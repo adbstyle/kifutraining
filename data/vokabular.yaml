@@ -1,0 +1,16 @@
+erscheinungsform:
+  spiel-kreativ-gestalten: "Das Spiel kreativ gestalten"
+  ball-entschlossen-erobern: "Den Ball entschlossen erobern"
+  mutig-tore-erzielen: "Mutig Tore erzielen"
+  mutig-tore-verhindern: "Mutig Tore verhindern"
+  flink-geschickt-bewegen: "Sich flink und geschickt bewegen"
+  respektvoll-fair-spielen: "Sich respektvoll verhalten und fair spielen"
+feldtyp:
+  kleinfeld: "Kleinfeld"
+  grossfeld: "Grossfeld"
+  freies_feld: "Freies Feld"
+trainingsteil:
+  auffangen: "Auffangen"
+  einleitung: "Einleitung"
+  hauptteil: "Hauptteil"
+  ausklang: "Ausklang"
