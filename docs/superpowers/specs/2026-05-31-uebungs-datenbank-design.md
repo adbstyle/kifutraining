@@ -28,7 +28,7 @@ Trainingsteil (Auffangen | Einleitung | Hauptteil | Ausklang)
   └─ Erscheinungsform (z. B. «Das Spiel kreativ gestalten / Den Ball entschlossen erobern»)
        └─ Thema (z. B. Dribbling)  → Ziele, Metaphern, Fragen an die Kinder
             └─ Trainingsform/Übung (z. B. Wechseltore)
-                 → Offen starten («aufbau»), Üben, Wett-eifern,
+                 → Offen starten («setup»), Üben, Wett-eifern,
                    Alterskategorien G/F/E, Feld-Diagramm
 ```
 
@@ -45,66 +45,69 @@ kifu/
 │   ├── Manual_Kinderfussball_D.pdf
 │   └── ... (übrige PDFs/PPTX)
 ├── data/
-│   ├── themen/                     # Themen-Metadaten (geteilt über Übungen)
+│   ├── topics/                     # Themen-Metadaten (geteilt über Übungen)
 │   │   └── dribbling.yaml
-│   └── uebungen/                   # eine YAML pro Übung
+│   └── exercises/                  # eine YAML pro Übung
 │       └── dribbling-wechseltore.yaml
 ├── images/
 │   └── dribbling-wechseltore.png   # Feld-Diagramm pro Übung
 ├── docs/
 │   ├── README.md                   # generierter Index (nach Trainingsteil/Thema)
-│   └── uebungen/dribbling-wechseltore.md   # generierte Einzelansicht
+│   └── exercises/dribbling-wechseltore.md   # generierte Einzelansicht
 ├── scripts/
 │   ├── extract.py                  # PDF → YAML + PNG (wiederholbar)
 │   └── build_docs.py               # YAML → Markdown-Ansicht
 ├── schema/
-│   └── uebung.schema.json          # JSON-Schema zur Validierung
+│   └── exercise.schema.json        # JSON-Schema zur Validierung
 └── docs/superpowers/specs/         # dieses Spec-Dokument
 ```
 
-## Schema einer Übung (`data/uebungen/*.yaml`)
+## Schema einer Übung (`data/exercises/*.yaml`)
+
+Englische Keys (App-Tauglichkeit), deutsche Inhalte. Ausnahme: die vier
+`training_part`-Werte bleiben deutsche SFV-Fachbegriffe.
 
 ```yaml
-id: dribbling-wechseltore           # {thema}-{slug}; eindeutig & lesbar
+id: dribbling-wechseltore           # {topic}-{slug}; eindeutig & lesbar
 name: Wechseltore
-trainingsteil: hauptteil            # auffangen | einleitung | hauptteil | ausklang
-erscheinungsform: "Das Spiel kreativ gestalten / Den Ball entschlossen erobern"
-thema: dribbling                    # ref auf data/themen/dribbling.yaml
-kategorien: [G, F, E]               # Alterskategorien aus den G/F/E-Badges
-spielform: "3:3"                    # wo angegeben, sonst null
-anzahl_kinder: { min: 6, empfohlen: 6 }   # abgeleitet (best-effort); null wenn unklar
-material: [Markierkegel, Minitore, "1 Ball pro Team"]   # best-effort, sonst []
-aufbau: >                           # Inhalt von «Offen starten»
+training_part: hauptteil            # auffangen | einleitung | hauptteil | ausklang (SFV-Begriffe)
+focus: "Das Spiel kreativ gestalten / Den Ball entschlossen erobern"   # Erscheinungsform
+topic: dribbling                    # ref auf data/topics/dribbling.yaml
+categories: [G, F, E]               # Alterskategorien aus den G/F/E-Badges
+play_form: "3:3"                    # Spielform, wo angegeben, sonst null
+player_count: { min: 6, recommended: 6 }   # abgeleitet (best-effort); null wenn unklar
+equipment: [Markierkegel, Minitore, "1 Ball pro Team"]   # Material, best-effort, sonst []
+setup: >                            # Inhalt von «Offen starten»
   Zwei Teams spielen 3:3. Dribbelt ein Kind über die Mittellinie...
-ueben:                              # Liste der «Üben»-Punkte
+practice:                           # Liste der «Üben»-Punkte
   - Täuschen und in den freien Raum dribbeln
-wetteifern: >                       # Inhalt von «Wett-eifern»
+compete: >                          # Inhalt von «Wett-eifern»
   Welches Team erzielt innerhalb von fünf Minuten mehr Tore?
-varianten:                          # inline "Variante: ..." im Text, sonst []
+variants:                           # inline "Variante: ..." im Text, sonst []
   - "nach einem erzielten Tor wechseln die zugeteilten Tore"
-bild: images/dribbling-wechseltore.png   # null wenn kein Diagramm
-quelle: { datei: Manual_Kinderfussball_D.pdf, seite: 65 }
+image: images/dribbling-wechseltore.png   # null wenn kein Diagramm
+source: { file: Manual_Kinderfussball_D.pdf, page: 65 }
 ```
 
 ### Feld-Regeln
 - **Nicht ableitbare Felder bleiben leer/`null`** statt geraten zu werden, damit klar
   ist, was bei der manuellen Korrektur noch zu ergänzen ist.
-- `spielform`, `anzahl_kinder`, `material`, `varianten` sind best-effort aus Text
+- `play_form`, `player_count`, `equipment`, `variants` sind best-effort aus Text
   (und ggf. Diagramm) abgeleitet.
 
-## Schema eines Themas (`data/themen/*.yaml`)
+## Schema eines Themas (`data/topics/*.yaml`)
 
 ```yaml
 id: dribbling
 name: Dribbling
-trainingsteil: hauptteil
-erscheinungsform: "Das Spiel kreativ gestalten / Den Ball entschlossen erobern"
-ziele:
+training_part: hauptteil
+focus: "Das Spiel kreativ gestalten / Den Ball entschlossen erobern"
+goals:                              # Ziele
   - "Die Kinder können den Ball beidfüssig und eng führen."
   - "Die Kinder suchen mutig das 1:1, kennen passende Finten und wenden diese an."
-metaphern:
+metaphors:                          # Metaphern
   - "Den Ball als Hund verstehen"
-fragen_an_die_kinder:
+questions_for_kids:                 # Fragen an die Kinder
   - "Wie hast du das Dribbling jeweils gemacht?"
 ```
 
@@ -115,7 +118,7 @@ fragen_an_die_kinder:
    - Bilder je Seite via `pdfimages -png`.
    - Parst die wiederkehrende Block-Struktur (Thema-Header mit Ziele/Metaphern/Fragen;
      Übungs-Blöcke mit Offen starten/Üben/Wett-eifern + G/F/E-Badges).
-   - Schreibt `data/themen/*.yaml`, `data/uebungen/*.yaml` und `images/*.png`.
+   - Schreibt `data/topics/*.yaml`, `data/exercises/*.yaml` und `images/*.png`.
    - Bild↔Übung-Zuordnung über Reihenfolge pro Seite.
 2. **Manuelle Korrektur**: PDF-Parsing ist nie 100 % exakt. Die generierten YAMLs
    werden gegen das PDF geprüft und korrigiert. Danach ist die YAML die **kanonische
@@ -126,8 +129,8 @@ fragen_an_die_kinder:
 
 ## Validierung
 
-- `schema/uebung.schema.json`: JSON-Schema, gegen das alle Übungs-YAMLs geprüft werden
-  (fängt fehlende Pflichtfelder, ungültige `trainingsteil`-/`kategorien`-Werte, Tippfehler).
+- `schema/exercise.schema.json`: JSON-Schema, gegen das alle Übungs-YAMLs geprüft werden
+  (fängt fehlende Pflichtfelder, ungültige `training_part`-/`categories`-Werte, Tippfehler).
 - Validierung läuft als Teil von `build_docs.py` bzw. als separater Check.
 
 ## Technische Annahmen / Risiken
