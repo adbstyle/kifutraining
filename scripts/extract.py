@@ -8,10 +8,11 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import parser
 
-PDF = Path("sources/Manual_Kinderfussball_D.pdf")
-UEB = Path("data/uebungen")
-THEMEN = Path("data/themen")
-IMAGES = Path("images")
+ROOT = Path(__file__).resolve().parent.parent
+PDF = ROOT / "sources" / "Manual_Kinderfussball_D.pdf"
+UEB = ROOT / "data" / "uebungen"
+THEMEN = ROOT / "data" / "themen"
+IMAGES = ROOT / "images"
 
 # Seite -> (trainingsteil, [erscheinungsform-slugs])
 PAGE_META = {60: ("auffangen", [])}
@@ -56,60 +57,74 @@ def main():
 
     current_thema = None
     count = 0
-    for page in range(60, 83):
-        teil, erschein = PAGE_META[page]
-        text = page_text(page)
+    seen_ids: set = set()
+    try:
+        for page in range(60, 83):
+            teil, erschein = PAGE_META[page]
+            text = page_text(page)
 
-        theme = parser.parse_theme_header(text)
-        if theme:
-            current_thema = theme["id"]
-            (THEMEN / f"{theme['id']}.yaml").write_text(
-                yaml.safe_dump({**theme, "trainingsteil": teil,
-                                "erscheinungsform": erschein},
-                               allow_unicode=True, sort_keys=False),
-                encoding="utf-8")
+            theme = parser.parse_theme_header(text)
+            if theme:
+                current_thema = theme["id"]
+                (THEMEN / f"{theme['id']}.yaml").write_text(
+                    yaml.safe_dump({**theme, "trainingsteil": teil,
+                                    "erscheinungsform": erschein},
+                                   allow_unicode=True, sort_keys=False),
+                    encoding="utf-8")
 
-        blocks = parser.split_page_into_exercises(text)
-        imgs = extract_images(page, tmp / f"p{page}")
+            blocks = parser.split_page_into_exercises(text)
+            imgs = extract_images(page, tmp / f"p{page}")
 
-        for i, block in enumerate(blocks):
-            ex = parser.parse_exercise_block(block)
-            if not ex["name"]:
-                continue
-            thema = current_thema if teil == "hauptteil" else None
-            uid = f"{thema + '-' if thema else ''}{parser.slugify(ex['name'])}"
+            named_count = 0
+            for i, block in enumerate(blocks):
+                ex = parser.parse_exercise_block(block)
+                if not ex["name"]:
+                    continue
+                thema = current_thema if teil == "hauptteil" else None
+                uid = f"{thema + '-' if thema else ''}{parser.slugify(ex['name'])}"
 
-            bild = None
-            if i < len(imgs):
-                bild = f"images/{uid}.png"
-                imgs[i].replace(IMAGES / f"{uid}.png")
+                if uid in seen_ids:
+                    raise ValueError(f"Doppelte ID: {uid} (Seite {page})")
+                seen_ids.add(uid)
 
-            doc = {
-                "id": uid,
-                "name": ex["name"],
-                "trainingsteil": teil,
-                "erscheinungsform": erschein,
-                "feldtyp": feldtyp_aus_text(block),
-                "thema": thema,
-                "kategorien": ex["kategorien"],
-                "spielform": ex["spielform"],
-                "anzahl_kinder": None,
-                "material": [],
-                "aufbau": ex["aufbau"],
-                "ueben": ex["ueben"],
-                "wetteifern": ex["wetteifern"],
-                "varianten": [],
-                "bild": bild,
-                "quelle": {"datei": PDF.name, "seite": page},
-            }
-            (UEB / f"{uid}.yaml").write_text(
-                yaml.safe_dump(doc, allow_unicode=True, sort_keys=False),
-                encoding="utf-8")
-            count += 1
+                bild = None
+                if i < len(imgs):
+                    bild = f"images/{uid}.png"
+                    imgs[i].replace(IMAGES / f"{uid}.png")
 
-    for leftover in tmp.glob("*"):
-        leftover.unlink()
-    tmp.rmdir()
+                doc = {
+                    "id": uid,
+                    "name": ex["name"],
+                    "trainingsteil": teil,
+                    "erscheinungsform": erschein,
+                    "feldtyp": feldtyp_aus_text(block),
+                    "thema": thema,
+                    "kategorien": ex["kategorien"],
+                    "spielform": ex["spielform"],
+                    "anzahl_kinder": None,
+                    "material": [],
+                    "aufbau": ex["aufbau"],
+                    "ueben": ex["ueben"],
+                    "wetteifern": ex["wetteifern"],
+                    "varianten": [],
+                    "bild": bild,
+                    "quelle": {"datei": PDF.name, "seite": page},
+                }
+                (UEB / f"{uid}.yaml").write_text(
+                    yaml.safe_dump(doc, allow_unicode=True, sort_keys=False),
+                    encoding="utf-8")
+                count += 1
+                named_count += 1
+
+            if len(imgs) != named_count:
+                print(
+                    f"WARNUNG: Seite {page}: {len(imgs)} Bilder, aber {named_count} Übungen",
+                    file=sys.stderr,
+                )
+    finally:
+        for leftover in tmp.glob("*"):
+            leftover.unlink()
+        tmp.rmdir()
     print(f"{count} Übungen extrahiert nach {UEB}/")
 
 

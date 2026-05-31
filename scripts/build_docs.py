@@ -4,9 +4,10 @@ from pathlib import Path
 
 import yaml
 
-UEB = Path("data/uebungen")
-OUT = Path("docs")
-VOKABULAR = Path("data/vokabular.yaml")
+ROOT = Path(__file__).resolve().parent.parent
+UEB = ROOT / "data" / "uebungen"
+OUT = ROOT / "docs"
+VOKABULAR = ROOT / "data" / "vokabular.yaml"
 TEILE = ["auffangen", "einleitung", "hauptteil", "ausklang"]
 TEIL_TITEL = {"auffangen": "Auffangen", "einleitung": "Einleitung",
               "hauptteil": "Hauptteil", "ausklang": "Ausklang"}

@@ -6,12 +6,14 @@ from pathlib import Path
 import yaml
 from jsonschema import Draft202012Validator
 
+ROOT = Path(__file__).resolve().parent.parent
+
 
 def main():
-    schema = json.loads(Path("schema/uebung.schema.json").read_text(encoding="utf-8"))
+    schema = json.loads((ROOT / "schema" / "uebung.schema.json").read_text(encoding="utf-8"))
     validator = Draft202012Validator(schema)
     errors = 0
-    files = sorted(Path("data/uebungen").glob("*.yaml"))
+    files = sorted((ROOT / "data" / "uebungen").glob("*.yaml"))
     for f in files:
         doc = yaml.safe_load(f.read_text(encoding="utf-8"))
         for err in validator.iter_errors(doc):
