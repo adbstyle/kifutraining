@@ -156,7 +156,7 @@ def parse_theme_header(text):
 
     sections = {v: [] for v in _THEME_KEYS.values()}
     current = None
-    for ln in lines:
+    for ln in lines[key_idx:]:
         stripped = ln.strip()
         matched = next((k for k in _THEME_KEYS if stripped.startswith(k)), None)
         if matched:

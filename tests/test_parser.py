@@ -129,3 +129,21 @@ def test_parse_theme_header():
 
 def test_parse_theme_header_none_when_no_labels():
     assert parser.parse_theme_header("Jäger und Hase   G  F  E\n\n  Offen ...") is None
+
+def test_theme_header_ignores_prekey_header_line():
+    text = (
+        "Fragen der Trainer                 42\n"
+        "Dribbling\n"
+        "\n"
+        "Ziele                  Die Kinder\n"
+        "                       – können den Ball eng führen.\n"
+        "\n"
+        "Metaphern              – Den Ball als Hund verstehen\n"
+        "\n"
+        "Fragen an die Kinder   – Wie hast du das gemacht?\n"
+    )
+    th = parser.parse_theme_header(text)
+    assert th["name"] == "Dribbling"
+    assert th["ziele"] == ["können den Ball eng führen."]
+    assert th["metaphern"] == ["Den Ball als Hund verstehen"]
+    assert th["fragen_an_die_kinder"] == ["Wie hast du das gemacht?"]
