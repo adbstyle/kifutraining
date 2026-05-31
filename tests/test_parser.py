@@ -102,3 +102,30 @@ def test_split_page_into_two_exercises():
     assert len(blocks) == 2
     assert parser.split_title_and_categories(blocks[0].splitlines()[0])[0] == "Freies Kleinfeldspiel"
     assert parser.split_title_and_categories(blocks[1].splitlines()[0])[0] == "Dribblestart"
+
+THEME_HEADER = (
+"Dribbling\n"
+"\n"
+"Ziele                  Die Kinder\n"
+"                       – können den Ball beidfüssig und eng führen.\n"
+"                       – suchen mutig das 1:1, kennen passende Finten.\n"
+"\n"
+"Metaphern              – Den Ball als Hund verstehen\n"
+"                       – Superman oder Superwoman sein\n"
+"\n"
+"Fragen an die Kinder   – Wie hast du das Dribbling jeweils gemacht?\n"
+"                       – Was ist dir gut gelungen?\n"
+)
+
+def test_parse_theme_header():
+    th = parser.parse_theme_header(THEME_HEADER)
+    assert th["name"] == "Dribbling"
+    assert th["ziele"] == [
+        "können den Ball beidfüssig und eng führen.",
+        "suchen mutig das 1:1, kennen passende Finten.",
+    ]
+    assert th["metaphern"][0] == "Den Ball als Hund verstehen"
+    assert th["fragen_an_die_kinder"][0] == "Wie hast du das Dribbling jeweils gemacht?"
+
+def test_parse_theme_header_none_when_no_labels():
+    assert parser.parse_theme_header("Jäger und Hase   G  F  E\n\n  Offen ...") is None

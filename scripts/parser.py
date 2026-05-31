@@ -122,3 +122,54 @@ def split_page_into_exercises(page_text):
     if current:
         blocks.append("\n".join(current))
     return blocks
+
+_THEME_KEYS = {
+    "Ziele": "ziele",
+    "Metaphern": "metaphern",
+    "Fragen an die Kinder": "fragen_an_die_kinder",
+}
+
+def _label_content_col(line, label):
+    """Spaltenindex, an dem nach 'label' + Leerraum der Inhalt beginnt."""
+    lead = len(line) - len(line.lstrip())
+    after = lead + len(label)
+    rest = line[after:]
+    return after + (len(rest) - len(rest.lstrip()))
+
+def parse_theme_header(text):
+    lines = text.splitlines()
+    key_idx = next((i for i, ln in enumerate(lines)
+                    if any(ln.strip().startswith(k) for k in _THEME_KEYS)), None)
+    if key_idx is None:
+        return None
+
+    # Themenname = letzte nicht-leere Zeile vor dem ersten Theme-Key
+    # (überspringt Seiten-/Kapitel-Header oben auf der Seite).
+    name = ""
+    for ln in reversed(lines[:key_idx]):
+        if ln.strip():
+            name = ln.strip()
+            break
+
+    first_key = next(k for k in _THEME_KEYS if lines[key_idx].strip().startswith(k))
+    content_col = _label_content_col(lines[key_idx], first_key)
+
+    sections = {v: [] for v in _THEME_KEYS.values()}
+    current = None
+    for ln in lines:
+        stripped = ln.strip()
+        matched = next((k for k in _THEME_KEYS if stripped.startswith(k)), None)
+        if matched:
+            current = _THEME_KEYS[matched]
+        if current and len(ln) > content_col:
+            tail = ln[content_col:]
+            if tail.strip():
+                sections[current].append(tail)
+
+    return {
+        "name": name,
+        "id": slugify(name),
+        "ziele": split_bullets(sections["ziele"]),
+        "metaphern": split_bullets(sections["metaphern"]),
+        "fragen_an_die_kinder": split_bullets(sections["fragen_an_die_kinder"]),
+    }
