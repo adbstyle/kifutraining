@@ -1,0 +1,27 @@
+id: torabschluss-tannenbaum-fangis
+name: Tannenbaum-Fangis
+trainingsteil: hauptteil
+erscheinungsform:
+- flink-geschickt-bewegen
+feldtyp: null
+thema: torabschluss
+kategorien:
+- G
+- F
+- E
+spielform: null
+anzahl_kinder: null
+material: []
+aufbau: Zwei Kinder versuchen, möglichst viele Kinder zu fangen. Wird ein Kind von
+  einem/r Fänger/in berührt, muss es wie eine Tanne (Arme ausstrecken, breitbeinig)
+  stehen bleiben. Die anderen Kinder können es befreien, indem sie zwischen seinen
+  Beinen durchkriechen.
+ueben:
+- Als Fänger/innen Strategie festlegen, wie sich möglichst alle Kinder fangen lassen
+wetteifern: 'Wer schafft es, alle Kinder zu fangen? Wer kann fünf Tannen befreien?
+  Lernbaustein: «Vielseitigkeit erleben» jsle.ch/dLve'
+varianten: []
+bild: images/torabschluss-tannenbaum-fangis.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 80

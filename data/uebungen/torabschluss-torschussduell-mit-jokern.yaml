@@ -1,0 +1,25 @@
+id: torabschluss-torschussduell-mit-jokern
+name: Torschussduell mit Jokern
+trainingsteil: hauptteil
+erscheinungsform:
+- mutig-tore-erzielen
+- mutig-tore-verhindern
+feldtyp: null
+thema: torabschluss
+kategorien:
+- G
+- F
+- E
+spielform: null
+anzahl_kinder: null
+material: []
+aufbau: Zwei Kinder versuchen, mithilfe von Jokern in Überzahl ein Tor zu erzielen.
+ueben:
+- Durch Einbezug der Joker und der Torspielerin/ des Torspielers Überzahl ausnutzen
+  und entschlossen Tore erzielen
+wetteifern: Welches Team erzielt mit Einbezug des Jokers ein Tor?
+varianten: []
+bild: images/torabschluss-torschussduell-mit-jokern.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 78

@@ -1,0 +1,27 @@
+id: passen-und-ballkontrolle-jokerspiel-seitlich
+name: Jokerspiel seitlich
+trainingsteil: hauptteil
+erscheinungsform:
+- spiel-kreativ-gestalten
+- ball-entschlossen-erobern
+feldtyp: null
+thema: passen-und-ballkontrolle
+kategorien:
+- G
+- F
+- E
+spielform: '2:2'
+anzahl_kinder:
+  min: 4
+  empfohlen: 4
+material: []
+aufbau: Manual Fussball – Good Practice Die Kinder spielen 2:2 mit je zwei Kindern
+  auf den Aussenbahnen als Joker. Die Joker dürfen den Ball max. zweimal berühren.
+ueben:
+- Joker miteinbeziehen und somit Breite und Überzahl nutzen
+wetteifern: Welches Team erzielt unter Einbezug der Joker ein Tor?
+varianten: []
+bild: images/passen-und-ballkontrolle-jokerspiel-seitlich.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 73

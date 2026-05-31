@@ -1,0 +1,28 @@
+id: torabschluss-zielschuss
+name: Zielschuss
+trainingsteil: hauptteil
+erscheinungsform:
+- mutig-tore-erzielen
+- mutig-tore-verhindern
+feldtyp: null
+thema: torabschluss
+kategorien:
+- G
+- F
+- E
+spielform: null
+anzahl_kinder: null
+material: []
+aufbau: 'Dribbelnd führen die Kinder verschiedene Finten vor den Hütchen aus und schliessen
+  am Ende des Parcours aufs Tor ab. Danach holen sie ihren Ball und stellen sich auf
+  der anderen Seite an. Variation: auf Minitore abschliessen.'
+ueben:
+- Nach zwei unterschiedlichen Finten erfolgreich abschliessen
+- Beidseitig üben (abwechselnd mit links und rechts abschliessen)
+wetteifern: Wer schafft die Aufgabe mit dem linken und anschliessend mit dem rechten
+  Fuss ohne Fehler?
+varianten: []
+bild: images/torabschluss-zielschuss.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 76

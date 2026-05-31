@@ -1,0 +1,29 @@
+id: torabschluss-1-1-torabschluss-frontal
+name: 1:1 Torabschluss frontal
+trainingsteil: hauptteil
+erscheinungsform:
+- mutig-tore-erzielen
+- mutig-tore-verhindern
+feldtyp: null
+thema: torabschluss
+kategorien:
+- G
+- F
+- E
+spielform: '1:1'
+anzahl_kinder:
+  min: 2
+  empfohlen: 2
+material: []
+aufbau: Ein Kind aus Team Rot passt zu einem Kind aus Team Weiss. Danach starten beide
+  zum 1:1 und versuchen, beim Gegenüber ein Tor zu erzielen. Die Kinder auf der anderen
+  Seite starten gleichzeitig wie die beiden, allerdings passt das weisse Team zum
+  roten.
+ueben:
+- Mit Tempo und Täuschungen das verteidigende Kind ausdribbeln und entschlossen abschliessen
+wetteifern: Welches Team erzielt am meisten Tore?
+varianten: []
+bild: images/torabschluss-1-1-torabschluss-frontal.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 79

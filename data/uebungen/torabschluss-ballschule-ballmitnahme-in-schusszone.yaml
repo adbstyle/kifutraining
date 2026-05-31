@@ -1,0 +1,30 @@
+id: torabschluss-ballschule-ballmitnahme-in-schusszone
+name: Ballschule – Ballmitnahme in Schusszone
+trainingsteil: hauptteil
+erscheinungsform:
+- mutig-tore-erzielen
+- mutig-tore-verhindern
+feldtyp: null
+thema: torabschluss
+kategorien:
+- G
+- F
+- E
+spielform: null
+anzahl_kinder: null
+material: []
+aufbau: Ein Kind von Team Rot startet mit dem Ball ins Feld und spielt einen Pass
+  zu einem gegenüberstehenden Kind von Team Weiss. Dieses nimmt den Ball in die Abschlusszone
+  mit und schliesst auf das Tor ab. Danach erhält das Kind einen weiteren Pass von
+  einem Kind der Gruppe Rot, nimmt ihn aus der Schusszone mit und schliesst mit dem
+  zweiten Ballkontakt ausserhalb der Schusszone ab. Beide Seiten starten gleichzeitig.
+ueben:
+- Ball kontrolliert in die Schusszone mitnehmen und mit einem präzisen Schuss in die
+  freie Ecke abschliessen
+wetteifern: Wer schafft zwei erfolgreiche Torabschlüsse hintereinander? Wer mit links
+  und nachher mit rechts?
+varianten: []
+bild: images/torabschluss-ballschule-ballmitnahme-in-schusszone.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 77

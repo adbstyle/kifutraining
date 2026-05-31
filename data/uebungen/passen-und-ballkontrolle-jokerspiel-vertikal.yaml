@@ -1,0 +1,29 @@
+id: passen-und-ballkontrolle-jokerspiel-vertikal
+name: Jokerspiel vertikal
+trainingsteil: hauptteil
+erscheinungsform:
+- spiel-kreativ-gestalten
+- ball-entschlossen-erobern
+feldtyp: null
+thema: passen-und-ballkontrolle
+kategorien:
+- G
+- F
+- E
+spielform: '3:3'
+anzahl_kinder:
+  min: 6
+  empfohlen: 6
+material: []
+aufbau: Die Kinder spielen 3:3 mit zwei Jokern im Feld und zwei Jokern ausserhalb
+  des Feldes. Für Letztere sind zwei Ballkontakte erlaubt. Alle Kinder beteiligen
+  sich am Angriffsspiel.
+ueben:
+- Aussenspieler/innen und Joker im Feld miteinbeziehen und somit Tiefe und Überzahl
+  nutzen
+wetteifern: Tore mit Einbezug der Joker in der Tiefe zählen doppelt.
+varianten: []
+bild: images/passen-und-ballkontrolle-jokerspiel-vertikal.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 73
