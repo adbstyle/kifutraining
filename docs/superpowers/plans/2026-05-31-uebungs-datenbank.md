@@ -19,6 +19,7 @@
 | `requirements.txt` | Python-Abhängigkeiten (pyyaml, jsonschema, pytest) |
 | `.gitignore` | `.venv/`, `__pycache__/`, `*.pyc` |
 | `schema/uebung.schema.json` | JSON-Schema für eine Übungs-YAML |
+| `data/vokabular.yaml` | Kontrollierte Enums (Slug → Anzeigetext) für App-Filter |
 | `scripts/parser.py` | Reine Parsing-Funktionen (Text → dicts), keine I/O |
 | `scripts/extract.py` | Orchestrator: poppler aufrufen, Seiten→Trainingsteil mappen, YAML+PNG schreiben |
 | `scripts/validate.py` | Alle `data/uebungen/*.yaml` gegen Schema validieren |
@@ -28,15 +29,20 @@
 
 **Seiten→Trainingsteil-Mapping** (aus dem Inhaltsverzeichnis, lebt als Tabelle in `extract.py`):
 
-| Seiten | trainingsteil | erscheinungsform |
+| Seiten | trainingsteil | erscheinungsform (Enum-Slugs, Liste) |
 |---|---|---|
-| 60 | auffangen | – |
-| 61–64 | einleitung | – |
-| 65–74 | hauptteil | Das Spiel kreativ gestalten / Den Ball entschlossen erobern |
-| 75–79 | hauptteil | Mutig Tore erzielen / Mutig Tore verhindern |
-| 80 | hauptteil | Sich flink und geschickt bewegen |
-| 81 | hauptteil | Sich respektvoll verhalten und fair spielen |
-| 82 | ausklang | – |
+| 60 | auffangen | `[]` |
+| 61–64 | einleitung | `[]` |
+| 65–74 | hauptteil | `[spiel-kreativ-gestalten, ball-entschlossen-erobern]` |
+| 75–79 | hauptteil | `[mutig-tore-erzielen, mutig-tore-verhindern]` |
+| 80 | hauptteil | `[flink-geschickt-bewegen]` |
+| 81 | hauptteil | `[respektvoll-fair-spielen]` |
+| 82 | ausklang | `[]` |
+
+**Filter-Enums** (kontrolliertes Vokabular, definiert in `data/vokabular.yaml`):
+- `erscheinungsform`: die 6 Slugs oben (Liste pro Übung).
+- `feldtyp`: `kleinfeld` | `grossfeld` | `freies_feld` | `null`. Aus Schlüsselwörtern
+  abgeleitet: `Grossfeld`→grossfeld; `Kleinfeld`/`Viereck`→kleinfeld; `frei`/`freies`→freies_feld; sonst `null`.
 
 ---
 
@@ -121,6 +127,8 @@ def test_minimal_valid_uebung_passes():
         "id": "dribbling-wechseltore",
         "name": "Wechseltore",
         "trainingsteil": "hauptteil",
+        "erscheinungsform": ["spiel-kreativ-gestalten", "ball-entschlossen-erobern"],
+        "feldtyp": "kleinfeld",
         "thema": "dribbling",
         "kategorien": ["G", "F", "E"],
         "aufbau": "Zwei Teams spielen 3:3.",
@@ -136,6 +144,22 @@ def test_invalid_trainingsteil_fails():
     doc = {"id": "x", "name": "X", "trainingsteil": "quatsch",
            "kategorien": ["G"], "aufbau": "...",
            "quelle": {"datei": "a.pdf", "seite": 1}}
+    assert list(v.iter_errors(doc)) != []
+
+def test_invalid_feldtyp_fails():
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    doc = {"id": "x", "name": "X", "trainingsteil": "auffangen",
+           "feldtyp": "fussballplatz", "kategorien": ["G"], "aufbau": "...",
+           "quelle": {"datei": "a.pdf", "seite": 1}}
+    assert list(v.iter_errors(doc)) != []
+
+def test_invalid_erscheinungsform_slug_fails():
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    doc = {"id": "x", "name": "X", "trainingsteil": "hauptteil",
+           "erscheinungsform": ["nicht-im-vokabular"], "kategorien": ["G"],
+           "aufbau": "...", "quelle": {"datei": "a.pdf", "seite": 1}}
     assert list(v.iter_errors(doc)) != []
 ```
 
@@ -157,7 +181,16 @@ Expected: FAIL (Datei `schema/uebung.schema.json` existiert nicht → `FileNotFo
     "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
     "name": { "type": "string", "minLength": 1 },
     "trainingsteil": { "enum": ["auffangen", "einleitung", "hauptteil", "ausklang"] },
-    "erscheinungsform": { "type": ["string", "null"] },
+    "erscheinungsform": {
+      "type": "array",
+      "items": {
+        "enum": ["spiel-kreativ-gestalten", "ball-entschlossen-erobern",
+                 "mutig-tore-erzielen", "mutig-tore-verhindern",
+                 "flink-geschickt-bewegen", "respektvoll-fair-spielen"]
+      },
+      "uniqueItems": true
+    },
+    "feldtyp": { "enum": ["kleinfeld", "grossfeld", "freies_feld", null] },
     "thema": { "type": ["string", "null"] },
     "kategorien": {
       "type": "array",
@@ -202,6 +235,72 @@ Expected: PASS (3 passed)
 ```bash
 git add schema/uebung.schema.json tests/test_schema.py
 git commit -m "feat: JSON-Schema für Übungen"
+```
+
+---
+
+## Task 2b: Vokabular-Datei
+
+Kontrolliertes Vokabular für App-Filter (Slug → Anzeigetext). Die Slugs müssen exakt
+den Enum-Werten im Schema entsprechen.
+
+**Files:**
+- Create: `data/vokabular.yaml`
+- Test: `tests/test_vokabular.py`
+
+- [ ] **Step 1: Failing-Test schreiben** (`tests/test_vokabular.py`) — Vokabular-Slugs == Schema-Enums
+
+```python
+import json
+from pathlib import Path
+import yaml
+
+def test_vokabular_matches_schema_enums():
+    vocab = yaml.safe_load(Path("data/vokabular.yaml").read_text(encoding="utf-8"))
+    schema = json.loads(Path("schema/uebung.schema.json").read_text(encoding="utf-8"))
+    props = schema["properties"]
+
+    assert set(vocab["erscheinungsform"]) == set(props["erscheinungsform"]["items"]["enum"])
+    assert set(vocab["feldtyp"]) == {v for v in props["feldtyp"]["enum"] if v is not None}
+    assert set(vocab["trainingsteil"]) == set(props["trainingsteil"]["enum"])
+```
+
+- [ ] **Step 2: Test ausführen, fehlschlagen sehen**
+
+Run: `.venv/bin/pytest tests/test_vokabular.py -v`
+Expected: FAIL (`FileNotFoundError: data/vokabular.yaml`)
+
+- [ ] **Step 3: `data/vokabular.yaml` schreiben**
+
+```yaml
+erscheinungsform:
+  spiel-kreativ-gestalten: "Das Spiel kreativ gestalten"
+  ball-entschlossen-erobern: "Den Ball entschlossen erobern"
+  mutig-tore-erzielen: "Mutig Tore erzielen"
+  mutig-tore-verhindern: "Mutig Tore verhindern"
+  flink-geschickt-bewegen: "Sich flink und geschickt bewegen"
+  respektvoll-fair-spielen: "Sich respektvoll verhalten und fair spielen"
+feldtyp:
+  kleinfeld: "Kleinfeld"
+  grossfeld: "Grossfeld"
+  freies_feld: "Freies Feld"
+trainingsteil:
+  auffangen: "Auffangen"
+  einleitung: "Einleitung"
+  hauptteil: "Hauptteil"
+  ausklang: "Ausklang"
+```
+
+- [ ] **Step 4: Test ausführen, bestehen sehen**
+
+Run: `.venv/bin/pytest tests/test_vokabular.py -v`
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add data/vokabular.yaml tests/test_vokabular.py
+git commit -m "feat: kontrolliertes Vokabular für App-Filter"
 ```
 
 ---
@@ -763,14 +862,26 @@ UEB = Path("data/uebungen")
 THEMEN = Path("data/themen")
 IMAGES = Path("images")
 
-# Seite -> (trainingsteil, erscheinungsform | None)
-PAGE_META = {60: ("auffangen", None)}
-PAGE_META.update({p: ("einleitung", None) for p in range(61, 65)})
-PAGE_META.update({p: ("hauptteil", "Das Spiel kreativ gestalten / Den Ball entschlossen erobern") for p in range(65, 75)})
-PAGE_META.update({p: ("hauptteil", "Mutig Tore erzielen / Mutig Tore verhindern") for p in range(75, 80)})
-PAGE_META[80] = ("hauptteil", "Sich flink und geschickt bewegen")
-PAGE_META[81] = ("hauptteil", "Sich respektvoll verhalten und fair spielen")
-PAGE_META[82] = ("ausklang", None)
+# Seite -> (trainingsteil, [erscheinungsform-slugs])
+PAGE_META = {60: ("auffangen", [])}
+PAGE_META.update({p: ("einleitung", []) for p in range(61, 65)})
+PAGE_META.update({p: ("hauptteil", ["spiel-kreativ-gestalten", "ball-entschlossen-erobern"]) for p in range(65, 75)})
+PAGE_META.update({p: ("hauptteil", ["mutig-tore-erzielen", "mutig-tore-verhindern"]) for p in range(75, 80)})
+PAGE_META[80] = ("hauptteil", ["flink-geschickt-bewegen"])
+PAGE_META[81] = ("hauptteil", ["respektvoll-fair-spielen"])
+PAGE_META[82] = ("ausklang", [])
+
+
+def feldtyp_aus_text(text):
+    """Feldtyp best-effort aus Schlüsselwörtern ableiten; None wenn unklar."""
+    low = text.lower()
+    if "grossfeld" in low:
+        return "grossfeld"
+    if "kleinfeld" in low or "viereck" in low:
+        return "kleinfeld"
+    if "freies feld" in low or "frei auf" in low or "freien feld" in low:
+        return "freies_feld"
+    return None
 
 
 def page_text(page):
@@ -827,6 +938,7 @@ def main():
                 "name": ex["name"],
                 "trainingsteil": teil,
                 "erscheinungsform": erschein,
+                "feldtyp": feldtyp_aus_text(block),
                 "thema": thema,
                 "kategorien": ex["kategorien"],
                 "spielform": ex["spielform"],
@@ -956,9 +1068,13 @@ Für je 1–2 Übungen aus auffangen / einleitung / hauptteil / ausklang: `aufba
 Run: `.venv/bin/python -c "import yaml,glob; [print(d['id'], d['bild']) for f in sorted(glob.glob('data/uebungen/*.yaml')) for d in [yaml.safe_load(open(f))]]"`
 Stichprobe: 2–3 PNGs öffnen und gegen die Übung im PDF prüfen (richtige Reihenfolge?). Falsche Zuordnungen in der YAML (`bild`-Feld + Dateiname) korrigieren.
 
-- [ ] **Step 4: `anzahl_kinder` / `material` best-effort ergänzen** (optional, wo eindeutig)
+- [ ] **Step 4: Filter-Felder best-effort ergänzen** (`feldtyp`, `anzahl_kinder`, `material`)
 
-Wo `spielform` gesetzt ist (z. B. "3:3"), `anzahl_kinder.min` = Summe (6) eintragen. Material aus `aufbau`/Diagramm ergänzen wo offensichtlich (Markierkegel, Minitore, Bälle). Unklares leer lassen.
+Wo `spielform` gesetzt ist (z. B. "3:3"), `anzahl_kinder.min` = Summe (6) eintragen.
+`feldtyp` prüfen: die automatische Ableitung greift nur bei Schlüsselwörtern — bei `null`
+anhand von Beschreibung/Diagramm `kleinfeld`/`grossfeld`/`freies_feld` ergänzen wo eindeutig,
+sonst `null` lassen. Material aus `aufbau`/Diagramm ergänzen wo offensichtlich
+(Markierkegel, Minitore, Bälle). Unklares leer/`null` lassen.
 
 - [ ] **Step 5: Re-Validierung + Commit**
 
@@ -984,10 +1100,18 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import build_docs
 
+VOCAB = {
+    "erscheinungsform": {"spiel-kreativ-gestalten": "Das Spiel kreativ gestalten",
+                         "ball-entschlossen-erobern": "Den Ball entschlossen erobern"},
+    "feldtyp": {"kleinfeld": "Kleinfeld"},
+}
+
 def test_render_exercise_markdown():
     doc = {
         "id": "dribbling-wechseltore", "name": "Wechseltore",
         "trainingsteil": "hauptteil", "thema": "dribbling",
+        "erscheinungsform": ["spiel-kreativ-gestalten", "ball-entschlossen-erobern"],
+        "feldtyp": "kleinfeld",
         "kategorien": ["G", "F", "E"], "spielform": "3:3",
         "aufbau": "Zwei Teams spielen 3:3.",
         "ueben": ["Täuschen und dribbeln"],
@@ -995,9 +1119,11 @@ def test_render_exercise_markdown():
         "bild": "images/dribbling-wechseltore.png",
         "quelle": {"datei": "Manual_Kinderfussball_D.pdf", "seite": 65},
     }
-    md = build_docs.render_exercise(doc)
+    md = build_docs.render_exercise(doc, VOCAB)
     assert md.startswith("# Wechseltore")
     assert "**Kategorien:** G, F, E" in md
+    assert "**Feldtyp:** Kleinfeld" in md
+    assert "Das Spiel kreativ gestalten" in md
     assert "## Offen starten" in md
     assert "Zwei Teams spielen 3:3." in md
     assert "- Täuschen und dribbeln" in md
@@ -1021,15 +1147,21 @@ import yaml
 
 UEB = Path("data/uebungen")
 OUT = Path("docs")
+VOKABULAR = Path("data/vokabular.yaml")
 TEILE = ["auffangen", "einleitung", "hauptteil", "ausklang"]
 TEIL_TITEL = {"auffangen": "Auffangen", "einleitung": "Einleitung",
               "hauptteil": "Hauptteil", "ausklang": "Ausklang"}
 
 
-def render_exercise(doc):
+def render_exercise(doc, vocab):
     lines = [f"# {doc['name']}", ""]
     meta = [f"**Trainingsteil:** {doc['trainingsteil']}",
             f"**Kategorien:** {', '.join(doc['kategorien'])}"]
+    formen = [vocab["erscheinungsform"].get(s, s) for s in doc.get("erscheinungsform") or []]
+    if formen:
+        meta.append(f"**Erscheinungsform:** {', '.join(formen)}")
+    if doc.get("feldtyp"):
+        meta.append(f"**Feldtyp:** {vocab['feldtyp'].get(doc['feldtyp'], doc['feldtyp'])}")
     if doc.get("thema"):
         meta.append(f"**Thema:** {doc['thema']}")
     if doc.get("spielform"):
@@ -1049,12 +1181,13 @@ def render_exercise(doc):
 
 
 def main():
+    vocab = yaml.safe_load(VOKABULAR.read_text(encoding="utf-8"))
     docs = [yaml.safe_load(f.read_text(encoding="utf-8"))
             for f in sorted(UEB.glob("*.yaml"))]
     (OUT / "uebungen").mkdir(parents=True, exist_ok=True)
     for doc in docs:
         (OUT / "uebungen" / f"{doc['id']}.md").write_text(
-            render_exercise(doc), encoding="utf-8")
+            render_exercise(doc, vocab), encoding="utf-8")
 
     idx = ["# Übungs-Datenbank Kinderfussball", "",
            f"{len(docs)} Übungen aus dem Manual Kinderfussball.", ""]
