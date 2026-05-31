@@ -57,3 +57,53 @@ def split_bullets(lines):
             else:
                 bullets[-1] = tail + " " + seg
     return bullets
+
+_SECTION_KEYS = {"Offen": "aufbau", "Üben": "ueben", "Wett-": "wetteifern"}
+_SPIELFORM = re.compile(r"\b(\d+\s*:\s*\d+)\b")
+
+def _content_column(line):
+    """Spaltenindex, an dem nach Label-Wort + Leerraum der Inhalt beginnt."""
+    m = re.match(r"\s*\S+\s{2,}", line)
+    return m.end() if m else 0
+
+def parse_exercise_block(block):
+    lines = block.splitlines()
+    title, cats = split_title_and_categories(lines[0])
+    body = lines[1:]
+
+    # Inhaltsspalte aus der ersten Label-Zeile bestimmen.
+    content_col = 0
+    for ln in body:
+        first = ln.strip().split(" ")[0] if ln.strip() else ""
+        if first in _SECTION_KEYS:
+            content_col = _content_column(ln)
+            break
+
+    if content_col == 0:
+        for ln in body:
+            if ln.strip():
+                content_col = len(ln) - len(ln.lstrip())
+                break
+
+    sections = {"aufbau": [], "ueben": [], "wetteifern": []}
+    current = "aufbau"
+    for ln in body:
+        first = ln.strip().split(" ")[0] if ln.strip() else ""
+        if first in _SECTION_KEYS:
+            current = _SECTION_KEYS[first]
+        if not ln.strip():
+            continue
+        content = ln[content_col:] if len(ln) > content_col else ""
+        if content.strip():
+            sections[current].append(content)
+
+    aufbau = join_text(sections["aufbau"])
+    spielform_m = _SPIELFORM.search(aufbau)
+    return {
+        "name": title,
+        "kategorien": cats,
+        "aufbau": aufbau,
+        "ueben": split_bullets(sections["ueben"]),
+        "wetteifern": join_text(sections["wetteifern"]) or None,
+        "spielform": spielform_m.group(1).replace(" ", "") if spielform_m else None,
+    }

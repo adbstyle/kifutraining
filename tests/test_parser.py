@@ -43,3 +43,31 @@ def test_split_bullets():
         "Den Ball nur mit links führen",
         "Abwechslungsweise links und rechts führen sowie Finten schlagen",
     ]
+
+WECHSELTORE_BLOCK = (
+"Wechseltore                                                         G     F      E\n"
+"\n"
+"                    Offen          Zwei Teams spielen 3:3. Dribbelt ein Kind über die Mittel-\n"
+"                    starten        linie, kann es in dieser Hälfte ein Tor erzielen. Dribbelt es\n"
+"                                   wieder zurück, sind die anderen beiden Tore freigeschal-\n"
+"                                   tet.\n"
+"\n"
+"                    Üben           – Täuschen und in den freien Raum dribbeln\n"
+"                                   – Als Mitspieler/innen freilaufen, anspielbar sein\n"
+"\n"
+"                    Wett-          Welches Team erzielt innerhalb von fünf Minuten mehr\n"
+"                    eifern         Tore?\n"
+)
+
+def test_parse_full_exercise_block():
+    ex = parser.parse_exercise_block(WECHSELTORE_BLOCK)
+    assert ex["name"] == "Wechseltore"
+    assert ex["kategorien"] == ["G", "F", "E"]
+    assert ex["aufbau"].startswith("Zwei Teams spielen 3:3.")
+    assert "Mittellinie" in ex["aufbau"]          # de-hyphenated
+    assert ex["ueben"] == [
+        "Täuschen und in den freien Raum dribbeln",
+        "Als Mitspieler/innen freilaufen, anspielbar sein",
+    ]
+    assert ex["wetteifern"].startswith("Welches Team erzielt")
+    assert ex["spielform"] == "3:3"
