@@ -1,11 +1,11 @@
-id: manual-fussball-good-practice-vom-1-0-zum-3-3
+id: passen-und-ballkontrolle-vom-1-0-zum-3-3
 name: Vom 1:0 zum 3:3
 trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: manual-fussball-good-practice
+thema: passen-und-ballkontrolle
 kategorien:
 - G
 - F
@@ -24,7 +24,7 @@ ueben:
 - In Gleichzahl freilaufen und mit Dribbling oder mit Pässen Tore erzielen
 wetteifern: Welches Team erzielt bis zum 3:3 mehr Tore?
 varianten: []
-bild: images/manual-fussball-good-practice-vom-1-0-zum-3-3.png
+bild: images/passen-und-ballkontrolle-vom-1-0-zum-3-3.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 70

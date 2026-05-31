@@ -1,11 +1,11 @@
-id: manual-fussball-good-practice-jokerspiel-im-feld
+id: passen-und-ballkontrolle-jokerspiel-im-feld
 name: Jokerspiel im Feld
 trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: manual-fussball-good-practice
+thema: passen-und-ballkontrolle
 kategorien:
 - G
 - F
@@ -19,7 +19,7 @@ ueben:
 - Nach Ballverlust die Blume schnell schliessen und im Schwarm zusammen den Ball jagen
 wetteifern: Welches Team erzielt innerhalb von fünf Minuten mehr Tore?
 varianten: []
-bild: images/manual-fussball-good-practice-jokerspiel-im-feld.png
+bild: images/passen-und-ballkontrolle-jokerspiel-im-feld.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 73

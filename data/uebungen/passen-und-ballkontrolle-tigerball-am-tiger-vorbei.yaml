@@ -1,11 +1,11 @@
-id: manual-fussball-good-practice-tigerball-am-tiger-vorbei
+id: passen-und-ballkontrolle-tigerball-am-tiger-vorbei
 name: Tigerball – am Tiger vorbei
 trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: manual-fussball-good-practice
+thema: passen-und-ballkontrolle
 kategorien:
 - G
 - F
@@ -21,7 +21,7 @@ ueben:
 - Geschickt im Rücken des Tigers freilaufen (aus dem Schatten in die Sonne)
 wetteifern: Wie viele Pässe gelingen am Tiger vorbei?
 varianten: []
-bild: images/manual-fussball-good-practice-tigerball-am-tiger-vorbei.png
+bild: images/passen-und-ballkontrolle-tigerball-am-tiger-vorbei.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 74

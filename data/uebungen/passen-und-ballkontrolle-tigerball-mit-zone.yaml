@@ -1,11 +1,11 @@
-id: manual-fussball-good-practice-tigerball-mit-zone
+id: passen-und-ballkontrolle-tigerball-mit-zone
 name: Tigerball – mit Zone
 trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: manual-fussball-good-practice
+thema: passen-und-ballkontrolle
 kategorien:
 - G
 - F
@@ -21,7 +21,7 @@ ueben:
   passen
 wetteifern: Gelingen die Pässe am Tiger vorbei und die Ballannahme in der Zone?
 varianten: []
-bild: images/manual-fussball-good-practice-tigerball-mit-zone.png
+bild: images/passen-und-ballkontrolle-tigerball-mit-zone.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 74

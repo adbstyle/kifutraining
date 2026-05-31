@@ -1,11 +1,11 @@
-id: manual-fussball-good-practice-jokerspiel-seitlich
+id: passen-und-ballkontrolle-jokerspiel-seitlich
 name: Jokerspiel seitlich
 trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: manual-fussball-good-practice
+thema: passen-und-ballkontrolle
 kategorien:
 - G
 - F
@@ -19,7 +19,7 @@ ueben:
 - Joker miteinbeziehen und somit Breite und Überzahl nutzen
 wetteifern: Welches Team erzielt unter Einbezug der Joker ein Tor?
 varianten: []
-bild: images/manual-fussball-good-practice-jokerspiel-seitlich.png
+bild: images/passen-und-ballkontrolle-jokerspiel-seitlich.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 73

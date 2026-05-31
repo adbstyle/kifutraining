@@ -1,11 +1,11 @@
-id: manual-fussball-good-practice-jokerspiel-vertikal
+id: passen-und-ballkontrolle-jokerspiel-vertikal
 name: Jokerspiel vertikal
 trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: manual-fussball-good-practice
+thema: passen-und-ballkontrolle
 kategorien:
 - G
 - F
@@ -21,7 +21,7 @@ ueben:
   nutzen
 wetteifern: Tore mit Einbezug der Joker in der Tiefe zählen doppelt.
 varianten: []
-bild: images/manual-fussball-good-practice-jokerspiel-vertikal.png
+bild: images/passen-und-ballkontrolle-jokerspiel-vertikal.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 73

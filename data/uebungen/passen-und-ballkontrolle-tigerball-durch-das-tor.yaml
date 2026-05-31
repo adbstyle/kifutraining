@@ -1,11 +1,11 @@
-id: manual-fussball-good-practice-tigerball-durch-das-tor
+id: passen-und-ballkontrolle-tigerball-durch-das-tor
 name: Tigerball – durch das Tor
 trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: manual-fussball-good-practice
+thema: passen-und-ballkontrolle
 kategorien:
 - G
 - F
@@ -22,7 +22,7 @@ ueben:
   zuspielen (Ball rotiert Richtung Passempfänger/in)
 wetteifern: Wie viele Pässe schaffen die Kinder innerhalb einer Minute?
 varianten: []
-bild: images/manual-fussball-good-practice-tigerball-durch-das-tor.png
+bild: images/passen-und-ballkontrolle-tigerball-durch-das-tor.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 74

@@ -1,11 +1,11 @@
-id: manual-fussball-good-practice-2-1
+id: passen-und-ballkontrolle-2-1
 name: '2:1'
 trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: kleinfeld
-thema: manual-fussball-good-practice
+thema: passen-und-ballkontrolle
 kategorien:
 - G
 - F
@@ -21,7 +21,7 @@ ueben:
 wetteifern: Zähl z. B. das linke Tor doppelt oder gib für einen erfolgreichen Pass
   (oder Dribbling) einen Extrapunkt.
 varianten: []
-bild: images/manual-fussball-good-practice-2-1.png
+bild: images/passen-und-ballkontrolle-2-1.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 70

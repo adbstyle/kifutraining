@@ -1,11 +1,11 @@
-id: manual-fussball-good-practice-angreifen-in-ueberzahl-3-3
+id: passen-und-ballkontrolle-angreifen-in-ueberzahl-3-3
 name: Angreifen in Überzahl – 3:3
 trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: manual-fussball-good-practice
+thema: passen-und-ballkontrolle
 kategorien:
 - G
 - F
@@ -23,7 +23,7 @@ ueben:
 wetteifern: Welches Team erzielt in einem Durchgang ein Tor? Nach einem Durchgang
   wechseln die Rollen.
 varianten: []
-bild: images/manual-fussball-good-practice-angreifen-in-ueberzahl-3-3.png
+bild: images/passen-und-ballkontrolle-angreifen-in-ueberzahl-3-3.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 72

@@ -1,11 +1,11 @@
-id: manual-fussball-good-practice-drei-aussenspieler-innen
+id: passen-und-ballkontrolle-drei-aussenspieler-innen
 name: Drei Aussenspieler/innen
 trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: manual-fussball-good-practice
+thema: passen-und-ballkontrolle
 kategorien:
 - G
 - F
@@ -24,7 +24,7 @@ ueben:
   abschliessen
 wetteifern: Welches Team erzielt in 3 Minuten mehr Tore?
 varianten: []
-bild: images/manual-fussball-good-practice-drei-aussenspieler-innen.png
+bild: images/passen-und-ballkontrolle-drei-aussenspieler-innen.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 71

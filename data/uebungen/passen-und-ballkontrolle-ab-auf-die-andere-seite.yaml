@@ -1,11 +1,11 @@
-id: manual-fussball-good-practice-ab-auf-die-andere-seite
+id: passen-und-ballkontrolle-ab-auf-die-andere-seite
 name: Ab auf die andere Seite
 trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: manual-fussball-good-practice
+thema: passen-und-ballkontrolle
 kategorien:
 - G
 - F
@@ -20,7 +20,7 @@ ueben:
 - Nach erzieltem Tor sofort auf neue Situation um­ schalten und freien Raum ausnutzen
 wetteifern: Welchem Team gelingen zwei Tore in Folge?
 varianten: []
-bild: images/manual-fussball-good-practice-ab-auf-die-andere-seite.png
+bild: images/passen-und-ballkontrolle-ab-auf-die-andere-seite.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 71
