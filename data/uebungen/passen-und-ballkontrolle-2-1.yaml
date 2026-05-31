@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '2:1'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 3
+  empfohlen: 3
 material: []
 aufbau: Die Kinder spielen im Kleinfeld 2:1. Die rote Linie dient als Grenze. Gib
   diverse Startpositionen (seitlich, nebeneinander, vor dem verteidigenden Kind) vor.

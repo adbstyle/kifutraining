@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '3:3'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 6
+  empfohlen: 6
 material: []
 aufbau: Die Kinder spielen 3:3. Das weisse Team schiesst auf das grosse Tor, das rote
   auf die beiden Minitore. Nach Torerfolg auf die Minitore wechseln die Rollen.

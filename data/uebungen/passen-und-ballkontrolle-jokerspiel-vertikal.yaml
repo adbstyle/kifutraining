@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '3:3'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 6
+  empfohlen: 6
 material: []
 aufbau: Die Kinder spielen 3:3 mit zwei Jokern im Feld und zwei Jokern ausserhalb
   des Feldes. Für Letztere sind zwei Ballkontakte erlaubt. Alle Kinder beteiligen

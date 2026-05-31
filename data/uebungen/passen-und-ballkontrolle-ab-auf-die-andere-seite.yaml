@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '3:3'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 6
+  empfohlen: 6
 material: []
 aufbau: Im Spiel 3:3 dürfen die Kinder nur in der Endzone Tore erzielen. Das Team,
   das einen Treffer erzielt, bleibt in Ballbesitz und greift sofort in die andere

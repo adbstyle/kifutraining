@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '3:1'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 4
+  empfohlen: 4
 material: []
 aufbau: Im Spiel 3:1 (oder 2:1) greifen die Kinder von Team Weiss auf die beiden Tore
   an. Ab der Mittellinie dürfen sie aufs Tor schiessen. Ist der Ball im Tor oder aus

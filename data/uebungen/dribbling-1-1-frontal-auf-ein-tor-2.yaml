@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '1:1'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 2
+  empfohlen: 2
 material: []
 aufbau: Die Kinder duellieren sich 1:1. Das Tor in der Mitte ist grösser als die Tore
   nebenan. Ist ein Ball im Tor oder aus dem Feld, ist das Spiel zu Ende. Nach zwei

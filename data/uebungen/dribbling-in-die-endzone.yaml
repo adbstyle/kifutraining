@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '3:3'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 6
+  empfohlen: 6
 material: []
 aufbau: Im Spiel 3:3 erhält einen Punkt, wer es in die Endzone geschafft hat und den
   Ball dort stoppen kann.

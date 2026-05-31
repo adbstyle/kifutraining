@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '1:1'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 2
+  empfohlen: 2
 material: []
 aufbau: Zwei Kinder aus Team Rot dribbeln gleichzeitig auf das Feld und passen auf
   die andere Seite zum/r jeweiligen Gegenspieler/in. Danach erfolgt ein 1:1 auf die

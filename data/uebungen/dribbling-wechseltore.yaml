@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '3:3'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 6
+  empfohlen: 6
 material: []
 aufbau: Zwei Teams spielen 3:3. Dribbelt ein Kind über die Mittellinie, kann es in
   dieser Hälfte ein Tor erzielen. Dribbelt es wieder zurück, sind die anderen beiden

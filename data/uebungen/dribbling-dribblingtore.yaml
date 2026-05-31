@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '3:3'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 6
+  empfohlen: 6
 material: []
 aufbau: Im Spiel 3:3 können die Teams über die beiden Linien in der Mitte ein Dribbeltor
   oder ein «normales» Tor erzielen (beides gibt einen Punkt).

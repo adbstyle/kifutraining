@@ -10,7 +10,9 @@ kategorien:
 - F
 - E
 spielform: '1:1'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 2
+  empfohlen: 2
 material: []
 aufbau: Kleinfeld     Die Kinder spielen auf dem Kleinfeld 1:1 bis 4:4, je nach Anzahl
   Kinder. Gross-        Die Kinder spielen auf dem Grossfeld auf die grossen feld          Tore

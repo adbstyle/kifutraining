@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '1:1'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 2
+  empfohlen: 2
 material: []
 aufbau: Manual Fussball – Good Practice Bilde zwei Teams. Zwei Kinder von Team Rot
   passen nach vorne zu den angreifenden Kindern. Sobald der Pass erfolgt ist, dürfen

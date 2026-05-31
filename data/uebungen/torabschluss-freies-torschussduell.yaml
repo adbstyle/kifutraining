@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '2:2'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 4
+  empfohlen: 4
 material: []
 aufbau: Die Kinder versuchen im 2:2, durch mutiges Dribbeln, geschicktes Zusammenspiel
   und Freilaufen eine Überzahl zu kreieren und ein Tor zu erzielen.

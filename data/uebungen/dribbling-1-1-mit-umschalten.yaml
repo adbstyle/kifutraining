@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '1:1'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 2
+  empfohlen: 2
 material: []
 aufbau: Ein Kind dribbelt in Richtung Schusszone und versucht im 1:1 ein Tor zu erzielen.
   Nach dem Abschluss verteidigt es nun. Das nächste Kind startet sofort und sucht

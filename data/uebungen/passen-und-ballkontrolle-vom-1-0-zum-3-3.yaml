@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '1:1'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 2
+  empfohlen: 2
 material: []
 aufbau: Ein Kind (Team Weiss) dribbelt ins freie Feld und erzielt so schnell wie möglich
   ein Tor. Danach kommt ein Kind von Team Rot mit einem Ball ins Feld und die beiden

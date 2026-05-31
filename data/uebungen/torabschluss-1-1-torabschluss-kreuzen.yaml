@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '1:1'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 2
+  empfohlen: 2
 material: []
 aufbau: Ein/e Angreifer/in (mit Ball) und ein/e Verteidiger/in (ohne Ball) starten
   gleichzeitig auf ein Kommando 1:1. Sobald Erstere/r die Markierung in der Mitte

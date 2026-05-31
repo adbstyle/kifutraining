@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '3:3'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 6
+  empfohlen: 6
 material: []
 aufbau: Im Spiel 3:3 und drei Aussenspieler/innen pro Team können die Kinder diese
   immer anspielen. Spielen sie den Ball direkt zurück, bleiben sie in dieser Rolle.

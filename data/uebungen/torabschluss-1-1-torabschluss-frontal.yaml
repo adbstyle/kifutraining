@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '1:1'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 2
+  empfohlen: 2
 material: []
 aufbau: Ein Kind aus Team Rot passt zu einem Kind aus Team Weiss. Danach starten beide
   zum 1:1 und versuchen, beim Gegenüber ein Tor zu erzielen. Die Kinder auf der anderen

@@ -11,7 +11,9 @@ kategorien:
 - F
 - E
 spielform: '2:2'
-anzahl_kinder: null
+anzahl_kinder:
+  min: 4
+  empfohlen: 4
 material: []
 aufbau: Manual Fussball – Good Practice Die Kinder spielen 2:2 mit je zwei Kindern
   auf den Aussenbahnen als Joker. Die Joker dürfen den Ball max. zweimal berühren.
