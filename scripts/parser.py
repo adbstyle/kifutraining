@@ -107,3 +107,18 @@ def parse_exercise_block(block):
         "wetteifern": join_text(sections["wetteifern"]) or None,
         "spielform": spielform_m.group(1).replace(" ", "") if spielform_m else None,
     }
+
+def split_page_into_exercises(page_text):
+    """Seitentext an Titelzeilen (mit Kategorie-Badges) in Übungsblöcke teilen."""
+    lines = page_text.splitlines()
+    blocks, current = [], []
+    for ln in lines:
+        if is_exercise_title(ln):
+            if current:
+                blocks.append("\n".join(current))
+            current = [ln]
+        elif current:
+            current.append(ln)
+    if current:
+        blocks.append("\n".join(current))
+    return blocks

@@ -71,3 +71,34 @@ def test_parse_full_exercise_block():
     ]
     assert ex["wetteifern"].startswith("Welches Team erzielt")
     assert ex["spielform"] == "3:3"
+
+SIMPLE_BLOCK = (
+"Freies Kleinfeldspiel                                               G     F      E\n"
+"\n"
+"                         Den Kindern steht vor dem Training mind. ein Kleinfeld zur\n"
+"                         Verfügung. Sobald die ersten Kinder auf dem Feld erscheinen,\n"
+"                         spielen sie frei auf dem vorbereiteten Kleinfeld.\n"
+)
+
+def test_parse_simple_block_has_only_aufbau():
+    ex = parser.parse_exercise_block(SIMPLE_BLOCK)
+    assert ex["name"] == "Freies Kleinfeldspiel"
+    assert ex["aufbau"].startswith("Den Kindern steht vor dem Training")
+    assert ex["ueben"] == []
+    assert ex["wetteifern"] is None
+
+PAGE_TWO_EXERCISES = (
+"Freies Kleinfeldspiel                                               G     F      E\n"
+"\n"
+"                         Den Kindern steht ein Kleinfeld zur Verfügung.\n"
+"\n"
+"Dribblestart                                                        G     F      E\n"
+"\n"
+"                         Sobald die Kinder kommen, umdribbeln sie die Gegenstände.\n"
+)
+
+def test_split_page_into_two_exercises():
+    blocks = parser.split_page_into_exercises(PAGE_TWO_EXERCISES)
+    assert len(blocks) == 2
+    assert parser.split_title_and_categories(blocks[0].splitlines()[0])[0] == "Freies Kleinfeldspiel"
+    assert parser.split_title_and_categories(blocks[1].splitlines()[0])[0] == "Dribblestart"
