@@ -1,0 +1,27 @@
+id: torabschluss-ballschule-durch-huetchentor
+name: Ballschule – durch Hütchentor
+trainingsteil: hauptteil
+erscheinungsform:
+- mutig-tore-erzielen
+- mutig-tore-verhindern
+feldtyp: null
+thema: torabschluss
+kategorien:
+- G
+- F
+- E
+spielform: null
+anzahl_kinder: null
+material: []
+aufbau: 'Die Kinder legen sich den Ball dribbelnd durch das Hütchentor vor und schliessen
+  ab. Danach holen sie den Ball und schliessen auf der anderen Seite an. Variation:
+  auf Minitore abschliessen.'
+ueben:
+- Den Torabschluss mit dem letzten Ballkontakt kontrolliert vorbereiten und direkt
+  abschliessen
+wetteifern: Wie viele Versuche gelingen ohne Fehler und mit erfolgreichem Torabschluss?
+varianten: []
+bild: images/torabschluss-ballschule-durch-huetchentor.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 77

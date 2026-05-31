@@ -1,0 +1,24 @@
+id: linienschiessen
+name: Linienschiessen
+trainingsteil: ausklang
+erscheinungsform: []
+feldtyp: null
+thema: null
+kategorien:
+- G
+- F
+- E
+spielform: null
+anzahl_kinder: null
+material: []
+aufbau: Die Kinder versuchen, aus einer bestimmten Distanz den Ball in der Luft ins
+  Tor zu schiessen. Gelingt dies, wiederholen sie die Aufgabe von der nächsten, weiter
+  entfernten Markierung. Wer nicht reüssiert, schiesst in der nächsten Runde aus der
+  gleichen Distanz. Wer trifft wie oft?
+ueben: []
+wetteifern: null
+varianten: []
+bild: images/linienschiessen.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 82

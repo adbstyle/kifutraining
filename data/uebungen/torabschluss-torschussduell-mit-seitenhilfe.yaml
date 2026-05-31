@@ -1,0 +1,26 @@
+id: torabschluss-torschussduell-mit-seitenhilfe
+name: Torschussduell mit Seitenhilfe
+trainingsteil: hauptteil
+erscheinungsform:
+- mutig-tore-erzielen
+- mutig-tore-verhindern
+feldtyp: null
+thema: torabschluss
+kategorien:
+- G
+- F
+- E
+spielform: '2:2'
+anzahl_kinder: null
+material: []
+aufbau: Die Kinder versuchen im 2:2, mithilfe der Kinder ausserhalb des Feldes (Joker)
+  ein Tor zu erzielen.
+ueben:
+- Mithilfe der Aussen- und der Torspieler/innen Breite und Überzahl nutzen und entschlossen
+  abschliessen
+wetteifern: Welches Team nutzt die Überzahl in Ballbesitz am erfolgreichsten?
+varianten: []
+bild: images/torabschluss-torschussduell-mit-seitenhilfe.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 78

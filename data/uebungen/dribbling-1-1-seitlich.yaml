@@ -1,0 +1,27 @@
+id: dribbling-1-1-seitlich
+name: 1:1 seitlich
+trainingsteil: hauptteil
+erscheinungsform:
+- spiel-kreativ-gestalten
+- ball-entschlossen-erobern
+feldtyp: null
+thema: dribbling
+kategorien:
+- G
+- F
+- E
+spielform: null
+anzahl_kinder: null
+material: []
+aufbau: Zwei Kinder starten gleichzeitig. Sobald das erste mit dem Ball die Markierung
+  passiert hat, darf es links oder rechts ein Tor erzielen. Ist der Ball im Tor oder
+  aus dem Feld, ist das Spiel zu Ende.
+ueben:
+- Mit Körpertäuschung das gegnerische Kind auf eine Seite locken und erfolgreich abschliessen
+wetteifern: Bilde zwei Teams. Ein Team verteidigt, das andere greift an. Welches Team
+  schafft in zwei Minuten am meisten Tore? Nach zwei Minuten wechseln sie die Rollen.
+varianten: []
+bild: images/dribbling-1-1-seitlich.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 67

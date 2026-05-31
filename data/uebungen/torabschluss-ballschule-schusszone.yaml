@@ -1,0 +1,26 @@
+id: torabschluss-ballschule-schusszone
+name: Ballschule – Schusszone
+trainingsteil: hauptteil
+erscheinungsform:
+- mutig-tore-erzielen
+- mutig-tore-verhindern
+feldtyp: null
+thema: torabschluss
+kategorien:
+- G
+- F
+- E
+spielform: null
+anzahl_kinder: null
+material: []
+aufbau: 'Manual Fussball – Good Practice Die Kinder dribbeln auf die Abschlusszone
+  zu und schliessen in dieser auf das Tor ab. Variation: auf Minitore abschliessen.'
+ueben:
+- Mit linkem und rechtem Fuss kontrolliert den Ball führen und in die freie Ecke zielen
+wetteifern: Wie viele Versuche gelingen mit dem linken, wie viele mit dem rechten
+  Fuss?
+varianten: []
+bild: images/torabschluss-ballschule-schusszone.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 77

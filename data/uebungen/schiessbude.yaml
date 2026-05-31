@@ -1,0 +1,23 @@
+id: schiessbude
+name: Schiessbude
+trainingsteil: ausklang
+erscheinungsform: []
+feldtyp: null
+thema: null
+kategorien:
+- G
+- F
+- E
+spielform: null
+anzahl_kinder: null
+material: []
+aufbau: 'Mit dem gesamten Trainingsmaterial baust du im Tor eine Schiessbude auf.
+  Wer trifft am meisten Gegenstände? Manual Grundlagen. Magglingen: BASPO. . Kinderfussball
+  – Theorie und Praxis. Kursdokument J+S und SFV.'
+ueben: []
+wetteifern: null
+varianten: []
+bild: images/schiessbude.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 82

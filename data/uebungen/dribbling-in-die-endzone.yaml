@@ -1,0 +1,26 @@
+id: dribbling-in-die-endzone
+name: In die Endzone
+trainingsteil: hauptteil
+erscheinungsform:
+- spiel-kreativ-gestalten
+- ball-entschlossen-erobern
+feldtyp: null
+thema: dribbling
+kategorien:
+- G
+- F
+- E
+spielform: '3:3'
+anzahl_kinder: null
+material: []
+aufbau: Im Spiel 3:3 erhält einen Punkt, wer es in die Endzone geschafft hat und den
+  Ball dort stoppen kann.
+ueben:
+- Mutig in die Endzone dribbeln, freilaufen, anspielbar sein (in die Sonne) und passen
+- Blume öffnen und schliessen
+wetteifern: Welches Team schafft es von Endzone zu Endzone ohne Ballverlust?
+varianten: []
+bild: images/dribbling-in-die-endzone.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 65

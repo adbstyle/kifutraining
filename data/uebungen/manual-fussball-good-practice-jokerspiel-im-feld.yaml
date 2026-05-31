@@ -1,0 +1,25 @@
+id: manual-fussball-good-practice-jokerspiel-im-feld
+name: Jokerspiel im Feld
+trainingsteil: hauptteil
+erscheinungsform:
+- spiel-kreativ-gestalten
+- ball-entschlossen-erobern
+feldtyp: null
+thema: manual-fussball-good-practice
+kategorien:
+- G
+- F
+- E
+spielform: '4:4'
+anzahl_kinder: null
+material: []
+aufbau: Die Kinder spielen 4:4 mit zwei Jokern. Alle Kinder beteiligen sich am Angriffsspiel.
+ueben:
+- Bei Ballbesitz Blume öffnen und mit Zusammenspiel Breite, Tiefe und Überzahl nutzen
+- Nach Ballverlust die Blume schnell schliessen und im Schwarm zusammen den Ball jagen
+wetteifern: Welches Team erzielt innerhalb von fünf Minuten mehr Tore?
+varianten: []
+bild: images/manual-fussball-good-practice-jokerspiel-im-feld.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 73

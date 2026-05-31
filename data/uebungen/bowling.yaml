@@ -1,0 +1,25 @@
+id: bowling
+name: Bowling
+trainingsteil: ausklang
+erscheinungsform: []
+feldtyp: null
+thema: null
+kategorien:
+- G
+- F
+- E
+spielform: null
+anzahl_kinder: null
+material: []
+aufbau: Zwei Kinder bilden ein Paar. Sie haben vier Markierkegel und einen Ball. Ein
+  Kind stellt sich mit dem Ball fünf Meter vor die Pylonen, das andere steht vis-à-vis.
+  Der/die Ballbesitzer/in versucht, die Pylonen mit einem Pass umzuwerfen. Danach
+  ist das andere Kind an der Reihe. Wie viele Versuche brauchen sie, um alle Pylonen
+  umzuwerfen?
+ueben: []
+wetteifern: null
+varianten: []
+bild: images/bowling.png
+quelle:
+  datei: Manual_Kinderfussball_D.pdf
+  seite: 82
