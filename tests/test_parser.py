@@ -181,3 +181,16 @@ def test_theme_name_skips_footer_and_section_noise():
     )
     th = parser.parse_theme_header(text)
     assert th["name"] == "Torabschluss"
+
+
+def test_theme_header_returns_none_when_name_is_only_noise():
+    # Alle Zeilen vor dem Theme-Key sind Rauschen → kein gültiger Name → None
+    # (verhindert eine leere ".yaml"-Datei und thema-Verlust in extract.py).
+    text = (
+        "Manual Fussball – Good Practice\n"
+        "82\n"
+        "\n"
+        "Ziele                  Die Kinder\n"
+        "                       – schliessen mutig ab.\n"
+    )
+    assert parser.parse_theme_header(text) is None

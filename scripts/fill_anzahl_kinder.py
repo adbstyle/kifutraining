@@ -13,6 +13,7 @@ from pathlib import Path
 import yaml
 
 
+ROOT = Path(__file__).resolve().parent.parent
 NM_PATTERN = re.compile(r'^(\d+):(\d+)$')
 
 
@@ -77,7 +78,7 @@ def fill_file(path: Path) -> bool:
 
 
 def main():
-    uebungen_dir = Path("data/uebungen")
+    uebungen_dir = ROOT / "data" / "uebungen"
     files = sorted(uebungen_dir.glob("*.yaml"))
     filled = 0
     for f in files:

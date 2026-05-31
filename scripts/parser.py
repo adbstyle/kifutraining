@@ -161,6 +161,10 @@ def parse_theme_header(text):
         name = s
         break
 
+    # Ohne gültigen Themennamen kein Thema (fail-loud statt leerer .yaml-Datei):
+    if not name:
+        return None
+
     first_key = next(k for k in _THEME_KEYS if lines[key_idx].strip().startswith(k))
     content_col = _label_content_col(lines[key_idx], first_key)
 
