@@ -129,6 +129,8 @@ _THEME_KEYS = {
     "Fragen an die Kinder": "fragen_an_die_kinder",
 }
 
+_NAME_NOISE = ("Manual Fussball", "Erscheinungsform", "Trainingsformen")
+
 def _label_content_col(line, label):
     """Spaltenindex, an dem nach 'label' + Leerraum der Inhalt beginnt."""
     lead = len(line) - len(line.lstrip())
@@ -138,6 +140,8 @@ def _label_content_col(line, label):
 
 def parse_theme_header(text):
     lines = text.splitlines()
+    end = next((i for i, ln in enumerate(lines) if is_exercise_title(ln)), len(lines))
+    lines = lines[:end]
     key_idx = next((i for i, ln in enumerate(lines)
                     if any(ln.strip().startswith(k) for k in _THEME_KEYS)), None)
     if key_idx is None:
@@ -147,9 +151,15 @@ def parse_theme_header(text):
     # (überspringt Seiten-/Kapitel-Header oben auf der Seite).
     name = ""
     for ln in reversed(lines[:key_idx]):
-        if ln.strip():
-            name = ln.strip()
-            break
+        s = ln.strip()
+        if not s:
+            continue
+        if any(n in s for n in _NAME_NOISE):
+            continue
+        if s.replace(" ", "").isdigit():   # bare page number
+            continue
+        name = s
+        break
 
     first_key = next(k for k in _THEME_KEYS if lines[key_idx].strip().startswith(k))
     content_col = _label_content_col(lines[key_idx], first_key)

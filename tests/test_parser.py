@@ -147,3 +147,37 @@ def test_theme_header_ignores_prekey_header_line():
     assert th["ziele"] == ["können den Ball eng führen."]
     assert th["metaphern"] == ["Den Ball als Hund verstehen"]
     assert th["fragen_an_die_kinder"] == ["Wie hast du das gemacht?"]
+
+def test_theme_header_stops_at_first_exercise():
+    text = (
+        "Dribbling\n"
+        "\n"
+        "Ziele                  Die Kinder\n"
+        "                       – können den Ball eng führen.\n"
+        "\n"
+        "Fragen an die Kinder   – Wie hast du das gemacht?\n"
+        "\n"
+        "Wechseltore                                   G     F      E\n"
+        "\n"
+        "                    Offen          Zwei Teams spielen 3:3.\n"
+        "                    starten        Dribbelt ein Kind über die Linie.\n"
+    )
+    th = parser.parse_theme_header(text)
+    assert th["name"] == "Dribbling"
+    assert th["fragen_an_die_kinder"] == ["Wie hast du das gemacht?"]
+    # exercise content must NOT leak into the theme sections
+    joined = " ".join(th["ziele"] + th["metaphern"] + th["fragen_an_die_kinder"])
+    assert "Wechseltore" not in joined
+    assert "Zwei Teams" not in joined
+
+def test_theme_name_skips_footer_and_section_noise():
+    text = (
+        "Manual Fussball – Good Practice\n"
+        "Erscheinungsformen «Mutig Tore erzielen»\n"
+        "Torabschluss\n"
+        "\n"
+        "Ziele                  Die Kinder\n"
+        "                       – schliessen mutig ab.\n"
+    )
+    th = parser.parse_theme_header(text)
+    assert th["name"] == "Torabschluss"
