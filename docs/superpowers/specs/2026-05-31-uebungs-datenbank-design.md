@@ -91,6 +91,13 @@ quelle: { datei: Manual_Kinderfussball_D.pdf, seite: 65 }
   ist, was bei der manuellen Korrektur noch zu ergänzen ist.
 - `spielform`, `anzahl_kinder`, `material`, `varianten` sind best-effort aus Text
   (und ggf. Diagramm) abgeleitet.
+- **Zwei Übungsformate** im Manual:
+  - *Voll* (Einleitung, Hauptteil): `aufbau` (= «Offen starten»), `ueben` (Liste),
+    `wetteifern`.
+  - *Einfach* (Auffangen, Ausklang): nur eine Beschreibung → landet in `aufbau`;
+    `ueben: []`, `wetteifern: null`.
+  - `erscheinungsform` / Themen-Metadaten (Ziele/Metaphern/Fragen) gibt es nur beim
+    Hauptteil; sonst `null` bzw. kein Themen-Eintrag.
 
 ## Schema eines Themas (`data/themen/*.yaml`)
 
