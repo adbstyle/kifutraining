@@ -129,9 +129,8 @@
   --nav-item-active-label: var(--color-on-surface);
   --nav-item-inactive-label: var(--color-on-surface-variant);
 
-  /* ─── Text-Field Component-Tokens (M3-Stil). Shape KiFu-eckig. ─── */
+  /* ─── Text-Field Component-Tokens (M3-Stil, outlined). Shape KiFu-eckig. ─── */
   --field-shape: 3px;
-  --field-container: var(--color-surface-container-highest);
   --field-outline: var(--color-outline);
   --field-label: var(--color-on-surface-variant);
   --field-text: var(--color-on-surface);

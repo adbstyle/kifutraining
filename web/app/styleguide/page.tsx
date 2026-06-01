@@ -406,20 +406,13 @@ export default function Styleguide() {
 
       <Section n="13" title="Text-Fields">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Outlined &amp; filled mit schwebendem Label (KiFu: mono/uppercase),
-          Supporting-Text und Error-State. Gespeist aus{" "}
-          <code>--field-*</code>-Component-Tokens.
+          Outlined mit schwebendem Label (KiFu: mono/uppercase), Supporting-Text
+          und Error-State. Gespeist aus <code>--field-*</code>-Component-Tokens.
         </p>
         <div className="grid max-w-md gap-6">
-          <TextField
-            label="Übungsname"
-            variant="outlined"
-            supportingText="Pflichtfeld"
-          />
-          <TextField label="Suchbegriff" variant="filled" />
+          <TextField label="Übungsname" supportingText="Pflichtfeld" />
           <TextField
             label="Anzahl Kinder"
-            variant="outlined"
             type="number"
             defaultValue="1"
             error
