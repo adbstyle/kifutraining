@@ -72,6 +72,20 @@
   --color-scrim: #000000;
   --color-shadow: #000000;
 
+  /* ─── Elevation (Dark): Höhe primär über Surface-Container; Schatten ab L3.
+     Konvention: Level N = bg-surface-container-* (siehe Spec §3) + shadow-eN.
+     Ausnahme: Primary-CTA nutzt den Signatur-Schatten, NICHT diese Tokens. ─── */
+  --shadow-e1: none;
+  --shadow-e2: none;
+  --shadow-e3: 0 2px 6px color-mix(in oklab, var(--color-scrim) 40%, transparent);
+  --shadow-e4: 0 4px 12px color-mix(in oklab, var(--color-scrim) 50%, transparent);
+  --shadow-e5: 0 8px 24px color-mix(in oklab, var(--color-scrim) 60%, transparent);
+
+  /* State-Layers (M3-Opazitäten) — in Komponenten via Opacity-Utilities:
+     hover  → bg-on-surface/8   (auf aktiven Elementen: bg-primary/8)
+     focus  → bg-on-surface/10
+     pressed→ bg-on-surface/10  */
+
   /* Typografie */
   --font-display: var(--font-anton), "Arial Narrow", sans-serif;
   --font-body: var(--font-source), Georgia, serif;
