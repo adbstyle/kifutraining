@@ -1,7 +1,7 @@
 # Infrastruktur-Setup-Plan: Local Dev & Production (Vercel + Supabase)
 
 **Datum:** 2026-05-31
-**Bezug:** `2026-05-31-webapp-architektur-plan-mvp.md` (server-only-Architektur)
+**Bezug:** `2026-05-31-kifu-architektur-mvp.md` (server-only-Architektur)
 **Ziel:** Reproduzierbares Setup für zwei Umgebungen — lokale Entwicklung und Produktion —
 beide auf Vercel (Next.js) + Supabase (Postgres/Auth/Storage), mit versionierten Migrationen
 und einem idempotenten Seed. Server-only bleibt durchgängig gewahrt: keine DB-Credentials im

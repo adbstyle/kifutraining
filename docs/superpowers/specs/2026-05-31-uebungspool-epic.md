@@ -1,4 +1,4 @@
-# Epic: Kinderfussball Trainings-Verwaltungsplattform
+# Übungspool — Epic: Kinderfussball-Übungsplattform
 
 **Datum:** 2026-05-31
 **Ebene:** Epic (Business) — mehrere Workflows und Rollen, mehrere Sprints
@@ -31,27 +31,27 @@ damit ich im Training schnell eine passende Übung finde und meine eigene Übung
 ## 4. Erfolgskriterien (outcome-orientiert)
 
 1. Übungen sind ohne Konto öffentlich durchsuchbar und nach Trainingsteil, Alterskategorie, Feldtyp, benötigter Spieleranzahl sowie über eine Freitextsuche filterbar.
-2. Die Filterdimensionen Erscheinungsform und Thema stehen ausschliesslich für Hauptteil-Übungen zur Verfügung und werden bei anderen Trainingsteilen nicht angeboten.
+2. Die Filterdimensionen Erscheinungsform und Thema stehen für Hauptteil- und Einleitungs-Übungen zur Verfügung und werden bei den übrigen Trainingsteilen nicht angeboten.
 3. Der Alterskategorie-Filter erlaubt die Auswahl mehrerer Stufen und zeigt alle Übungen, die mindestens eine der gewählten Stufen abdecken.
 4. Der Spieleranzahl-Filter bezieht sich auf die insgesamt für eine Übung benötigte Anzahl Kinder, sodass ein Trainer nach seiner verfügbaren Gruppengrösse einschränken kann.
 5. Die offiziellen Manual-Übungen sind als kuratierter, schreibgeschützter Bestand erkennbar und von Nutzer-Übungen unterscheidbar.
 6. Ein Konto ist Voraussetzung, um Übungen zu erstellen oder zu bearbeiten; das Ansehen und Filtern bleibt ohne Konto möglich.
-7. Ein angemeldeter Trainer kann eigene Übungen mit demselben Feldsatz wie Manual-Übungen erfassen, sodass sie gleichwertig filterbar sind; Hauptteil-spezifische Felder werden nur bei Trainingsteil Hauptteil erfasst.
-8. Eine neu erstellte Übung ist standardmässig öffentlich sichtbar, und der Ersteller kann die Sichtbarkeit jederzeit zwischen öffentlich und privat umschalten.
+7. Ein angemeldeter Trainer kann eigene Übungen mit demselben Feldsatz wie Manual-Übungen erfassen, sodass sie gleichwertig filterbar sind; Erscheinungsform und Thema werden nur bei den Trainingsteilen Hauptteil und Einleitung erfasst.
+8. Eine neu erstellte Übung ist standardmässig privat (Entwurf), und der Ersteller kann sie jederzeit öffentlich schalten und die Sichtbarkeit zwischen öffentlich und privat umschalten.
 9. Ein Trainer kann ausschliesslich seine eigenen Übungen bearbeiten und löschen; fremde und Manual-Übungen sind für ihn schreibgeschützt.
 10. Das Löschen einer Übung und das Löschen des Kontos erfordern jeweils eine ausdrückliche Bestätigung des Nutzers.
 11. Bei Konto-Löschung bleiben die öffentlichen Übungen des Nutzers anonymisiert und unveränderlich erhalten, während private Übungen gelöscht werden.
-12. Die Detailansicht einer Hauptteil-Übung mit Themenzuordnung zeigt die zugehörigen Themen-Informationen (Ziele, Metaphern, Fragen an die Kinder).
+12. Die Detailansicht einer Hauptteil- oder Einleitungs-Übung mit Themenzuordnung zeigt die zugehörigen Themen-Informationen (Ziele, Metaphern, Fragen an die Kinder).
 
 ## 5. Story-Skelett (SPIDR-Zerlegung, vertikal)
 
 Jede Story liefert End-to-End-Wert. Reihenfolge ist grob abhängigkeitssortiert.
 
 1. **Enabler — Datenmodell für Mehrbenutzerbetrieb & Seed:** Das Datenmodell trägt Eigentümerschaft, Herkunft (Manual vs. Nutzer), Sichtbarkeit und Zeitstempel; die bestehenden Manual-Übungen sind als kuratierter, schreibgeschützter Bestand übernommen.
-2. **Business — Übungskatalog öffentlich durchsuchen & filtern:** Anonyme Besucher sehen alle öffentlichen Übungen in einer Übersicht und grenzen sie über die Filterdimensionen und eine Freitextsuche ein, wobei Erscheinungsform und Thema nur im Kontext von Hauptteil-Übungen greifen.
-3. **Business — Übungs-Detailansicht:** Besucher sehen alle Felder einer Übung inklusive Feld-Diagramm und – bei Hauptteil-Übungen mit Themenzuordnung – der zugehörigen Themen-Informationen.
+2. **Business — Übungskatalog öffentlich durchsuchen & filtern:** Anonyme Besucher sehen alle öffentlichen Übungen in einer Übersicht und grenzen sie über die Filterdimensionen und eine Freitextsuche ein, wobei Erscheinungsform und Thema nur im Kontext von Hauptteil- und Einleitungs-Übungen greifen.
+3. **Business — Übungs-Detailansicht:** Besucher sehen alle Felder einer Übung inklusive Feld-Diagramm und – bei Hauptteil- und Einleitungs-Übungen mit Themenzuordnung – der zugehörigen Themen-Informationen.
 4. **Enabler/Business — Authentifizierung:** Ein Trainer kann sich ein Konto anlegen, an- und abmelden; geschützte Aktionen sind nur angemeldet möglich.
-5. **Business — Eigene Übung erstellen:** Ein angemeldeter Trainer erfasst eine neue Übung mit dem vollen Feldsatz und optionalem Feld-Diagramm-Upload; Hauptteil-spezifische Felder erscheinen nur bei Trainingsteil Hauptteil. Die Übung ist standardmässig öffentlich.
+5. **Business — Eigene Übung erstellen:** Ein angemeldeter Trainer erfasst eine neue Übung mit dem vollen Feldsatz und optionalem Feld-Diagramm-Upload; Erscheinungsform und Thema erscheinen nur bei den Trainingsteilen Hauptteil und Einleitung. Die Übung ist standardmässig privat (Entwurf).
 6. **Business — Eigene Übung bearbeiten, Sichtbarkeit steuern & löschen:** Ein Trainer ändert oder entfernt seine eigenen Übungen und schaltet ihre Sichtbarkeit jederzeit um; das Löschen erfordert eine Bestätigung.
 7. **Business — Eigene Übungen verwalten:** Ein Trainer sieht eine Übersicht ausschliesslich seiner eigenen Übungen (öffentlich wie privat) und ihren Sichtbarkeitsstatus.
 8. **Business — Konto löschen:** Ein Trainer löscht sein Konto nach Bestätigung; öffentliche Übungen bleiben anonymisiert und unveränderlich erhalten, private werden entfernt.
@@ -76,7 +76,7 @@ Hinweis Datenabhängigkeit (siehe Preconditions/Offene Fragen): Story 2 liefert 
 
 1. Das Zusammenstellen mehrerer Übungen zu einem Trainingsplan oder einer Session ist nicht Teil dieses Epics.
 2. Ein Werkzeug zum Zeichnen eigener Feld-Diagramme in der Anwendung ist nicht enthalten; bei eigenen Übungen ist nur ein optionaler Bild-Upload vorgesehen.
-3. Das Erstellen eigener Themen mit Zielen, Metaphern und Fragen ist nicht enthalten; Nutzer können ihre Hauptteil-Übung nur einem der bestehenden Themen zuordnen.
+3. Das Erstellen eigener Themen mit Zielen, Metaphern und Fragen ist nicht enthalten; Nutzer können ihre Hauptteil- oder Einleitungs-Übung nur einem der bestehenden Themen zuordnen.
 4. Eine Moderation oder Freigabe von Nutzer-Übungen vor der Veröffentlichung findet nicht statt; jeder angemeldete Nutzer kann öffentlich sichtbare Inhalte publizieren.
 5. Eine Vereins- oder Rollenverwaltung über das Eigentümer-Modell hinaus ist nicht enthalten.
 6. Eine mehrsprachige Oberfläche (FR/IT/EN) ist nicht enthalten.
@@ -94,4 +94,4 @@ Hinweis Datenabhängigkeit (siehe Preconditions/Offene Fragen): Story 2 liefert 
 
 ## 10. Mögliche Lösungsansätze (Kontext, keine Empfehlung)
 
-1. Architektur-Entscheid bereits getroffen: Next.js + Supabase (Postgres/Auth/Storage) auf Vercel; öffentliche Leserechte, Login für schreibende Aktionen; Manual-Übungen ohne Eigentümer und schreibgeschützt; Seed der Manual-Daten aus den versionierten Dateien. Siehe `2026-05-31-webapp-architektur-entscheid.md`.
+1. Architektur-Entscheid bereits getroffen: Next.js + Supabase (Postgres/Auth/Storage) auf Vercel; öffentliche Leserechte, Login für schreibende Aktionen; Manual-Übungen ohne Eigentümer und schreibgeschützt; Seed der Manual-Daten aus den versionierten Dateien. Siehe `2026-05-31-kifu-architektur-mvp.md`.
