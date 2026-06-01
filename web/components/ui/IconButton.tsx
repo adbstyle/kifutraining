@@ -15,27 +15,29 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   /** Pflicht: a11y-Label, da der Button nur ein Icon trägt. */
   label: string;
   size?: Size;
-  /** aktiver/ausgewählter Zustand → primary-Farbe + State-Layer */
+  /** aktiver/ausgewählter Zustand → Toggle-Semantik (aria-pressed) + primary-Farbe + State-Layer */
   active?: boolean;
 }
 
 /* IconButton nach M3: outlined Icon (Lucide) + State-Layer statt Fill.
-   Default-Icon-Farbe on-surface-variant, aktiv primary. */
+   Default-Icon-Farbe on-surface-variant, aktiv primary.
+   `active` aktiviert Toggle-Semantik (aria-pressed); ohne `active` = reiner Aktions-Button. */
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ icon: Icon, label, size = "md", active = false, className, ...props }, ref) => {
+  ({ icon: Icon, label, size = "md", active, className, ...props }, ref) => {
     const s = sizes[size];
+    const isToggle = active !== undefined;
     return (
       <button
         ref={ref}
         aria-label={label}
-        aria-pressed={active}
+        aria-pressed={isToggle ? active : undefined}
         className={cn(
           "inline-flex items-center justify-center rounded-full transition-colors",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
           "disabled:opacity-40 disabled:pointer-events-none",
           s.box,
           active
-            ? "text-primary bg-primary/10 hover:bg-primary/15"
+            ? "text-primary bg-primary/10 hover:bg-primary/15 active:bg-primary/20"
             : "text-on-surface-variant hover:text-on-surface hover:bg-on-surface/8 active:bg-on-surface/10",
           className,
         )}
