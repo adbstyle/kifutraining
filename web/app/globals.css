@@ -51,9 +51,9 @@
 
   /* Surface-Familie — die Rasen-Leiter IST die M3 Elevation-Leiter */
   --color-surface: var(--color-rasen-950);
-  --color-surface-dim: #07160f;
+  --color-surface-dim: #07160f; /* bewusst gleich wie surface-container-lowest auf dieser Palette-Stufe */
   --color-surface-bright: var(--color-rasen-800);
-  --color-surface-container-lowest: #07160f;
+  --color-surface-container-lowest: #07160f; /* bewusst gleich wie surface-dim auf dieser Palette-Stufe */
   --color-surface-container-low: var(--color-rasen-900);
   --color-surface-container: var(--color-rasen-850);
   --color-surface-container-high: var(--color-rasen-800);
@@ -135,7 +135,7 @@
 }
 @utility type-title-large {
   font-family: var(--font-body); font-weight: 600;
-  font-size: 22px; line-height: 28px; letter-spacing: 0;
+  font-size: 22px; line-height: 28px; letter-spacing: 0em;
 }
 @utility type-title-medium {
   font-family: var(--font-body); font-weight: 600;
@@ -147,11 +147,11 @@
 }
 @utility type-body-large {
   font-family: var(--font-body); font-weight: 400;
-  font-size: 16px; line-height: 24px; letter-spacing: 0;
+  font-size: 16px; line-height: 24px; letter-spacing: 0em;
 }
 @utility type-body-medium {
   font-family: var(--font-body); font-weight: 400;
-  font-size: 14px; line-height: 20px; letter-spacing: 0;
+  font-size: 14px; line-height: 20px; letter-spacing: 0em;
 }
 @utility type-body-small {
   font-family: var(--font-body); font-weight: 400;
