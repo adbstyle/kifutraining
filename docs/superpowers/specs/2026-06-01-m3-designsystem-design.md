@@ -183,9 +183,14 @@ gehen von Roboto aus und passen nicht 1:1 auf Versal-Anton / Space-Mono).
 
 ## 10. Komponenten-Migration (gezielt, keine Neuschreibung)
 
-- **Button:** Varianten auf Rollen-Tokens (`primary`/`on-primary`,
-  `outline`, `error`); State-Layers für hover/press; Label-Typo
-  `type-label-*`; **CTA-Signatur-Schatten bleibt**.
+- **Button:** M3-Emphase-Varianten `filled · tonal · elevated · outlined ·
+  text` (+ `danger`), gespeist aus `--button-*`-Component-Tokens (M3-Stil,
+  zeigen auf System-Rollen). `filled` behält den **harten CTA-Signatur-Schatten**,
+  `elevated` trägt den weichen `shadow-e3/e4`. Shape KiFu-eckig (`--button-shape`).
+  Label-Typo `type-label-large`.
+- **ButtonGroup:** M3 Connected Button Group — verbundene Aktions-Buttons,
+  Außenecken gerundet, Innenecken eckig (`role="group"`). Abgegrenzt von der
+  `SegmentedControl` (Single-Select-Auswahl).
 - **Card:** `elevation-1` (surface-container-low + outline).
 - **SegmentedControl:** `elevation-2`; aktiver Tab `primary`/`on-primary`;
   State-Layer auf inaktiven Tabs; Label-Typo.

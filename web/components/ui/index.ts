@@ -1,4 +1,5 @@
 export { Button } from "./Button";
+export { ButtonGroup } from "./ButtonGroup";
 export { Badge } from "./Badge";
 export { KategorieChip, FilterChip } from "./Chip";
 export { Card } from "./Card";

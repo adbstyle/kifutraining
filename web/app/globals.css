@@ -86,6 +86,31 @@
      focus  → bg-on-surface/10
      pressed→ bg-on-surface/10  */
 
+  /* ─── Button Component-Tokens (M3-Stil: zeigen auf System-Rollen; analog
+     md.comp.*-button.*). Hover-Container = State-Layer vorab eingerechnet.
+     Shape bewusst KiFu-eckig (3px) statt M3-Stadium. ─── */
+  --button-shape: 3px;
+
+  --button-filled-container: var(--color-primary);
+  --button-filled-container-hover: var(--color-signal-bright); /* KiFu-Signatur */
+  --button-filled-label: var(--color-on-primary);
+
+  --button-tonal-container: var(--color-secondary-container);
+  --button-tonal-container-hover: color-mix(in oklab, var(--color-on-secondary-container) 8%, var(--color-secondary-container));
+  --button-tonal-label: var(--color-on-secondary-container);
+
+  --button-elevated-container: var(--color-surface-container-low);
+  --button-elevated-container-hover: color-mix(in oklab, var(--color-on-surface) 8%, var(--color-surface-container-low));
+  --button-elevated-label: var(--color-primary);
+
+  --button-outlined-label: var(--color-on-surface);
+  --button-outlined-outline: var(--color-outline);
+
+  --button-text-label: var(--color-primary);
+
+  --button-danger-label: var(--color-error);
+  --button-danger-outline: color-mix(in oklab, var(--color-error) 40%, transparent);
+
   /* Typografie */
   --font-display: var(--font-anton), "Arial Narrow", sans-serif;
   --font-body: var(--font-source), Georgia, serif;

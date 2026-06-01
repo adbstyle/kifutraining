@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import {
   Button,
+  ButtonGroup,
   Badge,
   KategorieChip,
   FilterChip,
@@ -285,11 +286,17 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="07" title="Buttons">
+      <Section n="07" title="Buttons (M3-Styles) &amp; Button-Group">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          M3-Emphase-Stufen über <code>--button-*</code>-Component-Tokens. Filled
+          trägt die harte KiFu-CTA-Signatur, Elevated den weichen M3-Schatten.
+        </p>
         <div className="flex flex-wrap items-end gap-3">
-          <Button variant="primary">Plan erstellen</Button>
-          <Button variant="secondary">Filter zurücksetzen</Button>
-          <Button variant="ghost">Abbrechen</Button>
+          <Button variant="filled">Plan erstellen</Button>
+          <Button variant="tonal">Duplizieren</Button>
+          <Button variant="elevated">Teilen</Button>
+          <Button variant="outlined">Filter zurücksetzen</Button>
+          <Button variant="text">Abbrechen</Button>
           <Button variant="danger">Übung löschen</Button>
         </div>
         <div className="mt-4 flex flex-wrap items-end gap-3">
@@ -297,6 +304,14 @@ export default function Styleguide() {
           <Button size="md">Mittel</Button>
           <Button size="lg">Gross · Spielfeldrand</Button>
         </div>
+        <p className="type-label-small mb-2 mt-6 text-on-surface-variant">
+          Connected Button-Group (verbundene Aktionen)
+        </p>
+        <ButtonGroup ariaLabel="Ansicht wählen">
+          <Button variant="outlined">Liste</Button>
+          <Button variant="outlined">Raster</Button>
+          <Button variant="outlined">Karte</Button>
+        </ButtonGroup>
       </Section>
 
       <Section n="08" title="Badges &amp; Chips">
