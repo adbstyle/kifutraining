@@ -27,8 +27,8 @@ export function SegmentedDemo() {
   return (
     <div className="space-y-5">
       <div>
-        <p className="mb-2 font-mono text-[11px] uppercase tracking-widest text-chalk-faint">
-          Trainingsteil <span className="text-signal">· eine Auswahl</span>
+        <p className="type-label-small mb-2 text-on-surface-variant">
+          Trainingsteil <span className="text-primary">· eine Auswahl</span>
         </p>
         <SegmentedControl
           ariaLabel="Trainingsteil"
@@ -39,8 +39,8 @@ export function SegmentedDemo() {
       </div>
 
       <div>
-        <p className="mb-2 font-mono text-[11px] uppercase tracking-widest text-chalk-faint">
-          Erscheinungsform <span className="text-signal">· mehrere (ODER)</span>
+        <p className="type-label-small mb-2 text-on-surface-variant">
+          Erscheinungsform <span className="text-primary">· mehrere (ODER)</span>
         </p>
         <div className="flex flex-wrap gap-2">
           {(
