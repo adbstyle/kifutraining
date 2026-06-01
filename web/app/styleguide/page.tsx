@@ -4,12 +4,12 @@ import {
   ButtonGroup,
   Badge,
   KategorieChip,
-  FilterChip,
   Card,
   ExerciseCard,
   IconButton,
 } from "@/components/ui";
 import { SegmentedDemo } from "./SegmentedDemo";
+import { ChipsDemo } from "./ChipsDemo";
 import { kategorienSlugs } from "@/lib/vocab";
 import {
   Search,
@@ -314,14 +314,14 @@ export default function Styleguide() {
         </ButtonGroup>
       </Section>
 
-      <Section n="08" title="Badges &amp; Chips">
-        <div className="flex flex-wrap items-center gap-3">
+      <Section n="08" title="Badges &amp; Chips (M3)">
+        <p className="type-label-small mb-2 text-on-surface-variant">Badges</p>
+        <div className="mb-6 flex flex-wrap items-center gap-3">
           <Badge tone="manual" />
           <Badge tone="oeffentlich" />
           <Badge tone="entwurf">✎ Entwurf</Badge>
-          <FilterChip selected>Aktiv</FilterChip>
-          <FilterChip>Inaktiv</FilterChip>
         </div>
+        <ChipsDemo />
       </Section>
 
       <Section n="09" title="Filter (interaktiv)">

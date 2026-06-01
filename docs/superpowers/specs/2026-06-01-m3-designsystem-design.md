@@ -194,9 +194,12 @@ gehen von Roboto aus und passen nicht 1:1 auf Versal-Anton / Space-Mono).
 - **Card:** `elevation-1` (surface-container-low + outline).
 - **SegmentedControl:** `elevation-2`; aktiver Tab `primary`/`on-primary`;
   State-Layer auf inaktiven Tabs; Label-Typo.
-- **FilterChip:** State-Layers; „selected" nach M3-Filter-Chip:
-  `secondary-container`-Fläche + `on-secondary-container`-Text + führendes
-  `Check`-Icon.
+- **Chips (M3-Familie):** `FilterChip` (selected = `secondary-container` +
+  `Check`, optionales führendes Icon), `AssistChip` (führendes Icon, optional
+  `elevated` mit `shadow-e3/e4`), `SuggestionChip` (nur Label), `InputChip`
+  (führendes Icon + Entfernen-`X`) — gespeist aus `--chip-*`-Component-Tokens
+  (M3-Stil), Shape KiFu-Pill (`--chip-shape`). `KategorieChip` bleibt
+  domänenspezifisch (`kat-*`).
 - **Badge, ExerciseCard, FieldPlaceholder:** auf Rollen-Tokens umstellen;
   `chalk-hatch` bleibt als Diagramm-Platzhalter.
 

@@ -111,6 +111,15 @@
   --button-danger-label: var(--color-error);
   --button-danger-outline: color-mix(in oklab, var(--color-error) 40%, transparent);
 
+  /* ─── Chip Component-Tokens (M3-Stil; Assist/Filter/Input/Suggestion).
+     Shape KiFu-pill (Kontrast zu den eckigen Buttons). ─── */
+  --chip-shape: 9999px;
+  --chip-outline: var(--color-outline);
+  --chip-label: var(--color-on-surface-variant);
+  --chip-selected-container: var(--color-secondary-container);
+  --chip-selected-label: var(--color-on-secondary-container);
+  --chip-elevated-container: var(--color-surface-container-low);
+
   /* Typografie */
   --font-display: var(--font-anton), "Arial Narrow", sans-serif;
   --font-body: var(--font-source), Georgia, serif;
