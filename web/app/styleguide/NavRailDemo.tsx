@@ -17,6 +17,7 @@ const ITEMS: NavRailItem<NavKey>[] = [
 /* Demonstriert die Navigation Rail interaktiv (aktives Ziel + Inhalt). */
 export function NavRailDemo() {
   const [active, setActive] = useState<NavKey>("uebungen");
+  const [expanded, setExpanded] = useState(false);
   const current = ITEMS.find((i) => i.value === active)!;
 
   return (
@@ -25,8 +26,15 @@ export function NavRailDemo() {
         items={ITEMS}
         value={active}
         onChange={setActive}
+        expanded={expanded}
         ariaLabel="Hauptnavigation"
-        header={<IconButton icon={Menu} label="Menü öffnen" />}
+        header={
+          <IconButton
+            icon={Menu}
+            label={expanded ? "Navigation einklappen" : "Navigation ausklappen"}
+            onClick={() => setExpanded((e) => !e)}
+          />
+        }
         className="h-full"
       />
       <div className="flex flex-1 items-center justify-center bg-surface-container-low">

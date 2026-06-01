@@ -394,9 +394,11 @@ export default function Styleguide() {
 
       <Section n="12" title="Navigation Rail">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Vertikale Hauptnavigation (medium+ Fenster). Aktives Ziel über
-          Indicator-Pille (<code>secondary-container</code>) hinter dem Icon +
-          Label. Pfeiltasten-Navigation; gespeist aus{" "}
+          Vertikale Hauptnavigation (medium+ Fenster). Über den Menü-Button
+          zwischen <strong>collapsed</strong> (schmal) und{" "}
+          <strong>expanded</strong> (breit, Icon + Label nebeneinander)
+          umschaltbar. Aktives Ziel über Indicator-Pille (
+          <code>secondary-container</code>). Pfeiltasten-Navigation; gespeist aus{" "}
           <code>--nav-*</code>-Component-Tokens.
         </p>
         <NavRailDemo />
