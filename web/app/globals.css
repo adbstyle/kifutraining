@@ -177,6 +177,25 @@
   );
 }
 
+/* ─── Keyboard-Focus (a11y) ───────────────────────────────────────────
+   outline statt ring: rendert zuverlässig (CSS-Var greift, anders als beim
+   ring-Box-Shadow), folgt dem Border-Radius, kollidiert NICHT mit Box-Shadows
+   (CTA-Schatten bleibt) und übersteht Forced-Colors/High-Contrast.
+   `focus-ring`: Offset (Lücke zum Surface -> sichtbar auch auf primary-Flächen).
+   `focus-ring-inset`: für Elemente in overflow-hidden-Containern (z. B. Karten). */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+@utility focus-ring-inset {
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+}
+
 /* ─── M3 Type-Scale → KiFu-Fonts (Spec §5). Tracking KiFu-getunt. ─── */
 @utility type-display-large {
   font-family: var(--font-display); font-weight: 400; text-transform: uppercase;

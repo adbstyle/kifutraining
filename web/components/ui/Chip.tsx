@@ -31,7 +31,7 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
    Gemeinsame Basis + --chip-*-Component-Tokens (siehe globals.css).
    Vier Typen nach M3: Assist · Filter · Input · Suggestion. */
 const chipBase =
-  "type-label-medium inline-flex items-center gap-1.5 rounded-(--chip-shape) border-[1.5px] px-3 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface";
+  "focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-(--chip-shape) border-[1.5px] px-3 py-1.5 transition-colors";
 const chipOutlined =
   "border-(--chip-outline) bg-transparent text-(--chip-label) hover:bg-on-surface/8 hover:text-on-surface";
 const chipSelected =
@@ -141,7 +141,7 @@ export function InputChip({
           type="button"
           onClick={onRemove}
           aria-label="Entfernen"
-          className="-mr-1 ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/12 hover:text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="focus-ring -mr-1 ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/12 hover:text-on-surface"
         >
           <X size={14} strokeWidth={2.5} aria-hidden />
         </button>

@@ -8,7 +8,7 @@ type Variant = "filled" | "tonal" | "elevated" | "outlined" | "text" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "type-label-large inline-flex items-center justify-center gap-2 rounded-(--button-shape) transition-[background-color,box-shadow,transform,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40 disabled:pointer-events-none select-none";
+  "focus-ring type-label-large inline-flex items-center justify-center gap-2 rounded-(--button-shape) transition-[background-color,box-shadow,transform,color] duration-150 disabled:opacity-40 disabled:pointer-events-none select-none";
 
 const variants: Record<Variant, string> = {
   // Höchste Emphase — KiFu-Signatur: harter taktischer Schlagschatten

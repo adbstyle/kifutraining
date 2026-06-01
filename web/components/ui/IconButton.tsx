@@ -32,8 +32,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         aria-label={label}
         aria-pressed={isToggle ? active : undefined}
         className={cn(
-          "inline-flex items-center justify-center rounded-full transition-colors",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+          "focus-ring inline-flex items-center justify-center rounded-full transition-colors",
           "disabled:opacity-40 disabled:pointer-events-none",
           s.box,
           active

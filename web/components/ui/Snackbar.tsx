@@ -35,7 +35,7 @@ export function Snackbar({
         <button
           type="button"
           onClick={onAction}
-          className="type-label-large -my-1 rounded-[3px] px-2 py-1 text-(--snackbar-action) transition-colors hover:bg-scrim/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--snackbar-action)"
+          className="focus-ring type-label-large -my-1 rounded-[3px] px-2 py-1 text-(--snackbar-action) transition-colors hover:bg-scrim/10"
         >
           {actionLabel}
         </button>
@@ -45,7 +45,7 @@ export function Snackbar({
           type="button"
           onClick={onClose}
           aria-label="Schliessen"
-          className="-mr-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-(--snackbar-label) transition-colors hover:bg-scrim/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--snackbar-action)"
+          className="focus-ring -mr-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-(--snackbar-label) transition-colors hover:bg-scrim/10"
         >
           <X size={18} strokeWidth={2} aria-hidden />
         </button>
