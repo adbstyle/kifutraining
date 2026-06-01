@@ -24,13 +24,13 @@ export function ExerciseCard({ ex }: { ex: ExerciseCardData }) {
     .join(" · ");
 
   return (
-    <Card className="group overflow-hidden transition-colors hover:border-chalk/45">
+    <Card className="group overflow-hidden transition-colors hover:border-on-surface/45">
       <Link
         href={`/uebung/${ex.slug}`}
-        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal"
+        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {/* Diagramm */}
-        <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-chalk/15">
+        <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-outline-variant">
           {ex.bildUrl ? (
             <Image
               src={ex.bildUrl}
@@ -57,10 +57,10 @@ export function ExerciseCard({ ex }: { ex: ExerciseCardData }) {
 
         {/* Inhalt */}
         <div className="p-3">
-          <h3 className="text-xl text-chalk transition-colors group-hover:text-signal-bright">
+          <h3 className="type-title-medium text-on-surface transition-colors group-hover:text-primary">
             {ex.name}
           </h3>
-          <p className="mt-1 font-mono text-[11px] uppercase tracking-wider text-chalk-faint">
+          <p className="type-label-small mt-1 text-on-surface-variant">
             {meta}
           </p>
           {ex.kategorien.length > 0 && (

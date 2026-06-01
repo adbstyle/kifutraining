@@ -6,7 +6,7 @@ export function FieldPlaceholder({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex items-center justify-center bg-rasen-850 chalk-hatch",
+        "flex items-center justify-center bg-surface-container chalk-hatch",
         className,
       )}
       aria-hidden="true"
@@ -15,7 +15,7 @@ export function FieldPlaceholder({ className }: { className?: string }) {
         viewBox="0 0 160 100"
         className="h-full w-full max-h-[70%] max-w-[80%] opacity-30"
         fill="none"
-        stroke="var(--color-chalk)"
+        stroke="var(--color-on-surface)"
         strokeWidth="1.5"
       >
         <rect x="6" y="6" width="148" height="88" rx="2" />
