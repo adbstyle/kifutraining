@@ -1,1 +1,274 @@
 @import "tailwindcss";
+
+/* ───────────────────────────────────────────────────────────
+   KiFu — Designsystem "Taktik-Editorial"
+   Chalk-Lines auf Rasen-Dunkelgrün, Signalorange als einziger
+   warmer Akzent. Hoher Kontrast für den Spielfeldrand.
+   ─────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Rasen — dunkelgrüne Flächen (Hintergrund, Panels) */
+  --color-rasen-950: #0a1f15;
+  --color-rasen-900: #0f2a1d;
+  --color-rasen-850: #133523;
+  --color-rasen-800: #163a29;
+  --color-rasen-700: #1e4d37;
+  --color-rasen-600: #2a6347;
+
+  /* Chalk — Kreide-Weiss (Text, Linien) */
+  --color-chalk: #f4f1e8;
+  --color-chalk-dim: #b9bcae;
+  --color-chalk-faint: #7f8a7a;
+
+  /* Signal — der einzige warme Akzent (CTAs, aktiver Zustand) */
+  --color-signal: #ff5722;
+  --color-signal-bright: #ff6e40;
+  --color-signal-dark: #c43e15;
+
+  /* Alterskategorien — fest lernbare, distinkte Farben (nie nur Farbe) */
+  --color-kat-g: #5eb3f5;
+  --color-kat-f: #e6c044;
+  --color-kat-e: #c084fc;
+
+  /* ─── M3 Color Roles (Ebene 2 — zeigen auf Primitives, Dark-Scheme) ─── */
+  /* Primary — Signal bleibt der einzige warme Hue */
+  --color-primary: var(--color-signal);
+  --color-on-primary: var(--color-rasen-950);
+  --color-primary-container: var(--color-signal-dark);
+  --color-on-primary-container: var(--color-chalk);
+
+  /* Secondary — bewusst low-chroma (kein zweiter Hue) */
+  --color-secondary: var(--color-chalk-dim);
+  --color-on-secondary: var(--color-rasen-950);
+  --color-secondary-container: var(--color-rasen-700);
+  --color-on-secondary-container: var(--color-chalk);
+
+  /* Error */
+  --color-error: #f87171;
+  --color-on-error: var(--color-rasen-950);
+  --color-error-container: #5c1d18;
+  --color-on-error-container: #fecaca;
+
+  /* Surface-Familie — die Rasen-Leiter IST die M3 Elevation-Leiter */
+  --color-surface: var(--color-rasen-950);
+  --color-surface-dim: #07160f; /* bewusst gleich wie surface-container-lowest auf dieser Palette-Stufe */
+  --color-surface-bright: var(--color-rasen-800);
+  --color-surface-container-lowest: #07160f; /* bewusst gleich wie surface-dim auf dieser Palette-Stufe */
+  --color-surface-container-low: var(--color-rasen-900);
+  --color-surface-container: var(--color-rasen-850);
+  --color-surface-container-high: var(--color-rasen-800);
+  --color-surface-container-highest: var(--color-rasen-700);
+  --color-on-surface: var(--color-chalk);
+  --color-on-surface-variant: var(--color-chalk-dim);
+
+  /* Outline (= chalk-border-Anmutung) */
+  --color-outline: color-mix(in oklab, var(--color-chalk) 28%, transparent);
+  --color-outline-variant: color-mix(in oklab, var(--color-chalk) 12%, transparent);
+
+  /* Inverse / Overlay */
+  --color-inverse-surface: var(--color-chalk);
+  --color-inverse-on-surface: var(--color-rasen-950);
+  --color-inverse-primary: var(--color-signal-dark);
+  --color-scrim: #000000;
+  --color-shadow: #000000;
+
+  /* ─── Elevation (Dark): Höhe primär über Surface-Container; Schatten ab L3.
+     Konvention: Level N = bg-surface-container-* (siehe Spec §3) + shadow-eN.
+     Ausnahme: Primary-CTA nutzt den Signatur-Schatten, NICHT diese Tokens. ─── */
+  --shadow-e1: none;
+  --shadow-e2: none;
+  --shadow-e3: 0 2px 6px color-mix(in oklab, var(--color-scrim) 40%, transparent);
+  --shadow-e4: 0 4px 12px color-mix(in oklab, var(--color-scrim) 50%, transparent);
+  --shadow-e5: 0 8px 24px color-mix(in oklab, var(--color-scrim) 60%, transparent);
+
+  /* State-Layers (M3-Opazitäten) — in Komponenten via Opacity-Utilities:
+     hover  → bg-on-surface/8   (auf aktiven Elementen: bg-primary/8)
+     focus  → bg-on-surface/10
+     pressed→ bg-on-surface/10  */
+
+  /* ─── Button Component-Tokens (M3-Stil: zeigen auf System-Rollen; analog
+     md.comp.*-button.*). Hover-Container = State-Layer vorab eingerechnet.
+     Shape bewusst KiFu-eckig (3px) statt M3-Stadium. ─── */
+  --button-shape: 3px;
+
+  --button-filled-container: var(--color-primary);
+  --button-filled-container-hover: var(--color-signal-bright); /* KiFu-Signatur */
+  --button-filled-label: var(--color-on-primary);
+
+  --button-tonal-container: var(--color-secondary-container);
+  --button-tonal-container-hover: color-mix(in oklab, var(--color-on-secondary-container) 8%, var(--color-secondary-container));
+  --button-tonal-label: var(--color-on-secondary-container);
+
+  --button-elevated-container: var(--color-surface-container-low);
+  --button-elevated-container-hover: color-mix(in oklab, var(--color-on-surface) 8%, var(--color-surface-container-low));
+  --button-elevated-label: var(--color-primary);
+
+  --button-outlined-label: var(--color-on-surface);
+  --button-outlined-outline: var(--color-outline);
+
+  --button-text-label: var(--color-primary);
+
+  --button-danger-label: var(--color-error);
+  --button-danger-outline: color-mix(in oklab, var(--color-error) 40%, transparent);
+
+  /* ─── Chip Component-Tokens (M3-Stil; Assist/Filter/Input/Suggestion).
+     Shape KiFu-pill (Kontrast zu den eckigen Buttons). ─── */
+  --chip-shape: 9999px;
+  --chip-outline: var(--color-outline);
+  --chip-label: var(--color-on-surface-variant);
+  --chip-selected-container: var(--color-secondary-container);
+  --chip-selected-label: var(--color-on-secondary-container);
+  --chip-elevated-container: var(--color-surface-container-low);
+
+  /* ─── Navigation Rail Component-Tokens (M3-Stil). Aktives Ziel: Indicator-
+     Pille (secondary-container) hinter dem Icon. ─── */
+  --nav-rail-container: var(--color-surface);
+  --nav-indicator: var(--color-secondary-container);
+  --nav-item-active-icon: var(--color-on-secondary-container);
+  --nav-item-inactive-icon: var(--color-on-surface-variant);
+  --nav-item-active-label: var(--color-on-surface);
+  --nav-item-inactive-label: var(--color-on-surface-variant);
+
+  /* ─── Text-Field Component-Tokens (M3-Stil, outlined). Shape KiFu-eckig. ─── */
+  --field-shape: 3px;
+  --field-outline: var(--color-outline);
+  --field-label: var(--color-on-surface-variant);
+  --field-text: var(--color-on-surface);
+  --field-focus: var(--color-primary);
+  --field-error: var(--color-error);
+
+  /* ─── Menu Component-Tokens (M3-Stil). ─── */
+  --menu-shape: 4px;
+  --menu-container: var(--color-surface-container);
+  --menu-label: var(--color-on-surface);
+  --menu-leading: var(--color-on-surface-variant);
+
+  /* ─── Dialog Component-Tokens (M3-Stil). ─── */
+  --dialog-shape: 6px;
+  --dialog-container: var(--color-surface-container-high);
+  --dialog-headline: var(--color-on-surface);
+  --dialog-text: var(--color-on-surface-variant);
+
+  /* ─── Snackbar Component-Tokens (M3-Stil: Inverse-Farben für Kontrast). ─── */
+  --snackbar-shape: 4px;
+  --snackbar-container: var(--color-inverse-surface);
+  --snackbar-label: var(--color-inverse-on-surface);
+  --snackbar-action: var(--color-inverse-primary);
+
+  /* Typografie */
+  --font-display: var(--font-anton), "Arial Narrow", sans-serif;
+  --font-body: var(--font-source), Georgia, serif;
+  --font-mono: var(--font-space-mono), ui-monospace, monospace;
+}
+
+/* Kreide-Rahmen: leicht transluzente Linie, taktiktafel-Anmutung */
+@utility chalk-border {
+  border: 1.5px solid color-mix(in oklab, var(--color-chalk) 28%, transparent);
+}
+
+/* Diagramm-Platzhalter: gekreuzte Kreide-Schraffur */
+@utility chalk-hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in oklab, var(--color-chalk) 7%, transparent) 0,
+    color-mix(in oklab, var(--color-chalk) 7%, transparent) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+}
+
+/* ─── M3 Type-Scale → KiFu-Fonts (Spec §5). Tracking KiFu-getunt. ─── */
+@utility type-display-large {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 57px; line-height: 64px; letter-spacing: 0.01em;
+}
+@utility type-display-medium {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 45px; line-height: 52px; letter-spacing: 0.01em;
+}
+@utility type-display-small {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 36px; line-height: 44px; letter-spacing: 0.012em;
+}
+@utility type-headline-large {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 32px; line-height: 40px; letter-spacing: 0.015em;
+}
+@utility type-headline-medium {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 28px; line-height: 36px; letter-spacing: 0.015em;
+}
+@utility type-headline-small {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 24px; line-height: 32px; letter-spacing: 0.015em;
+}
+@utility type-title-large {
+  font-family: var(--font-body); font-weight: 600;
+  font-size: 22px; line-height: 28px; letter-spacing: 0em;
+  text-transform: none;
+}
+@utility type-title-medium {
+  font-family: var(--font-body); font-weight: 600;
+  font-size: 16px; line-height: 24px; letter-spacing: 0.01em;
+  text-transform: none;
+}
+@utility type-title-small {
+  font-family: var(--font-body); font-weight: 600;
+  font-size: 14px; line-height: 20px; letter-spacing: 0.01em;
+  text-transform: none;
+}
+@utility type-body-large {
+  font-family: var(--font-body); font-weight: 400;
+  font-size: 16px; line-height: 24px; letter-spacing: 0em;
+  text-transform: none;
+}
+@utility type-body-medium {
+  font-family: var(--font-body); font-weight: 400;
+  font-size: 14px; line-height: 20px; letter-spacing: 0em;
+  text-transform: none;
+}
+@utility type-body-small {
+  font-family: var(--font-body); font-weight: 400;
+  font-size: 12px; line-height: 16px; letter-spacing: 0.01em;
+  text-transform: none;
+}
+@utility type-label-large {
+  font-family: var(--font-mono); font-weight: 700; text-transform: uppercase;
+  font-size: 14px; line-height: 20px; letter-spacing: 0.08em;
+}
+@utility type-label-medium {
+  font-family: var(--font-mono); font-weight: 700; text-transform: uppercase;
+  font-size: 12px; line-height: 16px; letter-spacing: 0.1em;
+}
+@utility type-label-small {
+  font-family: var(--font-mono); font-weight: 400; text-transform: uppercase;
+  font-size: 11px; line-height: 16px; letter-spacing: 0.1em;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-body);
+    background-color: var(--color-rasen-950);
+    /* dezenter grüner Lichtschein von oben — Atmosphäre, CSS-only */
+    background-image: radial-gradient(
+      130% 80% at 50% -15%,
+      color-mix(in oklab, var(--color-rasen-700) 60%, transparent),
+      transparent 60%
+    );
+    background-attachment: fixed;
+    color: var(--color-chalk);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0.015em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  ::selection {
+    background: var(--color-signal);
+    color: var(--color-rasen-950);
+  }
+}

@@ -1,0 +1,54 @@
+import { forwardRef } from "react";
+import type { ButtonHTMLAttributes } from "react";
+import { cn } from "@/lib/cn";
+
+// M3-Emphase-Stufen (filled → text) + destruktiv. Werte kommen aus den
+// --button-*-Component-Tokens in globals.css (zeigen auf die System-Rollen).
+type Variant = "filled" | "tonal" | "elevated" | "outlined" | "text" | "danger";
+type Size = "sm" | "md" | "lg";
+
+const base =
+  "type-label-large inline-flex items-center justify-center gap-2 rounded-(--button-shape) transition-[background-color,box-shadow,transform,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40 disabled:pointer-events-none select-none";
+
+const variants: Record<Variant, string> = {
+  // Höchste Emphase — KiFu-Signatur: harter taktischer Schlagschatten
+  filled:
+    "bg-(--button-filled-container) text-(--button-filled-label) hover:bg-(--button-filled-container-hover) active:translate-y-px shadow-[0_3px_0_0_var(--color-signal-dark)] active:shadow-[0_1px_0_0_var(--color-signal-dark)]",
+  // Mittlere Emphase — tonale Fläche
+  tonal:
+    "bg-(--button-tonal-container) text-(--button-tonal-label) hover:bg-(--button-tonal-container-hover) active:translate-y-px",
+  // Mittlere Emphase mit weichem M3-Schatten (Kontrast zum harten Filled-Schatten)
+  elevated:
+    "bg-(--button-elevated-container) text-(--button-elevated-label) shadow-e3 hover:bg-(--button-elevated-container-hover) hover:shadow-e4 active:translate-y-px",
+  // Mittlere Emphase — nur Rand, State-Layer auf transparentem Grund
+  outlined:
+    "bg-transparent text-(--button-outlined-label) border-[1.5px] border-(--button-outlined-outline) hover:bg-on-surface/8 active:translate-y-px",
+  // Niedrigste Emphase
+  text:
+    "bg-transparent text-(--button-text-label) hover:bg-on-surface/8",
+  // Destruktiv — Error-Rolle
+  danger:
+    "bg-transparent text-(--button-danger-label) border-[1.5px] border-(--button-danger-outline) hover:bg-error/10",
+};
+
+const sizes: Record<Size, string> = {
+  sm: "h-9 px-3",
+  md: "h-11 px-5",
+  lg: "h-14 px-7", // Spielfeldrand-Grösse (Touch ≥ 56px)
+};
+
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: Variant;
+  size?: Size;
+}
+
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = "filled", size = "md", className, ...props }, ref) => (
+    <button
+      ref={ref}
+      className={cn(base, variants[variant], sizes[size], className)}
+      {...props}
+    />
+  ),
+);
+Button.displayName = "Button";
