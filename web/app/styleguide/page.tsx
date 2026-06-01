@@ -59,6 +59,11 @@ const surfaceLadder: [string, string][] = [
   ["surface-container-highest", "bg-surface-container-highest"],
 ];
 
+const extraSurfaces: [string, string][] = [
+  ["surface-dim", "bg-surface-dim"],
+  ["surface-bright", "bg-surface-bright"],
+];
+
 const accentRoles: [string, string][] = [
   ["primary", "bg-primary"],
   ["primary-container", "bg-primary-container"],
@@ -87,6 +92,7 @@ const typeScale: [string, string][] = [
   ["type-label-small", "Label Small · Space Mono · 11"],
 ];
 
+// [Level, Flächen-Klassen (inkl. Border bei L1/L2), Schatten-Klasse]
 const elevations: [string, string, string][] = [
   ["0", "bg-surface", ""],
   ["1", "bg-surface-container-low border border-outline", ""],
@@ -163,6 +169,15 @@ export default function Styleguide() {
             </div>
           ))}
         </div>
+        <p className="type-label-small mb-2 text-on-surface-variant">Weitere Surface-Rollen</p>
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+          {extraSurfaces.map(([name, bg]) => (
+            <div key={name} className="rounded-[4px] border border-outline p-3">
+              <div className={`mb-2 h-14 w-full rounded-[2px] border border-outline-variant ${bg}`} />
+              <p className="type-label-small text-on-surface">{name}</p>
+            </div>
+          ))}
+        </div>
         <p className="type-label-small mb-2 text-on-surface-variant">Akzent &amp; Rollen</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
           {accentRoles.map(([name, bg]) => (
@@ -196,10 +211,10 @@ export default function Styleguide() {
           ist eine eigene Signatur (siehe Buttons), kein Elevation-Level.
         </p>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          {elevations.map(([lvl, surface, shadow]) => (
+          {elevations.map(([lvl, bg, shadow]) => (
             <div
               key={lvl}
-              className={`flex h-20 items-center justify-center rounded-[4px] ${surface} ${shadow}`}
+              className={`flex h-20 items-center justify-center rounded-[4px] ${bg} ${shadow}`}
             >
               <span className="type-label-medium text-on-surface">L{lvl}</span>
             </div>
@@ -231,6 +246,14 @@ export default function Styleguide() {
         <div className="mb-6 flex flex-wrap items-center gap-5 text-on-surface-variant">
           {iconSet.map((Icon, i) => (
             <Icon key={i} size={24} strokeWidth={2} aria-hidden />
+          ))}
+        </div>
+        <div className="mb-6 flex items-end gap-6 text-on-surface-variant">
+          {[20, 24, 40].map((sz) => (
+            <div key={sz} className="flex flex-col items-center gap-1">
+              <Search size={sz} strokeWidth={2} aria-hidden />
+              <span className="type-label-small">{sz}px</span>
+            </div>
           ))}
         </div>
         <div className="flex items-center gap-4">
@@ -340,7 +363,7 @@ export default function Styleguide() {
               key={title}
               className={i > 0 ? "mt-5 border-t border-outline-variant pt-5" : ""}
             >
-              <p className="flex items-center gap-2 font-display text-xl text-primary">
+              <p className="type-headline-small flex items-center gap-2 text-primary">
                 <span>{num}</span>
                 {title}
               </p>
