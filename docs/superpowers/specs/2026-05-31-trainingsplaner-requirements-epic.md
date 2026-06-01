@@ -94,4 +94,4 @@ Jede Story liefert End-to-End-Wert. Reihenfolge ist grob abhängigkeitssortiert.
 
 ## 10. Mögliche Lösungsansätze (Kontext, keine Empfehlung)
 
-1. Der Architektur-Entscheid zur Plattform (Next.js + Supabase, öffentliches Lesen, Login für schreibende Aktionen, Eigentümer-/Sichtbarkeitsmodell) ist bereits getroffen und nennt den Trainingsplaner als mögliche spätere Phase. Siehe `2026-05-31-webapp-architektur-entscheid.md` und `2026-05-31-webapp-requirements-epic.md`.
+1. Der Architektur-Entscheid zur Plattform (Next.js + Supabase, öffentliches Lesen, Login für schreibende Aktionen, Eigentümer-/Sichtbarkeitsmodell) ist bereits getroffen und nennt den Trainingsplaner als mögliche spätere Phase. Siehe `2026-05-31-kifu-architektur-mvp.md` und `2026-05-31-uebungspool-epic.md`.
