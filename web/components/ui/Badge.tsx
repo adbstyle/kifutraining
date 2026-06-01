@@ -3,13 +3,13 @@ import { cn } from "@/lib/cn";
 type Tone = "manual" | "entwurf" | "oeffentlich" | "neutral";
 
 const tones: Record<Tone, string> = {
-  // Manual-Bestand: solide Kreide-Plakette — maximal erkennbar als "offiziell"
-  manual: "bg-chalk text-rasen-950",
+  // Manual-Bestand: solide Kreide-Plakette (inverse-surface) — maximal "offiziell"
+  manual: "bg-inverse-surface text-inverse-on-surface",
   // Eigener Entwurf (privat)
-  entwurf: "chalk-border text-chalk-dim",
-  // Eigene öffentliche Übung
-  oeffentlich: "bg-signal/15 text-signal-bright border-[1.5px] border-signal/40",
-  neutral: "chalk-border text-chalk-dim",
+  entwurf: "border-[1.5px] border-outline text-on-surface-variant",
+  // Eigene öffentliche Übung — signal-bright als bewusster heller Akzent
+  oeffentlich: "bg-primary/15 text-signal-bright border-[1.5px] border-primary/40",
+  neutral: "border-[1.5px] border-outline text-on-surface-variant",
 };
 
 const defaultLabel: Record<Tone, string> = {

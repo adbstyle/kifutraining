@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { kategorieStufe } from "@/lib/labels";
 import type { KategorieSlug } from "@/lib/vocab";
@@ -45,14 +46,15 @@ export function FilterChip({
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-rasen-950",
+        "type-label-medium inline-flex items-center gap-1.5 rounded-full border-[1.5px] px-3 py-1.5 transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
         selected
-          ? "bg-signal text-rasen-950 font-bold"
-          : "chalk-border text-chalk-dim hover:text-chalk hover:bg-chalk/10",
+          ? "border-transparent bg-secondary-container text-on-secondary-container"
+          : "border-outline text-on-surface-variant hover:bg-on-surface/8 hover:text-on-surface",
         className,
       )}
     >
+      {selected && <Check size={14} strokeWidth={2.5} aria-hidden />}
       {children}
     </button>
   );
