@@ -1,1 +1,84 @@
 @import "tailwindcss";
+
+/* ───────────────────────────────────────────────────────────
+   KiFu — Designsystem "Taktik-Editorial"
+   Chalk-Lines auf Rasen-Dunkelgrün, Signalorange als einziger
+   warmer Akzent. Hoher Kontrast für den Spielfeldrand.
+   ─────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Rasen — dunkelgrüne Flächen (Hintergrund, Panels) */
+  --color-rasen-950: #0a1f15;
+  --color-rasen-900: #0f2a1d;
+  --color-rasen-850: #133523;
+  --color-rasen-800: #163a29;
+  --color-rasen-700: #1e4d37;
+  --color-rasen-600: #2a6347;
+
+  /* Chalk — Kreide-Weiss (Text, Linien) */
+  --color-chalk: #f4f1e8;
+  --color-chalk-dim: #b9bcae;
+  --color-chalk-faint: #7f8a7a;
+
+  /* Signal — der einzige warme Akzent (CTAs, aktiver Zustand) */
+  --color-signal: #ff5722;
+  --color-signal-bright: #ff6e40;
+  --color-signal-dark: #c43e15;
+
+  /* Alterskategorien — fest lernbare, distinkte Farben (nie nur Farbe) */
+  --color-kat-g: #5eb3f5;
+  --color-kat-f: #e6c044;
+  --color-kat-e: #c084fc;
+
+  /* Typografie */
+  --font-display: var(--font-anton), "Arial Narrow", sans-serif;
+  --font-body: var(--font-source), Georgia, serif;
+  --font-mono: var(--font-space-mono), ui-monospace, monospace;
+}
+
+/* Kreide-Rahmen: leicht transluzente Linie, taktiktafel-Anmutung */
+@utility chalk-border {
+  border: 1.5px solid color-mix(in oklab, var(--color-chalk) 28%, transparent);
+}
+
+/* Diagramm-Platzhalter: gekreuzte Kreide-Schraffur */
+@utility chalk-hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in oklab, var(--color-chalk) 7%, transparent) 0,
+    color-mix(in oklab, var(--color-chalk) 7%, transparent) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+}
+
+@layer base {
+  body {
+    font-family: var(--font-body);
+    background-color: var(--color-rasen-950);
+    /* dezenter grüner Lichtschein von oben — Atmosphäre, CSS-only */
+    background-image: radial-gradient(
+      130% 80% at 50% -15%,
+      color-mix(in oklab, var(--color-rasen-700) 60%, transparent),
+      transparent 60%
+    );
+    background-attachment: fixed;
+    color: var(--color-chalk);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0.015em;
+    text-transform: uppercase;
+    line-height: 0.95;
+  }
+
+  ::selection {
+    background: var(--color-signal);
+    color: var(--color-rasen-950);
+  }
+}
