@@ -108,6 +108,68 @@
   );
 }
 
+/* ─── M3 Type-Scale → KiFu-Fonts (Spec §5). Tracking KiFu-getunt. ─── */
+@utility type-display-large {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 57px; line-height: 64px; letter-spacing: 0.01em;
+}
+@utility type-display-medium {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 45px; line-height: 52px; letter-spacing: 0.01em;
+}
+@utility type-display-small {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 36px; line-height: 44px; letter-spacing: 0.012em;
+}
+@utility type-headline-large {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 32px; line-height: 40px; letter-spacing: 0.015em;
+}
+@utility type-headline-medium {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 28px; line-height: 36px; letter-spacing: 0.015em;
+}
+@utility type-headline-small {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 24px; line-height: 32px; letter-spacing: 0.015em;
+}
+@utility type-title-large {
+  font-family: var(--font-body); font-weight: 600;
+  font-size: 22px; line-height: 28px; letter-spacing: 0;
+}
+@utility type-title-medium {
+  font-family: var(--font-body); font-weight: 600;
+  font-size: 16px; line-height: 24px; letter-spacing: 0.01em;
+}
+@utility type-title-small {
+  font-family: var(--font-body); font-weight: 600;
+  font-size: 14px; line-height: 20px; letter-spacing: 0.01em;
+}
+@utility type-body-large {
+  font-family: var(--font-body); font-weight: 400;
+  font-size: 16px; line-height: 24px; letter-spacing: 0;
+}
+@utility type-body-medium {
+  font-family: var(--font-body); font-weight: 400;
+  font-size: 14px; line-height: 20px; letter-spacing: 0;
+}
+@utility type-body-small {
+  font-family: var(--font-body); font-weight: 400;
+  font-size: 12px; line-height: 16px; letter-spacing: 0.01em;
+}
+@utility type-label-large {
+  font-family: var(--font-mono); font-weight: 700; text-transform: uppercase;
+  font-size: 14px; line-height: 20px; letter-spacing: 0.08em;
+}
+@utility type-label-medium {
+  font-family: var(--font-mono); font-weight: 700; text-transform: uppercase;
+  font-size: 12px; line-height: 16px; letter-spacing: 0.1em;
+}
+@utility type-label-small {
+  font-family: var(--font-mono); font-weight: 400; text-transform: uppercase;
+  font-size: 11px; line-height: 16px; letter-spacing: 0.1em;
+}
+
 @layer base {
   body {
     font-family: var(--font-body);
@@ -122,15 +184,12 @@
     color: var(--color-chalk);
   }
 
-  h1,
-  h2,
-  h3,
-  h4 {
+  h1, h2, h3, h4 {
     font-family: var(--font-display);
     font-weight: 400;
     letter-spacing: 0.015em;
     text-transform: uppercase;
-    line-height: 0.95;
+    line-height: 1;
   }
 
   ::selection {
