@@ -7,3 +7,5 @@ export { ExerciseCard } from "./ExerciseCard";
 export type { ExerciseCardData } from "./ExerciseCard";
 export { SegmentedControl } from "./SegmentedControl";
 export type { SegmentOption } from "./SegmentedControl";
+export { IconButton } from "./IconButton";
+export type { IconButtonProps } from "./IconButton";
