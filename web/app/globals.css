@@ -136,26 +136,32 @@
 @utility type-title-large {
   font-family: var(--font-body); font-weight: 600;
   font-size: 22px; line-height: 28px; letter-spacing: 0em;
+  text-transform: none;
 }
 @utility type-title-medium {
   font-family: var(--font-body); font-weight: 600;
   font-size: 16px; line-height: 24px; letter-spacing: 0.01em;
+  text-transform: none;
 }
 @utility type-title-small {
   font-family: var(--font-body); font-weight: 600;
   font-size: 14px; line-height: 20px; letter-spacing: 0.01em;
+  text-transform: none;
 }
 @utility type-body-large {
   font-family: var(--font-body); font-weight: 400;
   font-size: 16px; line-height: 24px; letter-spacing: 0em;
+  text-transform: none;
 }
 @utility type-body-medium {
   font-family: var(--font-body); font-weight: 400;
   font-size: 14px; line-height: 20px; letter-spacing: 0em;
+  text-transform: none;
 }
 @utility type-body-small {
   font-family: var(--font-body); font-weight: 400;
   font-size: 12px; line-height: 16px; letter-spacing: 0.01em;
+  text-transform: none;
 }
 @utility type-label-large {
   font-family: var(--font-mono); font-weight: 700; text-transform: uppercase;
