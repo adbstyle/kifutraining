@@ -74,7 +74,7 @@ export function NavigationRail<T extends string>({
             </span>
             <span
               className={cn(
-                "type-label-medium",
+                "type-label-small",
                 active
                   ? "text-(--nav-item-active-label)"
                   : "text-(--nav-item-inactive-label)",
