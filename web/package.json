@@ -1,0 +1,39 @@
+{
+  "name": "kifu-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "gen:vocab": "node scripts/gen-vocab.mjs",
+    "gen:types": "npx supabase gen types typescript --local --workdir .. > lib/database.types.ts",
+    "db:start": "npx supabase start --workdir ..",
+    "db:stop": "npx supabase stop --workdir ..",
+    "db:status": "npx supabase status --workdir ..",
+    "db:reset": "npx supabase db reset --workdir ..",
+    "db:push": "npx supabase db push --workdir ..",
+    "seed": "tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.45.4",
+    "next": "^15.5.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.7.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "js-yaml": "^4.1.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
