@@ -1,0 +1,32 @@
+name: Deploy (Migrationen -> Production)
+
+# Vercel deployt die Next.js-App automatisch über die Git-Integration bei Push auf main.
+# Dieser Workflow kümmert sich NUR um die Datenbank-Migrationen nach Production.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+
+jobs:
+  db-push:
+    name: supabase db push (Production)
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Mit Produktions-Projekt verknüpfen
+        run: supabase link --project-ref "$SUPABASE_PROD_REF"
+        env:
+          SUPABASE_PROD_REF: ${{ secrets.SUPABASE_PROD_REF }}
+      - name: Migrationen nach Production anwenden
+        run: supabase db push
+
+  # Der Daten-Seed (Manual-Übungen) läuft NICHT automatisch bei jedem Deploy.
+  # Er ist ein separater, manuell ausgelöster Workflow (workflow_dispatch) bzw.
+  # lokaler Aufruf 'npm run seed' gegen Prod — siehe Infrastruktur-Plan §9.

@@ -1,0 +1,23 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# env — NIE committen (enthält Supabase-Keys)
+.env
+.env*.local
+.env.production.local
+
+# generated
+/lib/database.types.ts
+
+# misc
+.DS_Store
+*.tsbuildinfo
+.vercel
