@@ -8,6 +8,7 @@ import {
   ExerciseCard,
   IconButton,
   TextField,
+  TextArea,
 } from "@/components/ui";
 import { SegmentedDemo } from "./SegmentedDemo";
 import { ChipsDemo } from "./ChipsDemo";
@@ -402,10 +403,12 @@ export default function Styleguide() {
         <NavRailDemo />
       </Section>
 
-      <Section n="13" title="Text-Fields">
+      <Section n="13" title="Text-Fields &amp; Text-Area">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           Outlined mit schwebendem Label (KiFu: mono/uppercase), Supporting-Text
-          und Error-State. Gespeist aus <code>--field-*</code>-Component-Tokens.
+          und Error-State. Die Text-Area ist mehrzeilig (Enter = Umbruch), wächst
+          bis ~10 Zeilen und scrollt danach. Gespeist aus{" "}
+          <code>--field-*</code>-Component-Tokens.
         </p>
         <div className="grid max-w-md gap-6">
           <TextField label="Übungsname" supportingText="Pflichtfeld" />
@@ -415,6 +418,10 @@ export default function Styleguide() {
             defaultValue="1"
             error
             supportingText="Bitte eine Zahl ≥ 2 eingeben."
+          />
+          <TextArea
+            label="Aufbau / Beschreibung"
+            supportingText="Mehrzeilig — wächst bis 10 Zeilen, dann scrollen."
           />
         </div>
       </Section>

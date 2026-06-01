@@ -209,6 +209,9 @@ gehen von Roboto aus und passen nicht 1:1 auf Versal-Anton / Space-Mono).
 - **TextField:** M3 Text-Field (outlined), schwebendes Label (KiFu
   mono/uppercase), Supporting-Text + Error-State. `--field-*`-Tokens; hookfrei,
   in Server Components nutzbar.
+- **TextArea:** mehrzeiliges Pendant (natives `<textarea>`, Enter = Umbruch);
+  wächst via CSS `field-sizing: content` bis ~10 Zeilen, danach Scroll. Teilt
+  Label/Supporting/Error + `--field-*`-Tokens mit dem TextField.
 - **Menu:** verankertes Dropdown (Outside-Click/Escape), Items mit
   Icon/Trailing/destruktiver Variante. `--menu-*`-Tokens.
 - **Dialog:** modal auf nativem `<dialog>` (Fokus-Trap, Escape,

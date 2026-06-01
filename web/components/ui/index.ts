@@ -12,6 +12,8 @@ export { NavigationRail } from "./NavigationRail";
 export type { NavRailItem } from "./NavigationRail";
 export { TextField } from "./TextField";
 export type { TextFieldProps } from "./TextField";
+export { TextArea } from "./TextArea";
+export type { TextAreaProps } from "./TextArea";
 export { Menu } from "./Menu";
 export type { MenuItemDef } from "./Menu";
 export { Dialog } from "./Dialog";
