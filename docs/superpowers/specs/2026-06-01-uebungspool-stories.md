@@ -98,8 +98,8 @@ Acceptance Criteria:
 5. Der Besucher kann die Übungen nach Feldtyp eingrenzen.
 6. Der Besucher kann seine verfügbare Gruppengrösse angeben und sieht daraufhin alle Übungen, die mit dieser Anzahl Kinder durchführbar sind.
 7. Der Besucher kann die Übungen über eine Freitextsuche eingrenzen.
-8. Der Besucher kann die Filterdimensionen Erscheinungsform und Thema im Kontext von Hauptteil- und Einleitungs-Übungen nutzen; bei den übrigen Trainingsteilen werden sie nicht angeboten.
-9. Der Besucher kann mehrere Filter kombinieren und sieht die entsprechend eingegrenzte Ergebnismenge.
+8. Der Besucher kann die Filterdimensionen Erscheinungsform und Thema jederzeit gleichberechtigt zu den übrigen Dimensionen nutzen; sie sind nicht an einen Trainingsteil gekoppelt. Übungen ohne Wert in diesen Dimensionen (z. B. Auffangen/Ausklang) erscheinen bei gesetztem Filter schlicht nicht in der Ergebnismenge.
+9. Der Besucher kann mehrere Filter kombinieren und sieht die entsprechend eingegrenzte Ergebnismenge: Dimensionen sind mit UND verknüpft, mehrere Werte innerhalb einer Dimension mit ODER.
 10. Der Besucher erkennt für jede Übung, ob sie zum kuratierten Manual-Bestand gehört oder von einem Nutzer stammt.
 11. Der Besucher erhält eine verständliche Rückmeldung, wenn keine Übung die gewählten Filter erfüllt.
 12. Der angemeldete Trainer sieht in derselben Übersicht zusätzlich seine eigenen privaten Übungen.
