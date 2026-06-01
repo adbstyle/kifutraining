@@ -27,7 +27,7 @@ export function ExerciseCard({ ex }: { ex: ExerciseCardData }) {
     <Card className="group overflow-hidden transition-colors hover:border-on-surface/45">
       <Link
         href={`/uebung/${ex.slug}`}
-        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="focus-ring-inset block rounded-[4px]"
       >
         {/* Diagramm */}
         <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-outline-variant">

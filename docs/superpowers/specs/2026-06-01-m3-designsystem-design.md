@@ -104,6 +104,12 @@ Ersetzen die heutigen ad-hoc `hover:bg-chalk/5`-Stellen.
 
 Angewandt auf: `IconButton`, Listeneinträge, `SegmentedControl`, `FilterChip`.
 
+**Keyboard-Focus (a11y):** `@utility focus-ring` / `focus-ring-inset` — `outline`
+(2px `primary`, Offset ±2px) statt Tailwind-`ring`. Outline rendert zuverlässig
+(die `ring`+CSS-Var-Kombination blieb in v4 transparent), folgt dem Radius,
+kollidiert nicht mit Box-Shadows (CTA-Schatten bleibt) und übersteht
+Forced-Colors. `-inset` für Elemente in `overflow-hidden`-Containern (Karten).
+
 ## 5. Typografie: M3 Type-Scale (15 Rollen) → KiFu-Fonts
 
 Skala/Hierarchie nach M3; Fonts und Tracking KiFu-getunt (M3-Tracking-Werte

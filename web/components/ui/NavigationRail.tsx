@@ -74,8 +74,7 @@ export function NavigationRail<T extends string>({
             onClick={() => onChange(item.value)}
             onKeyDown={(e) => handleKey(e, i)}
             className={cn(
-              "flex h-14 w-full items-center rounded-full transition-[background-color,color,gap,padding] duration-300 ease-in-out",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+              "focus-ring flex h-14 w-full items-center rounded-full transition-[background-color,color,gap,padding] duration-300 ease-in-out",
               expanded ? "justify-start gap-3 px-4" : "justify-center gap-0 px-0",
               active
                 ? "bg-(--nav-indicator) text-(--nav-item-active-icon)"
