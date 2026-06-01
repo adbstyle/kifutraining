@@ -202,6 +202,10 @@ gehen von Roboto aus und passen nicht 1:1 auf Versal-Anton / Space-Mono).
   domänenspezifisch (`kat-*`).
 - **Badge, ExerciseCard, FieldPlaceholder:** auf Rollen-Tokens umstellen;
   `chalk-hatch` bleibt als Diagramm-Platzhalter.
+- **NavigationRail:** M3 Navigation Rail — vertikale Hauptnavigation, aktives
+  Ziel über Indicator-Pille (`secondary-container`) hinter dem Lucide-Icon +
+  Label; Pfeiltasten-Navigation, optionaler Header (Menü/FAB). Gespeist aus
+  `--nav-*`-Component-Tokens.
 
 ## 11. Verifikation
 

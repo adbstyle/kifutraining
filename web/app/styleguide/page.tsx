@@ -10,6 +10,7 @@ import {
 } from "@/components/ui";
 import { SegmentedDemo } from "./SegmentedDemo";
 import { ChipsDemo } from "./ChipsDemo";
+import { NavRailDemo } from "./NavRailDemo";
 import { kategorienSlugs } from "@/lib/vocab";
 import {
   Search,
@@ -386,6 +387,16 @@ export default function Styleguide() {
             </div>
           ))}
         </Card>
+      </Section>
+
+      <Section n="12" title="Navigation Rail">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Vertikale Hauptnavigation (medium+ Fenster). Aktives Ziel über
+          Indicator-Pille (<code>secondary-container</code>) hinter dem Icon +
+          Label. Pfeiltasten-Navigation; gespeist aus{" "}
+          <code>--nav-*</code>-Component-Tokens.
+        </p>
+        <NavRailDemo />
       </Section>
     </main>
   );

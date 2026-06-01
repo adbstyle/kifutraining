@@ -8,5 +8,7 @@ export { ExerciseCard } from "./ExerciseCard";
 export type { ExerciseCardData } from "./ExerciseCard";
 export { SegmentedControl } from "./SegmentedControl";
 export type { SegmentOption } from "./SegmentedControl";
+export { NavigationRail } from "./NavigationRail";
+export type { NavRailItem } from "./NavigationRail";
 export { IconButton } from "./IconButton";
 export type { IconButtonProps } from "./IconButton";

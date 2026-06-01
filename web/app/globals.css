@@ -120,6 +120,15 @@
   --chip-selected-label: var(--color-on-secondary-container);
   --chip-elevated-container: var(--color-surface-container-low);
 
+  /* ─── Navigation Rail Component-Tokens (M3-Stil). Aktives Ziel: Indicator-
+     Pille (secondary-container) hinter dem Icon. ─── */
+  --nav-rail-container: var(--color-surface);
+  --nav-indicator: var(--color-secondary-container);
+  --nav-item-active-icon: var(--color-on-secondary-container);
+  --nav-item-inactive-icon: var(--color-on-surface-variant);
+  --nav-item-active-label: var(--color-on-surface);
+  --nav-item-inactive-label: var(--color-on-surface-variant);
+
   /* Typografie */
   --font-display: var(--font-anton), "Arial Narrow", sans-serif;
   --font-body: var(--font-source), Georgia, serif;
