@@ -30,6 +30,48 @@
   --color-kat-f: #e6c044;
   --color-kat-e: #c084fc;
 
+  /* ─── M3 Color Roles (Ebene 2 — zeigen auf Primitives, Dark-Scheme) ─── */
+  /* Primary — Signal bleibt der einzige warme Hue */
+  --color-primary: var(--color-signal);
+  --color-on-primary: var(--color-rasen-950);
+  --color-primary-container: var(--color-signal-dark);
+  --color-on-primary-container: var(--color-chalk);
+
+  /* Secondary — bewusst low-chroma (kein zweiter Hue) */
+  --color-secondary: var(--color-chalk-dim);
+  --color-on-secondary: var(--color-rasen-950);
+  --color-secondary-container: var(--color-rasen-700);
+  --color-on-secondary-container: var(--color-chalk);
+
+  /* Error */
+  --color-error: #f87171;
+  --color-on-error: var(--color-rasen-950);
+  --color-error-container: #5c1d18;
+  --color-on-error-container: #fecaca;
+
+  /* Surface-Familie — die Rasen-Leiter IST die M3 Elevation-Leiter */
+  --color-surface: var(--color-rasen-950);
+  --color-surface-dim: #07160f;
+  --color-surface-bright: var(--color-rasen-800);
+  --color-surface-container-lowest: #07160f;
+  --color-surface-container-low: var(--color-rasen-900);
+  --color-surface-container: var(--color-rasen-850);
+  --color-surface-container-high: var(--color-rasen-800);
+  --color-surface-container-highest: var(--color-rasen-700);
+  --color-on-surface: var(--color-chalk);
+  --color-on-surface-variant: var(--color-chalk-dim);
+
+  /* Outline (= chalk-border-Anmutung) */
+  --color-outline: color-mix(in oklab, var(--color-chalk) 28%, transparent);
+  --color-outline-variant: color-mix(in oklab, var(--color-chalk) 12%, transparent);
+
+  /* Inverse / Overlay */
+  --color-inverse-surface: var(--color-chalk);
+  --color-inverse-on-surface: var(--color-rasen-950);
+  --color-inverse-primary: var(--color-signal-dark);
+  --color-scrim: #000000;
+  --color-shadow: #000000;
+
   /* Typografie */
   --font-display: var(--font-anton), "Arial Narrow", sans-serif;
   --font-body: var(--font-source), Georgia, serif;
