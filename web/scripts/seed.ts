@@ -93,7 +93,7 @@ async function seedExercises() {
     const bildRel = (u.bild as string | null) ?? null;
     const bildUrl = bildRel ? await uploadImage(bildRel) : null;
 
-    const row = {
+    const row: Record<string, unknown> = {
       slug: u.id,
       name: u.name,
       trainingsteil: u.trainingsteil,
@@ -108,11 +108,17 @@ async function seedExercises() {
       ueben: u.ueben ?? [],
       wetteifern: u.wetteifern ?? null,
       varianten: u.varianten ?? [],
-      bild_url: bildUrl,
       source: "manual",
       owner_id: null,
       visibility: "public",
     };
+
+    // bild_url nur schreiben, wenn ein Bild hochgeladen wurde ODER bewusst keins
+    // existiert. Wurde ein Bild erwartet, der Upload schlug aber fehl (Datei fehlt),
+    // das Feld auslassen -> ein bereits vorhandener bild_url bleibt beim Upsert erhalten.
+    if (bildUrl !== null || !bildRel) {
+      row.bild_url = bildUrl;
+    }
 
     const { error } = await supabase.from("exercises").upsert(row, { onConflict: "slug" });
     if (error) throw error;

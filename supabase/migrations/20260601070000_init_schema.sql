@@ -11,7 +11,8 @@ create extension if not exists pg_trgm;
 create table themen (
   id text primary key,                      -- sprechender Slug (= YAML-id)
   name text not null,
-  trainingsteil text,
+  trainingsteil text not null
+    check (trainingsteil in ('auffangen','einleitung','hauptteil','ausklang')),
   erscheinungsform text[] not null default '{}',
   ziele text[] not null default '{}',
   metaphern text[] not null default '{}',

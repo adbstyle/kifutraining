@@ -34,6 +34,7 @@ jobs:
         with:
           version: latest
       - name: Lokalen Stack starten und Migrationen + seed.sql anwenden
-        run: supabase db start
-      # 'supabase db start' (bzw. 'supabase start' + 'db reset') schlägt fehl,
-      # wenn eine Migration kaputt ist -> fängt Schema-Fehler früh ab.
+        run: supabase start
+      # 'supabase start' fährt den vollen lokalen Stack hoch und wendet alle
+      # Migrationen + seed.sql an -> schlägt fehl, wenn eine Migration kaputt ist
+      # und validiert so die Schema-Änderungen wirklich.
