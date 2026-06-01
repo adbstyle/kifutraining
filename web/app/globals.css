@@ -129,6 +129,33 @@
   --nav-item-active-label: var(--color-on-surface);
   --nav-item-inactive-label: var(--color-on-surface-variant);
 
+  /* ─── Text-Field Component-Tokens (M3-Stil). Shape KiFu-eckig. ─── */
+  --field-shape: 3px;
+  --field-container: var(--color-surface-container-highest);
+  --field-outline: var(--color-outline);
+  --field-label: var(--color-on-surface-variant);
+  --field-text: var(--color-on-surface);
+  --field-focus: var(--color-primary);
+  --field-error: var(--color-error);
+
+  /* ─── Menu Component-Tokens (M3-Stil). ─── */
+  --menu-shape: 4px;
+  --menu-container: var(--color-surface-container);
+  --menu-label: var(--color-on-surface);
+  --menu-leading: var(--color-on-surface-variant);
+
+  /* ─── Dialog Component-Tokens (M3-Stil). ─── */
+  --dialog-shape: 6px;
+  --dialog-container: var(--color-surface-container-high);
+  --dialog-headline: var(--color-on-surface);
+  --dialog-text: var(--color-on-surface-variant);
+
+  /* ─── Snackbar Component-Tokens (M3-Stil: Inverse-Farben für Kontrast). ─── */
+  --snackbar-shape: 4px;
+  --snackbar-container: var(--color-inverse-surface);
+  --snackbar-label: var(--color-inverse-on-surface);
+  --snackbar-action: var(--color-inverse-primary);
+
   /* Typografie */
   --font-display: var(--font-anton), "Arial Narrow", sans-serif;
   --font-body: var(--font-source), Georgia, serif;

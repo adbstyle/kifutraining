@@ -7,10 +7,13 @@ import {
   Card,
   ExerciseCard,
   IconButton,
+  TextField,
 } from "@/components/ui";
 import { SegmentedDemo } from "./SegmentedDemo";
 import { ChipsDemo } from "./ChipsDemo";
 import { NavRailDemo } from "./NavRailDemo";
+import { MenuDemo } from "./MenuDemo";
+import { OverlaysDemo } from "./OverlaysDemo";
 import { kategorienSlugs } from "@/lib/vocab";
 import {
   Search,
@@ -397,6 +400,48 @@ export default function Styleguide() {
           <code>--nav-*</code>-Component-Tokens.
         </p>
         <NavRailDemo />
+      </Section>
+
+      <Section n="13" title="Text-Fields">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Outlined &amp; filled mit schwebendem Label (KiFu: mono/uppercase),
+          Supporting-Text und Error-State. Gespeist aus{" "}
+          <code>--field-*</code>-Component-Tokens.
+        </p>
+        <div className="grid max-w-md gap-6">
+          <TextField
+            label="Übungsname"
+            variant="outlined"
+            supportingText="Pflichtfeld"
+          />
+          <TextField label="Suchbegriff" variant="filled" />
+          <TextField
+            label="Anzahl Kinder"
+            variant="outlined"
+            type="number"
+            defaultValue="1"
+            error
+            supportingText="Bitte eine Zahl ≥ 2 eingeben."
+          />
+        </div>
+      </Section>
+
+      <Section n="14" title="Menu">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Verankertes Dropdown (Outside-Click/Escape schliesst). Items mit
+          führendem Icon, optionalem Trailing-Text und destruktiver Variante.
+          Gespeist aus <code>--menu-*</code>-Component-Tokens.
+        </p>
+        <MenuDemo />
+      </Section>
+
+      <Section n="15" title="Dialog &amp; Snackbar">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Dialog auf nativem <code>&lt;dialog&gt;</code> (Fokus-Trap, Escape,
+          Scrim). Snackbar in M3-Inverse-Farben mit Aktion + Auto-Dismiss.
+          Gespeist aus <code>--dialog-*</code> / <code>--snackbar-*</code>-Tokens.
+        </p>
+        <OverlaysDemo />
       </Section>
     </main>
   );

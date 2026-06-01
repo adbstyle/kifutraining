@@ -206,6 +206,15 @@ gehen von Roboto aus und passen nicht 1:1 auf Versal-Anton / Space-Mono).
   Ziel über Indicator-Pille (`secondary-container`) hinter dem Lucide-Icon +
   Label; Pfeiltasten-Navigation, optionaler Header (Menü/FAB). Gespeist aus
   `--nav-*`-Component-Tokens.
+- **TextField:** M3 Text-Field outlined & filled, schwebendes Label (KiFu
+  mono/uppercase), Supporting-Text + Error-State. `--field-*`-Tokens; hookfrei,
+  in Server Components nutzbar.
+- **Menu:** verankertes Dropdown (Outside-Click/Escape), Items mit
+  Icon/Trailing/destruktiver Variante. `--menu-*`-Tokens.
+- **Dialog:** modal auf nativem `<dialog>` (Fokus-Trap, Escape,
+  `::backdrop`-Scrim), Headline/Text/Actions. `--dialog-*`-Tokens.
+- **Snackbar:** kurze Rückmeldung in M3-Inverse-Farben (helle Fläche, dunkler
+  Text), optionale Aktion + Schliessen. `--snackbar-*`-Tokens.
 
 ## 11. Verifikation
 
