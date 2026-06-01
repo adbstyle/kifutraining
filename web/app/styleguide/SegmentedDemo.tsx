@@ -1,61 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { SegmentedControl, FilterChip } from "@/components/ui";
-import { trainingsteil, erscheinungsform } from "@/lib/vocab";
-import type { TrainingsteilSlug, ErscheinungsformSlug } from "@/lib/vocab";
+import { SegmentedControl } from "@/components/ui";
+import { trainingsteil } from "@/lib/vocab";
+import type { TrainingsteilSlug } from "@/lib/vocab";
 
 const teilOptions = (
   Object.entries(trainingsteil) as [TrainingsteilSlug, string][]
 ).map(([value, label]) => ({ value, label }));
 
-/* Demonstriert die freie Filterung des Übungspools: jede Dimension ist
-   unabhängig und immer sichtbar (AND über Dimensionen, OR innerhalb). Sinnlose
-   Kombinationen liefern schlicht eine leere Ergebnismenge — kein Ein-/Ausblenden. */
+/* Zeigt die SegmentedControl als Baustein (Einfachauswahl, tab-artig). */
 export function SegmentedDemo() {
   const [teil, setTeil] = useState<TrainingsteilSlug>("hauptteil");
-  const [forms, setForms] = useState<Set<ErscheinungsformSlug>>(new Set());
-
-  function toggle(f: ErscheinungsformSlug) {
-    setForms((prev) => {
-      const next = new Set(prev);
-      next.has(f) ? next.delete(f) : next.add(f);
-      return next;
-    });
-  }
-
   return (
-    <div className="space-y-5">
-      <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
-          Trainingsteil <span className="text-primary">· eine Auswahl</span>
-        </p>
-        <SegmentedControl
-          ariaLabel="Trainingsteil"
-          options={teilOptions}
-          value={teil}
-          onChange={setTeil}
-        />
-      </div>
-
-      <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
-          Erscheinungsform <span className="text-primary">· mehrere (ODER)</span>
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {(
-            Object.entries(erscheinungsform) as [ErscheinungsformSlug, string][]
-          ).map(([slug, label]) => (
-            <FilterChip
-              key={slug}
-              selected={forms.has(slug)}
-              onClick={() => toggle(slug)}
-            >
-              {label}
-            </FilterChip>
-          ))}
-        </div>
-      </div>
-    </div>
+    <SegmentedControl
+      ariaLabel="Trainingsteil"
+      options={teilOptions}
+      value={teil}
+      onChange={setTeil}
+    />
   );
 }

@@ -328,12 +328,10 @@ export default function Styleguide() {
         <ChipsDemo />
       </Section>
 
-      <Section n="09" title="Filter (interaktiv)">
+      <Section n="09" title="Segmented Control">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Freie Filterung: jede Dimension ist unabhängig und immer sichtbar.
-          Dimensionen werden mit UND verknüpft, Werte innerhalb einer Dimension
-          mit ODER. Sinnlose Kombinationen liefern eine leere Ergebnismenge (mit
-          Hinweis) — keine Filter werden ausgeblendet.
+          Einfachauswahl (z. B. Trainingsteil), tab-artig mit
+          Pfeiltasten-Navigation. Aktives Segment = <code>primary</code>.
         </p>
         <SegmentedDemo />
       </Section>
