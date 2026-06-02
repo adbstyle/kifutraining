@@ -69,7 +69,10 @@ create table exercises (
     or trainingsteil not in ('einleitung','hauptteil')
     or (
       coalesce(methodischer_fahrplan->>'offen_starten','') <> ''
-      and jsonb_array_length(coalesce(methodischer_fahrplan->'ueben','[]'::jsonb)) >= 1
+      -- jsonb_typeof-Guard: schützt vor Fehler bei {"ueben": null} (JSON-null
+      -- statt Array) — jsonb_array_length('null') würde sonst hart werfen.
+      and jsonb_typeof(methodischer_fahrplan->'ueben') = 'array'
+      and jsonb_array_length(methodischer_fahrplan->'ueben') >= 1
       and coalesce(methodischer_fahrplan->>'wetteifern','') <> ''
     )
   ),

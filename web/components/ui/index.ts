@@ -1,4 +1,4 @@
-export { Button } from "./Button";
+export { Button, ButtonLink } from "./Button";
 export { ButtonGroup } from "./ButtonGroup";
 export { Badge, HerkunftBadge } from "./Badge";
 export { KategorieChip, FilterChip, AssistChip, SuggestionChip, InputChip } from "./Chip";

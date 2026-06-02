@@ -1,7 +1,6 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { Plus, FolderOpen } from "lucide-react";
-import { ExerciseCard, Button } from "@/components/ui";
+import { ExerciseCard, ButtonLink } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { getMyExercises, toCardData } from "@/lib/queries/exercises";
 
@@ -28,12 +27,10 @@ export default async function MeineUebungenPage({
             Deine eigenen Übungen — öffentliche und private Entwürfe.
           </p>
         </div>
-        <Link href="/neu">
-          <Button variant="filled">
-            <Plus size={20} strokeWidth={2.5} aria-hidden />
-            Neue Übung
-          </Button>
-        </Link>
+        <ButtonLink href="/neu" variant="filled">
+          <Plus size={20} strokeWidth={2.5} aria-hidden />
+          Neue Übung
+        </ButtonLink>
       </header>
 
       {rows.length === 0 ? (
@@ -44,12 +41,10 @@ export default async function MeineUebungenPage({
             Du hast noch keine Übung erstellt. Lege deine erste an — sie bleibt
             privat, bis du sie öffentlich schaltest.
           </p>
-          <Link href="/neu" className="mt-2">
-            <Button variant="filled">
-              <Plus size={20} strokeWidth={2.5} aria-hidden />
-              Erste Übung erstellen
-            </Button>
-          </Link>
+          <ButtonLink href="/neu" variant="filled" className="mt-2">
+            <Plus size={20} strokeWidth={2.5} aria-hidden />
+            Erste Übung erstellen
+          </ButtonLink>
         </div>
       ) : (
         <>

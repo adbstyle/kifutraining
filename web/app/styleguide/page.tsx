@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import {
   Button,
+  ButtonLink,
   ButtonGroup,
   Badge,
   KategorieChip,
@@ -310,6 +311,13 @@ export default function Styleguide() {
           <Button size="sm">Klein</Button>
           <Button size="md">Mittel</Button>
           <Button size="lg">Gross · Spielfeldrand</Button>
+        </div>
+        <p className="type-label-small mb-2 mt-6 text-on-surface-variant">
+          Button-Link (navigiert als &lt;a&gt; — kein &lt;a&gt;&lt;button&gt;-Nesting)
+        </p>
+        <div className="flex flex-wrap items-end gap-3">
+          <ButtonLink href="#" variant="filled">Neue Übung</ButtonLink>
+          <ButtonLink href="#" variant="tonal" size="sm">Bearbeiten</ButtonLink>
         </div>
         <p className="type-label-small mb-2 mt-6 text-on-surface-variant">
           Connected Button-Group (verbundene Aktionen)

@@ -89,9 +89,13 @@ export async function deleteAccount() {
   // Erst nach erfolgreichem RPC die verwaisten Diagramme entfernen.
   if (paths.length) await supabase.storage.from(STORAGE_BUCKET).remove(paths);
 
-  // Session beenden (Cookies löschen, solange sie noch gültig ist), dann den
-  // Auth-User per Service-Role entfernen.
-  await supabase.auth.signOut();
+  // Session-Cookies löschen (Best Effort) — darf den unwiderruflichen
+  // Auth-User-Löschschritt NICHT blockieren, falls signOut wirft.
+  try {
+    await supabase.auth.signOut();
+  } catch {
+    /* ignorieren: Cookies werden spätestens beim nächsten getUser invalidiert */
+  }
   const admin = createAdminClient();
   await admin.auth.admin.deleteUser(uid);
 

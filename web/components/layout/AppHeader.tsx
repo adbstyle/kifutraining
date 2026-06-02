@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Plus, LogOut } from "lucide-react";
+import { ButtonLink } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
 
@@ -27,13 +28,10 @@ export async function AppHeader() {
           {user ? (
             <>
               <NavLink href="/meine-uebungen">Meine Übungen</NavLink>
-              <Link
-                href="/neu"
-                className="focus-ring type-label-large inline-flex h-9 items-center gap-1.5 rounded-(--button-shape) bg-(--button-filled-container) px-3 text-(--button-filled-label) shadow-[0_3px_0_0_var(--color-signal-dark)] transition-colors hover:bg-(--button-filled-container-hover)"
-              >
+              <ButtonLink href="/neu" variant="filled" size="sm">
                 <Plus size={18} strokeWidth={2.5} aria-hidden />
                 Übung
-              </Link>
+              </ButtonLink>
               <NavLink href="/konto">Konto</NavLink>
               <form action={signOut}>
                 <button

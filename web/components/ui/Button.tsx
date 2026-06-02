@@ -1,5 +1,7 @@
 import { forwardRef } from "react";
 import type { ButtonHTMLAttributes } from "react";
+import Link from "next/link";
+import type { ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 
 // M3-Emphase-Stufen (filled → text) + destruktiv. Werte kommen aus den
@@ -37,6 +39,16 @@ const sizes: Record<Size, string> = {
   lg: "h-14 px-7", // Spielfeldrand-Grösse (Touch ≥ 56px)
 };
 
+/** Gemeinsame Button-Klassen — geteilt von Button und ButtonLink, damit ein
+ *  navigierender Button als <a>/<Link> dieselbe Optik trägt (kein <a><button>). */
+export function buttonClasses(
+  variant: Variant = "filled",
+  size: Size = "md",
+  className?: string,
+): string {
+  return cn(base, variants[variant], sizes[size], className);
+}
+
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
@@ -44,11 +56,18 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = "filled", size = "md", className, ...props }, ref) => (
-    <button
-      ref={ref}
-      className={cn(base, variants[variant], sizes[size], className)}
-      {...props}
-    />
+    <button ref={ref} className={buttonClasses(variant, size, className)} {...props} />
   ),
 );
 Button.displayName = "Button";
+
+export type ButtonLinkProps = ComponentProps<typeof Link> & {
+  variant?: Variant;
+  size?: Size;
+};
+
+/** Wie Button, aber als Navigations-Link (Next <Link>). Verhindert das
+ *  ungültige <a><button>-Nesting bei „Button, der navigiert". */
+export function ButtonLink({ variant = "filled", size = "md", className, ...props }: ButtonLinkProps) {
+  return <Link className={buttonClasses(variant, size, className)} {...props} />;
+}

@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Pencil, Globe, Lock, Trash2 } from "lucide-react";
-import { Button, Dialog } from "@/components/ui";
+import { Button, ButtonLink, Dialog } from "@/components/ui";
 import { setVisibility, deleteExercise } from "@/lib/actions/exercises";
 
 /* Eigentümer-Aktionen auf der Detailseite: bearbeiten, Sichtbarkeit umschalten,
@@ -25,12 +24,10 @@ export function OwnerActions({
     <div className="mb-6 flex flex-wrap items-center gap-2 rounded-[6px] border border-outline-variant bg-surface-container-low p-3">
       <span className="type-label-small mr-1 text-on-surface-variant">Deine Übung:</span>
 
-      <Link href={`/uebung/${slug}/edit`}>
-        <Button variant="tonal" size="sm">
-          <Pencil size={16} strokeWidth={2} aria-hidden />
-          Bearbeiten
-        </Button>
-      </Link>
+      <ButtonLink href={`/uebung/${slug}/edit`} variant="tonal" size="sm">
+        <Pencil size={16} strokeWidth={2} aria-hidden />
+        Bearbeiten
+      </ButtonLink>
 
       <form action={setVisibility.bind(null, id, next)}>
         <Button type="submit" variant="outlined" size="sm">

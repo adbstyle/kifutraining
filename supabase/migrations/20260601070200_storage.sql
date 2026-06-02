@@ -23,6 +23,10 @@ create policy "exercise_images_user_update" on storage.objects
     bucket_id = 'exercise-images'
     and (storage.foldername(name))[1] = 'user'
     and (storage.foldername(name))[2] = auth.uid()::text
+  ) with check (
+    bucket_id = 'exercise-images'
+    and (storage.foldername(name))[1] = 'user'
+    and (storage.foldername(name))[2] = auth.uid()::text
   );
 
 create policy "exercise_images_user_delete" on storage.objects

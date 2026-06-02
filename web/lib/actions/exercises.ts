@@ -174,39 +174,39 @@ export async function createExercise(
     if (invalid) return { status: "error", errors: { bild: invalid } };
   }
 
+  // Id vorab erzeugen: Bild VOR dem Insert hochladen, danach EIN Insert mit
+  // bild_url. Kein zweistufiges insert->update (kein Halb-Zustand, kein
+  // Update-Fenster). Schlägt der Insert nach dem Upload fehl, bleibt höchstens
+  // ein Bild-Waise zurück (Cron-Cleanup, Architektur §11).
+  const id = crypto.randomUUID();
   const slug = userSlug(String(parsed.row.name));
+
+  let bildUrl: string | null = null;
+  if (hasImage) {
+    const { url, error: imgErr } = await uploadImage(supabase, user.id, id, file);
+    if (imgErr) return { status: "error", errors: { bild: imgErr } };
+    bildUrl = url ?? null;
+  }
+
   const { data: inserted, error } = await supabase
     .from("exercises")
     .insert({
       ...parsed.row,
+      id,
       slug,
       source: "user",
       owner_id: user.id,
       visibility: "private", // Entwurf (EK8)
+      bild_url: bildUrl,
     })
-    .select("id, slug")
+    .select("slug")
     .single();
 
-  if (error || !inserted)
-    return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
-
-  if (hasImage) {
-    const { url, error: imgErr } = await uploadImage(
-      supabase,
-      user.id,
-      inserted.id,
-      file,
-    );
-    if (imgErr) {
-      // Verwaiste Übung wieder entfernen, damit kein bildloser Entwurf zurückbleibt.
-      await supabase.from("exercises").delete().eq("id", inserted.id).eq("owner_id", user.id);
-      return { status: "error", errors: { bild: imgErr } };
+  if (error || !inserted) {
+    if (bildUrl) {
+      await supabase.storage.from(STORAGE_BUCKET).remove([`user/${user.id}/${id}.${IMAGE_TYPES[(file as File).type]}`]);
     }
-    await supabase
-      .from("exercises")
-      .update({ bild_url: url })
-      .eq("id", inserted.id)
-      .eq("owner_id", user.id);
+    return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
   }
 
   revalidateLists();
