@@ -1,6 +1,6 @@
 # Tigerball – am Tiger vorbei
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** passen-und-ballkontrolle
+**Trainingsteil:** hauptteil · **Kategorien:** G, F · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** passen-und-ballkontrolle
 
 ![Tigerball – am Tiger vorbei](../images/passen-und-ballkontrolle-tigerball-am-tiger-vorbei.png)
 

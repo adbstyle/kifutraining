@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
-import { Badge } from "./Badge";
+import { HerkunftBadge } from "./Badge";
 import { KategorieChip } from "./Chip";
 import { Card } from "./Card";
 import { FieldPlaceholder } from "./FieldPlaceholder";
@@ -45,13 +45,7 @@ export function ExerciseCard({ ex }: { ex: ExerciseCardData }) {
 
           {/* Herkunft / Status — oben rechts */}
           <div className="absolute right-2 top-2">
-            {ex.herkunft === "manual" ? (
-              <Badge tone="manual" />
-            ) : ex.visibility === "public" ? (
-              <Badge tone="oeffentlich" />
-            ) : (
-              <Badge tone="entwurf">✎ Entwurf</Badge>
-            )}
+            <HerkunftBadge herkunft={ex.herkunft} visibility={ex.visibility} />
           </div>
         </div>
 

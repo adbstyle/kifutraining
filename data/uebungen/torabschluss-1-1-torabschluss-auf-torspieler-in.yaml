@@ -13,12 +13,13 @@ kategorien:
 spielform: null
 anzahl_kinder: null
 material: []
-aufbau: 'Ein Kind dribbelt auf den/die Torspieler/in zu und versucht, ein Tor zu erzielen.
-  Dabei darf es nur vorwärts oder seitwärts dribbeln. Anschliessend tauschen sie.
-  Variation: mit Gegenspieler/in im Rücken.'
-ueben:
-- Schnell zum Tor dribbeln und entschlossen abschliessen
-wetteifern: Wer schafft bei jedem Versuch ein Tor?
+methodischer_fahrplan:
+  offen_starten: 'Ein Kind dribbelt auf den/die Torspieler/in zu und versucht, ein
+    Tor zu erzielen. Dabei darf es nur vorwärts oder seitwärts dribbeln. Anschliessend
+    tauschen sie. Variation: mit Gegenspieler/in im Rücken.'
+  ueben:
+  - Schnell zum Tor dribbeln und entschlossen abschliessen
+  wetteifern: Wer schafft bei jedem Versuch ein Tor?
 varianten: []
 bild: images/torabschluss-1-1-torabschluss-auf-torspieler-in.png
 quelle:

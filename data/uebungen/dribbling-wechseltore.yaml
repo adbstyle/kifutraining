@@ -7,7 +7,6 @@ erscheinungsform:
 feldtyp: null
 thema: dribbling
 kategorien:
-- G
 - F
 - E
 spielform: '3:3'
@@ -15,15 +14,16 @@ anzahl_kinder:
   min: 6
   empfohlen: 6
 material: []
-aufbau: Zwei Teams spielen 3:3. Dribbelt ein Kind über die Mittellinie, kann es in
-  dieser Hälfte ein Tor erzielen. Dribbelt es wieder zurück, sind die anderen beiden
-  Tore freigeschaltet. Bei Ballgewinn müssen die Kinder zuerst über die Mittellinie
-  dribbeln.
-ueben:
-- Täuschen und in den freien Raum dribbeln
-- Als Mitspieler/innen freilaufen, anspielbar sein und einander zupassen
-wetteifern: Welches Team erzielt innerhalb von fünf Minuten mehr Tore? Welchem Team
-  gelingt ein gutes Zusammenspiel?
+methodischer_fahrplan:
+  offen_starten: Zwei Teams spielen 3:3. Dribbelt ein Kind über die Mittellinie, kann
+    es in dieser Hälfte ein Tor erzielen. Dribbelt es wieder zurück, sind die anderen
+    beiden Tore freigeschaltet. Bei Ballgewinn müssen die Kinder zuerst über die Mittellinie
+    dribbeln.
+  ueben:
+  - Täuschen und in den freien Raum dribbeln
+  - Als Mitspieler/innen freilaufen, anspielbar sein und einander zupassen
+  wetteifern: Welches Team erzielt innerhalb von fünf Minuten mehr Tore? Welchem Team
+    gelingt ein gutes Zusammenspiel?
 varianten: []
 bild: images/dribbling-wechseltore.png
 quelle:

@@ -103,13 +103,23 @@ def main():
                     "spielform": ex["spielform"],
                     "anzahl_kinder": None,
                     "material": [],
-                    "aufbau": ex["aufbau"],
-                    "ueben": ex["ueben"],
-                    "wetteifern": ex["wetteifern"],
+                }
+                # Übungsablauf je Trainingsteil: einleitung/hauptteil als
+                # methodischer_fahrplan-Block (der geparste "Offen"-Text ist das
+                # offen_starten), auffangen/ausklang als flaches aufbau-Feld.
+                if teil in ("einleitung", "hauptteil"):
+                    doc["methodischer_fahrplan"] = {
+                        "offen_starten": ex["aufbau"],
+                        "ueben": ex["ueben"],
+                        "wetteifern": ex["wetteifern"],
+                    }
+                else:
+                    doc["aufbau"] = ex["aufbau"]
+                doc.update({
                     "varianten": [],
                     "bild": bild,
                     "quelle": {"datei": PDF.name, "seite": page},
-                }
+                })
                 (UEB / f"{uid}.yaml").write_text(
                     yaml.safe_dump(doc, allow_unicode=True, sort_keys=False),
                     encoding="utf-8")

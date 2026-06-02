@@ -1,6 +1,6 @@
 # Dribblingtore
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** dribbling · **Spielform:** 3:3
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** dribbling · **Spielform:** 3:3
 
 ![Dribblingtore](../images/dribbling-dribblingtore.png)
 

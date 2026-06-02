@@ -7,20 +7,19 @@ erscheinungsform:
 feldtyp: null
 thema: dribbling
 kategorien:
-- G
-- F
 - E
 spielform: '3:3'
 anzahl_kinder:
   min: 6
   empfohlen: 6
 material: []
-aufbau: 'Im Spiel 3:3 übers Kreuz greift Rot auf die blauen Tore an und verteidigt
-  die gelben. Variante: nach einem erzielten Tor wechseln die zugeteilten Tore.'
-ueben:
-- Den Überblick behalten und das gegnerische Team mit schnellen Richtungswechseln
-  überraschen
-wetteifern: Welches Team schliesst auf beide Tore erfolgreich ab?
+methodischer_fahrplan:
+  offen_starten: 'Im Spiel 3:3 übers Kreuz greift Rot auf die blauen Tore an und verteidigt
+    die gelben. Variante: nach einem erzielten Tor wechseln die zugeteilten Tore.'
+  ueben:
+  - Den Überblick behalten und das gegnerische Team mit schnellen Richtungswechseln
+    überraschen
+  wetteifern: Welches Team schliesst auf beide Tore erfolgreich ab?
 varianten: []
 bild: images/dribbling-spiel-uebers-kreuz.png
 quelle:

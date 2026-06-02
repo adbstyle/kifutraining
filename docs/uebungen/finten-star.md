@@ -1,6 +1,6 @@
 # Finten-Star
 
-**Trainingsteil:** einleitung · **Kategorien:** G, F, E
+**Trainingsteil:** einleitung · **Kategorien:** F, E
 
 ![Finten-Star](../images/finten-star.png)
 

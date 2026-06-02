@@ -29,11 +29,15 @@ def render_exercise(doc, vocab):
     lines += [" · ".join(meta), ""]
     if doc.get("bild"):
         lines += [f"![{doc['name']}](../{doc['bild']})", ""]
-    lines += ["## Offen starten", "", doc["aufbau"], ""]
-    if doc.get("ueben"):
-        lines += ["## Üben", ""] + [f"- {u}" for u in doc["ueben"]] + [""]
-    if doc.get("wetteifern"):
-        lines += ["## Wett-eifern", "", doc["wetteifern"], ""]
+    fahrplan = doc.get("methodischer_fahrplan")
+    if fahrplan:
+        lines += ["## Offen starten", "", fahrplan["offen_starten"], ""]
+        if fahrplan.get("ueben"):
+            lines += ["## Üben", ""] + [f"- {u}" for u in fahrplan["ueben"]] + [""]
+        if fahrplan.get("wetteifern"):
+            lines += ["## Wett-eifern", "", fahrplan["wetteifern"], ""]
+    elif doc.get("aufbau"):
+        lines += ["## Aufbau", "", doc["aufbau"], ""]
     if doc.get("varianten"):
         lines += ["## Varianten", ""] + [f"- {v}" for v in doc["varianten"]] + [""]
     lines += ["---", f"*Quelle: {doc['quelle']['datei']}, S. {doc['quelle']['seite']}*"]

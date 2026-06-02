@@ -31,24 +31,47 @@ create table exercises (
   kategorien text[] not null default '{}',          -- Teilmenge von {G,F,E}
   spielform text,
   anzahl_kinder jsonb,                               -- {min, empfohlen}
+  -- abgeleitete Mindest-Kinderzahl für den Gruppengrössen-Filter (Story 3 EK6);
+  -- null = keine Mindestangabe (gilt als beliebig durchführbar).
+  anzahl_kinder_min int generated always as ((anzahl_kinder->>'min')::int) stored,
   material text[] not null default '{}',
-  aufbau text not null,
-  ueben text[] not null default '{}',
-  wetteifern text,
+  -- Übungsablauf: methodischer_fahrplan (jsonb) bei einleitung/hauptteil
+  -- {offen_starten, ueben[], wetteifern}; flaches aufbau bei auffangen/ausklang.
+  methodischer_fahrplan jsonb,
+  aufbau text,
   varianten text[] not null default '{}',
   bild_url text,
   source text not null default 'user' check (source in ('manual','user')),
   owner_id uuid references auth.users(id) on delete set null,
-  visibility text not null default 'public' check (visibility in ('public','private')),
+  -- Neue Nutzer-Übungen sind Entwürfe (privat); der Manual-Seed setzt public explizit.
+  visibility text not null default 'private' check (visibility in ('public','private')),
   search_tsv tsvector,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   -- Herkunfts-Konsistenz: Manual-Übungen haben nie einen Owner
   constraint manual_has_no_owner check (source <> 'manual' or owner_id is null),
-  -- Hauptteil-spezifische Felder nur bei Hauptteil (Übungs-Epic EK2)
-  constraint hauptteil_only_fields check (
-    trainingsteil = 'hauptteil'
+  -- Erscheinungsform/Thema nur bei Hauptteil ODER Einleitung (Stories 3/4/6, §7.3)
+  constraint themenfelder_nur_haupt_einleitung check (
+    trainingsteil in ('hauptteil','einleitung')
     or (erscheinungsform = '{}' and thema is null)
+  ),
+  -- Übungsablauf passend zum Trainingsteil vorhanden
+  constraint ablauf_je_trainingsteil check (
+    case
+      when trainingsteil in ('einleitung','hauptteil') then methodischer_fahrplan is not null
+      else aufbau is not null
+    end
+  ),
+  -- Nutzer-Übungen (einleitung/hauptteil): alle drei Fahrplan-Stufen Pflicht
+  -- (strenger als der Altbestand, der ueben/wetteifern leer haben darf — Story 6, §7.3).
+  constraint user_fahrplan_vollstaendig check (
+    source <> 'user'
+    or trainingsteil not in ('einleitung','hauptteil')
+    or (
+      coalesce(methodischer_fahrplan->>'offen_starten','') <> ''
+      and jsonb_array_length(coalesce(methodischer_fahrplan->'ueben','[]'::jsonb)) >= 1
+      and coalesce(methodischer_fahrplan->>'wetteifern','') <> ''
+    )
   ),
   -- nur gültige Alterskategorien
   constraint valid_kategorien check (kategorien <@ array['G','F','E'])
@@ -84,6 +107,7 @@ create table plan_exercises (
 create index exercises_search_idx on exercises using gin (search_tsv);
 create index exercises_name_trgm_idx on exercises using gin (name gin_trgm_ops);
 create index exercises_filter_idx on exercises (trainingsteil, visibility);
+create index exercises_kinder_idx on exercises (anzahl_kinder_min);
 create index exercises_owner_idx on exercises (owner_id);
 create index exercises_thema_idx on exercises (thema);
 create index plan_exercises_plan_idx on plan_exercises (plan_id);
@@ -105,11 +129,26 @@ $$;
 
 create or replace function exercises_search_refresh() returns trigger
 language plpgsql as $$
+declare
+  v_ueben text := '';
 begin
+  -- ueben-Schritte aus dem Fahrplan-jsonb zu einem Text zusammenfassen
+  if new.methodischer_fahrplan is not null then
+    select coalesce(string_agg(value, ' '), '')
+      into v_ueben
+      from jsonb_array_elements_text(
+        coalesce(new.methodischer_fahrplan->'ueben', '[]'::jsonb)
+      ) as value;
+  end if;
+
   new.search_tsv :=
       setweight(to_tsvector('german', coalesce(new.name, '')), 'A')
-    || setweight(to_tsvector('german', coalesce(new.aufbau, '')), 'B')
-    || setweight(to_tsvector('german', array_to_string(new.ueben, ' ')), 'C')
+    || setweight(to_tsvector('german',
+         coalesce(new.aufbau, '') || ' ' ||
+         coalesce(new.methodischer_fahrplan->>'offen_starten', '')), 'B')
+    || setweight(to_tsvector('german',
+         v_ueben || ' ' ||
+         coalesce(new.methodischer_fahrplan->>'wetteifern', '')), 'C')
     || setweight(to_tsvector('german', array_to_string(new.material, ' ')), 'D');
   return new;
 end;

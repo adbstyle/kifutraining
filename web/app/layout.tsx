@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Anton, Source_Serif_4, Space_Mono } from "next/font/google";
 import "./globals.css";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 // Display: kondensierte Plakat-Grotesk (Taktiktafel-Headlines)
 const display = Anton({
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body
         className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen antialiased`}
       >
+        <AppHeader />
         {children}
       </body>
     </html>

@@ -40,3 +40,17 @@ export function Badge({
     </span>
   );
 }
+
+/* Herkunfts-/Status-Plakette: Manual-Bestand vs. eigene öffentliche/Entwurf-Übung.
+   Eine Quelle für Karte und Detailansicht. */
+export function HerkunftBadge({
+  herkunft,
+  visibility,
+}: {
+  herkunft: "manual" | "user";
+  visibility?: "public" | "private";
+}) {
+  if (herkunft === "manual") return <Badge tone="manual" />;
+  if (visibility === "public") return <Badge tone="oeffentlich" />;
+  return <Badge tone="entwurf">✎ Entwurf</Badge>;
+}

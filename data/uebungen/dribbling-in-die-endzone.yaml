@@ -7,7 +7,6 @@ erscheinungsform:
 feldtyp: null
 thema: dribbling
 kategorien:
-- G
 - F
 - E
 spielform: '3:3'
@@ -15,12 +14,14 @@ anzahl_kinder:
   min: 6
   empfohlen: 6
 material: []
-aufbau: Im Spiel 3:3 erhält einen Punkt, wer es in die Endzone geschafft hat und den
-  Ball dort stoppen kann.
-ueben:
-- Mutig in die Endzone dribbeln, freilaufen, anspielbar sein (in die Sonne) und passen
-- Blume öffnen und schliessen
-wetteifern: Welches Team schafft es von Endzone zu Endzone ohne Ballverlust?
+methodischer_fahrplan:
+  offen_starten: Im Spiel 3:3 erhält einen Punkt, wer es in die Endzone geschafft
+    hat und den Ball dort stoppen kann.
+  ueben:
+  - Mutig in die Endzone dribbeln, freilaufen, anspielbar sein (in die Sonne) und
+    passen
+  - Blume öffnen und schliessen
+  wetteifern: Welches Team schafft es von Endzone zu Endzone ohne Ballverlust?
 varianten: []
 bild: images/dribbling-in-die-endzone.png
 quelle:

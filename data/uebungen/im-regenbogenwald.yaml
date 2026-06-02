@@ -11,16 +11,17 @@ kategorien:
 spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Alle Kinder haben einen Ball und dribbeln damit frei in einem markierten Feld.
-  Hebst du einen farbigen Markierkegel hoch, dribbeln die Kinder in das entsprechend
-  markierte Feld.
-ueben:
-- Den Ball nur mit links, dann nur mit rechts führen
-- Den Ball abwechslungsweise mit links und rechts führen
-- Nur mit Voll-, Innen- und Aussenrist führen
-wetteifern: Mit mehreren Teams spielen, welches Team ist am schnellsten im angezeigten
-  Feld? Zeig evtl. mehrere Farben an, welche die Teams in dieser Reihenfolge durchdribbeln
-  müssen, bevor sie ins Startfeld zurückkehren.
+methodischer_fahrplan:
+  offen_starten: Alle Kinder haben einen Ball und dribbeln damit frei in einem markierten
+    Feld. Hebst du einen farbigen Markierkegel hoch, dribbeln die Kinder in das entsprechend
+    markierte Feld.
+  ueben:
+  - Den Ball nur mit links, dann nur mit rechts führen
+  - Den Ball abwechslungsweise mit links und rechts führen
+  - Nur mit Voll-, Innen- und Aussenrist führen
+  wetteifern: Mit mehreren Teams spielen, welches Team ist am schnellsten im angezeigten
+    Feld? Zeig evtl. mehrere Farben an, welche die Teams in dieser Reihenfolge durchdribbeln
+    müssen, bevor sie ins Startfeld zurückkehren.
 varianten: []
 bild: images/im-regenbogenwald.png
 quelle:

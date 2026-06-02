@@ -7,20 +7,20 @@ erscheinungsform:
 feldtyp: null
 thema: torabschluss
 kategorien:
-- G
 - F
 - E
 spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Manual Fussball – Good Practice Ein Kind muss mit einer Finte eine Pylone
-  ausdribbeln, bevor es die Abschlusszone erreicht und aufs Tor schiessen kann. Danach
-  holt es seinen Ball und schliesst auf der anderen Seite an.
-ueben:
-- Mit Rhythmuswechsel und Körpertäuschung die Pylone ausdribbeln und schnell in die
-  Abschlusszone gelangen, um aufs Tor abzuschliessen
-- Täuschungen und Torabschluss beidseitig üben
-wetteifern: Gelingen die Täuschungen auf beide Seiten?
+methodischer_fahrplan:
+  offen_starten: Manual Fussball – Good Practice Ein Kind muss mit einer Finte eine
+    Pylone ausdribbeln, bevor es die Abschlusszone erreicht und aufs Tor schiessen
+    kann. Danach holt es seinen Ball und schliesst auf der anderen Seite an.
+  ueben:
+  - Mit Rhythmuswechsel und Körpertäuschung die Pylone ausdribbeln und schnell in
+    die Abschlusszone gelangen, um aufs Tor abzuschliessen
+  - Täuschungen und Torabschluss beidseitig üben
+  wetteifern: Gelingen die Täuschungen auf beide Seiten?
 varianten: []
 bild: images/torabschluss-1-0-mit-taeuschung.png
 quelle:

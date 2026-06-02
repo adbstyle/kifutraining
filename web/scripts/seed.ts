@@ -104,9 +104,10 @@ async function seedExercises() {
       spielform: u.spielform ?? null,
       anzahl_kinder: u.anzahl_kinder ?? null,
       material: u.material ?? [],
-      aufbau: u.aufbau,
-      ueben: u.ueben ?? [],
-      wetteifern: u.wetteifern ?? null,
+      // Übungsablauf je Trainingsteil: methodischer_fahrplan (jsonb) bei
+      // einleitung/hauptteil, flaches aufbau bei auffangen/ausklang.
+      methodischer_fahrplan: u.methodischer_fahrplan ?? null,
+      aufbau: u.aufbau ?? null,
       varianten: u.varianten ?? [],
       source: "manual",
       owner_id: null,

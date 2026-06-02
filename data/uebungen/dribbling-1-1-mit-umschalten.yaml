@@ -7,23 +7,22 @@ erscheinungsform:
 feldtyp: null
 thema: dribbling
 kategorien:
-- G
-- F
 - E
 spielform: '1:1'
 anzahl_kinder:
   min: 2
   empfohlen: 2
 material: []
-aufbau: Ein Kind dribbelt in Richtung Schusszone und versucht im 1:1 ein Tor zu erzielen.
-  Nach dem Abschluss verteidigt es nun. Das nächste Kind startet sofort und sucht
-  den Torabschluss.
-ueben:
-- Situation sofort wahrnehmen sowie mit Tempo und schnellen Richtungswechseln ein
-  Tor erzielen
-- Danach möglichst rasch Verteidigerrolle einnehmen
-wetteifern: Bilde zwei Teams. Welches Team erzielt mehr Tore? Wechsle nach einem Durchgang
-  die Seiten.
+methodischer_fahrplan:
+  offen_starten: Ein Kind dribbelt in Richtung Schusszone und versucht im 1:1 ein
+    Tor zu erzielen. Nach dem Abschluss verteidigt es nun. Das nächste Kind startet
+    sofort und sucht den Torabschluss.
+  ueben:
+  - Situation sofort wahrnehmen sowie mit Tempo und schnellen Richtungswechseln ein
+    Tor erzielen
+  - Danach möglichst rasch Verteidigerrolle einnehmen
+  wetteifern: Bilde zwei Teams. Welches Team erzielt mehr Tore? Wechsle nach einem
+    Durchgang die Seiten.
 varianten: []
 bild: images/dribbling-1-1-mit-umschalten.png
 quelle:

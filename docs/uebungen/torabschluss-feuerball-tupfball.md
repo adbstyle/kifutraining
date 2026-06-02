@@ -1,6 +1,6 @@
 # Feuerball (Tupfball)
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Sich flink und geschickt bewegen · **Feldtyp:** Kleinfeld · **Thema:** torabschluss
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Sich flink und geschickt bewegen · **Feldtyp:** Kleinfeld · **Thema:** torabschluss
 
 ![Feuerball (Tupfball)](../images/torabschluss-feuerball-tupfball.png)
 

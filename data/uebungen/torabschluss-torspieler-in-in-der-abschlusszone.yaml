@@ -7,7 +7,6 @@ erscheinungsform:
 feldtyp: null
 thema: torabschluss
 kategorien:
-- G
 - F
 - E
 spielform: '3:3'
@@ -15,12 +14,13 @@ anzahl_kinder:
   min: 6
   empfohlen: 6
 material: []
-aufbau: Die Kinder spielen 3:3. Die Torspieler/innen dürfen in der Abschlusszone den
-  Ball mit den Händen abwehren.
-ueben:
-- Durch rasche Spielverlagerung und Ausnutzen der Breite auf das freie Tor abschliessen
-- Als Torspieler/in durch rasches Verschieben die beiden Minitore verteidigen
-wetteifern: Welche/r Torspieler/in bekommt am wenigsten Tore?
+methodischer_fahrplan:
+  offen_starten: Die Kinder spielen 3:3. Die Torspieler/innen dürfen in der Abschlusszone
+    den Ball mit den Händen abwehren.
+  ueben:
+  - Durch rasche Spielverlagerung und Ausnutzen der Breite auf das freie Tor abschliessen
+  - Als Torspieler/in durch rasches Verschieben die beiden Minitore verteidigen
+  wetteifern: Welche/r Torspieler/in bekommt am wenigsten Tore?
 varianten: []
 bild: images/torabschluss-torspieler-in-in-der-abschlusszone.png
 quelle:

@@ -1,6 +1,6 @@
 # Spiel übers Kreuz
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** dribbling · **Spielform:** 3:3
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** dribbling · **Spielform:** 3:3
 
 ![Spiel übers Kreuz](../images/dribbling-spiel-uebers-kreuz.png)
 

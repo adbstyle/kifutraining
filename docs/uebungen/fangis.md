@@ -4,7 +4,7 @@
 
 ![Fangis](../images/fangis.png)
 
-## Offen starten
+## Aufbau
 
 Den Kindern steht vor dem Training mind. ein Fangisfeld zur Verfügung. Sobald die Kinder im Traininig erscheinen, spielen sie selbstständig ein Fangis nach ihrer Wahl. Jedes Kind darf einmal Fänger/in sein.
 

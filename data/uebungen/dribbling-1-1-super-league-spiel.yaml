@@ -7,19 +7,20 @@ erscheinungsform:
 feldtyp: null
 thema: dribbling
 kategorien:
-- G
 - F
 - E
 spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Zwei Kinder versuchen, während einer Minute aneinander vorbei über die gegnerische
-  Torlinie zu dribbeln. Wer gewonnen hat, steigt ein Feld auf, wer verloren hat, steigt
-  ein Feld ab (Super-League-Feld zuoberst). Bei Unentschieden machen die Kinder «Schere-Stein-Papier».
-ueben:
-- Körper als Schutzschild nutzen, um Ball gut abzuschirmen
-- Mit Täuschungen und Rhythmuswechseln den Ball kontrolliert über die Linie dribbeln
-wetteifern: Welches Kind gewinnt am meisten Super-League-Titel?
+methodischer_fahrplan:
+  offen_starten: Zwei Kinder versuchen, während einer Minute aneinander vorbei über
+    die gegnerische Torlinie zu dribbeln. Wer gewonnen hat, steigt ein Feld auf, wer
+    verloren hat, steigt ein Feld ab (Super-League-Feld zuoberst). Bei Unentschieden
+    machen die Kinder «Schere-Stein-Papier».
+  ueben:
+  - Körper als Schutzschild nutzen, um Ball gut abzuschirmen
+  - Mit Täuschungen und Rhythmuswechseln den Ball kontrolliert über die Linie dribbeln
+  wetteifern: Welches Kind gewinnt am meisten Super-League-Titel?
 varianten: []
 bild: images/dribbling-1-1-super-league-spiel.png
 quelle:

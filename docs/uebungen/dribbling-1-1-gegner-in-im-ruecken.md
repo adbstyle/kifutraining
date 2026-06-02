@@ -1,6 +1,6 @@
 # 1:1 Gegner/in im Rücken
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** dribbling · **Spielform:** 1:1
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** dribbling · **Spielform:** 1:1
 
 ![1:1 Gegner/in im Rücken](../images/dribbling-1-1-gegner-in-im-ruecken.png)
 

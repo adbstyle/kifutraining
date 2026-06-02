@@ -1,0 +1,239 @@
+"use client";
+
+import { useState, useActionState, startTransition } from "react";
+import { Save } from "lucide-react";
+import {
+  TextField,
+  TextArea,
+  SelectField,
+  FilterChip,
+  Button,
+  SegmentedControl,
+} from "@/components/ui";
+import type { ExerciseFormState } from "@/lib/actions/exercises";
+import {
+  trainingsteil as teilLabels,
+  feldtyp as feldLabels,
+  erscheinungsform as formLabels,
+  kategorienSlugs,
+  trainingsteilSlugs,
+  type TrainingsteilSlug,
+} from "@/lib/vocab";
+import { kategorieStufe, FAHRPLAN_TEILE } from "@/lib/labels";
+
+export type ExerciseInitial = {
+  name?: string;
+  trainingsteil?: string;
+  kategorien?: string[];
+  feldtyp?: string | null;
+  erscheinungsform?: string[];
+  thema?: string | null;
+  spielform?: string | null;
+  anzahl_kinder?: { min?: number | null; empfohlen?: number | null } | null;
+  material?: string[];
+  methodischer_fahrplan?: {
+    offen_starten?: string;
+    ueben?: string[];
+    wetteifern?: string | null;
+  } | null;
+  aufbau?: string | null;
+  varianten?: string[];
+  bildUrl?: string | null;
+};
+
+function Group({ title, error, children }: { title: string; error?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className={`type-label-small mb-2 ${error ? "text-error" : "text-on-surface-variant"}`}>
+        {title}
+      </p>
+      <div className="flex flex-wrap gap-2">{children}</div>
+      {error && <p className="type-body-small mt-1.5 text-error">{error}</p>}
+    </div>
+  );
+}
+
+
+export function ExerciseForm({
+  action,
+  initial = {},
+  themen,
+  submitLabel,
+}: {
+  action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
+  initial?: ExerciseInitial;
+  themen: { id: string; name: string }[];
+  submitLabel: string;
+}) {
+  const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
+  const err = state.errors ?? {};
+
+  const [teil, setTeil] = useState<string>(initial.trainingsteil ?? "");
+  const [kat, setKat] = useState<string[]>(initial.kategorien ?? []);
+  const [form, setForm] = useState<string[]>(initial.erscheinungsform ?? []);
+  const [feld, setFeld] = useState<string>(initial.feldtyp ?? "");
+
+  const istFahrplan = FAHRPLAN_TEILE.has(teil);
+  const toggle = (arr: string[], set: (v: string[]) => void, v: string) =>
+    set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+
+  // FormData direkt aus dem DOM bauen und die Chip-/Select-Werte aus dem State
+  // explizit setzen. Verlässlicher als state-gesteuerte Hidden-Inputs, deren
+  // Wert die Server-Action-Serialisierung nicht zuverlässig erfasst.
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    fd.set("trainingsteil", teil);
+    fd.set("kat", kat.join(","));
+    fd.set("form", istFahrplan ? form.join(",") : "");
+    fd.set("feldtyp", feld);
+    startTransition(() => formAction(fd));
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+      {state.message && (
+        <p className="type-body-small rounded-[4px] border border-error/40 bg-error/10 p-3 text-on-surface">
+          {state.message}
+        </p>
+      )}
+
+      <TextField
+        label="Name der Übung"
+        name="name"
+        defaultValue={initial.name}
+        required
+        error={!!err.name}
+        supportingText={err.name ?? "Pflichtfeld"}
+      />
+
+      <div>
+        <p className={`type-label-small mb-2 ${err.trainingsteil ? "text-error" : "text-on-surface-variant"}`}>
+          Trainingsteil
+        </p>
+        <SegmentedControl<TrainingsteilSlug>
+          ariaLabel="Trainingsteil"
+          value={(teil || null) as TrainingsteilSlug | null}
+          onChange={(v) => setTeil(v)}
+          options={trainingsteilSlugs.map((t) => ({ value: t, label: teilLabels[t] }))}
+        />
+        {err.trainingsteil && <p className="type-body-small mt-1.5 text-error">{err.trainingsteil}</p>}
+      </div>
+
+      <Group title="Alterskategorie" error={err.kat}>
+        {kategorienSlugs.map((k) => (
+          <FilterChip key={k} selected={kat.includes(k)} onClick={() => toggle(kat, setKat, k)}>
+            <span title={kategorieStufe[k]}>{k}</span>
+          </FilterChip>
+        ))}
+      </Group>
+
+      <Group title="Feldtyp (optional)">
+        {(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => (
+          <FilterChip key={t} selected={feld === t} onClick={() => setFeld(feld === t ? "" : t)}>
+            {feldLabels[t]}
+          </FilterChip>
+        ))}
+      </Group>
+
+      {teil && (istFahrplan ? (
+        <fieldset className="flex flex-col gap-5 rounded-[6px] border border-outline-variant p-5">
+          <legend className="type-label-medium px-2 text-primary">Methodischer Fahrplan</legend>
+          <TextArea
+            label="① Offen starten"
+            name="offen_starten"
+            defaultValue={initial.methodischer_fahrplan?.offen_starten}
+            error={!!err.offen_starten}
+            supportingText={err.offen_starten ?? "Wie die Übung offen beginnt."}
+          />
+          <TextArea
+            label="② Üben — ein Schritt pro Zeile"
+            name="ueben"
+            defaultValue={initial.methodischer_fahrplan?.ueben?.join("\n")}
+            error={!!err.ueben}
+            supportingText={err.ueben ?? "Mindestens ein Übungsschritt."}
+          />
+          <TextArea
+            label="③ Wett-eifern"
+            name="wetteifern"
+            defaultValue={initial.methodischer_fahrplan?.wetteifern ?? undefined}
+            error={!!err.wetteifern}
+            supportingText={err.wetteifern ?? "Der spielerische Wettkampf-Teil."}
+          />
+        </fieldset>
+      ) : (
+        <TextArea
+          label="Aufbau / Beschreibung"
+          name="aufbau"
+          defaultValue={initial.aufbau ?? undefined}
+          error={!!err.aufbau}
+          supportingText={err.aufbau ?? "Aufbau und Ablauf der Übung."}
+        />
+      ))}
+
+      {istFahrplan && (
+        <>
+          <Group title="Erscheinungsform (optional)">
+            {(Object.keys(formLabels) as (keyof typeof formLabels)[]).map((f) => (
+              <FilterChip key={f} selected={form.includes(f)} onClick={() => toggle(form, setForm, f)}>
+                {formLabels[f]}
+              </FilterChip>
+            ))}
+          </Group>
+
+          <SelectField
+            label="Thema (optional)"
+            name="thema"
+            defaultValue={initial.thema ?? ""}
+            options={[
+              { value: "", label: "— kein Thema —" },
+              ...themen.map((t) => ({ value: t.id, label: t.name })),
+            ]}
+          />
+        </>
+      )}
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <TextField label="Spielform (optional)" name="spielform" defaultValue={initial.spielform ?? undefined} />
+        <div className="grid grid-cols-2 gap-3">
+          <TextField label="Kinder ab" name="anzahl_min" type="number" inputMode="numeric" min={1} defaultValue={initial.anzahl_kinder?.min ?? undefined} />
+          <TextField label="Empfohlen" name="anzahl_empfohlen" type="number" inputMode="numeric" min={1} defaultValue={initial.anzahl_kinder?.empfohlen ?? undefined} />
+        </div>
+      </div>
+
+      <TextArea label="Material (optional, eines pro Zeile)" name="material" defaultValue={initial.material?.join("\n")} />
+      <TextArea label="Varianten (optional, eine pro Zeile)" name="varianten" defaultValue={initial.varianten?.join("\n")} />
+
+      <div>
+        <label htmlFor="bild" className="type-label-small mb-2 block text-on-surface-variant">
+          Feld-Diagramm (optional)
+        </label>
+        <input
+          id="bild"
+          name="bild"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="focus-ring type-body-medium block w-full rounded-(--field-shape) border-[1.5px] border-(--field-outline) text-on-surface-variant file:mr-4 file:border-0 file:bg-secondary-container file:px-4 file:py-2.5 file:font-mono file:text-xs file:uppercase file:tracking-wider file:text-on-secondary-container"
+        />
+        <p className={`type-body-small mt-1.5 ${err.bild ? "text-error" : "text-on-surface-variant"}`}>
+          {err.bild ?? "JPG, PNG oder WebP, max. 5 MB."}
+        </p>
+        {initial.bildUrl && !err.bild && (
+          <p className="type-body-small mt-1 text-on-surface-variant">
+            Aktuelles Bild bleibt erhalten, wenn du keines hochlädst.
+          </p>
+        )}
+      </div>
+
+      <div className="flex items-center gap-3 border-t border-outline-variant pt-5">
+        <Button type="submit" size="lg" disabled={isPending}>
+          <Save size={20} strokeWidth={2} aria-hidden />
+          {isPending ? "Wird gespeichert …" : submitLabel}
+        </Button>
+        <p className="type-body-small text-on-surface-variant">
+          Neue Übungen sind zunächst privat (Entwurf).
+        </p>
+      </div>
+    </form>
+  );
+}

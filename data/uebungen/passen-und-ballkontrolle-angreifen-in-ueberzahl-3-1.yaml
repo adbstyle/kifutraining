@@ -15,13 +15,14 @@ anzahl_kinder:
   min: 4
   empfohlen: 4
 material: []
-aufbau: Im Spiel 3:1 (oder 2:1) greifen die Kinder von Team Weiss auf die beiden Tore
-  an. Ab der Mittellinie dürfen sie aufs Tor schiessen. Ist der Ball im Tor oder aus
-  dem Feld, ist das Spiel zu Ende.
-ueben:
-- Durch Zusammenspiel oder Dribbling Verteidigung ausspielen und entschlossen den
-  Abschluss suchen
-wetteifern: Schafft das angreifende Team aus acht Versuchen vier Tore?
+methodischer_fahrplan:
+  offen_starten: Im Spiel 3:1 (oder 2:1) greifen die Kinder von Team Weiss auf die
+    beiden Tore an. Ab der Mittellinie dürfen sie aufs Tor schiessen. Ist der Ball
+    im Tor oder aus dem Feld, ist das Spiel zu Ende.
+  ueben:
+  - Durch Zusammenspiel oder Dribbling Verteidigung ausspielen und entschlossen den
+    Abschluss suchen
+  wetteifern: Schafft das angreifende Team aus acht Versuchen vier Tore?
 varianten: []
 bild: images/passen-und-ballkontrolle-angreifen-in-ueberzahl-3-1.png
 quelle:

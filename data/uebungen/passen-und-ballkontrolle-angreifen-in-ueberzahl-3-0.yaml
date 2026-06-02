@@ -13,14 +13,15 @@ kategorien:
 spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Drei Kinder von Team Rot greifen auf die beiden Tore an. Sie haben für ihren
-  Abschluss fünf bis zehn Sekunden Zeit, wobei alle den Ball berührt haben müssen.
-  Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende.
-ueben:
-- Durch präzises Zusammenspiel rasch zum Tor­ abschluss kommen
-- Breite des Feldes nutzen
-wetteifern: Team Weiss startet gleichzeitig auf der anderen Seite (Gegenstrom). Welches
-  Team erzielt zuerst ein Tor?
+methodischer_fahrplan:
+  offen_starten: Drei Kinder von Team Rot greifen auf die beiden Tore an. Sie haben
+    für ihren Abschluss fünf bis zehn Sekunden Zeit, wobei alle den Ball berührt haben
+    müssen. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende.
+  ueben:
+  - Durch präzises Zusammenspiel rasch zum Tor­ abschluss kommen
+  - Breite des Feldes nutzen
+  wetteifern: Team Weiss startet gleichzeitig auf der anderen Seite (Gegenstrom).
+    Welches Team erzielt zuerst ein Tor?
 varianten: []
 bild: images/passen-und-ballkontrolle-angreifen-in-ueberzahl-3-0.png
 quelle:

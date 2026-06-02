@@ -13,12 +13,13 @@ kategorien:
 spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Auf dein Signal dribbeln die Kinder mit ihrem Ball über die Brücke (Markierkegel
-  = Hindernisse) in die gegenüberliegende Zone und stoppen dort ihren Ball. Du kannst
-  die Aufgaben variieren.
-ueben:
-- Den Ball mit dem linken oder dem rechten Fuss eng um die Hindernisse führen
-wetteifern: Bilde zwei Teams. Welches absolviert eine vorgegebene Route am schnellsten?
+methodischer_fahrplan:
+  offen_starten: Auf dein Signal dribbeln die Kinder mit ihrem Ball über die Brücke
+    (Markierkegel = Hindernisse) in die gegenüberliegende Zone und stoppen dort ihren
+    Ball. Du kannst die Aufgaben variieren.
+  ueben:
+  - Den Ball mit dem linken oder dem rechten Fuss eng um die Hindernisse führen
+  wetteifern: Bilde zwei Teams. Welches absolviert eine vorgegebene Route am schnellsten?
 varianten: []
 bild: images/dribbling-ueber-die-bruecke-um-hindernisse.png
 quelle:

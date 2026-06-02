@@ -7,21 +7,20 @@ erscheinungsform:
 feldtyp: null
 thema: torabschluss
 kategorien:
-- G
-- F
 - E
 spielform: '1:1'
 anzahl_kinder:
   min: 2
   empfohlen: 2
 material: []
-aufbau: Ein/e Angreifer/in (mit Ball) und ein/e Verteidiger/in (ohne Ball) starten
-  gleichzeitig auf ein Kommando 1:1. Sobald Erstere/r die Markierung in der Mitte
-  passiert hat, darf sie/ er ein Tor erzielen. Ist der Ball im Tor oder aus dem Feld,
-  ist das Spiel zu Ende und die Kinder tauschen die Rollen.
-ueben:
-- Den Ball kontrolliert führen und nach einer Täuschung abschliessen
-wetteifern: Wer erzielt wie viele Tore?
+methodischer_fahrplan:
+  offen_starten: Ein/e Angreifer/in (mit Ball) und ein/e Verteidiger/in (ohne Ball)
+    starten gleichzeitig auf ein Kommando 1:1. Sobald Erstere/r die Markierung in
+    der Mitte passiert hat, darf sie/ er ein Tor erzielen. Ist der Ball im Tor oder
+    aus dem Feld, ist das Spiel zu Ende und die Kinder tauschen die Rollen.
+  ueben:
+  - Den Ball kontrolliert führen und nach einer Täuschung abschliessen
+  wetteifern: Wer erzielt wie viele Tore?
 varianten: []
 bild: images/torabschluss-1-1-torabschluss-kreuzen.png
 quelle:

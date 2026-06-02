@@ -9,6 +9,8 @@ import {
   IconButton,
   TextField,
   TextArea,
+  SelectField,
+  MethodischerFahrplan,
 } from "@/components/ui";
 import { SegmentedDemo } from "./SegmentedDemo";
 import { ChipsDemo } from "./ChipsDemo";
@@ -376,18 +378,13 @@ export default function Styleguide() {
 
       <Section n="11" title="Methodischer Fahrplan (Signatur-Komponente)">
         <Card className="max-w-xl p-6">
-          {fahrplan.map(([num, title, text], i) => (
-            <div
-              key={title}
-              className={i > 0 ? "mt-5 border-t border-outline-variant pt-5" : ""}
-            >
-              <p className="type-headline-small flex items-center gap-2 text-primary">
-                <span>{num}</span>
-                {title}
-              </p>
-              <p className="type-body-medium mt-1 text-on-surface-variant">{text}</p>
-            </div>
-          ))}
+          <MethodischerFahrplan
+            fahrplan={{
+              offen_starten: fahrplan[0][2],
+              ueben: [fahrplan[1][2]],
+              wetteifern: fahrplan[2][2],
+            }}
+          />
         </Card>
       </Section>
 
@@ -422,6 +419,15 @@ export default function Styleguide() {
           <TextArea
             label="Aufbau / Beschreibung"
             supportingText="Mehrzeilig — wächst bis 10 Zeilen, dann scrollen."
+          />
+          <SelectField
+            label="Thema"
+            options={[
+              { value: "", label: "— kein Thema —" },
+              { value: "dribbling", label: "Dribbling" },
+              { value: "torabschluss", label: "Torabschluss" },
+            ]}
+            supportingText="Outlined-Select im gleichen Feld-Kontrakt wie Text-Field."
           />
         </div>
       </Section>

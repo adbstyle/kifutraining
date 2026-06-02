@@ -1,6 +1,6 @@
 # Jokerspiel im Feld
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** passen-und-ballkontrolle · **Spielform:** 4:4
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** passen-und-ballkontrolle · **Spielform:** 4:4
 
 ![Jokerspiel im Feld](../images/passen-und-ballkontrolle-jokerspiel-im-feld.png)
 

@@ -7,7 +7,6 @@ erscheinungsform:
 feldtyp: null
 thema: passen-und-ballkontrolle
 kategorien:
-- G
 - F
 - E
 spielform: '3:3'
@@ -15,12 +14,13 @@ anzahl_kinder:
   min: 6
   empfohlen: 6
 material: []
-aufbau: Manual Fussball – Good Practice Im Spiel 3:3 greift Rot auf die beiden Tore
-  von Weiss an und umgekehrt.
-ueben:
-- Ganzes Feld nutzen und sich geschickt freilaufen
-- Mit Zusammenspiel und Dribblings zum Torabschluss kommen
-wetteifern: Welches Team erzielt innerhalb von fünf Minuten mehr Tore?
+methodischer_fahrplan:
+  offen_starten: Manual Fussball – Good Practice Im Spiel 3:3 greift Rot auf die beiden
+    Tore von Weiss an und umgekehrt.
+  ueben:
+  - Ganzes Feld nutzen und sich geschickt freilaufen
+  - Mit Zusammenspiel und Dribblings zum Torabschluss kommen
+  wetteifern: Welches Team erzielt innerhalb von fünf Minuten mehr Tore?
 varianten: []
 bild: images/passen-und-ballkontrolle-tore-in-der-mitte.png
 quelle:
