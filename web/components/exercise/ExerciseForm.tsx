@@ -20,6 +20,7 @@ import {
   type TrainingsteilSlug,
 } from "@/lib/vocab";
 import { kategorieStufe, FAHRPLAN_TEILE } from "@/lib/labels";
+import { imageError, IMAGE_ACCEPT, MAX_IMAGE_MB } from "@/lib/image";
 
 export type ExerciseInitial = {
   name?: string;
@@ -72,6 +73,7 @@ export function ExerciseForm({
   const [kat, setKat] = useState<string[]>(initial.kategorien ?? []);
   const [form, setForm] = useState<string[]>(initial.erscheinungsform ?? []);
   const [feld, setFeld] = useState<string>(initial.feldtyp ?? "");
+  const [bildError, setBildError] = useState<string | null>(null);
 
   const istFahrplan = FAHRPLAN_TEILE.has(teil);
   const toggle = (arr: string[], set: (v: string[]) => void, v: string) =>
@@ -83,6 +85,18 @@ export function ExerciseForm({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    // Bild VOR dem Senden prüfen — sonst lehnt das Server-Action-/Plattform-
+    // Body-Limit eine zu grosse Datei mit einem rohen Fehler ab, bevor unsere
+    // Validierung greift.
+    const bild = fd.get("bild");
+    if (bild instanceof File && bild.size > 0) {
+      const invalid = imageError(bild.type, bild.size);
+      if (invalid) {
+        setBildError(invalid);
+        return;
+      }
+    }
+    setBildError(null);
     fd.set("trainingsteil", teil);
     fd.set("kat", kat.join(","));
     fd.set("form", istFahrplan ? form.join(",") : "");
@@ -212,13 +226,14 @@ export function ExerciseForm({
           id="bild"
           name="bild"
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept={IMAGE_ACCEPT}
+          onChange={() => setBildError(null)}
           className="focus-ring type-body-medium block w-full rounded-(--field-shape) border-[1.5px] border-(--field-outline) text-on-surface-variant file:mr-4 file:border-0 file:bg-secondary-container file:px-4 file:py-2.5 file:font-mono file:text-xs file:uppercase file:tracking-wider file:text-on-secondary-container"
         />
-        <p className={`type-body-small mt-1.5 ${err.bild ? "text-error" : "text-on-surface-variant"}`}>
-          {err.bild ?? "JPG, PNG oder WebP, max. 5 MB."}
+        <p className={`type-body-small mt-1.5 ${err.bild || bildError ? "text-error" : "text-on-surface-variant"}`}>
+          {err.bild ?? bildError ?? `JPG, PNG oder WebP, max. ${MAX_IMAGE_MB} MB.`}
         </p>
-        {initial.bildUrl && !err.bild && (
+        {initial.bildUrl && !err.bild && !bildError && (
           <p className="type-body-small mt-1 text-on-surface-variant">
             Aktuelles Bild bleibt erhalten, wenn du keines hochlädst.
           </p>

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { userSlug } from "@/lib/slug";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
+import { IMAGE_TYPES, imageError } from "@/lib/image";
 import { FAHRPLAN_TEILE } from "@/lib/labels";
 import {
   trainingsteilSlugs,
@@ -18,20 +19,6 @@ export type ExerciseFormState = {
   errors?: Record<string, string>;
   message?: string;
 };
-
-const IMAGE_TYPES: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // ~5 MB (Architektur §11)
-
-/** Bild-Format/-Grösse prüfen (gemeinsam für Vorab-Check + Upload). */
-function validateImage(file: File): string | null {
-  if (!IMAGE_TYPES[file.type]) return "Nur JPG, PNG oder WebP sind erlaubt.";
-  if (file.size > MAX_IMAGE_BYTES) return "Das Bild ist grösser als 5 MB.";
-  return null;
-}
 
 /** Listen-Seiten, die nach Mutationen neu validiert werden. */
 function revalidateLists() {
@@ -139,7 +126,7 @@ async function uploadImage(
   exerciseId: string,
   file: File,
 ): Promise<{ url?: string; error?: string }> {
-  const invalid = validateImage(file);
+  const invalid = imageError(file.type, file.size);
   if (invalid) return { error: invalid };
 
   const path = `user/${ownerId}/${exerciseId}.${IMAGE_TYPES[file.type]}`;
@@ -170,7 +157,7 @@ export async function createExercise(
   const file = form.get("bild");
   const hasImage = file instanceof File && file.size > 0;
   if (hasImage) {
-    const invalid = validateImage(file);
+    const invalid = imageError(file.type, file.size);
     if (invalid) return { status: "error", errors: { bild: invalid } };
   }
 
@@ -232,7 +219,7 @@ export async function updateExercise(
   const file = form.get("bild");
   const hasImage = file instanceof File && file.size > 0;
   if (hasImage) {
-    const invalid = validateImage(file);
+    const invalid = imageError(file.type, file.size);
     if (invalid) return { status: "error", errors: { bild: invalid } };
   }
 
