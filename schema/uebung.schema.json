@@ -18,7 +18,6 @@
       "uniqueItems": true
     },
     "feldtyp": { "enum": ["kleinfeld", "grossfeld", "freies_feld", null] },
-    "thema": { "type": ["string", "null"] },
     "kategorien": {
       "type": "array",
       "items": { "enum": ["G", "F", "E"] },

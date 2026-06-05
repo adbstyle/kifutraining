@@ -1,6 +1,6 @@
 # Vom 1:0 zum 3:3
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** passen-und-ballkontrolle · **Spielform:** 1:1
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Spielform:** 1:1
 
 ![Vom 1:0 zum 3:3](../images/passen-und-ballkontrolle-vom-1-0-zum-3-3.png)
 

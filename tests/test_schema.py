@@ -17,7 +17,6 @@ def test_minimal_valid_uebung_passes():
         "trainingsteil": "hauptteil",
         "erscheinungsform": ["spiel-kreativ-gestalten", "ball-entschlossen-erobern"],
         "feldtyp": "kleinfeld",
-        "thema": "dribbling",
         "kategorien": ["G", "F", "E"],
         "methodischer_fahrplan": {
             "offen_starten": "Zwei Teams spielen 3:3.",

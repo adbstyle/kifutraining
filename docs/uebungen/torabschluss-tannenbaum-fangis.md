@@ -1,6 +1,6 @@
 # Tannenbaum-Fangis
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Sich flink und geschickt bewegen · **Thema:** torabschluss
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Sich flink und geschickt bewegen
 
 ![Tannenbaum-Fangis](../images/torabschluss-tannenbaum-fangis.png)
 

@@ -1,6 +1,6 @@
 # Zielschuss
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Thema:** torabschluss
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![Zielschuss](../images/torabschluss-zielschuss.png)
 

@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { createExercise } from "@/lib/actions/exercises";
-import { getThemen } from "@/lib/queries/exercises";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Neue Übung — KiFu", robots: { index: false } };
 
 export default async function NeuePage() {
-  const themen = await getThemen();
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
       <header className="mb-8">
@@ -18,7 +16,7 @@ export default async function NeuePage() {
           so ist sie gleichwertig durchsuch- und filterbar.
         </p>
       </header>
-      <ExerciseForm action={createExercise} themen={themen} submitLabel="Übung speichern" />
+      <ExerciseForm action={createExercise} submitLabel="Übung speichern" />
     </main>
   );
 }

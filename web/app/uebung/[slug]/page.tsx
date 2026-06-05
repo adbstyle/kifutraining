@@ -13,10 +13,8 @@ import {
 import { Flash } from "@/components/Flash";
 import { OwnerActions } from "@/components/exercise/OwnerActions";
 import { createClient } from "@/lib/supabase/server";
-import { FAHRPLAN_TEILE } from "@/lib/labels";
 import {
   getExerciseDetail,
-  getThemaDetail,
   type ExerciseDetail,
 } from "@/lib/queries/exercises";
 import {
@@ -74,11 +72,6 @@ export default async function ExerciseDetailPage({
     data: { user },
   } = await supabase.auth.getUser();
   const isOwner = ex.source === "user" && !!user && ex.owner_id === user.id;
-
-  const thema =
-    ex.thema && FAHRPLAN_TEILE.has(ex.trainingsteil)
-      ? await getThemaDetail(ex.thema)
-      : null;
 
   const meta = [
     teilLabels[ex.trainingsteil as keyof typeof teilLabels] ?? ex.trainingsteil,
@@ -153,7 +146,6 @@ export default async function ExerciseDetailPage({
                 .join(", ")}
             </Meta>
           )}
-          {thema && <Meta label="Thema">{thema.name}</Meta>}
           {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
           {ex.material.length > 0 && (
             <Meta label="Material">{ex.material.join(", ")}</Meta>
@@ -191,20 +183,6 @@ export default async function ExerciseDetailPage({
         </section>
       )}
 
-      {/* Themen-Infos (Hauptteil/Einleitung mit Thema) */}
-      {thema && (
-        <section className="mt-10">
-          <h2 className="type-headline-small mb-4 text-on-surface">
-            Zum Thema „{thema.name}"
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <ThemaCard title="Ziele" items={thema.ziele} />
-            <ThemaCard title="Metaphern" items={thema.metaphern} />
-            <ThemaCard title="Fragen an die Kinder" items={thema.fragen_an_die_kinder} />
-          </div>
-        </section>
-      )}
-
       {/* Quellen-/Urheberangabe (Manual) */}
       {ex.source === "manual" && (
         <footer className="mt-12 flex items-start gap-2 border-t border-outline-variant pt-5">
@@ -216,19 +194,5 @@ export default async function ExerciseDetailPage({
         </footer>
       )}
     </main>
-  );
-}
-
-function ThemaCard({ title, items }: { title: string; items: string[] }) {
-  if (!items?.length) return null;
-  return (
-    <Card className="p-4">
-      <p className="type-label-small text-primary">{title}</p>
-      <ul className="type-body-medium mt-2 list-disc space-y-1 pl-4 text-on-surface-variant">
-        {items.map((it, i) => (
-          <li key={i}>{it}</li>
-        ))}
-      </ul>
-    </Card>
   );
 }

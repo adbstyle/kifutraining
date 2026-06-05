@@ -1,6 +1,6 @@
 # 1:1 Torabschluss kreuzen
 
-**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Thema:** torabschluss · **Spielform:** 1:1
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Spielform:** 1:1
 
 ![1:1 Torabschluss kreuzen](../images/torabschluss-1-1-torabschluss-kreuzen.png)
 

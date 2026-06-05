@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { updateExercise } from "@/lib/actions/exercises";
-import { getExerciseDetail, getThemen } from "@/lib/queries/exercises";
+import { getExerciseDetail } from "@/lib/queries/exercises";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export default async function EditPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [ex, themen] = await Promise.all([getExerciseDetail(slug), getThemen()]);
+  const ex = await getExerciseDetail(slug);
   if (!ex) notFound();
 
   // Nur eigene Nutzer-Übungen sind bearbeitbar (Story 7 EK5). Manual/fremd -> Detail.
@@ -46,7 +46,6 @@ export default async function EditPage({
           kategorien: ex.kategorien,
           feldtyp: ex.feldtyp,
           erscheinungsform: ex.erscheinungsform,
-          thema: ex.thema,
           spielform: ex.spielform,
           anzahl_kinder: ex.anzahl_kinder,
           material: ex.material,
@@ -55,7 +54,6 @@ export default async function EditPage({
           varianten: ex.varianten,
           bildUrl: ex.bild_url,
         }}
-        themen={themen}
         submitLabel="Änderungen speichern"
       />
     </main>

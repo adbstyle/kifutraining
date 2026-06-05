@@ -3,7 +3,6 @@ name: Freies Kleinfeldspiel
 trainingsteil: auffangen
 erscheinungsform: []
 feldtyp: kleinfeld
-thema: null
 kategorien:
 - G
 - F

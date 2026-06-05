@@ -22,8 +22,6 @@ def render_exercise(doc, vocab):
         meta.append(f"**Erscheinungsform:** {', '.join(formen)}")
     if doc.get("feldtyp"):
         meta.append(f"**Feldtyp:** {vocab['feldtyp'].get(doc['feldtyp'], doc['feldtyp'])}")
-    if doc.get("thema"):
-        meta.append(f"**Thema:** {doc['thema']}")
     if doc.get("spielform"):
         meta.append(f"**Spielform:** {doc['spielform']}")
     lines += [" · ".join(meta), ""]
@@ -61,10 +59,9 @@ def main():
             continue
         idx.append(f"## {TEIL_TITEL[teil]}")
         idx.append("")
-        for d in sorted(group, key=lambda x: (x.get("thema") or "", x["name"])):
-            thema = f" _({d['thema']})_" if d.get("thema") else ""
+        for d in sorted(group, key=lambda x: x["name"]):
             idx.append(f"- [{d['name']}](uebungen/{d['id']}.md)"
-                       f" – {', '.join(d['kategorien'])}{thema}")
+                       f" – {', '.join(d['kategorien'])}")
         idx.append("")
     (OUT / "README.md").write_text("\n".join(idx), encoding="utf-8")
     print(f"{len(docs)} Übungsseiten + Index generiert in {OUT}/")

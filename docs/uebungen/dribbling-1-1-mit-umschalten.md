@@ -1,6 +1,6 @@
 # 1:1 mit Umschalten
 
-**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** dribbling · **Spielform:** 1:1
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Spielform:** 1:1
 
 ![1:1 mit Umschalten](../images/dribbling-1-1-mit-umschalten.png)
 

@@ -12,7 +12,7 @@ VOCAB = {
 def test_render_exercise_markdown():
     doc = {
         "id": "dribbling-wechseltore", "name": "Wechseltore",
-        "trainingsteil": "hauptteil", "thema": "dribbling",
+        "trainingsteil": "hauptteil",
         "erscheinungsform": ["spiel-kreativ-gestalten", "ball-entschlossen-erobern"],
         "feldtyp": "kleinfeld",
         "kategorien": ["G", "F", "E"], "spielform": "3:3",

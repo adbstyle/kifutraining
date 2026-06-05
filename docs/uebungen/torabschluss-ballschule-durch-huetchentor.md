@@ -1,6 +1,6 @@
 # Ballschule – durch Hütchentor
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Thema:** torabschluss
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![Ballschule – durch Hütchentor](../images/torabschluss-ballschule-durch-huetchentor.png)
 

@@ -1,6 +1,6 @@
 # Torschussduell mit Mittellinie
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Thema:** torabschluss
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![Torschussduell mit Mittellinie](../images/torabschluss-torschussduell-mit-mittellinie.png)
 

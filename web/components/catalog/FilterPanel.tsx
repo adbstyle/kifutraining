@@ -12,14 +12,11 @@ import {
 } from "@/lib/vocab";
 import { kategorieStufe } from "@/lib/labels";
 
-type ThemaOption = { id: string; name: string };
-
 export type CatalogFilters = {
   teil: string[];
   kat: string[];
   feld: string[];
   form: string[];
-  thema: string[];
   kinder?: number;
   q?: string;
 };
@@ -39,13 +36,7 @@ function FilterGroup({
   );
 }
 
-export function FilterPanel({
-  filters,
-  themen,
-}: {
-  filters: CatalogFilters;
-  themen: ThemaOption[];
-}) {
+export function FilterPanel({ filters }: { filters: CatalogFilters }) {
   const router = useRouter();
 
   // URL ist die Quelle der Wahrheit. Beim Mutieren die LIVE-URL lesen
@@ -92,7 +83,6 @@ export function FilterPanel({
     filters.kat.length ||
     filters.feld.length ||
     filters.form.length ||
-    filters.thema.length ||
     filters.kinder !== undefined ||
     (filters.q?.length ?? 0) > 0;
 
@@ -142,20 +132,6 @@ export function FilterPanel({
           </FilterChip>
         ))}
       </FilterGroup>
-
-      {themen.length > 0 && (
-        <FilterGroup title="Thema">
-          {themen.map((th) => (
-            <FilterChip
-              key={th.id}
-              selected={isOn("thema", th.id)}
-              onClick={() => toggle("thema", th.id)}
-            >
-              {th.name}
-            </FilterChip>
-          ))}
-        </FilterGroup>
-      )}
 
       <DebouncedField
         label="Verfügbare Kinder"

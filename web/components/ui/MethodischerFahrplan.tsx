@@ -32,7 +32,7 @@ export function MethodischerFahrplan({
     <div className={cn("flex flex-col", className)}>
       {present.map((s, i) => (
         <div key={s.key} className={i > 0 ? "mt-5 border-t border-outline-variant pt-5" : ""}>
-          <p className="type-headline-small flex items-center gap-2 text-primary">
+          <p className="type-title-large flex items-center gap-2 text-primary">
             <span aria-hidden>{s.num}</span>
             {s.title}
           </p>

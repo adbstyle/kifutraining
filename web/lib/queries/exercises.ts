@@ -17,7 +17,6 @@ export type ExerciseFilters = {
   kat?: string[]; // Alterskategorien G/F/E (Überlappung)
   feld?: string[]; // Feldtyp (OR)
   form?: string[]; // Erscheinungsform (Überlappung)
-  thema?: string[]; // Thema (OR)
   kinder?: number; // verfügbare Gruppengrösse
   q?: string; // Freitext
 };
@@ -50,7 +49,6 @@ export async function getExercises(
   if (f.kat?.length) query = query.overlaps("kategorien", f.kat);
   if (f.feld?.length) query = query.in("feldtyp", f.feld);
   if (f.form?.length) query = query.overlaps("erscheinungsform", f.form);
-  if (f.thema?.length) query = query.in("thema", f.thema);
   // Gruppengrösse: durchführbar, wenn die Mindestzahl <= verfügbar ist
   // oder gar keine Mindestzahl angegeben ist (EK6).
   if (typeof f.kinder === "number" && Number.isFinite(f.kinder)) {
@@ -81,7 +79,6 @@ export type ExerciseDetail = {
   trainingsteil: string;
   erscheinungsform: string[];
   feldtyp: string | null;
-  thema: string | null;
   kategorien: string[];
   spielform: string | null;
   anzahl_kinder: { min?: number | null; empfohlen?: number | null } | null;
@@ -95,14 +92,6 @@ export type ExerciseDetail = {
   owner_id: string | null;
 };
 
-export type ThemaDetail = {
-  id: string;
-  name: string;
-  ziele: string[];
-  metaphern: string[];
-  fragen_an_die_kinder: string[];
-};
-
 /** Eine Übung per Slug (volle Felder). RLS blendet private Übungen für
  *  Nicht-Eigentümer aus -> null (Story 4 Postcondition). */
 export async function getExerciseDetail(
@@ -112,24 +101,12 @@ export async function getExerciseDetail(
   const { data, error } = await supabase
     .from("exercises")
     .select(
-      "id, slug, name, trainingsteil, erscheinungsform, feldtyp, thema, kategorien, spielform, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, source, visibility, owner_id",
+      "id, slug, name, trainingsteil, erscheinungsform, feldtyp, kategorien, spielform, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, source, visibility, owner_id",
     )
     .eq("slug", slug)
     .maybeSingle();
   if (error) throw error;
   return (data as ExerciseDetail | null) ?? null;
-}
-
-/** Themen-Infos (Ziele/Metaphern/Fragen) zu einer Thema-Id. */
-export async function getThemaDetail(id: string): Promise<ThemaDetail | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("themen")
-    .select("id, name, ziele, metaphern, fragen_an_die_kinder")
-    .eq("id", id)
-    .maybeSingle();
-  if (error) throw error;
-  return (data as ThemaDetail | null) ?? null;
 }
 
 /** Ausschliesslich die eigenen Übungen des angemeldeten Trainers (Story 8) —
@@ -147,17 +124,6 @@ export async function getMyExercises(): Promise<ExerciseListRow[]> {
     .order("updated_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as ExerciseListRow[];
-}
-
-/** Themen für die Filter-Optionen (id + Anzeigename). */
-export async function getThemen(): Promise<{ id: string; name: string }[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("themen")
-    .select("id, name")
-    .order("name");
-  if (error) throw error;
-  return data ?? [];
 }
 
 /** DB-Zeile -> Karten-Props (Labels aus dem Vokabular). */

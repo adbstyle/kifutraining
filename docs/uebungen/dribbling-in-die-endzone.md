@@ -1,6 +1,6 @@
 # In die Endzone
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** dribbling · **Spielform:** 3:3
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Spielform:** 3:3
 
 ![In die Endzone](../images/dribbling-in-die-endzone.png)
 

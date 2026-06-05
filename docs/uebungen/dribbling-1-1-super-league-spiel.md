@@ -1,6 +1,6 @@
 # 1:1 Super-League-Spiel
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** dribbling
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
 ![1:1 Super-League-Spiel](../images/dribbling-1-1-super-league-spiel.png)
 

@@ -1,6 +1,6 @@
 # Kleiner Torschussrundlauf
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Thema:** torabschluss
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![Kleiner Torschussrundlauf](../images/torabschluss-kleiner-torschussrundlauf.png)
 

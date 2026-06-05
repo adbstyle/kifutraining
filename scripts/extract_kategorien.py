@@ -131,7 +131,7 @@ def main():
         exs = pages[page_no]
         names = reading_order(page_no)
         order = []
-        # Namen -> Slug über Suffix-Match (slug == {thema}-slugify(name) o. slugify(name))
+        # Namen -> Slug über Suffix-Match (slug == slugify(name) o. mit Präfix davor)
         for nm in names:
             sl = P.slugify(nm)
             match = next((e for e in exs if e["slug"] == sl or e["slug"].endswith("-" + sl)), None)

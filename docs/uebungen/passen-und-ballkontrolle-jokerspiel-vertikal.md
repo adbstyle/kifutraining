@@ -1,6 +1,6 @@
 # Jokerspiel vertikal
 
-**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** passen-und-ballkontrolle · **Spielform:** 3:3
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Spielform:** 3:3
 
 ![Jokerspiel vertikal](../images/passen-und-ballkontrolle-jokerspiel-vertikal.png)
 

@@ -84,11 +84,10 @@ function parseExercise(form: FormData): ParseResult {
     if (!aufbau) errors.aufbau = "Bitte den Aufbau beschreiben.";
   }
 
-  // Erscheinungsform/Thema nur bei Einleitung/Hauptteil
+  // Erscheinungsform nur bei Einleitung/Hauptteil
   const erscheinungsform = istFahrplan
     ? csv(form.get("form")).filter((f) => erscheinungsformSlugs.includes(f as never))
     : [];
-  const thema = istFahrplan ? clean(form.get("thema")) || null : null;
 
   const feldtyp = clean(form.get("feldtyp"));
   const min = clean(form.get("anzahl_min"));
@@ -108,7 +107,6 @@ function parseExercise(form: FormData): ParseResult {
       kategorien,
       feldtyp: feldtyp && feldtypSlugs.includes(feldtyp as never) ? feldtyp : null,
       erscheinungsform,
-      thema,
       spielform: clean(form.get("spielform")) || null,
       anzahl_kinder,
       material: lines(form.get("material")),

@@ -10,7 +10,7 @@ import {
   IconButton,
   TextField,
   TextArea,
-  SelectField,
+  Select,
   MethodischerFahrplan,
 } from "@/components/ui";
 import { SegmentedDemo } from "./SegmentedDemo";
@@ -428,15 +428,6 @@ export default function Styleguide() {
             label="Aufbau / Beschreibung"
             supportingText="Mehrzeilig — wächst bis 10 Zeilen, dann scrollen."
           />
-          <SelectField
-            label="Thema"
-            options={[
-              { value: "", label: "— kein Thema —" },
-              { value: "dribbling", label: "Dribbling" },
-              { value: "torabschluss", label: "Torabschluss" },
-            ]}
-            supportingText="Outlined-Select im gleichen Feld-Kontrakt wie Text-Field."
-          />
         </div>
       </Section>
 
@@ -449,7 +440,30 @@ export default function Styleguide() {
         <MenuDemo />
       </Section>
 
-      <Section n="15" title="Dialog &amp; Snackbar">
+      <Section n="15" title="Single-Select">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Auswahl <strong>eines</strong> Werts — kein natives{" "}
+          <code>&lt;select&gt;</code>. Der Trigger trägt den Feld-Token-Kontrakt
+          (wie Text-Field), das aufgeklappte Panel den <code>--menu-*</code>
+          -Kontrakt (gerundet, dunkle Surface, Hover, ✓ auf der Auswahl). Listbox-
+          Semantik mit voller Tastatursteuerung (↑/↓, Home/End, Enter, Esc).
+        </p>
+        <div className="grid max-w-md gap-6">
+          <Select
+            label="Feldtyp"
+            defaultValue="kleinfeld"
+            options={[
+              { value: "", label: "— kein Feldtyp —" },
+              { value: "kleinfeld", label: "Kleinfeld" },
+              { value: "grossfeld", label: "Grossfeld" },
+              { value: "freies_feld", label: "Freies Feld" },
+            ]}
+            supportingText="Öffnet ein Menu-Panel statt des OS-Dropdowns."
+          />
+        </div>
+      </Section>
+
+      <Section n="16" title="Dialog &amp; Snackbar">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           Dialog auf nativem <code>&lt;dialog&gt;</code> (Fokus-Trap, Escape,
           Scrim). Snackbar in M3-Inverse-Farben mit Aktion + Auto-Dismiss.

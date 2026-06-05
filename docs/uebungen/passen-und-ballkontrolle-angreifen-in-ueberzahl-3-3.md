@@ -1,6 +1,6 @@
 # Angreifen in Überzahl – 3:3
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** passen-und-ballkontrolle
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
 ![Angreifen in Überzahl – 3:3](../images/passen-und-ballkontrolle-angreifen-in-ueberzahl-3-3.png)
 

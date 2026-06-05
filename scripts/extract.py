@@ -11,7 +11,6 @@ import parser
 ROOT = Path(__file__).resolve().parent.parent
 PDF = ROOT / "sources" / "Manual_Kinderfussball_D.pdf"
 UEB = ROOT / "data" / "uebungen"
-THEMEN = ROOT / "data" / "themen"
 IMAGES = ROOT / "images"
 
 # Seite -> (trainingsteil, [erscheinungsform-slugs])
@@ -50,27 +49,17 @@ def extract_images(page, dest_prefix):
 
 
 def main():
-    for d in (UEB, THEMEN, IMAGES):
+    for d in (UEB, IMAGES):
         d.mkdir(parents=True, exist_ok=True)
     tmp = IMAGES / "_tmp"
     tmp.mkdir(exist_ok=True)
 
-    current_thema = None
     count = 0
     seen_ids: set = set()
     try:
         for page in range(60, 83):
             teil, erschein = PAGE_META[page]
             text = page_text(page)
-
-            theme = parser.parse_theme_header(text)
-            if theme:
-                current_thema = theme["id"]
-                (THEMEN / f"{theme['id']}.yaml").write_text(
-                    yaml.safe_dump({**theme, "trainingsteil": teil,
-                                    "erscheinungsform": erschein},
-                                   allow_unicode=True, sort_keys=False),
-                    encoding="utf-8")
 
             blocks = parser.split_page_into_exercises(text)
             imgs = extract_images(page, tmp / f"p{page}")
@@ -80,8 +69,7 @@ def main():
                 ex = parser.parse_exercise_block(block)
                 if not ex["name"]:
                     continue
-                thema = current_thema if teil == "hauptteil" else None
-                uid = f"{thema + '-' if thema else ''}{parser.slugify(ex['name'])}"
+                uid = parser.slugify(ex["name"])
 
                 if uid in seen_ids:
                     raise ValueError(f"Doppelte ID: {uid} (Seite {page})")
@@ -98,7 +86,6 @@ def main():
                     "trainingsteil": teil,
                     "erscheinungsform": erschein,
                     "feldtyp": feldtyp_aus_text(block),
-                    "thema": thema,
                     "kategorien": ex["kategorien"],
                     "spielform": ex["spielform"],
                     "anzahl_kinder": None,

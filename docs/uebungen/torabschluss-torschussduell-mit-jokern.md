@@ -1,6 +1,6 @@
 # Torschussduell mit Jokern
 
-**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Thema:** torabschluss
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![Torschussduell mit Jokern](../images/torabschluss-torschussduell-mit-jokern.png)
 

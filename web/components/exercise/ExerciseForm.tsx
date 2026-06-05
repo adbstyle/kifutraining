@@ -5,7 +5,7 @@ import { Save } from "lucide-react";
 import {
   TextField,
   TextArea,
-  SelectField,
+  Select,
   FilterChip,
   Button,
   SegmentedControl,
@@ -28,7 +28,6 @@ export type ExerciseInitial = {
   kategorien?: string[];
   feldtyp?: string | null;
   erscheinungsform?: string[];
-  thema?: string | null;
   spielform?: string | null;
   anzahl_kinder?: { min?: number | null; empfohlen?: number | null } | null;
   material?: string[];
@@ -58,12 +57,10 @@ function Group({ title, error, children }: { title: string; error?: string; chil
 export function ExerciseForm({
   action,
   initial = {},
-  themen,
   submitLabel,
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
-  themen: { id: string; name: string }[];
   submitLabel: string;
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
@@ -186,25 +183,13 @@ export function ExerciseForm({
       ))}
 
       {istFahrplan && (
-        <>
-          <Group title="Erscheinungsform (optional)">
-            {(Object.keys(formLabels) as (keyof typeof formLabels)[]).map((f) => (
-              <FilterChip key={f} selected={form.includes(f)} onClick={() => toggle(form, setForm, f)}>
-                {formLabels[f]}
-              </FilterChip>
-            ))}
-          </Group>
-
-          <SelectField
-            label="Thema (optional)"
-            name="thema"
-            defaultValue={initial.thema ?? ""}
-            options={[
-              { value: "", label: "— kein Thema —" },
-              ...themen.map((t) => ({ value: t.id, label: t.name })),
-            ]}
-          />
-        </>
+        <Group title="Erscheinungsform (optional)">
+          {(Object.keys(formLabels) as (keyof typeof formLabels)[]).map((f) => (
+            <FilterChip key={f} selected={form.includes(f)} onClick={() => toggle(form, setForm, f)}>
+              {formLabels[f]}
+            </FilterChip>
+          ))}
+        </Group>
       )}
 
       <div className="grid gap-5 sm:grid-cols-2">

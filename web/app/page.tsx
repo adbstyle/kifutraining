@@ -4,7 +4,6 @@ import { Flash } from "@/components/Flash";
 import { FilterPanel, type CatalogFilters } from "@/components/catalog/FilterPanel";
 import {
   getExercises,
-  getThemen,
   toCardData,
   type ExerciseFilters,
 } from "@/lib/queries/exercises";
@@ -36,18 +35,16 @@ export default async function Home({
     kat: list(sp.kat),
     feld: list(sp.feld),
     form: list(sp.form),
-    thema: list(sp.thema),
     kinder: num(sp.kinder),
     q: typeof sp.q === "string" ? sp.q : undefined,
   };
   const queryFilters: ExerciseFilters = { ...filters };
 
   let rows: Awaited<ReturnType<typeof getExercises>> | null = null;
-  let themen: { id: string; name: string }[] = [];
   let error: string | null = null;
 
   try {
-    [rows, themen] = await Promise.all([getExercises(queryFilters), getThemen()]);
+    rows = await getExercises(queryFilters);
   } catch (e) {
     error = e instanceof Error ? e.message : "Unbekannter Fehler";
   }
@@ -79,7 +76,7 @@ export default async function Home({
 
       {rows && (
         <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-          <FilterPanel filters={filters} themen={themen} />
+          <FilterPanel filters={filters} />
 
           <section>
             <p className="type-label-small mb-4 text-on-surface-variant">

@@ -8,17 +8,6 @@ create extension if not exists pg_trgm;
 -- Tabellen
 -- ============================================================================
 
-create table themen (
-  id text primary key,                      -- sprechender Slug (= YAML-id)
-  name text not null,
-  trainingsteil text not null
-    check (trainingsteil in ('auffangen','einleitung','hauptteil','ausklang')),
-  erscheinungsform text[] not null default '{}',
-  ziele text[] not null default '{}',
-  metaphern text[] not null default '{}',
-  fragen_an_die_kinder text[] not null default '{}'
-);
-
 create table exercises (
   id uuid primary key default gen_random_uuid(),
   slug text unique not null,
@@ -27,7 +16,6 @@ create table exercises (
     check (trainingsteil in ('auffangen','einleitung','hauptteil','ausklang')),
   erscheinungsform text[] not null default '{}',
   feldtyp text check (feldtyp in ('kleinfeld','grossfeld','freies_feld')),
-  thema text references themen(id) on delete set null,
   kategorien text[] not null default '{}',          -- Teilmenge von {G,F,E}
   spielform text,
   anzahl_kinder jsonb,                               -- {min, empfohlen}
@@ -50,10 +38,10 @@ create table exercises (
   updated_at timestamptz not null default now(),
   -- Herkunfts-Konsistenz: Manual-Übungen haben nie einen Owner
   constraint manual_has_no_owner check (source <> 'manual' or owner_id is null),
-  -- Erscheinungsform/Thema nur bei Hauptteil ODER Einleitung (Stories 3/4/6, §7.3)
-  constraint themenfelder_nur_haupt_einleitung check (
+  -- Erscheinungsform nur bei Hauptteil ODER Einleitung (Stories 3/4/6, §7.3)
+  constraint erscheinungsform_nur_haupt_einleitung check (
     trainingsteil in ('hauptteil','einleitung')
-    or (erscheinungsform = '{}' and thema is null)
+    or erscheinungsform = '{}'
   ),
   -- Übungsablauf passend zum Trainingsteil vorhanden
   constraint ablauf_je_trainingsteil check (
@@ -112,7 +100,6 @@ create index exercises_name_trgm_idx on exercises using gin (name gin_trgm_ops);
 create index exercises_filter_idx on exercises (trainingsteil, visibility);
 create index exercises_kinder_idx on exercises (anzahl_kinder_min);
 create index exercises_owner_idx on exercises (owner_id);
-create index exercises_thema_idx on exercises (thema);
 create index plan_exercises_plan_idx on plan_exercises (plan_id);
 create index plan_exercises_exercise_idx on plan_exercises (exercise_id);
 create index plans_owner_idx on training_plans (owner_id);
@@ -204,13 +191,9 @@ create trigger plan_exercise_phase before insert or update on plan_exercises
 -- Row Level Security
 -- ============================================================================
 
-alter table themen enable row level security;
 alter table exercises enable row level security;
 alter table training_plans enable row level security;
 alter table plan_exercises enable row level security;
-
--- Themen: für alle lesbar, nicht über die App schreibbar (nur Seed via service_role).
-create policy themen_select on themen for select using (true);
 
 -- Übungen
 create policy ex_select on exercises for select

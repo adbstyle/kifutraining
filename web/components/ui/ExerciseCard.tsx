@@ -43,8 +43,26 @@ export function ExerciseCard({ ex }: { ex: ExerciseCardData }) {
             <FieldPlaceholder className="h-full w-full" />
           )}
 
-          {/* Herkunft / Status — oben rechts */}
-          <div className="absolute right-2 top-2">
+          {/* Lesbarkeits-Scrim für die Overlays oben — auf der dunklen
+              Kreide-Skizze kaum sichtbar, sorgt auf hellen Diagramm-Bildern
+              für Kontrast. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/55 to-transparent"
+          />
+
+          {/* Overlay-Zeile oben: Alterskategorien links, Status rechts —
+              gemeinsame Höhe, mittig zueinander ausgerichtet. */}
+          <div className="absolute inset-x-2 top-2 flex items-center justify-between gap-2">
+            {ex.kategorien.length > 0 ? (
+              <div className="flex gap-1">
+                {ex.kategorien.map((k) => (
+                  <KategorieChip key={k} k={k} />
+                ))}
+              </div>
+            ) : (
+              <span />
+            )}
             <HerkunftBadge herkunft={ex.herkunft} visibility={ex.visibility} />
           </div>
         </div>
@@ -57,13 +75,6 @@ export function ExerciseCard({ ex }: { ex: ExerciseCardData }) {
           <p className="type-label-small mt-1 text-on-surface-variant">
             {meta}
           </p>
-          {ex.kategorien.length > 0 && (
-            <div className="mt-3 flex gap-1">
-              {ex.kategorien.map((k) => (
-                <KategorieChip key={k} k={k} />
-              ))}
-            </div>
-          )}
         </div>
       </Link>
     </Card>
