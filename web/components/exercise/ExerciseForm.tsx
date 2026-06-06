@@ -139,13 +139,19 @@ export function ExerciseForm({
         ))}
       </Group>
 
-      <Group title="Feldtyp (optional)">
-        {(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => (
-          <FilterChip key={t} selected={feld === t} onClick={() => setFeld(feld === t ? "" : t)}>
-            {feldLabels[t]}
-          </FilterChip>
-        ))}
-      </Group>
+      <Select
+        label="Feldtyp (optional)"
+        className="max-w-xs"
+        value={feld}
+        onChange={setFeld}
+        options={[
+          { value: "", label: "— kein Feldtyp —" },
+          ...(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => ({
+            value: t,
+            label: feldLabels[t],
+          })),
+        ]}
+      />
 
       {teil && (istFahrplan ? (
         <fieldset className="flex flex-col gap-5 rounded-[6px] border border-outline-variant p-5">
