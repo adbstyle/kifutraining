@@ -7,10 +7,9 @@ erscheinungsform:
 feldtyp: null
 kategorien:
 - E
-spielform: '3:3'
 anzahl_kinder:
   min: 6
-  empfohlen: 6
+  max: 6
 material: []
 methodischer_fahrplan:
   offen_starten: 'Im Spiel 3:3 übers Kreuz greift Rot auf die blauen Tore an und verteidigt

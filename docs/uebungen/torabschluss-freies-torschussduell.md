@@ -1,6 +1,6 @@
 # Freies Torschussduell
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Spielform:** 2:2
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![Freies Torschussduell](../images/torabschluss-freies-torschussduell.png)
 

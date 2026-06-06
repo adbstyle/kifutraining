@@ -8,10 +8,9 @@ kategorien:
 - G
 - F
 - E
-spielform: '1:1'
 anzahl_kinder:
   min: 2
-  empfohlen: 2
+  max: 2
 material: []
 methodischer_fahrplan:
   offen_starten: Kleinfeld     Die Kinder spielen auf dem Kleinfeld 1:1 bis 4:4, je

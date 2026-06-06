@@ -1,6 +1,6 @@
 # Torspieler/in in der Abschlusszone
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Spielform:** 3:3
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![Torspieler/in in der Abschlusszone](../images/torabschluss-torspieler-in-in-der-abschlusszone.png)
 

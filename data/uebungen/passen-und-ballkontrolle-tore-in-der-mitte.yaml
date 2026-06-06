@@ -8,10 +8,9 @@ feldtyp: null
 kategorien:
 - F
 - E
-spielform: '3:3'
 anzahl_kinder:
   min: 6
-  empfohlen: 6
+  max: 6
 material: []
 methodischer_fahrplan:
   offen_starten: Manual Fussball – Good Practice Im Spiel 3:3 greift Rot auf die beiden

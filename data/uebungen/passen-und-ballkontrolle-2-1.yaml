@@ -8,10 +8,9 @@ feldtyp: kleinfeld
 kategorien:
 - F
 - E
-spielform: '2:1'
 anzahl_kinder:
   min: 3
-  empfohlen: 3
+  max: 3
 material: []
 methodischer_fahrplan:
   offen_starten: Die Kinder spielen im Kleinfeld 2:1. Die rote Linie dient als Grenze.

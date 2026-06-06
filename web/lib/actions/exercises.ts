@@ -74,10 +74,10 @@ function parseExercise(form: FormData): ParseResult {
     const offen = clean(form.get("offen_starten"));
     const ueben = lines(form.get("ueben"));
     const wett = clean(form.get("wetteifern"));
-    if (!offen) errors.offen_starten = "Pflichtfeld für Einleitung/Hauptteil.";
+    if (!offen) errors.offen_starten = "Bitte beschreiben, wie die Übung offen startet.";
     if (ueben.length === 0)
-      errors.ueben = "Mindestens ein Übungsschritt nötig.";
-    if (!wett) errors.wetteifern = "Pflichtfeld für Einleitung/Hauptteil.";
+      errors.ueben = "Bitte mindestens einen Übungsschritt angeben.";
+    if (!wett) errors.wetteifern = "Bitte den Wett-eifern-Teil beschreiben.";
     methodischer_fahrplan = { offen_starten: offen, ueben, wetteifern: wett };
   } else if (trainingsteil) {
     aufbau = clean(form.get("aufbau"));
@@ -91,11 +91,13 @@ function parseExercise(form: FormData): ParseResult {
 
   const feldtyp = clean(form.get("feldtyp"));
   const min = clean(form.get("anzahl_min"));
-  const empf = clean(form.get("anzahl_empfohlen"));
+  const max = clean(form.get("anzahl_max"));
   const anzahl_kinder =
-    min || empf
-      ? { min: min ? Number(min) : null, empfohlen: empf ? Number(empf) : null }
+    min || max
+      ? { min: min ? Number(min) : null, max: max ? Number(max) : null }
       : null;
+  if (min && max && Number(max) < Number(min))
+    errors.anzahl_max = "Die Maximalanzahl darf nicht kleiner als die Mindestanzahl sein.";
 
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
@@ -107,7 +109,6 @@ function parseExercise(form: FormData): ParseResult {
       kategorien,
       feldtyp: feldtyp && feldtypSlugs.includes(feldtyp as never) ? feldtyp : null,
       erscheinungsform,
-      spielform: clean(form.get("spielform")) || null,
       anzahl_kinder,
       material: lines(form.get("material")),
       methodischer_fahrplan,

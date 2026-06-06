@@ -70,7 +70,6 @@ def test_parse_full_exercise_block():
         "Als Mitspieler/innen freilaufen, anspielbar sein",
     ]
     assert ex["wetteifern"].startswith("Welches Team erzielt")
-    assert ex["spielform"] == "3:3"
 
 SIMPLE_BLOCK = (
 "Freies Kleinfeldspiel                                               G     F      E\n"

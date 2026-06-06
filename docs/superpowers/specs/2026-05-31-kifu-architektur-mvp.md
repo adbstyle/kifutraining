@@ -223,7 +223,6 @@ erDiagram
         text feldtyp "nullable"
         text thema FK "nullable, nur hauptteil/einleitung"
         text[] kategorien "G|F|E (mind. 1 bei user)"
-        text spielform "nullable"
         jsonb anzahl_kinder "{min,empfohlen}"
         text[] material
         jsonb methodischer_fahrplan "offen_starten/ueben/wetteifern (einleitung/hauptteil)"
@@ -301,7 +300,6 @@ create table exercises (
   feldtyp text check (feldtyp in ('kleinfeld','grossfeld','freies_feld')),
   thema text references themen(id),
   kategorien text[] not null default '{}',
-  spielform text,
   anzahl_kinder jsonb,
   material text[] not null default '{}',
   methodischer_fahrplan jsonb,        -- {offen_starten, ueben[], wetteifern} bei einleitung/hauptteil

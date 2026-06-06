@@ -28,8 +28,7 @@ export type ExerciseInitial = {
   kategorien?: string[];
   feldtyp?: string | null;
   erscheinungsform?: string[];
-  spielform?: string | null;
-  anzahl_kinder?: { min?: number | null; empfohlen?: number | null } | null;
+  anzahl_kinder?: { min?: number | null; max?: number | null } | null;
   material?: string[];
   methodischer_fahrplan?: {
     offen_starten?: string;
@@ -161,21 +160,21 @@ export function ExerciseForm({
             name="offen_starten"
             defaultValue={initial.methodischer_fahrplan?.offen_starten}
             error={!!err.offen_starten}
-            supportingText={err.offen_starten ?? "Wie die Übung offen beginnt."}
+            supportingText={err.offen_starten ?? "Pflichtfeld — wie die Übung offen startet."}
           />
           <TextArea
             label="② Üben — ein Schritt pro Zeile"
             name="ueben"
             defaultValue={initial.methodischer_fahrplan?.ueben?.join("\n")}
             error={!!err.ueben}
-            supportingText={err.ueben ?? "Mindestens ein Übungsschritt."}
+            supportingText={err.ueben ?? "Pflichtfeld — mindestens ein Schritt, einer pro Zeile."}
           />
           <TextArea
             label="③ Wett-eifern"
             name="wetteifern"
             defaultValue={initial.methodischer_fahrplan?.wetteifern ?? undefined}
             error={!!err.wetteifern}
-            supportingText={err.wetteifern ?? "Der spielerische Wettkampf-Teil."}
+            supportingText={err.wetteifern ?? "Pflichtfeld — der spielerische Wettkampf-Teil."}
           />
         </fieldset>
       ) : (
@@ -184,7 +183,7 @@ export function ExerciseForm({
           name="aufbau"
           defaultValue={initial.aufbau ?? undefined}
           error={!!err.aufbau}
-          supportingText={err.aufbau ?? "Aufbau und Ablauf der Übung."}
+          supportingText={err.aufbau ?? "Pflichtfeld — Aufbau und Ablauf der Übung."}
         />
       ))}
 
@@ -198,12 +197,37 @@ export function ExerciseForm({
         </Group>
       )}
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <TextField label="Spielform (optional)" name="spielform" defaultValue={initial.spielform ?? undefined} />
-        <div className="grid grid-cols-2 gap-3">
-          <TextField label="Kinder ab" name="anzahl_min" type="number" inputMode="numeric" min={1} defaultValue={initial.anzahl_kinder?.min ?? undefined} />
-          <TextField label="Empfohlen" name="anzahl_empfohlen" type="number" inputMode="numeric" min={1} defaultValue={initial.anzahl_kinder?.empfohlen ?? undefined} />
+      <div>
+        <p className={`type-label-small mb-2 ${err.anzahl_max ? "text-error" : "text-on-surface-variant"}`}>
+          Anzahl Kinder
+        </p>
+        <div className="flex items-start gap-3 sm:max-w-sm">
+          <TextField
+            label="Minimum"
+            name="anzahl_min"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            className="flex-1"
+            defaultValue={initial.anzahl_kinder?.min ?? undefined}
+          />
+          <span aria-hidden className="type-body-large flex h-14 items-center text-on-surface-variant">
+            –
+          </span>
+          <TextField
+            label="Maximum"
+            name="anzahl_max"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            className="flex-1"
+            error={!!err.anzahl_max}
+            defaultValue={initial.anzahl_kinder?.max ?? undefined}
+          />
         </div>
+        <p className={`type-body-small mt-1.5 ${err.anzahl_max ? "text-error" : "text-on-surface-variant"}`}>
+          {err.anzahl_max ?? "Mindest- und Höchstzahl der Kinder, z. B. 4 bis 8. Leer lassen, wenn beliebig."}
+        </p>
       </div>
 
       <TextArea label="Material (optional, eines pro Zeile)" name="material" defaultValue={initial.material?.join("\n")} />

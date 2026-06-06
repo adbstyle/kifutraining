@@ -15,7 +15,7 @@ def test_render_exercise_markdown():
         "trainingsteil": "hauptteil",
         "erscheinungsform": ["spiel-kreativ-gestalten", "ball-entschlossen-erobern"],
         "feldtyp": "kleinfeld",
-        "kategorien": ["G", "F", "E"], "spielform": "3:3",
+        "kategorien": ["G", "F", "E"],
         "methodischer_fahrplan": {
             "offen_starten": "Zwei Teams spielen 3:3.",
             "ueben": ["Täuschen und dribbeln"],

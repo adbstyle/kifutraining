@@ -1,6 +1,6 @@
 # Jokerspiel mit Eindribbeln
 
-**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Spielform:** 3:3
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
 ![Jokerspiel mit Eindribbeln](../images/passen-und-ballkontrolle-jokerspiel-mit-eindribbeln.png)
 

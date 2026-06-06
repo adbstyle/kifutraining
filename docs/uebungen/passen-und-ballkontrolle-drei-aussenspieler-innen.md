@@ -1,6 +1,6 @@
 # Drei Aussenspieler/innen
 
-**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Spielform:** 3:3
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
 ![Drei Aussenspieler/innen](../images/passen-und-ballkontrolle-drei-aussenspieler-innen.png)
 

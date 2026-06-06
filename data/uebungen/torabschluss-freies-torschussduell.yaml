@@ -8,10 +8,9 @@ feldtyp: null
 kategorien:
 - F
 - E
-spielform: '2:2'
 anzahl_kinder:
   min: 4
-  empfohlen: 4
+  max: 4
 material: []
 methodischer_fahrplan:
   offen_starten: Die Kinder versuchen im 2:2, durch mutiges Dribbeln, geschicktes

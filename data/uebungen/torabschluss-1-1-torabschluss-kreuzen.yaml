@@ -7,10 +7,9 @@ erscheinungsform:
 feldtyp: null
 kategorien:
 - E
-spielform: '1:1'
 anzahl_kinder:
   min: 2
-  empfohlen: 2
+  max: 2
 material: []
 methodischer_fahrplan:
   offen_starten: Ein/e Angreifer/in (mit Ball) und ein/e Verteidiger/in (ohne Ball)

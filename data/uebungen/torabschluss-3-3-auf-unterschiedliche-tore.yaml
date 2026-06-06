@@ -8,10 +8,9 @@ feldtyp: null
 kategorien:
 - F
 - E
-spielform: '3:3'
 anzahl_kinder:
   min: 6
-  empfohlen: 6
+  max: 6
 material: []
 methodischer_fahrplan:
   offen_starten: Die Kinder spielen 3:3. Das weisse Team schiesst auf das grosse Tor,

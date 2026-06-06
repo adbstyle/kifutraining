@@ -7,10 +7,9 @@ erscheinungsform:
 feldtyp: null
 kategorien:
 - E
-spielform: '3:3'
 anzahl_kinder:
   min: 6
-  empfohlen: 6
+  max: 6
 material: []
 methodischer_fahrplan:
   offen_starten: Die Kinder spielen 3:3 mit Jokern an der Aussenlinie. Spielt ein/e

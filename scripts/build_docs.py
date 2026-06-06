@@ -22,8 +22,6 @@ def render_exercise(doc, vocab):
         meta.append(f"**Erscheinungsform:** {', '.join(formen)}")
     if doc.get("feldtyp"):
         meta.append(f"**Feldtyp:** {vocab['feldtyp'].get(doc['feldtyp'], doc['feldtyp'])}")
-    if doc.get("spielform"):
-        meta.append(f"**Spielform:** {doc['spielform']}")
     lines += [" · ".join(meta), ""]
     if doc.get("bild"):
         lines += [f"![{doc['name']}](../{doc['bild']})", ""]

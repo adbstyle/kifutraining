@@ -1,6 +1,6 @@
 # Jokerspiel seitlich
 
-**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Spielform:** 2:2
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
 ![Jokerspiel seitlich](../images/passen-und-ballkontrolle-jokerspiel-seitlich.png)
 

@@ -48,10 +48,11 @@ function Meta({ label, children }: { label: string; children: React.ReactNode })
 
 function anzahlText(a: ExerciseDetail["anzahl_kinder"]): string | null {
   if (!a) return null;
-  const parts: string[] = [];
-  if (a.min != null) parts.push(`ab ${a.min}`);
-  if (a.empfohlen != null) parts.push(`empfohlen ${a.empfohlen}`);
-  return parts.length ? parts.join(" · ") : null;
+  const { min, max } = a;
+  if (min != null && max != null) return min === max ? `${min}` : `${min}–${max}`;
+  if (min != null) return `ab ${min}`;
+  if (max != null) return `bis ${max}`;
+  return null;
 }
 
 export default async function ExerciseDetailPage({
@@ -76,7 +77,6 @@ export default async function ExerciseDetailPage({
   const meta = [
     teilLabels[ex.trainingsteil as keyof typeof teilLabels] ?? ex.trainingsteil,
     ex.feldtyp ? feldLabels[ex.feldtyp as keyof typeof feldLabels] : null,
-    ex.spielform,
   ].filter(Boolean);
   const anzahl = anzahlText(ex.anzahl_kinder);
 

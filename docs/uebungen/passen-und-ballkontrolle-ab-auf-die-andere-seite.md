@@ -1,6 +1,6 @@
 # Ab auf die andere Seite
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Spielform:** 3:3
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
 ![Ab auf die andere Seite](../images/passen-und-ballkontrolle-ab-auf-die-andere-seite.png)
 

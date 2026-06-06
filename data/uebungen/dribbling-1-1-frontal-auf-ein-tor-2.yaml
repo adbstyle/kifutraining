@@ -8,10 +8,9 @@ feldtyp: null
 kategorien:
 - F
 - E
-spielform: '1:1'
 anzahl_kinder:
   min: 2
-  empfohlen: 2
+  max: 2
 material: []
 methodischer_fahrplan:
   offen_starten: Die Kinder duellieren sich 1:1. Das Tor in der Mitte ist grösser

@@ -46,7 +46,6 @@ export default async function EditPage({
           kategorien: ex.kategorien,
           feldtyp: ex.feldtyp,
           erscheinungsform: ex.erscheinungsform,
-          spielform: ex.spielform,
           anzahl_kinder: ex.anzahl_kinder,
           material: ex.material,
           methodischer_fahrplan: ex.methodischer_fahrplan,

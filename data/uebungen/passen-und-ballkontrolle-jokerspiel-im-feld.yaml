@@ -7,10 +7,9 @@ erscheinungsform:
 feldtyp: null
 kategorien:
 - E
-spielform: '4:4'
 anzahl_kinder:
   min: 8
-  empfohlen: 8
+  max: 8
 material: []
 methodischer_fahrplan:
   offen_starten: Die Kinder spielen 4:4 mit zwei Jokern. Alle Kinder beteiligen sich

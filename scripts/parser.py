@@ -59,7 +59,6 @@ def split_bullets(lines):
     return bullets
 
 _SECTION_KEYS = {"Offen": "aufbau", "Üben": "ueben", "Wett-": "wetteifern"}
-_SPIELFORM = re.compile(r"\b(\d+\s*:\s*\d+)\b")
 
 def _content_column(line):
     """Spaltenindex, an dem nach Label-Wort + Leerraum der Inhalt beginnt."""
@@ -98,14 +97,12 @@ def parse_exercise_block(block):
             sections[current].append(content)
 
     aufbau = join_text(sections["aufbau"])
-    spielform_m = _SPIELFORM.search(aufbau)
     return {
         "name": title,
         "kategorien": cats,
         "aufbau": aufbau,
         "ueben": split_bullets(sections["ueben"]),
         "wetteifern": join_text(sections["wetteifern"]) or None,
-        "spielform": spielform_m.group(1).replace(" ", "") if spielform_m else None,
     }
 
 def split_page_into_exercises(page_text):

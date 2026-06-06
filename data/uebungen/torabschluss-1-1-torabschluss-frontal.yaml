@@ -8,10 +8,9 @@ feldtyp: null
 kategorien:
 - F
 - E
-spielform: '1:1'
 anzahl_kinder:
   min: 2
-  empfohlen: 2
+  max: 2
 material: []
 methodischer_fahrplan:
   offen_starten: Ein Kind aus Team Rot passt zu einem Kind aus Team Weiss. Danach

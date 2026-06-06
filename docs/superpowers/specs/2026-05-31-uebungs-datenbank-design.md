@@ -12,7 +12,7 @@ generiert. So sind die Daten sowohl auf GitHub durchblätterbar als auch maschin
 für eine spätere App (Trainingsplaner, Filter) nutzbar.
 
 **Filterbarkeit ist ein Kernziel:** Felder, nach denen die App filtern soll
-(`erscheinungsform`, `feldtyp`, `kategorien`, `anzahl_kinder`, `spielform`), sind als
+(`erscheinungsform`, `feldtyp`, `kategorien`, `anzahl_kinder`), sind als
 **kontrollierte Vokabulare/Enums** modelliert — nicht als Freitext. Die erlaubten
 Werte liegen in `data/vokabular.yaml` (Slug → Anzeigetext) für Filter-Dropdowns.
 
@@ -78,7 +78,6 @@ erscheinungsform: [spiel-kreativ-gestalten, ball-entschlossen-erobern]   # Liste
 feldtyp: kleinfeld                  # kleinfeld | grossfeld | freies_feld | null (best-effort)
 thema: dribbling                    # ref auf data/themen/dribbling.yaml
 kategorien: [G, F, E]               # Alterskategorien aus den G/F/E-Badges
-spielform: "3:3"                    # wo angegeben, sonst null
 anzahl_kinder: { min: 6, empfohlen: 6 }   # abgeleitet (best-effort); null wenn unklar
 material: [Markierkegel, Minitore, "1 Ball pro Team"]   # best-effort, sonst []
 aufbau: >                           # Inhalt von «Offen starten»
@@ -96,7 +95,7 @@ quelle: { datei: Manual_Kinderfussball_D.pdf, seite: 65 }
 ### Feld-Regeln
 - **Nicht ableitbare Felder bleiben leer/`null`** statt geraten zu werden, damit klar
   ist, was bei der manuellen Korrektur noch zu ergänzen ist.
-- `spielform`, `anzahl_kinder`, `material`, `varianten`, `feldtyp` sind best-effort aus
+- `anzahl_kinder`, `material`, `varianten`, `feldtyp` sind best-effort aus
   Text (und ggf. Diagramm) abgeleitet.
 - **Filter-Enums (kontrolliertes Vokabular, definiert in `data/vokabular.yaml`):**
   - `erscheinungsform` (Liste): `spiel-kreativ-gestalten`, `ball-entschlossen-erobern`,

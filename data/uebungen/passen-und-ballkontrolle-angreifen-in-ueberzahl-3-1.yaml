@@ -9,10 +9,9 @@ kategorien:
 - G
 - F
 - E
-spielform: '3:1'
 anzahl_kinder:
   min: 4
-  empfohlen: 4
+  max: 4
 material: []
 methodischer_fahrplan:
   offen_starten: Im Spiel 3:1 (oder 2:1) greifen die Kinder von Team Weiss auf die

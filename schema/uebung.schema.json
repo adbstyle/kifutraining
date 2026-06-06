@@ -23,13 +23,12 @@
       "items": { "enum": ["G", "F", "E"] },
       "uniqueItems": true
     },
-    "spielform": { "type": ["string", "null"] },
     "anzahl_kinder": {
       "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "min": { "type": ["integer", "null"] },
-        "empfohlen": { "type": ["integer", "null"] }
+        "max": { "type": ["integer", "null"] }
       }
     },
     "material": { "type": "array", "items": { "type": "string" } },

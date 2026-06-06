@@ -83,7 +83,6 @@ async function seedExercises() {
       erscheinungsform: u.erscheinungsform ?? [],
       feldtyp: u.feldtyp ?? null,
       kategorien: u.kategorien ?? [],
-      spielform: u.spielform ?? null,
       anzahl_kinder: u.anzahl_kinder ?? null,
       material: u.material ?? [],
       // Übungsablauf je Trainingsteil: methodischer_fahrplan (jsonb) bei

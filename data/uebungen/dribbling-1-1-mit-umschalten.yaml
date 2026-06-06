@@ -7,10 +7,9 @@ erscheinungsform:
 feldtyp: null
 kategorien:
 - E
-spielform: '1:1'
 anzahl_kinder:
   min: 2
-  empfohlen: 2
+  max: 2
 material: []
 methodischer_fahrplan:
   offen_starten: Ein Kind dribbelt in Richtung Schusszone und versucht im 1:1 ein
