@@ -420,13 +420,15 @@ export default function Styleguide() {
 
       <Section n="13" title="Text-Fields &amp; Text-Area">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Outlined mit schwebendem Label (KiFu: mono/uppercase), Supporting-Text
-          und Error-State. Die Text-Area ist mehrzeilig (Enter = Umbruch), wächst
-          bis ~10 Zeilen und scrollt danach. Gespeist aus{" "}
-          <code>--field-*</code>-Component-Tokens.
+          Outlined mit schwebendem Label (KiFu: mono/uppercase), optionalem
+          führenden Icon (<code>leadingIcon</code> — Label rückt ein, sodass es
+          das Icon nie überlagert), Supporting-Text und Error-State. Die
+          Text-Area ist mehrzeilig (Enter = Umbruch), wächst bis ~10 Zeilen und
+          scrollt danach. Gespeist aus <code>--field-*</code>-Component-Tokens.
         </p>
         <div className="grid max-w-md gap-6">
           <TextField label="Übungsname" supportingText="Pflichtfeld" />
+          <TextField label="Suche" type="search" leadingIcon={Search} />
           <TextField
             label="Anzahl Kinder"
             type="number"

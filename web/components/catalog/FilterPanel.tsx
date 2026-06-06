@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, RotateCcw } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { FilterChip, TextField, Button } from "@/components/ui";
 import {
   trainingsteil as teilLabels,
@@ -92,7 +93,7 @@ export function FilterPanel({ filters }: { filters: CatalogFilters }) {
         label="Suche"
         type="search"
         initial={filters.q ?? ""}
-        icon
+        leadingIcon={Search}
         onCommit={(v) => setScalar("q", v)}
       />
 
@@ -157,17 +158,16 @@ export function FilterPanel({ filters }: { filters: CatalogFilters }) {
 function DebouncedField({
   initial,
   onCommit,
-  icon = false,
   ...props
 }: {
   initial: string;
   onCommit: (value: string) => void;
-  icon?: boolean;
   label: string;
   type?: string;
   inputMode?: "numeric";
   min?: number;
   supportingText?: string;
+  leadingIcon?: LucideIcon;
 }) {
   const [value, setValue] = useState(initial);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -182,21 +182,10 @@ function DebouncedField({
   }
 
   return (
-    <div className="relative">
-      <TextField
-        {...props}
-        value={value}
-        onChange={(e) => handle(e.target.value)}
-        className={icon ? "[&_input]:pl-10" : undefined}
-      />
-      {icon && (
-        <Search
-          size={18}
-          strokeWidth={2}
-          aria-hidden
-          className="pointer-events-none absolute left-3 top-[18px] text-on-surface-variant"
-        />
-      )}
-    </div>
+    <TextField
+      {...props}
+      value={value}
+      onChange={(e) => handle(e.target.value)}
+    />
   );
 }

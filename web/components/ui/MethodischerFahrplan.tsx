@@ -7,12 +7,12 @@ export type FahrplanData = {
 };
 
 /* Signatur-Komponente: der methodische Fahrplan (Offen starten → Üben →
-   Wett-eifern) als nummerierte Sequenz. Leere Stufen (Altbestand) werden
+   Wetteifern) als nummerierte Sequenz. Leere Stufen (Altbestand) werden
    weggelassen, die Nummerierung bleibt an der Phase, nicht am Index. */
 const STEPS = [
   { key: "offen_starten", num: "①", title: "Offen starten" },
   { key: "ueben", num: "②", title: "Üben" },
-  { key: "wetteifern", num: "③", title: "Wett-eifern" },
+  { key: "wetteifern", num: "③", title: "Wetteifern" },
 ] as const;
 
 export function MethodischerFahrplan({
