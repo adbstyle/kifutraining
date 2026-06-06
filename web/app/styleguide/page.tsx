@@ -17,6 +17,7 @@ import { ChipsDemo } from "./ChipsDemo";
 import { NavRailDemo } from "./NavRailDemo";
 import { MenuDemo } from "./MenuDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
+import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import {
   Search,
   SlidersHorizontal,
@@ -482,6 +483,19 @@ export default function Styleguide() {
           Gespeist aus <code>--dialog-*</code> / <code>--snackbar-*</code>-Tokens.
         </p>
         <OverlaysDemo />
+      </Section>
+
+      <Section n="17" title="Breadcrumbs">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Sekundäre Pfad-Navigation. Datengetrieben (<code>items</code>); das
+          letzte Item ohne <code>href</code> ist die aktuelle Seite
+          (<code>aria-current</code>) und trägt das Gewicht (
+          <code>title-small</code>). Separator standardmässig{" "}
+          <code>ChevronRight</code>, per <code>separator</code> ersetzbar. Lange
+          Pfade kollabieren ab <code>maxItems</code> zu einem aufklappbaren
+          „…"-Button. Gespeist aus <code>--breadcrumb-*</code>-Component-Tokens.
+        </p>
+        <BreadcrumbsDemo />
       </Section>
     </main>
   );

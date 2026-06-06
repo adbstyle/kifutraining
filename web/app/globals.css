@@ -155,6 +155,14 @@
   --snackbar-label: var(--color-inverse-on-surface);
   --snackbar-action: var(--color-inverse-primary);
 
+  /* ─── Breadcrumb Component-Tokens. Sekundär-Navigation: ruhige Links in
+     on-surface-variant, aktuelle Seite trägt das Gewicht (on-surface).
+     Separator als Kreide-Strich in outline. ─── */
+  --breadcrumb-label: var(--color-on-surface-variant);
+  --breadcrumb-label-hover: var(--color-on-surface);
+  --breadcrumb-current: var(--color-on-surface);
+  --breadcrumb-separator: var(--color-outline);
+
   /* Typografie */
   --font-display: var(--font-anton), "Arial Narrow", sans-serif;
   --font-body: var(--font-source), Georgia, serif;

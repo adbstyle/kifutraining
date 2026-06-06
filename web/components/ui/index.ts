@@ -24,3 +24,5 @@ export { Dialog } from "./Dialog";
 export { Snackbar } from "./Snackbar";
 export { IconButton } from "./IconButton";
 export type { IconButtonProps } from "./IconButton";
+export { Breadcrumbs } from "./Breadcrumbs";
+export type { BreadcrumbItem } from "./Breadcrumbs";
