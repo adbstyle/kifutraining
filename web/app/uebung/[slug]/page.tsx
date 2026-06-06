@@ -122,31 +122,24 @@ export default async function ExerciseDetailPage({
         )}
       </header>
 
-      <div className="mt-8 grid gap-8 md:grid-cols-2">
-        {/* Diagramm */}
-        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[6px] border border-outline-variant">
-          {ex.bild_url ? (
-            <Image
-              src={ex.bild_url}
-              alt={`Feld-Diagramm: ${ex.name}`}
-              fill
-              sizes="(max-width: 768px) 100vw, 480px"
-              className="object-contain"
-            />
-          ) : (
-            <FieldPlaceholder className="h-full w-full" />
-          )}
-        </div>
+      {/* Diagramm — grosszügig, volle Breite */}
+      <div className="relative mt-8 aspect-[16/9] w-full overflow-hidden rounded-[6px] border border-outline-variant">
+        {ex.bild_url ? (
+          <Image
+            src={ex.bild_url}
+            alt={`Feld-Diagramm: ${ex.name}`}
+            fill
+            sizes="(max-width: 896px) 100vw, 896px"
+            className="object-contain"
+          />
+        ) : (
+          <FieldPlaceholder className="h-full w-full" />
+        )}
+      </div>
 
-        {/* Eckdaten */}
-        <div className="flex flex-col gap-5">
-          <Meta label="Alterskategorien">
-            <span className="type-body-medium text-on-surface-variant">
-              Geeignet für die oben markierten Stufen — in jeweils angepasster
-              Komplexität.
-            </span>
-          </Meta>
-
+      {/* Eckdaten — unterhalb des Bildes */}
+      {(ex.erscheinungsform.length > 0 || anzahl || ex.material.length > 0) && (
+        <div className="mt-6 flex flex-wrap gap-x-12 gap-y-5">
           {ex.erscheinungsform.length > 0 && (
             <Meta label="Erscheinungsform">
               {ex.erscheinungsform
@@ -159,7 +152,7 @@ export default async function ExerciseDetailPage({
             <Meta label="Material">{ex.material.join(", ")}</Meta>
           )}
         </div>
-      </div>
+      )}
 
       {/* Ablauf */}
       <section className="mt-10">
