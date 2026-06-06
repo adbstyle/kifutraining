@@ -1,6 +1,6 @@
 # Linienschiessen
 
-**Trainingsteil:** ausklang · **Kategorien:** G, F, E
+**Trainingsteil:** ausklang · **Kategorien:** G, F, E · **Feldtyp:** Grossfeld
 
 ![Linienschiessen](../images/linienschiessen.png)
 
