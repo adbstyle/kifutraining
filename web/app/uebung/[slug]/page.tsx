@@ -99,10 +99,8 @@ export default async function ExerciseDetailPage({
 
       <header className="mt-4">
         <div className="mb-3 flex flex-wrap items-center gap-2.5">
-          <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
           {ex.kategorien.length > 0 && (
             <>
-              <span aria-hidden className="h-3.5 w-px bg-outline-variant" />
               <div
                 className="flex items-center gap-1.5"
                 aria-label="Geeignete Alterskategorien"
@@ -111,8 +109,10 @@ export default async function ExerciseDetailPage({
                   <KategorieChip key={k} k={k as KategorieSlug} />
                 ))}
               </div>
+              <span aria-hidden className="h-3.5 w-px bg-outline-variant" />
             </>
           )}
+          <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
         </div>
         <h1 className="type-headline-large text-on-surface">{ex.name}</h1>
         {meta.length > 0 && (
