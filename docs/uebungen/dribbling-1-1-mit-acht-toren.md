@@ -1,6 +1,6 @@
 # 1:1 mit acht Toren
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
 ![1:1 mit acht Toren](../images/dribbling-1-1-mit-acht-toren.png)
 

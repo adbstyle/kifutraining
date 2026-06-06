@@ -3,7 +3,7 @@ name: Feuerball (Tupfball)
 trainingsteil: hauptteil
 erscheinungsform:
 - flink-geschickt-bewegen
-feldtyp: kleinfeld
+feldtyp: freies_feld
 kategorien:
 - F
 - E
