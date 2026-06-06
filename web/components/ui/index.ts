@@ -12,6 +12,8 @@ export { SegmentedControl } from "./SegmentedControl";
 export type { SegmentOption } from "./SegmentedControl";
 export { NavigationRail } from "./NavigationRail";
 export type { NavRailItem } from "./NavigationRail";
+export { BottomNav } from "./BottomNav";
+export type { BottomNavItem } from "./BottomNav";
 export { TextField } from "./TextField";
 export type { TextFieldProps } from "./TextField";
 export { TextArea } from "./TextArea";

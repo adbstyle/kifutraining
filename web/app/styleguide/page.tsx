@@ -15,6 +15,7 @@ import {
 import { SegmentedDemo } from "./SegmentedDemo";
 import { ChipsDemo } from "./ChipsDemo";
 import { NavRailDemo } from "./NavRailDemo";
+import { BottomNavDemo } from "./BottomNavDemo";
 import { MenuDemo } from "./MenuDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
@@ -227,8 +228,7 @@ export default function Styleguide() {
 
       <Section n="03" title="Elevation">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Höhe über Surface-Container; Schatten erst ab Level 3. Der CTA-Schatten
-          ist eine eigene Signatur (siehe Buttons), kein Elevation-Level.
+          Höhe über Surface-Container; Schatten erst ab Level 3.
         </p>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {elevations.map(([lvl, bg, shadow]) => (
@@ -308,7 +308,8 @@ export default function Styleguide() {
       <Section n="07" title="Buttons (M3-Styles) &amp; Button-Group">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           M3-Emphase-Stufen über <code>--button-*</code>-Component-Tokens. Filled
-          trägt die harte KiFu-CTA-Signatur, Elevated den weichen M3-Schatten.
+          ist flächig mit M3-State-Layer beim Hover, Elevated trägt den weichen
+          M3-Schatten. Shape bleibt KiFu-eckig (3px).
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <Button variant="filled">Plan erstellen</Button>
@@ -407,16 +408,25 @@ export default function Styleguide() {
         </Card>
       </Section>
 
-      <Section n="12" title="Navigation Rail">
-        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Vertikale Hauptnavigation (medium+ Fenster). Über den Menü-Button
-          zwischen <strong>collapsed</strong> (schmal) und{" "}
-          <strong>expanded</strong> (breit, Icon + Label nebeneinander)
-          umschaltbar. Aktives Ziel über Indicator-Pille (
-          <code>secondary-container</code>). Pfeiltasten-Navigation; gespeist aus{" "}
-          <code>--nav-*</code>-Component-Tokens.
+      <Section n="12" title="Navigation">
+        <p className="type-body-medium mb-2 max-w-xl text-on-surface-variant">
+          <strong>Navigation Rail</strong> — vertikale Hauptnavigation (medium+
+          Fenster). Über den Menü-Button zwischen <strong>collapsed</strong>{" "}
+          (schmal) und <strong>expanded</strong> (breit, Icon + Label
+          nebeneinander) umschaltbar. Optionale <code>header</code>- und{" "}
+          <code>footer</code>-Slots (Logo/FAB bzw. Abmelden). Aktives Ziel über
+          Indicator-Pille (<code>secondary-container</code>). Pfeiltasten-
+          Navigation; gespeist aus <code>--nav-*</code>-Component-Tokens.
         </p>
         <NavRailDemo />
+
+        <p className="type-body-medium mt-8 mb-5 max-w-xl text-on-surface-variant">
+          <strong>Bottom Navigation</strong> — dasselbe für kompakte Fenster
+          (Mobil): drei bis fünf gleich breite Ziele, aktives über dieselbe
+          Indicator-Pille hinter dem Icon. Die App schaltet automatisch zwischen
+          Rail (ab <code>md</code>) und Bottom Navigation um.
+        </p>
+        <BottomNavDemo />
       </Section>
 
       <Section n="13" title="Text-Fields &amp; Text-Area">

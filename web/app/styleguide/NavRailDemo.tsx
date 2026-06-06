@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { NavigationRail, IconButton } from "@/components/ui";
 import type { NavRailItem } from "@/components/ui";
-import { Home, BookOpen, ClipboardList, User, Menu } from "lucide-react";
+import { Home, BookOpen, ClipboardList, User, Menu, LogOut } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 type NavKey = "start" | "uebungen" | "plaene" | "profil";
 
@@ -34,6 +35,25 @@ export function NavRailDemo() {
             label={expanded ? "Navigation einklappen" : "Navigation ausklappen"}
             onClick={() => setExpanded((e) => !e)}
           />
+        }
+        footer={
+          <button
+            type="button"
+            className={cn(
+              "focus-ring type-label-large flex h-14 items-center rounded-full text-on-surface-variant transition-[gap,padding] duration-300 ease-in-out hover:bg-on-surface/8 hover:text-on-surface",
+              expanded ? "w-full justify-start gap-3 px-4" : "w-14 justify-center px-0",
+            )}
+          >
+            <LogOut size={24} strokeWidth={2} className="shrink-0" aria-hidden />
+            <span
+              className={cn(
+                "overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-in-out",
+                expanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0",
+              )}
+            >
+              Abmelden
+            </span>
+          </button>
         }
         className="h-full"
       />

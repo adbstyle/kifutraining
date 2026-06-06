@@ -92,7 +92,8 @@
   --button-shape: 3px;
 
   --button-filled-container: var(--color-primary);
-  --button-filled-container-hover: var(--color-signal-bright); /* KiFu-Signatur */
+  /* M3 State-Layer: 8 % on-primary über dem Container (kein Helligkeitswechsel) */
+  --button-filled-container-hover: color-mix(in oklab, var(--color-on-primary) 8%, var(--color-primary));
   --button-filled-label: var(--color-on-primary);
 
   --button-tonal-container: var(--color-secondary-container);

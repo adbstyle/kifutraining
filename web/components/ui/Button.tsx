@@ -13,9 +13,10 @@ const base =
   "focus-ring type-label-large inline-flex items-center justify-center gap-2 rounded-(--button-shape) transition-[background-color,box-shadow,transform,color] duration-150 disabled:opacity-40 disabled:pointer-events-none select-none";
 
 const variants: Record<Variant, string> = {
-  // Höchste Emphase — KiFu-Signatur: harter taktischer Schlagschatten
+  // Höchste Emphase — M3 Filled: flächig, Hover via State-Layer (kein Schatten,
+  // keine Helligkeitsänderung). Press-Nudge wie bei allen Varianten.
   filled:
-    "bg-(--button-filled-container) text-(--button-filled-label) hover:bg-(--button-filled-container-hover) active:translate-y-px shadow-[0_3px_0_0_var(--color-signal-dark)] active:shadow-[0_1px_0_0_var(--color-signal-dark)]",
+    "bg-(--button-filled-container) text-(--button-filled-label) hover:bg-(--button-filled-container-hover) active:translate-y-px",
   // Mittlere Emphase — tonale Fläche
   tonal:
     "bg-(--button-tonal-container) text-(--button-tonal-label) hover:bg-(--button-tonal-container-hover) active:translate-y-px",
