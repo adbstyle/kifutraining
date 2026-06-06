@@ -4,7 +4,6 @@ import {
   ButtonLink,
   ButtonGroup,
   Badge,
-  KategorieChip,
   Card,
   ExerciseCard,
   IconButton,
@@ -18,7 +17,6 @@ import { ChipsDemo } from "./ChipsDemo";
 import { NavRailDemo } from "./NavRailDemo";
 import { MenuDemo } from "./MenuDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
-import { kategorienSlugs } from "@/lib/vocab";
 import {
   Search,
   SlidersHorizontal,
@@ -81,6 +79,14 @@ const accentRoles: [string, string][] = [
   ["error", "bg-error"],
   ["error-container", "bg-error-container"],
   ["outline", "bg-outline"],
+];
+
+// Alterskategorien als Palette-Farben (Token + Stufe) — die kanonische
+// Quelle für G/F/E-Farben; keine neuen Hues erfinden.
+const kategorieColors: [string, string, string][] = [
+  ["kat-g", "bg-kat-g", "G-Junior:innen"],
+  ["kat-f", "bg-kat-f", "F-Junior:innen"],
+  ["kat-e", "bg-kat-e", "E-Junior:innen"],
 ];
 
 const typeScale: [string, string][] = [
@@ -196,10 +202,14 @@ export default function Styleguide() {
             </div>
           ))}
         </div>
-        <div className="mt-4 flex items-center gap-3">
-          <span className="type-label-small text-on-surface-variant">Alterskategorien:</span>
-          {kategorienSlugs.map((k) => (
-            <KategorieChip key={k} k={k} />
+        <p className="type-label-small mb-2 mt-6 text-on-surface-variant">Alterskategorien</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {kategorieColors.map(([name, bg, stufe]) => (
+            <div key={name} className="rounded-[4px] border border-outline p-3">
+              <div className={`mb-2 h-14 w-full rounded-[2px] border border-outline-variant ${bg}`} />
+              <p className="type-label-small text-on-surface">{name}</p>
+              <p className="type-label-small text-on-surface-variant">{stufe}</p>
+            </div>
           ))}
         </div>
       </Section>

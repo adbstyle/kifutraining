@@ -98,8 +98,21 @@ export default async function ExerciseDetailPage({
       </div>
 
       <header className="mt-4">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="mb-3 flex flex-wrap items-center gap-2.5">
           <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
+          {ex.kategorien.length > 0 && (
+            <>
+              <span aria-hidden className="h-3.5 w-px bg-outline-variant" />
+              <div
+                className="flex items-center gap-1.5"
+                aria-label="Geeignete Alterskategorien"
+              >
+                {ex.kategorien.map((k) => (
+                  <KategorieChip key={k} k={k as KategorieSlug} />
+                ))}
+              </div>
+            </>
+          )}
         </div>
         <h1 className="type-headline-large text-on-surface">{ex.name}</h1>
         {meta.length > 0 && (
@@ -127,17 +140,12 @@ export default async function ExerciseDetailPage({
 
         {/* Eckdaten */}
         <div className="flex flex-col gap-5">
-          <div>
-            <p className="type-label-small text-on-surface-variant">Alterskategorien</p>
-            <div className="mt-2 flex gap-1.5">
-              {ex.kategorien.map((k) => (
-                <KategorieChip key={k} k={k as KategorieSlug} />
-              ))}
-            </div>
-            <p className="type-body-small mt-2 text-on-surface-variant">
-              Geeignet für diese Stufen — in jeweils angepasster Komplexität.
-            </p>
-          </div>
+          <Meta label="Alterskategorien">
+            <span className="type-body-medium text-on-surface-variant">
+              Geeignet für die oben markierten Stufen — in jeweils angepasster
+              Komplexität.
+            </span>
+          </Meta>
 
           {ex.erscheinungsform.length > 0 && (
             <Meta label="Erscheinungsform">
