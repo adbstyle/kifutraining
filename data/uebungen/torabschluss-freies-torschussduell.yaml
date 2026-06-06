@@ -5,22 +5,20 @@ erscheinungsform:
 - mutig-tore-erzielen
 - mutig-tore-verhindern
 feldtyp: null
-thema: torabschluss
 kategorien:
-- G
 - F
 - E
-spielform: '2:2'
 anzahl_kinder:
   min: 4
-  empfohlen: 4
+  max: 4
 material: []
-aufbau: Die Kinder versuchen im 2:2, durch mutiges Dribbeln, geschicktes Zusammenspiel
-  und Freilaufen eine Überzahl zu kreieren und ein Tor zu erzielen.
-ueben:
-- Durch Dribbeln in den freien Raum und geschicktes Freilaufen Überzahlsituation nutzen
-  und den Torabschluss suchen
-wetteifern: Welches Team schafft innerhalb von fünf Minuten am meisten Tore?
+methodischer_fahrplan:
+  offen_starten: Die Kinder versuchen im 2:2, durch mutiges Dribbeln, geschicktes
+    Zusammenspiel und Freilaufen eine Überzahl zu kreieren und ein Tor zu erzielen.
+  ueben:
+  - Durch Dribbeln in den freien Raum und geschicktes Freilaufen Überzahlsituation
+    nutzen und den Torabschluss suchen
+  wetteifern: Welches Team schafft innerhalb von fünf Minuten am meisten Tore?
 varianten: []
 bild: images/torabschluss-freies-torschussduell.png
 quelle:

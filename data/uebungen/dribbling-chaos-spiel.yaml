@@ -4,22 +4,21 @@ trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
-feldtyp: null
-thema: dribbling
+feldtyp: kleinfeld
 kategorien:
 - G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Alle Kinder dribbeln gleichzeitig von der einen Seite zur anderen und schliessen
-  auf eines der drei Tore ab.
-ueben:
-- Mutig nach vorne dribbeln und die Gegenspieler/innen mit Täuschungen und Finten
-  (z. B. Körpertäuschung, Übersteiger, Schere) überwinden
-wetteifern: Bilde zwei Teams. Im 1:1 versuchen die Kinder, auf eines der drei Tore
-  abzuschliessen und Punkte für ihr Team zu sammeln.
+methodischer_fahrplan:
+  offen_starten: Alle Kinder dribbeln gleichzeitig von der einen Seite zur anderen
+    und schliessen auf eines der drei Tore ab.
+  ueben:
+  - Mutig nach vorne dribbeln und die Gegenspieler/innen mit Täuschungen und Finten
+    (z. B. Körpertäuschung, Übersteiger, Schere) überwinden
+  wetteifern: Bilde zwei Teams. Im 1:1 versuchen die Kinder, auf eines der drei Tore
+    abzuschliessen und Punkte für ihr Team zu sammeln.
 varianten: []
 bild: images/dribbling-chaos-spiel.png
 quelle:

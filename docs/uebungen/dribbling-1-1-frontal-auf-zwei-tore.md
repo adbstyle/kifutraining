@@ -1,6 +1,6 @@
 # 1:1 frontal auf zwei Tore
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** dribbling
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
 ![1:1 frontal auf zwei Tore](../images/dribbling-1-1-frontal-auf-zwei-tore.png)
 

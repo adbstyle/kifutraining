@@ -5,22 +5,21 @@ erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: passen-und-ballkontrolle
 kategorien:
 - G
 - F
-- E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Ein Kind versucht, flach durch das Hütchentor ein anderes anzuspielen. Dieses
-  nimmt den Ball hinter dem Tor an und spielt aus seiner Position durch das Tor zurück.
-ueben:
-- Beim Zuspiel den Fuss fest anspannen, fixieren und um ca. 90 Grad ausdrehen (wie
-  ein Golfschläger)
-- Vor dem Pass den/die Mitspieler/in kurz anschauen (Foto machen) und den Ball flach
-  zuspielen (Ball rotiert Richtung Passempfänger/in)
-wetteifern: Wie viele Pässe schaffen die Kinder innerhalb einer Minute?
+methodischer_fahrplan:
+  offen_starten: Ein Kind versucht, flach durch das Hütchentor ein anderes anzuspielen.
+    Dieses nimmt den Ball hinter dem Tor an und spielt aus seiner Position durch das
+    Tor zurück.
+  ueben:
+  - Beim Zuspiel den Fuss fest anspannen, fixieren und um ca. 90 Grad ausdrehen (wie
+    ein Golfschläger)
+  - Vor dem Pass den/die Mitspieler/in kurz anschauen (Foto machen) und den Ball flach
+    zuspielen (Ball rotiert Richtung Passempfänger/in)
+  wetteifern: Wie viele Pässe schaffen die Kinder innerhalb einer Minute?
 varianten: []
 bild: images/passen-und-ballkontrolle-tigerball-durch-das-tor.png
 quelle:

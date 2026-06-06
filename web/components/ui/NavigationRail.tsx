@@ -21,6 +21,7 @@ export function NavigationRail<T extends string>({
   onChange,
   ariaLabel,
   header,
+  footer,
   expanded = false,
   className,
 }: {
@@ -28,8 +29,10 @@ export function NavigationRail<T extends string>({
   value: T;
   onChange: (value: T) => void;
   ariaLabel: string;
-  /** Optionaler Kopfbereich (z. B. Menü-IconButton oder FAB). */
+  /** Optionaler Kopfbereich (z. B. Logo, Menü-IconButton oder FAB). */
   header?: React.ReactNode;
+  /** Optionaler Fussbereich, unten angedockt (z. B. Abmelden-Aktion). */
+  footer?: React.ReactNode;
   /** Expanded: breite Leiste mit Labels neben den Icons. */
   expanded?: boolean;
   className?: string;
@@ -54,7 +57,7 @@ export function NavigationRail<T extends string>({
       {header && (
         <div
           className={cn(
-            "mb-2 flex h-11 items-center",
+            "mb-2 flex min-h-11 items-center",
             expanded ? "justify-start" : "justify-center",
           )}
         >
@@ -93,6 +96,17 @@ export function NavigationRail<T extends string>({
           </button>
         );
       })}
+
+      {footer && (
+        <div
+          className={cn(
+            "mt-auto flex pt-2",
+            expanded ? "justify-stretch" : "justify-center",
+          )}
+        >
+          {footer}
+        </div>
+      )}
     </nav>
   );
 }

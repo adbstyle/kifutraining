@@ -5,23 +5,21 @@ erscheinungsform:
 - mutig-tore-erzielen
 - mutig-tore-verhindern
 feldtyp: null
-thema: torabschluss
 kategorien:
-- G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: 'Nach einem diagonalen Pass nimmt ein Kind den Ball nach vorne mit und schliesst
-  möglichst mit dem zweiten Ballkontakt ab. Danach holt es den Ball und schliesst
-  beim Start an. Variation: Das Kind lässt den Ball prallen und sucht den Abschluss
-  frontal.'
-ueben:
-- Ball kontrolliert nach vorne mitnehmen
-- Vor dem Schiessen freie Ecke erkennen (Foto vom Tor) und dorthin zielen
-wetteifern: Gelingt nach jedem zweiten Versuch ein fehlerfreier und erfolgreicher
-  Torabschluss?
+methodischer_fahrplan:
+  offen_starten: 'Nach einem diagonalen Pass nimmt ein Kind den Ball nach vorne mit
+    und schliesst möglichst mit dem zweiten Ballkontakt ab. Danach holt es den Ball
+    und schliesst beim Start an. Variation: Das Kind lässt den Ball prallen und sucht
+    den Abschluss frontal.'
+  ueben:
+  - Ball kontrolliert nach vorne mitnehmen
+  - Vor dem Schiessen freie Ecke erkennen (Foto vom Tor) und dorthin zielen
+  wetteifern: Gelingt nach jedem zweiten Versuch ein fehlerfreier und erfolgreicher
+    Torabschluss?
 varianten: []
 bild: images/torabschluss-ballschule-ballmitnahme-und-abschluss.png
 quelle:

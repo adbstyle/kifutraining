@@ -1,6 +1,6 @@
 # 1:1 frontal auf ein Tor
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** dribbling
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
 ![1:1 frontal auf ein Tor](../images/dribbling-1-1-frontal-auf-ein-tor.png)
 

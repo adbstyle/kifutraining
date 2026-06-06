@@ -4,23 +4,21 @@ trainingsteil: hauptteil
 erscheinungsform:
 - flink-geschickt-bewegen
 feldtyp: null
-thema: torabschluss
 kategorien:
-- G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: «Jäger» und «Hase» stehen einander gegenüber. Auf ein Signal hin startet der
-  Hase in die markierte Jagdzone. Gleichzeitig rennt der Jäger los. Je nach Verhalten
-  des Jägers entscheidet sich der Hase, durch das rote oder das gelbe Tor zu sprinten.
-  Der Jäger versucht dabei, den Hasen mit den Händen abzufangen/zu berühren. Danach
-  erfolgt ein Rollenwechsel.
-ueben:
-- Mit einer überraschenden Körpertäuschung den Jäger überlisten und durchs Tor sprinten
-wetteifern: Welche Hasen erzielen am meisten Punkte? Wie viele Läufe gelingen, ohne
-  gefangen zu werden? Welcher Jäger schlägt fünf Hasen?
+methodischer_fahrplan:
+  offen_starten: «Jäger» und «Hase» stehen einander gegenüber. Auf ein Signal hin
+    startet der Hase in die markierte Jagdzone. Gleichzeitig rennt der Jäger los.
+    Je nach Verhalten des Jägers entscheidet sich der Hase, durch das rote oder das
+    gelbe Tor zu sprinten. Der Jäger versucht dabei, den Hasen mit den Händen abzufangen/zu
+    berühren. Danach erfolgt ein Rollenwechsel.
+  ueben:
+  - Mit einer überraschenden Körpertäuschung den Jäger überlisten und durchs Tor sprinten
+  wetteifern: Welche Hasen erzielen am meisten Punkte? Wie viele Läufe gelingen, ohne
+    gefangen zu werden? Welcher Jäger schlägt fünf Hasen?
 varianten: []
 bild: images/torabschluss-jaeger-und-hase.png
 quelle:

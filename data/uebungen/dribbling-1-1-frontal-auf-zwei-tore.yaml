@@ -4,23 +4,23 @@ trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
-feldtyp: null
-thema: dribbling
+feldtyp: kleinfeld
 kategorien:
 - G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Zwei Kinder starten gleichzeitig. Eines läuft mit dem Ball auf das andere
-  zu und versucht, links oder rechts ein Tor zu erzielen. Ist der Ball im Tor oder
-  aus dem Feld, ist das Spiel zu Ende. Nach zwei Minuten wechseln die Rollen der Teams.
-ueben:
-- Mit Tempo und Rhythmuswechsel an der/dem Gegner/in vorbeidribbeln
-- Abwechslungsweise mit linkem bzw. rechtem Fuss abschliessen
-wetteifern: Bilde zwei Teams. Auf das linke Tor dürfen die Kinder nur mit dem linken
-  Fuss und auf das rechte Tor nur mit dem rechten Fuss abschliessen.
+methodischer_fahrplan:
+  offen_starten: Zwei Kinder starten gleichzeitig. Eines läuft mit dem Ball auf das
+    andere zu und versucht, links oder rechts ein Tor zu erzielen. Ist der Ball im
+    Tor oder aus dem Feld, ist das Spiel zu Ende. Nach zwei Minuten wechseln die Rollen
+    der Teams.
+  ueben:
+  - Mit Tempo und Rhythmuswechsel an der/dem Gegner/in vorbeidribbeln
+  - Abwechslungsweise mit linkem bzw. rechtem Fuss abschliessen
+  wetteifern: Bilde zwei Teams. Auf das linke Tor dürfen die Kinder nur mit dem linken
+    Fuss und auf das rechte Tor nur mit dem rechten Fuss abschliessen.
 varianten: []
 bild: images/dribbling-1-1-frontal-auf-zwei-tore.png
 quelle:

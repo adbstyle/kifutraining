@@ -4,13 +4,16 @@ import { cn } from "@/lib/cn";
 import { kategorieStufe } from "@/lib/labels";
 import type { KategorieSlug } from "@/lib/vocab";
 
-/* ── Alterskategorie-Chip (G / F / E) ─────────────────────────
-   Feste, lernbare Farbe je Stufe — immer mit Buchstabe, nie nur
-   über Farbe (a11y). Domänen-Chip, bewusst ausserhalb der M3-Chip-Tokens. */
+/* ── Alterskategorie-Badge (G / F / E) ────────────────────────
+   Je Stufe ein eigenes Badge in fester, lernbarer Farbe — deckend
+   gefüllt, dunkle Tafel-Tinte (rasen-950) als Schrift. Teilt die
+   Formensprache des Herkunfts-Badges (gleiche Höhe/Padding/Typo),
+   bleibt aber ein Domänen-Element ausserhalb der M3-Chip-Tokens.
+   Immer mit Buchstabe, nie nur über Farbe (a11y). */
 const katColor: Record<KategorieSlug, string> = {
-  G: "text-kat-g border-kat-g/50 bg-kat-g/10",
-  F: "text-kat-f border-kat-f/50 bg-kat-f/10",
-  E: "text-kat-e border-kat-e/50 bg-kat-e/10",
+  G: "bg-kat-g text-rasen-950",
+  F: "bg-kat-f text-rasen-950",
+  E: "bg-kat-e text-rasen-950",
 };
 
 export function KategorieChip({ k }: { k: KategorieSlug }) {
@@ -18,7 +21,7 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
     <span
       title={kategorieStufe[k]}
       className={cn(
-        "inline-flex h-5 w-5 items-center justify-center rounded-[2px] border font-mono text-[11px] font-bold leading-none",
+        "inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 font-mono text-[10px] font-bold uppercase leading-none",
         katColor[k],
       )}
     >

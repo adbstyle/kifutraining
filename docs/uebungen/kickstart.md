@@ -1,10 +1,10 @@
 # Kickstart
 
-**Trainingsteil:** auffangen · **Kategorien:** G, F, E
+**Trainingsteil:** auffangen · **Kategorien:** G, F
 
 ![Kickstart](../images/kickstart.png)
 
-## Offen starten
+## Aufbau
 
 Den Kindern stehen vor dem Training mind. sechs Kleintore zur Verfügung. Sobald die Kinder ins Training kommen, nehmen sie einen Ball und schiessen auf unterschiedliche Tore bzw. absolvieren selbstständig einen Torschussrundlauf.
 

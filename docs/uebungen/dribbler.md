@@ -1,6 +1,6 @@
 # Dribbler
 
-**Trainingsteil:** einleitung · **Kategorien:** G, F, E
+**Trainingsteil:** einleitung · **Kategorien:** F, E
 
 ![Dribbler](../images/dribbler.png)
 

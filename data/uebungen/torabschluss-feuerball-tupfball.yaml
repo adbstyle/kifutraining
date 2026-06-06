@@ -3,22 +3,21 @@ name: Feuerball (Tupfball)
 trainingsteil: hauptteil
 erscheinungsform:
 - flink-geschickt-bewegen
-feldtyp: kleinfeld
-thema: torabschluss
+feldtyp: freies_feld
 kategorien:
-- G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Ein Dreierteam pro Viereck und ein Eisbär des anderen Teams stellen sich auf.
-  Das Dreierteam spielt sich den Ball (Feuerball) mit den Händen so zu, dass sie den
-  Eisbären mit dem Ball berühren/abtupfen (nicht abschiessen) können. Dafür erhalten
-  sie einen Punkt. Die Kinder dürfen mit dem Ball in der Hand nicht laufen.
-ueben:
-- Mit raschem Zusammenspiel und Kooperation den Eisbären in die Ecke drängen
-wetteifern: Welches Team erzielt mehr Punkte? Welcher Eisbär kann sich freilaufen?
+methodischer_fahrplan:
+  offen_starten: Ein Dreierteam pro Viereck und ein Eisbär des anderen Teams stellen
+    sich auf. Das Dreierteam spielt sich den Ball (Feuerball) mit den Händen so zu,
+    dass sie den Eisbären mit dem Ball berühren/abtupfen (nicht abschiessen) können.
+    Dafür erhalten sie einen Punkt. Die Kinder dürfen mit dem Ball in der Hand nicht
+    laufen.
+  ueben:
+  - Mit raschem Zusammenspiel und Kooperation den Eisbären in die Ecke drängen
+  wetteifern: Welches Team erzielt mehr Punkte? Welcher Eisbär kann sich freilaufen?
 varianten: []
 bild: images/torabschluss-feuerball-tupfball.png
 quelle:

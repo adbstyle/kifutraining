@@ -22,18 +22,18 @@ def render_exercise(doc, vocab):
         meta.append(f"**Erscheinungsform:** {', '.join(formen)}")
     if doc.get("feldtyp"):
         meta.append(f"**Feldtyp:** {vocab['feldtyp'].get(doc['feldtyp'], doc['feldtyp'])}")
-    if doc.get("thema"):
-        meta.append(f"**Thema:** {doc['thema']}")
-    if doc.get("spielform"):
-        meta.append(f"**Spielform:** {doc['spielform']}")
     lines += [" · ".join(meta), ""]
     if doc.get("bild"):
         lines += [f"![{doc['name']}](../{doc['bild']})", ""]
-    lines += ["## Offen starten", "", doc["aufbau"], ""]
-    if doc.get("ueben"):
-        lines += ["## Üben", ""] + [f"- {u}" for u in doc["ueben"]] + [""]
-    if doc.get("wetteifern"):
-        lines += ["## Wett-eifern", "", doc["wetteifern"], ""]
+    fahrplan = doc.get("methodischer_fahrplan")
+    if fahrplan:
+        lines += ["## Offen starten", "", fahrplan["offen_starten"], ""]
+        if fahrplan.get("ueben"):
+            lines += ["## Üben", ""] + [f"- {u}" for u in fahrplan["ueben"]] + [""]
+        if fahrplan.get("wetteifern"):
+            lines += ["## Wett-eifern", "", fahrplan["wetteifern"], ""]
+    elif doc.get("aufbau"):
+        lines += ["## Aufbau", "", doc["aufbau"], ""]
     if doc.get("varianten"):
         lines += ["## Varianten", ""] + [f"- {v}" for v in doc["varianten"]] + [""]
     lines += ["---", f"*Quelle: {doc['quelle']['datei']}, S. {doc['quelle']['seite']}*"]
@@ -57,10 +57,9 @@ def main():
             continue
         idx.append(f"## {TEIL_TITEL[teil]}")
         idx.append("")
-        for d in sorted(group, key=lambda x: (x.get("thema") or "", x["name"])):
-            thema = f" _({d['thema']})_" if d.get("thema") else ""
+        for d in sorted(group, key=lambda x: x["name"]):
             idx.append(f"- [{d['name']}](uebungen/{d['id']}.md)"
-                       f" – {', '.join(d['kategorien'])}{thema}")
+                       f" – {', '.join(d['kategorien'])}")
         idx.append("")
     (OUT / "README.md").write_text("\n".join(idx), encoding="utf-8")
     print(f"{len(docs)} Übungsseiten + Index generiert in {OUT}/")

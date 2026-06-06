@@ -20,7 +20,6 @@ try {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
 const UEBUNGEN_DIR = resolve(REPO_ROOT, "data/uebungen");
-const THEMEN_DIR = resolve(REPO_ROOT, "data/themen");
 const IMAGES_DIR = resolve(REPO_ROOT, "images");
 
 const URL = process.env.SUPABASE_URL;
@@ -70,22 +69,6 @@ async function uploadImage(relPath: string): Promise<string | null> {
   return supabase.storage.from(BUCKET).getPublicUrl(storagePath).data.publicUrl;
 }
 
-async function seedThemen() {
-  const themen = loadYamlDir(THEMEN_DIR).map((t) => ({
-    id: t.id,
-    name: t.name,
-    trainingsteil: t.trainingsteil ?? null,
-    erscheinungsform: t.erscheinungsform ?? [],
-    ziele: t.ziele ?? [],
-    metaphern: t.metaphern ?? [],
-    fragen_an_die_kinder: t.fragen_an_die_kinder ?? [],
-  }));
-  if (themen.length === 0) return;
-  const { error } = await supabase.from("themen").upsert(themen, { onConflict: "id" });
-  if (error) throw error;
-  console.log(`Themen geseedet: ${themen.length}`);
-}
-
 async function seedExercises() {
   const raw = loadYamlDir(UEBUNGEN_DIR);
   let count = 0;
@@ -99,14 +82,13 @@ async function seedExercises() {
       trainingsteil: u.trainingsteil,
       erscheinungsform: u.erscheinungsform ?? [],
       feldtyp: u.feldtyp ?? null,
-      thema: u.thema ?? null,
       kategorien: u.kategorien ?? [],
-      spielform: u.spielform ?? null,
       anzahl_kinder: u.anzahl_kinder ?? null,
       material: u.material ?? [],
-      aufbau: u.aufbau,
-      ueben: u.ueben ?? [],
-      wetteifern: u.wetteifern ?? null,
+      // Übungsablauf je Trainingsteil: methodischer_fahrplan (jsonb) bei
+      // einleitung/hauptteil, flaches aufbau bei auffangen/ausklang.
+      methodischer_fahrplan: u.methodischer_fahrplan ?? null,
+      aufbau: u.aufbau ?? null,
       varianten: u.varianten ?? [],
       source: "manual",
       owner_id: null,
@@ -130,7 +112,6 @@ async function seedExercises() {
 async function main() {
   console.log(`Seed gegen ${URL} (Bucket '${BUCKET}')`);
   await ensureBucket();
-  await seedThemen();
   await seedExercises();
   console.log("Seed abgeschlossen.");
 }

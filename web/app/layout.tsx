@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Anton, Source_Serif_4, Space_Mono } from "next/font/google";
 import "./globals.css";
+import { AppNav } from "@/components/layout/AppNav";
 
 // Display: kondensierte Plakat-Grotesk (Taktiktafel-Headlines)
 const display = Anton({
@@ -37,7 +38,13 @@ export default function RootLayout({
       <body
         className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen antialiased`}
       >
-        {children}
+        <div className="flex min-h-dvh">
+          <AppNav />
+          {/* Inhaltsspalte: füllt den Rest neben der Rail; unten Platz für die
+              Bottom-Nav auf Mobil (md:pb-0). Seiten bringen ihren eigenen
+              <main>-Container mit eigener max-width mit. */}
+          <div className="min-w-0 flex-1 pb-24 md:pb-0">{children}</div>
+        </div>
       </body>
     </html>
   );

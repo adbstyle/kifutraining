@@ -1,6 +1,6 @@
 # Passduell
 
-**Trainingsteil:** einleitung · **Kategorien:** G, F, E
+**Trainingsteil:** einleitung · **Kategorien:** F, E
 
 ![Passduell](../images/passduell.png)
 

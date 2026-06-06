@@ -3,26 +3,25 @@ name: Spiel mit dem Feuer
 trainingsteil: einleitung
 erscheinungsform: []
 feldtyp: null
-thema: null
 kategorien:
 - G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Zwei Kinder symbolisieren das Feuer mit Überzieher­ shirts. Die anderen versuchen
-  ihnen auszuweichen. Wer sich verbrannt hat (Berührung), erfüllt eine Aufgabe (üben)
-  oder umdribbelt das Spielfeld.
-ueben:
-- Dribbling mit beiden Füssen (Innen-/Aussenfuss)
-- Finten z. B. als Körpertäuschung, Übersteiger oder Schere ausführen
-- 'Zusätzliche Ballkünstlertricks, z. B.: Ball hochwerfen und fangen; mit beiden Händen
-  den Boden berühren und den Ball stehend fangen; sich um die eigene Achse drehen
-  und den Ball fangen; hinter dem Rücken fangen; sich setzen und den Ball dann stehend
-  fangen'
-wetteifern: 'Welches «Feuer» erwischt innerhalb von einer Minute am meisten Kinder?
-  Oder beim Ballkünstlertrick: Welches Zweierteam zeigt den coolsten Trick?'
+methodischer_fahrplan:
+  offen_starten: Zwei Kinder symbolisieren das Feuer mit Überzieher­ shirts. Die anderen
+    versuchen ihnen auszuweichen. Wer sich verbrannt hat (Berührung), erfüllt eine
+    Aufgabe (üben) oder umdribbelt das Spielfeld.
+  ueben:
+  - Dribbling mit beiden Füssen (Innen-/Aussenfuss)
+  - Finten z. B. als Körpertäuschung, Übersteiger oder Schere ausführen
+  - 'Zusätzliche Ballkünstlertricks, z. B.: Ball hochwerfen und fangen; mit beiden
+    Händen den Boden berühren und den Ball stehend fangen; sich um die eigene Achse
+    drehen und den Ball fangen; hinter dem Rücken fangen; sich setzen und den Ball
+    dann stehend fangen'
+  wetteifern: 'Welches «Feuer» erwischt innerhalb von einer Minute am meisten Kinder?
+    Oder beim Ballkünstlertrick: Welches Zweierteam zeigt den coolsten Trick?'
 varianten: []
 bild: images/spiel-mit-dem-feuer.png
 quelle:

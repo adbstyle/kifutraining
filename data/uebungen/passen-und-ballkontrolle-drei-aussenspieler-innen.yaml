@@ -4,27 +4,24 @@ trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
-feldtyp: null
-thema: passen-und-ballkontrolle
+feldtyp: kleinfeld
 kategorien:
-- G
-- F
 - E
-spielform: '3:3'
 anzahl_kinder:
   min: 6
-  empfohlen: 6
+  max: 6
 material: []
-aufbau: Im Spiel 3:3 und drei Aussenspieler/innen pro Team können die Kinder diese
-  immer anspielen. Spielen sie den Ball direkt zurück, bleiben sie in dieser Rolle.
-  Kontrollieren sie den Ball und laufen in das Feld, übernimmt der/die Passgeber/in
-  dessen Rolle.
-ueben:
-- Durch Zusammenspiel und geschicktes Einbeziehen der Satelliten (Aussenspieler/innen)
-  in der Breite und der Tiefe zum Torerfolg gelangen
-- Als Aussenspieler/innen den Ball kontrolliert ins Feld mitnehmen und entschlossen
-  abschliessen
-wetteifern: Welches Team erzielt in 3 Minuten mehr Tore?
+methodischer_fahrplan:
+  offen_starten: Im Spiel 3:3 und drei Aussenspieler/innen pro Team können die Kinder
+    diese immer anspielen. Spielen sie den Ball direkt zurück, bleiben sie in dieser
+    Rolle. Kontrollieren sie den Ball und laufen in das Feld, übernimmt der/die Passgeber/in
+    dessen Rolle.
+  ueben:
+  - Durch Zusammenspiel und geschicktes Einbeziehen der Satelliten (Aussenspieler/innen)
+    in der Breite und der Tiefe zum Torerfolg gelangen
+  - Als Aussenspieler/innen den Ball kontrolliert ins Feld mitnehmen und entschlossen
+    abschliessen
+  wetteifern: Welches Team erzielt in 3 Minuten mehr Tore?
 varianten: []
 bild: images/passen-und-ballkontrolle-drei-aussenspieler-innen.png
 quelle:

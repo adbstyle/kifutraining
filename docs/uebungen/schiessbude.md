@@ -4,7 +4,7 @@
 
 ![Schiessbude](../images/schiessbude.png)
 
-## Offen starten
+## Aufbau
 
 Mit dem gesamten Trainingsmaterial baust du im Tor eine Schiessbude auf. Wer trifft am meisten Gegenstände? Manual Grundlagen. Magglingen: BASPO. . Kinderfussball – Theorie und Praxis. Kursdokument J+S und SFV.
 

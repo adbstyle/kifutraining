@@ -1,6 +1,6 @@
 # Torschussduell mit Seitenhilfe
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Thema:** torabschluss · **Spielform:** 2:2
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![Torschussduell mit Seitenhilfe](../images/torabschluss-torschussduell-mit-seitenhilfe.png)
 

@@ -1,6 +1,6 @@
 # Ballschule – Ballmitnahme und Abschluss
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Thema:** torabschluss
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![Ballschule – Ballmitnahme und Abschluss](../images/torabschluss-ballschule-ballmitnahme-und-abschluss.png)
 

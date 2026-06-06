@@ -5,22 +5,19 @@ erscheinungsform:
 - mutig-tore-erzielen
 - mutig-tore-verhindern
 feldtyp: null
-thema: torabschluss
 kategorien:
-- G
-- F
 - E
-spielform: '2:2'
 anzahl_kinder:
   min: 4
-  empfohlen: 4
+  max: 4
 material: []
-aufbau: Die Kinder versuchen im 2:2, mithilfe der Kinder ausserhalb des Feldes (Joker)
-  ein Tor zu erzielen.
-ueben:
-- Mithilfe der Aussen- und der Torspieler/innen Breite und Überzahl nutzen und entschlossen
-  abschliessen
-wetteifern: Welches Team nutzt die Überzahl in Ballbesitz am erfolgreichsten?
+methodischer_fahrplan:
+  offen_starten: Die Kinder versuchen im 2:2, mithilfe der Kinder ausserhalb des Feldes
+    (Joker) ein Tor zu erzielen.
+  ueben:
+  - Mithilfe der Aussen- und der Torspieler/innen Breite und Überzahl nutzen und entschlossen
+    abschliessen
+  wetteifern: Welches Team nutzt die Überzahl in Ballbesitz am erfolgreichsten?
 varianten: []
 bild: images/torabschluss-torschussduell-mit-seitenhilfe.png
 quelle:

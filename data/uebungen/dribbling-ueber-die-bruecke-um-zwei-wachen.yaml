@@ -5,22 +5,21 @@ erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: dribbling
 kategorien:
 - G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Manual Fussball – Good Practice Die Kinder dribbeln an den beiden verteidigenden
-  Kindern (Wachen) vorbei und stoppen ihren Ball in der gegenüberliegenden Zone. Nimmt
-  eine der Wachen einem Kind den Ball weg oder kann ihn aus dem Feld spielen, tauschen
-  sie die Rollen.
-ueben:
-- Die Wache täuschen und falls nötig den Ball gut abschirmen
-wetteifern: Welches Kind schafft an den Wachen vorbei am meisten Überquerungen der
-  Brücke? Welche Wache fängt in einer Minute am meisten Kinder?
+methodischer_fahrplan:
+  offen_starten: Manual Fussball – Good Practice Die Kinder dribbeln an den beiden
+    verteidigenden Kindern (Wachen) vorbei und stoppen ihren Ball in der gegenüberliegenden
+    Zone. Nimmt eine der Wachen einem Kind den Ball weg oder kann ihn aus dem Feld
+    spielen, tauschen sie die Rollen.
+  ueben:
+  - Die Wache täuschen und falls nötig den Ball gut abschirmen
+  wetteifern: Welches Kind schafft an den Wachen vorbei am meisten Überquerungen der
+    Brücke? Welche Wache fängt in einer Minute am meisten Kinder?
 varianten: []
 bild: images/dribbling-ueber-die-bruecke-um-zwei-wachen.png
 quelle:

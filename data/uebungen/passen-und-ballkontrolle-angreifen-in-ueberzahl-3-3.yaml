@@ -4,24 +4,23 @@ trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
-feldtyp: null
-thema: passen-und-ballkontrolle
+feldtyp: kleinfeld
 kategorien:
-- G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Drei Kinder von Team Rot starten von der Grundlinie aus einen Angriff. Ein
-  Kind von Team Weiss verteidigt im Feld. Nach dem ersten Ballkontakt von Team Rot
-  dürfen Kind 2 (hinter den Toren) und Kind 3 (von der Seite) von Team Weiss ins Spiel
-  eingreifen. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende.
-ueben:
-- Durch Zusammenspiel und Erkennen von freiem Raum die Verteidigung ausspielen und
-  sofort den Abschluss suchen
-wetteifern: Welches Team erzielt in einem Durchgang ein Tor? Nach einem Durchgang
-  wechseln die Rollen.
+methodischer_fahrplan:
+  offen_starten: Drei Kinder von Team Rot starten von der Grundlinie aus einen Angriff.
+    Ein Kind von Team Weiss verteidigt im Feld. Nach dem ersten Ballkontakt von Team
+    Rot dürfen Kind 2 (hinter den Toren) und Kind 3 (von der Seite) von Team Weiss
+    ins Spiel eingreifen. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu
+    Ende.
+  ueben:
+  - Durch Zusammenspiel und Erkennen von freiem Raum die Verteidigung ausspielen und
+    sofort den Abschluss suchen
+  wetteifern: Welches Team erzielt in einem Durchgang ein Tor? Nach einem Durchgang
+    wechseln die Rollen.
 varianten: []
 bild: images/passen-und-ballkontrolle-angreifen-in-ueberzahl-3-3.png
 quelle:

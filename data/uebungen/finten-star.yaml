@@ -3,24 +3,22 @@ name: Finten-Star
 trainingsteil: einleitung
 erscheinungsform: []
 feldtyp: null
-thema: null
 kategorien:
-- G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Auf dein Zeichen dribbeln zwei gegenüberstehende Kinder aufeinander zu. In
-  der Mitte machen sie einen Richtungswechsel (180 Grad) und dribbeln zurück. Nach
-  mehreren Richtungswechselvarianten dribbeln die Kinder mit einer Finte in der Mitte
-  auf die andere Seite.
-ueben:
-- Richtung z. B. mit der Sohle oder mit dem Innen-/ Aussenrist wechseln
-- Finten z. B. als Körpertäuschung, Übersteiger oder Schere ausführen
-wetteifern: Team Weiss steht Team Rot gegenüber. Weiss probiert, bei Rot im 1:1 durch
-  die Hütchentore (links oder rechts) zu dribbeln. Weiss greift zwei bis drei Minuten
-  an, Rot verteidigt. Danach tauschen sie. Wer erzielt mehr Tore?
+methodischer_fahrplan:
+  offen_starten: Auf dein Zeichen dribbeln zwei gegenüberstehende Kinder aufeinander
+    zu. In der Mitte machen sie einen Richtungswechsel (180 Grad) und dribbeln zurück.
+    Nach mehreren Richtungswechselvarianten dribbeln die Kinder mit einer Finte in
+    der Mitte auf die andere Seite.
+  ueben:
+  - Richtung z. B. mit der Sohle oder mit dem Innen-/ Aussenrist wechseln
+  - Finten z. B. als Körpertäuschung, Übersteiger oder Schere ausführen
+  wetteifern: Team Weiss steht Team Rot gegenüber. Weiss probiert, bei Rot im 1:1
+    durch die Hütchentore (links oder rechts) zu dribbeln. Weiss greift zwei bis drei
+    Minuten an, Rot verteidigt. Danach tauschen sie. Wer erzielt mehr Tore?
 varianten: []
 bild: images/finten-star.png
 quelle:

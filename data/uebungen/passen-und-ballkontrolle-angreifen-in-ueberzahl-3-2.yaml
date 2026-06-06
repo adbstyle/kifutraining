@@ -4,23 +4,22 @@ trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
-feldtyp: null
-thema: passen-und-ballkontrolle
+feldtyp: kleinfeld
 kategorien:
-- G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Team Rot greift auf die beiden Tore an. Ab der Mittellinie dürfen die Kinder
-  aufs Tor schiessen. Kind 1 (hinter den Toren) startet nach dem ersten Ballkontakt
-  von Kind 2. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende.
-ueben:
-- Durch schnelles und präzises Zusammenspiel oder Dribbling die Verteidigung ausspielen
-  und sofort den Abschluss suchen
-wetteifern: Welchem Team gelingen trotz erhöhtem Verteidigerdruck ein präzises Zusammenspiel
-  und ein rascher Torerfolg?
+methodischer_fahrplan:
+  offen_starten: Team Rot greift auf die beiden Tore an. Ab der Mittellinie dürfen
+    die Kinder aufs Tor schiessen. Kind 1 (hinter den Toren) startet nach dem ersten
+    Ballkontakt von Kind 2. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu
+    Ende.
+  ueben:
+  - Durch schnelles und präzises Zusammenspiel oder Dribbling die Verteidigung ausspielen
+    und sofort den Abschluss suchen
+  wetteifern: Welchem Team gelingen trotz erhöhtem Verteidigerdruck ein präzises Zusammenspiel
+    und ein rascher Torerfolg?
 varianten: []
 bild: images/passen-und-ballkontrolle-angreifen-in-ueberzahl-3-2.png
 quelle:

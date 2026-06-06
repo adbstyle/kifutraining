@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Kinderfussball Übung",
   "type": "object",
-  "required": ["id", "name", "trainingsteil", "kategorien", "aufbau", "quelle"],
+  "required": ["id", "name", "trainingsteil", "kategorien", "quelle"],
   "additionalProperties": false,
   "properties": {
     "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
@@ -18,25 +18,31 @@
       "uniqueItems": true
     },
     "feldtyp": { "enum": ["kleinfeld", "grossfeld", "freies_feld", null] },
-    "thema": { "type": ["string", "null"] },
     "kategorien": {
       "type": "array",
       "items": { "enum": ["G", "F", "E"] },
       "uniqueItems": true
     },
-    "spielform": { "type": ["string", "null"] },
     "anzahl_kinder": {
       "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "min": { "type": ["integer", "null"] },
-        "empfohlen": { "type": ["integer", "null"] }
+        "max": { "type": ["integer", "null"] }
       }
     },
     "material": { "type": "array", "items": { "type": "string" } },
     "aufbau": { "type": "string" },
-    "ueben": { "type": "array", "items": { "type": "string" } },
-    "wetteifern": { "type": ["string", "null"] },
+    "methodischer_fahrplan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["offen_starten"],
+      "properties": {
+        "offen_starten": { "type": "string", "minLength": 1 },
+        "ueben": { "type": "array", "items": { "type": "string" } },
+        "wetteifern": { "type": ["string", "null"] }
+      }
+    },
     "varianten": { "type": "array", "items": { "type": "string" } },
     "bild": { "type": ["string", "null"] },
     "quelle": {
@@ -48,5 +54,19 @@
         "seite": { "type": "integer" }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "trainingsteil": { "enum": ["einleitung", "hauptteil"] } }
+      },
+      "then": { "required": ["methodischer_fahrplan"] }
+    },
+    {
+      "if": {
+        "properties": { "trainingsteil": { "enum": ["auffangen", "ausklang"] } }
+      },
+      "then": { "required": ["aufbau"] }
+    }
+  ]
 }

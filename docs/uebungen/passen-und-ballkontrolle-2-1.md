@@ -1,6 +1,6 @@
 # 2:1
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld · **Thema:** passen-und-ballkontrolle · **Spielform:** 2:1
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
 ![2:1](../images/passen-und-ballkontrolle-2-1.png)
 

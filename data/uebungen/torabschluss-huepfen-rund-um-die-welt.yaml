@@ -4,22 +4,21 @@ trainingsteil: hauptteil
 erscheinungsform:
 - flink-geschickt-bewegen
 feldtyp: null
-thema: torabschluss
 kategorien:
 - G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: In einem markierten Feld liegen farbige Reifen. Die Kinder bewegen sich frei
-  im Feld und hüpfen (ein- und beidbeinig) immer wieder in die Reifen. Zuerst alleine,
-  anschliessend in Zweierteams. Ein Kind hüpft vor, das andere hüpft nach. Danach
-  erfolgt ein Rollenwechsel.
-ueben:
-- Reifen nicht berühren und auf dem Vorderfuss (wie eine Gazelle) springen
-wetteifern: Wer schafft es ohne Fehler? Führ eine Stafette mit gleicher Hüpfabfolge
-  durch oder lass die Kinder eigene Hüpfabfolgen erfinden.
+methodischer_fahrplan:
+  offen_starten: In einem markierten Feld liegen farbige Reifen. Die Kinder bewegen
+    sich frei im Feld und hüpfen (ein- und beidbeinig) immer wieder in die Reifen.
+    Zuerst alleine, anschliessend in Zweierteams. Ein Kind hüpft vor, das andere hüpft
+    nach. Danach erfolgt ein Rollenwechsel.
+  ueben:
+  - Reifen nicht berühren und auf dem Vorderfuss (wie eine Gazelle) springen
+  wetteifern: Wer schafft es ohne Fehler? Führ eine Stafette mit gleicher Hüpfabfolge
+    durch oder lass die Kinder eigene Hüpfabfolgen erfinden.
 varianten: []
 bild: images/torabschluss-huepfen-rund-um-die-welt.png
 quelle:

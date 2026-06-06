@@ -5,19 +5,17 @@ erscheinungsform:
 - mutig-tore-erzielen
 - mutig-tore-verhindern
 feldtyp: null
-thema: torabschluss
 kategorien:
-- G
-- F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Zwei Kinder versuchen, mithilfe von Jokern in Überzahl ein Tor zu erzielen.
-ueben:
-- Durch Einbezug der Joker und der Torspielerin/ des Torspielers Überzahl ausnutzen
-  und entschlossen Tore erzielen
-wetteifern: Welches Team erzielt mit Einbezug des Jokers ein Tor?
+methodischer_fahrplan:
+  offen_starten: Zwei Kinder versuchen, mithilfe von Jokern in Überzahl ein Tor zu
+    erzielen.
+  ueben:
+  - Durch Einbezug der Joker und der Torspielerin/ des Torspielers Überzahl ausnutzen
+    und entschlossen Tore erzielen
+  wetteifern: Welches Team erzielt mit Einbezug des Jokers ein Tor?
 varianten: []
 bild: images/torabschluss-torschussduell-mit-jokern.png
 quelle:

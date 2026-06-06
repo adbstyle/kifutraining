@@ -5,22 +5,21 @@ erscheinungsform:
 - mutig-tore-erzielen
 - mutig-tore-verhindern
 feldtyp: kleinfeld
-thema: torabschluss
 kategorien:
 - G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
-aufbau: Alle Kinder starten gleichzeitig. Sie dribbeln den Ball aus einem markierten
-  Viereck heraus und schliessen mit der nächsten Ballberührung in eines der acht Tore
-  ab (freie Wahl). Anschliessend holen sie ihren Ball, kehren ins Viereck zurück und
-  schiessen auf das nächste freie Tor.
-ueben:
-- Vor dem Schiessen ein Foto vom Tor machen und in die freie Ecke zielen
-wetteifern: Wie viele Tore erzielen die Kinder mit dem linken Fuss und wie viele mit
-  dem rechten?
+methodischer_fahrplan:
+  offen_starten: Alle Kinder starten gleichzeitig. Sie dribbeln den Ball aus einem
+    markierten Viereck heraus und schliessen mit der nächsten Ballberührung in eines
+    der acht Tore ab (freie Wahl). Anschliessend holen sie ihren Ball, kehren ins
+    Viereck zurück und schiessen auf das nächste freie Tor.
+  ueben:
+  - Vor dem Schiessen ein Foto vom Tor machen und in die freie Ecke zielen
+  wetteifern: Wie viele Tore erzielen die Kinder mit dem linken Fuss und wie viele
+    mit dem rechten?
 varianten: []
 bild: images/torabschluss-grosser-torschussrundlauf.png
 quelle:

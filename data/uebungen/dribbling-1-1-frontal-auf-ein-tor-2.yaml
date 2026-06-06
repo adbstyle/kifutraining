@@ -5,23 +5,21 @@ erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
 feldtyp: null
-thema: dribbling
 kategorien:
-- G
 - F
 - E
-spielform: '1:1'
 anzahl_kinder:
   min: 2
-  empfohlen: 2
+  max: 2
 material: []
-aufbau: Die Kinder duellieren sich 1:1. Das Tor in der Mitte ist grösser als die Tore
-  nebenan. Ist ein Ball im Tor oder aus dem Feld, ist das Spiel zu Ende. Nach zwei
-  Minuten wechseln die Rollen der Teams.
-ueben:
-- Mit Tempo und Rhythmuswechsel an der/dem Gegner/in vorbeidribbeln
-- Abwechslungsweise mit linkem bzw. rechtem Fuss abschliessen
-wetteifern: Bilde zwei Teams. Das Tor in der Mitte zählt dreifach.
+methodischer_fahrplan:
+  offen_starten: Die Kinder duellieren sich 1:1. Das Tor in der Mitte ist grösser
+    als die Tore nebenan. Ist ein Ball im Tor oder aus dem Feld, ist das Spiel zu
+    Ende. Nach zwei Minuten wechseln die Rollen der Teams.
+  ueben:
+  - Mit Tempo und Rhythmuswechsel an der/dem Gegner/in vorbeidribbeln
+  - Abwechslungsweise mit linkem bzw. rechtem Fuss abschliessen
+  wetteifern: Bilde zwei Teams. Das Tor in der Mitte zählt dreifach.
 varianten: []
 bild: images/dribbling-1-1-frontal-auf-ein-tor-2.png
 quelle:

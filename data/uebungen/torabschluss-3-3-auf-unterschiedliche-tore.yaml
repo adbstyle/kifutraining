@@ -4,25 +4,24 @@ trainingsteil: hauptteil
 erscheinungsform:
 - mutig-tore-erzielen
 - mutig-tore-verhindern
-feldtyp: null
-thema: torabschluss
+feldtyp: kleinfeld
 kategorien:
-- G
 - F
 - E
-spielform: '3:3'
 anzahl_kinder:
   min: 6
-  empfohlen: 6
+  max: 6
 material: []
-aufbau: Die Kinder spielen 3:3. Das weisse Team schiesst auf das grosse Tor, das rote
-  auf die beiden Minitore. Nach Torerfolg auf die Minitore wechseln die Rollen.
-ueben:
-- Durch geschicktes Zusammenspiel Überzahl ausnutzen und auf das grosse Tor abschliessen
-- Durch aktives Mitspielen des Torspielers/ der Torspielerin und rasches Angriffsspiel
-  aufs Minitor abschliessen
-wetteifern: Welches Team schafft ein Tor auf die Minitore und nach dem Seitenwechsel
-  direkt eines auf das grosse Tor?
+methodischer_fahrplan:
+  offen_starten: Die Kinder spielen 3:3. Das weisse Team schiesst auf das grosse Tor,
+    das rote auf die beiden Minitore. Nach Torerfolg auf die Minitore wechseln die
+    Rollen.
+  ueben:
+  - Durch geschicktes Zusammenspiel Überzahl ausnutzen und auf das grosse Tor abschliessen
+  - Durch aktives Mitspielen des Torspielers/ der Torspielerin und rasches Angriffsspiel
+    aufs Minitor abschliessen
+  wetteifern: Welches Team schafft ein Tor auf die Minitore und nach dem Seitenwechsel
+    direkt eines auf das grosse Tor?
 varianten: []
 bild: images/torabschluss-3-3-auf-unterschiedliche-tore.png
 quelle:

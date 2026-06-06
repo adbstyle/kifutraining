@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
 import {
   Button,
+  ButtonLink,
   ButtonGroup,
   Badge,
-  KategorieChip,
   Card,
   ExerciseCard,
   IconButton,
   TextField,
   TextArea,
+  Select,
+  MethodischerFahrplan,
 } from "@/components/ui";
 import { SegmentedDemo } from "./SegmentedDemo";
 import { ChipsDemo } from "./ChipsDemo";
 import { NavRailDemo } from "./NavRailDemo";
+import { BottomNavDemo } from "./BottomNavDemo";
 import { MenuDemo } from "./MenuDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
-import { kategorienSlugs } from "@/lib/vocab";
+import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import {
   Search,
   SlidersHorizontal,
@@ -78,6 +81,14 @@ const accentRoles: [string, string][] = [
   ["error", "bg-error"],
   ["error-container", "bg-error-container"],
   ["outline", "bg-outline"],
+];
+
+// Alterskategorien als Palette-Farben (Token + Stufe) — die kanonische
+// Quelle für G/F/E-Farben; keine neuen Hues erfinden.
+const kategorieColors: [string, string, string][] = [
+  ["kat-g", "bg-kat-g", "G-Junior:innen"],
+  ["kat-f", "bg-kat-f", "F-Junior:innen"],
+  ["kat-e", "bg-kat-e", "E-Junior:innen"],
 ];
 
 const typeScale: [string, string][] = [
@@ -193,10 +204,14 @@ export default function Styleguide() {
             </div>
           ))}
         </div>
-        <div className="mt-4 flex items-center gap-3">
-          <span className="type-label-small text-on-surface-variant">Alterskategorien:</span>
-          {kategorienSlugs.map((k) => (
-            <KategorieChip key={k} k={k} />
+        <p className="type-label-small mb-2 mt-6 text-on-surface-variant">Alterskategorien</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {kategorieColors.map(([name, bg, stufe]) => (
+            <div key={name} className="rounded-[4px] border border-outline p-3">
+              <div className={`mb-2 h-14 w-full rounded-[2px] border border-outline-variant ${bg}`} />
+              <p className="type-label-small text-on-surface">{name}</p>
+              <p className="type-label-small text-on-surface-variant">{stufe}</p>
+            </div>
           ))}
         </div>
       </Section>
@@ -213,8 +228,7 @@ export default function Styleguide() {
 
       <Section n="03" title="Elevation">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Höhe über Surface-Container; Schatten erst ab Level 3. Der CTA-Schatten
-          ist eine eigene Signatur (siehe Buttons), kein Elevation-Level.
+          Höhe über Surface-Container; Schatten erst ab Level 3.
         </p>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {elevations.map(([lvl, bg, shadow]) => (
@@ -294,7 +308,8 @@ export default function Styleguide() {
       <Section n="07" title="Buttons (M3-Styles) &amp; Button-Group">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           M3-Emphase-Stufen über <code>--button-*</code>-Component-Tokens. Filled
-          trägt die harte KiFu-CTA-Signatur, Elevated den weichen M3-Schatten.
+          ist flächig mit M3-State-Layer beim Hover, Elevated trägt den weichen
+          M3-Schatten. Shape bleibt KiFu-eckig (3px).
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <Button variant="filled">Plan erstellen</Button>
@@ -308,6 +323,13 @@ export default function Styleguide() {
           <Button size="sm">Klein</Button>
           <Button size="md">Mittel</Button>
           <Button size="lg">Gross · Spielfeldrand</Button>
+        </div>
+        <p className="type-label-small mb-2 mt-6 text-on-surface-variant">
+          Button-Link (navigiert als &lt;a&gt; — kein &lt;a&gt;&lt;button&gt;-Nesting)
+        </p>
+        <div className="flex flex-wrap items-end gap-3">
+          <ButtonLink href="#" variant="filled">Neue Übung</ButtonLink>
+          <ButtonLink href="#" variant="tonal" size="sm">Bearbeiten</ButtonLink>
         </div>
         <p className="type-label-small mb-2 mt-6 text-on-surface-variant">
           Connected Button-Group (verbundene Aktionen)
@@ -376,42 +398,48 @@ export default function Styleguide() {
 
       <Section n="11" title="Methodischer Fahrplan (Signatur-Komponente)">
         <Card className="max-w-xl p-6">
-          {fahrplan.map(([num, title, text], i) => (
-            <div
-              key={title}
-              className={i > 0 ? "mt-5 border-t border-outline-variant pt-5" : ""}
-            >
-              <p className="type-headline-small flex items-center gap-2 text-primary">
-                <span>{num}</span>
-                {title}
-              </p>
-              <p className="type-body-medium mt-1 text-on-surface-variant">{text}</p>
-            </div>
-          ))}
+          <MethodischerFahrplan
+            fahrplan={{
+              offen_starten: fahrplan[0][2],
+              ueben: [fahrplan[1][2]],
+              wetteifern: fahrplan[2][2],
+            }}
+          />
         </Card>
       </Section>
 
-      <Section n="12" title="Navigation Rail">
-        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Vertikale Hauptnavigation (medium+ Fenster). Über den Menü-Button
-          zwischen <strong>collapsed</strong> (schmal) und{" "}
-          <strong>expanded</strong> (breit, Icon + Label nebeneinander)
-          umschaltbar. Aktives Ziel über Indicator-Pille (
-          <code>secondary-container</code>). Pfeiltasten-Navigation; gespeist aus{" "}
-          <code>--nav-*</code>-Component-Tokens.
+      <Section n="12" title="Navigation">
+        <p className="type-body-medium mb-2 max-w-xl text-on-surface-variant">
+          <strong>Navigation Rail</strong> — vertikale Hauptnavigation (medium+
+          Fenster). Über den Menü-Button zwischen <strong>collapsed</strong>{" "}
+          (schmal) und <strong>expanded</strong> (breit, Icon + Label
+          nebeneinander) umschaltbar. Optionale <code>header</code>- und{" "}
+          <code>footer</code>-Slots (Logo/FAB bzw. Abmelden). Aktives Ziel über
+          Indicator-Pille (<code>secondary-container</code>). Pfeiltasten-
+          Navigation; gespeist aus <code>--nav-*</code>-Component-Tokens.
         </p>
         <NavRailDemo />
+
+        <p className="type-body-medium mt-8 mb-5 max-w-xl text-on-surface-variant">
+          <strong>Bottom Navigation</strong> — dasselbe für kompakte Fenster
+          (Mobil): drei bis fünf gleich breite Ziele, aktives über dieselbe
+          Indicator-Pille hinter dem Icon. Die App schaltet automatisch zwischen
+          Rail (ab <code>md</code>) und Bottom Navigation um.
+        </p>
+        <BottomNavDemo />
       </Section>
 
       <Section n="13" title="Text-Fields &amp; Text-Area">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Outlined mit schwebendem Label (KiFu: mono/uppercase), Supporting-Text
-          und Error-State. Die Text-Area ist mehrzeilig (Enter = Umbruch), wächst
-          bis ~10 Zeilen und scrollt danach. Gespeist aus{" "}
-          <code>--field-*</code>-Component-Tokens.
+          Outlined mit schwebendem Label (KiFu: mono/uppercase), optionalem
+          führenden Icon (<code>leadingIcon</code> — Label rückt ein, sodass es
+          das Icon nie überlagert), Supporting-Text und Error-State. Die
+          Text-Area ist mehrzeilig (Enter = Umbruch), wächst bis ~10 Zeilen und
+          scrollt danach. Gespeist aus <code>--field-*</code>-Component-Tokens.
         </p>
         <div className="grid max-w-md gap-6">
           <TextField label="Übungsname" supportingText="Pflichtfeld" />
+          <TextField label="Suche" type="search" leadingIcon={Search} />
           <TextField
             label="Anzahl Kinder"
             type="number"
@@ -435,13 +463,49 @@ export default function Styleguide() {
         <MenuDemo />
       </Section>
 
-      <Section n="15" title="Dialog &amp; Snackbar">
+      <Section n="15" title="Single-Select">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Auswahl <strong>eines</strong> Werts — kein natives{" "}
+          <code>&lt;select&gt;</code>. Der Trigger trägt den Feld-Token-Kontrakt
+          (wie Text-Field), das aufgeklappte Panel den <code>--menu-*</code>
+          -Kontrakt (gerundet, dunkle Surface, Hover, ✓ auf der Auswahl). Listbox-
+          Semantik mit voller Tastatursteuerung (↑/↓, Home/End, Enter, Esc).
+        </p>
+        <div className="grid max-w-md gap-6">
+          <Select
+            label="Feldtyp"
+            defaultValue="kleinfeld"
+            options={[
+              { value: "", label: "— kein Feldtyp —" },
+              { value: "kleinfeld", label: "Kleinfeld" },
+              { value: "grossfeld", label: "Grossfeld" },
+              { value: "freies_feld", label: "Freies Feld" },
+            ]}
+            supportingText="Öffnet ein Menu-Panel statt des OS-Dropdowns."
+          />
+        </div>
+      </Section>
+
+      <Section n="16" title="Dialog &amp; Snackbar">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           Dialog auf nativem <code>&lt;dialog&gt;</code> (Fokus-Trap, Escape,
           Scrim). Snackbar in M3-Inverse-Farben mit Aktion + Auto-Dismiss.
           Gespeist aus <code>--dialog-*</code> / <code>--snackbar-*</code>-Tokens.
         </p>
         <OverlaysDemo />
+      </Section>
+
+      <Section n="17" title="Breadcrumbs">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Sekundäre Pfad-Navigation. Datengetrieben (<code>items</code>); das
+          letzte Item ohne <code>href</code> ist die aktuelle Seite
+          (<code>aria-current</code>) und trägt das Gewicht (
+          <code>title-small</code>). Separator standardmässig{" "}
+          <code>ChevronRight</code>, per <code>separator</code> ersetzbar. Lange
+          Pfade kollabieren ab <code>maxItems</code> zu einem aufklappbaren
+          „…"-Button. Gespeist aus <code>--breadcrumb-*</code>-Component-Tokens.
+        </p>
+        <BreadcrumbsDemo />
       </Section>
     </main>
   );

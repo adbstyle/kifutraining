@@ -3,19 +3,15 @@ name: Dribblestart
 trainingsteil: auffangen
 erscheinungsform: []
 feldtyp: null
-thema: null
 kategorien:
 - G
 - F
 - E
-spielform: null
 anzahl_kinder: null
 material: []
 aufbau: Den Kindern steht vor dem Training mind. ein Feld mit unterschiedlichen Gegenständen
   zur Verfügung. Sobald die Kinder ins Training kommen, schnappen sie sich einen Ball
   und umdribbeln die Gegenstände.
-ueben: []
-wetteifern: null
 varianten: []
 bild: images/dribblestart.png
 quelle:

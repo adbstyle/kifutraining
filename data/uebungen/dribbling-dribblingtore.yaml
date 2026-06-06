@@ -4,24 +4,22 @@ trainingsteil: hauptteil
 erscheinungsform:
 - spiel-kreativ-gestalten
 - ball-entschlossen-erobern
-feldtyp: null
-thema: dribbling
+feldtyp: kleinfeld
 kategorien:
-- G
 - F
 - E
-spielform: '3:3'
 anzahl_kinder:
   min: 6
-  empfohlen: 6
+  max: 6
 material: []
-aufbau: Im Spiel 3:3 können die Teams über die beiden Linien in der Mitte ein Dribbeltor
-  oder ein «normales» Tor erzielen (beides gibt einen Punkt).
-ueben:
-- Entscheiden, ob sie mutig durch die Tore dribbeln oder nach vorne zu den Minitoren
-  zusammenspielen
-wetteifern: Welches Team erzielt mehr Punkte? Zähl Dribbeltore und Minitore entweder
-  gleich oder eine Torart doppelt.
+methodischer_fahrplan:
+  offen_starten: Im Spiel 3:3 können die Teams über die beiden Linien in der Mitte
+    ein Dribbeltor oder ein «normales» Tor erzielen (beides gibt einen Punkt).
+  ueben:
+  - Entscheiden, ob sie mutig durch die Tore dribbeln oder nach vorne zu den Minitoren
+    zusammenspielen
+  wetteifern: Welches Team erzielt mehr Punkte? Zähl Dribbeltore und Minitore entweder
+    gleich oder eine Torart doppelt.
 varianten: []
 bild: images/dribbling-dribblingtore.png
 quelle:

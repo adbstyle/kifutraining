@@ -1,6 +1,6 @@
 # Über die Brücke – um eine Wache
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Thema:** dribbling
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
 ![Über die Brücke – um eine Wache](../images/dribbling-ueber-die-bruecke-um-eine-wache.png)
 

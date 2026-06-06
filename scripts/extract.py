@@ -11,7 +11,6 @@ import parser
 ROOT = Path(__file__).resolve().parent.parent
 PDF = ROOT / "sources" / "Manual_Kinderfussball_D.pdf"
 UEB = ROOT / "data" / "uebungen"
-THEMEN = ROOT / "data" / "themen"
 IMAGES = ROOT / "images"
 
 # Seite -> (trainingsteil, [erscheinungsform-slugs])
@@ -42,35 +41,64 @@ def page_text(page):
         capture_output=True, text=True, check=True).stdout
 
 
+def _png_num(path):
+    """Laufnummer aus einem pdfimages-Dateinamen (…-NNN.png)."""
+    return int(path.stem.rsplit("-", 1)[1])
+
+
+def parse_real_image_nums(listing):
+    """`pdfimages -list`-Ausgabe → Laufnummern der echten Bilder (type == image).
+
+    smask/stencil (Alpha-Kanäle, Masken) werden verworfen. Spalten der Ausgabe:
+    page num type … — die ersten zwei Zeilen sind Kopf/Trennlinie.
+    """
+    nums = []
+    for line in listing.splitlines()[2:]:
+        cols = line.split()
+        if len(cols) >= 3 and cols[2] == "image":
+            nums.append(int(cols[1]))
+    return set(nums)
+
+
+def real_image_nums(page):
+    """Laufnummern der echten Diagramme einer Seite (ohne smask/stencil).
+
+    pdfimages exportiert Soft-Masks und Stencils als eigene PNG-Dateien. Das
+    sind keine Diagramme, sondern technische Zusatzebenen – sie würden die
+    index-basierte Zuordnung Bild→Übung verschieben.
+    """
+    listing = subprocess.run(
+        ["pdfimages", "-list", "-f", str(page), "-l", str(page), str(PDF)],
+        capture_output=True, text=True, check=True).stdout
+    return parse_real_image_nums(listing)
+
+
 def extract_images(page, dest_prefix):
-    """Eingebettete Bilder einer Seite als PNG; gibt sortierte Pfade zurück."""
+    """Echte Diagramme einer Seite als PNG, in Dokumentreihenfolge.
+
+    smasks/stencils werden herausgefiltert (siehe real_image_nums), damit die
+    Reihenfolge der zurückgegebenen Pfade exakt der Übungsreihenfolge auf der
+    Seite entspricht.
+    """
+    keep = real_image_nums(page)
     subprocess.run(["pdfimages", "-png", "-f", str(page), "-l", str(page),
                     str(PDF), str(dest_prefix)], check=True, capture_output=True)
-    return sorted(dest_prefix.parent.glob(dest_prefix.name + "-*.png"))
+    return [p for p in sorted(dest_prefix.parent.glob(dest_prefix.name + "-*.png"))
+            if _png_num(p) in keep]
 
 
 def main():
-    for d in (UEB, THEMEN, IMAGES):
+    for d in (UEB, IMAGES):
         d.mkdir(parents=True, exist_ok=True)
     tmp = IMAGES / "_tmp"
     tmp.mkdir(exist_ok=True)
 
-    current_thema = None
     count = 0
     seen_ids: set = set()
     try:
         for page in range(60, 83):
             teil, erschein = PAGE_META[page]
             text = page_text(page)
-
-            theme = parser.parse_theme_header(text)
-            if theme:
-                current_thema = theme["id"]
-                (THEMEN / f"{theme['id']}.yaml").write_text(
-                    yaml.safe_dump({**theme, "trainingsteil": teil,
-                                    "erscheinungsform": erschein},
-                                   allow_unicode=True, sort_keys=False),
-                    encoding="utf-8")
 
             blocks = parser.split_page_into_exercises(text)
             imgs = extract_images(page, tmp / f"p{page}")
@@ -80,8 +108,7 @@ def main():
                 ex = parser.parse_exercise_block(block)
                 if not ex["name"]:
                     continue
-                thema = current_thema if teil == "hauptteil" else None
-                uid = f"{thema + '-' if thema else ''}{parser.slugify(ex['name'])}"
+                uid = parser.slugify(ex["name"])
 
                 if uid in seen_ids:
                     raise ValueError(f"Doppelte ID: {uid} (Seite {page})")
@@ -98,18 +125,26 @@ def main():
                     "trainingsteil": teil,
                     "erscheinungsform": erschein,
                     "feldtyp": feldtyp_aus_text(block),
-                    "thema": thema,
                     "kategorien": ex["kategorien"],
-                    "spielform": ex["spielform"],
                     "anzahl_kinder": None,
                     "material": [],
-                    "aufbau": ex["aufbau"],
-                    "ueben": ex["ueben"],
-                    "wetteifern": ex["wetteifern"],
+                }
+                # Übungsablauf je Trainingsteil: einleitung/hauptteil als
+                # methodischer_fahrplan-Block (der geparste "Offen"-Text ist das
+                # offen_starten), auffangen/ausklang als flaches aufbau-Feld.
+                if teil in ("einleitung", "hauptteil"):
+                    doc["methodischer_fahrplan"] = {
+                        "offen_starten": ex["aufbau"],
+                        "ueben": ex["ueben"],
+                        "wetteifern": ex["wetteifern"],
+                    }
+                else:
+                    doc["aufbau"] = ex["aufbau"]
+                doc.update({
                     "varianten": [],
                     "bild": bild,
                     "quelle": {"datei": PDF.name, "seite": page},
-                }
+                })
                 (UEB / f"{uid}.yaml").write_text(
                     yaml.safe_dump(doc, allow_unicode=True, sort_keys=False),
                     encoding="utf-8")

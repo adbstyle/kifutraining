@@ -1,5 +1,7 @@
 import { forwardRef } from "react";
 import type { ButtonHTMLAttributes } from "react";
+import Link from "next/link";
+import type { ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 
 // M3-Emphase-Stufen (filled → text) + destruktiv. Werte kommen aus den
@@ -11,9 +13,10 @@ const base =
   "focus-ring type-label-large inline-flex items-center justify-center gap-2 rounded-(--button-shape) transition-[background-color,box-shadow,transform,color] duration-150 disabled:opacity-40 disabled:pointer-events-none select-none";
 
 const variants: Record<Variant, string> = {
-  // Höchste Emphase — KiFu-Signatur: harter taktischer Schlagschatten
+  // Höchste Emphase — M3 Filled: flächig, Hover via State-Layer (kein Schatten,
+  // keine Helligkeitsänderung). Press-Nudge wie bei allen Varianten.
   filled:
-    "bg-(--button-filled-container) text-(--button-filled-label) hover:bg-(--button-filled-container-hover) active:translate-y-px shadow-[0_3px_0_0_var(--color-signal-dark)] active:shadow-[0_1px_0_0_var(--color-signal-dark)]",
+    "bg-(--button-filled-container) text-(--button-filled-label) hover:bg-(--button-filled-container-hover) active:translate-y-px",
   // Mittlere Emphase — tonale Fläche
   tonal:
     "bg-(--button-tonal-container) text-(--button-tonal-label) hover:bg-(--button-tonal-container-hover) active:translate-y-px",
@@ -37,6 +40,16 @@ const sizes: Record<Size, string> = {
   lg: "h-14 px-7", // Spielfeldrand-Grösse (Touch ≥ 56px)
 };
 
+/** Gemeinsame Button-Klassen — geteilt von Button und ButtonLink, damit ein
+ *  navigierender Button als <a>/<Link> dieselbe Optik trägt (kein <a><button>). */
+export function buttonClasses(
+  variant: Variant = "filled",
+  size: Size = "md",
+  className?: string,
+): string {
+  return cn(base, variants[variant], sizes[size], className);
+}
+
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
@@ -44,11 +57,18 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = "filled", size = "md", className, ...props }, ref) => (
-    <button
-      ref={ref}
-      className={cn(base, variants[variant], sizes[size], className)}
-      {...props}
-    />
+    <button ref={ref} className={buttonClasses(variant, size, className)} {...props} />
   ),
 );
 Button.displayName = "Button";
+
+export type ButtonLinkProps = ComponentProps<typeof Link> & {
+  variant?: Variant;
+  size?: Size;
+};
+
+/** Wie Button, aber als Navigations-Link (Next <Link>). Verhindert das
+ *  ungültige <a><button>-Nesting bei „Button, der navigiert". */
+export function ButtonLink({ variant = "filled", size = "md", className, ...props }: ButtonLinkProps) {
+  return <Link className={buttonClasses(variant, size, className)} {...props} />;
+}
