@@ -11,6 +11,7 @@ import {
   trainingsteilSlugs,
   feldtypSlugs,
   erscheinungsformSlugs,
+  hauptteilkategorieSlugs,
   kategorienSlugs,
 } from "@/lib/vocab";
 
@@ -89,6 +90,13 @@ function parseExercise(form: FormData): ParseResult {
     ? csv(form.get("form")).filter((f) => erscheinungsformSlugs.includes(f as never))
     : [];
 
+  // Hauptteilkategorie ist genau bei Hauptteil-Übungen Pflicht (Enabler #21,
+  // AC2); andere Trainingsteile tragen keine (Postcondition 2).
+  const istHauptteil = trainingsteil === "hauptteil";
+  const hauptteilkategorie = istHauptteil ? clean(form.get("hauptteilkategorie")) : null;
+  if (istHauptteil && !hauptteilkategorieSlugs.includes(hauptteilkategorie as never))
+    errors.hauptteilkategorie = "Bitte eine Hauptteilkategorie wählen.";
+
   const feldtyp = clean(form.get("feldtyp"));
   const min = clean(form.get("anzahl_min"));
   const max = clean(form.get("anzahl_max"));
@@ -109,6 +117,7 @@ function parseExercise(form: FormData): ParseResult {
       kategorien,
       feldtyp: feldtyp && feldtypSlugs.includes(feldtyp as never) ? feldtyp : null,
       erscheinungsform,
+      hauptteilkategorie,
       anzahl_kinder,
       material: lines(form.get("material")),
       methodischer_fahrplan,

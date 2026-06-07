@@ -1,6 +1,6 @@
 # Ballschule – Ballmitnahme in Schusszone
 
-**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![Ballschule – Ballmitnahme in Schusszone](../images/torabschluss-ballschule-ballmitnahme-in-schusszone.png)
 

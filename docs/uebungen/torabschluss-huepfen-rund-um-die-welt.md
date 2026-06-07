@@ -1,6 +1,6 @@
 # Hüpfen rund um die Welt
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Sich flink und geschickt bewegen
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Vielseitigkeit erleben · **Erscheinungsform:** Sich flink und geschickt bewegen
 
 ![Hüpfen rund um die Welt](../images/torabschluss-huepfen-rund-um-die-welt.png)
 

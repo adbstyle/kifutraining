@@ -1,6 +1,6 @@
 # Torspieler/in in der Abschlusszone
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Kleinfeld
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Kleinfeld
 
 ![Torspieler/in in der Abschlusszone](../images/torabschluss-torspieler-in-in-der-abschlusszone.png)
 

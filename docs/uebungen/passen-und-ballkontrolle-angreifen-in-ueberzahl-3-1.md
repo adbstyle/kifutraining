@@ -1,6 +1,6 @@
 # Angreifen in Überzahl – 3:1
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
 ![Angreifen in Überzahl – 3:1](../images/passen-und-ballkontrolle-angreifen-in-ueberzahl-3-1.png)
 

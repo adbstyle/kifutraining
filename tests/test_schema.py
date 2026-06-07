@@ -16,6 +16,7 @@ def test_minimal_valid_uebung_passes():
         "name": "Wechseltore",
         "trainingsteil": "hauptteil",
         "erscheinungsform": ["spiel-kreativ-gestalten", "ball-entschlossen-erobern"],
+        "hauptteilkategorie": "fussball-spielen-lernen",
         "feldtyp": "kleinfeld",
         "kategorien": ["G", "F", "E"],
         "methodischer_fahrplan": {
@@ -76,4 +77,45 @@ def test_invalid_erscheinungsform_slug_fails():
     doc = {"id": "x", "name": "X", "trainingsteil": "hauptteil",
            "erscheinungsform": ["nicht-im-vokabular"], "kategorien": ["G"],
            "aufbau": "...", "quelle": {"datei": "a.pdf", "seite": 1}}
+    assert list(v.iter_errors(doc)) != []
+
+
+def _hauptteil_doc(**extra):
+    """Minimal gültige Hauptteil-Übung (ohne Hauptteilkategorie) als Basis."""
+    doc = {"id": "x", "name": "X", "trainingsteil": "hauptteil",
+           "kategorien": ["G"],
+           "methodischer_fahrplan": {"offen_starten": "Start."},
+           "quelle": {"datei": "a.pdf", "seite": 65}}
+    doc.update(extra)
+    return doc
+
+
+def test_hauptteil_ohne_hauptteilkategorie_fails():
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    assert list(v.iter_errors(_hauptteil_doc())) != []
+
+
+def test_hauptteil_mit_hauptteilkategorie_passes():
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    doc = _hauptteil_doc(hauptteilkategorie="vielseitigkeit-erleben")
+    assert list(v.iter_errors(doc)) == []
+
+
+def test_invalid_hauptteilkategorie_slug_fails():
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    doc = _hauptteil_doc(hauptteilkategorie="nicht-im-vokabular")
+    assert list(v.iter_errors(doc)) != []
+
+
+def test_nicht_hauptteil_mit_hauptteilkategorie_fails():
+    """Andere Trainingsteile dürfen keine Hauptteilkategorie tragen (Postcondition 2)."""
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    doc = {"id": "x", "name": "X", "trainingsteil": "ausklang",
+           "kategorien": ["G"], "aufbau": "Ausklang-Aufbau.",
+           "hauptteilkategorie": "fussball-spielen",
+           "quelle": {"datei": "a.pdf", "seite": 82}}
     assert list(v.iter_errors(doc)) != []

@@ -1,6 +1,6 @@
 # Tigerball – mit Zone
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
+**Trainingsteil:** hauptteil · **Kategorien:** G, F · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
 ![Tigerball – mit Zone](../images/passen-und-ballkontrolle-tigerball-mit-zone.png)
 

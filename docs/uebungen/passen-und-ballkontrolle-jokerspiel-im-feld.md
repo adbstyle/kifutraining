@@ -1,6 +1,6 @@
 # Jokerspiel im Feld
 
-**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Grossfeld
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Grossfeld
 
 ![Jokerspiel im Feld](../images/passen-und-ballkontrolle-jokerspiel-im-feld.png)
 

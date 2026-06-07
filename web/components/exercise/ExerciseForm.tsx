@@ -15,6 +15,7 @@ import {
   trainingsteil as teilLabels,
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
+  hauptteilkategorie as hkatLabels,
   kategorienSlugs,
   trainingsteilSlugs,
   type TrainingsteilSlug,
@@ -28,6 +29,7 @@ export type ExerciseInitial = {
   kategorien?: string[];
   feldtyp?: string | null;
   erscheinungsform?: string[];
+  hauptteilkategorie?: string | null;
   anzahl_kinder?: { min?: number | null; max?: number | null } | null;
   material?: string[];
   methodischer_fahrplan?: {
@@ -69,9 +71,12 @@ export function ExerciseForm({
   const [kat, setKat] = useState<string[]>(initial.kategorien ?? []);
   const [form, setForm] = useState<string[]>(initial.erscheinungsform ?? []);
   const [feld, setFeld] = useState<string>(initial.feldtyp ?? "");
+  const [hkat, setHkat] = useState<string>(initial.hauptteilkategorie ?? "");
   const [bildError, setBildError] = useState<string | null>(null);
 
   const istFahrplan = FAHRPLAN_TEILE.has(teil);
+  // Hauptteilkategorie ist genau bei Hauptteil-Übungen Pflicht (Enabler #21).
+  const istHauptteil = teil === "hauptteil";
   const toggle = (arr: string[], set: (v: string[]) => void, v: string) =>
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
@@ -96,6 +101,7 @@ export function ExerciseForm({
     fd.set("trainingsteil", teil);
     fd.set("kat", kat.join(","));
     fd.set("form", istFahrplan ? form.join(",") : "");
+    fd.set("hauptteilkategorie", istHauptteil ? hkat : "");
     fd.set("feldtyp", feld);
     startTransition(() => formAction(fd));
   }
@@ -186,6 +192,27 @@ export function ExerciseForm({
           supportingText={err.aufbau ?? "Pflichtfeld — Aufbau und Ablauf der Übung."}
         />
       ))}
+
+      {istHauptteil && (
+        <div>
+          <Select
+            label="Hauptteilkategorie"
+            className="max-w-xs"
+            value={hkat}
+            onChange={setHkat}
+            options={[
+              { value: "", label: "— Kategorie wählen —" },
+              ...(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
+                value: k,
+                label: hkatLabels[k],
+              })),
+            ]}
+          />
+          <p className={`type-body-small mt-1.5 ${err.hauptteilkategorie ? "text-error" : "text-on-surface-variant"}`}>
+            {err.hauptteilkategorie ?? "Pflichtfeld — der Trainingsinhalt des Hauptteils."}
+          </p>
+        </div>
+      )}
 
       {istFahrplan && (
         <Group title="Erscheinungsform (optional)">

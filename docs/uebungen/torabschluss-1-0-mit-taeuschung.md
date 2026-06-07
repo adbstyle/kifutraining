@@ -1,6 +1,6 @@
 # 1:0 mit Täuschung
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![1:0 mit Täuschung](../images/torabschluss-1-0-mit-taeuschung.png)
 

@@ -406,6 +406,7 @@ export default function Styleguide() {
               slug: "mein-4-gegen-4",
               name: "Mein 4-gegen-4",
               trainingsteilLabel: "Hauptteil",
+              hauptteilkategorieLabel: "Fussball spielen lernen",
               feldtypLabel: "Grossfeld",
               kategorien: ["F", "E"],
               herkunft: "user",
