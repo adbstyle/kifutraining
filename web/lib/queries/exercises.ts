@@ -19,6 +19,7 @@ export type ExerciseFilters = {
   form?: string[]; // Erscheinungsform (Überlappung)
   kinder?: number; // verfügbare Gruppengrösse
   q?: string; // Freitext
+  fav?: boolean; // nur eigene Favoriten (nur angemeldet wirksam)
 };
 
 // Felder, die Liste + Karte brauchen.
@@ -35,7 +36,26 @@ export type ExerciseListRow = {
   source: "manual" | "user";
   visibility: "public" | "private";
   bild_url: string | null;
+  /** Hat der aktuelle USER diese Übung favorisiert? (false wenn anonym) */
+  is_favorited: boolean;
 };
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+/** Übungs-IDs, die der angemeldete USER favorisiert hat. RLS liefert nur eigene
+ *  Favoriten — anonyme Aufrufer bekommen ein leeres Set. */
+async function getFavoriteIds(
+  supabase: SupabaseServerClient,
+  userId: string | undefined,
+): Promise<Set<string>> {
+  if (!userId) return new Set();
+  const { data, error } = await supabase
+    .from("exercise_favorites")
+    .select("exercise_id")
+    .eq("user_id", userId);
+  if (error) throw error;
+  return new Set((data ?? []).map((r) => r.exercise_id));
+}
 
 /** Übungen gemäss gesetzten Filtern. Dimensionen sind mit UND verknüpft,
  *  mehrere Werte innerhalb einer Dimension mit ODER (Story 3 EK9). */
@@ -43,8 +63,22 @@ export async function getExercises(
   f: ExerciseFilters = {},
 ): Promise<ExerciseListRow[]> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const favIds = await getFavoriteIds(supabase, user?.id);
+
+  // Favoriten-Filter ist nur angemeldet wirksam; ohne Favoriten -> leere Liste.
+  if (f.fav) {
+    if (!user || favIds.size === 0) return [];
+  }
+
   let query = supabase.from("exercises").select(LIST_COLUMNS).order("name");
 
+  // Filter serverseitig per ID-Liste (kombiniert sauber mit Suche/Filtern).
+  // Bei sehr vielen Favoriten könnte die Query-URL lang werden; im
+  // Kinderfussball-Kontext unkritisch. Sonst später als JOIN/View lösen.
+  if (f.fav) query = query.in("id", [...favIds]);
   if (f.teil?.length) query = query.in("trainingsteil", f.teil);
   if (f.kat?.length) query = query.overlaps("kategorien", f.kat);
   if (f.feld?.length) query = query.in("feldtyp", f.feld);
@@ -63,7 +97,10 @@ export async function getExercises(
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []) as ExerciseListRow[];
+  return (data ?? []).map((row) => ({
+    ...row,
+    is_favorited: favIds.has(row.id),
+  })) as ExerciseListRow[];
 }
 
 export type Fahrplan = {
@@ -116,13 +153,34 @@ export async function getMyExercises(): Promise<ExerciseListRow[]> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return [];
+  const favIds = await getFavoriteIds(supabase, user.id);
   const { data, error } = await supabase
     .from("exercises")
     .select(LIST_COLUMNS)
     .eq("owner_id", user.id)
     .order("updated_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []) as ExerciseListRow[];
+  return (data ?? []).map((row) => ({
+    ...row,
+    is_favorited: favIds.has(row.id),
+  })) as ExerciseListRow[];
+}
+
+/** Hat der angemeldete USER diese Übung favorisiert? (Detailseite) */
+export async function isFavorited(exerciseId: string): Promise<boolean> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data, error } = await supabase
+    .from("exercise_favorites")
+    .select("exercise_id")
+    .eq("user_id", user.id)
+    .eq("exercise_id", exerciseId)
+    .maybeSingle();
+  if (error) throw error;
+  return data != null;
 }
 
 /** DB-Zeile -> Karten-Props (Labels aus dem Vokabular). */

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Plus, FolderOpen } from "lucide-react";
 import { ExerciseCard, ButtonLink } from "@/components/ui";
 import { Flash } from "@/components/Flash";
+import { FavoriteButton } from "@/components/exercise/FavoriteButton";
+import { createClient } from "@/lib/supabase/server";
 import { getMyExercises, toCardData } from "@/lib/queries/exercises";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +16,13 @@ export default async function MeineUebungenPage({
 }) {
   const sp = await searchParams;
   const rows = await getMyExercises();
+
+  // Favoriten-Aktion nur für angemeldete USER (AC11) — wie im Katalog abgeleitet.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const canFavorite = !!user;
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -53,7 +62,20 @@ export default async function MeineUebungenPage({
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {rows.map((row) => (
-              <ExerciseCard key={row.id} ex={toCardData(row)} />
+              <ExerciseCard
+                key={row.id}
+                ex={toCardData(row)}
+                actionSlot={
+                  canFavorite ? (
+                    <FavoriteButton
+                      exerciseId={row.id}
+                      initial={row.is_favorited}
+                      size="sm"
+                      variant="overlay"
+                    />
+                  ) : undefined
+                }
+              />
             ))}
           </div>
         </>

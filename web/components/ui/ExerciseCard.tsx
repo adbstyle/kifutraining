@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { cn } from "@/lib/cn";
+import type { ReactNode } from "react";
 import { HerkunftBadge } from "./Badge";
 import { KategorieChip } from "./Chip";
 import { Card } from "./Card";
@@ -18,7 +18,15 @@ export interface ExerciseCardData {
   bildUrl?: string | null;
 }
 
-export function ExerciseCard({ ex }: { ex: ExerciseCardData }) {
+export function ExerciseCard({
+  ex,
+  actionSlot,
+}: {
+  ex: ExerciseCardData;
+  /** Optionaler Aktions-Slot oben rechts (z. B. Favoriten-Button). Wird vom
+   *  Feature-Layer befüllt, damit dieses UI-Kit domänenfrei bleibt. */
+  actionSlot?: ReactNode;
+}) {
   const meta = [ex.trainingsteilLabel, ex.feldtypLabel]
     .filter(Boolean)
     .join(" · ");
@@ -51,18 +59,16 @@ export function ExerciseCard({ ex }: { ex: ExerciseCardData }) {
             className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/55 to-transparent"
           />
 
-          {/* Overlay-Zeile oben: Alterskategorien links, Status rechts —
-              gemeinsame Höhe, mittig zueinander ausgerichtet. */}
-          <div className="absolute inset-x-2 top-2 flex items-center justify-between gap-2">
-            {ex.kategorien.length > 0 ? (
-              <div className="flex gap-1">
-                {ex.kategorien.map((k) => (
-                  <KategorieChip key={k} k={k} />
-                ))}
-              </div>
-            ) : (
-              <span />
-            )}
+          {/* Alterskategorien oben links. Der Aktions-Slot liegt oben rechts
+              (ausserhalb des Links, s. u.), die Herkunft unten links. */}
+          {ex.kategorien.length > 0 && (
+            <div className="absolute left-2 top-2 flex gap-1">
+              {ex.kategorien.map((k) => (
+                <KategorieChip key={k} k={k} />
+              ))}
+            </div>
+          )}
+          <div className="absolute bottom-2 left-2">
             <HerkunftBadge herkunft={ex.herkunft} visibility={ex.visibility} />
           </div>
         </div>
@@ -77,6 +83,12 @@ export function ExerciseCard({ ex }: { ex: ExerciseCardData }) {
           </p>
         </div>
       </Link>
+
+      {/* Aktions-Slot als Geschwister des Links (kein <button> in <a>),
+          oben rechts über dem Diagramm. Inhalt liefert der Feature-Layer. */}
+      {actionSlot && (
+        <div className="absolute right-2 top-2 z-10">{actionSlot}</div>
+      )}
     </Card>
   );
 }

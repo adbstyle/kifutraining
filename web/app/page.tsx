@@ -1,7 +1,9 @@
-import { SearchX } from "lucide-react";
+import { SearchX, Heart } from "lucide-react";
 import { ExerciseCard } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { FilterPanel, type CatalogFilters } from "@/components/catalog/FilterPanel";
+import { FavoriteButton } from "@/components/exercise/FavoriteButton";
+import { createClient } from "@/lib/supabase/server";
 import {
   getExercises,
   toCardData,
@@ -37,8 +39,16 @@ export default async function Home({
     form: list(sp.form),
     kinder: num(sp.kinder),
     q: typeof sp.q === "string" ? sp.q : undefined,
+    fav: sp.fav === "1",
   };
   const queryFilters: ExerciseFilters = { ...filters };
+
+  // Favoriten-Aktion + -Filter nur für angemeldete USER (AC11).
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const canFavorite = !!user;
 
   let rows: Awaited<ReturnType<typeof getExercises>> | null = null;
   let error: string | null = null;
@@ -76,7 +86,7 @@ export default async function Home({
 
       {rows && (
         <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-          <FilterPanel filters={filters} />
+          <FilterPanel filters={filters} canFavorite={canFavorite} />
 
           <section>
             <p className="type-label-small mb-4 text-on-surface-variant">
@@ -85,17 +95,44 @@ export default async function Home({
 
             {rows.length === 0 ? (
               <div className="flex flex-col items-center gap-3 rounded-[6px] border border-outline-variant bg-surface-container-low px-6 py-16 text-center">
-                <SearchX size={40} strokeWidth={1.5} className="text-on-surface-variant" aria-hidden />
-                <p className="type-title-medium text-on-surface">Keine Übung gefunden</p>
-                <p className="type-body-medium max-w-sm text-on-surface-variant">
-                  Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne
-                  Filter oder setze sie zurück.
-                </p>
+                {filters.fav ? (
+                  <>
+                    <Heart size={40} strokeWidth={1.5} className="text-on-surface-variant" aria-hidden />
+                    <p className="type-title-medium text-on-surface">Noch keine Favoriten</p>
+                    <p className="type-body-medium max-w-sm text-on-surface-variant">
+                      Markiere Übungen mit dem Herz-Symbol, um sie hier
+                      wiederzufinden. Andere Filter könnten die Auswahl zusätzlich
+                      einschränken.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <SearchX size={40} strokeWidth={1.5} className="text-on-surface-variant" aria-hidden />
+                    <p className="type-title-medium text-on-surface">Keine Übung gefunden</p>
+                    <p className="type-body-medium max-w-sm text-on-surface-variant">
+                      Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne
+                      Filter oder setze sie zurück.
+                    </p>
+                  </>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {rows.map((row) => (
-                  <ExerciseCard key={row.id} ex={toCardData(row)} />
+                  <ExerciseCard
+                    key={row.id}
+                    ex={toCardData(row)}
+                    actionSlot={
+                      canFavorite ? (
+                        <FavoriteButton
+                          exerciseId={row.id}
+                          initial={row.is_favorited}
+                          size="sm"
+                          variant="overlay"
+                        />
+                      ) : undefined
+                    }
+                  />
                 ))}
               </div>
             )}

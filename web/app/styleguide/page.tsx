@@ -12,6 +12,7 @@ import {
   Select,
   MethodischerFahrplan,
 } from "@/components/ui";
+import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { SegmentedDemo } from "./SegmentedDemo";
 import { ChipsDemo } from "./ChipsDemo";
 import { NavRailDemo } from "./NavRailDemo";
@@ -284,6 +285,25 @@ export default function Styleguide() {
             default · aktiv (State-Layer) · sm
           </span>
         </div>
+
+        <div className="mt-8 rounded-[4px] border border-outline-variant bg-surface-container-low p-4">
+          <p className="type-label-large mb-1 text-on-surface">
+            Ausnahme: Favoriten-Button (Fill)
+          </p>
+          <p className="type-body-medium mb-4 max-w-xl text-on-surface-variant">
+            Bewusste Abweichung von „Selected = State-Layer statt Fill": Das
+            Favoriten-Herz wird im aktiven Zustand <strong>gefüllt</strong> — der
+            etablierte, sofort lesbare Favoriten-Code. Optimistisch (sofortiges
+            Umschalten, Rücksetzen + Snackbar bei Fehler).
+          </p>
+          <div className="flex items-center gap-4">
+            <FavoriteButton exerciseId="00000000-0000-0000-0000-000000000000" initial={false} />
+            <FavoriteButton exerciseId="00000000-0000-0000-0000-000000000000" initial />
+            <span className="type-label-small text-on-surface-variant">
+              inaktiv (Outline) · aktiv (gefüllt, primary)
+            </span>
+          </div>
+        </div>
       </Section>
 
       <Section n="06" title="Layout &amp; Structure">
@@ -361,6 +381,8 @@ export default function Styleguide() {
 
       <Section n="10" title="Übungskarten">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* actionSlot demonstriert die Slot-Verdrahtung: das UI-Kit bleibt
+              domänenfrei, der Favoriten-Button kommt aus dem Feature-Layer. */}
           <ExerciseCard
             ex={{
               slug: "schiessbude",
@@ -370,6 +392,14 @@ export default function Styleguide() {
               kategorien: ["G", "F", "E"],
               herkunft: "manual",
             }}
+            actionSlot={
+              <FavoriteButton
+                exerciseId="00000000-0000-0000-0000-000000000000"
+                initial={false}
+                size="sm"
+                variant="overlay"
+              />
+            }
           />
           <ExerciseCard
             ex={{
