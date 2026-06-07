@@ -2,10 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   experimental: {
-    // Server-Action-Body-Limit (Default 1 MB) als Backstop über das 4-MB-
-    // Bild-Limit (lib/image.ts) heben. Der Client prüft die Grösse bereits vor
-    // dem Senden; das Plattform-Limit von Vercel (~4,5 MB) bleibt die Obergrenze.
-    serverActions: { bodySizeLimit: "5mb" },
+    // Server-Action-Body-Limit (Default 1 MB) anheben. Der Client verkleinert
+    // Bilder vor dem Upload (lib/image-compress.ts) auf < MAX_STORED_IMAGE_MB
+    // (1,5 MB); 3 MB lassen Spielraum für Bild + Formularfelder, damit eine
+    // knapp zu grosse Datei unsere eigene Meldung (storedImageError) erhält
+    // statt eines rohen Plattformfehlers. Vercel-Limit (~4,5 MB) bleibt Obergrenze.
+    serverActions: { bodySizeLimit: "3mb" },
   },
   images: {
     // Feld-Diagramme werden aus Supabase Storage ausgeliefert (öffentliche URLs).

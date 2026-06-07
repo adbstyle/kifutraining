@@ -21,7 +21,8 @@ import {
   type TrainingsteilSlug,
 } from "@/lib/vocab";
 import { kategorieStufe, FAHRPLAN_TEILE } from "@/lib/labels";
-import { imageError, IMAGE_ACCEPT, MAX_IMAGE_MB } from "@/lib/image";
+import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
+import { compressImage } from "@/lib/image-compress";
 
 export type ExerciseInitial = {
   name?: string;
@@ -73,6 +74,7 @@ export function ExerciseForm({
   const [feld, setFeld] = useState<string>(initial.feldtyp ?? "");
   const [hkat, setHkat] = useState<string>(initial.hauptteilkategorie ?? "");
   const [bildError, setBildError] = useState<string | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const istFahrplan = FAHRPLAN_TEILE.has(teil);
   // Hauptteilkategorie ist genau bei Hauptteil-Übungen Pflicht (Enabler #21).
@@ -83,20 +85,35 @@ export function ExerciseForm({
   // FormData direkt aus dem DOM bauen und die Chip-/Select-Werte aus dem State
   // explizit setzen. Verlässlicher als state-gesteuerte Hidden-Inputs, deren
   // Wert die Server-Action-Serialisierung nicht zuverlässig erfasst.
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isPending || isCompressing) return; // gegen Doppel-Submit
     const fd = new FormData(e.currentTarget);
-    // Bild VOR dem Senden prüfen — sonst lehnt das Server-Action-/Plattform-
-    // Body-Limit eine zu grosse Datei mit einem rohen Fehler ab, bevor unsere
-    // Validierung greift.
+
+    // Bild im Browser verkleinern, bevor es gesendet wird: so erreicht nur die
+    // kleine WebP-Fassung den Server (umgeht das Body-Limit, hält den Bucket
+    // klein). Grosse Originale sind dadurch erlaubt; HEIC wird konvertiert.
     const bild = fd.get("bild");
     if (bild instanceof File && bild.size > 0) {
-      const invalid = imageError(bild.type, bild.size);
+      const invalid = inputImageError(bild);
       if (invalid) {
         setBildError(invalid);
         return;
       }
+      setBildError(null);
+      setIsCompressing(true);
+      try {
+        fd.set("bild", await compressImage(bild));
+      } catch {
+        setBildError(
+          "Das Bild konnte nicht verarbeitet werden. Bitte versuche es erneut oder wähle ein anderes Bild.",
+        );
+        return;
+      } finally {
+        setIsCompressing(false);
+      }
     }
+
     setBildError(null);
     fd.set("trainingsteil", teil);
     fd.set("kat", kat.join(","));
@@ -273,7 +290,7 @@ export function ExerciseForm({
           className="focus-ring type-body-medium block w-full rounded-(--field-shape) border-[1.5px] border-(--field-outline) text-on-surface-variant file:mr-4 file:border-0 file:bg-secondary-container file:px-4 file:py-2.5 file:font-mono file:text-xs file:uppercase file:tracking-wider file:text-on-secondary-container"
         />
         <p className={`type-body-small mt-1.5 ${err.bild || bildError ? "text-error" : "text-on-surface-variant"}`}>
-          {err.bild ?? bildError ?? `JPG, PNG oder WebP, max. ${MAX_IMAGE_MB} MB.`}
+          {err.bild ?? bildError ?? "JPG, PNG, WebP oder HEIC. Grosse Bilder werden automatisch verkleinert."}
         </p>
         {initial.bildUrl && !err.bild && !bildError && (
           <p className="type-body-small mt-1 text-on-surface-variant">
@@ -283,9 +300,9 @@ export function ExerciseForm({
       </div>
 
       <div className="flex items-center gap-3 border-t border-outline-variant pt-5">
-        <Button type="submit" size="lg" disabled={isPending}>
+        <Button type="submit" size="lg" disabled={isPending || isCompressing}>
           <Save size={20} strokeWidth={2} aria-hidden />
-          {isPending ? "Wird gespeichert …" : submitLabel}
+          {isCompressing ? "Bild wird optimiert …" : isPending ? "Wird gespeichert …" : submitLabel}
         </Button>
         <p className="type-body-small text-on-surface-variant">
           Neue Übungen sind zunächst privat (Entwurf).

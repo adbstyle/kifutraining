@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { userSlug } from "@/lib/slug";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
-import { IMAGE_TYPES, imageError } from "@/lib/image";
+import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { FAHRPLAN_TEILE } from "@/lib/labels";
 import {
   trainingsteilSlugs,
@@ -134,10 +134,10 @@ async function uploadImage(
   exerciseId: string,
   file: File,
 ): Promise<{ url?: string; error?: string }> {
-  const invalid = imageError(file.type, file.size);
+  const invalid = storedImageError(file.type, file.size);
   if (invalid) return { error: invalid };
 
-  const path = `user/${ownerId}/${exerciseId}.${IMAGE_TYPES[file.type]}`;
+  const path = `user/${ownerId}/${exerciseId}.${STORED_IMAGE_TYPES[file.type]}`;
   const buf = new Uint8Array(await file.arrayBuffer());
   const { error } = await supabase.storage
     .from(STORAGE_BUCKET)
@@ -161,13 +161,8 @@ export async function createExercise(
   const parsed = parseExercise(form);
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
-  // Bild vor dem Insert prüfen, damit bei Formatfehler nichts angelegt wird (EK7).
   const file = form.get("bild");
   const hasImage = file instanceof File && file.size > 0;
-  if (hasImage) {
-    const invalid = imageError(file.type, file.size);
-    if (invalid) return { status: "error", errors: { bild: invalid } };
-  }
 
   // Id vorab erzeugen: Bild VOR dem Insert hochladen, danach EIN Insert mit
   // bild_url. Kein zweistufiges insert->update (kein Halb-Zustand, kein
@@ -199,7 +194,7 @@ export async function createExercise(
 
   if (error || !inserted) {
     if (bildUrl) {
-      await supabase.storage.from(STORAGE_BUCKET).remove([`user/${user.id}/${id}.${IMAGE_TYPES[(file as File).type]}`]);
+      await supabase.storage.from(STORAGE_BUCKET).remove([`user/${user.id}/${id}.${STORED_IMAGE_TYPES[(file as File).type]}`]);
     }
     return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
   }
@@ -226,13 +221,21 @@ export async function updateExercise(
 
   const file = form.get("bild");
   const hasImage = file instanceof File && file.size > 0;
-  if (hasImage) {
-    const invalid = imageError(file.type, file.size);
-    if (invalid) return { status: "error", errors: { bild: invalid } };
-  }
 
   const update: Record<string, unknown> = { ...parsed.row };
+  let altPfad: string | null = null;
   if (hasImage) {
+    // Alten Bildpfad merken: Erzeugt der Upload einen anderen Pfad (z. B.
+    // Formatwechsel .png -> .webp), wird die alte Datei sonst zur Waise.
+    const { data: alt } = await supabase
+      .from("exercises")
+      .select("bild_url")
+      .eq("id", id)
+      .eq("owner_id", user.id)
+      .eq("source", "user")
+      .maybeSingle();
+    altPfad = bildUrlToPath(alt?.bild_url);
+
     const { url, error: imgErr } = await uploadImage(supabase, user.id, id, file);
     if (imgErr) return { status: "error", errors: { bild: imgErr } };
     update.bild_url = url;
@@ -249,6 +252,14 @@ export async function updateExercise(
 
   if (error || !updated)
     return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
+
+  // Alte Bilddatei nur entfernen, wenn der Upload tatsächlich einen anderen
+  // Pfad erzeugt hat (bei gleichem Pfad hat upsert sie bereits überschrieben).
+  if (altPfad) {
+    const neuerPfad = bildUrlToPath(update.bild_url as string);
+    if (neuerPfad !== altPfad)
+      await supabase.storage.from(STORAGE_BUCKET).remove([altPfad]);
+  }
 
   revalidateLists();
   revalidatePath(`/uebung/${updated.slug}`);
