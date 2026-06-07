@@ -12,9 +12,11 @@ import {
 } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { OwnerActions } from "@/components/exercise/OwnerActions";
+import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { createClient } from "@/lib/supabase/server";
 import {
   getExerciseDetail,
+  isFavorited,
   type ExerciseDetail,
 } from "@/lib/queries/exercises";
 import {
@@ -73,6 +75,8 @@ export default async function ExerciseDetailPage({
     data: { user },
   } = await supabase.auth.getUser();
   const isOwner = ex.source === "user" && !!user && ex.owner_id === user.id;
+  // Favoriten-Aktion nur für angemeldete USER (AC2/AC11).
+  const favorited = user ? await isFavorited(ex.id) : false;
 
   const meta = [
     teilLabels[ex.trainingsteil as keyof typeof teilLabels] ?? ex.trainingsteil,
@@ -113,6 +117,14 @@ export default async function ExerciseDetailPage({
             </>
           )}
           <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
+          {user && (
+            <FavoriteButton
+              exerciseId={ex.id}
+              initial={favorited}
+              size="md"
+              className="ml-auto"
+            />
+          )}
         </div>
         <h1 className="type-headline-large text-on-surface">{ex.name}</h1>
         {meta.length > 0 && (

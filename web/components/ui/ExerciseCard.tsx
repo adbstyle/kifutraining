@@ -1,13 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
-import { cn } from "@/lib/cn";
 import { HerkunftBadge } from "./Badge";
 import { KategorieChip } from "./Chip";
 import { Card } from "./Card";
 import { FieldPlaceholder } from "./FieldPlaceholder";
+import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import type { KategorieSlug } from "@/lib/vocab";
 
 export interface ExerciseCardData {
+  id: string;
   slug: string;
   name: string;
   trainingsteilLabel: string;
@@ -16,6 +17,10 @@ export interface ExerciseCardData {
   herkunft: "manual" | "user";
   visibility?: "public" | "private";
   bildUrl?: string | null;
+  /** Aktueller Favoriten-Zustand des angemeldeten USERs. */
+  isFavorited?: boolean;
+  /** Nur angemeldete USER sehen den Favoriten-Button (AC11). */
+  canFavorite?: boolean;
 }
 
 export function ExerciseCard({ ex }: { ex: ExerciseCardData }) {
@@ -51,18 +56,16 @@ export function ExerciseCard({ ex }: { ex: ExerciseCardData }) {
             className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/55 to-transparent"
           />
 
-          {/* Overlay-Zeile oben: Alterskategorien links, Status rechts —
-              gemeinsame Höhe, mittig zueinander ausgerichtet. */}
-          <div className="absolute inset-x-2 top-2 flex items-center justify-between gap-2">
-            {ex.kategorien.length > 0 ? (
-              <div className="flex gap-1">
-                {ex.kategorien.map((k) => (
-                  <KategorieChip key={k} k={k} />
-                ))}
-              </div>
-            ) : (
-              <span />
-            )}
+          {/* Alterskategorien oben links. Der Favoriten-Button liegt oben
+              rechts (ausserhalb des Links, s. u.), die Herkunft unten links. */}
+          {ex.kategorien.length > 0 && (
+            <div className="absolute left-2 top-2 flex gap-1">
+              {ex.kategorien.map((k) => (
+                <KategorieChip key={k} k={k} />
+              ))}
+            </div>
+          )}
+          <div className="absolute bottom-2 left-2">
             <HerkunftBadge herkunft={ex.herkunft} visibility={ex.visibility} />
           </div>
         </div>
@@ -77,6 +80,19 @@ export function ExerciseCard({ ex }: { ex: ExerciseCardData }) {
           </p>
         </div>
       </Link>
+
+      {/* Favoriten-Button als Geschwister des Links (kein <button> in <a>),
+          oben rechts über dem Diagramm — nur für angemeldete USER. */}
+      {ex.canFavorite && (
+        <div className="absolute right-2 top-2 z-10">
+          <FavoriteButton
+            exerciseId={ex.id}
+            initial={!!ex.isFavorited}
+            size="sm"
+            variant="overlay"
+          />
+        </div>
+      )}
     </Card>
   );
 }

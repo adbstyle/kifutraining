@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, RotateCcw } from "lucide-react";
+import { Search, RotateCcw, Heart } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { FilterChip, TextField, Button } from "@/components/ui";
 import {
@@ -20,6 +20,7 @@ export type CatalogFilters = {
   form: string[];
   kinder?: number;
   q?: string;
+  fav?: boolean;
 };
 
 function FilterGroup({
@@ -37,7 +38,13 @@ function FilterGroup({
   );
 }
 
-export function FilterPanel({ filters }: { filters: CatalogFilters }) {
+export function FilterPanel({
+  filters,
+  canFavorite = false,
+}: {
+  filters: CatalogFilters;
+  canFavorite?: boolean;
+}) {
   const router = useRouter();
 
   // URL ist die Quelle der Wahrheit. Beim Mutieren die LIVE-URL lesen
@@ -75,6 +82,16 @@ export function FilterPanel({ filters }: { filters: CatalogFilters }) {
     [pushParams],
   );
 
+  const setFlag = useCallback(
+    (key: string, on: boolean) => {
+      const next = new URLSearchParams(window.location.search);
+      if (on) next.set(key, "1");
+      else next.delete(key);
+      pushParams(next);
+    },
+    [pushParams],
+  );
+
   const isOn = (key: string, value: string) =>
     (filters[key as keyof CatalogFilters] as string[] | undefined)?.includes(value) ??
     false;
@@ -85,7 +102,8 @@ export function FilterPanel({ filters }: { filters: CatalogFilters }) {
     filters.feld.length ||
     filters.form.length ||
     filters.kinder !== undefined ||
-    (filters.q?.length ?? 0) > 0;
+    (filters.q?.length ?? 0) > 0 ||
+    !!filters.fav;
 
   return (
     <aside className="flex flex-col gap-6">
@@ -96,6 +114,21 @@ export function FilterPanel({ filters }: { filters: CatalogFilters }) {
         leadingIcon={Search}
         onCommit={(v) => setScalar("q", v)}
       />
+
+      {/* Favoriten-Schalter: eigenständiger Ein/Aus-Modus oben, abgesetzt von
+          den übrigen Filterdimensionen. Nur für angemeldete USER (AC11). */}
+      {canFavorite && (
+        <div className="border-b border-outline-variant pb-6">
+          <FilterChip
+            selected={!!filters.fav}
+            onClick={() => setFlag("fav", !filters.fav)}
+            icon={Heart}
+            className="w-full justify-center"
+          >
+            Nur meine Favoriten
+          </FilterChip>
+        </div>
+      )}
 
       <FilterGroup title="Trainingsteil">
         {(Object.keys(teilLabels) as (keyof typeof teilLabels)[]).map((t) => (
