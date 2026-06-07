@@ -33,11 +33,12 @@ Die `supabase`-CLI läuft aus `web/` heraus mit `--workdir ..` — die `supabase
 
 ## Architektur & Gotchas
 
+- **Lokale authed-Flows / E2E:** Auth ist E-Mail/Passwort, **kein geseedeter Test-User**. Bestätigten User via Admin-API anlegen (`$SR` = `SUPABASE_SERVICE_ROLE_KEY` aus `web/.env.local`): `curl -X POST http://127.0.0.1:54321/auth/v1/admin/users -H "apikey: $SR" -H "Authorization: Bearer $SR" -H "Content-Type: application/json" -d '{"email":"e2e@test.local","password":"Test1234!","email_confirm":true}'`
 - **Eine Vokabular-Quelle:** `data/vokabular.yaml` ist kanonisch. `web/lib/vocab.ts` ist **auto-generiert** (`npm run gen:vocab`) — **nie von Hand editieren** (wird überschrieben). Schema-Enums hängen an derselben Quelle.
 - **Supabase ist server-only:** **keine `NEXT_PUBLIC_*`-Variablen.** DB-Credentials verlassen nie den Server. Client wird über `web/lib/supabase/server.ts` (request-gebunden) bzw. `admin.ts` (Seed) erzeugt — keinen Browser-Client einführen.
 - **RLS + RPC:** Zugriffskontrolle via Row Level Security; mehrstufige Mutationen laufen über `SECURITY DEFINER`-RPCs (`supabase/migrations/*_rpc_functions.sql`) mit Owner-Check als erster Anweisung.
 - **Styleguide-first UI:** Vor neuen UI-Komponenten am Styleguide/Kit (`web/app/styleguide`, `web/components/ui`) orientieren; Neues begründen und im Styleguide ergänzen.
-- **Bilder** kommen aus Supabase Storage (öffentliche URLs); erlaubte Hosts stehen in `web/next.config.ts`.
+- **Bilder** kommen aus Supabase Storage (öffentliche URLs); erlaubte Hosts stehen in `web/next.config.ts`. Trainer-Uploads werden **client-seitig** verkleinert (`web/lib/image-compress.ts`: browser-image-compression + heic-to → WebP ≤2000px) — keine serverseitige Bildverarbeitung einführen. Bild-Constraints sind Single Source in `web/lib/image.ts` (Client + Server); die Server Action validiert die gespeicherte Datei als Trust-Boundary (`storedImageError`).
 - **Migrationen vs. Prod-Daten:** CI prüft Migrationen gegen eine **leere** Wegwerf-DB, Prod hat Daten. Eine Migration, die eine Invariante auf einer bestehenden Tabelle verschärft (neuer `NOT NULL`/`CHECK`), muss `NOT VALID` (+ spätere `VALIDATE`-Migration) nutzen oder vorher backfillen — sonst bricht `supabase db push` an Altzeilen.
 - **Lifecycle-Modus:** Solange **pre-launch** (keine echten User): Prod darf zurückgesetzt + neu geseedet werden, Migrationen dürfen destruktiv sein. **Ab erstem echten User:** forward-only, keine Resets, `NOT VALID`/Backfills.
 - **Node-Version:** Single Source ist `.nvmrc` (Node 22); Workflows binden sie via `node-version-file`. `@supabase/supabase-js` braucht Node ≥22 (natives WebSocket), sonst scheitert `npm run seed`.
