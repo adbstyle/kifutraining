@@ -38,13 +38,16 @@ Die `supabase`-CLI läuft aus `web/` heraus mit `--workdir ..` — die `supabase
 - **RLS + RPC:** Zugriffskontrolle via Row Level Security; mehrstufige Mutationen laufen über `SECURITY DEFINER`-RPCs (`supabase/migrations/*_rpc_functions.sql`) mit Owner-Check als erster Anweisung.
 - **Styleguide-first UI:** Vor neuen UI-Komponenten am Styleguide/Kit (`web/app/styleguide`, `web/components/ui`) orientieren; Neues begründen und im Styleguide ergänzen.
 - **Bilder** kommen aus Supabase Storage (öffentliche URLs); erlaubte Hosts stehen in `web/next.config.ts`.
+- **Migrationen vs. Prod-Daten:** CI prüft Migrationen gegen eine **leere** Wegwerf-DB, Prod hat Daten. Eine Migration, die eine Invariante auf einer bestehenden Tabelle verschärft (neuer `NOT NULL`/`CHECK`), muss `NOT VALID` (+ spätere `VALIDATE`-Migration) nutzen oder vorher backfillen — sonst bricht `supabase db push` an Altzeilen.
+- **Lifecycle-Modus:** Solange **pre-launch** (keine echten User): Prod darf zurückgesetzt + neu geseedet werden, Migrationen dürfen destruktiv sein. **Ab erstem echten User:** forward-only, keine Resets, `NOT VALID`/Backfills.
+- **Node-Version:** Single Source ist `.nvmrc` (Node 22); Workflows binden sie via `node-version-file`. `@supabase/supabase-js` braucht Node ≥22 (natives WebSocket), sonst scheitert `npm run seed`.
 
 ## CI / Deploy
 
 - **Vercel** deployt die App automatisch bei Push auf `main` (Git-Integration).
 - `.github/workflows/deploy.yml` macht **nur** `supabase db push` (Migrationen → Prod), und nur wenn `supabase/migrations/**` sich ändert.
 - `seed-prod.yml` ist **manuell** (`workflow_dispatch`) — Manual-Daten werden nicht bei jedem Deploy geseedet.
-- `pr-checks.yml`: `gen:vocab` + `typecheck`, und Migrationen gegen eine Wegwerf-DB (`supabase start`).
+- `pr-checks.yml`: `gen:vocab` + `typecheck`; Migrationen gegen eine Wegwerf-DB (`supabase start`); zusätzlich `npm run seed` gegen diese DB — prüft den Seed-Runtime (sonst bricht `seed-prod` erst im Ernstfall) **und** dass alle YAML-Daten sämtliche Constraints erfüllen.
 
 ## Wichtige Pfade
 
