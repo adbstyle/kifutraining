@@ -381,9 +381,10 @@ export default function Styleguide() {
 
       <Section n="10" title="Übungskarten">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* actionSlot demonstriert die Slot-Verdrahtung: das UI-Kit bleibt
+              domänenfrei, der Favoriten-Button kommt aus dem Feature-Layer. */}
           <ExerciseCard
             ex={{
-              id: "demo-schiessbude",
               slug: "schiessbude",
               name: "Schiessbude",
               trainingsteilLabel: "Ausklang",
@@ -391,10 +392,17 @@ export default function Styleguide() {
               kategorien: ["G", "F", "E"],
               herkunft: "manual",
             }}
+            actionSlot={
+              <FavoriteButton
+                exerciseId="00000000-0000-0000-0000-000000000000"
+                initial={false}
+                size="sm"
+                variant="overlay"
+              />
+            }
           />
           <ExerciseCard
             ex={{
-              id: "demo-4-gegen-4",
               slug: "mein-4-gegen-4",
               name: "Mein 4-gegen-4",
               trainingsteilLabel: "Hauptteil",
@@ -406,7 +414,6 @@ export default function Styleguide() {
           />
           <ExerciseCard
             ex={{
-              id: "demo-toblerone",
               slug: "toblerone",
               name: "Toblerone",
               trainingsteilLabel: "Einleitung",

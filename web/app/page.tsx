@@ -2,6 +2,7 @@ import { SearchX, Heart } from "lucide-react";
 import { ExerciseCard } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { FilterPanel, type CatalogFilters } from "@/components/catalog/FilterPanel";
+import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { createClient } from "@/lib/supabase/server";
 import {
   getExercises,
@@ -120,7 +121,17 @@ export default async function Home({
                 {rows.map((row) => (
                   <ExerciseCard
                     key={row.id}
-                    ex={{ ...toCardData(row), canFavorite }}
+                    ex={toCardData(row)}
+                    actionSlot={
+                      canFavorite ? (
+                        <FavoriteButton
+                          exerciseId={row.id}
+                          initial={row.is_favorited}
+                          size="sm"
+                          variant="overlay"
+                        />
+                      ) : undefined
+                    }
                   />
                 ))}
               </div>

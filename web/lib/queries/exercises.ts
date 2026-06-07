@@ -186,10 +186,8 @@ export async function isFavorited(exerciseId: string): Promise<boolean> {
 /** DB-Zeile -> Karten-Props (Labels aus dem Vokabular). */
 export function toCardData(row: ExerciseListRow): ExerciseCardData {
   return {
-    id: row.id,
     slug: row.slug,
     name: row.name,
-    isFavorited: row.is_favorited,
     trainingsteilLabel:
       trainingsteilLabels[row.trainingsteil as keyof typeof trainingsteilLabels] ??
       row.trainingsteil,

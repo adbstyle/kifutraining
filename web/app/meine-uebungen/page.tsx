@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus, FolderOpen } from "lucide-react";
 import { ExerciseCard, ButtonLink } from "@/components/ui";
 import { Flash } from "@/components/Flash";
+import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { createClient } from "@/lib/supabase/server";
 import { getMyExercises, toCardData } from "@/lib/queries/exercises";
 
@@ -63,7 +64,17 @@ export default async function MeineUebungenPage({
             {rows.map((row) => (
               <ExerciseCard
                 key={row.id}
-                ex={{ ...toCardData(row), canFavorite }}
+                ex={toCardData(row)}
+                actionSlot={
+                  canFavorite ? (
+                    <FavoriteButton
+                      exerciseId={row.id}
+                      initial={row.is_favorited}
+                      size="sm"
+                      variant="overlay"
+                    />
+                  ) : undefined
+                }
               />
             ))}
           </div>
