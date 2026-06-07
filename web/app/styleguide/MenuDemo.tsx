@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button, Menu } from "@/components/ui";
 import type { MenuItemDef } from "@/components/ui";
 import { Copy, Share2, Trash2, ChevronDown } from "lucide-react";
@@ -8,6 +8,7 @@ import { Copy, Share2, Trash2, ChevronDown } from "lucide-react";
 export function MenuDemo() {
   const [open, setOpen] = useState(false);
   const [last, setLast] = useState<string | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const items: MenuItemDef[] = [
     { label: "Duplizieren", icon: Copy, onSelect: () => setLast("Duplizieren") },
@@ -18,11 +19,16 @@ export function MenuDemo() {
   return (
     <div className="flex items-center gap-4">
       <div className="relative">
-        <Button variant="tonal" onClick={() => setOpen((o) => !o)}>
+        <Button ref={triggerRef} variant="tonal" onClick={() => setOpen((o) => !o)}>
           Aktionen
           <ChevronDown size={18} strokeWidth={2} aria-hidden />
         </Button>
-        <Menu open={open} onClose={() => setOpen(false)} items={items} />
+        <Menu
+          open={open}
+          onClose={() => setOpen(false)}
+          triggerRef={triggerRef}
+          items={items}
+        />
       </div>
       {last && (
         <span className="type-label-small text-on-surface-variant">
