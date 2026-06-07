@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Card } from "@/components/ui";
 import { LoginForm } from "./LoginForm";
 
@@ -22,7 +23,7 @@ export default async function LoginPage({
         <h1 className="type-headline-large mt-1 text-on-surface">Anmelden</h1>
         <p className="type-body-medium mt-2 text-on-surface-variant">
           Melde dich mit E-Mail und Passwort an. Noch kein Konto?{" "}
-          <a href="/registrieren" className="text-primary underline">Registrieren</a>.
+          <Link href="/registrieren" className="text-primary underline">Registrieren</Link>.
         </p>
       </header>
 

@@ -12,7 +12,11 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get("next") ?? "/";
   const safeNext = next.startsWith("/") ? next : "/";
 
-  // Auf den tatsächlichen Host weiterleiten; in Prod via APP_ORIGIN festnageln.
+  // Auf den tatsächlichen Host-Header weiterleiten (nicht auf das evtl.
+  // normalisierte request.url-Origin): sonst wechselt der Host z. B. von
+  // 127.0.0.1 zu localhost und die soeben gesetzten Auth-Cookies (an den
+  // Host gebunden) gehen verloren. In Prod via APP_ORIGIN festnageln
+  // (gegen Host-Header-Spoofing).
   const host = request.headers.get("host");
   const proto = request.headers.get("x-forwarded-proto") ?? "http";
   const base = process.env.APP_ORIGIN ?? (host ? `${proto}://${host}` : origin);

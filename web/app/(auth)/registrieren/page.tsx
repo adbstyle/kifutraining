@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Card } from "@/components/ui";
 import { RegisterForm } from "./RegisterForm";
 
@@ -15,7 +16,7 @@ export default function RegisterPage() {
         <h1 className="type-headline-large mt-1 text-on-surface">Registrieren</h1>
         <p className="type-body-medium mt-2 text-on-surface-variant">
           Erstelle ein Konto, um eigene Übungen anzulegen. Bereits registriert?{" "}
-          <a href="/login" className="text-primary underline">Anmelden</a>.
+          <Link href="/login" className="text-primary underline">Anmelden</Link>.
         </p>
       </header>
       <Card className="p-6">

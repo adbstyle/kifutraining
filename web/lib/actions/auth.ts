@@ -11,7 +11,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PW = 8;
 
 export type AuthState = {
-  status: "idle" | "error" | "confirm" | "reset-sent";
+  status: "idle" | "error" | "confirm" | "reset-sent" | "needs-confirmation";
   message?: string;
   email?: string;
 };
@@ -48,13 +48,10 @@ export async function login(_prev: AuthState, formData: FormData): Promise<AuthS
     const notConfirmed =
       error.code === "email_not_confirmed" ||
       error.message.toLowerCase().includes("not confirmed");
-    return {
-      status: "error",
-      email,
-      message: notConfirmed
-        ? "Bitte bestätige zuerst deine E-Mail-Adresse."
-        : "E-Mail oder Passwort ist falsch.",
-    };
+    // Eigener Status, damit die UI gezielt einen „erneut senden"-Button zeigen
+    // kann (statt brüchigem String-Matching auf der Fehlermeldung).
+    if (notConfirmed) return { status: "needs-confirmation", email };
+    return { status: "error", email, message: "E-Mail oder Passwort ist falsch." };
   }
   redirect(next);
 }
