@@ -21,6 +21,8 @@ import { ChipsDemo } from "./ChipsDemo";
 import { NavRailDemo } from "./NavRailDemo";
 import { BottomNavDemo } from "./BottomNavDemo";
 import { MenuDemo } from "./MenuDemo";
+import { MultiSelectDemo } from "./MultiSelectDemo";
+import { HeaderNavDemo } from "./HeaderNavDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import {
@@ -496,6 +498,19 @@ export default function Styleguide() {
           Rail (ab <code>md</code>) und Bottom Navigation um.
         </p>
         <BottomNavDemo />
+
+        <p className="type-body-medium mt-8 mb-5 max-w-xl text-on-surface-variant">
+          <strong>Header-Navigation</strong> — horizontale Top-Bar als Alternative
+          zur Rail. Klebt oben (sticky, Kreide-Linie + Blur). Primär-Links als
+          mono-Labels mit Signal-Unterstrich (aktiv) und aufklappbarem{" "}
+          <strong>Flyout</strong> (Icon + Titel + Beschreibung). Rechts:
+          Such-Trigger mit <code>⌘K</code> (global), Notifications-Glocke mit
+          Zähler, Avatar-<strong>Konto-Menü</strong> (über <code>Menu</code>) und
+          CTA. Unter <code>lg</code> kollabiert alles in einen Hamburger →{" "}
+          <strong>Drawer</strong> (Scrim, Escape, Akkordeon für Flyout-Gruppen).
+          Datengetrieben über <code>nav</code>/<code>account</code>/<code>cta</code>.
+        </p>
+        <HeaderNavDemo />
       </Section>
 
       <Section n="13" title="Text-Fields &amp; Text-Area">
@@ -560,7 +575,23 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="16" title="Dialog &amp; Snackbar">
+      <Section n="16" title="Multi-Select">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Auswahl <strong>mehrerer</strong> Werte: Feld-Trigger mit inline
+          entfernbaren Tags (<code>--chip-selected-*</code>) öffnet ein Panel mit
+          Suchfeld im Kopf, Optionsliste (eckige KiFu-Checkbox 3px) und
+          Aktions-Footer (<code>Zurücksetzen</code> /{" "}
+          <code>Alle auswählen</code>, respektiert den aktiven Filter). Trigger
+          trägt den Feld-Token-Kontrakt (wie Text-Field), das Panel den{" "}
+          <code>--menu-*</code>-Kontrakt. Combobox-/Listbox-Semantik
+          (<code>aria-multiselectable</code>) mit voller Tastatursteuerung (↑/↓,
+          Home/End, Enter toggelt, Esc schliesst). <code>searchable</code> /{" "}
+          <code>actions</code> einzeln abschaltbar für kurze feste Listen.
+        </p>
+        <MultiSelectDemo />
+      </Section>
+
+      <Section n="17" title="Dialog &amp; Snackbar">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           Dialog auf nativem <code>&lt;dialog&gt;</code> (Fokus-Trap, Escape,
           Scrim). Snackbar in M3-Inverse-Farben mit Aktion + Auto-Dismiss.
@@ -569,7 +600,7 @@ export default function Styleguide() {
         <OverlaysDemo />
       </Section>
 
-      <Section n="17" title="Breadcrumbs">
+      <Section n="18" title="Breadcrumbs">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           Sekundäre Pfad-Navigation. Datengetrieben (<code>items</code>); das
           letzte Item ohne <code>href</code> ist die aktuelle Seite
