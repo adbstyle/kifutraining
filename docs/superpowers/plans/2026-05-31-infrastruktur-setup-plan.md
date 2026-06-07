@@ -207,6 +207,11 @@ deshalb läuft er nur aus CLI/CI, nie aus der App.
    - Pull Requests → automatische **Preview-Deployments** (optional nutzbar).
 4. **Env-Variablen** (Settings → Environment Variables): `SUPABASE_URL`, `SUPABASE_ANON_KEY`
    im Scope **Production** (und Preview). Keine `NEXT_PUBLIC_`-Supabase-Vars.
+   - `APP_ORIGIN=https://<prod-domain>` (z. B. `https://kifutraining.vercel.app`): kanonischer
+     Origin für Auth-Redirects (Magic-Link/Signup-Bestätigung), nagelt gegen Host-Header-Spoofing.
+     **Muss exakt** mit Supabase Auth → URL Configuration → **Site URL** und der **Redirect-Allowlist**
+     (`https://<prod-domain>/**`) übereinstimmen, sonst landen Bestätigungslinks auf localhost.
+     Env-Änderung greift erst nach einem **Redeploy**; die Supabase-Auth-Config greift sofort.
 5. Lokal verknüpfen (optional, für `vercel env pull`):
 
 ```bash
