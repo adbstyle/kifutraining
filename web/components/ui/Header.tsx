@@ -340,10 +340,16 @@ export function Header({
       </div>
       </header>
 
-      {/* ── Mobile-Drawer ─────────────────────────────────────── */}
+      {/* ── Mobile-Drawer ───────────────────────────────────────
+          `overflow-hidden`: der geschlossene Panel ist via translate-x-full
+          rechts ausserhalb des Viewports geparkt. Ohne Clipping ist dieser
+          Off-Canvas-Bereich auf Touch-Geräten per Visual-Viewport-Pan
+          erreichbar (Leerraum rechts, Inhalt links abgeschnitten). Clipping
+          am Overlay verbirgt ihn, lässt die Slide-in-Animation aber intakt.
+          Bewusst hier statt global (overflow-x:hidden am body bräche sticky). */}
       <div
         className={cn(
-          "fixed inset-0 z-50 lg:hidden",
+          "fixed inset-0 z-50 overflow-hidden lg:hidden",
           drawerOpen ? "pointer-events-auto" : "pointer-events-none",
         )}
         aria-hidden={!drawerOpen}
