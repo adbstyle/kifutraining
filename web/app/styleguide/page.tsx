@@ -8,6 +8,7 @@ import {
   ExerciseCard,
   IconButton,
   TextField,
+  PasswordField,
   TextArea,
   Select,
   MethodischerFahrplan,
@@ -485,6 +486,11 @@ export default function Styleguide() {
             defaultValue="1"
             error
             supportingText="Bitte eine Zahl ≥ 2 eingeben."
+          />
+          <PasswordField
+            label="Passwort"
+            autoComplete="off"
+            supportingText="Mit Auge-Icon ein-/ausblendbar."
           />
           <TextArea
             label="Aufbau / Beschreibung"

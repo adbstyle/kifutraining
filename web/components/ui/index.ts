@@ -28,3 +28,5 @@ export { IconButton } from "./IconButton";
 export type { IconButtonProps } from "./IconButton";
 export { Breadcrumbs } from "./Breadcrumbs";
 export type { BreadcrumbItem } from "./Breadcrumbs";
+export { PasswordField } from "./PasswordField";
+export type { PasswordFieldProps } from "./PasswordField";
