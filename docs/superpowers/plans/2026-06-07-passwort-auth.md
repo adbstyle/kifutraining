@@ -45,29 +45,38 @@ Befehle laufen aus `web/` (CLI via `--workdir ..`).
 - Create: `supabase/templates/confirmation.html`
 - Create: `supabase/templates/recovery.html`
 
-- [ ] **Step 1: `[auth.email]` in config.toml setzen**
+- [ ] **Step 1: Bestehende Werte in config.toml editieren (KEINE neuen Tabellen-Header!)**
 
-Im `[auth]`-Block die Werte ergänzen/anpassen (Passwort-Mindestlänge) und einen `[auth.email]`-Block mit Confirmations + Template-Pfaden hinzufügen. Direkt nach der `[auth]`-Sektion (nach `site_url`/`additional_redirect_urls`):
+> ⚠️ `[auth]`, `[auth.email]` und `[auth.rate_limit]` **existieren bereits** in `supabase/config.toml`.
+> TOML verbietet doppelte Tabellen-Header — also **bestehende Zeilen ändern**, nichts duplizieren.
+
+Drei bestehende Werte ändern:
 
 ```toml
-# Passwort-Policy
-[auth]
-# ... bestehende Keys (site_url, additional_redirect_urls, jwt_expiry) bleiben ...
-minimum_password_length = 8
+# Zeile ~182, im bestehenden [auth]-Block:
+minimum_password_length = 8        # war: 6
 
-[auth.email]
-enable_signup = true
-enable_confirmations = true
-# Versionierte deutsche Templates (token_hash-Pfad statt {{ .ConfirmationURL }})
+# Zeile ~199, im bestehenden [auth.rate_limit]-Block (Headroom fürs lokale Testen,
+# sonst greift beim Durchspielen mehrerer Flows in Task 10 dasselbe Limit):
+email_sent = 30                    # war: 2
+
+# Zeile ~226, im bestehenden [auth.email]-Block:
+enable_confirmations = true        # war: false
+```
+
+Und die zwei Template-Sub-Tabellen **neu hinzufügen** (die gibt es noch nicht — nur ein
+auskommentiertes `[auth.email.template.invite]`-Beispiel). Ans Ende des `[auth.email]`-Abschnitts
+(nach `otp_expiry`, vor dem auskommentierten `[auth.email.smtp]`):
+
+```toml
 [auth.email.template.confirmation]
 subject = "Bestätige deine E-Mail-Adresse"
 content_path = "./supabase/templates/confirmation.html"
+
 [auth.email.template.recovery]
 subject = "Passwort zurücksetzen"
 content_path = "./supabase/templates/recovery.html"
 ```
-
-> Falls `minimum_password_length` schon im `[auth]`-Block existiert, nur den Wert auf `8` setzen; `[auth]` nicht doppelt anlegen.
 
 - [ ] **Step 2: Bestätigungs-Template anlegen**
 
@@ -99,10 +108,14 @@ Create `supabase/templates/recovery.html`:
 <p>Wenn du das nicht angefordert hast, ignoriere diese E-Mail.</p>
 ```
 
-- [ ] **Step 4: Config validieren — lokalen Stack neu starten**
+- [ ] **Step 4: Config validieren — Stack neu starten (NICHT nur db:reset)**
 
-Run: `npm run db:reset`
-Expected: Reset + Migrationen + seed laufen ohne Fehler durch; am Ende „Finished supabase db reset". Kein Config-Parse-Fehler zu `[auth.email]`.
+> `supabase db reset` lädt die **GoTrue-Auth-Config + Templates NICHT** neu (die werden nur bei
+> `supabase start` gelesen). Deshalb den Stack stoppen und neu starten:
+
+Run: `npm run db:stop && npm run db:start`
+Expected: Stack fährt ohne Config-Parse-Fehler hoch (kein „duplicate key"/„duplicate table" zu
+`[auth]`/`[auth.email]`). `npm run db:status` zeigt die Mailpit-URL. Confirmations sind jetzt aktiv.
 
 - [ ] **Step 5: Commit**
 
@@ -215,7 +228,6 @@ git commit -m "feat(ui): PasswordField mit Show/Hide-Toggle + Styleguide-Demo"
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
@@ -406,8 +418,6 @@ export async function deleteAccount() {
   redirect("/?account_deleted=1");
 }
 ```
-
-> `EmailOtpType` aus `@supabase/supabase-js` wird hier importiert, damit der Typ in Task 4 (Route) konsistent verfügbar ist; in dieser Datei nur als Re-Export-Pfad nicht nötig — falls ESLint „unused" meldet, Import entfernen und in Task 4 direkt importieren.
 
 - [ ] **Step 2: Typecheck**
 
