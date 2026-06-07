@@ -7,13 +7,14 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 
-export type MagicLinkState = {
-  status: "idle" | "sent" | "error";
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PW = 8;
+
+export type AuthState = {
+  status: "idle" | "error" | "confirm" | "reset-sent";
   message?: string;
   email?: string;
 };
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Kanonischer Origin für Auth-Redirects. In Prod via APP_ORIGIN festnageln
  *  (gegen Host-Header-Spoofing); lokal aus den Request-Headern abgeleitet. */
@@ -25,33 +26,128 @@ async function appOrigin(): Promise<string> {
   return `${proto}://${host}`;
 }
 
-/** Passwortloser Login/Registrierung per Magic Link (Story 5 EK1/EK2).
- *  shouldCreateUser=true -> derselbe Flow legt bei Bedarf das Konto an. */
-export async function requestMagicLink(
-  _prev: MagicLinkState,
-  formData: FormData,
-): Promise<MagicLinkState> {
+function safeNext(raw: FormDataEntryValue | null): string {
+  const v = String(raw ?? "/");
+  return v.startsWith("/") ? v : "/";
+}
+
+/** Login per E-Mail + Passwort (Story 5). */
+export async function login(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim();
-  const redirectTo = String(formData.get("redirect") ?? "/");
-  const next = redirectTo.startsWith("/") ? redirectTo : "/";
+  const password = String(formData.get("password") ?? "");
+  const next = safeNext(formData.get("redirect"));
+
+  if (!EMAIL_RE.test(email) || password.length === 0) {
+    return { status: "error", message: "Bitte E-Mail und Passwort eingeben.", email };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    const notConfirmed =
+      error.code === "email_not_confirmed" ||
+      error.message.toLowerCase().includes("not confirmed");
+    return {
+      status: "error",
+      email,
+      message: notConfirmed
+        ? "Bitte bestätige zuerst deine E-Mail-Adresse."
+        : "E-Mail oder Passwort ist falsch.",
+    };
+  }
+  redirect(next);
+}
+
+/** Registrierung. Zeigt IMMER den Bestätigungs-Screen (Supabase obfuskiert
+ *  existierende Adressen -> Anti-Enumeration). */
+export async function register(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
 
   if (!EMAIL_RE.test(email)) {
     return { status: "error", message: "Bitte eine gültige E-Mail-Adresse eingeben." };
   }
+  if (password.length < MIN_PW) {
+    return { status: "error", message: `Das Passwort muss mindestens ${MIN_PW} Zeichen haben.`, email };
+  }
+  if (password !== confirm) {
+    return { status: "error", message: "Die Passwörter stimmen nicht überein.", email };
+  }
 
   const origin = await appOrigin();
-
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithOtp({
+  const { error } = await supabase.auth.signUp({
     email,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      shouldCreateUser: true,
-    },
+    password,
+    options: { emailRedirectTo: `${origin}/auth/confirm` },
   });
 
-  if (error) return { status: "error", message: error.message };
-  return { status: "sent", email };
+  if (error) {
+    const weak = error.code === "weak_password";
+    return {
+      status: "error",
+      email,
+      message: weak
+        ? `Das Passwort muss mindestens ${MIN_PW} Zeichen haben.`
+        : "Registrierung fehlgeschlagen. Bitte später erneut versuchen.",
+    };
+  }
+  return { status: "confirm", email };
+}
+
+/** Bestätigungsmail erneut senden (für „E-Mail noch nicht bestätigt"). */
+export async function resendConfirmation(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!EMAIL_RE.test(email)) return { status: "error", message: "Ungültige E-Mail-Adresse." };
+  const origin = await appOrigin();
+  const supabase = await createClient();
+  await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: `${origin}/auth/confirm` },
+  });
+  return { status: "confirm", email };
+}
+
+/** Passwort-Reset anfordern. Antwort IMMER neutral (Anti-Enumeration). */
+export async function requestPasswordReset(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!EMAIL_RE.test(email)) {
+    return { status: "error", message: "Bitte eine gültige E-Mail-Adresse eingeben." };
+  }
+  const origin = await appOrigin();
+  const supabase = await createClient();
+  // Fehler bewusst nicht durchreichen.
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/confirm`,
+  });
+  return { status: "reset-sent", email };
+}
+
+/** Neues Passwort setzen (nutzt die aktive Recovery-Session). */
+export async function setNewPassword(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+  if (password.length < MIN_PW) {
+    return { status: "error", message: `Das Passwort muss mindestens ${MIN_PW} Zeichen haben.` };
+  }
+  if (password !== confirm) {
+    return { status: "error", message: "Die Passwörter stimmen nicht überein." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    const same = error.code === "same_password";
+    return {
+      status: "error",
+      message: same
+        ? "Bitte ein neues, anderes Passwort wählen."
+        : "Passwort konnte nicht gesetzt werden. Fordere den Link neu an.",
+    };
+  }
+  redirect("/konto");
 }
 
 /** Abmelden (Story 5 EK3) und zurück zur Startseite. */
