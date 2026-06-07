@@ -262,47 +262,21 @@ export default function Styleguide() {
       <Section n="05" title="Iconography — Lucide">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           Open-Source Lucide, outlined, Strich 2px. „Selected" über Farbe +
-          State-Layer (statt Fill). Größen 20 / 24 / 40.
+          State-Layer (statt Fill). Größen 20 / 24 / 40. Interaktiv → siehe
+          Icon-Buttons unter „Buttons".
         </p>
         <div className="mb-6 flex flex-wrap items-center gap-5 text-on-surface-variant">
           {iconSet.map((Icon, i) => (
             <Icon key={i} size={24} strokeWidth={2} aria-hidden />
           ))}
         </div>
-        <div className="mb-6 flex items-end gap-6 text-on-surface-variant">
+        <div className="flex items-end gap-6 text-on-surface-variant">
           {[20, 24, 40].map((sz) => (
             <div key={sz} className="flex flex-col items-center gap-1">
               <Search size={sz} strokeWidth={2} aria-hidden />
               <span className="type-label-small">{sz}px</span>
             </div>
           ))}
-        </div>
-        <div className="flex items-center gap-4">
-          <IconButton icon={Search} label="Suchen" />
-          <IconButton icon={SlidersHorizontal} label="Filter" active />
-          <IconButton icon={Plus} label="Hinzufügen" size="sm" />
-          <span className="type-label-small text-on-surface-variant">
-            default · aktiv (State-Layer) · sm
-          </span>
-        </div>
-
-        <div className="mt-8 rounded-[4px] border border-outline-variant bg-surface-container-low p-4">
-          <p className="type-label-large mb-1 text-on-surface">
-            Ausnahme: Favoriten-Button (Fill)
-          </p>
-          <p className="type-body-medium mb-4 max-w-xl text-on-surface-variant">
-            Bewusste Abweichung von „Selected = State-Layer statt Fill": Das
-            Favoriten-Herz wird im aktiven Zustand <strong>gefüllt</strong> — der
-            etablierte, sofort lesbare Favoriten-Code. Optimistisch (sofortiges
-            Umschalten, Rücksetzen + Snackbar bei Fehler).
-          </p>
-          <div className="flex items-center gap-4">
-            <FavoriteButton exerciseId="00000000-0000-0000-0000-000000000000" initial={false} />
-            <FavoriteButton exerciseId="00000000-0000-0000-0000-000000000000" initial />
-            <span className="type-label-small text-on-surface-variant">
-              inaktiv (Outline) · aktiv (gefüllt, primary)
-            </span>
-          </div>
         </div>
       </Section>
 
@@ -359,6 +333,40 @@ export default function Styleguide() {
           <Button variant="outlined">Raster</Button>
           <Button variant="outlined">Karte</Button>
         </ButtonGroup>
+
+        <p className="type-label-small mb-2 mt-6 text-on-surface-variant">
+          Icon-Buttons (M3 — outlined Icon + State-Layer, primary im aktiven Zustand)
+        </p>
+        <div className="flex items-center gap-4">
+          <IconButton icon={Search} label="Suchen" />
+          <IconButton icon={SlidersHorizontal} label="Filter" active />
+          <IconButton icon={Plus} label="Hinzufügen" size="sm" />
+          <IconButton icon={Plus} label="Hinzufügen" variant="overlay" />
+          <span className="type-label-small text-on-surface-variant">
+            default · aktiv (State-Layer) · sm · overlay (über Bild)
+          </span>
+        </div>
+
+        <div className="mt-6 rounded-[4px] border border-outline-variant bg-surface-container-low p-4">
+          <p className="type-label-large mb-1 text-on-surface">
+            Ausnahme: Favoriten-Button (Fill)
+          </p>
+          <p className="type-body-medium mb-4 max-w-xl text-on-surface-variant">
+            Ist ein <code>IconButton</code> (gleiche Größe, State-Layer,
+            Focus-Ring, primary im aktiven Zustand). Einzige Abweichung von der
+            Iconography-Regel „Selected = State-Layer statt Fill": Das
+            Favoriten-Herz wird im aktiven Zustand <strong>gefüllt</strong> — der
+            etablierte, sofort lesbare Favoriten-Code. Optimistisch (sofortiges
+            Umschalten, Rücksetzen + Snackbar bei Fehler).
+          </p>
+          <div className="flex items-center gap-4">
+            <FavoriteButton exerciseId="00000000-0000-0000-0000-000000000000" initial={false} />
+            <FavoriteButton exerciseId="00000000-0000-0000-0000-000000000000" initial />
+            <span className="type-label-small text-on-surface-variant">
+              inaktiv (Outline) · aktiv (gefüllt, primary)
+            </span>
+          </div>
+        </div>
       </Section>
 
       <Section n="08" title="Badges &amp; Chips (M3)">
