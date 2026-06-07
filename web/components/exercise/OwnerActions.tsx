@@ -1,45 +1,96 @@
 "use client";
 
-import { useState } from "react";
-import { Pencil, Globe, Lock, Trash2 } from "lucide-react";
-import { Button, ButtonLink, Dialog } from "@/components/ui";
+import { useState, type ReactNode } from "react";
+import { Pencil, Globe, Lock, Trash2, MoreVertical } from "lucide-react";
+import {
+  Button,
+  IconButton,
+  IconButtonLink,
+  Tooltip,
+  Menu,
+  Dialog,
+} from "@/components/ui";
 import { setVisibility, deleteExercise } from "@/lib/actions/exercises";
 
-/* Eigentümer-Aktionen auf der Detailseite: bearbeiten, Sichtbarkeit umschalten,
-   löschen (mit Bestätigungsdialog, Story 7 EK4). */
+/* Eigentümer-Aktionen als Inline-Icon-Cluster, der rechts in die Badge-Zeile
+   der Detailseite gesetzt wird (kein eigener Kasten/Label mehr): bearbeiten
+   (Link), Sichtbarkeit umschalten (Form), und ein ⋮-Überlaufmenü, das die
+   destruktive Löschen-Aktion vom Alltagsgeschäft trennt (Löschen liegt bewusst
+   NICHT offen). Löschen ist damit zweistufig: ⋮ → Löschen → Bestätigungsdialog
+   (Story 7 EK4). Tooltips machen die icon-only Buttons lesbar (der Globus allein
+   wäre mehrdeutig).
+
+   `favoriteSlot` wird zwischen Sichtbarkeit und ⋮ platziert — so steht der
+   Favoriten-Button (für alle angemeldeten User) in der gewünschten Reihenfolge
+   Stift · Globus · Herz · ⋮, ohne dass die Detailseite die Owner-Logik kennen
+   muss. */
 export function OwnerActions({
   id,
   slug,
   visibility,
+  favoriteSlot,
 }: {
   id: string;
   slug: string;
   visibility: "public" | "private";
+  favoriteSlot?: ReactNode;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const isPublic = visibility === "public";
   const next = isPublic ? "private" : "public";
+  const visibilityLabel = isPublic ? "Auf privat setzen" : "Öffentlich schalten";
 
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-2 rounded-[6px] border border-outline-variant bg-surface-container-low p-3">
-      <span className="type-label-small mr-1 text-on-surface-variant">Deine Übung:</span>
+    <>
+      <Tooltip label="Bearbeiten">
+        <IconButtonLink
+          href={`/uebung/${slug}/edit`}
+          icon={Pencil}
+          label="Bearbeiten"
+          size="sm"
+        />
+      </Tooltip>
 
-      <ButtonLink href={`/uebung/${slug}/edit`} variant="tonal" size="sm">
-        <Pencil size={16} strokeWidth={2} aria-hidden />
-        Bearbeiten
-      </ButtonLink>
-
-      <form action={setVisibility.bind(null, id, next)}>
-        <Button type="submit" variant="outlined" size="sm">
-          {isPublic ? <Lock size={16} strokeWidth={2} aria-hidden /> : <Globe size={16} strokeWidth={2} aria-hidden />}
-          {isPublic ? "Auf privat setzen" : "Öffentlich schalten"}
-        </Button>
+      <form action={setVisibility.bind(null, id, next)} className="inline-flex">
+        <Tooltip label={visibilityLabel}>
+          <IconButton
+            type="submit"
+            icon={isPublic ? Lock : Globe}
+            label={visibilityLabel}
+            size="sm"
+          />
+        </Tooltip>
       </form>
 
-      <Button variant="danger" size="sm" onClick={() => setConfirmOpen(true)}>
-        <Trash2 size={16} strokeWidth={2} aria-hidden />
-        Löschen
-      </Button>
+      {favoriteSlot}
+
+      {/* ⋮-Überlaufmenü — Löschen liegt hier statt offen in der Reihe. */}
+      <div className="relative">
+        <Tooltip label="Weitere Aktionen">
+          <IconButton
+            icon={MoreVertical}
+            label="Weitere Aktionen"
+            size="sm"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((o) => !o)}
+          />
+        </Tooltip>
+        <Menu
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          className="right-0"
+          items={[
+            {
+              label: "Löschen",
+              icon: Trash2,
+              danger: true,
+              onSelect: () => setConfirmOpen(true),
+            },
+          ]}
+        />
+      </div>
 
       <Dialog
         open={confirmOpen}
@@ -61,6 +112,6 @@ export function OwnerActions({
         Diese Übung wird mitsamt Feld-Diagramm endgültig entfernt. Das kann nicht
         rückgängig gemacht werden.
       </Dialog>
-    </div>
+    </>
   );
 }

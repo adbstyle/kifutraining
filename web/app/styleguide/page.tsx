@@ -7,6 +7,8 @@ import {
   Card,
   ExerciseCard,
   IconButton,
+  IconButtonLink,
+  Tooltip,
   TextField,
   PasswordField,
   TextArea,
@@ -345,6 +347,32 @@ export default function Styleguide() {
           <IconButton icon={Plus} label="Hinzufügen" variant="overlay" />
           <span className="type-label-small text-on-surface-variant">
             default · aktiv (State-Layer) · sm · overlay (über Bild)
+          </span>
+        </div>
+
+        <p className="type-label-small mb-2 mt-6 text-on-surface-variant">
+          Icon-Button als Link (<code>IconButtonLink</code>) + Tooltip (Hover/Fokus)
+        </p>
+        <p className="type-body-medium mb-3 max-w-xl text-on-surface-variant">
+          <code>IconButtonLink</code> ist die Navigations-Variante (rendert ein
+          <code>&lt;a&gt;</code> statt <code>&lt;button&gt;</code>, gleiche Optik).
+          <code>Tooltip</code> umschliesst einen icon-only Trigger und macht ihn
+          lesbar — Pflicht, sobald das Icon allein mehrdeutig ist (z. B. Globus =
+          öffentlich vs. Schloss = privat). CSS-only, <code>aria-hidden</code>
+          (der Name kommt schon vom <code>aria-label</code> des Triggers).
+        </p>
+        <div className="flex items-center gap-4">
+          <Tooltip label="Bearbeiten">
+            <IconButtonLink href="#" icon={Search} label="Bearbeiten" size="sm" />
+          </Tooltip>
+          <Tooltip label="Öffentlich schalten">
+            <IconButton icon={Globe} label="Öffentlich schalten" size="sm" />
+          </Tooltip>
+          <Tooltip label="Auf privat setzen">
+            <IconButton icon={Lock} label="Auf privat setzen" size="sm" />
+          </Tooltip>
+          <span className="type-label-small text-on-surface-variant">
+            (hovern oder per Tab fokussieren)
           </span>
         </div>
 

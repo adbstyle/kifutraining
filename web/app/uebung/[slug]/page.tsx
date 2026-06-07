@@ -96,12 +96,6 @@ export default async function ExerciseDetailPage({
         Alle Übungen
       </Link>
 
-      <div className="mt-4">
-        {isOwner && (
-          <OwnerActions id={ex.id} slug={ex.slug} visibility={ex.visibility} />
-        )}
-      </div>
-
       <header className="mt-4">
         <div className="mb-3 flex flex-wrap items-center gap-2.5">
           {ex.kategorien.length > 0 && (
@@ -118,13 +112,32 @@ export default async function ExerciseDetailPage({
             </>
           )}
           <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
-          {user && (
-            <FavoriteButton
-              exerciseId={ex.id}
-              initial={favorited}
-              size="md"
-              className="ml-auto"
-            />
+
+          {/* Aktions-Cluster rechts: Stift · Globus · Herz · ⋮.
+              Owner sieht alle, sonstige angemeldete User nur den Favoriten. */}
+          {(isOwner || user) && (
+            <div className="ml-auto flex items-center gap-0.5">
+              {isOwner ? (
+                <OwnerActions
+                  id={ex.id}
+                  slug={ex.slug}
+                  visibility={ex.visibility}
+                  favoriteSlot={
+                    <FavoriteButton
+                      exerciseId={ex.id}
+                      initial={favorited}
+                      size="sm"
+                    />
+                  }
+                />
+              ) : (
+                <FavoriteButton
+                  exerciseId={ex.id}
+                  initial={favorited}
+                  size="sm"
+                />
+              )}
+            </div>
           )}
         </div>
         <h1 className="type-headline-large text-on-surface">{ex.name}</h1>
