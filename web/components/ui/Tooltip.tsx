@@ -27,7 +27,6 @@ export function Tooltip({
     <span className={cn("group relative inline-flex", className)}>
       {children}
       <span
-        role="tooltip"
         aria-hidden
         className={cn(
           // Standard: versteckt + nicht klickbar; sichtbar bei Hover/Fokus.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Pencil, Globe, Lock, Trash2, MoreVertical } from "lucide-react";
 import {
   Button,
@@ -37,6 +37,7 @@ export function OwnerActions({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const isPublic = visibility === "public";
   const next = isPublic ? "private" : "public";
   const visibilityLabel = isPublic ? "Auf privat setzen" : "Öffentlich schalten";
@@ -69,6 +70,7 @@ export function OwnerActions({
       <div className="relative">
         <Tooltip label="Weitere Aktionen">
           <IconButton
+            ref={menuTriggerRef}
             icon={MoreVertical}
             label="Weitere Aktionen"
             size="sm"
@@ -80,6 +82,7 @@ export function OwnerActions({
         <Menu
           open={menuOpen}
           onClose={() => setMenuOpen(false)}
+          triggerRef={menuTriggerRef}
           className="right-0"
           items={[
             {

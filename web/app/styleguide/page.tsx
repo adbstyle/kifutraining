@@ -36,6 +36,7 @@ import {
   BookOpen,
   Trash2,
   User,
+  Pencil,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -363,7 +364,7 @@ export default function Styleguide() {
         </p>
         <div className="flex items-center gap-4">
           <Tooltip label="Bearbeiten">
-            <IconButtonLink href="#" icon={Search} label="Bearbeiten" size="sm" />
+            <IconButtonLink href="#" icon={Pencil} label="Bearbeiten" size="sm" />
           </Tooltip>
           <Tooltip label="Öffentlich schalten">
             <IconButton icon={Globe} label="Öffentlich schalten" size="sm" />

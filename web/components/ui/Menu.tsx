@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { RefObject } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -14,24 +15,38 @@ export interface MenuItemDef {
 
 /* M3 Menu — verankertes Dropdown. In einen `relative` Wrapper neben den
    Trigger setzen. Schliesst bei Outside-Click und Escape. Gespeist aus
-   --menu-*-Component-Tokens. */
+   --menu-*-Component-Tokens.
+
+   `triggerRef`: Ref auf das öffnende Trigger-Element. Wird der Trigger als
+   Toggle benutzt (öffnet UND schliesst per Klick), MUSS er hier übergeben
+   werden — sonst schliesst der Outside-Click-Handler (mousedown) das Menü,
+   bevor der Trigger-Klick es togglet, und es öffnet sich sofort wieder. Mit
+   triggerRef ignoriert der Handler Klicks auf den Trigger und überlässt ihm
+   das Schliessen. */
 export function Menu({
   open,
   onClose,
   items,
   className,
+  triggerRef,
 }: {
   open: boolean;
   onClose: () => void;
   items: MenuItemDef[];
   className?: string;
+  triggerRef?: RefObject<HTMLElement | null>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     function onDoc(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      const target = e.target as Node;
+      if (ref.current?.contains(target)) return;
+      // Klicks auf den Trigger nicht als „aussen" werten — der Trigger
+      // schliesst selbst (Toggle), sonst Doppel-Toggle + sofortiges Wieder-Öffnen.
+      if (triggerRef?.current?.contains(target)) return;
+      onClose();
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -42,7 +57,7 @@ export function Menu({
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open, onClose]);
+  }, [open, onClose, triggerRef]);
 
   if (!open) return null;
 
