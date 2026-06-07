@@ -127,13 +127,26 @@ function parseExercise(form: FormData): ParseResult {
   };
 }
 
-/** Optionales Feld-Diagramm validieren + in den Storage laden -> public URL. */
+/** Storage-Objekt best-effort entfernen (no-op bei null). Eine Stelle für alle
+ *  Lösch-/Rollback-Pfade, damit das Pfad-Handling nicht dupliziert wird. */
+async function removeStorageObject(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  path: string | null,
+) {
+  if (path) await supabase.storage.from(STORAGE_BUCKET).remove([path]);
+}
+
+/** Optionales Feld-Diagramm validieren + in den Storage laden. Gibt public URL
+ *  UND den geschriebenen Storage-Pfad zurück — letzteren brauchen die Aufrufer
+ *  für Rollback/Cleanup, statt ihn fehleranfällig selbst zu rekonstruieren. */
 async function uploadImage(
   supabase: Awaited<ReturnType<typeof createClient>>,
   ownerId: string,
   exerciseId: string,
   file: File,
-): Promise<{ url?: string; error?: string }> {
+): Promise<{ url?: string; path?: string; error?: string }> {
+  // Server-seitige Trust-Boundary: prüft Format/Grösse VOR dem Storage-Write
+  // und damit vor jedem DB-Insert/-Update (EK7). Einzige Server-Prüfstelle.
   const invalid = storedImageError(file.type, file.size);
   if (invalid) return { error: invalid };
 
@@ -145,6 +158,7 @@ async function uploadImage(
   if (error) return { error: error.message };
   return {
     url: supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl,
+    path,
   };
 }
 
@@ -172,10 +186,12 @@ export async function createExercise(
   const slug = userSlug(String(parsed.row.name));
 
   let bildUrl: string | null = null;
+  let bildPfad: string | null = null;
   if (hasImage) {
-    const { url, error: imgErr } = await uploadImage(supabase, user.id, id, file);
+    const { url, path, error: imgErr } = await uploadImage(supabase, user.id, id, file);
     if (imgErr) return { status: "error", errors: { bild: imgErr } };
     bildUrl = url ?? null;
+    bildPfad = path ?? null;
   }
 
   const { data: inserted, error } = await supabase
@@ -193,9 +209,7 @@ export async function createExercise(
     .single();
 
   if (error || !inserted) {
-    if (bildUrl) {
-      await supabase.storage.from(STORAGE_BUCKET).remove([`user/${user.id}/${id}.${STORED_IMAGE_TYPES[(file as File).type]}`]);
-    }
+    await removeStorageObject(supabase, bildPfad);
     return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
   }
 
@@ -224,6 +238,7 @@ export async function updateExercise(
 
   const update: Record<string, unknown> = { ...parsed.row };
   let altPfad: string | null = null;
+  let neuPfad: string | null = null;
   if (hasImage) {
     // Alten Bildpfad merken: Erzeugt der Upload einen anderen Pfad (z. B.
     // Formatwechsel .png -> .webp), wird die alte Datei sonst zur Waise.
@@ -236,9 +251,10 @@ export async function updateExercise(
       .maybeSingle();
     altPfad = bildUrlToPath(alt?.bild_url);
 
-    const { url, error: imgErr } = await uploadImage(supabase, user.id, id, file);
+    const { url, path, error: imgErr } = await uploadImage(supabase, user.id, id, file);
     if (imgErr) return { status: "error", errors: { bild: imgErr } };
-    update.bild_url = url;
+    update.bild_url = url ?? null;
+    neuPfad = path ?? null;
   }
 
   const { data: updated, error } = await supabase
@@ -250,16 +266,17 @@ export async function updateExercise(
     .select("slug")
     .single();
 
-  if (error || !updated)
+  if (error || !updated) {
+    // Upload war erfolgreich, DB-Update nicht: das neu hochgeladene Bild wieder
+    // entfernen — ausser es hat den weiterhin referenzierten alten Pfad
+    // überschrieben (gleicher Pfad), dann zeigt die DB korrekt darauf.
+    if (neuPfad && neuPfad !== altPfad) await removeStorageObject(supabase, neuPfad);
     return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
-
-  // Alte Bilddatei nur entfernen, wenn der Upload tatsächlich einen anderen
-  // Pfad erzeugt hat (bei gleichem Pfad hat upsert sie bereits überschrieben).
-  if (altPfad) {
-    const neuerPfad = bildUrlToPath(update.bild_url as string);
-    if (neuerPfad !== altPfad)
-      await supabase.storage.from(STORAGE_BUCKET).remove([altPfad]);
   }
+
+  // Erfolg: alte Bilddatei entfernen, wenn der Upload einen anderen Pfad erzeugt
+  // hat (bei gleichem Pfad hat upsert sie bereits überschrieben).
+  if (altPfad && altPfad !== neuPfad) await removeStorageObject(supabase, altPfad);
 
   revalidateLists();
   revalidatePath(`/uebung/${updated.slug}`);
@@ -316,8 +333,7 @@ export async function deleteExercise(id: string, _form: FormData) {
     .eq("source", "user");
   if (error) return;
 
-  const path = bildUrlToPath(ex?.bild_url);
-  if (path) await supabase.storage.from(STORAGE_BUCKET).remove([path]);
+  await removeStorageObject(supabase, bildUrlToPath(ex?.bild_url));
 
   revalidateLists();
   redirect("/meine-uebungen?deleted=1");
