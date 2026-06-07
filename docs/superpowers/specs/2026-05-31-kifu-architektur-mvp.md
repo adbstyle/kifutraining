@@ -529,12 +529,21 @@ scripts/
 
 - Ein **öffentlicher Bucket `exercise-images`** für die Auslieferung (Lesen). Manual-Bilder
   beim Seed hochgeladen; User-Uploads unter `user/<owner_id>/<exercise_id>.<ext>`.
-- **Upload server-only:** Datei geht an Server Action / Route Handler, die Typ und Grösse
-  validiert und dann serverseitig in den Storage schreibt.
-- **Upload-Rahmen:** max. ~5 MB, Formate `jpg/png/webp`, serverseitige Validierung.
-- **Verwaiste Bilder:** Lösch-Action entfernt das Storage-Objekt; ergänzend ein
-  periodischer **Vercel-Cron-Cleanup** für Objekte ohne DB-Referenz. Bei Anonymisierung
-  bleiben öffentliche Bilder erhalten.
+- **Client-Verkleinerung vor dem Upload (#32):** Das Bild wird im Browser auf max. 2000px
+  (längste Kante) verkleinert und als WebP (~Quality 0.82) kodiert, bevor es gesendet wird.
+  So erreicht nie das grosse Original den Server — das umgeht das Vercel-Function-Body-Limit
+  und hält den Bucket klein. 2000px deckt die grösste Bildschirmdarstellung (Detail ~896px
+  @2×) und einen A4-Druck (~280 DPI) ab. HEIC (iPhone) wird client-seitig nach JPEG
+  dekodiert. Bringt die Verkleinerung nichts, bleibt das kleinere Original erhalten.
+- **Upload server-only:** Die (kleine) Datei geht an eine Server Action, die als einzige
+  Schreib-Stelle bleibt und als Trust-Boundary die ankommende Datei gegen eine harte
+  Byte-Obergrenze (`MAX_STORED_IMAGE_BYTES`, 1,5 MB) und die erlaubten Stored-Formate
+  (`webp/jpg/png`) prüft. Grosse Originale dürfen gewählt werden (Client verkleinert sie);
+  schlägt die Verkleinerung fehl, bricht der Upload mit Meldung ab. `bodySizeLimit` = 3 MB.
+- **Verwaiste Bilder:** Lösch-Action entfernt das Storage-Objekt; beim Bearbeiten wird zudem
+  die alte Datei entfernt, wenn ein Formatwechsel (z. B. `.png` → `.webp`) einen neuen Pfad
+  erzeugt. Ergänzend ein periodischer **Vercel-Cron-Cleanup** für Objekte ohne DB-Referenz.
+  Bei Anonymisierung bleiben öffentliche Bilder erhalten.
 - Übungen ohne Diagramm → **Ersatzdarstellung** in der UI. Sowohl Katalog-Detail als auch
   Planer-Durchführung und Print nutzen dieselben Bild-URLs.
 
