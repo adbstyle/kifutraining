@@ -38,12 +38,11 @@ export default function RootLayout({
       <body
         className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen antialiased`}
       >
-        <div className="flex min-h-dvh">
+        <div className="flex min-h-dvh flex-col">
           <AppNav />
-          {/* Inhaltsspalte: füllt den Rest neben der Rail; unten Platz für die
-              Bottom-Nav auf Mobil (md:pb-0). Seiten bringen ihren eigenen
-              <main>-Container mit eigener max-width mit. */}
-          <div className="min-w-0 flex-1 pb-24 md:pb-0">{children}</div>
+          {/* Inhaltsspalte unter dem (klebenden) Header. Seiten bringen ihren
+              eigenen <main>-Container mit eigener max-width mit. */}
+          <div className="min-w-0 flex-1">{children}</div>
         </div>
       </body>
     </html>
