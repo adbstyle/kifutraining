@@ -1,10 +1,11 @@
-import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft, BookOpen } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import type { Metadata } from "next";
 import {
   HerkunftBadge,
+  Breadcrumbs,
+  type BreadcrumbItem,
   Card,
   KategorieChip,
   FieldPlaceholder,
@@ -79,8 +80,16 @@ export default async function ExerciseDetailPage({
   // Favoriten-Aktion nur für angemeldete USER (AC2/AC11).
   const favorited = user ? await isFavorited(ex.id) : false;
 
+  // Trainingsteil wandert in die Brotkrumen (als Filter-Link auf den Pool);
+  // die Eyebrow-Zeile zeigt nur noch ergänzenden Kontext (Feldtyp).
+  const teilLabel =
+    teilLabels[ex.trainingsteil as keyof typeof teilLabels] ?? ex.trainingsteil;
+  const crumbs: BreadcrumbItem[] = [
+    { label: "Übungspool", href: "/" },
+    { label: teilLabel, href: `/?teil=${ex.trainingsteil}` },
+    { label: ex.name },
+  ];
   const meta = [
-    teilLabels[ex.trainingsteil as keyof typeof teilLabels] ?? ex.trainingsteil,
     ex.feldtyp ? feldLabels[ex.feldtyp as keyof typeof feldLabels] : null,
   ].filter(Boolean);
   const anzahl = anzahlText(ex.anzahl_kinder);
@@ -88,13 +97,7 @@ export default async function ExerciseDetailPage({
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
       {flash && <Flash message={flash} />}
-      <Link
-        href="/"
-        className="focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-[3px] text-on-surface-variant transition-colors hover:text-on-surface"
-      >
-        <ArrowLeft size={16} strokeWidth={2} aria-hidden />
-        Alle Übungen
-      </Link>
+      <Breadcrumbs items={crumbs} />
 
       <header className="mt-4">
         <div className="mb-3 flex flex-wrap items-center gap-2.5">
