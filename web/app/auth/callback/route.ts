@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-/** Magic-Link-Rücksprung: Code gegen eine Session tauschen (setzt die
- *  HttpOnly-Cookies via @supabase/ssr) und zum Ziel weiterleiten. */
+/** PKCE-Code-Rücksprung (`?code=`): Code gegen eine Session tauschen (setzt die
+ *  HttpOnly-Cookies via @supabase/ssr) und zum Ziel weiterleiten.
+ *  Aktuell ungenutzt — E-Mail-Bestätigung/Recovery laufen über /auth/confirm
+ *  (token_hash, geräteübergreifend stabil). Reserviert für künftiges OAuth. */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
