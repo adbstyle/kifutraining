@@ -1,6 +1,6 @@
 # Jokerspiel vertikal
 
-**Trainingsteil:** hauptteil · **Kategorien:** E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
 ![Jokerspiel vertikal](../images/passen-und-ballkontrolle-jokerspiel-vertikal.png)
 

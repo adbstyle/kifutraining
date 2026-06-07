@@ -1,6 +1,6 @@
 # Über die Brücke – um Hindernisse
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
 ![Über die Brücke – um Hindernisse](../images/dribbling-ueber-die-bruecke-um-hindernisse.png)
 

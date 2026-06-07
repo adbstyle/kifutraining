@@ -23,6 +23,7 @@ import {
   trainingsteil as teilLabels,
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
+  hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
 
@@ -150,8 +151,14 @@ export default async function ExerciseDetailPage({
       </div>
 
       {/* Eckdaten — unterhalb des Bildes */}
-      {(ex.erscheinungsform.length > 0 || anzahl || ex.material.length > 0) && (
+      {(ex.hauptteilkategorie || ex.erscheinungsform.length > 0 || anzahl || ex.material.length > 0) && (
         <div className="mt-6 flex flex-wrap gap-x-12 gap-y-5">
+          {ex.hauptteilkategorie && (
+            <Meta label="Hauptteilkategorie">
+              {hkatLabels[ex.hauptteilkategorie as keyof typeof hkatLabels] ??
+                ex.hauptteilkategorie}
+            </Meta>
+          )}
           {ex.erscheinungsform.length > 0 && (
             <Meta label="Erscheinungsform">
               {ex.erscheinungsform

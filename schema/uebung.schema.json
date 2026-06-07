@@ -18,6 +18,9 @@
       "uniqueItems": true
     },
     "feldtyp": { "enum": ["kleinfeld", "grossfeld", "freies_feld", null] },
+    "hauptteilkategorie": {
+      "enum": ["fussball-spielen-lernen", "vielseitigkeit-erleben", "fussball-spielen"]
+    },
     "kategorien": {
       "type": "array",
       "items": { "enum": ["G", "F", "E"] },
@@ -67,6 +70,14 @@
         "properties": { "trainingsteil": { "enum": ["auffangen", "ausklang"] } }
       },
       "then": { "required": ["aufbau"] }
+    },
+    {
+      "$comment": "Hauptteilkategorie ist genau bei Hauptteil-Übungen Pflicht (Enabler #21, AC2/AC3).",
+      "if": {
+        "properties": { "trainingsteil": { "const": "hauptteil" } }
+      },
+      "then": { "required": ["hauptteilkategorie"] },
+      "else": { "not": { "required": ["hauptteilkategorie"] } }
     }
   ]
 }

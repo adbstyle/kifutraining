@@ -22,6 +22,13 @@ PAGE_META[80] = ("hauptteil", ["flink-geschickt-bewegen"])
 PAGE_META[81] = ("hauptteil", ["respektvoll-fair-spielen"])
 PAGE_META[82] = ("ausklang", [])
 
+# Seite -> Hauptteilkategorie. Der Hauptteil ist im Manual seitenweise in drei
+# Inhalte gegliedert (Abbildung 14, «Trainingsschema im Kinderfussball»); die
+# gedruckte Seite ist massgeblich (Enabler #21). Nur Hauptteil-Seiten gelistet.
+PAGE_HAUPTTEILKATEGORIE = {p: "fussball-spielen-lernen" for p in range(65, 80)}
+PAGE_HAUPTTEILKATEGORIE[80] = "vielseitigkeit-erleben"
+PAGE_HAUPTTEILKATEGORIE[81] = "fussball-spielen"
+
 
 def feldtyp_aus_text(text):
     """Feldtyp best-effort aus Schlüsselwörtern ableiten; None wenn unklar."""
@@ -129,6 +136,10 @@ def main():
                     "anzahl_kinder": None,
                     "material": [],
                 }
+                # Hauptteilkategorie nur bei Hauptteil-Übungen (Enabler #21);
+                # andere Trainingsteile bleiben frei davon.
+                if teil == "hauptteil":
+                    doc["hauptteilkategorie"] = PAGE_HAUPTTEILKATEGORIE[page]
                 # Übungsablauf je Trainingsteil: einleitung/hauptteil als
                 # methodischer_fahrplan-Block (der geparste "Offen"-Text ist das
                 # offen_starten), auffangen/ausklang als flaches aufbau-Feld.

@@ -1,6 +1,6 @@
 # Jäger und Hase
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Sich flink und geschickt bewegen
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Vielseitigkeit erleben · **Erscheinungsform:** Sich flink und geschickt bewegen
 
 ![Jäger und Hase](../images/torabschluss-jaeger-und-hase.png)
 

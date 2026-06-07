@@ -9,6 +9,7 @@ import {
   trainingsteil as teilLabels,
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
+  hauptteilkategorie as hkatLabels,
   kategorienSlugs,
 } from "@/lib/vocab";
 import { kategorieStufe } from "@/lib/labels";
@@ -18,6 +19,7 @@ export type CatalogFilters = {
   kat: string[];
   feld: string[];
   form: string[];
+  hkat: string[];
   kinder?: number;
   q?: string;
   fav?: boolean;
@@ -101,6 +103,7 @@ export function FilterPanel({
     filters.kat.length ||
     filters.feld.length ||
     filters.form.length ||
+    filters.hkat.length ||
     filters.kinder !== undefined ||
     (filters.q?.length ?? 0) > 0 ||
     !!filters.fav;
@@ -163,6 +166,14 @@ export function FilterPanel({
         {(Object.keys(formLabels) as (keyof typeof formLabels)[]).map((t) => (
           <FilterChip key={t} selected={isOn("form", t)} onClick={() => toggle("form", t)}>
             {formLabels[t]}
+          </FilterChip>
+        ))}
+      </FilterGroup>
+
+      <FilterGroup title="Hauptteilkategorie">
+        {(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((t) => (
+          <FilterChip key={t} selected={isOn("hkat", t)} onClick={() => toggle("hkat", t)}>
+            {hkatLabels[t]}
           </FilterChip>
         ))}
       </FilterGroup>

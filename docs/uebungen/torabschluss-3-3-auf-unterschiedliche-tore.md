@@ -1,6 +1,6 @@
 # 3:3 auf unterschiedliche Tore
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Kleinfeld
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Kleinfeld
 
 ![3:3 auf unterschiedliche Tore](../images/torabschluss-3-3-auf-unterschiedliche-tore.png)
 

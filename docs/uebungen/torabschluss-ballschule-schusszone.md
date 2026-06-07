@@ -1,6 +1,6 @@
 # Ballschule – Schusszone
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![Ballschule – Schusszone](../images/torabschluss-ballschule-schusszone.png)
 

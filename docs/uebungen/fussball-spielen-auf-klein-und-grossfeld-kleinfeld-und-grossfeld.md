@@ -1,6 +1,6 @@
 # Kleinfeld und Grossfeld
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Sich respektvoll verhalten und fair spielen · **Feldtyp:** Grossfeld
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen · **Erscheinungsform:** Sich respektvoll verhalten und fair spielen · **Feldtyp:** Grossfeld
 
 ![Kleinfeld und Grossfeld](../images/fussball-spielen-auf-klein-und-grossfeld-kleinfeld-und-grossfeld.png)
 

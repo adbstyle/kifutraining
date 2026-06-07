@@ -17,6 +17,9 @@ def render_exercise(doc, vocab):
     lines = [f"# {doc['name']}", ""]
     meta = [f"**Trainingsteil:** {doc['trainingsteil']}",
             f"**Kategorien:** {', '.join(doc['kategorien'])}"]
+    if doc.get("hauptteilkategorie"):
+        kat = doc["hauptteilkategorie"]
+        meta.append(f"**Hauptteilkategorie:** {vocab['hauptteilkategorie'].get(kat, kat)}")
     formen = [vocab["erscheinungsform"].get(s, s) for s in doc.get("erscheinungsform") or []]
     if formen:
         meta.append(f"**Erscheinungsform:** {', '.join(formen)}")

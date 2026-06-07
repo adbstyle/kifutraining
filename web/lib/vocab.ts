@@ -30,6 +30,14 @@ export const trainingsteil = {
 export type TrainingsteilSlug = keyof typeof trainingsteil;
 export const trainingsteilSlugs = Object.keys(trainingsteil) as TrainingsteilSlug[];
 
+export const hauptteilkategorie = {
+  "fussball-spielen-lernen": "Fussball spielen lernen",
+  "vielseitigkeit-erleben": "Vielseitigkeit erleben",
+  "fussball-spielen": "Fussball spielen"
+} as const;
+export type HauptteilkategorieSlug = keyof typeof hauptteilkategorie;
+export const hauptteilkategorieSlugs = Object.keys(hauptteilkategorie) as HauptteilkategorieSlug[];
+
 export const kategorien = { G: "G", F: "F", E: "E" } as const;
 export type KategorieSlug = keyof typeof kategorien;
 export const kategorienSlugs = Object.keys(kategorien) as KategorieSlug[];

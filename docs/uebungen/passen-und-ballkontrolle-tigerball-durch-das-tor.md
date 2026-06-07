@@ -1,6 +1,6 @@
 # Tigerball – durch das Tor
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
+**Trainingsteil:** hauptteil · **Kategorien:** G, F · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
 ![Tigerball – durch das Tor](../images/passen-und-ballkontrolle-tigerball-durch-das-tor.png)
 

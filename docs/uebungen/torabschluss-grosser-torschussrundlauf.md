@@ -1,6 +1,6 @@
 # Grosser Torschussrundlauf
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Kleinfeld
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Kleinfeld
 
 ![Grosser Torschussrundlauf](../images/torabschluss-grosser-torschussrundlauf.png)
 

@@ -1,6 +1,6 @@
 # 1:1 Torabschluss frontal
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
 ![1:1 Torabschluss frontal](../images/torabschluss-1-1-torabschluss-frontal.png)
 

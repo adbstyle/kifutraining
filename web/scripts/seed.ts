@@ -81,6 +81,7 @@ async function seedExercises() {
       name: u.name,
       trainingsteil: u.trainingsteil,
       erscheinungsform: u.erscheinungsform ?? [],
+      hauptteilkategorie: u.hauptteilkategorie ?? null,
       feldtyp: u.feldtyp ?? null,
       kategorien: u.kategorien ?? [],
       anzahl_kinder: u.anzahl_kinder ?? null,

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   trainingsteil as trainingsteilLabels,
   feldtyp as feldtypLabels,
+  hauptteilkategorie as hauptteilkategorieLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
 import type { ExerciseCardData } from "@/components/ui";
@@ -17,6 +18,7 @@ export type ExerciseFilters = {
   kat?: string[]; // Alterskategorien G/F/E (Überlappung)
   feld?: string[]; // Feldtyp (OR)
   form?: string[]; // Erscheinungsform (Überlappung)
+  hkat?: string[]; // Hauptteilkategorie (OR)
   kinder?: number; // verfügbare Gruppengrösse
   q?: string; // Freitext
   fav?: boolean; // nur eigene Favoriten (nur angemeldet wirksam)
@@ -24,7 +26,7 @@ export type ExerciseFilters = {
 
 // Felder, die Liste + Karte brauchen.
 const LIST_COLUMNS =
-  "id, slug, name, trainingsteil, feldtyp, kategorien, source, visibility, bild_url";
+  "id, slug, name, trainingsteil, feldtyp, hauptteilkategorie, kategorien, source, visibility, bild_url";
 
 export type ExerciseListRow = {
   id: string;
@@ -32,6 +34,7 @@ export type ExerciseListRow = {
   name: string;
   trainingsteil: string;
   feldtyp: string | null;
+  hauptteilkategorie: string | null;
   kategorien: string[];
   source: "manual" | "user";
   visibility: "public" | "private";
@@ -83,6 +86,9 @@ export async function getExercises(
   if (f.kat?.length) query = query.overlaps("kategorien", f.kat);
   if (f.feld?.length) query = query.in("feldtyp", f.feld);
   if (f.form?.length) query = query.overlaps("erscheinungsform", f.form);
+  // Hauptteilkategorie: ODER über die gewählten Werte. Da nur Hauptteil-Übungen
+  // eine tragen, grenzt ein gesetzter Filter faktisch auf den Hauptteil ein (#22).
+  if (f.hkat?.length) query = query.in("hauptteilkategorie", f.hkat);
   // Gruppengrösse: durchführbar, wenn die Mindestzahl <= verfügbar ist
   // oder gar keine Mindestzahl angegeben ist (EK6).
   if (typeof f.kinder === "number" && Number.isFinite(f.kinder)) {
@@ -115,6 +121,7 @@ export type ExerciseDetail = {
   name: string;
   trainingsteil: string;
   erscheinungsform: string[];
+  hauptteilkategorie: string | null;
   feldtyp: string | null;
   kategorien: string[];
   anzahl_kinder: { min?: number | null; max?: number | null } | null;
@@ -137,7 +144,7 @@ export async function getExerciseDetail(
   const { data, error } = await supabase
     .from("exercises")
     .select(
-      "id, slug, name, trainingsteil, erscheinungsform, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, source, visibility, owner_id",
+      "id, slug, name, trainingsteil, erscheinungsform, hauptteilkategorie, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, source, visibility, owner_id",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -193,6 +200,11 @@ export function toCardData(row: ExerciseListRow): ExerciseCardData {
       row.trainingsteil,
     feldtypLabel: row.feldtyp
       ? feldtypLabels[row.feldtyp as keyof typeof feldtypLabels] ?? row.feldtyp
+      : null,
+    hauptteilkategorieLabel: row.hauptteilkategorie
+      ? hauptteilkategorieLabels[
+          row.hauptteilkategorie as keyof typeof hauptteilkategorieLabels
+        ] ?? row.hauptteilkategorie
       : null,
     kategorien: row.kategorien as KategorieSlug[],
     herkunft: row.source,

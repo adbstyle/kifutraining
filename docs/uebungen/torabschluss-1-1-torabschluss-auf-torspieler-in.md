@@ -1,6 +1,6 @@
 # 1:1 Torabschluss auf Torspieler/in
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Grossfeld
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Grossfeld
 
 ![1:1 Torabschluss auf Torspieler/in](../images/torabschluss-1-1-torabschluss-auf-torspieler-in.png)
 
