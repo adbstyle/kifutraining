@@ -12,10 +12,13 @@ export function PlanCard({
   plan,
   href,
   showVisibility = false,
+  updatedLabel,
 }: {
   plan: PlanListRow;
   href: string;
   showVisibility?: boolean;
+  /** Optionaler „Geändert"-Hinweis (eigene Übersicht, Story #13 AC2). */
+  updatedLabel?: string;
 }) {
   return (
     <Card className="group transition-colors hover:border-on-surface/45">
@@ -48,6 +51,12 @@ export function PlanCard({
             {plan.hasAnyDuration ? formatDuration(plan.totalDuration) : "Keine Dauer"}
           </span>
         </div>
+
+        {updatedLabel && (
+          <p className="mt-2 type-label-small text-on-surface-variant">
+            Geändert: {updatedLabel}
+          </p>
+        )}
       </Link>
     </Card>
   );

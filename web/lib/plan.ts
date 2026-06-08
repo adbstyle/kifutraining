@@ -53,6 +53,15 @@ export function sortStufen(stufen: readonly string[]): KategorieSlug[] {
   return order.filter((s) => stufen.includes(s));
 }
 
+/** Datum lesbar formatieren (de-CH, z. B. "8. Juni 2026"). */
+export function formatDate(iso: string): string {
+  return new Intl.DateTimeFormat("de-CH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(iso));
+}
+
 /** Dauer in Minuten lesbar formatieren ("45 min", "1 h", "1 h 15 min"). */
 export function formatDuration(min: number): string {
   if (min <= 0) return "0 min";
