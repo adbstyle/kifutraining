@@ -347,13 +347,11 @@ export function Header({
           erreichbar (Leerraum rechts, Inhalt links abgeschnitten). Clipping
           am Overlay verbirgt ihn, lässt die Slide-in-Animation aber intakt.
           Bewusst hier statt global (overflow-x:hidden am body bräche sticky). */}
-      <div
-        className={cn(
-          "fixed inset-0 z-50 overflow-hidden lg:hidden",
-          drawerOpen ? "pointer-events-auto" : "pointer-events-none",
-        )}
-        aria-hidden={!drawerOpen}
-      >
+      {/* `inert` (geschlossen): nimmt das gesamte Overlay aus Tab-Reihenfolge,
+          A11y-Baum UND Pointer-Events. aria-hidden allein hätte die fokussier-
+          baren Bedienelemente (Schliessen, Links, CTA) in der Tab-Reihenfolge
+          gelassen — Tastatur-Nutzer wären in den unsichtbaren Drawer getabbt. */}
+      <div className="fixed inset-0 z-50 overflow-hidden lg:hidden" inert={!drawerOpen}>
         {/* Scrim */}
         <button
           type="button"
@@ -489,11 +487,11 @@ export function Header({
                   </span>
                 </div>
               )}
-              {account?.items.map((it, k) => {
+              {account?.items.map((it) => {
                 const Icon = it.icon;
                 return (
                   <button
-                    key={k}
+                    key={it.label}
                     type="button"
                     onClick={() => {
                       it.onSelect?.();

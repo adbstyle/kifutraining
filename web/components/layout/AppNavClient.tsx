@@ -34,7 +34,9 @@ export function AppNavClient({
     ? {
         name: userEmail ?? "Konto",
         email: userEmail ?? undefined,
-        initials: (userEmail ?? "K").slice(0, 2).toUpperCase(),
+        // Initialen aus dem Local-Part (vor dem @), sonst entstünde z. B. „A@"
+        // bei einzeichigem Local-Part.
+        initials: (userEmail?.split("@")[0]?.slice(0, 2).toUpperCase() || "K"),
         items: [
           { label: "Konto", icon: UserRound, onSelect: () => router.push("/konto") },
           {
