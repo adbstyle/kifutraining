@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, UserRound, ListChecks, Plus } from "lucide-react";
+import { LogOut, UserRound, ListChecks, ClipboardList, Plus } from "lucide-react";
 import { Header } from "@/components/ui";
 import type { HeaderNavItem, HeaderAccount } from "@/components/ui";
 
@@ -28,7 +28,21 @@ export function AppNavClient({
     pathname.startsWith("/uebung") ||
     pathname.startsWith("/meine-uebungen");
 
-  const nav: HeaderNavItem[] = [{ label: "Übungen", href: "/", current: uebungenActive }];
+  // „Trainingsplaner" aktiv auf Editor, Einzel-/Durchführungs-/Druck-Ansicht,
+  // der eigenen Übersicht und dem öffentlichen Bereich.
+  const planerActive =
+    pathname.startsWith("/plan") ||
+    pathname.startsWith("/meine-plaene") ||
+    pathname.startsWith("/plaene");
+
+  // Angemeldet startet der Planer in der eigenen Übersicht, anonym im
+  // öffentlichen Bereich.
+  const planerHref = isAuthenticated ? "/meine-plaene" : "/plaene";
+
+  const nav: HeaderNavItem[] = [
+    { label: "Übungen", href: "/", current: uebungenActive },
+    { label: "Trainingsplaner", href: planerHref, current: planerActive },
+  ];
 
   const account: HeaderAccount | undefined = isAuthenticated
     ? {
@@ -43,6 +57,11 @@ export function AppNavClient({
             label: "Meine Übungen",
             icon: ListChecks,
             onSelect: () => router.push("/meine-uebungen"),
+          },
+          {
+            label: "Meine Pläne",
+            icon: ClipboardList,
+            onSelect: () => router.push("/meine-plaene"),
           },
           { label: "Abmelden", icon: LogOut, danger: true, onSelect: () => signOutAction() },
         ],

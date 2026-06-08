@@ -4,6 +4,7 @@ import {
   hauptteilkategorie as hauptteilkategorieLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
+import { likePattern } from "@/lib/search";
 import type { ExerciseCardData } from "@/components/ui";
 
 /**
@@ -43,25 +44,6 @@ export type ExerciseListRow = {
 };
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
-
-/** Suchbegriff identisch zur DB-Spalte `search_text` normalisieren:
- *  akzent-/umlaut- und case-insensitiv. Muss zum Trigger
- *  `lower(unaccent(...))` passen (Migration 20260608120000), damit z.B.
- *  "hutchen" das gespeicherte "Hütchen" findet. Auf Deutsch abgestimmt
- *  (inkl. ß→ss wie Postgres unaccent). */
-function normalizeSearch(s: string): string {
-  return s
-    .normalize("NFKD") // ä -> a + kombinierendes Diakritikum
-    .replace(/\p{M}/gu, "") // kombinierende Diakritika entfernen
-    .toLowerCase()
-    .replace(/ß/g, "ss");
-}
-
-/** %, _ und \ sind LIKE-Sonderzeichen — als Literal maskieren, damit eine
- *  Eingabe wie "100%" nicht als Wildcard interpretiert wird. */
-function escapeLike(s: string): string {
-  return s.replace(/[\\%_]/g, (c) => `\\${c}`);
-}
 
 /** Übungs-IDs, die der angemeldete USER favorisiert hat. RLS liefert nur eigene
  *  Favoriten — anonyme Aufrufer bekommen ein leeres Set. */
@@ -117,10 +99,7 @@ export async function getExercises(
     // Material, Varianten via `search_text`-Trigger). Findet auch Wortteile
     // und Komposita — "Hand" matcht "Handball". Sonderzeichen werden als
     // Literal maskiert, damit Eingaben wie "100%" nicht als Wildcard wirken.
-    query = query.ilike(
-      "search_text",
-      `%${escapeLike(normalizeSearch(f.q.trim()))}%`,
-    );
+    query = query.ilike("search_text", likePattern(f.q));
   }
 
   const { data, error } = await query;
