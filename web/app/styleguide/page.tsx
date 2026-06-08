@@ -553,12 +553,15 @@ export default function Styleguide() {
 
       <Section n="16" title="Multi-Select">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Auswahl <strong>mehrerer</strong> Werte: Feld-Trigger mit inline
-          entfernbaren Tags (<code>--chip-selected-*</code>) öffnet ein Panel mit
-          Suchfeld im Kopf, Optionsliste (eckige KiFu-Checkbox 3px) und
+          Auswahl <strong>mehrerer</strong> Werte: einzeiliger Feld-Trigger mit
+          inline entfernbaren Tags (<code>--chip-selected-*</code>) öffnet ein
+          Panel mit Suchfeld im Kopf, Optionsliste (eckige KiFu-Checkbox 3px) und
           Aktions-Footer (<code>Zurücksetzen</code> /{" "}
-          <code>Alle auswählen</code>, respektiert den aktiven Filter). Trigger
-          trägt den Feld-Token-Kontrakt (wie Text-Field), das Panel den{" "}
+          <code>Alle auswählen</code>, respektiert den aktiven Filter). Passen
+          nicht alle Tags in die Zelle, bündelt ein <code>+N</code>-Badge die
+          überzähligen — die sichtbare Anzahl wird per Messung an die Feldbreite
+          angepasst (mit der Breite mit-/abnehmend). Trigger trägt den
+          Feld-Token-Kontrakt (wie Text-Field), das Panel den{" "}
           <code>--menu-*</code>-Kontrakt. Combobox-/Listbox-Semantik
           (<code>aria-multiselectable</code>) mit voller Tastatursteuerung (↑/↓,
           Home/End, Enter toggelt, Esc schliesst). <code>searchable</code> /{" "}
