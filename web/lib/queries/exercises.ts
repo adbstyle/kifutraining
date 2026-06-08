@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import {
   trainingsteil as trainingsteilLabels,
-  feldtyp as feldtypLabels,
   hauptteilkategorie as hauptteilkategorieLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
@@ -44,6 +43,25 @@ export type ExerciseListRow = {
 };
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+/** Suchbegriff identisch zur DB-Spalte `search_text` normalisieren:
+ *  akzent-/umlaut- und case-insensitiv. Muss zum Trigger
+ *  `lower(unaccent(...))` passen (Migration 20260608120000), damit z.B.
+ *  "hutchen" das gespeicherte "Hütchen" findet. Auf Deutsch abgestimmt
+ *  (inkl. ß→ss wie Postgres unaccent). */
+function normalizeSearch(s: string): string {
+  return s
+    .normalize("NFKD") // ä -> a + kombinierendes Diakritikum
+    .replace(/\p{M}/gu, "") // kombinierende Diakritika entfernen
+    .toLowerCase()
+    .replace(/ß/g, "ss");
+}
+
+/** %, _ und \ sind LIKE-Sonderzeichen — als Literal maskieren, damit eine
+ *  Eingabe wie "100%" nicht als Wildcard interpretiert wird. */
+function escapeLike(s: string): string {
+  return s.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
 
 /** Übungs-IDs, die der angemeldete USER favorisiert hat. RLS liefert nur eigene
  *  Favoriten — anonyme Aufrufer bekommen ein leeres Set. */
@@ -95,10 +113,14 @@ export async function getExercises(
     query = query.or(`anzahl_kinder_min.lte.${f.kinder},anzahl_kinder_min.is.null`);
   }
   if (f.q?.trim()) {
-    query = query.textSearch("search_tsv", f.q.trim(), {
-      type: "websearch",
-      config: "german",
-    });
+    // Teilstring-Suche über alle Übungstexte (Name, Aufbau, Fahrplan,
+    // Material, Varianten via `search_text`-Trigger). Findet auch Wortteile
+    // und Komposita — "Hand" matcht "Handball". Sonderzeichen werden als
+    // Literal maskiert, damit Eingaben wie "100%" nicht als Wildcard wirken.
+    query = query.ilike(
+      "search_text",
+      `%${escapeLike(normalizeSearch(f.q.trim()))}%`,
+    );
   }
 
   const { data, error } = await query;
@@ -198,9 +220,6 @@ export function toCardData(row: ExerciseListRow): ExerciseCardData {
     trainingsteilLabel:
       trainingsteilLabels[row.trainingsteil as keyof typeof trainingsteilLabels] ??
       row.trainingsteil,
-    feldtypLabel: row.feldtyp
-      ? feldtypLabels[row.feldtyp as keyof typeof feldtypLabels] ?? row.feldtyp
-      : null,
     hauptteilkategorieLabel: row.hauptteilkategorie
       ? hauptteilkategorieLabels[
           row.hauptteilkategorie as keyof typeof hauptteilkategorieLabels

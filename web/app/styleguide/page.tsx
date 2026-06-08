@@ -18,8 +18,6 @@ import {
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { SegmentedDemo } from "./SegmentedDemo";
 import { ChipsDemo } from "./ChipsDemo";
-import { NavRailDemo } from "./NavRailDemo";
-import { BottomNavDemo } from "./BottomNavDemo";
 import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
 import { HeaderNavDemo } from "./HeaderNavDemo";
@@ -428,7 +426,6 @@ export default function Styleguide() {
               slug: "schiessbude",
               name: "Schiessbude",
               trainingsteilLabel: "Ausklang",
-              feldtypLabel: "Kleinfeld",
               kategorien: ["G", "F", "E"],
               herkunft: "manual",
             }}
@@ -447,7 +444,6 @@ export default function Styleguide() {
               name: "Mein 4-gegen-4",
               trainingsteilLabel: "Hauptteil",
               hauptteilkategorieLabel: "Fussball spielen lernen",
-              feldtypLabel: "Grossfeld",
               kategorien: ["F", "E"],
               herkunft: "user",
               visibility: "private",
@@ -458,7 +454,6 @@ export default function Styleguide() {
               slug: "toblerone",
               name: "Toblerone",
               trainingsteilLabel: "Einleitung",
-              feldtypLabel: null,
               kategorien: ["G"],
               herkunft: "user",
               visibility: "public",
@@ -480,26 +475,7 @@ export default function Styleguide() {
       </Section>
 
       <Section n="12" title="Navigation">
-        <p className="type-body-medium mb-2 max-w-xl text-on-surface-variant">
-          <strong>Navigation Rail</strong> — vertikale Hauptnavigation (medium+
-          Fenster). Über den Menü-Button zwischen <strong>collapsed</strong>{" "}
-          (schmal) und <strong>expanded</strong> (breit, Icon + Label
-          nebeneinander) umschaltbar. Optionale <code>header</code>- und{" "}
-          <code>footer</code>-Slots (Logo/FAB bzw. Abmelden). Aktives Ziel über
-          Indicator-Pille (<code>secondary-container</code>). Pfeiltasten-
-          Navigation; gespeist aus <code>--nav-*</code>-Component-Tokens.
-        </p>
-        <NavRailDemo />
-
-        <p className="type-body-medium mt-8 mb-5 max-w-xl text-on-surface-variant">
-          <strong>Bottom Navigation</strong> — dasselbe für kompakte Fenster
-          (Mobil): drei bis fünf gleich breite Ziele, aktives über dieselbe
-          Indicator-Pille hinter dem Icon. Die App schaltet automatisch zwischen
-          Rail (ab <code>md</code>) und Bottom Navigation um.
-        </p>
-        <BottomNavDemo />
-
-        <p className="type-body-medium mt-8 mb-5 max-w-xl text-on-surface-variant">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           <strong>Header-Navigation</strong> — horizontale Top-Bar als Alternative
           zur Rail. Klebt oben (sticky, Kreide-Linie + Blur). Primär-Links als
           mono-Labels mit Signal-Unterstrich (aktiv) und aufklappbarem{" "}
@@ -577,12 +553,15 @@ export default function Styleguide() {
 
       <Section n="16" title="Multi-Select">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Auswahl <strong>mehrerer</strong> Werte: Feld-Trigger mit inline
-          entfernbaren Tags (<code>--chip-selected-*</code>) öffnet ein Panel mit
-          Suchfeld im Kopf, Optionsliste (eckige KiFu-Checkbox 3px) und
+          Auswahl <strong>mehrerer</strong> Werte: einzeiliger Feld-Trigger mit
+          inline entfernbaren Tags (<code>--chip-selected-*</code>) öffnet ein
+          Panel mit Suchfeld im Kopf, Optionsliste (eckige KiFu-Checkbox 3px) und
           Aktions-Footer (<code>Zurücksetzen</code> /{" "}
-          <code>Alle auswählen</code>, respektiert den aktiven Filter). Trigger
-          trägt den Feld-Token-Kontrakt (wie Text-Field), das Panel den{" "}
+          <code>Alle auswählen</code>, respektiert den aktiven Filter). Passen
+          nicht alle Tags in die Zelle, bündelt ein <code>+N</code>-Badge die
+          überzähligen — die sichtbare Anzahl wird per Messung an die Feldbreite
+          angepasst (mit der Breite mit-/abnehmend). Trigger trägt den
+          Feld-Token-Kontrakt (wie Text-Field), das Panel den{" "}
           <code>--menu-*</code>-Kontrakt. Combobox-/Listbox-Semantik
           (<code>aria-multiselectable</code>) mit voller Tastatursteuerung (↑/↓,
           Home/End, Enter toggelt, Esc schliesst). <code>searchable</code> /{" "}

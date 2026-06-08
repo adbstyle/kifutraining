@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, Search, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { SelectOption } from "./Select";
@@ -28,13 +28,17 @@ export interface MultiSelectProps {
   className?: string;
 }
 
-/* M3 Multi-Select — Feld-Trigger mit inline entfernbaren Tags öffnet ein
-   Panel mit Suchfeld (Kopf), Optionsliste (eckige KiFu-Checkbox) und Aktions-
-   Footer (Zurücksetzen / Alle auswählen). Trigger trägt
-   den --field-*-Kontrakt (wie Text-Field), das Panel den --menu-*-Kontrakt.
-   Combobox-/Listbox-Semantik (aria-multiselectable) mit voller Tastatur-
-   steuerung (↑/↓, Home/End, Enter toggelt, Esc schliesst). Panel bleibt nach
-   Auswahl offen. „Alle auswählen" respektiert den aktiven Suchfilter. */
+/* M3 Multi-Select — einzeiliger Feld-Trigger mit inline entfernbaren Tags
+   öffnet ein Panel mit Suchfeld (Kopf), Optionsliste (eckige KiFu-Checkbox)
+   und Aktions-Footer (Zurücksetzen / Alle auswählen). Trigger trägt den
+   --field-*-Kontrakt (wie Text-Field), das Panel den --menu-*-Kontrakt.
+   Der Trigger bleibt auf eine Zeile begrenzt: passen nicht alle Tags in die
+   Zelle, werden die überzähligen zu einem Zähler-Badge (+N) gebündelt — die
+   sichtbare Anzahl wird per Messung (verstecktes Mess-Layer + ResizeObserver)
+   an die Feldbreite angepasst. Combobox-/Listbox-Semantik
+   (aria-multiselectable) mit voller Tastatursteuerung (↑/↓, Home/End, Enter
+   toggelt, Esc schliesst). Panel bleibt nach Auswahl offen. „Alle auswählen"
+   respektiert den aktiven Suchfilter. */
 export function MultiSelect({
   label,
   options,
@@ -68,6 +72,11 @@ export function MultiSelect({
   const triggerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  // Einzeiliger Trigger: `contentRef` ist die clippende Tag-Zeile, `measureRef`
+  // ein unsichtbares Layer, das alle Tags in voller Breite hält. Daraus wird
+  // berechnet, wie viele Tags reinpassen (Rest → „+N"-Badge).
+  const contentRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
   // Nur Tastatur-Navigation soll die aktive Option ins Sichtfeld scrollen.
   // Hover setzt `active` ebenfalls — würde das scrollen, springt die Liste
   // bei jeder Mausbewegung (scrollIntoView auf der überlaufenden Liste).
@@ -84,6 +93,14 @@ export function MultiSelect({
   const selectedOptions = current
     .map((v) => options.find((o) => o.value === v))
     .filter((o): o is SelectOption => Boolean(o));
+
+  // Wie viele Tags in eine Zeile passen. Start = alle (Layout-Effekt korrigiert
+  // vor dem ersten Paint). Stabiler Mess-Trigger via Schlüssel statt Array-ID.
+  const selectedKey = current.join("|");
+  const [visibleCount, setVisibleCount] = useState(selectedOptions.length);
+  const visibleOptions = selectedOptions.slice(0, visibleCount);
+  const hiddenOptions = selectedOptions.slice(visibleCount);
+  const hiddenCount = hiddenOptions.length;
 
   function emit(next: string[]) {
     if (!isControlled) setInternal(next);
@@ -161,6 +178,54 @@ export function MultiSelect({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
+  // Sichtbare Tag-Anzahl an die Feldbreite anpassen. Misst die natürlichen
+  // Tag-Breiten im versteckten Layer und füllt die Zeile, bis nur noch Platz
+  // fürs „+N"-Badge bliebe. Reagiert via ResizeObserver auf Breitenänderungen.
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    const measure = measureRef.current;
+    if (!content || !measure) return;
+
+    const GAP = 6; // gap-1.5
+    const BADGE_RESERVE = 46; // Platz fürs „+N"-Badge inkl. Gap
+
+    function recompute() {
+      const chips = Array.from(measure!.children) as HTMLElement[];
+      const n = chips.length;
+      if (n === 0) {
+        setVisibleCount(0);
+        return;
+      }
+      const avail = content!.clientWidth;
+      const widths = chips.map((c) => c.offsetWidth);
+      const totalAll = widths.reduce((a, b) => a + b, 0) + GAP * (n - 1);
+      if (totalAll <= avail) {
+        setVisibleCount(n);
+        return;
+      }
+      // Nicht alles passt → Platz fürs Badge reservieren und auffüllen.
+      let used = 0;
+      let count = 0;
+      for (let i = 0; i < n; i++) {
+        const w = widths[i] + (count > 0 ? GAP : 0);
+        if (used + w + GAP + BADGE_RESERVE <= avail) {
+          used += w;
+          count++;
+        } else {
+          break;
+        }
+      }
+      setVisibleCount(count);
+    }
+
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    ro.observe(content);
+    return () => ro.disconnect();
+    // selectedKey: Neuberechnung bei geänderter Auswahl; options: Label-Wechsel.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedKey, options]);
+
   // Listen-Navigation — geteilt von Suchfeld (searchable) und Trigger (sonst).
   function onNavKey(e: React.KeyboardEvent) {
     switch (e.key) {
@@ -217,6 +282,36 @@ export function MultiSelect({
 
   const showPlaceholder = selectedOptions.length === 0;
 
+  // Ein entfernbarer Tag. `measuring`: Variante fürs Mess-Layer (gleiche Breite,
+  // ohne Handler) — `shrink-0` hält die natürliche Breite in der clippenden Zeile.
+  function renderChip(o: SelectOption, measuring = false) {
+    return (
+      <span
+        key={o.value}
+        className="type-label-small inline-flex shrink-0 items-center gap-1 rounded-(--chip-shape) bg-(--chip-selected-container) py-0.5 pl-2.5 pr-1 text-(--chip-selected-label)"
+      >
+        {o.label}
+        <button
+          type="button"
+          tabIndex={-1}
+          disabled={disabled || measuring}
+          onClick={
+            measuring
+              ? undefined
+              : (e) => {
+                  e.stopPropagation();
+                  remove(o.value);
+                }
+          }
+          aria-label={`${o.label} entfernen`}
+          className="focus-ring inline-flex h-4 w-4 items-center justify-center rounded-full text-(--chip-selected-label)/70 transition-colors hover:bg-on-surface/12 hover:text-(--chip-selected-label)"
+        >
+          <X size={13} strokeWidth={2.5} aria-hidden />
+        </button>
+      </span>
+    );
+  }
+
   return (
     <div className={className}>
       <span id={`${fid}-label`} className="type-label-small mb-2 block text-(--field-label)">
@@ -224,9 +319,10 @@ export function MultiSelect({
       </span>
 
       <div ref={rootRef} className="relative">
-        {/* Trigger = Feld-Kontrakt, wächst mehrzeilig mit den Tags. Ohne Suche
-            ist er die Combobox (treibt die Liste), mit Suche ein Button, der
-            das Panel öffnet (Fokus springt dann ins Suchfeld). */}
+        {/* Trigger = Feld-Kontrakt, auf eine Zeile begrenzt. Ohne Suche ist er
+            die Combobox (treibt die Liste), mit Suche ein Button, der das Panel
+            öffnet (Fokus springt dann ins Suchfeld). Die Tag-Zeile clippt;
+            überzählige Tags bündelt das „+N"-Badge. */}
         <div
           id={fid}
           ref={triggerRef}
@@ -242,49 +338,54 @@ export function MultiSelect({
           onClick={() => !disabled && setOpen((o) => !o)}
           onKeyDown={onTriggerKey}
           className={cn(
-            "focus-ring flex min-h-12 w-full flex-wrap items-center gap-1.5 rounded-(--field-shape) border-[1.5px] bg-surface px-2 py-1.5",
+            "focus-ring flex h-12 w-full items-center gap-1.5 rounded-(--field-shape) border-[1.5px] bg-surface px-2",
             error ? "border-(--field-error)" : "border-(--field-outline)",
             open && !error && "border-(--field-focus)",
             disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
           )}
         >
-          {showPlaceholder ? (
-            <span className="type-body-large px-1 text-(--field-label)">
-              {placeholder ?? "Auswählen …"}
-            </span>
-          ) : (
-            selectedOptions.map((o) => (
-              <span
-                key={o.value}
-                className="type-label-small inline-flex items-center gap-1 rounded-(--chip-shape) bg-(--chip-selected-container) py-0.5 pl-2.5 pr-1 text-(--chip-selected-label)"
-              >
-                {o.label}
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  disabled={disabled}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    remove(o.value);
-                  }}
-                  aria-label={`${o.label} entfernen`}
-                  className="focus-ring inline-flex h-4 w-4 items-center justify-center rounded-full text-(--chip-selected-label)/70 transition-colors hover:bg-on-surface/12 hover:text-(--chip-selected-label)"
-                >
-                  <X size={13} strokeWidth={2.5} aria-hidden />
-                </button>
+          <div
+            ref={contentRef}
+            className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden"
+          >
+            {showPlaceholder ? (
+              <span className="type-body-large truncate px-1 text-(--field-label)">
+                {placeholder ?? "Auswählen …"}
               </span>
-            ))
-          )}
+            ) : (
+              <>
+                {visibleOptions.map((o) => renderChip(o))}
+                {hiddenCount > 0 && (
+                  <span
+                    aria-label={`${hiddenCount} weitere ausgewählt`}
+                    title={hiddenOptions.map((o) => o.label).join(", ")}
+                    className="type-label-small inline-flex shrink-0 items-center rounded-(--chip-shape) bg-(--chip-selected-container) px-2 py-0.5 font-medium tabular-nums text-(--chip-selected-label)/80"
+                  >
+                    +{hiddenCount}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
 
           <ChevronDown
             size={18}
             strokeWidth={2}
             aria-hidden
             className={cn(
-              "ml-auto mr-1 shrink-0 self-center text-on-surface-variant transition-transform",
+              "mr-1 shrink-0 self-center text-on-surface-variant transition-transform",
               open && "rotate-180",
             )}
           />
+
+          {/* Mess-Layer: alle Tags in voller Breite, unsichtbar & layout-neutral. */}
+          <div
+            ref={measureRef}
+            aria-hidden
+            className="pointer-events-none invisible absolute left-0 top-0 flex flex-nowrap items-center gap-1.5 whitespace-nowrap"
+          >
+            {selectedOptions.map((o) => renderChip(o, true))}
+          </div>
         </div>
 
         {open && (
