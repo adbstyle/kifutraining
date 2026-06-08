@@ -39,7 +39,10 @@ export default function RootLayout({
         className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen antialiased`}
       >
         <div className="flex min-h-dvh flex-col">
-          <AppNav />
+          {/* App-Navigation im Druck ausblenden (Story #18). */}
+          <div className="print:hidden">
+            <AppNav />
+          </div>
           {/* Inhaltsspalte unter dem (klebenden) Header. Seiten bringen ihren
               eigenen <main>-Container mit eigener max-width mit. */}
           <div className="min-w-0 flex-1">{children}</div>

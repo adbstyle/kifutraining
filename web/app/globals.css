@@ -296,3 +296,43 @@
     color: var(--color-rasen-950);
   }
 }
+
+/* ============================================================================
+   Druck-Ansicht (Story #18): helles, tintensparendes Layout, unabhängig vom
+   dunklen Bildschirm-Farbschema. Die token-basierte Palette wird im Druck auf
+   helle Flächen mit dunkler Schrift umgelegt; App-Chrome ist via print:hidden
+   ausgeblendet. Gilt für jede Druckausgabe der App.
+   ============================================================================ */
+@media print {
+  :root {
+    --color-surface: #ffffff;
+    --color-surface-dim: #ffffff;
+    --color-surface-bright: #ffffff;
+    --color-surface-container-lowest: #ffffff;
+    --color-surface-container-low: #f6f7f6;
+    --color-surface-container: #f1f2f1;
+    --color-surface-container-high: #ececec;
+    --color-surface-container-highest: #e6e6e6;
+    --color-on-surface: #121a16;
+    --color-on-surface-variant: #3c423f;
+    --color-outline: #9aa0a0;
+    --color-outline-variant: #cfd3d2;
+    --color-primary: #1c3a2b;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #121a16 !important;
+  }
+
+  body {
+    background-image: none !important;
+  }
+
+  /* Diagramme/Farben originalgetreu drucken */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
