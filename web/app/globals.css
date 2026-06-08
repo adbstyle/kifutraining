@@ -121,14 +121,10 @@
   --chip-selected-label: var(--color-on-secondary-container);
   --chip-elevated-container: var(--color-surface-container-low);
 
-  /* ─── Navigation Rail Component-Tokens (M3-Stil). Aktives Ziel: Indicator-
-     Pille (secondary-container) hinter dem Icon. ─── */
-  --nav-rail-container: var(--color-surface);
+  /* ─── Navigations-Component-Tokens (M3-Stil). Aktives Ziel: Indicator-
+     Pille (secondary-container) hinter dem Header-Link. ─── */
   --nav-indicator: var(--color-secondary-container);
-  --nav-item-active-icon: var(--color-on-secondary-container);
-  --nav-item-inactive-icon: var(--color-on-surface-variant);
   --nav-item-active-label: var(--color-on-surface);
-  --nav-item-inactive-label: var(--color-on-surface-variant);
 
   /* ─── Text-Field Component-Tokens (M3-Stil, outlined). Shape KiFu-eckig. ─── */
   --field-shape: 3px;

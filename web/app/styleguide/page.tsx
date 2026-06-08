@@ -18,8 +18,6 @@ import {
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { SegmentedDemo } from "./SegmentedDemo";
 import { ChipsDemo } from "./ChipsDemo";
-import { NavRailDemo } from "./NavRailDemo";
-import { BottomNavDemo } from "./BottomNavDemo";
 import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
 import { HeaderNavDemo } from "./HeaderNavDemo";
@@ -477,26 +475,7 @@ export default function Styleguide() {
       </Section>
 
       <Section n="12" title="Navigation">
-        <p className="type-body-medium mb-2 max-w-xl text-on-surface-variant">
-          <strong>Navigation Rail</strong> — vertikale Hauptnavigation (medium+
-          Fenster). Über den Menü-Button zwischen <strong>collapsed</strong>{" "}
-          (schmal) und <strong>expanded</strong> (breit, Icon + Label
-          nebeneinander) umschaltbar. Optionale <code>header</code>- und{" "}
-          <code>footer</code>-Slots (Logo/FAB bzw. Abmelden). Aktives Ziel über
-          Indicator-Pille (<code>secondary-container</code>). Pfeiltasten-
-          Navigation; gespeist aus <code>--nav-*</code>-Component-Tokens.
-        </p>
-        <NavRailDemo />
-
-        <p className="type-body-medium mt-8 mb-5 max-w-xl text-on-surface-variant">
-          <strong>Bottom Navigation</strong> — dasselbe für kompakte Fenster
-          (Mobil): drei bis fünf gleich breite Ziele, aktives über dieselbe
-          Indicator-Pille hinter dem Icon. Die App schaltet automatisch zwischen
-          Rail (ab <code>md</code>) und Bottom Navigation um.
-        </p>
-        <BottomNavDemo />
-
-        <p className="type-body-medium mt-8 mb-5 max-w-xl text-on-surface-variant">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           <strong>Header-Navigation</strong> — horizontale Top-Bar als Alternative
           zur Rail. Klebt oben (sticky, Kreide-Linie + Blur). Primär-Links als
           mono-Labels mit Signal-Unterstrich (aktiv) und aufklappbarem{" "}
