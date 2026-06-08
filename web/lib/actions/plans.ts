@@ -134,6 +134,35 @@ export async function addPlanExercise(
   return { ok: true };
 }
 
+// ── Story #11: Dauer je Zuordnung erfassen/ändern/entfernen ──────────────────
+
+/** Dauer einer Zuordnung setzen (Vielfaches von 5 min) oder entfernen (null).
+ *  Persistiert unmittelbar (Story #11 AC1/AC2). RLS stellt sicher, dass nur der
+ *  Eigentümer schreibt. */
+export async function setExerciseDuration(
+  planExerciseId: string,
+  minutes: number | null,
+): Promise<PlanActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+
+  if (minutes !== null && (!Number.isInteger(minutes) || minutes < 0 || minutes % 5 !== 0))
+    return { ok: false, error: "Dauer muss ein Vielfaches von 5 Minuten sein." };
+
+  const { data, error } = await supabase
+    .from("plan_exercises")
+    .update({ duration_min: minutes })
+    .eq("id", planExerciseId)
+    .select("plan_id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (data) revalidatePlan(data.plan_id);
+  return { ok: true };
+}
+
 // ── Story #10: Übungsauswahl (Picker) ────────────────────────────────────────
 
 /** Für den Picker passende Übungen eines Trainingsteils laden — alle für den

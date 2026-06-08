@@ -1,30 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, TriangleAlert, Info } from "lucide-react";
+import { Plus, TriangleAlert, Info, Clock } from "lucide-react";
 import { Card, KategorieChip, Badge } from "@/components/ui";
 import { ExercisePickerDialog } from "./ExercisePickerDialog";
-import { TRAININGSTEILE, ANZAHL_HINWEIS, stufenAbgedeckt } from "@/lib/plan";
+import { DurationStepper } from "./DurationStepper";
+import {
+  TRAININGSTEILE,
+  ANZAHL_HINWEIS,
+  stufenAbgedeckt,
+  formatDuration,
+} from "@/lib/plan";
+import { setExerciseDuration } from "@/lib/actions/plans";
 import type { TrainingsteilSlug } from "@/lib/vocab";
 import type { PlanDetail, PlanExerciseItem } from "@/lib/queries/plans";
 
-/* Trainingsplan-Editor (Story #10). Vier feste Trainingsteil-Abschnitte; je
-   Abschnitt lassen sich passende Übungen über den Picker zuordnen. Zuordnungen
-   persistieren sofort — nach jeder Aktion frischt der Editor seine Serverdaten
-   auf (router.refresh). */
+/* Trainingsplan-Editor (Stories #10/#11). Vier feste Trainingsteil-Abschnitte;
+   je Abschnitt lassen sich passende Übungen über den Picker zuordnen und mit
+   einer Dauer versehen. Struktur-Änderungen (Hinzufügen) frischen die
+   Serverdaten auf; Dauern werden für sofortige Summen lokal überlagert und im
+   Hintergrund persistiert. */
 export function PlanEditor({ plan }: { plan: PlanDetail }) {
   const router = useRouter();
   const [openTeil, setOpenTeil] = useState<TrainingsteilSlug | null>(null);
+  const [, startTransition] = useTransition();
+  // Lokale Dauer-Überlagerung: sofortige Summen ohne Server-Roundtrip. Die
+  // Serverdaten (item.durationMin) sind der Fallback für noch nicht editierte
+  // Zuordnungen; nach einem Refresh bleibt die Überlagerung bestehen.
+  const [durations, setDurations] = useState<Record<string, number | null>>({});
+
+  const dur = (item: PlanExerciseItem) =>
+    item.id in durations ? durations[item.id] : item.durationMin;
+
+  function changeDuration(item: PlanExerciseItem, next: number | null) {
+    setDurations((prev) => ({ ...prev, [item.id]: next }));
+    startTransition(async () => {
+      await setExerciseDuration(item.id, next);
+    });
+  }
 
   const byTeil = (slug: TrainingsteilSlug) =>
     plan.exercises.filter((e) => e.trainingsteil === slug);
 
+  // Gesamtdauer + fehlende Dauern über alle Teile.
+  const allDur = plan.exercises.map(dur);
+  const totalDuration = allDur.reduce<number>((a, d) => a + (d ?? 0), 0);
+  const totalMissing = allDur.filter((d) => d == null).length;
+
   return (
     <div className="flex flex-col gap-4">
+      {/* Summenleiste */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-[4px] border-[1.5px] border-outline bg-surface-container px-4 py-3">
+        <span className="inline-flex items-center gap-2 type-title-medium text-on-surface">
+          <Clock size={18} strokeWidth={2} aria-hidden />
+          Gesamtdauer: {formatDuration(totalDuration)}
+        </span>
+        {totalMissing > 0 && (
+          <span className="type-label-medium text-on-surface-variant">
+            {totalMissing} {totalMissing === 1 ? "Übung ohne" : "Übungen ohne"} Dauer
+          </span>
+        )}
+      </div>
+
       {TRAININGSTEILE.map(({ slug, label }) => {
         const items = byTeil(slug);
         const tooMany = items.length > ANZAHL_HINWEIS[slug];
+        const teilDur = items.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
+        const teilMissing = items.filter((it) => dur(it) == null).length;
         return (
           <Card key={slug} className="p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between gap-3">
@@ -32,6 +75,7 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
                 {label}
                 <span className="ml-2 type-label-medium text-on-surface-variant">
                   {items.length} {items.length === 1 ? "Übung" : "Übungen"}
+                  {teilDur > 0 && ` · ${formatDuration(teilDur)}`}
                 </span>
               </h2>
               <button
@@ -56,17 +100,29 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
                     item={item}
                     index={i}
                     planStufen={plan.stufen}
+                    duration={dur(item)}
+                    onDuration={(next) => changeDuration(item, next)}
                   />
                 ))}
               </ol>
             )}
 
-            {tooMany && (
-              <p className="mt-3 flex items-center gap-2 type-label-medium text-on-surface-variant">
-                <Info size={15} className="shrink-0 text-signal" aria-hidden />
-                Ungewöhnlich viele Übungen für diesen Trainingsteil — das ist
-                erlaubt, achte nur auf die Gesamtdauer.
-              </p>
+            {(tooMany || teilMissing > 0) && (
+              <div className="mt-3 flex flex-col gap-1">
+                {tooMany && (
+                  <p className="flex items-center gap-2 type-label-medium text-on-surface-variant">
+                    <Info size={15} className="shrink-0 text-signal" aria-hidden />
+                    Ungewöhnlich viele Übungen für diesen Trainingsteil — erlaubt,
+                    achte nur auf die Gesamtdauer.
+                  </p>
+                )}
+                {teilMissing > 0 && (
+                  <p className="type-label-medium text-on-surface-variant">
+                    {teilMissing} {teilMissing === 1 ? "Übung" : "Übungen"} ohne erfasste
+                    Dauer (zählt nicht zur Summe).
+                  </p>
+                )}
+              </div>
             )}
 
             {openTeil === slug && (
@@ -94,10 +150,14 @@ function PlanExerciseRow({
   item,
   index,
   planStufen,
+  duration,
+  onDuration,
 }: {
   item: PlanExerciseItem;
   index: number;
   planStufen: string[];
+  duration: number | null;
+  onDuration: (next: number | null) => void;
 }) {
   const mismatch =
     item.available &&
@@ -130,6 +190,9 @@ function PlanExerciseRow({
             ))}
           </span>
         )}
+      </span>
+      <span className="shrink-0">
+        <DurationStepper value={duration} onChange={onDuration} />
       </span>
       {!item.available && <Badge tone="neutral">Platzhalter</Badge>}
     </li>
