@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import {
   trainingsteil as trainingsteilLabels,
-  feldtyp as feldtypLabels,
   hauptteilkategorie as hauptteilkategorieLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
@@ -198,9 +197,6 @@ export function toCardData(row: ExerciseListRow): ExerciseCardData {
     trainingsteilLabel:
       trainingsteilLabels[row.trainingsteil as keyof typeof trainingsteilLabels] ??
       row.trainingsteil,
-    feldtypLabel: row.feldtyp
-      ? feldtypLabels[row.feldtyp as keyof typeof feldtypLabels] ?? row.feldtyp
-      : null,
     hauptteilkategorieLabel: row.hauptteilkategorie
       ? hauptteilkategorieLabels[
           row.hauptteilkategorie as keyof typeof hauptteilkategorieLabels

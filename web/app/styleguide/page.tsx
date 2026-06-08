@@ -428,7 +428,6 @@ export default function Styleguide() {
               slug: "schiessbude",
               name: "Schiessbude",
               trainingsteilLabel: "Ausklang",
-              feldtypLabel: "Kleinfeld",
               kategorien: ["G", "F", "E"],
               herkunft: "manual",
             }}
@@ -447,7 +446,6 @@ export default function Styleguide() {
               name: "Mein 4-gegen-4",
               trainingsteilLabel: "Hauptteil",
               hauptteilkategorieLabel: "Fussball spielen lernen",
-              feldtypLabel: "Grossfeld",
               kategorien: ["F", "E"],
               herkunft: "user",
               visibility: "private",
@@ -458,7 +456,6 @@ export default function Styleguide() {
               slug: "toblerone",
               name: "Toblerone",
               trainingsteilLabel: "Einleitung",
-              feldtypLabel: null,
               kategorien: ["G"],
               herkunft: "user",
               visibility: "public",

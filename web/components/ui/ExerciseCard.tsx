@@ -11,7 +11,6 @@ export interface ExerciseCardData {
   slug: string;
   name: string;
   trainingsteilLabel: string;
-  feldtypLabel?: string | null;
   hauptteilkategorieLabel?: string | null;
   kategorien: KategorieSlug[];
   herkunft: "manual" | "user";
@@ -28,7 +27,7 @@ export function ExerciseCard({
    *  Feature-Layer befüllt, damit dieses UI-Kit domänenfrei bleibt. */
   actionSlot?: ReactNode;
 }) {
-  const meta = [ex.trainingsteilLabel, ex.hauptteilkategorieLabel, ex.feldtypLabel]
+  const meta = [ex.trainingsteilLabel, ex.hauptteilkategorieLabel]
     .filter(Boolean)
     .join(" · ");
 
