@@ -62,6 +62,10 @@ export function Select({
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  // Nur Tastatur-Navigation scrollt die aktive Option ins Sichtfeld — Hover
+  // setzt `active` ebenfalls und würde die überlaufende Liste sonst bei jeder
+  // Mausbewegung verschieben.
+  const kbdNav = useRef(false);
 
   function commit(i: number) {
     const opt = options[i];
@@ -73,17 +77,20 @@ export function Select({
   }
 
   // Beim Öffnen: Aktiv-Index auf die aktuelle Auswahl, Fokus in die Listbox.
+  // `kbdNav` setzen, damit die gewählte Option einmalig ins Sichtfeld scrollt.
   useEffect(() => {
     if (!open) return;
+    kbdNav.current = true;
     setActive(selectedIndex);
     listRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Aktive Option ins Sichtfeld scrollen.
+  // Aktive Option ins Sichtfeld scrollen — nur nach Tastatur-Navigation.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !kbdNav.current) return;
     document.getElementById(optId(active))?.scrollIntoView({ block: "nearest" });
+    kbdNav.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, open]);
 
@@ -108,18 +115,22 @@ export function Select({
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
+        kbdNav.current = true;
         setActive((a) => Math.min(options.length - 1, a + 1));
         break;
       case "ArrowUp":
         e.preventDefault();
+        kbdNav.current = true;
         setActive((a) => Math.max(0, a - 1));
         break;
       case "Home":
         e.preventDefault();
+        kbdNav.current = true;
         setActive(0);
         break;
       case "End":
         e.preventDefault();
+        kbdNav.current = true;
         setActive(options.length - 1);
         break;
       case "Enter":
@@ -193,7 +204,10 @@ export function Select({
                   id={optId(i)}
                   role="option"
                   aria-selected={isSelected}
-                  onMouseEnter={() => setActive(i)}
+                  onMouseEnter={() => {
+                    kbdNav.current = false;
+                    setActive(i);
+                  }}
                   onClick={() => commit(i)}
                   className={cn(
                     "type-body-medium flex cursor-pointer items-center gap-3 px-3 py-2 text-(--menu-label)",

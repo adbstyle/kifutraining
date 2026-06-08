@@ -28,18 +28,12 @@ export default async function MeineUebungenPage({
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       {sp.deleted && <Flash message="Übung gelöscht." />}
 
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="type-label-medium text-primary">Übungspool</p>
-          <h1 className="type-headline-large mt-1 text-on-surface">Meine Übungen</h1>
-          <p className="type-body-medium mt-2 text-on-surface-variant">
-            Deine eigenen Übungen — öffentliche und private Entwürfe.
-          </p>
-        </div>
-        <ButtonLink href="/neu" variant="filled">
-          <Plus size={20} strokeWidth={2.5} aria-hidden />
-          Neue Übung
-        </ButtonLink>
+      <header className="mb-8">
+        <p className="type-label-medium text-primary">Übungspool</p>
+        <h1 className="type-headline-large mt-1 text-on-surface">Meine Übungen</h1>
+        <p className="type-body-medium mt-2 text-on-surface-variant">
+          Deine eigenen Übungen — öffentliche und private Entwürfe.
+        </p>
       </header>
 
       {rows.length === 0 ? (
