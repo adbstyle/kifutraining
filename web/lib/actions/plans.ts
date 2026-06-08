@@ -142,6 +142,53 @@ export async function addPlanExercise(
   return { ok: true };
 }
 
+// ── Story #14: Sichtbarkeit steuern & teilen ────────────────────────────────
+
+export type PublishResult =
+  | { status: "published" }
+  | { status: "incomplete"; missing: string[] }
+  | { status: "needs_confirmation"; count: number; names: string[] }
+  | { status: "error"; error: string };
+
+/** Plan öffentlich schalten (Story #14). Ohne Mitveröffentlichungs-Zustimmung
+ *  liefert die RPC bei eigenen privaten Übungen `needs_confirmation` (Anzahl +
+ *  Namen) und bei fehlenden Voraussetzungen `incomplete` (welche fehlen) —
+ *  jeweils ohne Mutation. */
+export async function publishPlanAction(
+  planId: string,
+  includePrivate: boolean,
+): Promise<PublishResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { status: "error", error: "Nicht angemeldet." };
+
+  const { data, error } = await supabase.rpc("publish_plan", {
+    p_plan_id: planId,
+    p_include_private: includePrivate,
+  });
+  if (error) return { status: "error", error: error.message };
+
+  const result = data as PublishResult;
+  if (result.status === "published") revalidatePlan(planId);
+  return result;
+}
+
+/** Öffentlichen Plan wieder privat schalten (Story #14 AC2). Mitveröffentlichte
+ *  Übungen bleiben öffentlich (Postcondition 4). */
+export async function unpublishPlanAction(planId: string): Promise<PlanActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  const { error } = await supabase.rpc("unpublish_plan", { p_plan_id: planId });
+  if (error) return { ok: false, error: error.message };
+  revalidatePlan(planId);
+  return { ok: true };
+}
+
 // ── Story #12: Plan bearbeiten, umsortieren, entfernen, löschen ──────────────
 
 /** Plannamen ändern (Story #12 AC1); leerer Name unzulässig. */

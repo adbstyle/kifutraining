@@ -25,6 +25,7 @@ import {
 import { ExercisePickerDialog } from "./ExercisePickerDialog";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
+import { PlanVisibilityControl } from "./PlanVisibilityControl";
 import {
   TRAININGSTEILE,
   ANZAHL_HINWEIS,
@@ -154,14 +155,17 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
               {plan.visibility === "public" ? "Öffentlich" : "✎ Privat"}
             </Badge>
           </div>
-          <button
-            type="button"
-            onClick={() => setDeleteOpen(true)}
-            className="focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-[4px] px-3 py-1.5 type-label-large text-error transition-colors hover:bg-error/10"
-          >
-            <Trash2 size={18} strokeWidth={2} aria-hidden />
-            Löschen
-          </button>
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            <PlanVisibilityControl planId={plan.id} visibility={plan.visibility} />
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(true)}
+              className="focus-ring inline-flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 type-label-large text-error transition-colors hover:bg-error/10"
+            >
+              <Trash2 size={18} strokeWidth={2} aria-hidden />
+              Löschen
+            </button>
+          </div>
         </div>
 
         <div className="mt-4">
