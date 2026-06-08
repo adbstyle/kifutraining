@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
-import { TRAININGSTEIL_SLUGS } from "@/lib/plan";
+import { TRAININGSTEIL_SLUGS, stufenAbgedeckt } from "@/lib/plan";
 import { kategorienSlugs, type TrainingsteilSlug } from "@/lib/vocab";
 
 export type PlanFormState = {
@@ -15,6 +15,14 @@ export type PlanFormState = {
 
 /** Ergebnis einer feingranularen Editor-Aktion (sofort-persistent). */
 export type PlanActionResult = { ok: boolean; error?: string };
+
+/** Ergebnis mit Auto-Privat-Hinweis (Story #12 Postcondition 2). */
+export type AutoPrivateResult = PlanActionResult & { becamePrivate?: boolean };
+
+/** Ergebnis des Stufen-Setzens inkl. abweichender Übungen (Story #12 AC3). */
+export type StufenResult = AutoPrivateResult & {
+  mismatched?: { id: string; name: string }[];
+};
 
 function csv(v: FormDataEntryValue | null): string[] {
   return String(v ?? "")
@@ -132,6 +140,178 @@ export async function addPlanExercise(
 
   revalidatePlan(planId);
   return { ok: true };
+}
+
+// ── Story #12: Plan bearbeiten, umsortieren, entfernen, löschen ──────────────
+
+/** Plannamen ändern (Story #12 AC1); leerer Name unzulässig. */
+export async function renamePlan(
+  planId: string,
+  name: string,
+): Promise<PlanActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false, error: "Bitte einen Namen angeben." };
+
+  const { error } = await supabase
+    .from("training_plans")
+    .update({ name: trimmed })
+    .eq("id", planId)
+    .eq("owner_id", user.id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePlan(planId);
+  return { ok: true };
+}
+
+/** Stufen eines Plans setzen/ergänzen/entfernen (Story #12 AC2). Liefert die
+ *  bereits zugeordneten Übungen zurück, die keine der neuen Stufen abdecken
+ *  (AC3), sowie ob der Plan dadurch auf privat gesetzt wurde (Postcondition 2,
+ *  durch den DB-Trigger bei leeren Stufen). */
+export async function setPlanStufen(
+  planId: string,
+  stufen: string[],
+): Promise<StufenResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+
+  const valid = validStufen(stufen);
+
+  const { data: before } = await supabase
+    .from("training_plans")
+    .select("visibility")
+    .eq("id", planId)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+  if (!before) return { ok: false, error: "Plan nicht gefunden." };
+
+  const { data: after, error } = await supabase
+    .from("training_plans")
+    .update({ stufen: valid })
+    .eq("id", planId)
+    .eq("owner_id", user.id)
+    .select("visibility")
+    .maybeSingle();
+  if (error || !after) return { ok: false, error: error?.message ?? "Speichern fehlgeschlagen." };
+
+  // Abweichende, noch auflösbare Übungen ermitteln (Platzhalter ohne Kategorien
+  // werden nicht bewertet).
+  let mismatched: { id: string; name: string }[] = [];
+  if (valid.length > 0) {
+    const { data: rows } = await supabase
+      .from("plan_exercises")
+      .select("id, exercise_name_cache, exercises ( name, kategorien )")
+      .eq("plan_id", planId);
+    mismatched = (rows ?? [])
+      .map((r) => ({
+        id: r.id,
+        // Embed ist als to-one-FK ein Objekt; supabase-js typisiert es defensiv
+        // als Array -> hier auf das tatsächliche Objekt normalisieren.
+        ex: (r.exercises as unknown) as { name: string; kategorien: string[] } | null,
+        cache: r.exercise_name_cache,
+      }))
+      .filter((r) => r.ex != null && !stufenAbgedeckt(valid, r.ex.kategorien))
+      .map((r) => ({ id: r.id, name: r.ex?.name ?? r.cache ?? "Übung" }));
+  }
+
+  revalidatePlan(planId);
+  return {
+    ok: true,
+    becamePrivate: before.visibility === "public" && after.visibility === "private",
+    mismatched,
+  };
+}
+
+/** Zuordnung innerhalb ihres Trainingsteils umsortieren (Story #12 AC4). */
+export async function movePlanExercise(
+  planExerciseId: string,
+  dir: -1 | 1,
+): Promise<PlanActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+
+  const { data: pe } = await supabase
+    .from("plan_exercises")
+    .select("plan_id")
+    .eq("id", planExerciseId)
+    .maybeSingle();
+  if (!pe) return { ok: false, error: "Zuordnung nicht gefunden." };
+
+  const { error } = await supabase.rpc("move_plan_exercise", {
+    p_plan_exercise_id: planExerciseId,
+    p_dir: dir,
+  });
+  if (error) return { ok: false, error: error.message };
+  revalidatePlan(pe.plan_id);
+  return { ok: true };
+}
+
+/** Eine Zuordnung aus ihrem Trainingsteil entfernen (Story #12 AC5). Meldet,
+ *  wenn der Plan dadurch auf privat gesetzt wurde (Postcondition 2). */
+export async function removePlanExercise(
+  planExerciseId: string,
+): Promise<AutoPrivateResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+
+  const { data: pe } = await supabase
+    .from("plan_exercises")
+    .select("plan_id")
+    .eq("id", planExerciseId)
+    .maybeSingle();
+  if (!pe) return { ok: false, error: "Zuordnung nicht gefunden." };
+  const planId = pe.plan_id;
+
+  const { data: before } = await supabase
+    .from("training_plans")
+    .select("visibility")
+    .eq("id", planId)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+  if (!before) return { ok: false, error: "Plan nicht gefunden." };
+
+  const { error } = await supabase
+    .from("plan_exercises")
+    .delete()
+    .eq("id", planExerciseId);
+  if (error) return { ok: false, error: error.message };
+
+  const { data: after } = await supabase
+    .from("training_plans")
+    .select("visibility")
+    .eq("id", planId)
+    .maybeSingle();
+
+  revalidatePlan(planId);
+  return {
+    ok: true,
+    becamePrivate: before.visibility === "public" && after?.visibility === "private",
+  };
+}
+
+/** Gesamten Plan löschen (Story #12 AC6/AC7); die Zuordnungen kaskadieren.
+ *  Die Bestätigung erfolgt im UI. */
+export async function deletePlan(planId: string): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("training_plans").delete().eq("id", planId).eq("owner_id", user.id);
+  revalidatePath("/meine-plaene");
+  redirect("/meine-plaene?deleted=1");
 }
 
 // ── Story #11: Dauer je Zuordnung erfassen/ändern/entfernen ──────────────────
