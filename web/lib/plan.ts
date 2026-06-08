@@ -53,6 +53,20 @@ export function sortStufen(stufen: readonly string[]): KategorieSlug[] {
   return order.filter((s) => stufen.includes(s));
 }
 
+/** Zuordnungen nach Trainingsteil gruppieren (feste Reihenfolge) und je Teil
+ *  die Summe der erfassten Dauern bilden. Generisch über die Item-Form, um
+ *  Importzyklen mit dem Query-Layer zu vermeiden. Reihenfolge der Items bleibt
+ *  erhalten (kommen bereits positionssortiert). */
+export function groupByTeil<
+  T extends { trainingsteil: string; durationMin: number | null },
+>(items: T[]): { slug: TrainingsteilSlug; label: string; items: T[]; sum: number }[] {
+  return TRAININGSTEILE.map(({ slug, label }) => {
+    const teilItems = items.filter((i) => i.trainingsteil === slug);
+    const sum = teilItems.reduce((a, i) => a + (i.durationMin ?? 0), 0);
+    return { slug, label, items: teilItems, sum };
+  });
+}
+
 /** Datum lesbar formatieren (de-CH, z. B. "8. Juni 2026"). */
 export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("de-CH", {
