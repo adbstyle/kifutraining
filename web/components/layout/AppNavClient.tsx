@@ -29,15 +29,15 @@ export function AppNavClient({
     pathname.startsWith("/meine-uebungen");
 
   // „Trainingsplaner" aktiv auf Editor, Einzel-/Durchführungs-/Druck-Ansicht,
-  // der eigenen Übersicht und dem öffentlichen Bereich.
+  // dem Pool und der eigenen Übersicht.
   const planerActive =
     pathname.startsWith("/plan") ||
-    pathname.startsWith("/meine-plaene") ||
-    pathname.startsWith("/plaene");
+    pathname.startsWith("/plaene") ||
+    pathname.startsWith("/meine-plaene");
 
-  // Angemeldet startet der Planer in der eigenen Übersicht, anonym im
-  // öffentlichen Bereich.
-  const planerHref = isAuthenticated ? "/meine-plaene" : "/plaene";
+  // Der Planer startet wie der Übungspool im gemeinsamen Pool (öffentliche
+  // Pläne + eigene); „Meine Pläne" liegt im Avatar-Menü.
+  const planerHref = "/plaene";
 
   const nav: HeaderNavItem[] = [
     { label: "Übungen", href: "/", current: uebungenActive },

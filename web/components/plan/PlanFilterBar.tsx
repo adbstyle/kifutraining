@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
-import { MultiSelect, Select } from "@/components/ui";
+import { Search, ClipboardList } from "lucide-react";
+import { FilterChip, MultiSelect, Select } from "@/components/ui";
 import { kategorieStufe } from "@/lib/labels";
 import { kategorienSlugs } from "@/lib/vocab";
 
@@ -16,20 +16,25 @@ const visOptions = [
   { value: "private", label: "Privat" },
 ];
 
-/* Such-/Filterleiste für Plan-Übersichten (Story #13 eigene, #8 öffentliche).
+/* Such-/Filterleiste für Plan-Übersichten (eigene Pläne und Plan-Pool).
    URL-basierter Zustand wie im Übungskatalog: jede Änderung schreibt in die URL
    und löst eine neue Server-Abfrage aus. Freitext debounced. `showVisibility`
-   blendet den Sichtbarkeitsfilter ein (nur eigene Übersicht). */
+   blendet den Sichtbarkeitsfilter ein, `showMine` den „Nur meine Pläne"-Schalter
+   (beide nur angemeldet sinnvoll). */
 export function PlanFilterBar({
   q,
   visibility,
   stufen,
+  mine = false,
   showVisibility = false,
+  showMine = false,
 }: {
   q: string;
   visibility?: "public" | "private";
   stufen: string[];
+  mine?: boolean;
   showVisibility?: boolean;
+  showMine?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -68,6 +73,13 @@ export function PlanFilterBar({
     pushParams((p) => {
       if (v === "all") p.delete("vis");
       else p.set("vis", v);
+    });
+  }
+
+  function toggleMine() {
+    pushParams((p) => {
+      if (mine) p.delete("mine");
+      else p.set("mine", "1");
     });
   }
 
@@ -110,6 +122,16 @@ export function PlanFilterBar({
           placeholder="Alle Stufen"
           className="w-full sm:w-64"
         />
+        {showMine && (
+          <FilterChip
+            selected={mine}
+            onClick={toggleMine}
+            icon={ClipboardList}
+            className="h-[42px]"
+          >
+            Nur meine Pläne
+          </FilterChip>
+        )}
       </div>
     </div>
   );
