@@ -21,6 +21,8 @@ import {
   Snackbar,
   Button,
   TextField,
+  IconButton,
+  Tooltip,
 } from "@/components/ui";
 import { ExercisePickerDialog } from "./ExercisePickerDialog";
 import { DurationStepper } from "./DurationStepper";
@@ -197,19 +199,20 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="type-title-medium text-on-surface">
                 {label}
-                <span className="ml-2 type-label-medium text-on-surface-variant">
-                  {items.length} {items.length === 1 ? "Übung" : "Übungen"}
-                  {teilDur > 0 && ` · ${formatDuration(teilDur)}`}
-                </span>
+                {teilDur > 0 && (
+                  <span className="ml-2 type-label-medium text-on-surface-variant">
+                    {formatDuration(teilDur)}
+                  </span>
+                )}
               </h2>
-              <button
-                type="button"
-                onClick={() => setOpenTeil(slug)}
-                className="focus-ring inline-flex items-center gap-1.5 rounded-[4px] border-[1.5px] border-outline px-3 py-1.5 type-label-large text-on-surface transition-colors hover:bg-on-surface/8"
-              >
-                <Plus size={18} strokeWidth={2.5} aria-hidden />
-                Übung hinzufügen
-              </button>
+              <Tooltip label="Übung hinzufügen">
+                <IconButton
+                  icon={Plus}
+                  label={`Übung zu ${label} hinzufügen`}
+                  size="sm"
+                  onClick={() => setOpenTeil(slug)}
+                />
+              </Tooltip>
             </div>
 
             {items.length === 0 ? (
