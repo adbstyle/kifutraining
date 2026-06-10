@@ -86,8 +86,11 @@ export function PlanFilterBar({
   void searchParams; // an Re-Render bei URL-Wechsel koppeln
 
   return (
-    <div className="mb-6 flex flex-col gap-3">
-      <label className="relative block max-w-md">
+    // Eine durchgehende, umbrechende Zeile: Suchfeld zuerst, dann die Filter
+    // direkt dahinter angereiht. Labels sind in die Felder gewandert (Empty-
+    // State als Beschriftung), darum alle Elemente auf gleicher Höhe (h-12).
+    <div className="mb-6 flex flex-wrap items-center gap-3">
+      <label className="relative block w-full sm:w-72">
         <Search
           size={18}
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
@@ -99,40 +102,40 @@ export function PlanFilterBar({
           onChange={(e) => onSearch(e.target.value)}
           placeholder="Nach Plannamen suchen…"
           aria-label="Nach Plannamen suchen"
-          className="focus-ring w-full rounded-[4px] border-[1.5px] border-outline bg-surface-container-low py-2.5 pl-10 pr-3 type-body-medium text-on-surface placeholder:text-on-surface-variant"
+          className="focus-ring h-12 w-full rounded-[4px] border-[1.5px] border-outline bg-surface-container-low pl-10 pr-3 type-body-medium text-on-surface placeholder:text-on-surface-variant"
         />
       </label>
 
-      <div className="flex flex-wrap items-end gap-3">
-        {showVisibility && (
-          <Select
-            label="Sichtbarkeit"
-            options={visOptions}
-            value={visibility ?? "all"}
-            onChange={setVisibility}
-            className="w-full sm:w-44"
-          />
-        )}
-        <MultiSelect
-          label="Alterskategorie"
-          options={stufenOptions}
-          value={stufen}
-          onChange={setStufen}
-          searchable={false}
-          placeholder="Alle Stufen"
-          className="w-full sm:w-64"
+      {showVisibility && (
+        <Select
+          label="Sichtbarkeit"
+          hideLabel
+          options={visOptions}
+          value={visibility ?? "all"}
+          onChange={setVisibility}
+          className="w-full sm:w-44"
         />
-        {showMine && (
-          <FilterChip
-            selected={mine}
-            onClick={toggleMine}
-            icon={ClipboardList}
-            className="h-[42px]"
-          >
-            Nur meine Pläne
-          </FilterChip>
-        )}
-      </div>
+      )}
+      <MultiSelect
+        label="Alterskategorie"
+        hideLabel
+        options={stufenOptions}
+        value={stufen}
+        onChange={setStufen}
+        searchable={false}
+        placeholder="Alle Stufen"
+        className="w-full sm:w-64"
+      />
+      {showMine && (
+        <FilterChip
+          selected={mine}
+          onClick={toggleMine}
+          icon={ClipboardList}
+          className="h-12"
+        >
+          Nur meine Pläne
+        </FilterChip>
+      )}
     </div>
   );
 }

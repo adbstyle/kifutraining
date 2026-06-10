@@ -548,6 +548,18 @@ export default function Styleguide() {
             ]}
             supportingText="Öffnet ein Menu-Panel statt des OS-Dropdowns."
           />
+          {/* hideLabel: Label sr-only, der Empty-State (erste Option) beschriftet
+              das Feld — für dichte Filterzeilen mit Feldern Seite an Seite. */}
+          <Select
+            label="Sichtbarkeit"
+            hideLabel
+            options={[
+              { value: "all", label: "Alle" },
+              { value: "public", label: "Öffentlich" },
+              { value: "private", label: "Privat" },
+            ]}
+            supportingText="hideLabel: Label sr-only, Empty-State dient als Beschriftung."
+          />
         </div>
       </Section>
 

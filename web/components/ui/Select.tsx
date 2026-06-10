@@ -18,6 +18,9 @@ export interface SelectProps {
   onChange?: (value: string) => void;
   /** Optionales Hidden-Input, damit das Feld an nativer Form-Serialisierung teilnimmt. */
   name?: string;
+  /** Label nur für Screenreader (visuell ausgeblendet) — z. B. wenn der
+      Empty-State des Felds bereits als Beschriftung dient. */
+  hideLabel?: boolean;
   supportingText?: string;
   error?: boolean;
   disabled?: boolean;
@@ -36,6 +39,7 @@ export function Select({
   defaultValue,
   onChange,
   name,
+  hideLabel,
   supportingText,
   error,
   disabled,
@@ -151,7 +155,13 @@ export function Select({
 
   return (
     <div className={className}>
-      <label htmlFor={fid} className="type-label-small mb-2 block text-(--field-label)">
+      <label
+        htmlFor={fid}
+        className={cn(
+          "type-label-small mb-2 block text-(--field-label)",
+          hideLabel && "sr-only",
+        )}
+      >
         {label}
       </label>
       <div ref={rootRef} className="relative">
