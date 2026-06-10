@@ -46,20 +46,20 @@ export default async function PlaenePage({
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       {sp.deleted && <Flash message="Trainingsplan gelöscht." />}
 
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
+      <header className="mb-8">
+        <div className="flex items-center justify-between gap-4">
           <h1 className="type-headline-large text-on-surface">Trainingspläne</h1>
-          <p className="type-body-medium mt-2 max-w-2xl text-on-surface-variant">
-            Öffentlich geteilte Pläne der Community und deine eigenen — ein Pool
-            zum Stöbern, Durchführen und Weiterentwickeln.
-          </p>
+          {user && (
+            <ButtonLink href="/plan/neu" variant="filled" className="shrink-0">
+              <Plus size={20} strokeWidth={2.5} aria-hidden />
+              Neuer Plan
+            </ButtonLink>
+          )}
         </div>
-        {user && (
-          <ButtonLink href="/plan/neu" variant="filled">
-            <Plus size={20} strokeWidth={2.5} aria-hidden />
-            Neuer Plan
-          </ButtonLink>
-        )}
+        <p className="type-body-medium mt-2 max-w-2xl text-on-surface-variant">
+          Öffentlich geteilte Pläne der Community und deine eigenen — ein Pool
+          zum Stöbern, Durchführen und Weiterentwickeln.
+        </p>
       </header>
 
       <PlanFilterBar

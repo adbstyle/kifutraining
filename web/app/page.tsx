@@ -69,20 +69,20 @@ export default async function Home({
         <Flash message="Konto gelöscht. Deine öffentlichen Übungen bleiben anonym erhalten." />
       )}
       {sp.deleted && <Flash message="Übung gelöscht." />}
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
+      <header className="mb-8">
+        <div className="flex items-center justify-between gap-4">
           <h1 className="type-display-small text-on-surface">Übungen</h1>
-          <p className="type-body-large mt-3 max-w-2xl text-on-surface-variant">
-            Der offizielle Kinderfussball-Bestand und Übungen der Community —
-            durchsuchbar und filterbar nach Trainingsteil, Alter, Feld und mehr.
-          </p>
+          {user && (
+            <ButtonLink href="/neu" variant="filled" className="shrink-0">
+              <Plus size={20} strokeWidth={2.5} aria-hidden />
+              Neue Übung
+            </ButtonLink>
+          )}
         </div>
-        {user && (
-          <ButtonLink href="/neu" variant="filled">
-            <Plus size={20} strokeWidth={2.5} aria-hidden />
-            Neue Übung
-          </ButtonLink>
-        )}
+        <p className="type-body-large mt-3 max-w-2xl text-on-surface-variant">
+          Der offizielle Kinderfussball-Bestand und Übungen der Community —
+          durchsuchbar und filterbar nach Trainingsteil, Alter, Feld und mehr.
+        </p>
       </header>
 
       {error && (
