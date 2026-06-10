@@ -11,7 +11,6 @@ import {
   ChevronDown,
   Trash2,
   Pencil,
-  X,
 } from "lucide-react";
 import {
   Card,
@@ -25,6 +24,7 @@ import {
   Tooltip,
 } from "@/components/ui";
 import { ExercisePickerDialog } from "./ExercisePickerDialog";
+import { ExerciseThumb } from "./ExerciseThumb";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
 import { PlanVisibilityControl } from "./PlanVisibilityControl";
@@ -419,6 +419,12 @@ function PlanExerciseRow({
         {index + 1}
       </span>
 
+      <ExerciseThumb
+        bildUrl={item.exercise?.bild_url}
+        name={item.name}
+        className="hidden sm:block"
+      />
+
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex items-center gap-2">
           <span className="truncate type-body-medium text-on-surface">{item.name}</span>
@@ -446,14 +452,18 @@ function PlanExerciseRow({
         <DurationStepper value={duration} onChange={onDuration} />
       </span>
 
-      <button
-        type="button"
-        aria-label="Übung entfernen"
-        onClick={onRemove}
-        className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-error/10 hover:text-error"
-      >
-        <X size={16} strokeWidth={2.5} aria-hidden />
-      </button>
+      <span className="ml-0.5 h-6 w-px shrink-0 bg-outline-variant sm:ml-1" aria-hidden />
+
+      <Tooltip label="Übung entfernen">
+        <button
+          type="button"
+          aria-label="Übung entfernen"
+          onClick={onRemove}
+          className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-error/10 hover:text-error"
+        >
+          <Trash2 size={16} strokeWidth={2.5} aria-hidden />
+        </button>
+      </Tooltip>
     </li>
   );
 }

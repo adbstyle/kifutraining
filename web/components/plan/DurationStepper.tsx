@@ -1,11 +1,14 @@
 "use client";
 
-import { Minus, Plus, X } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { DAUER_SCHRITT, formatDuration } from "@/lib/plan";
 
 /* Dauer-Eingabe je Zuordnung in 5-Minuten-Schritten (Story #11 AC1/AC2).
-   Ohne erfasste Dauer ein „+ Dauer"-Knopf; mit Dauer ein −/Wert/+-Stepper plus
-   Entfernen (X). Kontrolliert; persistiert über den Aufrufer. */
+   Ohne erfasste Dauer ein „+ Dauer"-Knopf; mit Dauer ein −/Wert/+-Stepper.
+   Die Dauer wird allein über Minus geleert: unterschreitet sie die kleinste
+   Stufe, fällt sie auf den Leerzustand zurück (kein separater Entfernen-Knopf,
+   der sich sonst mit dem „Übung entfernen“ verwechseln liesse). Kontrolliert;
+   persistiert über den Aufrufer. */
 export function DurationStepper({
   value,
   onChange,
@@ -51,15 +54,6 @@ export function DurationStepper({
         className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border-[1.5px] border-outline text-on-surface transition-colors hover:bg-on-surface/8 disabled:opacity-60"
       >
         <Plus size={14} strokeWidth={2.5} aria-hidden />
-      </button>
-      <button
-        type="button"
-        aria-label="Dauer entfernen"
-        onClick={() => onChange(null)}
-        disabled={disabled}
-        className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/8 disabled:opacity-60"
-      >
-        <X size={14} strokeWidth={2.5} aria-hidden />
       </button>
     </div>
   );
