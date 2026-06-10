@@ -3,9 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
-import { FilterChip } from "@/components/ui";
+import { MultiSelect, Select } from "@/components/ui";
 import { kategorieStufe } from "@/lib/labels";
 import { kategorienSlugs } from "@/lib/vocab";
+
+// Stufen als Multiselect-Optionen; Sichtbarkeit als Single-Select mit
+// „Alle" = kein Filter (mappt auf gelöschten vis-Parameter).
+const stufenOptions = kategorienSlugs.map((k) => ({ value: k, label: kategorieStufe[k] }));
+const visOptions = [
+  { value: "all", label: "Alle" },
+  { value: "public", label: "Öffentlich" },
+  { value: "private", label: "Privat" },
+];
 
 /* Such-/Filterleiste für Plan-Übersichten (Story #13 eigene, #8 öffentliche).
    URL-basierter Zustand wie im Übungskatalog: jede Änderung schreibt in die URL
@@ -48,18 +57,16 @@ export function PlanFilterBar({
     }, 300);
   }
 
-  function toggleStufe(k: string) {
+  function setStufen(next: string[]) {
     pushParams((p) => {
-      const cur = (p.get("stufen") ?? "").split(",").filter(Boolean);
-      const next = cur.includes(k) ? cur.filter((v) => v !== k) : [...cur, k];
       if (next.length) p.set("stufen", next.join(","));
       else p.delete("stufen");
     });
   }
 
-  function setVisibility(v: "public" | "private") {
+  function setVisibility(v: string) {
     pushParams((p) => {
-      if (visibility === v) p.delete("vis");
+      if (v === "all") p.delete("vis");
       else p.set("vis", v);
     });
   }
@@ -84,29 +91,25 @@ export function PlanFilterBar({
         />
       </label>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-end gap-3">
         {showVisibility && (
-          <>
-            <FilterChip
-              selected={visibility === "public"}
-              onClick={() => setVisibility("public")}
-            >
-              Öffentlich
-            </FilterChip>
-            <FilterChip
-              selected={visibility === "private"}
-              onClick={() => setVisibility("private")}
-            >
-              Privat
-            </FilterChip>
-            <span className="mx-1 h-5 w-px bg-outline-variant" aria-hidden />
-          </>
+          <Select
+            label="Sichtbarkeit"
+            options={visOptions}
+            value={visibility ?? "all"}
+            onChange={setVisibility}
+            className="w-full sm:w-44"
+          />
         )}
-        {kategorienSlugs.map((k) => (
-          <FilterChip key={k} selected={stufen.includes(k)} onClick={() => toggleStufe(k)}>
-            {kategorieStufe[k]}
-          </FilterChip>
-        ))}
+        <MultiSelect
+          label="Alterskategorie"
+          options={stufenOptions}
+          value={stufen}
+          onChange={setStufen}
+          searchable={false}
+          placeholder="Alle Stufen"
+          className="w-full sm:w-64"
+        />
       </div>
     </div>
   );
