@@ -4,6 +4,7 @@ import {
   hauptteilkategorie as hauptteilkategorieLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
+import { likePattern } from "@/lib/search";
 import type { ExerciseCardData } from "@/components/ui";
 
 /**
@@ -21,6 +22,7 @@ export type ExerciseFilters = {
   kinder?: number; // verfügbare Gruppengrösse
   q?: string; // Freitext
   fav?: boolean; // nur eigene Favoriten (nur angemeldet wirksam)
+  mine?: boolean; // nur eigene Übungen (nur angemeldet wirksam)
 };
 
 // Felder, die Liste + Karte brauchen.
@@ -43,25 +45,6 @@ export type ExerciseListRow = {
 };
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
-
-/** Suchbegriff identisch zur DB-Spalte `search_text` normalisieren:
- *  akzent-/umlaut- und case-insensitiv. Muss zum Trigger
- *  `lower(unaccent(...))` passen (Migration 20260608120000), damit z.B.
- *  "hutchen" das gespeicherte "Hütchen" findet. Auf Deutsch abgestimmt
- *  (inkl. ß→ss wie Postgres unaccent). */
-function normalizeSearch(s: string): string {
-  return s
-    .normalize("NFKD") // ä -> a + kombinierendes Diakritikum
-    .replace(/\p{M}/gu, "") // kombinierende Diakritika entfernen
-    .toLowerCase()
-    .replace(/ß/g, "ss");
-}
-
-/** %, _ und \ sind LIKE-Sonderzeichen — als Literal maskieren, damit eine
- *  Eingabe wie "100%" nicht als Wildcard interpretiert wird. */
-function escapeLike(s: string): string {
-  return s.replace(/[\\%_]/g, (c) => `\\${c}`);
-}
 
 /** Übungs-IDs, die der angemeldete USER favorisiert hat. RLS liefert nur eigene
  *  Favoriten — anonyme Aufrufer bekommen ein leeres Set. */
@@ -93,6 +76,8 @@ export async function getExercises(
   if (f.fav) {
     if (!user || favIds.size === 0) return [];
   }
+  // „Nur meine Übungen" ist ebenfalls nur angemeldet wirksam.
+  if (f.mine && !user) return [];
 
   let query = supabase.from("exercises").select(LIST_COLUMNS).order("name");
 
@@ -100,6 +85,8 @@ export async function getExercises(
   // Bei sehr vielen Favoriten könnte die Query-URL lang werden; im
   // Kinderfussball-Kontext unkritisch. Sonst später als JOIN/View lösen.
   if (f.fav) query = query.in("id", [...favIds]);
+  // Eigene Übungen: öffentliche wie private, keine fremden/Manual-Übungen.
+  if (f.mine && user) query = query.eq("owner_id", user.id);
   if (f.teil?.length) query = query.in("trainingsteil", f.teil);
   if (f.kat?.length) query = query.overlaps("kategorien", f.kat);
   if (f.feld?.length) query = query.in("feldtyp", f.feld);
@@ -117,10 +104,7 @@ export async function getExercises(
     // Material, Varianten via `search_text`-Trigger). Findet auch Wortteile
     // und Komposita — "Hand" matcht "Handball". Sonderzeichen werden als
     // Literal maskiert, damit Eingaben wie "100%" nicht als Wildcard wirken.
-    query = query.ilike(
-      "search_text",
-      `%${escapeLike(normalizeSearch(f.q.trim()))}%`,
-    );
+    query = query.ilike("search_text", likePattern(f.q));
   }
 
   const { data, error } = await query;
@@ -172,27 +156,6 @@ export async function getExerciseDetail(
     .maybeSingle();
   if (error) throw error;
   return (data as ExerciseDetail | null) ?? null;
-}
-
-/** Ausschliesslich die eigenen Übungen des angemeldeten Trainers (Story 8) —
- *  öffentliche wie private, keine fremden/Manual-Übungen. */
-export async function getMyExercises(): Promise<ExerciseListRow[]> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
-  const favIds = await getFavoriteIds(supabase, user.id);
-  const { data, error } = await supabase
-    .from("exercises")
-    .select(LIST_COLUMNS)
-    .eq("owner_id", user.id)
-    .order("updated_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
-    ...row,
-    is_favorited: favIds.has(row.id),
-  })) as ExerciseListRow[];
 }
 
 /** Hat der angemeldete USER diese Übung favorisiert? (Detailseite) */

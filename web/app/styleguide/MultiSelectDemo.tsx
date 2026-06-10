@@ -47,6 +47,18 @@ export function MultiSelectDemo() {
         ]}
         supportingText="searchable={false} actions={false}: Trigger treibt die Liste, ↑/↓ + Enter."
       />
+
+      {/* Ohne sichtbares Label — der Placeholder (Empty-State) beschriftet das
+          Feld; Label bleibt für Screenreader erhalten (sr-only). Für dichte
+          Filterzeilen, in denen Felder Seite an Seite stehen. */}
+      <MultiSelect
+        label="Alterskategorie"
+        hideLabel
+        searchable={false}
+        options={themen}
+        placeholder="Alle Stufen"
+        supportingText="hideLabel: Label sr-only, Placeholder dient als Beschriftung."
+      />
     </div>
   );
 }

@@ -48,7 +48,7 @@ export function ChipsDemo() {
           Assist · Suggestion · Elevated
         </p>
         <div className="flex flex-wrap gap-2">
-          <AssistChip icon={Plus}>Zu Plan hinzufügen</AssistChip>
+          <AssistChip icon={Plus}>Zu Training hinzufügen</AssistChip>
           <AssistChip icon={BookOpen} elevated>
             Im Manual öffnen
           </AssistChip>

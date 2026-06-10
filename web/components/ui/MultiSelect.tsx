@@ -20,6 +20,9 @@ export interface MultiSelectProps {
   searchable?: boolean;
   /** Footer mit „Zurücksetzen" / „Alle auswählen" (Default). */
   actions?: boolean;
+  /** Label nur für Screenreader (visuell ausgeblendet) — z. B. wenn der
+      Placeholder (Empty-State) bereits als Beschriftung dient. */
+  hideLabel?: boolean;
   placeholder?: string;
   supportingText?: string;
   error?: boolean;
@@ -48,6 +51,7 @@ export function MultiSelect({
   name,
   searchable = true,
   actions = true,
+  hideLabel,
   placeholder,
   supportingText,
   error,
@@ -314,7 +318,13 @@ export function MultiSelect({
 
   return (
     <div className={className}>
-      <span id={`${fid}-label`} className="type-label-small mb-2 block text-(--field-label)">
+      <span
+        id={`${fid}-label`}
+        className={cn(
+          "type-label-small mb-2 block text-(--field-label)",
+          hideLabel && "sr-only",
+        )}
+      >
         {label}
       </span>
 

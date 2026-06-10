@@ -173,7 +173,7 @@ export default function Styleguide() {
         <p className="type-body-large mt-4 max-w-xl text-on-surface-variant">
           Chalk-Lines auf Rasen-Dunkelgrün. Ein warmer Signalton. Hoher Kontrast
           für den Spielfeldrand. Die geteilte UI-Basis für Übungspool und
-          Trainingsplaner.
+          Trainings.
         </p>
       </header>
 
@@ -310,7 +310,7 @@ export default function Styleguide() {
           M3-Schatten. Shape bleibt KiFu-eckig (3px).
         </p>
         <div className="flex flex-wrap items-end gap-3">
-          <Button variant="filled">Plan erstellen</Button>
+          <Button variant="filled">Training erstellen</Button>
           <Button variant="tonal">Duplizieren</Button>
           <Button variant="elevated">Teilen</Button>
           <Button variant="outlined">Filter zurücksetzen</Button>
@@ -547,6 +547,18 @@ export default function Styleguide() {
               { value: "freies_feld", label: "Freies Feld" },
             ]}
             supportingText="Öffnet ein Menu-Panel statt des OS-Dropdowns."
+          />
+          {/* hideLabel: Label sr-only, der Empty-State (erste Option) beschriftet
+              das Feld — für dichte Filterzeilen mit Feldern Seite an Seite. */}
+          <Select
+            label="Sichtbarkeit"
+            hideLabel
+            options={[
+              { value: "all", label: "Alle" },
+              { value: "public", label: "Öffentlich" },
+              { value: "private", label: "Privat" },
+            ]}
+            supportingText="hideLabel: Label sr-only, Empty-State dient als Beschriftung."
           />
         </div>
       </Section>

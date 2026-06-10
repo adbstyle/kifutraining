@@ -20,14 +20,14 @@ const nav: HeaderNavItem[] = [
     current: true,
     items: [
       { label: "Alle Übungen", description: "Den ganzen Katalog durchsuchen", href: "/", icon: LayoutGrid },
-      { label: "Meine Übungen", description: "Eigene Entwürfe & Veröffentlichungen", href: "/meine-uebungen", icon: UserRound },
+      { label: "Meine Übungen", description: "Eigene Entwürfe & Veröffentlichungen", href: "/?mine=1", icon: UserRound },
       { label: "Favoriten", description: "Gemerkte Übungen", href: "/", icon: Star },
     ],
   },
   {
-    label: "Trainingspläne",
+    label: "Trainings",
     items: [
-      { label: "Meine Pläne", description: "Trainings zusammenstellen", href: "#", icon: ListChecks },
+      { label: "Meine Trainings", description: "Trainings zusammenstellen", href: "#", icon: ListChecks },
       { label: "Saisonplanung", description: "Über die Saison verteilen", href: "#", icon: CalendarRange },
     ],
   },

@@ -1,15 +1,17 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, UserRound, ListChecks, Plus } from "lucide-react";
+import { LogOut, UserRound, ListChecks, ClipboardList } from "lucide-react";
 import { Header } from "@/components/ui";
 import type { HeaderNavItem, HeaderAccount } from "@/components/ui";
 
 /* App-Chrome: M3-Header-Navigation als Top-Bar (alle Breakpoints; unter `lg`
    Hamburger → Drawer). Server-Teil (AppNav) liest die Session und reicht den
    Auth-Zustand + die Abmelde-Action durch; Aktiv-Zustand + Routing laufen
-   hier pfadbasiert. Die Primär-Aktion „Neue Übung" sitzt als Header-CTA (löst
-   den früheren FAB ab); Konto/Meine Übungen/Abmelden im Avatar-Menü. */
+   hier pfadbasiert. Die Primär-Aktion „Neue Übung" sitzt im Content-Bereich
+   (Katalog + Meine Übungen) wie „Neues Training" im Trainings-Modul — nicht mehr als
+   Header-CTA. Anonym dient der Header-CTA nur dem Anmelden; Konto/Meine
+   Übungen/Abmelden im Avatar-Menü. */
 export function AppNavClient({
   isAuthenticated,
   userEmail,
@@ -22,13 +24,23 @@ export function AppNavClient({
   const pathname = usePathname();
   const router = useRouter();
 
-  // „Übungen" aktiv auf Katalog, Detailseiten und den eigenen Übungen.
-  const uebungenActive =
-    pathname === "/" ||
-    pathname.startsWith("/uebung") ||
-    pathname.startsWith("/meine-uebungen");
+  // „Übungen" aktiv auf Katalog (inkl. vorgefiltertem „Meine Übungen") und
+  // Detailseiten. „Meine Übungen" ist derselbe Pool, vorgefiltert (?mine=1).
+  const uebungenActive = pathname === "/" || pathname.startsWith("/uebung");
 
-  const nav: HeaderNavItem[] = [{ label: "Übungen", href: "/", current: uebungenActive }];
+  // „Trainings" aktiv auf Editor, Einzel-/Durchführungs-/Druck-Ansicht und dem
+  // Pool (/training… deckt als Präfix auch /trainings ab).
+  const trainingsActive = pathname.startsWith("/training");
+
+  // Das Trainings-Modul startet wie der Übungspool im gemeinsamen Pool
+  // (öffentliche Trainings + eigene); „Meine Trainings" ist derselbe Pool,
+  // vorgefiltert auf die eigenen Trainings.
+  const trainingsHref = "/trainings";
+
+  const nav: HeaderNavItem[] = [
+    { label: "Übungen", href: "/", current: uebungenActive },
+    { label: "Trainings", href: trainingsHref, current: trainingsActive },
+  ];
 
   const account: HeaderAccount | undefined = isAuthenticated
     ? {
@@ -42,16 +54,21 @@ export function AppNavClient({
           {
             label: "Meine Übungen",
             icon: ListChecks,
-            onSelect: () => router.push("/meine-uebungen"),
+            onSelect: () => router.push("/?mine=1"),
+          },
+          {
+            label: "Meine Trainings",
+            icon: ClipboardList,
+            onSelect: () => router.push("/trainings?mine=1"),
           },
           { label: "Abmelden", icon: LogOut, danger: true, onSelect: () => signOutAction() },
         ],
       }
     : undefined;
 
-  const cta = isAuthenticated
-    ? { label: "Neue Übung", href: "/neu", icon: Plus }
-    : { label: "Anmelden", href: "/login" };
+  // Angemeldet: keine Header-CTA — „Neue Übung" lebt im Content-Bereich.
+  // Anonym: Anmelden-CTA als Einstieg.
+  const cta = isAuthenticated ? undefined : { label: "Anmelden", href: "/login" };
 
   return <Header nav={nav} account={account} cta={cta} />;
 }

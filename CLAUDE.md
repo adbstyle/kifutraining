@@ -7,7 +7,7 @@ Projektsprache ist **Deutsch** — Code-Kommentare, Doku, Commit-Messages und In
 Monorepo mit **zwei Teilprojekten**:
 
 1. **Übungs-Datenbank** (Repo-Root, Python) — YAML pro Übung als kanonische Quelle, aus dem SFV-Manual Kinderfussball extrahiert. Generiert eine lesbare Markdown-Ansicht.
-2. **Web-App** (`web/`, Next.js 15 + Supabase) — Trainingsplaner auf Basis der Übungen.
+2. **Web-App** (`web/`, Next.js 15 + Supabase) — Trainings (einzelne Einheiten, SFV: „Trainingslektion") aus den Übungen zusammenstellen.
 
 ## Commands
 

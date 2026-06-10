@@ -7,17 +7,15 @@ import { env } from "@/lib/env";
 // daher die konkreten Pfade.
 const PROTECTED_PREFIXES = [
   "/neu",
-  "/meine-uebungen",
-  "/meine-plaene",
   "/konto",
-  "/plan/neu",
+  "/training/neu",
 ];
 
 function isProtected(pathname: string): boolean {
   if (PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     return true;
   }
-  // Bearbeiten-Routen: /uebung/[slug]/edit, /plan/[id]/edit
+  // Bearbeiten-Routen: /uebung/[slug]/edit, /training/[id]/edit
   return pathname.endsWith("/edit");
 }
 

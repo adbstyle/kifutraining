@@ -175,7 +175,7 @@ export async function deleteAccount() {
     .map((p) => bildUrlToPath(p.bild_url))
     .filter((p): p is string => !!p);
 
-  // Daten-Teil: anonymisiert öffentliche, löscht private Übungen + eigene Pläne.
+  // Daten-Teil: anonymisiert öffentliche, löscht private Übungen + eigene Trainings.
   const { error } = await supabase.rpc("delete_account");
   if (error) return;
 
