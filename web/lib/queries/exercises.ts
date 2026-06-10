@@ -22,6 +22,7 @@ export type ExerciseFilters = {
   kinder?: number; // verfügbare Gruppengrösse
   q?: string; // Freitext
   fav?: boolean; // nur eigene Favoriten (nur angemeldet wirksam)
+  mine?: boolean; // nur eigene Übungen (nur angemeldet wirksam)
 };
 
 // Felder, die Liste + Karte brauchen.
@@ -75,6 +76,8 @@ export async function getExercises(
   if (f.fav) {
     if (!user || favIds.size === 0) return [];
   }
+  // „Nur meine Übungen" ist ebenfalls nur angemeldet wirksam.
+  if (f.mine && !user) return [];
 
   let query = supabase.from("exercises").select(LIST_COLUMNS).order("name");
 
@@ -82,6 +85,8 @@ export async function getExercises(
   // Bei sehr vielen Favoriten könnte die Query-URL lang werden; im
   // Kinderfussball-Kontext unkritisch. Sonst später als JOIN/View lösen.
   if (f.fav) query = query.in("id", [...favIds]);
+  // Eigene Übungen: öffentliche wie private, keine fremden/Manual-Übungen.
+  if (f.mine && user) query = query.eq("owner_id", user.id);
   if (f.teil?.length) query = query.in("trainingsteil", f.teil);
   if (f.kat?.length) query = query.overlaps("kategorien", f.kat);
   if (f.feld?.length) query = query.in("feldtyp", f.feld);
@@ -151,27 +156,6 @@ export async function getExerciseDetail(
     .maybeSingle();
   if (error) throw error;
   return (data as ExerciseDetail | null) ?? null;
-}
-
-/** Ausschliesslich die eigenen Übungen des angemeldeten Trainers (Story 8) —
- *  öffentliche wie private, keine fremden/Manual-Übungen. */
-export async function getMyExercises(): Promise<ExerciseListRow[]> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
-  const favIds = await getFavoriteIds(supabase, user.id);
-  const { data, error } = await supabase
-    .from("exercises")
-    .select(LIST_COLUMNS)
-    .eq("owner_id", user.id)
-    .order("updated_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
-    ...row,
-    is_favorited: favIds.has(row.id),
-  })) as ExerciseListRow[];
 }
 
 /** Hat der angemeldete USER diese Übung favorisiert? (Detailseite) */

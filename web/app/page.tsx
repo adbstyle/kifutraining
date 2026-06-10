@@ -32,6 +32,15 @@ export default async function Home({
   searchParams: Promise<SearchParams>;
 }) {
   const sp = await searchParams;
+
+  // Favoriten- und „Meine Übungen"-Filter sind nur für angemeldete USER
+  // wirksam (AC11; anonym gibt es keine eigenen/privaten Übungen zu sehen).
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const canFavorite = !!user;
+
   const filters: CatalogFilters = {
     teil: list(sp.teil),
     kat: list(sp.kat),
@@ -41,15 +50,9 @@ export default async function Home({
     kinder: num(sp.kinder),
     q: typeof sp.q === "string" ? sp.q : undefined,
     fav: sp.fav === "1",
+    mine: !!user && sp.mine === "1",
   };
   const queryFilters: ExerciseFilters = { ...filters };
-
-  // Favoriten-Aktion + -Filter nur für angemeldete USER (AC11).
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const canFavorite = !!user;
 
   let rows: Awaited<ReturnType<typeof getExercises>> | null = null;
   let error: string | null = null;
@@ -65,10 +68,10 @@ export default async function Home({
       {sp.account_deleted && (
         <Flash message="Konto gelöscht. Deine öffentlichen Übungen bleiben anonym erhalten." />
       )}
+      {sp.deleted && <Flash message="Übung gelöscht." />}
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="type-label-medium text-primary">Übungspool</p>
-          <h1 className="type-display-small mt-1 text-on-surface">Übungen finden</h1>
+          <h1 className="type-display-small text-on-surface">Übungen</h1>
           <p className="type-body-large mt-3 max-w-2xl text-on-surface-variant">
             Der offizielle Kinderfussball-Bestand und Übungen der Community —
             durchsuchbar und filterbar nach Trainingsteil, Alter, Feld und mehr.
@@ -95,7 +98,7 @@ export default async function Home({
 
       {rows && (
         <>
-          <CatalogFilterBar filters={filters} canFavorite={canFavorite} />
+          <CatalogFilterBar filters={filters} canFavorite={canFavorite} showMine={!!user} />
 
           <p className="type-label-small mb-4 text-on-surface-variant">
             {rows.length} {rows.length === 1 ? "Übung" : "Übungen"}

@@ -18,8 +18,7 @@ export default async function KontoPage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
       <header className="mb-8">
-        <p className="type-label-medium text-primary">Konto</p>
-        <h1 className="type-headline-large mt-1 text-on-surface">Dein Konto</h1>
+        <h1 className="type-headline-large text-on-surface">Dein Konto</h1>
         {user?.email && (
           <p className="type-body-medium mt-2 text-on-surface-variant">
             Angemeldet als <strong className="text-on-surface">{user.email}</strong>
@@ -34,7 +33,7 @@ export default async function KontoPage() {
       </header>
 
       <Link
-        href="/meine-uebungen"
+        href="/?mine=1"
         className="focus-ring group mb-4 flex items-center gap-4 rounded-[8px] border border-outline-variant bg-surface-container-low p-5 transition-colors hover:border-outline hover:bg-on-surface/5"
       >
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">

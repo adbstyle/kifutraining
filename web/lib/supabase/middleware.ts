@@ -7,7 +7,6 @@ import { env } from "@/lib/env";
 // daher die konkreten Pfade.
 const PROTECTED_PREFIXES = [
   "/neu",
-  "/meine-uebungen",
   "/konto",
   "/plan/neu",
 ];

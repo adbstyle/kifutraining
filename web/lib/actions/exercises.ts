@@ -24,7 +24,6 @@ export type ExerciseFormState = {
 /** Listen-Seiten, die nach Mutationen neu validiert werden. */
 function revalidateLists() {
   revalidatePath("/");
-  revalidatePath("/meine-uebungen");
 }
 
 function lines(v: FormDataEntryValue | null): string[] {
@@ -336,5 +335,5 @@ export async function deleteExercise(id: string, _form: FormData) {
   await removeStorageObject(supabase, bildUrlToPath(ex?.bild_url));
 
   revalidateLists();
-  redirect("/meine-uebungen?deleted=1");
+  redirect("/?mine=1&deleted=1");
 }

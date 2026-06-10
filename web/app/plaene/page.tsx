@@ -48,10 +48,7 @@ export default async function PlaenePage({
 
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="type-label-medium text-primary">Trainingsplaner</p>
-          <h1 className="type-headline-large mt-1 text-on-surface">
-            Trainingspläne
-          </h1>
+          <h1 className="type-headline-large text-on-surface">Trainingspläne</h1>
           <p className="type-body-medium mt-2 max-w-2xl text-on-surface-variant">
             Öffentlich geteilte Pläne der Community und deine eigenen — ein Pool
             zum Stöbern, Durchführen und Weiterentwickeln.

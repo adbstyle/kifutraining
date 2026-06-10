@@ -43,8 +43,7 @@ export async function setFavorite(
     if (error) return { ok: false };
   }
 
-  // Katalog-Listen neu validieren, damit der Favoriten-Filter konsistent bleibt.
+  // Katalog-Liste neu validieren, damit der Favoriten-Filter konsistent bleibt.
   revalidatePath("/");
-  revalidatePath("/meine-uebungen");
   return { ok: true };
 }

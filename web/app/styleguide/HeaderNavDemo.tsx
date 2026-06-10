@@ -20,7 +20,7 @@ const nav: HeaderNavItem[] = [
     current: true,
     items: [
       { label: "Alle Übungen", description: "Den ganzen Katalog durchsuchen", href: "/", icon: LayoutGrid },
-      { label: "Meine Übungen", description: "Eigene Entwürfe & Veröffentlichungen", href: "/meine-uebungen", icon: UserRound },
+      { label: "Meine Übungen", description: "Eigene Entwürfe & Veröffentlichungen", href: "/?mine=1", icon: UserRound },
       { label: "Favoriten", description: "Gemerkte Übungen", href: "/", icon: Star },
     ],
   },

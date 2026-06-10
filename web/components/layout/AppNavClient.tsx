@@ -24,11 +24,9 @@ export function AppNavClient({
   const pathname = usePathname();
   const router = useRouter();
 
-  // „Übungen" aktiv auf Katalog, Detailseiten und den eigenen Übungen.
-  const uebungenActive =
-    pathname === "/" ||
-    pathname.startsWith("/uebung") ||
-    pathname.startsWith("/meine-uebungen");
+  // „Übungen" aktiv auf Katalog (inkl. vorgefiltertem „Meine Übungen") und
+  // Detailseiten. „Meine Übungen" ist derselbe Pool, vorgefiltert (?mine=1).
+  const uebungenActive = pathname === "/" || pathname.startsWith("/uebung");
 
   // „Trainingsplaner" aktiv auf Editor, Einzel-/Durchführungs-/Druck-Ansicht
   // und dem Pool.
@@ -57,7 +55,7 @@ export function AppNavClient({
           {
             label: "Meine Übungen",
             icon: ListChecks,
-            onSelect: () => router.push("/meine-uebungen"),
+            onSelect: () => router.push("/?mine=1"),
           },
           {
             label: "Meine Pläne",

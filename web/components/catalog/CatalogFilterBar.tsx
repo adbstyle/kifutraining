@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search, Users, Heart, RotateCcw } from "lucide-react";
+import { Search, Users, RotateCcw } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { FilterChip, MultiSelect, Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -24,6 +24,7 @@ export type CatalogFilters = {
   kinder?: number;
   q?: string;
   fav?: boolean;
+  mine?: boolean;
 };
 
 // Optionen aus dem Vokabular (Slug → Label). Reihenfolge = Definitionsreihenfolge.
@@ -44,9 +45,11 @@ const stufenOptions = kategorienSlugs.map((k) => ({ value: k, label: kategorieSt
 export function CatalogFilterBar({
   filters,
   canFavorite = false,
+  showMine = false,
 }: {
   filters: CatalogFilters;
   canFavorite?: boolean;
+  showMine?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -80,6 +83,12 @@ export function CatalogFilterBar({
       else p.set("fav", "1");
     });
 
+  const toggleMine = () =>
+    pushParams((p) => {
+      if (filters.mine) p.delete("mine");
+      else p.set("mine", "1");
+    });
+
   void searchParams; // an Re-Render bei URL-Wechsel (z. B. Zurück) koppeln
 
   const anyActive =
@@ -90,7 +99,8 @@ export function CatalogFilterBar({
     filters.hkat.length > 0 ||
     filters.kinder !== undefined ||
     (filters.q?.length ?? 0) > 0 ||
-    !!filters.fav;
+    !!filters.fav ||
+    !!filters.mine;
 
   return (
     <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -168,14 +178,15 @@ export function CatalogFilterBar({
         onCommit={(v) => setScalar("kinder", v)}
       />
 
+      {showMine && (
+        <FilterChip selected={!!filters.mine} onClick={toggleMine} className="h-12">
+          Meine Übungen
+        </FilterChip>
+      )}
+
       {canFavorite && (
-        <FilterChip
-          selected={!!filters.fav}
-          onClick={toggleFav}
-          icon={Heart}
-          className="h-12"
-        >
-          Nur meine Favoriten
+        <FilterChip selected={!!filters.fav} onClick={toggleFav} className="h-12">
+          Favoriten
         </FilterChip>
       )}
 
