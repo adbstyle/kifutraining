@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search, Users, RotateCcw } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { FilterChip, MultiSelect, Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -191,9 +191,8 @@ export function CatalogFilterBar({
       )}
 
       {anyActive && (
-        <Button variant="outlined" onClick={() => router.push(pathname, { scroll: false })}>
-          <RotateCcw size={18} strokeWidth={2} aria-hidden />
-          Filter zurücksetzen
+        <Button variant="text" onClick={() => router.push(pathname, { scroll: false })}>
+          Zurücksetzen
         </Button>
       )}
     </div>

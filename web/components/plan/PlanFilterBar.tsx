@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, ClipboardList } from "lucide-react";
-import { FilterChip, MultiSelect, Select } from "@/components/ui";
+import { FilterChip, MultiSelect, Select, Button } from "@/components/ui";
 import { kategorieStufe } from "@/lib/labels";
 import { kategorienSlugs } from "@/lib/vocab";
 
@@ -83,7 +83,15 @@ export function PlanFilterBar({
     });
   }
 
+  function reset() {
+    setText("");
+    router.push(pathname, { scroll: false });
+  }
+
   void searchParams; // an Re-Render bei URL-Wechsel koppeln
+
+  const anyActive =
+    q.trim().length > 0 || !!visibility || stufen.length > 0 || mine;
 
   return (
     // Eine durchgehende, umbrechende Zeile: Suchfeld zuerst, dann die Filter
@@ -135,6 +143,12 @@ export function PlanFilterBar({
         >
           Nur meine Pläne
         </FilterChip>
+      )}
+
+      {anyActive && (
+        <Button variant="text" onClick={reset}>
+          Zurücksetzen
+        </Button>
       )}
     </div>
   );
