@@ -1,22 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { likePattern } from "@/lib/search";
-import { TRAININGSTEIL_SLUGS, sortStufen, teilTraegtDauer, hkatRank } from "@/lib/plan";
+import { TRAININGSTEIL_SLUGS, sortStufen, teilTraegtDauer, hkatRank } from "@/lib/training";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
 
 /**
- * Query-Layer für Trainingspläne — der EINZIGE Datenpfad zu `training_plans`
- * und `plan_exercises`. RLS filtert serverseitig: einen öffentlichen Plan darf
- * jeder lesen, einen privaten nur sein Eigentümer (Story #9 AC12). Eingebettete
+ * Query-Layer für Trainings — der EINZIGE Datenpfad zu `trainings`
+ * und `training_exercises`. RLS filtert serverseitig: ein öffentliches Training darf
+ * jeder lesen, ein privates nur sein Eigentümer (Story #9 AC12). Eingebettete
  * Übungen unterliegen ebenfalls der RLS — eine für den Betrachter nicht
  * sichtbare Übung kommt als `null` zurück und fällt auf den zwischengespeicherten
  * Namen zurück (Platzhalter, Story #9 AC10).
  */
 
-/** Vollständige Übungsfelder, soweit eine Plan-Ansicht sie braucht (Durchführung,
+/** Vollständige Übungsfelder, soweit eine Trainings-Ansicht sie braucht (Durchführung,
  *  Druck, Detail-Link). `null`, wenn die Übung für den Betrachter nicht sichtbar
  *  oder gelöscht ist. */
-export type PlanExerciseExercise = {
+export type TrainingExerciseExercise = {
   id: string;
   slug: string;
   name: string;
@@ -35,12 +35,12 @@ export type PlanExerciseExercise = {
   owner_id: string | null;
 };
 
-export type PlanExerciseItem = {
-  /** plan_exercises.id (die Zuordnung selbst). */
+export type TrainingExerciseItem = {
+  /** training_exercises.id (die Zuordnung selbst). */
   id: string;
   trainingsteil: TrainingsteilSlug;
   /** Snapshot der Hauptteilkategorie (nur Hauptteil-Zuordnungen; placeholder-fest
-   *  aus `plan_exercises`, nicht aus der ggf. unsichtbaren Übung). */
+   *  aus `training_exercises`, nicht aus der ggf. unsichtbaren Übung). */
   hauptteilkategorie: string | null;
   position: number;
   durationMin: number | null;
@@ -49,10 +49,10 @@ export type PlanExerciseItem = {
   name: string;
   /** Ist die referenzierte Übung für den Betrachter aufrufbar? */
   available: boolean;
-  exercise: PlanExerciseExercise | null;
+  exercise: TrainingExerciseExercise | null;
 };
 
-export type PlanDetail = {
+export type TrainingDetail = {
   id: string;
   name: string;
   ownerId: string | null;
@@ -61,7 +61,7 @@ export type PlanDetail = {
   createdAt: string;
   updatedAt: string;
   /** Flach, sortiert nach fester Trainingsteil-Reihenfolge, dann Position. */
-  exercises: PlanExerciseItem[];
+  exercises: TrainingExerciseItem[];
 };
 
 const PE_SELECT = `
@@ -73,10 +73,10 @@ const PE_SELECT = `
   )
 `;
 
-const PLAN_SELECT = `id, name, owner_id, visibility, stufen, created_at, updated_at, plan_exercises ( ${PE_SELECT} )`;
+const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
 
-type RawExercise = PlanExerciseExercise | null;
-type RawPlanExercise = {
+type RawExercise = TrainingExerciseExercise | null;
+type RawTrainingExercise = {
   id: string;
   trainingsteil: string;
   hauptteilkategorie: string | null;
@@ -86,7 +86,7 @@ type RawPlanExercise = {
   exercise_name_cache: string | null;
   exercises: RawExercise;
 };
-type RawPlan = {
+type RawTraining = {
   id: string;
   name: string;
   owner_id: string | null;
@@ -94,7 +94,7 @@ type RawPlan = {
   stufen: string[];
   created_at: string;
   updated_at: string;
-  plan_exercises: RawPlanExercise[];
+  training_exercises: RawTrainingExercise[];
 };
 
 const teilRank = (t: string) => {
@@ -102,8 +102,8 @@ const teilRank = (t: string) => {
   return i === -1 ? 99 : i;
 };
 
-function mapPlan(raw: RawPlan): PlanDetail {
-  const exercises: PlanExerciseItem[] = (raw.plan_exercises ?? [])
+function mapTraining(raw: RawTraining): TrainingDetail {
+  const exercises: TrainingExerciseItem[] = (raw.training_exercises ?? [])
     .map((pe) => {
       const ex = pe.exercises;
       return {
@@ -140,50 +140,50 @@ function mapPlan(raw: RawPlan): PlanDetail {
   };
 }
 
-/** Plan für den Editor — ausschliesslich für den Eigentümer. `null`, wenn der
- *  Plan nicht existiert oder dem USER nicht gehört. */
-export async function getPlanForEdit(id: string): Promise<PlanDetail | null> {
+/** Training für den Editor — ausschliesslich für den Eigentümer. `null`, wenn
+ *  das Training nicht existiert oder dem USER nicht gehört. */
+export async function getTrainingForEdit(id: string): Promise<TrainingDetail | null> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
   const { data, error } = await supabase
-    .from("training_plans")
-    .select(PLAN_SELECT)
+    .from("trainings")
+    .select(TRAINING_SELECT)
     .eq("id", id)
     .eq("owner_id", user.id)
     .maybeSingle();
   if (error) throw error;
-  return data ? mapPlan(data as unknown as RawPlan) : null;
+  return data ? mapTraining(data as unknown as RawTraining) : null;
 }
 
-/** Plan zum Ansehen (Story #7/#9/#10) — RLS gibt öffentliche Pläne jedem und
+/** Training zum Ansehen (Story #7/#9/#10) — RLS gibt öffentliche Trainings jedem und
  *  private nur dem Eigentümer frei. `null` ⇒ „nicht verfügbar" (privat-fremd,
  *  nicht existent — ununterscheidbar, Story #7 Postcondition 2). */
-export async function getPlanView(id: string): Promise<PlanDetail | null> {
+export async function getTrainingView(id: string): Promise<TrainingDetail | null> {
   const supabase = await createClient();
   // Ungültige UUID würde die Query mit Fehler abbrechen; defensiv abfangen.
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const { data, error } = await supabase
-    .from("training_plans")
-    .select(PLAN_SELECT)
+    .from("trainings")
+    .select(TRAINING_SELECT)
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  return data ? mapPlan(data as unknown as RawPlan) : null;
+  return data ? mapTraining(data as unknown as RawTraining) : null;
 }
 
-// ── Übersichten (eigene Pläne / Plan-Pool) ───────────────────────────────────
+// ── Übersichten (eigene Trainings / Trainings-Pool) ───────────────────────────────────
 
-export type PlanListFilters = {
+export type TrainingListFilters = {
   q?: string;
   stufen?: string[]; // Überlappung
   visibility?: "public" | "private"; // eigene Übersicht + Pool-Eingrenzung
-  mine?: boolean; // nur eigene Pläne (owner == aktueller USER) — nur im Pool
+  mine?: boolean; // nur eigene Trainings (owner == aktueller USER) — nur im Pool
 };
 
-export type PlanListRow = {
+export type TrainingListRow = {
   id: string;
   name: string;
   visibility: "public" | "private";
@@ -196,20 +196,20 @@ export type PlanListRow = {
   hasAnyDuration: boolean;
 };
 
-type RawListPlan = {
+type RawListTraining = {
   id: string;
   name: string;
   visibility: "public" | "private";
   stufen: string[];
   updated_at: string;
-  plan_exercises: { trainingsteil: string; duration_min: number | null }[];
+  training_exercises: { trainingsteil: string; duration_min: number | null }[];
 };
 
 const LIST_SELECT =
-  "id, name, visibility, stufen, updated_at, plan_exercises ( trainingsteil, duration_min )";
+  "id, name, visibility, stufen, updated_at, training_exercises ( trainingsteil, duration_min )";
 
-function mapListRow(raw: RawListPlan): PlanListRow {
-  const rows = raw.plan_exercises ?? [];
+function mapListRow(raw: RawListTraining): TrainingListRow {
+  const rows = raw.training_exercises ?? [];
   // Auffangen trägt keine Dauer und zählt nicht zur Summe.
   const withDuration = rows
     .filter((p) => teilTraegtDauer(p.trainingsteil as TrainingsteilSlug))
@@ -227,22 +227,22 @@ function mapListRow(raw: RawListPlan): PlanListRow {
   };
 }
 
-/** Plan-Pool — die Trainingsplaner-Einstiegsansicht (analog zum Übungspool).
+/** Trainings-Pool — die Trainings-Einstiegsansicht (analog zum Übungspool).
  *  Ohne Owner-/Sichtbarkeitsfilter liefert die RLS genau die für den Betrachter
- *  lesbare Menge: alle öffentlichen Pläne (der Community wie eigene) plus die
- *  eigenen privaten. So profitiert der Trainer von geteilten Plänen und sieht
+ *  lesbare Menge: alle öffentlichen Trainings (der Community wie eigene) plus die
+ *  eigenen privaten. So profitiert der Trainer von geteilten Trainings und sieht
  *  zugleich seine Entwürfe an einem Ort.
  *
- *  Optionale Eingrenzung: `mine` auf die selbst erstellten Pläne, `visibility`
+ *  Optionale Eingrenzung: `mine` auf die selbst erstellten Trainings, `visibility`
  *  auf öffentlich bzw. privat. Ohne Suche nach Aktualität; mit Suche nach
  *  Namens-Relevanz (kürzerer Name ⇒ näher am Begriff) sortiert. */
-export async function getPlanPool(
-  f: PlanListFilters = {},
-): Promise<PlanListRow[]> {
+export async function getTrainingPool(
+  f: TrainingListFilters = {},
+): Promise<TrainingListRow[]> {
   const supabase = await createClient();
-  let query = supabase.from("training_plans").select(LIST_SELECT);
+  let query = supabase.from("trainings").select(LIST_SELECT);
 
-  // „Nur meine": eigene Pläne; anonym gibt es keine -> leere Liste.
+  // „Nur meine": eigene Trainings; anonym gibt es keine -> leere Liste.
   if (f.mine) {
     const {
       data: { user },
@@ -262,7 +262,7 @@ export async function getPlanPool(
 
   const { data, error } = await query;
   if (error) throw error;
-  const rows = (data ?? []).map((r) => mapListRow(r as unknown as RawListPlan));
+  const rows = (data ?? []).map((r) => mapListRow(r as unknown as RawListTraining));
 
   // Relevanz-Sortierung bei aktiver Suche: kürzerer Treffer zuerst, dann Name.
   if (hasQuery) {

@@ -1,6 +1,6 @@
 /**
  * Geteilte Such-Helfer für die Teilstring-Suche (ILIKE) über die normalisierten
- * `search_text`-Spalten (Übungen wie Pläne). Muss zur DB-Normalisierung
+ * `search_text`-Spalten (Übungen wie Trainings). Muss zur DB-Normalisierung
  * `lower(unaccent(...))` passen (Migrationen 20260608120000 / 20260608130000),
  * damit z. B. "hutchen" das gespeicherte "Hütchen" findet.
  */

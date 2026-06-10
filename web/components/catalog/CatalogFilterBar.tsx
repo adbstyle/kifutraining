@@ -37,7 +37,7 @@ const hkatOptions = toOptions(hkatLabels);
 const stufenOptions = kategorienSlugs.map((k) => ({ value: k, label: kategorieStufe[k] }));
 
 /* Such-/Filterleiste für den Übungspool — eine durchgehende, umbrechende Zeile
-   statt Sidebar, analog zur Plan-Filter-Bar. Mehrfach-Dimensionen sind
+   statt Sidebar, analog zur Trainings-Filter-Bar. Mehrfach-Dimensionen sind
    MultiSelect-Dropdowns (Placeholder = Empty-State-Beschriftung), Suche und
    „Verfügbare Kinder" sind debounced Felder, Favoriten ein Toggle-Chip.
    URL ist die Quelle der Wahrheit: jede Änderung schreibt in die URL und löst
@@ -200,7 +200,7 @@ export function CatalogFilterBar({
 }
 
 /* Natives Eingabefeld mit Lead-Icon und Debounce (300 ms) — schreibt erst nach
-   Tipppause in die URL. Stil identisch zur Plan-Filter-Bar (h-12, Feld-Kontrakt). */
+   Tipppause in die URL. Stil identisch zur Trainings-Filter-Bar (h-12, Feld-Kontrakt). */
 function DebouncedField({
   initial,
   onCommit,

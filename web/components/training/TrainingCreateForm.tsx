@@ -3,13 +3,13 @@
 import { useActionState, useState, useTransition } from "react";
 import { TextField, Button } from "@/components/ui";
 import { StufenField } from "./StufenField";
-import { createPlan, type PlanFormState } from "@/lib/actions/plans";
+import { createTraining, type TrainingFormState } from "@/lib/actions/trainings";
 
-/* Formular „Neuen Trainingsplan anlegen" (Story #10 AC1/AC2/AC3). FormData wird
+/* Formular „Neues Training anlegen" (Story #10 AC1/AC2/AC3). FormData wird
    im onSubmit selbst aufgebaut (zuverlässige Serialisierung der Stufen-Auswahl),
    dann an die Server-Action übergeben. */
-export function PlanCreateForm() {
-  const [state, formAction] = useActionState<PlanFormState, FormData>(createPlan, {
+export function TrainingCreateForm() {
+  const [state, formAction] = useActionState<TrainingFormState, FormData>(createTraining, {
     status: "idle",
   });
   const [pending, startTransition] = useTransition();
@@ -33,7 +33,7 @@ export function PlanCreateForm() {
       )}
 
       <TextField
-        label="Name des Trainingsplans"
+        label="Name des Trainings"
         name="name"
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -54,7 +54,7 @@ export function PlanCreateForm() {
 
       <div className="flex justify-end gap-2">
         <Button type="submit" variant="filled" disabled={pending}>
-          {pending ? "Wird angelegt…" : "Plan anlegen"}
+          {pending ? "Wird angelegt…" : "Training anlegen"}
         </Button>
       </div>
     </form>

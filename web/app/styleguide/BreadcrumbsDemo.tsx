@@ -28,7 +28,7 @@ export function BreadcrumbsDemo() {
           separator={<span className="type-label-medium">/</span>}
           items={[
             { label: "Start", href: "#", icon: Home },
-            { label: "Trainingsplaner", href: "#" },
+            { label: "Trainings", href: "#" },
             { label: "Mein 4-gegen-4" },
           ]}
         />

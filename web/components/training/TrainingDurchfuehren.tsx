@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import { PlanExerciseDetail } from "./PlanExerciseDetail";
-import { groupByTeil, leseBloecke, formatDuration } from "@/lib/plan";
-import type { PlanDetail } from "@/lib/queries/plans";
+import { TrainingExerciseDetail } from "./TrainingExerciseDetail";
+import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
+import type { TrainingDetail } from "@/lib/queries/trainings";
 
 /* Mobile Durchführungsansicht (Story #17): Trainingsteil für Trainingsteil
    (nur belegte), grosse Bedienflächen, Bildschirm-Wachhalten (Best-Effort).
    Lesend — keine Mutationen. */
-export function PlanDurchfuehren({ plan }: { plan: PlanDetail }) {
-  const sections = groupByTeil(plan.exercises).filter((s) => s.items.length > 0);
+export function TrainingDurchfuehren({ training }: { training: TrainingDetail }) {
+  const sections = groupByTeil(training.exercises).filter((s) => s.items.length > 0);
   const [idx, setIdx] = useState(0);
 
   // Bildschirm wachhalten, solange die Ansicht aktiv und sichtbar ist
@@ -47,9 +47,9 @@ export function PlanDurchfuehren({ plan }: { plan: PlanDetail }) {
   if (sections.length === 0) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <h1 className="type-headline-small text-on-surface">{plan.name}</h1>
+        <h1 className="type-headline-small text-on-surface">{training.name}</h1>
         <p className="mt-3 type-body-medium text-on-surface-variant">
-          Diesem Plan sind noch keine Übungen zugeordnet.
+          Diesem Training sind noch keine Übungen zugeordnet.
         </p>
       </main>
     );
@@ -60,7 +60,7 @@ export function PlanDurchfuehren({ plan }: { plan: PlanDetail }) {
   return (
     <div className="mx-auto max-w-2xl px-4 pb-28 pt-4 sm:px-6">
       <header className="mb-4">
-        <p className="type-label-medium text-on-surface-variant">{plan.name}</p>
+        <p className="type-label-medium text-on-surface-variant">{training.name}</p>
         <div className="mt-1 flex items-baseline justify-between gap-2">
           <h1 className="type-headline-medium text-on-surface">{section.label}</h1>
           <span className="type-label-large text-on-surface-variant">
@@ -93,7 +93,7 @@ export function PlanDurchfuehren({ plan }: { plan: PlanDetail }) {
                 <p className="mb-2 type-label-small text-on-surface-variant">
                   Übung {i + 1} von {b.items.length}
                 </p>
-                <PlanExerciseDetail item={item} showSource />
+                <TrainingExerciseDetail item={item} showSource />
               </div>
             ))}
           </div>

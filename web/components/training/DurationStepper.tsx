@@ -1,7 +1,7 @@
 "use client";
 
 import { Minus, Plus } from "lucide-react";
-import { DAUER_SCHRITT, formatDuration } from "@/lib/plan";
+import { DAUER_SCHRITT, formatDuration } from "@/lib/training";
 
 /* Dauer-Eingabe je Zuordnung in 5-Minuten-Schritten (Story #11 AC1/AC2).
    Ohne erfasste Dauer ein „+ Dauer"-Knopf; mit Dauer ein −/Wert/+-Stepper.

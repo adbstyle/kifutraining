@@ -25,9 +25,9 @@ const mono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kinderfussball Übungen & Trainingspläne",
+  title: "Kinderfussball Übungen & Trainings",
   description:
-    "Kinderfussball-Übungen durchsuchen und filtern sowie strukturierte Trainingspläne zusammenstellen.",
+    "Kinderfussball-Übungen durchsuchen und filtern sowie strukturierte Trainings zusammenstellen.",
 };
 
 export default function RootLayout({

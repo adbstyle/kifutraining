@@ -5,13 +5,13 @@ import {
   FieldPlaceholder,
   MethodischerFahrplan,
 } from "@/components/ui";
-import { formatDuration, teilTraegtDauer } from "@/lib/plan";
+import { formatDuration, teilTraegtDauer } from "@/lib/training";
 import {
   feldtyp as feldLabels,
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
-import type { PlanExerciseItem } from "@/lib/queries/plans";
+import type { TrainingExerciseItem } from "@/lib/queries/trainings";
 
 function anzahlText(a: { min?: number | null; max?: number | null } | null): string | null {
   if (!a) return null;
@@ -31,15 +31,15 @@ function Meta({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-/* Vollständige Durchführungs-Details einer Plan-Zuordnung (Stories #17/#18):
+/* Vollständige Durchführungs-Details einer Trainings-Zuordnung (Stories #17/#18):
    Übungsablauf, Feld-Diagramm, Eckdaten und Dauer. Präsentational, daher in
    Durchführungs- (Client) wie Druck-Ansicht (Server) nutzbar. Eine für den
    Betrachter nicht verfügbare Übung fällt auf Platzhalter-Name + Dauer zurück. */
-export function PlanExerciseDetail({
+export function TrainingExerciseDetail({
   item,
   showSource = false,
 }: {
-  item: PlanExerciseItem;
+  item: TrainingExerciseItem;
   showSource?: boolean;
 }) {
   const ex = item.exercise;

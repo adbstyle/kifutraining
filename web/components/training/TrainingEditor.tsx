@@ -27,7 +27,7 @@ import { ExercisePickerDialog } from "./ExercisePickerDialog";
 import { ExerciseThumb } from "./ExerciseThumb";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
-import { PlanVisibilityControl } from "./PlanVisibilityControl";
+import { TrainingVisibilityControl } from "./TrainingVisibilityControl";
 import {
   TRAININGSTEILE,
   HAUPTTEILKATEGORIEN,
@@ -36,26 +36,26 @@ import {
   teilTraegtDauer,
   groupHauptteil,
   formatDuration,
-} from "@/lib/plan";
+} from "@/lib/training";
 import {
   setExerciseDuration,
-  movePlanExercise,
-  removePlanExercise,
-  renamePlan,
-  setPlanStufen,
-  deletePlan,
-} from "@/lib/actions/plans";
+  moveTrainingExercise,
+  removeTrainingExercise,
+  renameTraining,
+  setTrainingStufen,
+  deleteTraining,
+} from "@/lib/actions/trainings";
 import type { TrainingsteilSlug, HauptteilkategorieSlug } from "@/lib/vocab";
-import type { PlanDetail, PlanExerciseItem } from "@/lib/queries/plans";
+import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings";
 
 const AUTO_PRIVATE_MSG =
-  "Plan wurde auf privat gesetzt: ein öffentlicher Plan braucht Einleitung und Hauptteil belegt und mindestens eine Stufe.";
+  "Das Training wurde auf privat gesetzt: ein öffentliches Training braucht Einleitung und Hauptteil belegt und mindestens eine Stufe.";
 
-/* Trainingsplan-Editor (Stories #10/#11/#12). Vier feste Trainingsteil-Abschnitte
+/* Trainings-Editor (Stories #10/#11/#12). Vier feste Trainingsteil-Abschnitte
    mit Übungs-Picker, Dauer-Erfassung, Umsortieren (Hoch/Runter) und Entfernen.
-   Kopf: Name bearbeiten, Stufen setzen, Plan löschen. Struktur-Änderungen
+   Kopf: Name bearbeiten, Stufen setzen, Training löschen. Struktur-Änderungen
    frischen die Serverdaten auf; Dauern werden lokal überlagert. */
-export function PlanEditor({ plan }: { plan: PlanDetail }) {
+export function TrainingEditor({ training }: { training: TrainingDetail }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   // Offener Picker: Trainingsteil und — im Hauptteil — die Unterkategorie.
@@ -64,34 +64,34 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
     hkat?: HauptteilkategorieSlug;
   } | null>(null);
   const [durations, setDurations] = useState<Record<string, number | null>>({});
-  const [stufen, setStufen] = useState<string[]>(plan.stufen);
+  const [stufen, setStufen] = useState<string[]>(training.stufen);
   const [notice, setNotice] = useState<string | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
-  const [nameInput, setNameInput] = useState(plan.name);
+  const [nameInput, setNameInput] = useState(training.name);
   const [nameError, setNameError] = useState<string | undefined>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [mismatch, setMismatch] = useState<{ id: string; name: string }[] | null>(null);
 
-  const dur = (item: PlanExerciseItem) =>
+  const dur = (item: TrainingExerciseItem) =>
     item.id in durations ? durations[item.id] : item.durationMin;
 
-  function changeDuration(item: PlanExerciseItem, next: number | null) {
+  function changeDuration(item: TrainingExerciseItem, next: number | null) {
     setDurations((prev) => ({ ...prev, [item.id]: next }));
     startTransition(async () => {
       await setExerciseDuration(item.id, next);
     });
   }
 
-  function move(item: PlanExerciseItem, dir: -1 | 1) {
+  function move(item: TrainingExerciseItem, dir: -1 | 1) {
     startTransition(async () => {
-      await movePlanExercise(item.id, dir);
+      await moveTrainingExercise(item.id, dir);
       router.refresh();
     });
   }
 
-  function remove(item: PlanExerciseItem) {
+  function remove(item: TrainingExerciseItem) {
     startTransition(async () => {
-      const r = await removePlanExercise(item.id);
+      const r = await removeTrainingExercise(item.id);
       router.refresh();
       if (r.becamePrivate) setNotice(AUTO_PRIVATE_MSG);
     });
@@ -100,7 +100,7 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
   function changeStufen(next: string[]) {
     setStufen(next);
     startTransition(async () => {
-      const r = await setPlanStufen(plan.id, next);
+      const r = await setTrainingStufen(training.id, next);
       router.refresh();
       if (r.becamePrivate) setNotice(AUTO_PRIVATE_MSG);
       if (r.mismatched && r.mismatched.length > 0) setMismatch(r.mismatched);
@@ -109,7 +109,7 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
 
   function saveName() {
     startTransition(async () => {
-      const r = await renamePlan(plan.id, nameInput);
+      const r = await renameTraining(training.id, nameInput);
       if (r.ok) {
         setRenameOpen(false);
         router.refresh();
@@ -121,18 +121,18 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
 
   function removeMismatched(ids: string[]) {
     startTransition(async () => {
-      for (const id of ids) await removePlanExercise(id);
+      for (const id of ids) await removeTrainingExercise(id);
       setMismatch(null);
       router.refresh();
     });
   }
 
   const byTeil = (slug: TrainingsteilSlug) =>
-    plan.exercises.filter((e) => e.trainingsteil === slug);
+    training.exercises.filter((e) => e.trainingsteil === slug);
 
   // Auffangen trägt keine Dauer und zählt weder zur Summe noch zum
   // „ohne Dauer"-Hinweis.
-  const dauerItems = plan.exercises.filter((e) => teilTraegtDauer(e.trainingsteil));
+  const dauerItems = training.exercises.filter((e) => teilTraegtDauer(e.trainingsteil));
   const totalDuration = dauerItems.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
   const totalMissing = dauerItems.filter((it) => dur(it) == null).length;
 
@@ -144,12 +144,12 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="type-headline-medium truncate text-on-surface">
-                {plan.name}
+                {training.name}
               </h1>
               <button
                 type="button"
                 onClick={() => {
-                  setNameInput(plan.name);
+                  setNameInput(training.name);
                   setNameError(undefined);
                   setRenameOpen(true);
                 }}
@@ -160,14 +160,14 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
               </button>
             </div>
             <Badge
-              tone={plan.visibility === "public" ? "oeffentlich" : "entwurf"}
+              tone={training.visibility === "public" ? "oeffentlich" : "entwurf"}
               className="mt-2"
             >
-              {plan.visibility === "public" ? "Öffentlich" : "✎ Privat"}
+              {training.visibility === "public" ? "Öffentlich" : "✎ Privat"}
             </Badge>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
-            <PlanVisibilityControl planId={plan.id} visibility={plan.visibility} />
+            <TrainingVisibilityControl trainingId={training.id} visibility={training.visibility} />
             <button
               type="button"
               onClick={() => setDeleteOpen(true)}
@@ -245,7 +245,7 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
                     </div>
                     <ExerciseList
                       items={g.items}
-                      planStufen={stufen}
+                      trainingStufen={stufen}
                       showDuration={traegtDauer}
                       dur={dur}
                       onDuration={changeDuration}
@@ -315,7 +315,7 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
 
             <ExerciseList
               items={teilItems}
-              planStufen={stufen}
+              trainingStufen={stufen}
               showDuration={traegtDauer}
               dur={dur}
               onDuration={changeDuration}
@@ -352,7 +352,7 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
           const sub = open.hkat
             ? HAUPTTEILKATEGORIEN.find((h) => h.slug === open.hkat)
             : undefined;
-          const openItems = plan.exercises.filter(
+          const openItems = training.exercises.filter(
             (e) =>
               e.trainingsteil === open.teil &&
               (!open.hkat || e.hauptteilkategorie === open.hkat),
@@ -361,12 +361,12 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
             <ExercisePickerDialog
               open
               onClose={() => setOpen(null)}
-              planId={plan.id}
+              trainingId={training.id}
               trainingsteil={open.teil}
               trainingsteilLabel={teilLabel}
               hauptteilkategorie={sub?.slug}
               hauptteilkategorieLabel={sub?.label}
-              planStufen={stufen}
+              trainingStufen={stufen}
               addedExerciseIds={openItems
                 .map((e) => e.exerciseId)
                 .filter((id): id is string => id != null)}
@@ -392,7 +392,7 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
         }
       >
         <TextField
-          label="Name des Trainingsplans"
+          label="Name des Trainings"
           value={nameInput}
           onChange={(e) => setNameInput(e.target.value)}
           error={!!nameError}
@@ -422,7 +422,7 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
       >
         <p className="mb-3">
           Diese zugeordneten Übungen decken keine der gewählten Stufen ab. Du
-          kannst sie im Plan behalten oder entfernen.
+          kannst sie im Training behalten oder entfernen.
         </p>
         <ul className="flex flex-col gap-1">
           {(mismatch ?? []).map((m) => (
@@ -433,17 +433,17 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
         </ul>
       </Dialog>
 
-      {/* Plan löschen */}
+      {/* Training löschen */}
       <Dialog
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        title="Trainingsplan löschen?"
+        title="Training löschen?"
         actions={
           <>
             <Button variant="text" onClick={() => setDeleteOpen(false)}>
               Abbrechen
             </Button>
-            <form action={deletePlan.bind(null, plan.id)}>
+            <form action={deleteTraining.bind(null, training.id)}>
               <Button type="submit" variant="danger">
                 Endgültig löschen
               </Button>
@@ -452,7 +452,7 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
         }
       >
         <p>
-          Der Plan „{plan.name}" und alle seine Übungszuordnungen werden
+          Das Training „{training.name}" und alle seine Übungszuordnungen werden
           unwiderruflich gelöscht.
         </p>
       </Dialog>
@@ -471,20 +471,20 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
  *  Hauptteil-Unterkategorie gleichermassen genutzt. */
 function ExerciseList({
   items,
-  planStufen,
+  trainingStufen,
   showDuration,
   dur,
   onDuration,
   onMove,
   onRemove,
 }: {
-  items: PlanExerciseItem[];
-  planStufen: string[];
+  items: TrainingExerciseItem[];
+  trainingStufen: string[];
   showDuration: boolean;
-  dur: (item: PlanExerciseItem) => number | null;
-  onDuration: (item: PlanExerciseItem, next: number | null) => void;
-  onMove: (item: PlanExerciseItem, dir: -1 | 1) => void;
-  onRemove: (item: PlanExerciseItem) => void;
+  dur: (item: TrainingExerciseItem) => number | null;
+  onDuration: (item: TrainingExerciseItem, next: number | null) => void;
+  onMove: (item: TrainingExerciseItem, dir: -1 | 1) => void;
+  onRemove: (item: TrainingExerciseItem) => void;
 }) {
   if (items.length === 0)
     return (
@@ -495,13 +495,13 @@ function ExerciseList({
   return (
     <ol className="flex flex-col gap-2">
       {items.map((item, i) => (
-        <PlanExerciseRow
+        <TrainingExerciseRow
           key={item.id}
           item={item}
           index={i}
           isFirst={i === 0}
           isLast={i === items.length - 1}
-          planStufen={planStufen}
+          trainingStufen={trainingStufen}
           showDuration={showDuration}
           duration={dur(item)}
           onDuration={(next) => onDuration(item, next)}
@@ -513,23 +513,23 @@ function ExerciseList({
   );
 }
 
-function PlanExerciseRow({
+function TrainingExerciseRow({
   item,
   index,
   isFirst,
   isLast,
-  planStufen,
+  trainingStufen,
   showDuration,
   duration,
   onDuration,
   onMove,
   onRemove,
 }: {
-  item: PlanExerciseItem;
+  item: TrainingExerciseItem;
   index: number;
   isFirst: boolean;
   isLast: boolean;
-  planStufen: string[];
+  trainingStufen: string[];
   showDuration: boolean;
   duration: number | null;
   onDuration: (next: number | null) => void;
@@ -539,7 +539,7 @@ function PlanExerciseRow({
   const mismatch =
     item.available &&
     item.exercise != null &&
-    !stufenAbgedeckt(planStufen, item.exercise.kategorien);
+    !stufenAbgedeckt(trainingStufen, item.exercise.kategorien);
 
   return (
     <li className="flex items-center gap-2 rounded-[4px] border border-outline-variant bg-surface-container-low px-3 py-2.5 sm:gap-3">
@@ -579,7 +579,7 @@ function PlanExerciseRow({
         <span className="flex items-center gap-2">
           <span className="truncate type-body-medium text-on-surface">{item.name}</span>
           {mismatch && (
-            <span title="Deckt keine der Plan-Stufen ab">
+            <span title="Deckt keine der Trainings-Stufen ab">
               <TriangleAlert size={15} className="shrink-0 text-signal" aria-hidden />
             </span>
           )}

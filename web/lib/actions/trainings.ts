@@ -4,24 +4,24 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
-import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/plan";
+import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/training";
 import {
   kategorienSlugs,
   hauptteilkategorieSlugs,
   type TrainingsteilSlug,
 } from "@/lib/vocab";
 
-export type PlanFormState = {
+export type TrainingFormState = {
   status: "idle" | "error";
   errors?: Record<string, string>;
   message?: string;
 };
 
 /** Ergebnis einer feingranularen Editor-Aktion (sofort-persistent). */
-export type PlanActionResult = { ok: boolean; error?: string };
+export type TrainingActionResult = { ok: boolean; error?: string };
 
 /** Ergebnis mit Auto-Privat-Hinweis (Story #12 Postcondition 2). */
-export type AutoPrivateResult = PlanActionResult & { becamePrivate?: boolean };
+export type AutoPrivateResult = TrainingActionResult & { becamePrivate?: boolean };
 
 /** Ergebnis des Stufen-Setzens inkl. abweichender Übungen (Story #12 AC3). */
 export type StufenResult = AutoPrivateResult & {
@@ -39,27 +39,27 @@ function clean(v: FormDataEntryValue | null): string {
   return String(v ?? "").trim();
 }
 
-/** Editor- und Ansichtspfade eines Plans nach einer Mutation neu validieren. */
-function revalidatePlan(planId: string) {
-  revalidatePath(`/plan/${planId}/edit`);
-  revalidatePath(`/plan/${planId}`);
-  revalidatePath(`/plan/${planId}/durchfuehren`);
-  revalidatePath(`/plan/${planId}/druck`);
-  revalidatePath("/plaene");
+/** Editor- und Ansichtspfade eines Trainings nach einer Mutation neu validieren. */
+function revalidateTraining(trainingId: string) {
+  revalidatePath(`/training/${trainingId}/edit`);
+  revalidatePath(`/training/${trainingId}`);
+  revalidatePath(`/training/${trainingId}/durchfuehren`);
+  revalidatePath(`/training/${trainingId}/druck`);
+  revalidatePath("/trainings");
 }
 
 function validStufen(values: string[]): string[] {
   return values.filter((s) => kategorienSlugs.includes(s as never));
 }
 
-// ── Story #10: Plan anlegen ──────────────────────────────────────────────────
+// ── Story #10: Training anlegen ──────────────────────────────────────────────────
 
-/** Neuen Plan anlegen (Story #10 AC1/AC2/AC3). Standardmässig privat, der USER
+/** Neues Training anlegen (Story #10 AC1/AC2/AC3). Standardmässig privat, der USER
  *  ist Eigentümer. Leitet in den Editor weiter. */
-export async function createPlan(
-  _prev: PlanFormState,
+export async function createTraining(
+  _prev: TrainingFormState,
   form: FormData,
-): Promise<PlanFormState> {
+): Promise<TrainingFormState> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -71,7 +71,7 @@ export async function createPlan(
   if (!name) return { status: "error", errors: { name: "Bitte einen Namen angeben." } };
 
   const { data, error } = await supabase
-    .from("training_plans")
+    .from("trainings")
     .insert({ name, owner_id: user.id, stufen, visibility: "private" })
     .select("id")
     .single();
@@ -80,24 +80,24 @@ export async function createPlan(
     return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
   }
 
-  revalidatePath("/plaene");
-  redirect(`/plan/${data.id}/edit`);
+  revalidatePath("/trainings");
+  redirect(`/training/${data.id}/edit`);
 }
 
 // ── Story #10: Übung einem Trainingsteil zuordnen ────────────────────────────
 
-/** Eine sichtbare Übung dem passenden Trainingsteil des Plans zuordnen
+/** Eine sichtbare Übung dem passenden Trainingsteil des Trainings zuordnen
  *  (Story #10 AC4/AC5/AC6). Im Hauptteil zusätzlich der gewählten
  *  Hauptteilkategorie (Story #23): nur Übungen der passenden Kategorie sind
  *  zuordenbar, die Position ist pro Unterkategorie eindeutig. Persistiert
  *  unmittelbar; der Phasen-Guard-Trigger erzwingt Trainingsteil- und
  *  Kategorie-Bindung zusätzlich auf DB-Ebene. */
-export async function addPlanExercise(
-  planId: string,
+export async function addTrainingExercise(
+  trainingId: string,
   trainingsteil: string,
   exerciseId: string,
   hauptteilkategorie?: string | null,
-): Promise<PlanActionResult> {
+): Promise<TrainingActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -112,13 +112,13 @@ export async function addPlanExercise(
     return { ok: false, error: "Ungültige Hauptteilkategorie." };
 
   // Eigentum prüfen (UX-Guard; RLS setzt es ohnehin serverseitig durch).
-  const { data: plan } = await supabase
-    .from("training_plans")
+  const { data: training } = await supabase
+    .from("trainings")
     .select("id")
-    .eq("id", planId)
+    .eq("id", trainingId)
     .eq("owner_id", user.id)
     .maybeSingle();
-  if (!plan) return { ok: false, error: "Plan nicht gefunden." };
+  if (!training) return { ok: false, error: "Training nicht gefunden." };
 
   // Übung holen: Name für den Platzhalter-Cache, Trainingsteil-/Kategorie-Abgleich.
   const { data: ex } = await supabase
@@ -136,9 +136,9 @@ export async function addPlanExercise(
   // Nächste Position bestimmen (eindeutige Reihenfolge je Unterkategorie im
   // Hauptteil, sonst je Trainingsteil).
   let posQuery = supabase
-    .from("plan_exercises")
+    .from("training_exercises")
     .select("position")
-    .eq("plan_id", planId)
+    .eq("training_id", trainingId)
     .eq("trainingsteil", trainingsteil);
   posQuery = istHauptteil
     ? posQuery.eq("hauptteilkategorie", hkat as string)
@@ -149,8 +149,8 @@ export async function addPlanExercise(
     .maybeSingle();
   const position = (last?.position ?? -1) + 1;
 
-  const { error } = await supabase.from("plan_exercises").insert({
-    plan_id: planId,
+  const { error } = await supabase.from("training_exercises").insert({
+    training_id: trainingId,
     trainingsteil,
     hauptteilkategorie: hkat,
     exercise_id: exerciseId,
@@ -159,7 +159,7 @@ export async function addPlanExercise(
   });
   if (error) return { ok: false, error: error.message };
 
-  revalidatePlan(planId);
+  revalidateTraining(trainingId);
   return { ok: true };
 }
 
@@ -167,12 +167,12 @@ export async function addPlanExercise(
  *  „−" im Picker, Story #10). Entfernt die zuletzt hinzugefügte (höchste
  *  Position) passende Zeile, damit wiederholtes „−" die Anzahl Schritt für
  *  Schritt reduziert. RLS setzt das Eigentum zusätzlich serverseitig durch. */
-export async function removeOnePlanExercise(
-  planId: string,
+export async function removeOneTrainingExercise(
+  trainingId: string,
   trainingsteil: string,
   exerciseId: string,
   hauptteilkategorie?: string | null,
-): Promise<PlanActionResult> {
+): Promise<TrainingActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -185,20 +185,20 @@ export async function removeOnePlanExercise(
   const hkat = istHauptteil ? (hauptteilkategorie ?? null) : null;
 
   // Eigentum prüfen (UX-Guard; RLS setzt es ohnehin durch).
-  const { data: plan } = await supabase
-    .from("training_plans")
+  const { data: training } = await supabase
+    .from("trainings")
     .select("id")
-    .eq("id", planId)
+    .eq("id", trainingId)
     .eq("owner_id", user.id)
     .maybeSingle();
-  if (!plan) return { ok: false, error: "Plan nicht gefunden." };
+  if (!training) return { ok: false, error: "Training nicht gefunden." };
 
   // Zuletzt hinzugefügte passende Zuordnung entfernen (im Hauptteil zusätzlich
   // auf die Unterkategorie eingegrenzt).
   let rowQuery = supabase
-    .from("plan_exercises")
+    .from("training_exercises")
     .select("id")
-    .eq("plan_id", planId)
+    .eq("training_id", trainingId)
     .eq("trainingsteil", trainingsteil)
     .eq("exercise_id", exerciseId);
   rowQuery = istHauptteil ? rowQuery.eq("hauptteilkategorie", hkat as string) : rowQuery;
@@ -208,10 +208,10 @@ export async function removeOnePlanExercise(
     .maybeSingle();
   if (!row) return { ok: false, error: "Übung nicht im Trainingsteil." };
 
-  const { error } = await supabase.from("plan_exercises").delete().eq("id", row.id);
+  const { error } = await supabase.from("training_exercises").delete().eq("id", row.id);
   if (error) return { ok: false, error: error.message };
 
-  revalidatePlan(planId);
+  revalidateTraining(trainingId);
   return { ok: true };
 }
 
@@ -223,12 +223,12 @@ export type PublishResult =
   | { status: "needs_confirmation"; count: number; names: string[] }
   | { status: "error"; error: string };
 
-/** Plan öffentlich schalten (Story #14). Ohne Mitveröffentlichungs-Zustimmung
+/** Training öffentlich schalten (Story #14). Ohne Mitveröffentlichungs-Zustimmung
  *  liefert die RPC bei eigenen privaten Übungen `needs_confirmation` (Anzahl +
  *  Namen) und bei fehlenden Voraussetzungen `incomplete` (welche fehlen) —
  *  jeweils ohne Mutation. */
-export async function publishPlanAction(
-  planId: string,
+export async function publishTrainingAction(
+  trainingId: string,
   includePrivate: boolean,
 ): Promise<PublishResult> {
   const supabase = await createClient();
@@ -237,38 +237,38 @@ export async function publishPlanAction(
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", error: "Nicht angemeldet." };
 
-  const { data, error } = await supabase.rpc("publish_plan", {
-    p_plan_id: planId,
+  const { data, error } = await supabase.rpc("publish_training", {
+    p_training_id: trainingId,
     p_include_private: includePrivate,
   });
   if (error) return { status: "error", error: error.message };
 
   const result = data as PublishResult;
-  if (result.status === "published") revalidatePlan(planId);
+  if (result.status === "published") revalidateTraining(trainingId);
   return result;
 }
 
-/** Öffentlichen Plan wieder privat schalten (Story #14 AC2). Mitveröffentlichte
+/** Öffentliches Training wieder privat schalten (Story #14 AC2). Mitveröffentlichte
  *  Übungen bleiben öffentlich (Postcondition 4). */
-export async function unpublishPlanAction(planId: string): Promise<PlanActionResult> {
+export async function unpublishTrainingAction(trainingId: string): Promise<TrainingActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
-  const { error } = await supabase.rpc("unpublish_plan", { p_plan_id: planId });
+  const { error } = await supabase.rpc("unpublish_training", { p_training_id: trainingId });
   if (error) return { ok: false, error: error.message };
-  revalidatePlan(planId);
+  revalidateTraining(trainingId);
   return { ok: true };
 }
 
-// ── Story #12: Plan bearbeiten, umsortieren, entfernen, löschen ──────────────
+// ── Story #12: Training bearbeiten, umsortieren, entfernen, löschen ──────────────
 
-/** Plannamen ändern (Story #12 AC1); leerer Name unzulässig. */
-export async function renamePlan(
-  planId: string,
+/** Trainingsnamen ändern (Story #12 AC1); leerer Name unzulässig. */
+export async function renameTraining(
+  trainingId: string,
   name: string,
-): Promise<PlanActionResult> {
+): Promise<TrainingActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -278,21 +278,21 @@ export async function renamePlan(
   if (!trimmed) return { ok: false, error: "Bitte einen Namen angeben." };
 
   const { error } = await supabase
-    .from("training_plans")
+    .from("trainings")
     .update({ name: trimmed })
-    .eq("id", planId)
+    .eq("id", trainingId)
     .eq("owner_id", user.id);
   if (error) return { ok: false, error: error.message };
-  revalidatePlan(planId);
+  revalidateTraining(trainingId);
   return { ok: true };
 }
 
-/** Stufen eines Plans setzen/ergänzen/entfernen (Story #12 AC2). Liefert die
+/** Stufen eines Trainings setzen/ergänzen/entfernen (Story #12 AC2). Liefert die
  *  bereits zugeordneten Übungen zurück, die keine der neuen Stufen abdecken
- *  (AC3), sowie ob der Plan dadurch auf privat gesetzt wurde (Postcondition 2,
+ *  (AC3), sowie ob das Training dadurch auf privat gesetzt wurde (Postcondition 2,
  *  durch den DB-Trigger bei leeren Stufen). */
-export async function setPlanStufen(
-  planId: string,
+export async function setTrainingStufen(
+  trainingId: string,
   stufen: string[],
 ): Promise<StufenResult> {
   const supabase = await createClient();
@@ -304,17 +304,17 @@ export async function setPlanStufen(
   const valid = validStufen(stufen);
 
   const { data: before } = await supabase
-    .from("training_plans")
+    .from("trainings")
     .select("visibility")
-    .eq("id", planId)
+    .eq("id", trainingId)
     .eq("owner_id", user.id)
     .maybeSingle();
-  if (!before) return { ok: false, error: "Plan nicht gefunden." };
+  if (!before) return { ok: false, error: "Training nicht gefunden." };
 
   const { data: after, error } = await supabase
-    .from("training_plans")
+    .from("trainings")
     .update({ stufen: valid })
-    .eq("id", planId)
+    .eq("id", trainingId)
     .eq("owner_id", user.id)
     .select("visibility")
     .maybeSingle();
@@ -325,9 +325,9 @@ export async function setPlanStufen(
   let mismatched: { id: string; name: string }[] = [];
   if (valid.length > 0) {
     const { data: rows } = await supabase
-      .from("plan_exercises")
+      .from("training_exercises")
       .select("id, exercise_name_cache, exercises ( name, kategorien )")
-      .eq("plan_id", planId);
+      .eq("training_id", trainingId);
     mismatched = (rows ?? [])
       .map((r) => ({
         id: r.id,
@@ -340,7 +340,7 @@ export async function setPlanStufen(
       .map((r) => ({ id: r.id, name: r.ex?.name ?? r.cache ?? "Übung" }));
   }
 
-  revalidatePlan(planId);
+  revalidateTraining(trainingId);
   return {
     ok: true,
     becamePrivate: before.visibility === "public" && after.visibility === "private",
@@ -349,10 +349,10 @@ export async function setPlanStufen(
 }
 
 /** Zuordnung innerhalb ihres Trainingsteils umsortieren (Story #12 AC4). */
-export async function movePlanExercise(
-  planExerciseId: string,
+export async function moveTrainingExercise(
+  trainingExerciseId: string,
   dir: -1 | 1,
-): Promise<PlanActionResult> {
+): Promise<TrainingActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -360,25 +360,25 @@ export async function movePlanExercise(
   if (!user) return { ok: false, error: "Nicht angemeldet." };
 
   const { data: pe } = await supabase
-    .from("plan_exercises")
-    .select("plan_id")
-    .eq("id", planExerciseId)
+    .from("training_exercises")
+    .select("training_id")
+    .eq("id", trainingExerciseId)
     .maybeSingle();
   if (!pe) return { ok: false, error: "Zuordnung nicht gefunden." };
 
-  const { error } = await supabase.rpc("move_plan_exercise", {
-    p_plan_exercise_id: planExerciseId,
+  const { error } = await supabase.rpc("move_training_exercise", {
+    p_training_exercise_id: trainingExerciseId,
     p_dir: dir,
   });
   if (error) return { ok: false, error: error.message };
-  revalidatePlan(pe.plan_id);
+  revalidateTraining(pe.training_id);
   return { ok: true };
 }
 
 /** Eine Zuordnung aus ihrem Trainingsteil entfernen (Story #12 AC5). Meldet,
- *  wenn der Plan dadurch auf privat gesetzt wurde (Postcondition 2). */
-export async function removePlanExercise(
-  planExerciseId: string,
+ *  wenn das Training dadurch auf privat gesetzt wurde (Postcondition 2). */
+export async function removeTrainingExercise(
+  trainingExerciseId: string,
 ): Promise<AutoPrivateResult> {
   const supabase = await createClient();
   const {
@@ -387,51 +387,51 @@ export async function removePlanExercise(
   if (!user) return { ok: false, error: "Nicht angemeldet." };
 
   const { data: pe } = await supabase
-    .from("plan_exercises")
-    .select("plan_id")
-    .eq("id", planExerciseId)
+    .from("training_exercises")
+    .select("training_id")
+    .eq("id", trainingExerciseId)
     .maybeSingle();
   if (!pe) return { ok: false, error: "Zuordnung nicht gefunden." };
-  const planId = pe.plan_id;
+  const trainingId = pe.training_id;
 
   const { data: before } = await supabase
-    .from("training_plans")
+    .from("trainings")
     .select("visibility")
-    .eq("id", planId)
+    .eq("id", trainingId)
     .eq("owner_id", user.id)
     .maybeSingle();
-  if (!before) return { ok: false, error: "Plan nicht gefunden." };
+  if (!before) return { ok: false, error: "Training nicht gefunden." };
 
   const { error } = await supabase
-    .from("plan_exercises")
+    .from("training_exercises")
     .delete()
-    .eq("id", planExerciseId);
+    .eq("id", trainingExerciseId);
   if (error) return { ok: false, error: error.message };
 
   const { data: after } = await supabase
-    .from("training_plans")
+    .from("trainings")
     .select("visibility")
-    .eq("id", planId)
+    .eq("id", trainingId)
     .maybeSingle();
 
-  revalidatePlan(planId);
+  revalidateTraining(trainingId);
   return {
     ok: true,
     becamePrivate: before.visibility === "public" && after?.visibility === "private",
   };
 }
 
-/** Gesamten Plan löschen (Story #12 AC6/AC7); die Zuordnungen kaskadieren.
+/** Gesamtes Training löschen (Story #12 AC6/AC7); die Zuordnungen kaskadieren.
  *  Die Bestätigung erfolgt im UI. */
-export async function deletePlan(planId: string): Promise<void> {
+export async function deleteTraining(trainingId: string): Promise<void> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return;
-  await supabase.from("training_plans").delete().eq("id", planId).eq("owner_id", user.id);
-  revalidatePath("/plaene");
-  redirect("/plaene?mine=1&deleted=1");
+  await supabase.from("trainings").delete().eq("id", trainingId).eq("owner_id", user.id);
+  revalidatePath("/trainings");
+  redirect("/trainings?mine=1&deleted=1");
 }
 
 // ── Story #11: Dauer je Zuordnung erfassen/ändern/entfernen ──────────────────
@@ -440,9 +440,9 @@ export async function deletePlan(planId: string): Promise<void> {
  *  Persistiert unmittelbar (Story #11 AC1/AC2). RLS stellt sicher, dass nur der
  *  Eigentümer schreibt. */
 export async function setExerciseDuration(
-  planExerciseId: string,
+  trainingExerciseId: string,
   minutes: number | null,
-): Promise<PlanActionResult> {
+): Promise<TrainingActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -457,23 +457,23 @@ export async function setExerciseDuration(
   // immer erlaubt.
   if (minutes !== null) {
     const { data: row } = await supabase
-      .from("plan_exercises")
+      .from("training_exercises")
       .select("trainingsteil")
-      .eq("id", planExerciseId)
+      .eq("id", trainingExerciseId)
       .maybeSingle();
     if (row && !teilTraegtDauer(row.trainingsteil as TrainingsteilSlug))
       return { ok: false, error: "Für diesen Trainingsteil kann keine Dauer gesetzt werden." };
   }
 
   const { data, error } = await supabase
-    .from("plan_exercises")
+    .from("training_exercises")
     .update({ duration_min: minutes })
-    .eq("id", planExerciseId)
-    .select("plan_id")
+    .eq("id", trainingExerciseId)
+    .select("training_id")
     .maybeSingle();
   if (error) return { ok: false, error: error.message };
   if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
-  revalidatePlan(data.plan_id);
+  revalidateTraining(data.training_id);
   return { ok: true };
 }
 

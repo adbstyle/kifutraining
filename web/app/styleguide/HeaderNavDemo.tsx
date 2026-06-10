@@ -25,9 +25,9 @@ const nav: HeaderNavItem[] = [
     ],
   },
   {
-    label: "Trainingspläne",
+    label: "Trainings",
     items: [
-      { label: "Meine Pläne", description: "Trainings zusammenstellen", href: "#", icon: ListChecks },
+      { label: "Meine Trainings", description: "Trainings zusammenstellen", href: "#", icon: ListChecks },
       { label: "Saisonplanung", description: "Über die Saison verteilen", href: "#", icon: CalendarRange },
     ],
   },

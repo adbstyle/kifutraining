@@ -16,12 +16,12 @@ const visOptions = [
   { value: "private", label: "Privat" },
 ];
 
-/* Such-/Filterleiste für Plan-Übersichten (eigene Pläne und Plan-Pool).
+/* Such-/Filterleiste für Trainings-Übersichten (eigene Trainings und Trainings-Pool).
    URL-basierter Zustand wie im Übungskatalog: jede Änderung schreibt in die URL
    und löst eine neue Server-Abfrage aus. Freitext debounced. `showVisibility`
-   blendet den Sichtbarkeitsfilter ein, `showMine` den „Nur meine Pläne"-Schalter
+   blendet den Sichtbarkeitsfilter ein, `showMine` den „Nur meine Trainings"-Schalter
    (beide nur angemeldet sinnvoll). */
-export function PlanFilterBar({
+export function TrainingFilterBar({
   q,
   visibility,
   stufen,
@@ -108,8 +108,8 @@ export function PlanFilterBar({
           type="search"
           value={text}
           onChange={(e) => onSearch(e.target.value)}
-          placeholder="Nach Plannamen suchen…"
-          aria-label="Nach Plannamen suchen"
+          placeholder="Nach Trainingsnamen suchen…"
+          aria-label="Nach Trainingsnamen suchen"
           className="focus-ring h-12 w-full rounded-[4px] border-[1.5px] border-outline bg-surface-container-low pl-10 pr-3 type-body-medium text-on-surface placeholder:text-on-surface-variant"
         />
       </label>
@@ -141,7 +141,7 @@ export function PlanFilterBar({
           icon={ClipboardList}
           className="h-12"
         >
-          Nur meine Pläne
+          Nur meine Trainings
         </FilterChip>
       )}
 

@@ -7,7 +7,7 @@ import {
 } from "@/lib/vocab";
 
 /**
- * Domänen-Konstanten des Trainingsplaners — eine Quelle für alle Schichten
+ * Domänen-Konstanten des Trainings-Moduls — eine Quelle für alle Schichten
  * (Query, Action, UI). Die Reihenfolge der vier Trainingsteile ist fix und
  * unveränderlich (Epic #8 EK1, Story #9 AC4).
  */
@@ -64,14 +64,14 @@ export const ANZAHL_HINWEIS: Record<TrainingsteilSlug, number> = {
 /** Granularität der Dauer-Eingabe in Minuten (Story #11 AC1). */
 export const DAUER_SCHRITT = 5;
 
-/** Deckt eine Übung (mit ihren Stufen) mindestens eine der Plan-Stufen ab?
- *  Trägt der Plan keine Stufe, gibt es keinen Abgleich (immer abgedeckt). */
+/** Deckt eine Übung (mit ihren Stufen) mindestens eine der Trainings-Stufen ab?
+ *  Trägt das Training keine Stufe, gibt es keinen Abgleich (immer abgedeckt). */
 export function stufenAbgedeckt(
-  planStufen: readonly string[],
+  trainingStufen: readonly string[],
   uebungKategorien: readonly string[],
 ): boolean {
-  if (planStufen.length === 0) return true;
-  return planStufen.some((s) => uebungKategorien.includes(s));
+  if (trainingStufen.length === 0) return true;
+  return trainingStufen.some((s) => uebungKategorien.includes(s));
 }
 
 /** Stabile Reihenfolge der Stufen-Anzeige (G, F, E). */

@@ -9,7 +9,7 @@ import type { HeaderNavItem, HeaderAccount } from "@/components/ui";
    Hamburger → Drawer). Server-Teil (AppNav) liest die Session und reicht den
    Auth-Zustand + die Abmelde-Action durch; Aktiv-Zustand + Routing laufen
    hier pfadbasiert. Die Primär-Aktion „Neue Übung" sitzt im Content-Bereich
-   (Katalog + Meine Übungen) wie „Neuer Plan" beim Planer — nicht mehr als
+   (Katalog + Meine Übungen) wie „Neues Training" im Trainings-Modul — nicht mehr als
    Header-CTA. Anonym dient der Header-CTA nur dem Anmelden; Konto/Meine
    Übungen/Abmelden im Avatar-Menü. */
 export function AppNavClient({
@@ -28,19 +28,18 @@ export function AppNavClient({
   // Detailseiten. „Meine Übungen" ist derselbe Pool, vorgefiltert (?mine=1).
   const uebungenActive = pathname === "/" || pathname.startsWith("/uebung");
 
-  // „Trainingsplaner" aktiv auf Editor, Einzel-/Durchführungs-/Druck-Ansicht
-  // und dem Pool.
-  const planerActive =
-    pathname.startsWith("/plan") || pathname.startsWith("/plaene");
+  // „Trainings" aktiv auf Editor, Einzel-/Durchführungs-/Druck-Ansicht und dem
+  // Pool (/training… deckt als Präfix auch /trainings ab).
+  const trainingsActive = pathname.startsWith("/training");
 
-  // Der Planer startet wie der Übungspool im gemeinsamen Pool (öffentliche
-  // Pläne + eigene); „Meine Pläne" ist derselbe Pool, vorgefiltert auf die
-  // eigenen Pläne.
-  const planerHref = "/plaene";
+  // Das Trainings-Modul startet wie der Übungspool im gemeinsamen Pool
+  // (öffentliche Trainings + eigene); „Meine Trainings" ist derselbe Pool,
+  // vorgefiltert auf die eigenen Trainings.
+  const trainingsHref = "/trainings";
 
   const nav: HeaderNavItem[] = [
     { label: "Übungen", href: "/", current: uebungenActive },
-    { label: "Trainingsplaner", href: planerHref, current: planerActive },
+    { label: "Trainings", href: trainingsHref, current: trainingsActive },
   ];
 
   const account: HeaderAccount | undefined = isAuthenticated
@@ -58,9 +57,9 @@ export function AppNavClient({
             onSelect: () => router.push("/?mine=1"),
           },
           {
-            label: "Meine Pläne",
+            label: "Meine Trainings",
             icon: ClipboardList,
-            onSelect: () => router.push("/plaene?mine=1"),
+            onSelect: () => router.push("/trainings?mine=1"),
           },
           { label: "Abmelden", icon: LogOut, danger: true, onSelect: () => signOutAction() },
         ],

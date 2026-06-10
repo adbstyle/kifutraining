@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Minus, Plus, Search, TriangleAlert } from "lucide-react";
 import { Dialog, KategorieChip, HerkunftBadge, FilterChip, IconButton } from "@/components/ui";
-import { addPlanExercise, removeOnePlanExercise, pickExercises } from "@/lib/actions/plans";
-import { stufenAbgedeckt } from "@/lib/plan";
+import { addTrainingExercise, removeOneTrainingExercise, pickExercises } from "@/lib/actions/trainings";
+import { stufenAbgedeckt } from "@/lib/training";
 import { FAHRPLAN_TEILE } from "@/lib/labels";
 import {
   erscheinungsform as erscheinungsformLabels,
@@ -22,24 +22,24 @@ import type { ExerciseListRow } from "@/lib/queries/exercises";
 export function ExercisePickerDialog({
   open,
   onClose,
-  planId,
+  trainingId,
   trainingsteil,
   trainingsteilLabel,
   hauptteilkategorie,
   hauptteilkategorieLabel,
-  planStufen,
+  trainingStufen,
   addedExerciseIds,
   onAdded,
 }: {
   open: boolean;
   onClose: () => void;
-  planId: string;
+  trainingId: string;
   trainingsteil: TrainingsteilSlug;
   trainingsteilLabel: string;
   /** Im Hauptteil: die fixierte Unterkategorie, sonst undefined. */
   hauptteilkategorie?: string;
   hauptteilkategorieLabel?: string;
-  planStufen: string[];
+  trainingStufen: string[];
   addedExerciseIds: string[];
   onAdded: () => void;
 }) {
@@ -48,7 +48,7 @@ export function ExercisePickerDialog({
   const [results, setResults] = useState<ExerciseListRow[]>([]);
   const [loading, setLoading] = useState(false);
   // Warenkorb-Zählung je Übung (exercise_id → Anzahl im Trainingsteil). Beim
-  // Öffnen aus dem Plan befüllt und danach rein lokal/optimistisch gepflegt —
+  // Öffnen aus dem Training befüllt und danach rein lokal/optimistisch gepflegt —
   // NICHT aus `addedExerciseIds` neu abgeleitet, da sich das per router.refresh()
   // während das Modal offen ist ändert (würde optimistische Klicks doppelt
   // zählen). `countsRef` spiegelt `counts` synchron für Guards bei schnellen
@@ -126,7 +126,7 @@ export function ExercisePickerDialog({
     bump(ex.id, +1);
     inFlightRef.current += 1;
     queueRef.current = queueRef.current.then(async () => {
-      const res = await addPlanExercise(planId, trainingsteil, ex.id, hauptteilkategorie);
+      const res = await addTrainingExercise(trainingId, trainingsteil, ex.id, hauptteilkategorie);
       inFlightRef.current -= 1;
       if (!res.ok) {
         bump(ex.id, -1); // optimistische Erhöhung zurücknehmen
@@ -146,7 +146,7 @@ export function ExercisePickerDialog({
     bump(ex.id, -1);
     inFlightRef.current += 1;
     queueRef.current = queueRef.current.then(async () => {
-      const res = await removeOnePlanExercise(planId, trainingsteil, ex.id, hauptteilkategorie);
+      const res = await removeOneTrainingExercise(trainingId, trainingsteil, ex.id, hauptteilkategorie);
       inFlightRef.current -= 1;
       if (!res.ok) {
         bump(ex.id, +1); // optimistische Reduktion zurücknehmen
@@ -224,7 +224,7 @@ export function ExercisePickerDialog({
           ) : (
             results.map((ex) => {
               const count = counts[ex.id] ?? 0;
-              const mismatch = !stufenAbgedeckt(planStufen, ex.kategorien);
+              const mismatch = !stufenAbgedeckt(trainingStufen, ex.kategorien);
               return (
                 <li
                   key={ex.id}
@@ -239,7 +239,7 @@ export function ExercisePickerDialog({
                         <TriangleAlert
                           size={14}
                           className="shrink-0 text-signal"
-                          aria-label="Deckt keine der Plan-Stufen ab"
+                          aria-label="Deckt keine der Trainings-Stufen ab"
                         />
                       )}
                     </span>
@@ -272,7 +272,7 @@ export function ExercisePickerDialog({
                       icon={Plus}
                       label={
                         count > 0
-                          ? `${ex.name} noch einmal hinzufügen (aktuell ${count}× im Plan)`
+                          ? `${ex.name} noch einmal hinzufügen (aktuell ${count}× im Training)`
                           : `${ex.name} hinzufügen`
                       }
                       onClick={() => add(ex)}

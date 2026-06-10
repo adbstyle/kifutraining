@@ -11,7 +11,7 @@ const katColor: Record<KategorieSlug, string> = {
 };
 
 /* Stufen-Auswahl (G/F/E) als toggelbare Chips — die Alterskategorien eines
-   Plans (Story #10 AC3, Story #12 AC2). Im ausgewählten Zustand in der festen
+   Trainings (Story #10 AC3, Story #12 AC2). Im ausgewählten Zustand in der festen
    Stufen-Farbe, sonst als Outline-Chip. Kontrolliert. */
 export function StufenField({
   value,

@@ -2,34 +2,34 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, ChevronRight, Sparkles, Play, Printer } from "lucide-react";
 import { Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
-import { PlanNotAvailable } from "@/components/plan/PlanNotAvailable";
-import { ExerciseThumb } from "@/components/plan/ExerciseThumb";
-import { getPlanView } from "@/lib/queries/plans";
+import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
+import { ExerciseThumb } from "@/components/training/ExerciseThumb";
+import { getTrainingView } from "@/lib/queries/trainings";
 import { createClient } from "@/lib/supabase/server";
-import { groupByTeil, leseBloecke, formatDuration } from "@/lib/plan";
+import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Trainingsplan — KiFu",
+  title: "Training — KiFu",
   robots: { index: false },
 };
 
-export default async function PlanViewPage({
+export default async function TrainingViewPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const plan = await getPlanView(id);
-  if (!plan) return <PlanNotAvailable />;
+  const training = await getTrainingView(id);
+  if (!training) return <TrainingNotAvailable />;
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isOwner = !!user && plan.ownerId === user.id;
+  const isOwner = !!user && training.ownerId === user.id;
 
-  const sections = groupByTeil(plan.exercises).filter((s) => s.items.length > 0);
+  const sections = groupByTeil(training.exercises).filter((s) => s.items.length > 0);
   const total = sections.reduce((a, s) => a + s.sum, 0);
   const hasAnyDuration = sections.some((s) => s.sum > 0);
 
@@ -37,15 +37,15 @@ export default async function PlanViewPage({
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
       <Breadcrumbs
         items={[
-          { label: "Trainingsplaner", href: "/plaene" },
-          { label: plan.name },
+          { label: "Trainings", href: "/trainings" },
+          { label: training.name },
         ]}
       />
 
       <header className="mb-6 mt-4">
-        <h1 className="type-headline-large text-on-surface">{plan.name}</h1>
+        <h1 className="type-headline-large text-on-surface">{training.name}</h1>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {plan.stufen.map((k) => (
+          {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
           ))}
           <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-variant">
@@ -55,16 +55,16 @@ export default async function PlanViewPage({
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <ButtonLink href={`/plan/${plan.id}/durchfuehren`} variant="tonal" size="sm">
+          <ButtonLink href={`/training/${training.id}/durchfuehren`} variant="tonal" size="sm">
             <Play size={18} strokeWidth={2} aria-hidden />
             Durchführen
           </ButtonLink>
-          <ButtonLink href={`/plan/${plan.id}/druck`} variant="outlined" size="sm">
+          <ButtonLink href={`/training/${training.id}/druck`} variant="outlined" size="sm">
             <Printer size={18} strokeWidth={2} aria-hidden />
             Drucken
           </ButtonLink>
           {isOwner && (
-            <ButtonLink href={`/plan/${plan.id}/edit`} variant="text" size="sm">
+            <ButtonLink href={`/training/${training.id}/edit`} variant="text" size="sm">
               Bearbeiten
             </ButtonLink>
           )}
@@ -163,7 +163,7 @@ export default async function PlanViewPage({
         <div className="mt-8 flex items-center gap-3 rounded-[4px] border border-outline-variant bg-surface-container-low px-4 py-3">
           <Sparkles size={18} className="shrink-0 text-primary" aria-hidden />
           <p className="type-body-small text-on-surface-variant">
-            Mit einem Konto kannst du eigene Trainingspläne erstellen und
+            Mit einem Konto kannst du eigene Trainings erstellen und
             verwalten.{" "}
             <Link href="/login" className="text-primary underline">
               Anmelden

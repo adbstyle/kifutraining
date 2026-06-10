@@ -1,36 +1,36 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/ui";
-import { PlanEditor } from "@/components/plan/PlanEditor";
-import { getPlanForEdit } from "@/lib/queries/plans";
+import { TrainingEditor } from "@/components/training/TrainingEditor";
+import { getTrainingForEdit } from "@/lib/queries/trainings";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Trainingsplan bearbeiten — KiFu",
+  title: "Training bearbeiten — KiFu",
   robots: { index: false },
 };
 
-export default async function PlanEditPage({
+export default async function TrainingEditPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const plan = await getPlanForEdit(id);
+  const training = await getTrainingForEdit(id);
   // Nicht vorhanden oder fremd -> zurück in die eigene Übersicht (kein Schreib-
-  // zugriff auf fremde Pläne, Story #12 AC8).
-  if (!plan) redirect("/plaene?mine=1");
+  // zugriff auf fremde Trainings, Story #12 AC8).
+  if (!training) redirect("/trainings?mine=1");
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
       <Breadcrumbs
         items={[
-          { label: "Trainingsplaner", href: "/plaene" },
-          { label: plan.name },
+          { label: "Trainings", href: "/trainings" },
+          { label: training.name },
         ]}
       />
       <div className="mt-4">
-        <PlanEditor plan={plan} />
+        <TrainingEditor training={training} />
       </div>
     </main>
   );

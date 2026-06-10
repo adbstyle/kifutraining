@@ -1,28 +1,28 @@
 import type { Metadata } from "next";
 import { Clock } from "lucide-react";
 import { KategorieChip } from "@/components/ui";
-import { PlanNotAvailable } from "@/components/plan/PlanNotAvailable";
-import { PlanExerciseDetail } from "@/components/plan/PlanExerciseDetail";
-import { PrintButton } from "@/components/plan/PrintButton";
-import { getPlanView } from "@/lib/queries/plans";
-import { groupByTeil, leseBloecke, formatDuration } from "@/lib/plan";
+import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
+import { TrainingExerciseDetail } from "@/components/training/TrainingExerciseDetail";
+import { PrintButton } from "@/components/training/PrintButton";
+import { getTrainingView } from "@/lib/queries/trainings";
+import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Trainingsplan drucken — KiFu",
+  title: "Training drucken — KiFu",
   robots: { index: false },
 };
 
-export default async function PlanDruckPage({
+export default async function TrainingDruckPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const plan = await getPlanView(id);
-  if (!plan) return <PlanNotAvailable />;
+  const training = await getTrainingView(id);
+  if (!training) return <TrainingNotAvailable />;
 
-  const sections = groupByTeil(plan.exercises).filter((s) => s.items.length > 0);
+  const sections = groupByTeil(training.exercises).filter((s) => s.items.length > 0);
   const total = sections.reduce((a, s) => a + s.sum, 0);
   const hasAnyDuration = sections.some((s) => s.sum > 0);
 
@@ -33,9 +33,9 @@ export default async function PlanDruckPage({
       </div>
 
       <header className="mb-6 border-b border-outline pb-4">
-        <h1 className="type-headline-large text-on-surface">{plan.name}</h1>
+        <h1 className="type-headline-large text-on-surface">{training.name}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          {plan.stufen.map((k) => (
+          {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
           ))}
           <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-variant">
@@ -73,7 +73,7 @@ export default async function PlanDruckPage({
                     )}
                     <div className="flex flex-col gap-6">
                       {b.items.map((item) => (
-                        <PlanExerciseDetail key={item.id} item={item} showSource />
+                        <TrainingExerciseDetail key={item.id} item={item} showSource />
                       ))}
                     </div>
                   </div>

@@ -8,14 +8,14 @@ import { env } from "@/lib/env";
 const PROTECTED_PREFIXES = [
   "/neu",
   "/konto",
-  "/plan/neu",
+  "/training/neu",
 ];
 
 function isProtected(pathname: string): boolean {
   if (PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     return true;
   }
-  // Bearbeiten-Routen: /uebung/[slug]/edit, /plan/[id]/edit
+  // Bearbeiten-Routen: /uebung/[slug]/edit, /training/[id]/edit
   return pathname.endsWith("/edit");
 }
 

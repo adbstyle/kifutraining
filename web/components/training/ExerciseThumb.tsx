@@ -2,7 +2,7 @@ import Image from "next/image";
 import { FieldPlaceholder } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
-/* Kompaktes Feld-Diagramm-Thumbnail für Übungszeilen in Plan-Ansichten
+/* Kompaktes Feld-Diagramm-Thumbnail für Übungszeilen in Trainings-Ansichten
    (Editor + read-only): Trainer erkennen die Übung schneller am Bild. Zeigt das
    Diagramm oder die Kreide-Platzhalterskizze, im 16:10-Format wie die
    Übungs-Cards. Rein präsentational; Standardbreite per `className` übersteuerbar. */

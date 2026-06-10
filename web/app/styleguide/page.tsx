@@ -173,7 +173,7 @@ export default function Styleguide() {
         <p className="type-body-large mt-4 max-w-xl text-on-surface-variant">
           Chalk-Lines auf Rasen-Dunkelgrün. Ein warmer Signalton. Hoher Kontrast
           für den Spielfeldrand. Die geteilte UI-Basis für Übungspool und
-          Trainingsplaner.
+          Trainings.
         </p>
       </header>
 
@@ -310,7 +310,7 @@ export default function Styleguide() {
           M3-Schatten. Shape bleibt KiFu-eckig (3px).
         </p>
         <div className="flex flex-wrap items-end gap-3">
-          <Button variant="filled">Plan erstellen</Button>
+          <Button variant="filled">Training erstellen</Button>
           <Button variant="tonal">Duplizieren</Button>
           <Button variant="elevated">Teilen</Button>
           <Button variant="outlined">Filter zurücksetzen</Button>

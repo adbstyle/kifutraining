@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Globe, Lock } from "lucide-react";
 import { Dialog, Snackbar, Button } from "@/components/ui";
-import { publishPlanAction, unpublishPlanAction } from "@/lib/actions/plans";
+import { publishTrainingAction, unpublishTrainingAction } from "@/lib/actions/trainings";
 
 const MISSING_LABEL: Record<string, string> = {
   stufe: "mindestens eine Stufe",
@@ -15,11 +15,11 @@ const MISSING_LABEL: Record<string, string> = {
 /* Sichtbarkeits-Steuerung im Editor-Kopf (Story #14). Privat → Öffentlich
    schalten (mit Vollständigkeitsprüfung und Mitveröffentlichungs-Rückfrage für
    eigene private Übungen); Öffentlich → Privat. */
-export function PlanVisibilityControl({
-  planId,
+export function TrainingVisibilityControl({
+  trainingId,
   visibility,
 }: {
-  planId: string;
+  trainingId: string;
   visibility: "public" | "private";
 }) {
   const router = useRouter();
@@ -30,11 +30,11 @@ export function PlanVisibilityControl({
 
   function publish(includePrivate: boolean) {
     startTransition(async () => {
-      const res = await publishPlanAction(planId, includePrivate);
+      const res = await publishTrainingAction(trainingId, includePrivate);
       if (res.status === "published") {
         setConfirm(null);
         router.refresh();
-        setNotice("Plan ist jetzt öffentlich.");
+        setNotice("Das Training ist jetzt öffentlich.");
       } else if (res.status === "incomplete") {
         setIncomplete(res.missing);
       } else if (res.status === "needs_confirmation") {
@@ -47,9 +47,9 @@ export function PlanVisibilityControl({
 
   function unpublish() {
     startTransition(async () => {
-      const res = await unpublishPlanAction(planId);
+      const res = await unpublishTrainingAction(trainingId);
       router.refresh();
-      setNotice(res.ok ? "Plan ist jetzt privat." : (res.error ?? "Fehlgeschlagen."));
+      setNotice(res.ok ? "Das Training ist jetzt privat." : (res.error ?? "Fehlgeschlagen."));
     });
   }
 
@@ -105,11 +105,11 @@ export function PlanVisibilityControl({
         }
       >
         <p className="mb-3">
-          Dieser Plan enthält {confirm?.count}{" "}
+          Dieses Training enthält {confirm?.count}{" "}
           {confirm?.count === 1 ? "eigene private Übung" : "eigene private Übungen"}.
           Beim Öffentlich-Schalten {confirm?.count === 1 ? "wird sie" : "werden sie"}{" "}
           mitveröffentlicht und {confirm?.count === 1 ? "bleibt" : "bleiben"} öffentlich —
-          auch wenn du den Plan später wieder privat schaltest. Verwalte sie bei Bedarf
+          auch wenn du das Training später wieder privat schaltest. Verwalte sie bei Bedarf
           separat im Übungsbereich.
         </p>
         <ul className="flex flex-col gap-1">
