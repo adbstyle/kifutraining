@@ -142,6 +142,50 @@ export async function addPlanExercise(
   return { ok: true };
 }
 
+/** Genau eine Zuordnung einer Übung aus dem Trainingsteil entfernen (Warenkorb-
+ *  „−" im Picker, Story #10). Entfernt die zuletzt hinzugefügte (höchste
+ *  Position) passende Zeile, damit wiederholtes „−" die Anzahl Schritt für
+ *  Schritt reduziert. RLS setzt das Eigentum zusätzlich serverseitig durch. */
+export async function removeOnePlanExercise(
+  planId: string,
+  trainingsteil: string,
+  exerciseId: string,
+): Promise<PlanActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  if (!TRAININGSTEIL_SLUGS.includes(trainingsteil as TrainingsteilSlug))
+    return { ok: false, error: "Ungültiger Trainingsteil." };
+
+  // Eigentum prüfen (UX-Guard; RLS setzt es ohnehin durch).
+  const { data: plan } = await supabase
+    .from("training_plans")
+    .select("id")
+    .eq("id", planId)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+  if (!plan) return { ok: false, error: "Plan nicht gefunden." };
+
+  const { data: row } = await supabase
+    .from("plan_exercises")
+    .select("id")
+    .eq("plan_id", planId)
+    .eq("trainingsteil", trainingsteil)
+    .eq("exercise_id", exerciseId)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!row) return { ok: false, error: "Übung nicht im Trainingsteil." };
+
+  const { error } = await supabase.from("plan_exercises").delete().eq("id", row.id);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePlan(planId);
+  return { ok: true };
+}
+
 // ── Story #14: Sichtbarkeit steuern & teilen ────────────────────────────────
 
 export type PublishResult =
