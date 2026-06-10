@@ -13,7 +13,7 @@ export default function NeuerPlanPage() {
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
       <Breadcrumbs
         items={[
-          { label: "Trainingsplaner", href: "/meine-plaene" },
+          { label: "Trainingsplaner", href: "/plaene" },
           { label: "Neuer Plan" },
         ]}
       />

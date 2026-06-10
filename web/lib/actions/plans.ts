@@ -45,7 +45,6 @@ function revalidatePlan(planId: string) {
   revalidatePath(`/plan/${planId}`);
   revalidatePath(`/plan/${planId}/durchfuehren`);
   revalidatePath(`/plan/${planId}/druck`);
-  revalidatePath("/meine-plaene");
   revalidatePath("/plaene");
 }
 
@@ -81,7 +80,7 @@ export async function createPlan(
     return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
   }
 
-  revalidatePath("/meine-plaene");
+  revalidatePath("/plaene");
   redirect(`/plan/${data.id}/edit`);
 }
 
@@ -431,8 +430,8 @@ export async function deletePlan(planId: string): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) return;
   await supabase.from("training_plans").delete().eq("id", planId).eq("owner_id", user.id);
-  revalidatePath("/meine-plaene");
-  redirect("/meine-plaene?deleted=1");
+  revalidatePath("/plaene");
+  redirect("/plaene?mine=1&deleted=1");
 }
 
 // ── Story #11: Dauer je Zuordnung erfassen/ändern/entfernen ──────────────────

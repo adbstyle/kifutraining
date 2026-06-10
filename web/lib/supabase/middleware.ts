@@ -8,7 +8,6 @@ import { env } from "@/lib/env";
 const PROTECTED_PREFIXES = [
   "/neu",
   "/meine-uebungen",
-  "/meine-plaene",
   "/konto",
   "/plan/neu",
 ];

@@ -19,13 +19,13 @@ export default async function PlanEditPage({
   const plan = await getPlanForEdit(id);
   // Nicht vorhanden oder fremd -> zurück in die eigene Übersicht (kein Schreib-
   // zugriff auf fremde Pläne, Story #12 AC8).
-  if (!plan) redirect("/meine-plaene");
+  if (!plan) redirect("/plaene?mine=1");
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
       <Breadcrumbs
         items={[
-          { label: "Trainingsplaner", href: "/meine-plaene" },
+          { label: "Trainingsplaner", href: "/plaene" },
           { label: plan.name },
         ]}
       />

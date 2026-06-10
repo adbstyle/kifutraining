@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus, ClipboardList, SearchX, Sparkles } from "lucide-react";
 import { ButtonLink } from "@/components/ui";
+import { Flash } from "@/components/Flash";
 import { PlanCard } from "@/components/plan/PlanCard";
 import { PlanFilterBar } from "@/components/plan/PlanFilterBar";
 import { getPlanPool } from "@/lib/queries/plans";
@@ -17,7 +18,13 @@ export const metadata: Metadata = {
 export default async function PlaenePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; vis?: string; stufen?: string; mine?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    vis?: string;
+    stufen?: string;
+    mine?: string;
+    deleted?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
@@ -37,6 +44,8 @@ export default async function PlaenePage({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      {sp.deleted && <Flash message="Trainingsplan gelöscht." />}
+
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="type-label-medium text-primary">Trainingsplaner</p>

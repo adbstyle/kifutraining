@@ -30,15 +30,14 @@ export function AppNavClient({
     pathname.startsWith("/uebung") ||
     pathname.startsWith("/meine-uebungen");
 
-  // „Trainingsplaner" aktiv auf Editor, Einzel-/Durchführungs-/Druck-Ansicht,
-  // dem Pool und der eigenen Übersicht.
+  // „Trainingsplaner" aktiv auf Editor, Einzel-/Durchführungs-/Druck-Ansicht
+  // und dem Pool.
   const planerActive =
-    pathname.startsWith("/plan") ||
-    pathname.startsWith("/plaene") ||
-    pathname.startsWith("/meine-plaene");
+    pathname.startsWith("/plan") || pathname.startsWith("/plaene");
 
   // Der Planer startet wie der Übungspool im gemeinsamen Pool (öffentliche
-  // Pläne + eigene); „Meine Pläne" liegt im Avatar-Menü.
+  // Pläne + eigene); „Meine Pläne" ist derselbe Pool, vorgefiltert auf die
+  // eigenen Pläne.
   const planerHref = "/plaene";
 
   const nav: HeaderNavItem[] = [
@@ -63,7 +62,7 @@ export function AppNavClient({
           {
             label: "Meine Pläne",
             icon: ClipboardList,
-            onSelect: () => router.push("/meine-plaene"),
+            onSelect: () => router.push("/plaene?mine=1"),
           },
           { label: "Abmelden", icon: LogOut, danger: true, onSelect: () => signOutAction() },
         ],

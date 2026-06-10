@@ -227,33 +227,6 @@ function mapListRow(raw: RawListPlan): PlanListRow {
   };
 }
 
-/** Ausschliesslich die eigenen Pläne des angemeldeten Trainers (Story #13). */
-export async function getMyPlans(
-  f: PlanListFilters = {},
-): Promise<PlanListRow[]> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
-
-  let query = supabase
-    .from("training_plans")
-    .select(LIST_SELECT)
-    .eq("owner_id", user.id)
-    .order("updated_at", { ascending: false })
-    // deterministische Sekundärsortierung bei gleichem Änderungszeitpunkt
-    .order("id", { ascending: true });
-
-  if (f.visibility) query = query.eq("visibility", f.visibility);
-  if (f.stufen?.length) query = query.overlaps("stufen", f.stufen);
-  if (f.q?.trim()) query = query.ilike("search_text", likePattern(f.q));
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? []).map((r) => mapListRow(r as unknown as RawListPlan));
-}
-
 /** Plan-Pool — die Trainingsplaner-Einstiegsansicht (analog zum Übungspool).
  *  Ohne Owner-/Sichtbarkeitsfilter liefert die RLS genau die für den Betrachter
  *  lesbare Menge: alle öffentlichen Pläne (der Community wie eigene) plus die
