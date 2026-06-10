@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Clock, ChevronRight, Sparkles, Play, Printer } from "lucide-react";
 import { Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
 import { PlanNotAvailable } from "@/components/plan/PlanNotAvailable";
+import { ExerciseThumb } from "@/components/plan/ExerciseThumb";
 import { getPlanView } from "@/lib/queries/plans";
 import { createClient } from "@/lib/supabase/server";
 import { groupByTeil, formatDuration } from "@/lib/plan";
@@ -92,6 +93,10 @@ export default async function PlanViewPage({
                     <span className="w-5 shrink-0 text-center type-label-medium text-on-surface-variant">
                       {i + 1}
                     </span>
+                    <ExerciseThumb
+                      bildUrl={item.exercise?.bild_url}
+                      name={item.name}
+                    />
                     <span className="min-w-0 flex-1 truncate type-body-medium text-on-surface">
                       {item.name}
                     </span>
