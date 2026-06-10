@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { likePattern } from "@/lib/search";
-import { TRAININGSTEIL_SLUGS, sortStufen } from "@/lib/plan";
+import { TRAININGSTEIL_SLUGS, sortStufen, teilTraegtDauer } from "@/lib/plan";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
 
@@ -192,22 +192,26 @@ type RawListPlan = {
   visibility: "public" | "private";
   stufen: string[];
   updated_at: string;
-  plan_exercises: { duration_min: number | null }[];
+  plan_exercises: { trainingsteil: string; duration_min: number | null }[];
 };
 
 const LIST_SELECT =
-  "id, name, visibility, stufen, updated_at, plan_exercises ( duration_min )";
+  "id, name, visibility, stufen, updated_at, plan_exercises ( trainingsteil, duration_min )";
 
 function mapListRow(raw: RawListPlan): PlanListRow {
-  const durations = (raw.plan_exercises ?? []).map((p) => p.duration_min);
-  const withDuration = durations.filter((d): d is number => d != null);
+  const rows = raw.plan_exercises ?? [];
+  // Auffangen trägt keine Dauer und zählt nicht zur Summe.
+  const withDuration = rows
+    .filter((p) => teilTraegtDauer(p.trainingsteil as TrainingsteilSlug))
+    .map((p) => p.duration_min)
+    .filter((d): d is number => d != null);
   return {
     id: raw.id,
     name: raw.name,
     visibility: raw.visibility,
     stufen: sortStufen(raw.stufen ?? []),
     updatedAt: raw.updated_at,
-    exerciseCount: durations.length,
+    exerciseCount: rows.length,
     totalDuration: withDuration.reduce((a, d) => a + d, 0),
     hasAnyDuration: withDuration.length > 0,
   };

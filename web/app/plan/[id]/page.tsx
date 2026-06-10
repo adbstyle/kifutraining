@@ -31,7 +31,7 @@ export default async function PlanViewPage({
 
   const sections = groupByTeil(plan.exercises).filter((s) => s.items.length > 0);
   const total = sections.reduce((a, s) => a + s.sum, 0);
-  const hasAnyDuration = plan.exercises.some((e) => e.durationMin != null);
+  const hasAnyDuration = sections.some((s) => s.sum > 0);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
@@ -87,7 +87,10 @@ export default async function PlanViewPage({
             </h2>
             <ol className="flex flex-col gap-2">
               {s.items.map((item, i) => {
-                const dur = item.durationMin != null ? formatDuration(item.durationMin) : null;
+                const dur =
+                  s.traegtDauer && item.durationMin != null
+                    ? formatDuration(item.durationMin)
+                    : null;
                 const inner = (
                   <>
                     <span className="w-5 shrink-0 text-center type-label-medium text-on-surface-variant">

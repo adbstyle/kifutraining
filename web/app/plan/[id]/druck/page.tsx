@@ -24,7 +24,7 @@ export default async function PlanDruckPage({
 
   const sections = groupByTeil(plan.exercises).filter((s) => s.items.length > 0);
   const total = sections.reduce((a, s) => a + s.sum, 0);
-  const hasAnyDuration = plan.exercises.some((e) => e.durationMin != null);
+  const hasAnyDuration = sections.some((s) => s.sum > 0);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 print:max-w-none print:px-0 print:py-0">

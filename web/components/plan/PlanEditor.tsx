@@ -32,6 +32,7 @@ import {
   TRAININGSTEILE,
   ANZAHL_HINWEIS,
   stufenAbgedeckt,
+  teilTraegtDauer,
   formatDuration,
 } from "@/lib/plan";
 import {
@@ -123,9 +124,11 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
   const byTeil = (slug: TrainingsteilSlug) =>
     plan.exercises.filter((e) => e.trainingsteil === slug);
 
-  const allDur = plan.exercises.map(dur);
-  const totalDuration = allDur.reduce<number>((a, d) => a + (d ?? 0), 0);
-  const totalMissing = allDur.filter((d) => d == null).length;
+  // Auffangen trägt keine Dauer und zählt weder zur Summe noch zum
+  // „ohne Dauer"-Hinweis.
+  const dauerItems = plan.exercises.filter((e) => teilTraegtDauer(e.trainingsteil));
+  const totalDuration = dauerItems.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
+  const totalMissing = dauerItems.filter((it) => dur(it) == null).length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -192,8 +195,13 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
       {TRAININGSTEILE.map(({ slug, label }) => {
         const items = byTeil(slug);
         const tooMany = items.length > ANZAHL_HINWEIS[slug];
-        const teilDur = items.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
-        const teilMissing = items.filter((it) => dur(it) == null).length;
+        const traegtDauer = teilTraegtDauer(slug);
+        const teilDur = traegtDauer
+          ? items.reduce<number>((a, it) => a + (dur(it) ?? 0), 0)
+          : 0;
+        const teilMissing = traegtDauer
+          ? items.filter((it) => dur(it) == null).length
+          : 0;
         return (
           <Card key={slug} className="p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between gap-3">
@@ -229,6 +237,7 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
                     isFirst={i === 0}
                     isLast={i === items.length - 1}
                     planStufen={stufen}
+                    showDuration={traegtDauer}
                     duration={dur(item)}
                     onDuration={(next) => changeDuration(item, next)}
                     onMove={(d) => move(item, d)}
@@ -371,6 +380,7 @@ function PlanExerciseRow({
   isFirst,
   isLast,
   planStufen,
+  showDuration,
   duration,
   onDuration,
   onMove,
@@ -381,6 +391,7 @@ function PlanExerciseRow({
   isFirst: boolean;
   isLast: boolean;
   planStufen: string[];
+  showDuration: boolean;
   duration: number | null;
   onDuration: (next: number | null) => void;
   onMove: (dir: -1 | 1) => void;
@@ -448,11 +459,17 @@ function PlanExerciseRow({
         )}
       </span>
 
-      <span className="shrink-0">
-        <DurationStepper value={duration} onChange={onDuration} />
-      </span>
-
-      <span className="ml-0.5 h-6 w-px shrink-0 bg-outline-variant sm:ml-1" aria-hidden />
+      {showDuration && (
+        <>
+          <span className="shrink-0">
+            <DurationStepper value={duration} onChange={onDuration} />
+          </span>
+          <span
+            className="ml-0.5 h-6 w-px shrink-0 bg-outline-variant sm:ml-1"
+            aria-hidden
+          />
+        </>
+      )}
 
       <Tooltip label="Übung entfernen">
         <button

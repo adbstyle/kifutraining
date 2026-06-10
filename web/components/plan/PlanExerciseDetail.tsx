@@ -5,7 +5,7 @@ import {
   FieldPlaceholder,
   MethodischerFahrplan,
 } from "@/components/ui";
-import { formatDuration } from "@/lib/plan";
+import { formatDuration, teilTraegtDauer } from "@/lib/plan";
 import {
   feldtyp as feldLabels,
   hauptteilkategorie as hkatLabels,
@@ -43,7 +43,10 @@ export function PlanExerciseDetail({
   showSource?: boolean;
 }) {
   const ex = item.exercise;
-  const dur = item.durationMin != null ? formatDuration(item.durationMin) : null;
+  const dur =
+    teilTraegtDauer(item.trainingsteil) && item.durationMin != null
+      ? formatDuration(item.durationMin)
+      : null;
   const anzahl = anzahlText(ex?.anzahl_kinder ?? null);
 
   return (

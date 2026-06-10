@@ -74,7 +74,11 @@ export function PlanDurchfuehren({ plan }: { plan: PlanDetail }) {
               {formatDuration(section.sum)} in diesem Teil
             </span>
           )}
-          <span>· Gesamt {formatDuration(total)}</span>
+          {total > 0 && (
+            <span>
+              {section.sum > 0 ? "· " : ""}Gesamt {formatDuration(total)}
+            </span>
+          )}
         </div>
       </header>
 

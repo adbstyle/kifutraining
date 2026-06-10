@@ -24,6 +24,17 @@ export const TRAININGSTEIL_SLUGS = TRAININGSTEILE.map((t) => t.slug);
  *  Enabler #26 AC3). */
 export const PFLICHT_TEILE: TrainingsteilSlug[] = ["einleitung", "hauptteil"];
 
+/** Trainingsteile, die keine Dauer tragen. „Auffangen" ist der Teil vor dem
+ *  eigentlichen Trainingsbeginn — es wird aufgesetzt, die Spielerinnen machen
+ *  mit oder nicht; es zählt nicht zur Trainingsdauer. Diese Invariante wird auf
+ *  DB-Ebene per CHECK erzwungen. */
+export const OHNE_DAUER_TEILE = new Set<TrainingsteilSlug>(["auffangen"]);
+
+/** Trägt dieser Trainingsteil eine erfassbare Dauer? */
+export function teilTraegtDauer(slug: TrainingsteilSlug): boolean {
+  return !OHNE_DAUER_TEILE.has(slug);
+}
+
 /** Schwellenwerte für den „ungewöhnlich viele Übungen"-Hinweis je Trainingsteil
  *  (Story #10 AC9 / Lösungsansatz 1). Mehr als dieser Wert ⇒ Hinweis, keine
  *  Blockade. */
@@ -54,16 +65,26 @@ export function sortStufen(stufen: readonly string[]): KategorieSlug[] {
 }
 
 /** Zuordnungen nach Trainingsteil gruppieren (feste Reihenfolge) und je Teil
- *  die Summe der erfassten Dauern bilden. Generisch über die Item-Form, um
+ *  die Summe der erfassten Dauern bilden. Teile ohne Dauer (Auffangen) tragen
+ *  immer `sum = 0` und `traegtDauer = false`. Generisch über die Item-Form, um
  *  Importzyklen mit dem Query-Layer zu vermeiden. Reihenfolge der Items bleibt
  *  erhalten (kommen bereits positionssortiert). */
 export function groupByTeil<
   T extends { trainingsteil: string; durationMin: number | null },
->(items: T[]): { slug: TrainingsteilSlug; label: string; items: T[]; sum: number }[] {
+>(items: T[]): {
+  slug: TrainingsteilSlug;
+  label: string;
+  items: T[];
+  sum: number;
+  traegtDauer: boolean;
+}[] {
   return TRAININGSTEILE.map(({ slug, label }) => {
     const teilItems = items.filter((i) => i.trainingsteil === slug);
-    const sum = teilItems.reduce((a, i) => a + (i.durationMin ?? 0), 0);
-    return { slug, label, items: teilItems, sum };
+    const traegtDauer = teilTraegtDauer(slug);
+    const sum = traegtDauer
+      ? teilItems.reduce((a, i) => a + (i.durationMin ?? 0), 0)
+      : 0;
+    return { slug, label, items: teilItems, sum, traegtDauer };
   });
 }
 

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
-import { TRAININGSTEIL_SLUGS, stufenAbgedeckt } from "@/lib/plan";
+import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/plan";
 import { kategorienSlugs, type TrainingsteilSlug } from "@/lib/vocab";
 
 export type PlanFormState = {
@@ -423,6 +423,19 @@ export async function setExerciseDuration(
   if (minutes !== null && (!Number.isInteger(minutes) || minutes < 0 || minutes % 5 !== 0))
     return { ok: false, error: "Dauer muss ein Vielfaches von 5 Minuten sein." };
 
+  // Trust Boundary: „Auffangen" trägt keine Dauer (DB-CHECK erzwingt dies; hier
+  // mit klarer Meldung statt Constraint-Fehler abfangen). Das Leeren (null) bleibt
+  // immer erlaubt.
+  if (minutes !== null) {
+    const { data: row } = await supabase
+      .from("plan_exercises")
+      .select("trainingsteil")
+      .eq("id", planExerciseId)
+      .maybeSingle();
+    if (row && !teilTraegtDauer(row.trainingsteil as TrainingsteilSlug))
+      return { ok: false, error: "Für diesen Trainingsteil kann keine Dauer gesetzt werden." };
+  }
+
   const { data, error } = await supabase
     .from("plan_exercises")
     .update({ duration_min: minutes })
@@ -430,7 +443,8 @@ export async function setExerciseDuration(
     .select("plan_id")
     .maybeSingle();
   if (error) return { ok: false, error: error.message };
-  if (data) revalidatePlan(data.plan_id);
+  if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
+  revalidatePlan(data.plan_id);
   return { ok: true };
 }
 
