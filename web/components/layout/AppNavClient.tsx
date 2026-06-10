@@ -1,15 +1,17 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, UserRound, ListChecks, ClipboardList, Plus } from "lucide-react";
+import { LogOut, UserRound, ListChecks, ClipboardList } from "lucide-react";
 import { Header } from "@/components/ui";
 import type { HeaderNavItem, HeaderAccount } from "@/components/ui";
 
 /* App-Chrome: M3-Header-Navigation als Top-Bar (alle Breakpoints; unter `lg`
    Hamburger → Drawer). Server-Teil (AppNav) liest die Session und reicht den
    Auth-Zustand + die Abmelde-Action durch; Aktiv-Zustand + Routing laufen
-   hier pfadbasiert. Die Primär-Aktion „Neue Übung" sitzt als Header-CTA (löst
-   den früheren FAB ab); Konto/Meine Übungen/Abmelden im Avatar-Menü. */
+   hier pfadbasiert. Die Primär-Aktion „Neue Übung" sitzt im Content-Bereich
+   (Katalog + Meine Übungen) wie „Neuer Plan" beim Planer — nicht mehr als
+   Header-CTA. Anonym dient der Header-CTA nur dem Anmelden; Konto/Meine
+   Übungen/Abmelden im Avatar-Menü. */
 export function AppNavClient({
   isAuthenticated,
   userEmail,
@@ -68,9 +70,9 @@ export function AppNavClient({
       }
     : undefined;
 
-  const cta = isAuthenticated
-    ? { label: "Neue Übung", href: "/neu", icon: Plus }
-    : { label: "Anmelden", href: "/login" };
+  // Angemeldet: keine Header-CTA — „Neue Übung" lebt im Content-Bereich.
+  // Anonym: Anmelden-CTA als Einstieg.
+  const cta = isAuthenticated ? undefined : { label: "Anmelden", href: "/login" };
 
   return <Header nav={nav} account={account} cta={cta} />;
 }

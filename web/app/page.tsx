@@ -1,5 +1,5 @@
-import { SearchX, Heart } from "lucide-react";
-import { ExerciseCard } from "@/components/ui";
+import { SearchX, Heart, Plus } from "lucide-react";
+import { ExerciseCard, ButtonLink } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { FilterPanel, type CatalogFilters } from "@/components/catalog/FilterPanel";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
@@ -65,13 +65,21 @@ export default async function Home({
       {sp.account_deleted && (
         <Flash message="Konto gelöscht. Deine öffentlichen Übungen bleiben anonym erhalten." />
       )}
-      <header className="mb-8">
-        <p className="type-label-medium text-primary">Übungspool</p>
-        <h1 className="type-display-small mt-1 text-on-surface">Übungen finden</h1>
-        <p className="type-body-large mt-3 max-w-2xl text-on-surface-variant">
-          Der offizielle Kinderfussball-Bestand und Übungen der Community —
-          durchsuchbar und filterbar nach Trainingsteil, Alter, Feld und mehr.
-        </p>
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="type-label-medium text-primary">Übungspool</p>
+          <h1 className="type-display-small mt-1 text-on-surface">Übungen finden</h1>
+          <p className="type-body-large mt-3 max-w-2xl text-on-surface-variant">
+            Der offizielle Kinderfussball-Bestand und Übungen der Community —
+            durchsuchbar und filterbar nach Trainingsteil, Alter, Feld und mehr.
+          </p>
+        </div>
+        {user && (
+          <ButtonLink href="/neu" variant="filled">
+            <Plus size={20} strokeWidth={2.5} aria-hidden />
+            Neue Übung
+          </ButtonLink>
+        )}
       </header>
 
       {error && (
