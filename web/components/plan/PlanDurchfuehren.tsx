@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { PlanExerciseDetail } from "./PlanExerciseDetail";
-import { groupByTeil, formatDuration } from "@/lib/plan";
+import { groupByTeil, leseBloecke, formatDuration } from "@/lib/plan";
 import type { PlanDetail } from "@/lib/queries/plans";
 
 /* Mobile Durchführungsansicht (Story #17): Trainingsteil für Trainingsteil
@@ -83,12 +83,19 @@ export function PlanDurchfuehren({ plan }: { plan: PlanDetail }) {
       </header>
 
       <div className="flex flex-col gap-8">
-        {section.items.map((item, i) => (
-          <div key={item.id}>
-            <p className="mb-2 type-label-small text-on-surface-variant">
-              Übung {i + 1} von {section.items.length}
-            </p>
-            <PlanExerciseDetail item={item} showSource />
+        {leseBloecke(section).map((b) => (
+          <div key={b.key} className="flex flex-col gap-6">
+            {b.label && (
+              <h2 className="type-title-medium text-on-surface-variant">{b.label}</h2>
+            )}
+            {b.items.map((item, i) => (
+              <div key={item.id}>
+                <p className="mb-2 type-label-small text-on-surface-variant">
+                  Übung {i + 1} von {b.items.length}
+                </p>
+                <PlanExerciseDetail item={item} showSource />
+              </div>
+            ))}
           </div>
         ))}
       </div>

@@ -5,7 +5,7 @@ import { PlanNotAvailable } from "@/components/plan/PlanNotAvailable";
 import { PlanExerciseDetail } from "@/components/plan/PlanExerciseDetail";
 import { PrintButton } from "@/components/plan/PrintButton";
 import { getPlanView } from "@/lib/queries/plans";
-import { groupByTeil, formatDuration } from "@/lib/plan";
+import { groupByTeil, leseBloecke, formatDuration } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -46,23 +46,42 @@ export default async function PlanDruckPage({
       </header>
 
       <div className="flex flex-col gap-8">
-        {sections.map((s) => (
-          <section key={s.slug} className="break-inside-avoid">
-            <h2 className="mb-4 border-b border-outline-variant pb-1 type-title-medium text-on-surface">
-              {s.label}
-              {s.sum > 0 && (
-                <span className="ml-2 type-label-medium text-on-surface-variant">
-                  {formatDuration(s.sum)}
-                </span>
-              )}
-            </h2>
-            <div className="flex flex-col gap-6">
-              {s.items.map((item) => (
-                <PlanExerciseDetail key={item.id} item={item} showSource />
-              ))}
-            </div>
-          </section>
-        ))}
+        {sections.map((s) => {
+          const blocks = leseBloecke(s);
+          return (
+            <section key={s.slug} className="break-inside-avoid">
+              <h2 className="mb-4 border-b border-outline-variant pb-1 type-title-medium text-on-surface">
+                {s.label}
+                {s.sum > 0 && (
+                  <span className="ml-2 type-label-medium text-on-surface-variant">
+                    {formatDuration(s.sum)}
+                  </span>
+                )}
+              </h2>
+              <div className="flex flex-col gap-6">
+                {blocks.map((b) => (
+                  <div key={b.key} className="break-inside-avoid">
+                    {b.label && (
+                      <h3 className="mb-3 type-title-small text-on-surface-variant">
+                        {b.label}
+                        {b.sum > 0 && (
+                          <span className="ml-2 type-label-medium text-on-surface-variant">
+                            {formatDuration(b.sum)}
+                          </span>
+                        )}
+                      </h3>
+                    )}
+                    <div className="flex flex-col gap-6">
+                      {b.items.map((item) => (
+                        <PlanExerciseDetail key={item.id} item={item} showSource />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
     </main>
   );

@@ -1,6 +1,8 @@
 import {
   trainingsteil as trainingsteilLabels,
+  hauptteilkategorie as hauptteilkategorieLabels,
   type TrainingsteilSlug,
+  type HauptteilkategorieSlug,
   type KategorieSlug,
 } from "@/lib/vocab";
 
@@ -19,6 +21,20 @@ export const TRAININGSTEILE: { slug: TrainingsteilSlug; label: string }[] = [
 ];
 
 export const TRAININGSTEIL_SLUGS = TRAININGSTEILE.map((t) => t.slug);
+
+/** Die drei Hauptteilkategorien in fester methodischer Reihenfolge (SFV-Manual,
+ *  Abb. 14): vom geführten Lernen über die Vielseitigkeit zum freien Spiel
+ *  (Story #23). Reihenfolge und Bezeichnungen stammen aus dem Vokabular. */
+export const HAUPTTEILKATEGORIEN: {
+  slug: HauptteilkategorieSlug;
+  label: string;
+}[] = [
+  { slug: "fussball-spielen-lernen", label: hauptteilkategorieLabels["fussball-spielen-lernen"] },
+  { slug: "vielseitigkeit-erleben", label: hauptteilkategorieLabels["vielseitigkeit-erleben"] },
+  { slug: "fussball-spielen", label: hauptteilkategorieLabels["fussball-spielen"] },
+];
+
+export const HAUPTTEILKATEGORIE_SLUGS = HAUPTTEILKATEGORIEN.map((h) => h.slug);
 
 /** Für die Veröffentlichung zwingend belegte Trainingsteile (Story #14 AC3,
  *  Enabler #26 AC3). */
@@ -86,6 +102,51 @@ export function groupByTeil<
       : 0;
     return { slug, label, items: teilItems, sum, traegtDauer };
   });
+}
+
+/** Rang einer Hauptteilkategorie für die stabile Sortierung (−1 ⇒ unbekannt,
+ *  z. B. Platzhalter ohne Kategorie → ans Ende). */
+export function hkatRank(slug: string | null): number {
+  if (slug == null) return HAUPTTEILKATEGORIEN.length;
+  const i = HAUPTTEILKATEGORIE_SLUGS.indexOf(slug as HauptteilkategorieSlug);
+  return i === -1 ? HAUPTTEILKATEGORIEN.length : i;
+}
+
+/** Hauptteil-Zuordnungen nach Unterkategorie gruppieren (feste methodische
+ *  Reihenfolge) und je Unterkategorie die Dauer-Summe bilden. Items kommen
+ *  bereits positionssortiert. Generisch über die Item-Form (Importzyklen
+ *  vermeiden). */
+export function groupHauptteil<
+  T extends { hauptteilkategorie: string | null; durationMin: number | null },
+>(items: T[]): {
+  slug: HauptteilkategorieSlug;
+  label: string;
+  items: T[];
+  sum: number;
+}[] {
+  return HAUPTTEILKATEGORIEN.map(({ slug, label }) => {
+    const katItems = items.filter((i) => i.hauptteilkategorie === slug);
+    const sum = katItems.reduce((a, i) => a + (i.durationMin ?? 0), 0);
+    return { slug, label, items: katItems, sum };
+  });
+}
+
+/** Render-Blöcke eines Trainingsteil-Abschnitts für die Lese-/Ausgabe-Ansichten:
+ *  der Hauptteil wird in seine belegten Unterkategorien aufgeteilt (jeweils mit
+ *  Unter-Überschrift und Dauer-Summe), alle übrigen Trainingsteile bleiben ein
+ *  einzelner Block ohne Unter-Überschrift (`label = null`). Leere Unterkategorien
+ *  erscheinen in diesen Ansichten nicht (Story #23). */
+export function leseBloecke<
+  T extends { hauptteilkategorie: string | null; durationMin: number | null },
+>(section: {
+  slug: TrainingsteilSlug;
+  items: T[];
+}): { key: string; label: string | null; sum: number; items: T[] }[] {
+  if (section.slug !== "hauptteil")
+    return [{ key: section.slug, label: null, sum: 0, items: section.items }];
+  return groupHauptteil(section.items)
+    .filter((g) => g.items.length > 0)
+    .map((g) => ({ key: g.slug, label: g.label, sum: g.sum, items: g.items }));
 }
 
 /** Datum lesbar formatieren (de-CH, z. B. "8. Juni 2026"). */

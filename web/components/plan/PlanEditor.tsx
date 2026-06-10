@@ -30,9 +30,11 @@ import { StufenField } from "./StufenField";
 import { PlanVisibilityControl } from "./PlanVisibilityControl";
 import {
   TRAININGSTEILE,
+  HAUPTTEILKATEGORIEN,
   ANZAHL_HINWEIS,
   stufenAbgedeckt,
   teilTraegtDauer,
+  groupHauptteil,
   formatDuration,
 } from "@/lib/plan";
 import {
@@ -43,7 +45,7 @@ import {
   setPlanStufen,
   deletePlan,
 } from "@/lib/actions/plans";
-import type { TrainingsteilSlug } from "@/lib/vocab";
+import type { TrainingsteilSlug, HauptteilkategorieSlug } from "@/lib/vocab";
 import type { PlanDetail, PlanExerciseItem } from "@/lib/queries/plans";
 
 const AUTO_PRIVATE_MSG =
@@ -56,7 +58,11 @@ const AUTO_PRIVATE_MSG =
 export function PlanEditor({ plan }: { plan: PlanDetail }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [openTeil, setOpenTeil] = useState<TrainingsteilSlug | null>(null);
+  // Offener Picker: Trainingsteil und — im Hauptteil — die Unterkategorie.
+  const [open, setOpen] = useState<{
+    teil: TrainingsteilSlug;
+    hkat?: HauptteilkategorieSlug;
+  } | null>(null);
   const [durations, setDurations] = useState<Record<string, number | null>>({});
   const [stufen, setStufen] = useState<string[]>(plan.stufen);
   const [notice, setNotice] = useState<string | null>(null);
@@ -193,14 +199,98 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
       </div>
 
       {TRAININGSTEILE.map(({ slug, label }) => {
-        const items = byTeil(slug);
-        const tooMany = items.length > ANZAHL_HINWEIS[slug];
         const traegtDauer = teilTraegtDauer(slug);
+        const teilItems = byTeil(slug);
+
+        // Hauptteil: in die drei Unterkategorien gegliedert (Story #23). Stets
+        // alle drei sichtbar, je eigener Picker/Liste/Reihenfolge.
+        if (slug === "hauptteil") {
+          const subgroups = groupHauptteil(teilItems);
+          const teilDur = teilItems.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
+          const tooMany = teilItems.length > ANZAHL_HINWEIS[slug];
+          const teilMissing = teilItems.filter((it) => dur(it) == null).length;
+          const spielLeer =
+            subgroups.find((g) => g.slug === "fussball-spielen")?.items.length === 0;
+          return (
+            <Card key={slug} className="p-4 sm:p-5">
+              <div className="flex items-center gap-2">
+                <h2 className="type-title-medium text-on-surface">{label}</h2>
+                {teilDur > 0 && (
+                  <span className="type-label-medium text-on-surface-variant">
+                    {formatDuration(teilDur)}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-4 flex flex-col gap-5">
+                {subgroups.map((g) => (
+                  <div key={g.slug}>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <h3 className="type-title-small text-on-surface">
+                        {g.label}
+                        {g.sum > 0 && (
+                          <span className="ml-2 type-label-medium text-on-surface-variant">
+                            {formatDuration(g.sum)}
+                          </span>
+                        )}
+                      </h3>
+                      <Tooltip label="Übung hinzufügen">
+                        <IconButton
+                          icon={Plus}
+                          label={`Übung zu ${g.label} hinzufügen`}
+                          size="sm"
+                          onClick={() => setOpen({ teil: slug, hkat: g.slug })}
+                        />
+                      </Tooltip>
+                    </div>
+                    <ExerciseList
+                      items={g.items}
+                      planStufen={stufen}
+                      showDuration={traegtDauer}
+                      dur={dur}
+                      onDuration={changeDuration}
+                      onMove={move}
+                      onRemove={remove}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {(spielLeer || tooMany || teilMissing > 0) && (
+                <div className="mt-3 flex flex-col gap-1">
+                  {spielLeer && (
+                    <p className="flex items-center gap-2 type-label-medium text-on-surface-variant">
+                      <Info size={15} className="shrink-0 text-signal" aria-hidden />
+                      Das freie Spiel («Fussball spielen») ist noch leer — im
+                      Kinderfussball gehört es in jedes Training.
+                    </p>
+                  )}
+                  {tooMany && (
+                    <p className="flex items-center gap-2 type-label-medium text-on-surface-variant">
+                      <Info size={15} className="shrink-0 text-signal" aria-hidden />
+                      Ungewöhnlich viele Übungen für diesen Trainingsteil — erlaubt,
+                      achte nur auf die Gesamtdauer.
+                    </p>
+                  )}
+                  {teilMissing > 0 && (
+                    <p className="type-label-medium text-on-surface-variant">
+                      {teilMissing} {teilMissing === 1 ? "Übung" : "Übungen"} ohne erfasste
+                      Dauer (zählt nicht zur Summe).
+                    </p>
+                  )}
+                </div>
+              )}
+            </Card>
+          );
+        }
+
+        // Übrige Trainingsteile (Auffangen, Einleitung, Ausklang).
+        const tooMany = teilItems.length > ANZAHL_HINWEIS[slug];
         const teilDur = traegtDauer
-          ? items.reduce<number>((a, it) => a + (dur(it) ?? 0), 0)
+          ? teilItems.reduce<number>((a, it) => a + (dur(it) ?? 0), 0)
           : 0;
         const teilMissing = traegtDauer
-          ? items.filter((it) => dur(it) == null).length
+          ? teilItems.filter((it) => dur(it) == null).length
           : 0;
         return (
           <Card key={slug} className="p-4 sm:p-5">
@@ -218,34 +308,20 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
                   icon={Plus}
                   label={`Übung zu ${label} hinzufügen`}
                   size="sm"
-                  onClick={() => setOpenTeil(slug)}
+                  onClick={() => setOpen({ teil: slug })}
                 />
               </Tooltip>
             </div>
 
-            {items.length === 0 ? (
-              <p className="type-body-small text-on-surface-variant">
-                Noch keine Übung zugeordnet.
-              </p>
-            ) : (
-              <ol className="flex flex-col gap-2">
-                {items.map((item, i) => (
-                  <PlanExerciseRow
-                    key={item.id}
-                    item={item}
-                    index={i}
-                    isFirst={i === 0}
-                    isLast={i === items.length - 1}
-                    planStufen={stufen}
-                    showDuration={traegtDauer}
-                    duration={dur(item)}
-                    onDuration={(next) => changeDuration(item, next)}
-                    onMove={(d) => move(item, d)}
-                    onRemove={() => remove(item)}
-                  />
-                ))}
-              </ol>
-            )}
+            <ExerciseList
+              items={teilItems}
+              planStufen={stufen}
+              showDuration={traegtDauer}
+              dur={dur}
+              onDuration={changeDuration}
+              onMove={move}
+              onRemove={remove}
+            />
 
             {(tooMany || teilMissing > 0) && (
               <div className="mt-3 flex flex-col gap-1">
@@ -264,24 +340,40 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
                 )}
               </div>
             )}
-
-            {openTeil === slug && (
-              <ExercisePickerDialog
-                open
-                onClose={() => setOpenTeil(null)}
-                planId={plan.id}
-                trainingsteil={slug}
-                trainingsteilLabel={label}
-                planStufen={stufen}
-                addedExerciseIds={items
-                  .map((e) => e.exerciseId)
-                  .filter((id): id is string => id != null)}
-                onAdded={() => router.refresh()}
-              />
-            )}
           </Card>
         );
       })}
+
+      {/* Ein Picker, gesteuert über `open` (Trainingsteil + ggf. Unterkategorie). */}
+      {open &&
+        (() => {
+          const teilLabel =
+            TRAININGSTEILE.find((t) => t.slug === open.teil)?.label ?? open.teil;
+          const sub = open.hkat
+            ? HAUPTTEILKATEGORIEN.find((h) => h.slug === open.hkat)
+            : undefined;
+          const openItems = plan.exercises.filter(
+            (e) =>
+              e.trainingsteil === open.teil &&
+              (!open.hkat || e.hauptteilkategorie === open.hkat),
+          );
+          return (
+            <ExercisePickerDialog
+              open
+              onClose={() => setOpen(null)}
+              planId={plan.id}
+              trainingsteil={open.teil}
+              trainingsteilLabel={teilLabel}
+              hauptteilkategorie={sub?.slug}
+              hauptteilkategorieLabel={sub?.label}
+              planStufen={stufen}
+              addedExerciseIds={openItems
+                .map((e) => e.exerciseId)
+                .filter((id): id is string => id != null)}
+              onAdded={() => router.refresh()}
+            />
+          );
+        })()}
 
       {/* Namen bearbeiten */}
       <Dialog
@@ -371,6 +463,53 @@ export function PlanEditor({ plan }: { plan: PlanDetail }) {
         onClose={() => setNotice(null)}
       />
     </div>
+  );
+}
+
+/** Geordnete Übungsliste eines (Unter-)Abschnitts: leerer Zustand oder die
+ *  Zuordnungen als umsortierbare Zeilen. Wird vom Trainingsteil und von jeder
+ *  Hauptteil-Unterkategorie gleichermassen genutzt. */
+function ExerciseList({
+  items,
+  planStufen,
+  showDuration,
+  dur,
+  onDuration,
+  onMove,
+  onRemove,
+}: {
+  items: PlanExerciseItem[];
+  planStufen: string[];
+  showDuration: boolean;
+  dur: (item: PlanExerciseItem) => number | null;
+  onDuration: (item: PlanExerciseItem, next: number | null) => void;
+  onMove: (item: PlanExerciseItem, dir: -1 | 1) => void;
+  onRemove: (item: PlanExerciseItem) => void;
+}) {
+  if (items.length === 0)
+    return (
+      <p className="type-body-small text-on-surface-variant">
+        Noch keine Übung zugeordnet.
+      </p>
+    );
+  return (
+    <ol className="flex flex-col gap-2">
+      {items.map((item, i) => (
+        <PlanExerciseRow
+          key={item.id}
+          item={item}
+          index={i}
+          isFirst={i === 0}
+          isLast={i === items.length - 1}
+          planStufen={planStufen}
+          showDuration={showDuration}
+          duration={dur(item)}
+          onDuration={(next) => onDuration(item, next)}
+          onMove={(d) => onMove(item, d)}
+          onRemove={() => onRemove(item)}
+        />
+      ))}
+    </ol>
   );
 }
 

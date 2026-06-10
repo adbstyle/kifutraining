@@ -8,7 +8,6 @@ import { stufenAbgedeckt } from "@/lib/plan";
 import { FAHRPLAN_TEILE } from "@/lib/labels";
 import {
   erscheinungsform as erscheinungsformLabels,
-  hauptteilkategorie as hauptteilkategorieLabels,
   type KategorieSlug,
   type TrainingsteilSlug,
 } from "@/lib/vocab";
@@ -16,14 +15,18 @@ import type { ExerciseListRow } from "@/lib/queries/exercises";
 
 /* Übungs-Picker als Modal über dem Editor (Story #10). Lädt die für den USER
    sichtbaren Übungen des Trainingsteils serverseitig (RLS), eingrenzbar nach
-   Erscheinungsform, Hauptteilkategorie (nur Hauptteil) und Freitext. Auswahl
-   persistiert sofort; das Panel bleibt für Mehrfachauswahl offen. */
+   Erscheinungsform und Freitext. Im Hauptteil ist der Picker auf eine
+   Hauptteilkategorie fixiert (Story #23): er zeigt nur Übungen dieser
+   Unterkategorie. Auswahl persistiert sofort; das Panel bleibt für
+   Mehrfachauswahl offen. */
 export function ExercisePickerDialog({
   open,
   onClose,
   planId,
   trainingsteil,
   trainingsteilLabel,
+  hauptteilkategorie,
+  hauptteilkategorieLabel,
   planStufen,
   addedExerciseIds,
   onAdded,
@@ -33,13 +36,15 @@ export function ExercisePickerDialog({
   planId: string;
   trainingsteil: TrainingsteilSlug;
   trainingsteilLabel: string;
+  /** Im Hauptteil: die fixierte Unterkategorie, sonst undefined. */
+  hauptteilkategorie?: string;
+  hauptteilkategorieLabel?: string;
   planStufen: string[];
   addedExerciseIds: string[];
   onAdded: () => void;
 }) {
   const [q, setQ] = useState("");
   const [form, setForm] = useState<string[]>([]);
-  const [hkat, setHkat] = useState<string[]>([]);
   const [results, setResults] = useState<ExerciseListRow[]>([]);
   const [loading, setLoading] = useState(false);
   // Warenkorb-Zählung je Übung (exercise_id → Anzahl im Trainingsteil). Beim
@@ -65,7 +70,6 @@ export function ExercisePickerDialog({
   }
 
   const hatErscheinungsform = FAHRPLAN_TEILE.has(trainingsteil);
-  const istHauptteil = trainingsteil === "hauptteil";
 
   // Beim Schliessen Filter/Suche zurücksetzen; beim Öffnen die aktuelle Anzahl
   // je Übung als Warenkorb-Basis einfrieren. Absichtlich nur an `open` gebunden:
@@ -76,7 +80,6 @@ export function ExercisePickerDialog({
     if (!open) {
       setQ("");
       setForm([]);
-      setHkat([]);
       applyCounts({});
       setError(null);
       return;
@@ -97,7 +100,8 @@ export function ExercisePickerDialog({
       const rows = await pickExercises(trainingsteil, {
         q: q.trim() || undefined,
         form: form.length ? form : undefined,
-        hkat: hkat.length ? hkat : undefined,
+        // Im Hauptteil auf die fixierte Unterkategorie eingrenzen (harte Regel).
+        hkat: hauptteilkategorie ? [hauptteilkategorie] : undefined,
       });
       // Veraltete Antworten verwerfen (Race bei schneller Eingabe).
       if (id === reqId.current) {
@@ -106,7 +110,7 @@ export function ExercisePickerDialog({
       }
     }, 250);
     return () => clearTimeout(t);
-  }, [open, q, form, hkat, trainingsteil]);
+  }, [open, q, form, hauptteilkategorie, trainingsteil]);
 
   function toggle(list: string[], set: (v: string[]) => void, value: string) {
     set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
@@ -122,7 +126,7 @@ export function ExercisePickerDialog({
     bump(ex.id, +1);
     inFlightRef.current += 1;
     queueRef.current = queueRef.current.then(async () => {
-      const res = await addPlanExercise(planId, trainingsteil, ex.id);
+      const res = await addPlanExercise(planId, trainingsteil, ex.id, hauptteilkategorie);
       inFlightRef.current -= 1;
       if (!res.ok) {
         bump(ex.id, -1); // optimistische Erhöhung zurücknehmen
@@ -142,7 +146,7 @@ export function ExercisePickerDialog({
     bump(ex.id, -1);
     inFlightRef.current += 1;
     queueRef.current = queueRef.current.then(async () => {
-      const res = await removeOnePlanExercise(planId, trainingsteil, ex.id);
+      const res = await removeOnePlanExercise(planId, trainingsteil, ex.id, hauptteilkategorie);
       inFlightRef.current -= 1;
       if (!res.ok) {
         bump(ex.id, +1); // optimistische Reduktion zurücknehmen
@@ -156,7 +160,11 @@ export function ExercisePickerDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={`Übung hinzufügen — ${trainingsteilLabel}`}
+      title={`Übung hinzufügen — ${
+        hauptteilkategorieLabel
+          ? `${trainingsteilLabel} · ${hauptteilkategorieLabel}`
+          : trainingsteilLabel
+      }`}
       className="w-[min(42rem,calc(100vw-2rem))]"
     >
       <div className="flex flex-col gap-4">
@@ -192,21 +200,6 @@ export function ExercisePickerDialog({
           </div>
         )}
 
-        {/* Hauptteilkategorie-Filter (nur Hauptteil, #23) */}
-        {istHauptteil && (
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(hauptteilkategorieLabels).map(([slug, label]) => (
-              <FilterChip
-                key={slug}
-                selected={hkat.includes(slug)}
-                onClick={() => toggle(hkat, setHkat, slug)}
-              >
-                {label}
-              </FilterChip>
-            ))}
-          </div>
-        )}
-
         {error && (
           <p
             role="alert"
@@ -224,7 +217,9 @@ export function ExercisePickerDialog({
             </li>
           ) : results.length === 0 ? (
             <li className="px-2 py-6 text-center type-body-medium text-on-surface-variant">
-              Keine passende Übung gefunden.
+              {hauptteilkategorieLabel && !q.trim() && form.length === 0
+                ? `Für „${hauptteilkategorieLabel}" sind aktuell keine Übungen verfügbar.`
+                : "Keine passende Übung gefunden."}
             </li>
           ) : (
             results.map((ex) => {

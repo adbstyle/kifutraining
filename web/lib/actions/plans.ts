@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
 import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/plan";
-import { kategorienSlugs, type TrainingsteilSlug } from "@/lib/vocab";
+import {
+  kategorienSlugs,
+  hauptteilkategorieSlugs,
+  type TrainingsteilSlug,
+} from "@/lib/vocab";
 
 export type PlanFormState = {
   status: "idle" | "error";
@@ -84,12 +88,16 @@ export async function createPlan(
 // ── Story #10: Übung einem Trainingsteil zuordnen ────────────────────────────
 
 /** Eine sichtbare Übung dem passenden Trainingsteil des Plans zuordnen
- *  (Story #10 AC4/AC5/AC6). Persistiert unmittelbar. Der Phasen-Guard-Trigger
- *  erzwingt die Trainingsteil-Übereinstimmung zusätzlich auf DB-Ebene. */
+ *  (Story #10 AC4/AC5/AC6). Im Hauptteil zusätzlich der gewählten
+ *  Hauptteilkategorie (Story #23): nur Übungen der passenden Kategorie sind
+ *  zuordenbar, die Position ist pro Unterkategorie eindeutig. Persistiert
+ *  unmittelbar; der Phasen-Guard-Trigger erzwingt Trainingsteil- und
+ *  Kategorie-Bindung zusätzlich auf DB-Ebene. */
 export async function addPlanExercise(
   planId: string,
   trainingsteil: string,
   exerciseId: string,
+  hauptteilkategorie?: string | null,
 ): Promise<PlanActionResult> {
   const supabase = await createClient();
   const {
@@ -98,6 +106,11 @@ export async function addPlanExercise(
   if (!user) return { ok: false, error: "Nicht angemeldet." };
   if (!TRAININGSTEIL_SLUGS.includes(trainingsteil as TrainingsteilSlug))
     return { ok: false, error: "Ungültiger Trainingsteil." };
+
+  const istHauptteil = trainingsteil === "hauptteil";
+  const hkat = istHauptteil ? (hauptteilkategorie ?? null) : null;
+  if (istHauptteil && !hauptteilkategorieSlugs.includes(hkat as never))
+    return { ok: false, error: "Ungültige Hauptteilkategorie." };
 
   // Eigentum prüfen (UX-Guard; RLS setzt es ohnehin serverseitig durch).
   const { data: plan } = await supabase
@@ -108,22 +121,30 @@ export async function addPlanExercise(
     .maybeSingle();
   if (!plan) return { ok: false, error: "Plan nicht gefunden." };
 
-  // Übung holen: Name für den Platzhalter-Cache, Trainingsteil-Abgleich.
+  // Übung holen: Name für den Platzhalter-Cache, Trainingsteil-/Kategorie-Abgleich.
   const { data: ex } = await supabase
     .from("exercises")
-    .select("id, name, trainingsteil")
+    .select("id, name, trainingsteil, hauptteilkategorie")
     .eq("id", exerciseId)
     .maybeSingle();
   if (!ex) return { ok: false, error: "Übung nicht verfügbar." };
   if (ex.trainingsteil !== trainingsteil)
     return { ok: false, error: "Übung passt nicht zum Trainingsteil." };
+  // Harte Regel (Story #23 AC3): in eine Unterkategorie nur Übungen ebendieser.
+  if (istHauptteil && ex.hauptteilkategorie !== hkat)
+    return { ok: false, error: "Übung passt nicht zur Hauptteilkategorie." };
 
-  // Nächste Position im Trainingsteil bestimmen (eindeutige Reihenfolge).
-  const { data: last } = await supabase
+  // Nächste Position bestimmen (eindeutige Reihenfolge je Unterkategorie im
+  // Hauptteil, sonst je Trainingsteil).
+  let posQuery = supabase
     .from("plan_exercises")
     .select("position")
     .eq("plan_id", planId)
-    .eq("trainingsteil", trainingsteil)
+    .eq("trainingsteil", trainingsteil);
+  posQuery = istHauptteil
+    ? posQuery.eq("hauptteilkategorie", hkat as string)
+    : posQuery;
+  const { data: last } = await posQuery
     .order("position", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -132,6 +153,7 @@ export async function addPlanExercise(
   const { error } = await supabase.from("plan_exercises").insert({
     plan_id: planId,
     trainingsteil,
+    hauptteilkategorie: hkat,
     exercise_id: exerciseId,
     exercise_name_cache: ex.name,
     position,
@@ -150,6 +172,7 @@ export async function removeOnePlanExercise(
   planId: string,
   trainingsteil: string,
   exerciseId: string,
+  hauptteilkategorie?: string | null,
 ): Promise<PlanActionResult> {
   const supabase = await createClient();
   const {
@@ -158,6 +181,9 @@ export async function removeOnePlanExercise(
   if (!user) return { ok: false, error: "Nicht angemeldet." };
   if (!TRAININGSTEIL_SLUGS.includes(trainingsteil as TrainingsteilSlug))
     return { ok: false, error: "Ungültiger Trainingsteil." };
+
+  const istHauptteil = trainingsteil === "hauptteil";
+  const hkat = istHauptteil ? (hauptteilkategorie ?? null) : null;
 
   // Eigentum prüfen (UX-Guard; RLS setzt es ohnehin durch).
   const { data: plan } = await supabase
@@ -168,12 +194,16 @@ export async function removeOnePlanExercise(
     .maybeSingle();
   if (!plan) return { ok: false, error: "Plan nicht gefunden." };
 
-  const { data: row } = await supabase
+  // Zuletzt hinzugefügte passende Zuordnung entfernen (im Hauptteil zusätzlich
+  // auf die Unterkategorie eingegrenzt).
+  let rowQuery = supabase
     .from("plan_exercises")
     .select("id")
     .eq("plan_id", planId)
     .eq("trainingsteil", trainingsteil)
-    .eq("exercise_id", exerciseId)
+    .eq("exercise_id", exerciseId);
+  rowQuery = istHauptteil ? rowQuery.eq("hauptteilkategorie", hkat as string) : rowQuery;
+  const { data: row } = await rowQuery
     .order("position", { ascending: false })
     .limit(1)
     .maybeSingle();

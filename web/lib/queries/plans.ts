@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { likePattern } from "@/lib/search";
-import { TRAININGSTEIL_SLUGS, sortStufen, teilTraegtDauer } from "@/lib/plan";
+import { TRAININGSTEIL_SLUGS, sortStufen, teilTraegtDauer, hkatRank } from "@/lib/plan";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
 
@@ -39,6 +39,9 @@ export type PlanExerciseItem = {
   /** plan_exercises.id (die Zuordnung selbst). */
   id: string;
   trainingsteil: TrainingsteilSlug;
+  /** Snapshot der Hauptteilkategorie (nur Hauptteil-Zuordnungen; placeholder-fest
+   *  aus `plan_exercises`, nicht aus der ggf. unsichtbaren Übung). */
+  hauptteilkategorie: string | null;
   position: number;
   durationMin: number | null;
   exerciseId: string | null;
@@ -62,7 +65,7 @@ export type PlanDetail = {
 };
 
 const PE_SELECT = `
-  id, trainingsteil, position, duration_min, exercise_id, exercise_name_cache,
+  id, trainingsteil, hauptteilkategorie, position, duration_min, exercise_id, exercise_name_cache,
   exercises (
     id, slug, name, trainingsteil, kategorien, visibility, source,
     feldtyp, hauptteilkategorie, erscheinungsform, anzahl_kinder, material,
@@ -76,6 +79,7 @@ type RawExercise = PlanExerciseExercise | null;
 type RawPlanExercise = {
   id: string;
   trainingsteil: string;
+  hauptteilkategorie: string | null;
   position: number;
   duration_min: number | null;
   exercise_id: string | null;
@@ -105,6 +109,7 @@ function mapPlan(raw: RawPlan): PlanDetail {
       return {
         id: pe.id,
         trainingsteil: pe.trainingsteil as TrainingsteilSlug,
+        hauptteilkategorie: pe.hauptteilkategorie,
         position: pe.position,
         durationMin: pe.duration_min,
         exerciseId: pe.exercise_id,
@@ -113,11 +118,15 @@ function mapPlan(raw: RawPlan): PlanDetail {
         exercise: ex,
       };
     })
-    .sort((a, b) =>
-      a.trainingsteil === b.trainingsteil
-        ? a.position - b.position
-        : teilRank(a.trainingsteil) - teilRank(b.trainingsteil),
-    );
+    // Sortierung: Trainingsteil-Reihenfolge, im Hauptteil zusätzlich nach
+    // Unterkategorie (Positionen sind dort pro Unterkategorie eindeutig), dann
+    // Position.
+    .sort((a, b) => {
+      if (a.trainingsteil !== b.trainingsteil)
+        return teilRank(a.trainingsteil) - teilRank(b.trainingsteil);
+      const hk = hkatRank(a.hauptteilkategorie) - hkatRank(b.hauptteilkategorie);
+      return hk !== 0 ? hk : a.position - b.position;
+    });
 
   return {
     id: raw.id,
@@ -165,12 +174,13 @@ export async function getPlanView(id: string): Promise<PlanDetail | null> {
   return data ? mapPlan(data as unknown as RawPlan) : null;
 }
 
-// ── Übersichten (Story #5 eigene / Story #8 öffentliche Pläne) ───────────────
+// ── Übersichten (eigene Pläne / Plan-Pool) ───────────────────────────────────
 
 export type PlanListFilters = {
   q?: string;
   stufen?: string[]; // Überlappung
-  visibility?: "public" | "private"; // nur eigene Übersicht
+  visibility?: "public" | "private"; // eigene Übersicht + Pool-Eingrenzung
+  mine?: boolean; // nur eigene Pläne (owner == aktueller USER) — nur im Pool
 };
 
 export type PlanListRow = {
@@ -244,17 +254,30 @@ export async function getMyPlans(
   return (data ?? []).map((r) => mapListRow(r as unknown as RawListPlan));
 }
 
-/** Öffentlich geschaltete Pläne (Story #8). Ohne Suche nach Aktualität; mit
- *  Suche nach Namens-Relevanz (kürzerer Name ⇒ näher am Begriff) sortiert. */
-export async function getPublicPlans(
+/** Plan-Pool — die Trainingsplaner-Einstiegsansicht (analog zum Übungspool).
+ *  Ohne Owner-/Sichtbarkeitsfilter liefert die RLS genau die für den Betrachter
+ *  lesbare Menge: alle öffentlichen Pläne (der Community wie eigene) plus die
+ *  eigenen privaten. So profitiert der Trainer von geteilten Plänen und sieht
+ *  zugleich seine Entwürfe an einem Ort.
+ *
+ *  Optionale Eingrenzung: `mine` auf die selbst erstellten Pläne, `visibility`
+ *  auf öffentlich bzw. privat. Ohne Suche nach Aktualität; mit Suche nach
+ *  Namens-Relevanz (kürzerer Name ⇒ näher am Begriff) sortiert. */
+export async function getPlanPool(
   f: PlanListFilters = {},
 ): Promise<PlanListRow[]> {
   const supabase = await createClient();
-  let query = supabase
-    .from("training_plans")
-    .select(LIST_SELECT)
-    .eq("visibility", "public");
+  let query = supabase.from("training_plans").select(LIST_SELECT);
 
+  // „Nur meine": eigene Pläne; anonym gibt es keine -> leere Liste.
+  if (f.mine) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return [];
+    query = query.eq("owner_id", user.id);
+  }
+  if (f.visibility) query = query.eq("visibility", f.visibility);
   if (f.stufen?.length) query = query.overlaps("stufen", f.stufen);
 
   const hasQuery = !!f.q?.trim();
