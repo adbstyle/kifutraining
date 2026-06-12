@@ -592,6 +592,18 @@ export default function Styleguide() {
         <OverlaysDemo />
       </Section>
 
+      <Section n="18" title="Breadcrumbs">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Sekundäre Pfad-Navigation. Datengetrieben (<code>items</code>); das
+          letzte Item ohne <code>href</code> ist die aktuelle Seite
+          (<code>aria-current</code>) und trägt das Gewicht (
+          <code>title-small</code>). Separator standardmässig{" "}
+          <code>ChevronRight</code>, per <code>separator</code> ersetzbar. Lange
+          Pfade kollabieren ab <code>maxItems</code> zu einem aufklappbaren
+          „…"-Button. Gespeist aus <code>--breadcrumb-*</code>-Component-Tokens.
+        </p>
+        <BreadcrumbsDemo />
+      </Section>
       <Section n="19" title="Feld-Diagramm">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           Spielfeld-Diagramme (Epic #47) werden als SVG aus der gespeicherten
@@ -628,18 +640,6 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="18" title="Breadcrumbs">
-        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Sekundäre Pfad-Navigation. Datengetrieben (<code>items</code>); das
-          letzte Item ohne <code>href</code> ist die aktuelle Seite
-          (<code>aria-current</code>) und trägt das Gewicht (
-          <code>title-small</code>). Separator standardmässig{" "}
-          <code>ChevronRight</code>, per <code>separator</code> ersetzbar. Lange
-          Pfade kollabieren ab <code>maxItems</code> zu einem aufklappbaren
-          „…"-Button. Gespeist aus <code>--breadcrumb-*</code>-Component-Tokens.
-        </p>
-        <BreadcrumbsDemo />
-      </Section>
     </main>
   );
 }

@@ -55,11 +55,12 @@ function flaechenPunkt(svg: SVGSVGElement, e: { clientX: number; clientY: number
 
 const clamp = (v: number, max: number) => Math.min(Math.max(v, 0), max);
 
-type Drag =
+type Drag = { gemerkt: boolean } & (
   | { modus: "punktig"; id: string; dx: number; dy: number }
   | { modus: "pfad"; id: string; start: Punkt; orig: Punkt[] }
   | { modus: "zone"; id: string; start: Punkt; orig: ZoneElement }
-  | { modus: "groesse"; id: string; orig: ZoneElement };
+  | { modus: "groesse"; id: string; orig: ZoneElement }
+);
 
 /** Was gerade Punkt für Punkt gezeichnet wird: Bewegung/Linie oder Polygon-Zone. */
 type Zeichnen = { werkzeug: PfadTyp | "polygon"; punkte: Punkt[] };
@@ -288,14 +289,15 @@ export function DiagrammEditor({
     setSelectedId(el.id);
     const svg = svgRef.current;
     if (!svg) return;
-    merken();
     const p = flaechenPunkt(svg, e);
+    // gemerkt=false: der Undo-Schnappschuss entsteht erst bei der ersten
+    // echten Bewegung — blosses Selektieren flutet den Verlauf nicht.
     dragRef.current =
       el.art === "pfad"
-        ? { modus: "pfad", id: el.id, start: p, orig: el.punkte }
+        ? { gemerkt: false, modus: "pfad", id: el.id, start: p, orig: el.punkte }
         : el.art === "zone"
-          ? { modus: "zone", id: el.id, start: p, orig: el }
-          : { modus: "punktig", id: el.id, dx: p.x - el.x, dy: p.y - el.y };
+          ? { gemerkt: false, modus: "zone", id: el.id, start: p, orig: el }
+          : { gemerkt: false, modus: "punktig", id: el.id, dx: p.x - el.x, dy: p.y - el.y };
     svg.setPointerCapture(e.pointerId);
   }
 
@@ -304,8 +306,7 @@ export function DiagrammEditor({
     e.stopPropagation();
     const svg = svgRef.current;
     if (!svg) return;
-    merken();
-    dragRef.current = { modus: "groesse", id: el.id, orig: el };
+    dragRef.current = { gemerkt: false, modus: "groesse", id: el.id, orig: el };
     svg.setPointerCapture(e.pointerId);
   }
 
@@ -318,6 +319,10 @@ export function DiagrammEditor({
     }
     const drag = dragRef.current;
     if (!drag) return;
+    if (!drag.gemerkt) {
+      merken();
+      drag.gemerkt = true;
+    }
     const p = flaechenPunkt(svg, e);
     setElemente((prev) =>
       prev.map((el) => {
