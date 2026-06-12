@@ -6,6 +6,9 @@ import { Button } from "@/components/ui";
 import {
   FLAECHE,
   DIAGRAMM_VERSION,
+  FARBEN,
+  farbSlugs,
+  type FarbSlug,
   type DiagrammData,
   type DiagrammElement,
   type SymbolTyp,
@@ -83,6 +86,12 @@ export function DiagrammEditor({
     setSelectedId(null);
   }
 
+  function setFarbe(id: string, farbe: FarbSlug) {
+    setElemente((prev) =>
+      prev.map((el) => (el.id === id && el.art === "symbol" ? { ...el, farbe } : el)),
+    );
+  }
+
   function onElementPointerDown(e: React.PointerEvent, el: DiagrammElement) {
     if (el.art !== "symbol") return;
     e.stopPropagation();
@@ -129,13 +138,11 @@ export function DiagrammEditor({
     <div className="flex flex-col gap-4">
       {/* Werkzeug-Palette */}
       <div className="flex flex-wrap items-center gap-2">
-        {(Object.entries(SYMBOLE) as [SymbolTyp, NonNullable<(typeof SYMBOLE)[SymbolTyp]>][]).map(
-          ([typ, def]) => (
-            <Button key={typ} variant="tonal" size="sm" onClick={() => addSymbol(typ)}>
-              {def.label}
-            </Button>
-          ),
-        )}
+        {(Object.keys(SYMBOLE) as SymbolTyp[]).map((typ) => (
+          <Button key={typ} variant="tonal" size="sm" onClick={() => addSymbol(typ)}>
+            {SYMBOLE[typ].label}
+          </Button>
+        ))}
         <div className="ml-auto flex items-center gap-3">
           <Button
             variant="danger"
@@ -149,6 +156,29 @@ export function DiagrammEditor({
           </Button>
         </div>
       </div>
+
+      {/* Farbwahl für das ausgewählte färbbare Element */}
+      {selected?.art === "symbol" && symbolDef(selected.typ).faerbbar && (
+        <div className="flex items-center gap-2" role="group" aria-label="Farbe des Elements">
+          <span className="type-label-small text-on-surface-variant">Farbe</span>
+          {farbSlugs.map((slug) => {
+            const aktiv = (selected.farbe ?? symbolDef(selected.typ).defaultFarbe) === slug;
+            return (
+              <button
+                key={slug}
+                type="button"
+                onClick={() => setFarbe(selected.id, slug)}
+                aria-label={`Farbe ${slug}`}
+                aria-pressed={aktiv}
+                className={`focus-ring h-7 w-7 rounded-full border-2 ${
+                  aktiv ? "border-on-surface" : "border-outline-variant"
+                }`}
+                style={{ backgroundColor: FARBEN[slug] }}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Zeichenfläche */}
       <div
