@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, RotateCcw, RotateCw, Trash2, X } from "lucide-react";
+import { Check, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import {
   FLAECHE,
@@ -91,9 +91,37 @@ export function DiagrammEditor({
   const [zeichnen, setZeichnen] = useState<Zeichnen | null>(null);
   const [hoverPunkt, setHoverPunkt] = useState<Punkt | null>(null);
 
+  // Undo/Redo (#54): Schnappschüsse vor jeder abgeschlossenen Bearbeitung;
+  // ein Drag zählt als EIN Schritt (Schnappschuss beim Greifen).
+  const [verlauf, setVerlauf] = useState<DiagrammElement[][]>([]);
+  const [zukunft, setZukunft] = useState<DiagrammElement[][]>([]);
+
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<Drag | null>(null);
   const ersterRender = useRef(true);
+
+  function merken() {
+    setVerlauf((v) => [...v.slice(-49), elemente]);
+    setZukunft([]);
+  }
+
+  function rueckgaengig() {
+    if (verlauf.length === 0) return;
+    const letzter = verlauf[verlauf.length - 1];
+    setVerlauf((v) => v.slice(0, -1));
+    setZukunft((z) => [...z, elemente]);
+    setElemente(letzter);
+    setSelectedId(null);
+  }
+
+  function wiederherstellen() {
+    if (zukunft.length === 0) return;
+    const naechster = zukunft[zukunft.length - 1];
+    setZukunft((z) => z.slice(0, -1));
+    setVerlauf((v) => [...v, elemente]);
+    setElemente(naechster);
+    setSelectedId(null);
+  }
 
   // Autosave: debounced nach jeder Änderung (#49 AK6). Kein expliziter
   // Speicher-Schritt; Status informiert über ausstehend/gespeichert/Fehler.
@@ -115,6 +143,7 @@ export function DiagrammEditor({
   }, [elemente, exerciseId]);
 
   function addSymbol(typ: SymbolTyp) {
+    merken();
     const n = elemente.length;
     const neu: DiagrammElement = {
       id: crypto.randomUUID(),
@@ -130,17 +159,20 @@ export function DiagrammEditor({
 
   function removeSelected() {
     if (!selectedId) return;
+    merken();
     setElemente((prev) => prev.filter((e) => e.id !== selectedId));
     setSelectedId(null);
   }
 
   function setFarbe(id: string, farbe: FarbSlug) {
+    merken();
     setElemente((prev) =>
       prev.map((el) => (el.id === id && el.art !== "text" ? { ...el, farbe } : el)),
     );
   }
 
   function setGestrichelt(id: string, gestrichelt: boolean) {
+    merken();
     setElemente((prev) =>
       prev.map((el) =>
         el.id === id && el.art === "pfad" ? { ...el, gestrichelt } : el,
@@ -164,6 +196,7 @@ export function DiagrammEditor({
     if (!zeichnen) return;
     const punkte = punkteOverride ?? zeichnen.punkte;
     if (punkte.length >= minPunkte(zeichnen.werkzeug)) {
+      merken();
       const neu: DiagrammElement =
         zeichnen.werkzeug === "polygon"
           ? (() => {
@@ -204,6 +237,7 @@ export function DiagrammEditor({
   }
 
   function addZone(form: Exclude<ZonenForm, "polygon">) {
+    merken();
     const neu: DiagrammElement = {
       id: crypto.randomUUID(),
       art: "zone",
@@ -218,6 +252,7 @@ export function DiagrammEditor({
   }
 
   function addText() {
+    merken();
     const neu: DiagrammElement = {
       id: crypto.randomUUID(),
       art: "text",
@@ -237,6 +272,7 @@ export function DiagrammEditor({
 
   // Drehen in festen 45°-Schritten — andere Winkel gibt es nicht (#51 AK3).
   function drehen(id: string, delta: 45 | -45) {
+    merken();
     setElemente((prev) =>
       prev.map((el) =>
         el.id === id && el.art === "symbol" && symbolDef(el.typ).drehbar
@@ -253,6 +289,7 @@ export function DiagrammEditor({
     setSelectedId(el.id);
     const svg = svgRef.current;
     if (!svg) return;
+    merken();
     const p = flaechenPunkt(svg, e);
     dragRef.current =
       el.art === "pfad"
@@ -268,6 +305,7 @@ export function DiagrammEditor({
     e.stopPropagation();
     const svg = svgRef.current;
     if (!svg) return;
+    merken();
     dragRef.current = { modus: "groesse", id: el.id, orig: el };
     svg.setPointerCapture(e.pointerId);
   }
@@ -349,7 +387,25 @@ export function DiagrammEditor({
             {SYMBOLE[typ].label}
           </Button>
         ))}
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outlined"
+            size="sm"
+            onClick={rueckgaengig}
+            disabled={verlauf.length === 0 || !!zeichnen}
+            aria-label="Rückgängig"
+          >
+            <Undo2 size={16} strokeWidth={2} aria-hidden />
+          </Button>
+          <Button
+            variant="outlined"
+            size="sm"
+            onClick={wiederherstellen}
+            disabled={zukunft.length === 0 || !!zeichnen}
+            aria-label="Wiederherstellen"
+          >
+            <Redo2 size={16} strokeWidth={2} aria-hidden />
+          </Button>
           <Button
             variant="danger"
             size="sm"
@@ -455,6 +511,7 @@ export function DiagrammEditor({
             id="textbox-text"
             type="text"
             value={selected.text}
+            onFocus={merken}
             onChange={(e) => setText(selected.id, e.target.value)}
             className="focus-ring type-body-medium w-72 rounded-(--field-shape) border-[1.5px] border-(--field-outline) bg-transparent px-3 py-2 text-on-surface"
           />
@@ -526,6 +583,11 @@ export function DiagrammEditor({
           }
           if (e.key === "Escape") abbrechenZeichnen();
           if (e.key === "Enter" && zeichnen) fertigZeichnen();
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
+            e.preventDefault();
+            if (e.shiftKey) wiederherstellen();
+            else rueckgaengig();
+          }
         }}
       >
         <svg
