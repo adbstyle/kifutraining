@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
+import { Check, ClipboardPaste, Copy, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import {
   FLAECHE,
@@ -55,6 +55,43 @@ function flaechenPunkt(svg: SVGSVGElement, e: { clientX: number; clientY: number
 
 const clamp = (v: number, max: number) => Math.min(Math.max(v, 0), max);
 
+/** Diagonaler Versatz pro Einfügen, damit Kopien kaskadieren statt stapeln (#63 AK6). */
+const EINFUEGE_VERSATZ = 40;
+
+/** Eigenständige Kopie eines Elements mit diagonalem Versatz (#63).
+ *  Punkt-Geometrie wird tief kopiert; der Versatz ist so begrenzt,
+ *  dass die Kopie vollständig auf der Fläche bleibt. */
+function versetzteKopie(el: DiagrammElement, versatz: number): DiagrammElement {
+  const id = crypto.randomUUID();
+  switch (el.art) {
+    case "symbol":
+    case "text":
+      return {
+        ...el,
+        id,
+        x: clamp(el.x + versatz, FLAECHE.breite),
+        y: clamp(el.y + versatz, FLAECHE.hoehe),
+      };
+    case "pfad": {
+      const box = bbox(el.punkte);
+      const dx = clamp(box.minX + versatz, FLAECHE.breite - (box.maxX - box.minX)) - box.minX;
+      const dy = clamp(box.minY + versatz, FLAECHE.hoehe - (box.maxY - box.minY)) - box.minY;
+      return { ...el, id, punkte: el.punkte.map((p) => ({ x: p.x + dx, y: p.y + dy })) };
+    }
+    case "zone": {
+      const dx = clamp(el.x + versatz, FLAECHE.breite - el.breite) - el.x;
+      const dy = clamp(el.y + versatz, FLAECHE.hoehe - el.hoehe) - el.y;
+      return {
+        ...el,
+        id,
+        x: el.x + dx,
+        y: el.y + dy,
+        punkte: el.punkte?.map((p) => ({ x: p.x + dx, y: p.y + dy })),
+      };
+    }
+  }
+}
+
 type Drag = { gemerkt: boolean } & (
   | { modus: "punktig"; id: string; dx: number; dy: number }
   | { modus: "pfad"; id: string; start: Punkt; orig: Punkt[] }
@@ -90,6 +127,15 @@ export function DiagrammEditor({
   // ein Drag zählt als EIN Schritt (Schnappschuss beim Greifen).
   const [verlauf, setVerlauf] = useState<DiagrammElement[][]>([]);
   const [zukunft, setZukunft] = useState<DiagrammElement[][]>([]);
+
+  // Zwischenablage (#63): Schnappschuss zum Kopier-Zeitpunkt, bewusst
+  // ausserhalb des Undo-Verlaufs — Ändern/Löschen des Originals und
+  // Undo lassen den kopierten Stand unberührt (AK10). Der Zähler
+  // staffelt den Versatz, damit Mehrfach-Einfügen kaskadiert (AK6);
+  // als Ref, weil er kein Rendering treibt und so auch bei schnell
+  // aufeinanderfolgendem Einfügen nie einen veralteten Stand liest.
+  const [zwischenablage, setZwischenablage] = useState<DiagrammElement | null>(null);
+  const eingefuegtRef = useRef(0);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<Drag | null>(null);
@@ -162,6 +208,23 @@ export function DiagrammEditor({
     merken();
     setElemente((prev) => prev.filter((e) => e.id !== selectedId));
     setSelectedId(null);
+  }
+
+  function kopieren() {
+    if (zeichnen) return;
+    const el = elemente.find((e) => e.id === selectedId);
+    if (!el) return;
+    setZwischenablage(el);
+    eingefuegtRef.current = 0;
+  }
+
+  function einfuegen() {
+    if (!zwischenablage || zeichnen) return;
+    merken();
+    eingefuegtRef.current += 1;
+    const neu = versetzteKopie(zwischenablage, eingefuegtRef.current * EINFUEGE_VERSATZ);
+    setElemente((prev) => [...prev, neu]);
+    setSelectedId(neu.id);
   }
 
   function setFarbe(id: string, farbe: FarbSlug) {
@@ -411,6 +474,26 @@ export function DiagrammEditor({
             <Redo2 size={16} strokeWidth={2} aria-hidden />
           </Button>
           <Button
+            variant="outlined"
+            size="sm"
+            onClick={kopieren}
+            disabled={!selected || !!zeichnen}
+            aria-label="Ausgewähltes Element kopieren"
+          >
+            <Copy size={16} strokeWidth={2} aria-hidden />
+            Kopieren
+          </Button>
+          <Button
+            variant="outlined"
+            size="sm"
+            onClick={einfuegen}
+            disabled={!zwischenablage || !!zeichnen}
+            aria-label="Kopiertes Element einfügen"
+          >
+            <ClipboardPaste size={16} strokeWidth={2} aria-hidden />
+            Einfügen
+          </Button>
+          <Button
             variant="danger"
             size="sm"
             onClick={removeSelected}
@@ -596,6 +679,14 @@ export function DiagrammEditor({
             e.preventDefault();
             if (e.shiftKey) wiederherstellen();
             else rueckgaengig();
+          }
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "c") {
+            e.preventDefault();
+            kopieren();
+          }
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") {
+            e.preventDefault();
+            einfuegen();
           }
         }}
       >
