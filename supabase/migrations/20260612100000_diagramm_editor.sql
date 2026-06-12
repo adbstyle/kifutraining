@@ -11,6 +11,9 @@ alter table public.exercises
 
 -- Manual-Übungen sind read-only und behalten ihr statisches Original-Bild
 -- (Epic #47 Out of Scope 1): sie tragen nie ein Editor-Diagramm.
+-- Ohne NOT VALID sicher: beide Spalten sind soeben hinzugefügt und überall
+-- NULL — jede Bestandszeile erfüllt die Bedingung trivialerweise (CLAUDE.md-Regel
+-- zu verschärfenden CHECKs betrifft Invarianten über Bestandsdaten).
 alter table public.exercises
   add constraint manual_ohne_diagramm
     check (source <> 'manual' or (diagramm is null and bild_quelle is null));

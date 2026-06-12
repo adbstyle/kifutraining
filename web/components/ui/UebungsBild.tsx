@@ -41,7 +41,7 @@ export function UebungsBild({
     return (
       <Image
         src={bildUrl!}
-        alt={`Feld-Diagramm: ${name}`}
+        alt={`Übungsfoto: ${name}`}
         fill
         sizes={sizes}
         className="object-contain"

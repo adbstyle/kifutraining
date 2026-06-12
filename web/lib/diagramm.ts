@@ -28,6 +28,13 @@ export const FARBEN = {
 export type FarbSlug = keyof typeof FARBEN;
 export const farbSlugs = Object.keys(FARBEN) as FarbSlug[];
 
+/** Default-Farben nicht-symbolischer Elemente (Single Source für Editor + View). */
+export const ZONE_DEFAULT_FARBE: FarbSlug = "gelb";
+export const LINIE_DEFAULT_FARBE: FarbSlug = "weiss";
+
+/** Obergrenze für Textbox-Inhalte (Payload-Schutz, #53). */
+export const MAX_TEXT_LAENGE = 200;
+
 /** Gegenständliche Symbole (Story #50). */
 export const SYMBOL_TYPEN = [
   "tor",
@@ -66,6 +73,18 @@ export const ZONEN_FORMEN = ["rechteck", "ellipse", "dreieck", "polygon"] as con
 export type ZonenForm = (typeof ZONEN_FORMEN)[number];
 
 export type Punkt = { x: number; y: number };
+
+/** Begrenzungsrahmen einer Punktmenge (Editor-Drag, Polygon-Zonen). */
+export function bbox(punkte: Punkt[]) {
+  const xs = punkte.map((p) => p.x);
+  const ys = punkte.map((p) => p.y);
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys),
+  };
+}
 
 export type SymbolElement = {
   id: string;
@@ -136,7 +155,13 @@ function istElement(v: unknown): v is DiagrammElement {
   if (typeof e.id !== "string") return false;
   switch (e.art) {
     case "symbol":
-      return typeof e.typ === "string" && istZahl(e.x) && istZahl(e.y);
+      return (
+        typeof e.typ === "string" &&
+        istZahl(e.x) &&
+        istZahl(e.y) &&
+        (e.rotation === undefined ||
+          (ROTATIONEN as readonly number[]).includes(e.rotation as number))
+      );
     case "pfad":
       return (
         typeof e.typ === "string" &&
@@ -152,7 +177,12 @@ function istElement(v: unknown): v is DiagrammElement {
           (Array.isArray(e.punkte) && e.punkte.every(istPunkt)))
       );
     case "text":
-      return istZahl(e.x) && istZahl(e.y) && typeof e.text === "string";
+      return (
+        istZahl(e.x) &&
+        istZahl(e.y) &&
+        typeof e.text === "string" &&
+        e.text.length <= MAX_TEXT_LAENGE
+      );
     default:
       return false;
   }

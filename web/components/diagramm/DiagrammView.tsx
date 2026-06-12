@@ -1,6 +1,7 @@
 import {
   FLAECHE,
   FARBEN,
+  ZONE_DEFAULT_FARBE,
   type DiagrammData,
   type DiagrammElement,
   type PfadElement,
@@ -46,7 +47,7 @@ export function sortiertNachEbene(elemente: DiagrammElement[]): DiagrammElement[
   return [...elemente].sort((a, b) => ART_ORDNUNG[a.art] - ART_ORDNUNG[b.art]);
 }
 
-const punkteAttr = (punkte: Punkt[]) =>
+export const punkteAttr = (punkte: Punkt[]) =>
   punkte.map((p) => `${p.x},${p.y}`).join(" ");
 
 /** Pfeilspitze am Linienende, ausgerichtet am letzten Segment. */
@@ -79,6 +80,10 @@ export function zickzackPunkte(punkte: Punkt[], amplitude = 9, schritt = 26): Pu
     const dx = b.x - a.x;
     const dy = b.y - a.y;
     const len = Math.hypot(dx, dy);
+    if (len === 0) {
+      out.push(b);
+      continue;
+    }
     const n = Math.max(2, Math.round(len / schritt));
     for (let i = 1; i < n; i++) {
       const t = i / n;
@@ -144,7 +149,7 @@ export function PfadGrafik({ element }: { element: PfadElement }) {
 
 /** Markierte Zone (#53): farbige Füllung + Umriss, vier Formen. */
 export function ZoneGrafik({ element }: { element: ZoneElement }) {
-  const farbe = FARBEN[element.farbe ?? "gelb"];
+  const farbe = FARBEN[element.farbe ?? ZONE_DEFAULT_FARBE];
   const stil = { fill: farbe, fillOpacity: 0.28, stroke: farbe, strokeWidth: 4 };
   const { x, y, breite: b, hoehe: h } = element;
   switch (element.form) {

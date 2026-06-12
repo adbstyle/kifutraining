@@ -38,6 +38,7 @@ import {
   User,
   Pencil,
 } from "lucide-react";
+import { DiagrammView } from "@/components/diagramm/DiagrammView";
 
 export const metadata: Metadata = {
   title: "Styleguide — KiFu Designsystem",
@@ -589,6 +590,42 @@ export default function Styleguide() {
           Gespeist aus <code>--dialog-*</code> / <code>--snackbar-*</code>-Tokens.
         </p>
         <OverlaysDemo />
+      </Section>
+
+      <Section n="19" title="Feld-Diagramm">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Spielfeld-Diagramme (Epic #47) werden als SVG aus der gespeicherten
+          Struktur und dem zentralen Symbol-Register gerendert —{" "}
+          <code>DiagrammView</code> ist die eine Anzeige-Komponente für Karte,
+          Detailseite, Trainings, Druck und mobil; <code>UebungsBild</code>{" "}
+          schaltet zwischen Diagramm, Foto und Platzhalter. Der interaktive
+          Editor (<code>DiagrammEditor</code>) lebt auf{" "}
+          <code>/uebung/[slug]/diagramm</code> und braucht eine eigene Übung.
+          Symbol-Geometrie ist im Register verankert (Anker = Mittelpunkt),
+          damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.
+        </p>
+        <div className="relative aspect-[16/10] max-w-xl overflow-hidden rounded-[6px] border border-outline-variant">
+          <DiagrammView
+            title="Feld-Diagramm: Beispiel"
+            diagramm={{
+              version: 1,
+              elemente: [
+                { id: "z1", art: "zone", form: "rechteck", x: 950, y: 250, breite: 420, hoehe: 480, farbe: "blau" },
+                { id: "t1", art: "symbol", typ: "tor", x: 1380, y: 500, rotation: 270 },
+                { id: "m1", art: "symbol", typ: "minitor", x: 240, y: 200, rotation: 90 },
+                { id: "p1", art: "symbol", typ: "pylone", x: 480, y: 700, farbe: "rot" },
+                { id: "p2", art: "symbol", typ: "pylone", x: 620, y: 760, farbe: "gelb" },
+                { id: "s1", art: "symbol", typ: "spieler", x: 380, y: 420, rotation: 90, farbe: "rot" },
+                { id: "s2", art: "symbol", typ: "spieler", x: 1050, y: 480, rotation: 90, farbe: "blau" },
+                { id: "tw", art: "symbol", typ: "torwart", x: 1280, y: 500, rotation: 270 },
+                { id: "b1", art: "symbol", typ: "fussball", x: 470, y: 460 },
+                { id: "lw", art: "pfad", typ: "laufweg", punkte: [{ x: 380, y: 480 }, { x: 700, y: 620 }, { x: 950, y: 540 }] },
+                { id: "pa", art: "pfad", typ: "pass", punkte: [{ x: 500, y: 450 }, { x: 1000, y: 470 }] },
+                { id: "tx", art: "text", x: 1160, y: 130, text: "Abschlusszone" },
+              ],
+            }}
+          />
+        </div>
       </Section>
 
       <Section n="18" title="Breadcrumbs">

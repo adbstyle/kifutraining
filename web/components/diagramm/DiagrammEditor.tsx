@@ -7,6 +7,10 @@ import {
   FLAECHE,
   DIAGRAMM_VERSION,
   FARBEN,
+  ZONE_DEFAULT_FARBE,
+  LINIE_DEFAULT_FARBE,
+  MAX_TEXT_LAENGE,
+  bbox,
   farbSlugs,
   type FarbSlug,
   type DiagrammData,
@@ -25,6 +29,7 @@ import {
   ElementGrafik,
   PfadGrafik,
   ZoneGrafik,
+  punkteAttr,
   sortiertNachEbene,
   textBox,
 } from "./DiagrammView";
@@ -49,17 +54,6 @@ function flaechenPunkt(svg: SVGSVGElement, e: { clientX: number; clientY: number
 }
 
 const clamp = (v: number, max: number) => Math.min(Math.max(v, 0), max);
-
-function bbox(punkte: Punkt[]) {
-  const xs = punkte.map((p) => p.x);
-  const ys = punkte.map((p) => p.y);
-  return {
-    minX: Math.min(...xs),
-    maxX: Math.max(...xs),
-    minY: Math.min(...ys),
-    maxY: Math.max(...ys),
-  };
-}
 
 type Drag =
   | { modus: "punktig"; id: string; dx: number; dy: number }
@@ -99,6 +93,9 @@ export function DiagrammEditor({
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<Drag | null>(null);
   const ersterRender = useRef(true);
+  // Saves laufen strikt nacheinander: ein langsamer älterer Save kann so
+  // nie einen neueren Stand in der DB überschreiben.
+  const saveKette = useRef<Promise<unknown>>(Promise.resolve());
 
   function merken() {
     setVerlauf((v) => [...v.slice(-49), elemente]);
@@ -131,13 +128,15 @@ export function DiagrammEditor({
       return;
     }
     setStatus("ausstehend");
-    const timer = setTimeout(async () => {
+    const timer = setTimeout(() => {
       setStatus("speichert");
-      const result = await saveDiagramm(exerciseId, {
-        version: DIAGRAMM_VERSION,
-        elemente,
+      saveKette.current = saveKette.current.then(async () => {
+        const result = await saveDiagramm(exerciseId, {
+          version: DIAGRAMM_VERSION,
+          elemente,
+        });
+        setStatus(result.ok ? "gespeichert" : "fehler");
       });
-      setStatus(result.ok ? "gespeichert" : "fehler");
     }, AUTOSAVE_MS);
     return () => clearTimeout(timer);
   }, [elemente, exerciseId]);
@@ -355,8 +354,8 @@ export function DiagrammEditor({
           const hoehe = Math.max(60, clamp(p.y, FLAECHE.hoehe) - o.y);
           // Polygon-Punkte proportional zur neuen Begrenzung skalieren.
           const punkte = o.punkte?.map((q) => ({
-            x: o.x + (q.x - o.x) * (breite / o.breite),
-            y: o.y + (q.y - o.y) * (hoehe / o.hoehe),
+            x: o.breite > 0 ? o.x + (q.x - o.x) * (breite / o.breite) : q.x,
+            y: o.hoehe > 0 ? o.y + (q.y - o.y) * (hoehe / o.hoehe) : q.y,
           }));
           return { ...el, breite, hoehe, punkte };
         }
@@ -426,6 +425,7 @@ export function DiagrammEditor({
             key={typ}
             variant={zeichnen?.werkzeug === typ ? "filled" : "outlined"}
             size="sm"
+            aria-pressed={zeichnen?.werkzeug === typ}
             disabled={!!zeichnen && zeichnen.werkzeug !== typ}
             onClick={() => (zeichnen?.werkzeug === typ ? abbrechenZeichnen() : startZeichnen(typ))}
           >
@@ -439,6 +439,7 @@ export function DiagrammEditor({
               key={form}
               variant={zeichnen?.werkzeug === "polygon" ? "filled" : "outlined"}
               size="sm"
+              aria-pressed={zeichnen?.werkzeug === "polygon"}
               disabled={!!zeichnen && zeichnen.werkzeug !== "polygon"}
               onClick={() =>
                 zeichnen?.werkzeug === "polygon" ? abbrechenZeichnen() : startZeichnen("polygon")
@@ -510,6 +511,7 @@ export function DiagrammEditor({
           <input
             id="textbox-text"
             type="text"
+            maxLength={MAX_TEXT_LAENGE}
             value={selected.text}
             onFocus={merken}
             onChange={(e) => setText(selected.id, e.target.value)}
@@ -529,8 +531,8 @@ export function DiagrammEditor({
               selected.art === "symbol"
                 ? symbolDef(selected.typ).defaultFarbe
                 : selected.art === "zone"
-                  ? "gelb"
-                  : "weiss";
+                  ? ZONE_DEFAULT_FARBE
+                  : LINIE_DEFAULT_FARBE;
             const aktiv = (selected.farbe ?? standard) === slug;
             return (
               <button
@@ -556,6 +558,7 @@ export function DiagrammEditor({
           <Button
             variant={selected.gestrichelt ? "outlined" : "filled"}
             size="sm"
+            aria-pressed={!selected.gestrichelt}
             onClick={() => setGestrichelt(selected.id, false)}
           >
             Durchgezogen
@@ -563,6 +566,7 @@ export function DiagrammEditor({
           <Button
             variant={selected.gestrichelt ? "filled" : "outlined"}
             size="sm"
+            aria-pressed={!!selected.gestrichelt}
             onClick={() => setGestrichelt(selected.id, true)}
           >
             Gestrichelt
@@ -619,7 +623,7 @@ export function DiagrammEditor({
               {el.art === "symbol" && <TrefferFlaeche element={el} />}
               {el.art === "pfad" && (
                 <polyline
-                  points={el.punkte.map((p) => `${p.x},${p.y}`).join(" ")}
+                  points={punkteAttr(el.punkte)}
                   fill="none"
                   stroke="transparent"
                   strokeWidth={28}

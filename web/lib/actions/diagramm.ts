@@ -26,28 +26,40 @@ export async function saveDiagramm(
   if (!diagramm || diagramm.elemente.length > MAX_ELEMENTE)
     return { ok: false, error: "Ungültiges Diagramm." };
 
-  // Beim ersten Diagramm wird es das aktive Anzeige-Bild (#56 AK3:
-  // Diagramm bevorzugt, bis der USER umschaltet).
-  const { data: updated, error } = await supabase
+  // bild_quelle konsistent zum Diagramm-Inhalt mitführen (#56 AK3): beim
+  // ersten Element wird das Diagramm das aktive Bild; wird es geleert,
+  // fällt die Wahl zurück (sonst zeigte der Umschalter "Diagramm" an,
+  // während die Weiche längst das Foto rendert). Ein einziger Update —
+  // kein Fenster zwischen zwei Statements.
+  const { data: aktuell } = await supabase
     .from("exercises")
-    .update({ diagramm })
+    .select("bild_quelle")
     .eq("id", exerciseId)
     .eq("owner_id", user.id)
     .eq("source", "user")
-    .select("slug, bild_quelle")
+    .maybeSingle();
+  if (!aktuell) return { ok: false, error: "Übung nicht gefunden." };
+
+  const leer = diagramm.elemente.length === 0;
+  const bild_quelle = leer
+    ? aktuell.bild_quelle === "diagramm"
+      ? null
+      : aktuell.bild_quelle
+    : (aktuell.bild_quelle ?? "diagramm");
+
+  const { data: updated, error } = await supabase
+    .from("exercises")
+    .update({ diagramm, bild_quelle })
+    .eq("id", exerciseId)
+    .eq("owner_id", user.id)
+    .eq("source", "user")
+    .select("slug")
     .single();
   if (error || !updated)
     return { ok: false, error: error?.message ?? "Speichern fehlgeschlagen." };
 
-  if (!updated.bild_quelle && diagramm.elemente.length > 0) {
-    await supabase
-      .from("exercises")
-      .update({ bild_quelle: "diagramm" })
-      .eq("id", exerciseId)
-      .eq("owner_id", user.id);
-  }
-
   revalidatePath(`/uebung/${updated.slug}`);
+  revalidatePath(`/uebung/${updated.slug}/edit`);
   revalidatePath("/");
   return { ok: true };
 }
