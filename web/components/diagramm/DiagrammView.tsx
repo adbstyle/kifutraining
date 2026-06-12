@@ -1,4 +1,11 @@
-import { FLAECHE, type DiagrammData, type DiagrammElement } from "@/lib/diagramm";
+import {
+  FLAECHE,
+  FARBEN,
+  type DiagrammData,
+  type DiagrammElement,
+  type PfadElement,
+  type Punkt,
+} from "@/lib/diagramm";
 import { symbolDef, symbolFarbe } from "./symbols";
 import { cn } from "@/lib/cn";
 
@@ -37,6 +44,102 @@ export function sortiertNachEbene(elemente: DiagrammElement[]): DiagrammElement[
   return [...elemente].sort((a, b) => ART_ORDNUNG[a.art] - ART_ORDNUNG[b.art]);
 }
 
+const punkteAttr = (punkte: Punkt[]) =>
+  punkte.map((p) => `${p.x},${p.y}`).join(" ");
+
+/** Pfeilspitze am Linienende, ausgerichtet am letzten Segment. */
+function PfeilSpitze({ punkte, farbe }: { punkte: Punkt[]; farbe: string }) {
+  const b = punkte[punkte.length - 1];
+  const a = punkte[punkte.length - 2] ?? b;
+  const ang = Math.atan2(b.y - a.y, b.x - a.x);
+  const g = 20;
+  const seite = (off: number): Punkt => ({
+    x: b.x - g * Math.cos(ang + off),
+    y: b.y - g * Math.sin(ang + off),
+  });
+  const l = seite(-0.45);
+  const r = seite(0.45);
+  return (
+    <polygon
+      points={`${b.x},${b.y} ${l.x},${l.y} ${r.x},${r.y}`}
+      fill={farbe}
+    />
+  );
+}
+
+/** Zickzack entlang der Stützpunkte — die SFV-Darstellung des Dribblings. */
+export function zickzackPunkte(punkte: Punkt[], amplitude = 9, schritt = 26): Punkt[] {
+  const out: Punkt[] = [punkte[0]];
+  let seite = 1;
+  for (let s = 0; s < punkte.length - 1; s++) {
+    const a = punkte[s];
+    const b = punkte[s + 1];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len = Math.hypot(dx, dy);
+    const n = Math.max(2, Math.round(len / schritt));
+    for (let i = 1; i < n; i++) {
+      const t = i / n;
+      out.push({
+        x: a.x + dx * t + (-dy / len) * amplitude * seite,
+        y: a.y + dy * t + (dx / len) * amplitude * seite,
+      });
+      seite = -seite;
+    }
+    out.push(b);
+  }
+  return out;
+}
+
+/** Bewegungs- und Linien-Darstellung (#52): Laufweg durchgezogen + Pfeil,
+ *  Dribbling als Zickzack + Pfeil, Pass als kräftiger gerader Pfeil,
+ *  freie Linie farbig, wahlweise gestrichelt. */
+export function PfadGrafik({ element }: { element: PfadElement }) {
+  const weiss = "#fafafa";
+  const farbe = element.farbe ? FARBEN[element.farbe] : weiss;
+  const basis = {
+    fill: "none" as const,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+  switch (element.typ) {
+    case "laufweg":
+      return (
+        <>
+          <polyline points={punkteAttr(element.punkte)} {...basis} stroke={weiss} strokeWidth={5} />
+          <PfeilSpitze punkte={element.punkte} farbe={weiss} />
+        </>
+      );
+    case "dribbling": {
+      const zz = zickzackPunkte(element.punkte);
+      return (
+        <>
+          <polyline points={punkteAttr(zz)} {...basis} stroke={weiss} strokeWidth={4.5} />
+          <PfeilSpitze punkte={element.punkte} farbe={weiss} />
+        </>
+      );
+    }
+    case "pass":
+      return (
+        <>
+          <polyline points={punkteAttr(element.punkte)} {...basis} stroke={weiss} strokeWidth={8} />
+          <PfeilSpitze punkte={element.punkte} farbe={weiss} />
+        </>
+      );
+    case "linie":
+    default:
+      return (
+        <polyline
+          points={punkteAttr(element.punkte)}
+          {...basis}
+          stroke={farbe}
+          strokeWidth={5}
+          strokeDasharray={element.gestrichelt ? "16 12" : undefined}
+        />
+      );
+  }
+}
+
 /** Ein einzelnes Element (ohne Interaktion) — vom Editor wiederverwendet. */
 export function ElementGrafik({ element }: { element: DiagrammElement }) {
   switch (element.art) {
@@ -50,7 +153,9 @@ export function ElementGrafik({ element }: { element: DiagrammElement }) {
         </g>
       );
     }
-    // Pfade (#52), Zonen und Text (#53) folgen in ihren Stories.
+    case "pfad":
+      return <PfadGrafik element={element} />;
+    // Zonen und Text (#53) folgen in ihrer Story.
     default:
       return null;
   }

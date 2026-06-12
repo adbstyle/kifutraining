@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { RotateCcw, RotateCw, Trash2 } from "lucide-react";
+import { Check, RotateCcw, RotateCw, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import {
   FLAECHE,
@@ -11,17 +11,25 @@ import {
   type FarbSlug,
   type DiagrammData,
   type DiagrammElement,
+  type PfadTyp,
   type SymbolTyp,
   type Punkt,
   type Rotation,
 } from "@/lib/diagramm";
 import { saveDiagramm } from "@/lib/actions/diagramm";
 import { SYMBOLE, symbolDef } from "./symbols";
-import { Rasen, ElementGrafik, sortiertNachEbene } from "./DiagrammView";
+import { Rasen, ElementGrafik, PfadGrafik, sortiertNachEbene } from "./DiagrammView";
 
 type SaveStatus = "gespeichert" | "ausstehend" | "speichert" | "fehler";
 
 const AUTOSAVE_MS = 800;
+
+const PFAD_WERKZEUGE: Record<PfadTyp, string> = {
+  laufweg: "Laufweg",
+  dribbling: "Dribbling",
+  pass: "Pass/Schuss",
+  linie: "Linie",
+};
 
 /** Pointer-Position -> Flächen-Koordinaten (berücksichtigt viewBox-Skalierung). */
 function flaechenPunkt(svg: SVGSVGElement, e: { clientX: number; clientY: number }): Punkt {
@@ -33,6 +41,21 @@ function flaechenPunkt(svg: SVGSVGElement, e: { clientX: number; clientY: number
 
 const clamp = (v: number, max: number) => Math.min(Math.max(v, 0), max);
 
+function bbox(punkte: Punkt[]) {
+  const xs = punkte.map((p) => p.x);
+  const ys = punkte.map((p) => p.y);
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys),
+  };
+}
+
+type Drag =
+  | { modus: "punktig"; id: string; dx: number; dy: number }
+  | { modus: "pfad"; id: string; start: Punkt; orig: Punkt[] };
+
 export function DiagrammEditor({
   exerciseId,
   initial,
@@ -43,9 +66,12 @@ export function DiagrammEditor({
   const [elemente, setElemente] = useState<DiagrammElement[]>(initial.elemente);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [status, setStatus] = useState<SaveStatus>("gespeichert");
+  // Aktiver Zeichenmodus für Bewegungen/Linien (#52): Klicks setzen Stützpunkte.
+  const [zeichnen, setZeichnen] = useState<{ typ: PfadTyp; punkte: Punkt[] } | null>(null);
+  const [hoverPunkt, setHoverPunkt] = useState<Punkt | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
-  const dragRef = useRef<{ id: string; dx: number; dy: number } | null>(null);
+  const dragRef = useRef<Drag | null>(null);
   const ersterRender = useRef(true);
 
   // Autosave: debounced nach jeder Änderung (#49 AK6). Kein expliziter
@@ -89,8 +115,58 @@ export function DiagrammEditor({
 
   function setFarbe(id: string, farbe: FarbSlug) {
     setElemente((prev) =>
-      prev.map((el) => (el.id === id && el.art === "symbol" ? { ...el, farbe } : el)),
+      prev.map((el) =>
+        el.id === id && (el.art === "symbol" || el.art === "pfad")
+          ? { ...el, farbe }
+          : el,
+      ),
     );
+  }
+
+  function setGestrichelt(id: string, gestrichelt: boolean) {
+    setElemente((prev) =>
+      prev.map((el) =>
+        el.id === id && el.art === "pfad" ? { ...el, gestrichelt } : el,
+      ),
+    );
+  }
+
+  function startZeichnen(typ: PfadTyp) {
+    setSelectedId(null);
+    setZeichnen({ typ, punkte: [] });
+  }
+
+  function abbrechenZeichnen() {
+    setZeichnen(null);
+    setHoverPunkt(null);
+  }
+
+  function fertigZeichnen(punkteOverride?: Punkt[]) {
+    if (!zeichnen) return;
+    const punkte = punkteOverride ?? zeichnen.punkte;
+    if (punkte.length >= 2) {
+      const neu: DiagrammElement = {
+        id: crypto.randomUUID(),
+        art: "pfad",
+        typ: zeichnen.typ,
+        punkte,
+      };
+      setElemente((prev) => [...prev, neu]);
+      setSelectedId(neu.id);
+    }
+    setZeichnen(null);
+    setHoverPunkt(null);
+  }
+
+  function zeichnenKlick(p: Punkt) {
+    if (!zeichnen) return;
+    const punkte = [...zeichnen.punkte, p];
+    // Pass/Schuss ist ein gerader Pfeil: Start + Ziel, dann fertig (#52 AK3).
+    if (zeichnen.typ === "pass" && punkte.length === 2) {
+      fertigZeichnen(punkte);
+      return;
+    }
+    setZeichnen({ ...zeichnen, punkte });
   }
 
   // Drehen in festen 45°-Schritten — andere Winkel gibt es nicht (#51 AK3).
@@ -105,31 +181,50 @@ export function DiagrammEditor({
   }
 
   function onElementPointerDown(e: React.PointerEvent, el: DiagrammElement) {
-    if (el.art !== "symbol") return;
+    // Im Zeichenmodus zählen Klicks auf Elemente als Stützpunkte (kein Drag).
+    if (zeichnen) return;
     e.stopPropagation();
     setSelectedId(el.id);
     const svg = svgRef.current;
     if (!svg) return;
     const p = flaechenPunkt(svg, e);
-    dragRef.current = { id: el.id, dx: p.x - el.x, dy: p.y - el.y };
+    dragRef.current =
+      el.art === "pfad"
+        ? { modus: "pfad", id: el.id, start: p, orig: el.punkte }
+        : { modus: "punktig", id: el.id, dx: p.x - el.x, dy: p.y - el.y };
     svg.setPointerCapture(e.pointerId);
   }
 
   function onPointerMove(e: React.PointerEvent) {
-    const drag = dragRef.current;
     const svg = svgRef.current;
-    if (!drag || !svg) return;
+    if (!svg) return;
+    if (zeichnen) {
+      setHoverPunkt(flaechenPunkt(svg, e));
+      return;
+    }
+    const drag = dragRef.current;
+    if (!drag) return;
     const p = flaechenPunkt(svg, e);
     setElemente((prev) =>
-      prev.map((el) =>
-        el.id === drag.id && el.art === "symbol"
-          ? {
-              ...el,
-              x: clamp(p.x - drag.dx, FLAECHE.breite),
-              y: clamp(p.y - drag.dy, FLAECHE.hoehe),
-            }
-          : el,
-      ),
+      prev.map((el) => {
+        if (el.id !== drag.id) return el;
+        if (drag.modus === "punktig" && el.art !== "pfad") {
+          return {
+            ...el,
+            x: clamp(p.x - drag.dx, FLAECHE.breite),
+            y: clamp(p.y - drag.dy, FLAECHE.hoehe),
+          };
+        }
+        if (drag.modus === "pfad" && el.art === "pfad") {
+          // Ganzen Pfad verschieben; Delta so begrenzen, dass die
+          // Begrenzungsbox auf der Fläche bleibt (keine Verformung).
+          const box = bbox(drag.orig);
+          const dx = clamp(p.x - drag.start.x + box.minX, FLAECHE.breite - (box.maxX - box.minX)) - box.minX;
+          const dy = clamp(p.y - drag.start.y + box.minY, FLAECHE.hoehe - (box.maxY - box.minY)) - box.minY;
+          return { ...el, punkte: drag.orig.map((q) => ({ x: q.x + dx, y: q.y + dy })) };
+        }
+        return el;
+      }),
     );
   }
 
@@ -151,7 +246,7 @@ export function DiagrammEditor({
       {/* Werkzeug-Palette */}
       <div className="flex flex-wrap items-center gap-2">
         {(Object.keys(SYMBOLE) as SymbolTyp[]).map((typ) => (
-          <Button key={typ} variant="tonal" size="sm" onClick={() => addSymbol(typ)}>
+          <Button key={typ} variant="tonal" size="sm" disabled={!!zeichnen} onClick={() => addSymbol(typ)}>
             {SYMBOLE[typ].label}
           </Button>
         ))}
@@ -160,13 +255,47 @@ export function DiagrammEditor({
             variant="danger"
             size="sm"
             onClick={removeSelected}
-            disabled={!selected}
+            disabled={!selected || !!zeichnen}
             aria-label="Ausgewähltes Element entfernen"
           >
             <Trash2 size={16} strokeWidth={2} aria-hidden />
             Entfernen
           </Button>
         </div>
+      </div>
+
+      {/* Bewegungs- und Linien-Werkzeuge (#52) */}
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Bewegungen und Linien">
+        {(Object.keys(PFAD_WERKZEUGE) as PfadTyp[]).map((typ) => (
+          <Button
+            key={typ}
+            variant={zeichnen?.typ === typ ? "filled" : "outlined"}
+            size="sm"
+            disabled={!!zeichnen && zeichnen.typ !== typ}
+            onClick={() => (zeichnen?.typ === typ ? abbrechenZeichnen() : startZeichnen(typ))}
+          >
+            {PFAD_WERKZEUGE[typ]}
+          </Button>
+        ))}
+        {zeichnen && (
+          <>
+            <span className="type-body-small text-on-surface-variant" data-testid="zeichnen-hinweis">
+              {zeichnen.typ === "pass"
+                ? "Start und Ziel anklicken."
+                : "Punkte auf der Fläche anklicken; Knicke und Kurven entstehen über mehrere Punkte."}
+            </span>
+            {zeichnen.typ !== "pass" && (
+              <Button variant="filled" size="sm" onClick={() => fertigZeichnen()} disabled={zeichnen.punkte.length < 2}>
+                <Check size={16} strokeWidth={2} aria-hidden />
+                Fertig
+              </Button>
+            )}
+            <Button variant="text" size="sm" onClick={abbrechenZeichnen}>
+              <X size={16} strokeWidth={2} aria-hidden />
+              Abbrechen
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Drehung für das ausgewählte richtungsbehaftete Element */}
@@ -187,12 +316,15 @@ export function DiagrammEditor({
         </div>
       )}
 
-      {/* Farbwahl für das ausgewählte färbbare Element */}
-      {selected?.art === "symbol" && symbolDef(selected.typ).faerbbar && (
+      {/* Farbwahl: färbbare Symbole und freie Linien (#52 AK5) */}
+      {((selected?.art === "symbol" && symbolDef(selected.typ).faerbbar) ||
+        (selected?.art === "pfad" && selected.typ === "linie")) && (
         <div className="flex items-center gap-2" role="group" aria-label="Farbe des Elements">
           <span className="type-label-small text-on-surface-variant">Farbe</span>
           {farbSlugs.map((slug) => {
-            const aktiv = (selected.farbe ?? symbolDef(selected.typ).defaultFarbe) === slug;
+            const standard =
+              selected.art === "symbol" ? symbolDef(selected.typ).defaultFarbe : "weiss";
+            const aktiv = (selected.farbe ?? standard) === slug;
             return (
               <button
                 key={slug}
@@ -210,6 +342,27 @@ export function DiagrammEditor({
         </div>
       )}
 
+      {/* Linienstil für freie Linien (#52 AK6) */}
+      {selected?.art === "pfad" && selected.typ === "linie" && (
+        <div className="flex items-center gap-2" role="group" aria-label="Linienstil">
+          <span className="type-label-small text-on-surface-variant">Stil</span>
+          <Button
+            variant={selected.gestrichelt ? "outlined" : "filled"}
+            size="sm"
+            onClick={() => setGestrichelt(selected.id, false)}
+          >
+            Durchgezogen
+          </Button>
+          <Button
+            variant={selected.gestrichelt ? "filled" : "outlined"}
+            size="sm"
+            onClick={() => setGestrichelt(selected.id, true)}
+          >
+            Gestrichelt
+          </Button>
+        </div>
+      )}
+
       {/* Zeichenfläche */}
       <div
         className="overflow-hidden rounded-[6px] border border-outline-variant focus-ring"
@@ -221,14 +374,23 @@ export function DiagrammEditor({
             e.preventDefault();
             removeSelected();
           }
+          if (e.key === "Escape") abbrechenZeichnen();
+          if (e.key === "Enter" && zeichnen) fertigZeichnen();
         }}
       >
         <svg
           ref={svgRef}
           viewBox={`0 0 ${FLAECHE.breite} ${FLAECHE.hoehe}`}
-          className="block h-auto w-full touch-none select-none"
+          className={`block h-auto w-full touch-none select-none ${zeichnen ? "cursor-crosshair" : ""}`}
           data-testid="diagramm-flaeche"
-          onPointerDown={() => setSelectedId(null)}
+          onPointerDown={(e) => {
+            if (zeichnen) {
+              zeichnenKlick(flaechenPunkt(e.currentTarget, e));
+            } else {
+              setSelectedId(null);
+            }
+          }}
+          onDoubleClick={() => fertigZeichnen()}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
         >
@@ -240,15 +402,38 @@ export function DiagrammEditor({
               className="cursor-move"
               onPointerDown={(e) => onElementPointerDown(e, el)}
             >
-              {/* Unsichtbare Treffer-Fläche: macht auch Symbole mit
-                  fill="none" (Reifen) oder dünnen Linien zuverlässig greifbar. */}
+              {/* Unsichtbare Treffer-Flächen: machen auch Symbole mit
+                  fill="none" (Reifen) und dünne Linien zuverlässig greifbar. */}
               {el.art === "symbol" && <TrefferFlaeche element={el} />}
-              <ElementGrafik element={el} />
-              {el.id === selectedId && el.art === "symbol" && (
-                <SelektionsRahmen element={el} />
+              {el.art === "pfad" && (
+                <polyline
+                  points={el.punkte.map((p) => `${p.x},${p.y}`).join(" ")}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth={28}
+                />
               )}
+              <ElementGrafik element={el} />
+              {el.id === selectedId && <SelektionsRahmen element={el} />}
             </g>
           ))}
+
+          {/* Vorschau des entstehenden Pfads */}
+          {zeichnen && zeichnen.punkte.length > 0 && (
+            <g pointerEvents="none" opacity={0.75} data-testid="zeichnen-vorschau">
+              <PfadGrafik
+                element={{
+                  id: "vorschau",
+                  art: "pfad",
+                  typ: zeichnen.typ,
+                  punkte: hoverPunkt ? [...zeichnen.punkte, hoverPunkt] : zeichnen.punkte,
+                }}
+              />
+              {zeichnen.punkte.map((p, i) => (
+                <circle key={i} cx={p.x} cy={p.y} r={6} fill="#ffffff" stroke="rgba(0,0,0,.4)" />
+              ))}
+            </g>
+          )}
         </svg>
       </div>
 
@@ -281,19 +466,30 @@ function TrefferFlaeche({
   );
 }
 
-function SelektionsRahmen({
-  element,
-}: {
-  element: Extract<DiagrammElement, { art: "symbol" }>;
-}) {
-  const def = symbolDef(element.typ);
-  const r = 8; // Luft um die Symbol-Begrenzung
+function SelektionsRahmen({ element }: { element: DiagrammElement }) {
+  const r = 8; // Luft um die Element-Begrenzung
+  let x: number, y: number, b: number, h: number;
+  if (element.art === "symbol") {
+    const def = symbolDef(element.typ);
+    x = element.x - def.breite / 2;
+    y = element.y - def.hoehe / 2;
+    b = def.breite;
+    h = def.hoehe;
+  } else if (element.art === "pfad") {
+    const box = bbox(element.punkte);
+    x = box.minX;
+    y = box.minY;
+    b = box.maxX - box.minX;
+    h = box.maxY - box.minY;
+  } else {
+    return null;
+  }
   return (
     <rect
-      x={element.x - def.breite / 2 - r}
-      y={element.y - def.hoehe / 2 - r}
-      width={def.breite + r * 2}
-      height={def.hoehe + r * 2}
+      x={x - r}
+      y={y - r}
+      width={b + r * 2}
+      height={h + r * 2}
       fill="none"
       stroke="#ffffff"
       strokeWidth={2.5}
