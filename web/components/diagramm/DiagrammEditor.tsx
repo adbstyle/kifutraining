@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { RotateCcw, RotateCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui";
 import {
   FLAECHE,
@@ -13,6 +13,7 @@ import {
   type DiagrammElement,
   type SymbolTyp,
   type Punkt,
+  type Rotation,
 } from "@/lib/diagramm";
 import { saveDiagramm } from "@/lib/actions/diagramm";
 import { SYMBOLE, symbolDef } from "./symbols";
@@ -92,6 +93,17 @@ export function DiagrammEditor({
     );
   }
 
+  // Drehen in festen 45°-Schritten — andere Winkel gibt es nicht (#51 AK3).
+  function drehen(id: string, delta: 45 | -45) {
+    setElemente((prev) =>
+      prev.map((el) =>
+        el.id === id && el.art === "symbol" && symbolDef(el.typ).drehbar
+          ? { ...el, rotation: (((el.rotation ?? 0) + delta + 360) % 360) as Rotation }
+          : el,
+      ),
+    );
+  }
+
   function onElementPointerDown(e: React.PointerEvent, el: DiagrammElement) {
     if (el.art !== "symbol") return;
     e.stopPropagation();
@@ -157,6 +169,24 @@ export function DiagrammEditor({
         </div>
       </div>
 
+      {/* Drehung für das ausgewählte richtungsbehaftete Element */}
+      {selected?.art === "symbol" && symbolDef(selected.typ).drehbar && (
+        <div className="flex items-center gap-2" role="group" aria-label="Element drehen">
+          <span className="type-label-small text-on-surface-variant">Drehen</span>
+          <Button variant="outlined" size="sm" onClick={() => drehen(selected.id, -45)} aria-label="45 Grad nach links drehen">
+            <RotateCcw size={16} strokeWidth={2} aria-hidden />
+            45°
+          </Button>
+          <Button variant="outlined" size="sm" onClick={() => drehen(selected.id, 45)} aria-label="45 Grad nach rechts drehen">
+            <RotateCw size={16} strokeWidth={2} aria-hidden />
+            45°
+          </Button>
+          <span className="type-body-small text-on-surface-variant" data-testid="rotation-anzeige">
+            {selected.rotation ?? 0}°
+          </span>
+        </div>
+      )}
+
       {/* Farbwahl für das ausgewählte färbbare Element */}
       {selected?.art === "symbol" && symbolDef(selected.typ).faerbbar && (
         <div className="flex items-center gap-2" role="group" aria-label="Farbe des Elements">
@@ -210,6 +240,9 @@ export function DiagrammEditor({
               className="cursor-move"
               onPointerDown={(e) => onElementPointerDown(e, el)}
             >
+              {/* Unsichtbare Treffer-Fläche: macht auch Symbole mit
+                  fill="none" (Reifen) oder dünnen Linien zuverlässig greifbar. */}
+              {el.art === "symbol" && <TrefferFlaeche element={el} />}
               <ElementGrafik element={el} />
               {el.id === selectedId && el.art === "symbol" && (
                 <SelektionsRahmen element={el} />
@@ -227,6 +260,24 @@ export function DiagrammEditor({
         {statusText[status]}
       </p>
     </div>
+  );
+}
+
+function TrefferFlaeche({
+  element,
+}: {
+  element: Extract<DiagrammElement, { art: "symbol" }>;
+}) {
+  const def = symbolDef(element.typ);
+  return (
+    <rect
+      x={element.x - def.breite / 2}
+      y={element.y - def.hoehe / 2}
+      width={def.breite}
+      height={def.hoehe}
+      fill="transparent"
+      transform={`rotate(${element.rotation ?? 0} ${element.x} ${element.y})`}
+    />
   );
 }
 
