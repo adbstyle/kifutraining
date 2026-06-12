@@ -571,6 +571,8 @@ function TrainingExerciseRow({
 
       <ExerciseThumb
         bildUrl={item.exercise?.bild_url}
+        diagramm={item.exercise?.diagramm}
+        bildQuelle={item.exercise?.bild_quelle}
         name={item.name}
         className="hidden sm:block"
       />

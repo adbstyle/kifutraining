@@ -27,7 +27,7 @@ export type ExerciseFilters = {
 
 // Felder, die Liste + Karte brauchen.
 const LIST_COLUMNS =
-  "id, slug, name, trainingsteil, feldtyp, hauptteilkategorie, kategorien, source, visibility, bild_url";
+  "id, slug, name, trainingsteil, feldtyp, hauptteilkategorie, kategorien, source, visibility, bild_url, diagramm, bild_quelle";
 
 export type ExerciseListRow = {
   id: string;
@@ -40,6 +40,8 @@ export type ExerciseListRow = {
   source: "manual" | "user";
   visibility: "public" | "private";
   bild_url: string | null;
+  diagramm: unknown;
+  bild_quelle: "foto" | "diagramm" | null;
   /** Hat der aktuelle USER diese Übung favorisiert? (false wenn anonym) */
   is_favorited: boolean;
 };
@@ -194,5 +196,7 @@ export function toCardData(row: ExerciseListRow): ExerciseCardData {
     herkunft: row.source,
     visibility: row.visibility,
     bildUrl: row.bild_url,
+    diagramm: row.diagramm,
+    bildQuelle: row.bild_quelle,
   };
 }

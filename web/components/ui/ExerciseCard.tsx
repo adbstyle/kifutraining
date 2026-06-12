@@ -1,10 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { ReactNode } from "react";
 import { HerkunftBadge } from "./Badge";
 import { KategorieChip } from "./Chip";
 import { Card } from "./Card";
-import { FieldPlaceholder } from "./FieldPlaceholder";
+import { UebungsBild } from "./UebungsBild";
 import type { KategorieSlug } from "@/lib/vocab";
 
 export interface ExerciseCardData {
@@ -16,6 +15,8 @@ export interface ExerciseCardData {
   herkunft: "manual" | "user";
   visibility?: "public" | "private";
   bildUrl?: string | null;
+  diagramm?: unknown;
+  bildQuelle?: "foto" | "diagramm" | null;
 }
 
 export function ExerciseCard({
@@ -37,19 +38,15 @@ export function ExerciseCard({
         href={`/uebung/${ex.slug}`}
         className="focus-ring-inset block rounded-[4px]"
       >
-        {/* Diagramm */}
+        {/* Aktives Bild: Diagramm, Foto oder Platzhalter */}
         <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-outline-variant">
-          {ex.bildUrl ? (
-            <Image
-              src={ex.bildUrl}
-              alt={`Feld-Diagramm: ${ex.name} (${ex.trainingsteilLabel})`}
-              fill
-              sizes="(max-width: 640px) 100vw, 320px"
-              className="object-contain"
-            />
-          ) : (
-            <FieldPlaceholder className="h-full w-full" />
-          )}
+          <UebungsBild
+            name={ex.name}
+            bildUrl={ex.bildUrl}
+            diagramm={ex.diagramm}
+            bildQuelle={ex.bildQuelle}
+            sizes="(max-width: 640px) 100vw, 320px"
+          />
 
           {/* Lesbarkeits-Scrim für die Overlays oben — auf der dunklen
               Kreide-Skizze kaum sichtbar, sorgt auf hellen Diagramm-Bildern

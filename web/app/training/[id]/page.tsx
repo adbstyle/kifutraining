@@ -113,6 +113,8 @@ export default async function TrainingViewPage({
                             </span>
                             <ExerciseThumb
                               bildUrl={item.exercise?.bild_url}
+                              diagramm={item.exercise?.diagramm}
+                              bildQuelle={item.exercise?.bild_quelle}
                               name={item.name}
                             />
                             <span className="min-w-0 flex-1 truncate type-body-medium text-on-surface">
