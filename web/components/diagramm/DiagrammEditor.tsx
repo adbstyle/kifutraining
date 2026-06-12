@@ -15,10 +15,19 @@ import {
   type SymbolTyp,
   type Punkt,
   type Rotation,
+  type ZoneElement,
+  type ZonenForm,
 } from "@/lib/diagramm";
 import { saveDiagramm } from "@/lib/actions/diagramm";
 import { SYMBOLE, symbolDef } from "./symbols";
-import { Rasen, ElementGrafik, PfadGrafik, sortiertNachEbene } from "./DiagrammView";
+import {
+  Rasen,
+  ElementGrafik,
+  PfadGrafik,
+  ZoneGrafik,
+  sortiertNachEbene,
+  textBox,
+} from "./DiagrammView";
 
 type SaveStatus = "gespeichert" | "ausstehend" | "speichert" | "fehler";
 
@@ -54,7 +63,19 @@ function bbox(punkte: Punkt[]) {
 
 type Drag =
   | { modus: "punktig"; id: string; dx: number; dy: number }
-  | { modus: "pfad"; id: string; start: Punkt; orig: Punkt[] };
+  | { modus: "pfad"; id: string; start: Punkt; orig: Punkt[] }
+  | { modus: "zone"; id: string; start: Punkt; orig: ZoneElement }
+  | { modus: "groesse"; id: string; orig: ZoneElement };
+
+/** Was gerade Punkt für Punkt gezeichnet wird: Bewegung/Linie oder Polygon-Zone. */
+type Zeichnen = { werkzeug: PfadTyp | "polygon"; punkte: Punkt[] };
+
+const ZONEN_WERKZEUGE: Record<ZonenForm, string> = {
+  rechteck: "Rechteck",
+  ellipse: "Ellipse",
+  dreieck: "Dreieck",
+  polygon: "Polygon",
+};
 
 export function DiagrammEditor({
   exerciseId,
@@ -66,8 +87,8 @@ export function DiagrammEditor({
   const [elemente, setElemente] = useState<DiagrammElement[]>(initial.elemente);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [status, setStatus] = useState<SaveStatus>("gespeichert");
-  // Aktiver Zeichenmodus für Bewegungen/Linien (#52): Klicks setzen Stützpunkte.
-  const [zeichnen, setZeichnen] = useState<{ typ: PfadTyp; punkte: Punkt[] } | null>(null);
+  // Aktiver Zeichenmodus (#52/#53): Klicks setzen Stützpunkte.
+  const [zeichnen, setZeichnen] = useState<Zeichnen | null>(null);
   const [hoverPunkt, setHoverPunkt] = useState<Punkt | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -115,11 +136,7 @@ export function DiagrammEditor({
 
   function setFarbe(id: string, farbe: FarbSlug) {
     setElemente((prev) =>
-      prev.map((el) =>
-        el.id === id && (el.art === "symbol" || el.art === "pfad")
-          ? { ...el, farbe }
-          : el,
-      ),
+      prev.map((el) => (el.id === id && el.art !== "text" ? { ...el, farbe } : el)),
     );
   }
 
@@ -131,9 +148,9 @@ export function DiagrammEditor({
     );
   }
 
-  function startZeichnen(typ: PfadTyp) {
+  function startZeichnen(werkzeug: PfadTyp | "polygon") {
     setSelectedId(null);
-    setZeichnen({ typ, punkte: [] });
+    setZeichnen({ werkzeug, punkte: [] });
   }
 
   function abbrechenZeichnen() {
@@ -141,16 +158,33 @@ export function DiagrammEditor({
     setHoverPunkt(null);
   }
 
+  const minPunkte = (werkzeug: PfadTyp | "polygon") => (werkzeug === "polygon" ? 3 : 2);
+
   function fertigZeichnen(punkteOverride?: Punkt[]) {
     if (!zeichnen) return;
     const punkte = punkteOverride ?? zeichnen.punkte;
-    if (punkte.length >= 2) {
-      const neu: DiagrammElement = {
-        id: crypto.randomUUID(),
-        art: "pfad",
-        typ: zeichnen.typ,
-        punkte,
-      };
+    if (punkte.length >= minPunkte(zeichnen.werkzeug)) {
+      const neu: DiagrammElement =
+        zeichnen.werkzeug === "polygon"
+          ? (() => {
+              const box = bbox(punkte);
+              return {
+                id: crypto.randomUUID(),
+                art: "zone" as const,
+                form: "polygon" as const,
+                x: box.minX,
+                y: box.minY,
+                breite: box.maxX - box.minX,
+                hoehe: box.maxY - box.minY,
+                punkte,
+              };
+            })()
+          : {
+              id: crypto.randomUUID(),
+              art: "pfad",
+              typ: zeichnen.werkzeug,
+              punkte,
+            };
       setElemente((prev) => [...prev, neu]);
       setSelectedId(neu.id);
     }
@@ -162,11 +196,43 @@ export function DiagrammEditor({
     if (!zeichnen) return;
     const punkte = [...zeichnen.punkte, p];
     // Pass/Schuss ist ein gerader Pfeil: Start + Ziel, dann fertig (#52 AK3).
-    if (zeichnen.typ === "pass" && punkte.length === 2) {
+    if (zeichnen.werkzeug === "pass" && punkte.length === 2) {
       fertigZeichnen(punkte);
       return;
     }
     setZeichnen({ ...zeichnen, punkte });
+  }
+
+  function addZone(form: Exclude<ZonenForm, "polygon">) {
+    const neu: DiagrammElement = {
+      id: crypto.randomUUID(),
+      art: "zone",
+      form,
+      x: FLAECHE.breite / 2 - 130,
+      y: FLAECHE.hoehe / 2 - 90,
+      breite: 260,
+      hoehe: 180,
+    };
+    setElemente((prev) => [...prev, neu]);
+    setSelectedId(neu.id);
+  }
+
+  function addText() {
+    const neu: DiagrammElement = {
+      id: crypto.randomUUID(),
+      art: "text",
+      x: FLAECHE.breite / 2,
+      y: FLAECHE.hoehe / 2,
+      text: "Text",
+    };
+    setElemente((prev) => [...prev, neu]);
+    setSelectedId(neu.id);
+  }
+
+  function setText(id: string, text: string) {
+    setElemente((prev) =>
+      prev.map((el) => (el.id === id && el.art === "text" ? { ...el, text } : el)),
+    );
   }
 
   // Drehen in festen 45°-Schritten — andere Winkel gibt es nicht (#51 AK3).
@@ -191,7 +257,18 @@ export function DiagrammEditor({
     dragRef.current =
       el.art === "pfad"
         ? { modus: "pfad", id: el.id, start: p, orig: el.punkte }
-        : { modus: "punktig", id: el.id, dx: p.x - el.x, dy: p.y - el.y };
+        : el.art === "zone"
+          ? { modus: "zone", id: el.id, start: p, orig: el }
+          : { modus: "punktig", id: el.id, dx: p.x - el.x, dy: p.y - el.y };
+    svg.setPointerCapture(e.pointerId);
+  }
+
+  /** Grösse-Anfasser einer Zone gepackt (#53 AK4). */
+  function onResizePointerDown(e: React.PointerEvent, el: ZoneElement) {
+    e.stopPropagation();
+    const svg = svgRef.current;
+    if (!svg) return;
+    dragRef.current = { modus: "groesse", id: el.id, orig: el };
     svg.setPointerCapture(e.pointerId);
   }
 
@@ -222,6 +299,28 @@ export function DiagrammEditor({
           const dx = clamp(p.x - drag.start.x + box.minX, FLAECHE.breite - (box.maxX - box.minX)) - box.minX;
           const dy = clamp(p.y - drag.start.y + box.minY, FLAECHE.hoehe - (box.maxY - box.minY)) - box.minY;
           return { ...el, punkte: drag.orig.map((q) => ({ x: q.x + dx, y: q.y + dy })) };
+        }
+        if (drag.modus === "zone" && el.art === "zone") {
+          const o = drag.orig;
+          const dx = clamp(p.x - drag.start.x + o.x, FLAECHE.breite - o.breite) - o.x;
+          const dy = clamp(p.y - drag.start.y + o.y, FLAECHE.hoehe - o.hoehe) - o.y;
+          return {
+            ...el,
+            x: o.x + dx,
+            y: o.y + dy,
+            punkte: o.punkte?.map((q) => ({ x: q.x + dx, y: q.y + dy })),
+          };
+        }
+        if (drag.modus === "groesse" && el.art === "zone") {
+          const o = drag.orig;
+          const breite = Math.max(60, clamp(p.x, FLAECHE.breite) - o.x);
+          const hoehe = Math.max(60, clamp(p.y, FLAECHE.hoehe) - o.y);
+          // Polygon-Punkte proportional zur neuen Begrenzung skalieren.
+          const punkte = o.punkte?.map((q) => ({
+            x: o.x + (q.x - o.x) * (breite / o.breite),
+            y: o.y + (q.y - o.y) * (hoehe / o.hoehe),
+          }));
+          return { ...el, breite, hoehe, punkte };
         }
         return el;
       }),
@@ -264,28 +363,58 @@ export function DiagrammEditor({
         </div>
       </div>
 
-      {/* Bewegungs- und Linien-Werkzeuge (#52) */}
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Bewegungen und Linien">
+      {/* Bewegungs-/Linien-Werkzeuge (#52), Zonen und Textbox (#53) */}
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Bewegungen, Linien, Zonen und Text">
         {(Object.keys(PFAD_WERKZEUGE) as PfadTyp[]).map((typ) => (
           <Button
             key={typ}
-            variant={zeichnen?.typ === typ ? "filled" : "outlined"}
+            variant={zeichnen?.werkzeug === typ ? "filled" : "outlined"}
             size="sm"
-            disabled={!!zeichnen && zeichnen.typ !== typ}
-            onClick={() => (zeichnen?.typ === typ ? abbrechenZeichnen() : startZeichnen(typ))}
+            disabled={!!zeichnen && zeichnen.werkzeug !== typ}
+            onClick={() => (zeichnen?.werkzeug === typ ? abbrechenZeichnen() : startZeichnen(typ))}
           >
             {PFAD_WERKZEUGE[typ]}
           </Button>
         ))}
+        <span aria-hidden className="h-5 w-px bg-outline-variant" />
+        {(Object.keys(ZONEN_WERKZEUGE) as ZonenForm[]).map((form) =>
+          form === "polygon" ? (
+            <Button
+              key={form}
+              variant={zeichnen?.werkzeug === "polygon" ? "filled" : "outlined"}
+              size="sm"
+              disabled={!!zeichnen && zeichnen.werkzeug !== "polygon"}
+              onClick={() =>
+                zeichnen?.werkzeug === "polygon" ? abbrechenZeichnen() : startZeichnen("polygon")
+              }
+            >
+              Zone Polygon
+            </Button>
+          ) : (
+            <Button key={form} variant="outlined" size="sm" disabled={!!zeichnen} onClick={() => addZone(form)}>
+              Zone {ZONEN_WERKZEUGE[form]}
+            </Button>
+          ),
+        )}
+        <Button variant="outlined" size="sm" disabled={!!zeichnen} onClick={addText}>
+          Textbox
+        </Button>
         {zeichnen && (
           <>
             <span className="type-body-small text-on-surface-variant" data-testid="zeichnen-hinweis">
-              {zeichnen.typ === "pass"
+              {zeichnen.werkzeug === "pass"
                 ? "Start und Ziel anklicken."
-                : "Punkte auf der Fläche anklicken; Knicke und Kurven entstehen über mehrere Punkte."}
+                : zeichnen.werkzeug === "polygon"
+                  ? "Eckpunkte der Zone anklicken (mindestens drei)."
+                  : "Punkte auf der Fläche anklicken; Knicke und Kurven entstehen über mehrere Punkte."}
             </span>
-            {zeichnen.typ !== "pass" && (
-              <Button variant="filled" size="sm" onClick={() => fertigZeichnen()} disabled={zeichnen.punkte.length < 2}>
+            {zeichnen.werkzeug !== "pass" && (
+              <Button
+                variant="filled"
+                size="sm"
+                onClick={() => fertigZeichnen()}
+                disabled={zeichnen.punkte.length < minPunkte(zeichnen.werkzeug)}
+              >
                 <Check size={16} strokeWidth={2} aria-hidden />
                 Fertig
               </Button>
@@ -316,14 +445,35 @@ export function DiagrammEditor({
         </div>
       )}
 
-      {/* Farbwahl: färbbare Symbole und freie Linien (#52 AK5) */}
+      {/* Texteingabe für die ausgewählte Textbox (#53 AK6) */}
+      {selected?.art === "text" && (
+        <div className="flex items-center gap-2">
+          <label htmlFor="textbox-text" className="type-label-small text-on-surface-variant">
+            Text
+          </label>
+          <input
+            id="textbox-text"
+            type="text"
+            value={selected.text}
+            onChange={(e) => setText(selected.id, e.target.value)}
+            className="focus-ring type-body-medium w-72 rounded-(--field-shape) border-[1.5px] border-(--field-outline) bg-transparent px-3 py-2 text-on-surface"
+          />
+        </div>
+      )}
+
+      {/* Farbwahl: färbbare Symbole, freie Linien (#52 AK5) und Zonen (#53 AK3) */}
       {((selected?.art === "symbol" && symbolDef(selected.typ).faerbbar) ||
-        (selected?.art === "pfad" && selected.typ === "linie")) && (
+        (selected?.art === "pfad" && selected.typ === "linie") ||
+        selected?.art === "zone") && (
         <div className="flex items-center gap-2" role="group" aria-label="Farbe des Elements">
           <span className="type-label-small text-on-surface-variant">Farbe</span>
           {farbSlugs.map((slug) => {
             const standard =
-              selected.art === "symbol" ? symbolDef(selected.typ).defaultFarbe : "weiss";
+              selected.art === "symbol"
+                ? symbolDef(selected.typ).defaultFarbe
+                : selected.art === "zone"
+                  ? "gelb"
+                  : "weiss";
             const aktiv = (selected.farbe ?? standard) === slug;
             return (
               <button
@@ -415,20 +565,49 @@ export function DiagrammEditor({
               )}
               <ElementGrafik element={el} />
               {el.id === selectedId && <SelektionsRahmen element={el} />}
+              {el.id === selectedId && el.art === "zone" && (
+                <rect
+                  x={el.x + el.breite - 11}
+                  y={el.y + el.hoehe - 11}
+                  width={22}
+                  height={22}
+                  fill="#ffffff"
+                  stroke="rgba(0,0,0,.45)"
+                  strokeWidth={2}
+                  className="cursor-nwse-resize"
+                  data-testid="zone-anfasser"
+                  onPointerDown={(e) => onResizePointerDown(e, el)}
+                />
+              )}
             </g>
           ))}
 
-          {/* Vorschau des entstehenden Pfads */}
+          {/* Vorschau des entstehenden Pfads bzw. der Polygon-Zone */}
           {zeichnen && zeichnen.punkte.length > 0 && (
             <g pointerEvents="none" opacity={0.75} data-testid="zeichnen-vorschau">
-              <PfadGrafik
-                element={{
-                  id: "vorschau",
-                  art: "pfad",
-                  typ: zeichnen.typ,
-                  punkte: hoverPunkt ? [...zeichnen.punkte, hoverPunkt] : zeichnen.punkte,
-                }}
-              />
+              {zeichnen.werkzeug === "polygon" ? (
+                <ZoneGrafik
+                  element={{
+                    id: "vorschau",
+                    art: "zone",
+                    form: "polygon",
+                    x: 0,
+                    y: 0,
+                    breite: 0,
+                    hoehe: 0,
+                    punkte: hoverPunkt ? [...zeichnen.punkte, hoverPunkt] : zeichnen.punkte,
+                  }}
+                />
+              ) : (
+                <PfadGrafik
+                  element={{
+                    id: "vorschau",
+                    art: "pfad",
+                    typ: zeichnen.werkzeug,
+                    punkte: hoverPunkt ? [...zeichnen.punkte, hoverPunkt] : zeichnen.punkte,
+                  }}
+                />
+              )}
               {zeichnen.punkte.map((p, i) => (
                 <circle key={i} cx={p.x} cy={p.y} r={6} fill="#ffffff" stroke="rgba(0,0,0,.4)" />
               ))}
@@ -481,8 +660,17 @@ function SelektionsRahmen({ element }: { element: DiagrammElement }) {
     y = box.minY;
     b = box.maxX - box.minX;
     h = box.maxY - box.minY;
+  } else if (element.art === "zone") {
+    x = element.x;
+    y = element.y;
+    b = element.breite;
+    h = element.hoehe;
   } else {
-    return null;
+    const box = textBox(element);
+    x = box.x;
+    y = box.y;
+    b = box.breite;
+    h = box.hoehe;
   }
   return (
     <rect

@@ -4,6 +4,8 @@ import {
   type DiagrammData,
   type DiagrammElement,
   type PfadElement,
+  type ZoneElement,
+  type TextElement,
   type Punkt,
 } from "@/lib/diagramm";
 import { symbolDef, symbolFarbe } from "./symbols";
@@ -140,6 +142,60 @@ export function PfadGrafik({ element }: { element: PfadElement }) {
   }
 }
 
+/** Markierte Zone (#53): farbige Füllung + Umriss, vier Formen. */
+export function ZoneGrafik({ element }: { element: ZoneElement }) {
+  const farbe = FARBEN[element.farbe ?? "gelb"];
+  const stil = { fill: farbe, fillOpacity: 0.28, stroke: farbe, strokeWidth: 4 };
+  const { x, y, breite: b, hoehe: h } = element;
+  switch (element.form) {
+    case "ellipse":
+      return <ellipse cx={x + b / 2} cy={y + h / 2} rx={b / 2} ry={h / 2} {...stil} />;
+    case "dreieck":
+      return <polygon points={`${x + b / 2},${y} ${x + b},${y + h} ${x},${y + h}`} {...stil} />;
+    case "polygon":
+      return <polygon points={(element.punkte ?? []).map((p) => `${p.x},${p.y}`).join(" ")} {...stil} />;
+    case "rechteck":
+    default:
+      return <rect x={x} y={y} width={b} height={h} {...stil} />;
+  }
+}
+
+/** Geschätzte Begrenzung einer Textbox (für Treffer-Fläche und Rahmen). */
+export function textBox(element: TextElement) {
+  const breite = Math.max(80, element.text.length * 17 + 28);
+  const hoehe = 48;
+  return { x: element.x - breite / 2, y: element.y - hoehe / 2, breite, hoehe };
+}
+
+/** Textbox (#53): dunkle Schrift auf hellem Träger, lesbar auf Rasen. */
+export function TextGrafik({ element }: { element: TextElement }) {
+  const box = textBox(element);
+  return (
+    <>
+      <rect
+        x={box.x}
+        y={box.y}
+        width={box.breite}
+        height={box.hoehe}
+        rx={5}
+        fill="rgba(255,255,255,.88)"
+        stroke="rgba(0,0,0,.25)"
+        strokeWidth={1.5}
+      />
+      <text
+        x={element.x}
+        y={element.y + 10}
+        textAnchor="middle"
+        fontSize={30}
+        fontFamily="var(--font-sans, sans-serif)"
+        fill="#212121"
+      >
+        {element.text}
+      </text>
+    </>
+  );
+}
+
 /** Ein einzelnes Element (ohne Interaktion) — vom Editor wiederverwendet. */
 export function ElementGrafik({ element }: { element: DiagrammElement }) {
   switch (element.art) {
@@ -155,7 +211,10 @@ export function ElementGrafik({ element }: { element: DiagrammElement }) {
     }
     case "pfad":
       return <PfadGrafik element={element} />;
-    // Zonen und Text (#53) folgen in ihrer Story.
+    case "zone":
+      return <ZoneGrafik element={element} />;
+    case "text":
+      return <TextGrafik element={element} />;
     default:
       return null;
   }
