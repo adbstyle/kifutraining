@@ -136,6 +136,8 @@ export type ExerciseDetail = {
   aufbau: string | null;
   varianten: string[];
   bild_url: string | null;
+  diagramm: unknown;
+  bild_quelle: "foto" | "diagramm" | null;
   source: "manual" | "user";
   visibility: "public" | "private";
   owner_id: string | null;
@@ -150,7 +152,7 @@ export async function getExerciseDetail(
   const { data, error } = await supabase
     .from("exercises")
     .select(
-      "id, slug, name, trainingsteil, erscheinungsform, hauptteilkategorie, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, source, visibility, owner_id",
+      "id, slug, name, trainingsteil, erscheinungsform, hauptteilkategorie, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id",
     )
     .eq("slug", slug)
     .maybeSingle();

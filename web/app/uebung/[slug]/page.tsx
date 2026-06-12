@@ -27,6 +27,8 @@ import {
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
+import { aktivesBild, parseDiagramm } from "@/lib/diagramm";
+import { DiagrammView } from "@/components/diagramm/DiagrammView";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +95,11 @@ export default async function ExerciseDetailPage({
     ex.feldtyp ? feldLabels[ex.feldtyp as keyof typeof feldLabels] : null,
   ].filter(Boolean);
   const anzahl = anzahlText(ex.anzahl_kinder);
+  const bild = aktivesBild({
+    bildQuelle: ex.bild_quelle,
+    bildUrl: ex.bild_url,
+    diagramm: ex.diagramm,
+  });
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
@@ -151,11 +158,16 @@ export default async function ExerciseDetailPage({
         )}
       </header>
 
-      {/* Diagramm — grosszügig, volle Breite */}
+      {/* Aktives Bild — gezeichnetes Diagramm, Foto oder Platzhalter */}
       <div className="relative mt-8 aspect-[16/9] w-full overflow-hidden rounded-[6px] border border-outline-variant">
-        {ex.bild_url ? (
+        {bild === "diagramm" ? (
+          <DiagrammView
+            diagramm={parseDiagramm(ex.diagramm)!}
+            title={`Feld-Diagramm: ${ex.name}`}
+          />
+        ) : bild === "foto" ? (
           <Image
-            src={ex.bild_url}
+            src={ex.bild_url!}
             alt={`Feld-Diagramm: ${ex.name}`}
             fill
             sizes="(max-width: 896px) 100vw, 896px"

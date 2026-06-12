@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, PenLine } from "lucide-react";
+import { ButtonLink } from "@/components/ui";
 import type { Metadata } from "next";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { updateExercise } from "@/lib/actions/exercises";
@@ -37,7 +38,16 @@ export default async function EditPage({
         <ArrowLeft size={16} strokeWidth={2} aria-hidden />
         Zurück zur Übung
       </Link>
-      <h1 className="type-headline-large mb-8 text-on-surface">Übung bearbeiten</h1>
+      <h1 className="type-headline-large mb-4 text-on-surface">Übung bearbeiten</h1>
+      <div className="mb-8 flex items-center gap-3 rounded-[6px] border border-outline-variant bg-surface-container p-4">
+        <PenLine size={20} strokeWidth={2} className="shrink-0 text-primary" aria-hidden />
+        <p className="type-body-medium flex-1 text-on-surface-variant">
+          Spielfeld-Skizze mit Toren, Hütchen und Spielern direkt in der App zeichnen.
+        </p>
+        <ButtonLink href={`/uebung/${slug}/diagramm`} variant="tonal" size="sm">
+          Diagramm zeichnen
+        </ButtonLink>
+      </div>
       <ExerciseForm
         action={updateExercise.bind(null, ex.id)}
         initial={{
