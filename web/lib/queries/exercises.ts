@@ -5,6 +5,7 @@ import {
   type KategorieSlug,
 } from "@/lib/vocab";
 import { likePattern } from "@/lib/search";
+import { hatDiagramm } from "@/lib/diagramm";
 import type { ExerciseCardData } from "@/components/ui";
 
 /**
@@ -160,6 +161,41 @@ export async function getExerciseDetail(
     .maybeSingle();
   if (error) throw error;
   return (data as ExerciseDetail | null) ?? null;
+}
+
+/** Ein wiederverwendbares Vorlagen-Diagramm (Epic #58, Story #61). */
+export type VorlageItem = {
+  id: string;
+  slug: string;
+  name: string;
+  diagramm: unknown;
+};
+
+/** Verfügbare Vorlagen-Diagramme: die eigenen Diagramme des USERs plus die
+ *  KiFu-Manual-Diagramme. Fremde Trainer-Diagramme sind bewusst ausgeschlossen
+ *  (Epic #58 Out-of-Scope 1) — der `or`-Filter grenzt auf Manual ODER eigene
+ *  ein, RLS deckt die Lesbarkeit ab. Die Zielübung selbst wird ausgeklammert.
+ *  Nur Übungen mit einem nicht-leeren Diagramm erscheinen. */
+export async function getVorlagen(excludeId?: string): Promise<VorlageItem[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let query = supabase
+    .from("exercises")
+    .select("id, slug, name, diagramm")
+    .not("diagramm", "is", null)
+    .order("name");
+  query = user
+    ? query.or(`source.eq.manual,owner_id.eq.${user.id}`)
+    : query.eq("source", "manual");
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? [])
+    .filter((r) => r.id !== excludeId && hatDiagramm(r.diagramm))
+    .map((r) => ({ id: r.id, slug: r.slug, name: r.name, diagramm: r.diagramm }));
 }
 
 /** Hat der angemeldete USER diese Übung favorisiert? (Detailseite) */

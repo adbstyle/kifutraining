@@ -3,9 +3,11 @@ import type { Metadata } from "next";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
+import { VorlageUebernehmenButton } from "@/components/diagramm/VorlageUebernehmenButton";
 import { updateExercise } from "@/lib/actions/exercises";
-import { getExerciseDetail } from "@/lib/queries/exercises";
+import { getExerciseDetail, getVorlagen } from "@/lib/queries/exercises";
 import { createClient } from "@/lib/supabase/server";
+import { hatDiagramm } from "@/lib/diagramm";
 import { trainingsteil as teilLabels } from "@/lib/vocab";
 
 export const dynamic = "force-dynamic";
@@ -41,13 +43,29 @@ export default async function EditPage({
     { label: "Übung bearbeiten" },
   ];
 
+  // Vorlagen-Fundus für „Aus Vorlage übernehmen" (eigene + KiFu-Manual),
+  // die Übung selbst ausgeklammert.
+  const vorlagen = await getVorlagen(ex.id);
+
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
       <Breadcrumbs items={crumbs} className="mb-6" />
       <ExerciseForm
         action={updateExercise.bind(null, ex.id)}
         afterName={
-          <DiagrammVorschau slug={slug} name={ex.name} diagramm={ex.diagramm} />
+          <div className="flex flex-col gap-2">
+            <DiagrammVorschau slug={slug} name={ex.name} diagramm={ex.diagramm} />
+            {vorlagen.length > 0 && (
+              <div className="flex justify-end">
+                <VorlageUebernehmenButton
+                  zielId={ex.id}
+                  slug={slug}
+                  zielHatDiagramm={hatDiagramm(ex.diagramm)}
+                  vorlagen={vorlagen}
+                />
+              </div>
+            )}
+          </div>
         }
         initial={{
           name: ex.name,

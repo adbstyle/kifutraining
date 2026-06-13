@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { DiagrammEditor } from "@/components/diagramm/DiagrammEditor";
 import type { BreadcrumbItem } from "@/components/ui";
-import { getExerciseDetail } from "@/lib/queries/exercises";
+import { getExerciseDetail, getVorlagen } from "@/lib/queries/exercises";
 import { createClient } from "@/lib/supabase/server";
 import { parseDiagramm, LEERES_DIAGRAMM } from "@/lib/diagramm";
 import { trainingsteil as teilLabels } from "@/lib/vocab";
@@ -42,6 +42,8 @@ export default async function DiagrammPage({
     { label: "Feld-Diagramm" },
   ];
 
+  const vorlagen = await getVorlagen(ex.id);
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
       <DiagrammEditor
@@ -49,6 +51,7 @@ export default async function DiagrammPage({
         name={ex.name}
         crumbs={crumbs}
         initial={parseDiagramm(ex.diagramm) ?? LEERES_DIAGRAMM}
+        vorlagen={vorlagen}
       />
     </main>
   );

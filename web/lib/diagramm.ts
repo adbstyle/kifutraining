@@ -174,6 +174,17 @@ export const LEERES_DIAGRAMM: DiagrammData = {
   elemente: [],
 };
 
+/** Tiefe Kopie eines Diagramms mit frisch erzeugten Element-IDs (Epic #58,
+ *  Story #61). Die Kopie ist vollständig von der Quelle entkoppelt — keine
+ *  geteilten Referenzen, keine kollidierenden IDs. Wird beim Übernehmen einer
+ *  Vorlage genutzt (Server-Action und Editor gleichermassen). */
+export function kopiereDiagramm(data: DiagrammData): DiagrammData {
+  return {
+    version: DIAGRAMM_VERSION,
+    elemente: data.elemente.map((e) => ({ ...structuredClone(e), id: crypto.randomUUID() })),
+  };
+}
+
 const istZahl = (v: unknown): v is number =>
   typeof v === "number" && Number.isFinite(v);
 const istPunkt = (v: unknown): v is Punkt =>

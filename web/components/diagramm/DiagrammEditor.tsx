@@ -7,6 +7,8 @@ import { cn } from "@/lib/cn";
 import {
   FLAECHE,
   DIAGRAMM_VERSION,
+  parseDiagramm,
+  kopiereDiagramm,
   FARBEN,
   FORM_DEFAULT_FARBE,
   LINIE_DEFAULT_FARBE,
@@ -29,6 +31,8 @@ import {
   type FormTyp,
 } from "@/lib/diagramm";
 import { saveDiagramm } from "@/lib/actions/diagramm";
+import { VorlagePicker } from "./VorlagePicker";
+import type { VorlageItem } from "@/lib/queries/exercises";
 import { SYMBOLE, symbolDef } from "./symbols";
 import {
   Rasen,
@@ -227,11 +231,14 @@ export function DiagrammEditor({
   name,
   crumbs,
   initial,
+  vorlagen,
 }: {
   exerciseId: string;
   name: string;
   crumbs: BreadcrumbItem[];
   initial: DiagrammData;
+  /** Verfügbare Vorlagen-Diagramme für den Einstieg auf der leeren Fläche (#61). */
+  vorlagen: VorlageItem[];
 }) {
   const [elemente, setElemente] = useState<DiagrammElement[]>(initial.elemente);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -338,6 +345,17 @@ export function DiagrammEditor({
     };
     setElemente((prev) => [...prev, neu]);
     setSelectedId(neu.id);
+  }
+
+  // Eine Vorlage auf der leeren Fläche übernehmen (#61): als unabhängige Kopie
+  // (frische IDs) in den Editor laden; der Autosave persistiert sie. Nur aus dem
+  // Leerzustand erreichbar, daher kein Ersetzen/keine Bestätigung nötig.
+  function vorlageUebernehmen(vorlage: VorlageItem) {
+    const data = parseDiagramm(vorlage.diagramm);
+    if (!data || data.elemente.length === 0) return;
+    merken();
+    setElemente(kopiereDiagramm(data).elemente);
+    setSelectedId(null);
   }
 
   function removeSelected() {
@@ -998,6 +1016,23 @@ export function DiagrammEditor({
             </g>
           )}
         </svg>
+
+        {/* Leerzustand: Einstieg, eine Vorlage statt leerer Fläche zu übernehmen
+            (#61). Schwebt mittig, gibt aber Klicks an die Fläche durch — nur der
+            Picker selbst fängt sie ab. */}
+        {elemente.length === 0 && !zeichnen && vorlagen.length > 0 && (
+          <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center">
+            <div className="pointer-events-auto">
+              <VorlagePicker
+                vorlagen={vorlagen}
+                zielHatDiagramm={false}
+                onPick={vorlageUebernehmen}
+                triggerLabel="Aus Vorlage übernehmen"
+                triggerVariant="tonal"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Kontextuelle Optionen am ausgewählten Element (#65) */}
         {selected && !dragAktiv && editId === null && (
