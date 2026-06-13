@@ -18,9 +18,25 @@
 import type { SpielerPose } from "@/lib/diagramm";
 
 // --- Palette (fix, unabhängig von der Trikotfarbe) ---
-const SKIN = ["#ffdbac", "#e6a878", "#c68642", "#8d5524"] as const;
-const HAAR = ["#3a2a20", "#1c1c1c", "#e8b84b", "#7a4a1e"] as const;
-const FRISUREN = ["kurz", "lockig", "zopf", "dutt", "lang"] as const;
+// Hauttöne bewusst als warme Brauntöne von hell bis dunkel — auch der dunkelste
+// bleibt deutlich heller als das (oft schwarze) Haar, damit Gesichtszüge
+// (dunkle Augen/Mund) lesbar bleiben (kein schwarzer Kopf-Klumpen).
+const SKIN = ["#ffe0c2", "#f0c096", "#d39b66", "#b27a45", "#915f33"] as const;
+const HAAR = ["#3a2a20", "#1c1c1c", "#e8b84b", "#a9622a", "#5a3826", "#caa05a"] as const;
+// Augen/Mund: kräftiges, aber nicht reines Schwarz — trägt auf jedem Hautton.
+const TINTE = "#26201c";
+const FRISUREN = [
+  "kurz",
+  "scheitel",
+  "lockig",
+  "wuschel",
+  "zopf",
+  "zoepfe",
+  "dutt",
+  "iro",
+  "stirnband",
+  "lang",
+] as const;
 type Frisur = (typeof FRISUREN)[number];
 const SHORT = "#37474f";
 const SOCK = "#fafafa";
@@ -56,61 +72,95 @@ export function figurVariante(seed: string): { frisur: Frisur; haut: string; haa
 }
 
 // --- Kopf / Frisur ---
+const BAND = "#fafafa"; // Stirnband
+const ZOPF_TIE = "#e53935"; // Haargummi
+
+/** Hinter dem Kopf liegende Haarteile (Vorderansicht): Zöpfe, lange Haare. */
 function frisurBack(haar: string, fr: Frisur): string {
   if (fr === "zopf")
     return `<path d="M126 40 Q150 44 150 66 Q150 86 137 90 Q147 70 132 56 Z" fill="${haar}"/>`;
+  if (fr === "zoepfe")
+    return `<ellipse cx="64" cy="82" rx="11" ry="18" fill="${haar}"/><ellipse cx="136" cy="82" rx="11" ry="18" fill="${haar}"/>`;
   if (fr === "lang")
     return `<path d="M68 50 Q60 92 72 116 L82 116 Q74 84 82 56 Z" fill="${haar}"/><path d="M132 50 Q140 92 128 116 L118 116 Q126 84 118 56 Z" fill="${haar}"/>`;
   return "";
 }
+/** Haar auf/über dem Kopf (Vorderansicht). Grund-Schopf als Halbmond, je
+ *  Stil ergänzt. */
 function frisurTop(haar: string, fr: Frisur): string {
   let s = `<circle cx="100" cy="48" r="33" fill="${haar}"/>`;
   if (fr === "lockig")
     s += [[78, 32], [92, 24], [108, 24], [122, 32], [70, 46], [130, 46]]
       .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="10" fill="${haar}"/>`)
       .join("");
-  if (fr === "dutt") s += `<circle cx="100" cy="18" r="11" fill="${haar}"/>`;
-  if (fr === "zopf") s += `<circle cx="129" cy="46" r="4" fill="#e53935"/>`;
+  if (fr === "wuschel")
+    s += [[72, 30], [86, 18], [100, 14], [114, 18], [128, 30]]
+      .map(([x, y]) => `<path d="M${x - 8} ${y + 13} L${x} ${y} L${x + 8} ${y + 13} Z" fill="${haar}"/>`)
+      .join("");
+  if (fr === "scheitel")
+    // seitlich gescheitelter Pony: deckt eine Stirnseite stärker
+    s += `<path d="M100 22 Q136 24 134 58 Q133 44 114 42 Q102 38 99 28 Z" fill="${haar}"/>`;
+  if (fr === "dutt") s += `<circle cx="100" cy="17" r="11" fill="${haar}"/>`;
+  if (fr === "iro")
+    s += `<path d="M90 6 Q100 -2 110 6 L113 46 L87 46 Z" fill="${haar}"/>`;
+  if (fr === "stirnband")
+    s += `<path d="M68 47 Q100 41 132 47 L132 39 Q100 33 68 39 Z" fill="${BAND}"/>`;
+  if (fr === "zopf") s += `<circle cx="129" cy="46" r="4" fill="${ZOPF_TIE}"/>`;
+  if (fr === "zoepfe")
+    s += `<circle cx="64" cy="66" r="4" fill="${ZOPF_TIE}"/><circle cx="136" cy="66" r="4" fill="${ZOPF_TIE}"/>`;
   return s;
 }
-function kopfFront(skin: string, haar: string, fr: Frisur): string {
+function gesichtFront(skin: string): string {
   return (
-    frisurBack(haar, fr) +
-    frisurTop(haar, fr) +
     `<circle cx="100" cy="56" r="29" fill="${skin}"/>` +
     `<circle cx="72" cy="58" r="6" fill="${skin}"/><circle cx="128" cy="58" r="6" fill="${skin}"/>` +
-    `<circle cx="90" cy="56" r="3.2" fill="#222"/><circle cx="110" cy="56" r="3.2" fill="#222"/>` +
-    `<circle cx="84" cy="66" r="4.4" fill="#ff9e9e" opacity="0.6"/><circle cx="116" cy="66" r="4.4" fill="#ff9e9e" opacity="0.6"/>` +
-    `<path d="M91 66 Q100 76 109 66" stroke="#222" stroke-width="2.6" fill="none" stroke-linecap="round"/>`
+    `<circle cx="90" cy="56" r="3.4" fill="${TINTE}"/><circle cx="110" cy="56" r="3.4" fill="${TINTE}"/>` +
+    `<circle cx="84" cy="66" r="4.4" fill="#ff8f8f" opacity="0.5"/><circle cx="116" cy="66" r="4.4" fill="#ff8f8f" opacity="0.5"/>` +
+    `<path d="M91 66 Q100 76 109 66" stroke="${TINTE}" stroke-width="2.8" fill="none" stroke-linecap="round"/>`
   );
+}
+function kopfFront(skin: string, haar: string, fr: Frisur): string {
+  return frisurBack(haar, fr) + frisurTop(haar, fr) + gesichtFront(skin);
 }
 /** Profilkopf, Blick nach rechts; Mitte (hx,hy). */
 function kopfProfil(hx: number, hy: number, skin: string, haar: string, fr: Frisur): string {
-  let s = `<circle cx="${hx - 2}" cy="${hy - 7}" r="31" fill="${haar}"/>`;
-  if (fr === "zopf")
+  let s = "";
+  // Hinten liegende Haarteile zuerst.
+  if (fr === "zopf" || fr === "zoepfe")
     s += `<path d="M${hx - 22} ${hy - 6} Q${hx - 44} ${hy - 2} ${hx - 44} ${hy + 18} Q${hx - 44} ${hy + 34} ${hx - 30} ${hy + 34} Q${hx - 36} ${hy + 14} ${hx - 22} ${hy + 6} Z" fill="${haar}"/>`;
+  if (fr === "lang")
+    s += `<path d="M${hx - 24} ${hy - 8} Q${hx - 34} ${hy + 34} ${hx - 22} ${hy + 56} L${hx - 8} ${hy + 56} Q${hx - 16} ${hy + 24} ${hx - 12} ${hy} Z" fill="${haar}"/>`;
+  // Grund-Schopf.
+  s += `<circle cx="${hx - 2}" cy="${hy - 7}" r="31" fill="${haar}"/>`;
   if (fr === "lockig")
     s += [[hx - 18, hy - 26], [hx - 2, hy - 30], [hx + 12, hy - 24], [hx - 30, hy - 12]]
       .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="${haar}"/>`)
       .join("");
+  if (fr === "wuschel")
+    s += [[hx - 22, hy - 12], [hx - 8, hy - 26], [hx + 8, hy - 26], [hx + 18, hy - 14]]
+      .map(([x, y]) => `<path d="M${x - 8} ${y + 12} L${x} ${y - 1} L${x + 8} ${y + 12} Z" fill="${haar}"/>`)
+      .join("");
+  if (fr === "dutt") s += `<circle cx="${hx - 10}" cy="${hy - 30}" r="10" fill="${haar}"/>`;
+  if (fr === "iro")
+    s += `<path d="M${hx - 18} ${hy - 14} Q${hx - 6} ${hy - 40} ${hx + 8} ${hy - 38} L${hx + 8} ${hy - 30} Q${hx - 4} ${hy - 30} ${hx - 10} ${hy - 14} Z" fill="${haar}"/>`;
+  // Gesicht in Profil.
   s += `<circle cx="${hx}" cy="${hy}" r="27" fill="${skin}"/>`;
   s += `<path d="M${hx + 25} ${hy - 3} q9 5 1 11 q-3 -5 -1 -11 Z" fill="${skin}"/>`;
   s += `<circle cx="${hx - 13}" cy="${hy + 2}" r="5.5" fill="${skin}"/>`;
-  s += `<circle cx="${hx + 10}" cy="${hy - 2}" r="3.2" fill="#222"/>`;
-  s += `<circle cx="${hx + 4}" cy="${hy + 10}" r="4" fill="#ff9e9e" opacity="0.6"/>`;
-  s += `<path d="M${hx + 13} ${hy + 13} q6 4 11 -1" stroke="#222" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  if (fr === "stirnband")
+    s += `<path d="M${hx - 20} ${hy - 12} Q${hx + 4} ${hy - 24} ${hx + 24} ${hy - 14} L${hx + 24} ${hy - 6} Q${hx + 4} ${hy - 16} ${hx - 20} ${hy - 4} Z" fill="${BAND}"/>`;
+  s += `<circle cx="${hx + 10}" cy="${hy - 2}" r="3.4" fill="${TINTE}"/>`;
+  s += `<circle cx="${hx + 4}" cy="${hy + 10}" r="4" fill="#ff8f8f" opacity="0.5"/>`;
+  s += `<path d="M${hx + 13} ${hy + 13} q6 4 11 -1" stroke="${TINTE}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
   return s;
 }
 function schuh(x: number, y: number, dir: 1 | -1): string {
   return `<path d="M${x} ${y} q${-6 * dir} 11 ${10 * dir} 11 l${8 * dir} -2 q1 -10 ${-7 * dir} -11 Z" fill="${SHOE}"/>`;
 }
-const schatten = (cx: number, rx: number) =>
-  `<ellipse cx="${cx}" cy="262" rx="${rx}" ry="9" fill="#000" opacity=".1"/>`;
 
 // --- Posen (liefern Markup im Zeichen-Raum 0..200 × 0..280) ---
 function stehen(j: string, skin: string, haar: string, fr: Frisur): string {
   return (
-    schatten(100, 50) +
     `<path d="M91 154 L87 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
     <path d="M109 154 L113 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
     <path d="M88 196 L85 218" stroke="${SOCK}" stroke-width="17" stroke-linecap="round"/>
@@ -129,7 +179,6 @@ function stehen(j: string, skin: string, haar: string, fr: Frisur): string {
 }
 function laufen(j: string, skin: string, haar: string, fr: Frisur): string {
   return (
-    schatten(104, 52) +
     `<path d="M96 156 Q82 186 74 210" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
     <path d="M84 188 Q78 200 74 210" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
     ${schuh(70, 206, -1)}
@@ -150,7 +199,6 @@ function laufen(j: string, skin: string, haar: string, fr: Frisur): string {
 }
 function dribbeln(j: string, skin: string, haar: string, fr: Frisur): string {
   return (
-    schatten(104, 50) +
     `<path d="M96 150 Q90 188 84 222" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
     <path d="M88 196 Q86 210 84 222" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
     ${schuh(80, 220, -1)}
@@ -169,7 +217,6 @@ function dribbeln(j: string, skin: string, haar: string, fr: Frisur): string {
 }
 function schiessen(j: string, skin: string, haar: string, fr: Frisur): string {
   return (
-    schatten(96, 52) +
     `<path d="M94 150 L90 224" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
     <path d="M91 198 L89 220" stroke="${SOCK}" stroke-width="17" stroke-linecap="round"/>
     ${schuh(86, 220, -1)}
@@ -188,7 +235,6 @@ function schiessen(j: string, skin: string, haar: string, fr: Frisur): string {
 }
 function graetschen(j: string, skin: string, haar: string, fr: Frisur): string {
   return (
-    `<ellipse cx="110" cy="248" rx="64" ry="9" fill="#000" opacity=".12"/>` +
     `<path d="M96 206 Q120 210 156 212" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
     <path d="M128 210 Q142 211 156 212" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
     ${schuh(154, 208, 1)}
@@ -205,7 +251,6 @@ function graetschen(j: string, skin: string, haar: string, fr: Frisur): string {
 /** Torwart: Standfigur mit Handschuhen, Neon-Trikot (fix). */
 function torhueter(j: string, skin: string, haar: string, fr: Frisur): string {
   return (
-    schatten(100, 56) +
     `<path d="M88 154 L74 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
     <path d="M112 154 L126 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
     <path d="M82 198 L76 218" stroke="#212121" stroke-width="17" stroke-linecap="round"/>
