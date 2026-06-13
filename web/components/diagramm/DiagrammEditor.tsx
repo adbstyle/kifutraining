@@ -1,9 +1,8 @@
 "use client";
 
 import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Check, ClipboardPaste, Copy, Ellipsis, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
-import { Button, IconButton, Tooltip } from "@/components/ui";
+import { Check, ClipboardPaste, Copy, Ellipsis, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
+import { Breadcrumbs, type BreadcrumbItem, Button, IconButton, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
   FLAECHE,
@@ -187,13 +186,13 @@ function GlyphKachel({ label, element, active = false, disabled = false, onClick
 
 export function DiagrammEditor({
   exerciseId,
-  slug,
   name,
+  crumbs,
   initial,
 }: {
   exerciseId: string;
-  slug: string;
   name: string;
+  crumbs: BreadcrumbItem[];
   initial: DiagrammData;
 }) {
   const [elemente, setElemente] = useState<DiagrammElement[]>(initial.elemente);
@@ -683,14 +682,8 @@ export function DiagrammEditor({
           Zwischenablage brauchen. */}
       <header>
         <div className="mb-3 flex flex-wrap items-center gap-2.5">
-          <Link
-            href={`/uebung/${slug}`}
-            className="focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-[3px] text-on-surface-variant transition-colors hover:text-on-surface"
-          >
-            <ArrowLeft size={16} strokeWidth={2} aria-hidden />
-            Zurück zur Übung
-          </Link>
-          <div className="ml-auto flex items-center gap-0.5" role="group" aria-label="Aktionen">
+          <Breadcrumbs items={crumbs} className="min-w-0 flex-1" />
+          <div className="ml-auto flex shrink-0 items-center gap-0.5" role="group" aria-label="Aktionen">
             <Tooltip label="Rückgängig">
               <IconButton
                 icon={Undo2}
