@@ -687,7 +687,13 @@ export function DiagrammEditor({
               setSelectedId(null);
             }
           }}
-          onDoubleClick={() => fertigZeichnen()}
+          onDoubleClick={() => {
+            // Doppelklick landet wegen setPointerCapture (onElementPointerDown)
+            // immer auf dem SVG, nie am Element-<g>. Darum hier auf die bereits
+            // gesetzte Selektion stützen: Textbox doppelklicken = inline bearbeiten.
+            if (zeichnen) fertigZeichnen();
+            else if (selected?.art === "text") starteTextBearbeitung(selected);
+          }}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
@@ -699,12 +705,6 @@ export function DiagrammEditor({
               data-element-id={el.id}
               className="cursor-move"
               onPointerDown={(e) => onElementPointerDown(e, el)}
-              onDoubleClick={(e) => {
-                if (el.art === "text") {
-                  e.stopPropagation();
-                  starteTextBearbeitung(el);
-                }
-              }}
             >
               {/* Unsichtbare Treffer-Flächen: machen auch Symbole mit
                   fill="none" (Reifen) und dünne Linien zuverlässig greifbar. */}
