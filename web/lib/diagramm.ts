@@ -74,6 +74,17 @@ export type FormTyp = (typeof FORM_TYPEN)[number];
 
 export type Punkt = { x: number; y: number };
 
+/** Die drei Ecken eines gleichschenkligen Dreiecks aus seinem Begrenzungsrahmen:
+ *  Spitze oben mittig, Basis unten. Single Source für Anzeige (FormGrafik) und
+ *  Editor (Materialisieren der Eckpunkte beim Form-Bearbeiten, #66). */
+export function dreieckEcken(x: number, y: number, breite: number, hoehe: number): Punkt[] {
+  return [
+    { x: x + breite / 2, y },
+    { x: x + breite, y: y + hoehe },
+    { x, y: y + hoehe },
+  ];
+}
+
 /** Begrenzungsrahmen einer Punktmenge (Editor-Drag, Polygon-Zonen). */
 export function bbox(punkte: Punkt[]) {
   const xs = punkte.map((p) => p.x);

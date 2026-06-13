@@ -3,6 +3,7 @@ import {
   FARBEN,
   FORM_DEFAULT_FARBE,
   bbox,
+  dreieckEcken,
   type DiagrammData,
   type DiagrammElement,
   type PfadElement,
@@ -213,10 +214,14 @@ export function FormGrafik({ element }: { element: FormElement }) {
   switch (element.form) {
     case "ellipse":
       return <ellipse cx={x + b / 2} cy={y + h / 2} rx={b / 2} ry={h / 2} {...stil} />;
-    case "dreieck":
-      return <polygon points={`${x + b / 2},${y} ${x + b},${y + h} ${x},${y + h}`} {...stil} />;
+    case "dreieck": {
+      // Frei bearbeitete Dreiecke (#66) tragen ihre drei Ecken als punkte;
+      // unbearbeitete leiten sie weiterhin gleichschenklig aus der Box ab.
+      const ecken = element.punkte?.length === 3 ? element.punkte : dreieckEcken(x, y, b, h);
+      return <polygon points={punkteAttr(ecken)} {...stil} />;
+    }
     case "polygon":
-      return <polygon points={(element.punkte ?? []).map((p) => `${p.x},${p.y}`).join(" ")} {...stil} />;
+      return <polygon points={punkteAttr(element.punkte ?? [])} {...stil} />;
     case "rechteck":
     default:
       return <rect x={x} y={y} width={b} height={h} {...stil} />;

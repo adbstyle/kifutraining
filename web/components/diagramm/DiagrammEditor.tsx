@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Check, ClipboardPaste, Copy, Ellipsis, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
+import { Check, ClipboardPaste, Copy, Ellipsis, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, Waypoints, X } from "lucide-react";
 import { Breadcrumbs, type BreadcrumbItem, Button, IconButton, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
@@ -12,6 +12,7 @@ import {
   LINIE_DEFAULT_FARBE,
   MAX_TEXT_LAENGE,
   bbox,
+  dreieckEcken,
   farbSlugs,
   type FarbSlug,
   type DiagrammData,
@@ -95,12 +96,46 @@ function versetzteKopie(el: DiagrammElement, versatz: number): DiagrammElement {
   }
 }
 
+/** Welche Ecke einer Form gezogen wird; die gegenüberliegende bleibt Anker. */
+type Ecke = "tl" | "tr" | "bl" | "br";
+
 type Drag = { gemerkt: boolean } & (
   | { modus: "punktig"; id: string; dx: number; dy: number }
   | { modus: "pfad"; id: string; start: Punkt; orig: Punkt[] }
   | { modus: "form"; id: string; start: Punkt; orig: FormElement }
-  | { modus: "groesse"; id: string; orig: FormElement }
+  | { modus: "groesse"; id: string; orig: FormElement; ecke: Ecke }
+  // Einzelner Stütz-/Eckpunkt im Form-Bearbeitungsmodus (#66).
+  | { modus: "vertex"; id: string; index: number }
 );
+
+/** Mindestkantenlänge einer Form beim Resize (verhindert Entartung). */
+const FORM_MIN = 60;
+
+/** Punktbasiert form-bearbeitbar (#66): Pfade sowie Polygone und Dreiecke —
+ *  alle über ihre Stütz-/Eckpunkte. Rechteck/Ellipse haben keine Eckpunkte. */
+function geometrieEditierbar(el: DiagrammElement): boolean {
+  return (
+    el.art === "pfad" ||
+    (el.art === "form" && (el.form === "polygon" || el.form === "dreieck"))
+  );
+}
+
+/** Über Eck-Anfasser in der Grösse anpassbar (#66): Rechteck und Ellipse —
+ *  ihre Grundform bleibt dabei erhalten. */
+function formResizable(el: DiagrammElement): el is FormElement {
+  return el.art === "form" && (el.form === "rechteck" || el.form === "ellipse");
+}
+
+/** Editierbare Punkte einer Form: vorhandene punkte, sonst die abgeleiteten
+ *  Dreieck-Ecken (Materialisierung beim ersten Bearbeiten). */
+function formPunkte(el: FormElement): Punkt[] {
+  // Dreieck: drei freie Ecken, sonst aus der Box abgeleitet (identisch zur
+  // Render-Logik in FormGrafik). Polygon trägt seine Punkte stets selbst.
+  if (el.form === "dreieck") {
+    return el.punkte?.length === 3 ? el.punkte : dreieckEcken(el.x, el.y, el.breite, el.hoehe);
+  }
+  return el.punkte ?? [];
+}
 
 /** Was gerade Punkt für Punkt gezeichnet wird: Bewegung/Linie oder Polygon-Form. */
 type Zeichnen = { werkzeug: PfadTyp | "polygon"; punkte: Punkt[] };
@@ -197,6 +232,9 @@ export function DiagrammEditor({
 }) {
   const [elemente, setElemente] = useState<DiagrammElement[]>(initial.elemente);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Form-Bearbeitungsmodus (#66): zeigt am Element greifbare Stütz-/Eckpunkte.
+  // Nur das „tiefer ausgewählte" Element ist editierbar; null = nur Auswahl.
+  const [bearbeitenId, setBearbeitenId] = useState<string | null>(null);
   const [status, setStatus] = useState<SaveStatus>("gespeichert");
   // Aktiver Zeichenmodus (#52/#53): Klicks setzen Stützpunkte.
   const [zeichnen, setZeichnen] = useState<Zeichnen | null>(null);
@@ -250,6 +288,7 @@ export function DiagrammEditor({
     setZukunft((z) => [...z, elemente]);
     setElemente(letzter);
     setSelectedId(null);
+    setBearbeitenId(null);
   }
 
   function wiederherstellen() {
@@ -259,6 +298,7 @@ export function DiagrammEditor({
     setVerlauf((v) => [...v, elemente]);
     setElemente(naechster);
     setSelectedId(null);
+    setBearbeitenId(null);
   }
 
   // Autosave: debounced nach jeder Änderung (#49 AK6). Kein expliziter
@@ -302,6 +342,17 @@ export function DiagrammEditor({
     merken();
     setElemente((prev) => prev.filter((e) => e.id !== selectedId));
     setSelectedId(null);
+    setBearbeitenId(null);
+  }
+
+  // In den Form-Bearbeitungsmodus wechseln (#66): „tiefer auswählen" per
+  // Doppelklick oder Leisten-Knopf. Beim Dreieck werden die Anfasser aus den
+  // abgeleiteten Ecken gezeigt (formPunkte); die Punkte werden erst beim ersten
+  // Eckpunkt-Drag materialisiert — als regulärer, rückgängig machbarer Schritt.
+  function bearbeitenStart(el: DiagrammElement) {
+    if (zeichnen || !geometrieEditierbar(el)) return;
+    setSelectedId(el.id);
+    setBearbeitenId(el.id);
   }
 
   function kopieren() {
@@ -346,6 +397,7 @@ export function DiagrammEditor({
 
   function startZeichnen(werkzeug: PfadTyp | "polygon") {
     setSelectedId(null);
+    setBearbeitenId(null);
     setZeichnen({ werkzeug, punkte: [] });
   }
 
@@ -450,6 +502,8 @@ export function DiagrammEditor({
     // Im Zeichenmodus zählen Klicks auf Elemente als Stützpunkte (kein Drag).
     if (zeichnen) return;
     e.stopPropagation();
+    // Auswahl eines anderen Elements verlässt den Form-Bearbeitungsmodus.
+    if (el.id !== bearbeitenId) setBearbeitenId(null);
     setSelectedId(el.id);
     const svg = svgRef.current;
     if (!svg) return;
@@ -465,12 +519,21 @@ export function DiagrammEditor({
     svg.setPointerCapture(e.pointerId);
   }
 
-  /** Grösse-Anfasser einer Form gepackt (#53 AK4). */
-  function onResizePointerDown(e: React.PointerEvent, el: FormElement) {
+  /** Eck-Anfasser einer Form gepackt (#53 AK4, #66: alle vier Ecken). */
+  function onResizePointerDown(e: React.PointerEvent, el: FormElement, ecke: Ecke) {
     e.stopPropagation();
     const svg = svgRef.current;
     if (!svg) return;
-    dragRef.current = { gemerkt: false, modus: "groesse", id: el.id, orig: el };
+    dragRef.current = { gemerkt: false, modus: "groesse", id: el.id, orig: el, ecke };
+    svg.setPointerCapture(e.pointerId);
+  }
+
+  /** Einzelnen Stütz-/Eckpunkt im Bearbeitungsmodus gepackt (#66). */
+  function onVertexPointerDown(e: React.PointerEvent, el: DiagrammElement, index: number) {
+    e.stopPropagation();
+    const svg = svgRef.current;
+    if (!svg) return;
+    dragRef.current = { gemerkt: false, modus: "vertex", id: el.id, index };
     svg.setPointerCapture(e.pointerId);
   }
 
@@ -520,14 +583,38 @@ export function DiagrammEditor({
         }
         if (drag.modus === "groesse" && el.art === "form") {
           const o = drag.orig;
-          const breite = Math.max(60, clamp(p.x, FLAECHE.breite) - o.x);
-          const hoehe = Math.max(60, clamp(p.y, FLAECHE.hoehe) - o.y);
-          // Polygon-Punkte proportional zur neuen Begrenzung skalieren.
-          const punkte = o.punkte?.map((q) => ({
-            x: o.breite > 0 ? o.x + (q.x - o.x) * (breite / o.breite) : q.x,
-            y: o.hoehe > 0 ? o.y + (q.y - o.y) * (hoehe / o.hoehe) : q.y,
-          }));
-          return { ...el, breite, hoehe, punkte };
+          const px = clamp(p.x, FLAECHE.breite);
+          const py = clamp(p.y, FLAECHE.hoehe);
+          const rechts = o.x + o.breite;
+          const unten = o.y + o.hoehe;
+          // Gezogene Kante folgt dem Pointer; die gegenüberliegende bleibt Anker.
+          const links = drag.ecke === "tl" || drag.ecke === "bl";
+          const oben = drag.ecke === "tl" || drag.ecke === "tr";
+          const x = links ? Math.min(px, rechts - FORM_MIN) : o.x;
+          const breite = links ? rechts - x : Math.max(FORM_MIN, px - o.x);
+          const y = oben ? Math.min(py, unten - FORM_MIN) : o.y;
+          const hoehe = oben ? unten - y : Math.max(FORM_MIN, py - o.y);
+          return { ...el, x, y, breite, hoehe };
+        }
+        if (drag.modus === "vertex") {
+          const np = { x: clamp(p.x, FLAECHE.breite), y: clamp(p.y, FLAECHE.hoehe) };
+          if (el.art === "pfad") {
+            return { ...el, punkte: el.punkte.map((q, i) => (i === drag.index ? np : q)) };
+          }
+          if (el.art === "form") {
+            // Eckpunkt verschieben; Begrenzungsbox aus den Punkten nachführen,
+            // damit Selektionsrahmen und Leisten-Verankerung konsistent bleiben.
+            const punkte = formPunkte(el).map((q, i) => (i === drag.index ? np : q));
+            const box = bbox(punkte);
+            return {
+              ...el,
+              punkte,
+              x: box.minX,
+              y: box.minY,
+              breite: box.maxX - box.minX,
+              hoehe: box.maxY - box.minY,
+            };
+          }
         }
         return el;
       }),
@@ -715,8 +802,8 @@ export function DiagrammEditor({
         </div>
         <h1 className="type-headline-large text-on-surface">Feld-Diagramm</h1>
         <p className="type-body-medium mt-2 text-on-surface-variant">
-          {name} — Elemente platzieren, verschieben und entfernen. Änderungen
-          werden automatisch gespeichert.
+          {name} — Elemente platzieren, verschieben, in der Form anpassen und
+          entfernen. Änderungen werden automatisch gespeichert.
         </p>
       </header>
 
@@ -778,7 +865,10 @@ export function DiagrammEditor({
             e.preventDefault();
             removeSelected();
           }
-          if (e.key === "Escape") abbrechenZeichnen();
+          if (e.key === "Escape") {
+            if (zeichnen) abbrechenZeichnen();
+            else if (bearbeitenId) setBearbeitenId(null);
+          }
           if (e.key === "Enter" && zeichnen) fertigZeichnen();
           if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
             e.preventDefault();
@@ -805,14 +895,17 @@ export function DiagrammEditor({
               zeichnenKlick(flaechenPunkt(e.currentTarget, e));
             } else {
               setSelectedId(null);
+              setBearbeitenId(null);
             }
           }}
           onDoubleClick={() => {
             // Doppelklick landet wegen setPointerCapture (onElementPointerDown)
             // immer auf dem SVG, nie am Element-<g>. Darum hier auf die bereits
-            // gesetzte Selektion stützen: Textbox doppelklicken = inline bearbeiten.
+            // gesetzte Selektion stützen: Textbox = inline bearbeiten, Pfad/
+            // Polygon/Dreieck = Form-Bearbeitungsmodus „tiefer auswählen" (#66).
             if (zeichnen) fertigZeichnen();
             else if (selected?.art === "text") starteTextBearbeitung(selected);
+            else if (selected && geometrieEditierbar(selected)) bearbeitenStart(selected);
           }}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -839,18 +932,16 @@ export function DiagrammEditor({
               )}
               <ElementGrafik element={el} />
               {el.id === selectedId && <SelektionsRahmen element={el} />}
-              {el.id === selectedId && el.art === "form" && (
-                <rect
-                  x={el.x + el.breite - 11}
-                  y={el.y + el.hoehe - 11}
-                  width={22}
-                  height={22}
-                  fill="#ffffff"
-                  stroke="rgba(0,0,0,.45)"
-                  strokeWidth={2}
-                  className="cursor-nwse-resize"
-                  data-testid="form-anfasser"
-                  onPointerDown={(e) => onResizePointerDown(e, el)}
+              {/* Eck-Anfasser zum Grössen-Anpassen (Rechteck/Ellipse) — im
+                  Form-Bearbeitungsmodus ausgeblendet, dort gelten Punkte. */}
+              {el.id === selectedId && el.id !== bearbeitenId && formResizable(el) && (
+                <FormAnfasser element={el} onGreifen={onResizePointerDown} />
+              )}
+              {/* Punkt-Anfasser im Form-Bearbeitungsmodus (#66). */}
+              {el.id === bearbeitenId && geometrieEditierbar(el) && (
+                <PunktAnfasser
+                  punkte={el.art === "pfad" ? el.punkte : el.art === "form" ? formPunkte(el) : []}
+                  onGreifen={(e, i) => onVertexPointerDown(e, el, i)}
                 />
               )}
             </g>
@@ -895,6 +986,11 @@ export function DiagrammEditor({
             ref={leisteRef}
             element={selected}
             pos={leistePos}
+            bearbeitbar={geometrieEditierbar(selected)}
+            imBearbeiten={bearbeitenId === selected.id}
+            onBearbeiten={() =>
+              bearbeitenId === selected.id ? setBearbeitenId(null) : bearbeitenStart(selected)
+            }
             onDrehen={(delta) => drehen(selected.id, delta)}
             onFarbe={(farbe) => setFarbe(selected.id, farbe)}
             onGestrichelt={(gestrichelt) => setGestrichelt(selected.id, gestrichelt)}
@@ -992,6 +1088,73 @@ function SelektionsRahmen({ element }: { element: DiagrammElement }) {
   );
 }
 
+/** Vier Eck-Anfasser zum Grössen-Anpassen einer Form (#66). Die gezogene Ecke
+ *  folgt dem Pointer, die gegenüberliegende bleibt Anker — die Grundform
+ *  (Rechteck/Ellipse) bleibt erhalten. */
+function FormAnfasser({
+  element,
+  onGreifen,
+}: {
+  element: FormElement;
+  onGreifen: (e: React.PointerEvent, el: FormElement, ecke: Ecke) => void;
+}) {
+  const { x, y, breite, hoehe } = element;
+  const ecken: { ecke: Ecke; cx: number; cy: number; cursor: string }[] = [
+    { ecke: "tl", cx: x, cy: y, cursor: "cursor-nwse-resize" },
+    { ecke: "tr", cx: x + breite, cy: y, cursor: "cursor-nesw-resize" },
+    { ecke: "bl", cx: x, cy: y + hoehe, cursor: "cursor-nesw-resize" },
+    { ecke: "br", cx: x + breite, cy: y + hoehe, cursor: "cursor-nwse-resize" },
+  ];
+  return (
+    <>
+      {ecken.map(({ ecke, cx, cy, cursor }) => (
+        <rect
+          key={ecke}
+          x={cx - 11}
+          y={cy - 11}
+          width={22}
+          height={22}
+          fill="#ffffff"
+          stroke="rgba(0,0,0,.45)"
+          strokeWidth={2}
+          className={cursor}
+          data-testid="form-anfasser"
+          aria-label="Grösse anpassen"
+          onPointerDown={(e) => onGreifen(e, element, ecke)}
+        />
+      ))}
+    </>
+  );
+}
+
+/** Greifbare Stütz-/Eckpunkte im Form-Bearbeitungsmodus (#66). Blau abgesetzt
+ *  (vs. weisse Resize-Quadrate), mit grosszügiger unsichtbarer Trefferfläche,
+ *  damit die Punkte auch am verkleinerten Bild präzise greifbar sind (NFR). */
+function PunktAnfasser({
+  punkte,
+  onGreifen,
+}: {
+  punkte: Punkt[];
+  onGreifen: (e: React.PointerEvent, index: number) => void;
+}) {
+  return (
+    <>
+      {punkte.map((p, i) => (
+        <g
+          key={i}
+          className="cursor-grab"
+          data-testid="punkt-anfasser"
+          aria-label={`Punkt ${i + 1} verschieben`}
+          onPointerDown={(e) => onGreifen(e, i)}
+        >
+          <circle cx={p.x} cy={p.y} r={18} fill="transparent" />
+          <circle cx={p.x} cy={p.y} r={9} fill="#ffffff" stroke="#1565c0" strokeWidth={3} />
+        </g>
+      ))}
+    </>
+  );
+}
+
 /** Kontextuelle Bedienleiste am ausgewählten Element (#65): schwebt als HTML
  *  über der Zeichenfläche, ausserhalb des Dokumentflusses — so verschiebt das
  *  Ein-/Ausblentden die Fläche nicht. Eine Leiste, intern durch einen Trenner
@@ -1001,6 +1164,9 @@ const ElementLeiste = forwardRef<
   {
     element: DiagrammElement;
     pos: { left: number; top: number } | null;
+    bearbeitbar: boolean;
+    imBearbeiten: boolean;
+    onBearbeiten: () => void;
     onDrehen: (delta: 45 | -45) => void;
     onFarbe: (farbe: FarbSlug) => void;
     onGestrichelt: (gestrichelt: boolean) => void;
@@ -1009,7 +1175,19 @@ const ElementLeiste = forwardRef<
     onEntfernen: () => void;
   }
 >(function ElementLeiste(
-  { element, pos, onDrehen, onFarbe, onGestrichelt, onGefuellt, onKopieren, onEntfernen },
+  {
+    element,
+    pos,
+    bearbeitbar,
+    imBearbeiten,
+    onBearbeiten,
+    onDrehen,
+    onFarbe,
+    onGestrichelt,
+    onGefuellt,
+    onKopieren,
+    onEntfernen,
+  },
   ref,
 ) {
   const drehbar = element.art === "symbol" && symbolDef(element.typ).drehbar;
@@ -1019,7 +1197,7 @@ const ElementLeiste = forwardRef<
     element.art === "form";
   const stilbar = element.art === "pfad" && element.typ === "linie";
   const fuellbar = element.art === "form";
-  const hatEigenschaften = drehbar || faerbbar || stilbar || fuellbar;
+  const hatEigenschaften = drehbar || faerbbar || stilbar || fuellbar || bearbeitbar;
   const standardFarbe =
     element.art === "symbol"
       ? symbolDef(element.typ).defaultFarbe
@@ -1104,6 +1282,16 @@ const ElementLeiste = forwardRef<
           size="sm"
           active={!!element.gefuellt}
           onClick={() => onGefuellt(!element.gefuellt)}
+        />
+      )}
+
+      {bearbeitbar && (
+        <IconButton
+          icon={Waypoints}
+          label={imBearbeiten ? "Punkte bearbeiten beenden" : "Punkte bearbeiten"}
+          size="sm"
+          active={imBearbeiten}
+          onClick={onBearbeiten}
         />
       )}
 
