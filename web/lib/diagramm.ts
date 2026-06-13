@@ -61,6 +61,7 @@ export const SPIELER_POSEN = [
   "stehen",
   "laufen",
   "dribbeln",
+  "passen",
   "schiessen",
   "graetschen",
 ] as const;

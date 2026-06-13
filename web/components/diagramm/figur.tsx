@@ -64,10 +64,12 @@ export function figurVariante(seed: string): { frisur: Frisur; haut: string; haa
     h = Math.imul(h, 16777619);
   }
   const u = h >>> 0;
+  // Unsigned Shifts (>>>): ein vorzeichenbehaftetes >> liefert bei gesetztem
+  // Bit 31 negative Indizes → undefined → fill="undefined" (schwarz).
   return {
     frisur: FRISUREN[u % FRISUREN.length],
-    haut: SKIN[(u >> 3) % SKIN.length],
-    haar: HAAR[(u >> 6) % HAAR.length],
+    haut: SKIN[(u >>> 3) % SKIN.length],
+    haar: HAAR[(u >>> 6) % HAAR.length],
   };
 }
 
@@ -233,6 +235,27 @@ function schiessen(j: string, skin: string, haar: string, fr: Frisur): string {
     <circle cx="134" cy="126" r="7" fill="${skin}"/>`
   );
 }
+/** Innenseit-Pass (Profil, Blick nach rechts): Standbein gepflanzt, Passbein
+ *  tief quer zum Ball geführt (flacher Innenseit-Fuss am Boden), Arme zur
+ *  Balance offen — bewusst flacher als der hohe Schuss. */
+function passen(j: string, skin: string, haar: string, fr: Frisur): string {
+  return (
+    `<path d="M92 150 L86 224" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
+    <path d="M89 198 L86 220" stroke="${SOCK}" stroke-width="17" stroke-linecap="round"/>
+    ${schuh(82, 220, -1)}
+    <path d="M84 108 Q66 112 62 128" stroke="${skin}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <circle cx="62" cy="128" r="7" fill="${skin}"/>
+    <path d="M82 98 L120 100 Q126 102 124 122 L120 150 Q118 156 110 156 L88 156 Q82 156 82 150 Z" fill="${j}"/>
+    <rect x="92" y="82" width="14" height="18" rx="5" fill="${skin}"/>
+    ${kopfProfil(110, 54, skin, haar, fr)}
+    <path d="M106 150 Q126 178 136 202" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="M130 186 Q134 195 136 202" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
+    <path d="M129 198 q19 -1 25 7 q1 6 -7 6 l-18 0 q-5 -7 0 -13 Z" fill="${SHOE}"/>
+    <path d="M116 106 Q130 112 134 126" stroke="${skin}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <path d="M116 104 Q124 110 128 118" stroke="${j}" stroke-width="20" fill="none" stroke-linecap="round"/>
+    <circle cx="134" cy="126" r="7" fill="${skin}"/>`
+  );
+}
 function graetschen(j: string, skin: string, haar: string, fr: Frisur): string {
   return (
     `<path d="M96 206 Q120 210 156 212" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
@@ -273,6 +296,7 @@ const POSEN: Record<SpielerPose, (j: string, s: string, h: string, fr: Frisur) =
   stehen,
   laufen,
   dribbeln,
+  passen,
   schiessen,
   graetschen,
 };
