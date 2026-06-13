@@ -60,10 +60,13 @@ export function ExerciseForm({
   action,
   initial = {},
   submitLabel,
+  afterName,
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
   submitLabel: string;
+  /** Optionaler Slot direkt unter dem Namensfeld (z. B. die Diagramm-Vorschau). */
+  afterName?: React.ReactNode;
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const err = state.errors ?? {};
@@ -139,6 +142,8 @@ export function ExerciseForm({
         error={!!err.name}
         supportingText={err.name ?? "Pflichtfeld"}
       />
+
+      {afterName}
 
       <div>
         <p className={`type-label-small mb-2 ${err.trainingsteil ? "text-error" : "text-on-surface-variant"}`}>

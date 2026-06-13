@@ -39,6 +39,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
+import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
 import type { DiagrammElement } from "@/lib/diagramm";
 
 export const metadata: Metadata = {
@@ -715,6 +716,33 @@ export default function Styleguide() {
               <GlyphVorschau element={el} groesse={40} />
             </div>
           ))}
+        </div>
+        <p className="type-body-medium mb-4 mt-8 max-w-xl text-on-surface-variant">
+          <code>DiagrammVorschau</code> ist der Einstieg in den Editor auf der
+          Bearbeiten-Seite: Die ganze Fläche ist ein Link auf{" "}
+          <code>/uebung/[slug]/diagramm</code>. Existiert ein Diagramm, zeigt sie
+          dessen Vorschau (immer das Diagramm, nie das Foto); sonst einen
+          Empty-State, der zum Zeichnen auffordert. Der sichtbare Button ist reine
+          Optik (kein <code>&lt;button&gt;</code> in <code>&lt;a&gt;</code>) — der
+          Link trägt Klick und <code>aria-label</code>.
+        </p>
+        <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
+          <DiagrammVorschau
+            slug="beispiel"
+            name="Abschlussspiel"
+            diagramm={{
+              version: 1,
+              elemente: [
+                { id: "sv-tor", art: "symbol", typ: "tor", x: 1380, y: 500, rotation: 270 },
+                { id: "sv-py1", art: "symbol", typ: "pylone", x: 480, y: 360, farbe: "rot" },
+                { id: "sv-py2", art: "symbol", typ: "pylone", x: 480, y: 640, farbe: "gelb" },
+                { id: "sv-sp", art: "symbol", typ: "spieler", x: 520, y: 500, pose: "dribbeln", farbe: "blau" },
+                { id: "sv-ba", art: "symbol", typ: "fussball", x: 600, y: 520 },
+                { id: "sv-lw", art: "pfad", typ: "laufweg", punkte: [{ x: 560, y: 520 }, { x: 950, y: 500 }, { x: 1260, y: 500 }] },
+              ],
+            }}
+          />
+          <DiagrammVorschau slug="beispiel" name="Leeres Beispiel" diagramm={null} />
         </div>
       </Section>
 
