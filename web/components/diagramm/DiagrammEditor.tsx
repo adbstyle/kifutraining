@@ -1,8 +1,9 @@
 "use client";
 
-import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Check, ClipboardPaste, Copy, Ellipsis, Minus, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
-import { Button, IconButton } from "@/components/ui";
+import { Button, IconButton, Tooltip } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import {
   FLAECHE,
   DIAGRAMM_VERSION,
@@ -28,6 +29,7 @@ import { SYMBOLE, symbolDef } from "./symbols";
 import {
   Rasen,
   ElementGrafik,
+  GlyphVorschau,
   PfadGrafik,
   ZoneGrafik,
   punkteAttr,
@@ -109,6 +111,78 @@ const ZONEN_WERKZEUGE: Record<ZonenForm, string> = {
   dreieck: "Dreieck",
   polygon: "Polygon",
 };
+
+/** Cluster-Reihenfolge des Glyph-Bands (gruppiert, ohne sichtbare Überschrift —
+ *  die Anordnung trägt die Gruppierung, der Tooltip den Namen). */
+const GRUPPE_TORE: SymbolTyp[] = ["tor", "minitor"];
+const GRUPPE_MATERIAL: SymbolTyp[] = ["pylone", "teller", "stange", "reifen", "huerde"];
+const GRUPPE_PERSONEN: SymbolTyp[] = ["spieler", "torwart"];
+const GRUPPE_BAELLE: SymbolTyp[] = ["fussball", "handball", "tennisball"];
+
+/** Statische Mini-Vorschau-Elemente für die Kacheln — Koordinaten sind
+ *  beliebig, `GlyphVorschau` passt den Inhalt quadratisch ein. */
+const symVorschau = (typ: SymbolTyp): DiagrammElement => ({
+  id: `v-${typ}`,
+  art: "symbol",
+  typ,
+  x: 0,
+  y: 0,
+  farbe: SYMBOLE[typ].defaultFarbe,
+});
+const pfadVorschau = (typ: PfadTyp): DiagrammElement => ({
+  id: `v-${typ}`,
+  art: "pfad",
+  typ,
+  // Linie waagrecht (kein Pfeil), Bewegungen diagonal aufwärts (Richtung sichtbar).
+  punkte: typ === "linie" ? [{ x: 0, y: 45 }, { x: 90, y: 45 }] : [{ x: 8, y: 88 }, { x: 64, y: 6 }],
+});
+const zoneVorschau = (form: ZonenForm): DiagrammElement =>
+  form === "polygon"
+    ? {
+        id: "v-zone-polygon",
+        art: "zone",
+        form,
+        x: 0,
+        y: 0,
+        breite: 90,
+        hoehe: 90,
+        punkte: [{ x: 12, y: 22 }, { x: 82, y: 10 }, { x: 90, y: 72 }, { x: 38, y: 86 }],
+      }
+    : { id: `v-zone-${form}`, art: "zone", form, x: 4, y: 18, breite: 92, hoehe: 60 };
+const textVorschau: DiagrammElement = { id: "v-text", art: "text", x: 0, y: 0, text: "T" };
+
+/** Eine Werkzeug-Kachel des Bands. */
+type Kachel = {
+  key: string;
+  label: string;
+  element: DiagrammElement;
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
+};
+
+/** WYSIWYG-Glyph-Kachel: Mini-Vorschau des Elements, Name nur per Tooltip +
+ *  aria-label (kein sichtbarer Text). Aktive Zeichen-Werkzeuge sind markiert. */
+function GlyphKachel({ label, element, active = false, disabled = false, onClick }: Kachel) {
+  return (
+    <Tooltip label={label} placement="bottom">
+      <button
+        type="button"
+        aria-label={label}
+        aria-pressed={active}
+        disabled={disabled}
+        onClick={onClick}
+        className={cn(
+          "focus-ring flex size-12 items-center justify-center overflow-hidden rounded-[6px] border transition-colors",
+          active ? "border-primary ring-1 ring-primary" : "border-outline-variant hover:border-outline",
+          disabled && "cursor-not-allowed opacity-40 hover:border-outline-variant",
+        )}
+      >
+        <GlyphVorschau element={element} groesse={40} />
+      </button>
+    </Tooltip>
+  );
+}
 
 export function DiagrammEditor({
   exerciseId,
@@ -538,14 +612,73 @@ export function DiagrammEditor({
     fehler: "Speichern fehlgeschlagen — Änderung wird erneut versucht.",
   };
 
+  // Werkzeug-Kacheln gruppenweise zusammenstellen. Symbole werden sofort
+  // platziert; Pfad-/Polygon-Werkzeuge schalten den Zeichenmodus und sind
+  // dann „aktiv", während die übrigen Kacheln gesperrt sind.
+  const istAktiv = (w: PfadTyp | "polygon") => zeichnen?.werkzeug === w;
+  const symKachel = (typ: SymbolTyp): Kachel => ({
+    key: typ,
+    label: SYMBOLE[typ].label,
+    element: symVorschau(typ),
+    disabled: !!zeichnen,
+    onClick: () => addSymbol(typ),
+  });
+  const pfadKachel = (typ: PfadTyp): Kachel => ({
+    key: typ,
+    label: PFAD_WERKZEUGE[typ],
+    element: pfadVorschau(typ),
+    active: istAktiv(typ),
+    disabled: !!zeichnen && !istAktiv(typ),
+    onClick: () => (istAktiv(typ) ? abbrechenZeichnen() : startZeichnen(typ)),
+  });
+  const zoneKachel = (form: ZonenForm): Kachel =>
+    form === "polygon"
+      ? {
+          key: "zone-polygon",
+          label: "Zone Polygon",
+          element: zoneVorschau(form),
+          active: istAktiv("polygon"),
+          disabled: !!zeichnen && !istAktiv("polygon"),
+          onClick: () => (istAktiv("polygon") ? abbrechenZeichnen() : startZeichnen("polygon")),
+        }
+      : {
+          key: `zone-${form}`,
+          label: `Zone ${ZONEN_WERKZEUGE[form]}`,
+          element: zoneVorschau(form),
+          disabled: !!zeichnen,
+          onClick: () => addZone(form),
+        };
+  const gruppen: Kachel[][] = [
+    GRUPPE_TORE.map(symKachel),
+    GRUPPE_MATERIAL.map(symKachel),
+    GRUPPE_PERSONEN.map(symKachel),
+    GRUPPE_BAELLE.map(symKachel),
+    (Object.keys(PFAD_WERKZEUGE) as PfadTyp[]).map(pfadKachel),
+    [...(Object.keys(ZONEN_WERKZEUGE) as ZonenForm[]).map(zoneKachel), {
+      key: "text",
+      label: "Textbox",
+      element: textVorschau,
+      disabled: !!zeichnen,
+      onClick: addText,
+    }],
+  ];
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Werkzeug-Palette */}
-      <div className="flex flex-wrap items-center gap-2">
-        {(Object.keys(SYMBOLE) as SymbolTyp[]).map((typ) => (
-          <Button key={typ} variant="tonal" size="sm" disabled={!!zeichnen} onClick={() => addSymbol(typ)}>
-            {SYMBOLE[typ].label}
-          </Button>
+      {/* Werkzeug-Palette: ein gruppiertes Glyph-Band. Jede Kachel zeigt das
+          Element als Mini-Vorschau (WYSIWYG); der Name kommt nur über Tooltip +
+          aria-label. Cluster sind durch eine Haarlinie getrennt und brechen als
+          Einheit um. */}
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Elemente, Bewegungen, Zonen und Text">
+        {gruppen.map((gruppe, gi) => (
+          <Fragment key={gi}>
+            {gi > 0 && <span aria-hidden className="h-10 w-px shrink-0 self-center bg-outline-variant" />}
+            <div className="flex shrink-0 items-center gap-1.5">
+              {gruppe.map(({ key, ...rest }) => (
+                <GlyphKachel key={key} {...rest} />
+              ))}
+            </div>
+          </Fragment>
         ))}
         <div className="ml-auto flex items-center gap-2">
           <Button
@@ -579,71 +712,33 @@ export function DiagrammEditor({
         </div>
       </div>
 
-      {/* Bewegungs-/Linien-Werkzeuge (#52), Zonen und Textbox (#53) */}
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Bewegungen, Linien, Zonen und Text">
-        {(Object.keys(PFAD_WERKZEUGE) as PfadTyp[]).map((typ) => (
-          <Button
-            key={typ}
-            variant={zeichnen?.werkzeug === typ ? "filled" : "outlined"}
-            size="sm"
-            aria-pressed={zeichnen?.werkzeug === typ}
-            disabled={!!zeichnen && zeichnen.werkzeug !== typ}
-            onClick={() => (zeichnen?.werkzeug === typ ? abbrechenZeichnen() : startZeichnen(typ))}
-          >
-            {PFAD_WERKZEUGE[typ]}
-          </Button>
-        ))}
-        <span aria-hidden className="h-5 w-px bg-outline-variant" />
-        {(Object.keys(ZONEN_WERKZEUGE) as ZonenForm[]).map((form) =>
-          form === "polygon" ? (
+      {/* Zeichen-Steuerung — nur sichtbar, während ein Pfad/Polygon gezeichnet wird. */}
+      {zeichnen && (
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Zeichnen">
+          <span className="type-body-small text-on-surface-variant" data-testid="zeichnen-hinweis">
+            {zeichnen.werkzeug === "pass"
+              ? "Start und Ziel anklicken."
+              : zeichnen.werkzeug === "polygon"
+                ? "Eckpunkte der Zone anklicken (mindestens drei)."
+                : "Punkte auf der Fläche anklicken; Knicke und Kurven entstehen über mehrere Punkte."}
+          </span>
+          {zeichnen.werkzeug !== "pass" && (
             <Button
-              key={form}
-              variant={zeichnen?.werkzeug === "polygon" ? "filled" : "outlined"}
+              variant="filled"
               size="sm"
-              aria-pressed={zeichnen?.werkzeug === "polygon"}
-              disabled={!!zeichnen && zeichnen.werkzeug !== "polygon"}
-              onClick={() =>
-                zeichnen?.werkzeug === "polygon" ? abbrechenZeichnen() : startZeichnen("polygon")
-              }
+              onClick={() => fertigZeichnen()}
+              disabled={zeichnen.punkte.length < minPunkte(zeichnen.werkzeug)}
             >
-              Zone Polygon
+              <Check size={16} strokeWidth={2} aria-hidden />
+              Fertig
             </Button>
-          ) : (
-            <Button key={form} variant="outlined" size="sm" disabled={!!zeichnen} onClick={() => addZone(form)}>
-              Zone {ZONEN_WERKZEUGE[form]}
-            </Button>
-          ),
-        )}
-        <Button variant="outlined" size="sm" disabled={!!zeichnen} onClick={addText}>
-          Textbox
-        </Button>
-        {zeichnen && (
-          <>
-            <span className="type-body-small text-on-surface-variant" data-testid="zeichnen-hinweis">
-              {zeichnen.werkzeug === "pass"
-                ? "Start und Ziel anklicken."
-                : zeichnen.werkzeug === "polygon"
-                  ? "Eckpunkte der Zone anklicken (mindestens drei)."
-                  : "Punkte auf der Fläche anklicken; Knicke und Kurven entstehen über mehrere Punkte."}
-            </span>
-            {zeichnen.werkzeug !== "pass" && (
-              <Button
-                variant="filled"
-                size="sm"
-                onClick={() => fertigZeichnen()}
-                disabled={zeichnen.punkte.length < minPunkte(zeichnen.werkzeug)}
-              >
-                <Check size={16} strokeWidth={2} aria-hidden />
-                Fertig
-              </Button>
-            )}
-            <Button variant="text" size="sm" onClick={abbrechenZeichnen}>
-              <X size={16} strokeWidth={2} aria-hidden />
-              Abbrechen
-            </Button>
-          </>
-        )}
-      </div>
+          )}
+          <Button variant="text" size="sm" onClick={abbrechenZeichnen}>
+            <X size={16} strokeWidth={2} aria-hidden />
+            Abbrechen
+          </Button>
+        </div>
+      )}
 
       {/* Zeichenfläche — selektionsabhängige Optionen schweben kontextuell am
           Element (ElementLeiste), nicht mehr als Zeilen darüber (#65). */}

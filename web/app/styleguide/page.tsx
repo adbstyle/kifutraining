@@ -38,7 +38,8 @@ import {
   User,
   Pencil,
 } from "lucide-react";
-import { DiagrammView } from "@/components/diagramm/DiagrammView";
+import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
+import type { DiagrammElement } from "@/lib/diagramm";
 
 export const metadata: Metadata = {
   title: "Styleguide — KiFu Designsystem",
@@ -650,6 +651,36 @@ export default function Styleguide() {
               ],
             }}
           />
+        </div>
+        <p className="type-body-medium mb-4 mt-8 max-w-xl text-on-surface-variant">
+          Die Werkzeug-Palette des Editors zeigt jedes Element als{" "}
+          <code>GlyphVorschau</code> — dieselbe <code>ElementGrafik</code> wie
+          auf dem Feld, in eine Kachel auf Rasen-Grün eingepasst (WYSIWYG; weisse
+          Glyphen brauchen den grünen Grund). Die Kacheln sind gruppenweise
+          aneinandergereiht, der Name kommt nur über Tooltip + <code>aria-label</code>{" "}
+          (kein sichtbarer Text). Wiederverwendbar auch für die Diagramm-Bibliothek.
+        </p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {(
+            [
+              { id: "g-tor", art: "symbol", typ: "tor", x: 0, y: 0 },
+              { id: "g-pylone", art: "symbol", typ: "pylone", x: 0, y: 0, farbe: "rot" },
+              { id: "g-spieler", art: "symbol", typ: "spieler", x: 0, y: 0, farbe: "blau" },
+              { id: "g-fussball", art: "symbol", typ: "fussball", x: 0, y: 0 },
+              { id: "g-laufweg", art: "pfad", typ: "laufweg", punkte: [{ x: 8, y: 88 }, { x: 64, y: 6 }] },
+              { id: "g-dribbling", art: "pfad", typ: "dribbling", punkte: [{ x: 8, y: 88 }, { x: 64, y: 6 }] },
+              { id: "g-pass", art: "pfad", typ: "pass", punkte: [{ x: 8, y: 88 }, { x: 64, y: 6 }] },
+              { id: "g-zone", art: "zone", form: "rechteck", x: 4, y: 18, breite: 92, hoehe: 60 },
+              { id: "g-text", art: "text", x: 0, y: 0, text: "T" },
+            ] as DiagrammElement[]
+          ).map((el) => (
+            <div
+              key={el.id}
+              className="flex size-12 items-center justify-center overflow-hidden rounded-[6px] border border-outline-variant"
+            >
+              <GlyphVorschau element={el} groesse={40} />
+            </div>
+          ))}
         </div>
       </Section>
 

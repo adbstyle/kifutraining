@@ -2,6 +2,7 @@ import {
   FLAECHE,
   FARBEN,
   ZONE_DEFAULT_FARBE,
+  bbox,
   type DiagrammData,
   type DiagrammElement,
   type PfadElement,
@@ -47,8 +48,14 @@ export function sortiertNachEbene(elemente: DiagrammElement[]): DiagrammElement[
   return [...elemente].sort((a, b) => ART_ORDNUNG[a.art] - ART_ORDNUNG[b.art]);
 }
 
+/** Auf 2 Nachkommastellen runden. Wichtig für SVG-Koordinaten aus
+ *  transzendenten Funktionen (Welle: sin, Pfeilspitze: cos/sin): Server- und
+ *  Client-Engine runden das letzte Float-Bit minimal verschieden — vollpräzise
+ *  Ausgabe löst sonst einen Hydration-Mismatch aus. Gerundet ist sie stabil. */
+const r2 = (n: number) => Math.round(n * 100) / 100;
+
 export const punkteAttr = (punkte: Punkt[]) =>
-  punkte.map((p) => `${p.x},${p.y}`).join(" ");
+  punkte.map((p) => `${r2(p.x)},${r2(p.y)}`).join(" ");
 
 /** Pfeilkopf-Geometrie (Single Source für Zeichnung UND Linienkürzung): Länge
  *  entlang der Achse und halber Öffnungswinkel. Bewusst deutlich breiter als
@@ -72,7 +79,7 @@ function PfeilSpitze({ punkte, farbe }: { punkte: Punkt[]; farbe: string }) {
   const r = seite(PFEIL_WINKEL);
   return (
     <polygon
-      points={`${b.x},${b.y} ${l.x},${l.y} ${r.x},${r.y}`}
+      points={`${r2(b.x)},${r2(b.y)} ${r2(l.x)},${r2(l.y)} ${r2(r.x)},${r2(r.y)}`}
       fill={farbe}
     />
   );
@@ -267,6 +274,67 @@ export function ElementGrafik({ element }: { element: DiagrammElement }) {
     default:
       return null;
   }
+}
+
+/** Inhalts-Begrenzung eines Elements in Flächen-Koordinaten — Basis für das
+ *  Einpassen der Mini-Vorschau. Pfade bekommen Rand für Pfeilspitze + Strich. */
+function inhaltBox(element: DiagrammElement): { x: number; y: number; b: number; h: number } {
+  switch (element.art) {
+    case "symbol": {
+      const d = symbolDef(element.typ);
+      return { x: element.x - d.breite / 2, y: element.y - d.hoehe / 2, b: d.breite, h: d.hoehe };
+    }
+    case "pfad": {
+      const r = 18;
+      const bb = bbox(element.punkte);
+      return { x: bb.minX - r, y: bb.minY - r, b: bb.maxX - bb.minX + 2 * r, h: bb.maxY - bb.minY + 2 * r };
+    }
+    case "zone": {
+      if (element.form === "polygon" && element.punkte?.length) {
+        const bb = bbox(element.punkte);
+        return { x: bb.minX, y: bb.minY, b: bb.maxX - bb.minX, h: bb.maxY - bb.minY };
+      }
+      return { x: element.x, y: element.y, b: element.breite, h: element.hoehe };
+    }
+    case "text": {
+      const tb = textBox(element);
+      return { x: tb.x, y: tb.y, b: tb.breite, h: tb.hoehe };
+    }
+  }
+}
+
+/** Quadratische Mini-Vorschau eines Elements für Paletten/Bibliothek: rendert
+ *  exakt dasselbe `ElementGrafik` wie auf dem Feld, auf Rasen-Grün, zentriert
+ *  in eine Kachel eingepasst (WYSIWYG — die Vorschau ist das Resultat in klein).
+ *  Weisse Glyphen brauchen den grünen Grund, sonst wären sie unsichtbar. */
+export function GlyphVorschau({
+  element,
+  groesse = 44,
+  rand = 0.16,
+}: {
+  element: DiagrammElement;
+  groesse?: number;
+  /** Luft um den Inhalt, relativ zur längeren Kante. */
+  rand?: number;
+}) {
+  const ib = inhaltBox(element);
+  const seite = Math.max(ib.b, ib.h, 1) * (1 + rand * 2);
+  const cx = ib.x + ib.b / 2;
+  const cy = ib.y + ib.h / 2;
+  const ox = cx - seite / 2;
+  const oy = cy - seite / 2;
+  return (
+    <svg
+      viewBox={`${ox} ${oy} ${seite} ${seite}`}
+      width={groesse}
+      height={groesse}
+      aria-hidden
+      className="block"
+    >
+      <rect x={ox} y={oy} width={seite} height={seite} fill="#5f9c4d" />
+      <ElementGrafik element={element} />
+    </svg>
+  );
 }
 
 export function DiagrammView({
