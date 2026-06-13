@@ -2,14 +2,14 @@
 
 import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, ClipboardPaste, Copy, Ellipsis, Minus, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
+import { ArrowLeft, Check, ClipboardPaste, Copy, Ellipsis, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
 import { Button, IconButton, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
   FLAECHE,
   DIAGRAMM_VERSION,
   FARBEN,
-  ZONE_DEFAULT_FARBE,
+  FORM_DEFAULT_FARBE,
   LINIE_DEFAULT_FARBE,
   MAX_TEXT_LAENGE,
   bbox,
@@ -22,8 +22,8 @@ import {
   type Punkt,
   type Rotation,
   type TextElement,
-  type ZoneElement,
-  type ZonenForm,
+  type FormElement,
+  type FormTyp,
 } from "@/lib/diagramm";
 import { saveDiagramm } from "@/lib/actions/diagramm";
 import { SYMBOLE, symbolDef } from "./symbols";
@@ -32,7 +32,7 @@ import {
   ElementGrafik,
   GlyphVorschau,
   PfadGrafik,
-  ZoneGrafik,
+  FormGrafik,
   punkteAttr,
   sortiertNachEbene,
   textBox,
@@ -82,7 +82,7 @@ function versetzteKopie(el: DiagrammElement, versatz: number): DiagrammElement {
       const dy = clamp(box.minY + versatz, FLAECHE.hoehe - (box.maxY - box.minY)) - box.minY;
       return { ...el, id, punkte: el.punkte.map((p) => ({ x: p.x + dx, y: p.y + dy })) };
     }
-    case "zone": {
+    case "form": {
       const dx = clamp(el.x + versatz, FLAECHE.breite - el.breite) - el.x;
       const dy = clamp(el.y + versatz, FLAECHE.hoehe - el.hoehe) - el.y;
       return {
@@ -99,14 +99,14 @@ function versetzteKopie(el: DiagrammElement, versatz: number): DiagrammElement {
 type Drag = { gemerkt: boolean } & (
   | { modus: "punktig"; id: string; dx: number; dy: number }
   | { modus: "pfad"; id: string; start: Punkt; orig: Punkt[] }
-  | { modus: "zone"; id: string; start: Punkt; orig: ZoneElement }
-  | { modus: "groesse"; id: string; orig: ZoneElement }
+  | { modus: "form"; id: string; start: Punkt; orig: FormElement }
+  | { modus: "groesse"; id: string; orig: FormElement }
 );
 
-/** Was gerade Punkt für Punkt gezeichnet wird: Bewegung/Linie oder Polygon-Zone. */
+/** Was gerade Punkt für Punkt gezeichnet wird: Bewegung/Linie oder Polygon-Form. */
 type Zeichnen = { werkzeug: PfadTyp | "polygon"; punkte: Punkt[] };
 
-const ZONEN_WERKZEUGE: Record<ZonenForm, string> = {
+const FORMEN: Record<FormTyp, string> = {
   rechteck: "Rechteck",
   ellipse: "Ellipse",
   dreieck: "Dreieck",
@@ -137,11 +137,11 @@ const pfadVorschau = (typ: PfadTyp): DiagrammElement => ({
   // Linie waagrecht (kein Pfeil), Bewegungen diagonal aufwärts (Richtung sichtbar).
   punkte: typ === "linie" ? [{ x: 0, y: 45 }, { x: 90, y: 45 }] : [{ x: 8, y: 88 }, { x: 64, y: 6 }],
 });
-const zoneVorschau = (form: ZonenForm): DiagrammElement =>
+const formVorschau = (form: FormTyp): DiagrammElement =>
   form === "polygon"
     ? {
-        id: "v-zone-polygon",
-        art: "zone",
+        id: "v-form-polygon",
+        art: "form",
         form,
         x: 0,
         y: 0,
@@ -149,7 +149,7 @@ const zoneVorschau = (form: ZonenForm): DiagrammElement =>
         hoehe: 90,
         punkte: [{ x: 12, y: 22 }, { x: 82, y: 10 }, { x: 90, y: 72 }, { x: 38, y: 86 }],
       }
-    : { id: `v-zone-${form}`, art: "zone", form, x: 4, y: 18, breite: 92, hoehe: 60 };
+    : { id: `v-form-${form}`, art: "form", form, x: 4, y: 18, breite: 92, hoehe: 60 };
 const textVorschau: DiagrammElement = { id: "v-text", art: "text", x: 0, y: 0, text: "T" };
 
 /** Eine Werkzeug-Kachel des Bands. */
@@ -338,6 +338,13 @@ export function DiagrammEditor({
     );
   }
 
+  function setGefuellt(id: string, gefuellt: boolean) {
+    merken();
+    setElemente((prev) =>
+      prev.map((el) => (el.id === id && el.art === "form" ? { ...el, gefuellt } : el)),
+    );
+  }
+
   function startZeichnen(werkzeug: PfadTyp | "polygon") {
     setSelectedId(null);
     setZeichnen({ werkzeug, punkte: [] });
@@ -361,7 +368,7 @@ export function DiagrammEditor({
               const box = bbox(punkte);
               return {
                 id: crypto.randomUUID(),
-                art: "zone" as const,
+                art: "form" as const,
                 form: "polygon" as const,
                 x: box.minX,
                 y: box.minY,
@@ -394,11 +401,11 @@ export function DiagrammEditor({
     setZeichnen({ ...zeichnen, punkte });
   }
 
-  function addZone(form: Exclude<ZonenForm, "polygon">) {
+  function addForm(form: Exclude<FormTyp, "polygon">) {
     merken();
     const neu: DiagrammElement = {
       id: crypto.randomUUID(),
-      art: "zone",
+      art: "form",
       form,
       x: FLAECHE.breite / 2 - 130,
       y: FLAECHE.hoehe / 2 - 90,
@@ -453,14 +460,14 @@ export function DiagrammEditor({
     dragRef.current =
       el.art === "pfad"
         ? { gemerkt: false, modus: "pfad", id: el.id, start: p, orig: el.punkte }
-        : el.art === "zone"
-          ? { gemerkt: false, modus: "zone", id: el.id, start: p, orig: el }
+        : el.art === "form"
+          ? { gemerkt: false, modus: "form", id: el.id, start: p, orig: el }
           : { gemerkt: false, modus: "punktig", id: el.id, dx: p.x - el.x, dy: p.y - el.y };
     svg.setPointerCapture(e.pointerId);
   }
 
-  /** Grösse-Anfasser einer Zone gepackt (#53 AK4). */
-  function onResizePointerDown(e: React.PointerEvent, el: ZoneElement) {
+  /** Grösse-Anfasser einer Form gepackt (#53 AK4). */
+  function onResizePointerDown(e: React.PointerEvent, el: FormElement) {
     e.stopPropagation();
     const svg = svgRef.current;
     if (!svg) return;
@@ -501,7 +508,7 @@ export function DiagrammEditor({
           const dy = clamp(p.y - drag.start.y + box.minY, FLAECHE.hoehe - (box.maxY - box.minY)) - box.minY;
           return { ...el, punkte: drag.orig.map((q) => ({ x: q.x + dx, y: q.y + dy })) };
         }
-        if (drag.modus === "zone" && el.art === "zone") {
+        if (drag.modus === "form" && el.art === "form") {
           const o = drag.orig;
           const dx = clamp(p.x - drag.start.x + o.x, FLAECHE.breite - o.breite) - o.x;
           const dy = clamp(p.y - drag.start.y + o.y, FLAECHE.hoehe - o.hoehe) - o.y;
@@ -512,7 +519,7 @@ export function DiagrammEditor({
             punkte: o.punkte?.map((q) => ({ x: q.x + dx, y: q.y + dy })),
           };
         }
-        if (drag.modus === "groesse" && el.art === "zone") {
+        if (drag.modus === "groesse" && el.art === "form") {
           const o = drag.orig;
           const breite = Math.max(60, clamp(p.x, FLAECHE.breite) - o.x);
           const hoehe = Math.max(60, clamp(p.y, FLAECHE.hoehe) - o.y);
@@ -636,22 +643,22 @@ export function DiagrammEditor({
     disabled: !!zeichnen && !istAktiv(typ),
     onClick: () => (istAktiv(typ) ? abbrechenZeichnen() : startZeichnen(typ)),
   });
-  const zoneKachel = (form: ZonenForm): Kachel =>
+  const formKachel = (form: FormTyp): Kachel =>
     form === "polygon"
       ? {
-          key: "zone-polygon",
-          label: "Zone Polygon",
-          element: zoneVorschau(form),
+          key: "form-polygon",
+          label: "Polygon",
+          element: formVorschau(form),
           active: istAktiv("polygon"),
           disabled: !!zeichnen && !istAktiv("polygon"),
           onClick: () => (istAktiv("polygon") ? abbrechenZeichnen() : startZeichnen("polygon")),
         }
       : {
-          key: `zone-${form}`,
-          label: `Zone ${ZONEN_WERKZEUGE[form]}`,
-          element: zoneVorschau(form),
+          key: `form-${form}`,
+          label: FORMEN[form],
+          element: formVorschau(form),
           disabled: !!zeichnen,
-          onClick: () => addZone(form),
+          onClick: () => addForm(form),
         };
   const gruppen: Kachel[][] = [
     GRUPPE_TORE.map(symKachel),
@@ -659,7 +666,7 @@ export function DiagrammEditor({
     GRUPPE_PERSONEN.map(symKachel),
     GRUPPE_BAELLE.map(symKachel),
     (Object.keys(PFAD_WERKZEUGE) as PfadTyp[]).map(pfadKachel),
-    [...(Object.keys(ZONEN_WERKZEUGE) as ZonenForm[]).map(zoneKachel), {
+    [...(Object.keys(FORMEN) as FormTyp[]).map(formKachel), {
       key: "text",
       label: "Textbox",
       element: textVorschau,
@@ -724,7 +731,7 @@ export function DiagrammEditor({
           Element als Mini-Vorschau (WYSIWYG); der Name kommt nur über Tooltip +
           aria-label. Cluster sind durch eine Haarlinie getrennt und brechen als
           Einheit um. */}
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Elemente, Bewegungen, Zonen und Text">
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Elemente, Bewegungen, Formen und Text">
         {gruppen.map((gruppe, gi) => (
           <Fragment key={gi}>
             {gi > 0 && <span aria-hidden className="h-10 w-px shrink-0 self-center bg-outline-variant" />}
@@ -744,7 +751,7 @@ export function DiagrammEditor({
             {zeichnen.werkzeug === "pass"
               ? "Start und Ziel anklicken."
               : zeichnen.werkzeug === "polygon"
-                ? "Eckpunkte der Zone anklicken (mindestens drei)."
+                ? "Eckpunkte der Form anklicken (mindestens drei)."
                 : "Punkte auf der Fläche anklicken; Knicke und Kurven entstehen über mehrere Punkte."}
           </span>
           {zeichnen.werkzeug !== "pass" && (
@@ -839,7 +846,7 @@ export function DiagrammEditor({
               )}
               <ElementGrafik element={el} />
               {el.id === selectedId && <SelektionsRahmen element={el} />}
-              {el.id === selectedId && el.art === "zone" && (
+              {el.id === selectedId && el.art === "form" && (
                 <rect
                   x={el.x + el.breite - 11}
                   y={el.y + el.hoehe - 11}
@@ -849,21 +856,21 @@ export function DiagrammEditor({
                   stroke="rgba(0,0,0,.45)"
                   strokeWidth={2}
                   className="cursor-nwse-resize"
-                  data-testid="zone-anfasser"
+                  data-testid="form-anfasser"
                   onPointerDown={(e) => onResizePointerDown(e, el)}
                 />
               )}
             </g>
           ))}
 
-          {/* Vorschau des entstehenden Pfads bzw. der Polygon-Zone */}
+          {/* Vorschau der entstehenden Bewegung bzw. der Polygon-Form */}
           {zeichnen && zeichnen.punkte.length > 0 && (
             <g pointerEvents="none" opacity={0.75} data-testid="zeichnen-vorschau">
               {zeichnen.werkzeug === "polygon" ? (
-                <ZoneGrafik
+                <FormGrafik
                   element={{
                     id: "vorschau",
-                    art: "zone",
+                    art: "form",
                     form: "polygon",
                     x: 0,
                     y: 0,
@@ -898,6 +905,7 @@ export function DiagrammEditor({
             onDrehen={(delta) => drehen(selected.id, delta)}
             onFarbe={(farbe) => setFarbe(selected.id, farbe)}
             onGestrichelt={(gestrichelt) => setGestrichelt(selected.id, gestrichelt)}
+            onGefuellt={(gefuellt) => setGefuellt(selected.id, gefuellt)}
             onKopieren={kopieren}
             onEntfernen={removeSelected}
           />
@@ -966,7 +974,7 @@ function elementBBox(element: DiagrammElement): {
     const box = bbox(element.punkte);
     return { x: box.minX, y: box.minY, breite: box.maxX - box.minX, hoehe: box.maxY - box.minY };
   }
-  if (element.art === "zone") {
+  if (element.art === "form") {
     return { x: element.x, y: element.y, breite: element.breite, hoehe: element.hoehe };
   }
   const box = textBox(element);
@@ -1003,25 +1011,27 @@ const ElementLeiste = forwardRef<
     onDrehen: (delta: 45 | -45) => void;
     onFarbe: (farbe: FarbSlug) => void;
     onGestrichelt: (gestrichelt: boolean) => void;
+    onGefuellt: (gefuellt: boolean) => void;
     onKopieren: () => void;
     onEntfernen: () => void;
   }
 >(function ElementLeiste(
-  { element, pos, onDrehen, onFarbe, onGestrichelt, onKopieren, onEntfernen },
+  { element, pos, onDrehen, onFarbe, onGestrichelt, onGefuellt, onKopieren, onEntfernen },
   ref,
 ) {
   const drehbar = element.art === "symbol" && symbolDef(element.typ).drehbar;
   const faerbbar =
     (element.art === "symbol" && symbolDef(element.typ).faerbbar) ||
     (element.art === "pfad" && element.typ === "linie") ||
-    element.art === "zone";
+    element.art === "form";
   const stilbar = element.art === "pfad" && element.typ === "linie";
-  const hatEigenschaften = drehbar || faerbbar || stilbar;
+  const fuellbar = element.art === "form";
+  const hatEigenschaften = drehbar || faerbbar || stilbar || fuellbar;
   const standardFarbe =
     element.art === "symbol"
       ? symbolDef(element.typ).defaultFarbe
-      : element.art === "zone"
-        ? ZONE_DEFAULT_FARBE
+      : element.art === "form"
+        ? FORM_DEFAULT_FARBE
         : LINIE_DEFAULT_FARBE;
 
   return (
@@ -1092,6 +1102,16 @@ const ElementLeiste = forwardRef<
             onClick={() => onGestrichelt(true)}
           />
         </>
+      )}
+
+      {fuellbar && element.art === "form" && (
+        <IconButton
+          icon={PaintBucket}
+          label={element.gefuellt ? "Füllung entfernen" : "Fläche füllen"}
+          size="sm"
+          active={!!element.gefuellt}
+          onClick={() => onGefuellt(!element.gefuellt)}
+        />
       )}
 
       {hatEigenschaften && <span aria-hidden className="mx-0.5 h-5 w-px bg-outline-variant" />}

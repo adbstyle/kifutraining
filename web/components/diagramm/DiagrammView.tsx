@@ -1,12 +1,12 @@
 import {
   FLAECHE,
   FARBEN,
-  ZONE_DEFAULT_FARBE,
+  FORM_DEFAULT_FARBE,
   bbox,
   type DiagrammData,
   type DiagrammElement,
   type PfadElement,
-  type ZoneElement,
+  type FormElement,
   type TextElement,
   type Punkt,
 } from "@/lib/diagramm";
@@ -41,8 +41,8 @@ export function Rasen() {
   );
 }
 
-/** Stapelreihenfolge: Zonen unten, dann Pfade, Symbole, Text oben. */
-const ART_ORDNUNG = { zone: 0, pfad: 1, symbol: 2, text: 3 } as const;
+/** Stapelreihenfolge: Formen unten, dann Pfade, Symbole, Text oben. */
+const ART_ORDNUNG = { form: 0, pfad: 1, symbol: 2, text: 3 } as const;
 
 export function sortiertNachEbene(elemente: DiagrammElement[]): DiagrammElement[] {
   return [...elemente].sort((a, b) => ART_ORDNUNG[a.art] - ART_ORDNUNG[b.art]);
@@ -198,10 +198,17 @@ export function PfadGrafik({ element }: { element: PfadElement }) {
   }
 }
 
-/** Markierte Zone (#53): farbige Füllung + Umriss, vier Formen. */
-export function ZoneGrafik({ element }: { element: ZoneElement }) {
-  const farbe = FARBEN[element.farbe ?? ZONE_DEFAULT_FARBE];
-  const stil = { fill: farbe, fillOpacity: 0.28, stroke: farbe, strokeWidth: 4 };
+/** Form: farbiger Umriss; die Fläche ist optional gefüllt, sonst nur
+ *  Umriss. Im ungefüllten Fall hält eine transparente (unsichtbare) Füllung
+ *  die Form greifbar — ein Klick in die Fläche selektiert sie weiterhin. */
+export function FormGrafik({ element }: { element: FormElement }) {
+  const farbe = FARBEN[element.farbe ?? FORM_DEFAULT_FARBE];
+  const stil = {
+    fill: element.gefuellt ? farbe : "transparent",
+    fillOpacity: element.gefuellt ? 0.28 : undefined,
+    stroke: farbe,
+    strokeWidth: 4,
+  };
   const { x, y, breite: b, hoehe: h } = element;
   switch (element.form) {
     case "ellipse":
@@ -267,8 +274,8 @@ export function ElementGrafik({ element }: { element: DiagrammElement }) {
     }
     case "pfad":
       return <PfadGrafik element={element} />;
-    case "zone":
-      return <ZoneGrafik element={element} />;
+    case "form":
+      return <FormGrafik element={element} />;
     case "text":
       return <TextGrafik element={element} />;
     default:
@@ -289,7 +296,7 @@ function inhaltBox(element: DiagrammElement): { x: number; y: number; b: number;
       const bb = bbox(element.punkte);
       return { x: bb.minX - r, y: bb.minY - r, b: bb.maxX - bb.minX + 2 * r, h: bb.maxY - bb.minY + 2 * r };
     }
-    case "zone": {
+    case "form": {
       if (element.form === "polygon" && element.punkte?.length) {
         const bb = bbox(element.punkte);
         return { x: bb.minX, y: bb.minY, b: bb.maxX - bb.minX, h: bb.maxY - bb.minY };

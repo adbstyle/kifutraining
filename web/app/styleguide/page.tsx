@@ -636,7 +636,7 @@ export default function Styleguide() {
             diagramm={{
               version: 1,
               elemente: [
-                { id: "z1", art: "zone", form: "rechteck", x: 950, y: 250, breite: 420, hoehe: 480, farbe: "blau" },
+                { id: "z1", art: "form", form: "rechteck", x: 950, y: 250, breite: 420, hoehe: 480, farbe: "blau", gefuellt: true },
                 { id: "t1", art: "symbol", typ: "tor", x: 1380, y: 500, rotation: 270 },
                 { id: "m1", art: "symbol", typ: "minitor", x: 240, y: 200, rotation: 90 },
                 { id: "p1", art: "symbol", typ: "pylone", x: 480, y: 700, farbe: "rot" },
@@ -670,7 +670,7 @@ export default function Styleguide() {
               { id: "g-laufweg", art: "pfad", typ: "laufweg", punkte: [{ x: 8, y: 88 }, { x: 64, y: 6 }] },
               { id: "g-dribbling", art: "pfad", typ: "dribbling", punkte: [{ x: 8, y: 88 }, { x: 64, y: 6 }] },
               { id: "g-pass", art: "pfad", typ: "pass", punkte: [{ x: 8, y: 88 }, { x: 64, y: 6 }] },
-              { id: "g-zone", art: "zone", form: "rechteck", x: 4, y: 18, breite: 92, hoehe: 60 },
+              { id: "g-form", art: "form", form: "rechteck", x: 4, y: 18, breite: 92, hoehe: 60, gefuellt: true },
               { id: "g-text", art: "text", x: 0, y: 0, text: "T" },
             ] as DiagrammElement[]
           ).map((el) => (

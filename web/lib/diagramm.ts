@@ -29,7 +29,7 @@ export type FarbSlug = keyof typeof FARBEN;
 export const farbSlugs = Object.keys(FARBEN) as FarbSlug[];
 
 /** Default-Farben nicht-symbolischer Elemente (Single Source für Editor + View). */
-export const ZONE_DEFAULT_FARBE: FarbSlug = "gelb";
+export const FORM_DEFAULT_FARBE: FarbSlug = "gelb";
 export const LINIE_DEFAULT_FARBE: FarbSlug = "weiss";
 
 /** Obergrenze für Textbox-Inhalte (Payload-Schutz, #53). */
@@ -69,8 +69,8 @@ export type Rotation = (typeof ROTATIONEN)[number];
 export const PFAD_TYPEN = ["laufweg", "dribbling", "pass", "linie"] as const;
 export type PfadTyp = (typeof PFAD_TYPEN)[number];
 
-export const ZONEN_FORMEN = ["rechteck", "ellipse", "dreieck", "polygon"] as const;
-export type ZonenForm = (typeof ZONEN_FORMEN)[number];
+export const FORM_TYPEN = ["rechteck", "ellipse", "dreieck", "polygon"] as const;
+export type FormTyp = (typeof FORM_TYPEN)[number];
 
 export type Punkt = { x: number; y: number };
 
@@ -105,17 +105,20 @@ export type PfadElement = {
   gestrichelt?: boolean; // nur für typ "linie"
 };
 
-export type ZoneElement = {
+export type FormElement = {
   id: string;
-  art: "zone";
-  form: ZonenForm;
+  art: "form";
+  form: FormTyp;
   /** rechteck/ellipse/dreieck: Begrenzungsrahmen; polygon: punkte. */
   x: number;
   y: number;
   breite: number;
   hoehe: number;
   punkte?: Punkt[];
+  /** Umriss-/Füllfarbe (Slug); ohne Angabe der Default. */
   farbe?: FarbSlug;
+  /** Flächenfüllung optional — ohne Angabe nur farbiger Umriss. */
+  gefuellt?: boolean;
 };
 
 export type TextElement = {
@@ -129,7 +132,7 @@ export type TextElement = {
 export type DiagrammElement =
   | SymbolElement
   | PfadElement
-  | ZoneElement
+  | FormElement
   | TextElement;
 
 export type DiagrammData = {
@@ -169,10 +172,11 @@ function istElement(v: unknown): v is DiagrammElement {
         e.punkte.length >= 2 &&
         e.punkte.every(istPunkt)
       );
-    case "zone":
+    case "form":
       return (
         typeof e.form === "string" &&
         istZahl(e.x) && istZahl(e.y) && istZahl(e.breite) && istZahl(e.hoehe) &&
+        (e.gefuellt === undefined || typeof e.gefuellt === "boolean") &&
         (e.punkte === undefined ||
           (Array.isArray(e.punkte) && e.punkte.every(istPunkt)))
       );
@@ -188,13 +192,22 @@ function istElement(v: unknown): v is DiagrammElement {
   }
 }
 
+/** Altbestand: Formen hiessen früher "Zonen". Diskriminante beim Laden
+ *  normalisieren, damit bereits gespeicherte Diagramme intakt bleiben. */
+function migriereLegacy(e: unknown): unknown {
+  if (e && typeof e === "object" && (e as Record<string, unknown>).art === "zone") {
+    return { ...(e as object), art: "form" };
+  }
+  return e;
+}
+
 /** JSONB aus der DB -> validiertes Diagramm; null bei fehlender/kaputter
  *  Struktur. Kaputte Einzel-Elemente werden übersprungen, nie das Ganze. */
 export function parseDiagramm(json: unknown): DiagrammData | null {
   if (!json || typeof json !== "object") return null;
   const d = json as Record<string, unknown>;
   if (!istZahl(d.version) || !Array.isArray(d.elemente)) return null;
-  return { version: d.version, elemente: d.elemente.filter(istElement) };
+  return { version: d.version, elemente: d.elemente.map(migriereLegacy).filter(istElement) };
 }
 
 /** Hat die Übung ein anzeigbares Diagramm? */
