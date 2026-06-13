@@ -616,6 +616,19 @@ export default function Styleguide() {
           Symbol-Geometrie ist im Register verankert (Anker = Mittelpunkt),
           damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.
         </p>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Element-Optionen (Drehen, Farbe, Linienstil, Kopieren, Entfernen)
+          erscheinen im Editor als kontextuelle Bedienleiste, die am
+          ausgewählten Element schwebt — ein bewusst neues Muster (#65): Das
+          Kit kennt nur an DOM-Trigger verankerte Overlays (<code>Menu</code>,{" "}
+          <code>Select</code>), aber kein Panel an einer Position innerhalb
+          einer Canvas. Die Leiste liegt als absolutes Overlay über der Fläche
+          (Surface-Container, <code>shadow-e4</code>), nicht im Dokumentfluss —
+          so verschiebt das Ein- und Ausblenden die Fläche nie. Sie weicht
+          oberhalb/unterhalb des Elements aus, tritt während eines Drags zurück
+          und verschwindet beim Abwählen. Textboxen werden per Doppelklick
+          direkt am Element bearbeitet.
+        </p>
         <div className="relative aspect-[16/10] max-w-xl overflow-hidden rounded-[6px] border border-outline-variant">
           <DiagrammView
             title="Feld-Diagramm: Beispiel"

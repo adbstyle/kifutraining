@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Check, ClipboardPaste, Copy, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button, IconButton } from "@/components/ui";
 import {
   FLAECHE,
   DIAGRAMM_VERSION,
@@ -19,6 +19,7 @@ import {
   type SymbolTyp,
   type Punkt,
   type Rotation,
+  type TextElement,
   type ZoneElement,
   type ZonenForm,
 } from "@/lib/diagramm";
@@ -143,6 +144,21 @@ export function DiagrammEditor({
   // Saves laufen strikt nacheinander: ein langsamer älterer Save kann so
   // nie einen neueren Stand in der DB überschreiben.
   const saveKette = useRef<Promise<unknown>>(Promise.resolve());
+
+  // Kontextuelle Element-Leiste (#65): schwebt am ausgewählten Element und
+  // verdrängt nichts im Layout — die Zeichenfläche bleibt ruhig stehen.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const leisteRef = useRef<HTMLDivElement>(null);
+  const [leistePos, setLeistePos] = useState<{ left: number; top: number } | null>(null);
+  // Gerenderte Breite der Fläche in Pixel → viewBox-Koordinaten umrechnen.
+  const [flaecheBreite, setFlaecheBreite] = useState(0);
+  // Während eines Drags tritt die Leiste zurück, damit das Element frei und
+  // unverdeckt platziert werden kann (#65 AK6).
+  const [dragAktiv, setDragAktiv] = useState(false);
+  // Inline-Textbearbeitung (#65 AK9): direkt am Element statt im Werkzeugbereich.
+  const [editId, setEditId] = useState<string | null>(null);
+  const editAusgang = useRef("");
+  const textGemerkt = useRef(false);
 
   function merken() {
     setVerlauf((v) => [...v.slice(-49), elemente]);
@@ -385,6 +401,7 @@ export function DiagrammEditor({
     if (!drag.gemerkt) {
       merken();
       drag.gemerkt = true;
+      setDragAktiv(true);
     }
     const p = flaechenPunkt(svg, e);
     setElemente((prev) =>
@@ -434,9 +451,85 @@ export function DiagrammEditor({
 
   function onPointerUp() {
     dragRef.current = null;
+    setDragAktiv(false);
+  }
+
+  // Inline-Textbearbeitung (#65 AK9): Doppelklick öffnet die Eingabe direkt am
+  // Element. Verlassen übernimmt, Escape verwirft (#65 PC3).
+  function starteTextBearbeitung(el: TextElement) {
+    if (zeichnen) return;
+    setSelectedId(el.id);
+    editAusgang.current = el.text;
+    textGemerkt.current = false;
+    setEditId(el.id);
+  }
+
+  function bearbeiteText(id: string, text: string) {
+    // Ein Schnappschuss pro Bearbeitung: der ganze Edit ist ein Undo-Schritt.
+    if (!textGemerkt.current) {
+      merken();
+      textGemerkt.current = true;
+    }
+    setText(id, text);
+  }
+
+  function beendeTextBearbeitung(abbrechen: boolean) {
+    // Schützt vor doppeltem Aufruf (z. B. Escape-keydown UND folgendes Blur):
+    // der zweite Lauf trifft auf editId === null und tut nichts.
+    if (editId === null) return;
+    if (abbrechen && textGemerkt.current) {
+      // Auf den Ausgangstext zurück und den Edit-Schnappschuss wieder entfernen.
+      setText(editId, editAusgang.current);
+      setVerlauf((v) => v.slice(0, -1));
+    }
+    setEditId(null);
+    textGemerkt.current = false;
   }
 
   const selected = elemente.find((e) => e.id === selectedId) ?? null;
+
+  // Rendergrösse der Fläche verfolgen, damit die Leiste in Pixel positioniert
+  // werden kann (das SVG skaliert über die viewBox mit der Containerbreite).
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const messen = () => setFlaecheBreite(wrap.clientWidth);
+    messen();
+    const ro = new ResizeObserver(messen);
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, []);
+
+  // Leiste am ausgewählten Element verankern: oberhalb, sonst unterhalb; immer
+  // innerhalb der Fläche, ohne das Element zu verdecken (#65 AK7/AK8).
+  // useLayoutEffect misst die Leiste und setzt die Position vor dem Paint —
+  // dadurch kein Flackern und keine Layout-Verschiebung der Fläche.
+  useLayoutEffect(() => {
+    if (!selected || dragAktiv || editId !== null || flaecheBreite === 0) {
+      setLeistePos(null);
+      return;
+    }
+    const bar = leisteRef.current;
+    if (!bar) return;
+    const scale = flaecheBreite / FLAECHE.breite;
+    const flaecheHoehe = flaecheBreite * (FLAECHE.hoehe / FLAECHE.breite);
+    const box = elementBBox(selected);
+    const mitteX = (box.x + box.breite / 2) * scale;
+    const obenY = box.y * scale;
+    const untenY = (box.y + box.hoehe) * scale;
+    const { width: bw, height: bh } = bar.getBoundingClientRect();
+    const luft = 10;
+    let top = obenY - bh - luft;
+    if (top < luft) top = untenY + luft;
+    top = Math.min(Math.max(top, luft), Math.max(luft, flaecheHoehe - bh - luft));
+    const left = Math.min(
+      Math.max(mitteX - bw / 2, luft),
+      Math.max(luft, flaecheBreite - bw - luft),
+    );
+    setLeistePos({ left, top });
+    // selected ist aus elemente abgeleitet (find) und wechselt bei jeder
+    // Geometrie-Änderung die Referenz — elemente als Dep wäre redundant.
+  }, [selected, dragAktiv, editId, flaecheBreite]);
 
   const statusText: Record<SaveStatus, string> = {
     gespeichert: "Gespeichert",
@@ -476,32 +569,12 @@ export function DiagrammEditor({
           <Button
             variant="outlined"
             size="sm"
-            onClick={kopieren}
-            disabled={!selected || !!zeichnen}
-            aria-label="Ausgewähltes Element kopieren"
-          >
-            <Copy size={16} strokeWidth={2} aria-hidden />
-            Kopieren
-          </Button>
-          <Button
-            variant="outlined"
-            size="sm"
             onClick={einfuegen}
             disabled={!zwischenablage || !!zeichnen}
             aria-label="Kopiertes Element einfügen"
           >
             <ClipboardPaste size={16} strokeWidth={2} aria-hidden />
             Einfügen
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={removeSelected}
-            disabled={!selected || !!zeichnen}
-            aria-label="Ausgewähltes Element entfernen"
-          >
-            <Trash2 size={16} strokeWidth={2} aria-hidden />
-            Entfernen
           </Button>
         </div>
       </div>
@@ -572,99 +645,11 @@ export function DiagrammEditor({
         )}
       </div>
 
-      {/* Drehung für das ausgewählte richtungsbehaftete Element */}
-      {selected?.art === "symbol" && symbolDef(selected.typ).drehbar && (
-        <div className="flex items-center gap-2" role="group" aria-label="Element drehen">
-          <span className="type-label-small text-on-surface-variant">Drehen</span>
-          <Button variant="outlined" size="sm" onClick={() => drehen(selected.id, -45)} aria-label="45 Grad nach links drehen">
-            <RotateCcw size={16} strokeWidth={2} aria-hidden />
-            45°
-          </Button>
-          <Button variant="outlined" size="sm" onClick={() => drehen(selected.id, 45)} aria-label="45 Grad nach rechts drehen">
-            <RotateCw size={16} strokeWidth={2} aria-hidden />
-            45°
-          </Button>
-          <span className="type-body-small text-on-surface-variant" data-testid="rotation-anzeige">
-            {selected.rotation ?? 0}°
-          </span>
-        </div>
-      )}
-
-      {/* Texteingabe für die ausgewählte Textbox (#53 AK6) */}
-      {selected?.art === "text" && (
-        <div className="flex items-center gap-2">
-          <label htmlFor="textbox-text" className="type-label-small text-on-surface-variant">
-            Text
-          </label>
-          <input
-            id="textbox-text"
-            type="text"
-            maxLength={MAX_TEXT_LAENGE}
-            value={selected.text}
-            onFocus={merken}
-            onChange={(e) => setText(selected.id, e.target.value)}
-            className="focus-ring type-body-medium w-72 rounded-(--field-shape) border-[1.5px] border-(--field-outline) bg-transparent px-3 py-2 text-on-surface"
-          />
-        </div>
-      )}
-
-      {/* Farbwahl: färbbare Symbole, freie Linien (#52 AK5) und Zonen (#53 AK3) */}
-      {((selected?.art === "symbol" && symbolDef(selected.typ).faerbbar) ||
-        (selected?.art === "pfad" && selected.typ === "linie") ||
-        selected?.art === "zone") && (
-        <div className="flex items-center gap-2" role="group" aria-label="Farbe des Elements">
-          <span className="type-label-small text-on-surface-variant">Farbe</span>
-          {farbSlugs.map((slug) => {
-            const standard =
-              selected.art === "symbol"
-                ? symbolDef(selected.typ).defaultFarbe
-                : selected.art === "zone"
-                  ? ZONE_DEFAULT_FARBE
-                  : LINIE_DEFAULT_FARBE;
-            const aktiv = (selected.farbe ?? standard) === slug;
-            return (
-              <button
-                key={slug}
-                type="button"
-                onClick={() => setFarbe(selected.id, slug)}
-                aria-label={`Farbe ${slug}`}
-                aria-pressed={aktiv}
-                className={`focus-ring h-7 w-7 rounded-full border-2 ${
-                  aktiv ? "border-on-surface" : "border-outline-variant"
-                }`}
-                style={{ backgroundColor: FARBEN[slug] }}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/* Linienstil für freie Linien (#52 AK6) */}
-      {selected?.art === "pfad" && selected.typ === "linie" && (
-        <div className="flex items-center gap-2" role="group" aria-label="Linienstil">
-          <span className="type-label-small text-on-surface-variant">Stil</span>
-          <Button
-            variant={selected.gestrichelt ? "outlined" : "filled"}
-            size="sm"
-            aria-pressed={!selected.gestrichelt}
-            onClick={() => setGestrichelt(selected.id, false)}
-          >
-            Durchgezogen
-          </Button>
-          <Button
-            variant={selected.gestrichelt ? "filled" : "outlined"}
-            size="sm"
-            aria-pressed={!!selected.gestrichelt}
-            onClick={() => setGestrichelt(selected.id, true)}
-          >
-            Gestrichelt
-          </Button>
-        </div>
-      )}
-
-      {/* Zeichenfläche */}
+      {/* Zeichenfläche — selektionsabhängige Optionen schweben kontextuell am
+          Element (ElementLeiste), nicht mehr als Zeilen darüber (#65). */}
       <div
-        className="overflow-hidden rounded-[6px] border border-outline-variant focus-ring"
+        ref={wrapRef}
+        className="relative overflow-hidden rounded-[6px] border border-outline-variant focus-ring"
         tabIndex={0}
         role="application"
         aria-label="Zeichenfläche für das Feld-Diagramm"
@@ -705,6 +690,7 @@ export function DiagrammEditor({
           onDoubleClick={() => fertigZeichnen()}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
         >
           <Rasen />
           {sortiertNachEbene(elemente).map((el) => (
@@ -713,6 +699,12 @@ export function DiagrammEditor({
               data-element-id={el.id}
               className="cursor-move"
               onPointerDown={(e) => onElementPointerDown(e, el)}
+              onDoubleClick={(e) => {
+                if (el.art === "text") {
+                  e.stopPropagation();
+                  starteTextBearbeitung(el);
+                }
+              }}
             >
               {/* Unsichtbare Treffer-Flächen: machen auch Symbole mit
                   fill="none" (Reifen) und dünne Linien zuverlässig greifbar. */}
@@ -776,6 +768,31 @@ export function DiagrammEditor({
             </g>
           )}
         </svg>
+
+        {/* Kontextuelle Optionen am ausgewählten Element (#65) */}
+        {selected && !dragAktiv && editId === null && (
+          <ElementLeiste
+            ref={leisteRef}
+            element={selected}
+            pos={leistePos}
+            onDrehen={(delta) => drehen(selected.id, delta)}
+            onFarbe={(farbe) => setFarbe(selected.id, farbe)}
+            onGestrichelt={(gestrichelt) => setGestrichelt(selected.id, gestrichelt)}
+            onKopieren={kopieren}
+            onEntfernen={removeSelected}
+          />
+        )}
+
+        {/* Inline-Textbearbeitung direkt am Element (#65 AK9) */}
+        {editId !== null && selected && selected.art === "text" && flaecheBreite > 0 && (
+          <TextEingabe
+            element={selected}
+            scale={flaecheBreite / FLAECHE.breite}
+            onChange={(text) => bearbeiteText(selected.id, text)}
+            onCommit={() => beendeTextBearbeitung(false)}
+            onCancel={() => beendeTextBearbeitung(true)}
+          />
+        )}
       </div>
 
       <p
@@ -807,44 +824,227 @@ function TrefferFlaeche({
   );
 }
 
-function SelektionsRahmen({ element }: { element: DiagrammElement }) {
-  const r = 8; // Luft um die Element-Begrenzung
-  let x: number, y: number, b: number, h: number;
+/** Begrenzungsrahmen eines Elements in Flächen-Koordinaten — Single Source für
+ *  den Selektionsrahmen und die Verankerung der kontextuellen Leiste (#65).
+ *  Rotation bleibt bewusst unberücksichtigt, konsistent mit dem Rahmen. */
+function elementBBox(element: DiagrammElement): {
+  x: number;
+  y: number;
+  breite: number;
+  hoehe: number;
+} {
   if (element.art === "symbol") {
     const def = symbolDef(element.typ);
-    x = element.x - def.breite / 2;
-    y = element.y - def.hoehe / 2;
-    b = def.breite;
-    h = def.hoehe;
-  } else if (element.art === "pfad") {
-    const box = bbox(element.punkte);
-    x = box.minX;
-    y = box.minY;
-    b = box.maxX - box.minX;
-    h = box.maxY - box.minY;
-  } else if (element.art === "zone") {
-    x = element.x;
-    y = element.y;
-    b = element.breite;
-    h = element.hoehe;
-  } else {
-    const box = textBox(element);
-    x = box.x;
-    y = box.y;
-    b = box.breite;
-    h = box.hoehe;
+    return {
+      x: element.x - def.breite / 2,
+      y: element.y - def.hoehe / 2,
+      breite: def.breite,
+      hoehe: def.hoehe,
+    };
   }
+  if (element.art === "pfad") {
+    const box = bbox(element.punkte);
+    return { x: box.minX, y: box.minY, breite: box.maxX - box.minX, hoehe: box.maxY - box.minY };
+  }
+  if (element.art === "zone") {
+    return { x: element.x, y: element.y, breite: element.breite, hoehe: element.hoehe };
+  }
+  const box = textBox(element);
+  return { x: box.x, y: box.y, breite: box.breite, hoehe: box.hoehe };
+}
+
+function SelektionsRahmen({ element }: { element: DiagrammElement }) {
+  const r = 8; // Luft um die Element-Begrenzung
+  const { x, y, breite, hoehe } = elementBBox(element);
   return (
     <rect
       x={x - r}
       y={y - r}
-      width={b + r * 2}
-      height={h + r * 2}
+      width={breite + r * 2}
+      height={hoehe + r * 2}
       fill="none"
       stroke="#ffffff"
       strokeWidth={2.5}
       strokeDasharray="6 4"
       pointerEvents="none"
+    />
+  );
+}
+
+/** Kontextuelle Bedienleiste am ausgewählten Element (#65): schwebt als HTML
+ *  über der Zeichenfläche, ausserhalb des Dokumentflusses — so verschiebt das
+ *  Ein-/Ausblentden die Fläche nicht. Eine Leiste, intern durch einen Trenner
+ *  in Eigenschaften (links) und Strukturaktionen (rechts) gruppiert. */
+const ElementLeiste = forwardRef<
+  HTMLDivElement,
+  {
+    element: DiagrammElement;
+    pos: { left: number; top: number } | null;
+    onDrehen: (delta: 45 | -45) => void;
+    onFarbe: (farbe: FarbSlug) => void;
+    onGestrichelt: (gestrichelt: boolean) => void;
+    onKopieren: () => void;
+    onEntfernen: () => void;
+  }
+>(function ElementLeiste(
+  { element, pos, onDrehen, onFarbe, onGestrichelt, onKopieren, onEntfernen },
+  ref,
+) {
+  const drehbar = element.art === "symbol" && symbolDef(element.typ).drehbar;
+  const faerbbar =
+    (element.art === "symbol" && symbolDef(element.typ).faerbbar) ||
+    (element.art === "pfad" && element.typ === "linie") ||
+    element.art === "zone";
+  const stilbar = element.art === "pfad" && element.typ === "linie";
+  const hatEigenschaften = drehbar || faerbbar || stilbar;
+  const standardFarbe =
+    element.art === "symbol"
+      ? symbolDef(element.typ).defaultFarbe
+      : element.art === "zone"
+        ? ZONE_DEFAULT_FARBE
+        : LINIE_DEFAULT_FARBE;
+
+  return (
+    <div
+      ref={ref}
+      role="toolbar"
+      aria-label="Optionen für das ausgewählte Element"
+      className="absolute z-20 flex items-center gap-1 rounded-[6px] border border-outline-variant bg-surface-container-high px-1.5 py-1 shadow-e4"
+      style={{
+        left: pos?.left ?? -9999,
+        top: pos?.top ?? 0,
+        visibility: pos ? "visible" : "hidden",
+      }}
+    >
+      {drehbar && element.art === "symbol" && (
+        <>
+          <IconButton
+            icon={RotateCcw}
+            label="45 Grad nach links drehen"
+            size="sm"
+            onClick={() => onDrehen(-45)}
+          />
+          <IconButton
+            icon={RotateCw}
+            label="45 Grad nach rechts drehen"
+            size="sm"
+            onClick={() => onDrehen(45)}
+          />
+          <span
+            className="type-body-small px-0.5 text-on-surface-variant"
+            data-testid="rotation-anzeige"
+          >
+            {element.rotation ?? 0}°
+          </span>
+        </>
+      )}
+
+      {faerbbar && (
+        <div className="flex items-center gap-1" role="group" aria-label="Farbe des Elements">
+          {farbSlugs.map((slug) => {
+            const aktuell = "farbe" in element ? element.farbe : undefined;
+            const aktiv = (aktuell ?? standardFarbe) === slug;
+            return (
+              <button
+                key={slug}
+                type="button"
+                onClick={() => onFarbe(slug)}
+                aria-label={`Farbe ${slug}`}
+                aria-pressed={aktiv}
+                className={`focus-ring h-6 w-6 rounded-full border-2 ${
+                  aktiv ? "border-on-surface" : "border-outline-variant"
+                }`}
+                style={{ backgroundColor: FARBEN[slug] }}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {stilbar && element.art === "pfad" && (
+        <>
+          <Button
+            variant={element.gestrichelt ? "outlined" : "filled"}
+            size="sm"
+            aria-pressed={!element.gestrichelt}
+            onClick={() => onGestrichelt(false)}
+          >
+            Durchgezogen
+          </Button>
+          <Button
+            variant={element.gestrichelt ? "filled" : "outlined"}
+            size="sm"
+            aria-pressed={!!element.gestrichelt}
+            onClick={() => onGestrichelt(true)}
+          >
+            Gestrichelt
+          </Button>
+        </>
+      )}
+
+      {hatEigenschaften && <span aria-hidden className="mx-0.5 h-5 w-px bg-outline-variant" />}
+
+      <IconButton
+        icon={Copy}
+        label="Ausgewähltes Element kopieren"
+        size="sm"
+        onClick={onKopieren}
+      />
+      <IconButton
+        icon={Trash2}
+        label="Ausgewähltes Element entfernen"
+        size="sm"
+        onClick={onEntfernen}
+        className="text-error hover:text-error"
+      />
+    </div>
+  );
+});
+
+/** Inline-Eingabe für eine Textbox (#65 AK9), exakt über dem Element platziert. */
+function TextEingabe({
+  element,
+  scale,
+  onChange,
+  onCommit,
+  onCancel,
+}: {
+  element: TextElement;
+  scale: number;
+  onChange: (text: string) => void;
+  onCommit: () => void;
+  onCancel: () => void;
+}) {
+  const box = textBox(element);
+  return (
+    <input
+      autoFocus
+      aria-label="Text der Textbox bearbeiten"
+      value={element.text}
+      maxLength={MAX_TEXT_LAENGE}
+      onChange={(e) => onChange(e.target.value)}
+      onFocus={(e) => e.currentTarget.select()}
+      onBlur={onCommit}
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        if (e.key === "Enter") {
+          e.preventDefault();
+          onCommit();
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          onCancel();
+        }
+      }}
+      className="absolute z-30 rounded-[5px] border-[1.5px] border-primary bg-white text-center text-[#212121] outline-none"
+      style={{
+        left: box.x * scale,
+        top: box.y * scale,
+        width: box.breite * scale,
+        height: box.hoehe * scale,
+        fontSize: 30 * scale,
+        fontFamily: "var(--font-sans, sans-serif)",
+      }}
     />
   );
 }
