@@ -26,7 +26,9 @@ export function VorlagePicker({
 }: {
   vorlagen: VorlageItem[];
   zielHatDiagramm: boolean;
-  onPick: (vorlage: VorlageItem) => Promise<void> | void;
+  /** Übernimmt die Vorlage. Gibt null bei Erfolg zurück, sonst einen
+   *  Fehlertext, der im Dialog angezeigt wird (statt blind zu schliessen). */
+  onPick: (vorlage: VorlageItem) => Promise<string | null> | string | null;
   triggerLabel: string;
   triggerVariant?: "tonal" | "outlined" | "text";
 }) {
@@ -34,6 +36,7 @@ export function VorlagePicker({
   const [bestaetigen, setBestaetigen] = useState<VorlageItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [suche, setSuche] = useState("");
+  const [fehler, setFehler] = useState<string | null>(null);
 
   // Freitextsuche über den Namen der Quell-Übung (#62), akzent-/case-insensitiv
   // wie die Übungssuche. Leeres Feld -> alle Vorlagen.
@@ -48,8 +51,15 @@ export function VorlagePicker({
   async function uebernehmen(vorlage: VorlageItem) {
     setBusy(true);
     try {
-      await onPick(vorlage);
+      const fehlertext = await onPick(vorlage);
+      if (fehlertext) {
+        // Fehlgeschlagen: zurück zur Auswahl, Hinweis zeigen statt blind schliessen.
+        setBestaetigen(null);
+        setFehler(fehlertext);
+        return;
+      }
       setBestaetigen(null);
+      setFehler(null);
       setOffen(false);
     } finally {
       setBusy(false);
@@ -63,7 +73,15 @@ export function VorlagePicker({
 
   return (
     <>
-      <Button type="button" variant={triggerVariant} size="sm" onClick={() => setOffen(true)}>
+      <Button
+        type="button"
+        variant={triggerVariant}
+        size="sm"
+        onClick={() => {
+          setFehler(null);
+          setOffen(true);
+        }}
+      >
         {triggerLabel}
       </Button>
 
@@ -72,10 +90,16 @@ export function VorlagePicker({
         onClose={() => {
           setOffen(false);
           setSuche("");
+          setFehler(null);
         }}
         title="Vorlage übernehmen"
         className="w-[min(48rem,calc(100vw-2rem))]"
       >
+        {fehler && (
+          <p className="type-body-small mb-4 rounded-[4px] border border-error/40 bg-error/10 p-3 text-on-surface">
+            {fehler}
+          </p>
+        )}
         <TextField
           label="Übung suchen"
           leadingIcon={Search}

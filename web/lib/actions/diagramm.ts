@@ -10,6 +10,14 @@ const MAX_ELEMENTE = 300;
 
 export type SaveDiagrammResult = { ok: true } | { ok: false; error: string };
 
+/** Alle Stellen, an denen das aktive Bild einer Übung erscheint, nach einer
+ *  Diagramm-Mutation neu validieren — eine Quelle für beide Actions. */
+function revalidiereUebung(slug: string) {
+  revalidatePath(`/uebung/${slug}`);
+  revalidatePath(`/uebung/${slug}/edit`);
+  revalidatePath("/");
+}
+
 /** Autosave des Diagramm-Editors (#49 AK6). RLS lässt nur eigene
  *  User-Übungen durch; parseDiagramm ist die Server-Trust-Boundary. */
 export async function saveDiagramm(
@@ -58,9 +66,7 @@ export async function saveDiagramm(
   if (error || !updated)
     return { ok: false, error: error?.message ?? "Speichern fehlgeschlagen." };
 
-  revalidatePath(`/uebung/${updated.slug}`);
-  revalidatePath(`/uebung/${updated.slug}/edit`);
-  revalidatePath("/");
+  revalidiereUebung(updated.slug);
   return { ok: true };
 }
 
@@ -94,8 +100,10 @@ export async function uebernimmVorlage(
   if (!data || data.elemente.length === 0)
     return { ok: false, error: "Die Vorlage enthält kein Diagramm." };
 
-  // Zielübung muss eine eigene User-Übung sein. Das übernommene Diagramm wird
-  // aktives Anzeige-Bild; ein vorhandenes Foto (bild_url) bleibt erhalten (#61 PC4).
+  // Zielübung muss eine eigene User-Übung sein. Anders als saveDiagramm wird
+  // bild_quelle hier bewusst fest auf "diagramm" gesetzt (kein vorgelagerter
+  // Read): das übernommene Diagramm wird immer das aktive Anzeige-Bild (#61
+  // PC4), ein vorhandenes Foto (bild_url) bleibt als Umschalt-Option erhalten.
   const { data: updated, error } = await supabase
     .from("exercises")
     .update({ diagramm: kopiereDiagramm(data), bild_quelle: "diagramm" })
@@ -107,8 +115,6 @@ export async function uebernimmVorlage(
   if (error || !updated)
     return { ok: false, error: error?.message ?? "Übernehmen fehlgeschlagen." };
 
-  revalidatePath(`/uebung/${updated.slug}`);
-  revalidatePath(`/uebung/${updated.slug}/edit`);
-  revalidatePath("/");
+  revalidiereUebung(updated.slug);
   return { ok: true };
 }

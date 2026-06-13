@@ -350,12 +350,13 @@ export function DiagrammEditor({
   // Eine Vorlage auf der leeren Fläche übernehmen (#61): als unabhängige Kopie
   // (frische IDs) in den Editor laden; der Autosave persistiert sie. Nur aus dem
   // Leerzustand erreichbar, daher kein Ersetzen/keine Bestätigung nötig.
-  function vorlageUebernehmen(vorlage: VorlageItem) {
+  function vorlageUebernehmen(vorlage: VorlageItem): string | null {
     const data = parseDiagramm(vorlage.diagramm);
-    if (!data || data.elemente.length === 0) return;
+    if (!data || data.elemente.length === 0) return "Die Vorlage enthält kein Diagramm.";
     merken();
     setElemente(kopiereDiagramm(data).elemente);
     setSelectedId(null);
+    return null;
   }
 
   function removeSelected() {

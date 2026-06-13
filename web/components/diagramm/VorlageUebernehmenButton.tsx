@@ -29,7 +29,11 @@ export function VorlageUebernehmenButton({
       triggerLabel="Aus Vorlage übernehmen"
       onPick={async (vorlage) => {
         const res = await uebernimmVorlage(zielId, vorlage.id);
-        if (res.ok) router.push(`/uebung/${slug}/diagramm`);
+        if (res.ok) {
+          router.push(`/uebung/${slug}/diagramm`);
+          return null;
+        }
+        return res.error;
       }}
     />
   );
