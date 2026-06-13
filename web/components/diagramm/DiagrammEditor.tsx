@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Check, ClipboardPaste, Copy, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
+import { Check, ClipboardPaste, Copy, Ellipsis, Minus, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
 import { Button, IconButton } from "@/components/ui";
 import {
   FLAECHE,
@@ -957,22 +957,20 @@ const ElementLeiste = forwardRef<
 
       {stilbar && element.art === "pfad" && (
         <>
-          <Button
-            variant={element.gestrichelt ? "outlined" : "filled"}
+          <IconButton
+            icon={Minus}
+            label="Durchgezogene Linie"
             size="sm"
-            aria-pressed={!element.gestrichelt}
+            active={!element.gestrichelt}
             onClick={() => onGestrichelt(false)}
-          >
-            Durchgezogen
-          </Button>
-          <Button
-            variant={element.gestrichelt ? "filled" : "outlined"}
+          />
+          <IconButton
+            icon={Ellipsis}
+            label="Gestrichelte Linie"
             size="sm"
-            aria-pressed={!!element.gestrichelt}
+            active={!!element.gestrichelt}
             onClick={() => onGestrichelt(true)}
-          >
-            Gestrichelt
-          </Button>
+          />
         </>
       )}
 
