@@ -50,18 +50,26 @@ export function sortiertNachEbene(elemente: DiagrammElement[]): DiagrammElement[
 export const punkteAttr = (punkte: Punkt[]) =>
   punkte.map((p) => `${p.x},${p.y}`).join(" ");
 
+/** Pfeilkopf-Geometrie (Single Source für Zeichnung UND Linienkürzung): Länge
+ *  entlang der Achse und halber Öffnungswinkel. Bewusst deutlich breiter als
+ *  die Linie, damit die Richtung klar erkennbar ist. */
+const PFEIL_LAENGE = 30;
+const PFEIL_WINKEL = 0.5;
+/** Axiale Tiefe des Pfeilkopfs (Spitze → Basis) — so weit wird die Linie
+ *  gekürzt, damit sie an der Basis endet und nicht aus der Spitze ragt. */
+const PFEIL_BASIS = PFEIL_LAENGE * Math.cos(PFEIL_WINKEL);
+
 /** Pfeilspitze am Linienende, ausgerichtet am letzten Segment. */
 function PfeilSpitze({ punkte, farbe }: { punkte: Punkt[]; farbe: string }) {
   const b = punkte[punkte.length - 1];
   const a = punkte[punkte.length - 2] ?? b;
   const ang = Math.atan2(b.y - a.y, b.x - a.x);
-  const g = 20;
   const seite = (off: number): Punkt => ({
-    x: b.x - g * Math.cos(ang + off),
-    y: b.y - g * Math.sin(ang + off),
+    x: b.x - PFEIL_LAENGE * Math.cos(ang + off),
+    y: b.y - PFEIL_LAENGE * Math.sin(ang + off),
   });
-  const l = seite(-0.45);
-  const r = seite(0.45);
+  const l = seite(-PFEIL_WINKEL);
+  const r = seite(PFEIL_WINKEL);
   return (
     <polygon
       points={`${b.x},${b.y} ${l.x},${l.y} ${r.x},${r.y}`}
@@ -70,40 +78,72 @@ function PfeilSpitze({ punkte, farbe }: { punkte: Punkt[]; farbe: string }) {
   );
 }
 
-/** Zickzack entlang der Stützpunkte — die SFV-Darstellung des Dribblings. */
-export function zickzackPunkte(punkte: Punkt[], amplitude = 9, schritt = 26): Punkt[] {
-  const out: Punkt[] = [punkte[0]];
-  let seite = 1;
-  for (let s = 0; s < punkte.length - 1; s++) {
-    const a = punkte[s];
-    const b = punkte[s + 1];
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const len = Math.hypot(dx, dy);
-    if (len === 0) {
-      out.push(b);
-      continue;
+/** Kürzt eine Polylinie am Ende um `inset` (gemessen entlang der Linie), damit
+ *  die Linie an der Pfeilbasis endet statt durch die Spitze zu ragen. Robust
+ *  auch für die gewellte Dribbling-Linie. */
+function endeKuerzen(punkte: Punkt[], inset: number): Punkt[] {
+  const out = [...punkte];
+  let rest = inset;
+  while (out.length >= 2) {
+    const b = out[out.length - 1];
+    const a = out[out.length - 2];
+    const seg = Math.hypot(b.x - a.x, b.y - a.y);
+    if (seg >= rest) {
+      const t = (seg - rest) / seg;
+      out[out.length - 1] = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+      return out;
     }
-    const n = Math.max(2, Math.round(len / schritt));
-    for (let i = 1; i < n; i++) {
-      const t = i / n;
-      out.push({
-        x: a.x + dx * t + (-dy / len) * amplitude * seite,
-        y: a.y + dy * t + (dx / len) * amplitude * seite,
-      });
-      seite = -seite;
-    }
-    out.push(b);
+    rest -= seg;
+    out.pop();
   }
   return out;
 }
 
-/** Bewegungs- und Linien-Darstellung (#52): Laufweg durchgezogen + Pfeil,
- *  Dribbling als Zickzack + Pfeil, Pass als kräftiger gerader Pfeil,
- *  freie Linie farbig, wahlweise gestrichelt. */
+/** Glatte Sinus-Welle entlang der Stützpunkte — manual-getreue Dribbling-
+ *  Darstellung (echte Wellenform statt Zickzack). Dicht abgetastet, daher mit
+ *  rundem Linejoin optisch weich; die Amplitude läuft zum Ende hin auf 0 aus,
+ *  damit die Welle sauber an der Pfeilspitze ansetzt. */
+export function wellenPunkte(punkte: Punkt[], amplitude = 8, wellenlaenge = 44): Punkt[] {
+  const segLen = punkte
+    .slice(1)
+    .map((p, i) => Math.hypot(p.x - punkte[i].x, p.y - punkte[i].y));
+  const total = segLen.reduce((s, l) => s + l, 0);
+  if (total === 0) return [...punkte];
+  const schritt = 5; // Abtastabstand entlang der Linie
+  const auslauf = wellenlaenge * 0.75; // Strecke, über die die Welle ausklingt
+  const out: Punkt[] = [];
+  let bogen = 0; // kumulierte Bogenlänge für durchgehende Phase über Segmente
+  for (let s = 0; s < punkte.length - 1; s++) {
+    const a = punkte[s];
+    const len = segLen[s];
+    if (len === 0) continue;
+    const ux = (punkte[s + 1].x - a.x) / len;
+    const uy = (punkte[s + 1].y - a.y) / len;
+    const n = Math.max(1, Math.round(len / schritt));
+    for (let i = 0; i <= n; i++) {
+      if (i === 0 && out.length > 0) continue; // Naht zwischen Segmenten meiden
+      const d = (i / n) * len;
+      const arc = bogen + d;
+      const env = Math.min(1, (total - arc) / auslauf);
+      const off = amplitude * env * Math.sin((2 * Math.PI * arc) / wellenlaenge);
+      out.push({ x: a.x + ux * d - uy * off, y: a.y + uy * d + ux * off });
+    }
+    bogen += len;
+  }
+  return out;
+}
+
+/** Schwarz der Bewegungspfeile — wie in der Manual-Zeichenerklärung (Abb. 24),
+ *  klar auf dem Rasen erkennbar. */
+const PFEIL_SCHWARZ = "#1b1b1b";
+
+/** Bewegungs- und Linien-Darstellung (#52) gemäss SFV-Manual-Zeichenerklärung
+ *  (Abb. 24): Laufweg (Lauf ohne Ball) gestrichelt + Pfeil, Pass/Schuss
+ *  durchgezogen + Pfeil, Dribbling wellenförmig + Pfeil — alle drei schwarz;
+ *  freie Linie farbig, wahlweise gestrichelt. Der Linienstil — nicht die
+ *  Strichstärke — unterscheidet die Bewegungsarten. */
 export function PfadGrafik({ element }: { element: PfadElement }) {
-  const weiss = "#fafafa";
-  const farbe = element.farbe ? FARBEN[element.farbe] : weiss;
+  const farbe = element.farbe ? FARBEN[element.farbe] : "#fafafa";
   const basis = {
     fill: "none" as const,
     strokeLinecap: "round" as const,
@@ -113,24 +153,28 @@ export function PfadGrafik({ element }: { element: PfadElement }) {
     case "laufweg":
       return (
         <>
-          <polyline points={punkteAttr(element.punkte)} {...basis} stroke={weiss} strokeWidth={5} />
-          <PfeilSpitze punkte={element.punkte} farbe={weiss} />
+          <polyline
+            points={punkteAttr(endeKuerzen(element.punkte, PFEIL_BASIS))}
+            {...basis}
+            stroke={PFEIL_SCHWARZ}
+            strokeWidth={5}
+            strokeDasharray="18 14"
+          />
+          <PfeilSpitze punkte={element.punkte} farbe={PFEIL_SCHWARZ} />
         </>
       );
-    case "dribbling": {
-      const zz = zickzackPunkte(element.punkte);
+    case "dribbling":
       return (
         <>
-          <polyline points={punkteAttr(zz)} {...basis} stroke={weiss} strokeWidth={4.5} />
-          <PfeilSpitze punkte={element.punkte} farbe={weiss} />
+          <polyline points={punkteAttr(endeKuerzen(wellenPunkte(element.punkte), PFEIL_BASIS))} {...basis} stroke={PFEIL_SCHWARZ} strokeWidth={4.5} />
+          <PfeilSpitze punkte={element.punkte} farbe={PFEIL_SCHWARZ} />
         </>
       );
-    }
     case "pass":
       return (
         <>
-          <polyline points={punkteAttr(element.punkte)} {...basis} stroke={weiss} strokeWidth={8} />
-          <PfeilSpitze punkte={element.punkte} farbe={weiss} />
+          <polyline points={punkteAttr(endeKuerzen(element.punkte, PFEIL_BASIS))} {...basis} stroke={PFEIL_SCHWARZ} strokeWidth={5} />
+          <PfeilSpitze punkte={element.punkte} farbe={PFEIL_SCHWARZ} />
         </>
       );
     case "linie":
