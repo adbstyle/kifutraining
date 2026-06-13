@@ -930,12 +930,6 @@ const ElementLeiste = forwardRef<
             size="sm"
             onClick={() => onDrehen(45)}
           />
-          <span
-            className="type-body-small px-0.5 text-on-surface-variant"
-            data-testid="rotation-anzeige"
-          >
-            {element.rotation ?? 0}°
-          </span>
         </>
       )}
 
