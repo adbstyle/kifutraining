@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Check, ClipboardPaste, Copy, Ellipsis, Minus, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Check, ClipboardPaste, Copy, Ellipsis, Minus, Redo2, RotateCcw, RotateCw, Trash2, Undo2, X } from "lucide-react";
 import { Button, IconButton, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
@@ -186,9 +187,13 @@ function GlyphKachel({ label, element, active = false, disabled = false, onClick
 
 export function DiagrammEditor({
   exerciseId,
+  slug,
+  name,
   initial,
 }: {
   exerciseId: string;
+  slug: string;
+  name: string;
   initial: DiagrammData;
 }) {
   const [elemente, setElemente] = useState<DiagrammElement[]>(initial.elemente);
@@ -665,6 +670,56 @@ export function DiagrammEditor({
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Kopf wie bei anderen Entitäten (Übungs-Detail): Breadcrumb links,
+          globale Aktionen als Icon-Cluster rechts (ml-auto), Titel darunter.
+          Die Aktionen leben hier im Editor, weil sie dessen Verlauf/
+          Zwischenablage brauchen. */}
+      <header>
+        <div className="mb-3 flex flex-wrap items-center gap-2.5">
+          <Link
+            href={`/uebung/${slug}`}
+            className="focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-[3px] text-on-surface-variant transition-colors hover:text-on-surface"
+          >
+            <ArrowLeft size={16} strokeWidth={2} aria-hidden />
+            Zurück zur Übung
+          </Link>
+          <div className="ml-auto flex items-center gap-0.5" role="group" aria-label="Aktionen">
+            <Tooltip label="Rückgängig">
+              <IconButton
+                icon={Undo2}
+                label="Rückgängig"
+                size="sm"
+                onClick={rueckgaengig}
+                disabled={verlauf.length === 0 || !!zeichnen}
+              />
+            </Tooltip>
+            <Tooltip label="Wiederherstellen">
+              <IconButton
+                icon={Redo2}
+                label="Wiederherstellen"
+                size="sm"
+                onClick={wiederherstellen}
+                disabled={zukunft.length === 0 || !!zeichnen}
+              />
+            </Tooltip>
+            <Tooltip label="Kopiertes Element einfügen">
+              <IconButton
+                icon={ClipboardPaste}
+                label="Kopiertes Element einfügen"
+                size="sm"
+                onClick={einfuegen}
+                disabled={!zwischenablage || !!zeichnen}
+              />
+            </Tooltip>
+          </div>
+        </div>
+        <h1 className="type-headline-large text-on-surface">Feld-Diagramm</h1>
+        <p className="type-body-medium mt-2 text-on-surface-variant">
+          {name} — Elemente platzieren, verschieben und entfernen. Änderungen
+          werden automatisch gespeichert.
+        </p>
+      </header>
+
       {/* Werkzeug-Palette: ein gruppiertes Glyph-Band. Jede Kachel zeigt das
           Element als Mini-Vorschau (WYSIWYG); der Name kommt nur über Tooltip +
           aria-label. Cluster sind durch eine Haarlinie getrennt und brechen als
@@ -680,36 +735,6 @@ export function DiagrammEditor({
             </div>
           </Fragment>
         ))}
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="outlined"
-            size="sm"
-            onClick={rueckgaengig}
-            disabled={verlauf.length === 0 || !!zeichnen}
-            aria-label="Rückgängig"
-          >
-            <Undo2 size={16} strokeWidth={2} aria-hidden />
-          </Button>
-          <Button
-            variant="outlined"
-            size="sm"
-            onClick={wiederherstellen}
-            disabled={zukunft.length === 0 || !!zeichnen}
-            aria-label="Wiederherstellen"
-          >
-            <Redo2 size={16} strokeWidth={2} aria-hidden />
-          </Button>
-          <Button
-            variant="outlined"
-            size="sm"
-            onClick={einfuegen}
-            disabled={!zwischenablage || !!zeichnen}
-            aria-label="Kopiertes Element einfügen"
-          >
-            <ClipboardPaste size={16} strokeWidth={2} aria-hidden />
-            Einfügen
-          </Button>
-        </div>
       </div>
 
       {/* Zeichen-Steuerung — nur sichtbar, während ein Pfad/Polygon gezeichnet wird. */}
