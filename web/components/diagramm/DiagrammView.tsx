@@ -2,6 +2,7 @@ import {
   FLAECHE,
   FARBEN,
   FORM_DEFAULT_FARBE,
+  FIGUR_TYPEN,
   bbox,
   dreieckEcken,
   type DiagrammData,
@@ -269,11 +270,17 @@ export function ElementGrafik({ element }: { element: DiagrammElement }) {
   switch (element.art) {
     case "symbol": {
       const def = symbolDef(element.typ);
+      // Figuren (Spieler/Torwart) nutzen Blickrichtung statt Rotation; ihre
+      // Pose/Spiegelung/Frisur kommen über die Render-Optionen.
+      const figur = FIGUR_TYPEN.has(element.typ);
+      const rot = figur ? 0 : element.rotation ?? 0;
       return (
-        <g
-          transform={`translate(${element.x} ${element.y}) rotate(${element.rotation ?? 0})`}
-        >
-          {def.render(symbolFarbe(element.typ, element.farbe))}
+        <g transform={`translate(${element.x} ${element.y}) rotate(${rot})`}>
+          {def.render(symbolFarbe(element.typ, element.farbe), {
+            pose: element.pose,
+            spiegeln: element.spiegeln,
+            seed: element.id,
+          })}
         </g>
       );
     }

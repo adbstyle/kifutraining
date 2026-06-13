@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Check, ClipboardPaste, Copy, Ellipsis, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, Waypoints, X } from "lucide-react";
+import { Check, ClipboardPaste, Copy, Ellipsis, FlipHorizontal2, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, Waypoints, X } from "lucide-react";
 import { Breadcrumbs, type BreadcrumbItem, Button, IconButton, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
@@ -11,6 +11,8 @@ import {
   FORM_DEFAULT_FARBE,
   LINIE_DEFAULT_FARBE,
   MAX_TEXT_LAENGE,
+  FIGUR_TYPEN,
+  SPIELER_POSEN,
   bbox,
   dreieckEcken,
   farbSlugs,
@@ -19,6 +21,7 @@ import {
   type DiagrammElement,
   type PfadTyp,
   type SymbolTyp,
+  type SpielerPose,
   type Punkt,
   type Rotation,
   type TextElement,
@@ -376,6 +379,22 @@ export function DiagrammEditor({
     merken();
     setElemente((prev) =>
       prev.map((el) => (el.id === id && el.art !== "text" ? { ...el, farbe } : el)),
+    );
+  }
+
+  // Pose der Spieler-Figur (#47); Torwart hat eine feste Pose.
+  function setPose(id: string, pose: SpielerPose) {
+    merken();
+    setElemente((prev) =>
+      prev.map((el) => (el.id === id && el.art === "symbol" ? { ...el, pose } : el)),
+    );
+  }
+
+  // Blickrichtung der Figur (links/rechts) statt Rotation (#47).
+  function setSpiegeln(id: string, spiegeln: boolean) {
+    merken();
+    setElemente((prev) =>
+      prev.map((el) => (el.id === id && el.art === "symbol" ? { ...el, spiegeln } : el)),
     );
   }
 
@@ -992,6 +1011,8 @@ export function DiagrammEditor({
               bearbeitenId === selected.id ? setBearbeitenId(null) : bearbeitenStart(selected)
             }
             onDrehen={(delta) => drehen(selected.id, delta)}
+            onPose={(pose) => setPose(selected.id, pose)}
+            onSpiegeln={(spiegeln) => setSpiegeln(selected.id, spiegeln)}
             onFarbe={(farbe) => setFarbe(selected.id, farbe)}
             onGestrichelt={(gestrichelt) => setGestrichelt(selected.id, gestrichelt)}
             onGefuellt={(gefuellt) => setGefuellt(selected.id, gefuellt)}
@@ -1168,6 +1189,8 @@ const ElementLeiste = forwardRef<
     imBearbeiten: boolean;
     onBearbeiten: () => void;
     onDrehen: (delta: 45 | -45) => void;
+    onPose: (pose: SpielerPose) => void;
+    onSpiegeln: (spiegeln: boolean) => void;
     onFarbe: (farbe: FarbSlug) => void;
     onGestrichelt: (gestrichelt: boolean) => void;
     onGefuellt: (gefuellt: boolean) => void;
@@ -1182,6 +1205,8 @@ const ElementLeiste = forwardRef<
     imBearbeiten,
     onBearbeiten,
     onDrehen,
+    onPose,
+    onSpiegeln,
     onFarbe,
     onGestrichelt,
     onGefuellt,
@@ -1191,13 +1216,16 @@ const ElementLeiste = forwardRef<
   ref,
 ) {
   const drehbar = element.art === "symbol" && symbolDef(element.typ).drehbar;
+  const figur = element.art === "symbol" && FIGUR_TYPEN.has(element.typ);
+  const poseWaehlbar = element.art === "symbol" && element.typ === "spieler";
   const faerbbar =
     (element.art === "symbol" && symbolDef(element.typ).faerbbar) ||
     (element.art === "pfad" && element.typ === "linie") ||
     element.art === "form";
   const stilbar = element.art === "pfad" && element.typ === "linie";
   const fuellbar = element.art === "form";
-  const hatEigenschaften = drehbar || faerbbar || stilbar || fuellbar || bearbeitbar;
+  const hatEigenschaften =
+    drehbar || figur || faerbbar || stilbar || fuellbar || bearbeitbar;
   const standardFarbe =
     element.art === "symbol"
       ? symbolDef(element.typ).defaultFarbe
@@ -1232,6 +1260,40 @@ const ElementLeiste = forwardRef<
             onClick={() => onDrehen(45)}
           />
         </>
+      )}
+
+      {poseWaehlbar && element.art === "symbol" && (
+        <div className="flex items-center gap-1" role="group" aria-label="Pose der Figur">
+          {SPIELER_POSEN.map((p) => {
+            const aktiv = (element.pose ?? "stehen") === p;
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => onPose(p)}
+                aria-label={`Pose ${p}`}
+                aria-pressed={aktiv}
+                className={`focus-ring rounded-[4px] border p-0.5 ${
+                  aktiv
+                    ? "border-on-surface bg-surface-container-highest"
+                    : "border-outline-variant"
+                }`}
+              >
+                <GlyphVorschau element={{ ...element, pose: p }} groesse={28} />
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {figur && element.art === "symbol" && (
+        <IconButton
+          icon={FlipHorizontal2}
+          label="Blickrichtung spiegeln"
+          size="sm"
+          active={!!element.spiegeln}
+          onClick={() => onSpiegeln(!element.spiegeln)}
+        />
       )}
 
       {faerbbar && (

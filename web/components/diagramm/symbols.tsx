@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { FARBEN, type FarbSlug, type SymbolTyp, DREHBARE_TYPEN } from "@/lib/diagramm";
+import { FARBEN, type FarbSlug, type SymbolTyp, type SpielerPose, DREHBARE_TYPEN } from "@/lib/diagramm";
+import { figurMarkup, figurTransform } from "./figur";
 
 /**
  * Zentrales Symbol-Register (Decision Record Spike #48, Gate 3).
@@ -14,6 +15,15 @@ import { FARBEN, type FarbSlug, type SymbolTyp, DREHBARE_TYPEN } from "@/lib/dia
  * Richtungskonvention drehbarer Symbole: 0° = Öffnung bzw. Blick nach unten
  * (zum Betrachter); Hürde 0° = Überquerung von oben nach unten.
  */
+/** Render-Optionen für Figuren-Symbole (Spieler/Torwart); andere Symbole
+ *  ignorieren sie. `seed` (die Element-id) steuert die deterministische
+ *  Frisur-/Hautton-Variation. */
+export type SymbolRenderOpts = {
+  pose?: SpielerPose;
+  spiegeln?: boolean;
+  seed?: string;
+};
+
 export type SymbolDef = {
   label: string;
   breite: number;
@@ -21,7 +31,7 @@ export type SymbolDef = {
   drehbar: boolean;
   faerbbar: boolean;
   defaultFarbe?: FarbSlug;
-  render: (farbe: string) => ReactNode;
+  render: (farbe: string, opts?: SymbolRenderOpts) => ReactNode;
 };
 
 const KONTUR = "rgba(0,0,0,.3)";
@@ -154,35 +164,44 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
   },
   spieler: {
     label: "Spieler",
-    breite: 46,
-    hoehe: 46,
+    breite: 75,
+    hoehe: 145,
     drehbar: DREHBARE_TYPEN.has("spieler"),
     faerbbar: true,
     defaultFarbe: "rot",
-    render: (farbe) => (
-      <>
-        {/* Feldspieler in Aufsicht: Leibchen-Kreis + Blickrichtungs-Nase (0° = unten) */}
-        <path d="M 0 30 L -9 16 L 9 16 Z" fill={farbe} stroke={KONTUR} strokeWidth={1} />
-        <circle r={17} fill={farbe} stroke={KONTUR} strokeWidth={2} />
-        <circle r={6.5} fill="#ffe0b2" stroke={KONTUR} strokeWidth={1} />
-      </>
+    // Cartoon-Kind, Trikot = Team-Farbe; Pose/Spiegeln/Frisur über opts (Epic #47).
+    render: (farbe, opts) => (
+      <g
+        transform={figurTransform(opts?.spiegeln)}
+        dangerouslySetInnerHTML={{
+          __html: figurMarkup({
+            torwart: false,
+            pose: opts?.pose,
+            trikot: farbe,
+            seed: opts?.seed ?? "spieler",
+          }),
+        }}
+      />
     ),
   },
   torwart: {
     label: "Torwart",
-    breite: 46,
-    hoehe: 46,
+    breite: 75,
+    hoehe: 145,
     drehbar: DREHBARE_TYPEN.has("torwart"),
     faerbbar: false,
-    render: () => (
-      <>
-        {/* Torwart hebt sich ab: Neon-Leibchen + Handschuh-Punkte */}
-        <path d="M 0 30 L -9 16 L 9 16 Z" fill="#c0ca33" stroke={KONTUR} strokeWidth={1} />
-        <circle r={17} fill="#c0ca33" stroke="#212121" strokeWidth={3} />
-        <circle r={6.5} fill="#ffe0b2" stroke={KONTUR} strokeWidth={1} />
-        <circle cx={-19} cy={6} r={5} fill="#fafafa" stroke={KONTUR} strokeWidth={1} />
-        <circle cx={19} cy={6} r={5} fill="#fafafa" stroke={KONTUR} strokeWidth={1} />
-      </>
+    // Feste Standfigur mit Handschuhen, Neon-Trikot (hebt sich ab).
+    render: (_farbe, opts) => (
+      <g
+        transform={figurTransform(opts?.spiegeln)}
+        dangerouslySetInnerHTML={{
+          __html: figurMarkup({
+            torwart: true,
+            trikot: "#c0ca33",
+            seed: opts?.seed ?? "torwart",
+          }),
+        }}
+      />
     ),
   },
   fussball: {

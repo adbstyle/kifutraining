@@ -52,12 +52,25 @@ export const SYMBOL_TYPEN = [
 ] as const;
 export type SymbolTyp = (typeof SYMBOL_TYPEN)[number];
 
-/** Richtungsbehaftete Elemente: genau diese sind drehbar (Story #51). */
+/** Figuren-Symbole: als Cartoon-Kinder gerendert (Epic #47). Statt Rotation
+ *  haben sie eine Blickrichtung (Spiegeln); Spieler zusätzlich eine Pose. */
+export const FIGUR_TYPEN: ReadonlySet<SymbolTyp> = new Set(["spieler", "torwart"]);
+
+/** Wählbare Posen des Feldspielers. Der Torwart hat eine feste Standfigur. */
+export const SPIELER_POSEN = [
+  "stehen",
+  "laufen",
+  "dribbeln",
+  "schiessen",
+  "graetschen",
+] as const;
+export type SpielerPose = (typeof SPIELER_POSEN)[number];
+
+/** Richtungsbehaftete (drehbare) Elemente — Figuren nutzen stattdessen
+ *  Blickrichtung (Spiegeln), nicht Rotation (Story #51 / Epic #47). */
 export const DREHBARE_TYPEN: ReadonlySet<SymbolTyp> = new Set([
   "tor",
   "minitor",
-  "spieler",
-  "torwart",
   "huerde",
 ]);
 
@@ -103,8 +116,13 @@ export type SymbolElement = {
   typ: SymbolTyp;
   x: number;
   y: number;
+  /** Nur drehbare Symbole (Tor/Minitor/Hürde). */
   rotation?: Rotation;
   farbe?: FarbSlug;
+  /** Pose der Figur (nur Spieler); ohne Angabe „stehen". */
+  pose?: SpielerPose;
+  /** Blickrichtung der Figur nach links statt rechts (Spiegeln). */
+  spiegeln?: boolean;
 };
 
 export type PfadElement = {
@@ -174,7 +192,10 @@ function istElement(v: unknown): v is DiagrammElement {
         istZahl(e.x) &&
         istZahl(e.y) &&
         (e.rotation === undefined ||
-          (ROTATIONEN as readonly number[]).includes(e.rotation as number))
+          (ROTATIONEN as readonly number[]).includes(e.rotation as number)) &&
+        (e.pose === undefined ||
+          (SPIELER_POSEN as readonly string[]).includes(e.pose as string)) &&
+        (e.spiegeln === undefined || typeof e.spiegeln === "boolean")
       );
     case "pfad":
       return (

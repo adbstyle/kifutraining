@@ -618,6 +618,40 @@ export default function Styleguide() {
           damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.
         </p>
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Spieler und Torwart sind Cartoon-Kinder: das Trikot trägt die
+          Team-Farbe (ein konfigurierbarer Fill), Frisur und Hautton werden pro
+          Element deterministisch variiert. Der Spieler hat eine wählbare{" "}
+          <strong>Pose</strong> (stehen, laufen, dribbeln, schiessen, grätschen),
+          beide Figuren statt Rotation eine <strong>Blickrichtung</strong>{" "}
+          (links/rechts, Spiegeln). Die Posen als <code>GlyphVorschau</code>:
+        </p>
+        <div className="mb-6 flex flex-wrap items-end gap-2">
+          {(
+            [
+              { id: "po-stehen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "stehen", farbe: "rot" },
+              { id: "po-laufen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "laufen", farbe: "rot" },
+              { id: "po-dribbeln", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "dribbeln", farbe: "rot" },
+              { id: "po-schiessen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "schiessen", farbe: "rot" },
+              { id: "po-graetschen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "graetschen", farbe: "rot" },
+              { id: "po-torwart", art: "symbol", typ: "torwart", x: 0, y: 0 },
+            ] as DiagrammElement[]
+          ).map((el) => (
+            <div
+              key={el.id}
+              className="flex flex-col items-center gap-1 rounded-[6px] border border-outline-variant p-1"
+            >
+              <GlyphVorschau element={el} groesse={56} />
+              <span className="type-label-small text-on-surface-variant">
+                {el.art === "symbol" && el.typ === "torwart"
+                  ? "torwart"
+                  : el.art === "symbol"
+                    ? el.pose
+                    : ""}
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           Element-Optionen (Drehen, Farbe, Linienstil, Kopieren, Entfernen)
           erscheinen im Editor als kontextuelle Bedienleiste, die am
           ausgewählten Element schwebt — ein bewusst neues Muster (#65): Das
@@ -641,9 +675,9 @@ export default function Styleguide() {
                 { id: "m1", art: "symbol", typ: "minitor", x: 240, y: 200, rotation: 90 },
                 { id: "p1", art: "symbol", typ: "pylone", x: 480, y: 700, farbe: "rot" },
                 { id: "p2", art: "symbol", typ: "pylone", x: 620, y: 760, farbe: "gelb" },
-                { id: "s1", art: "symbol", typ: "spieler", x: 380, y: 420, rotation: 90, farbe: "rot" },
-                { id: "s2", art: "symbol", typ: "spieler", x: 1050, y: 480, rotation: 90, farbe: "blau" },
-                { id: "tw", art: "symbol", typ: "torwart", x: 1280, y: 500, rotation: 270 },
+                { id: "s1", art: "symbol", typ: "spieler", x: 380, y: 420, pose: "dribbeln", farbe: "rot" },
+                { id: "s2", art: "symbol", typ: "spieler", x: 1050, y: 480, pose: "schiessen", spiegeln: true, farbe: "blau" },
+                { id: "tw", art: "symbol", typ: "torwart", x: 1280, y: 500 },
                 { id: "b1", art: "symbol", typ: "fussball", x: 470, y: 460 },
                 { id: "lw", art: "pfad", typ: "laufweg", punkte: [{ x: 380, y: 480 }, { x: 700, y: 620 }, { x: 950, y: 540 }] },
                 { id: "pa", art: "pfad", typ: "pass", punkte: [{ x: 500, y: 450 }, { x: 1000, y: 470 }] },
