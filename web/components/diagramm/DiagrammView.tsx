@@ -273,13 +273,16 @@ export function ElementGrafik({ element }: { element: DiagrammElement }) {
       // Figuren (Spieler/Torwart) nutzen Blickrichtung statt Rotation; ihre
       // Pose/Spiegelung/Frisur kommen über die Render-Optionen.
       const figur = FIGUR_TYPEN.has(element.typ);
-      const rot = figur ? 0 : element.rotation ?? 0;
+      // Perspektivische Symbole (Minitor) zeichnen die Orientierung selbst als
+      // eigenes Sprite — kein äusserer rotate(), Winkel geht über opts.rotation.
+      const rot = figur || def.perspektivisch ? 0 : element.rotation ?? 0;
       return (
         <g transform={`translate(${element.x} ${element.y}) rotate(${rot})`}>
           {def.render(symbolFarbe(element.typ, element.farbe), {
             pose: element.pose,
             spiegeln: element.spiegeln,
             seed: element.id,
+            rotation: element.rotation,
           })}
         </g>
       );

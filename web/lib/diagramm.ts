@@ -35,6 +35,12 @@ export const LINIE_DEFAULT_FARBE: FarbSlug = "weiss";
 /** Obergrenze für Textbox-Inhalte (Payload-Schutz, #53). */
 export const MAX_TEXT_LAENGE = 200;
 
+/** Höchstzahl Elemente pro Diagramm — Single Source für den Server-Sanity-Check
+ *  (Autosave-Action) und den Client-Guard bei Bulk-Einfügen (#67 AK11). Weit
+ *  über dem fachlichen Rahmen von ~50 Elementen (NFR Epic #47), schützt nur vor
+ *  entarteten Payloads. */
+export const MAX_ELEMENTE = 300;
+
 /** Gegenständliche Symbole (Story #50). */
 export const SYMBOL_TYPEN = [
   "tor",

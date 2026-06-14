@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import {
   FLAECHE,
   DIAGRAMM_VERSION,
+  MAX_ELEMENTE,
   parseDiagramm,
   kopiereDiagramm,
   FARBEN,
@@ -69,39 +70,75 @@ const clamp = (v: number, max: number) => Math.min(Math.max(v, 0), max);
 /** Diagonaler Versatz pro Einfügen, damit Kopien kaskadieren statt stapeln (#63 AK6). */
 const EINFUEGE_VERSATZ = 40;
 
-/** Eigenständige Kopie eines Elements mit diagonalem Versatz (#63).
- *  Punkt-Geometrie wird tief kopiert; der Versatz ist so begrenzt,
- *  dass die Kopie vollständig auf der Fläche bleibt. */
-function versetzteKopie(el: DiagrammElement, versatz: number): DiagrammElement {
-  const id = crypto.randomUUID();
+/** Ein Element um (dx, dy) verschieben — Punkt-Geometrie wird dabei tief kopiert,
+ *  sodass das Ergebnis keine Referenzen mit dem Original teilt. Ohne eigenes
+ *  Clamping: die Begrenzung auf die Fläche geschieht auf Gruppenebene, damit die
+ *  Anordnung der Elemente zueinander erhalten bleibt (#67 PC2/PC3). */
+function verschiebeElement(el: DiagrammElement, dx: number, dy: number): DiagrammElement {
   switch (el.art) {
     case "symbol":
     case "text":
+      return { ...el, x: el.x + dx, y: el.y + dy };
+    case "pfad":
+      return { ...el, punkte: el.punkte.map((p) => ({ x: p.x + dx, y: p.y + dy })) };
+    case "form":
       return {
         ...el,
-        id,
-        x: clamp(el.x + versatz, FLAECHE.breite),
-        y: clamp(el.y + versatz, FLAECHE.hoehe),
-      };
-    case "pfad": {
-      const box = bbox(el.punkte);
-      const dx = clamp(box.minX + versatz, FLAECHE.breite - (box.maxX - box.minX)) - box.minX;
-      const dy = clamp(box.minY + versatz, FLAECHE.hoehe - (box.maxY - box.minY)) - box.minY;
-      return { ...el, id, punkte: el.punkte.map((p) => ({ x: p.x + dx, y: p.y + dy })) };
-    }
-    case "form": {
-      const dx = clamp(el.x + versatz, FLAECHE.breite - el.breite) - el.x;
-      const dy = clamp(el.y + versatz, FLAECHE.hoehe - el.hoehe) - el.y;
-      return {
-        ...el,
-        id,
         x: el.x + dx,
         y: el.y + dy,
         punkte: el.punkte?.map((p) => ({ x: p.x + dx, y: p.y + dy })),
       };
-    }
   }
 }
+
+/** Begrenzungsrahmen einer Auswahl (Vereinigung der Element-Boxen) in
+ *  Flächen-Koordinaten — Anker für Gruppen-Versatz, Gruppen-Drag und die
+ *  Verankerung der Mehrfach-Bedienleiste (#67). */
+function auswahlBox(els: DiagrammElement[]): { x: number; y: number; breite: number; hoehe: number } {
+  const boxen = els.map(elementBBox);
+  const minX = Math.min(...boxen.map((b) => b.x));
+  const minY = Math.min(...boxen.map((b) => b.y));
+  const maxX = Math.max(...boxen.map((b) => b.x + b.breite));
+  const maxY = Math.max(...boxen.map((b) => b.y + b.hoehe));
+  return { x: minX, y: minY, breite: maxX - minX, hoehe: maxY - minY };
+}
+
+/** Eigenständige Kopie einer Auswahl mit gemeinsamem diagonalem Versatz (#67 AK7).
+ *  Frische IDs, tief kopierte Geometrie; der Versatz gilt für die ganze Gruppe,
+ *  begrenzt an der Gruppen-Box — die relative Anordnung bleibt erhalten (PC2). */
+function versetzteGruppe(els: DiagrammElement[], versatz: number): DiagrammElement[] {
+  const box = auswahlBox(els);
+  const dx = clamp(box.x + versatz, FLAECHE.breite - box.breite) - box.x;
+  const dy = clamp(box.y + versatz, FLAECHE.hoehe - box.hoehe) - box.y;
+  return els.map((el) => ({ ...verschiebeElement(el, dx, dy), id: crypto.randomUUID() }));
+}
+
+/** Achsenparalleles Rechteck aus zwei Eckpunkten (Auswahlrahmen). */
+function rechteck(a: Punkt, b: Punkt) {
+  return {
+    minX: Math.min(a.x, b.x),
+    minY: Math.min(a.y, b.y),
+    maxX: Math.max(a.x, b.x),
+    maxY: Math.max(a.y, b.y),
+  };
+}
+
+/** Liegt eine Element-Box vollständig im Auswahlrahmen? (#67 AK2) */
+function vollstaendigInRahmen(
+  rahmen: ReturnType<typeof rechteck>,
+  box: { x: number; y: number; breite: number; hoehe: number },
+): boolean {
+  return (
+    box.x >= rahmen.minX &&
+    box.y >= rahmen.minY &&
+    box.x + box.breite <= rahmen.maxX &&
+    box.y + box.hoehe <= rahmen.maxY
+  );
+}
+
+/** Mindest-Ziehstrecke (Flächen-Koordinaten), ab der ein Druck auf die leere
+ *  Fläche als Auswahlrahmen statt als Klick-zum-Abwählen gilt (#67 NFR4). */
+const RAHMEN_SCHWELLE = 12;
 
 /** Welche Ecke einer Form gezogen wird; die gegenüberliegende bleibt Anker. */
 type Ecke = "tl" | "tr" | "bl" | "br";
@@ -113,7 +150,16 @@ type Drag = { gemerkt: boolean } & (
   | { modus: "groesse"; id: string; orig: FormElement; ecke: Ecke }
   // Einzelner Stütz-/Eckpunkt im Form-Bearbeitungsmodus (#66).
   | { modus: "vertex"; id: string; index: number }
+  // Ganze Mehrfachauswahl gemeinsam verschieben (#67 AK8): Schnappschuss aller
+  // ausgewählten Elemente, gemeinsamer Versatz an der Gruppen-Box begrenzt.
+  | { modus: "mehrfach"; start: Punkt; orig: DiagrammElement[] }
 );
+
+/** Eine in Aufbau befindliche Auswahlrahmen-Geste (#67 AK1). Als Ref geführt,
+ *  weil sie pro Pointer-Bewegung gelesen/geschrieben wird; das sichtbare
+ *  Rechteck lebt separat im State. `aktiv` wird erst ab der Schwelle gesetzt —
+ *  ein blosser Klick bleibt ein Klick. */
+type Rahmen = { start: Punkt; aktuell: Punkt; additiv: boolean; aktiv: boolean };
 
 /** Mindestkantenlänge einer Form beim Resize (verhindert Entartung). */
 const FORM_MIN = 60;
@@ -241,7 +287,10 @@ export function DiagrammEditor({
   vorlagen: VorlageItem[];
 }) {
   const [elemente, setElemente] = useState<DiagrammElement[]>(initial.elemente);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Auswahl als Liste (#67): leer / ein Element / mehrere. Ein einzelnes Element
+  // führt unverändert zur kontextuellen ElementLeiste mit allen Eigenschaften;
+  // ab zwei Elementen erscheint die schlanke Mehrfach-Bedienleiste.
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   // Form-Bearbeitungsmodus (#66): zeigt am Element greifbare Stütz-/Eckpunkte.
   // Nur das „tiefer ausgewählte" Element ist editierbar; null = nur Auswahl.
   const [bearbeitenId, setBearbeitenId] = useState<string | null>(null);
@@ -261,11 +310,18 @@ export function DiagrammEditor({
   // staffelt den Versatz, damit Mehrfach-Einfügen kaskadiert (AK6);
   // als Ref, weil er kein Rendering treibt und so auch bei schnell
   // aufeinanderfolgendem Einfügen nie einen veralteten Stand liest.
-  const [zwischenablage, setZwischenablage] = useState<DiagrammElement | null>(null);
+  const [zwischenablage, setZwischenablage] = useState<DiagrammElement[] | null>(null);
   const eingefuegtRef = useRef(0);
+
+  // Kurzlebiger Hinweis, z. B. wenn Einfügen die Höchstzahl sprengen würde
+  // (#67 AK11). Das Diagramm bleibt dabei unverändert.
+  const [hinweis, setHinweis] = useState<string | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<Drag | null>(null);
+  // Auswahlrahmen-Geste (#67 AK1): Ref treibt die Logik, State das sichtbare Rechteck.
+  const rahmenRef = useRef<Rahmen | null>(null);
+  const [auswahlRahmen, setAuswahlRahmen] = useState<{ start: Punkt; aktuell: Punkt } | null>(null);
   const ersterRender = useRef(true);
   // Saves laufen strikt nacheinander: ein langsamer älterer Save kann so
   // nie einen neueren Stand in der DB überschreiben.
@@ -297,7 +353,7 @@ export function DiagrammEditor({
     setVerlauf((v) => v.slice(0, -1));
     setZukunft((z) => [...z, elemente]);
     setElemente(letzter);
-    setSelectedId(null);
+    setSelectedIds([]);
     setBearbeitenId(null);
   }
 
@@ -307,7 +363,7 @@ export function DiagrammEditor({
     setZukunft((z) => z.slice(0, -1));
     setVerlauf((v) => [...v, elemente]);
     setElemente(naechster);
-    setSelectedId(null);
+    setSelectedIds([]);
     setBearbeitenId(null);
   }
 
@@ -332,6 +388,13 @@ export function DiagrammEditor({
     return () => clearTimeout(timer);
   }, [elemente, exerciseId]);
 
+  // Hinweis (#67 AK11) nach kurzer Zeit wieder ausblenden.
+  useEffect(() => {
+    if (!hinweis) return;
+    const t = setTimeout(() => setHinweis(null), 5000);
+    return () => clearTimeout(t);
+  }, [hinweis]);
+
   function addSymbol(typ: SymbolTyp) {
     merken();
     const n = elemente.length;
@@ -344,7 +407,7 @@ export function DiagrammEditor({
       y: FLAECHE.hoehe / 2 + ((Math.floor(n / 5) % 5) - 2) * 70,
     };
     setElemente((prev) => [...prev, neu]);
-    setSelectedId(neu.id);
+    setSelectedIds([neu.id]);
   }
 
   // Eine Vorlage auf der leeren Fläche übernehmen (#61): als unabhängige Kopie
@@ -355,15 +418,17 @@ export function DiagrammEditor({
     if (!data || data.elemente.length === 0) return "Die Vorlage enthält kein Diagramm.";
     merken();
     setElemente(kopiereDiagramm(data).elemente);
-    setSelectedId(null);
+    setSelectedIds([]);
     return null;
   }
 
+  // Alle ausgewählten Elemente in einem Schritt entfernen (#67 AK6/PC1).
   function removeSelected() {
-    if (!selectedId) return;
+    if (selectedIds.length === 0) return;
     merken();
-    setElemente((prev) => prev.filter((e) => e.id !== selectedId));
-    setSelectedId(null);
+    const ids = new Set(selectedIds);
+    setElemente((prev) => prev.filter((e) => !ids.has(e.id)));
+    setSelectedIds([]);
     setBearbeitenId(null);
   }
 
@@ -373,25 +438,36 @@ export function DiagrammEditor({
   // Eckpunkt-Drag materialisiert — als regulärer, rückgängig machbarer Schritt.
   function bearbeitenStart(el: DiagrammElement) {
     if (zeichnen || !geometrieEditierbar(el)) return;
-    setSelectedId(el.id);
+    setSelectedIds([el.id]);
     setBearbeitenId(el.id);
   }
 
+  // Aktuelle Auswahl als Schnappschuss in die Zwischenablage (#67 AK7) —
+  // ein oder mehrere Elemente, bewusst ausserhalb des Undo-Verlaufs.
   function kopieren() {
-    if (zeichnen) return;
-    const el = elemente.find((e) => e.id === selectedId);
-    if (!el) return;
-    setZwischenablage(el);
+    if (zeichnen || selectedIds.length === 0) return;
+    const ids = new Set(selectedIds);
+    const els = elemente.filter((e) => ids.has(e.id));
+    if (els.length === 0) return;
+    setZwischenablage(els);
     eingefuegtRef.current = 0;
   }
 
+  // Zwischenablage als Gruppe einfügen (#67 AK7/PC2): gemeinsamer Versatz,
+  // frische IDs, Anordnung erhalten. Würde die Höchstzahl überschritten, bleibt
+  // das Diagramm unverändert und ein Hinweis erscheint (AK11).
   function einfuegen() {
     if (!zwischenablage || zeichnen) return;
+    if (elemente.length + zwischenablage.length > MAX_ELEMENTE) {
+      setHinweis(`Das Diagramm kann höchstens ${MAX_ELEMENTE} Elemente enthalten.`);
+      return;
+    }
     merken();
     eingefuegtRef.current += 1;
-    const neu = versetzteKopie(zwischenablage, eingefuegtRef.current * EINFUEGE_VERSATZ);
-    setElemente((prev) => [...prev, neu]);
-    setSelectedId(neu.id);
+    const neu = versetzteGruppe(zwischenablage, eingefuegtRef.current * EINFUEGE_VERSATZ);
+    setElemente((prev) => [...prev, ...neu]);
+    setSelectedIds(neu.map((e) => e.id));
+    setBearbeitenId(null);
   }
 
   function setFarbe(id: string, farbe: FarbSlug) {
@@ -434,7 +510,7 @@ export function DiagrammEditor({
   }
 
   function startZeichnen(werkzeug: PfadTyp | "polygon") {
-    setSelectedId(null);
+    setSelectedIds([]);
     setBearbeitenId(null);
     setZeichnen({ werkzeug, punkte: [] });
   }
@@ -473,7 +549,7 @@ export function DiagrammEditor({
               punkte,
             };
       setElemente((prev) => [...prev, neu]);
-      setSelectedId(neu.id);
+      setSelectedIds([neu.id]);
     }
     setZeichnen(null);
     setHoverPunkt(null);
@@ -502,7 +578,7 @@ export function DiagrammEditor({
       hoehe: 180,
     };
     setElemente((prev) => [...prev, neu]);
-    setSelectedId(neu.id);
+    setSelectedIds([neu.id]);
   }
 
   function addText() {
@@ -515,7 +591,7 @@ export function DiagrammEditor({
       text: "Text",
     };
     setElemente((prev) => [...prev, neu]);
-    setSelectedId(neu.id);
+    setSelectedIds([neu.id]);
   }
 
   function setText(id: string, text: string) {
@@ -540,12 +616,38 @@ export function DiagrammEditor({
     // Im Zeichenmodus zählen Klicks auf Elemente als Stützpunkte (kein Drag).
     if (zeichnen) return;
     e.stopPropagation();
-    // Auswahl eines anderen Elements verlässt den Form-Bearbeitungsmodus.
-    if (el.id !== bearbeitenId) setBearbeitenId(null);
-    setSelectedId(el.id);
     const svg = svgRef.current;
     if (!svg) return;
+
+    // Additiver Klick (#67 AK3): Element in die Auswahl toggeln, ohne Drag.
+    if (e.shiftKey || e.metaKey || e.ctrlKey) {
+      setBearbeitenId(null);
+      setSelectedIds((prev) =>
+        prev.includes(el.id) ? prev.filter((id) => id !== el.id) : [...prev, el.id],
+      );
+      return;
+    }
+
     const p = flaechenPunkt(svg, e);
+
+    // Teil einer bestehenden Mehrfachauswahl → ganze Gruppe verschieben (#67 AK8).
+    if (selectedIds.length > 1 && selectedIds.includes(el.id)) {
+      setBearbeitenId(null);
+      const ids = new Set(selectedIds);
+      dragRef.current = {
+        gemerkt: false,
+        modus: "mehrfach",
+        start: p,
+        orig: elemente.filter((x) => ids.has(x.id)),
+      };
+      svg.setPointerCapture(e.pointerId);
+      return;
+    }
+
+    // Einzelauswahl wie bisher. Auswahl eines anderen Elements verlässt den
+    // Form-Bearbeitungsmodus.
+    if (el.id !== bearbeitenId) setBearbeitenId(null);
+    setSelectedIds([el.id]);
     // gemerkt=false: der Undo-Schnappschuss entsteht erst bei der ersten
     // echten Bewegung — blosses Selektieren flutet den Verlauf nicht.
     dragRef.current =
@@ -583,13 +685,45 @@ export function DiagrammEditor({
       return;
     }
     const drag = dragRef.current;
-    if (!drag) return;
+    if (!drag) {
+      // Kein Drag aktiv → ggf. Auswahlrahmen aufziehen (#67 AK1).
+      const rahmen = rahmenRef.current;
+      if (rahmen) {
+        const q = flaechenPunkt(svg, e);
+        rahmen.aktuell = q;
+        if (!rahmen.aktiv) {
+          if (
+            Math.abs(q.x - rahmen.start.x) < RAHMEN_SCHWELLE &&
+            Math.abs(q.y - rahmen.start.y) < RAHMEN_SCHWELLE
+          )
+            return;
+          rahmen.aktiv = true;
+        }
+        setAuswahlRahmen({ start: rahmen.start, aktuell: q });
+      }
+      return;
+    }
     if (!drag.gemerkt) {
       merken();
       drag.gemerkt = true;
       setDragAktiv(true);
     }
     const p = flaechenPunkt(svg, e);
+    // Gruppen-Verschiebung (#67 AK8): gemeinsamer Versatz, an der Gruppen-Box
+    // begrenzt — die Anordnung der Elemente zueinander bleibt erhalten (PC3).
+    if (drag.modus === "mehrfach") {
+      const box = auswahlBox(drag.orig);
+      const dx = clamp(box.x + (p.x - drag.start.x), FLAECHE.breite - box.breite) - box.x;
+      const dy = clamp(box.y + (p.y - drag.start.y), FLAECHE.hoehe - box.hoehe) - box.y;
+      const origMap = new Map(drag.orig.map((o) => [o.id, o]));
+      setElemente((prev) =>
+        prev.map((el) => {
+          const o = origMap.get(el.id);
+          return o ? verschiebeElement(o, dx, dy) : el;
+        }),
+      );
+      return;
+    }
     setElemente((prev) =>
       prev.map((el) => {
         if (el.id !== drag.id) return el;
@@ -660,15 +794,38 @@ export function DiagrammEditor({
   }
 
   function onPointerUp() {
-    dragRef.current = null;
-    setDragAktiv(false);
+    if (dragRef.current) {
+      dragRef.current = null;
+      setDragAktiv(false);
+      return;
+    }
+    // Auswahlrahmen abschliessen (#67 AK1/AK2) oder — bei blossem Klick auf die
+    // leere Fläche — die Auswahl aufheben (AK9).
+    const rahmen = rahmenRef.current;
+    if (rahmen) {
+      rahmenRef.current = null;
+      setAuswahlRahmen(null);
+      if (rahmen.aktiv) {
+        const rect = rechteck(rahmen.start, rahmen.aktuell);
+        const treffer = elemente
+          .filter((el) => vollstaendigInRahmen(rect, elementBBox(el)))
+          .map((el) => el.id);
+        setSelectedIds((prev) =>
+          rahmen.additiv ? Array.from(new Set([...prev, ...treffer])) : treffer,
+        );
+        setBearbeitenId(null);
+      } else if (!rahmen.additiv) {
+        setSelectedIds([]);
+        setBearbeitenId(null);
+      }
+    }
   }
 
   // Inline-Textbearbeitung (#65 AK9): Doppelklick öffnet die Eingabe direkt am
   // Element. Verlassen übernimmt, Escape verwirft (#65 PC3).
   function starteTextBearbeitung(el: TextElement) {
     if (zeichnen) return;
-    setSelectedId(el.id);
+    setSelectedIds([el.id]);
     editAusgang.current = el.text;
     textGemerkt.current = false;
     setEditId(el.id);
@@ -696,7 +853,13 @@ export function DiagrammEditor({
     textGemerkt.current = false;
   }
 
-  const selected = elemente.find((e) => e.id === selectedId) ?? null;
+  // Genau ein Element ausgewählt → volle ElementLeiste; mehrere → Mehrfach-Leiste.
+  const einzelId = selectedIds.length === 1 ? selectedIds[0] : null;
+  const selected = einzelId ? (elemente.find((e) => e.id === einzelId) ?? null) : null;
+  const mehrfach = selectedIds.length > 1;
+  const selektiertSet = new Set(selectedIds);
+  // Vereinigungs-Box der Auswahl: Anker für die Bedienleiste (einzeln wie mehrfach).
+  const auswahlElemente = elemente.filter((e) => selektiertSet.has(e.id));
 
   // Rendergrösse der Fläche verfolgen, damit die Leiste in Pixel positioniert
   // werden kann (das SVG skaliert über die viewBox mit der Containerbreite).
@@ -715,7 +878,7 @@ export function DiagrammEditor({
   // useLayoutEffect misst die Leiste und setzt die Position vor dem Paint —
   // dadurch kein Flackern und keine Layout-Verschiebung der Fläche.
   useLayoutEffect(() => {
-    if (!selected || dragAktiv || editId !== null || flaecheBreite === 0) {
+    if (auswahlElemente.length === 0 || dragAktiv || editId !== null || flaecheBreite === 0) {
       setLeistePos(null);
       return;
     }
@@ -723,7 +886,7 @@ export function DiagrammEditor({
     if (!bar) return;
     const scale = flaecheBreite / FLAECHE.breite;
     const flaecheHoehe = flaecheBreite * (FLAECHE.hoehe / FLAECHE.breite);
-    const box = elementBBox(selected);
+    const box = auswahlBox(auswahlElemente);
     const mitteX = (box.x + box.breite / 2) * scale;
     const obenY = box.y * scale;
     const untenY = (box.y + box.hoehe) * scale;
@@ -737,9 +900,9 @@ export function DiagrammEditor({
       Math.max(luft, flaecheBreite - bw - luft),
     );
     setLeistePos({ left, top });
-    // selected ist aus elemente abgeleitet (find) und wechselt bei jeder
-    // Geometrie-Änderung die Referenz — elemente als Dep wäre redundant.
-  }, [selected, dragAktiv, editId, flaecheBreite]);
+    // Auswahl + Geometrie bestimmen die Verankerung; bei jeder Änderung neu messen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [elemente, selectedIds, dragAktiv, editId, flaecheBreite]);
 
   const statusText: Record<SaveStatus, string> = {
     gespeichert: "Gespeichert",
@@ -841,7 +1004,9 @@ export function DiagrammEditor({
         <h1 className="type-headline-large text-on-surface">Feld-Diagramm</h1>
         <p className="type-body-medium mt-2 text-on-surface-variant">
           {name} — Elemente platzieren, verschieben, in der Form anpassen und
-          entfernen. Änderungen werden automatisch gespeichert.
+          entfernen. Mehrere Elemente lassen sich per Auswahlrahmen oder
+          Umschalt-Klick gemeinsam verschieben, kopieren und löschen. Änderungen
+          werden automatisch gespeichert.
         </p>
       </header>
 
@@ -906,6 +1071,7 @@ export function DiagrammEditor({
           if (e.key === "Escape") {
             if (zeichnen) abbrechenZeichnen();
             else if (bearbeitenId) setBearbeitenId(null);
+            else if (selectedIds.length > 0) setSelectedIds([]);
           }
           if (e.key === "Enter" && zeichnen) fertigZeichnen();
           if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
@@ -931,10 +1097,19 @@ export function DiagrammEditor({
           onPointerDown={(e) => {
             if (zeichnen) {
               zeichnenKlick(flaechenPunkt(e.currentTarget, e));
-            } else {
-              setSelectedId(null);
-              setBearbeitenId(null);
+              return;
             }
+            // Druck auf die leere Fläche startet eine Auswahlrahmen-Geste (#67
+            // AK1). Ob daraus ein Rahmen oder ein Klick-zum-Abwählen wird,
+            // entscheidet sich an der Ziehstrecke (onPointerMove/Up).
+            const svg = e.currentTarget;
+            rahmenRef.current = {
+              start: flaechenPunkt(svg, e),
+              aktuell: flaechenPunkt(svg, e),
+              additiv: e.shiftKey || e.metaKey || e.ctrlKey,
+              aktiv: false,
+            };
+            svg.setPointerCapture(e.pointerId);
           }}
           onDoubleClick={() => {
             // Doppelklick landet wegen setPointerCapture (onElementPointerDown)
@@ -969,10 +1144,10 @@ export function DiagrammEditor({
                 />
               )}
               <ElementGrafik element={el} />
-              {el.id === selectedId && <SelektionsRahmen element={el} />}
-              {/* Eck-Anfasser zum Grössen-Anpassen (Rechteck/Ellipse) — im
-                  Form-Bearbeitungsmodus ausgeblendet, dort gelten Punkte. */}
-              {el.id === selectedId && el.id !== bearbeitenId && formResizable(el) && (
+              {selektiertSet.has(el.id) && <SelektionsRahmen element={el} />}
+              {/* Eck-Anfasser zum Grössen-Anpassen (Rechteck/Ellipse) — nur bei
+                  Einzelauswahl, im Form-Bearbeitungsmodus ausgeblendet. */}
+              {el.id === einzelId && el.id !== bearbeitenId && formResizable(el) && (
                 <FormAnfasser element={el} onGreifen={onResizePointerDown} />
               )}
               {/* Punkt-Anfasser im Form-Bearbeitungsmodus (#66). */}
@@ -1016,6 +1191,25 @@ export function DiagrammEditor({
               ))}
             </g>
           )}
+
+          {/* Aufgezogener Auswahlrahmen (#67 AK1) */}
+          {auswahlRahmen && (() => {
+            const r = rechteck(auswahlRahmen.start, auswahlRahmen.aktuell);
+            return (
+              <rect
+                x={r.minX}
+                y={r.minY}
+                width={r.maxX - r.minX}
+                height={r.maxY - r.minY}
+                fill="rgba(255,255,255,.12)"
+                stroke="#ffffff"
+                strokeWidth={2}
+                strokeDasharray="6 4"
+                pointerEvents="none"
+                data-testid="auswahl-rahmen"
+              />
+            );
+          })()}
         </svg>
 
         {/* Leerzustand: Einstieg, eine Vorlage statt leerer Fläche zu übernehmen
@@ -1057,6 +1251,18 @@ export function DiagrammEditor({
           />
         )}
 
+        {/* Gemeinsame Aktionen bei Mehrfachauswahl (#67): schlanke Leiste an der
+            Gruppen-Box, nur Kopieren und Löschen — verschoben wird per Drag. */}
+        {mehrfach && !dragAktiv && (
+          <MehrfachLeiste
+            ref={leisteRef}
+            anzahl={selectedIds.length}
+            pos={leistePos}
+            onKopieren={kopieren}
+            onEntfernen={removeSelected}
+          />
+        )}
+
         {/* Inline-Textbearbeitung direkt am Element (#65 AK9) */}
         {editId !== null && selected && selected.art === "text" && flaecheBreite > 0 && (
           <TextEingabe
@@ -1076,6 +1282,11 @@ export function DiagrammEditor({
       >
         {statusText[status]}
       </p>
+      {hinweis && (
+        <p className="type-body-small text-error" role="status" data-testid="diagramm-hinweis">
+          {hinweis}
+        </p>
+      )}
     </div>
   );
 }
@@ -1086,6 +1297,9 @@ function TrefferFlaeche({
   element: Extract<DiagrammElement, { art: "symbol" }>;
 }) {
   const def = symbolDef(element.typ);
+  // Perspektivische Symbole (Minitor) drehen sich nicht flach — ihre Box bleibt
+  // achsenparallel, also auch die Trefferfläche.
+  const rot = def.perspektivisch ? 0 : element.rotation ?? 0;
   return (
     <rect
       x={element.x - def.breite / 2}
@@ -1093,7 +1307,7 @@ function TrefferFlaeche({
       width={def.breite}
       height={def.hoehe}
       fill="transparent"
-      transform={`rotate(${element.rotation ?? 0} ${element.x} ${element.y})`}
+      transform={`rotate(${rot} ${element.x} ${element.y})`}
     />
   );
 }
@@ -1404,6 +1618,51 @@ const ElementLeiste = forwardRef<
       <IconButton
         icon={Trash2}
         label="Ausgewähltes Element entfernen"
+        size="sm"
+        onClick={onEntfernen}
+        className="text-error hover:text-error"
+      />
+    </div>
+  );
+});
+
+/** Bedienleiste für eine Mehrfachauswahl (#67): schwebt wie die ElementLeiste
+ *  über der Zeichenfläche, an der gemeinsamen Box der Auswahl verankert. Zeigt
+ *  die Anzahl und die gemeinsamen Aktionen Kopieren und Löschen — Eigenschaften
+ *  einzelner Elemente bleiben der Einzelauswahl vorbehalten (Out of Scope). */
+const MehrfachLeiste = forwardRef<
+  HTMLDivElement,
+  {
+    anzahl: number;
+    pos: { left: number; top: number } | null;
+    onKopieren: () => void;
+    onEntfernen: () => void;
+  }
+>(function MehrfachLeiste({ anzahl, pos, onKopieren, onEntfernen }, ref) {
+  return (
+    <div
+      ref={ref}
+      role="toolbar"
+      aria-label={`Optionen für ${anzahl} ausgewählte Elemente`}
+      data-testid="mehrfach-leiste"
+      className="absolute z-20 flex items-center gap-1 rounded-[6px] border border-outline-variant bg-surface-container-high px-1.5 py-1 shadow-e4"
+      style={{
+        left: pos?.left ?? -9999,
+        top: pos?.top ?? 0,
+        visibility: pos ? "visible" : "hidden",
+      }}
+    >
+      <span className="type-label-medium px-1 text-on-surface-variant">{anzahl} ausgewählt</span>
+      <span aria-hidden className="mx-0.5 h-5 w-px bg-outline-variant" />
+      <IconButton
+        icon={Copy}
+        label="Ausgewählte Elemente kopieren"
+        size="sm"
+        onClick={onKopieren}
+      />
+      <IconButton
+        icon={Trash2}
+        label="Ausgewählte Elemente entfernen"
         size="sm"
         onClick={onEntfernen}
         className="text-error hover:text-error"

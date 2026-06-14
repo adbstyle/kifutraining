@@ -2,11 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { parseDiagramm, kopiereDiagramm, type DiagrammData } from "@/lib/diagramm";
-
-/** Obergrenze als Server-Sanity-Check — weit über dem fachlichen Rahmen
- *  von ~50 Elementen (NFR Epic #47), schützt nur vor entarteten Payloads. */
-const MAX_ELEMENTE = 300;
+import { parseDiagramm, kopiereDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
 
 export type SaveDiagrammResult = { ok: true } | { ok: false; error: string };
 

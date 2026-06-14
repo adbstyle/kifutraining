@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
-import type { DiagrammElement } from "@/lib/diagramm";
+import { ROTATIONEN, type DiagrammElement } from "@/lib/diagramm";
 
 export const metadata: Metadata = {
   title: "Styleguide — KiFu Designsystem",
@@ -655,6 +655,29 @@ export default function Styleguide() {
           ))}
         </div>
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Das <strong>Minitor</strong> ist <em>perspektivisch</em>: statt sich
+          flach zu drehen, zeigt es je Orientierung eine eigene 2.5D-Ansicht im
+          Manual-Look (Front, Dreiviertel, Seite, Rück). Der äussere{" "}
+          <code>rotate()</code> entfällt — das Symbol bekommt den Winkel über{" "}
+          <code>opts.rotation</code> und wählt das passende Sprite (Spiegelung
+          für 225°/270°/315°). Die acht Schritte als <code>GlyphVorschau</code>:
+        </p>
+        <div className="mb-6 flex flex-wrap items-end gap-2">
+          {ROTATIONEN.map((rot) => (
+            <div
+              key={rot}
+              className="flex flex-col items-center gap-1 rounded-[6px] border border-outline-variant p-1"
+            >
+              <GlyphVorschau
+                element={{ id: `mt-${rot}`, art: "symbol", typ: "minitor", x: 0, y: 0, rotation: rot }}
+                groesse={56}
+                rand={0.3}
+              />
+              <span className="type-label-small text-on-surface-variant">{rot}°</span>
+            </div>
+          ))}
+        </div>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           Element-Optionen (Drehen, Farbe, Linienstil, Kopieren, Entfernen)
           erscheinen im Editor als kontextuelle Bedienleiste, die am
           ausgewählten Element schwebt — ein bewusst neues Muster (#65): Das
@@ -666,6 +689,16 @@ export default function Styleguide() {
           oberhalb/unterhalb des Elements aus, tritt während eines Drags zurück
           und verschwindet beim Abwählen. Textboxen werden per Doppelklick
           direkt am Element bearbeitet.
+        </p>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Mehrere Elemente werden per <strong>Auswahlrahmen</strong> (Aufziehen
+          auf der freien Fläche, erfasst vollständig umschlossene Elemente) oder
+          additivem <strong>Umschalt-/Cmd-Klick</strong> ausgewählt (#67). Bei
+          mehr als einem Element tritt an die Stelle der Eigenschaften-Leiste
+          eine schlanke <strong>Mehrfach-Leiste</strong> (Anzahl, Kopieren,
+          Löschen), verankert an der gemeinsamen Box; verschoben wird die Gruppe
+          per Drag. Auswahlrahmen, additiver Klick und Lasso sind ebenfalls neue
+          Canvas-Muster ausserhalb des DOM-Trigger-Modells des Kits.
         </p>
         <div className="relative aspect-[16/10] max-w-xl overflow-hidden rounded-[6px] border border-outline-variant">
           <DiagrammView
