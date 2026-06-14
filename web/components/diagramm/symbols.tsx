@@ -61,172 +61,101 @@ function Netz({ x, y, b, h }: { x: number; y: number; b: number; h: number }) {
 }
 
 /* ───────────────────────── Minitor (perspektivisch) ─────────────────────────
- * Pop-up-Minitor im SFV-Manual-Look: heller Bügel, weisses Netz, dunkelgraue
- * Bodenstange + Füsse. Statt sich flach zu drehen, zeigt es je Orientierung
- * eine eigene 2.5D-Ansicht (Front / Dreiviertel / Seite / Rück). Alle Sprites
- * zeichnen zentriert um (0,0) und passen in die 100×48-Box (#55 Anker-Vertrag).
- */
-const MT = {
-  rohr: "#eceff1",
-  rohrKante: "rgba(0,0,0,.18)",
-  netz: (o: number) => `rgba(255,255,255,${o})`,
-  boden: "#37474f",
-  fuss: "#263238",
-};
+ * Pop-up-Minitor: vom Nutzer gezeichnete 2.5D-Ansichten (0/45/90/135/180°);
+ * die übrigen vier Orientierungen entstehen durch Spiegelung (siehe
+ * MINITOR_ANSICHT). Die Originalpfade werden 1:1 übernommen und nur über
+ * mtView() auf den Anker (0,0) zentriert und skaliert — eine einzige
+ * Transformation für alle Ansichten, damit das Tor in jeder Lage gleich gross
+ * bleibt. Anker = Mittelpunkt der gemeinsamen Bezugsbox (#55 Anker-Vertrag). */
+const MT_NETZ = "white";
+const MT_NETZ_FILL = 0.4;
+const MT_SCHNUR = "#646161";
+/** Bezugspunkt der Zeichnungen (Canvas 161×108): Tor-Mittelpunkt ~ (92.5, 50). */
+const MT_CX = 92.5;
+const MT_CY = 50;
+/** Skalierung der Original-Zeichnung in Symbol-Einheiten. */
+const MT_SKALA = 1.3;
 
-/** Auf 2 Nachkommastellen runden — Netzkoordinaten entstehen aus sqrt/Potenz;
- *  Server- und Client-Engine runden das letzte Float-Bit minimal verschieden,
- *  gerundet bleibt die Ausgabe hydrations-stabil (vgl. DiagrammView.r2). */
-const r2 = (n: number) => Math.round(n * 100) / 100;
+/** Zentriert + skaliert die Original-Zeichnung auf den Anker (0,0). Gemeinsam
+ *  für alle Ansichten → konsistente Grösse; mit dem äusseren scale(-1,1) der
+ *  gespiegelten Orientierungen verträglich (Spiegelung um die Tor-Achse). */
+function mtView(children: ReactNode) {
+  return <g transform={`scale(${MT_SKALA}) translate(${-MT_CX} ${-MT_CY})`}>{children}</g>;
+}
 
-/** Kuppel-Geometrie der Front-/Rückansicht: Parabel vom Fuss (±44, 20) über die
- *  Kuppe (0, -28). Das Netz endet aber bereits am Saum (MT_SAUM) — der grüne
- *  Spalt darunter zur Torschnur (Bodenschnur) ist gewollt (Soll-Vorgabe). */
-const MT_HALB = 44;
-const MT_KUPPE = -28; // Scheitel
-const MT_SAUM = 14; // Eckpunkte des Bügels (unterer Rahmenrand)
-const MT_RIM_SAG = 18; // Durchhang der unteren Rahmenkante in der Mitte
-const MT_BODEN = 22; // Torschnur / Boden vorn (mit Lücke zum Saum darüber)
-const mtTop = (x: number) => MT_KUPPE + (MT_SAUM - MT_KUPPE) * (x / MT_HALB) ** 2;
-/** x-Halbweite der Kuppel auf Höhe y (Umkehrung der Parabel). */
-const mtHalbweite = (y: number) => MT_HALB * Math.sqrt(Math.max(0, (y - MT_KUPPE) / (MT_SAUM - MT_KUPPE)));
-/** Oberer Bügel: Parabel von Ecke (±44, 14) über die Kuppe (0, -28). */
-const MT_BOGEN = `M ${-MT_HALB} ${MT_SAUM} Q ${-MT_HALB - 6} ${MT_KUPPE + 2} 0 ${MT_KUPPE} Q ${MT_HALB + 6} ${MT_KUPPE + 2} ${MT_HALB} ${MT_SAUM}`;
-/** Untere Rahmenkante (verstärkter weisser Rand AUCH am Boden): leichter
- *  Durchhang zwischen den Ecken — schliesst den Bügel zur Schlaufe. */
-const MT_RAND = `M ${-MT_HALB} ${MT_SAUM} Q 0 ${MT_RIM_SAG} ${MT_HALB} ${MT_SAUM}`;
-/** Netzfläche: oben Bügel, unten die durchhängende Rahmenkante. */
-const MT_NETZ_FLAECHE = `M ${-MT_HALB} ${MT_SAUM} Q -50 ${MT_KUPPE - 2} 0 ${MT_KUPPE} Q 50 ${MT_KUPPE - 2} ${MT_HALB} ${MT_SAUM} Q 0 ${MT_RIM_SAG} ${-MT_HALB} ${MT_SAUM} Z`;
-
-/** Feines Netz unter der Kuppel: zur Kuppe konvergierende Meridiane +
- *  Breitengrad-Bögen, bis zum Saum. `dichte` kleiner = feineres Netz;
- *  `opacity` steuert das Durchschimmern. */
-function mtNetz(dichte: number, opacity: number) {
-  const linien: ReactNode[] = [];
-  for (let x = -MT_HALB + 4; x <= MT_HALB - 4; x += dichte) {
-    const top = mtTop(x);
-    if (top >= MT_SAUM - 1) continue;
-    linien.push(<line key={`v${x}`} x1={r2(x)} y1={MT_SAUM} x2={r2(x * 0.42)} y2={r2(top + 1.5)} />);
-  }
-  for (let y = MT_KUPPE + 6; y < MT_SAUM - 1; y += dichte * 0.82) {
-    const xw = mtHalbweite(y) - 1.5;
-    linien.push(<path key={`h${y}`} d={`M ${r2(-xw)} ${r2(y)} Q 0 ${r2(y + 2.4)} ${r2(xw)} ${r2(y)}`} />);
-  }
+/** Torschnur (Bodenschnur) — Originalpfad, graue Linie. */
+const mtSchnur = (d: string) => <path d={d} stroke={MT_SCHNUR} strokeWidth={2} strokeLinecap="round" />;
+/** Netz/Bügel — Originalpfad. `modus`: "voll" = Fläche + weisser Rand,
+ *  "flaeche" = nur Netzfläche, "rand" = nur weisser Bügelrand. */
+function mtNetzPfad(d: string, modus: "voll" | "flaeche" | "rand" = "voll") {
   return (
-    <g fill="none" stroke={MT.netz(opacity)} strokeWidth={0.7} strokeLinecap="round">
-      {linien}
-    </g>
+    <path
+      d={d}
+      fill={modus === "rand" ? "none" : MT_NETZ}
+      fillOpacity={modus === "rand" ? undefined : MT_NETZ_FILL}
+      stroke={modus === "flaeche" ? "none" : MT_NETZ}
+      strokeWidth={modus === "flaeche" ? undefined : 2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   );
 }
 
-/** Helles Rohr mit dunkler Aussenkante — gibt dem verstärkten Rand Tube-
- *  Plastizität. `breite` = Rohrstärke (Bügel kräftiger als Bodenrand). */
-function mtRohr(d: string, opacity = 1, breite = 4.5) {
-  return (
-    <g opacity={opacity}>
-      <path d={d} fill="none" stroke={MT.rohrKante} strokeWidth={breite + 2} strokeLinecap="round" />
-      <path d={d} fill="none" stroke={MT.rohr} strokeWidth={breite} strokeLinecap="round" />
-    </g>
-  );
-}
-
-/** Klare Torschnur (Bodenschnur) auf Höhe y, mit dunklen Füssen — vorne, vor
- *  dem Netz, mit grünem Spalt zum Saum darüber. */
-function mtTorschnur(y: number) {
-  return (
-    <>
-      <line x1={-MT_HALB} y1={y} x2={MT_HALB} y2={y} stroke={MT.boden} strokeWidth={5} strokeLinecap="round" />
-      <circle cx={-MT_HALB} cy={y} r={4.5} fill={MT.fuss} />
-      <circle cx={MT_HALB} cy={y} r={4.5} fill={MT.fuss} />
-    </>
-  );
-}
-
-/** Schwach durchschimmernde Torschnur (Rückseite): sie liegt HÖHER als der
- *  untere Netzrand — das Netz hängt davor/darunter (Soll-Vorgabe). */
-function mtTorschnurSchwach(y: number) {
-  return <line x1={-MT_HALB + 5} y1={y} x2={MT_HALB - 5} y2={y} stroke={MT.boden} strokeWidth={3} strokeLinecap="round" opacity={0.3} />;
-}
-
-/** Kuppel (Single Source für Front + Dreiviertel). Bügel + verstärkter Boden-
- *  rand bilden eine geschlossene weisse Schlaufe; das Netz liegt darin.
- *  `rueck` = Blick auf die geschlossene Netzwand: dichteres, blasseres Netz,
- *  die Torschnur schimmert HÖHER als der Netzrand durch, kein Logo. Vorn:
- *  klare Torschnur tiefer mit grünem Spalt zum Saum. */
-function mtKuppel(rueck: boolean) {
-  return (
-    <>
-      <path d={MT_NETZ_FLAECHE} fill={MT.netz(rueck ? 0.18 : 0.1)} stroke="none" />
-      {/* Rückseite: Schnur höher und HINTER dem Netz → Netz hängt davor/tiefer. */}
-      {rueck && mtTorschnurSchwach(MT_SAUM - 6)}
-      {mtNetz(rueck ? 5 : 6.5, rueck ? 0.3 : 0.42)}
-      {mtRohr(MT_BOGEN, rueck ? 0.92 : 1)}
-      {mtRohr(MT_RAND, rueck ? 0.92 : 1, 3.5)}
-      {/* Front: Torschnur klar, tiefer als der Saum (grüner Spalt dazwischen). */}
-      {!rueck && mtTorschnur(MT_BODEN)}
-      {!rueck && <circle cx={0} cy={-14} r={3} fill="none" stroke={MT.netz(0.5)} strokeWidth={1.1} />}
-    </>
-  );
-}
-
+/** Front (0°). */
 function mtFront() {
-  return mtKuppel(false);
-}
-
-function mtRueck() {
-  return mtKuppel(true);
-}
-
-/** Dreiviertel = dieselbe Kuppel um eine feste Neigung gekippt; dadurch läuft
- *  die Torschnur diagonal und man blickt schräg auf das Tor (Soll). Vorn mit
- *  perspektivisch verkürzter Öffnung, hinten geschlossene Netzwand. */
-function mtDreiviertel(rueck: boolean) {
-  return (
-    <g transform="rotate(-17)">
-      {!rueck && <ellipse cx={0} cy={MT_SAUM} rx={mtHalbweite(MT_SAUM - 1)} ry={7} fill={MT.netz(0.08)} stroke="none" />}
-      {mtKuppel(rueck)}
-    </g>
+  return mtView(
+    <>
+      {mtSchnur("M64.5 56H120.5")}
+      {mtNetzPfad("M64 56.0009C80 45.0002 104 45.0002 120.5 56.0002C114 15.5 71.5 15.0002 64 56.0009Z")}
+    </>,
   );
 }
 
-function mtDreiviertelVorn() {
-  return mtDreiviertel(false);
-}
-
-function mtDreiviertelHinten() {
-  return mtDreiviertel(true);
-}
-
-/** Seite (90°, Spiegel für 270°): Halbkuppel-Profil — vertikale Rückkante
- *  rechts, gewölbte Front nach links, die zum Boden ausläuft (Öffnung links).
- *  Verstärkter weisser Rand rundum, Saumlücke + kleine Torschnur (Soll-Skizze). */
-function mtSeite() {
-  // Viertelkuppel von der Seite: kräftige, fast senkrechte Rückkante rechts;
-  // die Front wölbt sich nach links und läuft zum Boden aus (Öffnung links) —
-  // gemäss der Soll-Skizze. Verstärkter Rand rundum, Saumlücke + Torschnur.
-  const frame = "M 10 15 L 10 -25 Q 10 -30 4 -30 Q -19 -27 -16 15";
-  const rand = "M -16 15 Q -4 18 10 15";
-  const flaeche = "M 10 15 L 10 -24 Q 10 -28 4 -28 Q -16 -25 -13 15 Q -2 17 10 15 Z";
-  return (
+/** Rück (180°): Netz hängt unter die Torschnur. */
+function mtRueck() {
+  return mtView(
     <>
-      <path d={flaeche} fill={MT.netz(0.12)} stroke="none" />
-      <g fill="none" stroke={MT.netz(0.4)} strokeWidth={0.7} strokeLinecap="round">
-        {/* Meridiane: vom vorderen Boden hoch zur hinteren Kuppe */}
-        <path d="M -10 13 Q 1 -15 7 -27" />
-        <path d="M -3 14 Q 5 -12 9 -25" />
-        <path d="M 5 14 Q 8 -9 10 -22" />
-        {/* Breitengrade entlang der Wölbung */}
-        <path d="M -14 5 Q -2 1 9 3" />
-        <path d="M -11 -8 Q 0 -12 9 -10" />
-        <path d="M -4 -19 Q 3 -22 8 -20" />
-      </g>
-      {mtRohr(frame)}
-      {mtRohr(rand, 1, 3.5)}
-      {/* schmale Torschnur am Boden, mit Lücke zum Saum darüber */}
-      <line x1={-16} y1={MT_BODEN} x2={10} y2={MT_BODEN} stroke={MT.boden} strokeWidth={5} strokeLinecap="round" />
-      <circle cx={-16} cy={MT_BODEN} r={4.5} fill={MT.fuss} />
-      <circle cx={10} cy={MT_BODEN} r={4.5} fill={MT.fuss} />
-    </>
+      {mtSchnur("M64.5 56H120.5")}
+      {mtNetzPfad("M64 56.001C71 66.5 107.5 71.5 120.5 56.0002C114 15.5001 71.5 15.0003 64 56.001Z")}
+    </>,
+  );
+}
+
+/** Seite (90°, Spiegel für 270°). */
+function mtSeite() {
+  return mtView(
+    <>
+      {mtSchnur("M92.5 28V84")}
+      {mtNetzPfad(
+        "M80.9783 31.8956C77.6141 43.5002 78.7228 65.8352 91.646 84.1111C51.8704 57.5817 61.6449 41.3133 80.9783 31.8956C83.249 24.0629 87.5574 21.1187 91.646 27.6111C87.9423 28.8466 84.3177 30.2689 80.9783 31.8956Z",
+        "flaeche",
+      )}
+      {mtNetzPfad("M91.646 84.1111C70 53.4995 81.5 11.5 91.646 27.6111C66.5 35.9993 45 52.9993 91.646 84.1111Z", "rand")}
+    </>,
+  );
+}
+
+/** Dreiviertel vorn (45°, Spiegel für 315°). */
+function mtDreiviertelVorn() {
+  return mtView(
+    <>
+      {mtSchnur("M111.598 41.402L72 81")}
+      {mtNetzPfad(
+        "M72 80.9999C64.3266 76.2494 55.3181 62.1532 75.6126 51.3953C84.3573 18.5273 106.326 9.25879 111.5 41.4997C94.5404 43.9226 83.0884 47.4325 75.6126 51.3953C73.3724 59.8152 72 69.7837 72 80.9999Z",
+        "flaeche",
+      )}
+      {mtNetzPfad("M72 80.9999C61.5 74.4995 48.5 50.5 111.5 41.4997C105 0.999567 72 26 72 80.9999Z", "rand")}
+    </>,
+  );
+}
+
+/** Dreiviertel hinten (135°, Spiegel für 225°). */
+function mtDreiviertelHinten() {
+  return mtView(
+    <>
+      {mtSchnur("M71.5 36.5L111.098 76.098")}
+      {mtNetzPfad("M111 76.0004C111 31.5003 77.5 9.50018 72.5 36.0003C60 45 75.5 67 111 76.0004Z")}
+    </>,
   );
 }
 
@@ -268,8 +197,10 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
   },
   minitor: {
     label: "Minitor",
-    breite: 100,
-    hoehe: 48,
+    // Box deckt die gemeinsame Hülle aller acht Orientierungen ab (die Seiten-
+    // ansichten sind perspektivisch am höchsten); gemessen aus den Zeichnungen.
+    breite: 80,
+    hoehe: 92,
     drehbar: DREHBARE_TYPEN.has("minitor"),
     faerbbar: false,
     // Pop-up-Minitor im Manual-Look: je Orientierung eine eigene 2.5D-Ansicht
