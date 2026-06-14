@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { BookOpen } from "lucide-react";
 import type { Metadata } from "next";
@@ -8,8 +7,8 @@ import {
   type BreadcrumbItem,
   Card,
   KategorieChip,
-  FieldPlaceholder,
   MethodischerFahrplan,
+  UebungsBild,
 } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { OwnerActions } from "@/components/exercise/OwnerActions";
@@ -151,19 +150,15 @@ export default async function ExerciseDetailPage({
         )}
       </header>
 
-      {/* Diagramm — grosszügig, volle Breite */}
+      {/* Aktives Bild — gezeichnetes Diagramm, Foto oder Platzhalter */}
       <div className="relative mt-8 aspect-[16/9] w-full overflow-hidden rounded-[6px] border border-outline-variant">
-        {ex.bild_url ? (
-          <Image
-            src={ex.bild_url}
-            alt={`Feld-Diagramm: ${ex.name}`}
-            fill
-            sizes="(max-width: 896px) 100vw, 896px"
-            className="object-contain"
-          />
-        ) : (
-          <FieldPlaceholder className="h-full w-full" />
-        )}
+        <UebungsBild
+          name={ex.name}
+          bildUrl={ex.bild_url}
+          diagramm={ex.diagramm}
+          bildQuelle={ex.bild_quelle}
+          sizes="(max-width: 896px) 100vw, 896px"
+        />
       </div>
 
       {/* Eckdaten — unterhalb des Bildes */}

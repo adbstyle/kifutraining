@@ -10,8 +10,8 @@ kategorien:
 - F
 - E
 anzahl_kinder:
-  min: 3
-  max: 3
+  min: 9
+  max: 11
 material: []
 methodischer_fahrplan:
   offen_starten: Die Kinder spielen im Kleinfeld 2:1. Die rote Linie dient als Grenze.

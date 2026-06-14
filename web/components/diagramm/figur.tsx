@@ -1,0 +1,315 @@
+/**
+ * Cartoon-Kinder als Spieler-/Torwart-Figuren der Feld-Diagramme (Epic #47).
+ *
+ * Die Figuren ersetzen die früheren Aufsicht-Tokens (Decision: „Ersetzen").
+ * Trikotfarbe ist EIN konfigurierbarer Fill (Team-Farbe, kommt aus dem
+ * Element); Hose/Stutzen/Schuhe/Haut/Haar sind fix. Frisur und Hautton werden
+ * pro Element deterministisch aus der id variiert (Vielfalt ohne Persistenz),
+ * die Pose wird gewählt und gespeichert.
+ *
+ * Die Geometrie ist bewusst hier zentral (wie das Symbol-Register): eine neue
+ * Figuren-Version wirkt sofort auf bestehende Diagramme, ohne Standbild.
+ *
+ * Zeichen-Raum: 0..200 (x) × 0..280 (y), Figur-Anker (Körpermitte) bei
+ * (100, 140). `figurTransform` zentriert den Anker auf (0,0), skaliert auf
+ * Feldgrösse und spiegelt optional die Blickrichtung.
+ */
+
+import type { SpielerPose } from "@/lib/diagramm";
+
+// --- Palette (fix, unabhängig von der Trikotfarbe) ---
+// Hauttöne bewusst als warme Brauntöne von hell bis dunkel — auch der dunkelste
+// bleibt deutlich heller als das (oft schwarze) Haar, damit Gesichtszüge
+// (dunkle Augen/Mund) lesbar bleiben (kein schwarzer Kopf-Klumpen).
+const SKIN = ["#ffe0c2", "#f0c096", "#d39b66", "#b27a45", "#915f33"] as const;
+const HAAR = ["#3a2a20", "#1c1c1c", "#e8b84b", "#a9622a", "#5a3826", "#caa05a"] as const;
+// Augen/Mund: kräftiges, aber nicht reines Schwarz — trägt auf jedem Hautton.
+const TINTE = "#26201c";
+const FRISUREN = [
+  "kurz",
+  "scheitel",
+  "lockig",
+  "wuschel",
+  "zopf",
+  "zoepfe",
+  "dutt",
+  "iro",
+  "stirnband",
+  "lang",
+] as const;
+type Frisur = (typeof FRISUREN)[number];
+const SHORT = "#37474f";
+const SOCK = "#fafafa";
+const SHOE = "#222";
+const TORWART_TRIKOT = "#c0ca33"; // Neon, hebt den Torwart ab (faerbbar:false)
+
+/** Figur-Anker (Körpermitte) im Zeichen-Raum. */
+const ANKER_X = 100;
+const ANKER_Y = 140;
+/** Skalierung Zeichen-Raum → Feld-Einheiten (Figurhöhe ~125). */
+const SCALE = 0.55;
+
+/** Transform für die Figur: Anker auf (0,0), skaliert, optional gespiegelt.
+ *  Wird im Symbol-Register an das zentrierte `<g>` gehängt. */
+export function figurTransform(spiegeln?: boolean): string {
+  const sx = spiegeln ? -SCALE : SCALE;
+  return `scale(${sx} ${SCALE}) translate(${-ANKER_X} ${-ANKER_Y})`;
+}
+
+/** Stabiler kleiner Hash einer id → Frisur + Hautton + Haarfarbe. */
+export function figurVariante(seed: string): { frisur: Frisur; haut: string; haar: string } {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const u = h >>> 0;
+  // Unsigned Shifts (>>>): ein vorzeichenbehaftetes >> liefert bei gesetztem
+  // Bit 31 negative Indizes → undefined → fill="undefined" (schwarz).
+  return {
+    frisur: FRISUREN[u % FRISUREN.length],
+    haut: SKIN[(u >>> 3) % SKIN.length],
+    haar: HAAR[(u >>> 6) % HAAR.length],
+  };
+}
+
+// --- Kopf / Frisur ---
+const BAND = "#fafafa"; // Stirnband
+const ZOPF_TIE = "#e53935"; // Haargummi
+
+/** Hinter dem Kopf liegende Haarteile (Vorderansicht): Zöpfe, lange Haare. */
+function frisurBack(haar: string, fr: Frisur): string {
+  if (fr === "zopf")
+    return `<path d="M126 40 Q150 44 150 66 Q150 86 137 90 Q147 70 132 56 Z" fill="${haar}"/>`;
+  if (fr === "zoepfe")
+    return `<ellipse cx="64" cy="82" rx="11" ry="18" fill="${haar}"/><ellipse cx="136" cy="82" rx="11" ry="18" fill="${haar}"/>`;
+  if (fr === "lang")
+    return `<path d="M68 50 Q60 92 72 116 L82 116 Q74 84 82 56 Z" fill="${haar}"/><path d="M132 50 Q140 92 128 116 L118 116 Q126 84 118 56 Z" fill="${haar}"/>`;
+  return "";
+}
+/** Haar auf/über dem Kopf (Vorderansicht). Grund-Schopf als Halbmond, je
+ *  Stil ergänzt. */
+function frisurTop(haar: string, fr: Frisur): string {
+  let s = `<circle cx="100" cy="48" r="33" fill="${haar}"/>`;
+  if (fr === "lockig")
+    s += [[78, 32], [92, 24], [108, 24], [122, 32], [70, 46], [130, 46]]
+      .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="10" fill="${haar}"/>`)
+      .join("");
+  if (fr === "wuschel")
+    s += [[72, 30], [86, 18], [100, 14], [114, 18], [128, 30]]
+      .map(([x, y]) => `<path d="M${x - 8} ${y + 13} L${x} ${y} L${x + 8} ${y + 13} Z" fill="${haar}"/>`)
+      .join("");
+  if (fr === "scheitel")
+    // seitlich gescheitelter Pony: deckt eine Stirnseite stärker
+    s += `<path d="M100 22 Q136 24 134 58 Q133 44 114 42 Q102 38 99 28 Z" fill="${haar}"/>`;
+  if (fr === "dutt") s += `<circle cx="100" cy="17" r="11" fill="${haar}"/>`;
+  if (fr === "iro")
+    s += `<path d="M90 6 Q100 -2 110 6 L113 46 L87 46 Z" fill="${haar}"/>`;
+  if (fr === "stirnband")
+    s += `<path d="M68 47 Q100 41 132 47 L132 39 Q100 33 68 39 Z" fill="${BAND}"/>`;
+  if (fr === "zopf") s += `<circle cx="129" cy="46" r="4" fill="${ZOPF_TIE}"/>`;
+  if (fr === "zoepfe")
+    s += `<circle cx="64" cy="66" r="4" fill="${ZOPF_TIE}"/><circle cx="136" cy="66" r="4" fill="${ZOPF_TIE}"/>`;
+  return s;
+}
+function gesichtFront(skin: string): string {
+  return (
+    `<circle cx="100" cy="56" r="29" fill="${skin}"/>` +
+    `<circle cx="72" cy="58" r="6" fill="${skin}"/><circle cx="128" cy="58" r="6" fill="${skin}"/>` +
+    `<circle cx="90" cy="56" r="3.4" fill="${TINTE}"/><circle cx="110" cy="56" r="3.4" fill="${TINTE}"/>` +
+    `<circle cx="84" cy="66" r="4.4" fill="#ff8f8f" opacity="0.5"/><circle cx="116" cy="66" r="4.4" fill="#ff8f8f" opacity="0.5"/>` +
+    `<path d="M91 66 Q100 76 109 66" stroke="${TINTE}" stroke-width="2.8" fill="none" stroke-linecap="round"/>`
+  );
+}
+function kopfFront(skin: string, haar: string, fr: Frisur): string {
+  return frisurBack(haar, fr) + frisurTop(haar, fr) + gesichtFront(skin);
+}
+/** Profilkopf, Blick nach rechts; Mitte (hx,hy). */
+function kopfProfil(hx: number, hy: number, skin: string, haar: string, fr: Frisur): string {
+  let s = "";
+  // Hinten liegende Haarteile zuerst.
+  if (fr === "zopf" || fr === "zoepfe")
+    s += `<path d="M${hx - 22} ${hy - 6} Q${hx - 44} ${hy - 2} ${hx - 44} ${hy + 18} Q${hx - 44} ${hy + 34} ${hx - 30} ${hy + 34} Q${hx - 36} ${hy + 14} ${hx - 22} ${hy + 6} Z" fill="${haar}"/>`;
+  if (fr === "lang")
+    s += `<path d="M${hx - 24} ${hy - 8} Q${hx - 34} ${hy + 34} ${hx - 22} ${hy + 56} L${hx - 8} ${hy + 56} Q${hx - 16} ${hy + 24} ${hx - 12} ${hy} Z" fill="${haar}"/>`;
+  // Grund-Schopf.
+  s += `<circle cx="${hx - 2}" cy="${hy - 7}" r="31" fill="${haar}"/>`;
+  if (fr === "lockig")
+    s += [[hx - 18, hy - 26], [hx - 2, hy - 30], [hx + 12, hy - 24], [hx - 30, hy - 12]]
+      .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="${haar}"/>`)
+      .join("");
+  if (fr === "wuschel")
+    s += [[hx - 22, hy - 12], [hx - 8, hy - 26], [hx + 8, hy - 26], [hx + 18, hy - 14]]
+      .map(([x, y]) => `<path d="M${x - 8} ${y + 12} L${x} ${y - 1} L${x + 8} ${y + 12} Z" fill="${haar}"/>`)
+      .join("");
+  if (fr === "dutt") s += `<circle cx="${hx - 10}" cy="${hy - 30}" r="10" fill="${haar}"/>`;
+  if (fr === "iro")
+    s += `<path d="M${hx - 18} ${hy - 14} Q${hx - 6} ${hy - 40} ${hx + 8} ${hy - 38} L${hx + 8} ${hy - 30} Q${hx - 4} ${hy - 30} ${hx - 10} ${hy - 14} Z" fill="${haar}"/>`;
+  // Gesicht in Profil.
+  s += `<circle cx="${hx}" cy="${hy}" r="27" fill="${skin}"/>`;
+  s += `<path d="M${hx + 25} ${hy - 3} q9 5 1 11 q-3 -5 -1 -11 Z" fill="${skin}"/>`;
+  s += `<circle cx="${hx - 13}" cy="${hy + 2}" r="5.5" fill="${skin}"/>`;
+  if (fr === "stirnband")
+    s += `<path d="M${hx - 20} ${hy - 12} Q${hx + 4} ${hy - 24} ${hx + 24} ${hy - 14} L${hx + 24} ${hy - 6} Q${hx + 4} ${hy - 16} ${hx - 20} ${hy - 4} Z" fill="${BAND}"/>`;
+  s += `<circle cx="${hx + 10}" cy="${hy - 2}" r="3.4" fill="${TINTE}"/>`;
+  s += `<circle cx="${hx + 4}" cy="${hy + 10}" r="4" fill="#ff8f8f" opacity="0.5"/>`;
+  s += `<path d="M${hx + 13} ${hy + 13} q6 4 11 -1" stroke="${TINTE}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
+  return s;
+}
+function schuh(x: number, y: number, dir: 1 | -1): string {
+  return `<path d="M${x} ${y} q${-6 * dir} 11 ${10 * dir} 11 l${8 * dir} -2 q1 -10 ${-7 * dir} -11 Z" fill="${SHOE}"/>`;
+}
+
+// --- Posen (liefern Markup im Zeichen-Raum 0..200 × 0..280) ---
+function stehen(j: string, skin: string, haar: string, fr: Frisur): string {
+  return (
+    `<path d="M91 154 L87 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
+    <path d="M109 154 L113 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
+    <path d="M88 196 L85 218" stroke="${SOCK}" stroke-width="17" stroke-linecap="round"/>
+    <path d="M112 196 L115 218" stroke="${SOCK}" stroke-width="17" stroke-linecap="round"/>
+    ${schuh(80, 218, -1)}${schuh(120, 218, 1)}
+    <path d="M70 148 L130 148 L128 178 Q128 184 121 184 L110 184 L100 162 L90 184 L79 184 Q72 184 72 178 Z" fill="${SHORT}"/>
+    <path d="M74 106 L60 152" stroke="${skin}" stroke-width="14" stroke-linecap="round"/>
+    <path d="M126 106 L140 152" stroke="${skin}" stroke-width="14" stroke-linecap="round"/>
+    <circle cx="60" cy="152" r="8" fill="${skin}"/><circle cx="140" cy="152" r="8" fill="${skin}"/>
+    <path d="M72 98 Q72 92 82 92 L118 92 Q128 92 128 98 L131 150 Q131 156 123 156 L77 156 Q69 156 69 150 Z" fill="${j}"/>
+    <path d="M74 100 L60 118" stroke="${j}" stroke-width="22" stroke-linecap="round"/>
+    <path d="M126 100 L140 118" stroke="${j}" stroke-width="22" stroke-linecap="round"/>
+    <rect x="93" y="80" width="14" height="18" rx="5" fill="${skin}"/>
+    ${kopfFront(skin, haar, fr)}`
+  );
+}
+function laufen(j: string, skin: string, haar: string, fr: Frisur): string {
+  return (
+    `<path d="M96 156 Q82 186 74 210" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="M84 188 Q78 200 74 210" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
+    ${schuh(70, 206, -1)}
+    <path d="M124 108 Q140 118 136 134" stroke="${skin}" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <circle cx="136" cy="134" r="8" fill="${skin}"/>
+    <path d="M72 148 L130 148 L130 176 Q130 182 123 182 L112 182 L100 162 L92 182 L80 182 Q73 182 73 176 Z" fill="${SHORT}"/>
+    <path d="M106 156 Q124 178 126 200" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="M124 184 Q126 192 126 200" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
+    ${schuh(122, 198, 1)}
+    <path d="M76 108 Q62 120 66 136" stroke="${skin}" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <circle cx="66" cy="136" r="8" fill="${skin}"/>
+    <path d="M73 100 Q73 94 83 94 L117 94 Q127 94 127 100 L130 150 Q130 156 122 156 L78 156 Q70 156 70 150 Z" fill="${j}"/>
+    <path d="M76 102 Q66 110 62 122" stroke="${j}" stroke-width="22" fill="none" stroke-linecap="round"/>
+    <path d="M124 102 Q134 110 138 122" stroke="${j}" stroke-width="22" fill="none" stroke-linecap="round"/>
+    <rect x="93" y="82" width="14" height="18" rx="5" fill="${skin}"/>
+    ${kopfFront(skin, haar, fr)}`
+  );
+}
+function dribbeln(j: string, skin: string, haar: string, fr: Frisur): string {
+  return (
+    `<path d="M96 150 Q90 188 84 222" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="M88 196 Q86 210 84 222" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
+    ${schuh(80, 220, -1)}
+    <path d="M92 106 Q82 120 84 134" stroke="${skin}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <circle cx="84" cy="134" r="7" fill="${skin}"/>
+    <path d="M82 100 L122 98 Q128 100 126 122 L122 150 Q120 156 112 156 L88 156 Q82 156 82 150 Z" fill="${j}"/>
+    <rect x="93" y="82" width="14" height="18" rx="5" fill="${skin}"/>
+    ${kopfProfil(118, 54, skin, haar, fr)}
+    <path d="M108 150 Q126 176 132 204" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="M128 184 Q131 196 132 204" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
+    ${schuh(130, 202, 1)}
+    <path d="M114 106 Q128 116 132 132" stroke="${skin}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <path d="M114 104 Q124 110 128 120" stroke="${j}" stroke-width="20" fill="none" stroke-linecap="round"/>
+    <circle cx="132" cy="132" r="7" fill="${skin}"/>`
+  );
+}
+function schiessen(j: string, skin: string, haar: string, fr: Frisur): string {
+  return (
+    `<path d="M94 150 L90 224" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
+    <path d="M91 198 L89 220" stroke="${SOCK}" stroke-width="17" stroke-linecap="round"/>
+    ${schuh(86, 220, -1)}
+    <path d="M84 108 Q72 112 70 126" stroke="${skin}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <circle cx="70" cy="126" r="7" fill="${skin}"/>
+    <path d="M82 98 L120 100 Q126 102 124 122 L120 150 Q118 156 110 156 L88 156 Q82 156 82 150 Z" fill="${j}"/>
+    <rect x="92" y="82" width="14" height="18" rx="5" fill="${skin}"/>
+    ${kopfProfil(110, 54, skin, haar, fr)}
+    <path d="M106 150 Q132 152 150 142" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="M134 148 Q144 145 150 142" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
+    ${schuh(150, 140, 1)}
+    <path d="M116 106 Q130 112 134 126" stroke="${skin}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <path d="M116 104 Q124 110 128 118" stroke="${j}" stroke-width="20" fill="none" stroke-linecap="round"/>
+    <circle cx="134" cy="126" r="7" fill="${skin}"/>`
+  );
+}
+/** Innenseit-Pass (Profil, Blick nach rechts): Standbein gepflanzt, Passbein
+ *  tief quer zum Ball geführt (flacher Innenseit-Fuss am Boden), Arme zur
+ *  Balance offen — bewusst flacher als der hohe Schuss. */
+function passen(j: string, skin: string, haar: string, fr: Frisur): string {
+  return (
+    `<path d="M92 150 L86 224" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
+    <path d="M89 198 L86 220" stroke="${SOCK}" stroke-width="17" stroke-linecap="round"/>
+    ${schuh(82, 220, -1)}
+    <path d="M84 108 Q66 112 62 128" stroke="${skin}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <circle cx="62" cy="128" r="7" fill="${skin}"/>
+    <path d="M82 98 L120 100 Q126 102 124 122 L120 150 Q118 156 110 156 L88 156 Q82 156 82 150 Z" fill="${j}"/>
+    <rect x="92" y="82" width="14" height="18" rx="5" fill="${skin}"/>
+    ${kopfProfil(110, 54, skin, haar, fr)}
+    <path d="M106 150 Q126 178 136 202" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="M130 186 Q134 195 136 202" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
+    <path d="M129 198 q19 -1 25 7 q1 6 -7 6 l-18 0 q-5 -7 0 -13 Z" fill="${SHOE}"/>
+    <path d="M116 106 Q130 112 134 126" stroke="${skin}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <path d="M116 104 Q124 110 128 118" stroke="${j}" stroke-width="20" fill="none" stroke-linecap="round"/>
+    <circle cx="134" cy="126" r="7" fill="${skin}"/>`
+  );
+}
+function graetschen(j: string, skin: string, haar: string, fr: Frisur): string {
+  return (
+    `<path d="M96 206 Q120 210 156 212" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="M128 210 Q142 211 156 212" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
+    ${schuh(154, 208, 1)}
+    <path d="M92 204 Q86 224 102 230" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    ${schuh(98, 226, 1)}
+    <path d="M70 168 Q60 188 60 204" stroke="${skin}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <circle cx="60" cy="205" r="7" fill="${skin}"/>
+    <path d="M70 170 L104 196 Q110 200 106 208 L86 214 Q80 214 78 208 L66 184 Q62 176 70 170 Z" fill="${j}"/>
+    <path d="M74 168 Q86 158 96 156" stroke="${skin}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <circle cx="96" cy="156" r="7" fill="${skin}"/>
+    ${kopfProfil(64, 150, skin, haar, fr)}`
+  );
+}
+/** Torwart: Standfigur mit Handschuhen, Neon-Trikot (fix). */
+function torhueter(j: string, skin: string, haar: string, fr: Frisur): string {
+  return (
+    `<path d="M88 154 L74 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
+    <path d="M112 154 L126 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
+    <path d="M82 198 L76 218" stroke="#212121" stroke-width="17" stroke-linecap="round"/>
+    <path d="M118 198 L124 218" stroke="#212121" stroke-width="17" stroke-linecap="round"/>
+    ${schuh(70, 218, -1)}${schuh(130, 218, 1)}
+    <path d="M70 148 L130 148 L128 178 Q128 184 121 184 L110 184 L100 162 L90 184 L79 184 Q72 184 72 178 Z" fill="#212121"/>
+    <path d="M74 106 Q54 120 50 142" stroke="${skin}" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="M126 106 Q146 120 150 142" stroke="${skin}" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <rect x="40" y="136" width="20" height="22" rx="8" fill="#eceff1" stroke="#b0bec5" stroke-width="1.5"/>
+    <rect x="140" y="136" width="20" height="22" rx="8" fill="#eceff1" stroke="#b0bec5" stroke-width="1.5"/>
+    <path d="M72 98 Q72 92 82 92 L118 92 Q128 92 128 98 L131 150 Q131 156 123 156 L77 156 Q69 156 69 150 Z" fill="${j}"/>
+    <path d="M74 100 Q60 110 56 124" stroke="${j}" stroke-width="22" fill="none" stroke-linecap="round"/>
+    <path d="M126 100 Q140 110 144 124" stroke="${j}" stroke-width="22" fill="none" stroke-linecap="round"/>
+    <rect x="93" y="80" width="14" height="18" rx="5" fill="${skin}"/>
+    ${kopfFront(skin, haar, fr)}`
+  );
+}
+
+const POSEN: Record<SpielerPose, (j: string, s: string, h: string, fr: Frisur) => string> = {
+  stehen,
+  laufen,
+  dribbeln,
+  passen,
+  schiessen,
+  graetschen,
+};
+
+/** Markup einer Figur im Zeichen-Raum. `trikot` ist die gerenderte Team-Farbe
+ *  (beim Torwart ignoriert — fixes Neon). Frisur/Hautton aus `seed` abgeleitet. */
+export function figurMarkup(args: {
+  torwart: boolean;
+  pose?: SpielerPose;
+  trikot: string;
+  seed: string;
+}): string {
+  const { frisur, haut, haar } = figurVariante(args.seed);
+  if (args.torwart) return torhueter(TORWART_TRIKOT, haut, haar, frisur);
+  return POSEN[args.pose ?? "stehen"](args.trikot, haut, haar, frisur);
+}

@@ -10,7 +10,9 @@ kategorien:
 - G
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 8
+  max: 10
 material: []
 methodischer_fahrplan:
   offen_starten: Die Kinder dribbeln mit ihrem Ball an einer Wache vorbei in die Torzone.

@@ -7,7 +7,9 @@ kategorien:
 - G
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 12
+  max: 14
 material: []
 aufbau: 'Die Kinder schiessen abwechselnd einen Penalty. Bei erzieltem Tor bekommen
   sie einen Punkt. 1. Durchgang: mit dem linken Fuss 2. Durchgang: mit dem rechten

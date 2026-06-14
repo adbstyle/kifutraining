@@ -8,7 +8,9 @@ feldtyp: null
 hauptteilkategorie: fussball-spielen-lernen
 kategorien:
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 11
+  max: 13
 material: []
 methodischer_fahrplan:
   offen_starten: Ein Kind von Team Rot startet mit dem Ball ins Feld und spielt einen

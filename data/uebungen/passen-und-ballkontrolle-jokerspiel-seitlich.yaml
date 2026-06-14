@@ -9,8 +9,8 @@ hauptteilkategorie: fussball-spielen-lernen
 kategorien:
 - E
 anzahl_kinder:
-  min: 4
-  max: 4
+  min: 8
+  max: 10
 material: []
 methodischer_fahrplan:
   offen_starten: Manual Fussball – Good Practice Die Kinder spielen 2:2 mit je zwei

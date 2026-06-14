@@ -6,7 +6,9 @@ feldtyp: null
 kategorien:
 - G
 - F
-anzahl_kinder: null
+anzahl_kinder:
+  min: 6
+  max: 8
 material: []
 aufbau: Den Kindern stehen vor dem Training mind. sechs Kleintore zur Verfügung. Sobald
   die Kinder ins Training kommen, nehmen sie einen Ball und schiessen auf unterschiedliche

@@ -10,7 +10,9 @@ kategorien:
 - G
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 10
+  max: 12
 material: []
 methodischer_fahrplan:
   offen_starten: Alle Kinder starten gleichzeitig. Sie dribbeln den Ball aus einem

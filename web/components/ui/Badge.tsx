@@ -5,17 +5,17 @@ type Tone = "manual" | "entwurf" | "oeffentlich" | "neutral";
 const tones: Record<Tone, string> = {
   // Manual-Bestand: solide Kreide-Plakette (inverse-surface) — maximal "offiziell"
   manual: "bg-inverse-surface text-inverse-on-surface",
-  // Eigener Entwurf (privat)
-  entwurf: "border-[1.5px] border-outline text-on-surface-variant",
-  // Eigene öffentliche Übung — signal-bright als bewusster heller Akzent
-  oeffentlich: "bg-primary/15 text-signal-bright border-[1.5px] border-primary/40",
+  // Eigener Entwurf (privat): solides Dunkelgrün — deckend & lesbar auch über Bildern
+  entwurf: "bg-surface-container-high text-on-surface border-[1.5px] border-outline-variant",
+  // Eigene öffentliche/Community-Übung: solides Dunkelorange (primary-container) als deckender Akzent
+  oeffentlich: "bg-primary-container text-on-primary-container",
   neutral: "border-[1.5px] border-outline text-on-surface-variant",
 };
 
 const defaultLabel: Record<Tone, string> = {
-  manual: "Offiziell",
+  manual: "Kifu-Manual",
   entwurf: "Entwurf",
-  oeffentlich: "Öffentlich",
+  oeffentlich: "Community",
   neutral: "",
 };
 

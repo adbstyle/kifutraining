@@ -7,7 +7,9 @@ kategorien:
 - G
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 10
+  max: 12
 material: []
 aufbau: Den Kindern steht vor dem Training mind. ein Kleinfeld zur Verfügung. Sobald
   die ersten Kinder auf dem Feld erscheinen, spielen sie frei auf dem vorbereiteten

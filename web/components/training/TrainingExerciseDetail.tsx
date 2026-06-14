@@ -1,9 +1,8 @@
-import Image from "next/image";
 import { BookOpen, Clock } from "lucide-react";
 import {
   KategorieChip,
-  FieldPlaceholder,
   MethodischerFahrplan,
+  UebungsBild,
 } from "@/components/ui";
 import { formatDuration, teilTraegtDauer } from "@/lib/training";
 import {
@@ -76,17 +75,13 @@ export function TrainingExerciseDetail({
           )}
 
           <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[6px] border border-outline-variant">
-            {ex.bild_url ? (
-              <Image
-                src={ex.bild_url}
-                alt={`Feld-Diagramm: ${ex.name}`}
-                fill
-                sizes="(max-width: 768px) 100vw, 768px"
-                className="object-contain"
-              />
-            ) : (
-              <FieldPlaceholder className="h-full w-full" />
-            )}
+            <UebungsBild
+              name={ex.name}
+              bildUrl={ex.bild_url}
+              diagramm={ex.diagramm}
+              bildQuelle={ex.bild_quelle}
+              sizes="(max-width: 768px) 100vw, 768px"
+            />
           </div>
 
           {(ex.hauptteilkategorie || ex.feldtyp || anzahl || ex.material.length > 0) && (

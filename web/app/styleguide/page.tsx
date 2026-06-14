@@ -38,6 +38,9 @@ import {
   User,
   Pencil,
 } from "lucide-react";
+import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
+import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
+import { ROTATIONEN, type DiagrammElement } from "@/lib/diagramm";
 
 export const metadata: Metadata = {
   title: "Styleguide — KiFu Designsystem",
@@ -555,7 +558,7 @@ export default function Styleguide() {
             hideLabel
             options={[
               { value: "all", label: "Alle" },
-              { value: "public", label: "Öffentlich" },
+              { value: "public", label: "Community" },
               { value: "private", label: "Privat" },
             ]}
             supportingText="hideLabel: Label sr-only, Empty-State dient als Beschriftung."
@@ -603,6 +606,181 @@ export default function Styleguide() {
         </p>
         <BreadcrumbsDemo />
       </Section>
+      <Section n="19" title="Feld-Diagramm">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Spielfeld-Diagramme (Epic #47) werden als SVG aus der gespeicherten
+          Struktur und dem zentralen Symbol-Register gerendert —{" "}
+          <code>DiagrammView</code> ist die eine Anzeige-Komponente für Karte,
+          Detailseite, Trainings, Druck und mobil; <code>UebungsBild</code>{" "}
+          schaltet zwischen Diagramm, Foto und Platzhalter. Der interaktive
+          Editor (<code>DiagrammEditor</code>) lebt auf{" "}
+          <code>/uebung/[slug]/diagramm</code> und braucht eine eigene Übung.
+          Symbol-Geometrie ist im Register verankert (Anker = Mittelpunkt),
+          damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.
+        </p>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Spieler und Torwart sind Cartoon-Kinder: das Trikot trägt die
+          Team-Farbe (ein konfigurierbarer Fill), Frisur und Hautton werden pro
+          Element deterministisch variiert. Der Spieler hat eine wählbare{" "}
+          <strong>Pose</strong> (stehen, laufen, dribbeln, passen, schiessen,
+          grätschen),
+          beide Figuren statt Rotation eine <strong>Blickrichtung</strong>{" "}
+          (links/rechts, Spiegeln). Die Posen als <code>GlyphVorschau</code>:
+        </p>
+        <div className="mb-6 flex flex-wrap items-end gap-2">
+          {(
+            [
+              { id: "po-stehen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "stehen", farbe: "rot" },
+              { id: "po-laufen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "laufen", farbe: "rot" },
+              { id: "po-dribbeln", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "dribbeln", farbe: "rot" },
+              { id: "po-passen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "passen", farbe: "rot" },
+              { id: "po-schiessen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "schiessen", farbe: "rot" },
+              { id: "po-graetschen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "graetschen", farbe: "rot" },
+              { id: "po-torwart", art: "symbol", typ: "torwart", x: 0, y: 0 },
+            ] as DiagrammElement[]
+          ).map((el) => (
+            <div
+              key={el.id}
+              className="flex flex-col items-center gap-1 rounded-[6px] border border-outline-variant p-1"
+            >
+              <GlyphVorschau element={el} groesse={56} />
+              <span className="type-label-small text-on-surface-variant">
+                {el.art === "symbol" && el.typ === "torwart"
+                  ? "torwart"
+                  : el.art === "symbol"
+                    ? el.pose
+                    : ""}
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Das <strong>Minitor</strong> ist <em>perspektivisch</em>: statt sich
+          flach zu drehen, zeigt es je Orientierung eine eigene 2.5D-Ansicht im
+          Manual-Look (Front, Dreiviertel, Seite, Rück). Der äussere{" "}
+          <code>rotate()</code> entfällt — das Symbol bekommt den Winkel über{" "}
+          <code>opts.rotation</code> und wählt das passende Sprite (Spiegelung
+          für 225°/270°/315°). Die acht Schritte als <code>GlyphVorschau</code>:
+        </p>
+        <div className="mb-6 flex flex-wrap items-end gap-2">
+          {ROTATIONEN.map((rot) => (
+            <div
+              key={rot}
+              className="flex flex-col items-center gap-1 rounded-[6px] border border-outline-variant p-1"
+            >
+              <GlyphVorschau
+                element={{ id: `mt-${rot}`, art: "symbol", typ: "minitor", x: 0, y: 0, rotation: rot }}
+                groesse={56}
+                rand={0.3}
+              />
+              <span className="type-label-small text-on-surface-variant">{rot}°</span>
+            </div>
+          ))}
+        </div>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Element-Optionen (Drehen, Farbe, Linienstil, Kopieren, Entfernen)
+          erscheinen im Editor als kontextuelle Bedienleiste, die am
+          ausgewählten Element schwebt — ein bewusst neues Muster (#65): Das
+          Kit kennt nur an DOM-Trigger verankerte Overlays (<code>Menu</code>,{" "}
+          <code>Select</code>), aber kein Panel an einer Position innerhalb
+          einer Canvas. Die Leiste liegt als absolutes Overlay über der Fläche
+          (Surface-Container, <code>shadow-e4</code>), nicht im Dokumentfluss —
+          so verschiebt das Ein- und Ausblenden die Fläche nie. Sie weicht
+          oberhalb/unterhalb des Elements aus, tritt während eines Drags zurück
+          und verschwindet beim Abwählen. Textboxen werden per Doppelklick
+          direkt am Element bearbeitet.
+        </p>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Mehrere Elemente werden per <strong>Auswahlrahmen</strong> (Aufziehen
+          auf der freien Fläche, erfasst vollständig umschlossene Elemente) oder
+          additivem <strong>Umschalt-/Cmd-Klick</strong> ausgewählt (#67). Bei
+          mehr als einem Element tritt an die Stelle der Eigenschaften-Leiste
+          eine schlanke <strong>Mehrfach-Leiste</strong> (Anzahl, Kopieren,
+          Löschen), verankert an der gemeinsamen Box; verschoben wird die Gruppe
+          per Drag. Auswahlrahmen, additiver Klick und Lasso sind ebenfalls neue
+          Canvas-Muster ausserhalb des DOM-Trigger-Modells des Kits.
+        </p>
+        <div className="relative aspect-[16/10] max-w-xl overflow-hidden rounded-[6px] border border-outline-variant">
+          <DiagrammView
+            title="Feld-Diagramm: Beispiel"
+            diagramm={{
+              version: 1,
+              elemente: [
+                { id: "z1", art: "form", form: "rechteck", x: 950, y: 250, breite: 420, hoehe: 480, farbe: "blau", gefuellt: true },
+                { id: "t1", art: "symbol", typ: "tor", x: 1380, y: 500, rotation: 270 },
+                { id: "m1", art: "symbol", typ: "minitor", x: 240, y: 200, rotation: 90 },
+                { id: "p1", art: "symbol", typ: "pylone", x: 480, y: 700, farbe: "rot" },
+                { id: "p2", art: "symbol", typ: "pylone", x: 620, y: 760, farbe: "gelb" },
+                { id: "s1", art: "symbol", typ: "spieler", x: 380, y: 420, pose: "dribbeln", farbe: "rot" },
+                { id: "s2", art: "symbol", typ: "spieler", x: 1050, y: 480, pose: "schiessen", spiegeln: true, farbe: "blau" },
+                { id: "tw", art: "symbol", typ: "torwart", x: 1280, y: 500 },
+                { id: "b1", art: "symbol", typ: "fussball", x: 470, y: 460 },
+                { id: "lw", art: "pfad", typ: "laufweg", punkte: [{ x: 380, y: 480 }, { x: 700, y: 620 }, { x: 950, y: 540 }] },
+                { id: "pa", art: "pfad", typ: "pass", punkte: [{ x: 500, y: 450 }, { x: 1000, y: 470 }] },
+                { id: "tx", art: "text", x: 1160, y: 130, text: "Abschlusszone" },
+              ],
+            }}
+          />
+        </div>
+        <p className="type-body-medium mb-4 mt-8 max-w-xl text-on-surface-variant">
+          Die Werkzeug-Palette des Editors zeigt jedes Element als{" "}
+          <code>GlyphVorschau</code> — dieselbe <code>ElementGrafik</code> wie
+          auf dem Feld, in eine Kachel auf Rasen-Grün eingepasst (WYSIWYG; weisse
+          Glyphen brauchen den grünen Grund). Die Kacheln sind gruppenweise
+          aneinandergereiht, der Name kommt nur über Tooltip + <code>aria-label</code>{" "}
+          (kein sichtbarer Text). Wiederverwendbar auch für die Diagramm-Bibliothek.
+        </p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {(
+            [
+              { id: "g-tor", art: "symbol", typ: "tor", x: 0, y: 0 },
+              { id: "g-pylone", art: "symbol", typ: "pylone", x: 0, y: 0, farbe: "rot" },
+              { id: "g-spieler", art: "symbol", typ: "spieler", x: 0, y: 0, farbe: "blau" },
+              { id: "g-fussball", art: "symbol", typ: "fussball", x: 0, y: 0 },
+              { id: "g-laufweg", art: "pfad", typ: "laufweg", punkte: [{ x: 8, y: 88 }, { x: 64, y: 6 }] },
+              { id: "g-dribbling", art: "pfad", typ: "dribbling", punkte: [{ x: 8, y: 88 }, { x: 64, y: 6 }] },
+              { id: "g-pass", art: "pfad", typ: "pass", punkte: [{ x: 8, y: 88 }, { x: 64, y: 6 }] },
+              { id: "g-form", art: "form", form: "rechteck", x: 4, y: 18, breite: 92, hoehe: 60, gefuellt: true },
+              { id: "g-text", art: "text", x: 0, y: 0, text: "T" },
+            ] as DiagrammElement[]
+          ).map((el) => (
+            <div
+              key={el.id}
+              className="flex size-12 items-center justify-center overflow-hidden rounded-[6px] border border-outline-variant"
+            >
+              <GlyphVorschau element={el} groesse={40} />
+            </div>
+          ))}
+        </div>
+        <p className="type-body-medium mb-4 mt-8 max-w-xl text-on-surface-variant">
+          <code>DiagrammVorschau</code> ist der Einstieg in den Editor auf der
+          Bearbeiten-Seite: Die ganze Fläche ist ein Link auf{" "}
+          <code>/uebung/[slug]/diagramm</code>. Existiert ein Diagramm, zeigt sie
+          dessen Vorschau (immer das Diagramm, nie das Foto); sonst einen
+          Empty-State, der zum Zeichnen auffordert. Der sichtbare Button ist reine
+          Optik (kein <code>&lt;button&gt;</code> in <code>&lt;a&gt;</code>) — der
+          Link trägt Klick und <code>aria-label</code>.
+        </p>
+        <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
+          <DiagrammVorschau
+            slug="beispiel"
+            name="Abschlussspiel"
+            diagramm={{
+              version: 1,
+              elemente: [
+                { id: "sv-tor", art: "symbol", typ: "tor", x: 1380, y: 500, rotation: 270 },
+                { id: "sv-py1", art: "symbol", typ: "pylone", x: 480, y: 360, farbe: "rot" },
+                { id: "sv-py2", art: "symbol", typ: "pylone", x: 480, y: 640, farbe: "gelb" },
+                { id: "sv-sp", art: "symbol", typ: "spieler", x: 520, y: 500, pose: "dribbeln", farbe: "blau" },
+                { id: "sv-ba", art: "symbol", typ: "fussball", x: 600, y: 520 },
+                { id: "sv-lw", art: "pfad", typ: "laufweg", punkte: [{ x: 560, y: 520 }, { x: 950, y: 500 }, { x: 1260, y: 500 }] },
+              ],
+            }}
+          />
+          <DiagrammVorschau slug="beispiel" name="Leeres Beispiel" diagramm={null} />
+        </div>
+      </Section>
+
     </main>
   );
 }

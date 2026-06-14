@@ -1,17 +1,21 @@
-import Image from "next/image";
-import { FieldPlaceholder } from "@/components/ui";
+import { UebungsBild } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
 /* Kompaktes Feld-Diagramm-Thumbnail für Übungszeilen in Trainings-Ansichten
    (Editor + read-only): Trainer erkennen die Übung schneller am Bild. Zeigt das
-   Diagramm oder die Kreide-Platzhalterskizze, im 16:10-Format wie die
-   Übungs-Cards. Rein präsentational; Standardbreite per `className` übersteuerbar. */
+   aktive Bild (gezeichnetes Diagramm oder Foto) oder die Kreide-Platzhalter-
+   skizze, im 16:10-Format wie die Übungs-Cards. Rein präsentational;
+   Standardbreite per `className` übersteuerbar. */
 export function ExerciseThumb({
   bildUrl,
+  diagramm,
+  bildQuelle,
   name,
   className,
 }: {
   bildUrl: string | null | undefined;
+  diagramm?: unknown;
+  bildQuelle?: "foto" | "diagramm" | null;
   name: string;
   className?: string;
 }) {
@@ -22,17 +26,13 @@ export function ExerciseThumb({
         className,
       )}
     >
-      {bildUrl ? (
-        <Image
-          src={bildUrl}
-          alt={`Feld-Diagramm: ${name}`}
-          fill
-          sizes="144px"
-          className="object-contain"
-        />
-      ) : (
-        <FieldPlaceholder className="h-full w-full" />
-      )}
+      <UebungsBild
+        name={name}
+        bildUrl={bildUrl}
+        diagramm={diagramm}
+        bildQuelle={bildQuelle}
+        sizes="144px"
+      />
     </span>
   );
 }

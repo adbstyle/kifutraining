@@ -9,7 +9,9 @@ hauptteilkategorie: fussball-spielen-lernen
 kategorien:
 - G
 - F
-anzahl_kinder: null
+anzahl_kinder:
+  min: 2
+  max: 4
 material: []
 methodischer_fahrplan:
   offen_starten: Ein Kind versucht, flach durch das Hütchentor ein anderes anzuspielen.

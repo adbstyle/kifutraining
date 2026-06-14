@@ -9,8 +9,8 @@ hauptteilkategorie: fussball-spielen-lernen
 kategorien:
 - E
 anzahl_kinder:
-  min: 4
-  max: 4
+  min: 8
+  max: 10
 material: []
 methodischer_fahrplan:
   offen_starten: Die Kinder versuchen im 2:2, mithilfe der Kinder ausserhalb des Feldes

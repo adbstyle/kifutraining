@@ -32,6 +32,8 @@ export type TrainingExerciseExercise = {
   methodischer_fahrplan: Fahrplan | null;
   aufbau: string | null;
   bild_url: string | null;
+  diagramm: unknown;
+  bild_quelle: "foto" | "diagramm" | null;
   owner_id: string | null;
 };
 
@@ -69,7 +71,7 @@ const PE_SELECT = `
   exercises (
     id, slug, name, trainingsteil, kategorien, visibility, source,
     feldtyp, hauptteilkategorie, erscheinungsform, anzahl_kinder, material,
-    methodischer_fahrplan, aufbau, bild_url, owner_id
+    methodischer_fahrplan, aufbau, bild_url, diagramm, bild_quelle, owner_id
   )
 `;
 

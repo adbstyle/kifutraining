@@ -8,7 +8,9 @@ hauptteilkategorie: vielseitigkeit-erleben
 kategorien:
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 10
+  max: 12
 material: []
 methodischer_fahrplan:
   offen_starten: «Jäger» und «Hase» stehen einander gegenüber. Auf ein Signal hin

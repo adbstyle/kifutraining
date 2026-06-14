@@ -6,7 +6,9 @@ feldtyp: null
 kategorien:
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 10
+  max: 12
 material: []
 methodischer_fahrplan:
   offen_starten: Ein Team dribbelt aussen in einem Parcours, während sich das andere

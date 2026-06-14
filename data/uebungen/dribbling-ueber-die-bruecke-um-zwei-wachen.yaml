@@ -10,7 +10,9 @@ kategorien:
 - G
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 6
+  max: 8
 material: []
 methodischer_fahrplan:
   offen_starten: Manual Fussball – Good Practice Die Kinder dribbeln an den beiden

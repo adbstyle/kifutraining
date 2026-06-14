@@ -7,7 +7,9 @@ kategorien:
 - G
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 12
+  max: 14
 material: []
 aufbau: Zwei Kinder bilden ein Paar. Sie haben vier Markierkegel und einen Ball. Ein
   Kind stellt sich mit dem Ball fünf Meter vor die Pylonen, das andere steht vis-à-vis.

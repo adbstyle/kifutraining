@@ -3,6 +3,7 @@ export { ButtonGroup } from "./ButtonGroup";
 export { Badge, HerkunftBadge } from "./Badge";
 export { KategorieChip, FilterChip, AssistChip, SuggestionChip, InputChip } from "./Chip";
 export { Card } from "./Card";
+export { UebungsBild } from "./UebungsBild";
 export { FieldPlaceholder } from "./FieldPlaceholder";
 export { ExerciseCard } from "./ExerciseCard";
 export type { ExerciseCardData } from "./ExerciseCard";

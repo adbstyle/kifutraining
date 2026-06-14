@@ -5,6 +5,7 @@ import {
   type KategorieSlug,
 } from "@/lib/vocab";
 import { likePattern } from "@/lib/search";
+import { hatDiagramm } from "@/lib/diagramm";
 import type { ExerciseCardData } from "@/components/ui";
 
 /**
@@ -27,7 +28,7 @@ export type ExerciseFilters = {
 
 // Felder, die Liste + Karte brauchen.
 const LIST_COLUMNS =
-  "id, slug, name, trainingsteil, feldtyp, hauptteilkategorie, kategorien, source, visibility, bild_url";
+  "id, slug, name, trainingsteil, feldtyp, hauptteilkategorie, kategorien, source, visibility, bild_url, diagramm, bild_quelle";
 
 export type ExerciseListRow = {
   id: string;
@@ -40,6 +41,8 @@ export type ExerciseListRow = {
   source: "manual" | "user";
   visibility: "public" | "private";
   bild_url: string | null;
+  diagramm: unknown;
+  bild_quelle: "foto" | "diagramm" | null;
   /** Hat der aktuelle USER diese Übung favorisiert? (false wenn anonym) */
   is_favorited: boolean;
 };
@@ -136,6 +139,8 @@ export type ExerciseDetail = {
   aufbau: string | null;
   varianten: string[];
   bild_url: string | null;
+  diagramm: unknown;
+  bild_quelle: "foto" | "diagramm" | null;
   source: "manual" | "user";
   visibility: "public" | "private";
   owner_id: string | null;
@@ -150,12 +155,47 @@ export async function getExerciseDetail(
   const { data, error } = await supabase
     .from("exercises")
     .select(
-      "id, slug, name, trainingsteil, erscheinungsform, hauptteilkategorie, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, source, visibility, owner_id",
+      "id, slug, name, trainingsteil, erscheinungsform, hauptteilkategorie, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id",
     )
     .eq("slug", slug)
     .maybeSingle();
   if (error) throw error;
   return (data as ExerciseDetail | null) ?? null;
+}
+
+/** Ein wiederverwendbares Vorlagen-Diagramm (Epic #58, Story #61). */
+export type VorlageItem = {
+  id: string;
+  slug: string;
+  name: string;
+  diagramm: unknown;
+};
+
+/** Verfügbare Vorlagen-Diagramme: die eigenen Diagramme des USERs plus die
+ *  KiFu-Manual-Diagramme. Fremde Trainer-Diagramme sind bewusst ausgeschlossen
+ *  (Epic #58 Out-of-Scope 1) — der `or`-Filter grenzt auf Manual ODER eigene
+ *  ein, RLS deckt die Lesbarkeit ab. Die Zielübung selbst wird ausgeklammert.
+ *  Nur Übungen mit einem nicht-leeren Diagramm erscheinen. */
+export async function getVorlagen(excludeId?: string): Promise<VorlageItem[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let query = supabase
+    .from("exercises")
+    .select("id, slug, name, diagramm")
+    .not("diagramm", "is", null)
+    .order("name");
+  query = user
+    ? query.or(`source.eq.manual,owner_id.eq.${user.id}`)
+    : query.eq("source", "manual");
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? [])
+    .filter((r) => r.id !== excludeId && hatDiagramm(r.diagramm))
+    .map((r) => ({ id: r.id, slug: r.slug, name: r.name, diagramm: r.diagramm }));
 }
 
 /** Hat der angemeldete USER diese Übung favorisiert? (Detailseite) */
@@ -192,5 +232,7 @@ export function toCardData(row: ExerciseListRow): ExerciseCardData {
     herkunft: row.source,
     visibility: row.visibility,
     bildUrl: row.bild_url,
+    diagramm: row.diagramm,
+    bildQuelle: row.bild_quelle,
   };
 }

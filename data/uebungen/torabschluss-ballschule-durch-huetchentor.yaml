@@ -9,7 +9,9 @@ hauptteilkategorie: fussball-spielen-lernen
 kategorien:
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 9
+  max: 11
 material: []
 methodischer_fahrplan:
   offen_starten: 'Die Kinder legen sich den Ball dribbelnd durch das Hütchentor vor

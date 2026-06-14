@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve, basename } from "node:path";
 import yaml from "js-yaml";
 import { createClient } from "@supabase/supabase-js";
+import { parseDiagramm, type DiagrammData } from "../lib/diagramm";
 
 // .env.local laden, falls vorhanden (Prod übergibt Env inline).
 try {
@@ -21,6 +22,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
 const UEBUNGEN_DIR = resolve(REPO_ROOT, "data/uebungen");
 const IMAGES_DIR = resolve(REPO_ROOT, "images");
+// Gezeichnete KiFu-Manual-Diagramme als Vorlagen-Fundus (Epic #58, Story #60):
+// data/diagramme/<slug>.json hält die DiagrammData einer Manual-Übung.
+const DIAGRAMME_DIR = resolve(REPO_ROOT, "data/diagramme");
 
 const URL = process.env.SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -69,12 +73,35 @@ async function uploadImage(relPath: string): Promise<string | null> {
   return supabase.storage.from(BUCKET).getPublicUrl(storagePath).data.publicUrl;
 }
 
+/** Gezeichnetes Diagramm einer Manual-Übung laden (data/diagramme/<slug>.json).
+ *  parseDiagramm ist die Trust-Boundary — strukturell Kaputtes wird verworfen,
+ *  damit nie ein ungültiges Diagramm in die DB gelangt. null, wenn keine Datei
+ *  existiert oder die Datei kein anzeigbares Diagramm enthält. */
+function loadDiagramm(slug: string): DiagrammData | null {
+  const path = resolve(DIAGRAMME_DIR, `${slug}.json`);
+  if (!existsSync(path)) return null;
+  const diagramm = parseDiagramm(JSON.parse(readFileSync(path, "utf8")));
+  if (!diagramm || diagramm.elemente.length === 0) {
+    console.warn(`  Diagramm ungültig oder leer, übersprungen: data/diagramme/${slug}.json`);
+    return null;
+  }
+  return diagramm;
+}
+
 async function seedExercises() {
   const raw = loadYamlDir(UEBUNGEN_DIR);
   let count = 0;
+  let mitDiagramm = 0;
   for (const u of raw) {
     const bildRel = (u.bild as string | null) ?? null;
     const bildUrl = bildRel ? await uploadImage(bildRel) : null;
+
+    // Diagramm-Vorlage (Epic #58): gesetzt -> aktives Anzeige-Bild, das Foto
+    // (bild_url) bleibt als Umschalt-Option erhalten (#56). Beide Felder werden
+    // immer geschrieben, damit der Seed idempotent bleibt: eine entfernte
+    // Diagramm-Datei setzt diagramm/bild_quelle wieder zurück.
+    const diagramm = loadDiagramm(u.id as string);
+    if (diagramm) mitDiagramm++;
 
     const row: Record<string, unknown> = {
       slug: u.id,
@@ -91,6 +118,8 @@ async function seedExercises() {
       methodischer_fahrplan: u.methodischer_fahrplan ?? null,
       aufbau: u.aufbau ?? null,
       varianten: u.varianten ?? [],
+      diagramm,
+      bild_quelle: diagramm ? "diagramm" : null,
       source: "manual",
       owner_id: null,
       visibility: "public",
@@ -107,7 +136,7 @@ async function seedExercises() {
     if (error) throw error;
     count++;
   }
-  console.log(`Übungen geseedet: ${count}`);
+  console.log(`Übungen geseedet: ${count} (davon mit Diagramm-Vorlage: ${mitDiagramm})`);
 }
 
 async function main() {

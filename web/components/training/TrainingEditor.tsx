@@ -163,7 +163,7 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
               tone={training.visibility === "public" ? "oeffentlich" : "entwurf"}
               className="mt-2"
             >
-              {training.visibility === "public" ? "Öffentlich" : "✎ Privat"}
+              {training.visibility === "public" ? "Community" : "✎ Privat"}
             </Badge>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
@@ -571,6 +571,8 @@ function TrainingExerciseRow({
 
       <ExerciseThumb
         bildUrl={item.exercise?.bild_url}
+        diagramm={item.exercise?.diagramm}
+        bildQuelle={item.exercise?.bild_quelle}
         name={item.name}
         className="hidden sm:block"
       />

@@ -1,11 +1,14 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
+import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
+import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
+import { VorlageUebernehmenButton } from "@/components/diagramm/VorlageUebernehmenButton";
 import { updateExercise } from "@/lib/actions/exercises";
-import { getExerciseDetail } from "@/lib/queries/exercises";
+import { getExerciseDetail, getVorlagen } from "@/lib/queries/exercises";
 import { createClient } from "@/lib/supabase/server";
+import { hatDiagramm } from "@/lib/diagramm";
+import { trainingsteil as teilLabels } from "@/lib/vocab";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Übung bearbeiten — KiFu", robots: { index: false } };
@@ -28,18 +31,42 @@ export default async function EditPage({
     redirect(`/uebung/${slug}`);
   }
 
+  // Brotkrumen wie in der Detailseite/im Diagramm-Editor, eine Stufe tiefer:
+  // die Übung wird zum Link, „Übung bearbeiten" ist die aktuelle Seite und
+  // ersetzt den separaten Seitentitel.
+  const teilLabel =
+    teilLabels[ex.trainingsteil as keyof typeof teilLabels] ?? ex.trainingsteil;
+  const crumbs: BreadcrumbItem[] = [
+    { label: "Übungspool", href: "/" },
+    { label: teilLabel, href: `/?teil=${ex.trainingsteil}` },
+    { label: ex.name, href: `/uebung/${slug}` },
+    { label: "Übung bearbeiten" },
+  ];
+
+  // Vorlagen-Fundus für „Aus Vorlage übernehmen" (eigene + KiFu-Manual),
+  // die Übung selbst ausgeklammert.
+  const vorlagen = await getVorlagen(ex.id);
+
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
-      <Link
-        href={`/uebung/${slug}`}
-        className="focus-ring type-label-medium mb-4 inline-flex items-center gap-1.5 rounded-[3px] text-on-surface-variant transition-colors hover:text-on-surface"
-      >
-        <ArrowLeft size={16} strokeWidth={2} aria-hidden />
-        Zurück zur Übung
-      </Link>
-      <h1 className="type-headline-large mb-8 text-on-surface">Übung bearbeiten</h1>
+      <Breadcrumbs items={crumbs} className="mb-6" />
       <ExerciseForm
         action={updateExercise.bind(null, ex.id)}
+        afterName={
+          <div className="flex flex-col gap-2">
+            <DiagrammVorschau slug={slug} name={ex.name} diagramm={ex.diagramm} />
+            {vorlagen.length > 0 && (
+              <div className="flex justify-end">
+                <VorlageUebernehmenButton
+                  zielId={ex.id}
+                  slug={slug}
+                  zielHatDiagramm={hatDiagramm(ex.diagramm)}
+                  vorlagen={vorlagen}
+                />
+              </div>
+            )}
+          </div>
+        }
         initial={{
           name: ex.name,
           trainingsteil: ex.trainingsteil,

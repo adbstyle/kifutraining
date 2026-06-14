@@ -12,7 +12,7 @@ import { kategorienSlugs } from "@/lib/vocab";
 const stufenOptions = kategorienSlugs.map((k) => ({ value: k, label: kategorieStufe[k] }));
 const visOptions = [
   { value: "all", label: "Alle" },
-  { value: "public", label: "Öffentlich" },
+  { value: "public", label: "Community" },
   { value: "private", label: "Privat" },
 ];
 

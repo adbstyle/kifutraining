@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Search, X } from "lucide-react";
+import { Check, CheckCheck, ChevronDown, RotateCcw, Search, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { IconButton } from "./IconButton";
 import type { SelectOption } from "./Select";
 
 export interface MultiSelectProps {
@@ -481,22 +482,28 @@ export function MultiSelect({
             </ul>
 
             {actions && (
-              <div className="flex shrink-0 items-center justify-between border-t border-outline-variant px-2 py-2">
-                <button
-                  type="button"
+              // Icon-only-Footer: spart Platz in schmalen Panels (kein Umbruch
+              // langer Labels). `label` liefert den a11y-Namen (aria-label),
+              // `title` den Hover-Hinweis — bewusst kein <Tooltip>, da das Panel
+              // (overflow-hidden) den CSS-Tooltip ohne Portal abschneiden würde.
+              // „Alle auswählen" bleibt primary getönt (CTA).
+              <div className="flex shrink-0 items-center justify-between border-t border-outline-variant px-2 py-1.5">
+                <IconButton
+                  icon={RotateCcw}
+                  label="Zurücksetzen"
+                  title="Zurücksetzen"
+                  size="sm"
                   onClick={reset}
                   disabled={current.length === 0}
-                  className="focus-ring type-label-medium rounded-(--button-shape) px-3 py-1.5 text-on-surface-variant transition-colors hover:bg-on-surface/8 disabled:pointer-events-none disabled:opacity-40"
-                >
-                  Zurücksetzen
-                </button>
-                <button
-                  type="button"
+                />
+                <IconButton
+                  icon={CheckCheck}
+                  label="Alle auswählen"
+                  title="Alle auswählen"
+                  size="sm"
                   onClick={selectAllVisible}
-                  className="focus-ring type-label-medium rounded-(--button-shape) px-3 py-1.5 text-(--button-text-label) transition-colors hover:bg-primary/8"
-                >
-                  Alle auswählen
-                </button>
+                  iconProps={{ className: "text-primary" }}
+                />
               </div>
             )}
           </div>

@@ -7,7 +7,9 @@ kategorien:
 - G
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 11
+  max: 13
 material: []
 methodischer_fahrplan:
   offen_starten: Rufst du «Ahoi, Piraten!», dribbeln die Kinder auf die Schatzinsel
