@@ -9,8 +9,8 @@ hauptteilkategorie: fussball-spielen-lernen
 kategorien:
 - E
 anzahl_kinder:
-  min: 6
-  max: 6
+  min: 10
+  max: 12
 material: []
 methodischer_fahrplan:
   offen_starten: Die Kinder spielen 3:3 mit zwei Jokern im Feld und zwei Jokern ausserhalb

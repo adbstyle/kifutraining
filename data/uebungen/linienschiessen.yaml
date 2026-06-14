@@ -7,7 +7,9 @@ kategorien:
 - G
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 10
+  max: 12
 material: []
 aufbau: Die Kinder versuchen, aus einer bestimmten Distanz den Ball in der Luft ins
   Tor zu schiessen. Gelingt dies, wiederholen sie die Aufgabe von der nächsten, weiter

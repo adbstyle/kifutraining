@@ -10,8 +10,8 @@ kategorien:
 - F
 - E
 anzahl_kinder:
-  min: 2
-  max: 2
+  min: 11
+  max: 13
 material: []
 methodischer_fahrplan:
   offen_starten: Ein Kind aus Team Rot passt zu einem Kind aus Team Weiss. Danach

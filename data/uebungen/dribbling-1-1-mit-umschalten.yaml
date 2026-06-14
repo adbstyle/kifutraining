@@ -9,8 +9,8 @@ hauptteilkategorie: fussball-spielen-lernen
 kategorien:
 - E
 anzahl_kinder:
-  min: 2
-  max: 2
+  min: 7
+  max: 9
 material: []
 methodischer_fahrplan:
   offen_starten: Ein Kind dribbelt in Richtung Schusszone und versucht im 1:1 ein

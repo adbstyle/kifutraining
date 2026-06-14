@@ -9,8 +9,8 @@ hauptteilkategorie: fussball-spielen-lernen
 kategorien:
 - E
 anzahl_kinder:
-  min: 2
-  max: 2
+  min: 13
+  max: 15
 material: []
 methodischer_fahrplan:
   offen_starten: Ein/e Angreifer/in (mit Ball) und ein/e Verteidiger/in (ohne Ball)

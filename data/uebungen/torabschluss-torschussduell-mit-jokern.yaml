@@ -8,7 +8,9 @@ feldtyp: grossfeld
 hauptteilkategorie: fussball-spielen-lernen
 kategorien:
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 6
+  max: 8
 material: []
 methodischer_fahrplan:
   offen_starten: Zwei Kinder versuchen, mithilfe von Jokern in Überzahl ein Tor zu

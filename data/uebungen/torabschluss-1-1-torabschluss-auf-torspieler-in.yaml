@@ -10,7 +10,9 @@ kategorien:
 - G
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 9
+  max: 11
 material: []
 methodischer_fahrplan:
   offen_starten: 'Ein Kind dribbelt auf den/die Torspieler/in zu und versucht, ein

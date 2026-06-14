@@ -9,7 +9,9 @@ kategorien:
 - G
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 11
+  max: 13
 material: []
 methodischer_fahrplan:
   offen_starten: In einem markierten Feld liegen farbige Reifen. Die Kinder bewegen

@@ -10,7 +10,9 @@ kategorien:
 - G
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 7
+  max: 9
 material: []
 methodischer_fahrplan:
   offen_starten: 'Dribbelnd führen die Kinder verschiedene Finten vor den Hütchen

@@ -7,7 +7,9 @@ kategorien:
 - G
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 11
+  max: 13
 material: []
 methodischer_fahrplan:
   offen_starten: 'Alle Kinder dribbeln im Feld mit je einem farbigen Überzieher in

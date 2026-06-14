@@ -6,7 +6,9 @@ feldtyp: null
 kategorien:
 - F
 - E
-anzahl_kinder: null
+anzahl_kinder:
+  min: 12
+  max: 14
 material: []
 methodischer_fahrplan:
   offen_starten: 'Bilde drei Teams und ordne je ein Team einem markierten Dreieck
