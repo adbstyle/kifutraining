@@ -558,7 +558,7 @@ export default function Styleguide() {
             hideLabel
             options={[
               { value: "all", label: "Alle" },
-              { value: "public", label: "Öffentlich" },
+              { value: "public", label: "Community" },
               { value: "private", label: "Privat" },
             ]}
             supportingText="hideLabel: Label sr-only, Empty-State dient als Beschriftung."

@@ -32,7 +32,7 @@ export function TrainingCard({
           ))}
           {showVisibility && (
             <Badge tone={training.visibility === "public" ? "oeffentlich" : "entwurf"}>
-              {training.visibility === "public" ? "Öffentlich" : "✎ Privat"}
+              {training.visibility === "public" ? "Community" : "✎ Privat"}
             </Badge>
           )}
         </div>
