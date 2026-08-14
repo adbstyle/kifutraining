@@ -18,7 +18,8 @@
     "db:status": "npx supabase status --workdir ..",
     "db:reset": "npx supabase db reset --workdir ..",
     "db:push": "npx supabase db push --workdir ..",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "sync:storage": "tsx scripts/sync-storage-staging.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
