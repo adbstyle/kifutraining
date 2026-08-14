@@ -8,6 +8,8 @@ on:
     branches: [develop]
     paths:
       - "supabase/migrations/**"
+  # Manuell auslösbar, z. B. um ein frisches Staging-Projekt initial zu befüllen.
+  workflow_dispatch:
 
 jobs:
   db-push:
