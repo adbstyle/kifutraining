@@ -293,8 +293,10 @@ supabase gen types typescript --local > web/lib/database.types.ts
 
 ## 13. Verbleibende Entscheide
 
-1. **Preview-Umgebung jetzt oder später?** MVP-Empfehlung: später. Vorerst nur Local + Prod.
-   Wenn Previews gewünscht: Supabase Branching (Pro) oder ein separates `staging`-Supabase-Projekt.
+1. ~~**Preview-Umgebung jetzt oder später?**~~ **Entschieden (2026-08-14):** separates
+   `staging`-Supabase-Projekt (Free) + `develop`-Branch → Vercel Preview mit fester Domain
+   staging.ki-fu.ch. Migrationen via `deploy-staging.yml`, Daten via manuellem Prod-Spiegel
+   `sync-staging.yml`. Siehe CLAUDE.md, Abschnitt „CI / Deploy".
 2. **Seed aus CI gegen Prod automatisieren** oder bewusst manuell halten? Empfehlung: manuell
    (`workflow_dispatch`), da Manual-Daten selten ändern und ein versehentliches Überschreiben
    so ausgeschlossen ist.

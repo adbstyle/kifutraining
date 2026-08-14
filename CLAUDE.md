@@ -45,8 +45,11 @@ Die `supabase`-CLI läuft aus `web/` heraus mit `--workdir ..` — die `supabase
 
 ## CI / Deploy
 
-- **Vercel** deployt die App automatisch bei Push auf `main` (Git-Integration).
-- `.github/workflows/deploy.yml` macht **nur** `supabase db push` (Migrationen → Prod), und nur wenn `supabase/migrations/**` sich ändert.
+- **Branching-Modell:** Feature-Branch → PR auf `develop` (= Staging) → PR `develop` → `main` (= Prod). Deploys laufen ausschliesslich über CI, nie manuell.
+- **Vercel** deployt die App automatisch per Git-Integration: `main` → Production (ki-fu.ch), `develop` → Preview mit fester Domain **staging.ki-fu.ch** (hinter Vercel Deployment Protection, Login nötig). Vercel-Env: Production-Scope = Prod-Supabase, Preview-Scope = Staging-Supabase (Feature-Branch-Previews können Prod nie anfassen); `APP_ORIGIN` ist im Preview-Scope branch-gescoped auf `develop`.
+- **Staging-Supabase** ist ein separates Free-Projekt (Secrets `SUPABASE_STAGING_*`). Free-Projekte pausieren nach ~7 Tagen Inaktivität → vor dem Testen ggf. im Dashboard wecken. Auth-Konfig (Site URL, Redirect-Allowlist, E-Mail-Templates) wird von `db push` **nicht** übertragen — Änderungen daran in beiden Dashboards nachziehen.
+- `.github/workflows/deploy.yml` macht **nur** `supabase db push` (Migrationen → Prod) bei Push auf `main`; `deploy-staging.yml` ist das Pendant für `develop` → Staging (jeweils nur wenn `supabase/migrations/**` sich ändert).
+- `sync-staging.yml` ist **manuell** (`workflow_dispatch`, Bestätigung `sync`): spiegelt Prod-Daten 1:1 nach Staging (inkl. `auth.users`; `bild_url`-Hosts werden umgeschrieben, Storage-Dateien via `npm run sync:storage` kopiert). Überschreibt alle Staging-Daten.
 - `seed-prod.yml` ist **manuell** (`workflow_dispatch`) — Manual-Daten werden nicht bei jedem Deploy geseedet.
 - `pr-checks.yml`: `gen:vocab` + `typecheck`; Migrationen gegen eine Wegwerf-DB (`supabase start`); zusätzlich `npm run seed` gegen diese DB — prüft den Seed-Runtime (sonst bricht `seed-prod` erst im Ernstfall) **und** dass alle YAML-Daten sämtliche Constraints erfüllen.
 

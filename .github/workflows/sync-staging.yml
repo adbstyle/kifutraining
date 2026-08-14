@@ -1,0 +1,109 @@
+name: Sync Staging (Prod-Spiegel, manuell)
+
+# Manueller Prod->Staging-Datenspiegel: überschreibt ALLE Staging-Daten mit dem
+# aktuellen Prod-Stand (inkl. auth.users, 1:1) und kopiert die Storage-Dateien.
+#
+# Bewusst NICHT kopiert:
+# - auth.schema_migrations (GoTrue-Versionsstand des jeweiligen Projekts)
+# - auth.sessions/refresh_tokens/one_time_tokens/flow_state (anderes JWT-Secret,
+#   wären ungültig; TRUNCATE ... CASCADE räumt sie auf Staging mit ab)
+# - storage.* (Objekt-Metadaten entstehen über die Storage-API beim Kopieren
+#   der Dateien, siehe web/scripts/sync-storage-staging.ts)
+#
+# Voraussetzung: Staging-Schema ist per deploy-staging.yml aktuell (develop >= main).
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Zum Bestätigen "sync" eintippen (überschreibt ALLE Staging-Daten)'
+        required: true
+
+jobs:
+  sync:
+    name: Prod-Daten -> Staging spiegeln
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bestätigung prüfen
+        if: ${{ inputs.confirm != 'sync' }}
+        run: |
+          echo 'Abgebrochen: Input "confirm" muss exakt "sync" sein.'
+          exit 1
+
+      - uses: actions/checkout@v6
+
+      # ubuntu-latest liefert Client v16; Prod/Staging laufen auf Postgres 17.
+      - name: postgresql-client-17 installieren (PGDG)
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+
+      # Nur lesen: expliziter Tabellensatz, keine GoTrue-/Storage-Internas.
+      - name: Daten aus Prod dumpen
+        env:
+          SUPABASE_PROD_DB_URL: ${{ secrets.SUPABASE_PROD_DB_URL }}
+        run: |
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_PROD_DB_URL" \
+            --data-only --no-owner --no-privileges \
+            --table=auth.users \
+            --table=auth.identities \
+            --table=public.exercises \
+            --table=public.trainings \
+            --table=public.training_exercises \
+            --table=public.exercise_favorites \
+            -f dump.sql
+          echo "Dump: $(wc -c < dump.sql) Bytes"
+
+      # Eine Transaktion: bei Fehler bleibt Staging leer statt halbvoll.
+      # session_replication_role=replica deaktiviert FK-/User-Trigger,
+      # CHECK-Constraints gelten weiter (gewollt: früher Hinweis, falls eine
+      # develop-Migration nicht backfill-sicher wäre).
+      # Kein RESTART IDENTITY: postgres ist nicht Owner der GoTrue-Sequenzen
+      # (Kaskade auf auth.refresh_tokens), und die PKs sind ohnehin UUIDs.
+      - name: Staging leeren, Restore, bild_url auf Staging-Host umschreiben
+        env:
+          SUPABASE_STAGING_DB_URL: ${{ secrets.SUPABASE_STAGING_DB_URL }}
+          SUPABASE_PROD_REF: ${{ secrets.SUPABASE_PROD_REF }}
+          SUPABASE_STAGING_REF: ${{ secrets.SUPABASE_STAGING_REF }}
+        run: |
+          {
+            echo "begin;"
+            echo "set local session_replication_role = replica;"
+            echo "truncate auth.users,"
+            echo "         public.exercises, public.trainings,"
+            echo "         public.training_exercises, public.exercise_favorites"
+            echo "cascade;"
+            cat dump.sql
+            echo "update public.exercises"
+            echo "set bild_url = replace(bild_url,"
+            echo "      'https://' || :'prod_ref'    || '.supabase.co',"
+            echo "      'https://' || :'staging_ref' || '.supabase.co')"
+            echo "where bild_url like 'https://' || :'prod_ref' || '.supabase.co/%';"
+            echo "commit;"
+          } | psql "$SUPABASE_STAGING_DB_URL" \
+                -v ON_ERROR_STOP=1 \
+                -v prod_ref="$SUPABASE_PROD_REF" \
+                -v staging_ref="$SUPABASE_STAGING_REF" \
+                --quiet
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+        working-directory: web
+
+      - name: Storage-Dateien Prod -> Staging kopieren
+        working-directory: web
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_STAGING_URL: ${{ secrets.SUPABASE_STAGING_URL }}
+          SUPABASE_STAGING_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_STAGING_SERVICE_ROLE_KEY }}
+        run: npm run sync:storage

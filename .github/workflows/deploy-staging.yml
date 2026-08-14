@@ -1,0 +1,32 @@
+name: Deploy Staging (Migrationen -> Staging)
+
+# Vercel deployt die Next.js-App automatisch über die Git-Integration bei Push
+# auf develop (Preview-Environment, feste Domain staging.ki-fu.ch).
+# Dieser Workflow kümmert sich NUR um die Datenbank-Migrationen nach Staging.
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "supabase/migrations/**"
+
+jobs:
+  db-push:
+    name: supabase db push (Staging)
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: supabase/setup-cli@v2
+        with:
+          version: latest
+      - name: Mit Staging-Projekt verknüpfen
+        run: supabase link --project-ref "$SUPABASE_STAGING_REF"
+        env:
+          SUPABASE_STAGING_REF: ${{ secrets.SUPABASE_STAGING_REF }}
+      - name: Migrationen nach Staging anwenden
+        run: supabase db push
+
+  # Daten kommen NICHT über diesen Workflow: Staging wird per manuellem
+  # Prod-Spiegel befüllt (sync-staging.yml, workflow_dispatch).
