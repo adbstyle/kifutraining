@@ -19,6 +19,14 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}
     steps:
+      # workflow_dispatch defaultet in der GitHub-UI auf den Default-Branch (main);
+      # von dort gepusht fehlten develop-only-Migrationen auf Staging — still.
+      # Deshalb: hart abbrechen, wenn nicht vom develop-Branch ausgelöst.
+      - name: Ref-Guard (nur develop)
+        if: github.ref != 'refs/heads/develop'
+        run: |
+          echo "::error::deploy-staging läuft nur vom develop-Branch (aktuell: $GITHUB_REF). Beim manuellen Auslösen 'Use workflow from: develop' wählen."
+          exit 1
       - uses: actions/checkout@v6
       - uses: supabase/setup-cli@v2
         with:

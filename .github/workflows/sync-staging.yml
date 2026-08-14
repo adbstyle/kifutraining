@@ -1,7 +1,12 @@
 name: Sync Staging (Prod-Spiegel, manuell)
 
-# Manueller Prod->Staging-Datenspiegel: überschreibt ALLE Staging-Daten mit dem
-# aktuellen Prod-Stand (inkl. auth.users, 1:1) und kopiert die Storage-Dateien.
+# Manueller Prod->Staging-Datenspiegel: überschreibt die Staging-DB komplett mit
+# dem aktuellen Prod-Stand (inkl. auth.users, 1:1) und kopiert alle Storage-
+# Dateien (verwaiste Staging-Dateien bleiben liegen — Staging ist disposable).
+#
+# Reihenfolge: erst Storage-Dateien kopieren, dann DB restoren — so zeigen die
+# umgeschriebenen bild_urls nie auf noch fehlende Staging-Objekte. Schlägt ein
+# Schritt fehl, den Workflow einfach erneut ausführen (alle Schritte idempotent).
 #
 # Bewusst NICHT kopiert:
 # - auth.schema_migrations (GoTrue-Versionsstand des jeweiligen Projekts)
@@ -18,6 +23,14 @@ on:
         description: 'Zum Bestätigen "sync" eintippen (überschreibt ALLE Staging-Daten)'
         required: true
 
+env:
+  # Single Source für Dump, TRUNCATE und Vollständigkeits-Guard.
+  # Bytewise sortiert (collate "C", d. h. '_' vor Buchstaben) — muss der
+  # Sortierung im Guard-Query entsprechen. Neue public-Tabelle in einer
+  # Migration? -> hier ergänzen, sonst bricht der Guard den Sync bewusst ab
+  # (statt die Tabelle still leer zu lassen).
+  PUBLIC_TABLES: "exercise_favorites exercises training_exercises trainings"
+
 jobs:
   sync:
     name: Prod-Daten -> Staging spiegeln
@@ -26,8 +39,28 @@ jobs:
       - name: Bestätigung prüfen
         if: ${{ inputs.confirm != 'sync' }}
         run: |
-          echo 'Abgebrochen: Input "confirm" muss exakt "sync" sein.'
+          echo '::error::Abgebrochen: Input "confirm" muss exakt "sync" sein.'
           exit 1
+
+      # Beide Secrets müssen Session-Pooler-URLs sein (Host *.pooler.supabase.com,
+      # Port 5432): die Direktverbindung db.<ref>.supabase.co ist IPv6-only und
+      # von GitHub-Runnern (IPv4) nicht erreichbar; der Transaction-Pooler (6543)
+      # verträgt kein pg_dump. Quelle: Dashboard -> Connect -> "Session pooler".
+      - name: DB-URL-Form prüfen (Session-Pooler, Port 5432)
+        env:
+          SUPABASE_PROD_DB_URL: ${{ secrets.SUPABASE_PROD_DB_URL }}
+          SUPABASE_STAGING_DB_URL: ${{ secrets.SUPABASE_STAGING_DB_URL }}
+        run: |
+          for NAME in SUPABASE_PROD_DB_URL SUPABASE_STAGING_DB_URL; do
+            eval "URL=\$$NAME"
+            case "$URL" in
+              *".pooler.supabase.com:5432/"*) ;;
+              *)
+                echo "::error::$NAME ist keine Session-Pooler-URL (erwartet Host *.pooler.supabase.com, Port 5432)."
+                exit 1
+                ;;
+            esac
+          done
 
       - uses: actions/checkout@v6
 
@@ -43,52 +76,30 @@ jobs:
           sudo apt-get install -y -qq postgresql-client-17
 
       # Nur lesen: expliziter Tabellensatz, keine GoTrue-/Storage-Internas.
+      # Der Guard vergleicht PUBLIC_TABLES mit dem echten Prod-Schema und bricht
+      # laut ab, wenn eine Migration eine Tabelle ergänzt/entfernt hat.
       - name: Daten aus Prod dumpen
         env:
           SUPABASE_PROD_DB_URL: ${{ secrets.SUPABASE_PROD_DB_URL }}
         run: |
+          IST=$(psql "$SUPABASE_PROD_DB_URL" -t -A -c \
+            "select coalesce(string_agg(table_name, ' ' order by table_name collate \"C\"), '') \
+             from information_schema.tables \
+             where table_schema = 'public' and table_type = 'BASE TABLE'")
+          if [ "$IST" != "$PUBLIC_TABLES" ]; then
+            echo "::error::PUBLIC_TABLES (Workflow) und Prod-Schema divergieren. Prod hat: '$IST' — Liste im Workflow nachführen."
+            exit 1
+          fi
+
+          DUMP_FLAGS="--table=auth.users --table=auth.identities"
+          for T in $PUBLIC_TABLES; do
+            DUMP_FLAGS="$DUMP_FLAGS --table=public.$T"
+          done
           /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_PROD_DB_URL" \
             --data-only --no-owner --no-privileges \
-            --table=auth.users \
-            --table=auth.identities \
-            --table=public.exercises \
-            --table=public.trainings \
-            --table=public.training_exercises \
-            --table=public.exercise_favorites \
+            $DUMP_FLAGS \
             -f dump.sql
           echo "Dump: $(wc -c < dump.sql) Bytes"
-
-      # Eine Transaktion: bei Fehler bleibt Staging leer statt halbvoll.
-      # session_replication_role=replica deaktiviert FK-/User-Trigger,
-      # CHECK-Constraints gelten weiter (gewollt: früher Hinweis, falls eine
-      # develop-Migration nicht backfill-sicher wäre).
-      # Kein RESTART IDENTITY: postgres ist nicht Owner der GoTrue-Sequenzen
-      # (Kaskade auf auth.refresh_tokens), und die PKs sind ohnehin UUIDs.
-      - name: Staging leeren, Restore, bild_url auf Staging-Host umschreiben
-        env:
-          SUPABASE_STAGING_DB_URL: ${{ secrets.SUPABASE_STAGING_DB_URL }}
-          SUPABASE_PROD_REF: ${{ secrets.SUPABASE_PROD_REF }}
-          SUPABASE_STAGING_REF: ${{ secrets.SUPABASE_STAGING_REF }}
-        run: |
-          {
-            echo "begin;"
-            echo "set local session_replication_role = replica;"
-            echo "truncate auth.users,"
-            echo "         public.exercises, public.trainings,"
-            echo "         public.training_exercises, public.exercise_favorites"
-            echo "cascade;"
-            cat dump.sql
-            echo "update public.exercises"
-            echo "set bild_url = replace(bild_url,"
-            echo "      'https://' || :'prod_ref'    || '.supabase.co',"
-            echo "      'https://' || :'staging_ref' || '.supabase.co')"
-            echo "where bild_url like 'https://' || :'prod_ref' || '.supabase.co/%';"
-            echo "commit;"
-          } | psql "$SUPABASE_STAGING_DB_URL" \
-                -v ON_ERROR_STOP=1 \
-                -v prod_ref="$SUPABASE_PROD_REF" \
-                -v staging_ref="$SUPABASE_STAGING_REF" \
-                --quiet
 
       - uses: actions/setup-node@v6
         with:
@@ -99,6 +110,8 @@ jobs:
       - run: npm ci
         working-directory: web
 
+      # Vor dem DB-Restore, damit die umgeschriebenen bild_urls beim Commit
+      # bereits auf existierende Staging-Objekte zeigen.
       - name: Storage-Dateien Prod -> Staging kopieren
         working-directory: web
         env:
@@ -107,3 +120,63 @@ jobs:
           SUPABASE_STAGING_URL: ${{ secrets.SUPABASE_STAGING_URL }}
           SUPABASE_STAGING_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_STAGING_SERVICE_ROLE_KEY }}
         run: npm run sync:storage
+
+      # Eine Transaktion: schlägt etwas fehl, rollt alles zurück und Staging
+      # behält den vorherigen Datenstand (weder leer noch halbvoll).
+      # session_replication_role=replica deaktiviert FK-/User-Trigger,
+      # CHECK-Constraints gelten weiter (gewollt: früher Hinweis, falls eine
+      # develop-Migration nicht backfill-sicher wäre).
+      # Kein RESTART IDENTITY: postgres ist nicht Owner der GoTrue-Sequenzen
+      # (Kaskade auf auth.refresh_tokens), und die PKs sind ohnehin UUIDs.
+      # Der DO-Block am Ende stellt sicher, dass nach dem Rewrite jede bild_url
+      # auf den Staging-Host zeigt — schützt gegen leere/falsche Ref-Secrets
+      # (sonst würde der Rewrite still 0 Zeilen treffen und Staging bliebe am
+      # Prod-Storage hängen).
+      - name: Staging-DB leeren, Restore, bild_url auf Staging-Host umschreiben
+        env:
+          SUPABASE_STAGING_DB_URL: ${{ secrets.SUPABASE_STAGING_DB_URL }}
+          SUPABASE_PROD_REF: ${{ secrets.SUPABASE_PROD_REF }}
+          SUPABASE_STAGING_REF: ${{ secrets.SUPABASE_STAGING_REF }}
+        run: |
+          if [ -z "$SUPABASE_PROD_REF" ] || [ -z "$SUPABASE_STAGING_REF" ]; then
+            echo "::error::SUPABASE_PROD_REF/SUPABASE_STAGING_REF müssen gesetzt sein (leer -> Rewrite liefe ins Leere)."
+            exit 1
+          fi
+
+          TRUNCATE_LIST="auth.users"
+          for T in $PUBLIC_TABLES; do
+            TRUNCATE_LIST="$TRUNCATE_LIST, public.$T"
+          done
+
+          {
+            cat <<'SQL'
+          begin;
+          set local session_replication_role = replica;
+          SQL
+            echo "truncate $TRUNCATE_LIST cascade;"
+            cat dump.sql
+            cat <<'SQL'
+          select set_config('sync.staging_ref', :'staging_ref', true);
+          update public.exercises
+          set bild_url = replace(bild_url,
+                'https://' || :'prod_ref'    || '.supabase.co',
+                'https://' || :'staging_ref' || '.supabase.co')
+          where bild_url like 'https://' || :'prod_ref' || '.supabase.co/%';
+          do $$
+          declare falsch integer;
+          begin
+            select count(*) into falsch
+            from public.exercises
+            where bild_url is not null
+              and bild_url not like 'https://' || current_setting('sync.staging_ref') || '.supabase.co/%';
+            if falsch > 0 then
+              raise exception 'bild_url-Rewrite unvollständig: % Zeilen zeigen nicht auf den Staging-Host (Ref-Secrets prüfen)', falsch;
+            end if;
+          end $$;
+          commit;
+          SQL
+          } | psql "$SUPABASE_STAGING_DB_URL" \
+                -v ON_ERROR_STOP=1 \
+                -v prod_ref="$SUPABASE_PROD_REF" \
+                -v staging_ref="$SUPABASE_STAGING_REF" \
+                --quiet
