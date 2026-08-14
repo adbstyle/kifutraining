@@ -22,6 +22,7 @@ import {
 } from "@/lib/vocab";
 import { kategorieStufe, FAHRPLAN_TEILE } from "@/lib/labels";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
+import { compressImage } from "@/lib/image-compress";
 
 export type ExerciseInitial = {
   name?: string;
@@ -105,9 +106,6 @@ export function ExerciseForm({
       setBildError(null);
       setIsCompressing(true);
       try {
-        // Dynamischer Import: hält browser-image-compression aus dem initialen
-        // Route-Bundle — die Lib lädt erst, wenn wirklich ein Bild verarbeitet wird.
-        const { compressImage } = await import("@/lib/image-compress");
         fd.set("bild", await compressImage(bild));
       } catch {
         setBildError(

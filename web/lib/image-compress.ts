@@ -1,10 +1,10 @@
 // Client-seitige Bild-Verkleinerung VOR dem Upload. Läuft ausschliesslich im
 // Browser (Web Worker); "client-only" verhindert versehentlichen Server-Import.
 //
-// Dieses Modul nur dynamisch importieren (`await import("@/lib/image-compress")`),
-// sonst landet browser-image-compression im initialen Route-Bundle.
+// Die schweren Libs (browser-image-compression, heic-to) werden erst in
+// compressImage dynamisch geladen — das Modul selbst ist damit gefahrlos
+// statisch importierbar, ohne das initiale Route-Bundle zu belasten.
 import "client-only";
-import imageCompression from "browser-image-compression";
 import {
   COMPRESS_MAX_DIMENSION,
   COMPRESS_OUTPUT_MIME,
@@ -16,7 +16,7 @@ import {
 /**
  * Verkleinert ein hochgeladenes Bild im Browser auf max. COMPRESS_MAX_DIMENSION px
  * (längste Kante) und kodiert es als WebP. HEIC wird zuvor nach JPEG dekodiert
- * (heic-to, seinerseits lazy geladen — lädt nur bei tatsächlichem HEIC-Upload).
+ * (heic-to lädt nur bei tatsächlichem HEIC-Upload).
  *
  * Gibt die kleinere von komprimierter Fassung und Original zurück: brächte die
  * Verkleinerung nichts (z. B. bereits winziges Diagramm), bleibt das Original
@@ -35,6 +35,7 @@ export async function compressImage(file: File): Promise<File> {
     });
   }
 
+  const { default: imageCompression } = await import("browser-image-compression");
   const compressed = await imageCompression(input, {
     maxWidthOrHeight: COMPRESS_MAX_DIMENSION,
     initialQuality: COMPRESS_QUALITY,
