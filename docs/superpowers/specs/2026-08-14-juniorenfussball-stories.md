@@ -217,7 +217,8 @@ Faktenlage für die Stories 5a und 5b (aus der Übungs-Editor-Analyse dieser Ses
 - Der Übungs-Editor schaltet heute die Pflichtfelder am Trainingsteil um: methodischer Fahrplan bei Einleitung und Hauptteil (bei Trainer-Übungen alle drei Stufen Pflicht), Aufbau-Text bei Auffangen und Ausklang, Erscheinungsform nur bei Einleitung und Hauptteil, Hauptteilkategorie genau bei Hauptteil.
 - Es existiert keine Sicht, in welchen Trainings eine Übung verwendet wird; Trainingsteil-Änderungen laufen heute ohne Warnung. Die daraus folgende Bestands-Inkonsistenz wird ausserhalb dieses Epics behandelt.
 - Das Aufwärmen umfasst fachlich auch Körperstabilität und Prävention (Manual S. 72); solche Drills haben keinen natürlichen Wettkampf-Abschluss.
-- PO-Entscheide 2026-08-16: Der Unterblock folgt zwingend aus der Übung (kein freies Wählen). Leere Unterblöcke Spiel und Explosivität erzeugen einen Hinweis. Aufwärmen-Übungen tragen den Fahrplan, wobei nur die Stufe Offen starten Pflicht ist, und dürfen eine Erscheinungsform tragen; Explosivitäts-Übungen tragen einen Aufbau-Text ohne Erscheinungsform. Jede Heimat-Änderung einer in Trainings verwendeten Übung warnt vor dem Speichern, unabhängig davon, wem das Training gehört.
+- Der Einstieg hat drei Unterblöcke: Aufwärmen, Spielform zum Trainingsziel und Explosivität (PO-Entscheid 2026-08-16, ersetzt die frühere Zweiteilung). Die Spielform zum Trainingsziel ist eine eigenständige Übungsart, die den Trainingsschwerpunkt einführt und den roten Faden zum Hauptteil herstellt.
+- PO-Entscheide 2026-08-16: Der Unterblock folgt zwingend aus der Übung (kein freies Wählen). Leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität erzeugen einen Hinweis. Übungen mit Heimat Aufwärmen oder Spielform zum Trainingsziel tragen den Fahrplan, wobei nur die Stufe Offen starten Pflicht ist, und dürfen eine Erscheinungsform tragen; Explosivitäts-Übungen tragen einen Aufbau-Text ohne Erscheinungsform. Jede Heimat-Änderung einer in Trainings verwendeten Übung warnt vor dem Speichern, unabhängig davon, wem das Training gehört.
 
 ## Story 5a (Business): Einstieg und Hauptteil eines Junioren-Trainings in Unterblöcke gliedern
 
@@ -225,7 +226,7 @@ Status: Final ausgearbeitet und validiert am 2026-08-16.
 
 Als Trainer:in im Juniorenfussball
 möchte ich Einstieg und Hauptteil meines Junioren-Trainings in ihre Unterblöcke gegliedert planen
-damit ich Aufwärmen, Explosivität, Spielformen und freies Spiel gezielt und in der richtigen Balance zusammenstelle
+damit ich Aufwärmen, Zieleinführung, Explosivität, Spielformen und freies Spiel gezielt und in der richtigen Balance zusammenstelle
 
 Preconditions
 
@@ -233,13 +234,13 @@ Preconditions
 
 Acceptance Criteria
 
-1. Der USER sieht den Einstieg in die Unterblöcke Aufwärmen und Explosivität gegliedert
+1. Der USER sieht den Einstieg in die Unterblöcke Aufwärmen, Spielform zum Trainingsziel und Explosivität gegliedert
 2. Der USER sieht den Hauptteil in die Unterblöcke Spielformen und unterstützende Übungen sowie Spiel gegliedert
 3. Der USER erkennt die Unterblock-Struktur auch dann, wenn ein Unterblock keine Übungen enthält
 4. Der USER kann einem Unterblock Übungen zuordnen
 5. Der USER kann die Reihenfolge der Übungen innerhalb eines Unterblocks ändern
 6. Das SYSTEM bietet je Unterblock ausschliesslich Übungen an, deren Einordnung gemäss Abbildungsregel in diesem Unterblock liegt
-7. Der USER wird auf einen leeren Unterblock Spiel und einen leeren Unterblock Explosivität hingewiesen
+7. Der USER wird auf leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität hingewiesen
 8. Das SYSTEM blockiert wegen eines leeren Unterblocks weder das Speichern noch das Veröffentlichen
 
 Postconditions
@@ -255,12 +256,12 @@ Offene Fragen
 
 1. @UX Designer: Woran erkennt der Trainer die Herkunft der Übungen innerhalb eines Unterblocks, wenn dort abgeleitete Kinderfussball-Übungen und Übungen mit Junioren-Heimat zusammenkommen?
 
-## Story 5b (Business): Übungen mit Junioren-Heimat Aufwärmen oder Explosivität erfassen
+## Story 5b (Business): Übungen mit Junioren-Heimat in einem Einstiegs-Unterblock erfassen
 
 Status: Final ausgearbeitet und validiert am 2026-08-16.
 
 Als Trainer:in im Juniorenfussball
-möchte ich eigene Übungen mit der Junioren-Heimat Aufwärmen oder Explosivität erfassen
+möchte ich eigene Übungen erfassen, die in einem Einstiegs-Unterblock des Juniorenschemas zuhause sind
 damit ich die Einstiegs-Unterblöcke meines Junioren-Trainings mit passenden Übungen befüllen kann
 
 Preconditions
@@ -269,12 +270,12 @@ Preconditions
 
 Acceptance Criteria
 
-1. Der USER wählt beim Erfassen einer eigenen Übung als Heimat entweder einen Kinderfussball-Trainingsteil oder einen der zwei Junioren-Unterblöcke Aufwärmen oder Explosivität
+1. Der USER wählt beim Erfassen einer eigenen Übung als Heimat entweder einen Kinderfussball-Trainingsteil oder einen der drei Einstiegs-Unterblöcke Aufwärmen, Spielform zum Trainingsziel oder Explosivität
 2. Das SYSTEM verhindert, dass eine Übung gleichzeitig einen Kinderfussball-Trainingsteil und eine Junioren-Heimat trägt
-3. Der USER erfasst bei einer Übung mit Heimat Aufwärmen mindestens die Fahrplan-Stufe Offen starten
-4. Der USER kann bei einer Übung mit Heimat Aufwärmen die Fahrplan-Stufen Üben und Wetteifern ergänzen
+3. Der USER erfasst bei einer Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel mindestens die Fahrplan-Stufe Offen starten
+4. Der USER kann bei diesen Übungen die Fahrplan-Stufen Üben und Wetteifern ergänzen
 5. Der USER erfasst bei einer Übung mit Heimat Explosivität einen Aufbau-Text
-6. Der USER kann bei einer Übung mit Heimat Aufwärmen eine Erscheinungsform wählen
+6. Der USER kann bei einer Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel eine Erscheinungsform wählen
 7. Das SYSTEM lässt bei einer Übung mit Heimat Explosivität keine Erscheinungsform zu
 8. Der USER kann die Heimat einer bestehenden eigenen Übung ändern und muss dabei die Pflichtangaben der neuen Heimat vervollständigen
 9. Der USER wird bei jeder Heimat-Änderung einer Übung gewarnt, die in mindestens einem Training verwendet wird, unabhängig davon, wem das Training gehört
@@ -282,7 +283,7 @@ Acceptance Criteria
 Postconditions
 
 1. Das SYSTEM ordnet eine Übung mit Junioren-Heimat in Junioren-Trainings dem gewählten Unterblock zu
-2. Das SYSTEM stellt eine Übung mit Heimat Aufwärmen in Kinderfussball-Trainings als Einleitungs-Übung bereit
+2. Das SYSTEM stellt eine Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel in Kinderfussball-Trainings als Einleitungs-Übung bereit
 3. Das SYSTEM bietet eine Übung mit Heimat Explosivität in Kinderfussball-Trainings nicht an
 4. Das SYSTEM übernimmt die Heimat-Änderung einer in Trainings verwendeten Übung erst, WENN der USER die Warnung bestätigt hat
 5. Das SYSTEM entfernt beim gespeicherten Heimat-Wechsel die Angaben, die für die neue Heimat nicht zulässig sind
@@ -296,3 +297,51 @@ Out of Scope
 Offene Fragen
 
 1. @UX Designer: Wie werden die Heimat-Wahl im Übungs-Editor und die Verwendungs-Warnung gestaltet, insbesondere für Trainer, die nur eine der beiden Welten kennen?
+
+---
+
+Faktenlage für Story 6 (aus der Dauer-Analyse dieser Session):
+
+- Dauern werden je Zuordnung in Fünf-Minuten-Schritten erfasst, sind optional und haben keine Obergrenze. Fehlende Dauern zählen nicht zur Summe.
+- Summen zeigt die App bereits auf drei Ebenen: je Unterblock, je Trainingsteil und für das ganze Training. Sie erscheinen im Editor, im Druck, in der mobilen Durchführung und auf den Übersichtskarten; die Durchführungsansicht zeigt als einzige keine Unterblock-Summen.
+- Alle bestehenden Hinweise im Editor sind rein informativ und dauerhaft sichtbar, nie an ein Speichern gebunden. Sie prüfen ausschliesslich Anzahl oder Vorhandensein, nie eine Zeitsumme.
+- Einen Soll-Ist-Vergleich gibt es im gesamten Produkt bisher nicht; es existiert kein Muster, an dem sich eine Bandbreiten-Anzeige orientieren könnte.
+- PO-Entscheide 2026-08-16: Die App gleicht die erfassten Dauern gegen die Bandbreiten ab, statt sie nur als Referenz anzuzeigen. Die Orientierung gilt ausschliesslich im Juniorenschema, weil das Kinderfussball-Manual bewusst keine Zeiten vorgibt.
+- Konsistenz der Ebenen: Die Summe der drei Einstiegs-Unterblöcke (24–30 Minuten) und die Manual-Bandbreite des Trainingsteils Einstieg (20–30 Minuten) gelten je für sich; das System verlangt keine Konsistenz zwischen den Ebenen, weil alle Werte unverbindlich sind. Werte exakt auf einer Bandbreiten-Grenze zählen als innerhalb.
+- Der J+S-Lernbaustein «Der Einstieg» ist als Textauszug unter sources/junioren/ archiviert; er ist die Quelle der Phasen-Namen und -Zeitwerte.
+
+## Story 6 (Business): Zeitbandbreiten und Gesamtdauer als Orientierung anzeigen
+
+Status: Final ausgearbeitet und validiert am 2026-08-16.
+
+Als Trainer:in im Juniorenfussball
+möchte ich beim Planen erkennen, wie meine erfassten Dauern zu den Richtwerten des Trainingsschemas stehen
+damit ich mein Training auf die vorgesehenen 90 Minuten ausbalanciere, ohne selbst rechnen zu müssen
+
+Preconditions
+
+1. Das Training folgt dem Juniorenschema und ist nach Trainingsteilen und Unterblöcken gegliedert
+
+Acceptance Criteria
+
+1. Der USER erkennt je Trainingsteil und je Unterblock die Zeitbandbreite des Trainingsschemas
+2. Der USER erkennt, ob seine erfasste Summe je Trainingsteil und je Unterblock innerhalb der jeweiligen Bandbreite liegt und in welche Richtung sie gegebenenfalls abweicht
+3. Das SYSTEM zeigt für Trainingsteile und Unterblöcke ohne erfasste Dauer nur die Bandbreite, ohne Bewertung
+4. Der USER erkennt, wie die Gesamtdauer seines Trainings zur vorgesehenen Gesamtdauer von 90 Minuten steht
+5. Das SYSTEM zeigt die Zeit-Orientierung ausschliesslich bei Trainings des Juniorenschemas
+6. Das SYSTEM lässt sich vom Abgleich weder beim Speichern noch beim Veröffentlichen beeinflussen
+
+Postconditions
+
+1. Das SYSTEM aktualisiert den Abgleich, sobald der USER eine Dauer erfasst, ändert oder eine Zuordnung entfernt
+2. Das SYSTEM lässt Zuordnungen ohne erfasste Dauer im Abgleich unberücksichtigt
+
+Out of Scope
+
+1. Das SYSTEM zeigt keine Zeit-Orientierung bei Kinderfussball-Trainings; deren Lehrmittel gibt bewusst keine Zeiten vor
+2. Das SYSTEM begrenzt die erfassbare Dauer einer Zuordnung nicht und erzwingt keine Gesamtdauer
+3. Das SYSTEM schlägt keine Dauern vor und verteilt die Gesamtdauer nicht automatisch auf die Trainingsteile
+
+Offene Fragen
+
+1. @UX Designer: Wie wird der Abgleich dargestellt, und erscheint er ausser im Editor auch in der Durchführungsansicht, im Druck und auf der Übersichtskarte?

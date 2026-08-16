@@ -27,14 +27,14 @@ Der SFV führt zwei getrennte Lehrmittel mit zwei unterschiedlichen Trainingssch
 |---|---|---|
 | Quelle | Manual Fussball Kinder, Abbildung 14 | Manual Fussball Jugendliche, Abbildung 19 (S. 43) |
 | Trainingsteile | Auffangen, Einleitung, Hauptteil, Ausklang | Einstieg, Hauptteil, Abschluss |
-| Untergliederung | Hauptteil in drei Unterblöcke: Fussball spielen lernen; Vielseitigkeit erleben; Fussball spielen | Einstieg in zwei Unterblöcke: Aufwärmen; Explosivität. Hauptteil in zwei Unterblöcke: Spielformen und unterstützende Übungen; Spiel. Abschluss mit dem Unterblock Ausklang |
-| Zeitangaben | keine | Einstieg 20–30 Minuten, Spielformen und unterstützende Übungen 30–45 Minuten, Spiel 15–20 Minuten, Ausklang 5–10 Minuten, Gesamtdauer 90 Minuten (Manual Abb. 19; der frühere Entscheid für die Broschüren-Werte 45–65 wurde am 2026-08-16 revidiert, weil deren Summe die 90-Minuten-Vorgabe verfehlt) |
+| Untergliederung | Hauptteil in drei Unterblöcke: Fussball spielen lernen; Vielseitigkeit erleben; Fussball spielen | Einstieg in drei Unterblöcke: Aufwärmen; Spielform zum Trainingsziel; Explosivität. Hauptteil in zwei Unterblöcke: Spielformen und unterstützende Übungen; Spiel. Abschluss mit dem Unterblock Ausklang |
+| Zeitangaben | keine | Einstieg 20–30 Minuten, davon Aufwärmen 10–12, Spielform zum Trainingsziel 6–8 und Explosivität 8–10; Spielformen und unterstützende Übungen 30–45 Minuten, Spiel 15–20 Minuten, Ausklang 5–10 Minuten, Gesamtdauer 90 Minuten (Trainingsteile aus Manual Abb. 19, Einstiegs-Unterblöcke aus dem J+S-Lernbaustein; der frühere Entscheid für die Broschüren-Werte 45–65 wurde am 2026-08-16 revidiert, weil deren Summe die 90-Minuten-Vorgabe verfehlt) |
 | Didaktik (Inhalts-Klassifikation) | sechs Erscheinungsformen, methodischer Fahrplan Offen starten – Üben – Wetteifern | fünf Erscheinungsform-Kategorien (drei nach Spielphasen, zwei spielphasenübergreifend: Athletik und Gesundheit, Persönlichkeit und Team), darunter die Entwicklungsdimensionen Taktik, Technik, Athletik, Persönlichkeit |
 | Format-Klassifikation (unabhängige Achse) | keine | Übungs-Typologie Basisspielform, Spielform, Übung. Basisspielform: die Referenzform eines Themas, die die taktischen Prinzipien sichtbar macht; Spielform: spielnahe Form mit Entscheidungsdruck; Übung: isolierte Form. Das Manual bevorzugt fachlich Spielformen; diese Präferenz ist Hintergrundwissen und wird von der App nicht abgebildet |
 
 Anmerkungen aus der fachlichen Validierung (Manual am PDF verifiziert):
 - Das Manual verwendet die Begriffe synonym: Abbildung 19 nennt die Teile EINSTIEG/HAUPTTEIL/ABSCHLUSS, Abbildung 17 («roter Faden», S. 41) beschriftet dieselben Teile doppelt als EINLEITUNG/EINSTIEG und AUSKLANG/ABSCHLUSS. «Einleitung» und «Ausklang» sind damit nicht exklusiv Kinderfussball-Begriffe. Die Verwechslungsgefahr ist in der Quelle selbst angelegt. Abbildung 19 führt im Hauptteil zudem wörtlich «Fussball spielen lernen» und «Fussball spielen» — zwei der drei Kinderfussball-Hauptteilkategorien; nur «Vielseitigkeit erleben» hat im Junioren-Manual keine Entsprechung.
-- Die Inhalte des Einstiegs stehen im Manual selbst (Abb. 19: TA/TE/PE, AT-Prävention, AT-Explosivität; Reihenfolge-Belege S. 45 und S. 72); nur die Benennung der drei Phasen und deren Minutenwerte stammen aus dem J+S-Lernbaustein «Der Einstieg».
+- Die Inhalte des Einstiegs stehen im Manual selbst (Abb. 19: TA/TE/PE, AT-Prävention, AT-Explosivität; Reihenfolge-Belege S. 45 und S. 72); die Benennung der drei Phasen und deren Minutenwerte stammen aus dem J+S-Lernbaustein «Der Einstieg». Die Applikation bildet den Einstieg nach diesen drei Phasen ab, weil die Spielform zum Trainingsziel eine eigenständige Übungsart ist, die den Trainingsschwerpunkt einführt und den roten Faden zum Hauptteil herstellt.
 - Das Manual differenziert das Trainingsschema nicht nach Kategorien; es kennt eine einzige Struktur für die FTEM-Stufe Foundation 3. Die Gleichsetzung von Foundation 3 mit den Kategorien D bis A ist eine begründete Annahme (Manual-Zielgruppe «Jugendliche», Broschüre bestätigt sie für D), keine Manual-Aussage. Pädagogische Unterschiede laufen über Entwicklungsstufen (Tabelle 3, S. 13) und betreffen Inhalte und Dosierung, nicht die Struktur.
 - Der dritte Athletik-Bereich Ermüdungsresistenz gehört laut Manual (S. 72) über Spielformen in den Hauptteil; er braucht keinen eigenen Unterblock.
 - Im 7er-/9er-Fussball heissen die offiziellen Kategorien D (Knaben und gemischte Teams) und FF-14 (reine Mädchenteams). Entscheid: Die Applikation führt nur D; FF-14-Teams arbeiten mit der Kategorie D.
@@ -63,7 +63,7 @@ damit ich meine Mannschaft in derselben Applikation planen kann, ohne ihr die St
 4. Die Unterblock-Struktur von Einstieg und Hauptteil ist beim Planen eines Junioren-Trainings erkennbar, auch bevor ihnen Übungen zugeordnet sind
 5. Die Einordnung einer Übung in ein Junioren-Training folgt über die abgenommene Abbildungsregel aus ihrer gepflegten Heimat, ohne dass eine Übung doppelt gepflegt wird
 6. Eine Übung ist in Trainings beider Schemata verwendbar, sofern die Abbildungsregel für sie eine Entsprechung im jeweiligen Schema liefert
-7. Übungen für Aufwärmen und Explosivität lassen sich als eigene Übungen mit Junioren-Heimat erfassen
+7. Übungen für die Einstiegs-Unterblöcke lassen sich als eigene Übungen mit Junioren-Heimat erfassen
 8. Wechselt ein befülltes Training durch Änderung seiner Alterskategorien das Schema, überträgt das System die zugeordneten Übungen anhand der Abbildungsregel in die Struktur des neuen Schemas; Übungen ohne Entsprechung sind für den Trainer als Nacharbeit erkennbar und verhindern das Veröffentlichen nicht
 9. Die Zeitbandbreiten je Trainingsteil und die Gesamtdauer von 90 Minuten stehen dem Trainer beim Planen eines Junioren-Trainings als Orientierung zur Verfügung und sind keine Speicher- oder Veröffentlichungsbedingung
 10. Der Übungskatalog ist nach den Alterskategorien D, C, B und A gleichwertig filterbar wie nach G, F und E
@@ -96,8 +96,8 @@ Vertikal geschnitten, jede Story liefert für sich einen nachvollziehbaren Zusta
 | 3 | Trainingsschema aus den Alterskategorien bestimmen, Mischverbot und Wechselverhalten mit Übertragung | Rules | Business | 1, 2 |
 | 4 | Junioren-Training nach Einstieg, Hauptteil und Abschluss gliedern | Paths | Business | 3 |
 | 5a | Einstieg und Hauptteil eines Junioren-Trainings in Unterblöcke gliedern | Rules | Business | 4 |
-| 5b | Übungen mit Junioren-Heimat Aufwärmen oder Explosivität erfassen | Data | Business | 1, 5a |
-| 6 | Zeitbandbreiten und Gesamtdauer als Orientierung anzeigen | Rules | Business | 4 |
+| 5b | Übungen mit Junioren-Heimat in einem Einstiegs-Unterblock erfassen | Data | Business | 1, 5a |
+| 6 | Zeitbandbreiten und Gesamtdauer als Orientierung anzeigen | Rules | Business | 4, 5a |
 | 7 | Junioren-Training veröffentlichen | Rules | Business | 4 |
 | 8 | Junioren-Training mobil durchführen und drucken | Interface | Business | 4, 5a |
 | 9 | Übungs-Typologie erfassen und filtern | Data | Business | — |
@@ -131,12 +131,13 @@ Die Stories 9, 10 und 11 sind unabhängig und können jederzeit gezogen werden. 
 | Mischung der Schemata in einem Training | Nicht möglich; die Regel wird zusammen mit der Einführung der Kategorien ausgeliefert, ein Übergangszustand mit Mischung existiert nie |
 | Schema-Bestimmung | Folgt aus den gewählten Alterskategorien; ohne Auswahl gilt das Kinderfussball-Schema |
 | Schema-Wechsel eines befüllten Trainings | Automatische Übertragung anhand der Abbildungsregel, Übungen ohne Entsprechung als Nacharbeit markiert |
-| Untergliederung im Juniorenschema | Einstieg und Hauptteil werden untergliedert; Einstieg hat genau zwei Unterblöcke, die drei J+S-Phasen bleiben Zeit-Orientierung |
+| Untergliederung im Juniorenschema | Einstieg und Hauptteil werden untergliedert; der Einstieg hat drei Unterblöcke gemäss den J+S-Phasen (PO-Entscheid 2026-08-16, ersetzt die frühere Zweiteilung) |
 | Junioren-Einordnung einer Übung | Heimat-Mechanismus gemäss abgenommenem Entscheidungsdokument, keine Doppelpflege |
-| Befüllbarkeit Aufwärmen und Explosivität | Über Übungen mit direkter Junioren-Heimat, beschränkt auf diese zwei Unterblöcke |
-| Leere Unterblöcke Spiel und Explosivität im Junioren-Training | Hinweis, analog zum Kinderfussball-Hinweis bei leerem freiem Spiel; blockiert nichts (Explosivität ergänzt am 2026-08-16, Manual: gehört in jede Trainingseinheit) |
+| Befüllbarkeit der Einstiegs-Unterblöcke | Über Übungen mit direkter Junioren-Heimat, beschränkt auf die drei Einstiegs-Unterblöcke |
+| Zeit-Orientierung | Berechneter Abgleich der erfassten Dauern gegen die Bandbreiten und die Gesamtdauer, nur im Juniorenschema (PO 2026-08-16) |
+| Leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität im Junioren-Training | Hinweis, analog zum Kinderfussball-Hinweis bei leerem freiem Spiel; blockiert nichts (PO 2026-08-16) |
 | Unterblock-Zuordnung im Junioren-Training | Der Unterblock folgt zwingend aus der Übung, kein freies Wählen (PO 2026-08-16) |
-| Übungen mit Junioren-Heimat | Aufwärmen trägt den methodischen Fahrplan mit Offen starten als einziger Pflichtstufe und darf eine Erscheinungsform tragen; Explosivität trägt einen Aufbau-Text ohne Erscheinungsform; jede Heimat-Änderung einer verwendeten Übung warnt vor dem Speichern, unabhängig vom Eigentümer des Trainings (PO 2026-08-16) |
+| Übungen mit Junioren-Heimat | Aufwärmen und Spielform zum Trainingsziel tragen den methodischen Fahrplan mit Offen starten als einziger Pflichtstufe und dürfen eine Erscheinungsform tragen; Explosivität trägt einen Aufbau-Text ohne Erscheinungsform; jede Heimat-Änderung einer verwendeten Übung warnt vor dem Speichern, unabhängig vom Eigentümer des Trainings (PO 2026-08-16) |
 | Pflichtteile für Veröffentlichung im Juniorenschema | Einstieg und Hauptteil |
 | Trainingsziel | Genau ein optionales Freitext-Ziel pro Training, für beide Schemata; SMART-Formulierung bleibt Sache des Trainers (PO 2026-08-16) |
 | Übungs-Typologie | Basisspielform, Spielform, Übung als optionales Attribut für alle Übungen; keine Nachpflege des Bestands (PO 2026-08-16) |
@@ -148,8 +149,7 @@ Die Stories 9, 10 und 11 sind unabhängig und können jederzeit gezogen werden. 
 
 ## 8. Offene Fragen
 
-1. @UX Designer: Soll die Zeitbandbreiten-Orientierung eine statische Referenzanzeige der SFV-Werte sein oder ein berechneter Abgleich der Summe der zugeordneten Übungsdauern gegen die Bandbreite?
-2. @UX Designer: Gestaltung der Heimat-Wahl im Übungs-Editor, der Nacharbeits-Markierung beim Schema-Wechsel sowie Farbe und Kurzlabel je neuer Alterskategorie (aus dem Spike übernommen)
+1. @UX Designer: Gestaltung der Heimat-Wahl im Übungs-Editor, der Nacharbeits-Markierung beim Schema-Wechsel, der Zeit-Abgleich-Anzeige sowie Farbe und Kurzlabel je neuer Alterskategorie
 
 ## 9. Requirements-Analyse: Konflikte gegenüber dem Ist-Zustand
 

@@ -19,7 +19,7 @@ Geltungsbereich: Die Abbildungsregel gilt für Übungen mit Kinderfussball-Heima
 
 ## 2. Die Abbildungsregel
 
-Zielwertebereich: die fünf befüllbaren Stellen des Juniorenschemas — Einstieg/Aufwärmen, Einstieg/Explosivität, Hauptteil/Spielformen und unterstützende Übungen, Hauptteil/Spiel, Abschluss/Ausklang — sowie der Sonderwert «ohne Entsprechung».
+Zielwertebereich: die sechs befüllbaren Stellen des Juniorenschemas — Einstieg/Aufwärmen, Einstieg/Spielform zum Trainingsziel, Einstieg/Explosivität, Hauptteil/Spielformen und unterstützende Übungen, Hauptteil/Spiel, Abschluss/Ausklang — sowie der Sonderwert «ohne Entsprechung».
 
 | Z | `trainingsteil` | `hauptteilkategorie` | Junioren-Einordnung |
 |---|---|---|---|
@@ -47,11 +47,14 @@ Die Regel ist lückenlos (Z7 fängt alles Übrige) und überlappungsfrei (die Be
 | Unterblock | Erreichbar über | Bestand |
 |---|---|---|
 | Einstieg / Aufwärmen | Ableitung (Z2) und direkte Junioren-Einordnung (Abschnitt 4) | 12 Übungen |
+| Einstieg / Spielform zum Trainingsziel | **nur** direkte Junioren-Einordnung (Abschnitt 4) | 0 Übungen |
 | Einstieg / Explosivität | **nur** direkte Junioren-Einordnung (Abschnitt 4) | 0 Übungen |
 | Hauptteil / Spielformen und unterstützende Übungen | Ableitung (Z3, Z4) | 54 Übungen |
 | Hauptteil / Spiel | Ableitung (Z5) | 1 Übung |
 | Abschluss / Ausklang | Ableitung (Z6) | 4 Übungen |
 | — (ohne Entsprechung) | Z1 | 4 Übungen |
+
+Die Spielform zum Trainingsziel ist über den Bestand nicht erreichbar, weil das Kinderfussball-Modell keine Übungsart kennt, die einen Trainingsschwerpunkt einführt; sie wird über Trainer-Übungen mit direkter Junioren-Heimat befüllt.
 
 Explosivität ist über den Bestand nicht erreichbar, und zwar strukturell, nicht zufällig: Kein Kinderfussball-Attribut trägt ein Signal für Explosivitäts-Inhalte (Beschleunigung, Richtungswechsel, Sprünge mit vollständiger Erholung), weil das Kinderfussball-Manual diese Trainingsform nicht kennt — Athletik ist dort kein eigener Trainingsinhalt. Die J+S-Übungsblätter in `sources/junioren/einstieg/` zeigen, dass Explosivitäts-Formen eigenständige Inhalte sind. Dasselbe gilt für reine Körperstabilitäts-/Präventionsübungen (die «Big 4» gemäss J+S-Lernbaustein: Fussgelenk, Knie, Hüfte, Hamstrings — das Manual nennt die Bereiche Fussgelenk, Knie, Ischios, Hüfte, S. 74–78); sie gehören laut Manual (S. 72) ins Aufwärmen integriert, weshalb sie keinen eigenen Unterblock brauchen, sondern über die direkte Einordnung in Aufwärmen abgedeckt werden.
 
@@ -62,8 +65,8 @@ Vorgabe des Product Owners: Aufwärmen und Explosivität müssen über Trainer-�
 Festgelegter Mechanismus — **jede Übung hat genau eine gepflegte Heimat**:
 
 1. Übungen mit Kinderfussball-Heimat (heute alle 75 Manual-Übungen und alle Trainer-Übungen mit Trainingsteil): Die Junioren-Einordnung wird ausschliesslich über die Abbildungsregel (Abschnitt 2) abgeleitet. Nichts wird zusätzlich gepflegt.
-2. Übungen mit Junioren-Heimat (neu): Eine Übung kann statt eines Kinderfussball-Trainingsteils direkt einen der beiden Einstiegs-Unterblöcke Aufwärmen oder Explosivität als Heimat tragen. Das ist die minimale Modell-Ergänzung, die das Epic dem Spike zugesteht — und bewusst auf diese zwei Stellen beschränkt: Für Spielformen, Spiel und Ausklang existiert der Kinderfussball-Pfad bereits, eine direkte Junioren-Heimat dort würde ohne Not Übungen erzeugen, die dem Kinderfussball entzogen sind.
-3. Rückabbildung für Übungen mit Junioren-Heimat: Aufwärmen wird im Kinderfussball als Einleitung eingeordnet (die Zuordnung ist in beiden Richtungen verlustfrei, siehe Z2); Explosivität ist im Kinderfussball ohne Entsprechung, weil dieser Trainingsinhalt dort nicht existiert.
+2. Übungen mit Junioren-Heimat (neu): Eine Übung kann statt eines Kinderfussball-Trainingsteils direkt einen der drei Einstiegs-Unterblöcke Aufwärmen, Spielform zum Trainingsziel oder Explosivität als Heimat tragen. Das ist die minimale Modell-Ergänzung, die das Epic dem Spike zugesteht — und bewusst auf den Einstieg beschränkt: Für Spielformen, Spiel und Ausklang existiert der Kinderfussball-Pfad bereits, eine direkte Junioren-Heimat dort würde ohne Not Übungen erzeugen, die dem Kinderfussball entzogen sind.
+3. Rückabbildung für Übungen mit Junioren-Heimat: Aufwärmen wird im Kinderfussball als Einleitung eingeordnet (die Zuordnung ist in beiden Richtungen verlustfrei, siehe Z2); die Spielform zum Trainingsziel wird ebenfalls als Einleitung eingeordnet, weil sie fachlich eine Spielform mit Technik- und Zielbezug im Einstieg ist; Explosivität ist im Kinderfussball ohne Entsprechung, weil dieser Trainingsinhalt dort nicht existiert.
 4. Eine Übung trägt nie beide Heimaten. Damit ist Doppelpflege ausgeschlossen und es gibt keine Konfliktfälle zwischen gepflegter und abgeleiteter Einordnung.
 
 Konsequenzen, die der Product Owner mit der Abnahme mitträgt:
@@ -78,6 +81,7 @@ Steuerung für Trainer (welche bestehenden Angaben bestimmen die Einordnung):
 | Gewünschte Einordnung im Junioren-Training | Was der Trainer an der Übung setzt |
 |---|---|
 | Einstieg / Aufwärmen | Trainingsteil Einleitung — oder direkte Junioren-Einordnung Aufwärmen |
+| Einstieg / Spielform zum Trainingsziel | direkte Junioren-Einordnung Spielform zum Trainingsziel |
 | Einstieg / Explosivität | direkte Junioren-Einordnung Explosivität |
 | Hauptteil / Spielformen und unterstützende Übungen | Trainingsteil Hauptteil mit Kategorie Fussball spielen lernen oder Vielseitigkeit erleben |
 | Hauptteil / Spiel | Trainingsteil Hauptteil mit Kategorie Fussball spielen |
@@ -88,18 +92,21 @@ Steuerung für Trainer (welche bestehenden Angaben bestimmen die Einordnung):
 | Stelle | Bandbreite | Quelle |
 |---|---|---|
 | Einstieg gesamt | 20–30 Minuten | Manual Abb. 19, S. 43; Broschüre S. 5 und Abschnitt 5 |
-| Einstieg, Unterblock Aufwärmen | 16–20 Minuten | rechnerisch aus den J+S-Phasen 1 und 2 (10–12 plus 6–8) |
+| Einstieg, Unterblock Aufwärmen | 10–12 Minuten | J+S-Lernbaustein «Der Einstieg», Phase 1 |
+| Einstieg, Unterblock Spielform zum Trainingsziel | 6–8 Minuten | J+S-Lernbaustein «Der Einstieg», Phase 2 |
 | Einstieg, Unterblock Explosivität | 8–10 Minuten | J+S-Lernbaustein «Der Einstieg», Phase 3 |
 | Einstieg, Phase Aktivierung und Körperstabilität | 10–12 Minuten | J+S-Lernbaustein «Der Einstieg» |
 | Einstieg, Phase Spielform zum Trainingsziel | 6–8 Minuten | J+S-Lernbaustein «Der Einstieg» |
 | Einstieg, Phase Explosivität | 8–10 Minuten | J+S-Lernbaustein «Der Einstieg» |
-| Hauptteil, Spielformen und unterstützende Übungen | 45–65 Minuten | Broschüre Abschnitt 5 (Entscheid PO 2026-08-14; Manual Abb. 19 nennt 30–45) |
+| Hauptteil, Spielformen und unterstützende Übungen | 30–45 Minuten | Manual Abb. 19 (der frühere Broschüren-Wert 45–65 wurde am 2026-08-16 revidiert, siehe Errata 3) |
 | Hauptteil, Spiel | 15–20 Minuten, freies Spiel mindestens 15 | Manual Abb. 19; Broschüre S. 6 und Abschnitt 5 |
-| Hauptteil gesamt | 60–85 Minuten rechnerisch aus den PO-Werten; das Manual ergibt rechnerisch 45–65 | Summe der Unterblock-Werte |
+| Hauptteil gesamt | 45–65 Minuten | rechnerisch aus den Unterblock-Werten |
 | Abschluss / Ausklang | 5–10 Minuten | Manual Abb. 19; Broschüre Abschnitt 5 |
 | Gesamtdauer | 90 Minuten | Manual S. 43 (Tipp-Box); Broschüre Abschnitt 5 |
 
-Hinweis: Die drei J+S-Einstiegsphasen sind eine feinere Gliederung als die zwei Unterblöcke der Abbildung 19 (Aufwärmen umfasst die Phasen 1 und 2). Für die App sind die zwei Unterblöcke massgeblich; die Phasenwerte dienen als Orientierung innerhalb des Aufwärmens.
+Hinweis: Die App bildet den Einstieg nach den drei J+S-Phasen ab (PO-Entscheid 2026-08-16), nicht nach der gröberen Zweiteilung der Abbildung 19. Begründung: Die Spielform zum Trainingsziel ist eine eigenständige Übungsart mit eigenem Zweck und eigener Zeitangabe; sie führt den Trainingsschwerpunkt ein und stellt den roten Faden zum Hauptteil her.
+
+Konsistenz der Ebenen: Die Summe der drei Einstiegs-Unterblöcke ergibt rechnerisch 24–30 Minuten, die Manual-Bandbreite des Trainingsteils lautet 20–30 Minuten. Beide Ebenen gelten je für sich als Orientierung; das System verlangt keine Konsistenz zwischen den Ebenen, weil alle Werte unverbindliche Richtwerte sind. Die Summe der Trainingsteil-Bandbreiten (70–105 Minuten) umschliesst die Gesamtdauer von 90 Minuten.
 
 ## 6. Geprüfte und verworfene Alternativen
 
@@ -136,7 +143,8 @@ Hinweis: Die drei J+S-Einstiegsphasen sind eine feinere Gliederung als die zwei 
 2. Die Inhalte der drei Einstiegsphasen stehen entgegen der früheren Aussage auch im Manual selbst (Abb. 19 WAS-Zeile: TA/TE/PE, AT-Prävention, AT-Explosivität; Reihenfolge S. 45 und S. 72); nur Phasennamen und Minutenwerte stammen aus dem J+S-Lernbaustein.
 3. Zeitbandbreiten: Der Product Owner hat am 2026-08-16 den Broschüren-Wert 45–65 für Spielformen revidiert; es gelten die Manual-Werte 30–45 (Abb. 19), womit die Summen zur 90-Minuten-Gesamtdauer passen. Die Tabelle in Abschnitt 5 ist entsprechend zu lesen.
 4. Ergänzung: Der dritte Athletik-Bereich Ermüdungsresistenz gehört laut Manual S. 72 über Spielformen in den Hauptteil und braucht keinen eigenen Unterblock.
+5. Der Einstieg hat drei Unterblöcke statt zwei (PO-Entscheid 2026-08-16, im Story-Refinement zu Story 6): Aufwärmen, Spielform zum Trainingsziel, Explosivität. Die ursprüngliche Zweiteilung folgte Abbildung 19; die App bildet stattdessen die drei J+S-Phasen ab, weil die Spielform zum Trainingsziel eine eigenständige Übungsart ist. Die Abschnitte 2 bis 5 sind entsprechend nachgeführt.
 
 ## 11. Abnahme
 
-Abbildungsregel abgenommen durch Product Owner am 2026-08-15. Bestätigt wurden dabei ausdrücklich: die Zwei-Unterblock-Gliederung des Einstiegs (Aufwärmen, Explosivität — die drei J+S-Phasen bleiben Zeit-Orientierung), die Setzung, dass Explosivitäts-Übungen in Kinderfussball-Trainings nicht zuweisbar sind, und die Beschränkung der direkten Junioren-Heimat auf Aufwärmen und Explosivität.
+Abbildungsregel erstmals abgenommen durch Product Owner am 2026-08-15 (damals mit zwei Einstiegs-Unterblöcken). Geänderte Fassung erneut abgenommen am 2026-08-16: Der Einstieg hat drei Unterblöcke gemäss den J+S-Phasen (Aufwärmen, Spielform zum Trainingsziel, Explosivität), die direkte Junioren-Heimat umfasst alle drei, die Spielform zum Trainingsziel wird rückwärts als Einleitung eingeordnet, und die Zeitwerte je Unterblock lauten 10–12, 6–8 und 8–10 Minuten. Unverändert bestätigt: Explosivitäts-Übungen sind in Kinderfussball-Trainings nicht zuweisbar.
