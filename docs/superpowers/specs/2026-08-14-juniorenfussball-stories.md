@@ -2,6 +2,8 @@
 
 Stand 2026-08-16. Story-Ausarbeitung zum Epic «Juniorenfussball-Trainingsschema» (`2026-08-14-juniorenfussball-epic.md`). Die Stories werden einzeln analysiert, diskutiert und validiert; dieses Dokument wächst Story für Story. Release-Entscheid: Das gesamte Epic wird als Ganzes released (PO, 2026-08-16); die Story-Reihenfolge ist reine Entwicklungs-Reihenfolge.
 
+Revision 2026-08-16: Das Übungsbibliothek-Epic (`2026-08-16-uebungsbibliothek-epic.md`, Kopie statt Verweis) wird vor diesem Epic umgesetzt (PO-Entscheid). Trainings enthalten danach eigenständige Fassungen statt Verweise; die Einordnung einer Fassung ist frei anpassbar, die Abbildungsregel liefert den Vorschlag. Die Stories 3, 4, 5a, 5b und 7 sind entsprechend revidiert; überholte Entscheide bleiben als Historie in den Faktenlagen stehen.
+
 Faktenlage für Story 1 (aus Quellen- und Bestandsanalyse):
 
 - Bestand: 75 Manual-Übungen — 55 Hauptteil (davon 50 Fussball spielen lernen, 4 Vielseitigkeit erleben, 1 Fussball spielen), 12 Einleitung, 4 Auffangen, 4 Ausklang. Die Pflichtattribute (Trainingsteil, bei Hauptteil die Hauptteilkategorie) sind bei allen 75 gesetzt; optionale Attribute sind lückenhaft (Feldtyp 33 von 75, Material 8 von 75, Varianten 0 von 75, Erscheinungsform nur bei Hauptteil-Übungen).
@@ -144,10 +146,10 @@ Acceptance Criteria
 
 Postconditions
 
-1. Das SYSTEM übernimmt die neuen Alterskategorien und überträgt die zugeordneten Übungen anhand der Abbildungsregel in die Struktur des neuen Schemas WENN der USER den Wechsel bestätigt
+1. Das SYSTEM übernimmt die neuen Alterskategorien und überträgt die Fassungen des Trainings anhand der Abbildungsregel in die Struktur des neuen Schemas WENN der USER den Wechsel bestätigt
 2. Das SYSTEM lässt das Training vollständig unverändert WENN der USER den Wechsel abbricht
-3. Das SYSTEM behält übertragene Übungen ohne Entsprechung im Training und markiert sie als Nacharbeit
-4. Das SYSTEM löst die Nacharbeits-Markierung von selbst auf, WENN der USER die betroffene Zuordnung entfernt oder ersetzt
+3. Das SYSTEM behält Fassungen ohne Entsprechung im Training, markiert sie als Nacharbeit und setzt das Training auf privat, solange die Nacharbeit offen ist
+4. Das SYSTEM löst die Nacharbeits-Markierung von selbst auf, WENN der USER die betroffene Fassung entfernt oder einem Block des neuen Schemas zuordnet
 5. Das SYSTEM setzt ein veröffentlichtes Training auf privat und informiert den USER, WENN es nach dem Wechsel die Veröffentlichungsbedingungen seines neuen Schemas nicht mehr erfüllt
 
 Out of Scope
@@ -187,12 +189,13 @@ Acceptance Criteria
 
 1. Der USER sieht sein Junioren-Training nach den drei Trainingsteilen Einstieg, Hauptteil und Abschluss in dieser festen Reihenfolge gegliedert
 2. Der USER erkennt im Editor jederzeit, dass sein Training dem Juniorenschema folgt
-3. Der USER kann jedem der drei Trainingsteile Übungen zuordnen und je Zuordnung eine Dauer erfassen
-4. Das SYSTEM bietet zur Zuordnung ausschliesslich Übungen an, deren Einordnung gemäss Abbildungsregel im gewählten Trainingsteil liegt
-5. Der USER kann die Reihenfolge der Übungen innerhalb eines Trainingsteils ändern
-6. Der USER kann eine zugeordnete Übung wieder entfernen
-7. Der USER sieht je Trainingsteil die Summe der erfassten Übungsdauern
-8. Der USER sieht Nacharbeits-Zuordnungen in einem eigenen Bereich gesondert von den drei Trainingsteilen
+3. Der USER kann jedem der drei Trainingsteile Übungen als Fassungen zuordnen und je Fassung eine Dauer erfassen
+4. Das SYSTEM schlägt bei der Zuordnung den Trainingsteil vor, den die Abbildungsregel aus der Vorlage bestimmt
+5. Der USER kann die Einordnung einer Fassung ändern; eine Abweichung vom Vorschlag ist am Training erkennbar und blockiert nichts
+6. Der USER kann die Reihenfolge der Fassungen innerhalb eines Trainingsteils ändern
+7. Der USER kann eine Fassung wieder entfernen
+8. Der USER sieht je Trainingsteil die Summe der erfassten Dauern
+9. Der USER sieht Nacharbeits-Fassungen in einem eigenen Bereich gesondert von den drei Trainingsteilen
 
 Postconditions
 
@@ -218,7 +221,8 @@ Faktenlage für die Stories 5a und 5b (aus der Übungs-Editor-Analyse dieser Ses
 - Es existiert keine Sicht, in welchen Trainings eine Übung verwendet wird; Trainingsteil-Änderungen laufen heute ohne Warnung. Die daraus folgende Bestands-Inkonsistenz wird ausserhalb dieses Epics behandelt.
 - Das Aufwärmen umfasst fachlich auch Körperstabilität und Prävention (Manual S. 72); solche Drills haben keinen natürlichen Wettkampf-Abschluss.
 - Der Einstieg hat drei Unterblöcke: Aufwärmen, Spielform zum Trainingsziel und Explosivität (PO-Entscheid 2026-08-16, ersetzt die frühere Zweiteilung). Die Spielform zum Trainingsziel ist eine eigenständige Übungsart, die den Trainingsschwerpunkt einführt und den roten Faden zum Hauptteil herstellt.
-- PO-Entscheide 2026-08-16: Der Unterblock folgt zwingend aus der Übung (kein freies Wählen). Leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität erzeugen einen Hinweis. Übungen mit Heimat Aufwärmen oder Spielform zum Trainingsziel tragen den Fahrplan, wobei nur die Stufe Offen starten Pflicht ist, und dürfen eine Erscheinungsform tragen; Explosivitäts-Übungen tragen einen Aufbau-Text ohne Erscheinungsform. Jede Heimat-Änderung einer in Trainings verwendeten Übung warnt vor dem Speichern, unabhängig davon, wem das Training gehört.
+- PO-Entscheide 2026-08-16: Leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität erzeugen einen Hinweis. Übungen mit Heimat Aufwärmen oder Spielform zum Trainingsziel tragen den Fahrplan, wobei nur die Stufe Offen starten Pflicht ist, und dürfen eine Erscheinungsform tragen; Explosivitäts-Übungen tragen einen Aufbau-Text ohne Erscheinungsform.
+- Revidiert durch das Übungsbibliothek-Epic (2026-08-16): Der Unterblock folgt nicht mehr zwingend aus der Übung; die Vorlage liefert den Vorschlag, die Fassung im Training ist frei einordbar, eine Abweichung erzeugt einen Hinweis. Die ursprünglich beschlossene Heimat-Änderungs-Warnung ist gegenstandslos, weil Fassungen eigenständig sind und Änderungen an Bibliotheks-Übungen nicht mehr in Trainings wirken.
 
 ## Story 5a (Business): Einstieg und Hauptteil eines Junioren-Trainings in Unterblöcke gliedern
 
@@ -237,11 +241,12 @@ Acceptance Criteria
 1. Der USER sieht den Einstieg in die Unterblöcke Aufwärmen, Spielform zum Trainingsziel und Explosivität gegliedert
 2. Der USER sieht den Hauptteil in die Unterblöcke Spielformen und unterstützende Übungen sowie Spiel gegliedert
 3. Der USER erkennt die Unterblock-Struktur auch dann, wenn ein Unterblock keine Übungen enthält
-4. Der USER kann einem Unterblock Übungen zuordnen
-5. Der USER kann die Reihenfolge der Übungen innerhalb eines Unterblocks ändern
-6. Das SYSTEM bietet je Unterblock ausschliesslich Übungen an, deren Einordnung gemäss Abbildungsregel in diesem Unterblock liegt
-7. Der USER wird auf leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität hingewiesen
-8. Das SYSTEM blockiert wegen eines leeren Unterblocks weder das Speichern noch das Veröffentlichen
+4. Der USER kann einem Unterblock Übungen als Fassungen zuordnen
+5. Der USER kann die Reihenfolge der Fassungen innerhalb eines Unterblocks ändern
+6. Das SYSTEM schlägt bei der Zuordnung den Unterblock vor, den die Abbildungsregel aus der Vorlage bestimmt
+7. Der USER kann die Einordnung einer Fassung in einen anderen Unterblock ändern; eine Abweichung vom Vorschlag ist am Training erkennbar und blockiert nichts
+8. Der USER wird auf leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität hingewiesen
+9. Das SYSTEM blockiert das Speichern wegen eines leeren Unterblocks nicht; die Bedingungen der Veröffentlichung regelt die Veröffentlichungs-Story
 
 Postconditions
 
@@ -249,8 +254,7 @@ Postconditions
 
 Out of Scope
 
-1. Das SYSTEM bietet kein direktes Verschieben einer Übung zwischen Unterblöcken an; ein Wechsel erfolgt über Entfernen und erneutes Zuordnen
-2. Das SYSTEM zeigt in dieser Story keine Zeitbandbreiten je Unterblock an
+1. Das SYSTEM zeigt in dieser Story keine Zeitbandbreiten je Unterblock an
 
 Offene Fragen
 
@@ -278,25 +282,24 @@ Acceptance Criteria
 6. Der USER kann bei einer Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel eine Erscheinungsform wählen
 7. Das SYSTEM lässt bei einer Übung mit Heimat Explosivität keine Erscheinungsform zu
 8. Der USER kann die Heimat einer bestehenden eigenen Übung ändern und muss dabei die Pflichtangaben der neuen Heimat vervollständigen
-9. Der USER wird bei jeder Heimat-Änderung einer Übung gewarnt, die in mindestens einem Training verwendet wird, unabhängig davon, wem das Training gehört
 
 Postconditions
 
-1. Das SYSTEM ordnet eine Übung mit Junioren-Heimat in Junioren-Trainings dem gewählten Unterblock zu
-2. Das SYSTEM stellt eine Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel in Kinderfussball-Trainings als Einleitungs-Übung bereit
+1. Das SYSTEM schlägt für eine Übung mit Junioren-Heimat in Junioren-Trainings den gewählten Unterblock als Einordnung vor
+2. Das SYSTEM bietet eine Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel in Kinderfussball-Trainings als Einleitungs-Vorlage an
 3. Das SYSTEM bietet eine Übung mit Heimat Explosivität in Kinderfussball-Trainings nicht an
-4. Das SYSTEM übernimmt die Heimat-Änderung einer in Trainings verwendeten Übung erst, WENN der USER die Warnung bestätigt hat
-5. Das SYSTEM entfernt beim gespeicherten Heimat-Wechsel die Angaben, die für die neue Heimat nicht zulässig sind
+4. Das SYSTEM entfernt beim gespeicherten Heimat-Wechsel die Angaben, die für die neue Heimat nicht zulässig sind
 
 Out of Scope
 
 1. Die Manual-Übungen behalten ihre Kinderfussball-Heimat; eine Nachpflege des Bestands findet nicht statt
-2. Das SYSTEM ändert bestehende Zuordnungen in Trainings bei einer Heimat-Änderung nicht automatisch
+2. Das SYSTEM ändert bestehende Fassungen in Trainings bei einer Heimat-Änderung der Vorlage nicht; Fassungen sind eigenständig
 3. Das SYSTEM erfasst keine strukturierten Belastungsparameter für Explosivitäts-Übungen; Serien, Distanzen und Pausen stehen frei im Aufbau-Text
+4. Das SYSTEM warnt bei einer Heimat-Änderung nicht vor Auswirkungen auf Trainings; im Fassungs-Modell gibt es solche Auswirkungen nicht mehr
 
 Offene Fragen
 
-1. @UX Designer: Wie werden die Heimat-Wahl im Übungs-Editor und die Verwendungs-Warnung gestaltet, insbesondere für Trainer, die nur eine der beiden Welten kennen?
+1. @UX Designer: Wie wird die Heimat-Wahl im Übungs-Editor gestaltet, insbesondere für Trainer, die nur eine der beiden Welten kennen?
 
 ---
 
@@ -345,3 +348,52 @@ Out of Scope
 Offene Fragen
 
 1. @UX Designer: Wie wird der Abgleich dargestellt, und erscheint er ausser im Editor auch in der Durchführungsansicht, im Druck und auf der Übersichtskarte?
+
+---
+
+Faktenlage für Story 7 (aus der Veröffentlichungs-Analyse dieser Session):
+
+- Ein Trainer schaltet ein Training im Editor öffentlich. Sind die Bedingungen nicht erfüllt, nennt ihm ein Hinweis die fehlenden Punkte als Klartext-Liste; er springt jedoch nicht an die betroffene Stelle im Editor.
+- Verwendet das Training eigene private Übungen, muss der Trainer deren Mitveröffentlichung bestätigen; diese Übungen bleiben danach dauerhaft öffentlich.
+- Verletzt ein veröffentlichtes Training nachträglich eine Bedingung, setzt das System es selbsttätig auf privat und informiert den Trainer.
+- Ein Zurücksetzen auf privat geschieht ohne Rückfrage. Andere Nutzer verlieren den Zugriff und sehen eine neutrale Meldung, die nicht verrät, ob das Training je existierte.
+- Andere Nutzer können ein öffentliches Training ansehen, mobil durchführen und drucken; es gibt keine Kopier-Funktion und der Ersteller wird nirgends angezeigt.
+- Die Vollständigkeitsprüfung zählt heute nur, ob eine Zuordnung existiert, nicht ob die referenzierte Übung noch sichtbar ist.
+- Für die Unterblöcke Spielform zum Trainingsziel und Explosivität gibt es keine Bestandsübungen; sie sind nur über eigene Übungen befüllbar.
+- PO-Entscheide 2026-08-16: Pflicht für die Veröffentlichung sind die drei Einstiegs-Unterblöcke, der Unterblock Spielformen und unterstützende Übungen sowie der Abschluss; der Spiel-Block ist als freies Spiel bewusst ausgenommen und behält nur den Hinweis. Offene Nacharbeit blockiert die Veröffentlichung. Belegt heisst: mindestens eine Zuordnung, wobei Nacharbeits-Zuordnungen nicht zählen. Eine separate Alterskategorie-Bedingung braucht der Junioren-Zweig nicht, weil ein Junioren-Training per Schema-Definition mindestens eine Junioren-Kategorie trägt.
+- Die hohe Erst-Hürde (Spielform zum Trainingsziel und Explosivität sind nur über eigene Übungen befüllbar) ist bewusst gewählt: Ein öffentliches Junioren-Training soll lehrmittelkonform sein; privates Planen und Durchführen geht jederzeit ohne diese Bedingungen. Der Product Owner plant, die Hürde später durch geseedete Community-Übungen zu senken.
+
+## Story 7 (Business): Junioren-Training veröffentlichen
+
+Status: Final ausgearbeitet und validiert am 2026-08-16.
+
+Als Trainer:in im Juniorenfussball
+möchte ich mein Junioren-Training öffentlich teilen können, sobald es dem Trainingsschema entspricht
+damit andere Trainer:innen nur vollständige und lehrmittelkonforme Junioren-Trainings vorfinden
+
+Preconditions
+
+1. Das Training folgt dem Juniorenschema und ist nach Trainingsteilen und Unterblöcken gegliedert
+
+Acceptance Criteria
+
+1. Der USER kann sein Junioren-Training öffentlich schalten, sobald die drei Einstiegs-Unterblöcke, der Unterblock Spielformen und unterstützende Übungen sowie der Abschluss belegt sind und keine Nacharbeit offen ist
+2. Der USER kann sein Junioren-Training ohne Zuordnung im Spiel-Block veröffentlichen
+3. Der USER erkennt vor dem Veröffentlichen, welche Bedingungen sein Training noch nicht erfüllt
+4. Das SYSTEM zählt einen Unterblock als belegt, sobald ihm mindestens eine Fassung zugewiesen ist; Nacharbeits-Fassungen zählen nicht
+5. Der USER kann sein veröffentlichtes Junioren-Training jederzeit wieder auf privat setzen
+
+Postconditions
+
+1. Das SYSTEM macht das Training mit allen enthaltenen Fassungen für alle Betrachtenden sichtbar WENN der USER es öffentlich schaltet und alle Bedingungen erfüllt sind
+2. Das SYSTEM setzt ein veröffentlichtes Junioren-Training selbsttätig auf privat und informiert den USER WENN es eine der Bedingungen nicht mehr erfüllt
+
+Out of Scope
+
+1. Das SYSTEM ändert die Veröffentlichungsbedingungen für Kinderfussball-Trainings nicht
+2. Das SYSTEM stellt beim Veröffentlichen keine Rückfrage zu einzelnen Übungen; die einmalige Bestätigung der Tragweite regelt das Übungsbibliothek-Epic
+3. Das SYSTEM benachrichtigt niemanden, wenn ein Training wieder auf privat gesetzt wird
+
+Offene Fragen
+
+1. @UX Designer: Wie erfährt der Trainer, welche Bedingung er wo im Editor erfüllen muss, wenn die Anzahl der Bedingungen im Juniorenschema deutlich höher ist als im Kinderfussball, und wie unterscheidet sich die Meldung bei offener Nacharbeit von den übrigen Bedingungen?
