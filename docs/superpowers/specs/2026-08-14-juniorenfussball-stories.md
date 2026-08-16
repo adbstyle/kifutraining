@@ -146,7 +146,7 @@ Postconditions
 
 1. Das SYSTEM übernimmt die neuen Alterskategorien und überträgt die zugeordneten Übungen anhand der Abbildungsregel in die Struktur des neuen Schemas WENN der USER den Wechsel bestätigt
 2. Das SYSTEM lässt das Training vollständig unverändert WENN der USER den Wechsel abbricht
-3. Das SYSTEM behält übertragene Übungen ohne Entsprechung im Training, markiert sie als Nacharbeit und setzt das Training auf privat, solange die Nacharbeit offen ist
+3. Das SYSTEM behält übertragene Übungen ohne Entsprechung im Training und markiert sie als Nacharbeit
 4. Das SYSTEM löst die Nacharbeits-Markierung von selbst auf, WENN der USER die betroffene Zuordnung entfernt oder ersetzt
 5. Das SYSTEM setzt ein veröffentlichtes Training auf privat und informiert den USER, WENN es nach dem Wechsel die Veröffentlichungsbedingungen seines neuen Schemas nicht mehr erfüllt
 
@@ -241,7 +241,7 @@ Acceptance Criteria
 5. Der USER kann die Reihenfolge der Übungen innerhalb eines Unterblocks ändern
 6. Das SYSTEM bietet je Unterblock ausschliesslich Übungen an, deren Einordnung gemäss Abbildungsregel in diesem Unterblock liegt
 7. Der USER wird auf leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität hingewiesen
-8. Das SYSTEM blockiert das Speichern wegen eines leeren Unterblocks nicht; die Bedingungen der Veröffentlichung regelt die Veröffentlichungs-Story
+8. Das SYSTEM blockiert wegen eines leeren Unterblocks weder das Speichern noch das Veröffentlichen
 
 Postconditions
 
@@ -345,53 +345,3 @@ Out of Scope
 Offene Fragen
 
 1. @UX Designer: Wie wird der Abgleich dargestellt, und erscheint er ausser im Editor auch in der Durchführungsansicht, im Druck und auf der Übersichtskarte?
-
----
-
-Faktenlage für Story 7 (aus der Veröffentlichungs-Analyse dieser Session):
-
-- Ein Trainer schaltet ein Training im Editor öffentlich. Sind die Bedingungen nicht erfüllt, nennt ihm ein Hinweis die fehlenden Punkte als Klartext-Liste; er springt jedoch nicht an die betroffene Stelle im Editor.
-- Verwendet das Training eigene private Übungen, muss der Trainer deren Mitveröffentlichung bestätigen; diese Übungen bleiben danach dauerhaft öffentlich.
-- Verletzt ein veröffentlichtes Training nachträglich eine Bedingung, setzt das System es selbsttätig auf privat und informiert den Trainer.
-- Ein Zurücksetzen auf privat geschieht ohne Rückfrage. Andere Nutzer verlieren den Zugriff und sehen eine neutrale Meldung, die nicht verrät, ob das Training je existierte.
-- Andere Nutzer können ein öffentliches Training ansehen, mobil durchführen und drucken; es gibt keine Kopier-Funktion und der Ersteller wird nirgends angezeigt.
-- Die Vollständigkeitsprüfung zählt heute nur, ob eine Zuordnung existiert, nicht ob die referenzierte Übung noch sichtbar ist.
-- Für die Unterblöcke Spielform zum Trainingsziel und Explosivität gibt es keine Bestandsübungen; sie sind nur über eigene Übungen befüllbar.
-- PO-Entscheide 2026-08-16: Pflicht für die Veröffentlichung sind die drei Einstiegs-Unterblöcke, der Unterblock Spielformen und unterstützende Übungen sowie der Abschluss; der Spiel-Block ist als freies Spiel bewusst ausgenommen und behält nur den Hinweis. Offene Nacharbeit blockiert die Veröffentlichung. Belegt heisst: mindestens eine Zuordnung, wobei Nacharbeits-Zuordnungen nicht zählen. Eine separate Alterskategorie-Bedingung braucht der Junioren-Zweig nicht, weil ein Junioren-Training per Schema-Definition mindestens eine Junioren-Kategorie trägt.
-- Die hohe Erst-Hürde (Spielform zum Trainingsziel und Explosivität sind nur über eigene Übungen befüllbar) ist bewusst gewählt: Ein öffentliches Junioren-Training soll lehrmittelkonform sein; privates Planen und Durchführen geht jederzeit ohne diese Bedingungen. Der Product Owner plant, die Hürde später durch geseedete Community-Übungen zu senken.
-
-## Story 7 (Business): Junioren-Training veröffentlichen
-
-Status: Final ausgearbeitet und validiert am 2026-08-16.
-
-Als Trainer:in im Juniorenfussball
-möchte ich mein Junioren-Training öffentlich teilen können, sobald es dem Trainingsschema entspricht
-damit andere Trainer:innen nur vollständige und lehrmittelkonforme Junioren-Trainings vorfinden
-
-Preconditions
-
-1. Das Training folgt dem Juniorenschema und ist nach Trainingsteilen und Unterblöcken gegliedert
-
-Acceptance Criteria
-
-1. Der USER kann sein Junioren-Training öffentlich schalten, sobald die drei Einstiegs-Unterblöcke, der Unterblock Spielformen und unterstützende Übungen sowie der Abschluss belegt sind und keine Nacharbeit offen ist
-2. Der USER kann sein Junioren-Training ohne Zuordnung im Spiel-Block veröffentlichen
-3. Der USER erkennt vor dem Veröffentlichen, welche Bedingungen sein Training noch nicht erfüllt
-4. Das SYSTEM zählt einen Unterblock als belegt, sobald ihm mindestens eine Zuordnung zugewiesen ist; Nacharbeits-Zuordnungen zählen nicht
-5. Der USER kann sein veröffentlichtes Junioren-Training jederzeit wieder auf privat setzen
-
-Postconditions
-
-1. Das SYSTEM macht das Training für alle Betrachtenden sichtbar WENN der USER es öffentlich schaltet und alle Bedingungen erfüllt sind
-2. Das SYSTEM veröffentlicht die im Training verwendeten eigenen privaten Übungen mit WENN der USER dies beim jeweiligen Veröffentlichen bestätigt hat
-3. Das SYSTEM setzt ein veröffentlichtes Junioren-Training selbsttätig auf privat und informiert den USER WENN es eine der Bedingungen nicht mehr erfüllt
-
-Out of Scope
-
-1. Das SYSTEM ändert die Veröffentlichungsbedingungen für Kinderfussball-Trainings nicht
-2. Das SYSTEM prüft beim Veröffentlichen nicht, ob die zugeordneten Übungen für andere Betrachtende sichtbar sind
-3. Das SYSTEM benachrichtigt niemanden, wenn ein Training wieder auf privat gesetzt wird
-
-Offene Fragen
-
-1. @UX Designer: Wie erfährt der Trainer, welche Bedingung er wo im Editor erfüllen muss, wenn die Anzahl der Bedingungen im Juniorenschema deutlich höher ist als im Kinderfussball, und wie unterscheidet sich die Meldung bei offener Nacharbeit von den übrigen Bedingungen?
