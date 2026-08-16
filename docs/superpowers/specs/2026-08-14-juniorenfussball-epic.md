@@ -69,7 +69,7 @@ damit ich meine Mannschaft in derselben Applikation planen kann, ohne ihr die St
 10. Der Übungskatalog ist nach den Alterskategorien D, C, B und A gleichwertig filterbar wie nach G, F und E
 11. Ein Junioren-Training ist veröffentlichbar, sobald Einstieg und Hauptteil belegt sind und mindestens eine Alterskategorie gesetzt ist; der Abschluss ist keine Veröffentlichungsbedingung
 12. Ein Junioren-Training zeigt in der mobilen Durchführungsansicht und im Druck dieselbe Gliederung nach Trainingsteilen und Unterblöcken wie im Editor
-13. Ein Training kann ein Ziel tragen, das in Editor, Durchführungsansicht und Druck sichtbar ist, unabhängig vom Schema
+13. Ein Training kann genau ein optionales Ziel als Freitext tragen, das in Editor, Durchführungsansicht und Druck sichtbar ist, unabhängig vom Schema
 14. Eine Übung kann genau eine Typologie aus Basisspielform, Spielform oder Übung tragen, und der Übungskatalog ist danach filterbar; für den Bestand ist die Typologie nicht erforderlich
 15. Die zentralen nutzersichtbaren Texte der Applikation — Seitentitel, Startseite, Quellen- und Herkunftshinweise — beschreiben sie als Werkzeug für Kinder- und Juniorenfussball
 16. Bestehende Kinderfussball-Trainings und -Übungen bleiben unverändert lesbar, bearbeitbar und veröffentlichbar
@@ -134,7 +134,7 @@ Die Stories 9, 10 und 11 sind unabhängig und können jederzeit gezogen werden. 
 | Befüllbarkeit Aufwärmen und Explosivität | Über Übungen mit direkter Junioren-Heimat, beschränkt auf diese zwei Unterblöcke |
 | Leerer Unterblock Spiel im Junioren-Training | Hinweis beim Speichern, analog zum Kinderfussball-Hinweis; blockiert nichts |
 | Pflichtteile für Veröffentlichung im Juniorenschema | Einstieg und Hauptteil |
-| Trainingsziel | Ein Training kann ein Ziel tragen, für beide Schemata (PO 2026-08-16) |
+| Trainingsziel | Genau ein optionales Freitext-Ziel pro Training, für beide Schemata; SMART-Formulierung bleibt Sache des Trainers (PO 2026-08-16) |
 | Übungs-Typologie | Basisspielform, Spielform, Übung als optionales Attribut für alle Übungen; keine Nachpflege des Bestands (PO 2026-08-16) |
 | Junioren-Didaktik im Übrigen | Erscheinungsformen, Spielphasenmodell und Entwicklungsdimensionen bleiben ausserhalb dieses Epics |
 | Begriffsführung | Getrennte Begriffe je Schema, gemäss SFV-Lehrmittel |
