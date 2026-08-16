@@ -102,7 +102,7 @@ Vertikal geschnitten, jede Story liefert für sich einen nachvollziehbaren Zusta
 | 10 | Trainingsziel an Trainings führen | Data | Business | — |
 | 11 | Nutzersichtbare Texte auf Kinder- und Juniorenfussball öffnen | Interface | Business | — |
 
-Release-Kopplung (PO-Entscheid 2026-08-16): Die Stories 2 und 3 werden gemeinsam ausgeliefert — es gibt zu keinem Zeitpunkt einen nutzbaren Zustand, in dem Alterskategorien beider Schemata am selben Training mischbar sind.
+Release-Entscheid (PO, 2026-08-16): Das gesamte Epic wird als Ganzes released. Die Story-Reihenfolge ist reine Entwicklungs-Reihenfolge; Zwischenzustände einzelner Stories erreichen die Nutzer nie. Damit ist ausgeschlossen, dass je ein nutzbarer Zustand existiert, in dem Alterskategorien beider Schemata mischbar sind, ein Junioren-Training ohne Junioren-Struktur entsteht oder ein Junioren-Training nicht veröffentlicht werden kann.
 
 Story 5 umfasst neben der Unterblock-Gliederung auch den Data-Anteil der Junioren-Heimat: das Erfassen von Übungen mit Heimat Aufwärmen oder Explosivität im Übungs-Editor.
 

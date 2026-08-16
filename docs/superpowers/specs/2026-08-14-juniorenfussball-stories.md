@@ -1,6 +1,6 @@
 # Stories: Juniorenfussball-Trainingsschema
 
-Stand 2026-08-14. Story-Ausarbeitung zum Epic «Juniorenfussball-Trainingsschema» (`2026-08-14-juniorenfussball-epic.md`). Die Stories werden einzeln analysiert, diskutiert und validiert; dieses Dokument wächst Story für Story.
+Stand 2026-08-16. Story-Ausarbeitung zum Epic «Juniorenfussball-Trainingsschema» (`2026-08-14-juniorenfussball-epic.md`). Die Stories werden einzeln analysiert, diskutiert und validiert; dieses Dokument wächst Story für Story. Release-Entscheid: Das gesamte Epic wird als Ganzes released (PO, 2026-08-16); die Story-Reihenfolge ist reine Entwicklungs-Reihenfolge.
 
 Faktenlage für Story 1 (aus Quellen- und Bestandsanalyse):
 
@@ -72,12 +72,14 @@ Faktenlage für Story 2 (aus der Codebase-Analyse dieser Session):
 - Übungen tragen Alterskategorien als Mehrfachwert; im Bestand kommen die Kombinationen G+F+E (32), F+E (28), nur E (11) und G+F (4) vor. Trainings tragen Alterskategorien ebenfalls als Mehrfachwert.
 - Es gibt echte Nutzer; Migrationen sind forward-only, bestehende Zeilen müssen jede Änderung unverändert überstehen.
 
-## Story 2 (Business, Entwurf): Übungen und Trainings mit Alterskategorien D bis A auszeichnen und filtern
+## Story 2 (Business): Übungen und Trainings mit Alterskategorien D bis A auszeichnen und filtern
 
-Status: Entwurf, konsolidiert aus den früheren Stories 2 und 3, nachdem die Validierung gezeigt hat, dass die Oberfläche neue Vokabularwerte automatisch anbietet und ein reiner Modell-Schnitt einen künstlichen Zwischenzustand erzeugen würde. Blockiert bis zum Abschluss des Spikes: Der Product Owner hat am 2026-08-14 entschieden, nach dem Spike zuerst das Epic mit dem Fachwissen aus dem Manual Fussball Jugendliche erneut zu diskutieren, bevor diese und die folgenden Stories verfeinert werden. In dieser Epic-Diskussion wird auch entschieden, wie der Übergangszustand gemischter Alterskategorien (z.B. E und D am selben Training, bevor die Schema-Regel existiert) behandelt wird.
+Status: Final ausgearbeitet und validiert am 2026-08-16.
+
+Anmerkung: Eine Übung darf Alterskategorien beider Schemata gleichzeitig tragen (z.B. E und D) — das ist gewollt, weil eine Übung beiden Schemata dienen kann. Das Mischverbot gilt ausschliesslich für Trainings und liegt in der Schema-Story.
 
 Als Trainer:in im Juniorenfussball
-möchte ich Übungen und Trainings mit den Alterskategorien D bis A auszeichnen und den Übungskatalog danach filtern
+möchte ich Übungen und Trainings mit den Alterskategorien D bis A auszeichnen und danach filtern
 damit ich meine Inhalte der richtigen Stufe zuordnen und passende Übungen finden kann
 
 Preconditions
@@ -87,20 +89,73 @@ Preconditions
 Acceptance Criteria
 
 1. Der USER kann einer Übung jede Teilmenge der Alterskategorien G, F, E, D, C, B und A zuweisen
-2. Der USER kann einem Training jede Teilmenge derselben Alterskategorien zuweisen
-3. Der USER kann den Übungskatalog nach den neuen Alterskategorien gleichberechtigt mit den bestehenden filtern
-4. Das SYSTEM ordnet die Alterskategorien überall in der fachlichen Reihenfolge G, F, E, D, C, B, A
-5. Das SYSTEM bezieht alle Alterskategorien aus der einen kontrollierten Vokabularquelle, deren Übereinstimmung mit dem Übungsschema automatisiert nachgewiesen ist
+2. Der USER kann einem Training Alterskategorien aus dem gesamten Bereich G bis A zuweisen
+3. Der USER kann den Übungskatalog nach den neuen Alterskategorien gleichwertig mit den bestehenden filtern
+4. Der USER kann die Trainings-Übersichten nach den neuen Alterskategorien filtern
+5. Das SYSTEM zeigt bei Mehrfachauswahl im Kategorien-Filter alle Einträge, die mindestens eine der gewählten Kategorien tragen
+6. Das SYSTEM ordnet die Alterskategorien überall in der fachlichen Reihenfolge G, F, E, D, C, B, A
+7. Das SYSTEM bezieht die Alterskategorien in allen Bestandteilen der Applikation aus der einen kontrollierten Vokabularquelle, und die Übereinstimmung ist automatisiert nachgewiesen
 
 Postconditions
 
-1. Das SYSTEM lässt alle bestehenden Übungen und Trainings nachweislich unverändert gültig, geprüft gegen eine Kopie des Produktionsbestands
-2. Das SYSTEM speichert die neuen Werte, ohne dass bestehende Daten angefasst oder zurückgesetzt werden
+1. Das SYSTEM lässt alle bestehenden Übungen und Trainings unverändert und gültig: identische Feldwerte, alle Invarianten weiterhin erfüllt, nachgewiesen gegen eine Kopie des Produktionsbestands
+2. Das SYSTEM lässt die Zuordnung einer Übung ohne Stufen-Überlappung weiterhin zu und markiert sie nur mit dem bestehenden Hinweis
 
 Out of Scope
 
-1. Das SYSTEM leitet aus den Alterskategorien eines Trainings noch kein Trainingsschema ab; die Misch-Regel liegt in der Schema-Story, wird aber im selben Release ausgeliefert (PO-Entscheid 2026-08-16: kein nutzbarer Zustand mit mischbaren Schemata)
+1. Das SYSTEM leitet in dieser Story aus den Alterskategorien noch kein Trainingsschema ab und prüft keine Schema-Mischung; diese Regeln liegen in der Schema-Story desselben Releases
 
 Offene Fragen
 
 1. @UX Designer: Welche Farbe und welches Kurzlabel erhält jede der neuen Alterskategorien in der Oberfläche?
+2. @UX Designer: Wie skaliert der Kategorien-Filter von drei auf sieben Werte, als gemeinsamer Block oder nach Schema gruppiert?
+
+---
+
+Faktenlage für Story 3 (aus der Codebase-Analyse dieser Session):
+
+- Eine Stufen-Änderung am Training speichert heute sofort und ohne Rückfrage; erst danach zeigt ein Dialog die Übungen ohne Stufen-Überlappung mit den Optionen Behalten oder Entfernen. Ein Konzept von Übertragung oder Nacharbeit existiert nicht.
+- Die Zuordnung einer Übung ist heute nie durch Stufen blockiert; die einzige Markierung ist ein Warnsymbol pro Zeile, berechnet, nicht gespeichert.
+- Eine Datenbank-Invariante setzt ein veröffentlichtes Training automatisch auf privat, sobald es die Veröffentlichungsbedingungen verletzt; der Trainer wird nachträglich per Meldung informiert.
+- Die Abbildungsregel des Spikes definiert die Übertragung: 12 Einleitungs-Übungen nach Aufwärmen, 54 nach Spielformen und unterstützende Übungen, 1 nach Spiel, 4 nach Ausklang, 4 Auffangen-Übungen ohne Entsprechung. Rückrichtung: Aufwärmen nach Einleitung, Explosivität ohne Entsprechung.
+
+## Story 3 (Business): Trainingsschema aus den Alterskategorien bestimmen
+
+Status: Final ausgearbeitet und validiert am 2026-08-16.
+
+Als Trainer:in im Juniorenfussball
+möchte ich, dass sich mein Training nach dem Schema der gewählten Alterskategorien richtet
+damit ein D-Training die Junioren-Struktur erhält und nicht die Struktur des Kinderfussballs
+
+Preconditions
+
+1. Die Alterskategorien D bis A sind im Übungs- und Trainingsmodell verfügbar
+2. Die Abbildungsregel für die Übertragung zwischen den Schemata ist als Entscheidungsdokument abgenommen
+
+Acceptance Criteria
+
+1. Das SYSTEM bestimmt das Schema eines Trainings aus seinen Alterskategorien: G, F und E ergeben das Kinderfussball-Schema, D, C, B und A das Juniorenschema
+2. Das SYSTEM behandelt ein Training ohne Alterskategorie nach dem Kinderfussball-Schema
+3. Das SYSTEM wertet jede Kategorie-Änderung als Schema-Wechsel, durch die sich das massgebliche Schema ändert, einschliesslich des Entfernens der letzten Alterskategorie eines Junioren-Trainings
+4. Das SYSTEM verhindert, dass ein Training gleichzeitig Alterskategorien beider Schemata trägt
+5. Der USER muss einen Schema-Wechsel bestätigen, wenn dem Training Übungen zugeordnet sind
+6. Der USER erkennt vor der Bestätigung, welche zugeordneten Übungen im neuen Schema keine Entsprechung haben
+7. Das SYSTEM vollzieht einen Schema-Wechsel an einem Training ohne zugeordnete Übungen ohne Bestätigung
+
+Postconditions
+
+1. Das SYSTEM übernimmt die neuen Alterskategorien und überträgt die zugeordneten Übungen anhand der Abbildungsregel in die Struktur des neuen Schemas WENN der USER den Wechsel bestätigt
+2. Das SYSTEM lässt das Training vollständig unverändert WENN der USER den Wechsel abbricht
+3. Das SYSTEM behält übertragene Übungen ohne Entsprechung im Training und markiert sie als Nacharbeit
+4. Das SYSTEM löst die Nacharbeits-Markierung von selbst auf, WENN der USER die betroffene Zuordnung entfernt oder ersetzt
+5. Das SYSTEM setzt ein veröffentlichtes Training auf privat und informiert den USER, WENN es nach dem Wechsel die Veröffentlichungsbedingungen seines neuen Schemas nicht mehr erfüllt
+
+Out of Scope
+
+1. Das SYSTEM ändert beim Schema-Wechsel eines Trainings nicht die gepflegte Heimat der betroffenen Übungen; die Übertragung betrifft ausschliesslich die Zuordnungen im Training
+2. Das SYSTEM prüft innerhalb eines Schemas weiterhin nicht, ob die Alterskategorien einer Übung mit den Stufen des Trainings überlappen
+3. Der USER kann eine Nacharbeits-Markierung nicht manuell als erledigt abhaken; sie löst sich ausschliesslich über das Entfernen oder Ersetzen der Zuordnung
+
+Offene Fragen
+
+1. @UX Designer: Wie werden der Bestätigungsdialog vor dem Schema-Wechsel und die Nacharbeits-Markierung an übertragenen Übungen gestaltet, auch im Zusammenspiel mit dem bestehenden Dialog für Übungen ausserhalb der Stufen?
