@@ -18,8 +18,14 @@
             "farbe": "weiss",
             "gestrichelt": true,
             "punkte": [
-                { "x": 483, "y": 193 },
-                { "x": 483, "y": 900 }
+                {
+                    "x": 483,
+                    "y": 193
+                },
+                {
+                    "x": 483,
+                    "y": 900
+                }
             ]
         },
         {
@@ -29,8 +35,14 @@
             "farbe": "weiss",
             "gestrichelt": true,
             "punkte": [
-                { "x": 1127, "y": 193 },
-                { "x": 1127, "y": 900 }
+                {
+                    "x": 1127,
+                    "y": 193
+                },
+                {
+                    "x": 1127,
+                    "y": 900
+                }
             ]
         },
         {
@@ -40,8 +52,14 @@
             "farbe": "rot",
             "gestrichelt": true,
             "punkte": [
-                { "x": 384, "y": 286 },
-                { "x": 1221, "y": 286 }
+                {
+                    "x": 384,
+                    "y": 286
+                },
+                {
+                    "x": 1221,
+                    "y": 286
+                }
             ]
         },
         {
@@ -51,8 +69,14 @@
             "farbe": "rot",
             "gestrichelt": true,
             "punkte": [
-                { "x": 384, "y": 809 },
-                { "x": 1221, "y": 809 }
+                {
+                    "x": 384,
+                    "y": 809
+                },
+                {
+                    "x": 1221,
+                    "y": 809
+                }
             ]
         },
         {
@@ -125,7 +149,7 @@
             "typ": "minitor",
             "x": 350,
             "y": 374,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "minitor-links-u",
@@ -133,7 +157,7 @@
             "typ": "minitor",
             "x": 350,
             "y": 718,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "minitor-rechts-o",
@@ -141,7 +165,7 @@
             "typ": "minitor",
             "x": 1257,
             "y": 374,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "minitor-rechts-u",
@@ -149,7 +173,7 @@
             "typ": "minitor",
             "x": 1257,
             "y": 718,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "rot-warten-oben-1",
@@ -177,7 +201,7 @@
             "x": 773,
             "y": 214,
             "farbe": "rot",
-            "pose": "dribbeln"
+            "pose": "laufen"
         },
         {
             "id": "rot-aktiv-links",
@@ -287,13 +311,6 @@
             "y": 582
         },
         {
-            "id": "ball-rot-oben",
-            "art": "symbol",
-            "typ": "fussball",
-            "x": 799,
-            "y": 282
-        },
-        {
             "id": "ball-weiss-unten",
             "art": "symbol",
             "typ": "fussball",
@@ -319,8 +336,14 @@
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
-                { "x": 468, "y": 560 },
-                { "x": 587, "y": 558 }
+                {
+                    "x": 468,
+                    "y": 560
+                },
+                {
+                    "x": 587,
+                    "y": 558
+                }
             ]
         },
         {
@@ -328,26 +351,29 @@
             "art": "pfad",
             "typ": "pass",
             "punkte": [
-                { "x": 611, "y": 558 },
-                { "x": 1143, "y": 556 }
+                {
+                    "x": 611,
+                    "y": 558
+                },
+                {
+                    "x": 1143,
+                    "y": 556
+                }
             ]
         },
         {
-            "id": "dribbling-oben",
-            "art": "pfad",
-            "typ": "dribbling",
-            "punkte": [
-                { "x": 799, "y": 292 },
-                { "x": 795, "y": 382 }
-            ]
-        },
-        {
-            "id": "pass-oben",
+            "id": "pass-unten",
             "art": "pfad",
             "typ": "pass",
             "punkte": [
-                { "x": 794, "y": 404 },
-                { "x": 780, "y": 738 }
+                {
+                    "x": 773,
+                    "y": 757
+                },
+                {
+                    "x": 792,
+                    "y": 312
+                }
             ]
         },
         {
@@ -355,9 +381,18 @@
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
-                { "x": 806, "y": 818 },
-                { "x": 800, "y": 858 },
-                { "x": 818, "y": 898 }
+                {
+                    "x": 816,
+                    "y": 909
+                },
+                {
+                    "x": 818,
+                    "y": 878
+                },
+                {
+                    "x": 804,
+                    "y": 831
+                }
             ]
         }
     ]
