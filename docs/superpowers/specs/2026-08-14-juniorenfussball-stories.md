@@ -99,7 +99,7 @@ Postconditions
 
 Out of Scope
 
-1. Das SYSTEM leitet aus den Alterskategorien eines Trainings noch kein Trainingsschema ab und verhindert keine Mischung über die Schemagrenze
+1. Das SYSTEM leitet aus den Alterskategorien eines Trainings noch kein Trainingsschema ab; die Misch-Regel liegt in der Schema-Story, wird aber im selben Release ausgeliefert (PO-Entscheid 2026-08-16: kein nutzbarer Zustand mit mischbaren Schemata)
 
 Offene Fragen
 

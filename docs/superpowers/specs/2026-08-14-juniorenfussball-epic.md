@@ -1,10 +1,14 @@
 # Epic: Juniorenfussball-Trainingsschema
 
-Stand 2026-08-14. Requirements-Dokumentation, keine Architektur- oder Lösungsspezifikation. Validiert durch perspektivenbasiertes Lesen (Kunde, Architektur, Test, Business-Analyse, Fachexperte, UX); alle blockierenden und wichtigen Findings wurden mit dem Product Owner geklärt und sind eingearbeitet.
+Stand 2026-08-16 (Epic-Review nach abgeschlossenem Spike). Requirements-Dokumentation, keine Architektur- oder Lösungsspezifikation. Zweifach validiert durch perspektivenbasiertes Lesen; der Epic-Review vom 2026-08-15/16 hat alle Aussagen gegen das Manual Fussball Jugendliche (PDF im Projekt) und gegen die Codebase abgeglichen.
 
 ## 1. Problem und Wert
 
 Trainer:innen im Juniorenfussball (ab Kategorie D) können die Applikation heute nicht nutzen: Sie zwingt jedem Training die vier Trainingsteile des Kinderfussballs auf und kennt keine Alterskategorien oberhalb von E. Wer eine D-Juniorinnen-Mannschaft trainiert, muss auf andere Hilfsmittel ausweichen. Die Erweiterung öffnet die Applikation für den gesamten Juniorenfussball und bindet Trainer:innen über den Stufenübergang E→D hinaus, statt sie genau dann zu verlieren, wenn ihre Kinder in den Juniorenfussball wechseln.
+
+Zusätzlicher Wert-Kontext aus den Quellen: Gemäss den Weisungen von J+S ist eine schriftliche Planung für die Durchführung von J+S-Aktivitäten verbindlich (Manual S. 42) — die App bedient damit eine regulatorisch begründete Pflicht der Trainer:innen. Der SFV bietet mit Clubcorner ein eigenes, kostenloses Planungsinstrument an; die App positioniert sich daneben über die kuratierte Übungsdatenbank und die schema-getreue Struktur.
+
+Zwei Erweiterungen sichern die Quellentreue der neu entstehenden Junioren-Daten: Das Manual macht die zielgerichtete Planung zur Kernqualität eines Trainings (S. 41, roter Faden und SMART-Ziele) und typisiert seine Trainingsformen als Basisspielform, Spielform oder Übung (S. 56). Beides nimmt das Epic auf, damit Trainer ihre Junioren-Übungen und -Trainings von Beginn an quellengetreu erfassen und später keine Nachpflege oder Migration nötig wird.
 
 ## 2. Stakeholder
 
@@ -21,21 +25,22 @@ Der SFV führt zwei getrennte Lehrmittel mit zwei unterschiedlichen Trainingssch
 
 | | Kinderfussball (G, F, E) | Juniorenfussball (ab D) |
 |---|---|---|
-| Quelle | Manual Fussball Kinder, Abbildung 14 | Manual Fussball Jugendliche, Abbildung 19 |
+| Quelle | Manual Fussball Kinder, Abbildung 14 | Manual Fussball Jugendliche, Abbildung 19 (S. 43) |
 | Trainingsteile | Auffangen, Einleitung, Hauptteil, Ausklang | Einstieg, Hauptteil, Abschluss |
-| Untergliederung | Hauptteil in drei Unterblöcke: Fussball spielen lernen; Vielseitigkeit erleben; Fussball spielen | Einstieg in zwei Unterblöcke: Aufwärmen; Explosivität. Hauptteil in zwei Unterblöcke: Spielformen und unterstützende Übungen; Spiel |
-| Zeitangaben | keine | Einstieg 20–30 Minuten, Spielformen und unterstützende Übungen 45–65 Minuten, Spiel 15–20 Minuten, Ausklang 5–10 Minuten, Gesamtdauer 90 Minuten (Werte gemäss FVBJ-Broschüre Abschnitt 5; das Manual Abb. 19 nennt für Spielformen 30–45 Minuten, der Widerspruch ist zugunsten der Broschüre entschieden) |
-| Didaktik | sechs Erscheinungsformen, methodischer Fahrplan Offen starten – Üben – Wetteifern | eigene Erscheinungsformen nach Spielphasen, darunter die Entwicklungsdimensionen Taktik, Technik, Athletik, Persönlichkeit |
+| Untergliederung | Hauptteil in drei Unterblöcke: Fussball spielen lernen; Vielseitigkeit erleben; Fussball spielen | Einstieg in zwei Unterblöcke: Aufwärmen; Explosivität. Hauptteil in zwei Unterblöcke: Spielformen und unterstützende Übungen; Spiel. Abschluss mit dem Unterblock Ausklang |
+| Zeitangaben | keine | Einstieg 20–30 Minuten, Spielformen und unterstützende Übungen 30–45 Minuten, Spiel 15–20 Minuten, Ausklang 5–10 Minuten, Gesamtdauer 90 Minuten (Manual Abb. 19; der frühere Entscheid für die Broschüren-Werte 45–65 wurde am 2026-08-16 revidiert, weil deren Summe die 90-Minuten-Vorgabe verfehlt) |
+| Didaktik (Inhalts-Klassifikation) | sechs Erscheinungsformen, methodischer Fahrplan Offen starten – Üben – Wetteifern | fünf Erscheinungsform-Kategorien (drei nach Spielphasen, zwei spielphasenübergreifend: Athletik und Gesundheit, Persönlichkeit und Team), darunter die Entwicklungsdimensionen Taktik, Technik, Athletik, Persönlichkeit |
+| Format-Klassifikation (unabhängige Achse) | keine | Übungs-Typologie Basisspielform, Spielform, Übung. Basisspielform: die Referenzform eines Themas, die die taktischen Prinzipien sichtbar macht; Spielform: spielnahe Form mit Entscheidungsdruck; Übung: isolierte Form. Das Manual bevorzugt fachlich Spielformen; diese Präferenz ist Hintergrundwissen und wird von der App nicht abgebildet |
 
-Anmerkungen aus der fachlichen Validierung:
-- Das Manual Fussball Jugendliche verwendet die Begriffe synonym: Abbildung 19 nennt die Teile EINSTIEG/HAUPTTEIL/ABSCHLUSS, Abbildung 17 («roter Faden») beschriftet dieselben Teile doppelt als EINLEITUNG/EINSTIEG und AUSKLANG/ABSCHLUSS (am 2026-08-14 am PDF verifiziert, S. 41 und 43). «Einleitung» und «Ausklang» sind damit nicht exklusiv Kinderfussball-Begriffe; «Ausklang» ist im Juniorenschema zudem der Unterblock des Abschlusses. Eine deklarierte Brücke zum Kinderfussball existiert nicht, die Verwechslungsgefahr ist in der Quelle selbst angelegt.
-- Das Manual differenziert das Trainingsschema nicht nach den Kategorien D, C, B, A. Es kennt eine einzige Struktur für die gesamte FTEM-Stufe Foundation 3; pädagogische Unterschiede laufen über Entwicklungsstufen (spätes Schulkindalter bis Adoleszenz), nicht über die Trainingsstruktur.
-- Die Dreiphasen-Struktur des Einstiegs (Aktivierung und Körperstabilität, Spielform zum Trainingsziel, Explosivität) stammt aus dem J+S-Lernbaustein «Der Einstieg», nicht aus dem Manual selbst. Die Quellen liegen unter sources/junioren/ im Projekt.
-- Im 7er-/9er-Fussball heissen die offiziellen Kategorien D (Knaben und gemischte Teams) und FF-14 (reine Mädchenteams). Entscheid: Die Applikation führt nur D; FF-14-Teams arbeiten mit der Kategorie D, weil Trainingsschema und Inhalte identisch sind.
-- Die Junioren-Didaktik ist nicht ein Ersatz der Erscheinungsformen durch Entwicklungsdimensionen: Das Junioren-Manual hat eigene Erscheinungsformen (nach Spielphasen gegliedert), die Entwicklungsdimensionen liegen als Ebene darunter. Beides ist bewusst nicht Teil dieses Epics (siehe Out of Scope).
-- Die SFV-Kategorienreform (verbindlich seit Saison 2025/26) unterteilt die Kategorie D in D-7 und D-9. Entscheid: Die Applikation führt eine einzige Kategorie D; das Trainingsschema ist für beide Spielformen dasselbe.
+Anmerkungen aus der fachlichen Validierung (Manual am PDF verifiziert):
+- Das Manual verwendet die Begriffe synonym: Abbildung 19 nennt die Teile EINSTIEG/HAUPTTEIL/ABSCHLUSS, Abbildung 17 («roter Faden», S. 41) beschriftet dieselben Teile doppelt als EINLEITUNG/EINSTIEG und AUSKLANG/ABSCHLUSS. «Einleitung» und «Ausklang» sind damit nicht exklusiv Kinderfussball-Begriffe. Die Verwechslungsgefahr ist in der Quelle selbst angelegt. Abbildung 19 führt im Hauptteil zudem wörtlich «Fussball spielen lernen» und «Fussball spielen» — zwei der drei Kinderfussball-Hauptteilkategorien; nur «Vielseitigkeit erleben» hat im Junioren-Manual keine Entsprechung.
+- Die Inhalte des Einstiegs stehen im Manual selbst (Abb. 19: TA/TE/PE, AT-Prävention, AT-Explosivität; Reihenfolge-Belege S. 45 und S. 72); nur die Benennung der drei Phasen und deren Minutenwerte stammen aus dem J+S-Lernbaustein «Der Einstieg».
+- Das Manual differenziert das Trainingsschema nicht nach Kategorien; es kennt eine einzige Struktur für die FTEM-Stufe Foundation 3. Die Gleichsetzung von Foundation 3 mit den Kategorien D bis A ist eine begründete Annahme (Manual-Zielgruppe «Jugendliche», Broschüre bestätigt sie für D), keine Manual-Aussage. Pädagogische Unterschiede laufen über Entwicklungsstufen (Tabelle 3, S. 13) und betreffen Inhalte und Dosierung, nicht die Struktur.
+- Der dritte Athletik-Bereich Ermüdungsresistenz gehört laut Manual (S. 72) über Spielformen in den Hauptteil; er braucht keinen eigenen Unterblock.
+- Im 7er-/9er-Fussball heissen die offiziellen Kategorien D (Knaben und gemischte Teams) und FF-14 (reine Mädchenteams). Entscheid: Die Applikation führt nur D; FF-14-Teams arbeiten mit der Kategorie D.
+- Die SFV-Kategorienreform (verbindlich seit Saison 2025/26) unterteilt D in D-7 und D-9. Entscheid: eine einzige Kategorie D, keine Spielform-Unterscheidung.
 
-Die Applikation bildet heute ausschliesslich das Kinderfussball-Schema ab. Trainingsteile, Alterskategorien und die Hauptteil-Untergliederung sind nicht Konfiguration, sondern in Datenbank-Constraints, im JSON-Schema, im generierten Vokabular-Modul und in Domänen-Konstanten der Applikation verankert.
+Die Applikation bildet heute ausschliesslich das Kinderfussball-Schema ab. Trainingsteile, Alterskategorien und die Hauptteil-Untergliederung sind nicht Konfiguration, sondern in Datenbank-Constraints, im JSON-Schema, im generierten Vokabular-Modul und in Domänen-Konstanten der Applikation verankert. Die abgenommene Abbildungsregel samt Heimat-Mechanismus ist in `2026-08-15-junioren-abbildungsregel.md` festgehalten.
 
 ## 4. Epic
 
@@ -47,34 +52,37 @@ damit ich meine Mannschaft in derselben Applikation planen kann, ohne ihr die St
 
 ### Preconditions
 
-1. Das Trainingsschema des Juniorenfussballs liegt mit Trainingsteilen, Unterblöcken und Zeitbandbreiten aus dem SFV-Lehrmittel belegt vor
-2. Die Abbildungsregel von den Kinderfussball-Attributen einer Übung auf ihre Einordnung im Juniorenschema ist definiert (Ergebnis des Spikes)
-3. Die Applikation hat echte Nutzer, Migrationen müssen bestehende Daten unverändert überstehen
+1. Die Abbildungsregel und der Heimat-Mechanismus sind als Entscheidungsdokument abgenommen
+2. Die Applikation hat echte Nutzer, Migrationen müssen bestehende Daten unverändert überstehen
 
 ### Erfolgskriterien
 
-1. Ein Training ist genau einem der beiden Trainingsschemata zugeordnet; das Schema folgt aus den gewählten Alterskategorien, und Alterskategorien beider Schemata lassen sich nicht mischen
+1. Ein Training ist genau einem der beiden Trainingsschemata zugeordnet; das Schema folgt aus den gewählten Alterskategorien, und Alterskategorien beider Schemata lassen sich zu keinem Zeitpunkt mischen
 2. Ein Training ohne gewählte Alterskategorie verhält sich wie bisher nach dem Kinderfussball-Schema
-3. Ein Junioren-Training ist nach den drei Trainingsteilen Einstieg, Hauptteil und Abschluss in fester, unveränderlicher Reihenfolge gegliedert
+3. Ein Junioren-Training ist nach den drei Trainingsteilen Einstieg, Hauptteil und Abschluss in fester Reihenfolge gegliedert
 4. Die Unterblock-Struktur von Einstieg und Hauptteil ist beim Planen eines Junioren-Trainings erkennbar, auch bevor ihnen Übungen zugeordnet sind
-5. Die Einordnung einer Übung in ein Junioren-Training folgt über die definierte Abbildungsregel aus ihren bestehenden Kinderfussball-Attributen, ohne dass eine Übung doppelt gepflegt wird
+5. Die Einordnung einer Übung in ein Junioren-Training folgt über die abgenommene Abbildungsregel aus ihrer gepflegten Heimat, ohne dass eine Übung doppelt gepflegt wird
 6. Eine Übung ist in Trainings beider Schemata verwendbar, sofern die Abbildungsregel für sie eine Entsprechung im jeweiligen Schema liefert
-7. Wechselt ein befülltes Training durch Änderung seiner Alterskategorien das Schema, überträgt das System die zugeordneten Übungen anhand der Abbildungsregel in die Struktur des neuen Schemas; Übungen ohne Entsprechung sind für den Trainer als Nacharbeit erkennbar
-8. Die Zeitbandbreite je Trainingsteil und die Gesamtdauer von 90 Minuten sind beim Planen eines Junioren-Trainings erkennbar, ohne dass eine Abweichung das Speichern oder Veröffentlichen verhindert
-9. Der Übungskatalog ist nach den Alterskategorien D, C, B und A gleichwertig filterbar wie nach G, F und E
-10. Ein Junioren-Training ist veröffentlichbar, sobald Einstieg und Hauptteil belegt sind und mindestens eine Alterskategorie gesetzt ist; der Abschluss ist keine Veröffentlichungsbedingung
-11. Ein Junioren-Training zeigt in der mobilen Durchführungsansicht und im Druck dieselbe Gliederung nach Trainingsteilen und Unterblöcken wie im Editor
-12. Kein nutzersichtbarer Text bezeichnet die Applikation als ausschliesslich für den Kinderfussball
-13. Bestehende Kinderfussball-Trainings und -Übungen bleiben unverändert lesbar, bearbeitbar und veröffentlichbar
+7. Übungen für Aufwärmen und Explosivität lassen sich als eigene Übungen mit Junioren-Heimat erfassen
+8. Wechselt ein befülltes Training durch Änderung seiner Alterskategorien das Schema, überträgt das System die zugeordneten Übungen anhand der Abbildungsregel in die Struktur des neuen Schemas; Übungen ohne Entsprechung sind für den Trainer als Nacharbeit erkennbar und verhindern das Veröffentlichen nicht
+9. Die Zeitbandbreiten je Trainingsteil und die Gesamtdauer von 90 Minuten stehen dem Trainer beim Planen eines Junioren-Trainings als Orientierung zur Verfügung und sind keine Speicher- oder Veröffentlichungsbedingung
+10. Der Übungskatalog ist nach den Alterskategorien D, C, B und A gleichwertig filterbar wie nach G, F und E
+11. Ein Junioren-Training ist veröffentlichbar, sobald Einstieg und Hauptteil belegt sind und mindestens eine Alterskategorie gesetzt ist; der Abschluss ist keine Veröffentlichungsbedingung
+12. Ein Junioren-Training zeigt in der mobilen Durchführungsansicht und im Druck dieselbe Gliederung nach Trainingsteilen und Unterblöcken wie im Editor
+13. Ein Training kann ein Ziel tragen, das in Editor, Durchführungsansicht und Druck sichtbar ist, unabhängig vom Schema
+14. Eine Übung kann genau eine Typologie aus Basisspielform, Spielform oder Übung tragen, und der Übungskatalog ist danach filterbar; für den Bestand ist die Typologie nicht erforderlich
+15. Die zentralen nutzersichtbaren Texte der Applikation — Seitentitel, Startseite, Quellen- und Herkunftshinweise — beschreiben sie als Werkzeug für Kinder- und Juniorenfussball
+16. Bestehende Kinderfussball-Trainings und -Übungen bleiben unverändert lesbar, bearbeitbar und veröffentlichbar
 
 ### Out of Scope
 
-1. Die Applikation führt keinen kuratierten Übungsbestand aus dem Manual Fussball Jugendliche; der Product Owner sichtet die Junioren-Übungsschemata zuerst selbst, Trainer erfassen Junioren-Übungen als eigene Übungen
-2. Die Junioren-Didaktik wird nicht abgebildet: weder die Erscheinungsformen des Junioren-Manuals nach Spielphasen noch die Entwicklungsdimensionen Taktik, Technik, Athletik und Persönlichkeit; die Kinderfussball-Attribute der Übungen bleiben unverändert
+1. Die Applikation führt keinen kuratierten Übungsbestand aus dem Manual Fussball Jugendliche oder anderen Junioren-Quellen; Trainer erfassen Junioren-Übungen selbst
+2. Die Erscheinungsformen des Junioren-Manuals, das Spielphasenmodell und die Entwicklungsdimensionen werden nicht abgebildet; die Kinderfussball-Didaktik-Attribute der Bestandsübungen bleiben unverändert
 3. Die Applikation bildet kein Geschlecht ab; Juniorinnen und Junioren derselben Alterskategorie arbeiten mit derselben Struktur und demselben Übungsbestand
 4. Die Applikation unterscheidet die Spielformen 7er, 9er und 11er nicht; die Kategorie D wird nicht in D-7 und D-9 aufgeteilt
 5. Der Produktname und die Domain der Applikation werden nicht geändert
-6. Die Applikation leitet aus der Alterskategorie keine Empfehlung ab, welche Übung fachlich geeignet ist
+6. Die Applikation leitet aus der Alterskategorie, dem Trainingsziel oder der Typologie keine Empfehlung ab, welche Übung fachlich geeignet ist
+7. Die Applikation bildet keine Belastungssteuerung, keine Periodisierung über mehrere Trainings und keine Trainingsgruppen-Organisation ab
 
 ## 5. Story-Zerlegung nach SPIDR
 
@@ -82,29 +90,29 @@ Vertikal geschnitten, jede Story liefert für sich einen nachvollziehbaren Zusta
 
 | # | Story | SPIDR | Typ | Hängt ab von |
 |---|---|---|---|---|
-| 1 | Spike: Junioren-Übungsschemata sichten, Abbildungsregel definieren, Schema-Gültigkeit für C bis A prüfen | Spike | Enabler | — |
+| 1 | Spike: Junioren-Übungsschemata sichten, Abbildungsregel definieren (abgeschlossen 2026-08-15) | Spike | Enabler | — |
 | 2 | Übungen und Trainings mit Alterskategorien D bis A auszeichnen und filtern | Data | Business | 1 |
-| 3 | Trainingsschema aus den Alterskategorien bestimmen, inkl. Wechselverhalten mit Übertragung | Rules | Business | 1, 2 |
+| 3 | Trainingsschema aus den Alterskategorien bestimmen, Mischverbot und Wechselverhalten mit Übertragung | Rules | Business | 1, 2 |
 | 4 | Junioren-Training nach Einstieg, Hauptteil und Abschluss gliedern | Paths | Business | 3 |
-| 5 | Einstieg und Hauptteil eines Junioren-Trainings in Unterblöcke gliedern | Rules | Business | 4 |
+| 5 | Einstieg und Hauptteil eines Junioren-Trainings in Unterblöcke gliedern, inkl. Übungen mit Junioren-Heimat | Rules | Business | 4 |
 | 6 | Zeitbandbreiten und Gesamtdauer als Orientierung anzeigen | Rules | Business | 4 |
 | 7 | Junioren-Training veröffentlichen | Rules | Business | 4 |
 | 8 | Junioren-Training mobil durchführen und drucken | Interface | Business | 4, 5 |
-| 9 | Nutzersichtbare Texte auf Kinder- und Juniorenfussball öffnen | Interface | Business | — |
+| 9 | Übungs-Typologie erfassen und filtern | Data | Business | — |
+| 10 | Trainingsziel an Trainings führen | Data | Business | — |
+| 11 | Nutzersichtbare Texte auf Kinder- und Juniorenfussball öffnen | Interface | Business | — |
 
-Der Spike (Story 1) ist bewusst vorgeschaltet: Der Product Owner will die Übungsschemata des Juniorenfussballs sichten, bevor die Abbildungsregel und die Modellierung festgelegt werden. Der Spike prüft auch, ob das dreiteilige Schema mit identischen Unterblöcken unverändert für C, B und A gilt — das Manual differenziert die Entwicklungsstufen (spätes Schulkindalter bis Adoleszenz), die strukturelle Gleichheit des Schemas über alle Stufen ist eine Annahme, kein Beleg.
+Release-Kopplung (PO-Entscheid 2026-08-16): Die Stories 2 und 3 werden gemeinsam ausgeliefert — es gibt zu keinem Zeitpunkt einen nutzbaren Zustand, in dem Alterskategorien beider Schemata am selben Training mischbar sind.
 
-Die frühere Trennung in einen Modell-Enabler und eine Erfassen/Filtern-Story wurde aufgehoben: Die Oberfläche bietet neue Vokabularwerte automatisch an, ein reiner Modell-Schnitt hätte einen künstlichen Zwischenzustand erzeugt.
+Story 5 umfasst neben der Unterblock-Gliederung auch den Data-Anteil der Junioren-Heimat: das Erfassen von Übungen mit Heimat Aufwärmen oder Explosivität im Übungs-Editor.
 
-Vorgehensentscheid des Product Owners vom 2026-08-14: Zuerst wird der Spike umgesetzt, danach wird dieses Epic mit dem Fachwissen aus dem Manual Fussball Jugendliche erneut diskutiert, bevor die Stories 2 bis 8 verfeinert werden. In dieser Diskussion wird auch der Übergangszustand gemischter Alterskategorien vor Einführung der Schema-Regel entschieden.
-
-Story 9 ist unabhängig und kann jederzeit gezogen werden.
+Die Stories 9, 10 und 11 sind unabhängig und können jederzeit gezogen werden. Story 9 ist bewusst früh sinnvoll, damit Junioren-Übungen von Anfang an typisiert erfasst werden und keine Nachmigration entsteht.
 
 ## 6. Nicht-funktionale Anforderungen
 
 1. Bestehende Kinderfussball-Daten überstehen die Erweiterung ohne manuellen Eingriff und ohne Datenverlust
 2. Die Erweiterung fügt den bestehenden Invarianten nur zusätzlich erlaubte Werte hinzu und verschärft keine Regel, die auf bereits produktiv gespeicherten Zeilen gilt
-3. Trainingsteile, Unterblöcke und Alterskategorien beider Schemata stammen aus einer einzigen kontrollierten Vokabularquelle
+3. Trainingsteile, Unterblöcke, Alterskategorien und Übungs-Typologie beider Schemata stammen aus einer einzigen kontrollierten Vokabularquelle
 4. Ein Trainer erkennt an jeder Stelle der Oberfläche ohne Rückfrage, in welchem Trainingsschema er sich befindet
 5. Die zwischen den Schemata gleichlautenden oder synonym verwendeten Begriffe, insbesondere Hauptteil, Einleitung und Einstieg sowie Ausklang und Abschluss, sind in der Oberfläche eindeutig ihrem Schema zuordenbar
 
@@ -114,47 +122,42 @@ Story 9 ist unabhängig und kann jederzeit gezogen werden.
 |---|---|
 | Umfang der Alterskategorien | Gesamter Juniorenfussball, vier neue Kategorien D, C, B, A |
 | D-7 / D-9 gemäss Kategorienreform | Eine einzige Kategorie D, keine Spielform-Unterscheidung |
-| Geschlecht als Dimension | Nein, D-Juniorinnen sind die Alterskategorie D |
-| Übungsbestand für den Juniorenfussball | Kein zweiter Manual-Bestand; PO sichtet die Junioren-Schemata zuerst, Trainer erfassen selbst |
+| Geschlecht als Dimension | Nein; D-Juniorinnen und FF-14-Teams nutzen die Kategorie D |
+| Übungsbestand für den Juniorenfussball | Kein kuratierter Junioren-Bestand, Trainer erfassen selbst |
 | Verbindlichkeit der Zeitvorgaben | Orientierung, nicht bindend |
-| Mischung der Schemata in einem Training | Nicht möglich, ein Training führt genau ein Schema |
+| Zeitwerte | Manual-Werte gemäss Abbildung 19 (Spielformen 30–45); der Broschüren-Entscheid vom 2026-08-14 wurde am 2026-08-16 wegen des Rechenkonflikts mit der 90-Minuten-Gesamtdauer revidiert |
+| Mischung der Schemata in einem Training | Nicht möglich; die Regel wird zusammen mit der Einführung der Kategorien ausgeliefert, ein Übergangszustand mit Mischung existiert nie |
 | Schema-Bestimmung | Folgt aus den gewählten Alterskategorien; ohne Auswahl gilt das Kinderfussball-Schema |
 | Schema-Wechsel eines befüllten Trainings | Automatische Übertragung anhand der Abbildungsregel, Übungen ohne Entsprechung als Nacharbeit markiert |
-| Untergliederung im Juniorenschema | Einstieg und Hauptteil werden beide untergliedert |
-| Junioren-Einordnung einer Übung | Wird aus den Kinderfussball-Attributen abgeleitet (Abbildungsregel definiert der Spike), keine Doppelpflege |
-| Didaktik-Attribute für Junioren-Übungen | Vorerst unverändert, nur Alterskategorien kommen dazu; einzige Ausnahme: Der Spike darf eine minimale Ergänzung vorschlagen, damit Aufwärmen und Explosivität über Trainer-Übungen befüllbar sind |
-| Pflichtteile für Veröffentlichung im Juniorenschema | Einstieg und Hauptteil, analog zu Einleitung und Hauptteil im Kinderfussball |
+| Untergliederung im Juniorenschema | Einstieg und Hauptteil werden untergliedert; Einstieg hat genau zwei Unterblöcke, die drei J+S-Phasen bleiben Zeit-Orientierung |
+| Junioren-Einordnung einer Übung | Heimat-Mechanismus gemäss abgenommenem Entscheidungsdokument, keine Doppelpflege |
+| Befüllbarkeit Aufwärmen und Explosivität | Über Übungen mit direkter Junioren-Heimat, beschränkt auf diese zwei Unterblöcke |
+| Leerer Unterblock Spiel im Junioren-Training | Hinweis beim Speichern, analog zum Kinderfussball-Hinweis; blockiert nichts |
+| Pflichtteile für Veröffentlichung im Juniorenschema | Einstieg und Hauptteil |
+| Trainingsziel | Ein Training kann ein Ziel tragen, für beide Schemata (PO 2026-08-16) |
+| Übungs-Typologie | Basisspielform, Spielform, Übung als optionales Attribut für alle Übungen; keine Nachpflege des Bestands (PO 2026-08-16) |
+| Junioren-Didaktik im Übrigen | Erscheinungsformen, Spielphasenmodell und Entwicklungsdimensionen bleiben ausserhalb dieses Epics |
 | Begriffsführung | Getrennte Begriffe je Schema, gemäss SFV-Lehrmittel |
 | Positionierung | Sichtbare Texte werden geöffnet, Produktname und Domain bleiben |
 | Lifecycle | Echte Nutzer vorhanden, Migrationen forward-only |
 | Urheberrecht SFV/BASPO-Lehrmittel | Vom PO als unkritisch eingestuft (Struktur-Begriffe mit Quellenangabe) |
-| FF-14 (reine Mädchenteams) | Keine eigene Kategorie, FF-14-Teams nutzen D |
-| Quellenwiderspruch Zeitbandbreite Spielformen | Broschüren-Werte gelten: 45–65 Minuten |
-| Leerer Unterblock Spiel im Junioren-Training | Hinweis beim Speichern, analog zum Kinderfussball-Hinweis bei leerem «Fussball spielen»; blockiert nichts |
 
 ## 8. Offene Fragen
 
 1. @UX Designer: Soll die Zeitbandbreiten-Orientierung eine statische Referenzanzeige der SFV-Werte sein oder ein berechneter Abgleich der Summe der zugeordneten Übungsdauern gegen die Bandbreite?
-
-Die frühere Frage zur Schema-Gültigkeit für C, B und A ist quellenseitig beantwortet: Das Manual kennt eine einzige Struktur für die gesamte Stufe Foundation 3 und differenziert nicht nach Kategorien. Der Spike (Story 1) hält das Ergebnis fest.
+2. @UX Designer: Gestaltung der Heimat-Wahl im Übungs-Editor, der Nacharbeits-Markierung beim Schema-Wechsel sowie Farbe und Kurzlabel je neuer Alterskategorie (aus dem Spike übernommen)
 
 ## 9. Requirements-Analyse: Konflikte gegenüber dem Ist-Zustand
 
-Diese Befunde begründen, warum das Vorhaben Epic-Grösse hat. Sie sind Analyseergebnis, keine Anforderungen.
+Diese Befunde begründen den Umfang des Epics. Sie sind Analyseergebnis, keine Anforderungen. Vollständige Kopplungsanalyse in den Review-Protokollen; die wichtigsten Punkte:
 
-| Konflikt | Warum er entsteht |
-|---|---|
-| Eine Übung gehört heute genau einem Trainingsteil, soll aber beiden Schemata dienen | Die Bindung Übung zu Trainingsteil ist als Gleichheitsprüfung auf Datenbank- und Applikationsebene verankert und ausdrücklich als Architekturentscheid dokumentiert |
-| Die Untergliederung existiert heute ausschliesslich für den Hauptteil | Der Einstieg des Juniorenschemas braucht dieselbe zweite Ebene, für die es heute keinen Mechanismus gibt |
-| Die Regel «genau eine Hauptteilkategorie bei Hauptteil» ist bikonditional und vollvalidiert | Beide Schemata haben einen Trainingsteil namens Hauptteil, aber unterschiedliche Unterblöcke |
-| Die Veröffentlichungsprüfung verlangt hart die Trainingsteile Einleitung und Hauptteil | Ein Junioren-Training kann Einleitung nie erfüllen |
-| Die Regel «Auffangen trägt keine Dauer» hängt am Wert, nicht an einer Eigenschaft | Das Juniorenschema kennt Auffangen nicht |
-| Die Alterskategorien G, F, E stehen nicht im kontrollierten Vokabular | Sie sind im JSON-Schema, in Datenbank-Constraints, in Labels und in Farbtokens mehrfach hartkodiert |
-| Die Doku-Erzeugung und die Extraktionsskripte führen eigene, unabhängige Kopien der vier Trainingsteile | Jede Erweiterung muss dort separat nachgezogen werden |
+1. Die Bindung Übung zu Trainingsteil ist als Gleichheitsprüfung auf Datenbank- und Applikationsebene verankert; der Heimat-Mechanismus löst genau diese Prüfung ab
+2. Der Wertebereich des Übungs-Trainingsteils ist heute abschliessend auf die vier Kinderfussball-Werte begrenzt; Übungen mit Junioren-Heimat sind damit nicht darstellbar
+3. Die Untergliederung existiert heute nur für den Hauptteil; der Einstieg braucht dieselbe zweite Ebene
+4. Die Veröffentlichungsprüfung, die Positions-Eindeutigkeit und die Verschiebe-Logik kennen nur die Kinderfussball-Struktur
+5. Der bestehende Stufen-Hinweis unterscheidet nicht zwischen Alters-Abweichung und Schema-Konflikt; ein Begriff von Nacharbeit an einzelnen Zuordnungen existiert nicht
+6. Editor, Durchführung, Druck und Doku-Erzeugung iterieren über eine feste Vier-Teile-Konstante; Übungen mit fremden Werten verschwinden dort stillschweigend
+7. Die Alterskategorien stehen nicht in der kontrollierten Vokabularquelle, sondern sind mehrfach hartkodiert, auch im Vokabular-Generator selbst
+8. Trainingsziel, Übungs-Typologie und Zeit-Orientierungswerte haben im heutigen Modell keinerlei Entsprechung
 
-Widersprüchlich gewordene Aussagen im Repository, die bei der Umsetzung nachzuführen sind:
-
-1. Die Architektur-Spezifikation begründet den Verzicht auf eine Phasen-Abstraktion damit, dass die vier Trainingsteile eine feste, unveränderliche Sequenz seien
-2. Die Architektur-Spezifikation führt die Gleichheitsprüfung zwischen Übung und Zuordnung darauf zurück, dass eine Übung genau einen Trainingsteil hat
-3. `CLAUDE.md` beschreibt die Übungsdatenbank ausschliesslich als aus dem SFV-Manual Kinderfussball extrahiert
-4. Story 3 des Epics Hauptteilkategorie schliesst eine Untergliederung der übrigen Trainingsteile ausdrücklich aus
+Durch dieses Epic überholte Aussagen im Repository (bei der Umsetzung nachzuführen): die Architektur-Spec-Aussagen zur festen Vier-Teile-Sequenz und zur Gleichheitsprüfung, die Kinderfussball-Beschreibungen in CLAUDE.md, im Kopf der Init-Migration und im JSON-Schema-Titel, das Out-of-Scope von Epic #20 Story #23 sowie die veralteten Pre-Launch-Migrationsmuster als Vorlage.

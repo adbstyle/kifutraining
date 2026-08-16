@@ -130,6 +130,13 @@ Hinweis: Die drei J+S-Einstiegsphasen sind eine feinere Gliederung als die zwei 
 3. Epic #20 / Story #23, Out of Scope 3: «Eine Untergliederung der übrigen Trainingsteile ist nicht vorgesehen» — für das Juniorenschema überholt (Einstieg wird untergliedert).
 4. `schema/uebung.schema.json`, Titel «Kinderfussball Übung» — der Titel deckt Junioren-Übungen nicht mehr.
 
-## 10. Abnahme
+## 10. Errata (Epic-Review 2026-08-16, ändern die abgenommene Regel nicht)
+
+1. Die Kategorien-Anekdote steht auf Manual-S. 12, nicht S. 13; die Körperstabilitäts-Bereiche stehen auf S. 75–77.
+2. Die Inhalte der drei Einstiegsphasen stehen entgegen der früheren Aussage auch im Manual selbst (Abb. 19 WAS-Zeile: TA/TE/PE, AT-Prävention, AT-Explosivität; Reihenfolge S. 45 und S. 72); nur Phasennamen und Minutenwerte stammen aus dem J+S-Lernbaustein.
+3. Zeitbandbreiten: Der Product Owner hat am 2026-08-16 den Broschüren-Wert 45–65 für Spielformen revidiert; es gelten die Manual-Werte 30–45 (Abb. 19), womit die Summen zur 90-Minuten-Gesamtdauer passen. Die Tabelle in Abschnitt 5 ist entsprechend zu lesen.
+4. Ergänzung: Der dritte Athletik-Bereich Ermüdungsresistenz gehört laut Manual S. 72 über Spielformen in den Hauptteil und braucht keinen eigenen Unterblock.
+
+## 11. Abnahme
 
 Abbildungsregel abgenommen durch Product Owner am 2026-08-15. Bestätigt wurden dabei ausdrücklich: die Zwei-Unterblock-Gliederung des Einstiegs (Aufwärmen, Explosivität — die drei J+S-Phasen bleiben Zeit-Orientierung), die Setzung, dass Explosivitäts-Übungen in Kinderfussball-Trainings nicht zuweisbar sind, und die Beschränkung der direkten Junioren-Heimat auf Aufwärmen und Explosivität.
