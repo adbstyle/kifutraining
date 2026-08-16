@@ -277,7 +277,7 @@
             "x": 740,
             "y": 855,
             "farbe": "weiss",
-            "pose": "stehen"
+            "pose": "stehen-hinten"
         },
         {
             "id": "weiss-warten-unten-2",
@@ -286,7 +286,7 @@
             "x": 893,
             "y": 851,
             "farbe": "weiss",
-            "pose": "stehen",
+            "pose": "stehen-hinten",
             "spiegeln": true
         },
         {
