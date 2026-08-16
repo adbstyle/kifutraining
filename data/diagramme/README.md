@@ -25,6 +25,34 @@ Eine Datei pro Übung: `<slug>.json`, wobei `<slug>` exakt der `id` der Übung i
 Koordinatensystem: logische Zeichenfläche 1600 × 1000 (16:10). Element-Typen,
 Farben und Geometrie siehe `web/lib/diagramm.ts` und `web/components/diagramm/symbols.tsx`.
 
+## Vorgehen: Manual-Diagramm adaptieren
+
+Ziel ist die **originalgetreue** Übertragung in unsere Diagrammsprache, nicht
+eine freie Neuinterpretation. Aus dem Web-Screenshot der Übungsseite lässt sich
+das nicht ablesen — immer die PDF-Vorlage auswerten:
+
+1. **Vorlage in Auflösung holen.** Seite aus `sources/Manual_Kinderfussball_D.pdf`
+   rendern (Seitenzahl steht in `quelle.seite` der Übungs-YAML):
+   `pdftoppm -f <seite> -l <seite> -r 600 -x <x> -y <y> -W <b> -H <h> -png <pdf> <out>`.
+   Für Laufwege zusätzlich Detailausschnitte mit `-r 1200` — Wellen, Pfeilspitzen
+   und Figurenpaare sind sonst nicht unterscheidbar.
+2. **Inventar auszählen, bevor gezeichnet wird.** Jede Figur (auch wartende
+   Kinder in den Kolonnen), jeder Ball, jede Markierung, jedes Tor. Die Vorlage
+   zeigt regelmässig mehr Figuren als `anzahl_kinder` — abgebildet wird, was
+   gezeichnet ist.
+3. **Transform bestimmen.** Feld-Eckpunkte in Bildpixeln ablesen und linear auf
+   die Zeichenfläche 1600 × 1000 abbilden (Seitenverhältnis des Felds erhalten,
+   Rand für Tore und Warteschlangen ausserhalb der Linien lassen). Alle weiteren
+   Koordinaten über dieselbe Formel umrechnen, nicht schätzen.
+4. **Notation 1:1 übernehmen** (Manual-Zeichenerklärung, Abb. 24):
+   Welle + Pfeil = `dribbling`, durchgezogen + Pfeil = `pass` (auch Torschuss),
+   gestrichelt + Pfeil = `laufweg`, farbige Linie = `linie` (z. B. Feldbegrenzung).
+   Mehrstufige Aktionen bleiben mehrstufig: Dribbling-Welle und anschliessender
+   Torschuss sind **zwei** Elemente, kein durchgehender Pfeil. Stützpunkte grob
+   setzen — die Wellenform erzeugt `DiagrammView` selbst.
+5. **Verifizieren.** `npm run seed`, Übungsseite öffnen und Ausschnitte gegen die
+   Vorlage prüfen (Anzahl Figuren, Blickrichtungen, Ballpositionen, Pfeilziele).
+
 ## Wirkung
 
 Der Seed (`web/scripts/seed.ts`) liest diese Dateien beim Einspielen. Eine
