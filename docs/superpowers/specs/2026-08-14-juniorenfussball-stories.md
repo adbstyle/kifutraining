@@ -159,3 +159,51 @@ Out of Scope
 Offene Fragen
 
 1. @UX Designer: Wie werden der Bestätigungsdialog vor dem Schema-Wechsel und die Nacharbeits-Markierung an übertragenen Übungen gestaltet, auch im Zusammenspiel mit dem bestehenden Dialog für Übungen ausserhalb der Stufen?
+
+---
+
+Faktenlage für Story 4 (aus den Codebase-Analysen dieser Session, keine neuen Agenten nötig):
+
+- Der Trainings-Editor rendert heute fest die vier Kinderfussball-Teile in fixer Reihenfolge; Gruppierung, Positions-Eindeutigkeit und die Verschiebe-Logik kennen nur diese Struktur. Übungen mit fremden Werten verschwinden in Durchführung und Druck stillschweigend; bis die Durchführungs-Story greift, ist das ein reiner Entwicklungs-Zwischenstand, der wegen des Ganzes-Epic-Releases nie Nutzer erreicht.
+- Die bestehende Gleichheits-Invariante zwischen Übungs- und Zuordnungs-Trainingsteil (App und Datenbank) muss der abgeleiteten Einordnung weichen; ebenso brauchen die neuen Teile eine Positions-Eindeutigkeit. Beides ist als Ist-Zustands-Konflikt im Epic dokumentiert.
+- Der Übungs-Picker bietet je Trainingsteil exakt die Übungen mit passendem Kinderfussball-Trainingsteil an. Im Junioren-Hauptteil führt die Abbildungsregel drei Kinderfussball-Kategorien zusammen: 54 Übungen aus Fussball spielen lernen und Vielseitigkeit erleben sowie 1 aus Fussball spielen.
+- Jede Zuordnung trägt eine frei wählbare Dauer in Fünf-Minuten-Schritten; je Trainingsteil wird die Summe angezeigt. Diese Mechanik gilt unverändert auch für die Junioren-Teile.
+- PO-Entscheide 2026-08-16: Im Juniorenschema gibt es keine Anzahl-Hinweise (die Orientierung übernimmt die Zeitbandbreiten-Anzeige, dauerhaft). Alle drei Junioren-Trainingsteile tragen eine Dauer; ein Pendant zum dauerlosen Auffangen existiert nicht. Nacharbeits-Zuordnungen erscheinen in einem eigenen Bereich gesondert von den drei Trainingsteilen.
+
+## Story 4 (Business): Junioren-Training nach Einstieg, Hauptteil und Abschluss gliedern
+
+Status: Final ausgearbeitet und validiert am 2026-08-16.
+
+Als Trainer:in im Juniorenfussball
+möchte ich mein Junioren-Training entlang der drei Trainingsteile Einstieg, Hauptteil und Abschluss zusammenstellen
+damit mein Training der SFV-Struktur des Juniorenfussballs folgt
+
+Preconditions
+
+1. Das Training trägt eine Junioren-Alterskategorie und sein Schema ist daraus bestimmt
+2. Die Abbildungsregel für die Einordnung von Übungen ist als Entscheidungsdokument abgenommen
+
+Acceptance Criteria
+
+1. Der USER sieht sein Junioren-Training nach den drei Trainingsteilen Einstieg, Hauptteil und Abschluss in dieser festen Reihenfolge gegliedert
+2. Der USER erkennt im Editor jederzeit, dass sein Training dem Juniorenschema folgt
+3. Der USER kann jedem der drei Trainingsteile Übungen zuordnen und je Zuordnung eine Dauer erfassen
+4. Das SYSTEM bietet zur Zuordnung ausschliesslich Übungen an, deren Einordnung gemäss Abbildungsregel im gewählten Trainingsteil liegt
+5. Der USER kann die Reihenfolge der Übungen innerhalb eines Trainingsteils ändern
+6. Der USER kann eine zugeordnete Übung wieder entfernen
+7. Der USER sieht je Trainingsteil die Summe der erfassten Übungsdauern
+8. Der USER sieht Nacharbeits-Zuordnungen in einem eigenen Bereich gesondert von den drei Trainingsteilen
+
+Postconditions
+
+1. Das SYSTEM stellt die Gliederung und die Reihenfolge der Zuordnungen beim erneuten Öffnen des Trainings unverändert dar
+
+Out of Scope
+
+1. Die Unterblöcke von Einstieg und Hauptteil sind nicht Teil dieser Story; die Trainingsteile erscheinen als flache Listen, bis die Unterblock-Story greift. Dieser Entwicklungs-Zwischenstand erreicht wegen des Ganzes-Epic-Releases nie Nutzer
+2. Das SYSTEM zeigt in dieser Story noch keine Soll-Zeitbandbreiten an; Anzahl-Hinweise gibt es im Juniorenschema dauerhaft nicht
+3. Die Veröffentlichung eines Junioren-Trainings ist nicht Teil dieser Story
+
+Offene Fragen
+
+1. @UX Designer: Woran erkennt der Trainer im Übungs-Picker, warum eine Übung im gewählten Trainingsteil angeboten wird, wenn dort Übungen unterschiedlicher Herkunft zusammenkommen?
