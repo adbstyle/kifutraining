@@ -82,7 +82,8 @@ damit ich meine Mannschaft in derselben Applikation planen kann, ohne ihr die St
 4. Die Applikation unterscheidet die Spielformen 7er, 9er und 11er nicht; die Kategorie D wird nicht in D-7 und D-9 aufgeteilt
 5. Der Produktname und die Domain der Applikation werden nicht geändert
 6. Die Applikation leitet aus der Alterskategorie, dem Trainingsziel oder der Typologie keine Empfehlung ab, welche Übung fachlich geeignet ist
-7. Die Applikation bildet keine Belastungssteuerung, keine Periodisierung über mehrere Trainings und keine Trainingsgruppen-Organisation ab
+7. Die Applikation bildet keine Belastungssteuerung und keine Periodisierung über mehrere Trainings ab
+8. Die Organisation von Trainerteams, das Teilen und das Terminieren von Trainings sind nicht Teil dieses Epics; sie werden im Epic Team-Trainingsplan behandelt
 
 ## 5. Story-Zerlegung nach SPIDR
 
@@ -94,17 +95,18 @@ Vertikal geschnitten, jede Story liefert für sich einen nachvollziehbaren Zusta
 | 2 | Übungen und Trainings mit Alterskategorien D bis A auszeichnen und filtern | Data | Business | 1 |
 | 3 | Trainingsschema aus den Alterskategorien bestimmen, Mischverbot und Wechselverhalten mit Übertragung | Rules | Business | 1, 2 |
 | 4 | Junioren-Training nach Einstieg, Hauptteil und Abschluss gliedern | Paths | Business | 3 |
-| 5 | Einstieg und Hauptteil eines Junioren-Trainings in Unterblöcke gliedern, inkl. Übungen mit Junioren-Heimat | Rules | Business | 4 |
+| 5a | Einstieg und Hauptteil eines Junioren-Trainings in Unterblöcke gliedern | Rules | Business | 4 |
+| 5b | Übungen mit Junioren-Heimat Aufwärmen oder Explosivität erfassen | Data | Business | 1, 5a |
 | 6 | Zeitbandbreiten und Gesamtdauer als Orientierung anzeigen | Rules | Business | 4 |
 | 7 | Junioren-Training veröffentlichen | Rules | Business | 4 |
-| 8 | Junioren-Training mobil durchführen und drucken | Interface | Business | 4, 5 |
+| 8 | Junioren-Training mobil durchführen und drucken | Interface | Business | 4, 5a |
 | 9 | Übungs-Typologie erfassen und filtern | Data | Business | — |
 | 10 | Trainingsziel an Trainings führen | Data | Business | — |
 | 11 | Nutzersichtbare Texte auf Kinder- und Juniorenfussball öffnen | Interface | Business | — |
 
 Release-Entscheid (PO, 2026-08-16): Das gesamte Epic wird als Ganzes released. Die Story-Reihenfolge ist reine Entwicklungs-Reihenfolge; Zwischenzustände einzelner Stories erreichen die Nutzer nie. Damit ist ausgeschlossen, dass je ein nutzbarer Zustand existiert, in dem Alterskategorien beider Schemata mischbar sind, ein Junioren-Training ohne Junioren-Struktur entsteht oder ein Junioren-Training nicht veröffentlicht werden kann.
 
-Story 5 umfasst neben der Unterblock-Gliederung auch den Data-Anteil der Junioren-Heimat: das Erfassen von Übungen mit Heimat Aufwärmen oder Explosivität im Übungs-Editor.
+Die frühere Story 5 wurde im Refinement in 5a (Unterblock-Gliederung im Trainings-Editor) und 5b (Erfassen von Übungen mit Junioren-Heimat im Übungs-Editor) getrennt — zwei Oberflächen, zwei Workflows.
 
 Die Stories 9, 10 und 11 sind unabhängig und können jederzeit gezogen werden. Story 9 ist bewusst früh sinnvoll, damit Junioren-Übungen von Anfang an typisiert erfasst werden und keine Nachmigration entsteht.
 
@@ -132,7 +134,9 @@ Die Stories 9, 10 und 11 sind unabhängig und können jederzeit gezogen werden. 
 | Untergliederung im Juniorenschema | Einstieg und Hauptteil werden untergliedert; Einstieg hat genau zwei Unterblöcke, die drei J+S-Phasen bleiben Zeit-Orientierung |
 | Junioren-Einordnung einer Übung | Heimat-Mechanismus gemäss abgenommenem Entscheidungsdokument, keine Doppelpflege |
 | Befüllbarkeit Aufwärmen und Explosivität | Über Übungen mit direkter Junioren-Heimat, beschränkt auf diese zwei Unterblöcke |
-| Leerer Unterblock Spiel im Junioren-Training | Hinweis beim Speichern, analog zum Kinderfussball-Hinweis; blockiert nichts |
+| Leere Unterblöcke Spiel und Explosivität im Junioren-Training | Hinweis, analog zum Kinderfussball-Hinweis bei leerem freiem Spiel; blockiert nichts (Explosivität ergänzt am 2026-08-16, Manual: gehört in jede Trainingseinheit) |
+| Unterblock-Zuordnung im Junioren-Training | Der Unterblock folgt zwingend aus der Übung, kein freies Wählen (PO 2026-08-16) |
+| Übungen mit Junioren-Heimat | Aufwärmen trägt den methodischen Fahrplan mit Offen starten als einziger Pflichtstufe und darf eine Erscheinungsform tragen; Explosivität trägt einen Aufbau-Text ohne Erscheinungsform; jede Heimat-Änderung einer verwendeten Übung warnt vor dem Speichern, unabhängig vom Eigentümer des Trainings (PO 2026-08-16) |
 | Pflichtteile für Veröffentlichung im Juniorenschema | Einstieg und Hauptteil |
 | Trainingsziel | Genau ein optionales Freitext-Ziel pro Training, für beide Schemata; SMART-Formulierung bleibt Sache des Trainers (PO 2026-08-16) |
 | Übungs-Typologie | Basisspielform, Spielform, Übung als optionales Attribut für alle Übungen; keine Nachpflege des Bestands (PO 2026-08-16) |

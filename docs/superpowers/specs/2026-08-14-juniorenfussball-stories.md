@@ -207,3 +207,92 @@ Out of Scope
 Offene Fragen
 
 1. @UX Designer: Woran erkennt der Trainer im Übungs-Picker, warum eine Übung im gewählten Trainingsteil angeboten wird, wenn dort Übungen unterschiedlicher Herkunft zusammenkommen?
+
+---
+
+Faktenlage für die Stories 5a und 5b (aus der Übungs-Editor-Analyse dieser Session):
+
+- Die frühere Story 5 wurde getrennt: 5a gliedert Einstieg und Hauptteil im Trainings-Editor in Unterblöcke, 5b bringt die Heimat-Wahl in den Übungs-Editor (PO-Entscheid 2026-08-16).
+- Der bestehende Hauptteil-Mechanismus ist das Vorbild für 5a: Der Unterblock folgt zwingend aus einem Attribut der Übung, Positionen sind je Unterblock eindeutig, ein direktes Verschieben zwischen Unterblöcken existiert nicht.
+- Der Übungs-Editor schaltet heute die Pflichtfelder am Trainingsteil um: methodischer Fahrplan bei Einleitung und Hauptteil (bei Trainer-Übungen alle drei Stufen Pflicht), Aufbau-Text bei Auffangen und Ausklang, Erscheinungsform nur bei Einleitung und Hauptteil, Hauptteilkategorie genau bei Hauptteil.
+- Es existiert keine Sicht, in welchen Trainings eine Übung verwendet wird; Trainingsteil-Änderungen laufen heute ohne Warnung. Die daraus folgende Bestands-Inkonsistenz wird ausserhalb dieses Epics behandelt.
+- Das Aufwärmen umfasst fachlich auch Körperstabilität und Prävention (Manual S. 72); solche Drills haben keinen natürlichen Wettkampf-Abschluss.
+- PO-Entscheide 2026-08-16: Der Unterblock folgt zwingend aus der Übung (kein freies Wählen). Leere Unterblöcke Spiel und Explosivität erzeugen einen Hinweis. Aufwärmen-Übungen tragen den Fahrplan, wobei nur die Stufe Offen starten Pflicht ist, und dürfen eine Erscheinungsform tragen; Explosivitäts-Übungen tragen einen Aufbau-Text ohne Erscheinungsform. Jede Heimat-Änderung einer in Trainings verwendeten Übung warnt vor dem Speichern, unabhängig davon, wem das Training gehört.
+
+## Story 5a (Business): Einstieg und Hauptteil eines Junioren-Trainings in Unterblöcke gliedern
+
+Status: Final ausgearbeitet und validiert am 2026-08-16.
+
+Als Trainer:in im Juniorenfussball
+möchte ich Einstieg und Hauptteil meines Junioren-Trainings in ihre Unterblöcke gegliedert planen
+damit ich Aufwärmen, Explosivität, Spielformen und freies Spiel gezielt und in der richtigen Balance zusammenstelle
+
+Preconditions
+
+1. Das Training folgt dem Juniorenschema und ist nach den drei Trainingsteilen gegliedert
+
+Acceptance Criteria
+
+1. Der USER sieht den Einstieg in die Unterblöcke Aufwärmen und Explosivität gegliedert
+2. Der USER sieht den Hauptteil in die Unterblöcke Spielformen und unterstützende Übungen sowie Spiel gegliedert
+3. Der USER erkennt die Unterblock-Struktur auch dann, wenn ein Unterblock keine Übungen enthält
+4. Der USER kann einem Unterblock Übungen zuordnen
+5. Der USER kann die Reihenfolge der Übungen innerhalb eines Unterblocks ändern
+6. Das SYSTEM bietet je Unterblock ausschliesslich Übungen an, deren Einordnung gemäss Abbildungsregel in diesem Unterblock liegt
+7. Der USER wird auf einen leeren Unterblock Spiel und einen leeren Unterblock Explosivität hingewiesen
+8. Das SYSTEM blockiert wegen eines leeren Unterblocks weder das Speichern noch das Veröffentlichen
+
+Postconditions
+
+1. Das SYSTEM stellt Gliederung und Reihenfolge je Unterblock beim erneuten Öffnen des Trainings unverändert dar
+
+Out of Scope
+
+1. Das SYSTEM bietet kein direktes Verschieben einer Übung zwischen Unterblöcken an; ein Wechsel erfolgt über Entfernen und erneutes Zuordnen
+2. Das SYSTEM zeigt in dieser Story keine Zeitbandbreiten je Unterblock an
+
+Offene Fragen
+
+1. @UX Designer: Woran erkennt der Trainer die Herkunft der Übungen innerhalb eines Unterblocks, wenn dort abgeleitete Kinderfussball-Übungen und Übungen mit Junioren-Heimat zusammenkommen?
+
+## Story 5b (Business): Übungen mit Junioren-Heimat Aufwärmen oder Explosivität erfassen
+
+Status: Final ausgearbeitet und validiert am 2026-08-16.
+
+Als Trainer:in im Juniorenfussball
+möchte ich eigene Übungen mit der Junioren-Heimat Aufwärmen oder Explosivität erfassen
+damit ich die Einstiegs-Unterblöcke meines Junioren-Trainings mit passenden Übungen befüllen kann
+
+Preconditions
+
+1. Der Heimat-Mechanismus ist als Entscheidungsdokument abgenommen
+
+Acceptance Criteria
+
+1. Der USER wählt beim Erfassen einer eigenen Übung als Heimat entweder einen Kinderfussball-Trainingsteil oder einen der zwei Junioren-Unterblöcke Aufwärmen oder Explosivität
+2. Das SYSTEM verhindert, dass eine Übung gleichzeitig einen Kinderfussball-Trainingsteil und eine Junioren-Heimat trägt
+3. Der USER erfasst bei einer Übung mit Heimat Aufwärmen mindestens die Fahrplan-Stufe Offen starten
+4. Der USER kann bei einer Übung mit Heimat Aufwärmen die Fahrplan-Stufen Üben und Wetteifern ergänzen
+5. Der USER erfasst bei einer Übung mit Heimat Explosivität einen Aufbau-Text
+6. Der USER kann bei einer Übung mit Heimat Aufwärmen eine Erscheinungsform wählen
+7. Das SYSTEM lässt bei einer Übung mit Heimat Explosivität keine Erscheinungsform zu
+8. Der USER kann die Heimat einer bestehenden eigenen Übung ändern und muss dabei die Pflichtangaben der neuen Heimat vervollständigen
+9. Der USER wird bei jeder Heimat-Änderung einer Übung gewarnt, die in mindestens einem Training verwendet wird, unabhängig davon, wem das Training gehört
+
+Postconditions
+
+1. Das SYSTEM ordnet eine Übung mit Junioren-Heimat in Junioren-Trainings dem gewählten Unterblock zu
+2. Das SYSTEM stellt eine Übung mit Heimat Aufwärmen in Kinderfussball-Trainings als Einleitungs-Übung bereit
+3. Das SYSTEM bietet eine Übung mit Heimat Explosivität in Kinderfussball-Trainings nicht an
+4. Das SYSTEM übernimmt die Heimat-Änderung einer in Trainings verwendeten Übung erst, WENN der USER die Warnung bestätigt hat
+5. Das SYSTEM entfernt beim gespeicherten Heimat-Wechsel die Angaben, die für die neue Heimat nicht zulässig sind
+
+Out of Scope
+
+1. Die Manual-Übungen behalten ihre Kinderfussball-Heimat; eine Nachpflege des Bestands findet nicht statt
+2. Das SYSTEM ändert bestehende Zuordnungen in Trainings bei einer Heimat-Änderung nicht automatisch
+3. Das SYSTEM erfasst keine strukturierten Belastungsparameter für Explosivitäts-Übungen; Serien, Distanzen und Pausen stehen frei im Aufbau-Text
+
+Offene Fragen
+
+1. @UX Designer: Wie werden die Heimat-Wahl im Übungs-Editor und die Verwendungs-Warnung gestaltet, insbesondere für Trainer, die nur eine der beiden Welten kennen?
