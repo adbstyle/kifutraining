@@ -1,0 +1,246 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 430,
+            "y": 175,
+            "breite": 740,
+            "hoehe": 710
+        },
+        {
+            "id": "mittellinie",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 430,
+                    "y": 530
+                },
+                {
+                    "x": 1170,
+                    "y": 530
+                }
+            ]
+        },
+        {
+            "id": "minitor-ol",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 590,
+            "y": 175,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-or",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1010,
+            "y": 175,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-ul",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 590,
+            "y": 885,
+            "rotation": 180
+        },
+        {
+            "id": "minitor-ur",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1010,
+            "y": 885,
+            "rotation": 180
+        },
+        {
+            "id": "pylone-mitte-l",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 430,
+            "y": 530,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-mitte-r",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1170,
+            "y": 530,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-warteort-l",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 740,
+            "y": 175,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-warteort-r",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 860,
+            "y": 175,
+            "farbe": "blau"
+        },
+        {
+            "id": "weiss-warten-l",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 700,
+            "y": 95,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "weiss-warten-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 900,
+            "y": 95,
+            "farbe": "weiss",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-verteidigt-l",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 465,
+            "y": 415,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "weiss-verteidigt-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1135,
+            "y": 415,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-angriff-l",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 520,
+            "y": 440,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "rot-angriff-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1080,
+            "y": 440,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-pass-l",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 700,
+            "y": 790,
+            "farbe": "rot",
+            "pose": "passen",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-pass-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 900,
+            "y": 790,
+            "farbe": "rot",
+            "pose": "passen"
+        },
+        {
+            "id": "ball-l",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 655,
+            "y": 845
+        },
+        {
+            "id": "ball-r",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 945,
+            "y": 845
+        },
+        {
+            "id": "pass-l",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 655,
+                    "y": 845
+                },
+                {
+                    "x": 532,
+                    "y": 502
+                }
+            ]
+        },
+        {
+            "id": "pass-r",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 945,
+                    "y": 845
+                },
+                {
+                    "x": 1068,
+                    "y": 502
+                }
+            ]
+        },
+        {
+            "id": "dribbling-l",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 572,
+                    "y": 468
+                },
+                {
+                    "x": 591,
+                    "y": 238
+                }
+            ]
+        },
+        {
+            "id": "dribbling-r",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 1028,
+                    "y": 468
+                },
+                {
+                    "x": 1009,
+                    "y": 238
+                }
+            ]
+        }
+    ]
+}
