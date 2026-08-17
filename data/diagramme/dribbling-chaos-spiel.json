@@ -1,0 +1,206 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 202,
+            "y": 58,
+            "breite": 1196,
+            "hoehe": 901
+        },
+        {
+            "id": "minitor-links-1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 158,
+            "y": 201,
+            "rotation": 90
+        },
+        {
+            "id": "minitor-links-2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 158,
+            "y": 498,
+            "rotation": 90
+        },
+        {
+            "id": "minitor-links-3",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 161,
+            "y": 796,
+            "rotation": 90
+        },
+        {
+            "id": "minitor-rechts-1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1441,
+            "y": 192,
+            "rotation": 270
+        },
+        {
+            "id": "minitor-rechts-2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1440,
+            "y": 504,
+            "rotation": 270
+        },
+        {
+            "id": "minitor-rechts-3",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1442,
+            "y": 803,
+            "rotation": 270
+        },
+        {
+            "id": "rot-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 443,
+            "y": 202,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "weiss-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 565,
+            "y": 188,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 756,
+            "y": 381,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 738,
+            "y": 483,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 450,
+            "y": 680,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 496,
+            "y": 805,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "rot-4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 977,
+            "y": 630,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "weiss-4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1094,
+            "y": 561,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-rot-1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 478,
+            "y": 279
+        },
+        {
+            "id": "ball-weiss-2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 694,
+            "y": 555
+        },
+        {
+            "id": "ball-weiss-3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 432,
+            "y": 688
+        },
+        {
+            "id": "ball-rot-4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 988,
+            "y": 697
+        },
+        {
+            "id": "dribbling-links",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                { "x": 432, "y": 693 },
+                { "x": 370, "y": 640 },
+                { "x": 312, "y": 587 }
+            ]
+        },
+        {
+            "id": "torschuss-links",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                { "x": 298, "y": 573 },
+                { "x": 215, "y": 495 }
+            ]
+        },
+        {
+            "id": "dribbling-rechts",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                { "x": 993, "y": 702 },
+                { "x": 1120, "y": 760 },
+                { "x": 1241, "y": 803 }
+            ]
+        },
+        {
+            "id": "torschuss-rechts",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                { "x": 1255, "y": 808 },
+                { "x": 1379, "y": 812 }
+            ]
+        }
+    ]
+}
