@@ -262,7 +262,7 @@ Offene Fragen
 
 ## Story 5b (Business): Übungen mit Junioren-Heimat in einem Einstiegs-Unterblock erfassen
 
-Status: Final ausgearbeitet und validiert am 2026-08-16.
+Status: Final ausgearbeitet und validiert am 2026-08-16. Nachtrag 2026-08-17: Mit der Aufnahme der Junioren-Erscheinungsformen in den Epic-Scope wählen Übungen mit Junioren-Heimat aus dem Junioren-Vokabular (AC 6 präzisiert); die Ausgestaltung des Junioren-Vokabulars regelt die Erscheinungsformen-Story.
 
 Als Trainer:in im Juniorenfussball
 möchte ich eigene Übungen erfassen, die in einem Einstiegs-Unterblock des Juniorenschemas zuhause sind
@@ -279,7 +279,7 @@ Acceptance Criteria
 3. Der USER erfasst bei einer Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel mindestens die Fahrplan-Stufe Offen starten
 4. Der USER kann bei diesen Übungen die Fahrplan-Stufen Üben und Wetteifern ergänzen
 5. Der USER erfasst bei einer Übung mit Heimat Explosivität einen Aufbau-Text
-6. Der USER kann bei einer Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel eine Erscheinungsform wählen
+6. Der USER kann bei einer Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel eine Junioren-Erscheinungsform wählen
 7. Das SYSTEM lässt bei einer Übung mit Heimat Explosivität keine Erscheinungsform zu
 8. Der USER kann die Heimat einer bestehenden eigenen Übung ändern und muss dabei die Pflichtangaben der neuen Heimat vervollständigen
 
@@ -451,3 +451,55 @@ Offene Fragen
 
 1. @UX Designer: Wie werden im Druck die zusätzliche Gliederungsebene im Einstieg und die höhere Blockanzahl umbrochen, damit ein Junioren-Training auf Papier übersichtlich bleibt?
 2. @UX Designer: Wie bleibt in der Durchführung die Unterblock-Zugehörigkeit beim Scrollen innerhalb eines Trainingsteil-Schritts erkennbar, wenn der Einstieg drei Unterblöcke mit mehreren Fassungen bündelt?
+
+---
+
+Faktenlage für Story 9 (aus Manual und Codebase-Analyse):
+
+- Das Manual Fussball Jugendliche typisiert seine Trainingsformen dreiteilig (S. 56): Basisspielform als Referenzform, die die taktischen Prinzipien sichtbar macht; Spielform als spielnahe Form mit Entscheidungsdruck; Übung als isolierte Form. Die fachliche Präferenz des Manuals für Spielformen ist Hintergrundwissen und wird nicht abgebildet.
+- Begriffe in der App: Das Attribut heisst Übungstyp; der dritte Wert heisst Isolierte Form — bewusste Abweichung vom Manual-Begriff Übung, weil dieser mit dem Objekt Übung der App kollidiert (PO 2026-08-17).
+- Der Übungskatalog filtert dimensionenweise mit UND, mehrere Werte innerhalb einer Dimension mit ODER; Übungen ohne Wert in einer gefilterten Dimension fallen aus dem Ergebnis (einzige heutige Ausnahme: Gruppengrösse). Die Freitextsuche durchsucht nur Freitextfelder, keine Klassifikationswerte.
+- Der Übungs-Picker im Trainings-Editor ist ein eigener Filterpfad mit heute nur Freitext und Erscheinungsform; der Block ist dort vom Kontext fixiert.
+- Der Bestand (75 Manual-Übungen und bestehende Trainer-Übungen) trägt keinen Übungstyp und wird nicht nachgepflegt (Epic-Entscheid 2026-08-16).
+- Das Übungsbibliothek-Epic legt fest: Der Übungstyp bleibt eine freie Selbstauskunft ohne Konsistenzprüfung gegen die Einordnung; Fassungen übernehmen die Angaben ihrer Vorlage und sind unabhängig anpassbar.
+- PO-Entscheide 2026-08-17: Übungen ohne Übungstyp fallen bei aktivem Filter aus dem Ergebnis. Der Filter gilt auch im Übungs-Picker. Der Übungstyp erscheint in den Detail-Angaben (Übungs-Detail, Fassungs-Detail, Durchführung, Druck), nicht auf den Katalog-Karten. Die Kurzdefinitionen der drei Typen sind beim Zuweisen einsehbar und folgen dem Manual-Wortlaut (S. 56). Der Übungstyp ist auch an Fassungen frei setzbar, änderbar und entfernbar; Änderungen an der Vorlage wirken nie auf bestehende Fassungen (Kopie-Paradigma des Übungsbibliothek-Epics). «Keine Nachpflege des Bestands» meint den systemseitigen Backfill; Trainer können ihre eigenen Übungen jederzeit typisieren. Die dreifache Belegung des Worts Spielform (Übungstyp-Wert, zwei Unterblock-Namen) bleibt bewusst bestehen, weil alle drei Begriffe quellentreu sind; Kontext und Kurzdefinitionen fangen die Verwechslungsgefahr auf. Zusätzlich wurden die Junioren-Erscheinungsformen als eigene Story 12 in den Epic-Scope aufgenommen; das frühere Out of Scope ist revidiert, weil das Manual seinen Trainingsformen Erscheinungsformen über die Spielphasen-Kapitel zuschreibt. Übungen mit Junioren-Heimat wählen künftig aus dem Junioren-Erscheinungsformen-Vokabular (Story 5b AC 6 präzisiert).
+
+## Story 9 (Business): Übungstyp erfassen und filtern
+
+Status: Final ausgearbeitet und validiert am 2026-08-17.
+
+Als Trainer:in
+möchte ich meine Übungen als Basisspielform, Spielform oder Isolierte Form auszeichnen und gezielt danach suchen
+damit ich beim Planen schnell die Trainingsform finde, die zu meinem Vorhaben passt
+
+Preconditions
+
+1. Trainings enthalten zugeordnete Übungen als eigenständige Fassungen ihrer Vorlagen
+
+Acceptance Criteria
+
+1. Der USER kann einer eigenen Übung genau einen Übungstyp zuweisen
+2. Der USER kann den Übungstyp einer eigenen Übung wieder entfernen
+3. Der USER kann den Übungstyp einer Fassung in seinen Trainings setzen, ändern und entfernen
+4. Der USER sieht beim Zuweisen des Übungstyps die Kurzdefinition jedes Typs
+5. Der USER kann den Übungskatalog nach Übungstyp gleichwertig mit den bestehenden Filtern filtern
+6. Der USER kann im Übungs-Picker beim Zusammenstellen eines Trainings nach Übungstyp filtern
+7. Der USER sieht den Übungstyp in der Detailansicht einer Übung und in den Detail-Angaben ihrer Fassungen
+8. Das SYSTEM bezieht die Übungstypen aus der einen kontrollierten Vokabularquelle, und die Übereinstimmung ist automatisiert nachgewiesen
+
+Postconditions
+
+1. Das SYSTEM zeigt bei aktivem Übungstyp-Filter nur Übungen, die einen der gewählten Übungstypen tragen
+2. Das SYSTEM zeigt den Übungstyp nicht auf den Katalog-Karten
+3. Das SYSTEM lässt Änderungen des Übungstyps an einer Fassung ohne Rückwirkung auf ihre Vorlage
+
+Out of Scope
+
+1. Das SYSTEM prüft den Übungstyp nicht gegen Trainingsteil, Unterblock oder Hauptteilkategorie; er bleibt eine freie Selbstauskunft
+2. Das SYSTEM leitet aus dem Übungstyp keine fachliche Empfehlung ab
+3. Das SYSTEM befüllt den bestehenden Übungsbestand nicht; Übungen ohne Übungstyp bleiben vollwertig nutzbar
+4. Die Freitextsuche findet Übungen nicht über ihren Übungstyp
+
+Offene Fragen
+
+Keine.
