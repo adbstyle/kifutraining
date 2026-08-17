@@ -1,0 +1,281 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 237,
+            "y": 191,
+            "breite": 1096,
+            "hoehe": 769
+        },
+        {
+            "id": "startzone",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 237,
+            "y": 191,
+            "breite": 189,
+            "hoehe": 741
+        },
+        {
+            "id": "teller-zone-ol",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 237,
+            "y": 191,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-zone-or",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 426,
+            "y": 191,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-zone-ul",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 237,
+            "y": 932,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-zone-ur",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 426,
+            "y": 932,
+            "farbe": "blau"
+        },
+        {
+            "id": "torzonenlinie",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                { "x": 876, "y": 191 },
+                { "x": 876, "y": 960 }
+            ]
+        },
+        {
+            "id": "minitor-oben",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1359,
+            "y": 342,
+            "rotation": 270
+        },
+        {
+            "id": "minitor-unten",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1359,
+            "y": 804,
+            "rotation": 270
+        },
+        {
+            "id": "pylone-slalom-1",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 700,
+            "y": 133,
+            "farbe": "orange"
+        },
+        {
+            "id": "pylone-slalom-2",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 790,
+            "y": 129,
+            "farbe": "orange"
+        },
+        {
+            "id": "pylone-slalom-3",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 881,
+            "y": 131,
+            "farbe": "orange"
+        },
+        {
+            "id": "pylone-slalom-4",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 974,
+            "y": 128,
+            "farbe": "orange"
+        },
+        {
+            "id": "rot-slalom",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 930,
+            "y": 77,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-start",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 363,
+            "y": 707,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "rot-feld-oben",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 542,
+            "y": 262,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "rot-feld-mitte",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 504,
+            "y": 480,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "weiss-wache-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 701,
+            "y": 485,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-torzone",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1186,
+            "y": 279,
+            "farbe": "rot",
+            "pose": "schiessen"
+        },
+        {
+            "id": "rot-torzone-unten",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 979,
+            "y": 627,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "weiss-wache-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1115,
+            "y": 615,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-slalom",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 926,
+            "y": 153
+        },
+        {
+            "id": "ball-start",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 349,
+            "y": 767
+        },
+        {
+            "id": "ball-feld-oben",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 582,
+            "y": 338
+        },
+        {
+            "id": "ball-feld-mitte",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 531,
+            "y": 552
+        },
+        {
+            "id": "ball-torzone",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1228,
+            "y": 351
+        },
+        {
+            "id": "ball-torzone-unten",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1035,
+            "y": 699
+        },
+        {
+            "id": "dribbling-slalom",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                { "x": 926, "y": 145 },
+                { "x": 830, "y": 120 },
+                { "x": 729, "y": 111 }
+            ]
+        },
+        {
+            "id": "dribbling-feld-oben",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                { "x": 590, "y": 338 },
+                { "x": 708, "y": 338 }
+            ]
+        },
+        {
+            "id": "dribbling-feld-mitte",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                { "x": 535, "y": 552 },
+                { "x": 620, "y": 600 },
+                { "x": 691, "y": 653 }
+            ]
+        },
+        {
+            "id": "torschuss",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                { "x": 1233, "y": 351 },
+                { "x": 1312, "y": 359 }
+            ]
+        },
+        {
+            "id": "dribbling-torzone-unten",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                { "x": 1044, "y": 704 },
+                { "x": 1199, "y": 783 }
+            ]
+        }
+    ]
+}
