@@ -1,0 +1,39 @@
+name: Seed Staging (manuell)
+
+# Pendant zu seed-prod.yml für die Staging-Umgebung: lädt Manual-Übungen,
+# Themen, Bilder und die gezeichneten Diagramme (data/diagramme/*.json)
+# idempotent nach Staging.
+#
+# Warum überhaupt nötig: Diagramme und Manual-Daten liegen als Daten im Repo und
+# gelangen nur über `npm run seed` in eine Datenbank. deploy-staging.yml spielt
+# ausschliesslich Migrationen ein, sync-staging.yml spiegelt Prod-Daten — beide
+# bringen neue Manual-Daten also NICHT nach Staging.
+#
+# Läuft der Job ins Timeout oder meldet Verbindungsfehler: Staging ist ein
+# Supabase-Free-Projekt und pausiert nach ~7 Tagen Inaktivität. Dann zuerst im
+# Dashboard wecken und erneut auslösen.
+on:
+  workflow_dispatch:
+
+jobs:
+  seed:
+    name: npm run seed (Staging)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    # Das Seed-Script liest SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY (siehe
+    # web/lib/env.ts) — hier bewusst mit den Staging-Secrets belegt, damit
+    # derselbe Code gegen Staging läuft. env.ts wirft bei fehlendem Secret.
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_STAGING_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_STAGING_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run seed

@@ -1,0 +1,224 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 289,
+            "y": 88,
+            "breite": 994,
+            "hoehe": 846
+        },
+        {
+            "id": "hof-blau-oben-links",
+            "art": "form",
+            "form": "ellipse",
+            "farbe": "blau",
+            "gefuellt": true,
+            "x": 391,
+            "y": 51,
+            "breite": 156,
+            "hoehe": 78
+        },
+        {
+            "id": "hof-gelb-oben-rechts",
+            "art": "form",
+            "form": "ellipse",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 1053,
+            "y": 46,
+            "breite": 175,
+            "hoehe": 74
+        },
+        {
+            "id": "hof-gelb-unten-links",
+            "art": "form",
+            "form": "ellipse",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 377,
+            "y": 868,
+            "breite": 156,
+            "hoehe": 78
+        },
+        {
+            "id": "hof-blau-unten-rechts",
+            "art": "form",
+            "form": "ellipse",
+            "farbe": "blau",
+            "gefuellt": true,
+            "x": 1048,
+            "y": 874,
+            "breite": 175,
+            "hoehe": 74
+        },
+        {
+            "id": "minitor-oben-links",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 469,
+            "y": 88,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-oben-rechts",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1140,
+            "y": 88,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-unten-links",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 455,
+            "y": 934,
+            "rotation": 180
+        },
+        {
+            "id": "minitor-unten-rechts",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1136,
+            "y": 934,
+            "rotation": 180
+        },
+        {
+            "id": "weiss-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 469,
+            "y": 227,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "rot-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 818,
+            "y": 204,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1085,
+            "y": 292,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 483,
+            "y": 540,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "weiss-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 710,
+            "y": 604,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1074,
+            "y": 558,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-rot-3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1039,
+            "y": 635
+        },
+        {
+            "id": "reifen-oben",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 775,
+            "y": 63,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-reserve-oben",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 775,
+            "y": 63
+        },
+        {
+            "id": "reifen-links",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 237,
+            "y": 456,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-reserve-links",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 237,
+            "y": 456
+        },
+        {
+            "id": "reifen-rechts",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 1335,
+            "y": 449,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-reserve-rechts",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1335,
+            "y": 449
+        },
+        {
+            "id": "reifen-unten",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 780,
+            "y": 972,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-reserve-unten",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 780,
+            "y": 972
+        },
+        {
+            "id": "pylone-seitenlinie",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 178,
+            "y": 853,
+            "farbe": "rot"
+        }
+    ]
+}

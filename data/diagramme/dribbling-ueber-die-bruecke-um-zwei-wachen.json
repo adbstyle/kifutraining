@@ -1,0 +1,230 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 209,
+            "y": 109,
+            "breite": 1174,
+            "hoehe": 828
+        },
+        {
+            "id": "zone-links",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 209,
+            "y": 109,
+            "breite": 202,
+            "hoehe": 823
+        },
+        {
+            "id": "zone-rechts",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 1190,
+            "y": 109,
+            "breite": 193,
+            "hoehe": 828
+        },
+        {
+            "id": "teller-links-ol",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 209,
+            "y": 109,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-links-or",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 411,
+            "y": 109,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-links-ul",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 209,
+            "y": 932,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-links-ur",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 411,
+            "y": 928,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-rechts-ol",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1190,
+            "y": 109,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-rechts-or",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1383,
+            "y": 109,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-rechts-ul",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1190,
+            "y": 937,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-rechts-ur",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1383,
+            "y": 939,
+            "farbe": "blau"
+        },
+        {
+            "id": "rot-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 380,
+            "y": 127,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "rot-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 359,
+            "y": 285,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "rot-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 362,
+            "y": 541,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "rot-4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 371,
+            "y": 771,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "weiss-wache-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 818,
+            "y": 447,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-wache-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 654,
+            "y": 600,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 407,
+            "y": 204
+        },
+        {
+            "id": "ball-2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 398,
+            "y": 379
+        },
+        {
+            "id": "ball-3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 384,
+            "y": 609
+        },
+        {
+            "id": "ball-4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 384,
+            "y": 838
+        },
+        {
+            "id": "dribbling-oben",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 416,
+                    "y": 208
+                },
+                {
+                    "x": 1239,
+                    "y": 244
+                }
+            ]
+        },
+        {
+            "id": "dribbling-mitte",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 398,
+                    "y": 609
+                },
+                {
+                    "x": 767,
+                    "y": 510
+                }
+            ]
+        },
+        {
+            "id": "dribbling-unten",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 398,
+                    "y": 838
+                },
+                {
+                    "x": 1239,
+                    "y": 775
+                }
+            ]
+        }
+    ]
+}

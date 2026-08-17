@@ -1,0 +1,399 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 384,
+            "y": 193,
+            "breite": 837,
+            "hoehe": 707
+        },
+        {
+            "id": "zone-links",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 483,
+                    "y": 193
+                },
+                {
+                    "x": 483,
+                    "y": 900
+                }
+            ]
+        },
+        {
+            "id": "zone-rechts",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 1127,
+                    "y": 193
+                },
+                {
+                    "x": 1127,
+                    "y": 900
+                }
+            ]
+        },
+        {
+            "id": "zone-oben",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "rot",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 384,
+                    "y": 286
+                },
+                {
+                    "x": 1221,
+                    "y": 286
+                }
+            ]
+        },
+        {
+            "id": "zone-unten",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "rot",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 384,
+                    "y": 809
+                },
+                {
+                    "x": 1221,
+                    "y": 809
+                }
+            ]
+        },
+        {
+            "id": "pylone-ol",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 384,
+            "y": 286,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-or",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1221,
+            "y": 286,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ul",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 384,
+            "y": 809,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ur",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1221,
+            "y": 809,
+            "farbe": "rot"
+        },
+        {
+            "id": "minitor-oben-l",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 575,
+            "y": 193,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-oben-r",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1029,
+            "y": 193,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-unten-l",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 575,
+            "y": 900,
+            "rotation": 180
+        },
+        {
+            "id": "minitor-unten-r",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1029,
+            "y": 900,
+            "rotation": 180
+        },
+        {
+            "id": "minitor-links-o",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 384,
+            "y": 374,
+            "rotation": 90
+        },
+        {
+            "id": "minitor-links-u",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 384,
+            "y": 718,
+            "rotation": 90
+        },
+        {
+            "id": "minitor-rechts-o",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1221,
+            "y": 374,
+            "rotation": 270
+        },
+        {
+            "id": "minitor-rechts-u",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1221,
+            "y": 718,
+            "rotation": 270
+        },
+        {
+            "id": "rot-warten-oben-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 841,
+            "y": 104,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "rot-warten-oben-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 890,
+            "y": 104,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-aktiv-oben",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 773,
+            "y": 214,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "rot-aktiv-links",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 448,
+            "y": 497,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "rot-warten-links-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 292,
+            "y": 513,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "rot-warten-links-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 347,
+            "y": 510,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "weiss-aktiv-rechts",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1159,
+            "y": 504,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-warten-rechts-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1253,
+            "y": 504,
+            "farbe": "weiss",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-warten-rechts-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1306,
+            "y": 510,
+            "farbe": "weiss",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-aktiv-unten",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 815,
+            "y": 728,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-warten-unten-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 740,
+            "y": 855,
+            "farbe": "weiss",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "weiss-warten-unten-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 893,
+            "y": 851,
+            "farbe": "weiss",
+            "pose": "stehen-hinten",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-rot-links",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 456,
+            "y": 561
+        },
+        {
+            "id": "ball-rot-warten-1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 311,
+            "y": 588
+        },
+        {
+            "id": "ball-rot-warten-2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 363,
+            "y": 582
+        },
+        {
+            "id": "ball-weiss-unten",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 774,
+            "y": 760
+        },
+        {
+            "id": "ball-weiss-warten-1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 771,
+            "y": 917
+        },
+        {
+            "id": "ball-weiss-warten-2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 870,
+            "y": 917
+        },
+        {
+            "id": "dribbling-links",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 468,
+                    "y": 560
+                },
+                {
+                    "x": 587,
+                    "y": 558
+                }
+            ]
+        },
+        {
+            "id": "pass-links",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 611,
+                    "y": 558
+                },
+                {
+                    "x": 1143,
+                    "y": 556
+                }
+            ]
+        },
+        {
+            "id": "pass-unten",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 773,
+                    "y": 757
+                },
+                {
+                    "x": 792,
+                    "y": 312
+                }
+            ]
+        },
+        {
+            "id": "dribbling-unten",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 816,
+                    "y": 909
+                },
+                {
+                    "x": 818,
+                    "y": 878
+                },
+                {
+                    "x": 804,
+                    "y": 831
+                }
+            ]
+        }
+    ]
+}
