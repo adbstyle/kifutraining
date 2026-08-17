@@ -1,0 +1,143 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 462,
+            "y": 200,
+            "breite": 675,
+            "hoehe": 718
+        },
+        {
+            "id": "minitor-oben-l",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 591,
+            "y": 200,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-oben-r",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1010,
+            "y": 200,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-unten-l",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 591,
+            "y": 918,
+            "rotation": 180
+        },
+        {
+            "id": "minitor-unten-r",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1010,
+            "y": 918,
+            "rotation": 180
+        },
+        {
+            "id": "weiss-warten-l",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 755,
+            "y": 97,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "weiss-warten-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 807,
+            "y": 86,
+            "farbe": "weiss",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-verteidigt",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 790,
+            "y": 331,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "rot-angriff",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 872,
+            "y": 448,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "rot-warten-l",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 735,
+            "y": 858,
+            "farbe": "rot",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "rot-warten-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 827,
+            "y": 858,
+            "farbe": "rot",
+            "pose": "stehen-hinten",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-angriff",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 850,
+            "y": 514
+        },
+        {
+            "id": "ball-warten-l",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 759,
+            "y": 926
+        },
+        {
+            "id": "ball-warten-r",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 851,
+            "y": 927
+        },
+        {
+            "id": "dribbling",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                { "x": 852, "y": 509 },
+                { "x": 910, "y": 425 },
+                { "x": 997, "y": 290 }
+            ]
+        },
+        {
+            "id": "torschuss",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                { "x": 993, "y": 282 },
+                { "x": 1024, "y": 193 }
+            ]
+        }
+    ]
+}
