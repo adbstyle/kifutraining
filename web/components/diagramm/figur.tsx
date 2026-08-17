@@ -124,6 +124,23 @@ function gesichtFront(skin: string): string {
 function kopfFront(skin: string, haar: string, fr: Frisur): string {
   return frisurBack(haar, fr) + frisurTop(haar, fr) + gesichtFront(skin);
 }
+/** Kopf von hinten: kein Gesicht — der Haarschopf deckt den Schädel, sichtbar
+ *  bleiben Ohren und ein Streifen Nacken unter dem Haar. Frisur, Haarfarbe und
+ *  Hautton stammen aus derselben Ableitung wie vorne, damit es dasselbe Kind
+ *  bleibt; die von hinten sichtbaren Merkmale (Zopf, Zöpfe, langes Haar, Dutt,
+ *  Iro, Stirnband) tragen die Wiedererkennung. */
+function kopfRuecken(skin: string, haar: string, fr: Frisur): string {
+  return (
+    frisurBack(haar, fr) +
+    `<circle cx="100" cy="56" r="29" fill="${skin}"/>` +
+    frisurTop(haar, fr) +
+    // Ohren nach dem Schopf, sonst deckt ihn die Haarkappe zu.
+    `<circle cx="70" cy="60" r="6.5" fill="${skin}"/><circle cx="130" cy="60" r="6.5" fill="${skin}"/>`
+  );
+}
+/** Kragennaht des Trikots — nur in der Rückansicht, als leiser Schatten auf
+ *  jeder Trikotfarbe. */
+const KRAGEN = `<path d="M86 97 Q100 105 114 97" stroke="rgba(0,0,0,.16)" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
 /** Profilkopf, Blick nach rechts; Mitte (hx,hy). */
 function kopfProfil(hx: number, hy: number, skin: string, haar: string, fr: Frisur): string {
   let s = "";
@@ -161,7 +178,10 @@ function schuh(x: number, y: number, dir: 1 | -1): string {
 }
 
 // --- Posen (liefern Markup im Zeichen-Raum 0..200 × 0..280) ---
-function stehen(j: string, skin: string, haar: string, fr: Frisur): string {
+/** `hinten`: dieselbe Haltung von hinten gesehen — Kopf ohne Gesicht,
+ *  Kragennaht sichtbar, Hände etwas weiter vorn am Körper. */
+function stehen(j: string, skin: string, haar: string, fr: Frisur, hinten = false): string {
+  const hx = hinten ? 7 : 0;
   return (
     `<path d="M91 154 L87 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
     <path d="M109 154 L113 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
@@ -169,34 +189,37 @@ function stehen(j: string, skin: string, haar: string, fr: Frisur): string {
     <path d="M112 196 L115 218" stroke="${SOCK}" stroke-width="17" stroke-linecap="round"/>
     ${schuh(80, 218, -1)}${schuh(120, 218, 1)}
     <path d="M70 148 L130 148 L128 178 Q128 184 121 184 L110 184 L100 162 L90 184 L79 184 Q72 184 72 178 Z" fill="${SHORT}"/>
-    <path d="M74 106 L60 152" stroke="${skin}" stroke-width="14" stroke-linecap="round"/>
-    <path d="M126 106 L140 152" stroke="${skin}" stroke-width="14" stroke-linecap="round"/>
-    <circle cx="60" cy="152" r="8" fill="${skin}"/><circle cx="140" cy="152" r="8" fill="${skin}"/>
+    <path d="M74 106 L${60 + hx} 152" stroke="${skin}" stroke-width="14" stroke-linecap="round"/>
+    <path d="M126 106 L${140 - hx} 152" stroke="${skin}" stroke-width="14" stroke-linecap="round"/>
+    <circle cx="${60 + hx}" cy="152" r="8" fill="${skin}"/><circle cx="${140 - hx}" cy="152" r="8" fill="${skin}"/>
     <path d="M72 98 Q72 92 82 92 L118 92 Q128 92 128 98 L131 150 Q131 156 123 156 L77 156 Q69 156 69 150 Z" fill="${j}"/>
+    ${hinten ? KRAGEN : ""}
     <path d="M74 100 L60 118" stroke="${j}" stroke-width="22" stroke-linecap="round"/>
     <path d="M126 100 L140 118" stroke="${j}" stroke-width="22" stroke-linecap="round"/>
     <rect x="93" y="80" width="14" height="18" rx="5" fill="${skin}"/>
-    ${kopfFront(skin, haar, fr)}`
+    ${hinten ? kopfRuecken(skin, haar, fr) : kopfFront(skin, haar, fr)}`
   );
 }
-function laufen(j: string, skin: string, haar: string, fr: Frisur): string {
+function laufen(j: string, skin: string, haar: string, fr: Frisur, hinten = false): string {
+  const hx = hinten ? 7 : 0;
   return (
     `<path d="M96 156 Q82 186 74 210" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
     <path d="M84 188 Q78 200 74 210" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
     ${schuh(70, 206, -1)}
-    <path d="M124 108 Q140 118 136 134" stroke="${skin}" stroke-width="14" fill="none" stroke-linecap="round"/>
-    <circle cx="136" cy="134" r="8" fill="${skin}"/>
+    <path d="M124 108 Q140 118 ${136 - hx} 134" stroke="${skin}" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <circle cx="${136 - hx}" cy="134" r="8" fill="${skin}"/>
     <path d="M72 148 L130 148 L130 176 Q130 182 123 182 L112 182 L100 162 L92 182 L80 182 Q73 182 73 176 Z" fill="${SHORT}"/>
     <path d="M106 156 Q124 178 126 200" stroke="${skin}" stroke-width="16" fill="none" stroke-linecap="round"/>
     <path d="M124 184 Q126 192 126 200" stroke="${SOCK}" stroke-width="17" fill="none" stroke-linecap="round"/>
     ${schuh(122, 198, 1)}
-    <path d="M76 108 Q62 120 66 136" stroke="${skin}" stroke-width="14" fill="none" stroke-linecap="round"/>
-    <circle cx="66" cy="136" r="8" fill="${skin}"/>
+    <path d="M76 108 Q62 120 ${66 + hx} 136" stroke="${skin}" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <circle cx="${66 + hx}" cy="136" r="8" fill="${skin}"/>
     <path d="M73 100 Q73 94 83 94 L117 94 Q127 94 127 100 L130 150 Q130 156 122 156 L78 156 Q70 156 70 150 Z" fill="${j}"/>
+    ${hinten ? KRAGEN : ""}
     <path d="M76 102 Q66 110 62 122" stroke="${j}" stroke-width="22" fill="none" stroke-linecap="round"/>
     <path d="M124 102 Q134 110 138 122" stroke="${j}" stroke-width="22" fill="none" stroke-linecap="round"/>
     <rect x="93" y="82" width="14" height="18" rx="5" fill="${skin}"/>
-    ${kopfFront(skin, haar, fr)}`
+    ${hinten ? kopfRuecken(skin, haar, fr) : kopfFront(skin, haar, fr)}`
   );
 }
 function dribbeln(j: string, skin: string, haar: string, fr: Frisur): string {
@@ -294,7 +317,9 @@ function torhueter(j: string, skin: string, haar: string, fr: Frisur): string {
 
 const POSEN: Record<SpielerPose, (j: string, s: string, h: string, fr: Frisur) => string> = {
   stehen,
+  "stehen-hinten": (j, s, h, fr) => stehen(j, s, h, fr, true),
   laufen,
+  "laufen-hinten": (j, s, h, fr) => laufen(j, s, h, fr, true),
   dribbeln,
   passen,
   schiessen,

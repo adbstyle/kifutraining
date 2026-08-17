@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
-import { ROTATIONEN, type DiagrammElement } from "@/lib/diagramm";
+import { ROTATIONEN, SPIELER_POSEN, type DiagrammElement } from "@/lib/diagramm";
 
 export const metadata: Metadata = {
   title: "Styleguide — KiFu Designsystem",
@@ -622,20 +622,26 @@ export default function Styleguide() {
           Spieler und Torwart sind Cartoon-Kinder: das Trikot trägt die
           Team-Farbe (ein konfigurierbarer Fill), Frisur und Hautton werden pro
           Element deterministisch variiert. Der Spieler hat eine wählbare{" "}
-          <strong>Pose</strong> (stehen, laufen, dribbeln, passen, schiessen,
-          grätschen),
-          beide Figuren statt Rotation eine <strong>Blickrichtung</strong>{" "}
-          (links/rechts, Spiegeln). Die Posen als <code>GlyphVorschau</code>:
+          <strong>Pose</strong>, beide Figuren statt Rotation eine{" "}
+          <strong>Blickrichtung</strong> (links/rechts, Spiegeln). Die beiden{" "}
+          <code>-hinten</code>-Posen zeigen dieselbe Haltung von hinten — damit
+          lässt sich ein Kind darstellen, das vom Betrachter weg (im Diagramm
+          „nach oben") schaut, etwa eine wartende Kolonne. Nur die Frontal-Posen
+          haben diese Variante; die übrigen zeigen die Figur ohnehin im Profil.
+          Alle Posen als <code>GlyphVorschau</code>:
         </p>
         <div className="mb-6 flex flex-wrap items-end gap-2">
           {(
             [
-              { id: "po-stehen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "stehen", farbe: "rot" },
-              { id: "po-laufen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "laufen", farbe: "rot" },
-              { id: "po-dribbeln", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "dribbeln", farbe: "rot" },
-              { id: "po-passen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "passen", farbe: "rot" },
-              { id: "po-schiessen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "schiessen", farbe: "rot" },
-              { id: "po-graetschen", art: "symbol", typ: "spieler", x: 0, y: 0, pose: "graetschen", farbe: "rot" },
+              ...SPIELER_POSEN.map((pose) => ({
+                id: `po-${pose}`,
+                art: "symbol",
+                typ: "spieler",
+                x: 0,
+                y: 0,
+                pose,
+                farbe: "rot",
+              })),
               { id: "po-torwart", art: "symbol", typ: "torwart", x: 0, y: 0 },
             ] as DiagrammElement[]
           ).map((el) => (

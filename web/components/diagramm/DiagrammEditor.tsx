@@ -1488,7 +1488,11 @@ const ElementLeiste = forwardRef<
       ref={ref}
       role="toolbar"
       aria-label="Optionen für das ausgewählte Element"
-      className="absolute z-20 flex items-center gap-1 rounded-[6px] border border-outline-variant bg-surface-container-high px-1.5 py-1 shadow-e4"
+      // Posen, Farben und Aktionen zusammen sind auf schmalen Geräten breiter
+      // als die Zeichenfläche: die Leiste bricht um, statt über den Rand zu
+      // ragen. Die Positionierung misst die tatsächliche Höhe und verankert
+      // auch die umgebrochene Leiste am Element.
+      className="absolute z-20 flex max-w-[calc(100%-1.25rem)] flex-wrap items-center justify-center gap-1 rounded-[6px] border border-outline-variant bg-surface-container-high px-1.5 py-1 shadow-e4"
       style={{
         left: pos?.left ?? -9999,
         top: pos?.top ?? 0,
