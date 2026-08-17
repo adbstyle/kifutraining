@@ -503,3 +503,56 @@ Out of Scope
 Offene Fragen
 
 Keine.
+
+---
+
+Faktenlage für Story 10 (aus Manual und Codebase-Analyse):
+
+- Das Manual macht die zielgerichtete Planung zur Kernqualität eines Trainings (S. 41/42): Ziele dienen als Orientierung und Motivationsspritze und sollen zu Beginn jedes Trainings kommuniziert werden; der SMART-Tipp und der rote Faden gehören dazu. Das Manual spricht von Zielen im Plural (taktische, technische, athletische, Persönlichkeits-Ziele); der Epic-Entscheid verdichtet bewusst auf genau ein optionales Freitext-Ziel pro Training, die SMART-Formulierung bleibt Sache des Trainers.
+- Der Einstiegs-Unterblock Spielform zum Trainingsziel ist mit dem Ziel-Feld nur namensverwandt; er ist eine Übungsart, die den Trainingsschwerpunkt didaktisch einführt, und wird nicht an das Feld gekoppelt.
+- Ein Training trägt heute nur Name, Alterskategorien und Sichtbarkeit; ein ziel-ähnliches Feld existiert nicht. Editor, Detailansicht, Durchführung und Druck rendern ihre Kopfbereiche getrennt. Die Detailansicht ist dieselbe Seite für den Eigentümer und für Betrachter veröffentlichter Trainings; feldweises Verbergen gibt es im Zugriffsmodell nicht.
+- Die Trainings-Suche arbeitet ausschliesslich über den Namen; die Karten der Übersicht zeigen Chips, Name und Kennzahlen ohne Fliesstext.
+- PO-Entscheide 2026-08-17: Das Ziel steht auch auf der Detailansicht und ist damit für Betrachter veröffentlichter Trainings sichtbar. Es erscheint weder auf den Trainings-Karten noch in der Trainings-Suche. In der mobilen Durchführung erscheint es nur zu Beginn, danach bleibt der knappe Kopfbereich frei. EK 13 ist um die Detailansicht präzisiert. Aus der Validierung: Obergrenze 200 Zeichen (entspricht der einzigen bestehenden Begrenzung der App bei Diagramm-Beschriftungen); das Ziel ist bereits beim Anlegen eines Trainings erfassbar; keine Abgrenzungshilfe zwischen Name und Ziel (die Feldbezeichnung genügt); beim Übernehmen eines fremden Trainings als eigenständige Fassung (Team-Trainingsplan-Epic) wird das Ziel mitkopiert und ist dort unabhängig änderbar.
+- Bewusste Verdichtung: Ein einziges Freitextfeld statt der vier Manual-Zieldimensionen (taktisch, technisch, athletisch, Persönlichkeit) ist ein Business-Entscheid für Einfachheit; Dimensionen können im Freitext benannt werden. Die Optionalität ist ebenso bewusst: Das Ziel wird keine Speicher- oder Veröffentlichungsbedingung, die Hürden aus Story 7 bleiben unverändert.
+- Story 8 beschreibt den heutigen Druck-Kopf (Name, Alterskategorien, Gesamtdauer); Story 10 erweitert diesen Kopf um das Ziel.
+
+## Story 10 (Business): Trainingsziel an Trainings führen
+
+Status: Final ausgearbeitet und validiert am 2026-08-17.
+
+Als Trainer:in
+möchte ich meinem Training ein Ziel mitgeben, das mich von der Planung bis auf den Platz begleitet
+damit ich zielgerichtet plane und mein Team weiss, woran es arbeitet
+
+Preconditions
+
+1. Keine besonderen Voraussetzungen
+
+Acceptance Criteria
+
+1. Der USER kann seinem Training genau ein Ziel als Freitext erfassen
+2. Der USER kann das Ziel bereits beim Anlegen eines Trainings erfassen
+3. Der USER kann das Ziel ändern und entfernen
+4. Der USER sieht das Ziel im Editor, in der Detailansicht und im Druck des Trainings
+5. Der USER sieht das Ziel zu Beginn der mobilen Durchführung
+6. Das SYSTEM begrenzt das Ziel auf 200 Zeichen
+
+Postconditions
+
+1. Das SYSTEM zeigt das Ziel eines veröffentlichten Trainings allen Betrachtenden in Detailansicht, Durchführung und Druck
+2. Das SYSTEM blendet bei einem Training ohne Ziel den Ziel-Bereich in allen Ansichten aus
+3. Das SYSTEM behandelt eine leere oder nur aus Leerzeichen bestehende Eingabe als kein Ziel
+4. Das SYSTEM zeigt das Ziel in der mobilen Durchführung ausschliesslich zu Beginn
+5. Das SYSTEM zeigt das Ziel nicht auf den Trainings-Karten
+
+Out of Scope
+
+1. Das SYSTEM leitet aus dem Ziel keine Empfehlung ab, welche Übung fachlich geeignet ist
+2. Das SYSTEM prüft das Ziel nicht auf SMART-Kriterien; die Formulierung bleibt Sache des Trainers
+3. Das SYSTEM koppelt den Einstiegs-Unterblock Spielform zum Trainingsziel nicht an das Ziel-Feld
+4. Das SYSTEM führt keine Ziele über mehrere Trainings hinweg und keine Zielüberprüfung mit Standortbestimmungen
+5. Die Trainings-Suche findet Trainings nicht über ihr Ziel
+
+Offene Fragen
+
+1. @UX Designer: Wie wird das Ziel zu Beginn der mobilen Durchführung gezeigt, ohne den knappen Kopfbereich zu überladen, und wie unterscheidet es sich dort vom Trainingsnamen?

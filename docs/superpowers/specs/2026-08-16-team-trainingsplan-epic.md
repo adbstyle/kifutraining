@@ -139,7 +139,7 @@ Jede Story liefert End-to-End-Wert. Reihenfolge grob abhängigkeitssortiert.
 | Sichtbarkeit | Alles Geteilte ist für alle Mitglieder sichtbar und bearbeitbar; öffentlich schalten bleibt zusätzlich möglich | 2026-08-16 |
 | Konto-Löschung | Geteilte Trainings gehen automatisch an ein verbleibendes Mitglied über, statt anonymisiert und eingefroren zu werden | 2026-08-16 |
 | Team-Auflösung | Die Trainings bleiben bei ihren Eigentümern, die Termine des Teams entfallen | 2026-08-16 |
-| Fremde Trainings | Übernahme ausschliesslich als Kopie; die Herkunft bleibt sichtbar (revidiert im Zuge des Übungsbibliothek-Epics, ursprünglich „ohne festgehaltene Herkunft") | 2026-08-16 |
+| Fremde Trainings | Übernahme ausschliesslich als Kopie; die Herkunft bleibt sichtbar (revidiert im Zuge des Übungsbibliothek-Epics, ursprünglich „ohne festgehaltene Herkunft"). Nachtrag 2026-08-17: Das Trainingsziel (Junioren-Epic, Story 10) wird in die Kopie übernommen und ist dort unabhängig änderbar | 2026-08-16 |
 | Gleichzeitiges Bearbeiten | Bewusst nicht behandelt; die zuletzt gespeicherte Fassung gilt | 2026-08-16 |
 | Saison | Kein Saison-Konzept; das Team besteht dauerhaft, die Alterskategorie bleibt am Training | 2026-08-16 |
 | Kinderdaten | Bleiben ausserhalb der Anwendung | 2026-08-16 |
