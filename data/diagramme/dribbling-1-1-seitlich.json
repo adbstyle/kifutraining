@@ -1,0 +1,188 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 510,
+            "y": 116,
+            "breite": 634,
+            "hoehe": 786
+        },
+        {
+            "id": "markierung",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 509,
+            "y": 417,
+            "breite": 146,
+            "hoehe": 132
+        },
+        {
+            "id": "teller-markierung-ol",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 509,
+            "y": 417,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-markierung-or",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 654,
+            "y": 417,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-markierung-ul",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 509,
+            "y": 548,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-markierung-ur",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 655,
+            "y": 549,
+            "farbe": "rot"
+        },
+        {
+            "id": "minitor-oben",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 825,
+            "y": 116,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-unten",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 829,
+            "y": 902,
+            "rotation": 180
+        },
+        {
+            "id": "weiss-warten-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 344,
+            "y": 456,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "weiss-warten-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 405,
+            "y": 418,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "weiss-verteidigt",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 491,
+            "y": 477,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "rot-angriff",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1109,
+            "y": 485,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-warten-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1207,
+            "y": 464,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-warten-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1287,
+            "y": 477,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "teller-start-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1144,
+            "y": 437,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-start-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1148,
+            "y": 554,
+            "farbe": "blau"
+        },
+        {
+            "id": "ball-angriff",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1094,
+            "y": 511
+        },
+        {
+            "id": "ball-warten-1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1182,
+            "y": 528
+        },
+        {
+            "id": "ball-warten-2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1258,
+            "y": 545
+        },
+        {
+            "id": "laufweg-verteidigung",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                { "x": 510, "y": 461 },
+                { "x": 783, "y": 452 }
+            ]
+        },
+        {
+            "id": "dribbling",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                { "x": 1094, "y": 511 },
+                { "x": 968, "y": 448 },
+                { "x": 926, "y": 406 },
+                { "x": 871, "y": 364 }
+            ]
+        }
+    ]
+}
