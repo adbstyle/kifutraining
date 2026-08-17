@@ -71,7 +71,7 @@ damit ich meine Mannschaft in derselben Applikation planen kann, ohne ihr die St
 12. Ein Junioren-Training folgt in der mobilen Durchführungsansicht und im Druck derselben Gliederung und Reihenfolge nach Trainingsteilen und Unterblöcken wie im Editor, beschränkt auf die belegten Blöcke
 13. Ein Training kann genau ein optionales Ziel als Freitext tragen, das in Editor, Detailansicht, Durchführungsansicht und Druck sichtbar ist, unabhängig vom Schema
 14. Eine Übung kann genau einen Übungstyp aus Basisspielform, Spielform oder Isolierte Form tragen, und der Übungskatalog ist danach filterbar; für den Bestand ist der Übungstyp nicht erforderlich
-15. Die zentralen nutzersichtbaren Texte der Applikation — Seitentitel, Startseite, Quellen- und Herkunftshinweise — beschreiben sie als Werkzeug für Kinder- und Juniorenfussball
+15. Die zentralen nutzersichtbaren Texte der Applikation — Seitentitel, Beschreibung und Startseite — beschreiben sie wörtlich als Werkzeug für Kinder- und Juniorenfussball; Quellen- und Herkunftshinweise bezeichnen die Herkunft der Inhalte weiterhin korrekt
 16. Bestehende Kinderfussball-Trainings und -Übungen bleiben unverändert lesbar, bearbeitbar und veröffentlichbar
 17. Eine Übung kann mit Erscheinungsformen des Junioren-Manuals ausgezeichnet werden, und der Übungskatalog ist danach gleichwertig filterbar wie nach den Kinderfussball-Erscheinungsformen; für den Bestand sind sie nicht erforderlich
 
@@ -146,7 +146,7 @@ Die Stories 9, 10, 11 und 12 sind unabhängig und können jederzeit gezogen werd
 | Junioren-Erscheinungsformen | Revidiert am 2026-08-17: Die 11 Erscheinungsformen des Junioren-Manuals (Tabelle 4, S. 21) werden aufgenommen — erfassen und filtern als eigene Story, weil das Manual seinen Trainingsformen Erscheinungsformen über die Spielphasen-Kapitel zuschreibt. (Ursprünglich out of scope, Epic-Review 2026-08-16). Übungen mit Junioren-Heimat wählen aus dem Junioren-Vokabular statt aus den Kinderfussball-Erscheinungsformen (PO 2026-08-17) |
 | Junioren-Didaktik im Übrigen | Spielphasenmodell und Entwicklungsdimensionen bleiben ausserhalb dieses Epics |
 | Begriffsführung | Getrennte Begriffe je Schema, gemäss SFV-Lehrmittel |
-| Positionierung | Sichtbare Texte werden geöffnet, Produktname und Domain bleiben |
+| Positionierung | Sichtbare Texte werden geöffnet, Produktname und Domain bleiben. Präzisiert 2026-08-17: Kinderfussball und Juniorenfussball wörtlich in Titel, Beschreibung und Startseite; Übungs-Seitentitel schema-neutral; Quellenhinweise und Herkunfts-Badge unverändert; kein SEO-Ausbau; Formulierungen zur PO-Abnahme |
 | Lifecycle | Echte Nutzer vorhanden, Migrationen forward-only |
 | Urheberrecht SFV/BASPO-Lehrmittel | Vom PO als unkritisch eingestuft (Struktur-Begriffe mit Quellenangabe) |
 

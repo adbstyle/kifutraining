@@ -556,3 +556,48 @@ Out of Scope
 Offene Fragen
 
 1. @UX Designer: Wie wird das Ziel zu Beginn der mobilen Durchführung gezeigt, ohne den knappen Kopfbereich zu überladen, und wie unterscheidet es sich dort vom Trainingsnamen?
+
+---
+
+Faktenlage für Story 11 (aus dem Text-Inventar der App):
+
+- Epic-EK 15 verlangt, dass die zentralen nutzersichtbaren Texte — Seitentitel, Startseite, Quellen- und Herkunftshinweise — die Applikation als Werkzeug für Kinder- und Juniorenfussball beschreiben; Produktname und Domain bleiben (Epic Out of Scope 5).
+- Der Kinderfussball-Claim konzentriert sich auf vier zentrale Stellen: den globalen Seitentitel «Kinderfussball Übungen & Trainings» samt Beschreibung, das Startseiten-Intro («Der offizielle Kinderfussball-Bestand und Übungen der Community …»), den dynamischen Übungs-Seitentitel «[Name] — Kinderfussball-Übung» und die zwei hartkodiert duplizierten Quellenhinweis-Sätze an Manual-Übungen (Detailseite sowie Druck/Durchführung).
+- Auth-Seiten und E-Mail-Templates nennen nur den Produktnamen KiFu. Rechtsseiten, Footer, Web-Manifest und Open-Graph-Metadaten existieren nicht. Es gibt keine zentrale Textquelle; alle Texte sind an ihren Verwendungsstellen hartkodiert.
+- Es gibt keinen kuratierten Junioren-Übungsbestand; neue Texte dürfen keinen suggerieren.
+- PO-Entscheide 2026-08-17: Der Übungs-Seitentitel wird schema-neutral (eine Übung kann beiden Schemata dienen). Die Quellenhinweis-Sätze und das Herkunfts-Badge Kifu-Manual bleiben unverändert; sie bezeichnen die Herkunft korrekt und erfüllen den Urheberrechts-Entscheid (Struktur-Begriffe mit Quellenangabe). Kein SEO-Ausbau; die Story ändert nur bestehende Texte. Die schema-spezifischen Randstellen (Editor-Hinweis zum freien Spiel, Formulartext zum Manual-Feldsatz) bleiben unverändert; ihren Schema-Kontext regeln die Struktur-Stories.
+- PO-Entscheide aus der Validierung (2026-08-17): Die Begriffe Kinderfussball und Juniorenfussball kommen in Titel, Beschreibung und Startseite wörtlich vor. Kein Katalog-Hinweis zur anfänglich dünnen Junioren-Treffermenge; der PO seedet einige Junioren-Übungen als Community-Übungen (bestätigt den Story-7-Entscheid). Die neuen Formulierungen nimmt der PO ab. Der erste Kontakt meint Titel, Beschreibung und Startseite; die Sprache innerhalb der Editoren regeln die Struktur-Stories über die Schema-Erkennbarkeit.
+
+## Story 11 (Business): Nutzersichtbare Texte auf Kinder- und Juniorenfussball öffnen
+
+Status: Final ausgearbeitet und validiert am 2026-08-17.
+
+Als Trainer:in im Juniorenfussball
+möchte ich beim ersten Kontakt mit der Applikation erkennen, dass sie auch für den Juniorenfussball gemacht ist
+damit ich ihr meine Trainingsplanung anvertraue, statt sie als reines Kinderfussball-Werkzeug abzutun
+
+Preconditions
+
+1. Keine besonderen Voraussetzungen
+
+Acceptance Criteria
+
+1. Der USER liest im Seitentitel und in der Beschreibung der Applikation wörtlich, dass sie Kinder- und Juniorenfussball abdeckt
+2. Der USER liest auf der Startseite eine Selbstbeschreibung, die beide Welten wörtlich benennt, ohne einen kuratierten Junioren-Bestand zu suggerieren
+3. Der USER sieht auf der Detailseite einer Übung einen Seitentitel ohne Festlegung auf ein Schema
+
+Postconditions
+
+Keine.
+
+Out of Scope
+
+1. Der Produktname KiFu und die Domain bleiben unverändert
+2. Die Quellenhinweise der Manual-Übungen und das Herkunfts-Badge bleiben unverändert; sie bezeichnen korrekt die Herkunft aus dem Manual Kinderfussball
+3. Das SYSTEM erhält keine neue SEO-Infrastruktur wie Sitemap, Open-Graph-Metadaten oder robots-Regeln
+4. Die schema-spezifischen Hinweistexte im Trainings-Editor und die Formulartexte zum Manual-Feldsatz bleiben unverändert
+5. E-Mail-Texte und Auth-Seiten bleiben unverändert; sie nennen nur den Produktnamen
+
+Offene Fragen
+
+1. @UX Designer: Wie lauten die neuen Formulierungen für den globalen Seitentitel, die Beschreibung, das Startseiten-Intro und den schema-neutralen Übungs-Seitentitel? Vorgabe: Kinderfussball und Juniorenfussball kommen wörtlich vor; die Formulierungen gehen zur Abnahme an den Product Owner.
