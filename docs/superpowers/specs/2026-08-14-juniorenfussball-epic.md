@@ -29,7 +29,7 @@ Der SFV führt zwei getrennte Lehrmittel mit zwei unterschiedlichen Trainingssch
 | Trainingsteile | Auffangen, Einleitung, Hauptteil, Ausklang | Einstieg, Hauptteil, Abschluss |
 | Untergliederung | Hauptteil in drei Unterblöcke: Fussball spielen lernen; Vielseitigkeit erleben; Fussball spielen | Einstieg in drei Unterblöcke: Aufwärmen; Spielform zum Trainingsziel; Explosivität. Hauptteil in zwei Unterblöcke: Spielformen und unterstützende Übungen; Spiel. Abschluss mit dem Unterblock Ausklang |
 | Zeitangaben | keine | Einstieg 20–30 Minuten, davon Aufwärmen 10–12, Spielform zum Trainingsziel 6–8 und Explosivität 8–10; Spielformen und unterstützende Übungen 30–45 Minuten, Spiel 15–20 Minuten, Ausklang 5–10 Minuten, Gesamtdauer 90 Minuten (Trainingsteile aus Manual Abb. 19, Einstiegs-Unterblöcke aus dem J+S-Lernbaustein; der frühere Entscheid für die Broschüren-Werte 45–65 wurde am 2026-08-16 revidiert, weil deren Summe die 90-Minuten-Vorgabe verfehlt) |
-| Didaktik (Inhalts-Klassifikation) | sechs Erscheinungsformen, methodischer Fahrplan Offen starten – Üben – Wetteifern | fünf Erscheinungsform-Kategorien (drei nach Spielphasen, zwei spielphasenübergreifend: Athletik und Gesundheit, Persönlichkeit und Team), darunter die Entwicklungsdimensionen Taktik, Technik, Athletik, Persönlichkeit |
+| Didaktik (Inhalts-Klassifikation) | sechs Erscheinungsformen, methodischer Fahrplan Offen starten – Üben – Wetteifern | elf Erscheinungsformen in fünf Kategorien (drei nach Spielphasen, zwei spielphasenübergreifend: Athletik und Gesundheit, Persönlichkeit und Team), darunter die Entwicklungsdimensionen Taktik, Technik, Athletik, Persönlichkeit |
 | Format-Klassifikation (unabhängige Achse) | keine | Übungs-Typologie Basisspielform, Spielform, Übung. Basisspielform: die Referenzform eines Themas, die die taktischen Prinzipien sichtbar macht; Spielform: spielnahe Form mit Entscheidungsdruck; Übung: isolierte Form. Das Manual bevorzugt fachlich Spielformen; diese Präferenz ist Hintergrundwissen und wird von der App nicht abgebildet |
 
 Anmerkungen aus der fachlichen Validierung (Manual am PDF verifiziert):
@@ -68,16 +68,17 @@ damit ich meine Mannschaft in derselben Applikation planen kann, ohne ihr die St
 9. Die Zeitbandbreiten je Trainingsteil und die Gesamtdauer von 90 Minuten stehen dem Trainer beim Planen eines Junioren-Trainings als Orientierung zur Verfügung und sind keine Speicher- oder Veröffentlichungsbedingung
 10. Der Übungskatalog ist nach den Alterskategorien D, C, B und A gleichwertig filterbar wie nach G, F und E
 11. Ein veröffentlichtes Junioren-Training ist lehrmittelkonform: Die drei Einstiegs-Unterblöcke, der Unterblock Spielformen und unterstützende Übungen sowie der Abschluss sind belegt, und keine Nacharbeit ist offen; einzig der Spiel-Block bleibt als freies Spiel von der Pflicht ausgenommen
-12. Ein Junioren-Training zeigt in der mobilen Durchführungsansicht und im Druck dieselbe Gliederung nach Trainingsteilen und Unterblöcken wie im Editor
-13. Ein Training kann genau ein optionales Ziel als Freitext tragen, das in Editor, Durchführungsansicht und Druck sichtbar ist, unabhängig vom Schema
-14. Eine Übung kann genau eine Typologie aus Basisspielform, Spielform oder Übung tragen, und der Übungskatalog ist danach filterbar; für den Bestand ist die Typologie nicht erforderlich
-15. Die zentralen nutzersichtbaren Texte der Applikation — Seitentitel, Startseite, Quellen- und Herkunftshinweise — beschreiben sie als Werkzeug für Kinder- und Juniorenfussball
+12. Ein Junioren-Training folgt in der mobilen Durchführungsansicht und im Druck derselben Gliederung und Reihenfolge nach Trainingsteilen und Unterblöcken wie im Editor, beschränkt auf die belegten Blöcke
+13. Ein Training kann genau ein optionales Ziel als Freitext tragen, das in Editor, Detailansicht, Durchführungsansicht und Druck sichtbar ist, unabhängig vom Schema
+14. Eine Übung kann genau einen Übungstyp aus Basisspielform, Spielform oder Isolierte Form tragen, und der Übungskatalog ist danach filterbar; für den Bestand ist der Übungstyp nicht erforderlich
+15. Die zentralen nutzersichtbaren Texte der Applikation — Seitentitel, Beschreibung und Startseite — beschreiben sie wörtlich als Werkzeug für Kinder- und Juniorenfussball; Quellen- und Herkunftshinweise bezeichnen die Herkunft der Inhalte weiterhin korrekt
 16. Bestehende Kinderfussball-Trainings und -Übungen bleiben unverändert lesbar, bearbeitbar und veröffentlichbar
+17. Eine Übung kann mit Erscheinungsformen des Junioren-Manuals ausgezeichnet werden, und der Übungskatalog ist danach gleichwertig filterbar wie nach den Kinderfussball-Erscheinungsformen; für den Bestand sind sie nicht erforderlich
 
 ### Out of Scope
 
 1. Die Applikation führt keinen kuratierten Übungsbestand aus dem Manual Fussball Jugendliche oder anderen Junioren-Quellen; Trainer erfassen Junioren-Übungen selbst
-2. Die Erscheinungsformen des Junioren-Manuals, das Spielphasenmodell und die Entwicklungsdimensionen werden nicht abgebildet; die Kinderfussball-Didaktik-Attribute der Bestandsübungen bleiben unverändert
+2. Das Spielphasenmodell und die Entwicklungsdimensionen des Junioren-Manuals werden nicht abgebildet; die Kinderfussball-Didaktik-Attribute der Bestandsübungen bleiben unverändert. Die Junioren-Erscheinungsformen selbst sind seit dem PO-Entscheid vom 2026-08-17 im Scope
 3. Die Applikation bildet kein Geschlecht ab; Juniorinnen und Junioren derselben Alterskategorie arbeiten mit derselben Struktur und demselben Übungsbestand
 4. Die Applikation unterscheidet die Spielformen 7er, 9er und 11er nicht; die Kategorie D wird nicht in D-7 und D-9 aufgeteilt
 5. Der Produktname und die Domain der Applikation werden nicht geändert
@@ -100,21 +101,22 @@ Vertikal geschnitten, jede Story liefert für sich einen nachvollziehbaren Zusta
 | 6 | Zeitbandbreiten und Gesamtdauer als Orientierung anzeigen | Rules | Business | 4, 5a |
 | 7 | Junioren-Training veröffentlichen | Rules | Business | 4 |
 | 8 | Junioren-Training mobil durchführen und drucken | Interface | Business | 4, 5a |
-| 9 | Übungs-Typologie erfassen und filtern | Data | Business | — |
+| 9 | Übungstyp erfassen und filtern | Data | Business | — |
 | 10 | Trainingsziel an Trainings führen | Data | Business | — |
 | 11 | Nutzersichtbare Texte auf Kinder- und Juniorenfussball öffnen | Interface | Business | — |
+| 12 | Junioren-Erscheinungsformen erfassen und filtern | Data | Business | — |
 
 Release-Entscheid (PO, 2026-08-16): Das gesamte Epic wird als Ganzes released. Die Story-Reihenfolge ist reine Entwicklungs-Reihenfolge; Zwischenzustände einzelner Stories erreichen die Nutzer nie. Damit ist ausgeschlossen, dass je ein nutzbarer Zustand existiert, in dem Alterskategorien beider Schemata mischbar sind, ein Junioren-Training ohne Junioren-Struktur entsteht oder ein Junioren-Training nicht veröffentlicht werden kann.
 
 Die frühere Story 5 wurde im Refinement in 5a (Unterblock-Gliederung im Trainings-Editor) und 5b (Erfassen von Übungen mit Junioren-Heimat im Übungs-Editor) getrennt — zwei Oberflächen, zwei Workflows.
 
-Die Stories 9, 10 und 11 sind unabhängig und können jederzeit gezogen werden. Story 9 ist bewusst früh sinnvoll, damit Junioren-Übungen von Anfang an typisiert erfasst werden und keine Nachmigration entsteht.
+Die Stories 9, 10, 11 und 12 sind unabhängig und können jederzeit gezogen werden. Die Stories 9 und 12 sind bewusst früh sinnvoll, damit Junioren-Übungen von Anfang an typisiert und ausgezeichnet erfasst werden und keine Nachmigration entsteht.
 
 ## 6. Nicht-funktionale Anforderungen
 
 1. Bestehende Kinderfussball-Daten überstehen die Erweiterung ohne manuellen Eingriff und ohne Datenverlust
 2. Die Erweiterung fügt den bestehenden Invarianten nur zusätzlich erlaubte Werte hinzu und verschärft keine Regel, die auf bereits produktiv gespeicherten Zeilen gilt
-3. Trainingsteile, Unterblöcke, Alterskategorien und Übungs-Typologie beider Schemata stammen aus einer einzigen kontrollierten Vokabularquelle
+3. Trainingsteile, Unterblöcke, Alterskategorien, Übungstyp und Erscheinungsformen beider Schemata stammen aus einer einzigen kontrollierten Vokabularquelle
 4. Ein Trainer erkennt an jeder Stelle der Oberfläche ohne Rückfrage, in welchem Trainingsschema er sich befindet
 5. Die zwischen den Schemata gleichlautenden oder synonym verwendeten Begriffe, insbesondere Hauptteil, Einleitung und Einstieg sowie Ausklang und Abschluss, sind in der Oberfläche eindeutig ihrem Schema zuordenbar
 
@@ -137,13 +139,14 @@ Die Stories 9, 10 und 11 sind unabhängig und können jederzeit gezogen werden. 
 | Zeit-Orientierung | Berechneter Abgleich der erfassten Dauern gegen die Bandbreiten und die Gesamtdauer, nur im Juniorenschema (PO 2026-08-16) |
 | Leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität im Junioren-Training | Hinweis, analog zum Kinderfussball-Hinweis bei leerem freiem Spiel; blockiert nichts (PO 2026-08-16) |
 | Unterblock-Zuordnung im Junioren-Training | Revidiert am 2026-08-16 durch das Übungsbibliothek-Epic: Die Einordnung der Übung liefert den Unterblock als Vorschlag; die Einordnung der Fassung im Training ist frei anpassbar, eine Abweichung erzeugt einen Hinweis am Training statt einer Sperre. (Ursprünglich: Der Unterblock folgt zwingend aus der Übung, kein freies Wählen, PO 2026-08-16) |
-| Übungen mit Junioren-Heimat | Aufwärmen und Spielform zum Trainingsziel tragen den methodischen Fahrplan mit Offen starten als einziger Pflichtstufe und dürfen eine Erscheinungsform tragen; Explosivität trägt einen Aufbau-Text ohne Erscheinungsform (PO 2026-08-16). Die Warnung bei Heimat-Änderung einer verwendeten Übung ist seit dem Übungsbibliothek-Epic (2026-08-16) gegenstandslos: Trainings enthalten eigenständige Fassungen, Änderungen an Bibliotheks-Übungen wirken nicht mehr in Trainings |
+| Übungen mit Junioren-Heimat | Aufwärmen und Spielform zum Trainingsziel tragen den methodischen Fahrplan mit Offen starten als einziger Pflichtstufe und dürfen Junioren-Erscheinungsformen tragen (präzisiert 2026-08-17 mit der Aufnahme der Junioren-Erscheinungsformen); Explosivität trägt einen Aufbau-Text und darf ebenfalls Junioren-Erscheinungsformen tragen (revidiert 2026-08-17 — das Manual ordnet «Explosiv und dynamisch agieren» dem Bereich Explosivität 1:1 zu; ursprünglich ohne Erscheinungsform, PO 2026-08-16). Die Warnung bei Heimat-Änderung einer verwendeten Übung ist seit dem Übungsbibliothek-Epic (2026-08-16) gegenstandslos: Trainings enthalten eigenständige Fassungen, Änderungen an Bibliotheks-Übungen wirken nicht mehr in Trainings |
 | Pflichtbedingungen für Veröffentlichung im Juniorenschema | Drei Einstiegs-Unterblöcke, Spielformen und unterstützende Übungen sowie der Abschluss belegt, keine offene Nacharbeit; der Spiel-Block ist als freies Spiel ausgenommen (PO 2026-08-16). Die bewusst hohe Erst-Hürde (zwei Unterblöcke nur über eigene Übungen befüllbar) wird später durch geseedete Community-Übungen gesenkt |
-| Trainingsziel | Genau ein optionales Freitext-Ziel pro Training, für beide Schemata; SMART-Formulierung bleibt Sache des Trainers (PO 2026-08-16) |
-| Übungs-Typologie | Basisspielform, Spielform, Übung als optionales Attribut für alle Übungen; keine Nachpflege des Bestands (PO 2026-08-16) |
-| Junioren-Didaktik im Übrigen | Erscheinungsformen, Spielphasenmodell und Entwicklungsdimensionen bleiben ausserhalb dieses Epics |
+| Trainingsziel | Genau ein optionales Freitext-Ziel pro Training, für beide Schemata; SMART-Formulierung bleibt Sache des Trainers (PO 2026-08-16). Obergrenze 200 Zeichen; bereits beim Anlegen erfassbar; sichtbar auch auf der Detailansicht und damit für Betrachter veröffentlichter Trainings; in der Durchführung nur zu Beginn; weder auf den Trainings-Karten noch in der Trainings-Suche (PO 2026-08-17) |
+| Übungs-Typologie | Basisspielform, Spielform, Übung als optionales Attribut für alle Übungen; keine Nachpflege des Bestands (PO 2026-08-16). In der App heisst das Attribut Übungstyp; der dritte Wert heisst Isolierte Form, bewusste Abweichung vom Manual-Begriff Übung wegen der Kollision mit dem Objekt Übung. Kurzdefinitionen im Manual-Wortlaut beim Zuweisen einsehbar; an Fassungen frei anpassbar ohne Rückwirkung auf die Vorlage; die dreifache Belegung des Worts Spielform bleibt bewusst quellentreu bestehen (PO 2026-08-17) |
+| Junioren-Erscheinungsformen | Revidiert am 2026-08-17: Die 11 Erscheinungsformen des Junioren-Manuals (Tabelle 4, S. 21) werden aufgenommen — erfassen und filtern als eigene Story, weil das Manual seinen Trainingsformen Erscheinungsformen über die Spielphasen-Kapitel zuschreibt. (Ursprünglich out of scope, Epic-Review 2026-08-16). Mehrere Werte pro Übung erlaubt; beide Vokabulare stehen allen erscheinungsform-berechtigten Übungen offen (Einleitung, Hauptteil und die drei Junioren-Heimaten; Auffangen/Ausklang bleiben ausgeschlossen) — der Zwischenentscheid «Vokabular folgt der Heimat» wurde gleichentags revidiert, weil die 6 spielphasenbezogenen Werte sonst an Hauptteil-Übungen nie zuweisbar wären; keine Einschränkung je Unterblock; gemeinsame Filter-Dimension; die Auswahl- und Filterlisten bleiben flach ohne Spielphasen-Gruppierung; an Fassungen frei anpassbar ohne Rückwirkung (PO 2026-08-17) |
+| Junioren-Didaktik im Übrigen | Spielphasenmodell und Entwicklungsdimensionen bleiben ausserhalb dieses Epics |
 | Begriffsführung | Getrennte Begriffe je Schema, gemäss SFV-Lehrmittel |
-| Positionierung | Sichtbare Texte werden geöffnet, Produktname und Domain bleiben |
+| Positionierung | Sichtbare Texte werden geöffnet, Produktname und Domain bleiben. Präzisiert 2026-08-17: Kinderfussball und Juniorenfussball wörtlich in Titel, Beschreibung und Startseite; Übungs-Seitentitel schema-neutral; Quellenhinweise und Herkunfts-Badge unverändert; kein SEO-Ausbau; Formulierungen zur PO-Abnahme |
 | Lifecycle | Echte Nutzer vorhanden, Migrationen forward-only |
 | Urheberrecht SFV/BASPO-Lehrmittel | Vom PO als unkritisch eingestuft (Struktur-Begriffe mit Quellenangabe) |
 

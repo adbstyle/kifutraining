@@ -240,12 +240,12 @@ Acceptance Criteria
 
 1. Der USER sieht den Einstieg in die Unterblöcke Aufwärmen, Spielform zum Trainingsziel und Explosivität gegliedert
 2. Der USER sieht den Hauptteil in die Unterblöcke Spielformen und unterstützende Übungen sowie Spiel gegliedert
-3. Der USER erkennt die Unterblock-Struktur auch dann, wenn ein Unterblock keine Übungen enthält
+3. Der USER erkennt die Unterblock-Struktur im Editor auch dann, wenn ein Unterblock keine Übungen enthält
 4. Der USER kann einem Unterblock Übungen als Fassungen zuordnen
 5. Der USER kann die Reihenfolge der Fassungen innerhalb eines Unterblocks ändern
 6. Das SYSTEM schlägt bei der Zuordnung den Unterblock vor, den die Abbildungsregel aus der Vorlage bestimmt
 7. Der USER kann die Einordnung einer Fassung in einen anderen Unterblock ändern; eine Abweichung vom Vorschlag ist am Training erkennbar und blockiert nichts
-8. Der USER wird auf leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität hingewiesen
+8. Der USER wird im Editor auf leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität hingewiesen
 9. Das SYSTEM blockiert das Speichern wegen eines leeren Unterblocks nicht; die Bedingungen der Veröffentlichung regelt die Veröffentlichungs-Story
 
 Postconditions
@@ -262,7 +262,7 @@ Offene Fragen
 
 ## Story 5b (Business): Übungen mit Junioren-Heimat in einem Einstiegs-Unterblock erfassen
 
-Status: Final ausgearbeitet und validiert am 2026-08-16.
+Status: Final ausgearbeitet und validiert am 2026-08-16. Nachtrag 2026-08-17: Mit der Aufnahme der Junioren-Erscheinungsformen in den Epic-Scope wählen Übungen mit Junioren-Heimat aus dem Junioren-Vokabular (AC 6 präzisiert); die Ausgestaltung des Junioren-Vokabulars regelt die Erscheinungsformen-Story. Zweiter Nachtrag 2026-08-17: Auch die Explosivitäts-Heimat darf Junioren-Erscheinungsformen tragen — das Manual ordnet «Explosiv und dynamisch agieren» dem Bereich Explosivität 1:1 zu; das frühere Verbot (AC 7 alt) ist aufgehoben, AC 6 gilt für alle drei Junioren-Heimaten.
 
 Als Trainer:in im Juniorenfussball
 möchte ich eigene Übungen erfassen, die in einem Einstiegs-Unterblock des Juniorenschemas zuhause sind
@@ -279,9 +279,8 @@ Acceptance Criteria
 3. Der USER erfasst bei einer Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel mindestens die Fahrplan-Stufe Offen starten
 4. Der USER kann bei diesen Übungen die Fahrplan-Stufen Üben und Wetteifern ergänzen
 5. Der USER erfasst bei einer Übung mit Heimat Explosivität einen Aufbau-Text
-6. Der USER kann bei einer Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel eine Erscheinungsform wählen
-7. Das SYSTEM lässt bei einer Übung mit Heimat Explosivität keine Erscheinungsform zu
-8. Der USER kann die Heimat einer bestehenden eigenen Übung ändern und muss dabei die Pflichtangaben der neuen Heimat vervollständigen
+6. Der USER kann bei einer Übung mit Junioren-Heimat Junioren-Erscheinungsformen wählen
+7. Der USER kann die Heimat einer bestehenden eigenen Übung ändern und muss dabei die Pflichtangaben der neuen Heimat vervollständigen
 
 Postconditions
 
@@ -397,3 +396,256 @@ Out of Scope
 Offene Fragen
 
 1. @UX Designer: Wie erfährt der Trainer, welche Bedingung er wo im Editor erfüllen muss, wenn die Anzahl der Bedingungen im Juniorenschema deutlich höher ist als im Kinderfussball, und wie unterscheidet sich die Meldung bei offener Nacharbeit von den übrigen Bedingungen?
+
+---
+
+Faktenlage für Story 8 (aus der Analyse von Durchführung und Druck):
+
+- Die mobile Durchführung zeigt einen Trainingsteil pro Schritt, mit Vor- und Zurück-Navigation, Fortschrittsanzeige und einer Bildschirm-Wachhaltung. Der Druck zeigt alle Trainingsteile fortlaufend untereinander, mit Trainingsname, Alterskategorien und Gesamtdauer im Kopf.
+- Beide Ansichten zeigen je Übung denselben Inhalt über dieselbe Darstellung: Name, Dauer, Alterskategorien, Bild oder Diagramm, Feldtyp, Anzahl Kinder, Material, methodischer Fahrplan beziehungsweise Aufbau-Text und den Quellenhinweis. Nicht mehr verfügbare Übungen erscheinen als benannter Platzhalter mit Hinweis.
+- Beide blenden leere Trainingsteile und leere Unterblöcke aus; der Editor zeigt sie dagegen an.
+- Unterblöcke entstehen heute ausschliesslich im Hauptteil; für eine zweite Gliederungsebene an einem anderen Trainingsteil gibt es keinen Mechanismus. Übungen mit unbekanntem Trainingsteil verschwinden in beiden Ansichten stillschweigend.
+- Die Durchführung zeigt als einzige Ansicht keine Unterblock-Summen; der Druck zeigt sie.
+- Der Druck erzwingt keinen Seitenumbruch zwischen Trainingsteilen; er verhindert lediglich, dass eine Übung oder ein Block mitten auf der Seite zerrissen wird.
+- Beide Ansichten sind rein lesend und für Betrachtende ohne Eigentum identisch; nicht zugängliche Trainings zeigen eine neutrale Meldung.
+- PO-Entscheide 2026-08-16: Leere Blöcke bleiben in beiden Ansichten ausgeblendet; das Epic-Kriterium ist entsprechend auf Gliederung und Reihenfolge der belegten Blöcke präzisiert. Die Durchführung zeigt künftig auch Unterblock-Summen. Der Soll-Ist-Abgleich der Zeiten und der Nacharbeits-Bereich bleiben dem Editor vorbehalten.
+- PO-Entscheide 2026-08-17 (aus der Validierung): Unbelegte Blöcke erhalten in Durchführung und Druck keinen Hinweis — die Planungsqualität sichern Editor und Veröffentlichung; nur beim Training ganz ohne Fassungen bleibt der bestehende Hinweis, dass keine Übungen zugeordnet sind. Die Durchführung behält einen Trainingsteil pro Schritt; innerhalb des Schritts muss die Unterblock-Zugehörigkeit beim Scrollen erkennbar bleiben (Gestaltung klärt UX). Angaben, die zu einer Fassung nicht erfasst sind (etwa die Erscheinungsform bei Explosivitäts-Fassungen), erscheinen nicht als leere Felder. Der Druck ist kein eigenständiger J+S-Planungsnachweis; Datum, Ort und Teilnehmer gehören zur Terminierung im Team-Trainingsplan-Epic.
+- Bestand vs. Zuwachs: Der Druck zeigt Hauptteil-Unterblöcke und alle Summen-Ebenen bereits heute. Der Zuwachs dieser Story sind die Einstiegs-Unterblöcke in beiden Ansichten und die Unterblock-Summen in der Durchführung.
+
+## Story 8 (Business): Junioren-Training mobil durchführen und drucken
+
+Status: Final ausgearbeitet und validiert am 2026-08-17.
+
+Als Trainer:in im Juniorenfussball
+möchte ich mein Junioren-Training auf dem Platz am Gerät und auf Papier in seiner Struktur vor mir haben
+damit ich das Training so durchführe, wie ich es geplant habe
+
+Preconditions
+
+1. Das Training folgt dem Juniorenschema; seine Fassungen sind Trainingsteilen und Unterblöcken zugeordnet
+
+Acceptance Criteria
+
+1. Der USER durchläuft sein Junioren-Training am Gerät entlang der drei Trainingsteile in der Reihenfolge des Editors
+2. Der USER erkennt in beiden Ansichten die Unterblöcke von Einstieg und Hauptteil an ihrer Beschriftung und ihrer Einordnung unter dem Trainingsteil
+3. Der USER erkennt in der Durchführung an jeder Stelle eines Trainingsteil-Schritts, zu welchem Unterblock die angezeigten Fassungen gehören
+4. Der USER sieht je Trainingsteil und je Unterblock die Summe der erfassten Dauern
+5. Der USER sieht im Druck alle belegten Blöcke seines Junioren-Trainings in einem durchlaufenden Dokument
+6. Der USER sieht zu jeder Fassung die zu ihr erfassten Angaben in derselben Darstellung wie bei einem Kinderfussball-Training
+
+Postconditions
+
+1. Das SYSTEM zeigt in beiden Ansichten nur Trainingsteile und Unterblöcke, denen mindestens eine Fassung zugeordnet ist
+2. Das SYSTEM zeigt in beiden Ansichten keinen Hinweis auf unbelegte Blöcke
+3. Das SYSTEM weist bei einem Training ohne eine einzige Fassung darauf hin, dass dem Training keine Übungen zugeordnet sind
+
+Out of Scope
+
+1. Das SYSTEM zeigt in diesen Ansichten weder die Zeitbandbreiten des Trainingsschemas noch den Abgleich der erfassten Dauern dagegen
+2. Das SYSTEM zeigt in diesen Ansichten weder den Nacharbeits-Bereich noch Fassungen daraus; offene Nacharbeit bleibt eine Aufgabe im Editor
+3. Der USER kann aus diesen Ansichten heraus nichts am Training ändern
+4. Der Druck dient nicht als eigenständiger J+S-Planungsnachweis; Datum, Ort und Teilnehmer kommen mit der Terminierung im Team-Trainingsplan-Epic
+
+Offene Fragen
+
+1. @UX Designer: Wie werden im Druck die zusätzliche Gliederungsebene im Einstieg und die höhere Blockanzahl umbrochen, damit ein Junioren-Training auf Papier übersichtlich bleibt?
+2. @UX Designer: Wie bleibt in der Durchführung die Unterblock-Zugehörigkeit beim Scrollen innerhalb eines Trainingsteil-Schritts erkennbar, wenn der Einstieg drei Unterblöcke mit mehreren Fassungen bündelt?
+
+---
+
+Faktenlage für Story 9 (aus Manual und Codebase-Analyse):
+
+- Das Manual Fussball Jugendliche typisiert seine Trainingsformen dreiteilig (S. 56): Basisspielform als Referenzform, die die taktischen Prinzipien sichtbar macht; Spielform als spielnahe Form mit Entscheidungsdruck; Übung als isolierte Form. Die fachliche Präferenz des Manuals für Spielformen ist Hintergrundwissen und wird nicht abgebildet.
+- Begriffe in der App: Das Attribut heisst Übungstyp; der dritte Wert heisst Isolierte Form — bewusste Abweichung vom Manual-Begriff Übung, weil dieser mit dem Objekt Übung der App kollidiert (PO 2026-08-17).
+- Der Übungskatalog filtert dimensionenweise mit UND, mehrere Werte innerhalb einer Dimension mit ODER; Übungen ohne Wert in einer gefilterten Dimension fallen aus dem Ergebnis (einzige heutige Ausnahme: Gruppengrösse). Die Freitextsuche durchsucht nur Freitextfelder, keine Klassifikationswerte.
+- Der Übungs-Picker im Trainings-Editor ist ein eigener Filterpfad mit heute nur Freitext und Erscheinungsform; der Block ist dort vom Kontext fixiert.
+- Der Bestand (75 Manual-Übungen und bestehende Trainer-Übungen) trägt keinen Übungstyp und wird nicht nachgepflegt (Epic-Entscheid 2026-08-16).
+- Das Übungsbibliothek-Epic legt fest: Der Übungstyp bleibt eine freie Selbstauskunft ohne Konsistenzprüfung gegen die Einordnung; Fassungen übernehmen die Angaben ihrer Vorlage und sind unabhängig anpassbar.
+- PO-Entscheide 2026-08-17: Übungen ohne Übungstyp fallen bei aktivem Filter aus dem Ergebnis. Der Filter gilt auch im Übungs-Picker. Der Übungstyp erscheint in den Detail-Angaben (Übungs-Detail, Fassungs-Detail, Durchführung, Druck), nicht auf den Katalog-Karten. Die Kurzdefinitionen der drei Typen sind beim Zuweisen einsehbar und folgen dem Manual-Wortlaut (S. 56). Der Übungstyp ist auch an Fassungen frei setzbar, änderbar und entfernbar; Änderungen an der Vorlage wirken nie auf bestehende Fassungen (Kopie-Paradigma des Übungsbibliothek-Epics). «Keine Nachpflege des Bestands» meint den systemseitigen Backfill; Trainer können ihre eigenen Übungen jederzeit typisieren. Die dreifache Belegung des Worts Spielform (Übungstyp-Wert, zwei Unterblock-Namen) bleibt bewusst bestehen, weil alle drei Begriffe quellentreu sind; Kontext und Kurzdefinitionen fangen die Verwechslungsgefahr auf. Zusätzlich wurden die Junioren-Erscheinungsformen als eigene Story 12 in den Epic-Scope aufgenommen; das frühere Out of Scope ist revidiert, weil das Manual seinen Trainingsformen Erscheinungsformen über die Spielphasen-Kapitel zuschreibt. Übungen mit Junioren-Heimat wählen künftig aus dem Junioren-Erscheinungsformen-Vokabular (Story 5b AC 6 präzisiert).
+
+## Story 9 (Business): Übungstyp erfassen und filtern
+
+Status: Final ausgearbeitet und validiert am 2026-08-17.
+
+Als Trainer:in
+möchte ich meine Übungen als Basisspielform, Spielform oder Isolierte Form auszeichnen und gezielt danach suchen
+damit ich beim Planen schnell die Trainingsform finde, die zu meinem Vorhaben passt
+
+Preconditions
+
+1. Trainings enthalten zugeordnete Übungen als eigenständige Fassungen ihrer Vorlagen
+
+Acceptance Criteria
+
+1. Der USER kann einer eigenen Übung genau einen Übungstyp zuweisen
+2. Der USER kann den Übungstyp einer eigenen Übung wieder entfernen
+3. Der USER kann den Übungstyp einer Fassung in seinen Trainings setzen, ändern und entfernen
+4. Der USER sieht beim Zuweisen des Übungstyps die Kurzdefinition jedes Typs
+5. Der USER kann den Übungskatalog nach Übungstyp gleichwertig mit den bestehenden Filtern filtern
+6. Der USER kann im Übungs-Picker beim Zusammenstellen eines Trainings nach Übungstyp filtern
+7. Der USER sieht den Übungstyp in der Detailansicht einer Übung und in den Detail-Angaben ihrer Fassungen
+8. Das SYSTEM bezieht die Übungstypen aus der einen kontrollierten Vokabularquelle, und die Übereinstimmung ist automatisiert nachgewiesen
+
+Postconditions
+
+1. Das SYSTEM zeigt bei aktivem Übungstyp-Filter nur Übungen, die einen der gewählten Übungstypen tragen
+2. Das SYSTEM zeigt den Übungstyp nicht auf den Katalog-Karten
+3. Das SYSTEM lässt Änderungen des Übungstyps an einer Fassung ohne Rückwirkung auf ihre Vorlage
+
+Out of Scope
+
+1. Das SYSTEM prüft den Übungstyp nicht gegen Trainingsteil, Unterblock oder Hauptteilkategorie; er bleibt eine freie Selbstauskunft
+2. Das SYSTEM leitet aus dem Übungstyp keine fachliche Empfehlung ab
+3. Das SYSTEM befüllt den bestehenden Übungsbestand nicht; Übungen ohne Übungstyp bleiben vollwertig nutzbar
+4. Die Freitextsuche findet Übungen nicht über ihren Übungstyp
+
+Offene Fragen
+
+Keine.
+
+---
+
+Faktenlage für Story 10 (aus Manual und Codebase-Analyse):
+
+- Das Manual macht die zielgerichtete Planung zur Kernqualität eines Trainings (S. 41/42): Ziele dienen als Orientierung und Motivationsspritze und sollen zu Beginn jedes Trainings kommuniziert werden; der SMART-Tipp und der rote Faden gehören dazu. Das Manual spricht von Zielen im Plural (taktische, technische, athletische, Persönlichkeits-Ziele); der Epic-Entscheid verdichtet bewusst auf genau ein optionales Freitext-Ziel pro Training, die SMART-Formulierung bleibt Sache des Trainers.
+- Der Einstiegs-Unterblock Spielform zum Trainingsziel ist mit dem Ziel-Feld nur namensverwandt; er ist eine Übungsart, die den Trainingsschwerpunkt didaktisch einführt, und wird nicht an das Feld gekoppelt.
+- Ein Training trägt heute nur Name, Alterskategorien und Sichtbarkeit; ein ziel-ähnliches Feld existiert nicht. Editor, Detailansicht, Durchführung und Druck rendern ihre Kopfbereiche getrennt. Die Detailansicht ist dieselbe Seite für den Eigentümer und für Betrachter veröffentlichter Trainings; feldweises Verbergen gibt es im Zugriffsmodell nicht.
+- Die Trainings-Suche arbeitet ausschliesslich über den Namen; die Karten der Übersicht zeigen Chips, Name und Kennzahlen ohne Fliesstext.
+- PO-Entscheide 2026-08-17: Das Ziel steht auch auf der Detailansicht und ist damit für Betrachter veröffentlichter Trainings sichtbar. Es erscheint weder auf den Trainings-Karten noch in der Trainings-Suche. In der mobilen Durchführung erscheint es nur zu Beginn, danach bleibt der knappe Kopfbereich frei. EK 13 ist um die Detailansicht präzisiert. Aus der Validierung: Obergrenze 200 Zeichen (entspricht der einzigen bestehenden Begrenzung der App bei Diagramm-Beschriftungen); das Ziel ist bereits beim Anlegen eines Trainings erfassbar; keine Abgrenzungshilfe zwischen Name und Ziel (die Feldbezeichnung genügt); beim Übernehmen eines fremden Trainings als eigenständige Fassung (Team-Trainingsplan-Epic) wird das Ziel mitkopiert und ist dort unabhängig änderbar.
+- Bewusste Verdichtung: Ein einziges Freitextfeld statt der vier Manual-Zieldimensionen (taktisch, technisch, athletisch, Persönlichkeit) ist ein Business-Entscheid für Einfachheit; Dimensionen können im Freitext benannt werden. Die Optionalität ist ebenso bewusst: Das Ziel wird keine Speicher- oder Veröffentlichungsbedingung, die Hürden aus Story 7 bleiben unverändert.
+- Story 8 beschreibt den heutigen Druck-Kopf (Name, Alterskategorien, Gesamtdauer); Story 10 erweitert diesen Kopf um das Ziel.
+
+## Story 10 (Business): Trainingsziel an Trainings führen
+
+Status: Final ausgearbeitet und validiert am 2026-08-17.
+
+Als Trainer:in
+möchte ich meinem Training ein Ziel mitgeben, das mich von der Planung bis auf den Platz begleitet
+damit ich zielgerichtet plane und mein Team weiss, woran es arbeitet
+
+Preconditions
+
+1. Keine besonderen Voraussetzungen
+
+Acceptance Criteria
+
+1. Der USER kann seinem Training genau ein Ziel als Freitext erfassen
+2. Der USER kann das Ziel bereits beim Anlegen eines Trainings erfassen
+3. Der USER kann das Ziel ändern und entfernen
+4. Der USER sieht das Ziel im Editor, in der Detailansicht und im Druck des Trainings
+5. Der USER sieht das Ziel zu Beginn der mobilen Durchführung
+6. Das SYSTEM begrenzt das Ziel auf 200 Zeichen
+
+Postconditions
+
+1. Das SYSTEM zeigt das Ziel eines veröffentlichten Trainings allen Betrachtenden in Detailansicht, Durchführung und Druck
+2. Das SYSTEM blendet bei einem Training ohne Ziel den Ziel-Bereich in allen Ansichten aus
+3. Das SYSTEM behandelt eine leere oder nur aus Leerzeichen bestehende Eingabe als kein Ziel
+4. Das SYSTEM zeigt das Ziel in der mobilen Durchführung ausschliesslich zu Beginn
+5. Das SYSTEM zeigt das Ziel nicht auf den Trainings-Karten
+
+Out of Scope
+
+1. Das SYSTEM leitet aus dem Ziel keine Empfehlung ab, welche Übung fachlich geeignet ist
+2. Das SYSTEM prüft das Ziel nicht auf SMART-Kriterien; die Formulierung bleibt Sache des Trainers
+3. Das SYSTEM koppelt den Einstiegs-Unterblock Spielform zum Trainingsziel nicht an das Ziel-Feld
+4. Das SYSTEM führt keine Ziele über mehrere Trainings hinweg und keine Zielüberprüfung mit Standortbestimmungen
+5. Die Trainings-Suche findet Trainings nicht über ihr Ziel
+
+Offene Fragen
+
+1. @UX Designer: Wie wird das Ziel zu Beginn der mobilen Durchführung gezeigt, ohne den knappen Kopfbereich zu überladen, und wie unterscheidet es sich dort vom Trainingsnamen?
+
+---
+
+Faktenlage für Story 11 (aus dem Text-Inventar der App):
+
+- Epic-EK 15 verlangt, dass die zentralen nutzersichtbaren Texte — Seitentitel, Startseite, Quellen- und Herkunftshinweise — die Applikation als Werkzeug für Kinder- und Juniorenfussball beschreiben; Produktname und Domain bleiben (Epic Out of Scope 5).
+- Der Kinderfussball-Claim konzentriert sich auf vier zentrale Stellen: den globalen Seitentitel «Kinderfussball Übungen & Trainings» samt Beschreibung, das Startseiten-Intro («Der offizielle Kinderfussball-Bestand und Übungen der Community …»), den dynamischen Übungs-Seitentitel «[Name] — Kinderfussball-Übung» und die zwei hartkodiert duplizierten Quellenhinweis-Sätze an Manual-Übungen (Detailseite sowie Druck/Durchführung).
+- Auth-Seiten und E-Mail-Templates nennen nur den Produktnamen KiFu. Rechtsseiten, Footer, Web-Manifest und Open-Graph-Metadaten existieren nicht. Es gibt keine zentrale Textquelle; alle Texte sind an ihren Verwendungsstellen hartkodiert.
+- Es gibt keinen kuratierten Junioren-Übungsbestand; neue Texte dürfen keinen suggerieren.
+- PO-Entscheide 2026-08-17: Der Übungs-Seitentitel wird schema-neutral (eine Übung kann beiden Schemata dienen). Die Quellenhinweis-Sätze und das Herkunfts-Badge Kifu-Manual bleiben unverändert; sie bezeichnen die Herkunft korrekt und erfüllen den Urheberrechts-Entscheid (Struktur-Begriffe mit Quellenangabe). Kein SEO-Ausbau; die Story ändert nur bestehende Texte. Die schema-spezifischen Randstellen (Editor-Hinweis zum freien Spiel, Formulartext zum Manual-Feldsatz) bleiben unverändert; ihren Schema-Kontext regeln die Struktur-Stories.
+- PO-Entscheide aus der Validierung (2026-08-17): Die Begriffe Kinderfussball und Juniorenfussball kommen in Titel, Beschreibung und Startseite wörtlich vor. Kein Katalog-Hinweis zur anfänglich dünnen Junioren-Treffermenge; der PO seedet einige Junioren-Übungen als Community-Übungen (bestätigt den Story-7-Entscheid). Die neuen Formulierungen nimmt der PO ab. Der erste Kontakt meint Titel, Beschreibung und Startseite; die Sprache innerhalb der Editoren regeln die Struktur-Stories über die Schema-Erkennbarkeit.
+
+## Story 11 (Business): Nutzersichtbare Texte auf Kinder- und Juniorenfussball öffnen
+
+Status: Final ausgearbeitet und validiert am 2026-08-17.
+
+Als Trainer:in im Juniorenfussball
+möchte ich beim ersten Kontakt mit der Applikation erkennen, dass sie auch für den Juniorenfussball gemacht ist
+damit ich ihr meine Trainingsplanung anvertraue, statt sie als reines Kinderfussball-Werkzeug abzutun
+
+Preconditions
+
+1. Keine besonderen Voraussetzungen
+
+Acceptance Criteria
+
+1. Der USER liest im Seitentitel und in der Beschreibung der Applikation wörtlich, dass sie Kinder- und Juniorenfussball abdeckt
+2. Der USER liest auf der Startseite eine Selbstbeschreibung, die beide Welten wörtlich benennt, ohne einen kuratierten Junioren-Bestand zu suggerieren
+3. Der USER sieht auf der Detailseite einer Übung einen Seitentitel ohne Festlegung auf ein Schema
+
+Postconditions
+
+Keine.
+
+Out of Scope
+
+1. Der Produktname KiFu und die Domain bleiben unverändert
+2. Die Quellenhinweise der Manual-Übungen und das Herkunfts-Badge bleiben unverändert; sie bezeichnen korrekt die Herkunft aus dem Manual Kinderfussball
+3. Das SYSTEM erhält keine neue SEO-Infrastruktur wie Sitemap, Open-Graph-Metadaten oder robots-Regeln
+4. Die schema-spezifischen Hinweistexte im Trainings-Editor und die Formulartexte zum Manual-Feldsatz bleiben unverändert
+5. E-Mail-Texte und Auth-Seiten bleiben unverändert; sie nennen nur den Produktnamen
+
+Offene Fragen
+
+1. @UX Designer: Wie lauten die neuen Formulierungen für den globalen Seitentitel, die Beschreibung, das Startseiten-Intro und den schema-neutralen Übungs-Seitentitel? Vorgabe: Kinderfussball und Juniorenfussball kommen wörtlich vor; die Formulierungen gehen zur Abnahme an den Product Owner.
+
+---
+
+Faktenlage für Story 12 (aus Manual und Codebase-Analyse):
+
+- Das Manual Fussball Jugendliche definiert 11 Erscheinungsformen in 5 Kategorien (Tabelle 4, S. 21): Wir haben den Ball (3), Wir haben den Ball nicht (2), Wir erobern/verlieren den Ball (1: Schnell umschalten), spielphasenübergreifend Athletik und Gesundheit (3), spielphasenübergreifend Persönlichkeit und Team (2). Der Good-Practice-Teil ordnet seine Trainingsformen den Erscheinungsformen über die Spielphasen-Kapitel zu; bei Athletik besteht eine 1:1-Zuordnung zu den drei Bereichen (Explosiv und dynamisch agieren → Explosivität, Den Körper stabil halten → Körperstabilität und Mobilität, Viele intensive Spielaktionen bis ans Spielende ausführen → Ermüdungsresistenz).
+- Heute ist die Erscheinungsform ein Mehrfach-Attribut mit den 6 Kinderfussball-Werten, erlaubt nur bei Übungen der Trainingsteile Einleitung und Hauptteil, filterbar im Katalog (Überlappung, gleiche UND/ODER-Logik wie alle Dimensionen) und im Übungs-Picker, angezeigt nur auf der Übungs-Detailseite. Das Vokabular ist flach ohne Gruppenkonzept. 55 der 75 Manual-Übungen tragen Werte, stets einen oder zwei.
+- Die 11 Junioren-Erscheinungsformen im Wortlaut der Tabelle 4: Das Spiel variantenreich und situationsangepasst aufbauen; Torchancen variantenreich vorbereiten und erfolgreich abschliessen; Offensive Zweikämpfe mutig und erfolgreich bestreiten; Ballorientiert, kompakt und situationsangepasst verteidigen; Defensive Zweikämpfe mutig und erfolgreich bestreiten; Schnell umschalten; Explosiv und dynamisch agieren; Den Körper stabil halten; Viele intensive Spielaktionen bis ans Spielende ausführen; Positiv miteinander umgehen; Mutig und selbstbewusst zum Nutzen des ganzen Teams handeln. Keine dieser Bezeichnungen kollidiert mit den 6 Kinderfussball-Werten.
+- PO-Entscheide 2026-08-17: Übungen können mehrere Erscheinungsformen tragen. Beide Vokabulare stehen allen erscheinungsform-berechtigten Übungen offen — der frühere Entscheid «Vokabular folgt der Heimat» ist gleichentags revidiert, weil die 6 spielphasenbezogenen Junioren-Werte sonst an Hauptteil-Übungen (zwingend Kinderfussball-Heimat gemäss Spike) nie zuweisbar wären. Erscheinungsform-berechtigt sind wie bisher Übungen der Trainingsteile Einleitung und Hauptteil sowie neu die drei Junioren-Heimaten; Auffangen und Ausklang bleiben ausgeschlossen. Keine Einschränkung je Unterblock (freie Selbstauskunft; die Manual-Zuordnung ist Hintergrundwissen). Auch die Explosivitäts-Heimat darf Erscheinungsformen tragen; das frühere Verbot aus Story 5b ist revidiert, sonst fände der Filter «Explosiv und dynamisch agieren» genau die passenden Übungen nie. Erscheinungsformen sind wie der Übungstyp auch an Fassungen setzbar, änderbar und entfernbar, ohne Rückwirkung auf die Vorlage. Der Filter bleibt eine gemeinsame Dimension (ODER-Logik über alle gewählten Werte). Die Auswahl- und Filterlisten bleiben flach ohne Spielphasen-Gruppierung. Der Bestand wird nicht nachgepflegt.
+- Konsistenz-Leitplanke aus dem Übungsbibliothek-Epic: Die Erscheinungsformen werden nicht gegen die Einordnung einer Übung oder Fassung im Training geprüft.
+- Kinderfussball-Erscheinungsformen erscheinen heute nur auf der Übungs-Detailseite; die Junioren-Werte folgen dieser Parität.
+
+## Story 12 (Business): Junioren-Erscheinungsformen erfassen und filtern
+
+Status: Final ausgearbeitet und validiert am 2026-08-17.
+
+Als Trainer:in im Juniorenfussball
+möchte ich meine Übungen mit den Erscheinungsformen des Junioren-Manuals auszeichnen und den Katalog danach durchsuchen
+damit ich Übungen finde, die zum Spielphasen-Schwerpunkt meines Trainings passen
+
+Preconditions
+
+1. Trainings enthalten zugeordnete Übungen als eigenständige Fassungen ihrer Vorlagen
+
+Acceptance Criteria
+
+1. Der USER kann einer eigenen erscheinungsform-berechtigten Übung mehrere Erscheinungsformen aus beiden Vokabularen zuweisen
+2. Der USER kann die Erscheinungsformen einer Fassung in seinen Trainings setzen, ändern und entfernen
+3. Der USER kann den Übungskatalog nach Junioren-Erscheinungsformen gleichwertig mit den Kinderfussball-Erscheinungsformen filtern
+4. Der USER kann im Übungs-Picker beim Zusammenstellen eines Trainings nach Junioren-Erscheinungsformen filtern
+5. Der USER sieht die Junioren-Erscheinungsformen einer Übung in deren Detailansicht
+6. Das SYSTEM bezieht die Junioren-Erscheinungsformen aus der einen kontrollierten Vokabularquelle, und die Übereinstimmung ist automatisiert nachgewiesen
+
+Postconditions
+
+1. Das SYSTEM zeigt bei aktivem Erscheinungsform-Filter nur Übungen, die mindestens eine der gewählten Erscheinungsformen tragen; gewählte Werte beider Vokabulare wirken untereinander als ODER
+2. Das SYSTEM lässt Änderungen der Erscheinungsformen an einer Fassung ohne Rückwirkung auf ihre Vorlage
+
+Out of Scope
+
+1. Das SYSTEM prüft die Erscheinungsformen nicht gegen die Heimat, den Unterblock oder die Einordnung der Übung oder Fassung in einem Training
+2. Das SYSTEM bildet das Spielphasenmodell und die Entwicklungsdimensionen nicht ab; die Werte erscheinen in Auswahl und Filter als flache Liste ohne Spielphasen-Gruppierung
+3. Das SYSTEM befüllt den bestehenden Übungsbestand nicht; Übungen ohne Erscheinungsformen bleiben vollwertig nutzbar
+4. Die Freitextsuche findet Übungen nicht über ihre Erscheinungsformen
+5. Auffangen- und Ausklang-Übungen bleiben von Erscheinungsformen ausgeschlossen
+
+Offene Fragen
+
+1. @UX Designer: Wie bleiben die künftig 17 Erscheinungsform-Werte in Auswahl und Filter auffindbar, nachdem bewusst auf eine Spielphasen-Gruppierung verzichtet wurde?
