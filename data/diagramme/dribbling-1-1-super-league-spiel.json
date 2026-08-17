@@ -1,0 +1,346 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld-super",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 95,
+            "y": 133,
+            "breite": 300,
+            "hoehe": 735
+        },
+        {
+            "id": "teller-super-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 95,
+            "y": 133,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-super-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 395,
+            "y": 133,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-super-3",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 95,
+            "y": 868,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-super-4",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 395,
+            "y": 868,
+            "farbe": "gelb"
+        },
+        {
+            "id": "text-super",
+            "art": "text",
+            "x": 245,
+            "y": 828,
+            "text": "Super League"
+        },
+        {
+            "id": "feld-challenge",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gruen",
+            "gefuellt": true,
+            "x": 455,
+            "y": 133,
+            "breite": 330,
+            "hoehe": 735
+        },
+        {
+            "id": "teller-challenge-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 455,
+            "y": 133,
+            "farbe": "gruen"
+        },
+        {
+            "id": "teller-challenge-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 785,
+            "y": 133,
+            "farbe": "gruen"
+        },
+        {
+            "id": "teller-challenge-3",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 455,
+            "y": 868,
+            "farbe": "gruen"
+        },
+        {
+            "id": "teller-challenge-4",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 785,
+            "y": 868,
+            "farbe": "gruen"
+        },
+        {
+            "id": "text-challenge",
+            "art": "text",
+            "x": 620,
+            "y": 828,
+            "text": "Challenge League"
+        },
+        {
+            "id": "feld-promotion",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "blau",
+            "gefuellt": true,
+            "x": 830,
+            "y": 133,
+            "breite": 300,
+            "hoehe": 735
+        },
+        {
+            "id": "teller-promotion-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 830,
+            "y": 133,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-promotion-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1130,
+            "y": 133,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-promotion-3",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 830,
+            "y": 868,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-promotion-4",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1130,
+            "y": 868,
+            "farbe": "blau"
+        },
+        {
+            "id": "text-promotion",
+            "art": "text",
+            "x": 980,
+            "y": 828,
+            "text": "Promotion League"
+        },
+        {
+            "id": "feld-erste",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "gefuellt": true,
+            "x": 1195,
+            "y": 133,
+            "breite": 305,
+            "hoehe": 735
+        },
+        {
+            "id": "teller-erste-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1195,
+            "y": 133,
+            "farbe": "weiss"
+        },
+        {
+            "id": "teller-erste-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1500,
+            "y": 133,
+            "farbe": "weiss"
+        },
+        {
+            "id": "teller-erste-3",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1195,
+            "y": 868,
+            "farbe": "weiss"
+        },
+        {
+            "id": "teller-erste-4",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1500,
+            "y": 868,
+            "farbe": "weiss"
+        },
+        {
+            "id": "text-erste",
+            "art": "text",
+            "x": 1348,
+            "y": 828,
+            "text": "1st League"
+        },
+        {
+            "id": "weiss-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 278,
+            "y": 411,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 205,
+            "y": 551,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "rot-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 558,
+            "y": 276,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "weiss-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 650,
+            "y": 376,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 932,
+            "y": 281,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "rot-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1002,
+            "y": 371,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "weiss-4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1355,
+            "y": 476,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "rot-4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1412,
+            "y": 506,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 250,
+            "y": 628
+        },
+        {
+            "id": "ball-2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 590,
+            "y": 353
+        },
+        {
+            "id": "ball-3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1005,
+            "y": 398
+        },
+        {
+            "id": "ball-4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1385,
+            "y": 598
+        },
+        {
+            "id": "dribbling-challenge",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 590,
+                    "y": 353
+                },
+                {
+                    "x": 645,
+                    "y": 213
+                },
+                {
+                    "x": 685,
+                    "y": 88
+                }
+            ]
+        },
+        {
+            "id": "dribbling-promotion",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 1015,
+                    "y": 363
+                },
+                {
+                    "x": 1065,
+                    "y": 213
+                },
+                {
+                    "x": 1100,
+                    "y": 83
+                }
+            ]
+        }
+    ]
+}
