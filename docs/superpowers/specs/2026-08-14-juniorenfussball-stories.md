@@ -240,12 +240,12 @@ Acceptance Criteria
 
 1. Der USER sieht den Einstieg in die Unterblöcke Aufwärmen, Spielform zum Trainingsziel und Explosivität gegliedert
 2. Der USER sieht den Hauptteil in die Unterblöcke Spielformen und unterstützende Übungen sowie Spiel gegliedert
-3. Der USER erkennt die Unterblock-Struktur auch dann, wenn ein Unterblock keine Übungen enthält
+3. Der USER erkennt die Unterblock-Struktur im Editor auch dann, wenn ein Unterblock keine Übungen enthält
 4. Der USER kann einem Unterblock Übungen als Fassungen zuordnen
 5. Der USER kann die Reihenfolge der Fassungen innerhalb eines Unterblocks ändern
 6. Das SYSTEM schlägt bei der Zuordnung den Unterblock vor, den die Abbildungsregel aus der Vorlage bestimmt
 7. Der USER kann die Einordnung einer Fassung in einen anderen Unterblock ändern; eine Abweichung vom Vorschlag ist am Training erkennbar und blockiert nichts
-8. Der USER wird auf leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität hingewiesen
+8. Der USER wird im Editor auf leere Unterblöcke Spiel, Spielform zum Trainingsziel und Explosivität hingewiesen
 9. Das SYSTEM blockiert das Speichern wegen eines leeren Unterblocks nicht; die Bedingungen der Veröffentlichung regelt die Veröffentlichungs-Story
 
 Postconditions
@@ -397,3 +397,57 @@ Out of Scope
 Offene Fragen
 
 1. @UX Designer: Wie erfährt der Trainer, welche Bedingung er wo im Editor erfüllen muss, wenn die Anzahl der Bedingungen im Juniorenschema deutlich höher ist als im Kinderfussball, und wie unterscheidet sich die Meldung bei offener Nacharbeit von den übrigen Bedingungen?
+
+---
+
+Faktenlage für Story 8 (aus der Analyse von Durchführung und Druck):
+
+- Die mobile Durchführung zeigt einen Trainingsteil pro Schritt, mit Vor- und Zurück-Navigation, Fortschrittsanzeige und einer Bildschirm-Wachhaltung. Der Druck zeigt alle Trainingsteile fortlaufend untereinander, mit Trainingsname, Alterskategorien und Gesamtdauer im Kopf.
+- Beide Ansichten zeigen je Übung denselben Inhalt über dieselbe Darstellung: Name, Dauer, Alterskategorien, Bild oder Diagramm, Feldtyp, Anzahl Kinder, Material, methodischer Fahrplan beziehungsweise Aufbau-Text und den Quellenhinweis. Nicht mehr verfügbare Übungen erscheinen als benannter Platzhalter mit Hinweis.
+- Beide blenden leere Trainingsteile und leere Unterblöcke aus; der Editor zeigt sie dagegen an.
+- Unterblöcke entstehen heute ausschliesslich im Hauptteil; für eine zweite Gliederungsebene an einem anderen Trainingsteil gibt es keinen Mechanismus. Übungen mit unbekanntem Trainingsteil verschwinden in beiden Ansichten stillschweigend.
+- Die Durchführung zeigt als einzige Ansicht keine Unterblock-Summen; der Druck zeigt sie.
+- Der Druck erzwingt keinen Seitenumbruch zwischen Trainingsteilen; er verhindert lediglich, dass eine Übung oder ein Block mitten auf der Seite zerrissen wird.
+- Beide Ansichten sind rein lesend und für Betrachtende ohne Eigentum identisch; nicht zugängliche Trainings zeigen eine neutrale Meldung.
+- PO-Entscheide 2026-08-16: Leere Blöcke bleiben in beiden Ansichten ausgeblendet; das Epic-Kriterium ist entsprechend auf Gliederung und Reihenfolge der belegten Blöcke präzisiert. Die Durchführung zeigt künftig auch Unterblock-Summen. Der Soll-Ist-Abgleich der Zeiten und der Nacharbeits-Bereich bleiben dem Editor vorbehalten.
+- PO-Entscheide 2026-08-17 (aus der Validierung): Unbelegte Blöcke erhalten in Durchführung und Druck keinen Hinweis — die Planungsqualität sichern Editor und Veröffentlichung; nur beim Training ganz ohne Fassungen bleibt der bestehende Hinweis, dass keine Übungen zugeordnet sind. Die Durchführung behält einen Trainingsteil pro Schritt; innerhalb des Schritts muss die Unterblock-Zugehörigkeit beim Scrollen erkennbar bleiben (Gestaltung klärt UX). Angaben, die zu einer Fassung nicht erfasst sind (etwa die Erscheinungsform bei Explosivitäts-Fassungen), erscheinen nicht als leere Felder. Der Druck ist kein eigenständiger J+S-Planungsnachweis; Datum, Ort und Teilnehmer gehören zur Terminierung im Team-Trainingsplan-Epic.
+- Bestand vs. Zuwachs: Der Druck zeigt Hauptteil-Unterblöcke und alle Summen-Ebenen bereits heute. Der Zuwachs dieser Story sind die Einstiegs-Unterblöcke in beiden Ansichten und die Unterblock-Summen in der Durchführung.
+
+## Story 8 (Business): Junioren-Training mobil durchführen und drucken
+
+Status: Final ausgearbeitet und validiert am 2026-08-17.
+
+Als Trainer:in im Juniorenfussball
+möchte ich mein Junioren-Training auf dem Platz am Gerät und auf Papier in seiner Struktur vor mir haben
+damit ich das Training so durchführe, wie ich es geplant habe
+
+Preconditions
+
+1. Das Training folgt dem Juniorenschema; seine Fassungen sind Trainingsteilen und Unterblöcken zugeordnet
+
+Acceptance Criteria
+
+1. Der USER durchläuft sein Junioren-Training am Gerät entlang der drei Trainingsteile in der Reihenfolge des Editors
+2. Der USER erkennt in beiden Ansichten die Unterblöcke von Einstieg und Hauptteil an ihrer Beschriftung und ihrer Einordnung unter dem Trainingsteil
+3. Der USER erkennt in der Durchführung an jeder Stelle eines Trainingsteil-Schritts, zu welchem Unterblock die angezeigten Fassungen gehören
+4. Der USER sieht je Trainingsteil und je Unterblock die Summe der erfassten Dauern
+5. Der USER sieht im Druck alle belegten Blöcke seines Junioren-Trainings in einem durchlaufenden Dokument
+6. Der USER sieht zu jeder Fassung die zu ihr erfassten Angaben in derselben Darstellung wie bei einem Kinderfussball-Training
+
+Postconditions
+
+1. Das SYSTEM zeigt in beiden Ansichten nur Trainingsteile und Unterblöcke, denen mindestens eine Fassung zugeordnet ist
+2. Das SYSTEM zeigt in beiden Ansichten keinen Hinweis auf unbelegte Blöcke
+3. Das SYSTEM weist bei einem Training ohne eine einzige Fassung darauf hin, dass dem Training keine Übungen zugeordnet sind
+
+Out of Scope
+
+1. Das SYSTEM zeigt in diesen Ansichten weder die Zeitbandbreiten des Trainingsschemas noch den Abgleich der erfassten Dauern dagegen
+2. Das SYSTEM zeigt in diesen Ansichten weder den Nacharbeits-Bereich noch Fassungen daraus; offene Nacharbeit bleibt eine Aufgabe im Editor
+3. Der USER kann aus diesen Ansichten heraus nichts am Training ändern
+4. Der Druck dient nicht als eigenständiger J+S-Planungsnachweis; Datum, Ort und Teilnehmer kommen mit der Terminierung im Team-Trainingsplan-Epic
+
+Offene Fragen
+
+1. @UX Designer: Wie werden im Druck die zusätzliche Gliederungsebene im Einstieg und die höhere Blockanzahl umbrochen, damit ein Junioren-Training auf Papier übersichtlich bleibt?
+2. @UX Designer: Wie bleibt in der Durchführung die Unterblock-Zugehörigkeit beim Scrollen innerhalb eines Trainingsteil-Schritts erkennbar, wenn der Einstieg drei Unterblöcke mit mehreren Fassungen bündelt?

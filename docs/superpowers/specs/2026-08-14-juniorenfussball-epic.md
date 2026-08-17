@@ -68,7 +68,7 @@ damit ich meine Mannschaft in derselben Applikation planen kann, ohne ihr die St
 9. Die Zeitbandbreiten je Trainingsteil und die Gesamtdauer von 90 Minuten stehen dem Trainer beim Planen eines Junioren-Trainings als Orientierung zur Verfügung und sind keine Speicher- oder Veröffentlichungsbedingung
 10. Der Übungskatalog ist nach den Alterskategorien D, C, B und A gleichwertig filterbar wie nach G, F und E
 11. Ein veröffentlichtes Junioren-Training ist lehrmittelkonform: Die drei Einstiegs-Unterblöcke, der Unterblock Spielformen und unterstützende Übungen sowie der Abschluss sind belegt, und keine Nacharbeit ist offen; einzig der Spiel-Block bleibt als freies Spiel von der Pflicht ausgenommen
-12. Ein Junioren-Training zeigt in der mobilen Durchführungsansicht und im Druck dieselbe Gliederung nach Trainingsteilen und Unterblöcken wie im Editor
+12. Ein Junioren-Training folgt in der mobilen Durchführungsansicht und im Druck derselben Gliederung und Reihenfolge nach Trainingsteilen und Unterblöcken wie im Editor, beschränkt auf die belegten Blöcke
 13. Ein Training kann genau ein optionales Ziel als Freitext tragen, das in Editor, Durchführungsansicht und Druck sichtbar ist, unabhängig vom Schema
 14. Eine Übung kann genau eine Typologie aus Basisspielform, Spielform oder Übung tragen, und der Übungskatalog ist danach filterbar; für den Bestand ist die Typologie nicht erforderlich
 15. Die zentralen nutzersichtbaren Texte der Applikation — Seitentitel, Startseite, Quellen- und Herkunftshinweise — beschreiben sie als Werkzeug für Kinder- und Juniorenfussball
