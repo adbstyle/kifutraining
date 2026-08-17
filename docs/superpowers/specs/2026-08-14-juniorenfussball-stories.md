@@ -262,7 +262,7 @@ Offene Fragen
 
 ## Story 5b (Business): Übungen mit Junioren-Heimat in einem Einstiegs-Unterblock erfassen
 
-Status: Final ausgearbeitet und validiert am 2026-08-16. Nachtrag 2026-08-17: Mit der Aufnahme der Junioren-Erscheinungsformen in den Epic-Scope wählen Übungen mit Junioren-Heimat aus dem Junioren-Vokabular (AC 6 präzisiert); die Ausgestaltung des Junioren-Vokabulars regelt die Erscheinungsformen-Story.
+Status: Final ausgearbeitet und validiert am 2026-08-16. Nachtrag 2026-08-17: Mit der Aufnahme der Junioren-Erscheinungsformen in den Epic-Scope wählen Übungen mit Junioren-Heimat aus dem Junioren-Vokabular (AC 6 präzisiert); die Ausgestaltung des Junioren-Vokabulars regelt die Erscheinungsformen-Story. Zweiter Nachtrag 2026-08-17: Auch die Explosivitäts-Heimat darf Junioren-Erscheinungsformen tragen — das Manual ordnet «Explosiv und dynamisch agieren» dem Bereich Explosivität 1:1 zu; das frühere Verbot (AC 7 alt) ist aufgehoben, AC 6 gilt für alle drei Junioren-Heimaten.
 
 Als Trainer:in im Juniorenfussball
 möchte ich eigene Übungen erfassen, die in einem Einstiegs-Unterblock des Juniorenschemas zuhause sind
@@ -279,9 +279,8 @@ Acceptance Criteria
 3. Der USER erfasst bei einer Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel mindestens die Fahrplan-Stufe Offen starten
 4. Der USER kann bei diesen Übungen die Fahrplan-Stufen Üben und Wetteifern ergänzen
 5. Der USER erfasst bei einer Übung mit Heimat Explosivität einen Aufbau-Text
-6. Der USER kann bei einer Übung mit Heimat Aufwärmen oder Spielform zum Trainingsziel eine Junioren-Erscheinungsform wählen
-7. Das SYSTEM lässt bei einer Übung mit Heimat Explosivität keine Erscheinungsform zu
-8. Der USER kann die Heimat einer bestehenden eigenen Übung ändern und muss dabei die Pflichtangaben der neuen Heimat vervollständigen
+6. Der USER kann bei einer Übung mit Junioren-Heimat Junioren-Erscheinungsformen wählen
+7. Der USER kann die Heimat einer bestehenden eigenen Übung ändern und muss dabei die Pflichtangaben der neuen Heimat vervollständigen
 
 Postconditions
 
@@ -601,3 +600,52 @@ Out of Scope
 Offene Fragen
 
 1. @UX Designer: Wie lauten die neuen Formulierungen für den globalen Seitentitel, die Beschreibung, das Startseiten-Intro und den schema-neutralen Übungs-Seitentitel? Vorgabe: Kinderfussball und Juniorenfussball kommen wörtlich vor; die Formulierungen gehen zur Abnahme an den Product Owner.
+
+---
+
+Faktenlage für Story 12 (aus Manual und Codebase-Analyse):
+
+- Das Manual Fussball Jugendliche definiert 11 Erscheinungsformen in 5 Kategorien (Tabelle 4, S. 21): Wir haben den Ball (3), Wir haben den Ball nicht (2), Wir erobern/verlieren den Ball (1: Schnell umschalten), spielphasenübergreifend Athletik und Gesundheit (3), spielphasenübergreifend Persönlichkeit und Team (2). Der Good-Practice-Teil ordnet seine Trainingsformen den Erscheinungsformen über die Spielphasen-Kapitel zu; bei Athletik besteht eine 1:1-Zuordnung zu den drei Bereichen (Explosiv und dynamisch agieren → Explosivität, Den Körper stabil halten → Körperstabilität und Mobilität, Viele intensive Spielaktionen bis ans Spielende ausführen → Ermüdungsresistenz).
+- Heute ist die Erscheinungsform ein Mehrfach-Attribut mit den 6 Kinderfussball-Werten, erlaubt nur bei Übungen der Trainingsteile Einleitung und Hauptteil, filterbar im Katalog (Überlappung, gleiche UND/ODER-Logik wie alle Dimensionen) und im Übungs-Picker, angezeigt nur auf der Übungs-Detailseite. Das Vokabular ist flach ohne Gruppenkonzept. 55 der 75 Manual-Übungen tragen Werte, stets einen oder zwei.
+- Die 11 Junioren-Erscheinungsformen im Wortlaut der Tabelle 4: Das Spiel variantenreich und situationsangepasst aufbauen; Torchancen variantenreich vorbereiten und erfolgreich abschliessen; Offensive Zweikämpfe mutig und erfolgreich bestreiten; Ballorientiert, kompakt und situationsangepasst verteidigen; Defensive Zweikämpfe mutig und erfolgreich bestreiten; Schnell umschalten; Explosiv und dynamisch agieren; Den Körper stabil halten; Viele intensive Spielaktionen bis ans Spielende ausführen; Positiv miteinander umgehen; Mutig und selbstbewusst zum Nutzen des ganzen Teams handeln. Keine dieser Bezeichnungen kollidiert mit den 6 Kinderfussball-Werten.
+- PO-Entscheide 2026-08-17: Übungen können mehrere Erscheinungsformen tragen. Beide Vokabulare stehen allen erscheinungsform-berechtigten Übungen offen — der frühere Entscheid «Vokabular folgt der Heimat» ist gleichentags revidiert, weil die 6 spielphasenbezogenen Junioren-Werte sonst an Hauptteil-Übungen (zwingend Kinderfussball-Heimat gemäss Spike) nie zuweisbar wären. Erscheinungsform-berechtigt sind wie bisher Übungen der Trainingsteile Einleitung und Hauptteil sowie neu die drei Junioren-Heimaten; Auffangen und Ausklang bleiben ausgeschlossen. Keine Einschränkung je Unterblock (freie Selbstauskunft; die Manual-Zuordnung ist Hintergrundwissen). Auch die Explosivitäts-Heimat darf Erscheinungsformen tragen; das frühere Verbot aus Story 5b ist revidiert, sonst fände der Filter «Explosiv und dynamisch agieren» genau die passenden Übungen nie. Erscheinungsformen sind wie der Übungstyp auch an Fassungen setzbar, änderbar und entfernbar, ohne Rückwirkung auf die Vorlage. Der Filter bleibt eine gemeinsame Dimension (ODER-Logik über alle gewählten Werte). Die Auswahl- und Filterlisten bleiben flach ohne Spielphasen-Gruppierung. Der Bestand wird nicht nachgepflegt.
+- Konsistenz-Leitplanke aus dem Übungsbibliothek-Epic: Die Erscheinungsformen werden nicht gegen die Einordnung einer Übung oder Fassung im Training geprüft.
+- Kinderfussball-Erscheinungsformen erscheinen heute nur auf der Übungs-Detailseite; die Junioren-Werte folgen dieser Parität.
+
+## Story 12 (Business): Junioren-Erscheinungsformen erfassen und filtern
+
+Status: Final ausgearbeitet und validiert am 2026-08-17.
+
+Als Trainer:in im Juniorenfussball
+möchte ich meine Übungen mit den Erscheinungsformen des Junioren-Manuals auszeichnen und den Katalog danach durchsuchen
+damit ich Übungen finde, die zum Spielphasen-Schwerpunkt meines Trainings passen
+
+Preconditions
+
+1. Trainings enthalten zugeordnete Übungen als eigenständige Fassungen ihrer Vorlagen
+
+Acceptance Criteria
+
+1. Der USER kann einer eigenen erscheinungsform-berechtigten Übung mehrere Erscheinungsformen aus beiden Vokabularen zuweisen
+2. Der USER kann die Erscheinungsformen einer Fassung in seinen Trainings setzen, ändern und entfernen
+3. Der USER kann den Übungskatalog nach Junioren-Erscheinungsformen gleichwertig mit den Kinderfussball-Erscheinungsformen filtern
+4. Der USER kann im Übungs-Picker beim Zusammenstellen eines Trainings nach Junioren-Erscheinungsformen filtern
+5. Der USER sieht die Junioren-Erscheinungsformen einer Übung in deren Detailansicht
+6. Das SYSTEM bezieht die Junioren-Erscheinungsformen aus der einen kontrollierten Vokabularquelle, und die Übereinstimmung ist automatisiert nachgewiesen
+
+Postconditions
+
+1. Das SYSTEM zeigt bei aktivem Erscheinungsform-Filter nur Übungen, die mindestens eine der gewählten Erscheinungsformen tragen; gewählte Werte beider Vokabulare wirken untereinander als ODER
+2. Das SYSTEM lässt Änderungen der Erscheinungsformen an einer Fassung ohne Rückwirkung auf ihre Vorlage
+
+Out of Scope
+
+1. Das SYSTEM prüft die Erscheinungsformen nicht gegen die Heimat, den Unterblock oder die Einordnung der Übung oder Fassung in einem Training
+2. Das SYSTEM bildet das Spielphasenmodell und die Entwicklungsdimensionen nicht ab; die Werte erscheinen in Auswahl und Filter als flache Liste ohne Spielphasen-Gruppierung
+3. Das SYSTEM befüllt den bestehenden Übungsbestand nicht; Übungen ohne Erscheinungsformen bleiben vollwertig nutzbar
+4. Die Freitextsuche findet Übungen nicht über ihre Erscheinungsformen
+5. Auffangen- und Ausklang-Übungen bleiben von Erscheinungsformen ausgeschlossen
+
+Offene Fragen
+
+1. @UX Designer: Wie bleiben die künftig 17 Erscheinungsform-Werte in Auswahl und Filter auffindbar, nachdem bewusst auf eine Spielphasen-Gruppierung verzichtet wurde?
