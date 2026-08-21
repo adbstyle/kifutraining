@@ -1,0 +1,116 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 220,
+            "y": 57,
+            "breite": 1161,
+            "hoehe": 886
+        },
+        {
+            "id": "kind-laeufer-o",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 533,
+            "y": 165,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-gefangen-o",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 317,
+            "y": 278,
+            "farbe": "weiss",
+            "pose": "graetschen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-laeufer-m",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 544,
+            "y": 430,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-gefangen-m",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 765,
+            "y": 484,
+            "farbe": "rot",
+            "pose": "graetschen"
+        },
+        {
+            "id": "kind-baum-o",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1154,
+            "y": 197,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-laeufer-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1300,
+            "y": 419,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-laeufer-ul",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 522,
+            "y": 786,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-laeufer-um",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 706,
+            "y": 862,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-baum-u",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1013,
+            "y": 818,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-dribbler",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 905,
+            "y": 716,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-dribbler",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 846,
+            "y": 716
+        }
+    ]
+}
