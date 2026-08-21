@@ -1,0 +1,188 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 231,
+            "y": 61,
+            "breite": 1128,
+            "hoehe": 873
+        },
+        {
+            "id": "feuerzone-links",
+            "art": "form",
+            "form": "ellipse",
+            "farbe": "orange",
+            "gefuellt": true,
+            "x": 272,
+            "y": 482,
+            "breite": 224,
+            "hoehe": 114
+        },
+        {
+            "id": "feuerzone-rechts",
+            "art": "form",
+            "form": "ellipse",
+            "farbe": "orange",
+            "gefuellt": true,
+            "x": 943,
+            "y": 466,
+            "breite": 224,
+            "hoehe": 110
+        },
+        {
+            "id": "kind-weiss-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 361,
+            "y": 280,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-weiss-1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 366,
+            "y": 368
+        },
+        {
+            "id": "kind-rot-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 683,
+            "y": 311,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-rot-1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 631,
+            "y": 368
+        },
+        {
+            "id": "kind-rot-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 901,
+            "y": 176,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-rot-2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 938,
+            "y": 264
+        },
+        {
+            "id": "kind-feuer-links",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 397,
+            "y": 472,
+            "farbe": "orange",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-feuer-rechts",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1016,
+            "y": 446,
+            "farbe": "orange",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-weiss-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1307,
+            "y": 514,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-weiss-2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1271,
+            "y": 581
+        },
+        {
+            "id": "kind-rot-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 621,
+            "y": 670,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-rot-3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 621,
+            "y": 768
+        },
+        {
+            "id": "kind-rot-4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1031,
+            "y": 628,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-rot-4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 974,
+            "y": 669
+        },
+        {
+            "id": "kind-weiss-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 345,
+            "y": 805,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-weiss-3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 407,
+            "y": 815
+        },
+        {
+            "id": "kind-weiss-4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 927,
+            "y": 784,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-weiss-4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 875,
+            "y": 846
+        }
+    ]
+}
