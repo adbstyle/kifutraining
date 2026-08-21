@@ -1,0 +1,161 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 110,
+            "y": 42,
+            "breite": 1210,
+            "hoehe": 941
+        },
+        {
+            "id": "kind-k1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 208,
+            "y": 222,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 558,
+            "y": 222,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 650,
+            "y": 199,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1160,
+            "y": 143,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 457,
+            "y": 457,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k6",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 992,
+            "y": 463,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k7",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 214,
+            "y": 659,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k8",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 460,
+            "y": 787,
+            "farbe": "weiss",
+            "pose": "laufen-hinten"
+        },
+        {
+            "id": "kind-k9",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 690,
+            "y": 703,
+            "farbe": "rot",
+            "pose": "laufen-hinten"
+        },
+        {
+            "id": "kind-k10",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 720,
+            "y": 703,
+            "farbe": "rot",
+            "pose": "laufen-hinten"
+        },
+        {
+            "id": "kind-k11",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1098,
+            "y": 838,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "trainer",
+            "art": "symbol",
+            "typ": "trainer",
+            "x": 1451,
+            "y": 456,
+            "farbe": "orange",
+            "spiegeln": true
+        },
+        {
+            "id": "verfolgung-oben",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 491,
+                    "y": 316
+                },
+                {
+                    "x": 250,
+                    "y": 322
+                }
+            ]
+        },
+        {
+            "id": "verfolgung-mitte",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 776,
+                    "y": 731
+                },
+                {
+                    "x": 950,
+                    "y": 574
+                }
+            ]
+        }
+    ]
+}
