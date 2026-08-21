@@ -76,6 +76,17 @@ export function diagrammProbleme(daten: DiagrammData, rohAnzahl?: number): strin
       probleme.push(`${e.id}: unbekannte Farbe "${e.farbe}"`);
     }
 
+    if (e.art === "pfad" && e.typ !== "linie") {
+      // Farbe und Strichelung wertet nur die Linie aus; Laufweg, Dribbling und
+      // Pass zeichnen in fester Optik (DiagrammView.PfadGrafik).
+      if (e.farbe !== undefined) {
+        probleme.push(`${e.id}: farbe "${e.farbe}" auf "${e.typ}" (wirkungslos)`);
+      }
+      if (e.gestrichelt !== undefined) {
+        probleme.push(`${e.id}: gestrichelt auf "${e.typ}" (wirkungslos)`);
+      }
+    }
+
     if (e.art === "symbol") {
       if (!(SYMBOL_TYPEN as readonly string[]).includes(e.typ)) {
         probleme.push(`${e.id}: unbekannter Symbol-Typ "${e.typ}" (rendert als „?")`);

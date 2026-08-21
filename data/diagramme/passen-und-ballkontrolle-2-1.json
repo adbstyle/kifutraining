@@ -1,0 +1,269 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 370,
+            "y": 166,
+            "breite": 838,
+            "hoehe": 787
+        },
+        {
+            "id": "tor-o1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 516,
+            "y": 166,
+            "rotation": 0
+        },
+        {
+            "id": "tor-o2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1062,
+            "y": 166,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 516,
+            "y": 953,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1066,
+            "y": 953,
+            "rotation": 0
+        },
+        {
+            "id": "marke-links",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 318,
+            "y": 399,
+            "farbe": "blau"
+        },
+        {
+            "id": "marke-rechts",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1255,
+            "y": 700,
+            "farbe": "blau"
+        },
+        {
+            "id": "kind-o1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 767,
+            "y": 82,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-o1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 756,
+            "y": 149
+        },
+        {
+            "id": "kind-o2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 847,
+            "y": 73,
+            "farbe": "weiss",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-o2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 864,
+            "y": 149
+        },
+        {
+            "id": "kind-u1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 759,
+            "y": 899,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-u1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 756,
+            "y": 966
+        },
+        {
+            "id": "kind-u2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 812,
+            "y": 899,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-u2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 834,
+            "y": 966
+        },
+        {
+            "id": "kind-w1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 643,
+            "y": 189,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-w1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 610,
+            "y": 287
+        },
+        {
+            "id": "kind-w2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 361,
+            "y": 322,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-w3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1004,
+            "y": 413,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-r1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 617,
+            "y": 546,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-r2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 901,
+            "y": 778,
+            "farbe": "rot",
+            "pose": "passen"
+        },
+        {
+            "id": "ball-r2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 954,
+            "y": 829
+        },
+        {
+            "id": "kind-r3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1212,
+            "y": 589,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "weg-rot",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 623,
+                    "y": 399
+                },
+                {
+                    "x": 778,
+                    "y": 536
+                },
+                {
+                    "x": 933,
+                    "y": 682
+                }
+            ]
+        },
+        {
+            "id": "weg-links",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 395,
+                    "y": 416
+                },
+                {
+                    "x": 451,
+                    "y": 459
+                }
+            ]
+        },
+        {
+            "id": "weg-rechts",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 847,
+                    "y": 829
+                },
+                {
+                    "x": 950,
+                    "y": 734
+                },
+                {
+                    "x": 1019,
+                    "y": 635
+                }
+            ]
+        },
+        {
+            "id": "pass-rechts",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 954,
+                    "y": 829
+                },
+                {
+                    "x": 1255,
+                    "y": 700
+                }
+            ]
+        }
+    ]
+}
