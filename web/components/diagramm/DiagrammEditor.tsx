@@ -204,7 +204,7 @@ const FORMEN: Record<FormTyp, string> = {
  *  die Anordnung trägt die Gruppierung, der Tooltip den Namen). */
 const GRUPPE_TORE: SymbolTyp[] = ["tor", "minitor"];
 const GRUPPE_MATERIAL: SymbolTyp[] = ["pylone", "teller", "stange", "reifen", "huerde", "leibchen"];
-const GRUPPE_PERSONEN: SymbolTyp[] = ["spieler", "torwart"];
+const GRUPPE_PERSONEN: SymbolTyp[] = ["spieler", "torwart", "trainer"];
 const GRUPPE_BAELLE: SymbolTyp[] = ["fussball", "handball", "tennisball"];
 
 /** Statische Mini-Vorschau-Elemente für die Kacheln — Koordinaten sind

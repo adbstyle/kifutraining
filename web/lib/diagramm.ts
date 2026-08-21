@@ -53,17 +53,20 @@ export const SYMBOL_TYPEN = [
   "leibchen",
   "spieler",
   "torwart",
+  "trainer",
   "fussball",
   "handball",
   "tennisball",
 ] as const;
 export type SymbolTyp = (typeof SYMBOL_TYPEN)[number];
 
-/** Figuren-Symbole: als Cartoon-Kinder gerendert (Epic #47). Statt Rotation
- *  haben sie eine Blickrichtung (Spiegeln); Spieler zusätzlich eine Pose. */
-export const FIGUR_TYPEN: ReadonlySet<SymbolTyp> = new Set(["spieler", "torwart"]);
+/** Figuren-Symbole: als Cartoon-Figuren gerendert (Epic #47) — Kinder als
+ *  Spieler/Torwart, der Trainer als erwachsene Standfigur. Statt Rotation
+ *  haben sie eine Blickrichtung (Spiegeln); nur Spieler zusätzlich eine Pose. */
+export const FIGUR_TYPEN: ReadonlySet<SymbolTyp> = new Set(["spieler", "torwart", "trainer"]);
 
-/** Wählbare Posen des Feldspielers. Der Torwart hat eine feste Standfigur.
+/** Wählbare Posen des Feldspielers. Torwart und Trainer haben je eine feste
+ *  Standfigur.
  *  Die „-hinten"-Posen zeigen dieselbe Haltung von hinten (Kind schaut vom
  *  Betrachter weg, im Diagramm also „nach oben") — im Manual die Blickrichtung
  *  wartender Kolonnen. Nur die beiden Frontal-Posen haben eine Rückansicht; die

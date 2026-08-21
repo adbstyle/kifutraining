@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { FARBEN, type FarbSlug, type SymbolTyp, type SpielerPose, type Rotation, DREHBARE_TYPEN } from "@/lib/diagramm";
-import { figurMarkup, figurTransform } from "./figur";
+import { figurMarkup, figurTransform, TRAINER_SCALE } from "./figur";
 
 /**
  * Zentrales Symbol-Register (Decision Record Spike #48, Gate 3).
@@ -334,7 +334,7 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
         transform={figurTransform(opts?.spiegeln)}
         dangerouslySetInnerHTML={{
           __html: figurMarkup({
-            torwart: false,
+            art: "spieler",
             pose: opts?.pose,
             trikot: farbe,
             seed: opts?.seed ?? "spieler",
@@ -355,9 +355,34 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
         transform={figurTransform(opts?.spiegeln)}
         dangerouslySetInnerHTML={{
           __html: figurMarkup({
-            torwart: true,
+            art: "torwart",
             trikot: "#c0ca33",
             seed: opts?.seed ?? "torwart",
+          }),
+        }}
+      />
+    ),
+  },
+  trainer: {
+    label: "Trainer",
+    // Erwachsene Figur: rund 38 % grösser als ein Kind (TRAINER_SCALE). Die
+    // Zeichnung spannt im Figuren-Raum y 22…251, anker-relativ also −90…+84
+    // — der Rahmen deckt beides.
+    breite: 76,
+    hoehe: 184,
+    drehbar: DREHBARE_TYPEN.has("trainer"),
+    faerbbar: true,
+    defaultFarbe: "orange",
+    // Feste Standfigur mit Kappe, langen Ärmeln und langer Hose; Überzieher in
+    // der Elementfarbe. Posenlos wie der Torwart.
+    render: (farbe, opts) => (
+      <g
+        transform={figurTransform(opts?.spiegeln, TRAINER_SCALE)}
+        dangerouslySetInnerHTML={{
+          __html: figurMarkup({
+            art: "trainer",
+            trikot: farbe,
+            seed: opts?.seed ?? "trainer",
           }),
         }}
       />

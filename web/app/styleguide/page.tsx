@@ -619,16 +619,19 @@ export default function Styleguide() {
           damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.
         </p>
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Spieler und Torwart sind Cartoon-Kinder: das Trikot trägt die
-          Team-Farbe (ein konfigurierbarer Fill), Frisur und Hautton werden pro
-          Element deterministisch variiert. Der Spieler hat eine wählbare{" "}
+          Spieler und Torwart sind Cartoon-Kinder, der <strong>Trainer</strong>{" "}
+          eine erwachsene Figur (Kappe, lange Ärmel, lange Hose, rund 38 %
+          grösser — so zeichnet ihn das Manual): das Trikot trägt die Team-Farbe
+          (ein konfigurierbarer Fill), Frisur und Hautton werden pro Element
+          deterministisch variiert. Der Spieler hat eine wählbare{" "}
           <strong>Pose</strong>, beide Figuren statt Rotation eine{" "}
           <strong>Blickrichtung</strong> (links/rechts, Spiegeln). Die beiden{" "}
           <code>-hinten</code>-Posen zeigen dieselbe Haltung von hinten — damit
           lässt sich ein Kind darstellen, das vom Betrachter weg (im Diagramm
           „nach oben") schaut, etwa eine wartende Kolonne. Nur die Frontal-Posen
           haben diese Variante; die übrigen zeigen die Figur ohnehin im Profil.
-          Alle Posen als <code>GlyphVorschau</code>:
+          Torwart und Trainer haben je eine feste Standfigur ohne Pose. Alle Posen
+          als <code>GlyphVorschau</code>:
         </p>
         <div className="mb-6 flex flex-wrap items-end gap-2">
           {(
@@ -643,6 +646,7 @@ export default function Styleguide() {
                 farbe: "rot",
               })),
               { id: "po-torwart", art: "symbol", typ: "torwart", x: 0, y: 0 },
+              { id: "po-trainer", art: "symbol", typ: "trainer", x: 0, y: 0, farbe: "orange" },
             ] as DiagrammElement[]
           ).map((el) => (
             <div
@@ -651,8 +655,8 @@ export default function Styleguide() {
             >
               <GlyphVorschau element={el} groesse={56} />
               <span className="type-label-small text-on-surface-variant">
-                {el.art === "symbol" && el.typ === "torwart"
-                  ? "torwart"
+                {el.art === "symbol" && el.typ !== "spieler"
+                  ? el.typ
                   : el.art === "symbol"
                     ? el.pose
                     : ""}

@@ -383,18 +383,17 @@
         {
             "id": "trainer",
             "art": "symbol",
-            "typ": "spieler",
+            "typ": "trainer",
             "x": 671,
-            "y": 913,
-            "farbe": "orange",
-            "pose": "stehen"
+            "y": 901,
+            "farbe": "orange"
         },
         {
             "id": "leibchen-trainer",
             "art": "symbol",
             "typ": "leibchen",
-            "x": 715,
-            "y": 918,
+            "x": 722,
+            "y": 912,
             "farbe": "blau"
         }
     ]
