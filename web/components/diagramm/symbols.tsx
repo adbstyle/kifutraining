@@ -1,6 +1,14 @@
 import type { ReactNode } from "react";
-import { FARBEN, type FarbSlug, type SymbolTyp, type SpielerPose, type Rotation, DREHBARE_TYPEN } from "@/lib/diagramm";
-import { figurMarkup, figurTransform, TRAINER_SCALE } from "./figur";
+import {
+  FARBEN,
+  type FarbSlug,
+  type SymbolTyp,
+  type SpielerPose,
+  type Rotation,
+  DREHBARE_TYPEN,
+  FIGUR_TYPEN,
+} from "@/lib/diagramm";
+import { FigurGrafik, TORWART_TRIKOT } from "./figur";
 
 /**
  * Zentrales Symbol-Register (Decision Record Spike #48, Gate 3).
@@ -330,16 +338,12 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
     defaultFarbe: "rot",
     // Cartoon-Kind, Trikot = Team-Farbe; Pose/Spiegeln/Frisur über opts (Epic #47).
     render: (farbe, opts) => (
-      <g
-        transform={figurTransform(opts?.spiegeln)}
-        dangerouslySetInnerHTML={{
-          __html: figurMarkup({
-            art: "spieler",
-            pose: opts?.pose,
-            trikot: farbe,
-            seed: opts?.seed ?? "spieler",
-          }),
-        }}
+      <FigurGrafik
+        art="spieler"
+        pose={opts?.pose}
+        trikot={farbe}
+        seed={opts?.seed ?? "spieler"}
+        spiegeln={opts?.spiegeln}
       />
     ),
   },
@@ -351,15 +355,11 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
     faerbbar: false,
     // Feste Standfigur mit Handschuhen, Neon-Trikot (hebt sich ab).
     render: (_farbe, opts) => (
-      <g
-        transform={figurTransform(opts?.spiegeln)}
-        dangerouslySetInnerHTML={{
-          __html: figurMarkup({
-            art: "torwart",
-            trikot: "#c0ca33",
-            seed: opts?.seed ?? "torwart",
-          }),
-        }}
+      <FigurGrafik
+        art="torwart"
+        trikot={TORWART_TRIKOT}
+        seed={opts?.seed ?? "torwart"}
+        spiegeln={opts?.spiegeln}
       />
     ),
   },
@@ -376,15 +376,11 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
     // Feste Standfigur mit Kappe, langen Ärmeln und langer Hose; Überzieher in
     // der Elementfarbe. Posenlos wie der Torwart.
     render: (farbe, opts) => (
-      <g
-        transform={figurTransform(opts?.spiegeln, TRAINER_SCALE)}
-        dangerouslySetInnerHTML={{
-          __html: figurMarkup({
-            art: "trainer",
-            trikot: farbe,
-            seed: opts?.seed ?? "trainer",
-          }),
-        }}
+      <FigurGrafik
+        art="trainer"
+        trikot={farbe}
+        seed={opts?.seed ?? "trainer"}
+        spiegeln={opts?.spiegeln}
       />
     ),
   },
@@ -457,4 +453,36 @@ export function symbolFarbe(typ: string, farbe?: FarbSlug): string {
   const def = symbolDef(typ);
   const slug = farbe ?? def.defaultFarbe;
   return slug ? FARBEN[slug] : FARBEN.rot;
+}
+
+/** Wirksame Drehung eines Symbols — Single Source für Zeichnung, Trefferfläche
+ *  und Begrenzungsrahmen. Figuren nutzen Blickrichtung statt Rotation, und
+ *  perspektivische Symbole (Minitor) zeichnen den Winkel selbst als eigenes
+ *  Sprite: beide bleiben achsenparallel, eine gespeicherte Rotation ist dort
+ *  wirkungslos. */
+export function symbolRotation(typ: string, rotation?: Rotation): number {
+  if (FIGUR_TYPEN.has(typ as SymbolTyp) || symbolDef(typ).perspektivisch) return 0;
+  return rotation ?? 0;
+}
+
+/** Achsenparallele Masse eines Symbols in seiner Drehlage. Der Anker bleibt der
+ *  Mittelpunkt (Anker-Vertrag), die Rotation dreht um ihn — Auswahl-Rahmen,
+ *  Rand-Begrenzung und Vorschau-Einpassung müssen sie darum mitdrehen, sonst
+ *  liegt etwa um eine waagrecht gedrehte Stange ein hochkanter Rahmen.
+ *  45°-Schritte: 90/270 tauschen die Masse, die Diagonalen ergeben das
+ *  umschliessende Quadrat mit Seite (b + h) / √2. */
+export function symbolMasse(typ: string, rotation?: Rotation): { breite: number; hoehe: number } {
+  const { breite, hoehe } = symbolDef(typ);
+  switch (symbolRotation(typ, rotation)) {
+    case 0:
+    case 180:
+      return { breite, hoehe };
+    case 90:
+    case 270:
+      return { breite: hoehe, hoehe: breite };
+    default: {
+      const seite = (breite + hoehe) / Math.SQRT2;
+      return { breite: seite, hoehe: seite };
+    }
+  }
 }

@@ -11,8 +11,9 @@
  * Figuren-Version wirkt sofort auf bestehende Diagramme, ohne Standbild.
  *
  * Zeichen-Raum: 0..200 (x) × 0..280 (y), Figur-Anker (Körpermitte) bei
- * (100, 140). `figurTransform` zentriert den Anker auf (0,0), skaliert auf
- * Feldgrösse und spiegelt optional die Blickrichtung.
+ * (100, 140). `FigurGrafik` ist der einzige Einstiegspunkt: sie zentriert den
+ * Anker auf (0,0), skaliert je Figurenart auf Feldgrösse (der Trainer ist
+ * erwachsen und grösser) und spiegelt optional die Blickrichtung.
  */
 
 import type { SpielerPose } from "@/lib/diagramm";
@@ -41,7 +42,9 @@ type Frisur = (typeof FRISUREN)[number];
 const SHORT = "#37474f";
 const SOCK = "#fafafa";
 const SHOE = "#222";
-const TORWART_TRIKOT = "#c0ca33"; // Neon, hebt den Torwart ab (faerbbar:false)
+/** Festes Neon-Trikot des Torhüters (`faerbbar: false`) — hebt ihn vom Team ab.
+ *  Exportiert, damit das Register die Farbe nicht doppelt notiert. */
+export const TORWART_TRIKOT = "#c0ca33";
 // Trainer: lange graue Hose, dunkle lange Ärmel, Kappe mit hellem Rand — so
 // zeichnet ihn das KiFu-Manual (z. B. „Trikottausch", S. 62).
 const TRAINER_HOSE = "#78909c";
@@ -58,11 +61,19 @@ const SCALE = 0.55;
  *  ein Kind (gemessen 40 px gegen 29 px auf `images/trikottausch.png`). Die
  *  Proportionen (kleinerer Kopf, längere Beine) macht die Zeichnung, die
  *  Körpergrösse dieser Faktor. */
-export const TRAINER_SCALE = 0.76;
+const TRAINER_SCALE = 0.76;
 
-/** Transform für die Figur: Anker auf (0,0), skaliert, optional gespiegelt.
- *  Wird im Symbol-Register an das zentrierte `<g>` gehängt. */
-export function figurTransform(spiegeln?: boolean, scale: number = SCALE): string {
+/** Welche Figur gezeichnet wird. Die Körpergrösse hängt daran (siehe
+ *  `ART_SCALE`), darum ist die Art der einzige Schalter nach draussen. */
+export type FigurArt = "spieler" | "torwart" | "trainer";
+const ART_SCALE: Record<FigurArt, number> = {
+  spieler: SCALE,
+  torwart: SCALE,
+  trainer: TRAINER_SCALE,
+};
+
+/** Transform für die Figur: Anker auf (0,0), skaliert, optional gespiegelt. */
+function figurTransform(spiegeln: boolean | undefined, scale: number): string {
   const sx = spiegeln ? -scale : scale;
   return `scale(${sx} ${scale}) translate(${-ANKER_X} ${-ANKER_Y})`;
 }
@@ -366,10 +377,10 @@ const POSEN: Record<SpielerPose, (j: string, s: string, h: string, fr: Frisur) =
 };
 
 /** Markup einer Figur im Zeichen-Raum. `trikot` ist die gerenderte Team-Farbe
- *  (beim Torwart ignoriert — fixes Neon). Frisur/Hautton aus `seed` abgeleitet. */
-export function figurMarkup(args: {
-  /** Welche Figur: Kind mit Pose, Torhüter oder Trainer (beide posenlos). */
-  art: "spieler" | "torwart" | "trainer";
+ *  (beim Torwart ignoriert — fixes Neon). Frisur/Hautton aus `seed` abgeleitet.
+ *  Nur für `FigurGrafik` — das Markup passt allein zur Skalierung seiner Art. */
+function figurMarkup(args: {
+  art: FigurArt;
   pose?: SpielerPose;
   trikot: string;
   seed: string;
@@ -378,4 +389,29 @@ export function figurMarkup(args: {
   if (args.art === "torwart") return torhueter(TORWART_TRIKOT, haut, haar, frisur);
   if (args.art === "trainer") return trainer(args.trikot, haut);
   return POSEN[args.pose ?? "stehen"](args.trikot, haut, haar, frisur);
+}
+
+/** Fertige Figur für das Symbol-Register: Markup **und** Transform in einem
+ *  Aufruf. Beide gehören zusammen — die Zeichnung des Trainers stimmt nur bei
+ *  seiner eigenen Skalierung —, darum gibt es nach draussen nur diesen
+ *  Einstiegspunkt und keine einzeln aufrufbaren Hälften. */
+export function FigurGrafik({
+  art,
+  pose,
+  trikot,
+  seed,
+  spiegeln,
+}: {
+  art: FigurArt;
+  pose?: SpielerPose;
+  trikot: string;
+  seed: string;
+  spiegeln?: boolean;
+}) {
+  return (
+    <g
+      transform={figurTransform(spiegeln, ART_SCALE[art])}
+      dangerouslySetInnerHTML={{ __html: figurMarkup({ art, pose, trikot, seed }) }}
+    />
+  );
 }

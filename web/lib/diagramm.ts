@@ -65,6 +65,10 @@ export type SymbolTyp = (typeof SYMBOL_TYPEN)[number];
  *  haben sie eine Blickrichtung (Spiegeln); nur Spieler zusätzlich eine Pose. */
 export const FIGUR_TYPEN: ReadonlySet<SymbolTyp> = new Set(["spieler", "torwart", "trainer"]);
 
+/** Figuren mit wählbarer Pose — nur der Feldspieler. Torwart und Trainer haben
+ *  je eine feste Standfigur, eine gespeicherte Pose bliebe dort wirkungslos. */
+export const POSEN_TYPEN: ReadonlySet<SymbolTyp> = new Set(["spieler"]);
+
 /** Wählbare Posen des Feldspielers. Torwart und Trainer haben je eine feste
  *  Standfigur.
  *  Die „-hinten"-Posen zeigen dieselbe Haltung von hinten (Kind schaut vom

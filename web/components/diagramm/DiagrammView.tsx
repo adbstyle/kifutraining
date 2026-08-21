@@ -2,7 +2,6 @@ import {
   FLAECHE,
   FARBEN,
   FORM_DEFAULT_FARBE,
-  FIGUR_TYPEN,
   bbox,
   dreieckEcken,
   type DiagrammData,
@@ -12,7 +11,7 @@ import {
   type TextElement,
   type Punkt,
 } from "@/lib/diagramm";
-import { symbolDef, symbolFarbe } from "./symbols";
+import { symbolDef, symbolFarbe, symbolMasse, symbolRotation } from "./symbols";
 import { cn } from "@/lib/cn";
 
 /**
@@ -270,12 +269,11 @@ export function ElementGrafik({ element }: { element: DiagrammElement }) {
   switch (element.art) {
     case "symbol": {
       const def = symbolDef(element.typ);
-      // Figuren (Spieler/Torwart) nutzen Blickrichtung statt Rotation; ihre
-      // Pose/Spiegelung/Frisur kommen über die Render-Optionen.
-      const figur = FIGUR_TYPEN.has(element.typ);
-      // Perspektivische Symbole (Minitor) zeichnen die Orientierung selbst als
-      // eigenes Sprite — kein äusserer rotate(), Winkel geht über opts.rotation.
-      const rot = figur || def.perspektivisch ? 0 : element.rotation ?? 0;
+      // Figuren nutzen Blickrichtung statt Rotation (Pose/Spiegelung/Frisur
+      // kommen über die Render-Optionen), perspektivische Symbole (Minitor)
+      // zeichnen die Orientierung selbst als eigenes Sprite — für beide ist die
+      // wirksame Drehung 0, der Winkel geht dort über opts.rotation.
+      const rot = symbolRotation(element.typ, element.rotation);
       return (
         <g transform={`translate(${element.x} ${element.y}) rotate(${rot})`}>
           {def.render(symbolFarbe(element.typ, element.farbe), {
@@ -303,8 +301,10 @@ export function ElementGrafik({ element }: { element: DiagrammElement }) {
 function inhaltBox(element: DiagrammElement): { x: number; y: number; b: number; h: number } {
   switch (element.art) {
     case "symbol": {
-      const d = symbolDef(element.typ);
-      return { x: element.x - d.breite / 2, y: element.y - d.hoehe / 2, b: d.breite, h: d.hoehe };
+      // Gedrehte Symbole brauchen ihre gedrehten Masse, sonst passt die Vorschau
+      // eine hochkante Box um eine liegende Stange ein.
+      const m = symbolMasse(element.typ, element.rotation);
+      return { x: element.x - m.breite / 2, y: element.y - m.hoehe / 2, b: m.breite, h: m.hoehe };
     }
     case "pfad": {
       const r = 18;
