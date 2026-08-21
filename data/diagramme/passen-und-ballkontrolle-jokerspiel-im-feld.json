@@ -50,7 +50,7 @@
             "typ": "tor",
             "x": 179,
             "y": 483,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "tor-rechts",
@@ -58,7 +58,7 @@
             "typ": "tor",
             "x": 1411,
             "y": 483,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "kind-tw-links",

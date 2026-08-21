@@ -5,6 +5,7 @@
             "id": "linie-weiss",
             "art": "pfad",
             "typ": "linie",
+            "farbe": "weiss",
             "punkte": [
                 {
                     "x": 121,
@@ -14,8 +15,7 @@
                     "x": 1479,
                     "y": 221
                 }
-            ],
-            "farbe": "weiss"
+            ]
         },
         {
             "id": "teller-weiss-l",
@@ -37,6 +37,7 @@
             "id": "linie-gruen",
             "art": "pfad",
             "typ": "linie",
+            "farbe": "gruen",
             "punkte": [
                 {
                     "x": 121,
@@ -46,8 +47,7 @@
                     "x": 1479,
                     "y": 395
                 }
-            ],
-            "farbe": "gruen"
+            ]
         },
         {
             "id": "teller-gruen-l",
@@ -69,6 +69,7 @@
             "id": "linie-blau",
             "art": "pfad",
             "typ": "linie",
+            "farbe": "blau",
             "punkte": [
                 {
                     "x": 121,
@@ -78,8 +79,7 @@
                     "x": 1479,
                     "y": 569
                 }
-            ],
-            "farbe": "blau"
+            ]
         },
         {
             "id": "teller-blau-l",
@@ -101,6 +101,7 @@
             "id": "linie-orange",
             "art": "pfad",
             "typ": "linie",
+            "farbe": "orange",
             "punkte": [
                 {
                     "x": 121,
@@ -110,8 +111,7 @@
                     "x": 1479,
                     "y": 738
                 }
-            ],
-            "farbe": "orange"
+            ]
         },
         {
             "id": "teller-orange-l",
@@ -133,6 +133,7 @@
             "id": "linie-rot",
             "art": "pfad",
             "typ": "linie",
+            "farbe": "rot",
             "punkte": [
                 {
                     "x": 121,
@@ -142,8 +143,7 @@
                     "x": 1479,
                     "y": 912
                 }
-            ],
-            "farbe": "rot"
+            ]
         },
         {
             "id": "teller-rot-l",
@@ -166,7 +166,7 @@
             "art": "symbol",
             "typ": "tor",
             "x": 814,
-            "y": 88,
+            "y": 87.06323182582855,
             "rotation": 0
         },
         {
@@ -198,7 +198,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 696,
-            "y": 213,
+            "y": 213.93676817417145,
             "farbe": "rot",
             "pose": "schiessen"
         },

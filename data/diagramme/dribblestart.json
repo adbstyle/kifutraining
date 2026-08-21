@@ -225,8 +225,8 @@
             "id": "kind-k8",
             "art": "symbol",
             "typ": "spieler",
-            "x": 260,
-            "y": 731,
+            "x": 250.63231825828552,
+            "y": 673.8571413755417,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -234,15 +234,15 @@
             "id": "ball-k8",
             "art": "symbol",
             "typ": "fussball",
-            "x": 270,
-            "y": 780
+            "x": 255.94847738742828,
+            "y": 732.2248231172562
         },
         {
             "id": "trainer",
             "art": "symbol",
             "typ": "trainer",
-            "x": 185,
-            "y": 799,
+            "x": 183.1264636516571,
+            "y": 682.8407464027405,
             "farbe": "orange"
         },
         {
@@ -333,14 +333,6 @@
             "y": 280
         },
         {
-            "id": "stange-orange-1",
-            "art": "symbol",
-            "typ": "stange",
-            "x": 395,
-            "y": 422,
-            "farbe": "orange"
-        },
-        {
             "id": "stange-gelb-1",
             "art": "symbol",
             "typ": "stange",
@@ -357,22 +349,52 @@
             "farbe": "gelb"
         },
         {
-            "id": "stange-rot",
-            "art": "symbol",
-            "typ": "stange",
-            "x": 905,
-            "y": 455,
+            "id": "2444468b-faf6-4251-9bbf-5469e4fcd12e",
+            "art": "pfad",
+            "typ": "linie",
             "farbe": "rot",
-            "rotation": 90
+            "punkte": [
+                {
+                    "x": 874.004720211029,
+                    "y": 488.05624306201935
+                },
+                {
+                    "x": 966.7447694540024,
+                    "y": 487.1194748878479
+                }
+            ]
         },
         {
-            "id": "stange-orange-2",
-            "art": "symbol",
-            "typ": "stange",
-            "x": 1130,
-            "y": 775,
-            "farbe": "orange",
-            "rotation": 315
+            "id": "f87bfc44-b2f5-4c92-b9d4-ceb22f185a2e",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "rot",
+            "punkte": [
+                {
+                    "x": 1109.1335319280624,
+                    "y": 766.2763907909393
+                },
+                {
+                    "x": 1170.960231423378,
+                    "y": 822.4824812412262
+                }
+            ]
+        },
+        {
+            "id": "9f0508f4-e400-4e68-8ed9-17b894307b94",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "rot",
+            "punkte": [
+                {
+                    "x": 405.6206331253052,
+                    "y": 410.3044846057892
+                },
+                {
+                    "x": 404.6838649511337,
+                    "y": 513.3489837646484
+                }
+            ]
         }
     ]
 }

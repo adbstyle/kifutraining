@@ -7,7 +7,7 @@
             "form": "rechteck",
             "farbe": "weiss",
             "x": 374,
-            "y": 158,
+            "y": 158.93676817417145,
             "breite": 834,
             "hoehe": 793
         },
@@ -100,8 +100,8 @@
             "id": "kind-a-links2",
             "art": "symbol",
             "typ": "spieler",
-            "x": 350,
-            "y": 705,
+            "x": 330.3278683423996,
+            "y": 696.569086432457,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -110,8 +110,8 @@
             "id": "kind-a-rechts1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 1221,
-            "y": 270,
+            "x": 1237.861827135086,
+            "y": 324.33255410194397,
             "farbe": "rot",
             "pose": "laufen",
             "spiegeln": true
@@ -131,7 +131,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 806,
-            "y": 919,
+            "y": 917.1264636516571,
             "farbe": "weiss",
             "pose": "laufen-hinten"
         },
@@ -209,8 +209,8 @@
                     "y": 582
                 },
                 {
-                    "x": 1182,
-                    "y": 354
+                    "x": 1211.2412629127502,
+                    "y": 366.2763422727585
                 }
             ]
         },
@@ -220,8 +220,8 @@
             "typ": "dribbling",
             "punkte": [
                 {
-                    "x": 1182,
-                    "y": 332
+                    "x": 1200.0000448226929,
+                    "y": 340.04683339595795
                 },
                 {
                     "x": 1079,

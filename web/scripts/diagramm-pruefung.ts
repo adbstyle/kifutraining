@@ -87,11 +87,21 @@ function leibchenProbleme(elemente: DiagrammElement[]): string[] {
   return probleme;
 }
 
-/** Tore öffnen ins Feld. Das Tor-Symbol öffnet bei rotation 0 nach unten, also
- *  gehört auf die Oberkante eines Feldes 0, auf die Unterkante 180, links 90 und
- *  rechts 270. Ohne Prüfung fällt das kaum auf — Minitore sehen von vorn und von
- *  hinten ähnlich aus —, gezeigt wird aber ein Tor, das vom Feld weg öffnet (so
- *  standen 18 Minitore an Unterkanten falsch, bis diese Regel sie fand).
+/** Tore öffnen ins Feld.
+ *
+ *  Drehrichtung des Tor-Symbols, am Symbol nachgerechnet und am Render bestätigt
+ *  (die zwei runden Pfostenenden markieren den Tormund): **0 = Mund unten,
+ *  90 = Mund links, 180 = Mund oben, 270 = Mund rechts.** Auf die Oberkante eines
+ *  Feldes gehört also 0, auf die Unterkante 180, an die linke Kante 270 und an
+ *  die rechte 90.
+ *
+ *  Ohne Prüfung fällt das kaum auf — ein Tor von hinten sieht einem von vorn
+ *  ähnlich —, gezeigt wird aber ein Tor, das vom Feld weg öffnet: so standen 18
+ *  Tore an Unterkanten falsch, bis diese Regel sie fand. Links/rechts waren hier
+ *  zuerst vertauscht, und die Regel hat damit 56 falsch gedrehte Seitentore
+ *  abgesegnet — erst der Vergleich der Pfostenenden im Render hat es gezeigt.
+ *  Wer die Werte ändert, prüft sie an einem Render, nicht am Kopf.
+ *
  *  Als Feld gilt ein Rechteck ab FELD_MINDESTFLAECHE; kleine Zonen (Schusszone,
  *  Kiste) sind keine Feldkante. */
 const FELD_MINDESTFLAECHE = 200_000;
@@ -113,8 +123,8 @@ function torRichtungProbleme(elemente: DiagrammElement[]): string[] {
       const kanten: [string, boolean, number][] = [
         ["Oberkante", Math.abs(t.y - f.y) < KANTEN_NAEHE, 0],
         ["Unterkante", Math.abs(t.y - (f.y + f.hoehe)) < KANTEN_NAEHE, 180],
-        ["linke Feldkante", Math.abs(t.x - f.x) < KANTEN_NAEHE, 90],
-        ["rechte Feldkante", Math.abs(t.x - (f.x + f.breite)) < KANTEN_NAEHE, 270],
+        ["linke Feldkante", Math.abs(t.x - f.x) < KANTEN_NAEHE, 270],
+        ["rechte Feldkante", Math.abs(t.x - (f.x + f.breite)) < KANTEN_NAEHE, 90],
       ];
       const laengs = t.y >= f.y - 20 && t.y <= f.y + f.hoehe + 20;
       const quer = t.x >= f.x - 20 && t.x <= f.x + f.breite + 20;

@@ -6,11 +6,11 @@
             "art": "form",
             "form": "rechteck",
             "farbe": "weiss",
+            "gefuellt": true,
             "x": 393,
             "y": 338,
             "breite": 817,
-            "hoehe": 314,
-            "gefuellt": true
+            "hoehe": 314
         },
         {
             "id": "teller-l1",
@@ -162,9 +162,9 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 728,
-            "y": 573,
+            "y": 573.9367681741714,
             "farbe": "rot",
-            "pose": "laufen"
+            "pose": "laufen-hinten"
         },
         {
             "id": "weg-hase",

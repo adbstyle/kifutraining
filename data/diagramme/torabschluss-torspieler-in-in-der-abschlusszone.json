@@ -210,15 +210,6 @@
             "spiegeln": true
         },
         {
-            "id": "kind-torspieler",
-            "art": "symbol",
-            "typ": "spieler",
-            "x": 781,
-            "y": 691,
-            "farbe": "gruen",
-            "pose": "stehen-hinten"
-        },
-        {
             "id": "schuss",
             "art": "pfad",
             "typ": "pass",
@@ -232,6 +223,13 @@
                     "y": 133
                 }
             ]
+        },
+        {
+            "id": "b1ba218d-da9f-4a04-8f5e-c4a223721dd5",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 787.4285758733749,
+            "y": 722.9344408512115
         }
     ]
 }

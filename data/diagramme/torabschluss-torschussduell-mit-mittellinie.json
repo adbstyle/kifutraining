@@ -17,7 +17,7 @@
             "typ": "tor",
             "x": 213,
             "y": 480,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "tor-rechts",
@@ -25,7 +25,7 @@
             "typ": "tor",
             "x": 1388,
             "y": 480,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "mittellinie",
@@ -64,8 +64,8 @@
             "id": "kind-r-l",
             "art": "symbol",
             "typ": "spieler",
-            "x": 456,
-            "y": 548,
+            "x": 485.9765815734863,
+            "y": 600.4590177536011,
             "farbe": "rot",
             "pose": "dribbeln"
         },

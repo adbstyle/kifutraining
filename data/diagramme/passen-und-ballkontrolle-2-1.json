@@ -192,8 +192,8 @@
             "id": "kind-u1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 759,
-            "y": 922,
+            "x": 711.2248231172562,
+            "y": 924.8103045225143,
             "farbe": "rot",
             "pose": "stehen-hinten"
         },
@@ -208,8 +208,8 @@
             "id": "kind-u2",
             "art": "symbol",
             "typ": "spieler",
-            "x": 812,
-            "y": 922,
+            "x": 886.0046857595444,
+            "y": 922.9367681741714,
             "farbe": "rot",
             "pose": "stehen-hinten",
             "spiegeln": true
@@ -262,10 +262,10 @@
             "id": "kind-r1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 617,
-            "y": 569,
+            "x": 587.9601866006851,
+            "y": 568.0632318258286,
             "farbe": "rot",
-            "pose": "stehen"
+            "pose": "laufen-hinten"
         },
         {
             "id": "kind-r2",
@@ -287,8 +287,8 @@
             "id": "kind-r3",
             "art": "symbol",
             "typ": "spieler",
-            "x": 1225,
-            "y": 659,
+            "x": 1253.1030452251434,
+            "y": 631.833722949028,
             "farbe": "rot",
             "pose": "stehen",
             "spiegeln": true
@@ -322,8 +322,8 @@
                     "y": 416
                 },
                 {
-                    "x": 451,
-                    "y": 459
+                    "x": 471.1944053173065,
+                    "y": 477.7517921924591
                 }
             ]
         },
@@ -333,8 +333,8 @@
             "typ": "laufweg",
             "punkte": [
                 {
-                    "x": 847,
-                    "y": 829
+                    "x": 935.8314197063446,
+                    "y": 803.7471168041229
                 },
                 {
                     "x": 950,

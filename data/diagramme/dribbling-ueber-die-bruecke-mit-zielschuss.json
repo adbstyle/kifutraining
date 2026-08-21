@@ -6,10 +6,10 @@
             "art": "form",
             "form": "rechteck",
             "farbe": "weiss",
-            "x": 237,
+            "x": 237.93912994861603,
             "y": 191,
-            "breite": 1096,
-            "hoehe": 769
+            "breite": 1095.060870051384,
+            "hoehe": 741.0843194723129
         },
         {
             "id": "startzone",
@@ -66,8 +66,8 @@
                     "y": 191
                 },
                 {
-                    "x": 876,
-                    "y": 960
+                    "x": 874.9414883852005,
+                    "y": 927.4004786014557
                 }
             ]
         },
@@ -77,15 +77,15 @@
             "typ": "minitor",
             "x": 1333,
             "y": 342,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "minitor-unten",
             "art": "symbol",
             "typ": "minitor",
-            "x": 1333,
-            "y": 804,
-            "rotation": 270
+            "x": 1332.0632318258286,
+            "y": 774.0234184265137,
+            "rotation": 90
         },
         {
             "id": "pylone-slalom-1",

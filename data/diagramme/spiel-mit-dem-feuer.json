@@ -6,8 +6,8 @@
             "art": "form",
             "form": "rechteck",
             "farbe": "weiss",
-            "x": 231,
-            "y": 61,
+            "x": 231.93676817417145,
+            "y": 61.93676817417145,
             "breite": 1128,
             "hoehe": 873
         },
@@ -154,8 +154,8 @@
             "id": "kind-weiss-3",
             "art": "symbol",
             "typ": "spieler",
-            "x": 345,
-            "y": 828,
+            "x": 359.0515226125717,
+            "y": 792.402809381485,
             "farbe": "weiss",
             "pose": "dribbeln"
         },

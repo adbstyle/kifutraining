@@ -15,17 +15,17 @@
             "id": "tor-links",
             "art": "symbol",
             "typ": "tor",
-            "x": 212,
-            "y": 481,
-            "rotation": 90
+            "x": 173.59250485897064,
+            "y": 482.8735363483429,
+            "rotation": 270
         },
         {
             "id": "tor-rechts",
             "art": "symbol",
             "typ": "tor",
-            "x": 1356,
-            "y": 490,
-            "rotation": 270
+            "x": 1397.2177996635437,
+            "y": 521.8501179218292,
+            "rotation": 90
         },
         {
             "id": "pylone-ol",
@@ -81,8 +81,8 @@
             "id": "kind-w-lauf",
             "art": "symbol",
             "typ": "spieler",
-            "x": 515,
-            "y": 203,
+            "x": 553.4074951410294,
+            "y": 241.40749514102936,
             "farbe": "weiss",
             "pose": "laufen"
         },
@@ -157,8 +157,8 @@
             "id": "kind-r-lauf",
             "art": "symbol",
             "typ": "spieler",
-            "x": 1085,
-            "y": 749,
+            "x": 1016.6159232854843,
+            "y": 769.6088998317719,
             "farbe": "rot",
             "pose": "laufen",
             "spiegeln": true

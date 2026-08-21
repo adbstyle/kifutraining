@@ -2,19 +2,20 @@
     "version": 1,
     "elemente": [
         {
-            "x": 311.15,
-            "y": 169.25,
             "id": "8446866c-a145-4e81-ab24-9a87578e6580",
             "art": "form",
             "form": "rechteck",
             "farbe": "weiss",
-            "hoehe": 642.6,
-            "breite": 963.79
+            "x": 311.15,
+            "y": 169.25,
+            "breite": 963.79,
+            "hoehe": 642.6
         },
         {
             "id": "3c137a7e-923b-4d75-bd72-a3a78369c51d",
             "art": "pfad",
             "typ": "linie",
+            "gestrichelt": true,
             "punkte": [
                 {
                     "x": 315.58,
@@ -24,13 +25,13 @@
                     "x": 1268.3,
                     "y": 304.6
                 }
-            ],
-            "gestrichelt": true
+            ]
         },
         {
             "id": "3627f866-d54d-4744-9655-fd699578b843",
             "art": "pfad",
             "typ": "linie",
+            "gestrichelt": true,
             "punkte": [
                 {
                     "x": 317.12,
@@ -40,112 +41,111 @@
                     "x": 1269.84,
                     "y": 683.27
                 }
-            ],
-            "gestrichelt": true
+            ]
         },
         {
-            "x": 1025.66,
-            "y": 267.97,
             "id": "fd4874d1-467d-45c3-b01d-41b696ae250f",
             "art": "symbol",
             "typ": "spieler",
+            "x": 1025.66,
+            "y": 267.97,
             "pose": "laufen",
             "spiegeln": true
         },
         {
-            "x": 1038.04,
-            "y": 705.73,
             "id": "f369bdab-59ab-4802-bbdf-6368e24ae7eb",
             "art": "symbol",
             "typ": "spieler",
+            "x": 1038.04,
+            "y": 705.73,
             "pose": "passen"
         },
         {
-            "x": 457.1,
-            "y": 253.17,
             "id": "c2cf148c-de83-4c7d-8d1a-438937004be7",
             "art": "symbol",
             "typ": "spieler",
+            "x": 457.1,
+            "y": 253.17,
             "pose": "laufen"
         },
         {
-            "x": 430.14,
-            "y": 716.02,
             "id": "71b9b735-6b63-40b0-9f7e-cba9d1fe9bdf",
             "art": "symbol",
             "typ": "spieler",
+            "x": 430.14,
+            "y": 716.02,
             "pose": "dribbeln"
         },
         {
-            "x": 745.79,
-            "y": 266.86,
             "id": "71f34699-e272-4105-af41-3f6d406e4949",
             "art": "symbol",
             "typ": "spieler",
+            "x": 745.79,
+            "y": 266.86,
             "pose": "dribbeln",
             "spiegeln": true
         },
         {
-            "x": 732.67,
-            "y": 713.87,
             "id": "62d314bf-b74a-489b-a600-4532bfaeb002",
             "art": "symbol",
             "typ": "spieler",
+            "x": 732.67,
+            "y": 713.87,
             "pose": "dribbeln"
         },
         {
-            "x": 154.4,
-            "y": 202.47,
             "id": "69fa887d-284c-4377-9e2e-af517d1f190f",
             "art": "symbol",
             "typ": "spieler",
+            "x": 154.4,
+            "y": 202.47,
             "farbe": "weiss"
         },
         {
-            "x": 842.4,
-            "y": 925.69,
             "id": "735a3b14-4c19-4b06-8dbd-d802cacb3186",
             "art": "symbol",
             "typ": "spieler",
-            "pose": "passen",
-            "farbe": "weiss"
+            "x": 842.4,
+            "y": 925.69,
+            "farbe": "weiss",
+            "pose": "passen"
         },
         {
-            "x": 1393.12,
-            "y": 910.68,
             "id": "cf28a073-58ff-4630-a407-3b73ff90eab2",
             "art": "symbol",
             "typ": "spieler",
+            "x": 1393.12,
+            "y": 910.68,
             "farbe": "weiss"
         },
         {
-            "x": 1435.87,
-            "y": 223.98,
             "id": "c90b76b4-902f-4940-8be3-9e3ebbd07e82",
             "art": "symbol",
             "typ": "spieler",
-            "pose": "dribbeln",
+            "x": 1435.87,
+            "y": 223.98,
             "farbe": "weiss",
+            "pose": "dribbeln",
             "spiegeln": true
         },
         {
-            "x": 902.4,
-            "y": 118.31,
             "id": "bdaf8663-5de4-4730-b4ec-f9787fc5216c",
             "art": "symbol",
             "typ": "spieler",
-            "pose": "dribbeln",
+            "x": 902.4,
+            "y": 118.31,
             "farbe": "weiss",
+            "pose": "dribbeln",
             "spiegeln": true
         },
         {
-            "x": 252.61,
-            "y": 910.56,
             "id": "40771964-fa33-402e-b102-cdf4c5def97b",
             "art": "symbol",
             "typ": "spieler",
-            "pose": "dribbeln",
-            "farbe": "weiss"
+            "x": 252.61,
+            "y": 910.56,
+            "farbe": "weiss",
+            "pose": "dribbeln"
         },
         {
             "id": "a57e5cc8-d858-484b-822e-a57e3f5427e2",
@@ -188,65 +188,65 @@
                 },
                 {
                     "x": 1030.34,
-                    "y": 290.0
+                    "y": 290
                 }
             ]
         },
         {
-            "x": 717.88,
-            "y": 303.6,
             "id": "11ed1f3b-5cf4-4116-9ae4-8020774fa612",
             "art": "symbol",
-            "typ": "fussball"
+            "typ": "fussball",
+            "x": 717.88,
+            "y": 303.6
         },
         {
-            "x": 464.57,
-            "y": 714.82,
             "id": "7ad5445b-7ec9-4248-b6ec-2a36d816434a",
             "art": "symbol",
-            "typ": "fussball"
+            "typ": "fussball",
+            "x": 464.57,
+            "y": 714.82
         },
         {
-            "x": 1007.15,
-            "y": 713.51,
             "id": "fa407913-47e3-44ad-ac03-ed16c3109f73",
             "art": "symbol",
-            "typ": "fussball"
+            "typ": "fussball",
+            "x": 1007.15,
+            "y": 713.51
         },
         {
-            "x": 164.9,
-            "y": 343.5,
             "id": "ebcad5cd-efa4-4f19-9f16-ffc2805b966d",
             "art": "symbol",
-            "typ": "pylone"
+            "typ": "pylone",
+            "x": 164.9,
+            "y": 343.5
         },
         {
-            "x": 162.54,
-            "y": 421.66,
             "id": "90d6a48e-ebce-4a16-a9f1-2f3e4b1684b7",
             "art": "symbol",
-            "typ": "pylone"
+            "typ": "pylone",
+            "x": 162.54,
+            "y": 421.66
         },
         {
-            "x": 163.47,
-            "y": 502.61,
             "id": "00a6719d-48a3-4522-93d2-1895d8b06de6",
             "art": "symbol",
-            "typ": "pylone"
+            "typ": "pylone",
+            "x": 163.47,
+            "y": 502.61
         },
         {
-            "x": 166.39,
-            "y": 578.1,
             "id": "1f6443e8-0ff0-4148-a545-93817f84cfe4",
             "art": "symbol",
-            "typ": "pylone"
+            "typ": "pylone",
+            "x": 166.39,
+            "y": 578.1
         },
         {
-            "x": 165.6,
-            "y": 658.7,
             "id": "b50dc342-b280-4957-861b-85a710e8bc43",
             "art": "symbol",
-            "typ": "pylone"
+            "typ": "pylone",
+            "x": 165.6,
+            "y": 658.7
         },
         {
             "id": "0a965894-a0be-435d-96fb-960af78949be",
@@ -296,92 +296,92 @@
             ]
         },
         {
-            "x": 364.66,
-            "y": 912.3,
             "id": "548d6c84-a6ef-490a-832a-2fa2d71ab116",
             "art": "symbol",
             "typ": "pylone",
+            "x": 364.66,
+            "y": 912.3,
             "farbe": "gelb"
         },
         {
-            "x": 468.24,
-            "y": 850.81,
             "id": "ef75dfe5-355d-4af3-8dfd-3163ec7f8642",
             "art": "symbol",
             "typ": "pylone",
+            "x": 468.24,
+            "y": 850.81,
             "farbe": "gelb"
         },
         {
-            "x": 579.72,
-            "y": 910.3,
             "id": "a57bd511-8c41-45fb-b7be-db078793c879",
             "art": "symbol",
             "typ": "pylone",
+            "x": 579.72,
+            "y": 910.3,
             "farbe": "gelb"
         },
         {
-            "x": 679.09,
-            "y": 851.51,
             "id": "6d56d7a0-83a0-4b13-96dc-ee8f4a1ae89e",
             "art": "symbol",
             "typ": "pylone",
+            "x": 679.09,
+            "y": 851.51,
             "farbe": "gelb"
         },
         {
-            "x": 629.89,
-            "y": 51.19,
             "id": "d524dc2a-e471-4719-9898-ebd05b6f9789",
             "art": "symbol",
-            "typ": "reifen"
+            "typ": "reifen",
+            "x": 629.89,
+            "y": 51.19
         },
         {
-            "x": 724.13,
-            "y": 101.21,
             "id": "2c34d1f3-0d07-4ccb-bd21-8158d99d15cb",
             "art": "symbol",
-            "typ": "reifen"
+            "typ": "reifen",
+            "x": 724.13,
+            "y": 101.21
         },
         {
-            "x": 946.04,
-            "y": 123.82,
             "id": "9110a8f6-5853-4798-a37f-c3f6d23d3eaa",
             "art": "symbol",
-            "typ": "reifen"
+            "typ": "reifen",
+            "x": 946.04,
+            "y": 123.82
         },
         {
-            "x": 536.5,
-            "y": 108.18,
             "id": "ed827f0b-74ba-42fe-be6f-24922dd85512",
             "art": "symbol",
-            "typ": "reifen"
+            "typ": "reifen",
+            "x": 536.5,
+            "y": 108.18
         },
         {
-            "x": 1409.44,
-            "y": 383.76,
             "id": "51930845-3be0-45b9-bd5f-4b0a0fcce725",
             "art": "symbol",
-            "typ": "huerde"
+            "typ": "huerde",
+            "x": 1409.44,
+            "y": 383.76
         },
         {
-            "x": 1405.44,
-            "y": 451.43,
             "id": "f71b8556-8ba7-4deb-a175-9999abcdea92",
             "art": "symbol",
-            "typ": "huerde"
+            "typ": "huerde",
+            "x": 1405.44,
+            "y": 451.43
         },
         {
-            "x": 1408.82,
-            "y": 520.88,
             "id": "dab487af-f55e-4012-8913-8f45432653e8",
             "art": "symbol",
-            "typ": "huerde"
+            "typ": "huerde",
+            "x": 1408.82,
+            "y": 520.88
         },
         {
-            "x": 1412.35,
-            "y": 609.11,
             "id": "a97935e8-a20e-4859-8707-4fbab1831def",
             "art": "symbol",
-            "typ": "huerde"
+            "typ": "huerde",
+            "x": 1412.35,
+            "y": 609.11
         },
         {
             "id": "d6931780-f49f-4187-a3be-de79615d3315",
@@ -499,46 +499,46 @@
             ]
         },
         {
-            "x": 862.81,
-            "y": 139.31,
             "id": "f7ce110a-47a9-4a0f-ab35-8709ccd63cb7",
             "art": "symbol",
-            "typ": "fussball"
+            "typ": "fussball",
+            "x": 862.81,
+            "y": 139.31
         },
         {
-            "x": 158.49,
-            "y": 251.27,
             "id": "505ec966-9e92-4385-979d-aa2bb84f579f",
             "art": "symbol",
-            "typ": "fussball"
+            "typ": "fussball",
+            "x": 158.49,
+            "y": 251.27
         },
         {
-            "x": 283.42,
-            "y": 919.8,
             "id": "c423c42a-a8e6-4cbe-944a-b073bf16dec3",
             "art": "symbol",
-            "typ": "fussball"
+            "typ": "fussball",
+            "x": 283.42,
+            "y": 919.8
         },
         {
-            "x": 876.78,
-            "y": 932.18,
             "id": "d388aa42-9e99-4b8d-add2-ea08bd5fa29b",
             "art": "symbol",
-            "typ": "fussball"
+            "typ": "fussball",
+            "x": 876.78,
+            "y": 932.18
         },
         {
-            "x": 1400.39,
-            "y": 248.92,
             "id": "e47f287b-3ec1-4928-83e4-0dce129e678b",
             "art": "symbol",
-            "typ": "fussball"
+            "typ": "fussball",
+            "x": 1400.39,
+            "y": 248.92
         },
         {
-            "x": 1353.26,
-            "y": 905.66,
             "id": "bd3694cf-8603-4a89-8f7b-62a1dc7286f5",
             "art": "symbol",
-            "typ": "fussball"
+            "typ": "fussball",
+            "x": 1353.26,
+            "y": 905.66
         },
         {
             "id": "bbbc4020-9a01-4d1c-b079-0317e0227103",

@@ -17,7 +17,7 @@
             "typ": "tor",
             "x": 261,
             "y": 541,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "tor-rechts",
@@ -25,7 +25,7 @@
             "typ": "tor",
             "x": 1338,
             "y": 541,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "mittellinie",
@@ -101,7 +101,7 @@
             "x": 710,
             "y": 436,
             "farbe": "weiss",
-            "pose": "graetschen"
+            "pose": "passen"
         },
         {
             "id": "kind-r-m",

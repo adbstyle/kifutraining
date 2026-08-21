@@ -6,11 +6,11 @@
             "art": "form",
             "form": "rechteck",
             "farbe": "weiss",
+            "gefuellt": true,
             "x": 167,
             "y": 82,
             "breite": 783,
-            "hoehe": 833,
-            "gefuellt": true
+            "hoehe": 833
         },
         {
             "id": "tor-oben",
@@ -33,11 +33,11 @@
             "art": "form",
             "form": "rechteck",
             "farbe": "weiss",
+            "gefuellt": true,
             "x": 1000,
             "y": 236,
             "breite": 432,
-            "hoehe": 548,
-            "gefuellt": true
+            "hoehe": 548
         },
         {
             "id": "minitor-ol",

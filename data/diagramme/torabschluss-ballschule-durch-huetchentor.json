@@ -91,17 +91,17 @@
             "id": "tor-rechts",
             "art": "symbol",
             "typ": "tor",
-            "x": 1318,
-            "y": 260,
-            "rotation": 270
+            "x": 1310.5058546066284,
+            "y": 242.2014046907425,
+            "rotation": 90
         },
         {
             "id": "tor-links",
             "art": "symbol",
             "typ": "tor",
-            "x": 39,
-            "y": 826,
-            "rotation": 90
+            "x": 67.10304522514343,
+            "y": 792.2763457298279,
+            "rotation": 270
         },
         {
             "id": "kind-w1",
