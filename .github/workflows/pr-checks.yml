@@ -24,6 +24,10 @@ jobs:
       - run: npm ci
       - run: npm run gen:vocab
       - run: npm run typecheck
+      # Inhalt der gezeichneten Vorlagen: unbekannte Symbol-Typen/Farben,
+      # doppelte IDs, Elemente ausserhalb der Zeichenfläche. parseDiagramm
+      # allein würde das durchlassen (Fallback-Rendering).
+      - run: npm run check:diagramme
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)

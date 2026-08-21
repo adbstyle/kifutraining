@@ -10,6 +10,7 @@ import { dirname, resolve, basename } from "node:path";
 import yaml from "js-yaml";
 import { createClient } from "@supabase/supabase-js";
 import { parseDiagramm, type DiagrammData } from "../lib/diagramm";
+import { diagrammProbleme } from "./diagramm-pruefung";
 
 // .env.local laden, falls vorhanden (Prod übergibt Env inline).
 try {
@@ -76,14 +77,27 @@ async function uploadImage(relPath: string): Promise<string | null> {
 /** Gezeichnetes Diagramm einer Manual-Übung laden (data/diagramme/<slug>.json).
  *  parseDiagramm ist die Trust-Boundary — strukturell Kaputtes wird verworfen,
  *  damit nie ein ungültiges Diagramm in die DB gelangt. null, wenn keine Datei
- *  existiert oder die Datei kein anzeigbares Diagramm enthält. */
+ *  existiert oder die Datei kein anzeigbares Diagramm enthält.
+ *
+ *  Zusätzlich `diagrammProbleme`: der Parser lässt unbekannte Symbol-Typen
+ *  bewusst durch (Fallback-Rendering) — in einer von uns verfassten Vorlage ist
+ *  ein solcher Tippfehler aber ein Fehler und bricht den Seed ab, statt still
+ *  als „?"-Kreis in die DB zu wandern. */
 function loadDiagramm(slug: string): DiagrammData | null {
   const path = resolve(DIAGRAMME_DIR, `${slug}.json`);
   if (!existsSync(path)) return null;
-  const diagramm = parseDiagramm(JSON.parse(readFileSync(path, "utf8")));
+  const roh = JSON.parse(readFileSync(path, "utf8"));
+  const diagramm = parseDiagramm(roh);
   if (!diagramm || diagramm.elemente.length === 0) {
     console.warn(`  Diagramm ungültig oder leer, übersprungen: data/diagramme/${slug}.json`);
     return null;
+  }
+  const probleme = diagrammProbleme(diagramm, Array.isArray(roh.elemente) ? roh.elemente.length : undefined);
+  if (probleme.length > 0) {
+    throw new Error(
+      `data/diagramme/${slug}.json ist fehlerhaft:\n  ${probleme.join("\n  ")}\n` +
+        `Prüfen mit: npm run check:diagramme`,
+    );
   }
   return diagramm;
 }

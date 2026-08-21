@@ -50,6 +50,7 @@ export const SYMBOL_TYPEN = [
   "stange",
   "reifen",
   "huerde",
+  "leibchen",
   "spieler",
   "torwart",
   "fussball",
@@ -85,6 +86,8 @@ export const DREHBARE_TYPEN: ReadonlySet<SymbolTyp> = new Set([
   "tor",
   "minitor",
   "huerde",
+  // Leibchen liegen in den Vorlagen schräg in der Hand (z. B. „Trikottausch").
+  "leibchen",
 ]);
 
 /** Acht feste Orientierungen in 45°-Schritten (Story #51). */
@@ -129,7 +132,7 @@ export type SymbolElement = {
   typ: SymbolTyp;
   x: number;
   y: number;
-  /** Nur drehbare Symbole (Tor/Minitor/Hürde). */
+  /** Nur Symbole in `DREHBARE_TYPEN` — auf allen anderen wirkungslos. */
   rotation?: Rotation;
   farbe?: FarbSlug;
   /** Pose der Figur (nur Spieler); ohne Angabe „stehen". */

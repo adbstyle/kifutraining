@@ -1,0 +1,401 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 88,
+            "y": 47,
+            "breite": 1425,
+            "hoehe": 853
+        },
+        {
+            "id": "tauschfeld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 536,
+            "y": 317,
+            "breite": 540,
+            "hoehe": 276
+        },
+        {
+            "id": "teller-zone-ol",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 518,
+            "y": 306,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-zone-or",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1089,
+            "y": 302,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-zone-ul",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 520,
+            "y": 603,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-zone-ur",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1087,
+            "y": 609,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-ecke-ol",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 89,
+            "y": 48,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-ecke-or",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1513,
+            "y": 46,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-ecke-ul",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 86,
+            "y": 892,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-ecke-ur",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1512,
+            "y": 904,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-k1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 520,
+            "y": 171,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 536,
+            "y": 243
+        },
+        {
+            "id": "leibchen-k1",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 489,
+            "y": 166,
+            "farbe": "gelb"
+        },
+        {
+            "id": "kind-k2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 735,
+            "y": 97,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 690,
+            "y": 153
+        },
+        {
+            "id": "leibchen-k2",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 695,
+            "y": 91,
+            "farbe": "gelb"
+        },
+        {
+            "id": "kind-k3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 419,
+            "y": 351,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 424,
+            "y": 418
+        },
+        {
+            "id": "leibchen-k3",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 459,
+            "y": 345,
+            "farbe": "blau"
+        },
+        {
+            "id": "kind-k4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 207,
+            "y": 404,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 228,
+            "y": 476
+        },
+        {
+            "id": "leibchen-k4",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 247,
+            "y": 398,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-k5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1212,
+            "y": 150,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k5",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1182,
+            "y": 222
+        },
+        {
+            "id": "leibchen-k5",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 1172,
+            "y": 144,
+            "farbe": "gelb"
+        },
+        {
+            "id": "kind-k6",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1347,
+            "y": 388,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k6",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1315,
+            "y": 455
+        },
+        {
+            "id": "leibchen-k6",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 1378,
+            "y": 383,
+            "farbe": "blau"
+        },
+        {
+            "id": "kind-k7",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 303,
+            "y": 542,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k7",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 334,
+            "y": 609
+        },
+        {
+            "id": "leibchen-k7",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 272,
+            "y": 537,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-k8",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 130,
+            "y": 775,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k8",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 197,
+            "y": 868
+        },
+        {
+            "id": "leibchen-k8",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 99,
+            "y": 770,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-k9",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 385,
+            "y": 738,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k9",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 366,
+            "y": 800
+        },
+        {
+            "id": "leibchen-k9",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 416,
+            "y": 733,
+            "farbe": "blau"
+        },
+        {
+            "id": "kind-k11",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 899,
+            "y": 717,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k11",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 928,
+            "y": 821
+        },
+        {
+            "id": "leibchen-k11",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 939,
+            "y": 711,
+            "farbe": "gelb"
+        },
+        {
+            "id": "kind-k12",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1204,
+            "y": 765,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k12",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1172,
+            "y": 821
+        },
+        {
+            "id": "leibchen-k12",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 1164,
+            "y": 759,
+            "farbe": "blau"
+        },
+        {
+            "id": "kind-k13",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1410,
+            "y": 712,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k13",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1378,
+            "y": 784
+        },
+        {
+            "id": "leibchen-k13",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 1370,
+            "y": 706,
+            "farbe": "rot"
+        },
+        {
+            "id": "trainer",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 671,
+            "y": 913,
+            "farbe": "orange",
+            "pose": "stehen"
+        },
+        {
+            "id": "leibchen-trainer",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 715,
+            "y": 918,
+            "farbe": "blau"
+        }
+    ]
+}
