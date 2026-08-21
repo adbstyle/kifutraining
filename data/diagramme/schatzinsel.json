@@ -1,0 +1,254 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 252,
+            "y": 139,
+            "breite": 1095,
+            "hoehe": 851
+        },
+        {
+            "id": "insel",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "gefuellt": true,
+            "x": 510,
+            "y": 387,
+            "breite": 616,
+            "hoehe": 350
+        },
+        {
+            "id": "pylone-ol",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 512,
+            "y": 391,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-or",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1125,
+            "y": 388,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ul",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 510,
+            "y": 734,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ur",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1126,
+            "y": 737,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-i1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 714,
+            "y": 278,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-i1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 666,
+            "y": 429
+        },
+        {
+            "id": "kind-i2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 864,
+            "y": 334,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-i2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 859,
+            "y": 502
+        },
+        {
+            "id": "kind-i3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 556,
+            "y": 481,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-i3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 588,
+            "y": 645
+        },
+        {
+            "id": "kind-i4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 657,
+            "y": 462,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-i4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 717,
+            "y": 649
+        },
+        {
+            "id": "kind-i5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 792,
+            "y": 472,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-i5",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 850,
+            "y": 622
+        },
+        {
+            "id": "kind-i6",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 986,
+            "y": 481,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-i6",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1016,
+            "y": 672
+        },
+        {
+            "id": "kind-a1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 477,
+            "y": 131,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-a1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 533,
+            "y": 277
+        },
+        {
+            "id": "kind-a2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1317,
+            "y": 76,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-a2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1232,
+            "y": 203
+        },
+        {
+            "id": "kind-a3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 365,
+            "y": 416,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-a3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 349,
+            "y": 571
+        },
+        {
+            "id": "kind-a4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 293,
+            "y": 794,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-a4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 349,
+            "y": 870
+        },
+        {
+            "id": "kind-a5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 696,
+            "y": 794,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-a5",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 758,
+            "y": 898
+        },
+        {
+            "id": "kind-a6",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1094,
+            "y": 803,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-a6",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1177,
+            "y": 948
+        }
+    ]
+}
