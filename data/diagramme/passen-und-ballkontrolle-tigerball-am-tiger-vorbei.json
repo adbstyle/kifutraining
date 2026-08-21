@@ -1,0 +1,102 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "tor-linie",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 440,
+                    "y": 516
+                },
+                {
+                    "x": 1160,
+                    "y": 516
+                }
+            ]
+        },
+        {
+            "id": "pylone-links",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 440,
+            "y": 516,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-rechts",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1160,
+            "y": 516,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-w-oben",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 607,
+            "y": 137,
+            "farbe": "weiss",
+            "pose": "passen"
+        },
+        {
+            "id": "ball-w-oben",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 786,
+            "y": 417
+        },
+        {
+            "id": "kind-r-tiger",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 638,
+            "y": 439,
+            "farbe": "rot",
+            "pose": "graetschen"
+        },
+        {
+            "id": "kind-w-unten",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 690,
+            "y": 874,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "pass",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 665,
+                    "y": 230
+                },
+                {
+                    "x": 1039,
+                    "y": 874
+                }
+            ]
+        },
+        {
+            "id": "laufweg",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 742,
+                    "y": 945
+                },
+                {
+                    "x": 1028,
+                    "y": 890
+                }
+            ]
+        }
+    ]
+}

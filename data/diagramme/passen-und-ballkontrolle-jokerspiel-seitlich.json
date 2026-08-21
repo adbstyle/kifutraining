@@ -1,0 +1,195 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 243,
+            "y": 176,
+            "breite": 1095,
+            "hoehe": 796
+        },
+        {
+            "id": "mittellinie",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 795,
+                    "y": 176
+                },
+                {
+                    "x": 795,
+                    "y": 972
+                }
+            ]
+        },
+        {
+            "id": "pylone-oben",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 795,
+            "y": 171,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-unten",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 795,
+            "y": 972,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-l1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 243,
+            "y": 295,
+            "rotation": 90
+        },
+        {
+            "id": "tor-l2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 243,
+            "y": 801,
+            "rotation": 90
+        },
+        {
+            "id": "tor-r1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1338,
+            "y": 295,
+            "rotation": 270
+        },
+        {
+            "id": "tor-r2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1338,
+            "y": 801,
+            "rotation": 270
+        },
+        {
+            "id": "kind-w-o",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 499,
+            "y": 85,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-r-or",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1062,
+            "y": 76,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-r-mo",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 832,
+            "y": 315,
+            "farbe": "rot",
+            "pose": "passen"
+        },
+        {
+            "id": "ball-r-mo",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 841,
+            "y": 364
+        },
+        {
+            "id": "kind-w-mo",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 984,
+            "y": 288,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-w-m",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 864,
+            "y": 513,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-r-ml",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 616,
+            "y": 582,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-w-ul",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 512,
+            "y": 923,
+            "farbe": "weiss",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "kind-r-ur",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1101,
+            "y": 909,
+            "farbe": "rot",
+            "pose": "stehen-hinten",
+            "spiegeln": true
+        },
+        {
+            "id": "pass",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 860,
+                    "y": 360
+                },
+                {
+                    "x": 1145,
+                    "y": 305
+                }
+            ]
+        },
+        {
+            "id": "laufweg",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 892,
+                    "y": 360
+                },
+                {
+                    "x": 1150,
+                    "y": 346
+                }
+            ]
+        }
+    ]
+}

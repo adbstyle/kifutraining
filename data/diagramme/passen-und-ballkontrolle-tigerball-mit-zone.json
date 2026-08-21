@@ -1,0 +1,188 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "zone-oben",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 473,
+            "y": 32,
+            "breite": 656,
+            "hoehe": 272
+        },
+        {
+            "id": "marke-oben-l",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 473,
+            "y": 32,
+            "farbe": "gelb"
+        },
+        {
+            "id": "marke-oben-r",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1129,
+            "y": 32,
+            "farbe": "gelb"
+        },
+        {
+            "id": "marke-oben-l2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 473,
+            "y": 304,
+            "farbe": "gelb"
+        },
+        {
+            "id": "marke-oben-r2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1129,
+            "y": 304,
+            "farbe": "gelb"
+        },
+        {
+            "id": "zone-unten",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 473,
+            "y": 700,
+            "breite": 656,
+            "hoehe": 280
+        },
+        {
+            "id": "marke-unten-l",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 473,
+            "y": 700,
+            "farbe": "gelb"
+        },
+        {
+            "id": "marke-unten-r",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1129,
+            "y": 700,
+            "farbe": "gelb"
+        },
+        {
+            "id": "marke-unten-l2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 473,
+            "y": 980,
+            "farbe": "gelb"
+        },
+        {
+            "id": "marke-unten-r2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1129,
+            "y": 980,
+            "farbe": "gelb"
+        },
+        {
+            "id": "tor-linie",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 471,
+                    "y": 524
+                },
+                {
+                    "x": 1119,
+                    "y": 524
+                }
+            ]
+        },
+        {
+            "id": "pylone-links",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 471,
+            "y": 524,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-rechts",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1119,
+            "y": 524,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-r-oben",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1001,
+            "y": 154,
+            "farbe": "rot",
+            "pose": "passen"
+        },
+        {
+            "id": "ball-r-oben",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 976,
+            "y": 277
+        },
+        {
+            "id": "kind-w-tiger",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 768,
+            "y": 441,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-r-unten",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 701,
+            "y": 847,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "pass",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 976,
+                    "y": 297
+                },
+                {
+                    "x": 991,
+                    "y": 836
+                }
+            ]
+        },
+        {
+            "id": "laufweg",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 758,
+                    "y": 910
+                },
+                {
+                    "x": 971,
+                    "y": 861
+                }
+            ]
+        }
+    ]
+}
