@@ -96,21 +96,60 @@
             "pose": "stehen"
         },
         {
-            "id": "kind-dribbler",
+            "id": "kind-laeufer-ur",
             "art": "symbol",
             "typ": "spieler",
             "x": 905,
             "y": 716,
             "farbe": "rot",
-            "pose": "dribbeln",
+            "pose": "laufen",
             "spiegeln": true
         },
         {
-            "id": "ball-dribbler",
-            "art": "symbol",
-            "typ": "fussball",
-            "x": 846,
-            "y": 716
+            "id": "befreien-o",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 1278,
+                    "y": 430
+                },
+                {
+                    "x": 1213,
+                    "y": 327
+                },
+                {
+                    "x": 1154,
+                    "y": 230
+                },
+                {
+                    "x": 1094,
+                    "y": 133
+                }
+            ]
+        },
+        {
+            "id": "befreien-u",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 889,
+                    "y": 716
+                },
+                {
+                    "x": 959,
+                    "y": 797
+                },
+                {
+                    "x": 1013,
+                    "y": 867
+                },
+                {
+                    "x": 1046,
+                    "y": 932
+                }
+            ]
         }
     ]
 }

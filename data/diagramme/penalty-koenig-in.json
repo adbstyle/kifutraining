@@ -6,7 +6,7 @@
             "art": "symbol",
             "typ": "tor",
             "x": 843,
-            "y": 122,
+            "y": 164,
             "rotation": 0
         },
         {
@@ -14,7 +14,7 @@
             "art": "symbol",
             "typ": "tor",
             "x": 849,
-            "y": 795,
+            "y": 837,
             "rotation": 180
         },
         {
@@ -22,14 +22,14 @@
             "art": "symbol",
             "typ": "torwart",
             "x": 834,
-            "y": 148
+            "y": 190
         },
         {
             "id": "kind-tw-u",
             "art": "symbol",
             "typ": "torwart",
             "x": 843,
-            "y": 839,
+            "y": 712,
             "spiegeln": true
         },
         {
@@ -37,7 +37,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 799,
-            "y": 351,
+            "y": 393,
             "farbe": "weiss",
             "pose": "schiessen"
         },
@@ -46,14 +46,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 849,
-            "y": 313
+            "y": 355
         },
         {
             "id": "kind-s2",
             "art": "symbol",
             "typ": "spieler",
             "x": 910,
-            "y": 508,
+            "y": 550,
             "farbe": "rot",
             "pose": "schiessen",
             "spiegeln": true
@@ -63,7 +63,7 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 849,
-            "y": 586
+            "y": 628
         },
         {
             "id": "schuss-oben",
@@ -72,11 +72,11 @@
             "punkte": [
                 {
                     "x": 866,
-                    "y": 284
+                    "y": 326
                 },
                 {
                     "x": 918,
-                    "y": 122
+                    "y": 164
                 }
             ]
         },
@@ -87,11 +87,11 @@
             "punkte": [
                 {
                     "x": 831,
-                    "y": 574
+                    "y": 616
                 },
                 {
                     "x": 762,
-                    "y": 772
+                    "y": 814
                 }
             ]
         },
@@ -100,7 +100,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 353,
-            "y": 444,
+            "y": 486,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -109,7 +109,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 402,
-            "y": 467,
+            "y": 509,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -118,7 +118,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 489,
-            "y": 438,
+            "y": 480,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -127,7 +127,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 564,
-            "y": 438,
+            "y": 480,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -136,7 +136,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1092,
-            "y": 462,
+            "y": 504,
             "farbe": "rot",
             "pose": "stehen"
         },
@@ -145,7 +145,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1165,
-            "y": 462,
+            "y": 504,
             "farbe": "rot",
             "pose": "stehen-hinten"
         },
@@ -154,7 +154,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1240,
-            "y": 450,
+            "y": 492,
             "farbe": "rot",
             "pose": "stehen"
         },
@@ -163,7 +163,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1246,
-            "y": 537,
+            "y": 579,
             "farbe": "rot",
             "pose": "stehen-hinten"
         }

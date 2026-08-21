@@ -148,13 +148,6 @@
             "pose": "stehen"
         },
         {
-            "id": "ball-flug-links",
-            "art": "symbol",
-            "typ": "handball",
-            "x": 257,
-            "y": 462
-        },
-        {
             "id": "kind-a4",
             "art": "symbol",
             "typ": "spieler",
@@ -277,7 +270,7 @@
             "typ": "spieler",
             "x": 1153,
             "y": 397,
-            "farbe": "weiss",
+            "farbe": "blau",
             "pose": "passen"
         },
         {
@@ -295,15 +288,8 @@
             "typ": "spieler",
             "x": 1391,
             "y": 386,
-            "farbe": "weiss",
+            "farbe": "blau",
             "pose": "stehen"
-        },
-        {
-            "id": "ball-c3",
-            "art": "symbol",
-            "typ": "handball",
-            "x": 1396,
-            "y": 317
         },
         {
             "id": "kind-c4",

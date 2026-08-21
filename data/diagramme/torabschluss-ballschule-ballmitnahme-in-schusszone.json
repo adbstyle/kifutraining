@@ -24,49 +24,65 @@
             "hoehe": 149
         },
         {
-            "id": "pylone-o-l",
+            "id": "teller-o-l",
             "art": "symbol",
-            "typ": "pylone",
+            "typ": "teller",
             "x": 665,
             "y": 342,
             "farbe": "rot"
         },
         {
-            "id": "pylone-o-r",
+            "id": "teller-o-r",
             "art": "symbol",
-            "typ": "pylone",
+            "typ": "teller",
             "x": 868,
             "y": 342,
             "farbe": "rot"
         },
         {
-            "id": "pylone-m-l",
+            "id": "teller-m-l",
             "art": "symbol",
-            "typ": "pylone",
+            "typ": "teller",
             "x": 665,
-            "y": 499,
+            "y": 491,
             "farbe": "rot"
         },
         {
-            "id": "pylone-m-r",
+            "id": "teller-m-r",
             "art": "symbol",
-            "typ": "pylone",
+            "typ": "teller",
             "x": 868,
-            "y": 499,
+            "y": 491,
             "farbe": "rot"
         },
         {
-            "id": "pylone-u-l",
+            "id": "teller-mw-l",
             "art": "symbol",
-            "typ": "pylone",
+            "typ": "teller",
+            "x": 665,
+            "y": 507,
+            "farbe": "weiss"
+        },
+        {
+            "id": "teller-mw-r",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 868,
+            "y": 507,
+            "farbe": "weiss"
+        },
+        {
+            "id": "teller-u-l",
+            "art": "symbol",
+            "typ": "teller",
             "x": 665,
             "y": 648,
             "farbe": "weiss"
         },
         {
-            "id": "pylone-u-r",
+            "id": "teller-u-r",
             "art": "symbol",
-            "typ": "pylone",
+            "typ": "teller",
             "x": 868,
             "y": 648,
             "farbe": "weiss"
@@ -313,16 +329,16 @@
             "typ": "dribbling",
             "punkte": [
                 {
-                    "x": 764,
-                    "y": 625
+                    "x": 900,
+                    "y": 706
                 },
                 {
-                    "x": 809,
-                    "y": 679
+                    "x": 850,
+                    "y": 660
                 },
                 {
-                    "x": 845,
-                    "y": 751
+                    "x": 790,
+                    "y": 600
                 }
             ]
         },
@@ -336,8 +352,42 @@
                     "y": 800
                 },
                 {
-                    "x": 836,
-                    "y": 787
+                    "x": 890,
+                    "y": 724
+                }
+            ]
+        },
+        {
+            "id": "weg-oben-2",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 830,
+                    "y": 415
+                },
+                {
+                    "x": 855,
+                    "y": 436
+                },
+                {
+                    "x": 877,
+                    "y": 458
+                }
+            ]
+        },
+        {
+            "id": "schuss-rechts-2",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 896,
+                    "y": 470
+                },
+                {
+                    "x": 1274,
+                    "y": 458
                 }
             ]
         }
