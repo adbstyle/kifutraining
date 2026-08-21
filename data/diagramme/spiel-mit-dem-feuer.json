@@ -15,7 +15,7 @@
             "id": "feuerzone-links",
             "art": "form",
             "form": "ellipse",
-            "farbe": "orange",
+            "farbe": "weiss",
             "gefuellt": true,
             "x": 272,
             "y": 482,
@@ -26,7 +26,7 @@
             "id": "feuerzone-rechts",
             "art": "form",
             "form": "ellipse",
-            "farbe": "orange",
+            "farbe": "weiss",
             "gefuellt": true,
             "x": 943,
             "y": 466,
@@ -86,20 +86,19 @@
             "id": "kind-feuer-links",
             "art": "symbol",
             "typ": "spieler",
-            "x": 397,
+            "x": 413,
             "y": 472,
-            "farbe": "orange",
-            "pose": "laufen"
+            "farbe": "rot",
+            "pose": "stehen-hinten"
         },
         {
             "id": "kind-feuer-rechts",
             "art": "symbol",
             "typ": "spieler",
-            "x": 1016,
+            "x": 1026,
             "y": 446,
-            "farbe": "orange",
-            "pose": "laufen",
-            "spiegeln": true
+            "farbe": "weiss",
+            "pose": "stehen"
         },
         {
             "id": "kind-weiss-2",
@@ -183,6 +182,38 @@
             "typ": "fussball",
             "x": 875,
             "y": 846
+        },
+        {
+            "id": "leibchen-links-a",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 375,
+            "y": 479,
+            "farbe": "rot"
+        },
+        {
+            "id": "leibchen-links-b",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 451,
+            "y": 479,
+            "farbe": "rot"
+        },
+        {
+            "id": "leibchen-rechts-a",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 984,
+            "y": 453,
+            "farbe": "rot"
+        },
+        {
+            "id": "leibchen-rechts-b",
+            "art": "symbol",
+            "typ": "leibchen",
+            "x": 1068,
+            "y": 453,
+            "farbe": "rot"
         }
     ]
 }

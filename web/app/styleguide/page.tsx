@@ -741,6 +741,7 @@ export default function Styleguide() {
             [
               { id: "g-tor", art: "symbol", typ: "tor", x: 0, y: 0 },
               { id: "g-pylone", art: "symbol", typ: "pylone", x: 0, y: 0, farbe: "rot" },
+              { id: "g-leibchen", art: "symbol", typ: "leibchen", x: 0, y: 0, farbe: "rot" },
               { id: "g-spieler", art: "symbol", typ: "spieler", x: 0, y: 0, farbe: "blau" },
               { id: "g-fussball", art: "symbol", typ: "fussball", x: 0, y: 0 },
               { id: "g-laufweg", art: "pfad", typ: "laufweg", punkte: [{ x: 8, y: 88 }, { x: 64, y: 6 }] },
@@ -757,6 +758,36 @@ export default function Styleguide() {
               <GlyphVorschau element={el} groesse={40} />
             </div>
           ))}
+        </div>
+        <p className="type-body-medium mb-4 mt-8 max-w-xl text-on-surface-variant">
+          Das <strong>Überziehleibchen</strong> ist ein färbbares, drehbares
+          Symbol: ein zusammengelegtes Tuch mit gerader Oberkante und Wellensaum.
+          In den Manual-Vorlagen wird es in der Hand gehalten („Trikottausch",
+          „Spiel mit dem Feuer") — es lässt sich aber ebenso am Boden oder als
+          Stapel platzieren. Die unruhige Silhouette grenzt es bewusst vom{" "}
+          <strong>Markierungsteller</strong> ab (Ellipse mit Loch), der in dieser
+          Grösse sonst kaum zu unterscheiden wäre:
+        </p>
+        <div className="relative aspect-[16/5] max-w-xl overflow-hidden rounded-[6px] border border-outline-variant">
+          <DiagrammView
+            title="Leibchen in allen Farben, daneben der Teller zum Vergleich"
+            diagramm={{
+              version: 1,
+              elemente: [
+                { id: "lb-rot", art: "symbol", typ: "leibchen", x: 130, y: 250, farbe: "rot" },
+                { id: "lb-blau", art: "symbol", typ: "leibchen", x: 330, y: 250, farbe: "blau" },
+                { id: "lb-gelb", art: "symbol", typ: "leibchen", x: 530, y: 250, farbe: "gelb" },
+                { id: "lb-gruen", art: "symbol", typ: "leibchen", x: 730, y: 250, farbe: "gruen" },
+                { id: "lb-orange", art: "symbol", typ: "leibchen", x: 930, y: 250, farbe: "orange" },
+                { id: "lb-weiss", art: "symbol", typ: "leibchen", x: 1130, y: 250, farbe: "weiss" },
+                { id: "lb-schwarz", art: "symbol", typ: "leibchen", x: 1330, y: 250, farbe: "schwarz" },
+                { id: "lb-r45", art: "symbol", typ: "leibchen", x: 230, y: 620, farbe: "rot", rotation: 45 },
+                { id: "lb-r315", art: "symbol", typ: "leibchen", x: 530, y: 620, farbe: "blau", rotation: 315 },
+                { id: "lb-r90", art: "symbol", typ: "leibchen", x: 830, y: 620, farbe: "gelb", rotation: 90 },
+                { id: "lb-teller", art: "symbol", typ: "teller", x: 1230, y: 620, farbe: "gelb" },
+              ],
+            }}
+          />
         </div>
         <p className="type-body-medium mb-4 mt-8 max-w-xl text-on-surface-variant">
           <code>DiagrammVorschau</code> ist der Einstieg in den Editor auf der

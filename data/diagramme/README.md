@@ -55,6 +55,12 @@ nicht — gemessen wird auf der Vorlage:
    zeigt regelmässig mehr Figuren als `anzahl_kinder` — abgebildet wird, was
    gezeichnet ist. Wartende Kolonnen schauen meist ins Feld: dafür die Posen
    `stehen-hinten` / `laufen-hinten` verwenden.
+   - *Leibchen* (Symbol `leibchen`, färbbar, drehbar) sind in den Vorlagen
+     farbige Tupfer in den Händen — z. B. „Spiel mit dem Feuer", „Trikottausch".
+     Die Vorlage streckt die Arme waagrecht aus, unsere Posen führen sie am
+     Körper: das Tuch darum **an die Hand** setzen (Anker ± 22 frontal bzw.
+     ± 18 von hinten, 7 darunter, dann 20 weiter nach aussen), nicht auf die
+     gemessene Bildposition — sonst schwebt es neben der Figur.
 4. **Transform bestimmen.** Feld-Eckpunkte in Bildpixeln ablesen und linear auf
    die Zeichenfläche 1600 × 1000 abbilden (**uniforme** Skalierung, damit das
    Seitenverhältnis des Felds erhalten bleibt; Rand für Tore und Warteschlangen

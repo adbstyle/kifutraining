@@ -50,6 +50,7 @@ export const SYMBOL_TYPEN = [
   "stange",
   "reifen",
   "huerde",
+  "leibchen",
   "spieler",
   "torwart",
   "fussball",
@@ -85,6 +86,8 @@ export const DREHBARE_TYPEN: ReadonlySet<SymbolTyp> = new Set([
   "tor",
   "minitor",
   "huerde",
+  // Leibchen liegen in den Vorlagen schräg in der Hand (z. B. „Trikottausch").
+  "leibchen",
 ]);
 
 /** Acht feste Orientierungen in 45°-Schritten (Story #51). */

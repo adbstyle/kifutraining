@@ -279,6 +279,30 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
       <circle r={19} fill="none" stroke={farbe} strokeWidth={6} />
     ),
   },
+  leibchen: {
+    label: "Überziehleibchen",
+    breite: 46,
+    hoehe: 26,
+    drehbar: DREHBARE_TYPEN.has("leibchen"),
+    faerbbar: true,
+    defaultFarbe: "rot",
+    render: (farbe) => (
+      <>
+        {/* Zusammengelegtes Leibchen: gerade Oberkante, unten ein Wellensaum.
+         *  Die unruhige Silhouette grenzt es vom flachen Teller (Ellipse mit
+         *  Loch) ab — im Manual liegt es in der Hand oder am Boden. */}
+        <path
+          d="M-20 -8 L18 -10 Q22 -9 21 -5 Q16 -1 18 3 Q13 8 8 4 Q2 9 -3 4 Q-9 9 -14 4 Q-19 8 -21 2 Z"
+          fill={farbe}
+          stroke={KONTUR}
+          strokeWidth={1.4}
+        />
+        {/* Lichtkante an der Faltkante, dazu eine senkrechte Falte */}
+        <path d="M-16 -6 L14 -7.5" stroke="rgba(255,255,255,.5)" strokeWidth={1.6} fill="none" strokeLinecap="round" />
+        <path d="M-6 -8 Q-4 -2 -3 4" stroke={KONTUR} strokeWidth={1.2} fill="none" strokeLinecap="round" />
+      </>
+    ),
+  },
   huerde: {
     label: "Hürde",
     breite: 76,
