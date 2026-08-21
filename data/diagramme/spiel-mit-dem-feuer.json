@@ -188,7 +188,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 375,
-            "y": 479,
+            "y": 477,
             "farbe": "rot"
         },
         {
@@ -196,7 +196,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 451,
-            "y": 479,
+            "y": 477,
             "farbe": "rot"
         },
         {
@@ -204,7 +204,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 984,
-            "y": 453,
+            "y": 451,
             "farbe": "rot"
         },
         {
@@ -212,7 +212,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 1068,
-            "y": 453,
+            "y": 451,
             "farbe": "rot"
         }
     ]

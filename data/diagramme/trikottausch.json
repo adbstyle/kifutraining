@@ -107,7 +107,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 489,
-            "y": 168,
+            "y": 166,
             "farbe": "gelb"
         },
         {
@@ -132,7 +132,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 695,
-            "y": 93,
+            "y": 91,
             "farbe": "gelb"
         },
         {
@@ -156,7 +156,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 459,
-            "y": 347,
+            "y": 345,
             "farbe": "blau"
         },
         {
@@ -180,7 +180,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 247,
-            "y": 400,
+            "y": 398,
             "farbe": "rot"
         },
         {
@@ -205,7 +205,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 1172,
-            "y": 146,
+            "y": 144,
             "farbe": "gelb"
         },
         {
@@ -230,7 +230,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 1378,
-            "y": 385,
+            "y": 383,
             "farbe": "blau"
         },
         {
@@ -254,7 +254,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 272,
-            "y": 539,
+            "y": 537,
             "farbe": "rot"
         },
         {
@@ -278,7 +278,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 99,
-            "y": 772,
+            "y": 770,
             "farbe": "rot"
         },
         {
@@ -303,7 +303,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 416,
-            "y": 735,
+            "y": 733,
             "farbe": "blau"
         },
         {
@@ -327,7 +327,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 939,
-            "y": 713,
+            "y": 711,
             "farbe": "gelb"
         },
         {
@@ -352,7 +352,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 1164,
-            "y": 761,
+            "y": 759,
             "farbe": "blau"
         },
         {
@@ -377,7 +377,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 1370,
-            "y": 708,
+            "y": 706,
             "farbe": "rot"
         },
         {
@@ -394,7 +394,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 715,
-            "y": 920,
+            "y": 918,
             "farbe": "blau"
         }
     ]

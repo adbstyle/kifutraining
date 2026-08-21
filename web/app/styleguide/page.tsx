@@ -768,7 +768,7 @@ export default function Styleguide() {
           <strong>Markierungsteller</strong> ab (Ellipse mit Loch), der in dieser
           Grösse sonst kaum zu unterscheiden wäre:
         </p>
-        <div className="relative aspect-[16/5] max-w-xl overflow-hidden rounded-[6px] border border-outline-variant">
+        <div className="relative aspect-[16/10] max-w-xl overflow-hidden rounded-[6px] border border-outline-variant">
           <DiagrammView
             title="Leibchen in allen Farben, daneben der Teller zum Vergleich"
             diagramm={{

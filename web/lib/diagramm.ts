@@ -132,7 +132,7 @@ export type SymbolElement = {
   typ: SymbolTyp;
   x: number;
   y: number;
-  /** Nur drehbare Symbole (Tor/Minitor/Hürde). */
+  /** Nur Symbole in `DREHBARE_TYPEN` — auf allen anderen wirkungslos. */
   rotation?: Rotation;
   farbe?: FarbSlug;
   /** Pose der Figur (nur Spieler); ohne Angabe „stehen". */
