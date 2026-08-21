@@ -1,0 +1,374 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld-oben",
+            "art": "form",
+            "form": "dreieck",
+            "farbe": "blau",
+            "gefuellt": true,
+            "x": 535,
+            "y": 84,
+            "breite": 573,
+            "hoehe": 379,
+            "punkte": [
+                {
+                    "x": 824,
+                    "y": 84
+                },
+                {
+                    "x": 535,
+                    "y": 463
+                },
+                {
+                    "x": 1108,
+                    "y": 463
+                }
+            ]
+        },
+        {
+            "id": "feld-links",
+            "art": "form",
+            "form": "dreieck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 134,
+            "y": 593,
+            "breite": 602,
+            "hoehe": 378,
+            "punkte": [
+                {
+                    "x": 432,
+                    "y": 593
+                },
+                {
+                    "x": 134,
+                    "y": 971
+                },
+                {
+                    "x": 736,
+                    "y": 971
+                }
+            ]
+        },
+        {
+            "id": "feld-rechts",
+            "art": "form",
+            "form": "dreieck",
+            "farbe": "weiss",
+            "gefuellt": true,
+            "x": 882,
+            "y": 597,
+            "breite": 578,
+            "hoehe": 381,
+            "punkte": [
+                {
+                    "x": 1171,
+                    "y": 597
+                },
+                {
+                    "x": 882,
+                    "y": 978
+                },
+                {
+                    "x": 1460,
+                    "y": 975
+                }
+            ]
+        },
+        {
+            "id": "feld-mitte",
+            "art": "form",
+            "form": "dreieck",
+            "farbe": "gruen",
+            "gefuellt": true,
+            "x": 537,
+            "y": 475,
+            "breite": 570,
+            "hoehe": 502,
+            "punkte": [
+                {
+                    "x": 537,
+                    "y": 475
+                },
+                {
+                    "x": 1107,
+                    "y": 475
+                },
+                {
+                    "x": 822,
+                    "y": 977
+                }
+            ]
+        },
+        {
+            "id": "pylone-oben-1",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 824,
+            "y": 86,
+            "farbe": "blau"
+        },
+        {
+            "id": "pylone-oben-2",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 535,
+            "y": 463,
+            "farbe": "blau"
+        },
+        {
+            "id": "pylone-oben-3",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1108,
+            "y": 465,
+            "farbe": "blau"
+        },
+        {
+            "id": "pylone-links-1",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 432,
+            "y": 591,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-links-2",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 134,
+            "y": 973,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-links-3",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 736,
+            "y": 973,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-rechts-1",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1171,
+            "y": 597,
+            "farbe": "weiss"
+        },
+        {
+            "id": "pylone-rechts-2",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 882,
+            "y": 978,
+            "farbe": "weiss"
+        },
+        {
+            "id": "pylone-rechts-3",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1460,
+            "y": 975,
+            "farbe": "weiss"
+        },
+        {
+            "id": "kind-o1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 763,
+            "y": 153,
+            "farbe": "schwarz",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-o1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 735,
+            "y": 258
+        },
+        {
+            "id": "kind-o2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 651,
+            "y": 364,
+            "farbe": "schwarz",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-o2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 648,
+            "y": 401
+        },
+        {
+            "id": "kind-o3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 837,
+            "y": 376,
+            "farbe": "schwarz",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-o3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 865,
+            "y": 345
+        },
+        {
+            "id": "kind-o4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 998,
+            "y": 401,
+            "farbe": "schwarz",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-o4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 940,
+            "y": 432
+        },
+        {
+            "id": "kind-l1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 388,
+            "y": 674,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-l1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 425,
+            "y": 729
+        },
+        {
+            "id": "kind-l2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 298,
+            "y": 866,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-l2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 332,
+            "y": 909
+        },
+        {
+            "id": "kind-l3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 416,
+            "y": 916,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-l3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 475,
+            "y": 915
+        },
+        {
+            "id": "kind-l4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 589,
+            "y": 860,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-l4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 574,
+            "y": 903
+        },
+        {
+            "id": "kind-r1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1082,
+            "y": 736,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-r1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1126,
+            "y": 779
+        },
+        {
+            "id": "kind-r2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 992,
+            "y": 903,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-r2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1033,
+            "y": 934
+        },
+        {
+            "id": "kind-r3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1197,
+            "y": 810,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-r3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1206,
+            "y": 853
+        },
+        {
+            "id": "kind-r4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1333,
+            "y": 897,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-r4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1293,
+            "y": 934
+        }
+    ]
+}

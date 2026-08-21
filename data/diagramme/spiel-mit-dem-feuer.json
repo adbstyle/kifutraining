@@ -38,7 +38,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 361,
-            "y": 280,
+            "y": 303,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -54,7 +54,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 683,
-            "y": 311,
+            "y": 334,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -71,7 +71,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 901,
-            "y": 176,
+            "y": 199,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -87,7 +87,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 413,
-            "y": 472,
+            "y": 495,
             "farbe": "rot",
             "pose": "stehen-hinten"
         },
@@ -96,7 +96,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1026,
-            "y": 446,
+            "y": 469,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -105,7 +105,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1307,
-            "y": 514,
+            "y": 537,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -122,7 +122,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 621,
-            "y": 670,
+            "y": 693,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -138,7 +138,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1031,
-            "y": 628,
+            "y": 651,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -155,7 +155,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 345,
-            "y": 805,
+            "y": 828,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -171,7 +171,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 927,
-            "y": 784,
+            "y": 807,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -188,7 +188,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 375,
-            "y": 477,
+            "y": 500,
             "farbe": "rot"
         },
         {
@@ -196,7 +196,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 451,
-            "y": 477,
+            "y": 500,
             "farbe": "rot"
         },
         {
@@ -204,7 +204,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 984,
-            "y": 451,
+            "y": 474,
             "farbe": "rot"
         },
         {
@@ -212,7 +212,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 1068,
-            "y": 451,
+            "y": 474,
             "farbe": "rot"
         }
     ]

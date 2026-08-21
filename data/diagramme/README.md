@@ -43,7 +43,7 @@ nicht — gemessen wird auf der Vorlage:
      mit den meisten hellen Pixeln).
    - *Figurenmitten:* Begrenzungsrahmen der Nicht-Rasen-Pixel im Fenster um die
      Figur; als Anker die **Füsse** nehmen (Köpfe sind oft angeschnitten),
-     Element-`y` = Fuss-`y` − 72.
+     Element-`y` = `Y(Fusshöhe) − 49` (siehe *Figurenhöhe* unten).
    - *Marker, Pylonen, Reifen, Zonen:* Farb-Clustering (erst eine Farbprobe am
      Objekt nehmen, dann mit dieser Referenz clustern).
    - *Pfeilrichtung:* Pixelkarte des Linienendes. Eine Pfeilspitze ist eine
@@ -59,18 +59,13 @@ nicht — gemessen wird auf der Vorlage:
      farbige Tupfer in den Händen — z. B. „Spiel mit dem Feuer", „Trikottausch".
      Die Vorlage streckt die Arme oft waagrecht aus, unsere Posen führen sie am
      Körper: das Tuch darum **an die Hand der Pose** setzen, nicht auf die
-     gemessene Bildposition — sonst schwebt es neben der Figur. Hand-Offsets
-     anker-relativ (aus `figur.tsx`, mal `SCALE` 0.55), Tuch **22 Einheiten
-     weiter nach aussen** auf gleicher Höhe:
-
-     | Pose | hintere Hand | vordere Hand |
-     |---|---|---|
-     | `stehen` | −22 / +7 | +22 / +7 |
-     | `stehen-hinten` | −18 / +7 | +18 / +7 |
-     | `dribbeln` | −9 / −3 | +18 / −4 |
-
-     `spiegeln` kehrt die x-Offsets um (die Figur skaliert mit
-     `scale(−0.55, 0.55)` um den Anker), die y-Offsets bleiben.
+     gemessene Bildposition — sonst schwebt es neben der Figur. Die
+     anker-relativen Handpositionen liefert `haende(art, pose, spiegeln)` aus
+     `web/components/diagramm/figur.tsx` (schon skaliert, `spiegeln`
+     berücksichtigt); das Tuch sitzt **22 Einheiten weiter nach aussen** auf
+     gleicher Höhe. Zahlen nicht abschreiben, sondern die Funktion rechnen
+     lassen — `npm run check:diagramme` prüft mit derselben Quelle, dass jedes
+     Leibchen an einer Hand sitzt (oder deutlich abgelegt ist).
    - *Mini-Hürden* zeichnet das Manual als Zickzack bzw. flachen Bügel mit zwei
      Füssen — das ist eine **Hürde** (`huerde`, drehbar), keine Linie. Ein Balken
      mit Verdickungen an den Enden ist eine flach liegende Hürde.
@@ -78,6 +73,13 @@ nicht — gemessen wird auf der Vorlage:
      aber auch flach am Boden — dann drehen (90° waagrecht, 45°/315° diagonal).
      Balken im Feld sind Stangen, keine Linien; `linie` bleibt den echten
      Feldmarkierungen vorbehalten (Mittellinie, Zonen, Dribbeltore).
+   - *Figurenhöhe:* das Element `y` einer Figur ist ihr Anker, und der liegt
+     **49 Einheiten über der gezeichneten Schuhsohle** (Anker y=140, Sohle y=229
+     im Zeichenraum von `figur.tsx`, mal `SCALE` 0.55) — nicht 72, die halbe
+     Rahmenhöhe. Also `y = Y(Fusshöhe) − 49`. Mit 72 steht die Figur 23
+     Einheiten zu hoch; an einer Feldlinie heisst das: das Kind landet im Feld,
+     obwohl es in der Vorlage daneben steht. Beim Trainer sind es 84
+     (Sohle 251, mal `TRAINER_SCALE` 0.76).
    - *Figuren, die im Original Schulter an Schulter stehen* (Verfolger-Paare,
      Kolonnen): nicht die gemessene Distanz übertragen. Unsere Figuren sind
      breiter als die schlanken Manual-Kinder — die Anker auf etwa **0.75

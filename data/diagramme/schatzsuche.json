@@ -176,7 +176,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 497,
-            "y": 281,
+            "y": 304,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -193,7 +193,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 647,
-            "y": 286,
+            "y": 309,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -210,7 +210,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 647,
-            "y": 441,
+            "y": 464,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -227,7 +227,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 534,
-            "y": 563,
+            "y": 586,
             "farbe": "blau",
             "pose": "dribbeln",
             "spiegeln": true
@@ -244,7 +244,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 750,
-            "y": 624,
+            "y": 647,
             "farbe": "blau",
             "pose": "dribbeln",
             "spiegeln": true
@@ -261,7 +261,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 854,
-            "y": 295,
+            "y": 318,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -278,7 +278,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 962,
-            "y": 258,
+            "y": 281,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -295,7 +295,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 990,
-            "y": 478,
+            "y": 501,
             "farbe": "blau",
             "pose": "dribbeln",
             "spiegeln": true
@@ -312,7 +312,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1079,
-            "y": 455,
+            "y": 478,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true

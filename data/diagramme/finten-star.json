@@ -1,0 +1,407 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "tor-ol-ecke",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 279,
+            "y": 130,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-ol-linie-1",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 279,
+                    "y": 130
+                },
+                {
+                    "x": 594,
+                    "y": 130
+                }
+            ]
+        },
+        {
+            "id": "tor-ol-marker-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 594,
+            "y": 130,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-ol-linie-2",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 279,
+                    "y": 130
+                },
+                {
+                    "x": 276,
+                    "y": 414
+                }
+            ]
+        },
+        {
+            "id": "tor-ol-marker-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 276,
+            "y": 414,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-or-ecke",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1324,
+            "y": 130,
+            "farbe": "blau"
+        },
+        {
+            "id": "tor-or-linie-1",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 1324,
+                    "y": 130
+                },
+                {
+                    "x": 999,
+                    "y": 130
+                }
+            ]
+        },
+        {
+            "id": "tor-or-marker-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 999,
+            "y": 130,
+            "farbe": "blau"
+        },
+        {
+            "id": "tor-or-linie-2",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 1324,
+                    "y": 130
+                },
+                {
+                    "x": 1327,
+                    "y": 413
+                }
+            ]
+        },
+        {
+            "id": "tor-or-marker-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1327,
+            "y": 413,
+            "farbe": "blau"
+        },
+        {
+            "id": "tor-ul-ecke",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 278,
+            "y": 906,
+            "farbe": "blau"
+        },
+        {
+            "id": "tor-ul-linie-1",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 278,
+                    "y": 906
+                },
+                {
+                    "x": 593,
+                    "y": 909
+                }
+            ]
+        },
+        {
+            "id": "tor-ul-marker-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 593,
+            "y": 909,
+            "farbe": "blau"
+        },
+        {
+            "id": "tor-ul-linie-2",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 278,
+                    "y": 906
+                },
+                {
+                    "x": 281,
+                    "y": 648
+                }
+            ]
+        },
+        {
+            "id": "tor-ul-marker-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 281,
+            "y": 648,
+            "farbe": "blau"
+        },
+        {
+            "id": "tor-ur-ecke",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1324,
+            "y": 917,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-ur-linie-1",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 1324,
+                    "y": 917
+                },
+                {
+                    "x": 1001,
+                    "y": 911
+                }
+            ]
+        },
+        {
+            "id": "tor-ur-marker-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1001,
+            "y": 911,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-ur-linie-2",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 1324,
+                    "y": 917
+                },
+                {
+                    "x": 1322,
+                    "y": 640
+                }
+            ]
+        },
+        {
+            "id": "tor-ur-marker-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1322,
+            "y": 640,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-ol1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 167,
+            "y": 125,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-ol1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 177,
+            "y": 174
+        },
+        {
+            "id": "kind-ol2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 242,
+            "y": 96,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-ol2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 254,
+            "y": 169
+        },
+        {
+            "id": "kind-or1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1360,
+            "y": 101,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-or1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1346,
+            "y": 164
+        },
+        {
+            "id": "kind-ul1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 252,
+            "y": 862,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-ul1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 259,
+            "y": 940
+        },
+        {
+            "id": "kind-ur1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1341,
+            "y": 877,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-ur1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1326,
+            "y": 950
+        },
+        {
+            "id": "kind-ur2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1450,
+            "y": 911,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-ur2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1409,
+            "y": 979
+        },
+        {
+            "id": "kind-m1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 994,
+            "y": 334,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-m1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 948,
+            "y": 412
+        },
+        {
+            "id": "kind-m2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 686,
+            "y": 591,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-m2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 706,
+            "y": 640
+        },
+        {
+            "id": "weg-hin",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 720,
+                    "y": 586
+                },
+                {
+                    "x": 836,
+                    "y": 528
+                },
+                {
+                    "x": 1011,
+                    "y": 475
+                }
+            ]
+        },
+        {
+            "id": "weg-zurueck",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 972,
+                    "y": 528
+                },
+                {
+                    "x": 836,
+                    "y": 557
+                },
+                {
+                    "x": 652,
+                    "y": 514
+                }
+            ]
+        }
+    ]
+}
