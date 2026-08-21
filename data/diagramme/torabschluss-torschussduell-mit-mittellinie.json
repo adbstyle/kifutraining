@@ -1,0 +1,110 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 213,
+            "y": 70,
+            "breite": 1175,
+            "hoehe": 905
+        },
+        {
+            "id": "tor-links",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 213,
+            "y": 480,
+            "rotation": 90
+        },
+        {
+            "id": "tor-rechts",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 1388,
+            "y": 480,
+            "rotation": 270
+        },
+        {
+            "id": "mittellinie",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 812,
+                    "y": 70
+                },
+                {
+                    "x": 812,
+                    "y": 975
+                }
+            ]
+        },
+        {
+            "id": "pylone-oben",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 812,
+            "y": 70,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-unten",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 812,
+            "y": 975,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-r-l",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 456,
+            "y": 548,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-r-l",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 532,
+            "y": 646
+        },
+        {
+            "id": "kind-w-o",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 692,
+            "y": 404,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-w-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1316,
+            "y": 499,
+            "farbe": "weiss",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-r-u",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 996,
+            "y": 719,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        }
+    ]
+}
