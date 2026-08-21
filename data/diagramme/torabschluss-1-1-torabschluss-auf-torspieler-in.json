@@ -1,0 +1,271 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "zone",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "gefuellt": true,
+            "x": 583,
+            "y": 346,
+            "breite": 212,
+            "hoehe": 198
+        },
+        {
+            "id": "pylone-ol",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 583,
+            "y": 346,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-or",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 795,
+            "y": 346,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ul",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 583,
+            "y": 544,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ur",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 795,
+            "y": 544,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-links",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 49,
+            "y": 457,
+            "rotation": 90
+        },
+        {
+            "id": "tor-rechts",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 1310,
+            "y": 443,
+            "rotation": 270
+        },
+        {
+            "id": "kind-tw-l",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 197,
+            "y": 435
+        },
+        {
+            "id": "kind-r-l",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 429,
+            "y": 435,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-r-l",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 436,
+            "y": 494
+        },
+        {
+            "id": "kind-r-o1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 698,
+            "y": 284,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-r-o1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 675,
+            "y": 328
+        },
+        {
+            "id": "kind-r-o2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 728,
+            "y": 265,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-r-o3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 769,
+            "y": 265,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-r-o3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 776,
+            "y": 319
+        },
+        {
+            "id": "kind-w-m1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 585,
+            "y": 555,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-w-m1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 606,
+            "y": 618
+        },
+        {
+            "id": "kind-w-m2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 636,
+            "y": 560,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-w-m2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 657,
+            "y": 622
+        },
+        {
+            "id": "kind-w-m3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 657,
+            "y": 532,
+            "farbe": "weiss",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-w-m3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 693,
+            "y": 586
+        },
+        {
+            "id": "kind-w-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1004,
+            "y": 403,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-w-r",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1061,
+            "y": 480
+        },
+        {
+            "id": "kind-tw-r",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 1160,
+            "y": 385,
+            "spiegeln": true
+        },
+        {
+            "id": "weg-links",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 390,
+                    "y": 489
+                },
+                {
+                    "x": 330,
+                    "y": 494
+                },
+                {
+                    "x": 270,
+                    "y": 498
+                }
+            ]
+        },
+        {
+            "id": "schuss-links",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 252,
+                    "y": 503
+                },
+                {
+                    "x": 114,
+                    "y": 567
+                }
+            ]
+        },
+        {
+            "id": "weg-rechts",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 804,
+                    "y": 466
+                },
+                {
+                    "x": 887,
+                    "y": 466
+                },
+                {
+                    "x": 969,
+                    "y": 466
+                }
+            ]
+        },
+        {
+            "id": "schuss-rechts",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 1080,
+                    "y": 484
+                },
+                {
+                    "x": 1236,
+                    "y": 549
+                }
+            ]
+        }
+    ]
+}
