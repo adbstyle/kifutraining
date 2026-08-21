@@ -1,0 +1,237 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 308,
+            "y": 113,
+            "breite": 950,
+            "hoehe": 812
+        },
+        {
+            "id": "zone-oben",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 308,
+            "y": 113,
+            "breite": 950,
+            "hoehe": 207
+        },
+        {
+            "id": "pylone-oben-l",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 308,
+            "y": 320,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-oben-r",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1258,
+            "y": 320,
+            "farbe": "rot"
+        },
+        {
+            "id": "zone-unten",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 308,
+            "y": 707,
+            "breite": 950,
+            "hoehe": 218
+        },
+        {
+            "id": "pylone-unten-l",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 308,
+            "y": 707,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-unten-r",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1258,
+            "y": 707,
+            "farbe": "rot"
+        },
+        {
+            "id": "minitor-o1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 458,
+            "y": 113,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-o2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1100,
+            "y": 113,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-u1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 458,
+            "y": 925,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-u2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1087,
+            "y": 925,
+            "rotation": 0
+        },
+        {
+            "id": "reifen-o",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 779,
+            "y": 67,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-o",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 779,
+            "y": 67
+        },
+        {
+            "id": "reifen-l",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 264,
+            "y": 476,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-l",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 264,
+            "y": 476
+        },
+        {
+            "id": "reifen-r",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 1285,
+            "y": 476,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-r",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1285,
+            "y": 476
+        },
+        {
+            "id": "reifen-u",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 779,
+            "y": 960,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-u",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 779,
+            "y": 960
+        },
+        {
+            "id": "kind-r-l",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 341,
+            "y": 282,
+            "farbe": "rot",
+            "pose": "passen"
+        },
+        {
+            "id": "ball-r-l",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 405,
+            "y": 304
+        },
+        {
+            "id": "kind-tw",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 576,
+            "y": 119
+        },
+        {
+            "id": "kind-w-mo",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 537,
+            "y": 277,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-w-m",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 895,
+            "y": 339,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-r-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1012,
+            "y": 449,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-torspieler",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 781,
+            "y": 691,
+            "farbe": "gruen",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "schuss",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 418,
+                    "y": 296
+                },
+                {
+                    "x": 497,
+                    "y": 133
+                }
+            ]
+        }
+    ]
+}

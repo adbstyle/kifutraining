@@ -1,0 +1,220 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 312,
+            "y": 99,
+            "breite": 968,
+            "hoehe": 810
+        },
+        {
+            "id": "pylone-ol",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 312,
+            "y": 99,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-or",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1280,
+            "y": 99,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ul",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 312,
+            "y": 909,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ur",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1280,
+            "y": 909,
+            "farbe": "rot"
+        },
+        {
+            "id": "minitor-o1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 460,
+            "y": 99,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-o2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1136,
+            "y": 99,
+            "rotation": 0
+        },
+        {
+            "id": "tor-unten",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 798,
+            "y": 909,
+            "rotation": 180
+        },
+        {
+            "id": "reifen-o",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 789,
+            "y": 63,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-o",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 789,
+            "y": 63
+        },
+        {
+            "id": "reifen-l",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 272,
+            "y": 490,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-l",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 272,
+            "y": 490
+        },
+        {
+            "id": "reifen-r",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 1324,
+            "y": 490,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-r",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1324,
+            "y": 490
+        },
+        {
+            "id": "reifen-ul",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 452,
+            "y": 963,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-ul",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 452,
+            "y": 963
+        },
+        {
+            "id": "reifen-ur",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 1136,
+            "y": 963,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-ur",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1136,
+            "y": 963
+        },
+        {
+            "id": "kind-w-ol",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 476,
+            "y": 248,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-r-o",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 818,
+            "y": 221,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-w-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1090,
+            "y": 320,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-w-m",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 796,
+            "y": 495,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-r-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1126,
+            "y": 523,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-tw",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 690,
+            "y": 657
+        },
+        {
+            "id": "ball-tw",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 753,
+            "y": 698
+        },
+        {
+            "id": "pass",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 766,
+                    "y": 693
+                },
+                {
+                    "x": 1072,
+                    "y": 576
+                }
+            ]
+        }
+    ]
+}
