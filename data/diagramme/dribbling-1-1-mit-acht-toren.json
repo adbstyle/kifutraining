@@ -180,7 +180,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 841,
-            "y": 104,
+            "y": 127,
             "farbe": "rot",
             "pose": "stehen"
         },
@@ -189,7 +189,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 890,
-            "y": 104,
+            "y": 127,
             "farbe": "rot",
             "pose": "stehen",
             "spiegeln": true
@@ -199,7 +199,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 773,
-            "y": 214,
+            "y": 237,
             "farbe": "rot",
             "pose": "laufen"
         },
@@ -208,7 +208,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 448,
-            "y": 497,
+            "y": 520,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -217,7 +217,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 292,
-            "y": 513,
+            "y": 536,
             "farbe": "rot",
             "pose": "stehen"
         },
@@ -226,7 +226,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 347,
-            "y": 510,
+            "y": 533,
             "farbe": "rot",
             "pose": "stehen"
         },
@@ -235,7 +235,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1159,
-            "y": 504,
+            "y": 527,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -245,7 +245,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1253,
-            "y": 504,
+            "y": 527,
             "farbe": "weiss",
             "pose": "stehen",
             "spiegeln": true
@@ -255,7 +255,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1306,
-            "y": 510,
+            "y": 533,
             "farbe": "weiss",
             "pose": "stehen",
             "spiegeln": true
@@ -265,7 +265,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 815,
-            "y": 728,
+            "y": 751,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -275,7 +275,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 740,
-            "y": 855,
+            "y": 878,
             "farbe": "weiss",
             "pose": "stehen-hinten"
         },
@@ -284,7 +284,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 893,
-            "y": 851,
+            "y": 874,
             "farbe": "weiss",
             "pose": "stehen-hinten",
             "spiegeln": true

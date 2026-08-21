@@ -50,8 +50,14 @@
             "farbe": "rot",
             "gestrichelt": true,
             "punkte": [
-                { "x": 316, "y": 455 },
-                { "x": 509, "y": 455 }
+                {
+                    "x": 316,
+                    "y": 455
+                },
+                {
+                    "x": 509,
+                    "y": 455
+                }
             ]
         },
         {
@@ -77,8 +83,14 @@
             "farbe": "rot",
             "gestrichelt": true,
             "punkte": [
-                { "x": 1073, "y": 455 },
-                { "x": 1271, "y": 455 }
+                {
+                    "x": 1073,
+                    "y": 455
+                },
+                {
+                    "x": 1271,
+                    "y": 455
+                }
             ]
         },
         {
@@ -162,7 +174,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 652,
-            "y": 220,
+            "y": 243,
             "farbe": "weiss",
             "pose": "laufen"
         },
@@ -171,7 +183,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 798,
-            "y": 273,
+            "y": 296,
             "farbe": "rot",
             "pose": "laufen"
         },
@@ -180,7 +192,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 514,
-            "y": 506,
+            "y": 529,
             "farbe": "rot",
             "pose": "stehen"
         },
@@ -189,7 +201,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 716,
-            "y": 599,
+            "y": 622,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -199,7 +211,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1163,
-            "y": 489,
+            "y": 512,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -209,7 +221,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1205,
-            "y": 546,
+            "y": 569,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true

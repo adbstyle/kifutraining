@@ -111,7 +111,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 375,
-            "y": 208,
+            "y": 231,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -127,7 +127,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 755,
-            "y": 278,
+            "y": 301,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -143,7 +143,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1338,
-            "y": 148,
+            "y": 171,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -160,7 +160,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1315,
-            "y": 593,
+            "y": 616,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -177,7 +177,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1298,
-            "y": 833,
+            "y": 856,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -194,7 +194,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 762,
-            "y": 733,
+            "y": 756,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -210,7 +210,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 460,
-            "y": 783,
+            "y": 806,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -226,7 +226,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 260,
-            "y": 708,
+            "y": 731,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -242,7 +242,7 @@
             "art": "symbol",
             "typ": "trainer",
             "x": 185,
-            "y": 776,
+            "y": 799,
             "farbe": "orange"
         },
         {

@@ -16,7 +16,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 208,
-            "y": 222,
+            "y": 245,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -26,7 +26,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 569,
-            "y": 222,
+            "y": 245,
             "farbe": "rot",
             "pose": "laufen",
             "spiegeln": true
@@ -36,7 +36,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 625,
-            "y": 199,
+            "y": 222,
             "farbe": "rot",
             "pose": "laufen",
             "spiegeln": true
@@ -46,7 +46,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1160,
-            "y": 143,
+            "y": 166,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -56,7 +56,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 457,
-            "y": 457,
+            "y": 480,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -66,7 +66,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 992,
-            "y": 463,
+            "y": 486,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -76,7 +76,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 214,
-            "y": 659,
+            "y": 682,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -86,7 +86,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 460,
-            "y": 787,
+            "y": 810,
             "farbe": "weiss",
             "pose": "laufen-hinten"
         },
@@ -95,7 +95,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 690,
-            "y": 703,
+            "y": 726,
             "farbe": "rot",
             "pose": "laufen-hinten"
         },
@@ -104,7 +104,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 720,
-            "y": 703,
+            "y": 726,
             "farbe": "rot",
             "pose": "laufen-hinten"
         },
@@ -113,7 +113,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1098,
-            "y": 838,
+            "y": 861,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -123,7 +123,7 @@
             "art": "symbol",
             "typ": "trainer",
             "x": 1451,
-            "y": 456,
+            "y": 479,
             "farbe": "orange",
             "spiegeln": true
         },

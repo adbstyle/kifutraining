@@ -75,7 +75,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 344,
-            "y": 456,
+            "y": 479,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -84,7 +84,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 405,
-            "y": 418,
+            "y": 441,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -93,7 +93,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 491,
-            "y": 477,
+            "y": 500,
             "farbe": "weiss",
             "pose": "laufen"
         },
@@ -102,7 +102,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1109,
-            "y": 485,
+            "y": 508,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -112,7 +112,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1207,
-            "y": 464,
+            "y": 487,
             "farbe": "rot",
             "pose": "stehen",
             "spiegeln": true
@@ -122,7 +122,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1287,
-            "y": 477,
+            "y": 500,
             "farbe": "rot",
             "pose": "stehen",
             "spiegeln": true
@@ -169,8 +169,14 @@
             "art": "pfad",
             "typ": "laufweg",
             "punkte": [
-                { "x": 510, "y": 461 },
-                { "x": 783, "y": 452 }
+                {
+                    "x": 510,
+                    "y": 461
+                },
+                {
+                    "x": 783,
+                    "y": 452
+                }
             ]
         },
         {
@@ -178,10 +184,22 @@
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
-                { "x": 1094, "y": 511 },
-                { "x": 968, "y": 448 },
-                { "x": 926, "y": 406 },
-                { "x": 871, "y": 364 }
+                {
+                    "x": 1094,
+                    "y": 511
+                },
+                {
+                    "x": 968,
+                    "y": 448
+                },
+                {
+                    "x": 926,
+                    "y": 406
+                },
+                {
+                    "x": 871,
+                    "y": 364
+                }
             ]
         }
     ]

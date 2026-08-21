@@ -1,0 +1,237 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 374,
+            "y": 158,
+            "breite": 834,
+            "hoehe": 793
+        },
+        {
+            "id": "mittellinie",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 374,
+                    "y": 566
+                },
+                {
+                    "x": 1208,
+                    "y": 566
+                }
+            ]
+        },
+        {
+            "id": "pylone-links",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 367,
+            "y": 566,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-rechts",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1210,
+            "y": 566,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-o1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 507,
+            "y": 158,
+            "rotation": 0
+        },
+        {
+            "id": "tor-o2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1053,
+            "y": 158,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 507,
+            "y": 951,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1079,
+            "y": 951,
+            "rotation": 0
+        },
+        {
+            "id": "kind-a-oben",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 769,
+            "y": 98,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-a-links1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 339,
+            "y": 296,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-a-links2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 350,
+            "y": 705,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-a-rechts1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1221,
+            "y": 270,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-a-rechts2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1240,
+            "y": 700,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-a-unten",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 806,
+            "y": 919,
+            "farbe": "weiss",
+            "pose": "laufen-hinten"
+        },
+        {
+            "id": "kind-i1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 535,
+            "y": 425,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-i2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 944,
+            "y": 348,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-i3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 855,
+            "y": 541,
+            "farbe": "rot",
+            "pose": "passen"
+        },
+        {
+            "id": "kind-i4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 569,
+            "y": 644,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-i5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 739,
+            "y": 649,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-i6",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1070,
+            "y": 631,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 928,
+            "y": 590
+        },
+        {
+            "id": "pass",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 941,
+                    "y": 582
+                },
+                {
+                    "x": 1182,
+                    "y": 354
+                }
+            ]
+        },
+        {
+            "id": "weg-rechts",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 1182,
+                    "y": 332
+                },
+                {
+                    "x": 1079,
+                    "y": 302
+                },
+                {
+                    "x": 980,
+                    "y": 289
+                }
+            ]
+        }
+    ]
+}
