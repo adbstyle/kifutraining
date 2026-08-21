@@ -1,0 +1,197 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 320,
+            "y": 51,
+            "breite": 940,
+            "hoehe": 893
+        },
+        {
+            "id": "tor-o1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 480,
+            "y": 51,
+            "rotation": 0
+        },
+        {
+            "id": "tor-o2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1100,
+            "y": 51,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 470,
+            "y": 944,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1120,
+            "y": 944,
+            "rotation": 0
+        },
+        {
+            "id": "kind-rot-links",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 356,
+            "y": 493,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-rot-rechts",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1195,
+            "y": 484,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-rot-mitte",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 814,
+            "y": 678,
+            "farbe": "rot",
+            "pose": "passen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-w1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 662,
+            "y": 896,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-w2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 792,
+            "y": 910,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-w3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 926,
+            "y": 891,
+            "farbe": "weiss",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-angriff",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 746,
+            "y": 716
+        },
+        {
+            "id": "ball-warteschlange",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 761,
+            "y": 982
+        },
+        {
+            "id": "pass-1",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 742,
+                    "y": 711
+                },
+                {
+                    "x": 397,
+                    "y": 590
+                }
+            ]
+        },
+        {
+            "id": "weg-dribbling",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 412,
+                    "y": 570
+                },
+                {
+                    "x": 455,
+                    "y": 493
+                },
+                {
+                    "x": 475,
+                    "y": 415
+                }
+            ]
+        },
+        {
+            "id": "pass-2",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 494,
+                    "y": 396
+                },
+                {
+                    "x": 1018,
+                    "y": 240
+                }
+            ]
+        },
+        {
+            "id": "laufweg-tor",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 1042,
+                    "y": 221
+                },
+                {
+                    "x": 1105,
+                    "y": 80
+                }
+            ]
+        },
+        {
+            "id": "laufweg-tiefe",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 1173,
+                    "y": 439
+                },
+                {
+                    "x": 1052,
+                    "y": 270
+                }
+            ]
+        }
+    ]
+}

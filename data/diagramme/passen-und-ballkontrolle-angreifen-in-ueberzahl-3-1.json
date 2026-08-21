@@ -1,0 +1,139 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 388,
+            "y": 175,
+            "breite": 826,
+            "hoehe": 778
+        },
+        {
+            "id": "mittellinie",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 388,
+                    "y": 570
+                },
+                {
+                    "x": 1214,
+                    "y": 570
+                }
+            ]
+        },
+        {
+            "id": "pylone-links",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 384,
+            "y": 570,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-rechts",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1217,
+            "y": 570,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-o1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 530,
+            "y": 175,
+            "rotation": 0
+        },
+        {
+            "id": "tor-o2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1083,
+            "y": 175,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 534,
+            "y": 953,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1087,
+            "y": 953,
+            "rotation": 0
+        },
+        {
+            "id": "kind-w-oben",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 830,
+            "y": 73,
+            "farbe": "weiss",
+            "pose": "passen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-w-links",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 413,
+            "y": 366,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-w-mitte",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 787,
+            "y": 430,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-rot",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 800,
+            "y": 626,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 811,
+            "y": 171
+        },
+        {
+            "id": "pass",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 802,
+                    "y": 184
+                },
+                {
+                    "x": 458,
+                    "y": 447
+                }
+            ]
+        }
+    ]
+}

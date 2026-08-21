@@ -1,0 +1,158 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 244,
+            "y": 55,
+            "breite": 1256,
+            "hoehe": 917
+        },
+        {
+            "id": "mittellinie",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 866,
+                    "y": 55
+                },
+                {
+                    "x": 866,
+                    "y": 972
+                }
+            ]
+        },
+        {
+            "id": "pylone-oben",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 866,
+            "y": 50,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-unten",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 866,
+            "y": 972,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-aussen",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 69,
+            "y": 537,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-l1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 244,
+            "y": 235,
+            "rotation": 90
+        },
+        {
+            "id": "tor-l2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 244,
+            "y": 797,
+            "rotation": 90
+        },
+        {
+            "id": "tor-r1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1500,
+            "y": 230,
+            "rotation": 270
+        },
+        {
+            "id": "tor-r2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1500,
+            "y": 797,
+            "rotation": 270
+        },
+        {
+            "id": "kind-l1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 69,
+            "y": 481,
+            "farbe": "weiss",
+            "pose": "passen"
+        },
+        {
+            "id": "kind-l2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 201,
+            "y": 470,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-m1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 832,
+            "y": 454,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-m2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 956,
+            "y": 454,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-u1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 596,
+            "y": 852,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 238,
+            "y": 548
+        },
+        {
+            "id": "pass",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 254,
+                    "y": 548
+                },
+                {
+                    "x": 789,
+                    "y": 548
+                }
+            ]
+        }
+    ]
+}

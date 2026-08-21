@@ -1,0 +1,215 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 325,
+            "y": 49,
+            "breite": 958,
+            "hoehe": 902
+        },
+        {
+            "id": "zone-oben",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 325,
+            "y": 49,
+            "breite": 958,
+            "hoehe": 198
+        },
+        {
+            "id": "zonenlinie-oben",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 325,
+                    "y": 247
+                },
+                {
+                    "x": 1283,
+                    "y": 247
+                }
+            ]
+        },
+        {
+            "id": "zone-unten",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 325,
+            "y": 747,
+            "breite": 958,
+            "hoehe": 204
+        },
+        {
+            "id": "zonenlinie-unten",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 325,
+                    "y": 747
+                },
+                {
+                    "x": 1283,
+                    "y": 747
+                }
+            ]
+        },
+        {
+            "id": "pylone-ol",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 320,
+            "y": 247,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-or",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1288,
+            "y": 247,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ul",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 325,
+            "y": 747,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ur",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1283,
+            "y": 747,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-o1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 445,
+            "y": 49,
+            "rotation": 0
+        },
+        {
+            "id": "tor-o2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1141,
+            "y": 49,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 445,
+            "y": 951,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1141,
+            "y": 951,
+            "rotation": 0
+        },
+        {
+            "id": "kind-k1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 325,
+            "y": 180,
+            "farbe": "rot",
+            "pose": "passen"
+        },
+        {
+            "id": "kind-k2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 580,
+            "y": 87,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 406,
+            "y": 342,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1182,
+            "y": 239,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 790,
+            "y": 445,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-k6",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 977,
+            "y": 401,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 401,
+            "y": 164
+        },
+        {
+            "id": "pass",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 411,
+                    "y": 149
+                },
+                {
+                    "x": 455,
+                    "y": 66
+                }
+            ]
+        }
+    ]
+}
