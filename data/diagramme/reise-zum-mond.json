@@ -33,7 +33,7 @@
             "typ": "minitor",
             "x": 300,
             "y": 215,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "tor-l2",
@@ -41,7 +41,7 @@
             "typ": "minitor",
             "x": 300,
             "y": 525,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "tor-l3",
@@ -49,7 +49,7 @@
             "typ": "minitor",
             "x": 300,
             "y": 810,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "tor-r1",
@@ -57,7 +57,7 @@
             "typ": "minitor",
             "x": 1300,
             "y": 215,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "tor-r2",
@@ -65,7 +65,7 @@
             "typ": "minitor",
             "x": 1300,
             "y": 525,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "tor-r3",
@@ -73,7 +73,7 @@
             "typ": "minitor",
             "x": 1300,
             "y": 810,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "planet-1",
@@ -232,8 +232,8 @@
             "id": "ball-k2",
             "art": "symbol",
             "typ": "fussball",
-            "x": 790,
-            "y": 210
+            "x": 804,
+            "y": 158
         },
         {
             "id": "kind-k3",
@@ -265,8 +265,8 @@
             "id": "ball-k4",
             "art": "symbol",
             "typ": "fussball",
-            "x": 580,
-            "y": 435
+            "x": 570,
+            "y": 422
         },
         {
             "id": "kind-k5",
@@ -330,8 +330,8 @@
             "id": "ball-k8",
             "art": "symbol",
             "typ": "fussball",
-            "x": 845,
-            "y": 520
+            "x": 811,
+            "y": 601
         },
         {
             "id": "kind-k9",
@@ -346,8 +346,8 @@
             "id": "ball-k9",
             "art": "symbol",
             "typ": "fussball",
-            "x": 975,
-            "y": 720
+            "x": 947,
+            "y": 675
         },
         {
             "id": "kind-k10",
@@ -363,8 +363,8 @@
             "id": "ball-k10",
             "art": "symbol",
             "typ": "fussball",
-            "x": 1095,
-            "y": 625
+            "x": 1115,
+            "y": 599
         },
         {
             "id": "kind-k11",

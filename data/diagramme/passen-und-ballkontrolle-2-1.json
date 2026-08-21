@@ -33,7 +33,7 @@
             "typ": "minitor",
             "x": 516,
             "y": 953,
-            "rotation": 0
+            "rotation": 180
         },
         {
             "id": "tor-u2",
@@ -41,7 +41,7 @@
             "typ": "minitor",
             "x": 1066,
             "y": 953,
-            "rotation": 0
+            "rotation": 180
         },
         {
             "id": "pylone-diagonale-1",
@@ -192,8 +192,8 @@
             "id": "kind-u1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 759,
-            "y": 922,
+            "x": 711,
+            "y": 925,
             "farbe": "rot",
             "pose": "stehen-hinten"
         },
@@ -208,8 +208,8 @@
             "id": "kind-u2",
             "art": "symbol",
             "typ": "spieler",
-            "x": 812,
-            "y": 922,
+            "x": 886,
+            "y": 923,
             "farbe": "rot",
             "pose": "stehen-hinten",
             "spiegeln": true
@@ -262,10 +262,10 @@
             "id": "kind-r1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 617,
-            "y": 569,
+            "x": 588,
+            "y": 568,
             "farbe": "rot",
-            "pose": "stehen"
+            "pose": "laufen-hinten"
         },
         {
             "id": "kind-r2",
@@ -287,8 +287,8 @@
             "id": "kind-r3",
             "art": "symbol",
             "typ": "spieler",
-            "x": 1225,
-            "y": 659,
+            "x": 1253,
+            "y": 632,
             "farbe": "rot",
             "pose": "stehen",
             "spiegeln": true
@@ -322,8 +322,8 @@
                     "y": 416
                 },
                 {
-                    "x": 451,
-                    "y": 459
+                    "x": 471,
+                    "y": 478
                 }
             ]
         },
@@ -333,8 +333,8 @@
             "typ": "laufweg",
             "punkte": [
                 {
-                    "x": 847,
-                    "y": 829
+                    "x": 936,
+                    "y": 804
                 },
                 {
                     "x": 950,

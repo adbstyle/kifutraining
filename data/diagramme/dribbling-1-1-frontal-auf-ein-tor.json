@@ -69,8 +69,8 @@
             "id": "rot-warten-l",
             "art": "symbol",
             "typ": "spieler",
-            "x": 675,
-            "y": 881,
+            "x": 639,
+            "y": 906,
             "farbe": "rot",
             "pose": "stehen-hinten"
         },
@@ -78,8 +78,8 @@
             "id": "rot-warten-r",
             "art": "symbol",
             "typ": "spieler",
-            "x": 927,
-            "y": 881,
+            "x": 943,
+            "y": 913,
             "farbe": "rot",
             "pose": "stehen-hinten",
             "spiegeln": true
@@ -111,12 +111,12 @@
             "typ": "dribbling",
             "punkte": [
                 {
-                    "x": 724,
-                    "y": 606
+                    "x": 749,
+                    "y": 610
                 },
                 {
-                    "x": 778,
-                    "y": 462
+                    "x": 714,
+                    "y": 564
                 },
                 {
                     "x": 829,

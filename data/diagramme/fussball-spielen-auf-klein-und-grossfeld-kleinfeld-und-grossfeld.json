@@ -1,0 +1,196 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld-gross",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "gefuellt": true,
+            "x": 167,
+            "y": 82,
+            "breite": 783,
+            "hoehe": 833
+        },
+        {
+            "id": "tor-oben",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 558,
+            "y": 82,
+            "rotation": 0
+        },
+        {
+            "id": "tor-unten",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 556,
+            "y": 915,
+            "rotation": 180
+        },
+        {
+            "id": "feld-klein",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "gefuellt": true,
+            "x": 1000,
+            "y": 236,
+            "breite": 432,
+            "hoehe": 548
+        },
+        {
+            "id": "minitor-ol",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1076,
+            "y": 236,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-or",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1362,
+            "y": 236,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-ul",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1076,
+            "y": 784,
+            "rotation": 180
+        },
+        {
+            "id": "minitor-ur",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1364,
+            "y": 784,
+            "rotation": 180
+        },
+        {
+            "id": "kind-tw-o",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 527,
+            "y": 110
+        },
+        {
+            "id": "kind-g-rot",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 511,
+            "y": 290,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-g-w-l",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 358,
+            "y": 349,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-g-w-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 752,
+            "y": 277,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-g-w-m",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 662,
+            "y": 533,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-g-rot-l",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 318,
+            "y": 601,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-g-rot-b",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 788,
+            "y": 686,
+            "farbe": "rot",
+            "pose": "schiessen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-g-rot-b",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 738,
+            "y": 676
+        },
+        {
+            "id": "kind-tw-u",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 594,
+            "y": 821,
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k-w1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1110,
+            "y": 393,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-k-w2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1314,
+            "y": 344,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-k-r1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1389,
+            "y": 475,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k-r2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1062,
+            "y": 627,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "ball-k-r2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1166,
+            "y": 550
+        }
+    ]
+}

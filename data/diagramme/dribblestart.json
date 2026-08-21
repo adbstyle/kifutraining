@@ -225,8 +225,8 @@
             "id": "kind-k8",
             "art": "symbol",
             "typ": "spieler",
-            "x": 260,
-            "y": 731,
+            "x": 251,
+            "y": 674,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -234,15 +234,15 @@
             "id": "ball-k8",
             "art": "symbol",
             "typ": "fussball",
-            "x": 270,
-            "y": 780
+            "x": 256,
+            "y": 732
         },
         {
             "id": "trainer",
             "art": "symbol",
             "typ": "trainer",
-            "x": 185,
-            "y": 799,
+            "x": 183,
+            "y": 683,
             "farbe": "orange"
         },
         {
@@ -333,14 +333,6 @@
             "y": 280
         },
         {
-            "id": "stange-orange-1",
-            "art": "symbol",
-            "typ": "stange",
-            "x": 395,
-            "y": 422,
-            "farbe": "orange"
-        },
-        {
             "id": "stange-gelb-1",
             "art": "symbol",
             "typ": "stange",
@@ -357,22 +349,52 @@
             "farbe": "gelb"
         },
         {
-            "id": "stange-rot",
-            "art": "symbol",
-            "typ": "stange",
-            "x": 905,
-            "y": 455,
+            "id": "2444468b-faf6-4251-9bbf-5469e4fcd12e",
+            "art": "pfad",
+            "typ": "linie",
             "farbe": "rot",
-            "rotation": 90
+            "punkte": [
+                {
+                    "x": 874,
+                    "y": 488
+                },
+                {
+                    "x": 967,
+                    "y": 487
+                }
+            ]
         },
         {
-            "id": "stange-orange-2",
-            "art": "symbol",
-            "typ": "stange",
-            "x": 1130,
-            "y": 775,
-            "farbe": "orange",
-            "rotation": 315
+            "id": "f87bfc44-b2f5-4c92-b9d4-ceb22f185a2e",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "rot",
+            "punkte": [
+                {
+                    "x": 1109,
+                    "y": 766
+                },
+                {
+                    "x": 1171,
+                    "y": 822
+                }
+            ]
+        },
+        {
+            "id": "9f0508f4-e400-4e68-8ed9-17b894307b94",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "rot",
+            "punkte": [
+                {
+                    "x": 406,
+                    "y": 410
+                },
+                {
+                    "x": 405,
+                    "y": 513
+                }
+            ]
         }
     ]
 }

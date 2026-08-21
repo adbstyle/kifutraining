@@ -17,7 +17,7 @@
             "typ": "minitor",
             "x": 202,
             "y": 201,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "minitor-links-2",
@@ -25,7 +25,7 @@
             "typ": "minitor",
             "x": 202,
             "y": 498,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "minitor-links-3",
@@ -33,7 +33,7 @@
             "typ": "minitor",
             "x": 202,
             "y": 796,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "minitor-rechts-1",
@@ -41,7 +41,7 @@
             "typ": "minitor",
             "x": 1398,
             "y": 192,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "minitor-rechts-2",
@@ -49,7 +49,7 @@
             "typ": "minitor",
             "x": 1398,
             "y": 504,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "minitor-rechts-3",
@@ -57,7 +57,7 @@
             "typ": "minitor",
             "x": 1398,
             "y": 803,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "rot-1",

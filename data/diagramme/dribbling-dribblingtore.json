@@ -191,10 +191,10 @@
             "id": "rot-2",
             "art": "symbol",
             "typ": "spieler",
-            "x": 514,
-            "y": 529,
+            "x": 513,
+            "y": 528,
             "farbe": "rot",
-            "pose": "stehen"
+            "pose": "stehen-hinten"
         },
         {
             "id": "weiss-2",
@@ -203,7 +203,7 @@
             "x": 716,
             "y": 622,
             "farbe": "weiss",
-            "pose": "laufen",
+            "pose": "laufen-hinten",
             "spiegeln": true
         },
         {

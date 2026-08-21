@@ -286,8 +286,8 @@
             "id": "kind-ul1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 252,
-            "y": 862,
+            "x": 220,
+            "y": 884,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -312,8 +312,8 @@
             "id": "ball-ur1",
             "art": "symbol",
             "typ": "fussball",
-            "x": 1326,
-            "y": 950
+            "x": 1302,
+            "y": 897
         },
         {
             "id": "kind-ur2",
@@ -330,14 +330,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 1409,
-            "y": 979
+            "y": 941
         },
         {
             "id": "kind-m1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 994,
-            "y": 334,
+            "x": 983,
+            "y": 354,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -366,40 +366,60 @@
             "y": 640
         },
         {
-            "id": "weg-hin",
+            "id": "e122b5e4-7cbd-4aaf-85d1-deb720aee74a",
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
                 {
-                    "x": 720,
-                    "y": 586
+                    "x": 726,
+                    "y": 637
                 },
                 {
-                    "x": 836,
-                    "y": 528
+                    "x": 794,
+                    "y": 568
                 },
                 {
-                    "x": 1011,
-                    "y": 475
+                    "x": 816,
+                    "y": 492
+                },
+                {
+                    "x": 914,
+                    "y": 498
+                },
+                {
+                    "x": 1012,
+                    "y": 460
+                },
+                {
+                    "x": 1062,
+                    "y": 422
                 }
             ]
         },
         {
-            "id": "weg-zurueck",
+            "id": "3cfa4146-78f3-497a-86dc-e7a0c09f3b29",
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
                 {
-                    "x": 972,
-                    "y": 528
+                    "x": 930,
+                    "y": 408
                 },
                 {
-                    "x": 836,
-                    "y": 557
+                    "x": 827,
+                    "y": 423
                 },
                 {
-                    "x": 652,
-                    "y": 514
+                    "x": 799,
+                    "y": 481
+                },
+                {
+                    "x": 713,
+                    "y": 503
+                },
+                {
+                    "x": 615,
+                    "y": 570
                 }
             ]
         }

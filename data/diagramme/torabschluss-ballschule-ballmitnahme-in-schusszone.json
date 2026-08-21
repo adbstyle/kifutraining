@@ -1,0 +1,427 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "zone-oben",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 665,
+            "y": 342,
+            "breite": 203,
+            "hoehe": 157
+        },
+        {
+            "id": "zone-unten",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "gefuellt": true,
+            "x": 665,
+            "y": 499,
+            "breite": 203,
+            "hoehe": 149
+        },
+        {
+            "id": "teller-o-l",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 661,
+            "y": 346,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-o-r",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 868,
+            "y": 342,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-m-l",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 665,
+            "y": 491,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-m-r",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 868,
+            "y": 491,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-mw-l",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 665,
+            "y": 507,
+            "farbe": "weiss"
+        },
+        {
+            "id": "teller-mw-r",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 868,
+            "y": 507,
+            "farbe": "weiss"
+        },
+        {
+            "id": "teller-u-l",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 665,
+            "y": 648,
+            "farbe": "weiss"
+        },
+        {
+            "id": "teller-u-r",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 868,
+            "y": 648,
+            "farbe": "weiss"
+        },
+        {
+            "id": "tor-links",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 125,
+            "y": 454,
+            "rotation": 270
+        },
+        {
+            "id": "tor-rechts",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 1385,
+            "y": 476,
+            "rotation": 90
+        },
+        {
+            "id": "kind-ol1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 125,
+            "y": 185,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-ol2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 150,
+            "y": 203,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-ol2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 179,
+            "y": 247
+        },
+        {
+            "id": "kind-w-schuss",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 649,
+            "y": 225,
+            "farbe": "weiss",
+            "pose": "passen"
+        },
+        {
+            "id": "ball-w-schuss",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 696,
+            "y": 314
+        },
+        {
+            "id": "kind-or1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1293,
+            "y": 193,
+            "farbe": "rot",
+            "pose": "passen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-or2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1374,
+            "y": 193,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-or2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1380,
+            "y": 252
+        },
+        {
+            "id": "kind-tw-l",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 195,
+            "y": 473
+        },
+        {
+            "id": "kind-tw-r",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 1315,
+            "y": 437,
+            "spiegeln": true
+        },
+        {
+            "id": "kind-ul1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 127,
+            "y": 761,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-ul1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 156,
+            "y": 836
+        },
+        {
+            "id": "kind-ul2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 285,
+            "y": 733,
+            "farbe": "weiss",
+            "pose": "passen"
+        },
+        {
+            "id": "ball-ul2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 350,
+            "y": 800
+        },
+        {
+            "id": "kind-u-mr",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 942,
+            "y": 675,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-ur",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1390,
+            "y": 837,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-ur",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1398,
+            "y": 877
+        },
+        {
+            "id": "ziffer-1",
+            "art": "text",
+            "x": 958,
+            "y": 292,
+            "text": "1"
+        },
+        {
+            "id": "ziffer-2",
+            "art": "text",
+            "x": 1043,
+            "y": 342,
+            "text": "2"
+        },
+        {
+            "id": "pass-1",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 1259,
+                    "y": 265
+                },
+                {
+                    "x": 719,
+                    "y": 314
+                }
+            ]
+        },
+        {
+            "id": "pass-2",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 1258,
+                    "y": 264
+                },
+                {
+                    "x": 835,
+                    "y": 399
+                }
+            ]
+        },
+        {
+            "id": "schuss-rechts",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 804,
+                    "y": 441
+                },
+                {
+                    "x": 1304,
+                    "y": 571
+                }
+            ]
+        },
+        {
+            "id": "weg-oben",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 710,
+                    "y": 337
+                },
+                {
+                    "x": 755,
+                    "y": 391
+                },
+                {
+                    "x": 800,
+                    "y": 427
+                }
+            ]
+        },
+        {
+            "id": "weg-unten",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 900,
+                    "y": 706
+                },
+                {
+                    "x": 850,
+                    "y": 660
+                },
+                {
+                    "x": 790,
+                    "y": 600
+                }
+            ]
+        },
+        {
+            "id": "pass-unten",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 368,
+                    "y": 800
+                },
+                {
+                    "x": 890,
+                    "y": 724
+                }
+            ]
+        },
+        {
+            "id": "weg-oben-2",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 860,
+                    "y": 411
+                },
+                {
+                    "x": 885,
+                    "y": 432
+                },
+                {
+                    "x": 949,
+                    "y": 433
+                }
+            ]
+        },
+        {
+            "id": "schuss-rechts-2",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 963,
+                    "y": 437
+                },
+                {
+                    "x": 1274,
+                    "y": 458
+                }
+            ]
+        },
+        {
+            "id": "859ece32-fe26-48e3-bcb3-86f11b55dbb4",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1335,
+            "y": 870,
+            "farbe": "rot"
+        },
+        {
+            "id": "d244cfb8-f8f9-49ce-9fba-2fb516b005ef",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1330,
+            "y": 244,
+            "farbe": "rot"
+        },
+        {
+            "id": "edd83e6b-f498-4d8f-894b-6b2e47b897c2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 178,
+            "y": 858,
+            "farbe": "weiss"
+        },
+        {
+            "id": "9f66cb7d-c663-4ffe-b973-d37902b94687",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 204,
+            "y": 224,
+            "farbe": "weiss"
+        }
+    ]
+}

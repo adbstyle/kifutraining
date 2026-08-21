@@ -89,11 +89,28 @@ nicht — gemessen wird auf der Vorlage:
    die Zeichenfläche 1600 × 1000 abbilden (**uniforme** Skalierung, damit das
    Seitenverhältnis des Felds erhalten bleibt; Rand für Tore und Warteschlangen
    ausserhalb der Linien lassen). Alle weiteren Koordinaten über dieselbe Formel
-   umrechnen, nicht schätzen.
+   umrechnen, nicht schätzen. Hat die Übung **kein Feld**, sondern eine Kette aus
+   Material (die Reifenbahnen in „Hüpfen rund um die Welt"), gibt die Kette den
+   Massstab: unsere Symbole haben feste Grössen, und wer auf Blattbreite
+   skaliert, reisst die Reifen zu einer Punktreihe auseinander. Lieber Rand
+   stehen lassen — dann stimmen zugleich die Figurenproportionen (eine
+   Manual-Figur ist rund 45 Bildpixel hoch, unsere 154 Einheiten).
 5. **Tore mit dem Anker auf die Linie setzen** — unabhängig davon, wo die
    Vorlage die Torgrafik zeichnet (dort liegt sie meist ausserhalb des
    Feldrechtecks). Die Torlinie ist die Feldlinie; sonst enden Torschuss-Pfeile
-   vor dem Tormund.
+   vor dem Tormund. **Sie öffnen immer ins Feld:** Oberkante `rotation` 0,
+   Unterkante 180, linke Kante 270, rechte Kante 90 — das Symbol öffnet bei 0
+   nach unten, bei 90 nach links, bei 270 nach rechts. Die Vorlage zeichnet oben
+   und unten dieselbe Torgrafik; wer sie übernimmt, dreht das untere Tor vom Feld
+   weg (`check:diagramme` prüft das). Welche Seite offen ist, erkennt man im
+   Render an den **zwei runden Pfostenenden — sie markieren den Tormund**; im
+   Kopf hergeleitet war die Regel für links/rechts prompt vertauscht.
+   Was die Vorlage **im Tor** zeichnet (Reifen und Pylonen als Ziele in der
+   „Schiessbude"), nicht mit dem Blatt-Massstab platzieren: unser Tor-Symbol ist
+   viel kleiner als die perspektivische Torgrafik, die Ziele landen sonst neben
+   statt im Tor. Stattdessen die Torgrafik der Vorlage auf den Symbolrahmen
+   abbilden (relative Lage im Tor beibehalten, siehe `im_tor` in der
+   Commit-Historie).
 6. **Notation 1:1 übernehmen** (Manual-Zeichenerklärung, Abb. 24):
    Welle + Pfeil = `dribbling`, durchgezogen + Pfeil = `pass` (auch Torschuss),
    gestrichelt + Pfeil = `laufweg`, farbige Linie = `linie` (z. B. Feldbegrenzung).
@@ -103,6 +120,20 @@ nicht — gemessen wird auf der Vorlage:
 7. **Verifizieren.** `npm run seed`, Übungsseite öffnen und Ausschnitte gegen die
    Vorlage prüfen (Anzahl Figuren, Blickrichtungen, Ballpositionen, Pfeilziele).
    Verdachtsfälle im Zoom klären, nicht auf dem verkleinerten Gesamtbild.
+
+## Korrigieren im Review-Modus (nur lokal)
+
+Wer eine Abweichung *sieht*, korrigiert sie am schnellsten selbst:
+`npm run dev`, dann **http://localhost:3000/dev/diagramme** — die Übersicht aller
+Manual-Übungen mit Dateizustand und Prüfmeldungen. Pro Übung öffnet sich der
+normale Diagramm-Editor, rechts die Manual-Vorlage; der Regler „Unterlage" legt
+sie halbtransparent unter die Zeichenfläche (mit Massstab/X/Y ausrichten, weil
+jedes Diagramm seinen eigenen Massstab hat).
+
+Gespeichert wird per Autosave direkt in `data/diagramme/<slug>.json` — plus in die
+lokale DB, damit die Übungsseite ohne `npm run seed` stimmt. Ergebnis ist ein
+minimaler `git diff`; ein leeres Diagramm wird abgelehnt, damit ein Fehlklick
+keine Vorlage wegräumt. Die Routen existieren nur bei `NODE_ENV=development`.
 
 ## Wirkung
 

@@ -1,0 +1,200 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "bahn",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "gefuellt": true,
+            "x": 393,
+            "y": 338,
+            "breite": 817,
+            "hoehe": 314
+        },
+        {
+            "id": "teller-l1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 393,
+            "y": 334,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-l2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 604,
+            "y": 338,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-r1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1012,
+            "y": 338,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-r2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1206,
+            "y": 338,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-u1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 393,
+            "y": 652,
+            "farbe": "orange"
+        },
+        {
+            "id": "teller-u2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1197,
+            "y": 652,
+            "farbe": "orange"
+        },
+        {
+            "id": "teller-o-warte",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 797,
+            "y": 265,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-u-warte",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 797,
+            "y": 820,
+            "farbe": "blau"
+        },
+        {
+            "id": "kind-w1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 685,
+            "y": 143,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-w2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 771,
+            "y": 134,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-w3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 741,
+            "y": 237,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-w4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 853,
+            "y": 203,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-r1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 728,
+            "y": 861,
+            "farbe": "rot",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "kind-r2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 758,
+            "y": 831,
+            "farbe": "rot",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "kind-r3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 840,
+            "y": 831,
+            "farbe": "rot",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "kind-r4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 917,
+            "y": 874,
+            "farbe": "rot",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "kind-hase",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 629,
+            "y": 448,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-jaeger",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 728,
+            "y": 574,
+            "farbe": "rot",
+            "pose": "laufen-hinten"
+        },
+        {
+            "id": "weg-hase",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 702,
+                    "y": 467
+                },
+                {
+                    "x": 831,
+                    "y": 433
+                }
+            ]
+        },
+        {
+            "id": "weg-jaeger",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 806,
+                    "y": 579
+                },
+                {
+                    "x": 1141,
+                    "y": 325
+                }
+            ]
+        }
+    ]
+}

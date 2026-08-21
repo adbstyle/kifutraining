@@ -1,0 +1,79 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "tor-linie",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 446,
+                    "y": 460
+                },
+                {
+                    "x": 1153,
+                    "y": 460
+                }
+            ]
+        },
+        {
+            "id": "pylone-links",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 446,
+            "y": 460,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-rechts",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1153,
+            "y": 460,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-w-oben",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 843,
+            "y": 125,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-r-unten",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 875,
+            "y": 902,
+            "farbe": "rot",
+            "pose": "passen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-r-unten",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 786,
+            "y": 314
+        },
+        {
+            "id": "pass",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 824,
+                    "y": 881
+                },
+                {
+                    "x": 786,
+                    "y": 222
+                }
+            ]
+        }
+    ]
+}

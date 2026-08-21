@@ -1,0 +1,173 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 334,
+            "y": 78,
+            "breite": 1042,
+            "hoehe": 761
+        },
+        {
+            "id": "mittellinie",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "gestrichelt": true,
+            "punkte": [
+                {
+                    "x": 862,
+                    "y": 78
+                },
+                {
+                    "x": 862,
+                    "y": 839
+                }
+            ]
+        },
+        {
+            "id": "pylone-mitte-oben",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 862,
+            "y": 73,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-mitte-unten",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 862,
+            "y": 834,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-warte-links",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 158,
+            "y": 474,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-warte-unten",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 870,
+            "y": 975,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-l1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 334,
+            "y": 201,
+            "rotation": 270
+        },
+        {
+            "id": "tor-l2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 334,
+            "y": 707,
+            "rotation": 270
+        },
+        {
+            "id": "tor-r1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1376,
+            "y": 201,
+            "rotation": 90
+        },
+        {
+            "id": "tor-r2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1376,
+            "y": 707,
+            "rotation": 90
+        },
+        {
+            "id": "kind-oben",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 624,
+            "y": 77,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-links-w",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 164,
+            "y": 376,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-links-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 265,
+            "y": 447,
+            "farbe": "rot",
+            "pose": "passen"
+        },
+        {
+            "id": "ball-links-r",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 312,
+            "y": 460
+        },
+        {
+            "id": "kind-mitte-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 833,
+            "y": 482,
+            "farbe": "rot",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "kind-mitte-w",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 928,
+            "y": 477,
+            "farbe": "weiss",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-unten-w",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 846,
+            "y": 922,
+            "farbe": "weiss",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "pass",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 325,
+                    "y": 452
+                },
+                {
+                    "x": 633,
+                    "y": 174
+                }
+            ]
+        }
+    ]
+}

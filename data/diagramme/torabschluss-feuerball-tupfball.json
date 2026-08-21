@@ -1,0 +1,312 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "zone-links",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "gefuellt": true,
+            "x": 62,
+            "y": 349,
+            "breite": 492,
+            "hoehe": 324
+        },
+        {
+            "id": "zone-mitte",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gruen",
+            "gefuellt": true,
+            "x": 554,
+            "y": 349,
+            "breite": 486,
+            "hoehe": 324
+        },
+        {
+            "id": "zone-rechts",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 1040,
+            "y": 349,
+            "breite": 480,
+            "hoehe": 324
+        },
+        {
+            "id": "teller-l-o",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 68,
+            "y": 344,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-l-u",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 68,
+            "y": 678,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-m-o",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 554,
+            "y": 344,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-m-u",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 554,
+            "y": 678,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-r-o",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1040,
+            "y": 344,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-r-u",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1040,
+            "y": 678,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-e-o",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1520,
+            "y": 344,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-e-u",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1520,
+            "y": 678,
+            "farbe": "gelb"
+        },
+        {
+            "id": "kind-a1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 330,
+            "y": 359,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-a2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 133,
+            "y": 608,
+            "farbe": "rot",
+            "pose": "passen"
+        },
+        {
+            "id": "ball-a2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 105,
+            "y": 591
+        },
+        {
+            "id": "kind-a3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 254,
+            "y": 548,
+            "farbe": "blau",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-a4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 351,
+            "y": 602,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "wurf-mitte",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 686,
+                    "y": 375
+                },
+                {
+                    "x": 729,
+                    "y": 353
+                },
+                {
+                    "x": 773,
+                    "y": 343
+                },
+                {
+                    "x": 816,
+                    "y": 346
+                },
+                {
+                    "x": 859,
+                    "y": 362
+                },
+                {
+                    "x": 902,
+                    "y": 391
+                }
+            ]
+        },
+        {
+            "id": "kind-b1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 639,
+            "y": 428,
+            "farbe": "weiss",
+            "pose": "passen"
+        },
+        {
+            "id": "ball-b1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 672,
+            "y": 400
+        },
+        {
+            "id": "kind-b2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 775,
+            "y": 521,
+            "farbe": "rot",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "kind-b3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 959,
+            "y": 413,
+            "farbe": "weiss",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-b4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 872,
+            "y": 602,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "wurf-rechts",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 1196,
+                    "y": 333
+                },
+                {
+                    "x": 1233,
+                    "y": 295
+                },
+                {
+                    "x": 1273,
+                    "y": 291
+                },
+                {
+                    "x": 1315,
+                    "y": 319
+                },
+                {
+                    "x": 1359,
+                    "y": 379
+                },
+                {
+                    "x": 1419,
+                    "y": 518
+                }
+            ]
+        },
+        {
+            "id": "kind-c1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1153,
+            "y": 397,
+            "farbe": "blau",
+            "pose": "passen"
+        },
+        {
+            "id": "kind-c2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1288,
+            "y": 500,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-c3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1391,
+            "y": 386,
+            "farbe": "blau",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-c4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1391,
+            "y": 575,
+            "farbe": "blau",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-c4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1425,
+            "y": 549
+        },
+        {
+            "id": "e3236af4-1388-4082-9754-576061a64897",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 104,
+                    "y": 548
+                },
+                {
+                    "x": 291,
+                    "y": 350
+                }
+            ]
+        }
+    ]
+}
