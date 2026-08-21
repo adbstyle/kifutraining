@@ -195,7 +195,7 @@
             "x": 759,
             "y": 922,
             "farbe": "rot",
-            "pose": "stehen"
+            "pose": "stehen-hinten"
         },
         {
             "id": "ball-u1",
@@ -211,7 +211,7 @@
             "x": 812,
             "y": 922,
             "farbe": "rot",
-            "pose": "stehen",
+            "pose": "stehen-hinten",
             "spiegeln": true
         },
         {
