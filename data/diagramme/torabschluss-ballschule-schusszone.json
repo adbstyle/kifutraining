@@ -1,0 +1,325 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "zone-oben",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "blau",
+            "gefuellt": true,
+            "x": 674,
+            "y": 169,
+            "breite": 212,
+            "hoehe": 161
+        },
+        {
+            "id": "pylone-oben-ol",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 674,
+            "y": 169,
+            "farbe": "blau"
+        },
+        {
+            "id": "pylone-oben-or",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 886,
+            "y": 169,
+            "farbe": "blau"
+        },
+        {
+            "id": "pylone-oben-ul",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 674,
+            "y": 330,
+            "farbe": "blau"
+        },
+        {
+            "id": "pylone-oben-ur",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 886,
+            "y": 330,
+            "farbe": "blau"
+        },
+        {
+            "id": "zone-unten",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "rot",
+            "gefuellt": true,
+            "x": 476,
+            "y": 726,
+            "breite": 212,
+            "hoehe": 170
+        },
+        {
+            "id": "pylone-unten-ol",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 476,
+            "y": 726,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-unten-or",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 688,
+            "y": 726,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-unten-ul",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 476,
+            "y": 896,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-unten-ur",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 688,
+            "y": 896,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-rechts",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 1318,
+            "y": 248,
+            "rotation": 270
+        },
+        {
+            "id": "tor-links",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 39,
+            "y": 795,
+            "rotation": 90
+        },
+        {
+            "id": "kind-w1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 233,
+            "y": 217,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-w1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 251,
+            "y": 266
+        },
+        {
+            "id": "kind-w2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 377,
+            "y": 212,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-w2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 371,
+            "y": 238
+        },
+        {
+            "id": "kind-w-schuss",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 773,
+            "y": 226,
+            "farbe": "weiss",
+            "pose": "schiessen"
+        },
+        {
+            "id": "ball-w-schuss",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 840,
+            "y": 284
+        },
+        {
+            "id": "kind-tw-r",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 1233,
+            "y": 194,
+            "spiegeln": true
+        },
+        {
+            "id": "kind-r1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 994,
+            "y": 801,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-r1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1042,
+            "y": 850
+        },
+        {
+            "id": "kind-r2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1093,
+            "y": 801,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-r2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1093,
+            "y": 841
+        },
+        {
+            "id": "kind-r3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1302,
+            "y": 677,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-r3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1295,
+            "y": 763
+        },
+        {
+            "id": "kind-r-schuss",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 575,
+            "y": 778,
+            "farbe": "rot",
+            "pose": "schiessen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-r-schuss",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 458,
+            "y": 818
+        },
+        {
+            "id": "kind-tw-l",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 131,
+            "y": 787
+        },
+        {
+            "id": "weg-oben",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 398,
+                    "y": 257
+                },
+                {
+                    "x": 527,
+                    "y": 248
+                },
+                {
+                    "x": 665,
+                    "y": 243
+                }
+            ]
+        },
+        {
+            "id": "schuss-oben",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 854,
+                    "y": 289
+                },
+                {
+                    "x": 1194,
+                    "y": 280
+                }
+            ]
+        },
+        {
+            "id": "weg-unten",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 978,
+                    "y": 841
+                },
+                {
+                    "x": 840,
+                    "y": 846
+                },
+                {
+                    "x": 711,
+                    "y": 841
+                }
+            ]
+        },
+        {
+            "id": "schuss-unten",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 444,
+                    "y": 818
+                },
+                {
+                    "x": 113,
+                    "y": 800
+                }
+            ]
+        },
+        {
+            "id": "laufweg-zurueck",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 205,
+                    "y": 303
+                },
+                {
+                    "x": 76,
+                    "y": 473
+                },
+                {
+                    "x": 85,
+                    "y": 634
+                }
+            ]
+        }
+    ]
+}
