@@ -11,19 +11,21 @@ import {
   MAX_ELEMENTE,
   SYMBOL_TYPEN,
   DREHBARE_TYPEN,
+  POSEN_TYPEN,
   farbSlugs,
   type DiagrammData,
   type DiagrammElement,
+  type SymbolTyp,
 } from "../lib/diagramm";
-import { symbolDef } from "../components/diagramm/symbols";
-
-const FIGUREN = new Set(["spieler", "torwart"]);
+import { symbolMasse } from "../components/diagramm/symbols";
 
 /** Begrenzungsrahmen eines Elements in Flächen-Koordinaten. */
 function box(e: DiagrammElement): { x0: number; y0: number; x1: number; y1: number } | null {
   switch (e.art) {
     case "symbol": {
-      const { breite, hoehe } = symbolDef(e.typ);
+      // Gedrehte Symbole mit ihren gedrehten Massen prüfen, sonst geht eine
+      // liegende Stange am Rand durch, obwohl ihr Ende hinausragt.
+      const { breite, hoehe } = symbolMasse(e.typ, e.rotation);
       return { x0: e.x - breite / 2, y0: e.y - hoehe / 2, x1: e.x + breite / 2, y1: e.y + hoehe / 2 };
     }
     case "form": {
@@ -81,7 +83,7 @@ export function diagrammProbleme(daten: DiagrammData, rohAnzahl?: number): strin
         if (e.rotation !== undefined && e.rotation !== 0 && !DREHBARE_TYPEN.has(e.typ)) {
           probleme.push(`${e.id}: rotation ${e.rotation}° auf nicht drehbarem "${e.typ}" (wirkungslos)`);
         }
-        if (e.pose !== undefined && !FIGUREN.has(e.typ)) {
+        if (e.pose !== undefined && !POSEN_TYPEN.has(e.typ as SymbolTyp)) {
           probleme.push(`${e.id}: pose "${e.pose}" auf "${e.typ}" (wirkungslos)`);
         }
       }

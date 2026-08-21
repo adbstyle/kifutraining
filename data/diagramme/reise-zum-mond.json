@@ -1,0 +1,403 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "kreis",
+            "art": "form",
+            "form": "ellipse",
+            "farbe": "weiss",
+            "x": 405,
+            "y": 130,
+            "breite": 790,
+            "hoehe": 810
+        },
+        {
+            "id": "mittellinie",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "weiss",
+            "punkte": [
+                {
+                    "x": 785,
+                    "y": 10
+                },
+                {
+                    "x": 785,
+                    "y": 990
+                }
+            ]
+        },
+        {
+            "id": "tor-l1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 300,
+            "y": 215,
+            "rotation": 90
+        },
+        {
+            "id": "tor-l2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 300,
+            "y": 525,
+            "rotation": 90
+        },
+        {
+            "id": "tor-l3",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 300,
+            "y": 810,
+            "rotation": 90
+        },
+        {
+            "id": "tor-r1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1300,
+            "y": 215,
+            "rotation": 270
+        },
+        {
+            "id": "tor-r2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1300,
+            "y": 525,
+            "rotation": 270
+        },
+        {
+            "id": "tor-r3",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1300,
+            "y": 810,
+            "rotation": 270
+        },
+        {
+            "id": "planet-1",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 885,
+            "y": 195,
+            "farbe": "blau"
+        },
+        {
+            "id": "planet-2",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 730,
+            "y": 275,
+            "farbe": "blau"
+        },
+        {
+            "id": "planet-3",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 945,
+            "y": 390,
+            "farbe": "blau"
+        },
+        {
+            "id": "planet-4",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 670,
+            "y": 465,
+            "farbe": "blau"
+        },
+        {
+            "id": "planet-5",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 575,
+            "y": 760,
+            "farbe": "blau"
+        },
+        {
+            "id": "planet-6",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 870,
+            "y": 825,
+            "farbe": "blau"
+        },
+        {
+            "id": "mond-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 480,
+            "y": 485,
+            "farbe": "gelb"
+        },
+        {
+            "id": "mond-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 620,
+            "y": 550,
+            "farbe": "gelb"
+        },
+        {
+            "id": "mond-3",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1010,
+            "y": 445,
+            "farbe": "gelb"
+        },
+        {
+            "id": "mond-4",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 875,
+            "y": 660,
+            "farbe": "gelb"
+        },
+        {
+            "id": "mond-5",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 720,
+            "y": 790,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-rot-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 640,
+            "y": 275,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-rot-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 905,
+            "y": 310,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-rot-3",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 600,
+            "y": 645,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-rot-4",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1005,
+            "y": 610,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-rot-5",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 960,
+            "y": 765,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-k1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 628,
+            "y": 158,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 630,
+            "y": 235
+        },
+        {
+            "id": "kind-k2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 782,
+            "y": 73,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 790,
+            "y": 210
+        },
+        {
+            "id": "kind-k3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1042,
+            "y": 178,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1000,
+            "y": 270
+        },
+        {
+            "id": "kind-k4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 530,
+            "y": 348,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 580,
+            "y": 435
+        },
+        {
+            "id": "kind-k5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 838,
+            "y": 388,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k5",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 855,
+            "y": 505
+        },
+        {
+            "id": "kind-k6",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1132,
+            "y": 338,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k6",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1105,
+            "y": 435
+        },
+        {
+            "id": "kind-k7",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 480,
+            "y": 598,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k7",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 510,
+            "y": 695
+        },
+        {
+            "id": "kind-k8",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 772,
+            "y": 548,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k8",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 845,
+            "y": 520
+        },
+        {
+            "id": "kind-k9",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 918,
+            "y": 598,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k9",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 975,
+            "y": 720
+        },
+        {
+            "id": "kind-k10",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1135,
+            "y": 528,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k10",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1095,
+            "y": 625
+        },
+        {
+            "id": "kind-k11",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 670,
+            "y": 788,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k11",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 700,
+            "y": 865
+        },
+        {
+            "id": "kind-k12",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 792,
+            "y": 808,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k12",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 775,
+            "y": 910
+        }
+    ]
+}

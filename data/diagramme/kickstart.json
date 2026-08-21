@@ -1,0 +1,278 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "zone",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "gefuellt": true,
+            "x": 433,
+            "y": 352,
+            "breite": 629,
+            "hoehe": 297
+        },
+        {
+            "id": "pylone-ol",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 438,
+            "y": 352,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-or",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1057,
+            "y": 352,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ul",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 433,
+            "y": 649,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ur",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1062,
+            "y": 649,
+            "farbe": "rot"
+        },
+        {
+            "id": "tor-o1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 236,
+            "y": 64,
+            "rotation": 0
+        },
+        {
+            "id": "tor-o2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 740,
+            "y": 64,
+            "rotation": 0
+        },
+        {
+            "id": "tor-o3",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1254,
+            "y": 64,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 212,
+            "y": 937,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 736,
+            "y": 937,
+            "rotation": 0
+        },
+        {
+            "id": "tor-u3",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1254,
+            "y": 937,
+            "rotation": 0
+        },
+        {
+            "id": "kind-k1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 416,
+            "y": 265,
+            "farbe": "weiss",
+            "pose": "schiessen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 342,
+            "y": 256
+        },
+        {
+            "id": "kind-k2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 671,
+            "y": 380,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 688,
+            "y": 448
+        },
+        {
+            "id": "kind-k3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 918,
+            "y": 299,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 937,
+            "y": 371
+        },
+        {
+            "id": "kind-k4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 354,
+            "y": 668,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 294,
+            "y": 788
+        },
+        {
+            "id": "kind-k5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 541,
+            "y": 644,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k5",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 611,
+            "y": 793
+        },
+        {
+            "id": "kind-k6",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 966,
+            "y": 620,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k6",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 985,
+            "y": 712
+        },
+        {
+            "id": "trainer",
+            "art": "symbol",
+            "typ": "trainer",
+            "x": 1410,
+            "y": 796,
+            "farbe": "rot",
+            "spiegeln": true
+        },
+        {
+            "id": "weg-k3",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 937,
+                    "y": 371
+                },
+                {
+                    "x": 1096,
+                    "y": 265
+                }
+            ]
+        },
+        {
+            "id": "weg-k6",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 985,
+                    "y": 712
+                },
+                {
+                    "x": 1110,
+                    "y": 755
+                }
+            ]
+        },
+        {
+            "id": "schuss-k1",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 342,
+                    "y": 256
+                },
+                {
+                    "x": 241,
+                    "y": 140
+                }
+            ]
+        },
+        {
+            "id": "schuss-k5",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 611,
+                    "y": 793
+                },
+                {
+                    "x": 736,
+                    "y": 923
+                }
+            ]
+        },
+        {
+            "id": "schuss-k6",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 1129,
+                    "y": 774
+                },
+                {
+                    "x": 1254,
+                    "y": 923
+                }
+            ]
+        }
+    ]
+}

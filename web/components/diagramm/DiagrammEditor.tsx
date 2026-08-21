@@ -15,6 +15,7 @@ import {
   LINIE_DEFAULT_FARBE,
   MAX_TEXT_LAENGE,
   FIGUR_TYPEN,
+  POSEN_TYPEN,
   SPIELER_POSEN,
   bbox,
   dreieckEcken,
@@ -34,7 +35,7 @@ import {
 import { saveDiagramm } from "@/lib/actions/diagramm";
 import { VorlagePicker } from "./VorlagePicker";
 import type { VorlageItem } from "@/lib/queries/exercises";
-import { SYMBOLE, symbolDef } from "./symbols";
+import { SYMBOLE, symbolDef, symbolMasse, symbolRotation } from "./symbols";
 import {
   Rasen,
   ElementGrafik,
@@ -204,7 +205,7 @@ const FORMEN: Record<FormTyp, string> = {
  *  die Anordnung trägt die Gruppierung, der Tooltip den Namen). */
 const GRUPPE_TORE: SymbolTyp[] = ["tor", "minitor"];
 const GRUPPE_MATERIAL: SymbolTyp[] = ["pylone", "teller", "stange", "reifen", "huerde", "leibchen"];
-const GRUPPE_PERSONEN: SymbolTyp[] = ["spieler", "torwart"];
+const GRUPPE_PERSONEN: SymbolTyp[] = ["spieler", "torwart", "trainer"];
 const GRUPPE_BAELLE: SymbolTyp[] = ["fussball", "handball", "tennisball"];
 
 /** Statische Mini-Vorschau-Elemente für die Kacheln — Koordinaten sind
@@ -1297,9 +1298,11 @@ function TrefferFlaeche({
   element: Extract<DiagrammElement, { art: "symbol" }>;
 }) {
   const def = symbolDef(element.typ);
-  // Perspektivische Symbole (Minitor) drehen sich nicht flach — ihre Box bleibt
-  // achsenparallel, also auch die Trefferfläche.
-  const rot = def.perspektivisch ? 0 : element.rotation ?? 0;
+  // Figuren und perspektivische Symbole (Minitor) drehen sich nicht flach —
+  // ihre Box bleibt achsenparallel, also auch die Trefferfläche. Das Rechteck
+  // selbst wird mitgedreht, deckt die Zeichnung also genauer als die
+  // achsenparallele Box aus `symbolMasse`.
+  const rot = symbolRotation(element.typ, element.rotation);
   return (
     <rect
       x={element.x - def.breite / 2}
@@ -1322,13 +1325,10 @@ function elementBBox(element: DiagrammElement): {
   hoehe: number;
 } {
   if (element.art === "symbol") {
-    const def = symbolDef(element.typ);
-    return {
-      x: element.x - def.breite / 2,
-      y: element.y - def.hoehe / 2,
-      breite: def.breite,
-      hoehe: def.hoehe,
-    };
+    // Gedrehte Symbole: die Masse drehen mit, sonst liegt um eine waagrechte
+    // Stange ein hochkanter Rahmen und die Rand-Begrenzung rechnet falsch.
+    const { breite, hoehe } = symbolMasse(element.typ, element.rotation);
+    return { x: element.x - breite / 2, y: element.y - hoehe / 2, breite, hoehe };
   }
   if (element.art === "pfad") {
     const box = bbox(element.punkte);
@@ -1467,7 +1467,7 @@ const ElementLeiste = forwardRef<
 ) {
   const drehbar = element.art === "symbol" && symbolDef(element.typ).drehbar;
   const figur = element.art === "symbol" && FIGUR_TYPEN.has(element.typ);
-  const poseWaehlbar = element.art === "symbol" && element.typ === "spieler";
+  const poseWaehlbar = element.art === "symbol" && POSEN_TYPEN.has(element.typ);
   const faerbbar =
     (element.art === "symbol" && symbolDef(element.typ).faerbbar) ||
     (element.art === "pfad" && element.typ === "linie") ||

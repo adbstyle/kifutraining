@@ -1,0 +1,261 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld-links",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "gefuellt": true,
+            "x": 148,
+            "y": 105,
+            "breite": 490,
+            "hoehe": 740
+        },
+        {
+            "id": "feld-rechts",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 958,
+            "y": 100,
+            "breite": 490,
+            "hoehe": 745
+        },
+        {
+            "id": "tor-links-o1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 248,
+            "y": 105,
+            "rotation": 0
+        },
+        {
+            "id": "tor-links-o2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 553,
+            "y": 105,
+            "rotation": 0
+        },
+        {
+            "id": "tor-links-u1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 243,
+            "y": 845,
+            "rotation": 0
+        },
+        {
+            "id": "tor-links-u2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 543,
+            "y": 845,
+            "rotation": 0
+        },
+        {
+            "id": "tor-rechts-o1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1068,
+            "y": 100,
+            "rotation": 0
+        },
+        {
+            "id": "tor-rechts-o2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1363,
+            "y": 100,
+            "rotation": 0
+        },
+        {
+            "id": "tor-rechts-u1",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1068,
+            "y": 845,
+            "rotation": 0
+        },
+        {
+            "id": "tor-rechts-u2",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1353,
+            "y": 845,
+            "rotation": 0
+        },
+        {
+            "id": "treffpunkt-gelb",
+            "art": "form",
+            "form": "ellipse",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 673,
+            "y": 870,
+            "breite": 130,
+            "hoehe": 90
+        },
+        {
+            "id": "treffpunkt-blass",
+            "art": "form",
+            "form": "ellipse",
+            "farbe": "weiss",
+            "gefuellt": true,
+            "x": 803,
+            "y": 790,
+            "breite": 115,
+            "hoehe": 95
+        },
+        {
+            "id": "kind-k1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 256,
+            "y": 193,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-k2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 548,
+            "y": 203,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 246,
+            "y": 433,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-k4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 416,
+            "y": 403,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 500,
+            "y": 573,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k6",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 460,
+            "y": 893,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-k7",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 528,
+            "y": 893,
+            "farbe": "weiss",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k8",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 710,
+            "y": 853,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-k9",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 758,
+            "y": 843,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-k10",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 866,
+            "y": 748,
+            "farbe": "rot",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "trainer",
+            "art": "symbol",
+            "typ": "trainer",
+            "x": 970,
+            "y": 861,
+            "farbe": "rot",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k5",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 463,
+            "y": 655
+        },
+        {
+            "id": "ball-rechts",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1193,
+            "y": 490
+        },
+        {
+            "id": "weg-links",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 893,
+                    "y": 860
+                },
+                {
+                    "x": 578,
+                    "y": 690
+                }
+            ]
+        },
+        {
+            "id": "weg-rechts",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 918,
+                    "y": 945
+                },
+                {
+                    "x": 1248,
+                    "y": 770
+                }
+            ]
+        }
+    ]
+}
