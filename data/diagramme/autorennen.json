@@ -1,0 +1,431 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 312,
+            "y": 56,
+            "breite": 976,
+            "hoehe": 940
+        },
+        {
+            "id": "stange-1",
+            "art": "symbol",
+            "typ": "stange",
+            "x": 924,
+            "y": 132,
+            "farbe": "weiss"
+        },
+        {
+            "id": "stange-2",
+            "art": "symbol",
+            "typ": "stange",
+            "x": 1068,
+            "y": 132,
+            "farbe": "weiss"
+        },
+        {
+            "id": "stange-3",
+            "art": "symbol",
+            "typ": "stange",
+            "x": 1050,
+            "y": 388,
+            "farbe": "weiss"
+        },
+        {
+            "id": "stange-4",
+            "art": "symbol",
+            "typ": "stange",
+            "x": 1136,
+            "y": 424,
+            "farbe": "weiss"
+        },
+        {
+            "id": "stange-5",
+            "art": "symbol",
+            "typ": "stange",
+            "x": 384,
+            "y": 645,
+            "farbe": "weiss"
+        },
+        {
+            "id": "stange-6",
+            "art": "symbol",
+            "typ": "stange",
+            "x": 442,
+            "y": 735,
+            "farbe": "weiss"
+        },
+        {
+            "id": "pylone-rot-1",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 478,
+            "y": 146,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-rot-2",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 614,
+            "y": 150,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-rot-3",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 708,
+            "y": 416,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-rot-4",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 586,
+            "y": 492,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-rot-5",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 542,
+            "y": 838,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-rot-6",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 618,
+            "y": 915,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-gelb-1",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 708,
+            "y": 254,
+            "farbe": "gelb"
+        },
+        {
+            "id": "pylone-gelb-2",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 820,
+            "y": 240,
+            "farbe": "gelb"
+        },
+        {
+            "id": "pylone-gelb-3",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 879,
+            "y": 514,
+            "farbe": "gelb"
+        },
+        {
+            "id": "pylone-gelb-4",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 974,
+            "y": 560,
+            "farbe": "gelb"
+        },
+        {
+            "id": "pylone-gelb-5",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 974,
+            "y": 825,
+            "farbe": "gelb"
+        },
+        {
+            "id": "pylone-gelb-6",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1077,
+            "y": 776,
+            "farbe": "gelb"
+        },
+        {
+            "id": "teller-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 524,
+            "y": 244,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 402,
+            "y": 290,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-3",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 542,
+            "y": 672,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-4",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 717,
+            "y": 663,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-5",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1126,
+            "y": 884,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-6",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1239,
+            "y": 866,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-k1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 449,
+            "y": 240,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 492,
+            "y": 348
+        },
+        {
+            "id": "kind-k2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 994,
+            "y": 74,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 956,
+            "y": 186
+        },
+        {
+            "id": "kind-k3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1230,
+            "y": 208,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1154,
+            "y": 285
+        },
+        {
+            "id": "kind-k4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 640,
+            "y": 370,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 627,
+            "y": 442
+        },
+        {
+            "id": "kind-k5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 866,
+            "y": 344,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k5",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 852,
+            "y": 393
+        },
+        {
+            "id": "kind-k6",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 406,
+            "y": 424,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k6",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 429,
+            "y": 506
+        },
+        {
+            "id": "kind-k7",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1201,
+            "y": 546,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k7",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1149,
+            "y": 636
+        },
+        {
+            "id": "kind-k8",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 814,
+            "y": 636,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k8",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 798,
+            "y": 704
+        },
+        {
+            "id": "kind-k9",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 958,
+            "y": 627,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k9",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1000,
+            "y": 663
+        },
+        {
+            "id": "kind-k10",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 514,
+            "y": 780,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k10",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 470,
+            "y": 825
+        },
+        {
+            "id": "kind-k11",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 728,
+            "y": 825,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k11",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 771,
+            "y": 920
+        },
+        {
+            "id": "kind-k12",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1054,
+            "y": 874,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k12",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 992,
+            "y": 920
+        },
+        {
+            "id": "huerde-1",
+            "art": "symbol",
+            "typ": "huerde",
+            "x": 942,
+            "y": 276,
+            "rotation": 315
+        },
+        {
+            "id": "huerde-2",
+            "art": "symbol",
+            "typ": "huerde",
+            "x": 681,
+            "y": 546,
+            "rotation": 315
+        },
+        {
+            "id": "huerde-3",
+            "art": "symbol",
+            "typ": "huerde",
+            "x": 830,
+            "y": 830,
+            "rotation": 315
+        }
+    ]
+}
