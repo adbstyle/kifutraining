@@ -38,7 +38,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 492,
-            "y": 291,
+            "y": 314,
             "farbe": "rot",
             "pose": "laufen"
         },
@@ -47,7 +47,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 630,
-            "y": 283,
+            "y": 306,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -56,7 +56,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 786,
-            "y": 210,
+            "y": 233,
             "farbe": "weiss",
             "pose": "laufen"
         },
@@ -65,7 +65,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 967,
-            "y": 210,
+            "y": 233,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -75,7 +75,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 995,
-            "y": 403,
+            "y": 426,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -85,7 +85,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 797,
-            "y": 511,
+            "y": 534,
             "farbe": "rot",
             "pose": "stehen-hinten"
         },
@@ -101,9 +101,18 @@
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
-                { "x": 935, "y": 243 },
-                { "x": 879, "y": 187 },
-                { "x": 836, "y": 123 }
+                {
+                    "x": 935,
+                    "y": 243
+                },
+                {
+                    "x": 879,
+                    "y": 187
+                },
+                {
+                    "x": 836,
+                    "y": 123
+                }
             ]
         }
     ]

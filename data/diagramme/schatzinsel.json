@@ -17,10 +17,10 @@
             "form": "rechteck",
             "farbe": "weiss",
             "gefuellt": true,
-            "x": 510,
-            "y": 387,
-            "breite": 616,
-            "hoehe": 350
+            "x": 521,
+            "y": 392,
+            "breite": 598,
+            "hoehe": 349
         },
         {
             "id": "pylone-ol",
@@ -58,8 +58,8 @@
             "id": "kind-i1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 714,
-            "y": 278,
+            "x": 729,
+            "y": 412,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -68,15 +68,15 @@
             "id": "ball-i1",
             "art": "symbol",
             "typ": "fussball",
-            "x": 666,
-            "y": 429
+            "x": 672,
+            "y": 427
         },
         {
             "id": "kind-i2",
             "art": "symbol",
             "typ": "spieler",
-            "x": 864,
-            "y": 334,
+            "x": 908,
+            "y": 453,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -86,14 +86,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 859,
-            "y": 502
+            "y": 501
         },
         {
             "id": "kind-i3",
             "art": "symbol",
             "typ": "spieler",
-            "x": 556,
-            "y": 481,
+            "x": 530,
+            "y": 610,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -101,15 +101,15 @@
             "id": "ball-i3",
             "art": "symbol",
             "typ": "fussball",
-            "x": 588,
-            "y": 645
+            "x": 585,
+            "y": 646
         },
         {
             "id": "kind-i4",
             "art": "symbol",
             "typ": "spieler",
-            "x": 657,
-            "y": 462,
+            "x": 663,
+            "y": 600,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -117,15 +117,15 @@
             "id": "ball-i4",
             "art": "symbol",
             "typ": "fussball",
-            "x": 717,
-            "y": 649
+            "x": 713,
+            "y": 654
         },
         {
             "id": "kind-i5",
             "art": "symbol",
             "typ": "spieler",
-            "x": 792,
-            "y": 472,
+            "x": 789,
+            "y": 610,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -133,15 +133,15 @@
             "id": "ball-i5",
             "art": "symbol",
             "typ": "fussball",
-            "x": 850,
-            "y": 622
+            "x": 853,
+            "y": 629
         },
         {
             "id": "kind-i6",
             "art": "symbol",
             "typ": "spieler",
-            "x": 986,
-            "y": 481,
+            "x": 954,
+            "y": 614,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -149,7 +149,7 @@
             "id": "ball-i6",
             "art": "symbol",
             "typ": "fussball",
-            "x": 1016,
+            "x": 1017,
             "y": 672
         },
         {
@@ -157,7 +157,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 477,
-            "y": 131,
+            "y": 154,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -173,7 +173,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1317,
-            "y": 76,
+            "y": 99,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -190,7 +190,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 365,
-            "y": 416,
+            "y": 439,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -207,7 +207,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 293,
-            "y": 794,
+            "y": 817,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -223,7 +223,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 696,
-            "y": 794,
+            "y": 817,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -239,7 +239,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1094,
-            "y": 803,
+            "y": 826,
             "farbe": "rot",
             "pose": "dribbeln"
         },

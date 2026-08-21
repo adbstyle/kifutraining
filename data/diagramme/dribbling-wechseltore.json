@@ -18,8 +18,14 @@
             "farbe": "weiss",
             "gestrichelt": true,
             "punkte": [
-                { "x": 332, "y": 517 },
-                { "x": 1278, "y": 517 }
+                {
+                    "x": 332,
+                    "y": 517
+                },
+                {
+                    "x": 1278,
+                    "y": 517
+                }
             ]
         },
         {
@@ -135,7 +141,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 499,
-            "y": 238,
+            "y": 261,
             "farbe": "weiss",
             "pose": "laufen"
         },
@@ -144,7 +150,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 838,
-            "y": 220,
+            "y": 243,
             "farbe": "rot",
             "pose": "laufen"
         },
@@ -153,7 +159,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 981,
-            "y": 361,
+            "y": 384,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -163,7 +169,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1093,
-            "y": 313,
+            "y": 336,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -173,7 +179,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 516,
-            "y": 533,
+            "y": 556,
             "farbe": "rot",
             "pose": "stehen"
         },
@@ -182,7 +188,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 734,
-            "y": 603,
+            "y": 626,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -199,9 +205,18 @@
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
-                { "x": 943, "y": 420 },
-                { "x": 895, "y": 499 },
-                { "x": 820, "y": 587 }
+                {
+                    "x": 943,
+                    "y": 420
+                },
+                {
+                    "x": 895,
+                    "y": 499
+                },
+                {
+                    "x": 820,
+                    "y": 587
+                }
             ]
         },
         {
@@ -209,8 +224,14 @@
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
-                { "x": 842, "y": 631 },
-                { "x": 930, "y": 701 }
+                {
+                    "x": 842,
+                    "y": 631
+                },
+                {
+                    "x": 930,
+                    "y": 701
+                }
             ]
         },
         {
@@ -218,8 +239,14 @@
             "art": "pfad",
             "typ": "pass",
             "punkte": [
-                { "x": 952, "y": 719 },
-                { "x": 1075, "y": 877 }
+                {
+                    "x": 952,
+                    "y": 719
+                },
+                {
+                    "x": 1075,
+                    "y": 877
+                }
             ]
         }
     ]

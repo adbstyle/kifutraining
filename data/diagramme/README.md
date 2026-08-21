@@ -43,7 +43,7 @@ nicht — gemessen wird auf der Vorlage:
      mit den meisten hellen Pixeln).
    - *Figurenmitten:* Begrenzungsrahmen der Nicht-Rasen-Pixel im Fenster um die
      Figur; als Anker die **Füsse** nehmen (Köpfe sind oft angeschnitten),
-     Element-`y` = Fuss-`y` − 72.
+     Element-`y` = `Y(Fusshöhe) − 49` (siehe *Figurenhöhe* unten).
    - *Marker, Pylonen, Reifen, Zonen:* Farb-Clustering (erst eine Farbprobe am
      Objekt nehmen, dann mit dieser Referenz clustern).
    - *Pfeilrichtung:* Pixelkarte des Linienendes. Eine Pfeilspitze ist eine
@@ -78,6 +78,13 @@ nicht — gemessen wird auf der Vorlage:
      aber auch flach am Boden — dann drehen (90° waagrecht, 45°/315° diagonal).
      Balken im Feld sind Stangen, keine Linien; `linie` bleibt den echten
      Feldmarkierungen vorbehalten (Mittellinie, Zonen, Dribbeltore).
+   - *Figurenhöhe:* das Element `y` einer Figur ist ihr Anker, und der liegt
+     **49 Einheiten über der gezeichneten Schuhsohle** (Anker y=140, Sohle y=229
+     im Zeichenraum von `figur.tsx`, mal `SCALE` 0.55) — nicht 72, die halbe
+     Rahmenhöhe. Also `y = Y(Fusshöhe) − 49`. Mit 72 steht die Figur 23
+     Einheiten zu hoch; an einer Feldlinie heisst das: das Kind landet im Feld,
+     obwohl es in der Vorlage daneben steht. Beim Trainer sind es 84
+     (Sohle 251, mal `TRAINER_SCALE` 0.76).
    - *Figuren, die im Original Schulter an Schulter stehen* (Verfolger-Paare,
      Kolonnen): nicht die gemessene Distanz übertragen. Unsere Figuren sind
      breiter als die schlanken Manual-Kinder — die Anker auf etwa **0.75

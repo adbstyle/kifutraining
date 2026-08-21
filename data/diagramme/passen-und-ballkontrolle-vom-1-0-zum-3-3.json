@@ -81,7 +81,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 712,
-            "y": 73,
+            "y": 96,
             "farbe": "rot",
             "pose": "stehen"
         },
@@ -97,7 +97,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 780,
-            "y": 73,
+            "y": 96,
             "farbe": "rot",
             "pose": "stehen"
         },
@@ -113,7 +113,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 849,
-            "y": 73,
+            "y": 96,
             "farbe": "rot",
             "pose": "stehen",
             "spiegeln": true
@@ -130,25 +130,25 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 783,
-            "y": 882,
+            "y": 922,
             "farbe": "weiss",
-            "pose": "stehen"
+            "pose": "stehen-hinten"
         },
         {
             "id": "ball-u1",
             "art": "symbol",
             "typ": "fussball",
             "x": 746,
-            "y": 962
+            "y": 979
         },
         {
             "id": "kind-u2",
             "art": "symbol",
             "typ": "spieler",
             "x": 860,
-            "y": 882,
+            "y": 922,
             "farbe": "weiss",
-            "pose": "stehen",
+            "pose": "stehen-hinten",
             "spiegeln": true
         },
         {
@@ -156,14 +156,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 823,
-            "y": 971
+            "y": 984
         },
         {
             "id": "kind-m1",
             "art": "symbol",
             "typ": "spieler",
             "x": 731,
-            "y": 624,
+            "y": 647,
             "farbe": "weiss",
             "pose": "dribbeln"
         },

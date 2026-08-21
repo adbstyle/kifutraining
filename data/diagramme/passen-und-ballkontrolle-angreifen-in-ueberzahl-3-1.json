@@ -81,7 +81,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 830,
-            "y": 73,
+            "y": 96,
             "farbe": "weiss",
             "pose": "passen",
             "spiegeln": true
@@ -91,7 +91,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 413,
-            "y": 366,
+            "y": 389,
             "farbe": "weiss",
             "pose": "laufen"
         },
@@ -100,7 +100,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 787,
-            "y": 430,
+            "y": 453,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -109,7 +109,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 800,
-            "y": 626,
+            "y": 649,
             "farbe": "rot",
             "pose": "stehen"
         },

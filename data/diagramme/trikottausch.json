@@ -7,7 +7,7 @@
             "form": "rechteck",
             "farbe": "weiss",
             "x": 88,
-            "y": 47,
+            "y": 31,
             "breite": 1425,
             "hoehe": 853
         },
@@ -18,7 +18,7 @@
             "farbe": "gelb",
             "gefuellt": true,
             "x": 536,
-            "y": 317,
+            "y": 301,
             "breite": 540,
             "hoehe": 276
         },
@@ -27,7 +27,7 @@
             "art": "symbol",
             "typ": "teller",
             "x": 518,
-            "y": 306,
+            "y": 290,
             "farbe": "gelb"
         },
         {
@@ -35,7 +35,7 @@
             "art": "symbol",
             "typ": "teller",
             "x": 1089,
-            "y": 302,
+            "y": 286,
             "farbe": "gelb"
         },
         {
@@ -43,7 +43,7 @@
             "art": "symbol",
             "typ": "teller",
             "x": 520,
-            "y": 603,
+            "y": 587,
             "farbe": "gelb"
         },
         {
@@ -51,7 +51,7 @@
             "art": "symbol",
             "typ": "teller",
             "x": 1087,
-            "y": 609,
+            "y": 593,
             "farbe": "gelb"
         },
         {
@@ -59,7 +59,7 @@
             "art": "symbol",
             "typ": "teller",
             "x": 89,
-            "y": 48,
+            "y": 32,
             "farbe": "rot"
         },
         {
@@ -67,7 +67,7 @@
             "art": "symbol",
             "typ": "teller",
             "x": 1513,
-            "y": 46,
+            "y": 30,
             "farbe": "rot"
         },
         {
@@ -75,7 +75,7 @@
             "art": "symbol",
             "typ": "teller",
             "x": 86,
-            "y": 892,
+            "y": 876,
             "farbe": "rot"
         },
         {
@@ -83,7 +83,7 @@
             "art": "symbol",
             "typ": "teller",
             "x": 1512,
-            "y": 904,
+            "y": 888,
             "farbe": "rot"
         },
         {
@@ -91,7 +91,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 520,
-            "y": 171,
+            "y": 178,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -100,14 +100,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 536,
-            "y": 243
+            "y": 227
         },
         {
             "id": "leibchen-k1",
             "art": "symbol",
             "typ": "leibchen",
             "x": 489,
-            "y": 166,
+            "y": 150,
             "farbe": "gelb"
         },
         {
@@ -115,7 +115,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 735,
-            "y": 97,
+            "y": 104,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -125,14 +125,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 690,
-            "y": 153
+            "y": 137
         },
         {
             "id": "leibchen-k2",
             "art": "symbol",
             "typ": "leibchen",
             "x": 695,
-            "y": 91,
+            "y": 75,
             "farbe": "gelb"
         },
         {
@@ -140,7 +140,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 419,
-            "y": 351,
+            "y": 358,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -149,14 +149,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 424,
-            "y": 418
+            "y": 402
         },
         {
             "id": "leibchen-k3",
             "art": "symbol",
             "typ": "leibchen",
             "x": 459,
-            "y": 345,
+            "y": 329,
             "farbe": "blau"
         },
         {
@@ -164,7 +164,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 207,
-            "y": 404,
+            "y": 411,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -173,14 +173,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 228,
-            "y": 476
+            "y": 460
         },
         {
             "id": "leibchen-k4",
             "art": "symbol",
             "typ": "leibchen",
             "x": 247,
-            "y": 398,
+            "y": 382,
             "farbe": "rot"
         },
         {
@@ -188,7 +188,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1212,
-            "y": 150,
+            "y": 157,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -198,14 +198,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 1182,
-            "y": 222
+            "y": 206
         },
         {
             "id": "leibchen-k5",
             "art": "symbol",
             "typ": "leibchen",
             "x": 1172,
-            "y": 144,
+            "y": 128,
             "farbe": "gelb"
         },
         {
@@ -213,7 +213,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1347,
-            "y": 388,
+            "y": 395,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -223,14 +223,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 1315,
-            "y": 455
+            "y": 439
         },
         {
             "id": "leibchen-k6",
             "art": "symbol",
             "typ": "leibchen",
             "x": 1378,
-            "y": 383,
+            "y": 367,
             "farbe": "blau"
         },
         {
@@ -238,7 +238,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 303,
-            "y": 542,
+            "y": 549,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -247,14 +247,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 334,
-            "y": 609
+            "y": 593
         },
         {
             "id": "leibchen-k7",
             "art": "symbol",
             "typ": "leibchen",
             "x": 272,
-            "y": 537,
+            "y": 521,
             "farbe": "rot"
         },
         {
@@ -262,7 +262,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 130,
-            "y": 775,
+            "y": 782,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -271,14 +271,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 197,
-            "y": 868
+            "y": 852
         },
         {
             "id": "leibchen-k8",
             "art": "symbol",
             "typ": "leibchen",
             "x": 99,
-            "y": 770,
+            "y": 754,
             "farbe": "rot"
         },
         {
@@ -286,7 +286,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 385,
-            "y": 738,
+            "y": 745,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -296,14 +296,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 366,
-            "y": 800
+            "y": 784
         },
         {
             "id": "leibchen-k9",
             "art": "symbol",
             "typ": "leibchen",
             "x": 416,
-            "y": 733,
+            "y": 717,
             "farbe": "blau"
         },
         {
@@ -311,7 +311,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 899,
-            "y": 717,
+            "y": 724,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -320,14 +320,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 928,
-            "y": 821
+            "y": 805
         },
         {
             "id": "leibchen-k11",
             "art": "symbol",
             "typ": "leibchen",
             "x": 939,
-            "y": 711,
+            "y": 695,
             "farbe": "gelb"
         },
         {
@@ -335,7 +335,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1204,
-            "y": 765,
+            "y": 772,
             "farbe": "rot",
             "pose": "dribbeln",
             "spiegeln": true
@@ -345,14 +345,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 1172,
-            "y": 821
+            "y": 805
         },
         {
             "id": "leibchen-k12",
             "art": "symbol",
             "typ": "leibchen",
             "x": 1164,
-            "y": 759,
+            "y": 743,
             "farbe": "blau"
         },
         {
@@ -360,7 +360,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1410,
-            "y": 712,
+            "y": 719,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -370,14 +370,14 @@
             "art": "symbol",
             "typ": "fussball",
             "x": 1378,
-            "y": 784
+            "y": 768
         },
         {
             "id": "leibchen-k13",
             "art": "symbol",
             "typ": "leibchen",
             "x": 1370,
-            "y": 706,
+            "y": 690,
             "farbe": "rot"
         },
         {
@@ -385,7 +385,7 @@
             "art": "symbol",
             "typ": "trainer",
             "x": 671,
-            "y": 901,
+            "y": 908,
             "farbe": "orange"
         },
         {
@@ -393,7 +393,7 @@
             "art": "symbol",
             "typ": "leibchen",
             "x": 722,
-            "y": 912,
+            "y": 896,
             "farbe": "blau"
         }
     ]

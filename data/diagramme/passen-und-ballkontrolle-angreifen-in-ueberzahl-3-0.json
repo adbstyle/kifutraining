@@ -6,49 +6,49 @@
             "art": "form",
             "form": "rechteck",
             "farbe": "weiss",
-            "x": 320,
-            "y": 51,
-            "breite": 940,
-            "hoehe": 893
+            "x": 317,
+            "y": 50,
+            "breite": 931,
+            "hoehe": 883
         },
         {
             "id": "tor-o1",
             "art": "symbol",
             "typ": "minitor",
-            "x": 480,
-            "y": 51,
+            "x": 475,
+            "y": 50,
             "rotation": 0
         },
         {
             "id": "tor-o2",
             "art": "symbol",
             "typ": "minitor",
-            "x": 1100,
-            "y": 51,
+            "x": 1090,
+            "y": 50,
             "rotation": 0
         },
         {
             "id": "tor-u1",
             "art": "symbol",
             "typ": "minitor",
-            "x": 470,
-            "y": 944,
+            "x": 466,
+            "y": 933,
             "rotation": 0
         },
         {
             "id": "tor-u2",
             "art": "symbol",
             "typ": "minitor",
-            "x": 1120,
-            "y": 944,
+            "x": 1109,
+            "y": 933,
             "rotation": 0
         },
         {
             "id": "kind-rot-links",
             "art": "symbol",
             "typ": "spieler",
-            "x": 356,
-            "y": 493,
+            "x": 353,
+            "y": 510,
             "farbe": "rot",
             "pose": "stehen"
         },
@@ -56,8 +56,8 @@
             "id": "kind-rot-rechts",
             "art": "symbol",
             "typ": "spieler",
-            "x": 1195,
-            "y": 484,
+            "x": 1183,
+            "y": 500,
             "farbe": "rot",
             "pose": "laufen",
             "spiegeln": true
@@ -66,8 +66,8 @@
             "id": "kind-rot-mitte",
             "art": "symbol",
             "typ": "spieler",
-            "x": 814,
-            "y": 678,
+            "x": 806,
+            "y": 692,
             "farbe": "rot",
             "pose": "passen",
             "spiegeln": true
@@ -76,43 +76,43 @@
             "id": "kind-w1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 662,
-            "y": 896,
+            "x": 655,
+            "y": 908,
             "farbe": "weiss",
-            "pose": "stehen"
+            "pose": "stehen-hinten"
         },
         {
             "id": "kind-w2",
             "art": "symbol",
             "typ": "spieler",
-            "x": 792,
-            "y": 910,
+            "x": 785,
+            "y": 923,
             "farbe": "weiss",
-            "pose": "stehen"
+            "pose": "stehen-hinten"
         },
         {
             "id": "kind-w3",
             "art": "symbol",
             "typ": "spieler",
-            "x": 926,
-            "y": 891,
+            "x": 917,
+            "y": 903,
             "farbe": "weiss",
-            "pose": "stehen",
+            "pose": "stehen-hinten",
             "spiegeln": true
         },
         {
             "id": "ball-angriff",
             "art": "symbol",
             "typ": "fussball",
-            "x": 746,
-            "y": 716
+            "x": 739,
+            "y": 708
         },
         {
             "id": "ball-warteschlange",
             "art": "symbol",
             "typ": "fussball",
-            "x": 761,
-            "y": 982
+            "x": 754,
+            "y": 972
         },
         {
             "id": "pass-1",
@@ -120,12 +120,12 @@
             "typ": "pass",
             "punkte": [
                 {
-                    "x": 742,
-                    "y": 711
+                    "x": 734,
+                    "y": 703
                 },
                 {
-                    "x": 397,
-                    "y": 590
+                    "x": 394,
+                    "y": 583
                 }
             ]
         },
@@ -135,16 +135,16 @@
             "typ": "dribbling",
             "punkte": [
                 {
-                    "x": 412,
-                    "y": 570
+                    "x": 408,
+                    "y": 564
                 },
                 {
-                    "x": 455,
-                    "y": 493
+                    "x": 451,
+                    "y": 487
                 },
                 {
-                    "x": 475,
-                    "y": 415
+                    "x": 470,
+                    "y": 410
                 }
             ]
         },
@@ -154,27 +154,27 @@
             "typ": "pass",
             "punkte": [
                 {
-                    "x": 494,
-                    "y": 396
+                    "x": 490,
+                    "y": 391
                 },
                 {
-                    "x": 1018,
-                    "y": 240
+                    "x": 1008,
+                    "y": 237
                 }
             ]
         },
         {
-            "id": "laufweg-tor",
+            "id": "abschluss",
             "art": "pfad",
-            "typ": "laufweg",
+            "typ": "pass",
             "punkte": [
                 {
-                    "x": 1042,
-                    "y": 221
+                    "x": 1032,
+                    "y": 218
                 },
                 {
-                    "x": 1105,
-                    "y": 80
+                    "x": 1094,
+                    "y": 79
                 }
             ]
         },
@@ -184,12 +184,12 @@
             "typ": "laufweg",
             "punkte": [
                 {
-                    "x": 1173,
-                    "y": 439
+                    "x": 1162,
+                    "y": 434
                 },
                 {
-                    "x": 1052,
-                    "y": 270
+                    "x": 1042,
+                    "y": 266
                 }
             ]
         }

@@ -13,57 +13,6 @@
             "hoehe": 514
         },
         {
-            "id": "grenze-oben",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "weiss",
-            "gestrichelt": true,
-            "punkte": [
-                {
-                    "x": 7,
-                    "y": 293
-                },
-                {
-                    "x": 1592,
-                    "y": 293
-                }
-            ]
-        },
-        {
-            "id": "grenze-unten",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "weiss",
-            "gestrichelt": true,
-            "punkte": [
-                {
-                    "x": 7,
-                    "y": 807
-                },
-                {
-                    "x": 1592,
-                    "y": 807
-                }
-            ]
-        },
-        {
-            "id": "quergasse",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "weiss",
-            "gestrichelt": true,
-            "punkte": [
-                {
-                    "x": 389,
-                    "y": 293
-                },
-                {
-                    "x": 389,
-                    "y": 807
-                }
-            ]
-        },
-        {
             "id": "marker-oben-1",
             "art": "symbol",
             "typ": "teller",
@@ -164,7 +113,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 158,
-            "y": 486,
+            "y": 509,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -179,8 +128,8 @@
             "id": "kind-k2",
             "art": "symbol",
             "typ": "spieler",
-            "x": 49,
-            "y": 698,
+            "x": 92,
+            "y": 758,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -188,15 +137,15 @@
             "id": "ball-k2",
             "art": "symbol",
             "typ": "fussball",
-            "x": 92,
-            "y": 818
+            "x": 129,
+            "y": 839
         },
         {
             "id": "kind-k3",
             "art": "symbol",
             "typ": "spieler",
             "x": 463,
-            "y": 316,
+            "y": 339,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -212,7 +161,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 638,
-            "y": 253,
+            "y": 276,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -229,7 +178,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 760,
-            "y": 571,
+            "y": 594,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -245,7 +194,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1162,
-            "y": 348,
+            "y": 371,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -262,7 +211,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1459,
-            "y": 539,
+            "y": 562,
             "farbe": "weiss",
             "pose": "dribbeln"
         },
@@ -277,8 +226,8 @@
             "id": "kind-k8",
             "art": "symbol",
             "typ": "spieler",
-            "x": 1536,
-            "y": 688,
+            "x": 1544,
+            "y": 758,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -287,11 +236,11 @@
             "id": "ball-k8",
             "art": "symbol",
             "typ": "fussball",
-            "x": 1523,
-            "y": 834
+            "x": 1507,
+            "y": 839
         },
         {
-            "id": "weg-1",
+            "id": "weg-k1",
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
@@ -300,55 +249,78 @@
                     "y": 574
                 },
                 {
-                    "x": 272,
-                    "y": 479
+                    "x": 288,
+                    "y": 457
                 },
                 {
-                    "x": 352,
-                    "y": 367
+                    "x": 389,
+                    "y": 320
                 }
             ]
         },
         {
-            "id": "weg-2",
+            "id": "weg-k2",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 129,
+                    "y": 818
+                },
+                {
+                    "x": 214,
+                    "y": 638
+                },
+                {
+                    "x": 298,
+                    "y": 457
+                },
+                {
+                    "x": 389,
+                    "y": 320
+                }
+            ]
+        },
+        {
+            "id": "weg-k3",
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
                 {
                     "x": 521,
-                    "y": 447
-                },
-                {
-                    "x": 564,
-                    "y": 558
+                    "y": 436
                 },
                 {
                     "x": 601,
-                    "y": 664
+                    "y": 574
+                },
+                {
+                    "x": 680,
+                    "y": 781
                 }
             ]
         },
         {
-            "id": "weg-3",
+            "id": "weg-k4",
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
                 {
                     "x": 585,
-                    "y": 436
+                    "y": 415
                 },
                 {
-                    "x": 510,
-                    "y": 532
+                    "x": 500,
+                    "y": 574
                 },
                 {
-                    "x": 463,
-                    "y": 622
+                    "x": 404,
+                    "y": 781
                 }
             ]
         },
         {
-            "id": "weg-4",
+            "id": "weg-k5",
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
@@ -357,17 +329,17 @@
                     "y": 701
                 },
                 {
-                    "x": 844,
-                    "y": 574
+                    "x": 871,
+                    "y": 532
                 },
                 {
-                    "x": 887,
-                    "y": 457
+                    "x": 961,
+                    "y": 320
                 }
             ]
         },
         {
-            "id": "weg-5",
+            "id": "weg-k6",
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
@@ -376,17 +348,17 @@
                     "y": 532
                 },
                 {
-                    "x": 1094,
-                    "y": 595
+                    "x": 1099,
+                    "y": 638
                 },
                 {
-                    "x": 1056,
-                    "y": 643
+                    "x": 1062,
+                    "y": 781
                 }
             ]
         },
         {
-            "id": "weg-6",
+            "id": "weg-k7",
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
@@ -395,12 +367,31 @@
                     "y": 627
                 },
                 {
-                    "x": 1390,
-                    "y": 532
+                    "x": 1369,
+                    "y": 479
                 },
                 {
-                    "x": 1321,
-                    "y": 436
+                    "x": 1258,
+                    "y": 320
+                }
+            ]
+        },
+        {
+            "id": "weg-k8",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 1507,
+                    "y": 828
+                },
+                {
+                    "x": 1422,
+                    "y": 648
+                },
+                {
+                    "x": 1337,
+                    "y": 479
                 }
             ]
         }

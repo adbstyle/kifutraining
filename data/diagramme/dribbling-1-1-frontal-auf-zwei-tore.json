@@ -48,7 +48,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 755,
-            "y": 97,
+            "y": 120,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -57,7 +57,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 807,
-            "y": 86,
+            "y": 109,
             "farbe": "weiss",
             "pose": "stehen",
             "spiegeln": true
@@ -67,7 +67,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 790,
-            "y": 331,
+            "y": 354,
             "farbe": "weiss",
             "pose": "laufen"
         },
@@ -76,7 +76,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 872,
-            "y": 448,
+            "y": 471,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -85,7 +85,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 735,
-            "y": 858,
+            "y": 881,
             "farbe": "rot",
             "pose": "stehen-hinten"
         },
@@ -94,7 +94,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 827,
-            "y": 858,
+            "y": 881,
             "farbe": "rot",
             "pose": "stehen-hinten",
             "spiegeln": true
@@ -125,9 +125,18 @@
             "art": "pfad",
             "typ": "dribbling",
             "punkte": [
-                { "x": 852, "y": 509 },
-                { "x": 910, "y": 425 },
-                { "x": 997, "y": 290 }
+                {
+                    "x": 852,
+                    "y": 509
+                },
+                {
+                    "x": 910,
+                    "y": 425
+                },
+                {
+                    "x": 997,
+                    "y": 290
+                }
             ]
         },
         {
@@ -135,8 +144,14 @@
             "art": "pfad",
             "typ": "pass",
             "punkte": [
-                { "x": 993, "y": 282 },
-                { "x": 1024, "y": 193 }
+                {
+                    "x": 993,
+                    "y": 282
+                },
+                {
+                    "x": 1024,
+                    "y": 193
+                }
             ]
         }
     ]

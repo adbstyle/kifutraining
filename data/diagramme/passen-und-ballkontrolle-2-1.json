@@ -44,6 +44,102 @@
             "rotation": 0
         },
         {
+            "id": "pylone-diagonale-1",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 628,
+            "y": 403,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-diagonale-2",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 933,
+            "y": 682,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-diagonale-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 655,
+            "y": 428,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-diagonale-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 683,
+            "y": 454,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-diagonale-3",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 711,
+            "y": 479,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-diagonale-4",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 739,
+            "y": 505,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-diagonale-5",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 766,
+            "y": 530,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-diagonale-6",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 794,
+            "y": 555,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-diagonale-7",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 822,
+            "y": 581,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-diagonale-8",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 850,
+            "y": 606,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-diagonale-9",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 877,
+            "y": 632,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-diagonale-10",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 905,
+            "y": 657,
+            "farbe": "rot"
+        },
+        {
             "id": "marke-links",
             "art": "symbol",
             "typ": "teller",
@@ -64,7 +160,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 767,
-            "y": 82,
+            "y": 105,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -80,7 +176,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 847,
-            "y": 73,
+            "y": 96,
             "farbe": "weiss",
             "pose": "stehen",
             "spiegeln": true
@@ -97,7 +193,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 759,
-            "y": 899,
+            "y": 922,
             "farbe": "rot",
             "pose": "stehen"
         },
@@ -113,7 +209,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 812,
-            "y": 899,
+            "y": 922,
             "farbe": "rot",
             "pose": "stehen",
             "spiegeln": true
@@ -130,7 +226,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 643,
-            "y": 189,
+            "y": 212,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true
@@ -146,8 +242,8 @@
             "id": "kind-w2",
             "art": "symbol",
             "typ": "spieler",
-            "x": 361,
-            "y": 322,
+            "x": 348,
+            "y": 358,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -157,7 +253,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 1004,
-            "y": 413,
+            "y": 436,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -167,7 +263,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 617,
-            "y": 546,
+            "y": 569,
             "farbe": "rot",
             "pose": "stehen"
         },
@@ -176,7 +272,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 901,
-            "y": 778,
+            "y": 801,
             "farbe": "rot",
             "pose": "passen"
         },
@@ -191,28 +287,28 @@
             "id": "kind-r3",
             "art": "symbol",
             "typ": "spieler",
-            "x": 1212,
-            "y": 589,
+            "x": 1225,
+            "y": 659,
             "farbe": "rot",
             "pose": "stehen",
             "spiegeln": true
         },
         {
-            "id": "weg-rot",
+            "id": "weg-w1",
             "art": "pfad",
-            "typ": "laufweg",
+            "typ": "dribbling",
             "punkte": [
                 {
-                    "x": 623,
-                    "y": 399
+                    "x": 610,
+                    "y": 296
                 },
                 {
-                    "x": 778,
-                    "y": 536
+                    "x": 589,
+                    "y": 347
                 },
                 {
-                    "x": 933,
-                    "y": 682
+                    "x": 569,
+                    "y": 401
                 }
             ]
         },
