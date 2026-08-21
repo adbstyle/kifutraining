@@ -16,7 +16,7 @@
  * erwachsen und grösser) und spiegelt optional die Blickrichtung.
  */
 
-import type { SpielerPose } from "@/lib/diagramm";
+import type { Punkt, SpielerPose } from "@/lib/diagramm";
 
 // --- Palette (fix, unabhängig von der Trikotfarbe) ---
 // Hauttöne bewusst als warme Brauntöne von hell bis dunkel — auch der dunkelste
@@ -76,6 +76,46 @@ const ART_SCALE: Record<FigurArt, number> = {
 function figurTransform(spiegeln: boolean | undefined, scale: number): string {
   const sx = spiegeln ? -scale : scale;
   return `scale(${sx} ${scale}) translate(${-ANKER_X} ${-ANKER_Y})`;
+}
+
+/** Handmitten je Figur im Zeichen-Raum (aus den Posen abgelesen: die Hände sind
+ *  dort eigene Kreise bzw. beim Torhüter die Handschuhe). Erste Hand ist die im
+ *  Zeichen-Raum linke. */
+const HAENDE_ROH: Record<FigurArt | SpielerPose, readonly [Punkt, Punkt]> = {
+  stehen: [{ x: 60, y: 152 }, { x: 140, y: 152 }],
+  "stehen-hinten": [{ x: 67, y: 152 }, { x: 133, y: 152 }],
+  laufen: [{ x: 66, y: 136 }, { x: 136, y: 134 }],
+  "laufen-hinten": [{ x: 73, y: 136 }, { x: 129, y: 134 }],
+  dribbeln: [{ x: 84, y: 134 }, { x: 132, y: 132 }],
+  passen: [{ x: 62, y: 128 }, { x: 134, y: 126 }],
+  schiessen: [{ x: 70, y: 126 }, { x: 134, y: 126 }],
+  graetschen: [{ x: 60, y: 205 }, { x: 96, y: 156 }],
+  spieler: [{ x: 60, y: 152 }, { x: 140, y: 152 }], // = stehen (Default-Pose)
+  torwart: [{ x: 50, y: 147 }, { x: 150, y: 147 }],
+  trainer: [{ x: 62, y: 154 }, { x: 138, y: 154 }],
+};
+
+/**
+ * Anker-relative Handpositionen einer Figur in Flächen-Einheiten — Single Source
+ * für gehaltene Gegenstände (Leibchen in „Trikottausch", „Spiel mit dem Feuer")
+ * und für die Prüfung der Manual-Vorlagen. Wer ein Tuch in die Hand legt,
+ * rechnet damit statt Zahlen aus dieser Datei abzuschreiben.
+ *
+ * `spiegeln` kehrt die x-Werte um (die Figur skaliert mit negativem x um den
+ * Anker); die Reihenfolge der beiden Hände bleibt „links, rechts" im Ergebnis.
+ */
+export function haende(
+  art: FigurArt,
+  pose?: SpielerPose,
+  spiegeln?: boolean,
+): [Punkt, Punkt] {
+  const scale = ART_SCALE[art];
+  const roh = HAENDE_ROH[art === "spieler" ? pose ?? "stehen" : art];
+  const punkte = roh.map((p) => ({
+    x: (p.x - ANKER_X) * scale * (spiegeln ? -1 : 1),
+    y: (p.y - ANKER_Y) * scale,
+  }));
+  return punkte[0].x <= punkte[1].x ? [punkte[0], punkte[1]] : [punkte[1], punkte[0]];
 }
 
 /** Stabiler kleiner Hash einer id → Frisur + Hautton + Haarfarbe. */

@@ -59,18 +59,13 @@ nicht — gemessen wird auf der Vorlage:
      farbige Tupfer in den Händen — z. B. „Spiel mit dem Feuer", „Trikottausch".
      Die Vorlage streckt die Arme oft waagrecht aus, unsere Posen führen sie am
      Körper: das Tuch darum **an die Hand der Pose** setzen, nicht auf die
-     gemessene Bildposition — sonst schwebt es neben der Figur. Hand-Offsets
-     anker-relativ (aus `figur.tsx`, mal `SCALE` 0.55), Tuch **22 Einheiten
-     weiter nach aussen** auf gleicher Höhe:
-
-     | Pose | hintere Hand | vordere Hand |
-     |---|---|---|
-     | `stehen` | −22 / +7 | +22 / +7 |
-     | `stehen-hinten` | −18 / +7 | +18 / +7 |
-     | `dribbeln` | −9 / −3 | +18 / −4 |
-
-     `spiegeln` kehrt die x-Offsets um (die Figur skaliert mit
-     `scale(−0.55, 0.55)` um den Anker), die y-Offsets bleiben.
+     gemessene Bildposition — sonst schwebt es neben der Figur. Die
+     anker-relativen Handpositionen liefert `haende(art, pose, spiegeln)` aus
+     `web/components/diagramm/figur.tsx` (schon skaliert, `spiegeln`
+     berücksichtigt); das Tuch sitzt **22 Einheiten weiter nach aussen** auf
+     gleicher Höhe. Zahlen nicht abschreiben, sondern die Funktion rechnen
+     lassen — `npm run check:diagramme` prüft mit derselben Quelle, dass jedes
+     Leibchen an einer Hand sitzt (oder deutlich abgelegt ist).
    - *Mini-Hürden* zeichnet das Manual als Zickzack bzw. flachen Bügel mit zwei
      Füssen — das ist eine **Hürde** (`huerde`, drehbar), keine Linie. Ein Balken
      mit Verdickungen an den Enden ist eine flach liegende Hürde.
