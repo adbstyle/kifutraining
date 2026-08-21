@@ -1,0 +1,365 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 225,
+            "y": 94,
+            "breite": 1150,
+            "hoehe": 891
+        },
+        {
+            "id": "berg-1",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 812,
+            "y": 165,
+            "farbe": "orange"
+        },
+        {
+            "id": "berg-2",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 476,
+            "y": 336,
+            "farbe": "orange"
+        },
+        {
+            "id": "berg-3",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 960,
+            "y": 419,
+            "farbe": "orange"
+        },
+        {
+            "id": "berg-4",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1272,
+            "y": 754,
+            "farbe": "orange"
+        },
+        {
+            "id": "berg-5",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 320,
+            "y": 807,
+            "farbe": "orange"
+        },
+        {
+            "id": "berg-6",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 929,
+            "y": 905,
+            "farbe": "orange"
+        },
+        {
+            "id": "see-1",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 538,
+            "y": 195,
+            "farbe": "orange"
+        },
+        {
+            "id": "see-2",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 1163,
+            "y": 338,
+            "farbe": "orange"
+        },
+        {
+            "id": "see-3",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 331,
+            "y": 439,
+            "farbe": "orange"
+        },
+        {
+            "id": "see-4",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 718,
+            "y": 434,
+            "farbe": "orange"
+        },
+        {
+            "id": "see-5",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 1080,
+            "y": 563,
+            "farbe": "orange"
+        },
+        {
+            "id": "see-6",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 646,
+            "y": 824,
+            "farbe": "orange"
+        },
+        {
+            "id": "kind-k1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 373,
+            "y": 150,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 405,
+            "y": 259
+        },
+        {
+            "id": "kind-k2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 657,
+            "y": 150,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 603,
+            "y": 246
+        },
+        {
+            "id": "kind-k3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1054,
+            "y": 97,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1084,
+            "y": 230
+        },
+        {
+            "id": "kind-k4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1232,
+            "y": 171,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1235,
+            "y": 243
+        },
+        {
+            "id": "kind-k5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 901,
+            "y": 261,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k5",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 930,
+            "y": 386
+        },
+        {
+            "id": "kind-k6",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 577,
+            "y": 415,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k6",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 538,
+            "y": 481
+        },
+        {
+            "id": "kind-k7",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 397,
+            "y": 526,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k7",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 387,
+            "y": 598
+        },
+        {
+            "id": "kind-k8",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 736,
+            "y": 600,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k8",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 670,
+            "y": 680
+        },
+        {
+            "id": "kind-k9",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 970,
+            "y": 590,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k9",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1015,
+            "y": 658
+        },
+        {
+            "id": "kind-k10",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1256,
+            "y": 510,
+            "farbe": "rot",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k10",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1292,
+            "y": 627
+        },
+        {
+            "id": "kind-k11",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 546,
+            "y": 791,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-k11",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 487,
+            "y": 866
+        },
+        {
+            "id": "kind-k12",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1139,
+            "y": 786,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-k12",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1182,
+            "y": 828
+        },
+        {
+            "id": "weg-oben",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 548,
+                    "y": 216
+                },
+                {
+                    "x": 591,
+                    "y": 174
+                },
+                {
+                    "x": 654,
+                    "y": 206
+                },
+                {
+                    "x": 744,
+                    "y": 185
+                }
+            ]
+        },
+        {
+            "id": "weg-mitte",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 903,
+                    "y": 460
+                },
+                {
+                    "x": 951,
+                    "y": 434
+                },
+                {
+                    "x": 1020,
+                    "y": 418
+                }
+            ]
+        },
+        {
+            "id": "weg-unten",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 464,
+                    "y": 868
+                },
+                {
+                    "x": 289,
+                    "y": 868
+                }
+            ]
+        }
+    ]
+}
