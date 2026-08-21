@@ -1,0 +1,352 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "tor-oben",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 774,
+            "y": 195,
+            "rotation": 0
+        },
+        {
+            "id": "reifen-o-l",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 722,
+            "y": 174,
+            "farbe": "rot"
+        },
+        {
+            "id": "reifen-o-m",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 766,
+            "y": 172,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-o-r",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 840,
+            "y": 174,
+            "farbe": "rot"
+        },
+        {
+            "id": "kiste-oben",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 785,
+            "y": 185,
+            "breite": 30,
+            "hoehe": 20
+        },
+        {
+            "id": "pylone-o1",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 713,
+            "y": 211,
+            "farbe": "gelb"
+        },
+        {
+            "id": "pylone-o2",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 757,
+            "y": 211,
+            "farbe": "orange"
+        },
+        {
+            "id": "pylone-o3",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 777,
+            "y": 209,
+            "farbe": "gelb"
+        },
+        {
+            "id": "ball-tor-oben",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 735,
+            "y": 227
+        },
+        {
+            "id": "tor-unten",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 758,
+            "y": 794,
+            "rotation": 180
+        },
+        {
+            "id": "reifen-u-l",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 695,
+            "y": 771,
+            "farbe": "rot"
+        },
+        {
+            "id": "reifen-u-m",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 759,
+            "y": 771,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-u-r",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 826,
+            "y": 771,
+            "farbe": "rot"
+        },
+        {
+            "id": "kiste-unten",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 701,
+            "y": 775,
+            "breite": 18,
+            "hoehe": 18
+        },
+        {
+            "id": "pylone-u1",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 736,
+            "y": 802,
+            "farbe": "orange"
+        },
+        {
+            "id": "pylone-u2",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 759,
+            "y": 802,
+            "farbe": "gelb"
+        },
+        {
+            "id": "pylone-u3",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 794,
+            "y": 793,
+            "farbe": "gelb"
+        },
+        {
+            "id": "kind-y1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 482,
+            "y": 367,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-y1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 536,
+            "y": 346
+        },
+        {
+            "id": "kind-y2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 660,
+            "y": 383,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-y2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 725,
+            "y": 357
+        },
+        {
+            "id": "kind-y3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 817,
+            "y": 389,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-y3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 790,
+            "y": 400
+        },
+        {
+            "id": "kind-y4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 984,
+            "y": 405,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-y4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 963,
+            "y": 422
+        },
+        {
+            "id": "kind-y5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1114,
+            "y": 394,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-y5",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1092,
+            "y": 405
+        },
+        {
+            "id": "schuss-oben",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 558,
+                    "y": 330
+                },
+                {
+                    "x": 747,
+                    "y": 184
+                }
+            ]
+        },
+        {
+            "id": "kind-r1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 482,
+            "y": 605,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-r1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 542,
+            "y": 632
+        },
+        {
+            "id": "kind-r2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 633,
+            "y": 599,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-r2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 644,
+            "y": 665
+        },
+        {
+            "id": "kind-r3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 725,
+            "y": 610,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-r3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 741,
+            "y": 670
+        },
+        {
+            "id": "kind-r4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 930,
+            "y": 589,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-r4",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 898,
+            "y": 643
+        },
+        {
+            "id": "kind-r5",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1076,
+            "y": 599,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-r5",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1049,
+            "y": 648
+        },
+        {
+            "id": "schuss-unten",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 558,
+                    "y": 627
+                },
+                {
+                    "x": 609,
+                    "y": 640
+                },
+                {
+                    "x": 652,
+                    "y": 665
+                },
+                {
+                    "x": 688,
+                    "y": 700
+                },
+                {
+                    "x": 719,
+                    "y": 747
+                },
+                {
+                    "x": 741,
+                    "y": 805
+                }
+            ]
+        }
+    ]
+}
