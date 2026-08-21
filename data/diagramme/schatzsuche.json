@@ -1,0 +1,385 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "schatzinsel",
+            "art": "form",
+            "form": "ellipse",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 356,
+            "y": 142,
+            "breite": 874,
+            "hoehe": 629
+        },
+        {
+            "id": "minitor-links",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 233,
+            "y": 85,
+            "rotation": 225
+        },
+        {
+            "id": "minitor-rechts",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1358,
+            "y": 90,
+            "rotation": 135
+        },
+        {
+            "id": "minitor-unten",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 812,
+            "y": 922,
+            "rotation": 180
+        },
+        {
+            "id": "kegel-rot-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 407,
+            "y": 44,
+            "farbe": "rot"
+        },
+        {
+            "id": "kegel-rot-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 119,
+            "y": 220,
+            "farbe": "rot"
+        },
+        {
+            "id": "kegel-weiss-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1202,
+            "y": 79,
+            "farbe": "weiss"
+        },
+        {
+            "id": "kegel-weiss-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1483,
+            "y": 192,
+            "farbe": "weiss"
+        },
+        {
+            "id": "kegel-blau-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 598,
+            "y": 963,
+            "farbe": "blau"
+        },
+        {
+            "id": "kegel-blau-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1016,
+            "y": 960,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-weiss",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 774,
+            "y": 405,
+            "farbe": "gelb"
+        },
+        {
+            "id": "schatz-weiss-1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 760,
+            "y": 395
+        },
+        {
+            "id": "schatz-weiss-2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 783,
+            "y": 391
+        },
+        {
+            "id": "schatz-weiss-3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 774,
+            "y": 419
+        },
+        {
+            "id": "reifen-rot",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 741,
+            "y": 466,
+            "farbe": "gelb"
+        },
+        {
+            "id": "schatz-rot-1",
+            "art": "symbol",
+            "typ": "handball",
+            "x": 727,
+            "y": 456
+        },
+        {
+            "id": "schatz-rot-2",
+            "art": "symbol",
+            "typ": "handball",
+            "x": 750,
+            "y": 452
+        },
+        {
+            "id": "schatz-rot-3",
+            "art": "symbol",
+            "typ": "handball",
+            "x": 741,
+            "y": 480
+        },
+        {
+            "id": "reifen-blau",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 821,
+            "y": 475,
+            "farbe": "gelb"
+        },
+        {
+            "id": "schatz-blau-1",
+            "art": "symbol",
+            "typ": "tennisball",
+            "x": 807,
+            "y": 466
+        },
+        {
+            "id": "schatz-blau-2",
+            "art": "symbol",
+            "typ": "tennisball",
+            "x": 830,
+            "y": 461
+        },
+        {
+            "id": "schatz-blau-3",
+            "art": "symbol",
+            "typ": "tennisball",
+            "x": 821,
+            "y": 489
+        },
+        {
+            "id": "kind-rot-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 497,
+            "y": 281,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-rot-1",
+            "art": "symbol",
+            "typ": "handball",
+            "x": 468,
+            "y": 339
+        },
+        {
+            "id": "kind-rot-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 647,
+            "y": 286,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-rot-2",
+            "art": "symbol",
+            "typ": "handball",
+            "x": 619,
+            "y": 344
+        },
+        {
+            "id": "kind-rot-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 647,
+            "y": 441,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-rot-3",
+            "art": "symbol",
+            "typ": "handball",
+            "x": 619,
+            "y": 499
+        },
+        {
+            "id": "kind-blau-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 534,
+            "y": 563,
+            "farbe": "blau",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-blau-1",
+            "art": "symbol",
+            "typ": "tennisball",
+            "x": 506,
+            "y": 621
+        },
+        {
+            "id": "kind-blau-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 750,
+            "y": 624,
+            "farbe": "blau",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-blau-2",
+            "art": "symbol",
+            "typ": "tennisball",
+            "x": 722,
+            "y": 682
+        },
+        {
+            "id": "kind-weiss-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 854,
+            "y": 295,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-weiss-1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 826,
+            "y": 353
+        },
+        {
+            "id": "kind-weiss-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 962,
+            "y": 258,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-weiss-2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 934,
+            "y": 315
+        },
+        {
+            "id": "kind-blau-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 990,
+            "y": 478,
+            "farbe": "blau",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-blau-3",
+            "art": "symbol",
+            "typ": "tennisball",
+            "x": 962,
+            "y": 536
+        },
+        {
+            "id": "kind-weiss-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1079,
+            "y": 455,
+            "farbe": "weiss",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-weiss-3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1051,
+            "y": 513
+        },
+        {
+            "id": "dribbling-links",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 421,
+                    "y": 297
+                },
+                {
+                    "x": 365,
+                    "y": 212
+                },
+                {
+                    "x": 309,
+                    "y": 137
+                }
+            ]
+        },
+        {
+            "id": "dribbling-rechts",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 1056,
+                    "y": 297
+                },
+                {
+                    "x": 1136,
+                    "y": 259
+                },
+                {
+                    "x": 1211,
+                    "y": 221
+                }
+            ]
+        },
+        {
+            "id": "dribbling-unten",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 868,
+                    "y": 720
+                },
+                {
+                    "x": 844,
+                    "y": 776
+                },
+                {
+                    "x": 830,
+                    "y": 823
+                }
+            ]
+        }
+    ]
+}

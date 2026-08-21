@@ -1,0 +1,110 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 440,
+            "y": 41,
+            "breite": 718,
+            "hoehe": 924
+        },
+        {
+            "id": "endzone-oben",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 440,
+            "y": 45,
+            "breite": 718,
+            "hoehe": 129
+        },
+        {
+            "id": "endzone-unten",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "gelb",
+            "gefuellt": true,
+            "x": 440,
+            "y": 832,
+            "breite": 718,
+            "hoehe": 129
+        },
+        {
+            "id": "rot-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 492,
+            "y": 291,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "weiss-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 630,
+            "y": 283,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "weiss-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 786,
+            "y": 210,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "rot-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 967,
+            "y": 210,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 995,
+            "y": 403,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 797,
+            "y": 511,
+            "farbe": "rot",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "ball-rot-2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 944,
+            "y": 260
+        },
+        {
+            "id": "dribbling",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                { "x": 935, "y": 243 },
+                { "x": 879, "y": 187 },
+                { "x": 836, "y": 123 }
+            ]
+        }
+    ]
+}

@@ -55,6 +55,22 @@ nicht — gemessen wird auf der Vorlage:
    zeigt regelmässig mehr Figuren als `anzahl_kinder` — abgebildet wird, was
    gezeichnet ist. Wartende Kolonnen schauen meist ins Feld: dafür die Posen
    `stehen-hinten` / `laufen-hinten` verwenden.
+   - *Leibchen* (Symbol `leibchen`, färbbar, drehbar) sind in den Vorlagen
+     farbige Tupfer in den Händen — z. B. „Spiel mit dem Feuer", „Trikottausch".
+     Die Vorlage streckt die Arme oft waagrecht aus, unsere Posen führen sie am
+     Körper: das Tuch darum **an die Hand der Pose** setzen, nicht auf die
+     gemessene Bildposition — sonst schwebt es neben der Figur. Hand-Offsets
+     anker-relativ (aus `figur.tsx`, mal `SCALE` 0.55), Tuch **22 Einheiten
+     weiter nach aussen** auf gleicher Höhe:
+
+     | Pose | hintere Hand | vordere Hand |
+     |---|---|---|
+     | `stehen` | −22 / +7 | +22 / +7 |
+     | `stehen-hinten` | −18 / +7 | +18 / +7 |
+     | `dribbeln` | −9 / −3 | +18 / −4 |
+
+     `spiegeln` kehrt die x-Offsets um (die Figur skaliert mit
+     `scale(−0.55, 0.55)` um den Anker), die y-Offsets bleiben.
 4. **Transform bestimmen.** Feld-Eckpunkte in Bildpixeln ablesen und linear auf
    die Zeichenfläche 1600 × 1000 abbilden (**uniforme** Skalierung, damit das
    Seitenverhältnis des Felds erhalten bleibt; Rand für Tore und Warteschlangen
