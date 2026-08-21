@@ -111,8 +111,8 @@
             "id": "ball-warteschlange",
             "art": "symbol",
             "typ": "fussball",
-            "x": 740.8852455615997,
-            "y": 951.3911001682281
+            "x": 741,
+            "y": 951
         },
         {
             "id": "pass-1",

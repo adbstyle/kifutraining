@@ -149,8 +149,8 @@
             "id": "kind-r-unten",
             "art": "symbol",
             "typ": "spieler",
-            "x": 711.3044499158859,
-            "y": 876.9765815734863,
+            "x": 711,
+            "y": 877,
             "farbe": "rot",
             "pose": "laufen"
         },

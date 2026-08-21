@@ -84,8 +84,8 @@
             "id": "rot-warten-l",
             "art": "symbol",
             "typ": "spieler",
-            "x": 728.4426227807999,
-            "y": 901.6088998317719,
+            "x": 728,
+            "y": 902,
             "farbe": "rot",
             "pose": "stehen-hinten"
         },
@@ -93,8 +93,8 @@
             "id": "rot-warten-r",
             "art": "symbol",
             "typ": "spieler",
-            "x": 811.0749410390854,
-            "y": 912.8501179218292,
+            "x": 811,
+            "y": 913,
             "farbe": "rot",
             "pose": "stehen-hinten",
             "spiegeln": true
@@ -130,8 +130,8 @@
                     "y": 509
                 },
                 {
-                    "x": 808.4309480190277,
-                    "y": 433.72368800640106
+                    "x": 808,
+                    "y": 434
                 },
                 {
                     "x": 997,

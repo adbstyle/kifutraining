@@ -191,8 +191,8 @@
             "id": "rot-2",
             "art": "symbol",
             "typ": "spieler",
-            "x": 513.0632318258286,
-            "y": 528.0632318258286,
+            "x": 513,
+            "y": 528,
             "farbe": "rot",
             "pose": "stehen-hinten"
         },

@@ -128,8 +128,8 @@
             "id": "kind-k2",
             "art": "symbol",
             "typ": "spieler",
-            "x": 54.52927303314209,
-            "y": 794.5339587926865,
+            "x": 55,
+            "y": 795,
             "farbe": "rot",
             "pose": "dribbeln"
         },
@@ -137,8 +137,8 @@
             "id": "ball-k2",
             "art": "symbol",
             "typ": "fussball",
-            "x": 94.33957755565643,
-            "y": 834.3161591291428
+            "x": 94,
+            "y": 834
         },
         {
             "id": "kind-k3",
@@ -226,8 +226,8 @@
             "id": "kind-k8",
             "art": "symbol",
             "typ": "spieler",
-            "x": 1529.0117092132568,
-            "y": 803.9016405344009,
+            "x": 1529,
+            "y": 804,
             "farbe": "weiss",
             "pose": "dribbeln",
             "spiegeln": true

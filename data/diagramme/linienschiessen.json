@@ -166,7 +166,7 @@
             "art": "symbol",
             "typ": "tor",
             "x": 814,
-            "y": 87.06323182582855,
+            "y": 87,
             "rotation": 0
         },
         {
@@ -198,7 +198,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 696,
-            "y": 213.93676817417145,
+            "y": 214,
             "farbe": "rot",
             "pose": "schiessen"
         },

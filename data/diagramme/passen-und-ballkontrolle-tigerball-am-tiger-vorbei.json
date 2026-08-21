@@ -54,8 +54,8 @@
             "id": "kind-r-tiger",
             "art": "symbol",
             "typ": "spieler",
-            "x": 727.929744720459,
-            "y": 425.88524556159973,
+            "x": 728,
+            "y": 426,
             "farbe": "rot",
             "pose": "graetschen"
         },

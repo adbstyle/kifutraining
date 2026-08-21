@@ -64,8 +64,8 @@
             "id": "kind-r-l",
             "art": "symbol",
             "typ": "spieler",
-            "x": 485.9765815734863,
-            "y": 600.4590177536011,
+            "x": 486,
+            "y": 600,
             "farbe": "rot",
             "pose": "dribbeln"
         },

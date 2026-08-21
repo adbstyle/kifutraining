@@ -52,8 +52,8 @@
             "id": "kind-w-l",
             "art": "symbol",
             "typ": "spieler",
-            "x": 575.4543319940567,
-            "y": 556.1381728649139,
+            "x": 575,
+            "y": 556,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -99,8 +99,8 @@
             "id": "ball-u-l1",
             "art": "symbol",
             "typ": "fussball",
-            "x": 601.8430944681168,
-            "y": 909.6159232854843
+            "x": 602,
+            "y": 910
         },
         {
             "id": "kind-u-l2",
@@ -116,8 +116,8 @@
             "id": "kind-u-r1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 946.3629959821701,
-            "y": 835.833722949028,
+            "x": 946,
+            "y": 836,
             "farbe": "weiss",
             "pose": "passen",
             "spiegeln": true
@@ -143,8 +143,8 @@
             "id": "ball-u-r2",
             "art": "symbol",
             "typ": "fussball",
-            "x": 979.1615912914276,
-            "y": 918.9836050271988
+            "x": 979,
+            "y": 919
         },
         {
             "id": "pass",

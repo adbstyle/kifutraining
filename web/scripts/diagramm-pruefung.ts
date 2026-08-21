@@ -120,23 +120,31 @@ function torRichtungProbleme(elemente: DiagrammElement[]): string[] {
   for (const f of felder) {
     for (const t of tore) {
       const rot = t.rotation ?? 0;
-      const kanten: [string, boolean, number][] = [
-        ["Oberkante", Math.abs(t.y - f.y) < KANTEN_NAEHE, 0],
-        ["Unterkante", Math.abs(t.y - (f.y + f.hoehe)) < KANTEN_NAEHE, 180],
-        ["linke Feldkante", Math.abs(t.x - f.x) < KANTEN_NAEHE, 270],
-        ["rechte Feldkante", Math.abs(t.x - (f.x + f.breite)) < KANTEN_NAEHE, 90],
-      ];
+      // Diagonal gedrehte Tore (Ecktore) beurteilt die Regel nicht: sie öffnen
+      // schräg ins Feld, und keiner der vier rechten Winkel wäre richtig.
+      if (rot % 90 !== 0) continue;
+
+      // Innerhalb der Feldausdehnung? Die Achse gehört zur Kante (dritter Wert)
+      // und wird NICHT aus dem Meldungstext abgeleitet — sonst dreht eine
+      // umformulierte Meldung still die geprüfte Achse.
       const laengs = t.y >= f.y - 20 && t.y <= f.y + f.hoehe + 20;
       const quer = t.x >= f.x - 20 && t.x <= f.x + f.breite + 20;
-      for (const [name, aufKante, soll] of kanten) {
-        const passend = name.startsWith("Ober") || name.startsWith("Unter") ? quer : laengs;
-        if (aufKante && passend && rot !== soll) {
-          probleme.push(
-            `${t.id}: steht auf der ${name} von ${f.id}, hat aber rotation ${rot} ` +
-              `statt ${soll} — das Tor öffnet vom Feld weg`,
-          );
-        }
-      }
+      const kanten: { name: string; auf: boolean; soll: number }[] = [
+        { name: "Oberkante", auf: Math.abs(t.y - f.y) < KANTEN_NAEHE && quer, soll: 0 },
+        { name: "Unterkante", auf: Math.abs(t.y - (f.y + f.hoehe)) < KANTEN_NAEHE && quer, soll: 180 },
+        { name: "linken Feldkante", auf: Math.abs(t.x - f.x) < KANTEN_NAEHE && laengs, soll: 270 },
+        { name: "rechten Feldkante", auf: Math.abs(t.x - (f.x + f.breite)) < KANTEN_NAEHE && laengs, soll: 90 },
+      ];
+
+      // Ein Tor in der Feldecke liegt an zwei Kanten; dort ist jede der beiden
+      // Richtungen zulässig, sonst wäre die Forderung unerfüllbar.
+      const treffer = kanten.filter((k) => k.auf);
+      if (treffer.length === 0 || treffer.some((k) => k.soll === rot)) continue;
+      probleme.push(
+        `${t.id}: steht auf der ${treffer.map((k) => k.name).join(" und ")} von ` +
+          `${f.id}, hat aber rotation ${rot} statt ` +
+          `${treffer.map((k) => k.soll).join(" oder ")} — das Tor öffnet vom Feld weg`,
+      );
     }
   }
   return [...new Set(probleme)];

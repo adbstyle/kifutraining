@@ -48,8 +48,8 @@
             "id": "pylone-aussen",
             "art": "symbol",
             "typ": "pylone",
-            "x": 139.25761306285858,
-            "y": 524.8220137357712,
+            "x": 139,
+            "y": 525,
             "farbe": "rot"
         },
         {
@@ -88,8 +88,8 @@
             "id": "kind-l1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 104.59719061851501,
-            "y": 459.97189581394196,
+            "x": 105,
+            "y": 460,
             "farbe": "weiss",
             "pose": "passen"
         },

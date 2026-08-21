@@ -25,8 +25,8 @@
             "id": "kind-gefangen-o",
             "art": "symbol",
             "typ": "spieler",
-            "x": 432.2224854230881,
-            "y": 196.50116884708405,
+            "x": 432,
+            "y": 197,
             "farbe": "weiss",
             "pose": "passen",
             "spiegeln": true
@@ -44,8 +44,8 @@
             "id": "kind-gefangen-m",
             "art": "symbol",
             "typ": "spieler",
-            "x": 615.1170921325684,
-            "y": 478.3793909549713,
+            "x": 615,
+            "y": 478,
             "farbe": "rot",
             "pose": "graetschen"
         },
@@ -81,8 +81,8 @@
             "id": "kind-laeufer-um",
             "art": "symbol",
             "typ": "spieler",
-            "x": 619.8173279762268,
-            "y": 824.5292730331421,
+            "x": 620,
+            "y": 825,
             "farbe": "weiss",
             "pose": "laufen"
         },
@@ -157,12 +157,12 @@
             "typ": "laufweg",
             "punkte": [
                 {
-                    "x": 569.5550636053085,
-                    "y": 488.9930112361908
+                    "x": 570,
+                    "y": 489
                 },
                 {
-                    "x": 476.8150143623352,
-                    "y": 412.1780209541321
+                    "x": 477,
+                    "y": 412
                 }
             ]
         }
