@@ -71,6 +71,18 @@ nicht — gemessen wird auf der Vorlage:
 
      `spiegeln` kehrt die x-Offsets um (die Figur skaliert mit
      `scale(−0.55, 0.55)` um den Anker), die y-Offsets bleiben.
+   - *Mini-Hürden* zeichnet das Manual als Zickzack bzw. flachen Bügel mit zwei
+     Füssen — das ist eine **Hürde** (`huerde`, drehbar), keine Linie. Ein Balken
+     mit Verdickungen an den Enden ist eine flach liegende Hürde.
+   - *Stangen* (`stange`, färbbar, drehbar) stehen meist aufrecht (0°), liegen
+     aber auch flach am Boden — dann drehen (90° waagrecht, 45°/315° diagonal).
+     Balken im Feld sind Stangen, keine Linien; `linie` bleibt den echten
+     Feldmarkierungen vorbehalten (Mittellinie, Zonen, Dribbeltore).
+   - *Figuren, die im Original Schulter an Schulter stehen* (Verfolger-Paare,
+     Kolonnen): nicht die gemessene Distanz übertragen. Unsere Figuren sind
+     breiter als die schlanken Manual-Kinder — die Anker auf etwa **0.75
+     Figurenbreite (56 Einheiten)** setzen, sonst klafft eine Lücke, wo sich die
+     Kinder in der Vorlage fast an den Händen halten.
 4. **Transform bestimmen.** Feld-Eckpunkte in Bildpixeln ablesen und linear auf
    die Zeichenfläche 1600 × 1000 abbilden (**uniforme** Skalierung, damit das
    Seitenverhältnis des Felds erhalten bleibt; Rand für Tore und Warteschlangen

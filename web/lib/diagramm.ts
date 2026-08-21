@@ -91,6 +91,9 @@ export const DREHBARE_TYPEN: ReadonlySet<SymbolTyp> = new Set([
   "huerde",
   // Leibchen liegen in den Vorlagen schräg in der Hand (z. B. „Trikottausch").
   "leibchen",
+  // Stangen stehen meist aufrecht, liegen aber auch flach am Boden
+  // (z. B. „Dribblestart") — dafür braucht es die Drehung.
+  "stange",
 ]);
 
 /** Acht feste Orientierungen in 45°-Schritten (Story #51). */

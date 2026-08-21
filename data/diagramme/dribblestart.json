@@ -107,134 +107,6 @@
             "farbe": "blau"
         },
         {
-            "id": "stange-braun",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "orange",
-            "punkte": [
-                {
-                    "x": 395,
-                    "y": 370
-                },
-                {
-                    "x": 395,
-                    "y": 475
-                }
-            ]
-        },
-        {
-            "id": "stange-gelb-1",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "gelb",
-            "punkte": [
-                {
-                    "x": 655,
-                    "y": 545
-                },
-                {
-                    "x": 655,
-                    "y": 625
-                }
-            ]
-        },
-        {
-            "id": "stange-gelb-2",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "gelb",
-            "punkte": [
-                {
-                    "x": 925,
-                    "y": 720
-                },
-                {
-                    "x": 925,
-                    "y": 805
-                }
-            ]
-        },
-        {
-            "id": "stange-rot",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "rot",
-            "punkte": [
-                {
-                    "x": 840,
-                    "y": 455
-                },
-                {
-                    "x": 970,
-                    "y": 455
-                }
-            ]
-        },
-        {
-            "id": "stange-braun-2",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "orange",
-            "punkte": [
-                {
-                    "x": 1085,
-                    "y": 805
-                },
-                {
-                    "x": 1175,
-                    "y": 745
-                }
-            ]
-        },
-        {
-            "id": "seil-blau",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "blau",
-            "punkte": [
-                {
-                    "x": 520,
-                    "y": 900
-                },
-                {
-                    "x": 540,
-                    "y": 830
-                },
-                {
-                    "x": 570,
-                    "y": 885
-                },
-                {
-                    "x": 595,
-                    "y": 825
-                },
-                {
-                    "x": 615,
-                    "y": 875
-                }
-            ]
-        },
-        {
-            "id": "buegel-braun",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "orange",
-            "punkte": [
-                {
-                    "x": 900,
-                    "y": 305
-                },
-                {
-                    "x": 930,
-                    "y": 255
-                },
-                {
-                    "x": 990,
-                    "y": 275
-                }
-            ]
-        },
-        {
             "id": "kind-k1",
             "art": "symbol",
             "typ": "spieler",
@@ -444,6 +316,63 @@
                     "y": 695
                 }
             ]
+        },
+        {
+            "id": "huerde-3",
+            "art": "symbol",
+            "typ": "huerde",
+            "x": 565,
+            "y": 860,
+            "rotation": 315
+        },
+        {
+            "id": "huerde-4",
+            "art": "symbol",
+            "typ": "huerde",
+            "x": 945,
+            "y": 280
+        },
+        {
+            "id": "stange-orange-1",
+            "art": "symbol",
+            "typ": "stange",
+            "x": 395,
+            "y": 422,
+            "farbe": "orange"
+        },
+        {
+            "id": "stange-gelb-1",
+            "art": "symbol",
+            "typ": "stange",
+            "x": 655,
+            "y": 585,
+            "farbe": "gelb"
+        },
+        {
+            "id": "stange-gelb-2",
+            "art": "symbol",
+            "typ": "stange",
+            "x": 925,
+            "y": 762,
+            "farbe": "gelb"
+        },
+        {
+            "id": "stange-rot",
+            "art": "symbol",
+            "typ": "stange",
+            "x": 905,
+            "y": 455,
+            "farbe": "rot",
+            "rotation": 90
+        },
+        {
+            "id": "stange-orange-2",
+            "art": "symbol",
+            "typ": "stange",
+            "x": 1130,
+            "y": 775,
+            "farbe": "orange",
+            "rotation": 315
         }
     ]
 }

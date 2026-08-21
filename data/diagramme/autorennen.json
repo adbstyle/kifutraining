@@ -204,78 +204,6 @@
             "farbe": "rot"
         },
         {
-            "id": "buegel-1",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "blau",
-            "punkte": [
-                {
-                    "x": 920,
-                    "y": 258
-                },
-                {
-                    "x": 960,
-                    "y": 267
-                },
-                {
-                    "x": 924,
-                    "y": 290
-                },
-                {
-                    "x": 964,
-                    "y": 298
-                }
-            ]
-        },
-        {
-            "id": "buegel-2",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "blau",
-            "punkte": [
-                {
-                    "x": 658,
-                    "y": 528
-                },
-                {
-                    "x": 699,
-                    "y": 537
-                },
-                {
-                    "x": 663,
-                    "y": 560
-                },
-                {
-                    "x": 704,
-                    "y": 568
-                }
-            ]
-        },
-        {
-            "id": "buegel-3",
-            "art": "pfad",
-            "typ": "linie",
-            "farbe": "blau",
-            "punkte": [
-                {
-                    "x": 807,
-                    "y": 812
-                },
-                {
-                    "x": 848,
-                    "y": 820
-                },
-                {
-                    "x": 812,
-                    "y": 843
-                },
-                {
-                    "x": 852,
-                    "y": 852
-                }
-            ]
-        },
-        {
             "id": "kind-k1",
             "art": "symbol",
             "typ": "spieler",
@@ -474,6 +402,30 @@
             "typ": "fussball",
             "x": 992,
             "y": 920
+        },
+        {
+            "id": "huerde-1",
+            "art": "symbol",
+            "typ": "huerde",
+            "x": 942,
+            "y": 276,
+            "rotation": 315
+        },
+        {
+            "id": "huerde-2",
+            "art": "symbol",
+            "typ": "huerde",
+            "x": 681,
+            "y": 546,
+            "rotation": 315
+        },
+        {
+            "id": "huerde-3",
+            "art": "symbol",
+            "typ": "huerde",
+            "x": 830,
+            "y": 830,
+            "rotation": 315
         }
     ]
 }
