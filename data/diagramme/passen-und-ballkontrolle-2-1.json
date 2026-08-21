@@ -33,7 +33,7 @@
             "typ": "minitor",
             "x": 516,
             "y": 953,
-            "rotation": 0
+            "rotation": 180
         },
         {
             "id": "tor-u2",
@@ -41,7 +41,7 @@
             "typ": "minitor",
             "x": 1066,
             "y": 953,
-            "rotation": 0
+            "rotation": 180
         },
         {
             "id": "pylone-diagonale-1",

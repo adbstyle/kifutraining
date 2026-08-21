@@ -87,6 +87,51 @@ function leibchenProbleme(elemente: DiagrammElement[]): string[] {
   return probleme;
 }
 
+/** Tore öffnen ins Feld. Das Tor-Symbol öffnet bei rotation 0 nach unten, also
+ *  gehört auf die Oberkante eines Feldes 0, auf die Unterkante 180, links 90 und
+ *  rechts 270. Ohne Prüfung fällt das kaum auf — Minitore sehen von vorn und von
+ *  hinten ähnlich aus —, gezeigt wird aber ein Tor, das vom Feld weg öffnet (so
+ *  standen 18 Minitore an Unterkanten falsch, bis diese Regel sie fand).
+ *  Als Feld gilt ein Rechteck ab FELD_MINDESTFLAECHE; kleine Zonen (Schusszone,
+ *  Kiste) sind keine Feldkante. */
+const FELD_MINDESTFLAECHE = 200_000;
+const KANTEN_NAEHE = 45;
+
+function torRichtungProbleme(elemente: DiagrammElement[]): string[] {
+  const felder = elemente.filter(
+    (e): e is Extract<DiagrammElement, { art: "form" }> =>
+      e.art === "form" && e.form === "rechteck" && e.breite * e.hoehe >= FELD_MINDESTFLAECHE,
+  );
+  const tore = elemente.filter(
+    (e): e is Extract<DiagrammElement, { art: "symbol" }> =>
+      e.art === "symbol" && (e.typ === "tor" || e.typ === "minitor"),
+  );
+  const probleme: string[] = [];
+  for (const f of felder) {
+    for (const t of tore) {
+      const rot = t.rotation ?? 0;
+      const kanten: [string, boolean, number][] = [
+        ["Oberkante", Math.abs(t.y - f.y) < KANTEN_NAEHE, 0],
+        ["Unterkante", Math.abs(t.y - (f.y + f.hoehe)) < KANTEN_NAEHE, 180],
+        ["linke Feldkante", Math.abs(t.x - f.x) < KANTEN_NAEHE, 90],
+        ["rechte Feldkante", Math.abs(t.x - (f.x + f.breite)) < KANTEN_NAEHE, 270],
+      ];
+      const laengs = t.y >= f.y - 20 && t.y <= f.y + f.hoehe + 20;
+      const quer = t.x >= f.x - 20 && t.x <= f.x + f.breite + 20;
+      for (const [name, aufKante, soll] of kanten) {
+        const passend = name.startsWith("Ober") || name.startsWith("Unter") ? quer : laengs;
+        if (aufKante && passend && rot !== soll) {
+          probleme.push(
+            `${t.id}: steht auf der ${name} von ${f.id}, hat aber rotation ${rot} ` +
+              `statt ${soll} — das Tor öffnet vom Feld weg`,
+          );
+        }
+      }
+    }
+  }
+  return [...new Set(probleme)];
+}
+
 /** Alle Probleme eines Diagramms als lesbare Zeilen; leer = in Ordnung.
  *  `rohAnzahl` ist die Elementzahl VOR `parseDiagramm` — weicht sie ab, hat der
  *  Parser strukturell Kaputtes verworfen, was in einer Vorlage ein Fehler ist. */
@@ -105,6 +150,7 @@ export function diagrammProbleme(daten: DiagrammData, rohAnzahl?: number): strin
   }
 
   probleme.push(...leibchenProbleme(daten.elemente));
+  probleme.push(...torRichtungProbleme(daten.elemente));
 
   const gesehen = new Set<string>();
   for (const e of daten.elemente) {

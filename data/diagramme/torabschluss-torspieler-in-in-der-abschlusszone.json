@@ -87,7 +87,7 @@
             "typ": "minitor",
             "x": 458,
             "y": 925,
-            "rotation": 0
+            "rotation": 180
         },
         {
             "id": "minitor-u2",
@@ -95,7 +95,7 @@
             "typ": "minitor",
             "x": 1087,
             "y": 925,
-            "rotation": 0
+            "rotation": 180
         },
         {
             "id": "reifen-o",
