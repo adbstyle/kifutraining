@@ -1,0 +1,171 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "tor-oben",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 843,
+            "y": 164,
+            "rotation": 0
+        },
+        {
+            "id": "tor-unten",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 849,
+            "y": 837,
+            "rotation": 180
+        },
+        {
+            "id": "kind-tw-o",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 834,
+            "y": 190
+        },
+        {
+            "id": "kind-tw-u",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 848,
+            "y": 771,
+            "spiegeln": true
+        },
+        {
+            "id": "kind-s1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 799,
+            "y": 393,
+            "farbe": "weiss",
+            "pose": "schiessen"
+        },
+        {
+            "id": "ball-s1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 849,
+            "y": 355
+        },
+        {
+            "id": "kind-s2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 910,
+            "y": 550,
+            "farbe": "rot",
+            "pose": "schiessen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-s2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 849,
+            "y": 628
+        },
+        {
+            "id": "schuss-oben",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 866,
+                    "y": 326
+                },
+                {
+                    "x": 918,
+                    "y": 164
+                }
+            ]
+        },
+        {
+            "id": "schuss-unten",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 831,
+                    "y": 616
+                },
+                {
+                    "x": 762,
+                    "y": 814
+                }
+            ]
+        },
+        {
+            "id": "kind-w1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 353,
+            "y": 486,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-w2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 402,
+            "y": 509,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-w3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 489,
+            "y": 480,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-w4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 564,
+            "y": 480,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-r1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1092,
+            "y": 504,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-r2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1165,
+            "y": 504,
+            "farbe": "rot",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "kind-r3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1240,
+            "y": 492,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-r4",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1246,
+            "y": 579,
+            "farbe": "rot",
+            "pose": "stehen-hinten"
+        }
+    ]
+}

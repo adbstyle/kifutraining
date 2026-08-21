@@ -1,0 +1,199 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "tor",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 798,
+            "y": 212,
+            "rotation": 0
+        },
+        {
+            "id": "pylone-l",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 608,
+            "y": 608,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-r",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 978,
+            "y": 613,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ul",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 613,
+            "y": 938,
+            "farbe": "blau"
+        },
+        {
+            "id": "pylone-ur",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 982,
+            "y": 952,
+            "farbe": "blau"
+        },
+        {
+            "id": "kind-tw",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 793,
+            "y": 150
+        },
+        {
+            "id": "kind-w-l",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 575,
+            "y": 556,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-w-m",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 663,
+            "y": 590,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-r-r1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1002,
+            "y": 573,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-r-r2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1048,
+            "y": 542,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-u-l1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 505,
+            "y": 916,
+            "farbe": "rot",
+            "pose": "stehen-hinten"
+        },
+        {
+            "id": "ball-u-l1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 602,
+            "y": 910
+        },
+        {
+            "id": "kind-u-l2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 571,
+            "y": 903,
+            "farbe": "rot",
+            "pose": "laufen-hinten",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-u-r1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 946,
+            "y": 836,
+            "farbe": "weiss",
+            "pose": "passen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-u-r1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 899,
+            "y": 855
+        },
+        {
+            "id": "kind-u-r2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1011,
+            "y": 916,
+            "farbe": "weiss",
+            "pose": "stehen-hinten",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-u-r2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 979,
+            "y": 919
+        },
+        {
+            "id": "pass",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 886,
+                    "y": 846
+                },
+                {
+                    "x": 696,
+                    "y": 666
+                }
+            ]
+        },
+        {
+            "id": "mitnahme",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 696,
+                    "y": 639
+                },
+                {
+                    "x": 771,
+                    "y": 591
+                },
+                {
+                    "x": 833,
+                    "y": 538
+                }
+            ]
+        },
+        {
+            "id": "schuss",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 846,
+                    "y": 520
+                },
+                {
+                    "x": 921,
+                    "y": 234
+                }
+            ]
+        }
+    ]
+}

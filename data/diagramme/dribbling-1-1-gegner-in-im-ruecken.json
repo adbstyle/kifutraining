@@ -96,8 +96,8 @@
             "id": "weiss-warten-1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 646,
-            "y": 132,
+            "x": 667,
+            "y": 104,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -105,8 +105,8 @@
             "id": "weiss-warten-2",
             "art": "symbol",
             "typ": "spieler",
-            "x": 710,
-            "y": 132,
+            "x": 711,
+            "y": 117,
             "farbe": "weiss",
             "pose": "stehen",
             "spiegeln": true
@@ -116,7 +116,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 885,
-            "y": 132,
+            "y": 101,
             "farbe": "weiss",
             "pose": "stehen"
         },
@@ -124,8 +124,8 @@
             "id": "weiss-warten-4",
             "art": "symbol",
             "typ": "spieler",
-            "x": 949,
-            "y": 132,
+            "x": 930,
+            "y": 113,
             "farbe": "weiss",
             "pose": "stehen",
             "spiegeln": true

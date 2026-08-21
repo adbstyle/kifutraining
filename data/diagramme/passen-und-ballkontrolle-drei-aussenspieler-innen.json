@@ -7,7 +7,7 @@
             "form": "rechteck",
             "farbe": "weiss",
             "x": 374,
-            "y": 158,
+            "y": 159,
             "breite": 834,
             "hoehe": 793
         },
@@ -66,7 +66,7 @@
             "typ": "minitor",
             "x": 507,
             "y": 951,
-            "rotation": 0
+            "rotation": 180
         },
         {
             "id": "tor-u2",
@@ -74,7 +74,7 @@
             "typ": "minitor",
             "x": 1079,
             "y": 951,
-            "rotation": 0
+            "rotation": 180
         },
         {
             "id": "kind-a-oben",
@@ -100,8 +100,8 @@
             "id": "kind-a-links2",
             "art": "symbol",
             "typ": "spieler",
-            "x": 350,
-            "y": 705,
+            "x": 330,
+            "y": 697,
             "farbe": "weiss",
             "pose": "laufen",
             "spiegeln": true
@@ -110,8 +110,8 @@
             "id": "kind-a-rechts1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 1221,
-            "y": 270,
+            "x": 1238,
+            "y": 324,
             "farbe": "rot",
             "pose": "laufen",
             "spiegeln": true
@@ -131,7 +131,7 @@
             "art": "symbol",
             "typ": "spieler",
             "x": 806,
-            "y": 919,
+            "y": 917,
             "farbe": "weiss",
             "pose": "laufen-hinten"
         },
@@ -209,8 +209,8 @@
                     "y": 582
                 },
                 {
-                    "x": 1182,
-                    "y": 354
+                    "x": 1211,
+                    "y": 366
                 }
             ]
         },
@@ -220,8 +220,8 @@
             "typ": "dribbling",
             "punkte": [
                 {
-                    "x": 1182,
-                    "y": 332
+                    "x": 1200,
+                    "y": 340
                 },
                 {
                     "x": 1079,

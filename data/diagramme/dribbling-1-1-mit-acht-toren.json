@@ -149,7 +149,7 @@
             "typ": "minitor",
             "x": 384,
             "y": 374,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "minitor-links-u",
@@ -157,7 +157,7 @@
             "typ": "minitor",
             "x": 384,
             "y": 718,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "minitor-rechts-o",
@@ -165,7 +165,7 @@
             "typ": "minitor",
             "x": 1221,
             "y": 374,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "minitor-rechts-u",
@@ -173,7 +173,7 @@
             "typ": "minitor",
             "x": 1221,
             "y": 718,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "rot-warten-oben-1",

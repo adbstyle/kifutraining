@@ -18,7 +18,7 @@
             "typ": "minitor",
             "x": 233,
             "y": 85,
-            "rotation": 225
+            "rotation": 45
         },
         {
             "id": "minitor-rechts",
@@ -26,7 +26,7 @@
             "typ": "minitor",
             "x": 1358,
             "y": 90,
-            "rotation": 135
+            "rotation": 315
         },
         {
             "id": "minitor-unten",
@@ -40,48 +40,48 @@
             "id": "kegel-rot-1",
             "art": "symbol",
             "typ": "teller",
-            "x": 407,
-            "y": 44,
+            "x": 322,
+            "y": 66,
             "farbe": "rot"
         },
         {
             "id": "kegel-rot-2",
             "art": "symbol",
             "typ": "teller",
-            "x": 119,
-            "y": 220,
+            "x": 161,
+            "y": 170,
             "farbe": "rot"
         },
         {
             "id": "kegel-weiss-1",
             "art": "symbol",
             "typ": "teller",
-            "x": 1202,
-            "y": 79,
+            "x": 1271,
+            "y": 65,
             "farbe": "weiss"
         },
         {
             "id": "kegel-weiss-2",
             "art": "symbol",
             "typ": "teller",
-            "x": 1483,
-            "y": 192,
+            "x": 1424,
+            "y": 163,
             "farbe": "weiss"
         },
         {
             "id": "kegel-blau-1",
             "art": "symbol",
             "typ": "teller",
-            "x": 598,
-            "y": 963,
+            "x": 679,
+            "y": 934,
             "farbe": "blau"
         },
         {
             "id": "kegel-blau-2",
             "art": "symbol",
             "typ": "teller",
-            "x": 1016,
-            "y": 960,
+            "x": 938,
+            "y": 937,
             "farbe": "blau"
         },
         {
@@ -330,8 +330,8 @@
             "typ": "dribbling",
             "punkte": [
                 {
-                    "x": 421,
-                    "y": 297
+                    "x": 450,
+                    "y": 313
                 },
                 {
                     "x": 365,
@@ -349,8 +349,8 @@
             "typ": "dribbling",
             "punkte": [
                 {
-                    "x": 1056,
-                    "y": 297
+                    "x": 993,
+                    "y": 312
                 },
                 {
                     "x": 1136,
@@ -368,8 +368,8 @@
             "typ": "dribbling",
             "punkte": [
                 {
-                    "x": 868,
-                    "y": 720
+                    "x": 971,
+                    "y": 560
                 },
                 {
                     "x": 844,

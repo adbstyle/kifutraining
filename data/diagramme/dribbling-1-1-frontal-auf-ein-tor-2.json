@@ -28,70 +28,6 @@
             "rotation": 180
         },
         {
-            "id": "pylone-oben-1",
-            "art": "symbol",
-            "typ": "pylone",
-            "x": 513,
-            "y": 200,
-            "farbe": "rot"
-        },
-        {
-            "id": "pylone-unten-1",
-            "art": "symbol",
-            "typ": "pylone",
-            "x": 513,
-            "y": 918,
-            "farbe": "rot"
-        },
-        {
-            "id": "pylone-oben-2",
-            "art": "symbol",
-            "typ": "pylone",
-            "x": 595,
-            "y": 200,
-            "farbe": "rot"
-        },
-        {
-            "id": "pylone-unten-2",
-            "art": "symbol",
-            "typ": "pylone",
-            "x": 595,
-            "y": 918,
-            "farbe": "rot"
-        },
-        {
-            "id": "pylone-oben-3",
-            "art": "symbol",
-            "typ": "pylone",
-            "x": 1008,
-            "y": 200,
-            "farbe": "rot"
-        },
-        {
-            "id": "pylone-unten-3",
-            "art": "symbol",
-            "typ": "pylone",
-            "x": 1008,
-            "y": 918,
-            "farbe": "rot"
-        },
-        {
-            "id": "pylone-oben-4",
-            "art": "symbol",
-            "typ": "pylone",
-            "x": 1090,
-            "y": 200,
-            "farbe": "rot"
-        },
-        {
-            "id": "pylone-unten-4",
-            "art": "symbol",
-            "typ": "pylone",
-            "x": 1090,
-            "y": 918,
-            "farbe": "rot"
-        },
-        {
             "id": "weiss-warten-l",
             "art": "symbol",
             "typ": "spieler",
@@ -133,8 +69,8 @@
             "id": "rot-warten-l",
             "art": "symbol",
             "typ": "spieler",
-            "x": 675,
-            "y": 881,
+            "x": 708,
+            "y": 912,
             "farbe": "rot",
             "pose": "stehen-hinten"
         },
@@ -142,8 +78,8 @@
             "id": "rot-warten-r",
             "art": "symbol",
             "typ": "spieler",
-            "x": 927,
-            "y": 881,
+            "x": 941,
+            "y": 909,
             "farbe": "rot",
             "pose": "stehen-hinten",
             "spiegeln": true
@@ -175,12 +111,12 @@
             "typ": "dribbling",
             "punkte": [
                 {
-                    "x": 724,
-                    "y": 606
+                    "x": 735,
+                    "y": 605
                 },
                 {
-                    "x": 778,
-                    "y": 462
+                    "x": 715,
+                    "y": 553
                 },
                 {
                     "x": 829,
@@ -206,6 +142,70 @@
                     "y": 216
                 }
             ]
+        },
+        {
+            "id": "b4c70d07-cfdc-4ee7-89c4-debeae929847",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 517,
+            "y": 203,
+            "farbe": "rot"
+        },
+        {
+            "id": "68dbd6ff-3d8b-4bdd-b73a-61b522933c30",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 609,
+            "y": 202,
+            "farbe": "rot"
+        },
+        {
+            "id": "d6ec9f3a-c240-4cb4-b9d6-ba03d719cf47",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1000,
+            "y": 203,
+            "farbe": "rot"
+        },
+        {
+            "id": "9f8f98cf-7081-4ebc-9052-37791942303a",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1083,
+            "y": 201,
+            "farbe": "rot"
+        },
+        {
+            "id": "7846df10-07c5-46a3-92f3-625e9d964fb2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 995,
+            "y": 916,
+            "farbe": "rot"
+        },
+        {
+            "id": "61f8b7ef-c4f9-4121-8baa-e3814949fdbf",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1087,
+            "y": 917,
+            "farbe": "rot"
+        },
+        {
+            "id": "4eea0195-873f-4ee5-8261-b349fcca837c",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 522,
+            "y": 920,
+            "farbe": "rot"
+        },
+        {
+            "id": "df7822d8-46b9-498a-85d7-d217d84e933d",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 614,
+            "y": 919,
+            "farbe": "rot"
         }
     ]
 }

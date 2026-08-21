@@ -121,7 +121,7 @@
             "typ": "minitor",
             "x": 445,
             "y": 951,
-            "rotation": 0
+            "rotation": 180
         },
         {
             "id": "tor-u2",
@@ -129,7 +129,7 @@
             "typ": "minitor",
             "x": 1141,
             "y": 951,
-            "rotation": 0
+            "rotation": 180
         },
         {
             "id": "kind-k1",

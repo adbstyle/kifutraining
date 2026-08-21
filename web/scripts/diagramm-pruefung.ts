@@ -87,6 +87,69 @@ function leibchenProbleme(elemente: DiagrammElement[]): string[] {
   return probleme;
 }
 
+/** Tore öffnen ins Feld.
+ *
+ *  Drehrichtung des Tor-Symbols, am Symbol nachgerechnet und am Render bestätigt
+ *  (die zwei runden Pfostenenden markieren den Tormund): **0 = Mund unten,
+ *  90 = Mund links, 180 = Mund oben, 270 = Mund rechts.** Auf die Oberkante eines
+ *  Feldes gehört also 0, auf die Unterkante 180, an die linke Kante 270 und an
+ *  die rechte 90.
+ *
+ *  Ohne Prüfung fällt das kaum auf — ein Tor von hinten sieht einem von vorn
+ *  ähnlich —, gezeigt wird aber ein Tor, das vom Feld weg öffnet: so standen 18
+ *  Tore an Unterkanten falsch, bis diese Regel sie fand. Links/rechts waren hier
+ *  zuerst vertauscht, und die Regel hat damit 56 falsch gedrehte Seitentore
+ *  abgesegnet — erst der Vergleich der Pfostenenden im Render hat es gezeigt.
+ *  Wer die Werte ändert, prüft sie an einem Render, nicht am Kopf.
+ *
+ *  Als Feld gilt ein Rechteck ab FELD_MINDESTFLAECHE; kleine Zonen (Schusszone,
+ *  Kiste) sind keine Feldkante. */
+const FELD_MINDESTFLAECHE = 200_000;
+const KANTEN_NAEHE = 45;
+
+function torRichtungProbleme(elemente: DiagrammElement[]): string[] {
+  const felder = elemente.filter(
+    (e): e is Extract<DiagrammElement, { art: "form" }> =>
+      e.art === "form" && e.form === "rechteck" && e.breite * e.hoehe >= FELD_MINDESTFLAECHE,
+  );
+  const tore = elemente.filter(
+    (e): e is Extract<DiagrammElement, { art: "symbol" }> =>
+      e.art === "symbol" && (e.typ === "tor" || e.typ === "minitor"),
+  );
+  const probleme: string[] = [];
+  for (const f of felder) {
+    for (const t of tore) {
+      const rot = t.rotation ?? 0;
+      // Diagonal gedrehte Tore (Ecktore) beurteilt die Regel nicht: sie öffnen
+      // schräg ins Feld, und keiner der vier rechten Winkel wäre richtig.
+      if (rot % 90 !== 0) continue;
+
+      // Innerhalb der Feldausdehnung? Die Achse gehört zur Kante (dritter Wert)
+      // und wird NICHT aus dem Meldungstext abgeleitet — sonst dreht eine
+      // umformulierte Meldung still die geprüfte Achse.
+      const laengs = t.y >= f.y - 20 && t.y <= f.y + f.hoehe + 20;
+      const quer = t.x >= f.x - 20 && t.x <= f.x + f.breite + 20;
+      const kanten: { name: string; auf: boolean; soll: number }[] = [
+        { name: "Oberkante", auf: Math.abs(t.y - f.y) < KANTEN_NAEHE && quer, soll: 0 },
+        { name: "Unterkante", auf: Math.abs(t.y - (f.y + f.hoehe)) < KANTEN_NAEHE && quer, soll: 180 },
+        { name: "linken Feldkante", auf: Math.abs(t.x - f.x) < KANTEN_NAEHE && laengs, soll: 270 },
+        { name: "rechten Feldkante", auf: Math.abs(t.x - (f.x + f.breite)) < KANTEN_NAEHE && laengs, soll: 90 },
+      ];
+
+      // Ein Tor in der Feldecke liegt an zwei Kanten; dort ist jede der beiden
+      // Richtungen zulässig, sonst wäre die Forderung unerfüllbar.
+      const treffer = kanten.filter((k) => k.auf);
+      if (treffer.length === 0 || treffer.some((k) => k.soll === rot)) continue;
+      probleme.push(
+        `${t.id}: steht auf der ${treffer.map((k) => k.name).join(" und ")} von ` +
+          `${f.id}, hat aber rotation ${rot} statt ` +
+          `${treffer.map((k) => k.soll).join(" oder ")} — das Tor öffnet vom Feld weg`,
+      );
+    }
+  }
+  return [...new Set(probleme)];
+}
+
 /** Alle Probleme eines Diagramms als lesbare Zeilen; leer = in Ordnung.
  *  `rohAnzahl` ist die Elementzahl VOR `parseDiagramm` — weicht sie ab, hat der
  *  Parser strukturell Kaputtes verworfen, was in einer Vorlage ein Fehler ist. */
@@ -105,6 +168,7 @@ export function diagrammProbleme(daten: DiagrammData, rohAnzahl?: number): strin
   }
 
   probleme.push(...leibchenProbleme(daten.elemente));
+  probleme.push(...torRichtungProbleme(daten.elemente));
 
   const gesehen = new Set<string>();
   for (const e of daten.elemente) {

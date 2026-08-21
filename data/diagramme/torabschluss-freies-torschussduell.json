@@ -1,0 +1,90 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 197,
+            "y": 69,
+            "breite": 1205,
+            "hoehe": 911
+        },
+        {
+            "id": "tor-links",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 197,
+            "y": 479,
+            "rotation": 270
+        },
+        {
+            "id": "tor-rechts",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 1402,
+            "y": 479,
+            "rotation": 90
+        },
+        {
+            "id": "kind-r-tw",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 287,
+            "y": 536,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-r-m",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 618,
+            "y": 370,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-w-u",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 549,
+            "y": 687,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-w-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 968,
+            "y": 467,
+            "farbe": "weiss",
+            "pose": "passen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-w-r",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 873,
+            "y": 529
+        },
+        {
+            "id": "schuss",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 860,
+                    "y": 525
+                },
+                {
+                    "x": 354,
+                    "y": 470
+                }
+            ]
+        }
+    ]
+}

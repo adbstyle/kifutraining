@@ -1,0 +1,315 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 208,
+            "y": 72,
+            "breite": 1149,
+            "hoehe": 907
+        },
+        {
+            "id": "tor-links",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 166,
+            "y": 494,
+            "rotation": 270
+        },
+        {
+            "id": "tor-rechts",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 1398,
+            "y": 526,
+            "rotation": 90
+        },
+        {
+            "id": "pylone-mitte",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 794,
+            "y": 521,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ol",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 208,
+            "y": 257,
+            "farbe": "blau"
+        },
+        {
+            "id": "pylone-ul",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 208,
+            "y": 851,
+            "farbe": "blau"
+        },
+        {
+            "id": "pylone-or",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1348,
+            "y": 231,
+            "farbe": "rot"
+        },
+        {
+            "id": "pylone-ur",
+            "art": "symbol",
+            "typ": "pylone",
+            "x": 1361,
+            "y": 851,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-ol1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 169,
+            "y": 208,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-ol2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 184,
+            "y": 230,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-w-ol",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 310,
+            "y": 212,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-tw-l",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 255,
+            "y": 494
+        },
+        {
+            "id": "kind-w-ul",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 347,
+            "y": 639,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-w-ul",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 402,
+            "y": 693
+        },
+        {
+            "id": "kind-ul1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 175,
+            "y": 771,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "ball-ul1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 195,
+            "y": 851
+        },
+        {
+            "id": "kind-ul2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 191,
+            "y": 824,
+            "farbe": "weiss",
+            "pose": "dribbeln"
+        },
+        {
+            "id": "ball-ul2",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 213,
+            "y": 886
+        },
+        {
+            "id": "kind-r-or",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1209,
+            "y": 296,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-r-or",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1198,
+            "y": 376
+        },
+        {
+            "id": "kind-or1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1385,
+            "y": 212,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-or1",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1401,
+            "y": 279
+        },
+        {
+            "id": "kind-tw-r",
+            "art": "symbol",
+            "typ": "torwart",
+            "x": 1306,
+            "y": 498,
+            "spiegeln": true
+        },
+        {
+            "id": "kind-r-ur",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1212,
+            "y": 679,
+            "farbe": "rot",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-ur",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1423,
+            "y": 806,
+            "farbe": "rot",
+            "pose": "stehen",
+            "spiegeln": true
+        },
+        {
+            "id": "weg-ul",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 398,
+                    "y": 688
+                },
+                {
+                    "x": 534,
+                    "y": 587
+                },
+                {
+                    "x": 635,
+                    "y": 525
+                },
+                {
+                    "x": 710,
+                    "y": 468
+                },
+                {
+                    "x": 798,
+                    "y": 459
+                },
+                {
+                    "x": 890,
+                    "y": 464
+                }
+            ]
+        },
+        {
+            "id": "weg-or",
+            "art": "pfad",
+            "typ": "dribbling",
+            "punkte": [
+                {
+                    "x": 1198,
+                    "y": 376
+                },
+                {
+                    "x": 1062,
+                    "y": 446
+                },
+                {
+                    "x": 943,
+                    "y": 521
+                },
+                {
+                    "x": 864,
+                    "y": 569
+                },
+                {
+                    "x": 776,
+                    "y": 583
+                },
+                {
+                    "x": 679,
+                    "y": 534
+                }
+            ]
+        },
+        {
+            "id": "laufweg-ol",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 327,
+                    "y": 288
+                },
+                {
+                    "x": 459,
+                    "y": 402
+                },
+                {
+                    "x": 578,
+                    "y": 499
+                }
+            ]
+        },
+        {
+            "id": "laufweg-ur",
+            "art": "pfad",
+            "typ": "laufweg",
+            "punkte": [
+                {
+                    "x": 1194,
+                    "y": 697
+                },
+                {
+                    "x": 1106,
+                    "y": 622
+                },
+                {
+                    "x": 1018,
+                    "y": 543
+                }
+            ]
+        }
+    ]
+}

@@ -211,14 +211,6 @@
             "typ": "fussball",
             "x": 780,
             "y": 972
-        },
-        {
-            "id": "pylone-seitenlinie",
-            "art": "symbol",
-            "typ": "pylone",
-            "x": 178,
-            "y": 853,
-            "farbe": "rot"
         }
     ]
 }

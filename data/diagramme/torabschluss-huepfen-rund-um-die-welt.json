@@ -1,0 +1,345 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "teller-o-start",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 563,
+            "y": 445,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-o-ziel",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1169,
+            "y": 445,
+            "farbe": "rot"
+        },
+        {
+            "id": "reifen-o1",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 662,
+            "y": 442,
+            "farbe": "rot"
+        },
+        {
+            "id": "reifen-o2",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 725,
+            "y": 442,
+            "farbe": "rot"
+        },
+        {
+            "id": "reifen-o3",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 692,
+            "y": 469,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-o4",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 755,
+            "y": 469,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-o5",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 806,
+            "y": 448,
+            "farbe": "gelb"
+        },
+        {
+            "id": "reifen-o6",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 806,
+            "y": 469,
+            "farbe": "gelb"
+        },
+        {
+            "id": "reifen-o7",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 872,
+            "y": 472,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-o8",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 899,
+            "y": 448,
+            "farbe": "rot"
+        },
+        {
+            "id": "reifen-o9",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 935,
+            "y": 472,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-o10",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 983,
+            "y": 442,
+            "farbe": "gelb"
+        },
+        {
+            "id": "reifen-o11",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 983,
+            "y": 469,
+            "farbe": "gelb"
+        },
+        {
+            "id": "reifen-o12",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 1049,
+            "y": 445,
+            "farbe": "rot"
+        },
+        {
+            "id": "kind-r-w1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 470,
+            "y": 414,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-r-w2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 539,
+            "y": 414,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-r-h1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 671,
+            "y": 402,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-r-h2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 734,
+            "y": 402,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-r-h3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 812,
+            "y": 402,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-r-z",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1058,
+            "y": 402,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "teller-u-start",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 533,
+            "y": 601,
+            "farbe": "blau"
+        },
+        {
+            "id": "teller-u-ziel",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1196,
+            "y": 604,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-u1",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 602,
+            "y": 592,
+            "farbe": "rot"
+        },
+        {
+            "id": "reifen-u2",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 662,
+            "y": 589,
+            "farbe": "rot"
+        },
+        {
+            "id": "reifen-u3",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 635,
+            "y": 613,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-u4",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 719,
+            "y": 595,
+            "farbe": "rot"
+        },
+        {
+            "id": "reifen-u5",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 752,
+            "y": 595,
+            "farbe": "rot"
+        },
+        {
+            "id": "reifen-u6",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 803,
+            "y": 589,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-u7",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 809,
+            "y": 616,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-u8",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 875,
+            "y": 598,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-u9",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 911,
+            "y": 592,
+            "farbe": "blau"
+        },
+        {
+            "id": "reifen-u10",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 956,
+            "y": 589,
+            "farbe": "gelb"
+        },
+        {
+            "id": "reifen-u11",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 956,
+            "y": 616,
+            "farbe": "gelb"
+        },
+        {
+            "id": "reifen-u12",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 1025,
+            "y": 598,
+            "farbe": "rot"
+        },
+        {
+            "id": "reifen-u13",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 1085,
+            "y": 598,
+            "farbe": "blau"
+        },
+        {
+            "id": "kind-w-w1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 440,
+            "y": 567,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-w-w2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 512,
+            "y": 561,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-w-h1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 618,
+            "y": 537,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-w-h2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 724,
+            "y": 537,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-w-h3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 971,
+            "y": 537,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-w-z",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1109,
+            "y": 597,
+            "farbe": "weiss",
+            "pose": "laufen"
+        }
+    ]
+}

@@ -48,8 +48,8 @@
             "id": "pylone-aussen",
             "art": "symbol",
             "typ": "pylone",
-            "x": 69,
-            "y": 537,
+            "x": 139,
+            "y": 525,
             "farbe": "rot"
         },
         {
@@ -58,7 +58,7 @@
             "typ": "minitor",
             "x": 244,
             "y": 235,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "tor-l2",
@@ -66,7 +66,7 @@
             "typ": "minitor",
             "x": 244,
             "y": 797,
-            "rotation": 90
+            "rotation": 270
         },
         {
             "id": "tor-r1",
@@ -74,7 +74,7 @@
             "typ": "minitor",
             "x": 1500,
             "y": 230,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "tor-r2",
@@ -82,14 +82,14 @@
             "typ": "minitor",
             "x": 1500,
             "y": 797,
-            "rotation": 270
+            "rotation": 90
         },
         {
             "id": "kind-l1",
             "art": "symbol",
             "typ": "spieler",
-            "x": 69,
-            "y": 504,
+            "x": 105,
+            "y": 460,
             "farbe": "weiss",
             "pose": "passen"
         },

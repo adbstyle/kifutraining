@@ -1,0 +1,109 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 200,
+            "y": 69,
+            "breite": 1200,
+            "hoehe": 907
+        },
+        {
+            "id": "tor-links",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 200,
+            "y": 479,
+            "rotation": 270
+        },
+        {
+            "id": "tor-rechts",
+            "art": "symbol",
+            "typ": "tor",
+            "x": 1400,
+            "y": 479,
+            "rotation": 90
+        },
+        {
+            "id": "kind-r-tw",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 317,
+            "y": 503,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-r-o",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 568,
+            "y": 319,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-j-o",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 719,
+            "y": 315,
+            "farbe": "schwarz",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "kind-w-m",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 620,
+            "y": 485,
+            "farbe": "weiss",
+            "pose": "stehen"
+        },
+        {
+            "id": "kind-j-u",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 777,
+            "y": 733,
+            "farbe": "schwarz",
+            "pose": "laufen"
+        },
+        {
+            "id": "kind-w-r",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1267,
+            "y": 526,
+            "farbe": "weiss",
+            "pose": "passen",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-w-r",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1221,
+            "y": 562
+        },
+        {
+            "id": "schuss",
+            "art": "pfad",
+            "typ": "pass",
+            "punkte": [
+                {
+                    "x": 1207,
+                    "y": 557
+                },
+                {
+                    "x": 683,
+                    "y": 552
+                }
+            ]
+        }
+    ]
+}
