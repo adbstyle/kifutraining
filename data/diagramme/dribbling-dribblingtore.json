@@ -1,0 +1,225 @@
+{
+    "version": 1,
+    "elemente": [
+        {
+            "id": "feld",
+            "art": "form",
+            "form": "rechteck",
+            "farbe": "weiss",
+            "x": 314,
+            "y": 112,
+            "breite": 950,
+            "hoehe": 801
+        },
+        {
+            "id": "minitor-oben-l",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 457,
+            "y": 112,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-oben-r",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1121,
+            "y": 112,
+            "rotation": 0
+        },
+        {
+            "id": "minitor-unten-l",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 454,
+            "y": 913,
+            "rotation": 180
+        },
+        {
+            "id": "minitor-unten-r",
+            "art": "symbol",
+            "typ": "minitor",
+            "x": 1128,
+            "y": 913,
+            "rotation": 180
+        },
+        {
+            "id": "dribbeltor-links",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "rot",
+            "gestrichelt": true,
+            "punkte": [
+                { "x": 316, "y": 455 },
+                { "x": 509, "y": 455 }
+            ]
+        },
+        {
+            "id": "teller-links-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 316,
+            "y": 455,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-links-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 509,
+            "y": 455,
+            "farbe": "rot"
+        },
+        {
+            "id": "dribbeltor-rechts",
+            "art": "pfad",
+            "typ": "linie",
+            "farbe": "rot",
+            "gestrichelt": true,
+            "punkte": [
+                { "x": 1073, "y": 455 },
+                { "x": 1271, "y": 455 }
+            ]
+        },
+        {
+            "id": "teller-rechts-1",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1073,
+            "y": 455,
+            "farbe": "rot"
+        },
+        {
+            "id": "teller-rechts-2",
+            "art": "symbol",
+            "typ": "teller",
+            "x": 1271,
+            "y": 455,
+            "farbe": "rot"
+        },
+        {
+            "id": "reifen-oben",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 790,
+            "y": 78,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-reserve-oben",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 790,
+            "y": 78
+        },
+        {
+            "id": "reifen-links",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 282,
+            "y": 459,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-reserve-links",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 282,
+            "y": 459
+        },
+        {
+            "id": "reifen-rechts",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 1318,
+            "y": 448,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-reserve-rechts",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1318,
+            "y": 448
+        },
+        {
+            "id": "reifen-unten",
+            "art": "symbol",
+            "typ": "reifen",
+            "x": 794,
+            "y": 949,
+            "farbe": "orange"
+        },
+        {
+            "id": "ball-reserve-unten",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 794,
+            "y": 949
+        },
+        {
+            "id": "weiss-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 652,
+            "y": 220,
+            "farbe": "weiss",
+            "pose": "laufen"
+        },
+        {
+            "id": "rot-1",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 798,
+            "y": 273,
+            "farbe": "rot",
+            "pose": "laufen"
+        },
+        {
+            "id": "rot-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 514,
+            "y": 506,
+            "farbe": "rot",
+            "pose": "stehen"
+        },
+        {
+            "id": "weiss-2",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 716,
+            "y": 599,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "weiss-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1163,
+            "y": 489,
+            "farbe": "weiss",
+            "pose": "laufen",
+            "spiegeln": true
+        },
+        {
+            "id": "rot-3",
+            "art": "symbol",
+            "typ": "spieler",
+            "x": 1205,
+            "y": 546,
+            "farbe": "rot",
+            "pose": "dribbeln",
+            "spiegeln": true
+        },
+        {
+            "id": "ball-rot-3",
+            "art": "symbol",
+            "typ": "fussball",
+            "x": 1185,
+            "y": 618
+        }
+    ]
+}
