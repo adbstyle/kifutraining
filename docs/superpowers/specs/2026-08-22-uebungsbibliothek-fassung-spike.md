@@ -57,7 +57,7 @@ Geprüfte und verworfene Alternativen:
 **Entscheid:** Alle Prüfungen, die heute live auf der referenzierten Übung arbeiten, lesen künftig die Fassungs-Felder:
 1. Die Veröffentlichungs-Vollständigkeit eines Trainings (`publish_training`, Auto-Privat-Trigger) prüft die Fassungs-Spalten statt des Joins.
 2. Die Alterskategorien-Abgleichswarnung liest die kopierten Alterskategorien der Fassung.
-3. Der Trigger, der die Gleichheit von Übungs- und Zuordnungs-Trainingsteil erzwingt (`training_exercise_phase_guard`), entfällt: Die Einordnung der Fassung (Trainingsteil und Hauptteilkategorie) ist frei änderbar. Die Abbildungsregel liefert beim Übernehmen nur noch den Vorschlag; eine Abweichung erzeugt den Hinweis am Training (Erfolgskriterium 9), keine Sperre.
+3. Der Trigger, der die Gleichheit von Übungs- und Zuordnungs-Trainingsteil erzwingt (`training_exercise_phase_guard`), entfällt: Die Einordnung der Fassung (Trainingsteil und Hauptteilkategorie) ist frei änderbar. Die Abbildungsregel liefert beim Übernehmen nur noch den Vorschlag; eine Abweichung blockiert nichts und wird nicht gesondert angezeigt (Erfolgskriterium 9, revidiert am 2026-08-22: Hinweis gestrichen).
 4. Die Vollständigkeitsregel je Hauptteilkategorie (Story 2) erhält Constraint-Pendants auf `training_exercises`, damit die Fassung einer Manual-Übung denselben Regeln genügt wie eine Trainer-Übung — der Grund, weshalb Story 2 diesem Modell vorausgeht.
 
 Geprüfte und verworfene Alternative: Prüfungen weiterhin gegen die Live-Quelle — verworfen, weil die Quelle nach der Übernahme keinerlei Autorität mehr über das Training hat (Kernidee des Epics) und verschwinden darf.

@@ -196,7 +196,7 @@ Postconditions
 4. Das SYSTEM bricht die Übernahme folgenlos ab, WENN die Vorlage im Moment der Übernahme nicht mehr sichtbar oder nicht mehr vorhanden ist.
 
 Out of Scope
-1. Das Bearbeiten der Fassung und der Hinweis auf eine abweichende Einordnung sind nicht Teil dieser Story.
+1. Das Bearbeiten der Fassung ist nicht Teil dieser Story.
 2. Eine Wahl eines anderen Trainingsteils im Übernahme-Moment gibt es nicht; verschoben wird danach im Trainings-Editor.
 3. Eine Passungsprüfung zwischen Vorlage und Training über die bestehende Alterskategorien-Warnung hinaus findet nicht statt.
 
