@@ -163,3 +163,50 @@ Non-Functional Requirements
 
 Offene Fragen
 Keine — die Struktur folgt vollständig dem abgenommenen Spike-Entscheidungsdokument.
+
+---
+
+## Story 4 (Business, Paths) — Übung als Fassung ins Training übernehmen
+
+Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+
+Übung als Fassung ins Training übernehmen
+
+Als Trainer
+möchte ich eine Übung aus der Bibliothek in mein Training übernehmen und dabei eine eigene, unabhängige Fassung erhalten
+damit mein Training vollständig mir gehört und sich nie durch Handlungen anderer verändert
+
+Preconditions
+1. Das Fassungs-Datenmodell mit serverseitigem Erzeugungs-Mechanismus ist wirksam.
+
+Acceptance Criteria
+1. Der USER kann im Übungs-Picker eines Trainingsteils jede dazu passende, für ihn sichtbare Bibliotheks-Übung übernehmen: eigene, öffentliche anderer Trainer und Manual-Übungen.
+2. Der USER erhält mit der Übernahme eine eigenständige Fassung im Training.
+3. Das SYSTEM ordnet die Fassung dem Trainingsteil und bei Hauptteil der Kategorie zu, in der der USER den Picker geöffnet hat.
+4. Das SYSTEM reiht die neue Fassung am Ende ihres Abschnitts ein.
+5. Der USER kann dieselbe Vorlage mehrfach in dasselbe Training übernehmen und erhält jedes Mal eine eigene Fassung.
+6. Der USER kann eine Fassung im Trainings-Editor entfernen.
+7. Der Übungs-Picker bietet kein Entfernen an.
+8. Das SYSTEM informiert den USER, wenn eine Übernahme fehlschlägt.
+
+Postconditions
+1. Das SYSTEM erzeugt die Fassung mit sämtlichen Inhalten der Vorlage zum Übernahmezeitpunkt, einschliesslich eigenständiger Bild- und Diagrammkopie, WENN der USER die Übernahme auslöst; massgeblich ist die Feldmenge des Fassungs-Datenmodells.
+2. Das SYSTEM stempelt die Herkunftsangabe der Fassung zum Übernahmezeitpunkt.
+3. Das SYSTEM lässt die Vorlage bei der Übernahme unverändert.
+4. Das SYSTEM bricht die Übernahme folgenlos ab, WENN die Vorlage im Moment der Übernahme nicht mehr sichtbar oder nicht mehr vorhanden ist.
+
+Out of Scope
+1. Das Bearbeiten der Fassung und der Hinweis auf eine abweichende Einordnung sind nicht Teil dieser Story.
+2. Eine Wahl eines anderen Trainingsteils im Übernahme-Moment gibt es nicht; verschoben wird danach im Trainings-Editor.
+3. Eine Passungsprüfung zwischen Vorlage und Training über die bestehende Alterskategorien-Warnung hinaus findet nicht statt.
+
+Non-Functional Requirements
+1. Das Übernehmen antwortet einschliesslich Bild- und Diagrammkopie in unter einer Sekunde.
+2. Die Story wird erst zusammen mit der Bestand-Überführung nutzerwirksam ausgeliefert, damit nie zwei Verhaltensweisen nebeneinander bestehen.
+
+Getroffene Entscheide (PO 2026-08-22)
+1. Der Übungs-Picker bleibt wie heute je Trainingsteil (bei Hauptteil je Kategorie) gebunden; die Fassung landet genau dort. Die heutige harte Zurückweisung unpassender Übungen wird gegenstandslos, weil der Picker nur Passendes anbietet.
+2. Mehrfach-Übernahme derselben Vorlage ins selbe Training ist erlaubt.
+
+Offene Fragen
+1. @UX Designer: Wie erfährt der Trainer nach der Übernahme, dass die Fassung angelegt ist, und bleibt der Picker für weitere Übernahmen offen?
