@@ -5,6 +5,14 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
 import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/training";
+import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
+import { kopiereDiagramm, parseDiagramm } from "@/lib/diagramm";
+import {
+  stempleHerkunft,
+  fassungBildPfad,
+  FASSUNG_INHALT_FELDER,
+  VORLAGE_SELECT,
+} from "@/lib/fassung";
 import {
   kategorienSlugs,
   hauptteilkategorieSlugs,
@@ -52,6 +60,71 @@ function validStufen(values: string[]): string[] {
   return values.filter((s) => kategorienSlugs.includes(s as never));
 }
 
+// ── Fassungen: Kopieren einer Vorlage ins Training ───────────────────────────
+
+/** Eine Bibliotheks-Übung, wie sie für das Kopieren gelesen wird (VORLAGE_SELECT). */
+type Vorlage = {
+  id: string;
+  name: string;
+  trainingsteil: string;
+  hauptteilkategorie: string | null;
+  bild_url: string | null;
+  diagramm: unknown;
+  source: "manual" | "user";
+  owner_id: string | null;
+  herkunft_name: string | null;
+  herkunft_typ: "manual" | "community" | "eigen" | null;
+  herkunft_datum: string | null;
+} & Record<string, unknown>;
+
+/** Die inhaltlichen Felder der Vorlage übernehmen — eine Quelle für die
+ *  Feldmenge, damit ein neues Übungsfeld nicht an einer von mehreren Stellen
+ *  vergessen wird. */
+function fassungInhalt(ex: Vorlage): Record<string, unknown> {
+  return Object.fromEntries(FASSUNG_INHALT_FELDER.map((f) => [f, ex[f]]));
+}
+
+/** Das Diagramm entkoppelt kopieren (frische Element-IDs). `parseDiagramm` ist
+ *  die Trust-Boundary: ein strukturell unbrauchbares Diagramm ergibt keine
+ *  Kopie, statt die Übernahme scheitern zu lassen. */
+function kopiereDiagrammVon(quelle: unknown): unknown {
+  const data = parseDiagramm(quelle);
+  return data && data.elemente.length > 0 ? kopiereDiagramm(data) : null;
+}
+
+/** Die Bilddatei der Vorlage byte-identisch in den Pfad des Trainings-
+ *  Eigentümers kopieren. Kein Download/Upload und keine Bildverarbeitung — die
+ *  Storage-Kopie prüft Leserecht auf der Quelle und Schreibrecht auf dem Ziel,
+ *  genau die benötigte Semantik. Ohne Vorlagenbild ein No-op. */
+async function kopiereBild(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  quellUrl: string | null,
+  ownerId: string,
+  fassungId: string,
+): Promise<{ url: string | null; pfad: string | null; error?: string }> {
+  const quellPfad = bildUrlToPath(quellUrl);
+  if (!quellPfad) return { url: null, pfad: null };
+
+  const zielPfad = fassungBildPfad(ownerId, fassungId, quellPfad);
+  const { error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .copy(quellPfad, zielPfad);
+  if (error) return { url: null, pfad: null, error: `Bildkopie fehlgeschlagen: ${error.message}` };
+
+  return {
+    url: supabase.storage.from(STORAGE_BUCKET).getPublicUrl(zielPfad).data.publicUrl,
+    pfad: zielPfad,
+  };
+}
+
+/** Storage-Objekt best-effort entfernen (no-op bei null). */
+async function entferneStorageObjekt(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  pfad: string | null,
+) {
+  if (pfad) await supabase.storage.from(STORAGE_BUCKET).remove([pfad]);
+}
+
 // ── Story #10: Training anlegen ──────────────────────────────────────────────────
 
 /** Neues Training anlegen (Story #10 AC1/AC2/AC3). Standardmässig privat, der USER
@@ -86,12 +159,15 @@ export async function createTraining(
 
 // ── Story #10: Übung einem Trainingsteil zuordnen ────────────────────────────
 
-/** Eine sichtbare Übung dem passenden Trainingsteil des Trainings zuordnen
- *  (Story #10 AC4/AC5/AC6). Im Hauptteil zusätzlich der gewählten
- *  Hauptteilkategorie (Story #23): nur Übungen der passenden Kategorie sind
- *  zuordenbar, die Position ist pro Unterkategorie eindeutig. Persistiert
- *  unmittelbar; der Phasen-Guard-Trigger erzwingt Trainingsteil- und
- *  Kategorie-Bindung zusätzlich auf DB-Ebene. */
+/** Eine sichtbare Bibliotheks-Übung als eigenständige Fassung ins Training
+ *  übernehmen (Story 4). Die Fassung trägt die Inhalte der Vorlage zum
+ *  Übernahmezeitpunkt, eine eigene Bild- und Diagrammkopie sowie einen
+ *  unveränderlichen Herkunfts-Stempel; die Vorlage bleibt unberührt und hat
+ *  danach keinen Einfluss mehr auf das Training.
+ *
+ *  Der Picker bleibt an den Trainingsteil (im Hauptteil an die Kategorie)
+ *  gebunden und bietet nur Passendes an; die Prüfung hier ist der Guard gegen
+ *  manipulierte Aufrufe. */
 export async function addTrainingExercise(
   trainingId: string,
   trainingsteil: string,
@@ -120,16 +196,15 @@ export async function addTrainingExercise(
     .maybeSingle();
   if (!training) return { ok: false, error: "Training nicht gefunden." };
 
-  // Übung holen: Name für den Platzhalter-Cache, Trainingsteil-/Kategorie-Abgleich.
+  // Vorlage mit allen Inhalten holen (RLS lässt nur Sichtbares durch).
   const { data: ex } = await supabase
     .from("exercises")
-    .select("id, name, trainingsteil, hauptteilkategorie")
+    .select(VORLAGE_SELECT)
     .eq("id", exerciseId)
-    .maybeSingle();
+    .maybeSingle<Vorlage>();
   if (!ex) return { ok: false, error: "Übung nicht verfügbar." };
   if (ex.trainingsteil !== trainingsteil)
     return { ok: false, error: "Übung passt nicht zum Trainingsteil." };
-  // Harte Regel (Story #23 AC3): in eine Unterkategorie nur Übungen ebendieser.
   if (istHauptteil && ex.hauptteilkategorie !== hkat)
     return { ok: false, error: "Übung passt nicht zur Hauptteilkategorie." };
 
@@ -149,15 +224,33 @@ export async function addTrainingExercise(
     .maybeSingle();
   const position = (last?.position ?? -1) + 1;
 
+  // Die ID vorab erzeugen: sie benennt die Bildkopie, die VOR dem Insert
+  // entstehen muss (der Pfad steht dann bereits in bild_url). Scheitert der
+  // Insert, bleibt höchstens eine unreferenzierte Datei liegen, die ein
+  // erneuter Versuch überschreibt — nie eine Fassung ohne Inhalt.
+  const fassungId = crypto.randomUUID();
+  const bild = await kopiereBild(supabase, ex.bild_url, user.id, fassungId);
+  if (bild.error) return { ok: false, error: bild.error };
+
   const { error } = await supabase.from("training_exercises").insert({
+    id: fassungId,
     training_id: trainingId,
     trainingsteil,
     hauptteilkategorie: hkat,
+    position,
+    // Bis die Bestand-Überführung abgeschlossen ist, bleibt der Verweis als
+    // Brücke für die noch nicht überführten Zuordnungen bestehen.
     exercise_id: exerciseId,
     exercise_name_cache: ex.name,
-    position,
+    ...fassungInhalt(ex),
+    bild_url: bild.url,
+    diagramm: kopiereDiagrammVon(ex.diagramm),
+    ...stempleHerkunft(ex, user.id),
   });
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    await entferneStorageObjekt(supabase, bild.pfad);
+    return { ok: false, error: error.message };
+  }
 
   revalidateTraining(trainingId);
   return { ok: true };
