@@ -113,3 +113,53 @@ Mögliche Lösungsansätze (Kontext, keine Empfehlung)
 1. Die Vollständigkeitsprüfung ist heute dreifach verankert: im Schema der Übungsdatenbank, in der Formularvalidierung der Anwendung und als Datenbank-Regel; die Datenbank-Regel verlangt die drei Fahrplan-Stufen nur für Trainer-Übungen und nimmt den Manual-Bestand aus.
 2. Der Suchtext einer Übung wird heute ausschliesslich aus den Fahrplan-Stufen und dem Aufbau-Text gebildet; die neue Beschreibung ist darin noch nicht enthalten.
 3. Im Manual-Bestand ist genau eine Übung betroffen (Seite 81, «Fussball spielen auf Klein- und Grossfeld»); sie ist die einzige mit leeren Stufen, alle übrigen 74 sind vollständig. In Produktion existieren zusätzlich Trainer-Übungen dieser Kategorie mit befüllten Stufen.
+
+---
+
+## Story 3 (Enabler, Data) — Datenmodell für Fassungen mit Herkunftsangabe
+
+Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+
+Datenmodell für Fassungen mit Herkunftsangabe
+
+Als Entwicklungsteam
+möchte ich ein Datenmodell, in dem jede Trainings-Zuordnung ihre Übungsinhalte als eigenständige Fassung mit unveränderlicher Herkunftsangabe selbst trägt
+damit die Business-Stories des Epics auf einer Datengrundlage aufsetzen, in der ein Training von niemandem mehr abhängt
+
+Preconditions
+1. Das Spike-Entscheidungsdokument (Zuordnung = Fassung, Herkunftsstruktur, Kopierverfahren) ist abgenommen.
+2. Die Vollständigkeitsregel je Hauptteilkategorie ist wirksam und der Übungsbestand erfüllt sie.
+
+Acceptance Criteria
+1. Das SYSTEM speichert die Übungsinhalte einer Trainings-Zuordnung als eigenständige Fassung an der Zuordnung selbst.
+2. Das SYSTEM hält an jeder Fassung jedes inhaltliche Feld, das auch eine Trainer-Übung in der Bibliothek trägt, einschliesslich Bild und Diagramm.
+3. Das SYSTEM stellt einen serverseitigen Erzeugungs-Mechanismus bereit, der aus einer Bibliotheks-Übung eine Fassung mit entkoppelter Bild- und Diagrammkopie erzeugt.
+4. Das SYSTEM hält an jeder Fassung die Herkunftsangabe aus Name des Originals, Herkunftstyp und Übernahmezeitpunkt.
+5. Das SYSTEM hält dieselbe Herkunftsstruktur für die späteren Abläufe auch an Bibliotheks-Übungen und an Diagramm-Kopien bereit.
+6. Das SYSTEM weist jede tatsächliche Wertänderung an den Herkunftsfeldern einer bestehenden Fassung ab.
+7. Das SYSTEM hält Fassungen aus dem Übungskatalog, der Suche und den Favoriten heraus.
+8. Das SYSTEM wendet die Vollständigkeitsregel je Hauptteilkategorie auf Fassungen an.
+9. Das SYSTEM erzwingt für den gesamten Bestand validiert, dass genau Hauptteil-Fassungen eine Hauptteilkategorie tragen.
+10. Das SYSTEM erlaubt die freie Änderung der Einordnung einer Fassung in Trainingsteil und Hauptteilkategorie.
+11. Das SYSTEM gewährt Lese- und Schreibzugriff auf eine Fassung ausschliesslich nach den Zugriffsregeln des zugehörigen Trainings.
+12. Das SYSTEM prüft die Vollständigkeit eines Trainings für die Veröffentlichung anhand der Fassungs-Inhalte.
+13. Das SYSTEM entfernt die kopierte Bilddatei einer Fassung auf jedem Löschweg, einschliesslich Trainings-Löschung und Konto-Löschung.
+14. Der wiederholbare Ladevorgang des Manual-Bestands bleibt funktionsfähig und erzeugt keine Fassungen.
+
+Postconditions
+1. Das SYSTEM hält eine Fassung vollständig nutzbar, WENN ihr Original geändert, privat gestellt oder gelöscht wird oder das Konto seines Eigentümers entfernt wird.
+2. Das SYSTEM hinterlässt nach einer fehlgeschlagenen Fassungs-Erzeugung keine Fassung; eine bereits kopierte Bilddatei bleibt folgenlos und wird beim nächsten Versuch überschrieben oder bereinigt.
+
+Out of Scope
+1. Die nutzerseitigen Abläufe und Oberflächen für Übernehmen, Bearbeiten und Herkunfts-Anzeige sind nicht Teil dieses Enablers.
+2. Die Überführung des Bestands ist nicht Teil dieser Story; der bisherige Übungs-Verweis der Zuordnungen bleibt bestehen, bis die Überführung ihn nicht mehr benötigt.
+3. Die Trainings-Suche indexiert die Inhalte von Fassungen nicht.
+
+Non-Functional Requirements
+1. Die Zugriffsregeln für Fassungen sind serverseitig durchgesetzt und nicht allein in der Anwendungsschicht abgesichert.
+2. Der Erzeugungs-Mechanismus antwortet einschliesslich Bild- und Diagrammkopie in unter einer Sekunde.
+3. Bestehende Trainings, Übungen und Favoriten bleiben von der Einführung des Datenmodells unberührt.
+4. Die Story wird erst zusammen mit dem neuen Übernehmen und der Bestand-Überführung nutzerwirksam ausgeliefert, damit nie zwei Verhaltensweisen nebeneinander bestehen.
+
+Offene Fragen
+Keine — die Struktur folgt vollständig dem abgenommenen Spike-Entscheidungsdokument.
