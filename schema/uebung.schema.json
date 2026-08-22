@@ -35,7 +35,7 @@
       }
     },
     "material": { "type": "array", "items": { "type": "string" } },
-    "aufbau": { "type": "string" },
+    "aufbau": { "type": "string", "minLength": 1 },
     "methodischer_fahrplan": {
       "type": "object",
       "additionalProperties": false,
@@ -60,10 +60,27 @@
   },
   "allOf": [
     {
+      "$comment": "Ablauf-Form je Einordnung (Epic #72, Story 2): Einleitung und Hauptteil tragen den methodischen Fahrplan — ausser der Hauptteilkategorie «Fussball spielen», die als freies Spiel eine Beschreibung trägt.",
       "if": {
-        "properties": { "trainingsteil": { "enum": ["einleitung", "hauptteil"] } }
+        "properties": { "trainingsteil": { "enum": ["einleitung", "hauptteil"] } },
+        "required": ["trainingsteil"],
+        "not": {
+          "properties": { "hauptteilkategorie": { "const": "fussball-spielen" } },
+          "required": ["hauptteilkategorie"]
+        }
       },
       "then": { "required": ["methodischer_fahrplan"] }
+    },
+    {
+      "$comment": "«Fussball spielen» trägt die Beschreibung des Spiels im Feld aufbau; ein Fahrplan ist dort unzulässig.",
+      "if": {
+        "properties": { "hauptteilkategorie": { "const": "fussball-spielen" } },
+        "required": ["hauptteilkategorie"]
+      },
+      "then": {
+        "required": ["aufbau"],
+        "not": { "required": ["methodischer_fahrplan"] }
+      }
     },
     {
       "if": {

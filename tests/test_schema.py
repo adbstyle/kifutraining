@@ -119,3 +119,55 @@ def test_nicht_hauptteil_mit_hauptteilkategorie_fails():
            "hauptteilkategorie": "fussball-spielen",
            "quelle": {"datei": "a.pdf", "seite": 82}}
     assert list(v.iter_errors(doc)) != []
+
+
+# ── Ablauf-Form je Hauptteilkategorie (Epic #72, Story 2) ────────────────────
+# «Fussball spielen» ist das freie Spiel und trägt eine Beschreibung im Feld
+# `aufbau` statt des methodischen Fahrplans.
+
+def _fussball_spielen_doc(**extra):
+    """Hauptteil-Übung der Kategorie «Fussball spielen» mit Beschreibung."""
+    doc = _hauptteil_doc(hauptteilkategorie="fussball-spielen",
+                         aufbau="Die Kinder spielen frei auf zwei Tore.")
+    doc.pop("methodischer_fahrplan", None)
+    doc.update(extra)
+    return doc
+
+
+def test_fussball_spielen_mit_beschreibung_passes():
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    assert list(v.iter_errors(_fussball_spielen_doc())) == []
+
+
+def test_fussball_spielen_mit_fahrplan_fails():
+    """Der Fahrplan ist in dieser Kategorie nicht mehr zulässig."""
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    doc = _fussball_spielen_doc(
+        methodischer_fahrplan={"offen_starten": "Start."})
+    assert list(v.iter_errors(doc)) != []
+
+
+def test_fussball_spielen_ohne_beschreibung_fails():
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    doc = _fussball_spielen_doc()
+    doc.pop("aufbau")
+    assert list(v.iter_errors(doc)) != []
+
+
+def test_fussball_spielen_mit_leerer_beschreibung_fails():
+    """Vollständig heisst: die Beschreibung ist nicht leer (PO 2026-08-22)."""
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    assert list(v.iter_errors(_fussball_spielen_doc(aufbau=""))) != []
+
+
+def test_andere_hauptteilkategorie_braucht_weiterhin_fahrplan():
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    doc = _hauptteil_doc(hauptteilkategorie="fussball-spielen-lernen",
+                         aufbau="Nur eine Beschreibung genügt hier nicht.")
+    doc.pop("methodischer_fahrplan")
+    assert list(v.iter_errors(doc)) != []
