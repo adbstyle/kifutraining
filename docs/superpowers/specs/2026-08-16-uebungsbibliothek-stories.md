@@ -1,0 +1,115 @@
+# Stories: Übungsbibliothek — Vorlagen kopieren statt referenzieren
+
+**Datum:** 2026-08-22
+**Epic:** `2026-08-16-uebungsbibliothek-epic.md`
+**Status:** wächst Story für Story
+**Umsetzungsreihenfolge:** Story 2 vor Story 1 (PO-Entscheid 2026-08-22); der Spike setzt einen regelkonformen Bestand voraus.
+
+**Beantwortete Epic-Frage (§11.4, PO 2026-08-22):** Die «Fassung» erhält keinen eigenen Begriff in der Oberfläche. Im Training heisst sie schlicht «Übung», Bibliothekseinträge heissen «Vorlage»; der Kopie-Charakter zeigt sich ausschliesslich über die Herkunftsangabe «basiert auf …». «Fassung» bleibt interner Arbeitsbegriff der Spezifikationen.
+
+---
+
+## Story 1 (Enabler, Spike) — Fassungs-Datenmodell und Überführungsansatz
+
+Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+
+Fassungs-Datenmodell und Überführungsansatz
+
+Als Entwicklungsteam
+möchte ich klären, wie eine Fassung im Datenmodell lebt, wie Bild und Diagramm entkoppelt kopiert werden und wie der Bestand sicher überführt wird
+damit die Datenmodell-Story und die Bestand-Überführung auf abgestimmten, vom Product Owner abgenommenen Entscheiden aufbauen
+
+Preconditions
+1. Die Vollständigkeitsregel je Hauptteilkategorie ist wirksam und der gesamte Übungsbestand erfüllt sie.
+2. Für Diagramme existiert ein Kopiermechanismus, der die Diagramm-Struktur entkoppelt kopiert; er arbeitet heute nur innerhalb einer bereits bestehenden eigenen Übung.
+
+Acceptance Criteria
+1. Das TEAM hat entschieden und dokumentiert, wie eine Fassung im Datenmodell lebt, einschliesslich ihres Verhältnisses zu Katalog, Suche und Favoriten sowie zur privaten Vorlage, die aus «in meine Bibliothek übernehmen» entsteht.
+2. Das TEAM hat entschieden, welche Felder die Herkunftsangabe umfasst und wie sie bei Kopien von Kopien und bei Trainings-Kopien unverändert erhalten bleibt.
+3. Das TEAM hat die Zugriffsregeln für Fassungen entschieden: wer eine Fassung liest und schreibt, und wie sich das vom Zugriff auf Bibliotheks-Übungen unterscheidet.
+4. Das TEAM hat die Machbarkeit eines Bilddatei-Kopierverfahrens geprüft, das ohne erneute serverseitige Bildverarbeitung und ohne Qualitätsverlust auskommt und die Zugriffsregeln des Bildspeichers respektiert.
+5. Das TEAM legt einen allfälligen Zielkonflikt beim Bildkopieren dem Product Owner zur Entscheidung vor.
+6. Das TEAM hat das Überführungsverfahren für den Bestand festgelegt, mit Laufzeit- und Speichervolumen-Abschätzung auf Basis gemessener Produktionszahlen, benanntem Wiederanlauf-Verhalten bei Teilausfall und einem maschinell prüfbaren Nachweis der Vollständigkeit.
+7. Das TEAM hat geklärt, wie die Prüfungen, die heute live auf der referenzierten Übung arbeiten (Vollständigkeit beim Veröffentlichen, Alterskategorien-Abgleich, zwingende Snapshot-Übernahme der Einordnung), künftig auf der Fassung arbeiten.
+8. Das TEAM hat geklärt, wie der wiederholbare Ladevorgang des Manual-Bestands funktionsfähig bleibt, ohne Fassungen zu erzeugen.
+9. Das TEAM hat je Entscheid die geprüften und verworfenen Alternativen mit Begründung dokumentiert.
+10. Der Product Owner hat das Entscheidungsdokument abgenommen.
+
+Postconditions
+1. Das Entscheidungsdokument liegt im Repository vor und dient als Grundlage für die Datenmodell-Story und die Bestand-Überführung.
+2. Das TEAM hat offene Detailfragen dokumentiert, die erst in der Umsetzung klärbar sind, jeweils mit Begründung, warum sie im Spike nicht entscheidbar waren.
+
+Out of Scope
+1. Das TEAM implementiert keine produktive Funktionalität; es entstehen Entscheide und allenfalls Wegwerf-Experimente.
+2. Die Darstellung der Herkunftsangabe in der Oberfläche ist nicht Teil des Spikes.
+
+Offene Fragen
+Keine. Die drei UX-Fragen des Epics betreffen die Stories 5 und 6; die fehlenden Produktionszahlen werden im Spike selbst gemessen.
+
+Getroffene Entscheide (PO 2026-08-22)
+1. Keine Timebox; der Spike ist ergebnisgetrieben, die PO-Abnahme ist das Stop-Kriterium.
+2. Story 2 geht dem Spike voraus; die strenge Precondition 1 bleibt bestehen.
+3. «Nicht ohne Kompromiss machbar» ist ein zulässiges Spike-Ergebnis beim Bildkopieren; der Zielkonflikt geht dann zurück an den Product Owner.
+
+Mögliche Lösungsansätze (Kontext, keine Empfehlung)
+1. Trainings laden heute sämtliche Übungsfelder live über die Verknüpfung; kopiert werden bislang nur der Namens-Zwischenspeicher und der Einordnungs-Snapshot der Zuordnung — ein Verfahren «ganze Übung kopieren» existiert im Bestand nicht.
+2. Der Diagramm-Kopiermechanismus kopiert die Diagramm-Struktur mit frischen Element-IDs, jedoch nur in eine bereits existierende eigene Übung; Bilddateien kopiert er nicht.
+3. Der Bildspeicher bindet Schreibrechte an das eigene Pfadsegment des Eigentümers; das Kopieren einer fremden Bilddatei ist damit nicht durch den Aufrufer allein möglich.
+
+---
+
+## Story 2 (Enabler, Data) — Fahrplan-Regel je Hauptteilkategorie und Manual-Vollständigkeit
+
+Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+
+Fahrplan-Regel je Hauptteilkategorie und Manual-Vollständigkeit
+
+Als Trainer
+möchte ich ein freies Spiel mit einer Beschreibung statt eines methodischen Fahrplans erfassen
+damit meine Übung das Spiel so festhält, wie es durchgeführt wird, und nicht in ein unpassendes Schema gezwängt wird
+
+Preconditions
+1. Im Bestand existieren Übungen der Hauptteilkategorie «Fussball spielen», deren Ablauf noch als methodischer Fahrplan gespeichert ist: eine Manual-Übung mit Extraktionsfehler im Text sowie Trainer-Übungen mit befüllten Fahrplan-Stufen.
+2. Der Manual-Bestand ist über einen wiederholbaren Ladevorgang aktualisierbar.
+
+Acceptance Criteria
+1. Der USER erfasst bei einer Übung der Hauptteilkategorie «Fussball spielen» eine Beschreibung des Spiels anstelle des methodischen Fahrplans.
+2. Der USER erfasst bei Übungen der übrigen Hauptteilkategorien und bei Einleitungs-Übungen weiterhin alle drei Stufen des methodischen Fahrplans.
+3. Der USER, der die Hauptteilkategorie einer Übung wechselt, findet seinen bisherigen Ablauftext als Ausgangstext in der zur neuen Kategorie passenden Form vor und redigiert ihn selbst.
+4. Der USER findet Übungen der Kategorie «Fussball spielen» über den Inhalt ihrer Beschreibung in der Suche.
+5. Das SYSTEM lehnt das Speichern einer Übung ab, deren Ablauf für ihre Hauptteilkategorie unvollständig ist.
+6. Das SYSTEM wertet die Beschreibung als vollständig, wenn sie nicht leer ist.
+7. Das SYSTEM wendet die Vollständigkeitsregel auf sämtliche Übungen an, auch auf den Manual-Bestand.
+
+Postconditions
+1. Das SYSTEM überführt bestehende Übungen der Kategorie «Fussball spielen» einmalig: die befüllten Fahrplan-Stufen stehen in ihrer Reihenfolge als getrennte Absätze in der Beschreibung, ohne Textverlust und ohne redaktionelle Eingriffe.
+2. Das SYSTEM liefert die betroffene Manual-Übung mit einer fortlaufend lesbaren, von Extraktionsfehlern bereinigten Beschreibung des Spiels aus; der wiederholbare Ladevorgang erzeugt dauerhaft diesen bereinigten Stand.
+3. Das SYSTEM weist die Einhaltung der Vollständigkeitsregel für den gesamten Bestand durch einen automatisierten Validierungslauf nach, der bei jeder Änderung am Bestand erneut läuft.
+
+Out of Scope
+1. Beim Kategoriewechsel wird der übernommene Ausgangstext nicht automatisch strukturiert; das Aufteilen auf Fahrplan-Stufen bleibt beim USER.
+2. Fassungen von Übungen in Trainings entstehen in dieser Story noch nicht; das Verhältnis zwischen Training und Übung bleibt unverändert.
+3. Der übrige Manual-Bestand wird inhaltlich nicht verändert; die Bereinigung betrifft ausschliesslich die eine Übung mit Extraktionsfehler.
+4. Die Merkmale des freien Spiels (Mindestdauer von 15 Minuten, Vorgabenarmut) werden weder als Angaben erfasst noch geprüft.
+
+Non-Functional Requirements
+1. Die Regelverschärfung greift erst, nachdem die produktiv gespeicherten Übungen nachweislich bereinigt sind.
+2. Der wiederholbare Ladevorgang des Manual-Bestands bleibt nach der Umstellung funktionsfähig.
+3. Die Überführung verändert an bestehenden Übungen und Trainings nichts Erkennbares ausser der Darstellungsform des Ablaufs.
+
+Offene Fragen
+1. @UX Designer: Wie wird das Beschreibungsfeld im Erfassungsformular benannt und von den Fahrplan-Stufen unterschieden?
+2. @UX Designer: Wie erkennt der Trainer beim Kategoriewechsel, dass sein bisheriger Text als Ausgangstext übernommen wurde und Redigieren erwartet wird?
+
+Getroffene Entscheide (PO 2026-08-22)
+1. Die Beschreibung gilt als vollständig, wenn sie nicht leer ist; keine Mindestlänge.
+2. Beim Kategoriewechsel wird der bisherige Ablauftext in beide Richtungen als Ausgangstext übernommen; der Trainer redigiert selbst.
+3. Die Merkmale des freien Spiels werden nicht abgebildet oder geprüft; die Beschreibung bleibt frei.
+4. Die einmalige Überführung übernimmt die Stufen-Texte als getrennte Absätze in ihrer Reihenfolge, ohne Beschriftung und ohne redaktionelle Eingriffe.
+5. Die bereinigte Manual-Beschreibung ist ein fortlaufender, lesbarer Text; Lesbarkeit geht vor Wörtlichkeit.
+6. Die neue Regel gilt durchgängig ab dieser Story, einschliesslich des Erfassungs- und Bearbeitungsformulars für Trainer-Übungen.
+
+Mögliche Lösungsansätze (Kontext, keine Empfehlung)
+1. Die Vollständigkeitsprüfung ist heute dreifach verankert: im Schema der Übungsdatenbank, in der Formularvalidierung der Anwendung und als Datenbank-Regel; die Datenbank-Regel verlangt die drei Fahrplan-Stufen nur für Trainer-Übungen und nimmt den Manual-Bestand aus.
+2. Der Suchtext einer Übung wird heute ausschliesslich aus den Fahrplan-Stufen und dem Aufbau-Text gebildet; die neue Beschreibung ist darin noch nicht enthalten.
+3. Im Manual-Bestand ist genau eine Übung betroffen (Seite 81, «Fussball spielen auf Klein- und Grossfeld»); sie ist die einzige mit leeren Stufen, alle übrigen 74 sind vollständig. In Produktion existieren zusätzlich Trainer-Übungen dieser Kategorie mit befüllten Stufen.
