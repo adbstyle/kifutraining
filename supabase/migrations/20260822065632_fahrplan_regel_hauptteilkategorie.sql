@@ -67,7 +67,11 @@ alter table exercises add constraint ablauf_je_einordnung check (
 alter table exercises drop constraint user_fahrplan_vollstaendig;
 alter table exercises add constraint fahrplan_vollstaendig check (
   trainingsteil not in ('einleitung', 'hauptteil')
-  or hauptteilkategorie = 'fussball-spielen'
+  -- NULL-sicherer Vergleich: `hauptteilkategorie = '…'` ergäbe bei Einleitungs-
+  -- Übungen (Kategorie immer NULL) NULL, die ganze OR-Kette damit NULL — und ein
+  -- CHECK lehnt nur FALSE ab. Ein unvollständiger Einleitungs-Fahrplan käme so
+  -- ungeprüft durch.
+  or hauptteilkategorie is not distinct from 'fussball-spielen'
   or (
     coalesce(methodischer_fahrplan->>'offen_starten', '') <> ''
     -- jsonb_typeof-Guard: schützt vor Fehler bei {"ueben": null} (JSON-null
