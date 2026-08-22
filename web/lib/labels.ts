@@ -44,3 +44,30 @@ export function fahrplanZuText(
     .filter(Boolean)
     .join("\n\n");
 }
+
+/** Die Ablauf-Felder eines Erfassungsformulars. */
+export type AblaufFelder = {
+  offenStarten: string;
+  ueben: string;
+  wetteifern: string;
+  aufbau: string;
+};
+
+/** Den Ablauftext beim Wechsel der Einordnung in die neue Form überführen
+ *  (Story 2 AK 3). Immer genau eine Form trägt den Ablauf: die alte wird
+ *  geleert. Bliebe dort eine Zweitfassung stehen, würde sie beim Zurückwechseln
+ *  die zwischenzeitliche Bearbeitung überschreiben. */
+export function ueberfuehreAblauf(
+  nachFahrplan: boolean,
+  felder: AblaufFelder,
+): AblaufFelder {
+  const text = nachFahrplan
+    ? felder.aufbau
+    : fahrplanZuText(felder.offenStarten, felder.ueben, felder.wetteifern);
+  return {
+    offenStarten: nachFahrplan ? text : "",
+    ueben: "",
+    wetteifern: "",
+    aufbau: nachFahrplan ? "" : text,
+  };
+}

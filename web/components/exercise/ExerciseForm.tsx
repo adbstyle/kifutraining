@@ -25,7 +25,7 @@ import {
   FAHRPLAN_TEILE,
   FREIES_SPIEL,
   brauchtFahrplan,
-  fahrplanZuText,
+  ueberfuehreAblauf,
 } from "@/lib/labels";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
@@ -105,15 +105,15 @@ export function ExerciseForm({
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
   /** Einordnung wechseln und den bisherigen Ablauftext als Ausgangstext in die
-   *  neue Form übernehmen (Story 2 AK 3) — redigiert wird von Hand. Ein bereits
-   *  befülltes Zielfeld bleibt unangetastet. */
+   *  neue Form überführen (Story 2 AK 3) — redigiert wird von Hand. */
   function wechsleEinordnung(neuerTeil: string, neueHkat: string) {
-    const vorher = brauchtFahrplan(teil, hkat);
     const nachher = brauchtFahrplan(neuerTeil, neueHkat);
-    if (vorher && !nachher && !aufbau.trim()) {
-      setAufbau(fahrplanZuText(offenStarten, ueben, wetteifern));
-    } else if (!vorher && nachher && !offenStarten.trim()) {
-      setOffenStarten(aufbau);
+    if (brauchtFahrplan(teil, hkat) !== nachher) {
+      const neu = ueberfuehreAblauf(nachher, { offenStarten, ueben, wetteifern, aufbau });
+      setOffenStarten(neu.offenStarten);
+      setUeben(neu.ueben);
+      setWetteifern(neu.wetteifern);
+      setAufbau(neu.aufbau);
     }
     setTeil(neuerTeil);
     setHkat(neueHkat);
