@@ -35,15 +35,16 @@
       }
     },
     "material": { "type": "array", "items": { "type": "string" } },
-    "aufbau": { "type": "string" },
+    "aufbau": { "type": "string", "minLength": 1 },
     "methodischer_fahrplan": {
+      "$comment": "Alle drei Stufen sind Pflicht — spiegelt den DB-Constraint fahrplan_vollstaendig, der seit Story 2 (Epic #72) quellenunabhängig gilt. So schlägt eine lückenhafte Übung schon bei validate.py fehl und nicht erst beim Seed.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["offen_starten"],
+      "required": ["offen_starten", "ueben", "wetteifern"],
       "properties": {
         "offen_starten": { "type": "string", "minLength": 1 },
-        "ueben": { "type": "array", "items": { "type": "string" } },
-        "wetteifern": { "type": ["string", "null"] }
+        "ueben": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "wetteifern": { "type": "string", "minLength": 1 }
       }
     },
     "varianten": { "type": "array", "items": { "type": "string" } },
@@ -60,10 +61,27 @@
   },
   "allOf": [
     {
+      "$comment": "Ablauf-Form je Einordnung (Epic #72, Story 2): Einleitung und Hauptteil tragen den methodischen Fahrplan — ausser der Hauptteilkategorie «Fussball spielen», die als freies Spiel eine Beschreibung trägt.",
       "if": {
-        "properties": { "trainingsteil": { "enum": ["einleitung", "hauptteil"] } }
+        "properties": { "trainingsteil": { "enum": ["einleitung", "hauptteil"] } },
+        "required": ["trainingsteil"],
+        "not": {
+          "properties": { "hauptteilkategorie": { "const": "fussball-spielen" } },
+          "required": ["hauptteilkategorie"]
+        }
       },
       "then": { "required": ["methodischer_fahrplan"] }
+    },
+    {
+      "$comment": "«Fussball spielen» trägt die Beschreibung des Spiels im Feld aufbau; ein Fahrplan ist dort unzulässig.",
+      "if": {
+        "properties": { "hauptteilkategorie": { "const": "fussball-spielen" } },
+        "required": ["hauptteilkategorie"]
+      },
+      "then": {
+        "required": ["aufbau"],
+        "not": { "required": ["methodischer_fahrplan"] }
+      }
     },
     {
       "if": {

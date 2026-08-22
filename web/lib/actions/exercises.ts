@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { userSlug } from "@/lib/slug";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
-import { FAHRPLAN_TEILE } from "@/lib/labels";
+import { FAHRPLAN_TEILE, FREIES_SPIEL, brauchtFahrplan } from "@/lib/labels";
 import {
   trainingsteilSlugs,
   feldtypSlugs,
@@ -66,7 +66,16 @@ function parseExercise(form: FormData): ParseResult {
   if (kategorien.some((k) => !kategorienSlugs.includes(k as never)))
     errors.kat = "Ungültige Alterskategorie.";
 
-  const istFahrplan = FAHRPLAN_TEILE.has(trainingsteil);
+  // Hauptteilkategorie ist genau bei Hauptteil-Übungen Pflicht (Enabler #21,
+  // AC2); andere Trainingsteile tragen keine (Postcondition 2). Wird VOR dem
+  // Ablauf ausgewertet, weil die Kategorie über dessen Form entscheidet.
+  const istHauptteil = trainingsteil === "hauptteil";
+  const hauptteilkategorie = istHauptteil ? clean(form.get("hauptteilkategorie")) : null;
+  if (istHauptteil && !hauptteilkategorieSlugs.includes(hauptteilkategorie as never))
+    errors.hauptteilkategorie = "Bitte eine Hauptteilkategorie wählen.";
+
+  const istFahrplan = brauchtFahrplan(trainingsteil, hauptteilkategorie);
+  const istFreiesSpiel = hauptteilkategorie === FREIES_SPIEL;
   let methodischer_fahrplan: Record<string, unknown> | null = null;
   let aufbau: string | null = null;
 
@@ -81,20 +90,18 @@ function parseExercise(form: FormData): ParseResult {
     methodischer_fahrplan = { offen_starten: offen, ueben, wetteifern: wett };
   } else if (trainingsteil) {
     aufbau = clean(form.get("aufbau"));
-    if (!aufbau) errors.aufbau = "Bitte den Aufbau beschreiben.";
+    if (!aufbau)
+      errors.aufbau = istFreiesSpiel
+        ? "Bitte das Spiel beschreiben."
+        : "Bitte den Aufbau beschreiben.";
   }
 
-  // Erscheinungsform nur bei Einleitung/Hauptteil
-  const erscheinungsform = istFahrplan
+  // Erscheinungsform bleibt an den Trainingsteil gebunden (DB-Constraint
+  // `erscheinungsform_nur_haupt_einleitung`) — auch das freie Spiel darf eine
+  // tragen, obwohl es keinen Fahrplan hat.
+  const erscheinungsform = FAHRPLAN_TEILE.has(trainingsteil)
     ? csv(form.get("form")).filter((f) => erscheinungsformSlugs.includes(f as never))
     : [];
-
-  // Hauptteilkategorie ist genau bei Hauptteil-Übungen Pflicht (Enabler #21,
-  // AC2); andere Trainingsteile tragen keine (Postcondition 2).
-  const istHauptteil = trainingsteil === "hauptteil";
-  const hauptteilkategorie = istHauptteil ? clean(form.get("hauptteilkategorie")) : null;
-  if (istHauptteil && !hauptteilkategorieSlugs.includes(hauptteilkategorie as never))
-    errors.hauptteilkategorie = "Bitte eine Hauptteilkategorie wählen.";
 
   const feldtyp = clean(form.get("feldtyp"));
   const min = clean(form.get("anzahl_min"));
