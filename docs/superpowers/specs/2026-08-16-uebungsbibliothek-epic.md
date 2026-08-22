@@ -2,7 +2,7 @@
 
 **Datum:** 2026-08-16
 **Ebene:** Epic (Business) — Paradigmenwechsel der Kernarchitektur, mehrere Workflows, mehrere Sprints
-**Status:** Anforderungen mit dem Product Owner abgestimmt; Stories noch nicht ausgearbeitet
+**Status:** Anforderungen mit dem Product Owner abgestimmt; alle 9 Stories ausgearbeitet und perspektivenbasiert validiert (2026-08-22, siehe `2026-08-16-uebungsbibliothek-stories.md`)
 **Reihenfolge:** Dieses Epic geht dem Epic Team-Trainingsplan (`2026-08-16-team-trainingsplan-epic.md`) voraus.
 
 ## 1. Problem & Wert

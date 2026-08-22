@@ -265,3 +265,177 @@ Mögliche Lösungsansätze (Kontext, keine Empfehlung)
 1. Der Diagramm-Editor und die Übungs-Bearbeitung hängen heute an der Übungs-Route mit Eigentümer-Guard; für Fassungen braucht es einen Bearbeitungsweg im Kontext des Trainings.
 2. Die bestehende Verschiebe-Operation tauscht nur Nachbarn innerhalb desselben Abschnitts; der Einordnungswechsel ist eine neue, andersartige Operation.
 3. Ein explizites Entfernen des Fotos ohne Ersatz existiert im heutigen Übungs-Formular nicht und ist eine Neuerung.
+
+---
+
+## Story 6 (Business, Rules) — Herkunft einer Fassung erkennen
+
+Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+
+Herkunft einer Fassung erkennen
+
+Als Trainer
+möchte ich an jeder Übung in einem Training erkennen, worauf sie basiert
+damit ich die Quelle einer Übung einschätzen kann und Bearbeitungen nie als Original erscheinen
+
+Preconditions
+1. Fassungen und übernommene Vorlagen tragen den unveränderlichen Herkunfts-Stempel aus dem Fassungs-Datenmodell.
+
+Acceptance Criteria
+1. Der USER sieht an jeder Fassung eine Herkunftsangabe, die sagt, worauf sie basiert.
+2. Die Herkunftsangabe nennt den Namen des Originals zum Übernahmezeitpunkt, die Art der Quelle und das Übernahmedatum.
+3. Die Herkunftsangabe formuliert «basiert auf» und gibt eine bearbeitete Fassung nie als Original aus.
+4. Die Herkunftsangabe zeigt die ursprüngliche Quelle; Zwischenstationen einer Kopierkette erscheinen nicht.
+5. Der USER sieht die Herkunftsangabe im Trainings-Editor und in der Trainings-Detailansicht.
+6. Der anonyme BESUCHER eines öffentlichen Trainings sieht die Herkunftsangabe ebenfalls.
+7. Der USER sieht die Herkunftsangabe einer übernommenen Vorlage auf deren Übungs-Detailseite.
+8. Der USER sieht die Diagramm-Herkunft einer Übung, deren Diagramm aus einer Vorlage übernommen wurde, auf der Übungs-Detailseite.
+9. Übungs-Herkunft und Diagramm-Herkunft sind eigenständige Angaben und können nebeneinander bestehen.
+10. Das SYSTEM verknüpft die Herkunftsangabe nicht mit dem Original; Übungen im Training verlinken nicht auf Bibliotheks-Einträge.
+
+Postconditions
+Keine über die Anzeige hinaus; die Daten stammen unverändert aus dem Herkunfts-Stempel.
+
+Out of Scope
+1. Die Druck- und die Durchführen-Ansicht zeigen keine Herkunftsangabe.
+2. Der bisherige Hinweis «Offizielle Übung aus dem Manual» in Druck- und Durchführen-Ansicht entfällt ersatzlos.
+3. Die Herkunftsangabe macht keine Aussage darüber, ob Vorlage oder Fassung seit der Übernahme geändert wurden.
+4. Die Herkunftsangabe enthält keine Personenangabe.
+
+Non-Functional Requirements
+Keine über die Epic-NFRs hinaus.
+
+Getroffene Entscheide (PO 2026-08-22)
+1. Die Herkunft wird bei jedem Quelltyp angezeigt, auch bei eigener Herkunft.
+2. Druck- und Durchführen-Ansicht bleiben frei von Herkunftsangaben; auch der bisherige Manual-Hinweis entfällt dort. Der Druck enthält ausschliesslich, was für die Durchführung des Trainings nötig ist.
+3. Die Quellbezeichnung folgt der bestehenden App-Konvention («KiFu-Manual»); der Zeitpunkt wird als Datum angezeigt.
+
+Offene Fragen
+1. @UX Designer: Wie wird die Herkunftsangabe an Fassung und Diagramm dargestellt, ohne Karten und Detailansichten zu überladen?
+
+---
+
+## Story 7 (Business, Paths) — Fassung in die eigene Bibliothek übernehmen
+
+Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+
+Fassung in die eigene Bibliothek übernehmen
+
+Als Trainer
+möchte ich eine Fassung aus einem Training als eigene Vorlage in meine Bibliothek übernehmen
+damit ich sie in weiteren Trainings wiederverwenden kann
+
+Preconditions
+1. Ein Training mit mindestens einer Fassung ist für den USER sichtbar.
+
+Acceptance Criteria
+1. Der USER kann eine Fassung aus einem eigenen Training in seine Bibliothek übernehmen.
+2. Der USER kann eine Fassung aus einem fremden öffentlichen Training in seine Bibliothek übernehmen; die Aktion steht dafür in der Trainings-Ansicht zur Verfügung.
+3. Das SYSTEM legt die neue Vorlage privat an.
+4. Der USER kann die neue Vorlage wie jede eigene Übung verwenden, bearbeiten, veröffentlichen und in Trainings übernehmen.
+5. Der USER kann dieselbe Fassung mehrfach übernehmen und erhält jedes Mal eine eigene, unabhängige Vorlage.
+6. Das SYSTEM lehnt die Übernahme einer Fassung ab, deren Inhalt die Vollständigkeitsregel für Übungen nicht erfüllt.
+7. Das SYSTEM löst Namensgleichheit mit bestehenden Übungen selbständig auf; die Übernahme scheitert nicht daran.
+8. Das SYSTEM informiert den USER, wenn die Übernahme fehlschlägt.
+
+Postconditions
+1. Das SYSTEM erzeugt die neue Vorlage mit sämtlichen Inhalten der Fassung, einschliesslich eigenständiger Bild- und Diagrammkopie, WENN der USER die Übernahme auslöst.
+2. Das SYSTEM überträgt die Herkunftsangabe der Fassung unverändert auf die neue Vorlage; spätere Fassungen dieser Vorlage tragen dieselbe ursprüngliche Herkunft.
+3. Das SYSTEM lässt die Fassung und ihr Training unverändert.
+4. Das SYSTEM bricht die Übernahme folgenlos ab, WENN die Fassung oder ihr Training im Moment der Übernahme nicht mehr sichtbar oder nicht mehr vorhanden ist.
+5. Das SYSTEM hinterlässt nach einer fehlgeschlagenen Übernahme keine Vorlage; eine bereits kopierte Bilddatei bleibt folgenlos und wird bereinigt.
+
+Out of Scope
+1. Eine Verknüpfung zwischen Fassung und neuer Vorlage entsteht nicht; spätere Änderungen wirken nicht aufeinander.
+2. Eine Zusammenführung mit einer allenfalls noch existierenden ursprünglichen Vorlage findet nicht statt.
+3. Das Kopieren ganzer fremder Trainings ist nicht Teil dieser Story.
+
+Non-Functional Requirements
+1. Die Übernahme in die Bibliothek antwortet einschliesslich Bild- und Diagrammkopie in unter einer Sekunde.
+
+Getroffene Entscheide (PO 2026-08-22)
+1. Die Übernahme ist auch aus fremden öffentlichen Trainings möglich.
+2. Die neue Vorlage ist zunächst privat.
+3. Mehrfach-Übernahme derselben Fassung ist erlaubt, analog zum Entscheid in Story 4.
+
+Offene Fragen
+1. @UX Designer: Wo und wie wird die Übernahme-Aktion angeboten (Trainings-Editor und Trainings-Ansicht)?
+
+---
+
+## Story 8 (Business, Rules) — Vereinfachtes Veröffentlichen
+
+Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+
+Vereinfachtes Veröffentlichen
+
+Als Trainer
+möchte ich mein Training mit einer einzigen, klaren Bestätigung veröffentlichen
+damit ich die Tragweite kenne, ohne über einzelne Übungen entscheiden zu müssen, und meine Bibliothek unberührt bleibt
+
+Preconditions
+1. Trainings enthalten ausschliesslich Fassungen; das Fassungs-Datenmodell und die Bestand-Überführung sind wirksam.
+
+Acceptance Criteria
+1. Der USER bestätigt beim Veröffentlichen eines Trainings einmalig, dass sämtliche Inhalte des Trainings einschliesslich der Bilder öffentlich werden.
+2. Die Bestätigung erscheint bei jedem Veröffentlichungsvorgang, auch beim erneuten Veröffentlichen nach einem Rückzug.
+3. Das SYSTEM prüft die Vollständigkeitsregel des Trainings vor der Bestätigung; die Bestätigung erscheint nur für ein veröffentlichbares Training.
+4. Das SYSTEM stellt beim Veröffentlichen keine Rückfrage zu einzelnen Übungen.
+5. Das SYSTEM informiert den USER, wenn das Veröffentlichen nach der Bestätigung fehlschlägt.
+6. Der USER kann eine eigene Bibliotheks-Übung weiterhin unabhängig von Trainings veröffentlichen und jederzeit zurückziehen, ohne Tragweite-Bestätigung.
+7. Eine veröffentlichte Übung ist weiterhin im Katalog als Vorlage auffindbar und über eine öffentliche Detailseite einsehbar.
+
+Postconditions
+1. Das SYSTEM veröffentlicht das Training WENN der USER die Tragweite bestätigt hat UND die Vollständigkeitsregel erfüllt ist.
+2. Das SYSTEM verändert beim Veröffentlichen oder Zurückziehen eines Trainings keine Bibliotheks-Übung.
+3. Das SYSTEM lässt bestehende Fassungen unberührt, WENN eine Übung zurückgezogen wird.
+
+Out of Scope
+1. Eine Auswahl einzelner Inhalte beim Veröffentlichen gibt es nicht; ein Training wird als Ganzes öffentlich oder bleibt privat.
+2. Eine Mitveröffentlichung privater Übungen beim Veröffentlichen eines Trainings gibt es nicht mehr.
+3. Katalog und Übungs-Detailseite werden nicht neu gestaltet; sie bestehen bereits und laufen unter dem neuen Modell unverändert weiter.
+
+Non-Functional Requirements
+Keine über die Epic-NFRs hinaus.
+
+Getroffene Entscheide (PO 2026-08-22)
+1. Die Tragweite-Bestätigung erscheint bei jedem Veröffentlichungsvorgang.
+2. Das Veröffentlichen einer einzelnen Bibliotheks-Übung verlangt keine Tragweite-Bestätigung; sie bleibt dem Training vorbehalten.
+
+Offene Fragen
+1. @UX Designer: Wortlaut und Gestaltung der Tragweite-Bestätigung.
+
+---
+
+## Story 9 (Enabler, Data) — Bestand überführen
+
+Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+
+Bestand überführen
+
+Als Entwicklungsteam
+möchte ich alle bestehenden Trainings einmalig in Fassungen überführen
+damit nach der Umstellung nur ein Modell existiert und kein Nutzer eingreifen muss
+
+Preconditions
+1. Das Fassungs-Datenmodell ist wirksam.
+
+Acceptance Criteria
+1. Das SYSTEM kopiert die Bilddateien aller bestehenden Zuordnungen über ein idempotentes, wiederanlauffähiges Verfahren; ein Wiederanlauf überspringt bereits kopierte Dateien.
+2. Das SYSTEM überführt danach in einer atomaren Feld-Migration die Inhalte der referenzierten Übung in die Fassungs-Felder jeder Zuordnung, einschliesslich Diagramm; ein Teilausfall hinterlässt keinen Mischzustand.
+3. Das SYSTEM stempelt die Herkunft jeder überführten Fassung: Name und Quelltyp aus der referenzierten Übung, als Übernahmezeitpunkt gilt der Überführungszeitpunkt.
+4. Das SYSTEM überführt Zuordnungen ohne auflösbare Übung als benannte, inhaltsleere Fassungen; der zwischengespeicherte Name wird Fassungs-Name und Herkunfts-Name, als Quelltyp gilt die Community-Vorlage.
+5. Überführte inhaltsleere Fassungen bleiben zulässig gespeichert; die Ablauf-Vollständigkeitsregel greift erst, wenn ein USER sie bearbeitet.
+6. Das TEAM weist die Vollständigkeit der Überführung maschinell nach: jede Zuordnung trägt die Inhalte ihrer Quelle, jede Bild-Fassung ihr Zielobjekt, und die Feldwerte stimmen mit der Quelle überein; der Zweig ohne auflösbare Übung wird mangels realer Fälle synthetisch geprüft.
+7. Das SYSTEM entfernt den bisherigen Übungs-Verweis der Zuordnungen als abschliessende Migration erst nach erfolgreichem Nachweis; Nutzdaten gehen dabei keine verloren, weil sie zuvor vollständig in die Fassungen kopiert wurden.
+
+Postconditions
+1. Bestehende Trainings verhalten sich wie neu erstellte; an ihnen ist ausser der neuen Unabhängigkeit nichts Erkennbares verändert.
+2. Die Überführung wird im selben Release wirksam wie das neue Übernehmen; zu keinem Zeitpunkt existieren zwei Verhaltensweisen nebeneinander.
+
+Out of Scope
+1. Eine Benachrichtigung der Nutzer über die Überführung gibt es nicht.
+2. Eine Rückabwicklung der Überführung ist nicht vorgesehen; der Lifecycle ist forward-only.
+
+Non-Functional Requirements
+1. Die Überführung läuft ohne Wartungsfenster; die Anwendung bleibt während der gesamten Überführung verfügbar.

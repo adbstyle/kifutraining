@@ -2,7 +2,7 @@
 
 **Datum:** 2026-08-22
 **Story:** Story 1 (Enabler, Spike) des Epics `2026-08-16-uebungsbibliothek-epic.md` (Stories: `2026-08-16-uebungsbibliothek-stories.md`)
-**Status:** Entscheide mit dem Product Owner abgestimmt; Abnahme ausstehend
+**Status:** Entscheide mit dem Product Owner abgestimmt; Abnahme erfolgt im PR-Review (PO-Entscheid 2026-08-22)
 **Messbasis:** Produktionsstand vom 2026-08-22 — 89 Übungen (14 von Trainern), 6 Trainings, 37 Zuordnungen (0 verwaiste), 27 Zuordnungen mit Bild, 34 mit Diagramm, 79 Bilddateien (~3,3 MB Bucket total, ~1,0 MB auf referenzierte Bilder), 7 Nutzerkonten.
 
 Begriffsrahmen (PO 2026-08-22, siehe Stories-Dokument): «Fassung» ist ein interner Arbeitsbegriff. In der Oberfläche heisst die Fassung schlicht «Übung», Bibliothekseinträge heissen «Vorlage»; der Kopie-Charakter zeigt sich ausschliesslich über die Herkunftsangabe «basiert auf …».
@@ -68,11 +68,12 @@ Geprüfte und verworfene Alternative: Prüfungen weiterhin gegen die Live-Quelle
 
 ## Gate 7 — Bestand-Überführung
 
-**Entscheid:** Dreischrittiges, wiederanlauffähiges Verfahren, ausgeliefert im selben Release wie das neue Zuordnen (harte Umstellung, Erfolgskriterium 15):
+**Entscheid:** Vierschrittiges, wiederanlauffähiges Verfahren, ausgeliefert im selben Release wie das neue Zuordnen (harte Umstellung, Erfolgskriterium 15) — Schritt 4 ergänzt am 2026-08-22 im Story-9-Refinement:
 
 1. **Bild-Kopierskript (Service-Role, idempotent):** liest alle Zuordnungen mit Bild und kopiert jedes Objekt nach dem deterministischen Schema aus Gate 4 (`user/<owner>/<zuordnungs-id>.<ext>`). Existiert das Zielobjekt bereits, wird übersprungen — beliebig oft wiederholbar. Gleiche Werkzeugklasse wie Seed und Storage-Sync.
 2. **Feld-Migration (eine Transaktion, atomar):** kopiert die Übungsfelder jeder Zuordnung aus der referenzierten Übung in die Fassungs-Spalten, setzt die Herkunftsfelder (Typ aus `source`/Eigentümer-Vergleich, Zeitpunkt = Überführungszeitpunkt) und die Bild-URL auf das kopierte Objekt. Zuordnungen ohne auflösbare Übung übernehmen den zwischengespeicherten Namen als benannte, inhaltsleere Fassung (in Produktion aktuell 0 Fälle). Teilausfall hinterlässt keinen Mischzustand — die Transaktion greift ganz oder gar nicht.
-3. **Nachweis-Abgleich (maschinell):** prüft nach der Überführung, dass jede Zuordnung ihre Pflichtfelder gemäss Kategorie trägt, jede Bild-Fassung ihr Zielobjekt besitzt und die Feldwerte mit der Quelle übereinstimmen. Erst ein grüner Abgleich schliesst die Überführung ab.
+3. **Nachweis-Abgleich (maschinell):** prüft nach der Überführung, dass jede Zuordnung ihre Pflichtfelder gemäss Kategorie trägt, jede Bild-Fassung ihr Zielobjekt besitzt und die Feldwerte mit der Quelle übereinstimmen. Der Zweig «Zuordnung ohne auflösbare Übung» (Herkunfts-Name = zwischengespeicherter Name, Quelltyp = Community-Vorlage, da nur Trainer-Übungen verschwinden können) wird mangels realer Fälle synthetisch geprüft. Erst ein grüner Abgleich schliesst die Überführung ab.
+4. **Verweis-Abbau (abschliessende Migration):** erst nach grünem Nachweis entfernt eine letzte Migration den bisherigen Übungs-Verweis der Zuordnungen. Nutzdaten gehen dabei keine verloren — sie liegen zuvor vollständig in den Fassungen; der forward-only-Grundsatz bleibt gewahrt.
 
 **Laufzeit- und Volumenabschätzung (gemessene Produktionszahlen vom 2026-08-22):** 37 Zuordnungen → Feld-Migration im Sekundenbereich; 27 Bildkopien, ~1,0 MB zusätzliches Storage-Volumen → Kopierskript im Sekundenbereich. Fortlaufender Mehrverbrauch: pro künftiger Zuordnung eine Bildkopie (Ø ~40 KB) plus Zeilendaten — bei heutiger Nutzung vernachlässigbar gegenüber dem Free-Tier-Kontingent.
 
