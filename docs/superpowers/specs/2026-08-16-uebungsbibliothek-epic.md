@@ -61,7 +61,7 @@ Jede Story liefert End-to-End-Wert. Reihenfolge grob abhängigkeitssortiert.
 2. **Enabler (Data) — Fahrplan-Regel je Hauptteilkategorie und Manual-Vollständigkeit:** Die Vollständigkeitsregel gilt je Hauptteilkategorie für alle Übungen; die Kategorie Fussball spielen trägt eine Beschreibung statt eines Fahrplans, bestehende Übungen dieser Kategorie übernehmen ihren bisherigen Ablauftext als Beschreibung; der Manual-Bestand erfüllt die Regel nachweislich, inklusive Bereinigung von Extraktionsfehlern. Diese Story geht der Datenmodell-Story voraus, weil die Fassung einer Manual-Übung den Regeln für Trainer-Übungen genügen muss und daran heute scheitern würde.
 3. **Enabler (Data) — Datenmodell für Fassungen mit Herkunftsangabe:** Das Datenmodell trägt Fassungen als trainingseigene Übungen mit unveränderlicher Herkunftsangabe, ausgeblendet aus Katalog, Suche und Favoriten; Bild und Diagramm werden beim Erzeugen entkoppelt.
 4. **Business (Paths) — Übung als Fassung ins Training übernehmen:** Ein Trainer fügt eine Bibliotheks-Übung einem Training hinzu und erhält eine eigenständige Fassung; der Vorschlag des Blocks folgt der Einordnung der Vorlage; der Picker fügt nur hinzu, entfernt wird im Editor.
-5. **Business (Paths) — Fassung im Training bearbeiten:** Ein Trainer passt eine Fassung vollständig an, einschliesslich Einordnung, Bild und Diagramm; bei abweichender Einordnung weist das Training darauf hin.
+5. **Business (Paths) — Fassung im Training bearbeiten:** Ein Trainer passt eine Fassung vollständig an, einschliesslich Einordnung, Bild und Diagramm. (Revidiert am 2026-08-22: der Hinweis bei abweichender Einordnung ist gestrichen.)
 6. **Business (Rules) — Herkunft einer Fassung erkennen:** Ein Trainer erkennt an jeder Fassung, woraus sie entstanden ist; Diagramm-Kopien tragen dieselbe Art von Herkunftsangabe.
 7. **Business (Paths) — Fassung in die eigene Bibliothek übernehmen:** Ein Trainer macht eine Fassung zur eigenen, zunächst privaten Vorlage und verwendet sie in weiteren Trainings; die ursprüngliche Herkunft bleibt an der Vorlage und an späteren Fassungen davon bestehen.
 8. **Business (Rules) — Vereinfachtes Veröffentlichen:** Ein Trainer veröffentlicht ein Training mit einer einmaligen Bestätigung der Tragweite statt einer Übungs-Rückfrage; eine veröffentlichte Bibliotheks-Übung ist danach als Vorlage auffindbar und öffentlich einsehbar.
@@ -124,5 +124,4 @@ Jede Story liefert End-to-End-Wert. Reihenfolge grob abhängigkeitssortiert.
 ## 11. Offene Fragen
 
 1. @UX Designer: Wie wird die Herkunftsangabe an Fassung und Diagramm dargestellt, ohne die Karten und Detailansichten zu überladen?
-2. @UX Designer: Wie unterscheidet der Trainer im Trainings-Editor eine unveränderte von einer angepassten Fassung?
 4. @Product Owner: Wie soll die „Fassung" gegenüber den Nutzern heissen? Der Begriff ist intern; die Oberfläche braucht ein verständliches Wort.

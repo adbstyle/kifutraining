@@ -210,3 +210,58 @@ Getroffene Entscheide (PO 2026-08-22)
 
 Offene Fragen
 1. @UX Designer: Wie erfährt der Trainer nach der Übernahme, dass die Fassung angelegt ist, und bleibt der Picker für weitere Übernahmen offen?
+
+---
+
+## Story 5 (Business, Paths) — Fassung im Training bearbeiten
+
+Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+
+Fassung im Training bearbeiten
+
+Als Trainer
+möchte ich die Fassung einer Übung in meinem Training vollständig an meine Gruppe anpassen
+damit jede Vorlage auf Platz, Kinderzahl und Niveau meiner Mannschaft zugeschnitten ist, ohne die Vorlage oder andere Trainings zu berühren
+
+Preconditions
+1. Das Fassungs-Datenmodell ist wirksam; das Training des USERs enthält Fassungen aus Übernahme oder Bestand-Überführung.
+
+Acceptance Criteria
+1. Der USER kann jedes inhaltliche Feld einer Fassung bearbeiten; ausgenommen ist die unveränderliche Herkunftsangabe.
+2. Der USER kann auch die Fassung einer Manual-Übung vollständig bearbeiten.
+3. Der USER kann das Foto einer Fassung ersetzen oder entfernen.
+4. Der USER kann das Diagramm einer Fassung bearbeiten.
+5. Der USER bestimmt, ob Foto oder Diagramm als Anzeigebild der Fassung wirkt.
+6. Der USER kann die Einordnung einer Fassung in Trainingsteil und bei Hauptteil in die Kategorie frei ändern.
+7. Das SYSTEM verschiebt die Fassung bei einem Einordnungswechsel in den entsprechenden Abschnitt des Trainings und reiht sie dort am Ende ein.
+8. Das SYSTEM verwirft beim Einordnungswechsel Angaben, die in der neuen Einordnung nicht existieren: die Erscheinungsform ausserhalb von Einleitung und Hauptteil, die Kategorie ausserhalb des Hauptteils.
+9. Der USER erfasst den Ablauf einer Fassung in der Form, die zu ihrer Einordnung passt.
+10. Der USER, der in eine Form mit einem einzelnen Textfeld wechselt, findet die befüllten bisherigen Ablaufteile in ihrer Reihenfolge als getrennte Absätze im Ausgangstext vor.
+11. Der USER, der in den methodischen Fahrplan wechselt, findet seinen bisherigen Ablauftext als Ausgangstext in der Stufe Offen starten vor und befüllt die übrigen Stufen vor dem Speichern.
+12. Das SYSTEM lehnt das Speichern einer Fassung ab, deren Ablauf für ihre Einordnung unvollständig ist.
+13. Das SYSTEM wertet den methodischen Fahrplan als vollständig, wenn alle drei Stufen befüllt sind, und Beschreibung wie Aufbau, wenn der Text nicht leer ist.
+
+Postconditions
+1. Das SYSTEM speichert Änderungen ausschliesslich an der bearbeiteten Fassung; Vorlage und andere Fassungen bleiben unverändert.
+2. Das SYSTEM entfernt die bisherige Bilddatei der Fassung endgültig, WENN der USER das Foto ersetzt oder entfernt und die Fassung speichert.
+3. Das SYSTEM wendet die bestehende Auto-Privat-Regel des Trainings an, WENN ein Einordnungswechsel die Einleitung oder den Hauptteil leert.
+
+Out of Scope
+1. Die Vorlage ist aus dem Training heraus nicht bearbeitbar.
+2. Ein Zurücksetzen der Fassung auf den Stand der Vorlage gibt es nicht.
+3. Das SYSTEM zeigt nicht an, ob eine Fassung gegenüber ihrer Vorlage verändert wurde.
+
+Non-Functional Requirements
+1. Die Bearbeitung einer Fassung folgt denselben Vollständigkeits- und Validierungsregeln wie die Bearbeitung einer Bibliotheks-Übung.
+
+Getroffene Entscheide (PO 2026-08-22)
+1. Kein Bearbeitet-Kennzeichen und kein Abweichungs-Hinweis; die Herkunftsangabe «basiert auf …» genügt. Die Epic-UX-Fragen zu Hinweis und Unterscheidung sind gegenstandslos.
+2. Beim Einordnungswechsel wird der bisherige Ablauftext als Ausgangstext in die neue Form übernommen (Zusammenführung als getrennte Absätze bzw. Übernahme in Offen starten), analog zum Story-2-Entscheid.
+
+Offene Fragen
+1. @UX Designer: Wird die Fassung eingebettet im Trainings-Editor bearbeitet oder auf einer eigenen Bearbeitungsseite mit Rücksprung, insbesondere für das Diagramm?
+
+Mögliche Lösungsansätze (Kontext, keine Empfehlung)
+1. Der Diagramm-Editor und die Übungs-Bearbeitung hängen heute an der Übungs-Route mit Eigentümer-Guard; für Fassungen braucht es einen Bearbeitungsweg im Kontext des Trainings.
+2. Die bestehende Verschiebe-Operation tauscht nur Nachbarn innerhalb desselben Abschnitts; der Einordnungswechsel ist eine neue, andersartige Operation.
+3. Ein explizites Entfernen des Fotos ohne Ersatz existiert im heutigen Übungs-Formular nicht und ist eine Neuerung.
