@@ -143,6 +143,15 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
 
   // Auffangen trägt keine Dauer und zählt weder zur Summe noch zum
   // „ohne Dauer"-Hinweis.
+  // Was zum Öffentlich-Schalten fehlt (Story 8 AK 3): so erscheint die
+  // Tragweite-Bestätigung nur für ein veröffentlichbares Training. Die RPC
+  // prüft es serverseitig erneut.
+  const fehlendeVoraussetzungen = [
+    stufen.length === 0 ? "stufe" : null,
+    training.exercises.some((e) => e.trainingsteil === "einleitung") ? null : "einleitung",
+    training.exercises.some((e) => e.trainingsteil === "hauptteil") ? null : "hauptteil",
+  ].filter((x): x is string => x !== null);
+
   const dauerItems = training.exercises.filter((e) => teilTraegtDauer(e.trainingsteil));
   const totalDuration = dauerItems.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
   const totalMissing = dauerItems.filter((it) => dur(it) == null).length;
@@ -178,7 +187,11 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
             </Badge>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
-            <TrainingVisibilityControl trainingId={training.id} visibility={training.visibility} />
+            <TrainingVisibilityControl
+              trainingId={training.id}
+              visibility={training.visibility}
+              fehlend={fehlendeVoraussetzungen}
+            />
             <button
               type="button"
               onClick={() => setDeleteOpen(true)}

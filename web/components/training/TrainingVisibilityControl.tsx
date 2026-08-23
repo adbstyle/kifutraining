@@ -12,33 +12,45 @@ const MISSING_LABEL: Record<string, string> = {
   hauptteil: "mindestens eine Übung im Hauptteil",
 };
 
-/* Sichtbarkeits-Steuerung im Editor-Kopf (Story #14). Privat → Öffentlich
-   schalten (mit Vollständigkeitsprüfung und Mitveröffentlichungs-Rückfrage für
-   eigene private Übungen); Öffentlich → Privat. */
+/* Sichtbarkeits-Steuerung im Editor-Kopf (Story #14, Epic #72 Story 8).
+   Privat → Öffentlich mit einer einzigen Bestätigung der Tragweite; die frühere
+   Rückfrage zur Mitveröffentlichung einzelner Übungen ist entfallen, weil ein
+   Training nur noch eigenständige Fassungen enthält. Öffentlich → Privat. */
 export function TrainingVisibilityControl({
   trainingId,
   visibility,
+  /** Erfüllt das Training die Voraussetzungen? Ist es unvollständig, erscheint
+   *  gar keine Tragweite-Bestätigung, sondern direkt der Hinweis, was fehlt
+   *  (Story 8 AK 3). Die RPC prüft es serverseitig erneut. */
+  fehlend = [],
 }: {
   trainingId: string;
   visibility: "public" | "private";
+  fehlend?: string[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [notice, setNotice] = useState<string | null>(null);
   const [incomplete, setIncomplete] = useState<string[] | null>(null);
-  const [confirm, setConfirm] = useState<{ count: number; names: string[] } | null>(null);
+  const [tragweite, setTragweite] = useState(false);
 
-  function publish(includePrivate: boolean) {
+  function starten() {
+    if (fehlend.length > 0) {
+      setIncomplete(fehlend);
+      return;
+    }
+    setTragweite(true);
+  }
+
+  function publish() {
     startTransition(async () => {
-      const res = await publishTrainingAction(trainingId, includePrivate);
+      const res = await publishTrainingAction(trainingId);
+      setTragweite(false);
       if (res.status === "published") {
-        setConfirm(null);
         router.refresh();
         setNotice("Das Training ist jetzt öffentlich.");
       } else if (res.status === "incomplete") {
         setIncomplete(res.missing);
-      } else if (res.status === "needs_confirmation") {
-        setConfirm({ count: res.count, names: res.names });
       } else {
         setNotice(res.error);
       }
@@ -56,7 +68,7 @@ export function TrainingVisibilityControl({
   return (
     <>
       {visibility === "private" ? (
-        <Button variant="tonal" size="sm" onClick={() => publish(false)} disabled={pending}>
+        <Button variant="tonal" size="sm" onClick={starten} disabled={pending}>
           <Globe size={18} strokeWidth={2} aria-hidden />
           Öffentlich schalten
         </Button>
@@ -67,7 +79,7 @@ export function TrainingVisibilityControl({
         </Button>
       )}
 
-      {/* Voraussetzungen fehlen (AC4) */}
+      {/* Voraussetzungen fehlen */}
       <Dialog
         open={incomplete != null}
         onClose={() => setIncomplete(null)}
@@ -88,37 +100,28 @@ export function TrainingVisibilityControl({
         </ul>
       </Dialog>
 
-      {/* Mitveröffentlichungs-Rückfrage (AC5/AC6/AC7) */}
+      {/* Einmalige Bestätigung der Tragweite (Story 8 AK 1/2) — bei jedem
+          Veröffentlichungsvorgang, auch beim erneuten nach einem Rückzug. */}
       <Dialog
-        open={confirm != null}
-        onClose={() => setConfirm(null)}
-        title="Eigene private Übungen mitveröffentlichen?"
+        open={tragweite}
+        onClose={() => setTragweite(false)}
+        title="Training öffentlich schalten?"
         actions={
           <>
-            <Button variant="text" onClick={() => setConfirm(null)}>
+            <Button variant="text" onClick={() => setTragweite(false)}>
               Abbrechen
             </Button>
-            <Button variant="filled" onClick={() => publish(true)} disabled={pending}>
-              Mitveröffentlichen & teilen
+            <Button variant="filled" onClick={publish} disabled={pending}>
+              Öffentlich schalten
             </Button>
           </>
         }
       >
-        <p className="mb-3">
-          Dieses Training enthält {confirm?.count}{" "}
-          {confirm?.count === 1 ? "eigene private Übung" : "eigene private Übungen"}.
-          Beim Öffentlich-Schalten {confirm?.count === 1 ? "wird sie" : "werden sie"}{" "}
-          mitveröffentlicht und {confirm?.count === 1 ? "bleibt" : "bleiben"} öffentlich —
-          auch wenn du das Training später wieder privat schaltest. Verwalte sie bei Bedarf
-          separat im Übungsbereich.
+        <p>
+          Alle Inhalte dieses Trainings werden öffentlich sichtbar —
+          einschliesslich der Bilder und Feld-Diagramme. Deine Übungen in der
+          Bibliothek bleiben davon unberührt.
         </p>
-        <ul className="flex flex-col gap-1">
-          {(confirm?.names ?? []).map((n) => (
-            <li key={n} className="type-body-medium text-on-surface">
-              · {n}
-            </li>
-          ))}
-        </ul>
       </Dialog>
 
       <Snackbar open={notice != null} message={notice ?? ""} onClose={() => setNotice(null)} />

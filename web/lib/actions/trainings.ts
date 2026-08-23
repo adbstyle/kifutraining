@@ -280,16 +280,15 @@ export async function addTrainingExercise(
 export type PublishResult =
   | { status: "published" }
   | { status: "incomplete"; missing: string[] }
-  | { status: "needs_confirmation"; count: number; names: string[] }
   | { status: "error"; error: string };
 
-/** Training öffentlich schalten (Story #14). Ohne Mitveröffentlichungs-Zustimmung
- *  liefert die RPC bei eigenen privaten Übungen `needs_confirmation` (Anzahl +
- *  Namen) und bei fehlenden Voraussetzungen `incomplete` (welche fehlen) —
- *  jeweils ohne Mutation. */
+/** Training öffentlich schalten (Story #14, Epic #72 Story 8). Die Bestätigung
+ *  der Tragweite erfolgt in der Oberfläche; hier bleibt die serverseitige
+ *  Vollständigkeitsprüfung, die bei fehlenden Voraussetzungen `incomplete`
+ *  liefert — ohne Mutation. Eine Rückfrage zu einzelnen Übungen gibt es nicht
+ *  mehr: ein Training enthält nur noch eigenständige Fassungen. */
 export async function publishTrainingAction(
   trainingId: string,
-  includePrivate: boolean,
 ): Promise<PublishResult> {
   const supabase = await createClient();
   const {
@@ -299,7 +298,6 @@ export async function publishTrainingAction(
 
   const { data, error } = await supabase.rpc("publish_training", {
     p_training_id: trainingId,
-    p_include_private: includePrivate,
   });
   if (error) return { status: "error", error: error.message };
 
