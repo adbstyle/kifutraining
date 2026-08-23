@@ -804,7 +804,7 @@ export default function Styleguide() {
         </p>
         <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
           <DiagrammVorschau
-            slug="beispiel"
+            href="/uebung/beispiel/diagramm"
             name="Abschlussspiel"
             diagramm={{
               version: 1,
@@ -818,7 +818,11 @@ export default function Styleguide() {
               ],
             }}
           />
-          <DiagrammVorschau slug="beispiel" name="Leeres Beispiel" diagramm={null} />
+          <DiagrammVorschau
+            href="/uebung/beispiel/diagramm"
+            name="Leeres Beispiel"
+            diagramm={null}
+          />
         </div>
       </Section>
 

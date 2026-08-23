@@ -32,7 +32,6 @@ import {
   type FormElement,
   type FormTyp,
 } from "@/lib/diagramm";
-import { saveDiagramm } from "@/lib/actions/diagramm";
 import { VorlagePicker } from "./VorlagePicker";
 import type { VorlageItem } from "@/lib/queries/exercises";
 import { SYMBOLE, symbolDef, symbolMasse, symbolRotation } from "./symbols";
@@ -274,13 +273,15 @@ function GlyphKachel({ label, element, active = false, disabled = false, onClick
 }
 
 export function DiagrammEditor({
-  exerciseId,
+  speichern,
   name,
   crumbs,
   initial,
   vorlagen,
 }: {
-  exerciseId: string;
+  /** Wohin das Diagramm gespeichert wird — an eine Bibliotheks-Übung oder an
+   *  eine Fassung im Training (Epic #72). Der Editor bleibt davon unabhängig. */
+  speichern: (data: DiagrammData) => Promise<{ ok: boolean; error?: string }>;
   name: string;
   crumbs: BreadcrumbItem[];
   initial: DiagrammData;
@@ -379,7 +380,7 @@ export function DiagrammEditor({
     const timer = setTimeout(() => {
       setStatus("speichert");
       saveKette.current = saveKette.current.then(async () => {
-        const result = await saveDiagramm(exerciseId, {
+        const result = await speichern({
           version: DIAGRAMM_VERSION,
           elemente,
         });
@@ -387,7 +388,7 @@ export function DiagrammEditor({
       });
     }, AUTOSAVE_MS);
     return () => clearTimeout(timer);
-  }, [elemente, exerciseId]);
+  }, [elemente, speichern]);
 
   // Hinweis (#67 AK11) nach kurzer Zeit wieder ausblenden.
   useEffect(() => {

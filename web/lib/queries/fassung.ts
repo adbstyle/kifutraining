@@ -1,0 +1,78 @@
+import { createClient } from "@/lib/supabase/server";
+import type { Fahrplan } from "@/lib/queries/exercises";
+
+/** Eine Fassung zum Bearbeiten — ausschliesslich für den Eigentümer ihres
+ *  Trainings. `null`, wenn sie nicht existiert oder dem USER nicht gehört. */
+export type FassungZumBearbeiten = {
+  id: string;
+  trainingId: string;
+  trainingName: string;
+  name: string;
+  trainingsteil: string;
+  hauptteilkategorie: string | null;
+  kategorien: string[];
+  erscheinungsform: string[];
+  feldtyp: string | null;
+  anzahlKinder: { min?: number | null; max?: number | null } | null;
+  material: string[];
+  fahrplan: Fahrplan | null;
+  aufbau: string | null;
+  varianten: string[];
+  bildUrl: string | null;
+  bildQuelle: "foto" | "diagramm" | null;
+  diagramm: unknown;
+  herkunft: { name: string; typ: string; datum: string } | null;
+};
+
+export async function getFassungZumBearbeiten(
+  fassungId: string,
+): Promise<FassungZumBearbeiten | null> {
+  // Ungültige UUID würde die Query mit Fehler abbrechen; defensiv abfangen.
+  if (!/^[0-9a-f-]{36}$/i.test(fassungId)) return null;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from("training_exercises")
+    .select(
+      `id, training_id, name, trainingsteil, hauptteilkategorie, kategorien,
+       erscheinungsform, feldtyp, anzahl_kinder, material, methodischer_fahrplan,
+       aufbau, varianten, bild_url, bild_quelle, diagramm,
+       herkunft_name, herkunft_typ, herkunft_datum,
+       trainings!inner ( id, name, owner_id )`,
+    )
+    .eq("id", fassungId)
+    .eq("trainings.owner_id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  const training = data.trainings as unknown as { id: string; name: string };
+  return {
+    id: data.id,
+    trainingId: data.training_id,
+    trainingName: training.name,
+    name: data.name ?? "Unbenannte Übung",
+    trainingsteil: data.trainingsteil,
+    hauptteilkategorie: data.hauptteilkategorie,
+    kategorien: data.kategorien ?? [],
+    erscheinungsform: data.erscheinungsform ?? [],
+    feldtyp: data.feldtyp,
+    anzahlKinder: data.anzahl_kinder,
+    material: data.material ?? [],
+    fahrplan: data.methodischer_fahrplan,
+    aufbau: data.aufbau,
+    varianten: data.varianten ?? [],
+    bildUrl: data.bild_url,
+    bildQuelle: data.bild_quelle,
+    diagramm: data.diagramm,
+    herkunft:
+      data.herkunft_name && data.herkunft_typ && data.herkunft_datum
+        ? { name: data.herkunft_name, typ: data.herkunft_typ, datum: data.herkunft_datum }
+        : null,
+  };
+}

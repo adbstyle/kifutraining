@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   Plus,
   TriangleAlert,
@@ -57,6 +58,7 @@ const AUTO_PRIVATE_MSG =
    frischen die Serverdaten auf; Dauern werden lokal überlagert. */
 export function TrainingEditor({ training }: { training: TrainingDetail }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
   // Offener Picker: Trainingsteil und — im Hauptteil — die Unterkategorie.
   const [open, setOpen] = useState<{
@@ -71,6 +73,13 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
   const [nameError, setNameError] = useState<string | undefined>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [mismatch, setMismatch] = useState<{ id: string; name: string }[] | null>(null);
+
+  // Das Bearbeiten einer Fassung läuft über eine eigene Seite und kehrt per
+  // Weiterleitung zurück. Hat die DB-Regel das Training dabei auf privat
+  // gesetzt, trägt die Rückkehr-Adresse den Hinweis — einmalig anzeigen.
+  useEffect(() => {
+    if (searchParams.get("privat") === "1") setNotice(AUTO_PRIVATE_MSG);
+  }, [searchParams]);
 
   const dur = (item: TrainingExerciseItem) =>
     item.id in durations ? durations[item.id] : item.durationMin;
@@ -245,6 +254,7 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
                     </div>
                     <ExerciseList
                       items={g.items}
+                      trainingId={training.id}
                       trainingStufen={stufen}
                       showDuration={traegtDauer}
                       dur={dur}
@@ -315,6 +325,7 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
 
             <ExerciseList
               items={teilItems}
+              trainingId={training.id}
               trainingStufen={stufen}
               showDuration={traegtDauer}
               dur={dur}
@@ -468,6 +479,7 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
  *  Hauptteil-Unterkategorie gleichermassen genutzt. */
 function ExerciseList({
   items,
+  trainingId,
   trainingStufen,
   showDuration,
   dur,
@@ -476,6 +488,7 @@ function ExerciseList({
   onRemove,
 }: {
   items: TrainingExerciseItem[];
+  trainingId: string;
   trainingStufen: string[];
   showDuration: boolean;
   dur: (item: TrainingExerciseItem) => number | null;
@@ -498,6 +511,7 @@ function ExerciseList({
           index={i}
           isFirst={i === 0}
           isLast={i === items.length - 1}
+          trainingId={trainingId}
           trainingStufen={trainingStufen}
           showDuration={showDuration}
           duration={dur(item)}
@@ -515,6 +529,7 @@ function TrainingExerciseRow({
   index,
   isFirst,
   isLast,
+  trainingId,
   trainingStufen,
   showDuration,
   duration,
@@ -526,6 +541,7 @@ function TrainingExerciseRow({
   index: number;
   isFirst: boolean;
   isLast: boolean;
+  trainingId: string;
   trainingStufen: string[];
   showDuration: boolean;
   duration: number | null;
@@ -600,6 +616,16 @@ function TrainingExerciseRow({
           />
         </>
       )}
+
+      <Tooltip label="Übung bearbeiten">
+        <Link
+          href={`/training/${trainingId}/uebung/${item.id}/edit`}
+          aria-label={`${item.name} bearbeiten`}
+          className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/8 hover:text-primary"
+        >
+          <Pencil size={16} strokeWidth={2.5} aria-hidden />
+        </Link>
+      </Tooltip>
 
       <Tooltip label="Übung entfernen">
         <button

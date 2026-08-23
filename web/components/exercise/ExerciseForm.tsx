@@ -67,12 +67,18 @@ export function ExerciseForm({
   initial = {},
   submitLabel,
   afterName,
+  bildEntfernenMoeglich = false,
+  fussnote = "Neue Übungen sind zunächst privat (Entwurf).",
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
   submitLabel: string;
   /** Optionaler Slot direkt unter dem Namensfeld (z. B. die Diagramm-Vorschau). */
   afterName?: React.ReactNode;
+  /** Erlaubt, das vorhandene Bild ohne Ersatz zu entfernen (Fassungen, Story 5). */
+  bildEntfernenMoeglich?: boolean;
+  /** Hinweis neben der Speichern-Schaltfläche. */
+  fussnote?: React.ReactNode;
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const err = state.errors ?? {};
@@ -84,6 +90,7 @@ export function ExerciseForm({
   const [hkat, setHkat] = useState<string>(initial.hauptteilkategorie ?? "");
   const [bildError, setBildError] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [bildEntfernen, setBildEntfernen] = useState(false);
 
   // Ablauf-Texte kontrolliert: nur so kann der bisherige Text beim Wechsel der
   // Einordnung als Ausgangstext in die andere Form übernommen werden (Story 2).
@@ -159,6 +166,7 @@ export function ExerciseForm({
     fd.set("form", FAHRPLAN_TEILE.has(teil) ? form.join(",") : "");
     fd.set("hauptteilkategorie", istHauptteil ? hkat : "");
     fd.set("feldtyp", feld);
+    fd.set("bild_entfernen", bildEntfernen ? "1" : "");
     startTransition(() => formAction(fd));
   }
 
@@ -344,8 +352,21 @@ export function ExerciseForm({
         </p>
         {initial.bildUrl && !err.bild && !bildError && (
           <p className="type-body-small mt-1 text-on-surface-variant">
-            Aktuelles Bild bleibt erhalten, wenn du keines hochlädst.
+            {bildEntfernen
+              ? "Das aktuelle Bild wird beim Speichern entfernt."
+              : "Aktuelles Bild bleibt erhalten, wenn du keines hochlädst."}
           </p>
+        )}
+        {bildEntfernenMoeglich && initial.bildUrl && (
+          <label className="mt-2 flex items-center gap-2 type-body-small text-on-surface-variant">
+            <input
+              type="checkbox"
+              checked={bildEntfernen}
+              onChange={(e) => setBildEntfernen(e.target.checked)}
+              className="focus-ring h-4 w-4 accent-primary"
+            />
+            Bild entfernen
+          </label>
         )}
       </div>
 
@@ -354,9 +375,9 @@ export function ExerciseForm({
           <Save size={20} strokeWidth={2} aria-hidden />
           {isCompressing ? "Bild wird optimiert …" : isPending ? "Wird gespeichert …" : submitLabel}
         </Button>
-        <p className="type-body-small text-on-surface-variant">
-          Neue Übungen sind zunächst privat (Entwurf).
-        </p>
+        {fussnote && (
+          <p className="type-body-small text-on-surface-variant">{fussnote}</p>
+        )}
       </div>
     </form>
   );
