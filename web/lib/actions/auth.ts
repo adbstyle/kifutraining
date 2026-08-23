@@ -171,7 +171,18 @@ export async function deleteAccount() {
     .select("bild_url")
     .eq("owner_id", uid)
     .eq("visibility", "private");
-  const paths = (priv ?? [])
+
+  // Dasselbe für die Fassungen in den privaten Trainings: sie tragen eigene
+  // Bildkopien, und die Kaskade der Konto-Löschung entfernt nur die Zeilen
+  // (Story 3 AK 13). Öffentliche Trainings bleiben anonymisiert erhalten —
+  // ihre Bilder müssen bleiben.
+  const { data: fassungen } = await supabase
+    .from("training_exercises")
+    .select("bild_url, trainings!inner ( owner_id, visibility )")
+    .eq("trainings.owner_id", uid)
+    .eq("trainings.visibility", "private");
+
+  const paths = [...(priv ?? []), ...(fassungen ?? [])]
     .map((p) => bildUrlToPath(p.bild_url))
     .filter((p): p is string => !!p);
 

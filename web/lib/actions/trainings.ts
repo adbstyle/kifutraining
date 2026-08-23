@@ -6,11 +6,12 @@ import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
 import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/training";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
-import { kopiereDiagramm, parseDiagramm } from "@/lib/diagramm";
 import {
   stempleHerkunft,
-  fassungBildPfad,
-  FASSUNG_INHALT_FELDER,
+  kopiereBild,
+  kopiereDiagrammVon,
+  entferneStorageObjekt,
+  inhaltFelder,
   VORLAGE_SELECT,
 } from "@/lib/fassung";
 import {
@@ -76,54 +77,6 @@ type Vorlage = {
   herkunft_typ: "manual" | "community" | "eigen" | null;
   herkunft_datum: string | null;
 } & Record<string, unknown>;
-
-/** Die inhaltlichen Felder der Vorlage übernehmen — eine Quelle für die
- *  Feldmenge, damit ein neues Übungsfeld nicht an einer von mehreren Stellen
- *  vergessen wird. */
-function fassungInhalt(ex: Vorlage): Record<string, unknown> {
-  return Object.fromEntries(FASSUNG_INHALT_FELDER.map((f) => [f, ex[f]]));
-}
-
-/** Das Diagramm entkoppelt kopieren (frische Element-IDs). `parseDiagramm` ist
- *  die Trust-Boundary: ein strukturell unbrauchbares Diagramm ergibt keine
- *  Kopie, statt die Übernahme scheitern zu lassen. */
-function kopiereDiagrammVon(quelle: unknown): unknown {
-  const data = parseDiagramm(quelle);
-  return data && data.elemente.length > 0 ? kopiereDiagramm(data) : null;
-}
-
-/** Die Bilddatei der Vorlage byte-identisch in den Pfad des Trainings-
- *  Eigentümers kopieren. Kein Download/Upload und keine Bildverarbeitung — die
- *  Storage-Kopie prüft Leserecht auf der Quelle und Schreibrecht auf dem Ziel,
- *  genau die benötigte Semantik. Ohne Vorlagenbild ein No-op. */
-async function kopiereBild(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  quellUrl: string | null,
-  ownerId: string,
-  fassungId: string,
-): Promise<{ url: string | null; pfad: string | null; error?: string }> {
-  const quellPfad = bildUrlToPath(quellUrl);
-  if (!quellPfad) return { url: null, pfad: null };
-
-  const zielPfad = fassungBildPfad(ownerId, fassungId, quellPfad);
-  const { error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .copy(quellPfad, zielPfad);
-  if (error) return { url: null, pfad: null, error: `Bildkopie fehlgeschlagen: ${error.message}` };
-
-  return {
-    url: supabase.storage.from(STORAGE_BUCKET).getPublicUrl(zielPfad).data.publicUrl,
-    pfad: zielPfad,
-  };
-}
-
-/** Storage-Objekt best-effort entfernen (no-op bei null). */
-async function entferneStorageObjekt(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  pfad: string | null,
-) {
-  if (pfad) await supabase.storage.from(STORAGE_BUCKET).remove([pfad]);
-}
 
 /** Die Bilddatei einer Fassung entfernen (Story 3 AK 13).
  *
@@ -261,7 +214,7 @@ export async function addTrainingExercise(
     // Brücke für die noch nicht überführten Zuordnungen bestehen.
     exercise_id: exerciseId,
     exercise_name_cache: ex.name,
-    ...fassungInhalt(ex),
+    ...inhaltFelder(ex),
     bild_url: bild.url,
     diagramm: kopiereDiagrammVon(ex.diagramm),
     ...stempleHerkunft(ex, user.id),
@@ -380,22 +333,35 @@ export async function setTrainingStufen(
 
   // Abweichende, noch auflösbare Übungen ermitteln (Platzhalter ohne Kategorien
   // werden nicht bewertet).
+  // Abweichende Fassungen ermitteln — anhand IHRER Alterskategorien, nicht
+  // anhand der Vorlage: die Fassung ist im Training frei bearbeitbar, ihre
+  // Kategorien können also längst abweichen. Der Embed ist nur die Brücke für
+  // noch nicht überführte Zuordnungen (siehe queries/trainings.ts) und entfällt
+  // mit dem Verweis-Abbau.
   let mismatched: { id: string; name: string }[] = [];
   if (valid.length > 0) {
     const { data: rows } = await supabase
       .from("training_exercises")
-      .select("id, exercise_name_cache, exercises ( name, kategorien )")
+      .select("id, name, kategorien, exercise_name_cache, exercises ( name, kategorien )")
       .eq("training_id", trainingId);
     mismatched = (rows ?? [])
-      .map((r) => ({
-        id: r.id,
+      .map((r) => {
         // Embed ist als to-one-FK ein Objekt; supabase-js typisiert es defensiv
         // als Array -> hier auf das tatsächliche Objekt normalisieren.
-        ex: (r.exercises as unknown) as { name: string; kategorien: string[] } | null,
-        cache: r.exercise_name_cache,
-      }))
-      .filter((r) => r.ex != null && !stufenAbgedeckt(valid, r.ex.kategorien))
-      .map((r) => ({ id: r.id, name: r.ex?.name ?? r.cache ?? "Übung" }));
+        const ex = (r.exercises as unknown) as
+          | { name: string; kategorien: string[] }
+          | null;
+        const ueberfuehrt = r.name != null;
+        return {
+          id: r.id,
+          name: r.name ?? ex?.name ?? r.exercise_name_cache ?? "Übung",
+          kategorien: ueberfuehrt ? (r.kategorien ?? []) : (ex?.kategorien ?? []),
+        };
+      })
+      // Ohne Kategorien gibt es nichts abzudecken — solche Fassungen gelten
+      // nicht als abweichend.
+      .filter((r) => r.kategorien.length > 0 && !stufenAbgedeckt(valid, r.kategorien))
+      .map((r) => ({ id: r.id, name: r.name }));
   }
 
   revalidateTraining(trainingId);

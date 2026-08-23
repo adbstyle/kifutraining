@@ -7,8 +7,15 @@ import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
-import { parseDiagramm, kopiereDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
-import { fassungBildPfad, fassungUnvollstaendig, dateiendung, stempleHerkunft } from "@/lib/fassung";
+import { parseDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
+import {
+  fassungUnvollstaendig,
+  stempleHerkunft,
+  kopiereBild,
+  kopiereDiagrammVon,
+  entferneStorageObjekt,
+  inhaltFelder,
+} from "@/lib/fassung";
 import { userSlug } from "@/lib/slug";
 import { TRAININGSTEIL_SLUGS } from "@/lib/training";
 import { hauptteilkategorieSlugs, type TrainingsteilSlug } from "@/lib/vocab";
@@ -219,39 +226,19 @@ export async function uebernehmeInBibliothek(
 
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
   const uebungId = crypto.randomUUID();
-  const quellPfad = bildUrlToPath(f.bild_url);
-  let bildUrl: string | null = null;
-  let zielPfad: string | null = null;
-  if (quellPfad) {
-    zielPfad = `user/${user.id}/${uebungId}.${dateiendung(quellPfad)}`;
-    const { error } = await supabase.storage.from(STORAGE_BUCKET).copy(quellPfad, zielPfad);
-    if (error) return { ok: false, error: `Bildkopie fehlgeschlagen: ${error.message}` };
-    bildUrl = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(zielPfad).data.publicUrl;
-  }
+  const bild = await kopiereBild(supabase, f.bild_url, user.id, uebungId);
+  if (bild.error) return { ok: false, error: bild.error };
 
-  const quellDiagramm = parseDiagramm(f.diagramm);
   const { data: angelegt, error } = await supabase
     .from("exercises")
     .insert({
       id: uebungId,
       slug: userSlug(f.name!),
-      name: f.name,
       trainingsteil: f.trainingsteil,
       hauptteilkategorie: f.hauptteilkategorie,
-      kategorien: f.kategorien,
-      erscheinungsform: f.erscheinungsform,
-      feldtyp: f.feldtyp,
-      anzahl_kinder: f.anzahl_kinder,
-      material: f.material,
-      methodischer_fahrplan: f.methodischer_fahrplan,
-      aufbau: f.aufbau,
-      varianten: f.varianten,
-      bild_url: bildUrl,
-      bild_quelle: f.bild_quelle,
-      diagramm:
-        quellDiagramm && quellDiagramm.elemente.length > 0
-          ? kopiereDiagramm(quellDiagramm)
-          : null,
+      ...inhaltFelder(f),
+      bild_url: bild.url,
+      diagramm: kopiereDiagrammVon(f.diagramm),
       source: "user",
       owner_id: user.id,
       // Zunächst privat (PO-Entscheid): veröffentlicht wird bewusst separat.
@@ -263,7 +250,7 @@ export async function uebernehmeInBibliothek(
     .single();
 
   if (error || !angelegt) {
-    if (zielPfad) await supabase.storage.from(STORAGE_BUCKET).remove([zielPfad]);
+    await entferneStorageObjekt(supabase, bild.pfad);
     return { ok: false, error: error?.message ?? "Übernehmen fehlgeschlagen." };
   }
 

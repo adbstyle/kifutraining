@@ -99,24 +99,12 @@ create trigger te_herkunft_unveraenderlich before update on training_exercises
 create trigger ex_herkunft_unveraenderlich before update on exercises
   for each row execute function herkunft_unveraenderlich();
 
--- Die Diagramm-Herkunft trägt eigene Spaltennamen und darum eine eigene
--- Funktion; dieselbe Semantik.
-create or replace function diagramm_herkunft_unveraenderlich() returns trigger
-language plpgsql as $$
-begin
-  if old.diagramm_herkunft_datum is not null and (
-       new.diagramm_herkunft_name  is distinct from old.diagramm_herkunft_name
-    or new.diagramm_herkunft_typ   is distinct from old.diagramm_herkunft_typ
-    or new.diagramm_herkunft_datum is distinct from old.diagramm_herkunft_datum
-  ) then
-    raise exception 'Die Diagramm-Herkunft ist unveränderlich';
-  end if;
-  return new;
-end;
-$$;
-
-create trigger ex_diagramm_herkunft_unveraenderlich before update on exercises
-  for each row execute function diagramm_herkunft_unveraenderlich();
+-- Die Diagramm-Herkunft ist BEWUSST veränderlich — anders als die Herkunft der
+-- Fassung oder der Übung selbst. Grund: sie beschreibt nicht die Entstehung des
+-- Datensatzes, sondern die Quelle seines aktuellen Diagramms. Übernimmt der
+-- Trainer eine andere Diagramm-Vorlage, wechselt diese Quelle tatsächlich; ein
+-- festgeschriebener Stempel würde dann eine falsche Aussage machen und die
+-- zweite Übernahme überhaupt verhindern.
 
 -- ----------------------------------------------------------------------------
 -- 4) Freie Einordnung der Fassung (Story 3 AK 10)

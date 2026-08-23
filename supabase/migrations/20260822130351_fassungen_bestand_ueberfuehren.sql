@@ -12,8 +12,11 @@
 -- Migration ohne vorherigen Skriptlauf, zeigt die URL ins Leere; genau das
 -- deckt der Nachweis in Schritt 3 auf, und ein erneuter Skriptlauf heilt es.
 --
--- Nur noch nicht überführte Zeilen werden angefasst (`herkunft_datum is null`),
--- damit ein Wiederanlauf nichts überschreibt, was inzwischen bearbeitet wurde.
+-- Angefasst wird nur, was noch nicht überführt ist (`herkunft_datum is null`).
+-- Zusätzlich gilt: Inhalte werden nur übertragen, wenn die Zuordnung noch keine
+-- trägt (`name is null`). Hat ein Trainer im Auslieferungsfenster — zwischen
+-- App-Deploy und dieser Migration — schon eine Fassung bearbeitet, bleibt seine
+-- Eingabe erhalten; sie bekommt in Schritt 3 nur noch den fehlenden Stempel.
 
 -- ----------------------------------------------------------------------------
 -- 1) Zuordnungen mit auflösbarer Übung
@@ -50,7 +53,8 @@ set name                  = e.name,
 from exercises e, trainings t
 where e.id = te.exercise_id
   and t.id = te.training_id
-  and te.herkunft_datum is null;
+  and te.herkunft_datum is null
+  and te.name is null;
 
 -- ----------------------------------------------------------------------------
 -- 2) Zuordnungen ohne auflösbare Übung (Story 9 AK 4)
@@ -66,4 +70,49 @@ set name = coalesce(nullif(btrim(exercise_name_cache), ''), 'Übung ohne Inhalt'
     herkunft_typ = 'community',
     herkunft_datum = now()
 where exercise_id is null
-  and herkunft_datum is null;
+  and herkunft_datum is null
+  and name is null;
+
+-- ----------------------------------------------------------------------------
+-- 3) Im Auslieferungsfenster bearbeitete Zuordnungen nur stempeln
+-- ----------------------------------------------------------------------------
+-- Diese Zeilen tragen bereits eigene Inhalte (vom Trainer erfasst), ihnen fehlen
+-- nur Herkunft und — weil das Formular im Fenster kein Bild anzeigen konnte —
+-- der Verweis auf die bereits kopierte Bilddatei. Ohne beides würde der Nachweis
+-- sie zu Recht beanstanden und den Verweis-Abbau blockieren.
+update training_exercises te
+set -- Die Bildkopie hat Schritt 1 des Verfahrens schon angelegt; hier fehlt nur
+    -- der Verweis darauf. Ein bereits gesetzter bleibt unangetastet.
+    bild_url = coalesce(te.bild_url, (
+      select case
+               when e.bild_url is null or t.owner_id is null then null
+               else regexp_replace(e.bild_url, '/exercise-images/.*$', '')
+                    || '/exercise-images/user/' || t.owner_id || '/' || te.id || '.'
+                    || coalesce(nullif(regexp_replace(e.bild_url, '^.*\.', ''), e.bild_url), 'png')
+             end
+        from exercises e where e.id = te.exercise_id
+    )),
+    bild_quelle = coalesce(
+      te.bild_quelle,
+      (select e.bild_quelle from exercises e where e.id = te.exercise_id)
+    ),
+    herkunft_name = coalesce(
+      (select e.name from exercises e where e.id = te.exercise_id),
+      nullif(btrim(te.exercise_name_cache), ''),
+      te.name
+    ),
+    herkunft_typ = coalesce(
+      (select case
+                when e.source = 'manual' then 'manual'
+                when e.owner_id is not null and e.owner_id = t.owner_id then 'eigen'
+                else 'community'
+              end
+         from exercises e where e.id = te.exercise_id),
+      -- Ohne auflösbare Quelle: nur eine Trainer-Übung kann verschwinden.
+      'community'
+    ),
+    herkunft_datum = now()
+from trainings t
+where t.id = te.training_id
+  and te.herkunft_datum is null
+  and te.name is not null;

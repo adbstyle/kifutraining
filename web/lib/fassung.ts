@@ -2,6 +2,9 @@
 // (Epic #72). Diese Datei hält die Regeln, die Erzeugung und Übernahme teilen —
 // die Server Actions bleiben dadurch dünn.
 import { brauchtFahrplan } from "@/lib/labels";
+import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
+import { kopiereDiagramm, parseDiagramm } from "@/lib/diagramm";
+import type { createClient } from "@/lib/supabase/server";
 
 /** Woraus eine Fassung entstanden ist. Reine Angabe ohne Fremdschlüssel: sie
  *  überlebt das Verschwinden des Originals und ist unveränderlich. */
@@ -110,8 +113,9 @@ export const VORLAGE_SELECT = [
 ].join(", ");
 
 /** Die Dateiendung eines Storage-Pfads (ohne Punkt), mit Rückfall auf `png`.
- *  Die Endung bestimmt den Zielnamen der Bildkopie. */
-export function dateiendung(pfad: string): string {
+ *  Die Endung bestimmt den Zielnamen der Bildkopie. Modul-intern: nach aussen
+ *  genügt `fassungBildPfad`. */
+function dateiendung(pfad: string): string {
   const teil = pfad.split(".").pop();
   return teil && teil !== pfad && /^[a-z0-9]+$/i.test(teil) ? teil : "png";
 }
@@ -160,4 +164,59 @@ export function fassungBildPfad(
   quellPfad: string,
 ): string {
   return `user/${ownerId}/${trainingExerciseId}.${dateiendung(quellPfad)}`;
+}
+
+// ── Kopier-Bausteine ────────────────────────────────────────────────────────
+// Geteilt zwischen dem Übernehmen einer Vorlage ins Training und dem Übernehmen
+// einer Fassung in die Bibliothek: beide erzeugen eine entkoppelte Kopie.
+
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
+
+/** Das Diagramm entkoppelt kopieren (frische Element-IDs). `parseDiagramm` ist
+ *  die Trust-Boundary: ein strukturell unbrauchbares Diagramm ergibt keine
+ *  Kopie, statt die ganze Übernahme scheitern zu lassen. */
+export function kopiereDiagrammVon(quelle: unknown): unknown {
+  const data = parseDiagramm(quelle);
+  return data && data.elemente.length > 0 ? kopiereDiagramm(data) : null;
+}
+
+/** Eine Bilddatei byte-identisch in den Pfad des Handelnden kopieren.
+ *
+ *  Kein Download/Upload und keine Bildverarbeitung — die Storage-Kopie prüft
+ *  Leserecht auf der Quelle (der Bucket ist öffentlich lesbar) und Schreibrecht
+ *  auf dem Ziel (eigener Pfad), genau die benötigte Semantik. Der Zielname ist
+ *  die ID des neuen Objekts, damit ein erneuter Versuch dieselbe Datei
+ *  überschreibt statt Waisen zu hinterlassen. Ohne Quellbild ein No-op. */
+export async function kopiereBild(
+  supabase: SupabaseClient,
+  quellUrl: string | null,
+  ownerId: string,
+  zielId: string,
+): Promise<{ url: string | null; pfad: string | null; error?: string }> {
+  const quellPfad = bildUrlToPath(quellUrl);
+  if (!quellPfad) return { url: null, pfad: null };
+
+  const zielPfad = fassungBildPfad(ownerId, zielId, quellPfad);
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).copy(quellPfad, zielPfad);
+  if (error) return { url: null, pfad: null, error: `Bildkopie fehlgeschlagen: ${error.message}` };
+
+  return {
+    url: supabase.storage.from(STORAGE_BUCKET).getPublicUrl(zielPfad).data.publicUrl,
+    pfad: zielPfad,
+  };
+}
+
+/** Storage-Objekt best-effort entfernen (no-op bei null). */
+export async function entferneStorageObjekt(
+  supabase: SupabaseClient,
+  pfad: string | null,
+) {
+  if (pfad) await supabase.storage.from(STORAGE_BUCKET).remove([pfad]);
+}
+
+/** Die inhaltlichen Felder einer Quelle übernehmen — eine Quelle für die
+ *  Feldmenge, damit ein neues Übungsfeld nicht an einer von mehreren Stellen
+ *  vergessen wird. */
+export function inhaltFelder(quelle: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(FASSUNG_INHALT_FELDER.map((f) => [f, quelle[f]]));
 }

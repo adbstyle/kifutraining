@@ -36,14 +36,16 @@ export async function getFassungZumBearbeiten(
   } = await supabase.auth.getUser();
   if (!user) return null;
 
+  const INHALT = `name, kategorien, erscheinungsform, feldtyp, anzahl_kinder,
+    material, methodischer_fahrplan, aufbau, varianten, bild_url, bild_quelle, diagramm`;
+
   const { data, error } = await supabase
     .from("training_exercises")
     .select(
-      `id, training_id, name, trainingsteil, hauptteilkategorie, kategorien,
-       erscheinungsform, feldtyp, anzahl_kinder, material, methodischer_fahrplan,
-       aufbau, varianten, bild_url, bild_quelle, diagramm,
+      `id, training_id, trainingsteil, hauptteilkategorie, ${INHALT},
        herkunft_name, herkunft_typ, herkunft_datum,
-       trainings!inner ( id, name, owner_id )`,
+       trainings!inner ( id, name, owner_id ),
+       exercises ( ${INHALT} )`,
     )
     .eq("id", fassungId)
     .eq("trainings.owner_id", user.id)
@@ -52,24 +54,31 @@ export async function getFassungZumBearbeiten(
   if (!data) return null;
 
   const training = data.trainings as unknown as { id: string; name: string };
+  // Dieselbe Brücke wie im Anzeige-Pfad: eine noch nicht überführte Zuordnung
+  // liefert ihre Inhalte über die referenzierte Übung, damit das Formular im
+  // Auslieferungsfenster nicht leer erscheint. Entfällt mit dem Verweis-Abbau.
+  const q = (data.name != null
+    ? data
+    : ((data.exercises as unknown as Record<string, unknown> | null) ?? data)) as typeof data;
+
   return {
     id: data.id,
     trainingId: data.training_id,
     trainingName: training.name,
-    name: data.name ?? "Unbenannte Übung",
+    name: q.name ?? "Unbenannte Übung",
     trainingsteil: data.trainingsteil,
     hauptteilkategorie: data.hauptteilkategorie,
-    kategorien: data.kategorien ?? [],
-    erscheinungsform: data.erscheinungsform ?? [],
-    feldtyp: data.feldtyp,
-    anzahlKinder: data.anzahl_kinder,
-    material: data.material ?? [],
-    fahrplan: data.methodischer_fahrplan,
-    aufbau: data.aufbau,
-    varianten: data.varianten ?? [],
-    bildUrl: data.bild_url,
-    bildQuelle: data.bild_quelle,
-    diagramm: data.diagramm,
+    kategorien: q.kategorien ?? [],
+    erscheinungsform: q.erscheinungsform ?? [],
+    feldtyp: q.feldtyp,
+    anzahlKinder: q.anzahl_kinder,
+    material: q.material ?? [],
+    fahrplan: q.methodischer_fahrplan,
+    aufbau: q.aufbau,
+    varianten: q.varianten ?? [],
+    bildUrl: q.bild_url,
+    bildQuelle: q.bild_quelle,
+    diagramm: q.diagramm,
     herkunft:
       data.herkunft_name && data.herkunft_typ && data.herkunft_datum
         ? { name: data.herkunft_name, typ: data.herkunft_typ, datum: data.herkunft_datum }
