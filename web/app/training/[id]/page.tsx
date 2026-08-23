@@ -4,6 +4,7 @@ import { Clock, Sparkles, Play, Printer } from "lucide-react";
 import { Breadcrumbs, KategorieChip, ButtonLink, HerkunftsAngabe } from "@/components/ui";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
+import { InBibliothekButton } from "@/components/training/InBibliothekButton";
 import { getTrainingView } from "@/lib/queries/trainings";
 import { createClient } from "@/lib/supabase/server";
 import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
@@ -133,6 +134,12 @@ export default async function TrainingViewPage({
                               <span className="shrink-0 type-label-medium text-on-surface-variant">
                                 {dur}
                               </span>
+                            )}
+                            {/* Auch aus einem fremden öffentlichen Training
+                                übernehmbar (Story 7 AK 2) — hier gibt es keinen
+                                Editor, darum steht die Aktion in der Ansicht. */}
+                            {user && (
+                              <InBibliothekButton fassungId={item.id} name={item.name} />
                             )}
                           </li>
                         );

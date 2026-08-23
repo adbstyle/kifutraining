@@ -7,8 +7,9 @@ import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
-import { parseDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
-import { fassungBildPfad } from "@/lib/fassung";
+import { parseDiagramm, kopiereDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
+import { fassungBildPfad, fassungUnvollstaendig, dateiendung, stempleHerkunft } from "@/lib/fassung";
+import { userSlug } from "@/lib/slug";
 import { TRAININGSTEIL_SLUGS } from "@/lib/training";
 import { hauptteilkategorieSlugs, type TrainingsteilSlug } from "@/lib/vocab";
 
@@ -181,6 +182,93 @@ export async function updateFassung(
   redirect(
     `/training/${fassung.training_id}/edit?bearbeitet=1${wurdePrivat ? "&privat=1" : ""}`,
   );
+}
+
+/** Eine Fassung als eigene, zunächst private Vorlage in die Bibliothek
+ *  übernehmen (Story 7).
+ *
+ *  Zulässig ist jede für den USER sichtbare Fassung — auch aus einem fremden
+ *  öffentlichen Training. Es entsteht eine gewöhnliche Trainer-Übung mit eigener
+ *  Bild- und Diagrammkopie; eine Verknüpfung zur Fassung gibt es nicht, spätere
+ *  Änderungen wirken in keine Richtung. Die Herkunft der Fassung wird
+ *  unverändert übertragen, sodass die ursprüngliche Quelle auch an späteren
+ *  Fassungen dieser Vorlage stehen bleibt. */
+export async function uebernehmeInBibliothek(
+  fassungId: string,
+): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+
+  // RLS lässt Fassungen eigener und öffentlicher Trainings durch.
+  const { data: f } = await supabase
+    .from("training_exercises")
+    .select(
+      `name, trainingsteil, hauptteilkategorie, kategorien, erscheinungsform, feldtyp,
+       anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten,
+       bild_url, bild_quelle, diagramm, herkunft_name, herkunft_typ, herkunft_datum`,
+    )
+    .eq("id", fassungId)
+    .maybeSingle();
+  if (!f) return { ok: false, error: "Diese Übung ist nicht mehr verfügbar." };
+
+  const mangel = fassungUnvollstaendig(f);
+  if (mangel) return { ok: false, error: mangel };
+
+  // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
+  const uebungId = crypto.randomUUID();
+  const quellPfad = bildUrlToPath(f.bild_url);
+  let bildUrl: string | null = null;
+  let zielPfad: string | null = null;
+  if (quellPfad) {
+    zielPfad = `user/${user.id}/${uebungId}.${dateiendung(quellPfad)}`;
+    const { error } = await supabase.storage.from(STORAGE_BUCKET).copy(quellPfad, zielPfad);
+    if (error) return { ok: false, error: `Bildkopie fehlgeschlagen: ${error.message}` };
+    bildUrl = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(zielPfad).data.publicUrl;
+  }
+
+  const quellDiagramm = parseDiagramm(f.diagramm);
+  const { data: angelegt, error } = await supabase
+    .from("exercises")
+    .insert({
+      id: uebungId,
+      slug: userSlug(f.name!),
+      name: f.name,
+      trainingsteil: f.trainingsteil,
+      hauptteilkategorie: f.hauptteilkategorie,
+      kategorien: f.kategorien,
+      erscheinungsform: f.erscheinungsform,
+      feldtyp: f.feldtyp,
+      anzahl_kinder: f.anzahl_kinder,
+      material: f.material,
+      methodischer_fahrplan: f.methodischer_fahrplan,
+      aufbau: f.aufbau,
+      varianten: f.varianten,
+      bild_url: bildUrl,
+      bild_quelle: f.bild_quelle,
+      diagramm:
+        quellDiagramm && quellDiagramm.elemente.length > 0
+          ? kopiereDiagramm(quellDiagramm)
+          : null,
+      source: "user",
+      owner_id: user.id,
+      // Zunächst privat (PO-Entscheid): veröffentlicht wird bewusst separat.
+      visibility: "private",
+      // Herkunft unverändert weitergeben — die ursprüngliche Quelle bleibt.
+      ...stempleHerkunft(f, user.id),
+    })
+    .select("slug")
+    .single();
+
+  if (error || !angelegt) {
+    if (zielPfad) await supabase.storage.from(STORAGE_BUCKET).remove([zielPfad]);
+    return { ok: false, error: error?.message ?? "Übernehmen fehlgeschlagen." };
+  }
+
+  revalidatePath("/");
+  return { ok: true, slug: angelegt.slug };
 }
 
 /** Das Diagramm einer Fassung speichern — das Pendant zu `saveDiagramm` für

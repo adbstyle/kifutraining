@@ -27,6 +27,7 @@ import {
 } from "@/components/ui";
 import { ExercisePickerDialog } from "./ExercisePickerDialog";
 import { ExerciseThumb } from "./ExerciseThumb";
+import { InBibliothekButton } from "./InBibliothekButton";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
 import { TrainingVisibilityControl } from "./TrainingVisibilityControl";
@@ -618,6 +619,8 @@ function TrainingExerciseRow({
           />
         </>
       )}
+
+      <InBibliothekButton fassungId={item.id} name={item.name} />
 
       <Tooltip label="Übung bearbeiten">
         <Link

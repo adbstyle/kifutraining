@@ -1,6 +1,7 @@
 // Fassungen: eigenständige, im Training lebende Kopien von Bibliotheks-Übungen
 // (Epic #72). Diese Datei hält die Regeln, die Erzeugung und Übernahme teilen —
 // die Server Actions bleiben dadurch dünn.
+import { brauchtFahrplan } from "@/lib/labels";
 
 /** Woraus eine Fassung entstanden ist. Reine Angabe ohne Fremdschlüssel: sie
  *  überlebt das Verschwinden des Originals und ist unveränderlich. */
@@ -51,8 +52,18 @@ export function stempleHerkunft(quelle: HerkunftsQuelle, userId: string): Herkun
 
 /** Aus welchem Bestand stammt das Original? Manual-Übungen sind der kuratierte
  *  Bestand; alles andere unterscheidet sich danach, ob es dem Handelnden selbst
- *  gehört. */
+ *  gehört.
+ *
+ *  Fehlt `source`, bricht das laut ab: ohne dieses Feld liesse sich der Typ nur
+ *  raten, und das Ergebnis wäre eine plausibel aussehende, aber falsche
+ *  Herkunftsangabe — die sich später nicht mehr korrigieren lässt, weil der
+ *  Stempel unveränderlich ist. Ein Aufrufer, der die Quelle liest, muss `source`
+ *  mitselektieren. */
 function herkunftsTyp(quelle: HerkunftsQuelle, userId: string): HerkunftTyp {
+  if (!quelle.source)
+    throw new Error(
+      "stempleHerkunft: Die Quelle trägt keine eigene Herkunft, dann ist `source` zum Ableiten des Typs erforderlich.",
+    );
   if (quelle.source === "manual") return "manual";
   return quelle.owner_id === userId ? "eigen" : "community";
 }
@@ -103,6 +114,40 @@ export const VORLAGE_SELECT = [
 export function dateiendung(pfad: string): string {
   const teil = pfad.split(".").pop();
   return teil && teil !== pfad && /^[a-z0-9]+$/i.test(teil) ? teil : "png";
+}
+
+/** Erfüllt der Inhalt einer Fassung die Vollständigkeitsregel für Übungen?
+ *  Gibt `null` zurück, wenn sie erfüllt ist, sonst eine Meldung für den USER.
+ *
+ *  Spiegelt die DB-Constraints `ablauf_je_einordnung` und
+ *  `fahrplan_vollstaendig`: die Datenbank würde eine lückenhafte Übung ohnehin
+ *  abweisen — hier geht es um eine verständliche Meldung statt eines rohen
+ *  Constraint-Fehlers. Betrifft vor allem die inhaltsleeren Fassungen aus der
+ *  Bestand-Überführung. */
+export function fassungUnvollstaendig(f: {
+  name: string | null;
+  trainingsteil: string;
+  hauptteilkategorie: string | null;
+  methodischer_fahrplan: { offen_starten?: string; ueben?: string[]; wetteifern?: string | null } | null;
+  aufbau: string | null;
+}): string | null {
+  if (!f.name?.trim()) return "Diese Übung hat keinen Namen.";
+
+  if (brauchtFahrplan(f.trainingsteil, f.hauptteilkategorie)) {
+    const fp = f.methodischer_fahrplan;
+    const vollstaendig =
+      !!fp?.offen_starten?.trim() &&
+      Array.isArray(fp.ueben) &&
+      fp.ueben.length > 0 &&
+      !!fp.wetteifern?.trim();
+    return vollstaendig
+      ? null
+      : "Diese Übung hat keinen vollständigen methodischen Fahrplan. Ergänze ihn im Training, bevor du sie in deine Bibliothek übernimmst.";
+  }
+
+  return f.aufbau?.trim()
+    ? null
+    : "Diese Übung hat keine Ablaufbeschreibung. Ergänze sie im Training, bevor du sie in deine Bibliothek übernimmst.";
 }
 
 /** Zielpfad der Bildkopie einer Fassung. Der Dateiname ist die Zuordnungs-ID —
