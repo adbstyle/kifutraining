@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseDiagramm, kopiereDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
+import { stempleHerkunft } from "@/lib/fassung";
 
 export type SaveDiagrammResult = { ok: true } | { ok: false; error: string };
 
@@ -85,7 +86,9 @@ export async function uebernimmVorlage(
   // ausschliesslich Manual oder eigene Übungen sind als Vorlage zulässig.
   const { data: quelle } = await supabase
     .from("exercises")
-    .select("diagramm, source, owner_id")
+    .select(
+      "name, diagramm, source, owner_id, diagramm_herkunft_name, diagramm_herkunft_typ, diagramm_herkunft_datum",
+    )
     .eq("id", quellId)
     .maybeSingle();
   if (!quelle) return { ok: false, error: "Vorlage nicht gefunden." };
@@ -100,9 +103,30 @@ export async function uebernimmVorlage(
   // bild_quelle hier bewusst fest auf "diagramm" gesetzt (kein vorgelagerter
   // Read): das übernommene Diagramm wird immer das aktive Anzeige-Bild (#61
   // PC4), ein vorhandenes Foto (bild_url) bleibt als Umschalt-Option erhalten.
+  // Herkunft der Diagramm-Kopie stempeln (Story 6 AK 8). Trägt die Quelle
+  // selbst schon eine, wird sie unverändert weitergegeben — auch hier bleibt
+  // die ursprüngliche Herkunft stehen.
+  const herkunft = stempleHerkunft(
+    {
+      name: quelle.name,
+      source: quelle.source,
+      owner_id: quelle.owner_id,
+      herkunft_name: quelle.diagramm_herkunft_name,
+      herkunft_typ: quelle.diagramm_herkunft_typ,
+      herkunft_datum: quelle.diagramm_herkunft_datum,
+    },
+    user.id,
+  );
+
   const { data: updated, error } = await supabase
     .from("exercises")
-    .update({ diagramm: kopiereDiagramm(data), bild_quelle: "diagramm" })
+    .update({
+      diagramm: kopiereDiagramm(data),
+      bild_quelle: "diagramm",
+      diagramm_herkunft_name: herkunft.herkunft_name,
+      diagramm_herkunft_typ: herkunft.herkunft_typ,
+      diagramm_herkunft_datum: herkunft.herkunft_datum,
+    })
     .eq("id", zielId)
     .eq("owner_id", user.id)
     .eq("source", "user")

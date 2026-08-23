@@ -23,6 +23,7 @@ import {
   TextField,
   IconButton,
   Tooltip,
+  HerkunftsAngabe,
 } from "@/components/ui";
 import { ExercisePickerDialog } from "./ExercisePickerDialog";
 import { ExerciseThumb } from "./ExerciseThumb";
@@ -603,6 +604,7 @@ function TrainingExerciseRow({
             ))}
           </span>
         )}
+        {item.herkunft && <HerkunftsAngabe herkunft={item.herkunft} />}
       </span>
 
       {showDuration && (

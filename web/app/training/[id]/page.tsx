@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, Sparkles, Play, Printer } from "lucide-react";
-import { Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
+import { Breadcrumbs, KategorieChip, ButtonLink, HerkunftsAngabe } from "@/components/ui";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { getTrainingView } from "@/lib/queries/trainings";
@@ -121,8 +121,13 @@ export default async function TrainingViewPage({
                               bildQuelle={item.bildQuelle}
                               name={item.name}
                             />
-                            <span className="min-w-0 flex-1 truncate type-body-medium text-on-surface">
-                              {item.name}
+                            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                              <span className="truncate type-body-medium text-on-surface">
+                                {item.name}
+                              </span>
+                              {item.herkunft && (
+                                <HerkunftsAngabe herkunft={item.herkunft} />
+                              )}
                             </span>
                             {dur && (
                               <span className="shrink-0 type-label-medium text-on-surface-variant">
