@@ -73,7 +73,7 @@ export default async function TrainingDruckPage({
                     )}
                     <div className="flex flex-col gap-6">
                       {b.items.map((item) => (
-                        <TrainingExerciseDetail key={item.id} item={item} showSource />
+                        <TrainingExerciseDetail key={item.id} item={item} />
                       ))}
                     </div>
                   </div>

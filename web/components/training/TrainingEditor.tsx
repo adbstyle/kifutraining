@@ -367,9 +367,6 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
               hauptteilkategorie={sub?.slug}
               hauptteilkategorieLabel={sub?.label}
               trainingStufen={stufen}
-              addedExerciseIds={openItems
-                .map((e) => e.exerciseId)
-                .filter((id): id is string => id != null)}
               onAdded={() => router.refresh()}
             />
           );
@@ -536,10 +533,7 @@ function TrainingExerciseRow({
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
 }) {
-  const mismatch =
-    item.available &&
-    item.exercise != null &&
-    !stufenAbgedeckt(trainingStufen, item.exercise.kategorien);
+  const mismatch = !stufenAbgedeckt(trainingStufen, item.kategorien);
 
   return (
     <li className="flex items-center gap-2 rounded-[4px] border border-outline-variant bg-surface-container-low px-3 py-2.5 sm:gap-3">
@@ -570,9 +564,9 @@ function TrainingExerciseRow({
       </span>
 
       <ExerciseThumb
-        bildUrl={item.exercise?.bild_url}
-        diagramm={item.exercise?.diagramm}
-        bildQuelle={item.exercise?.bild_quelle}
+        bildUrl={item.bildUrl}
+        diagramm={item.diagramm}
+        bildQuelle={item.bildQuelle}
         name={item.name}
         className="hidden sm:block"
       />
@@ -586,14 +580,9 @@ function TrainingExerciseRow({
             </span>
           )}
         </span>
-        {!item.available && (
-          <span className="type-label-small text-on-surface-variant">
-            Übung nicht mehr verfügbar (Platzhalter)
-          </span>
-        )}
-        {item.available && item.exercise && item.exercise.kategorien.length > 0 && (
+        {item.kategorien.length > 0 && (
           <span className="flex flex-wrap gap-1">
-            {item.exercise.kategorien.map((k) => (
+            {item.kategorien.map((k) => (
               <KategorieChip key={k} k={k as never} />
             ))}
           </span>

@@ -125,6 +125,25 @@ async function entferneStorageObjekt(
   if (pfad) await supabase.storage.from(STORAGE_BUCKET).remove([pfad]);
 }
 
+/** Die Bilddatei einer Fassung entfernen (Story 3 AK 13).
+ *
+ *  Gelöscht wird ausschliesslich die eigene Kopie: der Dateiname muss die
+ *  Zuordnungs-ID tragen, wie `fassungBildPfad` sie bildet. Zeigt die URL auf
+ *  etwas anderes — etwa noch auf das Bild der Vorlage, solange eine Zuordnung
+ *  nicht überführt ist — bleibt die Datei unangetastet. Ein verwaistes Bild ist
+ *  harmlos, ein gelöschtes Vorlagenbild wäre Datenverlust für alle. */
+async function entferneFassungsBild(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  bildUrl: string | null,
+  fassungId: string,
+) {
+  const pfad = bildUrlToPath(bildUrl);
+  if (!pfad) return;
+  const datei = pfad.slice(pfad.lastIndexOf("/") + 1);
+  if (!datei.startsWith(`${fassungId}.`)) return;
+  await entferneStorageObjekt(supabase, pfad);
+}
+
 // ── Story #10: Training anlegen ──────────────────────────────────────────────────
 
 /** Neues Training anlegen (Story #10 AC1/AC2/AC3). Standardmässig privat, der USER
@@ -251,58 +270,6 @@ export async function addTrainingExercise(
     await entferneStorageObjekt(supabase, bild.pfad);
     return { ok: false, error: error.message };
   }
-
-  revalidateTraining(trainingId);
-  return { ok: true };
-}
-
-/** Genau eine Zuordnung einer Übung aus dem Trainingsteil entfernen (Warenkorb-
- *  „−" im Picker, Story #10). Entfernt die zuletzt hinzugefügte (höchste
- *  Position) passende Zeile, damit wiederholtes „−" die Anzahl Schritt für
- *  Schritt reduziert. RLS setzt das Eigentum zusätzlich serverseitig durch. */
-export async function removeOneTrainingExercise(
-  trainingId: string,
-  trainingsteil: string,
-  exerciseId: string,
-  hauptteilkategorie?: string | null,
-): Promise<TrainingActionResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-  if (!TRAININGSTEIL_SLUGS.includes(trainingsteil as TrainingsteilSlug))
-    return { ok: false, error: "Ungültiger Trainingsteil." };
-
-  const istHauptteil = trainingsteil === "hauptteil";
-  const hkat = istHauptteil ? (hauptteilkategorie ?? null) : null;
-
-  // Eigentum prüfen (UX-Guard; RLS setzt es ohnehin durch).
-  const { data: training } = await supabase
-    .from("trainings")
-    .select("id")
-    .eq("id", trainingId)
-    .eq("owner_id", user.id)
-    .maybeSingle();
-  if (!training) return { ok: false, error: "Training nicht gefunden." };
-
-  // Zuletzt hinzugefügte passende Zuordnung entfernen (im Hauptteil zusätzlich
-  // auf die Unterkategorie eingegrenzt).
-  let rowQuery = supabase
-    .from("training_exercises")
-    .select("id")
-    .eq("training_id", trainingId)
-    .eq("trainingsteil", trainingsteil)
-    .eq("exercise_id", exerciseId);
-  rowQuery = istHauptteil ? rowQuery.eq("hauptteilkategorie", hkat as string) : rowQuery;
-  const { data: row } = await rowQuery
-    .order("position", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!row) return { ok: false, error: "Übung nicht im Trainingsteil." };
-
-  const { error } = await supabase.from("training_exercises").delete().eq("id", row.id);
-  if (error) return { ok: false, error: error.message };
 
   revalidateTraining(trainingId);
   return { ok: true };
@@ -481,7 +448,7 @@ export async function removeTrainingExercise(
 
   const { data: pe } = await supabase
     .from("training_exercises")
-    .select("training_id")
+    .select("training_id, bild_url")
     .eq("id", trainingExerciseId)
     .maybeSingle();
   if (!pe) return { ok: false, error: "Zuordnung nicht gefunden." };
@@ -500,6 +467,10 @@ export async function removeTrainingExercise(
     .delete()
     .eq("id", trainingExerciseId);
   if (error) return { ok: false, error: error.message };
+
+  // Erst nach erfolgreichem Löschen die eigene Bilddatei entfernen — nie das
+  // Bild einer noch existierenden Fassung, und nie das Bild der Vorlage.
+  await entferneFassungsBild(supabase, pe.bild_url, trainingExerciseId);
 
   const { data: after } = await supabase
     .from("trainings")
@@ -522,7 +493,24 @@ export async function deleteTraining(trainingId: string): Promise<void> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return;
-  await supabase.from("trainings").delete().eq("id", trainingId).eq("owner_id", user.id);
+
+  // Bildpfade der Fassungen VOR dem Löschen einsammeln: die Kaskade entfernt nur
+  // die Zeilen, nicht die Dateien im Bildspeicher.
+  const { data: fassungen } = await supabase
+    .from("training_exercises")
+    .select("id, bild_url")
+    .eq("training_id", trainingId);
+
+  const { error } = await supabase
+    .from("trainings")
+    .delete()
+    .eq("id", trainingId)
+    .eq("owner_id", user.id);
+  if (error) return;
+
+  for (const f of fassungen ?? []) {
+    await entferneFassungsBild(supabase, f.bild_url, f.id);
+  }
   revalidatePath("/trainings");
   redirect("/trainings?mine=1&deleted=1");
 }

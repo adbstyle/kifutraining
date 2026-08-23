@@ -1,4 +1,4 @@
-import { BookOpen, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import {
   KategorieChip,
   MethodischerFahrplan,
@@ -30,23 +30,19 @@ function Meta({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-/* Vollständige Durchführungs-Details einer Trainings-Zuordnung (Stories #17/#18):
+/* Vollständige Durchführungs-Details einer Fassung im Training (Stories #17/#18):
    Übungsablauf, Feld-Diagramm, Eckdaten und Dauer. Präsentational, daher in
-   Durchführungs- (Client) wie Druck-Ansicht (Server) nutzbar. Eine für den
-   Betrachter nicht verfügbare Übung fällt auf Platzhalter-Name + Dauer zurück. */
-export function TrainingExerciseDetail({
-  item,
-  showSource = false,
-}: {
-  item: TrainingExerciseItem;
-  showSource?: boolean;
-}) {
-  const ex = item.exercise;
+   Durchführungs- (Client) wie Druck-Ansicht (Server) nutzbar.
+
+   Beide Ansichten sind fürs Training auf dem Platz gedacht und zeigen darum
+   ausschliesslich Durchführungsrelevantes — keine Herkunftsangabe (PO-Entscheid
+   2026-08-22, Story 6 Out of Scope 1). */
+export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem }) {
   const dur =
     teilTraegtDauer(item.trainingsteil) && item.durationMin != null
       ? formatDuration(item.durationMin)
       : null;
-  const anzahl = anzahlText(ex?.anzahl_kinder ?? null);
+  const anzahl = anzahlText(item.anzahlKinder);
 
   return (
     <article className="break-inside-avoid">
@@ -60,72 +56,56 @@ export function TrainingExerciseDetail({
         )}
       </div>
 
-      {!item.available || !ex ? (
-        <p className="type-body-medium text-on-surface-variant">
-          Diese Übung ist nicht mehr verfügbar.
-        </p>
-      ) : (
-        <>
-          {ex.kategorien.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-1.5">
-              {ex.kategorien.map((k) => (
-                <KategorieChip key={k} k={k as KategorieSlug} />
-              ))}
-            </div>
-          )}
-
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[6px] border border-outline-variant">
-            <UebungsBild
-              name={ex.name}
-              bildUrl={ex.bild_url}
-              diagramm={ex.diagramm}
-              bildQuelle={ex.bild_quelle}
-              sizes="(max-width: 768px) 100vw, 768px"
-            />
-          </div>
-
-          {(ex.hauptteilkategorie || ex.feldtyp || anzahl || ex.material.length > 0) && (
-            <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
-              {ex.feldtyp && (
-                <Meta label="Feldtyp">
-                  {feldLabels[ex.feldtyp as keyof typeof feldLabels] ?? ex.feldtyp}
-                </Meta>
-              )}
-              {ex.hauptteilkategorie && (
-                <Meta label="Hauptteilkategorie">
-                  {hkatLabels[ex.hauptteilkategorie as keyof typeof hkatLabels] ??
-                    ex.hauptteilkategorie}
-                </Meta>
-              )}
-              {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
-              {ex.material.length > 0 && (
-                <Meta label="Material">{ex.material.join(", ")}</Meta>
-              )}
-            </div>
-          )}
-
-          <div className="mt-4">
-            <p className="type-label-medium mb-2 text-on-surface-variant">Übungsablauf</p>
-            {ex.methodischer_fahrplan ? (
-              <MethodischerFahrplan fahrplan={ex.methodischer_fahrplan} />
-            ) : ex.aufbau ? (
-              <p className="type-body-medium whitespace-pre-line text-on-surface-variant">
-                {ex.aufbau}
-              </p>
-            ) : (
-              <p className="type-body-medium text-on-surface-variant">Kein Ablauf erfasst.</p>
-            )}
-          </div>
-
-          {showSource && ex.source === "manual" && (
-            <p className="mt-4 flex items-start gap-2 type-body-small text-on-surface-variant">
-              <BookOpen size={16} strokeWidth={2} className="mt-0.5 shrink-0" aria-hidden />
-              Offizielle Übung aus dem Manual Kinderfussball des Schweizerischen
-              Fussballverbands (SFV).
-            </p>
-          )}
-        </>
+      {item.kategorien.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {item.kategorien.map((k) => (
+            <KategorieChip key={k} k={k as KategorieSlug} />
+          ))}
+        </div>
       )}
+
+      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[6px] border border-outline-variant">
+        <UebungsBild
+          name={item.name}
+          bildUrl={item.bildUrl}
+          diagramm={item.diagramm}
+          bildQuelle={item.bildQuelle}
+          sizes="(max-width: 768px) 100vw, 768px"
+        />
+      </div>
+
+      {(item.hauptteilkategorie || item.feldtyp || anzahl || item.material.length > 0) && (
+        <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
+          {item.feldtyp && (
+            <Meta label="Feldtyp">
+              {feldLabels[item.feldtyp as keyof typeof feldLabels] ?? item.feldtyp}
+            </Meta>
+          )}
+          {item.hauptteilkategorie && (
+            <Meta label="Hauptteilkategorie">
+              {hkatLabels[item.hauptteilkategorie as keyof typeof hkatLabels] ??
+                item.hauptteilkategorie}
+            </Meta>
+          )}
+          {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
+          {item.material.length > 0 && (
+            <Meta label="Material">{item.material.join(", ")}</Meta>
+          )}
+        </div>
+      )}
+
+      <div className="mt-4">
+        <p className="type-label-medium mb-2 text-on-surface-variant">Übungsablauf</p>
+        {item.fahrplan ? (
+          <MethodischerFahrplan fahrplan={item.fahrplan} />
+        ) : item.aufbau ? (
+          <p className="type-body-medium whitespace-pre-line text-on-surface-variant">
+            {item.aufbau}
+          </p>
+        ) : (
+          <p className="type-body-medium text-on-surface-variant">Kein Ablauf erfasst.</p>
+        )}
+      </div>
     </article>
   );
 }

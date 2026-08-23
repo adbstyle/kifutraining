@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Clock, ChevronRight, Sparkles, Play, Printer } from "lucide-react";
+import { Clock, Sparkles, Play, Printer } from "lucide-react";
 import { Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
@@ -106,15 +106,19 @@ export default async function TrainingViewPage({
                           s.traegtDauer && item.durationMin != null
                             ? formatDuration(item.durationMin)
                             : null;
-                        const inner = (
-                          <>
+                        return (
+                          // Die Übung im Training ist eine eigenständige Fassung
+                          // und verlinkt bewusst nicht auf einen Bibliotheks-
+                          // Eintrag: sie hängt von ihm nicht mehr ab, und ihr
+                          // Inhalt kann inzwischen abweichen (Story 6 AK 10).
+                          <li key={item.id} className="flex items-center gap-3 px-2 py-2">
                             <span className="w-5 shrink-0 text-center type-label-medium text-on-surface-variant">
                               {i + 1}
                             </span>
                             <ExerciseThumb
-                              bildUrl={item.exercise?.bild_url}
-                              diagramm={item.exercise?.diagramm}
-                              bildQuelle={item.exercise?.bild_quelle}
+                              bildUrl={item.bildUrl}
+                              diagramm={item.diagramm}
+                              bildQuelle={item.bildQuelle}
                               name={item.name}
                             />
                             <span className="min-w-0 flex-1 truncate type-body-medium text-on-surface">
@@ -124,30 +128,6 @@ export default async function TrainingViewPage({
                               <span className="shrink-0 type-label-medium text-on-surface-variant">
                                 {dur}
                               </span>
-                            )}
-                          </>
-                        );
-                        return (
-                          <li key={item.id}>
-                            {item.available && item.exercise ? (
-                              <Link
-                                href={`/uebung/${item.exercise.slug}`}
-                                className="focus-ring group flex items-center gap-3 rounded-[4px] px-2 py-2 transition-colors hover:bg-on-surface/8"
-                              >
-                                {inner}
-                                <ChevronRight
-                                  size={16}
-                                  className="shrink-0 text-on-surface-variant transition-colors group-hover:text-primary"
-                                  aria-hidden
-                                />
-                              </Link>
-                            ) : (
-                              <div className="flex items-center gap-3 px-2 py-2">
-                                {inner}
-                                <span className="shrink-0 type-label-small text-on-surface-variant">
-                                  nicht verfügbar
-                                </span>
-                              </div>
                             )}
                           </li>
                         );
