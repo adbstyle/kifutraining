@@ -12,6 +12,8 @@ import {
   TextField,
   PasswordField,
   TextArea,
+  DateField,
+  TimeField,
   Select,
   MethodischerFahrplan,
   HerkunftsAngabe,
@@ -525,7 +527,7 @@ export default function Styleguide() {
         <HeaderNavDemo />
       </Section>
 
-      <Section n="13" title="Text-Fields &amp; Text-Area">
+      <Section n="13" title="Text-Fields, Text-Area &amp; Datum/Zeit">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           Outlined mit schwebendem Label (KiFu: mono/uppercase), optionalem
           führenden Icon (<code>leadingIcon</code> — Label rückt ein, sodass es
@@ -552,6 +554,23 @@ export default function Styleguide() {
             label="Aufbau / Beschreibung"
             supportingText="Mehrzeilig — wächst bis 10 Zeilen, dann scrollen."
           />
+        </div>
+
+        <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
+          Datum &amp; Uhrzeit
+        </h3>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Für Trainings-Termine. Bewusst <strong>ohne</strong> schwebendes
+          Label: native <code>date</code>/<code>time</code>-Felder zeigen immer
+          eine Platzhalter-Maske, das Label schwebte also sofort und dauerhaft.
+          Stattdessen ein fest darüberstehendes Label im selben
+          mono/uppercase-Stil. Das native Steuerelement ist Absicht —
+          Datumsauswahl, Tastatureingabe und Lokalisierung kommen vom
+          Betriebssystem.
+        </p>
+        <div className="grid max-w-md gap-6 sm:grid-cols-2">
+          <DateField label="Datum" />
+          <TimeField label="Beginn (optional)" />
         </div>
       </Section>
 

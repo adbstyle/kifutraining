@@ -3,9 +3,19 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Clock, CornerDownRight, Download, ListChecks, Trash2 } from "lucide-react";
+import {
+  CalendarCheck,
+  CalendarPlus,
+  Clock,
+  CornerDownRight,
+  Download,
+  ListChecks,
+  Trash2,
+} from "lucide-react";
 import { Button, Card, Dialog, KategorieChip, Snackbar } from "@/components/ui";
+import { TerminDialog } from "./TerminDialog";
 import { entferneTeamTraining, uebernimmZuMir } from "@/lib/actions/team-trainings";
+import { erstelleTermin, type TerminFelder } from "@/lib/actions/termine";
 import { formatDuration } from "@/lib/training";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
 
@@ -23,7 +33,18 @@ export function TeamTrainingsListe({ trainings }: { trainings: TeamTrainingRow[]
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [entfernen, setEntfernen] = useState<TeamTrainingRow | null>(null);
+  const [ansetzen, setAnsetzen] = useState<TeamTrainingRow | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  function ansetzenSpeichern(felder: TerminFelder) {
+    if (!ansetzen) return;
+    startTransition(async () => {
+      const res = await erstelleTermin(ansetzen.id, felder);
+      setAnsetzen(null);
+      router.refresh();
+      setNotice(res.ok ? `„${ansetzen.name}" ist angesetzt.` : res.error);
+    });
+  }
 
   function uebernehmen(t: TeamTrainingRow) {
     startTransition(async () => {
@@ -94,6 +115,24 @@ export function TeamTrainingsListe({ trainings }: { trainings: TeamTrainingRow[]
               </div>
 
               <div className="flex shrink-0 flex-wrap gap-2">
+                {/* Angesetzte Trainings ändert man im Plan — höchstens ein
+                    Termin je Training; erneutes Ansetzen kopiert dort. */}
+                {t.terminId ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 type-label-large text-on-surface-variant">
+                    <CalendarCheck size={18} strokeWidth={2} aria-hidden />
+                    Angesetzt
+                  </span>
+                ) : (
+                  <Button
+                    variant="text"
+                    size="sm"
+                    disabled={pending}
+                    onClick={() => setAnsetzen(t)}
+                  >
+                    <CalendarPlus size={18} strokeWidth={2} aria-hidden />
+                    Ansetzen
+                  </Button>
+                )}
                 <Button
                   variant="text"
                   size="sm"
@@ -117,6 +156,16 @@ export function TeamTrainingsListe({ trainings }: { trainings: TeamTrainingRow[]
           </Card>
         ))}
       </div>
+
+      <TerminDialog
+        open={ansetzen != null}
+        titel="Training ansetzen"
+        bestaetigung="Ansetzen"
+        hinweis="Der Termin erscheint im Trainingsplan des Teams."
+        pending={pending}
+        onClose={() => setAnsetzen(null)}
+        onSpeichern={ansetzenSpeichern}
+      />
 
       <Dialog
         open={entfernen != null}

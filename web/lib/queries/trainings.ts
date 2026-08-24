@@ -325,9 +325,12 @@ export async function getTrainingPool(
  *  der Herkunft — «basiert auf …» sagt, woraus die Kopie entstanden ist. */
 export type TeamTrainingRow = TrainingListRow & {
   herkunft: { name: string; datum: string } | null;
+  /** Ist dieses Training angesetzt? Höchstens ein Termin je Training —
+   *  erneutes Ansetzen kopiert (Story 8). */
+  terminId: string | null;
 };
 
-const TEAM_LIST_SELECT = `${LIST_SELECT}, herkunft_name, herkunft_datum`;
+const TEAM_LIST_SELECT = `${LIST_SELECT}, herkunft_name, herkunft_datum, training_termine ( id )`;
 
 /** Der Trainingsbestand eines Teams. Team-Trainings erscheinen NIE im
  *  Trainings-Pool — sie gehören dem Team, nicht der Öffentlichkeit und keiner
@@ -346,13 +349,22 @@ export async function getTeamTrainings(teamId: string): Promise<TeamTrainingRow[
     const r = raw as unknown as RawListTraining & {
       herkunft_name: string | null;
       herkunft_datum: string | null;
+      // PostgREST erkennt die UNIQUE-Bedingung auf `training_id` und liefert
+      // den Termin deshalb als EIN Objekt statt als Liste. Beide Formen
+      // abfangen: eine spätere Schema-Änderung soll hier keinen stillen
+      // Nulltreffer erzeugen.
+      training_termine: { id: string } | { id: string }[] | null;
     };
+    const termin = Array.isArray(r.training_termine)
+      ? r.training_termine[0]
+      : r.training_termine;
     return {
       ...mapListRow(r),
       herkunft:
         r.herkunft_name && r.herkunft_datum
           ? { name: r.herkunft_name, datum: r.herkunft_datum }
           : null,
+      terminId: termin?.id ?? null,
     };
   });
 }

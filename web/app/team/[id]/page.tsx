@@ -6,8 +6,10 @@ import { MitgliederListe } from "@/components/team/MitgliederListe";
 import { TeamGefahrenzone } from "@/components/team/TeamGefahrenzone";
 import { TeamTrainingsListe } from "@/components/team/TeamTrainingsListe";
 import { TeamTrainingErstellenButton } from "@/components/team/TeamTrainingErstellenButton";
+import { TrainingsPlan } from "@/components/team/TrainingsPlan";
 import { getTeam, getTeamAufloesungsInfo } from "@/lib/queries/teams";
 import { getTeamTrainings } from "@/lib/queries/trainings";
+import { getTeamPlan } from "@/lib/queries/termine";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -29,9 +31,10 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
   // (ununterscheidbar: die Existenz eines fremden Teams ist keine Auskunft wert).
   if (!team) redirect("/teams");
 
-  const [aufloesung, trainings] = await Promise.all([
+  const [aufloesung, trainings, plan] = await Promise.all([
     getTeamAufloesungsInfo(team.id),
     getTeamTrainings(team.id),
+    getTeamPlan(team.id),
   ]);
 
   return (
@@ -45,6 +48,23 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
           umbenennen, Trainings bearbeiten und weitere Trainer:innen aufnehmen.
         </p>
       </header>
+
+      <section className="mb-8">
+        <h2 className="mb-4 type-title-large text-on-surface">
+          Trainingsplan
+          <span className="type-label-small ml-2 text-on-surface-variant">
+            {plan.length}
+          </span>
+        </h2>
+        {plan.length === 0 ? (
+          <p className="rounded-[6px] border border-outline-variant bg-surface-container-low px-5 py-8 text-center type-body-medium text-on-surface-variant">
+            Noch nichts angesetzt. Setze ein Training des Teams auf ein Datum an
+            — es erscheint dann hier chronologisch im Plan.
+          </p>
+        ) : (
+          <TrainingsPlan termine={plan} />
+        )}
+      </section>
 
       <section className="mb-4">
         <div className="mb-4 flex items-center justify-between gap-3">

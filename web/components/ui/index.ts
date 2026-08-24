@@ -15,6 +15,8 @@ export { SegmentedControl } from "./SegmentedControl";
 export type { SegmentOption } from "./SegmentedControl";
 export { TextField } from "./TextField";
 export type { TextFieldProps } from "./TextField";
+export { DateField, TimeField } from "./DateTimeField";
+export type { DateTimeFieldProps } from "./DateTimeField";
 export { TextArea } from "./TextArea";
 export type { TextAreaProps } from "./TextArea";
 export { Select } from "./Select";
