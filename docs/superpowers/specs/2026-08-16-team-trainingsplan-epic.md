@@ -2,7 +2,7 @@
 
 **Datum:** 2026-08-16
 **Ebene:** Epic (Business) — mehrere Workflows, mehrere Rollen, mehrere Sprints
-**Status:** Anforderungen mit dem Product Owner abgestimmt, perspektivenbasiertes Review durchlaufen; Stories noch nicht ausgearbeitet
+**Status:** Anforderungen mit dem Product Owner abgestimmt, perspektivenbasiertes Review durchlaufen; Stories in Ausarbeitung. **Revision 2026-08-24 (§9/§10):** Kopie-Modell — Trainings gehören einer Person ODER einem Team, ins Team kommt eine Kopie, Veröffentlichen erzeugt eine eingefrorene Vorlagen-Kopie.
 **Reihenfolge:** Das Epic Übungsbibliothek (`2026-08-16-uebungsbibliothek-epic.md`) geht diesem Epic voraus; es beseitigt die Abhängigkeit geteilter Trainings von fremden Übungen und vereinfacht mehrere Stories dieses Epics.
 
 ## 1. Problem & Wert
@@ -13,7 +13,7 @@ Das kostet die Trainer doppelt: Sie geben Trainingsinhalte öffentlich preis, um
 
 Der Team-Trainingsplan löst beides. Ein Trainerteam bildet in der Anwendung ein Team, jedes Mitglied teilt seine Trainings mit diesem Team, alle Mitglieder bearbeiten sie gleichberechtigt, und die geteilten Trainings werden terminiert und erscheinen als chronologischer Trainingsplan. Dasselbe Training kann an mehreren Terminen angesetzt werden, ohne dass es ein zweites Mal erfasst wird.
 
-Ein Training gehört dabei immer genau einer Person, nie dem Team. Das Teilen erweitert den Zugriff, es verschiebt nicht die Verantwortung — passend dazu, dass hinter einer J+S-Planung stets eine benannte Leiterin oder ein benannter Leiter steht.
+Ein Training gehört dabei jederzeit genau einem Eigentümer — einer Person oder einem Team (revidiert 2026-08-24; ursprünglich «immer genau einer Person»). In den Team-Trainingsplan gelangt ein Training als eigenständige Kopie, die dem Team gehört; das persönliche Original bleibt unangetastet. Damit gilt durchgängig dasselbe Kopie-Paradigma wie in der Übungsbibliothek.
 
 Damit wird die Anwendung erstmals von einem Einzelplatz-Werkzeug zu einem Werkzeug für ein Trainerkollegium — der Weg, auf dem Amateurvereine tatsächlich arbeiten.
 
@@ -38,49 +38,51 @@ damit wir Trainings intern austauschen können, ohne sie zu veröffentlichen, un
 
 ## 5. Erfolgskriterien
 
-1. Ein Training ist mit einem Team teilbar und danach für alle Mitglieder sichtbar und bearbeitbar, ohne öffentlich geschaltet zu werden.
-2. Ein Training bleibt jederzeit genau einer Person zugeordnet, die dafür verantwortlich ist.
-3. Ein Training ist mit mehreren Teams gleichzeitig teilbar.
+1. Ein Training lässt sich als Kopie in ein Team stellen und ist dort für alle Mitglieder sichtbar und bearbeitbar, ohne öffentlich zu sein.
+2. Ein Training gehört jederzeit genau einem Eigentümer — einer Person oder einem Team.
+3. Ein Training lässt sich in mehrere Teams stellen; jedes Team erhält seine eigene, unabhängige Kopie.
 4. Ein bereits registrierter Trainer wird über seine E-Mail-Adresse unmittelbar Mitglied eines Teams.
 5. Jedes Mitglied eines Teams verfügt über dieselben Rechte, einschliesslich Umbenennen des Teams, Aufnehmen und Entfernen von Mitgliedern sowie Auflösen des Teams.
-6. Das Veröffentlichen eines Trainings und jede Änderung, die es aus der Öffentlichkeit nehmen würde, bleiben seinem Eigentümer vorbehalten.
+6. Das Veröffentlichen erzeugt eine eingefrorene öffentliche Vorlagen-Kopie in der Trainingsbibliothek; nur ihr Urheber kann sie ersetzen oder zurückziehen. Persönliche und Team-Trainings sind nie selbst öffentlich.
 7. Ein Team ohne Mitglieder besteht nicht fort.
 8. Jedes Mitglied ist für die übrigen an einem Namen erkennbar, auch wenn es selbst keinen gewählt hat.
 9. Ein Trainer kann mehreren Teams angehören und erkennt jederzeit, für welches Team er gerade plant.
 10. Der zeitliche Ablauf der Trainings eines Teams ist chronologisch erkennbar, ohne dass Datum oder Mannschaft im Trainingstitel stehen.
 11. Ein Mitglied erkennt aus dem Trainingsplan, wann und wo ein Training stattfindet, ohne bei den Kollegen nachfragen zu müssen.
-12. Dasselbe Training ist an mehreren Terminen ansetzbar, ohne es ein zweites Mal zu erfassen.
-13. Vor einer Änderung an einem mehrfach angesetzten Training ist erkennbar, welche weiteren Termine die Änderung ebenfalls betrifft.
+12. Dasselbe Training ist an mehreren Terminen ansetzbar, ohne es ein zweites Mal zu erfassen; das SYSTEM legt dafür je Termin eine eigene Kopie an (revidiert 2026-08-24).
+13. ENTFALLEN 2026-08-24: Da jeder Termin seine eigene Trainings-Kopie trägt, kann eine Änderung nie weitere Termine betreffen; ein Hinweis erübrigt sich konstruktiv.
 14. Ein einzelner Termin ist entfernbar, ohne das Training und seine übrigen Termine zu verändern.
-15. Vor dem Aufheben einer Teilung und vor dem Löschen eines Trainings ist erkennbar, wie viele Termine dadurch entfallen, und beides erfordert eine Bestätigung.
-16. Ein vergangener Termin bleibt im Trainingsplan erhalten und belegt, welches Training stattgefunden hat.
+15. Vor dem Entfernen eines Team-Trainings ist erkennbar, wie viele Termine dadurch entfallen, und das Entfernen erfordert eine Bestätigung.
+16. Ein vergangener Termin bleibt im Trainingsplan erhalten und belegt, welches Training stattgefunden hat, solange sein Team-Training im Team bleibt; das Entfernen eines Team-Trainings entfernt nach ausdrücklicher Bestätigung auch dessen vergangene Termine.
 17. Ein fremdes öffentliches Training ist als eigenständige Fassung übernehmbar, die von späteren Änderungen am Ursprung unberührt bleibt.
-18. Ein geteiltes Training ist zusätzlich öffentlich teilbar und bleibt dabei für die Mitglieder unverändert bearbeitbar.
+18. Vorlagen entstehen ausschliesslich aus persönlichen Trainings; ein Team-Training wird dafür zuerst als persönliche Kopie übernommen (revidiert 2026-08-24 — Vorlagen kommen immer von einer Person).
 19. Ein öffentliches Training ist seinem Urheber zuordenbar.
-20. Die geteilten Trainings eines Teams bleiben für die übrigen Mitglieder vollständig nutzbar, wenn ein Mitglied austritt oder sein Konto löscht.
-21. Wird ein Team aufgelöst, bleiben die geteilten Trainings bei ihren Eigentümern erhalten.
-22. Ein Trainer unterscheidet in seiner Trainingsübersicht zwischen seinen eigenen und den mit ihm geteilten Trainings.
+20. Die Trainings eines Teams bleiben für die übrigen Mitglieder vollständig nutzbar, wenn ein Mitglied austritt oder sein Konto löscht; sie gehören dem Team und wechseln nie den Eigentümer.
+21. Wird ein Team aufgelöst, entfallen seine Team-Trainings samt Terminen; die Auflösung erfordert eine Bestätigung, die deren Anzahl nennt (entschieden 2026-08-24).
+22. Ein Trainer unterscheidet in der Trainingsübersicht zwischen öffentlichen Vorlagen und seinen persönlichen Trainings; die Trainings seiner Teams findet er in einem eigenen Team-Bereich je Team.
 23. Ein Trainer ohne Team nutzt die Anwendung unverändert weiter.
 
-## 6. Story-Zerlegung (SPIDR, vertikal)
+## 6. Story-Zerlegung (SPIDR, vertikal) — revidiert 2026-08-24
 
 Jede Story liefert End-to-End-Wert. Reihenfolge grob abhängigkeitssortiert.
 
-1. **Enabler (Data) — Datenmodell für Team, Mitgliedschaft, Teilung und Trainingstermine:** Das Datenmodell trägt ein Team mit Namen, eine gleichberechtigte Mitgliedschaft mehrerer Nutzer, die Teilung eines Trainings mit einem oder mehreren Teams sowie datierte Trainingstermine. Der Zugriff ist serverseitig durchgesetzt; bestehende ungeteilte Trainings bleiben unverändert.
-2. **Business (Data) — Anzeigename setzen:** Ein Trainer hinterlegt einen selbst gewählten Anzeigenamen; ohne eigene Wahl erhält er automatisch einen.
-3. **Business (Paths) — Team erstellen, benennen und umbenennen:** Ein Trainer legt ein Team mit freiem Namen an und wird dessen erstes Mitglied; jedes Mitglied kann den Namen später ändern.
-4. **Business (Paths) — Trainer ins Team aufnehmen:** Ein Mitglied nimmt einen registrierten Trainer über dessen E-Mail-Adresse auf; dieser sieht danach unmittelbar die geteilten Inhalte des Teams.
-5. **Business (Rules) — Eigenes Training mit einem Team teilen und Teilung aufheben:** Ein Trainer gibt eines seiner Trainings für ein Team frei und nimmt die Freigabe wieder zurück, wobei er vorher erkennt, wie viele Termine dadurch entfallen.
-6. **Business (Rules) — Geteilte Trainings gemeinsam bearbeiten:** Alle Mitglieder bearbeiten ein geteiltes Training gleichberechtigt, ohne dass es öffentlich ist; die Sichtbarkeit steuert allein der Eigentümer.
-7. **Business (Data) — Training terminieren und Trainingsplan chronologisch sehen:** Ein Mitglied setzt ein geteiltes Training auf ein Datum und ergänzt wahlweise Beginn, Ort und Bemerkung; die Termine des Teams erscheinen chronologisch, vergangene wie künftige.
-8. **Business (Rules) — Training an weiteren Terminen ansetzen:** Ein Mitglied setzt dasselbe Training zusätzlich an, ohne es zu duplizieren, und erkennt vor einer Änderung dessen Mehrfachverwendung.
-9. **Business (Paths) — Einzelnen Termin entfernen:** Ein Mitglied entfernt einen ausgefallenen Termin, ohne das Training und die übrigen Termine anzutasten.
-10. **Business (Rules) — Auswirkungen einer Löschung erkennen und bestätigen:** Ein Trainer sieht vor dem Löschen eines Trainings, wie viele Termine entfallen, und bestätigt ausdrücklich.
-11. **Business (Paths) — Fremdes öffentliches Training als Kopie übernehmen:** Ein Trainer übernimmt ein Community-Training als eigenständige Fassung und teilt sie mit seinem Team.
-12. **Business (Interface) — Eigene und geteilte Trainings getrennt auffinden:** Ein Trainer unterscheidet in seiner Übersicht zwischen Trainings, die ihm gehören, und solchen, die mit ihm geteilt sind.
-13. **Business (Paths) — Team verlassen, Mitglied entfernen, Team auflösen:** Mitglieder verwalten die Zusammensetzung des Teams; die Trainings bleiben bei ihren Eigentümern, die Termine entfallen mit dem Team.
-14. **Business (Rules) — Eigentum bei Konto-Löschung übertragen:** Löscht ein Trainer sein Konto, gehen seine geteilten Trainings samt der darin verwendeten privaten Übungen an ein verbleibendes Mitglied über und bleiben nutzbar.
-15. **Business (Rules) — Urheber eines öffentlichen Trainings anzeigen:** Ein Besucher erkennt bei einem öffentlichen Training, von wem es stammt.
+1. **Enabler (Data) — Datenmodell für Team, Mitgliedschaft, Team-Eigentum und Trainingstermine:** Teams mit gleichberechtigter Mitgliedschaft; ein Training gehört einer Person oder einem Team; datierte Trainingstermine an Team-Trainings. Zugriff serverseitig durchgesetzt; Bestand unverändert.
+2. **Business (Data) — Anzeigename setzen** (unverändert, ausgearbeitet).
+3. **Business (Paths) — Team erstellen, benennen und umbenennen** (unverändert, ausgearbeitet).
+4. **Business (Paths) — Trainer ins Team aufnehmen** (unverändert, ausgearbeitet).
+5. **Business (Paths) — Training ins Team stellen und Team-Training entfernen:** Ein Mitglied stellt ein Training als Team-Kopie ins Team (aus persönlichem Bestand oder direkt im Team erstellt) und entfernt Team-Trainings; vorher ist die Zahl der entfallenden Termine erkennbar.
+6. **Business (Rules) — Team-Trainings gemeinsam bearbeiten:** Alle Mitglieder bearbeiten die Trainings ihres Teams gleichberechtigt und vollständig.
+7. **Business (Data) — Training terminieren und Trainingsplan chronologisch sehen** (Termine an Team-Trainings).
+8. **Business (Rules) — Training an weiteren Terminen ansetzen:** Das erneute Ansetzen erzeugt automatisch eine eigene Trainings-Kopie je Termin, ohne Neuerfassung.
+9. **Business (Paths) — Einzelnen Termin entfernen** (unverändert).
+10. **Entfallen (2026-08-24):** «Auswirkungen einer Löschung erkennen und bestätigen» ist in Story 5 aufgegangen (Entfernen eines Team-Trainings mit Termin-Anzahl und Bestätigung); persönliche Trainings tragen keine Termine.
+11. **Business (Paths) — Öffentliche Trainings-Vorlage übernehmen:** Ein Trainer übernimmt eine Vorlage als Kopie — in seinen persönlichen Bestand oder direkt in ein Team.
+12. **Business (Interface) — Vorlagen und persönliche Trainings auffinden; Team-Bestand im Team-Bereich.**
+13. **Business (Paths) — Team verlassen, Mitglied entfernen, Team auflösen** (inkl. Entscheid, was mit Team-Trainings bei Auflösung geschieht).
+14. **Business (Rules) — Training als Vorlage veröffentlichen, ersetzen und zurückziehen:** Aus einem persönlichen Training entsteht eine eingefrorene öffentliche Vorlagen-Kopie; Team-Trainings werden dafür zuerst zu sich übernommen.
+15. **Business (Rules) — Urheber einer öffentlichen Vorlage anzeigen** (unverändert sinngemäss).
+
+Die frühere Story «Eigentum bei Konto-Löschung übertragen» entfällt: Team-Trainings gehören dem Team und sind von einer Konto-Löschung konstruktiv unberührt; persönliche Trainings folgen dem bestehenden Verhalten (öffentliche Vorlagen anonymisiert, private gelöscht).
 
 ## 7. Non-Functional Requirements
 
@@ -115,30 +117,38 @@ Jede Story liefert End-to-End-Wert. Reihenfolge grob abhängigkeitssortiert.
 |---|---|---|
 | Ebene | Epic mit nachgelagerter Story-Zerlegung | 2026-08-16 |
 | Begriff | Die Sammlung datierter Trainings eines Teams heisst „Team-Trainingsplan"; „Training" bleibt die einzelne Einheit | 2026-08-16 |
-| Eigentum | Ein Training gehört immer einer Person; ein Team wird nie Eigentümer, sondern erhält Zugriff durch Teilen | 2026-08-16 |
+| Eigentum | REVIDIERT 2026-08-24: Ein Training gehört genau einem Eigentümer — einer Person oder einem Team. Ursprünglich: «immer einer Person, Team erhält Zugriff durch Teilen» | 2026-08-24 |
 | Rechte | Alle Mitglieder sind vollständig gleichberechtigt, einschliesslich Umbenennen, Aufnehmen, Entfernen und Auflösen des Teams | 2026-08-16 |
-| Sichtbarkeit steuern | Veröffentlichen und jede Änderung, die ein Training aus der Öffentlichkeit nehmen würde, bleiben dem Eigentümer vorbehalten — die einzige Ausnahme von der Gleichberechtigung | 2026-08-16 |
+| Sichtbarkeit steuern | REVIDIERT 2026-08-24: Persönliche und Team-Trainings sind nie selbst öffentlich; Veröffentlichen erzeugt eine eingefrorene Vorlagen-Kopie, die nur ihr Urheber ersetzt oder zurückzieht | 2026-08-24 |
 | Aufnahme | Die Aufnahme wirkt sofort; es gibt keinen Einladungs-Zwischenzustand und keine Zustimmung des Aufgenommenen | 2026-08-16 |
 | Teamname | Frei wählbar, nicht eindeutig, jederzeit durch jedes Mitglied änderbar | 2026-08-16 |
 | Leeres Team | Ein Team wird aufgelöst, sobald es kein Mitglied mehr hat | 2026-08-16 |
 | Termin-Pflichtfeld | Nur das Datum ist Pflicht; Beginn, Ort und Bemerkung sind freiwillig | 2026-08-16 |
-| Teilung aufheben | Die abhängigen Termine entfallen, nach vorheriger Anzeige ihrer Anzahl | 2026-08-16 |
-| Übertragung ohne Nachfolger | Steht kein verbleibendes Mitglied bereit, gilt das bisherige Verhalten: öffentlich anonymisiert, privat gelöscht | 2026-08-16 |
-| Private Übungen | Sie gehen bei der Konto-Löschung zusammen mit dem geteilten Training an dasselbe Mitglied über | 2026-08-16 |
-| Trainingsübersicht | Eigene und mit mir geteilte Trainings sind getrennt wählbar | 2026-08-16 |
-| Wiederverwendung | Ein Training wird für mehrere Termine nicht dupliziert; die Mehrfachverwendung muss vor Änderungen sichtbar sein | 2026-08-16 |
-| Mehrfachteilung | Ein Training ist gleichzeitig mit mehreren Teams teilbar | 2026-08-16 |
+| Team-Training entfernen | Ersetzt «Teilung aufheben»: Jedes Mitglied kann ein Team-Training entfernen; die abhängigen Termine entfallen, nach vorheriger Anzeige ihrer Anzahl. Das persönliche Original eines anderen bleibt unberührt | 2026-08-24 |
+| Übertragung ohne Nachfolger | GEGENSTANDSLOS 2026-08-24: Es gibt keine Übertragung mehr; Team-Trainings gehören dem Team | 2026-08-24 |
+| Private Übungen | GEGENSTANDSLOS 2026-08-24: bereits durch das Fassungs-Modell (Epic Übungsbibliothek) überholt; Trainings enthalten eigenständige Fassungen | 2026-08-24 |
+| Trainingsübersicht | Persönliche, Team- und Vorlagen-Trainings sind getrennt wählbar | 2026-08-24 |
+| Wiederverwendung | REVIDIERT 2026-08-24: Je Termin trägt das Team eine eigene Trainings-Kopie; das erneute Ansetzen erzeugt sie automatisch, ohne Neuerfassung. Eine Änderung wirkt dadurch nie auf andere Termine. Bewusste Folgen: der Team-Bestand wächst je Termin um eine Kopie (inkl. Bilder), und Sammel-Änderungen über mehrere Termine gibt es nicht | 2026-08-24 |
+| Mehrfachteilung | REVIDIERT 2026-08-24: Je Team eine eigene, unabhängige Kopie; Änderungen synchronisieren nicht über Teams hinweg | 2026-08-24 |
 | Reihenfolge | Die Reihenfolge ergibt sich aus dem Datum; keine freie Sortierung | 2026-08-16 |
 | Termin-Angaben | Ein Termin trägt Datum, Beginn, Ort als Freitext und eine Bemerkung | 2026-08-16 |
-| Vergangenheit | Vergangene Termine sind erfassbar und bleiben erhalten, damit der Trainingsplan als J+S-Nachweis taugt | 2026-08-16 |
+| Vergangenheit | PRÄZISIERT 2026-08-24: Vergangene Termine sind erfassbar und bleiben erhalten, solange ihr Team-Training im Team bleibt; das Entfernen eines Team-Trainings entfernt nach ausdrücklicher Bestätigung auch vergangene Termine | 2026-08-24 |
 | Doppelbelegung | Mehrere Termine desselben Teams am selben Tag sind ohne Einschränkung erlaubt | 2026-08-16 |
 | Beitritt | Einladung über die E-Mail-Adresse eines bereits registrierten Trainers | 2026-08-16 |
 | Identität | Selbst gewählter Anzeigename am Konto; ohne eigene Wahl wird automatisch einer vergeben | 2026-08-16 |
 | Öffentliche Urheberschaft | Der Anzeigename erscheint auch an öffentlichen Trainings; damit wird der Anzeigename zu einem öffentlich sichtbaren Personendatum | 2026-08-16 |
 | Mehrfachzugehörigkeit | Ein Trainer kann mehreren Teams angehören | 2026-08-16 |
-| Sichtbarkeit | Alles Geteilte ist für alle Mitglieder sichtbar und bearbeitbar; öffentlich schalten bleibt zusätzlich möglich | 2026-08-16 |
-| Konto-Löschung | Geteilte Trainings gehen automatisch an ein verbleibendes Mitglied über, statt anonymisiert und eingefroren zu werden | 2026-08-16 |
-| Team-Auflösung | Die Trainings bleiben bei ihren Eigentümern, die Termine des Teams entfallen | 2026-08-16 |
+| Sichtbarkeit | Team-Trainings sind für alle Mitglieder sichtbar und vollständig bearbeitbar; eine Vorlagen-Kopie lässt sich zusätzlich veröffentlichen | 2026-08-24 |
+| Konto-Löschung | REVIDIERT 2026-08-24: Team-Trainings sind konstruktiv unberührt (sie gehören dem Team); persönliche folgen dem bestehenden Verhalten (öffentliche Vorlagen anonymisiert, private gelöscht) | 2026-08-24 |
+| Team-Auflösung | Team-Trainings samt Terminen (auch vergangenen) entfallen; die Auflösung erfordert eine Bestätigung mit deren Anzahl. Die Konto-Löschung des letzten Mitglieds löst still auf, der Konto-Lösch-Dialog nennt Teams nicht | 2026-08-24 |
+| Team-Kopie | «Ins Team stellen» erzeugt eine eigenständige Kopie, die dem Team gehört — kein Teilungs-Zustand, dasselbe Kopie-Paradigma wie in der Übungsbibliothek; Divergenz zwischen Original und Team-Kopie ist akzeptiert | 2026-08-24 |
+| Vorlagen-Publish | Veröffentlichen legt eine inhaltlich eingefrorene öffentliche Kopie in der Trainingsbibliothek ab; Aktualisieren = erneut veröffentlichen (ersetzt), Zurückziehen entfernt die Vorlage | 2026-08-24 |
+| Aufnahme-Vorschau | Vor der Aufnahme wird der Anzeigename der gefundenen Person gezeigt und bestätigt; erfolglose Suchversuche werden gebremst (Enumerations-Schutz) | 2026-08-24 |
+| Team-Vorlagen | Vorlagen kommen immer von einer Person; Team-Trainings sind nicht direkt veröffentlichbar, jedes Mitglied kann ein Team-Training als persönliche Kopie zu sich übernehmen | 2026-08-24 |
+| Absage | Einen Abgesagt-Zustand für Termine gibt es nicht; Ausfälle stehen in der Bemerkung oder der Termin wird entfernt | 2026-08-24 |
+| Termin-Vorschlag | Beim erneuten Ansetzen sind Beginn, Ort und Bemerkung des bisherigen Termins vorgeschlagen; nur das Datum wird neu gewählt | 2026-08-24 |
+| Navigation | Die Trainingsübersicht zeigt standardmässig die Vorlagen; persönliche Trainings sind eingrenzbar; die Trainings der Teams liegen in einem eigenen Team-Bereich je Team | 2026-08-24 |
+| Vorlagen-Ersetzen | Je persönlichem Training höchstens eine aktive Vorlage; erneutes Veröffentlichen desselben Trainings ersetzt sie, ein anderes Training erzeugt eine weitere | 2026-08-24 |
 | Fremde Trainings | Übernahme ausschliesslich als Kopie; die Herkunft bleibt sichtbar (revidiert im Zuge des Übungsbibliothek-Epics, ursprünglich „ohne festgehaltene Herkunft"). Nachtrag 2026-08-17: Das Trainingsziel (Junioren-Epic, Story 10) wird in die Kopie übernommen und ist dort unabhängig änderbar | 2026-08-16 |
 | Gleichzeitiges Bearbeiten | Bewusst nicht behandelt; die zuletzt gespeicherte Fassung gilt | 2026-08-16 |
 | Saison | Kein Saison-Konzept; das Team besteht dauerhaft, die Alterskategorie bleibt am Training | 2026-08-16 |
@@ -168,10 +178,12 @@ Aus der Architektur-Spec (2026-05-31):
 8. Der Zugriffsgrundsatz „jeder bearbeitet nur eigene Inhalte" aus §3 gilt nicht mehr uneingeschränkt.
 9. Das Verhalten der Konto-Löschung aus §9.4 ändert sich für geteilte Trainings von Anonymisieren zu Übertragen.
 
+### Eigene Revision (2026-08-24)
+
+10. Der ursprüngliche Kernentscheid «Ein Training gehört immer genau einer Person, nie dem Team» ist aufgehoben; ebenso das Teilen-Modell (Zugriffs-Erweiterung ohne Kopie) und die Eigentums-Übertragung bei Konto-Löschung. Begründung: Die Story-Reviews zeigten strukturelle Reibungen des Teilen-Modells (einseitiges Aufheben ohne Benachrichtigung, Termin-Kaskade gegen den J+S-Nachweis, Sichtbarkeits-Konflikte beim gemeinsamen Bearbeiten öffentlicher Trainings); der PO entschied, durchgängig das Kopie-Paradigma der Übungsbibliothek anzuwenden.
+
 ## 11. Offene Fragen
 
 1. @Product Owner: Ist der Bedarf über den Fall FC Wyler hinaus validiert, oder trägt das Epic bisher einen Einzelfall?
 2. @Product Owner: Bis zu welcher Anzahl Termine muss der Trainingsplan die Antwortzeit einhalten? Die genannten 100 sind eine Annahme.
-3. @UX Designer: Wie erkennt ein Mitglied vor einer Änderung, dass ein Training an weiteren Terminen angesetzt ist, ohne dass der Hinweis bei jeder Bearbeitung stört?
-4. @UX Designer: Wie wechselt ein Trainer zwischen mehreren Teams, ohne den Bezug zum aktuell bearbeiteten Team zu verlieren?
-5. @UX Designer: Wie wird ein automatisch vergebener Anzeigename gebildet, damit er innerhalb eines Teams unterscheidbar bleibt?
+5. @UX Designer: Wie wechselt ein Trainer zwischen mehreren Teams, ohne den Bezug zum aktuell bearbeiteten Team zu verlieren?
