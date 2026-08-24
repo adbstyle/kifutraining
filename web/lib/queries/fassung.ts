@@ -2,8 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import { FASSUNG_INHALT_FELDER, type HerkunftTyp } from "@/lib/fassung";
 
-/** Eine Fassung zum Bearbeiten — ausschliesslich für den Eigentümer ihres
- *  Trainings. `null`, wenn sie nicht existiert oder dem USER nicht gehört. */
+/** Eine Fassung zum Bearbeiten — im eigenen privaten Training oder in einem
+ *  Training des eigenen Teams (Team-Epic Story 6). `null`, wenn sie nicht
+ *  existiert oder der USER sie nicht bearbeiten darf. */
 export type FassungZumBearbeiten = {
   id: string;
   trainingId: string;
@@ -45,12 +46,11 @@ export async function getFassungZumBearbeiten(
   // auswerten — gemappt wird unten ohnehin explizit.
   const select: string = `id, training_id, trainingsteil, hauptteilkategorie, ${INHALT},
        herkunft_name, herkunft_typ, herkunft_datum,
-       trainings!inner ( id, name, owner_id )`;
+       trainings!inner ( id, name, owner_id, team_id, visibility )`;
   const { data: roh, error } = await supabase
     .from("training_exercises")
     .select(select)
     .eq("id", fassungId)
-    .eq("trainings.owner_id", user.id)
     .maybeSingle();
   if (error) throw error;
   if (!roh) return null;
@@ -79,10 +79,24 @@ export async function getFassungZumBearbeiten(
     herkunft_name: string | null;
     herkunft_typ: string | null;
     herkunft_datum: string | null;
-    trainings: { id: string; name: string };
+    trainings: {
+      id: string;
+      name: string;
+      owner_id: string | null;
+      team_id: string | null;
+      visibility: string;
+    };
   };
 
   const training = data.trainings;
+  // Bearbeitbar ist das eigene PRIVATE Training oder eines des eigenen Teams;
+  // eine öffentliche Vorlage ist eingefroren. Team-Trainings lässt die RLS nur
+  // Mitglieder überhaupt lesen.
+  const bearbeitbar =
+    !!training.team_id ||
+    (training.owner_id === user.id && training.visibility === "private");
+  if (!bearbeitbar) return null;
+
   const q: RohInhalt = data;
 
   return {

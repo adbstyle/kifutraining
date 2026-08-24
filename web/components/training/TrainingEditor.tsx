@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Trash2,
   Pencil,
+  Users,
 } from "lucide-react";
 import {
   Card,
@@ -31,6 +32,7 @@ import { InBibliothekButton } from "./InBibliothekButton";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
 import { VorlagenControl } from "./VorlagenControl";
+import { InTeamStellenControl } from "./InTeamStellenControl";
 import {
   TRAININGSTEILE,
   HAUPTTEILKATEGORIEN,
@@ -50,12 +52,20 @@ import {
 } from "@/lib/actions/trainings";
 import type { TrainingsteilSlug, HauptteilkategorieSlug } from "@/lib/vocab";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings";
+import type { TeamUebersicht } from "@/lib/queries/teams";
 
 /* Trainings-Editor (Stories #10/#11/#12). Vier feste Trainingsteil-Abschnitte
    mit Übungs-Picker, Dauer-Erfassung, Umsortieren (Hoch/Runter) und Entfernen.
    Kopf: Name bearbeiten, Stufen setzen, Training löschen. Struktur-Änderungen
    frischen die Serverdaten auf; Dauern werden lokal überlagert. */
-export function TrainingEditor({ training }: { training: TrainingDetail }) {
+export function TrainingEditor({
+  training,
+  /** Die Teams des USERS — Ziele für „Ins Team stellen" (Team-Epic Story 5). */
+  teams = [],
+}: {
+  training: TrainingDetail;
+  teams?: TeamUebersicht[];
+}) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   // Offener Picker: Trainingsteil und — im Hauptteil — die Unterkategorie.
@@ -166,18 +176,36 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
                 <Pencil size={16} strokeWidth={2} aria-hidden />
               </button>
             </div>
-            {/* Der Editor zeigt immer das private Original; die Marke sagt,
-                ob es davon zusätzlich eine öffentliche Vorlage gibt. */}
-            <Badge tone={training.vorlageId ? "oeffentlich" : "entwurf"} className="mt-2">
-              {training.vorlageId ? "Vorlage aktiv" : "✎ Privat"}
-            </Badge>
+            {/* Team-Training oder persönliches? Die Marke sagt, wem es gehört —
+                und bei persönlichen zusätzlich, ob es davon eine öffentliche
+                Vorlage gibt. */}
+            {training.team ? (
+              <Link
+                href={`/team/${training.team.id}`}
+                className="focus-ring mt-2 inline-flex items-center gap-1.5 rounded-[4px] type-label-medium text-on-surface-variant hover:text-primary"
+              >
+                <Users size={16} strokeWidth={2} aria-hidden />
+                Team-Training von {training.team.name}
+              </Link>
+            ) : (
+              <Badge tone={training.vorlageId ? "oeffentlich" : "entwurf"} className="mt-2">
+                {training.vorlageId ? "Vorlage aktiv" : "✎ Privat"}
+              </Badge>
+            )}
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
-            <VorlagenControl
-              trainingId={training.id}
-              vorlageId={training.vorlageId}
-              fehlend={fehlendeVoraussetzungen}
-            />
+            {/* Veröffentlichen und Ins-Team-Stellen gibt es nur für das eigene
+                Training: ein Team-Training gehört dem Team, nicht einer Person. */}
+            {!training.team && (
+              <>
+                <VorlagenControl
+                  trainingId={training.id}
+                  vorlageId={training.vorlageId}
+                  fehlend={fehlendeVoraussetzungen}
+                />
+                <InTeamStellenControl trainingId={training.id} teams={teams} />
+              </>
+            )}
             <button
               type="button"
               onClick={() => setDeleteOpen(true)}

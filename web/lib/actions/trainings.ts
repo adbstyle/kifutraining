@@ -9,11 +9,11 @@ import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { revalidiereTraining } from "@/lib/revalidate";
 import { kopiereTraining } from "@/lib/training-kopie";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
+import { bildOrdnerFuer, ladeBearbeitungsziel } from "@/lib/training-zugriff";
 import {
   istEigeneFassungsDatei,
   stempleHerkunft,
   kopiereBild,
-  userOrdner,
   kopiereDiagrammVon,
   entferneStorageObjekt,
   inhaltFelder,
@@ -150,14 +150,11 @@ export async function addTrainingExercise(
   if (istHauptteil && !hauptteilkategorieSlugs.includes(hkat as never))
     return { ok: false, error: "Ungültige Hauptteilkategorie." };
 
-  // Eigentum prüfen (UX-Guard; RLS setzt es ohnehin serverseitig durch).
-  const { data: training } = await supabase
-    .from("trainings")
-    .select("id")
-    .eq("id", trainingId)
-    .eq("owner_id", user.id)
-    .maybeSingle();
-  if (!training) return { ok: false, error: "Training nicht gefunden." };
+  // Schreibrecht prüfen (UX-Guard; RLS setzt es ohnehin serverseitig durch).
+  // Team-Trainings sind für jedes Mitglied bearbeitbar (Story 6) — und ihre
+  // Bildkopien gehören in den Team-Ordner, nicht in den persönlichen.
+  const ziel = await ladeBearbeitungsziel(supabase, trainingId, user.id);
+  if (!ziel) return { ok: false, error: "Training nicht gefunden." };
 
   // Vorlage mit allen Inhalten holen (RLS lässt nur Sichtbares durch).
   const { data: ex } = await supabase
@@ -192,7 +189,7 @@ export async function addTrainingExercise(
   // Insert, bleibt höchstens eine unreferenzierte Datei liegen, die ein
   // erneuter Versuch überschreibt — nie eine Fassung ohne Inhalt.
   const fassungId = crypto.randomUUID();
-  const bild = await kopiereBild(supabase, ex.bild_url, userOrdner(user.id), fassungId);
+  const bild = await kopiereBild(supabase, ex.bild_url, bildOrdnerFuer(ziel), fassungId);
   if (bild.error) return { ok: false, error: bild.error };
 
   const { error } = await supabase.from("training_exercises").insert({
@@ -368,12 +365,17 @@ export async function renameTraining(
   const trimmed = name.trim();
   if (!trimmed) return { ok: false, error: "Bitte einen Namen angeben." };
 
-  const { error } = await supabase
+  // Kein Owner-Filter mehr: Team-Trainings darf jedes Mitglied umbenennen
+  // (Story 6). Die RLS entscheidet — `select` zeigt, ob wirklich etwas getroffen
+  // wurde, sonst meldete ein Nulltreffer stillen Erfolg.
+  const { data, error } = await supabase
     .from("trainings")
     .update({ name: trimmed })
     .eq("id", trainingId)
-    .eq("owner_id", user.id);
+    .select("id")
+    .maybeSingle();
   if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: "Training nicht gefunden." };
   revalidiereTraining(trainingId);
   return { ok: true };
 }
@@ -397,7 +399,6 @@ export async function setTrainingStufen(
     .from("trainings")
     .update({ stufen: valid })
     .eq("id", trainingId)
-    .eq("owner_id", user.id)
     .select("id")
     .maybeSingle();
   if (error) return { ok: false, error: error.message };
@@ -482,7 +483,11 @@ export async function removeTrainingExercise(
 }
 
 /** Gesamtes Training löschen (Story #12 AC6/AC7); die Zuordnungen kaskadieren.
- *  Die Bestätigung erfolgt im UI. */
+ *  Die Bestätigung erfolgt im UI.
+ *
+ *  Ein Team-Training löscht das ganze Team-Exemplar — jedes Mitglied darf das
+ *  (Story 6); die Rückkehr führt dann in den Team-Bereich statt in die eigene
+ *  Übersicht. Wer nur seine eigene Kopie will, übernimmt sie vorher zu sich. */
 export async function deleteTraining(trainingId: string): Promise<void> {
   const supabase = await createClient();
   const {
@@ -490,29 +495,20 @@ export async function deleteTraining(trainingId: string): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  // Bildpfade der Fassungen VOR dem Löschen einsammeln: die Kaskade entfernt nur
-  // die Zeilen, nicht die Dateien im Bildspeicher. Der Owner-Filter am Join
-  // verhindert schon das Lesen fremder Zuordnungen.
-  const { data: fassungen } = await supabase
-    .from("training_exercises")
-    .select("id, bild_url, trainings!inner ( owner_id )")
-    .eq("training_id", trainingId)
-    .eq("trainings.owner_id", user.id);
-
-  // `select` liefert die tatsächlich gelöschten Zeilen: nur wenn wirklich etwas
-  // gelöscht wurde (das Training existiert und gehört dem USER), fallen auch die
-  // Bilddateien — und nur dann gibt es die Erfolgs-Weiterleitung. Ein fremdes
-  // oder fehlendes Training endet ohne falsches Erfolgssignal.
-  const { data: geloescht, error } = await supabase
+  const { data: training } = await supabase
     .from("trainings")
-    .delete()
+    .select("team_id")
     .eq("id", trainingId)
-    .eq("owner_id", user.id)
-    .select("id");
-  if (error || !geloescht?.length) return;
+    .maybeSingle();
+  if (!training) return;
 
-  for (const f of fassungen ?? []) {
-    await entferneFassungsBild(supabase, f.bild_url, f.id);
+  // Kein Erfolgssignal ohne tatsächliche Löschung: der Helfer meldet `false`,
+  // wenn die RLS nichts durchgelassen hat.
+  if (!(await loescheTrainingMitBildern(supabase, trainingId))) return;
+
+  if (training.team_id) {
+    revalidatePath(`/team/${training.team_id}`);
+    redirect(`/team/${training.team_id}`);
   }
   revalidatePath("/trainings");
   redirect("/trainings?mine=1&deleted=1");

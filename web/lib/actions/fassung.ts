@@ -20,6 +20,7 @@ import {
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
 import { userSlug } from "@/lib/slug";
+import { bildOrdnerFuer, type Bearbeitungsziel } from "@/lib/training-zugriff";
 
 export type SaveFassungResult = { ok: true } | { ok: false; error: string };
 
@@ -34,18 +35,28 @@ async function ladeFassung(
   const { data } = await supabase
     .from("training_exercises")
     .select(
-      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, visibility )",
+      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, visibility )",
     )
     .eq("id", fassungId)
     .maybeSingle();
   if (!data) return null;
   const training = data.trainings as unknown as {
     owner_id: string | null;
+    team_id: string | null;
     visibility: string;
   } | null;
-  // Nur das private Original ist bearbeitbar: eine veröffentlichte Vorlage ist
-  // eingefroren, auch für ihren Urheber (Team-Epic Story 14).
-  return training?.owner_id === userId && training.visibility === "private" ? data : null;
+  if (!training) return null;
+
+  // Bearbeitbar ist das eigene PRIVATE Training oder eines des eigenen Teams
+  // (Story 6). Eine veröffentlichte Vorlage ist eingefroren, auch für ihren
+  // Urheber (Story 14). Team-Trainings kommen ohnehin nur bei Mitgliedern aus
+  // der Abfrage zurück — dafür sorgt die SELECT-Policy.
+  const ziel: Bearbeitungsziel | null = training.team_id
+    ? { art: "team", teamId: training.team_id }
+    : training.owner_id === userId && training.visibility === "private"
+      ? { art: "persoenlich", ownerId: userId }
+      : null;
+  return ziel ? { ...data, ziel } : null;
 }
 
 /** Die nächste freie Position im Zielabschnitt. Eine umgeordnete Fassung reiht
@@ -126,7 +137,9 @@ export async function updateFassung(
   if (neuesBild) {
     const invalid = storedImageError(datei.type, datei.size);
     if (invalid) return { status: "error", errors: { bild: invalid } };
-    neuPfad = `user/${user.id}/${fassungId}.${STORED_IMAGE_TYPES[datei.type]}`;
+    // Bei Team-Trainings in den Team-Ordner, damit jedes Mitglied das Bild
+    // ersetzen darf (Story 6 NFR 2). Dateiname = Fassungs-ID, wie überall.
+    neuPfad = `${bildOrdnerFuer(fassung.ziel)}/${fassungId}.${STORED_IMAGE_TYPES[datei.type]}`;
     const { error } = await supabase.storage
       .from(STORAGE_BUCKET)
       .upload(neuPfad, new Uint8Array(await datei.arrayBuffer()), {

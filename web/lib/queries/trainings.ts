@@ -55,6 +55,8 @@ export type TrainingDetail = {
   vorlageId: string | null;
   /** Woraus die Kopie entstanden ist — Name + Zeitpunkt, ohne Person. */
   herkunft: { name: string; datum: string } | null;
+  /** Gehört das Training einem Team? Dann steht hier dessen Name (Story 6). */
+  team: { id: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
   /** Flach, sortiert nach fester Trainingsteil-Reihenfolge, dann Position. */
@@ -72,7 +74,7 @@ const PE_SELECT = `
   ${INHALT_FELDER}
 `;
 
-const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, vorlage_id, herkunft_name, herkunft_datum, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
+const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, team_id, vorlage_id, herkunft_name, herkunft_datum, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
 
 /** Die Inhaltsfelder, wie sie aus der Zuordnung zurückkommen. */
 type RawInhalt = {
@@ -105,12 +107,15 @@ type RawTraining = {
   owner_id: string | null;
   visibility: "public" | "private";
   stufen: string[];
+  team_id: string | null;
   vorlage_id: string | null;
   herkunft_name: string | null;
   herkunft_datum: string | null;
   created_at: string;
   updated_at: string;
   training_exercises: RawTrainingExercise[];
+  /** Nur der Editor lädt den Teamnamen mit (PostgREST-Embed). */
+  teams?: { name: string } | null;
 };
 
 const teilRank = (t: string) => {
@@ -165,16 +170,22 @@ function mapTraining(raw: RawTraining): TrainingDetail {
       raw.herkunft_name && raw.herkunft_datum
         ? { name: raw.herkunft_name, datum: raw.herkunft_datum }
         : null,
+    team: raw.team_id ? { id: raw.team_id, name: raw.teams?.name ?? "Team" } : null,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
     exercises,
   };
 }
 
-/** Training für den Editor — ausschliesslich für den Eigentümer, und nur das
- *  private Original. `null`, wenn das Training nicht existiert, dem USER nicht
- *  gehört oder eine veröffentlichte Vorlage ist: Vorlagen sind eingefroren
- *  (Story 14), die RLS kennt für sie keine Update-Policy. */
+/** Training für den Editor: das eigene PRIVATE Training oder ein Training des
+ *  eigenen Teams (Team-Epic Story 6). `null`, wenn es das Training nicht gibt,
+ *  der USER es nicht bearbeiten darf oder es eine veröffentlichte Vorlage ist —
+ *  Vorlagen sind eingefroren (Story 14), die RLS kennt für sie keine
+ *  Update-Policy.
+ *
+ *  Die SELECT-Policy lässt Team-Trainings nur bei Mitgliedern durch; der
+ *  Filter hier grenzt lediglich die fremden öffentlichen Vorlagen aus, die
+ *  jeder lesen darf. */
 export async function getTrainingForEdit(id: string): Promise<TrainingDetail | null> {
   const supabase = await createClient();
   const {
@@ -183,10 +194,10 @@ export async function getTrainingForEdit(id: string): Promise<TrainingDetail | n
   if (!user) return null;
   const { data, error } = await supabase
     .from("trainings")
-    .select(TRAINING_SELECT)
+    .select(`${TRAINING_SELECT}, teams ( name )`)
     .eq("id", id)
-    .eq("owner_id", user.id)
     .eq("visibility", "private")
+    .or(`owner_id.eq.${user.id},team_id.not.is.null`)
     .maybeSingle();
   if (error) throw error;
   return data ? mapTraining(data as unknown as RawTraining) : null;
@@ -306,4 +317,42 @@ export async function getTrainingPool(
     );
   }
   return rows;
+}
+
+// ── Team-Trainings (Team-Epic Story 5) ───────────────────────────────────────
+
+/** Ein Team-Training im Bestand des Teams. Wie eine Pool-Zeile, zusätzlich mit
+ *  der Herkunft — «basiert auf …» sagt, woraus die Kopie entstanden ist. */
+export type TeamTrainingRow = TrainingListRow & {
+  herkunft: { name: string; datum: string } | null;
+};
+
+const TEAM_LIST_SELECT = `${LIST_SELECT}, herkunft_name, herkunft_datum`;
+
+/** Der Trainingsbestand eines Teams. Team-Trainings erscheinen NIE im
+ *  Trainings-Pool — sie gehören dem Team, nicht der Öffentlichkeit und keiner
+ *  Person. Sichtbar sind sie nur Mitgliedern; das setzt die RLS durch. */
+export async function getTeamTrainings(teamId: string): Promise<TeamTrainingRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("trainings")
+    .select(TEAM_LIST_SELECT)
+    .eq("team_id", teamId)
+    .order("updated_at", { ascending: false })
+    .order("id");
+  if (error) throw error;
+
+  return (data ?? []).map((raw) => {
+    const r = raw as unknown as RawListTraining & {
+      herkunft_name: string | null;
+      herkunft_datum: string | null;
+    };
+    return {
+      ...mapListRow(r),
+      herkunft:
+        r.herkunft_name && r.herkunft_datum
+          ? { name: r.herkunft_name, datum: r.herkunft_datum }
+          : null,
+    };
+  });
 }

@@ -4,7 +4,10 @@ import { Breadcrumbs, Card } from "@/components/ui";
 import { TeamKopf } from "@/components/team/TeamKopf";
 import { MitgliederListe } from "@/components/team/MitgliederListe";
 import { TeamGefahrenzone } from "@/components/team/TeamGefahrenzone";
+import { TeamTrainingsListe } from "@/components/team/TeamTrainingsListe";
+import { TeamTrainingErstellenButton } from "@/components/team/TeamTrainingErstellenButton";
 import { getTeam, getTeamAufloesungsInfo } from "@/lib/queries/teams";
+import { getTeamTrainings } from "@/lib/queries/trainings";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +29,10 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
   // (ununterscheidbar: die Existenz eines fremden Teams ist keine Auskunft wert).
   if (!team) redirect("/teams");
 
-  const aufloesung = await getTeamAufloesungsInfo(team.id);
+  const [aufloesung, trainings] = await Promise.all([
+    getTeamAufloesungsInfo(team.id),
+    getTeamTrainings(team.id),
+  ]);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
@@ -39,6 +45,26 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
           umbenennen, Trainings bearbeiten und weitere Trainer:innen aufnehmen.
         </p>
       </header>
+
+      <section className="mb-4">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="type-title-large text-on-surface">
+            Trainings
+            <span className="type-label-small ml-2 text-on-surface-variant">
+              {trainings.length}
+            </span>
+          </h2>
+          <TeamTrainingErstellenButton teamId={team.id} />
+        </div>
+        {trainings.length === 0 ? (
+          <p className="rounded-[6px] border border-outline-variant bg-surface-container-low px-5 py-8 text-center type-body-medium text-on-surface-variant">
+            Noch kein Training im Team. Erstelle eines hier oder stelle eine
+            Kopie eines eigenen Trainings ins Team.
+          </p>
+        ) : (
+          <TeamTrainingsListe trainings={trainings} />
+        )}
+      </section>
 
       <Card className="p-5 sm:p-6">
         <h2 className="type-title-large text-on-surface">
