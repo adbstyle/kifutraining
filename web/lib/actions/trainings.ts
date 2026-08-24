@@ -201,10 +201,6 @@ export async function addTrainingExercise(
     trainingsteil,
     hauptteilkategorie: hkat,
     position,
-    // Bis die Bestand-Überführung abgeschlossen ist, bleibt der Verweis als
-    // Brücke für die noch nicht überführten Zuordnungen bestehen.
-    exercise_id: exerciseId,
-    exercise_name_cache: ex.name,
     ...inhaltFelder(ex),
     bild_url: bild.url,
     diagramm: kopiereDiagrammVon(ex.diagramm),
@@ -322,36 +318,18 @@ export async function setTrainingStufen(
     .maybeSingle();
   if (error || !after) return { ok: false, error: error?.message ?? "Speichern fehlgeschlagen." };
 
-  // Abweichende, noch auflösbare Übungen ermitteln (Platzhalter ohne Kategorien
-  // werden nicht bewertet).
-  // Abweichende Fassungen ermitteln — anhand IHRER Alterskategorien, nicht
-  // anhand der Vorlage: die Fassung ist im Training frei bearbeitbar, ihre
-  // Kategorien können also längst abweichen. Der Embed ist nur die Brücke für
-  // noch nicht überführte Zuordnungen (siehe queries/trainings.ts) und entfällt
-  // mit dem Verweis-Abbau.
+  // Abweichende Fassungen ermitteln — anhand IHRER Alterskategorien: die
+  // Fassung ist im Training frei bearbeitbar und die einzige Quelle.
   let mismatched: { id: string; name: string }[] = [];
   if (valid.length > 0) {
     const { data: rows } = await supabase
       .from("training_exercises")
-      .select("id, name, kategorien, exercise_name_cache, exercises ( name, kategorien )")
+      .select("id, name, kategorien")
       .eq("training_id", trainingId);
     mismatched = (rows ?? [])
-      .map((r) => {
-        // Embed ist als to-one-FK ein Objekt; supabase-js typisiert es defensiv
-        // als Array -> hier auf das tatsächliche Objekt normalisieren.
-        const ex = (r.exercises as unknown) as
-          | { name: string; kategorien: string[] }
-          | null;
-        const ueberfuehrt = r.name != null;
-        return {
-          id: r.id,
-          name: r.name ?? ex?.name ?? r.exercise_name_cache ?? "Übung",
-          kategorien: ueberfuehrt ? (r.kategorien ?? []) : (ex?.kategorien ?? []),
-        };
-      })
       // Ohne Kategorien gibt es nichts abzudecken — solche Fassungen gelten
       // nicht als abweichend.
-      .filter((r) => r.kategorien.length > 0 && !stufenAbgedeckt(valid, r.kategorien))
+      .filter((r) => (r.kategorien ?? []).length > 0 && !stufenAbgedeckt(valid, r.kategorien))
       .map((r) => ({ id: r.id, name: r.name }));
   }
 
