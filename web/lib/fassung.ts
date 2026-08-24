@@ -161,11 +161,25 @@ export function istEigeneFassungsDatei(pfad: string, fassungId: string): boolean
  *  deterministisch, sodass ein erneuter Versuch dieselbe Datei überschreibt
  *  statt Waisen zu hinterlassen. */
 export function fassungBildPfad(
-  ownerId: string,
+  ordner: BildOrdner,
   trainingExerciseId: string,
   quellPfad: string,
 ): string {
-  return `user/${ownerId}/${trainingExerciseId}.${dateiendung(quellPfad)}`;
+  return `${ordner}/${trainingExerciseId}.${dateiendung(quellPfad)}`;
+}
+
+/** Der Storage-Ordner, in dem die Bildkopien liegen. Zwei Formen: `user/<uid>`
+ *  für persönliche Inhalte, `team/<teamId>` für Team-Trainings — nur so kann
+ *  jedes Mitglied das Bild einer Team-Fassung ersetzen (Team-Epic Story 6). Die
+ *  Storage-Policies prüfen genau diese beiden Präfixe. */
+export type BildOrdner = string;
+
+export function userOrdner(userId: string): BildOrdner {
+  return `user/${userId}`;
+}
+
+export function teamOrdner(teamId: string): BildOrdner {
+  return `team/${teamId}`;
 }
 
 // ── Kopier-Bausteine ────────────────────────────────────────────────────────
@@ -182,23 +196,23 @@ export function kopiereDiagrammVon(quelle: unknown): unknown {
   return data && data.elemente.length > 0 ? kopiereDiagramm(data) : null;
 }
 
-/** Eine Bilddatei byte-identisch in den Pfad des Handelnden kopieren.
+/** Eine Bilddatei byte-identisch in den Ziel-Ordner kopieren.
  *
  *  Kein Download/Upload und keine Bildverarbeitung — die Storage-Kopie prüft
  *  Leserecht auf der Quelle (der Bucket ist öffentlich lesbar) und Schreibrecht
- *  auf dem Ziel (eigener Pfad), genau die benötigte Semantik. Der Zielname ist
+ *  auf dem Ziel (eigener bzw. Team-Ordner), genau die benötigte Semantik. Der Zielname ist
  *  die ID des neuen Objekts, damit ein erneuter Versuch dieselbe Datei
  *  überschreibt statt Waisen zu hinterlassen. Ohne Quellbild ein No-op. */
 export async function kopiereBild(
   supabase: SupabaseClient,
   quellUrl: string | null,
-  ownerId: string,
+  ordner: BildOrdner,
   zielId: string,
 ): Promise<{ url: string | null; pfad: string | null; error?: string }> {
   const quellPfad = bildUrlToPath(quellUrl);
   if (!quellPfad) return { url: null, pfad: null };
 
-  const zielPfad = fassungBildPfad(ownerId, zielId, quellPfad);
+  const zielPfad = fassungBildPfad(ordner, zielId, quellPfad);
   const { error } = await supabase.storage.from(STORAGE_BUCKET).copy(quellPfad, zielPfad);
   if (error) return { url: null, pfad: null, error: `Bildkopie fehlgeschlagen: ${error.message}` };
 

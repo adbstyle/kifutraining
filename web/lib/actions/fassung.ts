@@ -12,6 +12,7 @@ import {
   fassungUnvollstaendig,
   stempleHerkunft,
   kopiereBild,
+  userOrdner,
   kopiereDiagrammVon,
   entferneStorageObjekt,
   inhaltFelder,
@@ -42,7 +43,9 @@ async function ladeFassung(
     owner_id: string | null;
     visibility: string;
   } | null;
-  return training?.owner_id === userId ? { ...data, visibility: training.visibility } : null;
+  // Nur das private Original ist bearbeitbar: eine veröffentlichte Vorlage ist
+  // eingefroren, auch für ihren Urheber (Team-Epic Story 14).
+  return training?.owner_id === userId && training.visibility === "private" ? data : null;
 }
 
 /** Die nächste freie Position im Zielabschnitt. Eine umgeordnete Fassung reiht
@@ -163,24 +166,8 @@ export async function updateFassung(
   )
     await supabase.storage.from(STORAGE_BUCKET).remove([altPfad]);
 
-  // Leert ein Einordnungswechsel die Einleitung oder den Hauptteil, setzt die
-  // DB-Regel das Training auf privat (Story 5 PC 3) — nur dieser Fall kann die
-  // Sichtbarkeit kippen, also wird auch nur dann nachgelesen. Den Vorher-Wert
-  // liefert ladeFassung mit.
-  let wurdePrivat = false;
-  if (wechsel && fassung.visibility === "public") {
-    const { data: nachher } = await supabase
-      .from("trainings")
-      .select("visibility")
-      .eq("id", fassung.training_id)
-      .maybeSingle();
-    wurdePrivat = nachher?.visibility === "private";
-  }
-
   revalidiereTraining(fassung.training_id, fassungId);
-  redirect(
-    `/training/${fassung.training_id}/edit?bearbeitet=1${wurdePrivat ? "&privat=1" : ""}`,
-  );
+  redirect(`/training/${fassung.training_id}/edit?bearbeitet=1`);
 }
 
 /** Eine Fassung als eigene, zunächst private Vorlage in die Bibliothek
@@ -228,7 +215,7 @@ export async function uebernehmeInBibliothek(
 
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
   const uebungId = crypto.randomUUID();
-  const bild = await kopiereBild(supabase, f.bild_url, user.id, uebungId);
+  const bild = await kopiereBild(supabase, f.bild_url, userOrdner(user.id), uebungId);
   if (bild.error) return { ok: false, error: bild.error };
 
   const { data: angelegt, error } = await supabase

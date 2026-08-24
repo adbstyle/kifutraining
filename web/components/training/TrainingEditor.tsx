@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Plus,
@@ -30,7 +30,7 @@ import { ExerciseThumb } from "./ExerciseThumb";
 import { InBibliothekButton } from "./InBibliothekButton";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
-import { TrainingVisibilityControl } from "./TrainingVisibilityControl";
+import { VorlagenControl } from "./VorlagenControl";
 import {
   TRAININGSTEILE,
   HAUPTTEILKATEGORIEN,
@@ -51,16 +51,12 @@ import {
 import type { TrainingsteilSlug, HauptteilkategorieSlug } from "@/lib/vocab";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings";
 
-const AUTO_PRIVATE_MSG =
-  "Das Training wurde auf privat gesetzt: ein öffentliches Training braucht Einleitung und Hauptteil belegt und mindestens eine Stufe.";
-
 /* Trainings-Editor (Stories #10/#11/#12). Vier feste Trainingsteil-Abschnitte
    mit Übungs-Picker, Dauer-Erfassung, Umsortieren (Hoch/Runter) und Entfernen.
    Kopf: Name bearbeiten, Stufen setzen, Training löschen. Struktur-Änderungen
    frischen die Serverdaten auf; Dauern werden lokal überlagert. */
 export function TrainingEditor({ training }: { training: TrainingDetail }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
   // Offener Picker: Trainingsteil und — im Hauptteil — die Unterkategorie.
   const [open, setOpen] = useState<{
@@ -75,13 +71,6 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
   const [nameError, setNameError] = useState<string | undefined>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [mismatch, setMismatch] = useState<{ id: string; name: string }[] | null>(null);
-
-  // Das Bearbeiten einer Fassung läuft über eine eigene Seite und kehrt per
-  // Weiterleitung zurück. Hat die DB-Regel das Training dabei auf privat
-  // gesetzt, trägt die Rückkehr-Adresse den Hinweis — einmalig anzeigen.
-  useEffect(() => {
-    if (searchParams.get("privat") === "1") setNotice(AUTO_PRIVATE_MSG);
-  }, [searchParams]);
 
   const dur = (item: TrainingExerciseItem) =>
     item.id in durations ? durations[item.id] : item.durationMin;
@@ -102,9 +91,8 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
 
   function remove(item: TrainingExerciseItem) {
     startTransition(async () => {
-      const r = await removeTrainingExercise(item.id);
+      await removeTrainingExercise(item.id);
       router.refresh();
-      if (r.becamePrivate) setNotice(AUTO_PRIVATE_MSG);
     });
   }
 
@@ -113,7 +101,6 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
     startTransition(async () => {
       const r = await setTrainingStufen(training.id, next);
       router.refresh();
-      if (r.becamePrivate) setNotice(AUTO_PRIVATE_MSG);
       if (r.mismatched && r.mismatched.length > 0) setMismatch(r.mismatched);
     });
   }
@@ -143,9 +130,9 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
 
   // Auffangen trägt keine Dauer und zählt weder zur Summe noch zum
   // „ohne Dauer"-Hinweis.
-  // Was zum Öffentlich-Schalten fehlt (Story 8 AK 3): so erscheint die
-  // Tragweite-Bestätigung nur für ein veröffentlichbares Training. Die RPC
-  // prüft es serverseitig erneut.
+  // Was zum Veröffentlichen fehlt: so erscheint die Tragweite-Bestätigung nur
+  // für ein veröffentlichbares Training. Die Action prüft es serverseitig
+  // erneut.
   const fehlendeVoraussetzungen = [
     stufen.length === 0 ? "stufe" : null,
     training.exercises.some((e) => e.trainingsteil === "einleitung") ? null : "einleitung",
@@ -179,17 +166,16 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
                 <Pencil size={16} strokeWidth={2} aria-hidden />
               </button>
             </div>
-            <Badge
-              tone={training.visibility === "public" ? "oeffentlich" : "entwurf"}
-              className="mt-2"
-            >
-              {training.visibility === "public" ? "Community" : "✎ Privat"}
+            {/* Der Editor zeigt immer das private Original; die Marke sagt,
+                ob es davon zusätzlich eine öffentliche Vorlage gibt. */}
+            <Badge tone={training.vorlageId ? "oeffentlich" : "entwurf"} className="mt-2">
+              {training.vorlageId ? "Vorlage aktiv" : "✎ Privat"}
             </Badge>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
-            <TrainingVisibilityControl
+            <VorlagenControl
               trainingId={training.id}
-              visibility={training.visibility}
+              vorlageId={training.vorlageId}
               fehlend={fehlendeVoraussetzungen}
             />
             <button

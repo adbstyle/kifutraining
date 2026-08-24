@@ -50,6 +50,11 @@ export type TrainingDetail = {
   ownerId: string | null;
   visibility: "public" | "private";
   stufen: KategorieSlug[];
+  /** Die aktive öffentliche Vorlage dieses Trainings, falls veröffentlicht
+   *  (Story 14). Nur am persönlichen Original gesetzt, nie an der Vorlage. */
+  vorlageId: string | null;
+  /** Woraus die Kopie entstanden ist — Name + Zeitpunkt, ohne Person. */
+  herkunft: { name: string; datum: string } | null;
   createdAt: string;
   updatedAt: string;
   /** Flach, sortiert nach fester Trainingsteil-Reihenfolge, dann Position. */
@@ -67,7 +72,7 @@ const PE_SELECT = `
   ${INHALT_FELDER}
 `;
 
-const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
+const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, vorlage_id, herkunft_name, herkunft_datum, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
 
 /** Die Inhaltsfelder, wie sie aus der Zuordnung zurückkommen. */
 type RawInhalt = {
@@ -100,6 +105,9 @@ type RawTraining = {
   owner_id: string | null;
   visibility: "public" | "private";
   stufen: string[];
+  vorlage_id: string | null;
+  herkunft_name: string | null;
+  herkunft_datum: string | null;
   created_at: string;
   updated_at: string;
   training_exercises: RawTrainingExercise[];
@@ -152,14 +160,21 @@ function mapTraining(raw: RawTraining): TrainingDetail {
     ownerId: raw.owner_id,
     visibility: raw.visibility,
     stufen: sortStufen(raw.stufen ?? []),
+    vorlageId: raw.vorlage_id,
+    herkunft:
+      raw.herkunft_name && raw.herkunft_datum
+        ? { name: raw.herkunft_name, datum: raw.herkunft_datum }
+        : null,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
     exercises,
   };
 }
 
-/** Training für den Editor — ausschliesslich für den Eigentümer. `null`, wenn
- *  das Training nicht existiert oder dem USER nicht gehört. */
+/** Training für den Editor — ausschliesslich für den Eigentümer, und nur das
+ *  private Original. `null`, wenn das Training nicht existiert, dem USER nicht
+ *  gehört oder eine veröffentlichte Vorlage ist: Vorlagen sind eingefroren
+ *  (Story 14), die RLS kennt für sie keine Update-Policy. */
 export async function getTrainingForEdit(id: string): Promise<TrainingDetail | null> {
   const supabase = await createClient();
   const {
@@ -171,6 +186,7 @@ export async function getTrainingForEdit(id: string): Promise<TrainingDetail | n
     .select(TRAINING_SELECT)
     .eq("id", id)
     .eq("owner_id", user.id)
+    .eq("visibility", "private")
     .maybeSingle();
   if (error) throw error;
   return data ? mapTraining(data as unknown as RawTraining) : null;
