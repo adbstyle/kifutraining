@@ -16,7 +16,6 @@ import {
   entferneStorageObjekt,
   inhaltFelder,
   istEigeneFassungsDatei,
-  FASSUNG_INHALT_FELDER,
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
 import { userSlug } from "@/lib/slug";
@@ -34,7 +33,7 @@ async function ladeFassung(
   const { data } = await supabase
     .from("training_exercises")
     .select(
-      "id, training_id, trainingsteil, hauptteilkategorie, position, name, exercise_id, bild_url, bild_quelle, diagramm, trainings ( owner_id, visibility )",
+      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, visibility )",
     )
     .eq("id", fassungId)
     .maybeSingle();
@@ -120,30 +119,6 @@ export async function updateFassung(
   const altPfad = bildUrlToPath(fassung.bild_url);
   let neuPfad: string | null = null;
 
-  // Auslieferungsfenster: eine noch nicht überführte Zeile (name NULL) zeigt
-  // Bild und Diagramm bis jetzt über den Übungs-Verweis. Das Formular schreibt
-  // beides nicht — ohne Mitnahme kippte die Anzeige mit dem ersten Speichern
-  // auf die Fassung und Vorlagen-Diagramm/-Bild verschwänden. Entfällt mit dem
-  // Verweis-Abbau.
-  if (fassung.name == null && fassung.exercise_id) {
-    const { data: quelle } = await supabase
-      .from("exercises")
-      .select("bild_url, bild_quelle, diagramm")
-      .eq("id", fassung.exercise_id)
-      .maybeSingle();
-    if (quelle) {
-      update.diagramm = fassung.diagramm ?? quelle.diagramm;
-      if (!neuesBild && !entfernen) {
-        update.bild_quelle = fassung.bild_quelle ?? quelle.bild_quelle;
-        if (!fassung.bild_url && quelle.bild_url) {
-          // Eigene Kopie statt Verweis auf die Vorlagen-Datei; schlägt die
-          // Kopie fehl, heilt die Bestand-Migration den Verweis später.
-          const kopie = await kopiereBild(supabase, quelle.bild_url, user.id, fassungId);
-          if (!kopie.error && kopie.url) update.bild_url = kopie.url;
-        }
-      }
-    }
-  }
 
   if (neuesBild) {
     const invalid = storedImageError(datei.type, datei.size);
@@ -161,9 +136,8 @@ export async function updateFassung(
   } else if (entfernen) {
     update.bild_url = null;
     // Ohne Foto kann die Anzeige nicht mehr darauf zeigen; ein vorhandenes
-    // Diagramm (auch das soeben aus der Vorlage mitgenommene) wird zum aktiven
-    // Bild.
-    update.bild_quelle = (update.diagramm ?? fassung.diagramm) ? "diagramm" : null;
+    // Diagramm wird zum aktiven Bild.
+    update.bild_quelle = fassung.diagramm ? "diagramm" : null;
   }
 
   const { error } = await supabase
@@ -244,8 +218,7 @@ export async function uebernehmeInBibliothek(
 
   // Fassungen tragen kein `source` — der vollständige Herkunfts-Stempel ist
   // hier die einzige legale Eingabe für stempleHerkunft (die sonst wirft).
-  // Ungestempelt ist eine Zeile nur im Auslieferungsfenster vor der Bestand-
-  // Migration; sauber abweisen statt mit rohem Fehler abzubrechen.
+  // Sauber abweisen statt mit rohem Fehler abzubrechen.
   if (!(f.herkunft_name && f.herkunft_typ && f.herkunft_datum))
     return {
       ok: false,
@@ -306,53 +279,20 @@ export async function saveFassungDiagramm(
   if (!diagramm || diagramm.elemente.length > MAX_ELEMENTE)
     return { ok: false, error: "Ungültiges Diagramm." };
 
-  // Auslieferungsfenster: eine noch nicht überführte Zeile (name NULL) würde
-  // die Zeichnung zwar speichern, aber die Anzeige läse weiter den Übungs-
-  // Verweis — und die Bestand-Migration überführte die Zeile mit ihren
-  // NULL-Inhalten. Darum wird sie hier zuerst vollständig überführt: die
-  // Inhalte der Quelle, eine eigene Bildkopie, und damit `name`, sodass die
-  // Zeile fortan für sich steht. Entfällt mit dem Verweis-Abbau.
-  const ueberfuehrung: Record<string, unknown> = {};
-  let effektiv = { bild_url: fassung.bild_url, bild_quelle: fassung.bild_quelle };
-  if (fassung.name == null && fassung.exercise_id) {
-    const select: string = `${FASSUNG_INHALT_FELDER.join(", ")}, bild_url`;
-    const { data: roh } = await supabase
-      .from("exercises")
-      .select(select)
-      .eq("id", fassung.exercise_id)
-      .maybeSingle();
-    // Der Query-Parser kennt die Feldliste nicht; die Form bestimmt das Select.
-    const quelle = roh as unknown as
-      | (Record<string, unknown> & {
-          bild_url: string | null;
-          bild_quelle: "foto" | "diagramm" | null;
-        })
-      | null;
-    if (quelle) {
-      Object.assign(ueberfuehrung, inhaltFelder(quelle));
-      const kopie = await kopiereBild(supabase, quelle.bild_url, user.id, fassungId);
-      if (!kopie.error && kopie.url) ueberfuehrung.bild_url = kopie.url;
-      effektiv = {
-        bild_url: (ueberfuehrung.bild_url as string | null) ?? null,
-        bild_quelle: (quelle.bild_quelle ?? null) as "foto" | "diagramm" | null,
-      };
-    }
-  }
-
   // bild_quelle konsistent mitführen: das erste Element macht das Diagramm zum
   // aktiven Bild; wird es geleert, fällt die Wahl zurück.
   const leer = diagramm.elemente.length === 0;
   const bild_quelle = leer
-    ? effektiv.bild_quelle === "diagramm"
-      ? effektiv.bild_url
+    ? fassung.bild_quelle === "diagramm"
+      ? fassung.bild_url
         ? "foto"
         : null
-      : effektiv.bild_quelle
-    : (effektiv.bild_quelle ?? "diagramm");
+      : fassung.bild_quelle
+    : (fassung.bild_quelle ?? "diagramm");
 
   const { error } = await supabase
     .from("training_exercises")
-    .update({ ...ueberfuehrung, diagramm, bild_quelle })
+    .update({ diagramm, bild_quelle })
     .eq("id", fassungId);
   if (error) return { ok: false, error: error.message };
 
