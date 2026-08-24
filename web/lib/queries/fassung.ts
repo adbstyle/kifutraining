@@ -45,8 +45,7 @@ export async function getFassungZumBearbeiten(
   // auswerten — gemappt wird unten ohnehin explizit.
   const select: string = `id, training_id, trainingsteil, hauptteilkategorie, ${INHALT},
        herkunft_name, herkunft_typ, herkunft_datum,
-       trainings!inner ( id, name, owner_id ),
-       exercises ( ${INHALT} )`;
+       trainings!inner ( id, name, owner_id )`;
   const { data: roh, error } = await supabase
     .from("training_exercises")
     .select(select)
@@ -59,7 +58,7 @@ export async function getFassungZumBearbeiten(
   // Der Query-Parser kennt die Feldliste nicht (siehe oben) — die Form der
   // Antwort ist durch das Select bestimmt und wird hier einmal benannt.
   type RohInhalt = {
-    name: string | null;
+    name: string;
     kategorien: string[] | null;
     erscheinungsform: string[] | null;
     feldtyp: string | null;
@@ -81,20 +80,16 @@ export async function getFassungZumBearbeiten(
     herkunft_typ: string | null;
     herkunft_datum: string | null;
     trainings: { id: string; name: string };
-    exercises: RohInhalt | null;
   };
 
   const training = data.trainings;
-  // Dieselbe Brücke wie im Anzeige-Pfad: eine noch nicht überführte Zuordnung
-  // liefert ihre Inhalte über die referenzierte Übung, damit das Formular im
-  // Auslieferungsfenster nicht leer erscheint. Entfällt mit dem Verweis-Abbau.
-  const q: RohInhalt = data.name != null ? data : (data.exercises ?? data);
+  const q: RohInhalt = data;
 
   return {
     id: data.id,
     trainingId: data.training_id,
     trainingName: training.name,
-    name: q.name ?? "Unbenannte Übung",
+    name: q.name,
     trainingsteil: data.trainingsteil,
     hauptteilkategorie: data.hauptteilkategorie,
     kategorien: q.kategorien ?? [],
