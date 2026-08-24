@@ -71,3 +71,24 @@ export async function getTeam(id: string): Promise<TeamDetail | null> {
 
   return { id: team.id, name: team.name, mitglieder };
 }
+
+/** Was beim Auflösen verloren geht (Story 13 AK 5): die Zahlen für den
+ *  Bestätigungsdialog. Persönliche Trainings der Mitglieder zählen nicht dazu —
+ *  sie gehören nicht dem Team. */
+export async function getTeamAufloesungsInfo(
+  teamId: string,
+): Promise<{ trainings: number; termine: number }> {
+  const supabase = await createClient();
+
+  const { count: trainings } = await supabase
+    .from("trainings")
+    .select("id", { count: "exact", head: true })
+    .eq("team_id", teamId);
+
+  const { data: termine } = await supabase
+    .from("training_termine")
+    .select("id, trainings!inner ( team_id )")
+    .eq("trainings.team_id", teamId);
+
+  return { trainings: trainings ?? 0, termine: (termine ?? []).length };
+}

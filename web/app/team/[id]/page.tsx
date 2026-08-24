@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { Breadcrumbs, Card } from "@/components/ui";
 import { TeamKopf } from "@/components/team/TeamKopf";
 import { MitgliederListe } from "@/components/team/MitgliederListe";
-import { getTeam } from "@/lib/queries/teams";
+import { TeamGefahrenzone } from "@/components/team/TeamGefahrenzone";
+import { getTeam, getTeamAufloesungsInfo } from "@/lib/queries/teams";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,8 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
   // Nicht vorhanden oder kein Mitglied — beides führt zurück in die Übersicht
   // (ununterscheidbar: die Existenz eines fremden Teams ist keine Auskunft wert).
   if (!team) redirect("/teams");
+
+  const aufloesung = await getTeamAufloesungsInfo(team.id);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
@@ -51,6 +54,20 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
             eigeneUserId={user.id}
           />
         </div>
+      </Card>
+
+      <Card className="mt-4 p-5 sm:p-6">
+        <h2 className="type-title-large text-on-surface">Mitgliedschaft beenden</h2>
+        <p className="type-body-medium mt-2 mb-4 text-on-surface-variant">
+          Verlassen betrifft nur dich; Auflösen löscht das Team samt seinen
+          Trainings und Terminen für alle.
+        </p>
+        <TeamGefahrenzone
+          teamId={team.id}
+          anzahlMitglieder={team.mitglieder.length}
+          anzahlTrainings={aufloesung.trainings}
+          anzahlTermine={aufloesung.termine}
+        />
       </Card>
     </main>
   );

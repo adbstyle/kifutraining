@@ -8,6 +8,7 @@ import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/tra
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { revalidiereTraining } from "@/lib/revalidate";
 import { kopiereTraining } from "@/lib/training-kopie";
+import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
 import {
   istEigeneFassungsDatei,
   stempleHerkunft,
@@ -249,31 +250,6 @@ async function fehlendeVoraussetzungen(
   return { missing };
 }
 
-/** Die Vorlage eines Trainings samt ihrer Bilddateien entfernen. Gelöscht wird
- *  nur, was der Vorlage selbst gehört: der Dateiname muss die Fassungs-ID
- *  tragen. Ein verwaistes Bild ist harmlos, eine fremde Datei zu löschen wäre
- *  Datenverlust. */
-async function entferneVorlage(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  vorlageId: string,
-) {
-  const { data: fassungen } = await supabase
-    .from("training_exercises")
-    .select("id, bild_url")
-    .eq("training_id", vorlageId);
-
-  const { data: geloescht } = await supabase
-    .from("trainings")
-    .delete()
-    .eq("id", vorlageId)
-    .select("id");
-  if (!geloescht?.length) return;
-
-  for (const f of fassungen ?? []) {
-    await entferneFassungsBild(supabase, f.bild_url, f.id);
-  }
-}
-
 /** Ein persönliches Training als öffentliche Vorlage veröffentlichen (Story 14).
  *
  *  Veröffentlicht wird nie das Training selbst, sondern eine vollständige,
@@ -323,11 +299,11 @@ export async function veroeffentlicheTraining(
     .eq("owner_id", user.id);
   if (freigabeFehler) {
     // Die halbfertige Kopie darf nicht als stiller Zwilling stehen bleiben.
-    await entferneVorlage(supabase, kopie.neueId);
+    await loescheTrainingMitBildern(supabase, kopie.neueId);
     return { status: "error", error: freigabeFehler.message };
   }
 
-  if (vorher?.vorlage_id) await entferneVorlage(supabase, vorher.vorlage_id);
+  if (vorher?.vorlage_id) await loescheTrainingMitBildern(supabase, vorher.vorlage_id);
 
   const { error } = await supabase
     .from("trainings")
@@ -363,7 +339,7 @@ export async function zieheVorlageZurueck(
   if (!training) return { ok: false, error: "Training nicht gefunden." };
   if (!training.vorlage_id) return { ok: true }; // schon zurückgezogen
 
-  await entferneVorlage(supabase, training.vorlage_id);
+  await loescheTrainingMitBildern(supabase, training.vorlage_id);
   // `on delete set null` hat den Link bereits geleert; explizit nachziehen
   // schadet nicht und deckt den Fall ab, dass das Löschen nichts traf.
   await supabase

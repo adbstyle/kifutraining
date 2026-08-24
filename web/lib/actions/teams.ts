@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
 
 /**
  * Server Actions rund um Teams (Team-Epic Stories 3, 4).
@@ -130,4 +131,104 @@ export async function nimmMitgliedAuf(
 
   revalidiereTeam(teamId);
   return { ok: true, anzeigeName: res.anzeige_name! };
+}
+
+// ── Story 13: Verlassen, Entfernen, Auflösen ─────────────────────────────────
+
+/** Ergebnis eines Austritts bzw. einer Entfernung. `aufloesung_noetig` heisst:
+ *  der Vorgang würde das letzte Mitglied entfernen und damit das Team samt
+ *  seinen Trainings und Terminen auflösen — dafür braucht es eine eigene
+ *  Bestätigung. */
+export type MitgliedschaftResult =
+  | { status: "entfernt" }
+  | { status: "aufgeloest" }
+  | { status: "aufloesung_noetig" }
+  | { status: "fehler"; error: string };
+
+/** Die Trainings eines Teams samt Bilddateien entfernen.
+ *
+ *  Läuft VOR dem Ende der Mitgliedschaft: danach greifen weder die
+ *  Trainings- noch die Storage-Policy, und die Dateien blieben als Waisen
+ *  liegen. Die DB-Kaskade allein räumt nur die Zeilen ab. */
+async function raeumeTeamTrainings(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  teamId: string,
+) {
+  const { data: trainings } = await supabase
+    .from("trainings")
+    .select("id")
+    .eq("team_id", teamId);
+  for (const t of trainings ?? []) {
+    await loescheTrainingMitBildern(supabase, t.id);
+  }
+}
+
+/** Ein Mitglied entfernen — sich selbst („verlassen") oder eine andere Person.
+ *  Beides derselbe Vorgang: im Team sind alle gleichberechtigt.
+ *
+ *  Ob der Vorgang das Team leert, entscheidet die RPC in derselben Transaktion
+ *  wie die Löschung — sonst könnte zwischen Prüfung und Ausführung jemand
+ *  anders austreten und das Team unbestätigt verschwinden. */
+export async function entferneMitglied(
+  teamId: string,
+  userId: string,
+  bestaetigt = false,
+): Promise<MitgliedschaftResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { status: "fehler", error: "Nicht angemeldet." };
+
+  // Bei bestätigter Auflösung zuerst aufräumen, solange die Rechte noch stehen.
+  if (bestaetigt) await raeumeTeamTrainings(supabase, teamId);
+
+  const { data, error } = await supabase.rpc("entferne_team_mitglied", {
+    p_team: teamId,
+    p_user: userId,
+    p_bestaetigt: bestaetigt,
+  });
+  if (error) return { status: "fehler", error: error.message };
+
+  const res = data as { status: string };
+  revalidiereTeam(teamId);
+  if (res.status === "aufloesung_noetig") return { status: "aufloesung_noetig" };
+  return res.status === "aufgeloest" ? { status: "aufgeloest" } : { status: "entfernt" };
+}
+
+/** Das Team selbst verlassen (Story 13 AK 1–3). */
+export async function verlasseTeam(
+  teamId: string,
+  bestaetigt = false,
+): Promise<MitgliedschaftResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { status: "fehler", error: "Nicht angemeldet." };
+  return entferneMitglied(teamId, user.id, bestaetigt);
+}
+
+/** Das Team ausdrücklich auflösen (Story 13 AK 5). Trainings und Termine des
+ *  Teams gehen dabei verloren; persönliche Trainings der Mitglieder — auch
+ *  Kopien, die jemand zu sich übernommen hat — bleiben unberührt. */
+export async function loeseTeamAuf(teamId: string): Promise<TeamActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+
+  await raeumeTeamTrainings(supabase, teamId);
+
+  const { data, error } = await supabase
+    .from("teams")
+    .delete()
+    .eq("id", teamId)
+    .select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: "Team nicht gefunden." };
+
+  revalidiereTeam(teamId);
+  return { ok: true };
 }

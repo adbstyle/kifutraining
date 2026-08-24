@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { UserPlus, UserRound } from "lucide-react";
-import { Button, Dialog, Snackbar, TextField } from "@/components/ui";
-import { nimmMitgliedAuf, sucheTrainer } from "@/lib/actions/teams";
+import { UserMinus, UserPlus, UserRound } from "lucide-react";
+import { Button, Dialog, IconButton, Snackbar, TextField } from "@/components/ui";
+import { entferneMitglied, nimmMitgliedAuf, sucheTrainer } from "@/lib/actions/teams";
 import type { TeamMitglied } from "@/lib/queries/teams";
 
 /* Mitgliederliste mit Aufnahme über eine Vorschau (Story 4).
@@ -27,6 +27,7 @@ export function MitgliederListe({
   const [fehler, setFehler] = useState<string | undefined>();
   const [notice, setNotice] = useState<string | null>(null);
   const [vorschau, setVorschau] = useState<string | null>(null);
+  const [entfernen, setEntfernen] = useState<TeamMitglied | null>(null);
 
   function suchen() {
     setFehler(undefined);
@@ -53,6 +54,19 @@ export function MitgliederListe({
     });
   }
 
+  function entfernenAusfuehren(mitglied: TeamMitglied) {
+    startTransition(async () => {
+      const res = await entferneMitglied(teamId, mitglied.userId);
+      setEntfernen(null);
+      if (res.status === "fehler") {
+        setNotice(res.error);
+        return;
+      }
+      router.refresh();
+      setNotice(`${mitglied.anzeigeName} ist nicht mehr im Team.`);
+    });
+  }
+
   return (
     <>
       <ul className="flex flex-col gap-2">
@@ -70,6 +84,15 @@ export function MitgliederListe({
                 <span className="type-label-small ml-2 text-on-surface-variant">(du)</span>
               )}
             </span>
+            {/* Sich selbst entfernt man über „Team verlassen" — dort hängt der
+                Hinweis, was der Austritt bedeutet. */}
+            {m.userId !== eigeneUserId && (
+              <IconButton
+                icon={UserMinus}
+                label={`${m.anzeigeName} aus dem Team entfernen`}
+                onClick={() => setEntfernen(m)}
+              />
+            )}
           </li>
         ))}
       </ul>
@@ -115,6 +138,32 @@ export function MitgliederListe({
           <strong className="text-on-surface">{vorschau}</strong> wurde gefunden.
           Als Mitglied sieht und bearbeitet diese Person alle Trainings und
           Termine des Teams.
+        </p>
+      </Dialog>
+
+      <Dialog
+        open={entfernen != null}
+        onClose={() => setEntfernen(null)}
+        title="Aus dem Team entfernen?"
+        actions={
+          <>
+            <Button variant="text" onClick={() => setEntfernen(null)}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => entfernen && entfernenAusfuehren(entfernen)}
+              disabled={pending}
+            >
+              Entfernen
+            </Button>
+          </>
+        }
+      >
+        <p>
+          <strong className="text-on-surface">{entfernen?.anzeigeName}</strong>{" "}
+          sieht die Trainings und Termine dieses Teams danach nicht mehr.
+          Persönliche Trainings dieser Person bleiben unberührt.
         </p>
       </Dialog>
 
