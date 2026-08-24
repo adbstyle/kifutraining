@@ -5,12 +5,26 @@
 -- Beschreibung im Feld `aufbau` statt des methodischen Fahrplans.
 --
 -- Reihenfolge in dieser Migration (Epic-NFR 4, CLAUDE.md forward-only): ERST
--- den Bestand bereinigen, DANN die Regel verschärfen — beides atomar in einer
--- Transaktion, damit nie ein Zustand entsteht, in dem produktive Zeilen die
--- neue Regel verletzen.
+-- die alten Regeln lösen, DANN den Bestand bereinigen, DANN die neuen Regeln
+-- setzen — alles atomar in einer Transaktion, damit nie ein Zustand entsteht,
+-- in dem produktive Zeilen eine geltende Regel verletzen.
+--
+-- Das Lösen MUSS vor dem Backfill stehen: der Backfill räumt den Fahrplan einer
+-- Hauptteil-Übung ab, und genau das verbietet die alte Regel
+-- `ablauf_je_trainingsteil` («Hauptteil hat einen Fahrplan»). Auf einer leeren
+-- CI-Datenbank fällt das nicht auf — es gibt keine solche Zeile —, auf Staging
+-- und Prod dagegen scheiterte der Push daran (Lauf 32574394127 am 2026-08-22).
 
 -- ----------------------------------------------------------------------------
--- 1) Backfill: «Fussball spielen»-Übungen ziehen ihren Ablauftext um
+-- 1) Alte Regeln lösen
+-- ----------------------------------------------------------------------------
+-- Beide werden weiter unten durch ihre kategorie-bewussten Nachfolger ersetzt;
+-- innerhalb dieser Transaktion sieht keine andere Sitzung die Lücke.
+alter table exercises drop constraint ablauf_je_trainingsteil;
+alter table exercises drop constraint user_fahrplan_vollstaendig;
+
+-- ----------------------------------------------------------------------------
+-- 2) Backfill: «Fussball spielen»-Übungen ziehen ihren Ablauftext um
 -- ----------------------------------------------------------------------------
 -- PO-Entscheid 2026-08-22: die befüllten Fahrplan-Stufen werden in ihrer
 -- Reihenfolge zu getrennten Absätzen zusammengeführt — ohne Textverlust und
@@ -40,11 +54,10 @@ where hauptteilkategorie = 'fussball-spielen'
   and methodischer_fahrplan is not null;
 
 -- ----------------------------------------------------------------------------
--- 2) Ablauf-Form je Einordnung (ersetzt ablauf_je_trainingsteil)
+-- 3) Ablauf-Form je Einordnung (ersetzt ablauf_je_trainingsteil)
 -- ----------------------------------------------------------------------------
 -- Neu kategorie-bewusst und mit Nicht-Leere-Prüfung auf dem Beschreibungstext
 -- (PO: „vollständig heisst nicht leer"). Gilt für alle Quellen.
-alter table exercises drop constraint ablauf_je_trainingsteil;
 alter table exercises add constraint ablauf_je_einordnung check (
   case
     when hauptteilkategorie = 'fussball-spielen'
@@ -56,7 +69,7 @@ alter table exercises add constraint ablauf_je_einordnung check (
 );
 
 -- ----------------------------------------------------------------------------
--- 3) Fahrplan-Vollständigkeit gilt neu für ALLE Quellen
+-- 4) Fahrplan-Vollständigkeit gilt neu für ALLE Quellen
 -- ----------------------------------------------------------------------------
 -- Der frühere Constraint nahm den Manual-Bestand aus, weil dort ueben/
 -- wetteifern leer sein durften. Diese Ausnahme betraf genau eine Übung
@@ -64,7 +77,6 @@ alter table exercises add constraint ablauf_je_einordnung check (
 -- Beschreibung umgezogen. Damit kann die Regel quellenunabhängig gelten,
 -- was Story 3 voraussetzt: die Fassung einer Manual-Übung im Training wird
 -- nach denselben Regeln bewertet wie eine Trainer-Übung.
-alter table exercises drop constraint user_fahrplan_vollstaendig;
 alter table exercises add constraint fahrplan_vollstaendig check (
   trainingsteil not in ('einleitung', 'hauptteil')
   -- NULL-sicherer Vergleich: `hauptteilkategorie = '…'` ergäbe bei Einleitungs-
