@@ -5,7 +5,9 @@ import { Breadcrumbs, KategorieChip, ButtonLink, HerkunftsAngabe } from "@/compo
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
+import { VorlageUebernehmenControl } from "@/components/training/VorlageUebernehmenControl";
 import { getTrainingView } from "@/lib/queries/trainings";
+import { getMeineTeams } from "@/lib/queries/teams";
 import { createClient } from "@/lib/supabase/server";
 import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
 
@@ -28,7 +30,13 @@ export default async function TrainingViewPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isOwner = !!user && training.ownerId === user.id;
+  const darfBearbeiten =
+    !!user &&
+    ((training.ownerId === user.id && training.visibility === "private") ||
+      !!training.team);
+  // Übernahme-Ziele: nur bei öffentlichen Vorlagen und nur angemeldet nötig.
+  const teams =
+    user && training.visibility === "public" ? await getMeineTeams() : [];
 
   const sections = groupByTeil(training.exercises).filter((s) => s.items.length > 0);
   const total = sections.reduce((a, s) => a + s.sum, 0);
@@ -45,6 +53,18 @@ export default async function TrainingViewPage({
 
       <header className="mb-6 mt-4">
         <h1 className="type-headline-large text-on-surface">{training.name}</h1>
+        {/* Urheber: der Anzeigename, nie die E-Mail. Bei anonymisierten
+            Vorlagen (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
+        {training.urheber && (
+          <p className="mt-1 type-body-medium text-on-surface-variant">
+            von {training.urheber}
+          </p>
+        )}
+        {training.herkunft && (
+          <p className="mt-1 type-body-small text-on-surface-variant">
+            basiert auf {training.herkunft.name}
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
@@ -64,10 +84,17 @@ export default async function TrainingViewPage({
             <Printer size={18} strokeWidth={2} aria-hidden />
             Drucken
           </ButtonLink>
-          {isOwner && (
+          {/* Bearbeiten nur am eigenen privaten Training bzw. im eigenen Team;
+              eine veröffentlichte Vorlage ist eingefroren (Story 14). */}
+          {darfBearbeiten && (
             <ButtonLink href={`/training/${training.id}/edit`} variant="text" size="sm">
               Bearbeiten
             </ButtonLink>
+          )}
+          {/* Vorlage übernehmen (Story 11) — für alle Angemeldeten, auch für
+              den Urheber selbst: die Kopie ist ein eigenes Trainingsobjekt. */}
+          {user && training.visibility === "public" && (
+            <VorlageUebernehmenControl vorlageId={training.id} teams={teams} />
           )}
         </div>
       </header>

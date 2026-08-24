@@ -57,6 +57,8 @@ export type TrainingDetail = {
   herkunft: { name: string; datum: string } | null;
   /** Gehört das Training einem Team? Dann steht hier dessen Name (Story 6). */
   team: { id: string; name: string } | null;
+  /** Anzeigename des Urhebers; `null` bei anonymisierten Vorlagen (Story 15). */
+  urheber: string | null;
   createdAt: string;
   updatedAt: string;
   /** Flach, sortiert nach fester Trainingsteil-Reihenfolge, dann Position. */
@@ -74,7 +76,7 @@ const PE_SELECT = `
   ${INHALT_FELDER}
 `;
 
-const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, team_id, vorlage_id, herkunft_name, herkunft_datum, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
+const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, team_id, vorlage_id, herkunft_name, herkunft_datum, urheber, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
 
 /** Die Inhaltsfelder, wie sie aus der Zuordnung zurückkommen. */
 type RawInhalt = {
@@ -111,6 +113,7 @@ type RawTraining = {
   vorlage_id: string | null;
   herkunft_name: string | null;
   herkunft_datum: string | null;
+  urheber: string | null;
   created_at: string;
   updated_at: string;
   training_exercises: RawTrainingExercise[];
@@ -171,6 +174,7 @@ function mapTraining(raw: RawTraining): TrainingDetail {
         ? { name: raw.herkunft_name, datum: raw.herkunft_datum }
         : null,
     team: raw.team_id ? { id: raw.team_id, name: raw.teams?.name ?? "Team" } : null,
+    urheber: raw.urheber ?? null,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
     exercises,
@@ -224,8 +228,8 @@ export async function getTrainingView(id: string): Promise<TrainingDetail | null
 export type TrainingListFilters = {
   q?: string;
   stufen?: string[]; // Überlappung
-  visibility?: "public" | "private"; // eigene Übersicht + Pool-Eingrenzung
-  mine?: boolean; // nur eigene Trainings (owner == aktueller USER) — nur im Pool
+  /** Facette: statt der öffentlichen Vorlagen die eigenen privaten Trainings. */
+  mine?: boolean;
 };
 
 export type TrainingListRow = {
@@ -239,6 +243,8 @@ export type TrainingListRow = {
   totalDuration: number;
   /** Trägt mindestens eine Zuordnung eine erfasste Dauer? */
   hasAnyDuration: boolean;
+  /** Anzeigename des Urhebers; `null` bei anonymisierten Vorlagen (Story 15). */
+  urheber: string | null;
 };
 
 type RawListTraining = {
@@ -247,11 +253,14 @@ type RawListTraining = {
   visibility: "public" | "private";
   stufen: string[];
   updated_at: string;
+  urheber: string | null;
   training_exercises: { trainingsteil: string; duration_min: number | null }[];
 };
 
+// `urheber` ist ein berechnetes PostgREST-Feld (SQL-Funktion über trainings) —
+// es liefert den Anzeigenamen, nie die E-Mail-Adresse.
 const LIST_SELECT =
-  "id, name, visibility, stufen, updated_at, training_exercises ( trainingsteil, duration_min )";
+  "id, name, visibility, stufen, updated_at, urheber, training_exercises ( trainingsteil, duration_min )";
 
 function mapListRow(raw: RawListTraining): TrainingListRow {
   const rows = raw.training_exercises ?? [];
@@ -269,33 +278,40 @@ function mapListRow(raw: RawListTraining): TrainingListRow {
     exerciseCount: rows.length,
     totalDuration: withDuration.reduce((a, d) => a + d, 0),
     hasAnyDuration: withDuration.length > 0,
+    urheber: raw.urheber ?? null,
   };
 }
 
 /** Trainings-Pool — die Trainings-Einstiegsansicht (analog zum Übungspool).
- *  Ohne Owner-/Sichtbarkeitsfilter liefert die RLS genau die für den Betrachter
- *  lesbare Menge: alle öffentlichen Trainings (der Community wie eigene) plus die
- *  eigenen privaten. So profitiert der Trainer von geteilten Trainings und sieht
- *  zugleich seine Entwürfe an einem Ort.
  *
- *  Optionale Eingrenzung: `mine` auf die selbst erstellten Trainings, `visibility`
- *  auf öffentlich bzw. privat. Ohne Suche nach Aktualität; mit Suche nach
- *  Namens-Relevanz (kürzerer Name ⇒ näher am Begriff) sortiert. */
+ *  Standardmässig die öffentlichen Vorlagen: der Bestand, aus dem sich jede und
+ *  jeder bedienen kann, auch ohne Konto. Die Facette `mine` zeigt stattdessen
+ *  die eigenen privaten Trainings — die eigene Werkbank. Team-Trainings kommen
+ *  in keiner der beiden Ansichten vor; sie leben im Team-Bereich (Story 12).
+ *
+ *  Ohne Suche nach Aktualität; mit Suche nach Namens-Relevanz (kürzerer Name
+ *  ⇒ näher am Begriff) sortiert. */
 export async function getTrainingPool(
   f: TrainingListFilters = {},
 ): Promise<TrainingListRow[]> {
   const supabase = await createClient();
   let query = supabase.from("trainings").select(LIST_SELECT);
 
-  // „Nur meine": eigene Trainings; anonym gibt es keine -> leere Liste.
+  // Zwei klar getrennte Ansichten (Story 12):
+  //   Standard        — die öffentlichen Vorlagen, auch für Besucher ohne Konto.
+  //   „Meine Trainings" — die eigenen privaten Trainings.
+  // Team-Trainings erscheinen in KEINER von beiden: sie gehören dem Team und
+  // leben im Team-Bereich. Der Standardfilter schliesst sie aus (sie sind nie
+  // öffentlich), die Facette ebenso (sie haben keinen owner_id).
   if (f.mine) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return [];
-    query = query.eq("owner_id", user.id);
+    query = query.eq("owner_id", user.id).eq("visibility", "private");
+  } else {
+    query = query.eq("visibility", "public");
   }
-  if (f.visibility) query = query.eq("visibility", f.visibility);
   if (f.stufen?.length) query = query.overlaps("stufen", f.stufen);
 
   const hasQuery = !!f.q?.trim();

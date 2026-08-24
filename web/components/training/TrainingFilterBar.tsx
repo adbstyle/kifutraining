@@ -3,37 +3,29 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, ClipboardList } from "lucide-react";
-import { FilterChip, MultiSelect, Select, Button } from "@/components/ui";
+import { FilterChip, MultiSelect, Button } from "@/components/ui";
 import { kategorieStufe } from "@/lib/labels";
 import { kategorienSlugs } from "@/lib/vocab";
 
-// Stufen als Multiselect-Optionen; Sichtbarkeit als Single-Select mit
-// „Alle" = kein Filter (mappt auf gelöschten vis-Parameter).
 const stufenOptions = kategorienSlugs.map((k) => ({ value: k, label: kategorieStufe[k] }));
-const visOptions = [
-  { value: "all", label: "Alle" },
-  { value: "public", label: "Community" },
-  { value: "private", label: "Privat" },
-];
 
-/* Such-/Filterleiste für Trainings-Übersichten (eigene Trainings und Trainings-Pool).
+/* Such-/Filterleiste für die Trainings-Übersicht.
    URL-basierter Zustand wie im Übungskatalog: jede Änderung schreibt in die URL
-   und löst eine neue Server-Abfrage aus. Freitext debounced. `showVisibility`
-   blendet den Sichtbarkeitsfilter ein, `showMine` den „Nur meine Trainings"-Schalter
-   (beide nur angemeldet sinnvoll). */
+   und löst eine neue Server-Abfrage aus. Freitext debounced.
+
+   Einen Sichtbarkeitsfilter gibt es nicht mehr: seit dem Kopie-Modell sind die
+   beiden Bestände verschiedene Dinge — öffentliche Vorlagen (Standard) und die
+   eigenen privaten Trainings (`mine`). Der Schalter wechselt zwischen ihnen,
+   statt eine Menge zu filtern. */
 export function TrainingFilterBar({
   q,
-  visibility,
   stufen,
   mine = false,
-  showVisibility = false,
   showMine = false,
 }: {
   q: string;
-  visibility?: "public" | "private";
   stufen: string[];
   mine?: boolean;
-  showVisibility?: boolean;
   showMine?: boolean;
 }) {
   const router = useRouter();
@@ -69,13 +61,6 @@ export function TrainingFilterBar({
     });
   }
 
-  function setVisibility(v: string) {
-    pushParams((p) => {
-      if (v === "all") p.delete("vis");
-      else p.set("vis", v);
-    });
-  }
-
   function toggleMine() {
     pushParams((p) => {
       if (mine) p.delete("mine");
@@ -90,8 +75,7 @@ export function TrainingFilterBar({
 
   void searchParams; // an Re-Render bei URL-Wechsel koppeln
 
-  const anyActive =
-    q.trim().length > 0 || !!visibility || stufen.length > 0 || mine;
+  const anyActive = q.trim().length > 0 || stufen.length > 0 || mine;
 
   return (
     // Eine durchgehende, umbrechende Zeile: Suchfeld zuerst, dann die Filter
@@ -114,16 +98,6 @@ export function TrainingFilterBar({
         />
       </label>
 
-      {showVisibility && (
-        <Select
-          label="Sichtbarkeit"
-          hideLabel
-          options={visOptions}
-          value={visibility ?? "all"}
-          onChange={setVisibility}
-          className="w-full sm:w-44"
-        />
-      )}
       <MultiSelect
         label="Alterskategorie"
         hideLabel
@@ -141,7 +115,7 @@ export function TrainingFilterBar({
           icon={ClipboardList}
           className="h-12"
         >
-          Nur meine Trainings
+          Meine Trainings
         </FilterChip>
       )}
 
