@@ -93,7 +93,7 @@ export function TrainingDurchfuehren({ training }: { training: TrainingDetail })
                 <p className="mb-2 type-label-small text-on-surface-variant">
                   Übung {i + 1} von {b.items.length}
                 </p>
-                <TrainingExerciseDetail item={item} showSource />
+                <TrainingExerciseDetail item={item} />
               </div>
             ))}
           </div>

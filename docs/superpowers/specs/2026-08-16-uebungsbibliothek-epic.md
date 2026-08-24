@@ -2,7 +2,7 @@
 
 **Datum:** 2026-08-16
 **Ebene:** Epic (Business) — Paradigmenwechsel der Kernarchitektur, mehrere Workflows, mehrere Sprints
-**Status:** Anforderungen mit dem Product Owner abgestimmt; Stories noch nicht ausgearbeitet
+**Status:** Anforderungen mit dem Product Owner abgestimmt; alle 9 Stories ausgearbeitet und perspektivenbasiert validiert (2026-08-22, siehe `2026-08-16-uebungsbibliothek-stories.md`)
 **Reihenfolge:** Dieses Epic geht dem Epic Team-Trainingsplan (`2026-08-16-team-trainingsplan-epic.md`) voraus.
 
 ## 1. Problem & Wert
@@ -44,7 +44,7 @@ damit meine Trainings vollständig mir gehören, sich nie durch Handlungen ander
 6. Bild und Diagramm einer Fassung sind eigenständig und bleiben intakt, wenn das Original verschwindet.
 7. Fassungen erscheinen weder im Übungskatalog noch in der Suche noch in den Favoriten.
 8. Eine im Training angepasste Fassung ist bewusst in die eigene Bibliothek übernehmbar und danach als eigene Vorlage verwendbar.
-9. Eine Fassung kann bewusst von der aus der Vorlage vorgeschlagenen Einordnung abweichen; die Abweichung ist am Training erkennbar und blockiert nichts.
+9. Eine Fassung kann bewusst von der aus der Vorlage vorgeschlagenen Einordnung abweichen; die Abweichung blockiert nichts und wird nicht gesondert angezeigt. (Revidiert am 2026-08-22: der ursprünglich vorgesehene Abweichungs-Hinweis ist gestrichen.)
 10. Das Veröffentlichen eines Trainings erfordert keine Entscheidung mehr über einzelne Übungen; der Trainer bestätigt stattdessen einmalig, dass sämtliche Inhalte des Trainings einschliesslich der Bilder öffentlich werden.
 11. Eine veröffentlichte Bibliotheks-Übung ist im Katalog als Vorlage auffindbar und über eine öffentliche Detailseite einsehbar; das Zurückziehen bleibt jederzeit möglich und lässt bestehende Fassungen unberührt.
 12. Jede Übung erfüllt eine zu ihrer Hauptteilkategorie passende Vollständigkeitsregel; für die Kategorie Fussball spielen genügt eine Beschreibung des Spiels anstelle des methodischen Fahrplans.
@@ -61,7 +61,7 @@ Jede Story liefert End-to-End-Wert. Reihenfolge grob abhängigkeitssortiert.
 2. **Enabler (Data) — Fahrplan-Regel je Hauptteilkategorie und Manual-Vollständigkeit:** Die Vollständigkeitsregel gilt je Hauptteilkategorie für alle Übungen; die Kategorie Fussball spielen trägt eine Beschreibung statt eines Fahrplans, bestehende Übungen dieser Kategorie übernehmen ihren bisherigen Ablauftext als Beschreibung; der Manual-Bestand erfüllt die Regel nachweislich, inklusive Bereinigung von Extraktionsfehlern. Diese Story geht der Datenmodell-Story voraus, weil die Fassung einer Manual-Übung den Regeln für Trainer-Übungen genügen muss und daran heute scheitern würde.
 3. **Enabler (Data) — Datenmodell für Fassungen mit Herkunftsangabe:** Das Datenmodell trägt Fassungen als trainingseigene Übungen mit unveränderlicher Herkunftsangabe, ausgeblendet aus Katalog, Suche und Favoriten; Bild und Diagramm werden beim Erzeugen entkoppelt.
 4. **Business (Paths) — Übung als Fassung ins Training übernehmen:** Ein Trainer fügt eine Bibliotheks-Übung einem Training hinzu und erhält eine eigenständige Fassung; der Vorschlag des Blocks folgt der Einordnung der Vorlage; der Picker fügt nur hinzu, entfernt wird im Editor.
-5. **Business (Paths) — Fassung im Training bearbeiten:** Ein Trainer passt eine Fassung vollständig an, einschliesslich Einordnung, Bild und Diagramm; bei abweichender Einordnung weist das Training darauf hin.
+5. **Business (Paths) — Fassung im Training bearbeiten:** Ein Trainer passt eine Fassung vollständig an, einschliesslich Einordnung, Bild und Diagramm. (Revidiert am 2026-08-22: der Hinweis bei abweichender Einordnung ist gestrichen.)
 6. **Business (Rules) — Herkunft einer Fassung erkennen:** Ein Trainer erkennt an jeder Fassung, woraus sie entstanden ist; Diagramm-Kopien tragen dieselbe Art von Herkunftsangabe.
 7. **Business (Paths) — Fassung in die eigene Bibliothek übernehmen:** Ein Trainer macht eine Fassung zur eigenen, zunächst privaten Vorlage und verwendet sie in weiteren Trainings; die ursprüngliche Herkunft bleibt an der Vorlage und an späteren Fassungen davon bestehen.
 8. **Business (Rules) — Vereinfachtes Veröffentlichen:** Ein Trainer veröffentlicht ein Training mit einer einmaligen Bestätigung der Tragweite statt einer Übungs-Rückfrage; eine veröffentlichte Bibliotheks-Übung ist danach als Vorlage auffindbar und öffentlich einsehbar.
@@ -91,12 +91,12 @@ Jede Story liefert End-to-End-Wert. Reihenfolge grob abhängigkeitssortiert.
 |---|---|---|
 | Grundsatz | Zuordnen erzeugt ausnahmslos eine eigenständige Fassung — auch bei Manual-Übungen und eigenen Übungen | 2026-08-16 |
 | Anpassbarkeit | Eine Fassung ist vollständig anpassbar, einschliesslich Einordnung, Bild und Diagramm | 2026-08-16 |
-| Einordnung | Die Abbildungsregel schlägt den Block vor; eine abweichende Einordnung erzeugt einen Hinweis am Training, keine Sperre | 2026-08-16 |
+| Einordnung | Die Abbildungsregel schlägt den Block vor; eine abweichende Einordnung ist frei und erzeugt weder Hinweis noch Sperre (revidiert 2026-08-22, ursprünglich „Hinweis am Training") | 2026-08-16 / 2026-08-22 |
 | Ort der Fassung | Die Fassung lebt nur im Training; Katalog, Suche und Favoriten zeigen ausschliesslich Bibliothekseinträge | 2026-08-16 |
 | Wiederverwendung | Eine Aktion „in meine Bibliothek übernehmen" macht eine angepasste Fassung zur eigenen Vorlage | 2026-08-16 |
 | Herkunft | Unveränderlicher Stempel zum Kopierzeitpunkt; bei Kopien von Kopien und bei Trainingskopien bleibt die ursprüngliche Herkunft stehen; gilt einheitlich auch für Diagramm-Kopien; kein Sprungziel, reine Angabe | 2026-08-16 |
 | Herkunfts-Wortlaut | Die Angabe sagt „basiert auf", nicht „ist" — eine bearbeitete Fassung gibt sich nie als Original aus | 2026-08-16 |
-| Einordnung vs. Junioren-Regel | Hinweis statt Zwang gilt auch im Junioren-Schema; der Junioren-Entscheid „Unterblock folgt zwingend aus der Übung" ist revidiert | 2026-08-16 |
+| Einordnung vs. Junioren-Regel | Freie Einordnung statt Zwang gilt auch im Junioren-Schema; der Junioren-Entscheid „Unterblock folgt zwingend aus der Übung" ist revidiert (2026-08-22: auch dort kein Hinweis) | 2026-08-16 / 2026-08-22 |
 | Publish-Moment | Einmalige Bestätigung mit Klartext-Folgen ersetzt die Übungs-Rückfrage | 2026-08-16 |
 | Übernahme-Default | Eine in die Bibliothek übernommene Fassung ist zunächst privat | 2026-08-16 |
 | Umstellung | Harte Umstellung: die Überführung des Bestands wird zusammen mit dem neuen Zuordnen ausgeliefert | 2026-08-16 |
@@ -109,6 +109,8 @@ Jede Story liefert End-to-End-Wert. Reihenfolge grob abhängigkeitssortiert.
 | Kinderzahl | Wird mitkopiert und ist frei anpassbar, ohne Automatik | 2026-08-16 |
 | Bestand | Einmalige Überführung aller bestehenden Trainings in Fassungen | 2026-08-16 |
 | Reihenfolge | Dieses Epic läuft vor dem Team-Trainingsplan-Epic | 2026-08-16 |
+| Begriff | Die «Fassung» bekommt keinen eigenen Begriff in der Oberfläche: im Training heisst sie schlicht «Übung», Bibliothekseinträge heissen «Vorlage»; der Kopie-Charakter zeigt sich allein über «basiert auf …» | 2026-08-22 |
+| Herkunfts-Darstellung | Eine dezente Zeile «basiert auf ‹Name› (Quelle, Datum)» unterhalb des Titels — als Kit-Komponente `HerkunftsAngabe` umgesetzt und im Styleguide dokumentiert; nicht in Druck und Durchführen | 2026-08-23 |
 
 ## 10. Aufgehobene Abgrenzungen und geänderte Festlegungen
 
@@ -119,11 +121,8 @@ Jede Story liefert End-to-End-Wert. Reihenfolge grob abhängigkeitssortiert.
 5. Juniorenfussball-Epic (2026-08-14): Der Entscheid, dass jede Heimat-Änderung einer verwendeten Übung alle verwendenden Trainings warnt, wird gegenstandslos — Änderungen an Bibliotheks-Übungen wirken nicht mehr in Trainings. Der Heimat-Mechanismus selbst (eine gepflegte Einordnung, Junioren-Zuordnung abgeleitet) bleibt für Bibliotheks-Übungen bestehen und liefert den Block-Vorschlag beim Übernehmen.
 6. Architektur-Spec §3 „Manual-Bestand schreibgeschützt": gilt weiterhin für die Bibliothek, nicht mehr für Fassungen in Trainings.
 7. Team-Trainingsplan-Epic (2026-08-16), Entscheid „Herkunft eines übernommenen fremden Trainings wird nicht festgehalten": zurückgenommen; die Herkunft bleibt einheitlich überall sichtbar. Beim Übernehmen eines Trainings werden dessen Fassungen erneut kopiert und behalten ihre ursprüngliche Herkunft.
-8. Juniorenfussball-Epic (2026-08-14), Entscheid „Der Unterblock folgt zwingend aus der Übung, kein freies Wählen": revidiert; die Einordnung einer Fassung ist frei, eine Abweichung erzeugt einen Hinweis am Training statt einer Sperre.
+8. Juniorenfussball-Epic (2026-08-14), Entscheid „Der Unterblock folgt zwingend aus der Übung, kein freies Wählen": revidiert; die Einordnung einer Fassung ist frei, eine Abweichung blockiert nichts und wird nicht gesondert angezeigt (2026-08-22).
 
 ## 11. Offene Fragen
 
-1. @UX Designer: Wie wird die Herkunftsangabe an Fassung und Diagramm dargestellt, ohne die Karten und Detailansichten zu überladen?
-2. @UX Designer: Wie unterscheidet der Trainer im Trainings-Editor eine unveränderte von einer angepassten Fassung?
-3. @UX Designer: Wie wird der Hinweis auf eine vom Block abweichende Einordnung dargestellt, ohne bei bewusster Abweichung zu stören?
-4. @Product Owner: Wie soll die „Fassung" gegenüber den Nutzern heissen? Der Begriff ist intern; die Oberfläche braucht ein verständliches Wort.
+Keine — die letzten beiden (Darstellung der Herkunftsangabe, Benennung der «Fassung») sind beantwortet und in §9 festgehalten.

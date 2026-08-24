@@ -20,7 +20,13 @@ import {
   trainingsteilSlugs,
   type TrainingsteilSlug,
 } from "@/lib/vocab";
-import { kategorieStufe, FAHRPLAN_TEILE } from "@/lib/labels";
+import {
+  kategorieStufe,
+  FAHRPLAN_TEILE,
+  FREIES_SPIEL,
+  brauchtFahrplan,
+  ueberfuehreAblauf,
+} from "@/lib/labels";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
 
@@ -61,12 +67,18 @@ export function ExerciseForm({
   initial = {},
   submitLabel,
   afterName,
+  bildEntfernenMoeglich = false,
+  fussnote = "Neue Übungen sind zunächst privat (Entwurf).",
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
   submitLabel: string;
   /** Optionaler Slot direkt unter dem Namensfeld (z. B. die Diagramm-Vorschau). */
   afterName?: React.ReactNode;
+  /** Erlaubt, das vorhandene Bild ohne Ersatz zu entfernen (Fassungen, Story 5). */
+  bildEntfernenMoeglich?: boolean;
+  /** Hinweis neben der Speichern-Schaltfläche. */
+  fussnote?: React.ReactNode;
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const err = state.errors ?? {};
@@ -78,12 +90,41 @@ export function ExerciseForm({
   const [hkat, setHkat] = useState<string>(initial.hauptteilkategorie ?? "");
   const [bildError, setBildError] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [bildEntfernen, setBildEntfernen] = useState(false);
 
-  const istFahrplan = FAHRPLAN_TEILE.has(teil);
+  // Ablauf-Texte kontrolliert: nur so kann der bisherige Text beim Wechsel der
+  // Einordnung als Ausgangstext in die andere Form übernommen werden (Story 2).
+  const [offenStarten, setOffenStarten] = useState(
+    initial.methodischer_fahrplan?.offen_starten ?? "",
+  );
+  const [ueben, setUeben] = useState(initial.methodischer_fahrplan?.ueben?.join("\n") ?? "");
+  const [wetteifern, setWetteifern] = useState(
+    initial.methodischer_fahrplan?.wetteifern ?? "",
+  );
+  const [aufbau, setAufbau] = useState(initial.aufbau ?? "");
+
+  const istFahrplan = brauchtFahrplan(teil, hkat);
   // Hauptteilkategorie ist genau bei Hauptteil-Übungen Pflicht (Enabler #21).
   const istHauptteil = teil === "hauptteil";
+  // Das freie Spiel trägt eine Beschreibung statt des Fahrplans (Story 2).
+  const istFreiesSpiel = istHauptteil && hkat === FREIES_SPIEL;
   const toggle = (arr: string[], set: (v: string[]) => void, v: string) =>
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+
+  /** Einordnung wechseln und den bisherigen Ablauftext als Ausgangstext in die
+   *  neue Form überführen (Story 2 AK 3) — redigiert wird von Hand. */
+  function wechsleEinordnung(neuerTeil: string, neueHkat: string) {
+    const nachher = brauchtFahrplan(neuerTeil, neueHkat);
+    if (brauchtFahrplan(teil, hkat) !== nachher) {
+      const neu = ueberfuehreAblauf(nachher, { offenStarten, ueben, wetteifern, aufbau });
+      setOffenStarten(neu.offenStarten);
+      setUeben(neu.ueben);
+      setWetteifern(neu.wetteifern);
+      setAufbau(neu.aufbau);
+    }
+    setTeil(neuerTeil);
+    setHkat(neueHkat);
+  }
 
   // FormData direkt aus dem DOM bauen und die Chip-/Select-Werte aus dem State
   // explizit setzen. Verlässlicher als state-gesteuerte Hidden-Inputs, deren
@@ -120,9 +161,12 @@ export function ExerciseForm({
     setBildError(null);
     fd.set("trainingsteil", teil);
     fd.set("kat", kat.join(","));
-    fd.set("form", istFahrplan ? form.join(",") : "");
+    // Erscheinungsform hängt am Trainingsteil, nicht an der Ablauf-Form: auch
+    // das freie Spiel darf eine tragen (DB-Constraint).
+    fd.set("form", FAHRPLAN_TEILE.has(teil) ? form.join(",") : "");
     fd.set("hauptteilkategorie", istHauptteil ? hkat : "");
     fd.set("feldtyp", feld);
+    fd.set("bild_entfernen", bildEntfernen ? "1" : "");
     startTransition(() => formAction(fd));
   }
 
@@ -152,7 +196,7 @@ export function ExerciseForm({
         <SegmentedControl<TrainingsteilSlug>
           ariaLabel="Trainingsteil"
           value={(teil || null) as TrainingsteilSlug | null}
-          onChange={(v) => setTeil(v)}
+          onChange={(v) => wechsleEinordnung(v, hkat)}
           options={trainingsteilSlugs.map((t) => ({ value: t, label: teilLabels[t] }))}
         />
         {err.trainingsteil && <p className="type-body-small mt-1.5 text-error">{err.trainingsteil}</p>}
@@ -186,32 +230,41 @@ export function ExerciseForm({
           <TextArea
             label="① Offen starten"
             name="offen_starten"
-            defaultValue={initial.methodischer_fahrplan?.offen_starten}
+            value={offenStarten}
+            onChange={(e) => setOffenStarten(e.target.value)}
             error={!!err.offen_starten}
             supportingText={err.offen_starten ?? "Pflichtfeld — wie die Übung offen startet."}
           />
           <TextArea
             label="② Üben — ein Schritt pro Zeile"
             name="ueben"
-            defaultValue={initial.methodischer_fahrplan?.ueben?.join("\n")}
+            value={ueben}
+            onChange={(e) => setUeben(e.target.value)}
             error={!!err.ueben}
             supportingText={err.ueben ?? "Pflichtfeld — mindestens ein Schritt, einer pro Zeile."}
           />
           <TextArea
             label="③ Wett-eifern"
             name="wetteifern"
-            defaultValue={initial.methodischer_fahrplan?.wetteifern ?? undefined}
+            value={wetteifern}
+            onChange={(e) => setWetteifern(e.target.value)}
             error={!!err.wetteifern}
             supportingText={err.wetteifern ?? "Pflichtfeld — der spielerische Wettkampf-Teil."}
           />
         </fieldset>
       ) : (
         <TextArea
-          label="Aufbau / Beschreibung"
+          label={istFreiesSpiel ? "Beschreibung des Spiels" : "Aufbau / Beschreibung"}
           name="aufbau"
-          defaultValue={initial.aufbau ?? undefined}
+          value={aufbau}
+          onChange={(e) => setAufbau(e.target.value)}
           error={!!err.aufbau}
-          supportingText={err.aufbau ?? "Pflichtfeld — Aufbau und Ablauf der Übung."}
+          supportingText={
+            err.aufbau ??
+            (istFreiesSpiel
+              ? "Pflichtfeld — wie das Spiel gespielt wird."
+              : "Pflichtfeld — Aufbau und Ablauf der Übung.")
+          }
         />
       ))}
 
@@ -221,7 +274,7 @@ export function ExerciseForm({
             label="Hauptteilkategorie"
             className="max-w-xs"
             value={hkat}
-            onChange={setHkat}
+            onChange={(v) => wechsleEinordnung(teil, v)}
             options={[
               { value: "", label: "— Kategorie wählen —" },
               ...(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
@@ -236,7 +289,7 @@ export function ExerciseForm({
         </div>
       )}
 
-      {istFahrplan && (
+      {FAHRPLAN_TEILE.has(teil) && (
         <Group title="Erscheinungsform (optional)">
           {(Object.keys(formLabels) as (keyof typeof formLabels)[]).map((f) => (
             <FilterChip key={f} selected={form.includes(f)} onClick={() => toggle(form, setForm, f)}>
@@ -299,8 +352,21 @@ export function ExerciseForm({
         </p>
         {initial.bildUrl && !err.bild && !bildError && (
           <p className="type-body-small mt-1 text-on-surface-variant">
-            Aktuelles Bild bleibt erhalten, wenn du keines hochlädst.
+            {bildEntfernen
+              ? "Das aktuelle Bild wird beim Speichern entfernt."
+              : "Aktuelles Bild bleibt erhalten, wenn du keines hochlädst."}
           </p>
+        )}
+        {bildEntfernenMoeglich && initial.bildUrl && (
+          <label className="mt-2 flex items-center gap-2 type-body-small text-on-surface-variant">
+            <input
+              type="checkbox"
+              checked={bildEntfernen}
+              onChange={(e) => setBildEntfernen(e.target.checked)}
+              className="focus-ring h-4 w-4 accent-primary"
+            />
+            Bild entfernen
+          </label>
         )}
       </div>
 
@@ -309,9 +375,9 @@ export function ExerciseForm({
           <Save size={20} strokeWidth={2} aria-hidden />
           {isCompressing ? "Bild wird optimiert …" : isPending ? "Wird gespeichert …" : submitLabel}
         </Button>
-        <p className="type-body-small text-on-surface-variant">
-          Neue Übungen sind zunächst privat (Entwurf).
-        </p>
+        {fussnote && (
+          <p className="type-body-small text-on-surface-variant">{fussnote}</p>
+        )}
       </div>
     </form>
   );

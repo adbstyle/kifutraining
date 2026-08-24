@@ -6,14 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { userSlug } from "@/lib/slug";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
-import { FAHRPLAN_TEILE } from "@/lib/labels";
-import {
-  trainingsteilSlugs,
-  feldtypSlugs,
-  erscheinungsformSlugs,
-  hauptteilkategorieSlugs,
-  kategorienSlugs,
-} from "@/lib/vocab";
+import { parseUebungsInhalt } from "@/lib/uebung-form";
 
 export type ExerciseFormState = {
   status: "idle" | "error";
@@ -24,106 +17,6 @@ export type ExerciseFormState = {
 /** Listen-Seiten, die nach Mutationen neu validiert werden. */
 function revalidateLists() {
   revalidatePath("/");
-}
-
-function lines(v: FormDataEntryValue | null): string[] {
-  return String(v ?? "")
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-function clean(v: FormDataEntryValue | null): string {
-  return String(v ?? "").trim();
-}
-
-/** Komma-getrennte Mehrfachwerte (Chips schreiben ein einzelnes Hidden-Feld). */
-function csv(v: FormDataEntryValue | null): string[] {
-  return String(v ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-
-type ParseResult =
-  | { ok: true; row: Record<string, unknown> }
-  | { ok: false; errors: Record<string, string> };
-
-/** Formular -> Übungs-Datensatz (ohne owner/visibility/slug) + Validierung.
- *  Wird von Erstellen UND Bearbeiten genutzt. */
-function parseExercise(form: FormData): ParseResult {
-  const errors: Record<string, string> = {};
-  const name = clean(form.get("name"));
-  const trainingsteil = clean(form.get("trainingsteil"));
-  const kategorien = csv(form.get("kat"));
-
-  if (!name) errors.name = "Bitte einen Namen angeben.";
-  if (!trainingsteilSlugs.includes(trainingsteil as never))
-    errors.trainingsteil = "Bitte einen Trainingsteil wählen.";
-  if (kategorien.length === 0)
-    errors.kat = "Bitte mindestens eine Alterskategorie wählen.";
-  if (kategorien.some((k) => !kategorienSlugs.includes(k as never)))
-    errors.kat = "Ungültige Alterskategorie.";
-
-  const istFahrplan = FAHRPLAN_TEILE.has(trainingsteil);
-  let methodischer_fahrplan: Record<string, unknown> | null = null;
-  let aufbau: string | null = null;
-
-  if (istFahrplan) {
-    const offen = clean(form.get("offen_starten"));
-    const ueben = lines(form.get("ueben"));
-    const wett = clean(form.get("wetteifern"));
-    if (!offen) errors.offen_starten = "Bitte beschreiben, wie die Übung offen startet.";
-    if (ueben.length === 0)
-      errors.ueben = "Bitte mindestens einen Übungsschritt angeben.";
-    if (!wett) errors.wetteifern = "Bitte den Wett-eifern-Teil beschreiben.";
-    methodischer_fahrplan = { offen_starten: offen, ueben, wetteifern: wett };
-  } else if (trainingsteil) {
-    aufbau = clean(form.get("aufbau"));
-    if (!aufbau) errors.aufbau = "Bitte den Aufbau beschreiben.";
-  }
-
-  // Erscheinungsform nur bei Einleitung/Hauptteil
-  const erscheinungsform = istFahrplan
-    ? csv(form.get("form")).filter((f) => erscheinungsformSlugs.includes(f as never))
-    : [];
-
-  // Hauptteilkategorie ist genau bei Hauptteil-Übungen Pflicht (Enabler #21,
-  // AC2); andere Trainingsteile tragen keine (Postcondition 2).
-  const istHauptteil = trainingsteil === "hauptteil";
-  const hauptteilkategorie = istHauptteil ? clean(form.get("hauptteilkategorie")) : null;
-  if (istHauptteil && !hauptteilkategorieSlugs.includes(hauptteilkategorie as never))
-    errors.hauptteilkategorie = "Bitte eine Hauptteilkategorie wählen.";
-
-  const feldtyp = clean(form.get("feldtyp"));
-  const min = clean(form.get("anzahl_min"));
-  const max = clean(form.get("anzahl_max"));
-  const anzahl_kinder =
-    min || max
-      ? { min: min ? Number(min) : null, max: max ? Number(max) : null }
-      : null;
-  if (min && max && Number(max) < Number(min))
-    errors.anzahl_max = "Die Maximalanzahl darf nicht kleiner als die Mindestanzahl sein.";
-
-  if (Object.keys(errors).length > 0) return { ok: false, errors };
-
-  return {
-    ok: true,
-    row: {
-      name,
-      trainingsteil,
-      kategorien,
-      feldtyp: feldtyp && feldtypSlugs.includes(feldtyp as never) ? feldtyp : null,
-      erscheinungsform,
-      hauptteilkategorie,
-      anzahl_kinder,
-      material: lines(form.get("material")),
-      methodischer_fahrplan,
-      aufbau,
-      varianten: lines(form.get("varianten")),
-    },
-  };
 }
 
 /** Storage-Objekt best-effort entfernen (no-op bei null). Eine Stelle für alle
@@ -171,7 +64,7 @@ export async function createExercise(
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", message: "Nicht angemeldet." };
 
-  const parsed = parseExercise(form);
+  const parsed = parseUebungsInhalt(form);
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
   const file = form.get("bild");
@@ -229,7 +122,7 @@ export async function updateExercise(
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", message: "Nicht angemeldet." };
 
-  const parsed = parseExercise(form);
+  const parsed = parseUebungsInhalt(form);
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
   const file = form.get("bild");

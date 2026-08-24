@@ -5,6 +5,17 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
 import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/training";
+import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
+import { revalidiereTraining } from "@/lib/revalidate";
+import {
+  istEigeneFassungsDatei,
+  stempleHerkunft,
+  kopiereBild,
+  kopiereDiagrammVon,
+  entferneStorageObjekt,
+  inhaltFelder,
+  VORLAGE_SELECT,
+} from "@/lib/fassung";
 import {
   kategorienSlugs,
   hauptteilkategorieSlugs,
@@ -39,17 +50,42 @@ function clean(v: FormDataEntryValue | null): string {
   return String(v ?? "").trim();
 }
 
-/** Editor- und Ansichtspfade eines Trainings nach einer Mutation neu validieren. */
-function revalidateTraining(trainingId: string) {
-  revalidatePath(`/training/${trainingId}/edit`);
-  revalidatePath(`/training/${trainingId}`);
-  revalidatePath(`/training/${trainingId}/durchfuehren`);
-  revalidatePath(`/training/${trainingId}/druck`);
-  revalidatePath("/trainings");
-}
-
 function validStufen(values: string[]): string[] {
   return values.filter((s) => kategorienSlugs.includes(s as never));
+}
+
+// ── Fassungen: Kopieren einer Vorlage ins Training ───────────────────────────
+
+/** Eine Bibliotheks-Übung, wie sie für das Kopieren gelesen wird (VORLAGE_SELECT). */
+type Vorlage = {
+  id: string;
+  name: string;
+  trainingsteil: string;
+  hauptteilkategorie: string | null;
+  bild_url: string | null;
+  diagramm: unknown;
+  source: "manual" | "user";
+  owner_id: string | null;
+  herkunft_name: string | null;
+  herkunft_typ: "manual" | "community" | "eigen" | null;
+  herkunft_datum: string | null;
+} & Record<string, unknown>;
+
+/** Die Bilddatei einer Fassung entfernen (Story 3 AK 13).
+ *
+ *  Gelöscht wird ausschliesslich die eigene Kopie: der Dateiname muss die
+ *  Zuordnungs-ID tragen, wie `fassungBildPfad` sie bildet. Zeigt die URL auf
+ *  etwas anderes — etwa noch auf das Bild der Vorlage, solange eine Zuordnung
+ *  nicht überführt ist — bleibt die Datei unangetastet. Ein verwaistes Bild ist
+ *  harmlos, ein gelöschtes Vorlagenbild wäre Datenverlust für alle. */
+async function entferneFassungsBild(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  bildUrl: string | null,
+  fassungId: string,
+) {
+  const pfad = bildUrlToPath(bildUrl);
+  if (!pfad || !istEigeneFassungsDatei(pfad, fassungId)) return;
+  await entferneStorageObjekt(supabase, pfad);
 }
 
 // ── Story #10: Training anlegen ──────────────────────────────────────────────────
@@ -86,12 +122,15 @@ export async function createTraining(
 
 // ── Story #10: Übung einem Trainingsteil zuordnen ────────────────────────────
 
-/** Eine sichtbare Übung dem passenden Trainingsteil des Trainings zuordnen
- *  (Story #10 AC4/AC5/AC6). Im Hauptteil zusätzlich der gewählten
- *  Hauptteilkategorie (Story #23): nur Übungen der passenden Kategorie sind
- *  zuordenbar, die Position ist pro Unterkategorie eindeutig. Persistiert
- *  unmittelbar; der Phasen-Guard-Trigger erzwingt Trainingsteil- und
- *  Kategorie-Bindung zusätzlich auf DB-Ebene. */
+/** Eine sichtbare Bibliotheks-Übung als eigenständige Fassung ins Training
+ *  übernehmen (Story 4). Die Fassung trägt die Inhalte der Vorlage zum
+ *  Übernahmezeitpunkt, eine eigene Bild- und Diagrammkopie sowie einen
+ *  unveränderlichen Herkunfts-Stempel; die Vorlage bleibt unberührt und hat
+ *  danach keinen Einfluss mehr auf das Training.
+ *
+ *  Der Picker bleibt an den Trainingsteil (im Hauptteil an die Kategorie)
+ *  gebunden und bietet nur Passendes an; die Prüfung hier ist der Guard gegen
+ *  manipulierte Aufrufe. */
 export async function addTrainingExercise(
   trainingId: string,
   trainingsteil: string,
@@ -120,16 +159,15 @@ export async function addTrainingExercise(
     .maybeSingle();
   if (!training) return { ok: false, error: "Training nicht gefunden." };
 
-  // Übung holen: Name für den Platzhalter-Cache, Trainingsteil-/Kategorie-Abgleich.
+  // Vorlage mit allen Inhalten holen (RLS lässt nur Sichtbares durch).
   const { data: ex } = await supabase
     .from("exercises")
-    .select("id, name, trainingsteil, hauptteilkategorie")
+    .select(VORLAGE_SELECT)
     .eq("id", exerciseId)
-    .maybeSingle();
+    .maybeSingle<Vorlage>();
   if (!ex) return { ok: false, error: "Übung nicht verfügbar." };
   if (ex.trainingsteil !== trainingsteil)
     return { ok: false, error: "Übung passt nicht zum Trainingsteil." };
-  // Harte Regel (Story #23 AC3): in eine Unterkategorie nur Übungen ebendieser.
   if (istHauptteil && ex.hauptteilkategorie !== hkat)
     return { ok: false, error: "Übung passt nicht zur Hauptteilkategorie." };
 
@@ -149,69 +187,35 @@ export async function addTrainingExercise(
     .maybeSingle();
   const position = (last?.position ?? -1) + 1;
 
+  // Die ID vorab erzeugen: sie benennt die Bildkopie, die VOR dem Insert
+  // entstehen muss (der Pfad steht dann bereits in bild_url). Scheitert der
+  // Insert, bleibt höchstens eine unreferenzierte Datei liegen, die ein
+  // erneuter Versuch überschreibt — nie eine Fassung ohne Inhalt.
+  const fassungId = crypto.randomUUID();
+  const bild = await kopiereBild(supabase, ex.bild_url, user.id, fassungId);
+  if (bild.error) return { ok: false, error: bild.error };
+
   const { error } = await supabase.from("training_exercises").insert({
+    id: fassungId,
     training_id: trainingId,
     trainingsteil,
     hauptteilkategorie: hkat,
+    position,
+    // Bis die Bestand-Überführung abgeschlossen ist, bleibt der Verweis als
+    // Brücke für die noch nicht überführten Zuordnungen bestehen.
     exercise_id: exerciseId,
     exercise_name_cache: ex.name,
-    position,
+    ...inhaltFelder(ex),
+    bild_url: bild.url,
+    diagramm: kopiereDiagrammVon(ex.diagramm),
+    ...stempleHerkunft(ex, user.id),
   });
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    await entferneStorageObjekt(supabase, bild.pfad);
+    return { ok: false, error: error.message };
+  }
 
-  revalidateTraining(trainingId);
-  return { ok: true };
-}
-
-/** Genau eine Zuordnung einer Übung aus dem Trainingsteil entfernen (Warenkorb-
- *  „−" im Picker, Story #10). Entfernt die zuletzt hinzugefügte (höchste
- *  Position) passende Zeile, damit wiederholtes „−" die Anzahl Schritt für
- *  Schritt reduziert. RLS setzt das Eigentum zusätzlich serverseitig durch. */
-export async function removeOneTrainingExercise(
-  trainingId: string,
-  trainingsteil: string,
-  exerciseId: string,
-  hauptteilkategorie?: string | null,
-): Promise<TrainingActionResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-  if (!TRAININGSTEIL_SLUGS.includes(trainingsteil as TrainingsteilSlug))
-    return { ok: false, error: "Ungültiger Trainingsteil." };
-
-  const istHauptteil = trainingsteil === "hauptteil";
-  const hkat = istHauptteil ? (hauptteilkategorie ?? null) : null;
-
-  // Eigentum prüfen (UX-Guard; RLS setzt es ohnehin durch).
-  const { data: training } = await supabase
-    .from("trainings")
-    .select("id")
-    .eq("id", trainingId)
-    .eq("owner_id", user.id)
-    .maybeSingle();
-  if (!training) return { ok: false, error: "Training nicht gefunden." };
-
-  // Zuletzt hinzugefügte passende Zuordnung entfernen (im Hauptteil zusätzlich
-  // auf die Unterkategorie eingegrenzt).
-  let rowQuery = supabase
-    .from("training_exercises")
-    .select("id")
-    .eq("training_id", trainingId)
-    .eq("trainingsteil", trainingsteil)
-    .eq("exercise_id", exerciseId);
-  rowQuery = istHauptteil ? rowQuery.eq("hauptteilkategorie", hkat as string) : rowQuery;
-  const { data: row } = await rowQuery
-    .order("position", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!row) return { ok: false, error: "Übung nicht im Trainingsteil." };
-
-  const { error } = await supabase.from("training_exercises").delete().eq("id", row.id);
-  if (error) return { ok: false, error: error.message };
-
-  revalidateTraining(trainingId);
+  revalidiereTraining(trainingId);
   return { ok: true };
 }
 
@@ -220,16 +224,15 @@ export async function removeOneTrainingExercise(
 export type PublishResult =
   | { status: "published" }
   | { status: "incomplete"; missing: string[] }
-  | { status: "needs_confirmation"; count: number; names: string[] }
   | { status: "error"; error: string };
 
-/** Training öffentlich schalten (Story #14). Ohne Mitveröffentlichungs-Zustimmung
- *  liefert die RPC bei eigenen privaten Übungen `needs_confirmation` (Anzahl +
- *  Namen) und bei fehlenden Voraussetzungen `incomplete` (welche fehlen) —
- *  jeweils ohne Mutation. */
+/** Training öffentlich schalten (Story #14, Epic #72 Story 8). Die Bestätigung
+ *  der Tragweite erfolgt in der Oberfläche; hier bleibt die serverseitige
+ *  Vollständigkeitsprüfung, die bei fehlenden Voraussetzungen `incomplete`
+ *  liefert — ohne Mutation. Eine Rückfrage zu einzelnen Übungen gibt es nicht
+ *  mehr: ein Training enthält nur noch eigenständige Fassungen. */
 export async function publishTrainingAction(
   trainingId: string,
-  includePrivate: boolean,
 ): Promise<PublishResult> {
   const supabase = await createClient();
   const {
@@ -239,12 +242,11 @@ export async function publishTrainingAction(
 
   const { data, error } = await supabase.rpc("publish_training", {
     p_training_id: trainingId,
-    p_include_private: includePrivate,
   });
   if (error) return { status: "error", error: error.message };
 
   const result = data as PublishResult;
-  if (result.status === "published") revalidateTraining(trainingId);
+  if (result.status === "published") revalidiereTraining(trainingId);
   return result;
 }
 
@@ -258,7 +260,7 @@ export async function unpublishTrainingAction(trainingId: string): Promise<Train
   if (!user) return { ok: false, error: "Nicht angemeldet." };
   const { error } = await supabase.rpc("unpublish_training", { p_training_id: trainingId });
   if (error) return { ok: false, error: error.message };
-  revalidateTraining(trainingId);
+  revalidiereTraining(trainingId);
   return { ok: true };
 }
 
@@ -283,7 +285,7 @@ export async function renameTraining(
     .eq("id", trainingId)
     .eq("owner_id", user.id);
   if (error) return { ok: false, error: error.message };
-  revalidateTraining(trainingId);
+  revalidiereTraining(trainingId);
   return { ok: true };
 }
 
@@ -322,25 +324,38 @@ export async function setTrainingStufen(
 
   // Abweichende, noch auflösbare Übungen ermitteln (Platzhalter ohne Kategorien
   // werden nicht bewertet).
+  // Abweichende Fassungen ermitteln — anhand IHRER Alterskategorien, nicht
+  // anhand der Vorlage: die Fassung ist im Training frei bearbeitbar, ihre
+  // Kategorien können also längst abweichen. Der Embed ist nur die Brücke für
+  // noch nicht überführte Zuordnungen (siehe queries/trainings.ts) und entfällt
+  // mit dem Verweis-Abbau.
   let mismatched: { id: string; name: string }[] = [];
   if (valid.length > 0) {
     const { data: rows } = await supabase
       .from("training_exercises")
-      .select("id, exercise_name_cache, exercises ( name, kategorien )")
+      .select("id, name, kategorien, exercise_name_cache, exercises ( name, kategorien )")
       .eq("training_id", trainingId);
     mismatched = (rows ?? [])
-      .map((r) => ({
-        id: r.id,
+      .map((r) => {
         // Embed ist als to-one-FK ein Objekt; supabase-js typisiert es defensiv
         // als Array -> hier auf das tatsächliche Objekt normalisieren.
-        ex: (r.exercises as unknown) as { name: string; kategorien: string[] } | null,
-        cache: r.exercise_name_cache,
-      }))
-      .filter((r) => r.ex != null && !stufenAbgedeckt(valid, r.ex.kategorien))
-      .map((r) => ({ id: r.id, name: r.ex?.name ?? r.cache ?? "Übung" }));
+        const ex = (r.exercises as unknown) as
+          | { name: string; kategorien: string[] }
+          | null;
+        const ueberfuehrt = r.name != null;
+        return {
+          id: r.id,
+          name: r.name ?? ex?.name ?? r.exercise_name_cache ?? "Übung",
+          kategorien: ueberfuehrt ? (r.kategorien ?? []) : (ex?.kategorien ?? []),
+        };
+      })
+      // Ohne Kategorien gibt es nichts abzudecken — solche Fassungen gelten
+      // nicht als abweichend.
+      .filter((r) => r.kategorien.length > 0 && !stufenAbgedeckt(valid, r.kategorien))
+      .map((r) => ({ id: r.id, name: r.name }));
   }
 
-  revalidateTraining(trainingId);
+  revalidiereTraining(trainingId);
   return {
     ok: true,
     becamePrivate: before.visibility === "public" && after.visibility === "private",
@@ -371,7 +386,7 @@ export async function moveTrainingExercise(
     p_dir: dir,
   });
   if (error) return { ok: false, error: error.message };
-  revalidateTraining(pe.training_id);
+  revalidiereTraining(pe.training_id);
   return { ok: true };
 }
 
@@ -388,7 +403,7 @@ export async function removeTrainingExercise(
 
   const { data: pe } = await supabase
     .from("training_exercises")
-    .select("training_id")
+    .select("training_id, bild_url")
     .eq("id", trainingExerciseId)
     .maybeSingle();
   if (!pe) return { ok: false, error: "Zuordnung nicht gefunden." };
@@ -408,13 +423,17 @@ export async function removeTrainingExercise(
     .eq("id", trainingExerciseId);
   if (error) return { ok: false, error: error.message };
 
+  // Erst nach erfolgreichem Löschen die eigene Bilddatei entfernen — nie das
+  // Bild einer noch existierenden Fassung, und nie das Bild der Vorlage.
+  await entferneFassungsBild(supabase, pe.bild_url, trainingExerciseId);
+
   const { data: after } = await supabase
     .from("trainings")
     .select("visibility")
     .eq("id", trainingId)
     .maybeSingle();
 
-  revalidateTraining(trainingId);
+  revalidiereTraining(trainingId);
   return {
     ok: true,
     becamePrivate: before.visibility === "public" && after?.visibility === "private",
@@ -429,7 +448,31 @@ export async function deleteTraining(trainingId: string): Promise<void> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return;
-  await supabase.from("trainings").delete().eq("id", trainingId).eq("owner_id", user.id);
+
+  // Bildpfade der Fassungen VOR dem Löschen einsammeln: die Kaskade entfernt nur
+  // die Zeilen, nicht die Dateien im Bildspeicher. Der Owner-Filter am Join
+  // verhindert schon das Lesen fremder Zuordnungen.
+  const { data: fassungen } = await supabase
+    .from("training_exercises")
+    .select("id, bild_url, trainings!inner ( owner_id )")
+    .eq("training_id", trainingId)
+    .eq("trainings.owner_id", user.id);
+
+  // `select` liefert die tatsächlich gelöschten Zeilen: nur wenn wirklich etwas
+  // gelöscht wurde (das Training existiert und gehört dem USER), fallen auch die
+  // Bilddateien — und nur dann gibt es die Erfolgs-Weiterleitung. Ein fremdes
+  // oder fehlendes Training endet ohne falsches Erfolgssignal.
+  const { data: geloescht, error } = await supabase
+    .from("trainings")
+    .delete()
+    .eq("id", trainingId)
+    .eq("owner_id", user.id)
+    .select("id");
+  if (error || !geloescht?.length) return;
+
+  for (const f of fassungen ?? []) {
+    await entferneFassungsBild(supabase, f.bild_url, f.id);
+  }
   revalidatePath("/trainings");
   redirect("/trainings?mine=1&deleted=1");
 }
@@ -473,7 +516,7 @@ export async function setExerciseDuration(
     .maybeSingle();
   if (error) return { ok: false, error: error.message };
   if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
-  revalidateTraining(data.training_id);
+  revalidiereTraining(data.training_id);
   return { ok: true };
 }
 

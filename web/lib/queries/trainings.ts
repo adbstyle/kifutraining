@@ -3,55 +3,46 @@ import { likePattern } from "@/lib/search";
 import { TRAININGSTEIL_SLUGS, sortStufen, teilTraegtDauer, hkatRank } from "@/lib/training";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
+import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
 
 /**
  * Query-Layer für Trainings — der EINZIGE Datenpfad zu `trainings`
  * und `training_exercises`. RLS filtert serverseitig: ein öffentliches Training darf
- * jeder lesen, ein privates nur sein Eigentümer (Story #9 AC12). Eingebettete
- * Übungen unterliegen ebenfalls der RLS — eine für den Betrachter nicht
- * sichtbare Übung kommt als `null` zurück und fällt auf den zwischengespeicherten
- * Namen zurück (Platzhalter, Story #9 AC10).
+ * jeder lesen, ein privates nur sein Eigentümer (Story #9 AC12).
+ *
+ * Seit dem Fassungs-Modell (Epic #72) trägt die Zuordnung ihre Übungsinhalte
+ * selbst. Sie hängt damit an genau einer RLS-Kette — die frühere Situation, dass
+ * eine Übung im lesbaren Training unsichtbar sein konnte, gibt es nicht mehr.
  */
 
-/** Vollständige Übungsfelder, soweit eine Trainings-Ansicht sie braucht (Durchführung,
- *  Druck, Detail-Link). `null`, wenn die Übung für den Betrachter nicht sichtbar
- *  oder gelöscht ist. */
-export type TrainingExerciseExercise = {
-  id: string;
-  slug: string;
+/** Woraus eine Fassung entstanden ist — unveränderlich, reine Angabe. */
+export type Herkunft = {
   name: string;
-  trainingsteil: string;
-  kategorien: string[];
-  visibility: "public" | "private";
-  source: "manual" | "user";
-  feldtyp: string | null;
-  hauptteilkategorie: string | null;
-  erscheinungsform: string[];
-  anzahl_kinder: { min?: number | null; max?: number | null } | null;
-  material: string[];
-  methodischer_fahrplan: Fahrplan | null;
-  aufbau: string | null;
-  bild_url: string | null;
-  diagramm: unknown;
-  bild_quelle: "foto" | "diagramm" | null;
-  owner_id: string | null;
+  typ: "manual" | "community" | "eigen";
+  datum: string;
 };
 
 export type TrainingExerciseItem = {
-  /** training_exercises.id (die Zuordnung selbst). */
+  /** training_exercises.id (die Zuordnung, also die Fassung selbst). */
   id: string;
   trainingsteil: TrainingsteilSlug;
-  /** Snapshot der Hauptteilkategorie (nur Hauptteil-Zuordnungen; placeholder-fest
-   *  aus `training_exercises`, nicht aus der ggf. unsichtbaren Übung). */
+  /** Nur Hauptteil-Fassungen tragen eine Kategorie. */
   hauptteilkategorie: string | null;
   position: number;
   durationMin: number | null;
-  exerciseId: string | null;
-  /** Aufgelöster Anzeigename: die Übung, sonst der Platzhalter-Cache. */
   name: string;
-  /** Ist die referenzierte Übung für den Betrachter aufrufbar? */
-  available: boolean;
-  exercise: TrainingExerciseExercise | null;
+  kategorien: string[];
+  erscheinungsform: string[];
+  feldtyp: string | null;
+  anzahlKinder: { min?: number | null; max?: number | null } | null;
+  material: string[];
+  fahrplan: Fahrplan | null;
+  aufbau: string | null;
+  bildUrl: string | null;
+  bildQuelle: "foto" | "diagramm" | null;
+  diagramm: unknown;
+  /** `null` nur bei Fassungen, die noch nicht überführt sind. */
+  herkunft: Herkunft | null;
 };
 
 export type TrainingDetail = {
@@ -66,27 +57,52 @@ export type TrainingDetail = {
   exercises: TrainingExerciseItem[];
 };
 
+/** Inhaltsfelder, die Fassung und Bibliotheks-Übung gleich benennen. Genau
+ *  darum genügt beim Lesen eine Quelle-Weiche statt zweier Mappings. Aus der
+ *  Kopier-Konstante abgeleitet, damit ein neues Übungsfeld nicht kopiert, aber
+ *  hier vergessen werden kann (es verschwände dann still aus der Anzeige). */
+const INHALT_FELDER = [...FASSUNG_INHALT_FELDER, "bild_url", "diagramm"].join(", ");
+
+// Der Embed auf `exercises` ist die Brücke für das Auslieferungsfenster: die
+// Bestand-Überführung läuft als Migration und kann dem App-Deploy um Minuten
+// nachlaufen. Solange eine Zuordnung noch nicht überführt ist (`name is null`),
+// liefert die referenzierte Übung die Inhalte, damit kein Training leer
+// erscheint. Entfällt mit dem Verweis-Abbau.
 const PE_SELECT = `
-  id, trainingsteil, hauptteilkategorie, position, duration_min, exercise_id, exercise_name_cache,
-  exercises (
-    id, slug, name, trainingsteil, kategorien, visibility, source,
-    feldtyp, hauptteilkategorie, erscheinungsform, anzahl_kinder, material,
-    methodischer_fahrplan, aufbau, bild_url, diagramm, bild_quelle, owner_id
-  )
+  id, trainingsteil, hauptteilkategorie, position, duration_min,
+  herkunft_name, herkunft_typ, herkunft_datum, exercise_name_cache,
+  ${INHALT_FELDER},
+  exercises ( ${INHALT_FELDER} )
 `;
 
 const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
 
-type RawExercise = TrainingExerciseExercise | null;
-type RawTrainingExercise = {
+/** Die Inhaltsfelder, wie sie aus beiden Tabellen zurückkommen. */
+type RawInhalt = {
+  name: string | null;
+  kategorien: string[] | null;
+  erscheinungsform: string[] | null;
+  feldtyp: string | null;
+  anzahl_kinder: { min?: number | null; max?: number | null } | null;
+  material: string[] | null;
+  methodischer_fahrplan: Fahrplan | null;
+  aufbau: string | null;
+  bild_url: string | null;
+  bild_quelle: "foto" | "diagramm" | null;
+  diagramm: unknown;
+};
+
+type RawTrainingExercise = RawInhalt & {
   id: string;
   trainingsteil: string;
   hauptteilkategorie: string | null;
   position: number;
   duration_min: number | null;
-  exercise_id: string | null;
+  herkunft_name: string | null;
+  herkunft_typ: "manual" | "community" | "eigen" | null;
+  herkunft_datum: string | null;
   exercise_name_cache: string | null;
-  exercises: RawExercise;
+  exercises: RawInhalt | null;
 };
 type RawTraining = {
   id: string;
@@ -106,18 +122,31 @@ const teilRank = (t: string) => {
 
 function mapTraining(raw: RawTraining): TrainingDetail {
   const exercises: TrainingExerciseItem[] = (raw.training_exercises ?? [])
-    .map((pe) => {
-      const ex = pe.exercises;
+    .map((te) => {
+      // Die Fassung ist die Quelle; nur eine noch nicht überführte Zuordnung
+      // greift auf die referenzierte Übung zurück (siehe PE_SELECT).
+      const q: RawInhalt = te.name != null ? te : (te.exercises ?? te);
       return {
-        id: pe.id,
-        trainingsteil: pe.trainingsteil as TrainingsteilSlug,
-        hauptteilkategorie: pe.hauptteilkategorie,
-        position: pe.position,
-        durationMin: pe.duration_min,
-        exerciseId: pe.exercise_id,
-        name: ex?.name ?? pe.exercise_name_cache ?? "Unbenannte Übung",
-        available: ex != null,
-        exercise: ex,
+        id: te.id,
+        trainingsteil: te.trainingsteil as TrainingsteilSlug,
+        hauptteilkategorie: te.hauptteilkategorie,
+        position: te.position,
+        durationMin: te.duration_min,
+        name: q.name ?? te.exercise_name_cache ?? "Unbenannte Übung",
+        kategorien: q.kategorien ?? [],
+        erscheinungsform: q.erscheinungsform ?? [],
+        feldtyp: q.feldtyp,
+        anzahlKinder: q.anzahl_kinder,
+        material: q.material ?? [],
+        fahrplan: q.methodischer_fahrplan,
+        aufbau: q.aufbau,
+        bildUrl: q.bild_url,
+        bildQuelle: q.bild_quelle,
+        diagramm: q.diagramm,
+        herkunft:
+          te.herkunft_name && te.herkunft_typ && te.herkunft_datum
+            ? { name: te.herkunft_name, typ: te.herkunft_typ, datum: te.herkunft_datum }
+            : null,
       };
     })
     // Sortierung: Trainingsteil-Reihenfolge, im Hauptteil zusätzlich nach

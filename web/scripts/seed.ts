@@ -127,8 +127,9 @@ async function seedExercises() {
       kategorien: u.kategorien ?? [],
       anzahl_kinder: u.anzahl_kinder ?? null,
       material: u.material ?? [],
-      // Übungsablauf je Trainingsteil: methodischer_fahrplan (jsonb) bei
-      // einleitung/hauptteil, flaches aufbau bei auffangen/ausklang.
+      // Übungsablauf je Einordnung: methodischer_fahrplan (jsonb) bei
+      // einleitung/hauptteil, flaches aufbau bei auffangen/ausklang sowie bei
+      // der Hauptteilkategorie «Fussball spielen» (freies Spiel, Story 2).
       methodischer_fahrplan: u.methodischer_fahrplan ?? null,
       aufbau: u.aufbau ?? null,
       varianten: u.varianten ?? [],

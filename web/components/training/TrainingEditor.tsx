@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   Plus,
   TriangleAlert,
@@ -22,9 +23,11 @@ import {
   TextField,
   IconButton,
   Tooltip,
+  HerkunftsAngabe,
 } from "@/components/ui";
 import { ExercisePickerDialog } from "./ExercisePickerDialog";
 import { ExerciseThumb } from "./ExerciseThumb";
+import { InBibliothekButton } from "./InBibliothekButton";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
 import { TrainingVisibilityControl } from "./TrainingVisibilityControl";
@@ -57,6 +60,7 @@ const AUTO_PRIVATE_MSG =
    frischen die Serverdaten auf; Dauern werden lokal überlagert. */
 export function TrainingEditor({ training }: { training: TrainingDetail }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
   // Offener Picker: Trainingsteil und — im Hauptteil — die Unterkategorie.
   const [open, setOpen] = useState<{
@@ -71,6 +75,13 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
   const [nameError, setNameError] = useState<string | undefined>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [mismatch, setMismatch] = useState<{ id: string; name: string }[] | null>(null);
+
+  // Das Bearbeiten einer Fassung läuft über eine eigene Seite und kehrt per
+  // Weiterleitung zurück. Hat die DB-Regel das Training dabei auf privat
+  // gesetzt, trägt die Rückkehr-Adresse den Hinweis — einmalig anzeigen.
+  useEffect(() => {
+    if (searchParams.get("privat") === "1") setNotice(AUTO_PRIVATE_MSG);
+  }, [searchParams]);
 
   const dur = (item: TrainingExerciseItem) =>
     item.id in durations ? durations[item.id] : item.durationMin;
@@ -132,6 +143,15 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
 
   // Auffangen trägt keine Dauer und zählt weder zur Summe noch zum
   // „ohne Dauer"-Hinweis.
+  // Was zum Öffentlich-Schalten fehlt (Story 8 AK 3): so erscheint die
+  // Tragweite-Bestätigung nur für ein veröffentlichbares Training. Die RPC
+  // prüft es serverseitig erneut.
+  const fehlendeVoraussetzungen = [
+    stufen.length === 0 ? "stufe" : null,
+    training.exercises.some((e) => e.trainingsteil === "einleitung") ? null : "einleitung",
+    training.exercises.some((e) => e.trainingsteil === "hauptteil") ? null : "hauptteil",
+  ].filter((x): x is string => x !== null);
+
   const dauerItems = training.exercises.filter((e) => teilTraegtDauer(e.trainingsteil));
   const totalDuration = dauerItems.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
   const totalMissing = dauerItems.filter((it) => dur(it) == null).length;
@@ -167,7 +187,11 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
             </Badge>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
-            <TrainingVisibilityControl trainingId={training.id} visibility={training.visibility} />
+            <TrainingVisibilityControl
+              trainingId={training.id}
+              visibility={training.visibility}
+              fehlend={fehlendeVoraussetzungen}
+            />
             <button
               type="button"
               onClick={() => setDeleteOpen(true)}
@@ -245,6 +269,7 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
                     </div>
                     <ExerciseList
                       items={g.items}
+                      trainingId={training.id}
                       trainingStufen={stufen}
                       showDuration={traegtDauer}
                       dur={dur}
@@ -315,6 +340,7 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
 
             <ExerciseList
               items={teilItems}
+              trainingId={training.id}
               trainingStufen={stufen}
               showDuration={traegtDauer}
               dur={dur}
@@ -367,9 +393,6 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
               hauptteilkategorie={sub?.slug}
               hauptteilkategorieLabel={sub?.label}
               trainingStufen={stufen}
-              addedExerciseIds={openItems
-                .map((e) => e.exerciseId)
-                .filter((id): id is string => id != null)}
               onAdded={() => router.refresh()}
             />
           );
@@ -471,6 +494,7 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
  *  Hauptteil-Unterkategorie gleichermassen genutzt. */
 function ExerciseList({
   items,
+  trainingId,
   trainingStufen,
   showDuration,
   dur,
@@ -479,6 +503,7 @@ function ExerciseList({
   onRemove,
 }: {
   items: TrainingExerciseItem[];
+  trainingId: string;
   trainingStufen: string[];
   showDuration: boolean;
   dur: (item: TrainingExerciseItem) => number | null;
@@ -501,6 +526,7 @@ function ExerciseList({
           index={i}
           isFirst={i === 0}
           isLast={i === items.length - 1}
+          trainingId={trainingId}
           trainingStufen={trainingStufen}
           showDuration={showDuration}
           duration={dur(item)}
@@ -518,6 +544,7 @@ function TrainingExerciseRow({
   index,
   isFirst,
   isLast,
+  trainingId,
   trainingStufen,
   showDuration,
   duration,
@@ -529,6 +556,7 @@ function TrainingExerciseRow({
   index: number;
   isFirst: boolean;
   isLast: boolean;
+  trainingId: string;
   trainingStufen: string[];
   showDuration: boolean;
   duration: number | null;
@@ -536,10 +564,11 @@ function TrainingExerciseRow({
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
 }) {
+  // Ohne Kategorien gibt es nichts abzudecken (z. B. eine inhaltsleere Fassung
+  // aus der Bestand-Überführung) — dieselbe Regel wie in setTrainingStufen,
+  // sonst stünde ein Warndreieck, das keine Stufenwahl je entfernt.
   const mismatch =
-    item.available &&
-    item.exercise != null &&
-    !stufenAbgedeckt(trainingStufen, item.exercise.kategorien);
+    item.kategorien.length > 0 && !stufenAbgedeckt(trainingStufen, item.kategorien);
 
   return (
     <li className="flex items-center gap-2 rounded-[4px] border border-outline-variant bg-surface-container-low px-3 py-2.5 sm:gap-3">
@@ -570,9 +599,9 @@ function TrainingExerciseRow({
       </span>
 
       <ExerciseThumb
-        bildUrl={item.exercise?.bild_url}
-        diagramm={item.exercise?.diagramm}
-        bildQuelle={item.exercise?.bild_quelle}
+        bildUrl={item.bildUrl}
+        diagramm={item.diagramm}
+        bildQuelle={item.bildQuelle}
         name={item.name}
         className="hidden sm:block"
       />
@@ -586,18 +615,14 @@ function TrainingExerciseRow({
             </span>
           )}
         </span>
-        {!item.available && (
-          <span className="type-label-small text-on-surface-variant">
-            Übung nicht mehr verfügbar (Platzhalter)
-          </span>
-        )}
-        {item.available && item.exercise && item.exercise.kategorien.length > 0 && (
+        {item.kategorien.length > 0 && (
           <span className="flex flex-wrap gap-1">
-            {item.exercise.kategorien.map((k) => (
+            {item.kategorien.map((k) => (
               <KategorieChip key={k} k={k as never} />
             ))}
           </span>
         )}
+        {item.herkunft && <HerkunftsAngabe herkunft={item.herkunft} />}
       </span>
 
       {showDuration && (
@@ -611,6 +636,18 @@ function TrainingExerciseRow({
           />
         </>
       )}
+
+      <InBibliothekButton fassungId={item.id} name={item.name} />
+
+      <Tooltip label="Übung bearbeiten">
+        <Link
+          href={`/training/${trainingId}/uebung/${item.id}/edit`}
+          aria-label={`${item.name} bearbeiten`}
+          className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/8 hover:text-primary"
+        >
+          <Pencil size={16} strokeWidth={2.5} aria-hidden />
+        </Link>
+      </Tooltip>
 
       <Tooltip label="Übung entfernen">
         <button

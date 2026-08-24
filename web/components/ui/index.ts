@@ -1,6 +1,8 @@
 export { Button, ButtonLink } from "./Button";
 export { ButtonGroup } from "./ButtonGroup";
 export { Badge, HerkunftBadge } from "./Badge";
+export { HerkunftsAngabe } from "./HerkunftsAngabe";
+export type { HerkunftsDaten, HerkunftTyp } from "./HerkunftsAngabe";
 export { KategorieChip, FilterChip, AssistChip, SuggestionChip, InputChip } from "./Chip";
 export { Card } from "./Card";
 export { UebungsBild } from "./UebungsBild";

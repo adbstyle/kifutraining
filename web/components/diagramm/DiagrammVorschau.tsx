@@ -15,11 +15,13 @@ import { buttonClasses } from "@/components/ui/Button";
  * Diagramm, nie das Foto.
  */
 export function DiagrammVorschau({
-  slug,
+  href,
   name,
   diagramm,
 }: {
-  slug: string;
+  /** Ziel des Editors — die Übung in der Bibliothek oder die Fassung im
+   *  Training (Epic #72). */
+  href: string;
   name: string;
   diagramm: unknown;
 }) {
@@ -32,7 +34,7 @@ export function DiagrammVorschau({
   return (
     <Card className="group overflow-hidden transition-colors hover:border-on-surface/45">
       <Link
-        href={`/uebung/${slug}/diagramm`}
+        href={href}
         aria-label={aktion}
         className="focus-ring-inset block rounded-[4px]"
       >

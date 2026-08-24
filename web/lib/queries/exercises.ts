@@ -144,6 +144,15 @@ export type ExerciseDetail = {
   source: "manual" | "user";
   visibility: "public" | "private";
   owner_id: string | null;
+  /** Woraus die Übung entstanden ist, falls sie aus einer Fassung übernommen
+   *  wurde (Story 7). Zwei eigenständige Angaben: die Übung selbst und ihr
+   *  Diagramm können unterschiedliche Quellen haben (Story 6 AK 9). */
+  herkunft_name: string | null;
+  herkunft_typ: "manual" | "community" | "eigen" | null;
+  herkunft_datum: string | null;
+  diagramm_herkunft_name: string | null;
+  diagramm_herkunft_typ: "manual" | "community" | "eigen" | null;
+  diagramm_herkunft_datum: string | null;
 };
 
 /** Eine Übung per Slug (volle Felder). RLS blendet private Übungen für
@@ -155,7 +164,7 @@ export async function getExerciseDetail(
   const { data, error } = await supabase
     .from("exercises")
     .select(
-      "id, slug, name, trainingsteil, erscheinungsform, hauptteilkategorie, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id",
+      "id, slug, name, trainingsteil, erscheinungsform, hauptteilkategorie, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id, herkunft_name, herkunft_typ, herkunft_datum, diagramm_herkunft_name, diagramm_herkunft_typ, diagramm_herkunft_datum",
     )
     .eq("slug", slug)
     .maybeSingle();

@@ -5,6 +5,7 @@ import type { BreadcrumbItem } from "@/components/ui";
 import { getExerciseDetail, getVorlagen } from "@/lib/queries/exercises";
 import { createClient } from "@/lib/supabase/server";
 import { parseDiagramm, LEERES_DIAGRAMM } from "@/lib/diagramm";
+import { saveDiagramm } from "@/lib/actions/diagramm";
 import { trainingsteil as teilLabels } from "@/lib/vocab";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +48,7 @@ export default async function DiagrammPage({
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
       <DiagrammEditor
-        exerciseId={ex.id}
+        speichern={saveDiagramm.bind(null, ex.id)}
         name={ex.name}
         crumbs={crumbs}
         initial={parseDiagramm(ex.diagramm) ?? LEERES_DIAGRAMM}

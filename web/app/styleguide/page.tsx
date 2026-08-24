@@ -14,6 +14,7 @@ import {
   TextArea,
   Select,
   MethodischerFahrplan,
+  HerkunftsAngabe,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { SegmentedDemo } from "./SegmentedDemo";
@@ -408,6 +409,38 @@ export default function Styleguide() {
           <Badge tone="manual" />
           <Badge tone="oeffentlich" />
           <Badge tone="entwurf">✎ Entwurf</Badge>
+        </div>
+
+        <p className="type-label-small mb-2 text-on-surface-variant">Herkunftsangabe</p>
+        <p className="type-body-medium mb-3 max-w-xl text-on-surface-variant">
+          Woraus eine Kopie entstanden ist (Übung im Training, übernommene
+          Vorlage, Diagramm-Kopie). Sagt immer „basiert auf" und gibt eine
+          Bearbeitung nie als Original aus; nennt die ursprüngliche Quelle, nie
+          eine Person, und ist bewusst kein Link — die Kopie hängt vom Original
+          nicht mehr ab.
+        </p>
+        <div className="mb-6 flex flex-col gap-2">
+          <HerkunftsAngabe
+            herkunft={{
+              name: "Kleinfeld und Grossfeld",
+              typ: "manual",
+              datum: "2026-08-23T09:00:00Z",
+            }}
+          />
+          <HerkunftsAngabe
+            herkunft={{
+              name: "Dribbling-Parcours",
+              typ: "community",
+              datum: "2026-08-20T09:00:00Z",
+            }}
+          />
+          <HerkunftsAngabe
+            herkunft={{
+              name: "Mein Aufwärmspiel",
+              typ: "eigen",
+              datum: "2026-07-01T09:00:00Z",
+            }}
+          />
         </div>
         <ChipsDemo />
       </Section>
@@ -804,7 +837,7 @@ export default function Styleguide() {
         </p>
         <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
           <DiagrammVorschau
-            slug="beispiel"
+            href="/uebung/beispiel/diagramm"
             name="Abschlussspiel"
             diagramm={{
               version: 1,
@@ -818,7 +851,11 @@ export default function Styleguide() {
               ],
             }}
           />
-          <DiagrammVorschau slug="beispiel" name="Leeres Beispiel" diagramm={null} />
+          <DiagrammVorschau
+            href="/uebung/beispiel/diagramm"
+            name="Leeres Beispiel"
+            diagramm={null}
+          />
         </div>
       </Section>
 
