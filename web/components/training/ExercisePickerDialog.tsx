@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Minus, Plus, Search, TriangleAlert } from "lucide-react";
+import { Plus, Search, TriangleAlert } from "lucide-react";
 import { Dialog, KategorieChip, HerkunftBadge, FilterChip, IconButton } from "@/components/ui";
-import { addTrainingExercise, removeOneTrainingExercise, pickExercises } from "@/lib/actions/trainings";
+import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import { stufenAbgedeckt } from "@/lib/training";
 import { FAHRPLAN_TEILE } from "@/lib/labels";
 import {
@@ -28,7 +28,6 @@ export function ExercisePickerDialog({
   hauptteilkategorie,
   hauptteilkategorieLabel,
   trainingStufen,
-  addedExerciseIds,
   onAdded,
 }: {
   open: boolean;
@@ -40,21 +39,18 @@ export function ExercisePickerDialog({
   hauptteilkategorie?: string;
   hauptteilkategorieLabel?: string;
   trainingStufen: string[];
-  addedExerciseIds: string[];
   onAdded: () => void;
 }) {
   const [q, setQ] = useState("");
   const [form, setForm] = useState<string[]>([]);
   const [results, setResults] = useState<ExerciseListRow[]>([]);
   const [loading, setLoading] = useState(false);
-  // Warenkorb-Zählung je Übung (exercise_id → Anzahl im Trainingsteil). Beim
-  // Öffnen aus dem Training befüllt und danach rein lokal/optimistisch gepflegt —
-  // NICHT aus `addedExerciseIds` neu abgeleitet, da sich das per router.refresh()
-  // während das Modal offen ist ändert (würde optimistische Klicks doppelt
-  // zählen). `countsRef` spiegelt `counts` synchron für Guards bei schnellen
-  // −/+-Klicks (Closures sähen sonst veralteten State).
+  // Wie oft der USER eine Vorlage in dieser Sitzung übernommen hat — reine
+  // Rückmeldung, dass der Klick angekommen ist. Es ist bewusst keine Aussage
+  // über den Trainingsinhalt: jede Übernahme erzeugt eine eigenständige Fassung,
+  // die danach frei bearbeitet und verschoben werden kann, und ist ihrer Vorlage
+  // nicht mehr zugeordnet.
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const countsRef = useRef<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
   const reqId = useRef(0);
   // Mutationen werden serialisiert (eine nach der anderen): die Position
@@ -63,32 +59,14 @@ export function ExercisePickerDialog({
   const queueRef = useRef<Promise<void>>(Promise.resolve());
   const inFlightRef = useRef(0);
 
-  // counts + Ref gemeinsam setzen, damit Guards synchron korrekt sind.
-  function applyCounts(next: Record<string, number>) {
-    countsRef.current = next;
-    setCounts(next);
-  }
-
   const hatErscheinungsform = FAHRPLAN_TEILE.has(trainingsteil);
 
-  // Beim Schliessen Filter/Suche zurücksetzen; beim Öffnen die aktuelle Anzahl
-  // je Übung als Warenkorb-Basis einfrieren. Absichtlich nur an `open` gebunden:
-  // `addedExerciseIds` ändert sich durch router.refresh() während das Modal
-  // offen ist — würde man dann neu zählen, erfasste man die optimistischen
-  // Session-Adds doppelt.
+  // Beim Öffnen und Schliessen Filter, Suche und Sitzungszählung zurücksetzen.
   useEffect(() => {
-    if (!open) {
-      setQ("");
-      setForm([]);
-      applyCounts({});
-      setError(null);
-      return;
-    }
-    const base: Record<string, number> = {};
-    for (const id of addedExerciseIds) base[id] = (base[id] ?? 0) + 1;
-    applyCounts(base);
+    setQ("");
+    setForm([]);
+    setCounts({});
     setError(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Übungen laden (debounced auf den Suchbegriff).
@@ -117,41 +95,28 @@ export function ExercisePickerDialog({
   }
 
   function bump(id: string, delta: number) {
-    applyCounts({ ...countsRef.current, [id]: (countsRef.current[id] ?? 0) + delta });
+    // Funktionales Update: der frühere Ref-Spiegel stammte aus der entfernten
+    // «−»-Mechanik und ist ohne synchrone Guards nicht mehr nötig.
+    setCounts((c) => ({ ...c, [id]: (c[id] ?? 0) + delta }));
   }
 
+  /** Vorlage als eigenständige Fassung ins Training übernehmen. Der Picker fügt
+   *  nur hinzu — entfernt wird im Trainings-Editor (Story 4 AK 6/7). */
   function add(ex: ExerciseListRow) {
     setError(null);
-    // Optimistische Zählung sofort hochsetzen → sichtbares Warenkorb-Feedback.
+    // Zählung sofort hochsetzen → sichtbare Rückmeldung, ohne auf den Server
+    // zu warten; bei einem Fehlschlag wird sie zurückgenommen.
     bump(ex.id, +1);
     inFlightRef.current += 1;
     queueRef.current = queueRef.current.then(async () => {
       const res = await addTrainingExercise(trainingId, trainingsteil, ex.id, hauptteilkategorie);
       inFlightRef.current -= 1;
       if (!res.ok) {
-        bump(ex.id, -1); // optimistische Erhöhung zurücknehmen
+        bump(ex.id, -1);
         setError(res.error ?? "Übung konnte nicht hinzugefügt werden.");
       }
       // Editor hinter dem Modal erst aktualisieren, wenn die Klick-Salve durch
       // ist (vermeidet mehrfaches Neuladen bei schnellen Klicks).
-      if (inFlightRef.current === 0) onAdded();
-    });
-  }
-
-  function remove(ex: ExerciseListRow) {
-    // Synchron gegen den Ref prüfen, damit schnelle „−"-Klicks nicht unter 0
-    // laufen (Closures sähen sonst denselben veralteten Zählerstand).
-    if ((countsRef.current[ex.id] ?? 0) <= 0) return;
-    setError(null);
-    bump(ex.id, -1);
-    inFlightRef.current += 1;
-    queueRef.current = queueRef.current.then(async () => {
-      const res = await removeOneTrainingExercise(trainingId, trainingsteil, ex.id, hauptteilkategorie);
-      inFlightRef.current -= 1;
-      if (!res.ok) {
-        bump(ex.id, +1); // optimistische Reduktion zurücknehmen
-        setError(res.error ?? "Übung konnte nicht entfernt werden.");
-      }
       if (inFlightRef.current === 0) onAdded();
     });
   }
@@ -251,29 +216,22 @@ export function ExercisePickerDialog({
                     </span>
                   </span>
 
-                  {/* Warenkorb-Stepper: −, Anzahl, + (− und Anzahl nur ab 1×). */}
+                  {/* Nur Hinzufügen; die Zahl zeigt die Übernahmen dieser Sitzung. */}
                   <span className="flex shrink-0 items-center gap-1">
                     {count > 0 && (
-                      <>
-                        <IconButton
-                          icon={Minus}
-                          label={`${ex.name} einmal entfernen`}
-                          onClick={() => remove(ex)}
-                        />
-                        <span
-                          aria-hidden
-                          className="inline-flex h-6 min-w-[1.75rem] items-center justify-center rounded-full bg-primary px-1.5 type-label-medium font-semibold leading-none text-on-primary"
-                        >
-                          {count}×
-                        </span>
-                      </>
+                      <span
+                        aria-hidden
+                        className="inline-flex h-6 min-w-[1.75rem] items-center justify-center rounded-full bg-primary px-1.5 type-label-medium font-semibold leading-none text-on-primary"
+                      >
+                        {count}×
+                      </span>
                     )}
                     <IconButton
                       icon={Plus}
                       label={
                         count > 0
-                          ? `${ex.name} noch einmal hinzufügen (aktuell ${count}× im Training)`
-                          : `${ex.name} hinzufügen`
+                          ? `${ex.name} noch einmal übernehmen (in dieser Sitzung ${count}× übernommen)`
+                          : `${ex.name} übernehmen`
                       }
                       onClick={() => add(ex)}
                     />

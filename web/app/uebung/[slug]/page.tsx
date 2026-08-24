@@ -3,6 +3,7 @@ import { BookOpen } from "lucide-react";
 import type { Metadata } from "next";
 import {
   HerkunftBadge,
+  HerkunftsAngabe,
   Breadcrumbs,
   type BreadcrumbItem,
   Card,
@@ -148,6 +149,18 @@ export default async function ExerciseDetailPage({
             {meta.join(" · ")}
           </p>
         )}
+        {/* Aus einer Fassung übernommene Vorlage: woraus sie entstanden ist
+            (Story 6 AK 7). */}
+        {ex.herkunft_name && ex.herkunft_typ && ex.herkunft_datum && (
+          <HerkunftsAngabe
+            className="mt-2"
+            herkunft={{
+              name: ex.herkunft_name,
+              typ: ex.herkunft_typ,
+              datum: ex.herkunft_datum,
+            }}
+          />
+        )}
       </header>
 
       {/* Aktives Bild — gezeichnetes Diagramm, Foto oder Platzhalter */}
@@ -160,6 +173,20 @@ export default async function ExerciseDetailPage({
           sizes="(max-width: 896px) 100vw, 896px"
         />
       </div>
+      {/* Das Diagramm kann aus einer anderen Quelle stammen als die Übung —
+          zwei eigenständige Angaben (Story 6 AK 9). */}
+      {ex.diagramm_herkunft_name &&
+        ex.diagramm_herkunft_typ &&
+        ex.diagramm_herkunft_datum && (
+          <HerkunftsAngabe
+            className="mt-2"
+            herkunft={{
+              name: ex.diagramm_herkunft_name,
+              typ: ex.diagramm_herkunft_typ,
+              datum: ex.diagramm_herkunft_datum,
+            }}
+          />
+        )}
 
       {/* Eckdaten — unterhalb des Bildes */}
       {(ex.hauptteilkategorie || ex.erscheinungsform.length > 0 || anzahl || ex.material.length > 0) && (

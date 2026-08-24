@@ -109,6 +109,8 @@ Jede Story liefert End-to-End-Wert. Reihenfolge grob abhängigkeitssortiert.
 | Kinderzahl | Wird mitkopiert und ist frei anpassbar, ohne Automatik | 2026-08-16 |
 | Bestand | Einmalige Überführung aller bestehenden Trainings in Fassungen | 2026-08-16 |
 | Reihenfolge | Dieses Epic läuft vor dem Team-Trainingsplan-Epic | 2026-08-16 |
+| Begriff | Die «Fassung» bekommt keinen eigenen Begriff in der Oberfläche: im Training heisst sie schlicht «Übung», Bibliothekseinträge heissen «Vorlage»; der Kopie-Charakter zeigt sich allein über «basiert auf …» | 2026-08-22 |
+| Herkunfts-Darstellung | Eine dezente Zeile «basiert auf ‹Name› (Quelle, Datum)» unterhalb des Titels — als Kit-Komponente `HerkunftsAngabe` umgesetzt und im Styleguide dokumentiert; nicht in Druck und Durchführen | 2026-08-23 |
 
 ## 10. Aufgehobene Abgrenzungen und geänderte Festlegungen
 
@@ -123,5 +125,4 @@ Jede Story liefert End-to-End-Wert. Reihenfolge grob abhängigkeitssortiert.
 
 ## 11. Offene Fragen
 
-1. @UX Designer: Wie wird die Herkunftsangabe an Fassung und Diagramm dargestellt, ohne die Karten und Detailansichten zu überladen?
-4. @Product Owner: Wie soll die „Fassung" gegenüber den Nutzern heissen? Der Begriff ist intern; die Oberfläche braucht ein verständliches Wort.
+Keine — die letzten beiden (Darstellung der Herkunftsangabe, Benennung der «Fassung») sind beantwortet und in §9 festgehalten.

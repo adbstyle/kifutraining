@@ -54,7 +54,11 @@ export default async function EditPage({
         action={updateExercise.bind(null, ex.id)}
         afterName={
           <div className="flex flex-col gap-2">
-            <DiagrammVorschau slug={slug} name={ex.name} diagramm={ex.diagramm} />
+            <DiagrammVorschau
+              href={`/uebung/${slug}/diagramm`}
+              name={ex.name}
+              diagramm={ex.diagramm}
+            />
             {vorlagen.length > 0 && (
               <div className="flex justify-end">
                 <VorlageUebernehmenButton
