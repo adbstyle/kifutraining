@@ -1,7 +1,10 @@
 import { CornerDownRight } from "lucide-react";
 import { cn } from "@/lib/cn";
+// Eine Typ-Quelle: ein neuer Herkunftstyp in lib/fassung zwingt den Compiler,
+// auch das quelle-Mapping hier zu ergänzen.
+import type { HerkunftTyp } from "@/lib/fassung";
 
-export type HerkunftTyp = "manual" | "community" | "eigen";
+export type { HerkunftTyp };
 
 export type HerkunftsDaten = {
   /** Name des Originals zum Zeitpunkt der Übernahme. */

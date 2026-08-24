@@ -3,6 +3,7 @@ import { likePattern } from "@/lib/search";
 import { TRAININGSTEIL_SLUGS, sortStufen, teilTraegtDauer, hkatRank } from "@/lib/training";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
+import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
 
 /**
  * Query-Layer für Trainings — der EINZIGE Datenpfad zu `trainings`
@@ -57,9 +58,10 @@ export type TrainingDetail = {
 };
 
 /** Inhaltsfelder, die Fassung und Bibliotheks-Übung gleich benennen. Genau
- *  darum genügt beim Lesen eine Quelle-Weiche statt zweier Mappings. */
-const INHALT_FELDER = `name, kategorien, erscheinungsform, feldtyp, anzahl_kinder,
-  material, methodischer_fahrplan, aufbau, bild_url, bild_quelle, diagramm`;
+ *  darum genügt beim Lesen eine Quelle-Weiche statt zweier Mappings. Aus der
+ *  Kopier-Konstante abgeleitet, damit ein neues Übungsfeld nicht kopiert, aber
+ *  hier vergessen werden kann (es verschwände dann still aus der Anzeige). */
+const INHALT_FELDER = [...FASSUNG_INHALT_FELDER, "bild_url", "diagramm"].join(", ");
 
 // Der Embed auf `exercises` ist die Brücke für das Auslieferungsfenster: die
 // Bestand-Überführung läuft als Migration und kann dem App-Deploy um Minuten

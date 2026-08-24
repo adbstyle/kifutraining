@@ -11,11 +11,15 @@
 -- ist die einmalige Bestätigung der Tragweite — sie lebt in der Oberfläche, die
 -- RPC bleibt die serverseitige Trust-Boundary.
 
--- Der Parameter p_include_private entfällt; CREATE OR REPLACE kann die Signatur
--- nicht ändern, daher Drop + Neuanlage samt Grants.
-drop function publish_training(uuid, boolean);
-
-create function publish_training(p_training_id uuid)
+-- Die Signatur bleibt absichtlich zweistellig: DB-Push (CI) und Vercel-Deploy
+-- laufen entkoppelt, und im Fenster dazwischen ruft das alte Bundle die RPC
+-- noch mit p_include_private auf — ein Drop der Signatur liesse jeden Publish
+-- dort mit «function does not exist» scheitern. Der Parameter wird schlicht
+-- ignoriert (das neue Bundle lässt ihn weg, der DEFAULT greift); entfernt wird
+-- er erst mit dem Verweis-Abbau, wenn kein altes Bundle mehr läuft.
+create or replace function publish_training(
+  p_training_id uuid,
+  p_include_private boolean default false)
 returns jsonb
 language plpgsql
 security definer
@@ -54,6 +58,17 @@ begin
   ) then
     v_missing := array_append(v_missing, 'hauptteil');
   end if;
+  -- Noch nicht überführte Zuordnungen (name NULL — nur ein altes App-Bundle im
+  -- Auslieferungsfenster kann solche nach der Bestand-Migration noch anlegen)
+  -- blockieren das Veröffentlichen: sie lesen über den Übungs-Verweis, und eine
+  -- private Übung wäre für Besucher eine leere Hülle. Überführte inhaltsleere
+  -- Fassungen tragen immer einen Namen (Story 9 AK 4/5) und bleiben publizierbar.
+  if exists (
+    select 1 from training_exercises
+    where training_id = p_training_id and name is null
+  ) then
+    v_missing := array_append(v_missing, 'ueberfuehrung');
+  end if;
   if array_length(v_missing, 1) >= 1 then
     return jsonb_build_object('status', 'incomplete', 'missing', to_jsonb(v_missing));
   end if;
@@ -63,5 +78,5 @@ begin
 end;
 $$;
 
-revoke all on function publish_training(uuid) from public, anon;
-grant execute on function publish_training(uuid) to authenticated;
+revoke all on function publish_training(uuid, boolean) from public, anon;
+grant execute on function publish_training(uuid, boolean) to authenticated;

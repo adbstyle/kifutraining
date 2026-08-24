@@ -51,7 +51,6 @@ export function ExercisePickerDialog({
   // die danach frei bearbeitet und verschoben werden kann, und ist ihrer Vorlage
   // nicht mehr zugeordnet.
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const countsRef = useRef<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
   const reqId = useRef(0);
   // Mutationen werden serialisiert (eine nach der anderen): die Position
@@ -60,19 +59,13 @@ export function ExercisePickerDialog({
   const queueRef = useRef<Promise<void>>(Promise.resolve());
   const inFlightRef = useRef(0);
 
-  // counts + Ref gemeinsam setzen, damit Guards synchron korrekt sind.
-  function applyCounts(next: Record<string, number>) {
-    countsRef.current = next;
-    setCounts(next);
-  }
-
   const hatErscheinungsform = FAHRPLAN_TEILE.has(trainingsteil);
 
   // Beim Öffnen und Schliessen Filter, Suche und Sitzungszählung zurücksetzen.
   useEffect(() => {
     setQ("");
     setForm([]);
-    applyCounts({});
+    setCounts({});
     setError(null);
   }, [open]);
 
@@ -102,7 +95,9 @@ export function ExercisePickerDialog({
   }
 
   function bump(id: string, delta: number) {
-    applyCounts({ ...countsRef.current, [id]: (countsRef.current[id] ?? 0) + delta });
+    // Funktionales Update: der frühere Ref-Spiegel stammte aus der entfernten
+    // «−»-Mechanik und ist ohne synchrone Guards nicht mehr nötig.
+    setCounts((c) => ({ ...c, [id]: (c[id] ?? 0) + delta }));
   }
 
   /** Vorlage als eigenständige Fassung ins Training übernehmen. Der Picker fügt

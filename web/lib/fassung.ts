@@ -88,22 +88,16 @@ export const FASSUNG_INHALT_FELDER = [
 ] as const;
 
 /** Die Spaltenliste, mit der eine Vorlage für das Kopieren gelesen wird —
- *  Inhalte, Bild/Diagramm und die Felder für den Herkunfts-Stempel. */
+ *  Inhalte, Bild/Diagramm und die Felder für den Herkunfts-Stempel. Die
+ *  Inhaltsfelder kommen aus derselben Konstante wie das Kopieren selbst, damit
+ *  ein neues Übungsfeld nicht gelesen-aber-nicht-kopiert (oder umgekehrt)
+ *  enden kann. */
 export const VORLAGE_SELECT = [
   "id",
-  "name",
   "trainingsteil",
   "hauptteilkategorie",
-  "kategorien",
-  "erscheinungsform",
-  "feldtyp",
-  "anzahl_kinder",
-  "material",
-  "methodischer_fahrplan",
-  "aufbau",
-  "varianten",
+  ...FASSUNG_INHALT_FELDER,
   "bild_url",
-  "bild_quelle",
   "diagramm",
   "source",
   "owner_id",
@@ -152,6 +146,14 @@ export function fassungUnvollstaendig(f: {
   return f.aufbau?.trim()
     ? null
     : "Diese Übung hat keine Ablaufbeschreibung. Ergänze sie im Training, bevor du sie in deine Bibliothek übernimmst.";
+}
+
+/** Gehört diese Storage-Datei der Fassung selbst? Der Dateiname trägt dann die
+ *  Zuordnungs-ID (wie `fassungBildPfad` sie bildet). Jeder Löschweg prüft das,
+ *  bevor er eine Datei entfernt: ein verwaistes Bild ist harmlos, eine fremde
+ *  oder geteilte Datei zu löschen wäre Datenverlust. */
+export function istEigeneFassungsDatei(pfad: string, fassungId: string): boolean {
+  return pfad.slice(pfad.lastIndexOf("/") + 1).startsWith(`${fassungId}.`);
 }
 
 /** Zielpfad der Bildkopie einer Fassung. Der Dateiname ist die Zuordnungs-ID —

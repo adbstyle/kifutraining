@@ -6,7 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
 import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/training";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
+import { revalidiereTraining } from "@/lib/revalidate";
 import {
+  istEigeneFassungsDatei,
   stempleHerkunft,
   kopiereBild,
   kopiereDiagrammVon,
@@ -48,15 +50,6 @@ function clean(v: FormDataEntryValue | null): string {
   return String(v ?? "").trim();
 }
 
-/** Editor- und Ansichtspfade eines Trainings nach einer Mutation neu validieren. */
-function revalidateTraining(trainingId: string) {
-  revalidatePath(`/training/${trainingId}/edit`);
-  revalidatePath(`/training/${trainingId}`);
-  revalidatePath(`/training/${trainingId}/durchfuehren`);
-  revalidatePath(`/training/${trainingId}/druck`);
-  revalidatePath("/trainings");
-}
-
 function validStufen(values: string[]): string[] {
   return values.filter((s) => kategorienSlugs.includes(s as never));
 }
@@ -91,9 +84,7 @@ async function entferneFassungsBild(
   fassungId: string,
 ) {
   const pfad = bildUrlToPath(bildUrl);
-  if (!pfad) return;
-  const datei = pfad.slice(pfad.lastIndexOf("/") + 1);
-  if (!datei.startsWith(`${fassungId}.`)) return;
+  if (!pfad || !istEigeneFassungsDatei(pfad, fassungId)) return;
   await entferneStorageObjekt(supabase, pfad);
 }
 
@@ -224,7 +215,7 @@ export async function addTrainingExercise(
     return { ok: false, error: error.message };
   }
 
-  revalidateTraining(trainingId);
+  revalidiereTraining(trainingId);
   return { ok: true };
 }
 
@@ -255,7 +246,7 @@ export async function publishTrainingAction(
   if (error) return { status: "error", error: error.message };
 
   const result = data as PublishResult;
-  if (result.status === "published") revalidateTraining(trainingId);
+  if (result.status === "published") revalidiereTraining(trainingId);
   return result;
 }
 
@@ -269,7 +260,7 @@ export async function unpublishTrainingAction(trainingId: string): Promise<Train
   if (!user) return { ok: false, error: "Nicht angemeldet." };
   const { error } = await supabase.rpc("unpublish_training", { p_training_id: trainingId });
   if (error) return { ok: false, error: error.message };
-  revalidateTraining(trainingId);
+  revalidiereTraining(trainingId);
   return { ok: true };
 }
 
@@ -294,7 +285,7 @@ export async function renameTraining(
     .eq("id", trainingId)
     .eq("owner_id", user.id);
   if (error) return { ok: false, error: error.message };
-  revalidateTraining(trainingId);
+  revalidiereTraining(trainingId);
   return { ok: true };
 }
 
@@ -364,7 +355,7 @@ export async function setTrainingStufen(
       .map((r) => ({ id: r.id, name: r.name }));
   }
 
-  revalidateTraining(trainingId);
+  revalidiereTraining(trainingId);
   return {
     ok: true,
     becamePrivate: before.visibility === "public" && after.visibility === "private",
@@ -395,7 +386,7 @@ export async function moveTrainingExercise(
     p_dir: dir,
   });
   if (error) return { ok: false, error: error.message };
-  revalidateTraining(pe.training_id);
+  revalidiereTraining(pe.training_id);
   return { ok: true };
 }
 
@@ -442,7 +433,7 @@ export async function removeTrainingExercise(
     .eq("id", trainingId)
     .maybeSingle();
 
-  revalidateTraining(trainingId);
+  revalidiereTraining(trainingId);
   return {
     ok: true,
     becamePrivate: before.visibility === "public" && after?.visibility === "private",
@@ -459,18 +450,25 @@ export async function deleteTraining(trainingId: string): Promise<void> {
   if (!user) return;
 
   // Bildpfade der Fassungen VOR dem Löschen einsammeln: die Kaskade entfernt nur
-  // die Zeilen, nicht die Dateien im Bildspeicher.
+  // die Zeilen, nicht die Dateien im Bildspeicher. Der Owner-Filter am Join
+  // verhindert schon das Lesen fremder Zuordnungen.
   const { data: fassungen } = await supabase
     .from("training_exercises")
-    .select("id, bild_url")
-    .eq("training_id", trainingId);
+    .select("id, bild_url, trainings!inner ( owner_id )")
+    .eq("training_id", trainingId)
+    .eq("trainings.owner_id", user.id);
 
-  const { error } = await supabase
+  // `select` liefert die tatsächlich gelöschten Zeilen: nur wenn wirklich etwas
+  // gelöscht wurde (das Training existiert und gehört dem USER), fallen auch die
+  // Bilddateien — und nur dann gibt es die Erfolgs-Weiterleitung. Ein fremdes
+  // oder fehlendes Training endet ohne falsches Erfolgssignal.
+  const { data: geloescht, error } = await supabase
     .from("trainings")
     .delete()
     .eq("id", trainingId)
-    .eq("owner_id", user.id);
-  if (error) return;
+    .eq("owner_id", user.id)
+    .select("id");
+  if (error || !geloescht?.length) return;
 
   for (const f of fassungen ?? []) {
     await entferneFassungsBild(supabase, f.bild_url, f.id);
@@ -518,7 +516,7 @@ export async function setExerciseDuration(
     .maybeSingle();
   if (error) return { ok: false, error: error.message };
   if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
-  revalidateTraining(data.training_id);
+  revalidiereTraining(data.training_id);
   return { ok: true };
 }
 

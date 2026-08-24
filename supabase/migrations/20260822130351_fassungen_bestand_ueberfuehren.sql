@@ -31,8 +31,11 @@ set name                  = e.name,
     methodischer_fahrplan = e.methodischer_fahrplan,
     aufbau                = e.aufbau,
     varianten             = e.varianten,
-    diagramm              = e.diagramm,
-    bild_quelle           = e.bild_quelle,
+    -- coalesce: ein im Auslieferungsfenster via saveFassungDiagramm an der
+    -- Zuordnung gespeichertes Diagramm (setzt name nicht, die Zeile fällt also
+    -- hierher) darf nicht von der Vorlagen-Kopie überschrieben werden.
+    diagramm              = coalesce(te.diagramm, e.diagramm),
+    bild_quelle           = coalesce(te.bild_quelle, e.bild_quelle),
     -- Zielpfad der Bildkopie: user/<trainings-eigentümer>/<zuordnungs-id>.<ext>.
     -- Die Endung wird aus der Quell-URL übernommen; ohne Eigentümer (anonymi-
     -- siertes Training) gibt es kein Zielverzeichnis, dann bleibt die Fassung
@@ -95,6 +98,13 @@ set -- Die Bildkopie hat Schritt 1 des Verfahrens schon angelegt; hier fehlt nur
     bild_quelle = coalesce(
       te.bild_quelle,
       (select e.bild_quelle from exercises e where e.id = te.exercise_id)
+    ),
+    -- Das Formular schreibt nie das Diagramm — ohne diesen coalesce verlöre
+    -- eine im Fenster bearbeitete Fassung das Diagramm ihrer Vorlage dauerhaft
+    -- (und bild_quelle='diagramm' stünde ohne Diagramm da).
+    diagramm = coalesce(
+      te.diagramm,
+      (select e.diagramm from exercises e where e.id = te.exercise_id)
     ),
     herkunft_name = coalesce(
       (select e.name from exercises e where e.id = te.exercise_id),

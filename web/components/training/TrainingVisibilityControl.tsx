@@ -10,6 +10,9 @@ const MISSING_LABEL: Record<string, string> = {
   stufe: "mindestens eine Stufe",
   einleitung: "mindestens eine Übung in der Einleitung",
   hauptteil: "mindestens eine Übung im Hauptteil",
+  // Nur im Auslieferungsfenster der Fassungs-Umstellung möglich: eine Übung,
+  // die noch nicht in eine eigenständige Fassung überführt wurde.
+  ueberfuehrung: "alle Übungen fertig übernommen — bitte später erneut versuchen",
 };
 
 /* Sichtbarkeits-Steuerung im Editor-Kopf (Story #14, Epic #72 Story 8).

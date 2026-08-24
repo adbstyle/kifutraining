@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
+import { istEigeneFassungsDatei } from "@/lib/fassung";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PW = 8;
@@ -178,13 +179,23 @@ export async function deleteAccount() {
   // ihre Bilder müssen bleiben.
   const { data: fassungen } = await supabase
     .from("training_exercises")
-    .select("bild_url, trainings!inner ( owner_id, visibility )")
+    .select("id, bild_url, trainings!inner ( owner_id, visibility )")
     .eq("trainings.owner_id", uid)
     .eq("trainings.visibility", "private");
 
-  const paths = [...(priv ?? []), ...(fassungen ?? [])]
-    .map((p) => bildUrlToPath(p.bild_url))
-    .filter((p): p is string => !!p);
+  // Gelöscht wird nur die eigene Bildkopie der Fassung (Dateiname = ihre ID),
+  // nie eine Datei, auf die eine bild_url sonst noch zeigen könnte — derselbe
+  // Guard wie in allen anderen Löschwegen.
+  const fassungsPfade = (fassungen ?? [])
+    .map((f) => ({ id: f.id, pfad: bildUrlToPath(f.bild_url) }))
+    .filter((f): f is { id: string; pfad: string } => !!f.pfad)
+    .filter((f) => istEigeneFassungsDatei(f.pfad, f.id))
+    .map((f) => f.pfad);
+
+  const paths = [
+    ...(priv ?? []).map((p) => bildUrlToPath(p.bild_url)).filter((p): p is string => !!p),
+    ...fassungsPfade,
+  ];
 
   // Daten-Teil: anonymisiert öffentliche, löscht private Übungen + eigene Trainings.
   const { error } = await supabase.rpc("delete_account");

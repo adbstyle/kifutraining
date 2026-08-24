@@ -15,25 +15,13 @@ import {
   kopiereDiagrammVon,
   entferneStorageObjekt,
   inhaltFelder,
+  istEigeneFassungsDatei,
+  FASSUNG_INHALT_FELDER,
 } from "@/lib/fassung";
+import { revalidiereTraining } from "@/lib/revalidate";
 import { userSlug } from "@/lib/slug";
-import { TRAININGSTEIL_SLUGS } from "@/lib/training";
-import { hauptteilkategorieSlugs, type TrainingsteilSlug } from "@/lib/vocab";
 
 export type SaveFassungResult = { ok: true } | { ok: false; error: string };
-
-/** Alle Ansichten eines Trainings nach einer Änderung an einer Fassung neu
- *  validieren — eine Quelle für alle Fassungs-Mutationen. */
-function revalidiereTraining(trainingId: string, fassungId?: string) {
-  revalidatePath(`/training/${trainingId}/edit`);
-  revalidatePath(`/training/${trainingId}`);
-  revalidatePath(`/training/${trainingId}/durchfuehren`);
-  revalidatePath(`/training/${trainingId}/druck`);
-  if (fassungId) {
-    revalidatePath(`/training/${trainingId}/uebung/${fassungId}/edit`);
-    revalidatePath(`/training/${trainingId}/uebung/${fassungId}/diagramm`);
-  }
-}
 
 /** Die Fassung samt ihrem Training laden und das Schreibrecht prüfen. Die RLS
  *  setzt es ohnehin durch; hier geht es um eine klare Meldung statt eines
@@ -46,13 +34,16 @@ async function ladeFassung(
   const { data } = await supabase
     .from("training_exercises")
     .select(
-      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id )",
+      "id, training_id, trainingsteil, hauptteilkategorie, position, name, exercise_id, bild_url, bild_quelle, diagramm, trainings ( owner_id, visibility )",
     )
     .eq("id", fassungId)
     .maybeSingle();
   if (!data) return null;
-  const owner = (data.trainings as unknown as { owner_id: string | null } | null)?.owner_id;
-  return owner === userId ? data : null;
+  const training = data.trainings as unknown as {
+    owner_id: string | null;
+    visibility: string;
+  } | null;
+  return training?.owner_id === userId ? { ...data, visibility: training.visibility } : null;
 }
 
 /** Die nächste freie Position im Zielabschnitt. Eine umgeordnete Fassung reiht
@@ -100,12 +91,10 @@ export async function updateFassung(
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
   const inhalt = parsed.row;
 
+  // Trainingsteil und Kategorie hat parseUebungsInhalt bereits gegen das
+  // Vokabular geprüft — hier nur noch als Werte gebraucht.
   const trainingsteil = String(inhalt.trainingsteil);
-  if (!TRAININGSTEIL_SLUGS.includes(trainingsteil as TrainingsteilSlug))
-    return { status: "error", errors: { trainingsteil: "Bitte einen Trainingsteil wählen." } };
   const hkat = (inhalt.hauptteilkategorie as string | null) ?? null;
-  if (hkat && !hauptteilkategorieSlugs.includes(hkat as never))
-    return { status: "error", errors: { hauptteilkategorie: "Ungültige Kategorie." } };
 
   const update: Record<string, unknown> = { ...inhalt };
 
@@ -131,6 +120,31 @@ export async function updateFassung(
   const altPfad = bildUrlToPath(fassung.bild_url);
   let neuPfad: string | null = null;
 
+  // Auslieferungsfenster: eine noch nicht überführte Zeile (name NULL) zeigt
+  // Bild und Diagramm bis jetzt über den Übungs-Verweis. Das Formular schreibt
+  // beides nicht — ohne Mitnahme kippte die Anzeige mit dem ersten Speichern
+  // auf die Fassung und Vorlagen-Diagramm/-Bild verschwänden. Entfällt mit dem
+  // Verweis-Abbau.
+  if (fassung.name == null && fassung.exercise_id) {
+    const { data: quelle } = await supabase
+      .from("exercises")
+      .select("bild_url, bild_quelle, diagramm")
+      .eq("id", fassung.exercise_id)
+      .maybeSingle();
+    if (quelle) {
+      update.diagramm = fassung.diagramm ?? quelle.diagramm;
+      if (!neuesBild && !entfernen) {
+        update.bild_quelle = fassung.bild_quelle ?? quelle.bild_quelle;
+        if (!fassung.bild_url && quelle.bild_url) {
+          // Eigene Kopie statt Verweis auf die Vorlagen-Datei; schlägt die
+          // Kopie fehl, heilt die Bestand-Migration den Verweis später.
+          const kopie = await kopiereBild(supabase, quelle.bild_url, user.id, fassungId);
+          if (!kopie.error && kopie.url) update.bild_url = kopie.url;
+        }
+      }
+    }
+  }
+
   if (neuesBild) {
     const invalid = storedImageError(datei.type, datei.size);
     if (invalid) return { status: "error", errors: { bild: invalid } };
@@ -147,18 +161,10 @@ export async function updateFassung(
   } else if (entfernen) {
     update.bild_url = null;
     // Ohne Foto kann die Anzeige nicht mehr darauf zeigen; ein vorhandenes
-    // Diagramm wird zum aktiven Bild.
-    update.bild_quelle = fassung.diagramm ? "diagramm" : null;
+    // Diagramm (auch das soeben aus der Vorlage mitgenommene) wird zum aktiven
+    // Bild.
+    update.bild_quelle = (update.diagramm ?? fassung.diagramm) ? "diagramm" : null;
   }
-
-  // Sichtbarkeit vorher merken: leert ein Einordnungswechsel die Einleitung
-  // oder den Hauptteil, setzt die bestehende DB-Regel das Training auf privat
-  // (Story 5 PC 3). Der USER erfährt das über den Hinweis im Editor.
-  const { data: vorher } = await supabase
-    .from("trainings")
-    .select("visibility")
-    .eq("id", fassung.training_id)
-    .maybeSingle();
 
   const { error } = await supabase
     .from("training_exercises")
@@ -173,17 +179,29 @@ export async function updateFassung(
     return { status: "error", message: error.message };
   }
 
-  // Erfolg: die alte Datei entfernen, wenn sie nicht mehr referenziert wird.
-  if (altPfad && altPfad !== neuPfad && (neuesBild || entfernen))
+  // Erfolg: die alte Datei entfernen, wenn sie nicht mehr referenziert wird —
+  // aber nur die eigene Kopie der Fassung, nie eine fremde oder geteilte Datei.
+  if (
+    altPfad &&
+    altPfad !== neuPfad &&
+    (neuesBild || entfernen) &&
+    istEigeneFassungsDatei(altPfad, fassungId)
+  )
     await supabase.storage.from(STORAGE_BUCKET).remove([altPfad]);
 
-  const { data: nachher } = await supabase
-    .from("trainings")
-    .select("visibility")
-    .eq("id", fassung.training_id)
-    .maybeSingle();
-  const wurdePrivat =
-    vorher?.visibility === "public" && nachher?.visibility === "private";
+  // Leert ein Einordnungswechsel die Einleitung oder den Hauptteil, setzt die
+  // DB-Regel das Training auf privat (Story 5 PC 3) — nur dieser Fall kann die
+  // Sichtbarkeit kippen, also wird auch nur dann nachgelesen. Den Vorher-Wert
+  // liefert ladeFassung mit.
+  let wurdePrivat = false;
+  if (wechsel && fassung.visibility === "public") {
+    const { data: nachher } = await supabase
+      .from("trainings")
+      .select("visibility")
+      .eq("id", fassung.training_id)
+      .maybeSingle();
+    wurdePrivat = nachher?.visibility === "private";
+  }
 
   revalidiereTraining(fassung.training_id, fassungId);
   redirect(
@@ -223,6 +241,17 @@ export async function uebernehmeInBibliothek(
 
   const mangel = fassungUnvollstaendig(f);
   if (mangel) return { ok: false, error: mangel };
+
+  // Fassungen tragen kein `source` — der vollständige Herkunfts-Stempel ist
+  // hier die einzige legale Eingabe für stempleHerkunft (die sonst wirft).
+  // Ungestempelt ist eine Zeile nur im Auslieferungsfenster vor der Bestand-
+  // Migration; sauber abweisen statt mit rohem Fehler abzubrechen.
+  if (!(f.herkunft_name && f.herkunft_typ && f.herkunft_datum))
+    return {
+      ok: false,
+      error:
+        "Diese Übung trägt noch keine Herkunftsangabe und kann im Moment nicht übernommen werden. Bitte später erneut versuchen.",
+    };
 
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
   const uebungId = crypto.randomUUID();
@@ -277,20 +306,53 @@ export async function saveFassungDiagramm(
   if (!diagramm || diagramm.elemente.length > MAX_ELEMENTE)
     return { ok: false, error: "Ungültiges Diagramm." };
 
+  // Auslieferungsfenster: eine noch nicht überführte Zeile (name NULL) würde
+  // die Zeichnung zwar speichern, aber die Anzeige läse weiter den Übungs-
+  // Verweis — und die Bestand-Migration überführte die Zeile mit ihren
+  // NULL-Inhalten. Darum wird sie hier zuerst vollständig überführt: die
+  // Inhalte der Quelle, eine eigene Bildkopie, und damit `name`, sodass die
+  // Zeile fortan für sich steht. Entfällt mit dem Verweis-Abbau.
+  const ueberfuehrung: Record<string, unknown> = {};
+  let effektiv = { bild_url: fassung.bild_url, bild_quelle: fassung.bild_quelle };
+  if (fassung.name == null && fassung.exercise_id) {
+    const select: string = `${FASSUNG_INHALT_FELDER.join(", ")}, bild_url`;
+    const { data: roh } = await supabase
+      .from("exercises")
+      .select(select)
+      .eq("id", fassung.exercise_id)
+      .maybeSingle();
+    // Der Query-Parser kennt die Feldliste nicht; die Form bestimmt das Select.
+    const quelle = roh as unknown as
+      | (Record<string, unknown> & {
+          bild_url: string | null;
+          bild_quelle: "foto" | "diagramm" | null;
+        })
+      | null;
+    if (quelle) {
+      Object.assign(ueberfuehrung, inhaltFelder(quelle));
+      const kopie = await kopiereBild(supabase, quelle.bild_url, user.id, fassungId);
+      if (!kopie.error && kopie.url) ueberfuehrung.bild_url = kopie.url;
+      effektiv = {
+        bild_url: (ueberfuehrung.bild_url as string | null) ?? null,
+        bild_quelle: (quelle.bild_quelle ?? null) as "foto" | "diagramm" | null,
+      };
+    }
+  }
+
   // bild_quelle konsistent mitführen: das erste Element macht das Diagramm zum
   // aktiven Bild; wird es geleert, fällt die Wahl zurück.
   const leer = diagramm.elemente.length === 0;
   const bild_quelle = leer
-    ? fassung.bild_quelle === "diagramm"
-      ? fassung.bild_url
+    ? effektiv.bild_quelle === "diagramm"
+      ? effektiv.bild_url
         ? "foto"
         : null
-      : fassung.bild_quelle
-    : (fassung.bild_quelle ?? "diagramm");
+      : effektiv.bild_quelle
+    : (effektiv.bild_quelle ?? "diagramm");
 
   const { error } = await supabase
     .from("training_exercises")
-    .update({ diagramm, bild_quelle })
+    .update({ ...ueberfuehrung, diagramm, bild_quelle })
     .eq("id", fassungId);
   if (error) return { ok: false, error: error.message };
 

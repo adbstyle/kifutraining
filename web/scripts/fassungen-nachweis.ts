@@ -103,8 +103,19 @@ async function main() {
     const ordner = pfad.slice(0, pfad.lastIndexOf("/"));
     const datei = pfad.slice(pfad.lastIndexOf("/") + 1);
     if (!inventar.has(ordner)) {
-      const { data: liste } = await supabase.storage.from(BUCKET).list(ordner, { limit: 1000 });
-      inventar.set(ordner, new Set((liste ?? []).map((o) => o.name)));
+      const namen = new Set<string>();
+      const SEITE = 1000;
+      for (let offset = 0; ; offset += SEITE) {
+        const { data: liste, error } = await supabase.storage
+          .from(BUCKET)
+          .list(ordner, { limit: SEITE, offset });
+        // Ein Listing-Fehler darf nie stumm als «alle Bilder fehlen» enden —
+        // der Nachweis würde sonst fälschlich Mängel melden und blockieren.
+        if (error) throw new Error(`Storage-Listing für '${ordner}' fehlgeschlagen: ${error.message}`);
+        for (const o of liste ?? []) namen.add(o.name);
+        if ((liste ?? []).length < SEITE) break;
+      }
+      inventar.set(ordner, namen);
     }
     return inventar.get(ordner)!.has(datei);
   }

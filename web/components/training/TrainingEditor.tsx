@@ -564,7 +564,11 @@ function TrainingExerciseRow({
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
 }) {
-  const mismatch = !stufenAbgedeckt(trainingStufen, item.kategorien);
+  // Ohne Kategorien gibt es nichts abzudecken (z. B. eine inhaltsleere Fassung
+  // aus der Bestand-Überführung) — dieselbe Regel wie in setTrainingStufen,
+  // sonst stünde ein Warndreieck, das keine Stufenwahl je entfernt.
+  const mismatch =
+    item.kategorien.length > 0 && !stufenAbgedeckt(trainingStufen, item.kategorien);
 
   return (
     <li className="flex items-center gap-2 rounded-[4px] border border-outline-variant bg-surface-container-low px-3 py-2.5 sm:gap-3">
