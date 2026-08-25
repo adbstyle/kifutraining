@@ -46,6 +46,7 @@ Die `supabase`-CLI läuft aus `web/` heraus mit `--workdir ..` — die `supabase
 ## CI / Deploy
 
 - **Branching-Modell:** Feature-Branch → PR auf `develop` (= Staging) → PR `develop` → `main` (= Prod). Deploys laufen ausschliesslich über CI, nie manuell.
+- **Produktdokumentation bei jedem Prod-Release nachführen:** Was auf Produktion landet, muss in `docs/produkt/` beschrieben sein — Auslöser ist der Merge nach `main`. Neue Fähigkeiten kommen dazu, entfallene raus, geändertes Verhalten wird berichtigt, ebenso der Abschnitt „Bekannte Grenzen". Eine auf Prod sichtbare Änderung, die dort nicht steht, gilt als unfertig. Die Stories unter `docs/superpowers/specs/` sind dagegen **Aufträge**: umgesetzt = als erledigt markieren, nie nachkorrigieren; wo Story und Produktdoku auseinandergehen, gilt die Produktdoku, und wo Produktdoku und Anwendung auseinandergehen, gilt die Anwendung.
 - **Ein Worktree pro Session:** Mehrteilige Aufträge (z. B. Diagramm-Runden) **nicht** im Haupt-Checkout ausführen, sondern in einem eigenen `git worktree`. Grund: teilen zwei Sessions dasselbe Arbeitsverzeichnis, verschiebt ein `reset`/`checkout` der einen den Branch der anderen — am 2026-08-17 ist so ein fertiger Commit vom Branch gefallen und erst am Prod-Seed aufgefallen (18 statt 19 Diagramme). Basis ist `develop`, nicht `main` (`worktree.baseRef: "head"` in `.claude/settings.local.json`, Haupt-Checkout vorher auf `develop`). Aufräumen: `git worktree remove <pfad>`, verwaiste Einträge `git worktree prune`.
 - **Vercel** deployt die App automatisch per Git-Integration: `main` → Production (ki-fu.ch), `develop` → Preview mit fester Domain **staging.ki-fu.ch** (hinter Vercel Deployment Protection, Login nötig). Vercel-Env: Production-Scope = Prod-Supabase, Preview-Scope = Staging-Supabase (Feature-Branch-Previews können Prod nie anfassen); `APP_ORIGIN` ist im Preview-Scope branch-gescoped auf `develop`.
 - **Staging-Supabase** ist ein separates Free-Projekt (Secrets `SUPABASE_STAGING_*`). Free-Projekte pausieren nach ~7 Tagen Inaktivität → vor dem Testen ggf. im Dashboard wecken. Auth-Konfig (Site URL, Redirect-Allowlist, E-Mail-Templates) wird von `db push` **nicht** übertragen — Änderungen daran in beiden Dashboards nachziehen.
@@ -64,4 +65,5 @@ Die `supabase`-CLI läuft aus `web/` heraus mit `--workdir ..` — die `supabase
 | `scripts/` | `extract.py`, `parser.py`, `validate.py`, `build_docs.py` |
 | `supabase/migrations/` | DB-Schema + RPCs |
 | `web/lib/supabase/` | server-only Clients (`server.ts`, `admin.ts`, `middleware.ts`) |
-| `docs/superpowers/specs/` | Architektur-/Requirements-Specs |
+| `docs/superpowers/specs/` | Architektur-/Requirements-Specs (Aufträge) |
+| `docs/produkt/` | Produktdokumentation — was die Anwendung kann (Ist-Zustand) |

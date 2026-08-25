@@ -8,7 +8,7 @@
 
 ## Story 1 (Enabler) — Datenmodell für Team, Mitgliedschaft, Team-Eigentum und Trainingstermine
 
-Status: ausgearbeitet, revidiert 2026-08-24 (Kopie-Modell), perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, revidiert 2026-08-24 (Kopie-Modell), perspektivenbasiertes Review durchlaufen
 
 Datenmodell für Team, Mitgliedschaft, Team-Eigentum und Trainingstermine
 
@@ -79,7 +79,7 @@ Mögliche Lösungsansätze (Kontext, keine Empfehlung)
 
 ## Story 2 (Business, Data) — Anzeigename setzen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Anzeigename setzen
 
@@ -120,7 +120,7 @@ Keine.
 
 ## Story 3 (Business, Paths) — Team erstellen, benennen und umbenennen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Team erstellen, benennen und umbenennen
 
@@ -163,7 +163,7 @@ Keine.
 
 ## Story 4 (Business, Paths) — Trainer ins Team aufnehmen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Trainer ins Team aufnehmen
 
@@ -208,7 +208,7 @@ Keine.
 
 ## Story 5 (Business, Paths) — Training ins Team stellen und Team-Training entfernen
 
-Status: ausgearbeitet, revidiert 2026-08-24 (Kopie-Modell), perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, revidiert 2026-08-24 (Kopie-Modell), perspektivenbasiertes Review durchlaufen
 
 Training ins Team stellen und Team-Training entfernen
 
@@ -255,7 +255,7 @@ Keine.
 
 ## Story 6 (Business, Rules) — Team-Trainings gemeinsam bearbeiten
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Team-Trainings gemeinsam bearbeiten
 
@@ -295,7 +295,7 @@ Keine.
 
 ## Story 7 (Business, Data) — Training terminieren und Team-Trainingsplan chronologisch sehen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Training terminieren und Team-Trainingsplan chronologisch sehen
 
@@ -342,7 +342,7 @@ Keine.
 
 ## Story 8 (Business, Rules) — Training an weiteren Terminen ansetzen
 
-Status: ausgearbeitet, revidiert 2026-08-24 (je Termin eine Kopie), perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, revidiert 2026-08-24 (je Termin eine Kopie), perspektivenbasiertes Review durchlaufen
 
 Training an weiteren Terminen ansetzen
 
@@ -378,7 +378,7 @@ Keine.
 
 ## Story 9 (Business, Paths) — Einzelnen Termin entfernen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Einzelnen Termin entfernen
 
@@ -413,7 +413,7 @@ Keine.
 
 ## Story 11 (Business, Paths) — Öffentliche Trainings-Vorlage übernehmen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Öffentliche Trainings-Vorlage übernehmen
 
@@ -451,7 +451,7 @@ Keine.
 
 ## Story 12 (Business, Interface) — Vorlagen und persönliche Trainings auffinden; Team-Bestand im Team-Bereich
 
-Status: ausgearbeitet, revidiert 2026-08-24 (Teams als eigener Bereich), perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, revidiert 2026-08-24 (Teams als eigener Bereich), perspektivenbasiertes Review durchlaufen
 
 Vorlagen und persönliche Trainings auffinden; Team-Bestand im Team-Bereich
 
@@ -485,7 +485,7 @@ Keine.
 
 ## Story 13 (Business, Paths) — Team verlassen, Mitglied entfernen, Team auflösen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Team verlassen, Mitglied entfernen, Team auflösen
 
@@ -521,7 +521,7 @@ Keine.
 
 ## Story 14 (Business, Rules) — Training als Vorlage veröffentlichen, ersetzen und zurückziehen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Training als Vorlage veröffentlichen, ersetzen und zurückziehen
 
@@ -559,7 +559,7 @@ Keine.
 
 ## Story 15 (Business, Rules) — Urheber einer öffentlichen Vorlage anzeigen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Urheber einer öffentlichen Vorlage anzeigen
 
@@ -685,4 +685,3 @@ Non-Functional Requirements
 
 Offene Fragen
 Keine.
-
