@@ -17,7 +17,6 @@ import {
   TimeField,
   Select,
   MethodischerFahrplan,
-  HerkunftsAngabe,
   Disclosure,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
@@ -456,37 +455,6 @@ export default function Styleguide() {
           <Badge tone="entwurf">✎ Entwurf</Badge>
         </div>
 
-        <p className="type-label-small mb-2 text-on-surface-variant">Herkunftsangabe</p>
-        <p className="type-body-medium mb-3 max-w-xl text-on-surface-variant">
-          Woraus eine Kopie entstanden ist (Übung im Training, übernommene
-          Vorlage, Diagramm-Kopie). Sagt immer „basiert auf" und gibt eine
-          Bearbeitung nie als Original aus; nennt die ursprüngliche Quelle, nie
-          eine Person, und ist bewusst kein Link — die Kopie hängt vom Original
-          nicht mehr ab.
-        </p>
-        <div className="mb-6 flex flex-col gap-2">
-          <HerkunftsAngabe
-            herkunft={{
-              name: "Kleinfeld und Grossfeld",
-              typ: "manual",
-              datum: "2026-08-23T09:00:00Z",
-            }}
-          />
-          <HerkunftsAngabe
-            herkunft={{
-              name: "Dribbling-Parcours",
-              typ: "community",
-              datum: "2026-08-20T09:00:00Z",
-            }}
-          />
-          <HerkunftsAngabe
-            herkunft={{
-              name: "Mein Aufwärmspiel",
-              typ: "eigen",
-              datum: "2026-07-01T09:00:00Z",
-            }}
-          />
-        </div>
         <ChipsDemo />
       </Section>
 
