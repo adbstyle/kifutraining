@@ -20,7 +20,6 @@ export default async function TrainingsPage({
 }: {
   searchParams: Promise<{
     q?: string;
-    vis?: string;
     stufen?: string;
     mine?: string;
     deleted?: string;
@@ -28,19 +27,17 @@ export default async function TrainingsPage({
 }) {
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
-  const visibility = sp.vis === "public" || sp.vis === "private" ? sp.vis : undefined;
   const stufen = (sp.stufen ?? "").split(",").filter((s) => kategorienSlugs.includes(s as never));
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  // Eingrenzungen sind nur angemeldet sinnvoll (anonym gibt es keine eigenen
-  // und keine privaten Trainings zu sehen).
+  // „Meine Trainings" ist nur angemeldet sinnvoll — anonym gibt es keine.
   const mine = !!user && sp.mine === "1";
-  const filtersActive = !!q || !!visibility || stufen.length > 0 || mine;
+  const filtersActive = !!q || stufen.length > 0;
 
-  const trainings = await getTrainingPool({ q, visibility, stufen, mine });
+  const trainings = await getTrainingPool({ q, stufen, mine });
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -57,19 +54,13 @@ export default async function TrainingsPage({
           )}
         </div>
         <p className="type-body-medium mt-2 max-w-2xl text-on-surface-variant">
-          Öffentlich geteilte Trainings der Community und deine eigenen — ein Pool
-          zum Stöbern, Durchführen und Weiterentwickeln.
+          {mine
+            ? "Deine eigenen Trainings. Team-Trainings findest du im jeweiligen Team."
+            : "Veröffentlichte Vorlagen der Community — zum Stöbern, Durchführen und Übernehmen. Eine Übernahme ist eine eigenständige Kopie, die du frei anpassen kannst."}
         </p>
       </header>
 
-      <TrainingFilterBar
-        q={q}
-        visibility={visibility}
-        stufen={stufen}
-        mine={mine}
-        showVisibility={!!user}
-        showMine={!!user}
-      />
+      <TrainingFilterBar q={q} stufen={stufen} mine={mine} showMine={!!user} />
 
       {trainings.length === 0 ? (
         <EmptyState
@@ -80,13 +71,21 @@ export default async function TrainingsPage({
               <ClipboardList size={40} strokeWidth={1.5} aria-hidden />
             )
           }
-          title={filtersActive ? "Keine Trainings gefunden" : "Noch keine Trainings"}
+          title={
+            filtersActive
+              ? "Keine Trainings gefunden"
+              : mine
+                ? "Noch kein eigenes Training"
+                : "Noch keine Vorlagen"
+          }
           text={
             filtersActive
               ? "Kein Training entspricht der aktiven Suche oder den Filtern. Passe die Kriterien an."
-              : user
-                ? "Es wurde noch nichts geteilt. Stelle aus dem Übungsbestand dein erstes Training zusammen — es bleibt privat, bis du es öffentlich schaltest."
-                : "Es wurden noch keine Trainings öffentlich geteilt. Schau später wieder vorbei."
+              : mine
+                ? "Stelle aus dem Übungsbestand dein erstes Training zusammen — es bleibt privat, bis du es als Vorlage veröffentlichst."
+                : user
+                  ? "Es wurde noch keine Vorlage veröffentlicht. Veröffentliche dein erstes Training — die Vorlage ist eine eingefrorene Kopie, dein Training bleibt bearbeitbar."
+                  : "Es wurde noch keine Vorlage veröffentlicht. Schau später wieder vorbei."
           }
         />
       ) : (
@@ -99,8 +98,10 @@ export default async function TrainingsPage({
               <TrainingCard
                 key={training.id}
                 training={training}
-                href={`/training/${training.id}`}
-                showVisibility
+                // Eigene Trainings führen in den Editor, Vorlagen in die
+                // Ansicht — eine Vorlage ist eingefroren.
+                href={mine ? `/training/${training.id}/edit` : `/training/${training.id}`}
+                zeigeUrheber={!mine}
                 updatedLabel={formatDate(training.updatedAt)}
               />
             ))}

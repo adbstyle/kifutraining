@@ -1,22 +1,25 @@
 import Link from "next/link";
 import { Clock, ListChecks } from "lucide-react";
-import { Card, KategorieChip, Badge } from "@/components/ui";
+import { Card, KategorieChip } from "@/components/ui";
 import { formatDuration } from "@/lib/training";
 import type { TrainingListRow } from "@/lib/queries/trainings";
 
-/* Trainings-Kachel für die Übersichten (Story #13 eigene / #8 öffentliche Trainings).
-   Domänenfrei über `href`: eigene Trainings verlinken in den Editor, öffentliche in
-   die Ansicht. `showVisibility` blendet den Sichtbarkeitsstatus ein (nur eigene
-   Übersicht — öffentliche Trainings sind per Definition öffentlich). */
+/* Trainings-Kachel für die Übersichten.
+   Domänenfrei über `href`: eigene Trainings verlinken in den Editor, Vorlagen in
+   die Ansicht. Einen Sichtbarkeits-Status trägt die Kachel nicht mehr — seit
+   dem Kopie-Modell sagt schon die Ansicht, in welchem Bestand man ist:
+   Vorlagen sind öffentlich, „Meine Trainings" sind privat. */
 export function TrainingCard({
   training,
   href,
-  showVisibility = false,
+  /** In der eigenen Übersicht überflüssig — dort ist der Urheber immer man
+   *  selbst. */
+  zeigeUrheber = true,
   updatedLabel,
 }: {
   training: TrainingListRow;
   href: string;
-  showVisibility?: boolean;
+  zeigeUrheber?: boolean;
   /** Optionaler „Geändert"-Hinweis (eigene Übersicht, Story #13 AC2). */
   updatedLabel?: string;
 }) {
@@ -30,16 +33,19 @@ export function TrainingCard({
           {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
           ))}
-          {showVisibility && (
-            <Badge tone={training.visibility === "public" ? "oeffentlich" : "entwurf"}>
-              {training.visibility === "public" ? "Community" : "✎ Privat"}
-            </Badge>
-          )}
         </div>
 
         <h3 className="type-title-medium text-on-surface transition-colors group-hover:text-primary">
           {training.name}
         </h3>
+
+        {/* Urheber: der Anzeigename, nie die E-Mail. Bei anonymisierten
+            Vorlagen (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
+        {zeigeUrheber && training.urheber && (
+          <p className="mt-1 type-body-small text-on-surface-variant">
+            von {training.urheber}
+          </p>
+        )}
 
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 type-label-medium text-on-surface-variant">
           <span className="inline-flex items-center gap-1.5">

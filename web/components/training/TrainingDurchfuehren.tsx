@@ -1,15 +1,69 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
 import { TrainingExerciseDetail } from "./TrainingExerciseDetail";
 import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
 import type { TrainingDetail } from "@/lib/queries/trainings";
 
+/** Termin-Datum als „Mo, 01.09.2026" — wie im Team-Trainingsplan. */
+function terminDatum(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString("de-CH", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+}
+
+type TerminKontext = {
+  datum: string;
+  beginn: string | null;
+  ort: string | null;
+  bemerkung: string | null;
+};
+
+/** Datum, Beginn, Ort und Bemerkung der Einheit — der Kontext für alle, die
+ *  gerade am Platz stehen (Story 7 AK 19). */
+function TerminKopf({ termin, className }: { termin: TerminKontext; className?: string }) {
+  return (
+    <div
+      className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[4px] border border-outline-variant bg-surface-container-low px-3 py-2 type-label-medium text-on-surface-variant ${className ?? ""}`}
+    >
+      <span className="inline-flex items-center gap-1.5 text-on-surface">
+        <CalendarDays size={15} strokeWidth={2} aria-hidden />
+        {terminDatum(termin.datum)}
+        {termin.beginn && <> · {termin.beginn} Uhr</>}
+      </span>
+      {termin.ort && (
+        <span className="inline-flex items-center gap-1.5">
+          <MapPin size={14} strokeWidth={2} aria-hidden />
+          {termin.ort}
+        </span>
+      )}
+      {termin.bemerkung && (
+        <span className="type-body-small basis-full">{termin.bemerkung}</span>
+      )}
+    </div>
+  );
+}
+
 /* Mobile Durchführungsansicht (Story #17): Trainingsteil für Trainingsteil
    (nur belegte), grosse Bedienflächen, Bildschirm-Wachhalten (Best-Effort).
    Lesend — keine Mutationen. */
-export function TrainingDurchfuehren({ training }: { training: TrainingDetail }) {
+export function TrainingDurchfuehren({
+  training,
+  /** Termin-Kontext, wenn aus dem Team-Trainingsplan geöffnet (Story 7 AK 19):
+   *  Wer am Platz steht, sieht so Datum, Beginn, Ort und Bemerkung dieser
+   *  Einheit — sonst müsste er dafür zurück in den Plan. */
+  termin,
+}: {
+  training: TrainingDetail;
+  termin?: TerminKontext;
+}) {
   const sections = groupByTeil(training.exercises).filter((s) => s.items.length > 0);
   const [idx, setIdx] = useState(0);
 
@@ -48,6 +102,8 @@ export function TrainingDurchfuehren({ training }: { training: TrainingDetail })
     return (
       <main className="mx-auto max-w-2xl px-4 py-16 text-center">
         <h1 className="type-headline-small text-on-surface">{training.name}</h1>
+        {/* Auch ohne Übungen: wer aus dem Plan kommt, soll Datum und Ort sehen. */}
+        {termin && <TerminKopf termin={termin} className="mt-4 justify-center" />}
         <p className="mt-3 type-body-medium text-on-surface-variant">
           Diesem Training sind noch keine Übungen zugeordnet.
         </p>
@@ -60,6 +116,7 @@ export function TrainingDurchfuehren({ training }: { training: TrainingDetail })
   return (
     <div className="mx-auto max-w-2xl px-4 pb-28 pt-4 sm:px-6">
       <header className="mb-4">
+        {termin && <TerminKopf termin={termin} className="mb-3" />}
         <p className="type-label-medium text-on-surface-variant">{training.name}</p>
         <div className="mt-1 flex items-baseline justify-between gap-2">
           <h1 className="type-headline-medium text-on-surface">{section.label}</h1>

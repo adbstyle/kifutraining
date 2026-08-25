@@ -161,11 +161,25 @@ export function istEigeneFassungsDatei(pfad: string, fassungId: string): boolean
  *  deterministisch, sodass ein erneuter Versuch dieselbe Datei überschreibt
  *  statt Waisen zu hinterlassen. */
 export function fassungBildPfad(
-  ownerId: string,
+  ordner: BildOrdner,
   trainingExerciseId: string,
   quellPfad: string,
 ): string {
-  return `user/${ownerId}/${trainingExerciseId}.${dateiendung(quellPfad)}`;
+  return `${ordner}/${trainingExerciseId}.${dateiendung(quellPfad)}`;
+}
+
+/** Der Storage-Ordner, in dem die Bildkopien liegen. Zwei Formen: `user/<uid>`
+ *  für persönliche Inhalte, `team/<teamId>` für Team-Trainings — nur so kann
+ *  jedes Mitglied das Bild einer Team-Fassung ersetzen (Team-Epic Story 6). Die
+ *  Storage-Policies prüfen genau diese beiden Präfixe. */
+export type BildOrdner = string;
+
+export function userOrdner(userId: string): BildOrdner {
+  return `user/${userId}`;
+}
+
+export function teamOrdner(teamId: string): BildOrdner {
+  return `team/${teamId}`;
 }
 
 // ── Kopier-Bausteine ────────────────────────────────────────────────────────
@@ -182,23 +196,23 @@ export function kopiereDiagrammVon(quelle: unknown): unknown {
   return data && data.elemente.length > 0 ? kopiereDiagramm(data) : null;
 }
 
-/** Eine Bilddatei byte-identisch in den Pfad des Handelnden kopieren.
+/** Eine Bilddatei byte-identisch in den Ziel-Ordner kopieren.
  *
  *  Kein Download/Upload und keine Bildverarbeitung — die Storage-Kopie prüft
  *  Leserecht auf der Quelle (der Bucket ist öffentlich lesbar) und Schreibrecht
- *  auf dem Ziel (eigener Pfad), genau die benötigte Semantik. Der Zielname ist
+ *  auf dem Ziel (eigener bzw. Team-Ordner), genau die benötigte Semantik. Der Zielname ist
  *  die ID des neuen Objekts, damit ein erneuter Versuch dieselbe Datei
  *  überschreibt statt Waisen zu hinterlassen. Ohne Quellbild ein No-op. */
 export async function kopiereBild(
   supabase: SupabaseClient,
   quellUrl: string | null,
-  ownerId: string,
+  ordner: BildOrdner,
   zielId: string,
 ): Promise<{ url: string | null; pfad: string | null; error?: string }> {
   const quellPfad = bildUrlToPath(quellUrl);
   if (!quellPfad) return { url: null, pfad: null };
 
-  const zielPfad = fassungBildPfad(ownerId, zielId, quellPfad);
+  const zielPfad = fassungBildPfad(ordner, zielId, quellPfad);
   const { error } = await supabase.storage.from(STORAGE_BUCKET).copy(quellPfad, zielPfad);
   if (error) return { url: null, pfad: null, error: `Bildkopie fehlgeschlagen: ${error.message}` };
 
@@ -214,6 +228,33 @@ export async function entferneStorageObjekt(
   pfad: string | null,
 ) {
   if (pfad) await supabase.storage.from(STORAGE_BUCKET).remove([pfad]);
+}
+
+/** Mehrere Storage-Objekte in EINEM Aufruf entfernen (no-op bei leerer Liste).
+ *  Beim Abräumen ganzer Trainings oder Teams sind das je Vorgang Dutzende
+ *  Dateien — einzeln nacheinander kostet je einen Roundtrip. */
+export async function entferneStorageObjekte(
+  supabase: SupabaseClient,
+  pfade: string[],
+) {
+  if (pfade.length > 0) await supabase.storage.from(STORAGE_BUCKET).remove(pfade);
+}
+
+/** Aus Fassungs-Zeilen die Pfade der Dateien, die IHNEN gehören.
+ *
+ *  Der Dateiname muss die Zuordnungs-ID tragen (`fassungBildPfad`). Zeigt die
+ *  URL auf etwas anderes — etwa noch auf das Bild der Vorlage —, bleibt die
+ *  Datei unangetastet: ein verwaistes Bild ist harmlos, ein gelöschtes fremdes
+ *  wäre Datenverlust. Eine Stelle für den Guard, damit ihn kein Löschweg
+ *  vergisst. */
+export function eigeneBildPfade(
+  fassungen: { id: string; bild_url: string | null }[],
+): string[] {
+  return fassungen
+    .map((f) => ({ id: f.id, pfad: bildUrlToPath(f.bild_url) }))
+    .filter((f): f is { id: string; pfad: string } => !!f.pfad)
+    .filter((f) => istEigeneFassungsDatei(f.pfad, f.id))
+    .map((f) => f.pfad);
 }
 
 /** Die inhaltlichen Felder einer Quelle übernehmen — eine Quelle für die

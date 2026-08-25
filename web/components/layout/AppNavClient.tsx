@@ -37,9 +37,16 @@ export function AppNavClient({
   // vorgefiltert auf die eigenen Trainings.
   const trainingsHref = "/trainings";
 
+  // „Teams" ist ein eigener Navigationspunkt (PO-Entscheid) und nur angemeldet
+  // sinnvoll: Teams sind ausschliesslich ihren Mitgliedern sichtbar.
+  const teamsActive = pathname === "/teams" || pathname.startsWith("/team/");
+
   const nav: HeaderNavItem[] = [
     { label: "Übungen", href: "/", current: uebungenActive },
     { label: "Trainings", href: trainingsHref, current: trainingsActive },
+    ...(isAuthenticated
+      ? [{ label: "Teams", href: "/teams", current: teamsActive }]
+      : []),
   ];
 
   const account: HeaderAccount | undefined = isAuthenticated

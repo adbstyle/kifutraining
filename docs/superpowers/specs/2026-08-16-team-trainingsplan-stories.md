@@ -8,7 +8,7 @@
 
 ## Story 1 (Enabler) — Datenmodell für Team, Mitgliedschaft, Team-Eigentum und Trainingstermine
 
-Status: ausgearbeitet, revidiert 2026-08-24 (Kopie-Modell), perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, revidiert 2026-08-24 (Kopie-Modell), perspektivenbasiertes Review durchlaufen
 
 Datenmodell für Team, Mitgliedschaft, Team-Eigentum und Trainingstermine
 
@@ -79,7 +79,7 @@ Mögliche Lösungsansätze (Kontext, keine Empfehlung)
 
 ## Story 2 (Business, Data) — Anzeigename setzen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Anzeigename setzen
 
@@ -120,7 +120,7 @@ Keine.
 
 ## Story 3 (Business, Paths) — Team erstellen, benennen und umbenennen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Team erstellen, benennen und umbenennen
 
@@ -163,7 +163,7 @@ Keine.
 
 ## Story 4 (Business, Paths) — Trainer ins Team aufnehmen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Trainer ins Team aufnehmen
 
@@ -208,7 +208,7 @@ Keine.
 
 ## Story 5 (Business, Paths) — Training ins Team stellen und Team-Training entfernen
 
-Status: ausgearbeitet, revidiert 2026-08-24 (Kopie-Modell), perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, revidiert 2026-08-24 (Kopie-Modell), perspektivenbasiertes Review durchlaufen
 
 Training ins Team stellen und Team-Training entfernen
 
@@ -255,7 +255,7 @@ Keine.
 
 ## Story 6 (Business, Rules) — Team-Trainings gemeinsam bearbeiten
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Team-Trainings gemeinsam bearbeiten
 
@@ -295,7 +295,7 @@ Keine.
 
 ## Story 7 (Business, Data) — Training terminieren und Team-Trainingsplan chronologisch sehen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Training terminieren und Team-Trainingsplan chronologisch sehen
 
@@ -342,7 +342,7 @@ Keine.
 
 ## Story 8 (Business, Rules) — Training an weiteren Terminen ansetzen
 
-Status: ausgearbeitet, revidiert 2026-08-24 (je Termin eine Kopie), perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, revidiert 2026-08-24 (je Termin eine Kopie), perspektivenbasiertes Review durchlaufen
 
 Training an weiteren Terminen ansetzen
 
@@ -378,7 +378,7 @@ Keine.
 
 ## Story 9 (Business, Paths) — Einzelnen Termin entfernen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Einzelnen Termin entfernen
 
@@ -413,7 +413,7 @@ Keine.
 
 ## Story 11 (Business, Paths) — Öffentliche Trainings-Vorlage übernehmen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Öffentliche Trainings-Vorlage übernehmen
 
@@ -451,7 +451,7 @@ Keine.
 
 ## Story 12 (Business, Interface) — Vorlagen und persönliche Trainings auffinden; Team-Bestand im Team-Bereich
 
-Status: ausgearbeitet, revidiert 2026-08-24 (Teams als eigener Bereich), perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, revidiert 2026-08-24 (Teams als eigener Bereich), perspektivenbasiertes Review durchlaufen
 
 Vorlagen und persönliche Trainings auffinden; Team-Bestand im Team-Bereich
 
@@ -485,7 +485,7 @@ Keine.
 
 ## Story 13 (Business, Paths) — Team verlassen, Mitglied entfernen, Team auflösen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Team verlassen, Mitglied entfernen, Team auflösen
 
@@ -521,7 +521,7 @@ Keine.
 
 ## Story 14 (Business, Rules) — Training als Vorlage veröffentlichen, ersetzen und zurückziehen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Training als Vorlage veröffentlichen, ersetzen und zurückziehen
 
@@ -559,7 +559,7 @@ Keine.
 
 ## Story 15 (Business, Rules) — Urheber einer öffentlichen Vorlage anzeigen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-25 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Urheber einer öffentlichen Vorlage anzeigen
 
@@ -585,6 +585,155 @@ Out of Scope
 
 Non-Functional Requirements
 Keine über die epicweiten hinaus.
+
+Offene Fragen
+Keine.
+
+---
+
+## Story 16 (Business, Interface) — Weitere Einheit aus dem Trainingsbestand ansetzen
+
+Status: UMGESETZT 2026-08-25 — ausgearbeitet 2026-08-25, perspektivenbasiertes Review durchlaufen
+
+Weitere Einheit aus dem Trainingsbestand ansetzen
+
+Als Trainer in einem Trainerteam
+möchte ich ein bereits angesetztes Team-Training auch im Trainingsbestand an einem weiteren Termin ansetzen
+damit ich die nächste Einheit dort auslöse, wo ich das Training vor mir habe, statt den Weg über den Trainingsplan zu kennen
+
+Die Fähigkeit besteht bereits (Story 8), ihr Einstieg fehlt aber genau dort, wo der Trainer sein Training auswählt: Im Trainingsbestand verschwindet die Ansetzen-Aktion, sobald ein Termin vorhanden ist, und der einzige verbleibende Weg führt über den Trainingsplan.
+
+Preconditions
+1. Der USER ist Mitglied des Teams, dessen Trainingsbestand er ansieht.
+2. Das Team besitzt ein bereits angesetztes Team-Training.
+
+Acceptance Criteria
+1. Der USER kann jedes angesetzte Team-Training aus dem Trainingsbestand an einem weiteren Termin ansetzen.
+2. Der USER kann auch eine Einheit erneut ansetzen, die selbst durch Ansetzen entstanden ist; alle Einheiten eines Teams sind darin gleichwertig.
+3. Der USER erfasst dabei dieselben Terminangaben wie beim Ansetzen aus dem Trainingsplan.
+4. Der USER kann eine weitere Einheit auf ein Datum in der Vergangenheit setzen und damit eine bereits durchgeführte Einheit nachtragen.
+5. Der USER erfährt beim Ansetzen, dass eine eigenständige Kopie entsteht und die bisherige Einheit unverändert bleibt.
+6. Der USER erhält eine Meldung, wenn das Ansetzen fehlschlägt.
+7. Der USER kann ein noch nicht angesetztes Team-Training unverändert wie bisher ansetzen.
+
+Postconditions
+1. Das SYSTEM erzeugt eine eigenständige Trainings-Kopie im selben Team und verbindet sie mit dem erfassten Termin, WENN der USER das Ansetzen bestätigt hat.
+2. Das SYSTEM belässt die Einheit, von der aus angesetzt wurde, samt ihrem Termin unverändert.
+3. Das SYSTEM führt den USER nach dem Ansetzen zur neuen Einheit im Trainingsplan.
+4. Das SYSTEM hinterlässt weder eine Kopie noch einen Termin, WENN das Ansetzen fehlschlägt.
+
+Out of Scope
+1. Mehrere Einheiten desselben Trainings sind im Trainingsbestand nicht voneinander unterscheidbar; wann eine Einheit stattfindet, steht im Trainingsplan.
+2. Der Trainingsbestand nennt kein Termindatum.
+3. Eine Serien- oder Wiederholungsplanung über mehrere Termine in einem Schritt gibt es nicht.
+4. Das SYSTEM hindert niemanden daran, zwei Einheiten desselben Trainings auf denselben Tag zu setzen.
+5. Ein Status «durchgeführt» und eine Leiterperson je Einheit sind nicht enthalten; der Trainingsplan bildet die Planung ab, nicht den Nachweis der geleisteten Lektion.
+6. Ein gesonderter Umgang mit dem Fall, dass ein anderes Mitglied das Training zeitgleich entfernt, ist nicht enthalten; er fällt unter den allgemeinen Fehlerfall.
+
+Non-Functional Requirements
+1. Das Ansetzen einer weiteren Einheit ist in unter zehn Sekunden abgeschlossen.
+
+Offene Fragen
+1. @Product Owner: Soll eine durchgeführte Einheit als solche gekennzeichnet und einer Leiterperson zugeordnet werden können, damit der Trainingsplan als J+S-Nachweis taugt?
+
+---
+
+## Story 17 (Business, Interface) — Team-Bereich in Ansichten gliedern
+
+Status: UMGESETZT 2026-08-25 — ausgearbeitet 2026-08-25, perspektivenbasiertes Review durchlaufen
+
+Team-Bereich in Ansichten gliedern
+
+Als Trainer in einem Trainerteam
+möchte ich Trainingsplan, Trainings und Teamverwaltung getrennt aufrufen
+damit ich bei vielen Terminen und Trainings noch finde, was ich suche, statt eine einzige lange Seite zu durchscrollen
+
+Der Team-Bereich als eigener Ort ist entschieden, seine innere Gliederung nicht. Heute stehen alle vier Abschnitte untereinander auf einer Seite; mit rund 80 Einheiten je Saison wächst sie über das Auffindbare hinaus.
+
+Preconditions
+1. Der USER ist Mitglied des Teams, dessen Bereich er öffnet.
+
+Acceptance Criteria
+1. Der USER erreicht Trainingsplan, Trainings und Teamverwaltung eines Teams als je eigene Ansicht.
+2. Der USER findet die Mitglieder sowie das Verlassen und Auflösen des Teams in der Teamverwaltung.
+3. Der USER sieht beim Öffnen eines Teams zuerst dessen Trainingsplan.
+4. Der USER erkennt in jeder Ansicht, für welches Team er plant und welche Ansicht geöffnet ist.
+5. Der USER kann eine einzelne Ansicht weitergeben, sodass sie beim Empfänger unmittelbar geöffnet erscheint.
+6. Der USER gelangt mit dem Zurück-Schritt des Browsers in die zuvor geöffnete Ansicht.
+7. Der USER gelangt nach dem Ansetzen einer Einheit aus den Trainings in den Trainingsplan.
+8. Der USER kehrt nach dem Entfernen eines Team-Trainings in die Trainings zurück.
+9. Der USER kehrt nach dem Entfernen eines Termins in den Trainingsplan zurück.
+10. Der USER gelangt nach dem Verlassen oder Auflösen eines Teams in die Teamübersicht.
+11. Der USER sieht je Ansicht die Anzahl ihrer Einträge.
+12. Der USER erfährt in Hinweisen und Bestätigungen, in welcher Ansicht das Ergebnis seiner Aktion erscheint.
+13. Das SYSTEM führt einen USER, der nicht Mitglied des Teams ist, in die Teamübersicht.
+
+Postconditions
+1. Das SYSTEM zeigt eine Ansicht mit dem Stand zum Zeitpunkt ihres Aufrufs; Änderungen anderer Mitglieder erscheinen beim nächsten Öffnen.
+
+Out of Scope
+1. Eine Ansicht über mehrere Teams hinweg gibt es nicht.
+2. Ein Wechsel zwischen Teams ohne Umweg über die Teamübersicht ist nicht enthalten.
+3. Ein Archivieren oder Ausblenden vergangener Einheiten ist nicht enthalten; die Gliederung ordnet die Menge, sie verkleinert sie nicht.
+4. Inhalt, Reihenfolge und Aktionen der einzelnen Listen ändern sich nicht.
+5. Eine Anzahl-Anzeige über alle Ansichten hinweg gibt es nicht.
+6. Eine bereits geöffnete Ansicht aktualisiert sich nicht von selbst, wenn ein anderes Mitglied etwas ändert.
+
+Non-Functional Requirements
+1. Trainingsplan und Trainings laden bei einer Saison mit je rund 80 Einträgen in unter einer Sekunde.
+2. Die Ansichten sind auf mobilen Geräten wie am Desktop bedienbar.
+
+Offene Fragen
+Keine.
+
+## Story 18 (Business, Rules) — Trainingsplan in Kommendes und Vergangenes gliedern
+
+Status: UMGESETZT 2026-08-25 — ausgearbeitet 2026-08-25, perspektivenbasiertes Review durchlaufen
+
+Trainingsplan in Kommendes und Vergangenes gliedern
+
+Als Trainer in einem Trainerteam
+möchte ich im Trainingsplan zuerst die anstehenden Einheiten sehen und die vergangenen darunter
+damit ich beim Öffnen sofort weiss, was als Nächstes vorzubereiten ist, ohne über eine Saison Vergangenheit zu scrollen
+
+Der Trainingsplan reiht heute alles in einer einzigen aufsteigenden Liste; Vergangenes ist nur gedämpft, steht aber weiterhin oben. Über eine Saison wandert damit genau das nach unten, wonach beim Öffnen am häufigsten gesucht wird. Die Grenze hängt am Tag, nicht am Ende der Lektion: ein Termin trägt keine Dauer, und die Übungszeiten sind freiwillig und nachträglich änderbar, sodass eine berechnete Endzeit eine Einheit nachträglich zwischen den Abschnitten hin und her schieben könnte.
+
+Preconditions
+1. Der USER ist Mitglied des Teams, dessen Trainingsplan er öffnet.
+
+Acceptance Criteria
+1. Der USER sieht die kommenden Einheiten zuoberst im Trainingsplan, die nächstgelegene zuerst.
+2. Der USER sieht die vergangenen Einheiten unterhalb der kommenden, die jüngste zuerst.
+3. Der USER erkennt, wo im Trainingsplan die kommenden Einheiten enden und die vergangenen beginnen.
+4. Der USER sieht eine Einheit so lange bei den kommenden, bis ihr Tag vorüber ist.
+5. Der USER findet die vergangenen Einheiten bei jedem Aufruf des Trainingsplans zusammengefasst vor, solange kommende Einheiten anstehen.
+6. Der USER sieht die vergangenen Einheiten von Beginn an vollständig, wenn keine kommende Einheit ansteht.
+7. Der USER kann die vergangenen Einheiten vollständig einsehen und wieder ausblenden.
+8. Der USER erkennt die Anzahl der vergangenen Einheiten, auch solange sie zusammengefasst sind.
+9. Der USER erkennt, wie viele Einheiten noch anstehen.
+10. Der USER sieht keinen Abschnitt ohne Einheiten.
+11. Der USER unterscheidet eine vergangene von einer kommenden Einheit auch dann, wenn er den Anfang ihres Abschnitts nicht im Blick hat.
+12. Das SYSTEM ordnet mehrere vergangene Einheiten desselben Tages nach dem späteren Beginn zuerst.
+13. Das SYSTEM stellt eine vergangene Einheit ohne erfassten Beginn hinter die Einheiten ihres Tages, die einen Beginn tragen.
+14. Das SYSTEM hält die Reihenfolge vergangener Einheiten mit gleichen Zeitangaben über wiederholte Aufrufe stabil.
+
+Postconditions
+1. Das SYSTEM stellt eine Einheit unmittelbar zu den vergangenen, WENN der USER sie auf einen bereits vergangenen Tag angesetzt hat.
+2. Das SYSTEM ordnet eine Einheit dem anderen Abschnitt zu, WENN der USER ihren Termin auf einen Tag jenseits der Grenze verschoben hat.
+3. Das SYSTEM zeigt die Einteilung mit dem Stand zum Zeitpunkt des Aufrufs; ein über den Tageswechsel hinweg geöffneter Trainingsplan teilt erst beim nächsten Aufruf neu ein.
+
+Out of Scope
+1. Ein Archivieren, Löschen oder dauerhaftes Ausblenden vergangener Einheiten ist nicht enthalten; die Gliederung fasst die Menge zusammen, sie verkleinert sie nicht.
+2. Der vergangene Abschnitt wird nicht auf einen Zeitraum begrenzt; er enthält jede vergangene Einheit des Teams.
+3. Eine Einteilung nach der tatsächlichen Endzeit einer Lektion ist nicht enthalten.
+4. Inhalt und Aktionen der einzelnen Einträge ändern sich nicht.
+5. Ein Kennzeichen dafür, ob eine Einheit stattgefunden hat, entsteht nicht; die Einteilung sagt allein, ob ihr Tag vorüber ist.
+6. Die Trainings-Ansicht des Teams bleibt unverändert; die Gliederung betrifft allein den Trainingsplan.
+7. Eine eigene Zeitzone je Trainingsort entsteht nicht; die Grenze richtet sich nach dem Kalendertag in der Schweiz.
+
+Non-Functional Requirements
+1. Der Trainingsplan lädt bei mehreren Saisons Teamgeschichte mit rund 400 Einheiten in unter einer Sekunde.
+2. Die Gliederung ist auf mobilen Geräten wie am Desktop bedienbar.
 
 Offene Fragen
 Keine.

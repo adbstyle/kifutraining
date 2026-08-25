@@ -607,3 +607,52 @@ export async function kopiereTraining(
 6. **Rate-Limit als Tabelle + Zählung in der RPC** — bewusst simpel (10 erfolglose Suchversuche/Stunde), kein Infrastruktur-Zusatz.
 7. **Bestandsübergang ohne Daten-Backfill** — bestehende öffentliche Trainings werden allein durch die neuen Policies zu eingefrorenen Vorlagen; kein Backfill nötig, `vorlage_id` bleibt bei Alt-Vorlagen null (sie haben kein persönliches Pendant).
 8. **Deploy-Fenster Teil A:** Das alte Bundle ruft `publish_training`/`unpublish_training` auf, die die Migration droppt → im Vercel-Build-Fenster schlägt Veröffentlichen/Zurückziehen mit sauberer Fehlermeldung fehl (Minuten, kein Datenverlust); alle Lese- und übrigen Schreibpfade bleiben verträglich. Bewusst akzeptiert — im PR-Text nennen.
+
+---
+
+## Umsetzungsnotizen (2026-08-24)
+
+Bewusste Abweichungen vom Plan, jeweils mit Grund — der Plan bleibt als
+Auftrag stehen, diese Liste sagt, was die Umsetzung anders gelöst hat.
+
+1. **Veröffentlichen ist zweistufig: private Kopie, dann Freigabe.** Der Plan
+   liess `kopiereTraining` direkt eine öffentliche Zeile anlegen. Das scheitert
+   an der eigenen Einfrier-Regel: `te_insert` lässt Fassungen nur in ein
+   PRIVATES Training. Die Vorlage entsteht deshalb als private Kopie und wird
+   zuletzt freigegeben; `tr_update` trifft mit seinem USING weiterhin nur
+   private Zeilen, das Einfrieren bleibt konstruktiv. `KopieZiel` hat dadurch
+   nur noch zwei Arten (`persoenlich`, `team`).
+2. **`ist_team_mitglied` auch für `anon` ausführbar.** Die Funktion steht in
+   der trainings-SELECT-Policy, die anonyme Besucher für öffentliche Vorlagen
+   durchlaufen; Postgres garantiert im OR keine Auswertungsreihenfolge. Ohne
+   Grant scheiterte anonymes Lesen mit «permission denied for function». Ohne
+   `auth.uid()` liefert sie immer false — kein Leck.
+3. **Storage-Pfadprüfung als Funktion (`ist_team_bildpfad`).** Ein Cast
+   `(storage.foldername(name))[2]::uuid` direkt in der Policy hätte bei
+   Nicht-Team-Pfaden einen Cast-Fehler werfen können und damit persönliche
+   Uploads gebrochen.
+4. **`entferne_team_mitglied`-RPC statt blosser DELETE-Policy** (Story 13):
+   Zählung und Löschung müssen in einer Transaktion liegen, sonst könnte
+   zwischen Prüfung und Ausführung jemand austreten und das Team unbestätigt
+   verschwinden.
+5. **`training-loeschen.ts` als geteilter Baustein.** Löschen samt Bilddateien
+   brauchen drei Wege (eigenes Training, Vorlage zurückziehen, Team auflösen);
+   die DB-Kaskade räumt nur Zeilen ab. Beim Auflösen läuft das Aufräumen VOR
+   dem Ende der Mitgliedschaft — danach greift keine Storage-Policy mehr.
+6. **`delete_account()` neu gefasst.** Sie zeigte noch auf die vor der
+   Umbenennung existierende Tabelle `training_plans` und wäre zur Laufzeit
+   gescheitert (Altlast, unabhängig vom Epic gefunden).
+7. **Policy-Zählung: 12, nicht 11** (teams 3, team_members 2, training_termine
+   4, profiles 3) — der Plan hatte sich verzählt.
+8. **PostgREST liefert `training_termine` als Objekt, nicht als Liste**: die
+   UNIQUE-Bedingung auf `training_id` macht daraus eine 1:1-Beziehung. Der
+   Mapper fängt beide Formen ab.
+9. **Kein Sichtbarkeitsfilter mehr in der Trainings-Übersicht** (Story 12): die
+   beiden Bestände sind verschiedene Dinge geworden — öffentliche Vorlagen
+   (Standard) und eigene private Trainings (Facette). Ein Filter über eine
+   gemischte Menge ergibt keinen Sinn mehr; `TrainingCard` trägt entsprechend
+   keinen Sichtbarkeits-Status mehr.
+
+**Offen / bewusst nicht gemacht:** Der Staging-Sync schreibt nur
+`exercises.bild_url` auf den Staging-Host um, nicht `training_exercises.bild_url`
+— eine Altlast aus dem Fassungs-Epic, ausserhalb dieses Auftrags.

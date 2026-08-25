@@ -6,7 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
 import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/training";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
-import { revalidiereTraining } from "@/lib/revalidate";
+import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
+import { kopiereTraining } from "@/lib/training-kopie";
+import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
+import { bildOrdnerFuer, ladeBearbeitungsziel } from "@/lib/training-zugriff";
 import {
   istEigeneFassungsDatei,
   stempleHerkunft,
@@ -31,11 +34,8 @@ export type TrainingFormState = {
 /** Ergebnis einer feingranularen Editor-Aktion (sofort-persistent). */
 export type TrainingActionResult = { ok: boolean; error?: string };
 
-/** Ergebnis mit Auto-Privat-Hinweis (Story #12 Postcondition 2). */
-export type AutoPrivateResult = TrainingActionResult & { becamePrivate?: boolean };
-
 /** Ergebnis des Stufen-Setzens inkl. abweichender Übungen (Story #12 AC3). */
-export type StufenResult = AutoPrivateResult & {
+export type StufenResult = TrainingActionResult & {
   mismatched?: { id: string; name: string }[];
 };
 
@@ -150,14 +150,11 @@ export async function addTrainingExercise(
   if (istHauptteil && !hauptteilkategorieSlugs.includes(hkat as never))
     return { ok: false, error: "Ungültige Hauptteilkategorie." };
 
-  // Eigentum prüfen (UX-Guard; RLS setzt es ohnehin serverseitig durch).
-  const { data: training } = await supabase
-    .from("trainings")
-    .select("id")
-    .eq("id", trainingId)
-    .eq("owner_id", user.id)
-    .maybeSingle();
-  if (!training) return { ok: false, error: "Training nicht gefunden." };
+  // Schreibrecht prüfen (UX-Guard; RLS setzt es ohnehin serverseitig durch).
+  // Team-Trainings sind für jedes Mitglied bearbeitbar (Story 6) — und ihre
+  // Bildkopien gehören in den Team-Ordner, nicht in den persönlichen.
+  const ziel = await ladeBearbeitungsziel(supabase, trainingId, user.id);
+  if (!ziel) return { ok: false, error: "Training nicht gefunden." };
 
   // Vorlage mit allen Inhalten holen (RLS lässt nur Sichtbares durch).
   const { data: ex } = await supabase
@@ -192,7 +189,7 @@ export async function addTrainingExercise(
   // Insert, bleibt höchstens eine unreferenzierte Datei liegen, die ein
   // erneuter Versuch überschreibt — nie eine Fassung ohne Inhalt.
   const fassungId = crypto.randomUUID();
-  const bild = await kopiereBild(supabase, ex.bild_url, user.id, fassungId);
+  const bild = await kopiereBild(supabase, ex.bild_url, bildOrdnerFuer(ziel), fassungId);
   if (bild.error) return { ok: false, error: bild.error };
 
   const { error } = await supabase.from("training_exercises").insert({
@@ -215,19 +212,55 @@ export async function addTrainingExercise(
   return { ok: true };
 }
 
-// ── Story #14: Sichtbarkeit steuern & teilen ────────────────────────────────
+// ── Story 14 (Team-Epic): Veröffentlichen als eingefrorene Vorlagen-Kopie ────
 
 export type PublishResult =
   | { status: "published" }
   | { status: "incomplete"; missing: string[] }
   | { status: "error"; error: string };
 
-/** Training öffentlich schalten (Story #14, Epic #72 Story 8). Die Bestätigung
- *  der Tragweite erfolgt in der Oberfläche; hier bleibt die serverseitige
- *  Vollständigkeitsprüfung, die bei fehlenden Voraussetzungen `incomplete`
- *  liefert — ohne Mutation. Eine Rückfrage zu einzelnen Übungen gibt es nicht
- *  mehr: ein Training enthält nur noch eigenständige Fassungen. */
-export async function publishTrainingAction(
+/** Marker, mit dem der DB-Trigger `training_publish_gate` eine unvollständige
+ *  Freigabe abweist. Die App prüft dieselben Bedingungen vorab, um sie in
+ *  Klartext zu benennen; die Datenebene ist die letzte Instanz. */
+const GATE_MARKER = "TRAINING_UNVOLLSTAENDIG";
+
+/** Fehlt dem Training etwas, um veröffentlicht werden zu dürfen? Gibt die
+ *  Marker zurück, die die Oberfläche in Klartext übersetzt. */
+async function fehlendeVoraussetzungen(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  trainingId: string,
+  ownerId: string,
+): Promise<{ missing: string[] } | { error: string }> {
+  const { data: training } = await supabase
+    .from("trainings")
+    .select("stufen, visibility, training_exercises ( trainingsteil )")
+    .eq("id", trainingId)
+    .eq("owner_id", ownerId)
+    .maybeSingle();
+  if (!training) return { error: "Training nicht gefunden." };
+  if (training.visibility !== "private")
+    return { error: "Nur persönliche Trainings lassen sich veröffentlichen." };
+
+  const teile = (training.training_exercises ?? []).map((t) => t.trainingsteil);
+  const missing: string[] = [];
+  if ((training.stufen ?? []).length === 0) missing.push("stufe");
+  if (!teile.includes("einleitung")) missing.push("einleitung");
+  if (!teile.includes("hauptteil")) missing.push("hauptteil");
+  return { missing };
+}
+
+/** Ein persönliches Training als öffentliche Vorlage veröffentlichen (Story 14).
+ *
+ *  Veröffentlicht wird nie das Training selbst, sondern eine vollständige,
+ *  eingefrorene Kopie: das Original bleibt privat und frei bearbeitbar, die
+ *  Vorlage ändert sich nie mehr (die RLS kennt keine Update-Policy für
+ *  öffentliche Zeilen). Ein erneutes Veröffentlichen ERSETZT die bisherige
+ *  Vorlage — es gibt je Training höchstens eine aktive.
+ *
+ *  Die Bestätigung der Tragweite (inkl. des öffentlich sichtbaren
+ *  Anzeigenamens) erfolgt in der Oberfläche; die Vollständigkeitsprüfung hier
+ *  ist die serverseitige Trust-Boundary. */
+export async function veroeffentlicheTraining(
   trainingId: string,
 ): Promise<PublishResult> {
   const supabase = await createClient();
@@ -236,26 +269,135 @@ export async function publishTrainingAction(
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", error: "Nicht angemeldet." };
 
-  const { data, error } = await supabase.rpc("publish_training", {
-    p_training_id: trainingId,
-  });
-  if (error) return { status: "error", error: error.message };
+  const gate = await fehlendeVoraussetzungen(supabase, trainingId, user.id);
+  if ("error" in gate) return { status: "error", error: gate.error };
+  if (gate.missing.length > 0) return { status: "incomplete", missing: gate.missing };
 
-  const result = data as PublishResult;
-  if (result.status === "published") revalidiereTraining(trainingId);
-  return result;
+  const { data: vorher } = await supabase
+    .from("trainings")
+    .select("vorlage_id")
+    .eq("id", trainingId)
+    .maybeSingle();
+
+  // Die Vorlage entsteht zuerst als private Kopie: in ein öffentliches Training
+  // lässt die RLS keine Fassungen einfügen — genau das ist das Einfrieren.
+  const kopie = await kopiereTraining(
+    supabase,
+    trainingId,
+    { art: "persoenlich", ownerId: user.id },
+    // Die Vorlage IST dieses Training, nur eingefroren — ein Herkunfts-Stempel
+    // auf den eigenen Namen wäre ein Selbstverweis. Eine geerbte Ur-Herkunft
+    // wandert weiter mit.
+    { herkunft: "erben" },
+  );
+  if (!kopie.ok) return { status: "error", error: kopie.error };
+
+  /** Die halbfertige Kopie darf nicht als stiller Zwilling stehen bleiben.
+   *  Bleibt sie trotzdem liegen (Löschen fehlgeschlagen), darf wenigstens der
+   *  Verweis nicht auf sie zeigen: er verspräche eine Vorlage, die privat ist. */
+  const verwerfen = async (ergebnis: PublishResult): Promise<PublishResult> => {
+    if (!(await loescheTrainingMitBildern(supabase, kopie.neueId))) {
+      await supabase
+        .from("trainings")
+        .update({ vorlage_id: null })
+        .eq("id", trainingId)
+        .eq("owner_id", user.id);
+    }
+    return ergebnis;
+  };
+
+  // Die Kopie NOCHMALS prüfen, bevor irgendetwas Bestehendes fällt: zwischen
+  // dem ersten Gate und dem Kopieren kann ein zweiter Editor die letzte Übung
+  // eines Teils entfernt haben. Danach wäre die Freigabe unten am DB-Trigger
+  // gescheitert — und die bisherige Vorlage bereits gelöscht.
+  const kopieGate = await fehlendeVoraussetzungen(supabase, kopie.neueId, user.id);
+  if ("error" in kopieGate) return verwerfen({ status: "error", error: kopieGate.error });
+  if (kopieGate.missing.length > 0)
+    return verwerfen({ status: "incomplete", missing: kopieGate.missing });
+
+  // Reihenfolge mit Bedacht: alte Vorlage weg → Verweis auf die neue → erst
+  // dann freigeben. So entsteht eine öffentliche Zeile NIE ohne den Verweis,
+  // über den sie sich zurückziehen lässt — eine unverlinkte Vorlage wäre
+  // öffentlich und für ihren Urheber unerreichbar. Jeder Fehlschlag unterwegs
+  // verwirft die Kopie, die dann noch privat und löschbar ist.
+  if (vorher?.vorlage_id) {
+    // Prüfen statt annehmen: schlägt das Löschen fehl (etwa weil ein
+    // gleichzeitiges Veröffentlichen die Vorlage bereits ersetzt hat), bliebe
+    // sie sonst als zweite, unverlinkte Vorlage öffentlich stehen.
+    if (!(await loescheTrainingMitBildern(supabase, vorher.vorlage_id)))
+      return verwerfen({
+        status: "error",
+        error: "Die bisherige Vorlage liess sich nicht ersetzen. Bitte erneut versuchen.",
+      });
+  }
+
+  const { data: verlinkt, error: linkFehler } = await supabase
+    .from("trainings")
+    .update({ vorlage_id: kopie.neueId })
+    .eq("id", trainingId)
+    .eq("owner_id", user.id)
+    .select("id")
+    .maybeSingle();
+  if (linkFehler || !verlinkt)
+    return verwerfen({
+      status: "error",
+      error: linkFehler?.message ?? "Training nicht gefunden.",
+    });
+
+  const { error: freigabeFehler } = await supabase
+    .from("trainings")
+    .update({ visibility: "public" })
+    .eq("id", kopie.neueId)
+    .eq("owner_id", user.id);
+  // Das Löschen der Kopie räumt über `on delete set null` auch den Verweis ab.
+  // Weist der DB-Trigger ab, ist das keine technische Panne, sondern dieselbe
+  // Aussage wie das Gate — entsprechend übersetzt statt roh durchgereicht.
+  if (freigabeFehler) {
+    const marker = freigabeFehler.message.includes(GATE_MARKER)
+      ? freigabeFehler.message.split(":").pop()?.trim()
+      : null;
+    return verwerfen(
+      marker
+        ? { status: "incomplete", missing: [marker] }
+        : { status: "error", error: freigabeFehler.message },
+    );
+  }
+
+  revalidatePath("/trainings");
+  revalidiereTraining(trainingId);
+  return { status: "published" };
 }
 
-/** Öffentliches Training wieder privat schalten (Story #14 AC2). Mitveröffentlichte
- *  Übungen bleiben öffentlich (Postcondition 4). */
-export async function unpublishTrainingAction(trainingId: string): Promise<TrainingActionResult> {
+/** Die Vorlage eines Trainings zurückziehen (Story 14 AK 5). Sie verschwindet
+ *  samt Bildern aus der Öffentlichkeit; das persönliche Training bleibt
+ *  unberührt. Bereits gezogene Kopien anderer Trainer bleiben bestehen — sie
+ *  sind eigenständig. */
+export async function zieheVorlageZurueck(
+  trainingId: string,
+): Promise<TrainingActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
-  const { error } = await supabase.rpc("unpublish_training", { p_training_id: trainingId });
-  if (error) return { ok: false, error: error.message };
+
+  const { data: training } = await supabase
+    .from("trainings")
+    .select("vorlage_id")
+    .eq("id", trainingId)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+  if (!training) return { ok: false, error: "Training nicht gefunden." };
+  if (!training.vorlage_id) return { ok: true }; // schon zurückgezogen
+
+  // Den Verweis NICHT eigenhändig leeren: das erledigt `on delete set null`,
+  // und zwar nur bei tatsächlicher Löschung. Ihn trotz Fehlschlag zu leeren
+  // meldete Erfolg und liesse die Vorlage öffentlich zurück — ohne jeden Weg,
+  // sie später doch noch zurückzuziehen.
+  if (!(await loescheTrainingMitBildern(supabase, training.vorlage_id)))
+    return { ok: false, error: "Die Vorlage liess sich nicht zurückziehen." };
+
+  revalidatePath("/trainings");
   revalidiereTraining(trainingId);
   return { ok: true };
 }
@@ -275,20 +417,24 @@ export async function renameTraining(
   const trimmed = name.trim();
   if (!trimmed) return { ok: false, error: "Bitte einen Namen angeben." };
 
-  const { error } = await supabase
+  // Kein Owner-Filter mehr: Team-Trainings darf jedes Mitglied umbenennen
+  // (Story 6). Die RLS entscheidet — `select` zeigt, ob wirklich etwas getroffen
+  // wurde, sonst meldete ein Nulltreffer stillen Erfolg.
+  const { data, error } = await supabase
     .from("trainings")
     .update({ name: trimmed })
     .eq("id", trainingId)
-    .eq("owner_id", user.id);
+    .select("id")
+    .maybeSingle();
   if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: "Training nicht gefunden." };
   revalidiereTraining(trainingId);
   return { ok: true };
 }
 
 /** Stufen eines Trainings setzen/ergänzen/entfernen (Story #12 AC2). Liefert die
  *  bereits zugeordneten Übungen zurück, die keine der neuen Stufen abdecken
- *  (AC3), sowie ob das Training dadurch auf privat gesetzt wurde (Postcondition 2,
- *  durch den DB-Trigger bei leeren Stufen). */
+ *  (AC3). */
 export async function setTrainingStufen(
   trainingId: string,
   stufen: string[],
@@ -301,22 +447,14 @@ export async function setTrainingStufen(
 
   const valid = validStufen(stufen);
 
-  const { data: before } = await supabase
-    .from("trainings")
-    .select("visibility")
-    .eq("id", trainingId)
-    .eq("owner_id", user.id)
-    .maybeSingle();
-  if (!before) return { ok: false, error: "Training nicht gefunden." };
-
   const { data: after, error } = await supabase
     .from("trainings")
     .update({ stufen: valid })
     .eq("id", trainingId)
-    .eq("owner_id", user.id)
-    .select("visibility")
+    .select("id")
     .maybeSingle();
-  if (error || !after) return { ok: false, error: error?.message ?? "Speichern fehlgeschlagen." };
+  if (error) return { ok: false, error: error.message };
+  if (!after) return { ok: false, error: "Training nicht gefunden." };
 
   // Abweichende Fassungen ermitteln — anhand IHRER Alterskategorien: die
   // Fassung ist im Training frei bearbeitbar und die einzige Quelle.
@@ -334,11 +472,7 @@ export async function setTrainingStufen(
   }
 
   revalidiereTraining(trainingId);
-  return {
-    ok: true,
-    becamePrivate: before.visibility === "public" && after.visibility === "private",
-    mismatched,
-  };
+  return { ok: true, mismatched };
 }
 
 /** Zuordnung innerhalb ihres Trainingsteils umsortieren (Story #12 AC4). */
@@ -368,11 +502,10 @@ export async function moveTrainingExercise(
   return { ok: true };
 }
 
-/** Eine Zuordnung aus ihrem Trainingsteil entfernen (Story #12 AC5). Meldet,
- *  wenn das Training dadurch auf privat gesetzt wurde (Postcondition 2). */
+/** Eine Zuordnung aus ihrem Trainingsteil entfernen (Story #12 AC5). */
 export async function removeTrainingExercise(
   trainingExerciseId: string,
-): Promise<AutoPrivateResult> {
+): Promise<TrainingActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -387,39 +520,34 @@ export async function removeTrainingExercise(
   if (!pe) return { ok: false, error: "Zuordnung nicht gefunden." };
   const trainingId = pe.training_id;
 
-  const { data: before } = await supabase
-    .from("trainings")
-    .select("visibility")
-    .eq("id", trainingId)
-    .eq("owner_id", user.id)
-    .maybeSingle();
-  if (!before) return { ok: false, error: "Training nicht gefunden." };
-
-  const { error } = await supabase
+  // `select` zeigt, ob wirklich eine Zeile fiel: ein Nulltreffer (die RLS liess
+  // nichts durch, etwa in einer eingefrorenen Vorlage) kommt ohne Fehler zurück.
+  // Ohne diese Prüfung fiele gleich darauf die Bilddatei — und die Fassung
+  // bliebe mit toter bild_url stehen.
+  const { data: geloescht, error } = await supabase
     .from("training_exercises")
     .delete()
-    .eq("id", trainingExerciseId);
+    .eq("id", trainingExerciseId)
+    .select("id")
+    .maybeSingle();
   if (error) return { ok: false, error: error.message };
+  if (!geloescht) return { ok: false, error: "Zuordnung nicht gefunden." };
 
   // Erst nach erfolgreichem Löschen die eigene Bilddatei entfernen — nie das
   // Bild einer noch existierenden Fassung, und nie das Bild der Vorlage.
   await entferneFassungsBild(supabase, pe.bild_url, trainingExerciseId);
 
-  const { data: after } = await supabase
-    .from("trainings")
-    .select("visibility")
-    .eq("id", trainingId)
-    .maybeSingle();
-
   revalidiereTraining(trainingId);
-  return {
-    ok: true,
-    becamePrivate: before.visibility === "public" && after?.visibility === "private",
-  };
+  return { ok: true };
 }
 
 /** Gesamtes Training löschen (Story #12 AC6/AC7); die Zuordnungen kaskadieren.
- *  Die Bestätigung erfolgt im UI. */
+ *  Eine veröffentlichte Vorlage dieses Trainings verschwindet mit. Die
+ *  Bestätigung erfolgt im UI.
+ *
+ *  Ein Team-Training löscht das ganze Team-Exemplar — jedes Mitglied darf das
+ *  (Story 6); die Rückkehr führt dann in den Team-Bereich statt in die eigene
+ *  Übersicht. Wer nur seine eigene Kopie will, übernimmt sie vorher zu sich. */
 export async function deleteTraining(trainingId: string): Promise<void> {
   const supabase = await createClient();
   const {
@@ -427,29 +555,30 @@ export async function deleteTraining(trainingId: string): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  // Bildpfade der Fassungen VOR dem Löschen einsammeln: die Kaskade entfernt nur
-  // die Zeilen, nicht die Dateien im Bildspeicher. Der Owner-Filter am Join
-  // verhindert schon das Lesen fremder Zuordnungen.
-  const { data: fassungen } = await supabase
-    .from("training_exercises")
-    .select("id, bild_url, trainings!inner ( owner_id )")
-    .eq("training_id", trainingId)
-    .eq("trainings.owner_id", user.id);
-
-  // `select` liefert die tatsächlich gelöschten Zeilen: nur wenn wirklich etwas
-  // gelöscht wurde (das Training existiert und gehört dem USER), fallen auch die
-  // Bilddateien — und nur dann gibt es die Erfolgs-Weiterleitung. Ein fremdes
-  // oder fehlendes Training endet ohne falsches Erfolgssignal.
-  const { data: geloescht, error } = await supabase
+  const { data: training } = await supabase
     .from("trainings")
-    .delete()
+    .select("team_id, vorlage_id")
     .eq("id", trainingId)
-    .eq("owner_id", user.id)
-    .select("id");
-  if (error || !geloescht?.length) return;
+    .maybeSingle();
+  if (!training) return;
 
-  for (const f of fassungen ?? []) {
-    await entferneFassungsBild(supabase, f.bild_url, f.id);
+  // Die veröffentlichte Vorlage zuerst: ihr Weg zurück führt einzig über den
+  // Verweis an diesem Training. Fiele sie erst danach — und scheiterte —,
+  // bliebe sie öffentlich und für ihren Urheber unerreichbar. Scheitert sie
+  // hier, bleibt alles stehen und ein zweiter Versuch ist möglich. Der
+  // Löschdialog nennt die Vorlage vorher.
+  if (training.vorlage_id && !(await loescheTrainingMitBildern(supabase, training.vorlage_id)))
+    return;
+
+  // Kein Erfolgssignal ohne tatsächliche Löschung: der Helfer meldet `false`,
+  // wenn die RLS nichts durchgelassen hat.
+  if (!(await loescheTrainingMitBildern(supabase, trainingId))) return;
+
+  if (training.team_id) {
+    revalidiereTeam(training.team_id);
+    // Zurück in die Ansicht, aus der das Training verschwunden ist — dort
+    // erwartet der Trainer den Beleg, dass es weg ist (Story 17).
+    redirect(`/team/${training.team_id}/trainings`);
   }
   revalidatePath("/trainings");
   redirect("/trainings?mine=1&deleted=1");
