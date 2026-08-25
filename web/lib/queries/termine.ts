@@ -73,6 +73,45 @@ export async function getTeamPlan(teamId: string): Promise<TerminZeile[]> {
   }));
 }
 
+/** Ein Trainingsplan, geteilt in Kommendes und Vergangenes (Story 18). */
+export type Plan = { kommend: TerminZeile[]; vergangen: TerminZeile[] };
+
+/** Vergangene Einheiten absteigend ordnen: die jüngste zuerst.
+ *
+ *  Kein blosses Umdrehen der aufsteigenden Liste — dabei rutschten die
+ *  Einheiten ohne Beginn, die am selben Tag zuletzt stehen, an dessen Anfang.
+ *  Sie sollen auch rückwärts betrachtet hinter denen mit Beginn bleiben.
+ *  `Array.sort` ist stabil, und die Liste kommt bereits nach `created_at`
+ *  geordnet aus der Datenbank; damit bleibt die Reihenfolge zweier gleich
+ *  angesetzter Termine über wiederholte Aufrufe dieselbe. */
+function juengsteZuerst(a: TerminZeile, b: TerminZeile): number {
+  if (a.datum !== b.datum) return a.datum < b.datum ? 1 : -1;
+  if (a.beginn === b.beginn) return 0;
+  if (a.beginn === null) return 1;
+  if (b.beginn === null) return -1;
+  return a.beginn < b.beginn ? 1 : -1;
+}
+
+/** Den Plan am heutigen Tag in zwei Abschnitte teilen (Story 18).
+ *
+ *  Die Grenze liegt am Tagesende, nicht am Ende der Lektion: Ein Termin trägt
+ *  keine Dauer, und die Dauer des Trainings ist bloss die Summe freiwilliger
+ *  Übungszeiten, die sich nachträglich ändern lässt. Eine gerechnete Endzeit
+ *  könnte eine Einheit später zwischen den Abschnitten hin und her schieben,
+ *  ohne dass jemand den Termin angefasst hätte.
+ *
+ *  Der heutige Tag zählt vollständig zum Kommenden — die Einheit von heute
+ *  Abend soll nicht schon mittags nach unten fallen.
+ *
+ *  Das Kommende behält die Ordnung aus der Datenbank (Datum, dann Beginn,
+ *  ohne Beginn zuletzt). */
+export function teilePlan(termine: TerminZeile[], heute: string): Plan {
+  return {
+    kommend: termine.filter((t) => t.datum >= heute),
+    vergangen: termine.filter((t) => t.datum < heute).sort(juengsteZuerst),
+  };
+}
+
 /** Der Termin eines einzelnen Trainings, falls es einen hat. Für den Kopf der
  *  Durchführen-Ansicht (AK 19) und die Vorbelegung beim erneuten Ansetzen. */
 export async function getTerminZuTraining(trainingId: string): Promise<TerminZeile | null> {

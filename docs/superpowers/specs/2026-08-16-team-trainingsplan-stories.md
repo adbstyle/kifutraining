@@ -685,3 +685,55 @@ Non-Functional Requirements
 
 Offene Fragen
 Keine.
+
+## Story 18 (Business, Rules) — Trainingsplan in Kommendes und Vergangenes gliedern
+
+Status: UMGESETZT 2026-08-25 — ausgearbeitet 2026-08-25, perspektivenbasiertes Review durchlaufen
+
+Trainingsplan in Kommendes und Vergangenes gliedern
+
+Als Trainer in einem Trainerteam
+möchte ich im Trainingsplan zuerst die anstehenden Einheiten sehen und die vergangenen darunter
+damit ich beim Öffnen sofort weiss, was als Nächstes vorzubereiten ist, ohne über eine Saison Vergangenheit zu scrollen
+
+Der Trainingsplan reiht heute alles in einer einzigen aufsteigenden Liste; Vergangenes ist nur gedämpft, steht aber weiterhin oben. Über eine Saison wandert damit genau das nach unten, wonach beim Öffnen am häufigsten gesucht wird. Die Grenze hängt am Tag, nicht am Ende der Lektion: ein Termin trägt keine Dauer, und die Übungszeiten sind freiwillig und nachträglich änderbar, sodass eine berechnete Endzeit eine Einheit nachträglich zwischen den Abschnitten hin und her schieben könnte.
+
+Preconditions
+1. Der USER ist Mitglied des Teams, dessen Trainingsplan er öffnet.
+
+Acceptance Criteria
+1. Der USER sieht die kommenden Einheiten zuoberst im Trainingsplan, die nächstgelegene zuerst.
+2. Der USER sieht die vergangenen Einheiten unterhalb der kommenden, die jüngste zuerst.
+3. Der USER erkennt, wo im Trainingsplan die kommenden Einheiten enden und die vergangenen beginnen.
+4. Der USER sieht eine Einheit so lange bei den kommenden, bis ihr Tag vorüber ist.
+5. Der USER findet die vergangenen Einheiten bei jedem Aufruf des Trainingsplans zusammengefasst vor, solange kommende Einheiten anstehen.
+6. Der USER sieht die vergangenen Einheiten von Beginn an vollständig, wenn keine kommende Einheit ansteht.
+7. Der USER kann die vergangenen Einheiten vollständig einsehen und wieder ausblenden.
+8. Der USER erkennt die Anzahl der vergangenen Einheiten, auch solange sie zusammengefasst sind.
+9. Der USER erkennt, wie viele Einheiten noch anstehen.
+10. Der USER sieht keinen Abschnitt ohne Einheiten.
+11. Der USER unterscheidet eine vergangene von einer kommenden Einheit auch dann, wenn er den Anfang ihres Abschnitts nicht im Blick hat.
+12. Das SYSTEM ordnet mehrere vergangene Einheiten desselben Tages nach dem späteren Beginn zuerst.
+13. Das SYSTEM stellt eine vergangene Einheit ohne erfassten Beginn hinter die Einheiten ihres Tages, die einen Beginn tragen.
+14. Das SYSTEM hält die Reihenfolge vergangener Einheiten mit gleichen Zeitangaben über wiederholte Aufrufe stabil.
+
+Postconditions
+1. Das SYSTEM stellt eine Einheit unmittelbar zu den vergangenen, WENN der USER sie auf einen bereits vergangenen Tag angesetzt hat.
+2. Das SYSTEM ordnet eine Einheit dem anderen Abschnitt zu, WENN der USER ihren Termin auf einen Tag jenseits der Grenze verschoben hat.
+3. Das SYSTEM zeigt die Einteilung mit dem Stand zum Zeitpunkt des Aufrufs; ein über den Tageswechsel hinweg geöffneter Trainingsplan teilt erst beim nächsten Aufruf neu ein.
+
+Out of Scope
+1. Ein Archivieren, Löschen oder dauerhaftes Ausblenden vergangener Einheiten ist nicht enthalten; die Gliederung fasst die Menge zusammen, sie verkleinert sie nicht.
+2. Der vergangene Abschnitt wird nicht auf einen Zeitraum begrenzt; er enthält jede vergangene Einheit des Teams.
+3. Eine Einteilung nach der tatsächlichen Endzeit einer Lektion ist nicht enthalten.
+4. Inhalt und Aktionen der einzelnen Einträge ändern sich nicht.
+5. Ein Kennzeichen dafür, ob eine Einheit stattgefunden hat, entsteht nicht; die Einteilung sagt allein, ob ihr Tag vorüber ist.
+6. Die Trainings-Ansicht des Teams bleibt unverändert; die Gliederung betrifft allein den Trainingsplan.
+7. Eine eigene Zeitzone je Trainingsort entsteht nicht; die Grenze richtet sich nach dem Kalendertag in der Schweiz.
+
+Non-Functional Requirements
+1. Der Trainingsplan lädt bei mehreren Saisons Teamgeschichte mit rund 400 Einheiten in unter einer Sekunde.
+2. Die Gliederung ist auf mobilen Geräten wie am Desktop bedienbar.
+
+Offene Fragen
+Keine.

@@ -36,8 +36,19 @@ Trainings.
 
 Ein Team-Training lässt sich auf ein Datum ansetzen; Beginn, Ort und Bemerkung sind
 freiwillig. Termine in der Vergangenheit sind erlaubt, damit sich Durchgeführtes nachtragen
-lässt. Der Trainingsplan zeigt die Termine eines Teams chronologisch aufsteigend, Vergangenes
-gedämpft, aber sichtbar.
+lässt.
+
+Der Trainingsplan gliedert sich in zwei Abschnitte. Zuoberst steht, was ansteht, chronologisch
+aufsteigend; darunter der Rückblick, die jüngste Einheit zuerst. Er beginnt zusammengefasst und
+nennt seine Anzahl, damit eine Saison Vergangenheit nicht verdeckt, was als Nächstes
+vorzubereiten ist — steht gar nichts mehr an, ist er von Beginn an offen. Vergangene Einträge
+bleiben zusätzlich gedämpft, damit sie auch weit unten im Rückblick als solche erkennbar sind.
+
+Die Grenze zwischen den Abschnitten liegt am Tagesende, gemessen an der Schweizer Zeit: Die
+Einheit von heute Abend bleibt den ganzen Tag oben, auch während sie läuft. Das Ende der
+Lektion zählt bewusst nicht — ein Termin trägt keine Dauer, und die Zeitangaben der Übungen
+sind freiwillig und nachträglich änderbar, sodass eine gerechnete Endzeit eine Einheit später
+zwischen den Abschnitten hin und her schieben könnte.
 
 Ein Training trägt höchstens einen Termin. Wer dieselbe Einheit ein zweites Mal ansetzt,
 bekommt eine eigenständige Kopie mit eigenem Termin — sowohl aus dem Trainingsplan heraus als
@@ -93,6 +104,9 @@ sie in die Trainings zurück.
 
 Mehrere Einheiten desselben Trainings heissen alle gleich und sind im Bestand nicht
 voneinander unterscheidbar — wann eine Einheit stattfindet, steht im Trainingsplan. Ein
-Archivieren oder Ausblenden vergangener Einheiten gibt es nicht, der Bestand wächst mit jedem
-Termin. Gleichzeitiges Bearbeiten desselben Trainings durch mehrere Mitglieder erkennt die
-Anwendung nicht; die zuletzt gespeicherte Fassung gilt.
+Archivieren oder Löschen vergangener Einheiten gibt es nicht: Der Rückblick fasst sie
+zusammen, der Trainingsbestand wächst mit jedem Termin weiter. Der Rückblick lässt sich weder
+auf einen Zeitraum eingrenzen noch durchsuchen, und ob eine Einheit tatsächlich stattgefunden
+hat, hält die Anwendung nicht fest — der Abschnitt sagt allein, dass ihr Tag vorüber ist.
+Gleichzeitiges Bearbeiten desselben Trainings durch mehrere Mitglieder erkennt die Anwendung
+nicht; die zuletzt gespeicherte Fassung gilt.
