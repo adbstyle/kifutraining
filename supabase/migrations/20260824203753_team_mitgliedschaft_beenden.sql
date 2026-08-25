@@ -21,6 +21,7 @@ as $$
 declare
   v_uid uuid := auth.uid();
   v_verbleibend int;
+  v_bilder jsonb := '[]'::jsonb;
 begin
   if v_uid is null then raise exception 'not authenticated'; end if;
   if not exists (select 1 from team_members
@@ -43,12 +44,26 @@ begin
     return jsonb_build_object('status', 'aufloesung_noetig');
   end if;
 
+  -- Löst der Vorgang das Team auf, verschwinden mit ihm die Bildkopien seiner
+  -- Trainings. Ihre Pfade werden hier eingesammelt — INNERHALB der Transaktion,
+  -- die auch entscheidet, ob wirklich aufgelöst wird. Vorher aufzuräumen hiesse,
+  -- den Bestand eines Teams zu vernichten, das die Zählung anschliessend am
+  -- Leben lässt (gleichzeitiger Beitritt). Die Dateien selbst entfernt der
+  -- Aufrufer danach; die Kaskade nimmt nur die Zeilen mit.
+  if v_verbleibend = 0 then
+    select coalesce(jsonb_agg(jsonb_build_object('id', te.id, 'bild_url', te.bild_url)), '[]'::jsonb)
+      into v_bilder
+      from training_exercises te
+      join trainings t on t.id = te.training_id
+     where t.team_id = p_team and te.bild_url is not null;
+  end if;
+
   delete from team_members where team_id = p_team and user_id = p_user;
 
   -- Ein Team ohne Mitglieder besteht nicht fort: der Trigger
   -- team_aufloesen_wenn_leer hat es samt Trainings und Terminen entfernt.
   if v_verbleibend = 0 then
-    return jsonb_build_object('status', 'aufgeloest');
+    return jsonb_build_object('status', 'aufgeloest', 'bilder', v_bilder);
   end if;
   return jsonb_build_object('status', 'entfernt');
 end;

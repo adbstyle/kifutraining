@@ -51,8 +51,10 @@ export function VorlagenControl({
     startTransition(async () => {
       const res = await veroeffentlicheTraining(trainingId);
       setTragweite(false);
+      // Auch nach einem Fehlschlag neu laden: die bisherige Vorlage kann dabei
+      // gefallen sein, dann stimmt der angezeigte Zustand sonst nicht mehr.
+      router.refresh();
       if (res.status === "published") {
-        router.refresh();
         setNotice(
           aktiv
             ? "Die Vorlage wurde durch den aktuellen Stand ersetzt."

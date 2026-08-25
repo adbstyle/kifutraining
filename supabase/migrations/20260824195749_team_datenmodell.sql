@@ -39,6 +39,11 @@ alter table trainings
   add column vorlage_id uuid references trainings(id) on delete set null;
 
 create index trainings_team_idx on trainings (team_id);
+-- Der Selbst-Fremdschlüssel braucht seinen eigenen Index: ohne ihn sucht
+-- `on delete set null` bei JEDEM Löschen eines Trainings die verweisenden
+-- Zeilen per Seq-Scan (Vorlage ersetzen, Zurückziehen, Team auflösen).
+create index trainings_vorlage_idx on trainings (vorlage_id)
+  where vorlage_id is not null;
 
 -- Nie Person UND Team zugleich; beide NULL = anonymisierte Vorlage (Bestand).
 -- Alle drei CHECKs sind auf dem Bestand erfüllbar ohne Backfill: die geprüften
@@ -290,15 +295,48 @@ create trigger team_aufloesen_wenn_leer
   for each row execute function team_aufloesen_wenn_leer();
 
 -- ----------------------------------------------------------------------------
--- 7) Alte Publish-Mechanik entfällt (Story 14: Publish = Kopie)
+-- 7) Publish-Mechanik neu (Story 14: Publish = Kopie)
 -- ----------------------------------------------------------------------------
--- Auto-Privatisierung ist obsolet: public entsteht nur noch als komplette
--- Vorlagen-Kopie über das Publish-Gate; die fehlende Update-Policy friert ein.
+-- Auto-Privatisierung ist obsolet: eine Vorlage ist eingefroren, es gibt
+-- nichts mehr still zu korrigieren. Das Zurücksetzen weicht deshalb einer
+-- Zurückweisung — die Vollständigkeit bleibt aber auf der Datenebene erzwungen,
+-- nicht bloss in der App: sonst hinge die Invariante «eine Vorlage ist
+-- vollständig» an einer einzigen TypeScript-Funktion, und ein Wettlauf zwischen
+-- Gate und Freigabe erzeugte eine unvollständige, unveränderliche Vorlage.
 drop trigger training_enforce_publishable_trg on trainings;
 drop function training_enforce_publishable();
 -- unpublish entfällt: Zurückziehen = DELETE der Vorlage durch den Urheber.
 drop function unpublish_training(uuid);
 drop function publish_training(uuid);
+
+create function training_publish_gate() returns trigger
+language plpgsql
+set search_path = public, pg_temp
+as $$
+begin
+  -- Nur der ÜBERGANG nach öffentlich wird geprüft. Eine bestehende Vorlage
+  -- bleibt unangetastet — sonst scheiterte die Anonymisierung beim Löschen
+  -- eines Kontos an Altbestand, den niemand mehr reparieren kann.
+  if new.visibility <> 'public' then return new; end if;
+  if tg_op = 'UPDATE' and old.visibility = 'public' then return new; end if;
+
+  if coalesce(array_length(new.stufen, 1), 0) = 0 then
+    raise exception 'TRAINING_UNVOLLSTAENDIG: stufe';
+  end if;
+  if not exists (select 1 from training_exercises
+                 where training_id = new.id and trainingsteil = 'einleitung') then
+    raise exception 'TRAINING_UNVOLLSTAENDIG: einleitung';
+  end if;
+  if not exists (select 1 from training_exercises
+                 where training_id = new.id and trainingsteil = 'hauptteil') then
+    raise exception 'TRAINING_UNVOLLSTAENDIG: hauptteil';
+  end if;
+  return new;
+end;
+$$;
+create trigger training_publish_gate
+  before insert or update of visibility on trainings
+  for each row execute function training_publish_gate();
 
 -- ----------------------------------------------------------------------------
 -- 8) Konto-Löschung an das neue Modell anpassen

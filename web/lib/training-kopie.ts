@@ -9,7 +9,7 @@
 // Die Fassungs-Bausteine (`kopiereBild`, `inhaltFelder`, `kopiereDiagrammVon`)
 // stammen aus dem Bibliotheks-Epic und werden hier wiederverwendet.
 import {
-  entferneStorageObjekt,
+  entferneStorageObjekte,
   inhaltFelder,
   kopiereBild,
   kopiereDiagrammVon,
@@ -37,6 +37,17 @@ export type KopieZiel =
 export type KopieErgebnis =
   | { ok: true; neueId: string }
   | { ok: false; error: string };
+
+/** Wie die Kopie zu ihrer Herkunft kommt.
+ *
+ *  `stempeln` (Standard) ist der Normalfall jeder echten Übernahme: die Kopie
+ *  hält fest, woraus sie entstanden ist. `erben` reicht nur eine bereits
+ *  vorhandene Ur-Herkunft weiter und stempelt sonst nichts — für das
+ *  Veröffentlichen, wo Quelle und Kopie dasselbe Training sind und ein Stempel
+ *  auf den eigenen Namen ein «basiert auf sich selbst» ergäbe. */
+export type HerkunftsArt = "stempeln" | "erben";
+
+export type KopieOptionen = { herkunft?: HerkunftsArt };
 
 /** Die Felder einer Fassung, die in die Kopie übergehen. Inhalt kommt aus
  *  `inhaltFelder`; hier stehen Einordnung, Reihenfolge, Dauer und der
@@ -86,8 +97,9 @@ function zielFelder(ziel: KopieZiel): {
  *
  *  Herkunft: trägt die Quelle bereits eine, wird sie unverändert weitergereicht
  *  (die Ur-Herkunft bleibt auch bei Kopie-Ketten stehen), sonst entsteht ein
- *  neuer Stempel aus Name der Quelle + jetzt. Dasselbe Muster wie bei den
- *  Übungs-Fassungen; eine Personenangabe enthält der Stempel bewusst nicht.
+ *  neuer Stempel aus Name der Quelle + jetzt — ausser die Kopie soll bloss
+ *  `erben` (siehe `HerkunftsArt`). Dasselbe Muster wie bei den Übungs-Fassungen;
+ *  eine Personenangabe enthält der Stempel bewusst nicht.
  *
  *  Bei einem Fehler werden bereits kopierte Bilder und die halbe Kopie wieder
  *  entfernt — es bleibt nie eine Teilkopie zurück. */
@@ -95,6 +107,7 @@ export async function kopiereTraining(
   supabase: SupabaseClient,
   quelleId: string,
   ziel: KopieZiel,
+  opts: KopieOptionen = {},
 ): Promise<KopieErgebnis> {
   const { spalten, ordner } = zielFelder(ziel);
 
@@ -118,9 +131,12 @@ export async function kopiereTraining(
       name: quelle.name,
       stufen: quelle.stufen ?? [],
       ...spalten,
-      // Ur-Herkunft weiterreichen, sonst frisch stempeln.
-      herkunft_name: quelle.herkunft_name ?? quelle.name,
-      herkunft_datum: quelle.herkunft_datum ?? new Date().toISOString(),
+      // Ur-Herkunft weiterreichen, sonst frisch stempeln (ausser beim Erben).
+      herkunft_name:
+        quelle.herkunft_name ?? (opts.herkunft === "erben" ? null : quelle.name),
+      herkunft_datum:
+        quelle.herkunft_datum ??
+        (opts.herkunft === "erben" ? null : new Date().toISOString()),
     })
     .select("id")
     .single();
@@ -131,7 +147,7 @@ export async function kopiereTraining(
   // bereits erzeugten Bilddateien und das Ziel-Training wieder ab.
   const kopierteBilder: string[] = [];
   const abbrechen = async (fehler: string): Promise<KopieErgebnis> => {
-    for (const pfad of kopierteBilder) await entferneStorageObjekt(supabase, pfad);
+    await entferneStorageObjekte(supabase, kopierteBilder);
     await supabase.from("trainings").delete().eq("id", neu.id);
     return { ok: false, error: fehler };
   };

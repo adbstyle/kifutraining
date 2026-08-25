@@ -230,6 +230,33 @@ export async function entferneStorageObjekt(
   if (pfad) await supabase.storage.from(STORAGE_BUCKET).remove([pfad]);
 }
 
+/** Mehrere Storage-Objekte in EINEM Aufruf entfernen (no-op bei leerer Liste).
+ *  Beim Abräumen ganzer Trainings oder Teams sind das je Vorgang Dutzende
+ *  Dateien — einzeln nacheinander kostet je einen Roundtrip. */
+export async function entferneStorageObjekte(
+  supabase: SupabaseClient,
+  pfade: string[],
+) {
+  if (pfade.length > 0) await supabase.storage.from(STORAGE_BUCKET).remove(pfade);
+}
+
+/** Aus Fassungs-Zeilen die Pfade der Dateien, die IHNEN gehören.
+ *
+ *  Der Dateiname muss die Zuordnungs-ID tragen (`fassungBildPfad`). Zeigt die
+ *  URL auf etwas anderes — etwa noch auf das Bild der Vorlage —, bleibt die
+ *  Datei unangetastet: ein verwaistes Bild ist harmlos, ein gelöschtes fremdes
+ *  wäre Datenverlust. Eine Stelle für den Guard, damit ihn kein Löschweg
+ *  vergisst. */
+export function eigeneBildPfade(
+  fassungen: { id: string; bild_url: string | null }[],
+): string[] {
+  return fassungen
+    .map((f) => ({ id: f.id, pfad: bildUrlToPath(f.bild_url) }))
+    .filter((f): f is { id: string; pfad: string } => !!f.pfad)
+    .filter((f) => istEigeneFassungsDatei(f.pfad, f.id))
+    .map((f) => f.pfad);
+}
+
 /** Die inhaltlichen Felder einer Quelle übernehmen — eine Quelle für die
  *  Feldmenge, damit ein neues Übungsfeld nicht an einer von mehreren Stellen
  *  vergessen wird. */

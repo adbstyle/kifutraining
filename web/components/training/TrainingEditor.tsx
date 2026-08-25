@@ -492,6 +492,14 @@ export function TrainingEditor({
           Das Training „{training.name}" und alle seine Übungszuordnungen werden
           unwiderruflich gelöscht.
         </p>
+        {/* Die Vorlage lässt sich nur über dieses Training zurückziehen —
+            bliebe sie stehen, käme niemand mehr an sie heran. */}
+        {training.vorlageId && (
+          <p className="mt-3">
+            Die veröffentlichte Vorlage wird dabei zurückgezogen. Kopien, die
+            andere bereits übernommen haben, bleiben bestehen.
+          </p>
+        )}
       </Dialog>
 
       <Snackbar

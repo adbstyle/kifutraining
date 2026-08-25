@@ -8,6 +8,7 @@ import { InBibliothekButton } from "@/components/training/InBibliothekButton";
 import { VorlageUebernehmenControl } from "@/components/training/VorlageUebernehmenControl";
 import { getTrainingView } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
+import { bearbeitungszielVon } from "@/lib/training-zugriff";
 import { createClient } from "@/lib/supabase/server";
 import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
 
@@ -32,8 +33,14 @@ export default async function TrainingViewPage({
   } = await supabase.auth.getUser();
   const darfBearbeiten =
     !!user &&
-    ((training.ownerId === user.id && training.visibility === "private") ||
-      !!training.team);
+    !!bearbeitungszielVon(
+      {
+        owner_id: training.ownerId,
+        team_id: training.team?.id ?? null,
+        visibility: training.visibility,
+      },
+      user.id,
+    );
   // Übernahme-Ziele: nur bei öffentlichen Vorlagen und nur angemeldet nötig.
   const teams =
     user && training.visibility === "public" ? await getMeineTeams() : [];

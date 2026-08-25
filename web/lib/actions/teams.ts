@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
+import { eigeneBildPfade } from "@/lib/fassung";
+import { raeumeVerwaisteBilder, teamBildKandidaten } from "@/lib/storage-aufraeumen";
 
 /**
  * Server Actions rund um Teams (Team-Epic Stories 3, 4).
@@ -113,7 +114,11 @@ export async function sucheTrainer(teamId: string, email: string): Promise<Train
 }
 
 /** Nach der Vorschau-Bestätigung aufnehmen (Story 4 AK 6). Zweimal aufnehmen
- *  wirkt einmalig — die Mitgliedschaft ist ein Zustand, kein Vorgang. */
+ *  wirkt einmalig — die Mitgliedschaft ist ein Zustand, kein Vorgang.
+ *
+ *  Die Aufnahme löst dieselbe E-Mail-Frage auf wie die Vorschau und unterliegt
+ *  darum derselben Bremse (NFR 2); sonst liesse sich die Vorschau schlicht
+ *  überspringen. */
 export async function nimmMitgliedAuf(
   teamId: string,
   email: string,
@@ -126,6 +131,8 @@ export async function nimmMitgliedAuf(
   if (error) return { ok: false, error: error.message };
 
   const res = data as { status: string; anzeige_name?: string };
+  if (res.status === "gebremst")
+    return { ok: false, error: "Zu viele Versuche — bitte später erneut." };
   if (res.status !== "aufgenommen")
     return { ok: false, error: "Unter dieser Adresse ist niemand registriert." };
 
@@ -145,30 +152,15 @@ export type MitgliedschaftResult =
   | { status: "aufloesung_noetig" }
   | { status: "fehler"; error: string };
 
-/** Die Trainings eines Teams samt Bilddateien entfernen.
- *
- *  Läuft VOR dem Ende der Mitgliedschaft: danach greifen weder die
- *  Trainings- noch die Storage-Policy, und die Dateien blieben als Waisen
- *  liegen. Die DB-Kaskade allein räumt nur die Zeilen ab. */
-async function raeumeTeamTrainings(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  teamId: string,
-) {
-  const { data: trainings } = await supabase
-    .from("trainings")
-    .select("id")
-    .eq("team_id", teamId);
-  for (const t of trainings ?? []) {
-    await loescheTrainingMitBildern(supabase, t.id);
-  }
-}
-
 /** Ein Mitglied entfernen — sich selbst („verlassen") oder eine andere Person.
  *  Beides derselbe Vorgang: im Team sind alle gleichberechtigt.
  *
  *  Ob der Vorgang das Team leert, entscheidet die RPC in derselben Transaktion
  *  wie die Löschung — sonst könnte zwischen Prüfung und Ausführung jemand
- *  anders austreten und das Team unbestätigt verschwinden. */
+ *  anders austreten und das Team unbestätigt verschwinden. Aus demselben Grund
+ *  räumt hier NICHTS vor der RPC auf: eine Bestätigung ist kein Beweis, dass
+ *  der Vorgang beim Ausführen noch auflöst. Löst er auf, gibt die RPC die
+ *  Bildpfade zurück, die sie mitgelöscht hat. */
 export async function entferneMitglied(
   teamId: string,
   userId: string,
@@ -180,9 +172,6 @@ export async function entferneMitglied(
   } = await supabase.auth.getUser();
   if (!user) return { status: "fehler", error: "Nicht angemeldet." };
 
-  // Bei bestätigter Auflösung zuerst aufräumen, solange die Rechte noch stehen.
-  if (bestaetigt) await raeumeTeamTrainings(supabase, teamId);
-
   const { data, error } = await supabase.rpc("entferne_team_mitglied", {
     p_team: teamId,
     p_user: userId,
@@ -190,10 +179,18 @@ export async function entferneMitglied(
   });
   if (error) return { status: "fehler", error: error.message };
 
-  const res = data as { status: string };
+  const res = data as {
+    status: string;
+    bilder?: { id: string; bild_url: string | null }[];
+  };
   revalidiereTeam(teamId);
   if (res.status === "aufloesung_noetig") return { status: "aufloesung_noetig" };
-  return res.status === "aufgeloest" ? { status: "aufgeloest" } : { status: "entfernt" };
+  if (res.status !== "aufgeloest") return { status: "entfernt" };
+
+  // Das Team ist weg — und mit der Mitgliedschaft auch das Recht, seine Bilder
+  // zu löschen. Den Nachlauf erledigt darum der Service-Role-Client.
+  await raeumeVerwaisteBilder(eigeneBildPfade(res.bilder ?? []));
+  return { status: "aufgeloest" };
 }
 
 /** Das Team selbst verlassen (Story 13 AK 1–3). */
@@ -219,7 +216,11 @@ export async function loeseTeamAuf(teamId: string): Promise<TeamActionResult> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
 
-  await raeumeTeamTrainings(supabase, teamId);
+  // Pfade vor dem Löschen merken, aufräumen danach: die Kaskade entfernt Team,
+  // Trainings und Mitgliedschaft in einem Zug — mit ihr erlischt auch das Recht
+  // an den Dateien. Ein Wettlauf besteht hier nicht: das Löschen des Teams
+  // gelingt ganz oder gar nicht, und nur danach wird aufgeräumt.
+  const pfade = eigeneBildPfade(await teamBildKandidaten(supabase, [teamId]));
 
   const { data, error } = await supabase
     .from("teams")
@@ -229,6 +230,7 @@ export async function loeseTeamAuf(teamId: string): Promise<TeamActionResult> {
   if (error) return { ok: false, error: error.message };
   if (!data?.length) return { ok: false, error: "Team nicht gefunden." };
 
+  await raeumeVerwaisteBilder(pfade);
   revalidiereTeam(teamId);
   return { ok: true };
 }

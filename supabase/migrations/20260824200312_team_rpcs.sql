@@ -40,6 +40,43 @@ alter table trainer_suchversuche enable row level security;
 -- Zugriffsfläche soll gar nicht erst entstehen.
 revoke all on table trainer_suchversuche from anon, authenticated;
 
+-- Die Bremse gehört an JEDEN Weg, der eine E-Mail auflöst — sonst ist sie
+-- keine. Darum zwei geteilte Bausteine statt einer Prüfung nur in der
+-- Vorschau: `add_team_member` beantwortet dieselbe Frage («ist diese Adresse
+-- registriert?») und wäre ohne sie ein ungebremstes Auskunftsmittel.
+create function such_bremse_aktiv(p_user uuid) returns boolean
+language sql stable
+set search_path = public, pg_temp
+as $$
+  select (select count(*) from trainer_suchversuche
+           where user_id = p_user and versucht_am > now() - interval '1 hour') >= 10;
+$$;
+
+-- Bestätigtes Konto zu einer Adresse (Story 4); erfolglose Versuche werden für
+-- die Bremse vermerkt.
+create function trainer_per_email(p_user uuid, p_email text) returns uuid
+language plpgsql
+set search_path = public, pg_temp
+as $$
+declare
+  v_ziel uuid;
+begin
+  select id into v_ziel from auth.users
+   where lower(email) = lower(btrim(p_email))
+     and email_confirmed_at is not null   -- nur bestätigte Konten (Story 4)
+   limit 1;
+  if v_ziel is null then
+    insert into trainer_suchversuche (user_id) values (p_user);
+  end if;
+  return v_ziel;
+end;
+$$;
+-- Beide Helfer laufen ausschliesslich innerhalb der definer-RPCs — und mit
+-- deren Rechten, weil sie selbst KEINE definer sind. Ohne Grant bleiben sie
+-- für die API-Rollen unerreichbar.
+revoke all on function such_bremse_aktiv(uuid) from public, anon;
+revoke all on function trainer_per_email(uuid, text) from public, anon;
+
 -- Vorschau (Story 4 AK 2): Trainer per E-Mail finden, Anzeigename zurückgeben.
 -- Bewusste, dokumentierte Ausnahme von der Anti-Enumeration-Linie — nur für
 -- Team-Mitglieder, gebremst auf 10 erfolglose Versuche je Stunde.
@@ -56,17 +93,12 @@ begin
                  where team_id = p_team_id and user_id = v_uid) then
     raise exception 'not a member of this team';
   end if;
-  if (select count(*) from trainer_suchversuche
-      where user_id = v_uid and versucht_am > now() - interval '1 hour') >= 10 then
+  if such_bremse_aktiv(v_uid) then
     return jsonb_build_object('status', 'gebremst');
   end if;
 
-  select id into v_ziel from auth.users
-   where lower(email) = lower(btrim(p_email))
-     and email_confirmed_at is not null   -- nur bestätigte Konten (Story 4)
-   limit 1;
+  v_ziel := trainer_per_email(v_uid, p_email);
   if v_ziel is null then
-    insert into trainer_suchversuche (user_id) values (v_uid);
     return jsonb_build_object('status', 'nicht_gefunden');
   end if;
   if exists (select 1 from team_members
@@ -93,9 +125,12 @@ begin
                  where team_id = p_team_id and user_id = v_uid) then
     raise exception 'not a member of this team';
   end if;
-  select id into v_ziel from auth.users
-   where lower(email) = lower(btrim(p_email)) and email_confirmed_at is not null
-   limit 1;
+  -- Dieselbe Bremse wie in der Vorschau: die Aufnahme beantwortet dieselbe
+  -- Frage und liesse sich sonst als ungebremstes Auskunftsmittel missbrauchen.
+  if such_bremse_aktiv(v_uid) then
+    return jsonb_build_object('status', 'gebremst');
+  end if;
+  v_ziel := trainer_per_email(v_uid, p_email);
   if v_ziel is null then return jsonb_build_object('status', 'nicht_gefunden'); end if;
   insert into team_members (team_id, user_id) values (p_team_id, v_ziel)
     on conflict do nothing;   -- gleichzeitige Aufnahme wirkt einmalig (PC 3)

@@ -96,22 +96,28 @@ export async function entferneTeamTraining(
 
 /** Ein leeres Training direkt im Team anlegen (AK 5) — analog zum
  *  persönlichen Anlegen, nur gehört es von Anfang an dem Team. */
-export async function erstelleTeamTraining(teamId: string, name: string): Promise<void> {
+export async function erstelleTeamTraining(
+  teamId: string,
+  name: string,
+): Promise<{ ok: false; error: string } | void> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
 
   const trimmed = name.trim();
-  if (!trimmed) return;
+  if (!trimmed) return { ok: false, error: "Bitte einen Namen angeben." };
 
   const { data, error } = await supabase
     .from("trainings")
     .insert({ name: trimmed, team_id: teamId, stufen: [], visibility: "private" })
     .select("id")
     .single();
-  if (error || !data) return;
+  // Ein stilles `return` liesse den Dialog wortlos stehen: der Erfolg zeigt
+  // sich nur an der Weiterleitung, ein Fehlschlag an gar nichts.
+  if (error || !data)
+    return { ok: false, error: error?.message ?? "Erstellen fehlgeschlagen." };
 
   revalidiereTeamBereich(teamId);
   revalidiereTraining(data.id);

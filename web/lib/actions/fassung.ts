@@ -20,7 +20,7 @@ import {
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
 import { userSlug } from "@/lib/slug";
-import { bildOrdnerFuer, type Bearbeitungsziel } from "@/lib/training-zugriff";
+import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 
 export type SaveFassungResult = { ok: true } | { ok: false; error: string };
 
@@ -47,15 +47,9 @@ async function ladeFassung(
   } | null;
   if (!training) return null;
 
-  // Bearbeitbar ist das eigene PRIVATE Training oder eines des eigenen Teams
-  // (Story 6). Eine veröffentlichte Vorlage ist eingefroren, auch für ihren
-  // Urheber (Story 14). Team-Trainings kommen ohnehin nur bei Mitgliedern aus
-  // der Abfrage zurück — dafür sorgt die SELECT-Policy.
-  const ziel: Bearbeitungsziel | null = training.team_id
-    ? { art: "team", teamId: training.team_id }
-    : training.owner_id === userId && training.visibility === "private"
-      ? { art: "persoenlich", ownerId: userId }
-      : null;
+  // Die Zeile ist bereits geladen — die Bearbeitungsregel kommt aus der
+  // gemeinsamen Quelle, statt sie hier ein zweites Mal zu formulieren.
+  const ziel = bearbeitungszielVon(training, userId);
   return ziel ? { ...data, ziel } : null;
 }
 

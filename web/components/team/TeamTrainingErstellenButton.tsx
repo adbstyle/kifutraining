@@ -20,8 +20,9 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
     }
     setFehler(undefined);
     startTransition(async () => {
-      // Leitet bei Erfolg in den Editor weiter.
-      await erstelleTeamTraining(teamId, name);
+      // Leitet bei Erfolg in den Editor weiter; nur ein Fehlschlag kehrt zurück.
+      const res = await erstelleTeamTraining(teamId, name);
+      if (res && !res.ok) setFehler(res.error);
     });
   }
 

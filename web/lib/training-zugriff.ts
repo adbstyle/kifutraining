@@ -18,11 +18,33 @@ export type Bearbeitungsziel =
   | { art: "persoenlich"; ownerId: string }
   | { art: "team"; teamId: string };
 
-/** Das Bearbeitungsziel eines Trainings, oder `null` wenn es der USER nicht
- *  bearbeiten darf (fremd, nicht vorhanden oder eine eingefrorene Vorlage).
+/** Die Eigentums-Merkmale, aus denen sich das Bearbeitungsziel ergibt. */
+export type TrainingsEigentum = {
+  owner_id: string | null;
+  team_id: string | null;
+  visibility: string;
+};
+
+/** Die eine Regel, wer ein Training bearbeiten darf — als reine Funktion,
+ *  damit jeder Aufrufer sie anwenden kann, der die Zeile schon geladen hat,
+ *  statt sie erneut zu formulieren.
  *
- *  Team-Trainings kommen nur bei Mitgliedern überhaupt aus der Abfrage zurück —
- *  dafür sorgt die SELECT-Policy. */
+ *  Bearbeitbar ist das eigene PRIVATE Training oder eines des eigenen Teams
+ *  (Story 6). Eine veröffentlichte Vorlage ist eingefroren, auch für ihren
+ *  Urheber (Story 14). Team-Trainings kommen nur bei Mitgliedern überhaupt aus
+ *  der Abfrage zurück — dafür sorgt die SELECT-Policy. */
+export function bearbeitungszielVon(
+  training: TrainingsEigentum,
+  userId: string,
+): Bearbeitungsziel | null {
+  if (training.team_id) return { art: "team", teamId: training.team_id };
+  if (training.owner_id === userId && training.visibility === "private")
+    return { art: "persoenlich", ownerId: userId };
+  return null;
+}
+
+/** Das Bearbeitungsziel eines Trainings, oder `null` wenn es der USER nicht
+ *  bearbeiten darf (fremd, nicht vorhanden oder eine eingefrorene Vorlage). */
 export async function ladeBearbeitungsziel(
   supabase: SupabaseClient,
   trainingId: string,
@@ -33,12 +55,7 @@ export async function ladeBearbeitungsziel(
     .select("owner_id, team_id, visibility")
     .eq("id", trainingId)
     .maybeSingle();
-  if (!data) return null;
-
-  if (data.team_id) return { art: "team", teamId: data.team_id };
-  if (data.owner_id === userId && data.visibility === "private")
-    return { art: "persoenlich", ownerId: userId };
-  return null;
+  return data ? bearbeitungszielVon(data, userId) : null;
 }
 
 /** Der Storage-Ordner für die Bildkopien dieses Trainings. */

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import { FASSUNG_INHALT_FELDER, type HerkunftTyp } from "@/lib/fassung";
+import { bearbeitungszielVon } from "@/lib/training-zugriff";
 
 /** Eine Fassung zum Bearbeiten — im eigenen privaten Training oder in einem
  *  Training des eigenen Teams (Team-Epic Story 6). `null`, wenn sie nicht
@@ -89,13 +90,8 @@ export async function getFassungZumBearbeiten(
   };
 
   const training = data.trainings;
-  // Bearbeitbar ist das eigene PRIVATE Training oder eines des eigenen Teams;
-  // eine öffentliche Vorlage ist eingefroren. Team-Trainings lässt die RLS nur
-  // Mitglieder überhaupt lesen.
-  const bearbeitbar =
-    !!training.team_id ||
-    (training.owner_id === user.id && training.visibility === "private");
-  if (!bearbeitbar) return null;
+  // Dieselbe Regel wie im Editor und in den Fassungs-Actions — eine Quelle.
+  if (!bearbeitungszielVon(training, user.id)) return null;
 
   const q: RohInhalt = data;
 

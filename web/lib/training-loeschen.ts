@@ -4,8 +4,7 @@
 // Geteilt zwischen dem Löschen des eigenen Trainings, dem Zurückziehen einer
 // Vorlage und dem Auflösen eines Teams — dreimal dieselbe Reihenfolge, damit
 // nie das Bild einer noch existierenden Fassung fällt.
-import { bildUrlToPath } from "@/lib/storage";
-import { entferneStorageObjekt, istEigeneFassungsDatei } from "@/lib/fassung";
+import { eigeneBildPfade, entferneStorageObjekte } from "@/lib/fassung";
 import type { createClient } from "@/lib/supabase/server";
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
@@ -34,11 +33,6 @@ export async function loescheTrainingMitBildern(
     .select("id");
   if (error || !geloescht?.length) return false;
 
-  for (const f of fassungen ?? []) {
-    const pfad = bildUrlToPath(f.bild_url);
-    if (pfad && istEigeneFassungsDatei(pfad, f.id)) {
-      await entferneStorageObjekt(supabase, pfad);
-    }
-  }
+  await entferneStorageObjekte(supabase, eigeneBildPfade(fassungen ?? []));
   return true;
 }
