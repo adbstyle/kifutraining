@@ -8,6 +8,7 @@ import {
   ExerciseCard,
   IconButton,
   IconButtonLink,
+  TabNav,
   Tooltip,
   TextField,
   PasswordField,
@@ -17,6 +18,7 @@ import {
   Select,
   MethodischerFahrplan,
   HerkunftsAngabe,
+  Disclosure,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { SegmentedDemo } from "./SegmentedDemo";
@@ -26,6 +28,7 @@ import { MultiSelectDemo } from "./MultiSelectDemo";
 import { HeaderNavDemo } from "./HeaderNavDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
+import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import {
   Search,
   SlidersHorizontal,
@@ -382,6 +385,46 @@ export default function Styleguide() {
             (hovern oder per Tab fokussieren)
           </span>
         </div>
+
+        <p className="type-label-small mb-2 mt-6 text-on-surface-variant">
+          Ansichts-Umschalter (<code>TabNav</code>)
+        </p>
+        <p className="type-body-medium mb-3 max-w-xl text-on-surface-variant">
+          Mehrere Sichten auf denselben Gegenstand — etwa ein Team mit
+          Trainingsplan, Trainings und Verwaltung. Bewusst Links statt
+          Schaltflächen: jede Ansicht hat ihre eigene Adresse, ist damit
+          weitergebbar, und der Zurück-Schritt des Browsers funktioniert.
+          Deshalb nicht <code>SegmentedControl</code> — die ist ein Eingabefeld
+          für eine Auswahl, kein Navigationsmittel. Die Optik folgt der
+          Hauptnavigation, damit „hier wechselt man den Ort" überall dasselbe
+          Bild ergibt.
+        </p>
+        <TabNav
+          ariaLabel="Beispiel-Ansichten"
+          className="mb-6 max-w-md"
+          items={[
+            { label: "Trainingsplan", href: "#", current: true },
+            { label: "Trainings", href: "#" },
+            { label: "Team", href: "#" },
+          ]}
+        />
+
+        <p className="type-label-small mb-2 mt-6 text-on-surface-variant">
+          Überlaufmenü (<code>OverflowMenu</code>) — der Ort für Destruktives
+        </p>
+        <p className="type-body-medium mb-3 max-w-xl text-on-surface-variant">
+          Icon-only Aktionsreihen enden mit einem ⋮. Dort liegt, was nicht offen
+          stehen soll — allen voran Löschen und Entfernen: ein Klick daneben darf
+          nichts Unwiderrufliches auslösen, darum zweistufig (⋮ → Eintrag →
+          Bestätigungsdialog). Deshalb hat <code>IconButton</code> bewusst
+          <strong> keine</strong> danger-Variante. Trigger-Zustand und -Ref
+          stecken in der Komponente: ein geteilter Ref zeigte stets auf den
+          zuletzt gerenderten Trigger, und der Outside-Click-Handler erkennt
+          dann den eigenen Trigger nicht mehr — das Menü togglet doppelt und
+          öffnet sofort wieder. In Listen gehört der Gegenstand ins
+          <code>label</code> („Weitere Aktionen zu …"); der Tooltip bleibt kurz.
+        </p>
+        <OverflowMenuDemo />
 
         <div className="mt-6 rounded-[4px] border border-outline-variant bg-surface-container-low p-4">
           <p className="type-label-large mb-1 text-on-surface">
@@ -875,6 +918,42 @@ export default function Styleguide() {
             name="Leeres Beispiel"
             diagramm={null}
           />
+        </div>
+      </Section>
+
+      <Section n="20" title="Disclosure">
+        <p className="type-body-medium max-w-xl text-on-surface-variant">
+          Ein Abschnitt, der zugeklappt beginnt. Gedacht für lange Listen, die
+          vollständig erreichbar bleiben sollen, ohne die Seite zu beherrschen —
+          im Team-Trainingsplan liegt der Rückblick darin, der über die Jahre auf
+          mehrere hundert Einheiten anwächst. Die Anzahl steht am Kopf, damit man
+          weiss, was einen erwartet, bevor man öffnet.
+        </p>
+        <p className="type-body-medium mt-4 max-w-xl text-on-surface-variant">
+          Der Knopf sitzt in der Überschrift, wie es das Disclosure-Muster
+          vorsieht: So springt man mit der Überschriften-Navigation eines
+          Screenreaders auf den Abschnitt und erfährt dort, dass er sich öffnen
+          lässt. Der Inhalt wird nur gerendert, solange er offen ist; die Hülle
+          bleibt stehen, damit <code>aria-controls</code> immer greift. Wie beim
+          Akkordeon im mobilen Drawer bewegt sich nur der Pfeil, nicht die
+          Fläche — das Kit animiert nirgends Höhen.
+        </p>
+        <div className="mt-6 grid max-w-xl gap-6">
+          <Disclosure title="Vergangen" count={3}>
+            <div className="flex flex-col gap-2">
+              {["Mo, 04.05.2026", "Mi, 29.04.2026", "Mo, 27.04.2026"].map((d) => (
+                <Card key={d} className="type-body-medium p-3 text-on-surface-variant">
+                  {d}
+                </Card>
+              ))}
+            </div>
+          </Disclosure>
+          <Disclosure title="Von Beginn an offen" count={1} defaultOpen>
+            <Card className="type-body-medium p-3 text-on-surface-variant">
+              Mit <code>defaultOpen</code>, wenn der Abschnitt das Einzige ist,
+              was die Seite noch zu zeigen hat.
+            </Card>
+          </Disclosure>
         </div>
       </Section>
 
