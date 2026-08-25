@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { kopiereTraining } from "@/lib/training-kopie";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
-import { revalidiereTraining } from "@/lib/revalidate";
+import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 
 /**
  * Termine ansetzen, ändern, entfernen (Team-Epic Stories 7–9).
@@ -48,7 +48,7 @@ async function revalidiereTeamPlan(supabase: Awaited<ReturnType<typeof createCli
     .select("team_id")
     .eq("id", trainingId)
     .maybeSingle();
-  if (data?.team_id) revalidatePath(`/team/${data.team_id}`);
+  if (data?.team_id) revalidiereTeam(data.team_id);
   revalidiereTraining(trainingId);
 }
 
@@ -178,6 +178,6 @@ export async function setzeErneutAn(
     return termin;
   }
 
-  revalidatePath(`/team/${quelle.team_id}`);
+  revalidiereTeam(quelle.team_id);
   return termin;
 }

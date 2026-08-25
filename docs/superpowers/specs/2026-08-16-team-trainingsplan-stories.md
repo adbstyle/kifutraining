@@ -638,3 +638,51 @@ Offene Fragen
 
 ---
 
+## Story 17 (Business, Interface) — Team-Bereich in Ansichten gliedern
+
+Status: UMGESETZT 2026-08-25 — ausgearbeitet 2026-08-25, perspektivenbasiertes Review durchlaufen
+
+Team-Bereich in Ansichten gliedern
+
+Als Trainer in einem Trainerteam
+möchte ich Trainingsplan, Trainings und Teamverwaltung getrennt aufrufen
+damit ich bei vielen Terminen und Trainings noch finde, was ich suche, statt eine einzige lange Seite zu durchscrollen
+
+Der Team-Bereich als eigener Ort ist entschieden, seine innere Gliederung nicht. Heute stehen alle vier Abschnitte untereinander auf einer Seite; mit rund 80 Einheiten je Saison wächst sie über das Auffindbare hinaus.
+
+Preconditions
+1. Der USER ist Mitglied des Teams, dessen Bereich er öffnet.
+
+Acceptance Criteria
+1. Der USER erreicht Trainingsplan, Trainings und Teamverwaltung eines Teams als je eigene Ansicht.
+2. Der USER findet die Mitglieder sowie das Verlassen und Auflösen des Teams in der Teamverwaltung.
+3. Der USER sieht beim Öffnen eines Teams zuerst dessen Trainingsplan.
+4. Der USER erkennt in jeder Ansicht, für welches Team er plant und welche Ansicht geöffnet ist.
+5. Der USER kann eine einzelne Ansicht weitergeben, sodass sie beim Empfänger unmittelbar geöffnet erscheint.
+6. Der USER gelangt mit dem Zurück-Schritt des Browsers in die zuvor geöffnete Ansicht.
+7. Der USER gelangt nach dem Ansetzen einer Einheit aus den Trainings in den Trainingsplan.
+8. Der USER kehrt nach dem Entfernen eines Team-Trainings in die Trainings zurück.
+9. Der USER kehrt nach dem Entfernen eines Termins in den Trainingsplan zurück.
+10. Der USER gelangt nach dem Verlassen oder Auflösen eines Teams in die Teamübersicht.
+11. Der USER sieht je Ansicht die Anzahl ihrer Einträge.
+12. Der USER erfährt in Hinweisen und Bestätigungen, in welcher Ansicht das Ergebnis seiner Aktion erscheint.
+13. Das SYSTEM führt einen USER, der nicht Mitglied des Teams ist, in die Teamübersicht.
+
+Postconditions
+1. Das SYSTEM zeigt eine Ansicht mit dem Stand zum Zeitpunkt ihres Aufrufs; Änderungen anderer Mitglieder erscheinen beim nächsten Öffnen.
+
+Out of Scope
+1. Eine Ansicht über mehrere Teams hinweg gibt es nicht.
+2. Ein Wechsel zwischen Teams ohne Umweg über die Teamübersicht ist nicht enthalten.
+3. Ein Archivieren oder Ausblenden vergangener Einheiten ist nicht enthalten; die Gliederung ordnet die Menge, sie verkleinert sie nicht.
+4. Inhalt, Reihenfolge und Aktionen der einzelnen Listen ändern sich nicht.
+5. Eine Anzahl-Anzeige über alle Ansichten hinweg gibt es nicht.
+6. Eine bereits geöffnete Ansicht aktualisiert sich nicht von selbst, wenn ein anderes Mitglied etwas ändert.
+
+Non-Functional Requirements
+1. Trainingsplan und Trainings laden bei einer Saison mit je rund 80 Einträgen in unter einer Sekunde.
+2. Die Ansichten sind auf mobilen Geräten wie am Desktop bedienbar.
+
+Offene Fragen
+Keine.
+

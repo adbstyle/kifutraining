@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { kopiereTraining } from "@/lib/training-kopie";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
-import { revalidiereTraining } from "@/lib/revalidate";
+import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 
 /**
  * Trainings zwischen Person und Team bewegen (Team-Epic Story 5).
@@ -19,11 +19,6 @@ import { revalidiereTraining } from "@/lib/revalidate";
 export type TeamTrainingResult =
   | { ok: true; trainingId: string }
   | { ok: false; error: string };
-
-function revalidiereTeamBereich(teamId: string) {
-  revalidatePath("/teams");
-  revalidatePath(`/team/${teamId}`);
-}
 
 /** Ein eigenes Training als Kopie ins Team stellen (AK 1–4).
  *
@@ -43,7 +38,7 @@ export async function stelleInsTeam(
   const kopie = await kopiereTraining(supabase, trainingId, { art: "team", teamId });
   if (!kopie.ok) return { ok: false, error: kopie.error };
 
-  revalidiereTeamBereich(teamId);
+  revalidiereTeam(teamId);
   return { ok: true, trainingId: kopie.neueId };
 }
 
@@ -90,7 +85,7 @@ export async function entferneTeamTraining(
   const geloescht = await loescheTrainingMitBildern(supabase, teamTrainingId);
   if (!geloescht) return { ok: false, error: "Entfernen fehlgeschlagen." };
 
-  revalidiereTeamBereich(training.team_id);
+  revalidiereTeam(training.team_id);
   return { ok: true };
 }
 
@@ -119,7 +114,7 @@ export async function erstelleTeamTraining(
   if (error || !data)
     return { ok: false, error: error?.message ?? "Erstellen fehlgeschlagen." };
 
-  revalidiereTeamBereich(teamId);
+  revalidiereTeam(teamId);
   revalidiereTraining(data.id);
   redirect(`/training/${data.id}/edit`);
 }
@@ -148,7 +143,7 @@ export async function uebernimmVorlage(
   );
   if (!kopie.ok) return { ok: false, error: kopie.error };
 
-  if (ziel.art === "team") revalidiereTeamBereich(ziel.teamId);
+  if (ziel.art === "team") revalidiereTeam(ziel.teamId);
   revalidatePath("/trainings");
   return { ok: true, trainingId: kopie.neueId };
 }

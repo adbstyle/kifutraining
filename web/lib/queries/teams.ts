@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -49,8 +50,14 @@ export async function getMeineTeams(): Promise<TeamUebersicht[]> {
 }
 
 /** Ein Team samt Mitgliedern. `null`, wenn es das Team nicht gibt oder der
- *  USER nicht dazugehört — beides ununterscheidbar. */
-export async function getTeam(id: string): Promise<TeamDetail | null> {
+ *  USER nicht dazugehört — beides ununterscheidbar.
+ *
+ *  Über `cache` je Request nur einmal ausgeführt: Rahmen und Ansicht des
+ *  Team-Bereichs fragen beide danach, sollen die Mitgliederliste aber nicht
+ *  zweimal holen. */
+export const getTeam = cache(async function getTeam(
+  id: string,
+): Promise<TeamDetail | null> {
   const supabase = await createClient();
   // Ungültige UUID würde die Query mit Fehler abbrechen; defensiv abfangen.
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
@@ -70,7 +77,7 @@ export async function getTeam(id: string): Promise<TeamDetail | null> {
   }));
 
   return { id: team.id, name: team.name, mitglieder };
-}
+});
 
 /** Was beim Auflösen verloren geht (Story 13 AK 5): die Zahlen für den
  *  Bestätigungsdialog. Persönliche Trainings der Mitglieder zählen nicht dazu —

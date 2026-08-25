@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { revalidiereTeam } from "@/lib/revalidate";
 import { eigeneBildPfade } from "@/lib/fassung";
 import { raeumeVerwaisteBilder, teamBildKandidaten } from "@/lib/storage-aufraeumen";
 
@@ -16,13 +17,6 @@ import { raeumeVerwaisteBilder, teamBildKandidaten } from "@/lib/storage-aufraeu
 const MAX_NAME = 60;
 
 export type TeamActionResult = { ok: boolean; error?: string };
-
-/** Alle Ansichten eines Teams neu validieren — eine Quelle, damit eine neue
- *  Route nicht an einer von mehreren Stellen vergessen wird. */
-function revalidiereTeam(teamId?: string) {
-  revalidatePath("/teams");
-  if (teamId) revalidatePath(`/team/${teamId}`);
-}
 
 function pruefeName(name: string): { ok: true; name: string } | { ok: false; error: string } {
   const trimmed = name.trim();
@@ -50,7 +44,7 @@ export async function erstelleTeam(
   const { data, error } = await supabase.rpc("create_team", { p_name: geprueft.name });
   if (error) return { ok: false, error: error.message };
 
-  revalidiereTeam();
+  revalidatePath("/teams");
   return { ok: true, teamId: data as string };
 }
 

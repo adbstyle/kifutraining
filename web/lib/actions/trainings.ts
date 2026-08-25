@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
 import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/training";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
-import { revalidiereTraining } from "@/lib/revalidate";
+import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { kopiereTraining } from "@/lib/training-kopie";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
 import { bildOrdnerFuer, ladeBearbeitungsziel } from "@/lib/training-zugriff";
@@ -575,8 +575,10 @@ export async function deleteTraining(trainingId: string): Promise<void> {
   if (!(await loescheTrainingMitBildern(supabase, trainingId))) return;
 
   if (training.team_id) {
-    revalidatePath(`/team/${training.team_id}`);
-    redirect(`/team/${training.team_id}`);
+    revalidiereTeam(training.team_id);
+    // Zurück in die Ansicht, aus der das Training verschwunden ist — dort
+    // erwartet der Trainer den Beleg, dass es weg ist (Story 17).
+    redirect(`/team/${training.team_id}/trainings`);
   }
   revalidatePath("/trainings");
   redirect("/trainings?mine=1&deleted=1");
