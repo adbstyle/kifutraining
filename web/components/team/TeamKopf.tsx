@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
-import { Button, Dialog, Snackbar, TextField } from "@/components/ui";
+import { Button, Dialog, IconButton, Snackbar, TextField, Tooltip } from "@/components/ui";
 import { benenneTeamUm } from "@/lib/actions/teams";
 
 /* Team-Kopf mit Umbenennen (Story 3 AK 5). Jedes Mitglied darf umbenennen —
@@ -34,18 +34,21 @@ export function TeamKopf({ teamId, name }: { teamId: string; name: string }) {
     <>
       <div className="flex items-center gap-2">
         <h1 className="type-headline-large truncate text-on-surface">{name}</h1>
-        <button
-          type="button"
-          onClick={() => {
-            setWert(name);
-            setFehler(undefined);
-            setOpen(true);
-          }}
-          aria-label="Teamnamen bearbeiten"
-          className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/8"
-        >
-          <Pencil size={16} strokeWidth={2} aria-hidden />
-        </button>
+        {/* `shrink-0` gehört an den Tooltip: er ist das Flex-Kind, nicht der
+            Button. Sonst schrumpft der Wrapper neben dem langen, truncateten
+            Teamnamen und der Button ragt über dessen Ellipse. */}
+        <Tooltip label="Teamnamen bearbeiten" className="shrink-0">
+          <IconButton
+            icon={Pencil}
+            label="Teamnamen bearbeiten"
+            size="sm"
+            onClick={() => {
+              setWert(name);
+              setFehler(undefined);
+              setOpen(true);
+            }}
+          />
+        </Tooltip>
       </div>
 
       <Dialog

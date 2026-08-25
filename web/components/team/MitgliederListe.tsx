@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { UserMinus, UserPlus, UserRound } from "lucide-react";
-import { Button, Dialog, IconButton, Snackbar, TextField } from "@/components/ui";
+import { Button, Dialog, IconButton, Snackbar, TextField, Tooltip } from "@/components/ui";
 import { entferneMitglied, nimmMitgliedAuf, sucheTrainer } from "@/lib/actions/teams";
 import type { TeamMitglied } from "@/lib/queries/teams";
 
@@ -87,11 +87,13 @@ export function MitgliederListe({
             {/* Sich selbst entfernt man über „Team verlassen" — dort hängt der
                 Hinweis, was der Austritt bedeutet. */}
             {m.userId !== eigeneUserId && (
-              <IconButton
-                icon={UserMinus}
-                label={`${m.anzeigeName} aus dem Team entfernen`}
-                onClick={() => setEntfernen(m)}
-              />
+              <Tooltip label="Aus dem Team entfernen">
+                <IconButton
+                  icon={UserMinus}
+                  label={`${m.anzeigeName} aus dem Team entfernen`}
+                  onClick={() => setEntfernen(m)}
+                />
+              </Tooltip>
             )}
           </li>
         ))}

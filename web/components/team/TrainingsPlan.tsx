@@ -3,8 +3,19 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CalendarDays, CalendarPlus, MapPin, Pencil, PlayCircle, Trash2 } from "lucide-react";
-import { Button, Card, Dialog, KategorieChip, Snackbar } from "@/components/ui";
+import { CalendarClock, CalendarDays, CalendarPlus, MapPin, PlayCircle, Trash2 } from "lucide-react";
+import {
+  Button,
+  Card,
+  Dialog,
+  IconButton,
+  IconButtonLink,
+  KategorieChip,
+  OverflowMenu,
+  Snackbar,
+  Tooltip,
+} from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { TerminDialog } from "./TerminDialog";
 import {
   aktualisiereTermin,
@@ -81,7 +92,7 @@ export function TrainingsPlan({ termine }: { termine: TerminZeile[] }) {
       router.refresh();
       setNotice(
         res.ok
-          ? "Termin entfernt. Das Training bleibt im Team-Bestand."
+          ? "Termin entfernt. Das Training bleibt unter „Trainings“."
           : (res.error ?? "Fehlgeschlagen."),
       );
     });
@@ -94,9 +105,32 @@ export function TrainingsPlan({ termine }: { termine: TerminZeile[] }) {
           const vergangen = t.datum < heute;
           return (
             <li key={t.id}>
-              <Card className={vergangen ? "p-4 opacity-60" : "p-4"}>
+              <Card className="p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
+                  {/* Der ganze Textblock führt zum Training, nicht nur der
+                      Titel: auf dem Platz mit dem Daumen ist eine Textzeile ein
+                      knappes Ziel. Der Block enthält bewusst nichts
+                      Interaktives — die Aktionen stehen daneben, damit kein
+                      Fehlgriff etwas auslöst.
+
+                      Bewusst ohne eigenes aria-label: Ein knapper Name wie
+                      „X ansehen" klänge in einer Liste neunmal gleich, weil
+                      viele Einheiten denselben Trainingsnamen tragen. Vorgelesen
+                      wird stattdessen der Inhalt selbst — Datum, Ort, Name und
+                      Bemerkung unterscheiden die Einträge zuverlässig.
+
+                      Gedämpft wird dieser Block, NICHT die Karte: `opacity` auf
+                      der Karte öffnete einen Stacking Context und sperrte das
+                      ⋮-Menü darin ein — die nächste Karte legte sich darüber.
+                      Die Aktionen bleiben ausserdem voll lesbar; vergangen
+                      heisst nicht unbedienbar. */}
+                  <Link
+                    href={`/training/${t.training.id}`}
+                    className={cn(
+                      "focus-ring group block min-w-0 flex-1 rounded-[4px]",
+                      vergangen && "opacity-60",
+                    )}
+                  >
                     <p className="type-title-small inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-on-surface">
                       <span className="inline-flex items-center gap-1.5">
                         <CalendarDays size={16} strokeWidth={2} aria-hidden />
@@ -111,13 +145,8 @@ export function TrainingsPlan({ termine }: { termine: TerminZeile[] }) {
                       )}
                     </p>
 
-                    <h3 className="mt-1 type-title-medium text-on-surface">
-                      <Link
-                        href={`/training/${t.training.id}`}
-                        className="focus-ring hover:text-primary"
-                      >
-                        {t.training.name}
-                      </Link>
+                    <h3 className="mt-1 type-title-medium text-on-surface transition-colors group-hover:text-primary">
+                      {t.training.name}
                     </h3>
 
                     <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -131,31 +160,55 @@ export function TrainingsPlan({ termine }: { termine: TerminZeile[] }) {
                         {t.bemerkung}
                       </p>
                     )}
-                  </div>
+                  </Link>
 
-                  <div className="flex shrink-0 flex-wrap gap-1">
-                    <Button
-                      variant="text"
-                      size="sm"
-                      onClick={() =>
-                        router.push(`/training/${t.training.id}/durchfuehren?termin=${t.id}`)
-                      }
-                    >
-                      <PlayCircle size={18} strokeWidth={2} aria-hidden />
-                      Durchführen
-                    </Button>
-                    <Button variant="text" size="sm" onClick={() => setAendern(t)}>
-                      <Pencil size={18} strokeWidth={2} aria-hidden />
-                      Ändern
-                    </Button>
-                    <Button variant="text" size="sm" onClick={() => setErneut(t)}>
-                      <CalendarPlus size={18} strokeWidth={2} aria-hidden />
-                      Erneut ansetzen
-                    </Button>
-                    <Button variant="text" size="sm" onClick={() => setLoeschen(t)}>
-                      <Trash2 size={18} strokeWidth={2} aria-hidden />
-                      Entfernen
-                    </Button>
+                  {/* Icon-only wie auf der Übungsseite: die ausgeschriebenen
+                      Beschriftungen (mono, gesperrt, versal) beanspruchten mehr
+                      Breite als die Karte hat — der Titel blieb auf einen
+                      Reststreifen gedrängt. Der Tooltip nennt die Aktion, das
+                      aria-label zusätzlich das Training: in einer Liste hört
+                      man sonst sechsmal „Termin ändern" ohne Unterschied.
+                      Entfernen liegt im ⋮-Menü, nicht offen. */}
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    <Tooltip label="Durchführen">
+                      <IconButtonLink
+                        href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`}
+                        icon={PlayCircle}
+                        label={`${t.training.name} durchführen`}
+                        size="sm"
+                      />
+                    </Tooltip>
+                    {/* Uhr statt Zahnrad: Beim Ändern geht es um Datum und
+                        Zeit, und die runde Uhr bleibt bei 20 Pixel gegen das
+                        eckige Kalender-Plus daneben unterscheidbar — ein
+                        Zahnrad zerfällt in dieser Grösse zum Fleck. */}
+                    <Tooltip label="Termin ändern">
+                      <IconButton
+                        icon={CalendarClock}
+                        label={`Termin von ${t.training.name} ändern`}
+                        size="sm"
+                        onClick={() => setAendern(t)}
+                      />
+                    </Tooltip>
+                    <Tooltip label="Erneut ansetzen">
+                      <IconButton
+                        icon={CalendarPlus}
+                        label={`${t.training.name} erneut ansetzen`}
+                        size="sm"
+                        onClick={() => setErneut(t)}
+                      />
+                    </Tooltip>
+                    <OverflowMenu
+                      label={`Weitere Aktionen zu ${t.training.name}`}
+                      items={[
+                        {
+                          label: "Termin entfernen",
+                          icon: Trash2,
+                          danger: true,
+                          onSelect: () => setLoeschen(t),
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
               </Card>
@@ -227,7 +280,7 @@ export function TrainingsPlan({ termine }: { termine: TerminZeile[] }) {
         <p>
           Der Termin verschwindet aus dem Plan.{" "}
           <strong className="text-on-surface">{loeschen?.training.name}</strong>{" "}
-          bleibt im Team-Bestand und lässt sich jederzeit neu ansetzen.
+          bleibt unter „Trainings“ und lässt sich jederzeit neu ansetzen.
         </p>
       </Dialog>
 
