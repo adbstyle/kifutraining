@@ -75,7 +75,8 @@ Fremde Übungen und der Manual-Bestand sind nie direkt bearbeitbar. Wer daran et
 nimmt den Umweg über ein Training: dort entsteht eine eigenständige Fassung, die sich frei
 anpassen und anschliessend in die eigene Bibliothek zurückholen lässt.
 
-Eine Übung zeigt nirgends, wie oft oder wo sie übernommen wurde. Die Herkunftsangabe „basiert
-auf …" ist ein Zeitstempel, kein Verweis — sie sagt nicht, ob sich das Original inzwischen
-geändert hat, und es gibt keinen Abgleich und kein Zurücksetzen auf den ursprünglichen Stand.
+Eine Übung zeigt nirgends, wie oft oder wo sie übernommen wurde, und eine Kopie sagt nicht,
+woraus sie hervorging. Es gibt entsprechend auch keinen Abgleich mit dem Original und kein
+Zurücksetzen auf dessen Stand. Innerhalb eines Trainings ist ausserdem nicht erkennbar, ob eine
+Übung ursprünglich aus dem Manual stammt; die Plakette trägt nur der unveränderte Bestand.
 Die Angabe zur Kinderzahl ist Selbstauskunft und wird nicht gegen das Diagramm geprüft.

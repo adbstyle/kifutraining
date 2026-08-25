@@ -43,7 +43,8 @@ bearbeiten — Ablauf, Material, Varianten, Bild, alles.
 Das hat Folgen, die man kennen sollte. Änderungen im Training erreichen die Bibliotheks-Übung
 nie, und umgekehrt: Ändert sich später das Original oder verschwindet es ganz, bleibt das
 Training unberührt und vollständig. Dieselbe Übung kann in zwei Trainings ganz verschieden
-aussehen. Woher eine Fassung stammt, hält eine unveränderliche Herkunftsangabe fest.
+aussehen. Woraus eine Fassung einmal hervorging, hält die Anwendung nicht fest: Sie ist ab dem
+ersten Moment eigenständig, und ein Vermerk darauf sagte über ihren heutigen Inhalt nichts.
 
 ## Durchführen und drucken
 
@@ -52,8 +53,6 @@ Durchführen-Ansicht ist für den Platz gedacht: ein Trainingsteil nach dem ande
 Bedienflächen, und der Bildschirm bleibt wach, solange sie geöffnet ist. Jede Übung erscheint
 mit vollem Ablauf, Diagramm, Feldtyp, Kinderzahl, Material und Dauer. Der Druck zeigt dasselbe
 als zusammenhängende, druckfertige Seite zum Mitnehmen.
-
-Beide verzichten bewusst auf Herkunftsangaben — auf dem Platz zählt nur, was zu tun ist.
 
 ## Veröffentlichen
 
