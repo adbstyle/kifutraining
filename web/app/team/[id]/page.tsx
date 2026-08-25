@@ -82,7 +82,7 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
             Kopie eines eigenen Trainings ins Team.
           </p>
         ) : (
-          <TeamTrainingsListe trainings={trainings} />
+          <TeamTrainingsListe teamId={team.id} trainings={trainings} />
         )}
       </section>
 

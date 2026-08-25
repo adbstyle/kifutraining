@@ -4,6 +4,7 @@ import { TRAININGSTEIL_SLUGS, sortStufen, teilTraegtDauer, hkatRank } from "@/li
 import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
 import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
+import { kurzeZeit } from "@/lib/queries/termine";
 
 /**
  * Query-Layer für Trainings — der EINZIGE Datenpfad zu `trainings`
@@ -341,12 +342,19 @@ export async function getTrainingPool(
  *  der Herkunft — «basiert auf …» sagt, woraus die Kopie entstanden ist. */
 export type TeamTrainingRow = TrainingListRow & {
   herkunft: { name: string; datum: string } | null;
-  /** Ist dieses Training angesetzt? Höchstens ein Termin je Training —
-   *  erneutes Ansetzen kopiert (Story 8). */
-  terminId: string | null;
+  /** Der Termin dieses Trainings, falls es angesetzt ist. Höchstens einer je
+   *  Training — eine weitere Einheit entsteht als Kopie (Story 8). Beginn, Ort
+   *  und Bemerkung dienen als Vorbelegung beim erneuten Ansetzen, damit der
+   *  Weg aus dem Bestand derselbe ist wie aus dem Plan (Story 16 AK 3). */
+  termin: {
+    id: string;
+    beginn: string | null;
+    ort: string | null;
+    bemerkung: string | null;
+  } | null;
 };
 
-const TEAM_LIST_SELECT = `${LIST_SELECT}, herkunft_name, herkunft_datum, training_termine ( id )`;
+const TEAM_LIST_SELECT = `${LIST_SELECT}, herkunft_name, herkunft_datum, training_termine ( id, beginn, ort, bemerkung )`;
 
 /** Der Trainingsbestand eines Teams. Team-Trainings erscheinen NIE im
  *  Trainings-Pool — sie gehören dem Team, nicht der Öffentlichkeit und keiner
@@ -362,6 +370,14 @@ export async function getTeamTrainings(teamId: string): Promise<TeamTrainingRow[
   if (error) throw error;
 
   return (data ?? []).map((raw) => {
+    // Bewusst eigener Name: `RawTermin` in queries/termine.ts bezeichnet die
+    // vollständige Termin-Zeile, hier stehen nur die Felder der Vorbelegung.
+    type RawTerminVorbelegung = {
+      id: string;
+      beginn: string | null;
+      ort: string | null;
+      bemerkung: string | null;
+    };
     const r = raw as unknown as RawListTraining & {
       herkunft_name: string | null;
       herkunft_datum: string | null;
@@ -369,7 +385,7 @@ export async function getTeamTrainings(teamId: string): Promise<TeamTrainingRow[
       // den Termin deshalb als EIN Objekt statt als Liste. Beide Formen
       // abfangen: eine spätere Schema-Änderung soll hier keinen stillen
       // Nulltreffer erzeugen.
-      training_termine: { id: string } | { id: string }[] | null;
+      training_termine: RawTerminVorbelegung | RawTerminVorbelegung[] | null;
     };
     const termin = Array.isArray(r.training_termine)
       ? r.training_termine[0]
@@ -380,7 +396,14 @@ export async function getTeamTrainings(teamId: string): Promise<TeamTrainingRow[
         r.herkunft_name && r.herkunft_datum
           ? { name: r.herkunft_name, datum: r.herkunft_datum }
           : null,
-      terminId: termin?.id ?? null,
+      termin: termin
+        ? {
+            id: termin.id,
+            beginn: kurzeZeit(termin.beginn),
+            ort: termin.ort,
+            bemerkung: termin.bemerkung,
+          }
+        : null,
     };
   });
 }

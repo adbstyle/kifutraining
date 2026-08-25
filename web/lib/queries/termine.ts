@@ -31,8 +31,13 @@ type RawTermin = {
   trainings: { id: string; name: string; stufen: string[] | null; team_id: string };
 };
 
-/** Beginn auf `HH:MM` kürzen — Postgres liefert `HH:MM:SS`. */
-function kurzeZeit(t: string | null): string | null {
+/** Beginn auf `HH:MM` kürzen — Postgres liefert `HH:MM:SS`.
+ *
+ *  Exportiert, weil jede Abfrage, die einen Beginn ausliefert, ihn so kürzen
+ *  MUSS: das Zeitfeld der Oberfläche und die serverseitige Prüfung akzeptieren
+ *  ausschliesslich `HH:MM`. Ein roh durchgereichter Wert wird sonst erst beim
+ *  Speichern als «ungültige Uhrzeit» abgewiesen. */
+export function kurzeZeit(t: string | null): string | null {
   return t ? t.slice(0, 5) : null;
 }
 

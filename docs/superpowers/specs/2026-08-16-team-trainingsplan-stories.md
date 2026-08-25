@@ -588,3 +588,53 @@ Keine über die epicweiten hinaus.
 
 Offene Fragen
 Keine.
+
+---
+
+## Story 16 (Business, Interface) — Weitere Einheit aus dem Trainingsbestand ansetzen
+
+Status: UMGESETZT 2026-08-25 — ausgearbeitet 2026-08-25, perspektivenbasiertes Review durchlaufen
+
+Weitere Einheit aus dem Trainingsbestand ansetzen
+
+Als Trainer in einem Trainerteam
+möchte ich ein bereits angesetztes Team-Training auch im Trainingsbestand an einem weiteren Termin ansetzen
+damit ich die nächste Einheit dort auslöse, wo ich das Training vor mir habe, statt den Weg über den Trainingsplan zu kennen
+
+Die Fähigkeit besteht bereits (Story 8), ihr Einstieg fehlt aber genau dort, wo der Trainer sein Training auswählt: Im Trainingsbestand verschwindet die Ansetzen-Aktion, sobald ein Termin vorhanden ist, und der einzige verbleibende Weg führt über den Trainingsplan.
+
+Preconditions
+1. Der USER ist Mitglied des Teams, dessen Trainingsbestand er ansieht.
+2. Das Team besitzt ein bereits angesetztes Team-Training.
+
+Acceptance Criteria
+1. Der USER kann jedes angesetzte Team-Training aus dem Trainingsbestand an einem weiteren Termin ansetzen.
+2. Der USER kann auch eine Einheit erneut ansetzen, die selbst durch Ansetzen entstanden ist; alle Einheiten eines Teams sind darin gleichwertig.
+3. Der USER erfasst dabei dieselben Terminangaben wie beim Ansetzen aus dem Trainingsplan.
+4. Der USER kann eine weitere Einheit auf ein Datum in der Vergangenheit setzen und damit eine bereits durchgeführte Einheit nachtragen.
+5. Der USER erfährt beim Ansetzen, dass eine eigenständige Kopie entsteht und die bisherige Einheit unverändert bleibt.
+6. Der USER erhält eine Meldung, wenn das Ansetzen fehlschlägt.
+7. Der USER kann ein noch nicht angesetztes Team-Training unverändert wie bisher ansetzen.
+
+Postconditions
+1. Das SYSTEM erzeugt eine eigenständige Trainings-Kopie im selben Team und verbindet sie mit dem erfassten Termin, WENN der USER das Ansetzen bestätigt hat.
+2. Das SYSTEM belässt die Einheit, von der aus angesetzt wurde, samt ihrem Termin unverändert.
+3. Das SYSTEM führt den USER nach dem Ansetzen zur neuen Einheit im Trainingsplan.
+4. Das SYSTEM hinterlässt weder eine Kopie noch einen Termin, WENN das Ansetzen fehlschlägt.
+
+Out of Scope
+1. Mehrere Einheiten desselben Trainings sind im Trainingsbestand nicht voneinander unterscheidbar; wann eine Einheit stattfindet, steht im Trainingsplan.
+2. Der Trainingsbestand nennt kein Termindatum.
+3. Eine Serien- oder Wiederholungsplanung über mehrere Termine in einem Schritt gibt es nicht.
+4. Das SYSTEM hindert niemanden daran, zwei Einheiten desselben Trainings auf denselben Tag zu setzen.
+5. Ein Status «durchgeführt» und eine Leiterperson je Einheit sind nicht enthalten; der Trainingsplan bildet die Planung ab, nicht den Nachweis der geleisteten Lektion.
+6. Ein gesonderter Umgang mit dem Fall, dass ein anderes Mitglied das Training zeitgleich entfernt, ist nicht enthalten; er fällt unter den allgemeinen Fehlerfall.
+
+Non-Functional Requirements
+1. Das Ansetzen einer weiteren Einheit ist in unter zehn Sekunden abgeschlossen.
+
+Offene Fragen
+1. @Product Owner: Soll eine durchgeführte Einheit als solche gekennzeichnet und einer Leiterperson zugeordnet werden können, damit der Trainingsplan als J+S-Nachweis taugt?
+
+---
+
