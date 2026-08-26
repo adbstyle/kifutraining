@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-08-25. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-08-26. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Der Aufbau ist vorgegeben
@@ -56,36 +56,42 @@ als zusammenhängende, druckfertige Seite zum Mitnehmen.
 
 ## Veröffentlichen
 
-Aus einem persönlichen Training entsteht eine öffentliche Vorlage. Veröffentlicht wird dabei
-nie das Training selbst, sondern eine vollständige, eingefrorene Kopie: Das Original bleibt
-privat und bearbeitbar, die Vorlage ändert sich nie mehr. Der eigene Anzeigename steht als
-Urheber daran und ist für alle sichtbar.
+Ein Training ist entweder ein Entwurf oder öffentlich; der Trainer schaltet zwischen den
+beiden Zuständen um. Veröffentlicht wird dabei das Training selbst — es entsteht keine Kopie
+und nichts wird eingefroren. Der eigene Anzeigename steht als Urheber daran und ist für alle
+sichtbar; die Tragweite ist bei jedem Veröffentlichen zu bestätigen.
 
-Veröffentlichen setzt Vollständigkeit voraus — mindestens eine Alterskategorie und je
-mindestens eine Übung in Einleitung und Hauptteil. Fehlt etwas, nennt die Anwendung genau das.
+Ein öffentliches Training bleibt frei bearbeitbar, und die Community sieht jeweils den
+aktuellen Stand. Dafür gelten die Veröffentlichungsbedingungen nicht nur beim Umschalten,
+sondern solange es öffentlich ist: mindestens eine Alterskategorie sowie je mindestens eine
+Übung in der Einleitung und im freien Spiel. Fehlt etwas, nennt die Anwendung genau das. Wer
+sein Training unter diese Schwelle bringen will, setzt es zuerst auf Entwurf — die Anwendung
+sagt das, statt die Änderung bloss abzulehnen.
 
-Je Training gibt es höchstens eine aktive Vorlage; erneutes Veröffentlichen ersetzt die
-bisherige vollständig. Zurückziehen lässt sie sich jederzeit, ohne dass das eigene Training
-Schaden nimmt. Wer das persönliche Training löscht, zieht damit auch die Vorlage zurück.
-Kopien, die andere bereits übernommen haben, bleiben in jedem Fall bestehen — sie sind
-eigenständig.
+Eine eigene Übung, die noch privat in der Bibliothek liegt, bleibt dort privat, auch wenn ihre
+Fassung im veröffentlichten Training mitgelesen werden kann: wer ein Training veröffentlicht,
+veröffentlicht dessen Inhalt.
 
-Der übliche Weg zum Zurückziehen führt über das eigene Training, aus dem die Vorlage
-hervorgegangen ist. Steht hinter einer Vorlage kein solches Original — das betrifft Trainings,
-die noch vor dem heutigen Kopie-Modell unmittelbar öffentlich geschaltet wurden —, findet ihr
-Urheber den Knopf dafür direkt in der Ansicht der Vorlage. So bleibt jede eigene Vorlage
-erreichbar, auch wenn sie in keiner persönlichen Liste mehr auftaucht.
+Auf Entwurf setzen lässt sich ein Training jederzeit; es verschwindet dann aus dem
+öffentlichen Bestand und bleibt im Übrigen unberührt. Löschen entfernt es zugleich aus der
+Öffentlichkeit — der Löschdialog sagt es. Kopien, die andere bereits übernommen haben, bleiben
+in jedem Fall bestehen; sie sind eigenständig.
 
-Jede veröffentlichte Vorlage kann jede angemeldete Person übernehmen, auch ihr Urheber selbst.
+Team-Trainings sind nicht direkt veröffentlichbar. Wer eine Team-Arbeit veröffentlichen will,
+übernimmt sie zuerst in seinen persönlichen Bestand.
+
+Jedes öffentliche Training kann jede angemeldete Person übernehmen, auch ihr Urheber selbst.
 Es entsteht eine private, frei bearbeitbare Kopie des ganzen Trainings.
 
 ## Finden
 
-Die Übersicht kennt zwei Bestände: standardmässig die öffentlichen Vorlagen, die auch ohne
-Konto zugänglich sind, und über einen Schalter die eigenen Trainings. Gesucht wird über den
-Namen, gefiltert nach Alterskategorie. Ohne Suchbegriff steht das zuletzt Geänderte oben, mit
-Suchbegriff das, was am ehesten gemeint ist. Team-Trainings erscheinen in keiner der beiden
-Sichten; sie leben im Team-Bereich.
+Die Übersicht zeigt beides zusammen: die öffentlichen Trainings der Community, die auch ohne
+Konto zugänglich sind, und die eigenen, Entwürfe eingeschlossen. Ein Schalter grenzt auf die
+eigenen ein. An jedem eigenen Eintrag steht, ob er ein Entwurf oder öffentlich ist; er führt in
+die Bearbeitung, ein fremder in die Ansicht. Besucher ohne Konto sehen ausschliesslich die
+öffentlichen Trainings. Gesucht wird über den Namen, gefiltert nach Alterskategorie. Ohne
+Suchbegriff steht das zuletzt Geänderte oben, mit Suchbegriff das, was am ehesten gemeint ist.
+Team-Trainings erscheinen hier nicht; sie leben im Team-Bereich.
 
 ## Bekannte Grenzen
 
@@ -96,9 +102,11 @@ Orientierung.
 Der Druck hält eine Übung zusammen, solange sie auf eine Seite passt; steht sie als erste unter
 einer Trainingsteil-Überschrift und reicht der Platz darunter nicht, bricht sie um.
 
-Eine veröffentlichte Vorlage ist eingefroren und auch für ihren Urheber nicht mehr änderbar —
-sie lässt sich nur ersetzen oder zurückziehen. Vorschläge, welche Übung fachlich passen würde,
-macht die Anwendung nicht; alle Hinweise sind Hinweise und keine Sperren.
+Vorschläge, welche Übung fachlich passen würde, macht die Anwendung nicht; alle Hinweise sind
+Hinweise und keine Sperren. Eine Ausnahme sind die Veröffentlichungsbedingungen: sie sperren.
+
+Eine Historie früherer öffentlicher Stände gibt es nicht, und wer ein öffentliches Training
+ändert oder zurückzieht, benachrichtigt damit niemanden.
 
 Das Schema deckt heute ausschliesslich den Kinderfussball mit den Kategorien G, F und E ab. Für
 den Juniorenfussball von D bis A ist ein zweites Trainingsschema mit eigenen Teilen und

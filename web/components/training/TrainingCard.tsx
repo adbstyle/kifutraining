@@ -1,19 +1,21 @@
 import Link from "next/link";
 import { Clock, ListChecks } from "lucide-react";
-import { Card, KategorieChip } from "@/components/ui";
+import { Badge, Card, KategorieChip } from "@/components/ui";
 import { formatDuration } from "@/lib/training";
 import type { TrainingListRow } from "@/lib/queries/trainings";
 
 /* Trainings-Kachel für die Übersichten.
-   Domänenfrei über `href`: eigene Trainings verlinken in den Editor, Vorlagen in
-   die Ansicht. Einen Sichtbarkeits-Status trägt die Kachel nicht mehr — seit
-   dem Kopie-Modell sagt schon die Ansicht, in welchem Bestand man ist:
-   Vorlagen sind öffentlich, „Meine Trainings" sind privat. */
+   Domänenfrei über `href`: eigene Trainings verlinken in den Editor, fremde in
+   die Ansicht.
+
+   Die Marke trägt die Kachel selbst, weil die Übersicht beide Bestände
+   gemeinsam zeigt (Story B AK 3/4): am eigenen Eintrag steht, ob er ein Entwurf
+   oder öffentlich ist. Aus der Ansicht allein liesse sich das nicht mehr
+   ablesen. */
 export function TrainingCard({
   training,
   href,
-  /** In der eigenen Übersicht überflüssig — dort ist der Urheber immer man
-   *  selbst. */
+  /** Am eigenen Eintrag überflüssig — dort ist der Urheber man selbst. */
   zeigeUrheber = true,
   updatedLabel,
 }: {
@@ -33,6 +35,13 @@ export function TrainingCard({
           {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
           ))}
+          {/* Nur am eigenen Eintrag: bei fremden ist der Zustand immer
+              öffentlich und die Marke sagte nichts. */}
+          {training.istEigen && (
+            <Badge tone={training.visibility === "public" ? "oeffentlich" : "entwurf"}>
+              {training.visibility === "public" ? "Öffentlich" : "✎ Entwurf"}
+            </Badge>
+          )}
         </div>
 
         <h3 className="type-title-medium text-on-surface transition-colors group-hover:text-primary">
@@ -40,7 +49,7 @@ export function TrainingCard({
         </h3>
 
         {/* Urheber: der Anzeigename, nie die E-Mail. Bei anonymisierten
-            Vorlagen (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
+            Trainings (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
         {zeigeUrheber && training.urheber && (
           <p className="mt-1 type-body-small text-on-surface-variant">
             von {training.urheber}

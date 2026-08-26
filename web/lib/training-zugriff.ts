@@ -29,17 +29,17 @@ export type TrainingsEigentum = {
  *  damit jeder Aufrufer sie anwenden kann, der die Zeile schon geladen hat,
  *  statt sie erneut zu formulieren.
  *
- *  Bearbeitbar ist das eigene PRIVATE Training oder eines des eigenen Teams
- *  (Story 6). Eine veröffentlichte Vorlage ist eingefroren, auch für ihren
- *  Urheber (Story 14). Team-Trainings kommen nur bei Mitgliedern überhaupt aus
- *  der Abfrage zurück — dafür sorgt die SELECT-Policy. */
+ *  Bearbeitbar ist das eigene Training oder eines des eigenen Teams (Story 6) —
+ *  unabhängig davon, ob es öffentlich ist: Veröffentlichen ist ein Zustand, kein
+ *  Einfrieren (Story A). Was ein öffentliches Training dabei nicht verlieren
+ *  darf, setzt die Datenebene durch. Team-Trainings kommen nur bei Mitgliedern
+ *  überhaupt aus der Abfrage zurück — dafür sorgt die SELECT-Policy. */
 export function bearbeitungszielVon(
   training: TrainingsEigentum,
   userId: string,
 ): Bearbeitungsziel | null {
   if (training.team_id) return { art: "team", teamId: training.team_id };
-  if (training.owner_id === userId && training.visibility === "private")
-    return { art: "persoenlich", ownerId: userId };
+  if (training.owner_id === userId) return { art: "persoenlich", ownerId: userId };
   return null;
 }
 

@@ -29,19 +29,19 @@ kein Bild, keine Adresse, keine Vereinszugehörigkeit.
 ## Der Anzeigename
 
 Der Anzeigename ist das Einzige, was andere von einer Person zu sehen bekommen; die
-E-Mail-Adresse bleibt immer verborgen. Er steht als Urheber an veröffentlichten Vorlagen und
+E-Mail-Adresse bleibt immer verborgen. Er steht als Urheber an veröffentlichten Trainings und
 in den Mitgliederlisten der Teams. Wer keinen gewählt hat, erscheint nicht namenlos, sondern
 unter einer automatisch vergebenen, je Konto verschiedenen Kennung — etwa „Trainer:in a1b2".
 
 Ein einmal gesetzter Name lässt sich ersetzen, aber nicht mehr entfernen. Das ist Absicht: An
-bereits veröffentlichten Vorlagen soll nicht plötzlich wieder eine Zufallskennung auftauchen.
+bereits veröffentlichten Trainings soll nicht plötzlich wieder eine Zufallskennung auftauchen.
 Der Name ist auf vierzig Zeichen begrenzt.
 
 ## Ohne Konto
 
-Der gesamte Übungsbestand und alle veröffentlichten Trainings-Vorlagen sind ohne Anmeldung
+Der gesamte Übungsbestand und alle öffentlichen Trainings sind ohne Anmeldung
 zugänglich — ansehen, durchsuchen, filtern, durchführen und drucken inbegriffen. Verwehrt
-bleibt alles Eigene: Übungen und Trainings anlegen oder bearbeiten, favorisieren, Vorlagen
+bleibt alles Eigene: Übungen und Trainings anlegen oder bearbeiten, favorisieren, Trainings
 übernehmen, Teams. Der Menüpunkt für Teams erscheint gar nicht erst, und wer eine geschützte
 Adresse direkt aufruft, landet bei der Anmeldung und wird danach dorthin zurückgeführt, wo er
 hinwollte.
@@ -54,7 +54,7 @@ erhalten, verliert aber jeden Bezug zur Person.
 
 Konkret werden die Favoriten entfernt, die privaten Übungen samt ihren Feld-Diagrammen
 gelöscht und die persönlichen Trainings mitsamt den Bildern ihrer Übungsfassungen. Öffentliche
-Übungen und veröffentlichte Trainings-Vorlagen bleiben bestehen, künftig ohne Urheberangabe.
+Übungen und öffentliche Trainings bleiben bestehen, künftig ohne Urheberangabe.
 
 Bei Teams entscheidet die Mitgliederzahl: Ist noch jemand anderes im Team, bleibt es samt allen
 Trainings und Terminen unangetastet, und nur die gelöschte Person verschwindet aus der

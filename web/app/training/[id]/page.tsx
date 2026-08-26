@@ -5,8 +5,7 @@ import { Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
-import { VorlageUebernehmenControl } from "@/components/training/VorlageUebernehmenControl";
-import { VorlageZurueckziehenButton } from "@/components/training/VorlageZurueckziehenButton";
+import { TrainingUebernehmenControl } from "@/components/training/TrainingUebernehmenControl";
 import { getTrainingView } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
@@ -42,7 +41,7 @@ export default async function TrainingViewPage({
       },
       user.id,
     );
-  // Übernahme-Ziele: nur bei öffentlichen Vorlagen und nur angemeldet nötig.
+  // Übernahme-Ziele: nur bei öffentlichen Trainings und nur angemeldet nötig.
   const teams =
     user && training.visibility === "public" ? await getMeineTeams() : [];
 
@@ -62,7 +61,7 @@ export default async function TrainingViewPage({
       <header className="mb-6 mt-4">
         <h1 className="type-headline-large text-on-surface">{training.name}</h1>
         {/* Urheber: der Anzeigename, nie die E-Mail. Bei anonymisierten
-            Vorlagen (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
+            Trainings (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
         {training.urheber && (
           <p className="mt-1 type-body-medium text-on-surface-variant">
             von {training.urheber}
@@ -87,26 +86,17 @@ export default async function TrainingViewPage({
             <Printer size={18} strokeWidth={2} aria-hidden />
             Drucken
           </ButtonLink>
-          {/* Bearbeiten nur am eigenen privaten Training bzw. im eigenen Team;
-              eine veröffentlichte Vorlage ist eingefroren (Story 14). */}
+          {/* Bearbeiten am eigenen Training bzw. im eigenen Team — auch wenn es
+              öffentlich ist: Veröffentlichen ist ein Zustand, kein Einfrieren. */}
           {darfBearbeiten && (
             <ButtonLink href={`/training/${training.id}/edit`} variant="text" size="sm">
               Bearbeiten
             </ButtonLink>
           )}
-          {/* Vorlage übernehmen (Story 11) — für alle Angemeldeten, auch für
-              den Urheber selbst: die Kopie ist ein eigenes Trainingsobjekt. */}
+          {/* Übernehmen (Story 11) — für alle Angemeldeten, auch für den
+              Urheber selbst: die Kopie ist ein eigenes Trainingsobjekt. */}
           {user && training.visibility === "public" && (
-            <VorlageUebernehmenControl vorlageId={training.id} teams={teams} />
-          )}
-          {/* Rückzugs-Pfad für Vorlagen ohne verlinktes Original — Alt-Bestand
-              aus der Zeit vor dem Kopie-Modell sowie verwaiste Kopien. Ohne ihn
-              käme der Urheber an seine eigene Vorlage nicht mehr heran: sie
-              steht in keiner eigenen Liste und ist eingefroren. Beim normalen
-              Weg über den Editor bleibt `VorlagenControl` zuständig; dass beide
-              Wege dann offenstehen, schadet nicht — sie tun dasselbe. */}
-          {user && training.visibility === "public" && training.ownerId === user.id && (
-            <VorlageZurueckziehenButton vorlageId={training.id} />
+            <TrainingUebernehmenControl quelleId={training.id} teams={teams} />
           )}
         </div>
       </header>
