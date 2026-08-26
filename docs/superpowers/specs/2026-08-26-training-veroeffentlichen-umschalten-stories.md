@@ -1,21 +1,29 @@
 # Training veröffentlichen: Umschalten statt Einfrieren
 
-Stand 2026-08-26. Zwei Business-Stories. Sie lösen das Vorlagen-Modell aus dem
-Team-Trainingsplan-Epic (Stories 12 und 14) ab, das auf `develop` liegt und nie
-in Produktion war.
+Stand 2026-08-26, berichtigt am 2026-08-26. Zwei Business-Stories. Sie lösen das
+Vorlagen-Modell aus dem Team-Trainingsplan-Epic (Stories 12 und 14) ab.
+
+Das abgelöste Modell ist in Produktion: die Migration lief am 2026-08-26 um
+05:31 UTC, der Code ging mit demselben Release live. Es gibt dort also echte
+Vorlagen-Paare und echte öffentliche Trainings. Der Umbau ist damit
+forward-only und braucht eine Datenmigration — eine frühere Fassung dieses
+Dokuments behauptete das Gegenteil, sie beruhte auf einem veralteten lokalen
+Stand von `main`.
 
 ## Warum
 
-Das Veröffentlichen erzeugte bisher eine eingefrorene Kopie: Das persönliche
-Training blieb privat und bearbeitbar, daneben stand eine unveränderliche
-Vorlage. Daraus folgten zwei Trennungen, die im Alltag stören — zwei Zeilen
-gleichen Namens für den Urheber, und eine Trainingsübersicht, die eigene und
-öffentliche Trainings in getrennte Ansichten zwang.
+Das Veröffentlichen erzeugt eine eingefrorene Kopie: Das persönliche Training
+bleibt privat und bearbeitbar, daneben steht eine unveränderliche Vorlage.
+Daraus folgen zwei Trennungen, die im Alltag stören — zwei Zeilen gleichen
+Namens für den Urheber, und eine Trainingsübersicht, die eigene und öffentliche
+Trainings in getrennte Ansichten zwingt. Die zweite ist der Auslöser dieses
+Dokuments: sie wurde als Fehler gemeldet.
 
 Die dokumentierte Hauptbegründung des Einfrierens vom 2026-08-24 —
 Sichtbarkeitskonflikte beim gemeinsamen Bearbeiten öffentlicher Trainings —
 bezog sich auf das Teilen-Modell, das mit demselben Entscheid abgeschafft wurde.
 Sie ist mit ihrem Gegenstand entfallen; das Einfrieren blieb ohne sie stehen.
+Diese Begründung trägt unabhängig davon, wo das Modell ausgerollt ist.
 
 Der verbleibende Schutz ist zudem geringer als angenommen: Wer ein öffentliches
 Training übernimmt, erhält ohnehin eine Kopie. Ungeschützt bleibt allein, wer
@@ -65,7 +73,9 @@ Postconditions
 2. Das SYSTEM gibt jede spätere Änderung des USERs unmittelbar an alle weiter, die das Training sehen.
 3. Das SYSTEM entzieht das Training ohne Inhaltsverlust der Öffentlichkeit WENN der USER es auf Entwurf zurücknimmt.
 4. Das SYSTEM lässt Kopien unberührt, die andere USER bereits übernommen haben.
-5. Das SYSTEM nimmt jedes öffentliche Training ohne Übung im freien Spiel einmalig auf Entwurf zurück WENN die erweiterte Veröffentlichungsbedingung eingeführt wird.
+5. Das SYSTEM ergänzt jedes öffentliche Training ohne Übung im freien Spiel um die Manual-Übung des freien Spiels WENN die erweiterte Veröffentlichungsbedingung eingeführt wird.
+6. Das SYSTEM überträgt die Sichtbarkeit auf das persönliche Original und entfernt die eingefrorene Kopie WENN das bisherige Vorlagen-Modell abgelöst wird.
+7. Das SYSTEM behält den bisherigen Änderungszeitpunkt jedes betroffenen Trainings WENN es die Ablösung vornimmt.
 
 Out of Scope
 1. Das SYSTEM hält keine zweite, eingefrorene Fassung eines veröffentlichten Trainings vor.
@@ -84,6 +94,8 @@ Anmerkungen
 1. Die Bedingung „mindestens eine Übung im Hauptteil" entfällt als eigene Prüfung: Das freie Spiel liegt im Hauptteil, die neue Bedingung deckt sie zwingend ab.
 2. Ein öffentliches Training enthält Übungs-Fassungen, deren Inhalt damit öffentlich lesbar wird — auch dann, wenn die Fassung aus einer noch privaten eigenen Bibliotheks-Übung entstanden ist. Die Bibliotheks-Übung selbst bleibt privat. Das ist ein bewusster Entscheid und braucht keinen gesonderten Hinweis: Wer ein Training veröffentlicht, veröffentlicht dessen Inhalt.
 3. Team-Trainings bleiben nicht direkt veröffentlichbar, weil ein Team bewusst nicht öffentlich auffindbar ist. Wer eine Team-Arbeit veröffentlichen will, übernimmt sie zuerst in seinen persönlichen Bestand.
+4. Beim Ablösen des Vorlagen-Modells kann das Original inhaltlich von seiner eingefrorenen Kopie abweichen — es durfte nach dem Veröffentlichen weiterbearbeitet werden. Dass die Community dabei auf den aktuellen Stand des Urhebers springt und der eingefrorene Stand verloren geht, ist ein bewusster Entscheid (PO, 2026-08-26) zugunsten eines Objekts je Training.
+5. Die Bilddateien der entfernten Kopien bleiben im Ablagespeicher zurück. Verwaiste Dateien sind im Projekt bereits toleriert; sie aufzuräumen ist nicht Teil dieser Story.
 
 ---
 
@@ -125,7 +137,7 @@ Offene Fragen
 Keine.
 
 Anmerkungen
-1. Dieses Verhalten entspricht dem, was die Trainingsübersicht in Produktion bereits leistet und was der Übungsbestand durchgängig tut. Die getrennten Ansichten sind erst mit dem Team-Trainingsplan-Epic auf `develop` entstanden.
+1. Dieses Verhalten entspricht dem, was der Übungsbestand durchgängig tut. Die Trainingsübersicht leistete es bis zum Team-Trainingsplan-Epic ebenfalls; die getrennten Ansichten kamen mit diesem Epic und sind seit dem Release vom 2026-08-26 in Produktion.
 
 ---
 
@@ -139,4 +151,5 @@ dokumentierter Stand bleibt als erteilter Auftrag bestehen.
 2. Story 14 (Training als Vorlage veröffentlichen, ersetzen und zurückziehen) wird vollständig durch Story A abgelöst; das Konzept „Ersetzen" entfällt ersatzlos.
 3. Story 15 (Urheber einer öffentlichen Vorlage anzeigen) bleibt inhaltlich gültig und bezieht sich künftig auf öffentliche Trainings statt auf Vorlagen.
 4. Die Epic-Erfolgskriterien zur Sichtbarkeitssteuerung und zum Vorlagen-Publish sind mit dem Umschalt-Modell neu zu fassen.
-5. Die Produktdokumentation zu Trainings beschreibt das Vorlagen-Modell und ist vor dem nächsten Produktions-Release nachzuführen.
+5. Die Produktdokumentation zu Trainings, zum Team-Bereich und zu Konto und Zugang beschreibt das Vorlagen-Modell und ist vor dem nächsten Produktions-Release nachzuführen.
+6. Die Spiegelung der Produktionsdaten nach Staging ist gesperrt, solange `develop` den Spaltenabbau trägt und `main` nicht.
