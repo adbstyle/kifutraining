@@ -93,6 +93,9 @@ Ein Training trägt ausser Name und Alterskategorien keine eigenen Angaben — k
 Beschreibung, keine Notiz. Eine Soll-Dauer gibt es nicht; die Zeitangaben dienen der
 Orientierung.
 
+Der Druck hält eine Übung zusammen, solange sie auf eine Seite passt; steht sie als erste unter
+einer Trainingsteil-Überschrift und reicht der Platz darunter nicht, bricht sie um.
+
 Eine veröffentlichte Vorlage ist eingefroren und auch für ihren Urheber nicht mehr änderbar —
 sie lässt sich nur ersetzen oder zurückziehen. Vorschläge, welche Übung fachlich passen würde,
 macht die Anwendung nicht; alle Hinweise sind Hinweise und keine Sperren.

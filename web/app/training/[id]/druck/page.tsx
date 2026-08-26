@@ -45,12 +45,23 @@ export default async function TrainingDruckPage({
         </div>
       </header>
 
-      <div className="flex flex-col gap-8">
+      {/* Seitenumbruch im Druck: zusammengehalten wird nur die einzelne Übung
+          (`break-inside-avoid` am <article>), denn nur sie passt auf eine Seite.
+          Abschnitte und Blöcke sind regelmässig mehrere Seiten hoch — hielten
+          sie sich zusammen, schob Chrome den ganzen Abschnitt auf eine frische
+          Seite, wo die erste Übung erneut nicht mehr hinpasste: die Seite blieb
+          bis auf die Überschrift leer. Überschriften bleiben stattdessen per
+          `break-after-avoid` an ihrem Inhalt — überschreiten Überschrift und
+          erste Übung zusammen eine Seite, wiegt das die Sperre an der <article>
+          auf und die Übung bricht um. Gestapelt wird mit Margins statt
+          Flex-Gaps, weil Chrome innerhalb von Flex-Containern nicht zuverlässig
+          umbricht. */}
+      <div className="space-y-8">
         {sections.map((s) => {
           const blocks = leseBloecke(s);
           return (
-            <section key={s.slug} className="break-inside-avoid">
-              <h2 className="mb-4 border-b border-outline-variant pb-1 type-title-medium text-on-surface">
+            <section key={s.slug}>
+              <h2 className="mb-4 break-after-avoid border-b border-outline-variant pb-1 type-title-medium text-on-surface">
                 {s.label}
                 {s.sum > 0 && (
                   <span className="ml-2 type-label-medium text-on-surface-variant">
@@ -58,11 +69,11 @@ export default async function TrainingDruckPage({
                   </span>
                 )}
               </h2>
-              <div className="flex flex-col gap-6">
+              <div className="space-y-6">
                 {blocks.map((b) => (
-                  <div key={b.key} className="break-inside-avoid">
+                  <div key={b.key}>
                     {b.label && (
-                      <h3 className="mb-3 type-title-small text-on-surface-variant">
+                      <h3 className="mb-3 break-after-avoid type-title-small text-on-surface-variant">
                         {b.label}
                         {b.sum > 0 && (
                           <span className="ml-2 type-label-medium text-on-surface-variant">
@@ -71,7 +82,7 @@ export default async function TrainingDruckPage({
                         )}
                       </h3>
                     )}
-                    <div className="flex flex-col gap-6">
+                    <div className="space-y-6">
                       {b.items.map((item) => (
                         <TrainingExerciseDetail key={item.id} item={item} />
                       ))}
