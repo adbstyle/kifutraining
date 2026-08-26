@@ -18,11 +18,12 @@ export type Bearbeitungsziel =
   | { art: "persoenlich"; ownerId: string }
   | { art: "team"; teamId: string };
 
-/** Die Eigentums-Merkmale, aus denen sich das Bearbeitungsziel ergibt. */
+/** Die Eigentums-Merkmale, aus denen sich das Bearbeitungsziel ergibt.
+ *  Die Sichtbarkeit gehört bewusst NICHT dazu: sie entscheidet nichts mehr,
+ *  seit Veröffentlichen ein Zustand und kein Einfrieren ist (Story A). */
 export type TrainingsEigentum = {
   owner_id: string | null;
   team_id: string | null;
-  visibility: string;
 };
 
 /** Die eine Regel, wer ein Training bearbeiten darf — als reine Funktion,
@@ -44,7 +45,7 @@ export function bearbeitungszielVon(
 }
 
 /** Das Bearbeitungsziel eines Trainings, oder `null` wenn es der USER nicht
- *  bearbeiten darf (fremd, nicht vorhanden oder eine eingefrorene Vorlage). */
+ *  bearbeiten darf (fremd oder nicht vorhanden). */
 export async function ladeBearbeitungsziel(
   supabase: SupabaseClient,
   trainingId: string,
@@ -52,7 +53,7 @@ export async function ladeBearbeitungsziel(
 ): Promise<Bearbeitungsziel | null> {
   const { data } = await supabase
     .from("trainings")
-    .select("owner_id, team_id, visibility")
+    .select("owner_id, team_id")
     .eq("id", trainingId)
     .maybeSingle();
   return data ? bearbeitungszielVon(data, userId) : null;

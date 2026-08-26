@@ -37,7 +37,6 @@ export default async function TrainingViewPage({
       {
         owner_id: training.ownerId,
         team_id: training.team?.id ?? null,
-        visibility: training.visibility,
       },
       user.id,
     );
