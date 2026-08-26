@@ -12,7 +12,6 @@ import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
 import { bildOrdnerFuer, ladeBearbeitungsziel } from "@/lib/training-zugriff";
 import {
   istEigeneFassungsDatei,
-  stempleHerkunft,
   kopiereBild,
   kopiereDiagrammVon,
   entferneStorageObjekt,
@@ -64,11 +63,6 @@ type Vorlage = {
   hauptteilkategorie: string | null;
   bild_url: string | null;
   diagramm: unknown;
-  source: "manual" | "user";
-  owner_id: string | null;
-  herkunft_name: string | null;
-  herkunft_typ: "manual" | "community" | "eigen" | null;
-  herkunft_datum: string | null;
 } & Record<string, unknown>;
 
 /** Die Bilddatei einer Fassung entfernen (Story 3 AK 13).
@@ -124,9 +118,8 @@ export async function createTraining(
 
 /** Eine sichtbare Bibliotheks-Übung als eigenständige Fassung ins Training
  *  übernehmen (Story 4). Die Fassung trägt die Inhalte der Vorlage zum
- *  Übernahmezeitpunkt, eine eigene Bild- und Diagrammkopie sowie einen
- *  unveränderlichen Herkunfts-Stempel; die Vorlage bleibt unberührt und hat
- *  danach keinen Einfluss mehr auf das Training.
+ *  Übernahmezeitpunkt sowie eine eigene Bild- und Diagrammkopie; die Vorlage
+ *  bleibt unberührt und hat danach keinen Einfluss mehr auf das Training.
  *
  *  Der Picker bleibt an den Trainingsteil (im Hauptteil an die Kategorie)
  *  gebunden und bietet nur Passendes an; die Prüfung hier ist der Guard gegen
@@ -201,7 +194,6 @@ export async function addTrainingExercise(
     ...inhaltFelder(ex),
     bild_url: bild.url,
     diagramm: kopiereDiagrammVon(ex.diagramm),
-    ...stempleHerkunft(ex, user.id),
   });
   if (error) {
     await entferneStorageObjekt(supabase, bild.pfad);
@@ -285,10 +277,6 @@ export async function veroeffentlicheTraining(
     supabase,
     trainingId,
     { art: "persoenlich", ownerId: user.id },
-    // Die Vorlage IST dieses Training, nur eingefroren — ein Herkunfts-Stempel
-    // auf den eigenen Namen wäre ein Selbstverweis. Eine geerbte Ur-Herkunft
-    // wandert weiter mit.
-    { herkunft: "erben" },
   );
   if (!kopie.ok) return { status: "error", error: kopie.error };
 

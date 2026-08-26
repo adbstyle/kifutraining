@@ -10,7 +10,6 @@ import type { ExerciseFormState } from "@/lib/actions/exercises";
 import { parseDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
 import {
   fassungUnvollstaendig,
-  stempleHerkunft,
   kopiereBild,
   userOrdner,
   kopiereDiagrammVon,
@@ -78,8 +77,7 @@ async function naechstePosition(
  *  Es gelten dieselben Inhalts- und Vollständigkeitsregeln wie für eine
  *  Bibliotheks-Übung (NFR 1) — deshalb dieselbe Parse-Funktion. Geschrieben wird
  *  ausschliesslich an dieser Fassung; die Vorlage und andere Fassungen bleiben
- *  unberührt. Die Herkunftsangabe wird nie mitgeschrieben (der DB-Trigger
- *  sichert das zusätzlich ab). */
+ *  unberührt. */
 export async function updateFassung(
   fassungId: string,
   _prev: ExerciseFormState,
@@ -183,9 +181,7 @@ export async function updateFassung(
  *  Zulässig ist jede für den USER sichtbare Fassung — auch aus einem fremden
  *  öffentlichen Training. Es entsteht eine gewöhnliche Trainer-Übung mit eigener
  *  Bild- und Diagrammkopie; eine Verknüpfung zur Fassung gibt es nicht, spätere
- *  Änderungen wirken in keine Richtung. Die Herkunft der Fassung wird
- *  unverändert übertragen, sodass die ursprüngliche Quelle auch an späteren
- *  Fassungen dieser Vorlage stehen bleibt. */
+ *  Änderungen wirken in keine Richtung. */
 export async function uebernehmeInBibliothek(
   fassungId: string,
 ): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
@@ -201,7 +197,7 @@ export async function uebernehmeInBibliothek(
     .select(
       `name, trainingsteil, hauptteilkategorie, kategorien, erscheinungsform, feldtyp,
        anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten,
-       bild_url, bild_quelle, diagramm, herkunft_name, herkunft_typ, herkunft_datum`,
+       bild_url, bild_quelle, diagramm`,
     )
     .eq("id", fassungId)
     .maybeSingle();
@@ -209,16 +205,6 @@ export async function uebernehmeInBibliothek(
 
   const mangel = fassungUnvollstaendig(f);
   if (mangel) return { ok: false, error: mangel };
-
-  // Fassungen tragen kein `source` — der vollständige Herkunfts-Stempel ist
-  // hier die einzige legale Eingabe für stempleHerkunft (die sonst wirft).
-  // Sauber abweisen statt mit rohem Fehler abzubrechen.
-  if (!(f.herkunft_name && f.herkunft_typ && f.herkunft_datum))
-    return {
-      ok: false,
-      error:
-        "Diese Übung trägt noch keine Herkunftsangabe und kann im Moment nicht übernommen werden. Bitte später erneut versuchen.",
-    };
 
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
   const uebungId = crypto.randomUUID();
@@ -239,8 +225,6 @@ export async function uebernehmeInBibliothek(
       owner_id: user.id,
       // Zunächst privat (PO-Entscheid): veröffentlicht wird bewusst separat.
       visibility: "private",
-      // Herkunft unverändert weitergeben — die ursprüngliche Quelle bleibt.
-      ...stempleHerkunft(f, user.id),
     })
     .select("slug")
     .single();

@@ -35,8 +35,7 @@ function Meta({ label, children }: { label: string; children: React.ReactNode })
    Durchführungs- (Client) wie Druck-Ansicht (Server) nutzbar.
 
    Beide Ansichten sind fürs Training auf dem Platz gedacht und zeigen darum
-   ausschliesslich Durchführungsrelevantes — keine Herkunftsangabe (PO-Entscheid
-   2026-08-22, Story 6 Out of Scope 1). */
+   ausschliesslich Durchführungsrelevantes. */
 export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem }) {
   const dur =
     teilTraegtDauer(item.trainingsteil) && item.durationMin != null

@@ -25,9 +25,6 @@ das persönliche Original bleibt unberührt, und spätere Änderungen wirken in 
 Dasselbe gilt umgekehrt beim Übernehmen eines Team-Trainings zu sich. Ein Training lässt sich
 auch direkt im Team anlegen; es gehört dann von Beginn an dem Team.
 
-Jede Kopie trägt eine Herkunftsangabe: woraus sie entstanden ist und seit wann sie im Team
-liegt. Bei Ketten bleibt die ursprüngliche Herkunft stehen, Zwischenkopien erscheinen nicht.
-
 Team-Trainings tauchen in der allgemeinen Trainingsübersicht nie auf — sie leben
 ausschliesslich im Team-Bereich. Umgekehrt zeigt der Team-Bereich keine persönlichen
 Trainings.

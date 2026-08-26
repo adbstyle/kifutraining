@@ -38,25 +38,13 @@ export type KopieErgebnis =
   | { ok: true; neueId: string }
   | { ok: false; error: string };
 
-/** Wie die Kopie zu ihrer Herkunft kommt.
- *
- *  `stempeln` (Standard) ist der Normalfall jeder echten Übernahme: die Kopie
- *  hält fest, woraus sie entstanden ist. `erben` reicht nur eine bereits
- *  vorhandene Ur-Herkunft weiter und stempelt sonst nichts — für das
- *  Veröffentlichen, wo Quelle und Kopie dasselbe Training sind und ein Stempel
- *  auf den eigenen Namen ein «basiert auf sich selbst» ergäbe. */
-export type HerkunftsArt = "stempeln" | "erben";
-
-export type KopieOptionen = { herkunft?: HerkunftsArt };
-
 /** Die Felder einer Fassung, die in die Kopie übergehen. Inhalt kommt aus
- *  `inhaltFelder`; hier stehen Einordnung, Reihenfolge, Dauer und der
- *  unveränderliche Herkunfts-Stempel, den die Kopie unverändert weiterträgt. */
+ *  `inhaltFelder`; hier stehen Einordnung, Reihenfolge und Dauer. */
 const FASSUNG_SELECT = `
   id, trainingsteil, hauptteilkategorie, position, duration_min,
   name, kategorien, erscheinungsform, feldtyp, anzahl_kinder, material,
   methodischer_fahrplan, aufbau, varianten, bild_quelle,
-  bild_url, diagramm, herkunft_name, herkunft_typ, herkunft_datum
+  bild_url, diagramm
 `;
 
 type QuellFassung = {
@@ -67,9 +55,6 @@ type QuellFassung = {
   duration_min: number | null;
   bild_url: string | null;
   diagramm: unknown;
-  herkunft_name: string | null;
-  herkunft_typ: string | null;
-  herkunft_datum: string | null;
 } & Record<string, unknown>;
 
 /** Eigentum, Sichtbarkeit und Bild-Ordner des Ziels — an einer Stelle, damit
@@ -95,11 +80,9 @@ function zielFelder(ziel: KopieZiel): {
 /** Kopiert ein ganzes Training samt aller Übungs-Fassungen mit eigenen Bild-
  *  und Diagrammkopien.
  *
- *  Herkunft: trägt die Quelle bereits eine, wird sie unverändert weitergereicht
- *  (die Ur-Herkunft bleibt auch bei Kopie-Ketten stehen), sonst entsteht ein
- *  neuer Stempel aus Name der Quelle + jetzt — ausser die Kopie soll bloss
- *  `erben` (siehe `HerkunftsArt`). Dasselbe Muster wie bei den Übungs-Fassungen;
- *  eine Personenangabe enthält der Stempel bewusst nicht.
+ *  Die Kopie hält nicht fest, woraus sie entstanden ist: Sie ist ab dem ersten
+ *  Moment eigenständig und frei änderbar, und ein Vermerk darauf, dass sie
+ *  einmal aus etwas anderem hervorging, sagte darüber nichts Brauchbares.
  *
  *  Bei einem Fehler werden bereits kopierte Bilder und die halbe Kopie wieder
  *  entfernt — es bleibt nie eine Teilkopie zurück. */
@@ -107,14 +90,13 @@ export async function kopiereTraining(
   supabase: SupabaseClient,
   quelleId: string,
   ziel: KopieZiel,
-  opts: KopieOptionen = {},
 ): Promise<KopieErgebnis> {
   const { spalten, ordner } = zielFelder(ziel);
 
   // Quelle lesen — die RLS lässt nur durch, was der Handelnde sehen darf.
   const { data: quelle } = await supabase
     .from("trainings")
-    .select("id, name, stufen, herkunft_name, herkunft_datum")
+    .select("id, name, stufen")
     .eq("id", quelleId)
     .maybeSingle();
   if (!quelle) return { ok: false, error: "Das Training ist nicht (mehr) verfügbar." };
@@ -131,12 +113,6 @@ export async function kopiereTraining(
       name: quelle.name,
       stufen: quelle.stufen ?? [],
       ...spalten,
-      // Ur-Herkunft weiterreichen, sonst frisch stempeln (ausser beim Erben).
-      herkunft_name:
-        quelle.herkunft_name ?? (opts.herkunft === "erben" ? null : quelle.name),
-      herkunft_datum:
-        quelle.herkunft_datum ??
-        (opts.herkunft === "erben" ? null : new Date().toISOString()),
     })
     .select("id")
     .single();
@@ -178,11 +154,6 @@ export async function kopiereTraining(
         ...inhaltFelder(f),
         bild_url: bild.url,
         diagramm: kopiereDiagrammVon(f.diagramm),
-        // Der Herkunfts-Stempel der Fassung ist unveränderlich und wandert
-        // unverändert mit — er zeigt weiter auf die ursprüngliche Übung.
-        herkunft_name: f.herkunft_name,
-        herkunft_typ: f.herkunft_typ,
-        herkunft_datum: f.herkunft_datum,
       })),
     );
     if (error) return abbrechen(error.message);

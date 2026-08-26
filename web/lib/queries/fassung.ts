@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Fahrplan } from "@/lib/queries/exercises";
-import { FASSUNG_INHALT_FELDER, type HerkunftTyp } from "@/lib/fassung";
+import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
 
 /** Eine Fassung zum Bearbeiten — im eigenen privaten Training oder in einem
@@ -24,7 +24,6 @@ export type FassungZumBearbeiten = {
   bildUrl: string | null;
   bildQuelle: "foto" | "diagramm" | null;
   diagramm: unknown;
-  herkunft: { name: string; typ: HerkunftTyp; datum: string } | null;
 };
 
 export async function getFassungZumBearbeiten(
@@ -46,7 +45,6 @@ export async function getFassungZumBearbeiten(
   // zur Compile-Zeit unbekannt, der typisierte Query-Parser kann ihn nicht
   // auswerten — gemappt wird unten ohnehin explizit.
   const select: string = `id, training_id, trainingsteil, hauptteilkategorie, ${INHALT},
-       herkunft_name, herkunft_typ, herkunft_datum,
        trainings!inner ( id, name, owner_id, team_id, visibility )`;
   const { data: roh, error } = await supabase
     .from("training_exercises")
@@ -77,9 +75,6 @@ export async function getFassungZumBearbeiten(
     training_id: string;
     trainingsteil: string;
     hauptteilkategorie: string | null;
-    herkunft_name: string | null;
-    herkunft_typ: string | null;
-    herkunft_datum: string | null;
     trainings: {
       id: string;
       name: string;
@@ -113,9 +108,5 @@ export async function getFassungZumBearbeiten(
     bildUrl: q.bild_url,
     bildQuelle: q.bild_quelle,
     diagramm: q.diagramm,
-    herkunft:
-      data.herkunft_name && data.herkunft_typ && data.herkunft_datum
-        ? { name: data.herkunft_name, typ: data.herkunft_typ as HerkunftTyp, datum: data.herkunft_datum }
-        : null,
   };
 }
