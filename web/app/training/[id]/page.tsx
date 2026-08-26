@@ -6,6 +6,7 @@ import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
 import { VorlageUebernehmenControl } from "@/components/training/VorlageUebernehmenControl";
+import { VorlageZurueckziehenButton } from "@/components/training/VorlageZurueckziehenButton";
 import { getTrainingView } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
@@ -97,6 +98,15 @@ export default async function TrainingViewPage({
               den Urheber selbst: die Kopie ist ein eigenes Trainingsobjekt. */}
           {user && training.visibility === "public" && (
             <VorlageUebernehmenControl vorlageId={training.id} teams={teams} />
+          )}
+          {/* Rückzugs-Pfad für Vorlagen ohne verlinktes Original — Alt-Bestand
+              aus der Zeit vor dem Kopie-Modell sowie verwaiste Kopien. Ohne ihn
+              käme der Urheber an seine eigene Vorlage nicht mehr heran: sie
+              steht in keiner eigenen Liste und ist eingefroren. Beim normalen
+              Weg über den Editor bleibt `VorlagenControl` zuständig; dass beide
+              Wege dann offenstehen, schadet nicht — sie tun dasselbe. */}
+          {user && training.visibility === "public" && training.ownerId === user.id && (
+            <VorlageZurueckziehenButton vorlageId={training.id} />
           )}
         </div>
       </header>

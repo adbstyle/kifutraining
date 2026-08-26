@@ -49,6 +49,10 @@ export function kurzeZeit(t: string | null): string | null {
  *  Tiebreaker, damit zwei gleich angesetzte Termine nicht bei jedem Laden die
  *  Plätze tauschen. */
 export async function getTeamPlan(teamId: string): Promise<TerminZeile[]> {
+  // Ungültige UUID würde die Query mit Fehler abbrechen; defensiv abfangen.
+  // Der Guard im Layout greift hier nicht — Layout und Page rendern parallel;
+  // die leere Liste verhindert den 500 vor dem Redirect.
+  if (!/^[0-9a-f-]{36}$/i.test(teamId)) return [];
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("training_termine")

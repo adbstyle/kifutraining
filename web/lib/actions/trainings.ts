@@ -303,6 +303,20 @@ export async function veroeffentlicheTraining(
   if (kopieGate.missing.length > 0)
     return verwerfen({ status: "incomplete", missing: kopieGate.missing });
 
+  /** Fehlermeldung für die Pfade NACH dem Löschen der bisherigen Vorlage.
+   *
+   *  Ab dort ist die alte Vorlage bereits weg, während die neue nie freigegeben
+   *  wurde: das Training ist also nicht mehr öffentlich, obwohl es das vorher
+   *  war. Eine blosse Fehlermeldung verschwiege genau diesen Zustandswechsel —
+   *  der Trainer bliebe im Glauben, seine Vorlage stünde weiter draussen. Gab
+   *  es vorher keine Vorlage, hat sich nichts geändert und die Meldung bleibt,
+   *  wie sie ist. */
+  const nachErsatz = (grund: string) =>
+    vorher?.vorlage_id
+      ? "Die bisherige Vorlage wurde bereits entfernt, das erneute Veröffentlichen ist" +
+        ` danach fehlgeschlagen — bitte veröffentliche das Training nochmals. Grund: ${grund}`
+      : grund;
+
   // Reihenfolge mit Bedacht: alte Vorlage weg → Verweis auf die neue → erst
   // dann freigeben. So entsteht eine öffentliche Zeile NIE ohne den Verweis,
   // über den sie sich zurückziehen lässt — eine unverlinkte Vorlage wäre
@@ -329,7 +343,7 @@ export async function veroeffentlicheTraining(
   if (linkFehler || !verlinkt)
     return verwerfen({
       status: "error",
-      error: linkFehler?.message ?? "Training nicht gefunden.",
+      error: nachErsatz(linkFehler?.message ?? "Training nicht gefunden."),
     });
 
   const { error: freigabeFehler } = await supabase
@@ -340,6 +354,14 @@ export async function veroeffentlicheTraining(
   // Das Löschen der Kopie räumt über `on delete set null` auch den Verweis ab.
   // Weist der DB-Trigger ab, ist das keine technische Panne, sondern dieselbe
   // Aussage wie das Gate — entsprechend übersetzt statt roh durchgereicht.
+  //
+  // Der incomplete-Fall bleibt hier bewusst ohne Zusatzhinweis: die realistische
+  // Unvollständigkeit fängt `kopieGate` oben ab, also VOR dem Löschen der alten
+  // Vorlage. Bis hierher kommt nur, was die frisch erstellte, private und
+  // nirgends verlinkte Kopie zwischen Gate und Freigabe unvollständig gemacht
+  // hätte — ihre ID kennt keine Oberfläche. Der Pfad ist Absicherung der
+  // Datenebene, kein Zustand, den ein Trainer erreicht; der bestehende Dialog
+  // benennt dort das Fehlende und genügt.
   if (freigabeFehler) {
     const marker = freigabeFehler.message.includes(GATE_MARKER)
       ? freigabeFehler.message.split(":").pop()?.trim()
@@ -347,7 +369,7 @@ export async function veroeffentlicheTraining(
     return verwerfen(
       marker
         ? { status: "incomplete", missing: [marker] }
-        : { status: "error", error: freigabeFehler.message },
+        : { status: "error", error: nachErsatz(freigabeFehler.message) },
     );
   }
 
@@ -387,6 +409,55 @@ export async function zieheVorlageZurueck(
 
   revalidatePath("/trainings");
   revalidiereTraining(trainingId);
+  return { ok: true };
+}
+
+/** Eine öffentliche Vorlage direkt an ihr selbst zurückziehen — ohne den Umweg
+ *  über ein privates Original.
+ *
+ *  Gedacht für Vorlagen, auf die KEIN privates Training per `vorlage_id` zeigt.
+ *  Zwei Wege führen dorthin:
+ *  · Alt-Bestand: Trainings, die vor dem Kopie-Modell direkt öffentlich
+ *    geschaltet wurden. Sie sind selbst die öffentliche Zeile, es gab nie ein
+ *    privates Original — der reguläre Rückzug über `zieheVorlageZurueck` findet
+ *    für sie nichts.
+ *  · Verwaiste Vorlagen: scheitert in `veroeffentlicheTraining` das Aufräumen
+ *    der halbfertigen Kopie, wird nur der Verweis geleert; die Zeile kann
+ *    öffentlich zurückbleiben.
+ *
+ *  In beiden Fällen ist der Urheber sonst ausgesperrt: die Vorlage taucht in
+ *  keiner eigenen Liste auf, ist eingefroren (keine Update-Policy) und ohne
+ *  Verweis auch nicht zurückziehbar — obwohl die Lösch-Policy es ihm erlaubt.
+ *
+ *  Zeigt ausnahmsweise doch ein privates Original hierher, ist das unschädlich:
+ *  `vorlage_id` hängt an einem `on delete set null`, der Verweis löst sich mit
+ *  der Löschung von selbst. */
+export async function zieheEigeneVorlageZurueck(
+  vorlageId: string,
+): Promise<TrainingActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+
+  const { data: vorlage } = await supabase
+    .from("trainings")
+    .select("owner_id, visibility")
+    .eq("id", vorlageId)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+  if (!vorlage) return { ok: false, error: "Vorlage nicht gefunden." };
+  // Nur der öffentliche Fall gehört hierher. Ein privates Training löscht man
+  // über den regulären Weg — der nennt auch seine Vorlage im Löschdialog.
+  if (vorlage.visibility !== "public")
+    return { ok: false, error: "Dieses Training ist nicht öffentlich." };
+
+  if (!(await loescheTrainingMitBildern(supabase, vorlageId)))
+    return { ok: false, error: "Die Vorlage liess sich nicht zurückziehen." };
+
+  revalidatePath("/trainings");
+  revalidiereTraining(vorlageId);
   return { ok: true };
 }
 
