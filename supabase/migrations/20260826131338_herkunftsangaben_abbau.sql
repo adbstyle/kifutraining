@@ -35,54 +35,20 @@
 -- bricht die Migration stattdessen sauber ab — der Deploy schlägt fehl und ist
 -- nach dem Aufräumen der Blocker-Session unverändert wiederholbar.
 --
--- Ganz nach vorn, nicht erst vor die DDL: schon die Bestandsaufnahme unten
--- liest die drei Tabellen und wartete ohne Schranke unbegrenzt, wenn
--- gleichzeitig eine fremde DDL auf ihnen läuft — etwa ein zweiter Deploy nach
--- zwei kurz aufeinanderfolgenden Merges nach `main`. Der Lauf soll von der
--- ersten Anweisung an schnell scheitern statt zu hängen.
+-- Ganz nach vorn als erste Anweisung: der Lauf soll von Beginn an schnell
+-- scheitern statt zu hängen, wenn gleichzeitig eine fremde DDL auf den drei
+-- Tabellen läuft — etwa ein zweiter Deploy nach zwei kurz aufeinanderfolgenden
+-- Merges nach `main`.
 --
 -- Bewusst ohne `local`: die CLI führt die Datei zwar atomar aus, aber nicht in
 -- einem Transaktions*block* im Sinne von Postgres. `set local` wirkt dort zwar,
 -- protokolliert aber bei jedem Deploy die irreführende Warnung «SET LOCAL can
 -- only be used in transaction blocks» (mit CLI 2.115.0 gemessen). Dafür nimmt
--- Abschnitt 5 die Schranke am Ende ausdrücklich zurück.
+-- die letzte Anweisung der Datei die Schranke ausdrücklich zurück.
 set lock_timeout = '3s';
 
 -- ----------------------------------------------------------------------------
--- 2) Bestandsaufnahme vor dem Abbau
--- ----------------------------------------------------------------------------
--- Belegt, was hier tatsächlich verschwindet (NFR 2: «als vollständig
--- nachweisbar»). Die Zeilen landen dauerhaft im Deploy-Log der GitHub Action
--- und sind nach dem Drop nicht mehr erhebbar.
-do $$
-declare
-  v_trainings_gesamt bigint;
-  v_trainings_mit    bigint;
-  v_te_gesamt        bigint;
-  v_te_mit           bigint;
-  v_ex_gesamt        bigint;
-  v_ex_mit           bigint;
-  v_ex_diagramm_mit  bigint;
-begin
-  select count(*), count(herkunft_name) into v_trainings_gesamt, v_trainings_mit
-    from trainings;
-  select count(*), count(herkunft_name) into v_te_gesamt, v_te_mit
-    from training_exercises;
-  select count(*), count(herkunft_name), count(diagramm_herkunft_name)
-    into v_ex_gesamt, v_ex_mit, v_ex_diagramm_mit
-    from exercises;
-
-  raise notice 'Herkunfts-Abbau: trainings % von % Zeilen mit Herkunft',
-    v_trainings_mit, v_trainings_gesamt;
-  raise notice 'Herkunfts-Abbau: training_exercises % von % Zeilen mit Herkunft',
-    v_te_mit, v_te_gesamt;
-  raise notice 'Herkunfts-Abbau: exercises % von % Zeilen mit Herkunft, % mit Diagramm-Herkunft',
-    v_ex_mit, v_ex_gesamt, v_ex_diagramm_mit;
-end;
-$$;
-
--- ----------------------------------------------------------------------------
--- 3) Die Unveränderlichkeits-Regel entfällt
+-- 2) Die Unveränderlichkeits-Regel entfällt
 -- ----------------------------------------------------------------------------
 -- Zuerst beide Trigger, dann die Funktion — ohne `cascade`, damit ein
 -- übersehener weiterer Verwender die Migration abbrechen liesse, statt still
@@ -92,7 +58,7 @@ drop trigger ex_herkunft_unveraenderlich on exercises;
 drop function herkunft_unveraenderlich();
 
 -- ----------------------------------------------------------------------------
--- 4) Die Spalten fallen (PC 4, NFR 3)
+-- 3) Die Spalten fallen (PC 4, NFR 3)
 -- ----------------------------------------------------------------------------
 -- Die zugehörigen CHECKs fallen automatisch mit ihrer Spalte und werden
 -- deshalb NICHT einzeln gedroppt:
@@ -122,12 +88,21 @@ alter table trainings
   drop column herkunft_datum;
 
 -- ----------------------------------------------------------------------------
--- 5) Selbstprüfung: nichts bleibt zurück (NFR 3)
+-- 4) Selbstprüfung: nichts bleibt zurück (NFR 2, NFR 3)
 -- ----------------------------------------------------------------------------
 -- Sucht in allen vier Formen, in denen ein Herkunfts-Artefakt überleben
 -- könnte, und bricht die Migration ab, wenn eines gefunden wird. Findet die
 -- Query nichts, liefert string_agg über null Zeilen NULL — genau das ist das
 -- grüne Ergebnis.
+--
+-- Sie ist zugleich der Nachweis, den NFR 2 verlangt: Weil ein Fund die ganze
+-- Datei zurückrollt, ist ein erfolgreicher Deploy die Aussage «kein Artefakt
+-- übrig» — es braucht keine mitgeschriebene Zahl daneben. Ein Zähl-Block, der
+-- den Bestand vorher meldet, stand hier zunächst; er ist wieder entfallen,
+-- weil `supabase db push` NOTICE-Meldungen nicht ausgibt (am Staging-Deploy
+-- vom 2026-08-26 gemessen: das Log kennt nur «Applying migration …» und
+-- «Finished»). Er hätte gerechnet und ins Leere geschrieben — genau der
+-- ungenutzte Baustein, den NFR 3 ausschliesst.
 do $$
 declare
   v_funde text;
