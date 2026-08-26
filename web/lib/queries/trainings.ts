@@ -360,6 +360,10 @@ const TEAM_LIST_SELECT = `${LIST_SELECT}, herkunft_name, herkunft_datum, trainin
  *  Trainings-Pool — sie gehören dem Team, nicht der Öffentlichkeit und keiner
  *  Person. Sichtbar sind sie nur Mitgliedern; das setzt die RLS durch. */
 export async function getTeamTrainings(teamId: string): Promise<TeamTrainingRow[]> {
+  // Ungültige UUID würde die Query mit Fehler abbrechen; defensiv abfangen.
+  // Der Guard im Layout greift hier nicht — Layout und Page rendern parallel;
+  // die leere Liste verhindert den 500 vor dem Redirect.
+  if (!/^[0-9a-f-]{36}$/i.test(teamId)) return [];
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("trainings")

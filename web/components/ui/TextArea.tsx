@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useId } from "react";
 import type { TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
@@ -12,13 +12,18 @@ export interface TextAreaProps
 /* M3 Text-Area (outlined, mehrzeilig) — natives <textarea>: Enter = Zeilenumbruch.
    Wächst mit dem Inhalt (CSS field-sizing) bis max. ~10 Zeilen, danach scrollt es.
    Schwebendes Label (top-aligned), Supporting-Text + Error-State. Gespeist aus
-   --field-*-Component-Tokens. Kein Hook -> in Server Components nutzbar. */
+   --field-*-Component-Tokens. */
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
   (
     { label, supportingText, error = false, id, className, rows = 3, ...props },
     ref,
   ) => {
-    const fid = id ?? `ta-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    // Feld-id aus React statt aus dem Label-Text: Dialoge halten ihre Felder auch
+    // im geschlossenen Zustand im DOM (natives <dialog>), zwei gleichzeitig
+    // gemountete Dialoge mit gleichem Label ergäben sonst dieselbe id — Label-Klick
+    // und Screenreader träfen das Feld im falschen Dialog.
+    const reactId = useId();
+    const fid = id ?? `ta-${reactId}`;
 
     return (
       <div className={className}>
