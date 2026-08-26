@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Plus,
@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Trash2,
   Pencil,
+  Users,
 } from "lucide-react";
 import {
   Card,
@@ -30,7 +31,8 @@ import { ExerciseThumb } from "./ExerciseThumb";
 import { InBibliothekButton } from "./InBibliothekButton";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
-import { TrainingVisibilityControl } from "./TrainingVisibilityControl";
+import { VorlagenControl } from "./VorlagenControl";
+import { InTeamStellenControl } from "./InTeamStellenControl";
 import {
   TRAININGSTEILE,
   HAUPTTEILKATEGORIEN,
@@ -50,17 +52,21 @@ import {
 } from "@/lib/actions/trainings";
 import type { TrainingsteilSlug, HauptteilkategorieSlug } from "@/lib/vocab";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings";
-
-const AUTO_PRIVATE_MSG =
-  "Das Training wurde auf privat gesetzt: ein öffentliches Training braucht Einleitung und Hauptteil belegt und mindestens eine Stufe.";
+import type { TeamUebersicht } from "@/lib/queries/teams";
 
 /* Trainings-Editor (Stories #10/#11/#12). Vier feste Trainingsteil-Abschnitte
    mit Übungs-Picker, Dauer-Erfassung, Umsortieren (Hoch/Runter) und Entfernen.
    Kopf: Name bearbeiten, Stufen setzen, Training löschen. Struktur-Änderungen
    frischen die Serverdaten auf; Dauern werden lokal überlagert. */
-export function TrainingEditor({ training }: { training: TrainingDetail }) {
+export function TrainingEditor({
+  training,
+  /** Die Teams des USERS — Ziele für „Ins Team stellen" (Team-Epic Story 5). */
+  teams = [],
+}: {
+  training: TrainingDetail;
+  teams?: TeamUebersicht[];
+}) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
   // Offener Picker: Trainingsteil und — im Hauptteil — die Unterkategorie.
   const [open, setOpen] = useState<{
@@ -75,13 +81,6 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
   const [nameError, setNameError] = useState<string | undefined>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [mismatch, setMismatch] = useState<{ id: string; name: string }[] | null>(null);
-
-  // Das Bearbeiten einer Fassung läuft über eine eigene Seite und kehrt per
-  // Weiterleitung zurück. Hat die DB-Regel das Training dabei auf privat
-  // gesetzt, trägt die Rückkehr-Adresse den Hinweis — einmalig anzeigen.
-  useEffect(() => {
-    if (searchParams.get("privat") === "1") setNotice(AUTO_PRIVATE_MSG);
-  }, [searchParams]);
 
   const dur = (item: TrainingExerciseItem) =>
     item.id in durations ? durations[item.id] : item.durationMin;
@@ -102,9 +101,8 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
 
   function remove(item: TrainingExerciseItem) {
     startTransition(async () => {
-      const r = await removeTrainingExercise(item.id);
+      await removeTrainingExercise(item.id);
       router.refresh();
-      if (r.becamePrivate) setNotice(AUTO_PRIVATE_MSG);
     });
   }
 
@@ -113,7 +111,6 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
     startTransition(async () => {
       const r = await setTrainingStufen(training.id, next);
       router.refresh();
-      if (r.becamePrivate) setNotice(AUTO_PRIVATE_MSG);
       if (r.mismatched && r.mismatched.length > 0) setMismatch(r.mismatched);
     });
   }
@@ -143,9 +140,9 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
 
   // Auffangen trägt keine Dauer und zählt weder zur Summe noch zum
   // „ohne Dauer"-Hinweis.
-  // Was zum Öffentlich-Schalten fehlt (Story 8 AK 3): so erscheint die
-  // Tragweite-Bestätigung nur für ein veröffentlichbares Training. Die RPC
-  // prüft es serverseitig erneut.
+  // Was zum Veröffentlichen fehlt: so erscheint die Tragweite-Bestätigung nur
+  // für ein veröffentlichbares Training. Die Action prüft es serverseitig
+  // erneut.
   const fehlendeVoraussetzungen = [
     stufen.length === 0 ? "stufe" : null,
     training.exercises.some((e) => e.trainingsteil === "einleitung") ? null : "einleitung",
@@ -179,19 +176,36 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
                 <Pencil size={16} strokeWidth={2} aria-hidden />
               </button>
             </div>
-            <Badge
-              tone={training.visibility === "public" ? "oeffentlich" : "entwurf"}
-              className="mt-2"
-            >
-              {training.visibility === "public" ? "Community" : "✎ Privat"}
-            </Badge>
+            {/* Team-Training oder persönliches? Die Marke sagt, wem es gehört —
+                und bei persönlichen zusätzlich, ob es davon eine öffentliche
+                Vorlage gibt. */}
+            {training.team ? (
+              <Link
+                href={`/team/${training.team.id}`}
+                className="focus-ring mt-2 inline-flex items-center gap-1.5 rounded-[4px] type-label-medium text-on-surface-variant hover:text-primary"
+              >
+                <Users size={16} strokeWidth={2} aria-hidden />
+                Team-Training von {training.team.name}
+              </Link>
+            ) : (
+              <Badge tone={training.vorlageId ? "oeffentlich" : "entwurf"} className="mt-2">
+                {training.vorlageId ? "Vorlage aktiv" : "✎ Privat"}
+              </Badge>
+            )}
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
-            <TrainingVisibilityControl
-              trainingId={training.id}
-              visibility={training.visibility}
-              fehlend={fehlendeVoraussetzungen}
-            />
+            {/* Veröffentlichen und Ins-Team-Stellen gibt es nur für das eigene
+                Training: ein Team-Training gehört dem Team, nicht einer Person. */}
+            {!training.team && (
+              <>
+                <VorlagenControl
+                  trainingId={training.id}
+                  vorlageId={training.vorlageId}
+                  fehlend={fehlendeVoraussetzungen}
+                />
+                <InTeamStellenControl trainingId={training.id} teams={teams} />
+              </>
+            )}
             <button
               type="button"
               onClick={() => setDeleteOpen(true)}
@@ -478,6 +492,14 @@ export function TrainingEditor({ training }: { training: TrainingDetail }) {
           Das Training „{training.name}" und alle seine Übungszuordnungen werden
           unwiderruflich gelöscht.
         </p>
+        {/* Die Vorlage lässt sich nur über dieses Training zurückziehen —
+            bliebe sie stehen, käme niemand mehr an sie heran. */}
+        {training.vorlageId && (
+          <p className="mt-3">
+            Die veröffentlichte Vorlage wird dabei zurückgezogen. Kopien, die
+            andere bereits übernommen haben, bleiben bestehen.
+          </p>
+        )}
       </Dialog>
 
       <Snackbar

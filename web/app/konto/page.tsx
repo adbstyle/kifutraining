@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { LogOut, Bookmark, ChevronRight } from "lucide-react";
 import { Card, Button } from "@/components/ui";
 import { KontoClient } from "./KontoClient";
+import { AnzeigenameForm } from "./AnzeigenameForm";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
+import { getMeinAnzeigename, hatEigenenAnzeigenamen } from "@/lib/queries/profil";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +16,10 @@ export default async function KontoPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const [anzeigeName, eigenerName] = await Promise.all([
+    getMeinAnzeigename(),
+    hatEigenenAnzeigenamen(),
+  ]);
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
@@ -31,6 +37,15 @@ export default async function KontoPage() {
           </Button>
         </form>
       </header>
+
+      {anzeigeName && (
+        <Card className="mb-4 p-6">
+          <h2 className="type-title-large text-on-surface">Anzeigename</h2>
+          <div className="mt-2">
+            <AnzeigenameForm aktuell={anzeigeName} eigen={eigenerName} />
+          </div>
+        </Card>
+      )}
 
       <Link
         href="/?mine=1"

@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
-import { Pencil, Globe, Lock, Trash2, MoreVertical } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Pencil, Globe, Lock, Trash2 } from "lucide-react";
 import {
   Button,
   IconButton,
   IconButtonLink,
   Tooltip,
-  Menu,
+  OverflowMenu,
   Dialog,
 } from "@/components/ui";
 import { setVisibility, deleteExercise } from "@/lib/actions/exercises";
@@ -35,9 +35,7 @@ export function OwnerActions({
   visibility: "public" | "private";
   favoriteSlot?: ReactNode;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const isPublic = visibility === "public";
   const next = isPublic ? "private" : "public";
   const visibilityLabel = isPublic ? "Auf privat setzen" : "Öffentlich schalten";
@@ -67,33 +65,16 @@ export function OwnerActions({
       {favoriteSlot}
 
       {/* ⋮-Überlaufmenü — Löschen liegt hier statt offen in der Reihe. */}
-      <div className="relative">
-        <Tooltip label="Weitere Aktionen">
-          <IconButton
-            ref={menuTriggerRef}
-            icon={MoreVertical}
-            label="Weitere Aktionen"
-            size="sm"
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((o) => !o)}
-          />
-        </Tooltip>
-        <Menu
-          open={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          triggerRef={menuTriggerRef}
-          className="right-0"
-          items={[
-            {
-              label: "Löschen",
-              icon: Trash2,
-              danger: true,
-              onSelect: () => setConfirmOpen(true),
-            },
-          ]}
-        />
-      </div>
+      <OverflowMenu
+        items={[
+          {
+            label: "Löschen",
+            icon: Trash2,
+            danger: true,
+            onSelect: () => setConfirmOpen(true),
+          },
+        ]}
+      />
 
       <Dialog
         open={confirmOpen}

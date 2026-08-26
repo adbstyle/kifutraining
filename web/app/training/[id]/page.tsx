@@ -5,7 +5,11 @@ import { Breadcrumbs, KategorieChip, ButtonLink, HerkunftsAngabe } from "@/compo
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
+import { VorlageUebernehmenControl } from "@/components/training/VorlageUebernehmenControl";
+import { VorlageZurueckziehenButton } from "@/components/training/VorlageZurueckziehenButton";
 import { getTrainingView } from "@/lib/queries/trainings";
+import { getMeineTeams } from "@/lib/queries/teams";
+import { bearbeitungszielVon } from "@/lib/training-zugriff";
 import { createClient } from "@/lib/supabase/server";
 import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
 
@@ -28,7 +32,19 @@ export default async function TrainingViewPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isOwner = !!user && training.ownerId === user.id;
+  const darfBearbeiten =
+    !!user &&
+    !!bearbeitungszielVon(
+      {
+        owner_id: training.ownerId,
+        team_id: training.team?.id ?? null,
+        visibility: training.visibility,
+      },
+      user.id,
+    );
+  // Übernahme-Ziele: nur bei öffentlichen Vorlagen und nur angemeldet nötig.
+  const teams =
+    user && training.visibility === "public" ? await getMeineTeams() : [];
 
   const sections = groupByTeil(training.exercises).filter((s) => s.items.length > 0);
   const total = sections.reduce((a, s) => a + s.sum, 0);
@@ -45,6 +61,18 @@ export default async function TrainingViewPage({
 
       <header className="mb-6 mt-4">
         <h1 className="type-headline-large text-on-surface">{training.name}</h1>
+        {/* Urheber: der Anzeigename, nie die E-Mail. Bei anonymisierten
+            Vorlagen (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
+        {training.urheber && (
+          <p className="mt-1 type-body-medium text-on-surface-variant">
+            von {training.urheber}
+          </p>
+        )}
+        {training.herkunft && (
+          <p className="mt-1 type-body-small text-on-surface-variant">
+            basiert auf {training.herkunft.name}
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
@@ -64,10 +92,26 @@ export default async function TrainingViewPage({
             <Printer size={18} strokeWidth={2} aria-hidden />
             Drucken
           </ButtonLink>
-          {isOwner && (
+          {/* Bearbeiten nur am eigenen privaten Training bzw. im eigenen Team;
+              eine veröffentlichte Vorlage ist eingefroren (Story 14). */}
+          {darfBearbeiten && (
             <ButtonLink href={`/training/${training.id}/edit`} variant="text" size="sm">
               Bearbeiten
             </ButtonLink>
+          )}
+          {/* Vorlage übernehmen (Story 11) — für alle Angemeldeten, auch für
+              den Urheber selbst: die Kopie ist ein eigenes Trainingsobjekt. */}
+          {user && training.visibility === "public" && (
+            <VorlageUebernehmenControl vorlageId={training.id} teams={teams} />
+          )}
+          {/* Rückzugs-Pfad für Vorlagen ohne verlinktes Original — Alt-Bestand
+              aus der Zeit vor dem Kopie-Modell sowie verwaiste Kopien. Ohne ihn
+              käme der Urheber an seine eigene Vorlage nicht mehr heran: sie
+              steht in keiner eigenen Liste und ist eingefroren. Beim normalen
+              Weg über den Editor bleibt `VorlagenControl` zuständig; dass beide
+              Wege dann offenstehen, schadet nicht — sie tun dasselbe. */}
+          {user && training.visibility === "public" && training.ownerId === user.id && (
+            <VorlageZurueckziehenButton vorlageId={training.id} />
           )}
         </div>
       </header>

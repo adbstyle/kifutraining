@@ -12,6 +12,7 @@ import {
   fassungUnvollstaendig,
   stempleHerkunft,
   kopiereBild,
+  userOrdner,
   kopiereDiagrammVon,
   entferneStorageObjekt,
   inhaltFelder,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
 import { userSlug } from "@/lib/slug";
+import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 
 export type SaveFassungResult = { ok: true } | { ok: false; error: string };
 
@@ -33,16 +35,22 @@ async function ladeFassung(
   const { data } = await supabase
     .from("training_exercises")
     .select(
-      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, visibility )",
+      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, visibility )",
     )
     .eq("id", fassungId)
     .maybeSingle();
   if (!data) return null;
   const training = data.trainings as unknown as {
     owner_id: string | null;
+    team_id: string | null;
     visibility: string;
   } | null;
-  return training?.owner_id === userId ? { ...data, visibility: training.visibility } : null;
+  if (!training) return null;
+
+  // Die Zeile ist bereits geladen — die Bearbeitungsregel kommt aus der
+  // gemeinsamen Quelle, statt sie hier ein zweites Mal zu formulieren.
+  const ziel = bearbeitungszielVon(training, userId);
+  return ziel ? { ...data, ziel } : null;
 }
 
 /** Die nächste freie Position im Zielabschnitt. Eine umgeordnete Fassung reiht
@@ -123,7 +131,9 @@ export async function updateFassung(
   if (neuesBild) {
     const invalid = storedImageError(datei.type, datei.size);
     if (invalid) return { status: "error", errors: { bild: invalid } };
-    neuPfad = `user/${user.id}/${fassungId}.${STORED_IMAGE_TYPES[datei.type]}`;
+    // Bei Team-Trainings in den Team-Ordner, damit jedes Mitglied das Bild
+    // ersetzen darf (Story 6 NFR 2). Dateiname = Fassungs-ID, wie überall.
+    neuPfad = `${bildOrdnerFuer(fassung.ziel)}/${fassungId}.${STORED_IMAGE_TYPES[datei.type]}`;
     const { error } = await supabase.storage
       .from(STORAGE_BUCKET)
       .upload(neuPfad, new Uint8Array(await datei.arrayBuffer()), {
@@ -163,24 +173,8 @@ export async function updateFassung(
   )
     await supabase.storage.from(STORAGE_BUCKET).remove([altPfad]);
 
-  // Leert ein Einordnungswechsel die Einleitung oder den Hauptteil, setzt die
-  // DB-Regel das Training auf privat (Story 5 PC 3) — nur dieser Fall kann die
-  // Sichtbarkeit kippen, also wird auch nur dann nachgelesen. Den Vorher-Wert
-  // liefert ladeFassung mit.
-  let wurdePrivat = false;
-  if (wechsel && fassung.visibility === "public") {
-    const { data: nachher } = await supabase
-      .from("trainings")
-      .select("visibility")
-      .eq("id", fassung.training_id)
-      .maybeSingle();
-    wurdePrivat = nachher?.visibility === "private";
-  }
-
   revalidiereTraining(fassung.training_id, fassungId);
-  redirect(
-    `/training/${fassung.training_id}/edit?bearbeitet=1${wurdePrivat ? "&privat=1" : ""}`,
-  );
+  redirect(`/training/${fassung.training_id}/edit?bearbeitet=1`);
 }
 
 /** Eine Fassung als eigene, zunächst private Vorlage in die Bibliothek
@@ -228,7 +222,7 @@ export async function uebernehmeInBibliothek(
 
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
   const uebungId = crypto.randomUUID();
-  const bild = await kopiereBild(supabase, f.bild_url, user.id, uebungId);
+  const bild = await kopiereBild(supabase, f.bild_url, userOrdner(user.id), uebungId);
   if (bild.error) return { ok: false, error: bild.error };
 
   const { data: angelegt, error } = await supabase

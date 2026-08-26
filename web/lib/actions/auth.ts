@@ -6,7 +6,12 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
-import { istEigeneFassungsDatei } from "@/lib/fassung";
+import { eigeneBildPfade } from "@/lib/fassung";
+import {
+  raeumeGeloeschteFassungsBilder,
+  teamBildKandidaten,
+  type BildKandidat,
+} from "@/lib/storage-aufraeumen";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PW = 8;
@@ -155,6 +160,26 @@ export async function signOut() {
   redirect("/");
 }
 
+/** Die Fassungen in den Team-Trainings dieses Kontos — Kandidaten fürs
+ *  Aufräumen, falls die Konto-Löschung ein Team mit auflöst.
+ *
+ *  Ob sie wirklich fallen, entscheidet erst die auth.users-Kaskade: tritt
+ *  jemand zwischenzeitlich bei, lebt das Team weiter. Darum nur einsammeln —
+ *  gelöscht wird hinterher und nur, was tatsächlich verschwunden ist. */
+async function teamFassungsKandidaten(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  uid: string,
+): Promise<BildKandidat[]> {
+  const { data: meine } = await supabase
+    .from("team_members")
+    .select("team_id")
+    .eq("user_id", uid);
+  return teamBildKandidaten(
+    supabase,
+    (meine ?? []).map((m) => m.team_id),
+  );
+}
+
 /** Konto löschen (Story 9). Öffentliche Übungen bleiben anonymisiert erhalten,
  *  private werden samt Feld-Diagramm gelöscht, danach der Auth-User. */
 export async function deleteAccount() {
@@ -183,18 +208,19 @@ export async function deleteAccount() {
     .eq("trainings.owner_id", uid)
     .eq("trainings.visibility", "private");
 
+  // Die Team-Trainings des Kontos: löst seine Löschung ein Team auf (es war
+  // allein darin), verschwinden ihre Zeilen über die auth.users-Kaskade — die
+  // Bilddateien nicht. Hinterher darf sie niemand mehr löschen, weil die
+  // Storage-Policy eine bestehende Mitgliedschaft verlangt. Nur einsammeln:
+  // ob das Team wirklich fällt, steht erst nach der Kaskade fest.
+  const teamKandidaten = await teamFassungsKandidaten(supabase, uid);
+
   // Gelöscht wird nur die eigene Bildkopie der Fassung (Dateiname = ihre ID),
   // nie eine Datei, auf die eine bild_url sonst noch zeigen könnte — derselbe
   // Guard wie in allen anderen Löschwegen.
-  const fassungsPfade = (fassungen ?? [])
-    .map((f) => ({ id: f.id, pfad: bildUrlToPath(f.bild_url) }))
-    .filter((f): f is { id: string; pfad: string } => !!f.pfad)
-    .filter((f) => istEigeneFassungsDatei(f.pfad, f.id))
-    .map((f) => f.pfad);
-
   const paths = [
     ...(priv ?? []).map((p) => bildUrlToPath(p.bild_url)).filter((p): p is string => !!p),
-    ...fassungsPfade,
+    ...eigeneBildPfade(fassungen ?? []),
   ];
 
   // Daten-Teil: anonymisiert öffentliche, löscht private Übungen + eigene Trainings.
@@ -213,6 +239,11 @@ export async function deleteAccount() {
   }
   const admin = createAdminClient();
   await admin.auth.admin.deleteUser(uid);
+
+  // Jetzt erst die Team-Bilder: die Kaskade ist durch, und geräumt wird nur,
+  // was sie wirklich mitgenommen hat. Ein Team, dem inzwischen jemand
+  // beigetreten ist, behält seinen Bestand samt Bildern.
+  await raeumeGeloeschteFassungsBilder(teamKandidaten);
 
   revalidatePath("/");
   redirect("/?account_deleted=1");
