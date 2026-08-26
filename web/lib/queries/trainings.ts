@@ -16,13 +16,6 @@ import { kurzeZeit } from "@/lib/queries/termine";
  * eine Übung im lesbaren Training unsichtbar sein konnte, gibt es nicht mehr.
  */
 
-/** Woraus eine Fassung entstanden ist — unveränderlich, reine Angabe. */
-export type Herkunft = {
-  name: string;
-  typ: "manual" | "community" | "eigen";
-  datum: string;
-};
-
 export type TrainingExerciseItem = {
   /** training_exercises.id (die Zuordnung, also die Fassung selbst). */
   id: string;
@@ -42,7 +35,6 @@ export type TrainingExerciseItem = {
   bildUrl: string | null;
   bildQuelle: "foto" | "diagramm" | null;
   diagramm: unknown;
-  herkunft: Herkunft | null;
 };
 
 export type TrainingDetail = {
@@ -54,8 +46,6 @@ export type TrainingDetail = {
   /** Die aktive öffentliche Vorlage dieses Trainings, falls veröffentlicht
    *  (Story 14). Nur am persönlichen Original gesetzt, nie an der Vorlage. */
   vorlageId: string | null;
-  /** Woraus die Kopie entstanden ist — Name + Zeitpunkt, ohne Person. */
-  herkunft: { name: string; datum: string } | null;
   /** Gehört das Training einem Team? Dann steht hier dessen Name (Story 6). */
   team: { id: string; name: string } | null;
   /** Anzeigename des Urhebers; `null` bei anonymisierten Vorlagen (Story 15). */
@@ -73,11 +63,10 @@ const INHALT_FELDER = [...FASSUNG_INHALT_FELDER, "bild_url", "diagramm"].join(",
 
 const PE_SELECT = `
   id, trainingsteil, hauptteilkategorie, position, duration_min,
-  herkunft_name, herkunft_typ, herkunft_datum,
   ${INHALT_FELDER}
 `;
 
-const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, team_id, vorlage_id, herkunft_name, herkunft_datum, urheber, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
+const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, team_id, vorlage_id, urheber, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
 
 /** Die Inhaltsfelder, wie sie aus der Zuordnung zurückkommen. */
 type RawInhalt = {
@@ -100,9 +89,6 @@ type RawTrainingExercise = RawInhalt & {
   hauptteilkategorie: string | null;
   position: number;
   duration_min: number | null;
-  herkunft_name: string | null;
-  herkunft_typ: "manual" | "community" | "eigen" | null;
-  herkunft_datum: string | null;
 };
 type RawTraining = {
   id: string;
@@ -112,8 +98,6 @@ type RawTraining = {
   stufen: string[];
   team_id: string | null;
   vorlage_id: string | null;
-  herkunft_name: string | null;
-  herkunft_datum: string | null;
   urheber: string | null;
   created_at: string;
   updated_at: string;
@@ -147,10 +131,6 @@ function mapTraining(raw: RawTraining): TrainingDetail {
         bildUrl: te.bild_url,
         bildQuelle: te.bild_quelle,
         diagramm: te.diagramm,
-        herkunft:
-          te.herkunft_name && te.herkunft_typ && te.herkunft_datum
-            ? { name: te.herkunft_name, typ: te.herkunft_typ, datum: te.herkunft_datum }
-            : null,
       };
     })
     // Sortierung: Trainingsteil-Reihenfolge, im Hauptteil zusätzlich nach
@@ -170,10 +150,6 @@ function mapTraining(raw: RawTraining): TrainingDetail {
     visibility: raw.visibility,
     stufen: sortStufen(raw.stufen ?? []),
     vorlageId: raw.vorlage_id,
-    herkunft:
-      raw.herkunft_name && raw.herkunft_datum
-        ? { name: raw.herkunft_name, datum: raw.herkunft_datum }
-        : null,
     team: raw.team_id ? { id: raw.team_id, name: raw.teams?.name ?? "Team" } : null,
     urheber: raw.urheber ?? null,
     createdAt: raw.created_at,
@@ -339,9 +315,8 @@ export async function getTrainingPool(
 // ── Team-Trainings (Team-Epic Story 5) ───────────────────────────────────────
 
 /** Ein Team-Training im Bestand des Teams. Wie eine Pool-Zeile, zusätzlich mit
- *  der Herkunft — «basiert auf …» sagt, woraus die Kopie entstanden ist. */
+ *  dem Termin, falls es angesetzt ist. */
 export type TeamTrainingRow = TrainingListRow & {
-  herkunft: { name: string; datum: string } | null;
   /** Der Termin dieses Trainings, falls es angesetzt ist. Höchstens einer je
    *  Training — eine weitere Einheit entsteht als Kopie (Story 8). Beginn, Ort
    *  und Bemerkung dienen als Vorbelegung beim erneuten Ansetzen, damit der
@@ -354,7 +329,7 @@ export type TeamTrainingRow = TrainingListRow & {
   } | null;
 };
 
-const TEAM_LIST_SELECT = `${LIST_SELECT}, herkunft_name, herkunft_datum, training_termine ( id, beginn, ort, bemerkung )`;
+const TEAM_LIST_SELECT = `${LIST_SELECT}, training_termine ( id, beginn, ort, bemerkung )`;
 
 /** Der Trainingsbestand eines Teams. Team-Trainings erscheinen NIE im
  *  Trainings-Pool — sie gehören dem Team, nicht der Öffentlichkeit und keiner
@@ -383,8 +358,6 @@ export async function getTeamTrainings(teamId: string): Promise<TeamTrainingRow[
       bemerkung: string | null;
     };
     const r = raw as unknown as RawListTraining & {
-      herkunft_name: string | null;
-      herkunft_datum: string | null;
       // PostgREST erkennt die UNIQUE-Bedingung auf `training_id` und liefert
       // den Termin deshalb als EIN Objekt statt als Liste. Beide Formen
       // abfangen: eine spätere Schema-Änderung soll hier keinen stillen
@@ -396,10 +369,6 @@ export async function getTeamTrainings(teamId: string): Promise<TeamTrainingRow[
       : r.training_termine;
     return {
       ...mapListRow(r),
-      herkunft:
-        r.herkunft_name && r.herkunft_datum
-          ? { name: r.herkunft_name, datum: r.herkunft_datum }
-          : null,
       termin: termin
         ? {
             id: termin.id,

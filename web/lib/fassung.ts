@@ -6,71 +6,6 @@ import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { kopiereDiagramm, parseDiagramm } from "@/lib/diagramm";
 import type { createClient } from "@/lib/supabase/server";
 
-/** Woraus eine Fassung entstanden ist. Reine Angabe ohne Fremdschlüssel: sie
- *  überlebt das Verschwinden des Originals und ist unveränderlich. */
-export type Herkunft = {
-  herkunft_name: string;
-  herkunft_typ: HerkunftTyp;
-  herkunft_datum: string;
-};
-
-export type HerkunftTyp = "manual" | "community" | "eigen";
-
-/** Die Felder einer Quelle, die zum Stempeln der Herkunft nötig sind. Deckt
- *  sowohl Bibliotheks-Übungen als auch Fassungen ab — beide können Quelle sein
- *  (Übernehmen ins Training bzw. in die Bibliothek). */
-export type HerkunftsQuelle = {
-  name: string;
-  /** Nur Bibliotheks-Übungen tragen eine Quelle; Fassungen erben sie nicht. */
-  source?: "manual" | "user" | null;
-  owner_id?: string | null;
-  herkunft_name?: string | null;
-  herkunft_typ?: HerkunftTyp | null;
-  herkunft_datum?: string | null;
-};
-
-/** Die Herkunft für eine neue Kopie bestimmen.
- *
- *  Trägt die Quelle selbst schon eine Herkunft, wird sie unverändert
- *  weitergegeben — bei einer Kopie einer Kopie bleibt so die ursprüngliche
- *  Herkunft stehen (Erfolgskriterium 5). Erst wenn die Quelle ein Original ist,
- *  entsteht ein neuer Stempel.
- *
- *  Der Typ sagt, aus welchem Bestand das Original kam; eine Personenangabe
- *  enthält er bewusst nicht. */
-export function stempleHerkunft(quelle: HerkunftsQuelle, userId: string): Herkunft {
-  if (quelle.herkunft_name && quelle.herkunft_typ && quelle.herkunft_datum) {
-    return {
-      herkunft_name: quelle.herkunft_name,
-      herkunft_typ: quelle.herkunft_typ,
-      herkunft_datum: quelle.herkunft_datum,
-    };
-  }
-  return {
-    herkunft_name: quelle.name,
-    herkunft_typ: herkunftsTyp(quelle, userId),
-    herkunft_datum: new Date().toISOString(),
-  };
-}
-
-/** Aus welchem Bestand stammt das Original? Manual-Übungen sind der kuratierte
- *  Bestand; alles andere unterscheidet sich danach, ob es dem Handelnden selbst
- *  gehört.
- *
- *  Fehlt `source`, bricht das laut ab: ohne dieses Feld liesse sich der Typ nur
- *  raten, und das Ergebnis wäre eine plausibel aussehende, aber falsche
- *  Herkunftsangabe — die sich später nicht mehr korrigieren lässt, weil der
- *  Stempel unveränderlich ist. Ein Aufrufer, der die Quelle liest, muss `source`
- *  mitselektieren. */
-function herkunftsTyp(quelle: HerkunftsQuelle, userId: string): HerkunftTyp {
-  if (!quelle.source)
-    throw new Error(
-      "stempleHerkunft: Die Quelle trägt keine eigene Herkunft, dann ist `source` zum Ableiten des Typs erforderlich.",
-    );
-  if (quelle.source === "manual") return "manual";
-  return quelle.owner_id === userId ? "eigen" : "community";
-}
-
 /** Die inhaltlichen Felder, die eine Fassung von ihrer Vorlage übernimmt.
  *  Bewusst NICHT dabei: slug, source, owner_id, visibility (Bibliotheks-
  *  Belange) sowie die Einordnung, die der Aufrufer setzt. */
@@ -88,7 +23,7 @@ export const FASSUNG_INHALT_FELDER = [
 ] as const;
 
 /** Die Spaltenliste, mit der eine Vorlage für das Kopieren gelesen wird —
- *  Inhalte, Bild/Diagramm und die Felder für den Herkunfts-Stempel. Die
+ *  Inhalte sowie Bild und Diagramm. Die
  *  Inhaltsfelder kommen aus derselben Konstante wie das Kopieren selbst, damit
  *  ein neues Übungsfeld nicht gelesen-aber-nicht-kopiert (oder umgekehrt)
  *  enden kann. */
@@ -99,11 +34,6 @@ export const VORLAGE_SELECT = [
   ...FASSUNG_INHALT_FELDER,
   "bild_url",
   "diagramm",
-  "source",
-  "owner_id",
-  "herkunft_name",
-  "herkunft_typ",
-  "herkunft_datum",
 ].join(", ");
 
 /** Die Dateiendung eines Storage-Pfads (ohne Punkt), mit Rückfall auf `png`.

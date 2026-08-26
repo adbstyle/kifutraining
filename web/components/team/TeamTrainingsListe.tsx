@@ -7,7 +7,6 @@ import {
   CalendarCheck,
   CalendarPlus,
   Clock,
-  CornerDownRight,
   Download,
   ListChecks,
   Trash2,
@@ -29,16 +28,9 @@ import { erstelleTermin, setzeErneutAn, type TerminFelder } from "@/lib/actions/
 import { formatDuration } from "@/lib/training";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
 
-function datumKurz(iso: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime())
-    ? ""
-    : d.toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
-
 /* Der Trainingsbestand eines Teams (Story 5).
-   Je Eintrag: die Herkunft der Kopie, „Zu mir übernehmen" (erzeugt eine
-   persönliche Kopie) und „Entfernen" (nimmt es dem ganzen Team weg). */
+   Je Eintrag: „Zu mir übernehmen" (erzeugt eine persönliche Kopie) und
+   „Entfernen" (nimmt es dem ganzen Team weg). */
 export function TeamTrainingsListe({
   teamId,
   trainings,
@@ -131,21 +123,6 @@ export function TeamTrainingsListe({
                 <h3 className="type-title-medium text-on-surface transition-colors group-hover:text-primary">
                   {t.name}
                 </h3>
-                {t.herkunft && (
-                  <p className="mt-1 flex items-start gap-1.5 type-body-small text-on-surface-variant">
-                    <CornerDownRight
-                      size={14}
-                      strokeWidth={2}
-                      className="mt-0.5 shrink-0"
-                      aria-hidden
-                    />
-                    <span>
-                      basiert auf{" "}
-                      <span className="text-on-surface">{t.herkunft.name}</span>, seit{" "}
-                      {datumKurz(t.herkunft.datum)} im Team
-                    </span>
-                  </p>
-                )}
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 type-label-medium text-on-surface-variant">
                   <span className="inline-flex items-center gap-1.5">
                     <ListChecks size={15} strokeWidth={2} aria-hidden />

@@ -164,16 +164,10 @@ export async function setzeErneutAn(
     .maybeSingle();
   if (!quelle?.team_id) return { ok: false, error: "Team-Training nicht gefunden." };
 
-  // Herkunft nur erben, nicht stempeln: die neue Einheit IST dasselbe Training
-  // zu einem neuen Datum, nicht die Übernahme eines fremden. Ein frischer
-  // Stempel trüge den Namen der Quelle — also den eigenen — und ergäbe in der
-  // Anzeige ein «basiert auf sich selbst».
-  const kopie = await kopiereTraining(
-    supabase,
-    teamTrainingId,
-    { art: "team", teamId: quelle.team_id },
-    { herkunft: "erben" },
-  );
+  const kopie = await kopiereTraining(supabase, teamTrainingId, {
+    art: "team",
+    teamId: quelle.team_id,
+  });
   if (!kopie.ok) return { ok: false, error: kopie.error };
 
   const termin = await erstelleTermin(kopie.neueId, felder);

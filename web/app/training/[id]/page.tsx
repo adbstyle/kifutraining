@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, Sparkles, Play, Printer } from "lucide-react";
-import { Breadcrumbs, KategorieChip, ButtonLink, HerkunftsAngabe } from "@/components/ui";
+import { Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
@@ -66,11 +66,6 @@ export default async function TrainingViewPage({
         {training.urheber && (
           <p className="mt-1 type-body-medium text-on-surface-variant">
             von {training.urheber}
-          </p>
-        )}
-        {training.herkunft && (
-          <p className="mt-1 type-body-small text-on-surface-variant">
-            basiert auf {training.herkunft.name}
           </p>
         )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -170,9 +165,6 @@ export default async function TrainingViewPage({
                               <span className="truncate type-body-medium text-on-surface">
                                 {item.name}
                               </span>
-                              {item.herkunft && (
-                                <HerkunftsAngabe herkunft={item.herkunft} />
-                              )}
                             </span>
                             {dur && (
                               <span className="shrink-0 type-label-medium text-on-surface-variant">
