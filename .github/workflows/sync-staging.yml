@@ -16,6 +16,12 @@ name: Sync Staging (Prod-Spiegel, manuell)
 #   der Dateien, siehe web/scripts/sync-storage-staging.ts)
 #
 # Voraussetzung: Staging-Schema ist per deploy-staging.yml aktuell (develop >= main).
+# Das deckt nur ADDITIVE Migrationen ab. Trägt develop eine Migration, die eine
+# Spalte DROPPT, und main noch nicht, scheitert der Restore: pg_dump --data-only
+# schreibt die COPY-Header mit expliziter Spaltenliste aus der Prod-DB, und die
+# gedroppte Spalte gibt es auf Staging nicht mehr ("column ... does not exist").
+# Die Transaktion rollt zurück, Staging behält seinen Stand — der Sync ist bis
+# zum Merge nach main aber unbrauchbar.
 on:
   workflow_dispatch:
     inputs:
