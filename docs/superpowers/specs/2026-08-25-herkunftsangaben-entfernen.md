@@ -2,7 +2,7 @@
 
 **Datum:** 2026-08-25
 **Betrifft:** Übungsbibliothek-Epic (`2026-08-16-uebungsbibliothek-epic.md`, Story 6) und Team-Trainingsplan-Epic (`2026-08-16-team-trainingsplan-epic.md`, Stories 1, 5, 8, 11)
-**Status:** TEILWEISE UMGESETZT 2026-08-25 — Anzeige und Erfassung entfernt; der Abbau der Datenfelder folgt als zweites Release, damit während der Auslieferung nichts bricht (NFR 1)
+**Status:** UMGESETZT 2026-08-26 — in zwei Releases, damit während der Auslieferung nichts bricht (NFR 1): Release 1 entfernt Anzeige und Erfassung (auf Produktion seit 2026-08-26), Release 2 baut Spalten, Prüfregeln und Unveränderlichkeits-Trigger auf der Datenebene ab (Migration `20260826131338_herkunftsangaben_abbau.sql`, geht mit dem nächsten Merge nach `main` auf Produktion)
 
 ---
 
