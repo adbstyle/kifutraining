@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useId } from "react";
 import type { InputHTMLAttributes } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -27,14 +27,18 @@ const labelLeftIcon =
 
 /* M3 Text-Field (outlined) mit schwebendem Label, optionalem führenden Icon,
    Supporting-Text und Error-State. Gespeist aus --field-*-Component-Tokens.
-   Kein Hook -> direkt in Server Components nutzbar; `id` optional (sonst aus
-   dem Label abgeleitet). */
+   `id` optional (sonst von React vergeben). */
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
   (
     { label, supportingText, error = false, leadingIcon: Icon, id, className, ...props },
     ref,
   ) => {
-    const fid = id ?? `tf-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    // Feld-id aus React statt aus dem Label-Text: Dialoge halten ihre Felder auch
+    // im geschlossenen Zustand im DOM (natives <dialog>), zwei gleichzeitig
+    // gemountete Dialoge mit gleichem Label ergäben sonst dieselbe id — Label-Klick
+    // und Screenreader träfen das Feld im falschen Dialog.
+    const reactId = useId();
+    const fid = id ?? `tf-${reactId}`;
 
     return (
       <div className={className}>

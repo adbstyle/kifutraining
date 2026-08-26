@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useId } from "react";
 import type { InputHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
@@ -18,13 +18,20 @@ export interface DateTimeFieldProps
    Das native Steuerelement ist Absicht: Datumsauswahl, Tastatureingabe und
    Lokalisierung kommen vom Betriebssystem und funktionieren mobil wie am
    Desktop besser als jede eigene Nachbildung. Gespeist aus denselben
-   --field-*-Component-Tokens wie das TextField. */
-function DateTimeBase(
-  { label, supportingText, error = false, id, className, type, ...props }:
-    DateTimeFieldProps & { type: "date" | "time" },
-  ref: React.Ref<HTMLInputElement>,
-) {
-  const fid = id ?? `dtf-${type}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+   --field-*-Component-Tokens wie das TextField.
+
+   Eigene Komponente (statt einer bloss aufgerufenen Funktion), damit `useId`
+   ein regulärer Hook-Aufruf in einem eigenen Render bleibt. */
+const DateTimeBase = forwardRef<
+  HTMLInputElement,
+  DateTimeFieldProps & { type: "date" | "time" }
+>(({ label, supportingText, error = false, id, className, type, ...props }, ref) => {
+  // Feld-id aus React statt aus dem Label-Text: Dialoge halten ihre Felder auch
+  // im geschlossenen Zustand im DOM (natives <dialog>), zwei gleichzeitig
+  // gemountete Dialoge mit gleichem Label ergäben sonst dieselbe id — Label-Klick
+  // und Screenreader träfen das Feld im falschen Dialog.
+  const reactId = useId();
+  const fid = id ?? `dtf-${type}-${reactId}`;
   return (
     <div className={className}>
       <label
@@ -60,14 +67,15 @@ function DateTimeBase(
       )}
     </div>
   );
-}
+});
+DateTimeBase.displayName = "DateTimeBase";
 
-export const DateField = forwardRef<HTMLInputElement, DateTimeFieldProps>((props, ref) =>
-  DateTimeBase({ ...props, type: "date" }, ref),
-);
+export const DateField = forwardRef<HTMLInputElement, DateTimeFieldProps>((props, ref) => (
+  <DateTimeBase {...props} type="date" ref={ref} />
+));
 DateField.displayName = "DateField";
 
-export const TimeField = forwardRef<HTMLInputElement, DateTimeFieldProps>((props, ref) =>
-  DateTimeBase({ ...props, type: "time" }, ref),
-);
+export const TimeField = forwardRef<HTMLInputElement, DateTimeFieldProps>((props, ref) => (
+  <DateTimeBase {...props} type="time" ref={ref} />
+));
 TimeField.displayName = "TimeField";
