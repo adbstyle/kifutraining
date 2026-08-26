@@ -6,9 +6,11 @@
 -- öffentliche, unveränderliche Vorlage, verbunden über `vorlage_id`. Künftig
 -- ist Veröffentlichen ein Zustand am Training selbst — wie bei den Übungen.
 --
--- Die Reihenfolge in dieser Datei ist zwingend: erst die Daten in den neuen
--- Zustand bringen, dann die Invariante scharf schalten. Umgekehrt scheiterte
--- das Öffentlich-Schalten der Originale an ihrem fehlenden freien Spiel.
+-- Die Reihenfolge in dieser Datei ist zwingend: erst das alte Tor entfernen,
+-- dann die Daten in den neuen Zustand bringen, dann die neue Invariante scharf
+-- schalten. Jede andere Reihenfolge lässt die Migration an Bestandsdaten
+-- scheitern — das alte Tor an Originalen unter seiner Schwelle, die neue
+-- Invariante am noch nicht nachgezogenen freien Spiel.
 -- ============================================================================
 
 -- Lock-Schranke an den Dateianfang, nicht vor die DDL: sonst warten auch die
@@ -16,6 +18,23 @@
 -- `set` statt `set local`, weil die Datei atomar, aber nicht in einem
 -- Transaktionsblock im Postgres-Sinn läuft.
 set lock_timeout = '3s';
+
+-- ----------------------------------------------------------------------------
+-- 0) Das alte Tor fällt zuerst
+-- ----------------------------------------------------------------------------
+-- `training_publish_gate` weist jedes Öffentlich-Schalten ab, dem Alterskategorie,
+-- Einleitung oder Hauptteil fehlt. Es MUSS vor Abschnitt 1 fallen: dort werden
+-- die privaten Originale öffentlich geschaltet, und ein Original darf seit dem
+-- Veröffentlichen frei bearbeitet worden sein — auch bis unter diese Schwelle.
+-- Ein einziges solches Training in Produktion liesse die Migration und damit den
+-- Deploy scheitern (nachgestellt und gemessen: «TRAINING_UNVOLLSTAENDIG:
+-- einleitung»). Was künftig gilt, setzt der Trigger aus Abschnitt 3 durch — und
+-- zwar erst, nachdem Abschnitt 2 den Bestand in Ordnung gebracht hat.
+--
+-- Trigger und Funktion explizit, in dieser Reihenfolge: Postgres trackt die
+-- Abhängigkeit eines plpgsql-Rumpfs auf Spalten nicht.
+drop trigger training_publish_gate on trainings;
+drop function training_publish_gate();
 
 -- ----------------------------------------------------------------------------
 -- 1) Altbestand: die Vorlagen-Paare auflösen
@@ -106,16 +125,12 @@ alter table trainings enable trigger trainings_set_updated_at;
 -- ----------------------------------------------------------------------------
 -- 3) Die Bedingungen gelten dauerhaft, nicht nur beim Übergang
 -- ----------------------------------------------------------------------------
--- `training_publish_gate` prüfte ausschliesslich den Übergang nach öffentlich.
--- Ein öffentliches Training liess sich danach unter die Schwelle bringen —
--- unter dem Kopie-Modell unschädlich, weil die Vorlage eingefroren war. Ohne
--- Einfrieren wäre es der Weg, halbfertige Trainings öffentlich stehen zu
--- lassen. Neu: die Bedingungen gelten, solange ein Training öffentlich ist.
---
--- Trigger und Funktion explizit, in dieser Reihenfolge: Postgres trackt die
--- Abhängigkeit eines plpgsql-Rumpfs auf Spalten nicht.
-drop trigger training_publish_gate on trainings;
-drop function training_publish_gate();
+-- Das alte `training_publish_gate` (in Abschnitt 0 gefallen) prüfte
+-- ausschliesslich den Übergang nach öffentlich. Ein öffentliches Training liess
+-- sich danach unter die Schwelle bringen — unter dem Kopie-Modell unschädlich,
+-- weil die Vorlage eingefroren war. Ohne Einfrieren wäre es der Weg, halbfertige
+-- Trainings öffentlich stehen zu lassen. Neu: die Bedingungen gelten, solange
+-- ein Training öffentlich ist.
 
 -- Die Prüfung als eigene Funktion: zwei Tabellen lösen sie aus, die Regel darf
 -- aber nur an einer Stelle stehen.
