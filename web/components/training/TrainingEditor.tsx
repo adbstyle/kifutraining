@@ -532,7 +532,7 @@ export function TrainingEditor({
         open={notice != null}
         message={notice ?? ""}
         onClose={() => setNotice(null)}
-        className="fixed bottom-4 left-1/2 z-50 max-w-[calc(100vw-2rem)] -translate-x-1/2"
+        placement="fixed"
       />
     </div>
   );

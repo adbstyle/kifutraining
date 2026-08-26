@@ -653,6 +653,12 @@ export default function Styleguide() {
           Dialog auf nativem <code>&lt;dialog&gt;</code> (Fokus-Trap, Escape,
           Scrim). Snackbar in M3-Inverse-Farben mit Aktion + Auto-Dismiss.
           Gespeist aus <code>--dialog-*</code> / <code>--snackbar-*</code>-Tokens.
+          Die Snackbar kennt zwei Platzierungen: <code>inline</code> folgt dem
+          Dokumentfluss und passt, solange der auslösende Knopf daneben liegt;{" "}
+          <code>fixed</code> heftet sie an den unteren Rand des Sichtfelds. Auf
+          langen Seiten ist <code>fixed</code> Pflicht — hängt die Meldung im
+          Fluss am Seitenende, steht sie unter dem gesamten Inhalt und erreicht
+          niemanden, der oben geklickt hat.
         </p>
         <OverlaysDemo />
       </Section>
