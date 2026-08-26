@@ -27,7 +27,29 @@
 -- NFR 2 (kein halb abgebauter Zustand) ohne Zutun erfüllt.
 
 -- ----------------------------------------------------------------------------
--- 1) Bestandsaufnahme vor dem Abbau
+-- 1) Lock-Schranke für den ganzen Lauf
+-- ----------------------------------------------------------------------------
+-- `drop column` braucht ACCESS EXCLUSIVE. Hängt eine Session
+-- idle-in-transaction auf einer der drei Tabellen, stellt sich die DDL in die
+-- Lock-Queue und blockiert ab da JEDEN neuen Lesezugriff darauf. Mit Timeout
+-- bricht die Migration stattdessen sauber ab — der Deploy schlägt fehl und ist
+-- nach dem Aufräumen der Blocker-Session unverändert wiederholbar.
+--
+-- Ganz nach vorn, nicht erst vor die DDL: schon die Bestandsaufnahme unten
+-- liest die drei Tabellen und wartete ohne Schranke unbegrenzt, wenn
+-- gleichzeitig eine fremde DDL auf ihnen läuft — etwa ein zweiter Deploy nach
+-- zwei kurz aufeinanderfolgenden Merges nach `main`. Der Lauf soll von der
+-- ersten Anweisung an schnell scheitern statt zu hängen.
+--
+-- Bewusst ohne `local`: die CLI führt die Datei zwar atomar aus, aber nicht in
+-- einem Transaktions*block* im Sinne von Postgres. `set local` wirkt dort zwar,
+-- protokolliert aber bei jedem Deploy die irreführende Warnung «SET LOCAL can
+-- only be used in transaction blocks» (mit CLI 2.115.0 gemessen). Dafür nimmt
+-- Abschnitt 5 die Schranke am Ende ausdrücklich zurück.
+set lock_timeout = '3s';
+
+-- ----------------------------------------------------------------------------
+-- 2) Bestandsaufnahme vor dem Abbau
 -- ----------------------------------------------------------------------------
 -- Belegt, was hier tatsächlich verschwindet (NFR 2: «als vollständig
 -- nachweisbar»). Die Zeilen landen dauerhaft im Deploy-Log der GitHub Action
@@ -60,32 +82,17 @@ end;
 $$;
 
 -- ----------------------------------------------------------------------------
--- 2) Die Unveränderlichkeits-Regel entfällt
+-- 3) Die Unveränderlichkeits-Regel entfällt
 -- ----------------------------------------------------------------------------
 -- Zuerst beide Trigger, dann die Funktion — ohne `cascade`, damit ein
 -- übersehener weiterer Verwender die Migration abbrechen liesse, statt still
 -- mitgerissen zu werden.
---
--- Davor eine Lock-Schranke: `drop column` braucht ACCESS EXCLUSIVE. Hängt eine
--- Session idle-in-transaction auf einer der drei Tabellen, stellt sich die DDL
--- in die Lock-Queue und blockiert ab da JEDEN neuen Lesezugriff darauf. Mit
--- Timeout bricht die Migration stattdessen sauber ab — der Deploy schlägt fehl
--- und ist nach dem Aufräumen der Blocker-Session unverändert wiederholbar.
---
--- Bewusst ohne `local`: die CLI führt die Datei zwar atomar aus, aber nicht in
--- einem Transaktions*block* im Sinne von Postgres. `set local` wirkt dort zwar,
--- protokolliert aber bei jedem Deploy die irreführende Warnung «SET LOCAL can
--- only be used in transaction blocks». Das einfache `set` reicht ebenso weit:
--- die CLI setzt den Sessionzustand zwischen Migrationsdateien zurück, die
--- Schranke endet also mit dieser Datei (beides mit CLI 2.115.0 gemessen).
-set lock_timeout = '3s';
-
 drop trigger te_herkunft_unveraenderlich on training_exercises;
 drop trigger ex_herkunft_unveraenderlich on exercises;
 drop function herkunft_unveraenderlich();
 
 -- ----------------------------------------------------------------------------
--- 3) Die Spalten fallen (PC 4, NFR 3)
+-- 4) Die Spalten fallen (PC 4, NFR 3)
 -- ----------------------------------------------------------------------------
 -- Die zugehörigen CHECKs fallen automatisch mit ihrer Spalte und werden
 -- deshalb NICHT einzeln gedroppt:
@@ -115,7 +122,7 @@ alter table trainings
   drop column herkunft_datum;
 
 -- ----------------------------------------------------------------------------
--- 4) Selbstprüfung: nichts bleibt zurück (NFR 3)
+-- 5) Selbstprüfung: nichts bleibt zurück (NFR 3)
 -- ----------------------------------------------------------------------------
 -- Sucht in allen vier Formen, in denen ein Herkunfts-Artefakt überleben
 -- könnte, und bricht die Migration ab, wenn eines gefunden wird. Findet die
@@ -165,3 +172,13 @@ begin
   raise notice 'Herkunfts-Abbau: Selbstprüfung grün, kein Artefakt zurückgeblieben';
 end;
 $$;
+
+-- Die Schranke aus Abschnitt 1 ausdrücklich zurücknehmen. Gemessen räumt die
+-- CLI den Sessionzustand zwischen Migrationsdateien ohnehin ab — aber das ist
+-- undokumentiert, gilt gemessen nur für `supabase db push` (der PR-Check
+-- wendet Migrationen über `supabase start` an) und die Workflows installieren
+-- die CLI mit `version: latest`. Ohne diese Zeile erbte eine später
+-- hinzugefügte Migration womöglich eine 3-Sekunden-Schranke, von der in ihrer
+-- eigenen Datei nichts steht — und scheiterte unter Sperrkonkurrenz
+-- unerklärlich.
+reset lock_timeout;
