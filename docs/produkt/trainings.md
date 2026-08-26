@@ -71,6 +71,12 @@ Schaden nimmt. Wer das persönliche Training löscht, zieht damit auch die Vorla
 Kopien, die andere bereits übernommen haben, bleiben in jedem Fall bestehen — sie sind
 eigenständig.
 
+Der übliche Weg zum Zurückziehen führt über das eigene Training, aus dem die Vorlage
+hervorgegangen ist. Steht hinter einer Vorlage kein solches Original — das betrifft Trainings,
+die noch vor dem heutigen Kopie-Modell unmittelbar öffentlich geschaltet wurden —, findet ihr
+Urheber den Knopf dafür direkt in der Ansicht der Vorlage. So bleibt jede eigene Vorlage
+erreichbar, auch wenn sie in keiner persönlichen Liste mehr auftaucht.
+
 Jede veröffentlichte Vorlage kann jede angemeldete Person übernehmen, auch ihr Urheber selbst.
 Es entsteht eine private, frei bearbeitbare Kopie des ganzen Trainings.
 
