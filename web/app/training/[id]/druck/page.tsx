@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Clock } from "lucide-react";
-import { KategorieChip } from "@/components/ui";
+import { KategorieChip, PrintButton } from "@/components/ui";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { TrainingExerciseDetail } from "@/components/training/TrainingExerciseDetail";
-import { PrintButton } from "@/components/training/PrintButton";
 import { getTrainingView } from "@/lib/queries/trainings";
 import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
 
