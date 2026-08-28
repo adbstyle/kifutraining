@@ -77,9 +77,12 @@ unterscheidet sich das Übungsblatt bewusst vom Trainings-Druck, der keine Herku
 auf dem Platz zählt, was zu tun ist, ein einzelnes Blatt aus der Bibliothek dagegen soll seine
 Quelle nennen.
 
-Gedruckt wird mit den Bordmitteln des Geräts, auf dem Rechner wie auf dem Telefon; das Sichern
-als PDF übernimmt der Druckdialog. Eine eigene PDF-Datei erzeugt die Anwendung nicht, und
-mehrere Übungen in einem Vorgang lassen sich nicht drucken.
+Der Druck startet direkt von der Übungsseite, ohne Zwischenschritt: das Drucker-Symbol steht
+neben dem Herz, und der Druckdialog des Geräts öffnet sich sofort. Auf dem Blatt bleibt von der
+Bedienung nichts übrig — weder Navigation noch Aktionen. Gedruckt wird mit den Bordmitteln des
+Geräts, auf dem Rechner wie auf dem Telefon; das Sichern als PDF übernimmt der Druckdialog.
+Eine eigene PDF-Datei erzeugt die Anwendung nicht, und mehrere Übungen in einem Vorgang lassen
+sich nicht drucken.
 
 ## Übungen aus Trainings zurückholen
 

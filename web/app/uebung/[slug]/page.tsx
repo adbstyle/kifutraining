@@ -1,17 +1,18 @@
 import { notFound } from "next/navigation";
-import { BookOpen, Printer } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import type { Metadata } from "next";
 import {
   HerkunftBadge,
   Breadcrumbs,
-  ButtonLink,
   type BreadcrumbItem,
   Card,
   KategorieChip,
   MethodischerFahrplan,
+  PrintButton,
   UebungsBild,
 } from "@/components/ui";
 import { Flash } from "@/components/Flash";
+import { cn } from "@/lib/cn";
 import { OwnerActions } from "@/components/exercise/OwnerActions";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { createClient } from "@/lib/supabase/server";
@@ -104,11 +105,22 @@ export default async function ExerciseDetailPage({
     ex.feldtyp ? feldLabels[ex.feldtyp as keyof typeof feldLabels] : null,
   ].filter(Boolean);
   const anzahl = anzahlText(ex.anzahl_kinder);
+  const hatEckdaten =
+    !!ex.hauptteilkategorie ||
+    ex.erscheinungsform.length > 0 ||
+    !!anzahl ||
+    ex.material.length > 0;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-      {flash && <Flash message={flash} />}
-      <Breadcrumbs items={crumbs} />
+      {flash && (
+        <div className="print:hidden">
+          <Flash message={flash} />
+        </div>
+      )}
+      <div className="print:hidden">
+        <Breadcrumbs items={crumbs} />
+      </div>
 
       <header className="mt-4">
         <div className="mb-3 flex flex-wrap items-center gap-2.5">
@@ -130,16 +142,11 @@ export default async function ExerciseDetailPage({
           {/* Aktions-Cluster rechts: Drucken · Stift · Globus · Herz · ⋮.
               Drucken steht ausserhalb der Anmelde-Bedingung: eine Übung lässt
               sich auch ohne Konto ausdrucken (Story #114 AK 3). Owner sieht
-              alle Aktionen, sonstige angemeldete User nur den Favoriten. */}
-          <div className="ml-auto flex items-center gap-0.5">
-            <ButtonLink
-              href={`/uebung/${ex.slug}/druck`}
-              variant="text"
-              size="sm"
-            >
-              <Printer size={18} strokeWidth={2} aria-hidden />
-              Drucken
-            </ButtonLink>
+              alle Aktionen, sonstige angemeldete User nur den Favoriten.
+              Im Druck ist der ganze Cluster weg — auf dem Blatt hat kein
+              Bedienelement etwas verloren (Postcondition 5). */}
+          <div className="ml-auto flex items-center gap-0.5 print:hidden">
+            <PrintButton variant="icon" size="sm" />
             {(isOwner || user) && (
               <>
                 {isOwner ? (
@@ -184,31 +191,40 @@ export default async function ExerciseDetailPage({
           sizes="(max-width: 896px) 100vw, 896px"
         />
       </div>
-      {/* Eckdaten — unterhalb des Bildes */}
-      {(ex.hauptteilkategorie ||
-        ex.erscheinungsform.length > 0 ||
-        anzahl ||
-        ex.material.length > 0) && (
-        <div className="mt-6 flex flex-wrap gap-x-12 gap-y-5">
-          {ex.hauptteilkategorie && (
-            <Meta label="Hauptteilkategorie">
-              {hkatLabels[ex.hauptteilkategorie as keyof typeof hkatLabels] ??
-                ex.hauptteilkategorie}
-            </Meta>
-          )}
-          {ex.erscheinungsform.length > 0 && (
-            <Meta label="Erscheinungsform">
-              {ex.erscheinungsform
-                .map((f) => formLabels[f as keyof typeof formLabels] ?? f)
-                .join(", ")}
-            </Meta>
-          )}
-          {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
-          {ex.material.length > 0 && (
-            <Meta label="Material">{ex.material.join(", ")}</Meta>
-          )}
+      {/* Eckdaten — unterhalb des Bildes.
+
+          Der Trainingsteil steht am Bildschirm in den Brotkrumen und wäre hier
+          doppelt. Im Druck sind die Brotkrumen weg, und der Ausdruck muss ihn
+          nennen (Story #114 AK 4) — dort tritt er an ihre Stelle. Die Leiste
+          selbst bleibt am Bildschirm verborgen, wenn sie ausser ihm nichts zu
+          zeigen hat, damit dort kein leerer Abstand entsteht. */}
+      <div
+        className={cn(
+          "mt-6 flex flex-wrap gap-x-12 gap-y-5",
+          !hatEckdaten && "hidden print:flex",
+        )}
+      >
+        <div className="hidden print:block">
+          <Meta label="Trainingsteil">{teilLabel}</Meta>
         </div>
-      )}
+        {ex.hauptteilkategorie && (
+          <Meta label="Hauptteilkategorie">
+            {hkatLabels[ex.hauptteilkategorie as keyof typeof hkatLabels] ??
+              ex.hauptteilkategorie}
+          </Meta>
+        )}
+        {ex.erscheinungsform.length > 0 && (
+          <Meta label="Erscheinungsform">
+            {ex.erscheinungsform
+              .map((f) => formLabels[f as keyof typeof formLabels] ?? f)
+              .join(", ")}
+          </Meta>
+        )}
+        {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
+        {ex.material.length > 0 && (
+          <Meta label="Material">{ex.material.join(", ")}</Meta>
+        )}
+      </div>
 
       {/* Ablauf */}
       <section className="mt-10">
@@ -244,9 +260,37 @@ export default async function ExerciseDetailPage({
         </section>
       )}
 
-      {/* Quellen-/Urheberangabe (Manual) */}
+      {/* Herkunft auf dem Ausdruck (Story #114 AK 7). Am Bildschirm sagt sie
+          schon die Plakette oben; auf Papier fehlt sie, denn die Plakette nennt
+          beim eigenen Entwurf nur den Zustand, nicht die Herkunft. Darum im
+          Druck ein eigener Satz für alle drei Fälle — und der Manual-Fuss
+          darunter entfällt dort, sonst stünde dieselbe Aussage zweimal.
+
+          Bewusste Abweichung vom Trainings-Druck, der keine Herkunft trägt: ein
+          Blatt aus der Bibliothek weist seine Quelle aus (PO 2026-08-28), für
+          das Training bleibt der Entscheid von 2026-08-23 unverändert. */}
+      <footer className="mt-10 hidden border-t border-outline-variant pt-4 print:block">
+        {ex.source === "manual" ? (
+          <p className="type-body-small text-on-surface-variant">
+            Offizielle Übung aus dem{" "}
+            <strong className="text-on-surface">Manual Kinderfussball</strong>{" "}
+            des Schweizerischen Fussballverbands (SFV) — kuratierter Bestand,
+            unverändert übernommen.
+          </p>
+        ) : (
+          <p className="type-body-small text-on-surface-variant">
+            Übung aus der{" "}
+            <strong className="text-on-surface">Gemeinschaft</strong> der
+            Trainerinnen und Trainer, nicht aus dem Manual Kinderfussball.
+            {ex.visibility === "private" &&
+              " Noch nicht veröffentlicht — ein Entwurf."}
+          </p>
+        )}
+      </footer>
+
+      {/* Quellen-/Urheberangabe (Manual), nur am Bildschirm */}
       {ex.source === "manual" && (
-        <footer className="mt-12 flex items-start gap-2 border-t border-outline-variant pt-5">
+        <footer className="mt-12 flex items-start gap-2 border-t border-outline-variant pt-5 print:hidden">
           <BookOpen
             size={18}
             strokeWidth={2}
