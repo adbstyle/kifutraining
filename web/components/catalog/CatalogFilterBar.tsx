@@ -11,6 +11,7 @@ import {
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
   hauptteilkategorie as hkatLabels,
+  junioren_heimat as juniorenHeimatLabels,
   kategorienSlugs,
 } from "@/lib/vocab";
 import { kategorieStufe } from "@/lib/labels";
@@ -30,7 +31,20 @@ export type CatalogFilters = {
 // Optionen aus dem Vokabular (Slug → Label). Reihenfolge = Definitionsreihenfolge.
 const toOptions = (rec: Record<string, string>) =>
   Object.entries(rec).map(([value, label]) => ({ value, label }));
-const teilOptions = toOptions(teilLabels);
+// Trainingsteil-Filter über beide Welten: die vier Kinderfussball-Teile und
+// die drei Junioren-Heimaten, in zwei beschrifteten Gruppen (Epic #71).
+const teilOptions = [
+  ...Object.entries(teilLabels).map(([value, label]) => ({
+    value,
+    label,
+    group: "Kinderfussball",
+  })),
+  ...Object.entries(juniorenHeimatLabels).map(([value, label]) => ({
+    value,
+    label,
+    group: "Juniorenfussball — Einstieg",
+  })),
+];
 const feldOptions = toOptions(feldLabels);
 const formOptions = toOptions(formLabels);
 const hkatOptions = toOptions(hkatLabels);

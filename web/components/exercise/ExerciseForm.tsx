@@ -18,11 +18,13 @@ import {
   hauptteilkategorie as hkatLabels,
   kategorienSlugs,
   trainingsteilSlugs,
-  type TrainingsteilSlug,
+  junioren_heimat as juniorenHeimatLabels,
+  junioren_heimatSlugs,
 } from "@/lib/vocab";
 import {
   kategorieStufe,
-  FAHRPLAN_TEILE,
+  FAHRPLAN_NUR_OFFEN,
+  ERSCHEINUNGSFORM_TEILE,
   FREIES_SPIEL,
   brauchtFahrplan,
   ueberfuehreAblauf,
@@ -163,7 +165,7 @@ export function ExerciseForm({
     fd.set("kat", kat.join(","));
     // Erscheinungsform hängt am Trainingsteil, nicht an der Ablauf-Form: auch
     // das freie Spiel darf eine tragen (DB-Constraint).
-    fd.set("form", FAHRPLAN_TEILE.has(teil) ? form.join(",") : "");
+    fd.set("form", ERSCHEINUNGSFORM_TEILE.has(teil) ? form.join(",") : "");
     fd.set("hauptteilkategorie", istHauptteil ? hkat : "");
     fd.set("feldtyp", feld);
     fd.set("bild_entfernen", bildEntfernen ? "1" : "");
@@ -189,17 +191,34 @@ export function ExerciseForm({
 
       {afterName}
 
+      {/* Heimat der Übung: ein Kinderfussball-Trainingsteil ODER einer der
+          drei Einstiegs-Unterblöcke des Juniorenschemas — nie beides
+          (Entscheidungsdokument §4). Sieben Werte aus zwei Welten sprengen das
+          SegmentedControl; die Liste beschriftet darum ihre beiden Gruppen. */}
       <div>
-        <p className={`type-label-small mb-2 ${err.trainingsteil ? "text-error" : "text-on-surface-variant"}`}>
-          Trainingsteil
-        </p>
-        <SegmentedControl<TrainingsteilSlug>
-          ariaLabel="Trainingsteil"
-          value={(teil || null) as TrainingsteilSlug | null}
+        <Select
+          label="Heimat"
+          name="trainingsteil"
+          value={teil}
           onChange={(v) => wechsleEinordnung(v, hkat)}
-          options={trainingsteilSlugs.map((t) => ({ value: t, label: teilLabels[t] }))}
+          error={!!err.trainingsteil}
+          supportingText={
+            err.trainingsteil ??
+            "Wo die Übung zuhause ist. Sie lässt sich auch in Trainings des anderen Schemas verwenden, wo es eine Entsprechung gibt."
+          }
+          options={[
+            ...trainingsteilSlugs.map((t) => ({
+              value: t,
+              label: teilLabels[t],
+              group: "Kinderfussball",
+            })),
+            ...junioren_heimatSlugs.map((t) => ({
+              value: t,
+              label: juniorenHeimatLabels[t],
+              group: "Juniorenfussball — Einstieg",
+            })),
+          ]}
         />
-        {err.trainingsteil && <p className="type-body-small mt-1.5 text-error">{err.trainingsteil}</p>}
       </div>
 
       <Group title="Alterskategorie" error={err.kat}>
@@ -241,7 +260,12 @@ export function ExerciseForm({
             value={ueben}
             onChange={(e) => setUeben(e.target.value)}
             error={!!err.ueben}
-            supportingText={err.ueben ?? "Pflichtfeld — mindestens ein Schritt, einer pro Zeile."}
+            supportingText={
+              err.ueben ??
+              (FAHRPLAN_NUR_OFFEN.has(teil)
+                ? "Optional — ein Schritt pro Zeile."
+                : "Pflichtfeld — mindestens ein Schritt, einer pro Zeile.")
+            }
           />
           <TextArea
             label="③ Wett-eifern"
@@ -249,7 +273,12 @@ export function ExerciseForm({
             value={wetteifern}
             onChange={(e) => setWetteifern(e.target.value)}
             error={!!err.wetteifern}
-            supportingText={err.wetteifern ?? "Pflichtfeld — der spielerische Wettkampf-Teil."}
+            supportingText={
+              err.wetteifern ??
+              (FAHRPLAN_NUR_OFFEN.has(teil)
+                ? "Optional — nicht jede Aufwärmform hat einen Wettkampf-Teil."
+                : "Pflichtfeld — der spielerische Wettkampf-Teil.")
+            }
           />
         </fieldset>
       ) : (
@@ -289,7 +318,7 @@ export function ExerciseForm({
         </div>
       )}
 
-      {FAHRPLAN_TEILE.has(teil) && (
+      {ERSCHEINUNGSFORM_TEILE.has(teil) && (
         <Group title="Erscheinungsform (optional)">
           {(Object.keys(formLabels) as (keyof typeof formLabels)[]).map((f) => (
             <FilterChip key={f} selected={form.includes(f)} onClick={() => toggle(form, setForm, f)}>

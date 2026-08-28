@@ -11,9 +11,24 @@ export const kategorieStufe: Record<keyof typeof kategorien, string> = {
   A: "A-Junior:innen",
 };
 
-// Trainingsteile mit methodischem Fahrplan + Themen-/Erscheinungsform-Feldern
-// (vs. auffangen/ausklang mit flachem Aufbau). Eine Quelle für alle Schichten.
-export const FAHRPLAN_TEILE = new Set<string>(["einleitung", "hauptteil"]);
+// Einordnungen mit methodischem Fahrplan (vs. flachem Aufbau-Text). Eine
+// Quelle für alle Schichten. Die Junioren-Heimaten Aufwärmen und Spielform
+// zum Trainingsziel tragen ihn ebenfalls — dort ist allerdings nur die Stufe
+// «Offen starten» Pflicht (Story 5b AC 3/4).
+export const FAHRPLAN_TEILE = new Set<string>([
+  "einleitung",
+  "hauptteil",
+  "jun-aufwaermen",
+  "jun-spielform-trainingsziel",
+]);
+
+/** Heimaten, bei denen vom Fahrplan nur «Offen starten» Pflicht ist: das
+ *  Aufwärmen umfasst fachlich auch Körperstabilität und Prävention, und solche
+ *  Drills haben keinen natürlichen Wettkampf-Abschluss. */
+export const FAHRPLAN_NUR_OFFEN = new Set<string>([
+  "jun-aufwaermen",
+  "jun-spielform-trainingsziel",
+]);
 
 /** Einordnungen und Heimaten, die Erscheinungsformen tragen dürfen. Auffangen
  *  und Ausklang bleiben ausgeschlossen — auch der Junioren-Ausklang (Story 12

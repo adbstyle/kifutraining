@@ -3,9 +3,16 @@
 // Bewusst KEIN "use server"-Modul: hier stehen reine Validierungsregeln, keine
 // Mutationen. (Ein Server-Actions-Modul darf ausserdem nur async Funktionen
 // exportieren.)
-import { FAHRPLAN_TEILE, FREIES_SPIEL, brauchtFahrplan } from "@/lib/labels";
+import {
+  FAHRPLAN_TEILE,
+  FAHRPLAN_NUR_OFFEN,
+  ERSCHEINUNGSFORM_TEILE,
+  FREIES_SPIEL,
+  brauchtFahrplan,
+} from "@/lib/labels";
 import {
   trainingsteilSlugs,
+  junioren_heimatSlugs,
   feldtypSlugs,
   erscheinungsformSlugs,
   hauptteilkategorieSlugs,
@@ -49,8 +56,12 @@ export function parseUebungsInhalt(form: FormData): ParseResult {
   const kategorien = csv(form.get("kat"));
 
   if (!name) errors.name = "Bitte einen Namen angeben.";
-  if (!trainingsteilSlugs.includes(trainingsteil as never))
-    errors.trainingsteil = "Bitte einen Trainingsteil wählen.";
+  // Die Heimat ist entweder ein Kinderfussball-Trainingsteil oder einer der
+  // drei Einstiegs-Unterblöcke des Juniorenschemas — nie beides, dafür sorgt
+  // schon die Skalarität des Felds (Entscheidungsdokument §4).
+  const heimaten: readonly string[] = [...trainingsteilSlugs, ...junioren_heimatSlugs];
+  if (!heimaten.includes(trainingsteil))
+    errors.trainingsteil = "Bitte eine Heimat wählen.";
   if (kategorien.length === 0)
     errors.kat = "Bitte mindestens eine Alterskategorie wählen.";
   if (kategorien.some((k) => !kategorienSlugs.includes(k as never)))
@@ -73,10 +84,13 @@ export function parseUebungsInhalt(form: FormData): ParseResult {
     const offen = clean(form.get("offen_starten"));
     const ueben = lines(form.get("ueben"));
     const wett = clean(form.get("wetteifern"));
+    // Bei den Junioren-Heimaten genügt «Offen starten»; die übrigen Stufen
+    // sind dort freiwillig (Story 5b AC 3/4).
+    const nurOffen = FAHRPLAN_NUR_OFFEN.has(trainingsteil);
     if (!offen) errors.offen_starten = "Bitte beschreiben, wie die Übung offen startet.";
-    if (ueben.length === 0)
+    if (!nurOffen && ueben.length === 0)
       errors.ueben = "Bitte mindestens einen Übungsschritt angeben.";
-    if (!wett) errors.wetteifern = "Bitte den Wett-eifern-Teil beschreiben.";
+    if (!nurOffen && !wett) errors.wetteifern = "Bitte den Wett-eifern-Teil beschreiben.";
     methodischer_fahrplan = { offen_starten: offen, ueben, wetteifern: wett };
   } else if (trainingsteil) {
     aufbau = clean(form.get("aufbau"));
@@ -86,10 +100,10 @@ export function parseUebungsInhalt(form: FormData): ParseResult {
         : "Bitte den Aufbau beschreiben.";
   }
 
-  // Erscheinungsform bleibt an den Trainingsteil gebunden (DB-Constraint
+  // Erscheinungsform bleibt an die Einordnung gebunden (DB-Constraint
   // `erscheinungsform_nur_haupt_einleitung`) — auch das freie Spiel darf eine
-  // tragen, obwohl es keinen Fahrplan hat.
-  const erscheinungsform = FAHRPLAN_TEILE.has(trainingsteil)
+  // tragen, obwohl es keinen Fahrplan hat, und die Explosivität ebenso.
+  const erscheinungsform = ERSCHEINUNGSFORM_TEILE.has(trainingsteil)
     ? csv(form.get("form")).filter((f) => erscheinungsformSlugs.includes(f as never))
     : [];
 
