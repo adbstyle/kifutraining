@@ -165,7 +165,7 @@ Reihenfolge ist die vorgeschlagene Umsetzungsreihenfolge.
 |---|---|---|---|---|
 | 1 | Zugehörigkeit einer Übung zu einer Altersstufe führen und aus dem Bestand ableiten | Data | Enabler | — |
 | 2 | Übung in der gewählten Altersstufe erfassen, mit den Feldern dieses Lehrmittels | Rules | Business | 1 |
-| 3 | Junioren-Übung in jedem der sechs Blöcke verorten | Data | Business | 1 |
+| 3 | Junioren-Übung zweistufig einem der sechs Blöcke zuordnen | Data | Business | 1 |
 | 4 | Übung von einer Altersstufe in die andere überführen | Paths | Business | 2, 3 |
 | 5 | Angaben der verlassenen Altersstufe aufbewahren und bei Rückkehr wiederherstellen | Rules | Business | 4 |
 | 6 | Übungs-Picker auf die Altersstufe des Trainings beschränken | Rules | Business | 1 |
@@ -176,7 +176,8 @@ dass sich für den Trainer etwas ändert. Erst Story 2 macht den Nutzen sichtbar
 
 Story 3 ist nötig, weil mit der Trennung keine Kinderfussball-Übung mehr in die
 Junioren-Blöcke fliesst: Spielformen, Spiel und Ausklang müssen aus eigenen Übungen
-befüllbar werden.
+befüllbar werden. Die Zuordnung erfolgt in zwei Schritten — erst der Trainingsteil,
+dann der Block darin —, wie es der Kinderfussball beim Hauptteil bereits vormacht.
 
 ## 6. Nicht-funktionale Anforderungen
 
@@ -207,6 +208,8 @@ befüllbar werden.
 | Bestehender Übungsbestand | Bleibt wie er ist und gilt als Kinderfussball; keine Nachpflege |
 | Wer überführen darf | Die Trainerin überführt ausschliesslich Übungen, die ihr gehören. Der kuratierte Manual-Bestand und fremde Community-Übungen bleiben unberührt; wer eine davon in der anderen Altersstufe braucht, übernimmt sie zuerst in den eigenen Bestand |
 | Trainings-Schemawechsel, Zuordnung | Die Abbildungsregel ordnet jede Fassung automatisch ihrem Zielblock zu. Was dort keine Entsprechung hat — etwa Auffangen-Übungen — landet im bestehenden Nacharbeits-Bereich |
+| Wahl des Junioren-Trainingsteils | Zweistufig wie im Kinderfussball: erst Einstieg, Hauptteil oder Abschluss, dann der Block darin. Die Blocknamen sind lang, und die Zugehörigkeit zum Trainingsteil bleibt so sichtbar |
+| Aufbau des Junioren-Bestands | Kein geseedeter Grundbestand und keine gesenkte Veröffentlichungs-Hürde. Wer ein Junioren-Training veröffentlichen will, legt zuerst die nötigen Übungen an — das ist die natürliche Reihenfolge, kein Mangel |
 | Rückrichtung ohne aufbewahrten Stand | Eine Junioren-Übung aus dem Block «Spielformen und unterstützende Übungen» wird beim erstmaligen Wechsel zu Kinder als «Fussball spielen lernen» vorgeschlagen — die Begriffsbrücke, die das Junioren-Manual selbst zieht |
 | Trainings-Schemawechsel | Dieselbe Überführung und dieselbe Aufbewahrung wie bei einer einzelnen Übung; ein Training behält beim Wechsel seine Übungen |
 | Migrationslage | Kein Migrationsproblem: Das Juniorenfussball-Epic liegt nur auf Staging und wurde nie auf Produktion ausgeliefert |
@@ -235,24 +238,18 @@ Alle betreffen das Epic «Juniorenfussball-Trainingsschema», das auf Staging li
 
 ## 9. Offene Fragen
 
-1. @Product Owner: Wie soll ein Trainer sein erstes Junioren-Training befüllen, wenn der
-   Junioren-Bestand bei null startet und die Veröffentlichung fünf belegte Blöcke
-   verlangt? Ein geseedeter Grundbestand war früher angekündigt.
-2. @Product Owner: Soll die Wahl des Junioren-Trainingsteils zweistufig erfolgen (erst Einstieg,
-   Hauptteil oder Abschluss, dann der Unterblock) oder als eine flache Liste der sechs
-   Blöcke?
-3. @UX Designer: Wie erfährt der Trainer vor der Umwandlung, was mit seinen Angaben
+1. @UX Designer: Wie erfährt der Trainer vor der Umwandlung, was mit seinen Angaben
    geschieht — welche bleiben, welche werden überführt, welche fallen weg? Und wie
    erfährt er es beim Wechsel eines ganzen Trainings, wo mehrere Übungen betroffen sind?
-4. @UX Designer: Wie wird die Altersstufen-Wahl beim Erfassen dargestellt, und wie beim
+2. @UX Designer: Wie wird die Altersstufen-Wahl beim Erfassen dargestellt, und wie beim
    Bearbeiten einer bestehenden Übung, wo sie eine Umwandlung auslöst?
-5. @Product Owner: Eine Trainerin überarbeitet eine Übung in der Junioren-Altersstufe,
+3. @Product Owner: Eine Trainerin überarbeitet eine Übung in der Junioren-Altersstufe,
    wechselt zurück und sieht den alten Kinderfussball-Stand — ohne Hinweis, dass ihre
    Überarbeitung in der anderen Altersstufe weiterlebt. Ist diese Überraschung tragbar,
    oder braucht es doch einen Hinweis?
-6. @Product Owner: Was geschieht mit den aufbewahrten Angaben bei einem wiederholten
+4. @Product Owner: Was geschieht mit den aufbewahrten Angaben bei einem wiederholten
    Wechsel hin und zurück? Wird beim zweiten Eintreffen in einer Altersstufe der Stand
    des ersten Aufenthalts wiederhergestellt, oder gilt dann der zuletzt verlassene?
-7. @Product Owner: Auf Staging existieren bereits Junioren-Trainings, die über die
+5. @Product Owner: Auf Staging existieren bereits Junioren-Trainings, die über die
    Abbildungsregel Kinderfussball-Übungen nutzen, sowie Übungen mit Werten beider
    Altersstufen. Dürfen diese Testdaten verworfen werden?
