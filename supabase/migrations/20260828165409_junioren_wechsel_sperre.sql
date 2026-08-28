@@ -58,12 +58,20 @@ begin
     return jsonb_build_object('status', 'ok', 'wechsel', false);
   end if;
 
+  -- Ein öffentliches Training wechselt das Schema nicht: nach dem Wechsel
+  -- erfüllt es die Bedingungen des neuen Schemas praktisch nie — Spielform zum
+  -- Trainingsziel und Explosivität sind aus dem Manual-Bestand gar nicht
+  -- befüllbar. Statt es still zurückzuziehen, verlangt die Applikation
+  -- denselben bewussten Schritt wie bei jeder anderen Änderung, die ein
+  -- öffentliches Training unter die Bedingungen brächte.
   if v_visibility = 'public' then
     raise exception 'SCHEMA_WECHSEL_OEFFENTLICH';
   end if;
 
   update trainings set stufen = p_stufen where id = p_training_id;
 
+  -- Zielbestimmung je Fassung in zwei Stufen, damit die Positionsvergabe auf
+  -- dem TATSÄCHLICHEN Ziel rechnet und nicht auf der Abbildungsregel allein.
   with ziel as (
     select
       te.id,
@@ -71,8 +79,11 @@ begin
       te.hauptteilkategorie as alt_hkat,
       te.position           as alt_pos,
       case
+        -- Vorrang hat die Konserve: die tatsächlich verlassene Einordnung,
+        -- sofern sie ins Zielschema gehört. Das macht den Rückweg verlustfrei.
         when training_schema_der_einordnung(te.einordnung_vorher) = v_schema_neu
           then te.einordnung_vorher
+        -- Sonst die Abbildungsregel, Richtung Kinderfussball → Junioren.
         when v_schema_neu = 'junioren' then
           case
             when te.trainingsteil = 'einleitung' then 'jun-aufwaermen'
@@ -84,8 +95,9 @@ begin
                  and te.hauptteilkategorie = 'fussball-spielen'
               then 'jun-spiel'
             when te.trainingsteil = 'ausklang' then 'jun-ausklang'
-            else 'nacharbeit'
+            else 'nacharbeit'  -- Auffangen (Z1) und Übriges (Z7)
           end
+        -- Und Richtung Junioren → Kinderfussball.
         else
           case
             when te.trainingsteil in ('jun-aufwaermen',
@@ -94,7 +106,7 @@ begin
             when te.trainingsteil in ('jun-spielformen','jun-spiel')
               then 'hauptteil'
             when te.trainingsteil = 'jun-ausklang' then 'ausklang'
-            else 'nacharbeit'
+            else 'nacharbeit'  -- Explosivität hat im Kinderfussball keine Entsprechung
           end
       end as neu_teil,
       case
@@ -112,6 +124,10 @@ begin
   nummeriert as (
     select z.*,
       row_number() over (
+        -- Ziel-Positionsraum: ausserhalb des Hauptteils zählt der Teil
+        -- (Index training_ex_pos_nonhauptteil), im Hauptteil die Kategorie
+        -- (Index training_ex_pos_hauptteil). Beide getrennt zu partitionieren
+        -- ist die sichere Obermenge.
         partition by z.neu_teil, coalesce(z.neu_hkat, '')
         order by array_position(array[
             'auffangen','einleitung','hauptteil','ausklang',
@@ -126,8 +142,12 @@ begin
   update training_exercises te
   set trainingsteil = n.neu_teil,
       hauptteilkategorie = n.neu_hkat,
+      -- Die Konserve für den Rückweg: die JETZT verlassene Einordnung.
       einordnung_vorher = n.alt_teil,
       hauptteilkategorie_vorher = n.alt_hkat,
+      -- Negative Zwischenpositionen halten die Umsortierung kollisionsfrei
+      -- (Muster von move_training_exercise): nach diesem UPDATE ist jede Zeile
+      -- des Trainings negativ, positive und negative kollidieren nie.
       position = -n.neu_pos
   from nummeriert n
   where te.id = n.id;

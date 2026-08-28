@@ -16,6 +16,7 @@ import {
   entferneStorageObjekt,
   inhaltFelder,
   istEigeneFassungsDatei,
+  FASSUNG_UEBERNAHME_SELECT,
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
 import { TRAININGSTEIL_SLUGS } from "@/lib/training";
@@ -103,9 +104,11 @@ export async function updateFassung(
 
   // Eine Fassung wird nach den Blöcken IHRES Trainingsschemas eingeordnet —
   // die Nacharbeit eingeschlossen, aus der sie der Trainer herausholt.
+  // Die Nacharbeit steht nur zur Wahl, wenn die Fassung dort liegt — dorthin
+  // gerät sie nur durch den Schema-Wechsel, nie durch eine Zuordnung.
   const parsed = parseUebungsInhalt(form, [
     ...zuordnungsZiele(schemaAusStufen(fassung.stufen)),
-    NACHARBEIT,
+    ...(fassung.trainingsteil === NACHARBEIT ? [NACHARBEIT] : []),
   ]);
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
   const inhalt = parsed.row;
@@ -207,6 +210,22 @@ export async function updateFassung(
  *  öffentlichen Training. Es entsteht eine gewöhnliche Trainer-Übung mit eigener
  *  Bild- und Diagrammkopie; eine Verknüpfung zur Fassung gibt es nicht, spätere
  *  Änderungen wirken in keine Richtung. */
+/** Eine Fassung, wie sie fürs Übernehmen in die Bibliothek gelesen wird
+ *  (FASSUNG_UEBERNAHME_SELECT). */
+type ZuUebernehmendeFassung = {
+  trainingsteil: string;
+  hauptteilkategorie: string | null;
+  name: string | null;
+  methodischer_fahrplan: {
+    offen_starten?: string;
+    ueben?: string[];
+    wetteifern?: string | null;
+  } | null;
+  aufbau: string | null;
+  bild_url: string | null;
+  diagramm: unknown;
+} & Record<string, unknown>;
+
 export async function uebernehmeInBibliothek(
   fassungId: string,
 ): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
@@ -219,13 +238,9 @@ export async function uebernehmeInBibliothek(
   // RLS lässt Fassungen eigener und öffentlicher Trainings durch.
   const { data: f } = await supabase
     .from("training_exercises")
-    .select(
-      `name, trainingsteil, hauptteilkategorie, kategorien, erscheinungsform, feldtyp,
-       anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten,
-       bild_url, bild_quelle, diagramm`,
-    )
+    .select(FASSUNG_UEBERNAHME_SELECT)
     .eq("id", fassungId)
-    .maybeSingle();
+    .maybeSingle<ZuUebernehmendeFassung>();
   if (!f) return { ok: false, error: "Diese Übung ist nicht mehr verfügbar." };
 
   // Die Heimat bestimmen, BEVOR die Vollständigkeit geprüft wird: eine Fassung

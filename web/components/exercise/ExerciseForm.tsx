@@ -203,6 +203,11 @@ export function ExerciseForm({
     // das freie Spiel darf eine tragen (DB-Constraint).
     fd.set("form", ERSCHEINUNGSFORM_TEILE.has(teil) ? form.join(",") : "");
     fd.set("uebungstyp", uebungstyp);
+    // Welche Ablauf-Form gilt, hat das Formular schon entschieden — es rendert
+    // danach. Der Server soll dieselbe Antwort nutzen, statt sie aus dem
+    // Feldinhalt neu zu raten: sonst rutschte er in den anderen Zweig und
+    // verlangte ein Feld, das gar nicht auf dem Bildschirm steht.
+    fd.set("ablauf_form", istFahrplan ? "fahrplan" : "aufbau");
     fd.set("hauptteilkategorie", istHauptteil ? hkat : "");
     fd.set("feldtyp", feld);
     fd.set("bild_entfernen", bildEntfernen ? "1" : "");

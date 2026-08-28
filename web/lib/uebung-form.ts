@@ -4,7 +4,6 @@
 // Mutationen. (Ein Server-Actions-Modul darf ausserdem nur async Funktionen
 // exportieren.)
 import {
-  FAHRPLAN_TEILE,
   FAHRPLAN_NUR_OFFEN,
   ERSCHEINUNGSFORM_TEILE,
   FREIES_SPIEL,
@@ -73,7 +72,9 @@ export function parseUebungsInhalt(
   const zulaessig: readonly string[] =
     erlaubteEinordnungen ?? [...trainingsteilSlugs, ...junioren_heimatSlugs];
   if (!zulaessig.includes(trainingsteil))
-    errors.trainingsteil = "Bitte eine Heimat wählen.";
+    errors.trainingsteil = erlaubteEinordnungen
+      ? "Bitte eine Einordnung wählen."
+      : "Bitte eine Heimat wählen.";
   if (kategorien.length === 0)
     errors.kat = "Bitte mindestens eine Alterskategorie wählen.";
   if (kategorien.some((k) => !kategorienSlugs.includes(k as never)))
@@ -93,11 +94,20 @@ export function parseUebungsInhalt(
   // Heimat wäre — entscheidet der mitgelieferte Inhalt: eine aus einer
   // Hauptteil-Übung entstandene Fassung bringt ihren Fahrplan mit, eine aus
   // dem freien Spiel ihren Aufbau-Text.
-  const istFahrplan = brauchtFahrplanFuerFassung(
-    trainingsteil,
-    hauptteilkategorie,
-    clean(form.get("offen_starten")) !== "",
-  );
+  // Das Formular teilt mit, in welcher Form es den Ablauf erfasst hat. Ohne
+  // die Angabe — etwa bei einem Aufruf ausserhalb des Formulars — wird sie aus
+  // dem Inhalt abgeleitet.
+  const angesagteForm = clean(form.get("ablauf_form"));
+  const istFahrplan =
+    angesagteForm === "fahrplan" || angesagteForm === "aufbau"
+      ? angesagteForm === "fahrplan"
+      : brauchtFahrplanFuerFassung(
+          trainingsteil,
+          hauptteilkategorie,
+          clean(form.get("offen_starten")) !== "" ||
+            lines(form.get("ueben")).length > 0 ||
+            clean(form.get("wetteifern")) !== "",
+        );
   const istFreiesSpiel = hauptteilkategorie === FREIES_SPIEL;
   let methodischer_fahrplan: Record<string, unknown> | null = null;
   let aufbau: string | null = null;

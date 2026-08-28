@@ -117,7 +117,12 @@ export async function createTraining(
     .single();
 
   if (error || !data) {
-    return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
+    // Übersetzt, nicht roh: eine gemischte Stufenwahl kommt hier als
+    // Constraint-Meldung an, und die versteht niemand (Epic #71).
+    return {
+      status: "error",
+      message: error ? fehlerMeldung(error.message) : "Speichern fehlgeschlagen.",
+    };
   }
 
   revalidatePath("/trainings");

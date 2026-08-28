@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import {
-  trainingsteil as trainingsteilLabels,
   hauptteilkategorie as hauptteilkategorieLabels,
   type KategorieSlug,
 } from "@/lib/vocab";

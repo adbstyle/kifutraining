@@ -1,3 +1,4 @@
+import { JUNIOREN_BLOCK_SLUGS, NACHARBEIT } from "@/lib/junioren";
 import {
   kategorien,
   trainingsteil as trainingsteilLabels,
@@ -38,7 +39,14 @@ export const FAHRPLAN_NUR_OFFEN = new Set<string>([
  *  und Ausklang bleiben ausgeschlossen — auch der Junioren-Ausklang (Story 12
  *  Out of Scope 5). Ohne dieses eigene Set würde die Fahrplan-Menge hier
  *  zweckentfremdet und jede Bearbeitung einer Junioren-Fassung löschte ihre
- *  Erscheinungsformen still. */
+ *  Erscheinungsformen still.
+ *
+ *  Verhältnis zum DB-Constraint `erscheinungsform_nur_haupt_einleitung`: Der
+ *  deckt die HEIMATEN ab — die vier Kinderfussball-Teile und die drei
+ *  Einstiegs-Unterblöcke, mehr kann eine Bibliotheks-Übung nicht tragen. Diese
+ *  Menge ist grösser, weil eine FASSUNG auch in `jun-spielformen` oder
+ *  `jun-spiel` liegen kann; für Fassungen gilt der Constraint nicht. Die beiden
+ *  Listen sind also nicht redundant, sondern beschreiben verschiedene Orte. */
 export const ERSCHEINUNGSFORM_TEILE = new Set<string>([
   "einleitung",
   "hauptteil",
@@ -86,8 +94,16 @@ export function brauchtFahrplanFuerFassung(
   hauptteilkategorie: string | null,
   hatFahrplanInhalt: boolean,
 ): boolean {
+  // Eine eigene Ablauf-Regel haben nur die Kinderfussball-Teile und die beiden
+  // Fahrplan-Heimaten. Alle übrigen Junioren-Blöcke UND die Nacharbeit sind
+  // Orte, an denen eine Fassung liegen kann, ohne dass der Ort etwas über ihre
+  // Form aussagt — dort entscheidet ihr Inhalt. Die Nacharbeit ausgerechnet
+  // auszunehmen hiesse, den Fahrplan einer dorthin gefallenen Fassung
+  // stillschweigend zu verwerfen.
   const eigeneRegel =
-    !einordnung.startsWith("jun-") || FAHRPLAN_TEILE.has(einordnung);
+    einordnung !== NACHARBEIT &&
+    (!(JUNIOREN_BLOCK_SLUGS as readonly string[]).includes(einordnung) ||
+      FAHRPLAN_TEILE.has(einordnung));
   return eigeneRegel
     ? brauchtFahrplan(einordnung, hauptteilkategorie)
     : hatFahrplanInhalt;
