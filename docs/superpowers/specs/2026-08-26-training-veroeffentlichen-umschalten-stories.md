@@ -46,7 +46,7 @@ ohne sie irreführend. Ein Training ist entweder ein Entwurf oder ein
 
 ## Story A (Business, Rules) — Training veröffentlichen und zurückziehen
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-28 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Training veröffentlichen und zurückziehen
 
@@ -101,7 +101,7 @@ Anmerkungen
 
 ## Story B (Business, Interface) — Öffentliche und eigene Trainings gemeinsam finden
 
-Status: ausgearbeitet, perspektivenbasiertes Review durchlaufen
+Status: UMGESETZT 2026-08-28 — ausgearbeitet, perspektivenbasiertes Review durchlaufen
 
 Öffentliche und eigene Trainings gemeinsam finden
 
