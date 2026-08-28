@@ -6,6 +6,12 @@
 // die Prüfung für die Vorab-Meldung und die Übersetzung des DB-Fehlers, damit
 // beide Seiten dieselbe Regel nennen statt zweier Formulierungen davon.
 
+import {
+  schemaAusStufen,
+  JUNIOREN_PFLICHT_BLOECKE,
+  NACHARBEIT,
+} from "@/lib/junioren";
+
 /** Marker, mit dem die Datenebene eine verletzte Bedingung meldet. */
 const BEDINGUNG_MARKER = "TRAINING_UNVOLLSTAENDIG";
 
@@ -103,4 +109,35 @@ function schemaMeldung(message: string): string | null {
  *  Bedingungen fiele. */
 export function fehlerMeldung(message: string): string {
   return bedingungsFehler(message) ?? schemaMeldung(message) ?? message;
+}
+
+/** Welche Veröffentlichungs-Bedingungen erfüllt ein Training noch nicht?
+ *  Die Regel hängt an seinem Schema (Story 7 AC 1/2/4) und spiegelt die
+ *  DB-Funktion `training_fehlende_bedingungen`, die als Trust-Boundary
+ *  dasselbe prüft.
+ *
+ *  Synchron und bewusst hier statt bei den Server Actions: der Editor rechnet
+ *  sie live aus seinem lokalen Stand, und ein "use server"-Modul darf nur
+ *  async-Funktionen exportieren.
+ *
+ *  Im Juniorenschema braucht es keine eigene Stufen-Bedingung — ein
+ *  Junioren-Training trägt per Schema-Definition eine Junioren-Kategorie. */
+export function fehlendeBedingungenAus(
+  stufen: readonly string[],
+  fassungen: readonly { trainingsteil: string; hauptteilkategorie?: string | null }[],
+): Bedingung[] {
+  const missing: Bedingung[] = [];
+  if (schemaAusStufen(stufen) === "kifu") {
+    if (stufen.length === 0) missing.push("stufe");
+    if (!fassungen.some((f) => f.trainingsteil === "einleitung")) missing.push("einleitung");
+    if (!fassungen.some((f) => f.hauptteilkategorie === FREIES_SPIEL))
+      missing.push("freies_spiel");
+  } else {
+    for (const block of JUNIOREN_PFLICHT_BLOECKE) {
+      if (!fassungen.some((f) => f.trainingsteil === block)) missing.push(block);
+    }
+  }
+  // Offene Nacharbeit blockiert in beiden Schemata (Story 7 AC 1).
+  if (fassungen.some((f) => f.trainingsteil === NACHARBEIT)) missing.push("nacharbeit");
+  return missing;
 }

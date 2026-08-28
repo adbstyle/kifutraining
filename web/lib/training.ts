@@ -1,4 +1,4 @@
-import { JUNIOREN_TEILE } from "@/lib/junioren";
+import { JUNIOREN_TEILE, NACHARBEIT, schemaAusStufen } from "@/lib/junioren";
 import type { JuniorenBlockSlug } from "@/lib/vocab";
 import {
   trainingsteil as trainingsteilLabels,
@@ -188,6 +188,78 @@ export function leseBloecke<
   return groupHauptteil(section.items)
     .filter((g) => g.items.length > 0)
     .map((g) => ({ key: g.slug, label: g.label, sum: g.sum, items: g.items }));
+}
+
+/** Die Lese-Gliederung eines Trainings — eine Form für beide Schemata, damit
+ *  Detailansicht, Durchführung und Druck nicht je zweimal verzweigen müssen.
+ *
+ *  Kinderfussball: die vier Trainingsteile, der Hauptteil in seine belegten
+ *  Unterkategorien geteilt, die übrigen Teile als ein Block ohne
+ *  Unterüberschrift (`label: null`). Juniorenfussball: die drei Trainingsteile
+ *  mit ihren belegten Unterblöcken. Leere Teile und Blöcke erscheinen in
+ *  beiden Fällen nicht (Story 8 PC 1). */
+export function leseGliederung<
+  T extends {
+    trainingsteil: string;
+    hauptteilkategorie: string | null;
+    durationMin: number | null;
+  },
+>(
+  stufen: readonly string[],
+  items: T[],
+): {
+  key: string;
+  label: string;
+  sum: number;
+  traegtDauer: boolean;
+  bloecke: { key: string; label: string | null; sum: number; items: T[] }[];
+}[] {
+  if (schemaAusStufen(stufen) === "junioren") {
+    return leseBloeckeJunioren(items).map((teil) => ({
+      key: teil.teilSlug,
+      label: teil.teilLabel,
+      sum: teil.teilSum,
+      // Im Juniorenschema trägt jeder Trainingsteil eine Dauer; ein Pendant
+      // zum dauerlosen Auffangen kennt es nicht.
+      traegtDauer: true,
+      bloecke: teil.bloecke,
+    }));
+  }
+  return groupByTeil(items)
+    .filter((s) => s.items.length > 0)
+    .map((s) => ({
+      key: s.slug,
+      label: s.label,
+      sum: s.sum,
+      traegtDauer: s.traegtDauer,
+      bloecke: leseBloecke(s),
+    }));
+}
+
+/** Lese-Gliederung eines Junioren-Trainings für Detailansicht, Durchführung
+ *  und Druck: nur belegte Teile und Blöcke, in der Reihenfolge des Editors
+ *  (Story 8 AC 1/2/5, PC 1). Die Nacharbeit bleibt aussen vor — sie ist eine
+ *  Aufgabe im Editor, nicht Teil des Trainings auf dem Platz (Out of Scope 2). */
+export function leseBloeckeJunioren<
+  T extends { trainingsteil: string; durationMin: number | null },
+>(
+  items: T[],
+): {
+  teilSlug: string;
+  teilLabel: string;
+  teilSum: number;
+  bloecke: { key: string; label: string; sum: number; items: T[] }[];
+}[] {
+  return groupJunioren(items.filter((i) => i.trainingsteil !== NACHARBEIT))
+    .map((teil) => ({
+      teilSlug: teil.slug,
+      teilLabel: teil.label,
+      teilSum: teil.sum,
+      bloecke: teil.bloecke
+        .filter((b) => b.items.length > 0)
+        .map((b) => ({ key: b.slug, label: b.label, sum: b.sum, items: b.items })),
+    }))
+    .filter((teil) => teil.bloecke.length > 0);
 }
 
 /** Datum lesbar formatieren (de-CH, z. B. "8. Juni 2026"). */

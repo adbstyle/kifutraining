@@ -50,7 +50,7 @@ import {
   type JuniorenBlockSlug,
 } from "@/lib/vocab";
 import { SichtbarkeitControl } from "./SichtbarkeitControl";
-import { FREIES_SPIEL, type Bedingung } from "@/lib/training-bedingungen";
+import { fehlendeBedingungenAus, type Bedingung } from "@/lib/training-bedingungen";
 import { InTeamStellenControl } from "./InTeamStellenControl";
 import {
   TRAININGSTEILE,
@@ -68,7 +68,6 @@ import {
   removeTrainingExercise,
   renameTraining,
   setTrainingStufen,
-  fehlendeBedingungenAus,
   deleteTraining,
 } from "@/lib/actions/trainings";
 import type { TrainingsteilSlug, HauptteilkategorieSlug } from "@/lib/vocab";
