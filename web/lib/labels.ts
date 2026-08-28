@@ -5,6 +5,10 @@ export const kategorieStufe: Record<keyof typeof kategorien, string> = {
   G: "G-Junior:innen",
   F: "F-Junior:innen",
   E: "E-Junior:innen",
+  D: "D-Junior:innen",
+  C: "C-Junior:innen",
+  B: "B-Junior:innen",
+  A: "A-Junior:innen",
 };
 
 // Trainingsteile mit methodischem Fahrplan + Themen-/Erscheinungsform-Feldern

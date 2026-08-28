@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Kinderfussball Übung",
+  "title": "Übung",
   "type": "object",
   "required": ["id", "name", "trainingsteil", "kategorien", "quelle"],
   "additionalProperties": false,
@@ -23,7 +23,7 @@
     },
     "kategorien": {
       "type": "array",
-      "items": { "enum": ["G", "F", "E"] },
+      "items": { "enum": ["G", "F", "E", "D", "C", "B", "A"] },
       "uniqueItems": true
     },
     "anzahl_kinder": {

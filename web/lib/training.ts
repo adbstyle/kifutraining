@@ -4,6 +4,7 @@ import {
   type TrainingsteilSlug,
   type HauptteilkategorieSlug,
   type KategorieSlug,
+  kategorienSlugs,
 } from "@/lib/vocab";
 
 /**
@@ -74,10 +75,10 @@ export function stufenAbgedeckt(
   return trainingStufen.some((s) => uebungKategorien.includes(s));
 }
 
-/** Stabile Reihenfolge der Stufen-Anzeige (G, F, E). */
+/** Stabile Reihenfolge der Stufen-Anzeige — die fachliche Reihenfolge des
+ *  Vokabulars (G, F, E, D, C, B, A; Story 2 AC 6). */
 export function sortStufen(stufen: readonly string[]): KategorieSlug[] {
-  const order: KategorieSlug[] = ["G", "F", "E"];
-  return order.filter((s) => stufen.includes(s));
+  return kategorienSlugs.filter((s) => stufen.includes(s));
 }
 
 /** Zuordnungen nach Trainingsteil gruppieren (feste Reihenfolge) und je Teil

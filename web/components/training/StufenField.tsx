@@ -8,9 +8,13 @@ const katColor: Record<KategorieSlug, string> = {
   G: "bg-kat-g text-rasen-950 border-transparent",
   F: "bg-kat-f text-rasen-950 border-transparent",
   E: "bg-kat-e text-rasen-950 border-transparent",
+  D: "bg-kat-d text-rasen-950 border-transparent",
+  C: "bg-kat-c text-rasen-950 border-transparent",
+  B: "bg-kat-b text-rasen-950 border-transparent",
+  A: "bg-kat-a text-rasen-950 border-transparent",
 };
 
-/* Stufen-Auswahl (G/F/E) als toggelbare Chips — die Alterskategorien eines
+/* Stufen-Auswahl (G bis A) als toggelbare Chips — die Alterskategorien eines
    Trainings (Story #10 AC3, Story #12 AC2). Im ausgewählten Zustand in der festen
    Stufen-Farbe, sonst als Outline-Chip. Kontrolliert. */
 export function StufenField({

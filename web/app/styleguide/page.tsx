@@ -97,11 +97,18 @@ const accentRoles: [string, string][] = [
 ];
 
 // Alterskategorien als Palette-Farben (Token + Stufe) — die kanonische
-// Quelle für G/F/E-Farben; keine neuen Hues erfinden.
+// Quelle für die Kategorie-Farben; keine neuen Hues erfinden.
+// G/F/E gehören zum Kinderfussball, D/C/B/A zum Juniorenfussball (Epic #71).
+// Sieben Werte lassen sich nicht mehr allein über die Farbe unterscheiden:
+// jedes Badge trägt darum immer den Buchstaben (siehe KategorieChip).
 const kategorieColors: [string, string, string][] = [
   ["kat-g", "bg-kat-g", "G-Junior:innen"],
   ["kat-f", "bg-kat-f", "F-Junior:innen"],
   ["kat-e", "bg-kat-e", "E-Junior:innen"],
+  ["kat-d", "bg-kat-d", "D-Junior:innen"],
+  ["kat-c", "bg-kat-c", "C-Junior:innen"],
+  ["kat-b", "bg-kat-b", "B-Junior:innen"],
+  ["kat-a", "bg-kat-a", "A-Junior:innen"],
 ];
 
 const typeScale: [string, string][] = [
