@@ -30,6 +30,7 @@ import { ExerciseThumb } from "./ExerciseThumb";
 import { InBibliothekButton } from "./InBibliothekButton";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
+import { ZeitAbgleich, GesamtAbgleich } from "./ZeitAbgleich";
 import {
   schemaAusStufen,
   stufenMischen,
@@ -39,6 +40,7 @@ import {
   JUNIOREN_TEILE,
   NACHARBEIT,
   LEER_HINWEIS_BLOECKE,
+  GESAMTDAUER_JUNIOREN,
   schemaDerEinordnung,
   type Schema,
   type Einordnung,
@@ -352,6 +354,12 @@ export function TrainingEditor({
           <Clock size={18} strokeWidth={2} aria-hidden />
           Gesamtdauer: {formatDuration(totalDuration)}
         </span>
+        {/* Die Zeit-Orientierung gilt nur im Juniorenschema — das
+            Kinderfussball-Manual gibt bewusst keine Zeiten vor (Story 6
+            AC 5 / Out of Scope 1). */}
+        {schema === "junioren" && (
+          <GesamtAbgleich sum={totalDuration} soll={GESAMTDAUER_JUNIOREN} />
+        )}
         {totalMissing > 0 && (
           <span className="type-label-medium text-on-surface-variant">
             {totalMissing} {totalMissing === 1 ? "Übung ohne" : "Übungen ohne"} Dauer
@@ -383,6 +391,7 @@ export function TrainingEditor({
                     {formatDuration(teilDur)}
                   </span>
                 )}
+                <ZeitAbgleich slug={teil.slug} sum={teilDur} />
               </div>
 
               <div className="mt-4 flex flex-col gap-5">
@@ -398,6 +407,9 @@ export function TrainingEditor({
                               {formatDuration(blockDur)}
                             </span>
                           )}
+                          <span className="ml-2">
+                            <ZeitAbgleich slug={b.slug} sum={blockDur} />
+                          </span>
                         </h3>
                         <Tooltip label="Übung hinzufügen">
                           <IconButton
