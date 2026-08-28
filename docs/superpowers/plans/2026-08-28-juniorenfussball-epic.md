@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Migrationspfad ist der Hauptanwendungsfall (PO 2026-08-28):** Heute existiert nur Kinderfussball, und ein Teil des produktiven Bestands ist inhaltlich bereits Junioren-Training. Diese Trainings heben die Nutzer:innen SELBST von E auf D — der Schema-Wechsel ist damit kein Randfall, sondern der zentrale Übergang für den Bestand. Daraus folgen drei Leitplanken: (a) die Übertragung KiFu→Junioren muss so viel wie möglich retten, (b) der Rückwechsel muss VERLUSTFREI sein, damit das Umstellen gefahrlos ausprobiert werden kann, (c) der Bestätigungsdialog muss vorher sagen, was danach fehlt.
+
 **Goal:** Die App zusätzlich zum Kinderfussball (G/F/E) für den Juniorenfussball (D–A) öffnen: neue Alterskategorien, Schema-Bestimmung mit Mischverbot und Wechsel-Übertragung, dreiteiliges Junioren-Schema mit Unterblöcken, Junioren-Heimat für Übungen, Zeit-Orientierung, schema-eigene Veröffentlichungsbedingungen, Durchführung/Druck, Übungstyp, Trainingsziel, geöffnete Texte und Junioren-Erscheinungsformen — Stories 2–12 aus `docs/superpowers/specs/2026-08-14-juniorenfussball-stories.md`.
 
 **Architektur:** Die Heimat einer Übung bleibt die bestehende Spalte `exercises.trainingsteil`, deren CHECK additiv um die drei Junioren-Heimaten erweitert wird — genau eine Heimat ist damit strukturell garantiert, kein NULL-Zustand, keine zweite Spalte. Die Einordnung im Training bleibt `training_exercises.trainingsteil`, erweitert um die sechs Junioren-Block-Slugs und den schema-neutralen Zustand `nacharbeit`; die Teil→Unterblock-Hierarchie des Juniorenschemas ist reines Darstellungswissen in `web/lib/junioren.ts`. Das Schema eines Trainings ist eine reine Funktion seiner `stufen` (TS und SQL identisch definiert); Mischverbot, Schema-Konsistenz der Zuordnungen und die schema-eigenen Veröffentlichungsbedingungen werden in der Datenbank durchgesetzt (Trigger/RPC, Muster der bestehenden Gates).
@@ -34,8 +36,8 @@
 | Zeit-Abgleich-Darstellung (Story 6) | Neben jeder Summe «Richtwert X–Y min» plus Zustand: innerhalb (neutral), darunter «−N min», darüber «+N min»; nur im Editor (Story 8 OoS 1 hält Durchführung/Druck frei; Übersichtskarte unverändert) | PO im E2E-Durchgang |
 | 17 Erscheinungsformen auffindbar (Story 12) | Flache Liste in Manual-Reihenfolge (6 KiFu, dann 11 Junioren); bestehendes `MultiSelect` mit Placeholder — keine Gruppierung (PO-Entscheid) | PO im E2E-Durchgang |
 | Formulierungen Story 11 | Konkrete Textvorschläge in Task 16; **PO-Abnahme ist dort ein blockierender Checkpoint** | PO vor Merge |
-| Rückübertragung Junioren→KiFu (Story 3 überträgt «anhand der Abbildungsregel», definiert die Blockrichtung aber nur teilweise) | `jun-aufwaermen`→einleitung, `jun-spielform-trainingsziel`→einleitung (Heimat-Rückabbildung §4), `jun-spiel`→hauptteil+fussball-spielen, `jun-ausklang`→ausklang (Umkehrung Z5/Z6), `jun-spielformen`→hauptteil+fussball-spielen-lernen (Z3 invers; Z4 «vielseitigkeit-erleben» ist nicht rekonstruierbar — ein Wechsel KiFu→Junioren→KiFu normalisiert sie dauerhaft; Alternative wäre das Konservieren der Alt-Kategorie in einer Nebenspalte), `jun-explosivitaet`→`nacharbeit` (ohne KiFu-Entsprechung), `nacharbeit` bleibt `nacharbeit` | **PO-Entscheid VOR Task 6 einholen** — erweitert die abgenommene Abbildungsregel (§4 kennt nur die Heimat-Rückabbildung) und wirkt beim Round-Trip irreversibel |
-| Story 7 PC 2 / Story 3 PC 5 («selbsttätig auf privat») vs. Ist-Verhalten (Umschalten-Epic BLOCKIERT verletzende Änderungen) | Blockieren bleibt für beide Schemata die Regel (kein KiFu-Verhaltensbruch, Story 7 OoS 1); Auto-Privat gibt es genau beim Schema-Wechsel im RPC (PC 5). PC 2 wird damit bewusst NICHT wörtlich erfüllt | **PO-Entscheid in Task 12 (Checkpoint)** |
+| Rückübertragung Junioren→KiFu (Story 3 überträgt «anhand der Abbildungsregel», definiert die Blockrichtung aber nur teilweise) | **Konservierung statt Normalisierung (PO 2026-08-28):** Der Wechsel sichert je Fassung die verlassene Einordnung in `einordnung_vorher`/`hauptteilkategorie_vorher`; der Rückwechsel stellt sie wieder her. Damit ist E→D→E verlustfrei — auch «Vielseitigkeit erleben» und die in die Nacharbeit gefallenen Auffangen-Übungen kehren zurück. Nur wo keine Konserve existiert (nativ als D angelegtes Training) greift die Normalisierungstabelle: `jun-aufwaermen`/`jun-spielform-trainingsziel`→einleitung (Heimat-Rückabbildung §4), `jun-spielformen`→hauptteil+fussball-spielen-lernen, `jun-spiel`→hauptteil+fussball-spielen, `jun-ausklang`→ausklang, `jun-explosivitaet`→`nacharbeit` | entschieden |
+| Story 7 PC 2 / Story 3 PC 5 («selbsttätig auf privat») vs. Ist-Verhalten (Umschalten-Epic BLOCKIERT verletzende Änderungen) | **Umschalten-Epic gilt durchgängig (PO 2026-08-28):** Auch der Schema-Wechsel eines ÖFFENTLICHEN Trainings wird abgewiesen — «Setze das Training zuerst auf Entwurf, wenn du das Trainingsschema wechseln willst.» Kein Auto-Privat, nirgends. Sachlich zwingend: ein KiFu-Training erfüllt die Junioren-Bedingungen nach dem Wechsel praktisch nie (Spielform zum Trainingsziel und Explosivität sind aus dem Bestand nicht befüllbar), ein Auto-Privat wäre also der Normalfall statt der Ausnahme. Story 7 PC 2 und Story 3 PC 5 werden in der Stories-Doku als überholt vermerkt | entschieden |
 
 ---
 
@@ -50,7 +52,7 @@ Ein Task = eine Story-Scheibe mit eigenem Test-Zyklus und eigenem Commit. Reihen
 | 3 | Migration: Alterskategorien G–A | 2 |
 | 4 | UI: Kategorien D–A überall (Chips, Filter, Farben, Sortierung) | 2 |
 | 5 | `web/lib/junioren.ts`: Schema-Funktion, Abbildungsregel, Struktur, Bandbreiten | 3–8 (Fundament) |
-| 6 | Migration: Mischverbot, Schema-Funktion SQL, Junioren-Blöcke, Schema-Gate, Bedingungsfunktion, Wechsel-RPC | 3, 4, 7 (DB) |
+| 6 | Migration: Mischverbot, Schema-Funktion SQL, Junioren-Blöcke, Konserve, Schema-Gate, Bedingungsfunktion, Wechsel-RPC | 3, 4, 7 (DB) |
 | 7 | VALIDATE-Migration Mischverbot | 3 |
 | 8 | UI: Schema-Wechsel mit Bestätigung + Nacharbeits-Bereich | 3 |
 | 9 | UI: Junioren-Editor (3 Teile, 6 Unterblöcke, Picker, Vorschlag, Einordnung ändern) | 4, 5a |
@@ -633,7 +635,8 @@ Die zentrale DB-Migration des Epics. Sie bündelt, was fachlich untrennbar ist (
   - `training_schema(p_stufen text[]) returns text` — `'kifu' | 'junioren'`, IMMUTABLE.
   - `training_exercises.trainingsteil` akzeptiert zusätzlich die 6 Junioren-Blöcke + `nacharbeit`.
   - `training_fehlende_bedingungen(p_training_id uuid) returns text[]` — leeres Array = veröffentlichbar; Werte: `stufe|einleitung|freies_spiel` (KiFu) bzw. `jun-aufwaermen|jun-spielform-trainingsziel|jun-explosivitaet|jun-spielformen|jun-ausklang` (Junioren), schema-übergreifend `nacharbeit`.
-  - `set_training_stufen(p_training_id uuid, p_stufen text[]) returns jsonb` — `{status:'ok'}` oder Exception; überträgt bei Schema-Wechsel alle Fassungen.
+  - `set_training_stufen(p_training_id uuid, p_stufen text[]) returns jsonb` — `{status:'ok', wechsel:boolean}` oder Exception; überträgt bei Schema-Wechsel alle Fassungen und sichert/​stellt deren vorherige Einordnung wieder her.
+  - Spalten `training_exercises.einordnung_vorher`, `.hauptteilkategorie_vorher` (nullable) — die Konserve für den verlustfreien Rückwechsel.
 
 - [ ] **Step 1: Fehlschlagende DB-Tests formulieren**
 
@@ -684,6 +687,24 @@ $$;
 alter table trainings add constraint training_stufen_ein_schema check (
   stufen <@ array['G','F','E'] or stufen <@ array['D','C','B','A']
 ) not valid;
+
+-- ----------------------------------------------------------------------------
+-- 2b) Konserve für den verlustfreien Rückwechsel (PO 2026-08-28)
+-- ----------------------------------------------------------------------------
+-- Der Schema-Wechsel ist der Migrationspfad des Bestands: Nutzer:innen heben
+-- ihre inhaltlich bereits juniorentauglichen E-Trainings selbst auf D. Damit
+-- dieses Umstellen gefahrlos ausprobierbar ist, sichert der Wechsel je Fassung
+-- die verlassene Einordnung; der Rückwechsel stellt sie wieder her. Ohne die
+-- Konserve wäre der Round-Trip verlustbehaftet: die Abbildungsregel führt
+-- «Fussball spielen lernen» und «Vielseitigkeit erleben» beide nach
+-- jun-spielformen zusammen (Z3/Z4) und ist damit nicht umkehrbar; ebenso
+-- fielen die Auffangen-Zuordnungen (Z1) dauerhaft in die Nacharbeit.
+-- Nullable und ohne CHECK auf den Wertebereich: es ist ein Gedächtnis, keine
+-- Invariante — ein unbekannter Altwert darf die Wiederherstellung höchstens
+-- ausfallen lassen, nie ein Update abweisen.
+alter table training_exercises
+  add column einordnung_vorher text,
+  add column hauptteilkategorie_vorher text;
 
 -- ----------------------------------------------------------------------------
 -- 3) Einordnungs-Wertebereich der Zuordnung (Story 4 AC 3, 5a AC 4):
@@ -817,6 +838,23 @@ $$;
 --    (Entscheidungsdokument §2/§4; Rückrichtung als dokumentierter
 --    Plan-Entscheid) — SQL-Pendant zu web/lib/junioren.ts.
 -- ----------------------------------------------------------------------------
+-- Zu welchem Schema gehört eine Einordnung? Für die Konserven-Auswertung.
+-- `nacharbeit` und NULL gehören zu keinem — sie liefern NULL und fallen damit
+-- in der Wechsel-Query auf die Abbildungsregel zurück.
+create or replace function training_schema_der_einordnung(p_einordnung text)
+returns text
+language sql
+immutable
+as $$
+  select case
+    when p_einordnung in ('auffangen','einleitung','hauptteil','ausklang') then 'kifu'
+    when p_einordnung in ('jun-aufwaermen','jun-spielform-trainingsziel',
+                          'jun-explosivitaet','jun-spielformen','jun-spiel',
+                          'jun-ausklang') then 'junioren'
+    else null
+  end;
+$$;
+
 create or replace function set_training_stufen(
   p_training_id uuid,
   p_stufen text[])
@@ -857,6 +895,16 @@ begin
     return jsonb_build_object('status', 'ok', 'wechsel', false);
   end if;
 
+  -- Ein öffentliches Training wechselt das Schema nicht (PO 2026-08-28,
+  -- Umschalten-Epic gilt durchgängig): nach dem Wechsel erfüllt es die
+  -- Bedingungen des neuen Schemas praktisch nie — Spielform zum Trainingsziel
+  -- und Explosivität sind aus dem Bestand gar nicht befüllbar. Statt es still
+  -- zurückzuziehen, verlangt die App denselben bewussten Schritt wie bei jeder
+  -- anderen bedingungsverletzenden Änderung.
+  if v_visibility = 'public' then
+    raise exception 'SCHEMA_WECHSEL_OEFFENTLICH';
+  end if;
+
   -- Schema-Wechsel: Stufen setzen und ALLE Zuordnungen übertragen — atomar.
   -- Positionen werden je Zielblock lückenlos neu vergeben (Positions-
   -- Eindeutigkeit); die Reihenfolge folgt der bisherigen Gliederung.
@@ -864,97 +912,100 @@ begin
   -- zuerst die Stufen.
   update trainings set stufen = p_stufen where id = p_training_id;
 
+  -- Zielbestimmung je Fassung in zwei Stufen, damit das row_number() auf dem
+  -- TATSÄCHLICHEN Ziel rechnet (Konserve ODER Abbildungsregel), nicht nur auf
+  -- der Abbildungsregel.
+  --
+  -- Stufe 1 (ziel): Wohin geht die Fassung?
+  --   a) Konserve, wenn sie ins Zielschema passt — der verlustfreie Rückweg.
+  --   b) sonst die Abbildungsregel (Entscheidungsdokument §2 Z1–Z7 hin,
+  --      Plan-Entscheid zurück).
+  -- Stufe 2 (nummeriert): lückenlose Positionen je Ziel-Positionsraum.
   with ziel as (
-    select te.id,
-      case when v_schema_neu = 'junioren' then
-        case
-          when te.trainingsteil = 'einleitung' then 'jun-aufwaermen'
-          when te.trainingsteil = 'hauptteil'
-               and te.hauptteilkategorie in ('fussball-spielen-lernen','vielseitigkeit-erleben')
-            then 'jun-spielformen'
-          when te.trainingsteil = 'hauptteil'
-               and te.hauptteilkategorie = 'fussball-spielen' then 'jun-spiel'
-          when te.trainingsteil = 'ausklang' then 'jun-ausklang'
-          else 'nacharbeit' -- auffangen (Z1), nacharbeit, Übriges (Z7)
-        end
-      else
-        case
-          when te.trainingsteil in ('jun-aufwaermen','jun-spielform-trainingsziel')
-            then 'einleitung'
-          when te.trainingsteil in ('jun-spielformen','jun-spiel') then 'hauptteil'
-          when te.trainingsteil = 'jun-ausklang' then 'ausklang'
-          else 'nacharbeit' -- jun-explosivitaet ohne KiFu-Entsprechung, nacharbeit
-        end
-      end as neu_teil,
-      case when v_schema_neu = 'kifu' and te.trainingsteil = 'jun-spielformen'
-             then 'fussball-spielen-lernen'
-           when v_schema_neu = 'kifu' and te.trainingsteil = 'jun-spiel'
-             then 'fussball-spielen'
-           else null
-      end as neu_hkat,
-      row_number() over (
-        -- Partition = ZIEL-Positionsraum: je Teil UND Hauptteilkategorie,
-        -- weil plan_ex_pos_hauptteil auf (training_id, hauptteilkategorie,
-        -- position) eindeutig ist — jun-spielformen und jun-spiel landen
-        -- beim Rückwechsel beide in 'hauptteil' mit verschiedener Kategorie.
-        partition by
-          case when v_schema_neu = 'kifu' and te.trainingsteil = 'jun-spielformen'
-                 then 'fussball-spielen-lernen'
-               when v_schema_neu = 'kifu' and te.trainingsteil = 'jun-spiel'
-                 then 'fussball-spielen'
-               else '' end,
-          case when v_schema_neu = 'junioren' then
-            case
-              when te.trainingsteil = 'einleitung' then 'jun-aufwaermen'
-              when te.trainingsteil = 'hauptteil'
-                   and te.hauptteilkategorie in ('fussball-spielen-lernen','vielseitigkeit-erleben')
-                then 'jun-spielformen'
-              when te.trainingsteil = 'hauptteil'
-                   and te.hauptteilkategorie = 'fussball-spielen' then 'jun-spiel'
-              when te.trainingsteil = 'ausklang' then 'jun-ausklang'
-              else 'nacharbeit'
-            end
-          else
-            case
-              when te.trainingsteil in ('jun-aufwaermen','jun-spielform-trainingsziel')
-                then 'einleitung'
-              when te.trainingsteil in ('jun-spielformen','jun-spiel') then 'hauptteil'
-              when te.trainingsteil = 'jun-ausklang' then 'ausklang'
-              else 'nacharbeit'
-            end
+    select
+      te.id,
+      te.trainingsteil        as alt_teil,
+      te.hauptteilkategorie   as alt_hkat,
+      te.position             as alt_pos,
+      case
+        -- a) passende Konserve
+        when training_schema_der_einordnung(te.einordnung_vorher) = v_schema_neu
+          then te.einordnung_vorher
+        -- b) Abbildungsregel, Richtung KiFu → Junioren
+        when v_schema_neu = 'junioren' then
+          case
+            when te.trainingsteil = 'einleitung' then 'jun-aufwaermen'      -- Z2
+            when te.trainingsteil = 'hauptteil'
+                 and te.hauptteilkategorie in ('fussball-spielen-lernen',
+                                               'vielseitigkeit-erleben')
+              then 'jun-spielformen'                                        -- Z3, Z4
+            when te.trainingsteil = 'hauptteil'
+                 and te.hauptteilkategorie = 'fussball-spielen'
+              then 'jun-spiel'                                              -- Z5
+            when te.trainingsteil = 'ausklang' then 'jun-ausklang'          -- Z6
+            else 'nacharbeit'                                               -- Z1, Z7
           end
+        -- b) Abbildungsregel, Richtung Junioren → KiFu (Fallback ohne Konserve)
+        else
+          case
+            when te.trainingsteil in ('jun-aufwaermen',
+                                      'jun-spielform-trainingsziel')
+              then 'einleitung'
+            when te.trainingsteil in ('jun-spielformen','jun-spiel')
+              then 'hauptteil'
+            when te.trainingsteil = 'jun-ausklang' then 'ausklang'
+            else 'nacharbeit'  -- jun-explosivitaet ohne KiFu-Entsprechung
+          end
+      end as neu_teil,
+      case
+        when training_schema_der_einordnung(te.einordnung_vorher) = v_schema_neu
+          then te.hauptteilkategorie_vorher
+        when v_schema_neu = 'kifu' and te.trainingsteil = 'jun-spielformen'
+          then 'fussball-spielen-lernen'
+        when v_schema_neu = 'kifu' and te.trainingsteil = 'jun-spiel'
+          then 'fussball-spielen'
+        else null
+      end as neu_hkat
+    from training_exercises te
+    where te.training_id = p_training_id
+  ),
+  nummeriert as (
+    select z.*,
+      row_number() over (
+        -- Ziel-Positionsraum: ausserhalb des Hauptteils zählt der Teil
+        -- (Index plan_ex_pos_nonhauptteil), im Hauptteil die Kategorie
+        -- (Index plan_ex_pos_hauptteil). Beide Räume getrennt zu partitionieren
+        -- ist die sichere Obermenge.
+        partition by z.neu_teil, coalesce(z.neu_hkat, '')
+        -- Reihenfolge innerhalb des Ziels: bisherige Gliederung, dann Position.
         order by array_position(array[
             'auffangen','einleitung','hauptteil','ausklang',
             'jun-aufwaermen','jun-spielform-trainingsziel','jun-explosivitaet',
             'jun-spielformen','jun-spiel','jun-ausklang','nacharbeit'
-          ], te.trainingsteil),
-          te.position
+          ], z.alt_teil),
+          z.alt_hkat nulls first,
+          z.alt_pos
       ) as neu_pos
-    from training_exercises te
-    where te.training_id = p_training_id
+    from ziel z
   )
   update training_exercises te
-  set trainingsteil = z.neu_teil,
-      hauptteilkategorie = z.neu_hkat,
-      -- Kollisionfreie Zwischenwerte: negative Positionen, dann sauber
-      position = -z.neu_pos
-  from ziel z
-  where te.id = z.id;
+  set trainingsteil = n.neu_teil,
+      hauptteilkategorie = n.neu_hkat,
+      -- Konserve für den Rückweg: die JETZT verlassene Einordnung.
+      einordnung_vorher = n.alt_teil,
+      hauptteilkategorie_vorher = n.alt_hkat,
+      -- Kollisionsfreie Zwischenwerte: erst alle negativ, dann zurückdrehen
+      -- (Muster von move_plan_exercise). Nach diesem UPDATE ist JEDE Zeile des
+      -- Trainings negativ — positive und negative kollidieren nie.
+      position = -n.neu_pos
+  from nummeriert n
+  where te.id = n.id;
 
   update training_exercises
   set position = -position
   where training_id = p_training_id and position < 0;
 
-  -- Ein öffentliches Training, das die Bedingungen des neuen Schemas nicht
-  -- mehr erfüllt, wird zurückgezogen; die App informiert (Story 3 PC 5).
-  if v_visibility = 'public'
-     and coalesce(array_length(training_fehlende_bedingungen(p_training_id), 1), 0) > 0
-  then
-    update trainings set visibility = 'private' where id = p_training_id;
-    return jsonb_build_object('status', 'ok', 'wechsel', true, 'zurueckgezogen', true);
-  end if;
-
-  return jsonb_build_object('status', 'ok', 'wechsel', true, 'zurueckgezogen', false);
+  return jsonb_build_object('status', 'ok', 'wechsel', true);
 end;
 $$;
 
@@ -964,7 +1015,7 @@ grant execute on function set_training_stufen(uuid, text[]) to authenticated;
 
 Hinweis zur Positions-Neuvergabe: das Zwei-Schritt-Update über negative Werte umgeht die Unique-Kollision während der Umsortierung (dasselbe Muster wie `move_plan_exercise` mit `position = -1`). Der `te_schema_gate`-Trigger feuert bei `update of trainingsteil` — die zweite (nur-Position-)Anweisung berührt ihn nicht.
 
-Wechselwirkung mit den bestehenden `oeffentlich`-Gates (`20260826172000`): beide sind `constraint trigger … deferrable initially deferred` und WERFEN beim Commit, wenn ein öffentliches Training die Bedingungen verletzt. Darum MUSS der RPC ein betroffenes öffentliches Training noch VOR dem Transaktionsende selbst auf privat setzen (genau das tut der Block oben) — sonst bricht der Wechsel beim Commit mit `TRAINING_UNVOLLSTAENDIG` ab, statt Story 3 PC 5 zu erfüllen. Die Gates selbst bleiben unangetastet (Umbau erst in Task 12).
+Wechselwirkung mit den bestehenden `oeffentlich`-Gates (`20260826172000`): beide sind `constraint trigger … deferrable initially deferred` und WERFEN beim Commit, wenn ein öffentliches Training die Bedingungen verletzt. Der RPC weist den Wechsel eines öffentlichen Trainings darum schon am Anfang mit `SCHEMA_WECHSEL_OEFFENTLICH` ab (PO-Entscheid: Umschalten-Epic gilt durchgängig) — so bekommt die Nutzerin eine verständliche Ansage statt eines Commit-Fehlers. Die Gates selbst bleiben unangetastet (Umbau erst in Task 12).
 
 - [ ] **Step 3: DB-Tests grün**
 
@@ -1067,6 +1118,7 @@ git commit -m "feat(db): Mischverbot der Alterskategorien validieren"
 - Modify: `web/components/training/StufenField.tsx` (neue optionale Prop `disabledKeys?: KategorieSlug[]` + `title`-Tooltip — die Sperr-Logik braucht sie; heute gibt es nur `value`/`onChange`/`className`)
 - Modify: `web/components/training/TrainingCreateForm.tsx` (dieselbe Sperr-Logik beim Anlegen — sonst quittiert die DB G+D mit einem rohen `training_stufen_ein_schema`-Fehler)
 - Modify: `web/lib/queries/trainings.ts` (Typ `TrainingExerciseItem.trainingsteil` von `TrainingsteilSlug` auf `Einordnung` aus `@/lib/junioren` weiten; `teilRank` um Junioren-Blöcke + nacharbeit ergänzen)
+- Modify: `web/lib/actions/fassung.ts` (Einordnungs-Änderung durch die Nutzerin setzt `einordnung_vorher = null`/`hauptteilkategorie_vorher = null` — von Hand umgehängte Fassungen dürfen beim Rückwechsel NICHT auf den alten Stand zurückspringen; die Konserve gilt nur für unangetastete Übertragungen)
 
 **Interfaces:**
 - Consumes: `schemaAusStufen`, `stufenMischen`, `abbildungKifuZuJunioren`, `abbildungJuniorenZuKifu`, `NACHARBEIT` (Task 5); RPC `set_training_stufen` (Task 6).
@@ -1112,7 +1164,9 @@ const hatFassungen = training.exercises.length > 0;
 - `stufenMischen(naechsteStufen)` ⇒ Auswahl gar nicht erst zulassen: `StufenField` bekommt `disabledKeys` (neue Prop, siehe Files) — im Editor UND im Anlegen-Formular werden die Chips des jeweils anderen Schemas deaktiviert, sobald eine Kategorie gewählt ist, mit Tooltip «Kinder- und Juniorenfussball lassen sich in einem Training nicht mischen» (AC 4; die DB bleibt Trust-Boundary, `createTraining` prüft zusätzlich `stufenMischen`).
 - `istWechsel && !hatFassungen` ⇒ direkt speichern, kein Dialog (AC 7).
 - `istWechsel && hatFassungen` ⇒ `Dialog` (UI-Kit) öffnen: Titel «Trainingsschema wechseln?», Text nennt Ziel-Schema; Liste der Fassungen, deren Vorschau-Abbildung `NACHARBEIT` ergibt (Vorschau lokal via `abbildungKifuZuJunioren` bzw. `abbildungJuniorenZuKifu` über `training.exercises`), mit Hinweis «Diese Übungen haben im neuen Schema keine Entsprechung und landen in der Nacharbeit» (AC 5/6). Bestätigen ⇒ Action; Abbrechen ⇒ nichts (PC 2).
-- Resultat `zurueckgezogen === true` ⇒ Snackbar «Das Training wurde auf privat gesetzt, weil es die Bedingungen seines neuen Schemas nicht mehr erfüllt.» (PC 5).
+- **Öffentliches Training** ⇒ der Wechsel wird gar nicht erst angeboten: Stufen-Chips des anderen Schemas bleiben gesperrt, mit der Ansage «Setze das Training zuerst auf Entwurf, wenn du das Trainingsschema wechseln willst.» Der RPC-Fehler `SCHEMA_WECHSEL_OEFFENTLICH` wird in `training-bedingungen.ts` in denselben Satz übersetzt (Trust-Boundary, falls der Zustand zwischenzeitlich kippte).
+- **Migrations-Vorschau im Dialog** (der Wechsel E→D ist der Onboarding-Pfad des Bestands): Der Dialog nennt nicht nur die Fassungen ohne Entsprechung, sondern auch, was danach zum Veröffentlichen fehlt — lokal berechenbar über `JUNIOREN_PFLICHT_BLOECKE` gegen die Vorschau-Abbildung. Typischer Fall eines übertragenen E-Trainings: «Nach dem Wechsel fehlen dir noch Übungen in Spielform zum Trainingsziel und Explosivität, bevor du das Training veröffentlichen kannst. Solche Übungen erfasst du selbst im Übungspool.»
+- **Rückwechsel ist verlustfrei** (Konserve, Task 6): Der Dialog sagt das beim Wechsel nach Junioren zu — «Du kannst jederzeit zu Kinderfussball zurückwechseln; deine bisherige Gliederung wird dabei wiederhergestellt.» Damit ist das Umstellen gefahrlos ausprobierbar.
 
 - [ ] **Step 3: Nacharbeits-Bereich rendern**
 
@@ -1142,7 +1196,7 @@ Im Editor-Kopf neben den Stufen: `<Badge>{schemaAusStufen(training.stufen) === "
 
 - [ ] **Step 5: E2E**
 
-Browser: (1) KiFu-Training mit Auffangen+Einleitung+Hauptteil+Ausklang-Übungen bauen. (2) Stufe auf D wechseln ⇒ Dialog listet genau die Auffangen-Übung als «ohne Entsprechung»; bestätigen ⇒ Editor zeigt Junioren-Struktur (Task 9 liefert die volle Gliederung; bis dahin genügt: keine Fehlleitung, Nacharbeits-Bereich zeigt die Auffangen-Fassung). (3) Abbrechen-Pfad: Training unverändert. (4) Leeres Training wechselt ohne Dialog. (5) G+D zusammen nicht wählbar.
+Browser: (1) KiFu-Training mit Auffangen+Einleitung+Hauptteil(2 Kategorien: Fussball spielen lernen UND Vielseitigkeit erleben)+Ausklang-Übungen bauen. (2) Stufe auf D wechseln ⇒ Dialog listet genau die Auffangen-Übung als «ohne Entsprechung» und nennt die nach dem Wechsel fehlenden Pflichtblöcke; bestätigen ⇒ Editor zeigt Junioren-Struktur (Task 9 liefert die volle Gliederung; bis dahin genügt: keine Fehlleitung, Nacharbeits-Bereich zeigt die Auffangen-Fassung). (3) **Rückwechsel D→E ⇒ VERLUSTFREI:** Auffangen-Übung ist wieder im Auffangen, «Vielseitigkeit erleben» wieder in ihrer eigenen Kategorie (nicht in «Fussball spielen lernen» normalisiert), Reihenfolgen intakt. (4) Abbrechen-Pfad: Training unverändert. (5) Leeres Training wechselt ohne Dialog. (6) G+D zusammen nicht wählbar. (7) Öffentliches Training: Stufen-Chips des anderen Schemas gesperrt mit Ansage.
 
 - [ ] **Step 6: Commit**
 
@@ -1576,11 +1630,11 @@ Die bestehende Architektur bleibt stehen: `publish_training` EXISTIERT NICHT MEH
 -- training_fehlende_bedingungen (Migration junioren_schema) — DB-Gate und
 -- App-Vorabmeldung nennen damit dieselbe Regel.
 -- KiFu-Bedingungen unverändert (Story 7 OoS 1); die Gate-Semantik bleibt
--- BLOCKIEREN (Ist-Verhalten seit dem Umschalten-Epic): eine Änderung, die ein
--- öffentliches Training unter die Bedingungen brächte, wird abgewiesen und
--- von der App erklärt («Setze es zuerst auf Entwurf …»). Auto-Privat gibt es
--- genau an den zwei spezifizierten Stellen: Schema-Wechsel (RPC, Story 3
--- PC 5) — und nirgendwo sonst (Plan-Entscheid, siehe Checkpoint unten).
+-- BLOCKIEREN (Ist-Verhalten seit dem Umschalten-Epic, PO 2026-08-28): eine
+-- Änderung, die ein öffentliches Training unter die Bedingungen brächte, wird
+-- abgewiesen und von der App erklärt («Setze es zuerst auf Entwurf …»).
+-- Auto-Privat gibt es nirgends — auch der Schema-Wechsel eines öffentlichen
+-- Trainings wird abgewiesen (Task 6).
 
 create or replace function training_pruefe_oeffentlich(p_id uuid) returns void
 language plpgsql
@@ -1605,7 +1659,7 @@ $$;
 
 Das ist die GESAMTE Migration dieses Tasks — eine Funktion. `publish_training`-RPCs, Gate-Funktionen und Trigger bleiben unangetastet.
 
-**CHECKPOINT (PO):** Story 7 PC 2 («setzt selbsttätig auf privat und informiert») entstammt einer inzwischen überholten Faktenlage — seit dem Umschalten-Epic BLOCKIERT die Datenbank solche Änderungen, statt still zurückzuziehen. Dieser Plan behält das Blockieren für beide Schemata bei (konsistent, kein Regressionsrisiko für KiFu); Auto-Privat bleibt auf den Schema-Wechsel beschränkt. Diese Abweichung von PC 2 dem PO explizit vorlegen (Stories sind Aufträge — die Abweichung wird dokumentiert, nicht stillschweigend umgangen).
+**Entschieden (PO 2026-08-28):** Das Umschalten-Epic gilt durchgängig — die Datenbank BLOCKIERT jede Änderung, die ein öffentliches Training unter die Bedingungen brächte, statt es still zurückzuziehen. Es gibt kein Auto-Privat, auch nicht beim Schema-Wechsel (der RPC weist ihn ab, Task 6). Story 7 PC 2 und Story 3 PC 5 sind damit überholt und werden in der Stories-Doku als solche vermerkt (Task 18 Step 3).
 
 - [ ] **Step 2: App-Bedingungen erweitern**
 
@@ -1634,7 +1688,7 @@ export const BEDINGUNG_FEHLT: Record<Bedingung, string> = {
 
 - [ ] **Step 3: E2E**
 
-Browser, D-Training: (1) Nur Spielformen+Ausklang belegt ⇒ Veröffentlichen nennt die drei fehlenden Einstiegs-Blöcke im Klartext (AC 3). (2) Alle fünf Pflichtblöcke belegt, Spiel leer ⇒ veröffentlichbar (AC 2). (3) Nacharbeits-Fassung vorhanden ⇒ blockiert mit eigener Meldung (AC 1/4). (4) Veröffentlicht, dann Aufwärmen-Fassung entfernen ⇒ Änderung wird BLOCKIERT mit Klartext-Meldung «Ein öffentliches Training braucht … Setze es zuerst auf Entwurf …» (Ist-Semantik; Abweichung von PC 2 siehe Checkpoint). (5) KiFu-Training: Bedingungen und Meldungen unverändert (OoS 1 — Regression!). (6) Wieder auf privat setzen jederzeit möglich (AC 5).
+Browser, D-Training: (1) Nur Spielformen+Ausklang belegt ⇒ Veröffentlichen nennt die drei fehlenden Einstiegs-Blöcke im Klartext (AC 3). (2) Alle fünf Pflichtblöcke belegt, Spiel leer ⇒ veröffentlichbar (AC 2). (3) Nacharbeits-Fassung vorhanden ⇒ blockiert mit eigener Meldung (AC 1/4). (4) Veröffentlicht, dann Aufwärmen-Fassung entfernen ⇒ Änderung wird BLOCKIERT mit Klartext-Meldung «Ein öffentliches Training braucht … Setze es zuerst auf Entwurf …». (4b) Veröffentlichtes Training, Stufe D→E ⇒ ebenfalls blockiert, mit der Schema-Wechsel-Ansage. (5) KiFu-Training: Bedingungen und Meldungen unverändert (OoS 1 — Regression!). (6) Wieder auf privat setzen jederzeit möglich (AC 5).
 
 - [ ] **Step 4: Commit**
 
@@ -1941,7 +1995,8 @@ Vollständiger Durchlauf als e2e@test.local, gegen die Erfolgskriterien 1–17 d
 
 - [ ] **Step 3: Doku nachführen**
 
-- `docs/superpowers/specs/2026-08-14-juniorenfussball-stories.md`: jede Story «Status: Umgesetzt am <Datum>» (Stories sind Aufträge — als erledigt markieren, nie nachkorrigieren).
+- `docs/superpowers/specs/2026-08-14-juniorenfussball-stories.md`: jede Story «Status: Umgesetzt am <Datum>» (Stories sind Aufträge — als erledigt markieren, nie nachkorrigieren). Zwei datierte Nachträge im Stil der bestehenden Revisionsvermerke: bei Story 7 PC 2 und Story 3 PC 5, dass das Auto-Privat durch den Entscheid vom 2026-08-28 (Umschalten-Epic gilt durchgängig) ersetzt ist — die Datenbank blockiert stattdessen, der Schema-Wechsel eines öffentlichen Trainings wird abgewiesen.
+- `docs/superpowers/specs/2026-08-15-junioren-abbildungsregel.md`: Errata-Eintrag zur Konservierung — die Rückrichtung läuft primär über `einordnung_vorher`, die Normalisierungstabelle ist nur der Fallback für nativ angelegte Junioren-Trainings.
 - `docs/superpowers/specs/2026-05-31-kifu-architektur-mvp.md` §7.1: überholte Aussagen (feste Vier-Teile-Sequenz, Gleichheitsprüfung) mit Verweis auf dieses Epic nachführen (Abbildungsregel §9.1).
 - `CLAUDE.md` Überblick: «aus dem SFV-Manual Kinderfussball extrahiert» präzisieren (§9.2); Beschreibung der zwei Schemata ergänzen.
 - Kopf der Init-Migration NICHT anfassen (Migrationshistorie ist unveränderlich); der Hinweis lebt in CLAUDE.md.
@@ -1970,6 +2025,10 @@ PR develop → main NUR nach expliziter PO-Freigabe. Beim Merge nach main zusät
 1. **Constraint-Bestandsdefinitionen**: Tasks 10/12/17 ersetzen bestehende CHECKs/Trigger — IMMER zuerst `pg_get_constraintdef`/Funktionskörper aus der lokalen DB ziehen und die Alt-Semantik wörtlich übernehmen; die Plan-SQL gibt die Ziel-Semantik vor.
 2. **Deploy-Fenster DB vor App**: `deploy.yml` pusht Migrationen, Vercel deployt getrennt. Alle Migrationen dieses Epics sind additiv/erweiternd — das alte Bundle kann mit ihnen leben (keine entfernten Spalten/Signaturen; KEINE `publish_training`-RPC wiederbeleben — sie wurde mit dem Team-Epic ersatzlos gedroppt, Veröffentlichen ist ein direktes UPDATE hinter den Gates). Das NEUE Bundle gegen die ALTE DB wäre kaputt (Junioren-Werte an alten CHECKs) — die Reihenfolge Migrationen→App ist durch CI ohnehin gegeben (db push läuft vor/mit dem Vercel-Build); beim main-Merge prüfen, dass der `deploy.yml`-Lauf VOR dem Vercel-Promote fertig ist.
 3. **`teilRank`/Sortierungen**: jede Stelle, die `TRAININGSTEIL_SLUGS.indexOf` nutzt, braucht die Junioren-Erweiterung (Task 9 Step 5) — sonst sortieren Junioren-Fassungen ans Ende «unbekannt». `grep -rn "TRAININGSTEIL_SLUGS\|teilRank" web/`.
-4. **RPC-Grants**: neue Funktionen brauchen explizite Grants (Memory «Seed 42501»); `training_fehlende_bedingungen` zusätzlich `grant execute to authenticated`, wenn die App sie direkt ruft (Task 12 Step 2).
+4. **RPC-Grants**: neue Funktionen brauchen explizite Grants (Memory «Seed 42501»). `set_training_stufen` braucht `grant execute to authenticated`; `training_fehlende_bedingungen`, `training_schema` und `training_schema_der_einordnung` werden nur DB-intern von Gates und RPC gerufen (die App spiegelt die Regel in TypeScript) — kein Grant nötig.
+
+7. **Die Konserve muss zur Regel passen**: `einordnung_vorher` wird an genau zwei Stellen geschrieben (Wechsel-RPC: setzen) und an einer gelöscht (manuelle Einordnungsänderung der Nutzerin: auf NULL). Wird das Löschen vergessen, springt eine von Hand umgehängte Fassung beim Rückwechsel auf ihren alten Platz zurück — ein stiller Datenverlust aus Nutzersicht. Der E2E-Schritt dazu gehört in Task 9 (umhängen → Schema wechseln → zurück → die Handänderung muss gewinnen).
+
+8. **Migrationspfad ist der Hauptanwendungsfall**: Die Übertragung E→D und der verlustfreie Rückweg sind das, was produktive Nutzer:innen als Erstes berühren — im E2E-Gesamtdurchgang (Task 18) mit einem realistisch befüllten Bestands-Training prüfen, nicht mit einem Minimalfall.
 5. **`veroeffentlicheTraining` filtert auf `owner_id`** (`actions/trainings.ts:275`): prüfen, wie Team-Trainings veröffentlicht werden (eigener Pfad?) — der Junioren-Umbau darf diesen Filter nicht kopieren, ohne Team-Trainings mitzudenken. (`validStufen` ist dagegen bereits vokabularbasiert und wächst automatisch mit.)
 6. **Story-4-AC-5-Erkennbarkeit der Abweichung**: Der Epic-Entscheid (revidiert 2026-08-22) hat den Abweichungs-Hinweis GESTRICHEN — Stories-Doku AC 5 («Abweichung erkennbar») ist damit durch den Epic-Eintrag überholt; es gilt die Epic-Tabelle (keine gesonderte Anzeige). Im Abnahme-Durchgang explizit ansprechen.
