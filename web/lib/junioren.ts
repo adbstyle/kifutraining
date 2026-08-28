@@ -92,6 +92,15 @@ export const JUNIOREN_TEILE: {
   },
 ];
 
+/** Die vier Kinderfussball-Trainingsteile — hier als Wertemenge für die
+ *  Schema-Zuordnung einer Einordnung. */
+const TRAININGSTEIL_SLUGS_KIFU: readonly string[] = [
+  "auffangen",
+  "einleitung",
+  "hauptteil",
+  "ausklang",
+];
+
 /** Alle sechs Blöcke in der flachen Reihenfolge des Schemas. */
 export const JUNIOREN_BLOCK_SLUGS: JuniorenBlockSlug[] = JUNIOREN_TEILE.flatMap((t) =>
   t.bloecke.map((b) => b.slug),
@@ -100,6 +109,15 @@ export const JUNIOREN_BLOCK_SLUGS: JuniorenBlockSlug[] = JUNIOREN_TEILE.flatMap(
 /** Zu welchem Junioren-Trainingsteil gehört ein Block? */
 export function teilZuBlock(block: string): string | null {
   return JUNIOREN_TEILE.find((t) => t.bloecke.some((b) => b.slug === block))?.slug ?? null;
+}
+
+/** Zu welchem Schema gehört eine Einordnung? `nacharbeit` und Unbekanntes
+ *  gehören zu keinem und liefern `null`. SQL-Pendant:
+ *  `training_schema_der_einordnung`. */
+export function schemaDerEinordnung(einordnung: string): Schema | null {
+  if ((TRAININGSTEIL_SLUGS_KIFU as readonly string[]).includes(einordnung)) return "kifu";
+  if ((JUNIOREN_BLOCK_SLUGS as readonly string[]).includes(einordnung)) return "junioren";
+  return null;
 }
 
 /** Abbildungsregel Kinderfussball → Juniorenschema (Entscheidungsdokument §2).

@@ -3,6 +3,7 @@ import { likePattern } from "@/lib/search";
 import { TRAININGSTEIL_SLUGS, sortStufen, teilTraegtDauer, hkatRank } from "@/lib/training";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
+import { JUNIOREN_BLOCK_SLUGS, NACHARBEIT, type Einordnung } from "@/lib/junioren";
 import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
 import { kurzeZeit } from "@/lib/queries/termine";
 
@@ -19,11 +20,16 @@ import { kurzeZeit } from "@/lib/queries/termine";
 export type TrainingExerciseItem = {
   /** training_exercises.id (die Zuordnung, also die Fassung selbst). */
   id: string;
-  trainingsteil: TrainingsteilSlug;
+  /** Wo die Fassung im Training liegt: ein Kinderfussball-Trainingsteil, ein
+   *  Junioren-Unterblock oder die Nacharbeit (Epic #71). */
+  trainingsteil: Einordnung;
   /** Nur Hauptteil-Fassungen tragen eine Kategorie. */
   hauptteilkategorie: string | null;
   position: number;
   durationMin: number | null;
+  /** Einordnung im zuletzt verlassenen Schema — macht den Schema-Wechsel
+   *  umkehrbar und die Wechsel-Vorschau ehrlich (Epic #71). */
+  einordnungVorher: string | null;
   name: string;
   kategorien: string[];
   erscheinungsform: string[];
@@ -60,6 +66,7 @@ const INHALT_FELDER = [...FASSUNG_INHALT_FELDER, "bild_url", "diagramm"].join(",
 
 const PE_SELECT = `
   id, trainingsteil, hauptteilkategorie, position, duration_min,
+  einordnung_vorher,
   ${INHALT_FELDER}
 `;
 
@@ -86,6 +93,7 @@ type RawTrainingExercise = RawInhalt & {
   hauptteilkategorie: string | null;
   position: number;
   duration_min: number | null;
+  einordnung_vorher: string | null;
 };
 type RawTraining = {
   id: string;
@@ -102,9 +110,19 @@ type RawTraining = {
   teams?: { name: string } | null;
 };
 
+/** Sortier-Reihenfolge aller Einordnungen: erst die vier Kinderfussball-Teile,
+ *  dann die sechs Junioren-Blöcke, zuletzt die Nacharbeit. Ein Training führt
+ *  immer nur EIN Schema — die gemeinsame Liste hält die Sortierung trotzdem
+ *  stabil, statt fremde Werte stillschweigend ans Ende zu kippen. */
+const EINORDNUNG_RANG: string[] = [
+  ...TRAININGSTEIL_SLUGS,
+  ...JUNIOREN_BLOCK_SLUGS,
+  NACHARBEIT,
+];
+
 const teilRank = (t: string) => {
-  const i = TRAININGSTEIL_SLUGS.indexOf(t as TrainingsteilSlug);
-  return i === -1 ? 99 : i;
+  const i = EINORDNUNG_RANG.indexOf(t);
+  return i === -1 ? EINORDNUNG_RANG.length : i;
 };
 
 function mapTraining(raw: RawTraining): TrainingDetail {
@@ -112,10 +130,11 @@ function mapTraining(raw: RawTraining): TrainingDetail {
     .map((te) => {
       return {
         id: te.id,
-        trainingsteil: te.trainingsteil as TrainingsteilSlug,
+        trainingsteil: te.trainingsteil as Einordnung,
         hauptteilkategorie: te.hauptteilkategorie,
         position: te.position,
         durationMin: te.duration_min,
+        einordnungVorher: te.einordnung_vorher,
         name: te.name,
         kategorien: te.kategorien ?? [],
         erscheinungsform: te.erscheinungsform ?? [],

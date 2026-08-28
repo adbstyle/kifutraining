@@ -41,14 +41,17 @@ export const HAUPTTEILKATEGORIE_SLUGS = HAUPTTEILKATEGORIEN.map((h) => h.slug);
  *  Enabler #26 AC3). */
 export const PFLICHT_TEILE: TrainingsteilSlug[] = ["einleitung", "hauptteil"];
 
-/** Trainingsteile, die keine Dauer tragen. „Auffangen" ist der Teil vor dem
+/** Einordnungen, die keine Dauer tragen. „Auffangen" ist der Teil vor dem
  *  eigentlichen Trainingsbeginn — es wird aufgesetzt, die Spielerinnen machen
  *  mit oder nicht; es zählt nicht zur Trainingsdauer. Diese Invariante wird auf
- *  DB-Ebene per CHECK erzwungen. */
-export const OHNE_DAUER_TEILE = new Set<TrainingsteilSlug>(["auffangen"]);
+ *  DB-Ebene per CHECK erzwungen (`dauer_nicht_auffangen`).
+ *
+ *  Im Juniorenschema gibt es dazu kein Gegenstück: alle drei Trainingsteile
+ *  tragen eine Dauer, ein Pendant zum Auffangen kennt es nicht. */
+export const OHNE_DAUER_TEILE = new Set<string>(["auffangen"]);
 
-/** Trägt dieser Trainingsteil eine erfassbare Dauer? */
-export function teilTraegtDauer(slug: TrainingsteilSlug): boolean {
+/** Trägt diese Einordnung eine erfassbare Dauer? Gilt für beide Schemata. */
+export function teilTraegtDauer(slug: string): boolean {
   return !OHNE_DAUER_TEILE.has(slug);
 }
 

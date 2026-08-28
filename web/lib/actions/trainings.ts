@@ -41,6 +41,9 @@ export type TrainingActionResult = { ok: boolean; error?: string };
 /** Ergebnis des Stufen-Setzens inkl. abweichender Übungen (Story #12 AC3). */
 export type StufenResult = TrainingActionResult & {
   mismatched?: { id: string; name: string }[];
+  /** Hat sich mit den Stufen das Trainingsschema geändert? Dann hat die
+   *  Datenebene die Fassungen übertragen und der Editor lädt neu. */
+  wechsel?: boolean;
 };
 
 function csv(v: FormDataEntryValue | null): string[] {
@@ -366,19 +369,19 @@ export async function setTrainingStufen(
 
   const valid = validStufen(stufen);
 
-  const { data: after, error } = await supabase
-    .from("trainings")
-    .update({ stufen: valid })
-    .eq("id", trainingId)
-    .select("id")
-    .maybeSingle();
-  // Ein öffentliches Training ohne Alterskategorie weist die Datenebene ab;
-  // die Meldung nennt den Weg über den Entwurfszustand (Story A AK 7).
+  // Über die RPC statt per direktem Update: ändert sich mit den Stufen das
+  // Trainingsschema, überträgt sie alle Fassungen in die Struktur des neuen
+  // Schemas und merkt sich ihre bisherige Einordnung für den Weg zurück
+  // (Story 3). Innerhalb eines Schemas setzt sie schlicht die Stufen.
+  const { data, error } = await supabase.rpc("set_training_stufen", {
+    p_training_id: trainingId,
+    p_stufen: valid,
+  });
   if (error) return { ok: false, error: fehlerMeldung(error.message) };
-  if (!after) return { ok: false, error: "Training nicht gefunden." };
 
   // Abweichende Fassungen ermitteln — anhand IHRER Alterskategorien: die
-  // Fassung ist im Training frei bearbeitbar und die einzige Quelle.
+  // Fassung ist im Training frei bearbeitbar und die einzige Quelle. Das ist
+  // der Stufen-Abgleich innerhalb eines Schemas und unabhängig vom Wechsel.
   let mismatched: { id: string; name: string }[] = [];
   if (valid.length > 0) {
     const { data: rows } = await supabase
@@ -393,7 +396,11 @@ export async function setTrainingStufen(
   }
 
   revalidiereTraining(trainingId);
-  return { ok: true, mismatched };
+  return {
+    ok: true,
+    mismatched,
+    wechsel: Boolean((data as { wechsel?: boolean } | null)?.wechsel),
+  };
 }
 
 /** Zuordnung innerhalb ihres Trainingsteils umsortieren (Story #12 AC4). */

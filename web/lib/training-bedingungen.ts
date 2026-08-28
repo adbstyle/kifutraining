@@ -54,10 +54,34 @@ function bedingungsFehler(message: string): string | null {
   return bedingung ? bedingungsMeldung(bedingung) : null;
 }
 
+/** Marker der Datenebene für einen Schema-Wechsel am öffentlichen Training. */
+const WECHSEL_OEFFENTLICH = "SCHEMA_WECHSEL_OEFFENTLICH";
+
+/** Marker der Datenebene für eine Einordnung oder Stufe, die nicht zum
+ *  Trainingsschema passt. */
+const SCHEMA_KONFLIKT = "SCHEMA_KONFLIKT";
+
+/** Die Meldungen zu den Schema-Regeln des Juniorenfussballs (Epic #71).
+ *  Sie nennen wie die Bedingungs-Meldungen den Weg, nicht nur die Absage. */
+function schemaMeldung(message: string): string | null {
+  if (message.includes(WECHSEL_OEFFENTLICH))
+    return (
+      "Ein öffentliches Training wechselt das Trainingsschema nicht. " +
+      "Setze es zuerst auf Entwurf — nach dem Wechsel brauchst du ohnehin " +
+      "weitere Übungen, bevor du es wieder veröffentlichen kannst."
+    );
+  if (message.includes(SCHEMA_KONFLIKT))
+    return (
+      "Kinderfussball und Juniorenfussball lassen sich in einem Training " +
+      "nicht mischen."
+    );
+  return null;
+}
+
 /** Die Meldung zu einem DB-Fehler: die Bedingungs-Erklärung, wenn es eine ist,
  *  sonst der Originaltext. Für jede Action, die ein Training oder eine seiner
  *  Fassungen so ändern könnte, dass ein öffentliches Training unter die
  *  Bedingungen fiele. */
 export function fehlerMeldung(message: string): string {
-  return bedingungsFehler(message) ?? message;
+  return bedingungsFehler(message) ?? schemaMeldung(message) ?? message;
 }

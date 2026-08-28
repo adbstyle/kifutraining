@@ -3,6 +3,7 @@
 import { useActionState, useState, useTransition } from "react";
 import { TextField, Button } from "@/components/ui";
 import { StufenField } from "./StufenField";
+import { stufenMischen } from "@/lib/junioren";
 import { createTraining, type TrainingFormState } from "@/lib/actions/trainings";
 
 /* Formular „Neues Training anlegen" (Story #10 AC1/AC2/AC3). FormData wird
@@ -49,7 +50,15 @@ export function TrainingCreateForm() {
           Für welche Alterskategorien ist das Training gedacht? Du kannst dies
           später jederzeit ändern.
         </p>
-        <StufenField value={stufen} onChange={setStufen} />
+        {/* Ein Training folgt genau einem Trainingsschema: die Wahl einer
+            Stufe des anderen ersetzt die bisherige Auswahl, statt zu mischen
+            (Story 3 AC 4). Die Datenebene weist die Mischung ohnehin ab. */}
+        <StufenField
+          value={stufen}
+          onChange={(next) =>
+            setStufen(stufenMischen(next) ? next.filter((k) => !stufen.includes(k)) : next)
+          }
+        />
       </div>
 
       <div className="flex justify-end gap-2">

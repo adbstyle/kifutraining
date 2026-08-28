@@ -104,7 +104,9 @@ export async function updateFassung(
   const update: Record<string, unknown> = { ...inhalt };
 
   // Einordnungswechsel: die Fassung wandert ans Ende ihres neuen Abschnitts.
-  // Die Kategorie ausserhalb des Hauptteils leert der DB-Trigger.
+  // Die Kategorie ausserhalb des Hauptteils ist in `inhalt` bereits null —
+  // einen DB-Trigger, der das erzwänge, gibt es seit dem Verweis-Abbau nicht
+  // mehr, nur noch den Biconditional-CHECK.
   const wechsel =
     trainingsteil !== fassung.trainingsteil || hkat !== fassung.hauptteilkategorie;
   if (wechsel) {
@@ -115,6 +117,12 @@ export async function updateFassung(
       trainingsteil === "hauptteil" ? hkat : null,
       fassungId,
     );
+    // Die Konserve des Schema-Wechsels verfällt: sie gilt nur für Fassungen,
+    // die seit der Übertragung unangetastet blieben. Sonst spränge eine von
+    // Hand umgehängte Fassung beim Rückwechsel auf ihren alten Platz zurück
+    // und die Handänderung ginge verloren (Epic #71).
+    update.einordnung_vorher = null;
+    update.hauptteilkategorie_vorher = null;
   }
 
   // Bild: ersetzen (neue Datei) oder entfernen (Schalter). Beides wirkt erst
