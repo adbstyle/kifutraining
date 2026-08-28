@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Printer } from "lucide-react";
 import type { Metadata } from "next";
 import {
   HerkunftBadge,
   Breadcrumbs,
+  ButtonLink,
   type BreadcrumbItem,
   Card,
   KategorieChip,
@@ -40,7 +41,13 @@ export async function generateMetadata({
   return { title: `${ex.name} — Kinderfussball-Übung` };
 }
 
-function Meta({ label, children }: { label: string; children: React.ReactNode }) {
+function Meta({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <p className="type-label-small text-on-surface-variant">{label}</p>
@@ -52,7 +59,8 @@ function Meta({ label, children }: { label: string; children: React.ReactNode })
 function anzahlText(a: ExerciseDetail["anzahl_kinder"]): string | null {
   if (!a) return null;
   const { min, max } = a;
-  if (min != null && max != null) return min === max ? `${min}` : `${min}–${max}`;
+  if (min != null && max != null)
+    return min === max ? `${min}` : `${min}–${max}`;
   if (min != null) return `ab ${min}`;
   if (max != null) return `bis ${max}`;
   return null;
@@ -69,7 +77,11 @@ export default async function ExerciseDetailPage({
   const sp = await searchParams;
   const ex = await getExerciseDetail(slug);
   if (!ex) notFound();
-  const flash = sp.created ? "Übung erstellt." : sp.updated ? "Änderungen gespeichert." : null;
+  const flash = sp.created
+    ? "Übung erstellt."
+    : sp.updated
+      ? "Änderungen gespeichert."
+      : null;
 
   const supabase = await createClient();
   const {
@@ -115,32 +127,44 @@ export default async function ExerciseDetailPage({
           )}
           <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
 
-          {/* Aktions-Cluster rechts: Stift · Globus · Herz · ⋮.
-              Owner sieht alle, sonstige angemeldete User nur den Favoriten. */}
-          {(isOwner || user) && (
-            <div className="ml-auto flex items-center gap-0.5">
-              {isOwner ? (
-                <OwnerActions
-                  id={ex.id}
-                  slug={ex.slug}
-                  visibility={ex.visibility}
-                  favoriteSlot={
-                    <FavoriteButton
-                      exerciseId={ex.id}
-                      initial={favorited}
-                      size="sm"
-                    />
-                  }
-                />
-              ) : (
-                <FavoriteButton
-                  exerciseId={ex.id}
-                  initial={favorited}
-                  size="sm"
-                />
-              )}
-            </div>
-          )}
+          {/* Aktions-Cluster rechts: Drucken · Stift · Globus · Herz · ⋮.
+              Drucken steht ausserhalb der Anmelde-Bedingung: eine Übung lässt
+              sich auch ohne Konto ausdrucken (Story #114 AK 3). Owner sieht
+              alle Aktionen, sonstige angemeldete User nur den Favoriten. */}
+          <div className="ml-auto flex items-center gap-0.5">
+            <ButtonLink
+              href={`/uebung/${ex.slug}/druck`}
+              variant="text"
+              size="sm"
+            >
+              <Printer size={18} strokeWidth={2} aria-hidden />
+              Drucken
+            </ButtonLink>
+            {(isOwner || user) && (
+              <>
+                {isOwner ? (
+                  <OwnerActions
+                    id={ex.id}
+                    slug={ex.slug}
+                    visibility={ex.visibility}
+                    favoriteSlot={
+                      <FavoriteButton
+                        exerciseId={ex.id}
+                        initial={favorited}
+                        size="sm"
+                      />
+                    }
+                  />
+                ) : (
+                  <FavoriteButton
+                    exerciseId={ex.id}
+                    initial={favorited}
+                    size="sm"
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
         <h1 className="type-headline-large text-on-surface">{ex.name}</h1>
         {meta.length > 0 && (
@@ -161,7 +185,10 @@ export default async function ExerciseDetailPage({
         />
       </div>
       {/* Eckdaten — unterhalb des Bildes */}
-      {(ex.hauptteilkategorie || ex.erscheinungsform.length > 0 || anzahl || ex.material.length > 0) && (
+      {(ex.hauptteilkategorie ||
+        ex.erscheinungsform.length > 0 ||
+        anzahl ||
+        ex.material.length > 0) && (
         <div className="mt-6 flex flex-wrap gap-x-12 gap-y-5">
           {ex.hauptteilkategorie && (
             <Meta label="Hauptteilkategorie">
@@ -185,7 +212,9 @@ export default async function ExerciseDetailPage({
 
       {/* Ablauf */}
       <section className="mt-10">
-        <h2 className="type-headline-small mb-4 text-on-surface">Übungsablauf</h2>
+        <h2 className="type-headline-small mb-4 text-on-surface">
+          Übungsablauf
+        </h2>
         <Card className="p-6">
           {ex.methodischer_fahrplan ? (
             <MethodischerFahrplan fahrplan={ex.methodischer_fahrplan} />
@@ -204,7 +233,9 @@ export default async function ExerciseDetailPage({
       {/* Varianten */}
       {ex.varianten.length > 0 && (
         <section className="mt-8">
-          <h2 className="type-headline-small mb-4 text-on-surface">Varianten</h2>
+          <h2 className="type-headline-small mb-4 text-on-surface">
+            Varianten
+          </h2>
           <ul className="type-body-large list-disc space-y-1 pl-5 text-on-surface-variant">
             {ex.varianten.map((v, i) => (
               <li key={i}>{v}</li>
@@ -216,10 +247,17 @@ export default async function ExerciseDetailPage({
       {/* Quellen-/Urheberangabe (Manual) */}
       {ex.source === "manual" && (
         <footer className="mt-12 flex items-start gap-2 border-t border-outline-variant pt-5">
-          <BookOpen size={18} strokeWidth={2} className="mt-0.5 shrink-0 text-on-surface-variant" aria-hidden />
+          <BookOpen
+            size={18}
+            strokeWidth={2}
+            className="mt-0.5 shrink-0 text-on-surface-variant"
+            aria-hidden
+          />
           <p className="type-body-small text-on-surface-variant">
-            Offizielle Übung aus dem <strong className="text-on-surface">Manual Kinderfussball</strong>{" "}
-            des Schweizerischen Fussballverbands (SFV) — kuratierter Bestand, unverändert übernommen.
+            Offizielle Übung aus dem{" "}
+            <strong className="text-on-surface">Manual Kinderfussball</strong>{" "}
+            des Schweizerischen Fussballverbands (SFV) — kuratierter Bestand,
+            unverändert übernommen.
           </p>
         </footer>
       )}
