@@ -24,14 +24,34 @@ import {
   TextField,
   IconButton,
   Tooltip,
+  TextArea,
 } from "@/components/ui";
 import { ExercisePickerDialog } from "./ExercisePickerDialog";
 import { ExerciseThumb } from "./ExerciseThumb";
 import { InBibliothekButton } from "./InBibliothekButton";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
+import { ZeitAbgleich, GesamtAbgleich } from "./ZeitAbgleich";
+import {
+  schemaAusStufen,
+  stufenMischen,
+  abbildungKifuZuJunioren,
+  abbildungJuniorenZuKifu,
+  JUNIOREN_PFLICHT_BLOECKE,
+  JUNIOREN_TEILE,
+  NACHARBEIT,
+  LEER_HINWEIS_BLOECKE,
+  GESAMTDAUER_JUNIOREN,
+  schemaDerEinordnung,
+  type Schema,
+  type Einordnung,
+} from "@/lib/junioren";
+import {
+  junioren_block as juniorenBlockLabels,
+  type JuniorenBlockSlug,
+} from "@/lib/vocab";
 import { SichtbarkeitControl } from "./SichtbarkeitControl";
-import { FREIES_SPIEL, type Bedingung } from "@/lib/training-bedingungen";
+import { fehlendeBedingungenAus, type Bedingung } from "@/lib/training-bedingungen";
 import { InTeamStellenControl } from "./InTeamStellenControl";
 import {
   TRAININGSTEILE,
@@ -40,7 +60,9 @@ import {
   stufenAbgedeckt,
   teilTraegtDauer,
   groupHauptteil,
+  groupJunioren,
   formatDuration,
+  ZIEL_MAX,
 } from "@/lib/training";
 import {
   setExerciseDuration,
@@ -48,6 +70,7 @@ import {
   removeTrainingExercise,
   renameTraining,
   setTrainingStufen,
+  setTrainingZiel,
   deleteTraining,
 } from "@/lib/actions/trainings";
 import type { TrainingsteilSlug, HauptteilkategorieSlug } from "@/lib/vocab";
@@ -69,18 +92,30 @@ export function TrainingEditor({
   const router = useRouter();
   const [, startTransition] = useTransition();
   // Offener Picker: Trainingsteil und — im Hauptteil — die Unterkategorie.
+  // Offener Picker: die Ziel-Einordnung (Kinderfussball-Teil oder
+  // Junioren-Block) und — im Kinderfussball-Hauptteil — die Unterkategorie.
   const [open, setOpen] = useState<{
-    teil: TrainingsteilSlug;
+    teil: Einordnung;
     hkat?: HauptteilkategorieSlug;
   } | null>(null);
   const [durations, setDurations] = useState<Record<string, number | null>>({});
   const [stufen, setStufen] = useState<string[]>(training.stufen);
+  const [ziel, setZiel] = useState<string>(training.ziel ?? "");
   const [notice, setNotice] = useState<string | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const [nameInput, setNameInput] = useState(training.name);
   const [nameError, setNameError] = useState<string | undefined>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [mismatch, setMismatch] = useState<{ id: string; name: string }[] | null>(null);
+  // Bevorstehender Schema-Wechsel, der bestätigt sein will (Story 3 AC 5).
+  const [wechsel, setWechsel] = useState<{
+    stufen: string[];
+    ziel: Schema;
+    ohneEntsprechung: string[];
+    fehlendeBloecke: string[];
+  } | null>(null);
+
+  const schema = schemaAusStufen(stufen);
 
   const dur = (item: TrainingExerciseItem) =>
     item.id in durations ? durations[item.id] : item.durationMin;
@@ -110,7 +145,7 @@ export function TrainingEditor({
     });
   }
 
-  function changeStufen(next: string[]) {
+  function speichereStufen(next: string[]) {
     const vorher = stufen;
     setStufen(next);
     startTransition(async () => {
@@ -123,7 +158,90 @@ export function TrainingEditor({
         setNotice(r.error ?? "Speichern fehlgeschlagen.");
         return;
       }
-      if (r.mismatched && r.mismatched.length > 0) setMismatch(r.mismatched);
+      // Nach einem Schema-Wechsel bleibt der Stufen-Abgleich stumm: dass die
+      // Fassungen noch die Kategorien des alten Schemas tragen, ist dort die
+      // Normalität und kein Befund. Ihn hier zu melden, hiesse dem Trainer
+      // unmittelbar nach dem bestätigten Wechsel anzubieten, sämtliche gerade
+      // übertragenen Übungen zu entfernen (Story 3, offene UX-Frage).
+      if (!r.wechsel && r.mismatched && r.mismatched.length > 0)
+        setMismatch(r.mismatched);
+    });
+  }
+
+  /** Stufen-Änderung. Ändert sich damit das Trainingsschema und liegen bereits
+   *  Übungen im Training, fragt der Editor vorher nach: die Fassungen wandern
+   *  in die Struktur des anderen Schemas, und einzelne finden dort keinen Platz
+   *  (Story 3 AC 5–7). Ein leeres Training wechselt ohne Rückfrage. */
+  function changeStufen(gewaehlt: string[]) {
+    // Ein Training folgt genau einem Schema. Wählt der Trainer eine Stufe des
+    // anderen, ist das kein Mischen, sondern ein Wechsel — die bisherige
+    // Auswahl weicht der neuen. Das ist der Weg, auf dem ein bestehendes
+    // E-Training zum D-Training wird (Story 3 AC 3/4).
+    const next = stufenMischen(gewaehlt)
+      ? gewaehlt.filter((k) => !stufen.includes(k))
+      : gewaehlt;
+
+    const zielSchema = schemaAusStufen(next);
+    if (zielSchema === schema || training.exercises.length === 0) {
+      speichereStufen(next);
+      return;
+    }
+
+    // Ein öffentliches Training wechselt das Schema nicht. Das sagt der Editor
+    // sofort, statt erst den Wechsel-Dialog zu zeigen und die Bestätigung dann
+    // von der Datenebene abweisen zu lassen — gerade beim Umstellen eines
+    // bestehenden Trainings wäre das ein Umweg in die Sackgasse.
+    if (oeffentlich) {
+      setNotice(
+        "Ein öffentliches Training wechselt das Trainingsschema nicht. " +
+          "Setze es zuerst auf Entwurf — nach dem Wechsel brauchst du ohnehin " +
+          "weitere Übungen, bevor du es wieder veröffentlichen kannst.",
+      );
+      return;
+    }
+
+    // Vorschau: Was findet im Zielschema keine Entsprechung, und was fehlt
+    // danach zum Veröffentlichen? Beides rechnet lokal dieselbe Regel wie die
+    // Datenebene — Konserve zuerst, sonst die Abbildungsregel. Ohne die
+    // Konserve wäre die Vorschau pessimistisch und meldete einen Verlust, den
+    // der Rückweg gar nicht erleidet.
+    const ziele = training.exercises.map((e) => {
+      const konserve = e.einordnungVorher;
+      if (konserve && schemaDerEinordnung(konserve) === zielSchema)
+        return { name: e.name, ziel: konserve as Einordnung };
+      return {
+        name: e.name,
+        ziel:
+          zielSchema === "junioren"
+            ? abbildungKifuZuJunioren(e.trainingsteil, e.hauptteilkategorie)
+            : (() => {
+                const r = abbildungJuniorenZuKifu(e.trainingsteil);
+                return r === NACHARBEIT ? NACHARBEIT : r.trainingsteil;
+              })(),
+      };
+    });
+    const belegt = new Set(ziele.map((z) => z.ziel));
+    setWechsel({
+      stufen: next,
+      ziel: zielSchema,
+      ohneEntsprechung: ziele.filter((z) => z.ziel === NACHARBEIT).map((z) => z.name),
+      fehlendeBloecke:
+        zielSchema === "junioren"
+          ? JUNIOREN_PFLICHT_BLOECKE.filter((b) => !belegt.has(b))
+          : [],
+    });
+  }
+
+  function speichereZiel() {
+    if (ziel.trim() === (training.ziel ?? "")) return;
+    startTransition(async () => {
+      const r = await setTrainingZiel(training.id, ziel);
+      if (!r.ok) {
+        setZiel(training.ziel ?? "");
+        setNotice(r.error ?? "Speichern fehlgeschlagen.");
+        return;
+      }
+      router.refresh();
     });
   }
 
@@ -152,8 +270,12 @@ export function TrainingEditor({
     });
   }
 
-  const byTeil = (slug: TrainingsteilSlug) =>
+  const byTeil = (slug: string) =>
     training.exercises.filter((e) => e.trainingsteil === slug);
+
+  /** Fassungen ohne Entsprechung im aktuellen Schema. Sie erscheinen in einem
+   *  eigenen Bereich, gesondert von den Trainingsteilen (Story 4 AC 9). */
+  const nacharbeit = training.exercises.filter((e) => e.trainingsteil === NACHARBEIT);
 
   // Auffangen trägt keine Dauer und zählt weder zur Summe noch zum
   // „ohne Dauer"-Hinweis.
@@ -163,15 +285,16 @@ export function TrainingEditor({
   // freie Spiel liegt dort und deckt es zwingend ab.
   const oeffentlich = training.visibility === "public";
 
-  const fehlendeBedingungen: Bedingung[] = [
-    stufen.length === 0 ? "stufe" : null,
-    training.exercises.some((e) => e.trainingsteil === "einleitung") ? null : "einleitung",
-    training.exercises.some((e) => e.hauptteilkategorie === FREIES_SPIEL)
-      ? null
-      : "freies_spiel",
-  ].filter((x): x is Bedingung => x !== null);
+  // Live-Vorschau der Veröffentlichungs-Bedingungen aus dem lokalen Stand.
+  // Dieselbe Funktion, die die Server Action nutzt — und dieselbe Regel, die
+  // die Datenbank als Trust-Boundary durchsetzt (Story 7 AC 3).
+  const fehlendeBedingungen = fehlendeBedingungenAus(stufen, training.exercises);
 
-  const dauerItems = training.exercises.filter((e) => teilTraegtDauer(e.trainingsteil));
+  // Die Nacharbeit liegt ausserhalb der Trainingsstruktur und zählt darum
+  // nicht zur Gesamtdauer.
+  const dauerItems = training.exercises.filter(
+    (e) => e.trainingsteil !== NACHARBEIT && teilTraegtDauer(e.trainingsteil),
+  );
   const totalDuration = dauerItems.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
   const totalMissing = dauerItems.filter((it) => dur(it) == null).length;
 
@@ -238,8 +361,31 @@ export function TrainingEditor({
           </div>
         </div>
 
+        {/* Ziel: optional, jederzeit änder- und entfernbar (Story 10 AC 3).
+            Gespeichert wird beim Verlassen des Felds — wie der Trainingsname
+            über einen eigenen Schritt, nicht bei jedem Tastendruck. */}
         <div className="mt-4">
-          <p className="mb-2 type-label-large text-on-surface">Stufen</p>
+          <TextArea
+            label="Ziel (optional)"
+            rows={2}
+            maxLength={ZIEL_MAX}
+            value={ziel}
+            onChange={(e) => setZiel(e.target.value)}
+            onBlur={() => speichereZiel()}
+            supportingText={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
+          />
+        </div>
+
+        <div className="mt-4">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <p className="type-label-large text-on-surface">Stufen</p>
+            {/* Die Stufen bestimmen das Trainingsschema; beide Schemata teilen
+                Begriffe wie „Hauptteil" — der Trainer muss jederzeit sehen, in
+                welchem er plant (Story 4 AC 2). */}
+            <span className="rounded-[4px] border-[1.5px] border-outline px-2 py-0.5 type-label-small text-on-surface-variant">
+              {schema === "junioren" ? "Juniorenfussball" : "Kinderfussball"}
+            </span>
+          </div>
           <StufenField value={stufen} onChange={changeStufen} />
         </div>
       </Card>
@@ -250,6 +396,12 @@ export function TrainingEditor({
           <Clock size={18} strokeWidth={2} aria-hidden />
           Gesamtdauer: {formatDuration(totalDuration)}
         </span>
+        {/* Die Zeit-Orientierung gilt nur im Juniorenschema — das
+            Kinderfussball-Manual gibt bewusst keine Zeiten vor (Story 6
+            AC 5 / Out of Scope 1). */}
+        {schema === "junioren" && (
+          <GesamtAbgleich sum={totalDuration} soll={GESAMTDAUER_JUNIOREN} />
+        )}
         {totalMissing > 0 && (
           <span className="type-label-medium text-on-surface-variant">
             {totalMissing} {totalMissing === 1 ? "Übung ohne" : "Übungen ohne"} Dauer
@@ -257,7 +409,97 @@ export function TrainingEditor({
         )}
       </div>
 
-      {TRAININGSTEILE.map(({ slug, label }) => {
+      {/* Juniorenschema: drei Trainingsteile, die Unterblöcke stets sichtbar —
+          auch leere, damit die Struktur beim Planen erkennbar bleibt
+          (Story 4 AC 1, Story 5a AC 1–3). */}
+      {schema === "junioren" &&
+        groupJunioren(
+          training.exercises.filter((e) => e.trainingsteil !== NACHARBEIT),
+        ).map((teil) => {
+          const teilDur = teil.bloecke.reduce<number>(
+            (a, b) => a + b.items.reduce<number>((x, it) => x + (dur(it) ?? 0), 0),
+            0,
+          );
+          const teilMissing = teil.bloecke.reduce<number>(
+            (a, b) => a + b.items.filter((it) => dur(it) == null).length,
+            0,
+          );
+          return (
+            <Card key={teil.slug} className="p-4 sm:p-5">
+              <div className="flex items-center gap-2">
+                <h2 className="type-title-medium text-on-surface">{teil.label}</h2>
+                {teilDur > 0 && (
+                  <span className="type-label-medium text-on-surface-variant">
+                    {formatDuration(teilDur)}
+                  </span>
+                )}
+                <ZeitAbgleich slug={teil.slug} sum={teilDur} />
+              </div>
+
+              <div className="mt-4 flex flex-col gap-5">
+                {teil.bloecke.map((b) => {
+                  const blockDur = b.items.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
+                  return (
+                    <div key={b.slug}>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <h3 className="type-title-small text-on-surface">
+                          {b.label}
+                          {blockDur > 0 && (
+                            <span className="ml-2 type-label-medium text-on-surface-variant">
+                              {formatDuration(blockDur)}
+                            </span>
+                          )}
+                          <span className="ml-2">
+                            <ZeitAbgleich slug={b.slug} sum={blockDur} />
+                          </span>
+                        </h3>
+                        <Tooltip label="Übung hinzufügen">
+                          <IconButton
+                            icon={Plus}
+                            label={`Übung zu ${b.label} hinzufügen`}
+                            size="sm"
+                            onClick={() => setOpen({ teil: b.slug })}
+                          />
+                        </Tooltip>
+                      </div>
+                      <ExerciseList
+                        items={b.items}
+                        trainingId={training.id}
+                        trainingStufen={stufen}
+                        showDuration
+                        dur={dur}
+                        onDuration={changeDuration}
+                        onMove={move}
+                        onRemove={remove}
+                      />
+                      {/* Leere Blöcke, die das Lehrmittel als gesetzt ansieht:
+                          Hinweis, keine Blockade (Story 5a AC 8/9). */}
+                      {b.items.length === 0 &&
+                        LEER_HINWEIS_BLOECKE.includes(b.slug) && (
+                          <p className="mt-2 flex items-center gap-2 type-label-medium text-on-surface-variant">
+                            <Info size={15} className="shrink-0 text-signal" aria-hidden />
+                            {b.slug === "jun-spiel"
+                              ? "Das Spiel ist noch leer — im Juniorenfussball gehört das freie Spiel in jedes Training."
+                              : `«${b.label}» ist noch leer.`}
+                          </p>
+                        )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {teilMissing > 0 && (
+                <p className="mt-3 type-label-medium text-on-surface-variant">
+                  {teilMissing} {teilMissing === 1 ? "Übung" : "Übungen"} ohne erfasste
+                  Dauer (zählt nicht zur Summe).
+                </p>
+              )}
+            </Card>
+          );
+        })}
+
+      {schema === "kifu" &&
+        TRAININGSTEILE.map(({ slug, label }) => {
         const traegtDauer = teilTraegtDauer(slug);
         const teilItems = byTeil(slug);
 
@@ -403,13 +645,15 @@ export function TrainingEditor({
             )}
           </Card>
         );
-      })}
+        })}
 
       {/* Ein Picker, gesteuert über `open` (Trainingsteil + ggf. Unterkategorie). */}
       {open &&
         (() => {
           const teilLabel =
-            TRAININGSTEILE.find((t) => t.slug === open.teil)?.label ?? open.teil;
+            TRAININGSTEILE.find((t) => t.slug === open.teil)?.label ??
+            juniorenBlockLabels[open.teil as JuniorenBlockSlug] ??
+            open.teil;
           const sub = open.hkat
             ? HAUPTTEILKATEGORIEN.find((h) => h.slug === open.hkat)
             : undefined;
@@ -458,6 +702,113 @@ export function TrainingEditor({
           autoFocus
         />
       </Dialog>
+
+      {/* Nacharbeit: Fassungen, die beim Schema-Wechsel keinen Platz im neuen
+          Schema fanden. Sie bleiben erhalten und blockieren nur die
+          Veröffentlichung — der Trainer ordnet sie ein oder entfernt sie
+          (Story 3 PC 3/4, Story 4 AC 9). */}
+      {nacharbeit.length > 0 && (
+        <Card className="border-error p-4 sm:p-5">
+          <h2 className="type-title-medium text-error">Nacharbeit</h2>
+          <p className="mt-1 type-body-small text-on-surface-variant">
+            Diese Übungen haben im{" "}
+            {schema === "junioren" ? "Juniorenschema" : "Kinderfussball-Schema"} keine
+            Entsprechung. Ordne sie einem Block zu oder entferne sie — solange sie hier
+            liegen, lässt sich das Training nicht veröffentlichen.
+          </p>
+          <ul className="mt-3 flex flex-col gap-2">
+            {nacharbeit.map((item) => (
+              <li
+                key={item.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-[4px] border-[1.5px] border-outline px-3 py-2"
+              >
+                <span className="type-body-medium text-on-surface">{item.name}</span>
+                <span className="flex items-center gap-1">
+                  <Link
+                    href={`/training/${training.id}/uebung/${item.id}/edit`}
+                    className="focus-ring rounded-[4px] px-2 py-1 type-label-medium text-on-surface-variant hover:bg-on-surface/8"
+                  >
+                    Einordnen
+                  </Link>
+                  <IconButton
+                    label={`${item.name} entfernen`}
+                    onClick={() => remove(item)}
+                    icon={Trash2}
+                  />
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {/* Schema-Wechsel bestätigen. Der Dialog sagt vorher, was danach anders
+          ist: was keinen Platz findet, was zum Veröffentlichen noch fehlt —
+          und dass der Weg zurück nichts kostet (Story 3 AC 5/6). */}
+      {wechsel && (
+        <Dialog
+          open
+          onClose={() => setWechsel(null)}
+          title={
+            wechsel.ziel === "junioren"
+              ? "Auf das Juniorenschema wechseln?"
+              : "Auf das Kinderfussball-Schema wechseln?"
+          }
+          actions={
+            <>
+              <Button variant="text" onClick={() => setWechsel(null)}>
+                Abbrechen
+              </Button>
+              <Button
+                onClick={() => {
+                  const next = wechsel.stufen;
+                  setWechsel(null);
+                  speichereStufen(next);
+                }}
+              >
+                Schema wechseln
+              </Button>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <p className="type-body-medium text-on-surface-variant">
+              Deine Übungen wandern in die Struktur des{" "}
+              {wechsel.ziel === "junioren" ? "Juniorenfussballs" : "Kinderfussballs"}. Du
+              kannst jederzeit zurückwechseln — deine bisherige Gliederung wird dabei
+              wiederhergestellt.
+            </p>
+            {wechsel.ohneEntsprechung.length > 0 && (
+              <div>
+                <p className="type-label-large text-on-surface">
+                  Ohne Entsprechung im neuen Schema
+                </p>
+                <p className="type-body-small text-on-surface-variant">
+                  Diese Übungen bleiben erhalten und landen in der Nacharbeit:
+                </p>
+                <ul className="mt-1 list-inside list-disc type-body-small text-on-surface-variant">
+                  {wechsel.ohneEntsprechung.map((n) => (
+                    <li key={n}>{n}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {wechsel.fehlendeBloecke.length > 0 && (
+              <div>
+                <p className="type-label-large text-on-surface">
+                  Zum Veröffentlichen fehlt danach
+                </p>
+                <p className="type-body-small text-on-surface-variant">
+                  {wechsel.fehlendeBloecke
+                    .map((b) => juniorenBlockLabels[b as JuniorenBlockSlug])
+                    .join(", ")}
+                  . Solche Übungen erfasst du selbst im Übungspool.
+                </p>
+              </div>
+            )}
+          </div>
+        </Dialog>
+      )}
 
       {/* Stufen-Abweichungs-Hinweis */}
       <Dialog

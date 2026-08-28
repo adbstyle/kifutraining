@@ -22,14 +22,19 @@ import {
   type ExerciseDetail,
 } from "@/lib/queries/exercises";
 import {
-  trainingsteil as teilLabels,
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
+  erscheinungsform_junioren as formJuniorenLabels,
+  uebungstyp as uebungstypLabels,
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
+import { HEIMAT_LABEL } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
+
+/** Beide Erscheinungsform-Vokabulare als eine flache Liste (Story 12). */
+const alleFormLabels: Record<string, string> = { ...formLabels, ...formJuniorenLabels };
 
 export async function generateMetadata({
   params,
@@ -39,7 +44,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const ex = await getExerciseDetail(slug).catch(() => null);
   if (!ex) return { title: "Übung nicht gefunden" };
-  return { title: `${ex.name} — Kinderfussball-Übung` };
+  return { title: `${ex.name} — Übung` };
 }
 
 function Meta({
@@ -95,7 +100,7 @@ export default async function ExerciseDetailPage({
   // Trainingsteil wandert in die Brotkrumen (als Filter-Link auf den Pool);
   // die Eyebrow-Zeile zeigt nur noch ergänzenden Kontext (Feldtyp).
   const teilLabel =
-    teilLabels[ex.trainingsteil as keyof typeof teilLabels] ?? ex.trainingsteil;
+    HEIMAT_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
     { label: "Übungspool", href: "/" },
     { label: teilLabel, href: `/?teil=${ex.trainingsteil}` },
@@ -107,6 +112,7 @@ export default async function ExerciseDetailPage({
   const anzahl = anzahlText(ex.anzahl_kinder);
   const hatEckdaten =
     !!ex.hauptteilkategorie ||
+    !!ex.uebungstyp ||
     ex.erscheinungsform.length > 0 ||
     !!anzahl ||
     ex.material.length > 0;
@@ -213,10 +219,17 @@ export default async function ExerciseDetailPage({
               ex.hauptteilkategorie}
           </Meta>
         )}
+        {ex.uebungstyp && (
+          <Meta label="Übungstyp">
+            {uebungstypLabels[ex.uebungstyp as keyof typeof uebungstypLabels] ??
+              ex.uebungstyp}
+          </Meta>
+        )}
         {ex.erscheinungsform.length > 0 && (
           <Meta label="Erscheinungsform">
             {ex.erscheinungsform
-              .map((f) => formLabels[f as keyof typeof formLabels] ?? f)
+              // Beide Vokabulare — eine Übung kann Werte aus beiden tragen.
+              .map((f) => alleFormLabels[f] ?? f)
               .join(", ")}
           </Meta>
         )}

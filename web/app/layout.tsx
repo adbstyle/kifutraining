@@ -25,9 +25,9 @@ const mono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kinderfussball Übungen & Trainings",
+  title: "Übungen & Trainings für Kinder- und Juniorenfussball",
   description:
-    "Kinderfussball-Übungen durchsuchen und filtern sowie strukturierte Trainings zusammenstellen.",
+    "Übungen durchsuchen und filtern sowie strukturierte Trainings zusammenstellen — nach den SFV-Trainingsschemata für Kinderfussball und Juniorenfussball.",
 };
 
 export default function RootLayout({

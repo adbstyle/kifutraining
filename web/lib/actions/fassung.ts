@@ -16,8 +16,17 @@ import {
   entferneStorageObjekt,
   inhaltFelder,
   istEigeneFassungsDatei,
+  FASSUNG_UEBERNAHME_SELECT,
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
+import { TRAININGSTEIL_SLUGS } from "@/lib/training";
+import {
+  abbildungJuniorenZuKifu,
+  schemaAusStufen,
+  zuordnungsZiele,
+  NACHARBEIT,
+} from "@/lib/junioren";
+import { junioren_heimatSlugs } from "@/lib/vocab";
 import { userSlug } from "@/lib/slug";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
@@ -35,7 +44,7 @@ async function ladeFassung(
   const { data } = await supabase
     .from("training_exercises")
     .select(
-      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id )",
+      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, stufen )",
     )
     .eq("id", fassungId)
     .maybeSingle();
@@ -43,13 +52,14 @@ async function ladeFassung(
   const training = data.trainings as unknown as {
     owner_id: string | null;
     team_id: string | null;
+    stufen: string[] | null;
   } | null;
   if (!training) return null;
 
   // Die Zeile ist bereits geladen — die Bearbeitungsregel kommt aus der
   // gemeinsamen Quelle, statt sie hier ein zweites Mal zu formulieren.
   const ziel = bearbeitungszielVon(training, userId);
-  return ziel ? { ...data, ziel } : null;
+  return ziel ? { ...data, ziel, stufen: training.stufen ?? [] } : null;
 }
 
 /** Die nächste freie Position im Zielabschnitt. Eine umgeordnete Fassung reiht
@@ -92,7 +102,14 @@ export async function updateFassung(
   const fassung = await ladeFassung(supabase, fassungId, user.id);
   if (!fassung) return { status: "error", message: "Übung nicht gefunden." };
 
-  const parsed = parseUebungsInhalt(form);
+  // Eine Fassung wird nach den Blöcken IHRES Trainingsschemas eingeordnet —
+  // die Nacharbeit eingeschlossen, aus der sie der Trainer herausholt.
+  // Die Nacharbeit steht nur zur Wahl, wenn die Fassung dort liegt — dorthin
+  // gerät sie nur durch den Schema-Wechsel, nie durch eine Zuordnung.
+  const parsed = parseUebungsInhalt(form, [
+    ...zuordnungsZiele(schemaAusStufen(fassung.stufen)),
+    ...(fassung.trainingsteil === NACHARBEIT ? [NACHARBEIT] : []),
+  ]);
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
   const inhalt = parsed.row;
 
@@ -104,7 +121,9 @@ export async function updateFassung(
   const update: Record<string, unknown> = { ...inhalt };
 
   // Einordnungswechsel: die Fassung wandert ans Ende ihres neuen Abschnitts.
-  // Die Kategorie ausserhalb des Hauptteils leert der DB-Trigger.
+  // Die Kategorie ausserhalb des Hauptteils ist in `inhalt` bereits null —
+  // einen DB-Trigger, der das erzwänge, gibt es seit dem Verweis-Abbau nicht
+  // mehr, nur noch den Biconditional-CHECK.
   const wechsel =
     trainingsteil !== fassung.trainingsteil || hkat !== fassung.hauptteilkategorie;
   if (wechsel) {
@@ -115,6 +134,12 @@ export async function updateFassung(
       trainingsteil === "hauptteil" ? hkat : null,
       fassungId,
     );
+    // Die Konserve des Schema-Wechsels verfällt: sie gilt nur für Fassungen,
+    // die seit der Übertragung unangetastet blieben. Sonst spränge eine von
+    // Hand umgehängte Fassung beim Rückwechsel auf ihren alten Platz zurück
+    // und die Handänderung ginge verloren (Epic #71).
+    update.einordnung_vorher = null;
+    update.hauptteilkategorie_vorher = null;
   }
 
   // Bild: ersetzen (neue Datei) oder entfernen (Schalter). Beides wirkt erst
@@ -185,6 +210,22 @@ export async function updateFassung(
  *  öffentlichen Training. Es entsteht eine gewöhnliche Trainer-Übung mit eigener
  *  Bild- und Diagrammkopie; eine Verknüpfung zur Fassung gibt es nicht, spätere
  *  Änderungen wirken in keine Richtung. */
+/** Eine Fassung, wie sie fürs Übernehmen in die Bibliothek gelesen wird
+ *  (FASSUNG_UEBERNAHME_SELECT). */
+type ZuUebernehmendeFassung = {
+  trainingsteil: string;
+  hauptteilkategorie: string | null;
+  name: string | null;
+  methodischer_fahrplan: {
+    offen_starten?: string;
+    ueben?: string[];
+    wetteifern?: string | null;
+  } | null;
+  aufbau: string | null;
+  bild_url: string | null;
+  diagramm: unknown;
+} & Record<string, unknown>;
+
 export async function uebernehmeInBibliothek(
   fassungId: string,
 ): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
@@ -197,16 +238,27 @@ export async function uebernehmeInBibliothek(
   // RLS lässt Fassungen eigener und öffentlicher Trainings durch.
   const { data: f } = await supabase
     .from("training_exercises")
-    .select(
-      `name, trainingsteil, hauptteilkategorie, kategorien, erscheinungsform, feldtyp,
-       anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten,
-       bild_url, bild_quelle, diagramm`,
-    )
+    .select(FASSUNG_UEBERNAHME_SELECT)
     .eq("id", fassungId)
-    .maybeSingle();
+    .maybeSingle<ZuUebernehmendeFassung>();
   if (!f) return { ok: false, error: "Diese Übung ist nicht mehr verfügbar." };
 
-  const mangel = fassungUnvollstaendig(f);
+  // Die Heimat bestimmen, BEVOR die Vollständigkeit geprüft wird: eine Fassung
+  // in einem Junioren-Block wird als Kinderfussball-Übung abgelegt, und dort
+  // gilt deren Ablauf-Regel. Andersherum meldete die Prüfung eine fehlende
+  // Beschreibung an einer Übung, die vollständig ist.
+  const heimat = heimatAusEinordnung(f.trainingsteil, f.hauptteilkategorie);
+  if (!heimat)
+    return {
+      ok: false,
+      error: "Ordne die Übung zuerst einem Block zu, bevor du sie übernimmst.",
+    };
+
+  const mangel = fassungUnvollstaendig({
+    ...f,
+    trainingsteil: heimat.trainingsteil,
+    hauptteilkategorie: heimat.hauptteilkategorie,
+  });
   if (mangel) return { ok: false, error: mangel };
 
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
@@ -219,8 +271,8 @@ export async function uebernehmeInBibliothek(
     .insert({
       id: uebungId,
       slug: userSlug(f.name!),
-      trainingsteil: f.trainingsteil,
-      hauptteilkategorie: f.hauptteilkategorie,
+      trainingsteil: heimat.trainingsteil,
+      hauptteilkategorie: heimat.hauptteilkategorie,
       ...inhaltFelder(f),
       bild_url: bild.url,
       diagramm: kopiereDiagrammVon(f.diagramm),
@@ -279,4 +331,21 @@ export async function saveFassungDiagramm(
 
   revalidiereTraining(fassung.training_id, fassungId);
   return { ok: true };
+}
+
+/** Einordnung einer Fassung im Training → Heimat der neuen Bibliotheks-Übung.
+ *  `null`, wenn die Fassung in der Nacharbeit liegt: dort hat sie gerade
+ *  keinen Platz, und eine Heimat liesse sich nur raten. */
+function heimatAusEinordnung(
+  einordnung: string,
+  hauptteilkategorie: string | null,
+): { trainingsteil: string; hauptteilkategorie: string | null } | null {
+  // Kinderfussball-Teile und die drei Junioren-Heimaten sind selbst Heimaten.
+  if (
+    (TRAININGSTEIL_SLUGS as readonly string[]).includes(einordnung) ||
+    (junioren_heimatSlugs as readonly string[]).includes(einordnung)
+  )
+    return { trainingsteil: einordnung, hauptteilkategorie };
+  const rueck = abbildungJuniorenZuKifu(einordnung);
+  return rueck === NACHARBEIT ? null : rueck;
 }

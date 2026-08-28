@@ -25,10 +25,17 @@
   --color-signal-bright: #ff6e40;
   --color-signal-dark: #c43e15;
 
-  /* Alterskategorien — fest lernbare, distinkte Farben (nie nur Farbe) */
+  /* Alterskategorien — fest lernbare, distinkte Farben (nie nur Farbe).
+     G/F/E Kinderfussball, D/C/B/A Juniorenfussball (Epic #71). Alle hell
+     genug für rasen-950 als Schrift; der Buchstabe trägt die Unterscheidung
+     mit, Farbe allein reicht bei sieben Werten nicht. */
   --color-kat-g: #5eb3f5;
   --color-kat-f: #e6c044;
   --color-kat-e: #c084fc;
+  --color-kat-d: #5ee0a0;
+  --color-kat-c: #f48fb1;
+  --color-kat-b: #a5b4fc;
+  --color-kat-a: #cfd8dc;
 
   /* ─── M3 Color Roles (Ebene 2 — zeigen auf Primitives, Dark-Scheme) ─── */
   /* Primary — Signal bleibt der einzige warme Hue */

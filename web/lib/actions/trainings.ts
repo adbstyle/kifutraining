@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
-import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/training";
+import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer, ZIEL_MAX } from "@/lib/training";
+import { heimatFilterFuerEinordnung } from "@/lib/junioren";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
@@ -27,6 +28,7 @@ import {
   bedingungAusFehler,
   fehlerMeldung,
   type Bedingung,
+  fehlendeBedingungenAus,
 } from "@/lib/training-bedingungen";
 
 export type TrainingFormState = {
@@ -41,6 +43,9 @@ export type TrainingActionResult = { ok: boolean; error?: string };
 /** Ergebnis des Stufen-Setzens inkl. abweichender Übungen (Story #12 AC3). */
 export type StufenResult = TrainingActionResult & {
   mismatched?: { id: string; name: string }[];
+  /** Hat sich mit den Stufen das Trainingsschema geändert? Dann hat die
+   *  Datenebene die Fassungen übertragen und der Editor lädt neu. */
+  wechsel?: boolean;
 };
 
 function csv(v: FormDataEntryValue | null): string[] {
@@ -107,12 +112,17 @@ export async function createTraining(
 
   const { data, error } = await supabase
     .from("trainings")
-    .insert({ name, owner_id: user.id, stufen, visibility: "private" })
+    .insert({ name, ziel: zielWert(form.get("ziel")), owner_id: user.id, stufen, visibility: "private" })
     .select("id")
     .single();
 
   if (error || !data) {
-    return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
+    // Übersetzt, nicht roh: eine gemischte Stufenwahl kommt hier als
+    // Constraint-Meldung an, und die versteht niemand (Epic #71).
+    return {
+      status: "error",
+      message: error ? fehlerMeldung(error.message) : "Speichern fehlgeschlagen.",
+    };
   }
 
   revalidatePath("/trainings");
@@ -140,7 +150,10 @@ export async function addTrainingExercise(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
-  if (!TRAININGSTEIL_SLUGS.includes(trainingsteil as TrainingsteilSlug))
+  // Ziel darf jede Einordnung beider Schemata sein — welche zum Training
+  // passt, entscheidet das Schema-Gate der Datenebene.
+  const filter = heimatFilterFuerEinordnung(trainingsteil);
+  if (filter.trainingsteile.length === 0)
     return { ok: false, error: "Ungültiger Trainingsteil." };
 
   const istHauptteil = trainingsteil === "hauptteil";
@@ -161,10 +174,15 @@ export async function addTrainingExercise(
     .eq("id", exerciseId)
     .maybeSingle<Vorlage>();
   if (!ex) return { ok: false, error: "Übung nicht verfügbar." };
-  if (ex.trainingsteil !== trainingsteil)
-    return { ok: false, error: "Übung passt nicht zum Trainingsteil." };
-  if (istHauptteil && ex.hauptteilkategorie !== hkat)
-    return { ok: false, error: "Übung passt nicht zur Hauptteilkategorie." };
+  // Passt die Heimat der Vorlage zu diesem Block? Dieselbe Regel, nach der
+  // der Picker anbietet — sonst zeigte er Treffer, die hier scheitern.
+  if (!filter.trainingsteile.includes(ex.trainingsteil))
+    return { ok: false, error: "Übung passt nicht zu diesem Block." };
+  if (
+    filter.hauptteilkategorien &&
+    !filter.hauptteilkategorien.includes(ex.hauptteilkategorie ?? "")
+  )
+    return { ok: false, error: "Übung passt nicht zu diesem Block." };
 
   // Nächste Position bestimmen (eindeutige Reihenfolge je Unterkategorie im
   // Hauptteil, sonst je Trainingsteil).
@@ -241,11 +259,7 @@ async function fehlendeBedingungen(
   if (training.owner_id !== ownerId) return { error: "Training nicht gefunden." };
 
   const fassungen = training.training_exercises ?? [];
-  const missing: Bedingung[] = [];
-  if ((training.stufen ?? []).length === 0) missing.push("stufe");
-  if (!fassungen.some((f) => f.trainingsteil === "einleitung")) missing.push("einleitung");
-  if (!fassungen.some((f) => f.hauptteilkategorie === FREIES_SPIEL)) missing.push("freies_spiel");
-  return { missing };
+  return { missing: fehlendeBedingungenAus(training.stufen ?? [], fassungen) };
 }
 
 /** Ein persönliches Training öffentlich schalten (Story A AK 1).
@@ -324,6 +338,41 @@ export async function setzeTrainingAufEntwurf(
 // ── Story #12: Training bearbeiten, umsortieren, entfernen, löschen ──────────────
 
 /** Trainingsnamen ändern (Story #12 AC1); leerer Name unzulässig. */
+/** Leere und reine Leerzeichen-Eingaben sind kein Ziel (Story 10 PC 3). */
+function zielWert(v: FormDataEntryValue | null): string | null {
+  const t = String(v ?? "").trim();
+  return t === "" ? null : t.slice(0, ZIEL_MAX);
+}
+
+/** Das Ziel eines Trainings setzen, ändern oder entfernen (Story 10 AC 1/3).
+ *
+ *  Wie beim Umbenennen ohne Owner-Filter: Team-Trainings darf jedes Mitglied
+ *  bearbeiten, die RLS entscheidet. */
+export async function setTrainingZiel(
+  trainingId: string,
+  ziel: string,
+): Promise<TrainingActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  const wert = ziel.trim() === "" ? null : ziel.trim();
+  if (wert && wert.length > ZIEL_MAX)
+    return { ok: false, error: `Das Ziel darf höchstens ${ZIEL_MAX} Zeichen lang sein.` };
+
+  const { data, error } = await supabase
+    .from("trainings")
+    .update({ ziel: wert })
+    .eq("id", trainingId)
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+  if (!data) return { ok: false, error: "Training nicht gefunden." };
+  revalidiereTraining(trainingId);
+  return { ok: true };
+}
+
 export async function renameTraining(
   trainingId: string,
   name: string,
@@ -366,19 +415,19 @@ export async function setTrainingStufen(
 
   const valid = validStufen(stufen);
 
-  const { data: after, error } = await supabase
-    .from("trainings")
-    .update({ stufen: valid })
-    .eq("id", trainingId)
-    .select("id")
-    .maybeSingle();
-  // Ein öffentliches Training ohne Alterskategorie weist die Datenebene ab;
-  // die Meldung nennt den Weg über den Entwurfszustand (Story A AK 7).
+  // Über die RPC statt per direktem Update: ändert sich mit den Stufen das
+  // Trainingsschema, überträgt sie alle Fassungen in die Struktur des neuen
+  // Schemas und merkt sich ihre bisherige Einordnung für den Weg zurück
+  // (Story 3). Innerhalb eines Schemas setzt sie schlicht die Stufen.
+  const { data, error } = await supabase.rpc("set_training_stufen", {
+    p_training_id: trainingId,
+    p_stufen: valid,
+  });
   if (error) return { ok: false, error: fehlerMeldung(error.message) };
-  if (!after) return { ok: false, error: "Training nicht gefunden." };
 
   // Abweichende Fassungen ermitteln — anhand IHRER Alterskategorien: die
-  // Fassung ist im Training frei bearbeitbar und die einzige Quelle.
+  // Fassung ist im Training frei bearbeitbar und die einzige Quelle. Das ist
+  // der Stufen-Abgleich innerhalb eines Schemas und unabhängig vom Wechsel.
   let mismatched: { id: string; name: string }[] = [];
   if (valid.length > 0) {
     const { data: rows } = await supabase
@@ -393,7 +442,11 @@ export async function setTrainingStufen(
   }
 
   revalidiereTraining(trainingId);
-  return { ok: true, mismatched };
+  return {
+    ok: true,
+    mismatched,
+    wechsel: Boolean((data as { wechsel?: boolean } | null)?.wechsel),
+  };
 }
 
 /** Zuordnung innerhalb ihres Trainingsteils umsortieren (Story #12 AC4). */
@@ -549,14 +602,23 @@ export async function setExerciseDuration(
  *  USER sichtbaren (RLS), eingrenzbar nach Erscheinungsform und (Hauptteil)
  *  Hauptteilkategorie sowie per Freitext (Story #10 AC5/AC6/AC7, #23). */
 export async function pickExercises(
-  trainingsteil: string,
-  opts: { form?: string[]; hkat?: string[]; q?: string } = {},
+  einordnung: string,
+  opts: { form?: string[]; hkat?: string[]; typ?: string[]; q?: string } = {},
 ): Promise<ExerciseListRow[]> {
-  if (!TRAININGSTEIL_SLUGS.includes(trainingsteil as TrainingsteilSlug)) return [];
+  // Der Picker eines Blocks zeigt, was die Abbildungsregel dorthin führt —
+  // im Junioren-Hauptteil etwa die Übungen zweier Kinderfussball-Kategorien.
+  const filter = heimatFilterFuerEinordnung(einordnung);
+  if (filter.trainingsteile.length === 0) return [];
   return getExercises({
-    teil: [trainingsteil],
+    teil: filter.trainingsteile,
     form: opts.form,
-    hkat: opts.hkat,
+    typ: opts.typ,
+    // Der Block schränkt die Kategorie bereits ein; eine zusätzliche
+    // Nutzerwahl darf sie nur weiter verengen, nie erweitern.
+    hkat:
+      filter.hauptteilkategorien && opts.hkat?.length
+        ? opts.hkat.filter((k) => filter.hauptteilkategorien!.includes(k))
+        : (filter.hauptteilkategorien ?? opts.hkat),
     q: opts.q,
   });
 }

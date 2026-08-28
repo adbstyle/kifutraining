@@ -5,13 +5,21 @@ import { Plus, Search, TriangleAlert } from "lucide-react";
 import { Dialog, KategorieChip, HerkunftBadge, FilterChip, IconButton } from "@/components/ui";
 import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import { stufenAbgedeckt } from "@/lib/training";
-import { FAHRPLAN_TEILE } from "@/lib/labels";
 import {
   erscheinungsform as erscheinungsformLabels,
+  erscheinungsform_junioren as formJuniorenLabels,
+  uebungstyp as uebungstypLabels,
   type KategorieSlug,
-  type TrainingsteilSlug,
 } from "@/lib/vocab";
+import { ERSCHEINUNGSFORM_TEILE } from "@/lib/labels";
+import type { Einordnung } from "@/lib/junioren";
 import type { ExerciseListRow } from "@/lib/queries/exercises";
+
+/** Beide Erscheinungsform-Vokabulare als eine flache Liste (Story 12). */
+const alleFormLabels: Record<string, string> = {
+  ...erscheinungsformLabels,
+  ...formJuniorenLabels,
+};
 
 /* Übungs-Picker als Modal über dem Editor (Story #10). Lädt die für den USER
    sichtbaren Übungen des Trainingsteils serverseitig (RLS), eingrenzbar nach
@@ -33,7 +41,9 @@ export function ExercisePickerDialog({
   open: boolean;
   onClose: () => void;
   trainingId: string;
-  trainingsteil: TrainingsteilSlug;
+  /** Ziel-Einordnung: ein Kinderfussball-Trainingsteil oder ein
+   *  Junioren-Unterblock (Epic #71). */
+  trainingsteil: Einordnung;
   trainingsteilLabel: string;
   /** Im Hauptteil: die fixierte Unterkategorie, sonst undefined. */
   hauptteilkategorie?: string;
@@ -43,6 +53,8 @@ export function ExercisePickerDialog({
 }) {
   const [q, setQ] = useState("");
   const [form, setForm] = useState<string[]>([]);
+  // Übungstyp-Filter auch hier, nicht nur im Katalog (Story 9 AC 6).
+  const [typ, setTyp] = useState<string[]>([]);
   const [results, setResults] = useState<ExerciseListRow[]>([]);
   const [loading, setLoading] = useState(false);
   // Wie oft der USER eine Vorlage in dieser Sitzung übernommen hat — reine
@@ -59,7 +71,9 @@ export function ExercisePickerDialog({
   const queueRef = useRef<Promise<void>>(Promise.resolve());
   const inFlightRef = useRef(0);
 
-  const hatErscheinungsform = FAHRPLAN_TEILE.has(trainingsteil);
+  // Erscheinungsformen tragen nicht alle Einordnungen — der Filter erscheint
+  // nur, wo er etwas findet (Story 12 Out of Scope 5).
+  const hatErscheinungsform = ERSCHEINUNGSFORM_TEILE.has(trainingsteil);
 
   // Beim Öffnen und Schliessen Filter, Suche und Sitzungszählung zurücksetzen.
   useEffect(() => {
@@ -76,6 +90,7 @@ export function ExercisePickerDialog({
     setLoading(true);
     const t = setTimeout(async () => {
       const rows = await pickExercises(trainingsteil, {
+        typ,
         q: q.trim() || undefined,
         form: form.length ? form : undefined,
         // Im Hauptteil auf die fixierte Unterkategorie eingrenzen (harte Regel).
@@ -153,7 +168,7 @@ export function ExercisePickerDialog({
         {/* Erscheinungsform-Filter (nur Trainingsteile, die eine tragen) */}
         {hatErscheinungsform && (
           <div className="flex flex-wrap gap-2">
-            {Object.entries(erscheinungsformLabels).map(([slug, label]) => (
+            {Object.entries(alleFormLabels).map(([slug, label]) => (
               <FilterChip
                 key={slug}
                 selected={form.includes(slug)}
@@ -164,6 +179,19 @@ export function ExercisePickerDialog({
             ))}
           </div>
         )}
+
+        {/* Übungstyp-Filter — gilt in jedem Block (Story 9 AC 6). */}
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(uebungstypLabels).map(([slug, label]) => (
+            <FilterChip
+              key={slug}
+              selected={typ.includes(slug)}
+              onClick={() => toggle(typ, setTyp, slug)}
+            >
+              {label}
+            </FilterChip>
+          ))}
+        </div>
 
         {error && (
           <p

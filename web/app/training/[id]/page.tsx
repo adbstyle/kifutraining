@@ -10,7 +10,7 @@ import { getTrainingView } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
 import { createClient } from "@/lib/supabase/server";
-import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
+import { leseGliederung, formatDuration } from "@/lib/training";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -44,7 +44,7 @@ export default async function TrainingViewPage({
   const teams =
     user && training.visibility === "public" ? await getMeineTeams() : [];
 
-  const sections = groupByTeil(training.exercises).filter((s) => s.items.length > 0);
+  const sections = leseGliederung(training.stufen, training.exercises);
   const total = sections.reduce((a, s) => a + s.sum, 0);
   const hasAnyDuration = sections.some((s) => s.sum > 0);
 
@@ -98,14 +98,23 @@ export default async function TrainingViewPage({
             <TrainingUebernehmenControl quelleId={training.id} teams={teams} />
           )}
         </div>
+        {/* Das Ziel sehen auch Betrachter eines veröffentlichten Trainings:
+            feldweises Verbergen kennt das Zugriffsmodell nicht (Story 10
+            PC 1). Ohne Ziel bleibt der Bereich weg (PC 2). */}
+        {training.ziel && (
+          <p className="mt-3 type-body-medium text-on-surface">
+            <span className="type-label-small text-on-surface-variant">Ziel: </span>
+            {training.ziel}
+          </p>
+        )}
       </header>
 
       <div className="flex flex-col gap-4">
         {sections.map((s) => {
-          const blocks = leseBloecke(s);
+          const blocks = s.bloecke;
           return (
             <section
-              key={s.slug}
+              key={s.key}
               className="rounded-[4px] border-[1.5px] border-outline bg-surface-container-low p-4 sm:p-5"
             >
               <h2 className="mb-3 type-title-medium text-on-surface">

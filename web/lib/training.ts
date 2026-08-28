@@ -1,9 +1,12 @@
+import { JUNIOREN_TEILE, NACHARBEIT, schemaAusStufen } from "@/lib/junioren";
+import type { JuniorenBlockSlug } from "@/lib/vocab";
 import {
   trainingsteil as trainingsteilLabels,
   hauptteilkategorie as hauptteilkategorieLabels,
   type TrainingsteilSlug,
   type HauptteilkategorieSlug,
   type KategorieSlug,
+  kategorienSlugs,
 } from "@/lib/vocab";
 
 /**
@@ -40,14 +43,17 @@ export const HAUPTTEILKATEGORIE_SLUGS = HAUPTTEILKATEGORIEN.map((h) => h.slug);
  *  Enabler #26 AC3). */
 export const PFLICHT_TEILE: TrainingsteilSlug[] = ["einleitung", "hauptteil"];
 
-/** Trainingsteile, die keine Dauer tragen. „Auffangen" ist der Teil vor dem
+/** Einordnungen, die keine Dauer tragen. „Auffangen" ist der Teil vor dem
  *  eigentlichen Trainingsbeginn — es wird aufgesetzt, die Spielerinnen machen
  *  mit oder nicht; es zählt nicht zur Trainingsdauer. Diese Invariante wird auf
- *  DB-Ebene per CHECK erzwungen. */
-export const OHNE_DAUER_TEILE = new Set<TrainingsteilSlug>(["auffangen"]);
+ *  DB-Ebene per CHECK erzwungen (`dauer_nicht_auffangen`).
+ *
+ *  Im Juniorenschema gibt es dazu kein Gegenstück: alle drei Trainingsteile
+ *  tragen eine Dauer, ein Pendant zum Auffangen kennt es nicht. */
+export const OHNE_DAUER_TEILE = new Set<string>(["auffangen"]);
 
-/** Trägt dieser Trainingsteil eine erfassbare Dauer? */
-export function teilTraegtDauer(slug: TrainingsteilSlug): boolean {
+/** Trägt diese Einordnung eine erfassbare Dauer? Gilt für beide Schemata. */
+export function teilTraegtDauer(slug: string): boolean {
   return !OHNE_DAUER_TEILE.has(slug);
 }
 
@@ -60,6 +66,10 @@ export const ANZAHL_HINWEIS: Record<TrainingsteilSlug, number> = {
   hauptteil: 5,
   ausklang: 3,
 };
+
+/** Obergrenze des Trainingsziels in Zeichen (Story 10 AC 6). Entspricht der
+ *  einzigen bereits bestehenden Textbegrenzung der Applikation. */
+export const ZIEL_MAX = 200;
 
 /** Granularität der Dauer-Eingabe in Minuten (Story #11 AC1). */
 export const DAUER_SCHRITT = 5;
@@ -74,10 +84,10 @@ export function stufenAbgedeckt(
   return trainingStufen.some((s) => uebungKategorien.includes(s));
 }
 
-/** Stabile Reihenfolge der Stufen-Anzeige (G, F, E). */
+/** Stabile Reihenfolge der Stufen-Anzeige — die fachliche Reihenfolge des
+ *  Vokabulars (G, F, E, D, C, B, A; Story 2 AC 6). */
 export function sortStufen(stufen: readonly string[]): KategorieSlug[] {
-  const order: KategorieSlug[] = ["G", "F", "E"];
-  return order.filter((s) => stufen.includes(s));
+  return kategorienSlugs.filter((s) => stufen.includes(s));
 }
 
 /** Zuordnungen nach Trainingsteil gruppieren (feste Reihenfolge) und je Teil
@@ -101,6 +111,41 @@ export function groupByTeil<
       ? teilItems.reduce((a, i) => a + (i.durationMin ?? 0), 0)
       : 0;
     return { slug, label, items: teilItems, sum, traegtDauer };
+  });
+}
+
+/** Junioren-Zuordnungen nach Trainingsteil und Unterblock gruppieren (feste
+ *  Reihenfolge des Schemas; Story 4 AC 1, Story 5a AC 1–3). Items kommen
+ *  positionssortiert. Die Teil-Summe ist die Summe seiner Blöcke.
+ *
+ *  Die Nacharbeit gehört NICHT hierher — sie liegt ausserhalb der Struktur und
+ *  wird gesondert gerendert (Story 4 AC 9); Aufrufer filtern sie vorher weg. */
+export function groupJunioren<
+  T extends { trainingsteil: string; durationMin: number | null },
+>(
+  items: T[],
+): {
+  slug: string;
+  label: string;
+  sum: number;
+  bloecke: { slug: JuniorenBlockSlug; label: string; items: T[]; sum: number }[];
+}[] {
+  return JUNIOREN_TEILE.map((teil) => {
+    const bloecke = teil.bloecke.map(({ slug, label }) => {
+      const blockItems = items.filter((i) => i.trainingsteil === slug);
+      return {
+        slug,
+        label,
+        items: blockItems,
+        sum: blockItems.reduce((a, i) => a + (i.durationMin ?? 0), 0),
+      };
+    });
+    return {
+      slug: teil.slug,
+      label: teil.label,
+      sum: bloecke.reduce((a, b) => a + b.sum, 0),
+      bloecke,
+    };
   });
 }
 
@@ -147,6 +192,78 @@ export function leseBloecke<
   return groupHauptteil(section.items)
     .filter((g) => g.items.length > 0)
     .map((g) => ({ key: g.slug, label: g.label, sum: g.sum, items: g.items }));
+}
+
+/** Die Lese-Gliederung eines Trainings — eine Form für beide Schemata, damit
+ *  Detailansicht, Durchführung und Druck nicht je zweimal verzweigen müssen.
+ *
+ *  Kinderfussball: die vier Trainingsteile, der Hauptteil in seine belegten
+ *  Unterkategorien geteilt, die übrigen Teile als ein Block ohne
+ *  Unterüberschrift (`label: null`). Juniorenfussball: die drei Trainingsteile
+ *  mit ihren belegten Unterblöcken. Leere Teile und Blöcke erscheinen in
+ *  beiden Fällen nicht (Story 8 PC 1). */
+export function leseGliederung<
+  T extends {
+    trainingsteil: string;
+    hauptteilkategorie: string | null;
+    durationMin: number | null;
+  },
+>(
+  stufen: readonly string[],
+  items: T[],
+): {
+  key: string;
+  label: string;
+  sum: number;
+  traegtDauer: boolean;
+  bloecke: { key: string; label: string | null; sum: number; items: T[] }[];
+}[] {
+  if (schemaAusStufen(stufen) === "junioren") {
+    return leseBloeckeJunioren(items).map((teil) => ({
+      key: teil.teilSlug,
+      label: teil.teilLabel,
+      sum: teil.teilSum,
+      // Im Juniorenschema trägt jeder Trainingsteil eine Dauer; ein Pendant
+      // zum dauerlosen Auffangen kennt es nicht.
+      traegtDauer: true,
+      bloecke: teil.bloecke,
+    }));
+  }
+  return groupByTeil(items)
+    .filter((s) => s.items.length > 0)
+    .map((s) => ({
+      key: s.slug,
+      label: s.label,
+      sum: s.sum,
+      traegtDauer: s.traegtDauer,
+      bloecke: leseBloecke(s),
+    }));
+}
+
+/** Lese-Gliederung eines Junioren-Trainings für Detailansicht, Durchführung
+ *  und Druck: nur belegte Teile und Blöcke, in der Reihenfolge des Editors
+ *  (Story 8 AC 1/2/5, PC 1). Die Nacharbeit bleibt aussen vor — sie ist eine
+ *  Aufgabe im Editor, nicht Teil des Trainings auf dem Platz (Out of Scope 2). */
+export function leseBloeckeJunioren<
+  T extends { trainingsteil: string; durationMin: number | null },
+>(
+  items: T[],
+): {
+  teilSlug: string;
+  teilLabel: string;
+  teilSum: number;
+  bloecke: { key: string; label: string; sum: number; items: T[] }[];
+}[] {
+  return groupJunioren(items.filter((i) => i.trainingsteil !== NACHARBEIT))
+    .map((teil) => ({
+      teilSlug: teil.slug,
+      teilLabel: teil.label,
+      teilSum: teil.sum,
+      bloecke: teil.bloecke
+        .filter((b) => b.items.length > 0)
+        .map((b) => ({ key: b.slug, label: b.label, sum: b.sum, items: b.items })),
+    }))
+    .filter((teil) => teil.bloecke.length > 0);
 }
 
 /** Datum lesbar formatieren (de-CH, z. B. "8. Juni 2026"). */

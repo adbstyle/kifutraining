@@ -15,20 +15,45 @@ import {
   trainingsteil as teilLabels,
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
+  erscheinungsform_junioren as formJuniorenLabels,
   hauptteilkategorie as hkatLabels,
   kategorienSlugs,
   trainingsteilSlugs,
-  type TrainingsteilSlug,
+  junioren_heimat as juniorenHeimatLabels,
+  junioren_heimatSlugs,
+  uebungstyp as uebungstypLabels,
+  uebungstypSlugs,
 } from "@/lib/vocab";
 import {
   kategorieStufe,
-  FAHRPLAN_TEILE,
+  FAHRPLAN_NUR_OFFEN,
+  ERSCHEINUNGSFORM_TEILE,
+  UEBUNGSTYP_DEFINITION,
   FREIES_SPIEL,
   brauchtFahrplan,
+  brauchtFahrplanFuerFassung,
   ueberfuehreAblauf,
 } from "@/lib/labels";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
+
+/** Die Heimaten einer Bibliotheks-Übung: vier Kinderfussball-Trainingsteile
+ *  und die drei Einstiegs-Unterblöcke des Juniorenschemas. */
+const heimatOptionen = [
+  ...trainingsteilSlugs.map((t) => ({
+    value: t,
+    label: teilLabels[t],
+    group: "Kinderfussball",
+  })),
+  ...junioren_heimatSlugs.map((t) => ({
+    value: t,
+    label: juniorenHeimatLabels[t],
+    group: "Juniorenfussball — Einstieg",
+  })),
+];
+
+/** Beide Erscheinungsform-Vokabulare als eine flache Liste (Story 12). */
+const alleFormLabels: Record<string, string> = { ...formLabels, ...formJuniorenLabels };
 
 export type ExerciseInitial = {
   name?: string;
@@ -37,6 +62,7 @@ export type ExerciseInitial = {
   feldtyp?: string | null;
   erscheinungsform?: string[];
   hauptteilkategorie?: string | null;
+  uebungstyp?: string | null;
   anzahl_kinder?: { min?: number | null; max?: number | null } | null;
   material?: string[];
   methodischer_fahrplan?: {
@@ -65,6 +91,7 @@ function Group({ title, error, children }: { title: string; error?: string; chil
 export function ExerciseForm({
   action,
   initial = {},
+  einordnungsOptionen,
   submitLabel,
   afterName,
   bildEntfernenMoeglich = false,
@@ -72,6 +99,10 @@ export function ExerciseForm({
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
+  /** Zur Auswahl stehende Einordnungen. Ohne Angabe die Heimaten einer
+   *  Bibliotheks-Übung; eine Fassung im Training bekommt stattdessen die
+   *  Blöcke ihres Trainingsschemas übergeben (Epic #71). */
+  einordnungsOptionen?: { value: string; label: string; group?: string }[];
   submitLabel: string;
   /** Optionaler Slot direkt unter dem Namensfeld (z. B. die Diagramm-Vorschau). */
   afterName?: React.ReactNode;
@@ -88,6 +119,7 @@ export function ExerciseForm({
   const [form, setForm] = useState<string[]>(initial.erscheinungsform ?? []);
   const [feld, setFeld] = useState<string>(initial.feldtyp ?? "");
   const [hkat, setHkat] = useState<string>(initial.hauptteilkategorie ?? "");
+  const [uebungstyp, setUebungstyp] = useState<string>(initial.uebungstyp ?? "");
   const [bildError, setBildError] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [bildEntfernen, setBildEntfernen] = useState(false);
@@ -103,7 +135,13 @@ export function ExerciseForm({
   );
   const [aufbau, setAufbau] = useState(initial.aufbau ?? "");
 
-  const istFahrplan = brauchtFahrplan(teil, hkat);
+  // Bei einer Fassung in einem Junioren-Block ohne eigene Fahrplan-Regel
+  // entscheidet ihr Inhalt, welche Ablauf-Form das Formular zeigt.
+  const istFahrplan = brauchtFahrplanFuerFassung(
+    teil,
+    hkat,
+    offenStarten.trim() !== "" || (initial.methodischer_fahrplan ?? null) !== null,
+  );
   // Hauptteilkategorie ist genau bei Hauptteil-Übungen Pflicht (Enabler #21).
   const istHauptteil = teil === "hauptteil";
   // Das freie Spiel trägt eine Beschreibung statt des Fahrplans (Story 2).
@@ -163,7 +201,13 @@ export function ExerciseForm({
     fd.set("kat", kat.join(","));
     // Erscheinungsform hängt am Trainingsteil, nicht an der Ablauf-Form: auch
     // das freie Spiel darf eine tragen (DB-Constraint).
-    fd.set("form", FAHRPLAN_TEILE.has(teil) ? form.join(",") : "");
+    fd.set("form", ERSCHEINUNGSFORM_TEILE.has(teil) ? form.join(",") : "");
+    fd.set("uebungstyp", uebungstyp);
+    // Welche Ablauf-Form gilt, hat das Formular schon entschieden — es rendert
+    // danach. Der Server soll dieselbe Antwort nutzen, statt sie aus dem
+    // Feldinhalt neu zu raten: sonst rutschte er in den anderen Zweig und
+    // verlangte ein Feld, das gar nicht auf dem Bildschirm steht.
+    fd.set("ablauf_form", istFahrplan ? "fahrplan" : "aufbau");
     fd.set("hauptteilkategorie", istHauptteil ? hkat : "");
     fd.set("feldtyp", feld);
     fd.set("bild_entfernen", bildEntfernen ? "1" : "");
@@ -189,17 +233,25 @@ export function ExerciseForm({
 
       {afterName}
 
+      {/* Heimat der Übung: ein Kinderfussball-Trainingsteil ODER einer der
+          drei Einstiegs-Unterblöcke des Juniorenschemas — nie beides
+          (Entscheidungsdokument §4). Sieben Werte aus zwei Welten sprengen das
+          SegmentedControl; die Liste beschriftet darum ihre beiden Gruppen. */}
       <div>
-        <p className={`type-label-small mb-2 ${err.trainingsteil ? "text-error" : "text-on-surface-variant"}`}>
-          Trainingsteil
-        </p>
-        <SegmentedControl<TrainingsteilSlug>
-          ariaLabel="Trainingsteil"
-          value={(teil || null) as TrainingsteilSlug | null}
+        <Select
+          label={einordnungsOptionen ? "Einordnung" : "Heimat"}
+          name="trainingsteil"
+          value={teil}
           onChange={(v) => wechsleEinordnung(v, hkat)}
-          options={trainingsteilSlugs.map((t) => ({ value: t, label: teilLabels[t] }))}
+          error={!!err.trainingsteil}
+          supportingText={
+            err.trainingsteil ??
+            (einordnungsOptionen
+              ? "Wo die Übung in diesem Training liegt."
+              : "Wo die Übung zuhause ist. Sie lässt sich auch in Trainings des anderen Schemas verwenden, wo es eine Entsprechung gibt.")
+          }
+          options={einordnungsOptionen ?? heimatOptionen}
         />
-        {err.trainingsteil && <p className="type-body-small mt-1.5 text-error">{err.trainingsteil}</p>}
       </div>
 
       <Group title="Alterskategorie" error={err.kat}>
@@ -241,7 +293,12 @@ export function ExerciseForm({
             value={ueben}
             onChange={(e) => setUeben(e.target.value)}
             error={!!err.ueben}
-            supportingText={err.ueben ?? "Pflichtfeld — mindestens ein Schritt, einer pro Zeile."}
+            supportingText={
+              err.ueben ??
+              (FAHRPLAN_NUR_OFFEN.has(teil)
+                ? "Optional — ein Schritt pro Zeile."
+                : "Pflichtfeld — mindestens ein Schritt, einer pro Zeile.")
+            }
           />
           <TextArea
             label="③ Wett-eifern"
@@ -249,7 +306,12 @@ export function ExerciseForm({
             value={wetteifern}
             onChange={(e) => setWetteifern(e.target.value)}
             error={!!err.wetteifern}
-            supportingText={err.wetteifern ?? "Pflichtfeld — der spielerische Wettkampf-Teil."}
+            supportingText={
+              err.wetteifern ??
+              (FAHRPLAN_NUR_OFFEN.has(teil)
+                ? "Optional — nicht jede Aufwärmform hat einen Wettkampf-Teil."
+                : "Pflichtfeld — der spielerische Wettkampf-Teil.")
+            }
           />
         </fieldset>
       ) : (
@@ -289,11 +351,34 @@ export function ExerciseForm({
         </div>
       )}
 
-      {FAHRPLAN_TEILE.has(teil) && (
+      {/* Übungstyp: optionale Selbstauskunft, für alle Übungen beider
+          Schemata. Die Kurzdefinition steht beim Zuweisen dabei — «Spielform»
+          bezeichnet im Lehrmittel drei verschiedene Dinge (Story 9 AC 4). */}
+      <div>
+        <Select
+          label="Übungstyp (optional)"
+          name="uebungstyp"
+          value={uebungstyp}
+          onChange={setUebungstyp}
+          options={[
+            { value: "", label: "— kein Übungstyp —" },
+            ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
+          ]}
+          supportingText={
+            uebungstyp ? UEBUNGSTYP_DEFINITION[uebungstyp] : "Wie das Manual die Trainingsform einordnet."
+          }
+        />
+      </div>
+
+      {/* Beide Vokabulare in einer flachen Liste, in der Reihenfolge ihrer
+          Quellen: zuerst die sechs des Kinderfussball-Manuals, dann die elf
+          des Junioren-Manuals. Eine Gruppierung nach Spielphasen hat der
+          Product Owner bewusst abgelehnt (Story 12 Out of Scope 2). */}
+      {ERSCHEINUNGSFORM_TEILE.has(teil) && (
         <Group title="Erscheinungsform (optional)">
-          {(Object.keys(formLabels) as (keyof typeof formLabels)[]).map((f) => (
+          {Object.entries(alleFormLabels).map(([f, label]) => (
             <FilterChip key={f} selected={form.includes(f)} onClick={() => toggle(form, setForm, f)}>
-              {formLabels[f]}
+              {label}
             </FilterChip>
           ))}
         </Group>

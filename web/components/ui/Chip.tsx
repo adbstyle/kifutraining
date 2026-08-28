@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { kategorieStufe } from "@/lib/labels";
 import type { KategorieSlug } from "@/lib/vocab";
 
-/* ── Alterskategorie-Badge (G / F / E) ────────────────────────
+/* ── Alterskategorie-Badge (G bis A) ──────────────────────────
    Je Stufe ein eigenes Badge in fester, lernbarer Farbe — deckend
    gefüllt, dunkle Tafel-Tinte (rasen-950) als Schrift. Teilt die
    Formensprache des Herkunfts-Badges (gleiche Höhe/Padding/Typo),
@@ -14,6 +14,10 @@ const katColor: Record<KategorieSlug, string> = {
   G: "bg-kat-g text-rasen-950",
   F: "bg-kat-f text-rasen-950",
   E: "bg-kat-e text-rasen-950",
+  D: "bg-kat-d text-rasen-950",
+  C: "bg-kat-c text-rasen-950",
+  B: "bg-kat-b text-rasen-950",
+  A: "bg-kat-a text-rasen-950",
 };
 
 export function KategorieChip({ k }: { k: KategorieSlug }) {

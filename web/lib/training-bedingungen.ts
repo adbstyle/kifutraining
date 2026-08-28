@@ -6,17 +6,42 @@
 // die Prüfung für die Vorab-Meldung und die Übersetzung des DB-Fehlers, damit
 // beide Seiten dieselbe Regel nennen statt zweier Formulierungen davon.
 
+import {
+  schemaAusStufen,
+  JUNIOREN_PFLICHT_BLOECKE,
+  NACHARBEIT,
+} from "@/lib/junioren";
+
 /** Marker, mit dem die Datenebene eine verletzte Bedingung meldet. */
 const BEDINGUNG_MARKER = "TRAINING_UNVOLLSTAENDIG";
 
-/** Die Bedingungen — in der Reihenfolge, in der die Datenebene sie prüft. */
-export type Bedingung = "stufe" | "einleitung" | "freies_spiel";
+/** Die Bedingungen — in der Reihenfolge, in der die Datenebene sie prüft.
+ *  Die ersten drei gelten im Kinderfussball, die folgenden fünf im
+ *  Juniorenschema; die Nacharbeit blockiert in beiden (Story 7). */
+export type Bedingung =
+  | "stufe"
+  | "einleitung"
+  | "freies_spiel"
+  | "jun-aufwaermen"
+  | "jun-spielform-trainingsziel"
+  | "jun-explosivitaet"
+  | "jun-spielformen"
+  | "jun-ausklang"
+  | "nacharbeit";
 
 /** Was fehlt, aus Sicht des Trainers. Ergänzt den Satz «Es fehlt …». */
 export const BEDINGUNG_FEHLT: Record<Bedingung, string> = {
   stufe: "mindestens eine Alterskategorie",
   einleitung: "mindestens eine Übung in der Einleitung",
   freies_spiel: "mindestens eine Übung im freien Spiel",
+  "jun-aufwaermen": "mindestens eine Übung im Aufwärmen",
+  "jun-spielform-trainingsziel":
+    "mindestens eine Übung in der Spielform zum Trainingsziel",
+  "jun-explosivitaet": "mindestens eine Übung in der Explosivität",
+  "jun-spielformen":
+    "mindestens eine Übung in den Spielformen und unterstützenden Übungen",
+  "jun-ausklang": "mindestens eine Übung im Ausklang",
+  nacharbeit: "die Auflösung der offenen Nacharbeit",
 };
 
 /** Die Hauptteilkategorie des freien Spiels. Es liegt im Hauptteil — die
@@ -54,10 +79,65 @@ function bedingungsFehler(message: string): string | null {
   return bedingung ? bedingungsMeldung(bedingung) : null;
 }
 
+/** Marker der Datenebene für einen Schema-Wechsel am öffentlichen Training. */
+const WECHSEL_OEFFENTLICH = "SCHEMA_WECHSEL_OEFFENTLICH";
+
+/** Marker der Datenebene für eine Einordnung oder Stufe, die nicht zum
+ *  Trainingsschema passt. */
+const SCHEMA_KONFLIKT = "SCHEMA_KONFLIKT";
+
+/** Die Meldungen zu den Schema-Regeln des Juniorenfussballs (Epic #71).
+ *  Sie nennen wie die Bedingungs-Meldungen den Weg, nicht nur die Absage. */
+function schemaMeldung(message: string): string | null {
+  if (message.includes(WECHSEL_OEFFENTLICH))
+    return (
+      "Ein öffentliches Training wechselt das Trainingsschema nicht. " +
+      "Setze es zuerst auf Entwurf — nach dem Wechsel brauchst du ohnehin " +
+      "weitere Übungen, bevor du es wieder veröffentlichen kannst."
+    );
+  if (message.includes(SCHEMA_KONFLIKT))
+    return (
+      "Kinderfussball und Juniorenfussball lassen sich in einem Training " +
+      "nicht mischen."
+    );
+  return null;
+}
+
 /** Die Meldung zu einem DB-Fehler: die Bedingungs-Erklärung, wenn es eine ist,
  *  sonst der Originaltext. Für jede Action, die ein Training oder eine seiner
  *  Fassungen so ändern könnte, dass ein öffentliches Training unter die
  *  Bedingungen fiele. */
 export function fehlerMeldung(message: string): string {
-  return bedingungsFehler(message) ?? message;
+  return bedingungsFehler(message) ?? schemaMeldung(message) ?? message;
+}
+
+/** Welche Veröffentlichungs-Bedingungen erfüllt ein Training noch nicht?
+ *  Die Regel hängt an seinem Schema (Story 7 AC 1/2/4) und spiegelt die
+ *  DB-Funktion `training_fehlende_bedingungen`, die als Trust-Boundary
+ *  dasselbe prüft.
+ *
+ *  Synchron und bewusst hier statt bei den Server Actions: der Editor rechnet
+ *  sie live aus seinem lokalen Stand, und ein "use server"-Modul darf nur
+ *  async-Funktionen exportieren.
+ *
+ *  Im Juniorenschema braucht es keine eigene Stufen-Bedingung — ein
+ *  Junioren-Training trägt per Schema-Definition eine Junioren-Kategorie. */
+export function fehlendeBedingungenAus(
+  stufen: readonly string[],
+  fassungen: readonly { trainingsteil: string; hauptteilkategorie?: string | null }[],
+): Bedingung[] {
+  const missing: Bedingung[] = [];
+  if (schemaAusStufen(stufen) === "kifu") {
+    if (stufen.length === 0) missing.push("stufe");
+    if (!fassungen.some((f) => f.trainingsteil === "einleitung")) missing.push("einleitung");
+    if (!fassungen.some((f) => f.hauptteilkategorie === FREIES_SPIEL))
+      missing.push("freies_spiel");
+  } else {
+    for (const block of JUNIOREN_PFLICHT_BLOECKE) {
+      if (!fassungen.some((f) => f.trainingsteil === block)) missing.push(block);
+    }
+  }
+  // Offene Nacharbeit blockiert in beiden Schemata (Story 7 AC 1).
+  if (fassungen.some((f) => f.trainingsteil === NACHARBEIT)) missing.push("nacharbeit");
+  return missing;
 }

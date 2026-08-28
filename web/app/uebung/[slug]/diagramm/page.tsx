@@ -6,7 +6,7 @@ import { getExerciseDetail, getVorlagen } from "@/lib/queries/exercises";
 import { createClient } from "@/lib/supabase/server";
 import { parseDiagramm, LEERES_DIAGRAMM } from "@/lib/diagramm";
 import { saveDiagramm } from "@/lib/actions/diagramm";
-import { trainingsteil as teilLabels } from "@/lib/vocab";
+import { HEIMAT_LABEL } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -35,7 +35,7 @@ export default async function DiagrammPage({
   // Brotkrumen wie auf der Übungs-Detailseite, nur eine Stufe tiefer: die
   // Übung wird selbst zum Link, das Diagramm ist die aktuelle Seite.
   const teilLabel =
-    teilLabels[ex.trainingsteil as keyof typeof teilLabels] ?? ex.trainingsteil;
+    HEIMAT_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
     { label: "Übungspool", href: "/" },
     { label: teilLabel, href: `/?teil=${ex.trainingsteil}` },

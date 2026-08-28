@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
 import { TrainingExerciseDetail } from "./TrainingExerciseDetail";
-import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
+import { leseGliederung, formatDuration } from "@/lib/training";
 import type { TrainingDetail } from "@/lib/queries/trainings";
 
 /** Termin-Datum als „Mo, 01.09.2026" — wie im Team-Trainingsplan. */
@@ -64,7 +64,7 @@ export function TrainingDurchfuehren({
   training: TrainingDetail;
   termin?: TerminKontext;
 }) {
-  const sections = groupByTeil(training.exercises).filter((s) => s.items.length > 0);
+  const sections = leseGliederung(training.stufen, training.exercises);
   const [idx, setIdx] = useState(0);
 
   // Bildschirm wachhalten, solange die Ansicht aktiv und sichtbar ist
@@ -137,13 +137,33 @@ export function TrainingDurchfuehren({
             </span>
           )}
         </div>
+        {/* Das Ziel begleitet den Start des Trainings — danach bleibt der
+            knappe Kopfbereich für die Durchführung frei (Story 10 AC 5/PC 4).
+            Als eigener Absatz mit Beschriftung, damit es sich vom
+            Trainingsnamen unterscheidet. */}
+        {idx === 0 && training.ziel && (
+          <p className="mt-3 type-body-medium text-on-surface">
+            <span className="type-label-small text-on-surface-variant">Ziel: </span>
+            {training.ziel}
+          </p>
+        )}
       </header>
 
       <div className="flex flex-col gap-8">
-        {leseBloecke(section).map((b) => (
+        {section.bloecke.map((b) => (
           <div key={b.key} className="flex flex-col gap-6">
+            {/* Beim Scrollen durch einen Trainingsteil muss erkennbar bleiben,
+                zu welchem Unterblock die gezeigten Übungen gehören — der
+                Einstieg bündelt drei Blöcke in einem Schritt (Story 8 AC 3).
+                Die Überschrift bleibt darum am oberen Rand haften und nennt
+                die Summe des Blocks (AC 4). */}
             {b.label && (
-              <h2 className="type-title-medium text-on-surface-variant">{b.label}</h2>
+              <h2 className="sticky top-0 z-10 -mx-1 bg-surface/95 px-1 py-2 type-title-medium text-on-surface-variant backdrop-blur-sm">
+                {b.label}
+                {b.sum > 0 && (
+                  <span className="ml-2 type-label-medium">{formatDuration(b.sum)}</span>
+                )}
+              </h2>
             )}
             {b.items.map((item, i) => (
               <div key={item.id}>

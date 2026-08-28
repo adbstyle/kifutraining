@@ -8,7 +8,7 @@ import { updateExercise } from "@/lib/actions/exercises";
 import { getExerciseDetail, getVorlagen } from "@/lib/queries/exercises";
 import { createClient } from "@/lib/supabase/server";
 import { hatDiagramm } from "@/lib/diagramm";
-import { trainingsteil as teilLabels } from "@/lib/vocab";
+import { HEIMAT_LABEL } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Übung bearbeiten — KiFu", robots: { index: false } };
@@ -35,7 +35,7 @@ export default async function EditPage({
   // die Übung wird zum Link, „Übung bearbeiten" ist die aktuelle Seite und
   // ersetzt den separaten Seitentitel.
   const teilLabel =
-    teilLabels[ex.trainingsteil as keyof typeof teilLabels] ?? ex.trainingsteil;
+    HEIMAT_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
     { label: "Übungspool", href: "/" },
     { label: teilLabel, href: `/?teil=${ex.trainingsteil}` },
@@ -78,6 +78,7 @@ export default async function EditPage({
           feldtyp: ex.feldtyp,
           erscheinungsform: ex.erscheinungsform,
           hauptteilkategorie: ex.hauptteilkategorie,
+          uebungstyp: ex.uebungstyp,
           anzahl_kinder: ex.anzahl_kinder,
           material: ex.material,
           methodischer_fahrplan: ex.methodischer_fahrplan,

@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import {
-  trainingsteil as trainingsteilLabels,
   hauptteilkategorie as hauptteilkategorieLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
 import { likePattern } from "@/lib/search";
+import { HEIMAT_LABEL } from "@/lib/labels";
 import { hatDiagramm } from "@/lib/diagramm";
 import type { ExerciseCardData } from "@/components/ui";
 
@@ -20,6 +20,7 @@ export type ExerciseFilters = {
   feld?: string[]; // Feldtyp (OR)
   form?: string[]; // Erscheinungsform (Überlappung)
   hkat?: string[]; // Hauptteilkategorie (OR)
+  typ?: string[]; // Übungstyp (OR)
   kinder?: number; // verfügbare Gruppengrösse
   q?: string; // Freitext
   fav?: boolean; // nur eigene Favoriten (nur angemeldet wirksam)
@@ -97,6 +98,9 @@ export async function getExercises(
   // Hauptteilkategorie: ODER über die gewählten Werte. Da nur Hauptteil-Übungen
   // eine tragen, grenzt ein gesetzter Filter faktisch auf den Hauptteil ein (#22).
   if (f.hkat?.length) query = query.in("hauptteilkategorie", f.hkat);
+  // Übungen ohne Übungstyp fallen bei aktivem Filter heraus — dieselbe Regel
+  // wie bei allen Dimensionen (Story 9 PC 1).
+  if (f.typ?.length) query = query.in("uebungstyp", f.typ);
   // Gruppengrösse: durchführbar, wenn die Mindestzahl <= verfügbar ist
   // oder gar keine Mindestzahl angegeben ist (EK6).
   if (typeof f.kinder === "number" && Number.isFinite(f.kinder)) {
@@ -131,6 +135,7 @@ export type ExerciseDetail = {
   trainingsteil: string;
   erscheinungsform: string[];
   hauptteilkategorie: string | null;
+  uebungstyp: string | null;
   feldtyp: string | null;
   kategorien: string[];
   anzahl_kinder: { min?: number | null; max?: number | null } | null;
@@ -155,7 +160,7 @@ export async function getExerciseDetail(
   const { data, error } = await supabase
     .from("exercises")
     .select(
-      "id, slug, name, trainingsteil, erscheinungsform, hauptteilkategorie, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id",
+      "id, slug, name, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -221,7 +226,7 @@ export function toCardData(row: ExerciseListRow): ExerciseCardData {
     slug: row.slug,
     name: row.name,
     trainingsteilLabel:
-      trainingsteilLabels[row.trainingsteil as keyof typeof trainingsteilLabels] ??
+      HEIMAT_LABEL[row.trainingsteil] ??
       row.trainingsteil,
     hauptteilkategorieLabel: row.hauptteilkategorie
       ? hauptteilkategorieLabels[

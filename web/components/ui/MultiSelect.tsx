@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Check, CheckCheck, ChevronDown, RotateCcw, Search, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { IconButton } from "./IconButton";
@@ -443,9 +443,20 @@ export function MultiSelect({
               {filtered.map((o, i) => {
                 const isSelected = current.includes(o.value);
                 const isActive = i === active;
+                // Gruppen-Überschrift, sobald eine neue Gruppe beginnt — nötig,
+                // wo eine Dimension Werte aus zwei Welten führt (Epic #71).
+                const kopf = o.group && o.group !== filtered[i - 1]?.group ? o.group : null;
                 return (
+                  <Fragment key={o.value}>
+                  {kopf && (
+                    <li
+                      role="presentation"
+                      className="px-3 pb-1 pt-2 type-label-small text-on-surface-variant"
+                    >
+                      {kopf}
+                    </li>
+                  )}
                   <li
-                    key={o.value}
                     id={optId(i)}
                     role="option"
                     aria-selected={isSelected}
@@ -477,6 +488,7 @@ export function MultiSelect({
                     </span>
                     <span className="min-w-0 flex-1 truncate">{o.label}</span>
                   </li>
+                  </Fragment>
                 );
               })}
             </ul>

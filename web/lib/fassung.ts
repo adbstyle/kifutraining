@@ -17,6 +17,7 @@ export const FASSUNG_INHALT_FELDER = [
   "anzahl_kinder",
   "material",
   "methodischer_fahrplan",
+  "uebungstyp",
   "aufbau",
   "varianten",
   "bild_quelle",
@@ -27,6 +28,17 @@ export const FASSUNG_INHALT_FELDER = [
  *  Inhaltsfelder kommen aus derselben Konstante wie das Kopieren selbst, damit
  *  ein neues Übungsfeld nicht gelesen-aber-nicht-kopiert (oder umgekehrt)
  *  enden kann. */
+/** Die Spalten, mit denen eine Fassung fürs Übernehmen in die Bibliothek
+ *  gelesen wird. Aus derselben Konstante wie das Kopieren: eine handgepflegte
+ *  Zweitliste liesse ein neues Übungsfeld hier still wegfallen. */
+export const FASSUNG_UEBERNAHME_SELECT = [
+  "trainingsteil",
+  "hauptteilkategorie",
+  ...FASSUNG_INHALT_FELDER,
+  "bild_url",
+  "diagramm",
+].join(", ");
+
 export const VORLAGE_SELECT = [
   "id",
   "trainingsteil",

@@ -6,8 +6,10 @@ Projektsprache ist **Deutsch** — Code-Kommentare, Doku, Commit-Messages und In
 
 Monorepo mit **zwei Teilprojekten**:
 
-1. **Übungs-Datenbank** (Repo-Root, Python) — YAML pro Übung als kanonische Quelle, aus dem SFV-Manual Kinderfussball extrahiert. Generiert eine lesbare Markdown-Ansicht.
+1. **Übungs-Datenbank** (Repo-Root, Python) — YAML pro Übung als kanonische Quelle, extrahiert aus dem SFV-Manual Kinderfussball. Generiert eine lesbare Markdown-Ansicht. Trainer-Übungen in der DB können zusätzlich im Juniorenschema zuhause sein (Epic #71); die YAML-Datenbank selbst bleibt der Kinderfussball-Bestand.
 2. **Web-App** (`web/`, Next.js 15 + Supabase) — Trainings (einzelne Einheiten, SFV: „Trainingslektion") aus den Übungen zusammenstellen.
+
+**Zwei Trainingsschemata** (Epic #71): Ein Training folgt genau einem — Kinderfussball (Stufen G/F/E; Auffangen, Einleitung, Hauptteil, Ausklang) oder Juniorenfussball (D/C/B/A; Einstieg, Hauptteil, Abschluss mit sechs Unterblöcken). Das Schema folgt aus den Alterskategorien, Mischen ist ausgeschlossen. Fachliche Quelle ist `web/lib/junioren.ts` mit dem SQL-Pendant in der Migration `junioren_schema`; die Abbildung zwischen den Schemata steht im abgenommenen Entscheidungsdokument `docs/superpowers/specs/2026-08-15-junioren-abbildungsregel.md`. Beim Schema-Wechsel merkt sich jede Fassung ihre verlassene Einordnung (`training_exercises.einordnung_vorher`), damit der Rückweg verlustfrei bleibt — der Wechsel ist der Migrationspfad für bestehende Trainings.
 
 ## Commands
 

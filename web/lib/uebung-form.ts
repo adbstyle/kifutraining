@@ -3,11 +3,20 @@
 // Bewusst KEIN "use server"-Modul: hier stehen reine Validierungsregeln, keine
 // Mutationen. (Ein Server-Actions-Modul darf ausserdem nur async Funktionen
 // exportieren.)
-import { FAHRPLAN_TEILE, FREIES_SPIEL, brauchtFahrplan } from "@/lib/labels";
+import {
+  FAHRPLAN_NUR_OFFEN,
+  ERSCHEINUNGSFORM_TEILE,
+  FREIES_SPIEL,
+  brauchtFahrplan,
+  brauchtFahrplanFuerFassung,
+} from "@/lib/labels";
 import {
   trainingsteilSlugs,
+  junioren_heimatSlugs,
   feldtypSlugs,
   erscheinungsformSlugs,
+  erscheinungsform_juniorenSlugs,
+  uebungstypSlugs,
   hauptteilkategorieSlugs,
   kategorienSlugs,
 } from "@/lib/vocab";
@@ -42,15 +51,30 @@ export type ParseResult =
  *  Bearbeiten einer Fassung im Training: beide tragen dieselben Inhaltsfelder
  *  und müssen denselben Regeln genügen (Story 5 NFR 1). Nicht enthalten sind
  *  Bibliotheks-Belange (slug, source, owner_id, visibility) und das Bild. */
-export function parseUebungsInhalt(form: FormData): ParseResult {
+export function parseUebungsInhalt(
+  form: FormData,
+  /** Zulässige Einordnungen. Für eine Bibliotheks-Übung sind das die Heimaten
+   *  (vier Kinderfussball-Teile und die drei Einstiegs-Unterblöcke); für eine
+   *  Fassung im Training die Blöcke ihres Schemas — dort kann sie auch in
+   *  `jun-spielformen` oder in der Nacharbeit liegen, was nie eine Heimat ist
+   *  (Epic #71). Ohne Angabe gelten die Heimaten. */
+  erlaubteEinordnungen?: readonly string[],
+): ParseResult {
   const errors: Record<string, string> = {};
   const name = clean(form.get("name"));
   const trainingsteil = clean(form.get("trainingsteil"));
   const kategorien = csv(form.get("kat"));
 
   if (!name) errors.name = "Bitte einen Namen angeben.";
-  if (!trainingsteilSlugs.includes(trainingsteil as never))
-    errors.trainingsteil = "Bitte einen Trainingsteil wählen.";
+  // Die Heimat ist entweder ein Kinderfussball-Trainingsteil oder einer der
+  // drei Einstiegs-Unterblöcke des Juniorenschemas — nie beides, dafür sorgt
+  // schon die Skalarität des Felds (Entscheidungsdokument §4).
+  const zulaessig: readonly string[] =
+    erlaubteEinordnungen ?? [...trainingsteilSlugs, ...junioren_heimatSlugs];
+  if (!zulaessig.includes(trainingsteil))
+    errors.trainingsteil = erlaubteEinordnungen
+      ? "Bitte eine Einordnung wählen."
+      : "Bitte eine Heimat wählen.";
   if (kategorien.length === 0)
     errors.kat = "Bitte mindestens eine Alterskategorie wählen.";
   if (kategorien.some((k) => !kategorienSlugs.includes(k as never)))
@@ -64,7 +88,26 @@ export function parseUebungsInhalt(form: FormData): ParseResult {
   if (istHauptteil && !hauptteilkategorieSlugs.includes(hauptteilkategorie as never))
     errors.hauptteilkategorie = "Bitte eine Hauptteilkategorie wählen.";
 
-  const istFahrplan = brauchtFahrplan(trainingsteil, hauptteilkategorie);
+  // Welche Ablauf-Form gilt? Bei den Kinderfussball-Teilen und den beiden
+  // Fahrplan-Heimaten entscheidet die Einordnung. Bei den übrigen
+  // Junioren-Blöcken — in denen eine Fassung liegen kann, ohne dass es eine
+  // Heimat wäre — entscheidet der mitgelieferte Inhalt: eine aus einer
+  // Hauptteil-Übung entstandene Fassung bringt ihren Fahrplan mit, eine aus
+  // dem freien Spiel ihren Aufbau-Text.
+  // Das Formular teilt mit, in welcher Form es den Ablauf erfasst hat. Ohne
+  // die Angabe — etwa bei einem Aufruf ausserhalb des Formulars — wird sie aus
+  // dem Inhalt abgeleitet.
+  const angesagteForm = clean(form.get("ablauf_form"));
+  const istFahrplan =
+    angesagteForm === "fahrplan" || angesagteForm === "aufbau"
+      ? angesagteForm === "fahrplan"
+      : brauchtFahrplanFuerFassung(
+          trainingsteil,
+          hauptteilkategorie,
+          clean(form.get("offen_starten")) !== "" ||
+            lines(form.get("ueben")).length > 0 ||
+            clean(form.get("wetteifern")) !== "",
+        );
   const istFreiesSpiel = hauptteilkategorie === FREIES_SPIEL;
   let methodischer_fahrplan: Record<string, unknown> | null = null;
   let aufbau: string | null = null;
@@ -73,10 +116,13 @@ export function parseUebungsInhalt(form: FormData): ParseResult {
     const offen = clean(form.get("offen_starten"));
     const ueben = lines(form.get("ueben"));
     const wett = clean(form.get("wetteifern"));
+    // Bei den Junioren-Heimaten genügt «Offen starten»; die übrigen Stufen
+    // sind dort freiwillig (Story 5b AC 3/4).
+    const nurOffen = FAHRPLAN_NUR_OFFEN.has(trainingsteil);
     if (!offen) errors.offen_starten = "Bitte beschreiben, wie die Übung offen startet.";
-    if (ueben.length === 0)
+    if (!nurOffen && ueben.length === 0)
       errors.ueben = "Bitte mindestens einen Übungsschritt angeben.";
-    if (!wett) errors.wetteifern = "Bitte den Wett-eifern-Teil beschreiben.";
+    if (!nurOffen && !wett) errors.wetteifern = "Bitte den Wett-eifern-Teil beschreiben.";
     methodischer_fahrplan = { offen_starten: offen, ueben, wetteifern: wett };
   } else if (trainingsteil) {
     aufbau = clean(form.get("aufbau"));
@@ -86,11 +132,19 @@ export function parseUebungsInhalt(form: FormData): ParseResult {
         : "Bitte den Aufbau beschreiben.";
   }
 
-  // Erscheinungsform bleibt an den Trainingsteil gebunden (DB-Constraint
+  // Erscheinungsform bleibt an die Einordnung gebunden (DB-Constraint
   // `erscheinungsform_nur_haupt_einleitung`) — auch das freie Spiel darf eine
-  // tragen, obwohl es keinen Fahrplan hat.
-  const erscheinungsform = FAHRPLAN_TEILE.has(trainingsteil)
-    ? csv(form.get("form")).filter((f) => erscheinungsformSlugs.includes(f as never))
+  // tragen, obwohl es keinen Fahrplan hat, und die Explosivität ebenso.
+  // Beide Vokabulare stehen allen erscheinungsform-berechtigten Übungen offen
+  // (PO 2026-08-17): die sechs spielphasenbezogenen Junioren-Werte wären an
+  // Hauptteil-Übungen sonst nie zuweisbar, weil die zwingend eine
+  // Kinderfussball-Heimat tragen.
+  const erlaubteFormen: readonly string[] = [
+    ...erscheinungsformSlugs,
+    ...erscheinungsform_juniorenSlugs,
+  ];
+  const erscheinungsform = ERSCHEINUNGSFORM_TEILE.has(trainingsteil)
+    ? csv(form.get("form")).filter((f) => erlaubteFormen.includes(f))
     : [];
 
   const feldtyp = clean(form.get("feldtyp"));
@@ -116,6 +170,11 @@ export function parseUebungsInhalt(form: FormData): ParseResult {
       hauptteilkategorie,
       anzahl_kinder,
       material: lines(form.get("material")),
+      // Übungstyp: optionale Selbstauskunft, gegen nichts geprüft (Story 9
+      // Out of Scope 1). Leerer Wert heisst «kein Typ».
+      uebungstyp: uebungstypSlugs.includes(clean(form.get("uebungstyp")) as never)
+        ? clean(form.get("uebungstyp"))
+        : null,
       methodischer_fahrplan,
       aufbau,
       varianten: lines(form.get("varianten")),
