@@ -40,7 +40,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const ex = await getExerciseDetail(slug).catch(() => null);
   if (!ex) return { title: "Übung nicht gefunden" };
-  return { title: `${ex.name} — Kinderfussball-Übung` };
+  return { title: `${ex.name} — Übung` };
 }
 
 function Meta({

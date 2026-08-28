@@ -83,6 +83,8 @@ export default async function Home({
         <p className="type-body-large mt-3 max-w-2xl text-on-surface-variant">
           Der offizielle Kinderfussball-Bestand und Übungen der Community —
           durchsuchbar und filterbar nach Trainingsteil, Alter, Feld und mehr.
+          Trainings stellst du nach dem Schema des Kinderfussballs oder des
+          Juniorenfussballs zusammen, von der Stufe G bis A.
         </p>
       </header>
 
