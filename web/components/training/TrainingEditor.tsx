@@ -187,6 +187,19 @@ export function TrainingEditor({
       return;
     }
 
+    // Ein öffentliches Training wechselt das Schema nicht. Das sagt der Editor
+    // sofort, statt erst den Wechsel-Dialog zu zeigen und die Bestätigung dann
+    // von der Datenebene abweisen zu lassen — gerade beim Umstellen eines
+    // bestehenden Trainings wäre das ein Umweg in die Sackgasse.
+    if (oeffentlich) {
+      setNotice(
+        "Ein öffentliches Training wechselt das Trainingsschema nicht. " +
+          "Setze es zuerst auf Entwurf — nach dem Wechsel brauchst du ohnehin " +
+          "weitere Übungen, bevor du es wieder veröffentlichen kannst.",
+      );
+      return;
+    }
+
     // Vorschau: Was findet im Zielschema keine Entsprechung, und was fehlt
     // danach zum Veröffentlichen? Beides rechnet lokal dieselbe Regel wie die
     // Datenebene — Konserve zuerst, sonst die Abbildungsregel. Ohne die
