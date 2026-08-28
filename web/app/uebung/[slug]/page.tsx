@@ -12,6 +12,7 @@ import {
   UebungsBild,
 } from "@/components/ui";
 import { Flash } from "@/components/Flash";
+import { cn } from "@/lib/cn";
 import { OwnerActions } from "@/components/exercise/OwnerActions";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { createClient } from "@/lib/supabase/server";
@@ -104,6 +105,11 @@ export default async function ExerciseDetailPage({
     ex.feldtyp ? feldLabels[ex.feldtyp as keyof typeof feldLabels] : null,
   ].filter(Boolean);
   const anzahl = anzahlText(ex.anzahl_kinder);
+  const hatEckdaten =
+    !!ex.hauptteilkategorie ||
+    ex.erscheinungsform.length > 0 ||
+    !!anzahl ||
+    ex.material.length > 0;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
@@ -185,31 +191,40 @@ export default async function ExerciseDetailPage({
           sizes="(max-width: 896px) 100vw, 896px"
         />
       </div>
-      {/* Eckdaten — unterhalb des Bildes */}
-      {(ex.hauptteilkategorie ||
-        ex.erscheinungsform.length > 0 ||
-        anzahl ||
-        ex.material.length > 0) && (
-        <div className="mt-6 flex flex-wrap gap-x-12 gap-y-5">
-          {ex.hauptteilkategorie && (
-            <Meta label="Hauptteilkategorie">
-              {hkatLabels[ex.hauptteilkategorie as keyof typeof hkatLabels] ??
-                ex.hauptteilkategorie}
-            </Meta>
-          )}
-          {ex.erscheinungsform.length > 0 && (
-            <Meta label="Erscheinungsform">
-              {ex.erscheinungsform
-                .map((f) => formLabels[f as keyof typeof formLabels] ?? f)
-                .join(", ")}
-            </Meta>
-          )}
-          {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
-          {ex.material.length > 0 && (
-            <Meta label="Material">{ex.material.join(", ")}</Meta>
-          )}
+      {/* Eckdaten — unterhalb des Bildes.
+
+          Der Trainingsteil steht am Bildschirm in den Brotkrumen und wäre hier
+          doppelt. Im Druck sind die Brotkrumen weg, und der Ausdruck muss ihn
+          nennen (Story #114 AK 4) — dort tritt er an ihre Stelle. Die Leiste
+          selbst bleibt am Bildschirm verborgen, wenn sie ausser ihm nichts zu
+          zeigen hat, damit dort kein leerer Abstand entsteht. */}
+      <div
+        className={cn(
+          "mt-6 flex flex-wrap gap-x-12 gap-y-5",
+          !hatEckdaten && "hidden print:flex",
+        )}
+      >
+        <div className="hidden print:block">
+          <Meta label="Trainingsteil">{teilLabel}</Meta>
         </div>
-      )}
+        {ex.hauptteilkategorie && (
+          <Meta label="Hauptteilkategorie">
+            {hkatLabels[ex.hauptteilkategorie as keyof typeof hkatLabels] ??
+              ex.hauptteilkategorie}
+          </Meta>
+        )}
+        {ex.erscheinungsform.length > 0 && (
+          <Meta label="Erscheinungsform">
+            {ex.erscheinungsform
+              .map((f) => formLabels[f as keyof typeof formLabels] ?? f)
+              .join(", ")}
+          </Meta>
+        )}
+        {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
+        {ex.material.length > 0 && (
+          <Meta label="Material">{ex.material.join(", ")}</Meta>
+        )}
+      </div>
 
       {/* Ablauf */}
       <section className="mt-10">
