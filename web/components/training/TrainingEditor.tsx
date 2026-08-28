@@ -30,7 +30,8 @@ import { ExerciseThumb } from "./ExerciseThumb";
 import { InBibliothekButton } from "./InBibliothekButton";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
-import { VorlagenControl } from "./VorlagenControl";
+import { SichtbarkeitControl } from "./SichtbarkeitControl";
+import { FREIES_SPIEL, type Bedingung } from "@/lib/training-bedingungen";
 import { InTeamStellenControl } from "./InTeamStellenControl";
 import {
   TRAININGSTEILE,
@@ -100,16 +101,28 @@ export function TrainingEditor({
 
   function remove(item: TrainingExerciseItem) {
     startTransition(async () => {
-      await removeTrainingExercise(item.id);
+      const r = await removeTrainingExercise(item.id);
       router.refresh();
+      // Am öffentlichen Training kann das Entfernen abgelehnt werden — es wäre
+      // die letzte Übung, die es dort braucht. Ohne Meldung sähe der Trainer
+      // die Übung einfach stehenbleiben (Story A AK 7).
+      if (!r.ok) setNotice(r.error ?? "Entfernen fehlgeschlagen.");
     });
   }
 
   function changeStufen(next: string[]) {
+    const vorher = stufen;
     setStufen(next);
     startTransition(async () => {
       const r = await setTrainingStufen(training.id, next);
       router.refresh();
+      if (!r.ok) {
+        // Auswahl zurücknehmen: sonst zeigte der Editor Stufen an, die nie
+        // gespeichert wurden.
+        setStufen(vorher);
+        setNotice(r.error ?? "Speichern fehlgeschlagen.");
+        return;
+      }
       if (r.mismatched && r.mismatched.length > 0) setMismatch(r.mismatched);
     });
   }
@@ -128,9 +141,14 @@ export function TrainingEditor({
 
   function removeMismatched(ids: string[]) {
     startTransition(async () => {
-      for (const id of ids) await removeTrainingExercise(id);
+      let fehler: string | null = null;
+      for (const id of ids) {
+        const r = await removeTrainingExercise(id);
+        if (!r.ok && !fehler) fehler = r.error ?? "Entfernen fehlgeschlagen.";
+      }
       setMismatch(null);
       router.refresh();
+      if (fehler) setNotice(fehler);
     });
   }
 
@@ -141,12 +159,17 @@ export function TrainingEditor({
   // „ohne Dauer"-Hinweis.
   // Was zum Veröffentlichen fehlt: so erscheint die Tragweite-Bestätigung nur
   // für ein veröffentlichbares Training. Die Action prüft es serverseitig
-  // erneut.
-  const fehlendeVoraussetzungen = [
+  // erneut. Eine Übung im Hauptteil braucht es nicht eigens zu prüfen — das
+  // freie Spiel liegt dort und deckt es zwingend ab.
+  const oeffentlich = training.visibility === "public";
+
+  const fehlendeBedingungen: Bedingung[] = [
     stufen.length === 0 ? "stufe" : null,
     training.exercises.some((e) => e.trainingsteil === "einleitung") ? null : "einleitung",
-    training.exercises.some((e) => e.trainingsteil === "hauptteil") ? null : "hauptteil",
-  ].filter((x): x is string => x !== null);
+    training.exercises.some((e) => e.hauptteilkategorie === FREIES_SPIEL)
+      ? null
+      : "freies_spiel",
+  ].filter((x): x is Bedingung => x !== null);
 
   const dauerItems = training.exercises.filter((e) => teilTraegtDauer(e.trainingsteil));
   const totalDuration = dauerItems.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
@@ -176,8 +199,7 @@ export function TrainingEditor({
               </button>
             </div>
             {/* Team-Training oder persönliches? Die Marke sagt, wem es gehört —
-                und bei persönlichen zusätzlich, ob es davon eine öffentliche
-                Vorlage gibt. */}
+                und bei persönlichen zusätzlich, ob es öffentlich ist. */}
             {training.team ? (
               <Link
                 href={`/team/${training.team.id}`}
@@ -187,8 +209,8 @@ export function TrainingEditor({
                 Team-Training von {training.team.name}
               </Link>
             ) : (
-              <Badge tone={training.vorlageId ? "oeffentlich" : "entwurf"} className="mt-2">
-                {training.vorlageId ? "Vorlage aktiv" : "✎ Privat"}
+              <Badge tone={oeffentlich ? "oeffentlich" : "entwurf"} className="mt-2">
+                {oeffentlich ? "Öffentlich" : "✎ Entwurf"}
               </Badge>
             )}
           </div>
@@ -197,10 +219,10 @@ export function TrainingEditor({
                 Training: ein Team-Training gehört dem Team, nicht einer Person. */}
             {!training.team && (
               <>
-                <VorlagenControl
+                <SichtbarkeitControl
                   trainingId={training.id}
-                  vorlageId={training.vorlageId}
-                  fehlend={fehlendeVoraussetzungen}
+                  oeffentlich={oeffentlich}
+                  fehlend={fehlendeBedingungen}
                 />
                 <InTeamStellenControl trainingId={training.id} teams={teams} />
               </>
@@ -491,20 +513,26 @@ export function TrainingEditor({
           Das Training „{training.name}" und alle seine Übungszuordnungen werden
           unwiderruflich gelöscht.
         </p>
-        {/* Die Vorlage lässt sich nur über dieses Training zurückziehen —
-            bliebe sie stehen, käme niemand mehr an sie heran. */}
-        {training.vorlageId && (
+        {/* Beim öffentlichen Training ist das Löschen mehr als ein Aufräumen im
+            eigenen Bestand: es verschwindet aus der Öffentlichkeit (AK 8). */}
+        {oeffentlich && (
           <p className="mt-3">
-            Die veröffentlichte Vorlage wird dabei zurückgezogen. Kopien, die
-            andere bereits übernommen haben, bleiben bestehen.
+            Das Training verschwindet damit auch aus dem öffentlichen Bestand.
+            Kopien, die andere bereits übernommen haben, bleiben bestehen.
           </p>
         )}
       </Dialog>
 
+      {/* Fest am unteren Rand statt im Fluss: der Editor ist eine lange Seite,
+          und die Meldung gehört zu einer Aktion irgendwo darin. Am Seitenende
+          eingehängt stünde sie mehr als tausend Bildpunkte unter dem Klick und
+          erreichte den Trainer nie — was gerade die abgelehnten Änderungen an
+          einem öffentlichen Training betrifft (Story A AK 7). */}
       <Snackbar
         open={notice != null}
         message={notice ?? ""}
         onClose={() => setNotice(null)}
+        placement="fixed"
       />
     </div>
   );

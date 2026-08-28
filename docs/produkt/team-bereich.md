@@ -61,16 +61,18 @@ Lektion. Erinnerungen, Benachrichtigungen und Kalender-Export gibt es nicht.
 
 ## Veröffentlichen
 
-Aus einem persönlichen Training entsteht eine öffentliche Vorlage — als eingefrorene Kopie,
-nicht als Freigabe des Trainings selbst. Das Original bleibt privat und bearbeitbar, die
-Vorlage ändert sich nie mehr. Wer sie ersetzen will, veröffentlicht erneut; wer sie loswerden
-will, zieht sie zurück. Löscht jemand das persönliche Training, verschwindet die Vorlage mit.
+Ein persönliches Training lässt sich öffentlich schalten und jederzeit wieder auf Entwurf
+zurücknehmen. Es entsteht keine Kopie: dasselbe Training wird sichtbar und bleibt bearbeitbar,
+die Community sieht jeweils den aktuellen Stand.
 
-Veröffentlicht wird nur, was vollständig ist: mindestens eine Stufe, mindestens eine Übung in
-Einleitung und Hauptteil. Diese Bedingung erzwingt die Datenebene, nicht nur die Oberfläche.
+Öffentlich sein setzt voraus: mindestens eine Stufe sowie je mindestens eine Übung in der
+Einleitung und im freien Spiel. Diese Bedingungen gelten dauerhaft, nicht nur beim Umschalten,
+und die Datenebene erzwingt sie, nicht nur die Oberfläche. Wer sein Training darunter bringen
+will, setzt es zuerst auf Entwurf.
+
 Team-Trainings lassen sich nicht direkt veröffentlichen — wer eine Team-Arbeit teilen will,
-übernimmt sie zuerst zu sich. An jeder Vorlage steht der Anzeigename ihres Urhebers; bei
-gelöschten Konten bleibt die Vorlage anonymisiert erhalten.
+übernimmt sie zuerst zu sich. An jedem öffentlichen Training steht der Anzeigename seines
+Urhebers; bei gelöschten Konten bleibt es anonymisiert erhalten.
 
 ## Was beim Ausscheiden passiert
 

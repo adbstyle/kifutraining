@@ -45,7 +45,7 @@ export async function getFassungZumBearbeiten(
   // zur Compile-Zeit unbekannt, der typisierte Query-Parser kann ihn nicht
   // auswerten — gemappt wird unten ohnehin explizit.
   const select: string = `id, training_id, trainingsteil, hauptteilkategorie, ${INHALT},
-       trainings!inner ( id, name, owner_id, team_id, visibility )`;
+       trainings!inner ( id, name, owner_id, team_id )`;
   const { data: roh, error } = await supabase
     .from("training_exercises")
     .select(select)
@@ -80,7 +80,6 @@ export async function getFassungZumBearbeiten(
       name: string;
       owner_id: string | null;
       team_id: string | null;
-      visibility: string;
     };
   };
 

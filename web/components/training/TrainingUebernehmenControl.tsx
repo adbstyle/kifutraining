@@ -4,18 +4,18 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Download, UserRound, Users } from "lucide-react";
 import { Button, Menu, Snackbar } from "@/components/ui";
-import { uebernimmVorlage } from "@/lib/actions/team-trainings";
+import { uebernimmTraining } from "@/lib/actions/team-trainings";
 import type { TeamUebersicht } from "@/lib/queries/teams";
 
-/* „Übernehmen" an einer öffentlichen Vorlage (Team-Epic Story 11).
+/* „Übernehmen" an einem öffentlichen Training (Team-Epic Story 11).
    Ziel ist entweder man selbst oder eines der eigenen Teams. Ohne Team
    erscheint gar kein Menü, sondern direkt der Knopf — eine Auswahl mit nur
    einer Option ist nur ein Klick mehr. */
-export function VorlageUebernehmenControl({
-  vorlageId,
+export function TrainingUebernehmenControl({
+  quelleId,
   teams,
 }: {
-  vorlageId: string;
+  quelleId: string;
   teams: TeamUebersicht[];
 }) {
   const router = useRouter();
@@ -26,7 +26,7 @@ export function VorlageUebernehmenControl({
 
   function uebernehmen(ziel: { art: "persoenlich" } | { art: "team"; teamId: string }, wohin: string) {
     startTransition(async () => {
-      const res = await uebernimmVorlage(vorlageId, ziel);
+      const res = await uebernimmTraining(quelleId, ziel);
       setOffen(false);
       if (res.ok) {
         router.refresh();

@@ -55,8 +55,10 @@ export default async function TrainingsPage({
         </div>
         <p className="type-body-medium mt-2 max-w-2xl text-on-surface-variant">
           {mine
-            ? "Deine eigenen Trainings. Team-Trainings findest du im jeweiligen Team."
-            : "Veröffentlichte Vorlagen der Community — zum Stöbern, Durchführen und Übernehmen. Eine Übernahme ist eine eigenständige Kopie, die du frei anpassen kannst."}
+            ? "Deine eigenen Trainings, Entwürfe eingeschlossen. Team-Trainings findest du im jeweiligen Team."
+            : user
+              ? "Die öffentlichen Trainings der Community und deine eigenen — zum Stöbern, Durchführen und Übernehmen. Eine Übernahme ist eine eigenständige Kopie, die du frei anpassen kannst."
+              : "Öffentliche Trainings der Community — zum Stöbern, Durchführen und Übernehmen. Eine Übernahme ist eine eigenständige Kopie, die du frei anpassen kannst."}
         </p>
       </header>
 
@@ -76,16 +78,16 @@ export default async function TrainingsPage({
               ? "Keine Trainings gefunden"
               : mine
                 ? "Noch kein eigenes Training"
-                : "Noch keine Vorlagen"
+                : "Noch keine Trainings"
           }
           text={
             filtersActive
               ? "Kein Training entspricht der aktiven Suche oder den Filtern. Passe die Kriterien an."
               : mine
-                ? "Stelle aus dem Übungsbestand dein erstes Training zusammen — es bleibt privat, bis du es als Vorlage veröffentlichst."
+                ? "Stelle aus dem Übungsbestand dein erstes Training zusammen — es bleibt ein Entwurf, bis du es veröffentlichst."
                 : user
-                  ? "Es wurde noch keine Vorlage veröffentlicht. Veröffentliche dein erstes Training — die Vorlage ist eine eingefrorene Kopie, dein Training bleibt bearbeitbar."
-                  : "Es wurde noch keine Vorlage veröffentlicht. Schau später wieder vorbei."
+                  ? "Stelle dein erstes Training zusammen. Veröffentlichst du es, steht es der Community zur Verfügung."
+                  : "Es wurde noch kein Training veröffentlicht. Schau später wieder vorbei."
           }
         />
       ) : (
@@ -98,10 +100,15 @@ export default async function TrainingsPage({
               <TrainingCard
                 key={training.id}
                 training={training}
-                // Eigene Trainings führen in den Editor, Vorlagen in die
-                // Ansicht — eine Vorlage ist eingefroren.
-                href={mine ? `/training/${training.id}/edit` : `/training/${training.id}`}
-                zeigeUrheber={!mine}
+                // Je Eintrag, nicht je Ansicht: die Übersicht mischt beide
+                // Bestände, das eigene Training führt in den Editor, ein
+                // fremdes in die Ansicht (Story B AK 5).
+                href={
+                  training.istEigen
+                    ? `/training/${training.id}/edit`
+                    : `/training/${training.id}`
+                }
+                zeigeUrheber={!training.istEigen}
                 updatedLabel={formatDate(training.updatedAt)}
               />
             ))}

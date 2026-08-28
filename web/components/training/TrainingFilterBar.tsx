@@ -13,10 +13,10 @@ const stufenOptions = kategorienSlugs.map((k) => ({ value: k, label: kategorieSt
    URL-basierter Zustand wie im Übungskatalog: jede Änderung schreibt in die URL
    und löst eine neue Server-Abfrage aus. Freitext debounced.
 
-   Einen Sichtbarkeitsfilter gibt es nicht mehr: seit dem Kopie-Modell sind die
-   beiden Bestände verschiedene Dinge — öffentliche Vorlagen (Standard) und die
-   eigenen privaten Trainings (`mine`). Der Schalter wechselt zwischen ihnen,
-   statt eine Menge zu filtern. */
+   Der Schalter „Meine Trainings" grenzt die Übersicht ein, statt zwischen zwei
+   Beständen zu wechseln: standardmässig stehen die öffentlichen Trainings der
+   Community und die eigenen gemeinsam da, genau wie im Übungsbestand
+   (Story B). */
 export function TrainingFilterBar({
   q,
   stufen,

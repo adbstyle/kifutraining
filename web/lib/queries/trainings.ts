@@ -43,12 +43,9 @@ export type TrainingDetail = {
   ownerId: string | null;
   visibility: "public" | "private";
   stufen: KategorieSlug[];
-  /** Die aktive öffentliche Vorlage dieses Trainings, falls veröffentlicht
-   *  (Story 14). Nur am persönlichen Original gesetzt, nie an der Vorlage. */
-  vorlageId: string | null;
   /** Gehört das Training einem Team? Dann steht hier dessen Name (Story 6). */
   team: { id: string; name: string } | null;
-  /** Anzeigename des Urhebers; `null` bei anonymisierten Vorlagen (Story 15). */
+  /** Anzeigename des Urhebers; `null` bei anonymisierten Trainings (Story 15). */
   urheber: string | null;
   createdAt: string;
   updatedAt: string;
@@ -66,7 +63,7 @@ const PE_SELECT = `
   ${INHALT_FELDER}
 `;
 
-const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, team_id, vorlage_id, urheber, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
+const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, team_id, urheber, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
 
 /** Die Inhaltsfelder, wie sie aus der Zuordnung zurückkommen. */
 type RawInhalt = {
@@ -97,7 +94,6 @@ type RawTraining = {
   visibility: "public" | "private";
   stufen: string[];
   team_id: string | null;
-  vorlage_id: string | null;
   urheber: string | null;
   created_at: string;
   updated_at: string;
@@ -149,7 +145,6 @@ function mapTraining(raw: RawTraining): TrainingDetail {
     ownerId: raw.owner_id,
     visibility: raw.visibility,
     stufen: sortStufen(raw.stufen ?? []),
-    vorlageId: raw.vorlage_id,
     team: raw.team_id ? { id: raw.team_id, name: raw.teams?.name ?? "Team" } : null,
     urheber: raw.urheber ?? null,
     createdAt: raw.created_at,
@@ -158,15 +153,16 @@ function mapTraining(raw: RawTraining): TrainingDetail {
   };
 }
 
-/** Training für den Editor: das eigene PRIVATE Training oder ein Training des
- *  eigenen Teams (Team-Epic Story 6). `null`, wenn es das Training nicht gibt,
- *  der USER es nicht bearbeiten darf oder es eine veröffentlichte Vorlage ist —
- *  Vorlagen sind eingefroren (Story 14), die RLS kennt für sie keine
- *  Update-Policy.
+/** Training für den Editor: das eigene Training oder eines des eigenen Teams
+ *  (Team-Epic Story 6). `null`, wenn es das Training nicht gibt oder der USER
+ *  es nicht bearbeiten darf.
  *
- *  Die SELECT-Policy lässt Team-Trainings nur bei Mitgliedern durch; der
- *  Filter hier grenzt lediglich die fremden öffentlichen Vorlagen aus, die
- *  jeder lesen darf. */
+ *  Der öffentliche Zustand schliesst das Bearbeiten NICHT aus: Veröffentlichen
+ *  ist ein Zustand, kein Einfrieren (Story A). Was ein öffentliches Training
+ *  dabei nicht verlieren darf, setzt die Datenebene durch.
+ *
+ *  Die SELECT-Policy lässt Team-Trainings nur bei Mitgliedern durch; der Filter
+ *  hier grenzt die fremden öffentlichen Trainings aus, die jeder lesen darf. */
 export async function getTrainingForEdit(id: string): Promise<TrainingDetail | null> {
   const supabase = await createClient();
   const {
@@ -177,7 +173,6 @@ export async function getTrainingForEdit(id: string): Promise<TrainingDetail | n
     .from("trainings")
     .select(`${TRAINING_SELECT}, teams ( name )`)
     .eq("id", id)
-    .eq("visibility", "private")
     .or(`owner_id.eq.${user.id},team_id.not.is.null`)
     .maybeSingle();
   if (error) throw error;
@@ -205,7 +200,7 @@ export async function getTrainingView(id: string): Promise<TrainingDetail | null
 export type TrainingListFilters = {
   q?: string;
   stufen?: string[]; // Überlappung
-  /** Facette: statt der öffentlichen Vorlagen die eigenen privaten Trainings. */
+  /** Facette: die Übersicht auf die eigenen Trainings eingrenzen. */
   mine?: boolean;
 };
 
@@ -213,6 +208,10 @@ export type TrainingListRow = {
   id: string;
   name: string;
   visibility: "public" | "private";
+  /** Gehört das Training dem aktuellen USER? Entscheidet über Kennzeichnung und
+   *  Ziel des Eintrags in der Übersicht (Story B AK 3–5); `false` für Besucher
+   *  ohne Konto. */
+  istEigen: boolean;
   stufen: KategorieSlug[];
   updatedAt: string;
   exerciseCount: number;
@@ -220,7 +219,7 @@ export type TrainingListRow = {
   totalDuration: number;
   /** Trägt mindestens eine Zuordnung eine erfasste Dauer? */
   hasAnyDuration: boolean;
-  /** Anzeigename des Urhebers; `null` bei anonymisierten Vorlagen (Story 15). */
+  /** Anzeigename des Urhebers; `null` bei anonymisierten Trainings (Story 15). */
   urheber: string | null;
 };
 
@@ -230,6 +229,7 @@ type RawListTraining = {
   visibility: "public" | "private";
   stufen: string[];
   updated_at: string;
+  owner_id: string | null;
   urheber: string | null;
   training_exercises: { trainingsteil: string; duration_min: number | null }[];
 };
@@ -237,9 +237,9 @@ type RawListTraining = {
 // `urheber` ist ein berechnetes PostgREST-Feld (SQL-Funktion über trainings) —
 // es liefert den Anzeigenamen, nie die E-Mail-Adresse.
 const LIST_SELECT =
-  "id, name, visibility, stufen, updated_at, urheber, training_exercises ( trainingsteil, duration_min )";
+  "id, name, visibility, stufen, updated_at, owner_id, urheber, training_exercises ( trainingsteil, duration_min )";
 
-function mapListRow(raw: RawListTraining): TrainingListRow {
+function mapListRow(raw: RawListTraining, userId?: string): TrainingListRow {
   const rows = raw.training_exercises ?? [];
   // Auffangen trägt keine Dauer und zählt nicht zur Summe.
   const withDuration = rows
@@ -250,6 +250,7 @@ function mapListRow(raw: RawListTraining): TrainingListRow {
     id: raw.id,
     name: raw.name,
     visibility: raw.visibility,
+    istEigen: !!userId && raw.owner_id === userId,
     stufen: sortStufen(raw.stufen ?? []),
     updatedAt: raw.updated_at,
     exerciseCount: rows.length,
@@ -259,12 +260,18 @@ function mapListRow(raw: RawListTraining): TrainingListRow {
   };
 }
 
-/** Trainings-Pool — die Trainings-Einstiegsansicht (analog zum Übungspool).
+/** Trainings-Übersicht — der Einstieg, genau wie der Übungsbestand aufgebaut.
  *
- *  Standardmässig die öffentlichen Vorlagen: der Bestand, aus dem sich jede und
- *  jeder bedienen kann, auch ohne Konto. Die Facette `mine` zeigt stattdessen
- *  die eigenen privaten Trainings — die eigene Werkbank. Team-Trainings kommen
- *  in keiner der beiden Ansichten vor; sie leben im Team-Bereich (Story 12).
+ *  Standardmässig alles, was der USER sehen darf: die öffentlichen Trainings der
+ *  Community UND seine eigenen, Entwürfe eingeschlossen (Story B AK 1). Welche
+ *  Zeilen das sind, entscheidet die RLS — deshalb steht hier KEIN
+ *  Sichtbarkeitsfilter. Besucher ohne Konto bekommen dadurch von selbst nur die
+ *  öffentlichen (AK 6). Die Facette `mine` grenzt auf die eigenen ein (AK 2).
+ *
+ *  Team-Trainings erscheinen in keiner der beiden Sichten: sie gehören dem Team
+ *  und leben im Team-Bereich (AK 8). Sie müssen AUSDRÜCKLICH ausgeschlossen
+ *  werden — die RLS lässt sie für Mitglieder durch, und ohne
+ *  Sichtbarkeitsfilter fiele dieser Ausschluss sonst weg.
  *
  *  Ohne Suche nach Aktualität; mit Suche nach Namens-Relevanz (kürzerer Name
  *  ⇒ näher am Begriff) sortiert. */
@@ -272,22 +279,17 @@ export async function getTrainingPool(
   f: TrainingListFilters = {},
 ): Promise<TrainingListRow[]> {
   const supabase = await createClient();
-  let query = supabase.from("trainings").select(LIST_SELECT);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // Zwei klar getrennte Ansichten (Story 12):
-  //   Standard        — die öffentlichen Vorlagen, auch für Besucher ohne Konto.
-  //   „Meine Trainings" — die eigenen privaten Trainings.
-  // Team-Trainings erscheinen in KEINER von beiden: sie gehören dem Team und
-  // leben im Team-Bereich. Der Standardfilter schliesst sie aus (sie sind nie
-  // öffentlich), die Facette ebenso (sie haben keinen owner_id).
+  let query = supabase.from("trainings").select(LIST_SELECT).is("team_id", null);
+
   if (f.mine) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // Anonym gibt es keine eigenen Trainings; die Facette bleibt dann leer,
+    // statt still auf den ganzen Bestand zurückzufallen.
     if (!user) return [];
-    query = query.eq("owner_id", user.id).eq("visibility", "private");
-  } else {
-    query = query.eq("visibility", "public");
+    query = query.eq("owner_id", user.id);
   }
   if (f.stufen?.length) query = query.overlaps("stufen", f.stufen);
 
@@ -300,7 +302,9 @@ export async function getTrainingPool(
 
   const { data, error } = await query;
   if (error) throw error;
-  const rows = (data ?? []).map((r) => mapListRow(r as unknown as RawListTraining));
+  const rows = (data ?? []).map((r) =>
+    mapListRow(r as unknown as RawListTraining, user?.id),
+  );
 
   // Relevanz-Sortierung bei aktiver Suche: kürzerer Treffer zuerst, dann Name.
   if (hasQuery) {

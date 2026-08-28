@@ -119,15 +119,15 @@ export async function erstelleTeamTraining(
   redirect(`/training/${data.id}/edit`);
 }
 
-/** Eine öffentliche Vorlage übernehmen (Story 11) — zu sich selbst oder in ein
+/** Ein öffentliches Training übernehmen (Story 11) — zu sich selbst oder in ein
  *  Team.
  *
  *  Es entsteht eine eigenständige Kopie mit eigenen Bild- und Diagrammkopien.
- *  Die Vorlage bleibt unberührt, spätere Änderungen wirken in keine Richtung,
+ *  Das Original bleibt unberührt, spätere Änderungen wirken in keine Richtung,
  *  und mehrfaches Übernehmen ist ausdrücklich möglich — jede Kopie ist ein
  *  eigenes Trainingsobjekt. */
-export async function uebernimmVorlage(
-  vorlageId: string,
+export async function uebernimmTraining(
+  quelleId: string,
   ziel: { art: "persoenlich" } | { art: "team"; teamId: string },
 ): Promise<TeamTrainingResult> {
   const supabase = await createClient();
@@ -138,7 +138,7 @@ export async function uebernimmVorlage(
 
   const kopie = await kopiereTraining(
     supabase,
-    vorlageId,
+    quelleId,
     ziel.art === "team" ? { art: "team", teamId: ziel.teamId } : { art: "persoenlich", ownerId: user.id },
   );
   if (!kopie.ok) return { ok: false, error: kopie.error };
