@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-08-25. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-08-28. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Herkünfte
 
@@ -60,6 +60,26 @@ Statt eines Diagramms kann auch ein Foto hochgeladen werden. Zulässig sind die 
 Formate einschliesslich der HEIC-Bilder von iPhones. Grosse Bilder verkleinert die Anwendung
 schon im Browser, bevor der Upload beginnt, auf höchstens zweitausend Bildpunkte an der langen
 Kante.
+
+## Drucken
+
+Jede Übung, die ein Trainer ansehen darf, lässt sich einzeln ausdrucken — auch ohne Konto und
+ohne dafür ein Training anzulegen. Das Blatt trägt Name, Alterskategorien, Bild oder Diagramm,
+Trainingsteil, im Hauptteil dessen Kategorie, Erscheinungsform, Feldtyp, Kinderzahl, Material,
+Ablauf und Varianten. Was die Übung nicht führt, erscheint auch nicht; fehlen Bild und
+Diagramm, steht dort eine leere Feld-Skizze. Eine Dauer trägt das Blatt nie, weil eine Übung
+in der Bibliothek keine hat.
+
+Im Fuss steht, woher die Übung stammt: aus dem Manual Kinderfussball des SFV oder aus der
+Gemeinschaft der Trainerinnen und Trainer. Ein Trainername steht nie dabei. Beim eigenen,
+noch nicht veröffentlichten Entwurf vermerkt das Blatt zusätzlich, dass es einer ist. Darin
+unterscheidet sich das Übungsblatt bewusst vom Trainings-Druck, der keine Herkunft ausweist:
+auf dem Platz zählt, was zu tun ist, ein einzelnes Blatt aus der Bibliothek dagegen soll seine
+Quelle nennen.
+
+Gedruckt wird mit den Bordmitteln des Geräts, auf dem Rechner wie auf dem Telefon; das Sichern
+als PDF übernimmt der Druckdialog. Eine eigene PDF-Datei erzeugt die Anwendung nicht, und
+mehrere Übungen in einem Vorgang lassen sich nicht drucken.
 
 ## Übungen aus Trainings zurückholen
 
