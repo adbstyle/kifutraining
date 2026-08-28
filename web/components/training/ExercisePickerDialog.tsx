@@ -7,12 +7,19 @@ import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import { stufenAbgedeckt } from "@/lib/training";
 import {
   erscheinungsform as erscheinungsformLabels,
+  erscheinungsform_junioren as formJuniorenLabels,
   uebungstyp as uebungstypLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
 import { ERSCHEINUNGSFORM_TEILE } from "@/lib/labels";
 import type { Einordnung } from "@/lib/junioren";
 import type { ExerciseListRow } from "@/lib/queries/exercises";
+
+/** Beide Erscheinungsform-Vokabulare als eine flache Liste (Story 12). */
+const alleFormLabels: Record<string, string> = {
+  ...erscheinungsformLabels,
+  ...formJuniorenLabels,
+};
 
 /* Übungs-Picker als Modal über dem Editor (Story #10). Lädt die für den USER
    sichtbaren Übungen des Trainingsteils serverseitig (RLS), eingrenzbar nach
@@ -161,7 +168,7 @@ export function ExercisePickerDialog({
         {/* Erscheinungsform-Filter (nur Trainingsteile, die eine tragen) */}
         {hatErscheinungsform && (
           <div className="flex flex-wrap gap-2">
-            {Object.entries(erscheinungsformLabels).map(([slug, label]) => (
+            {Object.entries(alleFormLabels).map(([slug, label]) => (
               <FilterChip
                 key={slug}
                 selected={form.includes(slug)}

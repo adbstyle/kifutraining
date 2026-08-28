@@ -15,6 +15,7 @@ import {
   trainingsteil as teilLabels,
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
+  erscheinungsform_junioren as formJuniorenLabels,
   hauptteilkategorie as hkatLabels,
   kategorienSlugs,
   trainingsteilSlugs,
@@ -34,6 +35,9 @@ import {
 } from "@/lib/labels";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
+
+/** Beide Erscheinungsform-Vokabulare als eine flache Liste (Story 12). */
+const alleFormLabels: Record<string, string> = { ...formLabels, ...formJuniorenLabels };
 
 export type ExerciseInitial = {
   name?: string;
@@ -343,11 +347,15 @@ export function ExerciseForm({
         />
       </div>
 
+      {/* Beide Vokabulare in einer flachen Liste, in der Reihenfolge ihrer
+          Quellen: zuerst die sechs des Kinderfussball-Manuals, dann die elf
+          des Junioren-Manuals. Eine Gruppierung nach Spielphasen hat der
+          Product Owner bewusst abgelehnt (Story 12 Out of Scope 2). */}
       {ERSCHEINUNGSFORM_TEILE.has(teil) && (
         <Group title="Erscheinungsform (optional)">
-          {(Object.keys(formLabels) as (keyof typeof formLabels)[]).map((f) => (
+          {Object.entries(alleFormLabels).map(([f, label]) => (
             <FilterChip key={f} selected={form.includes(f)} onClick={() => toggle(form, setForm, f)}>
-              {formLabels[f]}
+              {label}
             </FilterChip>
           ))}
         </Group>

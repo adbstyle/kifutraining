@@ -25,12 +25,16 @@ import {
   trainingsteil as teilLabels,
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
+  erscheinungsform_junioren as formJuniorenLabels,
   uebungstyp as uebungstypLabels,
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
 
 export const dynamic = "force-dynamic";
+
+/** Beide Erscheinungsform-Vokabulare als eine flache Liste (Story 12). */
+const alleFormLabels: Record<string, string> = { ...formLabels, ...formJuniorenLabels };
 
 export async function generateMetadata({
   params,
@@ -224,7 +228,8 @@ export default async function ExerciseDetailPage({
         {ex.erscheinungsform.length > 0 && (
           <Meta label="Erscheinungsform">
             {ex.erscheinungsform
-              .map((f) => formLabels[f as keyof typeof formLabels] ?? f)
+              // Beide Vokabulare — eine Übung kann Werte aus beiden tragen.
+              .map((f) => alleFormLabels[f] ?? f)
               .join(", ")}
           </Meta>
         )}

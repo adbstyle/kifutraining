@@ -10,6 +10,7 @@ import {
   trainingsteil as teilLabels,
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
+  erscheinungsform_junioren as formJuniorenLabels,
   hauptteilkategorie as hkatLabels,
   uebungstyp as uebungstypLabels,
   junioren_heimat as juniorenHeimatLabels,
@@ -48,7 +49,10 @@ const teilOptions = [
   })),
 ];
 const feldOptions = toOptions(feldLabels);
-const formOptions = toOptions(formLabels);
+// Beide Erscheinungsform-Vokabulare als EINE Dimension: gewählte Werte wirken
+// untereinander als ODER, gleich aus welcher Quelle (Story 12 PC 1). Flach und
+// ohne Spielphasen-Gruppierung (Out of Scope 2).
+const formOptions = [...toOptions(formLabels), ...toOptions(formJuniorenLabels)];
 const hkatOptions = toOptions(hkatLabels);
 const typOptions = toOptions(uebungstypLabels);
 const stufenOptions = kategorienSlugs.map((k) => ({ value: k, label: kategorieStufe[k] }));

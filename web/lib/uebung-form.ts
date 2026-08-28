@@ -15,6 +15,7 @@ import {
   junioren_heimatSlugs,
   feldtypSlugs,
   erscheinungsformSlugs,
+  erscheinungsform_juniorenSlugs,
   uebungstypSlugs,
   hauptteilkategorieSlugs,
   kategorienSlugs,
@@ -104,8 +105,16 @@ export function parseUebungsInhalt(form: FormData): ParseResult {
   // Erscheinungsform bleibt an die Einordnung gebunden (DB-Constraint
   // `erscheinungsform_nur_haupt_einleitung`) — auch das freie Spiel darf eine
   // tragen, obwohl es keinen Fahrplan hat, und die Explosivität ebenso.
+  // Beide Vokabulare stehen allen erscheinungsform-berechtigten Übungen offen
+  // (PO 2026-08-17): die sechs spielphasenbezogenen Junioren-Werte wären an
+  // Hauptteil-Übungen sonst nie zuweisbar, weil die zwingend eine
+  // Kinderfussball-Heimat tragen.
+  const erlaubteFormen: readonly string[] = [
+    ...erscheinungsformSlugs,
+    ...erscheinungsform_juniorenSlugs,
+  ];
   const erscheinungsform = ERSCHEINUNGSFORM_TEILE.has(trainingsteil)
-    ? csv(form.get("form")).filter((f) => erscheinungsformSlugs.includes(f as never))
+    ? csv(form.get("form")).filter((f) => erlaubteFormen.includes(f))
     : [];
 
   const feldtyp = clean(form.get("feldtyp"));
