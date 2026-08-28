@@ -8,6 +8,7 @@ export { FieldPlaceholder } from "./FieldPlaceholder";
 export { ExerciseCard } from "./ExerciseCard";
 export type { ExerciseCardData } from "./ExerciseCard";
 export { MethodischerFahrplan } from "./MethodischerFahrplan";
+export { PrintButton } from "./PrintButton";
 export type { FahrplanData } from "./MethodischerFahrplan";
 export { SegmentedControl } from "./SegmentedControl";
 export type { SegmentOption } from "./SegmentedControl";
