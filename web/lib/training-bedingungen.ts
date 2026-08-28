@@ -9,14 +9,33 @@
 /** Marker, mit dem die Datenebene eine verletzte Bedingung meldet. */
 const BEDINGUNG_MARKER = "TRAINING_UNVOLLSTAENDIG";
 
-/** Die Bedingungen — in der Reihenfolge, in der die Datenebene sie prüft. */
-export type Bedingung = "stufe" | "einleitung" | "freies_spiel";
+/** Die Bedingungen — in der Reihenfolge, in der die Datenebene sie prüft.
+ *  Die ersten drei gelten im Kinderfussball, die folgenden fünf im
+ *  Juniorenschema; die Nacharbeit blockiert in beiden (Story 7). */
+export type Bedingung =
+  | "stufe"
+  | "einleitung"
+  | "freies_spiel"
+  | "jun-aufwaermen"
+  | "jun-spielform-trainingsziel"
+  | "jun-explosivitaet"
+  | "jun-spielformen"
+  | "jun-ausklang"
+  | "nacharbeit";
 
 /** Was fehlt, aus Sicht des Trainers. Ergänzt den Satz «Es fehlt …». */
 export const BEDINGUNG_FEHLT: Record<Bedingung, string> = {
   stufe: "mindestens eine Alterskategorie",
   einleitung: "mindestens eine Übung in der Einleitung",
   freies_spiel: "mindestens eine Übung im freien Spiel",
+  "jun-aufwaermen": "mindestens eine Übung im Aufwärmen",
+  "jun-spielform-trainingsziel":
+    "mindestens eine Übung in der Spielform zum Trainingsziel",
+  "jun-explosivitaet": "mindestens eine Übung in der Explosivität",
+  "jun-spielformen":
+    "mindestens eine Übung in den Spielformen und unterstützenden Übungen",
+  "jun-ausklang": "mindestens eine Übung im Ausklang",
+  nacharbeit: "die Auflösung der offenen Nacharbeit",
 };
 
 /** Die Hauptteilkategorie des freien Spiels. Es liegt im Hauptteil — die

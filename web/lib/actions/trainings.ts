@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
 import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/training";
-import { heimatFilterFuerEinordnung } from "@/lib/junioren";
+import {
+  heimatFilterFuerEinordnung,
+  schemaAusStufen,
+  JUNIOREN_PFLICHT_BLOECKE,
+  NACHARBEIT,
+} from "@/lib/junioren";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
@@ -253,11 +258,7 @@ async function fehlendeBedingungen(
   if (training.owner_id !== ownerId) return { error: "Training nicht gefunden." };
 
   const fassungen = training.training_exercises ?? [];
-  const missing: Bedingung[] = [];
-  if ((training.stufen ?? []).length === 0) missing.push("stufe");
-  if (!fassungen.some((f) => f.trainingsteil === "einleitung")) missing.push("einleitung");
-  if (!fassungen.some((f) => f.hauptteilkategorie === FREIES_SPIEL)) missing.push("freies_spiel");
-  return { missing };
+  return { missing: fehlendeBedingungenAus(training.stufen ?? [], fassungen) };
 }
 
 /** Ein persönliches Training öffentlich schalten (Story A AK 1).
@@ -583,4 +584,32 @@ export async function pickExercises(
         : (filter.hauptteilkategorien ?? opts.hkat),
     q: opts.q,
   });
+}
+
+/** Welche Veröffentlichungs-Bedingungen erfüllt ein Training noch nicht?
+ *  Die Regel hängt an seinem Schema (Story 7 AC 1/2/4) und spiegelt die
+ *  DB-Funktion `training_fehlende_bedingungen`, die als Trust-Boundary
+ *  dasselbe prüft. Hier ist sie synchron, weil der Editor sie live aus seinem
+ *  lokalen Stand berechnet — Supabase ist server-only.
+ *
+ *  Im Juniorenschema braucht es keine eigene Stufen-Bedingung: ein
+ *  Junioren-Training trägt per Schema-Definition eine Junioren-Kategorie. */
+export function fehlendeBedingungenAus(
+  stufen: readonly string[],
+  fassungen: readonly { trainingsteil: string; hauptteilkategorie?: string | null }[],
+): Bedingung[] {
+  const missing: Bedingung[] = [];
+  if (schemaAusStufen(stufen) === "kifu") {
+    if (stufen.length === 0) missing.push("stufe");
+    if (!fassungen.some((f) => f.trainingsteil === "einleitung")) missing.push("einleitung");
+    if (!fassungen.some((f) => f.hauptteilkategorie === FREIES_SPIEL))
+      missing.push("freies_spiel");
+  } else {
+    for (const block of JUNIOREN_PFLICHT_BLOECKE) {
+      if (!fassungen.some((f) => f.trainingsteil === block)) missing.push(block);
+    }
+  }
+  // Offene Nacharbeit blockiert in beiden Schemata (Story 7 AC 1).
+  if (fassungen.some((f) => f.trainingsteil === NACHARBEIT)) missing.push("nacharbeit");
+  return missing;
 }

@@ -68,6 +68,7 @@ import {
   removeTrainingExercise,
   renameTraining,
   setTrainingStufen,
+  fehlendeBedingungenAus,
   deleteTraining,
 } from "@/lib/actions/trainings";
 import type { TrainingsteilSlug, HauptteilkategorieSlug } from "@/lib/vocab";
@@ -255,13 +256,10 @@ export function TrainingEditor({
   // freie Spiel liegt dort und deckt es zwingend ab.
   const oeffentlich = training.visibility === "public";
 
-  const fehlendeBedingungen: Bedingung[] = [
-    stufen.length === 0 ? "stufe" : null,
-    training.exercises.some((e) => e.trainingsteil === "einleitung") ? null : "einleitung",
-    training.exercises.some((e) => e.hauptteilkategorie === FREIES_SPIEL)
-      ? null
-      : "freies_spiel",
-  ].filter((x): x is Bedingung => x !== null);
+  // Live-Vorschau der Veröffentlichungs-Bedingungen aus dem lokalen Stand.
+  // Dieselbe Funktion, die die Server Action nutzt — und dieselbe Regel, die
+  // die Datenbank als Trust-Boundary durchsetzt (Story 7 AC 3).
+  const fehlendeBedingungen = fehlendeBedingungenAus(stufen, training.exercises);
 
   // Die Nacharbeit liegt ausserhalb der Trainingsstruktur und zählt darum
   // nicht zur Gesamtdauer.

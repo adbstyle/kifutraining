@@ -235,13 +235,17 @@ export const GESAMTDAUER_JUNIOREN = 90;
  *
  *  Der Spiel-Block fehlt bewusst: als freies Spiel ist er von der Pflicht
  *  ausgenommen und behält nur den Hinweis (Story 7 AC 2). */
-export const JUNIOREN_PFLICHT_BLOECKE: JuniorenBlockSlug[] = [
+export const JUNIOREN_PFLICHT_BLOECKE = [
   "jun-aufwaermen",
   "jun-spielform-trainingsziel",
   "jun-explosivitaet",
   "jun-spielformen",
   "jun-ausklang",
-];
+] as const;
+
+/** Ein Block, der für die Veröffentlichung belegt sein muss — `jun-spiel`
+ *  gehört bewusst nicht dazu und ist darum auch nicht Teil dieses Typs. */
+export type JuniorenPflichtBlock = (typeof JUNIOREN_PFLICHT_BLOECKE)[number];
 
 /** Blöcke, deren Leere im Editor einen Hinweis erzeugt (Story 5a AC 8) —
  *  analog zum bestehenden Kinderfussball-Hinweis beim leeren freien Spiel.
