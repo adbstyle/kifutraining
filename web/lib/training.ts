@@ -67,6 +67,10 @@ export const ANZAHL_HINWEIS: Record<TrainingsteilSlug, number> = {
   ausklang: 3,
 };
 
+/** Obergrenze des Trainingsziels in Zeichen (Story 10 AC 6). Entspricht der
+ *  einzigen bereits bestehenden Textbegrenzung der Applikation. */
+export const ZIEL_MAX = 200;
+
 /** Granularität der Dauer-Eingabe in Minuten (Story #11 AC1). */
 export const DAUER_SCHRITT = 5;
 

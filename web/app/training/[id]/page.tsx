@@ -98,6 +98,15 @@ export default async function TrainingViewPage({
             <TrainingUebernehmenControl quelleId={training.id} teams={teams} />
           )}
         </div>
+        {/* Das Ziel sehen auch Betrachter eines veröffentlichten Trainings:
+            feldweises Verbergen kennt das Zugriffsmodell nicht (Story 10
+            PC 1). Ohne Ziel bleibt der Bereich weg (PC 2). */}
+        {training.ziel && (
+          <p className="mt-3 type-body-medium text-on-surface">
+            <span className="type-label-small text-on-surface-variant">Ziel: </span>
+            {training.ziel}
+          </p>
+        )}
       </header>
 
       <div className="flex flex-col gap-4">

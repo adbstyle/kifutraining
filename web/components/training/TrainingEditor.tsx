@@ -24,6 +24,7 @@ import {
   TextField,
   IconButton,
   Tooltip,
+  TextArea,
 } from "@/components/ui";
 import { ExercisePickerDialog } from "./ExercisePickerDialog";
 import { ExerciseThumb } from "./ExerciseThumb";
@@ -61,6 +62,7 @@ import {
   groupHauptteil,
   groupJunioren,
   formatDuration,
+  ZIEL_MAX,
 } from "@/lib/training";
 import {
   setExerciseDuration,
@@ -68,6 +70,7 @@ import {
   removeTrainingExercise,
   renameTraining,
   setTrainingStufen,
+  setTrainingZiel,
   deleteTraining,
 } from "@/lib/actions/trainings";
 import type { TrainingsteilSlug, HauptteilkategorieSlug } from "@/lib/vocab";
@@ -97,6 +100,7 @@ export function TrainingEditor({
   } | null>(null);
   const [durations, setDurations] = useState<Record<string, number | null>>({});
   const [stufen, setStufen] = useState<string[]>(training.stufen);
+  const [ziel, setZiel] = useState<string>(training.ziel ?? "");
   const [notice, setNotice] = useState<string | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const [nameInput, setNameInput] = useState(training.name);
@@ -215,6 +219,19 @@ export function TrainingEditor({
     });
   }
 
+  function speichereZiel() {
+    if (ziel.trim() === (training.ziel ?? "")) return;
+    startTransition(async () => {
+      const r = await setTrainingZiel(training.id, ziel);
+      if (!r.ok) {
+        setZiel(training.ziel ?? "");
+        setNotice(r.error ?? "Speichern fehlgeschlagen.");
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   function saveName() {
     startTransition(async () => {
       const r = await renameTraining(training.id, nameInput);
@@ -329,6 +346,21 @@ export function TrainingEditor({
               Löschen
             </button>
           </div>
+        </div>
+
+        {/* Ziel: optional, jederzeit änder- und entfernbar (Story 10 AC 3).
+            Gespeichert wird beim Verlassen des Felds — wie der Trainingsname
+            über einen eigenen Schritt, nicht bei jedem Tastendruck. */}
+        <div className="mt-4">
+          <TextArea
+            label="Ziel (optional)"
+            rows={2}
+            maxLength={ZIEL_MAX}
+            value={ziel}
+            onChange={(e) => setZiel(e.target.value)}
+            onBlur={() => speichereZiel()}
+            supportingText={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
+          />
         </div>
 
         <div className="mt-4">

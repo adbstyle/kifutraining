@@ -42,6 +42,12 @@ export default async function TrainingDruckPage({
             {hasAnyDuration ? `Gesamtdauer ${formatDuration(total)}` : "Keine Dauer erfasst"}
           </span>
         </div>
+        {training.ziel && (
+          <p className="mt-2 type-body-medium text-on-surface">
+            <span className="type-label-small text-on-surface-variant">Ziel: </span>
+            {training.ziel}
+          </p>
+        )}
       </header>
 
       {/* Seitenumbruch im Druck: zusammengehalten wird nur die einzelne Übung

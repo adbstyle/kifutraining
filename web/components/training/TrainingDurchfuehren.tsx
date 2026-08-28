@@ -137,6 +137,16 @@ export function TrainingDurchfuehren({
             </span>
           )}
         </div>
+        {/* Das Ziel begleitet den Start des Trainings — danach bleibt der
+            knappe Kopfbereich für die Durchführung frei (Story 10 AC 5/PC 4).
+            Als eigener Absatz mit Beschriftung, damit es sich vom
+            Trainingsnamen unterscheidet. */}
+        {idx === 0 && training.ziel && (
+          <p className="mt-3 type-body-medium text-on-surface">
+            <span className="type-label-small text-on-surface-variant">Ziel: </span>
+            {training.ziel}
+          </p>
+        )}
       </header>
 
       <div className="flex flex-col gap-8">

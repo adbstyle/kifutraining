@@ -51,6 +51,8 @@ export type TrainingDetail = {
   ownerId: string | null;
   visibility: "public" | "private";
   stufen: KategorieSlug[];
+  /** Optionales Freitext-Ziel des Trainings; `null` = keins (Story 10). */
+  ziel: string | null;
   /** Gehört das Training einem Team? Dann steht hier dessen Name (Story 6). */
   team: { id: string; name: string } | null;
   /** Anzeigename des Urhebers; `null` bei anonymisierten Trainings (Story 15). */
@@ -72,7 +74,7 @@ const PE_SELECT = `
   ${INHALT_FELDER}
 `;
 
-const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, team_id, urheber, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
+const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, ziel, team_id, urheber, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
 
 /** Die Inhaltsfelder, wie sie aus der Zuordnung zurückkommen. */
 type RawInhalt = {
@@ -104,6 +106,7 @@ type RawTraining = {
   owner_id: string | null;
   visibility: "public" | "private";
   stufen: string[];
+  ziel: string | null;
   team_id: string | null;
   urheber: string | null;
   created_at: string;
@@ -168,6 +171,7 @@ function mapTraining(raw: RawTraining): TrainingDetail {
     ownerId: raw.owner_id,
     visibility: raw.visibility,
     stufen: sortStufen(raw.stufen ?? []),
+    ziel: raw.ziel,
     team: raw.team_id ? { id: raw.team_id, name: raw.teams?.name ?? "Team" } : null,
     urheber: raw.urheber ?? null,
     createdAt: raw.created_at,

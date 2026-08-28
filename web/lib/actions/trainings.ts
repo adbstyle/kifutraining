@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
-import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/training";
+import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer, ZIEL_MAX } from "@/lib/training";
 import { heimatFilterFuerEinordnung } from "@/lib/junioren";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
@@ -112,7 +112,7 @@ export async function createTraining(
 
   const { data, error } = await supabase
     .from("trainings")
-    .insert({ name, owner_id: user.id, stufen, visibility: "private" })
+    .insert({ name, ziel: zielWert(form.get("ziel")), owner_id: user.id, stufen, visibility: "private" })
     .select("id")
     .single();
 
@@ -333,6 +333,41 @@ export async function setzeTrainingAufEntwurf(
 // ── Story #12: Training bearbeiten, umsortieren, entfernen, löschen ──────────────
 
 /** Trainingsnamen ändern (Story #12 AC1); leerer Name unzulässig. */
+/** Leere und reine Leerzeichen-Eingaben sind kein Ziel (Story 10 PC 3). */
+function zielWert(v: FormDataEntryValue | null): string | null {
+  const t = String(v ?? "").trim();
+  return t === "" ? null : t.slice(0, ZIEL_MAX);
+}
+
+/** Das Ziel eines Trainings setzen, ändern oder entfernen (Story 10 AC 1/3).
+ *
+ *  Wie beim Umbenennen ohne Owner-Filter: Team-Trainings darf jedes Mitglied
+ *  bearbeiten, die RLS entscheidet. */
+export async function setTrainingZiel(
+  trainingId: string,
+  ziel: string,
+): Promise<TrainingActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  const wert = ziel.trim() === "" ? null : ziel.trim();
+  if (wert && wert.length > ZIEL_MAX)
+    return { ok: false, error: `Das Ziel darf höchstens ${ZIEL_MAX} Zeichen lang sein.` };
+
+  const { data, error } = await supabase
+    .from("trainings")
+    .update({ ziel: wert })
+    .eq("id", trainingId)
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+  if (!data) return { ok: false, error: "Training nicht gefunden." };
+  revalidiereTraining(trainingId);
+  return { ok: true };
+}
+
 export async function renameTraining(
   trainingId: string,
   name: string,

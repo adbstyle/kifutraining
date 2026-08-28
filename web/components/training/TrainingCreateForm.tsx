@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { TextField, Button } from "@/components/ui";
+import { TextField, TextArea, Button } from "@/components/ui";
 import { StufenField } from "./StufenField";
 import { stufenMischen } from "@/lib/junioren";
+import { ZIEL_MAX } from "@/lib/training";
 import { createTraining, type TrainingFormState } from "@/lib/actions/trainings";
 
 /* Formular „Neues Training anlegen" (Story #10 AC1/AC2/AC3). FormData wird
@@ -53,6 +54,16 @@ export function TrainingCreateForm() {
         {/* Ein Training folgt genau einem Trainingsschema: die Wahl einer
             Stufe des anderen ersetzt die bisherige Auswahl, statt zu mischen
             (Story 3 AC 4). Die Datenebene weist die Mischung ohnehin ab. */}
+        {/* Das Ziel begleitet das Training von der Planung bis auf den Platz.
+            Es ist optional und schon beim Anlegen erfassbar (Story 10 AC 2). */}
+        <TextArea
+          label="Ziel (optional)"
+          name="ziel"
+          rows={2}
+          maxLength={ZIEL_MAX}
+          supportingText={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
+        />
+
         <StufenField
           value={stufen}
           onChange={(next) =>
