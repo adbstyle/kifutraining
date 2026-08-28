@@ -24,8 +24,8 @@ import {
 
 export type Schema = "kifu" | "junioren";
 
-export const KIFU_STUFEN: readonly KategorieSlug[] = ["G", "F", "E"];
-export const JUNIOREN_STUFEN: readonly KategorieSlug[] = ["D", "C", "B", "A"];
+const KIFU_STUFEN: readonly KategorieSlug[] = ["G", "F", "E"];
+const JUNIOREN_STUFEN: readonly KategorieSlug[] = ["D", "C", "B", "A"];
 
 /** Schema aus den Stufen: mindestens eine Junioren-Kategorie ⇒ Juniorenschema;
  *  sonst — auch ohne jede Stufe — Kinderfussball (Story 3 AC 1/2). */
@@ -106,11 +106,6 @@ export const JUNIOREN_BLOCK_SLUGS: JuniorenBlockSlug[] = JUNIOREN_TEILE.flatMap(
   t.bloecke.map((b) => b.slug),
 );
 
-/** Zu welchem Junioren-Trainingsteil gehört ein Block? */
-export function teilZuBlock(block: string): string | null {
-  return JUNIOREN_TEILE.find((t) => t.bloecke.some((b) => b.slug === block))?.slug ?? null;
-}
-
 /** Zu welchem Schema gehört eine Einordnung? `nacharbeit` und Unbekanntes
  *  gehören zu keinem und liefern `null`. SQL-Pendant:
  *  `training_schema_der_einordnung`. */
@@ -184,30 +179,6 @@ export function abbildungJuniorenZuKifu(
   }
 }
 
-/** Einordnungs-Vorschlag beim Zuordnen einer Übung und beim Umhängen einer
- *  Fassung (Story 4 AC 4, Story 5a AC 6).
- *
- *  Eine Übung hat genau eine gepflegte Heimat (Entscheidungsdokument §4):
- *  entweder einen Kinderfussball-Trainingsteil oder einen der drei
- *  Einstiegs-Unterblöcke. Im Juniorenschema schlägt eine Junioren-Heimat
- *  ihren eigenen Block vor, eine Kinderfussball-Heimat läuft über die
- *  Abbildungsregel; im Kinderfussball-Schema greift die Rückabbildung. */
-export function vorschlagEinordnung(
-  heimat: string,
-  hauptteilkategorie: string | null,
-  schema: Schema,
-): Einordnung {
-  const istJuniorenHeimat = (junioren_heimatSlugs as readonly string[]).includes(heimat);
-  if (schema === "junioren") {
-    return istJuniorenHeimat
-      ? (heimat as JuniorenBlockSlug)
-      : abbildungKifuZuJunioren(heimat, hauptteilkategorie);
-  }
-  if (!istJuniorenHeimat) return heimat as TrainingsteilSlug;
-  const rueck = abbildungJuniorenZuKifu(heimat);
-  return rueck === NACHARBEIT ? NACHARBEIT : rueck.trainingsteil;
-}
-
 /** Zeitbandbreiten in Minuten je Trainingsteil und Unterblock
  *  (Entscheidungsdokument §5: Manual Abb. 19 für die Teile, J+S-Lernbaustein
  *  für die Einstiegsphasen).
@@ -243,9 +214,6 @@ export const JUNIOREN_PFLICHT_BLOECKE = [
   "jun-ausklang",
 ] as const;
 
-/** Ein Block, der für die Veröffentlichung belegt sein muss — `jun-spiel`
- *  gehört bewusst nicht dazu und ist darum auch nicht Teil dieses Typs. */
-export type JuniorenPflichtBlock = (typeof JUNIOREN_PFLICHT_BLOECKE)[number];
 
 /** Blöcke, deren Leere im Editor einen Hinweis erzeugt (Story 5a AC 8) —
  *  analog zum bestehenden Kinderfussball-Hinweis beim leeren freien Spiel.

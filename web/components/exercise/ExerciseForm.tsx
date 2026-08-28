@@ -31,10 +31,26 @@ import {
   UEBUNGSTYP_DEFINITION,
   FREIES_SPIEL,
   brauchtFahrplan,
+  brauchtFahrplanFuerFassung,
   ueberfuehreAblauf,
 } from "@/lib/labels";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
+
+/** Die Heimaten einer Bibliotheks-Übung: vier Kinderfussball-Trainingsteile
+ *  und die drei Einstiegs-Unterblöcke des Juniorenschemas. */
+const heimatOptionen = [
+  ...trainingsteilSlugs.map((t) => ({
+    value: t,
+    label: teilLabels[t],
+    group: "Kinderfussball",
+  })),
+  ...junioren_heimatSlugs.map((t) => ({
+    value: t,
+    label: juniorenHeimatLabels[t],
+    group: "Juniorenfussball — Einstieg",
+  })),
+];
 
 /** Beide Erscheinungsform-Vokabulare als eine flache Liste (Story 12). */
 const alleFormLabels: Record<string, string> = { ...formLabels, ...formJuniorenLabels };
@@ -75,6 +91,7 @@ function Group({ title, error, children }: { title: string; error?: string; chil
 export function ExerciseForm({
   action,
   initial = {},
+  einordnungsOptionen,
   submitLabel,
   afterName,
   bildEntfernenMoeglich = false,
@@ -82,6 +99,10 @@ export function ExerciseForm({
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
+  /** Zur Auswahl stehende Einordnungen. Ohne Angabe die Heimaten einer
+   *  Bibliotheks-Übung; eine Fassung im Training bekommt stattdessen die
+   *  Blöcke ihres Trainingsschemas übergeben (Epic #71). */
+  einordnungsOptionen?: { value: string; label: string; group?: string }[];
   submitLabel: string;
   /** Optionaler Slot direkt unter dem Namensfeld (z. B. die Diagramm-Vorschau). */
   afterName?: React.ReactNode;
@@ -114,7 +135,13 @@ export function ExerciseForm({
   );
   const [aufbau, setAufbau] = useState(initial.aufbau ?? "");
 
-  const istFahrplan = brauchtFahrplan(teil, hkat);
+  // Bei einer Fassung in einem Junioren-Block ohne eigene Fahrplan-Regel
+  // entscheidet ihr Inhalt, welche Ablauf-Form das Formular zeigt.
+  const istFahrplan = brauchtFahrplanFuerFassung(
+    teil,
+    hkat,
+    offenStarten.trim() !== "" || (initial.methodischer_fahrplan ?? null) !== null,
+  );
   // Hauptteilkategorie ist genau bei Hauptteil-Übungen Pflicht (Enabler #21).
   const istHauptteil = teil === "hauptteil";
   // Das freie Spiel trägt eine Beschreibung statt des Fahrplans (Story 2).
@@ -207,27 +234,18 @@ export function ExerciseForm({
           SegmentedControl; die Liste beschriftet darum ihre beiden Gruppen. */}
       <div>
         <Select
-          label="Heimat"
+          label={einordnungsOptionen ? "Einordnung" : "Heimat"}
           name="trainingsteil"
           value={teil}
           onChange={(v) => wechsleEinordnung(v, hkat)}
           error={!!err.trainingsteil}
           supportingText={
             err.trainingsteil ??
-            "Wo die Übung zuhause ist. Sie lässt sich auch in Trainings des anderen Schemas verwenden, wo es eine Entsprechung gibt."
+            (einordnungsOptionen
+              ? "Wo die Übung in diesem Training liegt."
+              : "Wo die Übung zuhause ist. Sie lässt sich auch in Trainings des anderen Schemas verwenden, wo es eine Entsprechung gibt.")
           }
-          options={[
-            ...trainingsteilSlugs.map((t) => ({
-              value: t,
-              label: teilLabels[t],
-              group: "Kinderfussball",
-            })),
-            ...junioren_heimatSlugs.map((t) => ({
-              value: t,
-              label: juniorenHeimatLabels[t],
-              group: "Juniorenfussball — Einstieg",
-            })),
-          ]}
+          options={einordnungsOptionen ?? heimatOptionen}
         />
       </div>
 

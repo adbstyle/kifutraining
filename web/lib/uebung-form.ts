@@ -9,6 +9,7 @@ import {
   ERSCHEINUNGSFORM_TEILE,
   FREIES_SPIEL,
   brauchtFahrplan,
+  brauchtFahrplanFuerFassung,
 } from "@/lib/labels";
 import {
   trainingsteilSlugs,
@@ -51,7 +52,15 @@ export type ParseResult =
  *  Bearbeiten einer Fassung im Training: beide tragen dieselben Inhaltsfelder
  *  und müssen denselben Regeln genügen (Story 5 NFR 1). Nicht enthalten sind
  *  Bibliotheks-Belange (slug, source, owner_id, visibility) und das Bild. */
-export function parseUebungsInhalt(form: FormData): ParseResult {
+export function parseUebungsInhalt(
+  form: FormData,
+  /** Zulässige Einordnungen. Für eine Bibliotheks-Übung sind das die Heimaten
+   *  (vier Kinderfussball-Teile und die drei Einstiegs-Unterblöcke); für eine
+   *  Fassung im Training die Blöcke ihres Schemas — dort kann sie auch in
+   *  `jun-spielformen` oder in der Nacharbeit liegen, was nie eine Heimat ist
+   *  (Epic #71). Ohne Angabe gelten die Heimaten. */
+  erlaubteEinordnungen?: readonly string[],
+): ParseResult {
   const errors: Record<string, string> = {};
   const name = clean(form.get("name"));
   const trainingsteil = clean(form.get("trainingsteil"));
@@ -61,8 +70,9 @@ export function parseUebungsInhalt(form: FormData): ParseResult {
   // Die Heimat ist entweder ein Kinderfussball-Trainingsteil oder einer der
   // drei Einstiegs-Unterblöcke des Juniorenschemas — nie beides, dafür sorgt
   // schon die Skalarität des Felds (Entscheidungsdokument §4).
-  const heimaten: readonly string[] = [...trainingsteilSlugs, ...junioren_heimatSlugs];
-  if (!heimaten.includes(trainingsteil))
+  const zulaessig: readonly string[] =
+    erlaubteEinordnungen ?? [...trainingsteilSlugs, ...junioren_heimatSlugs];
+  if (!zulaessig.includes(trainingsteil))
     errors.trainingsteil = "Bitte eine Heimat wählen.";
   if (kategorien.length === 0)
     errors.kat = "Bitte mindestens eine Alterskategorie wählen.";
@@ -77,7 +87,17 @@ export function parseUebungsInhalt(form: FormData): ParseResult {
   if (istHauptteil && !hauptteilkategorieSlugs.includes(hauptteilkategorie as never))
     errors.hauptteilkategorie = "Bitte eine Hauptteilkategorie wählen.";
 
-  const istFahrplan = brauchtFahrplan(trainingsteil, hauptteilkategorie);
+  // Welche Ablauf-Form gilt? Bei den Kinderfussball-Teilen und den beiden
+  // Fahrplan-Heimaten entscheidet die Einordnung. Bei den übrigen
+  // Junioren-Blöcken — in denen eine Fassung liegen kann, ohne dass es eine
+  // Heimat wäre — entscheidet der mitgelieferte Inhalt: eine aus einer
+  // Hauptteil-Übung entstandene Fassung bringt ihren Fahrplan mit, eine aus
+  // dem freien Spiel ihren Aufbau-Text.
+  const istFahrplan = brauchtFahrplanFuerFassung(
+    trainingsteil,
+    hauptteilkategorie,
+    clean(form.get("offen_starten")) !== "",
+  );
   const istFreiesSpiel = hauptteilkategorie === FREIES_SPIEL;
   let methodischer_fahrplan: Record<string, unknown> | null = null;
   let aufbau: string | null = null;

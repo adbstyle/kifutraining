@@ -5,6 +5,7 @@ import {
   type KategorieSlug,
 } from "@/lib/vocab";
 import { likePattern } from "@/lib/search";
+import { HEIMAT_LABEL } from "@/lib/labels";
 import { hatDiagramm } from "@/lib/diagramm";
 import type { ExerciseCardData } from "@/components/ui";
 
@@ -226,7 +227,7 @@ export function toCardData(row: ExerciseListRow): ExerciseCardData {
     slug: row.slug,
     name: row.name,
     trainingsteilLabel:
-      trainingsteilLabels[row.trainingsteil as keyof typeof trainingsteilLabels] ??
+      HEIMAT_LABEL[row.trainingsteil] ??
       row.trainingsteil,
     hauptteilkategorieLabel: row.hauptteilkategorie
       ? hauptteilkategorieLabels[

@@ -725,7 +725,7 @@ export function TrainingEditor({
                 <span className="type-body-medium text-on-surface">{item.name}</span>
                 <span className="flex items-center gap-1">
                   <Link
-                    href={`/training/${training.id}/uebung/${item.id}`}
+                    href={`/training/${training.id}/uebung/${item.id}/edit`}
                     className="focus-ring rounded-[4px] px-2 py-1 type-label-medium text-on-surface-variant hover:bg-on-surface/8"
                   >
                     Einordnen

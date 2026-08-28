@@ -19,7 +19,12 @@ import {
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
 import { TRAININGSTEIL_SLUGS } from "@/lib/training";
-import { abbildungJuniorenZuKifu, NACHARBEIT } from "@/lib/junioren";
+import {
+  abbildungJuniorenZuKifu,
+  schemaAusStufen,
+  zuordnungsZiele,
+  NACHARBEIT,
+} from "@/lib/junioren";
 import { junioren_heimatSlugs } from "@/lib/vocab";
 import { userSlug } from "@/lib/slug";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
@@ -38,7 +43,7 @@ async function ladeFassung(
   const { data } = await supabase
     .from("training_exercises")
     .select(
-      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id )",
+      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, stufen )",
     )
     .eq("id", fassungId)
     .maybeSingle();
@@ -46,13 +51,14 @@ async function ladeFassung(
   const training = data.trainings as unknown as {
     owner_id: string | null;
     team_id: string | null;
+    stufen: string[] | null;
   } | null;
   if (!training) return null;
 
   // Die Zeile ist bereits geladen — die Bearbeitungsregel kommt aus der
   // gemeinsamen Quelle, statt sie hier ein zweites Mal zu formulieren.
   const ziel = bearbeitungszielVon(training, userId);
-  return ziel ? { ...data, ziel } : null;
+  return ziel ? { ...data, ziel, stufen: training.stufen ?? [] } : null;
 }
 
 /** Die nächste freie Position im Zielabschnitt. Eine umgeordnete Fassung reiht
@@ -95,7 +101,12 @@ export async function updateFassung(
   const fassung = await ladeFassung(supabase, fassungId, user.id);
   if (!fassung) return { status: "error", message: "Übung nicht gefunden." };
 
-  const parsed = parseUebungsInhalt(form);
+  // Eine Fassung wird nach den Blöcken IHRES Trainingsschemas eingeordnet —
+  // die Nacharbeit eingeschlossen, aus der sie der Trainer herausholt.
+  const parsed = parseUebungsInhalt(form, [
+    ...zuordnungsZiele(schemaAusStufen(fassung.stufen)),
+    NACHARBEIT,
+  ]);
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
   const inhalt = parsed.row;
 
@@ -217,20 +228,23 @@ export async function uebernehmeInBibliothek(
     .maybeSingle();
   if (!f) return { ok: false, error: "Diese Übung ist nicht mehr verfügbar." };
 
-  const mangel = fassungUnvollstaendig(f);
-  if (mangel) return { ok: false, error: mangel };
-
-  // Die Einordnung im Training ist nicht zwingend eine gültige Heimat für die
-  // Bibliothek: ein Junioren-Block wie «Spielformen und unterstützende
-  // Übungen» existiert dort nicht. Die Heimat folgt darum der Abbildungsregel
-  // zurück — die drei Einstiegs-Unterblöcke sind selbst Heimaten und bleiben
-  // wie sie sind (Entscheidungsdokument §4).
+  // Die Heimat bestimmen, BEVOR die Vollständigkeit geprüft wird: eine Fassung
+  // in einem Junioren-Block wird als Kinderfussball-Übung abgelegt, und dort
+  // gilt deren Ablauf-Regel. Andersherum meldete die Prüfung eine fehlende
+  // Beschreibung an einer Übung, die vollständig ist.
   const heimat = heimatAusEinordnung(f.trainingsteil, f.hauptteilkategorie);
   if (!heimat)
     return {
       ok: false,
       error: "Ordne die Übung zuerst einem Block zu, bevor du sie übernimmst.",
     };
+
+  const mangel = fassungUnvollstaendig({
+    ...f,
+    trainingsteil: heimat.trainingsteil,
+    hauptteilkategorie: heimat.hauptteilkategorie,
+  });
+  if (mangel) return { ok: false, error: mangel };
 
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
   const uebungId = crypto.randomUUID();

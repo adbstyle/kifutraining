@@ -44,7 +44,8 @@ const FASSUNG_SELECT = `
   id, trainingsteil, hauptteilkategorie, position, duration_min,
   name, kategorien, erscheinungsform, feldtyp, anzahl_kinder, material,
   methodischer_fahrplan, aufbau, varianten, bild_quelle,
-  bild_url, diagramm
+  bild_url, diagramm,
+  einordnung_vorher, hauptteilkategorie_vorher
 `;
 
 type QuellFassung = {
@@ -53,6 +54,8 @@ type QuellFassung = {
   hauptteilkategorie: string | null;
   position: number;
   duration_min: number | null;
+  einordnung_vorher: string | null;
+  hauptteilkategorie_vorher: string | null;
   bild_url: string | null;
   diagramm: unknown;
 } & Record<string, unknown>;
@@ -151,6 +154,11 @@ export async function kopiereTraining(
         hauptteilkategorie: f.hauptteilkategorie,
         position: f.position,
         duration_min: f.duration_min,
+        // Die Konserve wandert mit: sonst verlöre jede Kopie — ins Team
+        // gestellt, übernommen, je Termin angesetzt — die Umkehrbarkeit
+        // ihres Schema-Wechsels (Epic #71).
+        einordnung_vorher: f.einordnung_vorher,
+        hauptteilkategorie_vorher: f.hauptteilkategorie_vorher,
         ...inhaltFelder(f),
         bild_url: bild.url,
         diagramm: kopiereDiagrammVon(f.diagramm),

@@ -60,11 +60,12 @@ export function Select({
   const isControlled = value !== undefined;
   const [internal, setInternal] = useState(defaultValue ?? options[0]?.value ?? "");
   const current = isControlled ? value : internal;
-  const selectedIndex = Math.max(
-    0,
-    options.findIndex((o) => o.value === current),
-  );
-  const selected = options[selectedIndex];
+  // Ein Wert, der nicht in den Optionen steht, hat KEINE Auswahl — nicht die
+  // erste. Sonst behauptete das Feld einen Zustand, den der Datensatz nicht
+  // hat, und ein unbedachtes Speichern schriebe ihn fest.
+  const foundIndex = options.findIndex((o) => o.value === current);
+  const selectedIndex = foundIndex === -1 ? 0 : foundIndex;
+  const selected = foundIndex === -1 ? undefined : options[foundIndex];
 
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(selectedIndex);

@@ -118,6 +118,7 @@ export function CatalogFilterBar({
     filters.feld.length > 0 ||
     filters.form.length > 0 ||
     filters.hkat.length > 0 ||
+    filters.typ.length > 0 ||
     filters.kinder !== undefined ||
     (filters.q?.length ?? 0) > 0 ||
     !!filters.fav ||

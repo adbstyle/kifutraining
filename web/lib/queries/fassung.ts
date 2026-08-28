@@ -10,9 +10,13 @@ export type FassungZumBearbeiten = {
   id: string;
   trainingId: string;
   trainingName: string;
+  /** Stufen des Trainings — sie bestimmen sein Schema und damit die
+   *  Einordnungen, die für diese Fassung zur Wahl stehen (Epic #71). */
+  trainingStufen: string[];
   name: string;
   trainingsteil: string;
   hauptteilkategorie: string | null;
+  uebungstyp: string | null;
   kategorien: string[];
   erscheinungsform: string[];
   feldtyp: string | null;
@@ -45,7 +49,7 @@ export async function getFassungZumBearbeiten(
   // zur Compile-Zeit unbekannt, der typisierte Query-Parser kann ihn nicht
   // auswerten — gemappt wird unten ohnehin explizit.
   const select: string = `id, training_id, trainingsteil, hauptteilkategorie, ${INHALT},
-       trainings!inner ( id, name, owner_id, team_id )`;
+       trainings!inner ( id, name, owner_id, team_id, stufen )`;
   const { data: roh, error } = await supabase
     .from("training_exercises")
     .select(select)
@@ -75,7 +79,9 @@ export async function getFassungZumBearbeiten(
     training_id: string;
     trainingsteil: string;
     hauptteilkategorie: string | null;
+    uebungstyp: string | null;
     trainings: {
+      stufen?: string[] | null;
       id: string;
       name: string;
       owner_id: string | null;
@@ -93,9 +99,11 @@ export async function getFassungZumBearbeiten(
     id: data.id,
     trainingId: data.training_id,
     trainingName: training.name,
+    trainingStufen: training.stufen ?? [],
     name: q.name,
     trainingsteil: data.trainingsteil,
     hauptteilkategorie: data.hauptteilkategorie,
+    uebungstyp: data.uebungstyp,
     kategorien: q.kategorien ?? [],
     erscheinungsform: q.erscheinungsform ?? [],
     feldtyp: q.feldtyp,

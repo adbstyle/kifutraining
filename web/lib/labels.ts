@@ -1,4 +1,8 @@
-import { kategorien } from "@/lib/vocab";
+import {
+  kategorien,
+  trainingsteil as trainingsteilLabels,
+  junioren_heimat as juniorenHeimatLabels,
+} from "@/lib/vocab";
 
 // Schweizer Juniorenstufen — nur die offiziellen Stufennamen als Tooltip/Hint.
 export const kategorieStufe: Record<keyof typeof kategorien, string> = {
@@ -65,6 +69,30 @@ export function brauchtFahrplan(
   return !(trainingsteil === "hauptteil" && hauptteilkategorie === FREIES_SPIEL);
 }
 
+/** Welche Ablauf-Form gilt für eine Fassung in ihrem Training?
+ *
+ *  Für die Kinderfussball-Teile und die beiden Fahrplan-Heimaten entscheidet
+ *  die Einordnung — wie bei einer Bibliotheks-Übung. Für die übrigen
+ *  Junioren-Blöcke gibt es keine eigene Regel: dort kann eine Fassung liegen,
+ *  ohne dass der Block je eine Heimat wäre. Dann entscheidet, was sie
+ *  mitbringt: eine aus einer Hauptteil-Übung entstandene Fassung hat ihren
+ *  Fahrplan, eine aus dem freien Spiel ihren Aufbau-Text. Sonst zeigte das
+ *  Formular ein leeres Aufbau-Feld und der Fahrplan ginge beim Speichern
+ *  verloren (Epic #71).
+ *
+ *  Formular und Server müssen dieselbe Antwort geben — darum eine Funktion. */
+export function brauchtFahrplanFuerFassung(
+  einordnung: string,
+  hauptteilkategorie: string | null,
+  hatFahrplanInhalt: boolean,
+): boolean {
+  const eigeneRegel =
+    !einordnung.startsWith("jun-") || FAHRPLAN_TEILE.has(einordnung);
+  return eigeneRegel
+    ? brauchtFahrplan(einordnung, hauptteilkategorie)
+    : hatFahrplanInhalt;
+}
+
 /** Befüllte Fahrplan-Stufen zu einem Text: in ihrer Reihenfolge als getrennte
  *  Absätze, ohne Textverlust (PO-Entscheid 2026-08-22). Dient als Ausgangstext
  *  beim Wechsel in eine Einordnung mit einem einzelnen Textfeld. */
@@ -123,4 +151,13 @@ export const UEBUNGSTYP_DEFINITION: Record<string, string> = {
     "Spielnahe Form mit Gegner und Entscheidungen. Das Manual zieht sie der isolierten Übung vor.",
   "isolierte-form":
     "Übungsform ohne Spielsituation. Im Manual heisst sie schlicht «Übung» — hier umbenannt, weil die Applikation dieses Wort für das Objekt selbst braucht.",
+};
+
+/** Klartext jeder Heimat — die vier Kinderfussball-Trainingsteile und die drei
+ *  Einstiegs-Unterblöcke des Juniorenschemas. Eine Quelle für Katalogkarten,
+ *  Detailseiten, Breadcrumbs und Picker; ohne sie zeigten Übungen mit
+ *  Junioren-Heimat dort ihren Roh-Slug (Epic #71). */
+export const HEIMAT_LABEL: Record<string, string> = {
+  ...trainingsteilLabels,
+  ...juniorenHeimatLabels,
 };

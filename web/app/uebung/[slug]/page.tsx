@@ -22,7 +22,6 @@ import {
   type ExerciseDetail,
 } from "@/lib/queries/exercises";
 import {
-  trainingsteil as teilLabels,
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
   erscheinungsform_junioren as formJuniorenLabels,
@@ -30,6 +29,7 @@ import {
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
+import { HEIMAT_LABEL } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 
@@ -100,7 +100,7 @@ export default async function ExerciseDetailPage({
   // Trainingsteil wandert in die Brotkrumen (als Filter-Link auf den Pool);
   // die Eyebrow-Zeile zeigt nur noch ergänzenden Kontext (Feldtyp).
   const teilLabel =
-    teilLabels[ex.trainingsteil as keyof typeof teilLabels] ?? ex.trainingsteil;
+    HEIMAT_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
     { label: "Übungspool", href: "/" },
     { label: teilLabel, href: `/?teil=${ex.trainingsteil}` },
