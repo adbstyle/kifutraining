@@ -20,6 +20,7 @@ import {
 import { revalidiereTraining } from "@/lib/revalidate";
 import { userSlug } from "@/lib/slug";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
+import { fehlerMeldung } from "@/lib/training-bedingungen";
 
 export type SaveFassungResult = { ok: true } | { ok: false; error: string };
 
@@ -34,7 +35,7 @@ async function ladeFassung(
   const { data } = await supabase
     .from("training_exercises")
     .select(
-      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, visibility )",
+      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id )",
     )
     .eq("id", fassungId)
     .maybeSingle();
@@ -42,7 +43,6 @@ async function ladeFassung(
   const training = data.trainings as unknown as {
     owner_id: string | null;
     team_id: string | null;
-    visibility: string;
   } | null;
   if (!training) return null;
 
@@ -158,7 +158,10 @@ export async function updateFassung(
     // weiterhin referenzierten alten Pfad überschrieben.
     if (neuPfad && neuPfad !== altPfad)
       await supabase.storage.from(STORAGE_BUCKET).remove([neuPfad]);
-    return { status: "error", message: error.message };
+    // Wechselt die Einordnung so, dass ein öffentliches Training seine
+    // Bedingungen verlöre, weist die Datenebene ab; die Meldung nennt den Weg
+    // über den Entwurfszustand (Story A AK 7).
+    return { status: "error", message: fehlerMeldung(error.message) };
   }
 
   // Erfolg: die alte Datei entfernen, wenn sie nicht mehr referenziert wird —
