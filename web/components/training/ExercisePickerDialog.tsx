@@ -7,6 +7,7 @@ import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import { stufenAbgedeckt } from "@/lib/training";
 import {
   erscheinungsform as erscheinungsformLabels,
+  uebungstyp as uebungstypLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
 import { ERSCHEINUNGSFORM_TEILE } from "@/lib/labels";
@@ -45,6 +46,8 @@ export function ExercisePickerDialog({
 }) {
   const [q, setQ] = useState("");
   const [form, setForm] = useState<string[]>([]);
+  // Übungstyp-Filter auch hier, nicht nur im Katalog (Story 9 AC 6).
+  const [typ, setTyp] = useState<string[]>([]);
   const [results, setResults] = useState<ExerciseListRow[]>([]);
   const [loading, setLoading] = useState(false);
   // Wie oft der USER eine Vorlage in dieser Sitzung übernommen hat — reine
@@ -80,6 +83,7 @@ export function ExercisePickerDialog({
     setLoading(true);
     const t = setTimeout(async () => {
       const rows = await pickExercises(trainingsteil, {
+        typ,
         q: q.trim() || undefined,
         form: form.length ? form : undefined,
         // Im Hauptteil auf die fixierte Unterkategorie eingrenzen (harte Regel).
@@ -168,6 +172,19 @@ export function ExercisePickerDialog({
             ))}
           </div>
         )}
+
+        {/* Übungstyp-Filter — gilt in jedem Block (Story 9 AC 6). */}
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(uebungstypLabels).map(([slug, label]) => (
+            <FilterChip
+              key={slug}
+              selected={typ.includes(slug)}
+              onClick={() => toggle(typ, setTyp, slug)}
+            >
+              {label}
+            </FilterChip>
+          ))}
+        </div>
 
         {error && (
           <p

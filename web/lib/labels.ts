@@ -105,3 +105,22 @@ export function ueberfuehreAblauf(
     aufbau: nachFahrplan ? "" : text,
   };
 }
+
+/** Kurzdefinition je Übungstyp, sichtbar beim Zuweisen (Story 9 AC 4).
+ *
+ *  Quellenlage: Das Manual Fussball Jugendliche führt die drei Typen als
+ *  Gliederung seines Good-Practice-Teils, definiert sie aber nicht einzeln.
+ *  Belegt ist nur die Aussage zur Basisspielform (S. 56): «Die Basisspielform
+ *  eignet sich besonders gut, um die Prinzipien sichtbar zu machen und zu
+ *  beobachten. Für weitere Trainingsinhalte bedienst du dich der Spielformen
+ *  und Übungen, wobei die Spielformen zu bevorzugen sind.» Die beiden übrigen
+ *  Texte fassen diese Stelle und den Trainingsformen-Abschnitt (S. 24)
+ *  zusammen; sie sind Paraphrase, kein Zitat. */
+export const UEBUNGSTYP_DEFINITION: Record<string, string> = {
+  basisspielform:
+    "Die Referenzform eines Themas. Sie eignet sich besonders gut, um die Prinzipien sichtbar zu machen und zu beobachten.",
+  spielform:
+    "Spielnahe Form mit Gegner und Entscheidungen. Das Manual zieht sie der isolierten Übung vor.",
+  "isolierte-form":
+    "Übungsform ohne Spielsituation. Im Manual heisst sie schlicht «Übung» — hier umbenannt, weil die Applikation dieses Wort für das Objekt selbst braucht.",
+};

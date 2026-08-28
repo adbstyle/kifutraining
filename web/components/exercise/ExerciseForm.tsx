@@ -20,11 +20,14 @@ import {
   trainingsteilSlugs,
   junioren_heimat as juniorenHeimatLabels,
   junioren_heimatSlugs,
+  uebungstyp as uebungstypLabels,
+  uebungstypSlugs,
 } from "@/lib/vocab";
 import {
   kategorieStufe,
   FAHRPLAN_NUR_OFFEN,
   ERSCHEINUNGSFORM_TEILE,
+  UEBUNGSTYP_DEFINITION,
   FREIES_SPIEL,
   brauchtFahrplan,
   ueberfuehreAblauf,
@@ -39,6 +42,7 @@ export type ExerciseInitial = {
   feldtyp?: string | null;
   erscheinungsform?: string[];
   hauptteilkategorie?: string | null;
+  uebungstyp?: string | null;
   anzahl_kinder?: { min?: number | null; max?: number | null } | null;
   material?: string[];
   methodischer_fahrplan?: {
@@ -90,6 +94,7 @@ export function ExerciseForm({
   const [form, setForm] = useState<string[]>(initial.erscheinungsform ?? []);
   const [feld, setFeld] = useState<string>(initial.feldtyp ?? "");
   const [hkat, setHkat] = useState<string>(initial.hauptteilkategorie ?? "");
+  const [uebungstyp, setUebungstyp] = useState<string>(initial.uebungstyp ?? "");
   const [bildError, setBildError] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [bildEntfernen, setBildEntfernen] = useState(false);
@@ -166,6 +171,7 @@ export function ExerciseForm({
     // Erscheinungsform hängt am Trainingsteil, nicht an der Ablauf-Form: auch
     // das freie Spiel darf eine tragen (DB-Constraint).
     fd.set("form", ERSCHEINUNGSFORM_TEILE.has(teil) ? form.join(",") : "");
+    fd.set("uebungstyp", uebungstyp);
     fd.set("hauptteilkategorie", istHauptteil ? hkat : "");
     fd.set("feldtyp", feld);
     fd.set("bild_entfernen", bildEntfernen ? "1" : "");
@@ -317,6 +323,25 @@ export function ExerciseForm({
           </p>
         </div>
       )}
+
+      {/* Übungstyp: optionale Selbstauskunft, für alle Übungen beider
+          Schemata. Die Kurzdefinition steht beim Zuweisen dabei — «Spielform»
+          bezeichnet im Lehrmittel drei verschiedene Dinge (Story 9 AC 4). */}
+      <div>
+        <Select
+          label="Übungstyp (optional)"
+          name="uebungstyp"
+          value={uebungstyp}
+          onChange={setUebungstyp}
+          options={[
+            { value: "", label: "— kein Übungstyp —" },
+            ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
+          ]}
+          supportingText={
+            uebungstyp ? UEBUNGSTYP_DEFINITION[uebungstyp] : "Wie das Manual die Trainingsform einordnet."
+          }
+        />
+      </div>
 
       {ERSCHEINUNGSFORM_TEILE.has(teil) && (
         <Group title="Erscheinungsform (optional)">

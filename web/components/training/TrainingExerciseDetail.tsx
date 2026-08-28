@@ -7,6 +7,7 @@ import {
 import { formatDuration, teilTraegtDauer } from "@/lib/training";
 import {
   feldtyp as feldLabels,
+  uebungstyp as uebungstypLabels,
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
@@ -73,7 +74,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
         />
       </div>
 
-      {(item.hauptteilkategorie || item.feldtyp || anzahl || item.material.length > 0) && (
+      {(item.hauptteilkategorie || item.feldtyp || item.uebungstyp || anzahl || item.material.length > 0) && (
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
           {item.feldtyp && (
             <Meta label="Feldtyp">
@@ -84,6 +85,12 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
             <Meta label="Hauptteilkategorie">
               {hkatLabels[item.hauptteilkategorie as keyof typeof hkatLabels] ??
                 item.hauptteilkategorie}
+            </Meta>
+          )}
+          {item.uebungstyp && (
+            <Meta label="Übungstyp">
+              {uebungstypLabels[item.uebungstyp as keyof typeof uebungstypLabels] ??
+                item.uebungstyp}
             </Meta>
           )}
           {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}

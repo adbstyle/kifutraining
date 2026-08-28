@@ -11,6 +11,7 @@ import {
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
   hauptteilkategorie as hkatLabels,
+  uebungstyp as uebungstypLabels,
   junioren_heimat as juniorenHeimatLabels,
   kategorienSlugs,
 } from "@/lib/vocab";
@@ -22,6 +23,7 @@ export type CatalogFilters = {
   feld: string[];
   form: string[];
   hkat: string[];
+  typ: string[];
   kinder?: number;
   q?: string;
   fav?: boolean;
@@ -48,6 +50,7 @@ const teilOptions = [
 const feldOptions = toOptions(feldLabels);
 const formOptions = toOptions(formLabels);
 const hkatOptions = toOptions(hkatLabels);
+const typOptions = toOptions(uebungstypLabels);
 const stufenOptions = kategorienSlugs.map((k) => ({ value: k, label: kategorieStufe[k] }));
 
 /* Such-/Filterleiste für den Übungspool — eine durchgehende, umbrechende Zeile
@@ -176,6 +179,16 @@ export function CatalogFilterBar({
         onChange={(v) => setList("hkat", v)}
         searchable={false}
         placeholder="Alle Hauptteilkategorien"
+        className="w-full sm:w-64"
+      />
+      <MultiSelect
+        label="Übungstyp"
+        hideLabel
+        options={typOptions}
+        value={filters.typ}
+        onChange={(v) => setList("typ", v)}
+        searchable={false}
+        placeholder="Alle Übungstypen"
         className="w-full sm:w-64"
       />
 

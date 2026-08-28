@@ -47,6 +47,7 @@ export default async function Home({
     feld: list(sp.feld),
     form: list(sp.form),
     hkat: list(sp.hkat),
+    typ: list(sp.typ),
     kinder: num(sp.kinder),
     q: typeof sp.q === "string" ? sp.q : undefined,
     fav: sp.fav === "1",

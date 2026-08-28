@@ -25,6 +25,7 @@ import {
   trainingsteil as teilLabels,
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
+  uebungstyp as uebungstypLabels,
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
@@ -107,6 +108,7 @@ export default async function ExerciseDetailPage({
   const anzahl = anzahlText(ex.anzahl_kinder);
   const hatEckdaten =
     !!ex.hauptteilkategorie ||
+    !!ex.uebungstyp ||
     ex.erscheinungsform.length > 0 ||
     !!anzahl ||
     ex.material.length > 0;
@@ -211,6 +213,12 @@ export default async function ExerciseDetailPage({
           <Meta label="Hauptteilkategorie">
             {hkatLabels[ex.hauptteilkategorie as keyof typeof hkatLabels] ??
               ex.hauptteilkategorie}
+          </Meta>
+        )}
+        {ex.uebungstyp && (
+          <Meta label="Übungstyp">
+            {uebungstypLabels[ex.uebungstyp as keyof typeof uebungstypLabels] ??
+              ex.uebungstyp}
           </Meta>
         )}
         {ex.erscheinungsform.length > 0 && (

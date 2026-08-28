@@ -34,6 +34,8 @@ export type TrainingExerciseItem = {
   kategorien: string[];
   erscheinungsform: string[];
   feldtyp: string | null;
+  /** Übungstyp nach dem Manual Fussball Jugendliche (Story 9). */
+  uebungstyp: string | null;
   anzahlKinder: { min?: number | null; max?: number | null } | null;
   material: string[];
   fahrplan: Fahrplan | null;
@@ -78,6 +80,7 @@ type RawInhalt = {
   kategorien: string[] | null;
   erscheinungsform: string[] | null;
   feldtyp: string | null;
+  uebungstyp: string | null;
   anzahl_kinder: { min?: number | null; max?: number | null } | null;
   material: string[] | null;
   methodischer_fahrplan: Fahrplan | null;
@@ -139,6 +142,7 @@ function mapTraining(raw: RawTraining): TrainingDetail {
         kategorien: te.kategorien ?? [],
         erscheinungsform: te.erscheinungsform ?? [],
         feldtyp: te.feldtyp,
+        uebungstyp: te.uebungstyp,
         anzahlKinder: te.anzahl_kinder,
         material: te.material ?? [],
         fahrplan: te.methodischer_fahrplan,

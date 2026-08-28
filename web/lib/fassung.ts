@@ -17,6 +17,7 @@ export const FASSUNG_INHALT_FELDER = [
   "anzahl_kinder",
   "material",
   "methodischer_fahrplan",
+  "uebungstyp",
   "aufbau",
   "varianten",
   "bild_quelle",

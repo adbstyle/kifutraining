@@ -563,7 +563,7 @@ export async function setExerciseDuration(
  *  Hauptteilkategorie sowie per Freitext (Story #10 AC5/AC6/AC7, #23). */
 export async function pickExercises(
   einordnung: string,
-  opts: { form?: string[]; hkat?: string[]; q?: string } = {},
+  opts: { form?: string[]; hkat?: string[]; typ?: string[]; q?: string } = {},
 ): Promise<ExerciseListRow[]> {
   // Der Picker eines Blocks zeigt, was die Abbildungsregel dorthin führt —
   // im Junioren-Hauptteil etwa die Übungen zweier Kinderfussball-Kategorien.
@@ -572,6 +572,7 @@ export async function pickExercises(
   return getExercises({
     teil: filter.trainingsteile,
     form: opts.form,
+    typ: opts.typ,
     // Der Block schränkt die Kategorie bereits ein; eine zusätzliche
     // Nutzerwahl darf sie nur weiter verengen, nie erweitern.
     hkat:

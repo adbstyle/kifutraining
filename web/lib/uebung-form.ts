@@ -15,6 +15,7 @@ import {
   junioren_heimatSlugs,
   feldtypSlugs,
   erscheinungsformSlugs,
+  uebungstypSlugs,
   hauptteilkategorieSlugs,
   kategorienSlugs,
 } from "@/lib/vocab";
@@ -130,6 +131,11 @@ export function parseUebungsInhalt(form: FormData): ParseResult {
       hauptteilkategorie,
       anzahl_kinder,
       material: lines(form.get("material")),
+      // Übungstyp: optionale Selbstauskunft, gegen nichts geprüft (Story 9
+      // Out of Scope 1). Leerer Wert heisst «kein Typ».
+      uebungstyp: uebungstypSlugs.includes(clean(form.get("uebungstyp")) as never)
+        ? clean(form.get("uebungstyp"))
+        : null,
       methodischer_fahrplan,
       aufbau,
       varianten: lines(form.get("varianten")),
