@@ -18,6 +18,9 @@ import {
   istEigeneFassungsDatei,
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
+import { TRAININGSTEIL_SLUGS } from "@/lib/training";
+import { abbildungJuniorenZuKifu, NACHARBEIT } from "@/lib/junioren";
+import { junioren_heimatSlugs } from "@/lib/vocab";
 import { userSlug } from "@/lib/slug";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
@@ -217,6 +220,18 @@ export async function uebernehmeInBibliothek(
   const mangel = fassungUnvollstaendig(f);
   if (mangel) return { ok: false, error: mangel };
 
+  // Die Einordnung im Training ist nicht zwingend eine gültige Heimat für die
+  // Bibliothek: ein Junioren-Block wie «Spielformen und unterstützende
+  // Übungen» existiert dort nicht. Die Heimat folgt darum der Abbildungsregel
+  // zurück — die drei Einstiegs-Unterblöcke sind selbst Heimaten und bleiben
+  // wie sie sind (Entscheidungsdokument §4).
+  const heimat = heimatAusEinordnung(f.trainingsteil, f.hauptteilkategorie);
+  if (!heimat)
+    return {
+      ok: false,
+      error: "Ordne die Übung zuerst einem Block zu, bevor du sie übernimmst.",
+    };
+
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
   const uebungId = crypto.randomUUID();
   const bild = await kopiereBild(supabase, f.bild_url, userOrdner(user.id), uebungId);
@@ -227,8 +242,8 @@ export async function uebernehmeInBibliothek(
     .insert({
       id: uebungId,
       slug: userSlug(f.name!),
-      trainingsteil: f.trainingsteil,
-      hauptteilkategorie: f.hauptteilkategorie,
+      trainingsteil: heimat.trainingsteil,
+      hauptteilkategorie: heimat.hauptteilkategorie,
       ...inhaltFelder(f),
       bild_url: bild.url,
       diagramm: kopiereDiagrammVon(f.diagramm),
@@ -287,4 +302,21 @@ export async function saveFassungDiagramm(
 
   revalidiereTraining(fassung.training_id, fassungId);
   return { ok: true };
+}
+
+/** Einordnung einer Fassung im Training → Heimat der neuen Bibliotheks-Übung.
+ *  `null`, wenn die Fassung in der Nacharbeit liegt: dort hat sie gerade
+ *  keinen Platz, und eine Heimat liesse sich nur raten. */
+function heimatAusEinordnung(
+  einordnung: string,
+  hauptteilkategorie: string | null,
+): { trainingsteil: string; hauptteilkategorie: string | null } | null {
+  // Kinderfussball-Teile und die drei Junioren-Heimaten sind selbst Heimaten.
+  if (
+    (TRAININGSTEIL_SLUGS as readonly string[]).includes(einordnung) ||
+    (junioren_heimatSlugs as readonly string[]).includes(einordnung)
+  )
+    return { trainingsteil: einordnung, hauptteilkategorie };
+  const rueck = abbildungJuniorenZuKifu(einordnung);
+  return rueck === NACHARBEIT ? null : rueck;
 }

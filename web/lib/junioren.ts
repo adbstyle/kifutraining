@@ -251,3 +251,55 @@ export const LEER_HINWEIS_BLOECKE: JuniorenBlockSlug[] = [
   "jun-spielform-trainingsziel",
   "jun-explosivitaet",
 ];
+
+/** Welche Übungs-Heimaten darf ein Block aufnehmen? Die Umkehrung der
+ *  Abbildungsregel (Entscheidungsdokument §2/§4) — sie bestimmt, was der
+ *  Picker anbietet UND was die Server Action beim Zuordnen akzeptiert. Beide
+ *  müssen dieselbe Antwort geben, sonst zeigt der Picker Treffer, die das
+ *  Hinzufügen abweist.
+ *
+ *  `hauptteilkategorien: null` heisst: keine Einschränkung auf dieser Achse. */
+export function heimatFilterFuerEinordnung(einordnung: string): {
+  trainingsteile: string[];
+  hauptteilkategorien: string[] | null;
+} {
+  switch (einordnung) {
+    // Kinderfussball-Teile: der gleichnamige Trainingsteil. Die Einleitung
+    // nimmt zusätzlich die rückabgebildeten Junioren-Heimaten auf (§4.3,
+    // Story 5b PC 2) — Explosivität bleibt aussen vor (PC 3).
+    case "einleitung":
+      return {
+        trainingsteile: ["einleitung", "jun-aufwaermen", "jun-spielform-trainingsziel"],
+        hauptteilkategorien: null,
+      };
+    case "auffangen":
+    case "hauptteil":
+    case "ausklang":
+      return { trainingsteile: [einordnung], hauptteilkategorien: null };
+    // Junioren-Blöcke gemäss Abbildungsregel.
+    case "jun-aufwaermen":
+      return { trainingsteile: ["einleitung", "jun-aufwaermen"], hauptteilkategorien: null };
+    case "jun-spielform-trainingsziel":
+      return { trainingsteile: ["jun-spielform-trainingsziel"], hauptteilkategorien: null };
+    case "jun-explosivitaet":
+      return { trainingsteile: ["jun-explosivitaet"], hauptteilkategorien: null };
+    case "jun-spielformen":
+      return {
+        trainingsteile: ["hauptteil"],
+        hauptteilkategorien: ["fussball-spielen-lernen", "vielseitigkeit-erleben"],
+      };
+    case "jun-spiel":
+      return { trainingsteile: ["hauptteil"], hauptteilkategorien: ["fussball-spielen"] };
+    case "jun-ausklang":
+      return { trainingsteile: ["ausklang"], hauptteilkategorien: null };
+    default:
+      // Die Nacharbeit ist kein Zuordnungsziel.
+      return { trainingsteile: [], hauptteilkategorien: null };
+  }
+}
+
+/** Alle gültigen Zuordnungsziele eines Trainings — die Nacharbeit gehört nicht
+ *  dazu, in sie gerät eine Fassung nur durch den Schema-Wechsel. */
+export function zuordnungsZiele(schema: Schema): string[] {
+  return schema === "junioren" ? [...JUNIOREN_BLOCK_SLUGS] : [...TRAININGSTEIL_SLUGS_KIFU];
+}

@@ -15,6 +15,21 @@ export const kategorieStufe: Record<keyof typeof kategorien, string> = {
 // (vs. auffangen/ausklang mit flachem Aufbau). Eine Quelle für alle Schichten.
 export const FAHRPLAN_TEILE = new Set<string>(["einleitung", "hauptteil"]);
 
+/** Einordnungen und Heimaten, die Erscheinungsformen tragen dürfen. Auffangen
+ *  und Ausklang bleiben ausgeschlossen — auch der Junioren-Ausklang (Story 12
+ *  Out of Scope 5). Ohne dieses eigene Set würde die Fahrplan-Menge hier
+ *  zweckentfremdet und jede Bearbeitung einer Junioren-Fassung löschte ihre
+ *  Erscheinungsformen still. */
+export const ERSCHEINUNGSFORM_TEILE = new Set<string>([
+  "einleitung",
+  "hauptteil",
+  "jun-aufwaermen",
+  "jun-spielform-trainingsziel",
+  "jun-explosivitaet",
+  "jun-spielformen",
+  "jun-spiel",
+]);
+
 // Das freie Spiel am Ende des Hauptteils. Es folgt keiner methodischen
 // Progression und trägt darum eine Beschreibung statt des Fahrplans.
 export const FREIES_SPIEL = "fussball-spielen";

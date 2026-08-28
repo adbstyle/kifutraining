@@ -5,12 +5,12 @@ import { Plus, Search, TriangleAlert } from "lucide-react";
 import { Dialog, KategorieChip, HerkunftBadge, FilterChip, IconButton } from "@/components/ui";
 import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import { stufenAbgedeckt } from "@/lib/training";
-import { FAHRPLAN_TEILE } from "@/lib/labels";
 import {
   erscheinungsform as erscheinungsformLabels,
   type KategorieSlug,
-  type TrainingsteilSlug,
 } from "@/lib/vocab";
+import { ERSCHEINUNGSFORM_TEILE } from "@/lib/labels";
+import type { Einordnung } from "@/lib/junioren";
 import type { ExerciseListRow } from "@/lib/queries/exercises";
 
 /* Übungs-Picker als Modal über dem Editor (Story #10). Lädt die für den USER
@@ -33,7 +33,9 @@ export function ExercisePickerDialog({
   open: boolean;
   onClose: () => void;
   trainingId: string;
-  trainingsteil: TrainingsteilSlug;
+  /** Ziel-Einordnung: ein Kinderfussball-Trainingsteil oder ein
+   *  Junioren-Unterblock (Epic #71). */
+  trainingsteil: Einordnung;
   trainingsteilLabel: string;
   /** Im Hauptteil: die fixierte Unterkategorie, sonst undefined. */
   hauptteilkategorie?: string;
@@ -59,7 +61,9 @@ export function ExercisePickerDialog({
   const queueRef = useRef<Promise<void>>(Promise.resolve());
   const inFlightRef = useRef(0);
 
-  const hatErscheinungsform = FAHRPLAN_TEILE.has(trainingsteil);
+  // Erscheinungsformen tragen nicht alle Einordnungen — der Filter erscheint
+  // nur, wo er etwas findet (Story 12 Out of Scope 5).
+  const hatErscheinungsform = ERSCHEINUNGSFORM_TEILE.has(trainingsteil);
 
   // Beim Öffnen und Schliessen Filter, Suche und Sitzungszählung zurücksetzen.
   useEffect(() => {

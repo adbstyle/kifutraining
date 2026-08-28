@@ -38,6 +38,7 @@ import {
   JUNIOREN_PFLICHT_BLOECKE,
   JUNIOREN_TEILE,
   NACHARBEIT,
+  LEER_HINWEIS_BLOECKE,
   schemaDerEinordnung,
   type Schema,
   type Einordnung,
@@ -56,6 +57,7 @@ import {
   stufenAbgedeckt,
   teilTraegtDauer,
   groupHauptteil,
+  groupJunioren,
   formatDuration,
 } from "@/lib/training";
 import {
@@ -85,8 +87,10 @@ export function TrainingEditor({
   const router = useRouter();
   const [, startTransition] = useTransition();
   // Offener Picker: Trainingsteil und — im Hauptteil — die Unterkategorie.
+  // Offener Picker: die Ziel-Einordnung (Kinderfussball-Teil oder
+  // Junioren-Block) und — im Kinderfussball-Hauptteil — die Unterkategorie.
   const [open, setOpen] = useState<{
-    teil: TrainingsteilSlug;
+    teil: Einordnung;
     hkat?: HauptteilkategorieSlug;
   } | null>(null);
   const [durations, setDurations] = useState<Record<string, number | null>>({});
@@ -355,7 +359,93 @@ export function TrainingEditor({
         )}
       </div>
 
-      {TRAININGSTEILE.map(({ slug, label }) => {
+      {/* Juniorenschema: drei Trainingsteile, die Unterblöcke stets sichtbar —
+          auch leere, damit die Struktur beim Planen erkennbar bleibt
+          (Story 4 AC 1, Story 5a AC 1–3). */}
+      {schema === "junioren" &&
+        groupJunioren(
+          training.exercises.filter((e) => e.trainingsteil !== NACHARBEIT),
+        ).map((teil) => {
+          const teilDur = teil.bloecke.reduce<number>(
+            (a, b) => a + b.items.reduce<number>((x, it) => x + (dur(it) ?? 0), 0),
+            0,
+          );
+          const teilMissing = teil.bloecke.reduce<number>(
+            (a, b) => a + b.items.filter((it) => dur(it) == null).length,
+            0,
+          );
+          return (
+            <Card key={teil.slug} className="p-4 sm:p-5">
+              <div className="flex items-center gap-2">
+                <h2 className="type-title-medium text-on-surface">{teil.label}</h2>
+                {teilDur > 0 && (
+                  <span className="type-label-medium text-on-surface-variant">
+                    {formatDuration(teilDur)}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-4 flex flex-col gap-5">
+                {teil.bloecke.map((b) => {
+                  const blockDur = b.items.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
+                  return (
+                    <div key={b.slug}>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <h3 className="type-title-small text-on-surface">
+                          {b.label}
+                          {blockDur > 0 && (
+                            <span className="ml-2 type-label-medium text-on-surface-variant">
+                              {formatDuration(blockDur)}
+                            </span>
+                          )}
+                        </h3>
+                        <Tooltip label="Übung hinzufügen">
+                          <IconButton
+                            icon={Plus}
+                            label={`Übung zu ${b.label} hinzufügen`}
+                            size="sm"
+                            onClick={() => setOpen({ teil: b.slug })}
+                          />
+                        </Tooltip>
+                      </div>
+                      <ExerciseList
+                        items={b.items}
+                        trainingId={training.id}
+                        trainingStufen={stufen}
+                        showDuration
+                        dur={dur}
+                        onDuration={changeDuration}
+                        onMove={move}
+                        onRemove={remove}
+                      />
+                      {/* Leere Blöcke, die das Lehrmittel als gesetzt ansieht:
+                          Hinweis, keine Blockade (Story 5a AC 8/9). */}
+                      {b.items.length === 0 &&
+                        LEER_HINWEIS_BLOECKE.includes(b.slug) && (
+                          <p className="mt-2 flex items-center gap-2 type-label-medium text-on-surface-variant">
+                            <Info size={15} className="shrink-0 text-signal" aria-hidden />
+                            {b.slug === "jun-spiel"
+                              ? "Das Spiel ist noch leer — im Juniorenfussball gehört das freie Spiel in jedes Training."
+                              : `«${b.label}» ist noch leer.`}
+                          </p>
+                        )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {teilMissing > 0 && (
+                <p className="mt-3 type-label-medium text-on-surface-variant">
+                  {teilMissing} {teilMissing === 1 ? "Übung" : "Übungen"} ohne erfasste
+                  Dauer (zählt nicht zur Summe).
+                </p>
+              )}
+            </Card>
+          );
+        })}
+
+      {schema === "kifu" &&
+        TRAININGSTEILE.map(({ slug, label }) => {
         const traegtDauer = teilTraegtDauer(slug);
         const teilItems = byTeil(slug);
 
@@ -501,13 +591,15 @@ export function TrainingEditor({
             )}
           </Card>
         );
-      })}
+        })}
 
       {/* Ein Picker, gesteuert über `open` (Trainingsteil + ggf. Unterkategorie). */}
       {open &&
         (() => {
           const teilLabel =
-            TRAININGSTEILE.find((t) => t.slug === open.teil)?.label ?? open.teil;
+            TRAININGSTEILE.find((t) => t.slug === open.teil)?.label ??
+            juniorenBlockLabels[open.teil as JuniorenBlockSlug] ??
+            open.teil;
           const sub = open.hkat
             ? HAUPTTEILKATEGORIEN.find((h) => h.slug === open.hkat)
             : undefined;

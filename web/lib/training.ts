@@ -1,3 +1,5 @@
+import { JUNIOREN_TEILE } from "@/lib/junioren";
+import type { JuniorenBlockSlug } from "@/lib/vocab";
 import {
   trainingsteil as trainingsteilLabels,
   hauptteilkategorie as hauptteilkategorieLabels,
@@ -105,6 +107,41 @@ export function groupByTeil<
       ? teilItems.reduce((a, i) => a + (i.durationMin ?? 0), 0)
       : 0;
     return { slug, label, items: teilItems, sum, traegtDauer };
+  });
+}
+
+/** Junioren-Zuordnungen nach Trainingsteil und Unterblock gruppieren (feste
+ *  Reihenfolge des Schemas; Story 4 AC 1, Story 5a AC 1–3). Items kommen
+ *  positionssortiert. Die Teil-Summe ist die Summe seiner Blöcke.
+ *
+ *  Die Nacharbeit gehört NICHT hierher — sie liegt ausserhalb der Struktur und
+ *  wird gesondert gerendert (Story 4 AC 9); Aufrufer filtern sie vorher weg. */
+export function groupJunioren<
+  T extends { trainingsteil: string; durationMin: number | null },
+>(
+  items: T[],
+): {
+  slug: string;
+  label: string;
+  sum: number;
+  bloecke: { slug: JuniorenBlockSlug; label: string; items: T[]; sum: number }[];
+}[] {
+  return JUNIOREN_TEILE.map((teil) => {
+    const bloecke = teil.bloecke.map(({ slug, label }) => {
+      const blockItems = items.filter((i) => i.trainingsteil === slug);
+      return {
+        slug,
+        label,
+        items: blockItems,
+        sum: blockItems.reduce((a, i) => a + (i.durationMin ?? 0), 0),
+      };
+    });
+    return {
+      slug: teil.slug,
+      label: teil.label,
+      sum: bloecke.reduce((a, b) => a + b.sum, 0),
+      bloecke,
+    };
   });
 }
 
