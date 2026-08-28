@@ -2,6 +2,8 @@
 
 Erfasst 2026-08-28. Ebene: User Story (Business).
 
+Status: UMGESETZT 2026-08-28 — in Produktion seit dem Release #117.
+
 Abweichung von einem früheren Entscheid: Am 2026-08-23 wurde festgelegt, dass Druck- und
 Durchführen-Ansicht eines Trainings keine Herkunftsangabe tragen, weil der Druck
 ausschliesslich enthalten soll, was für die Durchführung nötig ist. Für den Druck einer
