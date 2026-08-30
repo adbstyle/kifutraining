@@ -27,6 +27,8 @@ oder das Vorgänger-Epic verändern, ist das vermerkt.
 | Vorschau der Umwandlungsfolgen | Keine. Der Trainer bestätigt die Umwandlung ohne vorgängige Aufstellung, welche Angaben bleiben, überführt werden oder wegfallen |
 | Nach der Übernahme | Der Trainer gelangt unmittelbar zur übernommenen Kopie — bei Übungen wie bei Trainings |
 | Darstellung der Altersstufen-Wahl | Vorgabe des PO ans UX-Design: ein offenes Bedienelement, kein aufklappendes Menü — in der Art der Trainingsteil-Wahl des Kinderfussballs (Auffangen, Einleitung, Hauptteil, Ausklang) |
+| Spielfeldgrösse Pflicht? | Optional, aber paarweise: wer sie angibt, gibt Länge und Breite an (2026-08-30) |
+| Alterskategorie am Training | Mindestens eine, immer — nicht erst beim Veröffentlichen. Gilt für neu angelegte Trainings; bestehende Trainings ohne Alterskategorie bleiben bearbeitbar, können aber nicht veröffentlicht werden (2026-08-30) |
 | Junioren-Testdaten auf der Testumgebung | Dürfen verworfen werden, Übungen wie Trainings. Damit entfällt jede Migrationsregel für Übungen mit Werten beider Altersstufen und für Trainings mit offener Nacharbeit |
 | Gemischt trainierte Jahrgänge | Werden bewusst nicht unterstützt. Wer E und D in einer Einheit trainiert, entscheidet sich für ein Lehrmittel und führt das Training dort. Die beiden Manuals lassen sich in einer Einheit ohnehin nicht mischen — das ist die Prämisse dieses Epics |
 | Aufstieg einer Mannschaft von E nach D | Die Trainerin legt ihre Trainings in der neuen Altersstufe neu an. Der Aufwand ist bewusst in Kauf genommen: Trainingsteile und Gliederung der beiden Schemata sind verschieden, ein übernommenes Training brächte nichts fachlich Brauchbares mit |
@@ -268,10 +270,11 @@ Wahl nicht versehentlich verrutscht
 ### Acceptance Criteria
 
 1. Der USER muss beim Anlegen eines Trainings dessen Altersstufe wählen
-2. Der USER erkennt an einem Training, welcher Altersstufe es folgt
-3. Der USER sieht an einem Training ausschliesslich die Alterskategorien seiner Altersstufe
-4. Der USER kann die Altersstufe eines bestehenden Trainings nicht mehr ändern
-5. Der USER sieht in einem Training keinen Bereich für Nacharbeit mehr
+2. Der USER muss beim Anlegen eines Trainings mindestens eine Alterskategorie wählen
+3. Der USER erkennt an einem Training, welcher Altersstufe es folgt
+4. Der USER sieht an einem Training ausschliesslich die Alterskategorien seiner Altersstufe
+5. Der USER kann die Altersstufe eines bestehenden Trainings nicht mehr ändern
+6. Der USER sieht in einem Training keinen Bereich für Nacharbeit mehr
 
 ### Postconditions
 
