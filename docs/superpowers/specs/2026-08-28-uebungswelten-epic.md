@@ -273,16 +273,14 @@ Alle gefallen am 2026-08-30 im Refinement mit dem Product Owner.
 
 ## 9. Offene Fragen
 
-1. @UX Designer: Wie erfährt der Trainer vor der Umwandlung einer Übung, was mit seinen
-   Angaben geschieht — welche bleiben, welche werden überführt, welche fallen weg?
-2. @UX Designer: Wie wird die Altersstufen-Wahl beim Erfassen dargestellt, und wie beim
-   Bearbeiten einer bestehenden Übung, wo sie eine Umwandlung auslöst?
-3. @Product Owner: In welcher Form erfasst der Trainer die Spielfeldgrösse einer
-   Junioren-Übung — als freien Text, oder als zwei Masse in Metern?
+1. @UX Designer: Wie bleibt beim Einordnen einer Junioren-Übung erkennbar, zu welchem
+   Trainingsteil ein Block gehört?
 
-Die früheren Fragen zur Rückkehr in eine verlassene Altersstufe, zum wiederholten Wechsel
-und zu den Staging-Testdaten sind am 2026-08-30 erledigt: Die ersten beiden sind
-gegenstandslos, weil nichts mehr aufbewahrt wird, die dritte ist beantwortet. Ebenso
-gegenstandslos ist die frühere Teilfrage zum Wechsel eines ganzen Trainings — ein
-Training wechselt die Altersstufe nicht mehr. Die Entscheide stehen in
-`2026-08-28-uebungswelten-stories.md`.
+Alle übrigen Fragen sind am 2026-08-30 im Refinement erledigt; die Entscheide stehen in
+`2026-08-28-uebungswelten-stories.md`. Insbesondere: Die Umwandlung zeigt keine Vorschau
+der Folgen, die Spielfeldgrösse wird als Länge und Breite in Metern erfasst, und die
+Altersstufen-Wahl ist als offenes Bedienelement vorgegeben — kein aufklappendes Menü, in
+der Art der Trainingsteil-Wahl des Kinderfussballs. Die früheren Fragen zur Rückkehr in
+eine verlassene Altersstufe und zum wiederholten Wechsel sind gegenstandslos, weil nichts
+mehr aufbewahrt wird; die Teilfrage zum Wechsel eines ganzen Trainings ebenso, weil ein
+Training die Altersstufe nicht mehr wechselt.

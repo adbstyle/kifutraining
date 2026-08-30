@@ -23,6 +23,10 @@ oder das Vorgänger-Epic verändern, ist das vermerkt.
 | Übernahme in den eigenen Bestand | Eine kuratierte oder fremde Übung lässt sich direkt aus dem Katalog übernehmen. Bisher führte der einzige Weg über ein Training |
 | Übungs-Picker | Filtert neu auf die Altersstufe des Trainings, zusätzlich zur bestehenden Einschränkung auf den Zielblock. Diese Einschränkung bleibt: Sie besteht heute schon und schützt davor, dass eine Explosivitäts-Übung im Ausklang landet |
 | Fachliche Eignung einer umgewandelten Übung | Wird nicht geprüft. Über Übernehmen und Umwandeln liesse sich der Kinderfussball-Manualbestand formal in den Juniorenfussball tragen; die Inhalte blieben für Fünf- bis Zehnjährige gedacht. Das verantwortet der Trainer — die Applikation macht ohnehin keine fachlichen Vorschläge |
+| Form der Spielfeldgrösse | Zwei Masse in Metern, wie das Manual sie führt (etwa 35 × 20 Meter) |
+| Vorschau der Umwandlungsfolgen | Keine. Der Trainer bestätigt die Umwandlung ohne vorgängige Aufstellung, welche Angaben bleiben, überführt werden oder wegfallen |
+| Nach der Übernahme | Der Trainer gelangt unmittelbar zur übernommenen Kopie — bei Übungen wie bei Trainings |
+| Darstellung der Altersstufen-Wahl | Vorgabe des PO ans UX-Design: ein offenes Bedienelement, kein aufklappendes Menü — in der Art der Trainingsteil-Wahl des Kinderfussballs (Auffangen, Einleitung, Hauptteil, Ausklang) |
 | Junioren-Testdaten auf der Testumgebung | Dürfen verworfen werden, Übungen wie Trainings. Damit entfällt jede Migrationsregel für Übungen mit Werten beider Altersstufen und für Trainings mit offener Nacharbeit |
 | Gemischt trainierte Jahrgänge | Werden bewusst nicht unterstützt. Wer E und D in einer Einheit trainiert, entscheidet sich für ein Lehrmittel und führt das Training dort. Die beiden Manuals lassen sich in einer Einheit ohnehin nicht mischen — das ist die Prämisse dieses Epics |
 | Aufstieg einer Mannschaft von E nach D | Die Trainerin legt ihre Trainings in der neuen Altersstufe neu an. Der Aufwand ist bewusst in Kauf genommen: Trainingsteile und Gliederung der beiden Schemata sind verschieden, ein übernommenes Training brächte nichts fachlich Brauchbares mit |
@@ -170,7 +174,7 @@ Kinderfussball-Didaktik zu übersetzen
 5. Der USER sieht an einer Junioren-Übung ausschliesslich die Alterskategorien des Juniorenfussballs
 6. Der USER sieht an einer Junioren-Übung ausschliesslich die Erscheinungsformen des Manuals Fussball Jugendliche
 7. Der USER muss den Ablauf einer Junioren-Übung als zusammenhängenden Beschreibungstext erfassen
-8. Der USER erfasst an einer Junioren-Übung die Spielfeldgrösse
+8. Der USER erfasst an einer Junioren-Übung die Spielfeldgrösse als Länge und Breite in Metern
 9. Der USER kann einer Junioren-Übung einen Übungstyp zuweisen, sofern sie in einem Block liegt, in dem eine Spielform vorkommen kann
 10. Der USER sieht an einer Junioren-Übung kein Feld für den Feldtyp
 11. Der USER sieht an einer Junioren-Übung kein Feld für die Hauptteilkategorie
@@ -194,8 +198,7 @@ Kinderfussball-Didaktik zu übersetzen
 
 ### Offene Fragen
 
-1. @UX Designer: Wie wird die Wahl der Altersstufe beim Erfassen dargestellt, und wie bleibt beim Einordnen einer Junioren-Übung erkennbar, zu welchem Trainingsteil ein Block gehört?
-2. @Product Owner: In welcher Form erfasst der Trainer die Spielfeldgrösse — als freien Text, oder als zwei Masse in Metern?
+1. @UX Designer: Wie bleibt beim Einordnen einer Junioren-Übung erkennbar, zu welchem Trainingsteil ein Block gehört? Für die Altersstufen-Wahl selbst gilt die PO-Vorgabe aus der Entscheidtabelle: offenes Bedienelement, kein aufklappendes Menü
 
 ---
 
@@ -219,11 +222,10 @@ von Hand richtiggestellt werden können.
 ### Acceptance Criteria
 
 1. Der USER kann die Altersstufe einer eigenen Übung ändern
-2. Der USER erfährt vor der Umwandlung, welche Angaben unverändert bleiben, welche überführt werden und welche wegfallen
-3. Der USER muss die Umwandlung bestätigen
-4. Der USER kann die Umwandlung abbrechen
-5. Der USER wählt im selben Vorgang die Angaben der Zielstufe, für die es keine Entsprechung gibt
-6. Das SYSTEM lässt die Umwandlung einer kuratierten oder einer fremden Übung nicht zu
+2. Der USER muss die Umwandlung bestätigen
+3. Der USER kann die Umwandlung abbrechen
+4. Der USER wählt im selben Vorgang die Angaben der Zielstufe, für die es keine Entsprechung gibt
+5. Das SYSTEM lässt die Umwandlung einer kuratierten oder einer fremden Übung nicht zu
 
 ### Postconditions
 
@@ -242,10 +244,11 @@ von Hand richtiggestellt werden können.
 4. Der Übungskatalog und die Suche bleiben unverändert
 5. Die Applikation weist andere Trainer nicht darauf hin, dass eine öffentliche Übung die Altersstufe gewechselt hat
 6. Die Applikation passt das Diagramm nicht an die Zielstufe an
+7. Die Applikation zeigt vor der Umwandlung keine Aufstellung, welche Angaben bleiben, überführt werden oder wegfallen
 
 ### Offene Fragen
 
-1. @UX Designer: Wie erfährt der Trainer vor der Umwandlung, was mit seinen Angaben geschieht — welche bleiben, welche werden überführt, welche fallen weg?
+Keine.
 
 ---
 
@@ -349,6 +352,7 @@ braucht, wandelt sie anschliessend um; das sind zwei getrennte Vorgänge.
 2. Der USER kann eine fremde öffentliche Übung in seinen eigenen Bestand übernehmen
 3. Der USER kann dieselbe Übung mehrfach übernehmen und erhält jedes Mal eine eigenständige Kopie
 4. Der USER erkennt nach der Übernahme, dass die Kopie ihm gehört
+5. Der USER gelangt nach der Übernahme unmittelbar zu seiner Kopie
 
 ### Postconditions
 
@@ -367,4 +371,4 @@ braucht, wandelt sie anschliessend um; das sind zwei getrennte Vorgänge.
 
 ### Offene Fragen
 
-1. @UX Designer: Landet der Trainer nach der Übernahme bei seiner Kopie, oder bleibt er im Katalog?
+Keine.
