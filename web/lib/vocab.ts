@@ -2,6 +2,13 @@
 // Neu generieren mit: npm run gen:vocab
 /* eslint-disable */
 
+export const altersstufe = {
+  "kinderfussball": "Kinderfussball",
+  "juniorenfussball": "Juniorenfussball"
+} as const;
+export type AltersstufeSlug = keyof typeof altersstufe;
+export const altersstufeSlugs = Object.keys(altersstufe) as AltersstufeSlug[];
+
 export const erscheinungsform = {
   "spiel-kreativ-gestalten": "Das Spiel kreativ gestalten",
   "ball-entschlossen-erobern": "Den Ball entschlossen erobern",

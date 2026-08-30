@@ -23,6 +23,7 @@ import {
   hauptteilkategorieSlugs,
   type TrainingsteilSlug,
 } from "@/lib/vocab";
+import { istAltersstufe, kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
 import {
   FREIES_SPIEL,
   bedingungAusFehler,
@@ -61,6 +62,16 @@ function clean(v: FormDataEntryValue | null): string {
 
 function validStufen(values: string[]): string[] {
   return values.filter((s) => kategorienSlugs.includes(s as never));
+}
+
+/** Transitional (Story 1 Out of Scope 1): Der Trainer wählt die Altersstufe
+ *  eines Trainings noch nicht selbst — sie folgt aus den gewählten
+ *  Alterskategorien. Mit Story 5 wird sie beim Anlegen gewählt und diese
+ *  Ableitung fällt weg; danach beschränken die Kategorien sich auf die Werte
+ *  der gewählten Altersstufe statt sie zu bestimmen. */
+function altersstufeAusStufen(stufen: string[]): Altersstufe {
+  const junioren = kategorienFuer("juniorenfussball");
+  return stufen.some((s) => junioren.includes(s)) ? "juniorenfussball" : "kinderfussball";
 }
 
 // ── Fassungen: Kopieren einer Vorlage ins Training ───────────────────────────
@@ -109,10 +120,25 @@ export async function createTraining(
   const name = clean(form.get("name"));
   const stufen = validStufen(csv(form.get("stufen")));
   if (!name) return { status: "error", errors: { name: "Bitte einen Namen angeben." } };
+  // Mindestens eine Alterskategorie, ab dem Anlegen (PO 2026-08-30). Bestehende
+  // Trainings ohne bleiben bearbeitbar; ein neues entsteht nicht mehr so. Die
+  // Datenebene setzt es als Trigger `trainings_stufe_pflicht` ebenfalls durch.
+  if (stufen.length === 0)
+    return {
+      status: "error",
+      message: "Bitte mindestens eine Alterskategorie wählen.",
+    };
 
   const { data, error } = await supabase
     .from("trainings")
-    .insert({ name, ziel: zielWert(form.get("ziel")), owner_id: user.id, stufen, visibility: "private" })
+    .insert({
+      name,
+      ziel: zielWert(form.get("ziel")),
+      owner_id: user.id,
+      stufen,
+      altersstufe: altersstufeAusStufen(stufen),
+      visibility: "private",
+    })
     .select("id")
     .single();
 
@@ -220,7 +246,10 @@ export async function addTrainingExercise(
   });
   if (error) {
     await entferneStorageObjekt(supabase, bild.pfad);
-    return { ok: false, error: error.message };
+    // Übersetzt statt roh: Eine Übung, deren Werte nicht zur Altersstufe des
+    // Trainings passen, weist die Datenebene als Constraint-Verletzung ab
+    // (Story 1). Der Picker grenzt darauf erst mit Story 6 ein.
+    return { ok: false, error: fehlerMeldung(error.message) };
   }
 
   revalidiereTraining(trainingId);
@@ -247,7 +276,9 @@ async function fehlendeBedingungen(
   // zuerst zu sich übernehmen muss.
   const { data: training } = await supabase
     .from("trainings")
-    .select("owner_id, team_id, stufen, training_exercises ( trainingsteil, hauptteilkategorie )")
+    .select(
+      "owner_id, team_id, altersstufe, stufen, training_exercises ( trainingsteil, hauptteilkategorie )",
+    )
     .eq("id", trainingId)
     .maybeSingle();
   if (!training) return { error: "Training nicht gefunden." };
@@ -259,7 +290,13 @@ async function fehlendeBedingungen(
   if (training.owner_id !== ownerId) return { error: "Training nicht gefunden." };
 
   const fassungen = training.training_exercises ?? [];
-  return { missing: fehlendeBedingungenAus(training.stufen ?? [], fassungen) };
+  return {
+    missing: fehlendeBedingungenAus(
+      istAltersstufe(training.altersstufe) ? training.altersstufe : "kinderfussball",
+      training.stufen ?? [],
+      fassungen,
+    ),
+  };
 }
 
 /** Ein persönliches Training öffentlich schalten (Story A AK 1).
@@ -415,15 +452,39 @@ export async function setTrainingStufen(
 
   const valid = validStufen(stufen);
 
-  // Über die RPC statt per direktem Update: ändert sich mit den Stufen das
-  // Trainingsschema, überträgt sie alle Fassungen in die Struktur des neuen
-  // Schemas und merkt sich ihre bisherige Einordnung für den Weg zurück
-  // (Story 3). Innerhalb eines Schemas setzt sie schlicht die Stufen.
-  const { data, error } = await supabase.rpc("set_training_stufen", {
-    p_training_id: trainingId,
-    p_stufen: valid,
-  });
+  // Direktes Update statt RPC: Die frühere `set_training_stufen` übertrug beim
+  // Wechsel des Trainingsschemas alle Fassungen und merkte sich ihre bisherige
+  // Einordnung. Den Wechsel gibt es nicht mehr — die Altersstufe eines
+  // Trainings steht ab dem Anlegen fest (Story 1). Die Berechtigung trägt die
+  // RLS-Policy `tr_update`, den Wertebereich der CHECK.
+  const { data: training } = await supabase
+    .from("trainings")
+    .select("altersstufe")
+    .eq("id", trainingId)
+    .maybeSingle();
+  if (!training) return { ok: false, error: "Training nicht gefunden." };
+
+  // Vorgelagert statt am Constraint-Fehler: die Datenebene würde denselben
+  // Versuch abweisen, aber ohne den Hinweis auf den gangbaren Weg.
+  const erlaubt = kategorienFuer(
+    istAltersstufe(training.altersstufe) ? training.altersstufe : "kinderfussball",
+  );
+  if (valid.some((s) => !erlaubt.includes(s)))
+    return {
+      ok: false,
+      error:
+        "Diese Alterskategorie gehört nicht zur Altersstufe dieses Trainings. " +
+        "Lege für die andere Altersstufe ein neues Training an.",
+    };
+
+  const { data, error } = await supabase
+    .from("trainings")
+    .update({ stufen: valid })
+    .eq("id", trainingId)
+    .select("id")
+    .maybeSingle();
   if (error) return { ok: false, error: fehlerMeldung(error.message) };
+  if (!data) return { ok: false, error: "Training nicht gefunden." };
 
   // Abweichende Fassungen ermitteln — anhand IHRER Alterskategorien: die
   // Fassung ist im Training frei bearbeitbar und die einzige Quelle. Das ist
@@ -442,11 +503,10 @@ export async function setTrainingStufen(
   }
 
   revalidiereTraining(trainingId);
-  return {
-    ok: true,
-    mismatched,
-    wechsel: Boolean((data as { wechsel?: boolean } | null)?.wechsel),
-  };
+  // `wechsel` bleibt im Ergebnis, ist aber ab jetzt immer false: Ein Training
+  // wechselt die Altersstufe nicht mehr. Das Feld — und der Wechsel-Dialog des
+  // Editors, der daran hängt — fällt mit Story 5.
+  return { ok: true, mismatched, wechsel: false };
 }
 
 /** Zuordnung innerhalb ihres Trainingsteils umsortieren (Story #12 AC4). */

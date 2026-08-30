@@ -7,6 +7,8 @@ import { userSlug } from "@/lib/slug";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
+import { altersstufeDerEinordnung, istAltersstufe } from "@/lib/altersstufe";
+import { fehlerMeldung } from "@/lib/training-bedingungen";
 
 export type ExerciseFormState = {
   status: "idle" | "error";
@@ -64,7 +66,16 @@ export async function createExercise(
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", message: "Nicht angemeldet." };
 
-  const parsed = parseUebungsInhalt(form);
+  // Transitional (Story 1 Out of Scope 1): Der Trainer wählt die Altersstufe
+  // noch nicht selbst — sie folgt aus der gewählten Heimat. Mit Story 3 wird
+  // sie im Formular gewählt und diese Ableitung fällt weg. Ist die Heimat
+  // ungültig, gilt Kinderfussball; die Heimat-Prüfung in parseUebungsInhalt
+  // meldet den eigentlichen Fehler.
+  const altersstufe =
+    altersstufeDerEinordnung(String(form.get("trainingsteil") ?? "").trim()) ??
+    "kinderfussball";
+
+  const parsed = parseUebungsInhalt(form, { altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
   const file = form.get("bild");
@@ -102,7 +113,12 @@ export async function createExercise(
 
   if (error || !inserted) {
     await removeStorageObject(supabase, bildPfad);
-    return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
+    // Übersetzt statt roh: Werte, die nicht zur Altersstufe der Übung passen,
+    // kommen als Constraint-Meldung an, und die versteht niemand.
+    return {
+      status: "error",
+      message: error ? fehlerMeldung(error.message) : "Speichern fehlgeschlagen.",
+    };
   }
 
   revalidateLists();
@@ -122,7 +138,25 @@ export async function updateExercise(
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", message: "Nicht angemeldet." };
 
-  const parsed = parseUebungsInhalt(form);
+  // Die gespeicherte Altersstufe entscheidet, welche Werte gelten — nie das
+  // Formular: sonst liesse sich eine Übung durch einen untergeschobenen Wert
+  // in die andere Altersstufe heben (Story 1 AC 9). Das Überführen in die
+  // andere Altersstufe ist ein eigener, ausdrücklicher Weg (Story 4).
+  // Der alte Bildpfad kommt gleich mit: Erzeugt der Upload einen anderen Pfad
+  // (z. B. Formatwechsel .png -> .webp), wird die alte Datei sonst zur Waise.
+  const { data: bestand } = await supabase
+    .from("exercises")
+    .select("altersstufe, bild_url")
+    .eq("id", id)
+    .eq("owner_id", user.id)
+    .eq("source", "user")
+    .maybeSingle();
+  if (!bestand) return { status: "error", message: "Übung nicht gefunden." };
+  const altersstufe = istAltersstufe(bestand.altersstufe)
+    ? bestand.altersstufe
+    : "kinderfussball";
+
+  const parsed = parseUebungsInhalt(form, { altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
   const file = form.get("bild");
@@ -132,16 +166,7 @@ export async function updateExercise(
   let altPfad: string | null = null;
   let neuPfad: string | null = null;
   if (hasImage) {
-    // Alten Bildpfad merken: Erzeugt der Upload einen anderen Pfad (z. B.
-    // Formatwechsel .png -> .webp), wird die alte Datei sonst zur Waise.
-    const { data: alt } = await supabase
-      .from("exercises")
-      .select("bild_url")
-      .eq("id", id)
-      .eq("owner_id", user.id)
-      .eq("source", "user")
-      .maybeSingle();
-    altPfad = bildUrlToPath(alt?.bild_url);
+    altPfad = bildUrlToPath(bestand.bild_url);
 
     const { url, path, error: imgErr } = await uploadImage(supabase, user.id, id, file);
     if (imgErr) return { status: "error", errors: { bild: imgErr } };
@@ -163,7 +188,10 @@ export async function updateExercise(
     // entfernen — ausser es hat den weiterhin referenzierten alten Pfad
     // überschrieben (gleicher Pfad), dann zeigt die DB korrekt darauf.
     if (neuPfad && neuPfad !== altPfad) await removeStorageObject(supabase, neuPfad);
-    return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
+    return {
+      status: "error",
+      message: error ? fehlerMeldung(error.message) : "Speichern fehlgeschlagen.",
+    };
   }
 
   // Erfolg: alte Bilddatei entfernen, wenn der Upload einen anderen Pfad erzeugt

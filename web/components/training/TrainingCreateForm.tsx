@@ -46,10 +46,13 @@ export function TrainingCreateForm() {
       />
 
       <div>
-        <p className="mb-2 type-label-large text-on-surface">Stufen (optional)</p>
+        <p className="mb-2 type-label-large text-on-surface">Stufen</p>
+        {/* Mindestens eine Alterskategorie, ab dem Anlegen (PO 2026-08-30,
+            Epic Übungswelten). Bestehende Trainings ohne bleiben bearbeitbar,
+            ein neues entsteht nicht mehr ohne. */}
         <p className="mb-3 type-body-small text-on-surface-variant">
-          Für welche Alterskategorien ist das Training gedacht? Du kannst dies
-          später jederzeit ändern.
+          Für welche Alterskategorien ist das Training gedacht? Mindestens eine
+          ist nötig; du kannst die Auswahl später jederzeit ändern.
         </p>
         {/* Ein Training folgt genau einem Trainingsschema: die Wahl einer
             Stufe des anderen ersetzt die bisherige Auswahl, statt zu mischen

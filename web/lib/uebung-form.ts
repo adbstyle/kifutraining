@@ -14,12 +14,14 @@ import {
   trainingsteilSlugs,
   junioren_heimatSlugs,
   feldtypSlugs,
-  erscheinungsformSlugs,
-  erscheinungsform_juniorenSlugs,
   uebungstypSlugs,
   hauptteilkategorieSlugs,
-  kategorienSlugs,
 } from "@/lib/vocab";
+import {
+  erscheinungsformenFuer,
+  kategorienFuer,
+  type Altersstufe,
+} from "@/lib/altersstufe";
 
 function lines(v: FormDataEntryValue | null): string[] {
   return String(v ?? "")
@@ -53,13 +55,22 @@ export type ParseResult =
  *  Bibliotheks-Belange (slug, source, owner_id, visibility) und das Bild. */
 export function parseUebungsInhalt(
   form: FormData,
-  /** Zulässige Einordnungen. Für eine Bibliotheks-Übung sind das die Heimaten
-   *  (vier Kinderfussball-Teile und die drei Einstiegs-Unterblöcke); für eine
-   *  Fassung im Training die Blöcke ihres Schemas — dort kann sie auch in
-   *  `jun-spielformen` oder in der Nacharbeit liegen, was nie eine Heimat ist
-   *  (Epic #71). Ohne Angabe gelten die Heimaten. */
-  erlaubteEinordnungen?: readonly string[],
+  opts: {
+    /** Die Altersstufe, der die Übung bzw. ihr Training angehört. Sie
+     *  entscheidet über die zulässigen Alterskategorien und
+     *  Erscheinungsformen (Story 1, Epic Übungswelten). Sie kommt NIE aus dem
+     *  Formular: bei einer Bibliotheks-Übung ist sie gespeichert bzw. folgt
+     *  aus der gewählten Heimat, bei einer Fassung aus ihrem Training. */
+    altersstufe: Altersstufe;
+    /** Zulässige Einordnungen. Für eine Bibliotheks-Übung sind das die Heimaten
+     *  (vier Kinderfussball-Teile und die drei Einstiegs-Unterblöcke); für eine
+     *  Fassung im Training die Blöcke ihres Schemas — dort kann sie auch in
+     *  `jun-spielformen` oder in der Nacharbeit liegen, was nie eine Heimat ist
+     *  (Epic #71). Ohne Angabe gelten die Heimaten. */
+    erlaubteEinordnungen?: readonly string[];
+  },
 ): ParseResult {
+  const { altersstufe, erlaubteEinordnungen } = opts;
   const errors: Record<string, string> = {};
   const name = clean(form.get("name"));
   const trainingsteil = clean(form.get("trainingsteil"));
@@ -75,10 +86,16 @@ export function parseUebungsInhalt(
     errors.trainingsteil = erlaubteEinordnungen
       ? "Bitte eine Einordnung wählen."
       : "Bitte eine Heimat wählen.";
+  // Alterskategorien gehören zu genau einer Altersstufe (DB-Constraint
+  // `ex_kategorien_je_altersstufe`): G–E zum Kinderfussball, D–A zum
+  // Juniorenfussball. Eine Kategorie der anderen Altersstufe ist kein
+  // Tippfehler, sondern die Frage nach dem falschen Lehrmittel — darum eine
+  // eigene Meldung.
+  const erlaubteKategorien = kategorienFuer(altersstufe);
   if (kategorien.length === 0)
     errors.kat = "Bitte mindestens eine Alterskategorie wählen.";
-  if (kategorien.some((k) => !kategorienSlugs.includes(k as never)))
-    errors.kat = "Ungültige Alterskategorie.";
+  else if (kategorien.some((k) => !erlaubteKategorien.includes(k)))
+    errors.kat = "Diese Alterskategorie gehört nicht zur Altersstufe dieser Übung.";
 
   // Hauptteilkategorie ist genau bei Hauptteil-Übungen Pflicht (Enabler #21,
   // AC2); andere Trainingsteile tragen keine (Postcondition 2). Wird VOR dem
@@ -133,16 +150,13 @@ export function parseUebungsInhalt(
   }
 
   // Erscheinungsform bleibt an die Einordnung gebunden (DB-Constraint
-  // `erscheinungsform_nur_haupt_einleitung`) — auch das freie Spiel darf eine
-  // tragen, obwohl es keinen Fahrplan hat, und die Explosivität ebenso.
-  // Beide Vokabulare stehen allen erscheinungsform-berechtigten Übungen offen
-  // (PO 2026-08-17): die sechs spielphasenbezogenen Junioren-Werte wären an
-  // Hauptteil-Übungen sonst nie zuweisbar, weil die zwingend eine
-  // Kinderfussball-Heimat tragen.
-  const erlaubteFormen: readonly string[] = [
-    ...erscheinungsformSlugs,
-    ...erscheinungsform_juniorenSlugs,
-  ];
+  // `erscheinungsform_je_altersstufe`) — auch das freie Spiel darf eine
+  // tragen, obwohl es keinen Fahrplan hat.
+  // Welcher der beiden Kataloge gilt, entscheidet neu die Altersstufe: die
+  // Manuals führen verschiedene Erscheinungsformen, und seit Story 1 hält die
+  // Datenbank sie auseinander. Werte des anderen Katalogs fallen hier still
+  // weg — wie jeder unbekannte Wert auch.
+  const erlaubteFormen: readonly string[] = erscheinungsformenFuer(altersstufe);
   const erscheinungsform = ERSCHEINUNGSFORM_TEILE.has(trainingsteil)
     ? csv(form.get("form")).filter((f) => erlaubteFormen.includes(f))
     : [];
@@ -163,6 +177,11 @@ export function parseUebungsInhalt(
     ok: true,
     row: {
       name,
+      // Die Altersstufe gehört zum Inhalt: sie entscheidet, nach welchem
+      // Lehrmittel die Zeile gelesen wird. An der Fassung im Training setzt
+      // sie allerdings der DB-Trigger `te_altersstufe_erben` — dort wird
+      // dieses Feld verworfen.
+      altersstufe,
       trainingsteil,
       kategorien,
       feldtyp: feldtyp && feldtypSlugs.includes(feldtyp as never) ? feldtyp : null,

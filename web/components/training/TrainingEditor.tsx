@@ -42,7 +42,6 @@ import {
   NACHARBEIT,
   LEER_HINWEIS_BLOECKE,
   GESAMTDAUER_JUNIOREN,
-  schemaDerEinordnung,
   type Schema,
   type Einordnung,
 } from "@/lib/junioren";
@@ -205,10 +204,10 @@ export function TrainingEditor({
     // Datenebene — Konserve zuerst, sonst die Abbildungsregel. Ohne die
     // Konserve wäre die Vorschau pessimistisch und meldete einen Verlust, den
     // der Rückweg gar nicht erleidet.
+    // Die Konserve der verlassenen Einordnung ist mit dem Altersstufen-Wechsel
+    // entfallen (Story 1, Übungswelten); die Vorschau rechnet nur noch die
+    // Abbildungsregel. Der Dialog selbst fällt mit Story 5.
     const ziele = training.exercises.map((e) => {
-      const konserve = e.einordnungVorher;
-      if (konserve && schemaDerEinordnung(konserve) === zielSchema)
-        return { name: e.name, ziel: konserve as Einordnung };
       return {
         name: e.name,
         ziel:
@@ -288,7 +287,11 @@ export function TrainingEditor({
   // Live-Vorschau der Veröffentlichungs-Bedingungen aus dem lokalen Stand.
   // Dieselbe Funktion, die die Server Action nutzt — und dieselbe Regel, die
   // die Datenbank als Trust-Boundary durchsetzt (Story 7 AC 3).
-  const fehlendeBedingungen = fehlendeBedingungenAus(stufen, training.exercises);
+  const fehlendeBedingungen = fehlendeBedingungenAus(
+    training.altersstufe,
+    stufen,
+    training.exercises,
+  );
 
   // Die Nacharbeit liegt ausserhalb der Trainingsstruktur und zählt darum
   // nicht zur Gesamtdauer.

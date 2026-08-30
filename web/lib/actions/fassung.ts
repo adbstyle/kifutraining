@@ -27,6 +27,7 @@ import {
   NACHARBEIT,
 } from "@/lib/junioren";
 import { junioren_heimatSlugs } from "@/lib/vocab";
+import { altersstufeDerEinordnung, istAltersstufe } from "@/lib/altersstufe";
 import { userSlug } from "@/lib/slug";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
@@ -44,7 +45,7 @@ async function ladeFassung(
   const { data } = await supabase
     .from("training_exercises")
     .select(
-      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, stufen )",
+      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, stufen, altersstufe )",
     )
     .eq("id", fassungId)
     .maybeSingle();
@@ -53,13 +54,24 @@ async function ladeFassung(
     owner_id: string | null;
     team_id: string | null;
     stufen: string[] | null;
+    altersstufe: string | null;
   } | null;
   if (!training) return null;
 
   // Die Zeile ist bereits geladen — die Bearbeitungsregel kommt aus der
   // gemeinsamen Quelle, statt sie hier ein zweites Mal zu formulieren.
   const ziel = bearbeitungszielVon(training, userId);
-  return ziel ? { ...data, ziel, stufen: training.stufen ?? [] } : null;
+  if (!ziel) return null;
+  return {
+    ...data,
+    ziel,
+    stufen: training.stufen ?? [],
+    // Die Fassung folgt der Altersstufe ihres Trainings — sie hat keine eigene
+    // (Story 1). Der Rückfall ist bloss der Typ-Guard: die Spalte ist NOT NULL.
+    altersstufe: istAltersstufe(training.altersstufe)
+      ? training.altersstufe
+      : ("kinderfussball" as const),
+  };
 }
 
 /** Die nächste freie Position im Zielabschnitt. Eine umgeordnete Fassung reiht
@@ -106,12 +118,17 @@ export async function updateFassung(
   // die Nacharbeit eingeschlossen, aus der sie der Trainer herausholt.
   // Die Nacharbeit steht nur zur Wahl, wenn die Fassung dort liegt — dorthin
   // gerät sie nur durch den Schema-Wechsel, nie durch eine Zuordnung.
-  const parsed = parseUebungsInhalt(form, [
-    ...zuordnungsZiele(schemaAusStufen(fassung.stufen)),
-    ...(fassung.trainingsteil === NACHARBEIT ? [NACHARBEIT] : []),
-  ]);
+  const parsed = parseUebungsInhalt(form, {
+    altersstufe: fassung.altersstufe,
+    erlaubteEinordnungen: [
+      ...zuordnungsZiele(schemaAusStufen(fassung.stufen)),
+      ...(fassung.trainingsteil === NACHARBEIT ? [NACHARBEIT] : []),
+    ],
+  });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
-  const inhalt = parsed.row;
+  // Die Altersstufe der Fassung setzt der DB-Trigger `te_altersstufe_erben`
+  // aus ihrem Training; die Applikation schreibt die Spalte nie selbst.
+  const { altersstufe: _geerbt, ...inhalt } = parsed.row;
 
   // Trainingsteil und Kategorie hat parseUebungsInhalt bereits gegen das
   // Vokabular geprüft — hier nur noch als Werte gebraucht.
@@ -134,12 +151,6 @@ export async function updateFassung(
       trainingsteil === "hauptteil" ? hkat : null,
       fassungId,
     );
-    // Die Konserve des Schema-Wechsels verfällt: sie gilt nur für Fassungen,
-    // die seit der Übertragung unangetastet blieben. Sonst spränge eine von
-    // Hand umgehängte Fassung beim Rückwechsel auf ihren alten Platz zurück
-    // und die Handänderung ginge verloren (Epic #71).
-    update.einordnung_vorher = null;
-    update.hauptteilkategorie_vorher = null;
   }
 
   // Bild: ersetzen (neue Datei) oder entfernen (Schalter). Beides wirkt erst
@@ -272,6 +283,10 @@ export async function uebernehmeInBibliothek(
       id: uebungId,
       slug: userSlug(f.name!),
       trainingsteil: heimat.trainingsteil,
+      // Die Altersstufe folgt der Heimat, in der die Übung landet — sonst
+      // widerspräche sie ihrem Trainingsteil und die Datenebene wiese den
+      // Insert ab (`ex_trainingsteil_je_altersstufe`).
+      altersstufe: altersstufeDerEinordnung(heimat.trainingsteil) ?? "kinderfussball",
       hauptteilkategorie: heimat.hauptteilkategorie,
       ...inhaltFelder(f),
       bild_url: bild.url,

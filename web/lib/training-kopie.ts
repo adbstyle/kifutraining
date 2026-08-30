@@ -44,8 +44,7 @@ const FASSUNG_SELECT = `
   id, trainingsteil, hauptteilkategorie, position, duration_min,
   name, kategorien, erscheinungsform, feldtyp, anzahl_kinder, material,
   methodischer_fahrplan, aufbau, varianten, bild_quelle,
-  bild_url, diagramm,
-  einordnung_vorher, hauptteilkategorie_vorher
+  bild_url, diagramm
 `;
 
 type QuellFassung = {
@@ -54,8 +53,6 @@ type QuellFassung = {
   hauptteilkategorie: string | null;
   position: number;
   duration_min: number | null;
-  einordnung_vorher: string | null;
-  hauptteilkategorie_vorher: string | null;
   bild_url: string | null;
   diagramm: unknown;
 } & Record<string, unknown>;
@@ -99,7 +96,7 @@ export async function kopiereTraining(
   // Quelle lesen — die RLS lässt nur durch, was der Handelnde sehen darf.
   const { data: quelle } = await supabase
     .from("trainings")
-    .select("id, name, stufen")
+    .select("id, name, altersstufe, stufen")
     .eq("id", quelleId)
     .maybeSingle();
   if (!quelle) return { ok: false, error: "Das Training ist nicht (mehr) verfügbar." };
@@ -114,6 +111,10 @@ export async function kopiereTraining(
     .from("trainings")
     .insert({
       name: quelle.name,
+      // Die Altersstufe wandert mit: Sie steht ab dem Anlegen fest, auch für
+      // eine Kopie — Trainingsteile, Gliederung und Übungsbestand der Kopie
+      // sind dieselben wie die des Originals (Story 1, Übungswelten).
+      altersstufe: quelle.altersstufe,
       stufen: quelle.stufen ?? [],
       ...spalten,
     })
@@ -154,11 +155,8 @@ export async function kopiereTraining(
         hauptteilkategorie: f.hauptteilkategorie,
         position: f.position,
         duration_min: f.duration_min,
-        // Die Konserve wandert mit: sonst verlöre jede Kopie — ins Team
-        // gestellt, übernommen, je Termin angesetzt — die Umkehrbarkeit
-        // ihres Schema-Wechsels (Epic #71).
-        einordnung_vorher: f.einordnung_vorher,
-        hauptteilkategorie_vorher: f.hauptteilkategorie_vorher,
+        // `altersstufe` steht bewusst nicht hier: Der Trigger
+        // `te_altersstufe_erben` setzt sie aus dem Ziel-Training.
         ...inhaltFelder(f),
         bild_url: bild.url,
         diagramm: kopiereDiagrammVon(f.diagramm),

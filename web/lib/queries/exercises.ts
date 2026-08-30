@@ -4,6 +4,7 @@ import {
   type KategorieSlug,
 } from "@/lib/vocab";
 import { likePattern } from "@/lib/search";
+import type { Altersstufe } from "@/lib/altersstufe";
 import { HEIMAT_LABEL } from "@/lib/labels";
 import { hatDiagramm } from "@/lib/diagramm";
 import type { ExerciseCardData } from "@/components/ui";
@@ -29,12 +30,14 @@ export type ExerciseFilters = {
 
 // Felder, die Liste + Karte brauchen.
 const LIST_COLUMNS =
-  "id, slug, name, trainingsteil, feldtyp, hauptteilkategorie, kategorien, source, visibility, bild_url, diagramm, bild_quelle";
+  "id, slug, name, altersstufe, trainingsteil, feldtyp, hauptteilkategorie, kategorien, source, visibility, bild_url, diagramm, bild_quelle";
 
 export type ExerciseListRow = {
   id: string;
   slug: string;
   name: string;
+  /** Nach welchem Lehrmittel die Übung geführt wird (Story 1, Übungswelten). */
+  altersstufe: Altersstufe;
   trainingsteil: string;
   feldtyp: string | null;
   hauptteilkategorie: string | null;
@@ -132,6 +135,8 @@ export type ExerciseDetail = {
   id: string;
   slug: string;
   name: string;
+  /** Nach welchem Lehrmittel die Übung geführt wird (Story 1, Übungswelten). */
+  altersstufe: Altersstufe;
   trainingsteil: string;
   erscheinungsform: string[];
   hauptteilkategorie: string | null;
@@ -160,7 +165,7 @@ export async function getExerciseDetail(
   const { data, error } = await supabase
     .from("exercises")
     .select(
-      "id, slug, name, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id",
+      "id, slug, name, altersstufe, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id",
     )
     .eq("slug", slug)
     .maybeSingle();

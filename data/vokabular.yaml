@@ -1,3 +1,10 @@
+# Die Altersstufe ist die oberste Dimension: sie entscheidet, nach welchem
+# Lehrmittel eine Übung und ein Training geführt werden — Manual Fussball
+# Kinder oder Manual Fussball Jugendliche. Alle übrigen Vokabulare hängen
+# an ihr (Story 1 «Altersstufe als geführte Angabe», Epic Übungswelten).
+altersstufe:
+  kinderfussball: "Kinderfussball"
+  juniorenfussball: "Juniorenfussball"
 erscheinungsform:
   spiel-kreativ-gestalten: "Das Spiel kreativ gestalten"
   ball-entschlossen-erobern: "Den Ball entschlossen erobern"

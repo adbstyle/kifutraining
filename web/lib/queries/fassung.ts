@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
+import { istAltersstufe, type Altersstufe } from "@/lib/altersstufe";
 
 /** Eine Fassung zum Bearbeiten — im eigenen privaten Training oder in einem
  *  Training des eigenen Teams (Team-Epic Story 6). `null`, wenn sie nicht
@@ -13,6 +14,10 @@ export type FassungZumBearbeiten = {
   /** Stufen des Trainings — sie bestimmen sein Schema und damit die
    *  Einordnungen, die für diese Fassung zur Wahl stehen (Epic #71). */
   trainingStufen: string[];
+  /** Altersstufe des Trainings. Die Fassung folgt ihr; sie entscheidet über
+   *  Alterskategorien, Erscheinungsformen und Ablaufform (Story 1,
+   *  Übungswelten). */
+  trainingAltersstufe: Altersstufe;
   name: string;
   trainingsteil: string;
   hauptteilkategorie: string | null;
@@ -49,7 +54,7 @@ export async function getFassungZumBearbeiten(
   // zur Compile-Zeit unbekannt, der typisierte Query-Parser kann ihn nicht
   // auswerten — gemappt wird unten ohnehin explizit.
   const select: string = `id, training_id, trainingsteil, hauptteilkategorie, ${INHALT},
-       trainings!inner ( id, name, owner_id, team_id, stufen )`;
+       trainings!inner ( id, name, owner_id, team_id, stufen, altersstufe )`;
   const { data: roh, error } = await supabase
     .from("training_exercises")
     .select(select)
@@ -82,6 +87,7 @@ export async function getFassungZumBearbeiten(
     uebungstyp: string | null;
     trainings: {
       stufen?: string[] | null;
+      altersstufe?: string | null;
       id: string;
       name: string;
       owner_id: string | null;
@@ -100,6 +106,10 @@ export async function getFassungZumBearbeiten(
     trainingId: data.training_id,
     trainingName: training.name,
     trainingStufen: training.stufen ?? [],
+    // Der Rückfall ist bloss der Typ-Guard: die Spalte ist NOT NULL.
+    trainingAltersstufe: istAltersstufe(training.altersstufe)
+      ? training.altersstufe
+      : "kinderfussball",
     name: q.name,
     trainingsteil: data.trainingsteil,
     hauptteilkategorie: data.hauptteilkategorie,

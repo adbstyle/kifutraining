@@ -1,11 +1,10 @@
 import {
   junioren_block as blockLabels,
   junioren_trainingsteil as jTeilLabels,
-  junioren_heimatSlugs,
   type JuniorenBlockSlug,
-  type KategorieSlug,
   type TrainingsteilSlug,
 } from "@/lib/vocab";
+import { kategorienFuer } from "@/lib/altersstufe";
 
 /**
  * Fachliches Fundament des Juniorenschemas (Epic #71): Schema-Bestimmung,
@@ -24,8 +23,10 @@ import {
 
 export type Schema = "kifu" | "junioren";
 
-const KIFU_STUFEN: readonly KategorieSlug[] = ["G", "F", "E"];
-const JUNIOREN_STUFEN: readonly KategorieSlug[] = ["D", "C", "B", "A"];
+// Die Aufteilung der Alterskategorien steht seit Story 1 (Übungswelten) in
+// web/lib/altersstufe.ts — einmal, für Übung wie Training.
+const KIFU_STUFEN: readonly string[] = kategorienFuer("kinderfussball");
+const JUNIOREN_STUFEN: readonly string[] = kategorienFuer("juniorenfussball");
 
 /** Schema aus den Stufen: mindestens eine Junioren-Kategorie ⇒ Juniorenschema;
  *  sonst — auch ohne jede Stufe — Kinderfussball (Story 3 AC 1/2). */
