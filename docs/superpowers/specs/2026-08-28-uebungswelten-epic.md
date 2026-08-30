@@ -94,18 +94,17 @@ Product Owner):
 | Ablaufbeschreibung | stufenabhängig, überführbar | Kinderfussball führt den methodischen Fahrplan, der Juniorenfussball eine Beschreibung |
 
 Die Ablaufbeschreibung ist der einzige inhaltlich wertvolle Text, der beim Wechsel
-sonst verloren ginge. Für sie greifen zwei Regeln in fester Rangfolge:
+sonst verloren ginge. Sie wird deshalb überführt: vom Kinderfussball zum
+Juniorenfussball werden die drei Fahrplan-Stufen zu einer Beschreibung zusammengeführt,
+in der Gegenrichtung wird die Beschreibung zur Stufe «Offen starten», die beiden übrigen
+bleiben leer und sind nachzutragen. Der Überführungs-Mechanismus existiert bereits für
+den Wechsel zwischen Fahrplan und Aufbau-Text innerhalb des Kinderfussballs.
 
-Hat die Übung die Zielstufe schon einmal bewohnt, kehrt sie zu dem Stand zurück, den
-sie dort verlassen hat — samt Fahrplan mit allen drei Stufen. Betritt sie die Zielstufe
-zum ersten Mal, wird überführt: vom Kinderfussball zum Juniorenfussball werden die drei
-Fahrplan-Stufen zu einer Beschreibung zusammengeführt, in der Gegenrichtung wird die
-Beschreibung zur Stufe «Offen starten», die beiden übrigen bleiben leer und sind
-nachzutragen. Der Überführungs-Mechanismus existiert bereits für den Wechsel zwischen
-Fahrplan und Aufbau-Text innerhalb des Kinderfussballs.
-
-Dieselbe Rangfolge gilt für alle stufenabhängigen Attribute: Aufbewahrung schlägt
-Überführung, Überführung schlägt Leeren.
+Für alle übrigen stufenabhängigen Attribute gilt: Überführung schlägt Leeren, und wo es
+keine Entsprechung gibt, wählt der Trainer in der Zielstufe neu. Aufbewahrt wird nichts
+— die verlassene Altersstufe behält keinen Stand (Refinement-Entscheid 2026-08-30). Der
+Anwendungsfall des Wechsels ist die einmalige Korrektur einer falsch gewählten
+Altersstufe, nicht das Hin und Her.
 
 ## 4. Epic
 
@@ -131,8 +130,8 @@ mir habe
    dem Lehrmittel ihrer Altersstufe; Begriffe der anderen Altersstufe erscheinen nicht
 3. Eine Übung lässt sich von einer Altersstufe in die andere überführen, ohne dass ihre
    stufenunabhängigen Angaben verloren gehen
-4. Die Angaben der verlassenen Altersstufe bleiben erhalten, sodass eine Rückkehr den vorherigen
-   Zustand wiederherstellt
+4. Eine Übung, die der falschen Altersstufe zugeordnet wurde, lässt sich richtigstellen,
+   ohne dass ihre stufenunabhängigen Angaben und ihr Diagramm neu zu erfassen sind
 5. Ein Junioren-Training bezieht seine Übungen ausschliesslich aus dem
    Juniorenfussball-Bestand, ein Kinderfussball-Training ausschliesslich aus dem
    Kinderfussball-Bestand
@@ -144,10 +143,8 @@ mir habe
 ### Out of Scope
 
 1. Die Applikation führt keinen kuratierten Übungsbestand für den Juniorenfussball ein
-2. Die Applikation gleicht die aufbewahrten stufenabhängigen Angaben nicht mit den
-   aktuellen ab; wer die Ablaufbeschreibung in einer Altersstufe überarbeitet, verändert
-   den aufbewahrten Stand der anderen nicht. Die stufenunabhängigen Angaben sind davon
-   nicht betroffen — sie gehören der Übung als Ganzes und kennen keine zwei Stände
+2. Die Applikation bewahrt die Angaben der verlassenen Altersstufe nicht auf; wer eine
+   Übung zurückwechselt, beginnt dort von vorn
 3. Die Applikation führt für den Juniorenfussball keine eigene Diagramm-Symbolik ein
 4. Die Applikation trennt die Altersstufen nicht im Übungskatalog und nicht in der Suche;
    die Trennung betrifft das Erfassen und Bearbeiten
@@ -172,10 +169,9 @@ Stories gelten, nicht mehr diese Tabelle.
 | 2 | Kinderfussball-Übung ohne Junioren-Begriffe erfassen | Rules | Business | 1 |
 | 3 | Junioren-Übung nach dem eigenen Lehrmittel erfassen | Rules | Business | 1 |
 | 4 | Übung in die andere Altersstufe überführen | Paths | Business | 2, 3 |
-| 5 | Angaben der verlassenen Altersstufe aufbewahren und bei Rückkehr wiederherstellen | Rules | Business | 4 |
-| 6 | Training in einer Altersstufe anlegen, die lebenslang gilt | Rules | Business | 1 |
-| 7 | Übungs-Picker auf die Altersstufe des Trainings beschränken | Rules | Business | 1, 6 |
-| 8 | Kuratierte oder fremde Übung direkt in den eigenen Bestand übernehmen | Paths | Business | — |
+| 5 | Training in einer Altersstufe anlegen, die lebenslang gilt | Rules | Business | 1 |
+| 6 | Übungs-Picker auf die Altersstufe des Trainings beschränken | Rules | Business | 1, 5 |
+| 7 | Kuratierte oder fremde Übung direkt in den eigenen Bestand übernehmen | Paths | Business | — |
 
 Story 1 ist ein Enabler: Sie macht die Zugehörigkeit zu einer geführten Angabe, ohne
 dass sich für den Trainer etwas ändert. Erst die Stories 2 und 3 machen den Nutzen
@@ -209,8 +205,7 @@ befüllbar werden.
 | Feldtyp | Nur Kinderfussball. Das Junioren-Manual nennt bei seinen Trainingsformen Spielfeldgrössen in Metern statt Feldtypen; die Junioren-Übung führt diese Spielfeldgrösse als eigene Angabe (2026-08-30) |
 | Übungstyp | Nur Juniorenfussball. Der Begriff stammt aus dem Manual Fussball Jugendliche; das Kinderfussball-Manual kennt ihn nicht |
 | Ablaufbeschreibung | Kinderfussball führt den methodischen Fahrplan, der Juniorenfussball eine Beschreibung. Beim Wechsel zum Juniorenfussball werden die Stufen zusammengeführt; zurück wird die Beschreibung zur Stufe «Offen starten», die übrigen bleiben leer |
-| Umgang mit den Daten der verlassenen Altersstufe | Sie bleiben erhalten und eingefroren. Eine Rückkehr stellt sie unverändert wieder her; Arbeit in der neuen Altersstufe bleibt dort und wirkt nicht zurück |
-| Sichtbarkeit der aufbewahrten Angaben | Keine. Die Aufbewahrung wirkt im Hintergrund und zeigt sich erst bei der Rückkehr |
+| Umgang mit den Daten der verlassenen Altersstufe | Sie werden verworfen. Aufbewahrt wird nichts, eine Rückkehr beginnt von vorn. Der Wechsel dient der einmaligen Korrektur einer falsch gewählten Altersstufe (2026-08-30, ersetzt den Entscheid, sie eingefroren zu erhalten) |
 | Diagramm | Bleibt beim Stufenwechsel unverändert, samt Kinderfussball-Symbolik |
 | Ort der Altersstufen-Wahl | Erfassen und Bearbeiten einer Übung. Katalog und Suche bleiben unverändert |
 | Bestehender Übungsbestand | Bleibt wie er ist und gilt als Kinderfussball; keine Nachpflege |
@@ -218,7 +213,7 @@ befüllbar werden.
 | Altersstufe eines Trainings | Wird beim Anlegen gewählt und steht danach fest. Die Alterskategorien sind auf die Werte dieser Altersstufe beschränkt und bestimmen die Altersstufe nicht mehr (2026-08-30) |
 | Wahl des Junioren-Trainingsteils | Zweistufig wie im Kinderfussball: erst Einstieg, Hauptteil oder Abschluss, dann der Block darin. Die Blocknamen sind lang, und die Zugehörigkeit zum Trainingsteil bleibt so sichtbar |
 | Aufbau des Junioren-Bestands | Kein geseedeter Grundbestand und keine gesenkte Veröffentlichungs-Hürde. Wer ein Junioren-Training veröffentlichen will, legt zuerst die nötigen Übungen an — das ist die natürliche Reihenfolge, kein Mangel |
-| Rückrichtung ohne aufbewahrten Stand | Eine Junioren-Übung aus dem Block «Spielformen und unterstützende Übungen» wird beim erstmaligen Wechsel zu Kinder als «Fussball spielen lernen» vorgeschlagen — die Begriffsbrücke, die das Junioren-Manual selbst zieht |
+| Rückrichtung der Abbildungsregel | Aufwärmen und Spielform zum Trainingsziel werden zur Einleitung, Spielformen und unterstützende Übungen zu «Fussball spielen lernen» — die Begriffsbrücke, die das Junioren-Manual selbst zieht —, Spiel zu «Fussball spielen», Ausklang zu Ausklang. Explosivität hat keine Entsprechung; dort wählt der Trainer selbst (vervollständigt 2026-08-30) |
 | Altersstufen-Wechsel eines Trainings | Wird gar nicht angeboten. Wer für die andere Altersstufe plant, legt ein neues Training an. Übungsbestand, Trainingsteile und Gliederung sind verschieden, fachlich ist ohnehin nichts übernehmbar (2026-08-30) |
 | Nacharbeit und automatische Umordnung im Training | Werden ersatzlos zurückgebaut. Ohne Altersstufen-Wechsel haben sie keinen Anwendungsfall mehr (2026-08-30) |
 | Migrationslage | Kein Migrationsproblem: Das Juniorenfussball-Epic liegt nur auf Staging und wurde nie auf Produktion ausgeliefert |
@@ -265,18 +260,25 @@ Alle gefallen am 2026-08-30 im Refinement mit dem Product Owner.
 4. Nacharbeit, automatische Umordnung nach der Abbildungsregel und die Einordnungs-Konserve
    an der Fassung werden zurückgebaut. Damit entfällt auch die Veröffentlichungsbedingung
    «keine offene Nacharbeit».
+5. Erfolgskriterium 4 lautete: «Die Angaben der verlassenen Altersstufe bleiben erhalten,
+   sodass eine Rückkehr den vorherigen Zustand wiederherstellt.» Es ist aufgehoben. Der
+   Wechsel überführt, bewahrt aber nichts auf; die Story zum Aufbewahren und
+   Wiederherstellen entfällt. Der Anwendungsfall ist die einmalige Richtigstellung einer
+   falsch gewählten Altersstufe — auf Produktion tragen Übungen die Kategorie E, die
+   fachlich zum Juniorenfussball gehören.
 
 ## 9. Offene Fragen
 
-1. @UX Designer: Wie erfährt der Trainer vor der Umwandlung, was mit seinen Angaben
-   geschieht — welche bleiben, welche werden überführt, welche fallen weg? Und wie
-   erfährt er es beim Wechsel eines ganzen Trainings, wo mehrere Übungen betroffen sind?
+1. @UX Designer: Wie erfährt der Trainer vor der Umwandlung einer Übung, was mit seinen
+   Angaben geschieht — welche bleiben, welche werden überführt, welche fallen weg?
 2. @UX Designer: Wie wird die Altersstufen-Wahl beim Erfassen dargestellt, und wie beim
    Bearbeiten einer bestehenden Übung, wo sie eine Umwandlung auslöst?
-3. @Product Owner: Eine Trainerin überarbeitet eine Übung in der Junioren-Altersstufe,
-   wechselt zurück und sieht den alten Kinderfussball-Stand — ohne Hinweis, dass ihre
-   Überarbeitung in der anderen Altersstufe weiterlebt. Ist diese Überraschung tragbar,
-   oder braucht es doch einen Hinweis?
-Die früheren Fragen 4 (wiederholter Wechsel) und 5 (Staging-Testdaten) sind am
-2026-08-30 beantwortet und als Entscheide in `2026-08-28-uebungswelten-stories.md`
-festgehalten.
+3. @Product Owner: In welcher Form erfasst der Trainer die Spielfeldgrösse einer
+   Junioren-Übung — als freien Text, oder als zwei Masse in Metern?
+
+Die früheren Fragen zur Rückkehr in eine verlassene Altersstufe, zum wiederholten Wechsel
+und zu den Staging-Testdaten sind am 2026-08-30 erledigt: Die ersten beiden sind
+gegenstandslos, weil nichts mehr aufbewahrt wird, die dritte ist beantwortet. Ebenso
+gegenstandslos ist die frühere Teilfrage zum Wechsel eines ganzen Trainings — ein
+Training wechselt die Altersstufe nicht mehr. Die Entscheide stehen in
+`2026-08-28-uebungswelten-stories.md`.

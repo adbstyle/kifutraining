@@ -13,7 +13,8 @@ oder das Vorgänger-Epic verändern, ist das vermerkt.
 | Altersstufe eines Trainings | Wird beim Anlegen gewählt und steht danach fest. Die Alterskategorien sind auf die Werte dieser Altersstufe beschränkt und bestimmen die Altersstufe nicht mehr |
 | Altersstufen-Wechsel eines Trainings | Wird gar nicht angeboten. Wer für die andere Altersstufe plant, legt ein neues Training an. Begründung: Übungsbestand, Trainingsteile und Gliederung sind verschieden, fachlich ist ohnehin nichts übernehmbar. Hebt Erfolgskriterium 6 des Epics auf |
 | Nacharbeit, automatische Umordnung, Einordnungs-Konserve am Training | Werden ersatzlos zurückgebaut. Ohne Altersstufen-Wechsel haben sie keinen Anwendungsfall mehr |
-| Aufbewahrung beim Altersstufen-Wechsel einer Übung | Genau ein Stand je Altersstufe, bei jedem Verlassen überschrieben. Eine zweite Rückkehr stellt den zuletzt verlassenen Stand her, nicht den des ersten Aufenthalts |
+| Altersstufen-Wechsel einer Übung | Wird überführt, nicht aufbewahrt. Die verlassene Altersstufe behält nichts; eine Rückkehr beginnt dort von vorn. Der Anwendungsfall ist die einmalige Korrektur, nicht das Hin und Her: Auf Produktion sind Übungen als Kategorie E erfasst, die fachlich zu D gehören und später von Hand richtiggestellt werden sollen. Hebt Erfolgskriterium 4 des Epics auf |
+| Rückrichtung der Abbildungsregel | Aufwärmen und Spielform zum Trainingsziel werden zur Einleitung, Spielformen und unterstützende Übungen zu «Fussball spielen lernen», Spiel zu «Fussball spielen», Ausklang zu Ausklang. Explosivität hat keine Entsprechung, weil der Kinderfussball diesen Trainingsinhalt nicht kennt; dort wählt der Trainer selbst |
 | Wechsel der Einordnung innerhalb einer Altersstufe | Bleibt wie heute: der Ablauftext wird überführt, die verlassene Form geleert. Nur der Wechsel der Altersstufe bewahrt auf |
 | Ablaufbeschreibung im Juniorenfussball | Durchgängig ein zusammenhängender Beschreibungstext, in allen sechs Blöcken, und Pflicht. Der methodische Fahrplan bleibt dem Kinderfussball vorbehalten. Ändert das Verhalten der Blöcke Aufwärmen und Spielform zum Trainingsziel gegenüber dem Vorgänger-Epic. Am Manual belegt: die Wörter «offen starten», «üben» und «wetteifern» kommen im Manual Fussball Jugendliche kein einziges Mal vor; eine Trainingsform steht dort als unbeschrifteter Fliesstext neben dem Diagramm (S. 58–83) |
 | Spielfeldgrösse | Eine Junioren-Übung trägt statt des Feldtyps eine Spielfeldgrösse. Das Manual führt sie zu praktisch jeder Trainingsform als eigene Angabe ausserhalb des Beschreibungstexts |
@@ -35,6 +36,10 @@ Alterskategorien D bis A noch den Übungstyp noch einen Junioren-Trainingsteil. 
 Juniorenfussball liegt ausschliesslich auf der Testumgebung. Dieses Epic korrigiert ihn,
 bevor er je auf Produktion erscheint.
 
+Ein Teil dieses Produktionsbestands ist fachlich falsch eingeordnet: Es gibt Übungen mit
+der Alterskategorie E, die zum Juniorenfussball gehören. Sie sollen von Hand
+richtiggestellt werden können — das ist der Anwendungsfall der Überführungs-Story.
+
 Die Trennung hat einen Preis, der dem Product Owner bewusst ist: Heute sind 71 der 75
 Manual-Übungen über die Abbildungsregel in Junioren-Trainings verwendbar. Danach sind es
 keine mehr. Ein Junioren-Trainer legt fünf eigene Übungen an, bevor er sein erstes
@@ -49,10 +54,9 @@ Das ist die natürliche Reihenfolge, kein Mangel.
 | 2 | Kinderfussball-Übung ohne Junioren-Begriffe erfassen | Rules | Business | 1 |
 | 3 | Junioren-Übung nach dem eigenen Lehrmittel erfassen | Rules | Business | 1, 2 |
 | 4 | Übung in die andere Altersstufe überführen | Paths | Business | 2, 3 |
-| 5 | Angaben der verlassenen Altersstufe aufbewahren und bei Rückkehr wiederherstellen | Rules | Business | 4 |
-| 6 | Training in einer Altersstufe anlegen, die lebenslang gilt | Rules | Business | 1 |
-| 7 | Übungs-Picker auf die Altersstufe des Trainings beschränken | Rules | Business | 1, 6 |
-| 8 | Kuratierte oder fremde Übung direkt in den eigenen Bestand übernehmen | Paths | Business | — |
+| 5 | Training in einer Altersstufe anlegen, die lebenslang gilt | Rules | Business | 1 |
+| 6 | Übungs-Picker auf die Altersstufe des Trainings beschränken | Rules | Business | 1, 5 |
+| 7 | Kuratierte oder fremde Übung direkt in den eigenen Bestand übernehmen | Paths | Business | — |
 
 ---
 
@@ -189,3 +193,53 @@ Kinderfussball-Didaktik zu übersetzen
 
 1. @UX Designer: Wie wird die Wahl der Altersstufe beim Erfassen dargestellt, und wie bleibt beim Einordnen einer Junioren-Übung erkennbar, zu welchem Trainingsteil ein Block gehört?
 2. @Product Owner: In welcher Form erfasst der Trainer die Spielfeldgrösse — als freien Text, oder als zwei Masse in Metern?
+
+---
+
+## Story 4: Übung in die andere Altersstufe überführen
+
+Als Trainer:in
+möchte ich eine eigene Übung, die ich der falschen Altersstufe zugeordnet habe, in die
+richtige überführen
+damit ich sie dort richtigstellen kann, ohne Titel, Bild, Diagramm, Material und Ablauf
+neu zu erfassen
+
+Der Anwendungsfall ist die Korrektur, nicht der Wechsel hin und her. Auf Produktion sind
+Übungen als Kategorie E erfasst, die fachlich zum Juniorenfussball gehören; sie sollen
+von Hand richtiggestellt werden können.
+
+### Preconditions
+
+1. Die Übung gehört dem USER
+2. Beide Altersstufen führen ihre eigenen Felder und Werte
+
+### Acceptance Criteria
+
+1. Der USER kann die Altersstufe einer eigenen Übung ändern
+2. Der USER erfährt vor der Umwandlung, welche Angaben unverändert bleiben, welche überführt werden und welche wegfallen
+3. Der USER muss die Umwandlung bestätigen
+4. Der USER kann die Umwandlung abbrechen
+5. Der USER wählt im selben Vorgang die Angaben der Zielstufe, für die es keine Entsprechung gibt
+6. Das SYSTEM lässt die Umwandlung einer kuratierten oder einer fremden Übung nicht zu
+
+### Postconditions
+
+1. Das SYSTEM behält Titel, Bild und Diagramm, Anzahl Kinder, Material und Varianten unverändert WENN der USER die Umwandlung bestätigt
+2. Das SYSTEM überführt die Ablaufbeschreibung in die Form der Zielstufe WENN der USER die Umwandlung bestätigt
+3. Das SYSTEM schlägt eine Einordnung in der Zielstufe vor, soweit die Abbildungsregel für die bisherige Einordnung eine Entsprechung kennt
+4. Das SYSTEM verwirft die Angaben der verlassenen Altersstufe WENN der USER die Umwandlung bestätigt
+5. Das SYSTEM lässt die Übung unverändert WENN der USER die Umwandlung abbricht
+6. Das SYSTEM lässt die Übungen in bestehenden Trainings unberührt; sie sind eigenständige Kopien und folgen der Umwandlung nicht
+
+### Out of Scope
+
+1. Die Applikation legt beim Überführen keine Kopie an; die Übung verlässt ihre bisherige Altersstufe
+2. Die Applikation bewahrt die Angaben der verlassenen Altersstufe nicht auf; eine Rückkehr beginnt dort von vorn
+3. Die Applikation überführt nicht mehrere Übungen auf einmal
+4. Der Übungskatalog und die Suche bleiben unverändert
+5. Die Applikation weist andere Trainer nicht darauf hin, dass eine öffentliche Übung die Altersstufe gewechselt hat
+6. Die Applikation passt das Diagramm nicht an die Zielstufe an
+
+### Offene Fragen
+
+1. @UX Designer: Wie erfährt der Trainer vor der Umwandlung, was mit seinen Angaben geschieht — welche bleiben, welche werden überführt, welche fallen weg?
