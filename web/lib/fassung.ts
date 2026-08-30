@@ -1,7 +1,7 @@
 // Fassungen: eigenständige, im Training lebende Kopien von Bibliotheks-Übungen
 // (Epic #72). Diese Datei hält die Regeln, die Erzeugung und Übernahme teilen —
 // die Server Actions bleiben dadurch dünn.
-import { brauchtFahrplan } from "@/lib/labels";
+import { brauchtFahrplan, type Altersstufe } from "@/lib/altersstufe";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { kopiereDiagramm, parseDiagramm } from "@/lib/diagramm";
 import type { createClient } from "@/lib/supabase/server";
@@ -14,6 +14,8 @@ export const FASSUNG_INHALT_FELDER = [
   "kategorien",
   "erscheinungsform",
   "feldtyp",
+  "spielfeld_laenge_m",
+  "spielfeld_breite_m",
   "anzahl_kinder",
   "material",
   "methodischer_fahrplan",
@@ -32,6 +34,7 @@ export const FASSUNG_INHALT_FELDER = [
  *  gelesen wird. Aus derselben Konstante wie das Kopieren: eine handgepflegte
  *  Zweitliste liesse ein neues Übungsfeld hier still wegfallen. */
 export const FASSUNG_UEBERNAHME_SELECT = [
+  "altersstufe",
   "trainingsteil",
   "hauptteilkategorie",
   ...FASSUNG_INHALT_FELDER,
@@ -66,6 +69,10 @@ function dateiendung(pfad: string): string {
  *  Bestand-Überführung. */
 export function fassungUnvollstaendig(f: {
   name: string | null;
+  /** Die Altersstufe entscheidet über die Ablaufform: der methodische Fahrplan
+   *  ist dem Kinderfussball vorbehalten, eine Junioren-Übung trägt in jedem
+   *  Block einen Beschreibungstext (Story 3, Übungswelten). */
+  altersstufe: Altersstufe;
   trainingsteil: string;
   hauptteilkategorie: string | null;
   methodischer_fahrplan: { offen_starten?: string; ueben?: string[]; wetteifern?: string | null } | null;
@@ -73,7 +80,7 @@ export function fassungUnvollstaendig(f: {
 }): string | null {
   if (!f.name?.trim()) return "Diese Übung hat keinen Namen.";
 
-  if (brauchtFahrplan(f.trainingsteil, f.hauptteilkategorie)) {
+  if (brauchtFahrplan(f.altersstufe, f.trainingsteil, f.hauptteilkategorie)) {
     const fp = f.methodischer_fahrplan;
     const vollstaendig =
       !!fp?.offen_starten?.trim() &&

@@ -29,11 +29,13 @@ import {
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
-import { HEIMAT_LABEL } from "@/lib/labels";
+import { EINORDNUNG_LABEL } from "@/lib/labels";
+import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
 
 export const dynamic = "force-dynamic";
 
-/** Beide Erscheinungsform-Vokabulare als eine flache Liste (Story 12). */
+/** Beide Erscheinungsform-Vokabulare als ein Nachschlagewerk: eine Übung
+ *  trägt nur die ihres Manuals, beschriftet werden hier bloss Slugs. */
 const alleFormLabels: Record<string, string> = { ...formLabels, ...formJuniorenLabels };
 
 export async function generateMetadata({
@@ -97,20 +99,32 @@ export default async function ExerciseDetailPage({
   // Favoriten-Aktion nur für angemeldete USER (AC2/AC11).
   const favorited = user ? await isFavorited(ex.id) : false;
 
-  // Trainingsteil wandert in die Brotkrumen (als Filter-Link auf den Pool);
-  // die Eyebrow-Zeile zeigt nur noch ergänzenden Kontext (Feldtyp).
-  const teilLabel =
-    HEIMAT_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
+  // Einordnung wandert in die Brotkrumen (als Filter-Link auf den Pool); die
+  // Eyebrow-Zeile zeigt nur noch ergänzenden Kontext.
+  const teilLabel = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
     { label: "Übungspool", href: "/" },
     { label: teilLabel, href: `/?teil=${ex.trainingsteil}` },
     { label: ex.name },
   ];
+  // Feldtyp und Spielfeldgrösse schliessen einander aus: der Feldtyp ist eine
+  // Kategorie des Manuals Fussball Kinder, die Spielfeldgrösse führt das
+  // Junioren-Manual an seiner Stelle (Story 3 AK 8/10).
+  const spielfeld =
+    traegtSpielfeldgroesse(ex.altersstufe) &&
+    ex.spielfeld_laenge_m != null &&
+    ex.spielfeld_breite_m != null
+      ? `${ex.spielfeld_laenge_m} × ${ex.spielfeld_breite_m} m`
+      : null;
   const meta = [
-    ex.feldtyp ? feldLabels[ex.feldtyp as keyof typeof feldLabels] : null,
+    traegtFeldtyp(ex.altersstufe) && ex.feldtyp
+      ? feldLabels[ex.feldtyp as keyof typeof feldLabels]
+      : null,
+    spielfeld,
   ].filter(Boolean);
   const anzahl = anzahlText(ex.anzahl_kinder);
   const hatEckdaten =
+    !!spielfeld ||
     !!ex.hauptteilkategorie ||
     !!ex.uebungstyp ||
     ex.erscheinungsform.length > 0 ||
@@ -213,6 +227,7 @@ export default async function ExerciseDetailPage({
         <div className="hidden print:block">
           <Meta label="Trainingsteil">{teilLabel}</Meta>
         </div>
+        {spielfeld && <Meta label="Spielfeldgrösse">{spielfeld}</Meta>}
         {ex.hauptteilkategorie && (
           <Meta label="Hauptteilkategorie">
             {hkatLabels[ex.hauptteilkategorie as keyof typeof hkatLabels] ??

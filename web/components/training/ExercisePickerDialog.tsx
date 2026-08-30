@@ -11,7 +11,7 @@ import {
   uebungstyp as uebungstypLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
-import { ERSCHEINUNGSFORM_TEILE } from "@/lib/labels";
+import { altersstufeDerEinordnung, traegtErscheinungsform } from "@/lib/altersstufe";
 import type { Einordnung } from "@/lib/junioren";
 import type { ExerciseListRow } from "@/lib/queries/exercises";
 
@@ -72,8 +72,11 @@ export function ExercisePickerDialog({
   const inFlightRef = useRef(0);
 
   // Erscheinungsformen tragen nicht alle Einordnungen — der Filter erscheint
-  // nur, wo er etwas findet (Story 12 Out of Scope 5).
-  const hatErscheinungsform = ERSCHEINUNGSFORM_TEILE.has(trainingsteil);
+  // nur, wo er etwas findet. Welche Altersstufe gilt, sagt der Ziel-Slug
+  // selbst: die Wertemengen der beiden Manuals sind überschneidungsfrei.
+  const zielStufe = altersstufeDerEinordnung(trainingsteil);
+  const hatErscheinungsform =
+    !!zielStufe && traegtErscheinungsform(zielStufe, trainingsteil);
 
   // Beim Öffnen und Schliessen Filter, Suche und Sitzungszählung zurücksetzen.
   useEffect(() => {

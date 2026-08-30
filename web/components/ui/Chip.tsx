@@ -78,6 +78,96 @@ export function FilterChip({
   );
 }
 
+/* ── Choice-Chip-Gruppe (Einfachauswahl, offen) ───────────────
+   Dasselbe, was die SegmentedControl leistet — genau EIN Wert aus einer
+   offen liegenden Menge —, aber für Werte, die in keine Segmentleiste
+   passen: «Spielformen und unterstützende Übungen» ist als Segment
+   unlesbar, als umbrechender Chip nicht. Darum Radiogroup-Semantik
+   (role=radiogroup / role=radio, aria-checked) statt der tab-artigen
+   Segmentleiste, mit Pfeiltasten-Navigation und wanderndem Tabstopp.
+
+   Optik: die bestehenden --chip-Tokens, ausgewählt wie der Filter-Chip.
+   Kein Häkchen — es ist eine Einfachauswahl, nicht ein Ein/Aus-Zustand,
+   und der Umriss-Wechsel trägt die Aussage bereits.
+
+   Bewusst hook-frei: Chip.tsx wird auch von Server-Komponenten importiert
+   (KategorieChip). Der Fokus wandert darum über das DOM statt über Refs. */
+export function ChoiceChip({
+  selected = false,
+  tabStop = false,
+  onSelect,
+  children,
+  className,
+}: {
+  selected?: boolean;
+  /** Trägt den Tabstopp, solange NICHTS gewählt ist — sonst wäre eine leere
+   *  Gruppe per Tastatur unerreichbar. Der Aufrufer setzt ihn auf dem ersten
+   *  Chip. */
+  tabStop?: boolean;
+  onSelect?: () => void;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  /** Pfeiltasten bewegen die Auswahl im Gruppen-Container und nehmen den
+   *  Fokus mit — so wie es die Radiogroup-Konvention verlangt. */
+  function handleKey(e: React.KeyboardEvent<HTMLButtonElement>) {
+    const richtung =
+      e.key === "ArrowRight" || e.key === "ArrowDown"
+        ? 1
+        : e.key === "ArrowLeft" || e.key === "ArrowUp"
+          ? -1
+          : 0;
+    if (richtung === 0) return;
+    const gruppe = e.currentTarget.parentElement;
+    if (!gruppe) return;
+    const chips = Array.from(
+      gruppe.querySelectorAll<HTMLButtonElement>('[role="radio"]'),
+    );
+    const i = chips.indexOf(e.currentTarget);
+    if (i < 0) return;
+    e.preventDefault();
+    const ziel = chips[(i + richtung + chips.length) % chips.length];
+    ziel.focus();
+    ziel.click();
+  }
+
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      tabIndex={selected || tabStop ? 0 : -1}
+      onClick={onSelect}
+      onKeyDown={handleKey}
+      className={cn(chipBase, selected ? chipSelected : chipOutlined, className)}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Der Container der Choice-Chips. Umbricht — das ist sein ganzer Zweck
+ *  gegenüber der horizontal scrollenden SegmentedControl. */
+export function ChoiceChipGroup({
+  ariaLabel,
+  children,
+  className,
+}: {
+  ariaLabel: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label={ariaLabel}
+      className={cn("flex flex-wrap gap-2", className)}
+    >
+      {children}
+    </div>
+  );
+}
+
 /* Assist-Chip — schlägt eine Aktion vor (führendes Icon + Label).
    `elevated`: weicher M3-Schatten statt Outline. */
 export function AssistChip({

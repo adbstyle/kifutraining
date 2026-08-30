@@ -5,7 +5,7 @@ import {
 } from "@/lib/vocab";
 import { likePattern } from "@/lib/search";
 import type { Altersstufe } from "@/lib/altersstufe";
-import { HEIMAT_LABEL } from "@/lib/labels";
+import { EINORDNUNG_LABEL } from "@/lib/labels";
 import { hatDiagramm } from "@/lib/diagramm";
 import type { ExerciseCardData } from "@/components/ui";
 
@@ -142,6 +142,10 @@ export type ExerciseDetail = {
   hauptteilkategorie: string | null;
   uebungstyp: string | null;
   feldtyp: string | null;
+  /** Spielfeldgrösse in Metern — nur im Juniorenfussball, nur paarweise
+   *  belegt (Story 3, Übungswelten). */
+  spielfeld_laenge_m: number | null;
+  spielfeld_breite_m: number | null;
   kategorien: string[];
   anzahl_kinder: { min?: number | null; max?: number | null } | null;
   material: string[];
@@ -165,7 +169,7 @@ export async function getExerciseDetail(
   const { data, error } = await supabase
     .from("exercises")
     .select(
-      "id, slug, name, altersstufe, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id",
+      "id, slug, name, altersstufe, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -231,8 +235,7 @@ export function toCardData(row: ExerciseListRow): ExerciseCardData {
     slug: row.slug,
     name: row.name,
     trainingsteilLabel:
-      HEIMAT_LABEL[row.trainingsteil] ??
-      row.trainingsteil,
+      EINORDNUNG_LABEL[row.trainingsteil] ?? row.trainingsteil,
     hauptteilkategorieLabel: row.hauptteilkategorie
       ? hauptteilkategorieLabels[
           row.hauptteilkategorie as keyof typeof hauptteilkategorieLabels

@@ -57,12 +57,11 @@ def test_vokabular_kategorien_und_junioren_bloecke():
         "jun-aufwaermen", "jun-spielform-trainingsziel", "jun-explosivitaet",
         "jun-spielformen", "jun-spiel", "jun-ausklang",
     ]
-    assert list(vocab["junioren_heimat"]) == [
-        "jun-aufwaermen", "jun-spielform-trainingsziel", "jun-explosivitaet",
-    ]
-    # Heimaten sind eine Teilmenge der Blöcke: gleicher Slug ⇒ die Heimat einer
-    # Übung IST ihr Einordnungs-Vorschlag (Entscheidungsdokument §4).
-    assert set(vocab["junioren_heimat"]) <= set(vocab["junioren_block"])
+    # Kein eigenes «Heimat»-Vokabular mehr: seit Story 3 (Epic Übungswelten)
+    # kann eine Junioren-Übung in JEDEM der sechs Blöcke zuhause sein, nicht
+    # mehr nur in den drei Einstiegs-Blöcken. `junioren_block` ist damit die
+    # eine Liste; die Teilmenge `junioren_heimat` ist ersatzlos entfallen.
+    assert "junioren_heimat" not in vocab
 
     assert list(vocab["uebungstyp"]) == ["basisspielform", "spielform", "isolierte-form"]
 

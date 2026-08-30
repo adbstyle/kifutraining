@@ -24,24 +24,26 @@ import { kategorienFuer } from "@/lib/altersstufe";
 export type Schema = "kifu" | "junioren";
 
 // Die Aufteilung der Alterskategorien steht seit Story 1 (Übungswelten) in
-// web/lib/altersstufe.ts — einmal, für Übung wie Training.
-const KIFU_STUFEN: readonly string[] = kategorienFuer("kinderfussball");
-const JUNIOREN_STUFEN: readonly string[] = kategorienFuer("juniorenfussball");
+// web/lib/altersstufe.ts — einmal, für Übung wie Training. Bewusst IN den
+// Funktionen abgerufen statt als Modul-Konstante: `altersstufe.ts` greift
+// seinerseits auf JUNIOREN_TEILE zu, und ein Aufruf zur Modul-Initialisierung
+// liefe je nach Ladereihenfolge in die temporale Totzone dieser Datei.
 
 /** Schema aus den Stufen: mindestens eine Junioren-Kategorie ⇒ Juniorenschema;
  *  sonst — auch ohne jede Stufe — Kinderfussball (Story 3 AC 1/2). */
 export function schemaAusStufen(stufen: readonly string[]): Schema {
-  return stufen.some((s) => (JUNIOREN_STUFEN as readonly string[]).includes(s))
-    ? "junioren"
-    : "kifu";
+  const juniorenStufen = kategorienFuer("juniorenfussball");
+  return stufen.some((s) => juniorenStufen.includes(s)) ? "junioren" : "kifu";
 }
 
 /** Trägt diese Stufen-Auswahl Kategorien BEIDER Schemata? Ein Training darf
  *  das nie (Story 3 AC 4) — eine Übung dagegen schon, sie kann beiden
  *  Schemata dienen (Story 2, Anmerkung). */
 export function stufenMischen(stufen: readonly string[]): boolean {
-  const kifu = stufen.some((s) => (KIFU_STUFEN as readonly string[]).includes(s));
-  const jun = stufen.some((s) => (JUNIOREN_STUFEN as readonly string[]).includes(s));
+  const kifuStufen = kategorienFuer("kinderfussball");
+  const juniorenStufen = kategorienFuer("juniorenfussball");
+  const kifu = stufen.some((s) => kifuStufen.includes(s));
+  const jun = stufen.some((s) => juniorenStufen.includes(s));
   return kifu && jun;
 }
 
@@ -271,8 +273,7 @@ export function heimatFilterFuerEinordnung(einordnung: string): {
   }
 }
 
-/** Alle gültigen Zuordnungsziele eines Trainings — die Nacharbeit gehört nicht
- *  dazu, in sie gerät eine Fassung nur durch den Schema-Wechsel. */
-export function zuordnungsZiele(schema: Schema): string[] {
-  return schema === "junioren" ? [...JUNIOREN_BLOCK_SLUGS] : [...TRAININGSTEIL_SLUGS_KIFU];
-}
+// Die gültigen Zuordnungsziele eines Trainings standen bis zum Epic
+// Übungswelten hier (`zuordnungsZiele`). Sie folgen jetzt aus der Altersstufe
+// und kommen aus `einordnungsSlugsFuer()` in web/lib/altersstufe.ts — derselben
+// Quelle, aus der auch eine Bibliotheks-Übung ihre Einordnung wählt.

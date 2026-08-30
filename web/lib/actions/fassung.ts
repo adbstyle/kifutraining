@@ -19,15 +19,7 @@ import {
   FASSUNG_UEBERNAHME_SELECT,
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
-import { TRAININGSTEIL_SLUGS } from "@/lib/training";
-import {
-  abbildungJuniorenZuKifu,
-  schemaAusStufen,
-  zuordnungsZiele,
-  NACHARBEIT,
-} from "@/lib/junioren";
-import { junioren_heimatSlugs } from "@/lib/vocab";
-import { altersstufeDerEinordnung, istAltersstufe } from "@/lib/altersstufe";
+import { istAltersstufe } from "@/lib/altersstufe";
 import { userSlug } from "@/lib/slug";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
@@ -45,7 +37,7 @@ async function ladeFassung(
   const { data } = await supabase
     .from("training_exercises")
     .select(
-      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, stufen, altersstufe )",
+      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, altersstufe )",
     )
     .eq("id", fassungId)
     .maybeSingle();
@@ -53,7 +45,6 @@ async function ladeFassung(
   const training = data.trainings as unknown as {
     owner_id: string | null;
     team_id: string | null;
-    stufen: string[] | null;
     altersstufe: string | null;
   } | null;
   if (!training) return null;
@@ -65,7 +56,6 @@ async function ladeFassung(
   return {
     ...data,
     ziel,
-    stufen: training.stufen ?? [],
     // Die Fassung folgt der Altersstufe ihres Trainings — sie hat keine eigene
     // (Story 1). Der Rückfall ist bloss der Typ-Guard: die Spalte ist NOT NULL.
     altersstufe: istAltersstufe(training.altersstufe)
@@ -114,17 +104,12 @@ export async function updateFassung(
   const fassung = await ladeFassung(supabase, fassungId, user.id);
   if (!fassung) return { status: "error", message: "Übung nicht gefunden." };
 
-  // Eine Fassung wird nach den Blöcken IHRES Trainingsschemas eingeordnet —
-  // die Nacharbeit eingeschlossen, aus der sie der Trainer herausholt.
-  // Die Nacharbeit steht nur zur Wahl, wenn die Fassung dort liegt — dorthin
-  // gerät sie nur durch den Schema-Wechsel, nie durch eine Zuordnung.
-  const parsed = parseUebungsInhalt(form, {
-    altersstufe: fassung.altersstufe,
-    erlaubteEinordnungen: [
-      ...zuordnungsZiele(schemaAusStufen(fassung.stufen)),
-      ...(fassung.trainingsteil === NACHARBEIT ? [NACHARBEIT] : []),
-    ],
-  });
+  // Eine Fassung wird nach den Einordnungen der Altersstufe IHRES Trainings
+  // eingeordnet — dieselbe Menge, die auch eine Bibliotheks-Übung dieser Stufe
+  // kennt. Eine eigene Optionsliste braucht es dafür nicht mehr: seit der
+  // Trennung der Altersstufen sind Übung und Fassung an denselben sechs bzw.
+  // vier Werten zuhause.
+  const parsed = parseUebungsInhalt(form, { altersstufe: fassung.altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
   // Die Altersstufe der Fassung setzt der DB-Trigger `te_altersstufe_erben`
   // aus ihrem Training; die Applikation schreibt die Spalte nie selbst.
@@ -224,6 +209,7 @@ export async function updateFassung(
 /** Eine Fassung, wie sie fürs Übernehmen in die Bibliothek gelesen wird
  *  (FASSUNG_UEBERNAHME_SELECT). */
 type ZuUebernehmendeFassung = {
+  altersstufe: string | null;
   trainingsteil: string;
   hauptteilkategorie: string | null;
   name: string | null;
@@ -254,22 +240,14 @@ export async function uebernehmeInBibliothek(
     .maybeSingle<ZuUebernehmendeFassung>();
   if (!f) return { ok: false, error: "Diese Übung ist nicht mehr verfügbar." };
 
-  // Die Heimat bestimmen, BEVOR die Vollständigkeit geprüft wird: eine Fassung
-  // in einem Junioren-Block wird als Kinderfussball-Übung abgelegt, und dort
-  // gilt deren Ablauf-Regel. Andersherum meldete die Prüfung eine fehlende
-  // Beschreibung an einer Übung, die vollständig ist.
-  const heimat = heimatAusEinordnung(f.trainingsteil, f.hauptteilkategorie);
-  if (!heimat)
-    return {
-      ok: false,
-      error: "Ordne die Übung zuerst einem Block zu, bevor du sie übernimmst.",
-    };
+  // Die Kopie behält die Altersstufe des Originals — und mit ihr Einordnung
+  // und Ablaufform. Eine Rückabbildung zwischen den Schemata gibt es hier nicht
+  // mehr: seit der Trennung der Altersstufen ist jeder Block, in dem eine
+  // Fassung liegen kann, auch ein gültiger Ort einer Bibliotheks-Übung
+  // derselben Stufe.
+  const altersstufe = istAltersstufe(f.altersstufe) ? f.altersstufe : "kinderfussball";
 
-  const mangel = fassungUnvollstaendig({
-    ...f,
-    trainingsteil: heimat.trainingsteil,
-    hauptteilkategorie: heimat.hauptteilkategorie,
-  });
+  const mangel = fassungUnvollstaendig({ ...f, altersstufe });
   if (mangel) return { ok: false, error: mangel };
 
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
@@ -282,12 +260,9 @@ export async function uebernehmeInBibliothek(
     .insert({
       id: uebungId,
       slug: userSlug(f.name!),
-      trainingsteil: heimat.trainingsteil,
-      // Die Altersstufe folgt der Heimat, in der die Übung landet — sonst
-      // widerspräche sie ihrem Trainingsteil und die Datenebene wiese den
-      // Insert ab (`ex_trainingsteil_je_altersstufe`).
-      altersstufe: altersstufeDerEinordnung(heimat.trainingsteil) ?? "kinderfussball",
-      hauptteilkategorie: heimat.hauptteilkategorie,
+      trainingsteil: f.trainingsteil,
+      altersstufe,
+      hauptteilkategorie: f.hauptteilkategorie,
       ...inhaltFelder(f),
       bild_url: bild.url,
       diagramm: kopiereDiagrammVon(f.diagramm),
@@ -346,21 +321,4 @@ export async function saveFassungDiagramm(
 
   revalidiereTraining(fassung.training_id, fassungId);
   return { ok: true };
-}
-
-/** Einordnung einer Fassung im Training → Heimat der neuen Bibliotheks-Übung.
- *  `null`, wenn die Fassung in der Nacharbeit liegt: dort hat sie gerade
- *  keinen Platz, und eine Heimat liesse sich nur raten. */
-function heimatAusEinordnung(
-  einordnung: string,
-  hauptteilkategorie: string | null,
-): { trainingsteil: string; hauptteilkategorie: string | null } | null {
-  // Kinderfussball-Teile und die drei Junioren-Heimaten sind selbst Heimaten.
-  if (
-    (TRAININGSTEIL_SLUGS as readonly string[]).includes(einordnung) ||
-    (junioren_heimatSlugs as readonly string[]).includes(einordnung)
-  )
-    return { trainingsteil: einordnung, hauptteilkategorie };
-  const rueck = abbildungJuniorenZuKifu(einordnung);
-  return rueck === NACHARBEIT ? null : rueck;
 }

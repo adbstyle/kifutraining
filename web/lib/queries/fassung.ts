@@ -11,9 +11,6 @@ export type FassungZumBearbeiten = {
   id: string;
   trainingId: string;
   trainingName: string;
-  /** Stufen des Trainings — sie bestimmen sein Schema und damit die
-   *  Einordnungen, die für diese Fassung zur Wahl stehen (Epic #71). */
-  trainingStufen: string[];
   /** Altersstufe des Trainings. Die Fassung folgt ihr; sie entscheidet über
    *  Alterskategorien, Erscheinungsformen und Ablaufform (Story 1,
    *  Übungswelten). */
@@ -25,6 +22,10 @@ export type FassungZumBearbeiten = {
   kategorien: string[];
   erscheinungsform: string[];
   feldtyp: string | null;
+  /** Spielfeldgrösse in Metern — nur im Juniorenfussball, nur paarweise
+   *  belegt (Story 3, Übungswelten). */
+  spielfeldLaengeM: number | null;
+  spielfeldBreiteM: number | null;
   anzahlKinder: { min?: number | null; max?: number | null } | null;
   material: string[];
   fahrplan: Fahrplan | null;
@@ -54,7 +55,7 @@ export async function getFassungZumBearbeiten(
   // zur Compile-Zeit unbekannt, der typisierte Query-Parser kann ihn nicht
   // auswerten — gemappt wird unten ohnehin explizit.
   const select: string = `id, training_id, trainingsteil, hauptteilkategorie, ${INHALT},
-       trainings!inner ( id, name, owner_id, team_id, stufen, altersstufe )`;
+       trainings!inner ( id, name, owner_id, team_id, altersstufe )`;
   const { data: roh, error } = await supabase
     .from("training_exercises")
     .select(select)
@@ -70,6 +71,8 @@ export async function getFassungZumBearbeiten(
     kategorien: string[] | null;
     erscheinungsform: string[] | null;
     feldtyp: string | null;
+    spielfeld_laenge_m: number | null;
+    spielfeld_breite_m: number | null;
     anzahl_kinder: { min?: number | null; max?: number | null } | null;
     material: string[] | null;
     methodischer_fahrplan: Fahrplan | null;
@@ -86,7 +89,6 @@ export async function getFassungZumBearbeiten(
     hauptteilkategorie: string | null;
     uebungstyp: string | null;
     trainings: {
-      stufen?: string[] | null;
       altersstufe?: string | null;
       id: string;
       name: string;
@@ -105,7 +107,6 @@ export async function getFassungZumBearbeiten(
     id: data.id,
     trainingId: data.training_id,
     trainingName: training.name,
-    trainingStufen: training.stufen ?? [],
     // Der Rückfall ist bloss der Typ-Guard: die Spalte ist NOT NULL.
     trainingAltersstufe: istAltersstufe(training.altersstufe)
       ? training.altersstufe
@@ -117,6 +118,8 @@ export async function getFassungZumBearbeiten(
     kategorien: q.kategorien ?? [],
     erscheinungsform: q.erscheinungsform ?? [],
     feldtyp: q.feldtyp,
+    spielfeldLaengeM: q.spielfeld_laenge_m,
+    spielfeldBreiteM: q.spielfeld_breite_m,
     anzahlKinder: q.anzahl_kinder,
     material: q.material ?? [],
     fahrplan: q.methodischer_fahrplan,

@@ -76,14 +76,6 @@ export const junioren_block = {
 export type JuniorenBlockSlug = keyof typeof junioren_block;
 export const junioren_blockSlugs = Object.keys(junioren_block) as JuniorenBlockSlug[];
 
-export const junioren_heimat = {
-  "jun-aufwaermen": "Aufwärmen",
-  "jun-spielform-trainingsziel": "Spielform zum Trainingsziel",
-  "jun-explosivitaet": "Explosivität"
-} as const;
-export type JuniorenHeimatSlug = keyof typeof junioren_heimat;
-export const junioren_heimatSlugs = Object.keys(junioren_heimat) as JuniorenHeimatSlug[];
-
 export const uebungstyp = {
   "basisspielform": "Basisspielform",
   "spielform": "Spielform",

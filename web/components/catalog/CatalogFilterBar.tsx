@@ -13,7 +13,7 @@ import {
   erscheinungsform_junioren as formJuniorenLabels,
   hauptteilkategorie as hkatLabels,
   uebungstyp as uebungstypLabels,
-  junioren_heimat as juniorenHeimatLabels,
+  junioren_block as juniorenBlockLabels,
   kategorienSlugs,
 } from "@/lib/vocab";
 import { kategorieStufe } from "@/lib/labels";
@@ -34,18 +34,21 @@ export type CatalogFilters = {
 // Optionen aus dem Vokabular (Slug → Label). Reihenfolge = Definitionsreihenfolge.
 const toOptions = (rec: Record<string, string>) =>
   Object.entries(rec).map(([value, label]) => ({ value, label }));
-// Trainingsteil-Filter über beide Welten: die vier Kinderfussball-Teile und
-// die drei Junioren-Heimaten, in zwei beschrifteten Gruppen (Epic #71).
-const teilOptions = [
+// Trainingsteil-Filter über beide Welten: die vier Trainingsteile des Manuals
+// Fussball Kinder und die sechs Blöcke des Manuals Fussball Jugendliche, in
+// zwei beschrifteten Gruppen. Der Katalog filtert bewusst über BEIDE
+// Altersstufen (Story 2 Out of Scope 2) — er ist der eine Ort, an dem der
+// ganze sichtbare Bestand nebeneinandersteht.
+const teilOptions: { value: string; label: string; group: string }[] = [
   ...Object.entries(teilLabels).map(([value, label]) => ({
     value,
-    label,
+    label: label as string,
     group: "Kinderfussball",
   })),
-  ...Object.entries(juniorenHeimatLabels).map(([value, label]) => ({
+  ...Object.entries(juniorenBlockLabels).map(([value, label]) => ({
     value,
-    label,
-    group: "Juniorenfussball — Einstieg",
+    label: label as string,
+    group: "Juniorenfussball",
   })),
 ];
 const feldOptions = toOptions(feldLabels);

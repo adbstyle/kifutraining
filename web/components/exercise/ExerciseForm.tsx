@@ -2,64 +2,62 @@
 
 import { useState, useActionState, startTransition } from "react";
 import { Save } from "lucide-react";
-import {
-  TextField,
-  TextArea,
-  Select,
-  FilterChip,
-  Button,
-  SegmentedControl,
-} from "@/components/ui";
+import { TextField, TextArea, Select, FilterChip, Button } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
-  trainingsteil as teilLabels,
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
   erscheinungsform_junioren as formJuniorenLabels,
   hauptteilkategorie as hkatLabels,
-  kategorienSlugs,
-  trainingsteilSlugs,
-  junioren_heimat as juniorenHeimatLabels,
-  junioren_heimatSlugs,
   uebungstyp as uebungstypLabels,
   uebungstypSlugs,
 } from "@/lib/vocab";
 import {
   kategorieStufe,
-  FAHRPLAN_NUR_OFFEN,
-  ERSCHEINUNGSFORM_TEILE,
   UEBUNGSTYP_DEFINITION,
   FREIES_SPIEL,
-  brauchtFahrplan,
-  brauchtFahrplanFuerFassung,
   ueberfuehreAblauf,
 } from "@/lib/labels";
+import {
+  brauchtFahrplan,
+  einordnungenFuer,
+  erscheinungsformenFuer,
+  kategorienFuer,
+  traegtErscheinungsform,
+  traegtFeldtyp,
+  traegtHauptteilkategorie,
+  traegtSpielfeldgroesse,
+  traegtUebungstyp,
+  type Altersstufe,
+} from "@/lib/altersstufe";
+import { AltersstufeField } from "@/components/exercise/AltersstufeField";
+import { EinordnungField } from "@/components/exercise/EinordnungField";
+import { SpielfeldgroesseField } from "@/components/exercise/SpielfeldgroesseField";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
 
-/** Die Heimaten einer Bibliotheks-Übung: vier Kinderfussball-Trainingsteile
- *  und die drei Einstiegs-Unterblöcke des Juniorenschemas. */
-const heimatOptionen = [
-  ...trainingsteilSlugs.map((t) => ({
-    value: t,
-    label: teilLabels[t],
-    group: "Kinderfussball",
-  })),
-  ...junioren_heimatSlugs.map((t) => ({
-    value: t,
-    label: juniorenHeimatLabels[t],
-    group: "Juniorenfussball — Einstieg",
-  })),
-];
-
-/** Beide Erscheinungsform-Vokabulare als eine flache Liste (Story 12). */
+/** Beide Erscheinungsform-Vokabulare als ein Nachschlagewerk. Welches davon
+ *  gilt, entscheidet die Altersstufe — hier werden nur Slugs beschriftet. */
 const alleFormLabels: Record<string, string> = { ...formLabels, ...formJuniorenLabels };
+
+/** Zu welchem Trainingsteil gehört diese Einordnung? Im Kinderfussball ist sie
+ *  der Teil selbst, im Juniorenfussball der Teil ihres Blocks. Beim Bearbeiten
+ *  schlägt das Formular damit den richtigen Teil auf. */
+function teilVonEinordnung(stufe: Altersstufe, einordnung: string): string {
+  const gruppen = einordnungenFuer(stufe);
+  const treffer = gruppen.find(
+    (g) => g.teil === einordnung || g.bloecke.some((b) => b.slug === einordnung),
+  );
+  return (treffer ?? gruppen[0]).teil;
+}
 
 export type ExerciseInitial = {
   name?: string;
   trainingsteil?: string;
   kategorien?: string[];
   feldtyp?: string | null;
+  spielfeld_laenge_m?: number | null;
+  spielfeld_breite_m?: number | null;
   erscheinungsform?: string[];
   hauptteilkategorie?: string | null;
   uebungstyp?: string | null;
@@ -91,7 +89,9 @@ function Group({ title, error, children }: { title: string; error?: string; chil
 export function ExerciseForm({
   action,
   initial = {},
-  einordnungsOptionen,
+  altersstufe: initialeStufe,
+  stufenWahl,
+  kontext,
   submitLabel,
   afterName,
   bildEntfernenMoeglich = false,
@@ -99,10 +99,15 @@ export function ExerciseForm({
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
-  /** Zur Auswahl stehende Einordnungen. Ohne Angabe die Heimaten einer
-   *  Bibliotheks-Übung; eine Fassung im Training bekommt stattdessen die
-   *  Blöcke ihres Trainingsschemas übergeben (Epic #71). */
-  einordnungsOptionen?: { value: string; label: string; group?: string }[];
+  /** Nach welchem Lehrmittel erfasst wird. Beim Bearbeiten die gespeicherte
+   *  Stufe der Übung bzw. die ihres Trainings, beim Erfassen die Vorbelegung. */
+  altersstufe: Altersstufe;
+  /** Darf der USER die Altersstufe hier wählen? Nur beim Erfassen — danach ist
+   *  sie fest, und das Überführen ist ein eigener Weg (Story 4). */
+  stufenWahl: "waehlbar" | "fest";
+  /** Bibliotheks-Übung oder Fassung in einem Training. Steuert ausschliesslich
+   *  die Beschriftung; die Felder selbst hängen an der Altersstufe. */
+  kontext: "bibliothek" | "fassung";
   submitLabel: string;
   /** Optionaler Slot direkt unter dem Namensfeld (z. B. die Diagramm-Vorschau). */
   afterName?: React.ReactNode;
@@ -114,10 +119,22 @@ export function ExerciseForm({
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const err = state.errors ?? {};
 
+  const [stufe, setStufe] = useState<Altersstufe>(initialeStufe);
   const [teil, setTeil] = useState<string>(initial.trainingsteil ?? "");
+  // Nur Anzeige-Navigation im Juniorenschema: welcher Trainingsteil
+  // aufgeschlagen ist. Gespeichert wird immer die Einordnung selbst.
+  const [offenerTeil, setOffenerTeil] = useState<string>(
+    teilVonEinordnung(initialeStufe, initial.trainingsteil ?? ""),
+  );
   const [kat, setKat] = useState<string[]>(initial.kategorien ?? []);
   const [form, setForm] = useState<string[]>(initial.erscheinungsform ?? []);
   const [feld, setFeld] = useState<string>(initial.feldtyp ?? "");
+  const [laenge, setLaenge] = useState<string>(
+    initial.spielfeld_laenge_m != null ? String(initial.spielfeld_laenge_m) : "",
+  );
+  const [breite, setBreite] = useState<string>(
+    initial.spielfeld_breite_m != null ? String(initial.spielfeld_breite_m) : "",
+  );
   const [hkat, setHkat] = useState<string>(initial.hauptteilkategorie ?? "");
   const [uebungstyp, setUebungstyp] = useState<string>(initial.uebungstyp ?? "");
   const [bildError, setBildError] = useState<string | null>(null);
@@ -135,25 +152,28 @@ export function ExerciseForm({
   );
   const [aufbau, setAufbau] = useState(initial.aufbau ?? "");
 
-  // Bei einer Fassung in einem Junioren-Block ohne eigene Fahrplan-Regel
-  // entscheidet ihr Inhalt, welche Ablauf-Form das Formular zeigt.
-  const istFahrplan = brauchtFahrplanFuerFassung(
-    teil,
-    hkat,
-    offenStarten.trim() !== "" || (initial.methodischer_fahrplan ?? null) !== null,
-  );
-  // Hauptteilkategorie ist genau bei Hauptteil-Übungen Pflicht (Enabler #21).
-  const istHauptteil = teil === "hauptteil";
+  // Das Feld-Gating kommt geschlossen aus lib/altersstufe.ts — derselben
+  // Quelle, gegen die die Server Action prüft und die die DB-CHECKs spiegelt.
+  // Weicht das Formular davon ab, verlangt es entweder ein Feld, das der Server
+  // verwirft, oder es verschweigt eines, das er einfordert.
+  const istFahrplan = brauchtFahrplan(stufe, teil, hkat);
+  const zeigtHkat = traegtHauptteilkategorie(stufe, teil);
+  const zeigtForm = traegtErscheinungsform(stufe, teil);
+  const zeigtTyp = traegtUebungstyp(stufe, teil);
+  const zeigtFeldtyp = traegtFeldtyp(stufe);
+  const zeigtSpielfeld = traegtSpielfeldgroesse(stufe);
   // Das freie Spiel trägt eine Beschreibung statt des Fahrplans (Story 2).
-  const istFreiesSpiel = istHauptteil && hkat === FREIES_SPIEL;
+  const istFreiesSpiel = zeigtHkat && hkat === FREIES_SPIEL;
+
   const toggle = (arr: string[], set: (v: string[]) => void, v: string) =>
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
   /** Einordnung wechseln und den bisherigen Ablauftext als Ausgangstext in die
-   *  neue Form überführen (Story 2 AK 3) — redigiert wird von Hand. */
+   *  neue Form überführen (Story 2 AK 3) — redigiert wird von Hand. Gilt nur
+   *  INNERHALB einer Altersstufe; der Stufenwechsel leert stattdessen. */
   function wechsleEinordnung(neuerTeil: string, neueHkat: string) {
-    const nachher = brauchtFahrplan(neuerTeil, neueHkat);
-    if (brauchtFahrplan(teil, hkat) !== nachher) {
+    const nachher = brauchtFahrplan(stufe, neuerTeil, neueHkat);
+    if (istFahrplan !== nachher) {
       const neu = ueberfuehreAblauf(nachher, { offenStarten, ueben, wetteifern, aufbau });
       setOffenStarten(neu.offenStarten);
       setUeben(neu.ueben);
@@ -161,7 +181,44 @@ export function ExerciseForm({
       setAufbau(neu.aufbau);
     }
     setTeil(neuerTeil);
+    setOffenerTeil(teilVonEinordnung(stufe, neuerTeil));
     setHkat(neueHkat);
+  }
+
+  /** Im Juniorenschema den Trainingsteil aufschlagen. Er ist nicht selbst die
+   *  Einordnung — gespeichert wird der Block. Damit Segment und Auswahl nie
+   *  auseinanderlaufen (und das Formular nie still einen Block behält, den man
+   *  gar nicht mehr sieht), zieht der Teilwechsel die Einordnung mit: liegt die
+   *  bisherige in diesem Teil, bleibt sie; sonst gilt sein erster Block. */
+  function wechsleTeil(neuerTeil: string) {
+    const gruppe = einordnungenFuer(stufe).find((g) => g.teil === neuerTeil);
+    if (!gruppe) return;
+    if (gruppe.bloecke.length === 0) return wechsleEinordnung(neuerTeil, hkat);
+    if (gruppe.bloecke.some((b) => b.slug === teil)) return setOffenerTeil(neuerTeil);
+    wechsleEinordnung(gruppe.bloecke[0].slug, hkat);
+  }
+
+  /** Altersstufe wechseln — nur beim Erfassen möglich, an einer noch nicht
+   *  gespeicherten Übung. Jedes stufenabhängige Feld beginnt leer: die beiden
+   *  Manuals führen verschiedene Einordnungen, Alterskategorien,
+   *  Erscheinungsformen und Ablaufformen, ein übernommener Wert wäre nie der
+   *  richtige. Name, Material, Varianten, Anzahl Kinder und Bild sind
+   *  lehrmittelunabhängig und bleiben stehen. */
+  function wechsleAltersstufe(neu: Altersstufe) {
+    setStufe(neu);
+    setTeil("");
+    setOffenerTeil(einordnungenFuer(neu)[0].teil);
+    setKat([]);
+    setForm([]);
+    setHkat("");
+    setUebungstyp("");
+    setFeld("");
+    setLaenge("");
+    setBreite("");
+    setOffenStarten("");
+    setUeben("");
+    setWetteifern("");
+    setAufbau("");
   }
 
   // FormData direkt aus dem DOM bauen und die Chip-/Select-Werte aus dem State
@@ -197,19 +254,22 @@ export function ExerciseForm({
     }
 
     setBildError(null);
+    // Die Altersstufe wertet nur das Erstellen aus; beim Bearbeiten nimmt die
+    // Server Action die gespeicherte bzw. die des Trainings (Story 1 AC 9).
+    fd.set("altersstufe", stufe);
     fd.set("trainingsteil", teil);
     fd.set("kat", kat.join(","));
-    // Erscheinungsform hängt am Trainingsteil, nicht an der Ablauf-Form: auch
-    // das freie Spiel darf eine tragen (DB-Constraint).
-    fd.set("form", ERSCHEINUNGSFORM_TEILE.has(teil) ? form.join(",") : "");
-    fd.set("uebungstyp", uebungstyp);
-    // Welche Ablauf-Form gilt, hat das Formular schon entschieden — es rendert
-    // danach. Der Server soll dieselbe Antwort nutzen, statt sie aus dem
-    // Feldinhalt neu zu raten: sonst rutschte er in den anderen Zweig und
-    // verlangte ein Feld, das gar nicht auf dem Bildschirm steht.
-    fd.set("ablauf_form", istFahrplan ? "fahrplan" : "aufbau");
-    fd.set("hauptteilkategorie", istHauptteil ? hkat : "");
-    fd.set("feldtyp", feld);
+    // Jedes gegatete Feld wird EXPLIZIT leer gesetzt, wenn es nicht gerendert
+    // ist: sonst überlebte ein Altwert im DOM oder — schlimmer — ein von aussen
+    // untergeschobener den Wechsel. Der Server verwirft ihn ohnehin (dort sitzt
+    // die Trust-Boundary), aber das Formular soll dieselbe Aussage senden, die
+    // es zeigt.
+    fd.set("form", zeigtForm ? form.join(",") : "");
+    fd.set("uebungstyp", zeigtTyp ? uebungstyp : "");
+    fd.set("hauptteilkategorie", zeigtHkat ? hkat : "");
+    fd.set("feldtyp", zeigtFeldtyp ? feld : "");
+    fd.set("spielfeld_laenge", zeigtSpielfeld ? laenge : "");
+    fd.set("spielfeld_breite", zeigtSpielfeld ? breite : "");
     fd.set("bild_entfernen", bildEntfernen ? "1" : "");
     startTransition(() => formAction(fd));
   }
@@ -233,48 +293,70 @@ export function ExerciseForm({
 
       {afterName}
 
-      {/* Heimat der Übung: ein Kinderfussball-Trainingsteil ODER einer der
-          drei Einstiegs-Unterblöcke des Juniorenschemas — nie beides
-          (Entscheidungsdokument §4). Sieben Werte aus zwei Welten sprengen das
-          SegmentedControl; die Liste beschriftet darum ihre beiden Gruppen. */}
-      <div>
-        <Select
-          label={einordnungsOptionen ? "Einordnung" : "Heimat"}
-          name="trainingsteil"
-          value={teil}
-          onChange={(v) => wechsleEinordnung(v, hkat)}
-          error={!!err.trainingsteil}
-          supportingText={
-            err.trainingsteil ??
-            (einordnungsOptionen
-              ? "Wo die Übung in diesem Training liegt."
-              : "Wo die Übung zuhause ist. Sie lässt sich auch in Trainings des anderen Schemas verwenden, wo es eine Entsprechung gibt.")
-          }
-          options={einordnungsOptionen ?? heimatOptionen}
-        />
-      </div>
+      <AltersstufeField
+        wert={stufe}
+        onChange={stufenWahl === "waehlbar" ? wechsleAltersstufe : undefined}
+        festHinweis={
+          kontext === "fassung"
+            ? "Folgt dem Training — Felder und Werte kommen aus dessen Manual."
+            : undefined
+        }
+      />
+
+      {/* Die Einordnung liegt wieder offen statt in einem Auswahlmenü. Sie war
+          eine Zeit lang ein Select, weil sieben Werte aus zwei Welten in einer
+          Liste standen und keine Segmentleiste sie trug. Mit der Trennung der
+          Altersstufen ist dieser Grund entfallen: Es sind nie mehr als vier
+          Kinderfussball-Teile oder drei Junioren-Teile mit ihren Blöcken, und
+          welche Einordnung gilt, entscheidet über die halbe Maske darunter —
+          das gehört sichtbar, nicht eingeklappt (PO-Vorgabe 2026-08-30). */}
+      <EinordnungField
+        altersstufe={stufe}
+        wert={teil}
+        teil={offenerTeil}
+        onTeilChange={wechsleTeil}
+        onChange={(v) => wechsleEinordnung(v, hkat)}
+        error={err.trainingsteil}
+        supportingText={
+          kontext === "fassung"
+            ? "Wo die Übung in diesem Training liegt."
+            : "Wo die Übung im Trainingsablauf ihren Platz hat."
+        }
+      />
 
       <Group title="Alterskategorie" error={err.kat}>
-        {kategorienSlugs.map((k) => (
+        {kategorienFuer(stufe).map((k) => (
           <FilterChip key={k} selected={kat.includes(k)} onClick={() => toggle(kat, setKat, k)}>
-            <span title={kategorieStufe[k]}>{k}</span>
+            <span title={kategorieStufe[k as keyof typeof kategorieStufe]}>{k}</span>
           </FilterChip>
         ))}
       </Group>
 
-      <Select
-        label="Feldtyp (optional)"
-        className="max-w-xs"
-        value={feld}
-        onChange={setFeld}
-        options={[
-          { value: "", label: "— kein Feldtyp —" },
-          ...(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => ({
-            value: t,
-            label: feldLabels[t],
-          })),
-        ]}
-      />
+      {zeigtFeldtyp && (
+        <Select
+          label="Feldtyp (optional)"
+          className="max-w-xs"
+          value={feld}
+          onChange={setFeld}
+          options={[
+            { value: "", label: "— kein Feldtyp —" },
+            ...(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => ({
+              value: t,
+              label: feldLabels[t],
+            })),
+          ]}
+        />
+      )}
+
+      {zeigtSpielfeld && (
+        <SpielfeldgroesseField
+          laenge={laenge}
+          breite={breite}
+          onLaengeChange={setLaenge}
+          onBreiteChange={setBreite}
+          error={err.spielfeld}
+        />
+      )}
 
       {teil && (istFahrplan ? (
         <fieldset className="flex flex-col gap-5 rounded-[6px] border border-outline-variant p-5">
@@ -294,10 +376,7 @@ export function ExerciseForm({
             onChange={(e) => setUeben(e.target.value)}
             error={!!err.ueben}
             supportingText={
-              err.ueben ??
-              (FAHRPLAN_NUR_OFFEN.has(teil)
-                ? "Optional — ein Schritt pro Zeile."
-                : "Pflichtfeld — mindestens ein Schritt, einer pro Zeile.")
+              err.ueben ?? "Pflichtfeld — mindestens ein Schritt, einer pro Zeile."
             }
           />
           <TextArea
@@ -306,12 +385,7 @@ export function ExerciseForm({
             value={wetteifern}
             onChange={(e) => setWetteifern(e.target.value)}
             error={!!err.wetteifern}
-            supportingText={
-              err.wetteifern ??
-              (FAHRPLAN_NUR_OFFEN.has(teil)
-                ? "Optional — nicht jede Aufwärmform hat einen Wettkampf-Teil."
-                : "Pflichtfeld — der spielerische Wettkampf-Teil.")
-            }
+            supportingText={err.wetteifern ?? "Pflichtfeld — der spielerische Wettkampf-Teil."}
           />
         </fieldset>
       ) : (
@@ -330,7 +404,7 @@ export function ExerciseForm({
         />
       ))}
 
-      {istHauptteil && (
+      {zeigtHkat && (
         <div>
           <Select
             label="Hauptteilkategorie"
@@ -351,34 +425,35 @@ export function ExerciseForm({
         </div>
       )}
 
-      {/* Übungstyp: optionale Selbstauskunft, für alle Übungen beider
-          Schemata. Die Kurzdefinition steht beim Zuweisen dabei — «Spielform»
-          bezeichnet im Lehrmittel drei verschiedene Dinge (Story 9 AC 4). */}
-      <div>
-        <Select
-          label="Übungstyp (optional)"
-          name="uebungstyp"
-          value={uebungstyp}
-          onChange={setUebungstyp}
-          options={[
-            { value: "", label: "— kein Übungstyp —" },
-            ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
-          ]}
-          supportingText={
-            uebungstyp ? UEBUNGSTYP_DEFINITION[uebungstyp] : "Wie das Manual die Trainingsform einordnet."
-          }
-        />
-      </div>
+      {/* Übungstyp: optionale Selbstauskunft des Junioren-Manuals, und nur in
+          den Blöcken, in denen eine Spielform vorkommen kann. Die
+          Kurzdefinition steht beim Zuweisen dabei — «Spielform» bezeichnet im
+          Lehrmittel drei verschiedene Dinge (Story 9 AC 4). */}
+      {zeigtTyp && (
+        <div>
+          <Select
+            label="Übungstyp (optional)"
+            value={uebungstyp}
+            onChange={setUebungstyp}
+            options={[
+              { value: "", label: "— kein Übungstyp —" },
+              ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
+            ]}
+            supportingText={
+              uebungstyp ? UEBUNGSTYP_DEFINITION[uebungstyp] : "Wie das Manual die Trainingsform einordnet."
+            }
+          />
+        </div>
+      )}
 
-      {/* Beide Vokabulare in einer flachen Liste, in der Reihenfolge ihrer
-          Quellen: zuerst die sechs des Kinderfussball-Manuals, dann die elf
-          des Junioren-Manuals. Eine Gruppierung nach Spielphasen hat der
+      {/* Die Erscheinungsformen des Manuals, dem diese Übung folgt — in der
+          Reihenfolge ihrer Quelle. Eine Gruppierung nach Spielphasen hat der
           Product Owner bewusst abgelehnt (Story 12 Out of Scope 2). */}
-      {ERSCHEINUNGSFORM_TEILE.has(teil) && (
+      {zeigtForm && (
         <Group title="Erscheinungsform (optional)">
-          {Object.entries(alleFormLabels).map(([f, label]) => (
+          {erscheinungsformenFuer(stufe).map((f) => (
             <FilterChip key={f} selected={form.includes(f)} onClick={() => toggle(form, setForm, f)}>
-              {label}
+              {alleFormLabels[f] ?? f}
             </FilterChip>
           ))}
         </Group>

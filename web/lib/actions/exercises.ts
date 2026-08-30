@@ -7,7 +7,7 @@ import { userSlug } from "@/lib/slug";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
-import { altersstufeDerEinordnung, istAltersstufe } from "@/lib/altersstufe";
+import { istAltersstufe } from "@/lib/altersstufe";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 
 export type ExerciseFormState = {
@@ -66,14 +66,14 @@ export async function createExercise(
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", message: "Nicht angemeldet." };
 
-  // Transitional (Story 1 Out of Scope 1): Der Trainer wählt die Altersstufe
-  // noch nicht selbst — sie folgt aus der gewählten Heimat. Mit Story 3 wird
-  // sie im Formular gewählt und diese Ableitung fällt weg. Ist die Heimat
-  // ungültig, gilt Kinderfussball; die Heimat-Prüfung in parseUebungsInhalt
-  // meldet den eigentlichen Fehler.
-  const altersstufe =
-    altersstufeDerEinordnung(String(form.get("trainingsteil") ?? "").trim()) ??
-    "kinderfussball";
+  // Beim Erfassen wählt der Trainer die Altersstufe selbst (Story 3 AK 1) —
+  // das ist die EINZIGE Stelle, an der sie aus dem Formular kommt. Danach ist
+  // sie fest; das Überführen in die andere Stufe ist ein eigener,
+  // ausdrücklicher Weg (Story 4). Ein unbekannter Wert fällt auf den
+  // Kinderfussball zurück (Story 1 AC 8), und die Einordnungs-Prüfung in
+  // parseUebungsInhalt meldet den daraus folgenden Widerspruch.
+  const gewaehlt = String(form.get("altersstufe") ?? "").trim();
+  const altersstufe = istAltersstufe(gewaehlt) ? gewaehlt : "kinderfussball";
 
   const parsed = parseUebungsInhalt(form, { altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };

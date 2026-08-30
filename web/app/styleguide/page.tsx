@@ -22,6 +22,7 @@ import {
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { SegmentedDemo } from "./SegmentedDemo";
 import { ChipsDemo } from "./ChipsDemo";
+import { ChoiceChipDemo } from "./ChoiceChipDemo";
 import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
 import { HeaderNavDemo } from "./HeaderNavDemo";
@@ -465,12 +466,58 @@ export default function Styleguide() {
         <ChipsDemo />
       </Section>
 
-      <Section n="09" title="Segmented Control">
+      <Section n="09" title="Offene Einfachauswahl">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Einfachauswahl (z. B. Trainingsteil), tab-artig mit
-          Pfeiltasten-Navigation. Aktives Segment = <code>primary</code>.
+          Genau <strong>ein</strong> Wert aus einer Menge, die offen liegt —
+          kein aufklappendes Menü. Zwei Bausteine für dieselbe Aufgabe, die
+          Wahl entscheidet die <strong>Länge der Werte</strong>:{" "}
+          <code>SegmentedControl</code> für kurze Beschriftungen (Trainingsteil,
+          Altersstufe), <code>ChoiceChipGroup</code> für lange, die umbrechen
+          müssen. Beides trägt Pfeiltasten-Navigation und einen wandernden
+          Tabstopp.
+        </p>
+        <p className="type-label-small mb-2 text-on-surface-variant">
+          <code>SegmentedControl</code> — kurze Werte, eine Zeile
+        </p>
+        <p className="type-body-medium mb-3 max-w-xl text-on-surface-variant">
+          Tab-artig (<code>role=tablist</code>), aktives Segment ={" "}
+          <code>primary</code>. Auf Mobile horizontal scrollbar. Ab etwa vier
+          Wörtern pro Segment kippt das: die Leiste scrollt, und der Nutzer
+          sieht seine Optionen nicht mehr nebeneinander — dann Chips.
         </p>
         <SegmentedDemo />
+
+        <p className="type-label-small mb-2 mt-8 text-on-surface-variant">
+          <code>ChoiceChipGroup</code> — lange Werte, umbrechend
+        </p>
+        <p className="type-body-medium mb-3 max-w-xl text-on-surface-variant">
+          Radiogroup-Semantik (<code>role=radiogroup</code> /{" "}
+          <code>role=radio</code>, <code>aria-checked</code>) statt der
+          tab-artigen Leiste — es ist ein Eingabefeld, keine Ansicht. Optik aus
+          den <code>--chip-*</code>-Tokens, ausgewählt wie der Filter-Chip, aber
+          <strong> ohne Häkchen</strong>: Einfachauswahl ist kein Ein/Aus-Zustand,
+          und der Umriss-Wechsel trägt die Aussage bereits. Anlass war der
+          Junioren-Block «Spielformen und unterstützende Übungen» — als Segment
+          unlesbar, als Chip nicht.
+        </p>
+        <ChoiceChipDemo />
+
+        <div className="mt-6 rounded-[4px] border border-outline-variant bg-surface-container-low p-4">
+          <p className="type-label-large mb-1 text-on-surface">
+            Warum die Einordnung einer Übung wieder offen liegt
+          </p>
+          <p className="type-body-medium max-w-xl text-on-surface-variant">
+            Sie war eine Zeit lang ein <code>Select</code>, weil sieben Werte aus
+            zwei Lehrmitteln in einer Liste standen und keine Segmentleiste sie
+            trug. Mit der Trennung der Altersstufen ist dieser Grund entfallen:
+            Es sind nie mehr als vier Kinderfussball-Trainingsteile oder drei
+            Junioren-Trainingsteile mit ihren Blöcken. Und weil die Einordnung
+            über die halbe Maske darunter entscheidet, gehört sie sichtbar statt
+            eingeklappt (PO-Vorgabe 2026-08-30). Im Juniorenschema stehen beide
+            Bausteine übereinander: Segmentleiste für den Trainingsteil, Chips
+            für seine Blöcke — so bleibt sichtbar, wozu ein Block gehört.
+          </p>
+        </div>
       </Section>
 
       <Section n="10" title="Übungskarten">
