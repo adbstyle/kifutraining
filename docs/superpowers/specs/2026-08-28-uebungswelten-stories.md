@@ -21,8 +21,11 @@ oder das Vorgänger-Epic verändern, ist das vermerkt.
 | Erscheinungsformen im Juniorenfussball | Alle sechs Blöcke dürfen sie tragen, der Ausklang eingeschlossen. Er ist im Manual mehr als das Ausklingen des Kinderfussballs: Cool-down, Mobilität und Austausch — und der Austausch trifft die Erscheinungsform «Positiv miteinander umgehen» |
 | Übungstyp je Block | Nur in Blöcken, in denen eine Spielform vorkommen kann: Aufwärmen, Spielform zum Trainingsziel, Spielformen und unterstützende Übungen sowie Spiel. Explosivität und Ausklang tragen keinen, weil die Typologie des Manuals spielnahe taktische Trainingsformen gliedert |
 | Übernahme in den eigenen Bestand | Eine kuratierte oder fremde Übung lässt sich direkt aus dem Katalog übernehmen. Bisher führte der einzige Weg über ein Training |
-| Übungs-Picker | Filtert ausschliesslich auf die Altersstufe des Trainings, nicht zusätzlich auf den Zielblock |
-| Junioren-Testdaten auf der Testumgebung | Dürfen verworfen werden. Damit entfällt jede Migrationsregel für Übungen mit Werten beider Altersstufen |
+| Übungs-Picker | Filtert neu auf die Altersstufe des Trainings, zusätzlich zur bestehenden Einschränkung auf den Zielblock. Diese Einschränkung bleibt: Sie besteht heute schon und schützt davor, dass eine Explosivitäts-Übung im Ausklang landet |
+| Fachliche Eignung einer umgewandelten Übung | Wird nicht geprüft. Über Übernehmen und Umwandeln liesse sich der Kinderfussball-Manualbestand formal in den Juniorenfussball tragen; die Inhalte blieben für Fünf- bis Zehnjährige gedacht. Das verantwortet der Trainer — die Applikation macht ohnehin keine fachlichen Vorschläge |
+| Junioren-Testdaten auf der Testumgebung | Dürfen verworfen werden, Übungen wie Trainings. Damit entfällt jede Migrationsregel für Übungen mit Werten beider Altersstufen und für Trainings mit offener Nacharbeit |
+| Gemischt trainierte Jahrgänge | Werden bewusst nicht unterstützt. Wer E und D in einer Einheit trainiert, entscheidet sich für ein Lehrmittel und führt das Training dort. Die beiden Manuals lassen sich in einer Einheit ohnehin nicht mischen — das ist die Prämisse dieses Epics |
+| Aufstieg einer Mannschaft von E nach D | Die Trainerin legt ihre Trainings in der neuen Altersstufe neu an. Der Aufwand ist bewusst in Kauf genommen: Trainingsteile und Gliederung der beiden Schemata sind verschieden, ein übernommenes Training brächte nichts fachlich Brauchbares mit |
 | Stufenfremde Altwerte an einer Übung | Wo eine Übung einen Wert der anderen Altersstufe trägt, wird er beim Umstellen entfernt, unabhängig davon ob die Übung sonst als Testdatum gilt. Auf Produktion gibt es solche Werte nicht; der Eingriff trifft ausschliesslich die Testumgebung |
 | Benennung der Altersstufe in der Oberfläche | Wird dort eingeführt, wo die Wahl entsteht: in der Junioren-Story. Solange nur eine Altersstufe existiert, sagt das Formular nichts darüber |
 | Kategorie FF12 | Reine Mädchenteams arbeiten mit der Alterskategorie E, wie FF-14-Teams mit D. Das Vokabular bleibt bei G, F und E |
@@ -56,7 +59,7 @@ Das ist die natürliche Reihenfolge, kein Mangel.
 | 4 | Übung in die andere Altersstufe überführen | Paths | Business | 2, 3 |
 | 5 | Training in einer Altersstufe anlegen, die lebenslang gilt | Rules | Business | 1 |
 | 6 | Übungs-Picker auf die Altersstufe des Trainings beschränken | Rules | Business | 1, 5 |
-| 7 | Kuratierte oder fremde Übung direkt in den eigenen Bestand übernehmen | Paths | Business | — |
+| 7 | Kuratierte oder fremde Übung direkt in den eigenen Bestand übernehmen | Paths | Business | 1 |
 
 ---
 
@@ -243,3 +246,125 @@ von Hand richtiggestellt werden können.
 ### Offene Fragen
 
 1. @UX Designer: Wie erfährt der Trainer vor der Umwandlung, was mit seinen Angaben geschieht — welche bleiben, welche werden überführt, welche fallen weg?
+
+---
+
+## Story 5: Training in einer Altersstufe anlegen, die lebenslang gilt
+
+Als Trainer:in
+möchte ich beim Anlegen eines Trainings entscheiden, ob ich für den Kinderfussball oder
+für den Juniorenfussball plane
+damit das Training von Anfang an der Gliederung meines Lehrmittels folgt und mir diese
+Wahl nicht versehentlich verrutscht
+
+### Preconditions
+
+1. Jedes Training trägt eine geführte Altersstufe
+2. Der gesamte Trainingsbestand gehört der Altersstufe Kinderfussball an
+
+### Acceptance Criteria
+
+1. Der USER muss beim Anlegen eines Trainings dessen Altersstufe wählen
+2. Der USER erkennt an einem Training, welcher Altersstufe es folgt
+3. Der USER sieht an einem Training ausschliesslich die Alterskategorien seiner Altersstufe
+4. Der USER kann die Altersstufe eines bestehenden Trainings nicht mehr ändern
+5. Der USER sieht in einem Training keinen Bereich für Nacharbeit mehr
+
+### Postconditions
+
+1. Das SYSTEM behält die Altersstufe eines Trainings über dessen ganze Lebensdauer bei, auch wenn eine Änderung die Oberfläche umgeht
+2. Das SYSTEM gliedert ein Training nach dem Trainingsschema seiner Altersstufe
+3. Das SYSTEM ordnet die Übungen eines Trainings nicht mehr selbsttätig um
+4. Das SYSTEM prüft beim Veröffentlichen eines Trainings keine offene Nacharbeit mehr
+5. Das SYSTEM gibt einer Kopie und einem ins Team gestellten Training dieselbe Altersstufe wie dem Original
+
+### Out of Scope
+
+1. Das SYSTEM überführt kein bestehendes Training in die andere Altersstufe
+2. Das SYSTEM ändert die übrigen Bedingungen für das Veröffentlichen eines Trainings nicht
+3. Das SYSTEM ändert nichts daran, wie ein Training kopiert, ins Team gestellt und terminiert wird
+4. Das SYSTEM ändert nichts an den Zeitbandbreiten des Junioren-Trainingsschemas
+5. Das SYSTEM kennt kein Training, das Alterskategorien beider Altersstufen trägt
+
+### Offene Fragen
+
+Keine.
+
+---
+
+## Story 6: Übungs-Picker auf die Altersstufe des Trainings beschränken
+
+Als Trainer:in
+möchte ich beim Zuordnen einer Übung zu meinem Training nur Übungen meiner Altersstufe
+angeboten bekommen
+damit ich nicht aus einem Bestand wähle, dessen Didaktik zu meinem Training nicht passt
+
+### Preconditions
+
+1. Jede Übung und jedes Training trägt eine geführte Altersstufe
+
+### Acceptance Criteria
+
+1. Der USER sieht beim Zuordnen ausschliesslich Übungen der Altersstufe seines Trainings
+2. Der USER sieht beim Zuordnen weiterhin nur Übungen, die zum Zielblock gehören
+3. Der USER erfährt, wenn der für ihn sichtbare Bestand seiner Altersstufe keine passende Übung enthält, dass er zuerst eine erfassen muss
+4. Das SYSTEM lässt die Zuordnung einer Übung der anderen Altersstufe nicht zu, auch wenn sie die Oberfläche umgeht
+
+### Postconditions
+
+1. Das SYSTEM übernimmt eine Übung unverändert als eigenständige Kopie ins Training
+2. Das SYSTEM ordnet die Kopie dem Block zu, für den der USER sie ausgewählt hat
+
+### Out of Scope
+
+1. Der Übungskatalog und die Suche bleiben unverändert
+2. Das SYSTEM schlägt keine Übung nach fachlicher Eignung vor
+3. Das SYSTEM ändert nichts daran, wie der Zielblock die angebotenen Übungen einschränkt
+4. Das SYSTEM ändert nichts an den Filtern und der Suche innerhalb der Auswahl
+
+### Offene Fragen
+
+Keine.
+
+---
+
+## Story 7: Kuratierte oder fremde Übung direkt in den eigenen Bestand übernehmen
+
+Als Trainer:in
+möchte ich eine kuratierte oder eine fremde Übung direkt aus dem Katalog in meinen eigenen
+Bestand übernehmen
+damit ich sie anpassen kann, ohne den Umweg über ein Training zu nehmen
+
+Die Kopie behält die Altersstufe des Originals. Wer sie in der anderen Altersstufe
+braucht, wandelt sie anschliessend um; das sind zwei getrennte Vorgänge.
+
+### Preconditions
+
+1. Die Übung ist für den USER sichtbar
+2. Die Übung gehört nicht dem USER
+
+### Acceptance Criteria
+
+1. Der USER kann eine kuratierte Übung in seinen eigenen Bestand übernehmen
+2. Der USER kann eine fremde öffentliche Übung in seinen eigenen Bestand übernehmen
+3. Der USER kann dieselbe Übung mehrfach übernehmen und erhält jedes Mal eine eigenständige Kopie
+4. Der USER erkennt nach der Übernahme, dass die Kopie ihm gehört
+
+### Postconditions
+
+1. Das SYSTEM legt die Kopie privat an WENN der USER die Übernahme auslöst
+2. Das SYSTEM übernimmt in die Kopie alle inhaltlichen Angaben des Originals, Bild und Diagramm eingeschlossen
+3. Das SYSTEM gibt der Kopie dieselbe Altersstufe wie dem Original
+4. Das SYSTEM lässt das Original unverändert
+5. Das SYSTEM hält die Kopie vollständig nutzbar, auch WENN das Original später geändert, privat gestellt oder gelöscht wird
+
+### Out of Scope
+
+1. Das SYSTEM überführt die Kopie nicht in die andere Altersstufe; dafür wandelt der USER sie anschliessend um
+2. Das SYSTEM zeigt nicht an, woraus eine Kopie hervorgegangen ist
+3. Das SYSTEM ändert nichts daran, wie eine Übung aus einem Training in den eigenen Bestand zurückgeholt wird
+4. Das SYSTEM prüft nicht, ob die Inhalte einer umgewandelten Übung zur Zielaltersstufe passen
+
+### Offene Fragen
+
+1. @UX Designer: Landet der Trainer nach der Übernahme bei seiner Kopie, oder bleibt er im Katalog?

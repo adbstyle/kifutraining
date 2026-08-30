@@ -191,7 +191,11 @@ befüllbar werden.
    auslöst
 3. Die Attribute beider Welten stammen aus derselben kontrollierten Vokabularquelle wie
    bisher
-4. Der bestehende Kinderfussball-Bestand erfährt keinen Eingriff und keine Nachpflege
+4. Der bestehende Kinderfussball-Bestand bleibt ohne Nachpflege durch den Trainer nutzbar.
+   Eingegriffen wird einzig dort, wo eine Übung heute einen Wert der anderen Altersstufe
+   trägt; auf Produktion gibt es solche Werte nicht
+5. Die Zugehörigkeit einer Übung und eines Trainings zu ihrer Altersstufe hält auch dann,
+   wenn eine Änderung die Oberfläche umgeht
 
 ## 7. Getroffene Entscheide
 
