@@ -22,6 +22,7 @@ import {
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { SegmentedDemo } from "./SegmentedDemo";
 import { ChipsDemo } from "./ChipsDemo";
+import { ChoiceChipDemo } from "./ChoiceChipDemo";
 import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
 import { HeaderNavDemo } from "./HeaderNavDemo";
@@ -97,11 +98,18 @@ const accentRoles: [string, string][] = [
 ];
 
 // Alterskategorien als Palette-Farben (Token + Stufe) — die kanonische
-// Quelle für G/F/E-Farben; keine neuen Hues erfinden.
+// Quelle für die Kategorie-Farben; keine neuen Hues erfinden.
+// G/F/E gehören zum Kinderfussball, D/C/B/A zum Juniorenfussball (Epic #71).
+// Sieben Werte lassen sich nicht mehr allein über die Farbe unterscheiden:
+// jedes Badge trägt darum immer den Buchstaben (siehe KategorieChip).
 const kategorieColors: [string, string, string][] = [
   ["kat-g", "bg-kat-g", "G-Junior:innen"],
   ["kat-f", "bg-kat-f", "F-Junior:innen"],
   ["kat-e", "bg-kat-e", "E-Junior:innen"],
+  ["kat-d", "bg-kat-d", "D-Junior:innen"],
+  ["kat-c", "bg-kat-c", "C-Junior:innen"],
+  ["kat-b", "bg-kat-b", "B-Junior:innen"],
+  ["kat-a", "bg-kat-a", "A-Junior:innen"],
 ];
 
 const typeScale: [string, string][] = [
@@ -458,12 +466,81 @@ export default function Styleguide() {
         <ChipsDemo />
       </Section>
 
-      <Section n="09" title="Segmented Control">
+      <Section n="09" title="Offene Einfachauswahl">
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
-          Einfachauswahl (z. B. Trainingsteil), tab-artig mit
-          Pfeiltasten-Navigation. Aktives Segment = <code>primary</code>.
+          Genau <strong>ein</strong> Wert aus einer Menge, die offen liegt —
+          kein aufklappendes Menü. Zwei Bausteine für dieselbe Aufgabe, die
+          Wahl entscheidet die <strong>Länge der Werte</strong>:{" "}
+          <code>SegmentedControl</code> für kurze Beschriftungen (Trainingsteil,
+          Altersstufe), <code>ChoiceChipGroup</code> für lange, die umbrechen
+          müssen. Beides trägt Pfeiltasten-Navigation und einen wandernden
+          Tabstopp.
+        </p>
+        <p className="type-label-small mb-2 text-on-surface-variant">
+          <code>SegmentedControl</code> — kurze Werte, eine Zeile
+        </p>
+        <p className="type-body-medium mb-3 max-w-xl text-on-surface-variant">
+          Tab-artig (<code>role=tablist</code>), aktives Segment ={" "}
+          <code>primary</code>. Auf Mobile horizontal scrollbar. Ab etwa vier
+          Wörtern pro Segment kippt das: die Leiste scrollt, und der Nutzer
+          sieht seine Optionen nicht mehr nebeneinander — dann Chips.
         </p>
         <SegmentedDemo />
+
+        <p className="type-label-small mb-2 mt-8 text-on-surface-variant">
+          <code>ChoiceChipGroup</code> — lange Werte, umbrechend
+        </p>
+        <p className="type-body-medium mb-3 max-w-xl text-on-surface-variant">
+          Radiogroup-Semantik (<code>role=radiogroup</code> /{" "}
+          <code>role=radio</code>, <code>aria-checked</code>) statt der
+          tab-artigen Leiste — es ist ein Eingabefeld, keine Ansicht. Optik aus
+          den <code>--chip-*</code>-Tokens, ausgewählt wie der Filter-Chip, aber
+          <strong> ohne Häkchen</strong>: Einfachauswahl ist kein Ein/Aus-Zustand,
+          und der Umriss-Wechsel trägt die Aussage bereits. Anlass war der
+          Junioren-Block «Spielformen und unterstützende Übungen» — als Segment
+          unlesbar, als Chip nicht.
+        </p>
+        <ChoiceChipDemo />
+
+        <div className="mt-6 rounded-[4px] border border-outline-variant bg-surface-container-low p-4">
+          <p className="type-label-large mb-1 text-on-surface">
+            Warum die Einordnung einer Übung wieder offen liegt
+          </p>
+          <p className="type-body-medium max-w-xl text-on-surface-variant">
+            Sie war eine Zeit lang ein <code>Select</code>, weil sieben Werte aus
+            zwei Lehrmitteln in einer Liste standen und keine Segmentleiste sie
+            trug. Mit der Trennung der Altersstufen ist dieser Grund entfallen:
+            Es sind nie mehr als vier Kinderfussball-Trainingsteile oder drei
+            Junioren-Trainingsteile mit ihren Blöcken. Und weil die Einordnung
+            über die halbe Maske darunter entscheidet, gehört sie sichtbar statt
+            eingeklappt (PO-Vorgabe 2026-08-30). Im Juniorenschema stehen beide
+            Bausteine übereinander: Segmentleiste für den Trainingsteil, Chips
+            für seine Blöcke — so bleibt sichtbar, wozu ein Block gehört.
+          </p>
+        </div>
+
+        <div className="mt-4 rounded-[4px] border border-outline-variant bg-surface-container-low p-4">
+          <p className="type-label-large mb-1 text-on-surface">
+            <code>AltersstufeField</code> — eine Wahl, zwei Domänen
+          </p>
+          <p className="type-body-medium max-w-xl text-on-surface-variant">
+            Übung und Training wählen dieselbe Altersstufe und teilen sich darum
+            denselben Baustein im Kit. Er hat drei Zustände: <strong>offene
+            Wahl</strong> (Segmentleiste), <strong>fest</strong> (neutraler{" "}
+            <code>Badge</code> plus Erklärsatz) und <strong>ungewählt</strong>{" "}
+            (<code>wert = null</code>). Der letzte ist der Ausgangszustand am
+            Training: Die Wahl bindet dort lebenslang und darf nicht durch eine
+            Voreinstellung durchrutschen — an der Übung ist sie vorbelegt, weil
+            eine Übung umwandelbar bleibt. Der Badge ist bewusst neutral: Die
+            Altersstufe ist keine Alterskategorie und borgt deren gelernte
+            Farbcodierung nicht. Der feste Zustand nimmt über{" "}
+            <code>aktion</code> ein Bedienelement neben dem Badge auf — dort
+            hängt das Überführen einer eigenen Übung in die andere Altersstufe.
+            Es gehört nicht in die Segmentleiste: An einer gespeicherten Übung
+            ist der Stufenwechsel kein Feld, sondern ein eigener, zu
+            bestätigender Vorgang.
+          </p>
+        </div>
       </Section>
 
       <Section n="10" title="Übungskarten">

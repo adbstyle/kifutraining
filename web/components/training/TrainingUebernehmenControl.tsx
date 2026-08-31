@@ -28,7 +28,11 @@ export function TrainingUebernehmenControl({
     startTransition(async () => {
       const res = await uebernimmTraining(quelleId, ziel);
       setOffen(false);
-      if (res.ok) {
+      if (res.ok && res.trainingId) {
+        // PO-Entscheid Übungswelten-Epic: nach der Übernahme direkt zur Kopie —
+        // bei Trainings wie bei Übungen.
+        router.push(`/training/${res.trainingId}?uebernommen=1`);
+      } else if (res.ok) {
         router.refresh();
         setNotice(`Kopie liegt jetzt ${wohin}.`);
       } else {

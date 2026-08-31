@@ -120,6 +120,11 @@ async function seedExercises() {
     const row: Record<string, unknown> = {
       slug: u.id,
       name: u.name,
+      // Der Manual-Bestand ist per Definition Kinderfussball: er stammt aus
+      // dem Manual Fussball Kinder (Story 1, Übungswelten). Ausdrücklich
+      // geschrieben statt dem Spalten-Default überlassen — der Seed ist
+      // idempotent und soll jede Zeile vollständig setzen.
+      altersstufe: "kinderfussball",
       trainingsteil: u.trainingsteil,
       erscheinungsform: u.erscheinungsform ?? [],
       hauptteilkategorie: u.hauptteilkategorie ?? null,

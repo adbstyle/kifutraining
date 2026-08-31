@@ -4,7 +4,7 @@ import { KategorieChip, PrintButton } from "@/components/ui";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { TrainingExerciseDetail } from "@/components/training/TrainingExerciseDetail";
 import { getTrainingView } from "@/lib/queries/trainings";
-import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
+import { leseGliederung, formatDuration } from "@/lib/training";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -21,7 +21,7 @@ export default async function TrainingDruckPage({
   const training = await getTrainingView(id);
   if (!training) return <TrainingNotAvailable />;
 
-  const sections = groupByTeil(training.exercises).filter((s) => s.items.length > 0);
+  const sections = leseGliederung(training.altersstufe, training.exercises);
   const total = sections.reduce((a, s) => a + s.sum, 0);
   const hasAnyDuration = sections.some((s) => s.sum > 0);
 
@@ -42,6 +42,12 @@ export default async function TrainingDruckPage({
             {hasAnyDuration ? `Gesamtdauer ${formatDuration(total)}` : "Keine Dauer erfasst"}
           </span>
         </div>
+        {training.ziel && (
+          <p className="mt-2 type-body-medium text-on-surface">
+            <span className="type-label-small text-on-surface-variant">Ziel: </span>
+            {training.ziel}
+          </p>
+        )}
       </header>
 
       {/* Seitenumbruch im Druck: zusammengehalten wird nur die einzelne Übung
@@ -57,9 +63,9 @@ export default async function TrainingDruckPage({
           umbricht. */}
       <div className="space-y-8">
         {sections.map((s) => {
-          const blocks = leseBloecke(s);
+          const blocks = s.bloecke;
           return (
-            <section key={s.slug}>
+            <section key={s.key}>
               <h2 className="mb-4 break-after-avoid border-b border-outline-variant pb-1 type-title-medium text-on-surface">
                 {s.label}
                 {s.sum > 0 && (

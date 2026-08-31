@@ -24,14 +24,27 @@ import {
   TextField,
   IconButton,
   Tooltip,
+  TextArea,
 } from "@/components/ui";
 import { ExercisePickerDialog } from "./ExercisePickerDialog";
 import { ExerciseThumb } from "./ExerciseThumb";
 import { InBibliothekButton } from "./InBibliothekButton";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
+import { ZeitAbgleich, GesamtAbgleich } from "./ZeitAbgleich";
+import {
+  LEER_HINWEIS_BLOECKE,
+  GESAMTDAUER_JUNIOREN,
+  type Einordnung,
+} from "@/lib/junioren";
+import { kategorienFuer } from "@/lib/altersstufe";
+import {
+  altersstufe as altersstufeLabels,
+  junioren_block as juniorenBlockLabels,
+  type JuniorenBlockSlug,
+} from "@/lib/vocab";
 import { SichtbarkeitControl } from "./SichtbarkeitControl";
-import { FREIES_SPIEL, type Bedingung } from "@/lib/training-bedingungen";
+import { fehlendeBedingungenAus, type Bedingung } from "@/lib/training-bedingungen";
 import { InTeamStellenControl } from "./InTeamStellenControl";
 import {
   TRAININGSTEILE,
@@ -40,7 +53,9 @@ import {
   stufenAbgedeckt,
   teilTraegtDauer,
   groupHauptteil,
+  groupJunioren,
   formatDuration,
+  ZIEL_MAX,
 } from "@/lib/training";
 import {
   setExerciseDuration,
@@ -48,6 +63,7 @@ import {
   removeTrainingExercise,
   renameTraining,
   setTrainingStufen,
+  setTrainingZiel,
   deleteTraining,
 } from "@/lib/actions/trainings";
 import type { TrainingsteilSlug, HauptteilkategorieSlug } from "@/lib/vocab";
@@ -68,19 +84,27 @@ export function TrainingEditor({
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
-  // Offener Picker: Trainingsteil und — im Hauptteil — die Unterkategorie.
+  // Offener Picker: die Ziel-Einordnung (Kinderfussball-Teil oder
+  // Junioren-Block) und — im Kinderfussball-Hauptteil — die Unterkategorie.
   const [open, setOpen] = useState<{
-    teil: TrainingsteilSlug;
+    teil: Einordnung;
     hkat?: HauptteilkategorieSlug;
   } | null>(null);
   const [durations, setDurations] = useState<Record<string, number | null>>({});
   const [stufen, setStufen] = useState<string[]>(training.stufen);
+  const [ziel, setZiel] = useState<string>(training.ziel ?? "");
   const [notice, setNotice] = useState<string | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const [nameInput, setNameInput] = useState(training.name);
   const [nameError, setNameError] = useState<string | undefined>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [mismatch, setMismatch] = useState<{ id: string; name: string }[] | null>(null);
+
+  // Nach welchem Lehrmittel das Training gegliedert ist. Es folgt aus der
+  // geführten Altersstufe, die ab dem Anlegen feststeht — nicht mehr aus den
+  // Alterskategorien (Story 5 PC 2). Ein Junioren-Training ohne Alterskategorie
+  // ist damit möglich und fällt trotzdem nie aufs Kinderfussball-Schema zurück.
+  const junioren = training.altersstufe === "juniorenfussball";
 
   const dur = (item: TrainingExerciseItem) =>
     item.id in durations ? durations[item.id] : item.durationMin;
@@ -110,6 +134,11 @@ export function TrainingEditor({
     });
   }
 
+  /** Alterskategorien setzen (Story #12 AC2). Die Altersstufe ist davon
+   *  unberührt: Sie steht ab dem Anlegen fest, und die angebotenen Kategorien
+   *  gehören ohnehin nur zu ihr (Story 5 AK 4/5). Eine stufenfremde Kategorie —
+   *  etwa aus einem manipulierten Aufruf — weist die Server-Action ab und nennt
+   *  den gangbaren Weg; die Meldung erscheint hier. */
   function changeStufen(next: string[]) {
     const vorher = stufen;
     setStufen(next);
@@ -124,6 +153,19 @@ export function TrainingEditor({
         return;
       }
       if (r.mismatched && r.mismatched.length > 0) setMismatch(r.mismatched);
+    });
+  }
+
+  function speichereZiel() {
+    if (ziel.trim() === (training.ziel ?? "")) return;
+    startTransition(async () => {
+      const r = await setTrainingZiel(training.id, ziel);
+      if (!r.ok) {
+        setZiel(training.ziel ?? "");
+        setNotice(r.error ?? "Speichern fehlgeschlagen.");
+        return;
+      }
+      router.refresh();
     });
   }
 
@@ -152,7 +194,7 @@ export function TrainingEditor({
     });
   }
 
-  const byTeil = (slug: TrainingsteilSlug) =>
+  const byTeil = (slug: string) =>
     training.exercises.filter((e) => e.trainingsteil === slug);
 
   // Auffangen trägt keine Dauer und zählt weder zur Summe noch zum
@@ -163,13 +205,14 @@ export function TrainingEditor({
   // freie Spiel liegt dort und deckt es zwingend ab.
   const oeffentlich = training.visibility === "public";
 
-  const fehlendeBedingungen: Bedingung[] = [
-    stufen.length === 0 ? "stufe" : null,
-    training.exercises.some((e) => e.trainingsteil === "einleitung") ? null : "einleitung",
-    training.exercises.some((e) => e.hauptteilkategorie === FREIES_SPIEL)
-      ? null
-      : "freies_spiel",
-  ].filter((x): x is Bedingung => x !== null);
+  // Live-Vorschau der Veröffentlichungs-Bedingungen aus dem lokalen Stand.
+  // Dieselbe Funktion, die die Server Action nutzt — und dieselbe Regel, die
+  // die Datenbank als Trust-Boundary durchsetzt (Story 7 AC 3).
+  const fehlendeBedingungen = fehlendeBedingungenAus(
+    training.altersstufe,
+    stufen,
+    training.exercises,
+  );
 
   const dauerItems = training.exercises.filter((e) => teilTraegtDauer(e.trainingsteil));
   const totalDuration = dauerItems.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
@@ -199,20 +242,27 @@ export function TrainingEditor({
               </button>
             </div>
             {/* Team-Training oder persönliches? Die Marke sagt, wem es gehört —
-                und bei persönlichen zusätzlich, ob es öffentlich ist. */}
-            {training.team ? (
-              <Link
-                href={`/team/${training.team.id}`}
-                className="focus-ring mt-2 inline-flex items-center gap-1.5 rounded-[4px] type-label-medium text-on-surface-variant hover:text-primary"
-              >
-                <Users size={16} strokeWidth={2} aria-hidden />
-                Team-Training von {training.team.name}
-              </Link>
-            ) : (
-              <Badge tone={oeffentlich ? "oeffentlich" : "entwurf"} className="mt-2">
-                {oeffentlich ? "Öffentlich" : "✎ Entwurf"}
-              </Badge>
-            )}
+                und bei persönlichen zusätzlich, ob es öffentlich ist. Daneben,
+                in derselben Zeile, welchem Lehrmittel es folgt (Story 5 AK 3):
+                beide Schemata teilen Begriffe wie „Hauptteil", der Trainer muss
+                jederzeit sehen, in welchem er plant. Neutral statt in einer
+                Kategorie-Farbe — die Altersstufe ist keine Alterskategorie. */}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {training.team ? (
+                <Link
+                  href={`/team/${training.team.id}`}
+                  className="focus-ring inline-flex items-center gap-1.5 rounded-[4px] type-label-medium text-on-surface-variant hover:text-primary"
+                >
+                  <Users size={16} strokeWidth={2} aria-hidden />
+                  Team-Training von {training.team.name}
+                </Link>
+              ) : (
+                <Badge tone={oeffentlich ? "oeffentlich" : "entwurf"}>
+                  {oeffentlich ? "Öffentlich" : "✎ Entwurf"}
+                </Badge>
+              )}
+              <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
+            </div>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
             {/* Veröffentlichen und Ins-Team-Stellen gibt es nur für das eigene
@@ -238,9 +288,32 @@ export function TrainingEditor({
           </div>
         </div>
 
+        {/* Ziel: optional, jederzeit änder- und entfernbar (Story 10 AC 3).
+            Gespeichert wird beim Verlassen des Felds — wie der Trainingsname
+            über einen eigenen Schritt, nicht bei jedem Tastendruck. */}
         <div className="mt-4">
-          <p className="mb-2 type-label-large text-on-surface">Stufen</p>
-          <StufenField value={stufen} onChange={changeStufen} />
+          <TextArea
+            label="Ziel (optional)"
+            rows={2}
+            maxLength={ZIEL_MAX}
+            value={ziel}
+            onChange={(e) => setZiel(e.target.value)}
+            onBlur={() => speichereZiel()}
+            supportingText={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
+          />
+        </div>
+
+        <div className="mt-4">
+          <p className="mb-2 type-label-large text-on-surface">Alterskategorien</p>
+          {/* Nur die Kategorien der Altersstufe dieses Trainings: Sie folgen ihr,
+              statt sie zu bestimmen (Story 5 AK 4). Ein Wechsel der Altersstufe
+              ist bewusst nirgends vorgesehen (AK 5) — wer für die andere plant,
+              legt ein neues Training an. */}
+          <StufenField
+            value={stufen}
+            onChange={changeStufen}
+            kategorien={kategorienFuer(training.altersstufe)}
+          />
         </div>
       </Card>
 
@@ -250,6 +323,10 @@ export function TrainingEditor({
           <Clock size={18} strokeWidth={2} aria-hidden />
           Gesamtdauer: {formatDuration(totalDuration)}
         </span>
+        {/* Die Zeit-Orientierung gilt nur im Juniorenschema — das
+            Kinderfussball-Manual gibt bewusst keine Zeiten vor (Story 6
+            AC 5 / Out of Scope 1). */}
+        {junioren && <GesamtAbgleich sum={totalDuration} soll={GESAMTDAUER_JUNIOREN} />}
         {totalMissing > 0 && (
           <span className="type-label-medium text-on-surface-variant">
             {totalMissing} {totalMissing === 1 ? "Übung ohne" : "Übungen ohne"} Dauer
@@ -257,7 +334,95 @@ export function TrainingEditor({
         )}
       </div>
 
-      {TRAININGSTEILE.map(({ slug, label }) => {
+      {/* Juniorenschema: drei Trainingsteile, die Unterblöcke stets sichtbar —
+          auch leere, damit die Struktur beim Planen erkennbar bleibt
+          (Story 4 AC 1, Story 5a AC 1–3). */}
+      {junioren &&
+        groupJunioren(training.exercises).map((teil) => {
+          const teilDur = teil.bloecke.reduce<number>(
+            (a, b) => a + b.items.reduce<number>((x, it) => x + (dur(it) ?? 0), 0),
+            0,
+          );
+          const teilMissing = teil.bloecke.reduce<number>(
+            (a, b) => a + b.items.filter((it) => dur(it) == null).length,
+            0,
+          );
+          return (
+            <Card key={teil.slug} className="p-4 sm:p-5">
+              <div className="flex items-center gap-2">
+                <h2 className="type-title-medium text-on-surface">{teil.label}</h2>
+                {teilDur > 0 && (
+                  <span className="type-label-medium text-on-surface-variant">
+                    {formatDuration(teilDur)}
+                  </span>
+                )}
+                <ZeitAbgleich slug={teil.slug} sum={teilDur} />
+              </div>
+
+              <div className="mt-4 flex flex-col gap-5">
+                {teil.bloecke.map((b) => {
+                  const blockDur = b.items.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
+                  return (
+                    <div key={b.slug}>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <h3 className="type-title-small text-on-surface">
+                          {b.label}
+                          {blockDur > 0 && (
+                            <span className="ml-2 type-label-medium text-on-surface-variant">
+                              {formatDuration(blockDur)}
+                            </span>
+                          )}
+                          <span className="ml-2">
+                            <ZeitAbgleich slug={b.slug} sum={blockDur} />
+                          </span>
+                        </h3>
+                        <Tooltip label="Übung hinzufügen">
+                          <IconButton
+                            icon={Plus}
+                            label={`Übung zu ${b.label} hinzufügen`}
+                            size="sm"
+                            onClick={() => setOpen({ teil: b.slug })}
+                          />
+                        </Tooltip>
+                      </div>
+                      <ExerciseList
+                        items={b.items}
+                        trainingId={training.id}
+                        trainingStufen={stufen}
+                        showDuration
+                        dur={dur}
+                        onDuration={changeDuration}
+                        onMove={move}
+                        onRemove={remove}
+                      />
+                      {/* Leere Blöcke, die das Lehrmittel als gesetzt ansieht:
+                          Hinweis, keine Blockade (Story 5a AC 8/9). */}
+                      {b.items.length === 0 &&
+                        LEER_HINWEIS_BLOECKE.includes(b.slug) && (
+                          <p className="mt-2 flex items-center gap-2 type-label-medium text-on-surface-variant">
+                            <Info size={15} className="shrink-0 text-signal" aria-hidden />
+                            {b.slug === "jun-spiel"
+                              ? "Das Spiel ist noch leer — im Juniorenfussball gehört das freie Spiel in jedes Training."
+                              : `«${b.label}» ist noch leer.`}
+                          </p>
+                        )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {teilMissing > 0 && (
+                <p className="mt-3 type-label-medium text-on-surface-variant">
+                  {teilMissing} {teilMissing === 1 ? "Übung" : "Übungen"} ohne erfasste
+                  Dauer (zählt nicht zur Summe).
+                </p>
+              )}
+            </Card>
+          );
+        })}
+
+      {!junioren &&
+        TRAININGSTEILE.map(({ slug, label }) => {
         const traegtDauer = teilTraegtDauer(slug);
         const teilItems = byTeil(slug);
 
@@ -403,13 +568,15 @@ export function TrainingEditor({
             )}
           </Card>
         );
-      })}
+        })}
 
       {/* Ein Picker, gesteuert über `open` (Trainingsteil + ggf. Unterkategorie). */}
       {open &&
         (() => {
           const teilLabel =
-            TRAININGSTEILE.find((t) => t.slug === open.teil)?.label ?? open.teil;
+            TRAININGSTEILE.find((t) => t.slug === open.teil)?.label ??
+            juniorenBlockLabels[open.teil as JuniorenBlockSlug] ??
+            open.teil;
           const sub = open.hkat
             ? HAUPTTEILKATEGORIEN.find((h) => h.slug === open.hkat)
             : undefined;
@@ -423,6 +590,7 @@ export function TrainingEditor({
               open
               onClose={() => setOpen(null)}
               trainingId={training.id}
+              altersstufe={training.altersstufe}
               trainingsteil={open.teil}
               trainingsteilLabel={teilLabel}
               hauptteilkategorie={sub?.slug}

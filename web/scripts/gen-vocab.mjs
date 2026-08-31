@@ -32,10 +32,8 @@ for (const [key, entries] of Object.entries(vocab)) {
   out += `export const ${key}Slugs = Object.keys(${key}) as ${name}Slug[];\n\n`;
 }
 
-// Alterskategorien (aus dem Schema, nicht im Vokabular)
-out += `export const kategorien = { G: "G", F: "F", E: "E" } as const;\n`;
-out += `export type KategorieSlug = keyof typeof kategorien;\n`;
-out += `export const kategorienSlugs = Object.keys(kategorien) as KategorieSlug[];\n`;
+// Rückwärtskompatibler Typ-Alias: der bisherige Hardcode exportierte `KategorieSlug`.
+out += `export type KategorieSlug = KategorienSlug;\n`;
 
 writeFileSync(outPath, out);
 console.log(`vocab.ts generiert: ${outPath}`);

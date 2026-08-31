@@ -10,7 +10,11 @@ import {
   trainingsteil as teilLabels,
   feldtyp as feldLabels,
   erscheinungsform as formLabels,
+  erscheinungsform_junioren as formJuniorenLabels,
   hauptteilkategorie as hkatLabels,
+  uebungstyp as uebungstypLabels,
+  junioren_block as juniorenBlockLabels,
+  altersstufe as altersstufeLabels,
   kategorienSlugs,
 } from "@/lib/vocab";
 import { kategorieStufe } from "@/lib/labels";
@@ -21,6 +25,7 @@ export type CatalogFilters = {
   feld: string[];
   form: string[];
   hkat: string[];
+  typ: string[];
   kinder?: number;
   q?: string;
   fav?: boolean;
@@ -30,10 +35,30 @@ export type CatalogFilters = {
 // Optionen aus dem Vokabular (Slug → Label). Reihenfolge = Definitionsreihenfolge.
 const toOptions = (rec: Record<string, string>) =>
   Object.entries(rec).map(([value, label]) => ({ value, label }));
-const teilOptions = toOptions(teilLabels);
+// Trainingsteil-Filter über beide Welten: die vier Trainingsteile des Manuals
+// Fussball Kinder und die sechs Blöcke des Manuals Fussball Jugendliche, in
+// zwei beschrifteten Gruppen. Der Katalog filtert bewusst über BEIDE
+// Altersstufen (Story 2 Out of Scope 2) — er ist der eine Ort, an dem der
+// ganze sichtbare Bestand nebeneinandersteht.
+const teilOptions: { value: string; label: string; group: string }[] = [
+  ...Object.entries(teilLabels).map(([value, label]) => ({
+    value,
+    label: label as string,
+    group: altersstufeLabels.kinderfussball,
+  })),
+  ...Object.entries(juniorenBlockLabels).map(([value, label]) => ({
+    value,
+    label: label as string,
+    group: altersstufeLabels.juniorenfussball,
+  })),
+];
 const feldOptions = toOptions(feldLabels);
-const formOptions = toOptions(formLabels);
+// Beide Erscheinungsform-Vokabulare als EINE Dimension: gewählte Werte wirken
+// untereinander als ODER, gleich aus welcher Quelle (Story 12 PC 1). Flach und
+// ohne Spielphasen-Gruppierung (Out of Scope 2).
+const formOptions = [...toOptions(formLabels), ...toOptions(formJuniorenLabels)];
 const hkatOptions = toOptions(hkatLabels);
+const typOptions = toOptions(uebungstypLabels);
 const stufenOptions = kategorienSlugs.map((k) => ({ value: k, label: kategorieStufe[k] }));
 
 /* Such-/Filterleiste für den Übungspool — eine durchgehende, umbrechende Zeile
@@ -97,6 +122,7 @@ export function CatalogFilterBar({
     filters.feld.length > 0 ||
     filters.form.length > 0 ||
     filters.hkat.length > 0 ||
+    filters.typ.length > 0 ||
     filters.kinder !== undefined ||
     (filters.q?.length ?? 0) > 0 ||
     !!filters.fav ||
@@ -162,6 +188,16 @@ export function CatalogFilterBar({
         onChange={(v) => setList("hkat", v)}
         searchable={false}
         placeholder="Alle Hauptteilkategorien"
+        className="w-full sm:w-64"
+      />
+      <MultiSelect
+        label="Übungstyp"
+        hideLabel
+        options={typOptions}
+        value={filters.typ}
+        onChange={(v) => setList("typ", v)}
+        searchable={false}
+        placeholder="Alle Übungstypen"
         className="w-full sm:w-64"
       />
 

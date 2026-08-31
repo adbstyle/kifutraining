@@ -1,3 +1,10 @@
+# Die Altersstufe ist die oberste Dimension: sie entscheidet, nach welchem
+# Lehrmittel eine Übung und ein Training geführt werden — Manual Fussball
+# Kinder oder Manual Fussball Jugendliche. Alle übrigen Vokabulare hängen
+# an ihr (Story 1 «Altersstufe als geführte Angabe», Epic Übungswelten).
+altersstufe:
+  kinderfussball: "Kinderfussball"
+  juniorenfussball: "Juniorenfussball"
 erscheinungsform:
   spiel-kreativ-gestalten: "Das Spiel kreativ gestalten"
   ball-entschlossen-erobern: "Den Ball entschlossen erobern"
@@ -18,3 +25,38 @@ hauptteilkategorie:
   fussball-spielen-lernen: "Fussball spielen lernen"
   vielseitigkeit-erleben: "Vielseitigkeit erleben"
   fussball-spielen: "Fussball spielen"
+kategorien:
+  G: "G"
+  F: "F"
+  E: "E"
+  D: "D"
+  C: "C"
+  B: "B"
+  A: "A"
+junioren_trainingsteil:
+  einstieg: "Einstieg"
+  hauptteil: "Hauptteil"
+  abschluss: "Abschluss"
+junioren_block:
+  jun-aufwaermen: "Aufwärmen"
+  jun-spielform-trainingsziel: "Spielform zum Trainingsziel"
+  jun-explosivitaet: "Explosivität"
+  jun-spielformen: "Spielformen und unterstützende Übungen"
+  jun-spiel: "Spiel"
+  jun-ausklang: "Ausklang"
+uebungstyp:
+  basisspielform: "Basisspielform"
+  spielform: "Spielform"
+  isolierte-form: "Isolierte Form"
+erscheinungsform_junioren:
+  spiel-variantenreich-aufbauen: "Das Spiel variantenreich und situationsangepasst aufbauen"
+  torchancen-vorbereiten-abschliessen: "Torchancen variantenreich vorbereiten und erfolgreich abschliessen"
+  offensive-zweikaempfe-bestreiten: "Offensive Zweikämpfe mutig und erfolgreich bestreiten"
+  ballorientiert-kompakt-verteidigen: "Ballorientiert, kompakt und situationsangepasst verteidigen"
+  defensive-zweikaempfe-bestreiten: "Defensive Zweikämpfe mutig und erfolgreich bestreiten"
+  schnell-umschalten: "Schnell umschalten"
+  explosiv-dynamisch-agieren: "Explosiv und dynamisch agieren"
+  koerper-stabil-halten: "Den Körper stabil halten"
+  intensive-spielaktionen-ausfuehren: "Viele intensive Spielaktionen bis ans Spielende ausführen"
+  positiv-miteinander-umgehen: "Positiv miteinander umgehen"
+  mutig-selbstbewusst-handeln: "Mutig und selbstbewusst zum Nutzen des ganzen Teams handeln"

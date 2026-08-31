@@ -10,15 +10,12 @@ import type { ExerciseFormState } from "@/lib/actions/exercises";
 import { parseDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
 import {
   fassungUnvollstaendig,
-  kopiereBild,
-  userOrdner,
-  kopiereDiagrammVon,
-  entferneStorageObjekt,
-  inhaltFelder,
   istEigeneFassungsDatei,
+  legeUebungsKopieAn,
+  FASSUNG_UEBERNAHME_SELECT,
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
-import { userSlug } from "@/lib/slug";
+import { alsAltersstufe } from "@/lib/altersstufe";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 
@@ -35,7 +32,7 @@ async function ladeFassung(
   const { data } = await supabase
     .from("training_exercises")
     .select(
-      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id )",
+      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, altersstufe )",
     )
     .eq("id", fassungId)
     .maybeSingle();
@@ -43,13 +40,21 @@ async function ladeFassung(
   const training = data.trainings as unknown as {
     owner_id: string | null;
     team_id: string | null;
+    altersstufe: string | null;
   } | null;
   if (!training) return null;
 
   // Die Zeile ist bereits geladen — die Bearbeitungsregel kommt aus der
   // gemeinsamen Quelle, statt sie hier ein zweites Mal zu formulieren.
   const ziel = bearbeitungszielVon(training, userId);
-  return ziel ? { ...data, ziel } : null;
+  if (!ziel) return null;
+  return {
+    ...data,
+    ziel,
+    // Die Fassung folgt der Altersstufe ihres Trainings — sie hat keine eigene
+    // (Story 1). Der Rückfall ist bloss der Typ-Guard: die Spalte ist NOT NULL.
+    altersstufe: alsAltersstufe(training.altersstufe),
+  };
 }
 
 /** Die nächste freie Position im Zielabschnitt. Eine umgeordnete Fassung reiht
@@ -92,9 +97,16 @@ export async function updateFassung(
   const fassung = await ladeFassung(supabase, fassungId, user.id);
   if (!fassung) return { status: "error", message: "Übung nicht gefunden." };
 
-  const parsed = parseUebungsInhalt(form);
+  // Eine Fassung wird nach den Einordnungen der Altersstufe IHRES Trainings
+  // eingeordnet — dieselbe Menge, die auch eine Bibliotheks-Übung dieser Stufe
+  // kennt. Eine eigene Optionsliste braucht es dafür nicht mehr: seit der
+  // Trennung der Altersstufen sind Übung und Fassung an denselben sechs bzw.
+  // vier Werten zuhause.
+  const parsed = parseUebungsInhalt(form, { altersstufe: fassung.altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
-  const inhalt = parsed.row;
+  // Die Altersstufe der Fassung setzt der DB-Trigger `te_altersstufe_erben`
+  // aus ihrem Training; die Applikation schreibt die Spalte nie selbst.
+  const { altersstufe: _geerbt, ...inhalt } = parsed.row;
 
   // Trainingsteil und Kategorie hat parseUebungsInhalt bereits gegen das
   // Vokabular geprüft — hier nur noch als Werte gebraucht.
@@ -104,7 +116,9 @@ export async function updateFassung(
   const update: Record<string, unknown> = { ...inhalt };
 
   // Einordnungswechsel: die Fassung wandert ans Ende ihres neuen Abschnitts.
-  // Die Kategorie ausserhalb des Hauptteils leert der DB-Trigger.
+  // Die Kategorie ausserhalb des Hauptteils ist in `inhalt` bereits null —
+  // einen DB-Trigger, der das erzwänge, gibt es seit dem Verweis-Abbau nicht
+  // mehr, nur noch den Biconditional-CHECK.
   const wechsel =
     trainingsteil !== fassung.trainingsteil || hkat !== fassung.hauptteilkategorie;
   if (wechsel) {
@@ -178,6 +192,23 @@ export async function updateFassung(
   redirect(`/training/${fassung.training_id}/edit?bearbeitet=1`);
 }
 
+/** Eine Fassung, wie sie fürs Übernehmen in die Bibliothek gelesen wird
+ *  (FASSUNG_UEBERNAHME_SELECT). */
+type ZuUebernehmendeFassung = {
+  altersstufe: string | null;
+  trainingsteil: string;
+  hauptteilkategorie: string | null;
+  name: string | null;
+  methodischer_fahrplan: {
+    offen_starten?: string;
+    ueben?: string[];
+    wetteifern?: string | null;
+  } | null;
+  aufbau: string | null;
+  bild_url: string | null;
+  diagramm: unknown;
+} & Record<string, unknown>;
+
 /** Eine Fassung als eigene, zunächst private Vorlage in die Bibliothek
  *  übernehmen (Story 7).
  *
@@ -197,48 +228,32 @@ export async function uebernehmeInBibliothek(
   // RLS lässt Fassungen eigener und öffentlicher Trainings durch.
   const { data: f } = await supabase
     .from("training_exercises")
-    .select(
-      `name, trainingsteil, hauptteilkategorie, kategorien, erscheinungsform, feldtyp,
-       anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten,
-       bild_url, bild_quelle, diagramm`,
-    )
+    .select(FASSUNG_UEBERNAHME_SELECT)
     .eq("id", fassungId)
-    .maybeSingle();
+    .maybeSingle<ZuUebernehmendeFassung>();
   if (!f) return { ok: false, error: "Diese Übung ist nicht mehr verfügbar." };
 
-  const mangel = fassungUnvollstaendig(f);
+  // Die Kopie behält die Altersstufe des Originals — und mit ihr Einordnung
+  // und Ablaufform. Eine Rückabbildung zwischen den Schemata gibt es hier nicht
+  // mehr: seit der Trennung der Altersstufen ist jeder Block, in dem eine
+  // Fassung liegen kann, auch ein gültiger Ort einer Bibliotheks-Übung
+  // derselben Stufe.
+  const altersstufe = alsAltersstufe(f.altersstufe);
+
+  const mangel = fassungUnvollstaendig({ ...f, altersstufe });
   if (mangel) return { ok: false, error: mangel };
 
-  // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
-  const uebungId = crypto.randomUUID();
-  const bild = await kopiereBild(supabase, f.bild_url, userOrdner(user.id), uebungId);
-  if (bild.error) return { ok: false, error: bild.error };
-
-  const { data: angelegt, error } = await supabase
-    .from("exercises")
-    .insert({
-      id: uebungId,
-      slug: userSlug(f.name!),
-      trainingsteil: f.trainingsteil,
-      hauptteilkategorie: f.hauptteilkategorie,
-      ...inhaltFelder(f),
-      bild_url: bild.url,
-      diagramm: kopiereDiagrammVon(f.diagramm),
-      source: "user",
-      owner_id: user.id,
-      // Zunächst privat (PO-Entscheid): veröffentlicht wird bewusst separat.
-      visibility: "private",
-    })
-    .select("slug")
-    .single();
-
-  if (error || !angelegt) {
-    await entferneStorageObjekt(supabase, bild.pfad);
-    return { ok: false, error: error?.message ?? "Übernehmen fehlgeschlagen." };
-  }
+  // Kopiert wird mit dem gemeinsamen Rumpf (`legeUebungsKopieAn`): Slug, Bild-
+  // und Diagrammkopie, Eigentum und der private Anfangszustand sind dieselben
+  // wie beim direkten Übernehmen einer Bibliotheks-Übung.
+  const kopie = await legeUebungsKopieAn(supabase, f, {
+    ownerId: user.id,
+    altersstufe,
+  });
+  if (!kopie.ok) return kopie;
 
   revalidatePath("/");
-  return { ok: true, slug: angelegt.slug };
+  return kopie;
 }
 
 /** Das Diagramm einer Fassung speichern — das Pendant zu `saveDiagramm` für

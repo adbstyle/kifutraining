@@ -76,7 +76,7 @@ Faktenlage für Story 2 (aus der Codebase-Analyse dieser Session):
 
 ## Story 2 (Business): Übungen und Trainings mit Alterskategorien D bis A auszeichnen und filtern
 
-Status: Final ausgearbeitet und validiert am 2026-08-16.
+Status: Umgesetzt am 2026-08-28.
 
 Anmerkung: Eine Übung darf Alterskategorien beider Schemata gleichzeitig tragen (z.B. E und D) — das ist gewollt, weil eine Übung beiden Schemata dienen kann. Das Mischverbot gilt ausschliesslich für Trainings und liegt in der Schema-Story.
 
@@ -123,7 +123,7 @@ Faktenlage für Story 3 (aus der Codebase-Analyse dieser Session):
 
 ## Story 3 (Business): Trainingsschema aus den Alterskategorien bestimmen
 
-Status: Final ausgearbeitet und validiert am 2026-08-16.
+Status: Umgesetzt am 2026-08-28. Nachtrag 2026-08-28: Postcondition 5 ist überholt — die Datenbank blockiert seit dem Umschalten-Epic jede Änderung, die ein öffentliches Training unter die Bedingungen brächte, statt es still zurückzuziehen. Entsprechend wechselt ein öffentliches Training das Schema gar nicht erst; die Applikation verweist auf den Entwurfszustand (PO-Entscheid 2026-08-28). Zusätzlich merkt sich jede Fassung beim Wechsel ihre verlassene Einordnung, womit der Rückweg verlustfrei ist — der Schema-Wechsel ist der Migrationspfad des Bestands.
 
 Als Trainer:in im Juniorenfussball
 möchte ich, dass sich mein Training nach dem Schema der gewählten Alterskategorien richtet
@@ -174,7 +174,7 @@ Faktenlage für Story 4 (aus den Codebase-Analysen dieser Session, keine neuen A
 
 ## Story 4 (Business): Junioren-Training nach Einstieg, Hauptteil und Abschluss gliedern
 
-Status: Final ausgearbeitet und validiert am 2026-08-16.
+Status: Umgesetzt am 2026-08-28.
 
 Als Trainer:in im Juniorenfussball
 möchte ich mein Junioren-Training entlang der drei Trainingsteile Einstieg, Hauptteil und Abschluss zusammenstellen
@@ -226,7 +226,7 @@ Faktenlage für die Stories 5a und 5b (aus der Übungs-Editor-Analyse dieser Ses
 
 ## Story 5a (Business): Einstieg und Hauptteil eines Junioren-Trainings in Unterblöcke gliedern
 
-Status: Final ausgearbeitet und validiert am 2026-08-16.
+Status: Umgesetzt am 2026-08-28.
 
 Als Trainer:in im Juniorenfussball
 möchte ich Einstieg und Hauptteil meines Junioren-Trainings in ihre Unterblöcke gegliedert planen
@@ -262,7 +262,7 @@ Offene Fragen
 
 ## Story 5b (Business): Übungen mit Junioren-Heimat in einem Einstiegs-Unterblock erfassen
 
-Status: Final ausgearbeitet und validiert am 2026-08-16. Nachtrag 2026-08-17: Mit der Aufnahme der Junioren-Erscheinungsformen in den Epic-Scope wählen Übungen mit Junioren-Heimat aus dem Junioren-Vokabular (AC 6 präzisiert); die Ausgestaltung des Junioren-Vokabulars regelt die Erscheinungsformen-Story. Zweiter Nachtrag 2026-08-17: Auch die Explosivitäts-Heimat darf Junioren-Erscheinungsformen tragen — das Manual ordnet «Explosiv und dynamisch agieren» dem Bereich Explosivität 1:1 zu; das frühere Verbot (AC 7 alt) ist aufgehoben, AC 6 gilt für alle drei Junioren-Heimaten.
+Status: Umgesetzt am 2026-08-28. Ursprünglich final ausgearbeitet und validiert am 2026-08-16. Nachtrag 2026-08-17: Mit der Aufnahme der Junioren-Erscheinungsformen in den Epic-Scope wählen Übungen mit Junioren-Heimat aus dem Junioren-Vokabular (AC 6 präzisiert); die Ausgestaltung des Junioren-Vokabulars regelt die Erscheinungsformen-Story. Zweiter Nachtrag 2026-08-17: Auch die Explosivitäts-Heimat darf Junioren-Erscheinungsformen tragen — das Manual ordnet «Explosiv und dynamisch agieren» dem Bereich Explosivität 1:1 zu; das frühere Verbot (AC 7 alt) ist aufgehoben, AC 6 gilt für alle drei Junioren-Heimaten.
 
 Als Trainer:in im Juniorenfussball
 möchte ich eigene Übungen erfassen, die in einem Einstiegs-Unterblock des Juniorenschemas zuhause sind
@@ -314,7 +314,7 @@ Faktenlage für Story 6 (aus der Dauer-Analyse dieser Session):
 
 ## Story 6 (Business): Zeitbandbreiten und Gesamtdauer als Orientierung anzeigen
 
-Status: Final ausgearbeitet und validiert am 2026-08-16.
+Status: Umgesetzt am 2026-08-28.
 
 Als Trainer:in im Juniorenfussball
 möchte ich beim Planen erkennen, wie meine erfassten Dauern zu den Richtwerten des Trainingsschemas stehen
@@ -364,7 +364,7 @@ Faktenlage für Story 7 (aus der Veröffentlichungs-Analyse dieser Session):
 
 ## Story 7 (Business): Junioren-Training veröffentlichen
 
-Status: Final ausgearbeitet und validiert am 2026-08-16.
+Status: Umgesetzt am 2026-08-28. Nachtrag 2026-08-28: Postcondition 2 ist überholt — die Datenbank setzt ein Training nicht selbsttätig auf privat, sondern weist die verletzende Änderung ab und verweist auf den Entwurfszustand. Das ist das Verhalten seit dem Umschalten-Epic und gilt für beide Schemata (PO-Entscheid 2026-08-28).
 
 Als Trainer:in im Juniorenfussball
 möchte ich mein Junioren-Training öffentlich teilen können, sobald es dem Trainingsschema entspricht
@@ -414,7 +414,7 @@ Faktenlage für Story 8 (aus der Analyse von Durchführung und Druck):
 
 ## Story 8 (Business): Junioren-Training mobil durchführen und drucken
 
-Status: Final ausgearbeitet und validiert am 2026-08-17.
+Status: Umgesetzt am 2026-08-28.
 
 Als Trainer:in im Juniorenfussball
 möchte ich mein Junioren-Training auf dem Platz am Gerät und auf Papier in seiner Struktur vor mir haben
@@ -465,7 +465,7 @@ Faktenlage für Story 9 (aus Manual und Codebase-Analyse):
 
 ## Story 9 (Business): Übungstyp erfassen und filtern
 
-Status: Final ausgearbeitet und validiert am 2026-08-17.
+Status: Umgesetzt am 2026-08-28. Nachtrag 2026-08-28: Acceptance Criterion 4 verlangt die Kurzdefinitionen im Manual-Wortlaut von Seite 56. Eine solche Definitionsliste enthält das Manual nicht — es führt die drei Begriffe als Gliederung seines Good-Practice-Teils und definiert einzeln nur die Basisspielform (S. 56). Deren Wortlaut ist übernommen; die beiden übrigen Texte fassen diese Stelle und den Trainingsformen-Abschnitt (S. 24) zusammen und brauchen eine Abnahme.
 
 Als Trainer:in
 möchte ich meine Übungen als Basisspielform, Spielform oder Isolierte Form auszeichnen und gezielt danach suchen
@@ -517,7 +517,7 @@ Faktenlage für Story 10 (aus Manual und Codebase-Analyse):
 
 ## Story 10 (Business): Trainingsziel an Trainings führen
 
-Status: Final ausgearbeitet und validiert am 2026-08-17.
+Status: Umgesetzt am 2026-08-28.
 
 Als Trainer:in
 möchte ich meinem Training ein Ziel mitgeben, das mich von der Planung bis auf den Platz begleitet
@@ -569,7 +569,7 @@ Faktenlage für Story 11 (aus dem Text-Inventar der App):
 
 ## Story 11 (Business): Nutzersichtbare Texte auf Kinder- und Juniorenfussball öffnen
 
-Status: Final ausgearbeitet und validiert am 2026-08-17.
+Status: Umgesetzt am 2026-08-28; die Formulierungen gehen zur Abnahme an den Product Owner.
 
 Als Trainer:in im Juniorenfussball
 möchte ich beim ersten Kontakt mit der Applikation erkennen, dass sie auch für den Juniorenfussball gemacht ist
@@ -614,7 +614,7 @@ Faktenlage für Story 12 (aus Manual und Codebase-Analyse):
 
 ## Story 12 (Business): Junioren-Erscheinungsformen erfassen und filtern
 
-Status: Final ausgearbeitet und validiert am 2026-08-17.
+Status: Umgesetzt am 2026-08-28.
 
 Als Trainer:in im Juniorenfussball
 möchte ich meine Übungen mit den Erscheinungsformen des Junioren-Manuals auszeichnen und den Katalog danach durchsuchen

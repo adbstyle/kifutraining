@@ -4,11 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
-import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer } from "@/lib/training";
-import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
+import { stufenAbgedeckt, teilTraegtDauer, ZIEL_MAX } from "@/lib/training";
+import { bildUrlToPath } from "@/lib/storage";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
-import { bildOrdnerFuer, ladeBearbeitungsziel } from "@/lib/training-zugriff";
+import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import {
   istEigeneFassungsDatei,
   kopiereBild,
@@ -19,14 +19,20 @@ import {
 } from "@/lib/fassung";
 import {
   kategorienSlugs,
-  hauptteilkategorieSlugs,
+  altersstufe as altersstufeLabels,
   type TrainingsteilSlug,
 } from "@/lib/vocab";
 import {
-  FREIES_SPIEL,
+  alsAltersstufe,
+  istAltersstufe,
+  kategorienFuer,
+  vorlagenFilterFuer,
+} from "@/lib/altersstufe";
+import {
   bedingungAusFehler,
   fehlerMeldung,
   type Bedingung,
+  fehlendeBedingungenAus,
 } from "@/lib/training-bedingungen";
 
 export type TrainingFormState = {
@@ -64,6 +70,9 @@ function validStufen(values: string[]): string[] {
 type Vorlage = {
   id: string;
   name: string;
+  /** Nach welchem Lehrmittel die Vorlage geführt wird — der Guard beim
+   *  Zuordnen prüft sie gegen die Altersstufe des Trainings (Story 6 AK 4). */
+  altersstufe: string;
   trainingsteil: string;
   hauptteilkategorie: string | null;
   bild_url: string | null;
@@ -89,8 +98,8 @@ async function entferneFassungsBild(
 
 // ── Story #10: Training anlegen ──────────────────────────────────────────────────
 
-/** Neues Training anlegen (Story #10 AC1/AC2/AC3). Standardmässig privat, der USER
- *  ist Eigentümer. Leitet in den Editor weiter. */
+/** Neues Training anlegen (Story #10 AC1/AC2/AC3, Story 5 AK 1/2). Standardmässig
+ *  privat, der USER ist Eigentümer. Leitet in den Editor weiter. */
 export async function createTraining(
   _prev: TrainingFormState,
   form: FormData,
@@ -105,14 +114,55 @@ export async function createTraining(
   const stufen = validStufen(csv(form.get("stufen")));
   if (!name) return { status: "error", errors: { name: "Bitte einen Namen angeben." } };
 
+  // Die Altersstufe ist Pflicht und hat bewusst KEINEN Rückfall: Sie bindet
+  // lebenslang (Story 5 AK 5), und eine stille Vorgabe wäre genau das
+  // Durchrutschen, das die Story ausschliesst. Die Datenebene führt die Spalte
+  // seit der Migration `training_altersstufe_default_drop` ohne Default.
+  const altersstufe = clean(form.get("altersstufe"));
+  if (!istAltersstufe(altersstufe))
+    return { status: "error", message: "Bitte die Altersstufe wählen." };
+
+  // Mindestens eine Alterskategorie, ab dem Anlegen (PO 2026-08-30). Bestehende
+  // Trainings ohne bleiben bearbeitbar; ein neues entsteht nicht mehr so. Die
+  // Datenebene setzt es als Trigger `trainings_stufe_pflicht` ebenfalls durch.
+  if (stufen.length === 0)
+    return {
+      status: "error",
+      message: "Bitte mindestens eine Alterskategorie wählen.",
+    };
+  // Die Kategorien folgen der gewählten Altersstufe; sie bestimmen sie nicht
+  // mehr (Story 5 AK 4). Ein stufenfremder Wert wird abgewiesen statt still
+  // weggefiltert — sonst entstünde ein Training mit weniger Kategorien, als der
+  // Trainer gewählt hat.
+  const erlaubt = kategorienFuer(altersstufe);
+  if (stufen.some((s) => !erlaubt.includes(s)))
+    return {
+      status: "error",
+      message:
+        "Diese Alterskategorie gehört nicht zur gewählten Altersstufe. " +
+        "Wähle nur Kategorien dieser Altersstufe.",
+    };
+
   const { data, error } = await supabase
     .from("trainings")
-    .insert({ name, owner_id: user.id, stufen, visibility: "private" })
+    .insert({
+      name,
+      ziel: zielWert(form.get("ziel")),
+      owner_id: user.id,
+      stufen,
+      altersstufe,
+      visibility: "private",
+    })
     .select("id")
     .single();
 
   if (error || !data) {
-    return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
+    // Übersetzt, nicht roh: eine gemischte Stufenwahl kommt hier als
+    // Constraint-Meldung an, und die versteht niemand (Epic #71).
+    return {
+      status: "error",
+      message: error ? fehlerMeldung(error.message) : "Speichern fehlgeschlagen.",
+    };
   }
 
   revalidatePath("/trainings");
@@ -126,9 +176,13 @@ export async function createTraining(
  *  Übernahmezeitpunkt sowie eine eigene Bild- und Diagrammkopie; die Vorlage
  *  bleibt unberührt und hat danach keinen Einfluss mehr auf das Training.
  *
- *  Der Picker bleibt an den Trainingsteil (im Hauptteil an die Kategorie)
- *  gebunden und bietet nur Passendes an; die Prüfung hier ist der Guard gegen
- *  manipulierte Aufrufe. */
+ *  Der Picker bleibt an die Altersstufe des Trainings und an den Zielblock (im
+ *  Kinderfussball-Hauptteil an dessen Kategorie) gebunden und bietet nur
+ *  Passendes an; die Prüfung hier ist die Trust Boundary gegen jeden Aufruf,
+ *  der die Oberfläche umgeht (Story 6 AK 4). Die Datenebene fängt Stufenfremdes
+ *  zusätzlich über `te_kategorien_je_altersstufe` und
+ *  `te_trainingsteil_je_altersstufe` — hier geht es um die verständliche
+ *  Meldung davor. */
 export async function addTrainingExercise(
   trainingId: string,
   trainingsteil: string,
@@ -140,19 +194,32 @@ export async function addTrainingExercise(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
-  if (!TRAININGSTEIL_SLUGS.includes(trainingsteil as TrainingsteilSlug))
-    return { ok: false, error: "Ungültiger Trainingsteil." };
-
-  const istHauptteil = trainingsteil === "hauptteil";
-  const hkat = istHauptteil ? (hauptteilkategorie ?? null) : null;
-  if (istHauptteil && !hauptteilkategorieSlugs.includes(hkat as never))
-    return { ok: false, error: "Ungültige Hauptteilkategorie." };
 
   // Schreibrecht prüfen (UX-Guard; RLS setzt es ohnehin serverseitig durch).
-  // Team-Trainings sind für jedes Mitglied bearbeitbar (Story 6) — und ihre
-  // Bildkopien gehören in den Team-Ordner, nicht in den persönlichen.
-  const ziel = await ladeBearbeitungsziel(supabase, trainingId, user.id);
+  // Team-Trainings sind für jedes Mitglied bearbeitbar (Story 6, Team-Epic) —
+  // und ihre Bildkopien gehören in den Team-Ordner, nicht in den persönlichen.
+  // Die Altersstufe kommt aus derselben Zeile: sie ist eine Eigenschaft des
+  // Trainings und darf nie vom Aufrufer stammen.
+  const { data: training } = await supabase
+    .from("trainings")
+    .select("owner_id, team_id, altersstufe")
+    .eq("id", trainingId)
+    .maybeSingle();
+  if (!training) return { ok: false, error: "Training nicht gefunden." };
+  const ziel = bearbeitungszielVon(training, user.id);
   if (!ziel) return { ok: false, error: "Training nicht gefunden." };
+  if (!istAltersstufe(training.altersstufe))
+    return { ok: false, error: "Das Training hat keine gültige Altersstufe." };
+
+  // Welche Übung dieser Block aufnehmen darf — dieselbe Quelle, aus der der
+  // Picker anbietet (`vorlagenFilterFuer`).
+  const filter = vorlagenFilterFuer(training.altersstufe, trainingsteil, hauptteilkategorie);
+  if (!filter)
+    return {
+      ok: false,
+      error: `Dieser Block gehört nicht zum Trainingsschema ${altersstufeLabels[training.altersstufe]}.`,
+    };
+  const hkat = filter.hauptteilkategorie ?? null;
 
   // Vorlage mit allen Inhalten holen (RLS lässt nur Sichtbares durch).
   const { data: ex } = await supabase
@@ -161,10 +228,21 @@ export async function addTrainingExercise(
     .eq("id", exerciseId)
     .maybeSingle<Vorlage>();
   if (!ex) return { ok: false, error: "Übung nicht verfügbar." };
-  if (ex.trainingsteil !== trainingsteil)
-    return { ok: false, error: "Übung passt nicht zum Trainingsteil." };
-  if (istHauptteil && ex.hauptteilkategorie !== hkat)
-    return { ok: false, error: "Übung passt nicht zur Hauptteilkategorie." };
+  // Passt die Vorlage zu diesem Block? Erst die Altersstufe — sie ist die
+  // oberste Dimension, und ihre Verletzung braucht eine eigene Meldung: «passt
+  // nicht zu diesem Block» liesse den Trainer einen anderen Block suchen, den
+  // es für diese Übung gar nicht gibt.
+  if (!istAltersstufe(ex.altersstufe) || ex.altersstufe !== filter.altersstufe)
+    return {
+      ok: false,
+      error: `Diese Übung gehört zur Altersstufe ${
+        istAltersstufe(ex.altersstufe) ? altersstufeLabels[ex.altersstufe] : "einer anderen"
+      } und passt darum nicht in ein Training der Altersstufe ${altersstufeLabels[filter.altersstufe]}.`,
+    };
+  if (ex.trainingsteil !== filter.trainingsteil)
+    return { ok: false, error: "Übung passt nicht zu diesem Block." };
+  if (filter.hauptteilkategorie && ex.hauptteilkategorie !== filter.hauptteilkategorie)
+    return { ok: false, error: "Übung passt nicht zu diesem Block." };
 
   // Nächste Position bestimmen (eindeutige Reihenfolge je Unterkategorie im
   // Hauptteil, sonst je Trainingsteil).
@@ -173,9 +251,7 @@ export async function addTrainingExercise(
     .select("position")
     .eq("training_id", trainingId)
     .eq("trainingsteil", trainingsteil);
-  posQuery = istHauptteil
-    ? posQuery.eq("hauptteilkategorie", hkat as string)
-    : posQuery;
+  posQuery = hkat ? posQuery.eq("hauptteilkategorie", hkat) : posQuery;
   const { data: last } = await posQuery
     .order("position", { ascending: false })
     .limit(1)
@@ -202,7 +278,10 @@ export async function addTrainingExercise(
   });
   if (error) {
     await entferneStorageObjekt(supabase, bild.pfad);
-    return { ok: false, error: error.message };
+    // Übersetzt statt roh: Eine Übung, deren Werte nicht zur Altersstufe des
+    // Trainings passen, weist die Datenebene als Constraint-Verletzung ab
+    // (Story 1).
+    return { ok: false, error: fehlerMeldung(error.message) };
   }
 
   revalidiereTraining(trainingId);
@@ -229,7 +308,9 @@ async function fehlendeBedingungen(
   // zuerst zu sich übernehmen muss.
   const { data: training } = await supabase
     .from("trainings")
-    .select("owner_id, team_id, stufen, training_exercises ( trainingsteil, hauptteilkategorie )")
+    .select(
+      "owner_id, team_id, altersstufe, stufen, training_exercises ( trainingsteil, hauptteilkategorie )",
+    )
     .eq("id", trainingId)
     .maybeSingle();
   if (!training) return { error: "Training nicht gefunden." };
@@ -241,11 +322,13 @@ async function fehlendeBedingungen(
   if (training.owner_id !== ownerId) return { error: "Training nicht gefunden." };
 
   const fassungen = training.training_exercises ?? [];
-  const missing: Bedingung[] = [];
-  if ((training.stufen ?? []).length === 0) missing.push("stufe");
-  if (!fassungen.some((f) => f.trainingsteil === "einleitung")) missing.push("einleitung");
-  if (!fassungen.some((f) => f.hauptteilkategorie === FREIES_SPIEL)) missing.push("freies_spiel");
-  return { missing };
+  return {
+    missing: fehlendeBedingungenAus(
+      alsAltersstufe(training.altersstufe),
+      training.stufen ?? [],
+      fassungen,
+    ),
+  };
 }
 
 /** Ein persönliches Training öffentlich schalten (Story A AK 1).
@@ -324,6 +407,41 @@ export async function setzeTrainingAufEntwurf(
 // ── Story #12: Training bearbeiten, umsortieren, entfernen, löschen ──────────────
 
 /** Trainingsnamen ändern (Story #12 AC1); leerer Name unzulässig. */
+/** Leere und reine Leerzeichen-Eingaben sind kein Ziel (Story 10 PC 3). */
+function zielWert(v: FormDataEntryValue | null): string | null {
+  const t = String(v ?? "").trim();
+  return t === "" ? null : t.slice(0, ZIEL_MAX);
+}
+
+/** Das Ziel eines Trainings setzen, ändern oder entfernen (Story 10 AC 1/3).
+ *
+ *  Wie beim Umbenennen ohne Owner-Filter: Team-Trainings darf jedes Mitglied
+ *  bearbeiten, die RLS entscheidet. */
+export async function setTrainingZiel(
+  trainingId: string,
+  ziel: string,
+): Promise<TrainingActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  const wert = ziel.trim() === "" ? null : ziel.trim();
+  if (wert && wert.length > ZIEL_MAX)
+    return { ok: false, error: `Das Ziel darf höchstens ${ZIEL_MAX} Zeichen lang sein.` };
+
+  const { data, error } = await supabase
+    .from("trainings")
+    .update({ ziel: wert })
+    .eq("id", trainingId)
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+  if (!data) return { ok: false, error: "Training nicht gefunden." };
+  revalidiereTraining(trainingId);
+  return { ok: true };
+}
+
 export async function renameTraining(
   trainingId: string,
   name: string,
@@ -366,19 +484,48 @@ export async function setTrainingStufen(
 
   const valid = validStufen(stufen);
 
-  const { data: after, error } = await supabase
+  // «Mindestens eine, immer — nicht erst beim Veröffentlichen» (PO 2026-08-30).
+  // Der DB-Trigger `trainings_stufe_pflicht` greift bewusst nur beim Anlegen,
+  // damit bestehende kategorielose Trainings bearbeitbar bleiben; das Leeren
+  // der letzten Kategorie im Editor fiele sonst durch beide Netze.
+  if (valid.length === 0)
+    return { ok: false, error: "Bitte mindestens eine Alterskategorie wählen." };
+
+  // Direktes Update statt RPC: Die frühere `set_training_stufen` übertrug beim
+  // Wechsel des Trainingsschemas alle Fassungen und merkte sich ihre bisherige
+  // Einordnung. Den Wechsel gibt es nicht mehr — die Altersstufe eines
+  // Trainings steht ab dem Anlegen fest (Story 1). Die Berechtigung trägt die
+  // RLS-Policy `tr_update`, den Wertebereich der CHECK.
+  const { data: training } = await supabase
+    .from("trainings")
+    .select("altersstufe")
+    .eq("id", trainingId)
+    .maybeSingle();
+  if (!training) return { ok: false, error: "Training nicht gefunden." };
+
+  // Vorgelagert statt am Constraint-Fehler: die Datenebene würde denselben
+  // Versuch abweisen, aber ohne den Hinweis auf den gangbaren Weg.
+  const erlaubt = kategorienFuer(alsAltersstufe(training.altersstufe));
+  if (valid.some((s) => !erlaubt.includes(s)))
+    return {
+      ok: false,
+      error:
+        "Diese Alterskategorie gehört nicht zur Altersstufe dieses Trainings. " +
+        "Lege für die andere Altersstufe ein neues Training an.",
+    };
+
+  const { data, error } = await supabase
     .from("trainings")
     .update({ stufen: valid })
     .eq("id", trainingId)
     .select("id")
     .maybeSingle();
-  // Ein öffentliches Training ohne Alterskategorie weist die Datenebene ab;
-  // die Meldung nennt den Weg über den Entwurfszustand (Story A AK 7).
   if (error) return { ok: false, error: fehlerMeldung(error.message) };
-  if (!after) return { ok: false, error: "Training nicht gefunden." };
+  if (!data) return { ok: false, error: "Training nicht gefunden." };
 
   // Abweichende Fassungen ermitteln — anhand IHRER Alterskategorien: die
-  // Fassung ist im Training frei bearbeitbar und die einzige Quelle.
+  // Fassung ist im Training frei bearbeitbar und die einzige Quelle. Das ist
+  // der Stufen-Abgleich innerhalb eines Schemas und unabhängig vom Wechsel.
   let mismatched: { id: string; name: string }[] = [];
   if (valid.length > 0) {
     const { data: rows } = await supabase
@@ -545,18 +692,41 @@ export async function setExerciseDuration(
 
 // ── Story #10: Übungsauswahl (Picker) ────────────────────────────────────────
 
-/** Für den Picker passende Übungen eines Trainingsteils laden — alle für den
- *  USER sichtbaren (RLS), eingrenzbar nach Erscheinungsform und (Hauptteil)
- *  Hauptteilkategorie sowie per Freitext (Story #10 AC5/AC6/AC7, #23). */
+/** Für den Picker passende Übungen eines Blocks laden — alle für den USER
+ *  sichtbaren (RLS), eingrenzbar nach Erscheinungsform, Übungstyp und Freitext
+ *  (Story #10 AC5/AC6/AC7, #23).
+ *
+ *  Der Bestand ist doppelt eingegrenzt: auf die Altersstufe des Trainings und
+ *  auf den Zielblock (Story 6 AK 1/2, Übungswelten). Beides kommt aus
+ *  `vorlagenFilterFuer` — derselben Funktion, nach der `addTrainingExercise`
+ *  entscheidet, sonst zeigte der Picker Treffer, die das Hinzufügen abweist.
+ *
+ *  Die Altersstufe stammt aus dem geladenen Training, nie vom Aufrufer: sonst
+ *  liesse sich der Bestand der anderen Welt hereinholen — anzeigen liesse er
+ *  sich, zuordnen nicht, und der Trainer sähe Übungen, die er nicht wählen
+ *  kann. */
 export async function pickExercises(
-  trainingsteil: string,
-  opts: { form?: string[]; hkat?: string[]; q?: string } = {},
+  trainingId: string,
+  einordnung: string,
+  hauptteilkategorie?: string | null,
+  opts: { form?: string[]; typ?: string[]; q?: string } = {},
 ): Promise<ExerciseListRow[]> {
-  if (!TRAININGSTEIL_SLUGS.includes(trainingsteil as TrainingsteilSlug)) return [];
+  const supabase = await createClient();
+  const { data: training } = await supabase
+    .from("trainings")
+    .select("altersstufe")
+    .eq("id", trainingId)
+    .maybeSingle();
+  if (!training || !istAltersstufe(training.altersstufe)) return [];
+
+  const filter = vorlagenFilterFuer(training.altersstufe, einordnung, hauptteilkategorie);
+  if (!filter) return [];
   return getExercises({
-    teil: [trainingsteil],
+    altersstufe: filter.altersstufe,
+    teil: [filter.trainingsteil],
+    hkat: filter.hauptteilkategorie ? [filter.hauptteilkategorie] : undefined,
     form: opts.form,
-    hkat: opts.hkat,
+    typ: opts.typ,
     q: opts.q,
   });
 }

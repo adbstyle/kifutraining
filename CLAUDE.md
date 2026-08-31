@@ -6,8 +6,10 @@ Projektsprache ist **Deutsch** — Code-Kommentare, Doku, Commit-Messages und In
 
 Monorepo mit **zwei Teilprojekten**:
 
-1. **Übungs-Datenbank** (Repo-Root, Python) — YAML pro Übung als kanonische Quelle, aus dem SFV-Manual Kinderfussball extrahiert. Generiert eine lesbare Markdown-Ansicht.
+1. **Übungs-Datenbank** (Repo-Root, Python) — YAML pro Übung als kanonische Quelle, extrahiert aus dem SFV-Manual Kinderfussball. Generiert eine lesbare Markdown-Ansicht. Trainer-Übungen in der DB können zusätzlich im Juniorenschema zuhause sein (Epic #71); die YAML-Datenbank selbst bleibt der Kinderfussball-Bestand.
 2. **Web-App** (`web/`, Next.js 15 + Supabase) — Trainings (einzelne Einheiten, SFV: „Trainingslektion") aus den Übungen zusammenstellen.
+
+**Zwei Altersstufen** (Epics #71 und #120): Jede Übung und jedes Training gehört zu genau einer Altersstufe — Kinderfussball (Alterskategorien G/F/E; Auffangen, Einleitung, Hauptteil, Ausklang) oder Juniorenfussball (D/C/B/A; Einstieg, Hauptteil, Abschluss mit sechs Blöcken). Die Altersstufe ist eine geführte Angabe (`altersstufe`-Spalte), wird bei Übungen beim Erfassen gewählt und per Umwandlung geändert, bei Trainings beim Anlegen gewählt und danach nie mehr. Fachliche Gating-Quelle ist `web/lib/altersstufe.ts` — jede Funktion nennt dort ihren SQL-Constraint-Zwilling (Migration `altersstufe_regeln`). Die Abbildungsregel (`docs/superpowers/specs/2026-08-15-junioren-abbildungsregel.md`) dient nur noch als Einordnungs-Vorschlag beim Umwandeln einer Übung; einen Schema-Wechsel von Trainings und eine Nacharbeit gibt es nicht mehr.
 
 ## Commands
 

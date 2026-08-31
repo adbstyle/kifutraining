@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export interface SelectOption {
   value: string;
   label: string;
+  /** Optionale Gruppenzugehörigkeit. Optionen derselben Gruppe stehen
+      zusammen; die Gruppe bekommt eine nicht wählbare Überschrift. Nötig, wo
+      ein Feld Werte aus zwei Welten anbietet — etwa der Trainingsteil-Filter
+      des Katalogs, der über beide Altersstufen sucht. Die Reihenfolge der Optionen
+      bleibt wie übergeben — gruppiert wird nur die Beschriftung. */
+  group?: string;
 }
 
 export interface SelectProps {
@@ -54,11 +60,12 @@ export function Select({
   const isControlled = value !== undefined;
   const [internal, setInternal] = useState(defaultValue ?? options[0]?.value ?? "");
   const current = isControlled ? value : internal;
-  const selectedIndex = Math.max(
-    0,
-    options.findIndex((o) => o.value === current),
-  );
-  const selected = options[selectedIndex];
+  // Ein Wert, der nicht in den Optionen steht, hat KEINE Auswahl — nicht die
+  // erste. Sonst behauptete das Feld einen Zustand, den der Datensatz nicht
+  // hat, und ein unbedachtes Speichern schriebe ihn fest.
+  const foundIndex = options.findIndex((o) => o.value === current);
+  const selectedIndex = foundIndex === -1 ? 0 : foundIndex;
+  const selected = foundIndex === -1 ? undefined : options[foundIndex];
 
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(selectedIndex);
@@ -208,9 +215,19 @@ export function Select({
             {options.map((o, i) => {
               const isSelected = i === selectedIndex;
               const isActive = i === active;
+              // Gruppen-Überschrift, sobald eine neue Gruppe beginnt.
+              const kopf = o.group && o.group !== options[i - 1]?.group ? o.group : null;
               return (
+                <Fragment key={o.value}>
+                {kopf && (
+                  <li
+                    role="presentation"
+                    className="px-3 pb-1 pt-2 type-label-small text-on-surface-variant"
+                  >
+                    {kopf}
+                  </li>
+                )}
                 <li
-                  key={o.value}
                   id={optId(i)}
                   role="option"
                   aria-selected={isSelected}
@@ -229,6 +246,7 @@ export function Select({
                   </span>
                   <span className="min-w-0 flex-1 truncate">{o.label}</span>
                 </li>
+                </Fragment>
               );
             })}
           </ul>

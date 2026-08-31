@@ -7,6 +7,7 @@ import {
 import { formatDuration, teilTraegtDauer } from "@/lib/training";
 import {
   feldtyp as feldLabels,
+  uebungstyp as uebungstypLabels,
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
@@ -42,6 +43,14 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
       ? formatDuration(item.durationMin)
       : null;
   const anzahl = anzahlText(item.anzahlKinder);
+  // Spielfeldgrösse und Feldtyp schliessen einander aus: der Feldtyp ist eine
+  // Kategorie des Manuals Fussball Kinder, die Spielfeldgrösse führt das
+  // Junioren-Manual an seiner Stelle (Story 3 AK 8/10). Geschrieben wie auf der
+  // Übungs-Detailseite — «35 × 20 m».
+  const spielfeld =
+    item.spielfeldLaengeM != null && item.spielfeldBreiteM != null
+      ? `${item.spielfeldLaengeM} × ${item.spielfeldBreiteM} m`
+      : null;
 
   return (
     <article className="break-inside-avoid">
@@ -73,17 +82,29 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
         />
       </div>
 
-      {(item.hauptteilkategorie || item.feldtyp || anzahl || item.material.length > 0) && (
+      {(item.hauptteilkategorie ||
+        item.feldtyp ||
+        spielfeld ||
+        item.uebungstyp ||
+        anzahl ||
+        item.material.length > 0) && (
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
           {item.feldtyp && (
             <Meta label="Feldtyp">
               {feldLabels[item.feldtyp as keyof typeof feldLabels] ?? item.feldtyp}
             </Meta>
           )}
+          {spielfeld && <Meta label="Spielfeldgrösse">{spielfeld}</Meta>}
           {item.hauptteilkategorie && (
             <Meta label="Hauptteilkategorie">
               {hkatLabels[item.hauptteilkategorie as keyof typeof hkatLabels] ??
                 item.hauptteilkategorie}
+            </Meta>
+          )}
+          {item.uebungstyp && (
+            <Meta label="Übungstyp">
+              {uebungstypLabels[item.uebungstyp as keyof typeof uebungstypLabels] ??
+                item.uebungstyp}
             </Meta>
           )}
           {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}

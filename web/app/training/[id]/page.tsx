@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, Sparkles, Play, Printer } from "lucide-react";
-import { Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
+import { Badge, Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
+import { altersstufe as altersstufeLabels } from "@/lib/vocab";
+import { Flash } from "@/components/Flash";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
@@ -10,7 +12,7 @@ import { getTrainingView } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
 import { createClient } from "@/lib/supabase/server";
-import { groupByTeil, leseBloecke, formatDuration } from "@/lib/training";
+import { leseGliederung, formatDuration } from "@/lib/training";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -20,10 +22,13 @@ export const metadata: Metadata = {
 
 export default async function TrainingViewPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ uebernommen?: string }>;
 }) {
   const { id } = await params;
+  const sp = await searchParams;
   const training = await getTrainingView(id);
   if (!training) return <TrainingNotAvailable />;
 
@@ -44,12 +49,15 @@ export default async function TrainingViewPage({
   const teams =
     user && training.visibility === "public" ? await getMeineTeams() : [];
 
-  const sections = groupByTeil(training.exercises).filter((s) => s.items.length > 0);
+  const sections = leseGliederung(training.altersstufe, training.exercises);
   const total = sections.reduce((a, s) => a + s.sum, 0);
   const hasAnyDuration = sections.some((s) => s.sum > 0);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+      {sp.uebernommen && (
+        <Flash message="Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen." />
+      )}
       <Breadcrumbs
         items={[
           { label: "Trainings", href: "/trainings" },
@@ -67,6 +75,11 @@ export default async function TrainingViewPage({
           </p>
         )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          {/* Die Altersstufe benennen, nicht nur andeuten (Story 5 AK 3):
+              Derselbe neutrale Badge wie im Editor und auf der Trainingskarte.
+              Für ein fremdes öffentliches Training ist diese Seite die einzige
+              Sicht — dort stünde die Angabe sonst nirgends. */}
+          <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
           {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
           ))}
@@ -98,14 +111,23 @@ export default async function TrainingViewPage({
             <TrainingUebernehmenControl quelleId={training.id} teams={teams} />
           )}
         </div>
+        {/* Das Ziel sehen auch Betrachter eines veröffentlichten Trainings:
+            feldweises Verbergen kennt das Zugriffsmodell nicht (Story 10
+            PC 1). Ohne Ziel bleibt der Bereich weg (PC 2). */}
+        {training.ziel && (
+          <p className="mt-3 type-body-medium text-on-surface">
+            <span className="type-label-small text-on-surface-variant">Ziel: </span>
+            {training.ziel}
+          </p>
+        )}
       </header>
 
       <div className="flex flex-col gap-4">
         {sections.map((s) => {
-          const blocks = leseBloecke(s);
+          const blocks = s.bloecke;
           return (
             <section
-              key={s.slug}
+              key={s.key}
               className="rounded-[4px] border-[1.5px] border-outline bg-surface-container-low p-4 sm:p-5"
             >
               <h2 className="mb-3 type-title-medium text-on-surface">

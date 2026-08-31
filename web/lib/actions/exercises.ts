@@ -7,6 +7,13 @@ import { userSlug } from "@/lib/slug";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
+import { alsAltersstufe, istAltersstufe } from "@/lib/altersstufe";
+import { fehlerMeldung } from "@/lib/training-bedingungen";
+import {
+  VORLAGE_SELECT,
+  entferneStorageObjekt,
+  legeUebungsKopieAn,
+} from "@/lib/fassung";
 
 export type ExerciseFormState = {
   status: "idle" | "error";
@@ -17,15 +24,6 @@ export type ExerciseFormState = {
 /** Listen-Seiten, die nach Mutationen neu validiert werden. */
 function revalidateLists() {
   revalidatePath("/");
-}
-
-/** Storage-Objekt best-effort entfernen (no-op bei null). Eine Stelle für alle
- *  Lösch-/Rollback-Pfade, damit das Pfad-Handling nicht dupliziert wird. */
-async function removeStorageObject(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  path: string | null,
-) {
-  if (path) await supabase.storage.from(STORAGE_BUCKET).remove([path]);
 }
 
 /** Optionales Feld-Diagramm validieren + in den Storage laden. Gibt public URL
@@ -64,7 +62,15 @@ export async function createExercise(
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", message: "Nicht angemeldet." };
 
-  const parsed = parseUebungsInhalt(form);
+  // Beim Erfassen wählt der Trainer die Altersstufe selbst (Story 3 AK 1) —
+  // das ist die EINZIGE Stelle, an der sie aus dem Formular kommt. Danach ist
+  // sie fest; das Überführen in die andere Stufe ist ein eigener,
+  // ausdrücklicher Weg (Story 4). Ein unbekannter Wert fällt auf den
+  // Kinderfussball zurück (Story 1 AC 8), und die Einordnungs-Prüfung in
+  // parseUebungsInhalt meldet den daraus folgenden Widerspruch.
+  const altersstufe = alsAltersstufe(String(form.get("altersstufe") ?? "").trim());
+
+  const parsed = parseUebungsInhalt(form, { altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
   const file = form.get("bild");
@@ -101,8 +107,13 @@ export async function createExercise(
     .single();
 
   if (error || !inserted) {
-    await removeStorageObject(supabase, bildPfad);
-    return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
+    await entferneStorageObjekt(supabase, bildPfad);
+    // Übersetzt statt roh: Werte, die nicht zur Altersstufe der Übung passen,
+    // kommen als Constraint-Meldung an, und die versteht niemand.
+    return {
+      status: "error",
+      message: error ? fehlerMeldung(error.message) : "Speichern fehlgeschlagen.",
+    };
   }
 
   revalidateLists();
@@ -122,7 +133,35 @@ export async function updateExercise(
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", message: "Nicht angemeldet." };
 
-  const parsed = parseUebungsInhalt(form);
+  // Die gespeicherte Altersstufe entscheidet, welche Werte gelten — nie das
+  // Formular allein: sonst liesse sich eine Übung durch einen untergeschobenen
+  // Wert in die andere Altersstufe heben (Story 1 AC 9).
+  // Der alte Bildpfad kommt gleich mit: Erzeugt der Upload einen anderen Pfad
+  // (z. B. Formatwechsel .png -> .webp), wird die alte Datei sonst zur Waise.
+  const { data: bestand } = await supabase
+    .from("exercises")
+    .select("altersstufe, bild_url")
+    .eq("id", id)
+    .eq("owner_id", user.id)
+    .eq("source", "user")
+    .maybeSingle();
+  if (!bestand) return { status: "error", message: "Übung nicht gefunden." };
+  const gespeichert = alsAltersstufe(bestand.altersstufe);
+
+  // Überführen in die andere Altersstufe (Story 4): der EINZIGE Weg, an dem
+  // eine bestehende Übung ihre Altersstufe verlässt — und er verlangt die
+  // ausdrückliche Quittung des Trainers (AK 2). Fehlt sie, gilt die
+  // gespeicherte Stufe, und ein mitgeschickter Wert bleibt wirkungslos. Die
+  // Filter auf `owner_id` und `source` oben sind zugleich der Guard gegen das
+  // Umwandeln einer kuratierten oder fremden Übung (AK 5): sie findet die Zeile
+  // gar nicht erst. Der Rest des Formulars wird anschliessend gegen die NEUE
+  // Altersstufe geprüft — Werte, die es dort nicht gibt, fallen weg (PC 4).
+  const gewuenscht = String(form.get("altersstufe") ?? "").trim();
+  const bestaetigt = String(form.get("umwandlung_bestaetigt") ?? "") === "1";
+  const altersstufe =
+    bestaetigt && istAltersstufe(gewuenscht) ? gewuenscht : gespeichert;
+
+  const parsed = parseUebungsInhalt(form, { altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
   const file = form.get("bild");
@@ -132,16 +171,7 @@ export async function updateExercise(
   let altPfad: string | null = null;
   let neuPfad: string | null = null;
   if (hasImage) {
-    // Alten Bildpfad merken: Erzeugt der Upload einen anderen Pfad (z. B.
-    // Formatwechsel .png -> .webp), wird die alte Datei sonst zur Waise.
-    const { data: alt } = await supabase
-      .from("exercises")
-      .select("bild_url")
-      .eq("id", id)
-      .eq("owner_id", user.id)
-      .eq("source", "user")
-      .maybeSingle();
-    altPfad = bildUrlToPath(alt?.bild_url);
+    altPfad = bildUrlToPath(bestand.bild_url);
 
     const { url, path, error: imgErr } = await uploadImage(supabase, user.id, id, file);
     if (imgErr) return { status: "error", errors: { bild: imgErr } };
@@ -162,17 +192,84 @@ export async function updateExercise(
     // Upload war erfolgreich, DB-Update nicht: das neu hochgeladene Bild wieder
     // entfernen — ausser es hat den weiterhin referenzierten alten Pfad
     // überschrieben (gleicher Pfad), dann zeigt die DB korrekt darauf.
-    if (neuPfad && neuPfad !== altPfad) await removeStorageObject(supabase, neuPfad);
-    return { status: "error", message: error?.message ?? "Speichern fehlgeschlagen." };
+    if (neuPfad && neuPfad !== altPfad) await entferneStorageObjekt(supabase, neuPfad);
+    return {
+      status: "error",
+      message: error ? fehlerMeldung(error.message) : "Speichern fehlgeschlagen.",
+    };
   }
 
   // Erfolg: alte Bilddatei entfernen, wenn der Upload einen anderen Pfad erzeugt
   // hat (bei gleichem Pfad hat upsert sie bereits überschrieben).
-  if (altPfad && altPfad !== neuPfad) await removeStorageObject(supabase, altPfad);
+  if (altPfad && altPfad !== neuPfad) await entferneStorageObjekt(supabase, altPfad);
 
   revalidateLists();
   revalidatePath(`/uebung/${updated.slug}`);
   redirect(`/uebung/${updated.slug}?updated=1`);
+}
+
+/** Eine Übung, wie sie fürs Übernehmen gelesen wird (`UEBERNAHME_SELECT`). */
+type ZuUebernehmendeUebung = {
+  owner_id: string | null;
+  altersstufe: string | null;
+  trainingsteil: string;
+  hauptteilkategorie: string | null;
+  name: string | null;
+  bild_url: string | null;
+  diagramm: unknown;
+} & Record<string, unknown>;
+
+/** Die Spalten der Quelle. `VORLAGE_SELECT` ist bereits die Übungs-Spaltenliste
+ *  fürs Kopieren (Inhalt, Einordnung, Bild, Diagramm) — dazu kommt hier nur der
+ *  Eigentümer, den die Precondition «gehört nicht dem USER» braucht. Eine
+ *  handgepflegte Zweitliste liesse ein neues Übungsfeld hier still wegfallen. */
+const UEBERNAHME_SELECT = `${VORLAGE_SELECT}, owner_id`;
+
+/** Eine kuratierte oder fremde Übung direkt in den eigenen Bestand übernehmen
+ *  (Story 7, Übungswelten).
+ *
+ *  Bisher führte der einzige Weg über ein Training. Es entsteht eine
+ *  gewöhnliche, zunächst private Trainer-Übung mit eigener Bild- und
+ *  Diagrammkopie; eine Verknüpfung zum Original gibt es nicht (PC 5) —
+ *  spätere Änderungen am Original wirken in keine Richtung.
+ *
+ *  Die Kopie behält die Altersstufe des Originals (PC 3). Wer sie in der
+ *  anderen Stufe braucht, wandelt sie anschliessend um (Story 4); das sind zwei
+ *  getrennte Vorgänge. */
+export async function uebernimmUebung(
+  exerciseId: string,
+): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+
+  // RLS deckt die Sichtbarkeit ab (Precondition 1): kuratierte und fremde
+  // öffentliche Übungen kommen durch, eine fremde private nicht.
+  const { data: q } = await supabase
+    .from("exercises")
+    .select(UEBERNAHME_SELECT)
+    .eq("id", exerciseId)
+    .maybeSingle<ZuUebernehmendeUebung>();
+  if (!q) return { ok: false, error: "Diese Übung ist nicht mehr verfügbar." };
+
+  // Precondition 2: Die eigene Übung übernimmt niemand — sie liegt bereits im
+  // eigenen Bestand, und die Detailseite bietet dort auch keinen Knopf an.
+  if (q.owner_id === user.id)
+    return { ok: false, error: "Diese Übung liegt schon in deinem Bestand." };
+
+  // Kopiert wird mit dem gemeinsamen Rumpf (`legeUebungsKopieAn`): Slug,
+  // Bild- und Diagrammkopie, Eigentum und der private Anfangszustand (PC 1)
+  // sind dieselben wie beim Übernehmen einer Fassung aus einem Training.
+  const kopie = await legeUebungsKopieAn(supabase, q, {
+    ownerId: user.id,
+    altersstufe: alsAltersstufe(q.altersstufe),
+  });
+  if (!kopie.ok) return kopie;
+
+  revalidateLists();
+  return kopie;
 }
 
 /** Sichtbarkeit zwischen public/private umschalten (Story 7 EK2). */
@@ -225,7 +322,7 @@ export async function deleteExercise(id: string, _form: FormData) {
     .eq("source", "user");
   if (error) return;
 
-  await removeStorageObject(supabase, bildUrlToPath(ex?.bild_url));
+  await entferneStorageObjekt(supabase, bildUrlToPath(ex?.bild_url));
 
   revalidateLists();
   redirect("/?mine=1&deleted=1");

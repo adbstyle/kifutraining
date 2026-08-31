@@ -15,6 +15,7 @@ import { Flash } from "@/components/Flash";
 import { cn } from "@/lib/cn";
 import { OwnerActions } from "@/components/exercise/OwnerActions";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
+import { UebungUebernehmenButton } from "@/components/exercise/UebungUebernehmenButton";
 import { createClient } from "@/lib/supabase/server";
 import {
   getExerciseDetail,
@@ -22,12 +23,13 @@ import {
   type ExerciseDetail,
 } from "@/lib/queries/exercises";
 import {
-  trainingsteil as teilLabels,
   feldtyp as feldLabels,
-  erscheinungsform as formLabels,
+  uebungstyp as uebungstypLabels,
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
+import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
+import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +41,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const ex = await getExerciseDetail(slug).catch(() => null);
   if (!ex) return { title: "Übung nicht gefunden" };
-  return { title: `${ex.name} — Kinderfussball-Übung` };
+  return { title: `${ex.name} — Übung` };
 }
 
 function Meta({
@@ -72,7 +74,11 @@ export default async function ExerciseDetailPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ created?: string; updated?: string }>;
+  searchParams: Promise<{
+    created?: string;
+    updated?: string;
+    uebernommen?: string;
+  }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -82,7 +88,9 @@ export default async function ExerciseDetailPage({
     ? "Übung erstellt."
     : sp.updated
       ? "Änderungen gespeichert."
-      : null;
+      : sp.uebernommen
+        ? "Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen."
+        : null;
 
   const supabase = await createClient();
   const {
@@ -92,21 +100,34 @@ export default async function ExerciseDetailPage({
   // Favoriten-Aktion nur für angemeldete USER (AC2/AC11).
   const favorited = user ? await isFavorited(ex.id) : false;
 
-  // Trainingsteil wandert in die Brotkrumen (als Filter-Link auf den Pool);
-  // die Eyebrow-Zeile zeigt nur noch ergänzenden Kontext (Feldtyp).
-  const teilLabel =
-    teilLabels[ex.trainingsteil as keyof typeof teilLabels] ?? ex.trainingsteil;
+  // Einordnung wandert in die Brotkrumen (als Filter-Link auf den Pool); die
+  // Eyebrow-Zeile zeigt nur noch ergänzenden Kontext.
+  const teilLabel = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
     { label: "Übungspool", href: "/" },
     { label: teilLabel, href: `/?teil=${ex.trainingsteil}` },
     { label: ex.name },
   ];
+  // Feldtyp und Spielfeldgrösse schliessen einander aus: der Feldtyp ist eine
+  // Kategorie des Manuals Fussball Kinder, die Spielfeldgrösse führt das
+  // Junioren-Manual an seiner Stelle (Story 3 AK 8/10).
+  const spielfeld =
+    traegtSpielfeldgroesse(ex.altersstufe) &&
+    ex.spielfeld_laenge_m != null &&
+    ex.spielfeld_breite_m != null
+      ? `${ex.spielfeld_laenge_m} × ${ex.spielfeld_breite_m} m`
+      : null;
   const meta = [
-    ex.feldtyp ? feldLabels[ex.feldtyp as keyof typeof feldLabels] : null,
+    traegtFeldtyp(ex.altersstufe) && ex.feldtyp
+      ? feldLabels[ex.feldtyp as keyof typeof feldLabels]
+      : null,
+    spielfeld,
   ].filter(Boolean);
   const anzahl = anzahlText(ex.anzahl_kinder);
   const hatEckdaten =
+    !!spielfeld ||
     !!ex.hauptteilkategorie ||
+    !!ex.uebungstyp ||
     ex.erscheinungsform.length > 0 ||
     !!anzahl ||
     ex.material.length > 0;
@@ -163,11 +184,17 @@ export default async function ExerciseDetailPage({
                     }
                   />
                 ) : (
-                  <FavoriteButton
-                    exerciseId={ex.id}
-                    initial={favorited}
-                    size="sm"
-                  />
+                  <>
+                    {/* Übernehmen (Story 7, Übungswelten) — nur an einer
+                        fremden oder kuratierten Übung: die eigene liegt
+                        bereits im Bestand. */}
+                    <UebungUebernehmenButton exerciseId={ex.id} name={ex.name} />
+                    <FavoriteButton
+                      exerciseId={ex.id}
+                      initial={favorited}
+                      size="sm"
+                    />
+                  </>
                 )}
               </>
             )}
@@ -207,16 +234,23 @@ export default async function ExerciseDetailPage({
         <div className="hidden print:block">
           <Meta label="Trainingsteil">{teilLabel}</Meta>
         </div>
+        {spielfeld && <Meta label="Spielfeldgrösse">{spielfeld}</Meta>}
         {ex.hauptteilkategorie && (
           <Meta label="Hauptteilkategorie">
             {hkatLabels[ex.hauptteilkategorie as keyof typeof hkatLabels] ??
               ex.hauptteilkategorie}
           </Meta>
         )}
+        {ex.uebungstyp && (
+          <Meta label="Übungstyp">
+            {uebungstypLabels[ex.uebungstyp as keyof typeof uebungstypLabels] ??
+              ex.uebungstyp}
+          </Meta>
+        )}
         {ex.erscheinungsform.length > 0 && (
           <Meta label="Erscheinungsform">
             {ex.erscheinungsform
-              .map((f) => formLabels[f as keyof typeof formLabels] ?? f)
+              .map((f) => ERSCHEINUNGSFORM_LABEL[f] ?? f)
               .join(", ")}
           </Meta>
         )}
@@ -281,7 +315,7 @@ export default async function ExerciseDetailPage({
           <p className="type-body-small text-on-surface-variant">
             Übung aus der{" "}
             <strong className="text-on-surface">Gemeinschaft</strong> der
-            Trainerinnen und Trainer, nicht aus dem Manual Kinderfussball.
+            Trainerinnen und Trainer, nicht aus dem kuratierten Manual-Bestand.
             {ex.visibility === "private" &&
               " Noch nicht veröffentlicht — ein Entwurf."}
           </p>

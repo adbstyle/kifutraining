@@ -46,13 +46,19 @@ export default async function FassungBearbeitenPage({
             diagramm={f.diagramm}
           />
         }
+        altersstufe={f.trainingAltersstufe}
+        stufenWahl="fest"
+        kontext="fassung"
         initial={{
           name: f.name,
           trainingsteil: f.trainingsteil,
           kategorien: f.kategorien,
           feldtyp: f.feldtyp,
+          spielfeld_laenge_m: f.spielfeldLaengeM,
+          spielfeld_breite_m: f.spielfeldBreiteM,
           erscheinungsform: f.erscheinungsform,
           hauptteilkategorie: f.hauptteilkategorie,
+          uebungstyp: f.uebungstyp,
           anzahl_kinder: f.anzahlKinder,
           material: f.material,
           methodischer_fahrplan: f.fahrplan,

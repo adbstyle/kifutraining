@@ -1,9 +1,10 @@
 // Fassungen: eigenständige, im Training lebende Kopien von Bibliotheks-Übungen
 // (Epic #72). Diese Datei hält die Regeln, die Erzeugung und Übernahme teilen —
 // die Server Actions bleiben dadurch dünn.
-import { brauchtFahrplan } from "@/lib/labels";
+import { brauchtFahrplan, type Altersstufe } from "@/lib/altersstufe";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { kopiereDiagramm, parseDiagramm } from "@/lib/diagramm";
+import { userSlug } from "@/lib/slug";
 import type { createClient } from "@/lib/supabase/server";
 
 /** Die inhaltlichen Felder, die eine Fassung von ihrer Vorlage übernimmt.
@@ -14,21 +15,39 @@ export const FASSUNG_INHALT_FELDER = [
   "kategorien",
   "erscheinungsform",
   "feldtyp",
+  "spielfeld_laenge_m",
+  "spielfeld_breite_m",
   "anzahl_kinder",
   "material",
   "methodischer_fahrplan",
+  "uebungstyp",
   "aufbau",
   "varianten",
   "bild_quelle",
 ] as const;
 
-/** Die Spaltenliste, mit der eine Vorlage für das Kopieren gelesen wird —
- *  Inhalte sowie Bild und Diagramm. Die
- *  Inhaltsfelder kommen aus derselben Konstante wie das Kopieren selbst, damit
- *  ein neues Übungsfeld nicht gelesen-aber-nicht-kopiert (oder umgekehrt)
- *  enden kann. */
+/** Die Spalten, mit denen eine Fassung fürs Übernehmen in die Bibliothek
+ *  gelesen wird. Aus derselben Konstante wie das Kopieren: eine handgepflegte
+ *  Zweitliste liesse ein neues Übungsfeld hier still wegfallen. */
+export const FASSUNG_UEBERNAHME_SELECT = [
+  "altersstufe",
+  "trainingsteil",
+  "hauptteilkategorie",
+  ...FASSUNG_INHALT_FELDER,
+  "bild_url",
+  "diagramm",
+].join(", ");
+
+/** Die Spaltenliste, mit der eine Bibliotheks-Übung als Vorlage fürs Kopieren
+ *  ins Training gelesen wird — Einordnung, Inhalte, Bild und Diagramm. Aus
+ *  derselben Konstante wie das Kopieren selbst, damit ein neues Übungsfeld
+ *  nicht gelesen-aber-nicht-kopiert (oder umgekehrt) enden kann. */
 export const VORLAGE_SELECT = [
   "id",
+  // Gelesen, aber nicht kopiert: Die Fassung erbt ihre Altersstufe vom
+  // Training (Trigger `te_altersstufe_erben`). Der Aufrufer braucht sie, um zu
+  // prüfen, ob die Vorlage überhaupt in dieses Training gehört (Story 6 AK 4).
+  "altersstufe",
   "trainingsteil",
   "hauptteilkategorie",
   ...FASSUNG_INHALT_FELDER,
@@ -54,6 +73,10 @@ function dateiendung(pfad: string): string {
  *  Bestand-Überführung. */
 export function fassungUnvollstaendig(f: {
   name: string | null;
+  /** Die Altersstufe entscheidet über die Ablaufform: der methodische Fahrplan
+   *  ist dem Kinderfussball vorbehalten, eine Junioren-Übung trägt in jedem
+   *  Block einen Beschreibungstext (Story 3, Übungswelten). */
+  altersstufe: Altersstufe;
   trainingsteil: string;
   hauptteilkategorie: string | null;
   methodischer_fahrplan: { offen_starten?: string; ueben?: string[]; wetteifern?: string | null } | null;
@@ -61,7 +84,7 @@ export function fassungUnvollstaendig(f: {
 }): string | null {
   if (!f.name?.trim()) return "Diese Übung hat keinen Namen.";
 
-  if (brauchtFahrplan(f.trainingsteil, f.hauptteilkategorie)) {
+  if (brauchtFahrplan(f.altersstufe, f.trainingsteil, f.hauptteilkategorie)) {
     const fp = f.methodischer_fahrplan;
     const vollstaendig =
       !!fp?.offen_starten?.trim() &&
@@ -192,4 +215,67 @@ export function eigeneBildPfade(
  *  vergessen wird. */
 export function inhaltFelder(quelle: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(FASSUNG_INHALT_FELDER.map((f) => [f, quelle[f]]));
+}
+
+/** Die Quelle einer Übungskopie: eine Bibliotheks-Übung oder eine Fassung aus
+ *  einem Training. Beide tragen denselben Feldsatz — die Kopie merkt keinen
+ *  Unterschied. */
+export type UebungsKopieQuelle = {
+  name: string | null;
+  trainingsteil: string;
+  hauptteilkategorie: string | null;
+  bild_url: string | null;
+  diagramm: unknown;
+} & Record<string, unknown>;
+
+/** Eine eigenständige, zunächst private Trainer-Übung aus einer Quelle anlegen —
+ *  mit eigener Bild- und Diagrammkopie.
+ *
+ *  Der gemeinsame Rumpf zweier Wege, die fachlich verschieden beginnen und
+ *  identisch enden: «kuratierte oder fremde Übung übernehmen» (Story 7,
+ *  Übungswelten) und «Fassung in die Bibliothek übernehmen» (Story 7,
+ *  Bibliotheks-Epic). Wer prüfen darf, was übernommen werden darf, entscheidet
+ *  der Aufrufer; hier steht nur, woraus die Kopie besteht.
+ *
+ *  Eine Verknüpfung zur Quelle entsteht nicht: spätere Änderungen wirken in
+ *  keine Richtung. Die Altersstufe gibt der Aufrufer mit — sie stammt bei der
+ *  Übung von ihr selbst, bei der Fassung von ihrem Training.
+ *
+ *  Scheitert der Insert, fällt die bereits erzeugte Bildkopie wieder weg. */
+export async function legeUebungsKopieAn(
+  supabase: SupabaseClient,
+  quelle: UebungsKopieQuelle,
+  ziel: { ownerId: string; altersstufe: Altersstufe },
+): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
+  // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
+  const uebungId = crypto.randomUUID();
+  const bild = await kopiereBild(supabase, quelle.bild_url, userOrdner(ziel.ownerId), uebungId);
+  if (bild.error) return { ok: false, error: bild.error };
+
+  const { data: angelegt, error } = await supabase
+    .from("exercises")
+    .insert({
+      id: uebungId,
+      // Zufallssuffix: dieselbe Quelle lässt sich mehrfach übernehmen, jede
+      // Kopie bekommt ihren eigenen Slug.
+      slug: userSlug(quelle.name ?? "Übung"),
+      altersstufe: ziel.altersstufe,
+      trainingsteil: quelle.trainingsteil,
+      hauptteilkategorie: quelle.hauptteilkategorie,
+      ...inhaltFelder(quelle),
+      bild_url: bild.url,
+      diagramm: kopiereDiagrammVon(quelle.diagramm),
+      source: "user",
+      owner_id: ziel.ownerId,
+      // Zunächst privat: veröffentlicht wird bewusst separat.
+      visibility: "private",
+    })
+    .select("slug")
+    .single();
+
+  if (error || !angelegt) {
+    await entferneStorageObjekt(supabase, bild.pfad);
+    return { ok: false, error: error?.message ?? "Übernehmen fehlgeschlagen." };
+  }
+  return { ok: true, slug: angelegt.slug };
 }

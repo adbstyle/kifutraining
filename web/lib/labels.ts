@@ -1,35 +1,21 @@
-import { kategorien } from "@/lib/vocab";
+import {
+  kategorien,
+  trainingsteil as trainingsteilLabels,
+  junioren_block as juniorenBlockLabels,
+  erscheinungsform as erscheinungsformLabels,
+  erscheinungsform_junioren as erscheinungsformJuniorenLabels,
+} from "@/lib/vocab";
 
 // Schweizer Juniorenstufen — nur die offiziellen Stufennamen als Tooltip/Hint.
 export const kategorieStufe: Record<keyof typeof kategorien, string> = {
   G: "G-Junior:innen",
   F: "F-Junior:innen",
   E: "E-Junior:innen",
+  D: "D-Junior:innen",
+  C: "C-Junior:innen",
+  B: "B-Junior:innen",
+  A: "A-Junior:innen",
 };
-
-// Trainingsteile mit methodischem Fahrplan + Themen-/Erscheinungsform-Feldern
-// (vs. auffangen/ausklang mit flachem Aufbau). Eine Quelle für alle Schichten.
-export const FAHRPLAN_TEILE = new Set<string>(["einleitung", "hauptteil"]);
-
-// Das freie Spiel am Ende des Hauptteils. Es folgt keiner methodischen
-// Progression und trägt darum eine Beschreibung statt des Fahrplans.
-export const FREIES_SPIEL = "fussball-spielen";
-
-/** Braucht diese Einordnung den methodischen Fahrplan? Die Kategorie
- *  «Fussball spielen» trägt stattdessen eine Beschreibung im Feld `aufbau`
- *  (Epic #72, Story 2). Eine Quelle für Formular, Validierung und Anzeige;
- *  spiegelt den DB-Constraint `ablauf_je_einordnung`.
- *
- *  Die Kategorie wird nur im Hauptteil ausgewertet — ausserhalb trägt eine
- *  Übung ohnehin keine, und ein stehengebliebener Formularwert darf die
- *  Einleitung nicht um ihren Fahrplan bringen. */
-export function brauchtFahrplan(
-  trainingsteil: string,
-  hauptteilkategorie: string | null,
-): boolean {
-  if (!FAHRPLAN_TEILE.has(trainingsteil)) return false;
-  return !(trainingsteil === "hauptteil" && hauptteilkategorie === FREIES_SPIEL);
-}
 
 /** Befüllte Fahrplan-Stufen zu einem Text: in ihrer Reihenfolge als getrennte
  *  Absätze, ohne Textverlust (PO-Entscheid 2026-08-22). Dient als Ausgangstext
@@ -71,3 +57,41 @@ export function ueberfuehreAblauf(
     aufbau: nachFahrplan ? "" : text,
   };
 }
+
+/** Kurzdefinition je Übungstyp, sichtbar beim Zuweisen (Story 9 AC 4).
+ *
+ *  Quellenlage: Das Manual Fussball Jugendliche führt die drei Typen als
+ *  Gliederung seines Good-Practice-Teils, definiert sie aber nicht einzeln.
+ *  Belegt ist nur die Aussage zur Basisspielform (S. 56): «Die Basisspielform
+ *  eignet sich besonders gut, um die Prinzipien sichtbar zu machen und zu
+ *  beobachten. Für weitere Trainingsinhalte bedienst du dich der Spielformen
+ *  und Übungen, wobei die Spielformen zu bevorzugen sind.» Die beiden übrigen
+ *  Texte fassen diese Stelle und den Trainingsformen-Abschnitt (S. 24)
+ *  zusammen; sie sind Paraphrase, kein Zitat. */
+export const UEBUNGSTYP_DEFINITION: Record<string, string> = {
+  basisspielform:
+    "Die Referenzform eines Themas. Sie eignet sich besonders gut, um die Prinzipien sichtbar zu machen und zu beobachten.",
+  spielform:
+    "Spielnahe Form mit Gegner und Entscheidungen. Das Manual zieht sie der isolierten Übung vor.",
+  "isolierte-form":
+    "Übungsform ohne Spielsituation. Im Manual heisst sie schlicht «Übung» — hier umbenannt, weil die Applikation dieses Wort für das Objekt selbst braucht.",
+};
+
+/** Klartext jeder Einordnung — die vier Trainingsteile des Manuals Fussball
+ *  Kinder und die sechs Blöcke des Manuals Fussball Jugendliche. Eine Quelle
+ *  für Katalogkarten, Detailseiten, Breadcrumbs und Picker; ohne sie zeigte
+ *  eine Junioren-Übung dort ihren Roh-Slug. */
+export const EINORDNUNG_LABEL: Record<string, string> = {
+  ...trainingsteilLabels,
+  ...juniorenBlockLabels,
+};
+
+/** Klartext jeder Erscheinungsform beider Manuals. Angeboten wird immer nur
+ *  das Vokabular EINER Altersstufe (`erscheinungsformenFuer`) — hier geht es
+ *  ausschliesslich darum, einen bereits gespeicherten Slug zu beschriften, und
+ *  dafür braucht es beide Kataloge. Eine Quelle statt dreier lokaler
+ *  Zusammenführungen in Formular, Picker und Detailseite. */
+export const ERSCHEINUNGSFORM_LABEL: Record<string, string> = {
+  ...erscheinungsformLabels,
+  ...erscheinungsformJuniorenLabels,
+};

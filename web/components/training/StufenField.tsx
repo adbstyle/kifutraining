@@ -8,18 +8,30 @@ const katColor: Record<KategorieSlug, string> = {
   G: "bg-kat-g text-rasen-950 border-transparent",
   F: "bg-kat-f text-rasen-950 border-transparent",
   E: "bg-kat-e text-rasen-950 border-transparent",
+  D: "bg-kat-d text-rasen-950 border-transparent",
+  C: "bg-kat-c text-rasen-950 border-transparent",
+  B: "bg-kat-b text-rasen-950 border-transparent",
+  A: "bg-kat-a text-rasen-950 border-transparent",
 };
 
-/* Stufen-Auswahl (G/F/E) als toggelbare Chips — die Alterskategorien eines
-   Trainings (Story #10 AC3, Story #12 AC2). Im ausgewählten Zustand in der festen
-   Stufen-Farbe, sonst als Outline-Chip. Kontrolliert. */
+/* Stufen-Auswahl als toggelbare Chips — die Alterskategorien eines Trainings
+   (Story #10 AC3, Story #12 AC2). Im ausgewählten Zustand in der festen
+   Stufen-Farbe, sonst als Outline-Chip. Kontrolliert.
+
+   Angeboten werden nur die Kategorien der Altersstufe des Trainings
+   (`kategorien`; Story 5 AK 4) — G bis A stehen nie gemeinsam zur Wahl. Beim
+   Anlegen erscheint das Feld deshalb erst nach der Wahl der Altersstufe:
+   welche Kategorien es überhaupt gibt, folgt aus ihr. */
 export function StufenField({
   value,
   onChange,
+  kategorien = kategorienSlugs,
   className,
 }: {
   value: string[];
   onChange: (next: string[]) => void;
+  /** Die wählbaren Alterskategorien; Vorgabe ist das ganze Vokabular. */
+  kategorien?: readonly string[];
   className?: string;
 }) {
   function toggle(k: KategorieSlug) {
@@ -27,7 +39,7 @@ export function StufenField({
   }
   return (
     <div className={cn("flex flex-wrap gap-2", className)} role="group" aria-label="Stufen">
-      {kategorienSlugs.map((k) => {
+      {(kategorien as KategorieSlug[]).map((k) => {
         const selected = value.includes(k);
         return (
           <button
