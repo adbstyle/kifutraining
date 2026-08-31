@@ -174,15 +174,7 @@ export const LEER_HINWEIS_BLOECKE: JuniorenBlockSlug[] = [
   "jun-explosivitaet",
 ];
 
-// Die gültigen Zuordnungsziele eines Trainings standen bis zum Epic
-// Übungswelten hier (`zuordnungsZiele`). Sie folgen jetzt aus der Altersstufe
-// und kommen aus `einordnungsSlugsFuer()` in web/lib/altersstufe.ts — derselben
-// Quelle, aus der auch eine Bibliotheks-Übung ihre Einordnung wählt.
-//
-// Ebenfalls entfallen ist `heimatFilterFuerEinordnung`: die Verwendungs-Brücke
-// der Abbildungsregel, die eine Kinderfussball-Übung in einen Junioren-Block
-// liess, solange es dort keinen eigenen Bestand gab. Der Picker filtert seit
-// Story 6 (Übungswelten) auf die Altersstufe des Trainings — was ein Block
-// aufnimmt, sagt `vorlagenFilterFuer()` in web/lib/altersstufe.ts. Die
-// Abbildungsregel selbst lebt weiter, aber nur noch als Vorschlag beim
-// Überführen einer Übung (Story 4).
+// Was ein Trainingsblock aufnehmen darf, steht nicht hier, sondern in
+// `vorlagenFilterFuer()` in web/lib/altersstufe.ts. Die Abbildungsregel oben
+// dient allein noch als Vorschlag beim Überführen einer Übung in die andere
+// Altersstufe (Story 4).

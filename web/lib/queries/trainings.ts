@@ -32,6 +32,10 @@ export type TrainingExerciseItem = {
   kategorien: string[];
   erscheinungsform: string[];
   feldtyp: string | null;
+  /** Spielfeldgrösse in Metern — das Junioren-Gegenstück zum Feldtyp. Immer
+   *  paarweise belegt oder beide `null` (CHECK `te_spielfeld_paarweise`). */
+  spielfeldLaengeM: number | null;
+  spielfeldBreiteM: number | null;
   /** Übungstyp nach dem Manual Fussball Jugendliche (Story 9). */
   uebungstyp: string | null;
   anzahlKinder: { min?: number | null; max?: number | null } | null;
@@ -82,6 +86,8 @@ type RawInhalt = {
   kategorien: string[] | null;
   erscheinungsform: string[] | null;
   feldtyp: string | null;
+  spielfeld_laenge_m: number | null;
+  spielfeld_breite_m: number | null;
   uebungstyp: string | null;
   anzahl_kinder: { min?: number | null; max?: number | null } | null;
   material: string[] | null;
@@ -140,6 +146,8 @@ function mapTraining(raw: RawTraining): TrainingDetail {
         kategorien: te.kategorien ?? [],
         erscheinungsform: te.erscheinungsform ?? [],
         feldtyp: te.feldtyp,
+        spielfeldLaengeM: te.spielfeld_laenge_m,
+        spielfeldBreiteM: te.spielfeld_breite_m,
         uebungstyp: te.uebungstyp,
         anzahlKinder: te.anzahl_kinder,
         material: te.material ?? [],

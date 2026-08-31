@@ -57,16 +57,29 @@ comment on column trainings.altersstufe is
 alter table training_exercises add column altersstufe text
   check (altersstufe in ('kinderfussball','juniorenfussball'));
 
--- Der Touch-Trigger würde jedem Training das Deploy-Datum als «Geändert»
--- schreiben; die Übersicht behauptete eine Änderung, die niemand vorgenommen
--- hat (Muster: herkunftsangaben_abbau).
+-- Zwei Trigger stehen dem Backfill im Weg — beide zu, wie in der
+-- Vorgängermigration (uebungswelten_testdaten_bereinigen):
+--
+-- `training_exercises_touch` würde jedem Training das Deploy-Datum als
+-- «Geändert» schreiben; die Übersicht behauptete eine Änderung, die niemand
+-- vorgenommen hat (Muster: herkunftsangaben_abbau).
+--
+-- `training_exercises_oeffentlich_gate` feuert bei JEDEM Update auf dieser
+-- Tabelle und prüft dann die Veröffentlichungs-Bedingungen des ganzen
+-- Trainings. Der Backfill fasst jede Zeile an — ein bestehendes öffentliches
+-- Training, dem heute eine Bedingung fehlt (Alterskategorie, Einleitung oder
+-- freies Spiel), liesse den Deploy an einer Altzeile scheitern, die niemand
+-- angerührt hat. Geändert wird hier ohnehin nur die geerbte Altersstufe, die
+-- keine Bedingung berührt.
 alter table training_exercises disable trigger training_exercises_touch;
+alter table training_exercises disable trigger training_exercises_oeffentlich_gate;
 
 update training_exercises te
   set altersstufe = t.altersstufe
   from trainings t
   where t.id = te.training_id;
 
+alter table training_exercises enable trigger training_exercises_oeffentlich_gate;
 alter table training_exercises enable trigger training_exercises_touch;
 
 alter table training_exercises alter column altersstufe set not null;

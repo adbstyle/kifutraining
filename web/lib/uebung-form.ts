@@ -3,9 +3,9 @@
 // Bewusst KEIN "use server"-Modul: hier stehen reine Validierungsregeln, keine
 // Mutationen. (Ein Server-Actions-Modul darf ausserdem nur async Funktionen
 // exportieren.)
-import { FREIES_SPIEL } from "@/lib/labels";
 import { feldtypSlugs, uebungstypSlugs, hauptteilkategorieSlugs } from "@/lib/vocab";
 import {
+  FREIES_SPIEL,
   brauchtFahrplan,
   einordnungsSlugsFuer,
   erscheinungsformenFuer,
@@ -19,9 +19,13 @@ import {
 } from "@/lib/altersstufe";
 
 /** Kleinste und grösste sinnvolle Kantenlänge eines Spielfelds in Metern.
- *  Spiegelt die CHECKs `ex_spielfeld_bereich` / `te_spielfeld_bereich`. */
-const SPIELFELD_MIN = 5;
-const SPIELFELD_MAX = 120;
+ *  Spiegelt die CHECKs `ex_spielfeld_bereich` / `te_spielfeld_bereich`.
+ *
+ *  Exportiert, damit das Eingabefeld dieselben Grenzen anbietet, die hier
+ *  geprüft werden — sonst liefe das `min`/`max` des Formulars von der Regel
+ *  weg, ohne dass es jemandem auffiele. */
+export const SPIELFELD_MIN = 5;
+export const SPIELFELD_MAX = 120;
 
 function lines(v: FormDataEntryValue | null): string[] {
   return String(v ?? "")

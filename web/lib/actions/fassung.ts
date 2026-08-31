@@ -10,17 +10,12 @@ import type { ExerciseFormState } from "@/lib/actions/exercises";
 import { parseDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
 import {
   fassungUnvollstaendig,
-  kopiereBild,
-  userOrdner,
-  kopiereDiagrammVon,
-  entferneStorageObjekt,
-  inhaltFelder,
   istEigeneFassungsDatei,
+  legeUebungsKopieAn,
   FASSUNG_UEBERNAHME_SELECT,
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
-import { istAltersstufe } from "@/lib/altersstufe";
-import { userSlug } from "@/lib/slug";
+import { alsAltersstufe } from "@/lib/altersstufe";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 
@@ -58,9 +53,7 @@ async function ladeFassung(
     ziel,
     // Die Fassung folgt der Altersstufe ihres Trainings — sie hat keine eigene
     // (Story 1). Der Rückfall ist bloss der Typ-Guard: die Spalte ist NOT NULL.
-    altersstufe: istAltersstufe(training.altersstufe)
-      ? training.altersstufe
-      : ("kinderfussball" as const),
+    altersstufe: alsAltersstufe(training.altersstufe),
   };
 }
 
@@ -199,13 +192,6 @@ export async function updateFassung(
   redirect(`/training/${fassung.training_id}/edit?bearbeitet=1`);
 }
 
-/** Eine Fassung als eigene, zunächst private Vorlage in die Bibliothek
- *  übernehmen (Story 7).
- *
- *  Zulässig ist jede für den USER sichtbare Fassung — auch aus einem fremden
- *  öffentlichen Training. Es entsteht eine gewöhnliche Trainer-Übung mit eigener
- *  Bild- und Diagrammkopie; eine Verknüpfung zur Fassung gibt es nicht, spätere
- *  Änderungen wirken in keine Richtung. */
 /** Eine Fassung, wie sie fürs Übernehmen in die Bibliothek gelesen wird
  *  (FASSUNG_UEBERNAHME_SELECT). */
 type ZuUebernehmendeFassung = {
@@ -223,6 +209,13 @@ type ZuUebernehmendeFassung = {
   diagramm: unknown;
 } & Record<string, unknown>;
 
+/** Eine Fassung als eigene, zunächst private Vorlage in die Bibliothek
+ *  übernehmen (Story 7).
+ *
+ *  Zulässig ist jede für den USER sichtbare Fassung — auch aus einem fremden
+ *  öffentlichen Training. Es entsteht eine gewöhnliche Trainer-Übung mit eigener
+ *  Bild- und Diagrammkopie; eine Verknüpfung zur Fassung gibt es nicht, spätere
+ *  Änderungen wirken in keine Richtung. */
 export async function uebernehmeInBibliothek(
   fassungId: string,
 ): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
@@ -245,42 +238,22 @@ export async function uebernehmeInBibliothek(
   // mehr: seit der Trennung der Altersstufen ist jeder Block, in dem eine
   // Fassung liegen kann, auch ein gültiger Ort einer Bibliotheks-Übung
   // derselben Stufe.
-  const altersstufe = istAltersstufe(f.altersstufe) ? f.altersstufe : "kinderfussball";
+  const altersstufe = alsAltersstufe(f.altersstufe);
 
   const mangel = fassungUnvollstaendig({ ...f, altersstufe });
   if (mangel) return { ok: false, error: mangel };
 
-  // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
-  const uebungId = crypto.randomUUID();
-  const bild = await kopiereBild(supabase, f.bild_url, userOrdner(user.id), uebungId);
-  if (bild.error) return { ok: false, error: bild.error };
-
-  const { data: angelegt, error } = await supabase
-    .from("exercises")
-    .insert({
-      id: uebungId,
-      slug: userSlug(f.name!),
-      trainingsteil: f.trainingsteil,
-      altersstufe,
-      hauptteilkategorie: f.hauptteilkategorie,
-      ...inhaltFelder(f),
-      bild_url: bild.url,
-      diagramm: kopiereDiagrammVon(f.diagramm),
-      source: "user",
-      owner_id: user.id,
-      // Zunächst privat (PO-Entscheid): veröffentlicht wird bewusst separat.
-      visibility: "private",
-    })
-    .select("slug")
-    .single();
-
-  if (error || !angelegt) {
-    await entferneStorageObjekt(supabase, bild.pfad);
-    return { ok: false, error: error?.message ?? "Übernehmen fehlgeschlagen." };
-  }
+  // Kopiert wird mit dem gemeinsamen Rumpf (`legeUebungsKopieAn`): Slug, Bild-
+  // und Diagrammkopie, Eigentum und der private Anfangszustand sind dieselben
+  // wie beim direkten Übernehmen einer Bibliotheks-Übung.
+  const kopie = await legeUebungsKopieAn(supabase, f, {
+    ownerId: user.id,
+    altersstufe,
+  });
+  if (!kopie.ok) return kopie;
 
   revalidatePath("/");
-  return { ok: true, slug: angelegt.slug };
+  return kopie;
 }
 
 /** Das Diagramm einer Fassung speichern — das Pendant zu `saveDiagramm` für

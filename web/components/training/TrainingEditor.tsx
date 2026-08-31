@@ -84,7 +84,6 @@ export function TrainingEditor({
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
-  // Offener Picker: Trainingsteil und — im Hauptteil — die Unterkategorie.
   // Offener Picker: die Ziel-Einordnung (Kinderfussball-Teil oder
   // Junioren-Block) und — im Kinderfussball-Hauptteil — die Unterkategorie.
   const [open, setOpen] = useState<{

@@ -1,6 +1,7 @@
 "use client";
 
 import { TextField } from "@/components/ui";
+import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
 
 /** Die Spielfeldgrösse einer Junioren-Übung (Story 3 AK 8).
  *
@@ -40,8 +41,8 @@ export function SpielfeldgroesseField({
           label="Länge (m)"
           type="number"
           inputMode="numeric"
-          min={5}
-          max={120}
+          min={SPIELFELD_MIN}
+          max={SPIELFELD_MAX}
           className="flex-1"
           error={!!error}
           value={laenge}
@@ -57,8 +58,8 @@ export function SpielfeldgroesseField({
           label="Breite (m)"
           type="number"
           inputMode="numeric"
-          min={5}
-          max={120}
+          min={SPIELFELD_MIN}
+          max={SPIELFELD_MAX}
           className="flex-1"
           error={!!error}
           value={breite}

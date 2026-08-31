@@ -9,6 +9,7 @@
 // Die Fassungs-Bausteine (`kopiereBild`, `inhaltFelder`, `kopiereDiagrammVon`)
 // stammen aus dem Bibliotheks-Epic und werden hier wiederverwendet.
 import {
+  FASSUNG_INHALT_FELDER,
   entferneStorageObjekte,
   inhaltFelder,
   kopiereBild,
@@ -17,6 +18,7 @@ import {
   userOrdner,
   type BildOrdner,
 } from "@/lib/fassung";
+import { fehlerMeldung } from "@/lib/training-bedingungen";
 import type { createClient } from "@/lib/supabase/server";
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
@@ -38,14 +40,24 @@ export type KopieErgebnis =
   | { ok: true; neueId: string }
   | { ok: false; error: string };
 
-/** Die Felder einer Fassung, die in die Kopie übergehen. Inhalt kommt aus
- *  `inhaltFelder`; hier stehen Einordnung, Reihenfolge und Dauer. */
-const FASSUNG_SELECT = `
-  id, trainingsteil, hauptteilkategorie, position, duration_min,
-  name, kategorien, erscheinungsform, feldtyp, anzahl_kinder, material,
-  methodischer_fahrplan, aufbau, varianten, bild_quelle,
-  bild_url, diagramm
-`;
+/** Die Felder einer Fassung, die in die Kopie übergehen: Einordnung,
+ *  Reihenfolge und Dauer, dazu Inhalt, Bild und Diagramm.
+ *
+ *  Die Inhaltsfelder kommen aus derselben Konstante wie das Kopieren selbst
+ *  (`inhaltFelder` liest aus `FASSUNG_INHALT_FELDER`). Eine handgepflegte
+ *  Zweitliste liess hier zuvor `spielfeld_laenge_m`, `spielfeld_breite_m` und
+ *  `uebungstyp` still wegfallen: gelesen wurde nicht, was kopiert wird, und die
+ *  Kopie verlor die Angaben wortlos. */
+const FASSUNG_SELECT = [
+  "id",
+  "trainingsteil",
+  "hauptteilkategorie",
+  "position",
+  "duration_min",
+  ...FASSUNG_INHALT_FELDER,
+  "bild_url",
+  "diagramm",
+].join(", ");
 
 type QuellFassung = {
   id: string;
@@ -120,8 +132,16 @@ export async function kopiereTraining(
     })
     .select("id")
     .single();
+  // Übersetzt statt roh: Stammt die Quelle noch aus der Zeit vor der
+  // Kategorie-Pflicht, weist der Trigger `trainings_stufe_pflicht` die Kopie mit
+  // dem Marker `STUFE_FEHLT` ab — den läse sonst der Trainer.
   if (insertFehler || !neu)
-    return { ok: false, error: insertFehler?.message ?? "Kopieren fehlgeschlagen." };
+    return {
+      ok: false,
+      error: insertFehler
+        ? fehlerMeldung(insertFehler.message)
+        : "Kopieren fehlgeschlagen.",
+    };
 
   // Ab hier kann eine Teilkopie entstehen: jeder weitere Fehlerpfad räumt die
   // bereits erzeugten Bilddateien und das Ziel-Training wieder ab.

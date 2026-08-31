@@ -22,6 +22,25 @@ set lock_timeout = '5s';
 -- die stufenfremden Altwerte an allem, was überlebt hat.
 
 -- ----------------------------------------------------------------------------
+-- 0) Die sechs Erscheinungsformen des Manuals Fussball Kinder
+-- ----------------------------------------------------------------------------
+-- Sie kommen unten sechsmal vor — im Filter, in der Bedingung und in der
+-- Selbstprüfung, je an Übung und Fassung. Sechs ausgeschriebene Listen laufen
+-- auseinander, ohne dass es auffiele; darum EINE Definition. Sie lebt in
+-- `pg_temp`, gilt nur für diese Deploy-Sitzung und verschwindet mit ihr — im
+-- Schema bleibt nichts zurück.
+--
+-- Quelle der Slugs: data/vokabular.yaml, Schlüssel `erscheinungsform`.
+create function pg_temp.kifu_erscheinungsformen() returns text[]
+language sql immutable
+as $$
+  select array[
+    'spiel-kreativ-gestalten','ball-entschlossen-erobern',
+    'mutig-tore-erzielen','mutig-tore-verhindern',
+    'flink-geschickt-bewegen','respektvoll-fair-spielen']
+$$;
+
+-- ----------------------------------------------------------------------------
 -- 1) Zwei Trigger stehen dem Aufräumen im Weg
 -- ----------------------------------------------------------------------------
 -- `training_exercises_touch` schriebe jedem betroffenen Training das
@@ -80,23 +99,15 @@ delete from exercises
 -- eine solche Zeile wäre für jede weitere Bearbeitung gesperrt. Der PO hat
 -- entschieden, den Wert zu entfernen statt die Zeile stehen zu lassen
 -- (2026-08-30) — auf Produktion gibt es solche Werte nicht.
---
--- Die sechs Kinderfussball-Erscheinungsformen stammen aus
--- data/vokabular.yaml, Schlüssel `erscheinungsform`.
 update exercises
   set kategorien = array(
         select k from unnest(kategorien) k where k = any (array['G','F','E'])),
       erscheinungsform = array(
-        select f from unnest(erscheinungsform) f where f = any (array[
-          'spiel-kreativ-gestalten','ball-entschlossen-erobern',
-          'mutig-tore-erzielen','mutig-tore-verhindern',
-          'flink-geschickt-bewegen','respektvoll-fair-spielen'])),
+        select f from unnest(erscheinungsform) f
+         where f = any (pg_temp.kifu_erscheinungsformen())),
       uebungstyp = null
   where kategorien && array['D','C','B','A']
-     or not (erscheinungsform <@ array[
-          'spiel-kreativ-gestalten','ball-entschlossen-erobern',
-          'mutig-tore-erzielen','mutig-tore-verhindern',
-          'flink-geschickt-bewegen','respektvoll-fair-spielen'])
+     or not (erscheinungsform <@ pg_temp.kifu_erscheinungsformen())
      or uebungstyp is not null;
 
 -- Dieselbe Bereinigung an den Fassungen. Zusätzlich fallen hier die beiden
@@ -107,18 +118,13 @@ update training_exercises
   set kategorien = array(
         select k from unnest(kategorien) k where k = any (array['G','F','E'])),
       erscheinungsform = array(
-        select f from unnest(erscheinungsform) f where f = any (array[
-          'spiel-kreativ-gestalten','ball-entschlossen-erobern',
-          'mutig-tore-erzielen','mutig-tore-verhindern',
-          'flink-geschickt-bewegen','respektvoll-fair-spielen'])),
+        select f from unnest(erscheinungsform) f
+         where f = any (pg_temp.kifu_erscheinungsformen())),
       uebungstyp = null,
       einordnung_vorher = null,
       hauptteilkategorie_vorher = null
   where kategorien && array['D','C','B','A']
-     or not (erscheinungsform <@ array[
-          'spiel-kreativ-gestalten','ball-entschlossen-erobern',
-          'mutig-tore-erzielen','mutig-tore-verhindern',
-          'flink-geschickt-bewegen','respektvoll-fair-spielen'])
+     or not (erscheinungsform <@ pg_temp.kifu_erscheinungsformen())
      or uebungstyp is not null
      or einordnung_vorher is not null
      or hauptteilkategorie_vorher is not null;
@@ -162,17 +168,11 @@ begin
     union all
     (select 'Übung mit Junioren-Erscheinungsform'
        from exercises
-      where not (erscheinungsform <@ array[
-        'spiel-kreativ-gestalten','ball-entschlossen-erobern',
-        'mutig-tore-erzielen','mutig-tore-verhindern',
-        'flink-geschickt-bewegen','respektvoll-fair-spielen']) limit 1)
+      where not (erscheinungsform <@ pg_temp.kifu_erscheinungsformen()) limit 1)
     union all
     (select 'Fassung mit Junioren-Erscheinungsform'
        from training_exercises
-      where not (erscheinungsform <@ array[
-        'spiel-kreativ-gestalten','ball-entschlossen-erobern',
-        'mutig-tore-erzielen','mutig-tore-verhindern',
-        'flink-geschickt-bewegen','respektvoll-fair-spielen']) limit 1)
+      where not (erscheinungsform <@ pg_temp.kifu_erscheinungsformen()) limit 1)
     union all
     (select 'Übung mit Übungstyp' from exercises where uebungstyp is not null limit 1)
     union all

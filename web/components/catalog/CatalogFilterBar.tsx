@@ -14,6 +14,7 @@ import {
   hauptteilkategorie as hkatLabels,
   uebungstyp as uebungstypLabels,
   junioren_block as juniorenBlockLabels,
+  altersstufe as altersstufeLabels,
   kategorienSlugs,
 } from "@/lib/vocab";
 import { kategorieStufe } from "@/lib/labels";
@@ -43,12 +44,12 @@ const teilOptions: { value: string; label: string; group: string }[] = [
   ...Object.entries(teilLabels).map(([value, label]) => ({
     value,
     label: label as string,
-    group: "Kinderfussball",
+    group: altersstufeLabels.kinderfussball,
   })),
   ...Object.entries(juniorenBlockLabels).map(([value, label]) => ({
     value,
     label: label as string,
-    group: "Juniorenfussball",
+    group: altersstufeLabels.juniorenfussball,
   })),
 ];
 const feldOptions = toOptions(feldLabels);

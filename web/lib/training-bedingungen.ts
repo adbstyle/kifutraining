@@ -7,7 +7,8 @@
 // beide Seiten dieselbe Regel nennen statt zweier Formulierungen davon.
 
 import { JUNIOREN_PFLICHT_BLOECKE } from "@/lib/junioren";
-import type { Altersstufe } from "@/lib/altersstufe";
+import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
+import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
 
 /** Marker, mit dem die Datenebene eine verletzte Bedingung meldet. */
 const BEDINGUNG_MARKER = "TRAINING_UNVOLLSTAENDIG";
@@ -39,10 +40,6 @@ export const BEDINGUNG_FEHLT: Record<Bedingung, string> = {
   "jun-ausklang": "mindestens eine Übung im Ausklang",
 };
 
-/** Die Hauptteilkategorie des freien Spiels. Es liegt im Hauptteil — die
- *  Bedingung deckt «mindestens eine Übung im Hauptteil» damit zwingend mit ab. */
-export const FREIES_SPIEL = "fussball-spielen";
-
 function istBedingung(wert: string): wert is Bedingung {
   return wert in BEDINGUNG_FEHLT;
 }
@@ -73,13 +70,6 @@ function bedingungsFehler(message: string): string | null {
   const bedingung = bedingungAusFehler(message);
   return bedingung ? bedingungsMeldung(bedingung) : null;
 }
-
-/** Marker der Datenebene für einen Schema-Wechsel am öffentlichen Training. */
-const WECHSEL_OEFFENTLICH = "SCHEMA_WECHSEL_OEFFENTLICH";
-
-/** Marker der Datenebene für eine Einordnung oder Stufe, die nicht zum
- *  Trainingsschema passt. */
-const SCHEMA_KONFLIKT = "SCHEMA_KONFLIKT";
 
 /** Marker der Datenebene für den Versuch, die Altersstufe eines bestehenden
  *  Trainings zu ändern (Trigger `trainings_altersstufe_unveraenderlich`). */
@@ -118,6 +108,23 @@ const ALTERSSTUFE_CHECKS: [string, string][] = [
     "Der Feldtyp ist eine Angabe des Manuals Fussball Kinder. " +
       "Eine Junioren-Übung trägt stattdessen eine Spielfeldgrösse.",
   ],
+  // Die drei Spielfeld-Regeln (Story 3). Sie heissen auf beiden Tabellen
+  // gleich, bloss mit dem Präfix `ex_` bzw. `te_` — der Namensrest genügt
+  // darum als Erkennungsmerkmal für beide. Die Meldungen sind wortgleich mit
+  // denen aus `parseUebungsInhalt`, dem Spiegel derselben Regeln.
+  [
+    "spielfeld_paarweise",
+    "Bitte Länge und Breite angeben oder beides leer lassen.",
+  ],
+  [
+    "spielfeld_bereich",
+    `Länge und Breite in ganzen Metern, zwischen ${SPIELFELD_MIN} und ${SPIELFELD_MAX}.`,
+  ],
+  [
+    "spielfeld_nur_junioren",
+    "Die Spielfeldgrösse ist eine Angabe des Manuals Fussball Jugendliche. " +
+      "Eine Kinderfussball-Übung trägt stattdessen einen Feldtyp.",
+  ],
   [
     "ex_uebungstyp_nur_junioren",
     "Der Übungstyp ist eine Angabe des Manuals Fussball Jugendliche und gilt " +
@@ -139,17 +146,6 @@ const ALTERSSTUFE_CHECKS: [string, string][] = [
  *  Epic Übungswelten). Sie nennen wie die Bedingungs-Meldungen den Weg, nicht
  *  nur die Absage. */
 function schemaMeldung(message: string): string | null {
-  if (message.includes(WECHSEL_OEFFENTLICH))
-    return (
-      "Ein öffentliches Training wechselt das Trainingsschema nicht. " +
-      "Setze es zuerst auf Entwurf — nach dem Wechsel brauchst du ohnehin " +
-      "weitere Übungen, bevor du es wieder veröffentlichen kannst."
-    );
-  if (message.includes(SCHEMA_KONFLIKT))
-    return (
-      "Kinderfussball und Juniorenfussball lassen sich in einem Training " +
-      "nicht mischen."
-    );
   if (message.includes(ALTERSSTUFE_FEST))
     return (
       "Die Altersstufe eines Trainings steht ab dem Anlegen fest. " +

@@ -13,8 +13,6 @@ import {
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
   feldtyp as feldLabels,
-  erscheinungsform as formLabels,
-  erscheinungsform_junioren as formJuniorenLabels,
   hauptteilkategorie as hkatLabels,
   uebungstyp as uebungstypLabels,
   uebungstypSlugs,
@@ -22,10 +20,11 @@ import {
 import {
   kategorieStufe,
   UEBUNGSTYP_DEFINITION,
-  FREIES_SPIEL,
+  ERSCHEINUNGSFORM_LABEL,
   ueberfuehreAblauf,
 } from "@/lib/labels";
 import {
+  FREIES_SPIEL,
   andereAltersstufe,
   brauchtFahrplan,
   einordnungenFuer,
@@ -45,10 +44,6 @@ import { UmwandelnDialog, type Umwandlung } from "@/components/exercise/Umwandel
 import { SpielfeldgroesseField } from "@/components/exercise/SpielfeldgroesseField";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
-
-/** Beide Erscheinungsform-Vokabulare als ein Nachschlagewerk. Welches davon
- *  gilt, entscheidet die Altersstufe — hier werden nur Slugs beschriftet. */
-const alleFormLabels: Record<string, string> = { ...formLabels, ...formJuniorenLabels };
 
 export type ExerciseInitial = {
   name?: string;
@@ -537,7 +532,7 @@ export function ExerciseForm({
         <Group title="Erscheinungsform (optional)">
           {erscheinungsformenFuer(stufe).map((f) => (
             <FilterChip key={f} selected={form.includes(f)} onClick={() => toggle(form, setForm, f)}>
-              {alleFormLabels[f] ?? f}
+              {ERSCHEINUNGSFORM_LABEL[f] ?? f}
             </FilterChip>
           ))}
         </Group>

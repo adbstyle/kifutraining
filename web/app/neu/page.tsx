@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { createExercise } from "@/lib/actions/exercises";
-import { einordnungsSlugsFuer, istAltersstufe } from "@/lib/altersstufe";
+import { alsAltersstufe, einordnungsSlugsFuer } from "@/lib/altersstufe";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Neue Übung — KiFu", robots: { index: false } };
@@ -16,7 +16,7 @@ export default async function NeuePage({
   // erfasst, soll dort nicht zweimal wählen müssen. Unbekanntes wird still
   // ignoriert — die Vorbelegung ist Bequemlichkeit, kein Vertrag. Der
   // Kinderfussball bleibt die Vorgabe (Story 1 AC 8).
-  const altersstufe = istAltersstufe(sp.stufe) ? sp.stufe : "kinderfussball";
+  const altersstufe = alsAltersstufe(sp.stufe);
   const teil =
     sp.teil && einordnungsSlugsFuer(altersstufe).includes(sp.teil) ? sp.teil : undefined;
 

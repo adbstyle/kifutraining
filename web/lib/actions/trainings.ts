@@ -4,15 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
-import { TRAININGSTEIL_SLUGS, stufenAbgedeckt, teilTraegtDauer, ZIEL_MAX } from "@/lib/training";
-import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
+import { stufenAbgedeckt, teilTraegtDauer, ZIEL_MAX } from "@/lib/training";
+import { bildUrlToPath } from "@/lib/storage";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
-import {
-  bearbeitungszielVon,
-  bildOrdnerFuer,
-  ladeBearbeitungsziel,
-} from "@/lib/training-zugriff";
+import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import {
   istEigeneFassungsDatei,
   kopiereBild,
@@ -26,9 +22,13 @@ import {
   altersstufe as altersstufeLabels,
   type TrainingsteilSlug,
 } from "@/lib/vocab";
-import { istAltersstufe, kategorienFuer, vorlagenFilterFuer } from "@/lib/altersstufe";
 import {
-  FREIES_SPIEL,
+  alsAltersstufe,
+  istAltersstufe,
+  kategorienFuer,
+  vorlagenFilterFuer,
+} from "@/lib/altersstufe";
+import {
   bedingungAusFehler,
   fehlerMeldung,
   type Bedingung,
@@ -280,7 +280,7 @@ export async function addTrainingExercise(
     await entferneStorageObjekt(supabase, bild.pfad);
     // Übersetzt statt roh: Eine Übung, deren Werte nicht zur Altersstufe des
     // Trainings passen, weist die Datenebene als Constraint-Verletzung ab
-    // (Story 1). Der Picker grenzt darauf erst mit Story 6 ein.
+    // (Story 1).
     return { ok: false, error: fehlerMeldung(error.message) };
   }
 
@@ -324,7 +324,7 @@ async function fehlendeBedingungen(
   const fassungen = training.training_exercises ?? [];
   return {
     missing: fehlendeBedingungenAus(
-      istAltersstufe(training.altersstufe) ? training.altersstufe : "kinderfussball",
+      alsAltersstufe(training.altersstufe),
       training.stufen ?? [],
       fassungen,
     ),
@@ -484,6 +484,13 @@ export async function setTrainingStufen(
 
   const valid = validStufen(stufen);
 
+  // «Mindestens eine, immer — nicht erst beim Veröffentlichen» (PO 2026-08-30).
+  // Der DB-Trigger `trainings_stufe_pflicht` greift bewusst nur beim Anlegen,
+  // damit bestehende kategorielose Trainings bearbeitbar bleiben; das Leeren
+  // der letzten Kategorie im Editor fiele sonst durch beide Netze.
+  if (valid.length === 0)
+    return { ok: false, error: "Bitte mindestens eine Alterskategorie wählen." };
+
   // Direktes Update statt RPC: Die frühere `set_training_stufen` übertrug beim
   // Wechsel des Trainingsschemas alle Fassungen und merkte sich ihre bisherige
   // Einordnung. Den Wechsel gibt es nicht mehr — die Altersstufe eines
@@ -498,9 +505,7 @@ export async function setTrainingStufen(
 
   // Vorgelagert statt am Constraint-Fehler: die Datenebene würde denselben
   // Versuch abweisen, aber ohne den Hinweis auf den gangbaren Weg.
-  const erlaubt = kategorienFuer(
-    istAltersstufe(training.altersstufe) ? training.altersstufe : "kinderfussball",
-  );
+  const erlaubt = kategorienFuer(alsAltersstufe(training.altersstufe));
   if (valid.some((s) => !erlaubt.includes(s)))
     return {
       ok: false,

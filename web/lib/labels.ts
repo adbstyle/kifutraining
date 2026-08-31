@@ -2,6 +2,8 @@ import {
   kategorien,
   trainingsteil as trainingsteilLabels,
   junioren_block as juniorenBlockLabels,
+  erscheinungsform as erscheinungsformLabels,
+  erscheinungsform_junioren as erscheinungsformJuniorenLabels,
 } from "@/lib/vocab";
 
 // Schweizer Juniorenstufen — nur die offiziellen Stufennamen als Tooltip/Hint.
@@ -14,18 +16,6 @@ export const kategorieStufe: Record<keyof typeof kategorien, string> = {
   B: "B-Junior:innen",
   A: "A-Junior:innen",
 };
-
-/** Das freie Spiel am Ende des Kinderfussball-Hauptteils. Es folgt keiner
- *  methodischen Progression und trägt darum eine Beschreibung statt des
- *  Fahrplans.
- *
- *  Wer und wann den Fahrplan trägt, steht nicht mehr hier: das Feld-Gating
- *  hängt seit dem Epic Übungswelten an der Altersstufe und lebt geschlossen in
- *  `web/lib/altersstufe.ts` (`brauchtFahrplan`, `traegtErscheinungsform`, …).
- *  Die drei früheren Wertemengen dieser Datei sind damit ersatzlos entfallen —
- *  sie beschrieben eine Welt, in der eine Übung beiden Lehrmitteln zugleich
- *  dienen konnte. */
-export const FREIES_SPIEL = "fussball-spielen";
 
 /** Befüllte Fahrplan-Stufen zu einem Text: in ihrer Reihenfolge als getrennte
  *  Absätze, ohne Textverlust (PO-Entscheid 2026-08-22). Dient als Ausgangstext
@@ -90,12 +80,18 @@ export const UEBUNGSTYP_DEFINITION: Record<string, string> = {
 /** Klartext jeder Einordnung — die vier Trainingsteile des Manuals Fussball
  *  Kinder und die sechs Blöcke des Manuals Fussball Jugendliche. Eine Quelle
  *  für Katalogkarten, Detailseiten, Breadcrumbs und Picker; ohne sie zeigte
- *  eine Junioren-Übung dort ihren Roh-Slug.
- *
- *  Deckte bis zum Epic Übungswelten nur die drei Einstiegs-Blöcke ab. Mit der
- *  Trennung der Altersstufen ist jeder der sechs Blöcke ein möglicher Ort einer
- *  Junioren-Übung. */
+ *  eine Junioren-Übung dort ihren Roh-Slug. */
 export const EINORDNUNG_LABEL: Record<string, string> = {
   ...trainingsteilLabels,
   ...juniorenBlockLabels,
+};
+
+/** Klartext jeder Erscheinungsform beider Manuals. Angeboten wird immer nur
+ *  das Vokabular EINER Altersstufe (`erscheinungsformenFuer`) — hier geht es
+ *  ausschliesslich darum, einen bereits gespeicherten Slug zu beschriften, und
+ *  dafür braucht es beide Kataloge. Eine Quelle statt dreier lokaler
+ *  Zusammenführungen in Formular, Picker und Detailseite. */
+export const ERSCHEINUNGSFORM_LABEL: Record<string, string> = {
+  ...erscheinungsformLabels,
+  ...erscheinungsformJuniorenLabels,
 };

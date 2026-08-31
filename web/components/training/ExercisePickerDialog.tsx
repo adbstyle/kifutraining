@@ -15,8 +15,6 @@ import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import { stufenAbgedeckt } from "@/lib/training";
 import {
   altersstufe as altersstufeLabels,
-  erscheinungsform as erscheinungsformLabels,
-  erscheinungsform_junioren as formJuniorenLabels,
   uebungstyp as uebungstypLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
@@ -26,17 +24,9 @@ import {
   traegtUebungstyp,
   type Altersstufe,
 } from "@/lib/altersstufe";
+import { ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
 import type { Einordnung } from "@/lib/junioren";
 import type { ExerciseListRow } from "@/lib/queries/exercises";
-
-/** Klartext jeder Erscheinungsform beider Manuals. Angeboten wird immer nur
- *  das Vokabular EINER Altersstufe (`erscheinungsformenFuer`) — die
- *  zusammengeführte Liste ist mit Story 6 (Übungswelten) entfallen: Sie bot im
- *  Junioren-Picker Kinderfussball-Formen an, die dort nichts mehr finden. */
-const FORM_LABEL: Record<string, string> = {
-  ...erscheinungsformLabels,
-  ...formJuniorenLabels,
-};
 
 /* Übungs-Picker als Modal über dem Editor (Story #10). Lädt die für den USER
    sichtbaren Übungen des Zielblocks serverseitig (RLS), eingrenzbar nach
@@ -226,7 +216,7 @@ export function ExercisePickerDialog({
                 selected={form.includes(slug)}
                 onClick={() => toggle(form, setForm, slug)}
               >
-                {FORM_LABEL[slug] ?? slug}
+                {ERSCHEINUNGSFORM_LABEL[slug] ?? slug}
               </FilterChip>
             ))}
           </div>

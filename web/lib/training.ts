@@ -174,12 +174,12 @@ export function groupHauptteil<
   });
 }
 
-/** Render-Blöcke eines Trainingsteil-Abschnitts für die Lese-/Ausgabe-Ansichten:
- *  der Hauptteil wird in seine belegten Unterkategorien aufgeteilt (jeweils mit
- *  Unter-Überschrift und Dauer-Summe), alle übrigen Trainingsteile bleiben ein
- *  einzelner Block ohne Unter-Überschrift (`label = null`). Leere Unterkategorien
- *  erscheinen in diesen Ansichten nicht (Story #23). */
-export function leseBloecke<
+/** Render-Blöcke eines Kinderfussball-Trainingsteils: der Hauptteil wird in
+ *  seine belegten Unterkategorien aufgeteilt (jeweils mit Unter-Überschrift und
+ *  Dauer-Summe), alle übrigen Trainingsteile bleiben ein einzelner Block ohne
+ *  Unter-Überschrift (`label = null`). Leere Unterkategorien erscheinen nicht
+ *  (Story #23). Modul-intern: nach aussen führt einzig `leseGliederung`. */
+function leseBloecke<
   T extends { hauptteilkategorie: string | null; durationMin: number | null },
 >(section: {
   slug: TrainingsteilSlug;
@@ -221,15 +221,19 @@ export function leseGliederung<
   bloecke: { key: string; label: string | null; sum: number; items: T[] }[];
 }[] {
   if (altersstufe === "juniorenfussball") {
-    return leseBloeckeJunioren(items).map((teil) => ({
-      key: teil.teilSlug,
-      label: teil.teilLabel,
-      sum: teil.teilSum,
-      // Im Juniorenschema trägt jeder Trainingsteil eine Dauer; ein Pendant
-      // zum dauerlosen Auffangen kennt es nicht.
-      traegtDauer: true,
-      bloecke: teil.bloecke,
-    }));
+    return groupJunioren(items)
+      .map((teil) => ({
+        key: teil.slug,
+        label: teil.label,
+        sum: teil.sum,
+        // Im Juniorenschema trägt jeder Trainingsteil eine Dauer; ein Pendant
+        // zum dauerlosen Auffangen kennt es nicht.
+        traegtDauer: true,
+        bloecke: teil.bloecke
+          .filter((b) => b.items.length > 0)
+          .map((b) => ({ key: b.slug, label: b.label, sum: b.sum, items: b.items })),
+      }))
+      .filter((teil) => teil.bloecke.length > 0);
   }
   return groupByTeil(items)
     .filter((s) => s.items.length > 0)
@@ -240,31 +244,6 @@ export function leseGliederung<
       traegtDauer: s.traegtDauer,
       bloecke: leseBloecke(s),
     }));
-}
-
-/** Lese-Gliederung eines Junioren-Trainings für Detailansicht, Durchführung
- *  und Druck: nur belegte Teile und Blöcke, in der Reihenfolge des Editors
- *  (Story 8 AC 1/2/5, PC 1). */
-export function leseBloeckeJunioren<
-  T extends { trainingsteil: string; durationMin: number | null },
->(
-  items: T[],
-): {
-  teilSlug: string;
-  teilLabel: string;
-  teilSum: number;
-  bloecke: { key: string; label: string; sum: number; items: T[] }[];
-}[] {
-  return groupJunioren(items)
-    .map((teil) => ({
-      teilSlug: teil.slug,
-      teilLabel: teil.label,
-      teilSum: teil.sum,
-      bloecke: teil.bloecke
-        .filter((b) => b.items.length > 0)
-        .map((b) => ({ key: b.slug, label: b.label, sum: b.sum, items: b.items })),
-    }))
-    .filter((teil) => teil.bloecke.length > 0);
 }
 
 /** Datum lesbar formatieren (de-CH, z. B. "8. Juni 2026"). */

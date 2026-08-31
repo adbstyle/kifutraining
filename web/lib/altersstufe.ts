@@ -42,6 +42,21 @@ export function istAltersstufe(wert: string | null | undefined): wert is Alterss
   return !!wert && (altersstufeSlugs as readonly string[]).includes(wert);
 }
 
+/** Einen rohen Wert als Altersstufe lesen, mit Rückfall auf den Kinderfussball.
+ *
+ *  Der Rückfall ist eine fachliche Festlegung, keine Bequemlichkeit: Was keine
+ *  gültige Altersstufe trägt, gilt als Kinderfussball (Story 1 AC 8) — der
+ *  Manual-Bestand ist es per Definition, und die Spalten sind NOT NULL mit
+ *  ebendiesem Default. In der Praxis ist das darum ein Typ-Guard gegen den
+ *  rohen `string` aus Datenbank oder Formular.
+ *
+ *  Wo eine falsche Stufe NICHT still durchrutschen darf — beim Anlegen eines
+ *  Trainings, beim Überführen einer Übung —, ist `istAltersstufe()` das
+ *  richtige Werkzeug: dort wird abgewiesen statt zurückgefallen. */
+export function alsAltersstufe(wert: string | null | undefined): Altersstufe {
+  return istAltersstufe(wert) ? wert : "kinderfussball";
+}
+
 /** Die Alterskategorien SFV-Kinderfussball (G–E) bzw. -Juniorenfussball (D–A).
  *  Die Aufteilung ist überschneidungsfrei und deckt das ganze Vokabular ab.
  *
@@ -179,8 +194,13 @@ export function ueberfuehrungsVorschlag(
 
 /** Das freie Spiel am Ende des Kinderfussball-Hauptteils. Es folgt keiner
  *  methodischen Progression und trägt darum eine Beschreibung statt des
- *  Fahrplans. */
-const FREIES_SPIEL = "fussball-spielen";
+ *  Fahrplans.
+ *
+ *  Die EINE Definition dieses Slugs: Formular, Veröffentlichungs-Bedingungen
+ *  und Feld-Gating lesen sie hier. Sie stand zeitweise dreifach in der
+ *  Codebasis — dieselbe Zeichenkette an drei Orten, die auseinanderlaufen
+ *  konnten, ohne dass es auffiel. */
+export const FREIES_SPIEL = "fussball-spielen";
 
 /** Trägt diese Einordnung Erscheinungsformen?
  *
@@ -305,11 +325,8 @@ export type VorlagenFilter = {
  *  Eine Übung passt genau dann, wenn ihre Altersstufe der des Trainings
  *  entspricht UND ihre Einordnung dem Zielblock — im Kinderfussball-Hauptteil
  *  zusätzlich die Hauptteilkategorie. Beide Altersstufen führen ihren eigenen
- *  Bestand; über die Stufengrenze wird nichts mehr zugeordnet (Story 6 AK 1/2,
- *  Übungswelten). Die frühere Verwendungs-Brücke der Abbildungsregel
- *  (`heimatFilterFuerEinordnung`) ist damit ersatzlos entfallen: Sie liess eine
- *  Kinderfussball-Übung in einen Junioren-Block, weil es dort noch keinen
- *  eigenen Bestand gab.
+ *  Bestand; über die Stufengrenze wird nichts zugeordnet (Story 6 AK 1/2,
+ *  Übungswelten).
  *
  *  Diese Funktion speist BEIDES: was der Picker anzeigt und was die Server
  *  Action beim Zuordnen akzeptiert (`pickExercises` und `addTrainingExercise`).

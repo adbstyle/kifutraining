@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, Sparkles, Play, Printer } from "lucide-react";
-import { Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
+import { Badge, Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
+import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { Flash } from "@/components/Flash";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
@@ -74,6 +75,11 @@ export default async function TrainingViewPage({
           </p>
         )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          {/* Die Altersstufe benennen, nicht nur andeuten (Story 5 AK 3):
+              Derselbe neutrale Badge wie im Editor und auf der Trainingskarte.
+              Für ein fremdes öffentliches Training ist diese Seite die einzige
+              Sicht — dort stünde die Angabe sonst nirgends. */}
+          <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
           {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
           ))}

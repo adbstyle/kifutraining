@@ -122,13 +122,13 @@ alter table exercises add constraint ex_feldtyp_nur_kifu check (
   altersstufe = 'kinderfussball' or feldtyp is null
 );
 comment on constraint ex_feldtyp_nur_kifu on exercises is
-  'Der Spiegel in web/lib/altersstufe.ts folgt mit Story 3 (Feldtyp vs. Spielfeldgrösse); bis dahin setzt allein die Datenbank die Regel durch.';
+  'Spiegel von traegtFeldtyp() in web/lib/altersstufe.ts.';
 
 alter table training_exercises add constraint ex_feldtyp_nur_kifu check (
   altersstufe = 'kinderfussball' or feldtyp is null
 ) not valid;
 comment on constraint ex_feldtyp_nur_kifu on training_exercises is
-  'Der Spiegel in web/lib/altersstufe.ts folgt mit Story 3 (Feldtyp vs. Spielfeldgrösse); bis dahin setzt allein die Datenbank die Regel durch.';
+  'Spiegel von traegtFeldtyp() in web/lib/altersstufe.ts.';
 
 alter table exercises add constraint ex_uebungstyp_nur_junioren check (
   uebungstyp is null
@@ -137,7 +137,7 @@ alter table exercises add constraint ex_uebungstyp_nur_junioren check (
                             'jun-spielformen','jun-spiel'))
 );
 comment on constraint ex_uebungstyp_nur_junioren on exercises is
-  'Der Spiegel in web/lib/altersstufe.ts folgt mit Story 3 (Übungstyp je Block); bis dahin setzt allein die Datenbank die Regel durch.';
+  'Spiegel von traegtUebungstyp() in web/lib/altersstufe.ts.';
 
 alter table training_exercises add constraint ex_uebungstyp_nur_junioren check (
   uebungstyp is null
@@ -146,7 +146,7 @@ alter table training_exercises add constraint ex_uebungstyp_nur_junioren check (
                             'jun-spielformen','jun-spiel'))
 ) not valid;
 comment on constraint ex_uebungstyp_nur_junioren on training_exercises is
-  'Der Spiegel in web/lib/altersstufe.ts folgt mit Story 3 (Übungstyp je Block); bis dahin setzt allein die Datenbank die Regel durch.';
+  'Spiegel von traegtUebungstyp() in web/lib/altersstufe.ts.';
 
 -- ----------------------------------------------------------------------------
 -- 4) Erscheinungsformen je Altersstufe
@@ -232,7 +232,7 @@ alter table exercises add constraint ablauf_je_einordnung check (
   end
 );
 comment on constraint ablauf_je_einordnung on exercises is
-  'Der Spiegel in web/lib/altersstufe.ts folgt mit Story 3 (Ablaufform je Altersstufe); die Kinderfussball-Zweige spiegelt heute brauchtFahrplan() in web/lib/labels.ts.';
+  'Spiegel von brauchtFahrplan() in web/lib/altersstufe.ts.';
 
 -- Dieselbe Regel an der Fassung, ebenfalls neu und darum NOT VALID: eine
 -- Fassung konnte bisher inhaltsleer im Training liegen.
@@ -248,7 +248,7 @@ alter table training_exercises add constraint te_ablauf_je_einordnung check (
   end
 ) not valid;
 comment on constraint te_ablauf_je_einordnung on training_exercises is
-  'Der Spiegel in web/lib/altersstufe.ts folgt mit Story 3 (Ablaufform je Altersstufe); die Kinderfussball-Zweige spiegelt heute brauchtFahrplanFuerFassung() in web/lib/labels.ts.';
+  'Spiegel von brauchtFahrplan() in web/lib/altersstufe.ts — eine Fassung folgt der Altersstufe ihres Trainings, sonst gilt dieselbe Regel wie für eine Bibliotheks-Übung.';
 
 -- ----------------------------------------------------------------------------
 -- 6) Fahrplan-Vollständigkeit bleibt Kinderfussball

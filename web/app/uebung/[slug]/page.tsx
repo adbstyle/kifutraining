@@ -24,20 +24,14 @@ import {
 } from "@/lib/queries/exercises";
 import {
   feldtyp as feldLabels,
-  erscheinungsform as formLabels,
-  erscheinungsform_junioren as formJuniorenLabels,
   uebungstyp as uebungstypLabels,
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
-import { EINORDNUNG_LABEL } from "@/lib/labels";
+import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
 import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
 
 export const dynamic = "force-dynamic";
-
-/** Beide Erscheinungsform-Vokabulare als ein Nachschlagewerk: eine Übung
- *  trägt nur die ihres Manuals, beschriftet werden hier bloss Slugs. */
-const alleFormLabels: Record<string, string> = { ...formLabels, ...formJuniorenLabels };
 
 export async function generateMetadata({
   params,
@@ -256,8 +250,7 @@ export default async function ExerciseDetailPage({
         {ex.erscheinungsform.length > 0 && (
           <Meta label="Erscheinungsform">
             {ex.erscheinungsform
-              // Beide Vokabulare — eine Übung kann Werte aus beiden tragen.
-              .map((f) => alleFormLabels[f] ?? f)
+              .map((f) => ERSCHEINUNGSFORM_LABEL[f] ?? f)
               .join(", ")}
           </Meta>
         )}

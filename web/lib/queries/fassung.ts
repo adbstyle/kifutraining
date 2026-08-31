@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
-import { istAltersstufe, type Altersstufe } from "@/lib/altersstufe";
+import { alsAltersstufe, type Altersstufe } from "@/lib/altersstufe";
 
 /** Eine Fassung zum Bearbeiten — im eigenen privaten Training oder in einem
  *  Training des eigenen Teams (Team-Epic Story 6). `null`, wenn sie nicht
@@ -108,9 +108,7 @@ export async function getFassungZumBearbeiten(
     trainingId: data.training_id,
     trainingName: training.name,
     // Der Rückfall ist bloss der Typ-Guard: die Spalte ist NOT NULL.
-    trainingAltersstufe: istAltersstufe(training.altersstufe)
-      ? training.altersstufe
-      : "kinderfussball",
+    trainingAltersstufe: alsAltersstufe(training.altersstufe),
     name: q.name,
     trainingsteil: data.trainingsteil,
     hauptteilkategorie: data.hauptteilkategorie,
