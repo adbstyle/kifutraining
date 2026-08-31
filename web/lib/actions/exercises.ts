@@ -9,6 +9,14 @@ import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import { istAltersstufe } from "@/lib/altersstufe";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
+import {
+  VORLAGE_SELECT,
+  entferneStorageObjekt,
+  inhaltFelder,
+  kopiereBild,
+  kopiereDiagrammVon,
+  userOrdner,
+} from "@/lib/fassung";
 
 export type ExerciseFormState = {
   status: "idle" | "error";
@@ -213,6 +221,94 @@ export async function updateExercise(
   revalidateLists();
   revalidatePath(`/uebung/${updated.slug}`);
   redirect(`/uebung/${updated.slug}?updated=1`);
+}
+
+/** Eine Übung, wie sie fürs Übernehmen gelesen wird (`UEBERNAHME_SELECT`). */
+type ZuUebernehmendeUebung = {
+  owner_id: string | null;
+  altersstufe: string | null;
+  trainingsteil: string;
+  hauptteilkategorie: string | null;
+  name: string | null;
+  bild_url: string | null;
+  diagramm: unknown;
+} & Record<string, unknown>;
+
+/** Die Spalten der Quelle. `VORLAGE_SELECT` ist bereits die Übungs-Spaltenliste
+ *  fürs Kopieren (Inhalt, Einordnung, Bild, Diagramm) — dazu kommt hier nur der
+ *  Eigentümer, den die Precondition «gehört nicht dem USER» braucht. Eine
+ *  handgepflegte Zweitliste liesse ein neues Übungsfeld hier still wegfallen. */
+const UEBERNAHME_SELECT = `${VORLAGE_SELECT}, owner_id`;
+
+/** Eine kuratierte oder fremde Übung direkt in den eigenen Bestand übernehmen
+ *  (Story 7, Übungswelten).
+ *
+ *  Bisher führte der einzige Weg über ein Training. Es entsteht eine
+ *  gewöhnliche, zunächst private Trainer-Übung mit eigener Bild- und
+ *  Diagrammkopie; eine Verknüpfung zum Original gibt es nicht (PC 5) —
+ *  spätere Änderungen am Original wirken in keine Richtung.
+ *
+ *  Die Kopie behält die Altersstufe des Originals (PC 3). Wer sie in der
+ *  anderen Stufe braucht, wandelt sie anschliessend um (Story 4); das sind zwei
+ *  getrennte Vorgänge. */
+export async function uebernimmUebung(
+  exerciseId: string,
+): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+
+  // RLS deckt die Sichtbarkeit ab (Precondition 1): kuratierte und fremde
+  // öffentliche Übungen kommen durch, eine fremde private nicht.
+  const { data: q } = await supabase
+    .from("exercises")
+    .select(UEBERNAHME_SELECT)
+    .eq("id", exerciseId)
+    .maybeSingle<ZuUebernehmendeUebung>();
+  if (!q) return { ok: false, error: "Diese Übung ist nicht mehr verfügbar." };
+
+  // Precondition 2: Die eigene Übung übernimmt niemand — sie liegt bereits im
+  // eigenen Bestand, und die Detailseite bietet dort auch keinen Knopf an.
+  if (q.owner_id === user.id)
+    return { ok: false, error: "Diese Übung liegt schon in deinem Bestand." };
+
+  const altersstufe = istAltersstufe(q.altersstufe) ? q.altersstufe : "kinderfussball";
+
+  // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
+  const uebungId = crypto.randomUUID();
+  const bild = await kopiereBild(supabase, q.bild_url, userOrdner(user.id), uebungId);
+  if (bild.error) return { ok: false, error: bild.error };
+
+  const { data: angelegt, error } = await supabase
+    .from("exercises")
+    .insert({
+      id: uebungId,
+      // Zufallssuffix: dieselbe Übung lässt sich mehrfach übernehmen, jede
+      // Kopie bekommt ihren eigenen Slug (AK 3).
+      slug: userSlug(q.name ?? "Übung"),
+      altersstufe,
+      trainingsteil: q.trainingsteil,
+      hauptteilkategorie: q.hauptteilkategorie,
+      ...inhaltFelder(q),
+      bild_url: bild.url,
+      diagramm: kopiereDiagrammVon(q.diagramm),
+      source: "user",
+      owner_id: user.id,
+      // Zunächst privat (PC 1): veröffentlicht wird bewusst separat.
+      visibility: "private",
+    })
+    .select("slug")
+    .single();
+
+  if (error || !angelegt) {
+    await entferneStorageObjekt(supabase, bild.pfad);
+    return { ok: false, error: error?.message ?? "Übernehmen fehlgeschlagen." };
+  }
+
+  revalidateLists();
+  return { ok: true, slug: angelegt.slug };
 }
 
 /** Sichtbarkeit zwischen public/private umschalten (Story 7 EK2). */

@@ -15,6 +15,7 @@ import { Flash } from "@/components/Flash";
 import { cn } from "@/lib/cn";
 import { OwnerActions } from "@/components/exercise/OwnerActions";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
+import { UebungUebernehmenButton } from "@/components/exercise/UebungUebernehmenButton";
 import { createClient } from "@/lib/supabase/server";
 import {
   getExerciseDetail,
@@ -79,7 +80,11 @@ export default async function ExerciseDetailPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ created?: string; updated?: string }>;
+  searchParams: Promise<{
+    created?: string;
+    updated?: string;
+    uebernommen?: string;
+  }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -89,7 +94,9 @@ export default async function ExerciseDetailPage({
     ? "Übung erstellt."
     : sp.updated
       ? "Änderungen gespeichert."
-      : null;
+      : sp.uebernommen
+        ? "Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen."
+        : null;
 
   const supabase = await createClient();
   const {
@@ -183,11 +190,17 @@ export default async function ExerciseDetailPage({
                     }
                   />
                 ) : (
-                  <FavoriteButton
-                    exerciseId={ex.id}
-                    initial={favorited}
-                    size="sm"
-                  />
+                  <>
+                    {/* Übernehmen (Story 7, Übungswelten) — nur an einer
+                        fremden oder kuratierten Übung: die eigene liegt
+                        bereits im Bestand. */}
+                    <UebungUebernehmenButton exerciseId={ex.id} name={ex.name} />
+                    <FavoriteButton
+                      exerciseId={ex.id}
+                      initial={favorited}
+                      size="sm"
+                    />
+                  </>
                 )}
               </>
             )}
