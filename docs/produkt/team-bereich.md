@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-08-25. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-08-31. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -23,7 +23,9 @@ Ein Training gehört entweder einer Person oder einem Team, nie beiden. Geteilt 
 kopiert immer: Wer ein eigenes Training ins Team stellt, erzeugt eine eigenständige Kopie —
 das persönliche Original bleibt unberührt, und spätere Änderungen wirken in keine Richtung.
 Dasselbe gilt umgekehrt beim Übernehmen eines Team-Trainings zu sich. Ein Training lässt sich
-auch direkt im Team anlegen; es gehört dann von Beginn an dem Team.
+auch direkt im Team anlegen; es gehört dann von Beginn an dem Team. Dabei gelten dieselben
+Pflichtangaben wie beim persönlichen Anlegen: Name, Altersstufe und mindestens eine
+Alterskategorie der gewählten Altersstufe. Auch hier steht die Altersstufe danach fest.
 
 Team-Trainings tauchen in der allgemeinen Trainingsübersicht nie auf — sie leben
 ausschliesslich im Team-Bereich. Umgekehrt zeigt der Team-Bereich keine persönlichen
@@ -65,10 +67,12 @@ Ein persönliches Training lässt sich öffentlich schalten und jederzeit wieder
 zurücknehmen. Es entsteht keine Kopie: dasselbe Training wird sichtbar und bleibt bearbeitbar,
 die Community sieht jeweils den aktuellen Stand.
 
-Öffentlich sein setzt voraus: mindestens eine Stufe sowie je mindestens eine Übung in der
-Einleitung und im freien Spiel. Diese Bedingungen gelten dauerhaft, nicht nur beim Umschalten,
-und die Datenebene erzwingt sie, nicht nur die Oberfläche. Wer sein Training darunter bringen
-will, setzt es zuerst auf Entwurf.
+Öffentlich sein setzt in beiden Altersstufen mindestens eine Alterskategorie voraus, dazu die
+belegten Teile des jeweiligen Manuals — im Kinderfussball Einleitung und freies Spiel, im
+Juniorenfussball fünf der sechs Blöcke. Die [Trainings-Seite](trainings.md) nennt sie im
+Einzelnen. Diese Bedingungen gelten dauerhaft, nicht nur beim Umschalten, und die Datenebene
+erzwingt sie, nicht nur die Oberfläche. Wer sein Training darunter bringen will, setzt es
+zuerst auf Entwurf.
 
 Team-Trainings lassen sich nicht direkt veröffentlichen — wer eine Team-Arbeit teilen will,
 übernimmt sie zuerst zu sich. An jedem öffentlichen Training steht der Anzeigename seines

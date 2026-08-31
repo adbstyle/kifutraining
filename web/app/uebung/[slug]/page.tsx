@@ -315,7 +315,7 @@ export default async function ExerciseDetailPage({
           <p className="type-body-small text-on-surface-variant">
             Übung aus der{" "}
             <strong className="text-on-surface">Gemeinschaft</strong> der
-            Trainerinnen und Trainer, nicht aus dem Manual Kinderfussball.
+            Trainerinnen und Trainer, nicht aus dem kuratierten Manual-Bestand.
             {ex.visibility === "private" &&
               " Noch nicht veröffentlicht — ein Entwurf."}
           </p>
