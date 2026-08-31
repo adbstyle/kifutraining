@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, Sparkles, Play, Printer } from "lucide-react";
 import { Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
+import { Flash } from "@/components/Flash";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
@@ -20,10 +21,13 @@ export const metadata: Metadata = {
 
 export default async function TrainingViewPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ uebernommen?: string }>;
 }) {
   const { id } = await params;
+  const sp = await searchParams;
   const training = await getTrainingView(id);
   if (!training) return <TrainingNotAvailable />;
 
@@ -50,6 +54,9 @@ export default async function TrainingViewPage({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+      {sp.uebernommen && (
+        <Flash message="Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen." />
+      )}
       <Breadcrumbs
         items={[
           { label: "Trainings", href: "/trainings" },
