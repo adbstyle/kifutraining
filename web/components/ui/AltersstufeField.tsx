@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Badge } from "./Badge";
 import { SegmentedControl } from "./SegmentedControl";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
@@ -29,6 +30,7 @@ export function AltersstufeField({
   wert,
   onChange,
   festHinweis,
+  aktion,
   hinweis,
   fehler,
 }: {
@@ -37,6 +39,12 @@ export function AltersstufeField({
   onChange?: (wert: Altersstufe) => void;
   /** Zusatz beim festen Zustand, etwa «folgt dem Training». */
   festHinweis?: string;
+  /** Bedienelement neben dem Badge — der einzige Weg, eine feststehende
+   *  Altersstufe doch noch zu verlassen: das Überführen einer eigenen Übung
+   *  (Story 4). Es steht bewusst hier und nicht in der Segmentleiste: ein
+   *  Stufenwechsel ist an einer gespeicherten Übung kein Feld, sondern ein
+   *  eigener, zu bestätigender Vorgang. */
+  aktion?: ReactNode;
   /** Erklärung unter der Wahl; ersetzt den Übungs-Standardtext. */
   hinweis?: string;
   /** Fehlermeldung, wenn die Wahl fehlt. */
@@ -48,6 +56,7 @@ export function AltersstufeField({
         <p className="type-label-small mb-2 text-on-surface-variant">Altersstufe</p>
         <div className="flex flex-wrap items-center gap-2">
           {wert && <Badge tone="neutral">{altersstufeLabels[wert]}</Badge>}
+          {aktion}
           <p className="type-body-small text-on-surface-variant">
             {festHinweis ??
               "Steht fest — Felder und Werte folgen dem Manual dieser Stufe."}

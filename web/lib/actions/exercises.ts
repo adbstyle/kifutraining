@@ -139,9 +139,8 @@ export async function updateExercise(
   if (!user) return { status: "error", message: "Nicht angemeldet." };
 
   // Die gespeicherte Altersstufe entscheidet, welche Werte gelten — nie das
-  // Formular: sonst liesse sich eine Übung durch einen untergeschobenen Wert
-  // in die andere Altersstufe heben (Story 1 AC 9). Das Überführen in die
-  // andere Altersstufe ist ein eigener, ausdrücklicher Weg (Story 4).
+  // Formular allein: sonst liesse sich eine Übung durch einen untergeschobenen
+  // Wert in die andere Altersstufe heben (Story 1 AC 9).
   // Der alte Bildpfad kommt gleich mit: Erzeugt der Upload einen anderen Pfad
   // (z. B. Formatwechsel .png -> .webp), wird die alte Datei sonst zur Waise.
   const { data: bestand } = await supabase
@@ -152,9 +151,22 @@ export async function updateExercise(
     .eq("source", "user")
     .maybeSingle();
   if (!bestand) return { status: "error", message: "Übung nicht gefunden." };
-  const altersstufe = istAltersstufe(bestand.altersstufe)
+  const gespeichert = istAltersstufe(bestand.altersstufe)
     ? bestand.altersstufe
     : "kinderfussball";
+
+  // Überführen in die andere Altersstufe (Story 4): der EINZIGE Weg, an dem
+  // eine bestehende Übung ihre Altersstufe verlässt — und er verlangt die
+  // ausdrückliche Quittung des Trainers (AK 2). Fehlt sie, gilt die
+  // gespeicherte Stufe, und ein mitgeschickter Wert bleibt wirkungslos. Die
+  // Filter auf `owner_id` und `source` oben sind zugleich der Guard gegen das
+  // Umwandeln einer kuratierten oder fremden Übung (AK 5): sie findet die Zeile
+  // gar nicht erst. Der Rest des Formulars wird anschliessend gegen die NEUE
+  // Altersstufe geprüft — Werte, die es dort nicht gibt, fallen weg (PC 4).
+  const gewuenscht = String(form.get("altersstufe") ?? "").trim();
+  const bestaetigt = String(form.get("umwandlung_bestaetigt") ?? "") === "1";
+  const altersstufe =
+    bestaetigt && istAltersstufe(gewuenscht) ? gewuenscht : gespeichert;
 
   const parsed = parseUebungsInhalt(form, { altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };

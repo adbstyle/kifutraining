@@ -73,6 +73,10 @@ export default async function EditPage({
         altersstufe={ex.altersstufe}
         stufenWahl="fest"
         kontext="bibliothek"
+        // Die Übung gehört dem angemeldeten USER (oben geprüft) und ist eine
+        // Nutzer-Übung — nur hier lässt sie sich in die andere Altersstufe
+        // überführen (Story 4 AK 1/5).
+        ueberfuehrbar
         initial={{
           name: ex.name,
           trainingsteil: ex.trainingsteil,

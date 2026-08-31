@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useActionState, startTransition } from "react";
-import { Save } from "lucide-react";
+import { ArrowLeftRight, Save } from "lucide-react";
 import {
   TextField,
   TextArea,
@@ -26,10 +26,12 @@ import {
   ueberfuehreAblauf,
 } from "@/lib/labels";
 import {
+  andereAltersstufe,
   brauchtFahrplan,
   einordnungenFuer,
   erscheinungsformenFuer,
   kategorienFuer,
+  teilDerEinordnung,
   traegtErscheinungsform,
   traegtFeldtyp,
   traegtHauptteilkategorie,
@@ -37,7 +39,9 @@ import {
   traegtUebungstyp,
   type Altersstufe,
 } from "@/lib/altersstufe";
+import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { EinordnungField } from "@/components/exercise/EinordnungField";
+import { UmwandelnDialog, type Umwandlung } from "@/components/exercise/UmwandelnDialog";
 import { SpielfeldgroesseField } from "@/components/exercise/SpielfeldgroesseField";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
@@ -45,17 +49,6 @@ import { compressImage } from "@/lib/image-compress";
 /** Beide Erscheinungsform-Vokabulare als ein Nachschlagewerk. Welches davon
  *  gilt, entscheidet die Altersstufe — hier werden nur Slugs beschriftet. */
 const alleFormLabels: Record<string, string> = { ...formLabels, ...formJuniorenLabels };
-
-/** Zu welchem Trainingsteil gehört diese Einordnung? Im Kinderfussball ist sie
- *  der Teil selbst, im Juniorenfussball der Teil ihres Blocks. Beim Bearbeiten
- *  schlägt das Formular damit den richtigen Teil auf. */
-function teilVonEinordnung(stufe: Altersstufe, einordnung: string): string {
-  const gruppen = einordnungenFuer(stufe);
-  const treffer = gruppen.find(
-    (g) => g.teil === einordnung || g.bloecke.some((b) => b.slug === einordnung),
-  );
-  return (treffer ?? gruppen[0]).teil;
-}
 
 export type ExerciseInitial = {
   name?: string;
@@ -98,6 +91,7 @@ export function ExerciseForm({
   altersstufe: initialeStufe,
   stufenWahl,
   kontext,
+  ueberfuehrbar = false,
   submitLabel,
   afterName,
   bildEntfernenMoeglich = false,
@@ -114,6 +108,10 @@ export function ExerciseForm({
   /** Bibliotheks-Übung oder Fassung in einem Training. Steuert ausschliesslich
    *  die Beschriftung; die Felder selbst hängen an der Altersstufe. */
   kontext: "bibliothek" | "fassung";
+  /** Darf die Übung hier in die andere Altersstufe überführt werden (Story 4)?
+   *  Nur an einer eigenen Bibliotheks-Übung. Eine Fassung erbt die Altersstufe
+   *  ihres Trainings und kann sie nie eigenständig wechseln. */
+  ueberfuehrbar?: boolean;
   submitLabel: string;
   /** Optionaler Slot direkt unter dem Namensfeld (z. B. die Diagramm-Vorschau). */
   afterName?: React.ReactNode;
@@ -130,7 +128,7 @@ export function ExerciseForm({
   // Nur Anzeige-Navigation im Juniorenschema: welcher Trainingsteil
   // aufgeschlagen ist. Gespeichert wird immer die Einordnung selbst.
   const [offenerTeil, setOffenerTeil] = useState<string>(
-    teilVonEinordnung(initialeStufe, initial.trainingsteil ?? ""),
+    teilDerEinordnung(initialeStufe, initial.trainingsteil ?? ""),
   );
   const [kat, setKat] = useState<string[]>(initial.kategorien ?? []);
   const [form, setForm] = useState<string[]>(initial.erscheinungsform ?? []);
@@ -143,6 +141,10 @@ export function ExerciseForm({
   );
   const [hkat, setHkat] = useState<string>(initial.hauptteilkategorie ?? "");
   const [uebungstyp, setUebungstyp] = useState<string>(initial.uebungstyp ?? "");
+  // Überführen in die andere Altersstufe (Story 4): der Dialog holt die
+  // Angaben, das Formular schaltet um — geschrieben wird erst beim Speichern.
+  const [dialogOffen, setDialogOffen] = useState(false);
+  const [umwandlung, setUmwandlung] = useState(false);
   const [bildError, setBildError] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [bildEntfernen, setBildEntfernen] = useState(false);
@@ -187,7 +189,7 @@ export function ExerciseForm({
       setAufbau(neu.aufbau);
     }
     setTeil(neuerTeil);
-    setOffenerTeil(teilVonEinordnung(stufe, neuerTeil));
+    setOffenerTeil(teilDerEinordnung(stufe, neuerTeil));
     setHkat(neueHkat);
   }
 
@@ -227,6 +229,44 @@ export function ExerciseForm({
     setAufbau("");
   }
 
+  /** Die Umwandlung in die andere Altersstufe vormerken (Story 4).
+   *
+   *  Anders als beim Erfassen wird hier nicht geleert, sondern überführt: Was
+   *  die Zielstufe kennt, kommt aus dem Dialog (Einordnung, Alterskategorien,
+   *  im Kinderfussball-Hauptteil die Kategorie), der Ablauftext wandert in die
+   *  Form der Zielstufe (PC 2), und was sie nicht kennt, fällt weg (PC 4) —
+   *  Erscheinungsformen, Übungstyp, Feldtyp bzw. Spielfeldgrösse. Titel, Bild,
+   *  Diagramm, Anzahl Kinder, Material und Varianten bleiben unangetastet
+   *  (PC 1); sie hängen an keinem Lehrmittel.
+   *
+   *  Gespeichert wird nichts: Erst das Absenden des Formulars macht die
+   *  Umwandlung wirksam. Wer die Seite verlässt, lässt die Übung unverändert
+   *  zurück (PC 5). */
+  function ueberfuehre(u: Umwandlung) {
+    const nachFahrplan = brauchtFahrplan(u.altersstufe, u.einordnung, u.hauptteilkategorie);
+    if (istFahrplan !== nachFahrplan) {
+      const neu = ueberfuehreAblauf(nachFahrplan, { offenStarten, ueben, wetteifern, aufbau });
+      setOffenStarten(neu.offenStarten);
+      setUeben(neu.ueben);
+      setWetteifern(neu.wetteifern);
+      setAufbau(neu.aufbau);
+    }
+    setStufe(u.altersstufe);
+    setTeil(u.einordnung);
+    setOffenerTeil(teilDerEinordnung(u.altersstufe, u.einordnung));
+    setHkat(u.hauptteilkategorie ?? "");
+    setKat(u.kategorien);
+    // Stufenfremde Angaben: die beiden Manuals führen getrennte Kataloge, und
+    // Feldtyp und Spielfeldgrösse schliessen einander aus.
+    setForm([]);
+    setUebungstyp("");
+    setFeld("");
+    setLaenge("");
+    setBreite("");
+    setUmwandlung(true);
+    setDialogOffen(false);
+  }
+
   // FormData direkt aus dem DOM bauen und die Chip-/Select-Werte aus dem State
   // explizit setzen. Verlässlicher als state-gesteuerte Hidden-Inputs, deren
   // Wert die Server-Action-Serialisierung nicht zuverlässig erfasst.
@@ -260,9 +300,12 @@ export function ExerciseForm({
     }
 
     setBildError(null);
-    // Die Altersstufe wertet nur das Erstellen aus; beim Bearbeiten nimmt die
-    // Server Action die gespeicherte bzw. die des Trainings (Story 1 AC 9).
+    // Die Altersstufe wertet das Erstellen aus; beim Bearbeiten nimmt die
+    // Server Action die gespeicherte bzw. die des Trainings (Story 1 AC 9) —
+    // ausser der Trainer hat die Umwandlung ausdrücklich bestätigt (Story 4
+    // AK 2). Ohne diese Quittung ist der Wert wirkungslos.
     fd.set("altersstufe", stufe);
+    fd.set("umwandlung_bestaetigt", umwandlung ? "1" : "");
     fd.set("trainingsteil", teil);
     fd.set("kat", kat.join(","));
     // Jedes gegatete Feld wird EXPLIZIT leer gesetzt, wenn es nicht gerendert
@@ -288,6 +331,15 @@ export function ExerciseForm({
         </p>
       )}
 
+      {/* Die Umwandlung ist vorgemerkt, nicht geschehen: Das Formular zeigt
+          bereits die Zielstufe, die Übung liegt aber unverändert in der
+          Datenbank (Story 4 PC 5). Der Hinweis sagt, was noch fehlt. */}
+      {umwandlung && (
+        <p className="type-body-small rounded-[4px] border border-primary/40 bg-primary/10 p-3 text-on-surface">
+          Umwandlung vorgemerkt — sie wird mit «Umwandeln und speichern» wirksam.
+        </p>
+      )}
+
       <TextField
         label="Name der Übung"
         name="name"
@@ -305,9 +357,35 @@ export function ExerciseForm({
         festHinweis={
           kontext === "fassung"
             ? "Folgt dem Training — Felder und Werte kommen aus dessen Manual."
-            : undefined
+            : umwandlung
+              ? "Wird beim Speichern übernommen."
+              : undefined
+        }
+        aktion={
+          ueberfuehrbar &&
+          !umwandlung && (
+            <Button
+              type="button"
+              variant="text"
+              size="sm"
+              onClick={() => setDialogOffen(true)}
+            >
+              <ArrowLeftRight size={18} strokeWidth={2} aria-hidden />
+              In den {altersstufeLabels[andereAltersstufe(stufe)]} überführen
+            </Button>
+          )
         }
       />
+
+      {dialogOffen && (
+        <UmwandelnDialog
+          von={stufe}
+          einordnung={teil}
+          hauptteilkategorie={zeigtHkat ? hkat : null}
+          onClose={() => setDialogOffen(false)}
+          onConfirm={ueberfuehre}
+        />
+      )}
 
       {/* Die Einordnung liegt wieder offen statt in einem Auswahlmenü. Sie war
           eine Zeit lang ein Select, weil sieben Werte aus zwei Welten in einer
@@ -539,7 +617,13 @@ export function ExerciseForm({
       <div className="flex items-center gap-3 border-t border-outline-variant pt-5">
         <Button type="submit" size="lg" disabled={isPending || isCompressing}>
           <Save size={20} strokeWidth={2} aria-hidden />
-          {isCompressing ? "Bild wird optimiert …" : isPending ? "Wird gespeichert …" : submitLabel}
+          {isCompressing
+            ? "Bild wird optimiert …"
+            : isPending
+              ? "Wird gespeichert …"
+              : umwandlung
+                ? "Umwandeln und speichern"
+                : submitLabel}
         </Button>
         {fussnote && (
           <p className="type-body-small text-on-surface-variant">{fussnote}</p>

@@ -533,7 +533,12 @@ export default function Styleguide() {
             Voreinstellung durchrutschen — an der Übung ist sie vorbelegt, weil
             eine Übung umwandelbar bleibt. Der Badge ist bewusst neutral: Die
             Altersstufe ist keine Alterskategorie und borgt deren gelernte
-            Farbcodierung nicht.
+            Farbcodierung nicht. Der feste Zustand nimmt über{" "}
+            <code>aktion</code> ein Bedienelement neben dem Badge auf — dort
+            hängt das Überführen einer eigenen Übung in die andere Altersstufe.
+            Es gehört nicht in die Segmentleiste: An einer gespeicherten Übung
+            ist der Stufenwechsel kein Feld, sondern ein eigener, zu
+            bestätigender Vorgang.
           </p>
         </div>
       </Section>

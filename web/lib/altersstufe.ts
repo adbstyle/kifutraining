@@ -8,7 +8,11 @@ import {
   junioren_blockSlugs,
   type AltersstufeSlug,
 } from "@/lib/vocab";
-import { JUNIOREN_TEILE } from "@/lib/junioren";
+import {
+  JUNIOREN_TEILE,
+  abbildungKifuZuJunioren,
+  abbildungJuniorenZuKifu,
+} from "@/lib/junioren";
 
 /**
  * Die Altersstufe — nach welchem Lehrmittel eine Übung und ein Training
@@ -123,6 +127,52 @@ export function einordnungsSlugsFuer(stufe: Altersstufe): string[] {
   return einordnungenFuer(stufe).flatMap((g) =>
     g.bloecke.length > 0 ? g.bloecke.map((b) => b.slug) : [g.teil],
   );
+}
+
+/** Zu welchem Trainingsteil gehört diese Einordnung? Im Kinderfussball ist sie
+ *  der Teil selbst, im Juniorenfussball der Teil ihres Blocks. Ein unbekannter
+ *  oder leerer Wert schlägt den ersten Teil auf — der Ausgangszustand einer
+ *  noch nicht eingeordneten Übung. */
+export function teilDerEinordnung(stufe: Altersstufe, einordnung: string): string {
+  const gruppen = einordnungenFuer(stufe);
+  const treffer = gruppen.find(
+    (g) => g.teil === einordnung || g.bloecke.some((b) => b.slug === einordnung),
+  );
+  return (treffer ?? gruppen[0]).teil;
+}
+
+// ── Überführen in die andere Altersstufe ────────────────────────────────────
+
+/** Die jeweils andere Altersstufe — es gibt genau zwei. */
+export function andereAltersstufe(stufe: Altersstufe): Altersstufe {
+  return stufe === "kinderfussball" ? "juniorenfussball" : "kinderfussball";
+}
+
+/** Wo eine Übung in der Zielstufe landen könnte, wenn sie überführt wird
+ *  (Story 4 PC 3).
+ *
+ *  Ein VORSCHLAG, mehr nicht: der Trainer bestätigt oder wählt anders. `null`
+ *  heisst «die Abbildungsregel kennt für diese Einordnung keine Entsprechung» —
+ *  Auffangen hat im Juniorenschema keine, Explosivität keine im Kinderfussball.
+ *  Dann beginnt die Wahl leer.
+ *
+ *  Die Regel selbst steht in `lib/junioren.ts` und stammt aus dem abgenommenen
+ *  Entscheidungsdokument; hier wird sie nur auf die Form gebracht, die das
+ *  Übungsformular trägt (Einordnung + Hauptteilkategorie). */
+export function ueberfuehrungsVorschlag(
+  von: Altersstufe,
+  einordnung: string,
+  hauptteilkategorie: string | null,
+): { einordnung: string; hauptteilkategorie: string | null } | null {
+  if (von === "kinderfussball") {
+    const block = abbildungKifuZuJunioren(einordnung, hauptteilkategorie);
+    // Der Juniorenfussball kennt keine Hauptteilkategorie.
+    return block ? { einordnung: block, hauptteilkategorie: null } : null;
+  }
+  const ziel = abbildungJuniorenZuKifu(einordnung);
+  return ziel
+    ? { einordnung: ziel.trainingsteil, hauptteilkategorie: ziel.hauptteilkategorie }
+    : null;
 }
 
 // ── Feld-Gating ─────────────────────────────────────────────────────────────
