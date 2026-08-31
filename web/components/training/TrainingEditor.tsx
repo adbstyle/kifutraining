@@ -591,6 +591,7 @@ export function TrainingEditor({
               open
               onClose={() => setOpen(null)}
               trainingId={training.id}
+              altersstufe={training.altersstufe}
               trainingsteil={open.teil}
               trainingsteilLabel={teilLabel}
               hauptteilkategorie={sub?.slug}

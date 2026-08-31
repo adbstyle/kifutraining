@@ -44,6 +44,10 @@ export const FASSUNG_UEBERNAHME_SELECT = [
 
 export const VORLAGE_SELECT = [
   "id",
+  // Gelesen, aber nicht kopiert: Die Fassung erbt ihre Altersstufe vom
+  // Training (Trigger `te_altersstufe_erben`). Der Aufrufer braucht sie, um zu
+  // prüfen, ob die Vorlage überhaupt in dieses Training gehört (Story 6 AK 4).
+  "altersstufe",
   "trainingsteil",
   "hauptteilkategorie",
   ...FASSUNG_INHALT_FELDER,

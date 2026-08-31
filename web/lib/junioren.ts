@@ -174,53 +174,15 @@ export const LEER_HINWEIS_BLOECKE: JuniorenBlockSlug[] = [
   "jun-explosivitaet",
 ];
 
-/** Welche Übungs-Heimaten darf ein Block aufnehmen? Die Umkehrung der
- *  Abbildungsregel (Entscheidungsdokument §2/§4) — sie bestimmt, was der
- *  Picker anbietet UND was die Server Action beim Zuordnen akzeptiert. Beide
- *  müssen dieselbe Antwort geben, sonst zeigt der Picker Treffer, die das
- *  Hinzufügen abweist.
- *
- *  `hauptteilkategorien: null` heisst: keine Einschränkung auf dieser Achse. */
-export function heimatFilterFuerEinordnung(einordnung: string): {
-  trainingsteile: string[];
-  hauptteilkategorien: string[] | null;
-} {
-  switch (einordnung) {
-    // Kinderfussball-Teile: der gleichnamige Trainingsteil. Die Einleitung
-    // nimmt zusätzlich die rückabgebildeten Junioren-Heimaten auf (§4.3,
-    // Story 5b PC 2) — Explosivität bleibt aussen vor (PC 3).
-    case "einleitung":
-      return {
-        trainingsteile: ["einleitung", "jun-aufwaermen", "jun-spielform-trainingsziel"],
-        hauptteilkategorien: null,
-      };
-    case "auffangen":
-    case "hauptteil":
-    case "ausklang":
-      return { trainingsteile: [einordnung], hauptteilkategorien: null };
-    // Junioren-Blöcke gemäss Abbildungsregel.
-    case "jun-aufwaermen":
-      return { trainingsteile: ["einleitung", "jun-aufwaermen"], hauptteilkategorien: null };
-    case "jun-spielform-trainingsziel":
-      return { trainingsteile: ["jun-spielform-trainingsziel"], hauptteilkategorien: null };
-    case "jun-explosivitaet":
-      return { trainingsteile: ["jun-explosivitaet"], hauptteilkategorien: null };
-    case "jun-spielformen":
-      return {
-        trainingsteile: ["hauptteil"],
-        hauptteilkategorien: ["fussball-spielen-lernen", "vielseitigkeit-erleben"],
-      };
-    case "jun-spiel":
-      return { trainingsteile: ["hauptteil"], hauptteilkategorien: ["fussball-spielen"] };
-    case "jun-ausklang":
-      return { trainingsteile: ["ausklang"], hauptteilkategorien: null };
-    default:
-      // Kein bekanntes Zuordnungsziel.
-      return { trainingsteile: [], hauptteilkategorien: null };
-  }
-}
-
 // Die gültigen Zuordnungsziele eines Trainings standen bis zum Epic
 // Übungswelten hier (`zuordnungsZiele`). Sie folgen jetzt aus der Altersstufe
 // und kommen aus `einordnungsSlugsFuer()` in web/lib/altersstufe.ts — derselben
 // Quelle, aus der auch eine Bibliotheks-Übung ihre Einordnung wählt.
+//
+// Ebenfalls entfallen ist `heimatFilterFuerEinordnung`: die Verwendungs-Brücke
+// der Abbildungsregel, die eine Kinderfussball-Übung in einen Junioren-Block
+// liess, solange es dort keinen eigenen Bestand gab. Der Picker filtert seit
+// Story 6 (Übungswelten) auf die Altersstufe des Trainings — was ein Block
+// aufnimmt, sagt `vorlagenFilterFuer()` in web/lib/altersstufe.ts. Die
+// Abbildungsregel selbst lebt weiter, aber nur noch als Vorschlag beim
+// Überführen einer Übung (Story 4).

@@ -2,6 +2,7 @@ import {
   altersstufeSlugs,
   erscheinungsformSlugs,
   erscheinungsform_juniorenSlugs,
+  hauptteilkategorieSlugs,
   trainingsteil as trainingsteilLabels,
   trainingsteilSlugs,
   junioren_blockSlugs,
@@ -233,4 +234,59 @@ export function brauchtFahrplan(
   if (stufe === "juniorenfussball") return false;
   if (einordnung !== "einleitung" && einordnung !== "hauptteil") return false;
   return !(einordnung === "hauptteil" && hauptteilkategorie === FREIES_SPIEL);
+}
+
+// ── Vorlagen für einen Trainingsblock ───────────────────────────────────────
+
+/** Die Merkmale, die eine Bibliotheks-Übung tragen muss, um in einen
+ *  bestimmten Block eines Trainings zu passen. */
+export type VorlagenFilter = {
+  /** Die Altersstufe des Trainings — die Übung muss dieselbe tragen. */
+  altersstufe: Altersstufe;
+  /** Die Ziel-Einordnung: ein Kinderfussball-Trainingsteil oder ein
+   *  Junioren-Block. Die Übung muss dieselbe tragen. */
+  trainingsteil: string;
+  /** Nur im Kinderfussball-Hauptteil: die fixierte Unterkategorie. */
+  hauptteilkategorie?: string;
+};
+
+/** Welche Bibliotheks-Übungen darf dieser Block eines Trainings aufnehmen?
+ *
+ *  Eine Übung passt genau dann, wenn ihre Altersstufe der des Trainings
+ *  entspricht UND ihre Einordnung dem Zielblock — im Kinderfussball-Hauptteil
+ *  zusätzlich die Hauptteilkategorie. Beide Altersstufen führen ihren eigenen
+ *  Bestand; über die Stufengrenze wird nichts mehr zugeordnet (Story 6 AK 1/2,
+ *  Übungswelten). Die frühere Verwendungs-Brücke der Abbildungsregel
+ *  (`heimatFilterFuerEinordnung`) ist damit ersatzlos entfallen: Sie liess eine
+ *  Kinderfussball-Übung in einen Junioren-Block, weil es dort noch keinen
+ *  eigenen Bestand gab.
+ *
+ *  Diese Funktion speist BEIDES: was der Picker anzeigt und was die Server
+ *  Action beim Zuordnen akzeptiert (`pickExercises` und `addTrainingExercise`).
+ *  Beide MÜSSEN dieselbe Antwort geben, sonst zeigte der Picker Treffer, die
+ *  das Hinzufügen abweist. Dass die Regel trivial geworden ist, ändert daran
+ *  nichts — die eine Quelle bleibt.
+ *
+ *  `null` heisst: kein gültiges Zuordnungsziel für diese Altersstufe — der
+ *  Block gehört dem anderen Lehrmittel an, oder die im Hauptteil zwingende
+ *  Kategorie fehlt.
+ *
+ *  Spiegelt die CHECKs `te_trainingsteil_je_altersstufe`,
+ *  `te_kategorien_je_altersstufe` und `hauptteilkategorie_genau_bei_hauptteil`
+ *  zusammen mit dem Trigger `te_altersstufe_erben`, der einer Fassung die
+ *  Altersstufe ihres Trainings gibt. */
+export function vorlagenFilterFuer(
+  stufe: Altersstufe,
+  einordnung: string,
+  hauptteilkategorie?: string | null,
+): VorlagenFilter | null {
+  if (!einordnungsSlugsFuer(stufe).includes(einordnung)) return null;
+  if (!traegtHauptteilkategorie(stufe, einordnung))
+    return { altersstufe: stufe, trainingsteil: einordnung };
+  if (
+    !hauptteilkategorie ||
+    !(hauptteilkategorieSlugs as readonly string[]).includes(hauptteilkategorie)
+  )
+    return null;
+  return { altersstufe: stufe, trainingsteil: einordnung, hauptteilkategorie };
 }

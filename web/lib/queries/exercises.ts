@@ -16,6 +16,11 @@ import type { ExerciseCardData } from "@/components/ui";
  */
 
 export type ExerciseFilters = {
+  /** Altersstufe — genau eine, nicht mehrere: eine Übung folgt genau einem
+   *  Lehrmittel, und wer hier filtert, plant in genau einer Welt (Story 6,
+   *  Übungswelten). Der Katalog setzt ihn bewusst nicht: er zeigt weiterhin
+   *  beide Altersstufen (Story 6 Out-of-Scope 1). */
+  altersstufe?: Altersstufe;
   teil?: string[]; // Trainingsteil (OR)
   kat?: string[]; // Alterskategorien G/F/E (Überlappung)
   feld?: string[]; // Feldtyp (OR)
@@ -94,6 +99,7 @@ export async function getExercises(
   if (f.fav) query = query.in("id", [...favIds]);
   // Eigene Übungen: öffentliche wie private, keine fremden/Manual-Übungen.
   if (f.mine && user) query = query.eq("owner_id", user.id);
+  if (f.altersstufe) query = query.eq("altersstufe", f.altersstufe);
   if (f.teil?.length) query = query.in("trainingsteil", f.teil);
   if (f.kat?.length) query = query.overlaps("kategorien", f.kat);
   if (f.feld?.length) query = query.in("feldtyp", f.feld);
