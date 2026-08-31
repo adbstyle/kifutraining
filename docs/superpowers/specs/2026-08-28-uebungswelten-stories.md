@@ -71,6 +71,8 @@ Das ist die natürliche Reihenfolge, kein Mangel.
 
 ## Story 1 (Enabler): Altersstufe als geführte Angabe an Übung und Training
 
+Status: Umgesetzt am 2026-08-31.
+
 Als Entwicklungsteam
 möchte ich die Altersstufe als eigene Angabe an Übungen und Trainings führen
 damit die Felder, Auswahlmöglichkeiten und Pflichtangaben der folgenden Stories sich auf
@@ -116,6 +118,8 @@ Keine.
 
 ## Story 2: Kinderfussball-Übung ohne Junioren-Begriffe erfassen
 
+Status: Umgesetzt am 2026-08-31.
+
 Als Trainer:in im Kinderfussball
 möchte ich beim Erfassen und Bearbeiten einer Übung nur die Felder und Werte des Manuals
 Fussball Kinder vor mir haben
@@ -155,6 +159,8 @@ Keine.
 ---
 
 ## Story 3: Junioren-Übung nach dem eigenen Lehrmittel erfassen
+
+Status: Umgesetzt am 2026-08-31.
 
 Als Trainer:in im Juniorenfussball
 möchte ich beim Erfassen einer Übung den Juniorenfussball wählen und danach nur die Felder
@@ -206,6 +212,8 @@ Kinderfussball-Didaktik zu übersetzen
 
 ## Story 4: Übung in die andere Altersstufe überführen
 
+Status: Umgesetzt am 2026-08-31.
+
 Als Trainer:in
 möchte ich eine eigene Übung, die ich der falschen Altersstufe zugeordnet habe, in die
 richtige überführen
@@ -256,6 +264,8 @@ Keine.
 
 ## Story 5: Training in einer Altersstufe anlegen, die lebenslang gilt
 
+Status: Umgesetzt am 2026-08-31.
+
 Als Trainer:in
 möchte ich beim Anlegen eines Trainings entscheiden, ob ich für den Kinderfussball oder
 für den Juniorenfussball plane
@@ -300,6 +310,8 @@ Keine.
 
 ## Story 6: Übungs-Picker auf die Altersstufe des Trainings beschränken
 
+Status: Umgesetzt am 2026-08-31.
+
 Als Trainer:in
 möchte ich beim Zuordnen einer Übung zu meinem Training nur Übungen meiner Altersstufe
 angeboten bekommen
@@ -335,6 +347,8 @@ Keine.
 ---
 
 ## Story 7: Kuratierte oder fremde Übung direkt in den eigenen Bestand übernehmen
+
+Status: Umgesetzt am 2026-08-31.
 
 Als Trainer:in
 möchte ich eine kuratierte oder eine fremde Übung direkt aus dem Katalog in meinen eigenen
