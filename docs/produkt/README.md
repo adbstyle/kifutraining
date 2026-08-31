@@ -6,8 +6,8 @@ Antwort auf die Frage „Was geht heute?" für alle, die nicht im Code nachsehen
 | Bereich | Inhalt |
 |---|---|
 | [Konto und Zugang](konto-und-zugang.md) | Registrieren, Anmelden, Anzeigename, Konto löschen |
-| [Übungen](uebungen.md) | Übungsbestand, eigene Übungen, Feld-Diagramme, Favoriten |
-| [Trainings](trainings.md) | Trainings zusammenstellen, durchführen, drucken, veröffentlichen |
+| [Übungen](uebungen.md) | Altersstufen, Übungsbestand, eigene Übungen, Feld-Diagramme, Favoriten |
+| [Trainings](trainings.md) | Trainings der beiden Altersstufen zusammenstellen, durchführen, drucken, veröffentlichen |
 | [Team-Bereich](team-bereich.md) | Trainerteams, Team-Trainings, Termine und Trainingsplan |
 
 ## Pflicht zur Aktualisierung
