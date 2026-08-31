@@ -42,13 +42,17 @@ export function SegmentedControl<T extends string>({
     >
       {options.map((opt, i) => {
         const active = opt.value === value;
+        // Der Tabstopp wandert mit der Auswahl. Ist noch nichts gewählt, trägt
+        // ihn das erste Segment — sonst wäre die Leiste per Tastatur gar nicht
+        // erreichbar (etwa das noch leere Einordnungsfeld einer neuen Übung).
+        const tabStop = active || (i === 0 && !options.some((o) => o.value === value));
         return (
           <button
             key={opt.value}
             type="button"
             role="tab"
             aria-selected={active}
-            tabIndex={active ? 0 : -1}
+            tabIndex={tabStop ? 0 : -1}
             onClick={() => onChange(opt.value)}
             onKeyDown={(e) => handleKey(e, i)}
             className={cn(

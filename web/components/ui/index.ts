@@ -1,7 +1,15 @@
 export { Button, ButtonLink } from "./Button";
 export { ButtonGroup } from "./ButtonGroup";
 export { Badge, HerkunftBadge } from "./Badge";
-export { KategorieChip, FilterChip, AssistChip, SuggestionChip, InputChip } from "./Chip";
+export {
+  KategorieChip,
+  FilterChip,
+  ChoiceChip,
+  ChoiceChipGroup,
+  AssistChip,
+  SuggestionChip,
+  InputChip,
+} from "./Chip";
 export { Card } from "./Card";
 export { UebungsBild } from "./UebungsBild";
 export { FieldPlaceholder } from "./FieldPlaceholder";
@@ -12,6 +20,7 @@ export { PrintButton } from "./PrintButton";
 export type { FahrplanData } from "./MethodischerFahrplan";
 export { SegmentedControl } from "./SegmentedControl";
 export type { SegmentOption } from "./SegmentedControl";
+export { AltersstufeField } from "./AltersstufeField";
 export { TextField } from "./TextField";
 export type { TextFieldProps } from "./TextField";
 export { DateField, TimeField } from "./DateTimeField";

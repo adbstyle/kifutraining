@@ -9,8 +9,8 @@ export interface SelectOption {
   label: string;
   /** Optionale Gruppenzugehörigkeit. Optionen derselben Gruppe stehen
       zusammen; die Gruppe bekommt eine nicht wählbare Überschrift. Nötig, wo
-      ein Feld Werte aus zwei Welten anbietet (z. B. die Heimat einer Übung:
-      Kinderfussball oder Juniorenfussball). Die Reihenfolge der Optionen
+      ein Feld Werte aus zwei Welten anbietet — etwa der Trainingsteil-Filter
+      des Katalogs, der über beide Altersstufen sucht. Die Reihenfolge der Optionen
       bleibt wie übergeben — gruppiert wird nur die Beschriftung. */
   group?: string;
 }

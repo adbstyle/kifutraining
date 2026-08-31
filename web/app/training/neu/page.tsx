@@ -23,8 +23,9 @@ export default function NeuesTrainingPage() {
           Neues Training
         </h1>
         <p className="type-body-medium mt-2 text-on-surface-variant">
-          Gib deinem Training einen Namen. Anschliessend ordnest du den vier
-          Trainingsteilen passende Übungen zu.
+          Gib deinem Training einen Namen und wähle die Altersstufe — sie
+          bestimmt Gliederung und Alterskategorien und steht danach fest.
+          Anschliessend ordnest du den Trainingsteilen passende Übungen zu.
         </p>
       </header>
 

@@ -1,60 +1,28 @@
 import {
   junioren_block as blockLabels,
   junioren_trainingsteil as jTeilLabels,
-  junioren_heimatSlugs,
   type JuniorenBlockSlug,
-  type KategorieSlug,
   type TrainingsteilSlug,
 } from "@/lib/vocab";
-
 /**
- * Fachliches Fundament des Juniorenschemas (Epic #71): Schema-Bestimmung,
- * Abbildungsregel, Struktur und Zeitbandbreiten.
+ * Fachliches Fundament des Juniorenschemas (Epic #71): Struktur,
+ * Zeitbandbreiten und Abbildungsregel.
  *
  * Quelle der Abbildungsregel ist das abgenommene Entscheidungsdokument
  * `docs/superpowers/specs/2026-08-15-junioren-abbildungsregel.md`; die
  * Zeilenverweise Z1–Z7 unten zeigen auf dessen Abschnitt 2.
  *
- * Eine Quelle für Editor, Server Actions und Ausgabe-Ansichten. Das
- * SQL-Pendant lebt in der Migration `junioren_schema` (Funktionen
- * `training_schema` und `set_training_stufen`) und MUSS inhaltlich identisch
- * bleiben — die Datenbank ist die Trust-Boundary, diese Datei die Sicht der
- * Applikation auf dieselbe Regel.
+ * Welchem Schema ein Training folgt, steht seit Story 1 (Übungswelten) als
+ * geführte Angabe an der Zeile selbst (`trainings.altersstufe`) — es wird
+ * nicht mehr aus Alterskategorien oder Trainingsteil erraten. Die
+ * Schema-Bestimmung, die früher hier lag, ist damit ersatzlos entfallen.
  */
 
-export type Schema = "kifu" | "junioren";
-
-const KIFU_STUFEN: readonly KategorieSlug[] = ["G", "F", "E"];
-const JUNIOREN_STUFEN: readonly KategorieSlug[] = ["D", "C", "B", "A"];
-
-/** Schema aus den Stufen: mindestens eine Junioren-Kategorie ⇒ Juniorenschema;
- *  sonst — auch ohne jede Stufe — Kinderfussball (Story 3 AC 1/2). */
-export function schemaAusStufen(stufen: readonly string[]): Schema {
-  return stufen.some((s) => (JUNIOREN_STUFEN as readonly string[]).includes(s))
-    ? "junioren"
-    : "kifu";
-}
-
-/** Trägt diese Stufen-Auswahl Kategorien BEIDER Schemata? Ein Training darf
- *  das nie (Story 3 AC 4) — eine Übung dagegen schon, sie kann beiden
- *  Schemata dienen (Story 2, Anmerkung). */
-export function stufenMischen(stufen: readonly string[]): boolean {
-  const kifu = stufen.some((s) => (KIFU_STUFEN as readonly string[]).includes(s));
-  const jun = stufen.some((s) => (JUNIOREN_STUFEN as readonly string[]).includes(s));
-  return kifu && jun;
-}
-
-/** Zuordnungs-Zustand «ohne Entsprechung im aktuellen Schema» (Story 3 PC 3).
- *
- *  Bewusst kein Vokabularwert: das ist kein Trainingsteil, sondern ein
- *  technischer Übergangszustand nach einem Schema-Wechsel. Er blockiert die
- *  Veröffentlichung, nie das Speichern, und löst sich auf, sobald der Trainer
- *  die Fassung einordnet oder entfernt (Story 3 PC 4). */
-export const NACHARBEIT = "nacharbeit" as const;
-
-/** Wo eine Fassung in einem Training liegt: ein Kinderfussball-Trainingsteil,
- *  ein Junioren-Unterblock oder die Nacharbeit. */
-export type Einordnung = TrainingsteilSlug | JuniorenBlockSlug | typeof NACHARBEIT;
+/** Wo eine Fassung in einem Training liegt: ein Kinderfussball-Trainingsteil
+ *  oder ein Junioren-Unterblock. Welche der beiden Mengen gilt, entscheidet die
+ *  Altersstufe des Trainings — gemischt wird nie, und einen dritten Zustand
+ *  ausserhalb beider Schemata gibt es nicht. */
+export type Einordnung = TrainingsteilSlug | JuniorenBlockSlug;
 
 /** Die drei Junioren-Trainingsteile mit ihren Unterblöcken in fester
  *  Reihenfolge (Manual Fussball Jugendliche Abb. 19 für die Teile, J+S-
@@ -92,30 +60,16 @@ export const JUNIOREN_TEILE: {
   },
 ];
 
-/** Die vier Kinderfussball-Trainingsteile — hier als Wertemenge für die
- *  Schema-Zuordnung einer Einordnung. */
-const TRAININGSTEIL_SLUGS_KIFU: readonly string[] = [
-  "auffangen",
-  "einleitung",
-  "hauptteil",
-  "ausklang",
-];
-
 /** Alle sechs Blöcke in der flachen Reihenfolge des Schemas. */
 export const JUNIOREN_BLOCK_SLUGS: JuniorenBlockSlug[] = JUNIOREN_TEILE.flatMap((t) =>
   t.bloecke.map((b) => b.slug),
 );
 
-/** Zu welchem Schema gehört eine Einordnung? `nacharbeit` und Unbekanntes
- *  gehören zu keinem und liefern `null`. SQL-Pendant:
- *  `training_schema_der_einordnung`. */
-export function schemaDerEinordnung(einordnung: string): Schema | null {
-  if ((TRAININGSTEIL_SLUGS_KIFU as readonly string[]).includes(einordnung)) return "kifu";
-  if ((JUNIOREN_BLOCK_SLUGS as readonly string[]).includes(einordnung)) return "junioren";
-  return null;
-}
-
 /** Abbildungsregel Kinderfussball → Juniorenschema (Entscheidungsdokument §2).
+ *
+ *  Sie ist ein VORSCHLAG beim Überführen einer Übung in die andere Altersstufe
+ *  (Story 4 PC 3), keine automatische Umordnung mehr: `null` heisst «keine
+ *  Entsprechung», dort wählt der Trainer selbst.
  *
  *  Lückenlos und überlappungsfrei: `trainingsteil` ist skalar, die
  *  Hauptteilkategorie je Zeile eindeutig, und die letzte Zeile fängt jede
@@ -123,7 +77,7 @@ export function schemaDerEinordnung(einordnung: string): Schema | null {
 export function abbildungKifuZuJunioren(
   trainingsteil: string,
   hauptteilkategorie: string | null,
-): JuniorenBlockSlug | typeof NACHARBEIT {
+): JuniorenBlockSlug | null {
   // Z2: Das Manual verwendet «Einleitung» und «Einstieg» synonym (Abb. 17).
   if (trainingsteil === "einleitung") return "jun-aufwaermen";
   if (trainingsteil === "hauptteil") {
@@ -142,26 +96,22 @@ export function abbildungKifuZuJunioren(
   // Z1: Auffangen ist Betreuung vor dem Training und zählt nicht zur
   // Trainingszeit — das Juniorenschema kennt keinen Vor-Trainings-Teil.
   // Z7: jede andere Kombination, damit die Regel deterministisch bleibt.
-  return NACHARBEIT;
+  return null;
 }
 
 /** Rückrichtung Juniorenschema → Kinderfussball.
  *
- *  Fallback für den Schema-Wechsel: Der Regelfall ist die Konserve
- *  (`training_exercises.einordnung_vorher`), die die tatsächlich verlassene
- *  Einordnung zurückgibt und den Wechsel damit verlustfrei macht. Diese
- *  Tabelle greift nur, wo es keine Konserve gibt — bei einem von Beginn an
- *  als Junioren-Training angelegten Plan.
+ *  Ebenfalls ein Vorschlag beim Überführen einer Übung (Story 4 PC 3); `null`
+ *  heisst «keine Entsprechung». Die verlassene Altersstufe bewahrt nichts auf —
+ *  die Konserve am Training ist mit dem Wechsel entfallen.
  *
  *  Hergeleitet aus der Heimat-Rückabbildung (Entscheidungsdokument §4.3) und
  *  der Umkehrung von Z3/Z5/Z6. `jun-spielformen` normalisiert dabei auf
- *  «Fussball spielen lernen»: Z3 und Z4 laufen hin zusammen und sind ohne
- *  Konserve nicht mehr trennbar. Die Einordnung bleibt frei änderbar. */
+ *  «Fussball spielen lernen»: Z3 und Z4 laufen hin zusammen und sind
+ *  nachträglich nicht mehr trennbar. Die Einordnung bleibt frei änderbar. */
 export function abbildungJuniorenZuKifu(
   block: string,
-):
-  | { trainingsteil: TrainingsteilSlug; hauptteilkategorie: string | null }
-  | typeof NACHARBEIT {
+): { trainingsteil: TrainingsteilSlug; hauptteilkategorie: string | null } | null {
   switch (block) {
     case "jun-aufwaermen":
     case "jun-spielform-trainingsziel":
@@ -175,7 +125,7 @@ export function abbildungJuniorenZuKifu(
     default:
       // Explosivität hat im Kinderfussball keine Entsprechung: diese
       // Trainingsform kennt das Kinderfussball-Manual nicht (§4.3).
-      return NACHARBEIT;
+      return null;
   }
 }
 
@@ -224,54 +174,7 @@ export const LEER_HINWEIS_BLOECKE: JuniorenBlockSlug[] = [
   "jun-explosivitaet",
 ];
 
-/** Welche Übungs-Heimaten darf ein Block aufnehmen? Die Umkehrung der
- *  Abbildungsregel (Entscheidungsdokument §2/§4) — sie bestimmt, was der
- *  Picker anbietet UND was die Server Action beim Zuordnen akzeptiert. Beide
- *  müssen dieselbe Antwort geben, sonst zeigt der Picker Treffer, die das
- *  Hinzufügen abweist.
- *
- *  `hauptteilkategorien: null` heisst: keine Einschränkung auf dieser Achse. */
-export function heimatFilterFuerEinordnung(einordnung: string): {
-  trainingsteile: string[];
-  hauptteilkategorien: string[] | null;
-} {
-  switch (einordnung) {
-    // Kinderfussball-Teile: der gleichnamige Trainingsteil. Die Einleitung
-    // nimmt zusätzlich die rückabgebildeten Junioren-Heimaten auf (§4.3,
-    // Story 5b PC 2) — Explosivität bleibt aussen vor (PC 3).
-    case "einleitung":
-      return {
-        trainingsteile: ["einleitung", "jun-aufwaermen", "jun-spielform-trainingsziel"],
-        hauptteilkategorien: null,
-      };
-    case "auffangen":
-    case "hauptteil":
-    case "ausklang":
-      return { trainingsteile: [einordnung], hauptteilkategorien: null };
-    // Junioren-Blöcke gemäss Abbildungsregel.
-    case "jun-aufwaermen":
-      return { trainingsteile: ["einleitung", "jun-aufwaermen"], hauptteilkategorien: null };
-    case "jun-spielform-trainingsziel":
-      return { trainingsteile: ["jun-spielform-trainingsziel"], hauptteilkategorien: null };
-    case "jun-explosivitaet":
-      return { trainingsteile: ["jun-explosivitaet"], hauptteilkategorien: null };
-    case "jun-spielformen":
-      return {
-        trainingsteile: ["hauptteil"],
-        hauptteilkategorien: ["fussball-spielen-lernen", "vielseitigkeit-erleben"],
-      };
-    case "jun-spiel":
-      return { trainingsteile: ["hauptteil"], hauptteilkategorien: ["fussball-spielen"] };
-    case "jun-ausklang":
-      return { trainingsteile: ["ausklang"], hauptteilkategorien: null };
-    default:
-      // Die Nacharbeit ist kein Zuordnungsziel.
-      return { trainingsteile: [], hauptteilkategorien: null };
-  }
-}
-
-/** Alle gültigen Zuordnungsziele eines Trainings — die Nacharbeit gehört nicht
- *  dazu, in sie gerät eine Fassung nur durch den Schema-Wechsel. */
-export function zuordnungsZiele(schema: Schema): string[] {
-  return schema === "junioren" ? [...JUNIOREN_BLOCK_SLUGS] : [...TRAININGSTEIL_SLUGS_KIFU];
-}
+// Was ein Trainingsblock aufnehmen darf, steht nicht hier, sondern in
+// `vorlagenFilterFuer()` in web/lib/altersstufe.ts. Die Abbildungsregel oben
+// dient allein noch als Vorschlag beim Überführen einer Übung in die andere
+// Altersstufe (Story 4).

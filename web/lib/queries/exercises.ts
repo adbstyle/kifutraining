@@ -4,7 +4,8 @@ import {
   type KategorieSlug,
 } from "@/lib/vocab";
 import { likePattern } from "@/lib/search";
-import { HEIMAT_LABEL } from "@/lib/labels";
+import type { Altersstufe } from "@/lib/altersstufe";
+import { EINORDNUNG_LABEL } from "@/lib/labels";
 import { hatDiagramm } from "@/lib/diagramm";
 import type { ExerciseCardData } from "@/components/ui";
 
@@ -15,6 +16,11 @@ import type { ExerciseCardData } from "@/components/ui";
  */
 
 export type ExerciseFilters = {
+  /** Altersstufe — genau eine, nicht mehrere: eine Übung folgt genau einem
+   *  Lehrmittel, und wer hier filtert, plant in genau einer Welt (Story 6,
+   *  Übungswelten). Der Katalog setzt ihn bewusst nicht: er zeigt weiterhin
+   *  beide Altersstufen (Story 6 Out-of-Scope 1). */
+  altersstufe?: Altersstufe;
   teil?: string[]; // Trainingsteil (OR)
   kat?: string[]; // Alterskategorien G/F/E (Überlappung)
   feld?: string[]; // Feldtyp (OR)
@@ -29,12 +35,14 @@ export type ExerciseFilters = {
 
 // Felder, die Liste + Karte brauchen.
 const LIST_COLUMNS =
-  "id, slug, name, trainingsteil, feldtyp, hauptteilkategorie, kategorien, source, visibility, bild_url, diagramm, bild_quelle";
+  "id, slug, name, altersstufe, trainingsteil, feldtyp, hauptteilkategorie, kategorien, source, visibility, bild_url, diagramm, bild_quelle";
 
 export type ExerciseListRow = {
   id: string;
   slug: string;
   name: string;
+  /** Nach welchem Lehrmittel die Übung geführt wird (Story 1, Übungswelten). */
+  altersstufe: Altersstufe;
   trainingsteil: string;
   feldtyp: string | null;
   hauptteilkategorie: string | null;
@@ -91,6 +99,7 @@ export async function getExercises(
   if (f.fav) query = query.in("id", [...favIds]);
   // Eigene Übungen: öffentliche wie private, keine fremden/Manual-Übungen.
   if (f.mine && user) query = query.eq("owner_id", user.id);
+  if (f.altersstufe) query = query.eq("altersstufe", f.altersstufe);
   if (f.teil?.length) query = query.in("trainingsteil", f.teil);
   if (f.kat?.length) query = query.overlaps("kategorien", f.kat);
   if (f.feld?.length) query = query.in("feldtyp", f.feld);
@@ -132,11 +141,17 @@ export type ExerciseDetail = {
   id: string;
   slug: string;
   name: string;
+  /** Nach welchem Lehrmittel die Übung geführt wird (Story 1, Übungswelten). */
+  altersstufe: Altersstufe;
   trainingsteil: string;
   erscheinungsform: string[];
   hauptteilkategorie: string | null;
   uebungstyp: string | null;
   feldtyp: string | null;
+  /** Spielfeldgrösse in Metern — nur im Juniorenfussball, nur paarweise
+   *  belegt (Story 3, Übungswelten). */
+  spielfeld_laenge_m: number | null;
+  spielfeld_breite_m: number | null;
   kategorien: string[];
   anzahl_kinder: { min?: number | null; max?: number | null } | null;
   material: string[];
@@ -160,7 +175,7 @@ export async function getExerciseDetail(
   const { data, error } = await supabase
     .from("exercises")
     .select(
-      "id, slug, name, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id",
+      "id, slug, name, altersstufe, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -226,8 +241,7 @@ export function toCardData(row: ExerciseListRow): ExerciseCardData {
     slug: row.slug,
     name: row.name,
     trainingsteilLabel:
-      HEIMAT_LABEL[row.trainingsteil] ??
-      row.trainingsteil,
+      EINORDNUNG_LABEL[row.trainingsteil] ?? row.trainingsteil,
     hauptteilkategorieLabel: row.hauptteilkategorie
       ? hauptteilkategorieLabels[
           row.hauptteilkategorie as keyof typeof hauptteilkategorieLabels

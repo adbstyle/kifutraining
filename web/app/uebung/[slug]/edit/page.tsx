@@ -8,7 +8,7 @@ import { updateExercise } from "@/lib/actions/exercises";
 import { getExerciseDetail, getVorlagen } from "@/lib/queries/exercises";
 import { createClient } from "@/lib/supabase/server";
 import { hatDiagramm } from "@/lib/diagramm";
-import { HEIMAT_LABEL } from "@/lib/labels";
+import { EINORDNUNG_LABEL } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Übung bearbeiten — KiFu", robots: { index: false } };
@@ -34,8 +34,7 @@ export default async function EditPage({
   // Brotkrumen wie in der Detailseite/im Diagramm-Editor, eine Stufe tiefer:
   // die Übung wird zum Link, „Übung bearbeiten" ist die aktuelle Seite und
   // ersetzt den separaten Seitentitel.
-  const teilLabel =
-    HEIMAT_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
+  const teilLabel = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
     { label: "Übungspool", href: "/" },
     { label: teilLabel, href: `/?teil=${ex.trainingsteil}` },
@@ -71,11 +70,20 @@ export default async function EditPage({
             )}
           </div>
         }
+        altersstufe={ex.altersstufe}
+        stufenWahl="fest"
+        kontext="bibliothek"
+        // Die Übung gehört dem angemeldeten USER (oben geprüft) und ist eine
+        // Nutzer-Übung — nur hier lässt sie sich in die andere Altersstufe
+        // überführen (Story 4 AK 1/5).
+        ueberfuehrbar
         initial={{
           name: ex.name,
           trainingsteil: ex.trainingsteil,
           kategorien: ex.kategorien,
           feldtyp: ex.feldtyp,
+          spielfeld_laenge_m: ex.spielfeld_laenge_m,
+          spielfeld_breite_m: ex.spielfeld_breite_m,
           erscheinungsform: ex.erscheinungsform,
           hauptteilkategorie: ex.hauptteilkategorie,
           uebungstyp: ex.uebungstyp,

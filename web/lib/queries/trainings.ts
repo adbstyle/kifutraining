@@ -3,7 +3,8 @@ import { likePattern } from "@/lib/search";
 import { TRAININGSTEIL_SLUGS, sortStufen, teilTraegtDauer, hkatRank } from "@/lib/training";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
-import { JUNIOREN_BLOCK_SLUGS, NACHARBEIT, type Einordnung } from "@/lib/junioren";
+import { JUNIOREN_BLOCK_SLUGS, type Einordnung } from "@/lib/junioren";
+import type { Altersstufe } from "@/lib/altersstufe";
 import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
 import { kurzeZeit } from "@/lib/queries/termine";
 
@@ -20,20 +21,21 @@ import { kurzeZeit } from "@/lib/queries/termine";
 export type TrainingExerciseItem = {
   /** training_exercises.id (die Zuordnung, also die Fassung selbst). */
   id: string;
-  /** Wo die Fassung im Training liegt: ein Kinderfussball-Trainingsteil, ein
-   *  Junioren-Unterblock oder die Nacharbeit (Epic #71). */
+  /** Wo die Fassung im Training liegt: ein Kinderfussball-Trainingsteil oder
+   *  ein Junioren-Unterblock (Epic #71). */
   trainingsteil: Einordnung;
   /** Nur Hauptteil-Fassungen tragen eine Kategorie. */
   hauptteilkategorie: string | null;
   position: number;
   durationMin: number | null;
-  /** Einordnung im zuletzt verlassenen Schema — macht den Schema-Wechsel
-   *  umkehrbar und die Wechsel-Vorschau ehrlich (Epic #71). */
-  einordnungVorher: string | null;
   name: string;
   kategorien: string[];
   erscheinungsform: string[];
   feldtyp: string | null;
+  /** Spielfeldgrösse in Metern — das Junioren-Gegenstück zum Feldtyp. Immer
+   *  paarweise belegt oder beide `null` (CHECK `te_spielfeld_paarweise`). */
+  spielfeldLaengeM: number | null;
+  spielfeldBreiteM: number | null;
   /** Übungstyp nach dem Manual Fussball Jugendliche (Story 9). */
   uebungstyp: string | null;
   anzahlKinder: { min?: number | null; max?: number | null } | null;
@@ -50,6 +52,9 @@ export type TrainingDetail = {
   name: string;
   ownerId: string | null;
   visibility: "public" | "private";
+  /** Nach welchem Lehrmittel das Training geführt wird. Steht ab dem Anlegen
+   *  fest (Story 1, Übungswelten). */
+  altersstufe: Altersstufe;
   stufen: KategorieSlug[];
   /** Optionales Freitext-Ziel des Trainings; `null` = keins (Story 10). */
   ziel: string | null;
@@ -70,11 +75,10 @@ const INHALT_FELDER = [...FASSUNG_INHALT_FELDER, "bild_url", "diagramm"].join(",
 
 const PE_SELECT = `
   id, trainingsteil, hauptteilkategorie, position, duration_min,
-  einordnung_vorher,
   ${INHALT_FELDER}
 `;
 
-const TRAINING_SELECT = `id, name, owner_id, visibility, stufen, ziel, team_id, urheber, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
+const TRAINING_SELECT = `id, name, owner_id, visibility, altersstufe, stufen, ziel, team_id, urheber, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
 
 /** Die Inhaltsfelder, wie sie aus der Zuordnung zurückkommen. */
 type RawInhalt = {
@@ -82,6 +86,8 @@ type RawInhalt = {
   kategorien: string[] | null;
   erscheinungsform: string[] | null;
   feldtyp: string | null;
+  spielfeld_laenge_m: number | null;
+  spielfeld_breite_m: number | null;
   uebungstyp: string | null;
   anzahl_kinder: { min?: number | null; max?: number | null } | null;
   material: string[] | null;
@@ -98,13 +104,13 @@ type RawTrainingExercise = RawInhalt & {
   hauptteilkategorie: string | null;
   position: number;
   duration_min: number | null;
-  einordnung_vorher: string | null;
 };
 type RawTraining = {
   id: string;
   name: string;
   owner_id: string | null;
   visibility: "public" | "private";
+  altersstufe: Altersstufe;
   stufen: string[];
   ziel: string | null;
   team_id: string | null;
@@ -117,14 +123,10 @@ type RawTraining = {
 };
 
 /** Sortier-Reihenfolge aller Einordnungen: erst die vier Kinderfussball-Teile,
- *  dann die sechs Junioren-Blöcke, zuletzt die Nacharbeit. Ein Training führt
- *  immer nur EIN Schema — die gemeinsame Liste hält die Sortierung trotzdem
- *  stabil, statt fremde Werte stillschweigend ans Ende zu kippen. */
-const EINORDNUNG_RANG: string[] = [
-  ...TRAININGSTEIL_SLUGS,
-  ...JUNIOREN_BLOCK_SLUGS,
-  NACHARBEIT,
-];
+ *  dann die sechs Junioren-Blöcke. Ein Training führt immer nur EIN Schema —
+ *  die gemeinsame Liste hält die Sortierung trotzdem stabil, statt fremde Werte
+ *  stillschweigend ans Ende zu kippen. */
+const EINORDNUNG_RANG: string[] = [...TRAININGSTEIL_SLUGS, ...JUNIOREN_BLOCK_SLUGS];
 
 const teilRank = (t: string) => {
   const i = EINORDNUNG_RANG.indexOf(t);
@@ -140,11 +142,12 @@ function mapTraining(raw: RawTraining): TrainingDetail {
         hauptteilkategorie: te.hauptteilkategorie,
         position: te.position,
         durationMin: te.duration_min,
-        einordnungVorher: te.einordnung_vorher,
         name: te.name,
         kategorien: te.kategorien ?? [],
         erscheinungsform: te.erscheinungsform ?? [],
         feldtyp: te.feldtyp,
+        spielfeldLaengeM: te.spielfeld_laenge_m,
+        spielfeldBreiteM: te.spielfeld_breite_m,
         uebungstyp: te.uebungstyp,
         anzahlKinder: te.anzahl_kinder,
         material: te.material ?? [],
@@ -170,6 +173,7 @@ function mapTraining(raw: RawTraining): TrainingDetail {
     name: raw.name,
     ownerId: raw.owner_id,
     visibility: raw.visibility,
+    altersstufe: raw.altersstufe,
     stufen: sortStufen(raw.stufen ?? []),
     ziel: raw.ziel,
     team: raw.team_id ? { id: raw.team_id, name: raw.teams?.name ?? "Team" } : null,
@@ -239,6 +243,9 @@ export type TrainingListRow = {
    *  Ziel des Eintrags in der Übersicht (Story B AK 3–5); `false` für Besucher
    *  ohne Konto. */
   istEigen: boolean;
+  /** Nach welchem Lehrmittel das Training geführt wird (Story 1,
+   *  Übungswelten). */
+  altersstufe: Altersstufe;
   stufen: KategorieSlug[];
   updatedAt: string;
   exerciseCount: number;
@@ -254,6 +261,7 @@ type RawListTraining = {
   id: string;
   name: string;
   visibility: "public" | "private";
+  altersstufe: Altersstufe;
   stufen: string[];
   updated_at: string;
   owner_id: string | null;
@@ -264,7 +272,7 @@ type RawListTraining = {
 // `urheber` ist ein berechnetes PostgREST-Feld (SQL-Funktion über trainings) —
 // es liefert den Anzeigenamen, nie die E-Mail-Adresse.
 const LIST_SELECT =
-  "id, name, visibility, stufen, updated_at, owner_id, urheber, training_exercises ( trainingsteil, duration_min )";
+  "id, name, visibility, altersstufe, stufen, updated_at, owner_id, urheber, training_exercises ( trainingsteil, duration_min )";
 
 function mapListRow(raw: RawListTraining, userId?: string): TrainingListRow {
   const rows = raw.training_exercises ?? [];
@@ -278,6 +286,7 @@ function mapListRow(raw: RawListTraining, userId?: string): TrainingListRow {
     name: raw.name,
     visibility: raw.visibility,
     istEigen: !!userId && raw.owner_id === userId,
+    altersstufe: raw.altersstufe,
     stufen: sortStufen(raw.stufen ?? []),
     updatedAt: raw.updated_at,
     exerciseCount: rows.length,

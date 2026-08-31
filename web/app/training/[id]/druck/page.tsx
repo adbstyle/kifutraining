@@ -21,7 +21,7 @@ export default async function TrainingDruckPage({
   const training = await getTrainingView(id);
   if (!training) return <TrainingNotAvailable />;
 
-  const sections = leseGliederung(training.stufen, training.exercises);
+  const sections = leseGliederung(training.altersstufe, training.exercises);
   const total = sections.reduce((a, s) => a + s.sum, 0);
   const hasAnyDuration = sections.some((s) => s.sum > 0);
 

@@ -10,24 +10,12 @@ import type { ExerciseFormState } from "@/lib/actions/exercises";
 import { parseDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
 import {
   fassungUnvollstaendig,
-  kopiereBild,
-  userOrdner,
-  kopiereDiagrammVon,
-  entferneStorageObjekt,
-  inhaltFelder,
   istEigeneFassungsDatei,
+  legeUebungsKopieAn,
   FASSUNG_UEBERNAHME_SELECT,
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
-import { TRAININGSTEIL_SLUGS } from "@/lib/training";
-import {
-  abbildungJuniorenZuKifu,
-  schemaAusStufen,
-  zuordnungsZiele,
-  NACHARBEIT,
-} from "@/lib/junioren";
-import { junioren_heimatSlugs } from "@/lib/vocab";
-import { userSlug } from "@/lib/slug";
+import { alsAltersstufe } from "@/lib/altersstufe";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 
@@ -44,7 +32,7 @@ async function ladeFassung(
   const { data } = await supabase
     .from("training_exercises")
     .select(
-      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, stufen )",
+      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, altersstufe )",
     )
     .eq("id", fassungId)
     .maybeSingle();
@@ -52,14 +40,21 @@ async function ladeFassung(
   const training = data.trainings as unknown as {
     owner_id: string | null;
     team_id: string | null;
-    stufen: string[] | null;
+    altersstufe: string | null;
   } | null;
   if (!training) return null;
 
   // Die Zeile ist bereits geladen — die Bearbeitungsregel kommt aus der
   // gemeinsamen Quelle, statt sie hier ein zweites Mal zu formulieren.
   const ziel = bearbeitungszielVon(training, userId);
-  return ziel ? { ...data, ziel, stufen: training.stufen ?? [] } : null;
+  if (!ziel) return null;
+  return {
+    ...data,
+    ziel,
+    // Die Fassung folgt der Altersstufe ihres Trainings — sie hat keine eigene
+    // (Story 1). Der Rückfall ist bloss der Typ-Guard: die Spalte ist NOT NULL.
+    altersstufe: alsAltersstufe(training.altersstufe),
+  };
 }
 
 /** Die nächste freie Position im Zielabschnitt. Eine umgeordnete Fassung reiht
@@ -102,16 +97,16 @@ export async function updateFassung(
   const fassung = await ladeFassung(supabase, fassungId, user.id);
   if (!fassung) return { status: "error", message: "Übung nicht gefunden." };
 
-  // Eine Fassung wird nach den Blöcken IHRES Trainingsschemas eingeordnet —
-  // die Nacharbeit eingeschlossen, aus der sie der Trainer herausholt.
-  // Die Nacharbeit steht nur zur Wahl, wenn die Fassung dort liegt — dorthin
-  // gerät sie nur durch den Schema-Wechsel, nie durch eine Zuordnung.
-  const parsed = parseUebungsInhalt(form, [
-    ...zuordnungsZiele(schemaAusStufen(fassung.stufen)),
-    ...(fassung.trainingsteil === NACHARBEIT ? [NACHARBEIT] : []),
-  ]);
+  // Eine Fassung wird nach den Einordnungen der Altersstufe IHRES Trainings
+  // eingeordnet — dieselbe Menge, die auch eine Bibliotheks-Übung dieser Stufe
+  // kennt. Eine eigene Optionsliste braucht es dafür nicht mehr: seit der
+  // Trennung der Altersstufen sind Übung und Fassung an denselben sechs bzw.
+  // vier Werten zuhause.
+  const parsed = parseUebungsInhalt(form, { altersstufe: fassung.altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
-  const inhalt = parsed.row;
+  // Die Altersstufe der Fassung setzt der DB-Trigger `te_altersstufe_erben`
+  // aus ihrem Training; die Applikation schreibt die Spalte nie selbst.
+  const { altersstufe: _geerbt, ...inhalt } = parsed.row;
 
   // Trainingsteil und Kategorie hat parseUebungsInhalt bereits gegen das
   // Vokabular geprüft — hier nur noch als Werte gebraucht.
@@ -134,12 +129,6 @@ export async function updateFassung(
       trainingsteil === "hauptteil" ? hkat : null,
       fassungId,
     );
-    // Die Konserve des Schema-Wechsels verfällt: sie gilt nur für Fassungen,
-    // die seit der Übertragung unangetastet blieben. Sonst spränge eine von
-    // Hand umgehängte Fassung beim Rückwechsel auf ihren alten Platz zurück
-    // und die Handänderung ginge verloren (Epic #71).
-    update.einordnung_vorher = null;
-    update.hauptteilkategorie_vorher = null;
   }
 
   // Bild: ersetzen (neue Datei) oder entfernen (Schalter). Beides wirkt erst
@@ -203,16 +192,10 @@ export async function updateFassung(
   redirect(`/training/${fassung.training_id}/edit?bearbeitet=1`);
 }
 
-/** Eine Fassung als eigene, zunächst private Vorlage in die Bibliothek
- *  übernehmen (Story 7).
- *
- *  Zulässig ist jede für den USER sichtbare Fassung — auch aus einem fremden
- *  öffentlichen Training. Es entsteht eine gewöhnliche Trainer-Übung mit eigener
- *  Bild- und Diagrammkopie; eine Verknüpfung zur Fassung gibt es nicht, spätere
- *  Änderungen wirken in keine Richtung. */
 /** Eine Fassung, wie sie fürs Übernehmen in die Bibliothek gelesen wird
  *  (FASSUNG_UEBERNAHME_SELECT). */
 type ZuUebernehmendeFassung = {
+  altersstufe: string | null;
   trainingsteil: string;
   hauptteilkategorie: string | null;
   name: string | null;
@@ -226,6 +209,13 @@ type ZuUebernehmendeFassung = {
   diagramm: unknown;
 } & Record<string, unknown>;
 
+/** Eine Fassung als eigene, zunächst private Vorlage in die Bibliothek
+ *  übernehmen (Story 7).
+ *
+ *  Zulässig ist jede für den USER sichtbare Fassung — auch aus einem fremden
+ *  öffentlichen Training. Es entsteht eine gewöhnliche Trainer-Übung mit eigener
+ *  Bild- und Diagrammkopie; eine Verknüpfung zur Fassung gibt es nicht, spätere
+ *  Änderungen wirken in keine Richtung. */
 export async function uebernehmeInBibliothek(
   fassungId: string,
 ): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
@@ -243,54 +233,27 @@ export async function uebernehmeInBibliothek(
     .maybeSingle<ZuUebernehmendeFassung>();
   if (!f) return { ok: false, error: "Diese Übung ist nicht mehr verfügbar." };
 
-  // Die Heimat bestimmen, BEVOR die Vollständigkeit geprüft wird: eine Fassung
-  // in einem Junioren-Block wird als Kinderfussball-Übung abgelegt, und dort
-  // gilt deren Ablauf-Regel. Andersherum meldete die Prüfung eine fehlende
-  // Beschreibung an einer Übung, die vollständig ist.
-  const heimat = heimatAusEinordnung(f.trainingsteil, f.hauptteilkategorie);
-  if (!heimat)
-    return {
-      ok: false,
-      error: "Ordne die Übung zuerst einem Block zu, bevor du sie übernimmst.",
-    };
+  // Die Kopie behält die Altersstufe des Originals — und mit ihr Einordnung
+  // und Ablaufform. Eine Rückabbildung zwischen den Schemata gibt es hier nicht
+  // mehr: seit der Trennung der Altersstufen ist jeder Block, in dem eine
+  // Fassung liegen kann, auch ein gültiger Ort einer Bibliotheks-Übung
+  // derselben Stufe.
+  const altersstufe = alsAltersstufe(f.altersstufe);
 
-  const mangel = fassungUnvollstaendig({
-    ...f,
-    trainingsteil: heimat.trainingsteil,
-    hauptteilkategorie: heimat.hauptteilkategorie,
-  });
+  const mangel = fassungUnvollstaendig({ ...f, altersstufe });
   if (mangel) return { ok: false, error: mangel };
 
-  // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
-  const uebungId = crypto.randomUUID();
-  const bild = await kopiereBild(supabase, f.bild_url, userOrdner(user.id), uebungId);
-  if (bild.error) return { ok: false, error: bild.error };
-
-  const { data: angelegt, error } = await supabase
-    .from("exercises")
-    .insert({
-      id: uebungId,
-      slug: userSlug(f.name!),
-      trainingsteil: heimat.trainingsteil,
-      hauptteilkategorie: heimat.hauptteilkategorie,
-      ...inhaltFelder(f),
-      bild_url: bild.url,
-      diagramm: kopiereDiagrammVon(f.diagramm),
-      source: "user",
-      owner_id: user.id,
-      // Zunächst privat (PO-Entscheid): veröffentlicht wird bewusst separat.
-      visibility: "private",
-    })
-    .select("slug")
-    .single();
-
-  if (error || !angelegt) {
-    await entferneStorageObjekt(supabase, bild.pfad);
-    return { ok: false, error: error?.message ?? "Übernehmen fehlgeschlagen." };
-  }
+  // Kopiert wird mit dem gemeinsamen Rumpf (`legeUebungsKopieAn`): Slug, Bild-
+  // und Diagrammkopie, Eigentum und der private Anfangszustand sind dieselben
+  // wie beim direkten Übernehmen einer Bibliotheks-Übung.
+  const kopie = await legeUebungsKopieAn(supabase, f, {
+    ownerId: user.id,
+    altersstufe,
+  });
+  if (!kopie.ok) return kopie;
 
   revalidatePath("/");
-  return { ok: true, slug: angelegt.slug };
+  return kopie;
 }
 
 /** Das Diagramm einer Fassung speichern — das Pendant zu `saveDiagramm` für
@@ -331,21 +294,4 @@ export async function saveFassungDiagramm(
 
   revalidiereTraining(fassung.training_id, fassungId);
   return { ok: true };
-}
-
-/** Einordnung einer Fassung im Training → Heimat der neuen Bibliotheks-Übung.
- *  `null`, wenn die Fassung in der Nacharbeit liegt: dort hat sie gerade
- *  keinen Platz, und eine Heimat liesse sich nur raten. */
-function heimatAusEinordnung(
-  einordnung: string,
-  hauptteilkategorie: string | null,
-): { trainingsteil: string; hauptteilkategorie: string | null } | null {
-  // Kinderfussball-Teile und die drei Junioren-Heimaten sind selbst Heimaten.
-  if (
-    (TRAININGSTEIL_SLUGS as readonly string[]).includes(einordnung) ||
-    (junioren_heimatSlugs as readonly string[]).includes(einordnung)
-  )
-    return { trainingsteil: einordnung, hauptteilkategorie };
-  const rueck = abbildungJuniorenZuKifu(einordnung);
-  return rueck === NACHARBEIT ? null : rueck;
 }

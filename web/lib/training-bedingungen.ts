@@ -6,18 +6,16 @@
 // die Prüfung für die Vorab-Meldung und die Übersetzung des DB-Fehlers, damit
 // beide Seiten dieselbe Regel nennen statt zweier Formulierungen davon.
 
-import {
-  schemaAusStufen,
-  JUNIOREN_PFLICHT_BLOECKE,
-  NACHARBEIT,
-} from "@/lib/junioren";
+import { JUNIOREN_PFLICHT_BLOECKE } from "@/lib/junioren";
+import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
+import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
 
 /** Marker, mit dem die Datenebene eine verletzte Bedingung meldet. */
 const BEDINGUNG_MARKER = "TRAINING_UNVOLLSTAENDIG";
 
 /** Die Bedingungen — in der Reihenfolge, in der die Datenebene sie prüft.
- *  Die ersten drei gelten im Kinderfussball, die folgenden fünf im
- *  Juniorenschema; die Nacharbeit blockiert in beiden (Story 7). */
+ *  Die Alterskategorie gilt in beiden Altersstufen, die beiden folgenden im
+ *  Kinderfussball, die letzten fünf im Juniorenfussball (Story 7, Story 1). */
 export type Bedingung =
   | "stufe"
   | "einleitung"
@@ -26,8 +24,7 @@ export type Bedingung =
   | "jun-spielform-trainingsziel"
   | "jun-explosivitaet"
   | "jun-spielformen"
-  | "jun-ausklang"
-  | "nacharbeit";
+  | "jun-ausklang";
 
 /** Was fehlt, aus Sicht des Trainers. Ergänzt den Satz «Es fehlt …». */
 export const BEDINGUNG_FEHLT: Record<Bedingung, string> = {
@@ -41,12 +38,7 @@ export const BEDINGUNG_FEHLT: Record<Bedingung, string> = {
   "jun-spielformen":
     "mindestens eine Übung in den Spielformen und unterstützenden Übungen",
   "jun-ausklang": "mindestens eine Übung im Ausklang",
-  nacharbeit: "die Auflösung der offenen Nacharbeit",
 };
-
-/** Die Hauptteilkategorie des freien Spiels. Es liegt im Hauptteil — die
- *  Bedingung deckt «mindestens eine Übung im Hauptteil» damit zwingend mit ab. */
-export const FREIES_SPIEL = "fussball-spielen";
 
 function istBedingung(wert: string): wert is Bedingung {
   return wert in BEDINGUNG_FEHLT;
@@ -79,27 +71,90 @@ function bedingungsFehler(message: string): string | null {
   return bedingung ? bedingungsMeldung(bedingung) : null;
 }
 
-/** Marker der Datenebene für einen Schema-Wechsel am öffentlichen Training. */
-const WECHSEL_OEFFENTLICH = "SCHEMA_WECHSEL_OEFFENTLICH";
+/** Marker der Datenebene für den Versuch, die Altersstufe eines bestehenden
+ *  Trainings zu ändern (Trigger `trainings_altersstufe_unveraenderlich`). */
+const ALTERSSTUFE_FEST = "ALTERSSTUFE_UNVERAENDERLICH";
 
-/** Marker der Datenebene für eine Einordnung oder Stufe, die nicht zum
- *  Trainingsschema passt. */
-const SCHEMA_KONFLIKT = "SCHEMA_KONFLIKT";
+/** Marker der Datenebene für ein neues Training ohne Alterskategorie
+ *  (Trigger `trainings_stufe_pflicht`). */
+const STUFE_FEHLT = "STUFE_FEHLT";
 
-/** Die Meldungen zu den Schema-Regeln des Juniorenfussballs (Epic #71).
- *  Sie nennen wie die Bedingungs-Meldungen den Weg, nicht nur die Absage. */
+/** Die Wertebereichs-CHECKs der Altersstufe (Story 1, Übungswelten) und ihre
+ *  Klartext-Erklärung. Postgres meldet sie als
+ *  `violates check constraint "<name>"` — die Applikation erkennt sie am
+ *  Namen. Ein Nutzer sieht sie nur, wenn er die Oberfläche umgeht oder die
+ *  Oberfläche der Regel noch nicht folgt; letzteres räumen die Stories 2 und 3
+ *  auf. */
+const ALTERSSTUFE_CHECKS: [string, string][] = [
+  [
+    "ex_kategorien_je_altersstufe",
+    "Diese Alterskategorie gehört nicht zur Altersstufe dieser Übung.",
+  ],
+  [
+    "te_kategorien_je_altersstufe",
+    "Diese Alterskategorie gehört nicht zur Altersstufe dieses Trainings.",
+  ],
+  [
+    "training_stufen_je_altersstufe",
+    "Diese Alterskategorie gehört nicht zur Altersstufe dieses Trainings. " +
+      "Lege für die andere Altersstufe ein neues Training an.",
+  ],
+  [
+    "trainingsteil_je_altersstufe",
+    "Dieser Trainingsteil gehört nicht zur Altersstufe dieser Übung.",
+  ],
+  [
+    "ex_feldtyp_nur_kifu",
+    "Der Feldtyp ist eine Angabe des Manuals Fussball Kinder. " +
+      "Eine Junioren-Übung trägt stattdessen eine Spielfeldgrösse.",
+  ],
+  // Die drei Spielfeld-Regeln (Story 3). Sie heissen auf beiden Tabellen
+  // gleich, bloss mit dem Präfix `ex_` bzw. `te_` — der Namensrest genügt
+  // darum als Erkennungsmerkmal für beide. Die Meldungen sind wortgleich mit
+  // denen aus `parseUebungsInhalt`, dem Spiegel derselben Regeln.
+  [
+    "spielfeld_paarweise",
+    "Bitte Länge und Breite angeben oder beides leer lassen.",
+  ],
+  [
+    "spielfeld_bereich",
+    `Länge und Breite in ganzen Metern, zwischen ${SPIELFELD_MIN} und ${SPIELFELD_MAX}.`,
+  ],
+  [
+    "spielfeld_nur_junioren",
+    "Die Spielfeldgrösse ist eine Angabe des Manuals Fussball Jugendliche. " +
+      "Eine Kinderfussball-Übung trägt stattdessen einen Feldtyp.",
+  ],
+  [
+    "ex_uebungstyp_nur_junioren",
+    "Der Übungstyp ist eine Angabe des Manuals Fussball Jugendliche und gilt " +
+      "nur in Blöcken, in denen eine Spielform vorkommen kann. Lass ihn hier leer.",
+  ],
+  [
+    "erscheinungsform_je_altersstufe",
+    "Diese Erscheinungsform gehört zum Manual der anderen Altersstufe.",
+  ],
+  [
+    "ablauf_je_einordnung",
+    "Der Ablauf ist für diese Einordnung nicht in der richtigen Form erfasst. " +
+      "Der methodische Fahrplan gilt im Kinderfussball, der Beschreibungstext " +
+      "im Juniorenfussball.",
+  ],
+];
+
+/** Die Meldungen zu den Altersstufen- und Schema-Regeln (Epic #71,
+ *  Epic Übungswelten). Sie nennen wie die Bedingungs-Meldungen den Weg, nicht
+ *  nur die Absage. */
 function schemaMeldung(message: string): string | null {
-  if (message.includes(WECHSEL_OEFFENTLICH))
+  if (message.includes(ALTERSSTUFE_FEST))
     return (
-      "Ein öffentliches Training wechselt das Trainingsschema nicht. " +
-      "Setze es zuerst auf Entwurf — nach dem Wechsel brauchst du ohnehin " +
-      "weitere Übungen, bevor du es wieder veröffentlichen kannst."
+      "Die Altersstufe eines Trainings steht ab dem Anlegen fest. " +
+      "Lege für die andere Altersstufe ein neues Training an."
     );
-  if (message.includes(SCHEMA_KONFLIKT))
-    return (
-      "Kinderfussball und Juniorenfussball lassen sich in einem Training " +
-      "nicht mischen."
-    );
+  if (message.includes(STUFE_FEHLT))
+    return "Bitte mindestens eine Alterskategorie wählen.";
+  for (const [name, klartext] of ALTERSSTUFE_CHECKS)
+    if (message.includes(name)) return klartext;
   return null;
 }
 
@@ -112,7 +167,7 @@ export function fehlerMeldung(message: string): string {
 }
 
 /** Welche Veröffentlichungs-Bedingungen erfüllt ein Training noch nicht?
- *  Die Regel hängt an seinem Schema (Story 7 AC 1/2/4) und spiegelt die
+ *  Die Regel hängt an seiner Altersstufe (Story 7 AC 1/2/4) und spiegelt die
  *  DB-Funktion `training_fehlende_bedingungen`, die als Trust-Boundary
  *  dasselbe prüft.
  *
@@ -120,15 +175,18 @@ export function fehlerMeldung(message: string): string {
  *  sie live aus seinem lokalen Stand, und ein "use server"-Modul darf nur
  *  async-Funktionen exportieren.
  *
- *  Im Juniorenschema braucht es keine eigene Stufen-Bedingung — ein
- *  Junioren-Training trägt per Schema-Definition eine Junioren-Kategorie. */
+ *  Mindestens eine Alterskategorie gilt in beiden Altersstufen: Seit die
+ *  Altersstufe eine eigene Angabe ist, folgt sie nicht mehr aus den
+ *  Kategorien — ein Junioren-Training ohne Kategorie ist damit möglich und
+ *  soll nicht veröffentlichbar sein (Story 1, Übungswelten). */
 export function fehlendeBedingungenAus(
+  altersstufe: Altersstufe,
   stufen: readonly string[],
   fassungen: readonly { trainingsteil: string; hauptteilkategorie?: string | null }[],
 ): Bedingung[] {
   const missing: Bedingung[] = [];
-  if (schemaAusStufen(stufen) === "kifu") {
-    if (stufen.length === 0) missing.push("stufe");
+  if (stufen.length === 0) missing.push("stufe");
+  if (altersstufe === "kinderfussball") {
     if (!fassungen.some((f) => f.trainingsteil === "einleitung")) missing.push("einleitung");
     if (!fassungen.some((f) => f.hauptteilkategorie === FREIES_SPIEL))
       missing.push("freies_spiel");
@@ -137,7 +195,5 @@ export function fehlendeBedingungenAus(
       if (!fassungen.some((f) => f.trainingsteil === block)) missing.push(block);
     }
   }
-  // Offene Nacharbeit blockiert in beiden Schemata (Story 7 AC 1).
-  if (fassungen.some((f) => f.trainingsteil === NACHARBEIT)) missing.push("nacharbeit");
   return missing;
 }

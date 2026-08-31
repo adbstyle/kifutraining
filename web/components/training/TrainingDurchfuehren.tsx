@@ -64,7 +64,7 @@ export function TrainingDurchfuehren({
   training: TrainingDetail;
   termin?: TerminKontext;
 }) {
-  const sections = leseGliederung(training.stufen, training.exercises);
+  const sections = leseGliederung(training.altersstufe, training.exercises);
   const [idx, setIdx] = useState(0);
 
   // Bildschirm wachhalten, solange die Ansicht aktiv und sichtbar ist

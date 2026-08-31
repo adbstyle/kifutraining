@@ -5,7 +5,6 @@ import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
 import { updateFassung } from "@/lib/actions/fassung";
 import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
-import { einordnungsOptionenFuer } from "@/lib/junioren-optionen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -47,12 +46,16 @@ export default async function FassungBearbeitenPage({
             diagramm={f.diagramm}
           />
         }
-        einordnungsOptionen={einordnungsOptionenFuer(f.trainingStufen, f.trainingsteil)}
+        altersstufe={f.trainingAltersstufe}
+        stufenWahl="fest"
+        kontext="fassung"
         initial={{
           name: f.name,
           trainingsteil: f.trainingsteil,
           kategorien: f.kategorien,
           feldtyp: f.feldtyp,
+          spielfeld_laenge_m: f.spielfeldLaengeM,
+          spielfeld_breite_m: f.spielfeldBreiteM,
           erscheinungsform: f.erscheinungsform,
           hauptteilkategorie: f.hauptteilkategorie,
           uebungstyp: f.uebungstyp,

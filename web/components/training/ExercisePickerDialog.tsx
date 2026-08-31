@@ -1,36 +1,45 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Plus, Search, TriangleAlert } from "lucide-react";
-import { Dialog, KategorieChip, HerkunftBadge, FilterChip, IconButton } from "@/components/ui";
+import {
+  Dialog,
+  KategorieChip,
+  HerkunftBadge,
+  FilterChip,
+  IconButton,
+  Badge,
+} from "@/components/ui";
 import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import { stufenAbgedeckt } from "@/lib/training";
 import {
-  erscheinungsform as erscheinungsformLabels,
-  erscheinungsform_junioren as formJuniorenLabels,
+  altersstufe as altersstufeLabels,
   uebungstyp as uebungstypLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
-import { ERSCHEINUNGSFORM_TEILE } from "@/lib/labels";
+import {
+  erscheinungsformenFuer,
+  traegtErscheinungsform,
+  traegtUebungstyp,
+  type Altersstufe,
+} from "@/lib/altersstufe";
+import { ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
 import type { Einordnung } from "@/lib/junioren";
 import type { ExerciseListRow } from "@/lib/queries/exercises";
 
-/** Beide Erscheinungsform-Vokabulare als eine flache Liste (Story 12). */
-const alleFormLabels: Record<string, string> = {
-  ...erscheinungsformLabels,
-  ...formJuniorenLabels,
-};
-
 /* Übungs-Picker als Modal über dem Editor (Story #10). Lädt die für den USER
-   sichtbaren Übungen des Trainingsteils serverseitig (RLS), eingrenzbar nach
-   Erscheinungsform und Freitext. Im Hauptteil ist der Picker auf eine
-   Hauptteilkategorie fixiert (Story #23): er zeigt nur Übungen dieser
-   Unterkategorie. Auswahl persistiert sofort; das Panel bleibt für
-   Mehrfachauswahl offen. */
+   sichtbaren Übungen des Zielblocks serverseitig (RLS), eingrenzbar nach
+   Erscheinungsform, Übungstyp und Freitext. Der angebotene Bestand ist doppelt
+   eingegrenzt: auf die Altersstufe des Trainings und auf den Zielblock
+   (Story 6 AK 1/2, Übungswelten) — im Kinderfussball-Hauptteil zusätzlich auf
+   die fixierte Unterkategorie (Story #23). Auswahl persistiert sofort; das
+   Panel bleibt für Mehrfachauswahl offen. */
 export function ExercisePickerDialog({
   open,
   onClose,
   trainingId,
+  altersstufe,
   trainingsteil,
   trainingsteilLabel,
   hauptteilkategorie,
@@ -41,11 +50,15 @@ export function ExercisePickerDialog({
   open: boolean;
   onClose: () => void;
   trainingId: string;
+  /** Die Altersstufe des Trainings. Sie bestimmt, welcher Bestand und welches
+   *  Filtervokabular überhaupt in Frage kommen. Für die Anzeige — der Server
+   *  liest sie beim Laden und beim Zuordnen selbst aus dem Training. */
+  altersstufe: Altersstufe;
   /** Ziel-Einordnung: ein Kinderfussball-Trainingsteil oder ein
    *  Junioren-Unterblock (Epic #71). */
   trainingsteil: Einordnung;
   trainingsteilLabel: string;
-  /** Im Hauptteil: die fixierte Unterkategorie, sonst undefined. */
+  /** Im Kinderfussball-Hauptteil: die fixierte Unterkategorie, sonst undefined. */
   hauptteilkategorie?: string;
   hauptteilkategorieLabel?: string;
   trainingStufen: string[];
@@ -71,14 +84,31 @@ export function ExercisePickerDialog({
   const queueRef = useRef<Promise<void>>(Promise.resolve());
   const inFlightRef = useRef(0);
 
-  // Erscheinungsformen tragen nicht alle Einordnungen — der Filter erscheint
-  // nur, wo er etwas findet (Story 12 Out of Scope 5).
-  const hatErscheinungsform = ERSCHEINUNGSFORM_TEILE.has(trainingsteil);
+  // Welches Ziel der Picker füllt — im Kinderfussball-Hauptteil Block und
+  // Unterkategorie zusammen. Ein Text für Titel und Leermeldung.
+  const zielLabel = hauptteilkategorieLabel
+    ? `${trainingsteilLabel} · ${hauptteilkategorieLabel}`
+    : trainingsteilLabel;
+
+  // Angeboten wird nur, was hier auch etwas findet: Erscheinungsformen tragen
+  // nicht alle Einordnungen, und den Übungstyp kennt nur der Juniorenfussball,
+  // dort nur in den Blöcken mit Spielformen. Beides entscheidet die Altersstufe
+  // des Trainings — dieselben Funktionen, nach denen das Übungsformular seine
+  // Felder zeigt.
+  const hatErscheinungsform = traegtErscheinungsform(altersstufe, trainingsteil);
+  const hatUebungstyp = traegtUebungstyp(altersstufe, trainingsteil);
+  const formen = erscheinungsformenFuer(altersstufe);
+
+  // Ist der leere Bestand eine Folge der Eingrenzung — oder gibt es für diesen
+  // Block schlicht noch keine Übung? Die beiden Fälle brauchen verschiedene
+  // Auswege (Story 6 AK 3).
+  const filterAktiv = !!q.trim() || form.length > 0 || typ.length > 0;
 
   // Beim Öffnen und Schliessen Filter, Suche und Sitzungszählung zurücksetzen.
   useEffect(() => {
     setQ("");
     setForm([]);
+    setTyp([]);
     setCounts({});
     setError(null);
   }, [open]);
@@ -89,13 +119,20 @@ export function ExercisePickerDialog({
     const id = ++reqId.current;
     setLoading(true);
     const t = setTimeout(async () => {
-      const rows = await pickExercises(trainingsteil, {
-        typ,
-        q: q.trim() || undefined,
-        form: form.length ? form : undefined,
-        // Im Hauptteil auf die fixierte Unterkategorie eingrenzen (harte Regel).
-        hkat: hauptteilkategorie ? [hauptteilkategorie] : undefined,
-      });
+      // Die Altersstufe wird bewusst nicht mitgegeben: der Server liest sie am
+      // Training selbst (Story 6 AK 4).
+      const rows = await pickExercises(
+        trainingId,
+        trainingsteil,
+        // Im Kinderfussball-Hauptteil auf die fixierte Unterkategorie
+        // eingrenzen (harte Regel, Story #23).
+        hauptteilkategorie ?? null,
+        {
+          typ: typ.length ? typ : undefined,
+          q: q.trim() || undefined,
+          form: form.length ? form : undefined,
+        },
+      );
       // Veraltete Antworten verwerfen (Race bei schneller Eingabe).
       if (id === reqId.current) {
         setResults(rows);
@@ -103,7 +140,7 @@ export function ExercisePickerDialog({
       }
     }, 250);
     return () => clearTimeout(t);
-  }, [open, q, form, hauptteilkategorie, trainingsteil]);
+  }, [open, q, form, typ, hauptteilkategorie, trainingsteil, trainingId]);
 
   function toggle(list: string[], set: (v: string[]) => void, value: string) {
     set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
@@ -140,14 +177,18 @@ export function ExercisePickerDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={`Übung hinzufügen — ${
-        hauptteilkategorieLabel
-          ? `${trainingsteilLabel} · ${hauptteilkategorieLabel}`
-          : trainingsteilLabel
-      }`}
+      title={`Übung hinzufügen — ${zielLabel}`}
       className="w-[min(42rem,calc(100vw-2rem))]"
     >
       <div className="flex flex-col gap-4">
+        {/* Aus welcher Welt hier gewählt wird. Beide Schemata kennen einen
+            „Hauptteil" und einen „Ausklang" — ohne die Altersstufe sagt der
+            Titel allein nicht, welcher gemeint ist. Derselbe neutrale Badge wie
+            im Editor-Kopf: die Altersstufe ist keine Alterskategorie. */}
+        <div className="-mt-1">
+          <Badge tone="neutral">{altersstufeLabels[altersstufe]}</Badge>
+        </div>
+
         {/* Suche */}
         <label className="relative block">
           <Search
@@ -165,33 +206,38 @@ export function ExercisePickerDialog({
           />
         </label>
 
-        {/* Erscheinungsform-Filter (nur Trainingsteile, die eine tragen) */}
+        {/* Erscheinungsform-Filter — nur das Vokabular dieser Altersstufe und
+            nur in Einordnungen, die überhaupt eine tragen. */}
         {hatErscheinungsform && (
           <div className="flex flex-wrap gap-2">
-            {Object.entries(alleFormLabels).map(([slug, label]) => (
+            {formen.map((slug) => (
               <FilterChip
                 key={slug}
                 selected={form.includes(slug)}
                 onClick={() => toggle(form, setForm, slug)}
+              >
+                {ERSCHEINUNGSFORM_LABEL[slug] ?? slug}
+              </FilterChip>
+            ))}
+          </div>
+        )}
+
+        {/* Übungstyp-Filter — nur wo eine Übung überhaupt einen tragen kann:
+            im Juniorenfussball, und dort nur in den Blöcken mit Spielformen
+            (Story 9 AC 6, eingegrenzt durch Story 3/6 der Übungswelten). */}
+        {hatUebungstyp && (
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(uebungstypLabels).map(([slug, label]) => (
+              <FilterChip
+                key={slug}
+                selected={typ.includes(slug)}
+                onClick={() => toggle(typ, setTyp, slug)}
               >
                 {label}
               </FilterChip>
             ))}
           </div>
         )}
-
-        {/* Übungstyp-Filter — gilt in jedem Block (Story 9 AC 6). */}
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(uebungstypLabels).map(([slug, label]) => (
-            <FilterChip
-              key={slug}
-              selected={typ.includes(slug)}
-              onClick={() => toggle(typ, setTyp, slug)}
-            >
-              {label}
-            </FilterChip>
-          ))}
-        </div>
 
         {error && (
           <p
@@ -209,10 +255,31 @@ export function ExercisePickerDialog({
               Lädt…
             </li>
           ) : results.length === 0 ? (
-            <li className="px-2 py-6 text-center type-body-medium text-on-surface-variant">
-              {hauptteilkategorieLabel && !q.trim() && form.length === 0
-                ? `Für „${hauptteilkategorieLabel}" sind aktuell keine Übungen verfügbar.`
-                : "Keine passende Übung gefunden."}
+            <li className="flex flex-col items-center gap-3 px-2 py-6 text-center type-body-medium text-on-surface-variant">
+              {filterAktiv ? (
+                // Eingegrenzt: es gibt hier etwas, nur nicht das Gesuchte.
+                "Keine passende Übung gefunden."
+              ) : (
+                // Der sichtbare Bestand dieser Altersstufe hält für diesen
+                // Block gar nichts bereit (Story 6 AK 3). Das ist im
+                // Juniorenfussball der Normalfall zu Beginn: Die Trennung der
+                // Altersstufen hat den Manual-Bestand des Kinderfussballs hier
+                // herausgenommen — der eigene Bestand entsteht erst.
+                <>
+                  <span>
+                    Für „{zielLabel}" gibt es in deinem sichtbaren Bestand noch keine
+                    Übung der Altersstufe {altersstufeLabels[altersstufe]}. Erfasse
+                    zuerst eine.
+                  </span>
+                  <Link
+                    href={`/neu?stufe=${altersstufe}&teil=${trainingsteil}`}
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 type-label-large text-primary transition-colors hover:bg-primary/10"
+                  >
+                    <Plus size={18} strokeWidth={2} aria-hidden />
+                    Übung erfassen
+                  </Link>
+                </>
+              )}
             </li>
           ) : (
             results.map((ex) => {

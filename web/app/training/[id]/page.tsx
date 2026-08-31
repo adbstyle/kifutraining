@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, Sparkles, Play, Printer } from "lucide-react";
-import { Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
+import { Badge, Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
+import { altersstufe as altersstufeLabels } from "@/lib/vocab";
+import { Flash } from "@/components/Flash";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
@@ -20,10 +22,13 @@ export const metadata: Metadata = {
 
 export default async function TrainingViewPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ uebernommen?: string }>;
 }) {
   const { id } = await params;
+  const sp = await searchParams;
   const training = await getTrainingView(id);
   if (!training) return <TrainingNotAvailable />;
 
@@ -44,12 +49,15 @@ export default async function TrainingViewPage({
   const teams =
     user && training.visibility === "public" ? await getMeineTeams() : [];
 
-  const sections = leseGliederung(training.stufen, training.exercises);
+  const sections = leseGliederung(training.altersstufe, training.exercises);
   const total = sections.reduce((a, s) => a + s.sum, 0);
   const hasAnyDuration = sections.some((s) => s.sum > 0);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+      {sp.uebernommen && (
+        <Flash message="Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen." />
+      )}
       <Breadcrumbs
         items={[
           { label: "Trainings", href: "/trainings" },
@@ -67,6 +75,11 @@ export default async function TrainingViewPage({
           </p>
         )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          {/* Die Altersstufe benennen, nicht nur andeuten (Story 5 AK 3):
+              Derselbe neutrale Badge wie im Editor und auf der Trainingskarte.
+              Für ein fremdes öffentliches Training ist diese Seite die einzige
+              Sicht — dort stünde die Angabe sonst nirgends. */}
+          <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
           {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
           ))}

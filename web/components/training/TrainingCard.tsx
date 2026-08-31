@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Clock, ListChecks } from "lucide-react";
 import { Badge, Card, KategorieChip } from "@/components/ui";
 import { formatDuration } from "@/lib/training";
+import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import type { TrainingListRow } from "@/lib/queries/trainings";
 
 /* Trainings-Kachel für die Übersichten.
@@ -35,6 +36,11 @@ export function TrainingCard({
           {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
           ))}
+          {/* Welchem Lehrmittel das Training folgt (Story 5 AK 3). Bewusst
+              neutral statt in einer Kategorie-Farbe: die Altersstufe ist keine
+              Alterskategorie und darf deren gelernte Codierung nicht borgen —
+              derselbe Look wie am Übungsformular. */}
+          <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
           {/* Nur am eigenen Eintrag: bei fremden ist der Zustand immer
               öffentlich und die Marke sagte nichts. */}
           {training.istEigen && (
