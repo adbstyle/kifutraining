@@ -2,7 +2,14 @@
 
 import { useState, useActionState, startTransition } from "react";
 import { Save } from "lucide-react";
-import { TextField, TextArea, Select, FilterChip, Button } from "@/components/ui";
+import {
+  TextField,
+  TextArea,
+  Select,
+  FilterChip,
+  Button,
+  AltersstufeField,
+} from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
   feldtyp as feldLabels,
@@ -30,7 +37,6 @@ import {
   traegtUebungstyp,
   type Altersstufe,
 } from "@/lib/altersstufe";
-import { AltersstufeField } from "@/components/exercise/AltersstufeField";
 import { EinordnungField } from "@/components/exercise/EinordnungField";
 import { SpielfeldgroesseField } from "@/components/exercise/SpielfeldgroesseField";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";

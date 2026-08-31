@@ -44,7 +44,7 @@ export default async function TrainingViewPage({
   const teams =
     user && training.visibility === "public" ? await getMeineTeams() : [];
 
-  const sections = leseGliederung(training.stufen, training.exercises);
+  const sections = leseGliederung(training.altersstufe, training.exercises);
   const total = sections.reduce((a, s) => a + s.sum, 0);
   const hasAnyDuration = sections.some((s) => s.sum > 0);
 

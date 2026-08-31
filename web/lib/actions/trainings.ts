@@ -23,7 +23,7 @@ import {
   hauptteilkategorieSlugs,
   type TrainingsteilSlug,
 } from "@/lib/vocab";
-import { istAltersstufe, kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
+import { istAltersstufe, kategorienFuer } from "@/lib/altersstufe";
 import {
   FREIES_SPIEL,
   bedingungAusFehler,
@@ -44,9 +44,6 @@ export type TrainingActionResult = { ok: boolean; error?: string };
 /** Ergebnis des Stufen-Setzens inkl. abweichender Übungen (Story #12 AC3). */
 export type StufenResult = TrainingActionResult & {
   mismatched?: { id: string; name: string }[];
-  /** Hat sich mit den Stufen das Trainingsschema geändert? Dann hat die
-   *  Datenebene die Fassungen übertragen und der Editor lädt neu. */
-  wechsel?: boolean;
 };
 
 function csv(v: FormDataEntryValue | null): string[] {
@@ -62,16 +59,6 @@ function clean(v: FormDataEntryValue | null): string {
 
 function validStufen(values: string[]): string[] {
   return values.filter((s) => kategorienSlugs.includes(s as never));
-}
-
-/** Transitional (Story 1 Out of Scope 1): Der Trainer wählt die Altersstufe
- *  eines Trainings noch nicht selbst — sie folgt aus den gewählten
- *  Alterskategorien. Mit Story 5 wird sie beim Anlegen gewählt und diese
- *  Ableitung fällt weg; danach beschränken die Kategorien sich auf die Werte
- *  der gewählten Altersstufe statt sie zu bestimmen. */
-function altersstufeAusStufen(stufen: string[]): Altersstufe {
-  const junioren = kategorienFuer("juniorenfussball");
-  return stufen.some((s) => junioren.includes(s)) ? "juniorenfussball" : "kinderfussball";
 }
 
 // ── Fassungen: Kopieren einer Vorlage ins Training ───────────────────────────
@@ -105,8 +92,8 @@ async function entferneFassungsBild(
 
 // ── Story #10: Training anlegen ──────────────────────────────────────────────────
 
-/** Neues Training anlegen (Story #10 AC1/AC2/AC3). Standardmässig privat, der USER
- *  ist Eigentümer. Leitet in den Editor weiter. */
+/** Neues Training anlegen (Story #10 AC1/AC2/AC3, Story 5 AK 1/2). Standardmässig
+ *  privat, der USER ist Eigentümer. Leitet in den Editor weiter. */
 export async function createTraining(
   _prev: TrainingFormState,
   form: FormData,
@@ -120,6 +107,15 @@ export async function createTraining(
   const name = clean(form.get("name"));
   const stufen = validStufen(csv(form.get("stufen")));
   if (!name) return { status: "error", errors: { name: "Bitte einen Namen angeben." } };
+
+  // Die Altersstufe ist Pflicht und hat bewusst KEINEN Rückfall: Sie bindet
+  // lebenslang (Story 5 AK 5), und eine stille Vorgabe wäre genau das
+  // Durchrutschen, das die Story ausschliesst. Die Datenebene führt die Spalte
+  // seit der Migration `training_altersstufe_default_drop` ohne Default.
+  const altersstufe = clean(form.get("altersstufe"));
+  if (!istAltersstufe(altersstufe))
+    return { status: "error", message: "Bitte die Altersstufe wählen." };
+
   // Mindestens eine Alterskategorie, ab dem Anlegen (PO 2026-08-30). Bestehende
   // Trainings ohne bleiben bearbeitbar; ein neues entsteht nicht mehr so. Die
   // Datenebene setzt es als Trigger `trainings_stufe_pflicht` ebenfalls durch.
@@ -127,6 +123,18 @@ export async function createTraining(
     return {
       status: "error",
       message: "Bitte mindestens eine Alterskategorie wählen.",
+    };
+  // Die Kategorien folgen der gewählten Altersstufe; sie bestimmen sie nicht
+  // mehr (Story 5 AK 4). Ein stufenfremder Wert wird abgewiesen statt still
+  // weggefiltert — sonst entstünde ein Training mit weniger Kategorien, als der
+  // Trainer gewählt hat.
+  const erlaubt = kategorienFuer(altersstufe);
+  if (stufen.some((s) => !erlaubt.includes(s)))
+    return {
+      status: "error",
+      message:
+        "Diese Alterskategorie gehört nicht zur gewählten Altersstufe. " +
+        "Wähle nur Kategorien dieser Altersstufe.",
     };
 
   const { data, error } = await supabase
@@ -136,7 +144,7 @@ export async function createTraining(
       ziel: zielWert(form.get("ziel")),
       owner_id: user.id,
       stufen,
-      altersstufe: altersstufeAusStufen(stufen),
+      altersstufe,
       visibility: "private",
     })
     .select("id")
@@ -503,10 +511,7 @@ export async function setTrainingStufen(
   }
 
   revalidiereTraining(trainingId);
-  // `wechsel` bleibt im Ergebnis, ist aber ab jetzt immer false: Ein Training
-  // wechselt die Altersstufe nicht mehr. Das Feld — und der Wechsel-Dialog des
-  // Editors, der daran hängt — fällt mit Story 5.
-  return { ok: true, mismatched, wechsel: false };
+  return { ok: true, mismatched };
 }
 
 /** Zuordnung innerhalb ihres Trainingsteils umsortieren (Story #12 AC4). */

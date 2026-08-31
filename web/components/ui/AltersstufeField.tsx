@@ -1,12 +1,14 @@
 "use client";
 
-import { Badge, SegmentedControl } from "@/components/ui";
+import { Badge } from "./Badge";
+import { SegmentedControl } from "./SegmentedControl";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { ALTERSSTUFEN, type Altersstufe } from "@/lib/altersstufe";
 
 const optionen = ALTERSSTUFEN.map((s) => ({ value: s, label: altersstufeLabels[s] }));
 
-/** Nach welchem Lehrmittel eine Übung geführt wird (Story 3 AK 1/2).
+/** Nach welchem Lehrmittel eine Übung oder ein Training geführt wird
+ *  (Story 3 AK 1/2, Story 5 AK 1/3).
  *
  *  Beim Erfassen eine offene Wahl, kein aufklappendes Menü — Vorgabe des
  *  Product Owners: die Altersstufe entscheidet über jedes weitere Feld des
@@ -14,27 +16,38 @@ const optionen = ALTERSSTUFEN.map((s) => ({ value: s, label: altersstufeLabels[s
  *  Werte passen in eine Segmentleiste, darum dieselbe wie bei der
  *  Kinderfussball-Einordnung.
  *
- *  Beim Bearbeiten steht die Stufe fest und wird nur noch benannt (AK 2). Sie
- *  zu ändern ist ein eigener, ausdrücklicher Weg (Story 4) — kein Nebeneffekt
- *  des Bearbeitens. Der Badge ist bewusst neutral: die Altersstufe ist keine
- *  Alterskategorie und darf deren gelernte Farbcodierung nicht borgen. */
+ *  `wert = null` heisst «noch nicht gewählt». Am Training ist das der
+ *  Ausgangszustand: dort bindet die Wahl lebenslang und darf nicht durch eine
+ *  Voreinstellung durchrutschen. An der Übung ist sie vorbelegt, weil eine
+ *  Übung umwandelbar bleibt (Story 4).
+ *
+ *  Steht die Stufe fest, wird sie nur noch benannt (AK 2/3). Sie zu ändern ist
+ *  bei der Übung ein eigener, ausdrücklicher Weg (Story 4) und beim Training
+ *  gar nicht vorgesehen. Der Badge ist bewusst neutral: die Altersstufe ist
+ *  keine Alterskategorie und darf deren gelernte Farbcodierung nicht borgen. */
 export function AltersstufeField({
   wert,
   onChange,
   festHinweis,
+  hinweis,
+  fehler,
 }: {
-  wert: Altersstufe;
-  /** Fehlt beim Bearbeiten: dort ist die Altersstufe gesetzt und unveränderlich. */
+  wert: Altersstufe | null;
+  /** Fehlt, wo die Altersstufe feststeht und nur noch benannt wird. */
   onChange?: (wert: Altersstufe) => void;
   /** Zusatz beim festen Zustand, etwa «folgt dem Training». */
   festHinweis?: string;
+  /** Erklärung unter der Wahl; ersetzt den Übungs-Standardtext. */
+  hinweis?: string;
+  /** Fehlermeldung, wenn die Wahl fehlt. */
+  fehler?: string;
 }) {
   if (!onChange)
     return (
       <div>
         <p className="type-label-small mb-2 text-on-surface-variant">Altersstufe</p>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge tone="neutral">{altersstufeLabels[wert]}</Badge>
+          {wert && <Badge tone="neutral">{altersstufeLabels[wert]}</Badge>}
           <p className="type-body-small text-on-surface-variant">
             {festHinweis ??
               "Steht fest — Felder und Werte folgen dem Manual dieser Stufe."}
@@ -52,9 +65,12 @@ export function AltersstufeField({
         value={wert}
         onChange={onChange}
       />
-      <p className="type-body-small mt-1.5 text-on-surface-variant">
-        Nach welchem Manual du erfasst. Bestimmt Einordnung, Alterskategorien und
-        alle weiteren Felder.
+      <p
+        className={`type-body-small mt-1.5 ${fehler ? "text-error" : "text-on-surface-variant"}`}
+      >
+        {fehler ??
+          hinweis ??
+          "Nach welchem Manual du erfasst. Bestimmt Einordnung, Alterskategorien und alle weiteren Felder."}
       </p>
     </div>
   );

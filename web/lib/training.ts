@@ -1,4 +1,5 @@
-import { JUNIOREN_TEILE, NACHARBEIT, schemaAusStufen } from "@/lib/junioren";
+import { JUNIOREN_TEILE } from "@/lib/junioren";
+import type { Altersstufe } from "@/lib/altersstufe";
 import type { JuniorenBlockSlug } from "@/lib/vocab";
 import {
   trainingsteil as trainingsteilLabels,
@@ -116,10 +117,7 @@ export function groupByTeil<
 
 /** Junioren-Zuordnungen nach Trainingsteil und Unterblock gruppieren (feste
  *  Reihenfolge des Schemas; Story 4 AC 1, Story 5a AC 1–3). Items kommen
- *  positionssortiert. Die Teil-Summe ist die Summe seiner Blöcke.
- *
- *  Die Nacharbeit gehört NICHT hierher — sie liegt ausserhalb der Struktur und
- *  wird gesondert gerendert (Story 4 AC 9); Aufrufer filtern sie vorher weg. */
+ *  positionssortiert. Die Teil-Summe ist die Summe seiner Blöcke. */
 export function groupJunioren<
   T extends { trainingsteil: string; durationMin: number | null },
 >(
@@ -197,6 +195,10 @@ export function leseBloecke<
 /** Die Lese-Gliederung eines Trainings — eine Form für beide Schemata, damit
  *  Detailansicht, Durchführung und Druck nicht je zweimal verzweigen müssen.
  *
+ *  Massgebend ist die Altersstufe des Trainings, nicht mehr seine
+ *  Alterskategorien (Story 5 PC 2): Ein Junioren-Training ohne Alterskategorie
+ *  ist möglich und folgt trotzdem der Junioren-Gliederung.
+ *
  *  Kinderfussball: die vier Trainingsteile, der Hauptteil in seine belegten
  *  Unterkategorien geteilt, die übrigen Teile als ein Block ohne
  *  Unterüberschrift (`label: null`). Juniorenfussball: die drei Trainingsteile
@@ -209,7 +211,7 @@ export function leseGliederung<
     durationMin: number | null;
   },
 >(
-  stufen: readonly string[],
+  altersstufe: Altersstufe,
   items: T[],
 ): {
   key: string;
@@ -218,7 +220,7 @@ export function leseGliederung<
   traegtDauer: boolean;
   bloecke: { key: string; label: string | null; sum: number; items: T[] }[];
 }[] {
-  if (schemaAusStufen(stufen) === "junioren") {
+  if (altersstufe === "juniorenfussball") {
     return leseBloeckeJunioren(items).map((teil) => ({
       key: teil.teilSlug,
       label: teil.teilLabel,
@@ -242,8 +244,7 @@ export function leseGliederung<
 
 /** Lese-Gliederung eines Junioren-Trainings für Detailansicht, Durchführung
  *  und Druck: nur belegte Teile und Blöcke, in der Reihenfolge des Editors
- *  (Story 8 AC 1/2/5, PC 1). Die Nacharbeit bleibt aussen vor — sie ist eine
- *  Aufgabe im Editor, nicht Teil des Trainings auf dem Platz (Out of Scope 2). */
+ *  (Story 8 AC 1/2/5, PC 1). */
 export function leseBloeckeJunioren<
   T extends { trainingsteil: string; durationMin: number | null },
 >(
@@ -254,7 +255,7 @@ export function leseBloeckeJunioren<
   teilSum: number;
   bloecke: { key: string; label: string; sum: number; items: T[] }[];
 }[] {
-  return groupJunioren(items.filter((i) => i.trainingsteil !== NACHARBEIT))
+  return groupJunioren(items)
     .map((teil) => ({
       teilSlug: teil.slug,
       teilLabel: teil.label,

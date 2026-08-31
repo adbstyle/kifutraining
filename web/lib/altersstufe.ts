@@ -65,7 +65,7 @@ export function erscheinungsformenFuer(stufe: Altersstufe): readonly string[] {
 }
 
 /** Zu welcher Altersstufe gehört eine Einordnung? `null` für alles, was in
- *  keinem der beiden Lehrmittel vorkommt (etwa die Nacharbeit).
+ *  keinem der beiden Lehrmittel vorkommt.
  *
  *  Spiegelt die CHECKs `ex_trainingsteil_je_altersstufe` und
  *  `te_trainingsteil_je_altersstufe`. */

@@ -3,7 +3,7 @@ import { likePattern } from "@/lib/search";
 import { TRAININGSTEIL_SLUGS, sortStufen, teilTraegtDauer, hkatRank } from "@/lib/training";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
-import { JUNIOREN_BLOCK_SLUGS, NACHARBEIT, type Einordnung } from "@/lib/junioren";
+import { JUNIOREN_BLOCK_SLUGS, type Einordnung } from "@/lib/junioren";
 import type { Altersstufe } from "@/lib/altersstufe";
 import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
 import { kurzeZeit } from "@/lib/queries/termine";
@@ -21,8 +21,8 @@ import { kurzeZeit } from "@/lib/queries/termine";
 export type TrainingExerciseItem = {
   /** training_exercises.id (die Zuordnung, also die Fassung selbst). */
   id: string;
-  /** Wo die Fassung im Training liegt: ein Kinderfussball-Trainingsteil, ein
-   *  Junioren-Unterblock oder die Nacharbeit (Epic #71). */
+  /** Wo die Fassung im Training liegt: ein Kinderfussball-Trainingsteil oder
+   *  ein Junioren-Unterblock (Epic #71). */
   trainingsteil: Einordnung;
   /** Nur Hauptteil-Fassungen tragen eine Kategorie. */
   hauptteilkategorie: string | null;
@@ -117,14 +117,10 @@ type RawTraining = {
 };
 
 /** Sortier-Reihenfolge aller Einordnungen: erst die vier Kinderfussball-Teile,
- *  dann die sechs Junioren-Blöcke, zuletzt die Nacharbeit. Ein Training führt
- *  immer nur EIN Schema — die gemeinsame Liste hält die Sortierung trotzdem
- *  stabil, statt fremde Werte stillschweigend ans Ende zu kippen. */
-const EINORDNUNG_RANG: string[] = [
-  ...TRAININGSTEIL_SLUGS,
-  ...JUNIOREN_BLOCK_SLUGS,
-  NACHARBEIT,
-];
+ *  dann die sechs Junioren-Blöcke. Ein Training führt immer nur EIN Schema —
+ *  die gemeinsame Liste hält die Sortierung trotzdem stabil, statt fremde Werte
+ *  stillschweigend ans Ende zu kippen. */
+const EINORDNUNG_RANG: string[] = [...TRAININGSTEIL_SLUGS, ...JUNIOREN_BLOCK_SLUGS];
 
 const teilRank = (t: string) => {
   const i = EINORDNUNG_RANG.indexOf(t);

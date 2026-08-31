@@ -518,6 +518,24 @@ export default function Styleguide() {
             für seine Blöcke — so bleibt sichtbar, wozu ein Block gehört.
           </p>
         </div>
+
+        <div className="mt-4 rounded-[4px] border border-outline-variant bg-surface-container-low p-4">
+          <p className="type-label-large mb-1 text-on-surface">
+            <code>AltersstufeField</code> — eine Wahl, zwei Domänen
+          </p>
+          <p className="type-body-medium max-w-xl text-on-surface-variant">
+            Übung und Training wählen dieselbe Altersstufe und teilen sich darum
+            denselben Baustein im Kit. Er hat drei Zustände: <strong>offene
+            Wahl</strong> (Segmentleiste), <strong>fest</strong> (neutraler{" "}
+            <code>Badge</code> plus Erklärsatz) und <strong>ungewählt</strong>{" "}
+            (<code>wert = null</code>). Der letzte ist der Ausgangszustand am
+            Training: Die Wahl bindet dort lebenslang und darf nicht durch eine
+            Voreinstellung durchrutschen — an der Übung ist sie vorbelegt, weil
+            eine Übung umwandelbar bleibt. Der Badge ist bewusst neutral: Die
+            Altersstufe ist keine Alterskategorie und borgt deren gelernte
+            Farbcodierung nicht.
+          </p>
+        </div>
       </Section>
 
       <Section n="10" title="Übungskarten">

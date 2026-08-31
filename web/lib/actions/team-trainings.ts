@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { kopiereTraining } from "@/lib/training-kopie";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
+import { istAltersstufe, kategorienFuer } from "@/lib/altersstufe";
+import { fehlerMeldung } from "@/lib/training-bedingungen";
 
 /**
  * Trainings zwischen Person und Team bewegen (Team-Epic Story 5).
@@ -90,10 +92,17 @@ export async function entferneTeamTraining(
 }
 
 /** Ein leeres Training direkt im Team anlegen (AK 5) — analog zum
- *  persönlichen Anlegen, nur gehört es von Anfang an dem Team. */
+ *  persönlichen Anlegen, nur gehört es von Anfang an dem Team.
+ *
+ *  «Analog» heisst auch: dieselben Pflichtangaben. Die Altersstufe wird hier
+ *  gewählt und steht danach fest, und mindestens eine Alterskategorie gehört
+ *  dazu (Story 5 AK 1/2, Übungswelten) — die Datenebene führt die Spalte ohne
+ *  Default und verlangt die Kategorie per Trigger. */
 export async function erstelleTeamTraining(
   teamId: string,
   name: string,
+  altersstufe: string,
+  stufen: string[],
 ): Promise<{ ok: false; error: string } | void> {
   const supabase = await createClient();
   const {
@@ -103,16 +112,40 @@ export async function erstelleTeamTraining(
 
   const trimmed = name.trim();
   if (!trimmed) return { ok: false, error: "Bitte einen Namen angeben." };
+  if (!istAltersstufe(altersstufe))
+    return { ok: false, error: "Bitte die Altersstufe wählen." };
+
+  const erlaubt = kategorienFuer(altersstufe);
+  const gewaehlt = stufen.filter((s) => erlaubt.includes(s));
+  if (gewaehlt.length === 0)
+    return { ok: false, error: "Bitte mindestens eine Alterskategorie wählen." };
+  if (gewaehlt.length !== stufen.length)
+    return {
+      ok: false,
+      error:
+        "Diese Alterskategorie gehört nicht zur gewählten Altersstufe. " +
+        "Wähle nur Kategorien dieser Altersstufe.",
+    };
 
   const { data, error } = await supabase
     .from("trainings")
-    .insert({ name: trimmed, team_id: teamId, stufen: [], visibility: "private" })
+    .insert({
+      name: trimmed,
+      team_id: teamId,
+      altersstufe,
+      stufen: gewaehlt,
+      visibility: "private",
+    })
     .select("id")
     .single();
   // Ein stilles `return` liesse den Dialog wortlos stehen: der Erfolg zeigt
-  // sich nur an der Weiterleitung, ein Fehlschlag an gar nichts.
+  // sich nur an der Weiterleitung, ein Fehlschlag an gar nichts. Übersetzt statt
+  // roh: die Marker der Datenebene versteht sonst niemand.
   if (error || !data)
-    return { ok: false, error: error?.message ?? "Erstellen fehlgeschlagen." };
+    return {
+      ok: false,
+      error: error ? fehlerMeldung(error.message) : "Erstellen fehlgeschlagen.",
+    };
 
   revalidiereTeam(teamId);
   revalidiereTraining(data.id);
