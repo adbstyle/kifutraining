@@ -21,7 +21,6 @@ export type ExerciseFilters = {
    *  Übungswelten). Der Katalog setzt ihn bewusst nicht: er zeigt weiterhin
    *  beide Altersstufen (Story 6 Out-of-Scope 1). */
   altersstufe?: Altersstufe;
-  teil?: string[]; // Trainingsteil (OR)
   kat?: string[]; // Alterskategorien G/F/E (Überlappung)
   feld?: string[]; // Feldtyp (OR)
   form?: string[]; // Erscheinungsform (Überlappung)
@@ -34,11 +33,13 @@ export type ExerciseFilters = {
    *  Hauptteilkategorien einzeln wählbar sind, und im Picker der Bestand eines
    *  Blocks samt der Übungen, die seine Erscheinungsform anzieht (Story #134).
    *
-   *  Nicht zu verwechseln mit `teil`, `hkat` und `form` oben: die bleiben
-   *  UND-Filter. `pickExercises` muss eine Hauptteil-Zuordnung auf die fixierte
+   *  Nicht zu verwechseln mit `hkat` und `form` oben: die bleiben UND-Filter.
+   *  `pickExercises` muss eine Hauptteil-Zuordnung auf die fixierte
    *  Unterkategorie EINGRENZEN (Story #23), und `form` ist der Nutzerfilter des
    *  Pickers, der die ganze Vorschlagsmenge eingrenzt — nicht die
-   *  Vorschlagsquelle `einordnung.formen`. */
+   *  Vorschlagsquelle `einordnung.formen`. Einen skalaren `teil`-Filter gibt es
+   *  nicht mehr: Seit Story #129 läuft jede Einordnungs-Abfrage über dieses
+   *  Feld, und ein zweiter Weg mit anderer Semantik wäre eine Falle. */
   einordnung?: { teile?: string[]; hkats?: string[]; formen?: string[] };
   typ?: string[]; // Übungstyp (OR)
   kinder?: number; // verfügbare Gruppengrösse
@@ -114,7 +115,6 @@ export async function getExercises(
   // Eigene Übungen: öffentliche wie private, keine fremden/Manual-Übungen.
   if (f.mine && user) query = query.eq("owner_id", user.id);
   if (f.altersstufe) query = query.eq("altersstufe", f.altersstufe);
-  if (f.teil?.length) query = query.in("trainingsteil", f.teil);
   if (f.kat?.length) query = query.overlaps("kategorien", f.kat);
   if (f.feld?.length) query = query.in("feldtyp", f.feld);
   if (f.form?.length) query = query.overlaps("erscheinungsform", f.form);
