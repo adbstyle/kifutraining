@@ -77,7 +77,9 @@ Wo die Anwendung etwas zu bemerken hat, bleibt sie bei einem Hinweis. Im Kinderf
 erwähnt sie einen Teil mit ungewöhnlich vielen Übungen und ein leeres freies Spiel, das dort in
 jedes Training gehört. Im Juniorenfussball übernimmt die Zeit-Orientierung diese Rolle; einen
 Hinweis gibt es dort, wenn Spielform zum Trainingsziel, Explosivität, Spiel oder der Abschluss
-leer bleiben. Gesperrt wird nie.
+leer bleiben. Ein solcher Hinweis steht im betroffenen Block selbst, an der Stelle, an der sonst
+„Noch keine Übung zugeordnet" stünde, und sagt in einem Satz auch, warum der Block ins Training
+gehört. Alle übrigen leeren Blöcke bleiben bei der neutralen Zeile. Gesperrt wird nie.
 
 ## Jede Übung im Training ist eine eigene Fassung
 

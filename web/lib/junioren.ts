@@ -215,19 +215,12 @@ export const JUNIOREN_PFLICHT_BLOECKE = [
   "jun-spielformen",
 ] as const;
 
-
-/** Blöcke, deren Leere im Editor einen Hinweis erzeugt (Story 5a AC 8) —
- *  analog zum bestehenden Kinderfussball-Hinweis beim leeren freien Spiel.
- *  Der Hinweis blockiert nichts (AC 9). Der Abschluss ist seit Story #127
- *  dabei: An die Stelle seiner Veröffentlichungspflicht tritt der Hinweis.
- *  Das Auffangen fehlt bewusst — ein leeres Auffangen ist der Normalfall, kein
- *  Mangel (Story #128, Out of Scope 3). */
-export const LEER_HINWEIS_BLOECKE: JuniorenBlockSlug[] = [
-  "jun-spiel",
-  "jun-spielform-trainingsziel",
-  "jun-explosivitaet",
-  "jun-abschluss",
-];
+// Welche Blöcke der Editor meldet, wenn sie leer bleiben, steht nicht mehr
+// hier: Der Wortlaut selbst ist die Liste (`LEER_HINWEIS` in
+// web/lib/training.ts, Story #126). Eine zweite Aufzählung derselben Blöcke
+// hätte danebenlaufen können, ohne dass es auffiele — und der Hinweis gilt seit
+// #126 für beide Altersstufen gleich, gehört also nicht in eine reine
+// Junioren-Datei.
 
 // Was ein Trainingsblock aufnehmen darf, steht nicht hier, sondern in
 // `vorlagenFilterFuer()` in web/lib/altersstufe.ts. Die Abbildungsregel oben

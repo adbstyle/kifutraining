@@ -1,5 +1,5 @@
 import { JUNIOREN_TEILE, istEinblockig } from "@/lib/junioren";
-import type { Altersstufe } from "@/lib/altersstufe";
+import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
 import type { JuniorenBlockSlug } from "@/lib/vocab";
 import {
   trainingsteil as trainingsteilLabels,
@@ -70,6 +70,42 @@ export const ANZAHL_HINWEIS: Record<TrainingsteilSlug, number> = {
   einleitung: 3,
   hauptteil: 5,
   ausklang: 3,
+};
+
+/** Was der Editor zu einem leeren Abschnitt meldet, den das Lehrmittel als
+ *  gesetzt ansieht — der VOLLSTÄNDIGE Wortlaut, an einem Ort und für beide
+ *  Altersstufen (Story #126).
+ *
+ *  Jeder Text nennt zweierlei: dass der Abschnitt noch leer ist UND warum er
+ *  ins Training gehört. Die neutrale Zeile «Noch keine Übung zugeordnet.»
+ *  entfällt dort — dieselbe Sachlage zweimal untereinander und in zwei
+ *  Schriftschnitten war der Mangel, den diese Story behebt. Wer hier steht,
+ *  bekommt genau eine Meldung; wer fehlt, die neutrale Zeile.
+ *
+ *  Der Schlüssel ist die Stelle, an der die Meldung erscheint: im
+ *  Juniorenschema der Block, im Kinderfussball die Hauptteilkategorie des
+ *  freien Spiels (`FREIES_SPIEL`) — dort liegt die einzige Kinderfussball-Stelle
+ *  mit einem solchen Hinweis. Die beiden Wertemengen überschneiden sich nicht.
+ *
+ *  Bewusst NICHT hier: das Auffangen beider Altersstufen (leer ist dort der
+ *  Normalfall, kein Mangel — Story #128), das Junioren-Aufwärmen und die
+ *  Spielformen (sie sind Veröffentlichungs-Bedingung, siehe
+ *  `JUNIOREN_PFLICHT_BLOECKE`, und brauchen den Hinweis nicht doppelt) sowie
+ *  alle übrigen Kinderfussball-Teile.
+ *
+ *  Der Hinweis blockiert nichts: Speichern und Weiterbearbeiten bleiben
+ *  unberührt (Story 5a AC 9). */
+export const LEER_HINWEIS: Record<string, string> = {
+  "jun-spielform-trainingsziel":
+    "Die Spielform zum Trainingsziel ist noch leer — sie führt das Trainingsziel ein und spannt den roten Faden zum Hauptteil.",
+  "jun-explosivitaet":
+    "Die Explosivität ist noch leer — kurze, intensive Aktionen mit vollständiger Erholung gehören im Juniorenfussball in jeden Einstieg.",
+  "jun-spiel":
+    "Das Spiel ist noch leer — im Juniorenfussball gehört das freie Spiel in jedes Training.",
+  "jun-abschluss":
+    "Der Abschluss ist noch leer — Cool-down und gemeinsamer Austausch beenden jedes Training.",
+  [FREIES_SPIEL]:
+    "Das freie Spiel ist noch leer — im Kinderfussball gehört es in jedes Training.",
 };
 
 /** Obergrenze des Trainingsziels in Zeichen (Story 10 AC 6). Entspricht der
