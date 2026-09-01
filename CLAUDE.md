@@ -62,7 +62,7 @@ Die `supabase`-CLI läuft aus `web/` heraus mit `--workdir ..` — die `supabase
 | Pfad | Zweck |
 |------|-------|
 | `data/uebungen/*.yaml` | kanonische Übungen |
-| `data/themen/*.yaml`, `data/vokabular.yaml` | Themen-Metadaten, Vokabular (Single Source) |
+| `data/vokabular.yaml` | Vokabular (Single Source) |
 | `schema/uebung.schema.json` | JSON-Schema der Übungen |
 | `scripts/` | `extract.py`, `parser.py`, `validate.py`, `build_docs.py` |
 | `supabase/migrations/` | DB-Schema + RPCs |
