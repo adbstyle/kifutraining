@@ -76,7 +76,7 @@ def test_vokabular_kategorien_und_junioren_bloecke():
     assert vocab["junioren_block"]["jun-abschluss"] == "Abschluss"
     assert not any("Ausklang" in v for v in vocab["junioren_block"].values())
     # Kein eigenes «Heimat»-Vokabular mehr: seit Story 3 (Epic Übungswelten)
-    # kann eine Junioren-Übung in JEDEM der sechs Blöcke zuhause sein, nicht
+    # kann eine Junioren-Übung in JEDEM der sieben Blöcke zuhause sein, nicht
     # mehr nur in den drei Einstiegs-Blöcken. `junioren_block` ist damit die
     # eine Liste; die Teilmenge `junioren_heimat` ist ersatzlos entfallen.
     assert "junioren_heimat" not in vocab

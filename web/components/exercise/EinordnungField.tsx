@@ -97,12 +97,13 @@ export function EinordnungField({
       >
         {error ?? supportingText}
       </p>
-      {/* Dezenter Hinweis in derselben Form wie die Hinweise des
-          Trainings-Editors (Info-Zeichen in Signalfarbe, Text in der
-          Variantenfarbe): Er meldet eine Folge, blockiert aber nichts. */}
+      {/* Dezenter Hinweis nach dem Muster der Hinweiszeile des
+          Trainings-Editors (Styleguide «Leerzustand & Hinweiszeile»):
+          Info-Zeichen in Signalfarbe, Text im Fliesstext-Schnitt. Er meldet
+          eine Folge, blockiert aber nichts. */}
       {hinweis && (
-        <p className="mt-1.5 flex items-center gap-2 type-label-medium text-on-surface-variant">
-          <Info size={15} className="shrink-0 text-signal" aria-hidden />
+        <p className="mt-1.5 flex items-start gap-2 type-body-small text-on-surface-variant">
+          <Info size={15} className="mt-0.5 shrink-0 text-signal" aria-hidden />
           {hinweis}
         </p>
       )}

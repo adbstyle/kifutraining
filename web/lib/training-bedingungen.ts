@@ -140,6 +140,11 @@ const ALTERSSTUFE_CHECKS: [string, string][] = [
       "Der methodische Fahrplan gilt im Kinderfussball, der Beschreibungstext " +
       "im Juniorenfussball.",
   ],
+  [
+    "dauer_nicht_auffangen",
+    "Eine Übung im Auffangen trägt keine Dauer — das Auffangen zählt nicht " +
+      "zur Trainingszeit.",
+  ],
 ];
 
 /** Die Meldungen zu den Altersstufen- und Schema-Regeln (Epic #71,

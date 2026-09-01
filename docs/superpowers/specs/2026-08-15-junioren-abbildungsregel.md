@@ -137,7 +137,7 @@ Konsistenz der Ebenen: Die Summe der drei Einstiegs-Unterblöcke ergibt rechneri
 3. Epic #20 / Story #23, Out of Scope 3: «Eine Untergliederung der übrigen Trainingsteile ist nicht vorgesehen» — für das Juniorenschema überholt (Einstieg wird untergliedert).
 4. `schema/uebung.schema.json`, Titel «Kinderfussball Übung» — der Titel deckt Junioren-Übungen nicht mehr.
 
-## 10. Errata (Epic-Review 2026-08-16, ändern die abgenommene Regel nicht)
+## 10. Errata und Nachträge (Errata 1–5 aus dem Epic-Review 2026-08-16)
 
 1. Die Kategorien-Anekdote steht auf Manual-S. 12, nicht S. 13; die Körperstabilitäts-Bereiche stehen auf S. 75–77.
 2. Die Inhalte der drei Einstiegsphasen stehen entgegen der früheren Aussage auch im Manual selbst (Abb. 19 WAS-Zeile: TA/TE/PE, AT-Prävention, AT-Explosivität; Reihenfolge S. 45 und S. 72); nur Phasennamen und Minutenwerte stammen aus dem J+S-Lernbaustein.

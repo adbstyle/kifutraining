@@ -406,7 +406,7 @@ export function ExerciseForm({
           eine Zeit lang ein Select, weil sieben Werte aus zwei Welten in einer
           Liste standen und keine Segmentleiste sie trug. Mit der Trennung der
           Altersstufen ist dieser Grund entfallen: Es sind nie mehr als vier
-          Kinderfussball-Teile oder drei Junioren-Teile mit ihren Blöcken, und
+          Kinderfussball-Teile oder vier Junioren-Teile mit ihren Blöcken, und
           welche Einordnung gilt, entscheidet über die halbe Maske darunter —
           das gehört sichtbar, nicht eingeklappt (PO-Vorgabe 2026-08-30). */}
       <EinordnungField

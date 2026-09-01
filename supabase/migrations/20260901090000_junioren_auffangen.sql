@@ -18,12 +18,13 @@ set lock_timeout = '5s';
 --
 -- Vier Regeln ändern sich, drei bleiben ausdrücklich unberührt (Abschnitte 5–7).
 --
--- Auf `exercises` validieren die neuen CHECKs inline: Sie erweitern entweder
--- bloss einen Wertebereich (Abschnitt 1 — jede Altzeile erfüllt sie unverändert)
--- oder sie sprechen allein über einen Block, den es bis zu dieser Migration gar
--- nicht gab, weshalb kein Altbestand darunter fallen kann (Abschnitt 2). Auf
--- `training_exercises` bleiben sie NOT VALID — derselbe Stand wie bisher
--- (Issue #45), keine neue Aussage über Altzeilen.
+-- Die neuen CHECKs validieren inline, wo das beweisbar gefahrlos ist: Sie
+-- erweitern entweder bloss einen Wertebereich (Abschnitt 1 — jede Altzeile
+-- erfüllt sie unverändert; `ex_/te_trainingsteil_je_altersstufe` waren schon
+-- bisher validiert und bleiben es) oder sie sprechen allein über einen Block,
+-- den es bis zu dieser Migration gar nicht gab (Abschnitte 2 und 4). Einzig
+-- `te_erscheinungsform_je_altersstufe` bleibt NOT VALID — derselbe Stand wie
+-- bisher (Issue #45), keine neue Aussage über Altzeilen.
 
 -- ----------------------------------------------------------------------------
 -- 1) Wertebereich der Einordnung: `jun-auffangen` als erster Junioren-Block
@@ -52,7 +53,7 @@ alter table training_exercises add constraint te_trainingsteil_je_altersstufe ch
       'jun-auffangen','jun-aufwaermen','jun-spielform-trainingsziel',
       'jun-explosivitaet','jun-spielformen','jun-spiel','jun-abschluss')
   end
-) not valid;
+);
 comment on constraint te_trainingsteil_je_altersstufe on training_exercises is
   'Spiegel von altersstufeDerEinordnung() in web/lib/altersstufe.ts.';
 

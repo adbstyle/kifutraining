@@ -17,11 +17,11 @@ set lock_timeout = '5s';
 --   2. Der Abschluss verliert seine Veröffentlichungspflicht — an ihre Stelle
 --      tritt in der Applikation ein Hinweis (wie beim Spiel-Block).
 --
--- Die neuen CHECKs sind auf `exercises` inline validiert: das UPDATE in
--- derselben Transaktion beweist, dass kein `jun-ausklang` mehr existiert, und
--- alle übrigen Zweige sind wortgleich die Regel, die heute schon gilt. Auf
--- `training_exercises` bleiben sie NOT VALID — derselbe Stand wie bisher
--- (Issue #45), keine neue Aussage über Altzeilen.
+-- Die neuen CHECKs sind auf BEIDEN Tabellen inline validiert — derselbe Stand
+-- wie bisher: `ex_/te_trainingsteil_je_altersstufe` waren seit 20260830102000
+-- validiert, das UPDATE in derselben Transaktion beweist, dass kein
+-- `jun-ausklang` mehr existiert, und alle übrigen Zweige sind wortgleich die
+-- Regel, die heute schon gilt.
 
 -- ----------------------------------------------------------------------------
 -- 1) Wertebereichs-CHECKs lösen, Daten umbenennen
@@ -65,7 +65,7 @@ alter table training_exercises add constraint te_trainingsteil_je_altersstufe ch
       'jun-aufwaermen','jun-spielform-trainingsziel','jun-explosivitaet',
       'jun-spielformen','jun-spiel','jun-abschluss')
   end
-) not valid;
+);
 comment on constraint te_trainingsteil_je_altersstufe on training_exercises is
   'Spiegel von altersstufeDerEinordnung() in web/lib/altersstufe.ts.';
 

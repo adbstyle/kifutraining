@@ -40,10 +40,6 @@ export const HAUPTTEILKATEGORIEN: {
 
 export const HAUPTTEILKATEGORIE_SLUGS = HAUPTTEILKATEGORIEN.map((h) => h.slug);
 
-/** Für die Veröffentlichung zwingend belegte Trainingsteile (Story #14 AC3,
- *  Enabler #26 AC3). */
-export const PFLICHT_TEILE: TrainingsteilSlug[] = ["einleitung", "hauptteil"];
-
 /** Einordnungen, die keine Dauer tragen. „Auffangen" ist der Teil vor dem
  *  eigentlichen Trainingsbeginn — es wird aufgesetzt, die Spielerinnen machen
  *  mit oder nicht; es zählt nicht zur Trainingsdauer. Diese Invariante wird auf
@@ -88,10 +84,11 @@ export const ANZAHL_HINWEIS: Record<TrainingsteilSlug, number> = {
  *  mit einem solchen Hinweis. Die beiden Wertemengen überschneiden sich nicht.
  *
  *  Bewusst NICHT hier: das Auffangen beider Altersstufen (leer ist dort der
- *  Normalfall, kein Mangel — Story #128), das Junioren-Aufwärmen und die
- *  Spielformen (sie sind Veröffentlichungs-Bedingung, siehe
- *  `JUNIOREN_PFLICHT_BLOECKE`, und brauchen den Hinweis nicht doppelt) sowie
- *  alle übrigen Kinderfussball-Teile.
+ *  Normalfall, kein Mangel — Story #128) sowie das Junioren-Aufwärmen, die
+ *  Spielformen und alle übrigen Kinderfussball-Teile. Massgebend ist allein
+ *  der PO-Entscheid, welche Blöcke einen Hinweis tragen (Story #126,
+ *  Refinement 2026-08-31) — nicht die Veröffentlichungspflicht: Spielform zum
+ *  Trainingsziel und Explosivität tragen beides.
  *
  *  Der Hinweis blockiert nichts: Speichern und Weiterbearbeiten bleiben
  *  unberührt (Story 5a AC 9). */
