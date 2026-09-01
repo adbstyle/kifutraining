@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-08-31. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-09-01. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -26,16 +26,22 @@ weiter in „Fussball spielen lernen", „Vielseitigkeit erleben" und „Fussbal
 in dieser Reihenfolge — sie führt vom geführten Lernen über die Vielseitigkeit zum freien Spiel
 und folgt damit dem Manual.
 
-Ein Junioren-Training hat drei Teile, die zusammen sechs Blöcke tragen. Der Einstieg umfasst
-Aufwärmen, Spielform zum Trainingsziel und Explosivität, der Hauptteil „Spielformen und
-unterstützende Übungen" sowie „Spiel", der Abschluss den Ausklang. Ein Gegenstück zum Auffangen
-gibt es nicht; hier tragen alle Teile eine Dauer.
+Ein Junioren-Training hat vier Teile, die zusammen sieben Blöcke tragen: Auffangen, Einstieg,
+Hauptteil, Abschluss. Der Einstieg umfasst Aufwärmen, Spielform zum Trainingsziel und
+Explosivität, der Hauptteil „Spielformen und unterstützende Übungen" sowie „Spiel"; Auffangen
+und Abschluss sind je selbst ein Block ohne weitere Untergliederung. Das Auffangen steht dabei
+für dasselbe wie im Kinderfussball — die Zeit, in der die Jugendlichen gestaffelt eintreffen.
+Es zählt nicht zur Trainingszeit und trägt deshalb keine Zeitangaben: keine Dauer je Übung,
+keine Summe, keinen Richtwert. Das Manual Fussball Jugendliche kennt diesen Teil nicht — die
+Anwendung stellt ihn bewusst voran, und freiwillig ist er ganz und gar: Ein leeres Auffangen
+ist der Normalfall und wird nirgends angemahnt.
 
-Zu jedem Junioren-Teil und -Block nennt die Anwendung einen Richtwert aus dem Manual: Einstieg
-zwanzig bis dreissig Minuten, darin Aufwärmen zehn bis zwölf, Spielform zum Trainingsziel sechs
-bis acht, Explosivität acht bis zehn; Hauptteil fünfundvierzig bis fünfundsechzig, darin
-Spielformen dreissig bis fünfundvierzig und Spiel fünfzehn bis zwanzig; Abschluss fünf bis
-zehn. Vorgesehen sind neunzig Minuten insgesamt. Wo Dauern erfasst sind, weist die Anwendung
+Zu jedem übrigen Junioren-Teil und -Block nennt die Anwendung einen Richtwert aus dem Manual:
+Einstieg zwanzig bis dreissig Minuten, darin Aufwärmen zehn bis zwölf, Spielform zum
+Trainingsziel sechs bis acht, Explosivität acht bis zehn; Hauptteil fünfundvierzig bis
+fünfundsechzig, darin Spielformen dreissig bis fünfundvierzig und Spiel fünfzehn bis zwanzig;
+Abschluss fünf bis zehn. Zum Auffangen gibt es keinen — es steht ausserhalb dieser Rechnung.
+Vorgesehen sind neunzig Minuten insgesamt. Wo Dauern erfasst sind, weist die Anwendung
 die Abweichung nach oben oder unten aus. Das ist Orientierung und sonst nichts — gesperrt wird
 damit nie. Im Kinderfussball erscheint dieser Abgleich gar nicht: Dessen Manual gibt bewusst
 keine Zeiten vor.
@@ -60,8 +66,9 @@ direkt zum Erfassen einer eigenen Übung. Mehrere Übungen nacheinander zu über
 möglich, dieselbe Übung auch mehrfach.
 
 Innerhalb eines Blocks lässt sich die Reihenfolge ändern. Jeder Übung ausser im Auffangen kann
-eine Dauer in Fünf-Minuten-Schritten gegeben werden; das Training summiert laufend mit und
-weist gesondert aus, wie viele Übungen noch ohne Zeitangabe sind.
+eine Dauer in Fünf-Minuten-Schritten gegeben werden — das gilt in beiden Altersstufen, denn
+beide haben ein Auffangen. Das Training summiert laufend mit und weist gesondert aus, wie viele
+Übungen noch ohne Zeitangabe sind; das Auffangen bleibt in beiden Rechnungen aussen vor.
 
 Ändert der Trainer die Alterskategorien, prüft die Anwendung, ob die bereits zugeordneten
 Übungen noch dazu passen, und benennt die abweichenden. Behalten oder entfernen entscheidet er.
@@ -69,8 +76,10 @@ weist gesondert aus, wie viele Übungen noch ohne Zeitangabe sind.
 Wo die Anwendung etwas zu bemerken hat, bleibt sie bei einem Hinweis. Im Kinderfussball
 erwähnt sie einen Teil mit ungewöhnlich vielen Übungen und ein leeres freies Spiel, das dort in
 jedes Training gehört. Im Juniorenfussball übernimmt die Zeit-Orientierung diese Rolle; einen
-Hinweis gibt es dort, wenn Spielform zum Trainingsziel, Explosivität oder Spiel leer bleiben.
-Gesperrt wird nie.
+Hinweis gibt es dort, wenn Spielform zum Trainingsziel, Explosivität, Spiel oder der Abschluss
+leer bleiben. Ein solcher Hinweis steht im betroffenen Block selbst, an der Stelle, an der sonst
+„Noch keine Übung zugeordnet" stünde, und sagt in einem Satz auch, warum der Block ins Training
+gehört. Alle übrigen leeren Blöcke bleiben bei der neutralen Zeile. Gesperrt wird nie.
 
 ## Jede Übung im Training ist eine eigene Fassung
 
@@ -90,8 +99,10 @@ ersten Moment eigenständig, und ein Vermerk darauf sagte über ihren heutigen I
 Beide Ansichten stehen für jedes sichtbare Training offen, auch für fremde. Die
 Durchführen-Ansicht ist für den Platz gedacht: ein Trainingsteil nach dem anderen mit seinen
 belegten Blöcken, grosse Bedienflächen, und der Bildschirm bleibt wach, solange sie geöffnet
-ist. Das Ziel steht zu Beginn, wo es beim Anpfiff noch zählt. Jede Übung erscheint mit vollem
-Ablauf, Diagramm, Feldtyp oder Spielfeldgrösse, Kinderzahl, Material und Dauer. Der Druck zeigt
+ist. Das Ziel steht zu Beginn, wo es beim Anpfiff noch zählt. Jede Übung erscheint mit
+Diagramm, Feldtyp oder Spielfeldgrösse, Kinderzahl, Material und Dauer, darunter der volle
+Ablauf und zuunterst — wo die Übung einen trägt — der Übungstyp; die Erscheinungsform zeigen
+beide Ansichten nicht, sie ordnet ein und hilft auf dem Platz nicht weiter. Der Druck zeigt
 dasselbe als zusammenhängende, druckfertige Seite zum Mitnehmen, das Ziel im Kopf. Leere Blöcke
 erscheinen in beiden Ansichten nicht.
 
@@ -106,9 +117,10 @@ Ein öffentliches Training bleibt frei bearbeitbar, und die Community sieht jewe
 Stand. Dafür gelten die Veröffentlichungsbedingungen nicht nur beim Umschalten, sondern solange
 es öffentlich ist. Mindestens eine Alterskategorie braucht es in beiden Altersstufen. Im
 Kinderfussball kommt je mindestens eine Übung in der Einleitung und im freien Spiel dazu. Im
-Juniorenfussball ist die Schwelle höher: Aufwärmen, Spielform zum Trainingsziel, Explosivität,
-Spielformen und unterstützende Übungen sowie der Ausklang müssen je mindestens eine Übung
-tragen. Nur das Spiel ist ausgenommen — dort bleibt es beim Hinweis. Fehlt etwas, nennt die
+Juniorenfussball ist die Schwelle höher: Aufwärmen, Spielform zum Trainingsziel, Explosivität
+sowie Spielformen und unterstützende Übungen müssen je mindestens eine Übung tragen. Spiel und
+Abschluss sind ausgenommen — dort bleibt es beim Hinweis —, das Auffangen ganz: Es ist weder
+Bedingung noch Hinweis, in keiner der beiden Altersstufen. Fehlt etwas, nennt die
 Anwendung genau das. Wer sein Training unter diese Schwelle bringen will, setzt es zuerst auf
 Entwurf — die Anwendung sagt das, statt die Änderung bloss abzulehnen.
 

@@ -127,10 +127,11 @@ export default async function ExerciseDetailPage({
   const hatEckdaten =
     !!spielfeld ||
     !!ex.hauptteilkategorie ||
-    !!ex.uebungstyp ||
-    ex.erscheinungsform.length > 0 ||
     !!anzahl ||
     ex.material.length > 0;
+  // Übungstyp und Erscheinungsform zählen bewusst NICHT zu den Eckdaten: sie
+  // stehen seit Story #124 unterhalb des Ablaufs (siehe dort).
+  const hatEinordnung = !!ex.uebungstyp || ex.erscheinungsform.length > 0;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
@@ -241,19 +242,6 @@ export default async function ExerciseDetailPage({
               ex.hauptteilkategorie}
           </Meta>
         )}
-        {ex.uebungstyp && (
-          <Meta label="Übungstyp">
-            {uebungstypLabels[ex.uebungstyp as keyof typeof uebungstypLabels] ??
-              ex.uebungstyp}
-          </Meta>
-        )}
-        {ex.erscheinungsform.length > 0 && (
-          <Meta label="Erscheinungsform">
-            {ex.erscheinungsform
-              .map((f) => ERSCHEINUNGSFORM_LABEL[f] ?? f)
-              .join(", ")}
-          </Meta>
-        )}
         {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
         {ex.material.length > 0 && (
           <Meta label="Material">{ex.material.join(", ")}</Meta>
@@ -292,6 +280,32 @@ export default async function ExerciseDetailPage({
             ))}
           </ul>
         </section>
+      )}
+
+      {/* Einordnung — Übungstyp und Erscheinungsform, beisammen unterhalb von
+          Ablauf und Varianten (Story #124, PO 2026-08-31). Beide ordnen die
+          Übung ein und speisen die Filter; für die Durchführung auf dem Platz
+          sagen sie nichts. Wer die Seite öffnet, soll zuerst lesen, was gemacht
+          wird — darum stehen sie hinter dem Ablauf, am Bildschirm wie im Druck
+          an derselben Stelle (gleicher DOM). Ist nichts davon erfasst, entfällt
+          der Abschnitt ganz. */}
+      {hatEinordnung && (
+        <div className="mt-8 flex flex-wrap gap-x-12 gap-y-5">
+          {ex.uebungstyp && (
+            <Meta label="Übungstyp">
+              {uebungstypLabels[
+                ex.uebungstyp as keyof typeof uebungstypLabels
+              ] ?? ex.uebungstyp}
+            </Meta>
+          )}
+          {ex.erscheinungsform.length > 0 && (
+            <Meta label="Erscheinungsform">
+              {ex.erscheinungsform
+                .map((f) => ERSCHEINUNGSFORM_LABEL[f] ?? f)
+                .join(", ")}
+            </Meta>
+          )}
+        </div>
       )}
 
       {/* Herkunft auf dem Ausdruck (Story #114 AK 7). Am Bildschirm sagt sie

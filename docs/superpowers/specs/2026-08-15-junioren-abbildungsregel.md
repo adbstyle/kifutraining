@@ -137,7 +137,7 @@ Konsistenz der Ebenen: Die Summe der drei Einstiegs-Unterblöcke ergibt rechneri
 3. Epic #20 / Story #23, Out of Scope 3: «Eine Untergliederung der übrigen Trainingsteile ist nicht vorgesehen» — für das Juniorenschema überholt (Einstieg wird untergliedert).
 4. `schema/uebung.schema.json`, Titel «Kinderfussball Übung» — der Titel deckt Junioren-Übungen nicht mehr.
 
-## 10. Errata (Epic-Review 2026-08-16, ändern die abgenommene Regel nicht)
+## 10. Errata und Nachträge (Errata 1–5 aus dem Epic-Review 2026-08-16)
 
 1. Die Kategorien-Anekdote steht auf Manual-S. 12, nicht S. 13; die Körperstabilitäts-Bereiche stehen auf S. 75–77.
 2. Die Inhalte der drei Einstiegsphasen stehen entgegen der früheren Aussage auch im Manual selbst (Abb. 19 WAS-Zeile: TA/TE/PE, AT-Prävention, AT-Explosivität; Reihenfolge S. 45 und S. 72); nur Phasennamen und Minutenwerte stammen aus dem J+S-Lernbaustein.
@@ -146,6 +146,12 @@ Konsistenz der Ebenen: Die Summe der drei Einstiegs-Unterblöcke ergibt rechneri
 5. Der Einstieg hat drei Unterblöcke statt zwei (PO-Entscheid 2026-08-16, im Story-Refinement zu Story 6): Aufwärmen, Spielform zum Trainingsziel, Explosivität. Die ursprüngliche Zweiteilung folgte Abbildung 19; die App bildet stattdessen die drei J+S-Phasen ab, weil die Spielform zum Trainingsziel eine eigenständige Übungsart ist. Die Abschnitte 2 bis 5 sind entsprechend nachgeführt.
 
 6. Nachtrag der Umsetzung (2026-08-28): Für die Übertragung der Zuordnungen beim Schema-Wechsel gilt die Abbildungsregel nur noch als Fallback. Vorrang hat die konservierte Einordnung: Jede Fassung merkt sich beim Wechsel, wo sie im verlassenen Schema lag, und der Rückweg stellt das wieder her. Grund: Die Regel führt «Fussball spielen lernen» und «Vielseitigkeit erleben» beide nach Spielformen zusammen (Z3/Z4) und ist damit nicht umkehrbar; ebenso fielen die Auffangen-Zuordnungen (Z1) dauerhaft in die Nacharbeit. Da der Schema-Wechsel der Migrationspfad des produktiven Bestands ist — bestehende E-Trainings werden von ihren Trainer:innen auf D gehoben —, muss er gefahrlos ausprobierbar sein. Die Tabelle in Abschnitt 2 bleibt unverändert gültig für die Einordnung neuer Zuordnungen und für Trainings ohne Konserve.
+
+7. Der Abschluss hat keinen Unterblock mehr (PO-Entscheid 2026-08-31, Story #127): Ein Teil mit nur einem Block braucht keine Untergliederung. Der sechste Junioren-Block heisst neu `jun-abschluss`/«Abschluss»; der Begriff «Ausklang» verschwindet im Juniorenfussball vollständig (im Kinderfussball bleibt er als Trainingsteil bestehen). «Abschluss / Ausklang» in den Abschnitten 2 bis 5 ist entsprechend als «Abschluss» zu lesen. Zugleich verliert der Abschluss seine Veröffentlichungspflicht und behält nur den Leer-Hinweis. Die Abbildungsregel selbst bleibt gültig (Z6: `ausklang` → Abschluss).
+
+8. **Z1 revidiert: Das Auffangen hat neu eine Entsprechung** (PO-Entscheid 2026-08-31, Story #128). Das Juniorenschema der Anwendung erhält einen ersten Trainingsteil «Auffangen» mit dem einzigen Block `jun-auffangen` — die Zeit, in der die Jugendlichen gestaffelt eintreffen. Damit gilt in beiden Richtungen: `auffangen` ↔ `jun-auffangen` (in der Rückrichtung ohne Hauptteilkategorie). Der Zielwertebereich in Abschnitt 2 umfasst entsprechend sieben statt sechs befüllbare Stellen, und Z1 lautet nicht mehr «ohne Entsprechung»; die Zeilen Z2–Z7 bleiben unverändert, und die Regel bleibt lückenlos und überlappungsfrei. Auch die Erreichbarkeitstabelle in Abschnitt 3 gewinnt eine Zeile: Auffangen ist über Z1 und über die direkte Junioren-Einordnung erreichbar.
+
+   Begründung: Der frühere Ausschluss stützte sich darauf, dass das Manual Fussball Jugendliche keinen Vor-Trainings-Teil kennt. Das trifft weiterhin zu — der neue Teil ist eine bewusste Erweiterung über das Manual hinaus, aus dem eigenen Bedarf des Product Owners als Junioren-Trainer. Er bleibt in jeder Hinsicht freiwillig: keine Veröffentlichungspflicht, kein Leer-Hinweis, kein Zeitrichtwert, und wie im Kinderfussball trägt er keine Dauer, weil er nicht zur Trainingszeit zählt. Erscheinungsform und Übungstyp gibt es dort ebenfalls nicht: Beide sind Kategorien des Manuals. Der in Errata 6 genannte Grund, Auffangen-Zuordnungen fielen beim Schema-Wechsel in die Nacharbeit, entfällt damit ersatzlos.
 
 ## 11. Abnahme
 

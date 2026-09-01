@@ -1,5 +1,5 @@
-import { JUNIOREN_TEILE } from "@/lib/junioren";
-import type { Altersstufe } from "@/lib/altersstufe";
+import { JUNIOREN_TEILE, istEinblockig } from "@/lib/junioren";
+import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
 import type { JuniorenBlockSlug } from "@/lib/vocab";
 import {
   trainingsteil as trainingsteilLabels,
@@ -40,18 +40,18 @@ export const HAUPTTEILKATEGORIEN: {
 
 export const HAUPTTEILKATEGORIE_SLUGS = HAUPTTEILKATEGORIEN.map((h) => h.slug);
 
-/** Für die Veröffentlichung zwingend belegte Trainingsteile (Story #14 AC3,
- *  Enabler #26 AC3). */
-export const PFLICHT_TEILE: TrainingsteilSlug[] = ["einleitung", "hauptteil"];
-
 /** Einordnungen, die keine Dauer tragen. „Auffangen" ist der Teil vor dem
  *  eigentlichen Trainingsbeginn — es wird aufgesetzt, die Spielerinnen machen
  *  mit oder nicht; es zählt nicht zur Trainingsdauer. Diese Invariante wird auf
  *  DB-Ebene per CHECK erzwungen (`dauer_nicht_auffangen`).
  *
- *  Im Juniorenschema gibt es dazu kein Gegenstück: alle drei Trainingsteile
- *  tragen eine Dauer, ein Pendant zum Auffangen kennt es nicht. */
-export const OHNE_DAUER_TEILE = new Set<string>(["auffangen"]);
+ *  Beide Altersstufen kennen ihn: `auffangen` im Kinderfussball, seit
+ *  Story #128 der Block `jun-auffangen` im Juniorenfussball — dort als
+ *  bewusste Erweiterung über das Manual Fussball Jugendliche hinaus. Weil die
+ *  Einordnung eines Junioren-Trainings der BLOCK ist, steht hier der
+ *  Block-Slug; sein Teil `auffangen` ist einblockig und teilt den Namen mit dem
+ *  Kinderfussball-Teil, weshalb dieser Eintrag beide Ebenen abdeckt. */
+export const OHNE_DAUER_TEILE = new Set<string>(["auffangen", "jun-auffangen"]);
 
 /** Trägt diese Einordnung eine erfassbare Dauer? Gilt für beide Schemata. */
 export function teilTraegtDauer(slug: string): boolean {
@@ -66,6 +66,43 @@ export const ANZAHL_HINWEIS: Record<TrainingsteilSlug, number> = {
   einleitung: 3,
   hauptteil: 5,
   ausklang: 3,
+};
+
+/** Was der Editor zu einem leeren Abschnitt meldet, den das Lehrmittel als
+ *  gesetzt ansieht — der VOLLSTÄNDIGE Wortlaut, an einem Ort und für beide
+ *  Altersstufen (Story #126).
+ *
+ *  Jeder Text nennt zweierlei: dass der Abschnitt noch leer ist UND warum er
+ *  ins Training gehört. Die neutrale Zeile «Noch keine Übung zugeordnet.»
+ *  entfällt dort — dieselbe Sachlage zweimal untereinander und in zwei
+ *  Schriftschnitten war der Mangel, den diese Story behebt. Wer hier steht,
+ *  bekommt genau eine Meldung; wer fehlt, die neutrale Zeile.
+ *
+ *  Der Schlüssel ist die Stelle, an der die Meldung erscheint: im
+ *  Juniorenschema der Block, im Kinderfussball die Hauptteilkategorie des
+ *  freien Spiels (`FREIES_SPIEL`) — dort liegt die einzige Kinderfussball-Stelle
+ *  mit einem solchen Hinweis. Die beiden Wertemengen überschneiden sich nicht.
+ *
+ *  Bewusst NICHT hier: das Auffangen beider Altersstufen (leer ist dort der
+ *  Normalfall, kein Mangel — Story #128) sowie das Junioren-Aufwärmen, die
+ *  Spielformen und alle übrigen Kinderfussball-Teile. Massgebend ist allein
+ *  der PO-Entscheid, welche Blöcke einen Hinweis tragen (Story #126,
+ *  Refinement 2026-08-31) — nicht die Veröffentlichungspflicht: Spielform zum
+ *  Trainingsziel und Explosivität tragen beides.
+ *
+ *  Der Hinweis blockiert nichts: Speichern und Weiterbearbeiten bleiben
+ *  unberührt (Story 5a AC 9). */
+export const LEER_HINWEIS: Record<string, string> = {
+  "jun-spielform-trainingsziel":
+    "Die Spielform zum Trainingsziel ist noch leer — sie führt das Trainingsziel ein und spannt den roten Faden zum Hauptteil.",
+  "jun-explosivitaet":
+    "Die Explosivität ist noch leer — kurze, intensive Aktionen mit vollständiger Erholung gehören im Juniorenfussball in jeden Einstieg.",
+  "jun-spiel":
+    "Das Spiel ist noch leer — im Juniorenfussball gehört das freie Spiel in jedes Training.",
+  "jun-abschluss":
+    "Der Abschluss ist noch leer — Cool-down und gemeinsamer Austausch beenden jedes Training.",
+  [FREIES_SPIEL]:
+    "Das freie Spiel ist noch leer — im Kinderfussball gehört es in jedes Training.",
 };
 
 /** Obergrenze des Trainingsziels in Zeichen (Story 10 AC 6). Entspricht der
@@ -117,7 +154,18 @@ export function groupByTeil<
 
 /** Junioren-Zuordnungen nach Trainingsteil und Unterblock gruppieren (feste
  *  Reihenfolge des Schemas; Story 4 AC 1, Story 5a AC 1–3). Items kommen
- *  positionssortiert. Die Teil-Summe ist die Summe seiner Blöcke. */
+ *  positionssortiert. Die Teil-Summe ist die Summe seiner Blöcke.
+ *
+ *  `einblockig` markiert einen Teil, der genau einen Block trägt: Er ist nicht
+ *  untergliedert und wird ohne Block-Überschrift und ohne zweiten Richtwert
+ *  dargestellt (Story #127). Die Marke steht hier, weil sie aus der Struktur
+ *  des Schemas folgt und nicht aus dem Inhalt — sie überlebt darum auch das
+ *  Wegfiltern leerer Blöcke in den Leseansichten.
+ *
+ *  `traegtDauer` folgt dem Block, nicht dem Schema: Seit Story #128 gibt es
+ *  auch im Juniorenfussball ein Auffangen, und das trägt keine Dauer. Wie in
+ *  `groupByTeil` ist die Summe eines dauerlosen Blocks 0 statt der Summe
+ *  seiner Zeilen — dort könnte ohnehin keine stehen (DB-CHECK). */
 export function groupJunioren<
   T extends { trainingsteil: string; durationMin: number | null },
 >(
@@ -126,22 +174,35 @@ export function groupJunioren<
   slug: string;
   label: string;
   sum: number;
-  bloecke: { slug: JuniorenBlockSlug; label: string; items: T[]; sum: number }[];
+  traegtDauer: boolean;
+  einblockig: boolean;
+  bloecke: {
+    slug: JuniorenBlockSlug;
+    label: string;
+    items: T[];
+    sum: number;
+    traegtDauer: boolean;
+  }[];
 }[] {
   return JUNIOREN_TEILE.map((teil) => {
     const bloecke = teil.bloecke.map(({ slug, label }) => {
       const blockItems = items.filter((i) => i.trainingsteil === slug);
+      const traegtDauer = teilTraegtDauer(slug);
       return {
         slug,
         label,
         items: blockItems,
-        sum: blockItems.reduce((a, i) => a + (i.durationMin ?? 0), 0),
+        sum: traegtDauer ? blockItems.reduce((a, i) => a + (i.durationMin ?? 0), 0) : 0,
+        traegtDauer,
       };
     });
     return {
       slug: teil.slug,
       label: teil.label,
       sum: bloecke.reduce((a, b) => a + b.sum, 0),
+      // Ein Teil trägt eine Dauer, sobald einer seiner Blöcke eine trägt.
+      traegtDauer: bloecke.some((b) => b.traegtDauer),
+      einblockig: istEinblockig(teil.slug),
       bloecke,
     };
   });
@@ -201,8 +262,10 @@ function leseBloecke<
  *
  *  Kinderfussball: die vier Trainingsteile, der Hauptteil in seine belegten
  *  Unterkategorien geteilt, die übrigen Teile als ein Block ohne
- *  Unterüberschrift (`label: null`). Juniorenfussball: die drei Trainingsteile
- *  mit ihren belegten Unterblöcken. Leere Teile und Blöcke erscheinen in
+ *  Unterüberschrift (`label: null`). Juniorenfussball: die vier Trainingsteile
+ *  mit ihren belegten Unterblöcken — ein Teil mit nur einem Block bleibt
+ *  ebenfalls ohne Unterüberschrift (`label: null`), sonst stünde derselbe Name
+ *  zweimal untereinander (Story #127). Leere Teile und Blöcke erscheinen in
  *  beiden Fällen nicht (Story 8 PC 1). */
 export function leseGliederung<
   T extends {
@@ -226,12 +289,18 @@ export function leseGliederung<
         key: teil.slug,
         label: teil.label,
         sum: teil.sum,
-        // Im Juniorenschema trägt jeder Trainingsteil eine Dauer; ein Pendant
-        // zum dauerlosen Auffangen kennt es nicht.
-        traegtDauer: true,
+        // Auch im Juniorenschema gibt es einen dauerlosen Teil: das Auffangen
+        // (Story #128). Die Antwort kommt darum aus der Einordnung selbst,
+        // nicht aus dem Schema.
+        traegtDauer: teil.traegtDauer,
         bloecke: teil.bloecke
           .filter((b) => b.items.length > 0)
-          .map((b) => ({ key: b.slug, label: b.label, sum: b.sum, items: b.items })),
+          .map((b) => ({
+            key: b.slug,
+            label: teil.einblockig ? null : b.label,
+            sum: b.sum,
+            items: b.items,
+          })),
       }))
       .filter((teil) => teil.bloecke.length > 0);
   }

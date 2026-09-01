@@ -43,6 +43,7 @@ import {
   Trash2,
   User,
   Pencil,
+  Info,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
@@ -1005,6 +1006,44 @@ export default function Styleguide() {
               was die Seite noch zu zeigen hat.
             </Card>
           </Disclosure>
+        </div>
+      </Section>
+
+      <Section n="21" title="Leerzustand &amp; Hinweiszeile">
+        <p className="type-body-medium max-w-xl text-on-surface-variant">
+          Ein leerer Abschnitt sagt zuerst nur, dass er leer ist —{" "}
+          <code>type-body-small</code>, <code>text-on-surface-variant</code>, kein
+          Icon. Hat die Anwendung fachlich etwas dazu zu sagen (im Trainings-Editor:
+          dieser Block gehört ins Training), tritt die Hinweiszeile an die Stelle
+          dieser neutralen Zeile — <strong>nie beides</strong>. Dieselbe Sachlage
+          erscheint nur einmal und nur in einem Schriftschnitt.
+        </p>
+        <p className="type-body-medium mt-4 max-w-xl text-on-surface-variant">
+          Die Hinweiszeile trägt darum denselben Schnitt wie der Leerzustand und
+          ordnet sich der Struktur unter: schwächer als Titel und Inhaltszeilen.
+          Das Signal ist das <code>Info</code>-Icon (15 px,{" "}
+          <code>text-signal</code>, <code>aria-hidden</code>) — es bleibt ohne
+          Farbwahrnehmung erkennbar. Der Text nennt den Grund, die Position den
+          betroffenen Abschnitt; er blockiert nichts. Zählende Meldungen einer
+          ganzen Karte (
+          <em>„Ungewöhnlich viele Übungen …"</em>) bleiben davon unberührt und
+          stehen weiter als <code>type-label-medium</code> am Kartenfuss.
+        </p>
+        <div className="mt-6 grid max-w-xl gap-4">
+          <Card className="p-4">
+            <h3 className="type-title-small text-on-surface">Vielseitigkeit erleben</h3>
+            <p className="mt-2 type-body-small text-on-surface-variant">
+              Noch keine Übung zugeordnet.
+            </p>
+          </Card>
+          <Card className="p-4">
+            <h3 className="type-title-small text-on-surface">Fussball spielen</h3>
+            <p className="mt-2 flex items-start gap-2 type-body-small text-on-surface-variant">
+              <Info size={15} className="mt-0.5 shrink-0 text-signal" aria-hidden />
+              Das freie Spiel ist noch leer — im Kinderfussball gehört es in jedes
+              Training.
+            </p>
+          </Card>
         </div>
       </Section>
 

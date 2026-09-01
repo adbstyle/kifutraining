@@ -33,17 +33,24 @@ kategorien:
   C: "C"
   B: "B"
   A: "A"
+# Das Juniorenschema des Manuals Fussball Jugendliche (Abb. 19) kennt drei
+# Trainingsteile: Einstieg, Hauptteil, Abschluss. Das «Auffangen» davor ist eine
+# bewusste Erweiterung über das Manual hinaus (PO-Entscheid 2026-08-31,
+# Story #128): die Zeit, in der die Jugendlichen gestaffelt eintreffen. Sie
+# zählt nicht zur Trainingszeit und bleibt in jeder Hinsicht freiwillig.
 junioren_trainingsteil:
+  auffangen: "Auffangen"
   einstieg: "Einstieg"
   hauptteil: "Hauptteil"
   abschluss: "Abschluss"
 junioren_block:
+  jun-auffangen: "Auffangen"
   jun-aufwaermen: "Aufwärmen"
   jun-spielform-trainingsziel: "Spielform zum Trainingsziel"
   jun-explosivitaet: "Explosivität"
   jun-spielformen: "Spielformen und unterstützende Übungen"
   jun-spiel: "Spiel"
-  jun-ausklang: "Ausklang"
+  jun-abschluss: "Abschluss"
 uebungstyp:
   basisspielform: "Basisspielform"
   spielform: "Spielform"
