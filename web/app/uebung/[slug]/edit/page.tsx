@@ -9,6 +9,7 @@ import { getExerciseDetail, getVorlagen } from "@/lib/queries/exercises";
 import { createClient } from "@/lib/supabase/server";
 import { hatDiagramm } from "@/lib/diagramm";
 import { EINORDNUNG_LABEL } from "@/lib/labels";
+import { katalogFilterZiel } from "@/lib/filter-optionen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Übung bearbeiten — KiFu", robots: { index: false } };
@@ -34,10 +35,13 @@ export default async function EditPage({
   // Brotkrumen wie in der Detailseite/im Diagramm-Editor, eine Stufe tiefer:
   // die Übung wird zum Link, „Übung bearbeiten" ist die aktuelle Seite und
   // ersetzt den separaten Seitentitel.
+  // Der Brotkrumen-Link zielt auf die feinste Einordnung, die der Katalog
+  // filtern kann — im Kinderfussball-Hauptteil auf die Hauptteilkategorie
+  // (Story #129). Der TEXT bleibt die Einordnung selbst.
   const teilLabel = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
     { label: "Übungspool", href: "/" },
-    { label: teilLabel, href: `/?teil=${ex.trainingsteil}` },
+    { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
     { label: ex.name, href: `/uebung/${slug}` },
     { label: "Übung bearbeiten" },
   ];

@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseDiagramm, LEERES_DIAGRAMM } from "@/lib/diagramm";
 import { saveDiagramm } from "@/lib/actions/diagramm";
 import { EINORDNUNG_LABEL } from "@/lib/labels";
+import { katalogFilterZiel } from "@/lib/filter-optionen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -34,11 +35,14 @@ export default async function DiagrammPage({
 
   // Brotkrumen wie auf der Übungs-Detailseite, nur eine Stufe tiefer: die
   // Übung wird selbst zum Link, das Diagramm ist die aktuelle Seite.
+  // Der Brotkrumen-Link zielt auf die feinste Einordnung, die der Katalog
+  // filtern kann — im Kinderfussball-Hauptteil auf die Hauptteilkategorie
+  // (Story #129). Der TEXT bleibt die Einordnung selbst.
   const teilLabel =
     EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
     { label: "Übungspool", href: "/" },
-    { label: teilLabel, href: `/?teil=${ex.trainingsteil}` },
+    { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
     { label: ex.name, href: `/uebung/${slug}` },
     { label: "Feld-Diagramm" },
   ];

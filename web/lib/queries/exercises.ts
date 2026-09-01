@@ -26,6 +26,16 @@ export type ExerciseFilters = {
   feld?: string[]; // Feldtyp (OR)
   form?: string[]; // Erscheinungsform (Überlappung)
   hkat?: string[]; // Hauptteilkategorie (OR)
+  /** ODER-verknüpfte Alternativen, wo eine Übung eingeordnet sein darf: ein
+   *  Trainingsteil bzw. Junioren-Block (Spalte `trainingsteil`) oder eine
+   *  Hauptteilkategorie (Spalte `hauptteilkategorie`). Beide Zweige zusammen
+   *  bilden EINE Dimension — der Trainingsteil-Filter des Katalogs, in dem seit
+   *  Story #129 auch die drei Hauptteilkategorien einzeln wählbar sind.
+   *
+   *  Nicht zu verwechseln mit `teil` und `hkat` oben: die bleiben UND-Filter,
+   *  weil `pickExercises` eine Hauptteil-Zuordnung auf die fixierte
+   *  Unterkategorie EINGRENZEN muss (Story #23). */
+  einordnung?: { teile?: string[]; hkats?: string[] };
   typ?: string[]; // Übungstyp (OR)
   kinder?: number; // verfügbare Gruppengrösse
   q?: string; // Freitext
@@ -110,6 +120,17 @@ export async function getExercises(
   // Übungen ohne Übungstyp fallen bei aktivem Filter heraus — dieselbe Regel
   // wie bei allen Dimensionen (Story 9 PC 1).
   if (f.typ?.length) query = query.in("uebungstyp", f.typ);
+  // Einordnung: EINE ODER-Klausel über beide Spalten, damit sich Trainingsteile
+  // und Hauptteilkategorien in derselben Auswahl mischen lassen (Story #129
+  // AC 4/5). PostgREST verbindet mehrere `or=`-Parameter derselben Abfrage mit
+  // UND — die Gruppengrössen-Klausel weiter unten bleibt davon unberührt.
+  if (f.einordnung) {
+    const zweige: string[] = [];
+    const { teile, hkats } = f.einordnung;
+    if (teile?.length) zweige.push(`trainingsteil.in.(${teile.join(",")})`);
+    if (hkats?.length) zweige.push(`hauptteilkategorie.in.(${hkats.join(",")})`);
+    if (zweige.length) query = query.or(zweige.join(","));
+  }
   // Gruppengrösse: durchführbar, wenn die Mindestzahl <= verfügbar ist
   // oder gar keine Mindestzahl angegeben ist (EK6).
   if (typeof f.kinder === "number" && Number.isFinite(f.kinder)) {
