@@ -26,16 +26,22 @@ weiter in „Fussball spielen lernen", „Vielseitigkeit erleben" und „Fussbal
 in dieser Reihenfolge — sie führt vom geführten Lernen über die Vielseitigkeit zum freien Spiel
 und folgt damit dem Manual.
 
-Ein Junioren-Training hat drei Teile, die zusammen sechs Blöcke tragen. Der Einstieg umfasst
-Aufwärmen, Spielform zum Trainingsziel und Explosivität, der Hauptteil „Spielformen und
-unterstützende Übungen" sowie „Spiel"; der Abschluss ist selbst ein Block ohne weitere
-Untergliederung. Ein Gegenstück zum Auffangen gibt es nicht; hier tragen alle Teile eine Dauer.
+Ein Junioren-Training hat vier Teile, die zusammen sieben Blöcke tragen: Auffangen, Einstieg,
+Hauptteil, Abschluss. Der Einstieg umfasst Aufwärmen, Spielform zum Trainingsziel und
+Explosivität, der Hauptteil „Spielformen und unterstützende Übungen" sowie „Spiel"; Auffangen
+und Abschluss sind je selbst ein Block ohne weitere Untergliederung. Das Auffangen steht dabei
+für dasselbe wie im Kinderfussball — die Zeit, in der die Jugendlichen gestaffelt eintreffen.
+Es zählt nicht zur Trainingszeit und trägt deshalb keine Zeitangaben: keine Dauer je Übung,
+keine Summe, keinen Richtwert. Das Manual Fussball Jugendliche kennt diesen Teil nicht — die
+Anwendung stellt ihn bewusst voran, und freiwillig ist er ganz und gar: Ein leeres Auffangen
+ist der Normalfall und wird nirgends angemahnt.
 
-Zu jedem Junioren-Teil und -Block nennt die Anwendung einen Richtwert aus dem Manual: Einstieg
-zwanzig bis dreissig Minuten, darin Aufwärmen zehn bis zwölf, Spielform zum Trainingsziel sechs
-bis acht, Explosivität acht bis zehn; Hauptteil fünfundvierzig bis fünfundsechzig, darin
-Spielformen dreissig bis fünfundvierzig und Spiel fünfzehn bis zwanzig; Abschluss fünf bis
-zehn. Vorgesehen sind neunzig Minuten insgesamt. Wo Dauern erfasst sind, weist die Anwendung
+Zu jedem übrigen Junioren-Teil und -Block nennt die Anwendung einen Richtwert aus dem Manual:
+Einstieg zwanzig bis dreissig Minuten, darin Aufwärmen zehn bis zwölf, Spielform zum
+Trainingsziel sechs bis acht, Explosivität acht bis zehn; Hauptteil fünfundvierzig bis
+fünfundsechzig, darin Spielformen dreissig bis fünfundvierzig und Spiel fünfzehn bis zwanzig;
+Abschluss fünf bis zehn. Zum Auffangen gibt es keinen — es steht ausserhalb dieser Rechnung.
+Vorgesehen sind neunzig Minuten insgesamt. Wo Dauern erfasst sind, weist die Anwendung
 die Abweichung nach oben oder unten aus. Das ist Orientierung und sonst nichts — gesperrt wird
 damit nie. Im Kinderfussball erscheint dieser Abgleich gar nicht: Dessen Manual gibt bewusst
 keine Zeiten vor.
@@ -60,8 +66,9 @@ direkt zum Erfassen einer eigenen Übung. Mehrere Übungen nacheinander zu über
 möglich, dieselbe Übung auch mehrfach.
 
 Innerhalb eines Blocks lässt sich die Reihenfolge ändern. Jeder Übung ausser im Auffangen kann
-eine Dauer in Fünf-Minuten-Schritten gegeben werden; das Training summiert laufend mit und
-weist gesondert aus, wie viele Übungen noch ohne Zeitangabe sind.
+eine Dauer in Fünf-Minuten-Schritten gegeben werden — das gilt in beiden Altersstufen, denn
+beide haben ein Auffangen. Das Training summiert laufend mit und weist gesondert aus, wie viele
+Übungen noch ohne Zeitangabe sind; das Auffangen bleibt in beiden Rechnungen aussen vor.
 
 Ändert der Trainer die Alterskategorien, prüft die Anwendung, ob die bereits zugeordneten
 Übungen noch dazu passen, und benennt die abweichenden. Behalten oder entfernen entscheidet er.
@@ -108,7 +115,8 @@ es öffentlich ist. Mindestens eine Alterskategorie braucht es in beiden Alterss
 Kinderfussball kommt je mindestens eine Übung in der Einleitung und im freien Spiel dazu. Im
 Juniorenfussball ist die Schwelle höher: Aufwärmen, Spielform zum Trainingsziel, Explosivität
 sowie Spielformen und unterstützende Übungen müssen je mindestens eine Übung tragen. Spiel und
-Abschluss sind ausgenommen — dort bleibt es beim Hinweis. Fehlt etwas, nennt die
+Abschluss sind ausgenommen — dort bleibt es beim Hinweis —, das Auffangen ganz: Es ist weder
+Bedingung noch Hinweis, in keiner der beiden Altersstufen. Fehlt etwas, nennt die
 Anwendung genau das. Wer sein Training unter diese Schwelle bringen will, setzt es zuerst auf
 Entwurf — die Anwendung sagt das, statt die Änderung bloss abzulehnen.
 

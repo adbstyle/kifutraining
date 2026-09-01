@@ -123,9 +123,13 @@ type RawTraining = {
 };
 
 /** Sortier-Reihenfolge aller Einordnungen: erst die vier Kinderfussball-Teile,
- *  dann die sechs Junioren-Blöcke. Ein Training führt immer nur EIN Schema —
+ *  dann die sieben Junioren-Blöcke. Ein Training führt immer nur EIN Schema —
  *  die gemeinsame Liste hält die Sortierung trotzdem stabil, statt fremde Werte
- *  stillschweigend ans Ende zu kippen. */
+ *  stillschweigend ans Ende zu kippen.
+ *
+ *  Beide Reihenfolgen stammen aus dem Vokabular, und in beiden steht das
+ *  Auffangen zuoberst — dadurch sortiert es vor dem Einstieg (Story #128 AC 1)
+ *  bzw. vor der Einleitung, ohne dass hier etwas eigens geregelt werden müsste. */
 const EINORDNUNG_RANG: string[] = [...TRAININGSTEIL_SLUGS, ...JUNIOREN_BLOCK_SLUGS];
 
 const teilRank = (t: string) => {

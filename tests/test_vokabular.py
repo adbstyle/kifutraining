@@ -51,12 +51,24 @@ def test_vokabular_kategorien_und_junioren_bloecke():
     assert list(vocab["kategorien"]) == ["G", "F", "E", "D", "C", "B", "A"]
     assert list(vocab["kategorien"]) == props["kategorien"]["items"]["enum"]
 
-    # Junioren-Strukturen vollständig und in der Reihenfolge des Manuals
-    assert list(vocab["junioren_trainingsteil"]) == ["einstieg", "hauptteil", "abschluss"]
-    assert list(vocab["junioren_block"]) == [
-        "jun-aufwaermen", "jun-spielform-trainingsziel", "jun-explosivitaet",
-        "jun-spielformen", "jun-spiel", "jun-abschluss",
+    # Junioren-Strukturen vollständig und in der Reihenfolge des Manuals — dem
+    # das «Auffangen» vorangestellt ist (Story #128, PO-Entscheid 2026-08-31):
+    # eine bewusste Erweiterung über das Manual hinaus, die Zeit vor dem
+    # eigentlichen Trainingsbeginn.
+    assert list(vocab["junioren_trainingsteil"]) == [
+        "auffangen", "einstieg", "hauptteil", "abschluss",
     ]
+    assert list(vocab["junioren_block"]) == [
+        "jun-auffangen", "jun-aufwaermen", "jun-spielform-trainingsziel",
+        "jun-explosivitaet", "jun-spielformen", "jun-spiel", "jun-abschluss",
+    ]
+    # Das Auffangen steht in beiden Altersstufen vor allem anderen, und die
+    # Sortierung der Einordnungen folgt genau dieser Reihenfolge
+    # (EINORDNUNG_RANG in web/lib/queries/trainings.ts) — darum je der ERSTE
+    # Eintrag. Es heisst in beiden Stufen gleich; unterschieden werden die
+    # beiden in der Filterleiste über die Gruppierung nach Altersstufe.
+    assert list(vocab["trainingsteil"])[0] == "auffangen"
+    assert vocab["junioren_block"]["jun-auffangen"] == vocab["trainingsteil"]["auffangen"]
     # Der Abschluss ist EIN Block ohne Untergliederung (Story #127, PO-Entscheid
     # 2026-08-31): Sein Block trägt darum den Namen des Trainingsteils, und der
     # Begriff «Ausklang» kommt im Juniorenfussball nicht mehr vor — im

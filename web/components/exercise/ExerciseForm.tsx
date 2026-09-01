@@ -168,6 +168,26 @@ export function ExerciseForm({
   // Das freie Spiel trägt eine Beschreibung statt des Fahrplans (Story 2).
   const istFreiesSpiel = zeigtHkat && hkat === FREIES_SPIEL;
 
+  // Was die neue Einordnung nicht kennt, verschwindet aus der Maske — und mit
+  // ihm beim Speichern die bereits erfasste Angabe (`parseUebungsInhalt` leert
+  // sie, die DB-CHECKs verbieten sie). Ohne Hinweis wäre der Verlust still:
+  // Das Feld ist ja schon weg, wenn er eintritt. Genannt wird nur, was
+  // tatsächlich etwas enthält (Story #128 AC 7). Der Fall entsteht heute beim
+  // Umhängen ins Auffangen, die Regel selbst ist aber allgemein — sie gilt für
+  // jede Einordnung, die eines der beiden Felder nicht trägt.
+  const entfallend = [
+    !zeigtForm && form.length > 0 ? "Erscheinungsform" : null,
+    !zeigtTyp && uebungstyp ? "Übungstyp" : null,
+  ].filter((f): f is string => f !== null);
+  const entfallHinweis =
+    entfallend.length === 0
+      ? undefined
+      : `${entfallend.join(" und ")} gibt es hier nicht — ${
+          entfallend.length === 1
+            ? "die erfasste Angabe entfällt"
+            : "die erfassten Angaben entfallen"
+        } beim Speichern.`;
+
   const toggle = (arr: string[], set: (v: string[]) => void, v: string) =>
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
@@ -401,6 +421,7 @@ export function ExerciseForm({
             ? "Wo die Übung in diesem Training liegt."
             : "Wo die Übung im Trainingsablauf ihren Platz hat."
         }
+        hinweis={entfallHinweis}
       />
 
       <Group title="Alterskategorie" error={err.kat}>

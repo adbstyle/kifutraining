@@ -78,7 +78,7 @@ export const UEBUNGSTYP_DEFINITION: Record<string, string> = {
 };
 
 /** Klartext jeder Einordnung — die vier Trainingsteile des Manuals Fussball
- *  Kinder und die sechs Blöcke des Manuals Fussball Jugendliche. Eine Quelle
+ *  Kinder und die sieben Blöcke des Juniorenschemas. Eine Quelle
  *  für Katalogkarten, Detailseiten, Breadcrumbs und Picker; ohne sie zeigte
  *  eine Junioren-Übung dort ihren Roh-Slug. */
 export const EINORDNUNG_LABEL: Record<string, string> = {

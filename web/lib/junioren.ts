@@ -24,10 +24,18 @@ import {
  *  ausserhalb beider Schemata gibt es nicht. */
 export type Einordnung = TrainingsteilSlug | JuniorenBlockSlug;
 
-/** Die drei Junioren-Trainingsteile mit ihren Unterblöcken in fester
- *  Reihenfolge (Manual Fussball Jugendliche Abb. 19 für die Teile, J+S-
- *  Lernbaustein «Der Einstieg» für dessen drei Phasen; Story 4 AC 1,
- *  Story 5a AC 1/2).
+/** Die Junioren-Trainingsteile mit ihren Unterblöcken in fester Reihenfolge
+ *  (Manual Fussball Jugendliche Abb. 19 für die Teile, J+S-Lernbaustein «Der
+ *  Einstieg» für dessen drei Phasen; Story 4 AC 1, Story 5a AC 1/2).
+ *
+ *  Dem Manual vorangestellt ist das «Auffangen»: die Zeit, in der die
+ *  Jugendlichen gestaffelt eintreffen. Das Manual Fussball Jugendliche kennt
+ *  diesen Teil nicht — er ist eine bewusste Erweiterung darüber hinaus
+ *  (PO-Entscheid 2026-08-31, Story #128) und bleibt in jeder Hinsicht
+ *  freiwillig: keine Veröffentlichungspflicht, kein Leer-Hinweis, kein
+ *  Zeitrichtwert. Wie sein Kinderfussball-Namensvetter zählt er nicht zur
+ *  Trainingszeit und trägt darum keine Dauer (`OHNE_DAUER_TEILE` in
+ *  web/lib/training.ts).
  *
  *  Ein Teil mit genau EINEM Block ist nicht untergliedert: Er erscheint überall
  *  ohne Block-Untertitel und ohne zweiten Richtwert (Story #127, PO-Entscheid
@@ -35,10 +43,15 @@ export type Einordnung = TrainingsteilSlug | JuniorenBlockSlug;
  *  bleibt einheitlich, bloss die Darstellung spart die leere Ebene. Kriterium
  *  ist `bloecke.length === 1`, siehe `istEinblockig()`. */
 export const JUNIOREN_TEILE: {
-  slug: "einstieg" | "hauptteil" | "abschluss";
+  slug: "auffangen" | "einstieg" | "hauptteil" | "abschluss";
   label: string;
   bloecke: { slug: JuniorenBlockSlug; label: string }[];
 }[] = [
+  {
+    slug: "auffangen",
+    label: jTeilLabels.auffangen,
+    bloecke: [{ slug: "jun-auffangen", label: blockLabels["jun-auffangen"] }],
+  },
   {
     slug: "einstieg",
     label: jTeilLabels.einstieg,
@@ -66,7 +79,7 @@ export const JUNIOREN_TEILE: {
   },
 ];
 
-/** Alle sechs Blöcke in der flachen Reihenfolge des Schemas. */
+/** Alle sieben Blöcke in der flachen Reihenfolge des Schemas. */
 export const JUNIOREN_BLOCK_SLUGS: JuniorenBlockSlug[] = JUNIOREN_TEILE.flatMap((t) =>
   t.bloecke.map((b) => b.slug),
 );
@@ -92,6 +105,13 @@ export function abbildungKifuZuJunioren(
   trainingsteil: string,
   hauptteilkategorie: string | null,
 ): JuniorenBlockSlug | null {
+  // Z1 (revidiert, PO 2026-08-31, Story #128): Das Auffangen hat neu eine
+  // Entsprechung. Es steht in beiden Altersstufen für dasselbe — die Zeit vor
+  // dem eigentlichen Trainingsbeginn, ohne Dauer —, seit das Juniorenschema um
+  // ebendiesen Teil erweitert wurde. Die ursprüngliche Regel «ohne
+  // Entsprechung» galt, solange das Juniorenschema keinen Vor-Trainings-Teil
+  // kannte; siehe Errata 8 des Entscheidungsdokuments.
+  if (trainingsteil === "auffangen") return "jun-auffangen";
   // Z2: Das Manual verwendet «Einleitung» und «Einstieg» synonym (Abb. 17).
   if (trainingsteil === "einleitung") return "jun-aufwaermen";
   if (trainingsteil === "hauptteil") {
@@ -109,8 +129,6 @@ export function abbildungKifuZuJunioren(
   // nennt dessen Inhalt selbst «Ausklang»; seit Story #127 ist der Abschluss
   // ein Block ohne Untergliederung und trägt darum den Namen des Teils.
   if (trainingsteil === "ausklang") return "jun-abschluss";
-  // Z1: Auffangen ist Betreuung vor dem Training und zählt nicht zur
-  // Trainingszeit — das Juniorenschema kennt keinen Vor-Trainings-Teil.
   // Z7: jede andere Kombination, damit die Regel deterministisch bleibt.
   return null;
 }
@@ -122,13 +140,16 @@ export function abbildungKifuZuJunioren(
  *  die Konserve am Training ist mit dem Wechsel entfallen.
  *
  *  Hergeleitet aus der Heimat-Rückabbildung (Entscheidungsdokument §4.3) und
- *  der Umkehrung von Z3/Z5/Z6. `jun-spielformen` normalisiert dabei auf
+ *  der Umkehrung von Z1/Z3/Z5/Z6. `jun-spielformen` normalisiert dabei auf
  *  «Fussball spielen lernen»: Z3 und Z4 laufen hin zusammen und sind
  *  nachträglich nicht mehr trennbar. Die Einordnung bleibt frei änderbar. */
 export function abbildungJuniorenZuKifu(
   block: string,
 ): { trainingsteil: TrainingsteilSlug; hauptteilkategorie: string | null } | null {
   switch (block) {
+    // Umkehrung von Z1 (revidiert, PO 2026-08-31, Story #128).
+    case "jun-auffangen":
+      return { trainingsteil: "auffangen", hauptteilkategorie: null };
     case "jun-aufwaermen":
     case "jun-spielform-trainingsziel":
       return { trainingsteil: "einleitung", hauptteilkategorie: null };
@@ -157,7 +178,13 @@ export function abbildungJuniorenZuKifu(
  *  Der Abschluss steht bewusst nur einmal hier — als Trainingsteil. Er ist
  *  einblockig, sein Block wird nirgends eigens überschrieben, und ein zweiter
  *  Eintrag `jun-abschluss` nennte denselben Richtwert 5–10 ein zweites Mal
- *  (Story #127). Ein fehlender Eintrag lässt `ZeitAbgleich` nichts rendern. */
+ *  (Story #127). Ein fehlender Eintrag lässt `ZeitAbgleich` nichts rendern.
+ *
+ *  Das Auffangen fehlt hier ganz — weder als Teil `auffangen` noch als Block
+ *  `jun-auffangen`. Es zählt nicht zur Trainingszeit (Story #128) und hat
+ *  darum keinen Richtwert: Die 90 Minuten des Manuals gelten für das Training
+ *  ab dem Einstieg, und ein Teil ohne Dauer hätte nichts, wogegen sich ein
+ *  Richtwert abgleichen liesse. */
 export const BANDBREITEN: Record<string, { min: number; max: number }> = {
   einstieg: { min: 20, max: 30 },
   "jun-aufwaermen": { min: 10, max: 12 },
@@ -174,10 +201,12 @@ export const GESAMTDAUER_JUNIOREN = 90;
 
 /** Für die Veröffentlichung zwingend belegte Blöcke (Story 7 AC 1).
  *
- *  Zwei Blöcke fehlen bewusst und behalten nur den Hinweis: das Spiel, weil es
- *  als freies Spiel von der Pflicht ausgenommen ist (Story 7 AC 2), und seit
- *  Story #127 der Abschluss — der PO hat ihm die Veröffentlichungspflicht am
- *  2026-08-31 genommen. Spiegel des Junioren-Zweigs der DB-Funktion
+ *  Drei Blöcke fehlen bewusst: das Spiel, weil es als freies Spiel von der
+ *  Pflicht ausgenommen ist (Story 7 AC 2), seit Story #127 der Abschluss — der
+ *  PO hat ihm die Veröffentlichungspflicht am 2026-08-31 genommen —, und das
+ *  Auffangen, das gar nicht zum Training gehört (Story #128). Die ersten
+ *  beiden behalten den Leer-Hinweis, das Auffangen auch den nicht: Es bleibt
+ *  in jeder Hinsicht freiwillig. Spiegel des Junioren-Zweigs der DB-Funktion
  *  `training_fehlende_bedingungen`. */
 export const JUNIOREN_PFLICHT_BLOECKE = [
   "jun-aufwaermen",
@@ -190,7 +219,9 @@ export const JUNIOREN_PFLICHT_BLOECKE = [
 /** Blöcke, deren Leere im Editor einen Hinweis erzeugt (Story 5a AC 8) —
  *  analog zum bestehenden Kinderfussball-Hinweis beim leeren freien Spiel.
  *  Der Hinweis blockiert nichts (AC 9). Der Abschluss ist seit Story #127
- *  dabei: An die Stelle seiner Veröffentlichungspflicht tritt der Hinweis. */
+ *  dabei: An die Stelle seiner Veröffentlichungspflicht tritt der Hinweis.
+ *  Das Auffangen fehlt bewusst — ein leeres Auffangen ist der Normalfall, kein
+ *  Mangel (Story #128, Out of Scope 3). */
 export const LEER_HINWEIS_BLOECKE: JuniorenBlockSlug[] = [
   "jun-spiel",
   "jun-spielform-trainingsziel",

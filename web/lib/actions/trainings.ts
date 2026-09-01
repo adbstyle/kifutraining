@@ -17,11 +17,7 @@ import {
   inhaltFelder,
   VORLAGE_SELECT,
 } from "@/lib/fassung";
-import {
-  kategorienSlugs,
-  altersstufe as altersstufeLabels,
-  type TrainingsteilSlug,
-} from "@/lib/vocab";
+import { kategorienSlugs, altersstufe as altersstufeLabels } from "@/lib/vocab";
 import {
   alsAltersstufe,
   istAltersstufe,
@@ -665,17 +661,19 @@ export async function setExerciseDuration(
   if (minutes !== null && (!Number.isInteger(minutes) || minutes < 0 || minutes % 5 !== 0))
     return { ok: false, error: "Dauer muss ein Vielfaches von 5 Minuten sein." };
 
-  // Trust Boundary: „Auffangen" trägt keine Dauer (DB-CHECK erzwingt dies; hier
-  // mit klarer Meldung statt Constraint-Fehler abfangen). Das Leeren (null) bleibt
-  // immer erlaubt.
+  // Trust Boundary: Das „Auffangen" trägt keine Dauer (DB-CHECK erzwingt dies;
+  // hier mit klarer Meldung statt Constraint-Fehler abfangen). Gefragt wird die
+  // gespeicherte Einordnung — ein Kinderfussball-Trainingsteil oder ein
+  // Junioren-Block —, denn seit Story #128 gibt es das Auffangen in beiden
+  // Altersstufen. Das Leeren (null) bleibt immer erlaubt.
   if (minutes !== null) {
     const { data: row } = await supabase
       .from("training_exercises")
       .select("trainingsteil")
       .eq("id", trainingExerciseId)
       .maybeSingle();
-    if (row && !teilTraegtDauer(row.trainingsteil as TrainingsteilSlug))
-      return { ok: false, error: "Für diesen Trainingsteil kann keine Dauer gesetzt werden." };
+    if (row && !teilTraegtDauer(row.trainingsteil))
+      return { ok: false, error: "Für das Auffangen kann keine Dauer gesetzt werden." };
   }
 
   const { data, error } = await supabase

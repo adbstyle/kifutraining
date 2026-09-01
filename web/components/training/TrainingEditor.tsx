@@ -334,23 +334,36 @@ export function TrainingEditor({
         )}
       </div>
 
-      {/* Juniorenschema: drei Trainingsteile, die Unterblöcke stets sichtbar —
+      {/* Juniorenschema: vier Trainingsteile, die Unterblöcke stets sichtbar —
           auch leere, damit die Struktur beim Planen erkennbar bleibt
           (Story 4 AC 1, Story 5a AC 1–3).
 
           Ein Teil mit genau einem Block ist keine Verschachtelung: Er zeigt
           weder Block-Überschrift noch zweiten Richtwert, und Liste wie
-          Hinzufügen-Knopf hängen direkt am Teil (Story #127). */}
+          Hinzufügen-Knopf hängen direkt am Teil (Story #127).
+
+          Das Auffangen trägt keine Dauer (Story #128) — dort erscheinen weder
+          Dauer-Stepper noch Summe noch «ohne Dauer»-Meldung, und einen
+          Richtwert gibt es zu ihm ohnehin keinen. */}
       {junioren &&
         groupJunioren(training.exercises).map((teil) => {
-          const teilDur = teil.bloecke.reduce<number>(
-            (a, b) => a + b.items.reduce<number>((x, it) => x + (dur(it) ?? 0), 0),
-            0,
-          );
-          const teilMissing = teil.bloecke.reduce<number>(
-            (a, b) => a + b.items.filter((it) => dur(it) == null).length,
-            0,
-          );
+          const teilDur = teil.traegtDauer
+            ? teil.bloecke.reduce<number>(
+                (a, b) =>
+                  a +
+                  (b.traegtDauer
+                    ? b.items.reduce<number>((x, it) => x + (dur(it) ?? 0), 0)
+                    : 0),
+                0,
+              )
+            : 0;
+          const teilMissing = teil.traegtDauer
+            ? teil.bloecke.reduce<number>(
+                (a, b) =>
+                  a + (b.traegtDauer ? b.items.filter((it) => dur(it) == null).length : 0),
+                0,
+              )
+            : 0;
           return (
             <Card key={teil.slug} className="p-4 sm:p-5">
               <div className="flex items-center justify-between gap-3">
@@ -379,7 +392,9 @@ export function TrainingEditor({
 
               <div className="mt-4 flex flex-col gap-5">
                 {teil.bloecke.map((b) => {
-                  const blockDur = b.items.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
+                  const blockDur = b.traegtDauer
+                    ? b.items.reduce<number>((a, it) => a + (dur(it) ?? 0), 0)
+                    : 0;
                   return (
                     <div key={b.slug}>
                       {!teil.einblockig && (
@@ -409,7 +424,7 @@ export function TrainingEditor({
                         items={b.items}
                         trainingId={training.id}
                         trainingStufen={stufen}
-                        showDuration
+                        showDuration={b.traegtDauer}
                         dur={dur}
                         onDuration={changeDuration}
                         onMove={move}

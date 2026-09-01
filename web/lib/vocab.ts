@@ -58,6 +58,7 @@ export type KategorienSlug = keyof typeof kategorien;
 export const kategorienSlugs = Object.keys(kategorien) as KategorienSlug[];
 
 export const junioren_trainingsteil = {
+  "auffangen": "Auffangen",
   "einstieg": "Einstieg",
   "hauptteil": "Hauptteil",
   "abschluss": "Abschluss"
@@ -66,6 +67,7 @@ export type JuniorenTrainingsteilSlug = keyof typeof junioren_trainingsteil;
 export const junioren_trainingsteilSlugs = Object.keys(junioren_trainingsteil) as JuniorenTrainingsteilSlug[];
 
 export const junioren_block = {
+  "jun-auffangen": "Auffangen",
   "jun-aufwaermen": "Aufwärmen",
   "jun-spielform-trainingsziel": "Spielform zum Trainingsziel",
   "jun-explosivitaet": "Explosivität",

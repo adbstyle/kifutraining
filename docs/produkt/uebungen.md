@@ -41,19 +41,23 @@ Spiel sowie in Auffangen und Ausklang, wo ein zusammenhängender Beschreibungste
 Erscheinungsformen trägt eine Kinderfussball-Übung in der Einleitung und im Hauptteil. Das
 Spielfeld wird als Feldtyp angegeben: Kleinfeld, Grossfeld oder freies Feld.
 
-Im Juniorenfussball ist die Zuordnung zweistufig: gewählt wird einer von sechs Blöcken, und der
+Im Juniorenfussball ist die Zuordnung zweistufig: gewählt wird einer von sieben Blöcken, und der
 Trainingsteil, zu dem er gehört, bleibt dabei sichtbar. Der Einstieg umfasst Aufwärmen,
 Spielform zum Trainingsziel und Explosivität, der Hauptteil „Spielformen und unterstützende
-Übungen" sowie „Spiel"; der Abschluss ist selbst ein Block ohne weitere Untergliederung — ihn
-zu wählen genügt. Eine Hauptteilkategorie gibt es hier nicht
+Übungen" sowie „Spiel"; Auffangen und Abschluss sind je selbst ein Block ohne weitere
+Untergliederung — sie zu wählen genügt. Eine Hauptteilkategorie gibt es hier nicht
 — das Schema gliedert seinen Hauptteil bereits selbst. Den methodischen Fahrplan gibt es
 ebenso wenig: Eine Junioren-Übung trägt in jedem Block einen zusammenhängenden
-Beschreibungstext, und der ist Pflicht. Erscheinungsformen trägt sie in allen sechs Blöcken,
-aus dem eigenen, deutlich umfangreicheren Katalog ihres Manuals. An die Stelle des Feldtyps
+Beschreibungstext, und der ist Pflicht — auch im Auffangen. Erscheinungsformen trägt sie in
+allen Blöcken des Manuals, aus dem eigenen, deutlich umfangreicheren Katalog; im Auffangen
+nicht, denn dieser Block steht ausserhalb des Manuals. An die Stelle des Feldtyps
 tritt die Spielfeldgrösse in Metern — freiwillig, aber nur ganz: Länge und Breite zusammen oder
 keines von beidem. Dazu kommt der Übungstyp — Basisspielform, Spielform oder isolierte Form —,
-den nur die Blöcke tragen, in denen eine Spielform vorkommen kann; Explosivität und Abschluss
-führen ihn nicht.
+den nur die Blöcke tragen, in denen eine Spielform vorkommen kann; Explosivität, Abschluss und
+Auffangen führen ihn nicht.
+
+Hängt der Trainer eine Übung dorthin um, wo es eines dieser Felder nicht gibt, sagt die
+Anwendung unter der Zuordnung, welche seiner erfassten Angaben dabei entfallen werden.
 
 Beiden Altersstufen gemeinsam sind Name und mindestens eine Alterskategorie, dazu die Zahl der
 Kinder, für die die Übung taugt, das benötigte Material, mögliche Varianten und das Bild.
@@ -95,8 +99,9 @@ Training. Unvollständige Fassungen lassen sich erst nach Ergänzung übernehmen
 Gesucht wird über den gesamten Text einer Übung, also auch über Material, Varianten und Ablauf;
 Wortteile genügen. Der Katalog zeigt beide Altersstufen nebeneinander — er ist der eine Ort, an
 dem der ganze sichtbare Bestand zusammensteht. Gefiltert wird nach Trainingsteil, wobei die
-vier Kinderfussball-Teile und die sechs Junioren-Blöcke in zwei beschrifteten Gruppen stehen,
-nach Alterskategorie, Feldtyp, Erscheinungsform, Hauptteilkategorie und Übungstyp,
+vier Kinderfussball-Teile und die sieben Junioren-Blöcke in zwei beschrifteten Gruppen stehen —
+das Auffangen kommt in beiden Gruppen vor und heisst dort gleich; die Beschriftung sagt, welches
+gemeint ist —, nach Alterskategorie, Feldtyp, Erscheinungsform, Hauptteilkategorie und Übungstyp,
 jeweils mit Mehrfachauswahl, sowie nach der Zahl der verfügbaren Kinder — dann erscheinen alle
 Übungen, die mit mindestens so vielen durchführbar sind. Die Erscheinungsformen beider Manuals
 stehen dabei in derselben Liste. Mehrere Werte derselben Art werden als „oder" verstanden,

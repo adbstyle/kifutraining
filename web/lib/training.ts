@@ -49,9 +49,13 @@ export const PFLICHT_TEILE: TrainingsteilSlug[] = ["einleitung", "hauptteil"];
  *  mit oder nicht; es zählt nicht zur Trainingsdauer. Diese Invariante wird auf
  *  DB-Ebene per CHECK erzwungen (`dauer_nicht_auffangen`).
  *
- *  Im Juniorenschema gibt es dazu kein Gegenstück: alle drei Trainingsteile
- *  tragen eine Dauer, ein Pendant zum Auffangen kennt es nicht. */
-export const OHNE_DAUER_TEILE = new Set<string>(["auffangen"]);
+ *  Beide Altersstufen kennen ihn: `auffangen` im Kinderfussball, seit
+ *  Story #128 der Block `jun-auffangen` im Juniorenfussball — dort als
+ *  bewusste Erweiterung über das Manual Fussball Jugendliche hinaus. Weil die
+ *  Einordnung eines Junioren-Trainings der BLOCK ist, steht hier der
+ *  Block-Slug; sein Teil `auffangen` ist einblockig und teilt den Namen mit dem
+ *  Kinderfussball-Teil, weshalb dieser Eintrag beide Ebenen abdeckt. */
+export const OHNE_DAUER_TEILE = new Set<string>(["auffangen", "jun-auffangen"]);
 
 /** Trägt diese Einordnung eine erfassbare Dauer? Gilt für beide Schemata. */
 export function teilTraegtDauer(slug: string): boolean {
@@ -123,7 +127,12 @@ export function groupByTeil<
  *  untergliedert und wird ohne Block-Überschrift und ohne zweiten Richtwert
  *  dargestellt (Story #127). Die Marke steht hier, weil sie aus der Struktur
  *  des Schemas folgt und nicht aus dem Inhalt — sie überlebt darum auch das
- *  Wegfiltern leerer Blöcke in den Leseansichten. */
+ *  Wegfiltern leerer Blöcke in den Leseansichten.
+ *
+ *  `traegtDauer` folgt dem Block, nicht dem Schema: Seit Story #128 gibt es
+ *  auch im Juniorenfussball ein Auffangen, und das trägt keine Dauer. Wie in
+ *  `groupByTeil` ist die Summe eines dauerlosen Blocks 0 statt der Summe
+ *  seiner Zeilen — dort könnte ohnehin keine stehen (DB-CHECK). */
 export function groupJunioren<
   T extends { trainingsteil: string; durationMin: number | null },
 >(
@@ -132,23 +141,34 @@ export function groupJunioren<
   slug: string;
   label: string;
   sum: number;
+  traegtDauer: boolean;
   einblockig: boolean;
-  bloecke: { slug: JuniorenBlockSlug; label: string; items: T[]; sum: number }[];
+  bloecke: {
+    slug: JuniorenBlockSlug;
+    label: string;
+    items: T[];
+    sum: number;
+    traegtDauer: boolean;
+  }[];
 }[] {
   return JUNIOREN_TEILE.map((teil) => {
     const bloecke = teil.bloecke.map(({ slug, label }) => {
       const blockItems = items.filter((i) => i.trainingsteil === slug);
+      const traegtDauer = teilTraegtDauer(slug);
       return {
         slug,
         label,
         items: blockItems,
-        sum: blockItems.reduce((a, i) => a + (i.durationMin ?? 0), 0),
+        sum: traegtDauer ? blockItems.reduce((a, i) => a + (i.durationMin ?? 0), 0) : 0,
+        traegtDauer,
       };
     });
     return {
       slug: teil.slug,
       label: teil.label,
       sum: bloecke.reduce((a, b) => a + b.sum, 0),
+      // Ein Teil trägt eine Dauer, sobald einer seiner Blöcke eine trägt.
+      traegtDauer: bloecke.some((b) => b.traegtDauer),
       einblockig: istEinblockig(teil.slug),
       bloecke,
     };
@@ -209,7 +229,7 @@ function leseBloecke<
  *
  *  Kinderfussball: die vier Trainingsteile, der Hauptteil in seine belegten
  *  Unterkategorien geteilt, die übrigen Teile als ein Block ohne
- *  Unterüberschrift (`label: null`). Juniorenfussball: die drei Trainingsteile
+ *  Unterüberschrift (`label: null`). Juniorenfussball: die vier Trainingsteile
  *  mit ihren belegten Unterblöcken — ein Teil mit nur einem Block bleibt
  *  ebenfalls ohne Unterüberschrift (`label: null`), sonst stünde derselbe Name
  *  zweimal untereinander (Story #127). Leere Teile und Blöcke erscheinen in
@@ -236,9 +256,10 @@ export function leseGliederung<
         key: teil.slug,
         label: teil.label,
         sum: teil.sum,
-        // Im Juniorenschema trägt jeder Trainingsteil eine Dauer; ein Pendant
-        // zum dauerlosen Auffangen kennt es nicht.
-        traegtDauer: true,
+        // Auch im Juniorenschema gibt es einen dauerlosen Teil: das Auffangen
+        // (Story #128). Die Antwort kommt darum aus der Einordnung selbst,
+        // nicht aus dem Schema.
+        traegtDauer: teil.traegtDauer,
         bloecke: teil.bloecke
           .filter((b) => b.items.length > 0)
           .map((b) => ({

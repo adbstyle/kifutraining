@@ -1,5 +1,6 @@
 "use client";
 
+import { Info } from "lucide-react";
 import { ChoiceChip, ChoiceChipGroup, SegmentedControl } from "@/components/ui";
 import { einordnungenFuer, type Altersstufe } from "@/lib/altersstufe";
 
@@ -31,6 +32,7 @@ export function EinordnungField({
   onChange,
   error,
   supportingText,
+  hinweis,
 }: {
   altersstufe: Altersstufe;
   /** Die gewählte Einordnung (Kinderfussball-Trainingsteil oder Junioren-Block). */
@@ -41,6 +43,10 @@ export function EinordnungField({
   onChange: (einordnung: string) => void;
   error?: string;
   supportingText?: string;
+  /** Was die gewählte Einordnung an bereits Erfasstem kosten wird. Steht unter
+   *  dem Feld statt darin: Der Hilfstext erklärt das Feld, dieser Satz eine
+   *  Folge der getroffenen Wahl — und ein Fehler darf ihn nicht verdrängen. */
+  hinweis?: string;
 }) {
   const gruppen = einordnungenFuer(altersstufe);
   const zweistufig = gruppen.some((g) => g.bloecke.length > 0);
@@ -91,6 +97,15 @@ export function EinordnungField({
       >
         {error ?? supportingText}
       </p>
+      {/* Dezenter Hinweis in derselben Form wie die Hinweise des
+          Trainings-Editors (Info-Zeichen in Signalfarbe, Text in der
+          Variantenfarbe): Er meldet eine Folge, blockiert aber nichts. */}
+      {hinweis && (
+        <p className="mt-1.5 flex items-center gap-2 type-label-medium text-on-surface-variant">
+          <Info size={15} className="shrink-0 text-signal" aria-hidden />
+          {hinweis}
+        </p>
+      )}
     </div>
   );
 }
