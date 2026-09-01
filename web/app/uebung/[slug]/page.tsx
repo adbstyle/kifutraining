@@ -29,6 +29,7 @@ import {
   type KategorieSlug,
 } from "@/lib/vocab";
 import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
+import { katalogFilterZiel } from "@/lib/filter-optionen";
 import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
 
 export const dynamic = "force-dynamic";
@@ -102,10 +103,13 @@ export default async function ExerciseDetailPage({
 
   // Einordnung wandert in die Brotkrumen (als Filter-Link auf den Pool); die
   // Eyebrow-Zeile zeigt nur noch ergänzenden Kontext.
+  // Der Brotkrumen-Link zielt auf die feinste Einordnung, die der Katalog
+  // filtern kann — im Kinderfussball-Hauptteil auf die Hauptteilkategorie
+  // (Story #129). Der TEXT bleibt die Einordnung selbst.
   const teilLabel = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
     { label: "Übungspool", href: "/" },
-    { label: teilLabel, href: `/?teil=${ex.trainingsteil}` },
+    { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
     { label: ex.name },
   ];
   // Feldtyp und Spielfeldgrösse schliessen einander aus: der Feldtyp ist eine

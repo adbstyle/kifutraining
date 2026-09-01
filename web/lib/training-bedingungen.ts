@@ -128,7 +128,9 @@ const ALTERSSTUFE_CHECKS: [string, string][] = [
   [
     "ex_uebungstyp_nur_junioren",
     "Der Übungstyp ist eine Angabe des Manuals Fussball Jugendliche und gilt " +
-      "nur in Blöcken, in denen eine Spielform vorkommen kann. Lass ihn hier leer.",
+      "im Aufwärmen, in der Spielform zum Trainingsziel, in der Explosivität, " +
+      "in den Spielformen und im Spiel. Ordne die Übung in einen dieser Blöcke " +
+      "ein oder lass den Übungstyp leer.",
   ],
   [
     "erscheinungsform_je_altersstufe",

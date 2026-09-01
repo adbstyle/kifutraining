@@ -88,3 +88,28 @@ def test_vokabular_kategorien_und_junioren_bloecke():
     # Keine Slug-Kollision zwischen den beiden Erscheinungsform-Vokabularen:
     # sie bilden eine gemeinsame Filter-Dimension (Story 12 PC 1).
     assert not set(vocab["erscheinungsform_junioren"]) & set(vocab["erscheinungsform"])
+
+
+def test_vokabular_einordnungs_slugs_kollisionsfrei():
+    """Einordnung und Hauptteilkategorie teilen sich EINEN Filter-Parameter.
+
+    Story #129: Der Trainingsteil-Filter des Katalogs bietet seit dieser Story
+    die drei Hauptteilkategorien einzeln an, gleichrangig neben den übrigen
+    Kinderfussball-Trainingsteilen und den Junioren-Blöcken. Alle drei
+    Vokabulare landen damit in demselben `?teil=`-Wert und werden anhand ihres
+    Slugs wieder auf die richtige Spalte (`trainingsteil` bzw.
+    `hauptteilkategorie`) verteilt.
+
+    Eine Kollision zwischen zweien dieser Vokabulare wäre darum kein
+    Schönheitsfehler, sondern ein stiller Filterfehler. Präzedenz ist der
+    Kollisionstest der beiden Erscheinungsform-Vokabulare.
+    """
+    vocab = yaml.safe_load(Path("data/vokabular.yaml").read_text(encoding="utf-8"))
+
+    trainingsteil = set(vocab["trainingsteil"])
+    junioren_block = set(vocab["junioren_block"])
+    hauptteilkategorie = set(vocab["hauptteilkategorie"])
+
+    assert not trainingsteil & junioren_block
+    assert not trainingsteil & hauptteilkategorie
+    assert not junioren_block & hauptteilkategorie

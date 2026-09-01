@@ -9,6 +9,7 @@ import {
   type AltersstufeSlug,
 } from "@/lib/vocab";
 import {
+  BLOCK_ERSCHEINUNGSFORM,
   JUNIOREN_TEILE,
   abbildungKifuZuJunioren,
   abbildungJuniorenZuKifu,
@@ -229,11 +230,13 @@ export function traegtErscheinungsform(stufe: Altersstufe, einordnung: string): 
 
 /** Trägt diese Einordnung einen Übungstyp?
  *
- *  Nur im Juniorenfussball, und dort nur in den Blöcken, in denen eine
- *  Spielform vorkommen kann. Explosivität und Abschluss tragen keinen, weil die
- *  Typologie des Manuals spielnahe taktische Trainingsformen gliedert
- *  (PO 2026-08-30); das Auffangen ebenso wenig — es steht ganz ausserhalb des
- *  Manuals (Story #128). Der Kinderfussball kennt den Übungstyp gar nicht.
+ *  Nur im Juniorenfussball — der Kinderfussball kennt den Übungstyp gar nicht.
+ *  Die Explosivität trägt ihn seit Story #133 wie die übrigen Blöcke, optional
+ *  wie überall: Der Product Owner hat seinen Entscheid vom 2026-08-30, sie von
+ *  der Typologie des Manuals auszunehmen, am 2026-09-01 für sie aufgehoben.
+ *  Für den Abschluss gilt er unverändert weiter — dort gliedert die Typologie
+ *  weiterhin nur spielnahe taktische Trainingsformen; das Auffangen steht
+ *  ohnehin ganz ausserhalb des Manuals (Story #128).
  *
  *  Eine Positivliste: Ein neuer Block trägt erst einen Übungstyp, wenn er hier
  *  ausdrücklich genannt wird.
@@ -246,6 +249,7 @@ export function traegtUebungstyp(stufe: Altersstufe, einordnung: string): boolea
     [
       "jun-aufwaermen",
       "jun-spielform-trainingsziel",
+      "jun-explosivitaet",
       "jun-spielformen",
       "jun-spiel",
     ].includes(einordnung)
@@ -331,21 +335,32 @@ export type VorlagenFilter = {
   trainingsteil: string;
   /** Nur im Kinderfussball-Hauptteil: die fixierte Unterkategorie. */
   hauptteilkategorie?: string;
+  /** Zusätzlich zur Einordnung: Erscheinungsformen, die diesen Block ebenfalls
+   *  füllen dürfen (Story #134). Leer bzw. fehlend heisst: allein die
+   *  Einordnung zählt. Gefüllt wird das Feld aus `BLOCK_ERSCHEINUNGSFORM`
+   *  (web/lib/junioren.ts) und nur im Juniorenfussball. */
+  erscheinungsformen?: readonly string[];
 };
 
 /** Welche Bibliotheks-Übungen darf dieser Block eines Trainings aufnehmen?
  *
  *  Eine Übung passt genau dann, wenn ihre Altersstufe der des Trainings
- *  entspricht UND ihre Einordnung dem Zielblock — im Kinderfussball-Hauptteil
- *  zusätzlich die Hauptteilkategorie. Beide Altersstufen führen ihren eigenen
- *  Bestand; über die Stufengrenze wird nichts zugeordnet (Story 6 AK 1/2,
+ *  entspricht UND entweder ihre Einordnung dem Zielblock entspricht ODER sie
+ *  eine Erscheinungsform trägt, die diesen Block anzieht (Story #134,
+ *  `BLOCK_ERSCHEINUNGSFORM` in web/lib/junioren.ts) — im
+ *  Kinderfussball-Hauptteil zusätzlich die Hauptteilkategorie. Der zweite Zweig
+ *  gibt es nur im Juniorenfussball und nur für die zwei Blöcke, denen das
+ *  Manual eine Athletik-Erscheinungsform zuordnet; im Kinderfussball bleibt es
+ *  bei der Einordnung allein. Beide Altersstufen führen ihren eigenen Bestand;
+ *  über die Stufengrenze wird nichts zugeordnet (Story 6 AK 1/2,
  *  Übungswelten).
  *
  *  Diese Funktion speist BEIDES: was der Picker anzeigt und was die Server
  *  Action beim Zuordnen akzeptiert (`pickExercises` und `addTrainingExercise`).
  *  Beide MÜSSEN dieselbe Antwort geben, sonst zeigte der Picker Treffer, die
- *  das Hinzufügen abweist. Dass die Regel trivial geworden ist, ändert daran
- *  nichts — die eine Quelle bleibt.
+ *  das Hinzufügen abweist. Wer die Antwort auf eine konkrete Vorlage braucht,
+ *  nimmt `vorlagePasst()` gleich unten — die Anzeige stellt denselben Filter
+ *  als Abfrage, die Annahme prüft ihn Zeile für Zeile.
  *
  *  `null` heisst: kein gültiges Zuordnungsziel für diese Altersstufe — der
  *  Block gehört dem anderen Lehrmittel an, oder die im Hauptteil zwingende
@@ -361,12 +376,58 @@ export function vorlagenFilterFuer(
   hauptteilkategorie?: string | null,
 ): VorlagenFilter | null {
   if (!einordnungsSlugsFuer(stufe).includes(einordnung)) return null;
+  // Die anziehende Erscheinungsform gibt es nur im Juniorenfussball und nur
+  // dort, wo die Zuordnung einen Eintrag führt. Im Kinderfussball bleibt der
+  // angebotene Bestand allein an die Einordnung gebunden (Story #134 Out of
+  // Scope 5) — `BLOCK_ERSCHEINUNGSFORM` kennt ohnehin nur Junioren-Blöcke, die
+  // Stufenprüfung hier macht das ausdrücklich.
+  const anziehend =
+    stufe === "juniorenfussball"
+      ? BLOCK_ERSCHEINUNGSFORM[einordnung as keyof typeof BLOCK_ERSCHEINUNGSFORM]
+      : undefined;
+  const erscheinungsformen = anziehend ? [anziehend] : undefined;
   if (!traegtHauptteilkategorie(stufe, einordnung))
-    return { altersstufe: stufe, trainingsteil: einordnung };
+    return { altersstufe: stufe, trainingsteil: einordnung, erscheinungsformen };
   if (
     !hauptteilkategorie ||
     !(hauptteilkategorieSlugs as readonly string[]).includes(hauptteilkategorie)
   )
     return null;
   return { altersstufe: stufe, trainingsteil: einordnung, hauptteilkategorie };
+}
+
+/** Passt diese konkrete Vorlage in den Block, den der Filter beschreibt?
+ *
+ *  Das Gegenstück zur Abfrage, die `pickExercises` aus demselben Filter baut:
+ *  Dort wird die Bedingung an die Datenbank gestellt, hier an eine bereits
+ *  gelesene Zeile. Beide lesen dieselben Felder desselben Filters, damit der
+ *  Picker nichts vorschlagen kann, was `addTrainingExercise` danach abweist
+ *  (Story #134 NFR 1/3).
+ *
+ *  Die Altersstufe ist NICHT Teil dieser Antwort. Sie ist die oberste
+ *  Dimension und braucht beim Zuordnen eine eigene Meldung — «passt nicht zu
+ *  diesem Block» schickte den Trainer sonst einen Block suchen, den es für
+ *  diese Übung gar nicht gibt. Der Aufrufer prüft sie darum davor.
+ *
+ *  Auf der Datenebene prüft dies KEIN Constraint: Seit dem Fassungsmodell gibt
+ *  es keinen `plan_exercise_phase_guard` mehr, der eine Fassung inhaltlich
+ *  gegen ihren Block hielte. Die Regel lebt allein in der Server Action, und
+ *  das bleibt so — sie ist eine Vorschlags- und Annahmeregel für neue
+ *  Zuordnungen, keine Invariante über dem Bestand (Story #134 NFR 4). */
+export function vorlagePasst(
+  filter: VorlagenFilter,
+  vorlage: { trainingsteil: string; hauptteilkategorie: string | null; erscheinungsform?: string[] | null },
+): boolean {
+  // Zweig 1: die Einordnung. Im Kinderfussball-Hauptteil muss zusätzlich die
+  // Unterkategorie stimmen — sie grenzt die Einordnung ein, sie ersetzt sie nicht.
+  const ueberEinordnung =
+    vorlage.trainingsteil === filter.trainingsteil &&
+    (!filter.hauptteilkategorie ||
+      vorlage.hauptteilkategorie === filter.hauptteilkategorie);
+  if (ueberEinordnung) return true;
+  // Zweig 2: die anziehende Erscheinungsform. Sie steht bewusst OHNE
+  // Bedingung an die Einordnung der Vorlage da (PO-Entscheid 2026-09-01):
+  // Kreuztreffer zwischen den beiden Zuordnungen sind gewollt.
+  const formen = vorlage.erscheinungsform ?? [];
+  return (filter.erscheinungsformen ?? []).some((f) => formen.includes(f));
 }
