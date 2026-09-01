@@ -99,8 +99,10 @@ ersten Moment eigenständig, und ein Vermerk darauf sagte über ihren heutigen I
 Beide Ansichten stehen für jedes sichtbare Training offen, auch für fremde. Die
 Durchführen-Ansicht ist für den Platz gedacht: ein Trainingsteil nach dem anderen mit seinen
 belegten Blöcken, grosse Bedienflächen, und der Bildschirm bleibt wach, solange sie geöffnet
-ist. Das Ziel steht zu Beginn, wo es beim Anpfiff noch zählt. Jede Übung erscheint mit vollem
-Ablauf, Diagramm, Feldtyp oder Spielfeldgrösse, Kinderzahl, Material und Dauer. Der Druck zeigt
+ist. Das Ziel steht zu Beginn, wo es beim Anpfiff noch zählt. Jede Übung erscheint mit
+Diagramm, Feldtyp oder Spielfeldgrösse, Kinderzahl, Material und Dauer, darunter der volle
+Ablauf und zuunterst — wo die Übung einen trägt — der Übungstyp; die Erscheinungsform zeigen
+beide Ansichten nicht, sie ordnet ein und hilft auf dem Platz nicht weiter. Der Druck zeigt
 dasselbe als zusammenhängende, druckfertige Seite zum Mitnehmen, das Ziel im Kopf. Leere Blöcke
 erscheinen in beiden Ansichten nicht.
 

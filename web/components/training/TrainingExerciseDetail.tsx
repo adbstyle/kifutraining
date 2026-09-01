@@ -82,10 +82,11 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
         />
       </div>
 
+      {/* Eckdaten fürs Aufbauen — der Übungstyp gehört seit Story #124 nicht
+          mehr dazu, er steht unterhalb des Ablaufs. */}
       {(item.hauptteilkategorie ||
         item.feldtyp ||
         spielfeld ||
-        item.uebungstyp ||
         anzahl ||
         item.material.length > 0) && (
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
@@ -99,12 +100,6 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
             <Meta label="Hauptteilkategorie">
               {hkatLabels[item.hauptteilkategorie as keyof typeof hkatLabels] ??
                 item.hauptteilkategorie}
-            </Meta>
-          )}
-          {item.uebungstyp && (
-            <Meta label="Übungstyp">
-              {uebungstypLabels[item.uebungstyp as keyof typeof uebungstypLabels] ??
-                item.uebungstyp}
             </Meta>
           )}
           {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
@@ -126,6 +121,19 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
           <p className="type-body-medium text-on-surface-variant">Kein Ablauf erfasst.</p>
         )}
       </div>
+
+      {/* Übungstyp — hinter dem Ablauf (Story #124, PO 2026-08-31): er ordnet
+          die Übung ein und speist die Filter, für die Durchführung auf dem Platz
+          sagt er nichts. Die Erscheinungsform bleibt hier weiterhin ganz weg,
+          Durchführungs- wie Druckansicht zeigen nur Durchführungsrelevantes. */}
+      {item.uebungstyp && (
+        <div className="mt-4">
+          <Meta label="Übungstyp">
+            {uebungstypLabels[item.uebungstyp as keyof typeof uebungstypLabels] ??
+              item.uebungstyp}
+          </Meta>
+        </div>
+      )}
     </article>
   );
 }

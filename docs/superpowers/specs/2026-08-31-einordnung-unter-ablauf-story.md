@@ -2,6 +2,8 @@
 
 Erfasst 2026-08-31. Ebene: User Story (Business).
 
+Status: UMGESETZT 2026-09-01 — auf dem Branch feat/stories-124-126-127-128.
+
 Auslöser ist eine Beobachtung des Product Owners an der Übungsseite auf Staging: Übungstyp
 und Erscheinungsform stehen dort zwischen Bild und Übungsablauf und damit vor dem, weswegen
 der Trainer die Seite überhaupt öffnet. Beide Angaben dienen dem Einordnen und Filtern; wer

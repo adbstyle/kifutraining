@@ -133,11 +133,14 @@ Browser, bevor der Upload beginnt, auf höchstens zweitausend Bildpunkte an der 
 
 Jede Übung, die ein Trainer ansehen darf, lässt sich einzeln ausdrucken — auch ohne Konto und
 ohne dafür ein Training anzulegen. Das Blatt trägt Name, Alterskategorien, Bild oder Diagramm,
-den Trainingsteil oder Block, im Kinderfussball-Hauptteil dessen Kategorie, Erscheinungsform,
-Feldtyp oder Spielfeldgrösse, im Juniorenfussball den Übungstyp, dazu Kinderzahl, Material,
-Ablauf und Varianten. Was die Übung nicht führt, erscheint auch nicht; fehlen Bild und
-Diagramm, steht dort eine leere Feld-Skizze. Eine Dauer trägt das Blatt nie, weil eine Übung in
-der Bibliothek keine hat.
+den Trainingsteil oder Block, im Kinderfussball-Hauptteil dessen Kategorie, Feldtyp oder
+Spielfeldgrösse, dazu Kinderzahl und Material, danach Ablauf und Varianten und zuunterst, was
+der Einordnung dient: Übungstyp und Erscheinungsform. Diese Reihenfolge gilt auf dem Papier wie
+am Bildschirm — wer eine Übung öffnet, liest zuerst, was gemacht wird, und trifft erst danach
+auf die beiden Einordnungsangaben, die dort beisammenstehen. Führt die Übung weder das eine
+noch das andere, steht an dieser Stelle nichts. Was die Übung nicht führt, erscheint auch
+nicht; fehlen Bild und Diagramm, steht dort eine leere Feld-Skizze. Eine Dauer trägt das Blatt
+nie, weil eine Übung in der Bibliothek keine hat.
 
 Im Fuss steht, woher die Übung stammt: aus dem Manual Kinderfussball des SFV oder aus der
 Gemeinschaft der Trainerinnen und Trainer. Ein Trainername steht nie dabei. Beim eigenen, noch
