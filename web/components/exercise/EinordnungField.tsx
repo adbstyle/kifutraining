@@ -1,5 +1,6 @@
 "use client";
 
+import { Info } from "lucide-react";
 import { ChoiceChip, ChoiceChipGroup, SegmentedControl } from "@/components/ui";
 import { einordnungenFuer, type Altersstufe } from "@/lib/altersstufe";
 
@@ -15,6 +16,11 @@ import { einordnungenFuer, type Altersstufe } from "@/lib/altersstufe";
  *  Segmente, weil «Spielformen und unterstützende Übungen» in keiner
  *  Segmentleiste lesbar bleibt; sie umbrechen.
  *
+ *  Ein Teil mit genau EINEM Block ist dabei keine zweite Ebene: Seine Chip-
+ *  Reihe wäre eine Wahl ohne Alternative, und der Chip trüge denselben Namen
+ *  wie das Segment darüber. Ihn zu wählen wählt darum unmittelbar seinen Block,
+ *  Chips erscheinen bei ihm keine (Story #127).
+ *
  *  Der Trainingsteil ist reine Anzeige-Navigation und wird nirgends
  *  gespeichert: gespeichert ist immer nur die Einordnung selbst. Beim
  *  Bearbeiten leitet der Aufrufer den Teil aus dem gespeicherten Block ab. */
@@ -26,6 +32,7 @@ export function EinordnungField({
   onChange,
   error,
   supportingText,
+  hinweis,
 }: {
   altersstufe: Altersstufe;
   /** Die gewählte Einordnung (Kinderfussball-Trainingsteil oder Junioren-Block). */
@@ -36,10 +43,17 @@ export function EinordnungField({
   onChange: (einordnung: string) => void;
   error?: string;
   supportingText?: string;
+  /** Was die gewählte Einordnung an bereits Erfasstem kosten wird. Steht unter
+   *  dem Feld statt darin: Der Hilfstext erklärt das Feld, dieser Satz eine
+   *  Folge der getroffenen Wahl — und ein Fehler darf ihn nicht verdrängen. */
+  hinweis?: string;
 }) {
   const gruppen = einordnungenFuer(altersstufe);
   const zweistufig = gruppen.some((g) => g.bloecke.length > 0);
   const offeneGruppe = gruppen.find((g) => g.teil === teil) ?? gruppen[0];
+  // Die Chip-Reihe lohnt erst ab zwei Blöcken; darunter ist die Wahl bereits
+  // mit dem Segment getroffen.
+  const chipsSichtbar = zweistufig && offeneGruppe.bloecke.length > 1;
 
   return (
     <div>
@@ -53,9 +67,15 @@ export function EinordnungField({
         options={gruppen.map((g) => ({ value: g.teil, label: g.label }))}
         // Einstufig ist der Trainingsteil selbst die Einordnung.
         value={zweistufig ? offeneGruppe.teil : wert || null}
-        onChange={(v) => (zweistufig ? onTeilChange(v) : onChange(v))}
+        onChange={(v) => {
+          if (!zweistufig) return onChange(v);
+          onTeilChange(v);
+          // Einblockiger Teil: die Wahl ist mit dem Segment schon getroffen.
+          const gruppe = gruppen.find((g) => g.teil === v);
+          if (gruppe?.bloecke.length === 1) onChange(gruppe.bloecke[0].slug);
+        }}
       />
-      {zweistufig && (
+      {chipsSichtbar && (
         <ChoiceChipGroup
           ariaLabel={`Block im Trainingsteil ${offeneGruppe.label}`}
           className="mt-3"
@@ -77,6 +97,16 @@ export function EinordnungField({
       >
         {error ?? supportingText}
       </p>
+      {/* Dezenter Hinweis nach dem Muster der Hinweiszeile des
+          Trainings-Editors (Styleguide «Leerzustand & Hinweiszeile»):
+          Info-Zeichen in Signalfarbe, Text im Fliesstext-Schnitt. Er meldet
+          eine Folge, blockiert aber nichts. */}
+      {hinweis && (
+        <p className="mt-1.5 flex items-start gap-2 type-body-small text-on-surface-variant">
+          <Info size={15} className="mt-0.5 shrink-0 text-signal" aria-hidden />
+          {hinweis}
+        </p>
+      )}
     </div>
   );
 }

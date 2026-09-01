@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-08-31. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-09-01. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -69,7 +69,7 @@ die Community sieht jeweils den aktuellen Stand.
 
 Öffentlich sein setzt in beiden Altersstufen mindestens eine Alterskategorie voraus, dazu die
 belegten Teile des jeweiligen Manuals — im Kinderfussball Einleitung und freies Spiel, im
-Juniorenfussball fünf der sechs Blöcke. Die [Trainings-Seite](trainings.md) nennt sie im
+Juniorenfussball vier der sieben Blöcke. Die [Trainings-Seite](trainings.md) nennt sie im
 Einzelnen. Diese Bedingungen gelten dauerhaft, nicht nur beim Umschalten, und die Datenebene
 erzwingt sie, nicht nur die Oberfläche. Wer sein Training darunter bringen will, setzt es
 zuerst auf Entwurf.

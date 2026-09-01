@@ -115,9 +115,10 @@ export type EinordnungsGruppe = {
  *
  *  Kinderfussball: die vier Trainingsteile des Manuals Fussball Kinder, flach
  *  — dort gibt es keine zweite Ebene, `bloecke` bleibt leer.
- *  Juniorenfussball: die drei Trainingsteile mit ihren insgesamt sechs Blöcken.
+ *  Juniorenfussball: die vier Trainingsteile mit ihren insgesamt sieben Blöcken.
  *  Gewählt wird der Block; der Teil bleibt sichtbar, damit die Zugehörigkeit
- *  erkennbar ist (Story 3 AK 3).
+ *  erkennbar ist (Story 3 AK 3). Auffangen und Abschluss tragen je genau einen
+ *  Block und sind darum nicht untergliedert (Stories #127/#128).
  *
  *  Spiegelt die CHECKs `ex_trainingsteil_je_altersstufe` und
  *  `te_trainingsteil_je_altersstufe`: die Vereinigung aller hier genannten
@@ -168,8 +169,8 @@ export function andereAltersstufe(stufe: Altersstufe): Altersstufe {
  *
  *  Ein VORSCHLAG, mehr nicht: der Trainer bestätigt oder wählt anders. `null`
  *  heisst «die Abbildungsregel kennt für diese Einordnung keine Entsprechung» —
- *  Auffangen hat im Juniorenschema keine, Explosivität keine im Kinderfussball.
- *  Dann beginnt die Wahl leer.
+ *  Explosivität etwa hat keine im Kinderfussball. Dann beginnt die Wahl leer.
+ *  Das Auffangen hat seit Story #128 in beiden Richtungen eine Entsprechung.
  *
  *  Die Regel selbst steht in `lib/junioren.ts` und stammt aus dem abgenommenen
  *  Entscheidungsdokument; hier wird sie nur auf die Form gebracht, die das
@@ -205,25 +206,37 @@ export const FREIES_SPIEL = "fussball-spielen";
 /** Trägt diese Einordnung Erscheinungsformen?
  *
  *  Kinderfussball: nur Einleitung und Hauptteil — Auffangen und Ausklang
- *  bleiben aussen vor. Juniorenfussball: alle sechs Blöcke, den Ausklang
+ *  bleiben aussen vor. Juniorenfussball: alle Blöcke des Manuals, den Abschluss
  *  eingeschlossen. Er ist im Manual mehr als das Ausklingen des
  *  Kinderfussballs — Cool-down, Mobilität und Austausch, und der Austausch
  *  trifft «Positiv miteinander umgehen» (PO 2026-08-30).
+ *
+ *  Ausgenommen ist einzig `jun-auffangen`: Betreuung vor Trainingsbeginn, für
+ *  die das Manual gar keine Erscheinungsform vorsieht — der Block steht
+ *  ausserhalb des Manuals (Story #128). Damit gilt in beiden Altersstufen
+ *  dasselbe: Das Auffangen trägt keine.
  *
  *  Spiegelt die CHECKs `erscheinungsform_je_altersstufe` und
  *  `te_erscheinungsform_je_altersstufe`. */
 export function traegtErscheinungsform(stufe: Altersstufe, einordnung: string): boolean {
   if (stufe === "juniorenfussball")
-    return (junioren_blockSlugs as readonly string[]).includes(einordnung);
+    return (
+      einordnung !== "jun-auffangen" &&
+      (junioren_blockSlugs as readonly string[]).includes(einordnung)
+    );
   return einordnung === "einleitung" || einordnung === "hauptteil";
 }
 
 /** Trägt diese Einordnung einen Übungstyp?
  *
  *  Nur im Juniorenfussball, und dort nur in den Blöcken, in denen eine
- *  Spielform vorkommen kann. Explosivität und Ausklang tragen keinen, weil die
+ *  Spielform vorkommen kann. Explosivität und Abschluss tragen keinen, weil die
  *  Typologie des Manuals spielnahe taktische Trainingsformen gliedert
- *  (PO 2026-08-30). Der Kinderfussball kennt den Übungstyp gar nicht.
+ *  (PO 2026-08-30); das Auffangen ebenso wenig — es steht ganz ausserhalb des
+ *  Manuals (Story #128). Der Kinderfussball kennt den Übungstyp gar nicht.
+ *
+ *  Eine Positivliste: Ein neuer Block trägt erst einen Übungstyp, wenn er hier
+ *  ausdrücklich genannt wird.
  *
  *  Spiegelt den CHECK `ex_uebungstyp_nur_junioren` (gleichnamig auf beiden
  *  Tabellen). */
@@ -284,7 +297,7 @@ export function traegtHauptteilkategorie(
  *
  *  Der Fahrplan «Offen starten – Üben – Wett-eifern» ist Didaktik des Manuals
  *  Fussball Kinder und bleibt ihm vorbehalten: eine Junioren-Übung trägt in
- *  allen sechs Blöcken einen Beschreibungstext, und zwar zwingend. Am Manual
+ *  jedem ihrer Blöcke einen Beschreibungstext, und zwar zwingend. Am Manual
  *  belegt — die Wörter «offen starten», «üben» und «wetteifern» kommen im
  *  Manual Fussball Jugendliche kein einziges Mal vor (PO 2026-08-30).
  *

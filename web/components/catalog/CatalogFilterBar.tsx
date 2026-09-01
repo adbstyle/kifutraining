@@ -36,10 +36,14 @@ export type CatalogFilters = {
 const toOptions = (rec: Record<string, string>) =>
   Object.entries(rec).map(([value, label]) => ({ value, label }));
 // Trainingsteil-Filter über beide Welten: die vier Trainingsteile des Manuals
-// Fussball Kinder und die sechs Blöcke des Manuals Fussball Jugendliche, in
-// zwei beschrifteten Gruppen. Der Katalog filtert bewusst über BEIDE
-// Altersstufen (Story 2 Out of Scope 2) — er ist der eine Ort, an dem der
-// ganze sichtbare Bestand nebeneinandersteht.
+// Fussball Kinder und die sieben Blöcke des Juniorenschemas, in zwei
+// beschrifteten Gruppen. Der Katalog filtert bewusst über BEIDE Altersstufen
+// (Story 2 Out of Scope 2) — er ist der eine Ort, an dem der ganze sichtbare
+// Bestand nebeneinandersteht.
+//
+// Das «Auffangen» kommt seit Story #128 in beiden Gruppen vor und heisst dort
+// gleich. Unterschieden werden die zwei über ihre Gruppen-Beschriftung; ein
+// Label-Zusatz wäre daneben doppelt gemoppelt (Entscheid Story #128 AC 12).
 const teilOptions: { value: string; label: string; group: string }[] = [
   ...Object.entries(teilLabels).map(([value, label]) => ({
     value,

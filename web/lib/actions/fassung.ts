@@ -16,6 +16,7 @@ import {
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
 import { alsAltersstufe } from "@/lib/altersstufe";
+import { teilTraegtDauer } from "@/lib/training";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 
@@ -100,7 +101,7 @@ export async function updateFassung(
   // Eine Fassung wird nach den Einordnungen der Altersstufe IHRES Trainings
   // eingeordnet — dieselbe Menge, die auch eine Bibliotheks-Übung dieser Stufe
   // kennt. Eine eigene Optionsliste braucht es dafür nicht mehr: seit der
-  // Trennung der Altersstufen sind Übung und Fassung an denselben sechs bzw.
+  // Trennung der Altersstufen sind Übung und Fassung an denselben sieben bzw.
   // vier Werten zuhause.
   const parsed = parseUebungsInhalt(form, { altersstufe: fassung.altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
@@ -129,6 +130,10 @@ export async function updateFassung(
       trainingsteil === "hauptteil" ? hkat : null,
       fassungId,
     );
+    // Wandert die Fassung in ein Auffangen, entfällt ihre Dauer — sie zählt
+    // dort nicht zur Trainingszeit. Ohne dieses Leeren liefe das UPDATE in den
+    // CHECK `dauer_nicht_auffangen`.
+    if (!teilTraegtDauer(trainingsteil)) update.duration_min = null;
   }
 
   // Bild: ersetzen (neue Datei) oder entfernen (Schalter). Beides wirkt erst

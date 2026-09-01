@@ -82,8 +82,8 @@ export function parseUebungsInhalt(
 
   if (!name) errors.name = "Bitte einen Namen angeben.";
   // Die Einordnung ist im Kinderfussball einer der vier Trainingsteile des
-  // Manuals Fussball Kinder, im Juniorenfussball einer der sechs Blöcke des
-  // Manuals Fussball Jugendliche — nie beides. Die Mengen sind
+  // Manuals Fussball Kinder, im Juniorenfussball einer der sieben Blöcke des
+  // Juniorenschemas — nie beides. Die Mengen sind
   // überschneidungsfrei, dafür sorgen die Slugs.
   if (!einordnungsSlugsFuer(altersstufe).includes(trainingsteil))
     errors.trainingsteil = "Bitte eine Einordnung wählen.";

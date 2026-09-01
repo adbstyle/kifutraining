@@ -32,11 +32,7 @@ import { InBibliothekButton } from "./InBibliothekButton";
 import { DurationStepper } from "./DurationStepper";
 import { StufenField } from "./StufenField";
 import { ZeitAbgleich, GesamtAbgleich } from "./ZeitAbgleich";
-import {
-  LEER_HINWEIS_BLOECKE,
-  GESAMTDAUER_JUNIOREN,
-  type Einordnung,
-} from "@/lib/junioren";
+import { GESAMTDAUER_JUNIOREN, type Einordnung } from "@/lib/junioren";
 import { kategorienFuer } from "@/lib/altersstufe";
 import {
   altersstufe as altersstufeLabels,
@@ -50,6 +46,7 @@ import {
   TRAININGSTEILE,
   HAUPTTEILKATEGORIEN,
   ANZAHL_HINWEIS,
+  LEER_HINWEIS,
   stufenAbgedeckt,
   teilTraegtDauer,
   groupHauptteil,
@@ -334,78 +331,107 @@ export function TrainingEditor({
         )}
       </div>
 
-      {/* Juniorenschema: drei Trainingsteile, die Unterblöcke stets sichtbar —
+      {/* Juniorenschema: vier Trainingsteile, die Unterblöcke stets sichtbar —
           auch leere, damit die Struktur beim Planen erkennbar bleibt
-          (Story 4 AC 1, Story 5a AC 1–3). */}
+          (Story 4 AC 1, Story 5a AC 1–3).
+
+          Ein Teil mit genau einem Block ist keine Verschachtelung: Er zeigt
+          weder Block-Überschrift noch zweiten Richtwert, und Liste wie
+          Hinzufügen-Knopf hängen direkt am Teil (Story #127).
+
+          Das Auffangen trägt keine Dauer (Story #128) — dort erscheinen weder
+          Dauer-Stepper noch Summe noch «ohne Dauer»-Meldung, und einen
+          Richtwert gibt es zu ihm ohnehin keinen. */}
       {junioren &&
         groupJunioren(training.exercises).map((teil) => {
-          const teilDur = teil.bloecke.reduce<number>(
-            (a, b) => a + b.items.reduce<number>((x, it) => x + (dur(it) ?? 0), 0),
-            0,
-          );
-          const teilMissing = teil.bloecke.reduce<number>(
-            (a, b) => a + b.items.filter((it) => dur(it) == null).length,
-            0,
-          );
+          const teilDur = teil.traegtDauer
+            ? teil.bloecke.reduce<number>(
+                (a, b) =>
+                  a +
+                  (b.traegtDauer
+                    ? b.items.reduce<number>((x, it) => x + (dur(it) ?? 0), 0)
+                    : 0),
+                0,
+              )
+            : 0;
+          const teilMissing = teil.traegtDauer
+            ? teil.bloecke.reduce<number>(
+                (a, b) =>
+                  a + (b.traegtDauer ? b.items.filter((it) => dur(it) == null).length : 0),
+                0,
+              )
+            : 0;
           return (
             <Card key={teil.slug} className="p-4 sm:p-5">
-              <div className="flex items-center gap-2">
-                <h2 className="type-title-medium text-on-surface">{teil.label}</h2>
-                {teilDur > 0 && (
-                  <span className="type-label-medium text-on-surface-variant">
-                    {formatDuration(teilDur)}
-                  </span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="type-title-medium text-on-surface">{teil.label}</h2>
+                  {teilDur > 0 && (
+                    <span className="type-label-medium text-on-surface-variant">
+                      {formatDuration(teilDur)}
+                    </span>
+                  )}
+                  <ZeitAbgleich slug={teil.slug} sum={teilDur} />
+                </div>
+                {/* Einblockig: der Knopf gehört zum Teil selbst — es gibt
+                    darunter keine Ebene mehr, an der er hängen könnte. */}
+                {teil.einblockig && (
+                  <Tooltip label="Übung hinzufügen">
+                    <IconButton
+                      icon={Plus}
+                      label={`Übung zu ${teil.label} hinzufügen`}
+                      size="sm"
+                      onClick={() => setOpen({ teil: teil.bloecke[0].slug })}
+                    />
+                  </Tooltip>
                 )}
-                <ZeitAbgleich slug={teil.slug} sum={teilDur} />
               </div>
 
               <div className="mt-4 flex flex-col gap-5">
                 {teil.bloecke.map((b) => {
-                  const blockDur = b.items.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
+                  const blockDur = b.traegtDauer
+                    ? b.items.reduce<number>((a, it) => a + (dur(it) ?? 0), 0)
+                    : 0;
                   return (
                     <div key={b.slug}>
-                      <div className="mb-2 flex items-center justify-between gap-3">
-                        <h3 className="type-title-small text-on-surface">
-                          {b.label}
-                          {blockDur > 0 && (
-                            <span className="ml-2 type-label-medium text-on-surface-variant">
-                              {formatDuration(blockDur)}
+                      {!teil.einblockig && (
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <h3 className="type-title-small text-on-surface">
+                            {b.label}
+                            {blockDur > 0 && (
+                              <span className="ml-2 type-label-medium text-on-surface-variant">
+                                {formatDuration(blockDur)}
+                              </span>
+                            )}
+                            <span className="ml-2">
+                              <ZeitAbgleich slug={b.slug} sum={blockDur} />
                             </span>
-                          )}
-                          <span className="ml-2">
-                            <ZeitAbgleich slug={b.slug} sum={blockDur} />
-                          </span>
-                        </h3>
-                        <Tooltip label="Übung hinzufügen">
-                          <IconButton
-                            icon={Plus}
-                            label={`Übung zu ${b.label} hinzufügen`}
-                            size="sm"
-                            onClick={() => setOpen({ teil: b.slug })}
-                          />
-                        </Tooltip>
-                      </div>
+                          </h3>
+                          <Tooltip label="Übung hinzufügen">
+                            <IconButton
+                              icon={Plus}
+                              label={`Übung zu ${b.label} hinzufügen`}
+                              size="sm"
+                              onClick={() => setOpen({ teil: b.slug })}
+                            />
+                          </Tooltip>
+                        </div>
+                      )}
+                      {/* Ist der Block leer und sieht ihn das Lehrmittel als
+                          gesetzt an, tritt der Hinweis an die Stelle der
+                          neutralen Zeile — eine Meldung, im Block selbst
+                          (Story 5a AC 8/9, Story #126). */}
                       <ExerciseList
                         items={b.items}
                         trainingId={training.id}
                         trainingStufen={stufen}
-                        showDuration
+                        showDuration={b.traegtDauer}
+                        leerHinweis={LEER_HINWEIS[b.slug]}
                         dur={dur}
                         onDuration={changeDuration}
                         onMove={move}
                         onRemove={remove}
                       />
-                      {/* Leere Blöcke, die das Lehrmittel als gesetzt ansieht:
-                          Hinweis, keine Blockade (Story 5a AC 8/9). */}
-                      {b.items.length === 0 &&
-                        LEER_HINWEIS_BLOECKE.includes(b.slug) && (
-                          <p className="mt-2 flex items-center gap-2 type-label-medium text-on-surface-variant">
-                            <Info size={15} className="shrink-0 text-signal" aria-hidden />
-                            {b.slug === "jun-spiel"
-                              ? "Das Spiel ist noch leer — im Juniorenfussball gehört das freie Spiel in jedes Training."
-                              : `«${b.label}» ist noch leer.`}
-                          </p>
-                        )}
                     </div>
                   );
                 })}
@@ -433,8 +459,6 @@ export function TrainingEditor({
           const teilDur = teilItems.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
           const tooMany = teilItems.length > ANZAHL_HINWEIS[slug];
           const teilMissing = teilItems.filter((it) => dur(it) == null).length;
-          const spielLeer =
-            subgroups.find((g) => g.slug === "fussball-spielen")?.items.length === 0;
           return (
             <Card key={slug} className="p-4 sm:p-5">
               <div className="flex items-center gap-2">
@@ -467,11 +491,16 @@ export function TrainingEditor({
                         />
                       </Tooltip>
                     </div>
+                    {/* Das freie Spiel ist die einzige Kinderfussball-Stelle
+                        mit einem Leer-Hinweis. Er steht seit Story #126 in
+                        seiner Unterkategorie statt am Fuss der ganzen Karte —
+                        dort war nicht zu sehen, welcher Abschnitt gemeint ist. */}
                     <ExerciseList
                       items={g.items}
                       trainingId={training.id}
                       trainingStufen={stufen}
                       showDuration={traegtDauer}
+                      leerHinweis={LEER_HINWEIS[g.slug]}
                       dur={dur}
                       onDuration={changeDuration}
                       onMove={move}
@@ -481,15 +510,8 @@ export function TrainingEditor({
                 ))}
               </div>
 
-              {(spielLeer || tooMany || teilMissing > 0) && (
+              {(tooMany || teilMissing > 0) && (
                 <div className="mt-3 flex flex-col gap-1">
-                  {spielLeer && (
-                    <p className="flex items-center gap-2 type-label-medium text-on-surface-variant">
-                      <Info size={15} className="shrink-0 text-signal" aria-hidden />
-                      Das freie Spiel («Fussball spielen») ist noch leer — im
-                      Kinderfussball gehört es in jedes Training.
-                    </p>
-                  )}
                   {tooMany && (
                     <p className="flex items-center gap-2 type-label-medium text-on-surface-variant">
                       <Info size={15} className="shrink-0 text-signal" aria-hidden />
@@ -707,13 +729,16 @@ export function TrainingEditor({
 }
 
 /** Geordnete Übungsliste eines (Unter-)Abschnitts: leerer Zustand oder die
- *  Zuordnungen als umsortierbare Zeilen. Wird vom Trainingsteil und von jeder
- *  Hauptteil-Unterkategorie gleichermassen genutzt. */
+ *  Zuordnungen als umsortierbare Zeilen. Wird vom Trainingsteil, von jedem
+ *  Junioren-Block und von jeder Hauptteil-Unterkategorie gleichermassen
+ *  genutzt — darum stellen beide Altersstufen ihre leeren Abschnitte
+ *  zwangsläufig gleich dar (Story #126 NFR 3). */
 function ExerciseList({
   items,
   trainingId,
   trainingStufen,
   showDuration,
+  leerHinweis,
   dur,
   onDuration,
   onMove,
@@ -723,13 +748,25 @@ function ExerciseList({
   trainingId: string;
   trainingStufen: string[];
   showDuration: boolean;
+  /** Was zu melden ist, wenn dieser Abschnitt leer bleibt und das Lehrmittel
+   *  ihn als gesetzt ansieht (`LEER_HINWEIS`). Gesetzt, ersetzt die Meldung die
+   *  neutrale Zeile — nie beides, sonst stünde dieselbe Sachlage doppelt da. */
+  leerHinweis?: string;
   dur: (item: TrainingExerciseItem) => number | null;
   onDuration: (item: TrainingExerciseItem, next: number | null) => void;
   onMove: (item: TrainingExerciseItem, dir: -1 | 1) => void;
   onRemove: (item: TrainingExerciseItem) => void;
 }) {
   if (items.length === 0)
-    return (
+    // Derselbe Schriftschnitt wie die neutrale Zeile: Es ist dieselbe Aussage,
+    // bloss begründet. Das Icon trägt das Signal — ohne Farbwahrnehmung bleibt
+    // der Hinweis vom neutralen Leerzustand unterscheidbar (NFR 4).
+    return leerHinweis ? (
+      <p className="flex items-start gap-2 type-body-small text-on-surface-variant">
+        <Info size={15} className="mt-0.5 shrink-0 text-signal" aria-hidden />
+        {leerHinweis}
+      </p>
+    ) : (
       <p className="type-body-small text-on-surface-variant">
         Noch keine Übung zugeordnet.
       </p>
