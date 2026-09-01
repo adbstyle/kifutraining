@@ -8,16 +8,16 @@ import { FilterChip, MultiSelect, Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
   trainingsteil as teilLabels,
-  feldtyp as feldLabels,
-  erscheinungsform as formLabels,
-  erscheinungsform_junioren as formJuniorenLabels,
   hauptteilkategorie as hkatLabels,
-  uebungstyp as uebungstypLabels,
   junioren_block as juniorenBlockLabels,
   altersstufe as altersstufeLabels,
-  kategorienSlugs,
 } from "@/lib/vocab";
-import { kategorieStufe } from "@/lib/labels";
+import {
+  feldOptionen,
+  formOptionen,
+  stufenOptionen,
+  typOptionen,
+} from "@/lib/filter-optionen";
 
 export type CatalogFilters = {
   teil: string[];
@@ -56,14 +56,7 @@ const teilOptions: { value: string; label: string; group: string }[] = [
     group: altersstufeLabels.juniorenfussball,
   })),
 ];
-const feldOptions = toOptions(feldLabels);
-// Beide Erscheinungsform-Vokabulare als EINE Dimension: gewählte Werte wirken
-// untereinander als ODER, gleich aus welcher Quelle (Story 12 PC 1). Flach und
-// ohne Spielphasen-Gruppierung (Out of Scope 2).
-const formOptions = [...toOptions(formLabels), ...toOptions(formJuniorenLabels)];
 const hkatOptions = toOptions(hkatLabels);
-const typOptions = toOptions(uebungstypLabels);
-const stufenOptions = kategorienSlugs.map((k) => ({ value: k, label: kategorieStufe[k] }));
 
 /* Such-/Filterleiste für den Übungspool — eine durchgehende, umbrechende Zeile
    statt Sidebar, analog zur Trainings-Filter-Bar. Mehrfach-Dimensionen sind
@@ -157,7 +150,7 @@ export function CatalogFilterBar({
       <MultiSelect
         label="Alterskategorie"
         hideLabel
-        options={stufenOptions}
+        options={stufenOptionen}
         value={filters.kat}
         onChange={(v) => setList("kat", v)}
         searchable={false}
@@ -167,7 +160,7 @@ export function CatalogFilterBar({
       <MultiSelect
         label="Feldtyp"
         hideLabel
-        options={feldOptions}
+        options={feldOptionen}
         value={filters.feld}
         onChange={(v) => setList("feld", v)}
         searchable={false}
@@ -177,7 +170,7 @@ export function CatalogFilterBar({
       <MultiSelect
         label="Erscheinungsform"
         hideLabel
-        options={formOptions}
+        options={formOptionen}
         value={filters.form}
         onChange={(v) => setList("form", v)}
         searchable={false}
@@ -197,7 +190,7 @@ export function CatalogFilterBar({
       <MultiSelect
         label="Übungstyp"
         hideLabel
-        options={typOptions}
+        options={typOptionen}
         value={filters.typ}
         onChange={(v) => setList("typ", v)}
         searchable={false}

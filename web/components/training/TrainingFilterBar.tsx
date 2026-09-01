@@ -4,10 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, ClipboardList } from "lucide-react";
 import { FilterChip, MultiSelect, Button } from "@/components/ui";
-import { kategorieStufe } from "@/lib/labels";
-import { kategorienSlugs } from "@/lib/vocab";
-
-const stufenOptions = kategorienSlugs.map((k) => ({ value: k, label: kategorieStufe[k] }));
+import { stufenOptionen } from "@/lib/filter-optionen";
 
 /* Such-/Filterleiste für die Trainings-Übersicht.
    URL-basierter Zustand wie im Übungskatalog: jede Änderung schreibt in die URL
@@ -101,7 +98,7 @@ export function TrainingFilterBar({
       <MultiSelect
         label="Alterskategorie"
         hideLabel
-        options={stufenOptions}
+        options={stufenOptionen}
         value={stufen}
         onChange={setStufen}
         searchable={false}

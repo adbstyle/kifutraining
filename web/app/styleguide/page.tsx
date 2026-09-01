@@ -721,7 +721,15 @@ export default function Styleguide() {
           <code>--menu-*</code>-Kontrakt. Combobox-/Listbox-Semantik
           (<code>aria-multiselectable</code>) mit voller Tastatursteuerung (↑/↓,
           Home/End, Enter toggelt, Esc schliesst). <code>searchable</code> /{" "}
-          <code>actions</code> einzeln abschaltbar für kurze feste Listen.
+          <code>actions</code> einzeln abschaltbar für kurze feste Listen.{" "}
+          <code>group</code> stellt einer Option eine nicht wählbare Kopfzeile
+          voran, sobald die Gruppe wechselt — für Dimensionen, deren Werte aus
+          zwei Welten stammen (in der Applikation: die Altersstufe, siehe{" "}
+          <code>lib/filter-optionen.ts</code>). Weil die Kopfzeile positional
+          entsteht, müssen die Optionen gruppensortiert übergeben werden, sonst
+          erscheint dieselbe Kopfzeile mehrfach. Eine einzige Gruppe ist
+          ausdrücklich erlaubt und der Normalfall dort, wo eine Dimension ganz
+          zu einer Welt gehört; die Beschriftung sagt dann, zu welcher.
         </p>
         <MultiSelectDemo />
       </Section>

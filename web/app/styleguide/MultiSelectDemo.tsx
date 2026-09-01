@@ -14,6 +14,19 @@ const themen: SelectOption[] = [
   { value: "verteidigen", label: "Verteidigen" },
 ];
 
+// Zwei Gruppen, gruppensortiert — so liegen die Filterwerte der Applikation
+// vor (lib/filter-optionen.ts): jede Dimension zeigt, zu welcher Altersstufe
+// ihre Werte gehören.
+const stufen: SelectOption[] = [
+  { value: "G", label: "G-Junior:innen", group: "Kinderfussball" },
+  { value: "F", label: "F-Junior:innen", group: "Kinderfussball" },
+  { value: "E", label: "E-Junior:innen", group: "Kinderfussball" },
+  { value: "D", label: "D-Junior:innen", group: "Juniorenfussball" },
+  { value: "C", label: "C-Junior:innen", group: "Juniorenfussball" },
+  { value: "B", label: "B-Junior:innen", group: "Juniorenfussball" },
+  { value: "A", label: "A-Junior:innen", group: "Juniorenfussball" },
+];
+
 export function MultiSelectDemo() {
   const [werte, setWerte] = useState<string[]>(["passen", "dribbling"]);
 
@@ -58,6 +71,18 @@ export function MultiSelectDemo() {
         options={themen}
         placeholder="Alle Stufen"
         supportingText="hideLabel: Label sr-only, Placeholder dient als Beschriftung."
+      />
+
+      {/* Gruppiert — Optionen aus zwei Welten unter je einer nicht wählbaren
+          Kopfzeile. Die Optionen MÜSSEN gruppensortiert übergeben werden: die
+          Kopfzeile entsteht positional, sobald `group` wechselt. */}
+      <MultiSelect
+        label="Alterskategorie (gruppiert)"
+        searchable={false}
+        actions={false}
+        defaultValue={["F"]}
+        options={stufen}
+        supportingText="group: nicht wählbare Kopfzeile je Gruppe. Werte beider Gruppen bleiben gemeinsam wählbar."
       />
     </div>
   );
