@@ -729,7 +729,11 @@ export default function Styleguide() {
           entsteht, müssen die Optionen gruppensortiert übergeben werden, sonst
           erscheint dieselbe Kopfzeile mehrfach. Eine einzige Gruppe ist
           ausdrücklich erlaubt und der Normalfall dort, wo eine Dimension ganz
-          zu einer Welt gehört; die Beschriftung sagt dann, zu welcher.
+          zu einer Welt gehört; die Beschriftung sagt dann, zu welcher. Die
+          Kopfzeile ist nicht nur optisch: Jede Option verweist per{" "}
+          <code>aria-describedby</code> auf sie, damit die Zugehörigkeit auch
+          vorgelesen wird («Wert, Gruppe») — sonst hörte man eine lange Liste
+          ohne jede Gliederung.
         </p>
         <MultiSelectDemo />
       </Section>

@@ -114,6 +114,12 @@ comment on constraint ex_uebungstyp_nur_junioren on training_exercises is
 -- Abschluss und Auffangen weiterhin draussen? Und ist keiner der vier
 -- bisherigen Blöcke beim Umschreiben verlorengegangen? Ein Fund rollt die
 -- ganze Datei zurück.
+--
+-- Gesucht wird jeweils nach dem Wert MIT seinen einfachen Anführungszeichen,
+-- so wie `pg_get_constraintdef` ihn ausgibt (`'jun-spiel'::text`). Eine blosse
+-- Teilzeichenketten-Suche wäre hier blind: `'jun-spiel'` steckt in
+-- `'jun-spielformen'`, und ein versehentlich weggelassenes `jun-spiel` käme
+-- ungesehen durch die eigene Prüfung.
 do $$
 declare
   v_funde text;
@@ -140,7 +146,7 @@ begin
       where c.conname = 'ex_uebungstyp_nur_junioren'
         and c.contype = 'c'
         and c.conrelid in ('exercises'::regclass, 'training_exercises'::regclass)
-        and pg_get_constraintdef(c.oid) not like '%jun-explosivitaet%')
+        and pg_get_constraintdef(c.oid) not like '%''jun-explosivitaet''%')
     union all
     -- c) Abschluss und Auffangen bleiben ausdrücklich aussen vor
     --    (Out of Scope 1; hält zugleich 20260901090000 Abschnitt 3 aufrecht).
@@ -151,7 +157,7 @@ begin
       where c.conname = 'ex_uebungstyp_nur_junioren'
         and c.contype = 'c'
         and c.conrelid in ('exercises'::regclass, 'training_exercises'::regclass)
-        and pg_get_constraintdef(c.oid) like '%' || block || '%')
+        and pg_get_constraintdef(c.oid) like '%''' || block || '''%')
     union all
     -- d) Keiner der vier bisherigen Blöcke ist beim Umschreiben verlorengegangen.
     (select format('CHECK %I an %s nennt %s nicht mehr',
@@ -161,7 +167,7 @@ begin
       where c.conname = 'ex_uebungstyp_nur_junioren'
         and c.contype = 'c'
         and c.conrelid in ('exercises'::regclass, 'training_exercises'::regclass)
-        and pg_get_constraintdef(c.oid) not like '%' || block || '%')
+        and pg_get_constraintdef(c.oid) not like '%''' || block || '''%')
   ) f;
 
   if v_funde is not null then
