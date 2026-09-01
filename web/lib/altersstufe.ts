@@ -229,11 +229,13 @@ export function traegtErscheinungsform(stufe: Altersstufe, einordnung: string): 
 
 /** Trägt diese Einordnung einen Übungstyp?
  *
- *  Nur im Juniorenfussball, und dort nur in den Blöcken, in denen eine
- *  Spielform vorkommen kann. Explosivität und Abschluss tragen keinen, weil die
- *  Typologie des Manuals spielnahe taktische Trainingsformen gliedert
- *  (PO 2026-08-30); das Auffangen ebenso wenig — es steht ganz ausserhalb des
- *  Manuals (Story #128). Der Kinderfussball kennt den Übungstyp gar nicht.
+ *  Nur im Juniorenfussball — der Kinderfussball kennt den Übungstyp gar nicht.
+ *  Die Explosivität trägt ihn seit Story #133 wie die übrigen Blöcke, optional
+ *  wie überall: Der Product Owner hat seinen Entscheid vom 2026-08-30, sie von
+ *  der Typologie des Manuals auszunehmen, am 2026-09-01 für sie aufgehoben.
+ *  Für den Abschluss gilt er unverändert weiter — dort gliedert die Typologie
+ *  weiterhin nur spielnahe taktische Trainingsformen; das Auffangen steht
+ *  ohnehin ganz ausserhalb des Manuals (Story #128).
  *
  *  Eine Positivliste: Ein neuer Block trägt erst einen Übungstyp, wenn er hier
  *  ausdrücklich genannt wird.
@@ -246,6 +248,7 @@ export function traegtUebungstyp(stufe: Altersstufe, einordnung: string): boolea
     [
       "jun-aufwaermen",
       "jun-spielform-trainingsziel",
+      "jun-explosivitaet",
       "jun-spielformen",
       "jun-spiel",
     ].includes(einordnung)
