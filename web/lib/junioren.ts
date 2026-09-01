@@ -222,7 +222,45 @@ export const JUNIOREN_PFLICHT_BLOECKE = [
 // #126 für beide Altersstufen gleich, gehört also nicht in eine reine
 // Junioren-Datei.
 
-// Was ein Trainingsblock aufnehmen darf, steht nicht hier, sondern in
-// `vorlagenFilterFuer()` in web/lib/altersstufe.ts. Die Abbildungsregel oben
-// dient allein noch als Vorschlag beim Überführen einer Übung in die andere
-// Altersstufe (Story 4).
+// Was ein Trainingsblock aufnehmen darf, entscheidet nicht diese Datei,
+// sondern `vorlagenFilterFuer()` in web/lib/altersstufe.ts. Von hier holt es
+// sich einzig die Zuordnung `BLOCK_ERSCHEINUNGSFORM` unten — sie ist eine
+// fachliche Angabe des Juniorenschemas und gehört darum hierher, die
+// Entscheidung selbst nicht. Die Abbildungsregel weiter oben dient allein
+// noch als Vorschlag beim Überführen einer Übung in die andere Altersstufe
+// (Story 4).
+
+/** Welche Erscheinungsform einen Trainingsblock ZUSÄTZLICH füllen darf
+ *  (Story #134).
+ *
+ *  Herkunft: Das Manual Fussball Jugendliche ordnet im Bereich Athletik drei
+ *  Erscheinungsformen je einem Trainingsinhalt zu. Zwei davon haben im
+ *  Juniorenschema einen eigenen Block und stehen darum hier:
+ *
+ *    * «Explosiv und dynamisch agieren» → Block Explosivität. Das ist die
+ *      Erscheinungsform, die das Manual dem Inhalt dieses Blocks gibt.
+ *    * «Den Körper stabil halten» → Block Aufwärmen. Das Manual (S. 72)
+ *      integriert die Körperstabilität ins Aufwärmen; einen eigenen Block dafür
+ *      gibt es nicht.
+ *
+ *  Die dritte Athletik-Erscheinungsform, «Viele intensive Spielaktionen bis ans
+ *  Spielende ausführen», fehlt bewusst: Sie meint die Ermüdungsresistenz, und
+ *  für die kennt das Juniorenschema keinen Block — sie zieht darum nichts an.
+ *
+ *  Die Regel wirkt NUR in Richtung Block: Der Block zieht Übungen an, die diese
+ *  Erscheinungsform tragen. Umgekehrt ist die Einordnung einer Übung kein
+ *  Anziehungsgrund für andere Blöcke, und die Einordnung der Vorlage ist auch
+ *  kein Ausschlussgrund — eine im Block Explosivität eingeordnete Übung mit
+ *  «Den Körper stabil halten» erscheint sehr wohl auch im Aufwärmen
+ *  (PO-Entscheid 2026-09-01). Vorgeschlagen wird allein aufgrund der
+ *  Erscheinungsform.
+ *
+ *  Diese Konstante ist die EINZIGE Stelle, an der die Zuordnung geführt wird.
+ *  Gelesen wird sie über `vorlagenFilterFuer()` in web/lib/altersstufe.ts —
+ *  und zwar von BEIDEN Seiten: von der Anzeige (`pickExercises`) und von der
+ *  Zuordnungsprüfung (`addTrainingExercise`). Beide müssen dieselbe Antwort
+ *  geben, sonst schlüge der Picker Übungen vor, die das Übernehmen abweist. */
+export const BLOCK_ERSCHEINUNGSFORM: Partial<Record<JuniorenBlockSlug, string>> = {
+  "jun-explosivitaet": "explosiv-dynamisch-agieren",
+  "jun-aufwaermen": "koerper-stabil-halten",
+};

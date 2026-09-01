@@ -27,15 +27,19 @@ export type ExerciseFilters = {
   form?: string[]; // Erscheinungsform (Überlappung)
   hkat?: string[]; // Hauptteilkategorie (OR)
   /** ODER-verknüpfte Alternativen, wo eine Übung eingeordnet sein darf: ein
-   *  Trainingsteil bzw. Junioren-Block (Spalte `trainingsteil`) oder eine
-   *  Hauptteilkategorie (Spalte `hauptteilkategorie`). Beide Zweige zusammen
-   *  bilden EINE Dimension — der Trainingsteil-Filter des Katalogs, in dem seit
-   *  Story #129 auch die drei Hauptteilkategorien einzeln wählbar sind.
+   *  Trainingsteil bzw. Junioren-Block (Spalte `trainingsteil`), eine
+   *  Hauptteilkategorie (Spalte `hauptteilkategorie`) oder eine Erscheinungsform
+   *  (Spalte `erscheinungsform`). Alle Zweige zusammen bilden EINE Dimension —
+   *  der Trainingsteil-Filter des Katalogs, in dem seit Story #129 auch die drei
+   *  Hauptteilkategorien einzeln wählbar sind, und im Picker der Bestand eines
+   *  Blocks samt der Übungen, die seine Erscheinungsform anzieht (Story #134).
    *
-   *  Nicht zu verwechseln mit `teil` und `hkat` oben: die bleiben UND-Filter,
-   *  weil `pickExercises` eine Hauptteil-Zuordnung auf die fixierte
-   *  Unterkategorie EINGRENZEN muss (Story #23). */
-  einordnung?: { teile?: string[]; hkats?: string[] };
+   *  Nicht zu verwechseln mit `teil`, `hkat` und `form` oben: die bleiben
+   *  UND-Filter. `pickExercises` muss eine Hauptteil-Zuordnung auf die fixierte
+   *  Unterkategorie EINGRENZEN (Story #23), und `form` ist der Nutzerfilter des
+   *  Pickers, der die ganze Vorschlagsmenge eingrenzt — nicht die
+   *  Vorschlagsquelle `einordnung.formen`. */
+  einordnung?: { teile?: string[]; hkats?: string[]; formen?: string[] };
   typ?: string[]; // Übungstyp (OR)
   kinder?: number; // verfügbare Gruppengrösse
   q?: string; // Freitext
@@ -120,15 +124,23 @@ export async function getExercises(
   // Übungen ohne Übungstyp fallen bei aktivem Filter heraus — dieselbe Regel
   // wie bei allen Dimensionen (Story 9 PC 1).
   if (f.typ?.length) query = query.in("uebungstyp", f.typ);
-  // Einordnung: EINE ODER-Klausel über beide Spalten, damit sich Trainingsteile
-  // und Hauptteilkategorien in derselben Auswahl mischen lassen (Story #129
-  // AC 4/5). PostgREST verbindet mehrere `or=`-Parameter derselben Abfrage mit
-  // UND — die Gruppengrössen-Klausel weiter unten bleibt davon unberührt.
+  // Einordnung: EINE ODER-Klausel über alle drei Spalten, damit sich
+  // Trainingsteile, Hauptteilkategorien und anziehende Erscheinungsformen in
+  // derselben Auswahl mischen lassen (Story #129 AC 4/5, Story #134 AC 1/2).
+  // PostgREST verbindet mehrere `or=`-Parameter derselben Abfrage mit UND — die
+  // Gruppengrössen-Klausel weiter unten bleibt davon unberührt.
+  //
+  // Bewusst EINE Abfrage statt zweier plus Zusammenführen in JS: So bleibt die
+  // Sortierung `.order("name")` in der DB-Collation unangetastet (#134 AC 5),
+  // und jede Übung erscheint ohne Zutun genau einmal, auch wenn sie über
+  // mehrere Zweige zugleich trifft (#134 AC 4).
   if (f.einordnung) {
     const zweige: string[] = [];
-    const { teile, hkats } = f.einordnung;
+    const { teile, hkats, formen } = f.einordnung;
     if (teile?.length) zweige.push(`trainingsteil.in.(${teile.join(",")})`);
     if (hkats?.length) zweige.push(`hauptteilkategorie.in.(${hkats.join(",")})`);
+    // `erscheinungsform` ist ein text[]: Überlappung statt Gleichheit.
+    if (formen?.length) zweige.push(`erscheinungsform.ov.{${formen.join(",")}}`);
     if (zweige.length) query = query.or(zweige.join(","));
   }
   // Gruppengrösse: durchführbar, wenn die Mindestzahl <= verfügbar ist
