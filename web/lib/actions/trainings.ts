@@ -22,6 +22,7 @@ import {
   alsAltersstufe,
   istAltersstufe,
   kategorienFuer,
+  vorlagePasst,
   vorlagenFilterFuer,
 } from "@/lib/altersstufe";
 import {
@@ -71,6 +72,10 @@ type Vorlage = {
   altersstufe: string;
   trainingsteil: string;
   hauptteilkategorie: string | null;
+  /** Die Erscheinungsformen der Vorlage. Sie kommen als Inhaltsfeld ohnehin
+   *  mit (`FASSUNG_INHALT_FELDER`); der Guard beim Zuordnen liest sie, weil ein
+   *  Block auch über sie gefüllt werden darf (Story #134). */
+  erscheinungsform: string[] | null;
   bild_url: string | null;
   diagramm: unknown;
 } & Record<string, unknown>;
@@ -174,7 +179,8 @@ export async function createTraining(
  *
  *  Der Picker bleibt an die Altersstufe des Trainings und an den Zielblock (im
  *  Kinderfussball-Hauptteil an dessen Kategorie) gebunden und bietet nur
- *  Passendes an; die Prüfung hier ist die Trust Boundary gegen jeden Aufruf,
+ *  Passendes an — samt der Übungen, die der Block über seine Erscheinungsform
+ *  anzieht (Story #134); die Prüfung hier ist die Trust Boundary gegen jeden Aufruf,
  *  der die Oberfläche umgeht (Story 6 AK 4). Die Datenebene fängt Stufenfremdes
  *  zusätzlich über `te_kategorien_je_altersstufe` und
  *  `te_trainingsteil_je_altersstufe` — hier geht es um die verständliche
@@ -235,9 +241,9 @@ export async function addTrainingExercise(
         istAltersstufe(ex.altersstufe) ? altersstufeLabels[ex.altersstufe] : "einer anderen"
       } und passt darum nicht in ein Training der Altersstufe ${altersstufeLabels[filter.altersstufe]}.`,
     };
-  if (ex.trainingsteil !== filter.trainingsteil)
-    return { ok: false, error: "Übung passt nicht zu diesem Block." };
-  if (filter.hauptteilkategorie && ex.hauptteilkategorie !== filter.hauptteilkategorie)
+  // Einordnung ODER anziehende Erscheinungsform — dieselbe Entscheidung, die
+  // der Picker als Abfrage stellt (`vorlagePasst` liest denselben Filter).
+  if (!vorlagePasst(filter, ex))
     return { ok: false, error: "Übung passt nicht zu diesem Block." };
 
   // Nächste Position bestimmen (eindeutige Reihenfolge je Unterkategorie im
@@ -695,7 +701,10 @@ export async function setExerciseDuration(
  *  (Story #10 AC5/AC6/AC7, #23).
  *
  *  Der Bestand ist doppelt eingegrenzt: auf die Altersstufe des Trainings und
- *  auf den Zielblock (Story 6 AK 1/2, Übungswelten). Beides kommt aus
+ *  auf den Zielblock (Story 6 AK 1/2, Übungswelten). Zum Zielblock zählen seit
+ *  Story #134 auch die Übungen, die seine Erscheinungsform anzieht — im
+ *  Juniorenfussball füllt «Explosiv und dynamisch agieren» die Explosivität und
+ *  «Den Körper stabil halten» das Aufwärmen. Alles kommt aus
  *  `vorlagenFilterFuer` — derselben Funktion, nach der `addTrainingExercise`
  *  entscheidet, sonst zeigte der Picker Treffer, die das Hinzufügen abweist.
  *
@@ -721,8 +730,21 @@ export async function pickExercises(
   if (!filter) return [];
   return getExercises({
     altersstufe: filter.altersstufe,
-    teil: [filter.trainingsteil],
+    // Einordnung und anziehende Erscheinungsform als EINE ODER-Dimension: der
+    // Block zeigt seinen eigenen Bestand plus die Übungen, die er anzieht
+    // (Story #134 AC 1/2/4/5).
+    einordnung: {
+      teile: [filter.trainingsteil],
+      formen: filter.erscheinungsformen ? [...filter.erscheinungsformen] : undefined,
+    },
+    // Die Hauptteilkategorie bleibt der harte UND-Filter: Sie grenzt eine
+    // Kinderfussball-Hauptteil-Zuordnung auf die fixierte Unterkategorie ein
+    // (Story #23), sie ist keine Alternative zur Einordnung. Vorschläge gibt es
+    // im Kinderfussball ohnehin keine.
     hkat: filter.hauptteilkategorie ? [filter.hauptteilkategorie] : undefined,
+    // Nutzerfilter — sie grenzen die ganze Vorschlagsmenge weiter ein, egal
+    // woher ein Treffer kommt (Story #134 AC 6). `opts.form` ist der
+    // Erscheinungsform-Filter des Trainers, nicht die Vorschlagsquelle oben.
     form: opts.form,
     typ: opts.typ,
     q: opts.q,

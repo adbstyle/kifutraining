@@ -53,8 +53,8 @@ allen Blöcken des Manuals, aus dem eigenen, deutlich umfangreicheren Katalog; i
 nicht, denn dieser Block steht ausserhalb des Manuals. An die Stelle des Feldtyps
 tritt die Spielfeldgrösse in Metern — freiwillig, aber nur ganz: Länge und Breite zusammen oder
 keines von beidem. Dazu kommt der Übungstyp — Basisspielform, Spielform oder isolierte Form —,
-den nur die Blöcke tragen, in denen eine Spielform vorkommen kann; Explosivität, Abschluss und
-Auffangen führen ihn nicht.
+freiwillig wie überall: Aufwärmen, Spielform zum Trainingsziel, Explosivität, Spielformen und
+Spiel führen ihn, Abschluss und Auffangen nicht.
 
 Hängt der Trainer eine Übung dorthin um, wo es eines dieser Felder nicht gibt, sagt die
 Anwendung unter der Zuordnung, welche seiner erfassten Angaben dabei entfallen werden.
@@ -99,13 +99,18 @@ Training. Unvollständige Fassungen lassen sich erst nach Ergänzung übernehmen
 Gesucht wird über den gesamten Text einer Übung, also auch über Material, Varianten und Ablauf;
 Wortteile genügen. Der Katalog zeigt beide Altersstufen nebeneinander — er ist der eine Ort, an
 dem der ganze sichtbare Bestand zusammensteht. Gefiltert wird nach Trainingsteil, wobei die
-vier Kinderfussball-Teile und die sieben Junioren-Blöcke in zwei beschrifteten Gruppen stehen —
-das Auffangen kommt in beiden Gruppen vor und heisst dort gleich; die Beschriftung sagt, welches
-gemeint ist —, nach Alterskategorie, Feldtyp, Erscheinungsform, Hauptteilkategorie und Übungstyp,
-jeweils mit Mehrfachauswahl, sowie nach der Zahl der verfügbaren Kinder — dann erscheinen alle
-Übungen, die mit mindestens so vielen durchführbar sind. Die Erscheinungsformen beider Manuals
-stehen dabei in derselben Liste. Mehrere Werte derselben Art werden als „oder" verstanden,
-verschiedene Arten als „und".
+Kinderfussball-Teile und die sieben Junioren-Blöcke in zwei beschrifteten Gruppen stehen — das
+Auffangen kommt in beiden Gruppen vor und heisst dort gleich; die Beschriftung sagt, welches
+gemeint ist. Der Kinderfussball-Hauptteil steht dort nicht als Ganzes, sondern als seine drei
+Hauptteilkategorien: Gewählt wird in beiden Welten die feinste Ebene, die das jeweilige Lehrmittel
+kennt, und einen eigenen Hauptteilkategorie-Filter gibt es darum nicht. Weiter gefiltert wird nach
+Alterskategorie, Feldtyp, Erscheinungsform und Übungstyp, jeweils mit Mehrfachauswahl, sowie nach
+der Zahl der verfügbaren Kinder — dann erscheinen alle Übungen, die mit mindestens so vielen
+durchführbar sind. Auch diese Filter beschriften ihre Werte nach Altersstufe: die Erscheinungsformen
+beider Manuals, die Alterskategorien G bis A, und ebenso die zwei Filter, die ganz einer Altersstufe
+gehören — der Feldtyp dem Kinderfussball, der Übungstyp dem Juniorenfussball. Die Beschriftung ist
+Text und wird mitvorgelesen, nicht bloss Farbe. Mehrere Werte derselben Art werden als „oder"
+verstanden, verschiedene Arten als „und".
 
 Angemeldete haben zwei weitere Sichten: die eigenen Übungen und die Favoriten. Favorisieren
 kann jeder jede sichtbare Übung, auch die aus dem Manual und die fremder Trainer.

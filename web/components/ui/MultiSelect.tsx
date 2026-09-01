@@ -64,6 +64,12 @@ export function MultiSelect({
   const fid = id ?? `ms-${reactId}`;
   const listId = `${fid}-list`;
   const optId = (i: number) => `${fid}-opt-${i}`;
+  // Id der Gruppen-Kopfzeile. Die Kopfzeile ist `role="presentation"` und damit
+  // strukturell unsichtbar — ohne Verweis erführe eine Screenreader-Nutzerin
+  // nie, zu welcher Gruppe ein Wert gehört. Jede Option zeigt darum per
+  // `aria-describedby` auf sie: vorgelesen wird «<Wert>, <Gruppe>».
+  const gruppenId = (gruppe: string) =>
+    `${fid}-gruppe-${gruppe.replace(/[^\p{L}\p{N}]+/gu, "-").toLowerCase()}`;
 
   const isControlled = value !== undefined;
   const [internal, setInternal] = useState<string[]>(defaultValue ?? []);
@@ -450,6 +456,7 @@ export function MultiSelect({
                   <Fragment key={o.value}>
                   {kopf && (
                     <li
+                      id={gruppenId(kopf)}
                       role="presentation"
                       className="px-3 pb-1 pt-2 type-label-small text-on-surface-variant"
                     >
@@ -460,6 +467,7 @@ export function MultiSelect({
                     id={optId(i)}
                     role="option"
                     aria-selected={isSelected}
+                    aria-describedby={o.group ? gruppenId(o.group) : undefined}
                     onMouseEnter={() => {
                       kbdNav.current = false;
                       setActive(i);

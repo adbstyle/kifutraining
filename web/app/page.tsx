@@ -9,6 +9,7 @@ import {
   toCardData,
   type ExerciseFilters,
 } from "@/lib/queries/exercises";
+import { alsEinordnungsFilter, einordnungNachSpalten } from "@/lib/filter-optionen";
 
 // Server-only Datenzugriff (anon-Key + RLS); kein Prerender ohne DB.
 export const dynamic = "force-dynamic";
@@ -42,18 +43,28 @@ export default async function Home({
   const canFavorite = !!user;
 
   const filters: CatalogFilters = {
-    teil: list(sp.teil),
+    // Nur wählbare Einordnungen zählen. Ein Wert aus einem früher geteilten
+    // Verweis — namentlich `?teil=hauptteil` — fällt hier weg, statt als
+    // unsichtbarer, aber wirksamer Filter stehenzubleiben (Story #129 PC 3).
+    // Den früheren `?hkat=`-Parameter liest der Katalog gar nicht mehr: die
+    // Hauptteilkategorie wird ausschliesslich über diesen Filter gesteuert.
+    teil: alsEinordnungsFilter(list(sp.teil)),
     kat: list(sp.kat),
     feld: list(sp.feld),
     form: list(sp.form),
-    hkat: list(sp.hkat),
     typ: list(sp.typ),
     kinder: num(sp.kinder),
     q: typeof sp.q === "string" ? sp.q : undefined,
     fav: sp.fav === "1",
     mine: !!user && sp.mine === "1",
   };
-  const queryFilters: ExerciseFilters = { ...filters };
+  // Die Einordnungen wirken untereinander als ODER und stehen in zwei Spalten
+  // — der Query-Layer bekommt sie darum als `einordnung`, nicht als `teil`.
+  const { teil, ...uebrige } = filters;
+  const queryFilters: ExerciseFilters = {
+    ...uebrige,
+    einordnung: einordnungNachSpalten(teil),
+  };
 
   let rows: Awaited<ReturnType<typeof getExercises>> | null = null;
   let error: string | null = null;

@@ -7,63 +7,27 @@ import type { LucideIcon } from "lucide-react";
 import { FilterChip, MultiSelect, Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
-  trainingsteil as teilLabels,
-  feldtyp as feldLabels,
-  erscheinungsform as formLabels,
-  erscheinungsform_junioren as formJuniorenLabels,
-  hauptteilkategorie as hkatLabels,
-  uebungstyp as uebungstypLabels,
-  junioren_block as juniorenBlockLabels,
-  altersstufe as altersstufeLabels,
-  kategorienSlugs,
-} from "@/lib/vocab";
-import { kategorieStufe } from "@/lib/labels";
+  einordnungFilterOptionen,
+  feldOptionen,
+  formOptionen,
+  stufenOptionen,
+  typOptionen,
+} from "@/lib/filter-optionen";
 
 export type CatalogFilters = {
+  /** Die gewählten Einordnungen: Kinderfussball-Trainingsteile und die drei
+   *  Hauptteilkategorien, dazu die Junioren-Blöcke — seit Story #129 EIN
+   *  Filter mit EINEM URL-Parameter (`?teil=`). */
   teil: string[];
   kat: string[];
   feld: string[];
   form: string[];
-  hkat: string[];
   typ: string[];
   kinder?: number;
   q?: string;
   fav?: boolean;
   mine?: boolean;
 };
-
-// Optionen aus dem Vokabular (Slug → Label). Reihenfolge = Definitionsreihenfolge.
-const toOptions = (rec: Record<string, string>) =>
-  Object.entries(rec).map(([value, label]) => ({ value, label }));
-// Trainingsteil-Filter über beide Welten: die vier Trainingsteile des Manuals
-// Fussball Kinder und die sieben Blöcke des Juniorenschemas, in zwei
-// beschrifteten Gruppen. Der Katalog filtert bewusst über BEIDE Altersstufen
-// (Story 2 Out of Scope 2) — er ist der eine Ort, an dem der ganze sichtbare
-// Bestand nebeneinandersteht.
-//
-// Das «Auffangen» kommt seit Story #128 in beiden Gruppen vor und heisst dort
-// gleich. Unterschieden werden die zwei über ihre Gruppen-Beschriftung; ein
-// Label-Zusatz wäre daneben doppelt gemoppelt (Entscheid Story #128 AC 12).
-const teilOptions: { value: string; label: string; group: string }[] = [
-  ...Object.entries(teilLabels).map(([value, label]) => ({
-    value,
-    label: label as string,
-    group: altersstufeLabels.kinderfussball,
-  })),
-  ...Object.entries(juniorenBlockLabels).map(([value, label]) => ({
-    value,
-    label: label as string,
-    group: altersstufeLabels.juniorenfussball,
-  })),
-];
-const feldOptions = toOptions(feldLabels);
-// Beide Erscheinungsform-Vokabulare als EINE Dimension: gewählte Werte wirken
-// untereinander als ODER, gleich aus welcher Quelle (Story 12 PC 1). Flach und
-// ohne Spielphasen-Gruppierung (Out of Scope 2).
-const formOptions = [...toOptions(formLabels), ...toOptions(formJuniorenLabels)];
-const hkatOptions = toOptions(hkatLabels);
-const typOptions = toOptions(uebungstypLabels);
-const stufenOptions = kategorienSlugs.map((k) => ({ value: k, label: kategorieStufe[k] }));
 
 /* Such-/Filterleiste für den Übungspool — eine durchgehende, umbrechende Zeile
    statt Sidebar, analog zur Trainings-Filter-Bar. Mehrfach-Dimensionen sind
@@ -125,7 +89,6 @@ export function CatalogFilterBar({
     filters.kat.length > 0 ||
     filters.feld.length > 0 ||
     filters.form.length > 0 ||
-    filters.hkat.length > 0 ||
     filters.typ.length > 0 ||
     filters.kinder !== undefined ||
     (filters.q?.length ?? 0) > 0 ||
@@ -147,7 +110,7 @@ export function CatalogFilterBar({
       <MultiSelect
         label="Trainingsteil"
         hideLabel
-        options={teilOptions}
+        options={einordnungFilterOptionen}
         value={filters.teil}
         onChange={(v) => setList("teil", v)}
         searchable={false}
@@ -157,7 +120,7 @@ export function CatalogFilterBar({
       <MultiSelect
         label="Alterskategorie"
         hideLabel
-        options={stufenOptions}
+        options={stufenOptionen}
         value={filters.kat}
         onChange={(v) => setList("kat", v)}
         searchable={false}
@@ -167,7 +130,7 @@ export function CatalogFilterBar({
       <MultiSelect
         label="Feldtyp"
         hideLabel
-        options={feldOptions}
+        options={feldOptionen}
         value={filters.feld}
         onChange={(v) => setList("feld", v)}
         searchable={false}
@@ -177,7 +140,7 @@ export function CatalogFilterBar({
       <MultiSelect
         label="Erscheinungsform"
         hideLabel
-        options={formOptions}
+        options={formOptionen}
         value={filters.form}
         onChange={(v) => setList("form", v)}
         searchable={false}
@@ -185,19 +148,9 @@ export function CatalogFilterBar({
         className="w-full sm:w-64"
       />
       <MultiSelect
-        label="Hauptteilkategorie"
-        hideLabel
-        options={hkatOptions}
-        value={filters.hkat}
-        onChange={(v) => setList("hkat", v)}
-        searchable={false}
-        placeholder="Alle Hauptteilkategorien"
-        className="w-full sm:w-64"
-      />
-      <MultiSelect
         label="Übungstyp"
         hideLabel
-        options={typOptions}
+        options={typOptionen}
         value={filters.typ}
         onChange={(v) => setList("typ", v)}
         searchable={false}

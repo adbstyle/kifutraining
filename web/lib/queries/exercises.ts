@@ -21,11 +21,26 @@ export type ExerciseFilters = {
    *  Übungswelten). Der Katalog setzt ihn bewusst nicht: er zeigt weiterhin
    *  beide Altersstufen (Story 6 Out-of-Scope 1). */
   altersstufe?: Altersstufe;
-  teil?: string[]; // Trainingsteil (OR)
   kat?: string[]; // Alterskategorien G/F/E (Überlappung)
   feld?: string[]; // Feldtyp (OR)
   form?: string[]; // Erscheinungsform (Überlappung)
   hkat?: string[]; // Hauptteilkategorie (OR)
+  /** ODER-verknüpfte Alternativen, wo eine Übung eingeordnet sein darf: ein
+   *  Trainingsteil bzw. Junioren-Block (Spalte `trainingsteil`), eine
+   *  Hauptteilkategorie (Spalte `hauptteilkategorie`) oder eine Erscheinungsform
+   *  (Spalte `erscheinungsform`). Alle Zweige zusammen bilden EINE Dimension —
+   *  der Trainingsteil-Filter des Katalogs, in dem seit Story #129 auch die drei
+   *  Hauptteilkategorien einzeln wählbar sind, und im Picker der Bestand eines
+   *  Blocks samt der Übungen, die seine Erscheinungsform anzieht (Story #134).
+   *
+   *  Nicht zu verwechseln mit `hkat` und `form` oben: die bleiben UND-Filter.
+   *  `pickExercises` muss eine Hauptteil-Zuordnung auf die fixierte
+   *  Unterkategorie EINGRENZEN (Story #23), und `form` ist der Nutzerfilter des
+   *  Pickers, der die ganze Vorschlagsmenge eingrenzt — nicht die
+   *  Vorschlagsquelle `einordnung.formen`. Einen skalaren `teil`-Filter gibt es
+   *  nicht mehr: Seit Story #129 läuft jede Einordnungs-Abfrage über dieses
+   *  Feld, und ein zweiter Weg mit anderer Semantik wäre eine Falle. */
+  einordnung?: { teile?: string[]; hkats?: string[]; formen?: string[] };
   typ?: string[]; // Übungstyp (OR)
   kinder?: number; // verfügbare Gruppengrösse
   q?: string; // Freitext
@@ -100,7 +115,6 @@ export async function getExercises(
   // Eigene Übungen: öffentliche wie private, keine fremden/Manual-Übungen.
   if (f.mine && user) query = query.eq("owner_id", user.id);
   if (f.altersstufe) query = query.eq("altersstufe", f.altersstufe);
-  if (f.teil?.length) query = query.in("trainingsteil", f.teil);
   if (f.kat?.length) query = query.overlaps("kategorien", f.kat);
   if (f.feld?.length) query = query.in("feldtyp", f.feld);
   if (f.form?.length) query = query.overlaps("erscheinungsform", f.form);
@@ -110,6 +124,25 @@ export async function getExercises(
   // Übungen ohne Übungstyp fallen bei aktivem Filter heraus — dieselbe Regel
   // wie bei allen Dimensionen (Story 9 PC 1).
   if (f.typ?.length) query = query.in("uebungstyp", f.typ);
+  // Einordnung: EINE ODER-Klausel über alle drei Spalten, damit sich
+  // Trainingsteile, Hauptteilkategorien und anziehende Erscheinungsformen in
+  // derselben Auswahl mischen lassen (Story #129 AC 4/5, Story #134 AC 1/2).
+  // PostgREST verbindet mehrere `or=`-Parameter derselben Abfrage mit UND — die
+  // Gruppengrössen-Klausel weiter unten bleibt davon unberührt.
+  //
+  // Bewusst EINE Abfrage statt zweier plus Zusammenführen in JS: So bleibt die
+  // Sortierung `.order("name")` in der DB-Collation unangetastet (#134 AC 5),
+  // und jede Übung erscheint ohne Zutun genau einmal, auch wenn sie über
+  // mehrere Zweige zugleich trifft (#134 AC 4).
+  if (f.einordnung) {
+    const zweige: string[] = [];
+    const { teile, hkats, formen } = f.einordnung;
+    if (teile?.length) zweige.push(`trainingsteil.in.(${teile.join(",")})`);
+    if (hkats?.length) zweige.push(`hauptteilkategorie.in.(${hkats.join(",")})`);
+    // `erscheinungsform` ist ein text[]: Überlappung statt Gleichheit.
+    if (formen?.length) zweige.push(`erscheinungsform.ov.{${formen.join(",")}}`);
+    if (zweige.length) query = query.or(zweige.join(","));
+  }
   // Gruppengrösse: durchführbar, wenn die Mindestzahl <= verfügbar ist
   // oder gar keine Mindestzahl angegeben ist (EK6).
   if (typeof f.kinder === "number" && Number.isFinite(f.kinder)) {

@@ -60,7 +60,13 @@ arbeitet, freiwillig, höchstens zweihundert Zeichen und jederzeit änderbar.
 Danach füllt der Trainer die Teile. Über eine Auswahl durchsucht und filtert er den für ihn
 sichtbaren Übungsbestand und übernimmt, was passt. Angeboten wird nur, was zur Altersstufe des
 Trainings gehört und zum Block, den er gerade füllt — im Kinderfussball-Hauptteil zusätzlich
-zur dort gewählten Kategorie. Findet sich nichts, sagt die Anwendung, ob das an der Eingrenzung
+zur dort gewählten Kategorie. Im Juniorenfussball ziehen zwei Blöcke über ihren eigenen Bestand
+hinaus an, was ihren Inhalt als Erscheinungsform trägt: die Explosivität die Übungen mit „Explosiv
+und dynamisch agieren", das Aufwärmen jene mit „Den Körper stabil halten" — beides Zuordnungen des
+Manuals, das die Körperstabilität ins Aufwärmen integriert. Wo eine so vorgeschlagene Übung sonst
+eingeordnet ist, spielt keine Rolle, und die Auswahl hebt sie auch nicht hervor; übernommen wird
+sie wie jede andere, mitsamt ihrem Übungstyp, und die Vorlage behält ihre eigene Einordnung. Im
+Kinderfussball bleibt es beim Bestand des Blocks allein. Findet sich nichts, sagt die Anwendung, ob das an der Eingrenzung
 liegt oder ob der sichtbare Bestand für diesen Block noch leer ist, und führt im zweiten Fall
 direkt zum Erfassen einer eigenen Übung. Mehrere Übungen nacheinander zu übernehmen ist
 möglich, dieselbe Übung auch mehrfach.
@@ -146,7 +152,8 @@ Konto zugänglich sind, und die eigenen, Entwürfe eingeschlossen. Ein Schalter 
 eigenen ein. An jedem Eintrag stehen Altersstufe und Alterskategorien, an jedem eigenen
 zusätzlich, ob er ein Entwurf oder öffentlich ist; er führt in die Bearbeitung, ein fremder in
 die Ansicht. Besucher ohne Konto sehen ausschliesslich die öffentlichen Trainings. Gesucht wird
-über den Namen, gefiltert nach Alterskategorie. Ohne Suchbegriff steht das zuletzt Geänderte
+über den Namen, gefiltert nach Alterskategorie, deren Werte wie im Übungskatalog nach
+Altersstufe beschriftet sind. Ohne Suchbegriff steht das zuletzt Geänderte
 oben, mit Suchbegriff das, was am ehesten gemeint ist. Team-Trainings erscheinen hier nicht;
 sie leben im Team-Bereich.
 
@@ -167,8 +174,8 @@ eingegrenzt wird über die Alterskategorie.
 Der Druck hält eine Übung zusammen, solange sie auf eine Seite passt; steht sie als erste unter
 einer Trainingsteil-Überschrift und reicht der Platz darunter nicht, bricht sie um.
 
-Vorschläge, welche Übung fachlich passen würde, macht die Anwendung nicht; alle Hinweise sind
-Hinweise und keine Sperren. Eine Ausnahme sind die Veröffentlichungsbedingungen: sie sperren.
+Über die zwei Athletik-Zuordnungen des Juniorenschemas hinaus schlägt die Anwendung nicht vor,
+welche Übung fachlich passen würde; alle Hinweise sind Hinweise und keine Sperren. Eine Ausnahme sind die Veröffentlichungsbedingungen: sie sperren.
 
 Eine Historie früherer öffentlicher Stände gibt es nicht, und wer ein öffentliches Training
 ändert oder zurückzieht, benachrichtigt damit niemanden.
