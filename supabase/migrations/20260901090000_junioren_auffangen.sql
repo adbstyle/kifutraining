@@ -16,7 +16,7 @@ set lock_timeout = '5s';
 -- Dauer. Erscheinungsform und Übungstyp gibt es dort ebenfalls nicht: Beide
 -- sind Kategorien des Manuals, und das Auffangen steht ausserhalb davon.
 --
--- Vier Regeln ändern sich, drei bleiben ausdrücklich unberührt (Abschnitte 5–7).
+-- Drei Regeln ändern sich, vier bleiben ausdrücklich unberührt (Abschnitte 3 und 5–7).
 --
 -- Die neuen CHECKs validieren inline, wo das beweisbar gefahrlos ist: Sie
 -- erweitern entweder bloss einen Wertebereich (Abschnitt 1 — jede Altzeile
@@ -169,7 +169,7 @@ declare
   v_gewollt text[] := array['ex_uebungstyp_nur_junioren'];
 begin
   select string_agg(fund, ', ' order by fund) into v_funde from (
-    -- a) Die vier geänderten CHECKs müssen den neuen Block nennen.
+    -- a) Die fünf geänderten CHECKs müssen den neuen Block nennen.
     (select format('CHECK %I an %s nennt jun-auffangen nicht', c.conname, c.conrelid::regclass) as fund
        from pg_constraint c
       where c.conname in (
