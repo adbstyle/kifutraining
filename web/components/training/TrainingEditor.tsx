@@ -336,7 +336,11 @@ export function TrainingEditor({
 
       {/* Juniorenschema: drei Trainingsteile, die Unterblöcke stets sichtbar —
           auch leere, damit die Struktur beim Planen erkennbar bleibt
-          (Story 4 AC 1, Story 5a AC 1–3). */}
+          (Story 4 AC 1, Story 5a AC 1–3).
+
+          Ein Teil mit genau einem Block ist keine Verschachtelung: Er zeigt
+          weder Block-Überschrift noch zweiten Richtwert, und Liste wie
+          Hinzufügen-Knopf hängen direkt am Teil (Story #127). */}
       {junioren &&
         groupJunioren(training.exercises).map((teil) => {
           const teilDur = teil.bloecke.reduce<number>(
@@ -349,14 +353,28 @@ export function TrainingEditor({
           );
           return (
             <Card key={teil.slug} className="p-4 sm:p-5">
-              <div className="flex items-center gap-2">
-                <h2 className="type-title-medium text-on-surface">{teil.label}</h2>
-                {teilDur > 0 && (
-                  <span className="type-label-medium text-on-surface-variant">
-                    {formatDuration(teilDur)}
-                  </span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="type-title-medium text-on-surface">{teil.label}</h2>
+                  {teilDur > 0 && (
+                    <span className="type-label-medium text-on-surface-variant">
+                      {formatDuration(teilDur)}
+                    </span>
+                  )}
+                  <ZeitAbgleich slug={teil.slug} sum={teilDur} />
+                </div>
+                {/* Einblockig: der Knopf gehört zum Teil selbst — es gibt
+                    darunter keine Ebene mehr, an der er hängen könnte. */}
+                {teil.einblockig && (
+                  <Tooltip label="Übung hinzufügen">
+                    <IconButton
+                      icon={Plus}
+                      label={`Übung zu ${teil.label} hinzufügen`}
+                      size="sm"
+                      onClick={() => setOpen({ teil: teil.bloecke[0].slug })}
+                    />
+                  </Tooltip>
                 )}
-                <ZeitAbgleich slug={teil.slug} sum={teilDur} />
               </div>
 
               <div className="mt-4 flex flex-col gap-5">
@@ -364,27 +382,29 @@ export function TrainingEditor({
                   const blockDur = b.items.reduce<number>((a, it) => a + (dur(it) ?? 0), 0);
                   return (
                     <div key={b.slug}>
-                      <div className="mb-2 flex items-center justify-between gap-3">
-                        <h3 className="type-title-small text-on-surface">
-                          {b.label}
-                          {blockDur > 0 && (
-                            <span className="ml-2 type-label-medium text-on-surface-variant">
-                              {formatDuration(blockDur)}
+                      {!teil.einblockig && (
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <h3 className="type-title-small text-on-surface">
+                            {b.label}
+                            {blockDur > 0 && (
+                              <span className="ml-2 type-label-medium text-on-surface-variant">
+                                {formatDuration(blockDur)}
+                              </span>
+                            )}
+                            <span className="ml-2">
+                              <ZeitAbgleich slug={b.slug} sum={blockDur} />
                             </span>
-                          )}
-                          <span className="ml-2">
-                            <ZeitAbgleich slug={b.slug} sum={blockDur} />
-                          </span>
-                        </h3>
-                        <Tooltip label="Übung hinzufügen">
-                          <IconButton
-                            icon={Plus}
-                            label={`Übung zu ${b.label} hinzufügen`}
-                            size="sm"
-                            onClick={() => setOpen({ teil: b.slug })}
-                          />
-                        </Tooltip>
-                      </div>
+                          </h3>
+                          <Tooltip label="Übung hinzufügen">
+                            <IconButton
+                              icon={Plus}
+                              label={`Übung zu ${b.label} hinzufügen`}
+                              size="sm"
+                              onClick={() => setOpen({ teil: b.slug })}
+                            />
+                          </Tooltip>
+                        </div>
+                      )}
                       <ExerciseList
                         items={b.items}
                         trainingId={training.id}
@@ -396,7 +416,9 @@ export function TrainingEditor({
                         onRemove={remove}
                       />
                       {/* Leere Blöcke, die das Lehrmittel als gesetzt ansieht:
-                          Hinweis, keine Blockade (Story 5a AC 8/9). */}
+                          Hinweis, keine Blockade (Story 5a AC 8/9). Beim
+                          einblockigen Teil nennt der Hinweis den Teil — sein
+                          Block trägt denselben Namen. */}
                       {b.items.length === 0 &&
                         LEER_HINWEIS_BLOECKE.includes(b.slug) && (
                           <p className="mt-2 flex items-center gap-2 type-label-medium text-on-surface-variant">

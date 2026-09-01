@@ -205,7 +205,7 @@ export const FREIES_SPIEL = "fussball-spielen";
 /** Trägt diese Einordnung Erscheinungsformen?
  *
  *  Kinderfussball: nur Einleitung und Hauptteil — Auffangen und Ausklang
- *  bleiben aussen vor. Juniorenfussball: alle sechs Blöcke, den Ausklang
+ *  bleiben aussen vor. Juniorenfussball: alle sechs Blöcke, den Abschluss
  *  eingeschlossen. Er ist im Manual mehr als das Ausklingen des
  *  Kinderfussballs — Cool-down, Mobilität und Austausch, und der Austausch
  *  trifft «Positiv miteinander umgehen» (PO 2026-08-30).
@@ -221,7 +221,7 @@ export function traegtErscheinungsform(stufe: Altersstufe, einordnung: string): 
 /** Trägt diese Einordnung einen Übungstyp?
  *
  *  Nur im Juniorenfussball, und dort nur in den Blöcken, in denen eine
- *  Spielform vorkommen kann. Explosivität und Ausklang tragen keinen, weil die
+ *  Spielform vorkommen kann. Explosivität und Abschluss tragen keinen, weil die
  *  Typologie des Manuals spielnahe taktische Trainingsformen gliedert
  *  (PO 2026-08-30). Der Kinderfussball kennt den Übungstyp gar nicht.
  *

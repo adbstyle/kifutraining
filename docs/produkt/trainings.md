@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-08-31. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-09-01. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -28,8 +28,8 @@ und folgt damit dem Manual.
 
 Ein Junioren-Training hat drei Teile, die zusammen sechs Blöcke tragen. Der Einstieg umfasst
 Aufwärmen, Spielform zum Trainingsziel und Explosivität, der Hauptteil „Spielformen und
-unterstützende Übungen" sowie „Spiel", der Abschluss den Ausklang. Ein Gegenstück zum Auffangen
-gibt es nicht; hier tragen alle Teile eine Dauer.
+unterstützende Übungen" sowie „Spiel"; der Abschluss ist selbst ein Block ohne weitere
+Untergliederung. Ein Gegenstück zum Auffangen gibt es nicht; hier tragen alle Teile eine Dauer.
 
 Zu jedem Junioren-Teil und -Block nennt die Anwendung einen Richtwert aus dem Manual: Einstieg
 zwanzig bis dreissig Minuten, darin Aufwärmen zehn bis zwölf, Spielform zum Trainingsziel sechs
@@ -69,8 +69,8 @@ weist gesondert aus, wie viele Übungen noch ohne Zeitangabe sind.
 Wo die Anwendung etwas zu bemerken hat, bleibt sie bei einem Hinweis. Im Kinderfussball
 erwähnt sie einen Teil mit ungewöhnlich vielen Übungen und ein leeres freies Spiel, das dort in
 jedes Training gehört. Im Juniorenfussball übernimmt die Zeit-Orientierung diese Rolle; einen
-Hinweis gibt es dort, wenn Spielform zum Trainingsziel, Explosivität oder Spiel leer bleiben.
-Gesperrt wird nie.
+Hinweis gibt es dort, wenn Spielform zum Trainingsziel, Explosivität, Spiel oder der Abschluss
+leer bleiben. Gesperrt wird nie.
 
 ## Jede Übung im Training ist eine eigene Fassung
 
@@ -106,9 +106,9 @@ Ein öffentliches Training bleibt frei bearbeitbar, und die Community sieht jewe
 Stand. Dafür gelten die Veröffentlichungsbedingungen nicht nur beim Umschalten, sondern solange
 es öffentlich ist. Mindestens eine Alterskategorie braucht es in beiden Altersstufen. Im
 Kinderfussball kommt je mindestens eine Übung in der Einleitung und im freien Spiel dazu. Im
-Juniorenfussball ist die Schwelle höher: Aufwärmen, Spielform zum Trainingsziel, Explosivität,
-Spielformen und unterstützende Übungen sowie der Ausklang müssen je mindestens eine Übung
-tragen. Nur das Spiel ist ausgenommen — dort bleibt es beim Hinweis. Fehlt etwas, nennt die
+Juniorenfussball ist die Schwelle höher: Aufwärmen, Spielform zum Trainingsziel, Explosivität
+sowie Spielformen und unterstützende Übungen müssen je mindestens eine Übung tragen. Spiel und
+Abschluss sind ausgenommen — dort bleibt es beim Hinweis. Fehlt etwas, nennt die
 Anwendung genau das. Wer sein Training unter diese Schwelle bringen will, setzt es zuerst auf
 Entwurf — die Anwendung sagt das, statt die Änderung bloss abzulehnen.
 

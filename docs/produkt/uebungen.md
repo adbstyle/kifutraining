@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-08-31. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-09-01. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -44,14 +44,15 @@ Spielfeld wird als Feldtyp angegeben: Kleinfeld, Grossfeld oder freies Feld.
 Im Juniorenfussball ist die Zuordnung zweistufig: gewählt wird einer von sechs Blöcken, und der
 Trainingsteil, zu dem er gehört, bleibt dabei sichtbar. Der Einstieg umfasst Aufwärmen,
 Spielform zum Trainingsziel und Explosivität, der Hauptteil „Spielformen und unterstützende
-Übungen" sowie „Spiel", der Abschluss den Ausklang. Eine Hauptteilkategorie gibt es hier nicht
+Übungen" sowie „Spiel"; der Abschluss ist selbst ein Block ohne weitere Untergliederung — ihn
+zu wählen genügt. Eine Hauptteilkategorie gibt es hier nicht
 — das Schema gliedert seinen Hauptteil bereits selbst. Den methodischen Fahrplan gibt es
 ebenso wenig: Eine Junioren-Übung trägt in jedem Block einen zusammenhängenden
 Beschreibungstext, und der ist Pflicht. Erscheinungsformen trägt sie in allen sechs Blöcken,
 aus dem eigenen, deutlich umfangreicheren Katalog ihres Manuals. An die Stelle des Feldtyps
 tritt die Spielfeldgrösse in Metern — freiwillig, aber nur ganz: Länge und Breite zusammen oder
 keines von beidem. Dazu kommt der Übungstyp — Basisspielform, Spielform oder isolierte Form —,
-den nur die Blöcke tragen, in denen eine Spielform vorkommen kann; Explosivität und Ausklang
+den nur die Blöcke tragen, in denen eine Spielform vorkommen kann; Explosivität und Abschluss
 führen ihn nicht.
 
 Beiden Altersstufen gemeinsam sind Name und mindestens eine Alterskategorie, dazu die Zahl der

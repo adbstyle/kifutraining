@@ -27,7 +27,13 @@ export type Einordnung = TrainingsteilSlug | JuniorenBlockSlug;
 /** Die drei Junioren-Trainingsteile mit ihren Unterblöcken in fester
  *  Reihenfolge (Manual Fussball Jugendliche Abb. 19 für die Teile, J+S-
  *  Lernbaustein «Der Einstieg» für dessen drei Phasen; Story 4 AC 1,
- *  Story 5a AC 1/2). */
+ *  Story 5a AC 1/2).
+ *
+ *  Ein Teil mit genau EINEM Block ist nicht untergliedert: Er erscheint überall
+ *  ohne Block-Untertitel und ohne zweiten Richtwert (Story #127, PO-Entscheid
+ *  2026-08-31). Gespeichert wird trotzdem der Block-Slug — die Einordnung
+ *  bleibt einheitlich, bloss die Darstellung spart die leere Ebene. Kriterium
+ *  ist `bloecke.length === 1`, siehe `istEinblockig()`. */
 export const JUNIOREN_TEILE: {
   slug: "einstieg" | "hauptteil" | "abschluss";
   label: string;
@@ -56,7 +62,7 @@ export const JUNIOREN_TEILE: {
   {
     slug: "abschluss",
     label: jTeilLabels.abschluss,
-    bloecke: [{ slug: "jun-ausklang", label: blockLabels["jun-ausklang"] }],
+    bloecke: [{ slug: "jun-abschluss", label: blockLabels["jun-abschluss"] }],
   },
 ];
 
@@ -64,6 +70,14 @@ export const JUNIOREN_TEILE: {
 export const JUNIOREN_BLOCK_SLUGS: JuniorenBlockSlug[] = JUNIOREN_TEILE.flatMap((t) =>
   t.bloecke.map((b) => b.slug),
 );
+
+/** Kommt dieser Trainingsteil ohne Untergliederung aus — trägt er also genau
+ *  einen Block? Dann führen Editor, Formular und Leseansichten ihn als eine
+ *  Ebene: kein Block-Untertitel, kein zweiter Richtwert, keine zweite Wahl
+ *  (Story #127). */
+export function istEinblockig(teilSlug: string): boolean {
+  return JUNIOREN_TEILE.find((t) => t.slug === teilSlug)?.bloecke.length === 1;
+}
 
 /** Abbildungsregel Kinderfussball → Juniorenschema (Entscheidungsdokument §2).
  *
@@ -91,8 +105,10 @@ export function abbildungKifuZuJunioren(
     )
       return "jun-spielformen";
   }
-  // Z6: Der Unterblock des Abschlusses heisst in Abb. 19 selbst «Ausklang».
-  if (trainingsteil === "ausklang") return "jun-ausklang";
+  // Z6: Der Ausklang des Kinderfussballs entspricht dem Abschluss. Abb. 19
+  // nennt dessen Inhalt selbst «Ausklang»; seit Story #127 ist der Abschluss
+  // ein Block ohne Untergliederung und trägt darum den Namen des Teils.
+  if (trainingsteil === "ausklang") return "jun-abschluss";
   // Z1: Auffangen ist Betreuung vor dem Training und zählt nicht zur
   // Trainingszeit — das Juniorenschema kennt keinen Vor-Trainings-Teil.
   // Z7: jede andere Kombination, damit die Regel deterministisch bleibt.
@@ -120,7 +136,7 @@ export function abbildungJuniorenZuKifu(
       return { trainingsteil: "hauptteil", hauptteilkategorie: "fussball-spielen-lernen" };
     case "jun-spiel":
       return { trainingsteil: "hauptteil", hauptteilkategorie: "fussball-spielen" };
-    case "jun-ausklang":
+    case "jun-abschluss":
       return { trainingsteil: "ausklang", hauptteilkategorie: null };
     default:
       // Explosivität hat im Kinderfussball keine Entsprechung: diese
@@ -136,7 +152,12 @@ export function abbildungJuniorenZuKifu(
  *  Orientierung, nie Speicher- oder Veröffentlichungsbedingung (Story 6
  *  AC 6). Die Ebenen dürfen rechnerisch auseinandergehen — die Summe der
  *  Einstiegs-Unterblöcke ergibt 24–30, der Trainingsteil nennt 20–30; beide
- *  Werte sind unverbindliche Richtwerte der Quelle. */
+ *  Werte sind unverbindliche Richtwerte der Quelle.
+ *
+ *  Der Abschluss steht bewusst nur einmal hier — als Trainingsteil. Er ist
+ *  einblockig, sein Block wird nirgends eigens überschrieben, und ein zweiter
+ *  Eintrag `jun-abschluss` nennte denselben Richtwert 5–10 ein zweites Mal
+ *  (Story #127). Ein fehlender Eintrag lässt `ZeitAbgleich` nichts rendern. */
 export const BANDBREITEN: Record<string, { min: number; max: number }> = {
   einstieg: { min: 20, max: 30 },
   "jun-aufwaermen": { min: 10, max: 12 },
@@ -146,7 +167,6 @@ export const BANDBREITEN: Record<string, { min: number; max: number }> = {
   "jun-spielformen": { min: 30, max: 45 },
   "jun-spiel": { min: 15, max: 20 },
   abschluss: { min: 5, max: 10 },
-  "jun-ausklang": { min: 5, max: 10 },
 };
 
 /** Vorgesehene Gesamtdauer eines Junioren-Trainings (Manual S. 43). */
@@ -154,24 +174,28 @@ export const GESAMTDAUER_JUNIOREN = 90;
 
 /** Für die Veröffentlichung zwingend belegte Blöcke (Story 7 AC 1).
  *
- *  Der Spiel-Block fehlt bewusst: als freies Spiel ist er von der Pflicht
- *  ausgenommen und behält nur den Hinweis (Story 7 AC 2). */
+ *  Zwei Blöcke fehlen bewusst und behalten nur den Hinweis: das Spiel, weil es
+ *  als freies Spiel von der Pflicht ausgenommen ist (Story 7 AC 2), und seit
+ *  Story #127 der Abschluss — der PO hat ihm die Veröffentlichungspflicht am
+ *  2026-08-31 genommen. Spiegel des Junioren-Zweigs der DB-Funktion
+ *  `training_fehlende_bedingungen`. */
 export const JUNIOREN_PFLICHT_BLOECKE = [
   "jun-aufwaermen",
   "jun-spielform-trainingsziel",
   "jun-explosivitaet",
   "jun-spielformen",
-  "jun-ausklang",
 ] as const;
 
 
 /** Blöcke, deren Leere im Editor einen Hinweis erzeugt (Story 5a AC 8) —
  *  analog zum bestehenden Kinderfussball-Hinweis beim leeren freien Spiel.
- *  Der Hinweis blockiert nichts (AC 9). */
+ *  Der Hinweis blockiert nichts (AC 9). Der Abschluss ist seit Story #127
+ *  dabei: An die Stelle seiner Veröffentlichungspflicht tritt der Hinweis. */
 export const LEER_HINWEIS_BLOECKE: JuniorenBlockSlug[] = [
   "jun-spiel",
   "jun-spielform-trainingsziel",
   "jun-explosivitaet",
+  "jun-abschluss",
 ];
 
 // Was ein Trainingsblock aufnehmen darf, steht nicht hier, sondern in

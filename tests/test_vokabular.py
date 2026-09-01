@@ -55,8 +55,14 @@ def test_vokabular_kategorien_und_junioren_bloecke():
     assert list(vocab["junioren_trainingsteil"]) == ["einstieg", "hauptteil", "abschluss"]
     assert list(vocab["junioren_block"]) == [
         "jun-aufwaermen", "jun-spielform-trainingsziel", "jun-explosivitaet",
-        "jun-spielformen", "jun-spiel", "jun-ausklang",
+        "jun-spielformen", "jun-spiel", "jun-abschluss",
     ]
+    # Der Abschluss ist EIN Block ohne Untergliederung (Story #127, PO-Entscheid
+    # 2026-08-31): Sein Block trägt darum den Namen des Trainingsteils, und der
+    # Begriff «Ausklang» kommt im Juniorenfussball nicht mehr vor — im
+    # Kinderfussball bleibt er als Trainingsteil unverändert.
+    assert vocab["junioren_block"]["jun-abschluss"] == "Abschluss"
+    assert not any("Ausklang" in v for v in vocab["junioren_block"].values())
     # Kein eigenes «Heimat»-Vokabular mehr: seit Story 3 (Epic Übungswelten)
     # kann eine Junioren-Übung in JEDEM der sechs Blöcke zuhause sein, nicht
     # mehr nur in den drei Einstiegs-Blöcken. `junioren_block` ist damit die

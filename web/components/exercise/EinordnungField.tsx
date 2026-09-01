@@ -15,6 +15,11 @@ import { einordnungenFuer, type Altersstufe } from "@/lib/altersstufe";
  *  Segmente, weil «Spielformen und unterstützende Übungen» in keiner
  *  Segmentleiste lesbar bleibt; sie umbrechen.
  *
+ *  Ein Teil mit genau EINEM Block ist dabei keine zweite Ebene: Seine Chip-
+ *  Reihe wäre eine Wahl ohne Alternative, und der Chip trüge denselben Namen
+ *  wie das Segment darüber. Ihn zu wählen wählt darum unmittelbar seinen Block,
+ *  Chips erscheinen bei ihm keine (Story #127).
+ *
  *  Der Trainingsteil ist reine Anzeige-Navigation und wird nirgends
  *  gespeichert: gespeichert ist immer nur die Einordnung selbst. Beim
  *  Bearbeiten leitet der Aufrufer den Teil aus dem gespeicherten Block ab. */
@@ -40,6 +45,9 @@ export function EinordnungField({
   const gruppen = einordnungenFuer(altersstufe);
   const zweistufig = gruppen.some((g) => g.bloecke.length > 0);
   const offeneGruppe = gruppen.find((g) => g.teil === teil) ?? gruppen[0];
+  // Die Chip-Reihe lohnt erst ab zwei Blöcken; darunter ist die Wahl bereits
+  // mit dem Segment getroffen.
+  const chipsSichtbar = zweistufig && offeneGruppe.bloecke.length > 1;
 
   return (
     <div>
@@ -53,9 +61,15 @@ export function EinordnungField({
         options={gruppen.map((g) => ({ value: g.teil, label: g.label }))}
         // Einstufig ist der Trainingsteil selbst die Einordnung.
         value={zweistufig ? offeneGruppe.teil : wert || null}
-        onChange={(v) => (zweistufig ? onTeilChange(v) : onChange(v))}
+        onChange={(v) => {
+          if (!zweistufig) return onChange(v);
+          onTeilChange(v);
+          // Einblockiger Teil: die Wahl ist mit dem Segment schon getroffen.
+          const gruppe = gruppen.find((g) => g.teil === v);
+          if (gruppe?.bloecke.length === 1) onChange(gruppe.bloecke[0].slug);
+        }}
       />
-      {zweistufig && (
+      {chipsSichtbar && (
         <ChoiceChipGroup
           ariaLabel={`Block im Trainingsteil ${offeneGruppe.label}`}
           className="mt-3"

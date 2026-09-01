@@ -15,7 +15,9 @@ const BEDINGUNG_MARKER = "TRAINING_UNVOLLSTAENDIG";
 
 /** Die Bedingungen — in der Reihenfolge, in der die Datenebene sie prüft.
  *  Die Alterskategorie gilt in beiden Altersstufen, die beiden folgenden im
- *  Kinderfussball, die letzten fünf im Juniorenfussball (Story 7, Story 1). */
+ *  Kinderfussball, die letzten vier im Juniorenfussball (Story 7, Story 1).
+ *  Der Abschluss ist seit Story #127 keine Bedingung mehr — er trägt nur noch
+ *  einen Hinweis. */
 export type Bedingung =
   | "stufe"
   | "einleitung"
@@ -23,8 +25,7 @@ export type Bedingung =
   | "jun-aufwaermen"
   | "jun-spielform-trainingsziel"
   | "jun-explosivitaet"
-  | "jun-spielformen"
-  | "jun-ausklang";
+  | "jun-spielformen";
 
 /** Was fehlt, aus Sicht des Trainers. Ergänzt den Satz «Es fehlt …». */
 export const BEDINGUNG_FEHLT: Record<Bedingung, string> = {
@@ -37,7 +38,6 @@ export const BEDINGUNG_FEHLT: Record<Bedingung, string> = {
   "jun-explosivitaet": "mindestens eine Übung in der Explosivität",
   "jun-spielformen":
     "mindestens eine Übung in den Spielformen und unterstützenden Übungen",
-  "jun-ausklang": "mindestens eine Übung im Ausklang",
 };
 
 function istBedingung(wert: string): wert is Bedingung {

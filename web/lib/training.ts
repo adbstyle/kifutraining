@@ -1,4 +1,4 @@
-import { JUNIOREN_TEILE } from "@/lib/junioren";
+import { JUNIOREN_TEILE, istEinblockig } from "@/lib/junioren";
 import type { Altersstufe } from "@/lib/altersstufe";
 import type { JuniorenBlockSlug } from "@/lib/vocab";
 import {
@@ -117,7 +117,13 @@ export function groupByTeil<
 
 /** Junioren-Zuordnungen nach Trainingsteil und Unterblock gruppieren (feste
  *  Reihenfolge des Schemas; Story 4 AC 1, Story 5a AC 1–3). Items kommen
- *  positionssortiert. Die Teil-Summe ist die Summe seiner Blöcke. */
+ *  positionssortiert. Die Teil-Summe ist die Summe seiner Blöcke.
+ *
+ *  `einblockig` markiert einen Teil, der genau einen Block trägt: Er ist nicht
+ *  untergliedert und wird ohne Block-Überschrift und ohne zweiten Richtwert
+ *  dargestellt (Story #127). Die Marke steht hier, weil sie aus der Struktur
+ *  des Schemas folgt und nicht aus dem Inhalt — sie überlebt darum auch das
+ *  Wegfiltern leerer Blöcke in den Leseansichten. */
 export function groupJunioren<
   T extends { trainingsteil: string; durationMin: number | null },
 >(
@@ -126,6 +132,7 @@ export function groupJunioren<
   slug: string;
   label: string;
   sum: number;
+  einblockig: boolean;
   bloecke: { slug: JuniorenBlockSlug; label: string; items: T[]; sum: number }[];
 }[] {
   return JUNIOREN_TEILE.map((teil) => {
@@ -142,6 +149,7 @@ export function groupJunioren<
       slug: teil.slug,
       label: teil.label,
       sum: bloecke.reduce((a, b) => a + b.sum, 0),
+      einblockig: istEinblockig(teil.slug),
       bloecke,
     };
   });
@@ -202,7 +210,9 @@ function leseBloecke<
  *  Kinderfussball: die vier Trainingsteile, der Hauptteil in seine belegten
  *  Unterkategorien geteilt, die übrigen Teile als ein Block ohne
  *  Unterüberschrift (`label: null`). Juniorenfussball: die drei Trainingsteile
- *  mit ihren belegten Unterblöcken. Leere Teile und Blöcke erscheinen in
+ *  mit ihren belegten Unterblöcken — ein Teil mit nur einem Block bleibt
+ *  ebenfalls ohne Unterüberschrift (`label: null`), sonst stünde derselbe Name
+ *  zweimal untereinander (Story #127). Leere Teile und Blöcke erscheinen in
  *  beiden Fällen nicht (Story 8 PC 1). */
 export function leseGliederung<
   T extends {
@@ -231,7 +241,12 @@ export function leseGliederung<
         traegtDauer: true,
         bloecke: teil.bloecke
           .filter((b) => b.items.length > 0)
-          .map((b) => ({ key: b.slug, label: b.label, sum: b.sum, items: b.items })),
+          .map((b) => ({
+            key: b.slug,
+            label: teil.einblockig ? null : b.label,
+            sum: b.sum,
+            items: b.items,
+          })),
       }))
       .filter((teil) => teil.bloecke.length > 0);
   }

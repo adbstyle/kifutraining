@@ -71,7 +71,7 @@ export const junioren_block = {
   "jun-explosivitaet": "Explosivität",
   "jun-spielformen": "Spielformen und unterstützende Übungen",
   "jun-spiel": "Spiel",
-  "jun-ausklang": "Ausklang"
+  "jun-abschluss": "Abschluss"
 } as const;
 export type JuniorenBlockSlug = keyof typeof junioren_block;
 export const junioren_blockSlugs = Object.keys(junioren_block) as JuniorenBlockSlug[];

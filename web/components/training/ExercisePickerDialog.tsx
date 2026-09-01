@@ -182,9 +182,9 @@ export function ExercisePickerDialog({
     >
       <div className="flex flex-col gap-4">
         {/* Aus welcher Welt hier gewählt wird. Beide Schemata kennen einen
-            „Hauptteil" und einen „Ausklang" — ohne die Altersstufe sagt der
-            Titel allein nicht, welcher gemeint ist. Derselbe neutrale Badge wie
-            im Editor-Kopf: die Altersstufe ist keine Alterskategorie. */}
+            „Hauptteil" — ohne die Altersstufe sagt der Titel allein nicht,
+            welcher gemeint ist. Derselbe neutrale Badge wie im Editor-Kopf:
+            die Altersstufe ist keine Alterskategorie. */}
         <div className="-mt-1">
           <Badge tone="neutral">{altersstufeLabels[altersstufe]}</Badge>
         </div>
