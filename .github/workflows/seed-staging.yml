@@ -1,7 +1,7 @@
 name: Seed Staging (manuell)
 
-# Pendant zu seed-prod.yml für die Staging-Umgebung: lädt Manual-Übungen,
-# Themen, Bilder und die gezeichneten Diagramme (data/diagramme/*.json)
+# Pendant zu seed-prod.yml für die Staging-Umgebung: lädt Manual-Übungen
+# und die gezeichneten Diagramme (data/diagramme/*.json)
 # idempotent nach Staging.
 #
 # Warum überhaupt nötig: Diagramme und Manual-Daten liegen als Daten im Repo und
