@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Die Kinder spielen 4:4 mit zwei Jokern. Alle Kinder beteiligen sich am Angriffsspiel.
+4 gegen 4 mit zwei Jokern, die immer für das Team am Ball spielen. Alle Kinder greifen mit an.
 
 ## Üben
 
-- Bei Ballbesitz Blume öffnen und mit Zusammenspiel Breite, Tiefe und Überzahl nutzen
-- Nach Ballverlust die Blume schnell schliessen und im Schwarm zusammen den Ball jagen
+- Am Ball die Blume öffnen: breit und tief aufstellen, die Überzahl im Zusammenspiel nutzen.
+- Nach Ballverlust die Blume schliessen: zusammenrücken und den Ball im Schwarm jagen.
 
 ## Wett-eifern
 
-Welches Team erzielt innerhalb von fünf Minuten mehr Tore?
+Welches Team trifft in fünf Minuten häufiger?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 73*

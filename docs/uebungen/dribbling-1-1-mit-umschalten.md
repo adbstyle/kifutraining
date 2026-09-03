@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Ein Kind dribbelt in Richtung Schusszone und versucht im 1:1 ein Tor zu erzielen. Nach dem Abschluss verteidigt es nun. Das nächste Kind startet sofort und sucht den Torabschluss.
+Das erste Kind zieht mit dem Ball zur Schusszone und sucht im Eins gegen Eins den Abschluss. Kaum ist der Ball weg, wird es selbst zum Verteidiger — denn ohne Pause startet schon das nächste Kind und will ebenfalls treffen.
 
 ## Üben
 
-- Situation sofort wahrnehmen sowie mit Tempo und schnellen Richtungswechseln ein Tor erzielen
-- Danach möglichst rasch Verteidigerrolle einnehmen
+- Die Lage blitzschnell erfassen, mit Tempo und Richtungswechseln zum Tor kommen.
+- Nach dem Abschluss keine Pause: sofort in die Verteidigerrolle.
 
 ## Wett-eifern
 
-Bilde zwei Teams. Welches Team erzielt mehr Tore? Wechsle nach einem Durchgang die Seiten.
+Du bildest zwei Teams. Welches trifft häufiger? Nach einem Durchgang tauschen die Teams die Seiten.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 68*

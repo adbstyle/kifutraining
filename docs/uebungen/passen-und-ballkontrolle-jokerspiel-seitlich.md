@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Manual Fussball – Good Practice Die Kinder spielen 2:2 mit je zwei Kindern auf den Aussenbahnen als Joker. Die Joker dürfen den Ball max. zweimal berühren.
+2 gegen 2 im Feld, auf jeder Aussenbahn stehen zwei Kinder als Joker. Ein Joker darf den Ball höchstens zweimal berühren.
 
 ## Üben
 
-- Joker miteinbeziehen und somit Breite und Überzahl nutzen
+- Die Joker einbeziehen und so die Breite und die Überzahl nutzen.
 
 ## Wett-eifern
 
-Welches Team erzielt unter Einbezug der Joker ein Tor?
+Welches Team trifft mit Hilfe der Joker?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 73*

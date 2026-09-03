@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Die Kinder spielen 3:3 mit zwei Jokern im Feld und zwei Jokern ausserhalb des Feldes. Für Letztere sind zwei Ballkontakte erlaubt. Alle Kinder beteiligen sich am Angriffsspiel.
+Drei gegen drei; zwei Joker spielen im Feld mit, zwei weitere stehen ausserhalb hinter den Toren. Die Joker ausserhalb haben zwei Ballkontakte. Alle Kinder greifen mit an.
 
 ## Üben
 
-- Aussenspieler/innen und Joker im Feld miteinbeziehen und somit Tiefe und Überzahl nutzen
+- Die Joker im Feld und die hinter den Toren einbeziehen — so entsteht Tiefe und Überzahl.
 
 ## Wett-eifern
 
-Tore mit Einbezug der Joker in der Tiefe zählen doppelt.
+Ein Treffer, an dem ein Joker in der Tiefe beteiligt war, zählt doppelt.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 73*

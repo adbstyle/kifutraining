@@ -15,13 +15,13 @@ anzahl_kinder:
   max: 6
 material: []
 methodischer_fahrplan:
-  offen_starten: Im Spiel 3:1 (oder 2:1) greifen die Kinder von Team Weiss auf die
-    beiden Tore an. Ab der Mittellinie dürfen sie aufs Tor schiessen. Ist der Ball
-    im Tor oder aus dem Feld, ist das Spiel zu Ende.
+  offen_starten: Drei gegen eins — bei weniger Kindern auch 2 gegen 1. Weiss greift
+    auf zwei Tore an; geschossen werden darf erst ab der Mittellinie. Tor oder Aus
+    beendet den Angriff.
   ueben:
-  - Durch Zusammenspiel oder Dribbling Verteidigung ausspielen und entschlossen den
-    Abschluss suchen
-  wetteifern: Schafft das angreifende Team aus acht Versuchen vier Tore?
+  - Den Verteidiger im Zusammenspiel oder per Dribbling überwinden und ohne Zögern
+    abschliessen.
+  wetteifern: Schafft das angreifende Team vier Tore aus acht Versuchen?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

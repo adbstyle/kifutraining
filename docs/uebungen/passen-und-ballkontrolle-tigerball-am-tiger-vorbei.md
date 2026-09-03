@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Zwei Kinder passen sich gegenseitig den Ball flach zu (immer anspielbar). Schaffen sie drei Pässe, ohne dass das Kind in der Mitte (Tiger) den Pass unterbindet? Erobert der Tiger den Ball, tauscht er mit dem Kind, das gepasst hat. Vereinfachen: als Tiger in der Mitte Pylonen verwenden.
+Zwei Kinder spielen sich den Ball flach zu und bleiben dabei immer anspielbar. Zwischen ihnen lauert der Tiger. Gelingen drei Pässe, ohne dass der Tiger dazwischenkommt? Schnappt sich der Tiger den Ball, wird das Kind, das den Pass gespielt hat, zum neuen Tiger. Einfacher wird es, wenn eine Pylone den Tiger ersetzt.
 
 ## Üben
 
-- Geschickt im Rücken des Tigers freilaufen (aus dem Schatten in die Sonne)
+- Hinter dem Tiger freilaufen — aus seinem Schatten hinaus in die Sonne.
 
 ## Wett-eifern
 
-Wie viele Pässe gelingen am Tiger vorbei?
+Wie viele Pässe kommen am Tiger vorbei?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 74*

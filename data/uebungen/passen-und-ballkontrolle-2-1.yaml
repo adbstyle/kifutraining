@@ -14,14 +14,14 @@ anzahl_kinder:
   max: 11
 material: []
 methodischer_fahrplan:
-  offen_starten: Die Kinder spielen im Kleinfeld 2:1. Die rote Linie dient als Grenze.
-    Gib diverse Startpositionen (seitlich, nebeneinander, vor dem verteidigenden Kind)
-    vor.
+  offen_starten: Zwei gegen eins auf dem Kleinfeld; eine rote Linie begrenzt den Raum.
+    Du gibst vor, wo die drei starten — seitlich, nebeneinander oder direkt vor dem
+    Verteidiger.
   ueben:
-  - Situationen schnell einschätzen, in die Sonne laufen (sich freilaufen) und Überzahl
-    durch Zusammenspiel ausnutzen
-  wetteifern: Zähl z. B. das linke Tor doppelt oder gib für einen erfolgreichen Pass
-    (oder Dribbling) einen Extrapunkt.
+  - Die Lage schnell lesen, in die Sonne laufen — also raus aus dem Deckungsschatten
+    des Verteidigers — und die Überzahl im Zusammenspiel ausnutzen.
+  wetteifern: 'Setz Anreize: Das linke Tor zählt doppelt, oder ein gelungener Pass
+    beziehungsweise ein gelungenes Dribbling bringt einen Extrapunkt.'
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

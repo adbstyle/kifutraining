@@ -14,12 +14,11 @@ anzahl_kinder:
   max: 8
 material: []
 methodischer_fahrplan:
-  offen_starten: Im Spiel 3:3 dürfen die Kinder nur in der Endzone Tore erzielen.
-    Das Team, das einen Treffer erzielt, bleibt in Ballbesitz und greift sofort in
-    die andere Richtung an.
+  offen_starten: Drei gegen drei, getroffen wird nur aus der Endzone. Wer trifft,
+    behält den Ball — und greift ohne Pause in die Gegenrichtung an.
   ueben:
-  - Nach erzieltem Tor sofort auf neue Situation um­ schalten und freien Raum ausnutzen
-  wetteifern: Welchem Team gelingen zwei Tore in Folge?
+  - Nach dem Treffer sofort umschalten und den freien Raum auf der anderen Seite nutzen.
+  wetteifern: Welches Team trifft zweimal hintereinander?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

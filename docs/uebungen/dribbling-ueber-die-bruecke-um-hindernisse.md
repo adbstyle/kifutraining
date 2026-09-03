@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Auf dein Signal dribbeln die Kinder mit ihrem Ball über die Brücke (Markierkegel = Hindernisse) in die gegenüberliegende Zone und stoppen dort ihren Ball. Du kannst die Aufgaben variieren.
+Zwischen zwei Zonen liegt die Brücke, auf ihr stehen Pylonen als Hindernisse. Auf dein Signal dribbeln alle Kinder über die Brücke in die gegenüberliegende Zone und stoppen dort den Ball. Die Aufgabe auf der Brücke kannst du jedes Mal ändern.
 
 ## Üben
 
-- Den Ball mit dem linken oder dem rechten Fuss eng um die Hindernisse führen
+- Den Ball dicht am Fuss um jede Pylone lenken — eine Überquerung linksfüssig, die nächste rechtsfüssig.
 
 ## Wett-eifern
 
-Bilde zwei Teams. Welches absolviert eine vorgegebene Route am schnellsten?
+Du bildest zwei Teams und gibst eine Route über die Brücke vor. Welches Team hat sie zuerst komplett abgefahren?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 66*

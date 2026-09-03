@@ -14,13 +14,15 @@ anzahl_kinder:
   max: 8
 material: []
 methodischer_fahrplan:
-  offen_starten: Im Spiel 3:3 können die Teams über die beiden Linien in der Mitte
-    ein Dribbeltor oder ein «normales» Tor erzielen (beides gibt einen Punkt).
+  offen_starten: 'Drei gegen drei auf einem Feld mit zwei Minitoren pro Seite. Quer
+    durch die Mitte verlaufen zwei kurze Linien: Wer mit dem Ball über eine davon
+    dribbelt, hat ein Dribbeltor erzielt. Ein Dribbeltor bringt einen Punkt, ein Treffer
+    ins Minitor ebenso.'
   ueben:
-  - Entscheiden, ob sie mutig durch die Tore dribbeln oder nach vorne zu den Minitoren
-    zusammenspielen
-  wetteifern: Welches Team erzielt mehr Punkte? Zähl Dribbeltore und Minitore entweder
-    gleich oder eine Torart doppelt.
+  - 'Am Ball jedes Mal neu entscheiden: mutig allein durchs Dribbeltor — oder den
+    Ball nach vorn zu einem Mitspieler und gemeinsam auf ein Minitor.'
+  wetteifern: 'Welches Team sammelt mehr Punkte? Du bestimmst die Wertung: beide Torarten
+    gleich, oder eine davon zählt doppelt.'
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

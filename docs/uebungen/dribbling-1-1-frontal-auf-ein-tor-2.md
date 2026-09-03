@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Die Kinder duellieren sich 1:1. Das Tor in der Mitte ist grösser als die Tore nebenan. Ist ein Ball im Tor oder aus dem Feld, ist das Spiel zu Ende. Nach zwei Minuten wechseln die Rollen der Teams.
+Eins gegen Eins auf drei Tore in einer Reihe, das mittlere deutlich grösser als die beiden äusseren. Tor oder Aus beendet die Runde. Nach zwei Minuten tauschen die Teams die Rollen.
 
 ## Üben
 
-- Mit Tempo und Rhythmuswechsel an der/dem Gegner/in vorbeidribbeln
-- Abwechslungsweise mit linkem bzw. rechtem Fuss abschliessen
+- Mit Tempo und Rhythmuswechsel am Gegner vorbeigehen.
+- Die Abschlüsse abwechseln: einmal linker, einmal rechter Fuss.
 
 ## Wett-eifern
 
-Bilde zwei Teams. Das Tor in der Mitte zählt dreifach.
+Du bildest zwei Teams. Ein Treffer ins grosse Mitteltor bringt drei Punkte.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 68*

@@ -13,12 +13,13 @@ anzahl_kinder:
   max: 8
 material: []
 methodischer_fahrplan:
-  offen_starten: 'Im Spiel 3:3 übers Kreuz greift Rot auf die blauen Tore an und verteidigt
-    die gelben. Variante: nach einem erzielten Tor wechseln die zugeteilten Tore.'
+  offen_starten: 'Drei gegen drei mit vier Toren in den Ecken, je zwei blaue und zwei
+    gelbe, diagonal gegenüber. Rot spielt auf die blauen Tore und verteidigt die gelben,
+    Weiss umgekehrt. Variante: Nach jedem Treffer wechseln die zugeteilten Tore.'
   ueben:
-  - Den Überblick behalten und das gegnerische Team mit schnellen Richtungswechseln
-    überraschen
-  wetteifern: Welches Team schliesst auf beide Tore erfolgreich ab?
+  - Den Kopf oben behalten, beide eigenen Tore im Blick — und das andere Team mit
+    schnellen Richtungswechseln auf dem falschen Fuss erwischen.
+  wetteifern: Welches Team trifft in beide seiner Tore?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

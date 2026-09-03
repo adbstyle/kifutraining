@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Beide Kinder versuchen, beim Gegenüber ein Tor zu erzielen. Ist ein Ball im Tor oder aus dem Feld, ist das Spiel zu Ende. Nach zwei Minuten wechseln die Rollen der Teams.
+Ein Tor auf jeder Seite, dazwischen zwei Kinder im Eins gegen Eins: Beide wollen am Gegenüber vorbei und in dessen Tor treffen. Tor oder Aus beendet die Runde. Nach zwei Minuten tauschen die Teams die Rollen.
 
 ## Üben
 
-- Mutig nach vorne dribbeln sowie die Gegenspieler/innen mit Täuschungen und Finten (z. B. Körpertäuschung, Übersteiger, Schere) überwinden
+- Mutig nach vorn ziehen und den Gegner mit Finten überwinden — Körpertäuschung, Übersteiger oder Schere.
 
 ## Wett-eifern
 
-Bilde zwei Teams. Im ersten Durchgang startet das rote Team mit dem Ball, im zweiten Durchgang das weisse Team.
+Du bildest zwei Teams. Den ersten Durchgang eröffnet Rot am Ball, den zweiten Weiss.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 68*

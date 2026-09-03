@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Team Rot greift auf die beiden Tore an. Ab der Mittellinie dürfen die Kinder aufs Tor schiessen. Kind 1 (hinter den Toren) startet nach dem ersten Ballkontakt von Kind 2. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende.
+Rot greift auf zwei Tore an; geschossen werden darf erst ab der Mittellinie. Ein Verteidiger steht im Feld, der zweite wartet hinter den Toren und darf erst loslaufen, sobald die Angreifer den Ball zum ersten Mal berührt haben. Tor oder Aus beendet den Angriff.
 
 ## Üben
 
-- Durch schnelles und präzises Zusammenspiel oder Dribbling die Verteidigung ausspielen und sofort den Abschluss suchen
+- Schnell und genau zusammenspielen oder dribbeln, die Verteidiger ausspielen und sofort abschliessen.
 
 ## Wett-eifern
 
-Welchem Team gelingen trotz erhöhtem Verteidigerdruck ein präzises Zusammenspiel und ein rascher Torerfolg?
+Welchem Team gelingt trotz zweitem Verteidiger ein sauberes Zusammenspiel und ein schneller Treffer?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 72*

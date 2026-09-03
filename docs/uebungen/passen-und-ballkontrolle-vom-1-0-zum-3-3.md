@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Ein Kind (Team Weiss) dribbelt ins freie Feld und erzielt so schnell wie möglich ein Tor. Danach kommt ein Kind von Team Rot mit einem Ball ins Feld und die beiden spielen 1:1. Nach einem Tor oder dem Ball im Aus kommt ein weiteres Kind von Team Weiss mit einem neuen Ball aufs Feld (2:1). Ist der Ball wiederum im Aus oder im Tor, kommt ein weiteres Kind von Team Rot zum 2:2. So geht es weiter, bis alle Kinder im Feld sind. Im 3:3 spielen sie noch drei Bälle weiter. Danach fängt Team Rot an.
+Ein Kind von Weiss dribbelt ins leere Feld und trifft so schnell es kann. Dann kommt ein Kind von Rot mit eigenem Ball dazu: Eins gegen Eins. Nach Tor oder Aus kommt das nächste Weisse mit neuem Ball — Zwei gegen Eins —, dann ein Rotes zum Zwei gegen Zwei, und so weiter, bis alle drin sind. Im Drei gegen Drei werden noch drei Bälle ausgespielt. Im nächsten Durchgang beginnt Rot.
 
 ## Üben
 
-- In Überzahl mit schnellem Passspiel zum Torerfolg kommen
-- In Gleichzahl freilaufen und mit Dribbling oder mit Pässen Tore erzielen
+- In Überzahl mit schnellen Pässen zum Tor kommen.
+- In Gleichzahl freilaufen und per Dribbling oder Pass treffen.
 
 ## Wett-eifern
 
-Welches Team erzielt bis zum 3:3 mehr Tore?
+Welches Team hat bis zum Drei gegen Drei mehr Tore erzielt?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 70*

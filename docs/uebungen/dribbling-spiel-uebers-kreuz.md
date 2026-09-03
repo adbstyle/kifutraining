@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Im Spiel 3:3 übers Kreuz greift Rot auf die blauen Tore an und verteidigt die gelben. Variante: nach einem erzielten Tor wechseln die zugeteilten Tore.
+Drei gegen drei mit vier Toren in den Ecken, je zwei blaue und zwei gelbe, diagonal gegenüber. Rot spielt auf die blauen Tore und verteidigt die gelben, Weiss umgekehrt. Variante: Nach jedem Treffer wechseln die zugeteilten Tore.
 
 ## Üben
 
-- Den Überblick behalten und das gegnerische Team mit schnellen Richtungswechseln überraschen
+- Den Kopf oben behalten, beide eigenen Tore im Blick — und das andere Team mit schnellen Richtungswechseln auf dem falschen Fuss erwischen.
 
 ## Wett-eifern
 
-Welches Team schliesst auf beide Tore erfolgreich ab?
+Welches Team trifft in beide seiner Tore?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 66*
