@@ -4,18 +4,18 @@
 
 ## Offen starten
 
-Die Kinder dribbeln durch das Universum und erfüllen gleichzeitig verschiedene Aufgaben, z. B.: nur um die blauen Reifen (Planeten) bzw. um die gelben Markierungsteller (Monde) dribbeln oder einander folgen.
+Das Feld ist ein Universum: blaue Reifen sind Planeten, gelbe Teller sind Monde, die Minitore am Rand sind Sterne. Die Kinder dribbeln durchs Weltall und erfüllen deine Aufgaben — nur um Planeten kreisen, nur Monde umrunden, oder in einer Raketenkette hintereinander fliegen.
 
 ## Üben
 
-- Den Ball nur mit links, dann nur mit rechts führen
-- Den Ball abwechslungsweise mit links und rechts führen
-- Nur mit Voll-, Innen- und Aussenrist führen
-- Jemandem einen Trick vorzeigen und die andern nachahmen lassen
+- Eine Runde durchs Universum nur mit dem linken Fuss, die nächste nur mit dem rechten.
+- Bei jedem Ballkontakt den Fuss wechseln.
+- Je eine Runde mit Vollspann, Innenseite und Aussenseite.
+- Ein Kind zeigt einen Trick vor, die anderen fliegen ihn nach.
 
 ## Wett-eifern
 
-Sternenschiessen – wer schiesst in zwei Minuten möglichst viele Tore (Sterne)? Nach jedem Schuss holen die Kinder den Ball, führen ihn auf den Mond zurück, dribbeln um einen Gegenstand im Universum und suchen ein neues Tor (Stern).
+Sternenschiessen: Wer trifft in zwei Minuten die meisten Sterne? Nach jedem Schuss holt das Kind seinen Ball, dribbelt zurück zu einem Mond, umrundet unterwegs einen Planeten und sucht sich den nächsten Stern.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 61*

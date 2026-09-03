@@ -11,16 +11,17 @@ anzahl_kinder:
   max: 14
 material: []
 methodischer_fahrplan:
-  offen_starten: 'Bilde drei Teams und ordne je ein Team einem markierten Dreieck
-    zu: Jedes Kind dribbelt mit seinem Ball im markierten Dreieck. Gibst du ein Zeichen,
-    wechselt das gesamte Team in ein freies Dreieck.'
+  offen_starten: Mehrere Dreiecke sind mit Pylonen abgesteckt, mindestens eines mehr,
+    als es Teams gibt. Du bildest drei Teams und schickst jedes in ein eigenes Dreieck,
+    wo alle mit Ball dribbeln. Auf dein Signal zieht jedes Team geschlossen in ein
+    freies Dreieck um.
   ueben:
-  - Den Ball nur mit links, dann nur mit rechts führen und passen
-  - Den Ball abwechslungsweise mit links und rechts führen
-  - Nur mit Voll-, Innen- und Aussenrist führen
-  wetteifern: 'Welches Team verschiebt sich zuerst vollzählig in ein freies Dreieck?
-    Oder: Welches Team ist zuerst wieder in seinem Startdreieck, nachdem es alle anderen
-    Dreiecke besucht hat?'
+  - Im Dreieck nur mit dem linken Fuss dribbeln und passen, dann nur mit dem rechten.
+  - Bei jedem Kontakt den Fuss wechseln.
+  - Je einen Durchgang mit Vollspann, Innenseite und Aussenseite.
+  wetteifern: 'Welches Team ist beim Signal zuerst vollzählig in einem freien Dreieck?
+    Anspruchsvoller: Welches Team hat zuerst alle anderen Dreiecke besucht und steht
+    wieder in seinem Startdreieck?'
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

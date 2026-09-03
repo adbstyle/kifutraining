@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Manual Fussball – Good Practice Bilde zwei Teams und ordne sie einem markierten Rechteck zu. Auf jeder Seite dribbelt die Hälfte der Kinder von der einen Stirnseite zur anderen.
+Ein Rechteck ist abgesteckt, an seinen Stirnseiten stehen Pylonen. Du teilst zwei Teams ein und weist jedem eine Feldhälfte zu. Dort dribbelt jedes Kind quer durch seine Hälfte, Stirnseite zu Stirnseite und wieder retour.
 
 ## Üben
 
-- Vor einem Markierkegel einen Richtungswechsel machen; danach zur nächsten Markierung auf die andere Seite dribbeln; anschliessend neu starten
-- Je eine Runde mit dem Innenrist, mit dem Aussenrist und als Übersteiger machen sowie in einer Runde den Ball mit der Sohle zurückziehen und hinter dem Standbein durchspielen
+- Kurz vor der Pylone die Richtung wechseln, quer zur nächsten Pylone auf der Gegenseite dribbeln und von dort neu starten.
+- Jede Runde eine andere Technik am Wendepunkt: mit der Innenseite, mit der Aussenseite, als Übersteiger — und einmal die Sohlen-Variante: Ball mit der Sohle zurückholen und hinter dem Standbein auf die andere Seite spielen.
 
 ## Wett-eifern
 
-Je ein Kind verteidigt auf der Linie, ein anderes im Viereck. Welches schafft den Durchmarsch, ohne dass die Verteidiger/innen es stoppen (Ballverlust)?
+Zwei Kinder werden Verteidiger: eines wacht auf der Linie, eines im Feld. Die anderen versuchen den Durchmarsch. Wer kommt auf die andere Seite, ohne den Ball zu verlieren?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 63*
