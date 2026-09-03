@@ -81,3 +81,10 @@ Die `supabase`-CLI läuft aus `web/` heraus mit `--workdir ..` – die
 
 Projektsprache ist **Deutsch** – Code-Kommentare, Doku und Commit-Messages auf
 Deutsch halten.
+
+## Lizenz
+
+Der Code steht unter der [MIT-Lizenz](LICENSE). Die Übungsinhalte unter
+`data/uebungen/` und `data/diagramme/` sind nach dem Manual Kinderfussball des
+Schweizerischen Fussballverbands (SFV) in eigener Formulierung und Zeichnung
+entstanden; für sie ist noch keine eigene Lizenz festgelegt.
