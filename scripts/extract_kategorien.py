@@ -22,10 +22,9 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import parser as P
+from manual_quelle import PDF, ROOT, require_pdf
 
-ROOT = Path(__file__).resolve().parent.parent
 UEB = ROOT / "data" / "uebungen"
-PDF = ROOT / "sources" / "Manual_Kinderfussball_D.pdf"
 DPI = 150
 
 # Badge-Geometrie (150 DPI). Die Badge-Spalte ist NICHT seitenkonstant
@@ -124,6 +123,7 @@ def classify(rgb_hsv, yc):
 
 
 def main():
+    require_pdf("pdftotext", "pdftoppm")
     write = "--write" in sys.argv
     pages = load_pages()
     changed = mism = 0
