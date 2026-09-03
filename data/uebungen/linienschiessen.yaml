@@ -11,10 +11,10 @@ anzahl_kinder:
   min: 10
   max: 12
 material: []
-aufbau: Die Kinder versuchen, aus einer bestimmten Distanz den Ball in der Luft ins
-  Tor zu schiessen. Gelingt dies, wiederholen sie die Aufgabe von der nächsten, weiter
-  entfernten Markierung. Wer nicht reüssiert, schiesst in der nächsten Runde aus der
-  gleichen Distanz. Wer trifft wie oft?
+aufbau: Von einer Markierung aus soll der Ball durch die Luft ins Tor fliegen. Wer
+  trifft, rückt eine Markierung weiter nach hinten; wer nicht trifft, versucht es
+  in der folgenden Runde noch einmal aus derselben Distanz. Wer hat am Ende die meisten
+  Treffer?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

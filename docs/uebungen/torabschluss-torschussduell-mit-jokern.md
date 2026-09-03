@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Zwei Kinder versuchen, mithilfe von Jokern in Überzahl ein Tor zu erzielen.
+Zwei Angreifer wollen treffen und holen sich dafür Joker dazu, die mit ihnen spielen — so entsteht Überzahl gegen die Verteidigung mit Torspieler.
 
 ## Üben
 
-- Durch Einbezug der Joker und der Torspielerin/ des Torspielers Überzahl ausnutzen und entschlossen Tore erzielen
+- Joker und Torspieler ins Spiel einbeziehen, die Überzahl ausnutzen und entschlossen treffen.
 
 ## Wett-eifern
 
-Welches Team erzielt mit Einbezug des Jokers ein Tor?
+Welches Team trifft unter Mithilfe eines Jokers?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 78*

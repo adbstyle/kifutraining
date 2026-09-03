@@ -14,13 +14,13 @@ anzahl_kinder:
   max: 11
 material: []
 methodischer_fahrplan:
-  offen_starten: 'Die Kinder legen sich den Ball dribbelnd durch das Hütchentor vor
-    und schliessen ab. Danach holen sie den Ball und schliessen auf der anderen Seite
-    an. Variation: auf Minitore abschliessen.'
+  offen_starten: 'Vor dem Tor steht ein Pylonentor. Jedes Kind dribbelt heran, spielt
+    sich den Ball durch das Pylonentor vor und schiesst. Dann Ball holen und auf der
+    anderen Seite anstellen. Variante: auf Minitore.'
   ueben:
-  - Den Torabschluss mit dem letzten Ballkontakt kontrolliert vorbereiten und direkt
-    abschliessen
-  wetteifern: Wie viele Versuche gelingen ohne Fehler und mit erfolgreichem Torabschluss?
+  - Mit dem letzten Kontakt vor dem Schuss den Ball so vorlegen, dass er direkt geschossen
+    werden kann.
+  wetteifern: Wie viele Versuche laufen fehlerfrei und enden im Tor?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

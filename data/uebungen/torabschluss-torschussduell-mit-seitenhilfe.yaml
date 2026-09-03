@@ -13,12 +13,12 @@ anzahl_kinder:
   max: 10
 material: []
 methodischer_fahrplan:
-  offen_starten: Die Kinder versuchen im 2:2, mithilfe der Kinder ausserhalb des Feldes
-    (Joker) ein Tor zu erzielen.
+  offen_starten: 2 gegen 2 im Feld, an den Seiten stehen Kinder ausserhalb als Joker,
+    dazu die Torspieler. Die Teams holen sich die Joker ins Spiel, um zu treffen.
   ueben:
-  - Mithilfe der Aussen- und der Torspieler/innen Breite und Überzahl nutzen und entschlossen
-    abschliessen
-  wetteifern: Welches Team nutzt die Überzahl in Ballbesitz am erfolgreichsten?
+  - Mit den Aussenspielern und dem Torspieler die Breite und die Überzahl nutzen —
+    dann entschlossen abschliessen.
+  wetteifern: Welches Team macht am meisten aus seiner Überzahl am Ball?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

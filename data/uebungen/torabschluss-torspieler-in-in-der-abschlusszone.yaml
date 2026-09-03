@@ -14,12 +14,12 @@ anzahl_kinder:
   max: 8
 material: []
 methodischer_fahrplan:
-  offen_starten: Die Kinder spielen 3:3. Die Torspieler/innen dürfen in der Abschlusszone
-    den Ball mit den Händen abwehren.
+  offen_starten: Drei gegen drei, auf jeder Seite zwei Minitore mit einer Abschlusszone
+    davor. Der Torspieler jedes Teams darf innerhalb dieser Zone die Hände einsetzen.
   ueben:
-  - Durch rasche Spielverlagerung und Ausnutzen der Breite auf das freie Tor abschliessen
-  - Als Torspieler/in durch rasches Verschieben die beiden Minitore verteidigen
-  wetteifern: Welche/r Torspieler/in bekommt am wenigsten Tore?
+  - Das Spiel schnell verlagern, die Breite nutzen und aufs freie Minitor abschliessen.
+  - Als Torspieler flink zwischen beiden Minitoren hin- und herschieben.
+  wetteifern: Welcher Torspieler kassiert am wenigsten Treffer?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

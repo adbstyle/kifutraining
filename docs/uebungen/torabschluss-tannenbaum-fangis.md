@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Zwei Kinder versuchen, möglichst viele Kinder zu fangen. Wird ein Kind von einem/r Fänger/in berührt, muss es wie eine Tanne (Arme ausstrecken, breitbeinig) stehen bleiben. Die anderen Kinder können es befreien, indem sie zwischen seinen Beinen durchkriechen.
+Zwei Fänger jagen alle anderen. Wer berührt wird, bleibt als Tanne stehen: Arme ausgestreckt, Beine breit. Befreit wird eine Tanne, indem ein anderes Kind zwischen ihren Beinen durchkriecht.
 
 ## Üben
 
-- Als Fänger/innen Strategie festlegen, wie sich möglichst alle Kinder fangen lassen
+- Als Fänger vorher absprechen, mit welcher Strategie sich alle fangen lassen.
 
 ## Wett-eifern
 
-Wer schafft es, alle Kinder zu fangen? Wer kann fünf Tannen befreien? Lernbaustein: «Vielseitigkeit erleben» jsle.ch/dLve
+Welchem Fängerpaar gelingt es, alle zu fangen? Wer befreit fünf Tannen?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 80*

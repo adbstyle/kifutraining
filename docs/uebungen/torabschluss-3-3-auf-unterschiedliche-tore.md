@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Die Kinder spielen 3:3. Das weisse Team schiesst auf das grosse Tor, das rote auf die beiden Minitore. Nach Torerfolg auf die Minitore wechseln die Rollen.
+Drei gegen drei auf ungleiche Tore: Weiss spielt auf das grosse Tor mit Torspieler, Rot auf zwei Minitore. Sobald Rot in ein Minitor trifft, tauschen die Teams die Rollen.
 
 ## Üben
 
-- Durch geschicktes Zusammenspiel Überzahl ausnutzen und auf das grosse Tor abschliessen
-- Durch aktives Mitspielen des Torspielers/ der Torspielerin und rasches Angriffsspiel aufs Minitor abschliessen
+- Die Überzahl im Zusammenspiel ausnutzen und aufs grosse Tor abschliessen.
+- Der Torspieler spielt aktiv mit; mit schnellem Angriff aufs Minitor treffen.
 
 ## Wett-eifern
 
-Welches Team schafft ein Tor auf die Minitore und nach dem Seitenwechsel direkt eines auf das grosse Tor?
+Welches Team trifft ins Minitor und nach dem Wechsel gleich auch ins grosse Tor?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 76*

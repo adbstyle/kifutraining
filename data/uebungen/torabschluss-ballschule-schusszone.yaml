@@ -15,13 +15,11 @@ anzahl_kinder:
   max: 11
 material: []
 methodischer_fahrplan:
-  offen_starten: 'Manual Fussball – Good Practice Die Kinder dribbeln auf die Abschlusszone
-    zu und schliessen in dieser auf das Tor ab. Variation: auf Minitore abschliessen.'
+  offen_starten: 'Vor dem Tor liegt eine Abschlusszone. Die Kinder dribbeln darauf
+    zu und schiessen aus der Zone aufs Tor. Variante: auf Minitore.'
   ueben:
-  - Mit linkem und rechtem Fuss kontrolliert den Ball führen und in die freie Ecke
-    zielen
-  wetteifern: Wie viele Versuche gelingen mit dem linken, wie viele mit dem rechten
-    Fuss?
+  - Den Ball mit links wie mit rechts sauber führen und die offene Ecke anvisieren.
+  wetteifern: Wie viele Treffer gelingen mit links, wie viele mit rechts?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

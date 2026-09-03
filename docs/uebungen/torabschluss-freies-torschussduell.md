@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Die Kinder versuchen im 2:2, durch mutiges Dribbeln, geschicktes Zusammenspiel und Freilaufen eine Überzahl zu kreieren und ein Tor zu erzielen.
+2 gegen 2 auf zwei Tore mit Torspielern. Wer mutig dribbelt, sich freiläuft und zusammenspielt, schafft Überzahl — und trifft.
 
 ## Üben
 
-- Durch Dribbeln in den freien Raum und geschicktes Freilaufen Überzahlsituation nutzen und den Torabschluss suchen
+- Ins Offene dribbeln, sich freilaufen, die Überzahl ausspielen und den Abschluss suchen.
 
 ## Wett-eifern
 
-Welches Team schafft innerhalb von fünf Minuten am meisten Tore?
+Welches Team trifft in fünf Minuten am häufigsten?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 78*

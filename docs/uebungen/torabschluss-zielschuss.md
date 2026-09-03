@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Dribbelnd führen die Kinder verschiedene Finten vor den Hütchen aus und schliessen am Ende des Parcours aufs Tor ab. Danach holen sie ihren Ball und stellen sich auf der anderen Seite an. Variation: auf Minitore abschliessen.
+Ein Parcours aus Pylonen führt zum Tor. Die Kinder dribbeln hindurch, setzen vor jeder Pylone eine Finte und schiessen am Ende aufs Tor. Dann Ball holen und auf der anderen Seite anstellen. Variante: auf Minitore.
 
 ## Üben
 
-- Nach zwei unterschiedlichen Finten erfolgreich abschliessen
-- Beidseitig üben (abwechselnd mit links und rechts abschliessen)
+- Zwei verschiedene Finten zeigen und trotzdem treffen.
+- Beidfüssig: einmal links, einmal rechts abschliessen.
 
 ## Wett-eifern
 
-Wer schafft die Aufgabe mit dem linken und anschliessend mit dem rechten Fuss ohne Fehler?
+Wer schafft den Parcours erst mit dem linken, dann mit dem rechten Fuss fehlerfrei?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 76*

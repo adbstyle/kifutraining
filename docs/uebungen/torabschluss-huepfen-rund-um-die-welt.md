@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-In einem markierten Feld liegen farbige Reifen. Die Kinder bewegen sich frei im Feld und hüpfen (ein- und beidbeinig) immer wieder in die Reifen. Zuerst alleine, anschliessend in Zweierteams. Ein Kind hüpft vor, das andere hüpft nach. Danach erfolgt ein Rollenwechsel.
+Farbige Reifen liegen verstreut in einem abgesteckten Feld. Die Kinder bewegen sich frei und hüpfen immer wieder in einen Reifen — einbeinig oder beidbeinig. Zuerst jedes für sich, dann zu zweit: Eines hüpft vor, das andere macht es nach, danach Wechsel.
 
 ## Üben
 
-- Reifen nicht berühren und auf dem Vorderfuss (wie eine Gazelle) springen
+- Sauber landen, ohne den Reifen zu berühren — auf dem Vorderfuss, leicht wie eine Gazelle.
 
 ## Wett-eifern
 
-Wer schafft es ohne Fehler? Führ eine Stafette mit gleicher Hüpfabfolge durch oder lass die Kinder eigene Hüpfabfolgen erfinden.
+Wer bleibt fehlerfrei? Als Stafette mit derselben Hüpffolge für alle, oder die Kinder erfinden eigene Folgen.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 80*
