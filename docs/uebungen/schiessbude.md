@@ -2,8 +2,6 @@
 
 **Trainingsteil:** ausklang · **Kategorien:** G, F, E
 
-![Schiessbude](../images/schiessbude.png)
-
 ## Aufbau
 
 Mit dem gesamten Trainingsmaterial baust du im Tor eine Schiessbude auf. Wer trifft am meisten Gegenstände? Manual Grundlagen. Magglingen: BASPO. . Kinderfussball – Theorie und Praxis. Kursdokument J+S und SFV.

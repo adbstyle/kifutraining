@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
-![1:1 frontal auf ein Tor](../images/dribbling-1-1-frontal-auf-ein-tor.png)
-
 ## Offen starten
 
 Beide Kinder versuchen, beim Gegenüber ein Tor zu erzielen. Ist ein Ball im Tor oder aus dem Feld, ist das Spiel zu Ende. Nach zwei Minuten wechseln die Rollen der Teams.

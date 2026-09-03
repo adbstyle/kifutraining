@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Grossfeld
 
-![1:1 Torabschluss auf Torspieler/in](../images/torabschluss-1-1-torabschluss-auf-torspieler-in.png)
-
 ## Offen starten
 
 Ein Kind dribbelt auf den/die Torspieler/in zu und versucht, ein Tor zu erzielen. Dabei darf es nur vorwärts oder seitwärts dribbeln. Anschliessend tauschen sie. Variation: mit Gegenspieler/in im Rücken.

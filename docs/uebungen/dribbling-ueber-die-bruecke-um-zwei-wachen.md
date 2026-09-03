@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
-![Über die Brücke – um zwei Wachen](../images/dribbling-ueber-die-bruecke-um-zwei-wachen.png)
-
 ## Offen starten
 
 Manual Fussball – Good Practice Die Kinder dribbeln an den beiden verteidigenden Kindern (Wachen) vorbei und stoppen ihren Ball in der gegenüberliegenden Zone. Nimmt eine der Wachen einem Kind den Ball weg oder kann ihn aus dem Feld spielen, tauschen sie die Rollen.

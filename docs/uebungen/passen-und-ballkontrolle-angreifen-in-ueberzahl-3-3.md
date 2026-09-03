@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
-![Angreifen in Überzahl – 3:3](../images/passen-und-ballkontrolle-angreifen-in-ueberzahl-3-3.png)
-
 ## Offen starten
 
 Drei Kinder von Team Rot starten von der Grundlinie aus einen Angriff. Ein Kind von Team Weiss verteidigt im Feld. Nach dem ersten Ballkontakt von Team Rot dürfen Kind 2 (hinter den Toren) und Kind 3 (von der Seite) von Team Weiss ins Spiel eingreifen. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende.

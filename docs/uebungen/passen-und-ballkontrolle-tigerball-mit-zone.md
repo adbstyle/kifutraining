@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
-![Tigerball – mit Zone](../images/passen-und-ballkontrolle-tigerball-mit-zone.png)
-
 ## Offen starten
 
 Zwei Kinder befinden sich je in einer Zone und passen sich gegenseitig den Ball flach zu. Der Tiger versucht, die Pässe zu unterbinden. Gelingt es, tauschen Tiger und passgebendes Kind die Rolle.

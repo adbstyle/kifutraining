@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
-![1:1 Super-League-Spiel](../images/dribbling-1-1-super-league-spiel.png)
-
 ## Offen starten
 
 Zwei Kinder versuchen, während einer Minute aneinander vorbei über die gegnerische Torlinie zu dribbeln. Wer gewonnen hat, steigt ein Feld auf, wer verloren hat, steigt ein Feld ab (Super-League-Feld zuoberst). Bei Unentschieden machen die Kinder «Schere-Stein-Papier».

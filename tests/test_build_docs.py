@@ -21,7 +21,6 @@ def test_render_exercise_markdown():
             "ueben": ["Täuschen und dribbeln"],
             "wetteifern": "Welches Team erzielt mehr Tore?",
         },
-        "bild": "images/dribbling-wechseltore.png",
         "quelle": {"datei": "Manual_Kinderfussball_D.pdf", "seite": 65},
     }
     md = build_docs.render_exercise(doc, VOCAB)
@@ -33,7 +32,6 @@ def test_render_exercise_markdown():
     assert "Zwei Teams spielen 3:3." in md
     assert "- Täuschen und dribbeln" in md
     assert "## Wett-eifern" in md
-    assert "![Wechseltore](../images/dribbling-wechseltore.png)" in md
 
 
 def test_render_auffangen_aufbau():

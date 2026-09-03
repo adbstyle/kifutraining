@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
-![1:1 mit acht Toren](../images/dribbling-1-1-mit-acht-toren.png)
-
 ## Offen starten
 
 Zwei Kinder aus Team Rot dribbeln gleichzeitig auf das Feld und passen auf die andere Seite zum/r jeweiligen Gegenspieler/in. Danach erfolgt ein 1:1 auf die beiden Minitore. Erobern die Kinder von Team Rot den Ball zurück, kontern sie auf die jeweils gegenüberliegenden Minitore. Tore sind nur in der Abschlusszone gültig.

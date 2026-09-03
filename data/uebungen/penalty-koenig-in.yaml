@@ -16,7 +16,6 @@ aufbau: 'Die Kinder schiessen abwechselnd einen Penalty. Bei erzieltem Tor bekom
   Fuss 3. Durchgang: mit dem linken oder rechten Fuss Wer erzielt in drei Durchgängen
   am meisten Tore?'
 varianten: []
-bild: images/penalty-koenig-in.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 82

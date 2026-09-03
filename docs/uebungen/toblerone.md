@@ -2,8 +2,6 @@
 
 **Trainingsteil:** einleitung · **Kategorien:** F, E
 
-![Toblerone](../images/toblerone.png)
-
 ## Offen starten
 
 Bilde drei Teams und ordne je ein Team einem markierten Dreieck zu: Jedes Kind dribbelt mit seinem Ball im markierten Dreieck. Gibst du ein Zeichen, wechselt das gesamte Team in ein freies Dreieck.

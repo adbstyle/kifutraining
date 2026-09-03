@@ -1,4 +1,4 @@
 -- Reine SQL-Stammdaten laufen bei `supabase db reset`.
 -- Die Manual-Übungen, Themen und Feld-Diagramme werden NICHT hier geseedet,
 -- sondern über den datengetriebenen Seed: `npm run seed` (web/scripts/seed.ts),
--- der data/*.yaml + images/*.png idempotent nach Postgres/Storage upsertet.
+-- der data/*.yaml (Übungen + Diagramme) idempotent nach Postgres upsertet.

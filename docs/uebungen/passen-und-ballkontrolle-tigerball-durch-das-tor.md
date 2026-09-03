@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
-![Tigerball – durch das Tor](../images/passen-und-ballkontrolle-tigerball-durch-das-tor.png)
-
 ## Offen starten
 
 Ein Kind versucht, flach durch das Hütchentor ein anderes anzuspielen. Dieses nimmt den Ball hinter dem Tor an und spielt aus seiner Position durch das Tor zurück.

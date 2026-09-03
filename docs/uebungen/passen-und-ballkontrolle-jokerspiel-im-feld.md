@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Grossfeld
 
-![Jokerspiel im Feld](../images/passen-und-ballkontrolle-jokerspiel-im-feld.png)
-
 ## Offen starten
 
 Die Kinder spielen 4:4 mit zwei Jokern. Alle Kinder beteiligen sich am Angriffsspiel.

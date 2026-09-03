@@ -2,8 +2,6 @@
 
 **Trainingsteil:** einleitung · **Kategorien:** G, F, E
 
-![Spiel mit dem Feuer](../images/spiel-mit-dem-feuer.png)
-
 ## Offen starten
 
 Zwei Kinder symbolisieren das Feuer mit Überzieher­ shirts. Die anderen versuchen ihnen auszuweichen. Wer sich verbrannt hat (Berührung), erfüllt eine Aufgabe (üben) oder umdribbelt das Spielfeld.

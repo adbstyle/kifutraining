@@ -22,7 +22,6 @@ methodischer_fahrplan:
     Oder: Welches Team ist zuerst wieder in seinem Startdreieck, nachdem es alle anderen
     Dreiecke besucht hat?'
 varianten: []
-bild: images/toblerone.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 62
