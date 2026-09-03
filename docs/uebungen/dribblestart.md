@@ -2,8 +2,6 @@
 
 **Trainingsteil:** auffangen · **Kategorien:** G, F, E
 
-![Dribblestart](../images/dribblestart.png)
-
 ## Aufbau
 
 Den Kindern steht vor dem Training mind. ein Feld mit unterschiedlichen Gegenständen zur Verfügung. Sobald die Kinder ins Training kommen, schnappen sie sich einen Ball und umdribbeln die Gegenstände.

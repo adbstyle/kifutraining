@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
-![Ballschule – durch Hütchentor](../images/torabschluss-ballschule-durch-huetchentor.png)
-
 ## Offen starten
 
 Die Kinder legen sich den Ball dribbelnd durch das Hütchentor vor und schliessen ab. Danach holen sie den Ball und schliessen auf der anderen Seite an. Variation: auf Minitore abschliessen.

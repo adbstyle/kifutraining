@@ -24,7 +24,6 @@ methodischer_fahrplan:
     der Insel in seine Schatztruhe gebracht? Variante: Die Teams können den Schatz
     der anderen klauen. Wer hat innerhalb von zwei Minuten mehr Schätze?'
 varianten: []
-bild: images/schatzsuche.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 64

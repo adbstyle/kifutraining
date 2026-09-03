@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
-![2:1](../images/passen-und-ballkontrolle-2-1.png)
-
 ## Offen starten
 
 Die Kinder spielen im Kleinfeld 2:1. Die rote Linie dient als Grenze. Gib diverse Startpositionen (seitlich, nebeneinander, vor dem verteidigenden Kind) vor.

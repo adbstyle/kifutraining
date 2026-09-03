@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
-![Wechseltore](../images/dribbling-wechseltore.png)
-
 ## Offen starten
 
 Zwei Teams spielen 3:3. Dribbelt ein Kind über die Mittellinie, kann es in dieser Hälfte ein Tor erzielen. Dribbelt es wieder zurück, sind die anderen beiden Tore freigeschaltet. Bei Ballgewinn müssen die Kinder zuerst über die Mittellinie dribbeln.

@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
-![1:0 mit Täuschung](../images/torabschluss-1-0-mit-taeuschung.png)
-
 ## Offen starten
 
 Manual Fussball – Good Practice Ein Kind muss mit einer Finte eine Pylone ausdribbeln, bevor es die Abschlusszone erreicht und aufs Tor schiessen kann. Danach holt es seinen Ball und schliesst auf der anderen Seite an.

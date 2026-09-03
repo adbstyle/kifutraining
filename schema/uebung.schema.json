@@ -48,7 +48,6 @@
       }
     },
     "varianten": { "type": "array", "items": { "type": "string" } },
-    "bild": { "type": ["string", "null"] },
     "quelle": {
       "type": "object",
       "required": ["datei", "seite"],

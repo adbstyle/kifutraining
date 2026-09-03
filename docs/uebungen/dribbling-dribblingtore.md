@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
-![Dribblingtore](../images/dribbling-dribblingtore.png)
-
 ## Offen starten
 
 Im Spiel 3:3 können die Teams über die beiden Linien in der Mitte ein Dribbeltor oder ein «normales» Tor erzielen (beides gibt einen Punkt).

@@ -26,8 +26,6 @@ def render_exercise(doc, vocab):
     if doc.get("feldtyp"):
         meta.append(f"**Feldtyp:** {vocab['feldtyp'].get(doc['feldtyp'], doc['feldtyp'])}")
     lines += [" · ".join(meta), ""]
-    if doc.get("bild"):
-        lines += [f"![{doc['name']}](../{doc['bild']})", ""]
     fahrplan = doc.get("methodischer_fahrplan")
     if fahrplan:
         lines += ["## Offen starten", "", fahrplan["offen_starten"], ""]

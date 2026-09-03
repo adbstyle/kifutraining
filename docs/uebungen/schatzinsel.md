@@ -2,8 +2,6 @@
 
 **Trainingsteil:** einleitung · **Kategorien:** G, F, E
 
-![Schatzinsel](../images/schatzinsel.png)
-
 ## Offen starten
 
 Rufst du «Ahoi, Piraten!», dribbeln die Kinder auf die Schatzinsel in der Mitte. Bei «Hejo, Captain Jack!» lassen die Kinder ihren Ball liegen und dribbeln mit einem freien Ball weiter.

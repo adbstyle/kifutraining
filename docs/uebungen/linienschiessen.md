@@ -2,8 +2,6 @@
 
 **Trainingsteil:** ausklang · **Kategorien:** G, F, E · **Feldtyp:** Grossfeld
 
-![Linienschiessen](../images/linienschiessen.png)
-
 ## Aufbau
 
 Die Kinder versuchen, aus einer bestimmten Distanz den Ball in der Luft ins Tor zu schiessen. Gelingt dies, wiederholen sie die Aufgabe von der nächsten, weiter entfernten Markierung. Wer nicht reüssiert, schiesst in der nächsten Runde aus der gleichen Distanz. Wer trifft wie oft?

@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Vielseitigkeit erleben · **Erscheinungsform:** Sich flink und geschickt bewegen
 
-![Tannenbaum-Fangis](../images/torabschluss-tannenbaum-fangis.png)
-
 ## Offen starten
 
 Zwei Kinder versuchen, möglichst viele Kinder zu fangen. Wird ein Kind von einem/r Fänger/in berührt, muss es wie eine Tanne (Arme ausstrecken, breitbeinig) stehen bleiben. Die anderen Kinder können es befreien, indem sie zwischen seinen Beinen durchkriechen.

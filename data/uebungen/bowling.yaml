@@ -17,7 +17,6 @@ aufbau: Zwei Kinder bilden ein Paar. Sie haben vier Markierkegel und einen Ball.
   ist das andere Kind an der Reihe. Wie viele Versuche brauchen sie, um alle Pylonen
   umzuwerfen?
 varianten: []
-bild: images/bowling.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 82

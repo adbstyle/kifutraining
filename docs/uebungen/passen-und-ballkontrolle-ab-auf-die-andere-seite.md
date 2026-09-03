@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
-![Ab auf die andere Seite](../images/passen-und-ballkontrolle-ab-auf-die-andere-seite.png)
-
 ## Offen starten
 
 Im Spiel 3:3 dürfen die Kinder nur in der Endzone Tore erzielen. Das Team, das einen Treffer erzielt, bleibt in Ballbesitz und greift sofort in die andere Richtung an.

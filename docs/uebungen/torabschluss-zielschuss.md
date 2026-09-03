@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
-![Zielschuss](../images/torabschluss-zielschuss.png)
-
 ## Offen starten
 
 Dribbelnd führen die Kinder verschiedene Finten vor den Hütchen aus und schliessen am Ende des Parcours aufs Tor ab. Danach holen sie ihren Ball und stellen sich auf der anderen Seite an. Variation: auf Minitore abschliessen.

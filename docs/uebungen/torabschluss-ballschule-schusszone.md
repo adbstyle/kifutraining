@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
 
-![Ballschule – Schusszone](../images/torabschluss-ballschule-schusszone.png)
-
 ## Offen starten
 
 Manual Fussball – Good Practice Die Kinder dribbeln auf die Abschlusszone zu und schliessen in dieser auf das Tor ab. Variation: auf Minitore abschliessen.

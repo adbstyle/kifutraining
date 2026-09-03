@@ -1,4 +1,4 @@
-// Idempotenter Daten-Seed: data/*.yaml + images/*.png -> Postgres + Storage.
+// Idempotenter Daten-Seed: data/*.yaml (Übungen + Diagramme) -> Postgres.
 // Manual-Übungen: source='manual', owner_id=null, visibility='public'.
 // Upsert per slug/id -> mehrfach ausführbar ohne Duplikate; User-Daten bleiben unberührt.
 //
@@ -6,7 +6,7 @@
 // Prod:    SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npm run seed
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve, basename } from "node:path";
+import { dirname, resolve } from "node:path";
 import yaml from "js-yaml";
 import { createClient } from "@supabase/supabase-js";
 import { parseDiagramm, type DiagrammData } from "../lib/diagramm";
@@ -56,24 +56,6 @@ async function ensureBucket() {
   }
 }
 
-async function uploadImage(relPath: string): Promise<string | null> {
-  // relPath wie "images/dribbling-wechseltore.png"
-  const localPath = resolve(REPO_ROOT, relPath);
-  if (!existsSync(localPath)) {
-    console.warn(`  Bild fehlt, übersprungen: ${relPath}`);
-    return null;
-  }
-  const storagePath = `manual/${basename(relPath)}`;
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(storagePath, readFileSync(localPath), {
-      contentType: "image/png",
-      upsert: true,
-    });
-  if (error) throw error;
-  return supabase.storage.from(BUCKET).getPublicUrl(storagePath).data.publicUrl;
-}
-
 /** Gezeichnetes Diagramm einer Manual-Übung laden (data/diagramme/<slug>.json).
  *  parseDiagramm ist die Trust-Boundary — strukturell Kaputtes wird verworfen,
  *  damit nie ein ungültiges Diagramm in die DB gelangt. null, wenn keine Datei
@@ -107,17 +89,14 @@ async function seedExercises() {
   let count = 0;
   let mitDiagramm = 0;
   for (const u of raw) {
-    const bildRel = (u.bild as string | null) ?? null;
-    const bildUrl = bildRel ? await uploadImage(bildRel) : null;
-
-    // Diagramm-Vorlage (Epic #58): gesetzt -> aktives Anzeige-Bild, das Foto
-    // (bild_url) bleibt als Umschalt-Option erhalten (#56). Beide Felder werden
-    // immer geschrieben, damit der Seed idempotent bleibt: eine entfernte
-    // Diagramm-Datei setzt diagramm/bild_quelle wieder zurück.
+    // Diagramm-Vorlage (Epic #58) ist das einzige Anzeige-Bild einer
+    // Manual-Übung. Beide Felder werden immer geschrieben, damit der Seed
+    // idempotent bleibt: eine entfernte Diagramm-Datei setzt diagramm und
+    // bild_quelle wieder zurück.
     const diagramm = loadDiagramm(u.id as string);
     if (diagramm) mitDiagramm++;
 
-    const row: Record<string, unknown> = {
+    const row = {
       slug: u.id,
       name: u.name,
       // Der Manual-Bestand ist per Definition Kinderfussball: er stammt aus
@@ -140,17 +119,13 @@ async function seedExercises() {
       varianten: u.varianten ?? [],
       diagramm,
       bild_quelle: diagramm ? "diagramm" : null,
+      // Manual-Übungen tragen kein Foto mehr (die Manual-Bitmaps sind
+      // entfernt); explizit genullt, damit ein Alt-Bestand mit-bereinigt wird.
+      bild_url: null,
       source: "manual",
       owner_id: null,
       visibility: "public",
     };
-
-    // bild_url nur schreiben, wenn ein Bild hochgeladen wurde ODER bewusst keins
-    // existiert. Wurde ein Bild erwartet, der Upload schlug aber fehl (Datei fehlt),
-    // das Feld auslassen -> ein bereits vorhandener bild_url bleibt beim Upsert erhalten.
-    if (bildUrl !== null || !bildRel) {
-      row.bild_url = bildUrl;
-    }
 
     const { error } = await supabase.from("exercises").upsert(row, { onConflict: "slug" });
     if (error) throw error;

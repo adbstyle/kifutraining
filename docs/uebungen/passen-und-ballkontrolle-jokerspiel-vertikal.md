@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
-![Jokerspiel vertikal](../images/passen-und-ballkontrolle-jokerspiel-vertikal.png)
-
 ## Offen starten
 
 Die Kinder spielen 3:3 mit zwei Jokern im Feld und zwei Jokern ausserhalb des Feldes. Für Letztere sind zwei Ballkontakte erlaubt. Alle Kinder beteiligen sich am Angriffsspiel.

@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Kleinfeld
 
-![Torspieler/in in der Abschlusszone](../images/torabschluss-torspieler-in-in-der-abschlusszone.png)
-
 ## Offen starten
 
 Die Kinder spielen 3:3. Die Torspieler/innen dürfen in der Abschlusszone den Ball mit den Händen abwehren.

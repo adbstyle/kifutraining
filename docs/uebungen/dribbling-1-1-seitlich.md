@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
-![1:1 seitlich](../images/dribbling-1-1-seitlich.png)
-
 ## Offen starten
 
 Zwei Kinder starten gleichzeitig. Sobald das erste mit dem Ball die Markierung passiert hat, darf es links oder rechts ein Tor erzielen. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende.

@@ -2,8 +2,6 @@
 
 **Trainingsteil:** einleitung · **Kategorien:** G, F, E
 
-![Berge und Seen](../images/berge-und-seen.png)
-
 ## Offen starten
 
 Die Kinder dribbeln in einem Feld um Reifen (Seen) und Markierkegel (Berge). Auf dein Zeichen legen sie den Ball entweder in einen See und nehmen einen anderen Ball oder auf einen Berg und nehmen einen anderen Ball.

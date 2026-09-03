@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
-![Tore in der Mitte](../images/passen-und-ballkontrolle-tore-in-der-mitte.png)
-
 ## Offen starten
 
 Manual Fussball – Good Practice Im Spiel 3:3 greift Rot auf die beiden Tore von Weiss an und umgekehrt.
