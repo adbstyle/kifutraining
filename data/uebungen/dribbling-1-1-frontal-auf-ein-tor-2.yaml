@@ -14,13 +14,14 @@ anzahl_kinder:
   max: 8
 material: []
 methodischer_fahrplan:
-  offen_starten: Die Kinder duellieren sich 1:1. Das Tor in der Mitte ist grösser
-    als die Tore nebenan. Ist ein Ball im Tor oder aus dem Feld, ist das Spiel zu
-    Ende. Nach zwei Minuten wechseln die Rollen der Teams.
+  offen_starten: Eins gegen Eins auf drei Tore in einer Reihe, das mittlere deutlich
+    grösser als die beiden äusseren. Tor oder Aus beendet die Runde. Nach zwei Minuten
+    tauschen die Teams die Rollen.
   ueben:
-  - Mit Tempo und Rhythmuswechsel an der/dem Gegner/in vorbeidribbeln
-  - Abwechslungsweise mit linkem bzw. rechtem Fuss abschliessen
-  wetteifern: Bilde zwei Teams. Das Tor in der Mitte zählt dreifach.
+  - Mit Tempo und Rhythmuswechsel am Gegner vorbeigehen.
+  - 'Die Abschlüsse abwechseln: einmal linker, einmal rechter Fuss.'
+  wetteifern: Du bildest zwei Teams. Ein Treffer ins grosse Mitteltor bringt drei
+    Punkte.
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Die Kinder spielen im Kleinfeld 2:1. Die rote Linie dient als Grenze. Gib diverse Startpositionen (seitlich, nebeneinander, vor dem verteidigenden Kind) vor.
+Zwei gegen eins auf dem Kleinfeld; eine rote Linie begrenzt den Raum. Du gibst vor, wo die drei starten — seitlich, nebeneinander oder direkt vor dem Verteidiger.
 
 ## Üben
 
-- Situationen schnell einschätzen, in die Sonne laufen (sich freilaufen) und Überzahl durch Zusammenspiel ausnutzen
+- Die Lage schnell lesen, in die Sonne laufen — also raus aus dem Deckungsschatten des Verteidigers — und die Überzahl im Zusammenspiel ausnutzen.
 
 ## Wett-eifern
 
-Zähl z. B. das linke Tor doppelt oder gib für einen erfolgreichen Pass (oder Dribbling) einen Extrapunkt.
+Setz Anreize: Das linke Tor zählt doppelt, oder ein gelungener Pass beziehungsweise ein gelungenes Dribbling bringt einen Extrapunkt.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 70*

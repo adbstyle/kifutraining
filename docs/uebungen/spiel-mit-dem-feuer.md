@@ -4,17 +4,17 @@
 
 ## Offen starten
 
-Zwei Kinder symbolisieren das Feuer mit Überzieher­ shirts. Die anderen versuchen ihnen auszuweichen. Wer sich verbrannt hat (Berührung), erfüllt eine Aufgabe (üben) oder umdribbelt das Spielfeld.
+Zwei Kinder tragen ein Leibchen in der Hand — sie sind das Feuer. Alle anderen dribbeln im Feld und halten Abstand. Wen das Feuer berührt, der hat sich verbrannt: Das Kind löst eine Übungsaufgabe oder dribbelt einmal aussen um das Feld, bevor es wieder einsteigt.
 
 ## Üben
 
-- Dribbling mit beiden Füssen (Innen-/Aussenfuss)
-- Finten z. B. als Körpertäuschung, Übersteiger oder Schere ausführen
-- Zusätzliche Ballkünstlertricks, z. B.: Ball hochwerfen und fangen; mit beiden Händen den Boden berühren und den Ball stehend fangen; sich um die eigene Achse drehen und den Ball fangen; hinter dem Rücken fangen; sich setzen und den Ball dann stehend fangen
+- Ausweichen mit beiden Füssen — Innenseite und Aussenseite abwechselnd.
+- Das Feuer austricksen: Körpertäuschung, Übersteiger oder Schere.
+- Kunststücke mit dem Ball: hochwerfen und fangen; hochwerfen, beide Hände kurz auf den Boden, im Stehen fangen; hochwerfen, eine ganze Drehung um die eigene Achse, fangen; hinter dem Rücken fangen; sich hinsetzen und den Ball im Aufstehen fangen.
 
 ## Wett-eifern
 
-Welches «Feuer» erwischt innerhalb von einer Minute am meisten Kinder? Oder beim Ballkünstlertrick: Welches Zweierteam zeigt den coolsten Trick?
+Welches Feuer erwischt in einer Minute die meisten Kinder? Oder als Kunststück-Wettbewerb: Welches Zweierteam zeigt den eindrucksvollsten Trick?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 64*

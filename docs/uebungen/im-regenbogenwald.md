@@ -4,17 +4,17 @@
 
 ## Offen starten
 
-Alle Kinder haben einen Ball und dribbeln damit frei in einem markierten Feld. Hebst du einen farbigen Markierkegel hoch, dribbeln die Kinder in das entsprechend markierte Feld.
+Rund um ein Startfeld liegen mehrere Felder, jedes mit Pylonen einer Farbe markiert. Alle Kinder dribbeln frei im Startfeld. Hebst du eine farbige Pylone hoch, dribbeln alle ins Feld mit dieser Farbe.
 
 ## Üben
 
-- Den Ball nur mit links, dann nur mit rechts führen
-- Den Ball abwechslungsweise mit links und rechts führen
-- Nur mit Voll-, Innen- und Aussenrist führen
+- Bis zum nächsten Farbwechsel nur mit dem linken Fuss dribbeln, danach nur mit dem rechten.
+- Bei jedem Ballkontakt den Fuss wechseln.
+- Drei Farbwechsel lang je eine Fussfläche: Vollspann, Innenseite, Aussenseite.
 
 ## Wett-eifern
 
-Mit mehreren Teams spielen, welches Team ist am schnellsten im angezeigten Feld? Zeig evtl. mehrere Farben an, welche die Teams in dieser Reihenfolge durchdribbeln müssen, bevor sie ins Startfeld zurückkehren.
+Mehrere Teams treten gegeneinander an: Welches ist vollzählig zuerst im angezeigten Feld? Schwieriger: Du zeigst zwei oder drei Farben nacheinander — die Teams durchdribbeln die Felder in dieser Reihenfolge und kehren dann ins Startfeld zurück.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 64*

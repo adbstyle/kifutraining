@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Nach einem diagonalen Pass nimmt ein Kind den Ball nach vorne mit und schliesst möglichst mit dem zweiten Ballkontakt ab. Danach holt es den Ball und schliesst beim Start an. Variation: Das Kind lässt den Ball prallen und sucht den Abschluss frontal.
+Der Ball kommt per diagonalem Pass. Das Kind nimmt ihn nach vorn mit und schiesst, wenn möglich schon mit dem zweiten Kontakt. Dann Ball holen und hinten anstellen. Variante: den Pass prallen lassen und frontal abschliessen.
 
 ## Üben
 
-- Ball kontrolliert nach vorne mitnehmen
-- Vor dem Schiessen freie Ecke erkennen (Foto vom Tor) und dorthin zielen
+- Den Ball kontrolliert nach vorn mitnehmen.
+- Vor dem Schuss die offene Ecke sehen — Foto im Kopf — und sie anvisieren.
 
 ## Wett-eifern
 
-Gelingt nach jedem zweiten Versuch ein fehlerfreier und erfolgreicher Torabschluss?
+Klappt jeder zweite Versuch fehlerfrei und mit Treffer?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 77*

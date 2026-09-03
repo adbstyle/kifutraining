@@ -15,14 +15,14 @@ anzahl_kinder:
   max: 12
 material: []
 methodischer_fahrplan:
-  offen_starten: Alle Kinder starten gleichzeitig. Sie dribbeln den Ball aus einem
-    markierten Viereck heraus und schliessen mit der nächsten Ballberührung in eines
-    der acht Tore ab (freie Wahl). Anschliessend holen sie ihren Ball, kehren ins
-    Viereck zurück und schiessen auf das nächste freie Tor.
+  offen_starten: 'In der Mitte liegt ein markiertes Viereck, rundherum stehen acht
+    Tore. Gleichzeitiger Start für alle: aus dem Viereck heraus dribbeln und mit der
+    allernächsten Berührung auf ein Tor der eigenen Wahl schiessen. Dann Ball holen,
+    zurück ins Viereck und das nächste freie Tor anvisieren.'
   ueben:
-  - Vor dem Schiessen ein Foto vom Tor machen und in die freie Ecke zielen
-  wetteifern: Wie viele Tore erzielen die Kinder mit dem linken Fuss und wie viele
-    mit dem rechten?
+  - 'Vor dem Schuss kurz hinschauen — ein Foto im Kopf: Wo ist die Ecke offen? — und
+    genau dorthin zielen.'
+  wetteifern: Wie viele Treffer fallen links, wie viele rechts?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

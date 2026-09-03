@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Die Kinder legen sich den Ball dribbelnd durch das Hütchentor vor und schliessen ab. Danach holen sie den Ball und schliessen auf der anderen Seite an. Variation: auf Minitore abschliessen.
+Vor dem Tor steht ein Pylonentor. Jedes Kind dribbelt heran, spielt sich den Ball durch das Pylonentor vor und schiesst. Dann Ball holen und auf der anderen Seite anstellen. Variante: auf Minitore.
 
 ## Üben
 
-- Den Torabschluss mit dem letzten Ballkontakt kontrolliert vorbereiten und direkt abschliessen
+- Mit dem letzten Kontakt vor dem Schuss den Ball so vorlegen, dass er direkt geschossen werden kann.
 
 ## Wett-eifern
 
-Wie viele Versuche gelingen ohne Fehler und mit erfolgreichem Torabschluss?
+Wie viele Versuche laufen fehlerfrei und enden im Tor?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 77*

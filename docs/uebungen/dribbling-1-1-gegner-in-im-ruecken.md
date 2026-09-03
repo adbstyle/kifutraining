@@ -4,17 +4,17 @@
 
 ## Offen starten
 
-Manual Fussball – Good Practice Bilde zwei Teams. Zwei Kinder von Team Rot passen nach vorne zu den angreifenden Kindern. Sobald der Pass erfolgt ist, dürfen die verteidigenden Kinder von Team Weiss ins Feld, um die Roten am Torerfolg zu hindern. Zwei Kinder von Team Rot versuchen, im 1:1 in eines der Minitore zu treffen. Nach zwei Minuten wechseln die Rollen der Teams.
+Du bildest Team Rot und Team Weiss. Zwei Rote stehen hinten und passen nach vorn zu ihren beiden Angreifern. Erst wenn der Pass gespielt ist, dürfen die Verteidiger von Weiss ins Feld. Die zwei roten Angreifer versuchen im Eins gegen Eins, ein Minitor zu treffen. Die Rollen wechseln nach zwei Minuten.
 
 ## Üben
 
-- Präzise auf Angreifer/in zuspielen
-- Ballkontrolle und Abschirmung beherrschen
-- Mit guter Körpertäuschung zum freien Tor dribbeln und erfolgreich abschliessen
+- Den Pass genau in den Fuss des Angreifers spielen.
+- Den Ball sauber kontrollieren und vor dem Gegner im Rücken abschirmen.
+- Mit einer Körpertäuschung zum freien Tor ziehen und abschliessen.
 
 ## Wett-eifern
 
-Schaffen alle Angreifer/innen im gleichen Versuch präzise Zuspiele und zwei erfolgreiche Torabschlüsse?
+Gelingt es allen Angreifern im selben Versuch: zwei genaue Zuspiele und zwei Treffer?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 69*

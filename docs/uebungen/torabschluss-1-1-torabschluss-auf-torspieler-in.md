@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Ein Kind dribbelt auf den/die Torspieler/in zu und versucht, ein Tor zu erzielen. Dabei darf es nur vorwärts oder seitwärts dribbeln. Anschliessend tauschen sie. Variation: mit Gegenspieler/in im Rücken.
+Ein Kind dribbelt allein auf den Torspieler zu und will treffen. Erlaubt ist nur, vorwärts oder seitwärts zu dribbeln — nie zurück. Danach tauschen die beiden. Variante: ein Gegenspieler jagt von hinten, im Rücken des Angreifers.
 
 ## Üben
 
-- Schnell zum Tor dribbeln und entschlossen abschliessen
+- Zügig zum Tor ziehen und entschlossen abschliessen.
 
 ## Wett-eifern
 
-Wer schafft bei jedem Versuch ein Tor?
+Wer trifft bei jedem Versuch?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 79*

@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Ein Kind versucht, flach durch das Hütchentor ein anderes anzuspielen. Dieses nimmt den Ball hinter dem Tor an und spielt aus seiner Position durch das Tor zurück.
+Zwischen zwei Kindern steht ein Pylonentor. Das eine spielt den Ball flach durch das Tor, das andere nimmt ihn dahinter an und spielt ihn von dort durch das Tor zurück.
 
 ## Üben
 
-- Beim Zuspiel den Fuss fest anspannen, fixieren und um ca. 90 Grad ausdrehen (wie ein Golfschläger)
-- Vor dem Pass den/die Mitspieler/in kurz anschauen (Foto machen) und den Ball flach zuspielen (Ball rotiert Richtung Passempfänger/in)
+- Beim Pass den Fuss fest anspannen, ruhig halten und rund 90 Grad nach aussen drehen — wie ein Golfschläger.
+- Vor dem Pass kurz zum Mitspieler schauen, ein Foto machen, dann flach spielen, sodass der Ball zum Empfänger hin rollt.
 
 ## Wett-eifern
 
-Wie viele Pässe schaffen die Kinder innerhalb einer Minute?
+Wie viele Pässe gelingen den zwei in einer Minute?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 74*

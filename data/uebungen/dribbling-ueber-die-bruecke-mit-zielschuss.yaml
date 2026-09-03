@@ -15,16 +15,15 @@ anzahl_kinder:
   max: 10
 material: []
 methodischer_fahrplan:
-  offen_starten: Die Kinder dribbeln mit ihrem Ball an einer Wache vorbei in die Torzone.
-    Dort versuchen sie, eine weitere Wache zu umspielen und ein Tor zu erzielen. Danach
-    kehren sie über die Slalombrücke zum Ausgangspunkt zurück und versuchen es erneut.
-    Nimmt eine Wache einem Kind den Ball weg oder kann ihn aus dem Feld spielen, tauschen
-    sie die Rollen.
+  offen_starten: Der Weg führt an einer Wache vorbei in die Torzone. Dort wartet eine
+    zweite Wache, die es zu umspielen gilt, bevor das Kind auf das Tor abschliesst.
+    Zurück zum Start geht es über die Slalombrücke, dann beginnt die nächste Runde.
+    Erobert eine Wache den Ball oder spielt ihn ins Aus, tauschen die beiden die Rollen.
   ueben:
-  - Wache täuschen und den Ball abschirmen
-  - Freies Tor erkennen und präzise abschliessen
-  wetteifern: Wer kommt an der Wache vorbei? Wer schafft in jedem Durchgang ein Tor?
-    Welche Wache fängt in einer Minute am meisten Kinder?
+  - Die Wache antäuschen, den Ball mit dem Körper abschirmen.
+  - Das freie Tor erkennen und gezielt abschliessen.
+  wetteifern: Wer kommt an der ersten Wache vorbei? Wer trifft in jeder Runde? Und
+    welcher Wache gelingen in einer Minute die meisten Fänge?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

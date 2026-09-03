@@ -16,8 +16,9 @@ beiden Altersstufen zugleich.
 
 ## Zwei Herkünfte
 
-Der Bestand speist sich aus zwei Quellen. Die eine sind fünfundsiebzig kuratierte Übungen aus
-dem offiziellen SFV-Manual Kinderfussball. Sie tragen eine dunkle Plakette „Kifu-Manual" und
+Der Bestand speist sich aus zwei Quellen. Die eine sind fünfundsiebzig kuratierte Übungen nach
+dem offiziellen SFV-Manual Kinderfussball: Aufbau, Regeln und Ablauf stammen aus dem Manual,
+der Text ist in eigener Formulierung geschrieben. Sie tragen eine dunkle Plakette „Kifu-Manual" und
 sind über die Oberfläche für niemanden veränderbar — auch nicht für den Betreiber. Aktualisiert
 werden sie ausschliesslich, indem der Bestand als Ganzes neu geladen wird. Für den
 Juniorenfussball gibt es keinen solchen kuratierten Bestand.
@@ -147,7 +148,7 @@ noch das andere, steht an dieser Stelle nichts. Was die Übung nicht führt, ers
 nicht; fehlen Bild und Diagramm, steht dort eine leere Feld-Skizze. Eine Dauer trägt das Blatt
 nie, weil eine Übung in der Bibliothek keine hat.
 
-Im Fuss steht, woher die Übung stammt: aus dem Manual Kinderfussball des SFV oder aus der
+Im Fuss steht, woher die Übung stammt: nach dem Manual Kinderfussball des SFV oder aus der
 Gemeinschaft der Trainerinnen und Trainer. Ein Trainername steht nie dabei. Beim eigenen, noch
 nicht veröffentlichten Entwurf vermerkt das Blatt zusätzlich, dass es einer ist. Darin
 unterscheidet sich das Übungsblatt bewusst vom Trainings-Druck, der keine Herkunft ausweist:

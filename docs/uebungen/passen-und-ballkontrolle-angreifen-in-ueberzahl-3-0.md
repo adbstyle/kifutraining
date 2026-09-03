@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Drei Kinder von Team Rot greifen auf die beiden Tore an. Sie haben für ihren Abschluss fünf bis zehn Sekunden Zeit, wobei alle den Ball berührt haben müssen. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende.
+Drei Rote greifen ohne Gegenspieler auf zwei Tore an. Sie haben fünf bis zehn Sekunden für den Abschluss, und alle drei müssen den Ball berührt haben. Tor oder Aus beendet den Angriff.
 
 ## Üben
 
-- Durch präzises Zusammenspiel rasch zum Tor­ abschluss kommen
-- Breite des Feldes nutzen
+- Mit genauen Pässen rasch zum Abschluss kommen.
+- Die ganze Breite des Feldes nutzen.
 
 ## Wett-eifern
 
-Team Weiss startet gleichzeitig auf der anderen Seite (Gegenstrom). Welches Team erzielt zuerst ein Tor?
+Weiss startet gleichzeitig von der anderen Seite im Gegenstrom. Welches Team trifft zuerst?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 72*

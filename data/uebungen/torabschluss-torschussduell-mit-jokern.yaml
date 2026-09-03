@@ -13,12 +13,12 @@ anzahl_kinder:
   max: 8
 material: []
 methodischer_fahrplan:
-  offen_starten: Zwei Kinder versuchen, mithilfe von Jokern in Überzahl ein Tor zu
-    erzielen.
+  offen_starten: Zwei Angreifer wollen treffen und holen sich dafür Joker dazu, die
+    mit ihnen spielen — so entsteht Überzahl gegen die Verteidigung mit Torspieler.
   ueben:
-  - Durch Einbezug der Joker und der Torspielerin/ des Torspielers Überzahl ausnutzen
-    und entschlossen Tore erzielen
-  wetteifern: Welches Team erzielt mit Einbezug des Jokers ein Tor?
+  - Joker und Torspieler ins Spiel einbeziehen, die Überzahl ausnutzen und entschlossen
+    treffen.
+  wetteifern: Welches Team trifft unter Mithilfe eines Jokers?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

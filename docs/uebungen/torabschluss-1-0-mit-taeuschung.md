@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Manual Fussball – Good Practice Ein Kind muss mit einer Finte eine Pylone ausdribbeln, bevor es die Abschlusszone erreicht und aufs Tor schiessen kann. Danach holt es seinen Ball und schliesst auf der anderen Seite an.
+Vor der Abschlusszone steht eine Pylone. Das Kind dribbelt darauf zu, überwindet sie mit einer Finte, zieht in die Abschlusszone und schiesst aufs Tor. Dann Ball holen und auf der anderen Seite anstellen.
 
 ## Üben
 
-- Mit Rhythmuswechsel und Körpertäuschung die Pylone ausdribbeln und schnell in die Abschlusszone gelangen, um aufs Tor abzuschliessen
-- Täuschungen und Torabschluss beidseitig üben
+- Mit Rhythmuswechsel und Körpertäuschung an der Pylone vorbei, schnell in die Abschlusszone und abschliessen.
+- Täuschung und Abschluss nach beiden Seiten üben.
 
 ## Wett-eifern
 
-Gelingen die Täuschungen auf beide Seiten?
+Gelingen die Täuschungen nach beiden Seiten?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 79*

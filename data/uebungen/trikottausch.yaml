@@ -12,17 +12,17 @@ anzahl_kinder:
   max: 13
 material: []
 methodischer_fahrplan:
-  offen_starten: 'Alle Kinder dribbeln im Feld mit je einem farbigen Überzieher in
-    der Hand. Auf dein Zeichen dribbeln sie in das freie, markierte Feld und tauschen
-    ihren Überzieher mit einem anderen Kind. Variation: Du schickst nur die Kinder
-    mit einer Farbe ins markierte Feld. Oder du gibst vor, welche Kinder tauschen,
-    z. B. Rot zu Gelb, Gelb zu Blau, Blau zu Rot.'
+  offen_starten: 'Jedes Kind dribbelt mit einem farbigen Leibchen in der Hand durch
+    das Feld; in der Mitte ist ein kleineres Feld frei markiert. Auf dein Signal dribbeln
+    alle ins Mittelfeld und tauschen dort ihr Leibchen mit einem anderen Kind. Du
+    kannst die Regel verschärfen: Nur eine Farbe darf hinein — oder du gibst die Tauschkette
+    vor, etwa Rot gibt an Gelb, Gelb an Blau, Blau an Rot.'
   ueben:
-  - Den Ball nur mit links, dann nur mit rechts führen
-  - Den Ball abwechslungsweise mit links und rechts führen
-  - Nur mit Voll-, Innen- und Aussenrist führen
-  wetteifern: Die Kinder mit welcher Farbe durchdribbeln das Feld in der Mitte am
-    schnellsten? Welches Farbteam findet sich am schnellsten in der Mitte zusammen?
+  - Bis zum nächsten Signal nur mit dem linken Fuss dribbeln, danach nur mit dem rechten.
+  - Bei jedem Ballkontakt den Fuss wechseln.
+  - Je einen Durchgang mit Vollspann, Innenseite und Aussenseite.
+  wetteifern: 'Du rufst eine Farbe: Welche Gruppe hat das Mittelfeld zuerst komplett
+    durchquert? Oder: Welches Farbteam hat sich zuerst vollzählig in der Mitte versammelt?'
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

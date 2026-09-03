@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Die Kinder spielen 3:3 mit Jokern an der Aussenlinie. Spielt ein/e Innenspieler/in einen Joker an und dieser dribbelt ins Feld, tauschen sie die Rollen.
+Drei gegen drei, an der Aussenlinie stehen Joker. Passt ein Feldspieler zu einem Joker und der Joker dribbelt hinein ins Feld, übernimmt der Passgeber dessen Platz an der Linie.
 
 ## Üben
 
-- Durch Zusammenspiel und geschicktes Einbeziehen der Joker in der Breite zum Torerfolg gelangen
-- Als Joker den Ball kontrolliert ins Feld mitnehmen und entschlossen abschliessen
+- Die Joker in der Breite einbeziehen und über sie zum Tor kommen.
+- Als Joker: Ball annehmen, ins Feld eindribbeln und ohne Zögern abschliessen.
 
 ## Wett-eifern
 
-Welches Team erzielt via Joker mehr Tore?
+Welches Team trifft häufiger über einen Joker?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 73*

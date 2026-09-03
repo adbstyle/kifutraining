@@ -14,16 +14,14 @@ anzahl_kinder:
   max: 8
 material: []
 methodischer_fahrplan:
-  offen_starten: Drei Kinder von Team Rot starten von der Grundlinie aus einen Angriff.
-    Ein Kind von Team Weiss verteidigt im Feld. Nach dem ersten Ballkontakt von Team
-    Rot dürfen Kind 2 (hinter den Toren) und Kind 3 (von der Seite) von Team Weiss
-    ins Spiel eingreifen. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu
-    Ende.
+  offen_starten: Drei Rote starten ihren Angriff von der Grundlinie. Ein Weisses verteidigt
+    von Anfang an im Feld. Sobald Rot den Ball zum ersten Mal berührt, kommen Weiss
+    2 hinter den Toren hervor und Weiss 3 von der Seite dazu. Tor oder Aus beendet
+    den Angriff.
   ueben:
-  - Durch Zusammenspiel und Erkennen von freiem Raum die Verteidigung ausspielen und
-    sofort den Abschluss suchen
-  wetteifern: Welches Team erzielt in einem Durchgang ein Tor? Nach einem Durchgang
-    wechseln die Rollen.
+  - Zusammenspielen, die Lücke erkennen und ohne Zögern abschliessen.
+  wetteifern: Welches Team trifft in seinem Durchgang? Nach jedem Durchgang wechseln
+    die Rollen.
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

@@ -4,17 +4,17 @@
 
 ## Offen starten
 
-Zwei Kinder versuchen, in Überzahl ein Tor zu erzielen. In der eigenen Platzhälfte darf nur der/die Torspieler/in verteidigen.
+Zwei gegen zwei mit einer Mittellinie. In der eigenen Hälfte darf einzig der Torspieler verteidigen — die Feldspieler dürfen sich also im Angriff auf ihre Überzahl verlassen.
 
 ## Üben
 
-- Mutig nach vorne dribbeln, freilaufen (in die Sonne) und zusammenspielen
-- Entschlossen abschliessen
-- Als Torspieler/in wie eine Katze springen und sich alle Bälle krallen
+- Mutig nach vorn dribbeln, in die Sonne laufen und zusammenspielen.
+- Entschlossen abschliessen.
+- Als Torspieler springen wie eine Katze und sich jeden Ball krallen.
 
 ## Wett-eifern
 
-Welches Team schafft innerhalb von fünf Minuten am meisten Tore? Welche/r Torspieler/in krallt sich die meisten Bälle?
+Welches Team trifft in fünf Minuten am häufigsten? Und welcher Torspieler hat am Ende die meisten Bälle gekrallt?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 78*

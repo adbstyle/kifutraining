@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Die Kinder spielen 3:3. Die Torspieler/innen dürfen in der Abschlusszone den Ball mit den Händen abwehren.
+Drei gegen drei, auf jeder Seite zwei Minitore mit einer Abschlusszone davor. Der Torspieler jedes Teams darf innerhalb dieser Zone die Hände einsetzen.
 
 ## Üben
 
-- Durch rasche Spielverlagerung und Ausnutzen der Breite auf das freie Tor abschliessen
-- Als Torspieler/in durch rasches Verschieben die beiden Minitore verteidigen
+- Das Spiel schnell verlagern, die Breite nutzen und aufs freie Minitor abschliessen.
+- Als Torspieler flink zwischen beiden Minitoren hin- und herschieben.
 
 ## Wett-eifern
 
-Welche/r Torspieler/in bekommt am wenigsten Tore?
+Welcher Torspieler kassiert am wenigsten Treffer?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 76*

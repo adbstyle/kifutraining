@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Die Kinder dribbeln in einem Feld um Reifen (Seen) und Markierkegel (Berge). Auf dein Zeichen legen sie den Ball entweder in einen See und nehmen einen anderen Ball oder auf einen Berg und nehmen einen anderen Ball.
+Im Feld liegen Reifen und stehen Pylonen: Die Reifen sind Seen, die Pylonen Berge. Jedes Kind führt seinen Ball dazwischen hindurch. Auf dein Signal legt es den Ball ab — in einen See oder oben auf einen Berg — und dribbelt mit einem anderen, frei gewordenen Ball weiter.
 
 ## Üben
 
-- Auf dein Zeichen einen See mit links/rechts und einen Berg mit links/rechts umdribbeln
-- Einen See mit dem linken und einen Berg mit dem rechten Fuss bzw. umgekehrt umdribbeln
+- Auf dein Signal einen See umrunden, dann einen Berg — du sagst, ob mit links oder mit rechts.
+- Fusswechsel nach Gelände: Seen mit dem linken Fuss umrunden, Berge mit dem rechten. Danach umgekehrt.
 
 ## Wett-eifern
 
-Rufst du «Berg» oder «See», versuchen die Kinder, so rasch wie möglich den Ball auf einen Berg oder in einen See zu legen. Welches Team schafft dies am schnellsten?
+Du rufst «Berg» oder «See». Jedes Kind bringt seinen Ball so schnell wie möglich an den passenden Ort. Welches Team hat zuerst alle Bälle abgelegt?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 63*

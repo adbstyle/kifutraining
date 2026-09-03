@@ -13,13 +13,14 @@ anzahl_kinder:
   max: 12
 material: []
 methodischer_fahrplan:
-  offen_starten: Die Kinder spielen 4:4 mit zwei Jokern. Alle Kinder beteiligen sich
-    am Angriffsspiel.
+  offen_starten: 4 gegen 4 mit zwei Jokern, die immer für das Team am Ball spielen.
+    Alle Kinder greifen mit an.
   ueben:
-  - Bei Ballbesitz Blume öffnen und mit Zusammenspiel Breite, Tiefe und Überzahl nutzen
-  - Nach Ballverlust die Blume schnell schliessen und im Schwarm zusammen den Ball
-    jagen
-  wetteifern: Welches Team erzielt innerhalb von fünf Minuten mehr Tore?
+  - 'Am Ball die Blume öffnen: breit und tief aufstellen, die Überzahl im Zusammenspiel
+    nutzen.'
+  - 'Nach Ballverlust die Blume schliessen: zusammenrücken und den Ball im Schwarm
+    jagen.'
+  wetteifern: Welches Team trifft in fünf Minuten häufiger?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

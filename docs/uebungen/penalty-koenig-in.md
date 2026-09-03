@@ -4,7 +4,7 @@
 
 ## Aufbau
 
-Die Kinder schiessen abwechselnd einen Penalty. Bei erzieltem Tor bekommen sie einen Punkt. 1. Durchgang: mit dem linken Fuss 2. Durchgang: mit dem rechten Fuss 3. Durchgang: mit dem linken oder rechten Fuss Wer erzielt in drei Durchgängen am meisten Tore?
+Die Kinder treten abwechselnd zum Penalty an, jeder Treffer ist ein Punkt. Erster Durchgang linker Fuss, zweiter rechter Fuss, dritter nach freier Wahl. Wer hat nach drei Durchgängen die meisten Punkte?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 82*

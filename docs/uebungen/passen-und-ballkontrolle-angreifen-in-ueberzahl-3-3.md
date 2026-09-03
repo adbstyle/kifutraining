@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Drei Kinder von Team Rot starten von der Grundlinie aus einen Angriff. Ein Kind von Team Weiss verteidigt im Feld. Nach dem ersten Ballkontakt von Team Rot dürfen Kind 2 (hinter den Toren) und Kind 3 (von der Seite) von Team Weiss ins Spiel eingreifen. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende.
+Drei Rote starten ihren Angriff von der Grundlinie. Ein Weisses verteidigt von Anfang an im Feld. Sobald Rot den Ball zum ersten Mal berührt, kommen Weiss 2 hinter den Toren hervor und Weiss 3 von der Seite dazu. Tor oder Aus beendet den Angriff.
 
 ## Üben
 
-- Durch Zusammenspiel und Erkennen von freiem Raum die Verteidigung ausspielen und sofort den Abschluss suchen
+- Zusammenspielen, die Lücke erkennen und ohne Zögern abschliessen.
 
 ## Wett-eifern
 
-Welches Team erzielt in einem Durchgang ein Tor? Nach einem Durchgang wechseln die Rollen.
+Welches Team trifft in seinem Durchgang? Nach jedem Durchgang wechseln die Rollen.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 72*

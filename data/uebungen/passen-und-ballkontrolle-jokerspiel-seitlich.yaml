@@ -13,12 +13,11 @@ anzahl_kinder:
   max: 10
 material: []
 methodischer_fahrplan:
-  offen_starten: Manual Fussball – Good Practice Die Kinder spielen 2:2 mit je zwei
-    Kindern auf den Aussenbahnen als Joker. Die Joker dürfen den Ball max. zweimal
-    berühren.
+  offen_starten: 2 gegen 2 im Feld, auf jeder Aussenbahn stehen zwei Kinder als Joker.
+    Ein Joker darf den Ball höchstens zweimal berühren.
   ueben:
-  - Joker miteinbeziehen und somit Breite und Überzahl nutzen
-  wetteifern: Welches Team erzielt unter Einbezug der Joker ein Tor?
+  - Die Joker einbeziehen und so die Breite und die Überzahl nutzen.
+  wetteifern: Welches Team trifft mit Hilfe der Joker?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

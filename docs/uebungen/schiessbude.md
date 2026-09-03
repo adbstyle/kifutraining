@@ -4,7 +4,7 @@
 
 ## Aufbau
 
-Mit dem gesamten Trainingsmaterial baust du im Tor eine Schiessbude auf. Wer trifft am meisten Gegenstände? Manual Grundlagen. Magglingen: BASPO. . Kinderfussball – Theorie und Praxis. Kursdokument J+S und SFV.
+Aus dem gesamten Material, das im Training herumliegt, wird im Tor eine Schiessbude aufgebaut — Pylonen, Reifen, Stangen, Bälle. Wer trifft die meisten Gegenstände?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 82*

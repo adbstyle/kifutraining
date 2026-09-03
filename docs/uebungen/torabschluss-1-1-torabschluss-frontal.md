@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Ein Kind aus Team Rot passt zu einem Kind aus Team Weiss. Danach starten beide zum 1:1 und versuchen, beim Gegenüber ein Tor zu erzielen. Die Kinder auf der anderen Seite starten gleichzeitig wie die beiden, allerdings passt das weisse Team zum roten.
+Ein Rotes spielt den Ball zu einem Weissen. Mit dem Pass geht es los ins Eins gegen Eins: Beide wollen beim Gegenüber treffen. Auf der anderen Feldseite läuft gleichzeitig dasselbe Duell, nur passt dort Weiss zu Rot.
 
 ## Üben
 
-- Mit Tempo und Täuschungen das verteidigende Kind ausdribbeln und entschlossen abschliessen
+- Mit Tempo und Täuschung den Verteidiger ausdribbeln und entschlossen abschliessen.
 
 ## Wett-eifern
 
-Welches Team erzielt am meisten Tore?
+Welches Team trifft am häufigsten?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 79*

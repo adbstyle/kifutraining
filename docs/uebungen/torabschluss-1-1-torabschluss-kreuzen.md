@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Ein/e Angreifer/in (mit Ball) und ein/e Verteidiger/in (ohne Ball) starten gleichzeitig auf ein Kommando 1:1. Sobald Erstere/r die Markierung in der Mitte passiert hat, darf sie/ er ein Tor erzielen. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende und die Kinder tauschen die Rollen.
+Ein Angreifer mit Ball und ein Verteidiger ohne Ball starten auf dein Kommando gleichzeitig; ihre Wege kreuzen sich. Sobald der Angreifer die mittlere Markierung hinter sich hat, darf er treffen. Tor oder Aus beendet die Runde, dann tauschen die beiden die Rollen.
 
 ## Üben
 
-- Den Ball kontrolliert führen und nach einer Täuschung abschliessen
+- Den Ball eng führen, antäuschen, abschliessen.
 
 ## Wett-eifern
 
-Wer erzielt wie viele Tore?
+Wer sammelt wie viele Treffer?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 79*

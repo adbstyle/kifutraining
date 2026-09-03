@@ -4,7 +4,7 @@
 
 ## Aufbau
 
-Den Kindern steht vor dem Training mind. ein Kleinfeld zur Verfügung. Sobald die ersten Kinder auf dem Feld erscheinen, spielen sie frei auf dem vorbereiteten Kleinfeld. Vom eins gegen null bis zum vier gegen vier. Sind acht Kinder auf einem Feld am Spielen, schickst du die weiteren Kinder in das nächste Kleinfeld.
+Ein Kleinfeld mit zwei Toren steht bereit, bevor das erste Kind eintrifft. Wer kommt, spielt sofort mit: erst allein aufs leere Tor, dann zu zweit, und mit jedem weiteren Kind wird daraus ein grösseres Spiel, am Ende Vier gegen Vier. Sind auf einem Feld acht Kinder am Ball, geht jedes weitere ins nächste Kleinfeld, das du bereitstellst.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 60*

@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Die Kinder dribbeln mit ihrem Ball an einer Wache vorbei in die Torzone. Dort versuchen sie, eine weitere Wache zu umspielen und ein Tor zu erzielen. Danach kehren sie über die Slalombrücke zum Ausgangspunkt zurück und versuchen es erneut. Nimmt eine Wache einem Kind den Ball weg oder kann ihn aus dem Feld spielen, tauschen sie die Rollen.
+Der Weg führt an einer Wache vorbei in die Torzone. Dort wartet eine zweite Wache, die es zu umspielen gilt, bevor das Kind auf das Tor abschliesst. Zurück zum Start geht es über die Slalombrücke, dann beginnt die nächste Runde. Erobert eine Wache den Ball oder spielt ihn ins Aus, tauschen die beiden die Rollen.
 
 ## Üben
 
-- Wache täuschen und den Ball abschirmen
-- Freies Tor erkennen und präzise abschliessen
+- Die Wache antäuschen, den Ball mit dem Körper abschirmen.
+- Das freie Tor erkennen und gezielt abschliessen.
 
 ## Wett-eifern
 
-Wer kommt an der Wache vorbei? Wer schafft in jedem Durchgang ein Tor? Welche Wache fängt in einer Minute am meisten Kinder?
+Wer kommt an der ersten Wache vorbei? Wer trifft in jeder Runde? Und welcher Wache gelingen in einer Minute die meisten Fänge?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 67*
