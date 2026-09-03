@@ -2,8 +2,6 @@
 
 **Trainingsteil:** einleitung · **Kategorien:** G, F, E
 
-![Trikottausch](../images/trikottausch.png)
-
 ## Offen starten
 
 Alle Kinder dribbeln im Feld mit je einem farbigen Überzieher in der Hand. Auf dein Zeichen dribbeln sie in das freie, markierte Feld und tauschen ihren Überzieher mit einem anderen Kind. Variation: Du schickst nur die Kinder mit einer Farbe ins markierte Feld. Oder du gibst vor, welche Kinder tauschen, z. B. Rot zu Gelb, Gelb zu Blau, Blau zu Rot.

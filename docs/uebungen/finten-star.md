@@ -2,8 +2,6 @@
 
 **Trainingsteil:** einleitung · **Kategorien:** F, E
 
-![Finten-Star](../images/finten-star.png)
-
 ## Offen starten
 
 Auf dein Zeichen dribbeln zwei gegenüberstehende Kinder aufeinander zu. In der Mitte machen sie einen Richtungswechsel (180 Grad) und dribbeln zurück. Nach mehreren Richtungswechselvarianten dribbeln die Kinder mit einer Finte in der Mitte auf die andere Seite.

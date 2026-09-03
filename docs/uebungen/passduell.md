@@ -2,8 +2,6 @@
 
 **Trainingsteil:** einleitung · **Kategorien:** F, E
 
-![Passduell](../images/passduell.png)
-
 ## Offen starten
 
 Ein Team dribbelt aussen in einem Parcours, während sich das andere Team im inneren Feld in Tandems die Bälle zupasst.

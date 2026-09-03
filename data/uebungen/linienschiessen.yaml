@@ -16,7 +16,6 @@ aufbau: Die Kinder versuchen, aus einer bestimmten Distanz den Ball in der Luft 
   entfernten Markierung. Wer nicht reüssiert, schiesst in der nächsten Runde aus der
   gleichen Distanz. Wer trifft wie oft?
 varianten: []
-bild: images/linienschiessen.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 82

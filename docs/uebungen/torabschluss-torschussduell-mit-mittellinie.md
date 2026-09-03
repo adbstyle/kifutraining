@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Grossfeld
 
-![Torschussduell mit Mittellinie](../images/torabschluss-torschussduell-mit-mittellinie.png)
-
 ## Offen starten
 
 Zwei Kinder versuchen, in Überzahl ein Tor zu erzielen. In der eigenen Platzhälfte darf nur der/die Torspieler/in verteidigen.

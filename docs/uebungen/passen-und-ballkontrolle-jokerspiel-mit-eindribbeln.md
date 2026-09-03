@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Grossfeld
 
-![Jokerspiel mit Eindribbeln](../images/passen-und-ballkontrolle-jokerspiel-mit-eindribbeln.png)
-
 ## Offen starten
 
 Die Kinder spielen 3:3 mit Jokern an der Aussenlinie. Spielt ein/e Innenspieler/in einen Joker an und dieser dribbelt ins Feld, tauschen sie die Rollen.

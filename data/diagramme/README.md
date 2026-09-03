@@ -1,9 +1,10 @@
 # KiFu-Manual-Diagramme (Vorlagen-Fundus)
 
-Gezeichnete Spielfeld-Diagramme für ausgewählte KiFu-Manual-Übungen (Epic #58).
-Sie dienen Trainern als Vorlage beim Anlegen eines eigenen Diagramms und werden
-zugleich zum aktiven Anzeige-Bild der jeweiligen Manual-Übung (das statische
-Original-Foto bleibt als Umschalt-Option erhalten).
+Gezeichnete Spielfeld-Diagramme für die KiFu-Manual-Übungen (Epic #58). Sie
+dienen Trainern als Vorlage beim Anlegen eines eigenen Diagramms und sind
+zugleich das einzige Anzeige-Bild der jeweiligen Manual-Übung: seit die
+Manual-Bitmaps entfernt sind, trägt keine Manual-Übung mehr ein Foto, und
+`bild_url` bleibt auf diesen Zeilen leer.
 
 ## Format
 
@@ -25,115 +26,19 @@ Eine Datei pro Übung: `<slug>.json`, wobei `<slug>` exakt der `id` der Übung i
 Koordinatensystem: logische Zeichenfläche 1600 × 1000 (16:10). Element-Typen,
 Farben und Geometrie siehe `web/lib/diagramm.ts` und `web/components/diagramm/symbols.tsx`.
 
-## Vorgehen: Manual-Diagramm adaptieren
+## Bestand
 
-Ziel ist die **originalgetreue** Übertragung in unsere Diagrammsprache, nicht
-eine freie Neuinterpretation. Der Web-Screenshot der Übungsseite genügt dafür
-nicht — gemessen wird auf der Vorlage:
+Der Fundus ist vollständig: für jede der 75 Manual-Übungen liegt ein Diagramm
+vor (`data/uebungen/<slug>.yaml` ↔ `data/diagramme/<slug>.json`, gleiche Slugs).
+`npm run check:diagramme` prüft den Bestand strukturell.
 
-1. **Auf dem Originalbitmap messen, nicht auf einem PDF-Render.** Die Vorlage ist
-   `images/<slug>.png` (304 × 228 px). Genau diese Bitmap steckt auch im PDF —
-   ein `pdftoppm -r 600` liefert deshalb **keine** zusätzlichen Details, sondern
-   interpolierte, geglättete Pixel, auf denen Pfeilrichtungen falsch abgelesen
-   werden. Zum Anschauen mit **Nearest Neighbour** vergrössern (PIL:
-   `im.resize((w*6, h*6), Image.NEAREST)`), für Details 12- bis 16-fach.
-2. **Messen statt schätzen.** Was sich automatisch bestimmen lässt, wird
-   automatisch bestimmt:
-   - *Feldlinien:* Helligkeitsscan über Zeilen/Spalten (die Linie ist die Zeile
-     mit den meisten hellen Pixeln).
-   - *Figurenmitten:* Begrenzungsrahmen der Nicht-Rasen-Pixel im Fenster um die
-     Figur; als Anker die **Füsse** nehmen (Köpfe sind oft angeschnitten),
-     Element-`y` = `Y(Fusshöhe) − 49` (siehe *Figurenhöhe* unten).
-   - *Marker, Pylonen, Reifen, Zonen:* Farb-Clustering (erst eine Farbprobe am
-     Objekt nehmen, dann mit dieser Referenz clustern).
-   - *Pfeilrichtung:* Pixelkarte des Linienendes. Eine Pfeilspitze ist eine
-     2–3 px breite Verdickung über ~5 Zeilen — **an welchem Ende sie sitzt,
-     bestimmt die Richtung** und ist im vergrösserten Bild oft nicht sicher
-     erkennbar.
-3. **Inventar auszählen, bevor gezeichnet wird.** Jede Figur (auch wartende
-   Kinder in den Kolonnen), jeder Ball, jede Markierung, jedes Tor. Die Vorlage
-   zeigt regelmässig mehr Figuren als `anzahl_kinder` — abgebildet wird, was
-   gezeichnet ist. Wartende Kolonnen schauen meist ins Feld: dafür die Posen
-   `stehen-hinten` / `laufen-hinten` verwenden.
-   - *Leibchen* (Symbol `leibchen`, färbbar, drehbar) sind in den Vorlagen
-     farbige Tupfer in den Händen — z. B. „Spiel mit dem Feuer", „Trikottausch".
-     Die Vorlage streckt die Arme oft waagrecht aus, unsere Posen führen sie am
-     Körper: das Tuch darum **an die Hand der Pose** setzen, nicht auf die
-     gemessene Bildposition — sonst schwebt es neben der Figur. Die
-     anker-relativen Handpositionen liefert `haende(art, pose, spiegeln)` aus
-     `web/components/diagramm/figur.tsx` (schon skaliert, `spiegeln`
-     berücksichtigt); das Tuch sitzt **22 Einheiten weiter nach aussen** auf
-     gleicher Höhe. Zahlen nicht abschreiben, sondern die Funktion rechnen
-     lassen — `npm run check:diagramme` prüft mit derselben Quelle, dass jedes
-     Leibchen an einer Hand sitzt (oder deutlich abgelegt ist).
-   - *Mini-Hürden* zeichnet das Manual als Zickzack bzw. flachen Bügel mit zwei
-     Füssen — das ist eine **Hürde** (`huerde`, drehbar), keine Linie. Ein Balken
-     mit Verdickungen an den Enden ist eine flach liegende Hürde.
-   - *Stangen* (`stange`, färbbar, drehbar) stehen meist aufrecht (0°), liegen
-     aber auch flach am Boden — dann drehen (90° waagrecht, 45°/315° diagonal).
-     Balken im Feld sind Stangen, keine Linien; `linie` bleibt den echten
-     Feldmarkierungen vorbehalten (Mittellinie, Zonen, Dribbeltore).
-   - *Figurenhöhe:* das Element `y` einer Figur ist ihr Anker, und der liegt
-     **49 Einheiten über der gezeichneten Schuhsohle** (Anker y=140, Sohle y=229
-     im Zeichenraum von `figur.tsx`, mal `SCALE` 0.55) — nicht 72, die halbe
-     Rahmenhöhe. Also `y = Y(Fusshöhe) − 49`. Mit 72 steht die Figur 23
-     Einheiten zu hoch; an einer Feldlinie heisst das: das Kind landet im Feld,
-     obwohl es in der Vorlage daneben steht. Beim Trainer sind es 84
-     (Sohle 251, mal `TRAINER_SCALE` 0.76).
-   - *Figuren, die im Original Schulter an Schulter stehen* (Verfolger-Paare,
-     Kolonnen): nicht die gemessene Distanz übertragen. Unsere Figuren sind
-     breiter als die schlanken Manual-Kinder — die Anker auf etwa **0.75
-     Figurenbreite (56 Einheiten)** setzen, sonst klafft eine Lücke, wo sich die
-     Kinder in der Vorlage fast an den Händen halten.
-4. **Transform bestimmen.** Feld-Eckpunkte in Bildpixeln ablesen und linear auf
-   die Zeichenfläche 1600 × 1000 abbilden (**uniforme** Skalierung, damit das
-   Seitenverhältnis des Felds erhalten bleibt; Rand für Tore und Warteschlangen
-   ausserhalb der Linien lassen). Alle weiteren Koordinaten über dieselbe Formel
-   umrechnen, nicht schätzen. Hat die Übung **kein Feld**, sondern eine Kette aus
-   Material (die Reifenbahnen in „Hüpfen rund um die Welt"), gibt die Kette den
-   Massstab: unsere Symbole haben feste Grössen, und wer auf Blattbreite
-   skaliert, reisst die Reifen zu einer Punktreihe auseinander. Lieber Rand
-   stehen lassen — dann stimmen zugleich die Figurenproportionen (eine
-   Manual-Figur ist rund 45 Bildpixel hoch, unsere 154 Einheiten).
-5. **Tore mit dem Anker auf die Linie setzen** — unabhängig davon, wo die
-   Vorlage die Torgrafik zeichnet (dort liegt sie meist ausserhalb des
-   Feldrechtecks). Die Torlinie ist die Feldlinie; sonst enden Torschuss-Pfeile
-   vor dem Tormund. **Sie öffnen immer ins Feld:** Oberkante `rotation` 0,
-   Unterkante 180, linke Kante 270, rechte Kante 90 — das Symbol öffnet bei 0
-   nach unten, bei 90 nach links, bei 270 nach rechts. Die Vorlage zeichnet oben
-   und unten dieselbe Torgrafik; wer sie übernimmt, dreht das untere Tor vom Feld
-   weg (`check:diagramme` prüft das). Welche Seite offen ist, erkennt man im
-   Render an den **zwei runden Pfostenenden — sie markieren den Tormund**; im
-   Kopf hergeleitet war die Regel für links/rechts prompt vertauscht.
-   Was die Vorlage **im Tor** zeichnet (Reifen und Pylonen als Ziele in der
-   „Schiessbude"), nicht mit dem Blatt-Massstab platzieren: unser Tor-Symbol ist
-   viel kleiner als die perspektivische Torgrafik, die Ziele landen sonst neben
-   statt im Tor. Stattdessen die Torgrafik der Vorlage auf den Symbolrahmen
-   abbilden (relative Lage im Tor beibehalten, siehe `im_tor` in der
-   Commit-Historie).
-6. **Notation 1:1 übernehmen** (Manual-Zeichenerklärung, Abb. 24):
-   Welle + Pfeil = `dribbling`, durchgezogen + Pfeil = `pass` (auch Torschuss),
-   gestrichelt + Pfeil = `laufweg`, farbige Linie = `linie` (z. B. Feldbegrenzung).
-   Mehrstufige Aktionen bleiben mehrstufig: Dribbling-Welle und anschliessender
-   Torschuss sind **zwei** Elemente, kein durchgehender Pfeil. Stützpunkte grob
-   setzen — die Wellenform erzeugt `DiagrammView` selbst.
-7. **Verifizieren.** `npm run seed`, Übungsseite öffnen und Ausschnitte gegen die
-   Vorlage prüfen (Anzahl Figuren, Blickrichtungen, Ballpositionen, Pfeilziele).
-   Verdachtsfälle im Zoom klären, nicht auf dem verkleinerten Gesamtbild.
-
-## Korrigieren im Review-Modus (nur lokal)
-
-Wer eine Abweichung *sieht*, korrigiert sie am schnellsten selbst:
-`npm run dev`, dann **http://localhost:3000/dev/diagramme** — die Übersicht aller
-Manual-Übungen mit Dateizustand und Prüfmeldungen. Pro Übung öffnet sich der
-normale Diagramm-Editor, rechts die Manual-Vorlage; der Regler „Unterlage" legt
-sie halbtransparent unter die Zeichenfläche (mit Massstab/X/Y ausrichten, weil
-jedes Diagramm seinen eigenen Massstab hat).
-
-Gespeichert wird per Autosave direkt in `data/diagramme/<slug>.json` — plus in die
-lokale DB, damit die Übungsseite ohne `npm run seed` stimmt. Ergebnis ist ein
-minimaler `git diff`; ein leeres Diagramm wird abgelehnt, damit ein Fehlklick
-keine Vorlage wegräumt. Die Routen existieren nur bei `NODE_ENV=development`.
+Die Diagramme sind in unserer eigenen Diagrammsprache gezeichnet — Symbole,
+Farben und Geometrie stammen aus `web/lib/diagramm.ts` und
+`web/components/diagramm/symbols.tsx`. Die Bitmaps aus dem Manual-PDF, die
+früher unter `images/` lagen, sind aus dem Repo entfernt; sie waren
+unveränderte Abbildungen aus einem fremden Werk. Ein Diagramm wird darum nicht
+mehr gegen eine Vorlage nachgemessen, sondern anhand des Übungstexts geprüft
+und im Editor korrigiert.
 
 ## Wirkung
 

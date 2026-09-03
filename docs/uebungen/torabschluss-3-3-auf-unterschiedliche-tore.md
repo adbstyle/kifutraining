@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Kleinfeld
 
-![3:3 auf unterschiedliche Tore](../images/torabschluss-3-3-auf-unterschiedliche-tore.png)
-
 ## Offen starten
 
 Die Kinder spielen 3:3. Das weisse Team schiesst auf das grosse Tor, das rote auf die beiden Minitore. Nach Torerfolg auf die Minitore wechseln die Rollen.

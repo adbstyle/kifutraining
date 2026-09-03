@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
 
-![Über die Brücke – um Hindernisse](../images/dribbling-ueber-die-bruecke-um-hindernisse.png)
-
 ## Offen starten
 
 Auf dein Signal dribbeln die Kinder mit ihrem Ball über die Brücke (Markierkegel = Hindernisse) in die gegenüberliegende Zone und stoppen dort ihren Ball. Du kannst die Aufgaben variieren.

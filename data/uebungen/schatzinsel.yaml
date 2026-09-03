@@ -26,7 +26,6 @@ methodischer_fahrplan:
     Bälle auch wieder vom Piratenschiff auf die Insel holen. Wer hat nach zwei Minuten
     mehr Bälle?
 varianten: []
-bild: images/schatzinsel.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 61

@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Vielseitigkeit erleben · **Erscheinungsform:** Sich flink und geschickt bewegen
 
-![Hüpfen rund um die Welt](../images/torabschluss-huepfen-rund-um-die-welt.png)
-
 ## Offen starten
 
 In einem markierten Feld liegen farbige Reifen. Die Kinder bewegen sich frei im Feld und hüpfen (ein- und beidbeinig) immer wieder in die Reifen. Zuerst alleine, anschliessend in Zweierteams. Ein Kind hüpft vor, das andere hüpft nach. Danach erfolgt ein Rollenwechsel.

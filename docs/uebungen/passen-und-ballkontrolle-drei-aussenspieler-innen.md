@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
-![Drei Aussenspieler/innen](../images/passen-und-ballkontrolle-drei-aussenspieler-innen.png)
-
 ## Offen starten
 
 Im Spiel 3:3 und drei Aussenspieler/innen pro Team können die Kinder diese immer anspielen. Spielen sie den Ball direkt zurück, bleiben sie in dieser Rolle. Kontrollieren sie den Ball und laufen in das Feld, übernimmt der/die Passgeber/in dessen Rolle.

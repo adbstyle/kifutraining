@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Grossfeld
 
-![Torschussduell mit Seitenhilfe](../images/torabschluss-torschussduell-mit-seitenhilfe.png)
-
 ## Offen starten
 
 Die Kinder versuchen im 2:2, mithilfe der Kinder ausserhalb des Feldes (Joker) ein Tor zu erzielen.

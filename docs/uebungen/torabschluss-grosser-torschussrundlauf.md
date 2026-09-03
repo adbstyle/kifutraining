@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Kleinfeld
 
-![Grosser Torschussrundlauf](../images/torabschluss-grosser-torschussrundlauf.png)
-
 ## Offen starten
 
 Alle Kinder starten gleichzeitig. Sie dribbeln den Ball aus einem markierten Viereck heraus und schliessen mit der nächsten Ballberührung in eines der acht Tore ab (freie Wahl). Anschliessend holen sie ihren Ball, kehren ins Viereck zurück und schiessen auf das nächste freie Tor.

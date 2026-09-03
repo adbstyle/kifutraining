@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
-![1:1 frontal auf zwei Tore](../images/dribbling-1-1-frontal-auf-zwei-tore.png)
-
 ## Offen starten
 
 Zwei Kinder starten gleichzeitig. Eines läuft mit dem Ball auf das andere zu und versucht, links oder rechts ein Tor zu erzielen. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende. Nach zwei Minuten wechseln die Rollen der Teams.

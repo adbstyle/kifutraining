@@ -2,8 +2,6 @@
 
 **Trainingsteil:** einleitung · **Kategorien:** G, F, E
 
-![Im Regenbogenwald](../images/im-regenbogenwald.png)
-
 ## Offen starten
 
 Alle Kinder haben einen Ball und dribbeln damit frei in einem markierten Feld. Hebst du einen farbigen Markierkegel hoch, dribbeln die Kinder in das entsprechend markierte Feld.

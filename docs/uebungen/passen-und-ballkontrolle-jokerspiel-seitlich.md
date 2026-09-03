@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
-![Jokerspiel seitlich](../images/passen-und-ballkontrolle-jokerspiel-seitlich.png)
-
 ## Offen starten
 
 Manual Fussball – Good Practice Die Kinder spielen 2:2 mit je zwei Kindern auf den Aussenbahnen als Joker. Die Joker dürfen den Ball max. zweimal berühren.

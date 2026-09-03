@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
-![Chaos-Spiel](../images/dribbling-chaos-spiel.png)
-
 ## Offen starten
 
 Alle Kinder dribbeln gleichzeitig von der einen Seite zur anderen und schliessen auf eines der drei Tore ab.

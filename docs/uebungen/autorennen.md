@@ -2,8 +2,6 @@
 
 **Trainingsteil:** einleitung · **Kategorien:** G, F, E
 
-![Autorennen](../images/autorennen.png)
-
 ## Offen starten
 
 Zwei Kinder dribbeln mit je einem Ball durch auf dem Spielfeld verteilte Tore auf die gegenüberliegende Seite und führen dabei verschiedene Aufgaben aus, z. B.: nur durch die roten Tore und den gleichen Weg zurückdribbeln oder einander folgen.

@@ -2,8 +2,6 @@
 
 **Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Grossfeld
 
-![Freies Torschussduell](../images/torabschluss-freies-torschussduell.png)
-
 ## Offen starten
 
 Die Kinder versuchen im 2:2, durch mutiges Dribbeln, geschicktes Zusammenspiel und Freilaufen eine Überzahl zu kreieren und ein Tor zu erzielen.

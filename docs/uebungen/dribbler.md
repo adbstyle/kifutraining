@@ -2,8 +2,6 @@
 
 **Trainingsteil:** einleitung · **Kategorien:** F, E
 
-![Dribbler](../images/dribbler.png)
-
 ## Offen starten
 
 Manual Fussball – Good Practice Bilde zwei Teams und ordne sie einem markierten Rechteck zu. Auf jeder Seite dribbelt die Hälfte der Kinder von der einen Stirnseite zur anderen.

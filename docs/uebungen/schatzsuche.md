@@ -2,8 +2,6 @@
 
 **Trainingsteil:** einleitung · **Kategorien:** G, F, E
 
-![Schatzsuche](../images/schatzsuche.png)
-
 ## Offen starten
 
 Alle Kinder dribbeln mit einem Ball auf der Schatzinsel. Auf dein Signal wechseln sie die Bälle (idealerweise verschiedene Bälle).

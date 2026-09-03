@@ -23,7 +23,6 @@ methodischer_fahrplan:
     Feld? Zeig evtl. mehrere Farben an, welche die Teams in dieser Reihenfolge durchdribbeln
     müssen, bevor sie ins Startfeld zurückkehren.
 varianten: []
-bild: images/im-regenbogenwald.png
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 64

@@ -20,8 +20,7 @@ Das Repo ist ein **Monorepo mit zwei Teilprojekten**:
 | `schema/uebung.schema.json` | JSON-Schema der Übungen |
 | `scripts/` | `extract.py`, `parser.py`, `validate.py`, `build_docs.py` |
 | `docs/` | generierte Markdown-Ansicht ([Index](docs/README.md)) + Specs |
-| `images/` | Feld-Diagramme (PNG) |
-| `sources/` | Original-PDFs/PPTX |
+| `data/diagramme/` | gezeichnete Feld-Diagramme (JSON) |
 | `supabase/migrations/` | DB-Schema + RPCs |
 | `web/` | Next.js-App (server-only Supabase-Clients in `web/lib/supabase/`) |
 

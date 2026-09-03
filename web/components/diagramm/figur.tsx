@@ -58,7 +58,7 @@ const ANKER_Y = 140;
 /** Skalierung Zeichen-Raum → Feld-Einheiten (Figurhöhe ~125). */
 const SCALE = 0.55;
 /** Der Trainer ist erwachsen: die Vorlage zeichnet ihn rund 38 % grösser als
- *  ein Kind (gemessen 40 px gegen 29 px auf `images/trikottausch.png`). Die
+ *  ein Kind (Verhältnis rund 40 zu 29 in den Manual-Diagrammen). Die
  *  Proportionen (kleinerer Kopf, längere Beine) macht die Zeichnung, die
  *  Körpergrösse dieser Faktor. */
 const TRAINER_SCALE = 0.76;

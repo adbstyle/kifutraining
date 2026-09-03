@@ -2,8 +2,6 @@
 
 **Trainingsteil:** einleitung · **Kategorien:** G, F, E
 
-![Reise zum Mond](../images/reise-zum-mond.png)
-
 ## Offen starten
 
 Die Kinder dribbeln durch das Universum und erfüllen gleichzeitig verschiedene Aufgaben, z. B.: nur um die blauen Reifen (Planeten) bzw. um die gelben Markierungsteller (Monde) dribbeln oder einander folgen.
