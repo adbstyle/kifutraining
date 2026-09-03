@@ -5,3 +5,7 @@ __pycache__/
 
 # Playwright MCP Scratch-Output
 .playwright-mcp/
+
+# Quellmaterial (SFV-/J+S-Manuals, Präsentationen, Broschüren) — fremde Werke,
+# nur lokal für scripts/extract.py; gehört nicht ins Repo.
+sources/

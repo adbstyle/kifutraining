@@ -1,4 +1,8 @@
-"""Extrahiert die Übungstexte aus dem Manual nach data/uebungen/."""
+"""Extrahiert die Übungstexte aus dem Manual nach data/uebungen/.
+
+Das Manual-PDF liegt NICHT im Repo (fremdes Werk, `sources/` ist ignoriert) —
+es muss lokal unter sources/Manual_Kinderfussball_D.pdf vorhanden sein.
+"""
 import subprocess
 import sys
 from pathlib import Path
@@ -48,6 +52,10 @@ def page_text(page):
 
 
 def main():
+    if not PDF.exists():
+        sys.exit(
+            f"Manual-PDF fehlt: {PDF}\n"
+            "sources/ ist nicht Teil des Repos — das PDF lokal dorthin legen.")
     UEB.mkdir(parents=True, exist_ok=True)
 
     count = 0

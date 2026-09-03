@@ -36,6 +36,11 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 Immer `.venv/bin/python` / `.venv/bin/pytest` explizit aufrufen (kein aktiviertes
 venv vorausgesetzt).
 
+`scripts/extract.py` braucht das SFV-Manual als PDF unter
+`sources/Manual_Kinderfussball_D.pdf`. Der Ordner `sources/` ist bewusst nicht
+Teil des Repos (fremdes Material, `.gitignore`); die YAML-Dateien unter
+`data/uebungen/` sind bereits extrahiert und werden direkt gepflegt.
+
 ## Web-App (`web/`)
 
 ```bash
