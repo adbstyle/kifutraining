@@ -13,7 +13,7 @@ Je zwei Kinder stehen sich mit Ball gegenüber, sternförmig rund um die Mitte v
 
 ## Wett-eifern
 
-Team Weiss gegen Team Rot. Weiss greift an und versucht, im Eins gegen Eins links oder rechts durch ein Pylonentor zu dribbeln; Rot verteidigt. Nach zwei bis drei Minuten wechseln die Rollen. Welches Team erzielt mehr Tore?
+Team Weiss gegen Team Rot. Weiss greift an und versucht, im Eins gegen Eins links oder rechts durch ein Pylonentor zu dribbeln; Rot verteidigt. Nach zwei bis drei Minuten wechseln die Rollen. Welches Team trifft häufiger?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 63*
