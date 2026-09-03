@@ -14,12 +14,12 @@ anzahl_kinder:
   max: 8
 material: []
 methodischer_fahrplan:
-  offen_starten: Manual Fussball – Good Practice Im Spiel 3:3 greift Rot auf die beiden
-    Tore von Weiss an und umgekehrt.
+  offen_starten: 'Drei gegen drei, die Tore stehen in der Feldmitte, Rücken an Rücken:
+    Rot zielt auf die zwei Tore, die Weiss verteidigt, Weiss auf die zwei von Rot.'
   ueben:
-  - Ganzes Feld nutzen und sich geschickt freilaufen
-  - Mit Zusammenspiel und Dribblings zum Torabschluss kommen
-  wetteifern: Welches Team erzielt innerhalb von fünf Minuten mehr Tore?
+  - Das ganze Feld ausnutzen und sich geschickt freilaufen.
+  - Über Zusammenspiel und Dribbling zum Abschluss kommen.
+  wetteifern: Welches Team trifft in fünf Minuten häufiger?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

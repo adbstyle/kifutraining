@@ -324,10 +324,10 @@ export default async function ExerciseDetailPage({
       <footer className="mt-10 hidden border-t border-outline-variant pt-4 print:block">
         {ex.source === "manual" ? (
           <p className="type-body-small text-on-surface-variant">
-            Offizielle Übung aus dem{" "}
+            Übung nach dem{" "}
             <strong className="text-on-surface">Manual Kinderfussball</strong>{" "}
-            des Schweizerischen Fussballverbands (SFV) — kuratierter Bestand,
-            unverändert übernommen.
+            des Schweizerischen Fussballverbands (SFV) — Aufbau und Regeln aus dem
+            Manual, Text in eigener Formulierung.
           </p>
         ) : (
           <p className="type-body-small text-on-surface-variant">
@@ -350,10 +350,10 @@ export default async function ExerciseDetailPage({
             aria-hidden
           />
           <p className="type-body-small text-on-surface-variant">
-            Offizielle Übung aus dem{" "}
+            Übung nach dem{" "}
             <strong className="text-on-surface">Manual Kinderfussball</strong>{" "}
-            des Schweizerischen Fussballverbands (SFV) — kuratierter Bestand,
-            unverändert übernommen.
+            des Schweizerischen Fussballverbands (SFV) — Aufbau und Regeln aus dem
+            Manual, Text in eigener Formulierung.
           </p>
         </footer>
       )}

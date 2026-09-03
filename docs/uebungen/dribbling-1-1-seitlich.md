@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Zwei Kinder starten gleichzeitig. Sobald das erste mit dem Ball die Markierung passiert hat, darf es links oder rechts ein Tor erzielen. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende.
+Zwei Kinder starten gleichzeitig von der Seite, eines mit Ball. Ab der Markierung ist der Abschluss frei, ins linke oder ins rechte Tor. Tor oder Aus beendet die Runde.
 
 ## Üben
 
-- Mit Körpertäuschung das gegnerische Kind auf eine Seite locken und erfolgreich abschliessen
+- Mit einer Körpertäuschung den Gegner nach einer Seite ziehen und auf der anderen abschliessen.
 
 ## Wett-eifern
 
-Bilde zwei Teams. Ein Team verteidigt, das andere greift an. Welches Team schafft in zwei Minuten am meisten Tore? Nach zwei Minuten wechseln sie die Rollen.
+Du bildest zwei Teams: eines greift an, das andere verteidigt. Welches Team trifft in zwei Minuten häufiger? Danach Rollentausch.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 67*

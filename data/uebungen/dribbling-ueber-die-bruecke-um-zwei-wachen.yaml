@@ -15,14 +15,14 @@ anzahl_kinder:
   max: 8
 material: []
 methodischer_fahrplan:
-  offen_starten: Manual Fussball – Good Practice Die Kinder dribbeln an den beiden
-    verteidigenden Kindern (Wachen) vorbei und stoppen ihren Ball in der gegenüberliegenden
-    Zone. Nimmt eine der Wachen einem Kind den Ball weg oder kann ihn aus dem Feld
-    spielen, tauschen sie die Rollen.
+  offen_starten: Auf der Brücke zwischen den beiden Zonen stehen diesmal zwei Wachen.
+    Die Kinder dribbeln an beiden vorbei und bringen den Ball in der Zone gegenüber
+    zum Stehen. Erobert eine Wache den Ball oder spielt ihn ins Aus, tauschen die
+    beiden die Rollen.
   ueben:
-  - Die Wache täuschen und falls nötig den Ball gut abschirmen
-  wetteifern: Welches Kind schafft an den Wachen vorbei am meisten Überquerungen der
-    Brücke? Welche Wache fängt in einer Minute am meisten Kinder?
+  - Die Wache antäuschen und, wenn es eng wird, den Ball mit dem Körper abschirmen.
+  wetteifern: Wer schafft an den zwei Wachen vorbei die meisten Überquerungen? Welcher
+    Wache gelingen in einer Minute die meisten Fänge?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

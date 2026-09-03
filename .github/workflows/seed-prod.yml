@@ -1,6 +1,6 @@
 name: Seed Production (manuell)
 
-# Bewusst nur manuell auslösbar: lädt die Manual-Übungen/Themen/Bilder idempotent
+# Bewusst nur manuell auslösbar: lädt die Manual-Übungen und Diagramme idempotent
 # nach Production. Manual-Daten ändern selten -> kein Auto-Seed bei jedem Deploy.
 on:
   workflow_dispatch:

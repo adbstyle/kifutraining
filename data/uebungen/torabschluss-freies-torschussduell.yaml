@@ -14,12 +14,12 @@ anzahl_kinder:
   max: 6
 material: []
 methodischer_fahrplan:
-  offen_starten: Die Kinder versuchen im 2:2, durch mutiges Dribbeln, geschicktes
-    Zusammenspiel und Freilaufen eine Überzahl zu kreieren und ein Tor zu erzielen.
+  offen_starten: 2 gegen 2 auf zwei Tore mit Torspielern. Wer mutig dribbelt, sich
+    freiläuft und zusammenspielt, schafft Überzahl — und trifft.
   ueben:
-  - Durch Dribbeln in den freien Raum und geschicktes Freilaufen Überzahlsituation
-    nutzen und den Torabschluss suchen
-  wetteifern: Welches Team schafft innerhalb von fünf Minuten am meisten Tore?
+  - Ins Offene dribbeln, sich freilaufen, die Überzahl ausspielen und den Abschluss
+    suchen.
+  wetteifern: Welches Team trifft in fünf Minuten am häufigsten?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

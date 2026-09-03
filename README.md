@@ -36,6 +36,15 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 Immer `.venv/bin/python` / `.venv/bin/pytest` explizit aufrufen (kein aktiviertes
 venv vorausgesetzt).
 
+Die YAML-Dateien unter `data/uebungen/` sind fertig extrahiert und werden
+direkt gepflegt. Die Extraktions-Skripte (`extract.py`, `extract_kategorien.py`)
+sind Bootstrap-Werkzeuge: Sie brauchen das SFV-Manual als PDF im lokalen,
+nicht versionierten Ordner `sources/` (fremdes Werk, `.gitignore`) sowie
+poppler im PATH; welche Datei genau, sagt das Skript beim Start. `extract.py`
+schreibt nur in ein leeres Zielverzeichnis, ausser mit `--force`. Wer den
+Ordner `sources/` lokal hat, sichert ihn ausserhalb des Repos — ein Checkout
+eines älteren Stands, der ihn noch trackt, räumt ihn beim Zurückwechseln weg.
+
 ## Web-App (`web/`)
 
 ```bash

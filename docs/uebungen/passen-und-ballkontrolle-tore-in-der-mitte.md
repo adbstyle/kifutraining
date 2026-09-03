@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Manual Fussball – Good Practice Im Spiel 3:3 greift Rot auf die beiden Tore von Weiss an und umgekehrt.
+Drei gegen drei, die Tore stehen in der Feldmitte, Rücken an Rücken: Rot zielt auf die zwei Tore, die Weiss verteidigt, Weiss auf die zwei von Rot.
 
 ## Üben
 
-- Ganzes Feld nutzen und sich geschickt freilaufen
-- Mit Zusammenspiel und Dribblings zum Torabschluss kommen
+- Das ganze Feld ausnutzen und sich geschickt freilaufen.
+- Über Zusammenspiel und Dribbling zum Abschluss kommen.
 
 ## Wett-eifern
 
-Welches Team erzielt innerhalb von fünf Minuten mehr Tore?
+Welches Team trifft in fünf Minuten häufiger?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 71*

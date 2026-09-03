@@ -14,14 +14,12 @@ anzahl_kinder:
   max: 13
 material: []
 methodischer_fahrplan:
-  offen_starten: Ein Kind aus Team Rot passt zu einem Kind aus Team Weiss. Danach
-    starten beide zum 1:1 und versuchen, beim Gegenüber ein Tor zu erzielen. Die Kinder
-    auf der anderen Seite starten gleichzeitig wie die beiden, allerdings passt das
-    weisse Team zum roten.
+  offen_starten: 'Ein Rotes spielt den Ball zu einem Weissen. Mit dem Pass geht es
+    los ins Eins gegen Eins: Beide wollen beim Gegenüber treffen. Auf der anderen
+    Feldseite läuft gleichzeitig dasselbe Duell, nur passt dort Weiss zu Rot.'
   ueben:
-  - Mit Tempo und Täuschungen das verteidigende Kind ausdribbeln und entschlossen
-    abschliessen
-  wetteifern: Welches Team erzielt am meisten Tore?
+  - Mit Tempo und Täuschung den Verteidiger ausdribbeln und entschlossen abschliessen.
+  wetteifern: Welches Team trifft am häufigsten?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

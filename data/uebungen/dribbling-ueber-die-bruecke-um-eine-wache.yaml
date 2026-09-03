@@ -15,14 +15,15 @@ anzahl_kinder:
   max: 8
 material: []
 methodischer_fahrplan:
-  offen_starten: Die Kinder dribbeln mit ihrem Ball am verteidigenden Kind (Wache)
-    vorbei und stoppen in der gegenüberliegenden Zone ihren Ball. Berührt die Wache
-    den Ball eines Kindes, tauschen sie die Rollen.
+  offen_starten: Zwischen zwei Zonen liegt die Brücke, ein schmaler Streifen. Auf
+    der Brücke steht eine Wache ohne Ball. Die Kinder dribbeln von der einen Zone
+    an der Wache vorbei in die gegenüberliegende Zone und stoppen dort den Ball. Gelingt
+    der Wache eine Ballberührung, wechselt sie mit diesem Kind die Rolle.
   ueben:
-  - Den freien Raum und den richtigen Zeitpunkt für die Überquerung erkennen, anschliessend
-    der Wache ausweichen und den Ball eng über die Brücke führen
-  wetteifern: Welches Kind schafft am meisten Überquerungen der Brücke, ohne gefangen
-    zu werden?
+  - Den richtigen Moment abwarten, die Lücke sehen, der Wache ausweichen und den Ball
+    dabei eng am Fuss über die Brücke führen.
+  wetteifern: Wer schafft die meisten Überquerungen, ohne von der Wache erwischt zu
+    werden?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

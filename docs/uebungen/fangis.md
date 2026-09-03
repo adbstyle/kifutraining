@@ -4,7 +4,7 @@
 
 ## Aufbau
 
-Den Kindern steht vor dem Training mind. ein Fangisfeld zur Verfügung. Sobald die Kinder im Traininig erscheinen, spielen sie selbstständig ein Fangis nach ihrer Wahl. Jedes Kind darf einmal Fänger/in sein.
+Ein abgestecktes Feld wartet auf die ersten Kinder. Wer ankommt, steigt in ein Fangspiel ein — welche Form, entscheiden die Kinder selbst. Eine Regel gibst du vor: Jedes Kind kommt einmal als Fängerin oder Fänger dran.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 60*

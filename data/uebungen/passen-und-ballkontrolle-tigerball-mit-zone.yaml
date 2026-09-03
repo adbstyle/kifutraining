@@ -14,13 +14,14 @@ anzahl_kinder:
   max: 5
 material: []
 methodischer_fahrplan:
-  offen_starten: Zwei Kinder befinden sich je in einer Zone und passen sich gegenseitig
-    den Ball flach zu. Der Tiger versucht, die Pässe zu unterbinden. Gelingt es, tauschen
-    Tiger und passgebendes Kind die Rolle.
+  offen_starten: Zwei Kinder stehen je in einer eigenen Zone und spielen sich den
+    Ball flach zu. Dazwischen lauert der Tiger und will die Pässe abfangen. Gelingt
+    es ihm, wird das Kind, das den Pass gespielt hat, zum neuen Tiger.
   ueben:
-  - Geschickt im Rücken des Tigers freilaufen (aus dem Schatten in die Sonne) und
-    präzise passen
-  wetteifern: Gelingen die Pässe am Tiger vorbei und die Ballannahme in der Zone?
+  - Hinter dem Tiger freilaufen — raus aus dem Schatten, hinein in die Sonne — und
+    genau passen.
+  wetteifern: Gelingen die Pässe vorbei am Tiger — und die saubere Annahme in der
+    Zone?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

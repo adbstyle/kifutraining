@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Ein Kind dribbelt in eines der Felder und schliesst aufs Tor ab. Anschliessend steht es ins Tor und der/die bisherige Torspieler/in stellt sich bei der nächsten Schussbahn an. Variation: auf Minitore abschliessen.
+Vor einem Tor mit Torspieler liegen mehrere Schussbahnen. Ein Kind dribbelt in eine Bahn und schiesst. Danach geht es selbst ins Tor, und der bisherige Torspieler stellt sich an der nächsten Schussbahn an. Variante: auf Minitore ohne Torspieler.
 
 ## Üben
 
-- Vor dem Schiessen ein Foto vom Tor machen und in die freie Ecke zielen
-- Einmal mit dem linken, einmal mit dem rechten Fuss schiessen
+- Vor dem Schuss kurz hinschauen — Foto im Kopf — und die offene Ecke anvisieren.
+- Einen Versuch links schiessen, den nächsten rechts.
 
 ## Wett-eifern
 
-Wer schafft mit dem linken und dem rechten Fuss ein Tor?
+Wer trifft sowohl mit dem linken als auch mit dem rechten Fuss?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 75*

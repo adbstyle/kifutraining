@@ -1,4 +1,11 @@
-"""Extrahiert die Übungstexte aus dem Manual nach data/uebungen/."""
+"""Extrahiert die Übungstexte aus dem Manual nach data/uebungen/.
+
+Einmaliges Bootstrap-Werkzeug: Der Bestand unter data/uebungen/ ist längst
+extrahiert und wird von Hand gepflegt (anzahl_kinder, material, varianten,
+Slugs). Ein erneuter Lauf würde diese Pflege mit Rohwerten überschreiben und
+wegen abweichender Slugs Dubletten anlegen — darum schreibt das Skript nur in
+ein leeres Zielverzeichnis, es sei denn, `--force` wird übergeben.
+"""
 import subprocess
 import sys
 from pathlib import Path
@@ -7,9 +14,8 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import parser
+from manual_quelle import PDF, ROOT, require_pdf
 
-ROOT = Path(__file__).resolve().parent.parent
-PDF = ROOT / "sources" / "Manual_Kinderfussball_D.pdf"
 UEB = ROOT / "data" / "uebungen"
 
 # Seite -> (trainingsteil, [erscheinungsform-slugs])
@@ -48,6 +54,13 @@ def page_text(page):
 
 
 def main():
+    require_pdf("pdftotext")
+    bestand = sorted(UEB.glob("*.yaml"))
+    if bestand and "--force" not in sys.argv:
+        sys.exit(
+            f"{UEB} enthält bereits {len(bestand)} Übungen — ein Lauf würde die "
+            "gepflegten Werte überschreiben und Dubletten anlegen.\n"
+            "  Erneut extrahieren nur bewusst: `extract.py --force`.")
     UEB.mkdir(parents=True, exist_ok=True)
 
     count = 0

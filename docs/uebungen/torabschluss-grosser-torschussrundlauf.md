@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Alle Kinder starten gleichzeitig. Sie dribbeln den Ball aus einem markierten Viereck heraus und schliessen mit der nächsten Ballberührung in eines der acht Tore ab (freie Wahl). Anschliessend holen sie ihren Ball, kehren ins Viereck zurück und schiessen auf das nächste freie Tor.
+In der Mitte liegt ein markiertes Viereck, rundherum stehen acht Tore. Gleichzeitiger Start für alle: aus dem Viereck heraus dribbeln und mit der allernächsten Berührung auf ein Tor der eigenen Wahl schiessen. Dann Ball holen, zurück ins Viereck und das nächste freie Tor anvisieren.
 
 ## Üben
 
-- Vor dem Schiessen ein Foto vom Tor machen und in die freie Ecke zielen
+- Vor dem Schuss kurz hinschauen — ein Foto im Kopf: Wo ist die Ecke offen? — und genau dorthin zielen.
 
 ## Wett-eifern
 
-Wie viele Tore erzielen die Kinder mit dem linken Fuss und wie viele mit dem rechten?
+Wie viele Treffer fallen links, wie viele rechts?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 75*

@@ -13,17 +13,14 @@ anzahl_kinder:
   max: 13
 material: []
 methodischer_fahrplan:
-  offen_starten: Ein Kind von Team Rot startet mit dem Ball ins Feld und spielt einen
-    Pass zu einem gegenüberstehenden Kind von Team Weiss. Dieses nimmt den Ball in
-    die Abschlusszone mit und schliesst auf das Tor ab. Danach erhält das Kind einen
-    weiteren Pass von einem Kind der Gruppe Rot, nimmt ihn aus der Schusszone mit
-    und schliesst mit dem zweiten Ballkontakt ausserhalb der Schusszone ab. Beide
-    Seiten starten gleichzeitig.
+  offen_starten: 'Ein Kind von Rot startet mit Ball ins Feld und passt zum Weissen,
+    das ihm gegenübersteht. Das Weisse nimmt ihn in die Schusszone mit und schiesst.
+    Gleich darauf kommt ein zweiter Pass von Rot: Diesmal führt das Weisse den Ball
+    aus der Schusszone hinaus und schiesst von aussen, spätestens mit dem zweiten
+    Kontakt. Beide Feldseiten laufen gleichzeitig.'
   ueben:
-  - Ball kontrolliert in die Schusszone mitnehmen und mit einem präzisen Schuss in
-    die freie Ecke abschliessen
-  wetteifern: Wer schafft zwei erfolgreiche Torabschlüsse hintereinander? Wer mit
-    links und nachher mit rechts?
+  - Den Ball sauber in die Schusszone führen und genau in die offene Ecke schiessen.
+  wetteifern: Wer trifft zweimal nacheinander? Wer erst mit links und dann mit rechts?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

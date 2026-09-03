@@ -4,18 +4,18 @@
 
 ## Offen starten
 
-Zwei Kinder dribbeln mit je einem Ball durch auf dem Spielfeld verteilte Tore auf die gegenüberliegende Seite und führen dabei verschiedene Aufgaben aus, z. B.: nur durch die roten Tore und den gleichen Weg zurückdribbeln oder einander folgen.
+Über das ganze Feld sind kleine Pylonentore in verschiedenen Farben verteilt. Immer zwei Kinder starten zusammen, jedes mit eigenem Ball, und dribbeln durch die Tore auf die andere Seite. Du gibst die Strecke vor: ausschliesslich rote Tore, derselbe Weg retour, oder eines fährt voraus und das andere folgt.
 
 ## Üben
 
-- Den Ball nur mit links, dann nur mit rechts führen
-- Abwechslungsweise den Ball links und rechts führen
-- Nur mit Voll-, Innen- und Aussenrist führen
-- Den Hindernissen und anderen Kindern ausweichen sowie Finten schlagen (Übersteiger, Schere oder schnell die Richtung wechseln)
+- Eine Fahrt nur mit dem linken Fuss, die nächste nur mit dem rechten.
+- Bei jedem Ballkontakt den Fuss wechseln.
+- Drei Fahrten mit vorgegebener Fussfläche: Vollspann, Innenseite, Aussenseite.
+- Anderen Autos und Hindernissen ausweichen und dabei täuschen — Übersteiger, Schere oder ein abrupter Richtungswechsel.
 
 ## Wett-eifern
 
-Team rot und weiss stehen einander gegenüber. Welches Team durchdribbelt die vorgegebene Route am schnellsten?
+Team Rot und Team Weiss stellen sich an gegenüberliegenden Seiten auf. Beide bekommen dieselbe Route durch die Tore. Welches Team hat sie zuerst komplett durchfahren?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 61*

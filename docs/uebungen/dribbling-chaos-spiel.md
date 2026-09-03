@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Alle Kinder dribbeln gleichzeitig von der einen Seite zur anderen und schliessen auf eines der drei Tore ab.
+Auf einer Seite stehen drei Tore. Alle Kinder starten gleichzeitig mit Ball von der anderen Seite und dribbeln durchs Gewusel nach vorn; am Ende sucht sich jedes eines der drei Tore aus und schiesst.
 
 ## Üben
 
-- Mutig nach vorne dribbeln und die Gegenspieler/innen mit Täuschungen und Finten (z. B. Körpertäuschung, Übersteiger, Schere) überwinden
+- Mutig nach vorn ziehen und Gegenspieler austricksen — mit Körpertäuschung, Übersteiger oder Schere.
 
 ## Wett-eifern
 
-Bilde zwei Teams. Im 1:1 versuchen die Kinder, auf eines der drei Tore abzuschliessen und Punkte für ihr Team zu sammeln.
+Du bildest zwei Teams. Im Eins gegen Eins versucht jedes Kind, in einem der drei Tore zu treffen; jeder Treffer zählt für sein Team.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 66*

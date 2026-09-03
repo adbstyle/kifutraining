@@ -14,15 +14,14 @@ anzahl_kinder:
   max: 9
 material: []
 methodischer_fahrplan:
-  offen_starten: Die Kinder spielen 3:3. Das weisse Team schiesst auf das grosse Tor,
-    das rote auf die beiden Minitore. Nach Torerfolg auf die Minitore wechseln die
-    Rollen.
+  offen_starten: 'Drei gegen drei auf ungleiche Tore: Weiss spielt auf das grosse
+    Tor mit Torspieler, Rot auf zwei Minitore. Sobald Rot in ein Minitor trifft, tauschen
+    die Teams die Rollen.'
   ueben:
-  - Durch geschicktes Zusammenspiel Überzahl ausnutzen und auf das grosse Tor abschliessen
-  - Durch aktives Mitspielen des Torspielers/ der Torspielerin und rasches Angriffsspiel
-    aufs Minitor abschliessen
-  wetteifern: Welches Team schafft ein Tor auf die Minitore und nach dem Seitenwechsel
-    direkt eines auf das grosse Tor?
+  - Die Überzahl im Zusammenspiel ausnutzen und aufs grosse Tor abschliessen.
+  - Der Torspieler spielt aktiv mit; mit schnellem Angriff aufs Minitor treffen.
+  wetteifern: Welches Team trifft ins Minitor und nach dem Wechsel gleich auch ins
+    grosse Tor?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

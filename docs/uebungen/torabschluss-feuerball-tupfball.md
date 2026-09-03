@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Ein Dreierteam pro Viereck und ein Eisbär des anderen Teams stellen sich auf. Das Dreierteam spielt sich den Ball (Feuerball) mit den Händen so zu, dass sie den Eisbären mit dem Ball berühren/abtupfen (nicht abschiessen) können. Dafür erhalten sie einen Punkt. Die Kinder dürfen mit dem Ball in der Hand nicht laufen.
+In jedem Viereck steht ein Dreierteam zusammen mit einem Eisbären des anderen Teams. Die drei spielen sich den Feuerball mit den Händen zu und versuchen, den Eisbären damit abzutupfen — berühren, nicht abschiessen. Jede Berührung gibt einen Punkt. Wer den Ball in der Hand hält, darf nicht laufen.
 
 ## Üben
 
-- Mit raschem Zusammenspiel und Kooperation den Eisbären in die Ecke drängen
+- Schnell zusammenspielen und den Eisbären gemeinsam in eine Ecke drängen.
 
 ## Wett-eifern
 
-Welches Team erzielt mehr Punkte? Welcher Eisbär kann sich freilaufen?
+Welches Team holt mehr Punkte? Welchem Eisbären gelingt es, sich immer wieder freizulaufen?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 80*

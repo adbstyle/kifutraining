@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Zwei Teams spielen 3:3. Dribbelt ein Kind über die Mittellinie, kann es in dieser Hälfte ein Tor erzielen. Dribbelt es wieder zurück, sind die anderen beiden Tore freigeschaltet. Bei Ballgewinn müssen die Kinder zuerst über die Mittellinie dribbeln.
+Drei gegen drei, das Feld hat eine Mittellinie und in jeder Hälfte zwei Tore. Abschliessen darf nur, wer zuvor mit dem Ball die Mittellinie überquert hat — und zwar auf die Tore der Hälfte, in der es gerade steht. Kehrt das Kind in die andere Hälfte zurück, öffnen sich stattdessen deren zwei Tore. Nach einem Ballgewinn gilt dasselbe: zuerst die Mittellinie überqueren.
 
 ## Üben
 
-- Täuschen und in den freien Raum dribbeln
-- Als Mitspieler/innen freilaufen, anspielbar sein und einander zupassen
+- Den Gegner antäuschen und den offenen Raum anlaufen.
+- Ohne Ball freilaufen, sich anbieten und den Ball weitergeben.
 
 ## Wett-eifern
 
-Welches Team erzielt innerhalb von fünf Minuten mehr Tore? Welchem Team gelingt ein gutes Zusammenspiel?
+Welches Team trifft in fünf Minuten häufiger? Und welches spielt dabei am besten zusammen?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 65*

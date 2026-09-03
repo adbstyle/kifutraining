@@ -4,16 +4,16 @@
 
 ## Offen starten
 
-Zwei Kinder starten gleichzeitig. Eines läuft mit dem Ball auf das andere zu und versucht, links oder rechts ein Tor zu erzielen. Ist der Ball im Tor oder aus dem Feld, ist das Spiel zu Ende. Nach zwei Minuten wechseln die Rollen der Teams.
+Zwei Tore stehen nebeneinander auf einer Seite. Gleichzeitiger Start für zwei Kinder: eines mit Ball frontal auf das andere zu, mit dem Ziel, in einem der beiden Tore zu treffen, egal welchem. Tor oder Aus beendet die Runde. Nach zwei Minuten tauschen die Teams die Rollen.
 
 ## Üben
 
-- Mit Tempo und Rhythmuswechsel an der/dem Gegner/in vorbeidribbeln
-- Abwechslungsweise mit linkem bzw. rechtem Fuss abschliessen
+- Mit Tempo und Rhythmuswechsel am Gegner vorbeigehen.
+- Die Abschlüsse abwechseln: einmal linker, einmal rechter Fuss.
 
 ## Wett-eifern
 
-Bilde zwei Teams. Auf das linke Tor dürfen die Kinder nur mit dem linken Fuss und auf das rechte Tor nur mit dem rechten Fuss abschliessen.
+Du bildest zwei Teams. Fürs linke Tor zählen nur Treffer mit dem linken Fuss, fürs rechte nur solche mit dem rechten.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 67*

@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Im Spiel 3:3 dürfen die Kinder nur in der Endzone Tore erzielen. Das Team, das einen Treffer erzielt, bleibt in Ballbesitz und greift sofort in die andere Richtung an.
+Drei gegen drei, getroffen wird nur aus der Endzone. Wer trifft, behält den Ball — und greift ohne Pause in die Gegenrichtung an.
 
 ## Üben
 
-- Nach erzieltem Tor sofort auf neue Situation um­ schalten und freien Raum ausnutzen
+- Nach dem Treffer sofort umschalten und den freien Raum auf der anderen Seite nutzen.
 
 ## Wett-eifern
 
-Welchem Team gelingen zwei Tore in Folge?
+Welches Team trifft zweimal hintereinander?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 71*

@@ -5,3 +5,6 @@ __pycache__/
 
 # Playwright MCP Scratch-Output
 .playwright-mcp/
+
+# Quellmaterial (fremde Werke) — nur lokal
+/sources/

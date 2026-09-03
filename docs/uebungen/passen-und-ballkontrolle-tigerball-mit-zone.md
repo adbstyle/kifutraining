@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Zwei Kinder befinden sich je in einer Zone und passen sich gegenseitig den Ball flach zu. Der Tiger versucht, die Pässe zu unterbinden. Gelingt es, tauschen Tiger und passgebendes Kind die Rolle.
+Zwei Kinder stehen je in einer eigenen Zone und spielen sich den Ball flach zu. Dazwischen lauert der Tiger und will die Pässe abfangen. Gelingt es ihm, wird das Kind, das den Pass gespielt hat, zum neuen Tiger.
 
 ## Üben
 
-- Geschickt im Rücken des Tigers freilaufen (aus dem Schatten in die Sonne) und präzise passen
+- Hinter dem Tiger freilaufen — raus aus dem Schatten, hinein in die Sonne — und genau passen.
 
 ## Wett-eifern
 
-Gelingen die Pässe am Tiger vorbei und die Ballannahme in der Zone?
+Gelingen die Pässe vorbei am Tiger — und die saubere Annahme in der Zone?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 74*

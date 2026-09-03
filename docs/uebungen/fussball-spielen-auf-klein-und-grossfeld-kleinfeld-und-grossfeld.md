@@ -4,7 +4,7 @@
 
 ## Aufbau
 
-Die Kinder spielen auf dem Kleinfeld 1:1 bis 4:4, je nach Anzahl Kinder. Auf dem Grossfeld spielen sie auf die grossen Tore maximal 6:6 (inklusive Torspieler/in); die maximale Anzahl Kinder im Grossfeld richtet sich nach dem Wettspielformat der jeweiligen Kategorie.
+Auf dem Kleinfeld spielen die Kinder je nach Anzahl 1 gegen 1 bis 4 gegen 4. Auf dem Grossfeld geht es auf die grossen Tore, höchstens 6 gegen 6 inklusive Torspieler; wie viele Kinder dort maximal spielen, richtet sich nach dem Wettspielformat der Kategorie.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 81*

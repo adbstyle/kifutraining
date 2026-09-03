@@ -15,12 +15,12 @@ anzahl_kinder:
   max: 11
 material: []
 methodischer_fahrplan:
-  offen_starten: 'Ein Kind dribbelt auf den/die Torspieler/in zu und versucht, ein
-    Tor zu erzielen. Dabei darf es nur vorwärts oder seitwärts dribbeln. Anschliessend
-    tauschen sie. Variation: mit Gegenspieler/in im Rücken.'
+  offen_starten: 'Ein Kind dribbelt allein auf den Torspieler zu und will treffen.
+    Erlaubt ist nur, vorwärts oder seitwärts zu dribbeln — nie zurück. Danach tauschen
+    die beiden. Variante: ein Gegenspieler jagt von hinten, im Rücken des Angreifers.'
   ueben:
-  - Schnell zum Tor dribbeln und entschlossen abschliessen
-  wetteifern: Wer schafft bei jedem Versuch ein Tor?
+  - Zügig zum Tor ziehen und entschlossen abschliessen.
+  wetteifern: Wer trifft bei jedem Versuch?
 varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf

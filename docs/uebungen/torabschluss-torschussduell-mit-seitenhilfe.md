@@ -4,15 +4,15 @@
 
 ## Offen starten
 
-Die Kinder versuchen im 2:2, mithilfe der Kinder ausserhalb des Feldes (Joker) ein Tor zu erzielen.
+2 gegen 2 im Feld, an den Seiten stehen Kinder ausserhalb als Joker, dazu die Torspieler. Die Teams holen sich die Joker ins Spiel, um zu treffen.
 
 ## Üben
 
-- Mithilfe der Aussen- und der Torspieler/innen Breite und Überzahl nutzen und entschlossen abschliessen
+- Mit den Aussenspielern und dem Torspieler die Breite und die Überzahl nutzen — dann entschlossen abschliessen.
 
 ## Wett-eifern
 
-Welches Team nutzt die Überzahl in Ballbesitz am erfolgreichsten?
+Welches Team macht am meisten aus seiner Überzahl am Ball?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 78*

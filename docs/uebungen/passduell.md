@@ -4,18 +4,18 @@
 
 ## Offen starten
 
-Ein Team dribbelt aussen in einem Parcours, während sich das andere Team im inneren Feld in Tandems die Bälle zupasst.
+Aussen führt ein Dribbelparcours ums Feld, innen liegt ein Passfeld. Ein Team dribbelt aussen durch den Parcours, das andere steht innen paarweise zusammen und spielt sich den Ball zu. Danach wechseln die Teams.
 
 ## Üben
 
-- Den Ball nur mit links, dann nur mit rechts führen und passen
-- Den Ball abwechslungsweise mit links und rechts führen
-- Nur mit Voll-, Innen- und Aussenrist führen
-- Passen und den Ball immer annehmen, vorlegen und zuspielen (drei Kontakte); Distanz variieren
+- Aussen nur mit dem linken Fuss dribbeln und innen nur mit links passen — dann alles mit rechts.
+- Beim Dribbeln bei jedem Kontakt den Fuss wechseln.
+- Drei Durchgänge mit vorgegebener Fussfläche: Vollspann, Innenseite, Aussenseite.
+- Innen jeden Pass mit genau drei Ballkontakten spielen — annehmen, vorlegen, zuspielen — und den Abstand zwischen den Paaren immer wieder verändern.
 
 ## Wett-eifern
 
-Im inneren Feld passen sich jeweils zwei Kinder den Ball zu. Wie viele Pässe schaffen sie, bis alle Kinder den Parcours absolviert haben?
+Die Paare im Innenfeld zählen ihre Pässe. Wie viele schaffen sie, bis das ganze Aussenteam den Parcours einmal durchdribbelt hat? Dann Rollentausch und Revanche.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 62*
