@@ -1,9 +1,10 @@
 # KiFu-Manual-Diagramme (Vorlagen-Fundus)
 
-Gezeichnete Spielfeld-Diagramme für ausgewählte KiFu-Manual-Übungen (Epic #58).
-Sie dienen Trainern als Vorlage beim Anlegen eines eigenen Diagramms und werden
-zugleich zum aktiven Anzeige-Bild der jeweiligen Manual-Übung (das statische
-Original-Foto bleibt als Umschalt-Option erhalten).
+Gezeichnete Spielfeld-Diagramme für die KiFu-Manual-Übungen (Epic #58). Sie
+dienen Trainern als Vorlage beim Anlegen eines eigenen Diagramms und sind
+zugleich das einzige Anzeige-Bild der jeweiligen Manual-Übung: seit die
+Manual-Bitmaps entfernt sind, trägt keine Manual-Übung mehr ein Foto, und
+`bild_url` bleibt auf diesen Zeilen leer.
 
 ## Format
 

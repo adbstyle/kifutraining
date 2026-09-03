@@ -22,7 +22,6 @@ try {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
 const UEBUNGEN_DIR = resolve(REPO_ROOT, "data/uebungen");
-const IMAGES_DIR = resolve(REPO_ROOT, "images");
 // Gezeichnete KiFu-Manual-Diagramme als Vorlagen-Fundus (Epic #58, Story #60):
 // data/diagramme/<slug>.json hält die DiagrammData einer Manual-Übung.
 const DIAGRAMME_DIR = resolve(REPO_ROOT, "data/diagramme");
@@ -134,10 +133,63 @@ async function seedExercises() {
   console.log(`Übungen geseedet: ${count} (davon mit Diagramm-Vorlage: ${mitDiagramm})`);
 }
 
+/** Der Storage-Ordner, in dem die früheren Manual-Bitmaps lagen. */
+const MANUAL_PREFIX = "manual";
+
+/** Zählt Zeilen, deren bild_url noch in den manual/-Ordner zeigt. */
+async function manualReferenzen(tabelle: "exercises" | "training_exercises"): Promise<number> {
+  const { count, error } = await supabase
+    .from(tabelle)
+    .select("id", { count: "exact", head: true })
+    .like("bild_url", `%/${MANUAL_PREFIX}/%`);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/** Die Manual-Bitmaps aus dem Storage räumen.
+ *
+ *  Nötig, weil `seedExercises` nur die Spalte `bild_url` nullt: die Dateien
+ *  selbst blieben sonst im öffentlichen Bucket liegen und wären unter ihrer
+ *  bisherigen URL weiter abrufbar — bloss von keiner Zeile mehr referenziert.
+ *  Genau das soll das Entfernen der Bitmaps aus dem Repo verhindern.
+ *
+ *  Läuft NACH dem Übungs-Seed, damit `bild_url` bereits genullt ist, und nur,
+ *  wenn wirklich keine Zeile mehr auf den Ordner zeigt — sonst würde ein
+ *  Zwischenstand (etwa ein abgebrochener Seed) sichtbare Bilder wegräumen. */
+async function entferneManualBilder() {
+  const offen =
+    (await manualReferenzen("exercises")) + (await manualReferenzen("training_exercises"));
+  if (offen > 0) {
+    console.warn(
+      `  ${offen} Zeile(n) zeigen noch auf ${MANUAL_PREFIX}/ — Storage bleibt unangetastet.`,
+    );
+    return;
+  }
+
+  const pfade: string[] = [];
+  const limit = 100;
+  for (let offset = 0; ; offset += limit) {
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .list(MANUAL_PREFIX, { limit, offset });
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    // Einträge ohne `id` sind Unterordner, keine Dateien.
+    pfade.push(...data.filter((e) => e.id).map((e) => `${MANUAL_PREFIX}/${e.name}`));
+    if (data.length < limit) break;
+  }
+  if (pfade.length === 0) return;
+
+  const { error } = await supabase.storage.from(BUCKET).remove(pfade);
+  if (error) throw error;
+  console.log(`Manual-Bitmaps aus dem Storage entfernt: ${pfade.length}`);
+}
+
 async function main() {
   console.log(`Seed gegen ${URL} (Bucket '${BUCKET}')`);
   await ensureBucket();
   await seedExercises();
+  await entferneManualBilder();
   console.log("Seed abgeschlossen.");
 }
 
