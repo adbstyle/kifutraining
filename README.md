@@ -82,9 +82,17 @@ Die `supabase`-CLI läuft aus `web/` heraus mit `--workdir ..` – die
 Projektsprache ist **Deutsch** – Code-Kommentare, Doku und Commit-Messages auf
 Deutsch halten.
 
-## Lizenz
+## Lizenz und Grundlagen
 
-Der Code steht unter der [MIT-Lizenz](LICENSE). Die Übungsinhalte unter
-`data/uebungen/` und `data/diagramme/` sind nach dem Manual Kinderfussball des
-Schweizerischen Fussballverbands (SFV) in eigener Formulierung und Zeichnung
-entstanden; für sie ist noch keine eigene Lizenz festgelegt.
+Dieses Werk — Code, Übungstexte, Diagramme und Dokumentation — steht unter
+**[CC BY-SA 4.0](LICENSE)** (Creative Commons Namensnennung – Weitergabe unter
+gleichen Bedingungen). © 2026 adbstyle. Wer es weiterverwendet, nennt
+«adbstyle, kifutraining» als Quelle und stellt Abgeleitetes unter dieselbe
+Lizenz.
+
+Die Übungen und die Trainingsstruktur beruhen auf dem **Manual Kinderfussball**
+und dem **Manual Fussball Jugendliche** des Schweizerischen Fussballverbands
+(SFV) sowie auf Lernbausteinen von Jugend+Sport (BASPO). Aufbau, Regeln und
+Ablauf der Übungen stammen von dort, Texte und Zeichnungen sind eigene
+Formulierung und eigene Arbeit. Details, Fremdlizenzen und Namensnennungen
+stehen in [NOTICE.md](NOTICE.md).

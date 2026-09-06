@@ -1,7 +1,7 @@
 {
   "name": "kifu-web",
   "version": "0.1.0",
-  "license": "MIT",
+  "license": "CC-BY-SA-4.0",
   "private": true,
   "type": "module",
   "engines": {
