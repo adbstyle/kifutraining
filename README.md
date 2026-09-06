@@ -86,8 +86,8 @@ Deutsch halten.
 
 Dieses Werk — Code, Übungstexte, Diagramme und Dokumentation — steht unter
 **[CC BY-SA 4.0](LICENSE)** (Creative Commons Namensnennung – Weitergabe unter
-gleichen Bedingungen). © 2026 Adrian Bader. Wer es weiterverwendet, nennt
-«Adrian Bader, kifutraining» als Quelle und stellt Abgeleitetes unter dieselbe
+gleichen Bedingungen). © 2026 adbstyle. Wer es weiterverwendet, nennt
+«adbstyle, kifutraining» als Quelle und stellt Abgeleitetes unter dieselbe
 Lizenz.
 
 Die Übungen und die Trainingsstruktur beruhen auf dem **Manual Kinderfussball**
