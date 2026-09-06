@@ -42,7 +42,7 @@ export function AnzeigenameForm({
       <p className="type-body-medium text-on-surface-variant">
         {eigen ? (
           // Ohne Satzzeichen nach dem Namen: er darf selbst auf einen Punkt
-          // enden («Adrian B.») und ergäbe sonst zwei.
+          // enden («Sina M.») und ergäbe sonst zwei.
           <>
             Dein Anzeigename: <strong className="text-on-surface">{aktuell}</strong>
           </>
