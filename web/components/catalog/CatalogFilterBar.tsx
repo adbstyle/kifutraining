@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { FilterChip, MultiSelect, Button } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { FilterChip, MultiSelect, Button, TextField } from "@/components/ui";
+import { useDebouncedWert } from "@/lib/use-debounce";
 import {
   einordnungFilterOptionen,
   feldOptionen,
@@ -192,8 +191,9 @@ export function CatalogFilterBar({
   );
 }
 
-/* Natives Eingabefeld mit Lead-Icon und Debounce (300 ms) — schreibt erst nach
-   Tipppause in die URL. Stil identisch zur Trainings-Filter-Bar (h-12, Feld-Kontrakt). */
+/* Feld mit Lead-Icon und verzögerter Übernahme (300 ms) — schreibt erst nach
+   der Tipppause in die URL. Die Optik kommt aus dem Kit (`TextField dense`),
+   hier bleibt nur die Verzögerung. */
 function DebouncedField({
   initial,
   onCommit,
@@ -213,32 +213,17 @@ function DebouncedField({
   placeholder?: string;
   title?: string;
 }) {
-  const [value, setValue] = useState(initial);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Externe URL-Änderungen (z. B. Reset, Zurück-Navigation) spiegeln.
-  useEffect(() => setValue(initial), [initial]);
-
-  function handle(v: string) {
-    setValue(v);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => onCommit(v), 300);
-  }
+  const [wert, aendern] = useDebouncedWert(initial, onCommit);
 
   return (
-    <label className={cn("relative block", className)}>
-      <Icon
-        size={18}
-        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
-        aria-hidden
-      />
-      <input
-        {...props}
-        value={value}
-        aria-label={ariaLabel}
-        onChange={(e) => handle(e.target.value)}
-        className="focus-ring h-12 w-full rounded-[4px] border-[1.5px] border-outline bg-surface-container-low pl-10 pr-3 type-body-medium text-on-surface placeholder:text-on-surface-variant"
-      />
-    </label>
+    <TextField
+      dense
+      label={ariaLabel}
+      leadingIcon={Icon}
+      value={wert}
+      onChange={(e) => aendern(e.target.value)}
+      className={className}
+      {...props}
+    />
   );
 }

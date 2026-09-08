@@ -29,6 +29,7 @@ import { HeaderNavDemo } from "./HeaderNavDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
+import { ChipMenuDemo } from "./ChipMenuDemo";
 import {
   Search,
   SlidersHorizontal,
@@ -250,6 +251,15 @@ export default function Styleguide() {
       </Section>
 
       <Section n="02" title="Typografie — M3 Type-Scale">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          <strong>Regel: Nutzertext nie in Label-Typografie.</strong> Die
+          <code> type-label-*</code>-Stufen sind mono, fett und{" "}
+          <em>versal</em> — sie verändern, was dasteht. Für Beschriftungen, die
+          wir selbst schreiben, ist das gewollt; ein Gruppenname wie „Grosse"
+          würde daraus als „GROSSE" zurückkommen und wäre nicht mehr das, was
+          die Trainerin eingetippt hat. Alles, was aus der Datenbank kommt,
+          gehört darum in <code>type-body-*</code>.
+        </p>
         <div className="space-y-3">
           {typeScale.map(([cls, label]) => (
             <div key={cls} className="border-b border-outline-variant pb-3">
@@ -657,6 +667,38 @@ export default function Styleguide() {
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
+          Dichte Variante (<code>dense</code>)
+        </h3>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Warum das hohe Feld nicht reicht: In Filterzeilen und dichten
+          Listenzeilen stehen Felder neben MultiSelect-Triggern und Chips und
+          müssen mit ihnen fluchten — <code>h-12</code> statt{" "}
+          <code>h-14</code>. Dort beschriftet ausserdem der Platzhalter
+          („Übungen durchsuchen…"), das schwebende Label hätte weder Platz noch
+          Aufgabe; es ist abgeschaltet und wandert als <code>aria-label</code>{" "}
+          an das Feld. <code>supportingText</code> und <code>error</code>{" "}
+          funktionieren unverändert.
+        </p>
+        <div className="grid max-w-md gap-6">
+          <TextField
+            dense
+            label="Übungen durchsuchen"
+            type="search"
+            leadingIcon={Search}
+            placeholder="Übungen durchsuchen…"
+          />
+          <TextField
+            dense
+            label="Verfügbare Kinder"
+            type="number"
+            min={1}
+            placeholder="Kinder"
+            error
+            supportingText="Bitte eine Zahl ≥ 1 eingeben."
+          />
+        </div>
+
+        <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
           Datum &amp; Uhrzeit
         </h3>
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
@@ -679,6 +721,16 @@ export default function Styleguide() {
           Verankertes Dropdown (Outside-Click/Escape schliesst). Items mit
           führendem Icon, optionalem Trailing-Text und destruktiver Variante.
           Gespeist aus <code>--menu-*</code>-Component-Tokens.
+        </p>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          <strong>Tastatur:</strong> Beim Öffnen springt der Fokus auf den
+          ersten Eintrag, <kbd>↑</kbd>/<kbd>↓</kbd> laufen zyklisch,{" "}
+          <kbd>Home</kbd>/<kbd>End</kbd> an die Enden. Den Fokus an den Trigger
+          zurück geben nur <kbd>Esc</kbd> und eine getroffene Auswahl — ein
+          Klick daneben <strong>nicht</strong>: dort will die Nutzerin gerade
+          woanders hin, ein Rücksprung risse ihr den Fokus vom eben geklickten
+          Element weg. Voraussetzung ist, dass der Trigger als{" "}
+          <code>triggerRef</code> übergeben wird.
         </p>
         <MenuDemo />
       </Section>
@@ -1068,6 +1120,24 @@ export default function Styleguide() {
             </p>
           </Card>
         </div>
+      </Section>
+
+      <Section n="22" title="Chip mit Menü">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Ein Chip, der ein Menü öffnet — für Werte, die man an ihrem Ort
+          umsortieren oder herausnehmen können muss.{" "}
+          <strong>Warum die bestehenden Chips nicht reichen:</strong> Der{" "}
+          <code>InputChip</code> kennt nur ein Entfernen-X — 16 px, kein
+          Touch-Ziel — und kann „nach vorne schieben" gar nicht ausdrücken; der{" "}
+          <code>AssistChip</code> löst genau eine Aktion aus, nicht mehrere zur
+          Wahl. Beide tragen ausserdem <code>type-label-medium</code>, also
+          mono und versal: ein Gruppenname stünde dort verfälscht (siehe Regel
+          in 02). Der Chip mit Menü trägt darum{" "}
+          <code>type-body-medium</code> und ist <strong>ein</strong>{" "}
+          Bedienelement mit <strong>einem</strong> Tabstopp — kein Chip plus
+          angehängter Knopf.
+        </p>
+        <ChipMenuDemo />
       </Section>
 
     </main>
