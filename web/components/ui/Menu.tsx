@@ -118,7 +118,10 @@ export function Menu({
     liste[ziel].focus();
   }
 
-  if (!open) return null;
+  // Ohne Einträge gibt es nichts zu zeigen — ein leeres Panel wäre nur eine
+  // leere Fläche mit Rahmen und Schatten. Trigger sagen dazu passend kein
+  // `aria-expanded="true"` (siehe ChipMenu).
+  if (!open || items.length === 0) return null;
 
   return (
     <div

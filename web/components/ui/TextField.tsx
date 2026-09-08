@@ -59,6 +59,10 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
     // und Screenreader träfen das Feld im falschen Dialog.
     const reactId = useId();
     const fid = id ?? `tf-${reactId}`;
+    // Supporting-Text (auch der Fehlertext) muss am Input hängen, sonst liest
+    // ihn kein Screenreader vor; `error` zusätzlich als aria-invalid, weil der
+    // rote Rahmen allein nur sehend wahrnehmbar ist. Gilt für beide Bauformen.
+    const hinweisId = supportingText ? `${fid}-hinweis` : undefined;
 
     // Zwei Bauformen, je eine Zeile Klassen — dicht (h-12, getönt, Klassen 1:1
     // aus den bisherigen Filterzeilen) und hoch (h-14, schwebendes Label).
@@ -99,6 +103,8 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
                und das Label wird zum a11y-Namen. Beides steht VOR {...props},
                damit eine eigene Angabe der Aufruferin gewinnt. */
             {...(dense ? { "aria-label": label } : { placeholder: " " })}
+            aria-invalid={error || undefined}
+            aria-describedby={hinweisId}
             className={feld}
             {...props}
           />
@@ -119,6 +125,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
         </div>
         {supportingText && (
           <p
+            id={hinweisId}
             className={cn(
               "type-body-small mt-1",
               // Dicht fluchtet der Supporting-Text mit dem Feldrand (px-3),

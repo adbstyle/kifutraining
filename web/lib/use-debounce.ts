@@ -18,9 +18,23 @@ export function useDebouncedWert(
 ): [string, (wert: string) => void] {
   const [wert, setWert] = useState(initial);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Der zuletzt nach aussen übernommene Wert — nur um sein Echo zu erkennen. */
+  const gesendet = useRef<string | null>(null);
 
-  // Änderungen von aussen (Zurücksetzen, Zurück-Navigation) spiegeln.
-  useEffect(() => setWert(initial), [initial]);
+  // Änderungen von aussen (Zurücksetzen, Zurück-Navigation) spiegeln — und dabei
+  // einen noch laufenden Timer abräumen: sonst schriebe er kurz darauf den
+  // überholten Tippstand zurück (z. B. „Zurücksetzen" innerhalb der Tipppause).
+  // Ausgenommen ist das Echo der eigenen Übernahme: trägt der Wert von aussen
+  // genau das, was wir zuletzt geschickt haben, während schon weitergetippt
+  // wird, bleiben der neue Tippstand und sein Timer stehen.
+  useEffect(() => {
+    if (timer.current && initial === gesendet.current) return;
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+    setWert(initial);
+  }, [initial]);
 
   // Beim Unmount den laufenden Timer verwerfen — sonst schriebe er in die URL,
   // nachdem die Zeile längst weg ist.
@@ -34,7 +48,11 @@ export function useDebouncedWert(
   function aendern(neu: string) {
     setWert(neu);
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => onCommit(neu), ms);
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      gesendet.current = neu;
+      onCommit(neu);
+    }, ms);
   }
 
   return [wert, aendern];

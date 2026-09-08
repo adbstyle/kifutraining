@@ -55,6 +55,10 @@ export function ChipMenu({
   const [offen, setOffen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
+  // Ohne Einträge zeigt `Menu` nichts an — dann darf der Chip auch kein
+  // geöffnetes Menü behaupten.
+  const hatEintraege = items.length > 0;
+
   return (
     <div className={cn("relative inline-block", className)}>
       <button
@@ -62,7 +66,7 @@ export function ChipMenu({
         type="button"
         disabled={disabled}
         aria-haspopup="menu"
-        aria-expanded={offen}
+        aria-expanded={offen && hatEintraege}
         aria-label={ariaLabel}
         onClick={() => setOffen((o) => !o)}
         className={cn(

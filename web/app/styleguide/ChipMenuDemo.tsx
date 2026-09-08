@@ -101,7 +101,7 @@ export function ChipMenuDemo() {
         />
       </div>
 
-      <p className="type-label-small text-on-surface-variant">
+      <p className="type-body-small text-on-surface-variant">
         {gewaehlt ? `gewählt: ${gewaehlt}` : "klicken oder Enter, dann ↑/↓"}
       </p>
     </div>
