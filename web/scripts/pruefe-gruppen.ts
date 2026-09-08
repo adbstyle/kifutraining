@@ -9,7 +9,12 @@
 //
 //   npm run check:gruppen
 import assert from "node:assert/strict";
-import { GRUPPE_NAME_MAX, gruppenSchluessel, nameProblem } from "../lib/gruppen";
+import {
+  GRUPPE_NAME_MAX,
+  MELDUNG_VERGEBEN,
+  gruppenSchluessel,
+  nameProblem,
+} from "../lib/gruppen";
 
 const bestehende = [
   { id: "a", name: "Gruppe 1" },
@@ -65,18 +70,18 @@ pruefe("Eine freie Bezeichnung geht durch", () => {
 pruefe("Eine vergebene Bezeichnung wird abgelehnt", () => {
   assert.equal(
     nameProblem("Gruppe 1", bestehende),
-    "Diese Bezeichnung gibt es in diesem Training schon.",
+    MELDUNG_VERGEBEN,
   );
 });
 
 pruefe("Die Kollision achtet nicht auf Gross-/Kleinschreibung", () => {
   assert.equal(
     nameProblem("gruppe 1", bestehende),
-    "Diese Bezeichnung gibt es in diesem Training schon.",
+    MELDUNG_VERGEBEN,
   );
   assert.equal(
     nameProblem("  TORHÜTER ", bestehende),
-    "Diese Bezeichnung gibt es in diesem Training schon.",
+    MELDUNG_VERGEBEN,
   );
 });
 
@@ -90,7 +95,7 @@ pruefe("Die eigene Bezeichnung kollidiert beim Umbenennen nicht mit sich", () =>
 pruefe("Die Bezeichnung einer FREMDEN Zeile kollidiert weiterhin", () => {
   assert.equal(
     nameProblem("Torhüter", bestehende, "a"),
-    "Diese Bezeichnung gibt es in diesem Training schon.",
+    MELDUNG_VERGEBEN,
   );
 });
 

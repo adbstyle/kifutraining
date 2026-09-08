@@ -27,6 +27,16 @@ export function gruppenSchluessel(name: string): string {
 }
 
 /**
+ * Der Satz, der eine bereits vergebene Bezeichnung ablehnt.
+ *
+ * Er entsteht an zwei Stellen — hier in der Vorabprüfung und in der Server
+ * Action, wenn erst die Datenbank die Kollision sieht (`23505` am Unique-Index
+ * `tg_name_je_training`). Beide Wege sollen dasselbe sagen, darum steht der
+ * Satz nur einmal.
+ */
+export const MELDUNG_VERGEBEN = "Diese Bezeichnung gibt es in diesem Training schon.";
+
+/**
  * Was einer Bezeichnung im Weg steht — `null`, wenn sie sich speichern lässt.
  *
  * `bestehende` sind alle Gruppen desselben Trainings. `eigeneId` schaltet beim
@@ -48,6 +58,6 @@ export function nameProblem(
   const vergeben = bestehende.some(
     (g) => g.id !== eigeneId && gruppenSchluessel(g.name) === schluessel,
   );
-  if (vergeben) return "Diese Bezeichnung gibt es in diesem Training schon.";
+  if (vergeben) return MELDUNG_VERGEBEN;
   return null;
 }

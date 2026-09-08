@@ -93,15 +93,35 @@ function GruppenZeile({
 }) {
   const [entwurf, setEntwurf] = useState(gruppe.name);
   const [fehler, setFehler] = useState<string | null>(null);
+  // Was gerade zur Datenbank unterwegs ist, und welcher Text von dort bereits
+  // eine Ablehnung hat. Ohne beides speichert dieselbe Eingabe zweimal: Enter
+  // schickt sie los, der Klick daneben schickt sie ein zweites Mal hinterher,
+  // und eine abgelehnte Änderung ginge bei jedem weiteren Verlassen des Felds
+  // erneut zur Datenbank. Refs statt State: die Schranke muss beim nächsten
+  // Aufruf schon gelten, nicht erst beim nächsten Rendern.
+  const unterwegs = useRef<string | null>(null);
+  const abgelehnt = useRef<string | null>(null);
 
   async function speichere() {
+    const wert = entwurf.trim();
     // Ein unveränderter Name ist kein Speichervorgang: sonst schriebe jedes
     // Verlassen des Felds in die Datenbank, auch das blosse Vorbeitabben.
-    if (entwurf.trim() === gruppe.name) {
+    if (wert === gruppe.name) {
       setFehler(null);
       return;
     }
-    setFehler(await onUmbenennen(gruppe.id, entwurf));
+    // Derselbe Text ein zweites Mal ist kein zweiter Auftrag — weder während
+    // der erste läuft noch nachdem er beantwortet wurde. Wer weiterschreibt,
+    // hebt die Schranke auf (siehe `onChange`).
+    if (wert === unterwegs.current || wert === abgelehnt.current) return;
+    unterwegs.current = wert;
+    try {
+      const problem = await onUmbenennen(gruppe.id, wert);
+      abgelehnt.current = problem ? wert : null;
+      setFehler(problem);
+    } finally {
+      unterwegs.current = null;
+    }
   }
 
   function beiTaste(e: KeyboardEvent<HTMLInputElement>) {
@@ -116,13 +136,19 @@ function GruppenZeile({
       <TextField
         className="min-w-0 flex-1"
         label="Bezeichnung"
+        // Sichtbar heisst jede Zeile „Bezeichnung"; für sich gelesen — in der
+        // Feldliste eines Screenreaders — wären das lauter gleich benannte
+        // Felder. Der a11y-Name nennt darum die Gruppe dazu und behält das
+        // sichtbare Wort als Anfang, damit Sprachsteuerung es weiter trifft.
+        aria-label={`Bezeichnung der Gruppe ${gruppe.name}`}
         value={entwurf}
         maxLength={GRUPPE_NAME_MAX}
         autoComplete="off"
         onChange={(e) => {
           setEntwurf(e.target.value);
           // Der Fehler gehört zum abgelehnten Stand; wer weiterschreibt, hat
-          // ihn beantwortet.
+          // ihn beantwortet — und darf denselben Text danach erneut abschicken.
+          abgelehnt.current = null;
           if (fehler) setFehler(null);
         }}
         onBlur={() => void speichere()}
@@ -148,20 +174,36 @@ function NeueGruppenZeile({ onAnlegen }: { onAnlegen: (name: string) => Antwort 
   const [entwurf, setEntwurf] = useState("");
   const [fehler, setFehler] = useState<string | null>(null);
   const feld = useRef<HTMLInputElement>(null);
+  // Dieselbe Laufschranke wie in der Gruppenzeile — hier fällt sie besonders
+  // auf: Enter legt an und räumt das Feld, der Klick daneben schickte denselben
+  // Text ein zweites Mal los und bekäme die eigene Anlage als Kollision zurück
+  // — die Meldung stünde dann unter einem leeren Feld.
+  const unterwegs = useRef<string | null>(null);
+  const abgelehnt = useRef<string | null>(null);
 
   async function lege() {
-    if (!entwurf.trim()) {
+    const wert = entwurf.trim();
+    if (!wert) {
       // Eine leere Zeile zu verlassen ist keine Eingabe, sondern der Normalfall.
       setFehler(null);
       return;
     }
-    const problem = await onAnlegen(entwurf);
-    setFehler(problem);
-    // Nur die geglückte Anlage räumt das Feld: sonst wäre die abgelehnte
-    // Bezeichnung weg und mit ihr die Möglichkeit, sie zu berichtigen.
-    if (!problem) {
-      setEntwurf("");
-      feld.current?.focus();
+    if (wert === unterwegs.current || wert === abgelehnt.current) return;
+    unterwegs.current = wert;
+    try {
+      const problem = await onAnlegen(wert);
+      abgelehnt.current = problem ? wert : null;
+      setFehler(problem);
+      // Nur die geglückte Anlage räumt das Feld: sonst wäre die abgelehnte
+      // Bezeichnung weg und mit ihr die Möglichkeit, sie zu berichtigen. Und
+      // nur, solange noch der angelegte Text drinsteht — wer während der
+      // Anlage weitergeschrieben hat, soll seine Eingabe behalten.
+      if (!problem) {
+        setEntwurf((aktuell) => (aktuell.trim() === wert ? "" : aktuell));
+        feld.current?.focus();
+      }
+    } finally {
+      unterwegs.current = null;
     }
   }
 
@@ -177,11 +219,15 @@ function NeueGruppenZeile({ onAnlegen }: { onAnlegen: (name: string) => Antwort 
         ref={feld}
         className="min-w-0 flex-1"
         label="Bezeichnung"
+        // Die leere Zeile trägt sichtbar dasselbe Label wie die Gruppen
+        // darüber; der a11y-Name sagt, dass sie anlegt statt umzubenennen.
+        aria-label="Bezeichnung der neuen Gruppe"
         value={entwurf}
         maxLength={GRUPPE_NAME_MAX}
         autoComplete="off"
         onChange={(e) => {
           setEntwurf(e.target.value);
+          abgelehnt.current = null;
           if (fehler) setFehler(null);
         }}
         onBlur={() => void lege()}

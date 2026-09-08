@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidiereTraining } from "@/lib/revalidate";
-import { nameProblem } from "@/lib/gruppen";
+import { MELDUNG_VERGEBEN, nameProblem } from "@/lib/gruppen";
 import type { TrainingActionResult } from "@/lib/actions/trainings";
 
 /**
@@ -21,10 +21,10 @@ import type { TrainingActionResult } from "@/lib/actions/trainings";
  * behandelt und nicht bloss durchgereicht.
  */
 
-/** Die Bezeichnung ist im Training bereits vergeben — Meldung und
- *  SQLSTATE-Erkennung an einer Stelle, damit Vorabprüfung und Datenbankfehler
- *  denselben Satz erzeugen. */
-const VERGEBEN = "Diese Bezeichnung gibt es in diesem Training schon.";
+/** Die Unique-Verletzung des Index `tg_name_je_training`. Ihre Meldung ist
+ *  `MELDUNG_VERGEBEN` aus `@/lib/gruppen` — derselbe Satz wie in der
+ *  Vorabprüfung, damit der Trainer nicht zwei Formulierungen für dieselbe
+ *  Kollision zu lesen bekommt. */
 const UNIQUE_VERLETZUNG = "23505";
 
 /** Die bestehenden Gruppen des Trainings — Grundlage der Vorabprüfung. */
@@ -61,7 +61,7 @@ export async function legeGruppeAn(
     .select("id, name")
     .maybeSingle();
   if (error) {
-    if (error.code === UNIQUE_VERLETZUNG) return { ok: false, error: VERGEBEN };
+    if (error.code === UNIQUE_VERLETZUNG) return { ok: false, error: MELDUNG_VERGEBEN };
     return { ok: false, error: error.message };
   }
   if (!data) return { ok: false, error: "Training nicht gefunden." };
@@ -108,7 +108,7 @@ export async function benenneGruppe(
     .select("training_id")
     .maybeSingle();
   if (error) {
-    if (error.code === UNIQUE_VERLETZUNG) return { ok: false, error: VERGEBEN };
+    if (error.code === UNIQUE_VERLETZUNG) return { ok: false, error: MELDUNG_VERGEBEN };
     return { ok: false, error: error.message };
   }
   if (!data) return { ok: false, error: "Gruppe nicht gefunden." };
