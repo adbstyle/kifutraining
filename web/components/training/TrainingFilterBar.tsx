@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, ClipboardList } from "lucide-react";
-import { FilterChip, MultiSelect, Button } from "@/components/ui";
+import { FilterChip, MultiSelect, Button, TextField } from "@/components/ui";
+import { useDebouncedWert } from "@/lib/use-debounce";
 import { stufenOptionen } from "@/lib/filter-optionen";
 
 /* Such-/Filterleiste für die Trainings-Übersicht.
@@ -28,11 +28,6 @@ export function TrainingFilterBar({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [text, setText] = useState(q);
-  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Externe Änderung (z. B. Zurück-Navigation) in das Suchfeld spiegeln.
-  useEffect(() => setText(q), [q]);
 
   function pushParams(mutate: (p: URLSearchParams) => void) {
     const p = new URLSearchParams(window.location.search);
@@ -40,16 +35,13 @@ export function TrainingFilterBar({
     router.push(`${pathname}?${p.toString()}`, { scroll: false });
   }
 
-  function onSearch(value: string) {
-    setText(value);
-    if (debounce.current) clearTimeout(debounce.current);
-    debounce.current = setTimeout(() => {
-      pushParams((p) => {
-        if (value.trim()) p.set("q", value.trim());
-        else p.delete("q");
-      });
-    }, 300);
-  }
+  // Freitext erst nach der Tipppause in die URL schreiben.
+  const [text, onSearch] = useDebouncedWert(q, (value) =>
+    pushParams((p) => {
+      if (value.trim()) p.set("q", value.trim());
+      else p.delete("q");
+    }),
+  );
 
   function setStufen(next: string[]) {
     pushParams((p) => {
@@ -66,7 +58,7 @@ export function TrainingFilterBar({
   }
 
   function reset() {
-    setText("");
+    // Das Suchfeld folgt über den `q`-Prop — wie im Übungskatalog.
     router.push(pathname, { scroll: false });
   }
 
@@ -79,21 +71,16 @@ export function TrainingFilterBar({
     // direkt dahinter angereiht. Labels sind in die Felder gewandert (Empty-
     // State als Beschriftung), darum alle Elemente auf gleicher Höhe (h-12).
     <div className="mb-6 flex flex-wrap items-center gap-3">
-      <label className="relative block w-full sm:w-72">
-        <Search
-          size={18}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
-          aria-hidden
-        />
-        <input
-          type="search"
-          value={text}
-          onChange={(e) => onSearch(e.target.value)}
-          placeholder="Nach Trainingsnamen suchen…"
-          aria-label="Nach Trainingsnamen suchen"
-          className="focus-ring h-12 w-full rounded-[4px] border-[1.5px] border-outline bg-surface-container-low pl-10 pr-3 type-body-medium text-on-surface placeholder:text-on-surface-variant"
-        />
-      </label>
+      <TextField
+        dense
+        type="search"
+        label="Nach Trainingsnamen suchen"
+        leadingIcon={Search}
+        placeholder="Nach Trainingsnamen suchen…"
+        value={text}
+        onChange={(e) => onSearch(e.target.value)}
+        className="w-full sm:w-72"
+      />
 
       <MultiSelect
         label="Alterskategorie"

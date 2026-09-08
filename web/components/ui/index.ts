@@ -34,6 +34,7 @@ export type { MultiSelectProps } from "./MultiSelect";
 export { Menu } from "./Menu";
 export type { MenuItemDef } from "./Menu";
 export { OverflowMenu } from "./OverflowMenu";
+export { ChipMenu } from "./ChipMenu";
 export { Header } from "./Header";
 export type { HeaderProps, HeaderNavItem, HeaderMenuItem, HeaderAccount } from "./Header";
 export { Disclosure } from "./Disclosure";
