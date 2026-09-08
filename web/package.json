@@ -21,6 +21,7 @@
     "db:push": "npx supabase db push --workdir ..",
     "seed": "tsx scripts/seed.ts",
     "check:diagramme": "tsx scripts/check-diagramme.ts",
+    "check:gruppen": "tsx scripts/pruefe-gruppen.ts",
     "sync:storage": "tsx scripts/sync-storage-staging.ts"
   },
   "dependencies": {

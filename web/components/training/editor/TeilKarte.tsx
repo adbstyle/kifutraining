@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Plus, Info } from "lucide-react";
 import { Card, IconButton, Tooltip } from "@/components/ui";
 import { ZeitAbgleich } from "../ZeitAbgleich";
@@ -22,10 +23,16 @@ export function TeilKarte({
   teil,
   kontext,
   onAdd,
+  gruppen,
 }: {
   teil: EditorTeil<TrainingExerciseItem>;
   kontext: ZeilenKontext;
   onAdd: (block: EditorBlock<TrainingExerciseItem>) => void;
+  /** Der Gruppen-Bereich (Story #149) — ein Stück in zwei Lagen: sein Einstieg
+   *  steht rechts im Kartenkopf, seine Liste zwischen Kopf und Blöcken. Nur der
+   *  Hauptteil bekommt ihn; welcher Teil das ist, entscheidet der Editor und
+   *  nicht die Karte. */
+  gruppen?: { knopf: ReactNode; abschnitt: ReactNode };
 }) {
   const einblockig = teil.bloecke.length === 1;
 
@@ -56,7 +63,12 @@ export function TeilKarte({
             />
           </Tooltip>
         )}
+        {/* Schliessen einander heute aus: der Hauptteil trägt die Gruppen und
+            hat in beiden Altersstufen mehr als einen Block. */}
+        {gruppen?.knopf}
       </div>
+
+      {gruppen?.abschnitt}
 
       {/* Alle Blöcke bleiben sichtbar, auch die leeren: Beim Planen ist gerade
           die Lücke die Information (Story 4 AC 1, Story 5a AC 1–3). */}

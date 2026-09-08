@@ -66,6 +66,9 @@ export type TrainingDetail = {
   updatedAt: string;
   /** Flach, sortiert nach fester Trainingsteil-Reihenfolge, dann Position. */
   exercises: TrainingExerciseItem[];
+  /** Die Gruppen, auf die der Hauptteil verteilt wird (Story #149), in
+   *  Anlegereihenfolge. Leer, solange das Training keine führt. */
+  gruppen: { id: string; name: string }[];
 };
 
 /** Die Inhaltsfelder der Fassung — aus der Kopier-Konstante abgeleitet, damit
@@ -78,7 +81,7 @@ const PE_SELECT = `
   ${INHALT_FELDER}
 `;
 
-const TRAINING_SELECT = `id, name, owner_id, visibility, altersstufe, stufen, ziel, team_id, urheber, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
+const TRAINING_SELECT = `id, name, owner_id, visibility, altersstufe, stufen, ziel, team_id, urheber, created_at, updated_at, training_exercises ( ${PE_SELECT} ), training_gruppen ( id, name, created_at )`;
 
 /** Die Inhaltsfelder, wie sie aus der Zuordnung zurückkommen. */
 type RawInhalt = {
@@ -118,6 +121,7 @@ type RawTraining = {
   created_at: string;
   updated_at: string;
   training_exercises: RawTrainingExercise[];
+  training_gruppen: { id: string; name: string; created_at: string }[];
   /** Nur der Editor lädt den Teamnamen mit (PostgREST-Embed). */
   teams?: { name: string } | null;
 };
@@ -172,6 +176,17 @@ function mapTraining(raw: RawTraining): TrainingDetail {
       return hk !== 0 ? hk : a.position - b.position;
     });
 
+  // Anzeigereihenfolge ist die Anlegereihenfolge; die ID entscheidet
+  // zeitgleiche Anlagen, damit die Liste zwischen zwei Abfragen nicht springt.
+  const gruppen = (raw.training_gruppen ?? [])
+    .slice()
+    .sort((a, b) =>
+      a.created_at === b.created_at
+        ? a.id.localeCompare(b.id)
+        : a.created_at.localeCompare(b.created_at),
+    )
+    .map((g) => ({ id: g.id, name: g.name }));
+
   return {
     id: raw.id,
     name: raw.name,
@@ -185,6 +200,7 @@ function mapTraining(raw: RawTraining): TrainingDetail {
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
     exercises,
+    gruppen,
   };
 }
 

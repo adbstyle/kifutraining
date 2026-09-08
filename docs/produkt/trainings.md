@@ -94,6 +94,36 @@ leer bleiben. Ein solcher Hinweis steht im betroffenen Block selbst, an der Stel
 „Noch keine Übung zugeordnet" stünde, und sagt in einem Satz auch, warum der Block ins Training
 gehört. Alle übrigen leeren Blöcke bleiben bei der neutralen Zeile. Gesperrt wird nie.
 
+## Gruppen
+
+Wer zwanzig oder dreissig Kinder vor sich hat, teilt sie auf und lässt mehrere Gruppen
+gleichzeitig an verschiedenen Übungen arbeiten. Diese Aufteilung lässt sich am Training
+festhalten, statt sie auf einem Zettel zu führen.
+
+Eine Gruppe ist eine Bezeichnung, mehr nicht — „Gruppe 1", „Torhüter", „Die Schnellen". Die
+Anwendung führt keine Kinder: Namen werden keine erfasst und einer Gruppe auch nicht zugeordnet.
+Eine Kinderzahl trägt eine Gruppe ebenso wenig, und weder die Anzahl der Gruppen noch ihre
+Zusammensetzung schlägt die Anwendung vor. Wie viele es sind, entscheidet der Trainer; es gibt
+keine Obergrenze, und eine Gruppe darf auch leer ausgehen — die Torhüter trainieren zeitweise
+für sich, und eine Gruppe lässt sich vorbereiten, bevor sie gebraucht wird.
+
+Verwaltet werden die Gruppen dort, wo sie wirken: in der Hauptteil-Karte beim Zusammenstellen,
+in beiden Altersstufen. Solange das Training keine führt, steht im Kartenkopf nur ein Knopf
+„Gruppen"; danach ein Abschnitt, der zugeklappt beginnt und die Anzahl nennt. Aufgeklappt trägt
+jede Gruppe eine eigene Zeile: Die Bezeichnung steht in einem offenen Feld und wird beim
+Verlassen des Felds gespeichert, ein Kreuz daneben entfernt die Gruppe. Die letzte Zeile ist
+dieselbe, nur leer — wer hineinschreibt, legt eine Gruppe an. Entfernt der Trainer die letzte
+Gruppe, verschwindet der Abschnitt wieder und der Knopf kommt zurück.
+
+Zwei Gruppen desselben Trainings dürfen nicht gleich heissen, wobei Gross- und Kleinschreibung
+keinen Unterschied macht: Neben „Gruppe 1" ist „gruppe 1" keine zweite Gruppe. Beim Umbenennen
+zählt die eigene bisherige Bezeichnung nicht als vergeben. Eine Bezeichnung ist höchstens vierzig
+Zeichen lang und darf nicht leer sein. Was nicht geht, sagt die Anwendung am Feld selbst.
+
+Eine Gruppe gehört zu genau dem Training, an dem sie angelegt wurde. In ein anderes Training
+wandert sie nicht, auch nicht in ein bestehendes. Die Übungen des Trainings bleiben vom Anlegen,
+Umbenennen und Entfernen von Gruppen unberührt.
+
 ## Jede Übung im Training ist eine eigene Fassung
 
 Wird eine Übung in ein Training übernommen, entsteht keine Verknüpfung, sondern eine
@@ -177,6 +207,10 @@ sich für ein Manual und plant darin. Für den Juniorenfussball gibt es zudem ke
 Übungsbestand; wer dort veröffentlichen will, erfasst seine Übungen zuerst selbst. Die
 Trainingsübersicht trennt die Altersstufen nicht — sie stehen zusammen in einer Liste,
 eingegrenzt wird über die Alterskategorie.
+
+Die Gruppen eines Trainings sind heute Bezeichnungen und sonst nichts: Welche Gruppe welche
+Übung des Hauptteils durchläuft, lässt sich noch nicht festhalten, und entsprechend steht davon
+auch nichts in der Durchführen-Ansicht oder im Druck.
 
 Der Druck hält eine Übung zusammen, solange sie auf eine Seite passt; steht sie als erste unter
 einer Trainingsteil-Überschrift und reicht der Platz darunter nicht, bricht sie um.
