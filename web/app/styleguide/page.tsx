@@ -95,6 +95,7 @@ const accentRoles: [string, string][] = [
   ["secondary-container", "bg-secondary-container"],
   ["error", "bg-error"],
   ["error-container", "bg-error-container"],
+  ["warning", "bg-warning"],
   ["outline", "bg-outline"],
 ];
 
@@ -198,6 +199,16 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           Semantische M3-Rollen über der KiFu-Palette. Surface-Leiter =
           Elevation-Leiter. Signal ist der einzige warme Hue.
+        </p>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          <code>warning</code> (Bernstein) trägt den{" "}
+          <strong>nicht-blockierenden</strong> Hinweis: etwas stimmt nicht,
+          lässt sich aber speichern. <code>error</code> bleibt dem vorbehalten,
+          was die Eingabe abweist. Warning erscheint als <strong>Rahmen, Text
+          und Icon — nie als Fläche</strong>: <code>kat-f</code> ist ebenfalls
+          gelb (Kontrast 1.06:1), als Füllung neben einer Kategorie-Plakette
+          wären beide nicht zu unterscheiden. Im Druck kippt der Token auf ein
+          dunkles Ocker.
         </p>
         <p className="type-label-small mb-2 text-on-surface-variant">Surface-Leiter</p>
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
