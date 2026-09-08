@@ -1,4 +1,4 @@
-import { JUNIOREN_TEILE, istEinblockig } from "@/lib/junioren";
+import { JUNIOREN_TEILE, istEinblockig, type Einordnung } from "@/lib/junioren";
 import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
 import type { JuniorenBlockSlug } from "@/lib/vocab";
 import {
@@ -166,7 +166,7 @@ export function groupByTeil<
  *  auch im Juniorenfussball ein Auffangen, und das trägt keine Dauer. Wie in
  *  `groupByTeil` ist die Summe eines dauerlosen Blocks 0 statt der Summe
  *  seiner Zeilen — dort könnte ohnehin keine stehen (DB-CHECK). */
-export function groupJunioren<
+function groupJunioren<
   T extends { trainingsteil: string; durationMin: number | null },
 >(
   items: T[],
@@ -220,7 +220,7 @@ export function hkatRank(slug: string | null): number {
  *  Reihenfolge) und je Unterkategorie die Dauer-Summe bilden. Items kommen
  *  bereits positionssortiert. Generisch über die Item-Form (Importzyklen
  *  vermeiden). */
-export function groupHauptteil<
+function groupHauptteil<
   T extends { hauptteilkategorie: string | null; durationMin: number | null },
 >(items: T[]): {
   slug: HauptteilkategorieSlug;
@@ -239,7 +239,7 @@ export function groupHauptteil<
  *  seine belegten Unterkategorien aufgeteilt (jeweils mit Unter-Überschrift und
  *  Dauer-Summe), alle übrigen Trainingsteile bleiben ein einzelner Block ohne
  *  Unter-Überschrift (`label = null`). Leere Unterkategorien erscheinen nicht
- *  (Story #23). Modul-intern: nach aussen führt einzig `leseGliederung`. */
+ *  (Story #23). Modul-intern: nach aussen führt hier einzig `leseGliederung`. */
 function leseBloecke<
   T extends { hauptteilkategorie: string | null; durationMin: number | null },
 >(section: {
@@ -313,6 +313,148 @@ export function leseGliederung<
       traegtDauer: s.traegtDauer,
       bloecke: leseBloecke(s),
     }));
+}
+
+/** Ein Block der Editor-Gliederung: die kleinste Ebene, an der der Trainer eine
+ *  Übung hinzufügt — eine Hauptteil-Unterkategorie im Kinderfussball, ein
+ *  Unterblock im Juniorenfussball, sonst der Trainingsteil selbst. */
+export type EditorBlock<T> = {
+  /** Wohin eine hier hinzugefügte Übung eingeordnet wird: der
+   *  Kinderfussball-Trainingsteil oder der Junioren-Block. */
+  einordnung: Einordnung;
+  /** Nur im Kinderfussball-Hauptteil: die Unterkategorie des Blocks. */
+  hkat?: HauptteilkategorieSlug;
+  label: string;
+  /** Trägt der Block eine eigene Fläche mit Überschrift? Genau dann, wenn sein
+   *  Teil mehr als einen Block hat — ein einblockiger Teil ist keine
+   *  Verschachtelung und bekommt weder Rahmen noch zweite Überschrift
+   *  (Story #127, PO-Entscheid #174). */
+  flaeche: boolean;
+  items: T[];
+  sum: number;
+  traegtDauer: boolean;
+  /** Wogegen sich die Summe abgleicht (`BANDBREITEN`). Nur im Juniorenschema
+   *  gesetzt: Das Kinderfussball-Manual gibt bewusst keine Zeiten vor, und sein
+   *  Teil-Slug `hauptteil` träfe sonst den gleichnamigen Junioren-Richtwert. */
+  richtwertSlug?: string;
+  /** Was zu melden ist, wenn der Block leer bleibt (`LEER_HINWEIS`). */
+  leerHinweis?: string;
+  /** Ob in diesem Block Gruppen geführt werden. Noch überall `false` — die
+   *  Gruppen-Story (#149) verdrahtet es. */
+  traegtGruppen: boolean;
+};
+
+/** Ein Trainingsteil der Editor-Gliederung — eine Karte im Editor. */
+export type EditorTeil<T> = {
+  key: string;
+  label: string;
+  sum: number;
+  traegtDauer: boolean;
+  /** Richtwert des Teils; nur im Juniorenschema gesetzt (siehe EditorBlock). */
+  richtwertSlug?: string;
+  /** Ungewöhnlich viele Übungen für diesen Teil (`ANZAHL_HINWEIS`). */
+  tooMany: boolean;
+  /** Zuordnungen des Teils ohne erfasste Dauer. */
+  missing: number;
+  bloecke: EditorBlock<T>[];
+};
+
+/** Die Editor-Gliederung eines Trainings — das Gegenstück zu `leseGliederung`
+ *  für die Bearbeitung, eine Form für beide Schemata.
+ *
+ *  Der Unterschied zur Leseansicht ist die Vollständigkeit: Hier bleibt jeder
+ *  Teil und jeder Block stehen, auch der leere. Beim Planen ist gerade die
+ *  Lücke die Information — die Leseansicht darf sie wegfiltern, der Editor
+ *  nicht (Story 4 AC 1, Story 5a AC 1–3).
+ *
+ *  Dauern kommen aus `durationMin` der übergebenen Zuordnungen. Der Editor
+ *  überlagert sie vor dem Aufruf mit dem lokal Erfassten, damit Summen und
+ *  «ohne Dauer»-Zählungen sofort mitgehen statt erst nach der Server-Antwort.
+ *
+ *  Die Summe eines Kinderfussball-Teils zählt ALLE seine Zuordnungen — auch
+ *  eine Hauptteil-Fassung ohne Unterkategorie, die in keinem Block erscheint;
+ *  sie soll in der Rechnung nicht verschwinden. */
+export function editorGliederung<
+  T extends {
+    trainingsteil: string;
+    hauptteilkategorie: string | null;
+    durationMin: number | null;
+  },
+>(altersstufe: Altersstufe, items: T[]): EditorTeil<T>[] {
+  // Die Fläche folgt allein der Anzahl Blöcke — an einer Stelle entschieden,
+  // damit die beiden Schemata darin nicht auseinanderlaufen können.
+  const mitFlaeche = (bloecke: Omit<EditorBlock<T>, "flaeche">[]): EditorBlock<T>[] =>
+    bloecke.map((b) => ({ ...b, flaeche: bloecke.length > 1 }));
+
+  if (altersstufe === "juniorenfussball") {
+    return groupJunioren(items).map((teil) => ({
+      key: teil.slug,
+      label: teil.label,
+      sum: teil.sum,
+      traegtDauer: teil.traegtDauer,
+      richtwertSlug: teil.slug,
+      // Den «ungewöhnlich viele Übungen»-Hinweis gibt es nur im
+      // Kinderfussball (`ANZAHL_HINWEIS`); im Juniorenschema übernimmt die
+      // Zeit-Orientierung diese Rolle.
+      tooMany: false,
+      missing: teil.bloecke
+        .filter((b) => b.traegtDauer)
+        .reduce((a, b) => a + b.items.filter((i) => i.durationMin == null).length, 0),
+      bloecke: mitFlaeche(
+        teil.bloecke.map((b) => ({
+          einordnung: b.slug,
+          label: b.label,
+          items: b.items,
+          sum: b.sum,
+          traegtDauer: b.traegtDauer,
+          richtwertSlug: b.slug,
+          leerHinweis: LEER_HINWEIS[b.slug],
+          traegtGruppen: false,
+        })),
+      ),
+    }));
+  }
+
+  return TRAININGSTEILE.map(({ slug, label }) => {
+    const teilItems = items.filter((i) => i.trainingsteil === slug);
+    const traegtDauer = teilTraegtDauer(slug);
+    const summe = (xs: T[]) =>
+      traegtDauer ? xs.reduce<number>((a, i) => a + (i.durationMin ?? 0), 0) : 0;
+    return {
+      key: slug,
+      label,
+      sum: summe(teilItems),
+      traegtDauer,
+      tooMany: teilItems.length > ANZAHL_HINWEIS[slug],
+      missing: traegtDauer ? teilItems.filter((i) => i.durationMin == null).length : 0,
+      bloecke: mitFlaeche(
+        // Der Hauptteil ist in seine drei Unterkategorien gegliedert
+        // (Story #23), alle übrigen Teile bleiben ein einzelner Block.
+        slug === "hauptteil"
+          ? groupHauptteil(teilItems).map((g) => ({
+              einordnung: slug,
+              hkat: g.slug,
+              label: g.label,
+              items: g.items,
+              sum: g.sum,
+              traegtDauer,
+              leerHinweis: LEER_HINWEIS[g.slug],
+              traegtGruppen: false,
+            }))
+          : [
+              {
+                einordnung: slug,
+                label,
+                items: teilItems,
+                sum: summe(teilItems),
+                traegtDauer,
+                leerHinweis: LEER_HINWEIS[slug],
+                traegtGruppen: false,
+              },
+            ],
+      ),
+    };
+  });
 }
 
 /** Datum lesbar formatieren (de-CH, z. B. "8. Juni 2026"). */

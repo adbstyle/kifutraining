@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/ui";
-import { TrainingEditor } from "@/components/training/TrainingEditor";
+import { TrainingEditor } from "@/components/training/editor/TrainingEditor";
 import { getTrainingForEdit } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
 

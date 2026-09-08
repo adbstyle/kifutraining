@@ -71,6 +71,13 @@ liegt oder ob der sichtbare Bestand für diesen Block noch leer ist, und führt 
 direkt zum Erfassen einer eigenen Übung. Mehrere Übungen nacheinander zu übernehmen ist
 möglich, dieselbe Übung auch mehrfach.
 
+Beim Zusammenstellen zeigt die Anwendung je Trainingsteil eine Karte und darin jeden Block auf
+einer eigenen, abgesetzten Fläche mit Überschrift, Dauer und eigenem Hinzufügen-Knopf — auch den
+leeren, denn beim Planen ist gerade die Lücke die Auskunft. Das betrifft die Teile mit mehr als
+einem Block: den Kinderfussball-Hauptteil mit seinen drei Unterkategorien sowie Einstieg und
+Hauptteil im Juniorenfussball. Ein Teil, der selbst ein einziger Block ist — Auffangen,
+Einleitung, Ausklang, Abschluss —, bleibt ungeteilt; dort hängt der Hinzufügen-Knopf am Teil.
+
 Innerhalb eines Blocks lässt sich die Reihenfolge ändern. Jeder Übung ausser im Auffangen kann
 eine Dauer in Fünf-Minuten-Schritten gegeben werden — das gilt in beiden Altersstufen, denn
 beide haben ein Auffangen. Das Training summiert laufend mit und weist gesondert aus, wie viele
