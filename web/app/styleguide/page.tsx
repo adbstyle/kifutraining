@@ -1104,20 +1104,42 @@ export default function Styleguide() {
           <em>„Ungewöhnlich viele Übungen …"</em>) bleiben davon unberührt und
           stehen weiter als <code>type-label-medium</code> am Kartenfuss.
         </p>
-        <div className="mt-6 grid max-w-xl gap-4">
+        <p className="type-body-medium mt-4 max-w-xl text-on-surface-variant">
+          <strong>Fläche für Blöcke einer dichten Karte:</strong> Trägt eine Karte
+          mehrere gleichrangige Blöcke — die Unterkategorien des
+          Kinderfussball-Hauptteils, die Blöcke des Junioren-Einstiegs —, steht
+          jeder auf einer eigenen Fläche: <code>bg-surface-container</code>,{" "}
+          <code>border-outline-variant</code>, <code>rounded-[4px]</code>,{" "}
+          <code>p-3</code>. Also eine Stufe die Leiter hoch gegenüber der Karte,
+          während die Inhaltszeilen darin auf <code>surface-container-low</code>{" "}
+          bleiben und sich dadurch als Inhalt <em>im</em> Block lesen.{" "}
+          <strong>Nicht dieselbe Stufe wie die Karte:</strong> Bei gleicher Fläche
+          verschwimmen Block und Karte, und ein leerer Block — beim Planen die
+          wichtigste Auskunft — wäre bloss eine Zeile Text im Nichts. Ein Teil mit
+          nur einem Block bekommt <em>keine</em> Fläche: Rahmen und Überschrift
+          wiederholten dort bloss die Karte.
+        </p>
+        <div className="mt-6 max-w-xl">
           <Card className="p-4">
-            <h3 className="type-title-small text-on-surface">Vielseitigkeit erleben</h3>
-            <p className="mt-2 type-body-small text-on-surface-variant">
-              Noch keine Übung zugeordnet.
-            </p>
-          </Card>
-          <Card className="p-4">
-            <h3 className="type-title-small text-on-surface">Fussball spielen</h3>
-            <p className="mt-2 flex items-start gap-2 type-body-small text-on-surface-variant">
-              <Info size={15} className="mt-0.5 shrink-0 text-signal" aria-hidden />
-              Das freie Spiel ist noch leer — im Kinderfussball gehört es in jedes
-              Training.
-            </p>
+            <h2 className="type-title-medium text-on-surface">Hauptteil</h2>
+            <div className="mt-4 flex flex-col gap-4">
+              <div className="rounded-[4px] border border-outline-variant bg-surface-container p-3">
+                <h3 className="type-title-small text-on-surface">
+                  Vielseitigkeit erleben
+                </h3>
+                <p className="mt-2 type-body-small text-on-surface-variant">
+                  Noch keine Übung zugeordnet.
+                </p>
+              </div>
+              <div className="rounded-[4px] border border-outline-variant bg-surface-container p-3">
+                <h3 className="type-title-small text-on-surface">Fussball spielen</h3>
+                <p className="mt-2 flex items-start gap-2 type-body-small text-on-surface-variant">
+                  <Info size={15} className="mt-0.5 shrink-0 text-signal" aria-hidden />
+                  Das freie Spiel ist noch leer — im Kinderfussball gehört es in
+                  jedes Training.
+                </p>
+              </div>
+            </div>
           </Card>
         </div>
       </Section>
