@@ -98,6 +98,23 @@ leer bleiben. Ein solcher Hinweis steht im betroffenen Block selbst, an der Stel
 „Noch keine Übung zugeordnet" stünde, und sagt in einem Satz auch, warum der Block ins Training
 gehört. Alle übrigen leeren Blöcke bleiben bei der neutralen Zeile. Gesperrt wird nie.
 
+## Notiz je Übung
+
+Zu jeder Übung eines Trainings lässt sich eine Notiz festhalten — ein freier Text, direkt in der
+Übungszeile unter dem Namen. Sie hält fest, was für genau dieses Training gilt: wer die Station
+betreut, welches Material aus dem Depot kommt, worauf heute zu achten ist. Sie steht offen da und
+nicht hinter einem Klick; erfasst, geändert und wieder geleert wird sie im selben Feld, gespeichert
+wird beim Verlassen. Höchstens 500 Zeichen.
+
+Die Notiz gilt für jede Übung jedes Trainings, auch ausserhalb des Hauptteils und auch ohne
+Gruppen. Sie erscheint beim Zusammenstellen, in der Durchführen-Ansicht und im Druck — dort unter
+dem Übungsnamen, vor den Alterskategorien —, und zwar auch dann, wenn der Betrachter das Training
+gar nicht bearbeiten darf.
+
+Sie gehört dem Training und nicht der Übung: Wer eine Fassung in seine Bibliothek übernimmt,
+übernimmt ihren Inhalt, nicht die Notiz. Kopiert er dagegen das ganze Training, reist sie mit —
+es ist dasselbe Training.
+
 ## Gruppen
 
 Wer zwanzig oder dreissig Kinder vor sich hat, teilt sie auf und lässt mehrere Gruppen
@@ -246,8 +263,9 @@ sie leben im Team-Bereich.
 ## Bekannte Grenzen
 
 Ein Training trägt ausser Name, Altersstufe, Alterskategorien und Ziel keine eigenen Angaben —
-keine Beschreibung, keine Notiz. Eine Soll-Dauer gibt es nicht; im Juniorenfussball sind die
-Zeitangaben Richtwerte, im Kinderfussball nennt die Anwendung gar keine.
+eine Beschreibung gibt es nicht, und die Notiz hängt an einer Übung, nicht am Training. Eine
+Soll-Dauer gibt es ebenso wenig; im Juniorenfussball sind die Zeitangaben Richtwerte, im
+Kinderfussball nennt die Anwendung gar keine.
 
 Die Altersstufe eines Trainings ändert sich nie, auch dann nicht, wenn eine Mannschaft
 aufsteigt — die Einheit wird für die neue Stufe neu angelegt. Gemischt trainierte Jahrgänge,
@@ -267,8 +285,8 @@ erscheint weder dort noch in den Übersichten. Wie lange ein Wechsel dauert, gib
 die Anwendung nicht vor, und ein Signal zum Wechseln gibt sie ebenso wenig. Unbesetzte Übungen
 und ungleich auf die Gruppen verteilte Übungen meldet sie nicht — beides kann gewollt sein —,
 und die Kinderzahl einer Übung gleicht sie nicht mit der Verteilung ab. Bearbeiten zwei
-Mitglieder desselben Teams die Verteilung gleichzeitig, bemerkt die Anwendung das nicht; die
-zuletzt gespeicherte Reihenfolge gilt.
+Mitglieder desselben Teams dieselbe Stelle gleichzeitig — die Verteilung ebenso wie die Notiz einer
+Übung —, bemerkt die Anwendung das nicht; es gilt, was zuletzt gespeichert wurde.
 
 Der Druck hält eine Übung zusammen, solange sie auf eine Seite passt; steht sie als erste unter
 einer Trainingsteil-Überschrift und reicht der Platz darunter nicht, bricht sie um.

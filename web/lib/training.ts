@@ -110,6 +110,17 @@ export const LEER_HINWEIS: Record<string, string> = {
  *  einzigen bereits bestehenden Textbegrenzung der Applikation. */
 export const ZIEL_MAX = 200;
 
+/** Obergrenze der Notiz an einer Übung des Trainings in Zeichen (Story #152,
+ *  getrimmt gezählt).
+ *
+ *  Spiegel des CHECK auf `training_exercises.notiz` (Migration
+ *  `fassung_notiz`). Sie steht hier neben `ZIEL_MAX` und nicht bei den Gruppen:
+ *  Die Notiz gilt an JEDER Übung jedes Trainings, auch ausserhalb des
+ *  Hauptteils. Grosszügiger als das Ziel, weil sie mehrere Hinweise für den
+ *  Platz tragen kann — eine Randbemerkung neben dem Ablauf bleibt sie
+ *  trotzdem, kein zweiter Übungstext. */
+export const NOTIZ_MAX = 500;
+
 /** Granularität der Dauer-Eingabe in Minuten — die Schrittweite der Pfeiltasten
  *  am Dauerfeld.
  *

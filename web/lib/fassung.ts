@@ -9,7 +9,12 @@ import type { createClient } from "@/lib/supabase/server";
 
 /** Die inhaltlichen Felder, die eine Fassung von ihrer Vorlage übernimmt.
  *  Bewusst NICHT dabei: slug, source, owner_id, visibility (Bibliotheks-
- *  Belange) sowie die Einordnung, die der Aufrufer setzt. */
+ *  Belange) sowie die Einordnung, die der Aufrufer setzt.
+ *
+ *  Ebenso wenig die `notiz` (#152): Sie sagt etwas über DIESES Training aus,
+ *  nicht über die Übung — und `exercises` trägt die Spalte gar nicht, ein
+ *  Übernehmen in die Bibliothek scheiterte mit ihr. Sie steht darum in
+ *  `FASSUNG_ZUORDNUNG_FELDER`. */
 export const FASSUNG_INHALT_FELDER = [
   "name",
   "kategorien",
@@ -24,6 +29,21 @@ export const FASSUNG_INHALT_FELDER = [
   "aufbau",
   "varianten",
   "bild_quelle",
+] as const;
+
+/** Die Felder der ZUORDNUNG — sie sagen, wo und wie die Fassung in genau
+ *  diesem Training steht, nicht was die Übung ist.
+ *
+ *  Sie reisen beim Kopieren eines Trainings mit (die Kopie soll dasselbe
+ *  Training sein) und gelangen nie in die Bibliothek: Dort gibt es weder eine
+ *  Position noch eine Dauer noch eine Notiz. Zusammen mit
+ *  `FASSUNG_INHALT_FELDER` ergeben sie den vollen Feldsatz einer Fassung. */
+export const FASSUNG_ZUORDNUNG_FELDER = [
+  "trainingsteil",
+  "hauptteilkategorie",
+  "position",
+  "duration_min",
+  "notiz",
 ] as const;
 
 /** Die Spalten, mit denen eine Fassung fürs Übernehmen in die Bibliothek

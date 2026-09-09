@@ -64,6 +64,20 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
         )}
       </div>
 
+      {/* Die Notiz gleich unter dem Titel (Story #152 AK 4): Sie sagt, was für
+          GENAU dieses Training gilt — etwa wer die Übung betreut —, und das
+          gehört gelesen, bevor der Blick zu Plaketten und Ablauf wandert. Der
+          Text selbst steht in Fliesstext-Typografie und nicht in der des
+          Labels: Er stammt vom Trainer. */}
+      {item.notiz && (
+        <div className="mb-3 flex gap-3">
+          <span className="type-label-small w-[78px] shrink-0 pt-1 text-on-surface-variant">
+            Notiz
+          </span>
+          <p className="type-body-large whitespace-pre-line text-on-surface">{item.notiz}</p>
+        </div>
+      )}
+
       {item.kategorien.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-1.5">
           {item.kategorien.map((k) => (

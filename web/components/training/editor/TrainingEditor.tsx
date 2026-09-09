@@ -9,7 +9,8 @@ import { GesamtAbgleich } from "../ZeitAbgleich";
 import { TrainingKopf } from "./TrainingKopf";
 import { TeilKarte } from "./TeilKarte";
 import { GruppenAbschnitt, GruppenKnopf } from "./GruppenAbschnitt";
-import { DurchlaufEtage } from "./DurchlaufEtage";
+import { DurchlaufZeile } from "./DurchlaufZeile";
+import { UebungsEtage } from "./UebungsEtage";
 import { KonfliktListe } from "./KonfliktListe";
 import { useGruppenModell } from "./useGruppenModell";
 import { zeitKurz, zeitText } from "@/lib/gruppen";
@@ -29,6 +30,7 @@ import {
 } from "@/lib/training";
 import {
   setExerciseDuration,
+  setzeNotiz,
   moveTrainingExercise,
   removeTrainingExercise,
   renameTraining,
@@ -64,6 +66,10 @@ export function TrainingEditor({
     hkat?: HauptteilkategorieSlug;
   } | null>(null);
   const [durations, setDurations] = useState<Record<string, number | null>>({});
+  // Die lokal erfassten Notizen (Story #152) — wie die Dauern eine Überlagerung
+  // der Serverdaten: Eine Notiz ändert die Gliederung nicht, und ein
+  // `router.refresh()` nach jedem Speichern risse den Fokus aus der Zeile.
+  const [notizen, setNotizen] = useState<Record<string, string | null>>({});
   const [stufen, setStufen] = useState<string[]>(training.stufen);
   const [ziel, setZiel] = useState<string>(training.ziel ?? "");
   const [notice, setNotice] = useState<string | null>(null);
@@ -97,8 +103,9 @@ export function TrainingEditor({
       training.exercises.map((e) => ({
         ...e,
         durationMin: e.id in durations ? durations[e.id] : e.durationMin,
+        notiz: e.id in notizen ? notizen[e.id] : e.notiz,
       })),
-    [training.exercises, durations],
+    [training.exercises, durations, notizen],
   );
 
   // Gruppen, Verteilung und Konflikte als ein Stück (Stories #149/#150).
@@ -120,6 +127,21 @@ export function TrainingEditor({
       const r = await setExerciseDuration(item.id, next);
       if (r.ok) return;
       setDurations((prev) => ({ ...prev, [item.id]: vorher }));
+      setNotice(r.error ?? "Speichern fehlgeschlagen.");
+    });
+  }
+
+  /** Die Notiz einer Zuordnung setzen, ändern oder entfernen (Story #152
+   *  AK 1/2). Optimistisch mit Rücknahme, wie die Dauer: Wird das Speichern
+   *  abgelehnt, stünde sonst ein Text im Editor, den kein Training trägt — und
+   *  auf dem Platz stünde er dann nicht. */
+  function changeNotiz(item: TrainingExerciseItem, text: string) {
+    const vorher = item.notiz;
+    setNotizen((prev) => ({ ...prev, [item.id]: text.trim() === "" ? null : text.trim() }));
+    startTransition(async () => {
+      const r = await setzeNotiz(item.id, text);
+      if (r.ok) return;
+      setNotizen((prev) => ({ ...prev, [item.id]: vorher }));
       setNotice(r.error ?? "Speichern fehlgeschlagen.");
     });
   }
@@ -283,25 +305,35 @@ export function TrainingEditor({
   const kontext: ZeilenKontext = {
     trainingId: training.id,
     trainingStufen: stufen,
-    // Der Durchlauf erscheint erst, wenn das Training Gruppen führt: Ohne sie
-    // gäbe es nichts zu verteilen, und «Alle gemeinsam» an jeder Zeile wäre
-    // eine Antwort auf eine Frage, die niemand gestellt hat.
-    etage: (item) =>
-      modell.gruppen.length === 0 ? null : (
-        <DurchlaufEtage
-          uebungName={item.name}
-          folge={modell.folgeVon(item)}
-          gruppen={modell.gruppen}
-          wechselGesamt={modell.wechselGesamt}
-          warnung={(gruppeId) =>
-            modell.befund.chipWarnung.has(`${item.id}|${gruppeId}`)
-              ? modell.befund.gruppenWarnung.get(gruppeId)
-              : undefined
-          }
-          zeit={(gruppeId) => zeitKurz(modell.zeiten.get(gruppeId))}
-          onFolge={(next) => modell.setzeFolge(item.id, next)}
-        />
-      ),
+    // Die Etage steht an jeder Zeile — die Notiz gilt an jeder Übung jedes
+    // Trainings (Story #152 AK 1). Der Durchlauf darin erscheint erst, wenn der
+    // Block Gruppen trägt UND das Training welche führt: Ohne sie gäbe es
+    // nichts zu verteilen, und «Alle gemeinsam» an jeder Zeile wäre eine
+    // Antwort auf eine Frage, die niemand gestellt hat.
+    etage: (item, traegtGruppen) => (
+      <UebungsEtage
+        uebungName={item.name}
+        notiz={item.notiz}
+        onNotiz={(text) => changeNotiz(item, text)}
+        durchlauf={
+          traegtGruppen && modell.gruppen.length > 0 ? (
+            <DurchlaufZeile
+              uebungName={item.name}
+              folge={modell.folgeVon(item)}
+              gruppen={modell.gruppen}
+              wechselGesamt={modell.wechselGesamt}
+              warnung={(gruppeId) =>
+                modell.befund.chipWarnung.has(`${item.id}|${gruppeId}`)
+                  ? modell.befund.gruppenWarnung.get(gruppeId)
+                  : undefined
+              }
+              zeit={(gruppeId) => zeitKurz(modell.zeiten.get(gruppeId))}
+              onFolge={(next) => modell.setzeFolge(item.id, next)}
+            />
+          ) : null
+        }
+      />
+    ),
     dauerWarnung: (item) => modell.befund.dauerWarnung.has(item.id),
     onDuration: changeDuration,
     onMove: move,

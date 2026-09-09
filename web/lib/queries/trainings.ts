@@ -5,7 +5,7 @@ import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
 import { JUNIOREN_BLOCK_SLUGS, type Einordnung } from "@/lib/junioren";
 import type { Altersstufe } from "@/lib/altersstufe";
-import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
+import { FASSUNG_INHALT_FELDER, FASSUNG_ZUORDNUNG_FELDER } from "@/lib/fassung";
 import { kurzeZeit } from "@/lib/queries/termine";
 
 /**
@@ -28,6 +28,10 @@ export type TrainingExerciseItem = {
   hauptteilkategorie: string | null;
   position: number;
   durationMin: number | null;
+  /** Freier Text zu dieser Übung in DIESEM Training (#152); `null` ohne Notiz.
+   *  Sie gehört der Zuordnung, nicht der Übung — in die Bibliothek gelangt sie
+   *  nie. */
+  notiz: string | null;
   name: string;
   kategorien: string[];
   erscheinungsform: string[];
@@ -80,8 +84,13 @@ export type TrainingDetail = {
  *  verschwände dann still aus der Anzeige). */
 const INHALT_FELDER = [...FASSUNG_INHALT_FELDER, "bild_url", "diagramm"].join(", ");
 
+/** Die Felder der Zuordnung — ebenfalls aus der Kopier-Konstante, aus demselben
+ *  Grund: Wo die Fassung im Training steht, was sie dauert und was für dieses
+ *  Training an ihr vermerkt ist, soll nicht an einer von zwei Listen hängen. */
+const ZUORDNUNG_FELDER = FASSUNG_ZUORDNUNG_FELDER.join(", ");
+
 const PE_SELECT = `
-  id, trainingsteil, hauptteilkategorie, position, duration_min,
+  id, ${ZUORDNUNG_FELDER},
   training_exercise_gruppen ( gruppe_id, position ),
   ${INHALT_FELDER}
 `;
@@ -112,6 +121,7 @@ type RawTrainingExercise = RawInhalt & {
   hauptteilkategorie: string | null;
   position: number;
   duration_min: number | null;
+  notiz: string | null;
   training_exercise_gruppen: { gruppe_id: string; position: number }[];
 };
 type RawTraining = {
@@ -173,6 +183,7 @@ function mapTraining(raw: RawTraining): TrainingDetail {
         hauptteilkategorie: te.hauptteilkategorie,
         position: te.position,
         durationMin: te.duration_min,
+        notiz: te.notiz,
         name: te.name,
         kategorien: te.kategorien ?? [],
         erscheinungsform: te.erscheinungsform ?? [],
