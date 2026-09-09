@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
+import { PFAD_HEADER } from "@/lib/pfad";
 
 // URL-Präfixe, die ein eingeloggtes Konto erfordern (UX-Guard; die echte
 // Durchsetzung bleibt RLS). Route-Groups wie (app) wirken nicht auf die URL,
@@ -18,10 +19,6 @@ function isProtected(pathname: string): boolean {
   // Bearbeiten-Routen: /uebung/[slug]/edit, /training/[id]/edit
   return pathname.endsWith("/edit");
 }
-
-/** Name des Request-Headers, der den angefragten Pfad an die
- *  Server-Komponenten weiterreicht (#156). */
-export const PFAD_HEADER = "x-pathname";
 
 /* Warum überhaupt: Eine Server-Komponente kennt die Adresse nicht — es gibt
    kein serverseitiges `usePathname`. Die Hauptnavigation muss aber schon beim

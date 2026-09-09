@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
-import { PFAD_HEADER } from "@/lib/supabase/middleware";
+import { PFAD_HEADER } from "@/lib/pfad";
 import { getTrainingNavKontext } from "@/lib/queries/trainings";
 import { AppNavClient } from "./AppNavClient";
 
@@ -18,7 +18,12 @@ const TRAINING_PFAD = /^\/training\/([0-9a-f-]{36})(\/|$)/i;
    der Adresse — die Zugehörigkeit wird deshalb hier nachgeschlagen. Den Pfad
    liefert die Middleware als Request-Header; `headers()` macht das
    Root-Layout dynamisch, was es durch `auth.getUser()` (liest Cookies)
-   ohnehin schon ist. */
+   ohnehin schon ist.
+
+   Das gilt nur für den Erstaufbau: Bei einer Client-Navigation rendert Next.js
+   das Root-Layout nicht neu, der Wert von hier bliebe also stehen. Für den Weg
+   danach meldet das Layout unter `/training/[id]` den Kontext nach — siehe
+   `TeamKontext`. */
 export async function AppNav() {
   const supabase = await createClient();
   const {

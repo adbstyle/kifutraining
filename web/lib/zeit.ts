@@ -36,12 +36,15 @@ export function heuteAmTrainingsort(): string {
 }
 
 /**
- * Ein Termindatum als „Mo, 01.09.2026".
+ * Ein Termindatum als „Mi., 23.09.2026".
  *
  * Der Wochentag ist beim Planen die wichtigste Information und in der reinen
  * Zahlenform nicht ablesbar. Die Schreibweise ist in der ganzen Anwendung
  * dieselbe (NFR 3) — Plan, Durchführen-Ansicht, Bestand und Brotkrumen teilen
  * sich diesen einen Helfer.
+ *
+ * Der abgekürzte Wochentag trägt im Schweizer Deutsch einen Punkt — so
+ * schreibt ihn `de-CH` selbst, und so steht er überall in der Anwendung.
  *
  * Bewusst fest auf `de-CH` und auf das Muster `T00:00:00`: Server und Browser
  * rendern dieselbe Zeichenkette, sonst meldete React beim Hydrieren einen

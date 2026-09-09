@@ -69,7 +69,7 @@ zwischen den Abschnitten hin und her schieben könnte.
 Ein angesetztes Team-Training trägt sein Termindatum sichtbar mit sich: an seinem Eintrag im
 Trainingsbestand des Teams neben der Plakette „Angesetzt" und in den Brotkrumen, solange es
 geöffnet ist. Die Schreibweise ist überall dieselbe wie im Trainingsplan, etwa
-„Mo, 01.09.2026".
+„Mi., 23.09.2026".
 
 Ein Training trägt höchstens einen Termin. Wer dieselbe Einheit ein zweites Mal ansetzt,
 bekommt eine eigenständige Kopie mit eigenem Termin — sowohl aus dem Trainingsplan heraus als

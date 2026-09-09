@@ -311,8 +311,11 @@ export type TrainingNavKontext = {
  *  RLS entscheidet wie überall. Wer dem Team nicht angehört, bekommt `null` —
  *  weder Teamname noch Termindatum verlassen so den Server (PC 4).
  *
- *  `cache()` bindet das Ergebnis an den laufenden Request: Fragen Layout und
- *  Seite dieselbe Adresse ab, sieht die Datenbank davon eine Abfrage. */
+ *  `cache()` bindet das Ergebnis an den laufenden Request. Beim harten Laden
+ *  einer Trainingsseite fragen zwei Stellen dasselbe: die Navigation im
+ *  Root-Layout und das Layout unter `/training/[id]`, das den Team-Kontext für
+ *  spätere Client-Navigationen meldet. Die Datenbank sieht davon eine
+ *  Abfrage. */
 export const getTrainingNavKontext = cache(
   async (id: string): Promise<TrainingNavKontext | null> => {
     // Ungültige UUID würde die Query mit Fehler abbrechen; defensiv abfangen.

@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { LogOut, UserRound, ListChecks, ClipboardList } from "lucide-react";
 import { Header } from "@/components/ui";
 import type { HeaderNavItem, HeaderAccount } from "@/components/ui";
+import { useTeamBereich } from "./TeamKontext";
 
 /* App-Chrome: M3-Header-Navigation als Top-Bar (alle Breakpoints; unter `lg`
    Hamburger → Drawer). Server-Teil (AppNav) liest die Session und reicht den
@@ -15,18 +16,21 @@ import type { HeaderNavItem, HeaderAccount } from "@/components/ui";
 export function AppNavClient({
   isAuthenticated,
   userEmail,
-  imTeamBereich,
+  imTeamBereich: imTeamBereichVomServer,
   signOutAction,
 }: {
   isAuthenticated: boolean;
   userEmail: string | null;
   /** Ist das geöffnete Training ein Team-Training? Der Server schlägt das
-   *  nach — der Adresse ist es nicht anzusehen (#156). */
+   *  nach — der Adresse ist es nicht anzusehen (#156). Der Wert stimmt für
+   *  den Erstaufbau; ab der ersten Client-Navigation gilt, was das Layout
+   *  unter `/training/[id]` gemeldet hat. */
   imTeamBereich: boolean;
   signOutAction: () => void;
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const imTeamBereich = useTeamBereich(imTeamBereichVomServer);
 
   // „Übungen" aktiv auf Katalog (inkl. vorgefiltertem „Meine Übungen") und
   // Detailseiten. „Meine Übungen" ist derselbe Pool, vorgefiltert (?mine=1).
