@@ -15,7 +15,7 @@ import { Flash } from "@/components/Flash";
 import { cn } from "@/lib/cn";
 import { OwnerActions } from "@/components/exercise/OwnerActions";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
-import { UebungUebernehmenButton } from "@/components/exercise/UebungUebernehmenButton";
+import { UebungKopierenButton } from "@/components/exercise/UebungKopierenButton";
 import { createClient } from "@/lib/supabase/server";
 import {
   getExerciseDetail,
@@ -78,7 +78,7 @@ export default async function ExerciseDetailPage({
   searchParams: Promise<{
     created?: string;
     updated?: string;
-    uebernommen?: string;
+    kopiert?: string;
   }>;
 }) {
   const { slug } = await params;
@@ -89,7 +89,7 @@ export default async function ExerciseDetailPage({
     ? "Übung erstellt."
     : sp.updated
       ? "Änderungen gespeichert."
-      : sp.uebernommen
+      : sp.kopiert
         ? "Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen."
         : null;
 
@@ -179,6 +179,7 @@ export default async function ExerciseDetailPage({
                   <OwnerActions
                     id={ex.id}
                     slug={ex.slug}
+                    name={ex.name}
                     visibility={ex.visibility}
                     favoriteSlot={
                       <FavoriteButton
@@ -190,10 +191,10 @@ export default async function ExerciseDetailPage({
                   />
                 ) : (
                   <>
-                    {/* Übernehmen (Story 7, Übungswelten) — nur an einer
-                        fremden oder kuratierten Übung: die eigene liegt
-                        bereits im Bestand. */}
-                    <UebungUebernehmenButton exerciseId={ex.id} name={ex.name} />
+                    {/* Kopieren (Story 7, Übungswelten) — hier an einer
+                        fremden oder kuratierten Übung; die eigene wird über das
+                        ⋮-Menü der Eigentümer-Aktionen kopiert (#171). */}
+                    <UebungKopierenButton exerciseId={ex.id} name={ex.name} />
                     <FavoriteButton
                       exerciseId={ex.id}
                       initial={favorited}

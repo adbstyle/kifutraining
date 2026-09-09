@@ -412,10 +412,10 @@ export function DiagrammEditor({
     setSelectedIds([neu.id]);
   }
 
-  // Eine Vorlage auf der leeren Fläche übernehmen (#61): als unabhängige Kopie
+  // Eine Vorlage auf der leeren Fläche kopieren (#61): als unabhängige Kopie
   // (frische IDs) in den Editor laden; der Autosave persistiert sie. Nur aus dem
   // Leerzustand erreichbar, daher kein Ersetzen/keine Bestätigung nötig.
-  function vorlageUebernehmen(vorlage: VorlageItem): string | null {
+  function vorlageKopieren(vorlage: VorlageItem): string | null {
     const data = parseDiagramm(vorlage.diagramm);
     if (!data || data.elemente.length === 0) return "Die Vorlage enthält kein Diagramm.";
     merken();
@@ -1214,7 +1214,7 @@ export function DiagrammEditor({
           })()}
         </svg>
 
-        {/* Leerzustand: Einstieg, eine Vorlage statt leerer Fläche zu übernehmen
+        {/* Leerzustand: Einstieg, eine Vorlage statt leerer Fläche zu kopieren
             (#61). Schwebt mittig, gibt aber Klicks an die Fläche durch — nur der
             Picker selbst fängt sie ab. */}
         {elemente.length === 0 && !zeichnen && vorlagen.length > 0 && (
@@ -1223,8 +1223,8 @@ export function DiagrammEditor({
               <VorlagePicker
                 vorlagen={vorlagen}
                 zielHatDiagramm={false}
-                onPick={vorlageUebernehmen}
-                triggerLabel="Aus Vorlage übernehmen"
+                onPick={vorlageKopieren}
+                triggerLabel="Aus Vorlage kopieren"
                 triggerVariant="tonal"
               />
             </div>

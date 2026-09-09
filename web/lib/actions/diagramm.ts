@@ -66,12 +66,12 @@ export async function saveDiagramm(
   return { ok: true };
 }
 
-/** Ein bestehendes Diagramm als Vorlage in die eigene Übung übernehmen (#61).
- *  Die Quelle wird als unabhängige Kopie (frische IDs) übernommen und nie
+/** Ein bestehendes Diagramm als Vorlage in die eigene Übung kopieren (#61).
+ *  Die Quelle wird als unabhängige Kopie (frische IDs) angelegt und nie
  *  verändert; ein vorhandenes Diagramm der Zielübung wird ersetzt (die
  *  Bestätigung erfolgt im UI). Erlaubte Quellen: eigene Diagramme und
  *  KiFu-Manual-Diagramme — fremde Trainer-Diagramme sind ausgeschlossen. */
-export async function uebernimmVorlage(
+export async function kopiereVorlage(
   zielId: string,
   quellId: string,
 ): Promise<SaveDiagrammResult> {
@@ -98,7 +98,7 @@ export async function uebernimmVorlage(
 
   // Zielübung muss eine eigene User-Übung sein. Anders als saveDiagramm wird
   // bild_quelle hier bewusst fest auf "diagramm" gesetzt (kein vorgelagerter
-  // Read): das übernommene Diagramm wird immer das aktive Anzeige-Bild (#61
+  // Read): das kopierte Diagramm wird immer das aktive Anzeige-Bild (#61
   // PC4), ein vorhandenes Foto (bild_url) bleibt als Umschalt-Option erhalten.
   const { data: updated, error } = await supabase
     .from("exercises")
@@ -112,7 +112,7 @@ export async function uebernimmVorlage(
     .select("slug")
     .single();
   if (error || !updated)
-    return { ok: false, error: error?.message ?? "Übernehmen fehlgeschlagen." };
+    return { ok: false, error: error?.message ?? "Kopieren fehlgeschlagen." };
 
   revalidiereUebung(updated.slug);
   return { ok: true };

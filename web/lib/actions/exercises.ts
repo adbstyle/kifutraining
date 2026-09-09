@@ -12,6 +12,7 @@ import { fehlerMeldung } from "@/lib/training-bedingungen";
 import {
   VORLAGE_SELECT,
   entferneStorageObjekt,
+  kopieName,
   legeUebungsKopieAn,
 } from "@/lib/fassung";
 
@@ -208,8 +209,8 @@ export async function updateExercise(
   redirect(`/uebung/${updated.slug}?updated=1`);
 }
 
-/** Eine Übung, wie sie fürs Übernehmen gelesen wird (`UEBERNAHME_SELECT`). */
-type ZuUebernehmendeUebung = {
+/** Eine Übung, wie sie fürs Kopieren gelesen wird (`KOPIE_SELECT`). */
+type ZuKopierendeUebung = {
   owner_id: string | null;
   altersstufe: string | null;
   trainingsteil: string;
@@ -221,22 +222,26 @@ type ZuUebernehmendeUebung = {
 
 /** Die Spalten der Quelle. `VORLAGE_SELECT` ist bereits die Übungs-Spaltenliste
  *  fürs Kopieren (Inhalt, Einordnung, Bild, Diagramm) — dazu kommt hier nur der
- *  Eigentümer, den die Precondition «gehört nicht dem USER» braucht. Eine
+ *  Eigentümer: An ihm hängt, ob die Kopie das Kopie-Suffix trägt (#171). Eine
  *  handgepflegte Zweitliste liesse ein neues Übungsfeld hier still wegfallen. */
-const UEBERNAHME_SELECT = `${VORLAGE_SELECT}, owner_id`;
+const KOPIE_SELECT = `${VORLAGE_SELECT}, owner_id`;
 
-/** Eine kuratierte oder fremde Übung direkt in den eigenen Bestand übernehmen
- *  (Story 7, Übungswelten).
+/** Eine sichtbare Übung in den eigenen Bestand kopieren — die eigene (#171)
+ *  ebenso wie eine kuratierte oder fremde (Story 7, Übungswelten).
  *
- *  Bisher führte der einzige Weg über ein Training. Es entsteht eine
- *  gewöhnliche, zunächst private Trainer-Übung mit eigener Bild- und
- *  Diagrammkopie; eine Verknüpfung zum Original gibt es nicht (PC 5) —
- *  spätere Änderungen am Original wirken in keine Richtung.
+ *  Es entsteht eine gewöhnliche, zunächst private Trainer-Übung mit eigener
+ *  Bild- und Diagrammkopie; eine Verknüpfung zur Quelle gibt es nicht (#171
+ *  PC 6) — spätere Änderungen wirken in keine Richtung. Mehrfaches Kopieren ist
+ *  erlaubt und ergibt jedes Mal eine eigenständige Übung (AK 2).
  *
- *  Die Kopie behält die Altersstufe des Originals (PC 3). Wer sie in der
- *  anderen Stufe braucht, wandelt sie anschliessend um (Story 4); das sind zwei
- *  getrennte Vorgänge. */
-export async function uebernimmUebung(
+ *  Die Kopie behält die Altersstufe der Quelle (PC 3). Wer sie in der anderen
+ *  Stufe braucht, wandelt sie anschliessend um (Story 4, Übungswelten); das
+ *  sind zwei getrennte Vorgänge.
+ *
+ *  Der Favoritenstatus reist NICHT mit (PC 4), und zwar ohne eigenen Code:
+ *  `exercise_favorites` hängt an `(user_id, exercise_id)`, und die Kopie trägt
+ *  eine neue ID. */
+export async function kopiereUebung(
   exerciseId: string,
 ): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
   const supabase = await createClient();
@@ -245,26 +250,29 @@ export async function uebernimmUebung(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
 
-  // RLS deckt die Sichtbarkeit ab (Precondition 1): kuratierte und fremde
-  // öffentliche Übungen kommen durch, eine fremde private nicht.
+  // RLS deckt die Sichtbarkeit ab: eigene, kuratierte und fremde öffentliche
+  // Übungen kommen durch, eine fremde private nicht. Kein Treffer heisst, dass
+  // die Übung im Moment des Kopierens nicht (mehr) da ist (#171 PC 8).
   const { data: q } = await supabase
     .from("exercises")
-    .select(UEBERNAHME_SELECT)
+    .select(KOPIE_SELECT)
     .eq("id", exerciseId)
-    .maybeSingle<ZuUebernehmendeUebung>();
-  if (!q) return { ok: false, error: "Diese Übung ist nicht mehr verfügbar." };
+    .maybeSingle<ZuKopierendeUebung>();
+  if (!q) return { ok: false, error: "Die Übung ist nicht mehr verfügbar." };
 
-  // Precondition 2: Die eigene Übung übernimmt niemand — sie liegt bereits im
-  // eigenen Bestand, und die Detailseite bietet dort auch keinen Knopf an.
-  if (q.owner_id === user.id)
-    return { ok: false, error: "Diese Übung liegt schon in deinem Bestand." };
+  // Gekennzeichnet wird nur die Kopie einer EIGENEN Übung (#171 AK 3): sie
+  // stünde sonst namensgleich neben der Quelle im eigenen Bestand. Die Kopie
+  // einer kuratierten oder fremden Übung behält ihren Namen (OOS 5) — dort
+  // trennt schon die Herkunft.
+  const name = q.owner_id === user.id && q.name ? kopieName(q.name) : undefined;
 
   // Kopiert wird mit dem gemeinsamen Rumpf (`legeUebungsKopieAn`): Slug,
   // Bild- und Diagrammkopie, Eigentum und der private Anfangszustand (PC 1)
-  // sind dieselben wie beim Übernehmen einer Fassung aus einem Training.
+  // sind dieselben wie beim Kopieren einer Fassung aus einem Training.
   const kopie = await legeUebungsKopieAn(supabase, q, {
     ownerId: user.id,
     altersstufe: alsAltersstufe(q.altersstufe),
+    name,
   });
   if (!kopie.ok) return kopie;
 

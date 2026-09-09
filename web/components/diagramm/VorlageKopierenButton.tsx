@@ -2,15 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { VorlagePicker } from "./VorlagePicker";
-import { uebernimmVorlage } from "@/lib/actions/diagramm";
+import { kopiereVorlage } from "@/lib/actions/diagramm";
 import type { VorlageItem } from "@/lib/queries/exercises";
 
 /**
- * Einstieg „Aus Vorlage übernehmen" auf der Bearbeiten-Seite (Epic #58,
- * Story #61). Übernimmt die gewählte Vorlage serverseitig als Kopie in die
- * Zielübung und öffnet danach den Editor zum Weiterbearbeiten.
+ * Einstieg „Aus Vorlage kopieren" auf der Bearbeiten-Seite (Epic #58,
+ * Story #61). Kopiert die gewählte Vorlage serverseitig in die Zielübung und
+ * öffnet danach den Editor zum Weiterbearbeiten.
  */
-export function VorlageUebernehmenButton({
+export function VorlageKopierenButton({
   zielId,
   slug,
   zielHatDiagramm,
@@ -26,9 +26,9 @@ export function VorlageUebernehmenButton({
     <VorlagePicker
       vorlagen={vorlagen}
       zielHatDiagramm={zielHatDiagramm}
-      triggerLabel="Aus Vorlage übernehmen"
+      triggerLabel="Aus Vorlage kopieren"
       onPick={async (vorlage) => {
-        const res = await uebernimmVorlage(zielId, vorlage.id);
+        const res = await kopiereVorlage(zielId, vorlage.id);
         if (res.ok) {
           router.push(`/uebung/${slug}/diagramm`);
           return null;

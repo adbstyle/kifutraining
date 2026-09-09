@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-09-01. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-09-09. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -83,17 +83,28 @@ nicht kennt, fällt weg — Erscheinungsformen, Übungstyp und, je nach Richtung
 Spielfeldgrösse. Aufbewahrt wird nichts: Eine Rückkehr ist wieder eine Überführung und beginnt
 von vorn. Fassungen, die aus dieser Übung in Trainings entstanden sind, bleiben unberührt.
 
-## Übernehmen
+## Kopieren
 
-Eine kuratierte oder fremde öffentliche Übung lässt sich unmittelbar in den eigenen Bestand
-übernehmen. Es entsteht eine private, frei bearbeitbare Kopie samt Bild und Diagramm, ohne
-Verbindung zum Original und mit dessen Altersstufe. Mehrfaches Übernehmen ist möglich und
-erzeugt jedes Mal eine weitere, unabhängige Übung; nach dem Übernehmen steht man direkt auf der
-eigenen Kopie. Die eigene Übung lässt sich nicht übernehmen — sie liegt schon im Bestand.
+Jede Übung, die ein Trainer sehen darf, lässt sich in seinen eigenen Bestand kopieren — die
+kuratierte, die fremde öffentliche und ebenso die eigene. Es entsteht eine private, frei
+bearbeitbare Kopie samt Bild und Diagramm, ohne Verbindung zur Quelle und mit deren
+Altersstufe; die Quelle bleibt unverändert, und spätere Änderungen an der einen erreichen die
+andere nicht. Kopiert werden darf mehrfach, und jedes Mal entsteht eine weitere, eigenständige
+Übung. Nach dem Kopieren steht man unmittelbar auf der Kopie und kann sie sofort anpassen.
+
+Die Kopie einer eigenen Übung trägt deren Namen mit dem Zusatz „(Kopie)" — sonst stünden zwei
+gleichnamige Übungen im selben Bestand nebeneinander. Der Zusatz kommt jedes Mal hinzu, auch bei
+der Kopie einer Kopie; durchgezählt werden Kopien nicht, und woraus eine hervorging, sagt der
+Name nicht. Die Kopie einer kuratierten oder fremden Übung behält ihren Namen unverändert —
+dort trennt schon die Herkunft. Ein Favorit wird nie mitkopiert, auch wenn die Quelle einer ist.
+
+Die eigene Übung wird über das Menü hinter den drei Punkten kopiert, die kuratierte oder fremde
+über das Kopieren-Symbol in derselben Zeile. Die Übungsliste bietet das Kopieren nicht an; der
+Weg führt über die Übung selbst.
 
 Denselben Weg gibt es aus einem Training heraus: Eine Übung, die dort angepasst wurde, lässt
-sich als eigene Vorlage in die Bibliothek holen, auch aus einem fremden, veröffentlichten
-Training. Unvollständige Fassungen lassen sich erst nach Ergänzung übernehmen.
+sich als eigene Vorlage in die Bibliothek kopieren, auch aus einem fremden, veröffentlichten
+Training. Unvollständige Fassungen lassen sich erst nach Ergänzung kopieren.
 
 ## Finden
 
@@ -125,10 +136,10 @@ Textfelder. Elemente lassen sich setzen, verschieben, drehen, einfärben, in der
 verändern, mehrfach auswählen, kopieren und löschen; jeder Schritt ist widerrufbar. Gespeichert
 wird laufend im Hintergrund.
 
-Ein vorhandenes Diagramm kann als Vorlage in eine andere eigene Übung übernommen werden. Zur
+Ein vorhandenes Diagramm kann als Vorlage in eine andere eigene Übung kopiert werden. Zur
 Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar über den Namen der
 Quell-Übung und mit Vorschau; die Altersstufe spielt dabei keine Rolle. Fremde
-Trainer-Diagramme sind bewusst nicht dabei. Die Übernahme erzeugt eine eigenständige Kopie ohne
+Trainer-Diagramme sind bewusst nicht dabei. Das Kopieren erzeugt eine eigenständige Kopie ohne
 Verbindung zum Original; ein bereits vorhandenes Diagramm wird erst nach Rückfrage ersetzt.
 
 Statt eines Diagramms kann auch ein Foto hochgeladen werden. Zulässig sind die gängigen Formate
@@ -176,11 +187,14 @@ Eine eigene Diagramm-Symbolik für den Juniorenfussball gibt es ebenfalls nicht;
 in beiden Altersstufen mit demselben Vorrat.
 
 Fremde Übungen und der Manual-Bestand sind nie direkt bearbeitbar. Wer daran etwas ändern will,
-übernimmt sie zuerst in den eigenen Bestand oder nimmt den Umweg über ein Training, wo eine
+kopiert sie zuerst in den eigenen Bestand oder nimmt den Umweg über ein Training, wo eine
 eigenständige, frei anpassbare Fassung entsteht.
 
-Eine Übung zeigt nirgends, wie oft oder wo sie übernommen wurde, und eine Kopie sagt nicht,
-woraus sie hervorging. Es gibt entsprechend auch keinen Abgleich mit dem Original und kein
-Zurücksetzen auf dessen Stand. Innerhalb eines Trainings ist ausserdem nicht erkennbar, ob eine
-Übung ursprünglich aus dem Manual stammt; die Plakette trägt nur der unveränderte Bestand. Die
-Angabe zur Kinderzahl ist Selbstauskunft und wird nicht gegen das Diagramm geprüft.
+Eine Übung zeigt nirgends, wie oft oder wo sie kopiert wurde, und eine Kopie sagt nicht, woraus
+sie hervorging — auch der Zusatz „(Kopie)" nennt keine Quelle. Es gibt entsprechend auch keinen
+Abgleich mit dem Original und kein Zurücksetzen auf dessen Stand. Mehrere Übungen in einem
+Vorgang zu kopieren ist ebenfalls nicht vorgesehen; kopiert wird eine nach der anderen. Eine
+Kopie wechselt auch nicht von selbst die Altersstufe — wer sie in der anderen braucht, wandelt
+sie anschliessend um. Innerhalb eines Trainings ist ausserdem nicht erkennbar, ob eine Übung
+ursprünglich aus dem Manual stammt; die Plakette trägt nur der unveränderte Bestand. Die Angabe
+zur Kinderzahl ist Selbstauskunft und wird nicht gegen das Diagramm geprüft.

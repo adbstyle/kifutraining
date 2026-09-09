@@ -111,8 +111,8 @@ Gruppen. Sie erscheint beim Zusammenstellen, in der Durchführen-Ansicht und im 
 dem Übungsnamen, vor den Alterskategorien —, und zwar auch dann, wenn der Betrachter das Training
 gar nicht bearbeiten darf.
 
-Sie gehört dem Training und nicht der Übung: Wer eine Fassung in seine Bibliothek übernimmt,
-übernimmt ihren Inhalt, nicht die Notiz. Kopiert er dagegen das ganze Training, reist sie mit —
+Sie gehört dem Training und nicht der Übung: Wer eine Fassung in seine Bibliothek kopiert,
+kopiert ihren Inhalt, nicht die Notiz. Kopiert er dagegen das ganze Training, reist sie mit —
 es ist dasselbe Training.
 
 ## Gruppen
@@ -198,7 +198,7 @@ Reihenfolge, verteilt die Übungen des Hauptteils auf dieselben Wechsel und trä
 Notizen. Neu verteilt werden muss nichts. Die Kopie ist dabei eigenständig: Ihre Gruppen sind
 eigene Gruppen, und wer in ihr umbenennt, verschiebt, zuweist oder entfernt, lässt das Original
 unberührt — und umgekehrt. Nicht mitgenommen wird die Verteilung, wenn jemand eine einzelne
-Fassung in seine Bibliothek übernimmt: Dort steht die Übung für sich, ohne Gruppen und ohne
+Fassung in seine Bibliothek kopiert: Dort steht die Übung für sich, ohne Gruppen und ohne
 Notiz.
 
 ## Jede Übung im Training ist eine eigene Fassung

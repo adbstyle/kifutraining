@@ -183,7 +183,7 @@ export default async function TrainingViewPage({
                               </span>
                             )}
                             {/* Auch aus einem fremden öffentlichen Training
-                                übernehmbar (Story 7 AK 2) — hier gibt es keinen
+                                kopierbar (Story 7 AK 2) — hier gibt es keinen
                                 Editor, darum steht die Aktion in der Ansicht. */}
                             {user && (
                               <InBibliothekButton fassungId={item.id} name={item.name} />
