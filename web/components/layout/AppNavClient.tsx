@@ -15,10 +15,14 @@ import type { HeaderNavItem, HeaderAccount } from "@/components/ui";
 export function AppNavClient({
   isAuthenticated,
   userEmail,
+  imTeamBereich,
   signOutAction,
 }: {
   isAuthenticated: boolean;
   userEmail: string | null;
+  /** Ist das geöffnete Training ein Team-Training? Der Server schlägt das
+   *  nach — der Adresse ist es nicht anzusehen (#156). */
+  imTeamBereich: boolean;
   signOutAction: () => void;
 }) {
   const pathname = usePathname();
@@ -29,8 +33,10 @@ export function AppNavClient({
   const uebungenActive = pathname === "/" || pathname.startsWith("/uebung");
 
   // „Trainings" aktiv auf Editor, Einzel-/Durchführungs-/Druck-Ansicht und dem
-  // Pool (/training… deckt als Präfix auch /trainings ab).
-  const trainingsActive = pathname.startsWith("/training");
+  // Pool (/training… deckt als Präfix auch /trainings ab) — aber NICHT bei
+  // einem Team-Training: das gehört dem Team und erscheint in keiner
+  // Trainingsübersicht (#156 AK 1/8/9).
+  const trainingsActive = pathname.startsWith("/training") && !imTeamBereich;
 
   // Das Trainings-Modul startet wie der Übungspool im gemeinsamen Pool
   // (öffentliche Trainings + eigene); „Meine Trainings" ist derselbe Pool,
@@ -39,7 +45,10 @@ export function AppNavClient({
 
   // „Teams" ist ein eigener Navigationspunkt (PO-Entscheid) und nur angemeldet
   // sinnvoll: Teams sind ausschliesslich ihren Mitgliedern sichtbar.
-  const teamsActive = pathname === "/teams" || pathname.startsWith("/team/");
+  // Ein geöffnetes Team-Training hält den Team-Bereich aktiv, gleichgültig
+  // über welchen Weg es geöffnet wurde — auch per Lesezeichen (AK 10).
+  const teamsActive =
+    pathname === "/teams" || pathname.startsWith("/team/") || imTeamBereich;
 
   const nav: HeaderNavItem[] = [
     { label: "Übungen", href: "/", current: uebungenActive },

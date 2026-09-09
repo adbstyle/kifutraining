@@ -11,6 +11,11 @@ export type FassungZumBearbeiten = {
   id: string;
   trainingId: string;
   trainingName: string;
+  /** Das Team, dem das Training gehört; `null` bei einem persönlichen
+   *  Training. Trägt den Team-Kontext in die Brotkrumen (#156). */
+  trainingTeam: { id: string; name: string } | null;
+  /** Datum des Termins, falls das Training angesetzt ist; sonst `null`. */
+  trainingTerminDatum: string | null;
   /** Altersstufe des Trainings. Die Fassung folgt ihr; sie entscheidet über
    *  Alterskategorien, Erscheinungsformen und Ablaufform (Story 1,
    *  Übungswelten). */
@@ -55,7 +60,8 @@ export async function getFassungZumBearbeiten(
   // zur Compile-Zeit unbekannt, der typisierte Query-Parser kann ihn nicht
   // auswerten — gemappt wird unten ohnehin explizit.
   const select: string = `id, training_id, trainingsteil, hauptteilkategorie, ${INHALT},
-       trainings!inner ( id, name, owner_id, team_id, altersstufe )`;
+       trainings!inner ( id, name, owner_id, team_id, altersstufe,
+         teams ( name ), training_termine ( datum ) )`;
   const { data: roh, error } = await supabase
     .from("training_exercises")
     .select(select)
@@ -94,6 +100,11 @@ export async function getFassungZumBearbeiten(
       name: string;
       owner_id: string | null;
       team_id: string | null;
+      teams: { name: string } | null;
+      // `training_termine.training_id` ist UNIQUE — PostgREST liefert deshalb
+      // ein Objekt statt einer Liste. Beide Formen abfangen (siehe
+      // `einzelnerTermin` in queries/trainings.ts).
+      training_termine: { datum: string } | { datum: string }[] | null;
     };
   };
 
@@ -102,11 +113,19 @@ export async function getFassungZumBearbeiten(
   if (!bearbeitungszielVon(training, user.id)) return null;
 
   const q: RohInhalt = data;
+  const termin = Array.isArray(training.training_termine)
+    ? (training.training_termine[0] ?? null)
+    : training.training_termine;
 
   return {
     id: data.id,
     trainingId: data.training_id,
     trainingName: training.name,
+    trainingTeam:
+      training.team_id && training.teams
+        ? { id: training.team_id, name: training.teams.name }
+        : null,
+    trainingTerminDatum: termin?.datum ?? null,
     // Der Rückfall ist bloss der Typ-Guard: die Spalte ist NOT NULL.
     trainingAltersstufe: alsAltersstufe(training.altersstufe),
     name: q.name,
