@@ -12,8 +12,9 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: boolean;
   /** Bernsteiner Rahmen: ein BEFUND am Feld, keine Fehleingabe — der Wert ist
       gespeichert und richtig erfasst, geht aber mit anderen nicht auf (Story
-      #151: ungleich lange Übungen im selben Wechsel). `error` gewinnt: Was sich
-      nicht speichern lässt, verdrängt den Hinweis auf etwas Gespeichertes. */
+      #151: ungleich lange Übungen im selben Wechsel). Rangfolge am Rahmen:
+      error > warning > focus — was sich nicht speichern lässt, verdrängt den
+      Hinweis auf etwas Gespeichertes, und beide überdauern den Fokus. */
   warning?: boolean;
   /** Führendes Icon (Lucide) im Feld — z. B. Lupe für Suche. Input und Label
       rücken automatisch ein, damit nichts mit dem Icon überlappt. */
@@ -84,10 +85,15 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       : cn(
           "peer type-body-large h-14 w-full rounded-(--field-shape) border-[1.5px] bg-transparent px-4 text-(--field-text) outline-none transition-[border-color] duration-150 focus:border-2",
           Icon && "pl-11",
+          // Rangfolge der Rahmenfarbe: error > warning > focus. Der Fokus
+          // färbt nur den ruhigen Rahmen um; einen Befund überschriebe er
+          // sonst genau in dem Moment, in dem hingeschaut wird (die dichte
+          // Bauform hält es mit ihrem focus-ring schon immer so). Sichtbar
+          // bleibt der Fokus über den dickeren Rahmen (focus:border-2).
           error
             ? "border-(--field-error)"
             : warning
-              ? "border-warning focus:border-(--field-focus)"
+              ? "border-warning"
               : "border-(--field-outline) focus:border-(--field-focus)",
         );
 

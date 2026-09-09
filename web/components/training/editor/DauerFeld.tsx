@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { Clock } from "lucide-react";
 import { TextField } from "@/components/ui";
 import { DAUER_SCHRITT } from "@/lib/training";
@@ -9,6 +9,11 @@ import { DAUER_SCHRITT } from "@/lib/training";
  *  schmalen Feld steht — ein ganzer Satz stünde dort über vier Zeilen und
  *  schöbe die halbe Übungszeile auseinander. */
 const UNGUELTIG = "Ganze Zahl ab 0.";
+
+/** Der bernsteine Rahmen ist nur sehend wahrnehmbar. Dieser Satz sagt dasselbe
+ *  für Screenreader; er hängt als Beschreibung am Feld. Kein `title`: Ein
+ *  Tooltip ist auf dem Touchgerät unerreichbar. */
+const WARNUNG_HINWEIS = "Ungleiche Dauer im selben Wechsel.";
 
 /**
  * Die Dauer einer Zuordnung als Zahlenfeld (Story #151).
@@ -47,6 +52,7 @@ export function DauerFeld({
 }) {
   const [entwurf, setEntwurf] = useState(() => (value == null ? "" : String(value)));
   const [fehler, setFehler] = useState(false);
+  const warnId = useId();
   // Der Wert, der zuletzt zum Speichern hinausging. Ohne diese Schranke
   // speichert Enter einmal und das anschliessende Verlassen des Felds ein
   // zweites Mal. Ref statt State: sie muss beim nächsten Aufruf schon gelten,
@@ -63,7 +69,19 @@ export function DauerFeld({
     gesendet.current = undefined;
   }
 
-  function speichere() {
+  function speichere(el: HTMLInputElement) {
+    // ZUERST die Gültigkeit des Steuerelements, erst dann der Text. Ein
+    // `type="number"`-Feld gibt für alles, was es nicht als Zahl lesen kann
+    // («12min», «abc», «1.2.3», ein einzelnes «-»), den LEEREN String heraus.
+    // Ohne diese Abfrage läse sich das wie «Feld geleert», und die erfasste
+    // Dauer verschwände lautlos, während im Browser weiter «12min» steht.
+    // `stepMismatch`/`rangeUnderflow` fangen 2.5 und -3 schon hier ab; die
+    // Textprüfung unten bleibt trotzdem stehen, weil sie ohne Browser gilt.
+    const v = el.validity;
+    if (v.badInput || v.stepMismatch || v.rangeUnderflow) {
+      setFehler(true);
+      return;
+    }
     const roh = entwurf.trim();
     // Ein leeres Feld ist keine Fehleingabe, sondern die Angabe «ohne Dauer».
     const naechster = roh === "" ? null : Number(roh);
@@ -83,34 +101,48 @@ export function DauerFeld({
     if (e.key !== "Enter") return;
     // Kein Absenden eines umgebenden Formulars — das Feld speichert selbst.
     e.preventDefault();
-    speichere();
+    speichere(e.currentTarget);
   }
 
+  const zeigeWarnung = !fehler && !!warnung;
+
   return (
-    <TextField
-      dense
-      type="number"
-      inputMode="numeric"
-      min={0}
-      step={DAUER_SCHRITT}
-      label="Dauer in Minuten"
-      placeholder="min"
-      leadingIcon={Clock}
-      className="w-28 shrink-0"
-      value={entwurf}
-      autoComplete="off"
-      onChange={(e) => {
-        setEntwurf(e.target.value);
-        // Wer weiterschreibt, hebt die Schranke auf: Derselbe Wert darf danach
-        // erneut hinaus — etwa, wenn der Server ihn zwischenzeitlich zurücknahm.
-        gesendet.current = undefined;
-        if (fehler) setFehler(false);
-      }}
-      onBlur={speichere}
-      onKeyDown={beiTaste}
-      error={fehler}
-      warning={!fehler && !!warnung}
-      supportingText={fehler ? UNGUELTIG : undefined}
-    />
+    <>
+      <TextField
+        dense
+        type="number"
+        inputMode="numeric"
+        min={0}
+        step={DAUER_SCHRITT}
+        label="Dauer in Minuten"
+        placeholder="min"
+        leadingIcon={Clock}
+        className="w-28 shrink-0"
+        value={entwurf}
+        autoComplete="off"
+        onChange={(e) => {
+          setEntwurf(e.target.value);
+          // Wer weiterschreibt, hebt die Schranke auf: Derselbe Wert darf danach
+          // erneut hinaus — etwa, wenn der Server ihn zwischenzeitlich zurücknahm.
+          gesendet.current = undefined;
+          if (fehler) setFehler(false);
+        }}
+        onBlur={(e) => speichere(e.currentTarget)}
+        onKeyDown={beiTaste}
+        error={fehler}
+        warning={zeigeWarnung}
+        supportingText={fehler ? UNGUELTIG : undefined}
+        /* Nur setzen, wenn es etwas zu beschreiben gibt: Ein durchgereichtes
+           `undefined` überschriebe die Verknüpfung, die das Kit im Fehlerfall
+           selbst auf den Hinweistext legt. Beides zugleich kommt nicht vor —
+           `error` verdrängt `warning`. */
+        {...(zeigeWarnung ? { "aria-describedby": warnId } : {})}
+      />
+      {zeigeWarnung && (
+        <span id={warnId} className="sr-only">
+          {WARNUNG_HINWEIS}
+        </span>
+      )}
+    </>
   );
 }

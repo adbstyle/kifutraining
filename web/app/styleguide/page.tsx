@@ -709,8 +709,14 @@ export default function Styleguide() {
           etwa eine Dauer in einem Wechsel, dessen Übungen ungleich lang sind.
           Das ist kein <code>error</code>: Es gibt nichts zu berichtigen, bevor
           gespeichert werden kann, und beides in dieselbe Rolle zu legen nähme
-          dem Rot seine Bedeutung. Stehen beide an, gewinnt <code>error</code>.
-          Bernstein bleibt dabei auf Rahmen, Text und Icon — nie als Fläche.
+          dem Rot seine Bedeutung. Am Rahmen gilt die Rangfolge{" "}
+          <code>error</code> &gt; <code>warning</code> &gt; Fokus: Der Fokus
+          färbt nur den ruhigen Rahmen um und zeigt sich sonst über seine
+          Dicke, damit ein Befund nicht ausgerechnet beim Hinschauen
+          verschwindet. Bernstein bleibt dabei auf Rahmen, Text und Icon — nie
+          als Fläche. Weil der Rahmen allein nur sehend wahrnehmbar ist, gehört
+          zu <code>warning</code> ein Hinweis für Screenreader (am Dauerfeld
+          ein <code>sr-only</code>-Satz per <code>aria-describedby</code>).
         </p>
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           <code>supportingText</code> nimmt seit derselben Story einen{" "}

@@ -409,6 +409,15 @@ pruefe("Eine Übung ohne Zuweisung zählt bei keiner Gruppe", () => {
   assert.equal(z.size, 1);
 });
 
+pruefe("Dieselbe Gruppe zweimal an einer Übung zählt die Dauer einmal", () => {
+  // Zwilling der Set-Zeile in `zeitJeGruppe`: Stünde eine Gruppe an derselben
+  // Übung doppelt, wäre das ein Datenfehler — die Gruppe läuft die Übung
+  // trotzdem nur einmal, und die 15 min dürfen nicht zu 30 werden.
+  const z = zeitJeGruppe(kifu([["A", 15, ["g1", "g1"]]]));
+  assert.deepEqual(z.get("g1"), { minuten: 15, mitDauer: 1, uebungen: 1 });
+  assert.equal(zeitText(z.get("g1")), "Zugewiesen 15 min");
+});
+
 pruefe("Die Summe geht über beide Junioren-Blöcke hinweg", () => {
   // Dieselbe Reichweite wie der Wechsel (AK 5): Die Blöcke gliedern die
   // Übungen, nicht die Zeit.
