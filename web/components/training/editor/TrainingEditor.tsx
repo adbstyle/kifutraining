@@ -367,9 +367,11 @@ export function TrainingEditor({
               hauptteilkategorieLabel={sub?.label}
               trainingStufen={stufen}
               onAdded={() => {
-                // Die neue Übung kommt mit dem Auffrischen; ab dann gilt für
-                // alle Zeilen wieder der Serverstand.
-                modell.alleVergessen();
+                // Nur auffrischen: Die neue Übung bringt keine Zuweisungen mit
+                // und lässt die der anderen Zeilen unberührt. Die lokalen
+                // Folgen hängen an der Fassungs-ID, nicht an der Position —
+                // sie pauschal zu vergessen, nähme jeder Zeile ihren
+                // ungespeicherten Stand ohne Grund.
                 router.refresh();
               }}
             />

@@ -148,8 +148,8 @@ bleiben vom Zuweisen unberührt.
 
 Zwei Dinge meldet die Anwendung: eine Gruppe, die im selben Wechsel an zwei Übungen steht — sie
 kann nicht an zwei Orten gleichzeitig sein —, und Übungen desselben Wechsels, die ungleich lang
-sind. Beides steht als Zeile am Fuss der Hauptteil-Karte, färbt den betroffenen Chip und
-erscheint bei der Doppelbelegung auch in der Zeile der Gruppe. Gemeldet wird es, gesperrt nicht:
+sind. Beides steht als Zeile am Fuss der Hauptteil-Karte; die Doppelbelegung färbt zusätzlich den
+betroffenen Chip und erscheint in der Zeile der Gruppe. Gemeldet wird es, gesperrt nicht:
 Speichern, Weiterbearbeiten und Veröffentlichen bleiben unberührt. Eine Übung ohne erfasste Dauer
 zählt beim Längenvergleich nicht mit.
 

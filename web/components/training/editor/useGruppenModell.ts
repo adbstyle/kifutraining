@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   istHauptteil,
   konfliktBefund,
@@ -49,11 +50,14 @@ export function useGruppenModell({
   /** Was in die Snackbar geht: abgelehnte Aktionen, quittierte Entfernungen. */
   melde: (text: string) => void;
 }) {
+  const router = useRouter();
   const [gruppen, setGruppen] = useState(gruppenInitial);
   // Die lokal gesetzten Folgen je Fassung. Fehlt ein Eintrag, gilt der
   // Serverstand der Fassung — darum ein `Record` und keine Vollkopie.
   const [folgen, setFolgen] = useState<Record<string, string[]>>({});
   const [, startTransition] = useTransition();
+  // Der letzte laufende Speichervorgang je Fassung. Siehe `setzeFolge`.
+  const kette = useRef(new Map<string, Promise<void>>());
 
   /** Die Folge einer Fassung: lokal gesetzt oder wie vom Server geliefert. */
   const folgeVon = (fassung: TrainingExerciseItem): string[] =>
@@ -104,25 +108,48 @@ export function useGruppenModell({
       return rest;
     });
 
-  /** Alle lokalen Stände vergessen — nach einem Auffrischen, das jede Zeile
-   *  betreffen kann (eine neu hinzugefügte Übung verschiebt die Positionen). */
-  const alleVergessen = () => setFolgen({});
-
   /**
    * Die Folge einer Übung setzen (AK 1/2/3) — Zuweisen, Umsortieren und
    * Entfernen sind dieselbe Aktion.
    *
-   * Wird sie abgelehnt, fällt die Zeile auf den Serverstand zurück: Ihn kennt
-   * die Fassung selbst, und er ist der einzige Stand, von dem sicher ist, dass
-   * er in der Datenbank steht.
+   * Die Aufrufe einer Fassung laufen VERKETTET, einer nach dem anderen. Der
+   * Aufruf ersetzt die ganze Folge, ist also kein Zuwachs, sondern eine
+   * Ansage: Zwei rasche Chip-Klicks nebeneinander abgeschickt, und die
+   * Datenbank behält die Folge, deren Antwort zuletzt eintrifft — das kann die
+   * ältere sein. Eine Kette je Fassung genügt dagegen (ein Zähler, der nur die
+   * jüngste Antwort gelten liesse, ordnete bloss die Anzeige und liesse die
+   * ältere Folge in der Datenbank stehen); Fassungen untereinander sind
+   * unabhängig und dürfen weiter nebeneinander laufen.
+   *
+   * Wird eine Änderung abgelehnt, fällt die Zeile auf den Serverstand zurück:
+   * Er ist der einzige Stand, von dem sicher ist, dass er gilt. Weil die
+   * Serverdaten seit dem Seitenaufbau veraltet sein können — eine frühere
+   * Änderung derselben Zeile ist ja gespeichert —, wird zugleich
+   * aufgefrischt. Nur hier: Im Erfolgsfall risse ein `router.refresh()` den
+   * Fokus aus der Chip-Zeile, in der der Trainer gerade arbeitet.
    */
   function setzeFolge(fassungId: string, next: string[]) {
     setFolgen((prev) => ({ ...prev, [fassungId]: next }));
-    startTransition(async () => {
-      const r = await setzeGruppenfolge(fassungId, next);
-      if (r.ok) return;
+    const vorher = kette.current.get(fassungId) ?? Promise.resolve();
+    // Die Kette darf nicht reissen: Ein geworfener Fehler — etwa ein
+    // Netzabbruch — würde sonst jede spätere Änderung dieser Fassung
+    // überspringen. Darum endet jeder Lauf gleich, ob abgelehnt oder geworfen.
+    const lauf = vorher.then(async () => {
+      let fehler: string | null = null;
+      try {
+        const r = await setzeGruppenfolge(fassungId, next);
+        if (r.ok) return;
+        fehler = r.error ?? "Speichern fehlgeschlagen.";
+      } catch {
+        fehler = "Speichern fehlgeschlagen.";
+      }
       vergissFolge(fassungId);
-      melde(r.error ?? "Speichern fehlgeschlagen.");
+      router.refresh();
+      melde(fehler);
+    });
+    kette.current.set(fassungId, lauf);
+    startTransition(async () => {
+      await lauf;
     });
   }
 
@@ -188,7 +215,6 @@ export function useGruppenModell({
     zuweisungenVon,
     gruppenAn,
     vergissFolge,
-    alleVergessen,
     setzeFolge,
     anlegen,
     umbenennen,

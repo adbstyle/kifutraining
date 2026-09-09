@@ -77,7 +77,12 @@ export function DurchlaufEtage({
 
   const nachId = new Map(gruppen.map((g) => [g.id, g]));
   const zugewiesen = folge.map((id) => nachId.get(id)).filter((g) => g != null);
-  const offen = gruppen.filter((g) => !folge.includes(g.id));
+  // Die Folge, wie sie hier tatsächlich steht. `folge` kann eine ID tragen, zu
+  // der es keine Gruppe (mehr) gibt — die zeigt `zugewiesen` nicht, und ein
+  // Index aus der Anzeige zeigte in `folge` dann auf die falsche Stelle.
+  // Angezeigt und geändert wird darum dieselbe Liste.
+  const ids = zugewiesen.map((g) => g.id);
+  const offen = gruppen.filter((g) => !ids.includes(g.id));
 
   /** Eine neue Folge setzen und ansagen, wo die bewegte Gruppe nun steht. */
   function setze(next: string[], name: string, wechsel: number | null) {
@@ -90,7 +95,7 @@ export function DurchlaufEtage({
   }
 
   function schiebe(i: number, richtung: -1 | 1) {
-    const next = [...folge];
+    const next = [...ids];
     [next[i], next[i + richtung]] = [next[i + richtung], next[i]];
     const gruppe = zugewiesen[i];
     fokusZiel.current = gruppe.id;
@@ -98,7 +103,7 @@ export function DurchlaufEtage({
   }
 
   function nimm(i: number) {
-    const next = folge.filter((_, j) => j !== i);
+    const next = ids.filter((_, j) => j !== i);
     const gruppe = zugewiesen[i];
     // Der Fokus darf nicht ins Nichts fallen: Er geht an den Chip, der an die
     // Stelle nachrückt, sonst an den davor — und ist die Zeile leer, an den
@@ -112,7 +117,7 @@ export function DurchlaufEtage({
     // gibt — mehrere Gruppen hintereinander zuzuweisen ist der Normalfall. Mit
     // der letzten verschwindet der Chip, und der Fokus geht an die neue Gruppe.
     if (offen.length <= 1) fokusZiel.current = gruppe.id;
-    setze([...folge, gruppe.id], gruppe.name, folge.length + 1);
+    setze([...ids, gruppe.id], gruppe.name, ids.length + 1);
   }
 
   return (
