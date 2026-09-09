@@ -1,10 +1,13 @@
 // Der zentrale Kopier-Baustein für Trainings (Team-Epic, Kopie-Modell).
 //
-// Geteilt wird nie, kopiert immer: ins Team stellen, zu mir übernehmen, je
-// Termin ansetzen, eine Vorlage übernehmen und das Veröffentlichen gehen alle
-// durch `kopiereTraining`. Damit gibt es genau eine Stelle, die weiss, was zu
-// einer vollständigen, entkoppelten Kopie gehört — und genau eine Stelle, die
-// aufräumt, wenn unterwegs etwas schiefgeht.
+// Geteilt wird nie, kopiert immer: ins Team stellen, zu mir übernehmen, ein
+// öffentliches Training bzw. eine Vorlage übernehmen und je Termin ansetzen —
+// alle vier gehen durch `kopiereTraining`. Das Veröffentlichen gehört nicht
+// dazu: Es schaltet dasselbe Training sichtbar und kopiert nichts.
+//
+// Damit gibt es genau eine Stelle, die weiss, was zu einer vollständigen,
+// entkoppelten Kopie gehört — und genau eine Stelle, die aufräumt, wenn
+// unterwegs etwas schiefgeht.
 //
 // Die Fassungs-Bausteine (`kopiereBild`, `inhaltFelder`, `kopiereDiagrammVon`)
 // stammen aus dem Bibliotheks-Epic und werden hier wiederverwendet.
@@ -177,28 +180,33 @@ export async function kopiereTraining(
   const gruppenMap = new Map<string, string>();
   const gruppen = quellGruppen ?? [];
   if (gruppen.length > 0) {
-    const neueIds = gruppen.map(() => crypto.randomUUID());
-    // Zeitgleich angelegte Gruppen entscheidet die ID — und die ist in der
-    // Kopie eine neue, zufällige. Damit die Kopie trotzdem dieselbe
-    // Reihenfolge zeigt, werden die neuen IDs je Gleichstands-Block
-    // aufsteigend vergeben: dieselbe Ordnung wie in der Quelle, ohne einen
-    // Anlegezeitpunkt zu erfinden.
-    for (let i = 0; i < gruppen.length; ) {
-      let j = i;
-      while (j < gruppen.length && gruppen[j].created_at === gruppen[i].created_at) j++;
-      const sortiert = neueIds.slice(i, j).sort();
-      for (let k = 0; k < sortiert.length; k++) neueIds[i + k] = sortiert[k];
-      i = j;
-    }
+    // Zeitgleich angelegte Gruppen entscheidet die ID — und die ist in der Kopie
+    // eine neue, zufällige. Aufsteigend sortiert vergeben, zeigt die Kopie
+    // trotzdem dieselbe Reihenfolge: `created_at` sortiert primär und wandert
+    // mit, ein Gleichstands-Block ist damit ein zusammenhängender Ausschnitt
+    // einer aufsteigenden Folge und selbst wieder aufsteigend. Ein
+    // Anlegezeitpunkt muss dafür nicht erfunden werden.
+    //
+    // Dass `.sort()` das leistet, hängt an drei Ordnungen, die für kanonische
+    // Kleinbuchstaben-UUIDs übereinstimmen: die UTF-16-Ordnung hier, das
+    // `localeCompare` in `mapTraining` (`web/lib/queries/trainings.ts`) und die
+    // Postgres-`uuid`-Ordnung des `.order("id")` oben. Ein `numeric`-Collator in
+    // `mapTraining` bräche die Kopie stumm.
+    const neueIds = gruppen.map(() => crypto.randomUUID()).sort();
+    gruppen.forEach((g, i) => gruppenMap.set(g.id, neueIds[i]));
 
+    // `created_at` wandert mit, statt auf `now()` zu fallen: Es ist die
+    // Anzeigereihenfolge der Gruppen, und alle Kopien auf denselben Zeitpunkt zu
+    // setzen liesse sie allein an den neuen IDs hängen. Der Preis ist ein
+    // Zeitstempel, der vor dem Entstehen der Kopie liegt — er dient hier
+    // ausschliesslich als Sortierschlüssel und wird sonst nirgends gelesen.
     const { error } = await supabase.from("training_gruppen").insert(
-      gruppen.map((g, i) => {
-        gruppenMap.set(g.id, neueIds[i]);
-        // `created_at` wandert mit, statt auf `now()` zu fallen: Es ist die
-        // Anzeigereihenfolge der Gruppen, und alle Kopien auf denselben
-        // Zeitpunkt zu setzen liesse sie allein an den neuen IDs hängen.
-        return { id: neueIds[i], training_id: neu.id, name: g.name, created_at: g.created_at };
-      }),
+      gruppen.map((g, i) => ({
+        id: neueIds[i],
+        training_id: neu.id,
+        name: g.name,
+        created_at: g.created_at,
+      })),
     );
     if (error) return abbrechen(error.message);
   }
@@ -223,9 +231,9 @@ export async function kopiereTraining(
         id: neueId,
         training_id: neu.id,
         ...zuordnungFelder(f),
+        // `altersstufe` steht bewusst nicht in den Zuordnungsfeldern: Der
+        // Trigger `te_altersstufe_erben` setzt sie aus dem Ziel-Training.
         ...inhaltFelder(f),
-        // `altersstufe` steht bewusst nicht hier: Der Trigger
-        // `te_altersstufe_erben` setzt sie aus dem Ziel-Training.
         bild_url: bild.url,
         diagramm: kopiereDiagrammVon(f.diagramm),
       })),
@@ -253,7 +261,10 @@ export async function kopiereTraining(
       // Beide Seiten müssen abgebildet sein: Zuweisung, Fassung und Gruppe
       // hängen an denselben Lese-Policies (`teg_select`/`tg_select`), eine
       // Lücke kann es also nur bei einer nebenläufigen Änderung an der Quelle
-      // geben. Dann lieber abbrechen als eine Kopie mit halber Verteilung.
+      // geben. Eine Zuweisung an einer Fassung ausserhalb des Hauptteils ist
+      // ohnehin konstruktiv ausgeschlossen (`te_gruppen_raeumen`). Trotzdem
+      // bewusst der Abbruch statt eines stillen Filters: Eine Kopie mit halber
+      // Verteilung sähe vollständig aus und wäre es nicht.
       if (!fassung || !gruppe)
         return abbrechen("Die Gruppenverteilung liess sich nicht vollständig kopieren.");
       // `position` ist der Wechsel — sie wandert unverändert mit, sonst liefe
