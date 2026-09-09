@@ -181,17 +181,45 @@ function gruppenMeldung(message: string): string | null {
   return null;
 }
 
-/** Die Meldung zu einem DB-Fehler: die Bedingungs-Erklärung, wenn es eine ist,
- *  sonst der Originaltext. Für jede Action, die ein Training oder eine seiner
- *  Fassungen so ändern könnte, dass ein öffentliches Training unter die
- *  Bedingungen fiele. */
+/** Der Marker, mit dem Postgres eine von der RLS abgewiesene Änderung meldet
+ *  («new row violates row-level security policy for table …»). */
+const RLS_VERLETZUNG = "row-level security";
+
+/** Die letzte Auskunft, wenn keine Regel den Fehler erklärt. Ein roher
+ *  Postgres-Text ist an der Oberfläche keine Meldung: Er nennt Tabellen und
+ *  Constraints statt eines Wegs, und der USER kann mit ihm nichts anfangen. */
+const ALLGEMEIN = "Das liess sich nicht speichern. Bitte versuche es noch einmal.";
+
+/** Die Meldung zu einer von der RLS abgewiesenen Änderung, sonst `null`. Sie
+ *  trifft, wer an einem fremden Training arbeitet — etwa weil er das Team
+ *  inzwischen verlassen hat oder eine veraltete Ansicht offen hält. */
+function berechtigungsMeldung(message: string): string | null {
+  return message.includes(RLS_VERLETZUNG)
+    ? "Keine Berechtigung für diese Änderung."
+    : null;
+}
+
+/** Die Meldung zu einem DB-Fehler: die Erklärung, wenn eine Regel greift,
+ *  sonst eine allgemeine Auskunft. Für jede Action, deren DB-Fehler an der
+ *  Oberfläche landet — der Originaltext tut das NIE.
+ *
+ *  Die Übersetzung steht bewusst an einem Ort: Jede Action, die den rohen
+ *  `error.message` durchreichte, war eine Stelle, an der ein Constraint-Name
+ *  vor dem Trainer landen konnte.
+ *
+ *  Verschwinden darf der Originaltext deswegen nicht (Issue #41): Greift keine
+ *  fachliche Regel, ist der Fehler unerwartet — dann gehört er ins Protokoll,
+ *  sonst bliebe er unsichtbar. Der Aufruf steht immer serverseitig (Server
+ *  Actions), die Zeile landet also in den Runtime-Logs und nie beim Trainer.
+ *  Eine von der RLS abgewiesene Änderung wird mitprotokolliert: Sie hat zwar
+ *  eine Meldung, ist aber kein erwarteter Verlauf. Was ein Marker oder ein
+ *  Constraint fachlich erklärt, ist erwartet und bleibt ungeloggt. */
 export function fehlerMeldung(message: string): string {
-  return (
-    bedingungsFehler(message) ??
-    schemaMeldung(message) ??
-    gruppenMeldung(message) ??
-    message
-  );
+  const fachlich =
+    bedingungsFehler(message) ?? schemaMeldung(message) ?? gruppenMeldung(message);
+  if (fachlich) return fachlich;
+  console.error(`[db] ${message}`);
+  return berechtigungsMeldung(message) ?? ALLGEMEIN;
 }
 
 /** Welche Veröffentlichungs-Bedingungen erfüllt ein Training noch nicht?

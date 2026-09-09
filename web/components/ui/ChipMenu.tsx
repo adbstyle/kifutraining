@@ -71,10 +71,25 @@ export function ChipMenu({
       <button
         // Zwei Interessenten an einem Element: das Menü braucht seinen Anker,
         // der Aufrufer den Fokus. Beide bekommen dasselbe Element.
+        //
+        // Die Aufräumfunktion des Aufrufers wird durchgereicht: Eine
+        // Ref-Callback darf seit React 19 eine zurückgeben, und wer hier eine
+        // Registratur führt (`DurchlaufZeile` merkt sich die Chips je
+        // Gruppen-ID), räumte sonst nie auf. Weil diese Weitergabe selbst eine
+        // Aufräumfunktion ist, ruft React die Callback nicht mehr mit `null` —
+        // das Abhängen gehört darum vollständig hierher: die eigene Ref, eine
+        // Objekt-Ref des Aufrufers und, im Altstil ohne Aufräumfunktion, der
+        // `null`-Aufruf seiner Callback.
         ref={(el) => {
           triggerRef.current = el;
-          if (typeof ref === "function") ref(el);
-          else if (ref) ref.current = el;
+          const aufraeumen = typeof ref === "function" ? ref(el) : undefined;
+          if (ref && typeof ref !== "function") ref.current = el;
+          return () => {
+            triggerRef.current = null;
+            if (typeof aufraeumen === "function") aufraeumen();
+            else if (typeof ref === "function") ref(null);
+            else if (ref) ref.current = null;
+          };
         }}
         type="button"
         disabled={disabled}

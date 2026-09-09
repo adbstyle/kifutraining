@@ -691,7 +691,7 @@ export async function setExerciseDuration(
     .eq("id", trainingExerciseId)
     .select("training_id")
     .maybeSingle();
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: fehlerMeldung(error.message) };
   if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
   revalidiereTraining(data.training_id);
   return { ok: true };
@@ -738,7 +738,7 @@ export async function setzeNotiz(
     .eq("id", trainingExerciseId)
     .select("training_id")
     .maybeSingle();
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: fehlerMeldung(error.message) };
   if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
   revalidiereTraining(data.training_id);
   return { ok: true };

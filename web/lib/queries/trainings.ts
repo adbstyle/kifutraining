@@ -170,7 +170,7 @@ const teilRank = (t: string) => {
  *  `training_termine.training_id` ist UNIQUE, deshalb liefert PostgREST den
  *  Termin als Objekt statt als Liste. Beide Formen werden abgefangen, damit
  *  eine spätere Schema-Änderung hier keinen stillen Nulltreffer erzeugt. */
-function einzelnerTermin<T>(embed: T | T[] | null | undefined): T | null {
+export function einzelnerTermin<T>(embed: T | T[] | null | undefined): T | null {
   if (embed == null) return null;
   return Array.isArray(embed) ? (embed[0] ?? null) : embed;
 }

@@ -75,8 +75,8 @@ Ein Training trägt höchstens einen Termin. Wer dieselbe Einheit ein zweites Ma
 bekommt eine eigenständige Kopie mit eigenem Termin — sowohl aus dem Trainingsplan heraus als
 auch direkt aus dem Trainingsbestand; Gruppen, Verteilung und Notizen sind darin dieselben.
 Der Grund: Jedes Datum bleibt bei dem Stand, mit dem es tatsächlich durchgeführt wurde, und eine
-Anpassung für die nächste Woche verändert die Vergangenheit nicht. Serientermine aus einem Rhythmus gibt es nicht; jedes Ansetzen ist ein
-bewusster Einzelschritt.
+Anpassung für die nächste Woche verändert die Vergangenheit nicht. Serientermine aus einem
+Rhythmus gibt es nicht; jedes Ansetzen ist ein bewusster Einzelschritt.
 
 Einen Abgesagt-Zustand kennt die Anwendung nicht — Ausfälle stehen in der Bemerkung oder der
 Termin wird entfernt. Sie hält auch nicht fest, wer an einem Termin im Einsatz war oder ob er

@@ -77,7 +77,7 @@ export function nameProblem(
  * SQL-Zwilling: `einordnung_traegt_gruppen(text)` in der Migration
  * `gruppen_zuweisung`.
  */
-export const HAUPTTEIL_EINORDNUNGEN = ["hauptteil", "jun-spielformen", "jun-spiel"];
+const HAUPTTEIL_EINORDNUNGEN = ["hauptteil", "jun-spielformen", "jun-spiel"];
 
 /** Trägt diese Einordnung Gruppen? Speist `EditorBlock.traegtGruppen`. */
 export function istHauptteil(einordnung: string): boolean {
@@ -238,16 +238,14 @@ export function konfliktBefund(
 
 // ── Zeitsumme je Gruppe (Story #151) ────────────────────────────────────────
 
-/** Was eine Gruppe im Hauptteil zusammenzählt. `uebungen` und `mitDauer`
- *  stehen getrennt, weil ohne sie «0 min» und «noch keine Dauer erfasst»
- *  dieselbe Zahl wären — und das eine ist eine Auskunft, das andere eine Lücke. */
+/** Was eine Gruppe im Hauptteil zusammenzählt. `mitDauer` steht neben den
+ *  Minuten, weil ohne es «0 min» und «noch keine Dauer erfasst» dieselbe Zahl
+ *  wären — und das eine ist eine Auskunft, das andere eine Lücke. */
 export type Zeitsumme = {
   /** Summe der erfassten Dauern in Minuten. */
   minuten: number;
   /** Wie viele der zugewiesenen Übungen eine Dauer tragen. */
   mitDauer: number;
-  /** Wie viele Übungen des Hauptteils diese Gruppe durchläuft. */
-  uebungen: number;
 };
 
 /**
@@ -257,9 +255,11 @@ export type Zeitsumme = {
  * Hauptteil-Blöcke hinweg — dieselbe Reichweite wie beim Wechsel (AK 5): Die
  * Blöcke gliedern die Übungen, nicht die Zeit.
  *
- * Eine Übung ohne erfasste Dauer zählt nicht mit; sie erhöht bloss `uebungen`.
- * Eine Übung ohne Zuweisung zählt bei keiner Gruppe — sie machen alle
- * gemeinsam, und das ist keine Aussage über eine einzelne Gruppe.
+ * Eine Übung ohne erfasste Dauer zählt nicht mit; die Gruppe steht deswegen
+ * aber trotzdem in der Map — mit `mitDauer = 0`, was «zugewiesen, aber keine
+ * Dauer erfasst» heisst. Eine Übung ohne Zuweisung zählt bei keiner Gruppe —
+ * sie machen alle gemeinsam, und das ist keine Aussage über eine einzelne
+ * Gruppe.
  *
  * Gruppen ohne Zuweisung stehen NICHT in der Map. `zeitText` beantwortet das
  * fehlende Ergebnis gleich wie die Null-Summe; darum lohnt kein Vorbelegen.
@@ -270,8 +270,7 @@ export function zeitJeGruppe(v: Verteilung): Map<string, Zeitsumme> {
     // Über die Menge statt über die Folge: Stünde dieselbe Gruppe an einer
     // Übung zweimal, wäre das ein Datenfehler und keine doppelte Zeit.
     for (const id of new Set(f.gruppen)) {
-      const s = summen.get(id) ?? { minuten: 0, mitDauer: 0, uebungen: 0 };
-      s.uebungen++;
+      const s = summen.get(id) ?? { minuten: 0, mitDauer: 0 };
       if (f.dauer != null) {
         s.minuten += f.dauer;
         s.mitDauer++;

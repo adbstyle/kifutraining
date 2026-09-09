@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Fahrplan } from "@/lib/queries/exercises";
+import { einzelnerTermin } from "@/lib/queries/trainings";
 import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
 import { alsAltersstufe, type Altersstufe } from "@/lib/altersstufe";
@@ -102,8 +103,7 @@ export async function getFassungZumBearbeiten(
       team_id: string | null;
       teams: { name: string } | null;
       // `training_termine.training_id` ist UNIQUE — PostgREST liefert deshalb
-      // ein Objekt statt einer Liste. Beide Formen abfangen (siehe
-      // `einzelnerTermin` in queries/trainings.ts).
+      // ein Objekt statt einer Liste. Beide Formen löst `einzelnerTermin` auf.
       training_termine: { datum: string } | { datum: string }[] | null;
     };
   };
@@ -113,9 +113,7 @@ export async function getFassungZumBearbeiten(
   if (!bearbeitungszielVon(training, user.id)) return null;
 
   const q: RohInhalt = data;
-  const termin = Array.isArray(training.training_termine)
-    ? (training.training_termine[0] ?? null)
-    : training.training_termine;
+  const termin = einzelnerTermin(training.training_termine);
 
   return {
     id: data.id,
