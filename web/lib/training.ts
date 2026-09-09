@@ -371,7 +371,6 @@ export type EditorTeil<T> = {
   key: string;
   label: string;
   sum: number;
-  traegtDauer: boolean;
   /** Richtwert des Teils; nur im Juniorenschema gesetzt (siehe EditorBlock). */
   richtwertSlug?: string;
   /** Ungewöhnlich viele Übungen für diesen Teil (`ANZAHL_HINWEIS`). */
@@ -413,7 +412,6 @@ export function editorGliederung<
       key: teil.slug,
       label: teil.label,
       sum: teil.sum,
-      traegtDauer: teil.traegtDauer,
       richtwertSlug: teil.slug,
       // Den «ungewöhnlich viele Übungen»-Hinweis gibt es nur im
       // Kinderfussball (`ANZAHL_HINWEIS`); im Juniorenschema übernimmt die
@@ -440,13 +438,15 @@ export function editorGliederung<
   return TRAININGSTEILE.map(({ slug, label }) => {
     const teilItems = items.filter((i) => i.trainingsteil === slug);
     const traegtDauer = teilTraegtDauer(slug);
-    const summe = (xs: T[]) =>
-      traegtDauer ? xs.reduce<number>((a, i) => a + (i.durationMin ?? 0), 0) : 0;
+    // Der Teil und sein einziger Block tragen dieselbe Summe — einmal
+    // gerechnet, damit die beiden Zahlen nicht auseinanderlaufen können.
+    const summe = traegtDauer
+      ? teilItems.reduce<number>((a, i) => a + (i.durationMin ?? 0), 0)
+      : 0;
     return {
       key: slug,
       label,
-      sum: summe(teilItems),
-      traegtDauer,
+      sum: summe,
       tooMany: teilItems.length > ANZAHL_HINWEIS[slug],
       missing: traegtDauer ? teilItems.filter((i) => i.durationMin == null).length : 0,
       bloecke: mitFlaeche(
@@ -468,7 +468,7 @@ export function editorGliederung<
                 einordnung: slug,
                 label,
                 items: teilItems,
-                sum: summe(teilItems),
+                sum: summe,
                 traegtDauer,
                 leerHinweis: LEER_HINWEIS[slug],
                 traegtGruppen: istHauptteil(slug),

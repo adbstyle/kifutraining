@@ -367,24 +367,24 @@ pruefe("Die Summe zählt alle Übungen einer Gruppe zusammen", () => {
       ["B", 25, ["g2", "g1"]],
     ]),
   );
-  assert.deepEqual(z.get("g1"), { minuten: 40, mitDauer: 2, uebungen: 2 });
+  assert.deepEqual(z.get("g1"), { minuten: 40, mitDauer: 2 });
   assert.equal(zeitText(z.get("g1")), "Zugewiesen 40 min");
 });
 
-pruefe("Eine Übung ohne Dauer zählt nicht mit, aber als Übung", () => {
+pruefe("Eine Übung ohne Dauer zählt nicht mit", () => {
   const z = zeitJeGruppe(
     kifu([
       ["A", 15, ["g1"]],
       ["B", null, ["g1"]],
     ]),
   );
-  assert.deepEqual(z.get("g1"), { minuten: 15, mitDauer: 1, uebungen: 2 });
+  assert.deepEqual(z.get("g1"), { minuten: 15, mitDauer: 1 });
   assert.equal(zeitText(z.get("g1")), "Zugewiesen 15 min");
 });
 
 pruefe("Trägt keine der Übungen eine Dauer, steht dort ein Gedankenstrich", () => {
   const z = zeitJeGruppe(kifu([["A", null, ["g1"]]]));
-  assert.deepEqual(z.get("g1"), { minuten: 0, mitDauer: 0, uebungen: 1 });
+  assert.deepEqual(z.get("g1"), { minuten: 0, mitDauer: 0 });
   assert.equal(zeitKurz(z.get("g1")), "—");
   assert.equal(zeitText(z.get("g1")), "Zugewiesen —");
 });
@@ -405,7 +405,7 @@ pruefe("Eine Übung ohne Zuweisung zählt bei keiner Gruppe", () => {
       ["Alle gemeinsam", 20, []],
     ]),
   );
-  assert.deepEqual(z.get("g1"), { minuten: 15, mitDauer: 1, uebungen: 1 });
+  assert.deepEqual(z.get("g1"), { minuten: 15, mitDauer: 1 });
   assert.equal(z.size, 1);
 });
 
@@ -414,7 +414,7 @@ pruefe("Dieselbe Gruppe zweimal an einer Übung zählt die Dauer einmal", () => 
   // Übung doppelt, wäre das ein Datenfehler — die Gruppe läuft die Übung
   // trotzdem nur einmal, und die 15 min dürfen nicht zu 30 werden.
   const z = zeitJeGruppe(kifu([["A", 15, ["g1", "g1"]]]));
-  assert.deepEqual(z.get("g1"), { minuten: 15, mitDauer: 1, uebungen: 1 });
+  assert.deepEqual(z.get("g1"), { minuten: 15, mitDauer: 1 });
   assert.equal(zeitText(z.get("g1")), "Zugewiesen 15 min");
 });
 

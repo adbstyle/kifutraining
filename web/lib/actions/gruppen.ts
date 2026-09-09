@@ -28,6 +28,10 @@ import type { TrainingActionResult } from "@/lib/actions/trainings";
  *  Kollision zu lesen bekommt. */
 const UNIQUE_VERLETZUNG = "23505";
 
+/** Die Auskunft für den Fall, der nach Lage der Daten nicht eintreten kann.
+ *  Sie nennt keine Ursache, weil es keine bekannte gibt. */
+const NICHT_MOEGLICH = "Die Gruppe liess sich nicht anlegen.";
+
 /** Die bestehenden Gruppen des Trainings — Grundlage der Vorabprüfung. */
 async function bestehendeGruppen(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -63,9 +67,13 @@ export async function legeGruppeAn(
     .maybeSingle();
   if (error) {
     if (error.code === UNIQUE_VERLETZUNG) return { ok: false, error: MELDUNG_VERGEBEN };
-    return { ok: false, error: error.message };
+    return { ok: false, error: fehlerMeldung(error.message) };
   }
-  if (!data) return { ok: false, error: "Training nicht gefunden." };
+  // Defensiv: Ein geglückter Insert liefert die Zeile, ein fehlendes Recht
+  // einen Fehler — einen dritten Ausgang gibt es nicht. Der Zweig steht
+  // trotzdem, weil `maybeSingle()` `null` zulässt und ein stiller Erfolg ohne
+  // Gruppe das Schlimmere wäre.
+  if (!data) return { ok: false, error: NICHT_MOEGLICH };
 
   revalidiereTraining(trainingId);
   return { ok: true, gruppe: { id: data.id, name: data.name } };
@@ -91,7 +99,7 @@ export async function benenneGruppe(
     .select("training_id")
     .eq("id", gruppeId)
     .maybeSingle();
-  if (leseFehler) return { ok: false, error: leseFehler.message };
+  if (leseFehler) return { ok: false, error: fehlerMeldung(leseFehler.message) };
   if (!gruppe) return { ok: false, error: "Gruppe nicht gefunden." };
 
   const getrimmt = name.trim();
@@ -110,7 +118,7 @@ export async function benenneGruppe(
     .maybeSingle();
   if (error) {
     if (error.code === UNIQUE_VERLETZUNG) return { ok: false, error: MELDUNG_VERGEBEN };
-    return { ok: false, error: error.message };
+    return { ok: false, error: fehlerMeldung(error.message) };
   }
   if (!data) return { ok: false, error: "Gruppe nicht gefunden." };
 
@@ -132,7 +140,7 @@ export async function entferneGruppe(gruppeId: string): Promise<TrainingActionRe
     .eq("id", gruppeId)
     .select("training_id")
     .maybeSingle();
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: fehlerMeldung(error.message) };
   if (!data) return { ok: false, error: "Gruppe nicht gefunden." };
 
   revalidiereTraining(data.training_id);
@@ -170,7 +178,7 @@ export async function setzeGruppenfolge(
     .select("training_id")
     .eq("id", trainingExerciseId)
     .maybeSingle();
-  if (leseFehler) return { ok: false, error: leseFehler.message };
+  if (leseFehler) return { ok: false, error: fehlerMeldung(leseFehler.message) };
   if (!fassung) return { ok: false, error: "Übung nicht gefunden." };
 
   const { error } = await supabase.rpc("setze_gruppenfolge", {

@@ -233,7 +233,7 @@ export function eigeneBildPfade(
 /** Das Suffix, an dem der USER die Kopie einer eigenen Übung erkennt (#171
  *  AK 3). Es nennt die Quelle bewusst nicht — es sagt «das ist eine Kopie»,
  *  nicht «das ist eine Kopie von X». */
-export const KOPIE_SUFFIX = " (Kopie)";
+const KOPIE_SUFFIX = " (Kopie)";
 
 /** Der Name einer Kopie. Das Suffix wird IMMER angehängt, auch wenn der Name es
  *  schon trägt: die Kopie einer Kopie heisst „X (Kopie) (Kopie)" (PO-Entscheid).
