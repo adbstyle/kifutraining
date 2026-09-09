@@ -39,6 +39,7 @@ export function DurchlaufEtage({
   gruppen,
   wechselGesamt,
   warnung,
+  zeit,
   onFolge,
 }: {
   /** Für die a11y-Namen: derselbe Chip steht an jeder Übung des Hauptteils. */
@@ -52,6 +53,8 @@ export function DurchlaufEtage({
   wechselGesamt: number;
   /** Der Konflikt-Grund an einer zugewiesenen Gruppe, sonst `undefined`. */
   warnung: (gruppeId: string) => string | undefined;
+  /** Die Zeitsumme einer Gruppe in Kurzform (`zeitKurz`) — «40 min» oder «—». */
+  zeit: (gruppeId: string) => string;
   /** Die neue Folge — Zuweisen, Umsortieren und Entfernen sind dasselbe. */
   onFolge: (next: string[]) => void;
 }) {
@@ -215,8 +218,10 @@ export function DurchlaufEtage({
             className="right-0"
             items={offen.map((g) => ({
               label: g.name,
-              // Die Zeitsumme der Gruppe steht hier ab Story #151 als
-              // `trailing` — am Ort der Entscheidung.
+              // Die Zeitsumme am Ort der Entscheidung (Story #151 AK 3): Wer
+              // eine Gruppe zuweist, will die nehmen, die bisher am wenigsten
+              // zu tun hatte — dafür muss er nicht erst zur Gruppenliste hoch.
+              trailing: zeit(g.id),
               onSelect: () => fuegeHinzu(g),
             }))}
           />

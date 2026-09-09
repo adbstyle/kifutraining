@@ -12,6 +12,7 @@ import { GruppenAbschnitt, GruppenKnopf } from "./GruppenAbschnitt";
 import { DurchlaufEtage } from "./DurchlaufEtage";
 import { KonfliktListe } from "./KonfliktListe";
 import { useGruppenModell } from "./useGruppenModell";
+import { zeitKurz, zeitText } from "@/lib/gruppen";
 import type { ZeilenKontext } from "./ExerciseList";
 import { GESAMTDAUER_JUNIOREN, type Einordnung } from "@/lib/junioren";
 import {
@@ -108,10 +109,18 @@ export function TrainingEditor({
     melde: setNotice,
   });
 
+  /** Die Dauer einer Zuordnung setzen oder leeren (Story #11, #151 AK 6).
+   *  Optimistisch mit Rücknahme: Wird die Änderung abgelehnt — am Auffangen,
+   *  an einer inzwischen entfernten Zuordnung —, stünde sonst eine Dauer im
+   *  Editor, die nie gespeichert wurde, und die Summen rechneten mit ihr. */
   function changeDuration(item: TrainingExerciseItem, next: number | null) {
+    const vorher = item.durationMin;
     setDurations((prev) => ({ ...prev, [item.id]: next }));
     startTransition(async () => {
-      await setExerciseDuration(item.id, next);
+      const r = await setExerciseDuration(item.id, next);
+      if (r.ok) return;
+      setDurations((prev) => ({ ...prev, [item.id]: vorher }));
+      setNotice(r.error ?? "Speichern fehlgeschlagen.");
     });
   }
 
@@ -260,6 +269,7 @@ export function TrainingEditor({
     abschnitt: zeigeGruppen ? (
       <GruppenAbschnitt
         gruppen={modell.gruppen}
+        zeit={(id) => zeitText(modell.zeiten.get(id))}
         defaultOpen={gruppenOffen}
         warnung={(id) => modell.befund.gruppenWarnung.get(id)}
         onAnlegen={modell.anlegen}
@@ -288,9 +298,11 @@ export function TrainingEditor({
               ? modell.befund.gruppenWarnung.get(gruppeId)
               : undefined
           }
+          zeit={(gruppeId) => zeitKurz(modell.zeiten.get(gruppeId))}
           onFolge={(next) => modell.setzeFolge(item.id, next)}
         />
       ),
+    dauerWarnung: (item) => modell.befund.dauerWarnung.has(item.id),
     onDuration: changeDuration,
     onMove: move,
     onRemove: remove,

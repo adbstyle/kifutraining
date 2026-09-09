@@ -651,7 +651,7 @@ export async function deleteTraining(trainingId: string): Promise<void> {
 
 // ── Story #11: Dauer je Zuordnung erfassen/ändern/entfernen ──────────────────
 
-/** Dauer einer Zuordnung setzen (Vielfaches von 5 min) oder entfernen (null).
+/** Dauer einer Zuordnung setzen (ganze Minuten ab 0) oder entfernen (null).
  *  Persistiert unmittelbar (Story #11 AC1/AC2). RLS stellt sicher, dass nur der
  *  Eigentümer schreibt. */
 export async function setExerciseDuration(
@@ -664,8 +664,11 @@ export async function setExerciseDuration(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
 
-  if (minutes !== null && (!Number.isInteger(minutes) || minutes < 0 || minutes % 5 !== 0))
-    return { ok: false, error: "Dauer muss ein Vielfaches von 5 Minuten sein." };
+  // Jede ganze Zahl ab 0 (PO-Entscheid 2026-09-08, Story #151). Die frühere
+  // Fünferschranke ist weg; die Datenbank kannte sie ohnehin nie — ihr CHECK an
+  // `duration_min` verlangt bloss `>= 0`.
+  if (minutes !== null && (!Number.isInteger(minutes) || minutes < 0))
+    return { ok: false, error: "Die Dauer muss eine ganze Zahl in Minuten sein." };
 
   // Trust Boundary: Das „Auffangen" trägt keine Dauer (DB-CHECK erzwingt dies;
   // hier mit klarer Meldung statt Constraint-Fehler abfangen). Gefragt wird die

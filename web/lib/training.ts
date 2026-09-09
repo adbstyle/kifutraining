@@ -110,8 +110,15 @@ export const LEER_HINWEIS: Record<string, string> = {
  *  einzigen bereits bestehenden Textbegrenzung der Applikation. */
 export const ZIEL_MAX = 200;
 
-/** Granularität der Dauer-Eingabe in Minuten (Story #11 AC1). */
-export const DAUER_SCHRITT = 5;
+/** Granularität der Dauer-Eingabe in Minuten — die Schrittweite der Pfeiltasten
+ *  am Dauerfeld.
+ *
+ *  Einerschritte seit dem PO-Entscheid vom 2026-09-08 (Story #151, überholt
+ *  AK 4/5): Zulässig ist jede ganze Zahl ab 0. Die Fünferschritte aus Story #11
+ *  AC1 sind damit weg — sie stammten aus der Zeit vor der Gruppenverteilung, wo
+ *  eine Dauer eine grobe Planungsgrösse war; im Wechsel muss sie stattdessen
+ *  genau aufgehen. */
+export const DAUER_SCHRITT = 1;
 
 /** Deckt eine Übung (mit ihren Stufen) mindestens eine der Trainings-Stufen ab?
  *  Trägt das Training keine Stufe, gibt es keinen Abgleich (immer abgedeckt). */

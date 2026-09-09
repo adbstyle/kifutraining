@@ -79,9 +79,13 @@ Hauptteil im Juniorenfussball. Ein Teil, der selbst ein einziger Block ist — A
 Einleitung, Ausklang, Abschluss —, bleibt ungeteilt; dort hängt der Hinzufügen-Knopf am Teil.
 
 Innerhalb eines Blocks lässt sich die Reihenfolge ändern. Jeder Übung ausser im Auffangen kann
-eine Dauer in Fünf-Minuten-Schritten gegeben werden — das gilt in beiden Altersstufen, denn
-beide haben ein Auffangen. Das Training summiert laufend mit und weist gesondert aus, wie viele
-Übungen noch ohne Zeitangabe sind; das Auffangen bleibt in beiden Rechnungen aussen vor.
+eine Dauer gegeben werden — das gilt in beiden Altersstufen, denn beide haben ein Auffangen. Die
+Dauer steht als Zahlenfeld an der Übung und nimmt jede ganze Zahl an Minuten ab 0; die
+Pfeiltasten des Felds gehen in Einerschritten. Eingetragen wird sie beim Verlassen des Felds und
+mit Enter. Eine Eingabe, die keine ganze Zahl ab 0 ist, bleibt am Feld stehen und wird nicht
+gespeichert; das leere Feld heisst «ohne Dauer». Das Training summiert laufend mit und weist
+gesondert aus, wie viele Übungen noch ohne Zeitangabe sind; das Auffangen bleibt in beiden
+Rechnungen aussen vor.
 
 Ändert der Trainer die Alterskategorien, prüft die Anwendung, ob die bereits zugeordneten
 Übungen noch dazu passen, und benennt die abweichenden. Behalten oder entfernen entscheidet er.
@@ -146,12 +150,21 @@ Dieselbe Gruppe darf an beliebig vielen Übungen stehen, an einer Übung aber nu
 wird allein der Hauptteil; ausserhalb gibt es keinen Durchlauf. Dauer und Reihenfolge der Übungen
 bleiben vom Zuweisen unberührt.
 
+Jede Gruppe trägt in ihrer Zeile, wie lange sie im Hauptteil beschäftigt ist: die Summe der
+Dauern aller Übungen, die sie durchläuft — im Juniorenfussball über beide Hauptteil-Blöcke
+hinweg. Dieselbe Summe steht im Menü „Gruppe hinzufügen" neben jeder Gruppe, dort also am Ort der
+Entscheidung. Sie geht nach jedem Zuweisen, jeder Dauer-Änderung und jedem Entfernen sofort mit.
+Übungen ohne erfasste Dauer zählen nicht mit; trägt keine der zugewiesenen Übungen eine Dauer
+oder ist der Gruppe noch keine zugewiesen, steht dort ein Gedankenstrich statt einer Null. Eine
+Übung, an der keine Gruppe steht, machen alle gemeinsam und zählt darum bei keiner Gruppe.
+
 Zwei Dinge meldet die Anwendung: eine Gruppe, die im selben Wechsel an zwei Übungen steht — sie
 kann nicht an zwei Orten gleichzeitig sein —, und Übungen desselben Wechsels, die ungleich lang
 sind. Beides steht als Zeile am Fuss der Hauptteil-Karte; die Doppelbelegung färbt zusätzlich den
-betroffenen Chip und erscheint in der Zeile der Gruppe. Gemeldet wird es, gesperrt nicht:
-Speichern, Weiterbearbeiten und Veröffentlichen bleiben unberührt. Eine Übung ohne erfasste Dauer
-zählt beim Längenvergleich nicht mit.
+betroffenen Chip und erscheint hinter der Zeitsumme in der Zeile der Gruppe, die ungleiche Länge
+den Rahmen des betroffenen Dauerfelds. Gemeldet wird es, gesperrt nicht: Speichern,
+Weiterbearbeiten und Veröffentlichen bleiben unberührt. Eine Übung ohne erfasste Dauer zählt beim
+Längenvergleich nicht mit.
 
 Zwei Vorgänge lösen eine Rückfrage aus, weil dabei Zuweisungen wegfallen, die nirgends sonst
 stehen: das Entfernen einer Gruppe, die noch Übungen zugewiesen ist, und das Entfernen einer
@@ -244,8 +257,13 @@ sich für ein Manual und plant darin. Für den Juniorenfussball gibt es zudem ke
 Trainingsübersicht trennt die Altersstufen nicht — sie stehen zusammen in einer Liste,
 eingegrenzt wird über die Alterskategorie.
 
+Teil- und Gesamtdauer rechnen die Übungen weiterhin nacheinander. Bei einem auf Gruppen
+verteilten Hauptteil entsprechen sie darum nicht der tatsächlichen Länge des Trainings: Was
+mehrere Gruppen gleichzeitig tun, steht in der Summe mehrfach.
+
 Die Gruppenverteilung steht heute nur beim Zusammenstellen: Die Durchführen-Ansicht und der
-Druck zeigen weder den Durchlauf einer Übung noch die Wechsel. Wie lange ein Wechsel dauert, gibt
+Druck zeigen weder den Durchlauf einer Übung noch die Wechsel, und die Zeitsumme einer Gruppe
+erscheint weder dort noch in den Übersichten. Wie lange ein Wechsel dauert, gibt
 die Anwendung nicht vor, und ein Signal zum Wechseln gibt sie ebenso wenig. Unbesetzte Übungen
 und ungleich auf die Gruppen verteilte Übungen meldet sie nicht — beides kann gewollt sein —,
 und die Kinderzahl einer Übung gleicht sie nicht mit der Verteilung ab. Bearbeiten zwei

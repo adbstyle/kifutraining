@@ -45,6 +45,7 @@ import {
   User,
   Pencil,
   Info,
+  Clock,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
@@ -695,6 +696,59 @@ export default function Styleguide() {
             placeholder="Kinder"
             error
             supportingText="Bitte eine Zahl ≥ 1 eingeben."
+          />
+        </div>
+
+        <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
+          Befund am Feld (<code>warning</code>) und gemischter Supporting-Text
+        </h3>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Zwei Ergänzungen aus der Gruppenverteilung (Story #151).{" "}
+          <code>warning</code> färbt den Rahmen bernstein: Der Wert ist
+          gespeichert und richtig erfasst, geht aber mit anderen nicht auf —
+          etwa eine Dauer in einem Wechsel, dessen Übungen ungleich lang sind.
+          Das ist kein <code>error</code>: Es gibt nichts zu berichtigen, bevor
+          gespeichert werden kann, und beides in dieselbe Rolle zu legen nähme
+          dem Rot seine Bedeutung. Am Rahmen gilt die Rangfolge{" "}
+          <code>error</code> &gt; <code>warning</code> &gt; Fokus: Der Fokus
+          färbt nur den ruhigen Rahmen um und zeigt sich sonst über seine
+          Dicke, damit ein Befund nicht ausgerechnet beim Hinschauen
+          verschwindet. Bernstein bleibt dabei auf Rahmen, Text und Icon — nie
+          als Fläche. Weil der Rahmen allein nur sehend wahrnehmbar ist, gehört
+          zu <code>warning</code> ein Hinweis für Screenreader (am Dauerfeld
+          ein <code>sr-only</code>-Satz per <code>aria-describedby</code>).
+        </p>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          <code>supportingText</code> nimmt seit derselben Story einen{" "}
+          <code>ReactNode</code>, weil unter der Gruppenzeile zwei Aussagen in
+          einer Zeile stehen: die Zeitsumme (eine Auskunft) und dahinter der
+          Konflikt (ein Befund). Nur der zweite Teil ist bernstein — die ganze
+          Zeile zu färben liesse nicht mehr erkennen, was daran gemeldet ist.
+        </p>
+        <div className="grid max-w-md gap-6">
+          <TextField
+            dense
+            label="Dauer in Minuten"
+            type="number"
+            min={0}
+            defaultValue="15"
+            placeholder="min"
+            leadingIcon={Clock}
+            className="w-28"
+            warning
+          />
+          <TextField
+            label="Bezeichnung"
+            defaultValue="Gruppe 1"
+            supportingText={
+              <>
+                Zugewiesen 40 min
+                <span className="text-warning">
+                  {" "}
+                  · Steht im 1. Wechsel an zwei Übungen.
+                </span>
+              </>
+            }
           />
         </div>
 

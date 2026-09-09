@@ -6,7 +6,7 @@ import { TriangleAlert, ChevronUp, ChevronDown, Trash2, Pencil } from "lucide-re
 import { KategorieChip, Tooltip } from "@/components/ui";
 import { ExerciseThumb } from "../ExerciseThumb";
 import { InBibliothekButton } from "../InBibliothekButton";
-import { DurationStepper } from "../DurationStepper";
+import { DauerFeld } from "./DauerFeld";
 import { stufenAbgedeckt } from "@/lib/training";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
 
@@ -26,6 +26,7 @@ export function TrainingExerciseRow({
   trainingId,
   trainingStufen,
   showDuration,
+  dauerWarnung,
   etage,
   onDuration,
   onMove,
@@ -38,6 +39,9 @@ export function TrainingExerciseRow({
   trainingId: string;
   trainingStufen: string[];
   showDuration: boolean;
+  /** Steht die Dauer dieser Übung in einem ungleich langen Wechsel? Färbt den
+   *  Rahmen des Dauerfelds bernstein (Story #150 `dauerWarnung`). */
+  dauerWarnung?: boolean;
   /** Das zweite Geschoss der Zeile; `null`, solange es nichts zu zeigen gibt. */
   etage?: ReactNode;
   onDuration: (next: number | null) => void;
@@ -105,40 +109,44 @@ export function TrainingExerciseRow({
           )}
         </span>
 
-        {showDuration && (
-          <>
-            <span className="shrink-0">
-              <DurationStepper value={item.durationMin} onChange={onDuration} />
-            </span>
-            <span
-              className="ml-0.5 h-6 w-px shrink-0 bg-outline-variant sm:ml-1"
-              aria-hidden
+        {/* Aktionen und Dauer stehen übereinander, nicht nebeneinander: Das
+            Dauerfeld ist ein 48px hohes Feld, in einer Reihe mit drei runden
+            Knöpfen liesse es die Zeile auseinanderfallen. Rechtsbündig, damit
+            die Felder aller Zeilen eine Kante bilden. */}
+        <span className="flex shrink-0 flex-col items-end gap-2">
+          <span className="flex items-center">
+            <InBibliothekButton fassungId={item.id} name={item.name} />
+
+            <Tooltip label="Übung bearbeiten">
+              <Link
+                href={`/training/${trainingId}/uebung/${item.id}/edit`}
+                aria-label={`${item.name} bearbeiten`}
+                className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/8 hover:text-primary"
+              >
+                <Pencil size={16} strokeWidth={2.5} aria-hidden />
+              </Link>
+            </Tooltip>
+
+            <Tooltip label="Übung entfernen">
+              <button
+                type="button"
+                aria-label="Übung entfernen"
+                onClick={onRemove}
+                className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-error/10 hover:text-error"
+              >
+                <Trash2 size={16} strokeWidth={2.5} aria-hidden />
+              </button>
+            </Tooltip>
+          </span>
+
+          {showDuration && (
+            <DauerFeld
+              value={item.durationMin}
+              warnung={dauerWarnung}
+              onChange={onDuration}
             />
-          </>
-        )}
-
-        <InBibliothekButton fassungId={item.id} name={item.name} />
-
-        <Tooltip label="Übung bearbeiten">
-          <Link
-            href={`/training/${trainingId}/uebung/${item.id}/edit`}
-            aria-label={`${item.name} bearbeiten`}
-            className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/8 hover:text-primary"
-          >
-            <Pencil size={16} strokeWidth={2.5} aria-hidden />
-          </Link>
-        </Tooltip>
-
-        <Tooltip label="Übung entfernen">
-          <button
-            type="button"
-            aria-label="Übung entfernen"
-            onClick={onRemove}
-            className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-error/10 hover:text-error"
-          >
-            <Trash2 size={16} strokeWidth={2.5} aria-hidden />
-          </button>
-        </Tooltip>
+          )}
+        </span>
       </div>
 
       {etage}
