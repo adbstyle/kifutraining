@@ -215,6 +215,13 @@ beide Ansichten nicht, sie ordnet ein und hilft auf dem Platz nicht weiter. Der 
 dasselbe als zusammenhängende, druckfertige Seite zum Mitnehmen, das Ziel im Kopf. Leere Blöcke
 erscheinen in beiden Ansichten nicht.
 
+Gleich unter dem Übungstitel steht, was für genau dieses Training gilt: zuerst der Durchlauf,
+darunter die Notiz. Der Durchlauf nennt die zugewiesenen Gruppen in ihrer Reihenfolge, durch
+Pfeile verbunden — als schlichte Textzeile, ohne Chips und ohne Farbe, denn auf dem Platz und
+auf Papier zählt das Lesen. Übungen ohne Zuweisung zeigen die Zeile gar nicht; ihr Fehlen ist
+dort selbsterklärend. Zeitsummen und Konflikte bleiben beim Zusammenstellen. Im Druck bleibt
+eine Übung samt Durchlauf und Notiz auf einer Seite zusammen, solange sie darauf Platz hat.
+
 ## Veröffentlichen
 
 Ein Training ist entweder ein Entwurf oder öffentlich; der Trainer schaltet zwischen den beiden
@@ -279,10 +286,13 @@ Teil- und Gesamtdauer rechnen die Übungen weiterhin nacheinander. Bei einem auf
 verteilten Hauptteil entsprechen sie darum nicht der tatsächlichen Länge des Trainings: Was
 mehrere Gruppen gleichzeitig tun, steht in der Summe mehrfach.
 
-Die Gruppenverteilung steht heute nur beim Zusammenstellen: Die Durchführen-Ansicht und der
-Druck zeigen weder den Durchlauf einer Übung noch die Wechsel, und die Zeitsumme einer Gruppe
-erscheint weder dort noch in den Übersichten. Wie lange ein Wechsel dauert, gibt
-die Anwendung nicht vor, und ein Signal zum Wechseln gibt sie ebenso wenig. Unbesetzte Übungen
+Auf dem Platz und im Druck steht der Durchlauf einer Übung, mehr aber nicht: Die Wechsel als
+solche erscheinen dort nicht, ebenso wenig die Zeitsumme einer Gruppe oder eine Meldung zu
+Konflikten — beides bleibt beim Zusammenstellen, und in den Übersichten steht die Summe
+ohnehin nirgends. Einen Auszug für eine einzelne Gruppe oder für eine betreuende Person gibt es
+weder in der Durchführen-Ansicht noch im Druck. Wie lange ein Wechsel dauert, gibt die
+Anwendung nicht vor, ein Signal zum Wechseln gibt sie ebenso wenig, und heruntergezählt wird
+nichts. Unbesetzte Übungen
 und ungleich auf die Gruppen verteilte Übungen meldet sie nicht — beides kann gewollt sein —,
 und die Kinderzahl einer Übung gleicht sie nicht mit der Verteilung ab. Bearbeiten zwei
 Mitglieder desselben Teams dieselbe Stelle gleichzeitig — die Verteilung ebenso wie die Notiz einer

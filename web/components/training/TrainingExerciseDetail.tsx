@@ -1,4 +1,4 @@
-import { Clock } from "lucide-react";
+import { ArrowRight, Clock } from "lucide-react";
 import {
   KategorieChip,
   MethodischerFahrplan,
@@ -64,7 +64,48 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
         )}
       </div>
 
-      {/* Die Notiz gleich unter dem Titel (Story #152 AK 4): Sie sagt, was für
+      {/* Der Durchlauf zuoberst (Stories #153/#154): Er sagt, WER als Nächstes
+          an diese Übung kommt — Durchführungswissen wie die Dauer, darum über
+          den Kategorie-Plaketten und nicht im umbrechenden Eckdaten-Fluss unter
+          dem Bild. Übungen ohne Zuweisung zeigen die Zeile gar nicht: Auf dem
+          Platz ist ihr Fehlen selbsterklärend. */}
+      {item.gruppen.length > 0 && (
+        <div className="mb-1.5 flex gap-3">
+          {/* Die sichtbare Beschriftung benennt zugleich die Liste — so heisst
+              sie auch für Screenreader „Durchlauf", ohne dass das Wort doppelt
+              vorgelesen wird. */}
+          <span
+            id={`durchlauf-${item.id}`}
+            className="type-label-small w-[78px] shrink-0 pt-1 text-on-surface-variant"
+          >
+            Durchlauf
+          </span>
+          <ol
+            aria-labelledby={`durchlauf-${item.id}`}
+            className="flex flex-wrap items-baseline gap-x-2"
+          >
+            {item.gruppen.map((g, i) => (
+              // Der Pfeil steckt im nachfolgenden Listenpunkt statt in einem
+              // eigenen: Optisch dasselbe, aber die Liste zählt genau so viele
+              // Einträge, wie Gruppen durchlaufen. Er trägt keinen Namen —
+              // vorgelesen wird die Reihenfolge, nicht die Trenner.
+              <li key={g.id} className="type-body-large text-on-surface">
+                {i > 0 && (
+                  <ArrowRight
+                    size={14}
+                    strokeWidth={2}
+                    aria-hidden
+                    className="mr-2 inline-block align-middle text-on-surface-variant"
+                  />
+                )}
+                {g.name}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {/* Die Notiz gleich hinter dem Durchlauf (Story #152 AK 4): Sie sagt, was für
           GENAU dieses Training gilt — etwa wer die Übung betreut —, und das
           gehört gelesen, bevor der Blick zu Plaketten und Ablauf wandert. Der
           Text selbst steht in Fliesstext-Typografie und nicht in der des
