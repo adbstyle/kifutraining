@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 /* Das Diagramm einer Fassung zeichnen (Story 5 AK 4). Derselbe Editor wie für
    Bibliotheks-Übungen; gespeichert wird an der Fassung, das Schreibrecht hängt
    am Training. Der Vorlagen-Fundus bleibt hier bewusst leer: die Fassung bringt
-   ihr Diagramm aus der Übernahme mit, und das Übernehmen einer weiteren
-   Diagramm-Vorlage ist Sache der Bibliothek. */
+   ihr Diagramm aus der Übernahme ins Training mit, und das Kopieren einer
+   weiteren Diagramm-Vorlage ist Sache der Bibliothek. */
 export default async function FassungDiagrammPage({
   params,
 }: {

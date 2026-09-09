@@ -26,7 +26,7 @@ export function VorlagePicker({
 }: {
   vorlagen: VorlageItem[];
   zielHatDiagramm: boolean;
-  /** Übernimmt die Vorlage. Gibt null bei Erfolg zurück, sonst einen
+  /** Kopiert die Vorlage. Gibt null bei Erfolg zurück, sonst einen
    *  Fehlertext, der im Dialog angezeigt wird (statt blind zu schliessen). */
   onPick: (vorlage: VorlageItem) => Promise<string | null> | string | null;
   triggerLabel: string;
@@ -48,7 +48,7 @@ export function VorlagePicker({
 
   if (vorlagen.length === 0) return null;
 
-  async function uebernehmen(vorlage: VorlageItem) {
+  async function kopieren(vorlage: VorlageItem) {
     setBusy(true);
     try {
       const fehlertext = await onPick(vorlage);
@@ -68,7 +68,7 @@ export function VorlagePicker({
 
   function waehlen(vorlage: VorlageItem) {
     if (zielHatDiagramm) setBestaetigen(vorlage);
-    else void uebernehmen(vorlage);
+    else void kopieren(vorlage);
   }
 
   return (
@@ -92,7 +92,7 @@ export function VorlagePicker({
           setSuche("");
           setFehler(null);
         }}
-        title="Vorlage übernehmen"
+        title="Vorlage kopieren"
         className="w-[min(48rem,calc(100vw-2rem))]"
       >
         {fehler && (
@@ -149,7 +149,7 @@ export function VorlagePicker({
             </Button>
             <Button
               type="button"
-              onClick={() => bestaetigen && uebernehmen(bestaetigen)}
+              onClick={() => bestaetigen && kopieren(bestaetigen)}
               disabled={busy}
             >
               Ersetzen
