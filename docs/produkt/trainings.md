@@ -142,8 +142,9 @@ zählt die eigene bisherige Bezeichnung nicht als vergeben. Eine Bezeichnung ist
 Zeichen lang und darf nicht leer sein. Was nicht geht, sagt die Anwendung am Feld selbst.
 
 Eine Gruppe gehört zu genau dem Training, an dem sie angelegt wurde. In ein anderes Training
-wandert sie nicht, auch nicht in ein bestehendes. Die Übungen des Trainings bleiben vom Anlegen
-und Umbenennen von Gruppen unberührt.
+wandert sie nicht, auch nicht in ein bestehendes; wird ein ganzes Training kopiert, bekommt die
+Kopie eigene Gruppen gleichen Namens. Die Übungen des Trainings bleiben vom Anlegen und
+Umbenennen von Gruppen unberührt.
 
 ## Gruppenverteilung im Hauptteil
 
@@ -189,6 +190,16 @@ stehen: das Entfernen einer Gruppe, die noch Übungen zugewiesen ist, und das En
 bleibt. Ohne Zuweisungen wird ohne Rückfrage entfernt. Verschiebt der Trainer eine Übung aus dem
 Hauptteil in einen anderen Teil, fragt die Anwendung nicht nach — dort gelten keine Gruppen, und
 die Zuweisungen fallen still weg.
+
+Kopiert jemand ein ganzes Training — ins Team stellen, ein Team-Training zu sich übernehmen, ein
+öffentliches Training übernehmen, eine angesetzte Einheit ein zweites Mal ansetzen —, reisen
+Gruppen, Durchlauf und Notizen mit: Die Kopie führt dieselben Bezeichnungen in derselben
+Reihenfolge, verteilt die Übungen des Hauptteils auf dieselben Wechsel und trägt dieselben
+Notizen. Neu verteilt werden muss nichts. Die Kopie ist dabei eigenständig: Ihre Gruppen sind
+eigene Gruppen, und wer in ihr umbenennt, verschiebt, zuweist oder entfernt, lässt das Original
+unberührt — und umgekehrt. Nicht mitgenommen wird die Verteilung, wenn jemand eine einzelne
+Fassung in seine Bibliothek übernimmt: Dort steht die Übung für sich, ohne Gruppen und ohne
+Notiz.
 
 ## Jede Übung im Training ist eine eigene Fassung
 

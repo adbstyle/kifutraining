@@ -22,8 +22,11 @@ seinen Trainings und Terminen, nach ausdrücklicher Bestätigung, die deren Anza
 Ein Training gehört entweder einer Person oder einem Team, nie beiden. Geteilt wird nie,
 kopiert immer: Wer ein eigenes Training ins Team stellt, erzeugt eine eigenständige Kopie —
 das persönliche Original bleibt unberührt, und spätere Änderungen wirken in keine Richtung.
-Dasselbe gilt umgekehrt beim Übernehmen eines Team-Trainings zu sich. Ein Training lässt sich
-auch direkt im Team anlegen; es gehört dann von Beginn an dem Team. Dabei gelten dieselben
+Dasselbe gilt umgekehrt beim Übernehmen eines Team-Trainings zu sich. Eine Kopie ist dabei
+vollständig: Sie führt neben den Übungen samt Bild und Diagramm auch die Gruppen des Trainings,
+deren Verteilung im Hauptteil und die Notizen der Übungen — das Team findet dieselbe Einheit vor
+und muss nichts davon neu eintragen. Ein Training lässt sich auch direkt im Team anlegen; es
+gehört dann von Beginn an dem Team. Dabei gelten dieselben
 Pflichtangaben wie beim persönlichen Anlegen: Name, Altersstufe und mindestens eine
 Alterskategorie der gewählten Altersstufe. Auch hier steht die Altersstufe danach fest.
 
@@ -51,9 +54,9 @@ zwischen den Abschnitten hin und her schieben könnte.
 
 Ein Training trägt höchstens einen Termin. Wer dieselbe Einheit ein zweites Mal ansetzt,
 bekommt eine eigenständige Kopie mit eigenem Termin — sowohl aus dem Trainingsplan heraus als
-auch direkt aus dem Trainingsbestand. Der Grund: Jedes Datum bleibt bei dem Stand, mit dem es
-tatsächlich durchgeführt wurde, und eine Anpassung für die nächste Woche verändert die
-Vergangenheit nicht. Serientermine aus einem Rhythmus gibt es nicht; jedes Ansetzen ist ein
+auch direkt aus dem Trainingsbestand; Gruppen, Verteilung und Notizen sind darin dieselben.
+Der Grund: Jedes Datum bleibt bei dem Stand, mit dem es tatsächlich durchgeführt wurde, und eine
+Anpassung für die nächste Woche verändert die Vergangenheit nicht. Serientermine aus einem Rhythmus gibt es nicht; jedes Ansetzen ist ein
 bewusster Einzelschritt.
 
 Einen Abgesagt-Zustand kennt die Anwendung nicht — Ausfälle stehen in der Bemerkung oder der
