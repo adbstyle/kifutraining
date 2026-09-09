@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidiereTraining } from "@/lib/revalidate";
 import { MELDUNG_VERGEBEN, nameProblem } from "@/lib/gruppen";
+import { fehlerMeldung } from "@/lib/training-bedingungen";
 import type { TrainingActionResult } from "@/lib/actions/trainings";
 
 /**
@@ -135,5 +136,49 @@ export async function entferneGruppe(gruppeId: string): Promise<TrainingActionRe
   if (!data) return { ok: false, error: "Gruppe nicht gefunden." };
 
   revalidiereTraining(data.training_id);
+  return { ok: true };
+}
+
+/**
+ * Die Gruppenfolge einer Übung setzen (Story #150 AK 1/2/3).
+ *
+ * Zuweisen, Umsortieren und Entfernen sind hier EINE Aktion: aus Sicht der
+ * Daten ist jedes davon eine neue Reihenfolge. Die RPC ersetzt die Folge
+ * vollständig — ein Umsortieren als Kette von Einzel-Updates käme unterwegs an
+ * der Eindeutigkeit der Position vorbei.
+ *
+ * `gruppeIds` sind die Gruppen in Wechselreihenfolge; die leere Liste heisst
+ * «alle gemeinsam». Was die Datenbank abweist — eine Übung ausserhalb des
+ * Hauptteils, eine fremde Gruppe, dieselbe Gruppe zweimal —, übersetzt
+ * `fehlerMeldung` in einen Satz.
+ */
+export async function setzeGruppenfolge(
+  trainingExerciseId: string,
+  gruppeIds: string[],
+): Promise<TrainingActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+
+  // Das Training der Fassung: es sagt, welche Ansichten danach neu zu
+  // validieren sind. Findet die RLS die Zeile nicht, ist hier Schluss — sonst
+  // meldete erst die RPC einen Fehler ohne Bezug.
+  const { data: fassung, error: leseFehler } = await supabase
+    .from("training_exercises")
+    .select("training_id")
+    .eq("id", trainingExerciseId)
+    .maybeSingle();
+  if (leseFehler) return { ok: false, error: leseFehler.message };
+  if (!fassung) return { ok: false, error: "Übung nicht gefunden." };
+
+  const { error } = await supabase.rpc("setze_gruppenfolge", {
+    p_te: trainingExerciseId,
+    p_gruppen: gruppeIds,
+  });
+  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+
+  revalidiereTraining(fassung.training_id);
   return { ok: true };
 }

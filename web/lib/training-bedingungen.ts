@@ -165,12 +165,33 @@ function schemaMeldung(message: string): string | null {
   return null;
 }
 
+/** Die Marker, mit denen der Trigger `teg_guard` eine unzulässige
+ *  Gruppen-Zuweisung meldet (Story #150), und ihr Klartext. Beide Fälle sieht
+ *  ein Trainer nur, wenn er die Oberfläche umgeht — sie bietet Gruppen allein
+ *  im Hauptteil an und kennt nur die Gruppen des eigenen Trainings. */
+const GRUPPEN_MARKER: [string, string][] = [
+  ["GRUPPE_NUR_HAUPTTEIL", "Gruppen lassen sich nur im Hauptteil verteilen."],
+  ["GRUPPE_FREMDES_TRAINING", "Diese Gruppe gehört zu einem anderen Training."],
+];
+
+/** Die Meldung zu einer abgewiesenen Gruppen-Zuweisung, sonst `null`. */
+function gruppenMeldung(message: string): string | null {
+  for (const [marker, klartext] of GRUPPEN_MARKER)
+    if (message.includes(marker)) return klartext;
+  return null;
+}
+
 /** Die Meldung zu einem DB-Fehler: die Bedingungs-Erklärung, wenn es eine ist,
  *  sonst der Originaltext. Für jede Action, die ein Training oder eine seiner
  *  Fassungen so ändern könnte, dass ein öffentliches Training unter die
  *  Bedingungen fiele. */
 export function fehlerMeldung(message: string): string {
-  return bedingungsFehler(message) ?? schemaMeldung(message) ?? message;
+  return (
+    bedingungsFehler(message) ??
+    schemaMeldung(message) ??
+    gruppenMeldung(message) ??
+    message
+  );
 }
 
 /** Welche Veröffentlichungs-Bedingungen erfüllt ein Training noch nicht?

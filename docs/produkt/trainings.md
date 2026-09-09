@@ -121,8 +121,44 @@ zählt die eigene bisherige Bezeichnung nicht als vergeben. Eine Bezeichnung ist
 Zeichen lang und darf nicht leer sein. Was nicht geht, sagt die Anwendung am Feld selbst.
 
 Eine Gruppe gehört zu genau dem Training, an dem sie angelegt wurde. In ein anderes Training
-wandert sie nicht, auch nicht in ein bestehendes. Die Übungen des Trainings bleiben vom Anlegen,
-Umbenennen und Entfernen von Gruppen unberührt.
+wandert sie nicht, auch nicht in ein bestehendes. Die Übungen des Trainings bleiben vom Anlegen
+und Umbenennen von Gruppen unberührt.
+
+## Gruppenverteilung im Hauptteil
+
+Führt ein Training Gruppen, trägt jede Übung des Hauptteils eine zweite Zeile: den Durchlauf.
+Dort steht, welche Gruppen die Übung durchlaufen und in welcher Reihenfolge — als Kette von
+Chips, durch Pfeile getrennt. Eine Gruppe kommt über den Knopf „Gruppe hinzufügen" dazu und hängt
+sich hinten an; sind alle Gruppen des Trainings zugewiesen, verschwindet der Knopf. Jeder Chip
+trägt sein eigenes Menü: nach vorne, nach hinten, aus dieser Übung nehmen. Steht keine Gruppe an
+einer Übung, heisst es „Alle gemeinsam" — die ganze Trainingsgruppe macht sie zusammen. Das ist
+eine Aussage und kein Mangel; ein Training kann Gruppen führen und trotzdem Übungen haben, die
+alle zusammen absolvieren.
+
+Die Stelle in der Kette ist ein **Wechsel**: das Zeitfenster, das über alle Übungen des
+Hauptteils dasselbe meint. Wer an drei Übungen jeweils zuerst eine Gruppe einträgt, hat diese
+drei Gruppen gleichzeitig im Einsatz. Im Juniorenfussball gilt das über beide Hauptteil-Blöcke
+hinweg: Der 1. Wechsel liegt zugleich in den Spielformen und im Spiel — die Blöcke gliedern die
+Übungen, nicht die Zeit. Der Wechsel wird nicht eigens erfasst; er folgt aus der Reihenfolge, und
+wer eine Gruppe verschiebt, verschiebt sie in einen anderen Wechsel.
+
+Dieselbe Gruppe darf an beliebig vielen Übungen stehen, an einer Übung aber nur einmal. Verteilt
+wird allein der Hauptteil; ausserhalb gibt es keinen Durchlauf. Dauer und Reihenfolge der Übungen
+bleiben vom Zuweisen unberührt.
+
+Zwei Dinge meldet die Anwendung: eine Gruppe, die im selben Wechsel an zwei Übungen steht — sie
+kann nicht an zwei Orten gleichzeitig sein —, und Übungen desselben Wechsels, die ungleich lang
+sind. Beides steht als Zeile am Fuss der Hauptteil-Karte; die Doppelbelegung färbt zusätzlich den
+betroffenen Chip und erscheint in der Zeile der Gruppe. Gemeldet wird es, gesperrt nicht:
+Speichern, Weiterbearbeiten und Veröffentlichen bleiben unberührt. Eine Übung ohne erfasste Dauer
+zählt beim Längenvergleich nicht mit.
+
+Zwei Vorgänge lösen eine Rückfrage aus, weil dabei Zuweisungen wegfallen, die nirgends sonst
+stehen: das Entfernen einer Gruppe, die noch Übungen zugewiesen ist, und das Entfernen einer
+Übung, die Gruppen im Durchlauf trägt. Beide Male nennt die Rückfrage die Anzahl und sagt, was
+bleibt. Ohne Zuweisungen wird ohne Rückfrage entfernt. Verschiebt der Trainer eine Übung aus dem
+Hauptteil in einen anderen Teil, fragt die Anwendung nicht nach — dort gelten keine Gruppen, und
+die Zuweisungen fallen still weg.
 
 ## Jede Übung im Training ist eine eigene Fassung
 
@@ -208,9 +244,13 @@ sich für ein Manual und plant darin. Für den Juniorenfussball gibt es zudem ke
 Trainingsübersicht trennt die Altersstufen nicht — sie stehen zusammen in einer Liste,
 eingegrenzt wird über die Alterskategorie.
 
-Die Gruppen eines Trainings sind heute Bezeichnungen und sonst nichts: Welche Gruppe welche
-Übung des Hauptteils durchläuft, lässt sich noch nicht festhalten, und entsprechend steht davon
-auch nichts in der Durchführen-Ansicht oder im Druck.
+Die Gruppenverteilung steht heute nur beim Zusammenstellen: Die Durchführen-Ansicht und der
+Druck zeigen weder den Durchlauf einer Übung noch die Wechsel. Wie lange ein Wechsel dauert, gibt
+die Anwendung nicht vor, und ein Signal zum Wechseln gibt sie ebenso wenig. Unbesetzte Übungen
+und ungleich auf die Gruppen verteilte Übungen meldet sie nicht — beides kann gewollt sein —,
+und die Kinderzahl einer Übung gleicht sie nicht mit der Verteilung ab. Bearbeiten zwei
+Mitglieder desselben Teams die Verteilung gleichzeitig, bemerkt die Anwendung das nicht; die
+zuletzt gespeicherte Reihenfolge gilt.
 
 Der Druck hält eine Übung zusammen, solange sie auf eine Seite passt; steht sie als erste unter
 einer Trainingsteil-Überschrift und reicht der Platz darunter nicht, bricht sie um.

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { TriangleAlert, ChevronUp, ChevronDown, Trash2, Pencil } from "lucide-react";
 import { KategorieChip, Tooltip } from "@/components/ui";
@@ -13,8 +14,10 @@ import type { TrainingExerciseItem } from "@/lib/queries/trainings";
  *  Aktionen an ihr.
  *
  *  Die Zeile ist in Geschosse gebaut, nicht als eine lange Reihe: Die Kopfzeile
- *  trägt alles, was jede Zuordnung hat, darunter ist Platz für eine weitere
- *  Zeile. Heute gibt es keine — die Zeile sieht aus wie zuvor. */
+ *  trägt alles, was jede Zuordnung hat, darunter das zweite Geschoss — im
+ *  Hauptteil der Durchlauf (Story #150). Getrennt sind die beiden durch Abstand
+ *  und nicht durch eine Haarlinie: Es ist eine Zeile, kein Kasten mit zwei
+ *  Fächern. */
 export function TrainingExerciseRow({
   item,
   index,
@@ -23,6 +26,7 @@ export function TrainingExerciseRow({
   trainingId,
   trainingStufen,
   showDuration,
+  etage,
   onDuration,
   onMove,
   onRemove,
@@ -34,6 +38,8 @@ export function TrainingExerciseRow({
   trainingId: string;
   trainingStufen: string[];
   showDuration: boolean;
+  /** Das zweite Geschoss der Zeile; `null`, solange es nichts zu zeigen gibt. */
+  etage?: ReactNode;
   onDuration: (next: number | null) => void;
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
@@ -134,6 +140,8 @@ export function TrainingExerciseRow({
           </button>
         </Tooltip>
       </div>
+
+      {etage}
     </li>
   );
 }
