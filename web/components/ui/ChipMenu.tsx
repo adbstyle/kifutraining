@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import { ChevronDown } from "lucide-react";
 import { Menu, type MenuItemDef } from "./Menu";
 import { cn } from "@/lib/cn";
@@ -28,6 +28,7 @@ import { cn } from "@/lib/cn";
      <ChipMenu label={gruppe.name} ariaLabel={`Gruppe ${gruppe.name}, Wechsel 2 von 3`}
                items={[{ label: "Nach vorne", icon: ChevronLeft, onSelect: … }]} /> */
 export function ChipMenu({
+  ref,
   label,
   items,
   leading,
@@ -37,6 +38,12 @@ export function ChipMenu({
   menuClassName,
   className,
 }: {
+  /** Ref auf den Chip selbst. Ein Chip in einer Sequenz muss von aussen
+   *  fokussierbar sein: Wer ihn per Menü verschiebt, soll ihn danach an seiner
+   *  neuen Stelle unter dem Fokus behalten — und das Verschieben rendert die
+   *  Liste neu, bevor der Fokus zurückkommt (React 19: `ref` ist eine
+   *  gewöhnliche Prop). */
+  ref?: Ref<HTMLButtonElement>;
   /** Beschriftung des Chips — in der Regel Nutzertext (z. B. ein Gruppenname). */
   label: string;
   items: MenuItemDef[];
@@ -62,7 +69,13 @@ export function ChipMenu({
   return (
     <div className={cn("relative inline-block", className)}>
       <button
-        ref={triggerRef}
+        // Zwei Interessenten an einem Element: das Menü braucht seinen Anker,
+        // der Aufrufer den Fokus. Beide bekommen dasselbe Element.
+        ref={(el) => {
+          triggerRef.current = el;
+          if (typeof ref === "function") ref(el);
+          else if (ref) ref.current = el;
+        }}
         type="button"
         disabled={disabled}
         aria-haspopup="menu"

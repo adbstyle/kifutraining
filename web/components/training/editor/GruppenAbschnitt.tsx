@@ -45,6 +45,7 @@ export function GruppenKnopf({ onOeffnen }: { onOeffnen: () => void }) {
 export function GruppenAbschnitt({
   gruppen,
   defaultOpen,
+  warnung,
   onAnlegen,
   onUmbenennen,
   onEntfernen,
@@ -53,6 +54,8 @@ export function GruppenAbschnitt({
   /** Aufgeklappt einhängen — wenn der Trainer den Abschnitt eben erst über den
    *  „Gruppen"-Knopf geöffnet hat. Wirkt nur beim Einhängen. */
   defaultOpen: boolean;
+  /** Der Konflikt-Kurztext zu einer Gruppe, sonst `undefined` (Story #150). */
+  warnung: (gruppeId: string) => string | undefined;
   /** Legt an und meldet zurück, was der Anlage im Weg stand. */
   onAnlegen: (name: string) => Antwort;
   /** Benennt um und meldet zurück, was dem Umbenennen im Weg stand. */
@@ -71,6 +74,7 @@ export function GruppenAbschnitt({
           <GruppenZeile
             key={g.id}
             gruppe={g}
+            warnung={warnung(g.id)}
             onUmbenennen={onUmbenennen}
             onEntfernen={onEntfernen}
           />
@@ -84,10 +88,12 @@ export function GruppenAbschnitt({
 /** Eine bestehende Gruppe: offenes Feld plus Entfernen-Knopf. */
 function GruppenZeile({
   gruppe,
+  warnung,
   onUmbenennen,
   onEntfernen,
 }: {
   gruppe: { id: string; name: string };
+  warnung?: string;
   onUmbenennen: (id: string, name: string) => Antwort;
   onEntfernen: (gruppe: { id: string; name: string }) => void;
 }) {
@@ -154,9 +160,10 @@ function GruppenZeile({
         onBlur={() => void speichere()}
         onKeyDown={beiTaste}
         error={!!fehler}
-        // Task 5 rechnet die Zeitsumme der Gruppe aus; bis dahin steht hier der
-        // Platzhalter, den die Gestaltung dafür vorsieht.
-        supportingText={fehler ?? "Zugewiesen —"}
+        // Drei Lagen: der Fehler am Feld verdrängt alles, sonst der Konflikt
+        // dieser Gruppe (Story #150) und zuunterst der Platzhalter der
+        // Zeitsumme, die Story #151 ausrechnet.
+        supportingText={fehler ?? warnung ?? "Zugewiesen —"}
       />
       <IconButton
         icon={X}

@@ -28,11 +28,12 @@ export function TeilKarte({
   teil: EditorTeil<TrainingExerciseItem>;
   kontext: ZeilenKontext;
   onAdd: (block: EditorBlock<TrainingExerciseItem>) => void;
-  /** Der Gruppen-Bereich (Story #149) — ein Stück in zwei Lagen: sein Einstieg
-   *  steht rechts im Kartenkopf, seine Liste zwischen Kopf und Blöcken. Nur der
-   *  Hauptteil bekommt ihn; welcher Teil das ist, entscheidet der Editor und
-   *  nicht die Karte. */
-  gruppen?: { knopf: ReactNode; abschnitt: ReactNode };
+  /** Der Gruppen-Bereich (Stories #149/#150) — ein Stück in drei Lagen: sein
+   *  Einstieg steht rechts im Kartenkopf, seine Liste zwischen Kopf und
+   *  Blöcken, die Konflikte der Verteilung im Kartenfuss bei den übrigen
+   *  zählenden Meldungen. Nur der Hauptteil bekommt ihn; welcher Teil das ist,
+   *  entscheidet der Editor und nicht die Karte. */
+  gruppen?: { knopf: ReactNode; abschnitt: ReactNode; fuss: ReactNode };
 }) {
   const einblockig = teil.bloecke.length === 1;
 
@@ -82,6 +83,8 @@ export function TeilKarte({
           />
         ))}
       </div>
+
+      {gruppen?.fuss}
 
       {(teil.tooMany || teil.missing > 0) && (
         <div className="mt-3 flex flex-col gap-1">

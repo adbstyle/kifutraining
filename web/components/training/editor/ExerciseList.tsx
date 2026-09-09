@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Info } from "lucide-react";
 import { TrainingExerciseRow } from "./TrainingExerciseRow";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
@@ -10,6 +11,10 @@ export type ZeilenKontext = {
   trainingId: string;
   /** Alterskategorien des Trainings — Grundlage des Stufen-Abgleichs der Zeile. */
   trainingStufen: string[];
+  /** Das zweite Geschoss einer Zeile (der Durchlauf, Story #150); `null`, wo
+   *  es nichts zu zeigen gibt. Wird nur in Blöcken abgerufen, die Gruppen
+   *  tragen — `showGruppen` an der Liste. */
+  etage: (item: TrainingExerciseItem) => ReactNode;
   onDuration: (item: TrainingExerciseItem, next: number | null) => void;
   onMove: (item: TrainingExerciseItem, dir: -1 | 1) => void;
   onRemove: (item: TrainingExerciseItem) => void;
@@ -22,11 +27,15 @@ export type ZeilenKontext = {
 export function ExerciseList({
   items,
   showDuration,
+  showGruppen,
   leerHinweis,
   kontext,
 }: {
   items: TrainingExerciseItem[];
   showDuration: boolean;
+  /** Werden die Übungen dieses Blocks auf Gruppen verteilt? Nur der Hauptteil
+   *  wird es (`EditorBlock.traegtGruppen`). */
+  showGruppen: boolean;
   /** Was zu melden ist, wenn dieser Abschnitt leer bleibt und das Lehrmittel
    *  ihn als gesetzt ansieht (`LEER_HINWEIS`). Gesetzt, ersetzt die Meldung die
    *  neutrale Zeile — nie beides, sonst stünde dieselbe Sachlage doppelt da. */
@@ -59,6 +68,7 @@ export function ExerciseList({
           trainingId={kontext.trainingId}
           trainingStufen={kontext.trainingStufen}
           showDuration={showDuration}
+          etage={showGruppen ? kontext.etage(item) : null}
           onDuration={(next) => kontext.onDuration(item, next)}
           onMove={(d) => kontext.onMove(item, d)}
           onRemove={() => kontext.onRemove(item)}

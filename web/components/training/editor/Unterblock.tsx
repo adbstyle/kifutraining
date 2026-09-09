@@ -32,6 +32,7 @@ export function Unterblock({
     <ExerciseList
       items={block.items}
       showDuration={block.traegtDauer}
+      showGruppen={block.traegtGruppen}
       leerHinweis={block.leerHinweis}
       kontext={kontext}
     />

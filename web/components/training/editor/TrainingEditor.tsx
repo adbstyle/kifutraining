@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Clock } from "lucide-react";
 import { Dialog, Snackbar, Button, TextField } from "@/components/ui";
@@ -9,6 +9,9 @@ import { GesamtAbgleich } from "../ZeitAbgleich";
 import { TrainingKopf } from "./TrainingKopf";
 import { TeilKarte } from "./TeilKarte";
 import { GruppenAbschnitt, GruppenKnopf } from "./GruppenAbschnitt";
+import { DurchlaufEtage } from "./DurchlaufEtage";
+import { KonfliktListe } from "./KonfliktListe";
+import { useGruppenModell } from "./useGruppenModell";
 import type { ZeilenKontext } from "./ExerciseList";
 import { GESAMTDAUER_JUNIOREN, type Einordnung } from "@/lib/junioren";
 import {
@@ -32,7 +35,6 @@ import {
   setTrainingZiel,
   deleteTraining,
 } from "@/lib/actions/trainings";
-import { legeGruppeAn, benenneGruppe, entferneGruppe } from "@/lib/actions/gruppen";
 import type { HauptteilkategorieSlug } from "@/lib/vocab";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings";
 import type { TeamUebersicht } from "@/lib/queries/teams";
@@ -42,8 +44,8 @@ import type { TeamUebersicht } from "@/lib/queries/teams";
    Kopf: Name bearbeiten, Ziel, Stufen setzen, Training löschen. Was in welcher
    Karte und in welchem Block steht, beantwortet `editorGliederung` für beide
    Altersstufen; hier bleiben Zustand, Dialoge und die Aktionen.
-   Struktur-Änderungen frischen die Serverdaten auf; Dauern werden lokal
-   überlagert. */
+   Struktur-Änderungen frischen die Serverdaten auf; Dauern und die
+   Gruppenverteilung werden lokal überlagert (`useGruppenModell`). */
 export function TrainingEditor({
   training,
   /** Die Teams des USERS — Ziele für „Ins Team stellen" (Team-Epic Story 5). */
@@ -69,15 +71,15 @@ export function TrainingEditor({
   const [nameError, setNameError] = useState<string | undefined>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [mismatch, setMismatch] = useState<{ id: string; name: string }[] | null>(null);
-  // Die Gruppen des Trainings als optimistische Überlagerung — wie die Dauern.
-  // Anlegen, Umbenennen und Entfernen ändern nichts an der Gliederung, darum
-  // frischt keine der drei Aktionen die Serverdaten auf; das Feld behielte
-  // sonst mitten in der Eingabe nicht einmal den Fokus.
-  const [gruppen, setGruppen] = useState(training.gruppen);
   // Hat der Trainer den Gruppen-Abschnitt eben über den Knopf geöffnet? Nur
   // dann hängt er aufgeklappt ein; mit bestehenden Gruppen beginnt er
   // zugeklappt und zeigt bloss die Anzahl (Story #149 AK 5).
   const [gruppenOffen, setGruppenOffen] = useState(false);
+  // Die beiden Rückfragen der Gruppenverteilung (Story #150 AK 8/16). Sie
+  // stehen hier und nicht im Modell: Was zu bestätigen ist, ist eine Frage der
+  // Oberfläche — das Modell führt aus.
+  const [gruppeWeg, setGruppeWeg] = useState<{ id: string; name: string } | null>(null);
+  const [uebungWeg, setUebungWeg] = useState<TrainingExerciseItem | null>(null);
 
   // Nach welchem Lehrmittel das Training gegliedert ist. Es folgt aus der
   // geführten Altersstufe, die ab dem Anlegen feststeht — nicht mehr aus den
@@ -85,8 +87,26 @@ export function TrainingEditor({
   // ist damit möglich und fällt trotzdem nie aufs Kinderfussball-Schema zurück.
   const junioren = training.altersstufe === "juniorenfussball";
 
-  const dur = (item: TrainingExerciseItem) =>
-    item.id in durations ? durations[item.id] : item.durationMin;
+  // Die lokal erfassten Dauern einmal über die Serverdaten legen — danach
+  // rechnen Gliederung, Zeilen und die Konflikt-Rechnung mit demselben Stand,
+  // und jede Summe geht sofort mit statt erst nach der Server-Antwort.
+  // Memoisiert, weil das Gruppen-Modell seine Ableitungen daran hängt.
+  const zuordnungen = useMemo(
+    () =>
+      training.exercises.map((e) => ({
+        ...e,
+        durationMin: e.id in durations ? durations[e.id] : e.durationMin,
+      })),
+    [training.exercises, durations],
+  );
+
+  // Gruppen, Verteilung und Konflikte als ein Stück (Stories #149/#150).
+  const modell = useGruppenModell({
+    trainingId: training.id,
+    gruppenInitial: training.gruppen,
+    zuordnungen,
+    melde: setNotice,
+  });
 
   function changeDuration(item: TrainingExerciseItem, next: number | null) {
     setDurations((prev) => ({ ...prev, [item.id]: next }));
@@ -96,13 +116,28 @@ export function TrainingEditor({
   }
 
   function move(item: TrainingExerciseItem, dir: -1 | 1) {
+    modell.vergissFolge(item.id);
     startTransition(async () => {
       await moveTrainingExercise(item.id, dir);
       router.refresh();
     });
   }
 
+  /** Übung entfernen — mit Rückfrage, solange sie Gruppen trägt (AK 16). Die
+   *  Tragweite ist dieselbe wie beim Entfernen einer Gruppe: Mit der Übung
+   *  fallen ihre Zuweisungen weg, und die stehen nirgends sonst. Ohne
+   *  Zuweisungen bleibt es beim Entfernen ohne Rückfrage. */
   function remove(item: TrainingExerciseItem) {
+    if (modell.gruppenAn(item.id) > 0) {
+      setUebungWeg(item);
+      return;
+    }
+    entferneUebung(item);
+  }
+
+  function entferneUebung(item: TrainingExerciseItem) {
+    setUebungWeg(null);
+    modell.vergissFolge(item.id);
     startTransition(async () => {
       const r = await removeTrainingExercise(item.id);
       router.refresh();
@@ -163,6 +198,7 @@ export function TrainingEditor({
   function removeMismatched(ids: string[]) {
     startTransition(async () => {
       let fehler: string | null = null;
+      for (const id of ids) modell.vergissFolge(id);
       for (const id of ids) {
         const r = await removeTrainingExercise(id);
         if (!r.ok && !fehler) fehler = r.error ?? "Entfernen fehlgeschlagen.";
@@ -173,47 +209,23 @@ export function TrainingEditor({
     });
   }
 
-  /** Eine Gruppe anlegen (Story #149 AK 1). Liefert die Meldung zurück, statt
-   *  sie in die Snackbar zu schicken: sie gehört an das Feld, in das der
-   *  Trainer gerade geschrieben hat. */
-  async function gruppeAnlegen(name: string): Promise<string | null> {
-    const r = await legeGruppeAn(training.id, name);
-    if (!r.ok) return r.error;
-    setGruppen((prev) => [...prev, r.gruppe]);
-    return null;
-  }
-
-  /** Eine Gruppe umbenennen (AK 2). Optimistisch, mit Rücknahme im Fehlerfall. */
-  async function gruppeUmbenennen(id: string, name: string): Promise<string | null> {
-    const vorher = gruppen;
-    setGruppen((prev) => prev.map((g) => (g.id === id ? { ...g, name: name.trim() } : g)));
-    const r = await benenneGruppe(id, name);
-    if (!r.ok) {
-      setGruppen(vorher);
-      return r.error ?? "Umbenennen fehlgeschlagen.";
-    }
-    return null;
-  }
-
-  /** Eine Gruppe entfernen (AK 3) — ohne Rückfrage, weil es in dieser Story
-   *  noch keine Zuweisungen gibt, die dabei wegfielen. Quittiert wird es
-   *  trotzdem: die Zeile verschwindet sonst kommentarlos. */
+  /** Eine Gruppe entfernen — mit Rückfrage, solange sie Übungen zugewiesen ist
+   *  (AK 8). Ohne Zuweisungen fällt bloss eine Bezeichnung weg; das quittiert
+   *  die Snackbar, mehr braucht es nicht. */
   function gruppeEntfernen(gruppe: { id: string; name: string }) {
-    const vorher = gruppen;
-    const rest = gruppen.filter((g) => g.id !== gruppe.id);
-    setGruppen(rest);
+    if (modell.zuweisungenVon(gruppe.id) > 0) {
+      setGruppeWeg(gruppe);
+      return;
+    }
+    entferneGruppeJetzt(gruppe);
+  }
+
+  function entferneGruppeJetzt(gruppe: { id: string; name: string }) {
+    setGruppeWeg(null);
     // War es die letzte, fällt der Abschnitt weg und der Einstiegs-Knopf kommt
-    // zurück (PC 3).
-    if (rest.length === 0) setGruppenOffen(false);
-    startTransition(async () => {
-      const r = await entferneGruppe(gruppe.id);
-      if (!r.ok) {
-        setGruppen(vorher);
-        setNotice(r.error ?? "Entfernen fehlgeschlagen.");
-        return;
-      }
-      setNotice(`Gruppe „${gruppe.name}" entfernt.`);
-    });
+    // zurück (Story #149 PC 3).
+    if (modell.gruppen.length === 1) setGruppenOffen(false);
+    modell.entferne(gruppe);
   }
 
   // Was zum Veröffentlichen fehlt: so erscheint die Tragweite-Bestätigung nur
@@ -231,10 +243,6 @@ export function TrainingEditor({
     training.exercises,
   );
 
-  // Die lokal erfassten Dauern einmal über die Serverdaten legen — danach
-  // rechnen Gliederung und Zeilen mit demselben Stand, und jede Summe geht
-  // sofort mit statt erst nach der Server-Antwort.
-  const zuordnungen = training.exercises.map((e) => ({ ...e, durationMin: dur(e) }));
   const teile = editorGliederung(training.altersstufe, zuordnungen);
 
   // Auffangen trägt keine Dauer und zählt weder zur Summe noch zum
@@ -246,23 +254,43 @@ export function TrainingEditor({
   // Der Gruppen-Bereich der Hauptteil-Karte: solange keine Gruppe geführt wird
   // und der Trainer den Abschnitt nicht geöffnet hat, steht dort nur der
   // Einstiegs-Knopf.
-  const zeigeGruppen = gruppen.length > 0 || gruppenOffen;
+  const zeigeGruppen = modell.gruppen.length > 0 || gruppenOffen;
   const gruppenBereich = {
     knopf: zeigeGruppen ? null : <GruppenKnopf onOeffnen={() => setGruppenOffen(true)} />,
     abschnitt: zeigeGruppen ? (
       <GruppenAbschnitt
-        gruppen={gruppen}
+        gruppen={modell.gruppen}
         defaultOpen={gruppenOffen}
-        onAnlegen={gruppeAnlegen}
-        onUmbenennen={gruppeUmbenennen}
+        warnung={(id) => modell.befund.gruppenWarnung.get(id)}
+        onAnlegen={modell.anlegen}
+        onUmbenennen={modell.umbenennen}
         onEntfernen={gruppeEntfernen}
       />
     ) : null,
+    fuss: <KonfliktListe konflikte={modell.befund.konflikte} />,
   };
 
   const kontext: ZeilenKontext = {
     trainingId: training.id,
     trainingStufen: stufen,
+    // Der Durchlauf erscheint erst, wenn das Training Gruppen führt: Ohne sie
+    // gäbe es nichts zu verteilen, und «Alle gemeinsam» an jeder Zeile wäre
+    // eine Antwort auf eine Frage, die niemand gestellt hat.
+    etage: (item) =>
+      modell.gruppen.length === 0 ? null : (
+        <DurchlaufEtage
+          uebungName={item.name}
+          folge={modell.folgeVon(item)}
+          gruppen={modell.gruppen}
+          wechselGesamt={modell.wechselGesamt}
+          warnung={(gruppeId) =>
+            modell.befund.chipWarnung.has(`${item.id}|${gruppeId}`)
+              ? modell.befund.gruppenWarnung.get(gruppeId)
+              : undefined
+          }
+          onFolge={(next) => modell.setzeFolge(item.id, next)}
+        />
+      ),
     onDuration: changeDuration,
     onMove: move,
     onRemove: remove,
@@ -338,7 +366,12 @@ export function TrainingEditor({
               hauptteilkategorie={sub?.slug}
               hauptteilkategorieLabel={sub?.label}
               trainingStufen={stufen}
-              onAdded={() => router.refresh()}
+              onAdded={() => {
+                // Die neue Übung kommt mit dem Auffrischen; ab dann gilt für
+                // alle Zeilen wieder der Serverstand.
+                modell.alleVergessen();
+                router.refresh();
+              }}
             />
           );
         })()}
@@ -433,6 +466,55 @@ export function TrainingEditor({
         )}
       </Dialog>
 
+      {/* Gruppe entfernen, solange sie Übungen zugewiesen ist (AK 8) */}
+      <Dialog
+        open={gruppeWeg != null}
+        onClose={() => setGruppeWeg(null)}
+        title={`${gruppeWeg?.name ?? "Gruppe"} entfernen?`}
+        actions={
+          <>
+            <Button variant="text" onClick={() => setGruppeWeg(null)}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => gruppeWeg && entferneGruppeJetzt(gruppeWeg)}
+            >
+              Entfernen
+            </Button>
+          </>
+        }
+      >
+        <p>
+          {gruppeWeg?.name} ist an {zaehle(gruppeWeg ? modell.zuweisungenVon(gruppeWeg.id) : 0, "Übung", "Übungen")}{" "}
+          zugewiesen. Die Zuweisungen fallen weg, die Übungen selbst bleiben
+          unberührt.
+        </p>
+      </Dialog>
+
+      {/* Übung entfernen, die Gruppen im Durchlauf trägt (AK 16) */}
+      <Dialog
+        open={uebungWeg != null}
+        onClose={() => setUebungWeg(null)}
+        title={`${uebungWeg?.name ?? "Übung"} entfernen?`}
+        actions={
+          <>
+            <Button variant="text" onClick={() => setUebungWeg(null)}>
+              Abbrechen
+            </Button>
+            <Button variant="danger" onClick={() => uebungWeg && entferneUebung(uebungWeg)}>
+              Entfernen
+            </Button>
+          </>
+        }
+      >
+        <p>
+          Die Übung trägt {zaehle(uebungWeg ? modell.gruppenAn(uebungWeg.id) : 0, "Gruppe", "Gruppen")}{" "}
+          im Durchlauf. Mit ihr fallen diese Zuweisungen weg; die Gruppen selbst
+          bleiben bestehen.
+        </p>
+      </Dialog>
+
       {/* Fest am unteren Rand statt im Fluss: der Editor ist eine lange Seite,
           und die Meldung gehört zu einer Aktion irgendwo darin. Am Seitenende
           eingehängt stünde sie mehr als tausend Bildpunkte unter dem Klick und
@@ -446,4 +528,10 @@ export function TrainingEditor({
       />
     </div>
   );
+}
+
+/** «1 Übung» / «3 Übungen» — die Rückfragen nennen eine Zahl, und die Einzahl
+ *  soll dabei nicht wie ein Tippfehler aussehen. */
+function zaehle(n: number, einzahl: string, mehrzahl: string): string {
+  return `${n} ${n === 1 ? einzahl : mehrzahl}`;
 }

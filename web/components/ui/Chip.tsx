@@ -169,24 +169,43 @@ export function ChoiceChipGroup({
 }
 
 /* Assist-Chip — schlägt eine Aktion vor (führendes Icon + Label).
-   `elevated`: weicher M3-Schatten statt Outline. */
+   `elevated`: weicher M3-Schatten statt Outline.
+
+   Öffnet die vorgeschlagene Aktion ein Menü, braucht der Chip einen Namen
+   dafür (`ariaLabel`, wenn dasselbe Label mehrfach auf der Seite steht), die
+   Ankündigung `aria-haspopup`/`aria-expanded` und eine Ref: das `Menu` verankert
+   sich am Trigger und gibt ihm den Fokus zurück. */
 export function AssistChip({
+  ref,
   icon: Icon,
   onClick,
   children,
+  ariaLabel,
+  ariaHasPopup,
+  ariaExpanded,
   elevated = false,
   className,
 }: {
+  ref?: React.Ref<HTMLButtonElement>;
   icon?: LucideIcon;
   onClick?: () => void;
   children: React.ReactNode;
+  /** a11y-Name, wenn das blosse Label zu wenig sagt. Beginnt mit dem sichtbaren
+   *  Text, damit Sprachsteuerung ihn weiter trifft. */
+  ariaLabel?: string;
+  ariaHasPopup?: "menu";
+  ariaExpanded?: boolean;
   elevated?: boolean;
   className?: string;
 }) {
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onClick}
+      aria-label={ariaLabel}
+      aria-haspopup={ariaHasPopup}
+      aria-expanded={ariaHasPopup ? ariaExpanded : undefined}
       className={cn(chipBase, elevated ? chipElevated : chipOutlined, className)}
     >
       {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
