@@ -44,6 +44,7 @@ export function GruppenKnopf({ onOeffnen }: { onOeffnen: () => void }) {
  */
 export function GruppenAbschnitt({
   gruppen,
+  zeit,
   defaultOpen,
   warnung,
   onAnlegen,
@@ -51,6 +52,8 @@ export function GruppenAbschnitt({
   onEntfernen,
 }: {
   gruppen: { id: string; name: string }[];
+  /** Die Zeitsumme einer Gruppe als fertiger Satzanfang (`zeitText`). */
+  zeit: (gruppeId: string) => string;
   /** Aufgeklappt einhängen — wenn der Trainer den Abschnitt eben erst über den
    *  „Gruppen"-Knopf geöffnet hat. Wirkt nur beim Einhängen. */
   defaultOpen: boolean;
@@ -74,6 +77,7 @@ export function GruppenAbschnitt({
           <GruppenZeile
             key={g.id}
             gruppe={g}
+            zeit={zeit(g.id)}
             warnung={warnung(g.id)}
             onUmbenennen={onUmbenennen}
             onEntfernen={onEntfernen}
@@ -88,11 +92,13 @@ export function GruppenAbschnitt({
 /** Eine bestehende Gruppe: offenes Feld plus Entfernen-Knopf. */
 function GruppenZeile({
   gruppe,
+  zeit,
   warnung,
   onUmbenennen,
   onEntfernen,
 }: {
   gruppe: { id: string; name: string };
+  zeit: string;
   warnung?: string;
   onUmbenennen: (id: string, name: string) => Antwort;
   onEntfernen: (gruppe: { id: string; name: string }) => void;
@@ -160,10 +166,21 @@ function GruppenZeile({
         onBlur={() => void speichere()}
         onKeyDown={beiTaste}
         error={!!fehler}
-        // Drei Lagen: der Fehler am Feld verdrängt alles, sonst der Konflikt
-        // dieser Gruppe (Story #150) und zuunterst der Platzhalter der
-        // Zeitsumme, die Story #151 ausrechnet.
-        supportingText={fehler ?? warnung ?? "Zugewiesen —"}
+        /* Zwei Lagen: Der Fehler am Feld verdrängt alles — was sich nicht
+           speichern lässt, ist dringender als jede Auskunft. Sonst steht dort
+           die Zeitsumme (Story #151) und dahinter, wenn es etwas zu melden gibt,
+           der Konflikt dieser Gruppe (Story #150). Nur der Konflikt ist
+           bernstein: Die Zeitsumme ist eine Auskunft und keine Warnung, und
+           färbte man die Zeile ganz, wäre nicht mehr zu sehen, was daran der
+           Befund ist. */
+        supportingText={
+          fehler ?? (
+            <>
+              {zeit}
+              {warnung && <span className="text-warning"> · {warnung}</span>}
+            </>
+          )
+        }
       />
       <IconButton
         icon={X}

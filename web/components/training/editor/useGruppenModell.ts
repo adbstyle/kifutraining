@@ -6,8 +6,10 @@ import {
   istHauptteil,
   konfliktBefund,
   wechselZahl,
+  zeitJeGruppe,
   type Befund,
   type Verteilung,
+  type Zeitsumme,
 } from "@/lib/gruppen";
 import {
   benenneGruppe,
@@ -87,6 +89,15 @@ export function useGruppenModell({
   );
 
   const wechselGesamt = useMemo(() => wechselZahl(verteilung), [verteilung]);
+
+  /** Wie lange jede Gruppe beschäftigt ist (Story #151). Aus derselben
+   *  Verteilung wie die Konflikte — darum steht die Summe nach jedem Zuweisen,
+   *  jeder Dauer-Änderung und jedem Entfernen sofort richtig da (AK 2), ohne
+   *  dass die Serverdaten aufgefrischt werden müssten. */
+  const zeiten: Map<string, Zeitsumme> = useMemo(
+    () => zeitJeGruppe(verteilung),
+    [verteilung],
+  );
 
   /** An wie vielen Übungen des Hauptteils steht diese Gruppe? Grundlage der
    *  Rückfrage vor dem Entfernen (AK 8). */
@@ -212,6 +223,7 @@ export function useGruppenModell({
     folgeVon,
     befund,
     wechselGesamt,
+    zeiten,
     zuweisungenVon,
     gruppenAn,
     vergissFolge,

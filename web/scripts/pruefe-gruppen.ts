@@ -17,6 +17,9 @@ import {
   konfliktBefund,
   nameProblem,
   wechselZahl,
+  zeitJeGruppe,
+  zeitKurz,
+  zeitText,
   type Verteilung,
 } from "../lib/gruppen";
 
@@ -353,6 +356,75 @@ pruefe("Doppelt steht vor ungleich, damit die Liste stabil bleibt", () => {
     b.konflikte.map((k) => k.art),
     ["doppelt", "ungleich"],
   );
+});
+
+
+// ── zeitJeGruppe / zeitText: die Zeitsumme einer Gruppe (Story #151) ────────
+pruefe("Die Summe zählt alle Übungen einer Gruppe zusammen", () => {
+  const z = zeitJeGruppe(
+    kifu([
+      ["A", 15, ["g1", "g2"]],
+      ["B", 25, ["g2", "g1"]],
+    ]),
+  );
+  assert.deepEqual(z.get("g1"), { minuten: 40, mitDauer: 2, uebungen: 2 });
+  assert.equal(zeitText(z.get("g1")), "Zugewiesen 40 min");
+});
+
+pruefe("Eine Übung ohne Dauer zählt nicht mit, aber als Übung", () => {
+  const z = zeitJeGruppe(
+    kifu([
+      ["A", 15, ["g1"]],
+      ["B", null, ["g1"]],
+    ]),
+  );
+  assert.deepEqual(z.get("g1"), { minuten: 15, mitDauer: 1, uebungen: 2 });
+  assert.equal(zeitText(z.get("g1")), "Zugewiesen 15 min");
+});
+
+pruefe("Trägt keine der Übungen eine Dauer, steht dort ein Gedankenstrich", () => {
+  const z = zeitJeGruppe(kifu([["A", null, ["g1"]]]));
+  assert.deepEqual(z.get("g1"), { minuten: 0, mitDauer: 0, uebungen: 1 });
+  assert.equal(zeitKurz(z.get("g1")), "—");
+  assert.equal(zeitText(z.get("g1")), "Zugewiesen —");
+});
+
+pruefe("Eine Gruppe ohne Übung fehlt in der Map und liest sich als «—»", () => {
+  const z = zeitJeGruppe(kifu([["A", 15, ["g1"]]]));
+  assert.equal(z.has("g2"), false);
+  assert.equal(zeitText(z.get("g2")), "Zugewiesen —");
+  // Auch ganz ohne Verteilung — ein Training, das eben erst Gruppen bekam.
+  assert.equal(zeitText(zeitJeGruppe([]).get("g1")), "Zugewiesen —");
+});
+
+pruefe("Eine Übung ohne Zuweisung zählt bei keiner Gruppe", () => {
+  // «Alle gemeinsam» ist keine Aussage über eine einzelne Gruppe (AK 7).
+  const z = zeitJeGruppe(
+    kifu([
+      ["A", 15, ["g1"]],
+      ["Alle gemeinsam", 20, []],
+    ]),
+  );
+  assert.deepEqual(z.get("g1"), { minuten: 15, mitDauer: 1, uebungen: 1 });
+  assert.equal(z.size, 1);
+});
+
+pruefe("Die Summe geht über beide Junioren-Blöcke hinweg", () => {
+  // Dieselbe Reichweite wie der Wechsel (AK 5): Die Blöcke gliedern die
+  // Übungen, nicht die Zeit.
+  const v: Verteilung = [
+    { id: "te1", name: "Passspiel", einordnung: "jun-spielformen", dauer: 20, gruppen: ["g1"] },
+    { id: "te2", name: "Torabschluss", einordnung: "jun-spielformen", dauer: 15, gruppen: ["g2"] },
+    { id: "te3", name: "Spiel", einordnung: "jun-spiel", dauer: 10, gruppen: ["g1"] },
+  ];
+  const z = zeitJeGruppe(v);
+  assert.equal(zeitText(z.get("g1")), "Zugewiesen 30 min");
+  assert.equal(zeitText(z.get("g2")), "Zugewiesen 15 min");
+});
+
+pruefe("Eine erfasste Null bleibt «0 min» — sie ist eine Angabe", () => {
+  const z = zeitJeGruppe(kifu([["A", 0, ["g1"]]]));
+  assert.equal(zeitText(z.get("g1")), "Zugewiesen 0 min");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

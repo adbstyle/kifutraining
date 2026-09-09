@@ -15,6 +15,8 @@ export type ZeilenKontext = {
    *  es nichts zu zeigen gibt. Wird nur in Blöcken abgerufen, die Gruppen
    *  tragen — `showGruppen` an der Liste. */
   etage: (item: TrainingExerciseItem) => ReactNode;
+  /** Steht die Dauer dieser Übung in einem ungleich langen Wechsel? (Story #151) */
+  dauerWarnung: (item: TrainingExerciseItem) => boolean;
   onDuration: (item: TrainingExerciseItem, next: number | null) => void;
   onMove: (item: TrainingExerciseItem, dir: -1 | 1) => void;
   onRemove: (item: TrainingExerciseItem) => void;
@@ -68,6 +70,7 @@ export function ExerciseList({
           trainingId={kontext.trainingId}
           trainingStufen={kontext.trainingStufen}
           showDuration={showDuration}
+          dauerWarnung={kontext.dauerWarnung(item)}
           etage={showGruppen ? kontext.etage(item) : null}
           onDuration={(next) => kontext.onDuration(item, next)}
           onMove={(d) => kontext.onMove(item, d)}

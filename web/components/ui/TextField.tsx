@@ -1,12 +1,20 @@
 import { forwardRef, useId } from "react";
-import type { InputHTMLAttributes } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  supportingText?: string;
+  /** Der Hinweis unter dem Feld. `ReactNode`, damit ein Teil davon anders
+      gefärbt sein kann als der Rest — die Gruppenzeile trägt Zeitsumme und
+      Konflikt in einer Zeile, und nur der Konflikt ist bernstein (Story #151). */
+  supportingText?: ReactNode;
   error?: boolean;
+  /** Bernsteiner Rahmen: ein BEFUND am Feld, keine Fehleingabe — der Wert ist
+      gespeichert und richtig erfasst, geht aber mit anderen nicht auf (Story
+      #151: ungleich lange Übungen im selben Wechsel). `error` gewinnt: Was sich
+      nicht speichern lässt, verdrängt den Hinweis auf etwas Gespeichertes. */
+  warning?: boolean;
   /** Führendes Icon (Lucide) im Feld — z. B. Lupe für Suche. Input und Label
       rücken automatisch ein, damit nichts mit dem Icon überlappt. */
   leadingIcon?: LucideIcon;
@@ -45,6 +53,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       label,
       supportingText,
       error = false,
+      warning = false,
       leadingIcon: Icon,
       dense = false,
       id,
@@ -70,14 +79,16 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       ? cn(
           "focus-ring type-body-medium h-12 w-full rounded-[4px] border-[1.5px] bg-surface-container-low text-on-surface placeholder:text-on-surface-variant",
           Icon ? "pl-10 pr-3" : "px-3",
-          error ? "border-error" : "border-outline",
+          error ? "border-error" : warning ? "border-warning" : "border-outline",
         )
       : cn(
           "peer type-body-large h-14 w-full rounded-(--field-shape) border-[1.5px] bg-transparent px-4 text-(--field-text) outline-none transition-[border-color] duration-150 focus:border-2",
           Icon && "pl-11",
           error
             ? "border-(--field-error)"
-            : "border-(--field-outline) focus:border-(--field-focus)",
+            : warning
+              ? "border-warning focus:border-(--field-focus)"
+              : "border-(--field-outline) focus:border-(--field-focus)",
         );
 
     return (
