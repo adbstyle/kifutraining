@@ -13,7 +13,7 @@ set lock_timeout = '5s';
 -- nichts nachzuvalidieren (Lifecycle forward-only, CLAUDE.md).
 --
 -- 500 Zeichen: Die Notiz ist eine Randbemerkung neben dem Ablauf, kein zweiter
--- Übungstext. Zwilling der Konstante `NOTIZ_MAX` in web/lib/gruppen.ts.
+-- Übungstext. Zwilling der Konstante `NOTIZ_MAX` in web/lib/training.ts.
 
 alter table training_exercises
   add column notiz text check (notiz is null or char_length(notiz) <= 500);

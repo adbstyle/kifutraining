@@ -95,7 +95,6 @@ function NotizFeld({
       // die Übung: Dasselbe Feld steht an jeder Zeile, und «Notiz» allein
       // sagte in der Vorleseliste nicht, zu welcher Übung.
       aria-label={`Notiz zu ${uebungName}`}
-      rows={1}
       maxLength={NOTIZ_MAX}
       value={entwurf}
       onChange={(e) => {
