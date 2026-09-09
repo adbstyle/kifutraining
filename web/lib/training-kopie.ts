@@ -10,6 +10,7 @@
 // stammen aus dem Bibliotheks-Epic und werden hier wiederverwendet.
 import {
   FASSUNG_INHALT_FELDER,
+  FASSUNG_ZUORDNUNG_FELDER,
   entferneStorageObjekte,
   inhaltFelder,
   kopiereBild,
@@ -40,20 +41,18 @@ export type KopieErgebnis =
   | { ok: true; neueId: string }
   | { ok: false; error: string };
 
-/** Die Felder einer Fassung, die in die Kopie übergehen: Einordnung,
- *  Reihenfolge und Dauer, dazu Inhalt, Bild und Diagramm.
+/** Die Felder einer Fassung, die in die Kopie übergehen: die Zuordnung
+ *  (Einordnung, Reihenfolge, Dauer, Notiz), dazu Inhalt, Bild und Diagramm.
  *
- *  Die Inhaltsfelder kommen aus derselben Konstante wie das Kopieren selbst
- *  (`inhaltFelder` liest aus `FASSUNG_INHALT_FELDER`). Eine handgepflegte
+ *  Beide Feldmengen kommen aus denselben Konstanten wie das Kopieren selbst
+ *  (`FASSUNG_ZUORDNUNG_FELDER`, `FASSUNG_INHALT_FELDER`). Eine handgepflegte
  *  Zweitliste liess hier zuvor `spielfeld_laenge_m`, `spielfeld_breite_m` und
  *  `uebungstyp` still wegfallen: gelesen wurde nicht, was kopiert wird, und die
- *  Kopie verlor die Angaben wortlos. */
+ *  Kopie verlor die Angaben wortlos. Die `notiz` (#152) wäre der nächste
+ *  Kandidat dafür gewesen. */
 const FASSUNG_SELECT = [
   "id",
-  "trainingsteil",
-  "hauptteilkategorie",
-  "position",
-  "duration_min",
+  ...FASSUNG_ZUORDNUNG_FELDER,
   ...FASSUNG_INHALT_FELDER,
   "bild_url",
   "diagramm",
@@ -61,13 +60,16 @@ const FASSUNG_SELECT = [
 
 type QuellFassung = {
   id: string;
-  trainingsteil: string;
-  hauptteilkategorie: string | null;
-  position: number;
-  duration_min: number | null;
   bild_url: string | null;
   diagramm: unknown;
 } & Record<string, unknown>;
+
+/** Die Zuordnungsfelder einer Quelle übernehmen — das Gegenstück zu
+ *  `inhaltFelder`, aus demselben Grund: eine Quelle für die Feldmenge, damit
+ *  ein neues Zuordnungsfeld nicht gelesen-aber-nicht-geschrieben endet. */
+function zuordnungFelder(quelle: QuellFassung): Record<string, unknown> {
+  return Object.fromEntries(FASSUNG_ZUORDNUNG_FELDER.map((f) => [f, quelle[f]]));
+}
 
 /** Eigentum, Sichtbarkeit und Bild-Ordner des Ziels — an einer Stelle, damit
  *  eine neue Kopier-Art nicht an zwei Orten nachgezogen werden muss. */
@@ -90,7 +92,11 @@ function zielFelder(ziel: KopieZiel): {
 }
 
 /** Kopiert ein ganzes Training samt aller Übungs-Fassungen mit eigenen Bild-
- *  und Diagrammkopien.
+ *  und Diagrammkopien, samt seinen Gruppen und deren Verteilung im Hauptteil.
+ *
+ *  Die Kopie ist dasselbe Training an einem anderen Ort: Wer sie öffnet, findet
+ *  dieselben Gruppen, dieselben Wechsel und dieselben Notizen vor und muss die
+ *  Verteilung nicht ein zweites Mal eintragen (#155 AK 1).
  *
  *  Die Kopie hält nicht fest, woraus sie entstanden ist: Sie ist ab dem ersten
  *  Moment eigenständig und frei änderbar, und ein Vermerk darauf, dass sie
@@ -152,6 +158,51 @@ export async function kopiereTraining(
     return { ok: false, error: fehler };
   };
 
+  // Gruppen zuerst, dann die Fassungen, dann die Zuweisungen: Diese Reihenfolge
+  // ist Pflicht, weil `teg_guard` bei jeder Zuweisung nachschlägt, ob Gruppe und
+  // Fassung zum selben Training gehören und die Fassung im Hauptteil liegt —
+  // beide Seiten müssen dafür schon in der Kopie stehen.
+  const { data: quellGruppen, error: gruppenLeseFehler } = await supabase
+    .from("training_gruppen")
+    .select("id, name, created_at")
+    .eq("training_id", quelleId)
+    // Dieselbe Ordnung wie in der Anzeige (`mapTraining`): Anlegereihenfolge,
+    // die ID entscheidet zeitgleiche Anlagen.
+    .order("created_at")
+    .order("id");
+  if (gruppenLeseFehler) return abbrechen(gruppenLeseFehler.message);
+
+  // Von der alten auf die neue Gruppen-ID: die Zuweisungen weiter unten reden
+  // noch in den IDs der Quelle.
+  const gruppenMap = new Map<string, string>();
+  const gruppen = quellGruppen ?? [];
+  if (gruppen.length > 0) {
+    const neueIds = gruppen.map(() => crypto.randomUUID());
+    // Zeitgleich angelegte Gruppen entscheidet die ID — und die ist in der
+    // Kopie eine neue, zufällige. Damit die Kopie trotzdem dieselbe
+    // Reihenfolge zeigt, werden die neuen IDs je Gleichstands-Block
+    // aufsteigend vergeben: dieselbe Ordnung wie in der Quelle, ohne einen
+    // Anlegezeitpunkt zu erfinden.
+    for (let i = 0; i < gruppen.length; ) {
+      let j = i;
+      while (j < gruppen.length && gruppen[j].created_at === gruppen[i].created_at) j++;
+      const sortiert = neueIds.slice(i, j).sort();
+      for (let k = 0; k < sortiert.length; k++) neueIds[i + k] = sortiert[k];
+      i = j;
+    }
+
+    const { error } = await supabase.from("training_gruppen").insert(
+      gruppen.map((g, i) => {
+        gruppenMap.set(g.id, neueIds[i]);
+        // `created_at` wandert mit, statt auf `now()` zu fallen: Es ist die
+        // Anzeigereihenfolge der Gruppen, und alle Kopien auf denselben
+        // Zeitpunkt zu setzen liesse sie allein an den neuen IDs hängen.
+        return { id: neueIds[i], training_id: neu.id, name: g.name, created_at: g.created_at };
+      }),
+    );
+    if (error) return abbrechen(error.message);
+  }
+
   // Die IDs entstehen vorab: sie benennen die Bildkopien, die vor dem Insert
   // liegen müssen (der Pfad steht dann bereits in bild_url).
   const fassungen = (quellFassungen ?? []) as unknown as QuellFassung[];
@@ -171,18 +222,53 @@ export async function kopiereTraining(
       bilder.map(({ quelle: f, neueId, bild }) => ({
         id: neueId,
         training_id: neu.id,
-        trainingsteil: f.trainingsteil,
-        hauptteilkategorie: f.hauptteilkategorie,
-        position: f.position,
-        duration_min: f.duration_min,
+        ...zuordnungFelder(f),
+        ...inhaltFelder(f),
         // `altersstufe` steht bewusst nicht hier: Der Trigger
         // `te_altersstufe_erben` setzt sie aus dem Ziel-Training.
-        ...inhaltFelder(f),
         bild_url: bild.url,
         diagramm: kopiereDiagrammVon(f.diagramm),
       })),
     );
     if (error) return abbrechen(error.message);
+  }
+
+  // Zuletzt die Verteilung: Gruppen und Fassungen der Kopie stehen jetzt, und
+  // ohne Gruppen kann es keine Zuweisung geben — dann entfällt auch die Abfrage.
+  if (gruppenMap.size > 0 && bilder.length > 0) {
+    const { data: quellZuweisungen, error: zuweisungLeseFehler } = await supabase
+      .from("training_exercise_gruppen")
+      .select("training_exercise_id, gruppe_id, position")
+      .in(
+        "training_exercise_id",
+        fassungen.map((f) => f.id),
+      );
+    if (zuweisungLeseFehler) return abbrechen(zuweisungLeseFehler.message);
+
+    const fassungMap = new Map(bilder.map(({ quelle: f, neueId }) => [f.id, neueId]));
+    const zeilen: { training_exercise_id: string; gruppe_id: string; position: number }[] = [];
+    for (const z of quellZuweisungen ?? []) {
+      const fassung = fassungMap.get(z.training_exercise_id);
+      const gruppe = gruppenMap.get(z.gruppe_id);
+      // Beide Seiten müssen abgebildet sein: Zuweisung, Fassung und Gruppe
+      // hängen an denselben Lese-Policies (`teg_select`/`tg_select`), eine
+      // Lücke kann es also nur bei einer nebenläufigen Änderung an der Quelle
+      // geben. Dann lieber abbrechen als eine Kopie mit halber Verteilung.
+      if (!fassung || !gruppe)
+        return abbrechen("Die Gruppenverteilung liess sich nicht vollständig kopieren.");
+      // `position` ist der Wechsel — sie wandert unverändert mit, sonst liefe
+      // die Kopie in einer anderen Reihenfolge durch als das Original.
+      zeilen.push({ training_exercise_id: fassung, gruppe_id: gruppe, position: z.position });
+    }
+
+    if (zeilen.length > 0) {
+      // Ein Insert für alle Zuweisungen: weniger Runden, und ein Fehler trifft
+      // die Kopie als Ganzes statt sie halb gefüllt stehen zu lassen.
+      const { error } = await supabase.from("training_exercise_gruppen").insert(zeilen);
+      // Übersetzt statt roh: `teg_guard` meldet sich mit den Markern
+      // `GRUPPE_NUR_HAUPTTEIL`/`GRUPPE_FREMDES_TRAINING`.
+      if (error) return abbrechen(fehlerMeldung(error.message));
+    }
   }
 
   return { ok: true, neueId: neu.id };
