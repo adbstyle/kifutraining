@@ -77,7 +77,9 @@ export function ChipMenu({
         // Registratur führt (`DurchlaufZeile` merkt sich die Chips je
         // Gruppen-ID), räumte sonst nie auf. Weil diese Weitergabe selbst eine
         // Aufräumfunktion ist, ruft React die Callback nicht mehr mit `null` —
-        // das Zurücksetzen der eigenen Refs gehört darum ebenfalls hinein.
+        // das Abhängen gehört darum vollständig hierher: die eigene Ref, eine
+        // Objekt-Ref des Aufrufers und, im Altstil ohne Aufräumfunktion, der
+        // `null`-Aufruf seiner Callback.
         ref={(el) => {
           triggerRef.current = el;
           const aufraeumen = typeof ref === "function" ? ref(el) : undefined;
@@ -85,7 +87,8 @@ export function ChipMenu({
           return () => {
             triggerRef.current = null;
             if (typeof aufraeumen === "function") aufraeumen();
-            else if (ref && typeof ref !== "function") ref.current = null;
+            else if (typeof ref === "function") ref(null);
+            else if (ref) ref.current = null;
           };
         }}
         type="button"

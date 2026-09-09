@@ -205,15 +205,21 @@ function berechtigungsMeldung(message: string): string | null {
  *
  *  Die Übersetzung steht bewusst an einem Ort: Jede Action, die den rohen
  *  `error.message` durchreichte, war eine Stelle, an der ein Constraint-Name
- *  vor dem Trainer landen konnte. */
+ *  vor dem Trainer landen konnte.
+ *
+ *  Verschwinden darf der Originaltext deswegen nicht (Issue #41): Greift keine
+ *  fachliche Regel, ist der Fehler unerwartet — dann gehört er ins Protokoll,
+ *  sonst bliebe er unsichtbar. Der Aufruf steht immer serverseitig (Server
+ *  Actions), die Zeile landet also in den Runtime-Logs und nie beim Trainer.
+ *  Eine von der RLS abgewiesene Änderung wird mitprotokolliert: Sie hat zwar
+ *  eine Meldung, ist aber kein erwarteter Verlauf. Was ein Marker oder ein
+ *  Constraint fachlich erklärt, ist erwartet und bleibt ungeloggt. */
 export function fehlerMeldung(message: string): string {
-  return (
-    bedingungsFehler(message) ??
-    schemaMeldung(message) ??
-    gruppenMeldung(message) ??
-    berechtigungsMeldung(message) ??
-    ALLGEMEIN
-  );
+  const fachlich =
+    bedingungsFehler(message) ?? schemaMeldung(message) ?? gruppenMeldung(message);
+  if (fachlich) return fachlich;
+  console.error(`[db] ${message}`);
+  return berechtigungsMeldung(message) ?? ALLGEMEIN;
 }
 
 /** Welche Veröffentlichungs-Bedingungen erfüllt ein Training noch nicht?
