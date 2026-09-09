@@ -14,10 +14,10 @@ import type { TrainingExerciseItem } from "@/lib/queries/trainings";
  *  Aktionen an ihr.
  *
  *  Die Zeile ist in Geschosse gebaut, nicht als eine lange Reihe: Die Kopfzeile
- *  trägt alles, was jede Zuordnung hat, darunter das zweite Geschoss — im
- *  Hauptteil der Durchlauf (Story #150). Getrennt sind die beiden durch Abstand
- *  und nicht durch eine Haarlinie: Es ist eine Zeile, kein Kasten mit zwei
- *  Fächern. */
+ *  trägt alles, was jede Zuordnung hat, darunter das zweite Geschoss — die
+ *  Etage mit Notiz und, im Hauptteil, dem Durchlauf (Stories #150/#152).
+ *  Getrennt sind die beiden durch Abstand und nicht durch eine Haarlinie: Es
+ *  ist eine Zeile, kein Kasten mit zwei Fächern. */
 export function TrainingExerciseRow({
   item,
   index,
@@ -42,7 +42,7 @@ export function TrainingExerciseRow({
   /** Steht die Dauer dieser Übung in einem ungleich langen Wechsel? Färbt den
    *  Rahmen des Dauerfelds bernstein (Story #150 `dauerWarnung`). */
   dauerWarnung?: boolean;
-  /** Das zweite Geschoss der Zeile; `null`, solange es nichts zu zeigen gibt. */
+  /** Das zweite Geschoss der Zeile (`UebungsEtage`). */
   etage?: ReactNode;
   onDuration: (next: number | null) => void;
   onMove: (dir: -1 | 1) => void;

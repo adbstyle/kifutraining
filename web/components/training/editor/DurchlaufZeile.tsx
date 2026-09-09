@@ -16,8 +16,8 @@ import { AssistChip, ChipMenu, Menu, type MenuItemDef } from "@/components/ui";
 const HINZU = " hinzu";
 
 /**
- * Der Durchlauf einer Übung im Hauptteil (Story #150) — das zweite Geschoss
- * der Übungszeile.
+ * Der Durchlauf einer Übung im Hauptteil (Story #150) — eine Zeile der
+ * Übungs-Etage (`UebungsEtage`).
  *
  * Die Chips sind eine FOLGE, keine Auswahl: Der erste Chip ist der 1. Wechsel,
  * der zweite der 2. — und dieser Wechsel meint über alle Übungen des
@@ -33,7 +33,7 @@ const HINZU = " hinzu";
  * plus X an jedem Chip wäre bei vier Gruppen ein Dutzend 16px-Ziele in einer
  * Zeile; Drag-and-Drop hätte kein Tastatur-Äquivalent (verworfen im Design).
  */
-export function DurchlaufEtage({
+export function DurchlaufZeile({
   uebungName,
   folge,
   gruppen,
@@ -124,7 +124,7 @@ export function DurchlaufEtage({
   }
 
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
       <span className="w-[78px] shrink-0 type-label-small text-on-surface-variant">
         Durchlauf
       </span>

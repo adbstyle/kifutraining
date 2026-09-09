@@ -11,10 +11,10 @@ export type ZeilenKontext = {
   trainingId: string;
   /** Alterskategorien des Trainings — Grundlage des Stufen-Abgleichs der Zeile. */
   trainingStufen: string[];
-  /** Das zweite Geschoss einer Zeile (der Durchlauf, Story #150); `null`, wo
-   *  es nichts zu zeigen gibt. Wird nur in Blöcken abgerufen, die Gruppen
-   *  tragen — `showGruppen` an der Liste. */
-  etage: (item: TrainingExerciseItem) => ReactNode;
+  /** Das zweite Geschoss einer Zeile (Durchlauf und Notiz, Stories #150/#152).
+   *  Steht an JEDER Zeile — die Notiz gilt überall. `traegtGruppen` sagt bloss,
+   *  ob die Etage auch den Durchlauf zeigt: Er ist dem Hauptteil vorbehalten. */
+  etage: (item: TrainingExerciseItem, traegtGruppen: boolean) => ReactNode;
   /** Steht die Dauer dieser Übung in einem ungleich langen Wechsel? (Story #151) */
   dauerWarnung: (item: TrainingExerciseItem) => boolean;
   onDuration: (item: TrainingExerciseItem, next: number | null) => void;
@@ -36,7 +36,8 @@ export function ExerciseList({
   items: TrainingExerciseItem[];
   showDuration: boolean;
   /** Werden die Übungen dieses Blocks auf Gruppen verteilt? Nur der Hauptteil
-   *  wird es (`EditorBlock.traegtGruppen`). */
+   *  wird es (`EditorBlock.traegtGruppen`). Entscheidet allein über den
+   *  Durchlauf in der Etage, nicht über die Etage selbst. */
   showGruppen: boolean;
   /** Was zu melden ist, wenn dieser Abschnitt leer bleibt und das Lehrmittel
    *  ihn als gesetzt ansieht (`LEER_HINWEIS`). Gesetzt, ersetzt die Meldung die
@@ -71,7 +72,7 @@ export function ExerciseList({
           trainingStufen={kontext.trainingStufen}
           showDuration={showDuration}
           dauerWarnung={kontext.dauerWarnung(item)}
-          etage={showGruppen ? kontext.etage(item) : null}
+          etage={kontext.etage(item, showGruppen)}
           onDuration={(next) => kontext.onDuration(item, next)}
           onMove={(d) => kontext.onMove(item, d)}
           onRemove={() => kontext.onRemove(item)}
