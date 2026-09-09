@@ -52,7 +52,7 @@ export function OwnerActions({
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [kopierFehler, setKopierFehler] = useState<string | null>(null);
-  const [kopiert, starteKopie] = useTransition();
+  const [kopierLaeuft, starteKopie] = useTransition();
   const isPublic = visibility === "public";
   const next = isPublic ? "private" : "public";
   const visibilityLabel = isPublic ? "Auf privat setzen" : "Öffentlich schalten";
@@ -96,7 +96,7 @@ export function OwnerActions({
       {/* ⋮-Überlaufmenü — Kopieren und, davon abgesetzt, das Löschen. */}
       <OverflowMenu
         label={`Weitere Aktionen zu „${name}"`}
-        disabled={kopiert}
+        disabled={kopierLaeuft}
         items={[
           {
             label: "Kopieren",
