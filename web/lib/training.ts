@@ -1,4 +1,5 @@
 import { JUNIOREN_TEILE, istEinblockig, type Einordnung } from "@/lib/junioren";
+import { istHauptteil } from "@/lib/gruppen";
 import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
 import type { JuniorenBlockSlug } from "@/lib/vocab";
 import {
@@ -339,8 +340,11 @@ export type EditorBlock<T> = {
   richtwertSlug?: string;
   /** Was zu melden ist, wenn der Block leer bleibt (`LEER_HINWEIS`). */
   leerHinweis?: string;
-  /** Ob in diesem Block Gruppen geführt werden. Noch überall `false` — die
-   *  Gruppen-Story (#149) verdrahtet es. */
+  /** Ob die Übungen dieses Blocks auf Gruppen verteilt werden (Story #150).
+   *  Wahr allein im Hauptteil — im Kinderfussball in allen drei
+   *  Unterkategorien, im Juniorenfussball in den Blöcken «Spielformen» und
+   *  «Spiel». Quelle ist `istHauptteil`, damit die Antwort nicht an zwei
+   *  Orten steht. */
   traegtGruppen: boolean;
 };
 
@@ -409,7 +413,7 @@ export function editorGliederung<
           traegtDauer: b.traegtDauer,
           richtwertSlug: b.slug,
           leerHinweis: LEER_HINWEIS[b.slug],
-          traegtGruppen: false,
+          traegtGruppen: istHauptteil(b.slug),
         })),
       ),
     }));
@@ -439,7 +443,7 @@ export function editorGliederung<
               sum: g.sum,
               traegtDauer,
               leerHinweis: LEER_HINWEIS[g.slug],
-              traegtGruppen: false,
+              traegtGruppen: istHauptteil(slug),
             }))
           : [
               {
@@ -449,7 +453,7 @@ export function editorGliederung<
                 sum: summe(teilItems),
                 traegtDauer,
                 leerHinweis: LEER_HINWEIS[slug],
-                traegtGruppen: false,
+                traegtGruppen: istHauptteil(slug),
               },
             ],
       ),

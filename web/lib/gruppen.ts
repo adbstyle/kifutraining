@@ -61,3 +61,177 @@ export function nameProblem(
   if (vergeben) return MELDUNG_VERGEBEN;
   return null;
 }
+
+// ── Verteilung: welche Gruppe wann an welcher Übung (Story #150) ────────────
+
+/**
+ * Die Einordnungen, in denen Gruppen gelten — der Hauptteil beider
+ * Altersstufen (AK 10 / Epic Out of Scope 1).
+ *
+ * Im Kinderfussball ist der Hauptteil EIN Trainingsteil, im Juniorenfussball
+ * zerfällt er in die beiden Blöcke «Spielformen und unterstützende Übungen»
+ * und «Spiel» — die Einordnung einer Junioren-Fassung ist der Block, darum
+ * stehen hier drei Werte. Über beide Blöcke hinweg gilt derselbe Durchlauf
+ * (AK 5).
+ *
+ * SQL-Zwilling: `einordnung_traegt_gruppen(text)` in der Migration
+ * `gruppen_zuweisung`.
+ */
+export const HAUPTTEIL_EINORDNUNGEN = ["hauptteil", "jun-spielformen", "jun-spiel"];
+
+/** Trägt diese Einordnung Gruppen? Speist `EditorBlock.traegtGruppen`. */
+export function istHauptteil(einordnung: string): boolean {
+  return HAUPTTEIL_EINORDNUNGEN.includes(einordnung);
+}
+
+/**
+ * Die Verteilung eines Trainings: seine Hauptteil-Fassungen in Anzeigereihenfolge,
+ * jede mit der Folge der Gruppen, die sie durchlaufen.
+ *
+ * `gruppen` sind Gruppen-IDs in WECHSELREIHENFOLGE — der Index ist der Wechsel
+ * (AK 11): das Zeitfenster, das über alle Übungen des Hauptteils dasselbe
+ * meint. Die leere Folge heisst «alle gemeinsam» (AK 7), nicht «noch nichts
+ * eingetragen».
+ *
+ * `dauer` ist die erfasste Dauer der Übung in Minuten oder `null`. Eine Übung
+ * ohne Dauer zählt beim Vergleich nicht mit — sie liesse sich nicht vergleichen,
+ * und eine fehlende Dauer meldet der Editor bereits an anderer Stelle.
+ */
+export type Verteilung = {
+  id: string;
+  name: string;
+  einordnung: string;
+  dauer: number | null;
+  gruppen: string[];
+}[];
+
+/** Wie viele Wechsel der Hauptteil hat: die längste Folge. Der Durchlauf einer
+ *  einzelnen Übung kann kürzer sein — sie steht dann nicht in jedem Wechsel. */
+export function wechselZahl(v: Verteilung): number {
+  return v.reduce((max, f) => Math.max(max, f.gruppen.length), 0);
+}
+
+/** Ein gemeldeter Konflikt der Verteilung. Gemeldet, nie gesperrt (AK 15). */
+export type Konflikt = { art: "doppelt" | "ungleich"; text: string };
+
+/** Was `konfliktBefund` zurückgibt — eine Rechnung, drei Anzeigeorte. */
+export type Befund = {
+  /** Die Meldungen am Kartenfuss des Hauptteils, doppelt vor ungleich. */
+  konflikte: Konflikt[];
+  /** Chips, die einen Konflikt tragen. Schlüssel: `${fassungId}|${gruppeId}`. */
+  chipWarnung: Set<string>;
+  /** Fassungen, deren Dauer in einem ungleichen Wechsel steht (Fassungs-IDs). */
+  dauerWarnung: Set<string>;
+  /** Der Kurztext für die Gruppenzeile, je Gruppen-ID. */
+  gruppenWarnung: Map<string, string>;
+};
+
+/** Zahlwörter bis neun — «an zwei Übungen» liest sich als Satz, «an 2 Übungen»
+ *  als Tabelle. Darüber hinaus die Ziffer; so viele Übungen im selben Wechsel
+ *  gibt es in der Praxis nicht. */
+const ZAHLWORT = ["null", "eine", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun"];
+const zahlwort = (n: number) => ZAHLWORT[n] ?? String(n);
+
+/** «1. Wechsel», «1. und 2. Wechsel», «1., 2. und 3. Wechsel»; darüber
+ *  abgekürzt, damit die Zeile eine Zeile bleibt. `ws` sind 0-basierte Indizes
+ *  in aufsteigender Folge. */
+function wechselAufzaehlung(ws: number[]): string {
+  const n = ws.map((w) => `${w + 1}.`);
+  if (n.length === 1) return `${n[0]} Wechsel`;
+  if (n.length === 2) return `${n[0]} und ${n[1]} Wechsel`;
+  if (n.length === 3) return `${n[0]}, ${n[1]} und ${n[2]} Wechsel`;
+  return `${n.slice(0, 3).join(", ")} Wechsel und weiteren`;
+}
+
+/** «10 und 15 min», «10, 15 und 20 min» — die Einheit einmal am Ende. */
+function dauerAufzaehlung(dauern: number[]): string {
+  const kopf = dauern.slice(0, -1).join(", ");
+  const letzte = dauern[dauern.length - 1];
+  return `${kopf} und ${letzte} min`;
+}
+
+/** Haben zwei aufsteigend sortierte Dauermengen denselben Inhalt? */
+function gleicheDauern(a: number[], b: number[]): boolean {
+  return a.length === b.length && a.every((d, i) => d === b[i]);
+}
+
+/**
+ * Was an einer Verteilung nicht aufgeht (AK 13/14).
+ *
+ * Zwei Befunde, beide am Wechsel — dem Zeitfenster, das über alle Übungen des
+ * Hauptteils dasselbe meint:
+ *
+ * - **doppelt**: Eine Gruppe steht im selben Wechsel an mehr als einer Übung.
+ *   Sie kann nicht an zwei Orten gleichzeitig sein.
+ * - **ungleich**: Die Übungen eines Wechsels sind unterschiedlich lang. Dann
+ *   endet eine Gruppe früher als die andere, und der Wechsel geht nicht auf.
+ *
+ * Aufeinanderfolgende ungleiche Wechsel mit derselben Dauermenge werden zu
+ * einer Zeile verdichtet: Es ist dieselbe Sachlage, und drei Zeilen mit
+ * demselben Wortlaut sind schwerer zu lesen als eine.
+ *
+ * Was NICHT gemeldet wird (Out of Scope 2): eine Übung ohne Gruppen und eine
+ * Gruppe, die weniger Übungen durchläuft als eine andere. Beides kann gewollt
+ * sein.
+ *
+ * `gruppen` liefert die Bezeichnungen und zugleich die Reihenfolge der
+ * Meldungen — so steht die Liste stabil, statt mit der Übungsreihenfolge zu
+ * springen.
+ */
+export function konfliktBefund(
+  v: Verteilung,
+  gruppen: { id: string; name: string }[],
+): Befund {
+  const konflikte: Konflikt[] = [];
+  const chipWarnung = new Set<string>();
+  const dauerWarnung = new Set<string>();
+  const gruppenWarnung = new Map<string, string>();
+  const wechsel = wechselZahl(v);
+
+  // ── doppelt ───────────────────────────────────────────────────────────────
+  for (let w = 0; w < wechsel; w++) {
+    for (const g of gruppen) {
+      const treffer = v.filter((f) => f.gruppen[w] === g.id);
+      if (treffer.length < 2) continue;
+      const wo = `im ${w + 1}. Wechsel an ${zahlwort(treffer.length)} Übungen`;
+      konflikte.push({ art: "doppelt", text: `${g.name} steht ${wo}.` });
+      for (const f of treffer) chipWarnung.add(`${f.id}|${g.id}`);
+      // Die Gruppenzeile trägt einen Kurztext, keine Sammlung: der erste
+      // Konflikt sagt bereits, dass an dieser Gruppe etwas zu richten ist.
+      if (!gruppenWarnung.has(g.id)) gruppenWarnung.set(g.id, `Steht ${wo}.`);
+    }
+  }
+
+  // ── ungleich ──────────────────────────────────────────────────────────────
+  // Erst je Wechsel die beteiligten Dauern, dann die Verdichtung: getrennt,
+  // weil die Verdichtung nur Nachbarn mit derselben Dauermenge zusammenzieht
+  // und dafür die Rohbefunde in Wechselreihenfolge braucht.
+  const roh: { w: number; dauern: number[] }[] = [];
+  for (let w = 0; w < wechsel; w++) {
+    const beteiligt = v.filter((f) => f.gruppen[w] != null && f.dauer != null);
+    const dauern = [...new Set(beteiligt.map((f) => f.dauer as number))].sort((a, b) => a - b);
+    if (dauern.length < 2) continue;
+    roh.push({ w, dauern });
+    for (const f of beteiligt) dauerWarnung.add(f.id);
+  }
+
+  const verdichtet: { wechsel: number[]; dauern: number[] }[] = [];
+  for (const r of roh) {
+    const letzte = verdichtet[verdichtet.length - 1];
+    const anschluss =
+      letzte &&
+      letzte.wechsel[letzte.wechsel.length - 1] === r.w - 1 &&
+      gleicheDauern(letzte.dauern, r.dauern);
+    if (anschluss) letzte.wechsel.push(r.w);
+    else verdichtet.push({ wechsel: [r.w], dauern: r.dauern });
+  }
+
+  for (const e of verdichtet) {
+    konflikte.push({
+      art: "ungleich",
+      text: `Im ${wechselAufzaehlung(e.wechsel)} sind die Übungen ungleich lang (${dauerAufzaehlung(e.dauern)}).`,
+    });
+  }
+
+  return { konflikte, chipWarnung, dauerWarnung, gruppenWarnung };
+}

@@ -45,6 +45,10 @@ export type TrainingExerciseItem = {
   bildUrl: string | null;
   bildQuelle: "foto" | "diagramm" | null;
   diagramm: unknown;
+  /** Die Gruppen, die diese Übung durchlaufen, in WECHSELREIHENFOLGE
+   *  (Story #150). Leer heisst «alle gemeinsam» — und ausserhalb des
+   *  Hauptteils immer leer. */
+  gruppen: { id: string; name: string }[];
 };
 
 export type TrainingDetail = {
@@ -78,6 +82,7 @@ const INHALT_FELDER = [...FASSUNG_INHALT_FELDER, "bild_url", "diagramm"].join(",
 
 const PE_SELECT = `
   id, trainingsteil, hauptteilkategorie, position, duration_min,
+  training_exercise_gruppen ( gruppe_id, position ),
   ${INHALT_FELDER}
 `;
 
@@ -107,6 +112,7 @@ type RawTrainingExercise = RawInhalt & {
   hauptteilkategorie: string | null;
   position: number;
   duration_min: number | null;
+  training_exercise_gruppen: { gruppe_id: string; position: number }[];
 };
 type RawTraining = {
   id: string;
@@ -142,6 +148,23 @@ const teilRank = (t: string) => {
 };
 
 function mapTraining(raw: RawTraining): TrainingDetail {
+  // Anzeigereihenfolge ist die Anlegereihenfolge; die ID entscheidet
+  // zeitgleiche Anlagen, damit die Liste zwischen zwei Abfragen nicht springt.
+  const gruppen = (raw.training_gruppen ?? [])
+    .slice()
+    .sort((a, b) =>
+      a.created_at === b.created_at
+        ? a.id.localeCompare(b.id)
+        : a.created_at.localeCompare(b.created_at),
+    )
+    .map((g) => ({ id: g.id, name: g.name }));
+
+  // Die Zuweisung trägt nur die Gruppen-ID; der Name steht am Training. Er
+  // wird hier aufgelöst, damit die Anzeige nicht in jeder Zeile nachschlagen
+  // muss — und damit eine Zuweisung ohne passende Gruppe gar nicht erst
+  // durchkommt (die Datenbank schliesst sie aus, `teg_guard`).
+  const nachId = new Map(gruppen.map((g) => [g.id, g]));
+
   const exercises: TrainingExerciseItem[] = (raw.training_exercises ?? [])
     .map((te) => {
       return {
@@ -164,6 +187,11 @@ function mapTraining(raw: RawTraining): TrainingDetail {
         bildUrl: te.bild_url,
         bildQuelle: te.bild_quelle,
         diagramm: te.diagramm,
+        gruppen: (te.training_exercise_gruppen ?? [])
+          .slice()
+          .sort((a, b) => a.position - b.position)
+          .map((z) => nachId.get(z.gruppe_id))
+          .filter((g): g is { id: string; name: string } => g != null),
       };
     })
     // Sortierung: Trainingsteil-Reihenfolge, im Hauptteil zusätzlich nach
@@ -175,17 +203,6 @@ function mapTraining(raw: RawTraining): TrainingDetail {
       const hk = hkatRank(a.hauptteilkategorie) - hkatRank(b.hauptteilkategorie);
       return hk !== 0 ? hk : a.position - b.position;
     });
-
-  // Anzeigereihenfolge ist die Anlegereihenfolge; die ID entscheidet
-  // zeitgleiche Anlagen, damit die Liste zwischen zwei Abfragen nicht springt.
-  const gruppen = (raw.training_gruppen ?? [])
-    .slice()
-    .sort((a, b) =>
-      a.created_at === b.created_at
-        ? a.id.localeCompare(b.id)
-        : a.created_at.localeCompare(b.created_at),
-    )
-    .map((g) => ({ id: g.id, name: g.name }));
 
   return {
     id: raw.id,
