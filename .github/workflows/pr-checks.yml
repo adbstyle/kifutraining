@@ -28,6 +28,10 @@ jobs:
       # doppelte IDs, Elemente ausserhalb der Zeichenfläche. parseDiagramm
       # allein würde das durchlassen (Fallback-Rendering).
       - run: npm run check:diagramme
+      # Regeln für Gruppen-Bezeichnungen: der TS-Zwilling des Unique-Index
+      # tg_name_je_training. Läuft er auseinander, bekommt der Trainer statt
+      # einer Meldung am Feld einen Datenbankfehler.
+      - run: npm run check:gruppen
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)

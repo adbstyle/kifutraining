@@ -8,6 +8,7 @@ import { ExercisePickerDialog } from "../ExercisePickerDialog";
 import { GesamtAbgleich } from "../ZeitAbgleich";
 import { TrainingKopf } from "./TrainingKopf";
 import { TeilKarte } from "./TeilKarte";
+import { GruppenAbschnitt, GruppenKnopf } from "./GruppenAbschnitt";
 import type { ZeilenKontext } from "./ExerciseList";
 import { GESAMTDAUER_JUNIOREN, type Einordnung } from "@/lib/junioren";
 import {
@@ -31,6 +32,7 @@ import {
   setTrainingZiel,
   deleteTraining,
 } from "@/lib/actions/trainings";
+import { legeGruppeAn, benenneGruppe, entferneGruppe } from "@/lib/actions/gruppen";
 import type { HauptteilkategorieSlug } from "@/lib/vocab";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings";
 import type { TeamUebersicht } from "@/lib/queries/teams";
@@ -67,6 +69,15 @@ export function TrainingEditor({
   const [nameError, setNameError] = useState<string | undefined>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [mismatch, setMismatch] = useState<{ id: string; name: string }[] | null>(null);
+  // Die Gruppen des Trainings als optimistische Überlagerung — wie die Dauern.
+  // Anlegen, Umbenennen und Entfernen ändern nichts an der Gliederung, darum
+  // frischt keine der drei Aktionen die Serverdaten auf; das Feld behielte
+  // sonst mitten in der Eingabe nicht einmal den Fokus.
+  const [gruppen, setGruppen] = useState(training.gruppen);
+  // Hat der Trainer den Gruppen-Abschnitt eben über den Knopf geöffnet? Nur
+  // dann hängt er aufgeklappt ein; mit bestehenden Gruppen beginnt er
+  // zugeklappt und zeigt bloss die Anzahl (Story #149 AK 5).
+  const [gruppenOffen, setGruppenOffen] = useState(false);
 
   // Nach welchem Lehrmittel das Training gegliedert ist. Es folgt aus der
   // geführten Altersstufe, die ab dem Anlegen feststeht — nicht mehr aus den
@@ -162,6 +173,49 @@ export function TrainingEditor({
     });
   }
 
+  /** Eine Gruppe anlegen (Story #149 AK 1). Liefert die Meldung zurück, statt
+   *  sie in die Snackbar zu schicken: sie gehört an das Feld, in das der
+   *  Trainer gerade geschrieben hat. */
+  async function gruppeAnlegen(name: string): Promise<string | null> {
+    const r = await legeGruppeAn(training.id, name);
+    if (!r.ok) return r.error;
+    setGruppen((prev) => [...prev, r.gruppe]);
+    return null;
+  }
+
+  /** Eine Gruppe umbenennen (AK 2). Optimistisch, mit Rücknahme im Fehlerfall. */
+  async function gruppeUmbenennen(id: string, name: string): Promise<string | null> {
+    const vorher = gruppen;
+    setGruppen((prev) => prev.map((g) => (g.id === id ? { ...g, name: name.trim() } : g)));
+    const r = await benenneGruppe(id, name);
+    if (!r.ok) {
+      setGruppen(vorher);
+      return r.error ?? "Umbenennen fehlgeschlagen.";
+    }
+    return null;
+  }
+
+  /** Eine Gruppe entfernen (AK 3) — ohne Rückfrage, weil es in dieser Story
+   *  noch keine Zuweisungen gibt, die dabei wegfielen. Quittiert wird es
+   *  trotzdem: die Zeile verschwindet sonst kommentarlos. */
+  function gruppeEntfernen(gruppe: { id: string; name: string }) {
+    const vorher = gruppen;
+    const rest = gruppen.filter((g) => g.id !== gruppe.id);
+    setGruppen(rest);
+    // War es die letzte, fällt der Abschnitt weg und der Einstiegs-Knopf kommt
+    // zurück (PC 3).
+    if (rest.length === 0) setGruppenOffen(false);
+    startTransition(async () => {
+      const r = await entferneGruppe(gruppe.id);
+      if (!r.ok) {
+        setGruppen(vorher);
+        setNotice(r.error ?? "Entfernen fehlgeschlagen.");
+        return;
+      }
+      setNotice(`Gruppe „${gruppe.name}" entfernt.`);
+    });
+  }
+
   // Was zum Veröffentlichen fehlt: so erscheint die Tragweite-Bestätigung nur
   // für ein veröffentlichbares Training. Die Action prüft es serverseitig
   // erneut. Eine Übung im Hauptteil braucht es nicht eigens zu prüfen — das
@@ -188,6 +242,23 @@ export function TrainingEditor({
   const dauerItems = zuordnungen.filter((e) => teilTraegtDauer(e.trainingsteil));
   const totalDuration = dauerItems.reduce<number>((a, it) => a + (it.durationMin ?? 0), 0);
   const totalMissing = dauerItems.filter((it) => it.durationMin == null).length;
+
+  // Der Gruppen-Bereich der Hauptteil-Karte: solange keine Gruppe geführt wird
+  // und der Trainer den Abschnitt nicht geöffnet hat, steht dort nur der
+  // Einstiegs-Knopf.
+  const zeigeGruppen = gruppen.length > 0 || gruppenOffen;
+  const gruppenBereich = {
+    knopf: zeigeGruppen ? null : <GruppenKnopf onOeffnen={() => setGruppenOffen(true)} />,
+    abschnitt: zeigeGruppen ? (
+      <GruppenAbschnitt
+        gruppen={gruppen}
+        defaultOpen={gruppenOffen}
+        onAnlegen={gruppeAnlegen}
+        onUmbenennen={gruppeUmbenennen}
+        onEntfernen={gruppeEntfernen}
+      />
+    ) : null,
+  };
 
   const kontext: ZeilenKontext = {
     trainingId: training.id,
@@ -240,6 +311,9 @@ export function TrainingEditor({
           teil={teil}
           kontext={kontext}
           onAdd={(block) => setOpen({ teil: block.einordnung, hkat: block.hkat })}
+          // Verteilt wird allein der Hauptteil — in beiden Altersstufen trägt er
+          // denselben Schlüssel (Story #149 AK 9 / Epic Out of Scope 2).
+          gruppen={teil.key === "hauptteil" ? gruppenBereich : undefined}
         />
       ))}
 
