@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { DiagrammEditor } from "@/components/diagramm/DiagrammEditor";
 import type { BreadcrumbItem } from "@/components/ui";
 import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
+import { trainingsKrumen } from "@/lib/brotkrumen";
 import { saveFassungDiagramm } from "@/lib/actions/fassung";
 import { parseDiagramm, LEERES_DIAGRAMM } from "@/lib/diagramm";
 
@@ -15,8 +16,8 @@ export const metadata: Metadata = {
 /* Das Diagramm einer Fassung zeichnen (Story 5 AK 4). Derselbe Editor wie für
    Bibliotheks-Übungen; gespeichert wird an der Fassung, das Schreibrecht hängt
    am Training. Der Vorlagen-Fundus bleibt hier bewusst leer: die Fassung bringt
-   ihr Diagramm aus der Übernahme mit, und das Übernehmen einer weiteren
-   Diagramm-Vorlage ist Sache der Bibliothek. */
+   ihr Diagramm aus der Übernahme ins Training mit, und das Kopieren einer
+   weiteren Diagramm-Vorlage ist Sache der Bibliothek. */
 export default async function FassungDiagrammPage({
   params,
 }: {
@@ -26,12 +27,18 @@ export default async function FassungDiagrammPage({
   const f = await getFassungZumBearbeiten(teId);
   if (!f || f.trainingId !== id) notFound();
 
-  const crumbs: BreadcrumbItem[] = [
-    { label: "Trainings", href: "/trainings" },
-    { label: f.trainingName, href: `/training/${f.trainingId}/edit` },
-    { label: f.name, href: `/training/${f.trainingId}/uebung/${f.id}/edit` },
-    { label: "Feld-Diagramm" },
-  ];
+  const crumbs: BreadcrumbItem[] = trainingsKrumen(
+    {
+      id: f.trainingId,
+      name: f.trainingName,
+      team: f.trainingTeam,
+      terminDatum: f.trainingTerminDatum,
+    },
+    [
+      { label: f.name, href: `/training/${f.trainingId}/uebung/${f.id}/edit` },
+      { label: "Feld-Diagramm" },
+    ],
+  );
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">

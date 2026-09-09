@@ -12,7 +12,7 @@ import {
   fassungUnvollstaendig,
   istEigeneFassungsDatei,
   legeUebungsKopieAn,
-  FASSUNG_UEBERNAHME_SELECT,
+  FASSUNG_KOPIE_SELECT,
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
 import { alsAltersstufe } from "@/lib/altersstufe";
@@ -197,9 +197,9 @@ export async function updateFassung(
   redirect(`/training/${fassung.training_id}/edit?bearbeitet=1`);
 }
 
-/** Eine Fassung, wie sie fürs Übernehmen in die Bibliothek gelesen wird
- *  (FASSUNG_UEBERNAHME_SELECT). */
-type ZuUebernehmendeFassung = {
+/** Eine Fassung, wie sie fürs Kopieren in die Bibliothek gelesen wird
+ *  (FASSUNG_KOPIE_SELECT). */
+type ZuKopierendeFassung = {
   altersstufe: string | null;
   trainingsteil: string;
   hauptteilkategorie: string | null;
@@ -215,13 +215,16 @@ type ZuUebernehmendeFassung = {
 } & Record<string, unknown>;
 
 /** Eine Fassung als eigene, zunächst private Vorlage in die Bibliothek
- *  übernehmen (Story 7).
+ *  kopieren (Story 7).
  *
  *  Zulässig ist jede für den USER sichtbare Fassung — auch aus einem fremden
  *  öffentlichen Training. Es entsteht eine gewöhnliche Trainer-Übung mit eigener
  *  Bild- und Diagrammkopie; eine Verknüpfung zur Fassung gibt es nicht, spätere
- *  Änderungen wirken in keine Richtung. */
-export async function uebernehmeInBibliothek(
+ *  Änderungen wirken in keine Richtung.
+ *
+ *  Der Name bleibt unverändert: Die Kopie-Kennzeichnung trägt nur die Kopie
+ *  einer eigenen Bibliotheks-Übung (#171 OOS 5). */
+export async function kopiereInBibliothek(
   fassungId: string,
 ): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
   const supabase = await createClient();
@@ -233,9 +236,9 @@ export async function uebernehmeInBibliothek(
   // RLS lässt Fassungen eigener und öffentlicher Trainings durch.
   const { data: f } = await supabase
     .from("training_exercises")
-    .select(FASSUNG_UEBERNAHME_SELECT)
+    .select(FASSUNG_KOPIE_SELECT)
     .eq("id", fassungId)
-    .maybeSingle<ZuUebernehmendeFassung>();
+    .maybeSingle<ZuKopierendeFassung>();
   if (!f) return { ok: false, error: "Diese Übung ist nicht mehr verfügbar." };
 
   // Die Kopie behält die Altersstufe des Originals — und mit ihr Einordnung
@@ -250,7 +253,7 @@ export async function uebernehmeInBibliothek(
 
   // Kopiert wird mit dem gemeinsamen Rumpf (`legeUebungsKopieAn`): Slug, Bild-
   // und Diagrammkopie, Eigentum und der private Anfangszustand sind dieselben
-  // wie beim direkten Übernehmen einer Bibliotheks-Übung.
+  // wie beim direkten Kopieren einer Bibliotheks-Übung.
   const kopie = await legeUebungsKopieAn(supabase, f, {
     ownerId: user.id,
     altersstufe,

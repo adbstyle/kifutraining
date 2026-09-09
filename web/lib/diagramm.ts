@@ -202,7 +202,7 @@ export const LEERES_DIAGRAMM: DiagrammData = {
 
 /** Tiefe Kopie eines Diagramms mit frisch erzeugten Element-IDs (Epic #58,
  *  Story #61). Die Kopie ist vollständig von der Quelle entkoppelt — keine
- *  geteilten Referenzen, keine kollidierenden IDs. Wird beim Übernehmen einer
+ *  geteilten Referenzen, keine kollidierenden IDs. Wird beim Kopieren einer
  *  Vorlage genutzt (Server-Action und Editor gleichermassen). */
 export function kopiereDiagramm(data: DiagrammData): DiagrammData {
   return {

@@ -2,27 +2,27 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Download } from "lucide-react";
+import { Copy } from "lucide-react";
 import { IconButton, Snackbar, Tooltip } from "@/components/ui";
-import { uebernimmUebung } from "@/lib/actions/exercises";
+import { kopiereUebung } from "@/lib/actions/exercises";
 
 /**
- * „Übernehmen" an einer kuratierten oder fremden Übung (Story 7,
- * Übungswelten).
+ * „Kopieren" an einer kuratierten oder fremden Übung (Story 7, Übungswelten).
  *
  * Es entsteht eine eigene, zunächst private Übung — eine Kopie, die mit dem
- * Original nicht verbunden bleibt. Mehrfaches Übernehmen ist erlaubt und
- * erzeugt jedes Mal eine weitere Kopie (AK 3).
+ * Original nicht verbunden bleibt. Mehrfaches Kopieren ist erlaubt und erzeugt
+ * jedes Mal eine weitere Kopie (AK 3); im Namen erkennbar gemacht wird nur die
+ * Kopie einer EIGENEN Übung (#171 OOS 5) — dafür steht der Eintrag im
+ * Eigentümer-Menü.
  *
- * Nach der Übernahme führt der Weg unmittelbar zur eigenen Kopie (AK 5,
+ * Nach dem Kopieren führt der Weg unmittelbar zur eigenen Kopie (AK 5,
  * PO-Entscheid 2026-08-30) — dort sagen Entwurf-Plakette und Eigentümer-
  * Aktionen, dass sie ihm gehört (AK 4). Der Hinweis dazu kommt als Flash über
- * `?uebernommen=1`, wie nach dem Erstellen und Bearbeiten. Icon-Knopf statt
+ * `?kopiert=1`, wie nach dem Erstellen und Bearbeiten. Icon-Knopf statt
  * beschriftetem Button, weil der Aktions-Cluster der Detailseite durchgehend
- * aus Icons besteht; der Tooltip trägt dieselbe Wortwahl wie das
- * Trainings-Pendant.
+ * aus Icons besteht.
  */
-export function UebungUebernehmenButton({
+export function UebungKopierenButton({
   exerciseId,
   name,
 }: {
@@ -33,24 +33,24 @@ export function UebungUebernehmenButton({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  function uebernehmen() {
+  function kopieren() {
     setError(null);
     startTransition(async () => {
-      const res = await uebernimmUebung(exerciseId);
-      if (res.ok) router.push(`/uebung/${res.slug}?uebernommen=1`);
+      const res = await kopiereUebung(exerciseId);
+      if (res.ok) router.push(`/uebung/${res.slug}?kopiert=1`);
       else setError(res.error);
     });
   }
 
   return (
     <>
-      <Tooltip label="Übernehmen">
+      <Tooltip label="Kopieren">
         <IconButton
-          icon={Download}
-          label={`„${name}" in meinen Bestand übernehmen`}
+          icon={Copy}
+          label={`„${name}" in meinen Bestand kopieren`}
           size="sm"
           disabled={pending}
-          onClick={uebernehmen}
+          onClick={kopieren}
         />
       </Tooltip>
       <Snackbar open={!!error} message={error ?? ""} onClose={() => setError(null)} />

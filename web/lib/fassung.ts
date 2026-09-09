@@ -1,5 +1,5 @@
 // Fassungen: eigenständige, im Training lebende Kopien von Bibliotheks-Übungen
-// (Epic #72). Diese Datei hält die Regeln, die Erzeugung und Übernahme teilen —
+// (Epic #72). Diese Datei hält die Regeln, die Erzeugung und Kopieren teilen —
 // die Server Actions bleiben dadurch dünn.
 import { brauchtFahrplan, type Altersstufe } from "@/lib/altersstufe";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
@@ -9,7 +9,12 @@ import type { createClient } from "@/lib/supabase/server";
 
 /** Die inhaltlichen Felder, die eine Fassung von ihrer Vorlage übernimmt.
  *  Bewusst NICHT dabei: slug, source, owner_id, visibility (Bibliotheks-
- *  Belange) sowie die Einordnung, die der Aufrufer setzt. */
+ *  Belange) sowie die Einordnung, die der Aufrufer setzt.
+ *
+ *  Ebenso wenig die `notiz` (#152): Sie sagt etwas über DIESES Training aus,
+ *  nicht über die Übung — und `exercises` trägt die Spalte gar nicht, ein
+ *  Kopieren in die Bibliothek scheiterte mit ihr. Sie steht darum in
+ *  `FASSUNG_ZUORDNUNG_FELDER`. */
 export const FASSUNG_INHALT_FELDER = [
   "name",
   "kategorien",
@@ -26,10 +31,25 @@ export const FASSUNG_INHALT_FELDER = [
   "bild_quelle",
 ] as const;
 
-/** Die Spalten, mit denen eine Fassung fürs Übernehmen in die Bibliothek
- *  gelesen wird. Aus derselben Konstante wie das Kopieren: eine handgepflegte
+/** Die Felder der ZUORDNUNG — sie sagen, wo und wie die Fassung in genau
+ *  diesem Training steht, nicht was die Übung ist.
+ *
+ *  Sie reisen beim Kopieren eines Trainings mit (die Kopie soll dasselbe
+ *  Training sein) und gelangen nie in die Bibliothek: Dort gibt es weder eine
+ *  Position noch eine Dauer noch eine Notiz. Zusammen mit
+ *  `FASSUNG_INHALT_FELDER` ergeben sie den vollen Feldsatz einer Fassung. */
+export const FASSUNG_ZUORDNUNG_FELDER = [
+  "trainingsteil",
+  "hauptteilkategorie",
+  "position",
+  "duration_min",
+  "notiz",
+] as const;
+
+/** Die Spalten, mit denen eine Fassung fürs Kopieren in die Bibliothek gelesen
+ *  wird. Aus derselben Konstante wie das Kopieren selbst: eine handgepflegte
  *  Zweitliste liesse ein neues Übungsfeld hier still wegfallen. */
-export const FASSUNG_UEBERNAHME_SELECT = [
+export const FASSUNG_KOPIE_SELECT = [
   "altersstufe",
   "trainingsteil",
   "hauptteilkategorie",
@@ -93,12 +113,12 @@ export function fassungUnvollstaendig(f: {
       !!fp.wetteifern?.trim();
     return vollstaendig
       ? null
-      : "Diese Übung hat keinen vollständigen methodischen Fahrplan. Ergänze ihn im Training, bevor du sie in deine Bibliothek übernimmst.";
+      : "Diese Übung hat keinen vollständigen methodischen Fahrplan. Ergänze ihn im Training, bevor du sie in deine Bibliothek kopierst.";
   }
 
   return f.aufbau?.trim()
     ? null
-    : "Diese Übung hat keine Ablaufbeschreibung. Ergänze sie im Training, bevor du sie in deine Bibliothek übernimmst.";
+    : "Diese Übung hat keine Ablaufbeschreibung. Ergänze sie im Training, bevor du sie in deine Bibliothek kopierst.";
 }
 
 /** Gehört diese Storage-Datei der Fassung selbst? Der Dateiname trägt dann die
@@ -136,14 +156,14 @@ export function teamOrdner(teamId: string): BildOrdner {
 }
 
 // ── Kopier-Bausteine ────────────────────────────────────────────────────────
-// Geteilt zwischen dem Übernehmen einer Vorlage ins Training und dem Übernehmen
+// Geteilt zwischen dem Übernehmen einer Vorlage ins Training und dem Kopieren
 // einer Fassung in die Bibliothek: beide erzeugen eine entkoppelte Kopie.
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 /** Das Diagramm entkoppelt kopieren (frische Element-IDs). `parseDiagramm` ist
  *  die Trust-Boundary: ein strukturell unbrauchbares Diagramm ergibt keine
- *  Kopie, statt die ganze Übernahme scheitern zu lassen. */
+ *  Kopie, statt den ganzen Kopiervorgang scheitern zu lassen. */
 export function kopiereDiagrammVon(quelle: unknown): unknown {
   const data = parseDiagramm(quelle);
   return data && data.elemente.length > 0 ? kopiereDiagramm(data) : null;
@@ -210,6 +230,23 @@ export function eigeneBildPfade(
     .map((f) => f.pfad);
 }
 
+/** Das Suffix, an dem der USER die Kopie einer eigenen Übung erkennt (#171
+ *  AK 3). Es nennt die Quelle bewusst nicht — es sagt «das ist eine Kopie»,
+ *  nicht «das ist eine Kopie von X». */
+const KOPIE_SUFFIX = " (Kopie)";
+
+/** Der Name einer Kopie. Das Suffix wird IMMER angehängt, auch wenn der Name es
+ *  schon trägt: die Kopie einer Kopie heisst „X (Kopie) (Kopie)" (PO-Entscheid).
+ *  Eine fortlaufende Nummerierung gibt es bewusst nicht — alle Kopien derselben
+ *  Quelle sind gleich gekennzeichnet (#171 PC 7).
+ *
+ *  Gekappt wird nichts: `exercises.name` ist `text not null` ohne Längen-CHECK
+ *  (Migration `init_schema`), und auch das Übungsformular begrenzt den Namen
+ *  nicht. */
+export function kopieName(name: string): string {
+  return `${name}${KOPIE_SUFFIX}`;
+}
+
 /** Die inhaltlichen Felder einer Quelle übernehmen — eine Quelle für die
  *  Feldmenge, damit ein neues Übungsfeld nicht an einer von mehreren Stellen
  *  vergessen wird. */
@@ -231,11 +268,14 @@ export type UebungsKopieQuelle = {
 /** Eine eigenständige, zunächst private Trainer-Übung aus einer Quelle anlegen —
  *  mit eigener Bild- und Diagrammkopie.
  *
- *  Der gemeinsame Rumpf zweier Wege, die fachlich verschieden beginnen und
- *  identisch enden: «kuratierte oder fremde Übung übernehmen» (Story 7,
- *  Übungswelten) und «Fassung in die Bibliothek übernehmen» (Story 7,
- *  Bibliotheks-Epic). Wer prüfen darf, was übernommen werden darf, entscheidet
- *  der Aufrufer; hier steht nur, woraus die Kopie besteht.
+ *  Der gemeinsame Rumpf dreier Wege, die fachlich verschieden beginnen und
+ *  identisch enden: «Übung kopieren» — die eigene wie die kuratierte oder
+ *  fremde (#171, Story 7 Übungswelten) — und «Fassung in die Bibliothek
+ *  kopieren» (Story 7, Bibliotheks-Epic). Wer prüfen darf, was kopiert werden
+ *  darf, entscheidet der Aufrufer; hier steht nur, woraus die Kopie besteht.
+ *
+ *  Herkunftsneutral: die Kennzeichnung der Kopie im Namen ist Sache des
+ *  Aufrufers — er gibt sie als `ziel.name` mit (#171).
  *
  *  Eine Verknüpfung zur Quelle entsteht nicht: spätere Änderungen wirken in
  *  keine Richtung. Die Altersstufe gibt der Aufrufer mit — sie stammt bei der
@@ -245,7 +285,12 @@ export type UebungsKopieQuelle = {
 export async function legeUebungsKopieAn(
   supabase: SupabaseClient,
   quelle: UebungsKopieQuelle,
-  ziel: { ownerId: string; altersstufe: Altersstufe },
+  ziel: {
+    ownerId: string;
+    altersstufe: Altersstufe;
+    /** Abweichender Name der Kopie. Ohne ihn trägt sie den Namen der Quelle. */
+    name?: string;
+  },
 ): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
   const uebungId = crypto.randomUUID();
@@ -256,13 +301,16 @@ export async function legeUebungsKopieAn(
     .from("exercises")
     .insert({
       id: uebungId,
-      // Zufallssuffix: dieselbe Quelle lässt sich mehrfach übernehmen, jede
+      // Zufallssuffix: dieselbe Quelle lässt sich mehrfach kopieren, jede
       // Kopie bekommt ihren eigenen Slug.
-      slug: userSlug(quelle.name ?? "Übung"),
+      slug: userSlug(ziel.name ?? quelle.name ?? "Übung"),
       altersstufe: ziel.altersstufe,
       trainingsteil: quelle.trainingsteil,
       hauptteilkategorie: quelle.hauptteilkategorie,
       ...inhaltFelder(quelle),
+      // NACH dem Spread: `inhaltFelder` trägt den Namen der Quelle, ein
+      // mitgegebener ersetzt ihn (die Kopie der eigenen Übung, #171).
+      ...(ziel.name ? { name: ziel.name } : {}),
       bild_url: bild.url,
       diagramm: kopiereDiagrammVon(quelle.diagramm),
       source: "user",
@@ -275,7 +323,7 @@ export async function legeUebungsKopieAn(
 
   if (error || !angelegt) {
     await entferneStorageObjekt(supabase, bild.pfad);
-    return { ok: false, error: error?.message ?? "Übernehmen fehlgeschlagen." };
+    return { ok: false, error: error?.message ?? "Kopieren fehlgeschlagen." };
   }
   return { ok: true, slug: angelegt.slug };
 }

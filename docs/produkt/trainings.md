@@ -71,10 +71,21 @@ liegt oder ob der sichtbare Bestand für diesen Block noch leer ist, und führt 
 direkt zum Erfassen einer eigenen Übung. Mehrere Übungen nacheinander zu übernehmen ist
 möglich, dieselbe Übung auch mehrfach.
 
+Beim Zusammenstellen zeigt die Anwendung je Trainingsteil eine Karte und darin jeden Block auf
+einer eigenen, abgesetzten Fläche mit Überschrift, Dauer und eigenem Hinzufügen-Knopf — auch den
+leeren, denn beim Planen ist gerade die Lücke die Auskunft. Das betrifft die Teile mit mehr als
+einem Block: den Kinderfussball-Hauptteil mit seinen drei Unterkategorien sowie Einstieg und
+Hauptteil im Juniorenfussball. Ein Teil, der selbst ein einziger Block ist — Auffangen,
+Einleitung, Ausklang, Abschluss —, bleibt ungeteilt; dort hängt der Hinzufügen-Knopf am Teil.
+
 Innerhalb eines Blocks lässt sich die Reihenfolge ändern. Jeder Übung ausser im Auffangen kann
-eine Dauer in Fünf-Minuten-Schritten gegeben werden — das gilt in beiden Altersstufen, denn
-beide haben ein Auffangen. Das Training summiert laufend mit und weist gesondert aus, wie viele
-Übungen noch ohne Zeitangabe sind; das Auffangen bleibt in beiden Rechnungen aussen vor.
+eine Dauer gegeben werden — das gilt in beiden Altersstufen, denn beide haben ein Auffangen. Die
+Dauer steht als Zahlenfeld an der Übung und nimmt jede ganze Zahl an Minuten ab 0; die
+Pfeiltasten des Felds gehen in Einerschritten. Eingetragen wird sie beim Verlassen des Felds und
+mit Enter. Eine Eingabe, die keine ganze Zahl ab 0 ist, bleibt am Feld stehen und wird nicht
+gespeichert; das leere Feld heisst «ohne Dauer». Das Training summiert laufend mit und weist
+gesondert aus, wie viele Übungen noch ohne Zeitangabe sind; das Auffangen bleibt in beiden
+Rechnungen aussen vor.
 
 Ändert der Trainer die Alterskategorien, prüft die Anwendung, ob die bereits zugeordneten
 Übungen noch dazu passen, und benennt die abweichenden. Behalten oder entfernen entscheidet er.
@@ -86,6 +97,109 @@ Hinweis gibt es dort, wenn Spielform zum Trainingsziel, Explosivität, Spiel ode
 leer bleiben. Ein solcher Hinweis steht im betroffenen Block selbst, an der Stelle, an der sonst
 „Noch keine Übung zugeordnet" stünde, und sagt in einem Satz auch, warum der Block ins Training
 gehört. Alle übrigen leeren Blöcke bleiben bei der neutralen Zeile. Gesperrt wird nie.
+
+## Notiz je Übung
+
+Zu jeder Übung eines Trainings lässt sich eine Notiz festhalten — ein freier Text, direkt in der
+Übungszeile unter dem Namen. Sie hält fest, was für genau dieses Training gilt: wer die Station
+betreut, welches Material aus dem Depot kommt, worauf heute zu achten ist. Sie steht offen da und
+nicht hinter einem Klick; erfasst, geändert und wieder geleert wird sie im selben Feld, gespeichert
+wird beim Verlassen. Höchstens 500 Zeichen.
+
+Die Notiz gilt für jede Übung jedes Trainings, auch ausserhalb des Hauptteils und auch ohne
+Gruppen. Sie erscheint beim Zusammenstellen, in der Durchführen-Ansicht und im Druck — dort unter
+dem Übungsnamen, vor den Alterskategorien —, und zwar auch dann, wenn der Betrachter das Training
+gar nicht bearbeiten darf.
+
+Sie gehört dem Training und nicht der Übung: Wer eine Fassung in seine Bibliothek kopiert,
+kopiert ihren Inhalt, nicht die Notiz. Kopiert er dagegen das ganze Training, reist sie mit —
+es ist dasselbe Training.
+
+## Gruppen
+
+Wer zwanzig oder dreissig Kinder vor sich hat, teilt sie auf und lässt mehrere Gruppen
+gleichzeitig an verschiedenen Übungen arbeiten. Diese Aufteilung lässt sich am Training
+festhalten, statt sie auf einem Zettel zu führen.
+
+Eine Gruppe ist eine Bezeichnung, mehr nicht — „Gruppe 1", „Torhüter", „Die Schnellen". Die
+Anwendung führt keine Kinder: Namen werden keine erfasst und einer Gruppe auch nicht zugeordnet.
+Eine Kinderzahl trägt eine Gruppe ebenso wenig, und weder die Anzahl der Gruppen noch ihre
+Zusammensetzung schlägt die Anwendung vor. Wie viele es sind, entscheidet der Trainer; es gibt
+keine Obergrenze, und eine Gruppe darf auch leer ausgehen — die Torhüter trainieren zeitweise
+für sich, und eine Gruppe lässt sich vorbereiten, bevor sie gebraucht wird.
+
+Verwaltet werden die Gruppen dort, wo sie wirken: in der Hauptteil-Karte beim Zusammenstellen,
+in beiden Altersstufen. Solange das Training keine führt, steht im Kartenkopf nur ein Knopf
+„Gruppen"; danach ein Abschnitt, der zugeklappt beginnt und die Anzahl nennt. Aufgeklappt trägt
+jede Gruppe eine eigene Zeile: Die Bezeichnung steht in einem offenen Feld und wird beim
+Verlassen des Felds gespeichert, ein Kreuz daneben entfernt die Gruppe. Die letzte Zeile ist
+dieselbe, nur leer — wer hineinschreibt, legt eine Gruppe an. Entfernt der Trainer die letzte
+Gruppe, verschwindet der Abschnitt wieder und der Knopf kommt zurück.
+
+Zwei Gruppen desselben Trainings dürfen nicht gleich heissen, wobei Gross- und Kleinschreibung
+keinen Unterschied macht: Neben „Gruppe 1" ist „gruppe 1" keine zweite Gruppe. Beim Umbenennen
+zählt die eigene bisherige Bezeichnung nicht als vergeben. Eine Bezeichnung ist höchstens vierzig
+Zeichen lang und darf nicht leer sein. Was nicht geht, sagt die Anwendung am Feld selbst.
+
+Eine Gruppe gehört zu genau dem Training, an dem sie angelegt wurde. In ein anderes Training
+wandert sie nicht, auch nicht in ein bestehendes; wird ein ganzes Training kopiert, bekommt die
+Kopie eigene Gruppen gleichen Namens. Die Übungen des Trainings bleiben vom Anlegen und
+Umbenennen von Gruppen unberührt.
+
+## Gruppenverteilung im Hauptteil
+
+Führt ein Training Gruppen, trägt jede Übung des Hauptteils eine zweite Zeile: den Durchlauf.
+Dort steht, welche Gruppen die Übung durchlaufen und in welcher Reihenfolge — als Kette von
+Chips, durch Pfeile getrennt. Eine Gruppe kommt über den Knopf „Gruppe hinzufügen" dazu und hängt
+sich hinten an; sind alle Gruppen des Trainings zugewiesen, verschwindet der Knopf. Jeder Chip
+trägt sein eigenes Menü: nach vorne, nach hinten, aus dieser Übung nehmen. Steht keine Gruppe an
+einer Übung, heisst es „Alle gemeinsam" — die ganze Trainingsgruppe macht sie zusammen. Das ist
+eine Aussage und kein Mangel; ein Training kann Gruppen führen und trotzdem Übungen haben, die
+alle zusammen absolvieren.
+
+Die Stelle in der Kette ist ein **Wechsel**: das Zeitfenster, das über alle Übungen des
+Hauptteils dasselbe meint. Wer an drei Übungen jeweils zuerst eine Gruppe einträgt, hat diese
+drei Gruppen gleichzeitig im Einsatz. Im Juniorenfussball gilt das über beide Hauptteil-Blöcke
+hinweg: Der 1. Wechsel liegt zugleich in den Spielformen und im Spiel — die Blöcke gliedern die
+Übungen, nicht die Zeit. Der Wechsel wird nicht eigens erfasst; er folgt aus der Reihenfolge, und
+wer eine Gruppe verschiebt, verschiebt sie in einen anderen Wechsel.
+
+Dieselbe Gruppe darf an beliebig vielen Übungen stehen, an einer Übung aber nur einmal. Verteilt
+wird allein der Hauptteil; ausserhalb gibt es keinen Durchlauf. Dauer und Reihenfolge der Übungen
+bleiben vom Zuweisen unberührt.
+
+Jede Gruppe trägt in ihrer Zeile, wie lange sie im Hauptteil beschäftigt ist: die Summe der
+Dauern aller Übungen, die sie durchläuft — im Juniorenfussball über beide Hauptteil-Blöcke
+hinweg. Dieselbe Summe steht im Menü „Gruppe hinzufügen" neben jeder Gruppe, dort also am Ort der
+Entscheidung. Sie geht nach jedem Zuweisen, jeder Dauer-Änderung und jedem Entfernen sofort mit.
+Übungen ohne erfasste Dauer zählen nicht mit; trägt keine der zugewiesenen Übungen eine Dauer
+oder ist der Gruppe noch keine zugewiesen, steht dort ein Gedankenstrich statt einer Null. Eine
+Übung, an der keine Gruppe steht, machen alle gemeinsam und zählt darum bei keiner Gruppe.
+
+Zwei Dinge meldet die Anwendung: eine Gruppe, die im selben Wechsel an zwei Übungen steht — sie
+kann nicht an zwei Orten gleichzeitig sein —, und Übungen desselben Wechsels, die ungleich lang
+sind. Beides steht als Zeile am Fuss der Hauptteil-Karte; die Doppelbelegung färbt zusätzlich den
+betroffenen Chip und erscheint hinter der Zeitsumme in der Zeile der Gruppe, die ungleiche Länge
+den Rahmen des betroffenen Dauerfelds. Gemeldet wird es, gesperrt nicht: Speichern,
+Weiterbearbeiten und Veröffentlichen bleiben unberührt. Eine Übung ohne erfasste Dauer zählt beim
+Längenvergleich nicht mit.
+
+Zwei Vorgänge lösen eine Rückfrage aus, weil dabei Zuweisungen wegfallen, die nirgends sonst
+stehen: das Entfernen einer Gruppe, die noch Übungen zugewiesen ist, und das Entfernen einer
+Übung, die Gruppen im Durchlauf trägt. Beide Male nennt die Rückfrage die Anzahl und sagt, was
+bleibt. Ohne Zuweisungen wird ohne Rückfrage entfernt. Verschiebt der Trainer eine Übung aus dem
+Hauptteil in einen anderen Teil, fragt die Anwendung nicht nach — dort gelten keine Gruppen, und
+die Zuweisungen fallen still weg.
+
+Kopiert jemand ein ganzes Training — ins Team stellen, ein Team-Training zu sich übernehmen, ein
+öffentliches Training übernehmen, eine angesetzte Einheit ein zweites Mal ansetzen —, reisen
+Gruppen, Durchlauf und Notizen mit: Die Kopie führt dieselben Bezeichnungen in derselben
+Reihenfolge, verteilt die Übungen des Hauptteils auf dieselben Wechsel und trägt dieselben
+Notizen. Neu verteilt werden muss nichts. Die Kopie ist dabei eigenständig: Ihre Gruppen sind
+eigene Gruppen, und wer in ihr umbenennt, verschiebt, zuweist oder entfernt, lässt das Original
+unberührt — und umgekehrt. Nicht mitgenommen wird die Verteilung, wenn jemand eine einzelne
+Fassung in seine Bibliothek kopiert: Dort steht die Übung für sich, ohne Gruppen und ohne
+Notiz.
 
 ## Jede Übung im Training ist eine eigene Fassung
 
@@ -111,6 +225,13 @@ Ablauf und zuunterst — wo die Übung einen trägt — der Übungstyp; die Ersc
 beide Ansichten nicht, sie ordnet ein und hilft auf dem Platz nicht weiter. Der Druck zeigt
 dasselbe als zusammenhängende, druckfertige Seite zum Mitnehmen, das Ziel im Kopf. Leere Blöcke
 erscheinen in beiden Ansichten nicht.
+
+Gleich unter dem Übungstitel steht, was für genau dieses Training gilt: zuerst der Durchlauf,
+darunter die Notiz. Der Durchlauf nennt die zugewiesenen Gruppen in ihrer Reihenfolge, durch
+Pfeile verbunden — als schlichte Textzeile, ohne Chips und ohne Farbe, denn auf dem Platz und
+auf Papier zählt das Lesen. Übungen ohne Zuweisung zeigen die Zeile gar nicht; ihr Fehlen ist
+dort selbsterklärend. Zeitsummen und Konflikte bleiben beim Zusammenstellen. Im Druck bleibt
+eine Übung samt Durchlauf und Notiz auf einer Seite zusammen, solange sie darauf Platz hat.
 
 ## Veröffentlichen
 
@@ -160,8 +281,9 @@ sie leben im Team-Bereich.
 ## Bekannte Grenzen
 
 Ein Training trägt ausser Name, Altersstufe, Alterskategorien und Ziel keine eigenen Angaben —
-keine Beschreibung, keine Notiz. Eine Soll-Dauer gibt es nicht; im Juniorenfussball sind die
-Zeitangaben Richtwerte, im Kinderfussball nennt die Anwendung gar keine.
+eine Beschreibung gibt es nicht, und die Notiz hängt an einer Übung, nicht am Training. Eine
+Soll-Dauer gibt es ebenso wenig; im Juniorenfussball sind die Zeitangaben Richtwerte, im
+Kinderfussball nennt die Anwendung gar keine.
 
 Die Altersstufe eines Trainings ändert sich nie, auch dann nicht, wenn eine Mannschaft
 aufsteigt — die Einheit wird für die neue Stufe neu angelegt. Gemischt trainierte Jahrgänge,
@@ -170,6 +292,22 @@ sich für ein Manual und plant darin. Für den Juniorenfussball gibt es zudem ke
 Übungsbestand; wer dort veröffentlichen will, erfasst seine Übungen zuerst selbst. Die
 Trainingsübersicht trennt die Altersstufen nicht — sie stehen zusammen in einer Liste,
 eingegrenzt wird über die Alterskategorie.
+
+Teil- und Gesamtdauer rechnen die Übungen weiterhin nacheinander. Bei einem auf Gruppen
+verteilten Hauptteil entsprechen sie darum nicht der tatsächlichen Länge des Trainings: Was
+mehrere Gruppen gleichzeitig tun, steht in der Summe mehrfach.
+
+Auf dem Platz und im Druck steht der Durchlauf einer Übung, mehr aber nicht: Die Wechsel als
+solche erscheinen dort nicht, ebenso wenig die Zeitsumme einer Gruppe oder eine Meldung zu
+Konflikten — beides bleibt beim Zusammenstellen, und in den Übersichten steht die Summe
+ohnehin nirgends. Einen Auszug für eine einzelne Gruppe oder für eine betreuende Person gibt es
+weder in der Durchführen-Ansicht noch im Druck. Wie lange ein Wechsel dauert, gibt die
+Anwendung nicht vor, ein Signal zum Wechseln gibt sie ebenso wenig, und heruntergezählt wird
+nichts. Unbesetzte Übungen
+und ungleich auf die Gruppen verteilte Übungen meldet sie nicht — beides kann gewollt sein —,
+und die Kinderzahl einer Übung gleicht sie nicht mit der Verteilung ab. Bearbeiten zwei
+Mitglieder desselben Teams dieselbe Stelle gleichzeitig — die Verteilung ebenso wie die Notiz einer
+Übung —, bemerkt die Anwendung das nicht; es gilt, was zuletzt gespeichert wurde.
 
 Der Druck hält eine Übung zusammen, solange sie auf eine Seite passt; steht sie als erste unter
 einer Trainingsteil-Überschrift und reicht der Platz darunter nicht, bricht sie um.

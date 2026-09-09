@@ -29,6 +29,7 @@ import { HeaderNavDemo } from "./HeaderNavDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
+import { ChipMenuDemo } from "./ChipMenuDemo";
 import {
   Search,
   SlidersHorizontal,
@@ -44,6 +45,7 @@ import {
   User,
   Pencil,
   Info,
+  Clock,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
@@ -95,6 +97,7 @@ const accentRoles: [string, string][] = [
   ["secondary-container", "bg-secondary-container"],
   ["error", "bg-error"],
   ["error-container", "bg-error-container"],
+  ["warning", "bg-warning"],
   ["outline", "bg-outline"],
 ];
 
@@ -199,6 +202,16 @@ export default function Styleguide() {
           Semantische M3-Rollen über der KiFu-Palette. Surface-Leiter =
           Elevation-Leiter. Signal ist der einzige warme Hue.
         </p>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          <code>warning</code> (Bernstein) trägt den{" "}
+          <strong>nicht-blockierenden</strong> Hinweis: etwas stimmt nicht,
+          lässt sich aber speichern. <code>error</code> bleibt dem vorbehalten,
+          was die Eingabe abweist. Warning erscheint als <strong>Rahmen, Text
+          und Icon — nie als Fläche</strong>: <code>kat-f</code> ist ebenfalls
+          gelb (Kontrast 1.06:1), als Füllung neben einer Kategorie-Plakette
+          wären beide nicht zu unterscheiden. Im Druck kippt der Token auf ein
+          dunkles Ocker.
+        </p>
         <p className="type-label-small mb-2 text-on-surface-variant">Surface-Leiter</p>
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {surfaceLadder.map(([name, bg]) => (
@@ -239,6 +252,15 @@ export default function Styleguide() {
       </Section>
 
       <Section n="02" title="Typografie — M3 Type-Scale">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          <strong>Regel: Nutzertext nie in Label-Typografie.</strong> Die
+          <code> type-label-*</code>-Stufen sind mono, fett und{" "}
+          <em>versal</em> — sie verändern, was dasteht. Für Beschriftungen, die
+          wir selbst schreiben, ist das gewollt; ein Gruppenname wie „Grosse"
+          würde daraus als „GROSSE" zurückkommen und wäre nicht mehr das, was
+          die Trainerin eingetippt hat. Alles, was aus der Datenbank kommt,
+          gehört darum in <code>type-body-*</code>.
+        </p>
         <div className="space-y-3">
           {typeScale.map(([cls, label]) => (
             <div key={cls} className="border-b border-outline-variant pb-3">
@@ -646,6 +668,91 @@ export default function Styleguide() {
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
+          Dichte Variante (<code>dense</code>)
+        </h3>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Warum das hohe Feld nicht reicht: In Filterzeilen und dichten
+          Listenzeilen stehen Felder neben MultiSelect-Triggern und Chips und
+          müssen mit ihnen fluchten — <code>h-12</code> statt{" "}
+          <code>h-14</code>. Dort beschriftet ausserdem der Platzhalter
+          („Übungen durchsuchen…"), das schwebende Label hätte weder Platz noch
+          Aufgabe; es ist abgeschaltet und wandert als <code>aria-label</code>{" "}
+          an das Feld. <code>supportingText</code> und <code>error</code>{" "}
+          funktionieren unverändert.
+        </p>
+        <div className="grid max-w-md gap-6">
+          <TextField
+            dense
+            label="Übungen durchsuchen"
+            type="search"
+            leadingIcon={Search}
+            placeholder="Übungen durchsuchen…"
+          />
+          <TextField
+            dense
+            label="Verfügbare Kinder"
+            type="number"
+            min={1}
+            placeholder="Kinder"
+            error
+            supportingText="Bitte eine Zahl ≥ 1 eingeben."
+          />
+        </div>
+
+        <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
+          Befund am Feld (<code>warning</code>) und gemischter Supporting-Text
+        </h3>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Zwei Ergänzungen aus der Gruppenverteilung (Story #151).{" "}
+          <code>warning</code> färbt den Rahmen bernstein: Der Wert ist
+          gespeichert und richtig erfasst, geht aber mit anderen nicht auf —
+          etwa eine Dauer in einem Wechsel, dessen Übungen ungleich lang sind.
+          Das ist kein <code>error</code>: Es gibt nichts zu berichtigen, bevor
+          gespeichert werden kann, und beides in dieselbe Rolle zu legen nähme
+          dem Rot seine Bedeutung. Am Rahmen gilt die Rangfolge{" "}
+          <code>error</code> &gt; <code>warning</code> &gt; Fokus: Der Fokus
+          färbt nur den ruhigen Rahmen um und zeigt sich sonst über seine
+          Dicke, damit ein Befund nicht ausgerechnet beim Hinschauen
+          verschwindet. Bernstein bleibt dabei auf Rahmen, Text und Icon — nie
+          als Fläche. Weil der Rahmen allein nur sehend wahrnehmbar ist, gehört
+          zu <code>warning</code> ein Hinweis für Screenreader (am Dauerfeld
+          ein <code>sr-only</code>-Satz per <code>aria-describedby</code>).
+        </p>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          <code>supportingText</code> nimmt seit derselben Story einen{" "}
+          <code>ReactNode</code>, weil unter der Gruppenzeile zwei Aussagen in
+          einer Zeile stehen: die Zeitsumme (eine Auskunft) und dahinter der
+          Konflikt (ein Befund). Nur der zweite Teil ist bernstein — die ganze
+          Zeile zu färben liesse nicht mehr erkennen, was daran gemeldet ist.
+        </p>
+        <div className="grid max-w-md gap-6">
+          <TextField
+            dense
+            label="Dauer in Minuten"
+            type="number"
+            min={0}
+            defaultValue="15"
+            placeholder="min"
+            leadingIcon={Clock}
+            className="w-28"
+            warning
+          />
+          <TextField
+            label="Bezeichnung"
+            defaultValue="Gruppe 1"
+            supportingText={
+              <>
+                Zugewiesen 40 min
+                <span className="text-warning">
+                  {" "}
+                  · Steht im 1. Wechsel an zwei Übungen.
+                </span>
+              </>
+            }
+          />
+        </div>
+
+        <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
           Datum &amp; Uhrzeit
         </h3>
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
@@ -668,6 +775,16 @@ export default function Styleguide() {
           Verankertes Dropdown (Outside-Click/Escape schliesst). Items mit
           führendem Icon, optionalem Trailing-Text und destruktiver Variante.
           Gespeist aus <code>--menu-*</code>-Component-Tokens.
+        </p>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          <strong>Tastatur:</strong> Beim Öffnen springt der Fokus auf den
+          ersten Eintrag, <kbd>↑</kbd>/<kbd>↓</kbd> laufen zyklisch,{" "}
+          <kbd>Home</kbd>/<kbd>End</kbd> an die Enden. Den Fokus an den Trigger
+          zurück geben nur <kbd>Esc</kbd> und eine getroffene Auswahl — ein
+          Klick daneben <strong>nicht</strong>: dort will die Nutzerin gerade
+          woanders hin, ein Rücksprung risse ihr den Fokus vom eben geklickten
+          Element weg. Voraussetzung ist, dass der Trigger als{" "}
+          <code>triggerRef</code> übergeben wird.
         </p>
         <MenuDemo />
       </Section>
@@ -1041,22 +1158,62 @@ export default function Styleguide() {
           <em>„Ungewöhnlich viele Übungen …"</em>) bleiben davon unberührt und
           stehen weiter als <code>type-label-medium</code> am Kartenfuss.
         </p>
-        <div className="mt-6 grid max-w-xl gap-4">
+        <p className="type-body-medium mt-4 max-w-xl text-on-surface-variant">
+          <strong>Fläche für Blöcke einer dichten Karte:</strong> Trägt eine Karte
+          mehrere gleichrangige Blöcke — die Unterkategorien des
+          Kinderfussball-Hauptteils, die Blöcke des Junioren-Einstiegs —, steht
+          jeder auf einer eigenen Fläche: <code>bg-surface-container</code>,{" "}
+          <code>border-outline-variant</code>, <code>rounded-[4px]</code>,{" "}
+          <code>p-3</code>. Also eine Stufe die Leiter hoch gegenüber der Karte,
+          während die Inhaltszeilen darin auf <code>surface-container-low</code>{" "}
+          bleiben und sich dadurch als Inhalt <em>im</em> Block lesen.{" "}
+          <strong>Nicht dieselbe Stufe wie die Karte:</strong> Bei gleicher Fläche
+          verschwimmen Block und Karte, und ein leerer Block — beim Planen die
+          wichtigste Auskunft — wäre bloss eine Zeile Text im Nichts. Ein Teil mit
+          nur einem Block bekommt <em>keine</em> Fläche: Rahmen und Überschrift
+          wiederholten dort bloss die Karte.
+        </p>
+        <div className="mt-6 max-w-xl">
           <Card className="p-4">
-            <h3 className="type-title-small text-on-surface">Vielseitigkeit erleben</h3>
-            <p className="mt-2 type-body-small text-on-surface-variant">
-              Noch keine Übung zugeordnet.
-            </p>
-          </Card>
-          <Card className="p-4">
-            <h3 className="type-title-small text-on-surface">Fussball spielen</h3>
-            <p className="mt-2 flex items-start gap-2 type-body-small text-on-surface-variant">
-              <Info size={15} className="mt-0.5 shrink-0 text-signal" aria-hidden />
-              Das freie Spiel ist noch leer — im Kinderfussball gehört es in jedes
-              Training.
-            </p>
+            <h2 className="type-title-medium text-on-surface">Hauptteil</h2>
+            <div className="mt-4 flex flex-col gap-4">
+              <div className="rounded-[4px] border border-outline-variant bg-surface-container p-3">
+                <h3 className="type-title-small text-on-surface">
+                  Vielseitigkeit erleben
+                </h3>
+                <p className="mt-2 type-body-small text-on-surface-variant">
+                  Noch keine Übung zugeordnet.
+                </p>
+              </div>
+              <div className="rounded-[4px] border border-outline-variant bg-surface-container p-3">
+                <h3 className="type-title-small text-on-surface">Fussball spielen</h3>
+                <p className="mt-2 flex items-start gap-2 type-body-small text-on-surface-variant">
+                  <Info size={15} className="mt-0.5 shrink-0 text-signal" aria-hidden />
+                  Das freie Spiel ist noch leer — im Kinderfussball gehört es in
+                  jedes Training.
+                </p>
+              </div>
+            </div>
           </Card>
         </div>
+      </Section>
+
+      <Section n="22" title="Chip mit Menü">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Ein Chip, der ein Menü öffnet — für Werte, die man an ihrem Ort
+          umsortieren oder herausnehmen können muss.{" "}
+          <strong>Warum die bestehenden Chips nicht reichen:</strong> Der{" "}
+          <code>InputChip</code> kennt nur ein Entfernen-X — 16 px, kein
+          Touch-Ziel — und kann „nach vorne schieben" gar nicht ausdrücken; der{" "}
+          <code>AssistChip</code> löst genau eine Aktion aus, nicht mehrere zur
+          Wahl. Beide tragen ausserdem <code>type-label-medium</code>, also
+          mono und versal: ein Gruppenname stünde dort verfälscht (siehe Regel
+          in 02). Der Chip mit Menü trägt darum{" "}
+          <code>type-body-medium</code> und ist <strong>ein</strong>{" "}
+          Bedienelement mit <strong>einem</strong> Tabstopp — kein Chip plus
+          angehängter Knopf.
+        </p>
+        <ChipMenuDemo />
       </Section>
 
     </main>

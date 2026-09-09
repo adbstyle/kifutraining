@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-09-01. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-09-09. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -22,14 +22,31 @@ seinen Trainings und Terminen, nach ausdrücklicher Bestätigung, die deren Anza
 Ein Training gehört entweder einer Person oder einem Team, nie beiden. Geteilt wird nie,
 kopiert immer: Wer ein eigenes Training ins Team stellt, erzeugt eine eigenständige Kopie —
 das persönliche Original bleibt unberührt, und spätere Änderungen wirken in keine Richtung.
-Dasselbe gilt umgekehrt beim Übernehmen eines Team-Trainings zu sich. Ein Training lässt sich
-auch direkt im Team anlegen; es gehört dann von Beginn an dem Team. Dabei gelten dieselben
+Dasselbe gilt umgekehrt beim Übernehmen eines Team-Trainings zu sich. Eine Kopie ist dabei
+vollständig: Sie führt neben den Übungen samt Bild und Diagramm auch die Gruppen des Trainings,
+deren Verteilung im Hauptteil und die Notizen der Übungen — das Team findet dieselbe Einheit vor
+und muss nichts davon neu eintragen. Ein Training lässt sich auch direkt im Team anlegen; es
+gehört dann von Beginn an dem Team. Dabei gelten dieselben
 Pflichtangaben wie beim persönlichen Anlegen: Name, Altersstufe und mindestens eine
 Alterskategorie der gewählten Altersstufe. Auch hier steht die Altersstufe danach fest.
 
 Team-Trainings tauchen in der allgemeinen Trainingsübersicht nie auf — sie leben
 ausschliesslich im Team-Bereich. Umgekehrt zeigt der Team-Bereich keine persönlichen
 Trainings.
+
+Deshalb bleibt der Team-Bereich auch dann bestehen, wenn ein Team-Training geöffnet ist: Die
+Hauptnavigation hält „Teams" hervorgehoben — beim Ansehen, Bearbeiten und Durchführen ebenso
+wie beim Bearbeiten einer Übung und ihres Feld-Diagramms, und gleichgültig, ob das Training
+aus dem Team heraus, über einen geteilten Link oder ein Lesezeichen geöffnet wurde. Die
+Brotkrumen führen entsprechend zurück: über das Team in die Teamübersicht, und dazwischen
+dorthin, wo das Training tatsächlich liegt. Ein nicht angesetztes Team-Training führt über
+eine Stufe „Trainings" in den Bestand des Teams; ein angesetztes trägt stattdessen sein
+Termindatum im Namen, und die Stufe des Teams führt direkt in den Trainingsplan — eine eigene
+Plan-Stufe gibt es nicht, weil das Team ohnehin dort beginnt. Setzt jemand ein Training an,
+wechselt das Ziel beim nächsten Aufruf von den Trainings in den Trainingsplan.
+
+Ein persönliches oder öffentliches Training führt unverändert in die Trainingsübersicht — auch
+die persönliche Kopie, die beim Übernehmen eines Team-Trainings entsteht.
 
 ## Termine und Trainingsplan
 
@@ -49,12 +66,17 @@ Lektion zählt bewusst nicht — ein Termin trägt keine Dauer, und die Zeitanga
 sind freiwillig und nachträglich änderbar, sodass eine gerechnete Endzeit eine Einheit später
 zwischen den Abschnitten hin und her schieben könnte.
 
+Ein angesetztes Team-Training trägt sein Termindatum sichtbar mit sich: an seinem Eintrag im
+Trainingsbestand des Teams neben der Plakette „Angesetzt" und in den Brotkrumen, solange es
+geöffnet ist. Die Schreibweise ist überall dieselbe wie im Trainingsplan, etwa
+„Mi., 23.09.2026".
+
 Ein Training trägt höchstens einen Termin. Wer dieselbe Einheit ein zweites Mal ansetzt,
 bekommt eine eigenständige Kopie mit eigenem Termin — sowohl aus dem Trainingsplan heraus als
-auch direkt aus dem Trainingsbestand. Der Grund: Jedes Datum bleibt bei dem Stand, mit dem es
-tatsächlich durchgeführt wurde, und eine Anpassung für die nächste Woche verändert die
-Vergangenheit nicht. Serientermine aus einem Rhythmus gibt es nicht; jedes Ansetzen ist ein
-bewusster Einzelschritt.
+auch direkt aus dem Trainingsbestand; Gruppen, Verteilung und Notizen sind darin dieselben.
+Der Grund: Jedes Datum bleibt bei dem Stand, mit dem es tatsächlich durchgeführt wurde, und eine
+Anpassung für die nächste Woche verändert die Vergangenheit nicht. Serientermine aus einem
+Rhythmus gibt es nicht; jedes Ansetzen ist ein bewusster Einzelschritt.
 
 Einen Abgesagt-Zustand kennt die Anwendung nicht — Ausfälle stehen in der Bemerkung oder der
 Termin wird entfernt. Sie hält auch nicht fest, wer an einem Termin im Einsatz war oder ob er
@@ -105,11 +127,14 @@ sie in die Trainings zurück.
 
 ## Bekannte Grenzen
 
-Mehrere Einheiten desselben Trainings heissen alle gleich und sind im Bestand nicht
-voneinander unterscheidbar — wann eine Einheit stattfindet, steht im Trainingsplan. Ein
+Mehrere Einheiten desselben Trainings heissen alle gleich; angesetzte lassen sich im Bestand
+am Termindatum auseinanderhalten, noch nicht angesetzte dagegen nicht. Ein
 Archivieren oder Löschen vergangener Einheiten gibt es nicht: Der Rückblick fasst sie
 zusammen, der Trainingsbestand wächst mit jedem Termin weiter. Der Rückblick lässt sich weder
 auf einen Zeitraum eingrenzen noch durchsuchen, und ob eine Einheit tatsächlich stattgefunden
 hat, hält die Anwendung nicht fest — der Abschnitt sagt allein, dass ihr Tag vorüber ist.
 Gleichzeitiges Bearbeiten desselben Trainings durch mehrere Mitglieder erkennt die Anwendung
-nicht; die zuletzt gespeicherte Fassung gilt.
+nicht; die zuletzt gespeicherte Fassung gilt. Eine bereits geöffnete Seite folgt einer
+Änderung nicht von selbst: Setzt ein anderes Mitglied das Training unterdessen an, greifen das
+neue Brotkrumen-Ziel und das Termindatum erst beim nächsten Aufruf. Ein Wechsel zwischen
+mehreren Teams ohne Umweg über die Teamübersicht ist nicht vorgesehen.

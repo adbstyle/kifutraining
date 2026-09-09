@@ -34,3 +34,31 @@ export function heuteAmTrainingsort(): string {
     teile.find((p) => p.type === typ)?.value ?? "";
   return `${wert("year")}-${wert("month")}-${wert("day")}`;
 }
+
+/**
+ * Ein Termindatum als „Mi., 23.09.2026".
+ *
+ * Der Wochentag ist beim Planen die wichtigste Information und in der reinen
+ * Zahlenform nicht ablesbar. Die Schreibweise ist in der ganzen Anwendung
+ * dieselbe (NFR 3) — Plan, Durchführen-Ansicht, Bestand und Brotkrumen teilen
+ * sich diesen einen Helfer.
+ *
+ * Der abgekürzte Wochentag trägt im Schweizer Deutsch einen Punkt — so
+ * schreibt ihn `de-CH` selbst, und so steht er überall in der Anwendung.
+ *
+ * Bewusst fest auf `de-CH` und auf das Muster `T00:00:00`: Server und Browser
+ * rendern dieselbe Zeichenkette, sonst meldete React beim Hydrieren einen
+ * Unterschied. Ein unlesbares Datum kommt unverändert zurück, statt „Invalid
+ * Date" anzuzeigen.
+ */
+export function datumKurz(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString("de-CH", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+}

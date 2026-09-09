@@ -5,6 +5,7 @@ import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
 import { updateFassung } from "@/lib/actions/fassung";
 import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
+import { trainingsKrumen } from "@/lib/brotkrumen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -28,11 +29,15 @@ export default async function FassungBearbeitenPage({
   // für den Betrachter dasselbe.
   if (!f || f.trainingId !== id) notFound();
 
-  const crumbs: BreadcrumbItem[] = [
-    { label: "Trainings", href: "/trainings" },
-    { label: f.trainingName, href: `/training/${f.trainingId}/edit` },
-    { label: f.name },
-  ];
+  const crumbs: BreadcrumbItem[] = trainingsKrumen(
+    {
+      id: f.trainingId,
+      name: f.trainingName,
+      team: f.trainingTeam,
+      terminDatum: f.trainingTerminDatum,
+    },
+    [{ label: f.name }],
+  );
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">

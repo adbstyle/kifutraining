@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { likePattern } from "@/lib/search";
 import { TRAININGSTEIL_SLUGS, sortStufen, teilTraegtDauer, hkatRank } from "@/lib/training";
@@ -5,7 +6,7 @@ import type { Fahrplan } from "@/lib/queries/exercises";
 import type { KategorieSlug, TrainingsteilSlug } from "@/lib/vocab";
 import { JUNIOREN_BLOCK_SLUGS, type Einordnung } from "@/lib/junioren";
 import type { Altersstufe } from "@/lib/altersstufe";
-import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
+import { FASSUNG_INHALT_FELDER, FASSUNG_ZUORDNUNG_FELDER } from "@/lib/fassung";
 import { kurzeZeit } from "@/lib/queries/termine";
 
 /**
@@ -28,6 +29,10 @@ export type TrainingExerciseItem = {
   hauptteilkategorie: string | null;
   position: number;
   durationMin: number | null;
+  /** Freier Text zu dieser Übung in DIESEM Training (#152); `null` ohne Notiz.
+   *  Sie gehört der Zuordnung, nicht der Übung — in die Bibliothek gelangt sie
+   *  nie. */
+  notiz: string | null;
   name: string;
   kategorien: string[];
   erscheinungsform: string[];
@@ -45,6 +50,10 @@ export type TrainingExerciseItem = {
   bildUrl: string | null;
   bildQuelle: "foto" | "diagramm" | null;
   diagramm: unknown;
+  /** Die Gruppen, die diese Übung durchlaufen, in WECHSELREIHENFOLGE
+   *  (Story #150). Leer heisst «alle gemeinsam» — und ausserhalb des
+   *  Hauptteils immer leer. */
+  gruppen: { id: string; name: string }[];
 };
 
 export type TrainingDetail = {
@@ -60,12 +69,19 @@ export type TrainingDetail = {
   ziel: string | null;
   /** Gehört das Training einem Team? Dann steht hier dessen Name (Story 6). */
   team: { id: string; name: string } | null;
+  /** Datum des Termins, falls das Training angesetzt ist (`YYYY-MM-DD`);
+   *  sonst `null`. Höchstens einer je Training — ein erneutes Ansetzen legt
+   *  eine eigene Kopie an. Die RLS gibt Termine nur Team-Mitgliedern (#156). */
+  terminDatum: string | null;
   /** Anzeigename des Urhebers; `null` bei anonymisierten Trainings (Story 15). */
   urheber: string | null;
   createdAt: string;
   updatedAt: string;
   /** Flach, sortiert nach fester Trainingsteil-Reihenfolge, dann Position. */
   exercises: TrainingExerciseItem[];
+  /** Die Gruppen, auf die der Hauptteil verteilt wird (Story #149), in
+   *  Anlegereihenfolge. Leer, solange das Training keine führt. */
+  gruppen: { id: string; name: string }[];
 };
 
 /** Die Inhaltsfelder der Fassung — aus der Kopier-Konstante abgeleitet, damit
@@ -73,12 +89,18 @@ export type TrainingDetail = {
  *  verschwände dann still aus der Anzeige). */
 const INHALT_FELDER = [...FASSUNG_INHALT_FELDER, "bild_url", "diagramm"].join(", ");
 
+/** Die Felder der Zuordnung — ebenfalls aus der Kopier-Konstante, aus demselben
+ *  Grund: Wo die Fassung im Training steht, was sie dauert und was für dieses
+ *  Training an ihr vermerkt ist, soll nicht an einer von zwei Listen hängen. */
+const ZUORDNUNG_FELDER = FASSUNG_ZUORDNUNG_FELDER.join(", ");
+
 const PE_SELECT = `
-  id, trainingsteil, hauptteilkategorie, position, duration_min,
+  id, ${ZUORDNUNG_FELDER},
+  training_exercise_gruppen ( gruppe_id, position ),
   ${INHALT_FELDER}
 `;
 
-const TRAINING_SELECT = `id, name, owner_id, visibility, altersstufe, stufen, ziel, team_id, urheber, created_at, updated_at, training_exercises ( ${PE_SELECT} )`;
+const TRAINING_SELECT = `id, name, owner_id, visibility, altersstufe, stufen, ziel, team_id, teams ( name ), urheber, created_at, updated_at, training_termine ( datum ), training_exercises ( ${PE_SELECT} ), training_gruppen ( id, name, created_at )`;
 
 /** Die Inhaltsfelder, wie sie aus der Zuordnung zurückkommen. */
 type RawInhalt = {
@@ -104,6 +126,8 @@ type RawTrainingExercise = RawInhalt & {
   hauptteilkategorie: string | null;
   position: number;
   duration_min: number | null;
+  notiz: string | null;
+  training_exercise_gruppen: { gruppe_id: string; position: number }[];
 };
 type RawTraining = {
   id: string;
@@ -118,8 +142,12 @@ type RawTraining = {
   created_at: string;
   updated_at: string;
   training_exercises: RawTrainingExercise[];
-  /** Nur der Editor lädt den Teamnamen mit (PostgREST-Embed). */
-  teams?: { name: string } | null;
+  training_gruppen: { id: string; name: string; created_at: string }[];
+  teams: { name: string } | null;
+  /** PostgREST erkennt die UNIQUE-Bedingung auf `training_id` und liefert den
+   *  Termin als EIN Objekt statt als Liste. Beide Formen abfangen: eine
+   *  spätere Schema-Änderung soll hier keinen stillen Nulltreffer erzeugen. */
+  training_termine: { datum: string } | { datum: string }[] | null;
 };
 
 /** Sortier-Reihenfolge aller Einordnungen: erst die vier Kinderfussball-Teile,
@@ -137,7 +165,34 @@ const teilRank = (t: string) => {
   return i === -1 ? EINORDNUNG_RANG.length : i;
 };
 
+/** Der eine Termin eines Trainings aus einem PostgREST-Embed.
+ *
+ *  `training_termine.training_id` ist UNIQUE, deshalb liefert PostgREST den
+ *  Termin als Objekt statt als Liste. Beide Formen werden abgefangen, damit
+ *  eine spätere Schema-Änderung hier keinen stillen Nulltreffer erzeugt. */
+export function einzelnerTermin<T>(embed: T | T[] | null | undefined): T | null {
+  if (embed == null) return null;
+  return Array.isArray(embed) ? (embed[0] ?? null) : embed;
+}
+
 function mapTraining(raw: RawTraining): TrainingDetail {
+  // Anzeigereihenfolge ist die Anlegereihenfolge; die ID entscheidet
+  // zeitgleiche Anlagen, damit die Liste zwischen zwei Abfragen nicht springt.
+  const gruppen = (raw.training_gruppen ?? [])
+    .slice()
+    .sort((a, b) =>
+      a.created_at === b.created_at
+        ? a.id.localeCompare(b.id)
+        : a.created_at.localeCompare(b.created_at),
+    )
+    .map((g) => ({ id: g.id, name: g.name }));
+
+  // Die Zuweisung trägt nur die Gruppen-ID; der Name steht am Training. Er
+  // wird hier aufgelöst, damit die Anzeige nicht in jeder Zeile nachschlagen
+  // muss — und damit eine Zuweisung ohne passende Gruppe gar nicht erst
+  // durchkommt (die Datenbank schliesst sie aus, `teg_guard`).
+  const nachId = new Map(gruppen.map((g) => [g.id, g]));
+
   const exercises: TrainingExerciseItem[] = (raw.training_exercises ?? [])
     .map((te) => {
       return {
@@ -146,6 +201,7 @@ function mapTraining(raw: RawTraining): TrainingDetail {
         hauptteilkategorie: te.hauptteilkategorie,
         position: te.position,
         durationMin: te.duration_min,
+        notiz: te.notiz,
         name: te.name,
         kategorien: te.kategorien ?? [],
         erscheinungsform: te.erscheinungsform ?? [],
@@ -160,6 +216,11 @@ function mapTraining(raw: RawTraining): TrainingDetail {
         bildUrl: te.bild_url,
         bildQuelle: te.bild_quelle,
         diagramm: te.diagramm,
+        gruppen: (te.training_exercise_gruppen ?? [])
+          .slice()
+          .sort((a, b) => a.position - b.position)
+          .map((z) => nachId.get(z.gruppe_id))
+          .filter((g): g is { id: string; name: string } => g != null),
       };
     })
     // Sortierung: Trainingsteil-Reihenfolge, im Hauptteil zusätzlich nach
@@ -180,11 +241,13 @@ function mapTraining(raw: RawTraining): TrainingDetail {
     altersstufe: raw.altersstufe,
     stufen: sortStufen(raw.stufen ?? []),
     ziel: raw.ziel,
-    team: raw.team_id ? { id: raw.team_id, name: raw.teams?.name ?? "Team" } : null,
+    team: raw.team_id && raw.teams ? { id: raw.team_id, name: raw.teams.name } : null,
+    terminDatum: einzelnerTermin(raw.training_termine)?.datum ?? null,
     urheber: raw.urheber ?? null,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
     exercises,
+    gruppen,
   };
 }
 
@@ -206,7 +269,7 @@ export async function getTrainingForEdit(id: string): Promise<TrainingDetail | n
   if (!user) return null;
   const { data, error } = await supabase
     .from("trainings")
-    .select(`${TRAINING_SELECT}, teams ( name )`)
+    .select(TRAINING_SELECT)
     .eq("id", id)
     .or(`owner_id.eq.${user.id},team_id.not.is.null`)
     .maybeSingle();
@@ -229,6 +292,58 @@ export async function getTrainingView(id: string): Promise<TrainingDetail | null
   if (error) throw error;
   return data ? mapTraining(data as unknown as RawTraining) : null;
 }
+
+/** Wo ein Training zu Hause ist — mehr braucht weder die Hauptnavigation noch
+ *  der Rückweg über die Brotkrumen (#156). `TrainingDetail` erfüllt dieselbe
+ *  Form, sodass eine Seite, die das Training ohnehin geladen hat, es direkt
+ *  weiterreichen kann. */
+export type TrainingNavKontext = {
+  id: string;
+  name: string;
+  team: { id: string; name: string } | null;
+  terminDatum: string | null;
+};
+
+/** Diesen Kontext braucht die Hauptnavigation im Root-Layout, um bei einem
+ *  Team-Training „Teams" statt „Trainings" hervorzuheben. Die Abfrage ist
+ *  bewusst schmal: die Navigation lädt kein ganzes Training.
+ *
+ *  RLS entscheidet wie überall. Wer dem Team nicht angehört, bekommt `null` —
+ *  weder Teamname noch Termindatum verlassen so den Server (PC 4).
+ *
+ *  `cache()` bindet das Ergebnis an den laufenden Request. Beim harten Laden
+ *  einer Trainingsseite fragen zwei Stellen dasselbe: die Navigation im
+ *  Root-Layout und das Layout unter `/training/[id]`, das den Team-Kontext für
+ *  spätere Client-Navigationen meldet. Die Datenbank sieht davon eine
+ *  Abfrage. */
+export const getTrainingNavKontext = cache(
+  async (id: string): Promise<TrainingNavKontext | null> => {
+    // Ungültige UUID würde die Query mit Fehler abbrechen; defensiv abfangen.
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("trainings")
+      .select("id, name, team_id, teams ( name ), training_termine ( datum )")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+
+    const raw = data as unknown as {
+      id: string;
+      name: string;
+      team_id: string | null;
+      teams: { name: string } | null;
+      training_termine: { datum: string } | { datum: string }[] | null;
+    };
+    return {
+      id: raw.id,
+      name: raw.name,
+      team: raw.team_id && raw.teams ? { id: raw.team_id, name: raw.teams.name } : null,
+      terminDatum: einzelnerTermin(raw.training_termine)?.datum ?? null,
+    };
+  },
+);
 
 // ── Übersichten (eigene Trainings / Trainings-Pool) ───────────────────────────────────
 
@@ -367,13 +482,16 @@ export type TeamTrainingRow = TrainingListRow & {
    *  Weg aus dem Bestand derselbe ist wie aus dem Plan (Story 16 AK 3). */
   termin: {
     id: string;
+    /** Der Tag der Einheit als `YYYY-MM-DD`. Er unterscheidet angesetzte
+     *  Einheiten desselben Trainings im Bestand voneinander (#156 AK 7). */
+    datum: string;
     beginn: string | null;
     ort: string | null;
     bemerkung: string | null;
   } | null;
 };
 
-const TEAM_LIST_SELECT = `${LIST_SELECT}, training_termine ( id, beginn, ort, bemerkung )`;
+const TEAM_LIST_SELECT = `${LIST_SELECT}, training_termine ( id, datum, beginn, ort, bemerkung )`;
 
 /** Der Trainingsbestand eines Teams. Team-Trainings erscheinen NIE im
  *  Trainings-Pool — sie gehören dem Team, nicht der Öffentlichkeit und keiner
@@ -397,25 +515,21 @@ export async function getTeamTrainings(teamId: string): Promise<TeamTrainingRow[
     // vollständige Termin-Zeile, hier stehen nur die Felder der Vorbelegung.
     type RawTerminVorbelegung = {
       id: string;
+      datum: string;
       beginn: string | null;
       ort: string | null;
       bemerkung: string | null;
     };
     const r = raw as unknown as RawListTraining & {
-      // PostgREST erkennt die UNIQUE-Bedingung auf `training_id` und liefert
-      // den Termin deshalb als EIN Objekt statt als Liste. Beide Formen
-      // abfangen: eine spätere Schema-Änderung soll hier keinen stillen
-      // Nulltreffer erzeugen.
       training_termine: RawTerminVorbelegung | RawTerminVorbelegung[] | null;
     };
-    const termin = Array.isArray(r.training_termine)
-      ? r.training_termine[0]
-      : r.training_termine;
+    const termin = einzelnerTermin(r.training_termine);
     return {
       ...mapListRow(r),
       termin: termin
         ? {
             id: termin.id,
+            datum: termin.datum,
             beginn: kurzeZeit(termin.beginn),
             ort: termin.ort,
             bemerkung: termin.bemerkung,

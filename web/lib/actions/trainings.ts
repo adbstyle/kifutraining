@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
-import { stufenAbgedeckt, teilTraegtDauer, ZIEL_MAX } from "@/lib/training";
+import { stufenAbgedeckt, teilTraegtDauer, NOTIZ_MAX, ZIEL_MAX } from "@/lib/training";
 import { bildUrlToPath } from "@/lib/storage";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
@@ -651,7 +651,7 @@ export async function deleteTraining(trainingId: string): Promise<void> {
 
 // ── Story #11: Dauer je Zuordnung erfassen/ändern/entfernen ──────────────────
 
-/** Dauer einer Zuordnung setzen (Vielfaches von 5 min) oder entfernen (null).
+/** Dauer einer Zuordnung setzen (ganze Minuten ab 0) oder entfernen (null).
  *  Persistiert unmittelbar (Story #11 AC1/AC2). RLS stellt sicher, dass nur der
  *  Eigentümer schreibt. */
 export async function setExerciseDuration(
@@ -664,8 +664,11 @@ export async function setExerciseDuration(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
 
-  if (minutes !== null && (!Number.isInteger(minutes) || minutes < 0 || minutes % 5 !== 0))
-    return { ok: false, error: "Dauer muss ein Vielfaches von 5 Minuten sein." };
+  // Jede ganze Zahl ab 0 (PO-Entscheid 2026-09-08, Story #151). Die frühere
+  // Fünferschranke ist weg; die Datenbank kannte sie ohnehin nie — ihr CHECK an
+  // `duration_min` verlangt bloss `>= 0`.
+  if (minutes !== null && (!Number.isInteger(minutes) || minutes < 0))
+    return { ok: false, error: "Die Dauer muss eine ganze Zahl in Minuten sein." };
 
   // Trust Boundary: Das „Auffangen" trägt keine Dauer (DB-CHECK erzwingt dies;
   // hier mit klarer Meldung statt Constraint-Fehler abfangen). Gefragt wird die
@@ -688,7 +691,54 @@ export async function setExerciseDuration(
     .eq("id", trainingExerciseId)
     .select("training_id")
     .maybeSingle();
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+  if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
+  revalidiereTraining(data.training_id);
+  return { ok: true };
+}
+
+// ── Story #152: Notiz je Übung des Trainings ─────────────────────────────────
+
+/**
+ * Die Notiz einer Zuordnung setzen, ändern oder entfernen (AK 1/2).
+ *
+ * Der leere Text ist kein Fehler, sondern das Entfernen: Wer die Notiz
+ * auswischt, will sie los — in der Datenbank steht dann wieder `null` und nicht
+ * eine leere Zeichenkette, sonst gäbe es zwei Schreibweisen für dasselbe
+ * Nichts und die Anzeige müsste beide kennen.
+ *
+ * Kein Owner-Filter, wie bei der Dauer: Die RLS entscheidet, wer schreiben
+ * darf — an einem Team-Training jedes Mitglied (Team-Epic Story 6). Der
+ * `select` danach zeigt, ob wirklich eine Zeile getroffen wurde; ein
+ * Nulltreffer meldete sonst stillen Erfolg.
+ *
+ * Die Notiz gilt an JEDER Übung: Anders als bei der Dauer gibt es keine
+ * Einordnung, die sie nicht trägt.
+ */
+export async function setzeNotiz(
+  trainingExerciseId: string,
+  notiz: string,
+): Promise<TrainingActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+
+  const wert = notiz.trim() === "" ? null : notiz.trim();
+  // Trust Boundary: Der CHECK an `training_exercises.notiz` weist zu langen
+  // Text ohnehin ab — hier mit einem Satz, der ans Feld passt, statt mit einem
+  // rohen Constraint-Fehler.
+  if (wert && wert.length > NOTIZ_MAX)
+    return { ok: false, error: `Höchstens ${NOTIZ_MAX} Zeichen.` };
+
+  const { data, error } = await supabase
+    .from("training_exercises")
+    .update({ notiz: wert })
+    .eq("id", trainingExerciseId)
+    .select("training_id")
+    .maybeSingle();
+  if (error) return { ok: false, error: fehlerMeldung(error.message) };
   if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
   revalidiereTraining(data.training_id);
   return { ok: true };

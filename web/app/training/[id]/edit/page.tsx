@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/ui";
-import { TrainingEditor } from "@/components/training/TrainingEditor";
+import { TrainingEditor } from "@/components/training/editor/TrainingEditor";
 import { getTrainingForEdit } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
+import { trainingsKrumen } from "@/lib/brotkrumen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -26,12 +27,7 @@ export default async function TrainingEditPage({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-      <Breadcrumbs
-        items={[
-          { label: "Trainings", href: "/trainings" },
-          { label: training.name },
-        ]}
-      />
+      <Breadcrumbs items={trainingsKrumen(training)} />
       <div className="mt-4">
         <TrainingEditor training={training} teams={teams} />
       </div>

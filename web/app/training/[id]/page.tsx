@@ -13,6 +13,7 @@ import { getMeineTeams } from "@/lib/queries/teams";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
 import { createClient } from "@/lib/supabase/server";
 import { leseGliederung, formatDuration } from "@/lib/training";
+import { trainingsKrumen } from "@/lib/brotkrumen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -58,12 +59,7 @@ export default async function TrainingViewPage({
       {sp.uebernommen && (
         <Flash message="Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen." />
       )}
-      <Breadcrumbs
-        items={[
-          { label: "Trainings", href: "/trainings" },
-          { label: training.name },
-        ]}
-      />
+      <Breadcrumbs items={trainingsKrumen(training)} />
 
       <header className="mb-6 mt-4">
         <h1 className="type-headline-large text-on-surface">{training.name}</h1>
@@ -183,7 +179,7 @@ export default async function TrainingViewPage({
                               </span>
                             )}
                             {/* Auch aus einem fremden öffentlichen Training
-                                übernehmbar (Story 7 AK 2) — hier gibt es keinen
+                                kopierbar (Story 7 AK 2) — hier gibt es keinen
                                 Editor, darum steht die Aktion in der Ansicht. */}
                             {user && (
                               <InBibliothekButton fassungId={item.id} name={item.name} />

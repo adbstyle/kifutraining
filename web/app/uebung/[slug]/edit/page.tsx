@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
-import { VorlageUebernehmenButton } from "@/components/diagramm/VorlageUebernehmenButton";
+import { VorlageKopierenButton } from "@/components/diagramm/VorlageKopierenButton";
 import { updateExercise } from "@/lib/actions/exercises";
 import { getExerciseDetail, getVorlagen } from "@/lib/queries/exercises";
 import { createClient } from "@/lib/supabase/server";
@@ -46,7 +46,7 @@ export default async function EditPage({
     { label: "Übung bearbeiten" },
   ];
 
-  // Vorlagen-Fundus für „Aus Vorlage übernehmen" (eigene + KiFu-Manual),
+  // Vorlagen-Fundus für „Aus Vorlage kopieren" (eigene + KiFu-Manual),
   // die Übung selbst ausgeklammert.
   const vorlagen = await getVorlagen(ex.id);
 
@@ -64,7 +64,7 @@ export default async function EditPage({
             />
             {vorlagen.length > 0 && (
               <div className="flex justify-end">
-                <VorlageUebernehmenButton
+                <VorlageKopierenButton
                   zielId={ex.id}
                   slug={slug}
                   zielHatDiagramm={hatDiagramm(ex.diagramm)}

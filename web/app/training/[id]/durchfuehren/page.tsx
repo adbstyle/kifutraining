@@ -3,6 +3,7 @@ import { getTrainingView } from "@/lib/queries/trainings";
 import { getTerminZuTraining } from "@/lib/queries/termine";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { TrainingDurchfuehren } from "@/components/training/TrainingDurchfuehren";
+import { trainingsKrumen } from "@/lib/brotkrumen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -31,6 +32,11 @@ export default async function TrainingDurchfuehrenPage({
   return (
     <TrainingDurchfuehren
       training={training}
+      // Der Rückweg hängt am Training, nicht am Aufrufweg: das Termindatum
+      // dafür kommt aus dem Training selbst (`terminDatum`), nicht aus
+      // `?termin=` — sonst sähen dieselbe Seite je nach Herkunft zwei
+      // verschiedene Brotkrumen (#156 PC 1).
+      crumbs={trainingsKrumen(training)}
       termin={
         termin
           ? {

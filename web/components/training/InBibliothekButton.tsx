@@ -2,15 +2,15 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Library } from "lucide-react";
+import { Copy } from "lucide-react";
 import { Snackbar, Tooltip } from "@/components/ui";
-import { uebernehmeInBibliothek } from "@/lib/actions/fassung";
+import { kopiereInBibliothek } from "@/lib/actions/fassung";
 
 /**
- * „In meine Bibliothek übernehmen" an einer Übung im Training (Story 7).
+ * „In meine Bibliothek kopieren" an einer Übung im Training (Story 7).
  *
  * Es entsteht eine eigene, zunächst private Vorlage — eine Kopie, die mit der
- * Übung im Training nicht verbunden bleibt. Mehrfaches Übernehmen ist erlaubt
+ * Übung im Training nicht verbunden bleibt. Mehrfaches Kopieren ist erlaubt
  * und erzeugt jedes Mal eine weitere Vorlage.
  */
 export function InBibliothekButton({
@@ -25,10 +25,10 @@ export function InBibliothekButton({
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  function uebernehmen() {
+  function kopieren() {
     setError(null);
     startTransition(async () => {
-      const res = await uebernehmeInBibliothek(fassungId);
+      const res = await kopiereInBibliothek(fassungId);
       if (res.ok) {
         setNotice(`„${name}" ist als private Vorlage in deiner Bibliothek.`);
         router.refresh();
@@ -40,15 +40,15 @@ export function InBibliothekButton({
 
   return (
     <>
-      <Tooltip label="In meine Bibliothek übernehmen">
+      <Tooltip label="In meine Bibliothek kopieren">
         <button
           type="button"
-          aria-label={`${name} in meine Bibliothek übernehmen`}
-          onClick={uebernehmen}
+          aria-label={`${name} in meine Bibliothek kopieren`}
+          onClick={kopieren}
           disabled={pending}
           className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/8 hover:text-primary disabled:opacity-40"
         >
-          <Library size={16} strokeWidth={2.5} aria-hidden />
+          <Copy size={16} strokeWidth={2.5} aria-hidden />
         </button>
       </Tooltip>
       <Snackbar

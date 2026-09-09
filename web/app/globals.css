@@ -56,6 +56,16 @@
   --color-error-container: #5c1d18;
   --color-on-error-container: #fecaca;
 
+  /* Warning — Bernstein. Der nicht-blockierende Hinweis: etwas stimmt nicht,
+     lässt sich aber speichern (z. B. eine Gruppe, die zwei Übungen im selben
+     Durchgang belegt). Error bleibt dem vorbehalten, was die Eingabe abweist.
+     REGEL: Warning erscheint als Rahmen, Text und Icon — NIE als Fläche.
+     Grund: kat-f (#e6c044) ist ebenfalls gelb, Kontrast zwischen beiden nur
+     1.06:1. Als Füllung neben einer Kategorie-Plakette wären sie nicht zu
+     unterscheiden; als Kontur gegen gefüllte Plakette trennt die Form. */
+  --color-warning: #f0b429;
+  --color-on-warning: var(--color-rasen-950);
+
   /* Surface-Familie — die Rasen-Leiter IST die M3 Elevation-Leiter */
   --color-surface: var(--color-rasen-950);
   --color-surface-dim: #07160f; /* bewusst gleich wie surface-container-lowest auf dieser Palette-Stufe */
@@ -325,6 +335,8 @@
     --color-outline: #9aa0a0;
     --color-outline-variant: #cfd3d2;
     --color-primary: #1c3a2b;
+    /* Bernstein hat auf Weiss nur 1.86:1 — im Druck ein dunkles Ocker (6.65:1). */
+    --color-warning: #7a5600;
   }
 
   html,
