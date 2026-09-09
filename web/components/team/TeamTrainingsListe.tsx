@@ -26,6 +26,7 @@ import { TerminDialog } from "./TerminDialog";
 import { entferneTeamTraining, uebernimmZuMir } from "@/lib/actions/team-trainings";
 import { erstelleTermin, setzeErneutAn, type TerminFelder } from "@/lib/actions/termine";
 import { formatDuration } from "@/lib/training";
+import { datumKurz } from "@/lib/zeit";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
 
 /* Der Trainingsbestand eines Teams (Story 5).
@@ -112,11 +113,14 @@ export function TeamTrainingsListe({
                   ))}
                   {/* „Angesetzt" ist ein Zustand, keine Aktion — darum als
                       Plakette beim Titel statt als Attrappe eines Buttons in
-                      der Aktionsreihe. Geändert wird der Termin im Plan. */}
+                      der Aktionsreihe. Geändert wird der Termin im Plan.
+                      Das Datum steht mit dabei: mehrere angesetzte Einheiten
+                      desselben Trainings heissen gleich und sind sonst nicht
+                      auseinanderzuhalten (#156 AK 7). */}
                   {t.termin && (
                     <Badge tone="neutral">
                       <CalendarCheck size={12} strokeWidth={2.5} aria-hidden />
-                      Angesetzt
+                      Angesetzt · {datumKurz(t.termin.datum)}
                     </Badge>
                   )}
                 </div>

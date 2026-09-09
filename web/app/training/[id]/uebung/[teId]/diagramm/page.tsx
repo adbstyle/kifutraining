@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { DiagrammEditor } from "@/components/diagramm/DiagrammEditor";
 import type { BreadcrumbItem } from "@/components/ui";
 import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
+import { trainingsKrumen } from "@/lib/brotkrumen";
 import { saveFassungDiagramm } from "@/lib/actions/fassung";
 import { parseDiagramm, LEERES_DIAGRAMM } from "@/lib/diagramm";
 
@@ -26,12 +27,18 @@ export default async function FassungDiagrammPage({
   const f = await getFassungZumBearbeiten(teId);
   if (!f || f.trainingId !== id) notFound();
 
-  const crumbs: BreadcrumbItem[] = [
-    { label: "Trainings", href: "/trainings" },
-    { label: f.trainingName, href: `/training/${f.trainingId}/edit` },
-    { label: f.name, href: `/training/${f.trainingId}/uebung/${f.id}/edit` },
-    { label: "Feld-Diagramm" },
-  ];
+  const crumbs: BreadcrumbItem[] = trainingsKrumen(
+    {
+      id: f.trainingId,
+      name: f.trainingName,
+      team: f.trainingTeam,
+      terminDatum: f.trainingTerminDatum,
+    },
+    [
+      { label: f.name, href: `/training/${f.trainingId}/uebung/${f.id}/edit` },
+      { label: "Feld-Diagramm" },
+    ],
+  );
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">

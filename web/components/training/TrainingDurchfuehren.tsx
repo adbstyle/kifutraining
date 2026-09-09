@@ -3,21 +3,10 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
 import { TrainingExerciseDetail } from "./TrainingExerciseDetail";
+import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui";
 import { leseGliederung, formatDuration } from "@/lib/training";
+import { datumKurz } from "@/lib/zeit";
 import type { TrainingDetail } from "@/lib/queries/trainings";
-
-/** Termin-Datum als „Mo, 01.09.2026" — wie im Team-Trainingsplan. */
-function terminDatum(iso: string): string {
-  const d = new Date(`${iso}T00:00:00`);
-  return Number.isNaN(d.getTime())
-    ? iso
-    : d.toLocaleDateString("de-CH", {
-        weekday: "short",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-}
 
 type TerminKontext = {
   datum: string;
@@ -35,7 +24,7 @@ function TerminKopf({ termin, className }: { termin: TerminKontext; className?: 
     >
       <span className="inline-flex items-center gap-1.5 text-on-surface">
         <CalendarDays size={15} strokeWidth={2} aria-hidden />
-        {terminDatum(termin.datum)}
+        {datumKurz(termin.datum)}
         {termin.beginn && <> · {termin.beginn} Uhr</>}
       </span>
       {termin.ort && (
@@ -60,9 +49,13 @@ export function TrainingDurchfuehren({
    *  Wer am Platz steht, sieht so Datum, Beginn, Ort und Bemerkung dieser
    *  Einheit — sonst müsste er dafür zurück in den Plan. */
   termin,
+  /** Der Rückweg — beim Team-Training ins Team, sonst in die
+   *  Trainingsübersicht (#156 AK 8). */
+  crumbs,
 }: {
   training: TrainingDetail;
   termin?: TerminKontext;
+  crumbs: BreadcrumbItem[];
 }) {
   const sections = leseGliederung(training.altersstufe, training.exercises);
   const [idx, setIdx] = useState(0);
@@ -100,11 +93,14 @@ export function TrainingDurchfuehren({
 
   if (sections.length === 0) {
     return (
-      <main className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <h1 className="type-headline-small text-on-surface">{training.name}</h1>
+      <main className="mx-auto max-w-2xl px-4 py-16">
+        <Breadcrumbs items={crumbs} className="mb-6 print:hidden" />
+        <h1 className="type-headline-small text-center text-on-surface">
+          {training.name}
+        </h1>
         {/* Auch ohne Übungen: wer aus dem Plan kommt, soll Datum und Ort sehen. */}
         {termin && <TerminKopf termin={termin} className="mt-4 justify-center" />}
-        <p className="mt-3 type-body-medium text-on-surface-variant">
+        <p className="mt-3 text-center type-body-medium text-on-surface-variant">
           Diesem Training sind noch keine Übungen zugeordnet.
         </p>
       </main>
@@ -116,6 +112,9 @@ export function TrainingDurchfuehren({
   return (
     <div className="mx-auto max-w-2xl px-4 pb-28 pt-4 sm:px-6">
       <header className="mb-4">
+        {/* Der Rückweg steht zuoberst — wie auf jeder anderen Trainingsseite.
+            Im Druck hat er nichts verloren (OOS 2). */}
+        <Breadcrumbs items={crumbs} className="mb-3 print:hidden" />
         {termin && <TerminKopf termin={termin} className="mb-3" />}
         <p className="type-label-medium text-on-surface-variant">{training.name}</p>
         <div className="mt-1 flex items-baseline justify-between gap-2">

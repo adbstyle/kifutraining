@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
+import { PFAD_HEADER } from "@/lib/pfad";
 
 // URL-Präfixe, die ein eingeloggtes Konto erfordern (UX-Guard; die echte
 // Durchsetzung bleibt RLS). Route-Groups wie (app) wirken nicht auf die URL,
@@ -19,8 +20,23 @@ function isProtected(pathname: string): boolean {
   return pathname.endsWith("/edit");
 }
 
+/* Warum überhaupt: Eine Server-Komponente kennt die Adresse nicht — es gibt
+   kein serverseitiges `usePathname`. Die Hauptnavigation muss aber schon beim
+   ersten Ausliefern wissen, ob ein Team-Training offen ist (NFR 1); würde sie
+   das erst im Browser nachschlagen, blitzte kurz der falsche Zustand auf. Die
+   Middleware sieht den Pfad ohnehin und legt ihn hier ab. */
+function pfadHeader(request: NextRequest): Headers {
+  const headers = new Headers(request.headers);
+  headers.set(PFAD_HEADER, request.nextUrl.pathname);
+  return headers;
+}
+
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  // `NextResponse.next({ request })` friert die Request-Header dieses Aufrufs
+  // ein. Der Pfad-Header muss darum an JEDER Stelle mitgegeben werden, an der
+  // die Antwort neu aufgebaut wird — sonst fiele er beim Cookie-Refresh
+  // (unten im `setAll`) still wieder weg.
+  let response = NextResponse.next({ request: { headers: pfadHeader(request) } });
 
   const supabase = createServerClient(env.supabaseUrl(), env.supabaseAnonKey(), {
     cookies: {
@@ -31,7 +47,7 @@ export async function updateSession(request: NextRequest) {
         for (const { name, value } of cookiesToSet) {
           request.cookies.set(name, value);
         }
-        response = NextResponse.next({ request });
+        response = NextResponse.next({ request: { headers: pfadHeader(request) } });
         for (const { name, value, options } of cookiesToSet) {
           response.cookies.set(name, value, options);
         }

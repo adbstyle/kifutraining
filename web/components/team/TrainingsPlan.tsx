@@ -24,21 +24,8 @@ import {
   setzeErneutAn,
   type TerminFelder,
 } from "@/lib/actions/termine";
+import { datumKurz } from "@/lib/zeit";
 import type { Plan, TerminZeile } from "@/lib/queries/termine";
-
-/** Datum als „Mo, 01.09.2026" — der Wochentag ist beim Planen die wichtigste
- *  Information und in der reinen Zahlenform nicht ablesbar. */
-function datumLang(iso: string): string {
-  const d = new Date(`${iso}T00:00:00`);
-  return Number.isNaN(d.getTime())
-    ? iso
-    : d.toLocaleDateString("de-CH", {
-        weekday: "short",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-}
 
 /* Der Team-Trainingsplan (Team-Epic Stories 7–9, gegliedert mit Story 18).
    Zuoberst, was ansteht — danach der Rückblick, zugeklappt, weil er über die
@@ -134,7 +121,7 @@ export function TrainingsPlan({ plan }: { plan: Plan }) {
               <p className="type-title-small inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-on-surface">
                 <span className="inline-flex items-center gap-1.5">
                   <CalendarDays size={16} strokeWidth={2} aria-hidden />
-                  {datumLang(t.datum)}
+                  {datumKurz(t.datum)}
                   {t.beginn && <> · {t.beginn} Uhr</>}
                 </span>
                 {t.ort && (
