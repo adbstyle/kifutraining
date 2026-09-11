@@ -4,34 +4,50 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 
-// M3-Emphase-Stufen (filled → text) + destruktiv. Werte kommen aus den
+// M3-Emphase-Stufen (filled → text) + destruktiv + leise. Werte kommen aus den
 // --button-*-Component-Tokens in globals.css (zeigen auf die System-Rollen).
-type Variant = "filled" | "tonal" | "elevated" | "outlined" | "text" | "danger";
+//
+// Warum eine sechste Stufe (`quiet`): Versalien sind für eine Randhandlung zu
+// laut. «+ Variante hinzufügen» steht in einer Leiste NEBEN Chips, die
+// Nutzertext tragen und darum normal gesetzt sind — ein mono-versaler Knopf
+// daneben schriee, und die Leiste zerfiele in zwei Stimmen. `quiet` behält die
+// Signalfarbe des `text`-Knopfes (es ist dieselbe Emphase-Ebene), lässt aber
+// die Versalien fallen: so liest sich die Leiste als EINE Zeile.
+type Variant = "filled" | "tonal" | "elevated" | "outlined" | "text" | "danger" | "quiet";
 type Size = "sm" | "md" | "lg";
 
+// Typo und Abstand stehen NICHT hier, sondern je Variante: `cn` ist ein reiner
+// Joiner (kein tailwind-merge), eine Basis-Klasse liesse sich also nicht
+// überschreiben. `quiet` bringt beides selbst mit.
 const base =
-  "focus-ring type-label-large inline-flex items-center justify-center gap-2 rounded-(--button-shape) transition-[background-color,box-shadow,transform,color] duration-150 disabled:opacity-40 disabled:pointer-events-none select-none";
+  "focus-ring inline-flex items-center justify-center rounded-(--button-shape) transition-[background-color,box-shadow,transform,color] duration-150 disabled:opacity-40 disabled:pointer-events-none select-none";
 
 const variants: Record<Variant, string> = {
   // Höchste Emphase — M3 Filled: flächig, Hover via State-Layer (kein Schatten,
   // keine Helligkeitsänderung). Press-Nudge wie bei allen Varianten.
   filled:
-    "bg-(--button-filled-container) text-(--button-filled-label) hover:bg-(--button-filled-container-hover) active:translate-y-px",
+    "type-label-large gap-2 bg-(--button-filled-container) text-(--button-filled-label) hover:bg-(--button-filled-container-hover) active:translate-y-px",
   // Mittlere Emphase — tonale Fläche
   tonal:
-    "bg-(--button-tonal-container) text-(--button-tonal-label) hover:bg-(--button-tonal-container-hover) active:translate-y-px",
+    "type-label-large gap-2 bg-(--button-tonal-container) text-(--button-tonal-label) hover:bg-(--button-tonal-container-hover) active:translate-y-px",
   // Mittlere Emphase mit weichem M3-Schatten (Kontrast zum harten Filled-Schatten)
   elevated:
-    "bg-(--button-elevated-container) text-(--button-elevated-label) shadow-e3 hover:bg-(--button-elevated-container-hover) hover:shadow-e4 active:translate-y-px",
+    "type-label-large gap-2 bg-(--button-elevated-container) text-(--button-elevated-label) shadow-e3 hover:bg-(--button-elevated-container-hover) hover:shadow-e4 active:translate-y-px",
   // Mittlere Emphase — nur Rand, State-Layer auf transparentem Grund
   outlined:
-    "bg-transparent text-(--button-outlined-label) border-[1.5px] border-(--button-outlined-outline) hover:bg-on-surface/8 active:translate-y-px",
+    "type-label-large gap-2 bg-transparent text-(--button-outlined-label) border-[1.5px] border-(--button-outlined-outline) hover:bg-on-surface/8 active:translate-y-px",
   // Niedrigste Emphase
   text:
-    "bg-transparent text-(--button-text-label) hover:bg-on-surface/8",
+    "type-label-large gap-2 bg-transparent text-(--button-text-label) hover:bg-on-surface/8",
   // Destruktiv — Error-Rolle
   danger:
-    "bg-transparent text-(--button-danger-label) border-[1.5px] border-(--button-danger-outline) hover:bg-error/10",
+    "type-label-large gap-2 bg-transparent text-(--button-danger-label) border-[1.5px] border-(--button-danger-outline) hover:bg-error/10",
+  // Eine Stufe UNTER `text` — für Handlungen, die am Rand mitlaufen. Nicht
+  // leiser in der Farbe (die Signalfarbe bleibt, es ist dieselbe Emphase),
+  // sondern in der Schrift: Source Serif 600 statt mono-versal. Bringt Typo
+  // und Mass selbst mit, `sizes` wird dafür übergangen.
+  quiet:
+    "type-title-small gap-1.5 h-9 px-2 bg-transparent text-(--button-text-label) hover:bg-on-surface/8",
 };
 
 const sizes: Record<Size, string> = {
@@ -47,7 +63,9 @@ export function buttonClasses(
   size: Size = "md",
   className?: string,
 ): string {
-  return cn(base, variants[variant], sizes[size], className);
+  // `quiet` ist eine SCHRIFT-Stufe, keine Emphase-Stufe mit eigener Grössen-
+  // leiter: Es gibt ihn nur in einer Höhe (h-9), darum ignoriert er `size`.
+  return cn(base, variants[variant], variant === "quiet" ? undefined : sizes[size], className);
 }
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import type { ReactNode, Ref } from "react";
 import { ChevronDown } from "lucide-react";
 import { Menu, type MenuItemDef } from "./Menu";
+import { chipTextBase } from "./Chip";
 import { cn } from "@/lib/cn";
 
 /* Chip mit Menü — ein Chip, der auf Klick ein Menü öffnet. Gedacht für Werte,
@@ -16,8 +17,26 @@ import { cn } from "@/lib/cn";
    `type-label-medium` — mono/versal —, was einen Gruppennamen verfälscht.
    Darum hier `type-body-medium normal-case`.
 
-   Der Chip ist EIN Bedienelement mit EINEM Tabstopp: kein Chip-plus-Knopf,
-   sondern ein Button, der das Menü trägt (`aria-haspopup="menu"`).
+   ZWEI Bauformen, je nachdem, wie viele Aufgaben an dem Wert hängen:
+
+   1. UNGETEILT (Vorgabe) — der Chip ist EIN Bedienelement mit EINEM Tabstopp:
+      kein Chip-plus-Knopf, sondern ein Button, der das Menü trägt
+      (`aria-haspopup="menu"`). So am Gruppen-Chip: dort gibt es nichts zu
+      wählen, nur zu verwalten.
+
+   2. GETEILT (`onSelect` gesetzt) — links wählen, rechts verwalten. Am
+      Varianten-Chip hängen zwei Aufgaben an EINEM Wert: „zeig mir diese
+      Variante" und „benenne/verschiebe/entferne sie". Ein Menüeintrag
+      „Anzeigen" allein reichte nicht — Wechseln ist die häufigste Handlung der
+      Leiste und darf nicht zwei Klicks kosten. Also zwei Bedienelemente,
+      zwei Tabstopps, aber EIN Chip-Umriss: die Zeile bleibt eine Reihe von
+      Varianten, nicht eine Reihe von Knopfpaaren.
+
+      Darum im geteilten Fall auch KEINE Radiogroup-Semantik (`role=radio` /
+      wandernder Tabstopp): Eine Radiogroup verlangt genau ein fokussierbares
+      Element je Wert und übernimmt die Pfeiltasten — hier gibt es zwei, und
+      Pfeiltasten gehören dem geöffneten Menü. Die Wahl sagt stattdessen
+      `aria-pressed` an der linken Hälfte.
 
    Eigene Datei statt in `Chip.tsx`, weil Chip.tsx hook-frei bleiben muss — es
    wird auch von Server-Komponenten importiert. Trigger-State und -Ref liegen
@@ -26,31 +45,61 @@ import { cn } from "@/lib/cn";
 
    Verwendung:
      <ChipMenu label={gruppe.name} ariaLabel={`Gruppe ${gruppe.name}, Wechsel 2 von 3`}
-               items={[{ label: "Nach vorne", icon: ChevronLeft, onSelect: … }]} /> */
+               items={[{ label: "Nach vorne", icon: ChevronLeft, onSelect: … }]} />
+     <ChipMenu label={variante.name} selected onSelect={() => wechseln(v.id)}
+               selectAriaLabel={`Variante ${variante.name} anzeigen`}
+               items={…} /> */
 export function ChipMenu({
   ref,
   label,
   items,
   leading,
+  trailing,
   ariaLabel,
+  onSelect,
+  selected = false,
+  selectAriaLabel,
+  menuAriaLabel,
   tone = "neutral",
   disabled,
   menuClassName,
   className,
 }: {
-  /** Ref auf den Chip selbst. Ein Chip in einer Sequenz muss von aussen
-   *  fokussierbar sein: Wer ihn per Menü verschiebt, soll ihn danach an seiner
-   *  neuen Stelle unter dem Fokus behalten — und das Verschieben rendert die
-   *  Liste neu, bevor der Fokus zurückkommt (React 19: `ref` ist eine
-   *  gewöhnliche Prop). */
+  /** Ref auf den Chip selbst — im geteilten Fall auf die MENÜ-Hälfte. Ein Chip
+   *  in einer Sequenz muss von aussen fokussierbar sein: Wer ihn per Menü
+   *  verschiebt, soll ihn danach an seiner neuen Stelle unter dem Fokus
+   *  behalten — und das Verschieben rendert die Liste neu, bevor der Fokus
+   *  zurückkommt (React 19: `ref` ist eine gewöhnliche Prop).
+   *
+   *  Warum die Menü-Hälfte und nicht die ganze Gruppe: Der Fokus kam gerade
+   *  aus dem Menü, und das Menü gibt ihn seinem Trigger zurück. Fokus-Rückgabe
+   *  und Fokus-Nachführung nach dem Verschieben treffen so dasselbe Element —
+   *  die Nutzerin bleibt an dem Knopf stehen, den sie eben bedient hat, und
+   *  kann direkt weiterschieben. */
   ref?: Ref<HTMLButtonElement>;
   /** Beschriftung des Chips — in der Regel Nutzertext (z. B. ein Gruppenname). */
   label: string;
   items: MenuItemDef[];
   /** Führender Inhalt vor dem Label, meist ein Icon. Farbe bestimmt der Aufrufer. */
   leading?: ReactNode;
-  /** a11y-Name, wenn das blosse Label zu wenig sagt („Gruppe 2, Wechsel 2 von 3"). */
+  /** Gedämpfter Zusatz NACH dem Label — eine Angabe zum Wert, keine Handlung
+   *  (z. B. „· 24 min"). Der Aufrufer setzt die Farbe
+   *  (`text-on-surface-variant`), damit sie nicht mit dem Namen konkurriert. */
+  trailing?: ReactNode;
+  /** a11y-Name des ungeteilten Chips, wenn das blosse Label zu wenig sagt
+   *  („Gruppe 2, Wechsel 2 von 3"). Im geteilten Fall benennen
+   *  `selectAriaLabel` und `menuAriaLabel` die beiden Hälften einzeln. */
   ariaLabel?: string;
+  /** Gesetzt = GETEILTER Chip: links wählt (diese Funktion), rechts öffnet das
+   *  Menü. Ohne die Prop bleibt der Chip ungeteilt. */
+  onSelect?: () => void;
+  /** Nur geteilt: ob dieser Wert gerade der angezeigte ist (`aria-pressed`). */
+  selected?: boolean;
+  /** Nur geteilt: a11y-Name der linken (wählenden) Hälfte. */
+  selectAriaLabel?: string;
+  /** Nur geteilt: a11y-Name der rechten (öffnenden) Hälfte. Vorgabe
+   *  „Menü zu „{label}"". */
+  menuAriaLabel?: string;
   /** `warning`: etwas stimmt nicht, lässt sich aber speichern. Färbt nur Rahmen
    *  und Chevron — nie die Fläche (siehe Warnrolle in globals.css). */
   tone?: "neutral" | "warning";
@@ -65,53 +114,127 @@ export function ChipMenu({
   // Ohne Einträge zeigt `Menu` nichts an — dann darf der Chip auch kein
   // geöffnetes Menü behaupten.
   const hatEintraege = items.length > 0;
+  const geteilt = Boolean(onSelect);
+
+  /** Zwei Interessenten an einem Element: das Menü braucht seinen Anker, der
+   *  Aufrufer den Fokus. Beide bekommen dasselbe Element — im geteilten Fall
+   *  die Menü-Hälfte.
+   *
+   *  Die Aufräumfunktion des Aufrufers wird durchgereicht: Eine Ref-Callback
+   *  darf seit React 19 eine zurückgeben, und wer hier eine Registratur führt
+   *  (`DurchlaufZeile` merkt sich die Chips je Gruppen-ID), räumte sonst nie
+   *  auf. Weil diese Weitergabe selbst eine Aufräumfunktion ist, ruft React die
+   *  Callback nicht mehr mit `null` — das Abhängen gehört darum vollständig
+   *  hierher: die eigene Ref, eine Objekt-Ref des Aufrufers und, im Altstil
+   *  ohne Aufräumfunktion, der `null`-Aufruf seiner Callback. */
+  function triggerRefSetzen(el: HTMLButtonElement | null) {
+    triggerRef.current = el;
+    const aufraeumen = typeof ref === "function" ? ref(el) : undefined;
+    if (ref && typeof ref !== "function") ref.current = el;
+    return () => {
+      triggerRef.current = null;
+      if (typeof aufraeumen === "function") aufraeumen();
+      else if (typeof ref === "function") ref(null);
+      else if (ref) ref.current = null;
+    };
+  }
+
+  // Warnung schlägt die Auswahl am RAHMEN (sie ist die Meldung), nie an der
+  // Fläche — bernsteine Füllung ist per Regel ausgeschlossen.
+  const randfarbe =
+    tone === "warning"
+      ? "border-warning"
+      : selected
+        ? "border-transparent"
+        : "border-outline";
+  const flaeche = selected
+    ? "bg-(--chip-selected-container) text-(--chip-selected-label)"
+    : "text-on-surface";
+
+  const chevron = (
+    <ChevronDown
+      size={14}
+      strokeWidth={2}
+      aria-hidden
+      className={cn("shrink-0", tone === "warning" && "text-warning")}
+    />
+  );
 
   return (
     <div className={cn("relative inline-block", className)}>
-      <button
-        // Zwei Interessenten an einem Element: das Menü braucht seinen Anker,
-        // der Aufrufer den Fokus. Beide bekommen dasselbe Element.
-        //
-        // Die Aufräumfunktion des Aufrufers wird durchgereicht: Eine
-        // Ref-Callback darf seit React 19 eine zurückgeben, und wer hier eine
-        // Registratur führt (`DurchlaufZeile` merkt sich die Chips je
-        // Gruppen-ID), räumte sonst nie auf. Weil diese Weitergabe selbst eine
-        // Aufräumfunktion ist, ruft React die Callback nicht mehr mit `null` —
-        // das Abhängen gehört darum vollständig hierher: die eigene Ref, eine
-        // Objekt-Ref des Aufrufers und, im Altstil ohne Aufräumfunktion, der
-        // `null`-Aufruf seiner Callback.
-        ref={(el) => {
-          triggerRef.current = el;
-          const aufraeumen = typeof ref === "function" ? ref(el) : undefined;
-          if (ref && typeof ref !== "function") ref.current = el;
-          return () => {
-            triggerRef.current = null;
-            if (typeof aufraeumen === "function") aufraeumen();
-            else if (typeof ref === "function") ref(null);
-            else if (ref) ref.current = null;
-          };
-        }}
-        type="button"
-        disabled={disabled}
-        aria-haspopup="menu"
-        aria-expanded={offen && hatEintraege}
-        aria-label={ariaLabel}
-        onClick={() => setOffen((o) => !o)}
-        className={cn(
-          "focus-ring type-body-medium inline-flex h-9 items-center gap-1.5 rounded-full border-[1.5px] px-3 normal-case text-on-surface transition-colors",
-          tone === "warning" ? "border-warning" : "border-outline",
-          disabled ? "cursor-not-allowed opacity-50" : "hover:bg-on-surface/8",
-        )}
-      >
-        {leading}
-        {label}
-        <ChevronDown
-          size={14}
-          strokeWidth={2}
-          aria-hidden
-          className={cn("shrink-0", tone === "warning" && "text-warning")}
-        />
-      </button>
+      {geteilt ? (
+        // Der Umriss gehört der GRUPPE, nicht den Hälften: ein Chip, in der
+        // Mitte geteilt. `items-stretch`, damit beide Hälften die volle
+        // Trefferhöhe bekommen. Kein `overflow-hidden` — das schnitte den
+        // Fokusring der Hälften ab (outline mit offset).
+        <div
+          className={cn(
+            "type-body-medium inline-flex h-9 items-stretch rounded-full border-[1.5px] normal-case transition-colors",
+            randfarbe,
+            flaeche,
+          )}
+        >
+          <button
+            type="button"
+            disabled={disabled}
+            aria-pressed={selected}
+            aria-label={selectAriaLabel}
+            onClick={onSelect}
+            className={cn(
+              "focus-ring inline-flex items-center gap-1.5 rounded-l-full px-3 transition-colors",
+              disabled ? "cursor-not-allowed opacity-50" : "hover:bg-on-surface/8",
+            )}
+          >
+            {leading}
+            {label}
+            {trailing}
+          </button>
+          {/* 44 px breit — die Menü-Hälfte ist ein eigenständiges Touch-Ziel
+              und nicht ein angehängtes 16px-Chevron. Der Trennstrich ist der
+              linke Rand dieser Hälfte; auf dem gefüllten (gewählten) Chip
+              braucht er mehr Deckkraft, sonst verschwindet er in der Fläche. */}
+          <button
+            ref={triggerRefSetzen}
+            type="button"
+            disabled={disabled}
+            aria-haspopup="menu"
+            aria-expanded={offen && hatEintraege}
+            aria-label={menuAriaLabel ?? `Menü zu „${label}“`}
+            onClick={() => setOffen((o) => !o)}
+            className={cn(
+              "focus-ring inline-flex w-11 items-center justify-center rounded-r-full border-l-[1.5px] transition-colors",
+              selected ? "border-on-surface/20" : "border-outline",
+              disabled ? "cursor-not-allowed opacity-50" : "hover:bg-on-surface/8",
+            )}
+          >
+            {chevron}
+          </button>
+        </div>
+      ) : (
+        <button
+          ref={triggerRefSetzen}
+          type="button"
+          disabled={disabled}
+          aria-haspopup="menu"
+          aria-expanded={offen && hatEintraege}
+          aria-label={ariaLabel}
+          onClick={() => setOffen((o) => !o)}
+          // Dieselbe Optik-Quelle wie `ChoiceChip look="nutzertext"` und die
+          // Links der Leseseiten (`chipTextBase` in Chip.tsx): ändert sich die
+          // Nutzertext-Pille, ändern sich alle vier Bauformen zusammen.
+          className={cn(
+            chipTextBase,
+            randfarbe,
+            flaeche,
+            disabled ? "cursor-not-allowed opacity-50" : "hover:bg-on-surface/8",
+          )}
+        >
+          {leading}
+          {label}
+          {trailing}
+          {chevron}
+        </button>
+      )}
       <Menu
         open={offen}
         onClose={() => setOffen(false)}

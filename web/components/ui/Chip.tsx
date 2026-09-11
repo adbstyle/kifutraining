@@ -53,6 +53,23 @@ export const chipSelected =
 const chipElevated =
   "border-transparent bg-(--chip-elevated-container) text-on-surface shadow-e3 hover:shadow-e4";
 
+/* ── Chip-Optik für NUTZERTEXT ────────────────────────────────
+   Dieselbe Pille, aber normal gesetzt statt mono/versal: `type-label-medium`
+   verfälscht, was die Trainerin selbst geschrieben hat («21 Kinder, zwei
+   Trainer» in Versalien liest sich als Rubrik, nicht als ihre Bezeichnung).
+   Dieselbe Regel, aus der schon `ChipMenu` `type-body-medium` trägt.
+
+   Auch exportiert — die Server-Seiten (`VariantenLinks`) tragen die Optik auf
+   einem <a>, und der geteilte Chip (`ChipMenu`) baut sie auf zwei Hälften auf.
+   Höhe fest auf h-9, damit Chip, geteilter Chip und leiser Knopf in einer
+   Leiste auf derselben Linie sitzen. */
+export const chipTextBase =
+  "focus-ring type-body-medium inline-flex h-9 items-center gap-1.5 rounded-full border-[1.5px] px-3 normal-case transition-colors";
+export const chipTextOutlined =
+  "border-outline text-on-surface hover:bg-on-surface/8";
+export const chipTextSelected =
+  "border-transparent bg-(--chip-selected-container) text-(--chip-selected-label)";
+
 /* Filter-Chip (toggelbar) — selected: secondary-container + Check (M3).
    Optionales führendes Icon, wenn nicht selektiert. */
 export function FilterChip({
@@ -103,6 +120,7 @@ export function ChoiceChip({
   selected = false,
   tabStop = false,
   onSelect,
+  look = "label",
   children,
   className,
 }: {
@@ -112,6 +130,12 @@ export function ChoiceChip({
    *  Chip. */
   tabStop?: boolean;
   onSelect?: () => void;
+  /** `label` (Vorgabe): mono/versal, für Werte aus dem Vokabular.
+   *  `nutzertext`: normal gesetzt, für Beschriftungen, die der Trainer selbst
+   *  vergibt — Versalien verfälschten sie (dieselbe Regel wie in ChipMenu.tsx).
+   *  Bewusst eine Prop statt `className`: `cn` merged nicht, eine Typo-Klasse
+   *  von aussen liesse sich also nicht überschreiben. */
+  look?: "label" | "nutzertext";
   children: React.ReactNode;
   className?: string;
 }) {
@@ -146,7 +170,17 @@ export function ChoiceChip({
       tabIndex={selected || tabStop ? 0 : -1}
       onClick={onSelect}
       onKeyDown={handleKey}
-      className={cn(chipBase, selected ? chipSelected : chipOutlined, className)}
+      className={cn(
+        look === "nutzertext" ? chipTextBase : chipBase,
+        look === "nutzertext"
+          ? selected
+            ? chipTextSelected
+            : chipTextOutlined
+          : selected
+            ? chipSelected
+            : chipOutlined,
+        className,
+      )}
     >
       {children}
     </button>
