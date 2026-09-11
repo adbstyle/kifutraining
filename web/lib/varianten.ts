@@ -170,6 +170,10 @@ export function abschnittMitVariante(
 export function wegfallSatz(
   variante: Variante,
   fassungen: readonly { notiz: string | null; gruppen: readonly unknown[] }[],
+  // Gibt es nach dem Entfernen noch mehrere Varianten? Bei der VORLETZTEN
+  // nicht — dann folgt `aufloesungSatz`, und «die übrigen Varianten bleiben»
+  // spräche von etwas, das es gleich nicht mehr gibt (#209).
+  { uebrigeVarianten = true }: { uebrigeVarianten?: boolean } = {},
 ): string {
   const n = fassungen.length;
   const mitNotiz = fassungen.filter((f) => f.notiz != null && f.notiz !== "").length;
@@ -188,7 +192,9 @@ export function wegfallSatz(
   return (
     `Mit „${variante.name}" ${n === 1 ? "fällt" : "fallen"} ` +
     `${zaehle(n, "Übung", "Übungen")} weg${davon}. ` +
-    "Die Gruppen selbst und die übrigen Varianten bleiben."
+    (uebrigeVarianten
+      ? "Die Gruppen selbst und die übrigen Varianten bleiben."
+      : "Die Gruppen selbst bleiben.")
   );
 }
 

@@ -437,6 +437,15 @@ pruefe("Eine leere Notiz ist keine Notiz", () => {
   );
 });
 
+pruefe("Vor der Auflösung schweigt der Nachsatz über übrige Varianten", () => {
+  // Wird die vorletzte entfernt, folgt `aufloesungSatz` — «die übrigen
+  // Varianten bleiben» stünde dann neben dem Satz, der das Gegenteil sagt.
+  assert.equal(
+    wegfallSatz(varianten[1], wegfall(2, 0, 0), { uebrigeVarianten: false }),
+    `Mit „21 Kinder" fallen 2 Übungen weg. Die Gruppen selbst bleiben.`,
+  );
+});
+
 pruefe("Eine leere Variante nennt nur die Null", () => {
   assert.equal(
     wegfallSatz(varianten[1], []),

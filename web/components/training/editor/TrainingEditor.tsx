@@ -856,7 +856,9 @@ export function TrainingEditor({
       >
         <p>
           {varianteWeg
-            ? wegfallSatz(varianteWeg, fassungenVon(fassungenLokal, varianteWeg.id))
+            ? wegfallSatz(varianteWeg, fassungenVon(fassungenLokal, varianteWeg.id), {
+                uebrigeVarianten: varianten.length > 2,
+              })
             : ""}
           {/* Bei zweien ist das Entfernen zugleich die Auflösung der
               verbleibenden (#209 AK 7) — beides gehört in dieselbe Rückfrage. */}
