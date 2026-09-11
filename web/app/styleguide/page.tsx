@@ -30,6 +30,7 @@ import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
+import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import {
   Search,
   SlidersHorizontal,
@@ -1214,6 +1215,48 @@ export default function Styleguide() {
           angehängter Knopf.
         </p>
         <ChipMenuDemo />
+      </Section>
+
+      <Section n="23" title="Variantenwahl">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Zwischen den <strong>Varianten des Hauptteils</strong> eines Trainings
+          wechseln (Epic „Hauptteil-Varianten"). Kein neuer Baustein, sondern
+          eine Anwendung der <code>ChoiceChipGroup</code> aus 09 — hier steht,
+          warum gerade sie:
+        </p>
+        <ul className="type-body-medium mb-5 flex max-w-xl list-disc flex-col gap-2 pl-5 text-on-surface-variant">
+          <li>
+            Die Werte sind <strong>Nutzertext</strong> — bis vierzig Zeichen,
+            vom Trainer vergeben. Eine <code>SegmentedControl</code> scrollte
+            damit, und er sähe seine Varianten nicht mehr nebeneinander.
+          </li>
+          <li>
+            Es ist <strong>ein Element von n</strong> und keine Ansicht:
+            Radiogroup-Semantik, nicht die tab-artige Leiste.
+          </li>
+          <li>
+            Bei <strong>einer</strong> Variante rendert sie <strong>nichts</strong>.
+            Ein Training ohne zweite Variante sieht aus wie vorher — eine
+            Einfachauswahl mit einem einzigen Wert wäre eine Frage ohne
+            Alternative. Die Schranke sitzt im Baustein, nicht bei den
+            Aufrufern.
+          </li>
+        </ul>
+        <VariantenWahlDemo />
+        <div className="mt-6 rounded-[4px] border border-outline-variant bg-surface-container-low p-4">
+          <p className="type-label-large mb-1 text-on-surface">
+            Zwei Bedienelemente, eine Zeile
+          </p>
+          <p className="type-body-medium max-w-xl text-on-surface-variant">
+            Im Editor steht die Wahl zusammen mit „Variante hinzufügen" in einer
+            eigenen Zeile unter dem Kartenkopf des Hauptteils — nicht IM Kopf:
+            Dort sitzt bereits der Einstieg in die Gruppen, und eine umbrechende
+            Chip-Reihe daneben risse die Kopfzeile auseinander. Über dem
+            Gruppen-Abschnitt, weil die Variante die grössere Klammer ist: Sie
+            entscheidet, welche Übungen darunter stehen; die Gruppen gelten für
+            alle Varianten.
+          </p>
+        </div>
       </Section>
 
     </main>

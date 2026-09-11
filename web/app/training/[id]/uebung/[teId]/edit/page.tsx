@@ -6,7 +6,7 @@ import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
 import { updateFassung } from "@/lib/actions/fassung";
 import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
 import { trainingsKrumen } from "@/lib/brotkrumen";
-import { VARIANTE_PARAM } from "@/lib/varianten";
+import { VARIANTE_PARAM, varianteAnhang } from "@/lib/varianten";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -33,9 +33,7 @@ export default async function FassungBearbeitenPage({
   // wandert und erstmals eine Variante braucht.
   const varianteRoh = (await searchParams)[VARIANTE_PARAM];
   const variante = Array.isArray(varianteRoh) ? varianteRoh[0] : varianteRoh;
-  const varianteAnhang = variante
-    ? `?${VARIANTE_PARAM}=${encodeURIComponent(variante)}`
-    : "";
+  const anhang = varianteAnhang(variante);
   const f = await getFassungZumBearbeiten(teId);
   // Auch ein fremdes oder nicht existierendes Training endet hier — beides ist
   // für den Betrachter dasselbe.
@@ -58,7 +56,7 @@ export default async function FassungBearbeitenPage({
         action={updateFassung.bind(null, f.id, variante)}
         afterName={
           <DiagrammVorschau
-            href={`/training/${f.trainingId}/uebung/${f.id}/diagramm${varianteAnhang}`}
+            href={`/training/${f.trainingId}/uebung/${f.id}/diagramm${anhang}`}
             name={f.name}
             diagramm={f.diagramm}
           />

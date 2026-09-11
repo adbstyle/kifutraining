@@ -41,14 +41,22 @@ export function useGruppenModell({
   trainingId,
   gruppenInitial,
   zuordnungen,
+  alleZuordnungen,
   melde,
 }: {
   trainingId: string;
   /** Die Gruppen, wie sie vom Server kamen (Anlegereihenfolge). */
   gruppenInitial: { id: string; name: string }[];
-  /** Alle Zuordnungen des Trainings, Dauern bereits überlagert. Muss stabil
-   *  sein (memoisiert) — an ihr hängt die Konflikt-Rechnung. */
+  /** Die Zuordnungen der ANGEZEIGTEN Variante, Dauern bereits überlagert. Muss
+   *  stabil sein (memoisiert) — an ihr hängt die Konflikt-Rechnung. Verteilung,
+   *  Zeitsummen, Wechsel und Konflikte gelten je Variante (#201 AK 9): Was in
+   *  einer anderen Variante steht, findet an diesem Trainingstag nicht statt. */
   zuordnungen: TrainingExerciseItem[];
+  /** Dieselben Zuordnungen über ALLE Varianten. Grundlage von allem, was die
+   *  Gruppe als Ganzes betrifft — die Rückfrage vor dem Entfernen (#201 AK 10)
+   *  und die Überlagerung danach: Die Datenbank räumt die Zuweisungen per
+   *  Kaskade in jeder Variante weg, nicht nur in der sichtbaren. */
+  alleZuordnungen: TrainingExerciseItem[];
   /** Was in die Snackbar geht: abgelehnte Aktionen, quittierte Entfernungen. */
   melde: (text: string) => void;
 }) {
@@ -99,15 +107,49 @@ export function useGruppenModell({
     [verteilung],
   );
 
+  /** Die Zuweisungen des GANZEN Trainings — über alle Varianten, jede mit
+   *  ihrer Herkunft. Die Verteilung oben kennt nur die angezeigte Variante;
+   *  eine Gruppe gehört aber dem Training und steht womöglich in Varianten, die
+   *  der Trainer gerade nicht sieht (#201 AK 10). */
+  const alleFolgen = useMemo(
+    () =>
+      alleZuordnungen
+        .filter((f) => istHauptteil(f.trainingsteil))
+        .map((f) => ({
+          id: f.id,
+          varianteId: f.varianteId,
+          gruppen: folgen[f.id] ?? f.gruppen.map((g) => g.id),
+        })),
+    [alleZuordnungen, folgen],
+  );
+
   /** An wie vielen Übungen des Hauptteils steht diese Gruppe? Grundlage der
-   *  Rückfrage vor dem Entfernen (AK 8). */
+   *  Rückfrage vor dem Entfernen (AK 8) — über alle Varianten gezählt, denn
+   *  genau so viele Zuweisungen fallen weg. */
   const zuweisungenVon = (gruppeId: string): number =>
-    verteilung.filter((f) => f.gruppen.includes(gruppeId)).length;
+    alleFolgen.filter((f) => f.gruppen.includes(gruppeId)).length;
+
+  /** Dieselbe Zahl, aufgeteilt nach Varianten — damit die Rückfrage sagen kann,
+   *  was ausserhalb des Sichtbaren wegfällt (#201 AK 10). Nur Varianten mit
+   *  Zuweisungen stehen darin; die Reihenfolge ist die der Fassungen und wird
+   *  vom Aufrufer an der Variantenliste ausgerichtet. */
+  const zuweisungenJeVariante = (
+    gruppeId: string,
+  ): { varianteId: string; anzahl: number }[] => {
+    const je = new Map<string, number>();
+    for (const f of alleFolgen) {
+      // Eine Hauptteil-Fassung trägt immer eine Variante (CHECK
+      // `te_variante_genau_bei_hauptteil`); der Typ lässt `null` trotzdem zu.
+      if (!f.varianteId || !f.gruppen.includes(gruppeId)) continue;
+      je.set(f.varianteId, (je.get(f.varianteId) ?? 0) + 1);
+    }
+    return [...je].map(([varianteId, anzahl]) => ({ varianteId, anzahl }));
+  };
 
   /** Wie viele Gruppen trägt diese Übung? Grundlage der Rückfrage vor dem
    *  Entfernen der Übung (AK 16). */
   const gruppenAn = (fassungId: string): number =>
-    verteilung.find((f) => f.id === fassungId)?.gruppen.length ?? 0;
+    alleFolgen.find((f) => f.id === fassungId)?.gruppen.length ?? 0;
 
   /** Den lokalen Stand einer Fassung vergessen — nach einer Aktion, die die
    *  Serverdaten auffrischt. Ab dann gilt wieder, was der Server sagt. */
@@ -192,7 +234,9 @@ export function useGruppenModell({
    *
    * Die Datenbank räumt die Zuweisungen per Kaskade weg; die Anzeige muss
    * nachziehen, ohne aufzufrischen. Darum bekommt JEDE betroffene Fassung eine
-   * Überlagerung ohne diese Gruppe — auch eine, die bisher keine hatte.
+   * Überlagerung ohne diese Gruppe — auch eine, die bisher keine hatte, und
+   * auch eine aus einer Variante, die gerade nicht angezeigt wird (#201): Beim
+   * Wechsel dorthin stünde die Gruppe sonst wieder da, obwohl sie weg ist.
    */
   function entferne(gruppe: { id: string; name: string }) {
     const vorherGruppen = gruppen;
@@ -200,7 +244,7 @@ export function useGruppenModell({
     setGruppen((prev) => prev.filter((g) => g.id !== gruppe.id));
     setFolgen((prev) => {
       const next = { ...prev };
-      for (const f of verteilung) {
+      for (const f of alleFolgen) {
         if (!f.gruppen.includes(gruppe.id)) continue;
         next[f.id] = f.gruppen.filter((id) => id !== gruppe.id);
       }
@@ -225,6 +269,7 @@ export function useGruppenModell({
     wechselGesamt,
     zeiten,
     zuweisungenVon,
+    zuweisungenJeVariante,
     gruppenAn,
     vergissFolge,
     setzeFolge,

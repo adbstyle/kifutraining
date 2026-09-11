@@ -20,7 +20,7 @@ import { teilTraegtDauer } from "@/lib/training";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 import { istHauptteil } from "@/lib/gruppen";
-import { VARIANTE_PARAM } from "@/lib/varianten";
+import { varianteAnhang } from "@/lib/varianten";
 
 export type SaveFassungResult = { ok: true } | { ok: false; error: string };
 
@@ -232,7 +232,7 @@ export async function updateFassung(
   // landete der Trainer nach dem Speichern in der ersten Variante und suchte
   // die eben bearbeitete Übung (#201 AK 6).
   const zurueck = `/training/${fassung.training_id}/edit?bearbeitet=1`;
-  redirect(variante ? `${zurueck}&${VARIANTE_PARAM}=${encodeURIComponent(variante)}` : zurueck);
+  redirect(`${zurueck}${varianteAnhang(variante, "&")}`);
 }
 
 /** Eine Fassung, wie sie fürs Kopieren in die Bibliothek gelesen wird

@@ -107,7 +107,17 @@ export function mitVariante(
   varianteId: string | undefined,
   varianten: readonly Variante[],
 ): string {
-  if (varianten.length < 2 || !varianteId) return href;
-  const trenner = href.includes("?") ? "&" : "?";
-  return `${href}${trenner}${VARIANTE_PARAM}=${encodeURIComponent(varianteId)}`;
+  if (varianten.length < 2) return href;
+  return `${href}${varianteAnhang(varianteId, href.includes("?") ? "&" : "?")}`;
+}
+
+/** Dieselbe Angabe für Aufrufer, die die Schranke «mehr als eine Variante»
+ *  bereits gezogen haben: die Editor-Zeile (sie kennt nur die angezeigte
+ *  Variante) und die Fassungs-Seiten (sie geben weiter, womit sie aufgerufen
+ *  wurden). Ohne Variante bleibt der Anhang leer — eine Quelle für die
+ *  Schreibweise, damit sie nicht an vier Orten auseinanderläuft. */
+export function varianteAnhang(varianteId: string | undefined, trenner = "?"): string {
+  return varianteId
+    ? `${trenner}${VARIANTE_PARAM}=${encodeURIComponent(varianteId)}`
+    : "";
 }

@@ -291,7 +291,14 @@ export function zeitKurz(s?: Zeitsumme): string {
   return `${s.minuten} min`;
 }
 
-/** Dieselbe Angabe als Satzanfang für die Gruppenzeile: «Zugewiesen 40 min». */
-export function zeitText(s?: Zeitsumme): string {
-  return `Zugewiesen ${zeitKurz(s)}`;
+/** Dieselbe Angabe als Satzanfang für die Gruppenzeile: «Zugewiesen 40 min».
+ *
+ *  `zusatz` schränkt sie ein, wo sie nur für einen Teil des Trainings gilt:
+ *  «Zugewiesen 40 min in dieser Variante» (#201 AK 9). Er hängt nur an einer
+ *  wirklichen Summe — an «Zugewiesen —» schränkte er eine Aussage ein, die es
+ *  gar nicht gibt. */
+export function zeitText(s?: Zeitsumme, zusatz?: string): string {
+  const kurz = zeitKurz(s);
+  const gilt = zusatz && s && s.mitDauer > 0 ? ` ${zusatz}` : "";
+  return `Zugewiesen ${kurz}${gilt}`;
 }

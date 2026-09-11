@@ -6,7 +6,7 @@ import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
 import { trainingsKrumen } from "@/lib/brotkrumen";
 import { saveFassungDiagramm } from "@/lib/actions/fassung";
 import { parseDiagramm, LEERES_DIAGRAMM } from "@/lib/diagramm";
-import { VARIANTE_PARAM } from "@/lib/varianten";
+import { VARIANTE_PARAM, varianteAnhang } from "@/lib/varianten";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -32,9 +32,7 @@ export default async function FassungDiagrammPage({
   // Zusammenstellung zeigen, aus der der Trainer gekommen ist.
   const varianteRoh = (await searchParams)[VARIANTE_PARAM];
   const variante = Array.isArray(varianteRoh) ? varianteRoh[0] : varianteRoh;
-  const varianteAnhang = variante
-    ? `?${VARIANTE_PARAM}=${encodeURIComponent(variante)}`
-    : "";
+  const anhang = varianteAnhang(variante);
   const f = await getFassungZumBearbeiten(teId);
   if (!f || f.trainingId !== id) notFound();
 
@@ -46,7 +44,7 @@ export default async function FassungDiagrammPage({
       terminDatum: f.trainingTerminDatum,
     },
     [
-      { label: f.name, href: `/training/${f.trainingId}/uebung/${f.id}/edit${varianteAnhang}` },
+      { label: f.name, href: `/training/${f.trainingId}/uebung/${f.id}/edit${anhang}` },
       { label: "Feld-Diagramm" },
     ],
   );
