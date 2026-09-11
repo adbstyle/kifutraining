@@ -10,6 +10,7 @@ import { TrainingKopf } from "./TrainingKopf";
 import { TeilKarte } from "./TeilKarte";
 import { VariantenLeiste } from "./VariantenLeiste";
 import { VarianteAnlegenDialog } from "./VarianteAnlegenDialog";
+import { VariantenVerwaltungDialog } from "./VariantenVerwaltungDialog";
 import { GruppenAbschnitt, GruppenKnopf } from "./GruppenAbschnitt";
 import { DurchlaufZeile } from "./DurchlaufZeile";
 import { UebungsEtage } from "./UebungsEtage";
@@ -23,6 +24,7 @@ import {
   type JuniorenBlockSlug,
 } from "@/lib/vocab";
 import { fehlendeBedingungenAus } from "@/lib/training-bedingungen";
+import { zaehle } from "@/lib/labels";
 import {
   VARIANTE_PARAM,
   sichtbareZuordnungen,
@@ -109,6 +111,7 @@ export function TrainingEditor({
     () => varianteAus(varianteParam, training.varianten)?.id,
   );
   const [varianteDialog, setVarianteDialog] = useState(false);
+  const [verwaltungDialog, setVerwaltungDialog] = useState(false);
 
   // Die Variante, die wirklich gilt: Nach einem `router.refresh()` kann die
   // gewählte weg sein (in einem anderen Fenster entfernt) — dann fällt die
@@ -197,6 +200,33 @@ export function TrainingEditor({
       router.refresh();
     });
     setNotice(`Variante „${name}" angelegt.`);
+  }
+
+  /** Umbenannt oder umsortiert (#202 AK 1/3): Beides ist Struktur — die
+   *  Bezeichnung steht an den Chips und in den Meldungen, die Reihenfolge
+   *  entscheidet, welche Variante beim Öffnen gilt (PC 3). Der Dialog hat es
+   *  bei sich bereits vollzogen; hier kommt der Serverstand nach. */
+  function varianteGeaendert() {
+    startTransition(() => {
+      router.refresh();
+    });
+  }
+
+  /** Eine Variante wurde entfernt (#202 AK 4, PC 1/2).
+   *
+   *  War es die angezeigte, rückt die erste verbleibende nach — dieselbe Regel
+   *  wie beim Öffnen (#201 AK 7). Die Adresse zieht mit und verliert ihre
+   *  Angabe, sobald nur noch eine Variante übrig ist: Ein Training ohne zweite
+   *  soll auch in der Adresszeile unverändert aussehen (PC 4 / #201 PC 5). */
+  function varianteEntfernt(variante: Variante) {
+    const rest = training.varianten.filter((v) => v.id !== variante.id);
+    const naechste = variante.id === aktive?.id ? rest[0]?.id : aktiveVariante;
+    setAktiveVariante(naechste);
+    schreibeAdresse(naechste, rest.length);
+    startTransition(() => {
+      router.refresh();
+    });
+    setNotice(`Variante „${variante.name}" entfernt.`);
   }
 
   /** Die Dauer einer Zuordnung setzen oder leeren (Story #11, #151 AK 6).
@@ -488,6 +518,7 @@ export function TrainingEditor({
                 aktiv={aktive?.id}
                 onWechsel={wechsleVariante}
                 onHinzufuegen={() => setVarianteDialog(true)}
+                onVerwalten={() => setVerwaltungDialog(true)}
               />
             ) : undefined
           }
@@ -709,6 +740,29 @@ export function TrainingEditor({
         />
       )}
 
+      {/* Varianten verwalten (#202). Immer eingehängt, auch wenn nur noch eine
+          übrig ist: Wer die vorletzte entfernt, soll im offenen Dialog sehen,
+          dass die letzte bleibt (AK 7) — der Einstieg dazu ist in der Leiste
+          dann schon weg. */}
+      <VariantenVerwaltungDialog
+        open={verwaltungDialog}
+        onClose={() => setVerwaltungDialog(false)}
+        varianten={training.varianten}
+        // Der lokale Stand, nicht die Serverdaten: Notiz und Gruppenfolge
+        // werden im Editor überlagert und erst beim nächsten Auffrischen vom
+        // Server bestätigt. Zählte die Rückfrage die Serverdaten, fehlte die
+        // eben erfasste Notiz in ihrer Aufstellung — und der Trainer verlöre
+        // sie ungewarnt (AK 6).
+        fassungen={zuordnungen.map((e) => ({
+          varianteId: e.varianteId,
+          notiz: e.notiz,
+          gruppen: modell.folgeVon(e),
+        }))}
+        onGeaendert={varianteGeaendert}
+        onEntfernt={varianteEntfernt}
+        melde={setNotice}
+      />
+
       {/* Fest am unteren Rand statt im Fluss: der Editor ist eine lange Seite,
           und die Meldung gehört zu einer Aktion irgendwo darin. Am Seitenende
           eingehängt stünde sie mehr als tausend Bildpunkte unter dem Klick und
@@ -722,12 +776,6 @@ export function TrainingEditor({
       />
     </div>
   );
-}
-
-/** «1 Übung» / «3 Übungen» — die Rückfragen nennen eine Zahl, und die Einzahl
- *  soll dabei nicht wie ein Tippfehler aussehen. */
-function zaehle(n: number, einzahl: string, mehrzahl: string): string {
-  return `${n} ${n === 1 ? einzahl : mehrzahl}`;
 }
 
 /**

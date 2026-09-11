@@ -95,3 +95,11 @@ export const ERSCHEINUNGSFORM_LABEL: Record<string, string> = {
   ...erscheinungsformLabels,
   ...erscheinungsformJuniorenLabels,
 };
+
+/** «1 Übung» / «3 Übungen» — Rückfragen nennen eine Zahl, und die Einzahl soll
+ *  dabei nicht wie ein Tippfehler aussehen. Steht hier statt in einem der
+ *  Dialoge, weil inzwischen mehrere davon zählen: die Rückfragen des Editors
+ *  (Gruppe, Übung) und die vor dem Entfernen einer Variante (#202 AK 6). */
+export function zaehle(n: number, einzahl: string, mehrzahl: string): string {
+  return `${n} ${n === 1 ? einzahl : mehrzahl}`;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Layers, Plus } from "lucide-react";
+import { Layers, ListOrdered, Plus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { VariantenWahl } from "../VariantenWahl";
 import type { Variante } from "@/lib/varianten";
@@ -17,18 +17,29 @@ import type { Variante } from "@/lib/varianten";
  * Bei genau einer Variante steht hier nur der Knopf. Die Wahl selbst
  * verschwindet (`VariantenWahl` rendert nichts) — ein Training ohne zweite
  * Variante sieht aus wie vorher, und wer nie eine zweite braucht, stösst auf
- * nichts als diesen einen Knopf (Epic EK 7, PC 5).
+ * nichts als diesen einen Knopf (Epic EK 7, PC 5). Aus demselben Grund kommt
+ * «Varianten verwalten» (#202) erst mit der zweiten dazu: Bei einer einzigen
+ * gäbe es nichts zu ordnen, nichts zu entfernen — und ihre Bezeichnung hat der
+ * Trainer nie vergeben.
+ *
+ * «Verwalten» ist ein offener Text-Knopf und kein ⋮-Menü, obwohl der Plan es
+ * so vorsah: Das Überlaufmenü ist laut Kit der Ort für das Destruktive, und
+ * Umbenennen und Ordnen sind es nicht. Destruktiv ist allein das Entfernen —
+ * und das bleibt zweistufig, weil es im Dialog hinter dem X eine Rückfrage
+ * trägt (#202 AK 5).
  */
 export function VariantenLeiste({
   varianten,
   aktiv,
   onWechsel,
   onHinzufuegen,
+  onVerwalten,
 }: {
   varianten: readonly Variante[];
   aktiv: string | undefined;
   onWechsel: (varianteId: string) => void;
   onHinzufuegen: () => void;
+  onVerwalten: () => void;
 }) {
   return (
     <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -48,6 +59,14 @@ export function VariantenLeiste({
         <Plus size={18} strokeWidth={2} aria-hidden />
         Variante hinzufügen
       </Button>
+      {varianten.length > 1 && (
+        <Button variant="text" size="sm" onClick={onVerwalten}>
+          {/* Die Liste als Zeichen: Umbenennen, Ordnen und Entfernen geschehen
+              alle an derselben Aufzählung. */}
+          <ListOrdered size={18} strokeWidth={2} aria-hidden />
+          Varianten verwalten
+        </Button>
+      )}
     </div>
   );
 }
