@@ -189,25 +189,29 @@ export function einzelnerTermin<T>(embed: T | T[] | null | undefined): T | null 
   return Array.isArray(embed) ? (embed[0] ?? null) : embed;
 }
 
+/** Gruppen und Varianten nach ihrer gesetzten Position.
+ *
+ *  PostgREST garantiert für einen Embed KEINE Reihenfolge; bei beiden ist sie
+ *  aber fachlich: Die Gruppen ordnet der Trainer am Chip (#209), die Varianten
+ *  ebenso (#202) — und dort entscheidet die vorderste, welche beim Öffnen gilt
+ *  (#201 AK 7). Darum hier sortiert und nicht in der Abfrage. Die ID
+ *  entscheidet den Gleichstand, den `tg_position_je_training` bzw.
+ *  `tv_position_je_training` ausschliessen — sie hält die Liste stabil, falls
+ *  er doch einmal auftritt. */
+const nachPosition = (
+  a: { id: string; position: number },
+  b: { id: string; position: number },
+) => (a.position === b.position ? a.id.localeCompare(b.id) : a.position - b.position);
+
 function mapTraining(raw: RawTraining): TrainingDetail {
-  // PostgREST garantiert für einen Embed KEINE Reihenfolge — die Ordnung der
-  // Gruppen ist aber seit #209 fachlich (der Trainer setzt sie am Chip). Darum
-  // hier sortiert, nicht in der Abfrage. Die ID entscheidet den Gleichstand,
-  // den `tg_position_je_training` ausschliesst — sie hält die Liste stabil,
-  // falls er doch einmal auftritt. Wie bei den Varianten weiter unten.
   const gruppen = (raw.training_gruppen ?? [])
     .slice()
-    .sort((a, b) => (a.position === b.position ? a.id.localeCompare(b.id) : a.position - b.position))
+    .sort(nachPosition)
     .map((g) => ({ id: g.id, name: g.name }));
 
-  // PostgREST garantiert für einen Embed KEINE Reihenfolge — die Ordnung der
-  // Varianten ist aber fachlich (#202: umsortieren) und entscheidet, welche
-  // beim Öffnen gilt (#201 AK 7). Darum hier sortiert, nicht in der Abfrage.
-  // Die ID entscheidet den Gleichstand, den `tv_position_je_training`
-  // ausschliesst — sie hält die Liste stabil, falls er doch einmal auftritt.
   const varianten: Variante[] = (raw.training_varianten ?? [])
     .slice()
-    .sort((a, b) => (a.position === b.position ? a.id.localeCompare(b.id) : a.position - b.position))
+    .sort(nachPosition)
     .map((v) => ({ id: v.id, name: v.name }));
 
   // Die Zuweisung trägt nur die Gruppen-ID; der Name steht am Training. Er

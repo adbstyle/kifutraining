@@ -8,7 +8,7 @@ import {
   entferneVariante,
   verschiebeVariante,
 } from "@/lib/actions/varianten";
-import type { Variante } from "@/lib/varianten";
+import { VARIANTE_VORGABENAME, type Variante } from "@/lib/varianten";
 
 /**
  * Das Varianten-Modell des Editors (#209): die Varianten des Hauptteils, ihre
@@ -30,10 +30,11 @@ import type { Variante } from "@/lib/varianten";
  * Veröffentlichungs-Bedingungen. Ein Chip-Klick an den Gruppen ändert dagegen
  * nur die Leiste selbst.
  *
- * Der Serverstand GEWINNT, sobald er hereinkommt: Verglichen wird die
- * Referenz der Prop (Muster `VarianteNameFeld`), denn genau eine neue Prop
- * bedeutet «der Server hat geantwortet». Eine Überlagerung, die sich erst
- * auflöst, wenn Reihenfolge und Namen übereinstimmen, wäre feiner — aber sie
+ * Der Serverstand GEWINNT, sobald er hereinkommt: Verglichen wird die REFERENZ
+ * der Prop und nicht ihr Inhalt — eine neue Referenz gibt es nur mit frisch
+ * geladenen Daten, sie heisst also «der Server hat geantwortet». Eine
+ * Überlagerung, die sich erst auflöst, wenn Reihenfolge und Namen
+ * übereinstimmen, wäre feiner — aber sie
  * hielte auch dann stand, wenn ein zweites Fenster etwas anderes gespeichert
  * hat, und behauptete einen Stand, den kein Training trägt. Beim Rendern
  * angeglichen statt in einem Effekt: So steht nie ein Zwischenbild mit der
@@ -86,6 +87,13 @@ export function useVariantenModell({
         }
         setVarianten(vorher);
         melde(r.error ?? "Verschieben fehlgeschlagen.");
+      } catch {
+        // Eine GEWORFENE Action zählt wie eine abgelehnte — Netzabbruch, Deploy
+        // mitten im Klick. Ohne diesen Zweig bliebe die vorweggenommene
+        // Reihenfolge stehen, obwohl sie nie gespeichert wurde, niemand bekäme
+        // es gesagt, und die Rejection schlüge auf die Error-Boundary durch.
+        setVarianten(vorher);
+        melde("Verschieben fehlgeschlagen.");
       } finally {
         verschiebt.current = false;
       }
@@ -101,15 +109,24 @@ export function useVariantenModell({
     setVarianten((prev) =>
       prev.map((v) => (v.id === varianteId ? { ...v, name: getrimmt } : v)),
     );
-    const r = await benenneVariante(varianteId, getrimmt);
-    if (!r.ok) {
-      setVarianten(vorher);
-      return r.error ?? "Umbenennen fehlgeschlagen.";
+    // Eine GEWORFENE Action zählt wie eine abgelehnte: Der neue Name stünde
+    // sonst im Chip, ohne je gespeichert worden zu sein, und der Dialog bliebe
+    // ohne Antwort offen.
+    let fehler: string;
+    try {
+      const r = await benenneVariante(varianteId, getrimmt);
+      if (r.ok) {
+        startTransition(() => {
+          router.refresh();
+        });
+        return null;
+      }
+      fehler = r.error ?? "Umbenennen fehlgeschlagen.";
+    } catch {
+      fehler = "Umbenennen fehlgeschlagen.";
     }
-    startTransition(() => {
-      router.refresh();
-    });
-    return null;
+    setVarianten(vorher);
+    return fehler;
   }
 
   /**
@@ -122,8 +139,14 @@ export function useVariantenModell({
    *
    * Die Leiste zieht sofort nach, obwohl der Editor gleich darauf die Seite
    * neu lädt: Bis der Serverstand da ist, stünde der Chip einer Variante da,
-   * die es nicht mehr gibt. Die verbleibende Bezeichnung holt der Ladevorgang
-   * nach — bei EINER Variante zeigt die Leiste ohnehin keine an.
+   * die es nicht mehr gibt.
+   *
+   * Beim Übergang 2 → 1 zieht auch die AUFLÖSUNG lokal mit (#209 AK 7): Die
+   * Datenbank gibt der verbleibenden Variante den Vorgabenamen und die
+   * Position 0 zurück. Bis der Ladevorgang das bestätigt, schlüge «Variante
+   * hinzufügen» sonst noch die alte Bezeichnung als Namen des bisherigen
+   * Hauptteils vor — eine, die es nicht mehr gibt. Die Position 0 ergibt sich
+   * hier von selbst: Es ist die einzige Variante der Liste.
    */
   async function entferne(variante: Variante): Promise<boolean> {
     if (entfernt.current) return false;
@@ -134,8 +157,18 @@ export function useVariantenModell({
         melde(r.error ?? "Entfernen fehlgeschlagen.");
         return false;
       }
-      setVarianten((prev) => prev.filter((v) => v.id !== variante.id));
+      setVarianten((prev) => {
+        const rest = prev.filter((v) => v.id !== variante.id);
+        return rest.length === 1
+          ? [{ ...rest[0], name: VARIANTE_VORGABENAME }]
+          : rest;
+      });
       return true;
+    } catch {
+      // Eine geworfene Action zählt wie eine abgelehnte: Die Variante ist NICHT
+      // weg, der Editor darf also weder wechseln noch quittieren.
+      melde("Entfernen fehlgeschlagen.");
+      return false;
     } finally {
       entfernt.current = false;
     }

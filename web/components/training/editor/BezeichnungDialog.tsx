@@ -111,6 +111,12 @@ export function BezeichnungDialog({
         }
         onFertig?.(name);
         onClose();
+      } catch {
+        // Wirft das Speichern — Netzabbruch, Deploy mitten im Klick —, ist das
+        // für den Trainer dasselbe wie eine Ablehnung: Der Dialog bleibt offen
+        // und sagt es am Feld. Ohne diesen Zweig schlüge die Rejection auf die
+        // Error-Boundary durch und nähme ihm seine Eingabe mit.
+        setFehler("Speichern fehlgeschlagen.");
       } finally {
         unterwegs.current = false;
       }

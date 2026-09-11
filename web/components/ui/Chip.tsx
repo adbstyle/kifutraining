@@ -62,9 +62,17 @@ const chipElevated =
    Auch exportiert — die Server-Seiten (`VariantenLinks`) tragen die Optik auf
    einem <a>, und der geteilte Chip (`ChipMenu`) baut sie auf zwei Hälften auf.
    Höhe fest auf h-9, damit Chip, geteilter Chip und leiser Knopf in einer
-   Leiste auf derselben Linie sitzen. */
-export const chipTextBase =
-  "focus-ring type-body-medium inline-flex h-9 items-center gap-1.5 rounded-full border-[1.5px] px-3 normal-case transition-colors";
+   Leiste auf derselben Linie sitzen.
+
+   ZWEI Bündel, weil der geteilte Chip die Pille anders füllt: `chipTextHuelle`
+   ist der Umriss — Schrift, Höhe, Rundung, Rahmen —, den er als Gruppe um
+   seine beiden Hälften legt (dort `items-stretch`, damit jede die volle
+   Trefferhöhe bekommt, und die Polsterung sitzt je Hälfte). Alles Einteilige
+   nimmt `chipTextBase`: dieselbe Hülle plus Fokusring, Ausrichtung und
+   Polsterung. So ändert sich die Nutzertext-Pille an EINER Stelle. */
+export const chipTextHuelle =
+  "type-body-medium inline-flex h-9 rounded-full border-[1.5px] normal-case transition-colors";
+export const chipTextBase = `${chipTextHuelle} focus-ring items-center gap-1.5 px-3`;
 export const chipTextOutlined =
   "border-outline text-on-surface hover:bg-on-surface/8";
 export const chipTextSelected =

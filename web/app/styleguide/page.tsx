@@ -752,9 +752,9 @@ export default function Styleguide() {
         </p>
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           <code>supportingText</code> nimmt seit derselben Story einen{" "}
-          <code>ReactNode</code>, weil unter der Gruppenzeile zwei Aussagen in
-          einer Zeile stehen: die Zeitsumme (eine Auskunft) und dahinter der
-          Konflikt (ein Befund). Nur der zweite Teil ist bernstein — die ganze
+          <code>ReactNode</code>, weil unter einem Feld zwei Aussagen in einer
+          Zeile stehen können — so trug die frühere Gruppenzeile die Zeitsumme
+          (eine Auskunft) und dahinter den Konflikt (ein Befund). Nur der zweite Teil ist bernstein — die ganze
           Zeile zu färben liesse nicht mehr erkennen, was daran gemeldet ist.
         </p>
         <div className="grid max-w-md gap-6">
@@ -1301,9 +1301,9 @@ export default function Styleguide() {
           <p className="type-body-medium max-w-xl text-on-surface-variant">
             Im Editor steht die Wahl zusammen mit „Variante hinzufügen" in einer
             eigenen Zeile unter dem Kartenkopf des Hauptteils — nicht IM Kopf:
-            Dort sitzt bereits der Einstieg in die Gruppen, und eine umbrechende
-            Chip-Reihe daneben risse die Kopfzeile auseinander. Über dem
-            Gruppen-Abschnitt, weil die Variante die grössere Klammer ist: Sie
+            Dort stehen Überschrift und Dauer-Summe, und eine umbrechende
+            Chip-Reihe daneben risse die Kopfzeile auseinander. Über der
+            Gruppenleiste, weil die Variante die grössere Klammer ist: Sie
             entscheidet, welche Übungen darunter stehen; die Gruppen gelten für
             alle Varianten.
           </p>
@@ -1315,19 +1315,18 @@ export default function Styleguide() {
           Suchparameter, jede Variante hat damit eine eigene{" "}
           <strong>Adresse</strong>. <code>VariantenLinks</code> rendert darum{" "}
           <code>&lt;nav&gt;</code> mit Links und <code>aria-current=&quot;page&quot;</code>,
-          leiht sich aber die Chip-Klassen aus 09 (<code>chipBase</code>,{" "}
-          <code>chipSelected</code>, <code>chipOutlined</code>): gleiche Sache,
-          gleiches Bild. Kein wandernder Tabstopp — durch Links tabbt man,
+          leiht sich aber die Nutzertext-Pille aus 09 (<code>chipTextBase</code>,{" "}
+          <code>chipTextOutlined</code>, <code>chipTextSelected</code>): gleiche
+          Sache, gleiches Bild. Kein wandernder Tabstopp — durch Links tabbt man,
           Pfeiltasten gehören der Radiogroup. Nicht <code>TabNav</code> (07): Die
           wechselt die <em>Sicht</em> auf einen Gegenstand; hier bleibt die Sicht
           dieselbe und der <em>Inhalt</em> wechselt. Und sie trägt{" "}
           <code>type-label-large</code> — Nutzertext stünde dort versal
           verfälscht. Aus demselben Grund kennt <code>ChoiceChip</code> seit
-          dem Chip-Umbau ein <code>look=&quot;nutzertext&quot;</code>
-          (<code>chipTextBase</code> / <code>chipTextOutlined</code> /{" "}
-          <code>chipTextSelected</code>): dieselbe Pille, aber normal gesetzt
-          und h-9 hoch, damit sie neben dem geteilten Chip aus 22 und dem leisen
-          Knopf aus 07 auf einer Linie sitzt.
+          dem Chip-Umbau ein <code>look=&quot;nutzertext&quot;</code> mit
+          denselben Bündeln: dieselbe Pille, aber normal gesetzt und h-9 hoch,
+          damit sie neben dem geteilten Chip aus 22 und dem leisen Knopf aus 07
+          auf einer Linie sitzt.
         </p>
         <p className="type-label-small mb-2 text-on-surface-variant">
           drei Varianten als Links — die offene trägt <code>aria-current</code>

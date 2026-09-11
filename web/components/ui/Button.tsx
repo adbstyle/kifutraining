@@ -16,38 +16,43 @@ import { cn } from "@/lib/cn";
 type Variant = "filled" | "tonal" | "elevated" | "outlined" | "text" | "danger" | "quiet";
 type Size = "sm" | "md" | "lg";
 
-// Typo und Abstand stehen NICHT hier, sondern je Variante: `cn` ist ein reiner
-// Joiner (kein tailwind-merge), eine Basis-Klasse liesse sich also nicht
-// überschreiben. `quiet` bringt beides selbst mit.
 const base =
   "focus-ring inline-flex items-center justify-center rounded-(--button-shape) transition-[background-color,box-shadow,transform,color] duration-150 disabled:opacity-40 disabled:pointer-events-none select-none";
 
+/** Schrift und Icon-Abstand einer Variante. Eigener Slot und nicht in `base`,
+ *  weil `cn` ein reiner Joiner ist (kein tailwind-merge): In den fertigen
+ *  String darf genau EINE Typo-Klasse gelangen, eine Basis-Klasse liesse sich
+ *  nicht überschreiben. `quiet` ist als einzige eine Schrift-Stufe — siehe
+ *  oben —, alle übrigen tragen die M3-Button-Typo. */
+function typo(variant: Variant): string {
+  return variant === "quiet" ? "type-title-small gap-1.5" : "type-label-large gap-2";
+}
+
+// Nur noch Farbe und Fläche — Schrift kommt aus `typo`, Höhe und Polsterung
+// aus `sizes` bzw. dem `quiet`-Mass.
 const variants: Record<Variant, string> = {
   // Höchste Emphase — M3 Filled: flächig, Hover via State-Layer (kein Schatten,
   // keine Helligkeitsänderung). Press-Nudge wie bei allen Varianten.
   filled:
-    "type-label-large gap-2 bg-(--button-filled-container) text-(--button-filled-label) hover:bg-(--button-filled-container-hover) active:translate-y-px",
+    "bg-(--button-filled-container) text-(--button-filled-label) hover:bg-(--button-filled-container-hover) active:translate-y-px",
   // Mittlere Emphase — tonale Fläche
   tonal:
-    "type-label-large gap-2 bg-(--button-tonal-container) text-(--button-tonal-label) hover:bg-(--button-tonal-container-hover) active:translate-y-px",
+    "bg-(--button-tonal-container) text-(--button-tonal-label) hover:bg-(--button-tonal-container-hover) active:translate-y-px",
   // Mittlere Emphase mit weichem M3-Schatten (Kontrast zum harten Filled-Schatten)
   elevated:
-    "type-label-large gap-2 bg-(--button-elevated-container) text-(--button-elevated-label) shadow-e3 hover:bg-(--button-elevated-container-hover) hover:shadow-e4 active:translate-y-px",
+    "bg-(--button-elevated-container) text-(--button-elevated-label) shadow-e3 hover:bg-(--button-elevated-container-hover) hover:shadow-e4 active:translate-y-px",
   // Mittlere Emphase — nur Rand, State-Layer auf transparentem Grund
   outlined:
-    "type-label-large gap-2 bg-transparent text-(--button-outlined-label) border-[1.5px] border-(--button-outlined-outline) hover:bg-on-surface/8 active:translate-y-px",
+    "bg-transparent text-(--button-outlined-label) border-[1.5px] border-(--button-outlined-outline) hover:bg-on-surface/8 active:translate-y-px",
   // Niedrigste Emphase
-  text:
-    "type-label-large gap-2 bg-transparent text-(--button-text-label) hover:bg-on-surface/8",
+  text: "bg-transparent text-(--button-text-label) hover:bg-on-surface/8",
   // Destruktiv — Error-Rolle
   danger:
-    "type-label-large gap-2 bg-transparent text-(--button-danger-label) border-[1.5px] border-(--button-danger-outline) hover:bg-error/10",
+    "bg-transparent text-(--button-danger-label) border-[1.5px] border-(--button-danger-outline) hover:bg-error/10",
   // Eine Stufe UNTER `text` — für Handlungen, die am Rand mitlaufen. Nicht
   // leiser in der Farbe (die Signalfarbe bleibt, es ist dieselbe Emphase),
-  // sondern in der Schrift: Source Serif 600 statt mono-versal. Bringt Typo
-  // und Mass selbst mit, `sizes` wird dafür übergangen.
-  quiet:
-    "type-title-small gap-1.5 h-9 px-2 bg-transparent text-(--button-text-label) hover:bg-on-surface/8",
+  // sondern in der Schrift: Source Serif 600 statt mono-versal.
+  quiet: "bg-transparent text-(--button-text-label) hover:bg-on-surface/8",
 };
 
 const sizes: Record<Size, string> = {
@@ -63,9 +68,15 @@ export function buttonClasses(
   size: Size = "md",
   className?: string,
 ): string {
-  // `quiet` ist eine SCHRIFT-Stufe, keine Emphase-Stufe mit eigener Grössen-
-  // leiter: Es gibt ihn nur in einer Höhe (h-9), darum ignoriert er `size`.
-  return cn(base, variants[variant], variant === "quiet" ? undefined : sizes[size], className);
+  return cn(
+    base,
+    typo(variant),
+    variants[variant],
+    // `quiet` ist eine SCHRIFT-Stufe, keine Emphase-Stufe mit eigener Grössen-
+    // leiter: Es gibt ihn nur in einer Höhe, darum ignoriert er `size`.
+    variant === "quiet" ? "h-9 px-2" : sizes[size],
+    className,
+  );
 }
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

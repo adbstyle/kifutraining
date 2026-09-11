@@ -98,7 +98,7 @@ export type Befund = {
   chipWarnung: Set<string>;
   /** Fassungen, deren Dauer in einem ungleichen Wechsel steht (Fassungs-IDs). */
   dauerWarnung: Set<string>;
-  /** Der Kurztext für die Gruppenzeile, je Gruppen-ID. */
+  /** Der Kurztext am Chip der Gruppenleiste, je Gruppen-ID. */
   gruppenWarnung: Map<string, string>;
 };
 
@@ -172,8 +172,8 @@ export function konfliktBefund(
       const wo = `im ${w + 1}. Wechsel an ${zahlwort(treffer.length)} Übungen`;
       konflikte.push({ art: "doppelt", text: `${g.name} steht ${wo}.` });
       for (const f of treffer) chipWarnung.add(`${f.id}|${g.id}`);
-      // Die Gruppenzeile trägt einen Kurztext, keine Sammlung: der erste
-      // Konflikt sagt bereits, dass an dieser Gruppe etwas zu richten ist.
+      // Der Chip der Gruppenleiste trägt einen Kurztext, keine Sammlung: der
+      // erste Konflikt sagt bereits, dass an dieser Gruppe etwas zu richten ist.
       if (!gruppenWarnung.has(g.id)) gruppenWarnung.set(g.id, `Steht ${wo}.`);
     }
   }
@@ -273,7 +273,8 @@ export function zeitKurz(s?: Zeitsumme): string {
   return `${s.minuten} min`;
 }
 
-/** Dieselbe Angabe als Satzanfang für die Gruppenzeile: «Zugewiesen 40 min».
+/** Dieselbe Angabe als ganzer Satz — der a11y-Name des Chips in der
+ *  Gruppenleiste nennt sie so: «Zugewiesen 40 min».
  *
  *  `zusatz` schränkt sie ein, wo sie nur für einen Teil des Trainings gilt:
  *  «Zugewiesen 40 min in dieser Variante» (#201 AK 9). Er hängt nur an einer

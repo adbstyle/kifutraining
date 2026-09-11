@@ -12,6 +12,7 @@ export {
   chipBase,
   chipOutlined,
   chipSelected,
+  chipTextHuelle,
   chipTextBase,
   chipTextOutlined,
   chipTextSelected,

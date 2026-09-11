@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import type { ReactNode, Ref } from "react";
 import { ChevronDown } from "lucide-react";
 import { Menu, type MenuItemDef } from "./Menu";
-import { chipTextBase } from "./Chip";
+import { chipTextBase, chipTextHuelle } from "./Chip";
 import { cn } from "@/lib/cn";
 
 /* Chip mit Menü — ein Chip, der auf Klick ein Menü öffnet. Gedacht für Werte,
@@ -160,20 +160,28 @@ export function ChipMenu({
     />
   );
 
+  /** Was die menü-öffnende Schaltfläche ausmacht — in beiden Bauformen
+   *  dasselbe, nur an verschiedenen Elementen: der Anker des Menüs, seine
+   *  Ankündigung und der Schalter. Name und Klassen bleiben je Bauform. */
+  const menuProps = {
+    ref: triggerRefSetzen,
+    type: "button" as const,
+    disabled,
+    "aria-haspopup": "menu" as const,
+    "aria-expanded": offen && hatEintraege,
+    onClick: () => setOffen((o) => !o),
+  };
+
   return (
     <div className={cn("relative inline-block", className)}>
       {geteilt ? (
         // Der Umriss gehört der GRUPPE, nicht den Hälften: ein Chip, in der
-        // Mitte geteilt. `items-stretch`, damit beide Hälften die volle
-        // Trefferhöhe bekommen. Kein `overflow-hidden` — das schnitte den
-        // Fokusring der Hälften ab (outline mit offset).
-        <div
-          className={cn(
-            "type-body-medium inline-flex h-9 items-stretch rounded-full border-[1.5px] normal-case transition-colors",
-            randfarbe,
-            flaeche,
-          )}
-        >
+        // Mitte geteilt — darum dieselbe `chipTextHuelle` wie am ungeteilten,
+        // nur mit `items-stretch`, damit beide Hälften die volle Trefferhöhe
+        // bekommen; Fokusring und Polsterung sitzen je Hälfte. Kein
+        // `overflow-hidden` — das schnitte den Fokusring ab (outline mit
+        // offset).
+        <div className={cn(chipTextHuelle, "items-stretch", randfarbe, flaeche)}>
           <button
             type="button"
             disabled={disabled}
@@ -194,13 +202,8 @@ export function ChipMenu({
               linke Rand dieser Hälfte; auf dem gefüllten (gewählten) Chip
               braucht er mehr Deckkraft, sonst verschwindet er in der Fläche. */}
           <button
-            ref={triggerRefSetzen}
-            type="button"
-            disabled={disabled}
-            aria-haspopup="menu"
-            aria-expanded={offen && hatEintraege}
+            {...menuProps}
             aria-label={menuAriaLabel ?? `Menü zu „${label}“`}
-            onClick={() => setOffen((o) => !o)}
             className={cn(
               "focus-ring inline-flex w-11 shrink-0 items-center justify-center rounded-r-full border-l-[1.5px] transition-colors",
               selected ? "border-on-surface/20" : "border-outline",
@@ -212,16 +215,12 @@ export function ChipMenu({
         </div>
       ) : (
         <button
-          ref={triggerRefSetzen}
-          type="button"
-          disabled={disabled}
-          aria-haspopup="menu"
-          aria-expanded={offen && hatEintraege}
+          {...menuProps}
           aria-label={ariaLabel}
-          onClick={() => setOffen((o) => !o)}
           // Dieselbe Optik-Quelle wie `ChoiceChip look="nutzertext"` und die
           // Links der Leseseiten (`chipTextBase` in Chip.tsx): ändert sich die
-          // Nutzertext-Pille, ändern sich alle vier Bauformen zusammen.
+          // Nutzertext-Pille, ändern sich alle vier Bauformen zusammen — der
+          // geteilte Chip oben inbegriffen, er trägt dieselbe Hülle.
           className={cn(
             chipTextBase,
             randfarbe,

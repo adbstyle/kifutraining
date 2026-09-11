@@ -253,6 +253,14 @@ export function useGruppenModell({
         if (r.ok) return;
         setGruppen(vorher);
         melde(r.error ?? "Verschieben fehlgeschlagen.");
+      } catch {
+        // Eine GEWORFENE Action zählt wie eine abgelehnte — Netzabbruch, Deploy
+        // mitten im Klick. Ohne diesen Zweig bliebe die vorweggenommene
+        // Reihenfolge stehen, obwohl sie nie gespeichert wurde, niemand bekäme
+        // es gesagt, und die Rejection schlüge auf die Error-Boundary durch
+        // (Muster `setzeFolge`).
+        setGruppen(vorher);
+        melde("Verschieben fehlgeschlagen.");
       } finally {
         verschiebt.current = false;
       }
@@ -263,12 +271,19 @@ export function useGruppenModell({
   async function umbenennen(id: string, name: string): Antwort {
     const vorher = gruppen;
     setGruppen((prev) => prev.map((g) => (g.id === id ? { ...g, name: name.trim() } : g)));
-    const r = await benenneGruppe(id, name);
-    if (!r.ok) {
-      setGruppen(vorher);
-      return r.error ?? "Umbenennen fehlgeschlagen.";
+    // Eine GEWORFENE Action zählt wie eine abgelehnte (Muster `setzeFolge`):
+    // Der neue Name stünde sonst im Chip, ohne je gespeichert worden zu sein,
+    // und der Dialog bliebe ohne Antwort offen.
+    let fehler: string;
+    try {
+      const r = await benenneGruppe(id, name);
+      if (r.ok) return null;
+      fehler = r.error ?? "Umbenennen fehlgeschlagen.";
+    } catch {
+      fehler = "Umbenennen fehlgeschlagen.";
     }
-    return null;
+    setGruppen(vorher);
+    return fehler;
   }
 
   /**
@@ -294,14 +309,22 @@ export function useGruppenModell({
       return next;
     });
     startTransition(async () => {
-      const r = await entferneGruppe(gruppe.id);
-      if (!r.ok) {
-        setGruppen(vorherGruppen);
-        setFolgen(vorherFolgen);
-        melde(r.error ?? "Entfernen fehlgeschlagen.");
-        return;
+      // Wie beim Verschieben: Eine geworfene Action zählt wie eine abgelehnte,
+      // sonst stünde die Gruppe nur in der Anzeige nicht mehr da.
+      let fehler: string;
+      try {
+        const r = await entferneGruppe(gruppe.id);
+        if (r.ok) {
+          melde(`Gruppe „${gruppe.name}" entfernt.`);
+          return;
+        }
+        fehler = r.error ?? "Entfernen fehlgeschlagen.";
+      } catch {
+        fehler = "Entfernen fehlgeschlagen.";
       }
-      melde(`Gruppe „${gruppe.name}" entfernt.`);
+      setGruppen(vorherGruppen);
+      setFolgen(vorherFolgen);
+      melde(fehler);
     });
   }
 

@@ -431,11 +431,23 @@ export function TrainingEditor({
       setGruppeWeg(gruppe);
       return;
     }
-    entferneGruppeJetzt(gruppe);
+    void entferneGruppeJetzt(gruppe);
   }
 
-  function entferneGruppeJetzt(gruppe: { id: string; name: string }) {
+  /** Die Gruppe ist weg (#149 AK 3).
+   *
+   *  Das Schliessen der Rückfrage und der Wegfall müssen in ZWEI Schritte
+   *  fallen, darum das Warten auf den nächsten Tick: Der native `<dialog>` gibt
+   *  den Fokus beim Schliessen dorthin zurück, wo er herkam — an die
+   *  Menü-Hälfte des Chips. Geschähe beides im selben Commit, wäre dieser Chip
+   *  in dem Moment schon entfernt, der Fokus fiele auf `<body>`, und die
+   *  Nachführung der Gruppenleiste käme zu früh. So schliesst erst der Dialog,
+   *  und der `wegZiel`-Effekt der Leiste setzt den Fokus danach auf den
+   *  Nachrücker. Beim Entfernen einer Variante ergibt sich dieselbe Reihenfolge
+   *  von selbst, weil dort auf die Antwort des Servers gewartet wird. */
+  async function entferneGruppeJetzt(gruppe: { id: string; name: string }) {
     setGruppeWeg(null);
+    await Promise.resolve();
     modell.entferne(gruppe);
   }
 
@@ -444,6 +456,10 @@ export function TrainingEditor({
   // erneut. Eine Übung im Hauptteil braucht es nicht eigens zu prüfen — das
   // freie Spiel liegt dort und deckt es zwingend ab.
   const oeffentlich = training.visibility === "public";
+
+  // Anlegen oder umbenennen? Der Gruppen-Dialog unterscheidet sich in sechs
+  // Angaben, und jede fragte sonst dieselbe Bedingung erneut.
+  const bearbeitet = gruppeDialog?.modus === "bearbeiten";
 
   // Live-Vorschau der Veröffentlichungs-Bedingungen aus dem lokalen Stand.
   // Dieselbe Funktion, die die Server Action nutzt — und dieselbe Regel, die
@@ -485,7 +501,7 @@ export function TrainingEditor({
     leiste: (
       <GruppenLeiste
         gruppen={modell.gruppen}
-        zeit={(id) => zeitKurz(modell.zeiten.get(id))}
+        zeit={(id) => modell.zeiten.get(id)}
         // Die Summe gilt für die angezeigte Variante — bei mehreren sagt der
         // a11y-Name das auch, sonst läse man sie als Zeit des ganzen Trainings
         // (#201 AK 9).
@@ -757,7 +773,7 @@ export function TrainingEditor({
             </Button>
             <Button
               variant="danger"
-              onClick={() => gruppeWeg && entferneGruppeJetzt(gruppeWeg)}
+              onClick={() => gruppeWeg && void entferneGruppeJetzt(gruppeWeg)}
             >
               Entfernen
             </Button>
@@ -878,33 +894,25 @@ export function TrainingEditor({
       <BezeichnungDialog
         open={gruppeDialog != null}
         onClose={() => setGruppeDialog(null)}
-        titel={
-          gruppeDialog?.modus === "bearbeiten" ? "Gruppe bearbeiten" : "Gruppe hinzufügen"
-        }
+        titel={bearbeitet ? "Gruppe bearbeiten" : "Gruppe hinzufügen"}
         hinweis={
-          gruppeDialog?.modus === "bearbeiten"
+          bearbeitet
             ? undefined
             : "Verteilt wird nur der Hauptteil. Die Gruppe gilt für alle Varianten."
         }
-        wert={gruppeDialog?.modus === "bearbeiten" ? gruppeDialog.gruppe.name : ""}
+        wert={bearbeitet ? gruppeDialog.gruppe.name : ""}
         max={GRUPPE_NAME_MAX}
         hilfetext={
-          gruppeDialog?.modus === "bearbeiten"
+          bearbeitet
             ? `Höchstens ${GRUPPE_NAME_MAX} Zeichen.`
             : `Woran du sie erkennst, etwa „Rot". Höchstens ${GRUPPE_NAME_MAX} Zeichen.`
         }
-        aktion={gruppeDialog?.modus === "bearbeiten" ? "Speichern" : "Anlegen"}
+        aktion={bearbeitet ? "Speichern" : "Anlegen"}
         pruefe={(name) =>
-          nameProblem(
-            name,
-            modell.gruppen,
-            gruppeDialog?.modus === "bearbeiten" ? gruppeDialog.gruppe.id : undefined,
-          )
+          nameProblem(name, modell.gruppen, bearbeitet ? gruppeDialog.gruppe.id : undefined)
         }
         speichere={(name) =>
-          gruppeDialog?.modus === "bearbeiten"
-            ? modell.umbenennen(gruppeDialog.gruppe.id, name)
-            : modell.anlegen(name)
+          bearbeitet ? modell.umbenennen(gruppeDialog.gruppe.id, name) : modell.anlegen(name)
         }
       />
 

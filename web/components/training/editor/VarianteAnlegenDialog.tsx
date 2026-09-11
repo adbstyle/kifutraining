@@ -53,7 +53,8 @@ export function VarianteAnlegenDialog({
   const [laeuft, startTransition] = useTransition();
   // Ein zweiter Klick auf «Anlegen», während der erste unterwegs ist, legte
   // zwei Varianten an — `useTransition` allein hält ihn nicht auf, weil der
-  // Aufruf in der Action und nicht im Rendern steckt (Muster `GruppenZeile`).
+  // Aufruf in der Action und nicht im Rendern steckt. Dieselbe Schranke hält
+  // der `BezeichnungDialog`, aus demselben Grund.
   const unterwegs = useRef(false);
 
   // Beim Öffnen zurücksetzen: Der Dialog überlebt im Baum, und ein

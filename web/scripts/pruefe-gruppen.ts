@@ -203,7 +203,7 @@ pruefe("Dieselbe Gruppe im selben Wechsel an zwei Übungen wird gemeldet", () =>
     ["Gruppe 1 steht im 1. Wechsel an zwei Übungen."],
   );
   assert.equal(b.konflikte[0].art, "doppelt");
-  // Beide Chips tragen die Warnung, die Gruppenzeile den Kurztext.
+  // Beide Durchlauf-Chips tragen die Warnung, der Chip der Gruppenleiste den Kurztext.
   assert.equal(b.chipWarnung.has("te1|g1"), true);
   assert.equal(b.chipWarnung.has("te2|g1"), true);
   assert.equal(b.chipWarnung.has("te1|g2"), false);

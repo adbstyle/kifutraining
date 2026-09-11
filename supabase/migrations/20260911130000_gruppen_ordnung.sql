@@ -157,9 +157,11 @@ comment on index tg_position_je_training is
 -- Wortgleich zu `verschiebe_variante`: Tausch mit dem Nachbarn über den
 -- Zwischenwert -1, am Rand kein Nachbar und also nichts zu tun.
 --
--- `p_dir` kennt genau zwei Werte: -1 nach vorne, 1 nach hinten. Die Null ist
--- keine Richtung — sie stillschweigend als «nach hinten» zu lesen, machte aus
--- einem Programmierfehler eine Umsortierung, die niemand verlangt hat.
+-- `p_dir` kennt genau zwei Werte: -1 nach vorne, 1 nach hinten. Weder die Null
+-- noch `null` ist eine Richtung — beide stillschweigend als «nach hinten» zu
+-- lesen (die Abfrage unten täte genau das, denn `null < 0` ist nicht wahr),
+-- machte aus einem Programmierfehler eine Umsortierung, die niemand verlangt
+-- hat. Darum fahren beide hier heraus, bevor irgendetwas getauscht wird.
 create function verschiebe_gruppe(p_gruppe uuid, p_dir int) returns void
 language plpgsql
 security definer
@@ -176,7 +178,7 @@ begin
     raise exception 'not authenticated';
   end if;
 
-  if p_dir = 0 then
+  if p_dir is null or p_dir = 0 then
     return;
   end if;
 
@@ -436,6 +438,18 @@ $$;
 -- `security definer` läuft; die Policies umgeht der Migrations-Superuser
 -- ohnehin.
 --
+-- Weggeräumt wird per ROLLBACK und nicht per `delete` (Muster
+-- `varianten_veroeffentlichung`, Abschnitt 4): Das Szenario läuft in einer
+-- Subtransaktion, die am Ende ABSICHTLICH mit einer eigenen Ausnahme verlassen
+-- wird. Ein `delete from trainings` wäre auf Produktion ein Schreibvorgang in
+-- eine Geschäftstabelle — er träfe zwar nur die eben angelegte Wegwerf-Zeile,
+-- aber eine Migration, die überhaupt aus `trainings` löscht, ist die falsche
+-- Vorlage für die nächste. Nach dem Rollback bleibt von der Prüfung keine
+-- Spur, auch nicht in den Sequenzen der Kaskade.
+--
+-- Ein echter Befund kommt als gewöhnliche Ausnahme aus demselben Block und
+-- wird nach dem Rollback WEITERGEREICHT — er soll die Migration abbrechen.
+--
 -- Die AUFLÖSUNG in `entferne_variante` lässt sich hier NICHT nachstellen: Die
 -- RPC verlangt `auth.uid()` und ein Training, dessen `owner_id` auf eine echte
 -- Zeile in `auth.users` zeigt. Einen Nutzer für eine Prüfung anzulegen und
@@ -444,42 +458,51 @@ $$;
 -- oben am Funktionsrumpf und in der Anwendung.
 do $$
 declare
+  v_ausgang text;
   v_training uuid;
   v_positionen int[];
   v_fest int;
   v_danach int;
 begin
-  insert into trainings (name, altersstufe, stufen, visibility)
-  values ('__pruefung_209__', 'kinderfussball', array['G'], 'private')
-  returning id into v_training;
+  begin
+    insert into trainings (name, altersstufe, stufen, visibility)
+    values ('__pruefung_209__', 'kinderfussball', array['G'], 'private')
+    returning id into v_training;
 
-  insert into training_gruppen (training_id, name)
-  values (v_training, 'A'), (v_training, 'B'), (v_training, 'C');
+    insert into training_gruppen (training_id, name)
+    values (v_training, 'A'), (v_training, 'B'), (v_training, 'C');
 
-  select array_agg(position order by position) into v_positionen
-    from training_gruppen where training_id = v_training;
-  if v_positionen is distinct from array[0, 1, 2] then
-    raise exception 'tg_position_setzen vergibt % statt 0,1,2', v_positionen;
+    select array_agg(position order by position) into v_positionen
+      from training_gruppen where training_id = v_training;
+    if v_positionen is distinct from array[0, 1, 2] then
+      raise exception 'tg_position_setzen vergibt % statt 0,1,2', v_positionen;
+    end if;
+
+    insert into training_gruppen (training_id, name, position)
+    values (v_training, 'D', 7);
+    select position into v_fest
+      from training_gruppen where training_id = v_training and name = 'D';
+    if v_fest <> 7 then
+      raise exception 'eine mitgegebene Position wurde ueberschrieben: %', v_fest;
+    end if;
+
+    insert into training_gruppen (training_id, name) values (v_training, 'E');
+    select position into v_danach
+      from training_gruppen where training_id = v_training and name = 'E';
+    if v_danach <> 8 then
+      raise exception 'die naechste Gruppe bekam % statt 8', v_danach;
+    end if;
+
+    -- Alles geprüft. Dieser Ausstieg rollt die Subtransaktion zurück und nimmt
+    -- Training, Gruppen und die vom Trigger angelegte Variante mit.
+    raise exception 'PRUEFUNG_209_BESTANDEN';
+  exception when others then
+    v_ausgang := sqlerrm;
+  end;
+
+  if v_ausgang <> 'PRUEFUNG_209_BESTANDEN' then
+    raise exception '%', v_ausgang;
   end if;
-
-  insert into training_gruppen (training_id, name, position)
-  values (v_training, 'D', 7);
-  select position into v_fest
-    from training_gruppen where training_id = v_training and name = 'D';
-  if v_fest <> 7 then
-    raise exception 'eine mitgegebene Position wurde ueberschrieben: %', v_fest;
-  end if;
-
-  insert into training_gruppen (training_id, name) values (v_training, 'E');
-  select position into v_danach
-    from training_gruppen where training_id = v_training and name = 'E';
-  if v_danach <> 8 then
-    raise exception 'die naechste Gruppe bekam % statt 8', v_danach;
-  end if;
-
-  -- Aufräumen. Die Kaskade nimmt Gruppen und Varianten mit; `tv_letzte_bleibt`
-  -- ist aufgeschoben und findet beim Commit kein Training mehr vor.
-  delete from trainings where id = v_training;
 end;
 $$;
 
