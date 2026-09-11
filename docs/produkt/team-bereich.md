@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-09-09. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-09-11. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -25,8 +25,11 @@ das persönliche Original bleibt unberührt, und spätere Änderungen wirken in 
 Dasselbe gilt umgekehrt beim Übernehmen eines Team-Trainings zu sich. Eine Kopie ist dabei
 vollständig: Sie führt neben den Übungen samt Bild und Diagramm auch die Gruppen des Trainings,
 deren Verteilung im Hauptteil und die Notizen der Übungen — das Team findet dieselbe Einheit vor
-und muss nichts davon neu eintragen. Ein Training lässt sich auch direkt im Team anlegen; es
-gehört dann von Beginn an dem Team. Dabei gelten dieselben
+und muss nichts davon neu eintragen. Hält das Training mehrere Varianten seines Hauptteils bereit,
+kommen alle mit, in derselben Reihenfolge und unter denselben Bezeichnungen; ausgewählt wird dabei
+nichts. Auch sie sind danach eigenständig: Wer in der Kopie eine Variante umbaut, umbenennt oder
+entfernt, lässt das Training unberührt, aus dem sie hervorging — und umgekehrt. Ein Training lässt
+sich auch direkt im Team anlegen; es gehört dann von Beginn an dem Team. Dabei gelten dieselben
 Pflichtangaben wie beim persönlichen Anlegen: Name, Altersstufe und mindestens eine
 Alterskategorie der gewählten Altersstufe. Auch hier steht die Altersstufe danach fest.
 
@@ -73,7 +76,8 @@ geöffnet ist. Die Schreibweise ist überall dieselbe wie im Trainingsplan, etwa
 
 Ein Training trägt höchstens einen Termin. Wer dieselbe Einheit ein zweites Mal ansetzt,
 bekommt eine eigenständige Kopie mit eigenem Termin — sowohl aus dem Trainingsplan heraus als
-auch direkt aus dem Trainingsbestand; Gruppen, Verteilung und Notizen sind darin dieselben.
+auch direkt aus dem Trainingsbestand; Gruppen, Verteilung, Notizen und sämtliche Varianten des
+Hauptteils sind darin dieselben.
 Der Grund: Jedes Datum bleibt bei dem Stand, mit dem es tatsächlich durchgeführt wurde, und eine
 Anpassung für die nächste Woche verändert die Vergangenheit nicht. Serientermine aus einem
 Rhythmus gibt es nicht; jedes Ansetzen ist ein bewusster Einzelschritt.

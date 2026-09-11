@@ -2,7 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidiereTraining } from "@/lib/revalidate";
-import { MELDUNG_VERGEBEN, nameProblem } from "@/lib/gruppen";
+import { MELDUNG_VERGEBEN } from "@/lib/bezeichnung";
+import { nameProblem } from "@/lib/gruppen";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 import type { TrainingActionResult } from "@/lib/actions/trainings";
 
@@ -23,7 +24,7 @@ import type { TrainingActionResult } from "@/lib/actions/trainings";
  */
 
 /** Die Unique-Verletzung des Index `tg_name_je_training`. Ihre Meldung ist
- *  `MELDUNG_VERGEBEN` aus `@/lib/gruppen` — derselbe Satz wie in der
+ *  `MELDUNG_VERGEBEN` aus `@/lib/bezeichnung` — derselbe Satz wie in der
  *  Vorabprüfung, damit der Trainer nicht zwei Formulierungen für dieselbe
  *  Kollision zu lesen bekommt. */
 const UNIQUE_VERLETZUNG = "23505";
@@ -144,6 +145,41 @@ export async function entferneGruppe(gruppeId: string): Promise<TrainingActionRe
   if (!data) return { ok: false, error: "Gruppe nicht gefunden." };
 
   revalidiereTraining(data.training_id);
+  return { ok: true };
+}
+
+/** Eine Gruppe in der Reihenfolge verschieben (#209): Tausch mit dem Nachbarn,
+ *  am Rand ohne Wirkung. Muster und Wortlaut wie `verschiebeVariante` — beide
+ *  Ordnungen ändern sich auf dieselbe Weise (`verschoben()` in
+ *  `@/lib/ordnung`). */
+export async function verschiebeGruppe(
+  gruppeId: string,
+  dir: -1 | 1,
+): Promise<TrainingActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Nicht angemeldet." };
+
+  // Das Training der Gruppe: es sagt, welche Ansichten danach neu zu
+  // validieren sind. Findet die RLS die Zeile nicht, ist hier Schluss — sonst
+  // meldete erst die RPC einen Fehler ohne Bezug.
+  const { data: gruppe, error: leseFehler } = await supabase
+    .from("training_gruppen")
+    .select("training_id")
+    .eq("id", gruppeId)
+    .maybeSingle();
+  if (leseFehler) return { ok: false, error: fehlerMeldung(leseFehler.message) };
+  if (!gruppe) return { ok: false, error: "Gruppe nicht gefunden." };
+
+  const { error } = await supabase.rpc("verschiebe_gruppe", {
+    p_gruppe: gruppeId,
+    p_dir: dir,
+  });
+  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+
+  revalidiereTraining(gruppe.training_id);
   return { ok: true };
 }
 

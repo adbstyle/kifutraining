@@ -9,6 +9,7 @@
 import { JUNIOREN_PFLICHT_BLOECKE } from "@/lib/junioren";
 import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
+import { sichtbareZuordnungen } from "@/lib/varianten";
 
 /** Marker, mit dem die Datenebene eine verletzte Bedingung meldet. */
 const BEDINGUNG_MARKER = "TRAINING_UNVOLLSTAENDIG";
@@ -27,8 +28,10 @@ export type Bedingung =
   | "jun-explosivitaet"
   | "jun-spielformen";
 
-/** Was fehlt, aus Sicht des Trainers. Ergänzt den Satz «Es fehlt …». */
-export const BEDINGUNG_FEHLT: Record<Bedingung, string> = {
+/** Was fehlt, aus Sicht des Trainers. Ergänzt den Satz «Es fehlt …».
+ *  Nur modulintern: Nach aussen geht der Text durch `bedingungText()`, weil er
+ *  seit #204 die Variante nennen kann. */
+const BEDINGUNG_FEHLT: Record<Bedingung, string> = {
   stufe: "mindestens eine Alterskategorie",
   einleitung: "mindestens eine Übung in der Einleitung",
   freies_spiel: "mindestens eine Übung im freien Spiel",
@@ -55,20 +58,84 @@ export function bedingungAusFehler(message: string): Bedingung | null {
   return istBedingung(wort) ? wort : null;
 }
 
+/** Die Variante aus einer DB-Fehlermeldung, oder `null` wenn die verletzte
+ *  Bedingung keine Variante betrifft (#204).
+ *
+ *  Die Datenebene schreibt `'<bedingung> VARIANTE <uuid>'` — die Bedingung
+ *  bleibt das erste Wort, die Variante steht als eigenes Wortpaar dahinter.
+ *  Hier interessiert nur die ID; der Name dazu liegt allein in der Oberfläche,
+ *  die das Training kennt.
+ *
+ *  SQL-Zwilling: `training_fehlende_bedingungen()`. */
+export function varianteAusFehler(message: string): string | null {
+  if (!message.includes(BEDINGUNG_MARKER)) return null;
+  const teil = message.split(`${BEDINGUNG_MARKER}:`).pop()?.trim() ?? "";
+  const [, marker, id] = teil.split(/\s+/);
+  return marker === "VARIANTE" && id ? id : null;
+}
+
+/** Was fehlt, aus Sicht des Trainers — mit der Variante, wenn es eine zu
+ *  nennen gibt (#204 AK 2). Ergänzt den Satz «Es fehlt …».
+ *
+ *  Ob der Name mitkommt, entscheidet der Aufrufer: Bei genau einer Variante ist
+ *  sie kein Gesprächsgegenstand (#201 PC 5) — dann übergibt er keinen Namen. */
+export function bedingungText(bedingung: Bedingung, varianteName?: string): string {
+  const fehlt = BEDINGUNG_FEHLT[bedingung];
+  return varianteName ? `${fehlt} in der Variante „${varianteName}"` : fehlt;
+}
+
 /** Die Meldung für eine Änderung, die ein öffentliches Training unter die
- *  Bedingungen gebracht hätte. Nennt den Weg, nicht nur die Absage (AK 7). */
-function bedingungsMeldung(bedingung: Bedingung): string {
+ *  Bedingungen gebracht hätte. Nennt den Weg, nicht nur die Absage (AK 7).
+ *
+ *  Betrifft die Bedingung eine Variante, bleibt die Meldung bewusst allgemein
+ *  («in jeder Variante») statt die eine zu nennen: Diese Übersetzung steht
+ *  jeder Action zur Verfügung, die einen rohen DB-Fehler bekommt — auch denen,
+ *  die nur die Fehlermeldung kennen und nicht das Training mit seinen
+ *  Variantennamen. Wer den Kontext hat (`veroeffentlicheTraining`), liefert
+ *  stattdessen `FehlendeBedingung[]` und die Oberfläche nennt Variante und
+ *  Block. */
+function bedingungsMeldung(bedingung: Bedingung, jeVariante: boolean): string {
+  const was = jeVariante
+    ? `in jeder Variante ${BEDINGUNG_FEHLT[bedingung]}`
+    : BEDINGUNG_FEHLT[bedingung];
+  return satzUm(was);
+}
+
+/** Dieselbe Meldung für den Aufrufer, der das Training kennt und die Variante
+ *  darum benennen kann (#204 AK 3): «Ein öffentliches Training braucht
+ *  mindestens eine Übung im freien Spiel in der Variante „21 Kinder". Setze es
+ *  zuerst auf Entwurf, wenn du es so ändern willst.»
+ *
+ *  Ohne `varianteName` ist sie wortgleich mit der allgemeinen Fassung — der
+ *  Editor übergibt ihn nur, wenn das Training mehr als eine Variante führt
+ *  (Epic EK 7). */
+export function bedingungsMeldungFuer(
+  bedingung: Bedingung,
+  varianteName?: string,
+): string {
+  return satzUm(bedingungText(bedingung, varianteName));
+}
+
+/** Der gemeinsame Satzbau beider Meldungen — er steht einmal, damit die beiden
+ *  Wege nicht in zwei Formulierungen desselben auseinanderlaufen. */
+function satzUm(was: string): string {
   return (
-    `Ein öffentliches Training braucht ${BEDINGUNG_FEHLT[bedingung]}. ` +
+    `Ein öffentliches Training braucht ${was}. ` +
     "Setze es zuerst auf Entwurf, wenn du es so ändern willst."
   );
 }
 
 /** Verletzte ein DB-Fehler eine Bedingung? Dann die Meldung dazu, sonst `null`.
- *  Für jede Action, die ein Training oder seine Fassungen ändert. */
+ *  Für jede Action, die ein Training oder seine Fassungen ändert.
+ *
+ *  Bewusste Asymmetrie (#204): Die Datenebene nennt nur die ERSTE verletzte
+ *  Variante (`v_missing[1]` in `training_pruefe_oeffentlich`) — ein `raise`
+ *  trägt genau eine Aussage. Die Live-Vorschau im Editor zeigt dagegen alle
+ *  verletzten Varianten, weil sie den ganzen Stand vor sich hat. */
 function bedingungsFehler(message: string): string | null {
   const bedingung = bedingungAusFehler(message);
-  return bedingung ? bedingungsMeldung(bedingung) : null;
+  if (!bedingung) return null;
+  return bedingungsMeldung(bedingung, varianteAusFehler(message) !== null);
 }
 
 /** Marker der Datenebene für den Versuch, die Altersstufe eines bestehenden
@@ -181,6 +248,38 @@ function gruppenMeldung(message: string): string | null {
   return null;
 }
 
+/** Die Marker der Varianten-Datenebene (#201) und ihr Klartext.
+ *
+ *  - `VARIANTE_FREMDES_TRAINING` (Trigger `te_variante_ausrichten`, RPC
+ *    `lege_variante_an`): eine Fassung soll in die Variante eines anderen
+ *    Trainings. Über die Oberfläche unerreichbar — ausser ein Kopierpfad
+ *    vergässe, `variante_id` auf die Kopie umzuschreiben; genau dafür ist der
+ *    Marker da, statt still die Quell-ID zu übernehmen.
+ *  - `LETZTE_VARIANTE` (Constraint-Trigger `tv_letzte_bleibt`, RPC
+ *    `entferne_variante`): ein Training führt jederzeit mindestens einen
+ *    Hauptteil (Epic EK 6). Der Knopf ist dann abgeschaltet; die Meldung
+ *    trifft, wer eine veraltete Ansicht offen hält.
+ *  - `VARIANTE_KOPIE_UNVOLLSTAENDIG` (RPC `lege_variante_an`): die Anwendung
+ *    hat weniger Fassungen angemeldet, als die Quelle führt — etwa weil jemand
+ *    parallel eine Übung ergänzt hat. Lieber keine Variante als eine, der
+ *    Übungen fehlen. */
+const VARIANTEN_MARKER: [string, string][] = [
+  ["VARIANTE_FREMDES_TRAINING", "Diese Variante gehört zu einem anderen Training."],
+  ["LETZTE_VARIANTE", "Die letzte Variante des Hauptteils lässt sich nicht entfernen."],
+  [
+    "VARIANTE_KOPIE_UNVOLLSTAENDIG",
+    "Die Variante liess sich nicht vollständig kopieren. " +
+      "Lade das Training neu und versuche es noch einmal.",
+  ],
+];
+
+/** Die Meldung zu einer abgewiesenen Varianten-Änderung, sonst `null`. */
+function variantenMeldung(message: string): string | null {
+  for (const [marker, klartext] of VARIANTEN_MARKER)
+    if (message.includes(marker)) return klartext;
+  return null;
+}
+
 /** Der Marker, mit dem Postgres eine von der RLS abgewiesene Änderung meldet
  *  («new row violates row-level security policy for table …»). */
 const RLS_VERLETZUNG = "row-level security";
@@ -216,11 +315,32 @@ function berechtigungsMeldung(message: string): string | null {
  *  Constraint fachlich erklärt, ist erwartet und bleibt ungeloggt. */
 export function fehlerMeldung(message: string): string {
   const fachlich =
-    bedingungsFehler(message) ?? schemaMeldung(message) ?? gruppenMeldung(message);
+    bedingungsFehler(message) ??
+    schemaMeldung(message) ??
+    gruppenMeldung(message) ??
+    variantenMeldung(message);
   if (fachlich) return fachlich;
   console.error(`[db] ${message}`);
   return berechtigungsMeldung(message) ?? ALLGEMEIN;
 }
+
+/** Eine noch nicht erfüllte Bedingung — mit der Variante, wenn sie eine
+ *  Variante betrifft (#204). Trainingsweite Bedingungen tragen `null`.
+ *
+ *  Die Trennung steht im Typ, nicht in einer Konvention: Die Hauptteil-Bedingung
+ *  kann mehrfach auftreten (einmal je Variante), die anderen genau einmal. */
+export type FehlendeBedingung = { bedingung: Bedingung; varianteId: string | null };
+
+/** Die Hauptteil-Bedingung je Altersstufe — die einzige, die je Variante gilt
+ *  (#204 AK 1). Im Kinderfussball liegt das freie Spiel im Hauptteil, im
+ *  Juniorenfussball sind es die Spielformen; beide Einordnungen tragen
+ *  Varianten (`istHauptteil()`).
+ *
+ *  SQL-Zwilling: die Varianten-Schleife in `training_fehlende_bedingungen()`. */
+const HAUPTTEIL_BEDINGUNG: Record<Altersstufe, Bedingung> = {
+  kinderfussball: "freies_spiel",
+  juniorenfussball: "jun-spielformen",
+};
 
 /** Welche Veröffentlichungs-Bedingungen erfüllt ein Training noch nicht?
  *  Die Regel hängt an seiner Altersstufe (Story 7 AC 1/2/4) und spiegelt die
@@ -234,22 +354,68 @@ export function fehlerMeldung(message: string): string {
  *  Mindestens eine Alterskategorie gilt in beiden Altersstufen: Seit die
  *  Altersstufe eine eigene Angabe ist, folgt sie nicht mehr aus den
  *  Kategorien — ein Junioren-Training ohne Kategorie ist damit möglich und
- *  soll nicht veröffentlichbar sein (Story 1, Übungswelten). */
+ *  soll nicht veröffentlichbar sein (Story 1, Übungswelten).
+ *
+ *  Die Hauptteil-Bedingung wird je Variante geprüft (#204 AK 1): Wer eine
+ *  Alternative übernimmt, soll keinen Hauptteil bekommen, dem der Pflichtblock
+ *  fehlt. `fassungen` sind darum ALLE Fassungen des Trainings, nicht nur die der
+ *  angezeigten Variante — welche zu welcher Variante gehören, entscheidet
+ *  `sichtbareZuordnungen`, dieselbe Regel wie in der Anzeige.
+ *
+ *  Reihenfolge wie in SQL: erst die trainingsweiten Bedingungen, dann die
+ *  Varianten in Anzeigereihenfolge. Der DB-Fehler nennt den ersten Eintrag —
+ *  es soll derselbe sein, den die Vorschau oben zeigt.
+ *
+ *  Genannt wird die Variante erst ab der zweiten: Führt das Training nur eine,
+ *  verhält es sich überall wie vor diesem Epic (Epic EK 7). */
 export function fehlendeBedingungenAus(
   altersstufe: Altersstufe,
   stufen: readonly string[],
-  fassungen: readonly { trainingsteil: string; hauptteilkategorie?: string | null }[],
-): Bedingung[] {
-  const missing: Bedingung[] = [];
-  if (stufen.length === 0) missing.push("stufe");
+  fassungen: readonly {
+    trainingsteil: string;
+    hauptteilkategorie?: string | null;
+    varianteId: string | null;
+  }[],
+  varianten: readonly { id: string }[],
+): FehlendeBedingung[] {
+  const missing: FehlendeBedingung[] = [];
+  if (stufen.length === 0) missing.push({ bedingung: "stufe", varianteId: null });
   if (altersstufe === "kinderfussball") {
-    if (!fassungen.some((f) => f.trainingsteil === "einleitung")) missing.push("einleitung");
-    if (!fassungen.some((f) => f.hauptteilkategorie === FREIES_SPIEL))
-      missing.push("freies_spiel");
+    if (!fassungen.some((f) => f.trainingsteil === "einleitung"))
+      missing.push({ bedingung: "einleitung", varianteId: null });
   } else {
+    // Die Spielformen stehen nicht in dieser Schleife: Sie liegen im Hauptteil
+    // und werden unten je Variante geprüft.
     for (const block of JUNIOREN_PFLICHT_BLOECKE) {
-      if (!fassungen.some((f) => f.trainingsteil === block)) missing.push(block);
+      if (block === "jun-spielformen") continue;
+      if (!fassungen.some((f) => f.trainingsteil === block))
+        missing.push({ bedingung: block, varianteId: null });
     }
+  }
+
+  const hauptteil = HAUPTTEIL_BEDINGUNG[altersstufe];
+  const erfuellt = (f: { trainingsteil: string; hauptteilkategorie?: string | null }) =>
+    altersstufe === "kinderfussball"
+      ? f.hauptteilkategorie === FREIES_SPIEL
+      : f.trainingsteil === "jun-spielformen";
+
+  // Ohne Variante bliebe die Hauptteil-Bedingung ungeprüft — nach Lage der
+  // Daten unmöglich (jedes Training führt mindestens eine, Epic EK 6), aber ein
+  // leerer Embed darf nicht zu «alles erfüllt» führen. Dann wird einmal über
+  // alle Fassungen geprüft, ohne Variante zu nennen.
+  if (varianten.length === 0) {
+    if (!fassungen.some(erfuellt)) missing.push({ bedingung: hauptteil, varianteId: null });
+    return missing;
+  }
+
+  // Bei genau EINER Variante bleibt `varianteId` leer: Ihre Bezeichnung hat der
+  // Trainer nie vergeben und sieht sie nirgends (#201 PC 5 / Epic EK 7) — sie in
+  // der Meldung zu nennen, erfände einen Gegenstand. Zwilling: die
+  // `v_variantenzahl`-Schranke in `training_fehlende_bedingungen()`.
+  const nennen = varianten.length > 1;
+  for (const v of varianten) {
+    if (!sichtbareZuordnungen(fassungen, v.id).some(erfuellt))
+      missing.push({ bedingung: hauptteil, varianteId: nennen ? v.id : null });
   }
   return missing;
 }

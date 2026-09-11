@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Clock, ListChecks } from "lucide-react";
+import { Clock, Layers, ListChecks } from "lucide-react";
 import { Badge, Card, KategorieChip } from "@/components/ui";
 import { formatDuration } from "@/lib/training";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
@@ -41,6 +41,19 @@ export function TrainingCard({
               Alterskategorie und darf deren gelernte Codierung nicht borgen —
               derselbe Look wie am Übungsformular. */}
           <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
+          {/* Führt das Training mehrere Varianten des Hauptteils, steht das
+              schon in der Übersicht (#206 AK 1) — sonst müsste man jedes
+              Training öffnen, um Alternativen zu finden. Bei genau einer
+              Variante bleibt die Zeile stumm (AK 3). Bewusst neutral: die
+              Variantenzahl ist keine Alterskategorie und borgt deren
+              Farbcodierung nicht. Plural immer, die Marke erscheint erst ab
+              zwei. */}
+          {training.variantenZahl > 1 && (
+            <Badge tone="neutral">
+              <Layers size={12} strokeWidth={2.5} aria-hidden />
+              {training.variantenZahl} Varianten
+            </Badge>
+          )}
           {/* Nur am eigenen Eintrag: bei fremden ist der Zustand immer
               öffentlich und die Marke sagte nichts. */}
           {training.istEigen && (
@@ -62,6 +75,9 @@ export function TrainingCard({
           </p>
         )}
 
+        {/* Übungszahl und Dauer der ERSTEN Variante (#206 AK 2) — ein Training
+            spielt nur eine Variante, die Summe über alle wäre eine Dauer, die
+            es nie hat. Gerechnet wird das in `mapListRow`. */}
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 type-label-medium text-on-surface-variant">
           <span className="inline-flex items-center gap-1.5">
             <ListChecks size={15} strokeWidth={2} aria-hidden />

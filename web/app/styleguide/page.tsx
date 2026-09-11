@@ -30,6 +30,8 @@ import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
+import { VariantenWahlDemo } from "./VariantenWahlDemo";
+import { VariantenLinks } from "@/components/training/VariantenLinks";
 import {
   Search,
   SlidersHorizontal,
@@ -361,6 +363,36 @@ export default function Styleguide() {
           <Button size="md">Mittel</Button>
           <Button size="lg">Gross · Spielfeldrand</Button>
         </div>
+        <p className="type-label-small mb-2 mt-6 text-on-surface-variant">
+          Leiser Knopf (<code>variant=&quot;quiet&quot;</code>) — eine Stufe unter{" "}
+          <code>text</code>
+        </p>
+        <p className="type-body-medium mb-3 max-w-xl text-on-surface-variant">
+          Die sechste Stufe ist eine <strong>Schrift</strong>-Stufe, keine
+          Emphase-Stufe: Die Signalfarbe bleibt (es ist derselbe{" "}
+          <code>--button-text-label</code>), nur die Versalien fallen —{" "}
+          <code>type-title-small</code> statt <code>type-label-large</code>.
+          Sie gilt für Handlungen, die <strong>am Rand mitlaufen</strong>: ein
+          Knopf in einer Leiste aus Chips, die Nutzertext tragen und darum
+          normal gesetzt sind. Mono-versal danebengestellt schriee er, und die
+          Leiste zerfiele in zwei Stimmen. Sie gilt <strong>nicht</strong> für
+          Knöpfe, die einen Vorgang abschliessen oder abbrechen —
+          Dialog-Knöpfe, Formularfüsse und alles, was neben einem{" "}
+          <code>filled</code> steht, bleibt <code>text</code>. <code>size</code>{" "}
+          wird übergangen: Den leisen Knopf gibt es nur in einer Höhe (h-9),
+          damit er in der Chip-Leiste auf der Linie sitzt.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="quiet">
+            <Plus size={16} strokeWidth={2} aria-hidden />
+            Variante hinzufügen
+          </Button>
+          <Button variant="text">Abbrechen</Button>
+          <span className="type-label-small text-on-surface-variant">
+            quiet (Source Serif, normal) · text (mono, versal)
+          </span>
+        </div>
+
         <p className="type-label-small mb-2 mt-6 text-on-surface-variant">
           Button-Link (navigiert als &lt;a&gt; — kein &lt;a&gt;&lt;button&gt;-Nesting)
         </p>
@@ -720,9 +752,9 @@ export default function Styleguide() {
         </p>
         <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
           <code>supportingText</code> nimmt seit derselben Story einen{" "}
-          <code>ReactNode</code>, weil unter der Gruppenzeile zwei Aussagen in
-          einer Zeile stehen: die Zeitsumme (eine Auskunft) und dahinter der
-          Konflikt (ein Befund). Nur der zweite Teil ist bernstein — die ganze
+          <code>ReactNode</code>, weil unter einem Feld zwei Aussagen in einer
+          Zeile stehen können — so trug die frühere Gruppenzeile die Zeitsumme
+          (eine Auskunft) und dahinter den Konflikt (ein Befund). Nur der zweite Teil ist bernstein — die ganze
           Zeile zu färben liesse nicht mehr erkennen, was daran gemeldet ist.
         </p>
         <div className="grid max-w-md gap-6">
@@ -1213,7 +1245,101 @@ export default function Styleguide() {
           Bedienelement mit <strong>einem</strong> Tabstopp — kein Chip plus
           angehängter Knopf.
         </p>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          <strong>Geteilte Bauform (<code>onSelect</code>).</strong> Sobald an
+          demselben Wert <strong>zwei</strong> Aufgaben hängen — „zeig mir
+          diese Variante" und „benenne, verschiebe, entferne sie" —, wird der
+          Chip in der Mitte geteilt: links wählen, rechts das Menü. Ein
+          Menüeintrag „Anzeigen" allein reichte nicht, denn Wechseln ist die
+          häufigste Handlung der Leiste und darf nicht zwei Klicks kosten. Die
+          Menühälfte ist <strong>44 px</strong> breit — ein eigenständiges
+          Touch-Ziel, nicht ein angehängtes 16px-Chevron. Der Umriss gehört
+          trotzdem der Gruppe: eine Reihe von Varianten, nicht eine Reihe von
+          Knopfpaaren.
+        </p>
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          <strong>Warum hier keine Radiogroup mehr</strong> (anders als bei der
+          Variantenwahl in 23): Eine Radiogroup verlangt genau EIN fokussierbares
+          Element je Wert und übernimmt die Pfeiltasten. Hier sind es zwei
+          Elemente, und die Pfeiltasten gehören dem geöffneten Menü. Die Wahl
+          sagt darum <code>aria-pressed</code> an der linken Hälfte; durch die
+          Leiste tabbt man.
+        </p>
         <ChipMenuDemo />
+      </Section>
+
+      <Section n="23" title="Variantenwahl">
+        <p className="type-body-medium mb-5 max-w-xl text-on-surface-variant">
+          Zwischen den <strong>Varianten des Hauptteils</strong> eines Trainings
+          wechseln (Epic „Hauptteil-Varianten"). Kein neuer Baustein, sondern
+          eine Anwendung der <code>ChoiceChipGroup</code> aus 09 — hier steht,
+          warum gerade sie:
+        </p>
+        <ul className="type-body-medium mb-5 flex max-w-xl list-disc flex-col gap-2 pl-5 text-on-surface-variant">
+          <li>
+            Die Werte sind <strong>Nutzertext</strong> — bis vierzig Zeichen,
+            vom Trainer vergeben. Eine <code>SegmentedControl</code> scrollte
+            damit, und er sähe seine Varianten nicht mehr nebeneinander.
+          </li>
+          <li>
+            Es ist <strong>ein Element von n</strong> und keine Ansicht:
+            Radiogroup-Semantik, nicht die tab-artige Leiste.
+          </li>
+          <li>
+            Bei <strong>einer</strong> Variante rendert sie <strong>nichts</strong>.
+            Ein Training ohne zweite Variante sieht aus wie vorher — eine
+            Einfachauswahl mit einem einzigen Wert wäre eine Frage ohne
+            Alternative. Die Schranke sitzt im Baustein, nicht bei den
+            Aufrufern.
+          </li>
+        </ul>
+        <VariantenWahlDemo />
+        <div className="mt-6 rounded-[4px] border border-outline-variant bg-surface-container-low p-4">
+          <p className="type-label-large mb-1 text-on-surface">
+            Zwei Bedienelemente, eine Zeile
+          </p>
+          <p className="type-body-medium max-w-xl text-on-surface-variant">
+            Im Editor steht die Wahl zusammen mit „Variante hinzufügen" in einer
+            eigenen Zeile unter dem Kartenkopf des Hauptteils — nicht IM Kopf:
+            Dort stehen Überschrift und Dauer-Summe, und eine umbrechende
+            Chip-Reihe daneben risse die Kopfzeile auseinander. Über der
+            Gruppenleiste, weil die Variante die grössere Klammer ist: Sie
+            entscheidet, welche Übungen darunter stehen; die Gruppen gelten für
+            alle Varianten.
+          </p>
+        </div>
+
+        <p className="type-body-medium mb-5 mt-8 max-w-xl text-on-surface-variant">
+          <strong>Auf Server-Seiten: dieselbe Optik, aber Links.</strong> Ansehen
+          und Drucken halten keinen Zustand — die angezeigte Variante steht im
+          Suchparameter, jede Variante hat damit eine eigene{" "}
+          <strong>Adresse</strong>. <code>VariantenLinks</code> rendert darum{" "}
+          <code>&lt;nav&gt;</code> mit Links und <code>aria-current=&quot;page&quot;</code>,
+          leiht sich aber die Nutzertext-Pille aus 09 (<code>chipTextBase</code>,{" "}
+          <code>chipTextOutlined</code>, <code>chipTextSelected</code>): gleiche
+          Sache, gleiches Bild. Kein wandernder Tabstopp — durch Links tabbt man,
+          Pfeiltasten gehören der Radiogroup. Nicht <code>TabNav</code> (07): Die
+          wechselt die <em>Sicht</em> auf einen Gegenstand; hier bleibt die Sicht
+          dieselbe und der <em>Inhalt</em> wechselt. Und sie trägt{" "}
+          <code>type-label-large</code> — Nutzertext stünde dort versal
+          verfälscht. Aus demselben Grund kennt <code>ChoiceChip</code> seit
+          dem Chip-Umbau ein <code>look=&quot;nutzertext&quot;</code> mit
+          denselben Bündeln: dieselbe Pille, aber normal gesetzt und h-9 hoch,
+          damit sie neben dem geteilten Chip aus 22 und dem leisen Knopf aus 07
+          auf einer Linie sitzt.
+        </p>
+        <p className="type-label-small mb-2 text-on-surface-variant">
+          drei Varianten als Links — die offene trägt <code>aria-current</code>
+        </p>
+        <VariantenLinks
+          varianten={[
+            { id: "a", name: "Standard" },
+            { id: "b", name: "21 Kinder, zwei Trainer" },
+            { id: "c", name: "Halle" },
+          ]}
+          aktiv="a"
+          hrefFuer={(v) => `#variante-${v}`}
+        />
       </Section>
 
     </main>

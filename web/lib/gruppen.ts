@@ -8,33 +8,17 @@
  * Jede Regel nennt ihren SQL-Zwilling aus der Migration `training_gruppen`. Die
  * Datenbank ist die Trust-Boundary — diese Datei ist die frühe, sprechende
  * Antwort im Formular, nicht die Absicherung.
+ *
+ * Die Namensregel selbst steht seit #201 in `lib/bezeichnung.ts`: Die Variante
+ * des Hauptteils trägt dieselbe. Was hier davon übrig ist, sind Namen mit
+ * Gruppen-Bezug — die Aufrufer (und der SQL-Zwilling, den sie nennen) reden von
+ * Gruppen, nicht von «Bezeichnungen».
  */
+import { bezeichnungProblem } from "@/lib/bezeichnung";
 
 /** Längstmögliche Bezeichnung einer Gruppe (getrimmt gezählt).
  *  SQL-Zwilling: `tg_name_laenge` an `training_gruppen`. */
 export const GRUPPE_NAME_MAX = 40;
-
-/**
- * Der Schlüssel, unter dem zwei Bezeichnungen als dieselbe gelten (AK 7).
- *
- * SQL-Zwilling: `lower(btrim(name))` im Unique-Index `tg_name_je_training`.
- * `toLocaleLowerCase("de")` statt `toLowerCase()`, damit die Kleinschreibung
- * derselben Sprache folgt wie die Anzeige — bei deutschen Bezeichnungen fallen
- * beide zusammen, aber die Absicht steht so im Code.
- */
-export function gruppenSchluessel(name: string): string {
-  return name.trim().toLocaleLowerCase("de");
-}
-
-/**
- * Der Satz, der eine bereits vergebene Bezeichnung ablehnt.
- *
- * Er entsteht an zwei Stellen — hier in der Vorabprüfung und in der Server
- * Action, wenn erst die Datenbank die Kollision sieht (`23505` am Unique-Index
- * `tg_name_je_training`). Beide Wege sollen dasselbe sagen, darum steht der
- * Satz nur einmal.
- */
-export const MELDUNG_VERGEBEN = "Diese Bezeichnung gibt es in diesem Training schon.";
 
 /**
  * Was einer Bezeichnung im Weg steht — `null`, wenn sie sich speichern lässt.
@@ -48,18 +32,10 @@ export const MELDUNG_VERGEBEN = "Diese Bezeichnung gibt es in diesem Training sc
  */
 export function nameProblem(
   name: string,
-  bestehende: { id: string; name: string }[],
+  bestehende: readonly { id: string; name: string }[],
   eigeneId?: string,
 ): string | null {
-  const getrimmt = name.trim();
-  if (!getrimmt) return "Bitte eine Bezeichnung eingeben.";
-  if (getrimmt.length > GRUPPE_NAME_MAX) return `Höchstens ${GRUPPE_NAME_MAX} Zeichen.`;
-  const schluessel = gruppenSchluessel(getrimmt);
-  const vergeben = bestehende.some(
-    (g) => g.id !== eigeneId && gruppenSchluessel(g.name) === schluessel,
-  );
-  if (vergeben) return MELDUNG_VERGEBEN;
-  return null;
+  return bezeichnungProblem(name, bestehende, { eigeneId, max: GRUPPE_NAME_MAX });
 }
 
 // ── Verteilung: welche Gruppe wann an welcher Übung (Story #150) ────────────
@@ -122,7 +98,7 @@ export type Befund = {
   chipWarnung: Set<string>;
   /** Fassungen, deren Dauer in einem ungleichen Wechsel steht (Fassungs-IDs). */
   dauerWarnung: Set<string>;
-  /** Der Kurztext für die Gruppenzeile, je Gruppen-ID. */
+  /** Der Kurztext am Chip der Gruppenleiste, je Gruppen-ID. */
   gruppenWarnung: Map<string, string>;
 };
 
@@ -196,8 +172,8 @@ export function konfliktBefund(
       const wo = `im ${w + 1}. Wechsel an ${zahlwort(treffer.length)} Übungen`;
       konflikte.push({ art: "doppelt", text: `${g.name} steht ${wo}.` });
       for (const f of treffer) chipWarnung.add(`${f.id}|${g.id}`);
-      // Die Gruppenzeile trägt einen Kurztext, keine Sammlung: der erste
-      // Konflikt sagt bereits, dass an dieser Gruppe etwas zu richten ist.
+      // Der Chip der Gruppenleiste trägt einen Kurztext, keine Sammlung: der
+      // erste Konflikt sagt bereits, dass an dieser Gruppe etwas zu richten ist.
       if (!gruppenWarnung.has(g.id)) gruppenWarnung.set(g.id, `Steht ${wo}.`);
     }
   }
@@ -297,7 +273,15 @@ export function zeitKurz(s?: Zeitsumme): string {
   return `${s.minuten} min`;
 }
 
-/** Dieselbe Angabe als Satzanfang für die Gruppenzeile: «Zugewiesen 40 min». */
-export function zeitText(s?: Zeitsumme): string {
-  return `Zugewiesen ${zeitKurz(s)}`;
+/** Dieselbe Angabe als ganzer Satz — der a11y-Name des Chips in der
+ *  Gruppenleiste nennt sie so: «Zugewiesen 40 min».
+ *
+ *  `zusatz` schränkt sie ein, wo sie nur für einen Teil des Trainings gilt:
+ *  «Zugewiesen 40 min in dieser Variante» (#201 AK 9). Er hängt nur an einer
+ *  wirklichen Summe — an «Zugewiesen —» schränkte er eine Aussage ein, die es
+ *  gar nicht gibt. */
+export function zeitText(s?: Zeitsumme, zusatz?: string): string {
+  const kurz = zeitKurz(s);
+  const gilt = zusatz && s && s.mitDauer > 0 ? ` ${zusatz}` : "";
+  return `Zugewiesen ${kurz}${gilt}`;
 }

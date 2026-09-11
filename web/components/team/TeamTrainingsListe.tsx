@@ -8,6 +8,7 @@ import {
   CalendarPlus,
   Clock,
   Download,
+  Layers,
   ListChecks,
   Trash2,
 } from "lucide-react";
@@ -111,6 +112,20 @@ export function TeamTrainingsListe({
                   {t.stufen.map((k) => (
                     <KategorieChip key={k} k={k} />
                   ))}
+                  {/* Dieselbe Marke wie auf der Trainings-Kachel, an derselben
+                      Stelle der Chip-Zeile: der Trainingsbestand des Teams
+                      zeigt Varianten genauso an (#206 AK 1). Die Liste
+                      dupliziert die Kachel-Anzeige bewusst — sie trägt eigene
+                      Aktionen und lässt sich darum nicht durch TrainingCard
+                      ersetzen. Neutral, weil die Variantenzahl keine
+                      Alterskategorie ist; Plural immer, die Marke erscheint
+                      erst ab zwei (AK 3). */}
+                  {t.variantenZahl > 1 && (
+                    <Badge tone="neutral">
+                      <Layers size={12} strokeWidth={2.5} aria-hidden />
+                      {t.variantenZahl} Varianten
+                    </Badge>
+                  )}
                   {/* „Angesetzt" ist ein Zustand, keine Aktion — darum als
                       Plakette beim Titel statt als Attrappe eines Buttons in
                       der Aktionsreihe. Geändert wird der Termin im Plan.
@@ -127,6 +142,8 @@ export function TeamTrainingsListe({
                 <h3 className="type-title-medium text-on-surface transition-colors group-hover:text-primary">
                   {t.name}
                 </h3>
+                {/* Kennzahlen der ERSTEN Variante (#206 AK 2), gerechnet in
+                    `mapListRow` — ein Training spielt nur eine Variante. */}
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 type-label-medium text-on-surface-variant">
                   <span className="inline-flex items-center gap-1.5">
                     <ListChecks size={15} strokeWidth={2} aria-hidden />

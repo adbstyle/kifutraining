@@ -6,8 +6,8 @@ import { cn } from "@/lib/cn";
 export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   /** Der Hinweis unter dem Feld. `ReactNode`, damit ein Teil davon anders
-      gefärbt sein kann als der Rest — die Gruppenzeile trägt Zeitsumme und
-      Konflikt in einer Zeile, und nur der Konflikt ist bernstein (Story #151). */
+      gefärbt sein kann als der Rest — Anlass war die Gruppenzeile (Story #151),
+      die Zeitsumme und Konflikt in einer Zeile trug, nur der Konflikt bernstein. */
   supportingText?: ReactNode;
   error?: boolean;
   /** Bernsteiner Rahmen: ein BEFUND am Feld, keine Fehleingabe — der Wert ist

@@ -36,15 +36,47 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
 
 /* ── M3-Chips ─────────────────────────────────────────────────
    Gemeinsame Basis + --chip-*-Component-Tokens (siehe globals.css).
-   Vier Typen nach M3: Assist · Filter · Input · Suggestion. */
-const chipBase =
+   Vier Typen nach M3: Assist · Filter · Input · Suggestion.
+
+   Die drei Klassenbündel sind exportiert (wie `iconButtonClasses`), weil ein
+   Chip nicht immer eine Schaltfläche ist: Auf den Server-Seiten trägt ein LINK
+   die Chip-Optik (`VariantenLinks` — jede Variante hat dort eine eigene
+   Adresse). Ein <a> als <button> zu verkleiden wäre falsch, die Optik ein
+   zweites Mal abzuschreiben ebenso — sie liefe auseinander, sobald die
+   --chip-Tokens sich ändern. */
+export const chipBase =
   "focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-(--chip-shape) border-[1.5px] px-3 py-1.5 transition-colors";
-const chipOutlined =
+export const chipOutlined =
   "border-(--chip-outline) bg-transparent text-(--chip-label) hover:bg-on-surface/8 hover:text-on-surface";
-const chipSelected =
+export const chipSelected =
   "border-transparent bg-(--chip-selected-container) text-(--chip-selected-label)";
 const chipElevated =
   "border-transparent bg-(--chip-elevated-container) text-on-surface shadow-e3 hover:shadow-e4";
+
+/* ── Chip-Optik für NUTZERTEXT ────────────────────────────────
+   Dieselbe Pille, aber normal gesetzt statt mono/versal: `type-label-medium`
+   verfälscht, was die Trainerin selbst geschrieben hat («21 Kinder, zwei
+   Trainer» in Versalien liest sich als Rubrik, nicht als ihre Bezeichnung).
+   Dieselbe Regel, aus der schon `ChipMenu` `type-body-medium` trägt.
+
+   Auch exportiert — die Server-Seiten (`VariantenLinks`) tragen die Optik auf
+   einem <a>, und der geteilte Chip (`ChipMenu`) baut sie auf zwei Hälften auf.
+   Höhe fest auf h-9, damit Chip, geteilter Chip und leiser Knopf in einer
+   Leiste auf derselben Linie sitzen.
+
+   ZWEI Bündel, weil der geteilte Chip die Pille anders füllt: `chipTextHuelle`
+   ist der Umriss — Schrift, Höhe, Rundung, Rahmen —, den er als Gruppe um
+   seine beiden Hälften legt (dort `items-stretch`, damit jede die volle
+   Trefferhöhe bekommt, und die Polsterung sitzt je Hälfte). Alles Einteilige
+   nimmt `chipTextBase`: dieselbe Hülle plus Fokusring, Ausrichtung und
+   Polsterung. So ändert sich die Nutzertext-Pille an EINER Stelle. */
+export const chipTextHuelle =
+  "type-body-medium inline-flex h-9 rounded-full border-[1.5px] normal-case transition-colors";
+export const chipTextBase = `${chipTextHuelle} focus-ring items-center gap-1.5 px-3`;
+export const chipTextOutlined =
+  "border-outline text-on-surface hover:bg-on-surface/8";
+export const chipTextSelected =
+  "border-transparent bg-(--chip-selected-container) text-(--chip-selected-label)";
 
 /* Filter-Chip (toggelbar) — selected: secondary-container + Check (M3).
    Optionales führendes Icon, wenn nicht selektiert. */
@@ -96,6 +128,7 @@ export function ChoiceChip({
   selected = false,
   tabStop = false,
   onSelect,
+  look = "label",
   children,
   className,
 }: {
@@ -105,6 +138,12 @@ export function ChoiceChip({
    *  Chip. */
   tabStop?: boolean;
   onSelect?: () => void;
+  /** `label` (Vorgabe): mono/versal, für Werte aus dem Vokabular.
+   *  `nutzertext`: normal gesetzt, für Beschriftungen, die der Trainer selbst
+   *  vergibt — Versalien verfälschten sie (dieselbe Regel wie in ChipMenu.tsx).
+   *  Bewusst eine Prop statt `className`: `cn` merged nicht, eine Typo-Klasse
+   *  von aussen liesse sich also nicht überschreiben. */
+  look?: "label" | "nutzertext";
   children: React.ReactNode;
   className?: string;
 }) {
@@ -139,7 +178,17 @@ export function ChoiceChip({
       tabIndex={selected || tabStop ? 0 : -1}
       onClick={onSelect}
       onKeyDown={handleKey}
-      className={cn(chipBase, selected ? chipSelected : chipOutlined, className)}
+      className={cn(
+        look === "nutzertext" ? chipTextBase : chipBase,
+        look === "nutzertext"
+          ? selected
+            ? chipTextSelected
+            : chipTextOutlined
+          : selected
+            ? chipSelected
+            : chipOutlined,
+        className,
+      )}
     >
       {children}
     </button>

@@ -37,10 +37,18 @@ export const FASSUNG_INHALT_FELDER = [
  *  Sie reisen beim Kopieren eines Trainings mit (die Kopie soll dasselbe
  *  Training sein) und gelangen nie in die Bibliothek: Dort gibt es weder eine
  *  Position noch eine Dauer noch eine Notiz. Zusammen mit
- *  `FASSUNG_INHALT_FELDER` ergeben sie den vollen Feldsatz einer Fassung. */
+ *  `FASSUNG_INHALT_FELDER` ergeben sie den vollen Feldsatz einer Fassung.
+ *
+ *  `variante_id` (#201) gehört dazu — sie sagt, in welcher Zusammenstellung
+ *  des Hauptteils die Fassung steht. Sie ist zugleich das einzige Feld, das
+ *  ein Kopierpfad NACH dem Übernehmen überschreiben muss: Die Quell-ID
+ *  bezeichnet eine Variante des Quell-Trainings. Vergisst er es, weist der
+ *  Trigger `te_variante_ausrichten` die Kopie mit
+ *  `VARIANTE_FREMDES_TRAINING` ab — laut statt still. */
 export const FASSUNG_ZUORDNUNG_FELDER = [
   "trainingsteil",
   "hauptteilkategorie",
+  "variante_id",
   "position",
   "duration_min",
   "notiz",

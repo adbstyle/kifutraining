@@ -8,19 +8,38 @@ import { ExercisePickerDialog } from "../ExercisePickerDialog";
 import { GesamtAbgleich } from "../ZeitAbgleich";
 import { TrainingKopf } from "./TrainingKopf";
 import { TeilKarte } from "./TeilKarte";
-import { GruppenAbschnitt, GruppenKnopf } from "./GruppenAbschnitt";
+import { VariantenLeiste } from "./VariantenLeiste";
+import { VarianteAnlegenDialog } from "./VarianteAnlegenDialog";
+import { BezeichnungDialog } from "./BezeichnungDialog";
+import { GruppenLeiste } from "./GruppenLeiste";
 import { DurchlaufZeile } from "./DurchlaufZeile";
 import { UebungsEtage } from "./UebungsEtage";
 import { KonfliktListe } from "./KonfliktListe";
 import { useGruppenModell } from "./useGruppenModell";
-import { zeitKurz, zeitText } from "@/lib/gruppen";
+import { useVariantenModell } from "./useVariantenModell";
+import { GRUPPE_NAME_MAX, istHauptteil, nameProblem, zeitKurz } from "@/lib/gruppen";
 import type { ZeilenKontext } from "./ExerciseList";
 import { GESAMTDAUER_JUNIOREN, type Einordnung } from "@/lib/junioren";
 import {
   junioren_block as juniorenBlockLabels,
   type JuniorenBlockSlug,
 } from "@/lib/vocab";
-import { fehlendeBedingungenAus } from "@/lib/training-bedingungen";
+import {
+  bedingungsMeldungFuer,
+  fehlendeBedingungenAus,
+} from "@/lib/training-bedingungen";
+import { zaehle } from "@/lib/labels";
+import {
+  VARIANTE_NAME_MAX,
+  VARIANTE_PARAM,
+  aufloesungSatz,
+  fassungenVon,
+  sichtbareZuordnungen,
+  varianteAus,
+  varianteNameProblem,
+  wegfallSatz,
+  type Variante,
+} from "@/lib/varianten";
 import {
   TRAININGSTEILE,
   HAUPTTEILKATEGORIEN,
@@ -39,6 +58,7 @@ import {
   deleteTraining,
 } from "@/lib/actions/trainings";
 import type { HauptteilkategorieSlug } from "@/lib/vocab";
+import type { TrainingActionResult } from "@/lib/actions/trainings";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings";
 import type { TeamUebersicht } from "@/lib/queries/teams";
 
@@ -48,14 +68,21 @@ import type { TeamUebersicht } from "@/lib/queries/teams";
    Karte und in welchem Block steht, beantwortet `editorGliederung` für beide
    Altersstufen; hier bleiben Zustand, Dialoge und die Aktionen.
    Struktur-Änderungen frischen die Serverdaten auf; Dauern und die
-   Gruppenverteilung werden lokal überlagert (`useGruppenModell`). */
+   Gruppenverteilung werden lokal überlagert (`useGruppenModell`), die
+   Varianten ebenso (`useVariantenModell`) — dort allerdings mit Auffrischen
+   hinterher, weil ihre Reihenfolge und ihre Bezeichnungen ausserhalb der
+   Leiste weiterwirken. */
 export function TrainingEditor({
   training,
   /** Die Teams des USERS — Ziele für „Ins Team stellen" (Team-Epic Story 5). */
   teams = [],
+  /** Die Variante des Hauptteils aus der Adresse (#201 AK 6/7). Sie ist der
+   *  Startwert, nicht die laufende Quelle: Gewechselt wird ohne Navigation. */
+  varianteParam,
 }: {
   training: TrainingDetail;
   teams?: TeamUebersicht[];
+  varianteParam?: string;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -77,16 +104,51 @@ export function TrainingEditor({
   const [nameInput, setNameInput] = useState(training.name);
   const [nameError, setNameError] = useState<string | undefined>();
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [mismatch, setMismatch] = useState<{ id: string; name: string }[] | null>(null);
-  // Hat der Trainer den Gruppen-Abschnitt eben über den Knopf geöffnet? Nur
-  // dann hängt er aufgeklappt ein; mit bestehenden Gruppen beginnt er
-  // zugeklappt und zeigt bloss die Anzahl (Story #149 AK 5).
-  const [gruppenOffen, setGruppenOffen] = useState(false);
+  // Die abweichenden Übungen aus dem Stufen-Abgleich — mit ihrer Variante, denn
+  // der Abgleich umfasst alle (#201 AK 11).
+  const [mismatch, setMismatch] = useState<
+    { id: string; name: string; varianteId: string | null }[] | null
+  >(null);
+  // Der Bezeichnungs-Dialog der Gruppen (#209 AK 2/6) — anlegen und umbenennen
+  // sind derselbe Dialog mit anderem Wortlaut, darum EIN Zustand.
+  const [gruppeDialog, setGruppeDialog] = useState<
+    { modus: "neu" } | { modus: "bearbeiten"; gruppe: { id: string; name: string } } | null
+  >(null);
   // Die beiden Rückfragen der Gruppenverteilung (Story #150 AK 8/16). Sie
   // stehen hier und nicht im Modell: Was zu bestätigen ist, ist eine Frage der
   // Oberfläche — das Modell führt aus.
   const [gruppeWeg, setGruppeWeg] = useState<{ id: string; name: string } | null>(null);
   const [uebungWeg, setUebungWeg] = useState<TrainingExerciseItem | null>(null);
+  // Die angezeigte Variante des Hauptteils (#201 AK 6). Beim Öffnen gilt die
+  // aus der Adresse, sonst die erste (AK 7) — gemerkt wird nichts.
+  const [aktiveVariante, setAktiveVariante] = useState<string | undefined>(
+    () => varianteAus(varianteParam, training.varianten)?.id,
+  );
+  const [varianteDialog, setVarianteDialog] = useState(false);
+  // Die Variante, deren Bezeichnung bearbeitet wird, und die, deren Entfernen
+  // noch zu bestätigen ist (#209 AK 6/7).
+  const [varianteBearbeiten, setVarianteBearbeiten] = useState<Variante | null>(null);
+  const [varianteWeg, setVarianteWeg] = useState<Variante | null>(null);
+
+  // Die Varianten samt ihrer Reihenfolge und ihren Bezeichnungen als ein Stück
+  // (#209). Alles, was Varianten betrifft, rechnet ab hier mit DIESER Liste und
+  // nicht mit `training.varianten`: Umsortieren und Umbenennen wirken sofort,
+  // der Serverstand kommt nach.
+  const variantenModell = useVariantenModell({
+    varianten: training.varianten,
+    melde: setNotice,
+  });
+  const varianten = variantenModell.varianten;
+
+  // Die Variante, die wirklich gilt: Nach einem `router.refresh()` kann die
+  // gewählte weg sein (in einem anderen Fenster entfernt) — dann fällt die
+  // Anzeige auf die erste zurück, statt einen leeren Hauptteil zu zeigen.
+  const aktive: Variante | undefined =
+    varianten.find((v) => v.id === aktiveVariante) ?? varianten[0];
+  // Gibt es überhaupt etwas zu wählen? Entscheidet über die Chips der Leiste,
+  // über den Zusatz an den Meldungen und darüber, ob die Adresse eine Variante
+  // trägt (#201 PC 5).
+  const mehrereVarianten = varianten.length > 1;
 
   // Nach welchem Lehrmittel das Training gegliedert ist. Es folgt aus der
   // geführten Altersstufe, die ab dem Anlegen feststeht — nicht mehr aus den
@@ -108,13 +170,118 @@ export function TrainingEditor({
     [training.exercises, durations, notizen],
   );
 
+  // Was in der angezeigten Variante steht: ihre Hauptteil-Fassungen plus alles
+  // ausserhalb des Hauptteils — das gilt für alle Varianten gemeinsam
+  // (#201 PC 3). Daran hängen Gliederung, Summen und die Live-Vorschau der
+  // Veröffentlichungs-Bedingungen; die Überlagerung der Dauern und Notizen
+  // bleibt für ALLE Fassungen bestehen, damit ein Wechsel und zurück keine
+  // ungespeicherte Eingabe verliert.
+  const sichtbar = useMemo(
+    () => sichtbareZuordnungen(zuordnungen, aktive?.id),
+    [zuordnungen, aktive?.id],
+  );
+
   // Gruppen, Verteilung und Konflikte als ein Stück (Stories #149/#150).
+  // Gerechnet wird über die angezeigte Variante (#201 AK 9), gefragt und
+  // aufgeräumt über alle (AK 10).
   const modell = useGruppenModell({
     trainingId: training.id,
     gruppenInitial: training.gruppen,
-    zuordnungen,
+    zuordnungen: sichtbar,
+    alleZuordnungen: zuordnungen,
     melde: setNotice,
   });
+
+  /** Die Adresse an die angezeigte Variante angleichen — ohne Navigation.
+   *
+   *  `history.replaceState` statt `router.push`/`refresh`: Der Wechsel ist eine
+   *  Frage der Anzeige, nicht der Daten — alle Varianten stehen bereits im
+   *  Speicher. Ein Aufruf zum Server risse den lokalen Stand (Dauern, Notizen,
+   *  Gruppenfolgen) mit sich und liesse die Karte flackern. Die Adresse zieht
+   *  trotzdem mit, damit Neuladen, Lesezeichen und der Rückweg aus der
+   *  Fassungs-Bearbeitung in derselben Variante landen.
+   *
+   *  Bei genau einer Variante fällt der Parameter weg: Ein Training ohne zweite
+   *  Variante soll auch in der Adresszeile unverändert aussehen (PC 5). */
+  function adresseFuer(varianteId: string | undefined, anzahl: number): URL {
+    const url = new URL(window.location.href);
+    if (anzahl > 1 && varianteId) url.searchParams.set(VARIANTE_PARAM, varianteId);
+    else url.searchParams.delete(VARIANTE_PARAM);
+    return url;
+  }
+
+  function schreibeAdresse(varianteId: string | undefined, anzahl: number) {
+    window.history.replaceState(null, "", adresseFuer(varianteId, anzahl));
+  }
+
+  /** Adresse UND Serverstand in einem Zug — für Struktur-Änderungen an den
+   *  Varianten (angelegt, entfernt), die den Serverstand ohnehin brauchen.
+   *
+   *  Bewusst `router.replace` statt `replaceState` + `router.refresh()`: Die
+   *  Kombination lief im Produktions-Build ins Leere — der Refresh holte den
+   *  neuen Stand vom Server, angezeigt wurde er aber erst nach einem Neuladen
+   *  (gemessen 2026-09-11 auf Staging). Ein Wechsel der Adresse über den
+   *  Router lädt die Seite für genau diese Adresse frisch und zeigt, was er
+   *  geladen hat. */
+  function navigiereZu(varianteId: string | undefined, anzahl: number) {
+    const url = adresseFuer(varianteId, anzahl);
+    startTransition(() => {
+      router.replace(`${url.pathname}${url.search}`, { scroll: false });
+    });
+  }
+
+  function wechsleVariante(varianteId: string) {
+    setAktiveVariante(varianteId);
+    schreibeAdresse(varianteId, varianten.length);
+  }
+
+  /** Eine Variante wurde angelegt (#201 AK 1, PC 1): Sie wird zur angezeigten —
+   *  der Trainer will sie jetzt umbauen, dafür ist sie da. Aufgefrischt wird
+   *  danach, weil die Kopie der Fassungen nur vom Server kommen kann. */
+  function varianteAngelegt(varianteId: string, name: string) {
+    setVarianteDialog(false);
+    setAktiveVariante(varianteId);
+    // Ab jetzt sind es mindestens zwei — die Adresse trägt die Variante.
+    navigiereZu(varianteId, varianten.length + 1);
+    setNotice(`Variante „${name}" angelegt.`);
+  }
+
+  /** Eine Variante entfernen — mit Rückfrage, sobald etwas daran hängt (#202
+   *  AK 5) ODER die verbleibende aufgelöst wird (#209 AK 7). Der zweite Fall
+   *  gilt auch bei einer LEEREN Variante: Mit ihr fällt zwar nichts weg, aber
+   *  der Hauptteil verliert seine Aufteilung, und das soll niemand hinterher
+   *  entdecken. Sonst bleibt es beim Entfernen ohne Rückfrage — eine leere
+   *  Variante ist bloss eine Bezeichnung. */
+  function varianteEntfernen(variante: Variante) {
+    if (fassungenVon(fassungenLokal, variante.id).length > 0 || varianten.length === 2) {
+      setVarianteWeg(variante);
+      return;
+    }
+    void entferneVarianteJetzt(variante);
+  }
+
+  /** Die Variante ist weg (#202 AK 4, PC 1/2).
+   *
+   *  War es die angezeigte, rückt die erste verbleibende nach — dieselbe Regel
+   *  wie beim Öffnen (#201 AK 7). Die Adresse zieht mit und verliert ihre
+   *  Angabe, sobald nur noch eine Variante übrig ist: Ein Training ohne zweite
+   *  soll auch in der Adresszeile unverändert aussehen (PC 4 / #201 PC 5). */
+  async function entferneVarianteJetzt(variante: Variante) {
+    setVarianteWeg(null);
+    const rest = varianten.filter((v) => v.id !== variante.id);
+    if (!(await variantenModell.entferne(variante))) return;
+    const naechste = variante.id === aktive?.id ? rest[0]?.id : aktiveVariante;
+    setAktiveVariante(naechste);
+    navigiereZu(naechste, rest.length);
+    // Bleibt eine einzige übrig, ist mehr geschehen als ein Entfernen: Der
+    // Hauptteil trägt wieder keine Bezeichnung (Auflösung, #209 AK 7). Die
+    // Quittung sagt es, weil die Leiste danach bloss stiller dasteht.
+    setNotice(
+      rest.length === 1
+        ? `Variante „${variante.name}" entfernt. Der Hauptteil steht wieder als einer da.`
+        : `Variante „${variante.name}" entfernt.`,
+    );
+  }
 
   /** Die Dauer einer Zuordnung setzen oder leeren (Story #11, #151 AK 6).
    *  Optimistisch mit Rücknahme: Wird die Änderung abgelehnt — am Auffangen,
@@ -154,6 +321,22 @@ export function TrainingEditor({
     });
   }
 
+  /** Die Meldung zu einer abgewiesenen Änderung.
+   *
+   *  Verweigert die Datenebene, weil ein öffentliches Training eine Bedingung
+   *  verlöre, sagt ihre allgemeine Übersetzung bloss «in jeder Variante» — die
+   *  Server-Action kennt die Bezeichnungen nicht. Hier sind sie da: Die Meldung
+   *  nennt Variante UND Block (#204 AK 3). Bei genau einer Variante bleibt es
+   *  beim Satz ohne Bezeichnung (Epic EK 7) — die Datenebene nennt dann schon
+   *  keine. */
+  function abweisung(r: TrainingActionResult, rueckfall: string): string {
+    if (r.bedingung && r.varianteId && mehrereVarianten) {
+      const name = varianten.find((v) => v.id === r.varianteId)?.name;
+      if (name) return bedingungsMeldungFuer(r.bedingung, name);
+    }
+    return r.error ?? rueckfall;
+  }
+
   /** Übung entfernen — mit Rückfrage, solange sie Gruppen trägt (AK 16). Die
    *  Tragweite ist dieselbe wie beim Entfernen einer Gruppe: Mit der Übung
    *  fallen ihre Zuweisungen weg, und die stehen nirgends sonst. Ohne
@@ -175,7 +358,7 @@ export function TrainingEditor({
       // Am öffentlichen Training kann das Entfernen abgelehnt werden — es wäre
       // die letzte Übung, die es dort braucht. Ohne Meldung sähe der Trainer
       // die Übung einfach stehenbleiben (Story A AK 7).
-      if (!r.ok) setNotice(r.error ?? "Entfernen fehlgeschlagen.");
+      if (!r.ok) setNotice(abweisung(r, "Entfernen fehlgeschlagen."));
     });
   }
 
@@ -232,7 +415,7 @@ export function TrainingEditor({
       for (const id of ids) modell.vergissFolge(id);
       for (const id of ids) {
         const r = await removeTrainingExercise(id);
-        if (!r.ok && !fehler) fehler = r.error ?? "Entfernen fehlgeschlagen.";
+        if (!r.ok && !fehler) fehler = abweisung(r, "Entfernen fehlgeschlagen.");
       }
       setMismatch(null);
       router.refresh();
@@ -248,14 +431,23 @@ export function TrainingEditor({
       setGruppeWeg(gruppe);
       return;
     }
-    entferneGruppeJetzt(gruppe);
+    void entferneGruppeJetzt(gruppe);
   }
 
-  function entferneGruppeJetzt(gruppe: { id: string; name: string }) {
+  /** Die Gruppe ist weg (#149 AK 3).
+   *
+   *  Das Schliessen der Rückfrage und der Wegfall müssen in ZWEI Schritte
+   *  fallen, darum das Warten auf den nächsten Tick: Der native `<dialog>` gibt
+   *  den Fokus beim Schliessen dorthin zurück, wo er herkam — an die
+   *  Menü-Hälfte des Chips. Geschähe beides im selben Commit, wäre dieser Chip
+   *  in dem Moment schon entfernt, der Fokus fiele auf `<body>`, und die
+   *  Nachführung der Gruppenleiste käme zu früh. So schliesst erst der Dialog,
+   *  und der `wegZiel`-Effekt der Leiste setzt den Fokus danach auf den
+   *  Nachrücker. Beim Entfernen einer Variante ergibt sich dieselbe Reihenfolge
+   *  von selbst, weil dort auf die Antwort des Servers gewartet wird. */
+  async function entferneGruppeJetzt(gruppe: { id: string; name: string }) {
     setGruppeWeg(null);
-    // War es die letzte, fällt der Abschnitt weg und der Einstiegs-Knopf kommt
-    // zurück (Story #149 PC 3).
-    if (modell.gruppen.length === 1) setGruppenOffen(false);
+    await Promise.resolve();
     modell.entferne(gruppe);
   }
 
@@ -265,45 +457,70 @@ export function TrainingEditor({
   // freie Spiel liegt dort und deckt es zwingend ab.
   const oeffentlich = training.visibility === "public";
 
+  // Anlegen oder umbenennen? Der Gruppen-Dialog unterscheidet sich in sechs
+  // Angaben, und jede fragte sonst dieselbe Bedingung erneut.
+  const bearbeitet = gruppeDialog?.modus === "bearbeiten";
+
   // Live-Vorschau der Veröffentlichungs-Bedingungen aus dem lokalen Stand.
   // Dieselbe Funktion, die die Server Action nutzt — und dieselbe Regel, die
   // die Datenbank als Trust-Boundary durchsetzt (Story 7 AC 3).
+  // Über ALLE Fassungen und alle Varianten, nicht über die angezeigte: Die
+  // Hauptteil-Bedingung gilt je Variante (#204 AK 1), und der Trainer soll
+  // beim Veröffentlichen sehen, welche Variante welchen Block nicht belegt hat
+  // (AK 2) — auch die, die er gerade nicht vor sich hat.
   const fehlendeBedingungen = fehlendeBedingungenAus(
     training.altersstufe,
     stufen,
-    training.exercises,
+    zuordnungen,
+    varianten,
   );
 
-  const teile = editorGliederung(training.altersstufe, zuordnungen);
+  // Die Fassungen aus dem LOKALEN Stand — Grundlage der Rückfrage vor dem
+  // Entfernen einer Variante (#202 AK 6). Notiz und Gruppenfolge werden im
+  // Editor überlagert und erst beim nächsten Auffrischen vom Server bestätigt;
+  // zählte die Rückfrage die Serverdaten, fehlte die eben erfasste Notiz in
+  // ihrer Aufstellung — und der Trainer verlöre sie ungewarnt.
+  const fassungenLokal = zuordnungen.map((e) => ({
+    varianteId: e.varianteId,
+    notiz: e.notiz,
+    gruppen: modell.folgeVon(e),
+  }));
+
+  const teile = editorGliederung(training.altersstufe, sichtbar);
 
   // Auffangen trägt keine Dauer und zählt weder zur Summe noch zum
   // „ohne Dauer"-Hinweis.
-  const dauerItems = zuordnungen.filter((e) => teilTraegtDauer(e.trainingsteil));
+  const dauerItems = sichtbar.filter((e) => teilTraegtDauer(e.trainingsteil));
   const totalDuration = dauerItems.reduce<number>((a, it) => a + (it.durationMin ?? 0), 0);
   const totalMissing = dauerItems.filter((it) => it.durationMin == null).length;
 
-  // Der Gruppen-Bereich der Hauptteil-Karte: solange keine Gruppe geführt wird
-  // und der Trainer den Abschnitt nicht geöffnet hat, steht dort nur der
-  // Einstiegs-Knopf.
-  const zeigeGruppen = modell.gruppen.length > 0 || gruppenOffen;
+  // Der Gruppen-Bereich der Hauptteil-Karte (#209 AK 1/3): die Leiste unter dem
+  // Kartenkopf, die Konflikte im Kartenfuss. Die Leiste steht IMMER — ohne
+  // Gruppe zeigt sie das Zeichen und den Knopf.
   const gruppenBereich = {
-    knopf: zeigeGruppen ? null : <GruppenKnopf onOeffnen={() => setGruppenOffen(true)} />,
-    abschnitt: zeigeGruppen ? (
-      <GruppenAbschnitt
+    leiste: (
+      <GruppenLeiste
         gruppen={modell.gruppen}
-        zeit={(id) => zeitText(modell.zeiten.get(id))}
-        defaultOpen={gruppenOffen}
+        zeit={(id) => modell.zeiten.get(id)}
+        // Die Summe gilt für die angezeigte Variante — bei mehreren sagt der
+        // a11y-Name das auch, sonst läse man sie als Zeit des ganzen Trainings
+        // (#201 AK 9).
+        zeitZusatz={mehrereVarianten ? "in dieser Variante" : undefined}
         warnung={(id) => modell.befund.gruppenWarnung.get(id)}
-        onAnlegen={modell.anlegen}
-        onUmbenennen={modell.umbenennen}
+        onHinzufuegen={() => setGruppeDialog({ modus: "neu" })}
+        onBearbeiten={(gruppe) => setGruppeDialog({ modus: "bearbeiten", gruppe })}
+        onVerschieben={modell.verschiebe}
         onEntfernen={gruppeEntfernen}
       />
-    ) : null,
+    ),
     fuss: <KonfliktListe konflikte={modell.befund.konflikte} />,
   };
 
   const kontext: ZeilenKontext = {
     trainingId: training.id,
+    // Nur bei mehreren Varianten: Sonst trüge jede Adresse eine Angabe, zu der
+    // es keine Wahl gibt (PC 5).
+    varianteId: mehrereVarianten ? aktive?.id : undefined,
     trainingStufen: stufen,
     // Die Etage steht an jeder Zeile — die Notiz gilt an jeder Übung jedes
     // Trainings (Story #152 AK 1). Der Durchlauf darin erscheint erst, wenn der
@@ -383,6 +600,21 @@ export function TrainingEditor({
           teil={teil}
           kontext={kontext}
           onAdd={(block) => setOpen({ teil: block.einordnung, hkat: block.hkat })}
+          // Varianten gibt es nur für den Hauptteil (#201 PC 4) — derselbe
+          // Schlüssel in beiden Altersstufen wie bei den Gruppen.
+          varianten={
+            teil.key === "hauptteil" ? (
+              <VariantenLeiste
+                varianten={varianten}
+                aktiv={aktive?.id}
+                onWechsel={wechsleVariante}
+                onHinzufuegen={() => setVarianteDialog(true)}
+                onBearbeiten={setVarianteBearbeiten}
+                onVerschieben={variantenModell.verschiebe}
+                onEntfernen={varianteEntfernen}
+              />
+            ) : undefined
+          }
           // Verteilt wird allein der Hauptteil — in beiden Altersstufen trägt er
           // denselben Schlüssel (Story #149 AK 9 / Epic Out of Scope 2).
           gruppen={teil.key === "hauptteil" ? gruppenBereich : undefined}
@@ -410,6 +642,9 @@ export function TrainingEditor({
               hauptteilkategorie={sub?.slug}
               hauptteilkategorieLabel={sub?.label}
               trainingStufen={stufen}
+              // Im Hauptteil kommt die Übung in die angezeigte Variante
+              // (#201 AK 8). Ausserhalb gibt es keine — dort gilt sie für alle.
+              varianteId={istHauptteil(open.teil) ? aktive?.id : undefined}
               onAdded={() => {
                 // Nur auffrischen: Die neue Übung bringt keine Zuweisungen mit
                 // und lässt die der anderen Zeilen unberührt. Die lokalen
@@ -471,12 +706,26 @@ export function TrainingEditor({
           Diese zugeordneten Übungen decken keine der gewählten Stufen ab. Du
           kannst sie im Training behalten oder entfernen.
         </p>
+        {/* Der Abgleich umfasst alle Varianten (#201 AK 11) — sonst bliebe eine
+            abweichende Übung in der nicht gezeigten Variante unentdeckt. Bei
+            mehreren Varianten trägt darum JEDE Hauptteil-Übung ihre Variante,
+            nicht nur die aus einer anderen: Ohne Zusatz wäre nicht zu
+            unterscheiden, ob eine Übung in der gezeigten Variante steht oder
+            ausserhalb des Hauptteils. */}
         <ul className="flex flex-col gap-1">
-          {(mismatch ?? []).map((m) => (
-            <li key={m.id} className="type-body-medium text-on-surface">
-              · {m.name}
-            </li>
-          ))}
+          {(mismatch ?? []).map((m) => {
+            const name = mehrereVarianten
+              ? varianten.find((v) => v.id === m.varianteId)?.name
+              : undefined;
+            return (
+              <li key={m.id} className="type-body-medium text-on-surface">
+                · {m.name}
+                {name && (
+                  <span className="text-on-surface-variant"> (Variante „{name}")</span>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </Dialog>
 
@@ -524,17 +773,24 @@ export function TrainingEditor({
             </Button>
             <Button
               variant="danger"
-              onClick={() => gruppeWeg && entferneGruppeJetzt(gruppeWeg)}
+              onClick={() => gruppeWeg && void entferneGruppeJetzt(gruppeWeg)}
             >
               Entfernen
             </Button>
           </>
         }
       >
+        {/* Gezählt wird über ALLE Varianten: Die Gruppe gehört dem Training,
+            und mit ihr fallen auch die Zuweisungen weg, die der Trainer gerade
+            nicht sieht (#201 AK 10). */}
         <p>
-          {gruppeWeg?.name} ist an {zaehle(gruppeWeg ? modell.zuweisungenVon(gruppeWeg.id) : 0, "Übung", "Übungen")}{" "}
-          zugewiesen. Die Zuweisungen fallen weg, die Übungen selbst bleiben
-          unberührt.
+          {gruppeWeg?.name} ist an{" "}
+          {zaehle(gruppeWeg ? modell.zuweisungenVon(gruppeWeg.id) : 0, "Übung", "Übungen")}{" "}
+          zugewiesen
+          {gruppeWeg && mehrereVarianten
+            ? aufteilungSatz(modell.zuweisungenJeVariante(gruppeWeg.id), varianten)
+            : ""}
+          . Die Zuweisungen fallen weg, die Übungen selbst bleiben unberührt.
         </p>
       </Dialog>
 
@@ -561,6 +817,105 @@ export function TrainingEditor({
         </p>
       </Dialog>
 
+      {/* Variante hinzufügen (#201 AK 1/2). Nur mit einer angezeigten Variante,
+          von der kopiert werden kann — ohne sie gäbe es keine Quelle. */}
+      {aktive && (
+        <VarianteAnlegenDialog
+          open={varianteDialog}
+          onClose={() => setVarianteDialog(false)}
+          trainingId={training.id}
+          aktive={aktive}
+          varianten={varianten}
+          onAngelegt={varianteAngelegt}
+        />
+      )}
+
+      {/* Bezeichnung einer Variante bearbeiten (#209 AK 6) */}
+      <BezeichnungDialog
+        open={varianteBearbeiten != null}
+        onClose={() => setVarianteBearbeiten(null)}
+        titel="Variante bearbeiten"
+        wert={varianteBearbeiten?.name ?? ""}
+        max={VARIANTE_NAME_MAX}
+        hilfetext={`Woran du sie erkennst, etwa „21 Kinder". Höchstens ${VARIANTE_NAME_MAX} Zeichen.`}
+        // Die eigene bisherige Bezeichnung zählt nicht als vergeben — dafür
+        // kennt `varianteNameProblem` die eigene ID.
+        pruefe={(name) => varianteNameProblem(name, varianten, varianteBearbeiten?.id)}
+        speichere={(name) =>
+          varianteBearbeiten
+            ? variantenModell.benenne(varianteBearbeiten.id, name)
+            : Promise.resolve(null)
+        }
+      />
+
+      {/* Variante entfernen — mit Rückfrage (#202 AK 5, #209 AK 7). Geschwister
+          der übrigen Dialoge und nie in einem von ihnen: Zwei ineinander
+          gerenderte <dialog> stapeln sich zwar im Top Layer, der äussere bliebe
+          dabei aber der Fokus-Trap des inneren. */}
+      <Dialog
+        open={varianteWeg != null}
+        onClose={() => setVarianteWeg(null)}
+        title={`Variante „${varianteWeg?.name ?? ""}" entfernen?`}
+        actions={
+          <>
+            <Button variant="text" onClick={() => setVarianteWeg(null)}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => varianteWeg && void entferneVarianteJetzt(varianteWeg)}
+            >
+              Entfernen
+            </Button>
+          </>
+        }
+      >
+        <p>
+          {varianteWeg
+            ? wegfallSatz(varianteWeg, fassungenVon(fassungenLokal, varianteWeg.id), {
+                uebrigeVarianten: varianten.length > 2,
+              })
+            : ""}
+          {/* Bei zweien ist das Entfernen zugleich die Auflösung der
+              verbleibenden (#209 AK 7) — beides gehört in dieselbe Rückfrage. */}
+          {varianteWeg && varianten.length === 2 && (
+            <>
+              {" "}
+              {aufloesungSatz(
+                varianten.find((v) => v.id !== varianteWeg.id) ?? varianteWeg,
+              )}
+            </>
+          )}
+        </p>
+      </Dialog>
+
+      {/* Gruppe anlegen und umbenennen — ein Dialog, zwei Wortlaute
+          (#209 AK 2/6) */}
+      <BezeichnungDialog
+        open={gruppeDialog != null}
+        onClose={() => setGruppeDialog(null)}
+        titel={bearbeitet ? "Gruppe bearbeiten" : "Gruppe hinzufügen"}
+        hinweis={
+          bearbeitet
+            ? undefined
+            : "Verteilt wird nur der Hauptteil. Die Gruppe gilt für alle Varianten."
+        }
+        wert={bearbeitet ? gruppeDialog.gruppe.name : ""}
+        max={GRUPPE_NAME_MAX}
+        hilfetext={
+          bearbeitet
+            ? `Höchstens ${GRUPPE_NAME_MAX} Zeichen.`
+            : `Woran du sie erkennst, etwa „Rot". Höchstens ${GRUPPE_NAME_MAX} Zeichen.`
+        }
+        aktion={bearbeitet ? "Speichern" : "Anlegen"}
+        pruefe={(name) =>
+          nameProblem(name, modell.gruppen, bearbeitet ? gruppeDialog.gruppe.id : undefined)
+        }
+        speichere={(name) =>
+          bearbeitet ? modell.umbenennen(gruppeDialog.gruppe.id, name) : modell.anlegen(name)
+        }
+      />
+
       {/* Fest am unteren Rand statt im Fluss: der Editor ist eine lange Seite,
           und die Meldung gehört zu einer Aktion irgendwo darin. Am Seitenende
           eingehängt stünde sie mehr als tausend Bildpunkte unter dem Klick und
@@ -576,8 +931,32 @@ export function TrainingEditor({
   );
 }
 
-/** «1 Übung» / «3 Übungen» — die Rückfragen nennen eine Zahl, und die Einzahl
- *  soll dabei nicht wie ein Tippfehler aussehen. */
-function zaehle(n: number, einzahl: string, mehrzahl: string): string {
-  return `${n} ${n === 1 ? einzahl : mehrzahl}`;
+/**
+ * Wo die Zuweisungen einer Gruppe stehen — als Nachsatz zur Rückfrage vor dem
+ * Entfernen (#201 AK 10).
+ *
+ * Die blosse Gesamtzahl liesse den Trainer glauben, er überblicke sie: Was er
+ * sieht, ist eine Variante. Darum nennt der Satz jede Variante, in der die
+ * Gruppe steht — in der Reihenfolge der Leiste, damit er sie dort wiederfindet.
+ * Liegen alle in derselben, sagt er das statt einer Aufzählung von einem.
+ */
+function aufteilungSatz(
+  je: { varianteId: string; anzahl: number }[],
+  varianten: readonly Variante[],
+): string {
+  const geordnet = varianten
+    .map((v) => ({ name: v.name, anzahl: je.find((e) => e.varianteId === v.id)?.anzahl ?? 0 }))
+    .filter((e) => e.anzahl > 0);
+  if (geordnet.length === 0) return "";
+  // «alle» setzt eine Mehrzahl voraus, die es bei einer einzigen Zuweisung
+  // nicht gibt: «ist an 1 Übung zugewiesen, alle in der Variante …».
+  if (geordnet.length === 1)
+    return `, ${geordnet[0].anzahl === 1 ? "" : "alle "}in der Variante „${geordnet[0].name}"`;
+  // Das Wort «Variante» steht einmal am Anfang; die weiteren Glieder tragen
+  // bloss den Namen — sonst stünde es in einem Satz drei- und viermal.
+  const teile = geordnet.map(
+    (e, i) => `${e.anzahl} in ${i === 0 ? "der Variante " : ""}„${e.name}"`,
+  );
+  const letzter = teile.pop();
+  return `, davon ${teile.join(", ")} und ${letzter}`;
 }

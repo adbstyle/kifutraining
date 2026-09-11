@@ -18,6 +18,7 @@ import {
   VORLAGE_SELECT,
 } from "@/lib/fassung";
 import { kategorienSlugs, altersstufe as altersstufeLabels } from "@/lib/vocab";
+import { istHauptteil } from "@/lib/gruppen";
 import {
   alsAltersstufe,
   istAltersstufe,
@@ -26,10 +27,12 @@ import {
   vorlagenFilterFuer,
 } from "@/lib/altersstufe";
 import {
+  type Bedingung,
   bedingungAusFehler,
   fehlerMeldung,
-  type Bedingung,
+  type FehlendeBedingung,
   fehlendeBedingungenAus,
+  varianteAusFehler,
 } from "@/lib/training-bedingungen";
 
 export type TrainingFormState = {
@@ -38,12 +41,42 @@ export type TrainingFormState = {
   message?: string;
 };
 
-/** Ergebnis einer feingranularen Editor-Aktion (sofort-persistent). */
-export type TrainingActionResult = { ok: boolean; error?: string };
+/** Ergebnis einer feingranularen Editor-Aktion (sofort-persistent).
+ *
+ *  `error` ist immer eine fertige Meldung. `bedingung` und `varianteId` stehen
+ *  zusätzlich dort, wo die Datenebene eine Veröffentlichungs-Bedingung
+ *  verweigert hat (#204 AK 3): Die Action kennt die Variantennamen nicht — die
+ *  Oberfläche kennt sie und kann die Meldung damit auf Variante UND Block
+ *  zuspitzen, statt nur «in jeder Variante» zu sagen. */
+export type TrainingActionResult = {
+  ok: boolean;
+  error?: string;
+  bedingung?: Bedingung;
+  varianteId?: string;
+};
 
-/** Ergebnis des Stufen-Setzens inkl. abweichender Übungen (Story #12 AC3). */
+/** Ein abgelehntes Schreiben als Ergebnis — Meldung und, wenn es eine
+ *  Bedingung war, die Angaben zum Zuspitzen.
+ *
+ *  Eine Stelle für alle Fassungs-Actions: Jede von ihnen kann an demselben
+ *  Gate scheitern, und keine soll die Übersetzung selbst zusammensetzen. */
+function aktionsFehler(message: string): TrainingActionResult {
+  return {
+    ok: false,
+    error: fehlerMeldung(message),
+    bedingung: bedingungAusFehler(message) ?? undefined,
+    varianteId: varianteAusFehler(message) ?? undefined,
+  };
+}
+
+/** Ergebnis des Stufen-Setzens inkl. abweichender Übungen (Story #12 AC3).
+ *
+ *  `varianteId` sagt, in welcher Variante des Hauptteils die Übung steht
+ *  (`null` ausserhalb): Der Abgleich umfasst ALLE Varianten, auch die gerade
+ *  nicht angezeigte (#201 AK 11) — und eine Übung, die der Trainer nirgends
+ *  sieht, muss benannt werden, sonst sucht er sie vergeblich. */
 export type StufenResult = TrainingActionResult & {
-  mismatched?: { id: string; name: string }[];
+  mismatched?: { id: string; name: string; varianteId: string | null }[];
 };
 
 function csv(v: FormDataEntryValue | null): string[] {
@@ -190,6 +223,11 @@ export async function addTrainingExercise(
   trainingsteil: string,
   exerciseId: string,
   hauptteilkategorie?: string | null,
+  /** Die Variante des Hauptteils, in die die Übung kommt (#201 AK 8). Ohne sie
+   *  greift die Regel der Datenebene «die erste» (`te_variante_ausrichten`);
+   *  der Editor gibt sie immer ausdrücklich mit. Ausserhalb des Hauptteils
+   *  ohne Bedeutung — der Trigger nullt sie dort. */
+  varianteId?: string,
 ): Promise<TrainingActionResult> {
   const supabase = await createClient();
   const {
@@ -247,13 +285,23 @@ export async function addTrainingExercise(
     return { ok: false, error: "Übung passt nicht zu diesem Block." };
 
   // Nächste Position bestimmen (eindeutige Reihenfolge je Unterkategorie im
-  // Hauptteil, sonst je Trainingsteil).
+  // Hauptteil, sonst je Trainingsteil — und im Hauptteil zusätzlich je
+  // Variante, #201).
+  //
+  // Der Variantenfilter hängt an der EINORDNUNG, nicht an `hkat`: Die
+  // Junioren-Hauptteilblöcke tragen keine Unterkategorie und führen trotzdem
+  // Varianten. Ohne die Unterscheidung begänne die zweite Variante dort bei
+  // einer Position, die in ihr längst frei ist.
   let posQuery = supabase
     .from("training_exercises")
     .select("position")
     .eq("training_id", trainingId)
     .eq("trainingsteil", trainingsteil);
   posQuery = hkat ? posQuery.eq("hauptteilkategorie", hkat) : posQuery;
+  posQuery =
+    istHauptteil(trainingsteil) && varianteId
+      ? posQuery.eq("variante_id", varianteId)
+      : posQuery;
   const { data: last } = await posQuery
     .order("position", { ascending: false })
     .limit(1)
@@ -273,6 +321,10 @@ export async function addTrainingExercise(
     training_id: trainingId,
     trainingsteil,
     hauptteilkategorie: hkat,
+    // Nur im Hauptteil: ausserhalb würde der CHECK
+    // `te_variante_genau_bei_hauptteil` greifen, und der Trigger nullt sie
+    // ohnehin.
+    ...(istHauptteil(trainingsteil) && varianteId ? { variante_id: varianteId } : {}),
     position,
     ...inhaltFelder(ex),
     bild_url: bild.url,
@@ -294,7 +346,7 @@ export async function addTrainingExercise(
 
 export type PublishResult =
   | { status: "published" }
-  | { status: "incomplete"; missing: Bedingung[] }
+  | { status: "incomplete"; missing: FehlendeBedingung[] }
   | { status: "error"; error: string };
 
 /** Welche Bedingungen dem Training fehlen, um öffentlich zu sein. Die Datenbank
@@ -304,14 +356,14 @@ async function fehlendeBedingungen(
   supabase: Awaited<ReturnType<typeof createClient>>,
   trainingId: string,
   ownerId: string,
-): Promise<{ missing: Bedingung[] } | { error: string }> {
+): Promise<{ missing: FehlendeBedingung[] } | { error: string }> {
   // Ohne owner_id-Filter lesen: sonst käme ein Team-Training gar nicht zurück
   // und der Trainer bekäme «nicht gefunden» statt des Hinweises, dass er es
   // zuerst zu sich übernehmen muss.
   const { data: training } = await supabase
     .from("trainings")
     .select(
-      "owner_id, team_id, altersstufe, stufen, training_exercises ( trainingsteil, hauptteilkategorie )",
+      "owner_id, team_id, altersstufe, stufen, training_exercises ( trainingsteil, hauptteilkategorie, variante_id ), training_varianten ( id, position )",
     )
     .eq("id", trainingId)
     .maybeSingle();
@@ -323,12 +375,25 @@ async function fehlendeBedingungen(
     };
   if (training.owner_id !== ownerId) return { error: "Training nicht gefunden." };
 
-  const fassungen = training.training_exercises ?? [];
+  // Die Hauptteil-Bedingung gilt je Variante (#204 AK 1) — darum kommen die
+  // Varianten mit. Sortiert wird hier: PostgREST garantiert für einen
+  // eingebetteten Satz keine Reihenfolge, und die Meldung soll die Varianten in
+  // derselben Folge nennen wie die Oberfläche (`position`, bei Gleichstand
+  // `id`, wie in `training_fehlende_bedingungen`).
+  const fassungen = (training.training_exercises ?? []).map((f) => ({
+    trainingsteil: f.trainingsteil,
+    hauptteilkategorie: f.hauptteilkategorie,
+    varianteId: f.variante_id,
+  }));
+  const varianten = (training.training_varianten ?? [])
+    .slice()
+    .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
   return {
     missing: fehlendeBedingungenAus(
       alsAltersstufe(training.altersstufe),
       training.stufen ?? [],
       fassungen,
+      varianten,
     ),
   };
 }
@@ -366,8 +431,14 @@ export async function veroeffentlicheTraining(
     // Aussage wie die Vorabprüfung — nur hat sich der Stand zwischenzeitlich
     // geändert. Entsprechend übersetzt statt roh durchgereicht.
     const bedingung = bedingungAusFehler(error.message);
+    // Die Datenebene nennt genau eine verletzte Bedingung — und bei einer
+    // Hauptteil-Bedingung die Variante dazu (#204 AK 2). Mehr als die erste gibt
+    // ein `raise` nicht her; die Vorabprüfung oben zeigt dafür alle.
     return bedingung
-      ? { status: "incomplete", missing: [bedingung] }
+      ? {
+          status: "incomplete",
+          missing: [{ bedingung, varianteId: varianteAusFehler(error.message) }],
+        }
       : { status: "error", error: error.message };
   }
   if (!data) return { status: "error", error: "Training nicht gefunden." };
@@ -528,17 +599,19 @@ export async function setTrainingStufen(
   // Abweichende Fassungen ermitteln — anhand IHRER Alterskategorien: die
   // Fassung ist im Training frei bearbeitbar und die einzige Quelle. Das ist
   // der Stufen-Abgleich innerhalb eines Schemas und unabhängig vom Wechsel.
-  let mismatched: { id: string; name: string }[] = [];
+  let mismatched: { id: string; name: string; varianteId: string | null }[] = [];
   if (valid.length > 0) {
     const { data: rows } = await supabase
       .from("training_exercises")
-      .select("id, name, kategorien")
+      .select("id, name, kategorien, variante_id")
       .eq("training_id", trainingId);
     mismatched = (rows ?? [])
       // Ohne Kategorien gibt es nichts abzudecken — solche Fassungen gelten
       // nicht als abweichend.
       .filter((r) => (r.kategorien ?? []).length > 0 && !stufenAbgedeckt(valid, r.kategorien))
-      .map((r) => ({ id: r.id, name: r.name }));
+      // Ohne Varianten-Filter: Der Abgleich gilt fürs ganze Training, also für
+      // alle Varianten (#201 AK 11).
+      .map((r) => ({ id: r.id, name: r.name, varianteId: r.variante_id }));
   }
 
   revalidiereTraining(trainingId);
@@ -567,7 +640,9 @@ export async function moveTrainingExercise(
     p_training_exercise_id: trainingExerciseId,
     p_dir: dir,
   });
-  if (error) return { ok: false, error: error.message };
+  // Übersetzt statt roh: Die RPC meldet fehlendes Schreibrecht und — seit #201 —
+  // eine fremde Variante im Klartext der Datenebene, nicht in dem des Trainers.
+  if (error) return aktionsFehler(error.message);
   revalidiereTraining(pe.training_id);
   return { ok: true };
 }
@@ -601,8 +676,10 @@ export async function removeTrainingExercise(
     .select("id")
     .maybeSingle();
   // War es die letzte Fassung, die ein öffentliches Training braucht, weist die
-  // Datenebene ab; die Meldung nennt den Weg über den Entwurf (Story A AK 7).
-  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+  // Datenebene ab; die Meldung nennt den Weg über den Entwurf (Story A AK 7) —
+  // und trägt die verletzte Bedingung samt Variante mit, damit der Editor sie
+  // benennen kann (#204 AK 3).
+  if (error) return aktionsFehler(error.message);
   if (!geloescht) return { ok: false, error: "Zuordnung nicht gefunden." };
 
   // Erst nach erfolgreichem Löschen die eigene Bilddatei entfernen — nie das
@@ -691,7 +768,7 @@ export async function setExerciseDuration(
     .eq("id", trainingExerciseId)
     .select("training_id")
     .maybeSingle();
-  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+  if (error) return aktionsFehler(error.message);
   if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
   revalidiereTraining(data.training_id);
   return { ok: true };
@@ -738,7 +815,7 @@ export async function setzeNotiz(
     .eq("id", trainingExerciseId)
     .select("training_id")
     .maybeSingle();
-  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+  if (error) return aktionsFehler(error.message);
   if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
   revalidiereTraining(data.training_id);
   return { ok: true };

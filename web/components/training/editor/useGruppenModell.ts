@@ -16,7 +16,9 @@ import {
   entferneGruppe,
   legeGruppeAn,
   setzeGruppenfolge,
+  verschiebeGruppe,
 } from "@/lib/actions/gruppen";
+import { gleicheFolge, verschoben } from "@/lib/ordnung";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
 
 /** Meldung einer Gruppen-Aktion: `null` heisst „gespeichert". */
@@ -41,14 +43,23 @@ export function useGruppenModell({
   trainingId,
   gruppenInitial,
   zuordnungen,
+  alleZuordnungen,
   melde,
 }: {
   trainingId: string;
-  /** Die Gruppen, wie sie vom Server kamen (Anlegereihenfolge). */
+  /** Die Gruppen, wie sie vom Server kamen — in der vom Trainer gesetzten
+   *  Reihenfolge (#209 AK 4). */
   gruppenInitial: { id: string; name: string }[];
-  /** Alle Zuordnungen des Trainings, Dauern bereits überlagert. Muss stabil
-   *  sein (memoisiert) — an ihr hängt die Konflikt-Rechnung. */
+  /** Die Zuordnungen der ANGEZEIGTEN Variante, Dauern bereits überlagert. Muss
+   *  stabil sein (memoisiert) — an ihr hängt die Konflikt-Rechnung. Verteilung,
+   *  Zeitsummen, Wechsel und Konflikte gelten je Variante (#201 AK 9): Was in
+   *  einer anderen Variante steht, findet an diesem Trainingstag nicht statt. */
   zuordnungen: TrainingExerciseItem[];
+  /** Dieselben Zuordnungen über ALLE Varianten. Grundlage von allem, was die
+   *  Gruppe als Ganzes betrifft — die Rückfrage vor dem Entfernen (#201 AK 10)
+   *  und die Überlagerung danach: Die Datenbank räumt die Zuweisungen per
+   *  Kaskade in jeder Variante weg, nicht nur in der sichtbaren. */
+  alleZuordnungen: TrainingExerciseItem[];
   /** Was in die Snackbar geht: abgelehnte Aktionen, quittierte Entfernungen. */
   melde: (text: string) => void;
 }) {
@@ -60,6 +71,10 @@ export function useGruppenModell({
   const [, startTransition] = useTransition();
   // Der letzte laufende Speichervorgang je Fassung. Siehe `setzeFolge`.
   const kette = useRef(new Map<string, Promise<void>>());
+  // Ein zweiter Klick, während der erste unterwegs ist, tauschte zweimal — die
+  // Leiste stünde dann anders als die Datenbank. Ref statt State: die Schranke
+  // muss beim nächsten Klick schon gelten, nicht erst beim nächsten Rendern.
+  const verschiebt = useRef(false);
 
   /** Die Folge einer Fassung: lokal gesetzt oder wie vom Server geliefert. */
   const folgeVon = (fassung: TrainingExerciseItem): string[] =>
@@ -99,15 +114,49 @@ export function useGruppenModell({
     [verteilung],
   );
 
+  /** Die Zuweisungen des GANZEN Trainings — über alle Varianten, jede mit
+   *  ihrer Herkunft. Die Verteilung oben kennt nur die angezeigte Variante;
+   *  eine Gruppe gehört aber dem Training und steht womöglich in Varianten, die
+   *  der Trainer gerade nicht sieht (#201 AK 10). */
+  const alleFolgen = useMemo(
+    () =>
+      alleZuordnungen
+        .filter((f) => istHauptteil(f.trainingsteil))
+        .map((f) => ({
+          id: f.id,
+          varianteId: f.varianteId,
+          gruppen: folgen[f.id] ?? f.gruppen.map((g) => g.id),
+        })),
+    [alleZuordnungen, folgen],
+  );
+
   /** An wie vielen Übungen des Hauptteils steht diese Gruppe? Grundlage der
-   *  Rückfrage vor dem Entfernen (AK 8). */
+   *  Rückfrage vor dem Entfernen (AK 8) — über alle Varianten gezählt, denn
+   *  genau so viele Zuweisungen fallen weg. */
   const zuweisungenVon = (gruppeId: string): number =>
-    verteilung.filter((f) => f.gruppen.includes(gruppeId)).length;
+    alleFolgen.filter((f) => f.gruppen.includes(gruppeId)).length;
+
+  /** Dieselbe Zahl, aufgeteilt nach Varianten — damit die Rückfrage sagen kann,
+   *  was ausserhalb des Sichtbaren wegfällt (#201 AK 10). Nur Varianten mit
+   *  Zuweisungen stehen darin; die Reihenfolge ist die der Fassungen und wird
+   *  vom Aufrufer an der Variantenliste ausgerichtet. */
+  const zuweisungenJeVariante = (
+    gruppeId: string,
+  ): { varianteId: string; anzahl: number }[] => {
+    const je = new Map<string, number>();
+    for (const f of alleFolgen) {
+      // Eine Hauptteil-Fassung trägt immer eine Variante (CHECK
+      // `te_variante_genau_bei_hauptteil`); der Typ lässt `null` trotzdem zu.
+      if (!f.varianteId || !f.gruppen.includes(gruppeId)) continue;
+      je.set(f.varianteId, (je.get(f.varianteId) ?? 0) + 1);
+    }
+    return [...je].map(([varianteId, anzahl]) => ({ varianteId, anzahl }));
+  };
 
   /** Wie viele Gruppen trägt diese Übung? Grundlage der Rückfrage vor dem
    *  Entfernen der Übung (AK 16). */
   const gruppenAn = (fassungId: string): number =>
-    verteilung.find((f) => f.id === fassungId)?.gruppen.length ?? 0;
+    alleFolgen.find((f) => f.id === fassungId)?.gruppen.length ?? 0;
 
   /** Den lokalen Stand einer Fassung vergessen — nach einer Aktion, die die
    *  Serverdaten auffrischt. Ab dann gilt wieder, was der Server sagt. */
@@ -174,16 +223,67 @@ export function useGruppenModell({
     return null;
   }
 
+  /**
+   * Eine Gruppe mit ihrer Nachbarin tauschen (#209 AK 4/8). Optimistisch, mit
+   * Rücknahme: Der Tausch soll unter dem Finger geschehen — stünde hier danach
+   * eine Reihenfolge, die kein Training trägt, sprängen die Chips beim nächsten
+   * Öffnen zurück.
+   *
+   * KEIN `router.refresh()` im Erfolgsfall, wie bei allen Gruppen-Aktionen: Die
+   * Reihenfolge steht in dieser Leiste und im Menü «Gruppe hinzufügen» am
+   * Durchlauf — beide rechnen mit derselben Liste, die hier schon nachgezogen
+   * ist. Ein Auffrischen risse dafür den Fokus aus der Zeile, in der der
+   * Trainer gerade arbeitet.
+   */
+  function verschiebe(gruppeId: string, dir: -1 | 1) {
+    if (verschiebt.current) return;
+    const index = gruppen.findIndex((g) => g.id === gruppeId);
+    if (index < 0) return;
+    const vorher = gruppen;
+    const neu = verschoben(gruppen, index, dir);
+    // Am Rand geschieht nichts — dann gibt es auch nichts zu schicken. Die
+    // Leiste bietet den Eintrag dort gar nicht erst an; die Schranke steht
+    // trotzdem, weil sie hier billiger ist als eine Runde zum Server.
+    if (gleicheFolge(neu.map((g) => g.id), vorher.map((g) => g.id))) return;
+    setGruppen(neu);
+    verschiebt.current = true;
+    startTransition(async () => {
+      try {
+        const r = await verschiebeGruppe(gruppeId, dir);
+        if (r.ok) return;
+        setGruppen(vorher);
+        melde(r.error ?? "Verschieben fehlgeschlagen.");
+      } catch {
+        // Eine GEWORFENE Action zählt wie eine abgelehnte — Netzabbruch, Deploy
+        // mitten im Klick. Ohne diesen Zweig bliebe die vorweggenommene
+        // Reihenfolge stehen, obwohl sie nie gespeichert wurde, niemand bekäme
+        // es gesagt, und die Rejection schlüge auf die Error-Boundary durch
+        // (Muster `setzeFolge`).
+        setGruppen(vorher);
+        melde("Verschieben fehlgeschlagen.");
+      } finally {
+        verschiebt.current = false;
+      }
+    });
+  }
+
   /** Eine Gruppe umbenennen (#149 AK 2). Optimistisch, mit Rücknahme. */
   async function umbenennen(id: string, name: string): Antwort {
     const vorher = gruppen;
     setGruppen((prev) => prev.map((g) => (g.id === id ? { ...g, name: name.trim() } : g)));
-    const r = await benenneGruppe(id, name);
-    if (!r.ok) {
-      setGruppen(vorher);
-      return r.error ?? "Umbenennen fehlgeschlagen.";
+    // Eine GEWORFENE Action zählt wie eine abgelehnte (Muster `setzeFolge`):
+    // Der neue Name stünde sonst im Chip, ohne je gespeichert worden zu sein,
+    // und der Dialog bliebe ohne Antwort offen.
+    let fehler: string;
+    try {
+      const r = await benenneGruppe(id, name);
+      if (r.ok) return null;
+      fehler = r.error ?? "Umbenennen fehlgeschlagen.";
+    } catch {
+      fehler = "Umbenennen fehlgeschlagen.";
     }
-    return null;
+    setGruppen(vorher);
+    return fehler;
   }
 
   /**
@@ -192,7 +292,9 @@ export function useGruppenModell({
    *
    * Die Datenbank räumt die Zuweisungen per Kaskade weg; die Anzeige muss
    * nachziehen, ohne aufzufrischen. Darum bekommt JEDE betroffene Fassung eine
-   * Überlagerung ohne diese Gruppe — auch eine, die bisher keine hatte.
+   * Überlagerung ohne diese Gruppe — auch eine, die bisher keine hatte, und
+   * auch eine aus einer Variante, die gerade nicht angezeigt wird (#201): Beim
+   * Wechsel dorthin stünde die Gruppe sonst wieder da, obwohl sie weg ist.
    */
   function entferne(gruppe: { id: string; name: string }) {
     const vorherGruppen = gruppen;
@@ -200,21 +302,29 @@ export function useGruppenModell({
     setGruppen((prev) => prev.filter((g) => g.id !== gruppe.id));
     setFolgen((prev) => {
       const next = { ...prev };
-      for (const f of verteilung) {
+      for (const f of alleFolgen) {
         if (!f.gruppen.includes(gruppe.id)) continue;
         next[f.id] = f.gruppen.filter((id) => id !== gruppe.id);
       }
       return next;
     });
     startTransition(async () => {
-      const r = await entferneGruppe(gruppe.id);
-      if (!r.ok) {
-        setGruppen(vorherGruppen);
-        setFolgen(vorherFolgen);
-        melde(r.error ?? "Entfernen fehlgeschlagen.");
-        return;
+      // Wie beim Verschieben: Eine geworfene Action zählt wie eine abgelehnte,
+      // sonst stünde die Gruppe nur in der Anzeige nicht mehr da.
+      let fehler: string;
+      try {
+        const r = await entferneGruppe(gruppe.id);
+        if (r.ok) {
+          melde(`Gruppe „${gruppe.name}" entfernt.`);
+          return;
+        }
+        fehler = r.error ?? "Entfernen fehlgeschlagen.";
+      } catch {
+        fehler = "Entfernen fehlgeschlagen.";
       }
-      melde(`Gruppe „${gruppe.name}" entfernt.`);
+      setGruppen(vorherGruppen);
+      setFolgen(vorherFolgen);
+      melde(fehler);
     });
   }
 
@@ -225,10 +335,12 @@ export function useGruppenModell({
     wechselGesamt,
     zeiten,
     zuweisungenVon,
+    zuweisungenJeVariante,
     gruppenAn,
     vergissFolge,
     setzeFolge,
     anlegen,
+    verschiebe,
     umbenennen,
     entferne,
   };

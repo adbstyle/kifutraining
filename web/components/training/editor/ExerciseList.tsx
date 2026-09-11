@@ -9,6 +9,11 @@ import type { TrainingExerciseItem } from "@/lib/queries/trainings";
  *  damit es unverändert durch Karte und Block bis zur Zeile durchreicht. */
 export type ZeilenKontext = {
   trainingId: string;
+  /** Die angezeigte Variante des Hauptteils — nur gesetzt, wenn es überhaupt
+   *  etwas zu wählen gibt (#201 AK 6). Sie hängt an den Links auf die
+   *  Fassungs-Seiten, damit der Rückweg von dort in derselben Variante landet;
+   *  bei genau einer Variante bleibt die Adresse unverändert. */
+  varianteId?: string;
   /** Alterskategorien des Trainings — Grundlage des Stufen-Abgleichs der Zeile. */
   trainingStufen: string[];
   /** Das zweite Geschoss einer Zeile (Durchlauf und Notiz, Stories #150/#152).
@@ -69,6 +74,7 @@ export function ExerciseList({
           isFirst={i === 0}
           isLast={i === items.length - 1}
           trainingId={kontext.trainingId}
+          varianteId={kontext.varianteId}
           trainingStufen={kontext.trainingStufen}
           showDuration={showDuration}
           dauerWarnung={kontext.dauerWarnung(item)}

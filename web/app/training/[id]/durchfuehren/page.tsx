@@ -16,7 +16,7 @@ export default async function TrainingDurchfuehrenPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ termin?: string }>;
+  searchParams: Promise<{ termin?: string; variante?: string }>;
 }) {
   const { id } = await params;
   const training = await getTrainingView(id);
@@ -26,7 +26,7 @@ export default async function TrainingDurchfuehrenPage({
   // der Termin DES TRAININGS, nicht der übergebene — so kann eine manipulierte
   // Adresse keinen fremden Termin an ein Training heften. Die RLS gibt Termine
   // ohnehin nur Team-Mitgliedern.
-  const { termin: terminParam } = await searchParams;
+  const { termin: terminParam, variante } = await searchParams;
   const termin = terminParam ? await getTerminZuTraining(id) : null;
 
   return (
@@ -37,6 +37,10 @@ export default async function TrainingDurchfuehrenPage({
       // `?termin=` — sonst sähen dieselbe Seite je nach Herkunft zwei
       // verschiedene Brotkrumen (#156 PC 1).
       crumbs={trainingsKrumen(training)}
+      // Welche Variante des Hauptteils gilt (#203 AK 1). Eine unbekannte
+      // Angabe fällt auf die erste zurück — das entscheidet `varianteAus` in
+      // der Ansicht, damit hier keine zweite Regel entsteht.
+      varianteParam={variante}
       termin={
         termin
           ? {

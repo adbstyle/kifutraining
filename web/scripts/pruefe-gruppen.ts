@@ -1,6 +1,7 @@
 // Prüft die Regeln für Gruppen-Bezeichnungen (web/lib/gruppen.ts) — die
-// Vorabprüfung im Editor und in der Server Action. Ohne DB und ohne Netz; läuft
-// im PR-Check neben `typecheck`.
+// Vorabprüfung im Editor und in der Server Action — sowie die Ordnung
+// (web/lib/ordnung.ts), mit der die Oberfläche eine Verschiebung vorausrechnet.
+// Ohne DB und ohne Netz; läuft im PR-Check neben `typecheck`.
 //
 // Der Wert dieser Prüfung liegt in der Kollisionsregel: sie ist der Zwilling
 // des Unique-Index `tg_name_je_training`, und läuft sie auseinander, bekommt der
@@ -9,10 +10,10 @@
 //
 //   npm run check:gruppen
 import assert from "node:assert/strict";
+import { MELDUNG_VERGEBEN, bezeichnungSchluessel } from "../lib/bezeichnung";
+import { gleicheFolge, verschoben } from "../lib/ordnung";
 import {
   GRUPPE_NAME_MAX,
-  MELDUNG_VERGEBEN,
-  gruppenSchluessel,
   istHauptteil,
   konfliktBefund,
   nameProblem,
@@ -35,20 +36,22 @@ function pruefe(was: string, fn: () => void) {
   console.log(`✓ ${was}`);
 }
 
-// ── gruppenSchluessel: der Zwilling von lower(btrim(name)) ──────────────────
+// ── bezeichnungSchluessel: der Zwilling von lower(btrim(name)) ──────────────
+// Gruppen und Varianten teilen die Regel (web/lib/bezeichnung.ts); geprüft wird
+// sie hier am Gruppen-Index `tg_name_je_training`.
 pruefe("Schlüssel senkt die Gross-/Kleinschreibung", () => {
-  assert.equal(gruppenSchluessel("Gruppe 1"), "gruppe 1");
-  assert.equal(gruppenSchluessel("TORHÜTER"), "torhüter");
+  assert.equal(bezeichnungSchluessel("Gruppe 1"), "gruppe 1");
+  assert.equal(bezeichnungSchluessel("TORHÜTER"), "torhüter");
 });
 
 pruefe("Schlüssel entfernt umschliessende Leerzeichen", () => {
-  assert.equal(gruppenSchluessel("  Gruppe 1  "), "gruppe 1");
-  assert.equal(gruppenSchluessel("\tGruppe 1\n"), "gruppe 1");
+  assert.equal(bezeichnungSchluessel("  Gruppe 1  "), "gruppe 1");
+  assert.equal(bezeichnungSchluessel("\tGruppe 1\n"), "gruppe 1");
 });
 
 pruefe("Schlüssel lässt Leerzeichen im Innern stehen", () => {
-  assert.equal(gruppenSchluessel("Gruppe  1"), "gruppe  1");
-  assert.notEqual(gruppenSchluessel("Gruppe  1"), gruppenSchluessel("Gruppe 1"));
+  assert.equal(bezeichnungSchluessel("Gruppe  1"), "gruppe  1");
+  assert.notEqual(bezeichnungSchluessel("Gruppe  1"), bezeichnungSchluessel("Gruppe 1"));
 });
 
 // ── nameProblem: leer und zu lang ───────────────────────────────────────────
@@ -200,7 +203,7 @@ pruefe("Dieselbe Gruppe im selben Wechsel an zwei Übungen wird gemeldet", () =>
     ["Gruppe 1 steht im 1. Wechsel an zwei Übungen."],
   );
   assert.equal(b.konflikte[0].art, "doppelt");
-  // Beide Chips tragen die Warnung, die Gruppenzeile den Kurztext.
+  // Beide Durchlauf-Chips tragen die Warnung, der Chip der Gruppenleiste den Kurztext.
   assert.equal(b.chipWarnung.has("te1|g1"), true);
   assert.equal(b.chipWarnung.has("te2|g1"), true);
   assert.equal(b.chipWarnung.has("te1|g2"), false);
@@ -434,6 +437,62 @@ pruefe("Die Summe geht über beide Junioren-Blöcke hinweg", () => {
 pruefe("Eine erfasste Null bleibt «0 min» — sie ist eine Angabe", () => {
   const z = zeitJeGruppe(kifu([["A", 0, ["g1"]]]));
   assert.equal(zeitText(z.get("g1")), "Zugewiesen 0 min");
+});
+
+// ── zeitText mit Zusatz: die Summe gilt nur in dieser Variante (#201 AK 9) ──
+pruefe("Der Zusatz hängt an einer wirklichen Summe", () => {
+  const z = zeitJeGruppe(kifu([["A", 15, ["g1"]]]));
+  assert.equal(zeitText(z.get("g1"), "in dieser Variante"), "Zugewiesen 15 min in dieser Variante");
+  // Auch die erfasste Null ist eine Summe — sie darf den Zusatz tragen.
+  const null0 = zeitJeGruppe(kifu([["A", 0, ["g1"]]]));
+  assert.equal(zeitText(null0.get("g1"), "in dieser Variante"), "Zugewiesen 0 min in dieser Variante");
+});
+
+pruefe("Ohne Summe bleibt «Zugewiesen —» ohne Zusatz", () => {
+  // «Zugewiesen — in dieser Variante» schränkte eine Aussage ein, die es nicht
+  // gibt: Es ist keine Zeit erfasst, weder hier noch anderswo.
+  const ohneDauer = zeitJeGruppe(kifu([["A", null, ["g1"]]]));
+  assert.equal(zeitText(ohneDauer.get("g1"), "in dieser Variante"), "Zugewiesen —");
+  // Und ebenso für eine Gruppe, die in dieser Variante gar nicht vorkommt.
+  assert.equal(zeitText(undefined, "in dieser Variante"), "Zugewiesen —");
+});
+
+// ── Ordnung: verschoben / gleicheFolge (#209) ───────────────────────────────
+// Zwilling der RPCs `verschiebe_gruppe` und `verschiebe_variante`: Die
+// Oberfläche rechnet den Zustand nach dem Klick voraus, die Datenbank führt ihn
+// aus. Laufen die beiden auseinander, springt die Liste nach der Antwort des
+// Servers zurück — und der Trainer klickt ein zweites Mal.
+pruefe("Verschieben tauscht mit dem Nachbarn", () => {
+  assert.deepEqual(verschoben(["a", "b", "c"], 1, -1), ["b", "a", "c"]);
+  assert.deepEqual(verschoben(["a", "b", "c"], 1, 1), ["a", "c", "b"]);
+});
+
+pruefe("Am Rand geschieht nichts", () => {
+  assert.deepEqual(verschoben(["a", "b", "c"], 0, -1), ["a", "b", "c"]);
+  assert.deepEqual(verschoben(["a", "b", "c"], 2, 1), ["a", "b", "c"]);
+  // Ein Index ausserhalb der Liste ebenso: Er kann aus einer Anzeige stammen,
+  // die eine nebenläufige Änderung noch nicht kennt.
+  assert.deepEqual(verschoben(["a", "b", "c"], 9, -1), ["a", "b", "c"]);
+  assert.deepEqual(verschoben(["a"], 0, 1), ["a"]);
+  assert.deepEqual(verschoben([], 0, 1), []);
+});
+
+pruefe("Die Eingabe wird nie verändert", () => {
+  const liste = ["a", "b", "c"];
+  const neu = verschoben(liste, 0, 1);
+  assert.deepEqual(liste, ["a", "b", "c"]);
+  assert.notEqual(neu, liste);
+  // Auch im wirkungslosen Fall eine neue Liste: Eine Funktion, die mal
+  // dieselbe Referenz und mal eine neue liefert, löste in React einmal ein
+  // Neuzeichnen aus und einmal nicht.
+  assert.notEqual(verschoben(liste, 0, -1), liste);
+});
+
+pruefe("gleicheFolge achtet auf Inhalt UND Reihenfolge", () => {
+  assert.equal(gleicheFolge(["a", "b"], ["a", "b"]), true);
+  assert.equal(gleicheFolge(["a", "b"], ["b", "a"]), false);
+  assert.equal(gleicheFolge(["a"], ["a", "b"]), false);
+  assert.equal(gleicheFolge([], []), true);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

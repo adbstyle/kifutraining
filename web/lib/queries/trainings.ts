@@ -8,6 +8,7 @@ import { JUNIOREN_BLOCK_SLUGS, type Einordnung } from "@/lib/junioren";
 import type { Altersstufe } from "@/lib/altersstufe";
 import { FASSUNG_INHALT_FELDER, FASSUNG_ZUORDNUNG_FELDER } from "@/lib/fassung";
 import { kurzeZeit } from "@/lib/queries/termine";
+import type { Variante } from "@/lib/varianten";
 
 /**
  * Query-Layer für Trainings — der EINZIGE Datenpfad zu `trainings`
@@ -27,6 +28,10 @@ export type TrainingExerciseItem = {
   trainingsteil: Einordnung;
   /** Nur Hauptteil-Fassungen tragen eine Kategorie. */
   hauptteilkategorie: string | null;
+  /** Die Variante des Hauptteils, in der diese Fassung steht (#201); `null`
+   *  ausserhalb des Hauptteils — dort gilt sie für alle Varianten gemeinsam.
+   *  SQL-Zwilling: CHECK `te_variante_genau_bei_hauptteil`. */
+  varianteId: string | null;
   position: number;
   durationMin: number | null;
   /** Freier Text zu dieser Übung in DIESEM Training (#152); `null` ohne Notiz.
@@ -79,9 +84,15 @@ export type TrainingDetail = {
   updatedAt: string;
   /** Flach, sortiert nach fester Trainingsteil-Reihenfolge, dann Position. */
   exercises: TrainingExerciseItem[];
-  /** Die Gruppen, auf die der Hauptteil verteilt wird (Story #149), in
-   *  Anlegereihenfolge. Leer, solange das Training keine führt. */
+  /** Die Gruppen, auf die der Hauptteil verteilt wird (Story #149), in der vom
+   *  Trainer gesetzten Reihenfolge (#209). Leer, solange das Training keine
+   *  führt. */
   gruppen: { id: string; name: string }[];
+  /** Die Varianten des Hauptteils (#201), in der vom Trainer gesetzten
+   *  Reihenfolge. Nie leer — jedes Training führt mindestens eine (Trigger
+   *  `trainings_erste_variante`). Bei genau einer zeigt die Oberfläche keine
+   *  Variantenwahl. */
+  varianten: Variante[];
 };
 
 /** Die Inhaltsfelder der Fassung — aus der Kopier-Konstante abgeleitet, damit
@@ -90,8 +101,9 @@ export type TrainingDetail = {
 const INHALT_FELDER = [...FASSUNG_INHALT_FELDER, "bild_url", "diagramm"].join(", ");
 
 /** Die Felder der Zuordnung — ebenfalls aus der Kopier-Konstante, aus demselben
- *  Grund: Wo die Fassung im Training steht, was sie dauert und was für dieses
- *  Training an ihr vermerkt ist, soll nicht an einer von zwei Listen hängen. */
+ *  Grund: Wo die Fassung im Training steht, in welcher Variante, was sie dauert
+ *  und was für dieses Training an ihr vermerkt ist, soll nicht an einer von
+ *  zwei Listen hängen. */
 const ZUORDNUNG_FELDER = FASSUNG_ZUORDNUNG_FELDER.join(", ");
 
 const PE_SELECT = `
@@ -100,7 +112,7 @@ const PE_SELECT = `
   ${INHALT_FELDER}
 `;
 
-const TRAINING_SELECT = `id, name, owner_id, visibility, altersstufe, stufen, ziel, team_id, teams ( name ), urheber, created_at, updated_at, training_termine ( datum ), training_exercises ( ${PE_SELECT} ), training_gruppen ( id, name, created_at )`;
+const TRAINING_SELECT = `id, name, owner_id, visibility, altersstufe, stufen, ziel, team_id, teams ( name ), urheber, created_at, updated_at, training_termine ( datum ), training_exercises ( ${PE_SELECT} ), training_gruppen ( id, name, position ), training_varianten ( id, name, position )`;
 
 /** Die Inhaltsfelder, wie sie aus der Zuordnung zurückkommen. */
 type RawInhalt = {
@@ -124,6 +136,7 @@ type RawTrainingExercise = RawInhalt & {
   id: string;
   trainingsteil: string;
   hauptteilkategorie: string | null;
+  variante_id: string | null;
   position: number;
   duration_min: number | null;
   notiz: string | null;
@@ -142,7 +155,8 @@ type RawTraining = {
   created_at: string;
   updated_at: string;
   training_exercises: RawTrainingExercise[];
-  training_gruppen: { id: string; name: string; created_at: string }[];
+  training_gruppen: { id: string; name: string; position: number }[];
+  training_varianten: { id: string; name: string; position: number }[];
   teams: { name: string } | null;
   /** PostgREST erkennt die UNIQUE-Bedingung auf `training_id` und liefert den
    *  Termin als EIN Objekt statt als Liste. Beide Formen abfangen: eine
@@ -175,17 +189,30 @@ export function einzelnerTermin<T>(embed: T | T[] | null | undefined): T | null 
   return Array.isArray(embed) ? (embed[0] ?? null) : embed;
 }
 
+/** Gruppen und Varianten nach ihrer gesetzten Position.
+ *
+ *  PostgREST garantiert für einen Embed KEINE Reihenfolge; bei beiden ist sie
+ *  aber fachlich: Die Gruppen ordnet der Trainer am Chip (#209), die Varianten
+ *  ebenso (#202) — und dort entscheidet die vorderste, welche beim Öffnen gilt
+ *  (#201 AK 7). Darum hier sortiert und nicht in der Abfrage. Die ID
+ *  entscheidet den Gleichstand, den `tg_position_je_training` bzw.
+ *  `tv_position_je_training` ausschliessen — sie hält die Liste stabil, falls
+ *  er doch einmal auftritt. */
+const nachPosition = (
+  a: { id: string; position: number },
+  b: { id: string; position: number },
+) => (a.position === b.position ? a.id.localeCompare(b.id) : a.position - b.position);
+
 function mapTraining(raw: RawTraining): TrainingDetail {
-  // Anzeigereihenfolge ist die Anlegereihenfolge; die ID entscheidet
-  // zeitgleiche Anlagen, damit die Liste zwischen zwei Abfragen nicht springt.
   const gruppen = (raw.training_gruppen ?? [])
     .slice()
-    .sort((a, b) =>
-      a.created_at === b.created_at
-        ? a.id.localeCompare(b.id)
-        : a.created_at.localeCompare(b.created_at),
-    )
+    .sort(nachPosition)
     .map((g) => ({ id: g.id, name: g.name }));
+
+  const varianten: Variante[] = (raw.training_varianten ?? [])
+    .slice()
+    .sort(nachPosition)
+    .map((v) => ({ id: v.id, name: v.name }));
 
   // Die Zuweisung trägt nur die Gruppen-ID; der Name steht am Training. Er
   // wird hier aufgelöst, damit die Anzeige nicht in jeder Zeile nachschlagen
@@ -199,6 +226,7 @@ function mapTraining(raw: RawTraining): TrainingDetail {
         id: te.id,
         trainingsteil: te.trainingsteil as Einordnung,
         hauptteilkategorie: te.hauptteilkategorie,
+        varianteId: te.variante_id,
         position: te.position,
         durationMin: te.duration_min,
         notiz: te.notiz,
@@ -248,6 +276,7 @@ function mapTraining(raw: RawTraining): TrainingDetail {
     updatedAt: raw.updated_at,
     exercises,
     gruppen,
+    varianten,
   };
 }
 
@@ -372,6 +401,10 @@ export type TrainingListRow = {
   totalDuration: number;
   /** Trägt mindestens eine Zuordnung eine erfasste Dauer? */
   hasAnyDuration: boolean;
+  /** Wie viele Varianten des Hauptteils das Training führt (#206). Mindestens
+   *  1 — jedes Training führt eine. Ab 2 trägt die Kachel einen Hinweis; die
+   *  Kennzahlen daneben beziehen sich dann auf die erste. */
+  variantenZahl: number;
   /** Anzeigename des Urhebers; `null` bei anonymisierten Trainings (Story 15). */
   urheber: string | null;
 };
@@ -385,16 +418,37 @@ type RawListTraining = {
   updated_at: string;
   owner_id: string | null;
   urheber: string | null;
-  training_exercises: { trainingsteil: string; duration_min: number | null }[];
+  training_exercises: {
+    trainingsteil: string;
+    duration_min: number | null;
+    variante_id: string | null;
+  }[];
+  training_varianten: { id: string; position: number }[];
 };
 
 // `urheber` ist ein berechnetes PostgREST-Feld (SQL-Funktion über trainings) —
 // es liefert den Anzeigenamen, nie die E-Mail-Adresse.
 const LIST_SELECT =
-  "id, name, visibility, altersstufe, stufen, updated_at, owner_id, urheber, training_exercises ( trainingsteil, duration_min )";
+  "id, name, visibility, altersstufe, stufen, updated_at, owner_id, urheber, training_exercises ( trainingsteil, duration_min, variante_id ), training_varianten ( id, position )";
 
 function mapListRow(raw: RawListTraining, userId?: string): TrainingListRow {
-  const rows = raw.training_exercises ?? [];
+  const alle = raw.training_exercises ?? [];
+
+  // Kennzahlen aus der ERSTEN Variante (#206 AK 2): Ein Training mit zwei
+  // Hauptteilen spielt nur einen davon — die Summe über beide wäre eine Zahl,
+  // die kein Training je dauert.
+  const varianten = (raw.training_varianten ?? [])
+    .slice()
+    .sort((a, b) => (a.position === b.position ? a.id.localeCompare(b.id) : a.position - b.position));
+  // Fällt der Embed leer aus (eine Sicht, die ihn nicht mitliest), zählen alle
+  // Fassungen: «0 Übungen» wäre eine falsche Auskunft, «etwas zu viel» eine
+  // ungenaue. Die Variantenzahl bleibt aus demselben Grund mindestens 1 —
+  // jedes Training führt eine.
+  const erste = varianten[0]?.id;
+  const rows = erste
+    ? alle.filter((p) => p.variante_id === null || p.variante_id === erste)
+    : alle;
+
   // Auffangen trägt keine Dauer und zählt nicht zur Summe.
   const withDuration = rows
     .filter((p) => teilTraegtDauer(p.trainingsteil as TrainingsteilSlug))
@@ -411,6 +465,7 @@ function mapListRow(raw: RawListTraining, userId?: string): TrainingListRow {
     exerciseCount: rows.length,
     totalDuration: withDuration.reduce((a, d) => a + d, 0),
     hasAnyDuration: withDuration.length > 0,
+    variantenZahl: Math.max(1, varianten.length),
     urheber: raw.urheber ?? null,
   };
 }
