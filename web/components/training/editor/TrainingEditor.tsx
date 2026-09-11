@@ -180,11 +180,31 @@ export function TrainingEditor({
    *
    *  Bei genau einer Variante fällt der Parameter weg: Ein Training ohne zweite
    *  Variante soll auch in der Adresszeile unverändert aussehen (PC 5). */
-  function schreibeAdresse(varianteId: string | undefined, anzahl: number) {
+  function adresseFuer(varianteId: string | undefined, anzahl: number): URL {
     const url = new URL(window.location.href);
     if (anzahl > 1 && varianteId) url.searchParams.set(VARIANTE_PARAM, varianteId);
     else url.searchParams.delete(VARIANTE_PARAM);
-    window.history.replaceState(null, "", url);
+    return url;
+  }
+
+  function schreibeAdresse(varianteId: string | undefined, anzahl: number) {
+    window.history.replaceState(null, "", adresseFuer(varianteId, anzahl));
+  }
+
+  /** Adresse UND Serverstand in einem Zug — für Struktur-Änderungen an den
+   *  Varianten (angelegt, entfernt), die den Serverstand ohnehin brauchen.
+   *
+   *  Bewusst `router.replace` statt `replaceState` + `router.refresh()`: Die
+   *  Kombination lief im Produktions-Build ins Leere — der Refresh holte den
+   *  neuen Stand vom Server, angezeigt wurde er aber erst nach einem Neuladen
+   *  (gemessen 2026-09-11 auf Staging). Ein Wechsel der Adresse über den
+   *  Router lädt die Seite für genau diese Adresse frisch und zeigt, was er
+   *  geladen hat. */
+  function navigiereZu(varianteId: string | undefined, anzahl: number) {
+    const url = adresseFuer(varianteId, anzahl);
+    startTransition(() => {
+      router.replace(`${url.pathname}${url.search}`, { scroll: false });
+    });
   }
 
   function wechsleVariante(varianteId: string) {
@@ -199,10 +219,7 @@ export function TrainingEditor({
     setVarianteDialog(false);
     setAktiveVariante(varianteId);
     // Ab jetzt sind es mindestens zwei — die Adresse trägt die Variante.
-    schreibeAdresse(varianteId, training.varianten.length + 1);
-    startTransition(() => {
-      router.refresh();
-    });
+    navigiereZu(varianteId, training.varianten.length + 1);
     setNotice(`Variante „${name}" angelegt.`);
   }
 
@@ -226,10 +243,7 @@ export function TrainingEditor({
     const rest = training.varianten.filter((v) => v.id !== variante.id);
     const naechste = variante.id === aktive?.id ? rest[0]?.id : aktiveVariante;
     setAktiveVariante(naechste);
-    schreibeAdresse(naechste, rest.length);
-    startTransition(() => {
-      router.refresh();
-    });
+    navigiereZu(naechste, rest.length);
     setNotice(`Variante „${variante.name}" entfernt.`);
   }
 
