@@ -35,7 +35,10 @@ export function TabNav({
     >
       <ul className="-mb-px flex gap-1 overflow-x-auto">
         {items.map((item) => (
-          <li key={item.href}>
+          // Der Name und nicht das Ziel: Zwei Reiter dürfen auf dieselbe
+          // Adresse zeigen (im Styleguide tun es drei), gleich heissen dürfen
+          // sie in einer Leiste nie.
+          <li key={item.label}>
             <Link
               href={item.href}
               aria-current={item.current ? "page" : undefined}
