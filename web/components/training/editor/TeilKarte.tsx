@@ -23,11 +23,18 @@ export function TeilKarte({
   teil,
   kontext,
   onAdd,
+  varianten,
   gruppen,
 }: {
   teil: EditorTeil<TrainingExerciseItem>;
   kontext: ZeilenKontext;
   onAdd: (block: EditorBlock<TrainingExerciseItem>) => void;
+  /** Die Variantenzeile des Hauptteils (#201) — eine eigene Zeile zwischen
+   *  Kartenkopf und Gruppen-Abschnitt. Sie steht ÜBER den Gruppen, weil sie die
+   *  grössere Klammer ist: Die Variante entscheidet, welche Übungen die Karte
+   *  zeigt; die Gruppen gelten für alle Varianten. Wie beim Gruppen-Bereich
+   *  entscheidet der Editor, welcher Teil sie bekommt — nicht die Karte. */
+  varianten?: ReactNode;
   /** Der Gruppen-Bereich (Stories #149/#150) — ein Stück in drei Lagen: sein
    *  Einstieg steht rechts im Kartenkopf, seine Liste zwischen Kopf und
    *  Blöcken, die Konflikte der Verteilung im Kartenfuss bei den übrigen
@@ -68,6 +75,8 @@ export function TeilKarte({
             hat in beiden Altersstufen mehr als einen Block. */}
         {gruppen?.knopf}
       </div>
+
+      {varianten}
 
       {gruppen?.abschnitt}
 

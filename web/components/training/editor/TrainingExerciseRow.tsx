@@ -8,6 +8,7 @@ import { ExerciseThumb } from "../ExerciseThumb";
 import { InBibliothekButton } from "../InBibliothekButton";
 import { DauerFeld } from "./DauerFeld";
 import { stufenAbgedeckt } from "@/lib/training";
+import { varianteAnhang } from "@/lib/varianten";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
 
 /** Eine Zuordnung im Editor: Reihenfolge, Bild, Name, Stufen, Dauer und die
@@ -24,6 +25,7 @@ export function TrainingExerciseRow({
   isFirst,
   isLast,
   trainingId,
+  varianteId,
   trainingStufen,
   showDuration,
   dauerWarnung,
@@ -37,6 +39,8 @@ export function TrainingExerciseRow({
   isFirst: boolean;
   isLast: boolean;
   trainingId: string;
+  /** Die angezeigte Variante des Hauptteils (#201), sonst `undefined`. */
+  varianteId?: string;
   trainingStufen: string[];
   showDuration: boolean;
   /** Steht die Dauer dieser Übung in einem ungleich langen Wechsel? Färbt den
@@ -119,7 +123,11 @@ export function TrainingExerciseRow({
 
             <Tooltip label="Übung bearbeiten">
               <Link
-                href={`/training/${trainingId}/uebung/${item.id}/edit`}
+                // Die Variante fährt mit: Nach dem Speichern führt
+                // `updateFassung` in genau diese zurück, und eine Fassung, die
+                // von aussen in den Hauptteil wandert, landet in ihr statt in
+                // der ersten (#201 AK 6).
+                href={`/training/${trainingId}/uebung/${item.id}/edit${varianteAnhang(varianteId)}`}
                 aria-label={`${item.name} bearbeiten`}
                 className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/8 hover:text-primary"
               >

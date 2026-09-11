@@ -9,6 +9,9 @@ export {
   AssistChip,
   SuggestionChip,
   InputChip,
+  chipBase,
+  chipOutlined,
+  chipSelected,
 } from "./Chip";
 export { Card } from "./Card";
 export { UebungsBild } from "./UebungsBild";

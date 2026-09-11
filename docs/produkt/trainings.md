@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-09-01. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-09-11. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -47,7 +47,9 @@ damit nie. Im Kinderfussball erscheint dieser Abgleich gar nicht: Dessen Manual 
 keine Zeiten vor.
 
 Beide Schemata sind nicht einstellbar. Teile lassen sich weder umbenennen noch umsortieren, und
-weitere kommen nicht dazu.
+weitere kommen nicht dazu. Mehrfach besetzen lässt sich einzig der Hauptteil: Ein Training darf
+mehrere benannte Varianten davon führen, von denen jeweils eine gilt. Die Gliederung bleibt dabei
+dieselbe — eine Variante ist ein zweiter Inhalt für denselben Teil, kein zweiter Teil.
 
 ## Zusammenstellen
 
@@ -144,7 +146,8 @@ Zeichen lang und darf nicht leer sein. Was nicht geht, sagt die Anwendung am Fel
 Eine Gruppe gehört zu genau dem Training, an dem sie angelegt wurde. In ein anderes Training
 wandert sie nicht, auch nicht in ein bestehendes; wird ein ganzes Training kopiert, bekommt die
 Kopie eigene Gruppen gleichen Namens. Die Übungen des Trainings bleiben vom Anlegen und
-Umbenennen von Gruppen unberührt.
+Umbenennen von Gruppen unberührt. Führt ein Training mehrere Varianten seines Hauptteils, gelten
+die Gruppen in allen gleichermassen — verteilt wird dagegen je Variante eigens.
 
 ## Gruppenverteilung im Hauptteil
 
@@ -195,11 +198,73 @@ Kopiert jemand ein ganzes Training — ins Team stellen, ein Team-Training zu si
 öffentliches Training übernehmen, eine angesetzte Einheit ein zweites Mal ansetzen —, reisen
 Gruppen, Durchlauf und Notizen mit: Die Kopie führt dieselben Bezeichnungen in derselben
 Reihenfolge, verteilt die Übungen des Hauptteils auf dieselben Wechsel und trägt dieselben
-Notizen. Neu verteilt werden muss nichts. Die Kopie ist dabei eigenständig: Ihre Gruppen sind
-eigene Gruppen, und wer in ihr umbenennt, verschiebt, zuweist oder entfernt, lässt das Original
-unberührt — und umgekehrt. Nicht mitgenommen wird die Verteilung, wenn jemand eine einzelne
-Fassung in seine Bibliothek kopiert: Dort steht die Übung für sich, ohne Gruppen und ohne
-Notiz.
+Notizen. Neu verteilt werden muss nichts. Führt das Original mehrere Varianten seines Hauptteils,
+wandern alle mit — mit ihren Bezeichnungen, ihrer Reihenfolge, ihren Übungen, Dauern, Notizen und
+ihrer Verteilung; ausgewählt wird dabei nichts, es kommen immer alle. Die Kopie ist dabei
+eigenständig: Ihre Gruppen sind eigene Gruppen, ihre Varianten eigene Varianten, und wer in ihr
+umbenennt, verschiebt, zuweist oder entfernt, lässt das Original unberührt — und umgekehrt. Nicht
+mitgenommen wird die Verteilung, wenn jemand eine einzelne Fassung in seine Bibliothek kopiert:
+Dort steht die Übung für sich, ohne Gruppen und ohne Notiz.
+
+## Varianten des Hauptteils
+
+Wie viele Kinder kommen, weiss ein Trainer oft erst am Trainingstag, und wie der Platz aussieht
+ebenso. Damit er deswegen nicht zwei Trainings führen muss, kann ein Training mehrere benannte
+Varianten seines Hauptteils tragen: vorbereitete Alternativen, von denen er eine spielt, während
+die übrigen als dasselbe Training bestehen bleiben.
+
+Eine Variante ist stets der ganze Hauptteil und nie ein einzelner Block — im Kinderfussball alle
+drei Unterkategorien zusammen, im Juniorenfussball die Spielformen und das Spiel. Ihr eigen sind
+die Übungsauswahl mit ihrer Reihenfolge, die Dauern, die Notizen und die Gruppenverteilung. Alles
+Übrige gehört dem Training und gilt in allen Varianten gleich: Name, Ziel, Altersstufe und
+Alterskategorien, die Gruppen selbst, die Sichtbarkeit, das Eigentum, ein allfälliger Termin sowie
+sämtliche Trainingsteile ausserhalb des Hauptteils. Was dort geändert wird, ist für alle geändert.
+
+Angelegt wird eine Variante beim Zusammenstellen, über einen Knopf in der Hauptteil-Karte. Die
+neue entsteht als Kopie der gerade angezeigten — mit allen ihren Übungen, Dauern, Notizen und der
+ganzen Gruppenverteilung; von da an sind beide unabhängig, und was in der einen geschieht, lässt
+die andere unberührt. Beim ersten Mal fragt der Dialog nach zwei Bezeichnungen: Auch der bisherige
+Hauptteil bekommt eine, denn bis dahin brauchte er keine, und künftig steht er neben der neuen.
+Ein Vorschlag steht bereits im Feld und lässt sich überschreiben. Ab der dritten Variante genügt
+die eine Bezeichnung. Angelegt, ist die neue gleich die angezeigte — sie ist es ja, die der
+Trainer nun umbaut.
+
+Eine Bezeichnung darf nicht leer sein, ist höchstens vierzig Zeichen lang und kommt je Training
+nur einmal vor, wobei Gross- und Kleinschreibung keinen Unterschied macht — dieselbe Regel wie bei
+den Gruppen, und was nicht geht, sagt die Anwendung am Feld selbst. Gedacht ist sie als das
+Merkmal, an dem der Trainer wiedererkennt, wofür er die Variante vorbereitet hat: „21 Kinder",
+„ohne Tore", „bei Regen".
+
+Ab der zweiten Variante steht in der Hauptteil-Karte eine Reihe von Chips, je einer für eine
+Variante; ein Klick wechselt, und darunter steht der Hauptteil der gewählten. Sichtbar ist immer
+genau eine. Beim Öffnen gilt stets die vorderste — welche zuletzt offen war, merkt sich die
+Anwendung nicht. Die Adresse der Seite trägt die angezeigte Variante mit sich, sodass Neuladen,
+ein Lesezeichen und der Rückweg aus einer bearbeiteten Übung wieder dort landen.
+
+Ein Training mit einer einzigen Variante sieht aus wie eh und je: keine Chips, keine Verwaltung,
+kein Zusatz in der Adresse, bloss der Knopf, über den eine zweite dazukäme. Wer nie eine braucht,
+merkt von der ganzen Sache nichts.
+
+Mit der zweiten Variante kommt „Varianten verwalten" dazu. Dort stehen alle untereinander, jede
+mit ihrer Bezeichnung in einem offenen Feld, das beim Verlassen speichert; Pfeile daneben ordnen
+sie um, und weil die vorderste beim Öffnen gilt, ist das Ordnen mehr als Kosmetik. Ein Kreuz
+entfernt eine Variante — trägt sie Übungen, fragt die Anwendung zuerst nach und sagt, wie viele
+wegfallen und wie viele davon eine Notiz oder eine Gruppenzuweisung tragen; die Gruppen selbst und
+die übrigen Varianten bleiben. Die letzte Variante lässt sich nicht entfernen: Ein Training führt
+jederzeit einen Hauptteil. Bleibt danach nur noch eine übrig, verschwinden Chips und Verwaltung
+wieder; ihre Bezeichnung bleibt gespeichert und kommt zum Vorschein, sobald eine zweite dazukommt.
+
+Was über den Hauptteil gerechnet und gemeldet wird, gilt der angezeigten Variante: die Zeitsummen
+der Teile und des ganzen Trainings, die Zeitsumme je Gruppe, die Wechsel und die Meldungen zu
+doppelt belegten Gruppen und ungleich langen Übungen, ebenso die Hinweise zu leeren oder
+ungewöhnlich vollen Blöcken. Damit dabei klar bleibt, worauf sich eine Zahl bezieht, trägt die
+Zeitangabe einer Gruppe ab der zweiten Variante den Zusatz „in dieser Variante".
+
+Zwei Rückfragen blicken dagegen über alle Varianten hinweg. Entfernt der Trainer eine Gruppe,
+nennt die Rückfrage nicht bloss die Gesamtzahl der Zuweisungen, sondern auch, wie sie sich auf die
+Varianten verteilen — sonst hielte er für den Überblick, was nur eine von mehreren ist. Und ändert
+er die Alterskategorien, umfasst der Abgleich der zugeordneten Übungen ebenfalls alle Varianten;
+jede genannte Übung des Hauptteils trägt dann ihre Variante dazu.
 
 ## Jede Übung im Training ist eine eigene Fassung
 
@@ -233,6 +298,19 @@ auf Papier zählt das Lesen. Übungen ohne Zuweisung zeigen die Zeile gar nicht;
 dort selbsterklärend. Zeitsummen und Konflikte bleiben beim Zusammenstellen. Im Druck bleibt
 eine Übung samt Durchlauf und Notiz auf einer Seite zusammen, solange sie darauf Platz hat.
 
+Führt ein Training mehrere Varianten seines Hauptteils, steht in jeder dieser Ansichten genau
+eine davon, zu Beginn die erste; die Trainingsteile ausserhalb des Hauptteils bleiben dabei
+dieselben. Gewechselt wird überall: auf dem Platz über dieselben Chips wie beim Zusammenstellen —
+wer dabei mitten im Training steht, bleibt beim Trainingsteil, den er gerade vor sich hat —, im
+Druck und in der Ansicht, in der ein Training bloss gelesen wird, über eine Reihe von Verweisen,
+von denen jeder eine eigene Adresse trägt; auf dem Papier erscheint diese Reihe nicht, sie gehört
+zur Bedienung der Seite. Wechseln darf dabei auch, wer das Training gar nicht bearbeiten kann: Es
+ist ein Weg durch dasselbe Training, keine Änderung daran. Die Überschrift des Hauptteils trägt in
+allen drei Ansichten die Bezeichnung der Variante, etwa „Hauptteil · 21 Kinder". Der Ausdruck
+nennt sie zusätzlich im Kopf neben Name und Ziel: Ist der Hauptteil dieser Variante leer, fällt
+sein Abschnitt samt Überschrift weg, und auf dem Blatt stünde sonst nirgends, welche gedruckt
+wurde. Gedruckt wird je Variante ein eigener Ausdruck.
+
 ## Veröffentlichen
 
 Ein Training ist entweder ein Entwurf oder öffentlich; der Trainer schaltet zwischen den beiden
@@ -250,6 +328,14 @@ Abschluss sind ausgenommen — dort bleibt es beim Hinweis —, das Auffangen ga
 Bedingung noch Hinweis, in keiner der beiden Altersstufen. Fehlt etwas, nennt die
 Anwendung genau das. Wer sein Training unter diese Schwelle bringen will, setzt es zuerst auf
 Entwurf — die Anwendung sagt das, statt die Änderung bloss abzulehnen.
+
+Führt das Training mehrere Varianten seines Hauptteils, gilt die Bedingung an den Hauptteil in
+jeder einzeln: Im Kinderfussball braucht jede Variante ihr freies Spiel, im Juniorenfussball jede
+ihre Spielformen. Die übrigen Bedingungen liegen ausserhalb des Hauptteils und gelten dem Training
+einmal. Fehlt etwas, nennt die Anwendung Block und Variante, und zwar jede betroffene. Auch das
+gilt dauerhaft: Eine spätere Änderung, die eine Variante unter die Schwelle brächte, wird
+abgewiesen, und die Meldung nennt auch dann Block und Variante — der Weg führt auch hier zuerst
+über den Entwurf.
 
 Eine eigene Übung, die noch privat in der Bibliothek liegt, bleibt dort privat, auch wenn ihre
 Fassung im veröffentlichten Training mitgelesen werden kann: wer ein Training veröffentlicht,
@@ -275,7 +361,11 @@ zusätzlich, ob er ein Entwurf oder öffentlich ist; er führt in die Bearbeitun
 die Ansicht. Besucher ohne Konto sehen ausschliesslich die öffentlichen Trainings. Gesucht wird
 über den Namen, gefiltert nach Alterskategorie, deren Werte wie im Übungskatalog nach
 Altersstufe beschriftet sind. Ohne Suchbegriff steht das zuletzt Geänderte
-oben, mit Suchbegriff das, was am ehesten gemeint ist. Team-Trainings erscheinen hier nicht;
+oben, mit Suchbegriff das, was am ehesten gemeint ist. Führt ein Training mehr als eine Variante
+seines Hauptteils, steht deren Zahl als Marke am Eintrag — hier wie im Trainingsbestand eines
+Teams; sonst bliebe verborgen, dass es Alternativen gibt. Übungszahl und Dauer daneben beziehen
+sich dann auf die erste Variante: Gespielt wird ohnehin nur eine, und die Summe über alle wäre
+eine Dauer, die dieses Training nie hat. Team-Trainings erscheinen hier nicht;
 sie leben im Team-Bereich.
 
 ## Bekannte Grenzen
@@ -314,6 +404,25 @@ einer Trainingsteil-Überschrift und reicht der Platz darunter nicht, bricht sie
 
 Über die zwei Athletik-Zuordnungen des Juniorenschemas hinaus schlägt die Anwendung nicht vor,
 welche Übung fachlich passen würde; alle Hinweise sind Hinweise und keine Sperren. Eine Ausnahme sind die Veröffentlichungsbedingungen: sie sperren.
+
+Varianten gibt es allein für den Hauptteil; wer unterschiedliche Einleitungen oder Ausklänge
+braucht, führt zwei Trainings. Eine Kinderzahl hält die Anwendung weder am Training noch an einer
+Variante fest, und welche Variante zu wie vielen Kindern passt, schlägt sie nicht vor — die
+Bezeichnung ist der ganze Hinweis. Eine einzelne Übung lässt sich nicht von einer Variante in eine
+andere kopieren oder verschieben, und Übungen, die in mehreren Varianten stehen, werden nicht
+miteinander abgeglichen: Eine Änderung wirkt allein dort, wo sie gemacht wurde. Eine Variante hat
+keine eigene Sichtbarkeit, keinen eigenen Eigentümer und keinen eigenen Termin. Welche Variante an
+einem Termin tatsächlich gespielt wurde, hält die Anwendung nicht fest, und sie merkt sich auch
+nicht, welche zuletzt angezeigt war — jede Ansicht beginnt wieder bei der ersten. Weist sie eine
+Änderung an einem öffentlichen Training ab, weil diese eine Variante unter die
+Veröffentlichungsbedingungen brächte, nennt die Meldung nur die Regel und nicht, welche Variante
+es trifft; wer das wissen will, setzt das Training auf Entwurf und schaltet es erneut öffentlich —
+erst dort steht alles Offene samt Variante. Veröffentlicht wird ohnehin immer das ganze Training:
+Eine einzelne Variante lässt sich weder für sich zeigen noch für sich zurückziehen. Eine entfernte
+Variante kommt nicht zurück, und aus einem bestehenden Training in ein anderes bestehendes wandert
+keine. In der Übersicht lässt sich nicht auf Trainings mit mehreren Varianten eingrenzen,
+und eine Bandbreite von der kürzesten bis zur längsten Variante nennt sie nirgends. Ein Ausdruck
+enthält immer nur eine Variante; wer alle auf Papier will, druckt mehrmals.
 
 Eine Historie früherer öffentlicher Stände gibt es nicht, und wer ein öffentliches Training
 ändert oder zurückzieht, benachrichtigt damit niemanden.

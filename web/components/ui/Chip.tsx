@@ -36,12 +36,19 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
 
 /* ── M3-Chips ─────────────────────────────────────────────────
    Gemeinsame Basis + --chip-*-Component-Tokens (siehe globals.css).
-   Vier Typen nach M3: Assist · Filter · Input · Suggestion. */
-const chipBase =
+   Vier Typen nach M3: Assist · Filter · Input · Suggestion.
+
+   Die drei Klassenbündel sind exportiert (wie `iconButtonClasses`), weil ein
+   Chip nicht immer eine Schaltfläche ist: Auf den Server-Seiten trägt ein LINK
+   die Chip-Optik (`VariantenLinks` — jede Variante hat dort eine eigene
+   Adresse). Ein <a> als <button> zu verkleiden wäre falsch, die Optik ein
+   zweites Mal abzuschreiben ebenso — sie liefe auseinander, sobald die
+   --chip-Tokens sich ändern. */
+export const chipBase =
   "focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-(--chip-shape) border-[1.5px] px-3 py-1.5 transition-colors";
-const chipOutlined =
+export const chipOutlined =
   "border-(--chip-outline) bg-transparent text-(--chip-label) hover:bg-on-surface/8 hover:text-on-surface";
-const chipSelected =
+export const chipSelected =
   "border-transparent bg-(--chip-selected-container) text-(--chip-selected-label)";
 const chipElevated =
   "border-transparent bg-(--chip-elevated-container) text-on-surface shadow-e3 hover:shadow-e4";

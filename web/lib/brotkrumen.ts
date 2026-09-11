@@ -24,12 +24,18 @@ import type { BreadcrumbItem } from "@/components/ui";
  * letzte Stufe wird dann verlinkt und führt in den Editor des Trainings — nur
  * dort ist die Fassung überhaupt erreichbar.
  *
+ * `anhang` ist der Suchteil, den dieser Rückweg tragen soll — heute die
+ * Variante des Hauptteils (#201 AK 6). Ohne ihn landete der Trainer in der
+ * ersten Variante und suchte die Übung, aus der er eben gekommen ist. Leer
+ * vorbelegt, damit die Aufrufer ohne Varianten-Kontext unverändert bleiben.
+ *
  * Rein und synchron: die Kette hängt allein am Kontext, nicht daran, über
  * welchen Weg jemand die Seite geöffnet hat (PC 1).
  */
 export function trainingsKrumen(
   k: TrainingNavKontext,
   blatt: { label: string; href?: string }[] = [],
+  anhang = "",
 ): BreadcrumbItem[] {
   const kette: BreadcrumbItem[] = k.team
     ? [
@@ -52,7 +58,7 @@ export function trainingsKrumen(
   const training = kette[kette.length - 1];
   return [
     ...bisher,
-    { ...training, href: `/training/${k.id}/edit` },
+    { ...training, href: `/training/${k.id}/edit${anhang}` },
     ...blatt,
   ];
 }

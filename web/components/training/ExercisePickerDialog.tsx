@@ -44,6 +44,7 @@ export function ExercisePickerDialog({
   trainingsteilLabel,
   hauptteilkategorie,
   hauptteilkategorieLabel,
+  varianteId,
   trainingStufen,
   onAdded,
 }: {
@@ -61,6 +62,10 @@ export function ExercisePickerDialog({
   /** Im Kinderfussball-Hauptteil: die fixierte Unterkategorie, sonst undefined. */
   hauptteilkategorie?: string;
   hauptteilkategorieLabel?: string;
+  /** Im Hauptteil: die Variante, in die die Übung kommt (#201 AK 8). Der Editor
+   *  gibt die angezeigte mit; ausserhalb des Hauptteils bleibt sie leer, dort
+   *  gilt die Übung für alle Varianten. */
+  varianteId?: string;
   trainingStufen: string[];
   onAdded: () => void;
 }) {
@@ -161,7 +166,13 @@ export function ExercisePickerDialog({
     bump(ex.id, +1);
     inFlightRef.current += 1;
     queueRef.current = queueRef.current.then(async () => {
-      const res = await addTrainingExercise(trainingId, trainingsteil, ex.id, hauptteilkategorie);
+      const res = await addTrainingExercise(
+        trainingId,
+        trainingsteil,
+        ex.id,
+        hauptteilkategorie,
+        varianteId,
+      );
       inFlightRef.current -= 1;
       if (!res.ok) {
         bump(ex.id, -1);

@@ -3,8 +3,15 @@ import { Clock } from "lucide-react";
 import { KategorieChip, PrintButton } from "@/components/ui";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { TrainingExerciseDetail } from "@/components/training/TrainingExerciseDetail";
+import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { getTrainingView } from "@/lib/queries/trainings";
 import { leseGliederung, formatDuration } from "@/lib/training";
+import {
+  abschnittMitVariante,
+  sichtbareZuordnungen,
+  varianteAnhang,
+  varianteAus,
+} from "@/lib/varianten";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -14,21 +21,45 @@ export const metadata: Metadata = {
 
 export default async function TrainingDruckPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ variante?: string }>;
 }) {
   const { id } = await params;
+  const { variante: varianteParam } = await searchParams;
   const training = await getTrainingView(id);
   if (!training) return <TrainingNotAvailable />;
 
-  const sections = leseGliederung(training.altersstufe, training.exercises);
+  // Ein Ausdruck zeigt GENAU EINE Variante des Hauptteils — zu Beginn die
+  // erste (#203 AK 3, Out of Scope 1). Je Variante entsteht damit ein eigener
+  // Ausdruck unter eigener Adresse.
+  const aktive = varianteAus(varianteParam, training.varianten);
+  const sections = leseGliederung(
+    training.altersstufe,
+    sichtbareZuordnungen(training.exercises, aktive?.id),
+  );
   const total = sections.reduce((a, s) => a + s.sum, 0);
   const hasAnyDuration = sections.some((s) => s.sum > 0);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 print:max-w-none print:px-0 print:py-0">
-      <div className="mb-6 flex justify-end print:hidden">
-        <PrintButton />
+      {/* Die Variantenwahl gehört zur Bedienung der Seite, nicht aufs Papier —
+          darum steht sie neben dem Druckknopf und teilt dessen `print:hidden`
+          (#203 AK 4). Auf dem Blatt nennen die Hauptteil-Überschrift und der
+          Kopfbereich, welche Variante gedruckt wurde. */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <VariantenLinks
+          varianten={training.varianten}
+          aktiv={aktive?.id}
+          hrefFuer={(v) => `/training/${training.id}/druck${varianteAnhang(v)}`}
+        />
+        {/* `ml-auto` hält den Knopf rechts, auch wenn die Variantenwahl gar
+            nichts rendert (genau eine Variante) — `justify-between` allein
+            liesse ihn dann nach links rutschen. */}
+        <div className="ml-auto">
+          <PrintButton />
+        </div>
       </div>
 
       <header className="mb-6 border-b border-outline pb-4">
@@ -46,6 +77,21 @@ export default async function TrainingDruckPage({
           <p className="mt-2 type-body-medium text-on-surface">
             <span className="type-label-small text-on-surface-variant">Ziel: </span>
             {training.ziel}
+          </p>
+        )}
+        {/* Die Bezeichnung gehört ZUSÄTZLICH in den Kopf, weil die Überschrift
+            des Hauptteils sie nicht immer trägt: Ist der Hauptteil dieser
+            Variante leer, fällt sein Abschnitt ganz weg (`leseGliederung`
+            überspringt leere) — und auf dem Blatt stünde nirgends, welche der
+            Varianten gedruckt wurde. Zwei Ausdrucke wären dann nicht mehr
+            auseinanderzuhalten. Druckbar, also ohne `print:hidden`; kleiner
+            Label-Stil wie beim Ziel. */}
+        {training.varianten.length > 1 && aktive && (
+          <p className="mt-2 type-body-medium text-on-surface">
+            <span className="type-label-small text-on-surface-variant">
+              Variante des Hauptteils:{" "}
+            </span>
+            „{aktive.name}"
           </p>
         )}
       </header>
@@ -67,7 +113,10 @@ export default async function TrainingDruckPage({
           return (
             <section key={s.key}>
               <h2 className="mb-4 break-after-avoid border-b border-outline-variant pb-1 type-title-medium text-on-surface">
-                {s.label}
+                {/* Auf dem Ausdruck ist die Überschrift der einzige Ort, an dem
+                    die Variante noch steht — die Wahl darüber ist weg
+                    (#203 AK 5). */}
+                {abschnittMitVariante(s.key, s.label, aktive, training.varianten)}
                 {s.sum > 0 && (
                   <span className="ml-2 type-label-medium text-on-surface-variant">
                     {formatDuration(s.sum)}

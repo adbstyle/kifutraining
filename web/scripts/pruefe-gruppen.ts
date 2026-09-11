@@ -9,10 +9,9 @@
 //
 //   npm run check:gruppen
 import assert from "node:assert/strict";
+import { MELDUNG_VERGEBEN, bezeichnungSchluessel } from "../lib/bezeichnung";
 import {
   GRUPPE_NAME_MAX,
-  MELDUNG_VERGEBEN,
-  gruppenSchluessel,
   istHauptteil,
   konfliktBefund,
   nameProblem,
@@ -35,20 +34,22 @@ function pruefe(was: string, fn: () => void) {
   console.log(`✓ ${was}`);
 }
 
-// ── gruppenSchluessel: der Zwilling von lower(btrim(name)) ──────────────────
+// ── bezeichnungSchluessel: der Zwilling von lower(btrim(name)) ──────────────
+// Gruppen und Varianten teilen die Regel (web/lib/bezeichnung.ts); geprüft wird
+// sie hier am Gruppen-Index `tg_name_je_training`.
 pruefe("Schlüssel senkt die Gross-/Kleinschreibung", () => {
-  assert.equal(gruppenSchluessel("Gruppe 1"), "gruppe 1");
-  assert.equal(gruppenSchluessel("TORHÜTER"), "torhüter");
+  assert.equal(bezeichnungSchluessel("Gruppe 1"), "gruppe 1");
+  assert.equal(bezeichnungSchluessel("TORHÜTER"), "torhüter");
 });
 
 pruefe("Schlüssel entfernt umschliessende Leerzeichen", () => {
-  assert.equal(gruppenSchluessel("  Gruppe 1  "), "gruppe 1");
-  assert.equal(gruppenSchluessel("\tGruppe 1\n"), "gruppe 1");
+  assert.equal(bezeichnungSchluessel("  Gruppe 1  "), "gruppe 1");
+  assert.equal(bezeichnungSchluessel("\tGruppe 1\n"), "gruppe 1");
 });
 
 pruefe("Schlüssel lässt Leerzeichen im Innern stehen", () => {
-  assert.equal(gruppenSchluessel("Gruppe  1"), "gruppe  1");
-  assert.notEqual(gruppenSchluessel("Gruppe  1"), gruppenSchluessel("Gruppe 1"));
+  assert.equal(bezeichnungSchluessel("Gruppe  1"), "gruppe  1");
+  assert.notEqual(bezeichnungSchluessel("Gruppe  1"), bezeichnungSchluessel("Gruppe 1"));
 });
 
 // ── nameProblem: leer und zu lang ───────────────────────────────────────────
@@ -434,6 +435,24 @@ pruefe("Die Summe geht über beide Junioren-Blöcke hinweg", () => {
 pruefe("Eine erfasste Null bleibt «0 min» — sie ist eine Angabe", () => {
   const z = zeitJeGruppe(kifu([["A", 0, ["g1"]]]));
   assert.equal(zeitText(z.get("g1")), "Zugewiesen 0 min");
+});
+
+// ── zeitText mit Zusatz: die Summe gilt nur in dieser Variante (#201 AK 9) ──
+pruefe("Der Zusatz hängt an einer wirklichen Summe", () => {
+  const z = zeitJeGruppe(kifu([["A", 15, ["g1"]]]));
+  assert.equal(zeitText(z.get("g1"), "in dieser Variante"), "Zugewiesen 15 min in dieser Variante");
+  // Auch die erfasste Null ist eine Summe — sie darf den Zusatz tragen.
+  const null0 = zeitJeGruppe(kifu([["A", 0, ["g1"]]]));
+  assert.equal(zeitText(null0.get("g1"), "in dieser Variante"), "Zugewiesen 0 min in dieser Variante");
+});
+
+pruefe("Ohne Summe bleibt «Zugewiesen —» ohne Zusatz", () => {
+  // «Zugewiesen — in dieser Variante» schränkte eine Aussage ein, die es nicht
+  // gibt: Es ist keine Zeit erfasst, weder hier noch anderswo.
+  const ohneDauer = zeitJeGruppe(kifu([["A", null, ["g1"]]]));
+  assert.equal(zeitText(ohneDauer.get("g1"), "in dieser Variante"), "Zugewiesen —");
+  // Und ebenso für eine Gruppe, die in dieser Variante gar nicht vorkommt.
+  assert.equal(zeitText(undefined, "in dieser Variante"), "Zugewiesen —");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

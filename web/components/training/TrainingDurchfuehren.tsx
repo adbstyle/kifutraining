@@ -3,9 +3,16 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
 import { TrainingExerciseDetail } from "./TrainingExerciseDetail";
+import { VariantenWahl } from "./VariantenWahl";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui";
 import { leseGliederung, formatDuration } from "@/lib/training";
 import { datumKurz } from "@/lib/zeit";
+import {
+  VARIANTE_PARAM,
+  abschnittMitVariante,
+  sichtbareZuordnungen,
+  varianteAus,
+} from "@/lib/varianten";
 import type { TrainingDetail } from "@/lib/queries/trainings";
 
 type TerminKontext = {
@@ -40,6 +47,17 @@ function TerminKopf({ termin, className }: { termin: TerminKontext; className?: 
   );
 }
 
+/** Die Gliederung, wie sie in einer Variante gilt: ihre Hauptteil-Übungen plus
+ *  alles ausserhalb des Hauptteils, das für alle Varianten gemeinsam gilt
+ *  (#203 PC 1). Steht ausserhalb der Komponente, weil der Wechsel sie für die
+ *  NEUE Variante braucht, bevor gerendert wird. */
+function gliederungFuer(training: TrainingDetail, varianteId: string | undefined) {
+  return leseGliederung(
+    training.altersstufe,
+    sichtbareZuordnungen(training.exercises, varianteId),
+  );
+}
+
 /* Mobile Durchführungsansicht (Story #17): Trainingsteil für Trainingsteil
    (nur belegte), grosse Bedienflächen, Bildschirm-Wachhalten (Best-Effort).
    Lesend — keine Mutationen. */
@@ -52,13 +70,47 @@ export function TrainingDurchfuehren({
   /** Der Rückweg — beim Team-Training ins Team, sonst in die
    *  Trainingsübersicht (#156 AK 8). */
   crumbs,
+  /** Die Variante des Hauptteils aus der Adresse (#203 AK 1). Die Seite liest
+   *  sie und gibt sie herein, statt dass diese Ansicht `useSearchParams`
+   *  befragt — dasselbe Muster wie im Editor. */
+  varianteParam,
 }: {
   training: TrainingDetail;
   termin?: TerminKontext;
   crumbs: BreadcrumbItem[];
+  varianteParam?: string;
 }) {
-  const sections = leseGliederung(training.altersstufe, training.exercises);
+  // Die angezeigte Variante: die aus der Adresse, sonst die erste (#203 AK 1).
+  // Gemerkt wird nichts — wer die Seite neu öffnet, beginnt wieder vorn.
+  const [aktiveVariante, setAktiveVariante] = useState<string | undefined>(
+    () => varianteAus(varianteParam, training.varianten)?.id,
+  );
+  const aktive =
+    training.varianten.find((v) => v.id === aktiveVariante) ?? training.varianten[0];
+
+  const sections = gliederungFuer(training, aktive?.id);
   const [idx, setIdx] = useState(0);
+
+  /** Zur anderen Variante wechseln (#203 AK 2).
+   *
+   *  Der Schritt bleibt stehen, wo er kann: Wer im Ausklang steht und die
+   *  Variante wechselt, will nicht wieder beim Auffangen anfangen. Hat die
+   *  neue Variante weniger Abschnitte (ein leerer Hauptteil etwa), rückt er
+   *  auf den letzten vorhandenen — sonst zeigte die Ansicht ins Leere.
+   *
+   *  Die Adresse zieht per `history.replaceState` mit, ohne Navigation: Alle
+   *  Varianten stehen bereits im Speicher, ein Serveraufruf würde bloss die
+   *  Seite neu bauen. So bleibt der Wechsel auch nach dem Neuladen erhalten —
+   *  und `?termin=` bleibt unangetastet, weil die bestehende Adresse nur
+   *  ergänzt wird (#156 AK 19). */
+  function wechsleVariante(varianteId: string) {
+    const neu = gliederungFuer(training, varianteId);
+    setIdx((i) => Math.max(0, Math.min(i, neu.length - 1)));
+    setAktiveVariante(varianteId);
+    const url = new URL(window.location.href);
+    url.searchParams.set(VARIANTE_PARAM, varianteId);
+    window.history.replaceState(null, "", url);
+  }
 
   // Bildschirm wachhalten, solange die Ansicht aktiv und sichtbar ist
   // (Best-Effort, AC7). Ohne Browser-Unterstützung still no-op.
@@ -100,8 +152,19 @@ export function TrainingDurchfuehren({
         </h1>
         {/* Auch ohne Übungen: wer aus dem Plan kommt, soll Datum und Ort sehen. */}
         {termin && <TerminKopf termin={termin} className="mt-4 justify-center" />}
+        {/* Die Wahl steht auch hier — eine leere Variante darf keine Sackgasse
+            sein, sonst käme der Trainer nur über die Adresszeile zurück
+            (#203 AK 2). */}
+        <VariantenWahl
+          varianten={training.varianten}
+          aktiv={aktive?.id}
+          onWechsel={wechsleVariante}
+          className="mt-4 justify-center"
+        />
         <p className="mt-3 text-center type-body-medium text-on-surface-variant">
-          Diesem Training sind noch keine Übungen zugeordnet.
+          {training.varianten.length > 1
+            ? `In der Variante „${aktive?.name}" ist noch keine Übung eingeordnet.`
+            : "Diesem Training sind noch keine Übungen zugeordnet."}
         </p>
       </main>
     );
@@ -117,8 +180,22 @@ export function TrainingDurchfuehren({
         <Breadcrumbs items={crumbs} className="mb-3 print:hidden" />
         {termin && <TerminKopf termin={termin} className="mb-3" />}
         <p className="type-label-medium text-on-surface-variant">{training.name}</p>
+        {/* Unter dem Trainingsnamen und über dem Abschnitt: Die Variante gilt
+            für das ganze Training, nicht für den gerade offenen Teil — und sie
+            bleibt beim Blättern an derselben Stelle stehen (#203 AK 2). */}
+        <VariantenWahl
+          varianten={training.varianten}
+          aktiv={aktive?.id}
+          onWechsel={wechsleVariante}
+          className="mt-2"
+        />
         <div className="mt-1 flex items-baseline justify-between gap-2">
-          <h1 className="type-headline-medium text-on-surface">{section.label}</h1>
+          <h1 className="type-headline-medium text-on-surface">
+            {/* Welche Variante gerade läuft, muss am Hauptteil selbst stehen —
+                die Chips zeigen die Wahl, die Überschrift die Antwort
+                (#203 AK 5). */}
+            {abschnittMitVariante(section.key, section.label, aktive, training.varianten)}
+          </h1>
           <span className="type-label-large text-on-surface-variant">
             {idx + 1}/{sections.length}
           </span>
