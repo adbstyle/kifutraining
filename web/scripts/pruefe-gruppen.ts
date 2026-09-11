@@ -1,6 +1,7 @@
 // Prüft die Regeln für Gruppen-Bezeichnungen (web/lib/gruppen.ts) — die
-// Vorabprüfung im Editor und in der Server Action. Ohne DB und ohne Netz; läuft
-// im PR-Check neben `typecheck`.
+// Vorabprüfung im Editor und in der Server Action — sowie die Ordnung
+// (web/lib/ordnung.ts), mit der die Oberfläche eine Verschiebung vorausrechnet.
+// Ohne DB und ohne Netz; läuft im PR-Check neben `typecheck`.
 //
 // Der Wert dieser Prüfung liegt in der Kollisionsregel: sie ist der Zwilling
 // des Unique-Index `tg_name_je_training`, und läuft sie auseinander, bekommt der
@@ -10,6 +11,7 @@
 //   npm run check:gruppen
 import assert from "node:assert/strict";
 import { MELDUNG_VERGEBEN, bezeichnungSchluessel } from "../lib/bezeichnung";
+import { gleicheFolge, verschoben } from "../lib/ordnung";
 import {
   GRUPPE_NAME_MAX,
   istHauptteil,
@@ -453,6 +455,44 @@ pruefe("Ohne Summe bleibt «Zugewiesen —» ohne Zusatz", () => {
   assert.equal(zeitText(ohneDauer.get("g1"), "in dieser Variante"), "Zugewiesen —");
   // Und ebenso für eine Gruppe, die in dieser Variante gar nicht vorkommt.
   assert.equal(zeitText(undefined, "in dieser Variante"), "Zugewiesen —");
+});
+
+// ── Ordnung: verschoben / gleicheFolge (#209) ───────────────────────────────
+// Zwilling der RPCs `verschiebe_gruppe` und `verschiebe_variante`: Die
+// Oberfläche rechnet den Zustand nach dem Klick voraus, die Datenbank führt ihn
+// aus. Laufen die beiden auseinander, springt die Liste nach der Antwort des
+// Servers zurück — und der Trainer klickt ein zweites Mal.
+pruefe("Verschieben tauscht mit dem Nachbarn", () => {
+  assert.deepEqual(verschoben(["a", "b", "c"], 1, -1), ["b", "a", "c"]);
+  assert.deepEqual(verschoben(["a", "b", "c"], 1, 1), ["a", "c", "b"]);
+});
+
+pruefe("Am Rand geschieht nichts", () => {
+  assert.deepEqual(verschoben(["a", "b", "c"], 0, -1), ["a", "b", "c"]);
+  assert.deepEqual(verschoben(["a", "b", "c"], 2, 1), ["a", "b", "c"]);
+  // Ein Index ausserhalb der Liste ebenso: Er kann aus einer Anzeige stammen,
+  // die eine nebenläufige Änderung noch nicht kennt.
+  assert.deepEqual(verschoben(["a", "b", "c"], 9, -1), ["a", "b", "c"]);
+  assert.deepEqual(verschoben(["a"], 0, 1), ["a"]);
+  assert.deepEqual(verschoben([], 0, 1), []);
+});
+
+pruefe("Die Eingabe wird nie verändert", () => {
+  const liste = ["a", "b", "c"];
+  const neu = verschoben(liste, 0, 1);
+  assert.deepEqual(liste, ["a", "b", "c"]);
+  assert.notEqual(neu, liste);
+  // Auch im wirkungslosen Fall eine neue Liste: Eine Funktion, die mal
+  // dieselbe Referenz und mal eine neue liefert, löste in React einmal ein
+  // Neuzeichnen aus und einmal nicht.
+  assert.notEqual(verschoben(liste, 0, -1), liste);
+});
+
+pruefe("gleicheFolge achtet auf Inhalt UND Reihenfolge", () => {
+  assert.equal(gleicheFolge(["a", "b"], ["a", "b"]), true);
+  assert.equal(gleicheFolge(["a", "b"], ["b", "a"]), false);
+  assert.equal(gleicheFolge(["a"], ["a", "b"]), false);
+  assert.equal(gleicheFolge([], []), true);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

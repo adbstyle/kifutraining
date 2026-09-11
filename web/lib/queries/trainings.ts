@@ -84,8 +84,9 @@ export type TrainingDetail = {
   updatedAt: string;
   /** Flach, sortiert nach fester Trainingsteil-Reihenfolge, dann Position. */
   exercises: TrainingExerciseItem[];
-  /** Die Gruppen, auf die der Hauptteil verteilt wird (Story #149), in
-   *  Anlegereihenfolge. Leer, solange das Training keine führt. */
+  /** Die Gruppen, auf die der Hauptteil verteilt wird (Story #149), in der vom
+   *  Trainer gesetzten Reihenfolge (#209). Leer, solange das Training keine
+   *  führt. */
   gruppen: { id: string; name: string }[];
   /** Die Varianten des Hauptteils (#201), in der vom Trainer gesetzten
    *  Reihenfolge. Nie leer — jedes Training führt mindestens eine (Trigger
@@ -111,7 +112,7 @@ const PE_SELECT = `
   ${INHALT_FELDER}
 `;
 
-const TRAINING_SELECT = `id, name, owner_id, visibility, altersstufe, stufen, ziel, team_id, teams ( name ), urheber, created_at, updated_at, training_termine ( datum ), training_exercises ( ${PE_SELECT} ), training_gruppen ( id, name, created_at ), training_varianten ( id, name, position )`;
+const TRAINING_SELECT = `id, name, owner_id, visibility, altersstufe, stufen, ziel, team_id, teams ( name ), urheber, created_at, updated_at, training_termine ( datum ), training_exercises ( ${PE_SELECT} ), training_gruppen ( id, name, position ), training_varianten ( id, name, position )`;
 
 /** Die Inhaltsfelder, wie sie aus der Zuordnung zurückkommen. */
 type RawInhalt = {
@@ -154,7 +155,7 @@ type RawTraining = {
   created_at: string;
   updated_at: string;
   training_exercises: RawTrainingExercise[];
-  training_gruppen: { id: string; name: string; created_at: string }[];
+  training_gruppen: { id: string; name: string; position: number }[];
   training_varianten: { id: string; name: string; position: number }[];
   teams: { name: string } | null;
   /** PostgREST erkennt die UNIQUE-Bedingung auf `training_id` und liefert den
@@ -189,15 +190,14 @@ export function einzelnerTermin<T>(embed: T | T[] | null | undefined): T | null 
 }
 
 function mapTraining(raw: RawTraining): TrainingDetail {
-  // Anzeigereihenfolge ist die Anlegereihenfolge; die ID entscheidet
-  // zeitgleiche Anlagen, damit die Liste zwischen zwei Abfragen nicht springt.
+  // PostgREST garantiert für einen Embed KEINE Reihenfolge — die Ordnung der
+  // Gruppen ist aber seit #209 fachlich (der Trainer setzt sie am Chip). Darum
+  // hier sortiert, nicht in der Abfrage. Die ID entscheidet den Gleichstand,
+  // den `tg_position_je_training` ausschliesst — sie hält die Liste stabil,
+  // falls er doch einmal auftritt. Wie bei den Varianten weiter unten.
   const gruppen = (raw.training_gruppen ?? [])
     .slice()
-    .sort((a, b) =>
-      a.created_at === b.created_at
-        ? a.id.localeCompare(b.id)
-        : a.created_at.localeCompare(b.created_at),
-    )
+    .sort((a, b) => (a.position === b.position ? a.id.localeCompare(b.id) : a.position - b.position))
     .map((g) => ({ id: g.id, name: g.name }));
 
   // PostgREST garantiert für einen Embed KEINE Reihenfolge — die Ordnung der

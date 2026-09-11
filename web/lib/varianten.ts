@@ -15,10 +15,22 @@
  * Trust-Boundary — was hier steht, ist die frühe, sprechende Antwort.
  */
 import { bezeichnungProblem } from "@/lib/bezeichnung";
+import { zaehle } from "@/lib/labels";
 
 /** Längstmögliche Bezeichnung einer Variante (getrimmt gezählt).
  *  SQL-Zwilling: `tv_name_laenge` an `training_varianten`. */
 export const VARIANTE_NAME_MAX = 40;
+
+/** Der Name, den ein Training seinem einzigen Hauptteil trägt — beim Anlegen
+ *  (Trigger `trainings_erste_variante`) und wieder, sobald die vorletzte
+ *  Variante entfernt wird (Auflösung, #209).
+ *
+ *  Er steuert in der Oberfläche nichts: Bei genau einer Variante zeigt sie gar
+ *  keine Bezeichnung (#201 PC 5). Sichtbar wird er erst, wenn eine zweite
+ *  dazukommt — der Anlege-Dialog bietet ihn dann als bisherigen Namen an.
+ *
+ *  SQL-Zwilling: `variante_vorgabename()` (Migration `gruppen_ordnung`). */
+export const VARIANTE_VORGABENAME = "Variante 1";
 
 /** Was einer Variantenbezeichnung im Weg steht — `null`, wenn sie sich
  *  speichern lässt (#201 AK 4/5). Dieselbe Regel wie bei den Gruppen, darum
@@ -52,6 +64,20 @@ export function sichtbareZuordnungen<T extends { varianteId: string | null }>(
   varianteId: string | undefined,
 ): T[] {
   return zuordnungen.filter((z) => z.varianteId === null || z.varianteId === varianteId);
+}
+
+/**
+ * Die Fassungen GENAU dieser Variante — was mit ihr wegfällt (#202 AK 6).
+ *
+ * Das Gegenstück zu `sichtbareZuordnungen`: Dort gehört alles ausserhalb des
+ * Hauptteils dazu, weil es für alle Varianten gilt; hier gehört es gerade
+ * nicht dazu, weil es bleibt.
+ */
+export function fassungenVon<T extends { varianteId: string | null }>(
+  fassungen: readonly T[],
+  varianteId: string,
+): T[] {
+  return fassungen.filter((f) => f.varianteId === varianteId);
 }
 
 /** Die anzuzeigende Variante aus einem Suchparameter: die genannte, wenn es sie
@@ -129,4 +155,59 @@ export function abschnittMitVariante(
 ): string {
   if (abschnittKey !== "hauptteil" || varianten.length < 2 || !variante) return label;
   return `${label} · ${variante.name}`;
+}
+
+/**
+ * Was das Entfernen einer Variante kostet, als ein Satz (#202 AK 6).
+ *
+ * Genannt wird nicht nur die Anzahl der Übungen: Notiz und Gruppenzuweisung
+ * sind die Arbeit, die in dieser Variante steckt und die nirgends sonst steht.
+ * Und was NICHT wegfällt, gehört in denselben Satz — die
+ * Gruppen-Definitionen gehören dem Training und gelten für alle Varianten
+ * (#202 PC 2); ohne den Nachsatz läse der Trainer die Rückfrage als Angriff
+ * auf sein ganzes Training.
+ */
+export function wegfallSatz(
+  variante: Variante,
+  fassungen: readonly { notiz: string | null; gruppen: readonly unknown[] }[],
+): string {
+  const n = fassungen.length;
+  const mitNotiz = fassungen.filter((f) => f.notiz != null && f.notiz !== "").length;
+  const mitGruppen = fassungen.filter((f) => f.gruppen.length > 0).length;
+
+  const teile: string[] = [];
+  // In der Einzahl ist die Zahl überflüssig: „1 Übung, davon 1 mit Notiz" sähe
+  // aus wie ein Zählfehler. Der Satz wechselt dann die Wendung — „sie trägt
+  // eine Notiz" statt eines Aufzählungs-Nachsatzes über ein einziges Stück.
+  if (mitNotiz > 0) teile.push(n === 1 ? "eine Notiz" : `${mitNotiz} mit Notiz`);
+  if (mitGruppen > 0)
+    teile.push(n === 1 ? "eine Gruppenzuweisung" : `${mitGruppen} mit Gruppenzuweisung`);
+  const davon =
+    teile.length > 0 ? `, ${n === 1 ? "sie trägt" : "davon"} ${teile.join(" und ")}` : "";
+
+  return (
+    `Mit „${variante.name}" ${n === 1 ? "fällt" : "fallen"} ` +
+    `${zaehle(n, "Übung", "Übungen")} weg${davon}. ` +
+    "Die Gruppen selbst und die übrigen Varianten bleiben."
+  );
+}
+
+/**
+ * Der Zusatz zur Rückfrage, wenn die VORLETZTE Variante entfernt wird (#209).
+ *
+ * Danach führt das Training wieder genau eine — und verhält sich überall wie
+ * vor dem Epic (Epic EK 7): Die Bezeichnung verschwindet aus der Ansicht, die
+ * Variantenleiste schrumpft auf den Knopf zum Hinzufügen. Das ist kein
+ * Nebeneffekt, den der Trainer hinterher entdecken soll, sondern Teil dessen,
+ * was er gerade bestätigt.
+ *
+ * SQL-Zwilling: der Auflösungs-`update` in `entferne_variante()`, der der
+ * bleibenden Variante `variante_vorgabename()` und Position 0 zurückgibt.
+ */
+export function aufloesungSatz(bleibende: Variante): string {
+  return (
+    "Danach bleibt eine einzige Variante übrig — sie wird aufgelöst: " +
+    `„${bleibende.name}" heisst dann wieder schlicht Hauptteil, ` +
+    "und die Leiste zeigt nur noch „Variante hinzufügen\"."
+  );
 }
