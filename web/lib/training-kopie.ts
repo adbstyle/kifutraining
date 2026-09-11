@@ -231,11 +231,11 @@ export async function kopiereTraining(
   // beide Seiten müssen dafür schon in der Kopie stehen.
   const { data: quellGruppen, error: gruppenLeseFehler } = await supabase
     .from("training_gruppen")
-    .select("id, name, created_at")
+    .select("id, name, position")
     .eq("training_id", quelleId)
-    // Dieselbe Ordnung wie in der Anzeige (`mapTraining`): Anlegereihenfolge,
-    // die ID entscheidet zeitgleiche Anlagen.
-    .order("created_at")
+    // Dieselbe Ordnung wie in der Anzeige (`mapTraining`): die vom Trainer
+    // gesetzte Position, die ID entscheidet den Gleichstand.
+    .order("position")
     .order("id");
   if (gruppenLeseFehler) return abbrechen(fehlerMeldung(gruppenLeseFehler.message));
 
@@ -244,32 +244,19 @@ export async function kopiereTraining(
   const gruppenMap = new Map<string, string>();
   const gruppen = quellGruppen ?? [];
   if (gruppen.length > 0) {
-    // Zeitgleich angelegte Gruppen entscheidet die ID — und die ist in der Kopie
-    // eine neue, zufällige. Aufsteigend sortiert vergeben, zeigt die Kopie
-    // trotzdem dieselbe Reihenfolge: `created_at` sortiert primär und wandert
-    // mit, ein Gleichstands-Block ist damit ein zusammenhängender Ausschnitt
-    // einer aufsteigenden Folge und selbst wieder aufsteigend. Ein
-    // Anlegezeitpunkt muss dafür nicht erfunden werden.
-    //
-    // Dass `.sort()` das leistet, hängt an drei Ordnungen, die für kanonische
-    // Kleinbuchstaben-UUIDs übereinstimmen: die UTF-16-Ordnung hier, das
-    // `localeCompare` in `mapTraining` (`web/lib/queries/trainings.ts`) und die
-    // Postgres-`uuid`-Ordnung des `.order("id")` oben. Ein `numeric`-Collator in
-    // `mapTraining` bräche die Kopie stumm.
-    const neueIds = gruppen.map(() => crypto.randomUUID()).sort();
+    const neueIds = gruppen.map(() => crypto.randomUUID());
     gruppen.forEach((g, i) => gruppenMap.set(g.id, neueIds[i]));
 
-    // `created_at` wandert mit, statt auf `now()` zu fallen: Es ist die
-    // Anzeigereihenfolge der Gruppen, und alle Kopien auf denselben Zeitpunkt zu
-    // setzen liesse sie allein an den neuen IDs hängen. Der Preis ist ein
-    // Zeitstempel, der vor dem Entstehen der Kopie liegt — er dient hier
-    // ausschliesslich als Sortierschlüssel und wird sonst nirgends gelesen.
+    // Die Position wandert mit (#209): Sie IST die Anzeigereihenfolge, und der
+    // Trigger `tg_position_setzen` lässt eine mitgegebene Angabe stehen. Bis
+    // #209 musste die Ordnung über `created_at` und sortierte neue UUIDs
+    // nachgebaut werden — das entfällt.
     const { error } = await supabase.from("training_gruppen").insert(
       gruppen.map((g, i) => ({
         id: neueIds[i],
         training_id: neu.id,
         name: g.name,
-        created_at: g.created_at,
+        position: g.position,
       })),
     );
     if (error) return abbrechen(fehlerMeldung(error.message));

@@ -13,6 +13,20 @@ import type { Variante } from "@/lib/varianten";
  * Einfachauswahl aus n gleichrangigen Werten, genau die Semantik der
  * Radiogroup.
  *
+ * Aus demselben Grund `look="nutzertext"`: Auf den Chips steht, was die
+ * Trainerin selbst geschrieben hat, und das setzt die Anwendung normal statt
+ * mono/versal — «21 Kinder, zwei Trainer» in Versalien läse sich als Rubrik,
+ * nicht als ihre Bezeichnung. Dieselbe Regel, aus der schon `ChipMenu`
+ * `type-body-medium` trägt; so steht die Varianten-Reihe auf dem Platz in
+ * derselben Schreibweise wie im Editor.
+ *
+ * Abgrenzung zum Editor: Dort trägt ein Varianten-Chip zusätzlich sein Menü
+ * (umbenennen, verschieben, entfernen) und ist darum GETEILT — links wählen,
+ * rechts verwalten —, was `role=radio` ausschliesst (eine Radiogroup verlangt
+ * genau ein fokussierbares Element je Wert und beansprucht die Pfeiltasten).
+ * Hier gibt es nur die Wahl: ein Bedienelement je Variante, ein wandernder
+ * Tabstopp, Pfeiltasten der Gruppe — die Radiogroup bleibt.
+ *
  * Bei genau einer Variante rendert der Baustein NICHTS (Epic EK 7, #201 PC 5):
  * Ein Training ohne zweite Variante soll unverändert aussehen — eine
  * Einfachauswahl mit einem einzigen Wert wäre eine Frage ohne Alternative.
@@ -49,6 +63,7 @@ export function VariantenWahl({
           // wäre die Gruppe per Tastatur unerreichbar.
           tabStop={i === 0 && !gewaehlt}
           onSelect={() => onWechsel(v.id)}
+          look="nutzertext"
         >
           {v.name}
         </ChoiceChip>

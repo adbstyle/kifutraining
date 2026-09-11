@@ -16,7 +16,9 @@ import {
   entferneGruppe,
   legeGruppeAn,
   setzeGruppenfolge,
+  verschiebeGruppe,
 } from "@/lib/actions/gruppen";
+import { gleicheFolge, verschoben } from "@/lib/ordnung";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
 
 /** Meldung einer Gruppen-Aktion: `null` heisst „gespeichert". */
@@ -45,7 +47,8 @@ export function useGruppenModell({
   melde,
 }: {
   trainingId: string;
-  /** Die Gruppen, wie sie vom Server kamen (Anlegereihenfolge). */
+  /** Die Gruppen, wie sie vom Server kamen — in der vom Trainer gesetzten
+   *  Reihenfolge (#209 AK 4). */
   gruppenInitial: { id: string; name: string }[];
   /** Die Zuordnungen der ANGEZEIGTEN Variante, Dauern bereits überlagert. Muss
    *  stabil sein (memoisiert) — an ihr hängt die Konflikt-Rechnung. Verteilung,
@@ -68,6 +71,10 @@ export function useGruppenModell({
   const [, startTransition] = useTransition();
   // Der letzte laufende Speichervorgang je Fassung. Siehe `setzeFolge`.
   const kette = useRef(new Map<string, Promise<void>>());
+  // Ein zweiter Klick, während der erste unterwegs ist, tauschte zweimal — die
+  // Leiste stünde dann anders als die Datenbank. Ref statt State: die Schranke
+  // muss beim nächsten Klick schon gelten, nicht erst beim nächsten Rendern.
+  const verschiebt = useRef(false);
 
   /** Die Folge einer Fassung: lokal gesetzt oder wie vom Server geliefert. */
   const folgeVon = (fassung: TrainingExerciseItem): string[] =>
@@ -216,16 +223,67 @@ export function useGruppenModell({
     return null;
   }
 
+  /**
+   * Eine Gruppe mit ihrer Nachbarin tauschen (#209 AK 4/8). Optimistisch, mit
+   * Rücknahme: Der Tausch soll unter dem Finger geschehen — stünde hier danach
+   * eine Reihenfolge, die kein Training trägt, sprängen die Chips beim nächsten
+   * Öffnen zurück.
+   *
+   * KEIN `router.refresh()` im Erfolgsfall, wie bei allen Gruppen-Aktionen: Die
+   * Reihenfolge steht in dieser Leiste und im Menü «Gruppe hinzufügen» am
+   * Durchlauf — beide rechnen mit derselben Liste, die hier schon nachgezogen
+   * ist. Ein Auffrischen risse dafür den Fokus aus der Zeile, in der der
+   * Trainer gerade arbeitet.
+   */
+  function verschiebe(gruppeId: string, dir: -1 | 1) {
+    if (verschiebt.current) return;
+    const index = gruppen.findIndex((g) => g.id === gruppeId);
+    if (index < 0) return;
+    const vorher = gruppen;
+    const neu = verschoben(gruppen, index, dir);
+    // Am Rand geschieht nichts — dann gibt es auch nichts zu schicken. Die
+    // Leiste bietet den Eintrag dort gar nicht erst an; die Schranke steht
+    // trotzdem, weil sie hier billiger ist als eine Runde zum Server.
+    if (gleicheFolge(neu.map((g) => g.id), vorher.map((g) => g.id))) return;
+    setGruppen(neu);
+    verschiebt.current = true;
+    startTransition(async () => {
+      try {
+        const r = await verschiebeGruppe(gruppeId, dir);
+        if (r.ok) return;
+        setGruppen(vorher);
+        melde(r.error ?? "Verschieben fehlgeschlagen.");
+      } catch {
+        // Eine GEWORFENE Action zählt wie eine abgelehnte — Netzabbruch, Deploy
+        // mitten im Klick. Ohne diesen Zweig bliebe die vorweggenommene
+        // Reihenfolge stehen, obwohl sie nie gespeichert wurde, niemand bekäme
+        // es gesagt, und die Rejection schlüge auf die Error-Boundary durch
+        // (Muster `setzeFolge`).
+        setGruppen(vorher);
+        melde("Verschieben fehlgeschlagen.");
+      } finally {
+        verschiebt.current = false;
+      }
+    });
+  }
+
   /** Eine Gruppe umbenennen (#149 AK 2). Optimistisch, mit Rücknahme. */
   async function umbenennen(id: string, name: string): Antwort {
     const vorher = gruppen;
     setGruppen((prev) => prev.map((g) => (g.id === id ? { ...g, name: name.trim() } : g)));
-    const r = await benenneGruppe(id, name);
-    if (!r.ok) {
-      setGruppen(vorher);
-      return r.error ?? "Umbenennen fehlgeschlagen.";
+    // Eine GEWORFENE Action zählt wie eine abgelehnte (Muster `setzeFolge`):
+    // Der neue Name stünde sonst im Chip, ohne je gespeichert worden zu sein,
+    // und der Dialog bliebe ohne Antwort offen.
+    let fehler: string;
+    try {
+      const r = await benenneGruppe(id, name);
+      if (r.ok) return null;
+      fehler = r.error ?? "Umbenennen fehlgeschlagen.";
+    } catch {
+      fehler = "Umbenennen fehlgeschlagen.";
     }
-    return null;
+    setGruppen(vorher);
+    return fehler;
   }
 
   /**
@@ -251,14 +309,22 @@ export function useGruppenModell({
       return next;
     });
     startTransition(async () => {
-      const r = await entferneGruppe(gruppe.id);
-      if (!r.ok) {
-        setGruppen(vorherGruppen);
-        setFolgen(vorherFolgen);
-        melde(r.error ?? "Entfernen fehlgeschlagen.");
-        return;
+      // Wie beim Verschieben: Eine geworfene Action zählt wie eine abgelehnte,
+      // sonst stünde die Gruppe nur in der Anzeige nicht mehr da.
+      let fehler: string;
+      try {
+        const r = await entferneGruppe(gruppe.id);
+        if (r.ok) {
+          melde(`Gruppe „${gruppe.name}" entfernt.`);
+          return;
+        }
+        fehler = r.error ?? "Entfernen fehlgeschlagen.";
+      } catch {
+        fehler = "Entfernen fehlgeschlagen.";
       }
-      melde(`Gruppe „${gruppe.name}" entfernt.`);
+      setGruppen(vorherGruppen);
+      setFolgen(vorherFolgen);
+      melde(fehler);
     });
   }
 
@@ -274,6 +340,7 @@ export function useGruppenModell({
     vergissFolge,
     setzeFolge,
     anlegen,
+    verschiebe,
     umbenennen,
     entferne,
   };

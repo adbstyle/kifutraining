@@ -12,6 +12,10 @@ export {
   chipBase,
   chipOutlined,
   chipSelected,
+  chipTextHuelle,
+  chipTextBase,
+  chipTextOutlined,
+  chipTextSelected,
 } from "./Chip";
 export { Card } from "./Card";
 export { UebungsBild } from "./UebungsBild";

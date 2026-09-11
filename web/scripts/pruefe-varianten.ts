@@ -29,21 +29,15 @@ import {
 import {
   VARIANTE_NAME_MAX,
   VARIANTE_PARAM,
+  VARIANTE_VORGABENAME,
+  aufloesungSatz,
+  fassungenVon,
   mitVariante,
   sichtbareZuordnungen,
   varianteAus,
   varianteNameProblem,
+  wegfallSatz,
 } from "../lib/varianten";
-
-/** Der Name, den `trainings_erste_variante()` und der Backfill der Migration
- *  `20260911100000_hauptteil_varianten.sql` jedem Training für seinen ersten
- *  Hauptteil schreiben.
- *
- *  Er steht NUR hier: In der Anwendung steuert er nichts — bei genau einer
- *  Variante zeigt die Oberfläche gar keine Bezeichnung (#201 PC 5), und der
- *  Anlege-Dialog liest den bisherigen Namen aus der Datenbank. Geprüft wird
- *  bloss, dass die Vorabprüfung akzeptiert, was die Datenbank schreibt. */
-const VARIANTE_DEFAULT_NAME = "Variante 1";
 
 const varianten = [
   { id: "v1", name: "28 Kinder" },
@@ -107,10 +101,15 @@ pruefe("Beim Umbenennen zählt die eigene Bezeichnung nicht als vergeben", () =>
 });
 
 pruefe("Der Vorgabename ist zulässig — er steht so in der Datenbank", () => {
-  // Zwilling von `trainings_erste_variante()` und dem Backfill: Was der Trigger
-  // schreibt, muss die Vorabprüfung akzeptieren, sonst liesse sich ein
-  // bestehender Hauptteil nicht mehr speichern.
-  assert.equal(varianteNameProblem(VARIANTE_DEFAULT_NAME, []), null);
+  // Zwilling von `variante_vorgabename()` in SQL: Denselben Namen schreiben der
+  // Trigger `trainings_erste_variante`, der Backfill von
+  // `hauptteil_varianten` und seit #209 die Auflösung in `entferne_variante`.
+  // Läuft er hier auseinander, kündigt die Rückfrage vor dem Entfernen etwas
+  // anderes an, als danach in der Datenbank steht.
+  assert.equal(VARIANTE_VORGABENAME, "Variante 1");
+  // Und was die Datenbank schreibt, muss die Vorabprüfung akzeptieren — sonst
+  // liesse sich ein bestehender Hauptteil nicht mehr speichern.
+  assert.equal(varianteNameProblem(VARIANTE_VORGABENAME, []), null);
 });
 
 pruefe("Gruppen und Varianten teilen dieselbe Regel", () => {
@@ -365,6 +364,106 @@ pruefe("Eine trainingsweite Bedingung trägt keine Variante", () => {
 
 pruefe("Ein anderer Fehler liefert keine Variante", () => {
   assert.equal(varianteAusFehler("duplicate key value violates unique constraint"), null);
+});
+
+// ── fassungenVon (#202 AK 6) ────────────────────────────────────────────────
+// Das Gegenstück zu `sichtbareZuordnungen`: Dort gehört alles ausserhalb des
+// Hauptteils dazu, weil es für alle Varianten gilt; hier gehört es gerade
+// nicht dazu, weil es bleibt. Zählte es mit, kündigte die Rückfrage vor dem
+// Entfernen den Verlust von Übungen an, die gar nicht wegfallen.
+pruefe("Gezählt wird genau die eine Variante", () => {
+  assert.deepEqual(
+    fassungenVon(zuordnungen, "v1").map((z) => z.id),
+    ["h1"],
+  );
+  assert.deepEqual(
+    fassungenVon(zuordnungen, "v2").map((z) => z.id),
+    ["h2"],
+  );
+});
+
+pruefe("Was ausserhalb des Hauptteils liegt, zählt nie mit", () => {
+  // `e1` trägt `varianteId: null` — es gilt für alle Varianten und fällt mit
+  // keiner weg.
+  assert.equal(
+    fassungenVon(zuordnungen, "weg").length,
+    0,
+  );
+});
+
+// ── wegfallSatz (#202 AK 6) ─────────────────────────────────────────────────
+const wegfall = (n: number, notizen: number, gruppen: number) =>
+  Array.from({ length: n }, (_, i) => ({
+    notiz: i < notizen ? "Text" : null,
+    gruppen: i < gruppen ? ["g1"] : [],
+  }));
+
+const NACHSATZ = "Die Gruppen selbst und die übrigen Varianten bleiben.";
+
+pruefe("Mehrzahl: die Zahl der Übungen und der Nachsatz", () => {
+  assert.equal(
+    wegfallSatz(varianten[1], wegfall(2, 0, 0)),
+    `Mit „21 Kinder" fallen 2 Übungen weg. ${NACHSATZ}`,
+  );
+});
+
+pruefe("Einzahl wechselt die Wendung statt die Zahl zu wiederholen", () => {
+  // „1 Übung, davon 1 mit Notiz" sähe aus wie ein Zählfehler.
+  assert.equal(
+    wegfallSatz(varianten[1], wegfall(1, 1, 0)),
+    `Mit „21 Kinder" fällt 1 Übung weg, sie trägt eine Notiz. ${NACHSATZ}`,
+  );
+  assert.equal(
+    wegfallSatz(varianten[1], wegfall(1, 1, 1)),
+    `Mit „21 Kinder" fällt 1 Übung weg, sie trägt eine Notiz und eine ` +
+      `Gruppenzuweisung. ${NACHSATZ}`,
+  );
+});
+
+pruefe("Notiz und Gruppenzuweisung werden einzeln gezählt", () => {
+  assert.equal(
+    wegfallSatz(varianten[1], wegfall(3, 2, 1)),
+    `Mit „21 Kinder" fallen 3 Übungen weg, davon 2 mit Notiz und ` +
+      `1 mit Gruppenzuweisung. ${NACHSATZ}`,
+  );
+});
+
+pruefe("Eine leere Notiz ist keine Notiz", () => {
+  // Der leere String kommt aus einem Feld, das jemand geleert hat — er ist
+  // keine Arbeit, die verlorenginge.
+  assert.equal(
+    wegfallSatz(varianten[1], [{ notiz: "", gruppen: [] }]),
+    `Mit „21 Kinder" fällt 1 Übung weg. ${NACHSATZ}`,
+  );
+});
+
+pruefe("Vor der Auflösung schweigt der Nachsatz über übrige Varianten", () => {
+  // Wird die vorletzte entfernt, folgt `aufloesungSatz` — «die übrigen
+  // Varianten bleiben» stünde dann neben dem Satz, der das Gegenteil sagt.
+  assert.equal(
+    wegfallSatz(varianten[1], wegfall(2, 0, 0), { uebrigeVarianten: false }),
+    `Mit „21 Kinder" fallen 2 Übungen weg. Die Gruppen selbst bleiben.`,
+  );
+});
+
+pruefe("Eine leere Variante nennt nur die Null", () => {
+  assert.equal(
+    wegfallSatz(varianten[1], []),
+    `Mit „21 Kinder" fallen 0 Übungen weg. ${NACHSATZ}`,
+  );
+});
+
+// ── aufloesungSatz (#209) ───────────────────────────────────────────────────
+pruefe("Die Auflösung wird angekündigt, nicht nachträglich entdeckt", () => {
+  // Zwilling des Auflösungs-`update` in `entferne_variante()`: Die bleibende
+  // Variante bekommt den Vorgabenamen und die Position 0 zurück, und die
+  // Oberfläche zeigt danach gar keine Bezeichnung mehr (Epic EK 7).
+  assert.equal(
+    aufloesungSatz(varianten[0]),
+    "Danach bleibt eine einzige Variante übrig — sie wird aufgelöst: " +
+      "„28 Kinder\" heisst dann wieder schlicht Hauptteil, " +
+      "und die Leiste zeigt nur noch „Variante hinzufügen\".",
+  );
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);
