@@ -131,17 +131,36 @@ keine Obergrenze, und eine Gruppe darf auch leer ausgehen — die Torhüter trai
 für sich, und eine Gruppe lässt sich vorbereiten, bevor sie gebraucht wird.
 
 Verwaltet werden die Gruppen dort, wo sie wirken: in der Hauptteil-Karte beim Zusammenstellen,
-in beiden Altersstufen. Solange das Training keine führt, steht im Kartenkopf nur ein Knopf
-„Gruppen"; danach ein Abschnitt, der zugeklappt beginnt und die Anzahl nennt. Aufgeklappt trägt
-jede Gruppe eine eigene Zeile: Die Bezeichnung steht in einem offenen Feld und wird beim
-Verlassen des Felds gespeichert, ein Kreuz daneben entfernt die Gruppe. Die letzte Zeile ist
-dieselbe, nur leer — wer hineinschreibt, legt eine Gruppe an. Entfernt der Trainer die letzte
-Gruppe, verschwindet der Abschnitt wieder und der Knopf kommt zurück.
+in beiden Altersstufen. Unter dem Kartenkopf liegen zwei Leisten übereinander — zuoberst die
+Varianten des Hauptteils an einem Ebenen-Zeichen, darunter die Gruppen an einem Personen-Zeichen.
+Beide Zeichen stehen immer da, auch wenn das Training weder eine Variante noch eine Gruppe führt;
+so ist von Anfang an zu sehen, wo beides wohnt. Am Ende der Gruppenleiste steht ein leiser Knopf
+„Gruppe hinzufügen". Er öffnet einen Dialog mit einem einzigen Feld, der Bezeichnung; angelegt,
+hängt sich die Gruppe hinten an die Leiste.
+
+Jede Gruppe ist dort ein Chip, der ihre Bezeichnung und die ihr zugewiesene Zeit trägt — „Rot ·
+24 min", und einen Gedankenstrich, solange keine Dauer zusammenkommt. Führt das Training mehrere
+Varianten seines Hauptteils, gilt die Zeit der angezeigten Variante. Trägt die Gruppe einen
+Konflikt der Verteilung, ist der Chip bernsteinfarben umrandet und trägt ein Warnzeichen; was
+genau nicht stimmt, steht im Klartext am Fuss der Karte.
+
+Ein Klick auf den Chip öffnet sein Menü. Darin steht, was mit dieser Gruppe zu tun ist:
+bearbeiten — die Bezeichnung ändert sich im selben Dialog, in dem sie entstanden ist —, nach
+vorne, nach hinten, entfernen. Was an dieser Stelle nicht geht, steht auch nicht im Menü: Der
+vorderste Chip bietet kein „Nach vorne", der hinterste kein „Nach hinten". Entfernen fragt nach,
+sobald der Gruppe Übungen zugewiesen sind, und nennt deren Anzahl; ohne Zuweisung wird ohne
+Rückfrage entfernt. Verschieben und Umbenennen wirken sofort — schlägt das Speichern fehl, springt
+die Leiste in ihren alten Stand zurück und die Anwendung sagt es.
+
+Die Reihenfolge der Gruppen bestimmt also der Trainer, und sie gilt überall, wo Gruppen
+aufgezählt werden: in der Leiste, im Menü „Gruppe hinzufügen" am Durchlauf einer Übung, in den
+Meldungen am Fuss der Karte und in einer Kopie des Trainings.
 
 Zwei Gruppen desselben Trainings dürfen nicht gleich heissen, wobei Gross- und Kleinschreibung
 keinen Unterschied macht: Neben „Gruppe 1" ist „gruppe 1" keine zweite Gruppe. Beim Umbenennen
 zählt die eigene bisherige Bezeichnung nicht als vergeben. Eine Bezeichnung ist höchstens vierzig
-Zeichen lang und darf nicht leer sein. Was nicht geht, sagt die Anwendung am Feld selbst.
+Zeichen lang und darf nicht leer sein. Was nicht geht, sagt die Anwendung am Feld des Dialogs
+selbst.
 
 Eine Gruppe gehört zu genau dem Training, an dem sie angelegt wurde. In ein anderes Training
 wandert sie nicht, auch nicht in ein bestehendes; wird ein ganzes Training kopiert, bekommt die
@@ -171,7 +190,7 @@ Dieselbe Gruppe darf an beliebig vielen Übungen stehen, an einer Übung aber nu
 wird allein der Hauptteil; ausserhalb gibt es keinen Durchlauf. Dauer und Reihenfolge der Übungen
 bleiben vom Zuweisen unberührt.
 
-Jede Gruppe trägt in ihrer Zeile, wie lange sie im Hauptteil beschäftigt ist: die Summe der
+Jede Gruppe trägt an ihrem Chip, wie lange sie im Hauptteil beschäftigt ist: die Summe der
 Dauern aller Übungen, die sie durchläuft — im Juniorenfussball über beide Hauptteil-Blöcke
 hinweg. Dieselbe Summe steht im Menü „Gruppe hinzufügen" neben jeder Gruppe, dort also am Ort der
 Entscheidung. Sie geht nach jedem Zuweisen, jeder Dauer-Änderung und jedem Entfernen sofort mit.
@@ -181,9 +200,9 @@ oder ist der Gruppe noch keine zugewiesen, steht dort ein Gedankenstrich statt e
 
 Zwei Dinge meldet die Anwendung: eine Gruppe, die im selben Wechsel an zwei Übungen steht — sie
 kann nicht an zwei Orten gleichzeitig sein —, und Übungen desselben Wechsels, die ungleich lang
-sind. Beides steht als Zeile am Fuss der Hauptteil-Karte; die Doppelbelegung färbt zusätzlich den
-betroffenen Chip und erscheint hinter der Zeitsumme in der Zeile der Gruppe, die ungleiche Länge
-den Rahmen des betroffenen Dauerfelds. Gemeldet wird es, gesperrt nicht: Speichern,
+sind. Beides steht als Zeile am Fuss der Hauptteil-Karte, die Gruppen darin in der Reihenfolge der
+Leiste; die Doppelbelegung färbt zusätzlich den betroffenen Chip im Durchlauf und umrandet den
+Chip der Gruppe in der Leiste, die ungleiche Länge den Rahmen des betroffenen Dauerfelds. Gemeldet wird es, gesperrt nicht: Speichern,
 Weiterbearbeiten und Veröffentlichen bleiben unberührt. Eine Übung ohne erfasste Dauer zählt beim
 Längenvergleich nicht mit.
 
@@ -220,10 +239,10 @@ die Übungsauswahl mit ihrer Reihenfolge, die Dauern, die Notizen und die Gruppe
 Alterskategorien, die Gruppen selbst, die Sichtbarkeit, das Eigentum, ein allfälliger Termin sowie
 sämtliche Trainingsteile ausserhalb des Hauptteils. Was dort geändert wird, ist für alle geändert.
 
-Angelegt wird eine Variante beim Zusammenstellen, über einen Knopf in der Hauptteil-Karte. Die
-neue entsteht als Kopie der gerade angezeigten — mit allen ihren Übungen, Dauern, Notizen und der
-ganzen Gruppenverteilung; von da an sind beide unabhängig, und was in der einen geschieht, lässt
-die andere unberührt. Beim ersten Mal fragt der Dialog nach zwei Bezeichnungen: Auch der bisherige
+Angelegt wird eine Variante beim Zusammenstellen, über den leisen Knopf „Variante hinzufügen" am
+Ende der obersten Leiste der Hauptteil-Karte. Die neue entsteht als Kopie der gerade angezeigten —
+mit allen ihren Übungen, Dauern, Notizen und der ganzen Gruppenverteilung; von da an sind beide
+unabhängig, und was in der einen geschieht, lässt die andere unberührt. Beim ersten Mal fragt der Dialog nach zwei Bezeichnungen: Auch der bisherige
 Hauptteil bekommt eine, denn bis dahin brauchte er keine, und künftig steht er neben der neuen.
 Ein Vorschlag steht bereits im Feld und lässt sich überschreiben. Ab der dritten Variante genügt
 die eine Bezeichnung. Angelegt, ist die neue gleich die angezeigte — sie ist es ja, die der
@@ -235,30 +254,41 @@ den Gruppen, und was nicht geht, sagt die Anwendung am Feld selbst. Gedacht ist 
 Merkmal, an dem der Trainer wiedererkennt, wofür er die Variante vorbereitet hat: „21 Kinder",
 „ohne Tore", „bei Regen".
 
-Ab der zweiten Variante steht in der Hauptteil-Karte eine Reihe von Chips, je einer für eine
-Variante; ein Klick wechselt, und darunter steht der Hauptteil der gewählten. Sichtbar ist immer
-genau eine. Beim Öffnen gilt stets die vorderste — welche zuletzt offen war, merkt sich die
-Anwendung nicht. Die Adresse der Seite trägt die angezeigte Variante mit sich, sodass Neuladen,
-ein Lesezeichen und der Rückweg aus einer bearbeiteten Übung wieder dort landen.
+Ab der zweiten Variante steht in eben dieser Leiste je ein Chip für jede Variante, und darunter
+der Hauptteil der angezeigten. Sichtbar ist immer genau eine; sie ist gefüllt hervorgehoben, die
+übrigen tragen bloss einen Umriss. Jeder Chip ist geteilt: Ein Klick auf seine linke Hälfte zeigt
+diese Variante an — das ist der häufigste Griff und kostet darum einen einzigen Klick —, das
+Chevron rechts öffnet das Menü zu ihr. Beim Öffnen des Trainings gilt stets die vorderste
+Variante; welche zuletzt offen war, merkt sich die Anwendung nicht. Die Adresse der Seite trägt
+die angezeigte Variante mit sich, sodass Neuladen, ein Lesezeichen und der Rückweg aus einer
+bearbeiteten Übung wieder dort landen.
 
-Ein Training mit einer einzigen Variante sieht aus wie eh und je: keine Chips, keine Verwaltung,
-kein Zusatz in der Adresse, bloss der Knopf, über den eine zweite dazukäme. Wer nie eine braucht,
+Im Menü eines Varianten-Chips steht: anzeigen — nur an einer, die gerade nicht angezeigt ist —,
+bearbeiten, nach vorne, nach hinten, entfernen. Wie bei den Gruppen fehlt, was an dieser Stelle
+nicht geht. „Bearbeiten" öffnet einen Dialog mit der Bezeichnung, dieselbe Regel wie beim
+Anlegen. Umsortieren und Umbenennen wirken sofort; schlägt das Speichern fehl, springt die Leiste
+zurück und die Anwendung sagt es. Weil beim Öffnen die vorderste Variante gilt, ist das Ordnen
+mehr als Kosmetik.
+
+„Entfernen" fragt zuerst nach und sagt, was mit der Variante wegfällt: wie viele Übungen es sind
+und wie viele davon eine Notiz oder eine Gruppenzuweisung tragen. Die Gruppen selbst und die
+übrigen Varianten bleiben. Trifft es die vorletzte, sagt die Rückfrage zusätzlich, dass die
+verbleibende damit aufgelöst wird — sie heisst danach wieder schlicht Hauptteil, ihre Bezeichnung
+fällt weg, und die Leiste zeigt nur noch ihr Zeichen und „Variante hinzufügen". Diese Rückfrage
+kommt auch dann, wenn die zu entfernende Variante gar nichts enthält: Aufgelöst wird die andere,
+und das ist es, was zu wissen ist. Eine einzelne Variante lässt sich nicht entfernen — es gibt
+sie als Chip gar nicht, und ein Training führt jederzeit einen Hauptteil. Legt der Trainer später
+wieder eine zweite an, fragt der Dialog erneut nach beiden Bezeichnungen.
+
+Ein Training mit einer einzigen Variante zeigt in der Leiste darum nur das Zeichen und den Knopf,
+über den eine zweite dazukäme: keine Chips, kein Zusatz in der Adresse. Wer nie eine braucht,
 merkt von der ganzen Sache nichts.
-
-Mit der zweiten Variante kommt „Varianten verwalten" dazu. Dort stehen alle untereinander, jede
-mit ihrer Bezeichnung in einem offenen Feld, das beim Verlassen speichert; Pfeile daneben ordnen
-sie um, und weil die vorderste beim Öffnen gilt, ist das Ordnen mehr als Kosmetik. Ein Kreuz
-entfernt eine Variante — trägt sie Übungen, fragt die Anwendung zuerst nach und sagt, wie viele
-wegfallen und wie viele davon eine Notiz oder eine Gruppenzuweisung tragen; die Gruppen selbst und
-die übrigen Varianten bleiben. Die letzte Variante lässt sich nicht entfernen: Ein Training führt
-jederzeit einen Hauptteil. Bleibt danach nur noch eine übrig, verschwinden Chips und Verwaltung
-wieder; ihre Bezeichnung bleibt gespeichert und kommt zum Vorschein, sobald eine zweite dazukommt.
 
 Was über den Hauptteil gerechnet und gemeldet wird, gilt der angezeigten Variante: die Zeitsummen
 der Teile und des ganzen Trainings, die Zeitsumme je Gruppe, die Wechsel und die Meldungen zu
 doppelt belegten Gruppen und ungleich langen Übungen, ebenso die Hinweise zu leeren oder
-ungewöhnlich vollen Blöcken. Damit dabei klar bleibt, worauf sich eine Zahl bezieht, trägt die
-Zeitangabe einer Gruppe ab der zweiten Variante den Zusatz „in dieser Variante".
+ungewöhnlich vollen Blöcken. Damit dabei klar bleibt, worauf sich eine Zahl bezieht, meint die
+Zeitangabe an einem Gruppen-Chip stets die angezeigte Variante.
 
 Zwei Rückfragen blicken dagegen über alle Varianten hinweg. Entfernt der Trainer eine Gruppe,
 nennt die Rückfrage nicht bloss die Gesamtzahl der Zuweisungen, sondern auch, wie sie sich auf die
@@ -300,11 +330,13 @@ eine Übung samt Durchlauf und Notiz auf einer Seite zusammen, solange sie darau
 
 Führt ein Training mehrere Varianten seines Hauptteils, steht in jeder dieser Ansichten genau
 eine davon, zu Beginn die erste; die Trainingsteile ausserhalb des Hauptteils bleiben dabei
-dieselben. Gewechselt wird überall: auf dem Platz über dieselben Chips wie beim Zusammenstellen —
-wer dabei mitten im Training steht, bleibt beim Trainingsteil, den er gerade vor sich hat —, im
-Druck und in der Ansicht, in der ein Training bloss gelesen wird, über eine Reihe von Verweisen,
-von denen jeder eine eigene Adresse trägt; auf dem Papier erscheint diese Reihe nicht, sie gehört
-zur Bedienung der Seite. Wechseln darf dabei auch, wer das Training gar nicht bearbeiten kann: Es
+dieselben. Gewechselt wird überall: auf dem Platz mit einem Klick auf den Chip der Variante — wer
+dabei mitten im Training steht, bleibt beim Trainingsteil, den er gerade vor sich hat —, im Druck
+und in der Ansicht, in der ein Training bloss gelesen wird, über eine Reihe von Verweisen, von
+denen jeder eine eigene Adresse trägt; auf dem Papier erscheint diese Reihe nicht, sie gehört zur
+Bedienung der Seite. Die Reihe liest sich in allen drei Ansichten wie beim Zusammenstellen —
+dieselben gemischt geschriebenen Chips, der angezeigte gefüllt —, trägt hier aber kein Menü:
+Benannt, geordnet und entfernt werden Varianten allein beim Zusammenstellen. Wechseln darf dabei auch, wer das Training gar nicht bearbeiten kann: Es
 ist ein Weg durch dasselbe Training, keine Änderung daran. Die Überschrift des Hauptteils trägt in
 allen drei Ansichten die Bezeichnung der Variante, etwa „Hauptteil · 21 Kinder". Der Ausdruck
 nennt sie zusätzlich im Kopf neben Name und Ziel: Ist der Hauptteil dieser Variante leer, fällt
@@ -387,10 +419,11 @@ Teil- und Gesamtdauer rechnen die Übungen weiterhin nacheinander. Bei einem auf
 verteilten Hauptteil entsprechen sie darum nicht der tatsächlichen Länge des Trainings: Was
 mehrere Gruppen gleichzeitig tun, steht in der Summe mehrfach.
 
-Auf dem Platz und im Druck steht der Durchlauf einer Übung, mehr aber nicht: Die Wechsel als
-solche erscheinen dort nicht, ebenso wenig die Zeitsumme einer Gruppe oder eine Meldung zu
-Konflikten — beides bleibt beim Zusammenstellen, und in den Übersichten steht die Summe
-ohnehin nirgends. Einen Auszug für eine einzelne Gruppe oder für eine betreuende Person gibt es
+Auf dem Platz, im Druck und in der Ansicht steht der Durchlauf einer Übung, mehr aber nicht: Die
+Gruppen des Trainings erscheinen dort nicht als Leiste, die Wechsel als solche ebenso wenig, und
+weder die Zeitsumme einer Gruppe noch eine Meldung zu Konflikten ist dort zu sehen. Beides steht
+allein beim Zusammenstellen — die Summe am Chip der Gruppe in der Hauptteil-Karte, die Meldung an
+deren Fuss —, und in den Übersichten steht die Summe ohnehin nirgends. Einen Auszug für eine einzelne Gruppe oder für eine betreuende Person gibt es
 weder in der Durchführen-Ansicht noch im Druck. Wie lange ein Wechsel dauert, gibt die
 Anwendung nicht vor, ein Signal zum Wechseln gibt sie ebenso wenig, und heruntergezählt wird
 nichts. Unbesetzte Übungen
@@ -404,6 +437,10 @@ einer Trainingsteil-Überschrift und reicht der Platz darunter nicht, bricht sie
 
 Über die zwei Athletik-Zuordnungen des Juniorenschemas hinaus schlägt die Anwendung nicht vor,
 welche Übung fachlich passen würde; alle Hinweise sind Hinweise und keine Sperren. Eine Ausnahme sind die Veröffentlichungsbedingungen: sie sperren.
+
+Die Reihenfolge von Gruppen und Varianten setzt der Trainer Schritt für Schritt über das Menü am
+Chip, nach vorne oder nach hinten. Ziehen und Ablegen gibt es nicht; eine lange Leiste will darum
+mehrmals angefasst werden.
 
 Varianten gibt es allein für den Hauptteil; wer unterschiedliche Einleitungen oder Ausklänge
 braucht, führt zwei Trainings. Eine Kinderzahl hält die Anwendung weder am Training noch an einer

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Layers } from "lucide-react";
-import { chipBase, chipOutlined, chipSelected } from "@/components/ui";
+import { chipTextBase, chipTextOutlined, chipTextSelected } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import type { Variante } from "@/lib/varianten";
 
@@ -9,8 +9,17 @@ import type { Variante } from "@/lib/varianten";
  * Server rendert (#203 AK 2/4/7).
  *
  * Das Gegenstück zu `VariantenWahl`: dieselbe Optik, dieselbe Schranke bei
- * einer Variante, aber Links statt Chips mit Zustand. Der Unterschied ist
- * nicht kosmetisch:
+ * einer Variante, aber Links statt Chips mit Zustand.
+ *
+ * Die Optik kommt aus denselben Klassenbündeln wie dort — `chipText*`, also
+ * die Pille für NUTZERTEXT: normal gesetzt statt mono/versal, weil auf den
+ * Chips die Bezeichnung steht, die die Trainerin selbst vergeben hat. So
+ * tragen Ansehen, Druck und Durchführen dieselbe Schreibweise wie der Editor,
+ * und gefüllt heisst überall dasselbe: das ist die angezeigte Variante. Was
+ * hier fehlt, ist allein das Verwalten — kein Menü, kein Chevron; wer
+ * umbenennt oder umsortiert, tut das beim Zusammenstellen.
+ *
+ * Der Unterschied zu `VariantenWahl` ist nicht kosmetisch:
  *
  * - Ansehen und Drucken haben keinen Client-Zustand. Die angezeigte Variante
  *   steht im Suchparameter (`VARIANTE_PARAM`), und damit hat jede Variante
@@ -58,7 +67,10 @@ export function VariantenLinks({
           key={v.id}
           href={hrefFuer(v.id)}
           aria-current={v.id === aktiv ? "page" : undefined}
-          className={cn(chipBase, v.id === aktiv ? chipSelected : chipOutlined)}
+          className={cn(
+            chipTextBase,
+            v.id === aktiv ? chipTextSelected : chipTextOutlined,
+          )}
         >
           {v.name}
         </Link>
