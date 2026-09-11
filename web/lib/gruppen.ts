@@ -8,7 +8,19 @@
  * Jede Regel nennt ihren SQL-Zwilling aus der Migration `training_gruppen`. Die
  * Datenbank ist die Trust-Boundary — diese Datei ist die frühe, sprechende
  * Antwort im Formular, nicht die Absicherung.
+ *
+ * Die Namensregel selbst steht seit #201 in `lib/bezeichnung.ts`: Die Variante
+ * des Hauptteils trägt dieselbe. Was hier davon übrig ist, sind Namen mit
+ * Gruppen-Bezug — die Aufrufer (und der SQL-Zwilling, den sie nennen) reden von
+ * Gruppen, nicht von «Bezeichnungen».
  */
+import {
+  MELDUNG_VERGEBEN,
+  bezeichnungProblem,
+  bezeichnungSchluessel,
+} from "@/lib/bezeichnung";
+
+export { MELDUNG_VERGEBEN };
 
 /** Längstmögliche Bezeichnung einer Gruppe (getrimmt gezählt).
  *  SQL-Zwilling: `tg_name_laenge` an `training_gruppen`. */
@@ -23,18 +35,8 @@ export const GRUPPE_NAME_MAX = 40;
  * beide zusammen, aber die Absicht steht so im Code.
  */
 export function gruppenSchluessel(name: string): string {
-  return name.trim().toLocaleLowerCase("de");
+  return bezeichnungSchluessel(name);
 }
-
-/**
- * Der Satz, der eine bereits vergebene Bezeichnung ablehnt.
- *
- * Er entsteht an zwei Stellen — hier in der Vorabprüfung und in der Server
- * Action, wenn erst die Datenbank die Kollision sieht (`23505` am Unique-Index
- * `tg_name_je_training`). Beide Wege sollen dasselbe sagen, darum steht der
- * Satz nur einmal.
- */
-export const MELDUNG_VERGEBEN = "Diese Bezeichnung gibt es in diesem Training schon.";
 
 /**
  * Was einer Bezeichnung im Weg steht — `null`, wenn sie sich speichern lässt.
@@ -48,18 +50,10 @@ export const MELDUNG_VERGEBEN = "Diese Bezeichnung gibt es in diesem Training sc
  */
 export function nameProblem(
   name: string,
-  bestehende: { id: string; name: string }[],
+  bestehende: readonly { id: string; name: string }[],
   eigeneId?: string,
 ): string | null {
-  const getrimmt = name.trim();
-  if (!getrimmt) return "Bitte eine Bezeichnung eingeben.";
-  if (getrimmt.length > GRUPPE_NAME_MAX) return `Höchstens ${GRUPPE_NAME_MAX} Zeichen.`;
-  const schluessel = gruppenSchluessel(getrimmt);
-  const vergeben = bestehende.some(
-    (g) => g.id !== eigeneId && gruppenSchluessel(g.name) === schluessel,
-  );
-  if (vergeben) return MELDUNG_VERGEBEN;
-  return null;
+  return bezeichnungProblem(name, bestehende, { eigeneId, max: GRUPPE_NAME_MAX });
 }
 
 // ── Verteilung: welche Gruppe wann an welcher Übung (Story #150) ────────────

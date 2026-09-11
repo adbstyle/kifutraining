@@ -1,0 +1,113 @@
+/**
+ * Varianten des Hauptteils (Epic #200) — reine Fachlogik ohne Server-Bezug.
+ *
+ * Eine Variante ist eine benannte Zusammenstellung des GANZEN Hauptteils: im
+ * Kinderfussball über alle drei Unterkategorien, im Juniorenfussball über die
+ * Blöcke «Spielformen» und «Spiel» (#201 PC 4). Genau dort, wo auch Gruppen
+ * gelten — `istHauptteil()` ist die eine Quelle dafür.
+ *
+ * Nicht zu verwechseln mit dem Übungsfeld `varianten` (alternative
+ * Ausführungsformen einer Übung, `FASSUNG_INHALT_FELDER`). Im Kontext des
+ * Hauptteils ist «Variante» laut PO eindeutig; die beiden berühren sich nicht.
+ *
+ * Jede Regel nennt ihren SQL-Zwilling aus der Migration
+ * `20260911100000_hauptteil_varianten.sql`. Die Datenbank ist die
+ * Trust-Boundary — was hier steht, ist die frühe, sprechende Antwort.
+ */
+import { MELDUNG_VERGEBEN, bezeichnungProblem } from "@/lib/bezeichnung";
+
+/** Längstmögliche Bezeichnung einer Variante (getrimmt gezählt).
+ *  SQL-Zwilling: `tv_name_laenge` an `training_varianten`. */
+export const VARIANTE_NAME_MAX = 40;
+
+/** Die Bezeichnung, die jedes Training für seinen ersten Hauptteil mitbekommt.
+ *
+ *  Sie steht ab dem Anlegen in der Datenbank (Trigger
+ *  `trainings_erste_variante`), wird aber erst sichtbar, wenn eine zweite
+ *  Variante dazukommt: Bei genau einer zeigt die Oberfläche keine
+ *  Variantenwahl (#201 PC 5). Beim Anlegen der zweiten bietet der Dialog sie
+ *  als bisherigen Namen zum Überschreiben an (#201 AK 2).
+ *
+ *  SQL-Zwilling: der Literalwert in `trainings_erste_variante()` und im
+ *  Backfill derselben Migration. */
+export const VARIANTE_DEFAULT_NAME = "Variante 1";
+
+/** Was einer Variantenbezeichnung im Weg steht — `null`, wenn sie sich
+ *  speichern lässt (#201 AK 4/5). Dieselbe Regel wie bei den Gruppen, darum
+ *  dieselbe Funktion; `eigeneId` schaltet beim Umbenennen die eigene Zeile aus
+ *  der Kollisionsprüfung aus.
+ *
+ *  SQL-Zwillinge: `tv_name_laenge` und `tv_name_je_training`. */
+export function varianteNameProblem(
+  name: string,
+  bestehende: readonly { id: string; name: string }[],
+  eigeneId?: string,
+): string | null {
+  return bezeichnungProblem(name, bestehende, { eigeneId, max: VARIANTE_NAME_MAX });
+}
+
+export { MELDUNG_VERGEBEN };
+
+/** Eine Variante, so weit die Anzeige sie braucht. */
+export type Variante = { id: string; name: string };
+
+/**
+ * Die Fassungen, die in einer Variante sichtbar sind (#201 AK 6).
+ *
+ * `varianteId === null` heisst «ausserhalb des Hauptteils» — diese Fassungen
+ * gelten für alle Varianten gemeinsam (#201 PC 3) und sind darum immer dabei.
+ * Alles andere gehört genau einer Variante.
+ *
+ * SQL-Zwilling: der CHECK `te_variante_genau_bei_hauptteil`, der genau diese
+ * beiden Fälle zulässt.
+ */
+export function sichtbareZuordnungen<T extends { varianteId: string | null }>(
+  zuordnungen: readonly T[],
+  varianteId: string | undefined,
+): T[] {
+  return zuordnungen.filter((z) => z.varianteId === null || z.varianteId === varianteId);
+}
+
+/** Die erste Variante — die, die beim Öffnen gilt (#201 AK 7). Die Liste kommt
+ *  bereits nach `position` sortiert aus dem Query-Layer; hier steht nur, dass
+ *  «die erste» die vorderste ist und nichts Gemerktes (Epic Out of Scope 7).
+ *
+ *  `undefined` kann es nach Lage der Daten nicht geben (jedes Training führt
+ *  mindestens eine Variante) — der Typ bleibt trotzdem ehrlich, damit kein
+ *  Aufrufer eine leere Liste unbemerkt durchreicht. */
+export function ersteVariante(varianten: readonly Variante[]): Variante | undefined {
+  return varianten[0];
+}
+
+/** Die anzuzeigende Variante aus einem Suchparameter: die genannte, wenn es sie
+ *  gibt, sonst die erste. Ein Link auf eine entfernte oder fremde Variante
+ *  landet damit auf dem Hauptteil statt auf einer leeren Seite. */
+export function varianteAus(
+  param: string | undefined,
+  varianten: readonly Variante[],
+): Variante | undefined {
+  return varianten.find((v) => v.id === param) ?? ersteVariante(varianten);
+}
+
+/** Der Name des Suchparameters, über den jede Ansicht ihre Variante trägt.
+ *  Eine Variante hat damit eine Adresse — nötig für die Server-Ansichten
+ *  (Ansehen, Drucken), die ihre Wahl nicht im State halten können. */
+export const VARIANTE_PARAM = "variante";
+
+/**
+ * Eine Adresse um die Varianten-Angabe ergänzen — aber nur, wenn es überhaupt
+ * etwas zu wählen gibt.
+ *
+ * Bei genau einer Variante bleibt der Link unverändert: Ein Training ohne
+ * zweite Variante soll auch in der Adresszeile unverändert aussehen (#201
+ * PC 5 / Epic EK 7).
+ */
+export function mitVariante(
+  href: string,
+  varianteId: string | undefined,
+  varianten: readonly Variante[],
+): string {
+  if (varianten.length < 2 || !varianteId) return href;
+  const trenner = href.includes("?") ? "&" : "?";
+  return `${href}${trenner}${VARIANTE_PARAM}=${encodeURIComponent(varianteId)}`;
+}

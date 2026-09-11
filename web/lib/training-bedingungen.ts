@@ -181,6 +181,38 @@ function gruppenMeldung(message: string): string | null {
   return null;
 }
 
+/** Die Marker der Varianten-Datenebene (#201) und ihr Klartext.
+ *
+ *  - `VARIANTE_FREMDES_TRAINING` (Trigger `te_variante_ausrichten`, RPC
+ *    `lege_variante_an`): eine Fassung soll in die Variante eines anderen
+ *    Trainings. Über die Oberfläche unerreichbar — ausser ein Kopierpfad
+ *    vergässe, `variante_id` auf die Kopie umzuschreiben; genau dafür ist der
+ *    Marker da, statt still die Quell-ID zu übernehmen.
+ *  - `LETZTE_VARIANTE` (Constraint-Trigger `tv_letzte_bleibt`, RPC
+ *    `entferne_variante`): ein Training führt jederzeit mindestens einen
+ *    Hauptteil (Epic EK 6). Der Knopf ist dann abgeschaltet; die Meldung
+ *    trifft, wer eine veraltete Ansicht offen hält.
+ *  - `VARIANTE_KOPIE_UNVOLLSTAENDIG` (RPC `lege_variante_an`): die Anwendung
+ *    hat weniger Fassungen angemeldet, als die Quelle führt — etwa weil jemand
+ *    parallel eine Übung ergänzt hat. Lieber keine Variante als eine, der
+ *    Übungen fehlen. */
+const VARIANTEN_MARKER: [string, string][] = [
+  ["VARIANTE_FREMDES_TRAINING", "Diese Variante gehört zu einem anderen Training."],
+  ["LETZTE_VARIANTE", "Die letzte Variante des Hauptteils lässt sich nicht entfernen."],
+  [
+    "VARIANTE_KOPIE_UNVOLLSTAENDIG",
+    "Die Variante liess sich nicht vollständig kopieren. " +
+      "Lade das Training neu und versuche es noch einmal.",
+  ],
+];
+
+/** Die Meldung zu einer abgewiesenen Varianten-Änderung, sonst `null`. */
+function variantenMeldung(message: string): string | null {
+  for (const [marker, klartext] of VARIANTEN_MARKER)
+    if (message.includes(marker)) return klartext;
+  return null;
+}
+
 /** Der Marker, mit dem Postgres eine von der RLS abgewiesene Änderung meldet
  *  («new row violates row-level security policy for table …»). */
 const RLS_VERLETZUNG = "row-level security";
@@ -216,7 +248,10 @@ function berechtigungsMeldung(message: string): string | null {
  *  Constraint fachlich erklärt, ist erwartet und bleibt ungeloggt. */
 export function fehlerMeldung(message: string): string {
   const fachlich =
-    bedingungsFehler(message) ?? schemaMeldung(message) ?? gruppenMeldung(message);
+    bedingungsFehler(message) ??
+    schemaMeldung(message) ??
+    gruppenMeldung(message) ??
+    variantenMeldung(message);
   if (fachlich) return fachlich;
   console.error(`[db] ${message}`);
   return berechtigungsMeldung(message) ?? ALLGEMEIN;

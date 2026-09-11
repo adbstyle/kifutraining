@@ -32,6 +32,10 @@ jobs:
       # tg_name_je_training. Läuft er auseinander, bekommt der Trainer statt
       # einer Meldung am Feld einen Datenbankfehler.
       - run: npm run check:gruppen
+      # Regeln für Varianten des Hauptteils: der TS-Zwilling von
+      # tv_name_je_training und des CHECK te_variante_genau_bei_hauptteil.
+      # Läuft er auseinander, blendet der Editor erfasste Übungen aus.
+      - run: npm run check:varianten
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)

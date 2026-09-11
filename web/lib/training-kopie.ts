@@ -63,6 +63,9 @@ const FASSUNG_SELECT = [
 
 type QuellFassung = {
   id: string;
+  /** Die Variante des Hauptteils in der QUELLE; `null` ausserhalb. Sie muss
+   *  beim Kopieren auf die Variante der Kopie umgeschrieben werden (#205). */
+  variante_id: string | null;
   bild_url: string | null;
   diagramm: unknown;
 } & Record<string, unknown>;
@@ -95,7 +98,8 @@ function zielFelder(ziel: KopieZiel): {
 }
 
 /** Kopiert ein ganzes Training samt aller Übungs-Fassungen mit eigenen Bild-
- *  und Diagrammkopien, samt seinen Gruppen und deren Verteilung im Hauptteil.
+ *  und Diagrammkopien, samt seinen Gruppen und deren Verteilung im Hauptteil
+ *  und samt allen Varianten des Hauptteils (#205).
  *
  *  Die Kopie ist dasselbe Training an einem anderen Ort: Wer sie öffnet, findet
  *  dieselben Gruppen, dieselben Wechsel und dieselben Notizen vor und muss die
@@ -127,6 +131,17 @@ export async function kopiereTraining(
     .select(FASSUNG_SELECT)
     .eq("training_id", quelleId);
   if (leseFehler) return { ok: false, error: leseFehler.message };
+
+  // Die Varianten des Hauptteils, in der Reihenfolge des Originals (#205 AK 1).
+  // Vor dem Insert des Ziels gelesen: Scheitert die Abfrage, entsteht gar keine
+  // halbe Kopie.
+  const { data: quellVarianten, error: variantenLeseFehler } = await supabase
+    .from("training_varianten")
+    .select("id, name, position")
+    .eq("training_id", quelleId)
+    .order("position")
+    .order("id");
+  if (variantenLeseFehler) return { ok: false, error: variantenLeseFehler.message };
 
   const { data: neu, error: insertFehler } = await supabase
     .from("trainings")
@@ -161,7 +176,53 @@ export async function kopiereTraining(
     return { ok: false, error: fehler };
   };
 
-  // Gruppen zuerst, dann die Fassungen, dann die Zuweisungen: Diese Reihenfolge
+  // Die Varianten zuerst: Jede Hauptteil-Fassung zeigt auf eine, und der
+  // Trigger `te_variante_ausrichten` weist eine Fassung ab, deren Variante
+  // nicht zum Ziel-Training gehört.
+  //
+  // Das Ziel-Training hat bereits eine Variante — der Trigger
+  // `trainings_erste_variante` legt sie beim Insert an. Sie wird zur ersten
+  // Quell-Variante umgeschrieben, statt sie zu löschen und neu anzulegen: Ein
+  // Training ohne Variante gibt es zwischendurch nicht (`tv_letzte_bleibt`).
+  //
+  // Die Positionen werden neu von 0 an durchnummeriert. Die Quelle kann Lücken
+  // haben (`entferne_variante` schliesst sie nicht), und die Kopie soll nicht
+  // erben, was in der Quelle bloss Geschichte ist — die REIHENFOLGE wandert
+  // mit, nicht die Zahl.
+  const varianteMap = new Map<string, string>();
+  const varianten = quellVarianten ?? [];
+  if (varianten.length > 0) {
+    const { data: auto, error: autoFehler } = await supabase
+      .from("training_varianten")
+      .select("id")
+      .eq("training_id", neu.id)
+      .maybeSingle();
+    if (autoFehler) return abbrechen(autoFehler.message);
+    if (!auto) return abbrechen("Die Varianten des Hauptteils liessen sich nicht kopieren.");
+
+    const { error } = await supabase
+      .from("training_varianten")
+      .update({ name: varianten[0].name, position: 0 })
+      .eq("id", auto.id);
+    if (error) return abbrechen(fehlerMeldung(error.message));
+    varianteMap.set(varianten[0].id, auto.id);
+
+    const weitere = varianten.slice(1).map((v, i) => ({
+      id: crypto.randomUUID(),
+      training_id: neu.id,
+      name: v.name,
+      position: i + 1,
+    }));
+    weitere.forEach((z, i) => varianteMap.set(varianten[i + 1].id, z.id));
+    if (weitere.length > 0) {
+      const { error: weitereFehler } = await supabase
+        .from("training_varianten")
+        .insert(weitere);
+      if (weitereFehler) return abbrechen(fehlerMeldung(weitereFehler.message));
+    }
+  }
+
+  // Gruppen als Nächstes, dann die Fassungen, dann die Zuweisungen: Diese Reihenfolge
   // ist Pflicht, weil `teg_guard` bei jeder Zuweisung nachschlägt, ob Gruppe und
   // Fassung zum selben Training gehören und die Fassung im Hauptteil liegt —
   // beide Seiten müssen dafür schon in der Kopie stehen.
@@ -225,12 +286,29 @@ export async function kopiereTraining(
   const bildFehler = bilder.find((b) => b.bild.error);
   if (bildFehler) return abbrechen(bildFehler.bild.error!);
 
+  // Jede Hauptteil-Fassung muss ihre Variante in der Kopie wiederfinden. Fehlt
+  // eine, hat sich die Quelle zwischen den beiden Abfragen geändert — dann
+  // bewusst der Abbruch statt eines stillen Rückfalls auf die erste Variante
+  // (dieselbe Haltung wie bei der Gruppenverteilung weiter unten): Eine Kopie,
+  // in der Übungen in der falschen Zusammenstellung stehen, sähe vollständig
+  // aus und wäre es nicht.
+  const ohneVariante = bilder.find(
+    ({ quelle: f }) => f.variante_id && !varianteMap.has(f.variante_id),
+  );
+  if (ohneVariante)
+    return abbrechen("Die Varianten des Hauptteils liessen sich nicht vollständig kopieren.");
+
   if (bilder.length > 0) {
     const { error } = await supabase.from("training_exercises").insert(
       bilder.map(({ quelle: f, neueId, bild }) => ({
         id: neueId,
         training_id: neu.id,
         ...zuordnungFelder(f),
+        // NACH dem Spread: `variante_id` steht in den Zuordnungsfeldern und
+        // bezeichnete sonst eine Variante des QUELL-Trainings. `null` ist der
+        // richtige Wert ausserhalb des Hauptteils — dort trägt schon die
+        // Quelle keine.
+        variante_id: f.variante_id ? (varianteMap.get(f.variante_id) ?? null) : null,
         // `altersstufe` steht bewusst nicht in den Zuordnungsfeldern: Der
         // Trigger `te_altersstufe_erben` setzt sie aus dem Ziel-Training.
         ...inhaltFelder(f),

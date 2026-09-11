@@ -19,6 +19,8 @@ import { alsAltersstufe } from "@/lib/altersstufe";
 import { teilTraegtDauer } from "@/lib/training";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
+import { istHauptteil } from "@/lib/gruppen";
+import { VARIANTE_PARAM } from "@/lib/varianten";
 
 export type SaveFassungResult = { ok: true } | { ok: false; error: string };
 
@@ -33,7 +35,7 @@ async function ladeFassung(
   const { data } = await supabase
     .from("training_exercises")
     .select(
-      "id, training_id, trainingsteil, hauptteilkategorie, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, altersstufe )",
+      "id, training_id, trainingsteil, hauptteilkategorie, variante_id, position, bild_url, bild_quelle, diagramm, trainings ( owner_id, team_id, altersstufe )",
     )
     .eq("id", fassungId)
     .maybeSingle();
@@ -59,12 +61,18 @@ async function ladeFassung(
 }
 
 /** Die nächste freie Position im Zielabschnitt. Eine umgeordnete Fassung reiht
- *  sich am Ende ein (Story 5 AK 7). */
+ *  sich am Ende ein (Story 5 AK 7).
+ *
+ *  Im Hauptteil zählt der Abschnitt je VARIANTE (#201): Dieselbe Position
+ *  existiert dort mehrfach, einmal je Zusammenstellung. Der Filter hängt an der
+ *  Einordnung und nicht an `hauptteilkategorie` — die Junioren-Hauptteilblöcke
+ *  tragen keine Unterkategorie und führen trotzdem Varianten. */
 async function naechstePosition(
   supabase: Awaited<ReturnType<typeof createClient>>,
   trainingId: string,
   trainingsteil: string,
   hauptteilkategorie: string | null,
+  varianteId: string | null,
   eigeneId: string,
 ): Promise<number> {
   let q = supabase
@@ -74,6 +82,7 @@ async function naechstePosition(
     .eq("trainingsteil", trainingsteil)
     .neq("id", eigeneId);
   q = hauptteilkategorie ? q.eq("hauptteilkategorie", hauptteilkategorie) : q;
+  q = istHauptteil(trainingsteil) && varianteId ? q.eq("variante_id", varianteId) : q;
   const { data } = await q.order("position", { ascending: false }).limit(1).maybeSingle();
   return (data?.position ?? -1) + 1;
 }
@@ -86,6 +95,13 @@ async function naechstePosition(
  *  unberührt. */
 export async function updateFassung(
   fassungId: string,
+  /** Die Variante, aus der heraus die Fassung geöffnet wurde (#201). Sie ist
+   *  gebunden, nicht aus dem Formular gelesen: Die Bearbeitungsseite ist eine
+   *  Server-Seite und kennt den Suchparameter, das Formular dagegen wird an
+   *  vielen Stellen gebaut. Gebraucht wird sie nur in EINEM Fall — wenn die
+   *  Fassung von ausserhalb in den Hauptteil wandert und deshalb erstmals eine
+   *  Variante braucht. */
+  variante: string | undefined,
   _prev: ExerciseFormState,
   form: FormData,
 ): Promise<ExerciseFormState> {
@@ -120,14 +136,32 @@ export async function updateFassung(
   // Die Kategorie ausserhalb des Hauptteils ist in `inhalt` bereits null —
   // einen DB-Trigger, der das erzwänge, gibt es seit dem Verweis-Abbau nicht
   // mehr, nur noch den Biconditional-CHECK.
+  //
+  // Die Variante gehört zum Zielabschnitt: Kommt die Fassung von AUSSERHALB in
+  // den Hauptteil, braucht sie erstmals eine — die der Trainer gerade offen
+  // hatte. Innerhalb des Hauptteils bleibt sie, wo sie ist (ein Wechsel
+  // zwischen den Junioren-Blöcken oder den Unterkategorien verlässt die
+  // Zusammenstellung nicht), und beim Verlassen nullt sie der Trigger
+  // `te_variante_ausrichten`. Ohne Parameter greift dessen Regel «die erste»;
+  // die Position wird dann über alle Varianten hinweg bestimmt und fällt
+  // höchstens zu gross aus — nie auf eine belegte.
+  const kamAusHauptteil = istHauptteil(fassung.trainingsteil);
+  const gehtInHauptteil = istHauptteil(trainingsteil);
+  const neueVariante =
+    !kamAusHauptteil && gehtInHauptteil && variante ? variante : fassung.variante_id;
+  if (!kamAusHauptteil && gehtInHauptteil && variante) update.variante_id = variante;
+
   const wechsel =
-    trainingsteil !== fassung.trainingsteil || hkat !== fassung.hauptteilkategorie;
+    trainingsteil !== fassung.trainingsteil ||
+    hkat !== fassung.hauptteilkategorie ||
+    neueVariante !== fassung.variante_id;
   if (wechsel) {
     update.position = await naechstePosition(
       supabase,
       fassung.training_id,
       trainingsteil,
       trainingsteil === "hauptteil" ? hkat : null,
+      gehtInHauptteil ? neueVariante : null,
       fassungId,
     );
     // Wandert die Fassung in ein Auffangen, entfällt ihre Dauer — sie zählt
@@ -194,7 +228,11 @@ export async function updateFassung(
     await supabase.storage.from(STORAGE_BUCKET).remove([altPfad]);
 
   revalidiereTraining(fassung.training_id, fassungId);
-  redirect(`/training/${fassung.training_id}/edit?bearbeitet=1`);
+  // Der Rückweg trägt die Variante mit, aus der heraus geöffnet wurde: Sonst
+  // landete der Trainer nach dem Speichern in der ersten Variante und suchte
+  // die eben bearbeitete Übung (#201 AK 6).
+  const zurueck = `/training/${fassung.training_id}/edit?bearbeitet=1`;
+  redirect(variante ? `${zurueck}&${VARIANTE_PARAM}=${encodeURIComponent(variante)}` : zurueck);
 }
 
 /** Eine Fassung, wie sie fürs Kopieren in die Bibliothek gelesen wird

@@ -6,6 +6,7 @@ import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
 import { updateFassung } from "@/lib/actions/fassung";
 import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
 import { trainingsKrumen } from "@/lib/brotkrumen";
+import { VARIANTE_PARAM } from "@/lib/varianten";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -20,10 +21,21 @@ export const metadata: Metadata = {
    bleibt. */
 export default async function FassungBearbeitenPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; teId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id, teId } = await params;
+  // Aus welcher Variante des Hauptteils heraus die Fassung geöffnet wurde
+  // (#201). Sie wird gebraucht, um nach dem Speichern dorthin zurückzuführen —
+  // und für den einen Fall, in dem die Fassung von ausserhalb in den Hauptteil
+  // wandert und erstmals eine Variante braucht.
+  const varianteRoh = (await searchParams)[VARIANTE_PARAM];
+  const variante = Array.isArray(varianteRoh) ? varianteRoh[0] : varianteRoh;
+  const varianteAnhang = variante
+    ? `?${VARIANTE_PARAM}=${encodeURIComponent(variante)}`
+    : "";
   const f = await getFassungZumBearbeiten(teId);
   // Auch ein fremdes oder nicht existierendes Training endet hier — beides ist
   // für den Betrachter dasselbe.
@@ -43,10 +55,10 @@ export default async function FassungBearbeitenPage({
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
       <Breadcrumbs items={crumbs} className="mb-6" />
       <ExerciseForm
-        action={updateFassung.bind(null, f.id)}
+        action={updateFassung.bind(null, f.id, variante)}
         afterName={
           <DiagrammVorschau
-            href={`/training/${f.trainingId}/uebung/${f.id}/diagramm`}
+            href={`/training/${f.trainingId}/uebung/${f.id}/diagramm${varianteAnhang}`}
             name={f.name}
             diagramm={f.diagramm}
           />

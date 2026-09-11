@@ -18,6 +18,7 @@ import {
   VORLAGE_SELECT,
 } from "@/lib/fassung";
 import { kategorienSlugs, altersstufe as altersstufeLabels } from "@/lib/vocab";
+import { istHauptteil } from "@/lib/gruppen";
 import {
   alsAltersstufe,
   istAltersstufe,
@@ -41,9 +42,14 @@ export type TrainingFormState = {
 /** Ergebnis einer feingranularen Editor-Aktion (sofort-persistent). */
 export type TrainingActionResult = { ok: boolean; error?: string };
 
-/** Ergebnis des Stufen-Setzens inkl. abweichender Übungen (Story #12 AC3). */
+/** Ergebnis des Stufen-Setzens inkl. abweichender Übungen (Story #12 AC3).
+ *
+ *  `varianteId` sagt, in welcher Variante des Hauptteils die Übung steht
+ *  (`null` ausserhalb): Der Abgleich umfasst ALLE Varianten, auch die gerade
+ *  nicht angezeigte (#201 AK 11) — und eine Übung, die der Trainer nirgends
+ *  sieht, muss benannt werden, sonst sucht er sie vergeblich. */
 export type StufenResult = TrainingActionResult & {
-  mismatched?: { id: string; name: string }[];
+  mismatched?: { id: string; name: string; varianteId: string | null }[];
 };
 
 function csv(v: FormDataEntryValue | null): string[] {
@@ -190,6 +196,11 @@ export async function addTrainingExercise(
   trainingsteil: string,
   exerciseId: string,
   hauptteilkategorie?: string | null,
+  /** Die Variante des Hauptteils, in die die Übung kommt (#201 AK 8). Ohne sie
+   *  greift die Regel der Datenebene «die erste» (`te_variante_ausrichten`);
+   *  der Editor gibt sie immer ausdrücklich mit. Ausserhalb des Hauptteils
+   *  ohne Bedeutung — der Trigger nullt sie dort. */
+  varianteId?: string,
 ): Promise<TrainingActionResult> {
   const supabase = await createClient();
   const {
@@ -247,13 +258,23 @@ export async function addTrainingExercise(
     return { ok: false, error: "Übung passt nicht zu diesem Block." };
 
   // Nächste Position bestimmen (eindeutige Reihenfolge je Unterkategorie im
-  // Hauptteil, sonst je Trainingsteil).
+  // Hauptteil, sonst je Trainingsteil — und im Hauptteil zusätzlich je
+  // Variante, #201).
+  //
+  // Der Variantenfilter hängt an der EINORDNUNG, nicht an `hkat`: Die
+  // Junioren-Hauptteilblöcke tragen keine Unterkategorie und führen trotzdem
+  // Varianten. Ohne die Unterscheidung begänne die zweite Variante dort bei
+  // einer Position, die in ihr längst frei ist.
   let posQuery = supabase
     .from("training_exercises")
     .select("position")
     .eq("training_id", trainingId)
     .eq("trainingsteil", trainingsteil);
   posQuery = hkat ? posQuery.eq("hauptteilkategorie", hkat) : posQuery;
+  posQuery =
+    istHauptteil(trainingsteil) && varianteId
+      ? posQuery.eq("variante_id", varianteId)
+      : posQuery;
   const { data: last } = await posQuery
     .order("position", { ascending: false })
     .limit(1)
@@ -273,6 +294,10 @@ export async function addTrainingExercise(
     training_id: trainingId,
     trainingsteil,
     hauptteilkategorie: hkat,
+    // Nur im Hauptteil: ausserhalb würde der CHECK
+    // `te_variante_genau_bei_hauptteil` greifen, und der Trigger nullt sie
+    // ohnehin.
+    ...(istHauptteil(trainingsteil) && varianteId ? { variante_id: varianteId } : {}),
     position,
     ...inhaltFelder(ex),
     bild_url: bild.url,
@@ -528,17 +553,19 @@ export async function setTrainingStufen(
   // Abweichende Fassungen ermitteln — anhand IHRER Alterskategorien: die
   // Fassung ist im Training frei bearbeitbar und die einzige Quelle. Das ist
   // der Stufen-Abgleich innerhalb eines Schemas und unabhängig vom Wechsel.
-  let mismatched: { id: string; name: string }[] = [];
+  let mismatched: { id: string; name: string; varianteId: string | null }[] = [];
   if (valid.length > 0) {
     const { data: rows } = await supabase
       .from("training_exercises")
-      .select("id, name, kategorien")
+      .select("id, name, kategorien, variante_id")
       .eq("training_id", trainingId);
     mismatched = (rows ?? [])
       // Ohne Kategorien gibt es nichts abzudecken — solche Fassungen gelten
       // nicht als abweichend.
       .filter((r) => (r.kategorien ?? []).length > 0 && !stufenAbgedeckt(valid, r.kategorien))
-      .map((r) => ({ id: r.id, name: r.name }));
+      // Ohne Varianten-Filter: Der Abgleich gilt fürs ganze Training, also für
+      // alle Varianten (#201 AK 11).
+      .map((r) => ({ id: r.id, name: r.name, varianteId: r.variante_id }));
   }
 
   revalidiereTraining(trainingId);
@@ -567,7 +594,9 @@ export async function moveTrainingExercise(
     p_training_exercise_id: trainingExerciseId,
     p_dir: dir,
   });
-  if (error) return { ok: false, error: error.message };
+  // Übersetzt statt roh: Die RPC meldet fehlendes Schreibrecht und — seit #201 —
+  // eine fremde Variante im Klartext der Datenebene, nicht in dem des Trainers.
+  if (error) return { ok: false, error: fehlerMeldung(error.message) };
   revalidiereTraining(pe.training_id);
   return { ok: true };
 }
