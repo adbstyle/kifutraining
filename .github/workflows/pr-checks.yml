@@ -36,6 +36,12 @@ jobs:
       # tv_name_je_training und des CHECK te_variante_genau_bei_hauptteil.
       # Läuft er auseinander, blendet der Editor erfasste Übungen aus.
       - run: npm run check:varianten
+      # Farbpalette: der TS-Zwilling des @theme-Blocks in app/globals.css plus
+      # die Kontrastrechnung nach WCAG 2.1 und der Wächter über die alte
+      # Palette. Tailwind v4 meldet unbekannte Utilities nicht — eine vergessene
+      # Klasse erzeugt still keine Regel, und der Text erbt die Elternfarbe.
+      - name: Farben und Kontraste prüfen
+        run: npm run check:farben
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)

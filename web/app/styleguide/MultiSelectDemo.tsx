@@ -42,7 +42,7 @@ export function MultiSelectDemo() {
           placeholder="Themen auswählen …"
           supportingText="Suche im Panel-Kopf · Footer: Zurücksetzen / Alle auswählen."
         />
-        <p className="type-label-small mt-2 text-on-surface-variant">
+        <p className="type-label-small mt-2 text-on-surface-mittel">
           gewählt: {werte.length ? werte.join(", ") : "—"}
         </p>
       </div>

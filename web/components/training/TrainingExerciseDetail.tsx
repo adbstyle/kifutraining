@@ -25,7 +25,7 @@ function anzahlText(a: { min?: number | null; max?: number | null } | null): str
 function Meta({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="type-label-small text-on-surface-variant">{label}</p>
+      <p className="type-label-small text-on-surface-mittel">{label}</p>
       <div className="type-body-medium mt-1 text-on-surface">{children}</div>
     </div>
   );
@@ -57,7 +57,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="type-title-large text-on-surface">{item.name}</h3>
         {dur && (
-          <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-variant">
+          <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-mittel">
             <Clock size={16} strokeWidth={2} aria-hidden />
             {dur}
           </span>
@@ -76,7 +76,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
               vorgelesen wird. */}
           <span
             id={`durchlauf-${item.id}`}
-            className="type-label-small w-[78px] shrink-0 pt-1 text-on-surface-variant"
+            className="type-label-small w-[78px] shrink-0 pt-1 text-on-surface-mittel"
           >
             Durchlauf
           </span>
@@ -95,7 +95,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
                     size={14}
                     strokeWidth={2}
                     aria-hidden
-                    className="mr-2 inline-block align-middle text-on-surface-variant"
+                    className="mr-2 inline-block align-middle text-on-surface-mittel"
                   />
                 )}
                 {g.name}
@@ -112,7 +112,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
           Labels: Er stammt vom Trainer. */}
       {item.notiz && (
         <div className="mb-3 flex gap-3">
-          <span className="type-label-small w-[78px] shrink-0 pt-1 text-on-surface-variant">
+          <span className="type-label-small w-[78px] shrink-0 pt-1 text-on-surface-mittel">
             Notiz
           </span>
           <p className="type-body-large whitespace-pre-line text-on-surface">{item.notiz}</p>
@@ -127,7 +127,9 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
         </div>
       )}
 
-      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[6px] border border-outline-variant">
+      {/* Der Diagramm-/Bildrahmen: Haarlinie, und derselbe Radius wie jede
+          andere Fläche, die Inhalt hält — der grössere gehört dem Dialog. */}
+      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-flaeche border border-linie">
         <UebungsBild
           name={item.name}
           bildUrl={item.bildUrl}
@@ -165,15 +167,15 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
       )}
 
       <div className="mt-4">
-        <p className="type-label-medium mb-2 text-on-surface-variant">Übungsablauf</p>
+        <p className="type-label-medium mb-2 text-on-surface-mittel">Übungsablauf</p>
         {item.fahrplan ? (
           <MethodischerFahrplan fahrplan={item.fahrplan} />
         ) : item.aufbau ? (
-          <p className="type-body-medium whitespace-pre-line text-on-surface-variant">
+          <p className="type-body-medium whitespace-pre-line text-on-surface-mittel">
             {item.aufbau}
           </p>
         ) : (
-          <p className="type-body-medium text-on-surface-variant">Kein Ablauf erfasst.</p>
+          <p className="type-body-medium text-on-surface-mittel">Kein Ablauf erfasst.</p>
         )}
       </div>
 

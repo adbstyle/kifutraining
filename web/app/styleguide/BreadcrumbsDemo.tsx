@@ -8,7 +8,7 @@ export function BreadcrumbsDemo() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
+        <p className="type-label-small mb-2 text-on-surface-mittel">
           Standard (ChevronRight)
         </p>
         <Breadcrumbs
@@ -21,8 +21,8 @@ export function BreadcrumbsDemo() {
       </div>
 
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
-          Mit Wurzel-Icon &amp; Kreide-Slash als Separator
+        <p className="type-label-small mb-2 text-on-surface-mittel">
+          Mit Wurzel-Zeichen &amp; Schrägstrich als Separator
         </p>
         <Breadcrumbs
           separator={<span className="type-label-medium">/</span>}
@@ -35,7 +35,7 @@ export function BreadcrumbsDemo() {
       </div>
 
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
+        <p className="type-label-small mb-2 text-on-surface-mittel">
           Kollabiert (maxItems=4) — „…" klappt den Pfad auf
         </p>
         <Breadcrumbs

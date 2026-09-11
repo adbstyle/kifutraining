@@ -46,7 +46,7 @@ export function InBibliothekButton({
           aria-label={`${name} in meine Bibliothek kopieren`}
           onClick={kopieren}
           disabled={pending}
-          className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/8 hover:text-primary disabled:opacity-40"
+          className="state focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-mittel disabled:opacity-40"
         >
           <Copy size={16} strokeWidth={2.5} aria-hidden />
         </button>

@@ -32,10 +32,11 @@ export interface MultiSelectProps {
   className?: string;
 }
 
-/* M3 Multi-Select — einzeiliger Feld-Trigger mit inline entfernbaren Tags
-   öffnet ein Panel mit Suchfeld (Kopf), Optionsliste (eckige KiFu-Checkbox)
-   und Aktions-Footer (Zurücksetzen / Alle auswählen). Trigger trägt den
-   --field-*-Kontrakt (wie Text-Field), das Panel den --menu-*-Kontrakt.
+/* M2 Multi-Select — einzeiliger Feld-Trigger mit inline entfernbaren Tags
+   öffnet ein Panel mit Suchfeld (Kopf), Optionsliste (eckige Checkbox) und
+   Aktions-Footer (Zurücksetzen / Alle auswählen). Der Trigger ist gebaut wie
+   ein Feld (Kontur in `kante`, offener Grund), das Panel wie ein Menü
+   (08dp, Haarlinie, Schatten).
    Der Trigger bleibt auf eine Zeile begrenzt: passen nicht alle Tags in die
    Zelle, werden die überzähligen zu einem Zähler-Badge (+N) gebündelt — die
    sichtbare Anzahl wird per Messung (verstecktes Mess-Layer + ResizeObserver)
@@ -297,9 +298,14 @@ export function MultiSelect({
   // ohne Handler) — `shrink-0` hält die natürliche Breite in der clippenden Zeile.
   function renderChip(o: SelectOption, measuring = false) {
     return (
+      // Gewählt heisst hier umrandet, nicht gefüllt: Die Tags sitzen IM Feld,
+      // eine volle Primary-Fläche pro Wert überstrahlte die Kontur des Felds,
+      // in dem sie stehen. Darum dieselbe Lesart wie beim gewählten
+      // Nutzertext-Chip — Primary auf Kontur und Schrift, die Fläche nur
+      // angehaucht.
       <span
         key={o.value}
-        className="type-label-small inline-flex shrink-0 items-center gap-1 rounded-(--chip-shape) bg-(--chip-selected-container) py-0.5 pl-2.5 pr-1 text-(--chip-selected-label)"
+        className="type-label-small inline-flex shrink-0 items-center gap-1 rounded-full kontur border-primary bg-primary/12 py-0.5 pl-2.5 pr-1 text-primary"
       >
         {o.label}
         <button
@@ -315,7 +321,7 @@ export function MultiSelect({
                 }
           }
           aria-label={`${o.label} entfernen`}
-          className="focus-ring inline-flex h-4 w-4 items-center justify-center rounded-full text-(--chip-selected-label)/70 transition-colors hover:bg-on-surface/12 hover:text-(--chip-selected-label)"
+          className="state focus-ring inline-flex h-4 w-4 items-center justify-center rounded-full text-primary"
         >
           <X size={13} strokeWidth={2.5} aria-hidden />
         </button>
@@ -328,7 +334,7 @@ export function MultiSelect({
       <span
         id={`${fid}-label`}
         className={cn(
-          "type-label-small mb-2 block text-(--field-label)",
+          "type-label-small mb-2 block text-on-surface-mittel",
           hideLabel && "sr-only",
         )}
       >
@@ -355,9 +361,11 @@ export function MultiSelect({
           onClick={() => !disabled && setOpen((o) => !o)}
           onKeyDown={onTriggerKey}
           className={cn(
-            "focus-ring flex h-12 w-full items-center gap-1.5 rounded-(--field-shape) border-[1.5px] bg-surface px-2",
-            error ? "border-(--field-error)" : "border-(--field-outline)",
-            open && !error && "border-(--field-focus)",
+            "focus-ring flex h-12 w-full items-center gap-1.5 rounded-flaeche kontur bg-transparent px-2",
+            error ? "border-error" : "border-kante",
+            // Offen zieht der Trigger die Kontur auf Primary — er gehört dann
+            // zum Panel darunter und soll das auch zeigen.
+            open && !error && "border-primary",
             disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
           )}
         >
@@ -366,7 +374,7 @@ export function MultiSelect({
             className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden"
           >
             {showPlaceholder ? (
-              <span className="type-body-large truncate px-1 text-(--field-label)">
+              <span className="type-body-large truncate px-1 text-on-surface-mittel">
                 {placeholder ?? "Auswählen …"}
               </span>
             ) : (
@@ -376,7 +384,7 @@ export function MultiSelect({
                   <span
                     aria-label={`${hiddenCount} weitere ausgewählt`}
                     title={hiddenOptions.map((o) => o.label).join(", ")}
-                    className="type-label-small inline-flex shrink-0 items-center rounded-(--chip-shape) bg-(--chip-selected-container) px-2 py-0.5 font-medium tabular-nums text-(--chip-selected-label)/80"
+                    className="type-label-small inline-flex shrink-0 items-center rounded-full kontur border-primary bg-primary/12 px-2 py-0.5 tabular-nums text-primary"
                   >
                     +{hiddenCount}
                   </span>
@@ -390,7 +398,7 @@ export function MultiSelect({
             strokeWidth={2}
             aria-hidden
             className={cn(
-              "mr-1 shrink-0 self-center text-on-surface-variant transition-transform",
+              "mr-1 shrink-0 self-center text-on-surface-mittel transition-transform",
               open && "rotate-180",
             )}
           />
@@ -406,14 +414,14 @@ export function MultiSelect({
         </div>
 
         {open && (
-          <div className="absolute z-50 mt-1 flex max-h-80 w-full flex-col overflow-hidden rounded-(--menu-shape) border border-outline-variant bg-(--menu-container) shadow-e4">
+          <div className="absolute z-50 mt-1 flex max-h-80 w-full flex-col overflow-hidden rounded-flaeche border border-linie bg-elev-08 shadow-dp-08">
             {searchable && (
-              <div className="flex shrink-0 items-center gap-2 border-b border-outline-variant px-3">
+              <div className="flex shrink-0 items-center gap-2 border-b border-linie px-3">
                 <Search
                   size={16}
                   strokeWidth={2}
                   aria-hidden
-                  className="shrink-0 text-on-surface-variant"
+                  className="shrink-0 text-on-surface-mittel"
                 />
                 <input
                   ref={searchRef}
@@ -428,7 +436,7 @@ export function MultiSelect({
                   placeholder="Suchen …"
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={onNavKey}
-                  className="type-body-medium h-10 w-full bg-transparent text-(--field-text) outline-none placeholder:text-(--field-label)"
+                  className="type-body-medium h-10 w-full bg-transparent text-on-surface outline-none placeholder:text-on-surface-mittel"
                 />
               </div>
             )}
@@ -442,7 +450,7 @@ export function MultiSelect({
               className="flex-1 overflow-auto py-1"
             >
               {filtered.length === 0 && (
-                <li className="type-body-medium px-3 py-2 text-on-surface-variant">
+                <li className="type-body-medium px-3 py-2 text-on-surface-mittel">
                   Keine Treffer
                 </li>
               )}
@@ -458,7 +466,7 @@ export function MultiSelect({
                     <li
                       id={gruppenId(kopf)}
                       role="presentation"
-                      className="px-3 pb-1 pt-2 type-label-small text-on-surface-variant"
+                      className="px-3 pb-1 pt-2 type-label-small text-on-surface-mittel"
                     >
                       {kopf}
                     </li>
@@ -478,18 +486,24 @@ export function MultiSelect({
                       refocus();
                     }}
                     className={cn(
-                      "type-body-medium flex cursor-pointer items-center gap-3 px-3 py-2 text-(--menu-label)",
-                      isActive && "bg-on-surface/8",
+                      // Der echte Fokus liegt im Suchfeld bzw. auf dem
+                      // Trigger, nicht auf der Zeile — die Tastatur-Aktivzeile
+                      // leiht sich darum die Fokus-Deckung der Zustands-Ebene
+                      // (`state-aktiv`), Hover kommt aus `state` selbst.
+                      "state type-body-medium flex cursor-pointer items-center gap-3 px-3 py-2 text-on-surface",
+                      isActive && "state-aktiv",
                     )}
                   >
-                    {/* Eckige KiFu-Checkbox: Signal-Fill + Chalk-Haken bei Auswahl. */}
+                    {/* Eckige Checkbox: gewählt füllt sie Primary und trägt den
+                        Haken in on-primary. Hier IST die Fläche die Aussage —
+                        ein Kästchen ohne Füllung wäre nur ein zweiter Rahmen. */}
                     <span
                       aria-hidden
                       className={cn(
-                        "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-[3px] border-[1.5px] transition-colors",
+                        "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-flaeche kontur transition-colors",
                         isSelected
                           ? "border-primary bg-primary text-on-primary"
-                          : "border-(--field-outline)",
+                          : "border-kante",
                       )}
                     >
                       {isSelected && <Check size={13} strokeWidth={3} />}
@@ -507,7 +521,7 @@ export function MultiSelect({
               // `title` den Hover-Hinweis — bewusst kein <Tooltip>, da das Panel
               // (overflow-hidden) den CSS-Tooltip ohne Portal abschneiden würde.
               // „Alle auswählen" bleibt primary getönt (CTA).
-              <div className="flex shrink-0 items-center justify-between border-t border-outline-variant px-2 py-1.5">
+              <div className="flex shrink-0 items-center justify-between border-t border-linie px-2 py-1.5">
                 <IconButton
                   icon={RotateCcw}
                   label="Zurücksetzen"
@@ -539,7 +553,7 @@ export function MultiSelect({
         <p
           className={cn(
             "type-body-small mt-1 px-1",
-            error ? "text-error" : "text-(--field-label)",
+            error ? "text-error" : "text-on-surface-mittel",
           )}
         >
           {supportingText}

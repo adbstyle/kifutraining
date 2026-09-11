@@ -26,7 +26,7 @@ export default async function KontoPage() {
       <header className="mb-8">
         <h1 className="type-headline-large text-on-surface">Dein Konto</h1>
         {user?.email && (
-          <p className="type-body-medium mt-2 text-on-surface-variant">
+          <p className="type-body-medium mt-2 text-on-surface-mittel">
             Angemeldet als <strong className="text-on-surface">{user.email}</strong>
           </p>
         )}
@@ -49,28 +49,28 @@ export default async function KontoPage() {
 
       <Link
         href="/?mine=1"
-        className="focus-ring group mb-4 flex items-center gap-4 rounded-[8px] border border-outline-variant bg-surface-container-low p-5 transition-colors hover:border-outline hover:bg-on-surface/5"
+        className="focus-ring state group mb-4 flex items-center gap-4 rounded-flaeche bg-elev-01 p-5"
       >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
           <Bookmark size={22} strokeWidth={2} aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
           <span className="type-title-medium block text-on-surface">Meine Übungen</span>
-          <span className="type-body-small block text-on-surface-variant">
+          <span className="type-body-small block text-on-surface-mittel">
             Deine eigenen Übungen — öffentliche und private Entwürfe.
           </span>
         </span>
         <ChevronRight
           size={20}
           strokeWidth={2}
-          className="shrink-0 text-on-surface-variant transition-transform group-hover:translate-x-0.5"
+          className="shrink-0 text-on-surface-mittel transition-transform group-hover:translate-x-0.5"
           aria-hidden
         />
       </Link>
 
       <Card className="p-6">
         <h2 className="type-title-large text-on-surface">Konto löschen</h2>
-        <p className="type-body-medium mt-2 text-on-surface-variant">
+        <p className="type-body-medium mt-2 text-on-surface-mittel">
           Wenn du die Plattform verlässt, bleiben deine öffentlich geteilten
           Übungen anonymisiert für andere erhalten. Deine privaten Entwürfe werden
           gelöscht.

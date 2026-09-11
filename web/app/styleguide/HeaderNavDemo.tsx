@@ -49,7 +49,7 @@ export function HeaderNavDemo() {
   const [snack, setSnack] = useState<string | null>(null);
 
   return (
-    <div className="overflow-hidden rounded-[6px] border border-outline-variant">
+    <div className="overflow-hidden rounded-flaeche border border-linie">
       {/* Im Styleguide in einem Rahmen gezeigt — in echt klebt der Header oben
           am Viewport. Die Suche feuert hier nur eine Snackbar (Demo). */}
       <Header
@@ -60,8 +60,8 @@ export function HeaderNavDemo() {
         cta={{ label: "Neue Übung", href: "/neu", icon: Plus }}
         className="!static"
       />
-      <div className="chalk-hatch relative grid h-64 place-items-center">
-        <span className="type-label-small text-on-surface-variant">Seiteninhalt</span>
+      <div className="schraffur relative grid h-64 place-items-center">
+        <span className="type-label-small text-on-surface-mittel">Seiteninhalt</span>
         <div className="absolute inset-x-0 bottom-4 flex justify-center">
           <Snackbar
             open={!!snack}

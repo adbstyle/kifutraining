@@ -20,14 +20,14 @@ export default async function TeamTrainingsPage({
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="type-title-large text-on-surface">
           Trainings
-          <span className="type-label-small ml-2 text-on-surface-variant">
+          <span className="type-label-small ml-2 text-on-surface-mittel">
             {trainings.length}
           </span>
         </h2>
         <TeamTrainingErstellenButton teamId={id} />
       </div>
       {trainings.length === 0 ? (
-        <p className="rounded-[6px] border border-outline-variant bg-surface-container-low px-5 py-8 text-center type-body-medium text-on-surface-variant">
+        <p className="kontur rounded-flaeche border-dashed border-kante bg-transparent px-5 py-8 text-center type-body-medium text-on-surface-mittel">
           Noch kein Training im Team. Erstelle eines hier oder stelle eine Kopie
           eines eigenen Trainings ins Team.
         </p>

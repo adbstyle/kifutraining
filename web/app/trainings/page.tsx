@@ -53,7 +53,7 @@ export default async function TrainingsPage({
             </ButtonLink>
           )}
         </div>
-        <p className="type-body-medium mt-2 max-w-2xl text-on-surface-variant">
+        <p className="type-body-medium mt-2 max-w-2xl text-on-surface-mittel">
           {mine
             ? "Deine eigenen Trainings, Entwürfe eingeschlossen. Team-Trainings findest du im jeweiligen Team."
             : user
@@ -92,7 +92,7 @@ export default async function TrainingsPage({
         />
       ) : (
         <>
-          <p className="type-label-small mb-4 text-on-surface-variant">
+          <p className="type-label-small mb-4 text-on-surface-mittel">
             {trainings.length} {trainings.length === 1 ? "Training" : "Trainings"}
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -117,9 +117,9 @@ export default async function TrainingsPage({
       )}
 
       {!user && (
-        <div className="mt-8 flex items-center gap-3 rounded-[4px] border border-outline-variant bg-surface-container-low px-4 py-3">
+        <div className="mt-8 flex items-center gap-3 rounded-flaeche bg-elev-01 px-4 py-3">
           <Sparkles size={18} className="shrink-0 text-primary" aria-hidden />
-          <p className="type-body-small text-on-surface-variant">
+          <p className="type-body-small text-on-surface-mittel">
             Mit einem Konto kannst du eigene Trainings erstellen und
             verwalten.{" "}
             <Link href="/login" className="text-primary underline">
@@ -142,7 +142,7 @@ function EmptyState({
   text: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-[6px] border border-outline-variant bg-surface-container-low px-6 py-16 text-center text-on-surface-variant">
+    <div className="kontur flex flex-col items-center gap-3 rounded-flaeche border-dashed border-kante bg-transparent px-6 py-16 text-center text-on-surface-mittel">
       {icon}
       <p className="type-title-medium text-on-surface">{title}</p>
       <p className="type-body-medium max-w-sm">{text}</p>

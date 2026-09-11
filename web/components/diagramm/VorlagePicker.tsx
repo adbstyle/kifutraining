@@ -96,7 +96,7 @@ export function VorlagePicker({
         className="w-[min(48rem,calc(100vw-2rem))]"
       >
         {fehler && (
-          <p className="type-body-small mb-4 rounded-[4px] border border-error/40 bg-error/10 p-3 text-on-surface">
+          <p className="type-body-small kontur mb-4 rounded-flaeche border-error bg-transparent p-3 text-error">
             {fehler}
           </p>
         )}
@@ -108,7 +108,7 @@ export function VorlagePicker({
           className="mb-4"
         />
         {gefiltert.length === 0 ? (
-          <p className="py-6 text-center text-on-surface-variant">
+          <p className="py-6 text-center text-on-surface-mittel">
             Keine Vorlage gefunden.
           </p>
         ) : (
@@ -122,12 +122,12 @@ export function VorlagePicker({
                     type="button"
                     onClick={() => waehlen(vorlage)}
                     disabled={busy}
-                    className="focus-ring block w-full overflow-hidden rounded-[6px] border border-outline-variant text-left transition-colors hover:border-on-surface/45 disabled:opacity-50"
+                    className="focus-ring state block w-full overflow-hidden rounded-flaeche border border-linie text-left disabled:opacity-50"
                   >
-                    <span className="block aspect-[16/10] w-full border-b border-outline-variant">
+                    <span className="block aspect-[16/10] w-full border-b border-linie">
                       <DiagrammView diagramm={data} title={`Vorlage: ${vorlage.name}`} />
                     </span>
-                    <span className="type-label-small block truncate p-2 text-on-surface-variant">
+                    <span className="type-label-small block truncate p-2 text-on-surface-mittel">
                       {vorlage.name}
                     </span>
                   </button>

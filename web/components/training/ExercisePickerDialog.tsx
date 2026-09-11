@@ -200,11 +200,13 @@ export function ExercisePickerDialog({
           <Badge tone="neutral">{altersstufeLabels[altersstufe]}</Badge>
         </div>
 
-        {/* Suche */}
+        {/* Suche. Offen statt gefüllt: Das Feld liegt im Dialog, und eine
+            eigene Fläche darunter ginge in der Höhenleiter abwärts — die
+            Kontur umreisst es, der Dialoggrund bleibt stehen. */}
         <label className="relative block">
           <Search
             size={18}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-mittel"
             aria-hidden
           />
           <input
@@ -213,7 +215,7 @@ export function ExercisePickerDialog({
             onChange={(e) => setQ(e.target.value)}
             placeholder="Übungen durchsuchen…"
             aria-label="Übungen durchsuchen"
-            className="focus-ring w-full rounded-[4px] border-[1.5px] border-outline bg-surface-container-low py-2.5 pl-10 pr-3 type-body-medium text-on-surface placeholder:text-on-surface-variant"
+            className="focus-ring w-full rounded-flaeche kontur border-kante bg-transparent py-2.5 pl-10 pr-3 type-body-medium text-on-surface placeholder:text-on-surface-mittel"
           />
         </label>
 
@@ -253,7 +255,7 @@ export function ExercisePickerDialog({
         {error && (
           <p
             role="alert"
-            className="rounded-[4px] bg-error/10 px-3 py-2 type-label-medium text-error"
+            className="kontur rounded-flaeche border-error bg-transparent px-3 py-2 type-label-medium text-error"
           >
             {error}
           </p>
@@ -262,11 +264,11 @@ export function ExercisePickerDialog({
         {/* Trefferliste */}
         <ul className="-mx-2 max-h-[min(24rem,50vh)] overflow-y-auto">
           {loading && results.length === 0 ? (
-            <li className="px-2 py-6 text-center type-body-medium text-on-surface-variant">
+            <li className="px-2 py-6 text-center type-body-medium text-on-surface-mittel">
               Lädt…
             </li>
           ) : results.length === 0 ? (
-            <li className="flex flex-col items-center gap-3 px-2 py-6 text-center type-body-medium text-on-surface-variant">
+            <li className="flex flex-col items-center gap-3 px-2 py-6 text-center type-body-medium text-on-surface-mittel">
               {filterAktiv ? (
                 // Eingegrenzt: es gibt hier etwas, nur nicht das Gesuchte.
                 "Keine passende Übung gefunden."
@@ -284,7 +286,7 @@ export function ExercisePickerDialog({
                   </span>
                   <Link
                     href={`/neu?stufe=${altersstufe}&teil=${trainingsteil}`}
-                    className="focus-ring inline-flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 type-label-large text-primary transition-colors hover:bg-primary/10"
+                    className="state focus-ring inline-flex items-center gap-1.5 rounded-flaeche px-3 py-1.5 type-label-large text-primary"
                   >
                     <Plus size={18} strokeWidth={2} aria-hidden />
                     Übung erfassen
@@ -299,7 +301,7 @@ export function ExercisePickerDialog({
               return (
                 <li
                   key={ex.id}
-                  className="flex items-center gap-2 rounded-[4px] px-2 transition-colors hover:bg-on-surface/8"
+                  className="state flex items-center gap-2 rounded-flaeche px-2"
                 >
                   <span className="flex min-w-0 flex-1 flex-col gap-1 py-2.5">
                     <span className="flex items-center gap-2">
@@ -309,7 +311,7 @@ export function ExercisePickerDialog({
                       {mismatch && (
                         <TriangleAlert
                           size={14}
-                          className="shrink-0 text-signal"
+                          className="shrink-0 text-primary"
                           aria-label="Deckt keine der Trainings-Stufen ab"
                         />
                       )}
@@ -327,7 +329,7 @@ export function ExercisePickerDialog({
                     {count > 0 && (
                       <span
                         aria-hidden
-                        className="inline-flex h-6 min-w-[1.75rem] items-center justify-center rounded-full bg-primary px-1.5 type-label-medium font-semibold leading-none text-on-primary"
+                        className="inline-flex h-6 min-w-[1.75rem] items-center justify-center rounded-full bg-primary px-1.5 type-plakette text-on-primary"
                       >
                         {count}×
                       </span>

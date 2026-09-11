@@ -26,7 +26,7 @@ export function RegisterForm() {
       <div className="flex flex-col items-center gap-3 text-center">
         <MailCheck size={40} strokeWidth={1.5} className="text-primary" aria-hidden />
         <h2 className="type-title-large text-on-surface">Fast geschafft</h2>
-        <p className="type-body-medium text-on-surface-variant">
+        <p className="type-body-medium text-on-surface-mittel">
           Wir haben einen Bestätigungslink an{" "}
           <strong className="text-on-surface">{state.email}</strong> geschickt.
           Öffne ihn, um deine Registrierung abzuschliessen.

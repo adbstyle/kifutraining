@@ -9,10 +9,13 @@ export interface TextAreaProps
   error?: boolean;
 }
 
-/* M3 Text-Area (outlined, mehrzeilig) — natives <textarea>: Enter = Zeilenumbruch.
+/* M2 Text-Area (outlined, mehrzeilig) — natives <textarea>: Enter = Zeilenumbruch.
    Wächst mit dem Inhalt (CSS field-sizing) bis max. ~10 Zeilen, danach scrollt es.
-   Schwebendes Label (top-aligned), Supporting-Text + Error-State. Gespeist aus
-   --field-*-Component-Tokens. */
+   Schwebendes Label (top-aligned), Supporting-Text + Error-State. Kontur und
+   Label folgen dem TextField, inklusive `--feld-grund`: Das schwebende Label
+   stanzt die Kontur aus und braucht die Farbe der Fläche dahinter — der
+   Grund (00dp) als Vorgabe; Card, Unterblock, Übungszeile und Dialog setzen
+   ihre Stufe selbst (`[--feld-grund:var(--color-elev-NN)]`). */
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
   (
     { label, supportingText, error = false, id, className, rows = 3, ...props },
@@ -35,22 +38,20 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
             placeholder=" "
             className={cn(
               // field-sizing-content: wächst mit Inhalt; min ~3 Zeilen, max-h-[17rem] ≈ 10 Zeilen + Padding, dann Scroll.
-              "peer type-body-large field-sizing-content block min-h-[6.5rem] max-h-[17rem] w-full resize-none overflow-y-auto rounded-(--field-shape) border-[1.5px] bg-transparent px-4 pb-3 pt-5 text-(--field-text) outline-none transition-[border-color] duration-150 focus:border-2",
-              error
-                ? "border-(--field-error)"
-                : "border-(--field-outline) focus:border-(--field-focus)",
+              "peer type-body-large field-sizing-content block min-h-[6.5rem] max-h-[17rem] w-full resize-none overflow-y-auto rounded-flaeche kontur bg-transparent px-4 pb-3 pt-5 text-on-surface outline-none transition-[border-color] duration-150 focus:border-2",
+              error ? "border-error" : "border-kante focus:border-primary",
             )}
             {...props}
           />
           <label
             htmlFor={fid}
             className={cn(
-              "pointer-events-none absolute left-3 top-4 bg-surface px-1 font-mono text-xs uppercase tracking-wider transition-all duration-150",
-              "peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px]",
-              "peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px]",
+              "pointer-events-none absolute left-3 top-4 type-label-small bg-(--feld-grund,var(--color-elev-00)) px-1 transition-all duration-150",
+              "peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:type-plakette",
+              "peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:type-plakette",
               error
-                ? "text-(--field-error)"
-                : "text-(--field-label) peer-focus:text-(--field-focus)",
+                ? "text-error"
+                : "text-on-surface-mittel peer-focus:text-primary",
             )}
           >
             {label}
@@ -60,7 +61,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           <p
             className={cn(
               "type-body-small mt-1 px-4",
-              error ? "text-(--field-error)" : "text-(--field-label)",
+              error ? "text-error" : "text-on-surface-mittel",
             )}
           >
             {supportingText}

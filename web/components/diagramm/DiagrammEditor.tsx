@@ -261,9 +261,9 @@ function GlyphKachel({ label, element, active = false, disabled = false, onClick
         disabled={disabled}
         onClick={onClick}
         className={cn(
-          "focus-ring flex size-12 items-center justify-center overflow-hidden rounded-[6px] border transition-colors",
-          active ? "border-primary ring-1 ring-primary" : "border-outline-variant hover:border-outline",
-          disabled && "cursor-not-allowed opacity-40 hover:border-outline-variant",
+          "focus-ring state kontur flex size-12 items-center justify-center overflow-hidden rounded-flaeche",
+          active ? "border-primary" : "border-kante",
+          disabled && "cursor-not-allowed opacity-40",
         )}
       >
         <GlyphVorschau element={element} groesse={40} />
@@ -1004,7 +1004,7 @@ export function DiagrammEditor({
           </div>
         </div>
         <h1 className="type-headline-large text-on-surface">Feld-Diagramm</h1>
-        <p className="type-body-medium mt-2 text-on-surface-variant">
+        <p className="type-body-medium mt-2 text-on-surface-mittel">
           {name} — Elemente platzieren, verschieben, in der Form anpassen und
           entfernen. Mehrere Elemente lassen sich per Auswahlrahmen oder
           Umschalt-Klick gemeinsam verschieben, kopieren und löschen. Änderungen
@@ -1019,7 +1019,7 @@ export function DiagrammEditor({
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Elemente, Bewegungen, Formen und Text">
         {gruppen.map((gruppe, gi) => (
           <Fragment key={gi}>
-            {gi > 0 && <span aria-hidden className="h-10 w-px shrink-0 self-center bg-outline-variant" />}
+            {gi > 0 && <span aria-hidden className="h-10 w-px shrink-0 self-center bg-linie" />}
             <div className="flex shrink-0 items-center gap-1.5">
               {gruppe.map(({ key, ...rest }) => (
                 <GlyphKachel key={key} {...rest} />
@@ -1032,7 +1032,7 @@ export function DiagrammEditor({
       {/* Zeichen-Steuerung — nur sichtbar, während ein Pfad/Polygon gezeichnet wird. */}
       {zeichnen && (
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Zeichnen">
-          <span className="type-body-small text-on-surface-variant" data-testid="zeichnen-hinweis">
+          <span className="type-body-small text-on-surface-mittel" data-testid="zeichnen-hinweis">
             {zeichnen.werkzeug === "pass"
               ? "Start und Ziel anklicken."
               : zeichnen.werkzeug === "polygon"
@@ -1061,7 +1061,7 @@ export function DiagrammEditor({
           Element (ElementLeiste), nicht mehr als Zeilen darüber (#65). */}
       <div
         ref={wrapRef}
-        className="relative overflow-hidden rounded-[6px] border border-outline-variant focus-ring"
+        className="relative overflow-hidden rounded-flaeche border border-linie focus-ring"
         tabIndex={0}
         role="application"
         aria-label="Zeichenfläche für das Feld-Diagramm"
@@ -1278,7 +1278,7 @@ export function DiagrammEditor({
       </div>
 
       <p
-        className={`type-body-small ${status === "fehler" ? "text-error" : "text-on-surface-variant"}`}
+        className={`type-body-small ${status === "fehler" ? "text-error" : "text-on-surface-mittel"}`}
         role="status"
         data-testid="autosave-status"
       >
@@ -1493,7 +1493,7 @@ const ElementLeiste = forwardRef<
       // als die Zeichenfläche: die Leiste bricht um, statt über den Rand zu
       // ragen. Die Positionierung misst die tatsächliche Höhe und verankert
       // auch die umgebrochene Leiste am Element.
-      className="absolute z-20 flex max-w-[calc(100%-1.25rem)] flex-wrap items-center justify-center gap-1 rounded-[6px] border border-outline-variant bg-surface-container-high px-1.5 py-1 shadow-e4"
+      className="absolute z-20 flex max-w-[calc(100%-1.25rem)] flex-wrap items-center justify-center gap-1 rounded-flaeche border border-linie bg-elev-08 px-1.5 py-1 shadow-dp-08"
       style={{
         left: pos?.left ?? -9999,
         top: pos?.top ?? 0,
@@ -1528,10 +1528,10 @@ const ElementLeiste = forwardRef<
                 onClick={() => onPose(p)}
                 aria-label={`Pose ${p}`}
                 aria-pressed={aktiv}
-                className={`focus-ring rounded-[4px] border p-0.5 ${
+                className={`focus-ring rounded-flaeche border p-0.5 ${
                   aktiv
-                    ? "border-on-surface bg-surface-container-highest"
-                    : "border-outline-variant"
+                    ? "border-on-surface bg-elev-08"
+                    : "border-linie"
                 }`}
               >
                 <GlyphVorschau element={{ ...element, pose: p }} groesse={28} />
@@ -1564,7 +1564,7 @@ const ElementLeiste = forwardRef<
                 aria-label={`Farbe ${slug}`}
                 aria-pressed={aktiv}
                 className={`focus-ring h-6 w-6 rounded-full border-2 ${
-                  aktiv ? "border-on-surface" : "border-outline-variant"
+                  aktiv ? "border-on-surface" : "border-linie"
                 }`}
                 style={{ backgroundColor: FARBEN[slug] }}
               />
@@ -1612,7 +1612,7 @@ const ElementLeiste = forwardRef<
         />
       )}
 
-      {hatEigenschaften && <span aria-hidden className="mx-0.5 h-5 w-px bg-outline-variant" />}
+      {hatEigenschaften && <span aria-hidden className="mx-0.5 h-5 w-px bg-linie" />}
 
       <IconButton
         icon={Copy}
@@ -1625,7 +1625,7 @@ const ElementLeiste = forwardRef<
         label="Ausgewähltes Element entfernen"
         size="sm"
         onClick={onEntfernen}
-        className="text-error hover:text-error"
+        className="text-error"
       />
     </div>
   );
@@ -1650,15 +1650,15 @@ const MehrfachLeiste = forwardRef<
       role="toolbar"
       aria-label={`Optionen für ${anzahl} ausgewählte Elemente`}
       data-testid="mehrfach-leiste"
-      className="absolute z-20 flex items-center gap-1 rounded-[6px] border border-outline-variant bg-surface-container-high px-1.5 py-1 shadow-e4"
+      className="absolute z-20 flex items-center gap-1 rounded-flaeche border border-linie bg-elev-08 px-1.5 py-1 shadow-dp-08"
       style={{
         left: pos?.left ?? -9999,
         top: pos?.top ?? 0,
         visibility: pos ? "visible" : "hidden",
       }}
     >
-      <span className="type-label-medium px-1 text-on-surface-variant">{anzahl} ausgewählt</span>
-      <span aria-hidden className="mx-0.5 h-5 w-px bg-outline-variant" />
+      <span className="type-label-medium px-1 text-on-surface-mittel">{anzahl} ausgewählt</span>
+      <span aria-hidden className="mx-0.5 h-5 w-px bg-linie" />
       <IconButton
         icon={Copy}
         label="Ausgewählte Elemente kopieren"
@@ -1670,7 +1670,7 @@ const MehrfachLeiste = forwardRef<
         label="Ausgewählte Elemente entfernen"
         size="sm"
         onClick={onEntfernen}
-        className="text-error hover:text-error"
+        className="text-error"
       />
     </div>
   );
@@ -1711,7 +1711,9 @@ function TextEingabe({
           onCancel();
         }
       }}
-      className="absolute z-30 rounded-[5px] border-[1.5px] border-primary bg-white text-center text-[#212121] outline-none"
+      // Weiss auf Dunkelgrau: die Eingabe imitiert die Textbox auf dem Rasen,
+      // nicht die Oberfläche der App — sie liegt im Bild und nicht darüber.
+      className="absolute z-30 rounded-flaeche kontur border-primary bg-white text-center text-[#212121] outline-none"
       style={{
         left: box.x * scale,
         top: box.y * scale,

@@ -26,7 +26,7 @@ export function ForgotPasswordForm() {
       <div className="flex flex-col items-center gap-3 text-center">
         <MailCheck size={40} strokeWidth={1.5} className="text-primary" aria-hidden />
         <h2 className="type-title-large text-on-surface">E-Mail unterwegs</h2>
-        <p className="type-body-medium text-on-surface-variant">
+        <p className="type-body-medium text-on-surface-mittel">
           Falls ein Konto zu <strong className="text-on-surface">{state.email}</strong>{" "}
           existiert, haben wir einen Link zum Zurücksetzen geschickt.
         </p>

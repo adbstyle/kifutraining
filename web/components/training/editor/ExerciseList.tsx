@@ -55,12 +55,12 @@ export function ExerciseList({
     // bloss begründet. Das Icon trägt das Signal — ohne Farbwahrnehmung bleibt
     // der Hinweis vom neutralen Leerzustand unterscheidbar (NFR 4).
     return leerHinweis ? (
-      <p className="flex items-start gap-2 type-body-small text-on-surface-variant">
-        <Info size={15} className="mt-0.5 shrink-0 text-signal" aria-hidden />
+      <p className="flex items-start gap-2 type-body-small text-on-surface-mittel">
+        <Info size={15} className="mt-0.5 shrink-0 text-primary" aria-hidden />
         {leerHinweis}
       </p>
     ) : (
-      <p className="type-body-small text-on-surface-variant">
+      <p className="type-body-small text-on-surface-mittel">
         Noch keine Übung zugeordnet.
       </p>
     );

@@ -94,7 +94,7 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
 
           <div>
             <p className="mb-2 type-label-large text-on-surface">Alterskategorien</p>
-            <p className="mb-3 type-body-small text-on-surface-variant">
+            <p className="mb-3 type-body-small text-on-surface-mittel">
               {altersstufe
                 ? "Mindestens eine ist nötig; ihr könnt die Auswahl später jederzeit ändern."
                 : "Wähle zuerst die Altersstufe — sie bestimmt, welche Alterskategorien es hier gibt."}

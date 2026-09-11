@@ -1,214 +1,162 @@
 @import "tailwindcss";
 
 /* ───────────────────────────────────────────────────────────
-   KiFu — Designsystem "Taktik-Editorial"
-   Chalk-Lines auf Rasen-Dunkelgrün, Signalorange als einziger
-   warmer Akzent. Hoher Kontrast für den Spielfeldrand.
+   KiFu — Material 2 Dark
+   Eine einzige Fläche (#101613, entsättigtes Rasengrün) trägt die
+   ganze App; Höhe entsteht nicht durch eine zweite Farbe, sondern
+   durch ein weisses Overlay auf derselben Fläche. Akzent ist
+   Primary #bb86fc — Material 2 Baseline, im Dunkeln hell genug,
+   um Text zu tragen. Farbe umrandet und beschriftet, sie füllt
+   nur dort, wo eine Fläche wirklich gemeint ist.
    ─────────────────────────────────────────────────────────── */
 
 @theme {
-  /* Rasen — dunkelgrüne Flächen (Hintergrund, Panels) */
-  --color-rasen-950: #0a1f15;
-  --color-rasen-900: #0f2a1d;
-  --color-rasen-850: #133523;
-  --color-rasen-800: #163a29;
-  --color-rasen-700: #1e4d37;
-  --color-rasen-600: #2a6347;
+  /* ─── Höhe: Grund + weisses Overlay, vorab verrechnet ───
+     Literale Hex-Werte, keine Rechnung zur Laufzeit — so kann
+     `scripts/check-kontrast.ts` die Palette per Regex mitlesen. */
+  --color-elev-00: #101613; /* 0 % */
+  --color-elev-01: #1c221f; /* 5 % */
+  --color-elev-02: #212624; /* 7 % */
+  --color-elev-03: #232926; /* 8 % */
+  --color-elev-04: #262b28; /* 9 % */
+  --color-elev-06: #2a302d; /* 11 % */
+  --color-elev-08: #2d322f; /* 12 % */
+  --color-elev-12: #313734; /* 14 % */
+  --color-elev-16: #343936; /* 15 % */
+  --color-elev-24: #363b39; /* 16 % */
 
-  /* Chalk — Kreide-Weiss (Text, Linien) */
-  --color-chalk: #f4f1e8;
-  --color-chalk-dim: #b9bcae;
-  --color-chalk-faint: #7f8a7a;
+  /* ─── Akzente ─── */
+  --color-primary: #bb86fc;
+  --color-on-primary: #000000;
+  /* Secondary hält die Rolle der Material-2-Baseline besetzt, damit die
+     Palette vollständig bleibt — angewandt wird sie NIRGENDS. Ein zweiter
+     Akzent würde neben Primary nur konkurrieren, ohne etwas zu benennen. */
+  --color-secondary: #03dac6;
+  --color-on-secondary: #000000;
+  --color-error: #cf6679;
+  --color-on-error: #000000;
+  --color-scrim: #000000;
 
-  /* Signal — der einzige warme Akzent (CTAs, aktiver Zustand) */
-  --color-signal: #ff5722;
-  --color-signal-bright: #ff6e40;
-  --color-signal-dark: #c43e15;
+  /* ─── Schrift und Striche: Weiss in vier Deckungen ───
+     Hex8 statt eigener Grautöne — so trägt jede Höhenstufe denselben
+     Text, ohne dass er pro Fläche neu gemischt werden müsste. */
+  --color-on-surface: #ffffff; /* 100 % */
+  --color-on-surface-mittel: #ffffffbd; /* 74 % */
+  /* 38 % reicht auf 00dp nur für 3.6:1 — darum ausschliesslich für
+     Deaktiviertes, wo Material den Kontrast bewusst preisgibt. */
+  --color-on-surface-tief: #ffffff61; /* 38 % */
+  --color-linie: #ffffff1f; /* 12 % — Trenner und Haarlinie, 1 px */
+  --color-kante: #ffffff47; /* 28 % — Kontur von Feld, Chip, Knopf, 1.5 px */
 
-  /* Alterskategorien — fest lernbare, distinkte Farben (nie nur Farbe).
-     G/F/E Kinderfussball, D/C/B/A Juniorenfussball (Epic #71). Alle hell
-     genug für rasen-950 als Schrift; der Buchstabe trägt die Unterscheidung
-     mit, Farbe allein reicht bei sieben Werten nicht. */
+  /* ─── Alterskategorien — fest lernbare, distinkte Farben (nie nur Farbe).
+     G/F/E Kinderfussball, D/C/B/A Juniorenfussball (Epic #71). Sie stehen
+     als Kontur und Schrift, nie als Fläche — gefüllt wären sieben Werte
+     nebeneinander ein Flickenteppich, und der Buchstabe trägt die
+     Unterscheidung ohnehin mit. Einzige Ausnahme ist der Druck. ─── */
   --color-kat-g: #5eb3f5;
   --color-kat-f: #e6c044;
-  --color-kat-e: #c084fc;
+  --color-kat-e: #ff8a65;
   --color-kat-d: #5ee0a0;
   --color-kat-c: #f48fb1;
   --color-kat-b: #a5b4fc;
   --color-kat-a: #cfd8dc;
 
-  /* ─── M3 Color Roles (Ebene 2 — zeigen auf Primitives, Dark-Scheme) ─── */
-  /* Primary — Signal bleibt der einzige warme Hue */
-  --color-primary: var(--color-signal);
-  --color-on-primary: var(--color-rasen-950);
-  --color-primary-container: var(--color-signal-dark);
-  --color-on-primary-container: var(--color-chalk);
+  /* ─── Zustände: Deckung der Overlay-Ebene (siehe @utility state) ─── */
+  --state-hover: 0.04;
+  --state-focus: 0.12;
+  --state-pressed: 0.10;
+  --state-dragged: 0.08;
 
-  /* Secondary — bewusst low-chroma (kein zweiter Hue) */
-  --color-secondary: var(--color-chalk-dim);
-  --color-on-secondary: var(--color-rasen-950);
-  --color-secondary-container: var(--color-rasen-700);
-  --color-on-secondary-container: var(--color-chalk);
+  /* ─── Radien: eckig für alles, was Inhalt hält; voll gerundet für
+     alles, was man antippt und wieder loslässt (Chips → rounded-full). ─── */
+  --radius-plakette: 2px;
+  --radius-flaeche: 4px;
+  --radius-dialog: 6px;
 
-  /* Error */
-  --color-error: #f87171;
-  --color-on-error: var(--color-rasen-950);
-  --color-error-container: #5c1d18;
-  --color-on-error-container: #fecaca;
+  /* ─── Schatten — nur wo etwas wirklich schwebt. Im Dunkeln trägt die
+     Helligkeit die Höhe, der Schatten trennt bloss das Schwebende vom
+     Grund darunter. ─── */
+  --shadow-dp-04: 0 4px 12px rgb(0 0 0 / 0.5);
+  --shadow-dp-06: 0 4px 12px rgb(0 0 0 / 0.55);
+  --shadow-dp-08: 0 4px 12px rgb(0 0 0 / 0.6);
+  --shadow-dp-24: 0 8px 24px rgb(0 0 0 / 0.6);
 
-  /* Warning — Bernstein. Der nicht-blockierende Hinweis: etwas stimmt nicht,
-     lässt sich aber speichern (z. B. eine Gruppe, die zwei Übungen im selben
-     Durchgang belegt). Error bleibt dem vorbehalten, was die Eingabe abweist.
-     REGEL: Warning erscheint als Rahmen, Text und Icon — NIE als Fläche.
-     Grund: kat-f (#e6c044) ist ebenfalls gelb, Kontrast zwischen beiden nur
-     1.06:1. Als Füllung neben einer Kategorie-Plakette wären sie nicht zu
-     unterscheiden; als Kontur gegen gefüllte Plakette trennt die Form. */
-  --color-warning: #f0b429;
-  --color-on-warning: var(--color-rasen-950);
-
-  /* Surface-Familie — die Rasen-Leiter IST die M3 Elevation-Leiter */
-  --color-surface: var(--color-rasen-950);
-  --color-surface-dim: #07160f; /* bewusst gleich wie surface-container-lowest auf dieser Palette-Stufe */
-  --color-surface-bright: var(--color-rasen-800);
-  --color-surface-container-lowest: #07160f; /* bewusst gleich wie surface-dim auf dieser Palette-Stufe */
-  --color-surface-container-low: var(--color-rasen-900);
-  --color-surface-container: var(--color-rasen-850);
-  --color-surface-container-high: var(--color-rasen-800);
-  --color-surface-container-highest: var(--color-rasen-700);
-  --color-on-surface: var(--color-chalk);
-  --color-on-surface-variant: var(--color-chalk-dim);
-
-  /* Outline (= chalk-border-Anmutung) */
-  --color-outline: color-mix(in oklab, var(--color-chalk) 28%, transparent);
-  --color-outline-variant: color-mix(in oklab, var(--color-chalk) 12%, transparent);
-
-  /* Inverse / Overlay */
-  --color-inverse-surface: var(--color-chalk);
-  --color-inverse-on-surface: var(--color-rasen-950);
-  --color-inverse-primary: var(--color-signal-dark);
-  --color-scrim: #000000;
-  --color-shadow: #000000;
-
-  /* ─── Elevation (Dark): Höhe primär über Surface-Container; Schatten ab L3.
-     Konvention: Level N = bg-surface-container-* (siehe Spec §3) + shadow-eN.
-     Ausnahme: Primary-CTA nutzt den Signatur-Schatten, NICHT diese Tokens. ─── */
-  --shadow-e1: none;
-  --shadow-e2: none;
-  --shadow-e3: 0 2px 6px color-mix(in oklab, var(--color-scrim) 40%, transparent);
-  --shadow-e4: 0 4px 12px color-mix(in oklab, var(--color-scrim) 50%, transparent);
-  --shadow-e5: 0 8px 24px color-mix(in oklab, var(--color-scrim) 60%, transparent);
-
-  /* State-Layers (M3-Opazitäten) — in Komponenten via Opacity-Utilities:
-     hover  → bg-on-surface/8   (auf aktiven Elementen: bg-primary/8)
-     focus  → bg-on-surface/10
-     pressed→ bg-on-surface/10  */
-
-  /* ─── Button Component-Tokens (M3-Stil: zeigen auf System-Rollen; analog
-     md.comp.*-button.*). Hover-Container = State-Layer vorab eingerechnet.
-     Shape bewusst KiFu-eckig (3px) statt M3-Stadium. ─── */
-  --button-shape: 3px;
-
-  --button-filled-container: var(--color-primary);
-  /* M3 State-Layer: 8 % on-primary über dem Container (kein Helligkeitswechsel) */
-  --button-filled-container-hover: color-mix(in oklab, var(--color-on-primary) 8%, var(--color-primary));
-  --button-filled-label: var(--color-on-primary);
-
-  --button-tonal-container: var(--color-secondary-container);
-  --button-tonal-container-hover: color-mix(in oklab, var(--color-on-secondary-container) 8%, var(--color-secondary-container));
-  --button-tonal-label: var(--color-on-secondary-container);
-
-  --button-elevated-container: var(--color-surface-container-low);
-  --button-elevated-container-hover: color-mix(in oklab, var(--color-on-surface) 8%, var(--color-surface-container-low));
-  --button-elevated-label: var(--color-primary);
-
-  --button-outlined-label: var(--color-on-surface);
-  --button-outlined-outline: var(--color-outline);
-
-  --button-text-label: var(--color-primary);
-
-  --button-danger-label: var(--color-error);
-  --button-danger-outline: color-mix(in oklab, var(--color-error) 40%, transparent);
-
-  /* ─── Chip Component-Tokens (M3-Stil; Assist/Filter/Input/Suggestion).
-     Shape KiFu-pill (Kontrast zu den eckigen Buttons). ─── */
-  --chip-shape: 9999px;
-  --chip-outline: var(--color-outline);
-  --chip-label: var(--color-on-surface-variant);
-  --chip-selected-container: var(--color-secondary-container);
-  --chip-selected-label: var(--color-on-secondary-container);
-  --chip-elevated-container: var(--color-surface-container-low);
-
-  /* ─── Navigations-Component-Tokens (M3-Stil). Aktives Ziel: Indicator-
-     Pille (secondary-container) hinter dem Header-Link. ─── */
-  --nav-indicator: var(--color-secondary-container);
-  --nav-item-active-label: var(--color-on-surface);
-
-  /* ─── Text-Field Component-Tokens (M3-Stil, outlined). Shape KiFu-eckig. ─── */
-  --field-shape: 3px;
-  --field-outline: var(--color-outline);
-  --field-label: var(--color-on-surface-variant);
-  --field-text: var(--color-on-surface);
-  --field-focus: var(--color-primary);
-  --field-error: var(--color-error);
-
-  /* ─── Menu Component-Tokens (M3-Stil). ─── */
-  --menu-shape: 4px;
-  --menu-container: var(--color-surface-container);
-  --menu-label: var(--color-on-surface);
-  --menu-leading: var(--color-on-surface-variant);
-
-  /* ─── Dialog Component-Tokens (M3-Stil). ─── */
-  --dialog-shape: 6px;
-  --dialog-container: var(--color-surface-container-high);
-  --dialog-headline: var(--color-on-surface);
-  --dialog-text: var(--color-on-surface-variant);
-
-  /* ─── Snackbar Component-Tokens (M3-Stil: Inverse-Farben für Kontrast). ─── */
-  --snackbar-shape: 4px;
-  --snackbar-container: var(--color-inverse-surface);
-  --snackbar-label: var(--color-inverse-on-surface);
-  --snackbar-action: var(--color-inverse-primary);
-
-  /* ─── Breadcrumb Component-Tokens. Sekundär-Navigation: ruhige Links in
-     on-surface-variant, aktuelle Seite trägt das Gewicht (on-surface).
-     Separator als Kreide-Strich in outline. ─── */
-  --breadcrumb-label: var(--color-on-surface-variant);
-  --breadcrumb-label-hover: var(--color-on-surface);
-  --breadcrumb-current: var(--color-on-surface);
-  --breadcrumb-separator: var(--color-outline);
-
-  /* Typografie */
-  --font-display: var(--font-anton), "Arial Narrow", sans-serif;
-  --font-body: var(--font-source), Georgia, serif;
-  --font-mono: var(--font-space-mono), ui-monospace, monospace;
+  /* ─── Schrift: eine Familie für alles Gelesene, ihre Schwester für
+     alles Gezählte. ─── */
+  --font-sans: var(--font-geist), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-/* Kreide-Rahmen: leicht transluzente Linie, taktiktafel-Anmutung */
-@utility chalk-border {
-  border: 1.5px solid color-mix(in oklab, var(--color-chalk) 28%, transparent);
+/* ─── Zustands-Ebene ──────────────────────────────────────────────────
+   Halbtransparent in der Farbe des Inhalts und ÜBER dem Text statt
+   darunter. Das klingt verkehrt, ist aber der Grund, warum die Ebene
+   nie schadet: Overlay-Farbe == Textfarbe, also kann sie den Kontrast
+   des Textes rechnerisch nicht senken — sie hellt Fläche und Schrift
+   im selben Ton auf. Und weil nichts untergeschoben werden muss,
+   erspart sie jede z-index-Buchhaltung im Inhalt.
+   Gehört in die BASIS-Bündel (Button, Chip, IconButton, Menüzeile,
+   Nav-Link), nicht an die Aufrufstellen. */
+@utility state {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--state-color, currentColor);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms;
+  }
+  &:hover::after {
+    opacity: var(--state-hover);
+  }
+  &:focus-visible::after {
+    opacity: var(--state-focus);
+  }
+  &:active::after {
+    opacity: var(--state-pressed);
+  }
+  &[data-dragging]::after {
+    opacity: var(--state-dragged);
+  }
+  &:disabled::after,
+  &[aria-disabled="true"]::after {
+    opacity: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      transition: none;
+    }
+  }
 }
 
-/* Diagramm-Platzhalter: gekreuzte Kreide-Schraffur */
-@utility chalk-hatch {
-  background-image: repeating-linear-gradient(
-    45deg,
-    color-mix(in oklab, var(--color-chalk) 7%, transparent) 0,
-    color-mix(in oklab, var(--color-chalk) 7%, transparent) 1px,
-    transparent 1px,
-    transparent 10px
-  );
+/* Aktiver IconButton: die Ebene färbt sich mit dem Zeichen ein. */
+@utility state-primary {
+  --state-color: var(--color-primary);
+}
+
+/* Tastatur-Aktivzeile in Select/MultiSelect — dieselbe Deckung wie
+   Fokus, aber ohne echten :focus-visible (der liegt auf dem Trigger). */
+@utility state-aktiv {
+  &::after {
+    opacity: var(--state-focus);
+  }
 }
 
 /* ─── Keyboard-Focus (a11y) ───────────────────────────────────────────
    outline statt ring: rendert zuverlässig (CSS-Var greift, anders als beim
    ring-Box-Shadow), folgt dem Border-Radius, kollidiert NICHT mit Box-Shadows
-   (CTA-Schatten bleibt) und übersteht Forced-Colors/High-Contrast.
-   `focus-ring`: Offset (Lücke zum Surface -> sichtbar auch auf primary-Flächen).
+   (der Schatten schwebender Flächen bleibt) und übersteht
+   Forced-Colors/High-Contrast.
+   `focus-ring`: Offset (Lücke zum Grund -> sichtbar auch auf Primary-Flächen);
+   die Kontur wird zusätzlich voll ausgefahren, den 12-%-Overlay liefert `state`.
    `focus-ring-inset`: für Elemente in overflow-hidden-Containern (z. B. Karten). */
 @utility focus-ring {
   &:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+    border-color: currentColor;
   }
 }
 @utility focus-ring-inset {
@@ -218,135 +166,159 @@
   }
 }
 
-/* ─── M3 Type-Scale → KiFu-Fonts (Spec §5). Tracking KiFu-getunt. ─── */
+/* Kontur: 1.5 px trägt im Dunkeln, 1 px verschwindet gegen den Grund.
+   Die Farbe kommt separat (border-kante / border-primary / border-error). */
+@utility kontur {
+  border-width: 1.5px;
+  border-style: solid;
+}
+
+/* Diagramm-Platzhalter: 45°-Schraffur, sehr leise. */
+@utility schraffur {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgb(255 255 255 / 0.07) 0,
+    rgb(255 255 255 / 0.07) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+}
+
+/* ─── Typo-Skala ──────────────────────────────────────────────────────
+   Display und Headline versal und leicht gesperrt: eine Neo-Grotesk
+   trägt Versalien eng, mehr als 3.5 % risse die Wörter auseinander.
+   Titel bekommen dafür ein negatives Tracking, damit sie kompakt
+   bleiben. Label und Plakette stehen in der Mono — sie beschriften
+   und zählen, und Kolonnen fluchten dort von selbst. */
 @utility type-display-large {
-  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
-  font-size: 57px; line-height: 64px; letter-spacing: 0.01em;
+  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
+  font-size: 57px; line-height: 60px; letter-spacing: 0.035em;
 }
 @utility type-display-medium {
-  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
-  font-size: 45px; line-height: 52px; letter-spacing: 0.01em;
+  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
+  font-size: 45px; line-height: 50px; letter-spacing: 0.035em;
 }
 @utility type-display-small {
-  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
-  font-size: 36px; line-height: 44px; letter-spacing: 0.012em;
+  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
+  font-size: 36px; line-height: 42px; letter-spacing: 0.03em;
 }
 @utility type-headline-large {
-  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
-  font-size: 32px; line-height: 40px; letter-spacing: 0.015em;
+  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
+  font-size: 32px; line-height: 38px; letter-spacing: 0.03em;
 }
 @utility type-headline-medium {
-  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
-  font-size: 28px; line-height: 36px; letter-spacing: 0.015em;
+  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
+  font-size: 28px; line-height: 34px; letter-spacing: 0.03em;
 }
 @utility type-headline-small {
-  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
-  font-size: 24px; line-height: 32px; letter-spacing: 0.015em;
+  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
+  font-size: 24px; line-height: 30px; letter-spacing: 0.025em;
 }
 @utility type-title-large {
-  font-family: var(--font-body); font-weight: 600;
-  font-size: 22px; line-height: 28px; letter-spacing: 0em;
-  text-transform: none;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 22px; line-height: 28px; letter-spacing: -0.01em;
 }
 @utility type-title-medium {
-  font-family: var(--font-body); font-weight: 600;
-  font-size: 16px; line-height: 24px; letter-spacing: 0.01em;
-  text-transform: none;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 16px; line-height: 24px; letter-spacing: -0.005em;
 }
 @utility type-title-small {
-  font-family: var(--font-body); font-weight: 600;
-  font-size: 14px; line-height: 20px; letter-spacing: 0.01em;
-  text-transform: none;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 14px; line-height: 20px; letter-spacing: 0em;
 }
 @utility type-body-large {
-  font-family: var(--font-body); font-weight: 400;
+  font-family: var(--font-sans); font-weight: 400; text-transform: none;
   font-size: 16px; line-height: 24px; letter-spacing: 0em;
-  text-transform: none;
 }
 @utility type-body-medium {
-  font-family: var(--font-body); font-weight: 400;
-  font-size: 14px; line-height: 20px; letter-spacing: 0em;
-  text-transform: none;
+  font-family: var(--font-sans); font-weight: 400; text-transform: none;
+  font-size: 14px; line-height: 21px; letter-spacing: 0em;
 }
 @utility type-body-small {
-  font-family: var(--font-body); font-weight: 400;
-  font-size: 12px; line-height: 16px; letter-spacing: 0.01em;
-  text-transform: none;
+  font-family: var(--font-sans); font-weight: 400; text-transform: none;
+  font-size: 12px; line-height: 18px; letter-spacing: 0.005em;
 }
 @utility type-label-large {
   font-family: var(--font-mono); font-weight: 700; text-transform: uppercase;
-  font-size: 14px; line-height: 20px; letter-spacing: 0.08em;
+  font-size: 14px; line-height: 20px; letter-spacing: 0.06em;
 }
 @utility type-label-medium {
   font-family: var(--font-mono); font-weight: 700; text-transform: uppercase;
-  font-size: 12px; line-height: 16px; letter-spacing: 0.1em;
+  font-size: 12px; line-height: 16px; letter-spacing: 0.07em;
 }
 @utility type-label-small {
   font-family: var(--font-mono); font-weight: 400; text-transform: uppercase;
-  font-size: 11px; line-height: 16px; letter-spacing: 0.1em;
+  font-size: 11px; line-height: 16px; letter-spacing: 0.07em;
+}
+/* Plakette: die kleinste beschriftbare Fläche (Badge, Kategorie-Chip).
+   Unter 10 px wird die Mono unleserlich, darunter geht nichts mehr. */
+@utility type-plakette {
+  font-family: var(--font-mono); font-weight: 700; text-transform: uppercase;
+  font-size: 10px; line-height: 14px; letter-spacing: 0.06em;
 }
 
 @layer base {
   body {
-    font-family: var(--font-body);
-    background-color: var(--color-rasen-950);
-    /* dezenter grüner Lichtschein von oben — Atmosphäre, CSS-only */
-    background-image: radial-gradient(
-      130% 80% at 50% -15%,
-      color-mix(in oklab, var(--color-rasen-700) 60%, transparent),
-      transparent 60%
-    );
-    background-attachment: fixed;
-    color: var(--color-chalk);
+    font-family: var(--font-sans);
+    /* Eine ruhige, gleichmässige Fläche — die Höhe soll die einzige
+       Helligkeitsänderung im Bild sein, darum kein Verlauf. */
+    background-color: var(--color-elev-00);
+    color: var(--color-on-surface);
   }
 
   h1, h2, h3, h4 {
-    font-family: var(--font-display);
-    font-weight: 400;
-    letter-spacing: 0.015em;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
-    line-height: 1;
+    line-height: 1.05;
   }
 
   ::selection {
-    background: var(--color-signal);
-    color: var(--color-rasen-950);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
   }
 }
 
 /* ============================================================================
    Druck-Ansicht (Story #18): helles, tintensparendes Layout, unabhängig vom
-   dunklen Bildschirm-Farbschema. Die token-basierte Palette wird im Druck auf
-   helle Flächen mit dunkler Schrift umgelegt; App-Chrome ist via print:hidden
-   ausgeblendet. Gilt für jede Druckausgabe der App.
+   dunklen Bildschirm-Farbschema. Die Höhenleiter kippt um — aus dem
+   aufgehellten Dunkel wird ein abgedunkeltes Weiss, die Reihenfolge der
+   Stufen bleibt. Primary wird zu einem dunklen Violett, weil #bb86fc auf
+   Papier nicht trägt. App-Chrome ist via print:hidden ausgeblendet.
+   Gilt für jede Druckausgabe der App.
    ============================================================================ */
 @media print {
   :root {
-    --color-surface: #ffffff;
-    --color-surface-dim: #ffffff;
-    --color-surface-bright: #ffffff;
-    --color-surface-container-lowest: #ffffff;
-    --color-surface-container-low: #f6f7f6;
-    --color-surface-container: #f1f2f1;
-    --color-surface-container-high: #ececec;
-    --color-surface-container-highest: #e6e6e6;
+    --color-elev-00: #ffffff;
+    --color-elev-01: #f6f7f6;
+    --color-elev-02: #f1f2f1;
+    --color-elev-03: #eeefee;
+    --color-elev-04: #ececec;
+    --color-elev-06: #e9e9e9;
+    --color-elev-08: #e6e6e6;
+    --color-elev-12: #e2e2e2;
+    --color-elev-16: #dfdfdf;
+    --color-elev-24: #dcdcdc;
     --color-on-surface: #121a16;
-    --color-on-surface-variant: #3c423f;
-    --color-outline: #9aa0a0;
-    --color-outline-variant: #cfd3d2;
-    --color-primary: #1c3a2b;
-    /* Bernstein hat auf Weiss nur 1.86:1 — im Druck ein dunkles Ocker (6.65:1). */
-    --color-warning: #7a5600;
+    --color-on-surface-mittel: #3c423f;
+    --color-on-surface-tief: #6b716e;
+    --color-kante: #9aa0a0;
+    --color-linie: #cfd3d2;
+    --color-primary: #4527a0;
+    --color-on-primary: #ffffff;
+    --color-error: #a32036;
+    --color-on-error: #ffffff;
+    /* Die beiden hellsten Kategorien tragen auf Weiss nicht — nur sie
+       werden nachgedunkelt, die übrigen fünf bleiben wie am Schirm. */
+    --color-kat-a: #78909c;
+    --color-kat-f: #b8960f;
   }
 
   html,
   body {
     background: #ffffff !important;
     color: #121a16 !important;
-  }
-
-  body {
-    background-image: none !important;
   }
 
   /* Diagramme/Farben originalgetreu drucken */

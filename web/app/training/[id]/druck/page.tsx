@@ -62,20 +62,20 @@ export default async function TrainingDruckPage({
         </div>
       </div>
 
-      <header className="mb-6 border-b border-outline pb-4">
+      <header className="mb-6 border-b border-kante pb-4">
         <h1 className="type-headline-large text-on-surface">{training.name}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
           ))}
-          <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-variant">
+          <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-mittel">
             <Clock size={16} strokeWidth={2} aria-hidden />
             {hasAnyDuration ? `Gesamtdauer ${formatDuration(total)}` : "Keine Dauer erfasst"}
           </span>
         </div>
         {training.ziel && (
           <p className="mt-2 type-body-medium text-on-surface">
-            <span className="type-label-small text-on-surface-variant">Ziel: </span>
+            <span className="type-label-small text-on-surface-mittel">Ziel: </span>
             {training.ziel}
           </p>
         )}
@@ -88,7 +88,7 @@ export default async function TrainingDruckPage({
             Label-Stil wie beim Ziel. */}
         {training.varianten.length > 1 && aktive && (
           <p className="mt-2 type-body-medium text-on-surface">
-            <span className="type-label-small text-on-surface-variant">
+            <span className="type-label-small text-on-surface-mittel">
               Variante des Hauptteils:{" "}
             </span>
             „{aktive.name}"
@@ -112,13 +112,13 @@ export default async function TrainingDruckPage({
           const blocks = s.bloecke;
           return (
             <section key={s.key}>
-              <h2 className="mb-4 break-after-avoid border-b border-outline-variant pb-1 type-title-medium text-on-surface">
+              <h2 className="mb-4 break-after-avoid border-b border-linie pb-1 type-title-medium text-on-surface">
                 {/* Auf dem Ausdruck ist die Überschrift der einzige Ort, an dem
                     die Variante noch steht — die Wahl darüber ist weg
                     (#203 AK 5). */}
                 {abschnittMitVariante(s.key, s.label, aktive, training.varianten)}
                 {s.sum > 0 && (
-                  <span className="ml-2 type-label-medium text-on-surface-variant">
+                  <span className="ml-2 type-label-medium text-on-surface-mittel">
                     {formatDuration(s.sum)}
                   </span>
                 )}
@@ -127,10 +127,10 @@ export default async function TrainingDruckPage({
                 {blocks.map((b) => (
                   <div key={b.key}>
                     {b.label && (
-                      <h3 className="mb-3 break-after-avoid type-title-small text-on-surface-variant">
+                      <h3 className="mb-3 break-after-avoid type-title-small text-on-surface-mittel">
                         {b.label}
                         {b.sum > 0 && (
-                          <span className="ml-2 type-label-medium text-on-surface-variant">
+                          <span className="ml-2 type-label-medium text-on-surface-mittel">
                             {formatDuration(b.sum)}
                           </span>
                         )}

@@ -14,17 +14,17 @@ export function ZeitAbgleich({ slug, sum }: { slug: string; sum: number }) {
   const richtwert = `${band.min}–${band.max} min`;
   if (sum === 0)
     return (
-      <span className="type-label-medium text-on-surface-variant">
+      <span className="type-label-medium text-on-surface-mittel">
         Richtwert {richtwert}
       </span>
     );
 
   const delta = sum < band.min ? sum - band.min : sum > band.max ? sum - band.max : 0;
   return (
-    <span className="type-label-medium text-on-surface-variant">
+    <span className="type-label-medium text-on-surface-mittel">
       Richtwert {richtwert}
       {delta !== 0 && (
-        <span className="text-signal">
+        <span className="text-primary">
           {" "}
           ({delta > 0 ? `+${delta}` : delta} min)
         </span>
@@ -37,10 +37,10 @@ export function ZeitAbgleich({ slug, sum }: { slug: string; sum: number }) {
 export function GesamtAbgleich({ sum, soll }: { sum: number; soll: number }) {
   const delta = sum - soll;
   return (
-    <span className="type-label-medium text-on-surface-variant">
+    <span className="type-label-medium text-on-surface-mittel">
       vorgesehen {soll} min
       {sum > 0 && delta !== 0 && (
-        <span className="text-signal">
+        <span className="text-primary">
           {" "}
           ({delta > 0 ? `+${delta}` : delta} min)
         </span>

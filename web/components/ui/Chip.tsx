@@ -4,20 +4,28 @@ import { cn } from "@/lib/cn";
 import { kategorieStufe } from "@/lib/labels";
 import type { KategorieSlug } from "@/lib/vocab";
 
-/* ── Alterskategorie-Badge (G bis A) ──────────────────────────
-   Je Stufe ein eigenes Badge in fester, lernbarer Farbe — deckend
-   gefüllt, dunkle Tafel-Tinte (rasen-950) als Schrift. Teilt die
-   Formensprache des Herkunfts-Badges (gleiche Höhe/Padding/Typo),
-   bleibt aber ein Domänen-Element ausserhalb der M3-Chip-Tokens.
-   Immer mit Buchstabe, nie nur über Farbe (a11y). */
-const katColor: Record<KategorieSlug, string> = {
-  G: "bg-kat-g text-rasen-950",
-  F: "bg-kat-f text-rasen-950",
-  E: "bg-kat-e text-rasen-950",
-  D: "bg-kat-d text-rasen-950",
-  C: "bg-kat-c text-rasen-950",
-  B: "bg-kat-b text-rasen-950",
-  A: "bg-kat-a text-rasen-950",
+/* ── Alterskategorie-Plakette (G bis A) ──────────────────────
+   Je Stufe eine eigene, fest lernbare Farbe — als KONTUR und Schrift,
+   nicht als Fläche: Die Farbe trägt die Stufe, sie füllt sie nicht.
+   Gefüllt stünden sieben Werte nebeneinander als Flickenteppich und
+   konkurrierten mit jedem gefüllten Knopf daneben; als Umriss bleiben
+   sie leise, und der Buchstabe unterscheidet ohnehin mit (a11y: nie
+   nur über Farbe).
+   Einzige Ausnahme ist der DRUCK: Auf Papier ist eine helle Kontur
+   kaum zu sehen — kat-a (#cfd8dc) verschwände auf Weiss ganz. Dort
+   kippt die Plakette darum in die gefüllte Form mit dunkler Schrift.
+
+   Exportiert, weil `components/training/StufenField.tsx` dieselbe
+   Plakette in seinen Auswahl-Kacheln trägt: EINE Tabelle für beide
+   Orte statt zweier, die auseinanderlaufen. */
+export const katPlakette: Record<KategorieSlug, string> = {
+  G: "kontur border-current text-kat-g bg-transparent print:bg-kat-g print:text-[#121a16] print:border-transparent",
+  F: "kontur border-current text-kat-f bg-transparent print:bg-kat-f print:text-[#121a16] print:border-transparent",
+  E: "kontur border-current text-kat-e bg-transparent print:bg-kat-e print:text-[#121a16] print:border-transparent",
+  D: "kontur border-current text-kat-d bg-transparent print:bg-kat-d print:text-[#121a16] print:border-transparent",
+  C: "kontur border-current text-kat-c bg-transparent print:bg-kat-c print:text-[#121a16] print:border-transparent",
+  B: "kontur border-current text-kat-b bg-transparent print:bg-kat-b print:text-[#121a16] print:border-transparent",
+  A: "kontur border-current text-kat-a bg-transparent print:bg-kat-a print:text-[#121a16] print:border-transparent",
 };
 
 export function KategorieChip({ k }: { k: KategorieSlug }) {
@@ -25,8 +33,8 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
     <span
       title={kategorieStufe[k]}
       className={cn(
-        "inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 font-mono text-[10px] font-bold uppercase leading-none",
-        katColor[k],
+        "type-plakette inline-flex items-center justify-center rounded-plakette px-2 py-0.5",
+        katPlakette[k],
       )}
     >
       {k}
@@ -34,24 +42,27 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
   );
 }
 
-/* ── M3-Chips ─────────────────────────────────────────────────
-   Gemeinsame Basis + --chip-*-Component-Tokens (siehe globals.css).
-   Vier Typen nach M3: Assist · Filter · Input · Suggestion.
+/* ── Chips ────────────────────────────────────────────────────
+   Eine gemeinsame Basis, vier Typen: Assist · Filter · Input · Suggestion.
+   Die Rollen stehen direkt in den Bündeln — gewählt füllt Primary, ungewählt
+   umrandet die Kante, und `state` in der Basis trägt Überfahren, Fokus und
+   Druck. Darum trägt kein Bündel mehr eine eigene Überfahr-Fläche: Die
+   Zustands-Ebene färbt sich in der Farbe des Chip-Inhalts ein und passt so
+   auf jede Variante.
 
    Die drei Klassenbündel sind exportiert (wie `iconButtonClasses`), weil ein
    Chip nicht immer eine Schaltfläche ist: Auf den Server-Seiten trägt ein LINK
    die Chip-Optik (`VariantenLinks` — jede Variante hat dort eine eigene
    Adresse). Ein <a> als <button> zu verkleiden wäre falsch, die Optik ein
-   zweites Mal abzuschreiben ebenso — sie liefe auseinander, sobald die
-   --chip-Tokens sich ändern. */
+   zweites Mal abzuschreiben ebenso — sie liefe auseinander, sobald sich die
+   Chip-Rollen ändern. */
 export const chipBase =
-  "focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-(--chip-shape) border-[1.5px] px-3 py-1.5 transition-colors";
-export const chipOutlined =
-  "border-(--chip-outline) bg-transparent text-(--chip-label) hover:bg-on-surface/8 hover:text-on-surface";
-export const chipSelected =
-  "border-transparent bg-(--chip-selected-container) text-(--chip-selected-label)";
-const chipElevated =
-  "border-transparent bg-(--chip-elevated-container) text-on-surface shadow-e3 hover:shadow-e4";
+  "state focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-full kontur px-3 py-1.5 transition-colors";
+export const chipOutlined = "border-kante bg-transparent text-on-surface";
+export const chipSelected = "border-transparent bg-primary text-on-primary";
+/* Schwebender Chip: eine Höhenstufe plus Schatten statt einer Kontur — er
+   liegt über der Fläche, statt in sie eingeschrieben zu sein. */
+const chipElevated = "border-transparent bg-elev-06 text-on-surface shadow-dp-04";
 
 /* ── Chip-Optik für NUTZERTEXT ────────────────────────────────
    Dieselbe Pille, aber normal gesetzt statt mono/versal: `type-label-medium`
@@ -67,18 +78,23 @@ const chipElevated =
    ZWEI Bündel, weil der geteilte Chip die Pille anders füllt: `chipTextHuelle`
    ist der Umriss — Schrift, Höhe, Rundung, Rahmen —, den er als Gruppe um
    seine beiden Hälften legt (dort `items-stretch`, damit jede die volle
-   Trefferhöhe bekommt, und die Polsterung sitzt je Hälfte). Alles Einteilige
-   nimmt `chipTextBase`: dieselbe Hülle plus Fokusring, Ausrichtung und
-   Polsterung. So ändert sich die Nutzertext-Pille an EINER Stelle. */
+   Trefferhöhe bekommt, und die Polsterung sitzt je Hälfte). Die Zustands-Ebene
+   gehört dort nicht an die Gruppe, sondern an jede Hälfte einzeln — sonst
+   leuchtete der ganze Chip auf, wenn nur eine Hälfte überfahren wird. Alles
+   Einteilige nimmt `chipTextBase`: dieselbe Hülle plus `state`, Fokusring,
+   Ausrichtung und Polsterung. So ändert sich die Nutzertext-Pille an EINER
+   Stelle. */
 export const chipTextHuelle =
-  "type-body-medium inline-flex h-9 rounded-full border-[1.5px] normal-case transition-colors";
-export const chipTextBase = `${chipTextHuelle} focus-ring items-center gap-1.5 px-3`;
-export const chipTextOutlined =
-  "border-outline text-on-surface hover:bg-on-surface/8";
-export const chipTextSelected =
-  "border-transparent bg-(--chip-selected-container) text-(--chip-selected-label)";
+  "type-body-medium inline-flex h-9 rounded-full kontur normal-case transition-colors";
+export const chipTextBase = `${chipTextHuelle} state focus-ring items-center gap-1.5 px-3`;
+export const chipTextOutlined = "border-kante text-on-surface";
+/* Gewählter Nutzertext-Chip: umrandet und beschriftet in Primary, dazu ein
+   sehr leiser Grund. Nicht gefüllt wie der Filter-Chip — eine gefüllte Pille
+   kehrte den Nutzertext in schwarze Schrift, und der Name, den die Trainerin
+   vergeben hat, soll auch gewählt wie ihr Name aussehen. */
+export const chipTextSelected = "border-primary bg-primary/12 text-primary";
 
-/* Filter-Chip (toggelbar) — selected: secondary-container + Check (M3).
+/* Filter-Chip (toggelbar) — gewählt: gefüllt in Primary, mit Häkchen.
    Optionales führendes Icon, wenn nicht selektiert. */
 export function FilterChip({
   selected = false,
@@ -118,7 +134,7 @@ export function FilterChip({
    (role=radiogroup / role=radio, aria-checked) statt der tab-artigen
    Segmentleiste, mit Pfeiltasten-Navigation und wanderndem Tabstopp.
 
-   Optik: die bestehenden --chip-Tokens, ausgewählt wie der Filter-Chip.
+   Optik: dieselben Chip-Bündel, ausgewählt wie der Filter-Chip.
    Kein Häkchen — es ist eine Einfachauswahl, nicht ein Ein/Aus-Zustand,
    und der Umriss-Wechsel trägt die Aussage bereits.
 
@@ -218,7 +234,7 @@ export function ChoiceChipGroup({
 }
 
 /* Assist-Chip — schlägt eine Aktion vor (führendes Icon + Label).
-   `elevated`: weicher M3-Schatten statt Outline.
+   `elevated`: Höhenstufe plus Schatten statt Kontur.
 
    Öffnet die vorgeschlagene Aktion ein Menü, braucht der Chip einen Namen
    dafür (`ariaLabel`, wenn dasselbe Label mehrfach auf der Seite steht), die
@@ -306,7 +322,7 @@ export function InputChip({
           type="button"
           onClick={onRemove}
           aria-label="Entfernen"
-          className="focus-ring -mr-1 ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/12 hover:text-on-surface"
+          className="state focus-ring -mr-1 ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-on-surface-mittel transition-colors"
         >
           <X size={14} strokeWidth={2.5} aria-hidden />
         </button>

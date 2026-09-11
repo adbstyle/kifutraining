@@ -36,9 +36,11 @@ function NeedsConfirmation({ email }: { email?: string }) {
 
   if (state.status === "confirm") {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-[4px] border border-primary/40 bg-primary/10 p-3 text-center">
-        <MailCheck size={28} strokeWidth={1.5} className="text-primary" aria-hidden />
-        <p className="type-body-small text-on-surface">
+      // Farbe trägt, füllt nicht — Kontur, Zeichen und Schrift in Primary,
+      // die Fläche bleibt die der Karte darunter.
+      <div className="flex flex-col items-center gap-2 rounded-flaeche kontur border-primary bg-transparent p-3 text-center text-primary">
+        <MailCheck size={28} strokeWidth={1.5} aria-hidden />
+        <p className="type-body-small">
           Bestätigungsmail erneut an{" "}
           <strong>{state.email ?? email}</strong> gesendet.
         </p>
@@ -47,8 +49,8 @@ function NeedsConfirmation({ email }: { email?: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-[4px] border border-error/40 bg-error/10 p-3">
-      <p className="type-body-small text-on-surface">
+    <div className="flex flex-col gap-3 rounded-flaeche kontur border-error bg-transparent p-3 text-error">
+      <p className="type-body-small">
         Bitte bestätige zuerst deine E-Mail-Adresse. Den Link nicht erhalten?
       </p>
       <form action={formAction}>
@@ -94,7 +96,7 @@ export function LoginForm({ redirect }: { redirect: string }) {
           <Link href="/passwort-vergessen" className="type-label-medium text-primary underline">
             Passwort vergessen?
           </Link>
-          <Link href="/registrieren" className="type-label-medium text-on-surface-variant underline">
+          <Link href="/registrieren" className="type-label-medium text-on-surface-mittel underline">
             Registrieren
           </Link>
         </div>

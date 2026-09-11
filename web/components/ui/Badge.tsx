@@ -1,15 +1,29 @@
 import { cn } from "@/lib/cn";
 
-type Tone = "manual" | "entwurf" | "oeffentlich" | "neutral";
+type Tone = "manual" | "entwurf" | "oeffentlich" | "neutral" | "varianten";
 
+/* Gefüllt heisst still, umrandet heisst gilt.
+   Eine Plakette meldet entweder bloss, woher etwas stammt oder in welchem
+   Zwischenstand es liegt — dann trägt sie eine Höhenstufe oder die Kante und
+   gedämpfte Schrift, sie soll gelesen und wieder vergessen werden. Oder sie
+   meldet eine Eigenschaft, die nach aussen wirkt: öffentlich sichtbar, mehrere
+   Varianten vorhanden — dann steht sie umrandet in Primary. Keine der beiden
+   Formen füllt mit Akzentfarbe; das bleibt dem gefüllten Knopf vorbehalten,
+   der etwas auslöst. */
 const tones: Record<Tone, string> = {
-  // Manual-Bestand: solide Kreide-Plakette (inverse-surface) — maximal "offiziell"
-  manual: "bg-inverse-surface text-inverse-on-surface",
-  // Eigener Entwurf (privat): solides Dunkelgrün — deckend & lesbar auch über Bildern
-  entwurf: "bg-surface-container-high text-on-surface border-[1.5px] border-outline-variant",
-  // Eigene öffentliche/Community-Übung: solides Dunkelorange (primary-container) als deckender Akzent
-  oeffentlich: "bg-primary-container text-on-primary-container",
-  neutral: "border-[1.5px] border-outline text-on-surface-variant",
+  // Manual-Bestand: eine Herkunftsangabe, mehr nicht — Kontur und gedämpfte
+  // Schrift, damit sie neben dem Titel der Übung nicht mitspricht.
+  manual: "kontur border-kante text-on-surface-mittel",
+  // Eigener Entwurf (privat): eine Höhenstufe statt einer Kontur — deckend und
+  // darum auch über einem Bild lesbar, aber ohne Farbe, denn ein Entwurf ist
+  // ein Zwischenstand und keine Eigenschaft.
+  entwurf: "bg-elev-08 text-on-surface-mittel",
+  // Öffentlich: gilt nach aussen, also umrandet in Primary.
+  oeffentlich: "kontur border-primary text-primary",
+  neutral: "kontur border-kante text-on-surface-mittel",
+  // Varianten-Zahl (TrainingCard, TeamTrainingsListe): wie `oeffentlich` —
+  // sie sagt etwas über den Inhalt aus, das man beim Öffnen erwarten darf.
+  varianten: "kontur border-primary text-primary",
 };
 
 const defaultLabel: Record<Tone, string> = {
@@ -17,6 +31,7 @@ const defaultLabel: Record<Tone, string> = {
   entwurf: "Entwurf",
   oeffentlich: "Community",
   neutral: "",
+  varianten: "",
 };
 
 export function Badge({
@@ -31,7 +46,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-[2px] px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] leading-none",
+        "type-plakette inline-flex h-[22px] items-center gap-1 rounded-plakette px-2",
         tones[tone],
         className,
       )}

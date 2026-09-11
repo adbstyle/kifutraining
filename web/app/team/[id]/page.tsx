@@ -34,7 +34,7 @@ export default async function TeamPlanPage({
       {angesetzt && <Flash message="Einheit angesetzt." />}
       <h2 className="mb-4 type-title-large text-on-surface">Trainingsplan</h2>
       {leer ? (
-        <p className="rounded-[6px] border border-outline-variant bg-surface-container-low px-5 py-8 text-center type-body-medium text-on-surface-variant">
+        <p className="kontur rounded-flaeche border-dashed border-kante bg-transparent px-5 py-8 text-center type-body-medium text-on-surface-mittel">
           Noch nichts angesetzt. Setze unter „Trainings“ ein Training des Teams
           auf ein Datum an — es erscheint dann hier im Plan.
         </p>

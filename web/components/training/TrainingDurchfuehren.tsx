@@ -27,7 +27,7 @@ type TerminKontext = {
 function TerminKopf({ termin, className }: { termin: TerminKontext; className?: string }) {
   return (
     <div
-      className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[4px] border border-outline-variant bg-surface-container-low px-3 py-2 type-label-medium text-on-surface-variant ${className ?? ""}`}
+      className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-flaeche border border-linie bg-elev-01 px-3 py-2 type-label-medium text-on-surface-mittel ${className ?? ""}`}
     >
       <span className="inline-flex items-center gap-1.5 text-on-surface">
         <CalendarDays size={15} strokeWidth={2} aria-hidden />
@@ -161,7 +161,7 @@ export function TrainingDurchfuehren({
           onWechsel={wechsleVariante}
           className="mt-4 justify-center"
         />
-        <p className="mt-3 text-center type-body-medium text-on-surface-variant">
+        <p className="mt-3 text-center type-body-medium text-on-surface-mittel">
           {training.varianten.length > 1
             ? `In der Variante „${aktive?.name}" ist noch keine Übung eingeordnet.`
             : "Diesem Training sind noch keine Übungen zugeordnet."}
@@ -179,7 +179,7 @@ export function TrainingDurchfuehren({
             Im Druck hat er nichts verloren (OOS 2). */}
         <Breadcrumbs items={crumbs} className="mb-3 print:hidden" />
         {termin && <TerminKopf termin={termin} className="mb-3" />}
-        <p className="type-label-medium text-on-surface-variant">{training.name}</p>
+        <p className="type-label-medium text-on-surface-mittel">{training.name}</p>
         {/* Unter dem Trainingsnamen und über dem Abschnitt: Die Variante gilt
             für das ganze Training, nicht für den gerade offenen Teil — und sie
             bleibt beim Blättern an derselben Stelle stehen (#203 AK 2). */}
@@ -196,11 +196,11 @@ export function TrainingDurchfuehren({
                 (#203 AK 5). */}
             {abschnittMitVariante(section.key, section.label, aktive, training.varianten)}
           </h1>
-          <span className="type-label-large text-on-surface-variant">
+          <span className="type-label-large text-on-surface-mittel">
             {idx + 1}/{sections.length}
           </span>
         </div>
-        <div className="mt-1 flex items-center gap-3 type-label-medium text-on-surface-variant">
+        <div className="mt-1 flex items-center gap-3 type-label-medium text-on-surface-mittel">
           {section.sum > 0 && (
             <span className="inline-flex items-center gap-1.5">
               <Clock size={15} strokeWidth={2} aria-hidden />
@@ -219,7 +219,7 @@ export function TrainingDurchfuehren({
             Trainingsnamen unterscheidet. */}
         {idx === 0 && training.ziel && (
           <p className="mt-3 type-body-medium text-on-surface">
-            <span className="type-label-small text-on-surface-variant">Ziel: </span>
+            <span className="type-label-small text-on-surface-mittel">Ziel: </span>
             {training.ziel}
           </p>
         )}
@@ -232,9 +232,13 @@ export function TrainingDurchfuehren({
                 zu welchem Unterblock die gezeigten Übungen gehören — der
                 Einstieg bündelt drei Blöcke in einem Schritt (Story 8 AC 3).
                 Die Überschrift bleibt darum am oberen Rand haften und nennt
-                die Summe des Blocks (AC 4). */}
+                die Summe des Blocks (AC 4). Deckend statt durchscheinend:
+                Ein Blur liesse den Grund durch die Stufe hindurch
+                mitsprechen, und die Höhenleiter wäre nicht mehr ablesbar.
+                Eine Stufe über dem Grund reicht, um die durchlaufenden
+                Übungen zu überdecken. */}
             {b.label && (
-              <h2 className="sticky top-0 z-10 -mx-1 bg-surface/95 px-1 py-2 type-title-medium text-on-surface-variant backdrop-blur-sm">
+              <h2 className="sticky top-0 z-10 -mx-1 bg-elev-01 px-1 py-2 type-title-medium text-on-surface-mittel">
                 {b.label}
                 {b.sum > 0 && (
                   <span className="ml-2 type-label-medium">{formatDuration(b.sum)}</span>
@@ -243,7 +247,7 @@ export function TrainingDurchfuehren({
             )}
             {b.items.map((item, i) => (
               <div key={item.id}>
-                <p className="mb-2 type-label-small text-on-surface-variant">
+                <p className="mb-2 type-label-small text-on-surface-mittel">
                   Übung {i + 1} von {b.items.length}
                 </p>
                 <TrainingExerciseDetail item={item} />
@@ -253,14 +257,17 @@ export function TrainingDurchfuehren({
         ))}
       </div>
 
-      {/* Spielfeldrand-Navigation: grosse, sicher treffbare Flächen */}
-      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-outline bg-surface/95 backdrop-blur-sm">
+      {/* Spielfeldrand-Navigation: grosse, sicher treffbare Flächen. Deckend
+          auf Kopfleisten-Höhe und mit einer Haarlinie abgesetzt — durch eine
+          schwebende Leiste darf der Inhalt nicht durchscheinen, sonst trägt
+          die Höhe die Trennung nicht mehr (kein Blur über der Höhenleiter). */}
+      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-linie bg-elev-04">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
           <button
             type="button"
             onClick={() => setIdx((i) => Math.max(0, i - 1))}
             disabled={idx === 0}
-            className="focus-ring inline-flex h-14 flex-1 items-center justify-center gap-1.5 rounded-[4px] border-[1.5px] border-outline type-label-large text-on-surface transition-colors hover:bg-on-surface/8 disabled:opacity-30"
+            className="state focus-ring inline-flex h-14 flex-1 items-center justify-center gap-1.5 rounded-flaeche kontur border-kante type-label-large text-on-surface disabled:opacity-30"
           >
             <ChevronLeft size={22} strokeWidth={2.5} aria-hidden />
             Zurück
@@ -269,7 +276,7 @@ export function TrainingDurchfuehren({
             type="button"
             onClick={() => setIdx((i) => Math.min(sections.length - 1, i + 1))}
             disabled={idx === sections.length - 1}
-            className="focus-ring inline-flex h-14 flex-1 items-center justify-center gap-1.5 rounded-[4px] bg-primary type-label-large text-on-primary transition-opacity hover:opacity-90 disabled:opacity-30"
+            className="state focus-ring inline-flex h-14 flex-1 items-center justify-center gap-1.5 rounded-flaeche bg-primary type-label-large text-on-primary disabled:opacity-30"
           >
             Weiter
             <ChevronRight size={22} strokeWidth={2.5} aria-hidden />

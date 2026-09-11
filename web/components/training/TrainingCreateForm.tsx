@@ -55,7 +55,9 @@ export function TrainingCreateForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       {state.status === "error" && state.message && (
-        <p className="rounded-[4px] border border-error/40 bg-error/10 px-4 py-3 type-body-medium text-error">
+        // Farbe trägt die Meldung, sie füllt sie nicht: Kontur und Schrift in
+        // Error, der Grund bleibt der Seitengrund.
+        <p className="kontur rounded-flaeche border-error bg-transparent px-4 py-3 type-body-medium text-error">
           {state.message}
         </p>
       )}
@@ -95,7 +97,7 @@ export function TrainingCreateForm() {
         {/* Mindestens eine Alterskategorie, ab dem Anlegen (PO 2026-08-30,
             Epic Übungswelten). Bestehende Trainings ohne bleiben bearbeitbar,
             ein neues entsteht nicht mehr ohne. */}
-        <p className="mb-3 type-body-small text-on-surface-variant">
+        <p className="mb-3 type-body-small text-on-surface-mittel">
           {altersstufe
             ? "Für welche Alterskategorien ist das Training gedacht? Mindestens eine ist nötig; du kannst die Auswahl später jederzeit ändern."
             : "Wähle zuerst die Altersstufe — sie bestimmt, welche Alterskategorien es hier gibt."}

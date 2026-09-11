@@ -11,11 +11,15 @@ import type { TrainingExerciseItem } from "@/lib/queries/trainings";
  *  Hinzufügen-Knopf und die Übungsliste.
  *
  *  Trägt sein Teil mehr als einen Block, steht er auf einer eigenen Fläche —
- *  eine Stufe die Rasen-Leiter hoch (`surface-container`), während die
- *  Übungszeilen auf `surface-container-low` bleiben und sich dadurch als Inhalt
+ *  eine Stufe die Höhenleiter hoch (`elev-02`), während die
+ *  Übungszeilen auf `elev-01` bleiben und sich dadurch als Inhalt
  *  IM Block lesen. Die Fläche ist der Grund dieser Story: In einer dichten
  *  Karte war ohne sie nicht zu sehen, wo eine Unterkategorie aufhört und die
  *  nächste beginnt, und ein leerer Block ging ganz unter (#174).
+ *
+ *  Die Fläche trägt das allein, ohne Rand: Höhe und Linie sagten dasselbe
+ *  zweimal. Die Haarlinie bleibt der Übungszeile vorbehalten — sie steht auf
+ *  derselben Stufe wie die Karte und hat sonst nichts, was sie abgrenzt.
  *
  *  Ein einblockiger Teil bekommt keine Fläche: Er ist keine Verschachtelung —
  *  Rahmen und Überschrift wiederholten bloss die Karte (Story #127). */
@@ -41,12 +45,12 @@ export function Unterblock({
   if (!block.flaeche) return liste;
 
   return (
-    <div className="rounded-[4px] border border-outline-variant bg-surface-container p-3">
+    <div className="rounded-flaeche bg-elev-02 p-3 [--feld-grund:var(--color-elev-02)]">
       <div className="mb-2 flex items-center justify-between gap-3">
         <h3 className="type-title-small text-on-surface">
           {block.label}
           {block.sum > 0 && (
-            <span className="ml-2 type-label-medium text-on-surface-variant">
+            <span className="ml-2 type-label-medium text-on-surface-mittel">
               {formatDuration(block.sum)}
             </span>
           )}
