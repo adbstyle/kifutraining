@@ -46,8 +46,8 @@ export default async function TrainingDruckPage({
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 print:max-w-none print:px-0 print:py-0">
       {/* Die Variantenwahl gehört zur Bedienung der Seite, nicht aufs Papier —
           darum steht sie neben dem Druckknopf und teilt dessen `print:hidden`
-          (#203 AK 4). Auf dem Blatt nennt die Hauptteil-Überschrift, welche
-          Variante gedruckt wurde. */}
+          (#203 AK 4). Auf dem Blatt nennen die Hauptteil-Überschrift und der
+          Kopfbereich, welche Variante gedruckt wurde. */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <VariantenLinks
           varianten={training.varianten}
@@ -77,6 +77,21 @@ export default async function TrainingDruckPage({
           <p className="mt-2 type-body-medium text-on-surface">
             <span className="type-label-small text-on-surface-variant">Ziel: </span>
             {training.ziel}
+          </p>
+        )}
+        {/* Die Bezeichnung gehört ZUSÄTZLICH in den Kopf, weil die Überschrift
+            des Hauptteils sie nicht immer trägt: Ist der Hauptteil dieser
+            Variante leer, fällt sein Abschnitt ganz weg (`leseGliederung`
+            überspringt leere) — und auf dem Blatt stünde nirgends, welche der
+            Varianten gedruckt wurde. Zwei Ausdrucke wären dann nicht mehr
+            auseinanderzuhalten. Druckbar, also ohne `print:hidden`; kleiner
+            Label-Stil wie beim Ziel. */}
+        {training.varianten.length > 1 && aktive && (
+          <p className="mt-2 type-body-medium text-on-surface">
+            <span className="type-label-small text-on-surface-variant">
+              Variante des Hauptteils:{" "}
+            </span>
+            „{aktive.name}"
           </p>
         )}
       </header>

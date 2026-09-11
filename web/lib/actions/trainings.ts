@@ -27,6 +27,7 @@ import {
   vorlagenFilterFuer,
 } from "@/lib/altersstufe";
 import {
+  type Bedingung,
   bedingungAusFehler,
   fehlerMeldung,
   type FehlendeBedingung,
@@ -40,8 +41,33 @@ export type TrainingFormState = {
   message?: string;
 };
 
-/** Ergebnis einer feingranularen Editor-Aktion (sofort-persistent). */
-export type TrainingActionResult = { ok: boolean; error?: string };
+/** Ergebnis einer feingranularen Editor-Aktion (sofort-persistent).
+ *
+ *  `error` ist immer eine fertige Meldung. `bedingung` und `varianteId` stehen
+ *  zusätzlich dort, wo die Datenebene eine Veröffentlichungs-Bedingung
+ *  verweigert hat (#204 AK 3): Die Action kennt die Variantennamen nicht — die
+ *  Oberfläche kennt sie und kann die Meldung damit auf Variante UND Block
+ *  zuspitzen, statt nur «in jeder Variante» zu sagen. */
+export type TrainingActionResult = {
+  ok: boolean;
+  error?: string;
+  bedingung?: Bedingung;
+  varianteId?: string;
+};
+
+/** Ein abgelehntes Schreiben als Ergebnis — Meldung und, wenn es eine
+ *  Bedingung war, die Angaben zum Zuspitzen.
+ *
+ *  Eine Stelle für alle Fassungs-Actions: Jede von ihnen kann an demselben
+ *  Gate scheitern, und keine soll die Übersetzung selbst zusammensetzen. */
+function aktionsFehler(message: string): TrainingActionResult {
+  return {
+    ok: false,
+    error: fehlerMeldung(message),
+    bedingung: bedingungAusFehler(message) ?? undefined,
+    varianteId: varianteAusFehler(message) ?? undefined,
+  };
+}
 
 /** Ergebnis des Stufen-Setzens inkl. abweichender Übungen (Story #12 AC3).
  *
@@ -616,7 +642,7 @@ export async function moveTrainingExercise(
   });
   // Übersetzt statt roh: Die RPC meldet fehlendes Schreibrecht und — seit #201 —
   // eine fremde Variante im Klartext der Datenebene, nicht in dem des Trainers.
-  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+  if (error) return aktionsFehler(error.message);
   revalidiereTraining(pe.training_id);
   return { ok: true };
 }
@@ -650,8 +676,10 @@ export async function removeTrainingExercise(
     .select("id")
     .maybeSingle();
   // War es die letzte Fassung, die ein öffentliches Training braucht, weist die
-  // Datenebene ab; die Meldung nennt den Weg über den Entwurf (Story A AK 7).
-  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+  // Datenebene ab; die Meldung nennt den Weg über den Entwurf (Story A AK 7) —
+  // und trägt die verletzte Bedingung samt Variante mit, damit der Editor sie
+  // benennen kann (#204 AK 3).
+  if (error) return aktionsFehler(error.message);
   if (!geloescht) return { ok: false, error: "Zuordnung nicht gefunden." };
 
   // Erst nach erfolgreichem Löschen die eigene Bilddatei entfernen — nie das
@@ -740,7 +768,7 @@ export async function setExerciseDuration(
     .eq("id", trainingExerciseId)
     .select("training_id")
     .maybeSingle();
-  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+  if (error) return aktionsFehler(error.message);
   if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
   revalidiereTraining(data.training_id);
   return { ok: true };
@@ -787,7 +815,7 @@ export async function setzeNotiz(
     .eq("id", trainingExerciseId)
     .select("training_id")
     .maybeSingle();
-  if (error) return { ok: false, error: fehlerMeldung(error.message) };
+  if (error) return aktionsFehler(error.message);
   if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
   revalidiereTraining(data.training_id);
   return { ok: true };

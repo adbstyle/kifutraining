@@ -22,19 +22,28 @@ import {
 } from "../lib/bezeichnung";
 import {
   bedingungText,
+  bedingungsMeldungFuer,
   fehlendeBedingungenAus,
   varianteAusFehler,
 } from "../lib/training-bedingungen";
 import {
-  VARIANTE_DEFAULT_NAME,
   VARIANTE_NAME_MAX,
   VARIANTE_PARAM,
-  ersteVariante,
   mitVariante,
   sichtbareZuordnungen,
   varianteAus,
   varianteNameProblem,
 } from "../lib/varianten";
+
+/** Der Name, den `trainings_erste_variante()` und der Backfill der Migration
+ *  `20260911100000_hauptteil_varianten.sql` jedem Training für seinen ersten
+ *  Hauptteil schreiben.
+ *
+ *  Er steht NUR hier: In der Anwendung steuert er nichts — bei genau einer
+ *  Variante zeigt die Oberfläche gar keine Bezeichnung (#201 PC 5), und der
+ *  Anlege-Dialog liest den bisherigen Namen aus der Datenbank. Geprüft wird
+ *  bloss, dass die Vorabprüfung akzeptiert, was die Datenbank schreibt. */
+const VARIANTE_DEFAULT_NAME = "Variante 1";
 
 const varianten = [
   { id: "v1", name: "28 Kinder" },
@@ -101,7 +110,6 @@ pruefe("Der Vorgabename ist zulässig — er steht so in der Datenbank", () => {
   // Zwilling von `trainings_erste_variante()` und dem Backfill: Was der Trigger
   // schreibt, muss die Vorabprüfung akzeptieren, sonst liesse sich ein
   // bestehender Hauptteil nicht mehr speichern.
-  assert.equal(VARIANTE_DEFAULT_NAME, "Variante 1");
   assert.equal(varianteNameProblem(VARIANTE_DEFAULT_NAME, []), null);
 });
 
@@ -147,14 +155,10 @@ pruefe("Die Reihenfolge bleibt, wie sie hereinkam", () => {
   assert.equal(gefiltert.length, 2);
 });
 
-// ── ersteVariante / varianteAus (#201 AK 7) ─────────────────────────────────
-pruefe("Die erste Variante ist die vorderste der Liste", () => {
-  assert.deepEqual(ersteVariante(varianten), varianten[0]);
-  assert.equal(ersteVariante([]), undefined);
-});
-
-pruefe("Ohne Parameter gilt die erste Variante", () => {
+// ── varianteAus (#201 AK 7) ─────────────────────────────────────────────────
+pruefe("Ohne Parameter gilt die erste — die vorderste der Liste", () => {
   assert.deepEqual(varianteAus(undefined, varianten), varianten[0]);
+  assert.equal(varianteAus(undefined, []), undefined);
 });
 
 pruefe("Ein gültiger Parameter wählt seine Variante", () => {
@@ -212,6 +216,16 @@ pruefe("Kinderfussball, eine Variante: vollständig heisst nichts offen", () => 
       [varianten[0]],
     ),
     [],
+  );
+});
+
+pruefe("Bei genau einer Variante wird sie nicht genannt", () => {
+  // Epic EK 7: Ein Training mit einer Variante verhält sich überall wie vor
+  // diesem Epic — die Bezeichnung hat der Trainer nie vergeben und sieht sie
+  // nirgends. Zwilling der `v_variantenzahl`-Schranke in SQL.
+  assert.deepEqual(
+    fehlendeBedingungenAus("kinderfussball", ["G"], [einleitung], [varianten[0]]),
+    [{ bedingung: "freies_spiel", varianteId: null }],
   );
 });
 
@@ -314,7 +328,25 @@ pruefe("Der Text nennt die Variante nur, wenn eine übergeben wird", () => {
   );
   assert.equal(
     bedingungText("freies_spiel", "21 Kinder"),
-    "mindestens eine Übung im freien Spiel in der Variante \u201e21 Kinder\u201c",
+    "mindestens eine Übung im freien Spiel in der Variante „21 Kinder\"",
+  );
+});
+
+// ── bedingungsMeldungFuer (#204 AK 3) ───────────────────────────────────────
+pruefe("Die laufende Verweigerung nennt Variante und Block", () => {
+  assert.equal(
+    bedingungsMeldungFuer("freies_spiel", "21 Kinder"),
+    "Ein öffentliches Training braucht mindestens eine Übung im freien Spiel " +
+      "in der Variante „21 Kinder\". " +
+      "Setze es zuerst auf Entwurf, wenn du es so ändern willst.",
+  );
+});
+
+pruefe("Ohne Variantennamen bleibt der Satz allgemein", () => {
+  assert.equal(
+    bedingungsMeldungFuer("einleitung"),
+    "Ein öffentliches Training braucht mindestens eine Übung in der Einleitung. " +
+      "Setze es zuerst auf Entwurf, wenn du es so ändern willst.",
   );
 });
 

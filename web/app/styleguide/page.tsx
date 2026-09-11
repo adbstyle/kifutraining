@@ -1268,7 +1268,7 @@ export default function Styleguide() {
           leiht sich aber die Chip-Klassen aus 09 (<code>chipBase</code>,{" "}
           <code>chipSelected</code>, <code>chipOutlined</code>): gleiche Sache,
           gleiches Bild. Kein wandernder Tabstopp — durch Links tabbt man,
-          Pfeiltasten gehören der Radiogroup. Nicht <code>TabNav</code> (20): Die
+          Pfeiltasten gehören der Radiogroup. Nicht <code>TabNav</code> (07): Die
           wechselt die <em>Sicht</em> auf einen Gegenstand; hier bleibt die Sicht
           dieselbe und der <em>Inhalt</em> wechselt. Und sie trägt{" "}
           <code>type-label-large</code> — Nutzertext stünde dort versal

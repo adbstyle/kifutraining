@@ -14,23 +14,11 @@
  * `20260911100000_hauptteil_varianten.sql`. Die Datenbank ist die
  * Trust-Boundary — was hier steht, ist die frühe, sprechende Antwort.
  */
-import { MELDUNG_VERGEBEN, bezeichnungProblem } from "@/lib/bezeichnung";
+import { bezeichnungProblem } from "@/lib/bezeichnung";
 
 /** Längstmögliche Bezeichnung einer Variante (getrimmt gezählt).
  *  SQL-Zwilling: `tv_name_laenge` an `training_varianten`. */
 export const VARIANTE_NAME_MAX = 40;
-
-/** Die Bezeichnung, die jedes Training für seinen ersten Hauptteil mitbekommt.
- *
- *  Sie steht ab dem Anlegen in der Datenbank (Trigger
- *  `trainings_erste_variante`), wird aber erst sichtbar, wenn eine zweite
- *  Variante dazukommt: Bei genau einer zeigt die Oberfläche keine
- *  Variantenwahl (#201 PC 5). Beim Anlegen der zweiten bietet der Dialog sie
- *  als bisherigen Namen zum Überschreiben an (#201 AK 2).
- *
- *  SQL-Zwilling: der Literalwert in `trainings_erste_variante()` und im
- *  Backfill derselben Migration. */
-export const VARIANTE_DEFAULT_NAME = "Variante 1";
 
 /** Was einer Variantenbezeichnung im Weg steht — `null`, wenn sie sich
  *  speichern lässt (#201 AK 4/5). Dieselbe Regel wie bei den Gruppen, darum
@@ -45,8 +33,6 @@ export function varianteNameProblem(
 ): string | null {
   return bezeichnungProblem(name, bestehende, { eigeneId, max: VARIANTE_NAME_MAX });
 }
-
-export { MELDUNG_VERGEBEN };
 
 /** Eine Variante, so weit die Anzeige sie braucht. */
 export type Variante = { id: string; name: string };
@@ -68,25 +54,20 @@ export function sichtbareZuordnungen<T extends { varianteId: string | null }>(
   return zuordnungen.filter((z) => z.varianteId === null || z.varianteId === varianteId);
 }
 
-/** Die erste Variante — die, die beim Öffnen gilt (#201 AK 7). Die Liste kommt
- *  bereits nach `position` sortiert aus dem Query-Layer; hier steht nur, dass
- *  «die erste» die vorderste ist und nichts Gemerktes (Epic Out of Scope 7).
- *
- *  `undefined` kann es nach Lage der Daten nicht geben (jedes Training führt
- *  mindestens eine Variante) — der Typ bleibt trotzdem ehrlich, damit kein
- *  Aufrufer eine leere Liste unbemerkt durchreicht. */
-export function ersteVariante(varianten: readonly Variante[]): Variante | undefined {
-  return varianten[0];
-}
-
 /** Die anzuzeigende Variante aus einem Suchparameter: die genannte, wenn es sie
  *  gibt, sonst die erste. Ein Link auf eine entfernte oder fremde Variante
- *  landet damit auf dem Hauptteil statt auf einer leeren Seite. */
+ *  landet damit auf dem Hauptteil statt auf einer leeren Seite.
+ *
+ *  «Die erste» ist die vorderste der Liste und nichts Gemerktes (#201 AK 7,
+ *  Epic Out of Scope 7) — sortiert nach `position` kommt sie so aus dem
+ *  Query-Layer. `undefined` kann es nach Lage der Daten nicht geben (jedes
+ *  Training führt mindestens eine Variante); der Typ bleibt trotzdem ehrlich,
+ *  damit kein Aufrufer eine leere Liste unbemerkt durchreicht. */
 export function varianteAus(
   param: string | undefined,
   varianten: readonly Variante[],
 ): Variante | undefined {
-  return varianten.find((v) => v.id === param) ?? ersteVariante(varianten);
+  return varianten.find((v) => v.id === param) ?? varianten[0];
 }
 
 /** Der Name des Suchparameters, über den jede Ansicht ihre Variante trägt.

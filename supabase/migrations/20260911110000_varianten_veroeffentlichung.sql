@@ -20,6 +20,12 @@ set lock_timeout = '5s';
 -- die Applikation mit `varianteAusFehler()` und macht daraus den Namen
 -- (#204 AK 2/3).
 --
+-- Der Zusatz steht NUR, wenn das Training mehr als eine Variante führt: Bei
+-- genau einer ist die Bezeichnung keine Angabe, sondern ein Name, den der
+-- Trainer nie vergeben hat (Epic EK 7) — ein Training mit einer Variante darf
+-- sich nirgends anders verhalten als vor diesem Epic. Zwilling:
+-- `fehlendeBedingungenAus()` liefert dann `varianteId: null`.
+--
 -- Bestandsdaten: Bis zu dieser Migration führt jedes Training genau eine
 -- Variante — die aus dem Backfill von 20260911100000. Für ein öffentliches
 -- Training ist die neue Regel damit wortgleich die alte, keine Altzeile kann
@@ -53,6 +59,7 @@ declare
   v_block text;
   v_variante record;
   v_hauptteil_fehlt boolean;
+  v_variantenzahl int;
 begin
   select stufen, altersstufe into v_stufen, v_altersstufe
     from trainings where id = p_training_id;
@@ -89,6 +96,12 @@ begin
   -- Die Hauptteil-Bedingung, je Variante (#204 AK 1). Im Kinderfussball ist es
   -- das freie Spiel — es liegt im Hauptteil und deckt «mindestens eine Übung im
   -- Hauptteil» zwingend mit ab; im Juniorenfussball sind es die Spielformen.
+  --
+  -- Einmal vor der Schleife gezählt, nicht je Durchgang: Der Zusatz hängt am
+  -- Training, nicht an der einzelnen Variante.
+  select count(*) into v_variantenzahl
+    from training_varianten where training_id = p_training_id;
+
   for v_variante in
     select id from training_varianten
      where training_id = p_training_id
@@ -112,8 +125,14 @@ begin
 
     if v_hauptteil_fehlt then
       -- Die Bedingung bleibt das erste Wort; die Variante hängt als eigenes
-      -- Wortpaar dahinter (Zwilling: `varianteAusFehler()`).
-      v_missing := array_append(v_missing, v_block || ' VARIANTE ' || v_variante.id::text);
+      -- Wortpaar dahinter (Zwilling: `varianteAusFehler()`) — aber nur, wenn es
+      -- überhaupt etwas zu unterscheiden gibt.
+      v_missing := array_append(
+        v_missing,
+        case when v_variantenzahl > 1
+             then v_block || ' VARIANTE ' || v_variante.id::text
+             else v_block
+        end);
     end if;
   end loop;
 
@@ -123,7 +142,8 @@ $$;
 
 comment on function training_fehlende_bedingungen(uuid) is
   'Spiegel von fehlendeBedingungenAus() in web/lib/training-bedingungen.ts. '
-  'Die Hauptteil-Bedingung erscheint je Variante als "<bedingung> VARIANTE <uuid>".';
+  'Die Hauptteil-Bedingung erscheint je Variante; ab der zweiten Variante als '
+  '"<bedingung> VARIANTE <uuid>", bei genau einer als blosse Bedingung.';
 
 -- ----------------------------------------------------------------------------
 -- 2) Der Gate wacht auch über die Varianten selbst
@@ -251,6 +271,8 @@ begin
   if v_abgewiesen is null then
     raise exception 'Eine leere zweite Variante wurde am öffentlichen Training zugelassen';
   end if;
+  -- Mit dem Zusatz, denn beim Commit der Subtransaktion führt das Training
+  -- zwei Varianten — genau der Fall, für den die Variante zu nennen ist.
   if v_abgewiesen not like 'TRAINING_UNVOLLSTAENDIG: freies_spiel VARIANTE %' then
     raise exception 'Unerwartete Abweisung der leeren Variante: %', v_abgewiesen;
   end if;

@@ -47,6 +47,7 @@ export default async function FassungDiagrammPage({
       { label: f.name, href: `/training/${f.trainingId}/uebung/${f.id}/edit${anhang}` },
       { label: "Feld-Diagramm" },
     ],
+    anhang,
   );
 
   return (

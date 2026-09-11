@@ -81,7 +81,7 @@ export function varianteAusFehler(message: string): string | null {
  *  sie kein Gesprächsgegenstand (#201 PC 5) — dann übergibt er keinen Namen. */
 export function bedingungText(bedingung: Bedingung, varianteName?: string): string {
   const fehlt = BEDINGUNG_FEHLT[bedingung];
-  return varianteName ? `${fehlt} in der Variante \u201e${varianteName}\u201c` : fehlt;
+  return varianteName ? `${fehlt} in der Variante „${varianteName}"` : fehlt;
 }
 
 /** Die Meldung für eine Änderung, die ein öffentliches Training unter die
@@ -98,6 +98,27 @@ function bedingungsMeldung(bedingung: Bedingung, jeVariante: boolean): string {
   const was = jeVariante
     ? `in jeder Variante ${BEDINGUNG_FEHLT[bedingung]}`
     : BEDINGUNG_FEHLT[bedingung];
+  return satzUm(was);
+}
+
+/** Dieselbe Meldung für den Aufrufer, der das Training kennt und die Variante
+ *  darum benennen kann (#204 AK 3): «Ein öffentliches Training braucht
+ *  mindestens eine Übung im freien Spiel in der Variante „21 Kinder". Setze es
+ *  zuerst auf Entwurf, wenn du es so ändern willst.»
+ *
+ *  Ohne `varianteName` ist sie wortgleich mit der allgemeinen Fassung — der
+ *  Editor übergibt ihn nur, wenn das Training mehr als eine Variante führt
+ *  (Epic EK 7). */
+export function bedingungsMeldungFuer(
+  bedingung: Bedingung,
+  varianteName?: string,
+): string {
+  return satzUm(bedingungText(bedingung, varianteName));
+}
+
+/** Der gemeinsame Satzbau beider Meldungen — er steht einmal, damit die beiden
+ *  Wege nicht in zwei Formulierungen desselben auseinanderlaufen. */
+function satzUm(was: string): string {
   return (
     `Ein öffentliches Training braucht ${was}. ` +
     "Setze es zuerst auf Entwurf, wenn du es so ändern willst."
@@ -343,7 +364,10 @@ const HAUPTTEIL_BEDINGUNG: Record<Altersstufe, Bedingung> = {
  *
  *  Reihenfolge wie in SQL: erst die trainingsweiten Bedingungen, dann die
  *  Varianten in Anzeigereihenfolge. Der DB-Fehler nennt den ersten Eintrag —
- *  es soll derselbe sein, den die Vorschau oben zeigt. */
+ *  es soll derselbe sein, den die Vorschau oben zeigt.
+ *
+ *  Genannt wird die Variante erst ab der zweiten: Führt das Training nur eine,
+ *  verhält es sich überall wie vor diesem Epic (Epic EK 7). */
 export function fehlendeBedingungenAus(
   altersstufe: Altersstufe,
   stufen: readonly string[],
@@ -384,9 +408,14 @@ export function fehlendeBedingungenAus(
     return missing;
   }
 
+  // Bei genau EINER Variante bleibt `varianteId` leer: Ihre Bezeichnung hat der
+  // Trainer nie vergeben und sieht sie nirgends (#201 PC 5 / Epic EK 7) — sie in
+  // der Meldung zu nennen, erfände einen Gegenstand. Zwilling: die
+  // `v_variantenzahl`-Schranke in `training_fehlende_bedingungen()`.
+  const nennen = varianten.length > 1;
   for (const v of varianten) {
     if (!sichtbareZuordnungen(fassungen, v.id).some(erfuellt))
-      missing.push({ bedingung: hauptteil, varianteId: v.id });
+      missing.push({ bedingung: hauptteil, varianteId: nennen ? v.id : null });
   }
   return missing;
 }

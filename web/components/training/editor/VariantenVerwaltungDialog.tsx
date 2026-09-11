@@ -180,7 +180,7 @@ export function VariantenVerwaltungDialog({
         }
       >
         <p className="mb-4">
-          Die vorderste Variante zeigt das Training beim Öffnen.
+          Beim Öffnen zeigt das Training die vorderste Variante.
         </p>
         <ul className="flex flex-col gap-2">
           {liste.map((v, i) => (
@@ -386,11 +386,13 @@ function wegfallSatz(
 
   const teile: string[] = [];
   // In der Einzahl ist die Zahl überflüssig: «1 Übung, davon 1 mit Notiz» sähe
-  // aus wie ein Zählfehler.
-  if (mitNotiz > 0) teile.push(n === 1 ? "mit einer Notiz" : `${mitNotiz} mit Notiz`);
+  // aus wie ein Zählfehler. Der Satz wechselt dann die Wendung — «sie trägt
+  // eine Notiz» statt eines Aufzählungs-Nachsatzes über ein einziges Stück.
+  if (mitNotiz > 0) teile.push(n === 1 ? "eine Notiz" : `${mitNotiz} mit Notiz`);
   if (mitGruppen > 0)
-    teile.push(n === 1 ? "mit einer Gruppenzuweisung" : `${mitGruppen} mit Gruppenzuweisung`);
-  const davon = teile.length > 0 ? `, ${n === 1 ? "sie ist" : "davon"} ${teile.join(" und ")}` : "";
+    teile.push(n === 1 ? "eine Gruppenzuweisung" : `${mitGruppen} mit Gruppenzuweisung`);
+  const davon =
+    teile.length > 0 ? `, ${n === 1 ? "sie trägt" : "davon"} ${teile.join(" und ")}` : "";
 
   return (
     `Mit „${variante.name}" ${n === 1 ? "fällt" : "fallen"} ` +

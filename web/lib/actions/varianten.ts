@@ -2,7 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidiereTraining } from "@/lib/revalidate";
-import { MELDUNG_VERGEBEN, varianteNameProblem } from "@/lib/varianten";
+import { MELDUNG_VERGEBEN } from "@/lib/bezeichnung";
+import { varianteNameProblem } from "@/lib/varianten";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 import { ladeBearbeitungsziel, bildOrdnerFuer } from "@/lib/training-zugriff";
 import {

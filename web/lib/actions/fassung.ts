@@ -228,11 +228,14 @@ export async function updateFassung(
     await supabase.storage.from(STORAGE_BUCKET).remove([altPfad]);
 
   revalidiereTraining(fassung.training_id, fassungId);
-  // Der Rückweg trägt die Variante mit, aus der heraus geöffnet wurde: Sonst
-  // landete der Trainer nach dem Speichern in der ersten Variante und suchte
-  // die eben bearbeitete Übung (#201 AK 6).
+  // Der Rückweg trägt die Variante mit: Sonst landete der Trainer nach dem
+  // Speichern in der ersten Variante und suchte die eben bearbeitete Übung
+  // (#201 AK 6). Massgebend ist, wo die Fassung jetzt LIEGT, nicht woher der
+  // Aufruf kam — kommt sie ohne Suchparameter herein (ein Lesezeichen, ein
+  // geteilter Link), führt ihre eigene Variante zurück. Ausserhalb des
+  // Hauptteils ist beides leer und der Anhang entfällt.
   const zurueck = `/training/${fassung.training_id}/edit?bearbeitet=1`;
-  redirect(`${zurueck}${varianteAnhang(variante, "&")}`);
+  redirect(`${zurueck}${varianteAnhang(variante ?? neueVariante ?? undefined, "&")}`);
 }
 
 /** Eine Fassung, wie sie fürs Kopieren in die Bibliothek gelesen wird

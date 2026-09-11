@@ -23,7 +23,10 @@ import {
   junioren_block as juniorenBlockLabels,
   type JuniorenBlockSlug,
 } from "@/lib/vocab";
-import { fehlendeBedingungenAus } from "@/lib/training-bedingungen";
+import {
+  bedingungsMeldungFuer,
+  fehlendeBedingungenAus,
+} from "@/lib/training-bedingungen";
 import { zaehle } from "@/lib/labels";
 import {
   VARIANTE_PARAM,
@@ -49,6 +52,7 @@ import {
   deleteTraining,
 } from "@/lib/actions/trainings";
 import type { HauptteilkategorieSlug } from "@/lib/vocab";
+import type { TrainingActionResult } from "@/lib/actions/trainings";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings";
 import type { TeamUebersicht } from "@/lib/queries/teams";
 
@@ -267,6 +271,22 @@ export function TrainingEditor({
     });
   }
 
+  /** Die Meldung zu einer abgewiesenen Änderung.
+   *
+   *  Verweigert die Datenebene, weil ein öffentliches Training eine Bedingung
+   *  verlöre, sagt ihre allgemeine Übersetzung bloss «in jeder Variante» — die
+   *  Server-Action kennt die Bezeichnungen nicht. Hier sind sie da: Die Meldung
+   *  nennt Variante UND Block (#204 AK 3). Bei genau einer Variante bleibt es
+   *  beim Satz ohne Bezeichnung (Epic EK 7) — die Datenebene nennt dann schon
+   *  keine. */
+  function abweisung(r: TrainingActionResult, rueckfall: string): string {
+    if (r.bedingung && r.varianteId && mehrereVarianten) {
+      const name = training.varianten.find((v) => v.id === r.varianteId)?.name;
+      if (name) return bedingungsMeldungFuer(r.bedingung, name);
+    }
+    return r.error ?? rueckfall;
+  }
+
   /** Übung entfernen — mit Rückfrage, solange sie Gruppen trägt (AK 16). Die
    *  Tragweite ist dieselbe wie beim Entfernen einer Gruppe: Mit der Übung
    *  fallen ihre Zuweisungen weg, und die stehen nirgends sonst. Ohne
@@ -288,7 +308,7 @@ export function TrainingEditor({
       // Am öffentlichen Training kann das Entfernen abgelehnt werden — es wäre
       // die letzte Übung, die es dort braucht. Ohne Meldung sähe der Trainer
       // die Übung einfach stehenbleiben (Story A AK 7).
-      if (!r.ok) setNotice(r.error ?? "Entfernen fehlgeschlagen.");
+      if (!r.ok) setNotice(abweisung(r, "Entfernen fehlgeschlagen."));
     });
   }
 
@@ -345,7 +365,7 @@ export function TrainingEditor({
       for (const id of ids) modell.vergissFolge(id);
       for (const id of ids) {
         const r = await removeTrainingExercise(id);
-        if (!r.ok && !fehler) fehler = r.error ?? "Entfernen fehlgeschlagen.";
+        if (!r.ok && !fehler) fehler = abweisung(r, "Entfernen fehlgeschlagen.");
       }
       setMismatch(null);
       router.refresh();
@@ -795,7 +815,10 @@ function aufteilungSatz(
     .map((v) => ({ name: v.name, anzahl: je.find((e) => e.varianteId === v.id)?.anzahl ?? 0 }))
     .filter((e) => e.anzahl > 0);
   if (geordnet.length === 0) return "";
-  if (geordnet.length === 1) return `, alle in der Variante „${geordnet[0].name}"`;
+  // «alle» setzt eine Mehrzahl voraus, die es bei einer einzigen Zuweisung
+  // nicht gibt: «ist an 1 Übung zugewiesen, alle in der Variante …».
+  if (geordnet.length === 1)
+    return `, ${geordnet[0].anzahl === 1 ? "" : "alle "}in der Variante „${geordnet[0].name}"`;
   // Das Wort «Variante» steht einmal am Anfang; die weiteren Glieder tragen
   // bloss den Namen — sonst stünde es in einem Satz drei- und viermal.
   const teile = geordnet.map(

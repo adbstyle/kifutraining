@@ -130,7 +130,9 @@ export async function kopiereTraining(
     .from("training_exercises")
     .select(FASSUNG_SELECT)
     .eq("training_id", quelleId);
-  if (leseFehler) return { ok: false, error: leseFehler.message };
+  // Übersetzt statt roh: Auch ein Lesefehler landet als Meldung beim Trainer,
+  // und ein Postgres-Text nennt dort Tabellen statt eines Wegs (Issue #41).
+  if (leseFehler) return { ok: false, error: fehlerMeldung(leseFehler.message) };
 
   // Die Varianten des Hauptteils, in der Reihenfolge des Originals (#205 AK 1).
   // Vor dem Insert des Ziels gelesen: Scheitert die Abfrage, entsteht gar keine
@@ -141,7 +143,8 @@ export async function kopiereTraining(
     .eq("training_id", quelleId)
     .order("position")
     .order("id");
-  if (variantenLeseFehler) return { ok: false, error: variantenLeseFehler.message };
+  if (variantenLeseFehler)
+    return { ok: false, error: fehlerMeldung(variantenLeseFehler.message) };
 
   const { data: neu, error: insertFehler } = await supabase
     .from("trainings")
@@ -197,7 +200,7 @@ export async function kopiereTraining(
       .select("id")
       .eq("training_id", neu.id)
       .maybeSingle();
-    if (autoFehler) return abbrechen(autoFehler.message);
+    if (autoFehler) return abbrechen(fehlerMeldung(autoFehler.message));
     if (!auto) return abbrechen("Die Varianten des Hauptteils liessen sich nicht kopieren.");
 
     const { error } = await supabase
@@ -234,7 +237,7 @@ export async function kopiereTraining(
     // die ID entscheidet zeitgleiche Anlagen.
     .order("created_at")
     .order("id");
-  if (gruppenLeseFehler) return abbrechen(gruppenLeseFehler.message);
+  if (gruppenLeseFehler) return abbrechen(fehlerMeldung(gruppenLeseFehler.message));
 
   // Von der alten auf die neue Gruppen-ID: die Zuweisungen weiter unten reden
   // noch in den IDs der Quelle.
@@ -269,7 +272,7 @@ export async function kopiereTraining(
         created_at: g.created_at,
       })),
     );
-    if (error) return abbrechen(error.message);
+    if (error) return abbrechen(fehlerMeldung(error.message));
   }
 
   // Die IDs entstehen vorab: sie benennen die Bildkopien, die vor dem Insert
@@ -316,7 +319,7 @@ export async function kopiereTraining(
         diagramm: kopiereDiagrammVon(f.diagramm),
       })),
     );
-    if (error) return abbrechen(error.message);
+    if (error) return abbrechen(fehlerMeldung(error.message));
   }
 
   // Zuletzt die Verteilung: Gruppen und Fassungen der Kopie stehen jetzt, und
@@ -329,7 +332,7 @@ export async function kopiereTraining(
         "training_exercise_id",
         fassungen.map((f) => f.id),
       );
-    if (zuweisungLeseFehler) return abbrechen(zuweisungLeseFehler.message);
+    if (zuweisungLeseFehler) return abbrechen(fehlerMeldung(zuweisungLeseFehler.message));
 
     const fassungMap = new Map(bilder.map(({ quelle: f, neueId }) => [f.id, neueId]));
     const zeilen: { training_exercise_id: string; gruppe_id: string; position: number }[] = [];

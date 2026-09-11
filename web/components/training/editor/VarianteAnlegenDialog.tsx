@@ -168,7 +168,7 @@ export function VarianteAnlegenDialog({
           error={!!fehlerNeu}
           supportingText={
             fehlerNeu ??
-            `Woran der Trainer sie erkennt, etwa „21 Kinder". Höchstens ${VARIANTE_NAME_MAX} Zeichen.`
+            `Woran du sie erkennst, etwa „21 Kinder". Höchstens ${VARIANTE_NAME_MAX} Zeichen.`
           }
         />
       </div>

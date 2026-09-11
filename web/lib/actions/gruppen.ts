@@ -2,7 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidiereTraining } from "@/lib/revalidate";
-import { MELDUNG_VERGEBEN, nameProblem } from "@/lib/gruppen";
+import { MELDUNG_VERGEBEN } from "@/lib/bezeichnung";
+import { nameProblem } from "@/lib/gruppen";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 import type { TrainingActionResult } from "@/lib/actions/trainings";
 
@@ -23,7 +24,7 @@ import type { TrainingActionResult } from "@/lib/actions/trainings";
  */
 
 /** Die Unique-Verletzung des Index `tg_name_je_training`. Ihre Meldung ist
- *  `MELDUNG_VERGEBEN` aus `@/lib/gruppen` — derselbe Satz wie in der
+ *  `MELDUNG_VERGEBEN` aus `@/lib/bezeichnung` — derselbe Satz wie in der
  *  Vorabprüfung, damit der Trainer nicht zwei Formulierungen für dieselbe
  *  Kollision zu lesen bekommt. */
 const UNIQUE_VERLETZUNG = "23505";

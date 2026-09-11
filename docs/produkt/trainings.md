@@ -306,9 +306,10 @@ Druck und in der Ansicht, in der ein Training bloss gelesen wird, über eine Rei
 von denen jeder eine eigene Adresse trägt; auf dem Papier erscheint diese Reihe nicht, sie gehört
 zur Bedienung der Seite. Wechseln darf dabei auch, wer das Training gar nicht bearbeiten kann: Es
 ist ein Weg durch dasselbe Training, keine Änderung daran. Die Überschrift des Hauptteils trägt in
-allen drei Ansichten die Bezeichnung der Variante, etwa „Hauptteil · 21 Kinder" — auf Papier ist
-das der einzige Ort, an dem noch steht, welche gedruckt wurde. Gedruckt wird darum je Variante ein
-eigener Ausdruck.
+allen drei Ansichten die Bezeichnung der Variante, etwa „Hauptteil · 21 Kinder". Der Ausdruck
+nennt sie zusätzlich im Kopf neben Name und Ziel: Ist der Hauptteil dieser Variante leer, fällt
+sein Abschnitt samt Überschrift weg, und auf dem Blatt stünde sonst nirgends, welche gedruckt
+wurde. Gedruckt wird je Variante ein eigener Ausdruck.
 
 ## Veröffentlichen
 
@@ -333,8 +334,8 @@ jeder einzeln: Im Kinderfussball braucht jede Variante ihr freies Spiel, im Juni
 ihre Spielformen. Die übrigen Bedingungen liegen ausserhalb des Hauptteils und gelten dem Training
 einmal. Fehlt etwas, nennt die Anwendung Block und Variante, und zwar jede betroffene. Auch das
 gilt dauerhaft: Eine spätere Änderung, die eine Variante unter die Schwelle brächte, wird
-abgewiesen, und die Meldung sagt, dass es die Übung in jeder Variante braucht — der Weg führt auch
-hier zuerst über den Entwurf.
+abgewiesen, und die Meldung nennt auch dann Block und Variante — der Weg führt auch hier zuerst
+über den Entwurf.
 
 Eine eigene Übung, die noch privat in der Bibliothek liegt, bleibt dort privat, auch wenn ihre
 Fassung im veröffentlichten Training mitgelesen werden kann: wer ein Training veröffentlicht,

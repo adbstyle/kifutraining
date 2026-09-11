@@ -47,6 +47,9 @@ export default async function FassungBearbeitenPage({
       terminDatum: f.trainingTerminDatum,
     },
     [{ label: f.name }],
+    // Die Brotkrume «Training» führt in die Variante zurück, aus der die
+    // Fassung geöffnet wurde — wie der Rückweg nach dem Speichern.
+    anhang,
   );
 
   return (

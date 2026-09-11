@@ -22,13 +22,21 @@ set lock_timeout = '5s';
 -- Reihenfolge in dieser Datei ist zwingend (Architektur-Gegenprüfung):
 --   1) Tabelle + Spalte          — noch ohne Invariante, damit der Backfill
 --                                  überhaupt Zeilen schreiben kann
---   2) Backfill                  — jedes Training bekommt «Variante 1», jede
+--   2) Trigger «erste Variante»  — VOR dem Backfill: Ein Training, das während
+--                                  des Deploys entsteht, bekäme sonst keine
+--                                  Variante — der Backfill ist dann schon
+--                                  durch, der Trigger noch nicht da. Er
+--                                  schreibt allein in `training_varianten`,
+--                                  und der Touch-Trigger darauf entsteht erst
+--                                  nach dem Backfill; einen
+--                                  «Geändert»-Sprung gibt es dadurch nicht.
+--   3) Backfill                  — jedes Training bekommt «Variante 1», jede
 --                                  Hauptteil-Fassung zeigt darauf
---   3) CHECK (inline validiert)  — der Bestand ist jetzt sauber; ein NOT VALID
+--   4) CHECK (inline validiert)  — der Bestand ist jetzt sauber; ein NOT VALID
 --                                  brächte nichts, weil der Backfill in
 --                                  derselben Datei davorsteht
---   4) Indizes                   — Positionen sind ab jetzt je Variante
---   5) Trigger + RPCs            — ERST hier, sonst schriebe der Touch-Trigger
+--   5) Indizes                   — Positionen sind ab jetzt je Variante
+--   6) Übrige Trigger + RPCs     — ERST hier, sonst schriebe der Touch-Trigger
 --                                  jedem Training das Deploy-Datum als
 --                                  «zuletzt geändert»
 
@@ -73,6 +81,13 @@ create unique index tv_name_je_training
 comment on index tv_name_je_training is
   'Spiegel von bezeichnungSchluessel()/varianteNameProblem() in web/lib/bezeichnung.ts bzw. web/lib/varianten.ts.';
 
+-- Und der Zwilling an den Gruppen zeigt jetzt auf dieselbe Quelle: Seit die
+-- Namensregel beiden gemeinsam gehört, gibt es `gruppenSchluessel()` nicht
+-- mehr — der alte Kommentar nannte eine Funktion, die keiner mehr findet.
+-- Nachgeführt hier statt in der bereits ausgerollten Migration (forward-only).
+comment on index tg_name_je_training is
+  'Spiegel von bezeichnungSchluessel()/nameProblem() in web/lib/bezeichnung.ts bzw. web/lib/gruppen.ts.';
+
 -- Zwei Varianten auf derselben Position wären keine Reihenfolge mehr. Der
 -- Index hält «die erste Variante» eindeutig beantwortbar (#201 AK 7).
 create unique index tv_position_je_training
@@ -92,11 +107,50 @@ comment on column training_exercises.variante_id is
 create index training_exercises_variante_idx on training_exercises (variante_id);
 
 -- ----------------------------------------------------------------------------
--- 2) Backfill: jedes bestehende Training bekommt seine erste Variante
+-- 2) Jedes Training führt ab dem ersten Moment eine Variante
+-- ----------------------------------------------------------------------------
+-- «Ein Training führt jederzeit mindestens einen Hauptteil» (Epic EK 6). Die
+-- Invariante hier statt in jedem Anlege-Pfad: `createTraining` und
+-- `kopiereTraining` legen Trainings an, der KI-Zugang (#190) wird folgen — je
+-- mehr Pfade, desto sicherer vergisst einer die Variante.
+--
+-- `security definer`, damit die Invariante nicht an einer Nutzer-Policy hängt:
+-- wer ein Training anlegen darf, bekommt seine Variante, ohne dass `tv_insert`
+-- ein zweites Mal dasselbe entscheidet (Muster `te_altersstufe_erben`).
+--
+-- Die Vorbelegung «Variante 1» ist dieselbe wie im Backfill. Sie steuert in der
+-- Anwendung nichts: Solange ein Training nur einen Hauptteil führt, zeigt die
+-- Oberfläche den Namen gar nicht (#201 PC 5) — er wird erst sichtbar, wenn die
+-- zweite Variante dazukommt, und der Anlege-Dialog liest ihn dann von hier.
+-- Geprüft wird bloss, dass die Vorabprüfung ihn zulässt
+-- (`VARIANTE_DEFAULT_NAME` in web/scripts/pruefe-varianten.ts).
+create function trainings_erste_variante() returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  insert into training_varianten (training_id, name, position)
+  values (new.id, 'Variante 1', 0);
+  return null;
+end;
+$$;
+
+create trigger trainings_erste_variante
+  after insert on trainings
+  for each row execute function trainings_erste_variante();
+
+-- ----------------------------------------------------------------------------
+-- 3) Backfill: jedes bestehende Training bekommt seine erste Variante
 -- ----------------------------------------------------------------------------
 -- Der Bestand kennt genau einen Hauptteil je Training. Er wird zur ersten
 -- Variante «Variante 1» — dieselbe Vorbelegung, die der Editor beim Anlegen
 -- der zweiten Variante als bisherigen Namen anbietet (#201 AK 2).
+--
+-- `where not exists` ist keine Zierde: Der Trigger aus Abschnitt 2 steht
+-- bereits, ein während des Deploys angelegtes Training hat seine Variante
+-- also schon. Ohne die Bedingung liefe der Backfill für dieses Training in
+-- `tv_position_je_training`.
 --
 -- Zwei Trigger stehen dem zweiten Schritt im Weg (Muster:
 -- `altersstufe_spalten`):
@@ -130,7 +184,7 @@ alter table training_exercises enable trigger training_exercises_oeffentlich_gat
 alter table training_exercises enable trigger training_exercises_touch;
 
 -- ----------------------------------------------------------------------------
--- 3) Die Invariante: Variante genau im Hauptteil
+-- 4) Die Invariante: Variante genau im Hauptteil
 -- ----------------------------------------------------------------------------
 -- Eine Hauptteil-Fassung OHNE Variante wäre in keiner Zusammenstellung
 -- sichtbar, eine Fassung ausserhalb des Hauptteils MIT Variante behauptete
@@ -148,7 +202,7 @@ comment on constraint te_variante_genau_bei_hauptteil on training_exercises is
   'Spiegel von istHauptteil() in web/lib/gruppen.ts: genau die Hauptteil-Einordnungen tragen eine Variante.';
 
 -- ----------------------------------------------------------------------------
--- 4) Positionen gelten je Variante
+-- 5) Positionen gelten je Variante
 -- ----------------------------------------------------------------------------
 -- Bisher war die Reihenfolge im Hauptteil je (Training, Unterkategorie)
 -- eindeutig. Mit Varianten stehen dieselben Positionen mehrfach — je Variante
@@ -182,7 +236,7 @@ comment on function einordnung_traegt_gruppen(text) is
   'Spiegel von istHauptteil() in web/lib/gruppen.ts. ACHTUNG: Wer die Wertemenge ändert, muss den Index training_ex_pos_nonhauptteil neu bauen und den CHECK te_variante_genau_bei_hauptteil neu validieren — beide hängen an dieser Funktion.';
 
 -- ----------------------------------------------------------------------------
--- 5a) RLS: die Variante folgt dem Training, dem sie gehört
+-- 6a) RLS: die Variante folgt dem Training, dem sie gehört
 -- ----------------------------------------------------------------------------
 -- Exakt die Kette der `tg_*`-Policies an den Gruppen: lesen darf, wer das
 -- Training lesen darf (öffentlich, eigen, Team) — auch Betrachtende ohne
@@ -217,42 +271,13 @@ create policy tv_delete on training_varianten for delete
 grant select, insert, update, delete on training_varianten to anon, authenticated, service_role;
 
 -- ----------------------------------------------------------------------------
--- 5b) Jedes Training führt ab dem ersten Moment eine Variante
+-- 6b) Die letzte Variante bleibt, und eine Änderung zählt als Änderung
 -- ----------------------------------------------------------------------------
--- «Ein Training führt jederzeit mindestens einen Hauptteil» (Epic EK 6). Die
--- Invariante hier statt in jedem Anlege-Pfad: `createTraining` und
--- `kopiereTraining` legen Trainings an, der KI-Zugang (#190) wird folgen — je
--- mehr Pfade, desto sicherer vergisst einer die Variante.
---
--- `security definer`, damit die Invariante nicht an einer Nutzer-Policy hängt:
--- wer ein Training anlegen darf, bekommt seine Variante, ohne dass `tv_insert`
--- ein zweites Mal dasselbe entscheidet (Muster `te_altersstufe_erben`).
---
--- Die Vorbelegung «Variante 1» ist dieselbe wie im Backfill und in
--- `VARIANTE_DEFAULT_NAME` (web/lib/varianten.ts): Solange ein Training nur
--- einen Hauptteil führt, zeigt die Oberfläche den Namen gar nicht (#201 PC 5) —
--- er wird erst sichtbar, wenn die zweite Variante dazukommt.
-create function trainings_erste_variante() returns trigger
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-begin
-  insert into training_varianten (training_id, name, position)
-  values (new.id, 'Variante 1', 0);
-  return null;
-end;
-$$;
-
-create trigger trainings_erste_variante
-  after insert on trainings
-  for each row execute function trainings_erste_variante();
-
--- Und sie verliert die letzte nicht wieder (#202). Als CONSTRAINT-Trigger
--- `deferrable initially deferred` wie die Veröffentlichungs-Gates: Beim
--- Löschen eines ganzen Trainings ist die Kaskade erst beim Commit
--- abgeschlossen — die Zwischenstände (Training weg, Varianten fallen nacheinander)
--- dürfen nicht anschlagen.
+-- Ein Training verliert seine letzte Variante nicht wieder (#202). Als
+-- CONSTRAINT-Trigger `deferrable initially deferred` wie die
+-- Veröffentlichungs-Gates: Beim Löschen eines ganzen Trainings ist die Kaskade
+-- erst beim Commit abgeschlossen — die Zwischenstände (Training weg, Varianten
+-- fallen nacheinander) dürfen nicht anschlagen.
 --
 -- `exists (select 1 from trainings …)` ist genau diese Unterscheidung: Ist das
 -- Training beim Commit noch da, war es eine gezielte Entfernung und die letzte
@@ -286,7 +311,7 @@ create trigger tv_touch
   for each row execute function training_exercises_touch_training();
 
 -- ----------------------------------------------------------------------------
--- 5c) Die Fassung findet ihre Variante — oder wird abgewiesen
+-- 6c) Die Fassung findet ihre Variante — oder wird abgewiesen
 -- ----------------------------------------------------------------------------
 -- Drei Regeln, die sich nicht als CHECK schreiben lassen, weil sie an einer
 -- zweiten Tabelle hängen:
@@ -345,7 +370,7 @@ create trigger te_variante_ausrichten
   for each row execute function te_variante_ausrichten();
 
 -- ----------------------------------------------------------------------------
--- 6a) Eine Variante anlegen — als Kopie der angezeigten
+-- 7a) Eine Variante anlegen — als Kopie der angezeigten
 -- ----------------------------------------------------------------------------
 -- «Eine neue Variante entsteht als Kopie der gerade angezeigten» (Epic EK 4).
 -- Variante, Fassungskopien und Gruppen-Zuweisungen entstehen in EINER
@@ -477,7 +502,7 @@ revoke all on function lege_variante_an(uuid, uuid, text, text, jsonb) from publ
 grant execute on function lege_variante_an(uuid, uuid, text, text, jsonb) to authenticated;
 
 -- ----------------------------------------------------------------------------
--- 6b) Eine Variante entfernen
+-- 7b) Eine Variante entfernen
 -- ----------------------------------------------------------------------------
 -- Der Constraint-Trigger `tv_letzte_bleibt` fängt den Fall ohnehin — aber erst
 -- beim Commit, und dann hat die Anwendung ihre Bilddateien womöglich schon
@@ -523,11 +548,15 @@ revoke all on function entferne_variante(uuid) from public, anon;
 grant execute on function entferne_variante(uuid) to authenticated;
 
 -- ----------------------------------------------------------------------------
--- 6c) Eine Variante umsortieren
+-- 7c) Eine Variante umsortieren
 -- ----------------------------------------------------------------------------
 -- Tausch mit dem Nachbarn über den Zwischenwert -1, weil
 -- `tv_position_je_training` eindeutig ist — dasselbe Vorgehen wie
 -- `move_training_exercise`. Am Rand kein Nachbar, also nichts zu tun.
+--
+-- `p_dir` kennt genau zwei Werte: -1 nach vorne, 1 nach hinten. Die Null ist
+-- keine Richtung — sie stillschweigend als «nach hinten» zu lesen, machte aus
+-- einem Programmierfehler eine Umsortierung, die niemand verlangt hat.
 create function verschiebe_variante(p_variante uuid, p_dir int) returns void
 language plpgsql
 security definer
@@ -542,6 +571,10 @@ declare
 begin
   if v_uid is null then
     raise exception 'not authenticated';
+  end if;
+
+  if p_dir = 0 then
+    return;
   end if;
 
   select v.training_id, v.position into v_training, v_pos
@@ -580,7 +613,7 @@ revoke all on function verschiebe_variante(uuid, int) from public, anon;
 grant execute on function verschiebe_variante(uuid, int) to authenticated;
 
 -- ----------------------------------------------------------------------------
--- 6d) Umsortieren einer Fassung bleibt in ihrer Variante
+-- 7d) Umsortieren einer Fassung bleibt in ihrer Variante
 -- ----------------------------------------------------------------------------
 -- Der Nachbar muss zusätzlich zur selben Variante gehören, sonst tauschte eine
 -- Übung ihre Position mit einer, die gar nicht angezeigt wird (#201 AK 8).
@@ -654,16 +687,18 @@ end;
 $$;
 
 -- ----------------------------------------------------------------------------
--- 7) Selbstprüfung
+-- 8) Selbstprüfung
 -- ----------------------------------------------------------------------------
 -- Geprüft wird, was die Anwendung nicht selbst sicherstellen kann: die vier
 -- Policies, die beiden Eindeutigkeiten, die drei neuen Positions-Indizes, der
--- validierte CHECK und die beiden Invarianten, die der Backfill hergestellt
--- hat. Läuft eine davon ins Leere, merkt es sonst erst der Trainer.
+-- validierte CHECK, die vier Trigger und die beiden Invarianten, die der
+-- Backfill hergestellt hat. Läuft eine davon ins Leere, merkt es sonst erst der
+-- Trainer.
 do $$
 declare
   v_policies int;
   v_indizes int;
+  v_trigger int;
   v_ohne_variante int;
   v_ohne_hauptteil int;
   v_validiert boolean;
@@ -694,6 +729,23 @@ begin
      and x.indisunique;
   if v_indizes <> 3 then
     raise exception 'training_exercises: erwartet 3 Positions-Indizes, gefunden %', v_indizes;
+  end if;
+
+  -- Die vier Trigger sind der einzige Ort, an dem die Invarianten dieser
+  -- Migration zur Laufzeit greifen: Ohne sie bliebe das Schema vollständig und
+  -- trotzdem entstünde ein Training ohne Hauptteil, verlöre eines seinen
+  -- letzten oder trüge eine Fassung eine fremde Variante. Ein CHECK erzählt
+  -- davon nichts — darum hier über `pg_trigger` gezählt.
+  select count(*) into v_trigger
+    from pg_trigger
+   where not tgisinternal
+     and (tgrelid = 'trainings'::regclass and tgname = 'trainings_erste_variante'
+          or tgrelid = 'training_varianten'::regclass
+             and tgname in ('tv_letzte_bleibt', 'tv_touch')
+          or tgrelid = 'training_exercises'::regclass
+             and tgname = 'te_variante_ausrichten');
+  if v_trigger <> 4 then
+    raise exception 'erwartet 4 Varianten-Trigger, gefunden %', v_trigger;
   end if;
 
   select convalidated into v_validiert

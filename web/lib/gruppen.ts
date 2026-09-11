@@ -14,29 +14,11 @@
  * Gruppen-Bezug — die Aufrufer (und der SQL-Zwilling, den sie nennen) reden von
  * Gruppen, nicht von «Bezeichnungen».
  */
-import {
-  MELDUNG_VERGEBEN,
-  bezeichnungProblem,
-  bezeichnungSchluessel,
-} from "@/lib/bezeichnung";
-
-export { MELDUNG_VERGEBEN };
+import { bezeichnungProblem } from "@/lib/bezeichnung";
 
 /** Längstmögliche Bezeichnung einer Gruppe (getrimmt gezählt).
  *  SQL-Zwilling: `tg_name_laenge` an `training_gruppen`. */
 export const GRUPPE_NAME_MAX = 40;
-
-/**
- * Der Schlüssel, unter dem zwei Bezeichnungen als dieselbe gelten (AK 7).
- *
- * SQL-Zwilling: `lower(btrim(name))` im Unique-Index `tg_name_je_training`.
- * `toLocaleLowerCase("de")` statt `toLowerCase()`, damit die Kleinschreibung
- * derselben Sprache folgt wie die Anzeige — bei deutschen Bezeichnungen fallen
- * beide zusammen, aber die Absicht steht so im Code.
- */
-export function gruppenSchluessel(name: string): string {
-  return bezeichnungSchluessel(name);
-}
 
 /**
  * Was einer Bezeichnung im Weg steht — `null`, wenn sie sich speichern lässt.
