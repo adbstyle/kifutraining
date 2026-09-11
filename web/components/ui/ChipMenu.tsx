@@ -181,7 +181,7 @@ export function ChipMenu({
             aria-label={selectAriaLabel}
             onClick={onSelect}
             className={cn(
-              "focus-ring inline-flex items-center gap-1.5 rounded-l-full px-3 transition-colors",
+              "focus-ring inline-flex min-w-0 items-center gap-1.5 rounded-l-full px-3 transition-colors",
               disabled ? "cursor-not-allowed opacity-50" : "hover:bg-on-surface/8",
             )}
           >
@@ -202,7 +202,7 @@ export function ChipMenu({
             aria-label={menuAriaLabel ?? `Menü zu „${label}“`}
             onClick={() => setOffen((o) => !o)}
             className={cn(
-              "focus-ring inline-flex w-11 items-center justify-center rounded-r-full border-l-[1.5px] transition-colors",
+              "focus-ring inline-flex w-11 shrink-0 items-center justify-center rounded-r-full border-l-[1.5px] transition-colors",
               selected ? "border-on-surface/20" : "border-outline",
               disabled ? "cursor-not-allowed opacity-50" : "hover:bg-on-surface/8",
             )}

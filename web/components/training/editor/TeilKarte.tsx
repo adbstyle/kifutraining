@@ -29,18 +29,18 @@ export function TeilKarte({
   teil: EditorTeil<TrainingExerciseItem>;
   kontext: ZeilenKontext;
   onAdd: (block: EditorBlock<TrainingExerciseItem>) => void;
-  /** Die Variantenzeile des Hauptteils (#201) — eine eigene Zeile zwischen
-   *  Kartenkopf und Gruppen-Abschnitt. Sie steht ÜBER den Gruppen, weil sie die
-   *  grössere Klammer ist: Die Variante entscheidet, welche Übungen die Karte
-   *  zeigt; die Gruppen gelten für alle Varianten. Wie beim Gruppen-Bereich
-   *  entscheidet der Editor, welcher Teil sie bekommt — nicht die Karte. */
+  /** Die Variantenleiste des Hauptteils (#201) — die obere der beiden Leisten
+   *  unter dem Kartenkopf. Sie steht ÜBER den Gruppen, weil sie die grössere
+   *  Klammer ist: Die Variante entscheidet, welche Übungen die Karte zeigt; die
+   *  Gruppen gelten für alle Varianten. Wie beim Gruppen-Bereich entscheidet
+   *  der Editor, welcher Teil sie bekommt — nicht die Karte. */
   varianten?: ReactNode;
-  /** Der Gruppen-Bereich (Stories #149/#150) — ein Stück in drei Lagen: sein
-   *  Einstieg steht rechts im Kartenkopf, seine Liste zwischen Kopf und
-   *  Blöcken, die Konflikte der Verteilung im Kartenfuss bei den übrigen
-   *  zählenden Meldungen. Nur der Hauptteil bekommt ihn; welcher Teil das ist,
+  /** Der Gruppen-Bereich (Stories #149/#150/#209) — ein Stück in zwei Lagen:
+   *  seine Leiste unter dem Kartenkopf gleich unter der Variantenleiste, die
+   *  Konflikte der Verteilung im Kartenfuss bei den übrigen zählenden
+   *  Meldungen. Nur der Hauptteil bekommt ihn; welcher Teil das ist,
    *  entscheidet der Editor und nicht die Karte. */
-  gruppen?: { knopf: ReactNode; abschnitt: ReactNode; fuss: ReactNode };
+  gruppen?: { leiste: ReactNode; fuss: ReactNode };
 }) {
   const einblockig = teil.bloecke.length === 1;
 
@@ -71,14 +71,18 @@ export function TeilKarte({
             />
           </Tooltip>
         )}
-        {/* Schliessen einander heute aus: der Hauptteil trägt die Gruppen und
-            hat in beiden Altersstufen mehr als einen Block. */}
-        {gruppen?.knopf}
       </div>
 
-      {varianten}
-
-      {gruppen?.abschnitt}
+      {/* Die beiden Leisten als EIN Block mit einer Trennlinie darunter:
+          Varianten und Gruppen sind dieselbe Art von Angabe — das, was für die
+          ganze Karte gilt —, und die Linie trennt sie zusammen von den Blöcken
+          mit den Übungen (#209 AK 1). */}
+      {(varianten || gruppen?.leiste) && (
+        <div className="mt-4 flex flex-col gap-2 border-b border-outline-variant pb-4">
+          {varianten}
+          {gruppen?.leiste}
+        </div>
+      )}
 
       {/* Alle Blöcke bleiben sichtbar, auch die leeren: Beim Planen ist gerade
           die Lücke die Information (Story 4 AC 1, Story 5a AC 1–3). */}
