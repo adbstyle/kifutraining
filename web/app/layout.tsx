@@ -34,11 +34,18 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Die Font-Variablen gehören an <html> und nicht an <body>: `--font-body`
+  // und seine Geschwister werden in `globals.css` auf `:root` definiert und
+  // dort auch BERECHNET. Stünde `--font-source` erst am <body>, wäre die
+  // Substitution auf `:root` ungültig — und eine Custom Property mit
+  // ungültiger Substitution hat den leeren Wert, den <body> dann erbt. Die
+  // ganze App fiele damit auf Tailwinds `--font-sans` zurück.
   return (
-    <html lang="de-CH">
-      <body
-        className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen antialiased`}
-      >
+    <html
+      lang="de-CH"
+      className={`${display.variable} ${body.variable} ${mono.variable}`}
+    >
+      <body className="min-h-screen antialiased">
         {/* Der Team-Kontext des geöffneten Trainings überdauert die einzelne
             Seite und wohnt darum hier — siehe TeamKontext (#156). */}
         <TeamKontextProvider>

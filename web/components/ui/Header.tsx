@@ -234,7 +234,11 @@ export function Header({
                       const SubIcon = sub.icon;
                       return (
                         <Link
-                          key={sub.href}
+                          // Der Name und nicht das Ziel: Zwei Unterpunkte
+                          // dürfen auf dieselbe Adresse zeigen («Alle
+                          // Übungen» und «Favoriten» tun es), gleich heissen
+                          // dürfen sie in einem Menü nie.
+                          key={sub.label}
                           href={sub.href}
                           role="menuitem"
                           onClick={() => setOpenNav(null)}
@@ -447,7 +451,9 @@ export function Header({
                           const SubIcon = sub.icon;
                           return (
                             <Link
-                              key={sub.href}
+                              // Siehe Desktop-Menü: der Name ist eindeutig,
+                              // das Ziel nicht.
+                              key={sub.label}
                               href={sub.href}
                               onClick={() => setDrawerOpen(false)}
                               className="focus-ring type-body-medium flex items-center gap-2.5 rounded-[3px] px-2 py-2.5 text-on-surface-variant transition-colors hover:bg-on-surface/8 hover:text-on-surface"
