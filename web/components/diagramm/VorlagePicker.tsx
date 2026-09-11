@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { Button, Dialog, TextField } from "@/components/ui";
+import { Button, Dialog, TextField, Meldung } from "@/components/ui";
 import { DiagrammView } from "./DiagrammView";
 import { parseDiagramm } from "@/lib/diagramm";
 import { normalizeSearch } from "@/lib/search";
@@ -96,9 +96,9 @@ export function VorlagePicker({
         className="w-[min(48rem,calc(100vw-2rem))]"
       >
         {fehler && (
-          <p className="type-body-small kontur mb-4 rounded-flaeche border-error bg-transparent p-3 text-error">
+          <Meldung tone="fehler" className="mb-4">
             {fehler}
-          </p>
+          </Meldung>
         )}
         <TextField
           label="Übung suchen"

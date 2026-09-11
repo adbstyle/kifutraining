@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Card } from "@/components/ui";
+import { Card, Meldung } from "@/components/ui";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
@@ -27,13 +27,11 @@ export default async function LoginPage({
         </p>
       </header>
 
-      {/* Farbe trägt, füllt nicht: Kontur und Schrift in Error, die Fläche
-          bleibt der Grund. */}
       {sp.error && (
-        <p className="type-body-small mb-4 rounded-flaeche kontur border-error bg-transparent p-3 text-error">
+        <Meldung tone="fehler" className="mb-4">
           Der Bestätigungslink war ungültig oder abgelaufen. Bitte melde dich an
           oder fordere einen neuen Link an.
-        </p>
+        </Meldung>
       )}
 
       <Card className="p-6">

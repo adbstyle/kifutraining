@@ -1,5 +1,5 @@
 import { SearchX, Heart, Plus } from "lucide-react";
-import { ExerciseCard, ButtonLink } from "@/components/ui";
+import { ExerciseCard, ButtonLink, Leerzustand, Meldung } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { CatalogFilterBar, type CatalogFilters } from "@/components/catalog/CatalogFilterBar";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
@@ -100,14 +100,14 @@ export default async function Home({
       </header>
 
       {error && (
-        <div className="type-body-small kontur rounded-flaeche border-error bg-transparent p-4 text-error">
+        <Meldung tone="fehler">
           Datenbank nicht erreichbar oder noch nicht geseedet:{" "}
           <code className="ml-1">{error}</code>
           <div className="mt-1">
             Lokal: <code>npm run db:start</code> → <code>npm run db:reset</code> →{" "}
             <code>npm run seed</code>.
           </div>
-        </div>
+        </Meldung>
       )}
 
       {rows && (
@@ -119,28 +119,14 @@ export default async function Home({
           </p>
 
           {rows.length === 0 ? (
-            <div className="kontur flex flex-col items-center gap-3 rounded-flaeche border-dashed border-kante bg-transparent px-6 py-16 text-center">
-              {filters.fav ? (
-                <>
-                  <Heart size={40} strokeWidth={1.5} className="text-on-surface-mittel" aria-hidden />
-                  <p className="type-title-medium text-on-surface">Noch keine Favoriten</p>
-                  <p className="type-body-medium max-w-sm text-on-surface-mittel">
-                    Markiere Übungen mit dem Herz-Symbol, um sie hier
-                    wiederzufinden. Andere Filter könnten die Auswahl zusätzlich
-                    einschränken.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <SearchX size={40} strokeWidth={1.5} className="text-on-surface-mittel" aria-hidden />
-                  <p className="type-title-medium text-on-surface">Keine Übung gefunden</p>
-                  <p className="type-body-medium max-w-sm text-on-surface-mittel">
-                    Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne
-                    Filter oder setze sie zurück.
-                  </p>
-                </>
-              )}
-            </div>
+            <Leerzustand
+              icon={filters.fav ? Heart : SearchX}
+              titel={filters.fav ? "Noch keine Favoriten" : "Keine Übung gefunden"}
+            >
+              {filters.fav
+                ? "Markiere Übungen mit dem Herz-Symbol, um sie hier wiederzufinden. Andere Filter könnten die Auswahl zusätzlich einschränken."
+                : "Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne Filter oder setze sie zurück."}
+            </Leerzustand>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {rows.map((row) => (

@@ -1,3 +1,4 @@
+import { Leerzustand } from "@/components/ui";
 import { TeamTrainingsListe } from "@/components/team/TeamTrainingsListe";
 import { TeamTrainingErstellenButton } from "@/components/team/TeamTrainingErstellenButton";
 import { getTeamTrainings } from "@/lib/queries/trainings";
@@ -27,10 +28,10 @@ export default async function TeamTrainingsPage({
         <TeamTrainingErstellenButton teamId={id} />
       </div>
       {trainings.length === 0 ? (
-        <p className="kontur rounded-flaeche border-dashed border-kante bg-transparent px-5 py-8 text-center type-body-medium text-on-surface-mittel">
-          Noch kein Training im Team. Erstelle eines hier oder stelle eine Kopie
-          eines eigenen Trainings ins Team.
-        </p>
+        <Leerzustand titel="Noch kein Training im Team" dicht>
+          Erstelle eines hier oder stelle eine Kopie eines eigenen Trainings ins
+          Team.
+        </Leerzustand>
       ) : (
         <TeamTrainingsListe teamId={id} trainings={trainings} />
       )}

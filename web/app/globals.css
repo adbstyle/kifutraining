@@ -13,7 +13,7 @@
 @theme {
   /* ─── Höhe: Grund + weisses Overlay, vorab verrechnet ───
      Literale Hex-Werte, keine Rechnung zur Laufzeit — so kann
-     `scripts/check-kontrast.ts` die Palette per Regex mitlesen. */
+     `scripts/pruefe-farben.ts` die Palette per Regex mitlesen. */
   --color-elev-00: #101613; /* 0 % */
   --color-elev-01: #1c221f; /* 5 % */
   --color-elev-02: #212624; /* 7 % */
@@ -65,7 +65,6 @@
   --state-hover: 0.04;
   --state-focus: 0.12;
   --state-pressed: 0.10;
-  --state-dragged: 0.08;
 
   /* ─── Radien: eckig für alles, was Inhalt hält; voll gerundet für
      alles, was man antippt und wieder loslässt (Chips → rounded-full). ─── */
@@ -95,7 +94,11 @@
    im selben Ton auf. Und weil nichts untergeschoben werden muss,
    erspart sie jede z-index-Buchhaltung im Inhalt.
    Gehört in die BASIS-Bündel (Button, Chip, IconButton, Menüzeile,
-   Nav-Link), nicht an die Aufrufstellen. */
+   Nav-Link), nicht an die Aufrufstellen.
+   Drei Zustände, nicht vier: Material führt zusätzlich «gezogen», aber das
+   Einzige, was in dieser Anwendung gezogen wird, sind Diagramm-Elemente — und
+   die leben im SVG, nicht im DOM. Sie melden das Ziehen in ihrer eigenen
+   Zeichnung; ein DOM-Zustand, den niemand auslöst, wäre ein totes Token. */
 @utility state {
   position: relative;
   &::after {
@@ -116,9 +119,6 @@
   }
   &:active::after {
     opacity: var(--state-pressed);
-  }
-  &[data-dragging]::after {
-    opacity: var(--state-dragged);
   }
   &:disabled::after,
   &[aria-disabled="true"]::after {
@@ -149,14 +149,16 @@
    ring-Box-Shadow), folgt dem Border-Radius, kollidiert NICHT mit Box-Shadows
    (der Schatten schwebender Flächen bleibt) und übersteht
    Forced-Colors/High-Contrast.
-   `focus-ring`: Offset (Lücke zum Grund -> sichtbar auch auf Primary-Flächen);
-   die Kontur wird zusätzlich voll ausgefahren, den 12-%-Overlay liefert `state`.
+   `focus-ring`: Offset (Lücke zum Grund -> sichtbar auch auf Primary-Flächen).
+   Der Ring allein trägt den Fokus; die Kontur bleibt unangetastet, denn sie
+   sagt bereits etwas anderes (Fehler, Befund, Auswahl, offenes Panel), und
+   eine `border-color`-Regel aus einer Utility schlüge jede Farbklasse am
+   Element. Die Zustands-Ebene (`state`) legt den 12-%-Overlay dazu.
    `focus-ring-inset`: für Elemente in overflow-hidden-Containern (z. B. Karten). */
 @utility focus-ring {
   &:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-    border-color: currentColor;
   }
 }
 @utility focus-ring-inset {

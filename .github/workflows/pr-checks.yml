@@ -40,8 +40,7 @@ jobs:
       # die Kontrastrechnung nach WCAG 2.1 und der Wächter über die alte
       # Palette. Tailwind v4 meldet unbekannte Utilities nicht — eine vergessene
       # Klasse erzeugt still keine Regel, und der Text erbt die Elternfarbe.
-      - name: Farben und Kontraste prüfen
-        run: npm run check:farben
+      - run: npm run check:farben
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)

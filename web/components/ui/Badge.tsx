@@ -26,12 +26,14 @@ const tones: Record<Tone, string> = {
   varianten: "kontur border-primary text-primary",
 };
 
-const defaultLabel: Record<Tone, string> = {
+/* Nur die Töne, deren Aufschrift IMMER dieselbe ist, führen hier eine Vorgabe.
+   `neutral` und `varianten` beschriften sich aus ihren Daten (Altersstufe,
+   Anzahl) — ein leerer Eintrag täuschte eine Vorgabe vor, die es nicht gibt.
+   Darum `Partial`: Fehlt der Ton hier, verlangt die Plakette ihren Text. */
+const defaultLabel: Partial<Record<Tone, string>> = {
   manual: "Kifu-Manual",
   entwurf: "Entwurf",
   oeffentlich: "Community",
-  neutral: "",
-  varianten: "",
 };
 
 export function Badge({
@@ -51,7 +53,7 @@ export function Badge({
         className,
       )}
     >
-      {children ?? defaultLabel[tone]}
+      {children ?? defaultLabel[tone] ?? null}
     </span>
   );
 }

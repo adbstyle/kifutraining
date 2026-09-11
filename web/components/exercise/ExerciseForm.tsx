@@ -9,6 +9,7 @@ import {
   FilterChip,
   Button,
   AltersstufeField,
+  Meldung,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
@@ -340,19 +341,15 @@ export function ExerciseForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-7">
-      {state.message && (
-        <p className="type-body-small kontur rounded-flaeche border-error bg-transparent p-3 text-error">
-          {state.message}
-        </p>
-      )}
+      {state.message && <Meldung tone="fehler">{state.message}</Meldung>}
 
       {/* Die Umwandlung ist vorgemerkt, nicht geschehen: Das Formular zeigt
           bereits die Zielstufe, die Übung liegt aber unverändert in der
           Datenbank (Story 4 PC 5). Der Hinweis sagt, was noch fehlt. */}
       {umwandlung && (
-        <p className="type-body-small kontur rounded-flaeche border-primary bg-transparent p-3 text-primary">
+        <Meldung tone="erfolg">
           Umwandlung vorgemerkt — sie wird mit «Umwandeln und speichern» wirksam.
-        </p>
+        </Meldung>
       )}
 
       <TextField

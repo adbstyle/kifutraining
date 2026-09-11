@@ -35,6 +35,7 @@ import {
   ON_PRIMARY,
   PRIMARY,
   SCHRIFT,
+  elev,
   elevName,
   hex8,
   kontrast,
@@ -240,7 +241,7 @@ pruefe("Jede Alterskategorie trägt auf Grund und Karte", () => {
   // elev-01, der Grund elev-00; auf beiden steht dieselbe Plakette.
   for (const [schluessel, hex] of Object.entries(KAT)) {
     for (const dp of [0, 1] as const) {
-      const flaeche = ELEV.find((s) => s.dp === dp)!.hex;
+      const flaeche = elev(dp);
       const wert = kontrast(hex, flaeche);
       assert.ok(wert >= 4.5, `kat-${schluessel} auf ${elevName(dp)}: ${z(wert)}:1`);
     }
@@ -345,7 +346,9 @@ const VERBOTEN: [RegExp, string][] = [
   [/--snackbar-/, "Component-Token"],
   [/--nav-/, "Component-Token"],
   [/--breadcrumb-/, "Component-Token"],
-  [/rounded-\[\d+px\]/, "freie Radien — nur rounded-plakette/-flaeche/-dialog/-full"],
+  // Jede eckige Klammer am Radius, nicht nur die in px: `rounded-[6px]` und
+  // `rounded-[--x]` sind beide am System vorbei.
+  [/rounded-\[/, "freie Radien — nur rounded-plakette/-flaeche/-dialog/-full"],
   [/border-\[1\.5px\]/, "ersetzt durch @utility kontur"],
   [/bg-on-surface\/8/, "Hover gehört in @utility state"],
   [/translate-y-px/, "Knöpfe springen nicht mehr"],
@@ -399,10 +402,6 @@ pruefe(`Keine Altlast der alten Palette (${DATEIEN.length} Dateien)`, () => {
 });
 
 // ── Messwerte ──────────────────────────────────────────────────────────────
-function elevHex(dp: number): string {
-  return ELEV.find((stufe) => stufe.dp === dp)!.hex;
-}
-
 // Nicht geprüft, sondern berichtet: die Zahlen, die im Styleguide stehen.
 console.log("\nMesswerte (Kontrast nach WCAG 2.1):");
 for (const stufe of ELEV) {
@@ -420,7 +419,7 @@ console.log("  Alterskategorien (elev-00 / elev-01 / RGB-Abstand zu primary):");
 for (const [schluessel, hex] of Object.entries(KAT)) {
   console.log(
     `    kat-${schluessel}  ${hex}  ` +
-      `${z(kontrast(hex, ELEV[0].hex))}  ${z(kontrast(hex, elevHex(1)))}  ` +
+      `${z(kontrast(hex, elev(0)))}  ${z(kontrast(hex, elev(1)))}  ` +
       `Abstand ${z(rgbAbstand(hex, PRIMARY))}`,
   );
 }

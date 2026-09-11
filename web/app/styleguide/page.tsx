@@ -19,6 +19,8 @@ import {
   Select,
   MethodischerFahrplan,
   Disclosure,
+  Leerzustand,
+  Meldung,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { SegmentedDemo } from "./SegmentedDemo";
@@ -49,6 +51,8 @@ import {
   Pencil,
   Info,
   Clock,
+  SearchX,
+  MailCheck,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
@@ -70,6 +74,7 @@ import {
   KANTE,
   ZUSTAND,
   DRUCK,
+  elev,
   elevName,
   hex8,
   kontrast,
@@ -206,14 +211,14 @@ const akzentRollen: [string, string, string, string, string][] = [
     "bg-secondary",
     SECONDARY.toUpperCase(),
     "Geführt, nirgends angewandt — die Rolle bleibt besetzt, damit die Palette vollständig ist.",
-    "text-on-primary",
+    "text-on-secondary",
   ],
   [
     "error",
     "bg-error",
     ERROR.toUpperCase(),
     `Fehleingabe und Befund. ${v(kontrast(ERROR, GRUND))} auf dem Grund.`,
-    "text-on-primary",
+    "text-on-error",
   ],
   [
     "on-error",
@@ -325,7 +330,6 @@ const zustaende: [string, number, string][] = [
   ["Überfahren", ZUSTAND.hover, "hover"],
   ["Fokus", ZUSTAND.focus, "focus-visible · dazu der Ring"],
   ["Gedrückt", ZUSTAND.pressed, "active"],
-  ["Gezogen", ZUSTAND.dragged, "data-dragging · dazu dp-08"],
 ];
 
 const spacingSteps: [string, string][] = [
@@ -347,7 +351,12 @@ const radien: [string, string, string][] = [
 ];
 
 const hoehen: [string, string][] = [
-  ["h-9 · 36 px", "Knopf klein, Chip, leiser Knopf — sitzt mit Chips auf einer Linie."],
+  ["h-[22px] · 22 px", "Plakette und Kategorie-Chip — die kleinste beschriftete Fläche."],
+  ["h-8 · 32 px", "Label-Chip: Filter, Assist, Suggestion, Input — alles mit Vokabular-Aufschrift."],
+  [
+    "h-9 · 36 px",
+    "Knopf klein, Nutzertext-Chip, geteilter Chip, leiser Knopf — sie stehen in einer Leiste nebeneinander und fluchten darum.",
+  ],
   ["h-11 · 44 px", "Knopf mittel, Icon-Knopf, Menühälfte — Mindestmass für den Finger."],
   ["h-12 · 48 px", "Dichtes Feld in Filter- und Listenzeilen."],
   ["h-14 · 56 px", "Hohes Feld, grosser Knopf — auf dem Platz, mit Handschuhen."],
@@ -417,7 +426,7 @@ export default function Styleguide() {
             <ul className="type-body-medium flex list-disc flex-col gap-1 pl-5 text-on-surface-mittel">
               <li>Das Farbsystem: fünf Rollen mit ihren On-Farben, Schrift als Weiss in Deckungen.</li>
               <li>Die Höhe als gerechnete Overlay-Leiter über einem einzigen Grund.</li>
-              <li>Die vier Zustands-Deckungen (4 / 12 / 10 / 8 %) in der Farbe des Inhalts.</li>
+              <li>Die Zustands-Deckungen (4 / 12 / 10 %) in der Farbe des Inhalts.</li>
               <li>Die Typo-Rollen: Display, Headline, Title, Body, Label.</li>
             </ul>
           </div>
@@ -659,12 +668,19 @@ export default function Styleguide() {
 
       <Section n="04" title="Zustände">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Jede bedienbare Fläche legt beim Überfahren, Fokussieren, Drücken und
-          Ziehen eine Ebene auf — <strong>in der Farbe ihres eigenen
-          Inhalts</strong>, mit fest vorgegebener Deckung. Die Ebene steckt im
-          Basis-Bündel der Bausteine (<code>state</code> in Button, Chip,
-          Icon-Knopf, Menüzeile, Nav-Link), nicht an den Aufrufstellen: Darum
-          kennt das Kit kein einziges <code>hover:bg-*</code>.
+          Jede bedienbare Fläche legt beim Überfahren, Fokussieren und Drücken
+          eine Ebene auf — <strong>in der Farbe ihres eigenen Inhalts</strong>,
+          mit fest vorgegebener Deckung. Die Ebene steckt im Basis-Bündel der
+          Bausteine (<code>state</code> in Button, Chip, Icon-Knopf, Menüzeile,
+          Nav-Link), nicht an den Aufrufstellen: Darum kennt das Kit kein
+          einziges <code>hover:bg-*</code>. Sie gehört zudem auf das{" "}
+          <strong>fokussierbare</strong> Element: Deckt ein Link eine ganze
+          Karte, trägt der Link die Ebene und nicht das{" "}
+          <code>&lt;div&gt;</code> darum — sonst bliebe sie beim Tabben und beim
+          Drücken stumm. <strong>Drei Zustände, nicht Materials vier:</strong>{" "}
+          «gezogen» fehlt, weil das Einzige, was hier gezogen wird,
+          Diagramm-Elemente sind — und die leben im SVG, nicht im DOM
+          (siehe 20).
         </p>
         <div className="mb-6 grid gap-6 sm:grid-cols-2">
           <div>
@@ -744,7 +760,10 @@ export default function Styleguide() {
               (<code>focus-ring</code>, als <code>outline</code> statt als
               Schatten: Er folgt dem Radius und kollidiert nicht mit dem
               Schatten schwebender Flächen). Die Ebene kommt dazu, sie ersetzt
-              ihn nicht.
+              ihn nicht. Die <strong>Kontur rührt er nicht an</strong>: Sie sagt
+              an vielen Stellen schon etwas anderes — Fehler, Befund, Auswahl,
+              offenes Panel —, und eine Utility, die <code>border-color</code>{" "}
+              setzte, schlüge jede dieser Farbklassen am Element.
             </p>
           </div>
         </div>
@@ -865,12 +884,15 @@ export default function Styleguide() {
 
       <Section n="08" title="Knöpfe">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Sechs Stufen, eine Regel: <strong>Gefüllt trägt Schwarz.</strong>{" "}
+          Sieben Varianten, eine Regel: <strong>Gefüllt trägt Schwarz.</strong>{" "}
           <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
           Höhenstufe (08dp), <code>elevated</code> dieselbe Idee eine Stufe
-          tiefer (06dp) mit Schatten und Primary-Schrift,{" "}
-          <code>outlined</code> Kontur auf der Kante, <code>text</code> nur
-          Schrift, <code>danger</code> Kontur und Schrift in Error. Alle tragen{" "}
+          tiefer (06dp) mit Schatten und Primary-Schrift — im Bild bisher nicht
+          angewandt, die Rolle bleibt besetzt —, <code>outlined</code> Kontur
+          auf der Kante, <code>text</code> nur Schrift, <code>danger</code>{" "}
+          Kontur und Schrift in Error; dazu der leise Knopf (<code>quiet</code>)
+          weiter unten, der als einziger nicht über die Emphase leiser wird,
+          sondern über die Schrift. Alle tragen{" "}
           <code>state</code> in der Basis und <code>rounded-flaeche</code>; es
           gibt kein <code>hover:bg-*</code> und kein Verschieben beim Drücken —
           die Zustands-Ebene färbt sich in der Farbe des Knopfinhalts ein und
@@ -894,7 +916,7 @@ export default function Styleguide() {
           <code>text</code>
         </p>
         <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-          Die sechste Stufe ist eine <strong>Schrift</strong>-Stufe, keine
+          Der leise Knopf ist eine <strong>Schrift</strong>-Stufe, keine
           Emphase-Stufe: Die Farbe bleibt Primary, nur die Versalien fallen —{" "}
           <code>type-title-small</code> statt <code>type-label-large</code>.
           Sie gilt für Handlungen, die <strong>am Rand mitlaufen</strong>: ein
@@ -1049,7 +1071,9 @@ export default function Styleguide() {
           <code>varianten</code>). Keine der beiden Formen füllt mit
           Akzentfarbe; das bleibt dem gefüllten Knopf vorbehalten, der etwas
           auslöst. Anatomie: <code>rounded-plakette</code>, 22 px hoch,{" "}
-          <code>type-plakette</code>.
+          <code>type-plakette</code> — dasselbe Mass trägt die
+          Kategorie-Plakette darunter, sonst stünden zwei Plaketten
+          nebeneinander verschieden hoch.
         </p>
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <Badge tone="manual" />
@@ -1094,7 +1118,11 @@ export default function Styleguide() {
           den Namen an, den die Trainerin selbst vergeben hat, und der Chip
           stünde als Knopf da statt als Wahl. Im geteilten Chip folgt der
           Trennstrich dem Zustand (<code>border-primary/50</code> gewählt,{" "}
-          <code>border-kante</code> sonst).
+          <code>border-kante</code> sonst). Der schwebende Assist-Chip
+          (<code>elevated</code> — 06dp plus <code>shadow-dp-04</code> statt
+          einer Kontur) ist wie der gleichnamige Knopf aus 08 im Bild bisher
+          nicht angewandt; die Rolle bleibt besetzt, damit die Chip-Leiter
+          vollständig ist.
         </p>
         <ChipsDemo />
       </Section>
@@ -1184,10 +1212,14 @@ export default function Styleguide() {
           Die Karte ist eine Höhenstufe (<code>bg-elev-01</code>,{" "}
           <code>rounded-flaeche</code>) und trägt <strong>keinen Rand</strong>:
           Höhe und Kontur nebeneinander sagten dasselbe zweimal. Das Bild ist das
-          einzige satte Farbfeld auf der Karte; darüber liegt zum Fuss hin ein
-          Verlauf aus <code>scrim</code>, damit Titel und Plaketten auch auf
-          hellen Diagrammen lesbar bleiben. Überfahren färbt die ganze Karte über{" "}
-          <code>state</code> — kein eigener Hover-Ton.
+          einzige satte Farbfeld auf der Karte; an seinem <strong>Kopf</strong>{" "}
+          liegt ein Verlauf aus <code>scrim</code> (<code>top-0 h-16</code>) —
+          er schützt, was dort steht: die Kategorie-Plaketten links und den
+          Favoriten-Knopf rechts. Titel und Herkunft brauchen ihn nicht; der
+          Titel steht auf der Kartenfläche unter dem Bild, die Herkunft auf
+          ihrer eigenen Plakette. Überfahren färbt die ganze Karte über{" "}
+          <code>state</code> — kein eigener Hover-Ton, und die Ebene sitzt auf
+          dem Link, der die Karte deckt.
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {/* actionSlot demonstriert die Slot-Verdrahtung: das UI-Kit bleibt
@@ -1420,7 +1452,7 @@ export default function Styleguide() {
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Bewusste Abweichung:</strong> Error auf 08dp kommt auf{" "}
-          {v(kontrast(ERROR, "#2d322f"))} — unter den 4.5:1 für Fliesstext, über
+          {v(kontrast(ERROR, elev(8)))} — unter den 4.5:1 für Fliesstext, über
           den 3:1 für grosse Schrift. Die Zeile trägt darum nie die Farbe
           allein: Sie steht abgesetzt am Fuss, hat ihr eigenes Zeichen, und der
           Vorgang ist zweistufig (Eintrag → Bestätigungsdialog). Das Rot
@@ -1525,7 +1557,7 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Bewusste Abweichung:</strong> Die Textknöpfe im Dialog bleiben
           Primary und kommen auf 24dp damit auf{" "}
-          {v(kontrast(PRIMARY, "#363b39"))} — knapp unter 4.5:1. Materials
+          {v(kontrast(PRIMARY, elev(24)))} — knapp unter 4.5:1. Materials
           eigene Baseline tut dasselbe, und die Alternative wäre schlechter:
           Weisse Knopfschrift wäre von der Fliesstextzeile darüber nicht mehr zu
           unterscheiden. Die Knöpfe sind gross gesetzt, stehen abgesetzt am Fuss
@@ -1667,8 +1699,10 @@ export default function Styleguide() {
           mehr als einem Element tritt an die Stelle der Eigenschaften-Leiste
           eine schlanke <strong>Mehrfach-Leiste</strong> (Anzahl, Kopieren,
           Löschen), verankert an der gemeinsamen Box; verschoben wird die Gruppe
-          per Drag. Während des Ziehens trägt das Element die Zustands-Ebene bei
-          8 % (<code>data-dragging</code>) — dieselbe Regel wie im Kit.
+          per Drag. Das Ziehen meldet die Zeichnung selbst — ein gezogenes
+          Element ist SVG und hat kein <code>::after</code>, auf das sich eine
+          Zustands-Ebene legen liesse. Darum kennt das Kit drei Zustände und
+          nicht Materials vier (siehe 04).
         </p>
         <div className="relative aspect-[16/10] max-w-xl overflow-hidden rounded-flaeche border border-linie">
           <DiagrammView
@@ -1823,7 +1857,7 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="22" title="Leerzustand &amp; Hinweiszeile">
+      <Section n="22" title="Leerzustand, Hinweiszeile &amp; Meldung">
         <p className="type-body-medium max-w-2xl text-on-surface-mittel">
           Ein leerer Abschnitt sagt zuerst nur, dass er leer ist —{" "}
           <code>type-body-small</code>, <code>text-on-surface-mittel</code>, kein
@@ -1880,6 +1914,79 @@ export default function Styleguide() {
               </div>
             </div>
           </Card>
+        </div>
+
+        <h3 className="mb-2 mt-10 type-title-medium text-on-surface">
+          Seiten-Leerfeld (<code>Leerzustand</code>)
+        </h3>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Ist nicht ein Block leer, sondern eine ganze <strong>Liste</strong> —
+          der Katalog ohne Treffer, die Team-Übersicht vor dem ersten Team —,
+          dann steht an ihrer Stelle ein Feld mit <strong>gestrichelter</strong>{" "}
+          Kontur, Zeichen, Titel und einem Satz zum Weiterkommen. Die
+          gestrichelte Linie ist die ganze Aussage: Eine durchgezogene Kontur
+          umreisst etwas, das da ist; die gestrichelte sagt, dass hier etwas
+          hingehört und noch fehlt. Die Fläche bleibt der Grund — ein eigener
+          Ton machte aus dem Fehlenden eine Karte.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Abgrenzung zur Block-Leerzeile oben:</strong> Die steht{" "}
+          <em>innerhalb</em> eines Blocks, ist blosser Text und bekommt weder
+          Rahmen noch Zeichen — ein Rahmen im Rahmen zöge einen zweiten Strich
+          um etwas, das der Block schon abgrenzt. Das Leerfeld hier füllt
+          umgekehrt eine ganze Seite oder einen ganzen Abschnitt.{" "}
+          <code>dicht</code> nimmt die Polsterung zurück, wo es unter einer
+          Überschrift im Abschnitt steht statt allein auf der Seite; das Zeichen
+          entfällt dort meist mit.
+        </p>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Leerzustand
+            icon={SearchX}
+            titel="Keine Übung gefunden"
+            aktion={<Button variant="text">Filter zurücksetzen</Button>}
+          >
+            Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne Filter
+            oder setze sie zurück.
+          </Leerzustand>
+          <Leerzustand titel="Noch nichts angesetzt" dicht>
+            Setze unter „Trainings“ ein Training des Teams auf ein Datum an — es
+            erscheint dann hier im Plan.
+          </Leerzustand>
+        </div>
+
+        <h3 className="mb-2 mt-10 type-title-medium text-on-surface">
+          Meldung (<code>Meldung</code>)
+        </h3>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Die dritte Sorte Zeile: keine Auskunft über den Bestand, sondern über
+          den <strong>eigenen Vorgang</strong> — das Speichern ist gescheitert,
+          die Mail ist unterwegs, die Umwandlung ist vorgemerkt.{" "}
+          <strong>Farbe trägt, sie füllt nicht:</strong> Kontur und Schrift
+          stehen in Error beziehungsweise Primary, die Fläche bleibt der Grund
+          darunter. Eine gefüllte rote Box wäre lauter als das, was sie meldet,
+          und zwänge zugleich eine zweite Schriftfarbe auf — füllen darf in
+          dieser Palette nur der Knopf, der etwas auslöst.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Zwei Töne, nicht mehr: <code>fehler</code> meldet, dass etwas nicht
+          ging, <code>erfolg</code> bestätigt — gelungen oder vorgemerkt. Für
+          einen dritten, gelben Ton gibt es keine Rolle (siehe 01). Die
+          Vorlesehilfe erfährt den Unterschied über <code>role</code>: Der
+          Fehler unterbricht (<code>alert</code>), die Bestätigung reiht sich
+          ein (<code>status</code>). Anatomie einmal und nur hier —{" "}
+          <code>px-4 py-3</code>, <code>type-body-small</code>, führendes
+          Zeichen optional und <strong>links</strong>, denn eine Meldung ist
+          eine Zeile und kein Bild.
+        </p>
+        <div className="grid max-w-2xl gap-3">
+          <Meldung tone="fehler">
+            Das Training konnte nicht gespeichert werden. Bitte versuche es noch
+            einmal.
+          </Meldung>
+          <Meldung tone="erfolg" icon={MailCheck}>
+            Bestätigungsmail erneut an <strong>trainerin@example.ch</strong>{" "}
+            gesendet.
+          </Meldung>
         </div>
       </Section>
 
@@ -2008,8 +2115,11 @@ export default function Styleguide() {
           einziger Block (<code>@media print :root</code>) die Rollen um. Die
           Höhenleiter kippt: Aus dem aufgehellten Dunkel wird ein abgedunkeltes
           Weiss, die Reihenfolge der Stufen bleibt, sodass gestapelte Karten sich
-          weiter voneinander abheben. Kein Baustein kennt einen Sonderfall für
-          den Druck; er benutzt dieselben Tokens.
+          weiter voneinander abheben. Einen Sonderfall für den Druck kennt genau{" "}
+          <strong>ein</strong> Baustein: Die Kategorie-Plakette kippt von Kontur
+          auf Fläche (<code>print:bg-kat-X</code>). Alle übrigen benutzen
+          unverändert dieselben Tokens — auch die Schrift auf jener Fläche, denn{" "}
+          <code>text-on-surface</code> ist im Druck bereits die Tinte.
         </p>
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {druckProben.map(([name, hex, notiz]) => (
@@ -2028,9 +2138,9 @@ export default function Styleguide() {
         <ul className="type-body-medium flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
           <li>
             <strong>Primary wird dunkel.</strong> {PRIMARY.toUpperCase()} kommt
-            auf Papier nur auf {v(kontrast(PRIMARY, "#ffffff"))} und trüge dort
+            auf Papier nur auf {v(kontrast(PRIMARY, DRUCK["elev-00"]))} und trüge dort
             keinen Text mehr; {DRUCK.primary.toUpperCase()} trägt{" "}
-            {v(kontrast(DRUCK.primary, "#ffffff"))}. Error macht denselben
+            {v(kontrast(DRUCK.primary, DRUCK["elev-00"]))}. Error macht denselben
             Schritt.
           </li>
           <li>
@@ -2038,8 +2148,8 @@ export default function Styleguide() {
             (<code>print:bg-kat-X</code>, dunkle Schrift, keine Kontur): Eine
             helle Kontur auf Weiss ist kaum zu sehen. Zwei Werte bekommen dafür
             eigene Druckfarben — kat-a stünde als Fläche bei{" "}
-            {v(kontrast(KAT.a, "#ffffff"))} gegen das Papier und verschwände,
-            kat-f bei {v(kontrast(KAT.f, "#ffffff"))}. Die übrigen fünf bleiben
+            {v(kontrast(KAT.a, DRUCK["elev-00"]))} gegen das Papier und verschwände,
+            kat-f bei {v(kontrast(KAT.f, DRUCK["elev-00"]))}. Die übrigen fünf bleiben
             wie am Schirm.
           </li>
           <li>

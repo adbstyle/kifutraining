@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight, Users } from "lucide-react";
-import { Card } from "@/components/ui";
+import { Card, Leerzustand } from "@/components/ui";
 import { TeamErstellenButton } from "@/components/team/TeamErstellenButton";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { createClient } from "@/lib/supabase/server";
@@ -35,23 +35,21 @@ export default async function TeamsPage() {
       </header>
 
       {teams.length === 0 ? (
-        <div className="kontur flex flex-col items-center gap-3 rounded-flaeche border-dashed border-kante bg-transparent px-6 py-16 text-center text-on-surface-mittel">
-          <Users size={40} strokeWidth={1.5} aria-hidden />
-          <p className="type-title-medium text-on-surface">Noch kein Team</p>
-          <p className="type-body-medium max-w-sm">
-            Lege ein Team an und nimm die Trainer:innen dazu, mit denen du
-            zusammen planst.
-          </p>
-        </div>
+        <Leerzustand icon={Users} titel="Noch kein Team">
+          Lege ein Team an und nimm die Trainer:innen dazu, mit denen du
+          zusammen planst.
+        </Leerzustand>
       ) : (
         <div className="flex flex-col gap-3">
           {teams.map((team) => (
+            /* Zustands-Ebene auf dem Link, nicht auf der Karte darin: Er
+               deckt die ganze Zeile, und nur er meldet Fokus und Druck. */
             <Link
               key={team.id}
               href={`/team/${team.id}`}
-              className="focus-ring group rounded-flaeche"
+              className="state focus-ring group block rounded-flaeche"
             >
-              <Card className="state flex items-center gap-4 p-5">
+              <Card className="flex items-center gap-4 p-5">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
                   <Users size={22} strokeWidth={2} aria-hidden />
                 </span>

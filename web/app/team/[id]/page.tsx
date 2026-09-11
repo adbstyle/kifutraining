@@ -1,3 +1,4 @@
+import { Leerzustand } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { TrainingsPlan } from "@/components/team/TrainingsPlan";
 import { getTeamPlan, teilePlan } from "@/lib/queries/termine";
@@ -34,10 +35,10 @@ export default async function TeamPlanPage({
       {angesetzt && <Flash message="Einheit angesetzt." />}
       <h2 className="mb-4 type-title-large text-on-surface">Trainingsplan</h2>
       {leer ? (
-        <p className="kontur rounded-flaeche border-dashed border-kante bg-transparent px-5 py-8 text-center type-body-medium text-on-surface-mittel">
-          Noch nichts angesetzt. Setze unter „Trainings“ ein Training des Teams
-          auf ein Datum an — es erscheint dann hier im Plan.
-        </p>
+        <Leerzustand titel="Noch nichts angesetzt" dicht>
+          Setze unter „Trainings“ ein Training des Teams auf ein Datum an — es
+          erscheint dann hier im Plan.
+        </Leerzustand>
       ) : (
         <TrainingsPlan plan={plan} />
       )}

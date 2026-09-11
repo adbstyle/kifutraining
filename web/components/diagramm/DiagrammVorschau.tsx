@@ -32,11 +32,14 @@ export function DiagrammVorschau({
   const aktion = mitDiagramm ? "Diagramm bearbeiten" : "Diagramm zeichnen";
 
   return (
-    <Card className="state group overflow-hidden">
+    /* Die Zustands-Ebene sitzt auf dem Link, nicht auf der Karte: Er deckt
+       die ganze Fläche, und nur er meldet Fokus und Druck — auf dem <div>
+       bliebe die Ebene beim Tabben stumm. */
+    <Card className="group overflow-hidden">
       <Link
         href={href}
         aria-label={aktion}
-        className="focus-ring-inset block rounded-flaeche"
+        className="state focus-ring-inset block rounded-flaeche"
       >
         <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-linie">
           {mitDiagramm && data ? (

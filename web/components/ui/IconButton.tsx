@@ -14,7 +14,7 @@ const sizes: Record<Size, { box: string; icon: number }> = {
 
 /** Gemeinsame Shell-Klassen — geteilt von IconButton und IconButtonLink, damit
  *  ein navigierender Icon-Button (als <a>/<Link>) dieselbe Optik trägt. */
-export function iconButtonClasses(
+function iconButtonClasses(
   size: Size = "md",
   variant: IconBtnVariant = "standard",
   active?: boolean,

@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 // Zwischenschicht aus Component-Tokens mehr: Wer den Knopf liest, sieht, auf
 // welcher Höhe er sitzt, ohne in globals.css nachschlagen zu müssen.
 //
-// Warum eine sechste Stufe (`quiet`): Versalien sind für eine Randhandlung zu
+// Warum es `quiet` überhaupt gibt: Versalien sind für eine Randhandlung zu
 // laut. «+ Variante hinzufügen» steht in einer Leiste NEBEN Chips, die
 // Nutzertext tragen und darum normal gesetzt sind — ein mono-versaler Knopf
 // daneben schriee, und die Leiste zerfiele in zwei Stimmen. `quiet` behält die

@@ -141,8 +141,9 @@ hängt sich die Gruppe hinten an die Leiste.
 Jede Gruppe ist dort ein Chip, der ihre Bezeichnung und die ihr zugewiesene Zeit trägt — „Rot ·
 24 min", und einen Gedankenstrich, solange keine Dauer zusammenkommt. Führt das Training mehrere
 Varianten seines Hauptteils, gilt die Zeit der angezeigten Variante. Trägt die Gruppe einen
-Konflikt der Verteilung, ist der Chip bernsteinfarben umrandet und trägt ein Warnzeichen; was
-genau nicht stimmt, steht im Klartext am Fuss der Karte.
+Konflikt der Verteilung, ist der Chip rot umrandet und trägt ein Warnzeichen — dieselbe Farbe
+wie eine abgewiesene Eingabe, denn die Anwendung kennt für Hinweise keine zweite; was genau nicht
+stimmt, steht im Klartext am Fuss der Karte, und gespeichert wird trotzdem.
 
 Ein Klick auf den Chip öffnet sein Menü. Darin steht, was mit dieser Gruppe zu tun ist:
 bearbeiten — die Bezeichnung ändert sich im selben Dialog, in dem sie entstanden ist —, nach
@@ -256,8 +257,8 @@ Merkmal, an dem der Trainer wiedererkennt, wofür er die Variante vorbereitet ha
 „ohne Tore", „bei Regen".
 
 Ab der zweiten Variante steht in eben dieser Leiste je ein Chip für jede Variante, und darunter
-der Hauptteil der angezeigten. Sichtbar ist immer genau eine; sie ist gefüllt hervorgehoben, die
-übrigen tragen bloss einen Umriss. Jeder Chip ist geteilt: Ein Klick auf seine linke Hälfte zeigt
+der Hauptteil der angezeigten. Sichtbar ist immer genau eine; sie ist in der Akzentfarbe umrandet und
+beschriftet, die übrigen tragen bloss einen neutralen Umriss. Jeder Chip ist geteilt: Ein Klick auf seine linke Hälfte zeigt
 diese Variante an — das ist der häufigste Griff und kostet darum einen einzigen Klick —, das
 Chevron rechts öffnet das Menü zu ihr. Beim Öffnen des Trainings gilt stets die vorderste
 Variante; welche zuletzt offen war, merkt sich die Anwendung nicht. Die Adresse der Seite trägt
@@ -338,7 +339,8 @@ dabei mitten im Training steht, bleibt beim Trainingsteil, den er gerade vor sic
 und in der Ansicht, in der ein Training bloss gelesen wird, über eine Reihe von Verweisen, von
 denen jeder eine eigene Adresse trägt; auf dem Papier erscheint diese Reihe nicht, sie gehört zur
 Bedienung der Seite. Die Reihe liest sich in allen drei Ansichten wie beim Zusammenstellen —
-dieselben gemischt geschriebenen Chips, der angezeigte gefüllt —, trägt hier aber kein Menü:
+dieselben gemischt geschriebenen Chips, der angezeigte in der Akzentfarbe umrandet —, trägt hier
+aber kein Menü:
 Benannt, geordnet und entfernt werden Varianten allein beim Zusammenstellen. Wechseln darf dabei
 auch, wer das Training gar nicht bearbeiten kann: Es ist ein Weg durch dasselbe Training, keine
 Änderung daran. Die Überschrift des Hauptteils trägt in allen drei Ansichten die Bezeichnung der

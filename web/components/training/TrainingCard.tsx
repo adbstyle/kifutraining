@@ -28,12 +28,15 @@ export function TrainingCard({
 }) {
   // Die Kachel hat keinen Rand mehr, den ein Hover aufhellen könnte — das
   // übernimmt die Zustands-Ebene: Sie liegt in der Farbe des Inhalts über der
-  // Fläche und hellt Karte und Schrift im selben Ton auf.
+  // Fläche und hellt Karte und Schrift im selben Ton auf. Sie sitzt auf dem
+  // LINK, nicht auf der Karte: Der Link deckt die ganze Kachel, und nur er
+  // kann Fokus und Druck überhaupt melden — auf dem <div> bliebe die Ebene
+  // beim Tabben und beim Drücken stumm.
   return (
-    <Card className="group state">
+    <Card className="group">
       <Link
         href={href}
-        className="focus-ring-inset block rounded-flaeche p-4"
+        className="state focus-ring-inset block rounded-flaeche p-4"
       >
         <div className="mb-2 flex flex-wrap items-center gap-2">
           {training.stufen.map((k) => (

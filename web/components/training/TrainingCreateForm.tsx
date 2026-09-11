@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { TextField, TextArea, Button, AltersstufeField } from "@/components/ui";
+import { TextField, TextArea, Button, AltersstufeField, Meldung } from "@/components/ui";
 import { StufenField } from "./StufenField";
 import { kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
 import { ZIEL_MAX } from "@/lib/training";
@@ -55,11 +55,7 @@ export function TrainingCreateForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       {state.status === "error" && state.message && (
-        // Farbe trägt die Meldung, sie füllt sie nicht: Kontur und Schrift in
-        // Error, der Grund bleibt der Seitengrund.
-        <p className="kontur rounded-flaeche border-error bg-transparent px-4 py-3 type-body-medium text-error">
-          {state.message}
-        </p>
+        <Meldung tone="fehler">{state.message}</Meldung>
       )}
 
       <TextField

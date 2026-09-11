@@ -147,8 +147,10 @@ export function Menu({
             /* Die Zeile trägt die Zustands-Ebene selbst (Hover, Tastaturfokus);
                ein eigener Ring bliebe im Panel ohnehin am Rand hängen, darum
                outline-none. Destruktives steht in Error-Schrift neben seinem
-               Zeichen — 3.62:1 auf 08dp, Materials Baseline, bewusst gehalten:
-               Die Farbe wiederholt hier nur, was Icon und Wortlaut sagen. */
+               Zeichen; auf 08dp bleibt das unter der Fliesstext-Schwelle —
+               bewusst, denn die Farbe wiederholt hier nur, was Icon und
+               Wortlaut ohnehin sagen. Die gerechnete Zahl und die Begründung
+               stehen im Styleguide (15 «Menü»). */
             className={cn(
               "state type-body-medium flex w-full items-center gap-3 px-3 py-2 text-left focus-visible:outline-none",
               item.danger ? "text-error" : "text-on-surface",

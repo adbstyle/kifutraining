@@ -10,6 +10,7 @@ import {
   FilterChip,
   IconButton,
   Badge,
+  Meldung,
 } from "@/components/ui";
 import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import { stufenAbgedeckt } from "@/lib/training";
@@ -252,14 +253,7 @@ export function ExercisePickerDialog({
           </div>
         )}
 
-        {error && (
-          <p
-            role="alert"
-            className="kontur rounded-flaeche border-error bg-transparent px-3 py-2 type-label-medium text-error"
-          >
-            {error}
-          </p>
-        )}
+        {error && <Meldung tone="fehler">{error}</Meldung>}
 
         {/* Trefferliste */}
         <ul className="-mx-2 max-h-[min(24rem,50vh)] overflow-y-auto">

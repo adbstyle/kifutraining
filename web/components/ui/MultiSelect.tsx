@@ -4,6 +4,7 @@ import { Fragment, useEffect, useId, useLayoutEffect, useMemo, useRef, useState 
 import { Check, CheckCheck, ChevronDown, RotateCcw, Search, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { IconButton } from "./IconButton";
+import { chipTextSelected } from "./Chip";
 import type { SelectOption } from "./Select";
 
 export interface MultiSelectProps {
@@ -302,10 +303,15 @@ export function MultiSelect({
       // eine volle Primary-Fläche pro Wert überstrahlte die Kontur des Felds,
       // in dem sie stehen. Darum dieselbe Lesart wie beim gewählten
       // Nutzertext-Chip — Primary auf Kontur und Schrift, die Fläche nur
-      // angehaucht.
+      // angehaucht. Das Farbtripel kommt darum aus `chipTextSelected` und
+      // steht nicht ein zweites Mal hier; eigen bleiben nur Höhe, Polsterung
+      // und Schrift, weil ein Tag im Feld-Trigger kleiner ist als ein Chip.
       <span
         key={o.value}
-        className="type-label-small inline-flex shrink-0 items-center gap-1 rounded-full kontur border-primary bg-primary/12 py-0.5 pl-2.5 pr-1 text-primary"
+        className={cn(
+          "type-label-small inline-flex shrink-0 items-center gap-1 rounded-full kontur py-0.5 pl-2.5 pr-1",
+          chipTextSelected,
+        )}
       >
         {o.label}
         <button
@@ -384,7 +390,10 @@ export function MultiSelect({
                   <span
                     aria-label={`${hiddenCount} weitere ausgewählt`}
                     title={hiddenOptions.map((o) => o.label).join(", ")}
-                    className="type-label-small inline-flex shrink-0 items-center rounded-full kontur border-primary bg-primary/12 px-2 py-0.5 tabular-nums text-primary"
+                    className={cn(
+                      "type-label-small inline-flex shrink-0 items-center rounded-full kontur px-2 py-0.5 tabular-nums",
+                      chipTextSelected,
+                    )}
                   >
                     +{hiddenCount}
                   </span>
@@ -500,7 +509,7 @@ export function MultiSelect({
                     <span
                       aria-hidden
                       className={cn(
-                        "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-flaeche kontur transition-colors",
+                        "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-plakette kontur transition-colors",
                         isSelected
                           ? "border-primary bg-primary text-on-primary"
                           : "border-kante",

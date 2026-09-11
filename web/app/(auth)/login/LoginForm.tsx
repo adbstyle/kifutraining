@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { LogIn, MailCheck, Send } from "lucide-react";
-import { TextField, PasswordField, Button } from "@/components/ui";
+import { TextField, PasswordField, Button, Meldung } from "@/components/ui";
 import { login, resendConfirmation, type AuthState } from "@/lib/actions/auth";
 
 const initial: AuthState = { status: "idle" };
@@ -36,28 +36,21 @@ function NeedsConfirmation({ email }: { email?: string }) {
 
   if (state.status === "confirm") {
     return (
-      // Farbe trägt, füllt nicht — Kontur, Zeichen und Schrift in Primary,
-      // die Fläche bleibt die der Karte darunter.
-      <div className="flex flex-col items-center gap-2 rounded-flaeche kontur border-primary bg-transparent p-3 text-center text-primary">
-        <MailCheck size={28} strokeWidth={1.5} aria-hidden />
-        <p className="type-body-small">
-          Bestätigungsmail erneut an{" "}
-          <strong>{state.email ?? email}</strong> gesendet.
-        </p>
-      </div>
+      <Meldung tone="erfolg" icon={MailCheck}>
+        Bestätigungsmail erneut an <strong>{state.email ?? email}</strong>{" "}
+        gesendet.
+      </Meldung>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-flaeche kontur border-error bg-transparent p-3 text-error">
-      <p className="type-body-small">
-        Bitte bestätige zuerst deine E-Mail-Adresse. Den Link nicht erhalten?
-      </p>
-      <form action={formAction}>
+    <Meldung tone="fehler">
+      <p>Bitte bestätige zuerst deine E-Mail-Adresse. Den Link nicht erhalten?</p>
+      <form action={formAction} className="mt-3">
         <input type="hidden" name="email" value={email ?? ""} />
         <ResendButton />
       </form>
-    </div>
+    </Meldung>
   );
 }
 

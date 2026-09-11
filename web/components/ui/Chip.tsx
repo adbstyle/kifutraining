@@ -14,18 +14,21 @@ import type { KategorieSlug } from "@/lib/vocab";
    Einzige Ausnahme ist der DRUCK: Auf Papier ist eine helle Kontur
    kaum zu sehen — kat-a (#cfd8dc) verschwände auf Weiss ganz. Dort
    kippt die Plakette darum in die gefüllte Form mit dunkler Schrift.
+   Die Schrift bleibt dabei `text-on-surface`: Im Druck-`:root` ist diese
+   Rolle bereits die Tinte, ein getippter Hex wäre eine dritte Stelle,
+   an der dieselbe Farbe steht.
 
    Exportiert, weil `components/training/StufenField.tsx` dieselbe
    Plakette in seinen Auswahl-Kacheln trägt: EINE Tabelle für beide
    Orte statt zweier, die auseinanderlaufen. */
 export const katPlakette: Record<KategorieSlug, string> = {
-  G: "kontur border-current text-kat-g bg-transparent print:bg-kat-g print:text-[#121a16] print:border-transparent",
-  F: "kontur border-current text-kat-f bg-transparent print:bg-kat-f print:text-[#121a16] print:border-transparent",
-  E: "kontur border-current text-kat-e bg-transparent print:bg-kat-e print:text-[#121a16] print:border-transparent",
-  D: "kontur border-current text-kat-d bg-transparent print:bg-kat-d print:text-[#121a16] print:border-transparent",
-  C: "kontur border-current text-kat-c bg-transparent print:bg-kat-c print:text-[#121a16] print:border-transparent",
-  B: "kontur border-current text-kat-b bg-transparent print:bg-kat-b print:text-[#121a16] print:border-transparent",
-  A: "kontur border-current text-kat-a bg-transparent print:bg-kat-a print:text-[#121a16] print:border-transparent",
+  G: "kontur border-current text-kat-g bg-transparent print:bg-kat-g print:text-on-surface print:border-transparent",
+  F: "kontur border-current text-kat-f bg-transparent print:bg-kat-f print:text-on-surface print:border-transparent",
+  E: "kontur border-current text-kat-e bg-transparent print:bg-kat-e print:text-on-surface print:border-transparent",
+  D: "kontur border-current text-kat-d bg-transparent print:bg-kat-d print:text-on-surface print:border-transparent",
+  C: "kontur border-current text-kat-c bg-transparent print:bg-kat-c print:text-on-surface print:border-transparent",
+  B: "kontur border-current text-kat-b bg-transparent print:bg-kat-b print:text-on-surface print:border-transparent",
+  A: "kontur border-current text-kat-a bg-transparent print:bg-kat-a print:text-on-surface print:border-transparent",
 };
 
 export function KategorieChip({ k }: { k: KategorieSlug }) {
@@ -33,7 +36,9 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
     <span
       title={kategorieStufe[k]}
       className={cn(
-        "type-plakette inline-flex items-center justify-center rounded-plakette px-2 py-0.5",
+        // 22 px wie die `Badge` — beide sind Plaketten, und der Styleguide
+        // nennt für sie EIN Mass.
+        "type-plakette inline-flex h-[22px] items-center justify-center rounded-plakette px-2",
         katPlakette[k],
       )}
     >
@@ -50,16 +55,19 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
    Zustands-Ebene färbt sich in der Farbe des Chip-Inhalts ein und passt so
    auf jede Variante.
 
-   Die drei Klassenbündel sind exportiert (wie `iconButtonClasses`), weil ein
-   Chip nicht immer eine Schaltfläche ist: Auf den Server-Seiten trägt ein LINK
-   die Chip-Optik (`VariantenLinks` — jede Variante hat dort eine eigene
-   Adresse). Ein <a> als <button> zu verkleiden wäre falsch, die Optik ein
-   zweites Mal abzuschreiben ebenso — sie liefe auseinander, sobald sich die
-   Chip-Rollen ändern. */
-export const chipBase =
-  "state focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-full kontur px-3 py-1.5 transition-colors";
-export const chipOutlined = "border-kante bg-transparent text-on-surface";
-export const chipSelected = "border-transparent bg-primary text-on-primary";
+   Die drei Bündel bleiben modul-lokal: Jeder Chip mit Vokabular-Beschriftung
+   ist in dieser Datei gebaut, und ein Bündel nach aussen zu geben lüde dazu
+   ein, die Chip-Optik anderswo neu zusammenzusetzen. Exportiert sind nur die
+   Nutzertext-Bündel weiter unten — die tragen auch Links und den geteilten
+   Chip, die hier nicht wohnen.
+
+   Höhe fest auf h-8 (32 px, das Mass des Kits für den Label-Chip) statt über
+   die Polsterung: Aus `py-1.5` folgten 31 px, und der Chip stünde neben jedem
+   anderen 32-px-Element um einen Pixel versetzt. */
+const chipBase =
+  "state focus-ring type-label-medium inline-flex h-8 items-center gap-1.5 rounded-full kontur px-3 transition-colors";
+const chipOutlined = "border-kante bg-transparent text-on-surface";
+const chipSelected = "border-transparent bg-primary text-on-primary";
 /* Schwebender Chip: eine Höhenstufe plus Schatten statt einer Kontur — er
    liegt über der Fläche, statt in sie eingeschrieben zu sein. */
 const chipElevated = "border-transparent bg-elev-06 text-on-surface shadow-dp-04";

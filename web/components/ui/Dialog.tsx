@@ -10,10 +10,11 @@ import { cn } from "@/lib/cn";
    den weichesten Schatten.
 
    `actions` nimmt typischerweise Text-/Tonal-Buttons auf. Text-Knöpfe bleiben
-   hier Primary, obwohl #bb86fc auf 24dp nur noch 4.31:1 erreicht — Materials
-   eigene Baseline hält es genauso, und ein eigener Farbton nur für Dialoge
-   risse die Handlungsfarbe der App auseinander. Im Styleguide steht das als
-   bewusste Abweichung. */
+   hier Primary, obwohl es auf 24dp knapp unter die 4.5:1 für Fliesstext fällt
+   — Materials eigene Baseline hält es genauso, und ein eigener Farbton nur für
+   Dialoge risse die Handlungsfarbe der App auseinander. Die Zahl steht nicht
+   hier, sondern gerechnet im Styleguide (18 «Dialog & Snackbar»), wo sie auch
+   als bewusste Abweichung begründet ist. */
 export function Dialog({
   open,
   onClose,
@@ -49,7 +50,7 @@ export function Dialog({
       className={cn(
         "m-auto w-[min(28rem,calc(100vw-2rem))] rounded-dialog bg-elev-24 p-6 shadow-dp-24",
         // Schwebende Feldbeschriftungen stanzen ihre Fläche aus `--feld-grund`
-        // (Vorgabe 01dp, die Karte). Im Dialog liegt darunter 24dp — ohne
+        // (Vorgabe 00dp, der Grund). Im Dialog liegt darunter 24dp — ohne
         // diese Zeile stünde jedes Label in einem dunklen Rechteck.
         "[--feld-grund:var(--color-elev-24)]",
         "backdrop:bg-scrim/60 backdrop:backdrop-blur-[2px]",

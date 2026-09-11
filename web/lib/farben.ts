@@ -109,12 +109,18 @@ export const KAT = {
 export type KatSchluessel = keyof typeof KAT;
 
 // ── Zustände ───────────────────────────────────────────────────────────────
-/** Deckung der Zustands-Ebene (`@utility state`), in der Farbe des Inhalts. */
+/**
+ * Deckung der Zustands-Ebene (`@utility state`), in der Farbe des Inhalts.
+ *
+ * Drei Zustände, nicht Materials vier: «gezogen» fehlt, weil das Einzige, was
+ * in dieser Anwendung gezogen wird, Diagramm-Elemente sind — und die leben im
+ * SVG, nicht im DOM. Eine Deckung, die kein DOM-Zustand je auslöst, wäre ein
+ * totes Token.
+ */
 export const ZUSTAND = {
   hover: 0.04,
   focus: 0.12,
   pressed: 0.1,
-  dragged: 0.08,
 } as const;
 
 // ── Rollen-Tabellen (der eigentliche Zwilling) ─────────────────────────────
