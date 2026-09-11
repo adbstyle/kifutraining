@@ -351,12 +351,15 @@ export function TrainingEditor({
   // Live-Vorschau der Veröffentlichungs-Bedingungen aus dem lokalen Stand.
   // Dieselbe Funktion, die die Server Action nutzt — und dieselbe Regel, die
   // die Datenbank als Trust-Boundary durchsetzt (Story 7 AC 3).
-  // Geprüft wird die angezeigte Variante: Die Bedingungen des Hauptteils gelten
-  // je Variante (#204 baut daraus die Meldung «… in der Variante „…"»).
+  // Über ALLE Fassungen und alle Varianten, nicht über die angezeigte: Die
+  // Hauptteil-Bedingung gilt je Variante (#204 AK 1), und der Trainer soll
+  // beim Veröffentlichen sehen, welche Variante welchen Block nicht belegt hat
+  // (AK 2) — auch die, die er gerade nicht vor sich hat.
   const fehlendeBedingungen = fehlendeBedingungenAus(
     training.altersstufe,
     stufen,
-    sichtbar,
+    zuordnungen,
+    training.varianten,
   );
 
   const teile = editorGliederung(training.altersstufe, sichtbar);

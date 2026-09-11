@@ -8,7 +8,11 @@ import {
   setzeTrainingAufEntwurf,
   veroeffentlicheTraining,
 } from "@/lib/actions/trainings";
-import { BEDINGUNG_FEHLT, type Bedingung } from "@/lib/training-bedingungen";
+import {
+  bedingungText,
+  type FehlendeBedingung,
+} from "@/lib/training-bedingungen";
+import type { Variante } from "@/lib/varianten";
 
 /* Sichtbarkeit des eigenen Trainings im Editor-Kopf (Story A).
 
@@ -22,17 +26,31 @@ export function SichtbarkeitControl({
    *  gar keine Tragweite-Bestätigung, sondern direkt der Hinweis. Die Action
    *  prüft es serverseitig erneut. */
   fehlend = [],
+  /** Die Varianten des Hauptteils — nur zum Benennen des Fehlenden (#204
+   *  AK 2). Bei genau einer bleibt sie ungenannt: Dann ist «die Variante» kein
+   *  Begriff, den der Trainer je gesehen hat (#201 PC 5). */
+  varianten = [],
 }: {
   trainingId: string;
   oeffentlich: boolean;
-  fehlend?: Bedingung[];
+  fehlend?: FehlendeBedingung[];
+  varianten?: Variante[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [notice, setNotice] = useState<string | null>(null);
-  const [incomplete, setIncomplete] = useState<Bedingung[] | null>(null);
+  const [incomplete, setIncomplete] = useState<FehlendeBedingung[] | null>(null);
   const [tragweite, setTragweite] = useState(false);
   const [rueckzug, setRueckzug] = useState(false);
+
+  const mehrereVarianten = varianten.length > 1;
+  /** Der Name zur Variante, oder `undefined` wenn es nichts zu unterscheiden
+   *  gibt. Eine unbekannte ID (die Variante wurde in einem anderen Fenster
+   *  entfernt) bleibt ebenfalls ungenannt — die Bedingung selbst stimmt weiter. */
+  function varianteName(id: string | null): string | undefined {
+    if (!mehrereVarianten || !id) return undefined;
+    return varianten.find((v) => v.id === id)?.name;
+  }
 
   function starten() {
     if (fehlend.length > 0) {
@@ -100,8 +118,11 @@ export function SichtbarkeitControl({
         <p className="mb-3">Zum Veröffentlichen fehlt noch:</p>
         <ul className="flex flex-col gap-1">
           {(incomplete ?? []).map((b) => (
-            <li key={b} className="type-body-medium text-on-surface">
-              · {BEDINGUNG_FEHLT[b]}
+            <li
+              key={`${b.bedingung}|${b.varianteId ?? ""}`}
+              className="type-body-medium text-on-surface"
+            >
+              · {bedingungText(b.bedingung, varianteName(b.varianteId))}
             </li>
           ))}
         </ul>
@@ -131,8 +152,9 @@ export function SichtbarkeitControl({
         <p className="mt-3">
           Du kannst es weiter bearbeiten; die Community sieht dann jeweils deinen
           aktuellen Stand. Solange es öffentlich ist, braucht es aber eine
-          Alterskategorie sowie je eine Übung in der Einleitung und im freien
-          Spiel. Willst du das ändern, setze es zuerst auf Entwurf.
+          Alterskategorie sowie je eine Übung in der Einleitung und
+          {mehrereVarianten ? " in jeder Variante im freien Spiel" : " im freien Spiel"}.
+          Willst du das ändern, setze es zuerst auf Entwurf.
         </p>
       </Dialog>
 

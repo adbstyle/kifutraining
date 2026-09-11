@@ -29,8 +29,9 @@ import {
 import {
   bedingungAusFehler,
   fehlerMeldung,
-  type Bedingung,
+  type FehlendeBedingung,
   fehlendeBedingungenAus,
+  varianteAusFehler,
 } from "@/lib/training-bedingungen";
 
 export type TrainingFormState = {
@@ -319,7 +320,7 @@ export async function addTrainingExercise(
 
 export type PublishResult =
   | { status: "published" }
-  | { status: "incomplete"; missing: Bedingung[] }
+  | { status: "incomplete"; missing: FehlendeBedingung[] }
   | { status: "error"; error: string };
 
 /** Welche Bedingungen dem Training fehlen, um öffentlich zu sein. Die Datenbank
@@ -329,14 +330,14 @@ async function fehlendeBedingungen(
   supabase: Awaited<ReturnType<typeof createClient>>,
   trainingId: string,
   ownerId: string,
-): Promise<{ missing: Bedingung[] } | { error: string }> {
+): Promise<{ missing: FehlendeBedingung[] } | { error: string }> {
   // Ohne owner_id-Filter lesen: sonst käme ein Team-Training gar nicht zurück
   // und der Trainer bekäme «nicht gefunden» statt des Hinweises, dass er es
   // zuerst zu sich übernehmen muss.
   const { data: training } = await supabase
     .from("trainings")
     .select(
-      "owner_id, team_id, altersstufe, stufen, training_exercises ( trainingsteil, hauptteilkategorie )",
+      "owner_id, team_id, altersstufe, stufen, training_exercises ( trainingsteil, hauptteilkategorie, variante_id ), training_varianten ( id, position )",
     )
     .eq("id", trainingId)
     .maybeSingle();
@@ -348,12 +349,25 @@ async function fehlendeBedingungen(
     };
   if (training.owner_id !== ownerId) return { error: "Training nicht gefunden." };
 
-  const fassungen = training.training_exercises ?? [];
+  // Die Hauptteil-Bedingung gilt je Variante (#204 AK 1) — darum kommen die
+  // Varianten mit. Sortiert wird hier: PostgREST garantiert für einen
+  // eingebetteten Satz keine Reihenfolge, und die Meldung soll die Varianten in
+  // derselben Folge nennen wie die Oberfläche (`position`, bei Gleichstand
+  // `id`, wie in `training_fehlende_bedingungen`).
+  const fassungen = (training.training_exercises ?? []).map((f) => ({
+    trainingsteil: f.trainingsteil,
+    hauptteilkategorie: f.hauptteilkategorie,
+    varianteId: f.variante_id,
+  }));
+  const varianten = (training.training_varianten ?? [])
+    .slice()
+    .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
   return {
     missing: fehlendeBedingungenAus(
       alsAltersstufe(training.altersstufe),
       training.stufen ?? [],
       fassungen,
+      varianten,
     ),
   };
 }
@@ -391,8 +405,14 @@ export async function veroeffentlicheTraining(
     // Aussage wie die Vorabprüfung — nur hat sich der Stand zwischenzeitlich
     // geändert. Entsprechend übersetzt statt roh durchgereicht.
     const bedingung = bedingungAusFehler(error.message);
+    // Die Datenebene nennt genau eine verletzte Bedingung — und bei einer
+    // Hauptteil-Bedingung die Variante dazu (#204 AK 2). Mehr als die erste gibt
+    // ein `raise` nicht her; die Vorabprüfung oben zeigt dafür alle.
     return bedingung
-      ? { status: "incomplete", missing: [bedingung] }
+      ? {
+          status: "incomplete",
+          missing: [{ bedingung, varianteId: varianteAusFehler(error.message) }],
+        }
       : { status: "error", error: error.message };
   }
   if (!data) return { status: "error", error: "Training nicht gefunden." };

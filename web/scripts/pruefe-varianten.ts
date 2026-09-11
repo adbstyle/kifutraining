@@ -21,6 +21,11 @@ import {
   bezeichnungSchluessel,
 } from "../lib/bezeichnung";
 import {
+  bedingungText,
+  fehlendeBedingungenAus,
+  varianteAusFehler,
+} from "../lib/training-bedingungen";
+import {
   VARIANTE_DEFAULT_NAME,
   VARIANTE_NAME_MAX,
   VARIANTE_PARAM,
@@ -184,6 +189,150 @@ pruefe("Ein vorhandener Suchteil wird ergänzt, nicht ersetzt", () => {
 
 pruefe("Ohne aktive Variante bleibt die Adresse unverändert", () => {
   assert.equal(mitVariante("/training/t1", undefined, varianten), "/training/t1");
+});
+
+// ── Veröffentlichungsbedingungen je Variante (#204) ─────────────────────────
+// Zwilling der SQL-Funktion `training_fehlende_bedingungen`: Die trainingsweiten
+// Bedingungen erscheinen genau einmal, die Hauptteil-Bedingung einmal je
+// Variante — und in derselben Reihenfolge, weil der DB-Fehler den ersten
+// Eintrag nennt.
+const einleitung = { trainingsteil: "einleitung", varianteId: null };
+const freiesSpiel = (varianteId: string) => ({
+  trainingsteil: "hauptteil",
+  hauptteilkategorie: "fussball-spielen",
+  varianteId,
+});
+
+pruefe("Kinderfussball, eine Variante: vollständig heisst nichts offen", () => {
+  assert.deepEqual(
+    fehlendeBedingungenAus(
+      "kinderfussball",
+      ["G"],
+      [einleitung, freiesSpiel("v1")],
+      [varianten[0]],
+    ),
+    [],
+  );
+});
+
+pruefe("Kinderfussball, zwei Varianten: die leere wird einzeln genannt", () => {
+  // Der Kern der Story: Variante 1 ist vollständig, Variante 2 nicht — und die
+  // Meldung nennt genau v2.
+  assert.deepEqual(
+    fehlendeBedingungenAus(
+      "kinderfussball",
+      ["G"],
+      [einleitung, freiesSpiel("v1")],
+      varianten,
+    ),
+    [{ bedingung: "freies_spiel", varianteId: "v2" }],
+  );
+});
+
+pruefe("Jede Variante zählt für sich — beide leer, beide genannt", () => {
+  assert.deepEqual(
+    fehlendeBedingungenAus("kinderfussball", ["G"], [einleitung], varianten),
+    [
+      { bedingung: "freies_spiel", varianteId: "v1" },
+      { bedingung: "freies_spiel", varianteId: "v2" },
+    ],
+  );
+});
+
+pruefe("Trainingsweite Bedingungen bleiben einmalig und ohne Variante", () => {
+  // Alterskategorie und Einleitung gelten je Training (#204 PC 2) — sie dürfen
+  // sich nicht mit der Variantenzahl vervielfachen. Reihenfolge wie in SQL:
+  // erst trainingsweit, dann je Variante.
+  assert.deepEqual(
+    fehlendeBedingungenAus("kinderfussball", [], [], varianten),
+    [
+      { bedingung: "stufe", varianteId: null },
+      { bedingung: "einleitung", varianteId: null },
+      { bedingung: "freies_spiel", varianteId: "v1" },
+      { bedingung: "freies_spiel", varianteId: "v2" },
+    ],
+  );
+});
+
+pruefe("Junioren: Spielformen je Variante, die übrigen Blöcke je Training", () => {
+  const jun = [
+    { trainingsteil: "jun-aufwaermen", varianteId: null },
+    { trainingsteil: "jun-spielform-trainingsziel", varianteId: null },
+    { trainingsteil: "jun-explosivitaet", varianteId: null },
+    { trainingsteil: "jun-spielformen", varianteId: "v1" },
+  ];
+  assert.deepEqual(
+    fehlendeBedingungenAus("juniorenfussball", ["D"], jun, [varianten[0]]),
+    [],
+  );
+  assert.deepEqual(
+    fehlendeBedingungenAus("juniorenfussball", ["D"], jun, varianten),
+    [{ bedingung: "jun-spielformen", varianteId: "v2" }],
+  );
+  // Fehlt ein trainingsweiter Block, erscheint er einmal — auch bei zwei
+  // Varianten.
+  assert.deepEqual(
+    fehlendeBedingungenAus("juniorenfussball", ["D"], [], varianten),
+    [
+      { bedingung: "jun-aufwaermen", varianteId: null },
+      { bedingung: "jun-spielform-trainingsziel", varianteId: null },
+      { bedingung: "jun-explosivitaet", varianteId: null },
+      { bedingung: "jun-spielformen", varianteId: "v1" },
+      { bedingung: "jun-spielformen", varianteId: "v2" },
+    ],
+  );
+});
+
+pruefe("Ohne Variante bleibt die Hauptteil-Bedingung geprüft", () => {
+  // Ein leerer Varianten-Embed darf nicht zu «alles erfüllt» führen — sonst
+  // liesse ein Datenfehler ein unvollständiges Training öffentlich werden.
+  assert.deepEqual(
+    fehlendeBedingungenAus("kinderfussball", ["G"], [einleitung], []),
+    [{ bedingung: "freies_spiel", varianteId: null }],
+  );
+});
+
+pruefe("Eine Fassung ausserhalb des Hauptteils gilt für alle Varianten", () => {
+  // `varianteId: null` heisst «gilt überall» — die Einleitung darf nicht an der
+  // ersten Variante hängen bleiben.
+  assert.deepEqual(
+    fehlendeBedingungenAus(
+      "kinderfussball",
+      ["G"],
+      [einleitung, freiesSpiel("v1"), freiesSpiel("v2")],
+      varianten,
+    ),
+    [],
+  );
+});
+
+// ── bedingungText (#204 AK 2) ───────────────────────────────────────────────
+pruefe("Der Text nennt die Variante nur, wenn eine übergeben wird", () => {
+  assert.equal(
+    bedingungText("freies_spiel"),
+    "mindestens eine Übung im freien Spiel",
+  );
+  assert.equal(
+    bedingungText("freies_spiel", "21 Kinder"),
+    "mindestens eine Übung im freien Spiel in der Variante \u201e21 Kinder\u201c",
+  );
+});
+
+// ── varianteAusFehler: Zwilling des SQL-Markers ─────────────────────────────
+pruefe("Die Variante wird aus der DB-Meldung gelesen", () => {
+  assert.equal(
+    varianteAusFehler("TRAINING_UNVOLLSTAENDIG: freies_spiel VARIANTE abc-123"),
+    "abc-123",
+  );
+});
+
+pruefe("Eine trainingsweite Bedingung trägt keine Variante", () => {
+  assert.equal(varianteAusFehler("TRAINING_UNVOLLSTAENDIG: einleitung"), null);
+  assert.equal(varianteAusFehler("TRAINING_UNVOLLSTAENDIG: stufe"), null);
+});
+
+pruefe("Ein anderer Fehler liefert keine Variante", () => {
+  assert.equal(varianteAusFehler("duplicate key value violates unique constraint"), null);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

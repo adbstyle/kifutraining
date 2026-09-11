@@ -9,6 +9,7 @@
 import { JUNIOREN_PFLICHT_BLOECKE } from "@/lib/junioren";
 import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
+import { sichtbareZuordnungen } from "@/lib/varianten";
 
 /** Marker, mit dem die Datenebene eine verletzte Bedingung meldet. */
 const BEDINGUNG_MARKER = "TRAINING_UNVOLLSTAENDIG";
@@ -27,8 +28,10 @@ export type Bedingung =
   | "jun-explosivitaet"
   | "jun-spielformen";
 
-/** Was fehlt, aus Sicht des Trainers. Ergänzt den Satz «Es fehlt …». */
-export const BEDINGUNG_FEHLT: Record<Bedingung, string> = {
+/** Was fehlt, aus Sicht des Trainers. Ergänzt den Satz «Es fehlt …».
+ *  Nur modulintern: Nach aussen geht der Text durch `bedingungText()`, weil er
+ *  seit #204 die Variante nennen kann. */
+const BEDINGUNG_FEHLT: Record<Bedingung, string> = {
   stufe: "mindestens eine Alterskategorie",
   einleitung: "mindestens eine Übung in der Einleitung",
   freies_spiel: "mindestens eine Übung im freien Spiel",
@@ -55,20 +58,63 @@ export function bedingungAusFehler(message: string): Bedingung | null {
   return istBedingung(wort) ? wort : null;
 }
 
+/** Die Variante aus einer DB-Fehlermeldung, oder `null` wenn die verletzte
+ *  Bedingung keine Variante betrifft (#204).
+ *
+ *  Die Datenebene schreibt `'<bedingung> VARIANTE <uuid>'` — die Bedingung
+ *  bleibt das erste Wort, die Variante steht als eigenes Wortpaar dahinter.
+ *  Hier interessiert nur die ID; der Name dazu liegt allein in der Oberfläche,
+ *  die das Training kennt.
+ *
+ *  SQL-Zwilling: `training_fehlende_bedingungen()`. */
+export function varianteAusFehler(message: string): string | null {
+  if (!message.includes(BEDINGUNG_MARKER)) return null;
+  const teil = message.split(`${BEDINGUNG_MARKER}:`).pop()?.trim() ?? "";
+  const [, marker, id] = teil.split(/\s+/);
+  return marker === "VARIANTE" && id ? id : null;
+}
+
+/** Was fehlt, aus Sicht des Trainers — mit der Variante, wenn es eine zu
+ *  nennen gibt (#204 AK 2). Ergänzt den Satz «Es fehlt …».
+ *
+ *  Ob der Name mitkommt, entscheidet der Aufrufer: Bei genau einer Variante ist
+ *  sie kein Gesprächsgegenstand (#201 PC 5) — dann übergibt er keinen Namen. */
+export function bedingungText(bedingung: Bedingung, varianteName?: string): string {
+  const fehlt = BEDINGUNG_FEHLT[bedingung];
+  return varianteName ? `${fehlt} in der Variante \u201e${varianteName}\u201c` : fehlt;
+}
+
 /** Die Meldung für eine Änderung, die ein öffentliches Training unter die
- *  Bedingungen gebracht hätte. Nennt den Weg, nicht nur die Absage (AK 7). */
-function bedingungsMeldung(bedingung: Bedingung): string {
+ *  Bedingungen gebracht hätte. Nennt den Weg, nicht nur die Absage (AK 7).
+ *
+ *  Betrifft die Bedingung eine Variante, bleibt die Meldung bewusst allgemein
+ *  («in jeder Variante») statt die eine zu nennen: Diese Übersetzung steht
+ *  jeder Action zur Verfügung, die einen rohen DB-Fehler bekommt — auch denen,
+ *  die nur die Fehlermeldung kennen und nicht das Training mit seinen
+ *  Variantennamen. Wer den Kontext hat (`veroeffentlicheTraining`), liefert
+ *  stattdessen `FehlendeBedingung[]` und die Oberfläche nennt Variante und
+ *  Block. */
+function bedingungsMeldung(bedingung: Bedingung, jeVariante: boolean): string {
+  const was = jeVariante
+    ? `in jeder Variante ${BEDINGUNG_FEHLT[bedingung]}`
+    : BEDINGUNG_FEHLT[bedingung];
   return (
-    `Ein öffentliches Training braucht ${BEDINGUNG_FEHLT[bedingung]}. ` +
+    `Ein öffentliches Training braucht ${was}. ` +
     "Setze es zuerst auf Entwurf, wenn du es so ändern willst."
   );
 }
 
 /** Verletzte ein DB-Fehler eine Bedingung? Dann die Meldung dazu, sonst `null`.
- *  Für jede Action, die ein Training oder seine Fassungen ändert. */
+ *  Für jede Action, die ein Training oder seine Fassungen ändert.
+ *
+ *  Bewusste Asymmetrie (#204): Die Datenebene nennt nur die ERSTE verletzte
+ *  Variante (`v_missing[1]` in `training_pruefe_oeffentlich`) — ein `raise`
+ *  trägt genau eine Aussage. Die Live-Vorschau im Editor zeigt dagegen alle
+ *  verletzten Varianten, weil sie den ganzen Stand vor sich hat. */
 function bedingungsFehler(message: string): string | null {
   const bedingung = bedingungAusFehler(message);
-  return bedingung ? bedingungsMeldung(bedingung) : null;
+  if (!bedingung) return null;
+  return bedingungsMeldung(bedingung, varianteAusFehler(message) !== null);
 }
 
 /** Marker der Datenebene für den Versuch, die Altersstufe eines bestehenden
@@ -257,6 +303,24 @@ export function fehlerMeldung(message: string): string {
   return berechtigungsMeldung(message) ?? ALLGEMEIN;
 }
 
+/** Eine noch nicht erfüllte Bedingung — mit der Variante, wenn sie eine
+ *  Variante betrifft (#204). Trainingsweite Bedingungen tragen `null`.
+ *
+ *  Die Trennung steht im Typ, nicht in einer Konvention: Die Hauptteil-Bedingung
+ *  kann mehrfach auftreten (einmal je Variante), die anderen genau einmal. */
+export type FehlendeBedingung = { bedingung: Bedingung; varianteId: string | null };
+
+/** Die Hauptteil-Bedingung je Altersstufe — die einzige, die je Variante gilt
+ *  (#204 AK 1). Im Kinderfussball liegt das freie Spiel im Hauptteil, im
+ *  Juniorenfussball sind es die Spielformen; beide Einordnungen tragen
+ *  Varianten (`istHauptteil()`).
+ *
+ *  SQL-Zwilling: die Varianten-Schleife in `training_fehlende_bedingungen()`. */
+const HAUPTTEIL_BEDINGUNG: Record<Altersstufe, Bedingung> = {
+  kinderfussball: "freies_spiel",
+  juniorenfussball: "jun-spielformen",
+};
+
 /** Welche Veröffentlichungs-Bedingungen erfüllt ein Training noch nicht?
  *  Die Regel hängt an seiner Altersstufe (Story 7 AC 1/2/4) und spiegelt die
  *  DB-Funktion `training_fehlende_bedingungen`, die als Trust-Boundary
@@ -269,22 +333,60 @@ export function fehlerMeldung(message: string): string {
  *  Mindestens eine Alterskategorie gilt in beiden Altersstufen: Seit die
  *  Altersstufe eine eigene Angabe ist, folgt sie nicht mehr aus den
  *  Kategorien — ein Junioren-Training ohne Kategorie ist damit möglich und
- *  soll nicht veröffentlichbar sein (Story 1, Übungswelten). */
+ *  soll nicht veröffentlichbar sein (Story 1, Übungswelten).
+ *
+ *  Die Hauptteil-Bedingung wird je Variante geprüft (#204 AK 1): Wer eine
+ *  Alternative übernimmt, soll keinen Hauptteil bekommen, dem der Pflichtblock
+ *  fehlt. `fassungen` sind darum ALLE Fassungen des Trainings, nicht nur die der
+ *  angezeigten Variante — welche zu welcher Variante gehören, entscheidet
+ *  `sichtbareZuordnungen`, dieselbe Regel wie in der Anzeige.
+ *
+ *  Reihenfolge wie in SQL: erst die trainingsweiten Bedingungen, dann die
+ *  Varianten in Anzeigereihenfolge. Der DB-Fehler nennt den ersten Eintrag —
+ *  es soll derselbe sein, den die Vorschau oben zeigt. */
 export function fehlendeBedingungenAus(
   altersstufe: Altersstufe,
   stufen: readonly string[],
-  fassungen: readonly { trainingsteil: string; hauptteilkategorie?: string | null }[],
-): Bedingung[] {
-  const missing: Bedingung[] = [];
-  if (stufen.length === 0) missing.push("stufe");
+  fassungen: readonly {
+    trainingsteil: string;
+    hauptteilkategorie?: string | null;
+    varianteId: string | null;
+  }[],
+  varianten: readonly { id: string }[],
+): FehlendeBedingung[] {
+  const missing: FehlendeBedingung[] = [];
+  if (stufen.length === 0) missing.push({ bedingung: "stufe", varianteId: null });
   if (altersstufe === "kinderfussball") {
-    if (!fassungen.some((f) => f.trainingsteil === "einleitung")) missing.push("einleitung");
-    if (!fassungen.some((f) => f.hauptteilkategorie === FREIES_SPIEL))
-      missing.push("freies_spiel");
+    if (!fassungen.some((f) => f.trainingsteil === "einleitung"))
+      missing.push({ bedingung: "einleitung", varianteId: null });
   } else {
+    // Die Spielformen stehen nicht in dieser Schleife: Sie liegen im Hauptteil
+    // und werden unten je Variante geprüft.
     for (const block of JUNIOREN_PFLICHT_BLOECKE) {
-      if (!fassungen.some((f) => f.trainingsteil === block)) missing.push(block);
+      if (block === "jun-spielformen") continue;
+      if (!fassungen.some((f) => f.trainingsteil === block))
+        missing.push({ bedingung: block, varianteId: null });
     }
+  }
+
+  const hauptteil = HAUPTTEIL_BEDINGUNG[altersstufe];
+  const erfuellt = (f: { trainingsteil: string; hauptteilkategorie?: string | null }) =>
+    altersstufe === "kinderfussball"
+      ? f.hauptteilkategorie === FREIES_SPIEL
+      : f.trainingsteil === "jun-spielformen";
+
+  // Ohne Variante bliebe die Hauptteil-Bedingung ungeprüft — nach Lage der
+  // Daten unmöglich (jedes Training führt mindestens eine, Epic EK 6), aber ein
+  // leerer Embed darf nicht zu «alles erfüllt» führen. Dann wird einmal über
+  // alle Fassungen geprüft, ohne Variante zu nennen.
+  if (varianten.length === 0) {
+    if (!fassungen.some(erfuellt)) missing.push({ bedingung: hauptteil, varianteId: null });
+    return missing;
+  }
+
+  for (const v of varianten) {
+    if (!sichtbareZuordnungen(fassungen, v.id).some(erfuellt))
+      missing.push({ bedingung: hauptteil, varianteId: v.id });
   }
   return missing;
 }

@@ -9,7 +9,7 @@ import { InTeamStellenControl } from "../InTeamStellenControl";
 import { kategorienFuer } from "@/lib/altersstufe";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { ZIEL_MAX } from "@/lib/training";
-import type { Bedingung } from "@/lib/training-bedingungen";
+import type { FehlendeBedingung } from "@/lib/training-bedingungen";
 import type { TrainingDetail } from "@/lib/queries/trainings";
 import type { TeamUebersicht } from "@/lib/queries/teams";
 
@@ -32,7 +32,7 @@ export function TrainingKopf({
   training: TrainingDetail;
   teams: TeamUebersicht[];
   oeffentlich: boolean;
-  fehlendeBedingungen: Bedingung[];
+  fehlendeBedingungen: FehlendeBedingung[];
   stufen: string[];
   onStufen: (next: string[]) => void;
   ziel: string;
@@ -90,6 +90,7 @@ export function TrainingKopf({
                 trainingId={training.id}
                 oeffentlich={oeffentlich}
                 fehlend={fehlendeBedingungen}
+                varianten={training.varianten}
               />
               <InTeamStellenControl trainingId={training.id} teams={teams} />
             </>
