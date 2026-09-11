@@ -8,11 +8,19 @@ import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
 import { TrainingUebernehmenControl } from "@/components/training/TrainingUebernehmenControl";
+import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { getTrainingView } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
 import { createClient } from "@/lib/supabase/server";
 import { leseGliederung, formatDuration } from "@/lib/training";
+import {
+  abschnittMitVariante,
+  mitVariante,
+  sichtbareZuordnungen,
+  varianteAnhang,
+  varianteAus,
+} from "@/lib/varianten";
 import { trainingsKrumen } from "@/lib/brotkrumen";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +34,7 @@ export default async function TrainingViewPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ uebernommen?: string }>;
+  searchParams: Promise<{ uebernommen?: string; variante?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -50,7 +58,14 @@ export default async function TrainingViewPage({
   const teams =
     user && training.visibility === "public" ? await getMeineTeams() : [];
 
-  const sections = leseGliederung(training.altersstufe, training.exercises);
+  // Angesehen wird genau eine Variante des Hauptteils, zu Beginn die erste
+  // (#203 AK 1/7). Die Wahl steht im Suchparameter und nicht im Zustand: Diese
+  // Seite sehen auch Betrachter ohne Konto, und ein Link braucht keine Rechte.
+  const aktive = varianteAus(sp.variante, training.varianten);
+  const sections = leseGliederung(
+    training.altersstufe,
+    sichtbareZuordnungen(training.exercises, aktive?.id),
+  );
   const total = sections.reduce((a, s) => a + s.sum, 0);
   const hasAnyDuration = sections.some((s) => s.sum > 0);
 
@@ -85,19 +100,39 @@ export default async function TrainingViewPage({
           </span>
         </div>
 
+        {/* Weiter geht es in der Variante, die hier offen liegt: Wer sie
+            gewählt hat, will sie durchführen, drucken oder bearbeiten — nicht
+            wieder die erste (#203 AK 1). `mitVariante` hängt die Angabe nur an,
+            wenn es überhaupt etwas zu wählen gibt. */}
         <div className="mt-4 flex flex-wrap gap-2">
-          <ButtonLink href={`/training/${training.id}/durchfuehren`} variant="tonal" size="sm">
+          <ButtonLink
+            href={mitVariante(
+              `/training/${training.id}/durchfuehren`,
+              aktive?.id,
+              training.varianten,
+            )}
+            variant="tonal"
+            size="sm"
+          >
             <Play size={18} strokeWidth={2} aria-hidden />
             Durchführen
           </ButtonLink>
-          <ButtonLink href={`/training/${training.id}/druck`} variant="outlined" size="sm">
+          <ButtonLink
+            href={mitVariante(`/training/${training.id}/druck`, aktive?.id, training.varianten)}
+            variant="outlined"
+            size="sm"
+          >
             <Printer size={18} strokeWidth={2} aria-hidden />
             Drucken
           </ButtonLink>
           {/* Bearbeiten am eigenen Training bzw. im eigenen Team — auch wenn es
               öffentlich ist: Veröffentlichen ist ein Zustand, kein Einfrieren. */}
           {darfBearbeiten && (
-            <ButtonLink href={`/training/${training.id}/edit`} variant="text" size="sm">
+            <ButtonLink
+              href={mitVariante(`/training/${training.id}/edit`, aktive?.id, training.varianten)}
+              variant="text"
+              size="sm"
+            >
               Bearbeiten
             </ButtonLink>
           )}
@@ -118,6 +153,16 @@ export default async function TrainingViewPage({
         )}
       </header>
 
+      {/* Über den Trainingsteilen, weil die Variante entscheidet, WAS darunter
+          steht (#203 AK 2/7). Links statt Chips: Jede Variante hat eine eigene
+          Adresse — so wechselt auch, wer das Training bloss ansehen darf. */}
+      <VariantenLinks
+        varianten={training.varianten}
+        aktiv={aktive?.id}
+        hrefFuer={(v) => `/training/${training.id}${varianteAnhang(v)}`}
+        className="mb-4"
+      />
+
       <div className="flex flex-col gap-4">
         {sections.map((s) => {
           const blocks = s.bloecke;
@@ -127,7 +172,9 @@ export default async function TrainingViewPage({
               className="rounded-[4px] border-[1.5px] border-outline bg-surface-container-low p-4 sm:p-5"
             >
               <h2 className="mb-3 type-title-medium text-on-surface">
-                {s.label}
+                {/* Welche Variante hier steht, gehört an den Hauptteil selbst —
+                    nicht nur an die Wahl darüber (#203 AK 5). */}
+                {abschnittMitVariante(s.key, s.label, aktive, training.varianten)}
                 {s.sum > 0 && (
                   <span className="ml-2 type-label-medium text-on-surface-variant">
                     {formatDuration(s.sum)}

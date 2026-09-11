@@ -121,3 +121,31 @@ export function varianteAnhang(varianteId: string | undefined, trenner = "?"): s
     ? `${trenner}${VARIANTE_PARAM}=${encodeURIComponent(varianteId)}`
     : "";
 }
+
+/**
+ * Der Titel eines Abschnitts der Leseansicht, um die angezeigte Variante
+ * ergänzt — «Hauptteil · 21 Kinder» (#203 AK 5).
+ *
+ * Der Zusatz steht am Hauptteil und nur dort: Er ist der einzige Teil, der sich
+ * je Variante unterscheidet (#201 PC 3). Führt das Training bloss eine
+ * Variante, bleibt der Titel unverändert — die Bezeichnung ist dann eine
+ * Angabe ohne Aussage (Epic EK 7).
+ *
+ * In BEIDEN Schemata trägt der Hauptteil-Abschnitt den Schlüssel `hauptteil`
+ * (Kinderfussball: der Trainingsteil; Juniorenfussball: der gleichnamige Teil
+ * mit den Blöcken «Spielformen» und «Spiel»). Darum genügt hier ein Vergleich
+ * und keine Fallunterscheidung — dieselbe Annahme wie im Editor
+ * (`teil.key === "hauptteil"`).
+ *
+ * Die drei Leseansichten (Ansehen, Durchführen, Drucken) rufen dieselbe
+ * Funktion, damit der Zusatz nicht an drei Orten auseinanderläuft.
+ */
+export function abschnittMitVariante(
+  abschnittKey: string,
+  label: string,
+  variante: Variante | undefined,
+  varianten: readonly Variante[],
+): string {
+  if (abschnittKey !== "hauptteil" || varianten.length < 2 || !variante) return label;
+  return `${label} · ${variante.name}`;
+}

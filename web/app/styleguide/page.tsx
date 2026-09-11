@@ -31,6 +31,7 @@ import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
+import { VariantenLinks } from "@/components/training/VariantenLinks";
 import {
   Search,
   SlidersHorizontal,
@@ -1257,6 +1258,34 @@ export default function Styleguide() {
             alle Varianten.
           </p>
         </div>
+
+        <p className="type-body-medium mb-5 mt-8 max-w-xl text-on-surface-variant">
+          <strong>Auf Server-Seiten: dieselbe Optik, aber Links.</strong> Ansehen
+          und Drucken halten keinen Zustand — die angezeigte Variante steht im
+          Suchparameter, jede Variante hat damit eine eigene{" "}
+          <strong>Adresse</strong>. <code>VariantenLinks</code> rendert darum{" "}
+          <code>&lt;nav&gt;</code> mit Links und <code>aria-current=&quot;page&quot;</code>,
+          leiht sich aber die Chip-Klassen aus 09 (<code>chipBase</code>,{" "}
+          <code>chipSelected</code>, <code>chipOutlined</code>): gleiche Sache,
+          gleiches Bild. Kein wandernder Tabstopp — durch Links tabbt man,
+          Pfeiltasten gehören der Radiogroup. Nicht <code>TabNav</code> (20): Die
+          wechselt die <em>Sicht</em> auf einen Gegenstand; hier bleibt die Sicht
+          dieselbe und der <em>Inhalt</em> wechselt. Und sie trägt{" "}
+          <code>type-label-large</code> — Nutzertext stünde dort versal
+          verfälscht.
+        </p>
+        <p className="type-label-small mb-2 text-on-surface-variant">
+          drei Varianten als Links — die offene trägt <code>aria-current</code>
+        </p>
+        <VariantenLinks
+          varianten={[
+            { id: "a", name: "Standard" },
+            { id: "b", name: "21 Kinder, zwei Trainer" },
+            { id: "c", name: "Halle" },
+          ]}
+          aktiv="a"
+          hrefFuer={(v) => `#variante-${v}`}
+        />
       </Section>
 
     </main>
