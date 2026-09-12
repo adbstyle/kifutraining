@@ -393,7 +393,15 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
     faerbbar: false,
     render: () => (
       <>
-        <circle r={12} fill={dv("ball-koerper")} stroke={dv("ball-zeichnung")} strokeWidth={dv("ball-strich")} />
+        <circle
+          r={12}
+          fill={dv("ball-koerper")}
+          stroke={dv("ball-zeichnung")}
+          // Strichstärke über style, nicht als Attribut: Für Farben ist
+          // var() im Präsentationsattribut erprobt, für Zahlen nicht —
+          // und ein nicht aufgelöstes var() fiele still auf 1 zurück.
+          style={{ strokeWidth: dv("ball-strich") }}
+        />
         <circle r={3.5} fill={dv("ball-zeichnung")} />
         <circle cx={-7} cy={-5} r={2} fill={dv("ball-zeichnung")} />
         <circle cx={7} cy={-5} r={2} fill={dv("ball-zeichnung")} />

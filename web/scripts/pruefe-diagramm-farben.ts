@@ -51,17 +51,21 @@ const z = (wert: number) => wert.toFixed(2);
 // ── Die Sätze aus globals.css lesen ────────────────────────────────────────
 const CSS = readFileSync(join(WEB, "app/globals.css"), "utf8");
 
-/** Der Bildschirm-Satz: der `:root`-Block, der die Diagramm-Rollen führt.
- *  (Der erste `:root` im `@media print` ist ein anderer — der kommt unten.) */
-const BILDSCHIRM = tokens(
-  blockVon(CSS, /:root\s*\{[^}]*--diagramm-/, "Diagramm-Block in :root"),
-  "diagramm",
-);
+/** Der Druck-Satz steht in seiner Media Query; er überschreibt nur, was sich
+ *  unterscheidet, alles Übrige erbt aus `:root`. Genau so wird hier gerechnet. */
+const DRUCK_BLOCK = blockVon(CSS, /@media\s+print\b/, "@media print");
+const DRUCK_ROH = tokens(blockVon(DRUCK_BLOCK, /:root\b/, "print :root"), "diagramm");
 
-/** Der Druck-Satz überschreibt nur, was sich unterscheidet — alles Übrige
- *  erbt aus `:root`. Genau so wird hier auch gerechnet. */
-const DRUCK_ROH = tokens(
-  blockVon(blockVon(CSS, /@media\s+print\b/, "@media print"), /:root\b/, "print :root"),
+/** Der Bildschirm-Satz ist der Diagramm-Block, der NICHT im Druck steht.
+ *
+ *  Beide passen auf dasselbe Muster (`:root` mit `--diagramm-`), und welcher
+ *  zuerst käme, entschiede allein die Reihenfolge in der Datei. Darum wird der
+ *  Druckblock zuerst ausgeschnitten und im Rest gesucht: Verschiebt jemand die
+ *  Blöcke — etwa wenn der Light-Satz dazukommt —, prüft der Wächter weiterhin
+ *  zwei verschiedene Sätze und nicht zweimal denselben. */
+const OHNE_DRUCK = CSS.replace(DRUCK_BLOCK, "");
+const BILDSCHIRM = tokens(
+  blockVon(OHNE_DRUCK, /:root\s*\{[^}]*--diagramm-/, "Diagramm-Block in :root"),
   "diagramm",
 );
 const DRUCK = new Map([...BILDSCHIRM, ...DRUCK_ROH]);
@@ -253,16 +257,44 @@ const ROHE_FARBE: [RegExp, string][] = [
   [new RegExp(`=\\s*["'\`](?:${NAMEN})["'\`]\\s*;`, "i"), "CSS-Farbname"],
 ];
 
+/** Die Zeilen einer Datei ohne ihre Kommentare.
+ *
+ *  Ein Kommentar darf den alten Wert nennen — er erklärt ja gerade, was sich
+ *  geändert hat und warum. Verboten ist der Wert im Code. Die Blockform
+ *  braucht dafür einen Zustand über die Zeilen hinweg: Dieses Projekt
+ *  begründet in mehrzeiligen `/** … *\/`-Blöcken, und eine zeilenweise
+ *  Ersetzung hielte deren Fortsetzungszeilen für Code. */
+function ohneKommentare(quelle: string): string[] {
+  let imBlock = false;
+  return quelle.split("\n").map((zeile) => {
+    let code = "";
+    for (let i = 0; i < zeile.length; i++) {
+      if (imBlock) {
+        if (zeile.startsWith("*/", i)) {
+          imBlock = false;
+          i++;
+        }
+        continue;
+      }
+      if (zeile.startsWith("//", i)) break;
+      if (zeile.startsWith("/*", i)) {
+        imBlock = true;
+        i++;
+        continue;
+      }
+      code += zeile[i];
+    }
+    return code;
+  });
+}
+
 pruefe(`Kein roher Farbwert im Zeichencode (${ZEICHENDATEIEN.length} Dateien)`, () => {
   const treffer: string[] = [];
   for (const kurz of ZEICHENDATEIEN) {
-    const zeilen = readFileSync(join(WEB, kurz), "utf8").split("\n");
-    zeilen.forEach((zeile, i) => {
-      // Der Kommentar darf den alten Wert nennen — er erklärt ja, was sich
-      // geändert hat. Verboten ist der Wert im Code.
-      const code = zeile.replace(/\/\/.*$/, "").replace(/\/\*.*?\*\//g, "");
+    const zeilen = ohneKommentare(readFileSync(join(WEB, kurz), "utf8"));
+    zeilen.forEach((code, i) => {
       for (const [muster, grund] of ROHE_FARBE) {
-        if (muster.test(code)) treffer.push(`${kurz}:${i + 1}  ${grund}  — ${zeile.trim()}`);
+        if (muster.test(code)) treffer.push(`${kurz}:${i + 1}  ${grund}  — ${code.trim()}`);
       }
     });
   }

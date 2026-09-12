@@ -113,9 +113,13 @@
   /* ─── Das Feld ─── */
   --diagramm-rasen: #1b271f;
   --diagramm-rasen-streifen: #212f26;
-  /* Am Bildschirm trägt der Rasen sich selbst; erst auf Papier braucht die
-     weisse Fläche einen Umriss, der sie vom weissen Blatt trennt. */
-  --diagramm-feldkante: transparent;
+  /* Der Rasen liegt mit 1.05:1 auf der Karte (elev-01) und mit 1.01:1 in der
+     Übungszeile (elev-02) — ohne Umriss verlöre das Feld dort seine Gestalt
+     und die Figuren stünden frei auf der Karte. Dieselbe Deckung wie die
+     Kontur der Oberfläche (--color-kante), aber als eigener Wert: Das
+     Diagramm borgt sich keine Rolle, es hat seine eigene. Auf Papier trägt
+     die Kante dasselbe Amt gegen das weisse Blatt. */
+  --diagramm-feldkante: rgba(255, 255, 255, 0.28);
 
   /* ─── Die wählbare Palette (ein Eintrag je Slug aus lib/diagramm.ts) ───
      Angehoben gegenüber der Manual-Palette: auf dem Nachtrasen kam das

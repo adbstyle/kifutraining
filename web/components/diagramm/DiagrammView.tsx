@@ -224,9 +224,13 @@ export function FormGrafik({ element }: { element: FormElement }) {
   const farbe = FARBEN[element.farbe ?? FORM_DEFAULT_FARBE];
   const stil = {
     fill: element.gefuellt ? farbe : "transparent",
-    fillOpacity: element.gefuellt ? dv("form-deckung") : undefined,
     stroke: farbe,
     strokeWidth: 4,
+    // Die Deckung geht über style statt als Attribut: Für Farben ist var() im
+    // Präsentationsattribut erprobt, für Zahlen nicht — und ein nicht
+    // aufgelöstes var() fiele still auf volle Deckung zurück, also auf eine
+    // deckende Fläche statt eines Hauchs.
+    style: element.gefuellt ? { fillOpacity: dv("form-deckung") } : undefined,
   };
   const { x, y, breite: b, hoehe: h } = element;
   switch (element.form) {
