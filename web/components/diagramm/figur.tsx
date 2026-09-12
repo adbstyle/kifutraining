@@ -16,17 +16,33 @@
  * erwachsen und grösser) und spiegelt optional die Blickrichtung.
  */
 
+import { dv } from "@/lib/diagramm-farben";
 import type { Punkt, SpielerPose } from "@/lib/diagramm";
 
 // --- Palette (fix, unabhängig von der Trikotfarbe) ---
 // Hauttöne bewusst als warme Brauntöne von hell bis dunkel — auch der dunkelste
 // bleibt deutlich heller als das (oft schwarze) Haar, damit Gesichtszüge
 // (dunkle Augen/Mund) lesbar bleiben (kein schwarzer Kopf-Klumpen).
-const SKIN = ["#ffe0c2", "#f0c096", "#d39b66", "#b27a45", "#915f33"] as const;
-const HAAR = ["#3a2a20", "#1c1c1c", "#e8b84b", "#a9622a", "#5a3826", "#caa05a"] as const;
+export const SKIN = [
+  dv("figur-haut-1"),
+  dv("figur-haut-2"),
+  dv("figur-haut-3"),
+  dv("figur-haut-4"),
+  dv("figur-haut-5"),
+] as const;
+export const HAAR = [
+  dv("figur-haar-1"),
+  dv("figur-haar-2"),
+  dv("figur-haar-3"),
+  dv("figur-haar-4"),
+  dv("figur-haar-5"),
+  dv("figur-haar-6"),
+] as const;
 // Augen/Mund: kräftiges, aber nicht reines Schwarz — trägt auf jedem Hautton.
-const TINTE = "#26201c";
-const FRISUREN = [
+const TINTE = dv("figur-tinte");
+/** Wangenrot — dieselbe Farbe in Vorder- und Profilansicht. */
+const ROUGE = dv("figur-rouge");
+export const FRISUREN = [
   "kurz",
   "scheitel",
   "lockig",
@@ -39,18 +55,22 @@ const FRISUREN = [
   "lang",
 ] as const;
 type Frisur = (typeof FRISUREN)[number];
-const SHORT = "#37474f";
-const SOCK = "#fafafa";
-const SHOE = "#222";
+const SHORT = dv("figur-hose");
+const SOCK = dv("figur-stutzen");
+const SHOE = dv("figur-schuh");
 /** Festes Neon-Trikot des Torhüters (`faerbbar: false`) — hebt ihn vom Team ab.
  *  Exportiert, damit das Register die Farbe nicht doppelt notiert. */
-export const TORWART_TRIKOT = "#c0ca33";
+export const TORWART_TRIKOT = dv("torwart-trikot");
 // Trainer: lange graue Hose, dunkle lange Ärmel, Kappe mit hellem Rand — so
 // zeichnet ihn das KiFu-Manual (z. B. „Trikottausch", S. 62).
-const TRAINER_HOSE = "#78909c";
-const TRAINER_ARM = "#2f3a40";
-const KAPPE = "#37474f";
-const KAPPE_RAND = "#eceff1";
+/** Der Torhüter trägt dunkle Hose und Stutzen; die Handschuhe sind hell. */
+const TORWART_HOSE = dv("torwart-hose");
+const HANDSCHUH = dv("torwart-handschuh");
+const HANDSCHUH_RAND = dv("torwart-handschuh-rand");
+const TRAINER_HOSE = dv("trainer-hose");
+const TRAINER_ARM = dv("trainer-arm");
+const KAPPE = dv("trainer-kappe");
+const KAPPE_RAND = dv("trainer-kappe-rand");
 
 /** Figur-Anker (Körpermitte) im Zeichen-Raum. */
 const ANKER_X = 100;
@@ -136,8 +156,8 @@ export function figurVariante(seed: string): { frisur: Frisur; haut: string; haa
 }
 
 // --- Kopf / Frisur ---
-const BAND = "#fafafa"; // Stirnband
-const ZOPF_TIE = "#e53935"; // Haargummi
+const BAND = dv("figur-band"); // Stirnband
+const ZOPF_TIE = dv("figur-zopfband"); // Haargummi
 
 /** Hinter dem Kopf liegende Haarteile (Vorderansicht): Zöpfe, lange Haare. */
 function frisurBack(haar: string, fr: Frisur): string {
@@ -179,7 +199,7 @@ function gesichtFront(skin: string): string {
     `<circle cx="100" cy="56" r="29" fill="${skin}"/>` +
     `<circle cx="72" cy="58" r="6" fill="${skin}"/><circle cx="128" cy="58" r="6" fill="${skin}"/>` +
     `<circle cx="90" cy="56" r="3.4" fill="${TINTE}"/><circle cx="110" cy="56" r="3.4" fill="${TINTE}"/>` +
-    `<circle cx="84" cy="66" r="4.4" fill="#ff8f8f" opacity="0.5"/><circle cx="116" cy="66" r="4.4" fill="#ff8f8f" opacity="0.5"/>` +
+    `<circle cx="84" cy="66" r="4.4" fill="${ROUGE}" opacity="0.5"/><circle cx="116" cy="66" r="4.4" fill="${ROUGE}" opacity="0.5"/>` +
     `<path d="M91 66 Q100 76 109 66" stroke="${TINTE}" stroke-width="2.8" fill="none" stroke-linecap="round"/>`
   );
 }
@@ -202,7 +222,7 @@ function kopfRuecken(skin: string, haar: string, fr: Frisur): string {
 }
 /** Kragennaht des Trikots — nur in der Rückansicht, als leiser Schatten auf
  *  jeder Trikotfarbe. */
-const KRAGEN = `<path d="M86 97 Q100 105 114 97" stroke="rgba(0,0,0,.16)" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+const KRAGEN = `<path d="M86 97 Q100 105 114 97" stroke="${dv("schatten")}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
 /** Profilkopf, Blick nach rechts; Mitte (hx,hy). */
 function kopfProfil(hx: number, hy: number, skin: string, haar: string, fr: Frisur): string {
   let s = "";
@@ -231,7 +251,7 @@ function kopfProfil(hx: number, hy: number, skin: string, haar: string, fr: Fris
   if (fr === "stirnband")
     s += `<path d="M${hx - 20} ${hy - 12} Q${hx + 4} ${hy - 24} ${hx + 24} ${hy - 14} L${hx + 24} ${hy - 6} Q${hx + 4} ${hy - 16} ${hx - 20} ${hy - 4} Z" fill="${BAND}"/>`;
   s += `<circle cx="${hx + 10}" cy="${hy - 2}" r="3.4" fill="${TINTE}"/>`;
-  s += `<circle cx="${hx + 4}" cy="${hy + 10}" r="4" fill="#ff8f8f" opacity="0.5"/>`;
+  s += `<circle cx="${hx + 4}" cy="${hy + 10}" r="4" fill="${ROUGE}" opacity="0.5"/>`;
   s += `<path d="M${hx + 13} ${hy + 13} q6 4 11 -1" stroke="${TINTE}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
   return s;
 }
@@ -361,14 +381,14 @@ function torhueter(j: string, skin: string, haar: string, fr: Frisur): string {
   return (
     `<path d="M88 154 L74 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
     <path d="M112 154 L126 222" stroke="${skin}" stroke-width="16" stroke-linecap="round"/>
-    <path d="M82 198 L76 218" stroke="#212121" stroke-width="17" stroke-linecap="round"/>
-    <path d="M118 198 L124 218" stroke="#212121" stroke-width="17" stroke-linecap="round"/>
+    <path d="M82 198 L76 218" stroke="${TORWART_HOSE}" stroke-width="17" stroke-linecap="round"/>
+    <path d="M118 198 L124 218" stroke="${TORWART_HOSE}" stroke-width="17" stroke-linecap="round"/>
     ${schuh(70, 218, -1)}${schuh(130, 218, 1)}
-    <path d="M70 148 L130 148 L128 178 Q128 184 121 184 L110 184 L100 162 L90 184 L79 184 Q72 184 72 178 Z" fill="#212121"/>
+    <path d="M70 148 L130 148 L128 178 Q128 184 121 184 L110 184 L100 162 L90 184 L79 184 Q72 184 72 178 Z" fill="${TORWART_HOSE}"/>
     <path d="M74 106 Q54 120 50 142" stroke="${skin}" stroke-width="14" fill="none" stroke-linecap="round"/>
     <path d="M126 106 Q146 120 150 142" stroke="${skin}" stroke-width="14" fill="none" stroke-linecap="round"/>
-    <rect x="40" y="136" width="20" height="22" rx="8" fill="#eceff1" stroke="#b0bec5" stroke-width="1.5"/>
-    <rect x="140" y="136" width="20" height="22" rx="8" fill="#eceff1" stroke="#b0bec5" stroke-width="1.5"/>
+    <rect x="40" y="136" width="20" height="22" rx="8" fill="${HANDSCHUH}" stroke="${HANDSCHUH_RAND}" stroke-width="1.5"/>
+    <rect x="140" y="136" width="20" height="22" rx="8" fill="${HANDSCHUH}" stroke="${HANDSCHUH_RAND}" stroke-width="1.5"/>
     <path d="M72 98 Q72 92 82 92 L118 92 Q128 92 128 98 L131 150 Q131 156 123 156 L77 156 Q69 156 69 150 Z" fill="${j}"/>
     <path d="M74 100 Q60 110 56 124" stroke="${j}" stroke-width="22" fill="none" stroke-linecap="round"/>
     <path d="M126 100 Q140 110 144 124" stroke="${j}" stroke-width="22" fill="none" stroke-linecap="round"/>

@@ -2,6 +2,7 @@ import {
   FLAECHE,
   FARBEN,
   FORM_DEFAULT_FARBE,
+  LINIE_DEFAULT_FARBE,
   bbox,
   dreieckEcken,
   type DiagrammData,
@@ -11,6 +12,7 @@ import {
   type TextElement,
   type Punkt,
 } from "@/lib/diagramm";
+import { dv } from "@/lib/diagramm-farben";
 import { symbolDef, symbolFarbe, symbolMasse, symbolRotation } from "./symbols";
 import { cn } from "@/lib/cn";
 
@@ -22,22 +24,36 @@ import { cn } from "@/lib/cn";
  * (Decision Record Spike #48, Gate 2).
  */
 
-/** Rasen mit dezenten Mähstreifen, wie in den SFV-Diagrammen. */
+/** Rasen mit dezenten Mähstreifen, wie in den SFV-Diagrammen.
+ *
+ *  Die Kante zeichnet immer mit, ist am Bildschirm aber durchsichtig: Dort
+ *  trägt der Rasen sich selbst, auf Papier ginge das weisse Feld ohne sie
+ *  nahtlos ins weisse Blatt über. Welcher Fall gilt, entscheidet die Rolle —
+ *  hier steht keine Bedingung. */
 export function Rasen() {
   const streifen = 8;
   const b = FLAECHE.breite / streifen;
   return (
     <>
-      <rect width={FLAECHE.breite} height={FLAECHE.hoehe} fill="#69a956" />
+      <rect width={FLAECHE.breite} height={FLAECHE.hoehe} fill={dv("rasen")} />
       {Array.from({ length: streifen / 2 }, (_, i) => (
         <rect
           key={i}
           x={(i * 2 + 1) * b}
           width={b}
           height={FLAECHE.hoehe}
-          fill="#5f9c4d"
+          fill={dv("rasen-streifen")}
         />
       ))}
+      <rect
+        x={0.75}
+        y={0.75}
+        width={FLAECHE.breite - 1.5}
+        height={FLAECHE.hoehe - 1.5}
+        fill="none"
+        stroke={dv("feldkante")}
+        strokeWidth={1.5}
+      />
     </>
   );
 }
@@ -141,9 +157,11 @@ export function wellenPunkte(punkte: Punkt[], amplitude = 8, wellenlaenge = 44):
   return out;
 }
 
-/** Schwarz der Bewegungspfeile — wie in der Manual-Zeichenerklärung (Abb. 24),
- *  klar auf dem Rasen erkennbar. */
-const PFEIL_SCHWARZ = "#1b1b1b";
+/** Farbe der Bewegungspfeile. Die Manual-Zeichenerklärung (Abb. 24) zeichnet
+ *  sie schwarz, und auf Papier tun wir das weiterhin; auf dem dunklen Rasen
+ *  läge Schwarz bei 1.3:1 und wäre schlicht weg. Welcher Fall gilt, entscheidet
+ *  die Rolle. */
+const PFEIL = dv("bewegung");
 
 /** Bewegungs- und Linien-Darstellung (#52) gemäss SFV-Manual-Zeichenerklärung
  *  (Abb. 24): Laufweg (Lauf ohne Ball) gestrichelt + Pfeil, Pass/Schuss
@@ -151,7 +169,7 @@ const PFEIL_SCHWARZ = "#1b1b1b";
  *  freie Linie farbig, wahlweise gestrichelt. Der Linienstil — nicht die
  *  Strichstärke — unterscheidet die Bewegungsarten. */
 export function PfadGrafik({ element }: { element: PfadElement }) {
-  const farbe = element.farbe ? FARBEN[element.farbe] : "#fafafa";
+  const farbe = FARBEN[element.farbe ?? LINIE_DEFAULT_FARBE];
   const basis = {
     fill: "none" as const,
     strokeLinecap: "round" as const,
@@ -164,25 +182,25 @@ export function PfadGrafik({ element }: { element: PfadElement }) {
           <polyline
             points={punkteAttr(endeKuerzen(element.punkte, PFEIL_BASIS))}
             {...basis}
-            stroke={PFEIL_SCHWARZ}
+            stroke={PFEIL}
             strokeWidth={5}
             strokeDasharray="18 14"
           />
-          <PfeilSpitze punkte={element.punkte} farbe={PFEIL_SCHWARZ} />
+          <PfeilSpitze punkte={element.punkte} farbe={PFEIL} />
         </>
       );
     case "dribbling":
       return (
         <>
-          <polyline points={punkteAttr(endeKuerzen(wellenPunkte(element.punkte), PFEIL_BASIS))} {...basis} stroke={PFEIL_SCHWARZ} strokeWidth={4.5} />
-          <PfeilSpitze punkte={element.punkte} farbe={PFEIL_SCHWARZ} />
+          <polyline points={punkteAttr(endeKuerzen(wellenPunkte(element.punkte), PFEIL_BASIS))} {...basis} stroke={PFEIL} strokeWidth={4.5} />
+          <PfeilSpitze punkte={element.punkte} farbe={PFEIL} />
         </>
       );
     case "pass":
       return (
         <>
-          <polyline points={punkteAttr(endeKuerzen(element.punkte, PFEIL_BASIS))} {...basis} stroke={PFEIL_SCHWARZ} strokeWidth={5} />
-          <PfeilSpitze punkte={element.punkte} farbe={PFEIL_SCHWARZ} />
+          <polyline points={punkteAttr(endeKuerzen(element.punkte, PFEIL_BASIS))} {...basis} stroke={PFEIL} strokeWidth={5} />
+          <PfeilSpitze punkte={element.punkte} farbe={PFEIL} />
         </>
       );
     case "linie":
@@ -246,8 +264,8 @@ export function TextGrafik({ element }: { element: TextElement }) {
         width={box.breite}
         height={box.hoehe}
         rx={5}
-        fill="rgba(255,255,255,.88)"
-        stroke="rgba(0,0,0,.25)"
+        fill={dv("textbox-grund")}
+        stroke={dv("textbox-rand")}
         strokeWidth={1.5}
       />
       <text
@@ -256,7 +274,7 @@ export function TextGrafik({ element }: { element: TextElement }) {
         textAnchor="middle"
         fontSize={30}
         fontFamily="var(--font-sans, sans-serif)"
-        fill="#212121"
+        fill={dv("textbox-schrift")}
       >
         {element.text}
       </text>
@@ -353,7 +371,7 @@ export function GlyphVorschau({
       aria-hidden
       className="block"
     >
-      <rect x={ox} y={oy} width={seite} height={seite} fill="#5f9c4d" />
+      <rect x={ox} y={oy} width={seite} height={seite} fill={dv("rasen-streifen")} />
       <ElementGrafik element={element} />
     </svg>
   );

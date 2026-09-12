@@ -8,6 +8,7 @@ import {
   DREHBARE_TYPEN,
   FIGUR_TYPEN,
 } from "@/lib/diagramm";
+import { dv } from "@/lib/diagramm-farben";
 import { FigurGrafik, TORWART_TRIKOT } from "./figur";
 
 /**
@@ -52,7 +53,7 @@ export type SymbolDef = {
   render: (farbe: string, opts?: SymbolRenderOpts) => ReactNode;
 };
 
-const KONTUR = "rgba(0,0,0,.3)";
+const KONTUR = dv("symbol-kontur");
 
 /** Netz-Schraffur für Tore. */
 function Netz({ x, y, b, h }: { x: number; y: number; b: number; h: number }) {
@@ -62,7 +63,7 @@ function Netz({ x, y, b, h }: { x: number; y: number; b: number; h: number }) {
   for (let j = y + 7; j < y + h; j += 9)
     linien.push(<line key={`h${j}`} x1={x} y1={j} x2={x + b} y2={j} />);
   return (
-    <g stroke="rgba(255,255,255,.75)" strokeWidth={1.5}>
+    <g stroke={dv("tornetz")} strokeWidth={1.5}>
       {linien}
     </g>
   );
@@ -75,9 +76,9 @@ function Netz({ x, y, b, h }: { x: number; y: number; b: number; h: number }) {
  * mtView() auf den Anker (0,0) zentriert und skaliert — eine einzige
  * Transformation für alle Ansichten, damit das Tor in jeder Lage gleich gross
  * bleibt. Anker = Mittelpunkt der gemeinsamen Bezugsbox (#55 Anker-Vertrag). */
-const MT_NETZ = "white";
+const MT_NETZ = dv("minitor-netz");
 const MT_NETZ_FILL = 0.4;
-const MT_SCHNUR = "#646161";
+const MT_SCHNUR = dv("minitor-schnur");
 /** Bezugspunkt der Zeichnungen (Canvas 161×108): Tor-Mittelpunkt ~ (92.5, 50). */
 const MT_CX = 92.5;
 const MT_CY = 50;
@@ -194,12 +195,12 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
         <path
           d="M -90 38 L -90 -38 L 90 -38 L 90 38"
           fill="none"
-          stroke="#fafafa"
+          stroke={dv("geraet")}
           strokeWidth={9}
           strokeLinecap="round"
         />
-        <circle cx={-90} cy={38} r={6} fill="#fafafa" />
-        <circle cx={90} cy={38} r={6} fill="#fafafa" />
+        <circle cx={-90} cy={38} r={6} fill={dv("geraet")} />
+        <circle cx={90} cy={38} r={6} fill={dv("geraet")} />
       </>
     ),
   },
@@ -240,8 +241,8 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
           strokeLinejoin="round"
         />
         {/* Schattierte rechte Flanke + Lichtkante links für Tiefe */}
-        <path d="M 0 -14 Q 9 -1 13 13 L 2 13 Q 1.5 -3 0 -14 Z" fill="rgba(0,0,0,.16)" />
-        <path d="M -1 -13 Q -6 -3 -8 11" fill="none" stroke="rgba(255,255,255,.32)" strokeWidth={2} strokeLinecap="round" />
+        <path d="M 0 -14 Q 9 -1 13 13 L 2 13 Q 1.5 -3 0 -14 Z" fill={dv("schatten")} />
+        <path d="M -1 -13 Q -6 -3 -8 11" fill="none" stroke={dv("symbol-glanz")} strokeWidth={2} strokeLinecap="round" />
       </>
     ),
   },
@@ -256,7 +257,7 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
       <>
         {/* Flacher Teller: Ellipse mit Loch */}
         <ellipse rx={17} ry={9} fill={farbe} stroke={KONTUR} strokeWidth={1.5} />
-        <ellipse rx={6} ry={3} fill="rgba(255,255,255,.9)" />
+        <ellipse rx={6} ry={3} fill={dv("teller-loch")} />
       </>
     ),
   },
@@ -270,7 +271,7 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
     render: (farbe) => (
       <>
         {/* Fahnenstange in Seitenansicht (wie im Manual): Stab + Fähnchen */}
-        <line x1={0} y1={-40} x2={0} y2={40} stroke="#eceff1" strokeWidth={4} strokeLinecap="round" />
+        <line x1={0} y1={-40} x2={0} y2={40} stroke={dv("stange-stab")} strokeWidth={4} strokeLinecap="round" />
         <line x1={0} y1={-40} x2={0} y2={40} stroke={KONTUR} strokeWidth={5.5} strokeLinecap="round" opacity={0.35} />
         <path d="M 2 -40 L 26 -32 L 2 -24 Z" fill={farbe} stroke={KONTUR} strokeWidth={1} />
       </>
@@ -309,7 +310,7 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
           strokeWidth={1.4}
         />
         {/* Lichtkante an der Faltkante, dazu eine senkrechte Falte */}
-        <path d="M-16 -4 L14 -5.5" stroke="rgba(255,255,255,.5)" strokeWidth={1.6} fill="none" strokeLinecap="round" />
+        <path d="M-16 -4 L14 -5.5" stroke={dv("leibchen-glanz")} strokeWidth={1.6} fill="none" strokeLinecap="round" />
         <path d="M-6 -6 Q-4 0 -3 6" stroke={KONTUR} strokeWidth={1.2} fill="none" strokeLinecap="round" />
       </>
     ),
@@ -323,9 +324,9 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
     render: () => (
       <>
         {/* Kleine Hürde: Querlatte auf zwei Füssen, Überquerung oben/unten */}
-        <line x1={-30} y1={-12} x2={-30} y2={12} stroke="#fafafa" strokeWidth={5} strokeLinecap="round" />
-        <line x1={30} y1={-12} x2={30} y2={12} stroke="#fafafa" strokeWidth={5} strokeLinecap="round" />
-        <line x1={-34} y1={0} x2={34} y2={0} stroke="#ffb300" strokeWidth={7} strokeLinecap="round" />
+        <line x1={-30} y1={-12} x2={-30} y2={12} stroke={dv("geraet")} strokeWidth={5} strokeLinecap="round" />
+        <line x1={30} y1={-12} x2={30} y2={12} stroke={dv("geraet")} strokeWidth={5} strokeLinecap="round" />
+        <line x1={-34} y1={0} x2={34} y2={0} stroke={dv("huerde-latte")} strokeWidth={7} strokeLinecap="round" />
       </>
     ),
   },
@@ -392,11 +393,11 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
     faerbbar: false,
     render: () => (
       <>
-        <circle r={12} fill="#fafafa" stroke="#424242" strokeWidth={1.5} />
-        <circle r={3.5} fill="#424242" />
-        <circle cx={-7} cy={-5} r={2} fill="#424242" />
-        <circle cx={7} cy={-5} r={2} fill="#424242" />
-        <circle cx={0} cy={9} r={2} fill="#424242" />
+        <circle r={12} fill={dv("ball-koerper")} stroke={dv("ball-zeichnung")} strokeWidth={dv("ball-strich")} />
+        <circle r={3.5} fill={dv("ball-zeichnung")} />
+        <circle cx={-7} cy={-5} r={2} fill={dv("ball-zeichnung")} />
+        <circle cx={7} cy={-5} r={2} fill={dv("ball-zeichnung")} />
+        <circle cx={0} cy={9} r={2} fill={dv("ball-zeichnung")} />
       </>
     ),
   },
@@ -408,8 +409,8 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
     faerbbar: false,
     render: () => (
       <>
-        <circle r={10} fill="#ef6c00" stroke={KONTUR} strokeWidth={1.5} />
-        <path d="M -9 -4 Q 0 2 9 -4 M -9 4 Q 0 -2 9 4" fill="none" stroke="#fff3e0" strokeWidth={1.5} />
+        <circle r={10} fill={dv("handball")} stroke={KONTUR} strokeWidth={1.5} />
+        <path d="M -9 -4 Q 0 2 9 -4 M -9 4 Q 0 -2 9 4" fill="none" stroke={dv("handball-naht")} strokeWidth={1.5} />
       </>
     ),
   },
@@ -421,8 +422,8 @@ export const SYMBOLE: Record<SymbolTyp, SymbolDef> = {
     faerbbar: false,
     render: () => (
       <>
-        <circle r={7} fill="#cddc39" stroke={KONTUR} strokeWidth={1} />
-        <path d="M -6 -3 Q 0 0 -6 3 M 6 -3 Q 0 0 6 3" fill="none" stroke="#fafafa" strokeWidth={1.2} />
+        <circle r={7} fill={dv("tennisball")} stroke={KONTUR} strokeWidth={1} />
+        <path d="M -6 -3 Q 0 0 -6 3 M 6 -3 Q 0 0 6 3" fill="none" stroke={dv("tennisball-naht")} strokeWidth={1.2} />
       </>
     ),
   },
@@ -438,8 +439,8 @@ export const FALLBACK_SYMBOL: SymbolDef = {
   faerbbar: false,
   render: () => (
     <>
-      <circle r={15} fill="rgba(255,255,255,.6)" stroke="#616161" strokeWidth={2} strokeDasharray="4 3" />
-      <text y={5} textAnchor="middle" fontSize={16} fill="#616161">?</text>
+      <circle r={15} fill={dv("fallback-grund")} stroke={dv("fallback-strich")} strokeWidth={2} strokeDasharray="4 3" />
+      <text y={5} textAnchor="middle" fontSize={16} fill={dv("fallback-strich")}>?</text>
     </>
   ),
 };

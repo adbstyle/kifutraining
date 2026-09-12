@@ -136,6 +136,15 @@ Textfelder. Elemente lassen sich setzen, verschieben, drehen, einfärben, in der
 verändern, mehrfach auswählen, kopieren und löschen; jeder Schritt ist widerrufbar. Gespeichert
 wird laufend im Hintergrund.
 
+Dasselbe Diagramm sieht am Bildschirm anders aus als auf Papier, und beides ist Absicht. Am
+Bildschirm liegt es auf einem dunklen Rasen, passend zur übrigen Anwendung, mit hellen
+Bewegungspfeilen und kräftigeren Farben für Leibchen und Material. Auf Papier kommt dieselbe
+Zeichnung auf weissem Grund mit angedeuteten Mähstreifen, schwarzen Pfeilen wie in der
+Zeichenerklärung des Manuals und dunkleren Farben. Das spart Druckfarbe — der grüne Rasen füllte
+bisher das ganze Blatt — und bleibt auf einem einfachen Bürodrucker lesbar. Wer eine Farbe wählt,
+wählt nicht einen Farbton, sondern «rot» oder «blau»; wie kräftig der ausfällt, entscheidet die
+Anwendung je nach Bildschirm oder Papier.
+
 Ein vorhandenes Diagramm kann als Vorlage in eine andere eigene Übung kopiert werden. Zur
 Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar über den Namen der
 Quell-Übung und mit Vorschau; die Altersstufe spielt dabei keine Rolle. Fremde

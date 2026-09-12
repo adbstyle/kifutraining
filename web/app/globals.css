@@ -92,6 +92,116 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
+/* ═══ Diagramm ════════════════════════════════════════════════════════
+   Die Farben des Feld-Diagramms. Sie stehen bewusst NICHT im `@theme`
+   und tragen kein `--color-`-Präfix: Tailwind macht aus jeder Farbrolle
+   des Themes eine Utility, und `bg-rasen` auf einem Knopf wäre genau die
+   Vermischung, die der Styleguide seit je verhindert — das Diagramm ist
+   ein Gegenstand, keine Oberfläche. Es hat eine eigene Palette, und diese
+   Trennung ist hier in der Schreibweise festgehalten, nicht nur im Text.
+
+   Dieselbe Zeichnung, mehrere Sätze: Der Browser löst `var()` beim Malen
+   auf, deshalb rendert dieselbe Server Component Bildschirm und Papier,
+   ohne je zu wissen, welches Medium gerade gilt. Ein weiterer Satz (der
+   angekündigte Light-Modus) ist ein weiterer Block mit denselben Rollen —
+   keine Zeichenkomponente wird dafür noch einmal angefasst.
+
+   Die Rollennamen führt `lib/diagramm-farben.ts`; `dv("rasen")` ist die
+   einzige Stelle im Code, die eine dieser Referenzen erzeugen darf.
+   Geprüft von `npm run check:diagramm-farben`. ═══════════════════════ */
+:root {
+  /* ─── Das Feld ─── */
+  --diagramm-rasen: #1b271f;
+  --diagramm-rasen-streifen: #212f26;
+  /* Am Bildschirm trägt der Rasen sich selbst; erst auf Papier braucht die
+     weisse Fläche einen Umriss, der sie vom weissen Blatt trennt. */
+  --diagramm-feldkante: transparent;
+
+  /* ─── Die wählbare Palette (ein Eintrag je Slug aus lib/diagramm.ts) ───
+     Angehoben gegenüber der Manual-Palette: auf dem Nachtrasen kam das
+     ursprüngliche Rot auf 2.6:1 und das Blau auf 2.2:1 — zwei Mannschaften,
+     die sich nicht mehr unterscheiden liessen. */
+  --diagramm-rot: #ef5350;
+  --diagramm-blau: #42a5f5;
+  --diagramm-gelb: #ffd54f;
+  --diagramm-gruen: #81c784;
+  --diagramm-orange: #ffa726;
+  --diagramm-weiss: #ffffff;
+  /* «schwarz» kann auf dem Nachtrasen nicht schwarz sein — #212121 läge bei
+     1.3:1. Der Slug bleibt, weil er gespeichert ist; gezeigt wird Graphit. */
+  --diagramm-schwarz: #90a4ae;
+
+  /* ─── Bewegung ───
+     Das Manual zeichnet Laufweg, Pass und Dribbling schwarz (Abb. 24). Auf
+     diesem Grund trägt Schwarz nicht mehr; der Druck bekommt es zurück. */
+  --diagramm-bewegung: #e8eae6;
+
+  /* ─── Textbox ─── */
+  --diagramm-textbox-grund: rgba(255, 255, 255, 0.88);
+  --diagramm-textbox-rand: rgba(0, 0, 0, 0.25);
+  --diagramm-textbox-schrift: #212121;
+
+  /* ─── Geräte ─── */
+  --diagramm-geraet: #fafafa;
+  --diagramm-tornetz: rgba(255, 255, 255, 0.75);
+  --diagramm-minitor-netz: #ffffff;
+  --diagramm-minitor-schnur: #646161;
+  --diagramm-stange-stab: #eceff1;
+  --diagramm-huerde-latte: #ffb300;
+
+  /* ─── Bälle ─── */
+  --diagramm-ball-koerper: #fafafa;
+  --diagramm-ball-zeichnung: #424242;
+  --diagramm-handball: #ef6c00;
+  --diagramm-handball-naht: #fff3e0;
+  --diagramm-tennisball: #cddc39;
+  --diagramm-tennisball-naht: #fafafa;
+
+  /* ─── Plastik der Symbole ─── */
+  --diagramm-symbol-kontur: rgba(0, 0, 0, 0.3);
+  --diagramm-schatten: rgba(0, 0, 0, 0.16);
+  --diagramm-symbol-glanz: rgba(255, 255, 255, 0.32);
+  --diagramm-leibchen-glanz: rgba(255, 255, 255, 0.5);
+  --diagramm-teller-loch: rgba(255, 255, 255, 0.9);
+
+  /* ─── Unbekanntes Symbol ─── */
+  --diagramm-fallback-grund: rgba(255, 255, 255, 0.6);
+  --diagramm-fallback-strich: #616161;
+
+  /* ─── Figuren ───
+     Haut und Haar sind durchnummeriert: `figurVariante()` greift sie über
+     einen Hash der Element-id ab. Die Reihenfolge ist Teil des Vertrags. */
+  --diagramm-figur-haut-1: #ffe0c2;
+  --diagramm-figur-haut-2: #f0c096;
+  --diagramm-figur-haut-3: #d39b66;
+  --diagramm-figur-haut-4: #b27a45;
+  --diagramm-figur-haut-5: #915f33;
+  --diagramm-figur-haar-1: #3a2a20;
+  --diagramm-figur-haar-2: #1c1c1c;
+  --diagramm-figur-haar-3: #e8b84b;
+  --diagramm-figur-haar-4: #a9622a;
+  --diagramm-figur-haar-5: #5a3826;
+  --diagramm-figur-haar-6: #caa05a;
+  --diagramm-figur-tinte: #26201c;
+  --diagramm-figur-rouge: #ff8f8f;
+  --diagramm-figur-hose: #37474f;
+  --diagramm-figur-stutzen: #fafafa;
+  --diagramm-figur-schuh: #222222;
+  --diagramm-figur-band: #fafafa;
+  --diagramm-figur-zopfband: #e53935;
+  --diagramm-torwart-trikot: #c0ca33;
+  --diagramm-torwart-hose: #212121;
+  --diagramm-torwart-handschuh: #eceff1;
+  --diagramm-torwart-handschuh-rand: #b0bec5;
+  --diagramm-trainer-hose: #78909c;
+  --diagramm-trainer-arm: #2f3a40;
+  --diagramm-trainer-kappe: #37474f;
+  --diagramm-trainer-kappe-rand: #eceff1;
+
+  /* ─── Masse, die sich mit dem Satz ändern ─── */
+  --diagramm-ball-strich: 1.5;
+}
+
 /* ─── Zustands-Ebene ──────────────────────────────────────────────────
    Halbtransparent in der Farbe des Inhalts und ÜBER dem Text statt
    darunter. Das klingt verkehrt, ist aber der Grund, warum die Ebene
@@ -321,6 +431,54 @@
        werden nachgedunkelt, die übrigen fünf bleiben wie am Schirm. */
     --color-kat-a: #78909c;
     --color-kat-f: #b8960f;
+
+    /* ─── Diagramm auf Papier ───────────────────────────────────────────
+       Aufgeführt ist nur, was sich vom Bildschirm unterscheidet; alles
+       Übrige erbt seinen Wert aus `:root` und ist auf Papier unverändert
+       richtig.
+
+       Der grosse Posten ist die Fläche: der Rasen deckt 1600×1000 und kam
+       in Grün auf geschätzt 125 % Farbauftrag (CMYK-Deckungssumme) — das
+       Blatt allein trug damit fast den ganzen Verbrauch. Weiss mit einem
+       6-%-Raster liegt bei rund 3 %, ohne dass die Mähstreifen verschwinden.
+
+       Der zweite Posten ist eine Umkehrung: Weiss existiert auf Papier
+       nicht. Alles, was am Bildschirm hell gezeichnet ist — Tor, Hürde,
+       Stutzen, Stange —, muss ins Graue kippen. Einzige Ausnahme ist der
+       Ball: er bleibt weiss und bekommt stattdessen eine kräftigere
+       Kontur, so wie ein Ball auf Papier seit je gezeichnet wird. Würde er
+       mitgegraut, wäre er ein grauer Fleck unter lauter grauen Flecken. */
+    --diagramm-rasen: #ffffff;
+    --diagramm-rasen-streifen: #f4f6f3;
+    --diagramm-feldkante: #9aa0a0;
+
+    /* Die Manual-Palette trägt auf Weiss von sich aus; nachgedunkelt werden
+       nur Gelb (1.97:1) und Orange (3.08:1), und «weiss» muss überhaupt
+       erst eine Farbe bekommen. */
+    --diagramm-rot: #d32f2f;
+    --diagramm-blau: #1565c0;
+    --diagramm-gelb: #9a7a09;
+    --diagramm-gruen: #2e7d32;
+    --diagramm-orange: #c25400;
+    --diagramm-weiss: #4a524e;
+    --diagramm-schwarz: #212121;
+
+    /* Zurück zur Zeichenerklärung des Manuals (Abb. 24). */
+    --diagramm-bewegung: #1b1b1b;
+
+    --diagramm-geraet: #6b716e;
+    --diagramm-tornetz: rgba(18, 26, 22, 0.3);
+    --diagramm-minitor-netz: #6b716e;
+    --diagramm-stange-stab: #9aa0a0;
+
+    --diagramm-ball-koerper: #ffffff;
+    --diagramm-ball-zeichnung: #1f2421;
+    --diagramm-ball-strich: 2;
+
+    /* Heller als das Gerät, damit die Figuren nicht mit ihm konkurrieren. */
+    --diagramm-figur-stutzen: #aeb5b0;
+    /* Das Neon des Torhüters liegt auf Weiss bei 1.8:1. */
+    --diagramm-torwart-trikot: #827717;
   }
 
   html,
