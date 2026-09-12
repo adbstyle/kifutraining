@@ -19,29 +19,55 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
       error > befund > focus — was sich nicht speichern lässt, verdrängt den
       Hinweis auf etwas Gespeichertes, und beide überdauern den Fokus. */
   befund?: boolean;
-  /** Führendes Icon (Lucide) im Feld — z. B. Lupe für Suche. Input und Label
-      rücken automatisch ein, damit nichts mit dem Icon überlappt. */
+  /** Führendes Icon (Lucide) im Feld — z. B. Uhr für eine Dauer. Input und
+      Label rücken automatisch ein, damit nichts mit dem Icon überlappt. */
   leadingIcon?: LucideIcon;
-  /** Dichte Variante für Filterzeilen und dichte Listenzeilen: h-12 statt h-14
-      (Höhe des MultiSelect-Triggers, damit alles in einer Zeile fluchtet),
-      getönte Fläche (02dp), KEIN schwebendes Label — `label` wird zum
-      `aria-label`, sichtbar beschriftet der `placeholder`. */
+  /** Dichte Bauform für Filterzeilen und dichte Listenzeilen: `h-12` statt
+      `h-14`, die Höhe des MultiSelect-Triggers, damit alles in einer Zeile
+      fluchtet. Sie ändert NUR die Höhe — Kontur, Radius, durchsichtige Fläche,
+      Schriftgrad und schwebendes Label sind dieselben. Eine dichte Bauform ist
+      dasselbe Feld, enger gestellt; sähe sie anders aus, wäre sie ein zweites
+      Feld, und die Filterzeile müsste erklären, warum ihre Felder nicht wie
+      Felder aussehen. */
   dense?: boolean;
 }
 
-// Schwebendes Label (Label-Stil: mono/versal). Float via :placeholder-shown
-// (Input trägt placeholder=" "). Ruhend vertikal in der Feldmitte (top-1/2) in
-// `type-label-small`, geschwebt in `type-plakette` — auf der Kontur ist das
-// Label nur noch eine Beschriftung und darf auf 10 px schrumpfen.
-//
-// Beim Schweben stanzt es die Kontur aus und braucht dafür die Farbe der
-// Fläche DAHINTER: `--feld-grund` ist die Stellschraube. Vorbelegt mit dem
-// Grund (00dp); jede Fläche, die Felder trägt, erklärt ihre Stufe selbst —
-// Card (01), Unterblock (02), Übungszeile (01), Dialog (24) setzen
-// `[--feld-grund:var(--color-elev-NN)]`. So kann ein Feld nirgends ein
-// falsches Rechteck stanzen, ohne dass der Aufrufer daran denken müsste.
-const labelBase =
-  "pointer-events-none absolute top-1/2 -translate-y-1/2 type-label-small bg-(--feld-grund,var(--color-elev-00)) px-1 transition-all duration-150 peer-focus:top-0 peer-focus:type-plakette peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:type-plakette";
+/* Das schwebende Label — zwei Zustände, und sie sagen Verschiedenes.
+ *
+ * RUHEND steht es IM Feld, an genau der Stelle, an der gleich der Wert stehen
+ * wird. Es trägt darum die Schrift des Werts (`type-body-large`) und
+ * unterscheidet sich von ihm nur in der Farbe: Was dort steht, ist noch nichts
+ * Eingegebenes. In der Label-Schrift (mono/versal) sähe es aus wie eine
+ * Beschriftung, die zufällig im Feld liegt — und Auswahlfelder, deren Leerfall
+ * seit je ein Satz ist («Alle Stufen»), stünden in einer Zeile daneben sichtbar
+ * anders da.
+ *
+ * GESCHWEBT sitzt es auf der Kontur und benennt das Feld nur noch. Es bleibt
+ * dieselbe Schrift, zwei Stufen kleiner (`type-body-small`, 12 px) — dasselbe
+ * Wort, leiser gesagt. Der Label-Stil des Hauses (mono/versal) stünde hier
+ * quer: Er ruft Aufmerksamkeit, und ein Label, das gerade aus dem Weg gegangen
+ * ist, will keine. Auf der Kontur liest sich das Feld dann von oben nach unten
+ * in einer Schrift — Name, Wert, Hinweistext (der ebenfalls `type-body-small`
+ * trägt).
+ *
+ * Beim Schweben stanzt es die Kontur aus und braucht dafür die Farbe der
+ * Fläche DAHINTER: `--feld-grund` ist die Stellschraube. Vorbelegt mit dem
+ * Grund (00dp); jede Fläche, die Felder trägt, erklärt ihre Stufe selbst —
+ * Card (01), Unterblock (02), Übungszeile (01), Dialog (24) setzen
+ * `[--feld-grund:var(--color-elev-NN)]`. So kann ein Feld nirgends ein
+ * falsches Rechteck stanzen, ohne dass der Aufrufer daran denken müsste.
+ *
+ * Die drei Bausteine sind exportiert, weil Select und MultiSelect dasselbe
+ * Label tragen — sie schalten es aber selbst um (`schwebt ? … : …`), denn ein
+ * Trigger ohne `<input>` kennt kein `:placeholder-shown`. */
+export const feldLabelBase =
+  "pointer-events-none absolute -translate-y-1/2 bg-(--feld-grund,var(--color-elev-00)) px-1 transition-all duration-150";
+export const feldLabelRuhend = "top-1/2 type-body-large";
+export const feldLabelSchwebend = "top-0 type-body-small";
+
+// Für das TextField hängen die beiden Zustände am Platzhalter (`placeholder=" "`)
+// und am Fokus des Nachbar-Inputs (`peer`).
+const labelBase = `${feldLabelBase} ${feldLabelRuhend} peer-focus:top-0 peer-focus:type-body-small peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:type-body-small`;
 
 // Horizontale Lage des Labels. Ohne Icon konstant bei left-3 (Text bündig mit
 // dem Input-px-4). Mit Icon ruht das Label rechts neben dem Icon (left-10) und
@@ -51,16 +77,33 @@ const labelLeftRest = "left-3";
 const labelLeftIcon =
   "left-10 peer-focus:left-3 peer-[:not(:placeholder-shown)]:left-3";
 
+/** Der Ankerplatz für ein bedienbares Zeichen am rechten Feldrand — das Auge
+ *  im Passwortfeld, das Kreuz im Suchfeld. Er hängt an der OBERKANTE der
+ *  Inputzeile und ist so hoch wie sie: an der Mitte des Wrappers ausgerichtet
+ *  rutschte er nach unten, sobald ein `supportingText` darunter steht.
+ *  `dense` muss dieselbe Höhe nennen wie das Feld, sonst mittet das Zeichen
+ *  im falschen Kasten. Aufrufer legen die Klassen auf ein `<span>` um den
+ *  Knopf, damit der Knopf selbst `relative` bleiben kann (die Zustands-Ebene
+ *  `state` braucht das). */
+export const feldTrailingSlot = (dense?: boolean) =>
+  cn("absolute right-2 top-0", dense ? "h-12" : "h-14");
+
+/** Das Zeichen selbst: der Knopf im Slot, auf voller Slot-Höhe. */
+export const feldTrailingKnopf =
+  "state focus-ring flex h-full items-center rounded-flaeche px-2 text-on-surface-mittel";
+
+/** Was der Slot rechts wegnimmt — der Input braucht so viel Innenabstand,
+ *  damit der Text nicht unter dem Zeichen verschwindet. */
+export const feldTrailingPadding = "[&_input]:pr-12";
+
 /* M2 Text-Field (outlined) mit schwebendem Label, optionalem führenden Icon,
    Supporting-Text und Error-State. Die Kontur trägt das Feld (1.5 px in
    `kante`), die Fläche bleibt der Grund — gefüllt wäre ein Feld eine Fläche
    mehr, die nichts bedeutet. `id` optional (sonst von React vergeben).
 
-   `dense` ist die zweite Bauform: ein flaches, getöntes Feld auf Höhe des
-   MultiSelect-Triggers (h-12), wie es die Filterzeilen brauchen. Dort trägt der
-   Placeholder die Beschriftung (Empty-State als Label), ein schwebendes Label
-   hätte daneben keinen Platz — es ist darum abgeschaltet und wandert als
-   `aria-label` an den Input. */
+   Es gibt EIN Feld in zwei Höhen: `dense` stellt `h-14` auf `h-12` und sonst
+   nichts. Der Platzhalter gehört damit überall der Float-Mechanik
+   (`placeholder=" "`); beschriftet wird ausschliesslich über `label`. */
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
   (
     {
@@ -84,29 +127,19 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
     const fid = id ?? `tf-${reactId}`;
     // Supporting-Text (auch der Fehlertext) muss am Input hängen, sonst liest
     // ihn kein Screenreader vor; `error` zusätzlich als aria-invalid, weil der
-    // rote Rahmen allein nur sehend wahrnehmbar ist. Gilt für beide Bauformen.
+    // rote Rahmen allein nur sehend wahrnehmbar ist.
     const hinweisId = supportingText ? `${fid}-hinweis` : undefined;
 
-    // Zwei Bauformen, je eine Zeile Klassen — dicht (h-12, getönt, Klassen 1:1
-    // aus den bisherigen Filterzeilen) und hoch (h-14, schwebendes Label).
-    const feld = dense
-      ? cn(
-          "focus-ring type-body-medium h-12 w-full rounded-flaeche kontur bg-elev-02 text-on-surface placeholder:text-on-surface-mittel",
-          Icon ? "pl-10 pr-3" : "px-3",
-          error || befund ? "border-error" : "border-kante",
-        )
-      : cn(
-          "peer type-body-large h-14 w-full rounded-flaeche kontur bg-transparent px-4 text-on-surface outline-none transition-[border-color] duration-150 focus:border-2",
-          Icon && "pl-11",
-          // Rangfolge der Rahmenfarbe: error > befund > focus. Der Fokus
-          // färbt nur den ruhigen Rahmen um; einen Befund überschriebe er
-          // sonst genau in dem Moment, in dem hingeschaut wird (die dichte
-          // Bauform hält es mit ihrem focus-ring schon immer so). Sichtbar
-          // bleibt der Fokus über den dickeren Rahmen (focus:border-2).
-          error || befund
-            ? "border-error"
-            : "border-kante focus:border-primary",
-        );
+    const feld = cn(
+      "peer type-body-large w-full rounded-flaeche kontur bg-transparent px-4 text-on-surface outline-none transition-[border-color] duration-150 focus:border-2",
+      dense ? "h-12" : "h-14",
+      Icon && "pl-11",
+      // Rangfolge der Rahmenfarbe: error > befund > focus. Der Fokus färbt nur
+      // den ruhigen Rahmen um; einen Befund überschriebe er sonst genau in dem
+      // Moment, in dem hingeschaut wird. Sichtbar bleibt der Fokus über den
+      // dickeren Rahmen (focus:border-2).
+      error || befund ? "border-error" : "border-kante focus:border-primary",
+    );
 
     return (
       <div className={className}>
@@ -117,51 +150,43 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
               size={18}
               strokeWidth={2}
               aria-hidden
-              className={cn(
-                "pointer-events-none absolute top-1/2 -translate-y-1/2 text-on-surface-mittel",
-                dense ? "left-3" : "left-4",
-              )}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-mittel"
             />
           )}
           <input
             id={fid}
             ref={ref}
-            /* Dicht: der Placeholder gehört der Aufruferin und bleibt sichtbar,
-               die Float-Mechanik (placeholder=" " + :placeholder-shown) ist aus
-               und das Label wird zum a11y-Namen. Beides steht VOR {...props},
-               damit eine eigene Angabe der Aufruferin gewinnt. */
-            {...(dense ? { "aria-label": label } : { placeholder: " " })}
+            /* Der Platzhalter treibt die Float-Mechanik (:placeholder-shown)
+               und gehört darum dem Feld, nicht der Aufruferin. Er steht VOR
+               {...props}, damit eine bewusste eigene Angabe trotzdem gewinnt —
+               sie schaltet dann allerdings das Schweben ab. */
+            placeholder=" "
             aria-invalid={error || undefined}
             aria-describedby={hinweisId}
             className={feld}
             {...props}
           />
-          {!dense && (
-            <label
-              htmlFor={fid}
-              className={cn(
-                labelBase,
-                Icon ? labelLeftIcon : labelLeftRest,
-                // Nur `error` färbt Label und Hinweis: Der Befund meldet sich
-                // am Rahmen und in seinem eigenen Hinweistext, die Beschriftung
-                // des Felds bleibt davon unberührt.
-                error
-                  ? "text-error"
-                  : "text-on-surface-mittel peer-focus:text-primary",
-              )}
-            >
-              {label}
-            </label>
-          )}
+          <label
+            htmlFor={fid}
+            className={cn(
+              labelBase,
+              Icon ? labelLeftIcon : labelLeftRest,
+              // Nur `error` färbt Label und Hinweis: Der Befund meldet sich
+              // am Rahmen und in seinem eigenen Hinweistext, die Beschriftung
+              // des Felds bleibt davon unberührt.
+              error
+                ? "text-error"
+                : "text-on-surface-mittel peer-focus:text-primary",
+            )}
+          >
+            {label}
+          </label>
         </div>
         {supportingText && (
           <p
             id={hinweisId}
             className={cn(
-              "type-body-small mt-1",
-              // Dicht fluchtet der Supporting-Text mit dem Feldrand (px-3),
-              // nicht mit dem breiteren Innenabstand des hohen Felds.
-              dense ? "px-1" : "px-4",
+              "type-body-small mt-1 px-4",
               error ? "text-error" : "text-on-surface-mittel",
             )}
           >

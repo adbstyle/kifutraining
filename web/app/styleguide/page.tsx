@@ -12,6 +12,7 @@ import {
   TabNav,
   Tooltip,
   TextField,
+  SearchField,
   PasswordField,
   TextArea,
   DateField,
@@ -37,6 +38,7 @@ import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import {
   Search,
+  Users,
   SlidersHorizontal,
   Plus,
   X,
@@ -50,7 +52,6 @@ import {
   User,
   Pencil,
   Info,
-  Clock,
   SearchX,
   MailCheck,
 } from "lucide-react";
@@ -1336,9 +1337,10 @@ export default function Styleguide() {
 
       <Section n="14" title="Textfelder, Text-Area, Datum &amp; Zeit">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Umrissen, mit schwebendem Label in Mono-Versalien: Kontur auf der
-          Kante (1.5 px), <code>rounded-flaeche</code>, durchsichtige Fläche und{" "}
-          <code>h-14</code>. Im Fokus wird die Kontur 2 px stark und Primary;
+          Umrissen, mit schwebendem Label: Kontur auf der Kante (1.5 px),{" "}
+          <code>rounded-flaeche</code>, durchsichtige Fläche und{" "}
+          <code>h-14</code> — beziehungsweise <code>h-12</code>, wo es dicht
+          steht (siehe unten); mehr Bauformen gibt es nicht. Im Fokus wird die Kontur 2 px stark und Primary;
           die Zustands-Ebene bleibt hier aussen vor, denn ein{" "}
           <code>&lt;input&gt;</code> hat kein <code>::after</code> — Ring und
           Rahmen tragen den Fokus allein. Das schwebende Label stanzt ein Loch in
@@ -1347,9 +1349,30 @@ export default function Styleguide() {
           Block, Übungszeile und Dialog setzen ihre Stufe selbst, ein Feld muss
           nichts wissen).
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Das Label trägt in seinen zwei Lagen zwei Schriften, und das
+          ist Absicht.</strong> Ruhend steht es <em>im</em> Feld, an genau der
+          Stelle, an der gleich der Wert stehen wird — also in der Schrift des
+          Werts (<code>type-body-large</code>), unterschieden nur durch die
+          blassere Farbe: Was dort steht, ist noch nichts Eingegebenes. In
+          Mono-Versalien sähe es aus wie eine Beschriftung, die zufällig im Feld
+          liegt, und Auswahlfelder, deren Leerfall seit je ein Satz ist («Alle
+          Stufen»), stünden in derselben Zeile sichtbar anders da. Geschwebt
+          sitzt es auf der Kontur und benennt das Feld nur noch — dieselbe
+          Schrift, zwei Stufen kleiner (<code>type-body-small</code>, 12 px):
+          dasselbe Wort, leiser gesagt. Der Label-Stil des Hauses
+          (mono/versal) stünde hier quer, denn er ruft Aufmerksamkeit, und ein
+          Label, das gerade aus dem Weg gegangen ist, will keine. So liest sich
+          das Feld von oben nach unten in einer Schrift: Name, Wert,
+          Hinweistext — die beiden Kleinen im selben Grad. Dieselben zwei Lagen
+          tragen Text-Area, Datum &amp; Zeit sowie Einfach- und Mehrfachauswahl
+          (16 und 17); die drei Klassenbündel stehen als{" "}
+          <code>feldLabelBase</code> / <code>-Ruhend</code> /{" "}
+          <code>-Schwebend</code> im TextField.
+        </p>
         <div className="grid max-w-md gap-6">
           <TextField label="Übungsname" supportingText="Pflichtfeld" />
-          <TextField label="Suche" type="search" leadingIcon={Search} />
+          <SearchField label="Suche" />
           <TextField
             label="Anzahl Kinder"
             type="number"
@@ -1369,33 +1392,49 @@ export default function Styleguide() {
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
-          Dichte Variante (<code>dense</code>)
+          Suchfeld (<code>SearchField</code>)
+        </h3>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Dasselbe Feld, dessen Zeichen aber <strong>rechts</strong> steht — an
+          demselben Platz, an dem das Passwortfeld sein Auge trägt. Das ist die
+          Hausregel: <strong>links steht Schmuck, rechts steht
+          Bedienbares.</strong> Und das Zeichen am Suchfeld ist beides
+          nacheinander — solange nichts eingegeben ist, sagt die Lupe, wofür das
+          Feld da ist; sobald etwas dasteht, tritt an ihre Stelle ein Kreuz, das
+          die Suche mit einem Klick leert und den Cursor zurück ins Feld setzt.
+          Nebenbei bekommt das schwebende Label seinen ruhigen Platz an der
+          linken Kante zurück. Das Kreuz meldet sich über dasselbe{" "}
+          <code>onChange</code> wie eine Tastatureingabe — es gibt keinen
+          zweiten Rückkanal, den ein Aufrufer vergessen könnte, und eine
+          verzögerte Suche verzögert auch das Leeren.
+        </p>
+        <div className="grid max-w-md gap-6">
+          <SearchField label="Übungen durchsuchen" />
+          <SearchField dense label="Übungen durchsuchen" defaultValue="Passspiel" />
+        </div>
+
+        <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
+          Dichte Bauform (<code>dense</code>)
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Warum das hohe Feld nicht reicht: In Filterzeilen und dichten
           Listenzeilen stehen Felder neben Select-Triggern und Chips und müssen
-          mit ihnen fluchten — <code>h-12</code> statt <code>h-14</code>, dazu
-          eine Stufe Fläche (<code>bg-elev-02</code>), weil ein dichtes Feld
-          ohne Label über seine Fläche lesbar bleiben muss. Dort beschriftet der
-          Platzhalter („Übungen durchsuchen…"), das schwebende Label hätte weder
-          Platz noch Aufgabe; es ist abgeschaltet und wandert als{" "}
-          <code>aria-label</code> an das Feld. <code>supportingText</code> und{" "}
-          <code>error</code> funktionieren unverändert.
+          mit ihnen fluchten — <code>h-12</code> statt <code>h-14</code>.{" "}
+          <strong>Das ist der ganze Unterschied.</strong> Kontur, Radius,
+          durchsichtige Fläche, Schriftgrad und schwebendes Label sind
+          dieselben; <code>supportingText</code>, <code>error</code> und{" "}
+          <code>befund</code> ebenso. Eine dichte Bauform ist dasselbe Feld,
+          enger gestellt — sähe sie anders aus, wäre sie ein zweites Feld, und
+          die Filterzeile müsste erklären, warum ihre Felder nicht wie Felder
+          aussehen.
         </p>
         <div className="grid max-w-md gap-6">
-          <TextField
-            dense
-            label="Übungen durchsuchen"
-            type="search"
-            leadingIcon={Search}
-            placeholder="Übungen durchsuchen…"
-          />
+          <TextField dense label="Verfügbare Kinder" type="number" min={1} leadingIcon={Users} />
           <TextField
             dense
             label="Verfügbare Kinder"
             type="number"
             min={1}
-            placeholder="Kinder"
             error
             supportingText="Bitte eine Zahl ≥ 1 eingeben."
           />
@@ -1437,12 +1476,11 @@ export default function Styleguide() {
         <div className="grid max-w-md gap-6">
           <TextField
             dense
-            label="Dauer in Minuten"
+            label="Minuten"
+            aria-label="Dauer in Minuten"
             type="number"
             min={0}
             defaultValue="15"
-            placeholder="min"
-            leadingIcon={Clock}
             className="w-28"
             befund
           />
@@ -1465,11 +1503,12 @@ export default function Styleguide() {
           Datum &amp; Uhrzeit
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Für Trainings-Termine. Bewusst <strong>ohne</strong> schwebendes
-          Label: native <code>date</code>/<code>time</code>-Felder zeigen immer
-          eine Platzhalter-Maske, das Label schwebte also sofort und dauerhaft.
-          Stattdessen ein fest darüberstehendes Label im selben
-          Mono-Versal-Stil. Das native Steuerelement ist Absicht —
+          Für Trainings-Termine. Das Label liegt auf der Kontur wie überall,
+          aber es <strong>schwebt nicht</strong>: Native <code>date</code>/
+          <code>time</code>-Felder zeigen immer ihre Platzhalter-Maske, es gäbe
+          also keine Ruhelage im Feld und die Bewegung liefe nie. Es steht von
+          Anfang an oben — wie bei der Einfachauswahl (16), die aus demselben
+          Grund immer einen Wert hat. Das native Steuerelement ist Absicht —
           Datumsauswahl, Tastatureingabe und Lokalisierung kommen vom
           Betriebssystem.
         </p>
@@ -1521,7 +1560,14 @@ export default function Styleguide() {
           <code>state-aktiv</code> — dieselbe Deckung wie der Fokus, aber ohne
           echten <code>:focus-visible</code>, denn der liegt auf dem Trigger.
           Listbox-Semantik mit voller Tastatursteuerung (↑/↓, Home/End, Enter,
-          Esc).
+          Esc). Das Label schwebt auf der Kontur wie am Textfeld (14) — und
+          zwar immer: Eine Einfachauswahl hat stets einen Wert, und sei es der
+          Leerfall («— kein Feldtyp —»), also gibt es keine Ruhelage, in der das
+          Label im Feld stünde. Ein Label <em>über</em> dem Feld, wie es hier
+          früher stand, gibt es im Kit nicht mehr — jede Beschriftung liegt auf
+          oder in ihrer Kontur. Datum &amp; Zeit (14) macht es aus demselben
+          Grund so: Ein natives Datumsfeld zeigt sein <code>tt.mm.jjjj</code>
+          immer, sein Label hat also ebenfalls nie eine Ruhelage.
         </p>
         <div className="grid max-w-md gap-6">
           <Select
@@ -1535,17 +1581,14 @@ export default function Styleguide() {
             ]}
             supportingText="Öffnet ein eigenes Panel statt des Betriebssystem-Dropdowns."
           />
-          {/* hideLabel: Label sr-only, der Empty-State (erste Option) beschriftet
-              das Feld — für dichte Filterzeilen mit Feldern Seite an Seite. */}
           <Select
             label="Sichtbarkeit"
-            hideLabel
             options={[
               { value: "all", label: "Alle" },
               { value: "public", label: "Community" },
               { value: "private", label: "Privat" },
             ]}
-            supportingText="hideLabel: Label sr-only, Empty-State dient als Beschriftung."
+            supportingText="Die erste Option ist der Leerfall — das Label schwebt trotzdem."
           />
         </div>
       </Section>
@@ -1560,7 +1603,17 @@ export default function Styleguide() {
           nicht alle Tags in die Zelle, bündelt eine <code>+N</code>-Plakette die
           überzähligen — die sichtbare Anzahl wird per Messung an die Feldbreite
           angepasst (mit der Breite mit- und abnehmend). Trigger wie ein Feld,
-          Panel wie ein Menü. Combobox- und Listbox-Semantik
+          Panel wie ein Menü — und das Label wie am Textfeld (14), nur von Hand
+          geschaltet, denn ein Trigger ohne <code>&lt;input&gt;</code> kennt
+          kein <code>:placeholder-shown</code>. Ruhend steht dort der Leerfall
+          in Worten («Alle Stufen», der <code>placeholder</code>) — genau da,
+          wo gleich die Tags stehen. Beim ersten Wert, und ebenso solange das
+          Panel offen ist, schwebt an seiner Stelle der Name der Dimension
+          («Alterskategorie», das <code>label</code>) auf die Kontur. Zwei
+          Sätze für zwei Zustände, weil sie Verschiedenes sagen; der
+          barrierefreie Name bleibt konstant das <code>label</code> — ein Feld
+          darf nicht umbenannt werden, bloss weil jemand etwas ausgewählt hat.
+          Combobox- und Listbox-Semantik
           (<code>aria-multiselectable</code>) mit voller Tastatursteuerung (↑/↓,
           Home/End, Enter toggelt, Esc schliesst). <code>searchable</code> /{" "}
           <code>actions</code> einzeln abschaltbar für kurze feste Listen.{" "}

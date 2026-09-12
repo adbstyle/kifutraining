@@ -46,9 +46,14 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           <label
             htmlFor={fid}
             className={cn(
-              "pointer-events-none absolute left-3 top-4 type-label-small bg-(--feld-grund,var(--color-elev-00)) px-1 transition-all duration-150",
-              "peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:type-plakette",
-              "peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:type-plakette",
+              // Wie beim TextField (siehe `feldLabelBase` dort): ruhend in der
+              // Schrift des Werts, geschwebt als Marke auf der Kontur. Nur die
+              // Ruhelage ist eine andere — nicht die Feldmitte, sondern die
+              // erste Zeile (top-5 = pt-5 des Felds), weil das Feld mehrzeilig
+              // ist und der Wert oben anfängt.
+              "pointer-events-none absolute left-3 top-5 type-body-large bg-(--feld-grund,var(--color-elev-00)) px-1 transition-all duration-150",
+              "peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:type-body-small",
+              "peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:type-body-small",
               error
                 ? "text-error"
                 : "text-on-surface-mittel peer-focus:text-primary",
