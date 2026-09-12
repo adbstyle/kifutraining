@@ -25,7 +25,7 @@ export default async function NeuePage({
       <header className="mb-8">
         <p className="type-label-medium text-primary">Übungspool</p>
         <h1 className="type-headline-large mt-1 text-on-surface">Neue Übung erstellen</h1>
-        <p className="type-body-medium mt-2 text-on-surface-variant">
+        <p className="type-body-medium mt-2 text-on-surface-mittel">
           Erfasse eine eigene Übung mit demselben Feldsatz wie die Manual-Übungen —
           so ist sie gleichwertig durchsuch- und filterbar.
         </p>

@@ -23,6 +23,7 @@
     "check:diagramme": "tsx scripts/check-diagramme.ts",
     "check:gruppen": "tsx scripts/pruefe-gruppen.ts",
     "check:varianten": "tsx scripts/pruefe-varianten.ts",
+    "check:farben": "tsx scripts/pruefe-farben.ts",
     "sync:storage": "tsx scripts/sync-storage-staging.ts"
   },
   "dependencies": {

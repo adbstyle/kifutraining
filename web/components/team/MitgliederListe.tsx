@@ -73,15 +73,15 @@ export function MitgliederListe({
         {mitglieder.map((m) => (
           <li
             key={m.userId}
-            className="flex items-center gap-3 rounded-[4px] border border-outline-variant bg-surface-container-low px-4 py-3"
+            className="flex items-center gap-3 rounded-flaeche bg-elev-01 px-4 py-3"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
               <UserRound size={18} strokeWidth={2} aria-hidden />
             </span>
             <span className="type-body-large min-w-0 flex-1 truncate text-on-surface">
               {m.anzeigeName}
               {m.userId === eigeneUserId && (
-                <span className="type-label-small ml-2 text-on-surface-variant">(du)</span>
+                <span className="type-label-small ml-2 text-on-surface-mittel">(du)</span>
               )}
             </span>
             {/* Sich selbst entfernt man über „Team verlassen" — dort hängt der

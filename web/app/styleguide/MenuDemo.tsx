@@ -31,7 +31,7 @@ export function MenuDemo() {
         />
       </div>
       {last && (
-        <span className="type-label-small text-on-surface-variant">
+        <span className="type-label-small text-on-surface-mittel">
           gewählt: {last}
         </span>
       )}

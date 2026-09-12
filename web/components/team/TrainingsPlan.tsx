@@ -114,7 +114,7 @@ export function TrainingsPlan({ plan }: { plan: Plan }) {
             <Link
               href={`/training/${t.training.id}`}
               className={cn(
-                "focus-ring group block min-w-0 flex-1 rounded-[4px]",
+                "focus-ring group block min-w-0 flex-1 rounded-flaeche",
                 vergangen && "opacity-60",
               )}
             >
@@ -125,7 +125,7 @@ export function TrainingsPlan({ plan }: { plan: Plan }) {
                   {t.beginn && <> · {t.beginn} Uhr</>}
                 </span>
                 {t.ort && (
-                  <span className="inline-flex items-center gap-1.5 type-body-small text-on-surface-variant">
+                  <span className="inline-flex items-center gap-1.5 type-body-small text-on-surface-mittel">
                     <MapPin size={14} strokeWidth={2} aria-hidden />
                     {t.ort}
                   </span>
@@ -143,7 +143,7 @@ export function TrainingsPlan({ plan }: { plan: Plan }) {
               </div>
 
               {t.bemerkung && (
-                <p className="mt-2 type-body-small text-on-surface-variant">
+                <p className="mt-2 type-body-small text-on-surface-mittel">
                   {t.bemerkung}
                 </p>
               )}
@@ -209,7 +209,7 @@ export function TrainingsPlan({ plan }: { plan: Plan }) {
         <section>
           <h3 className="type-title-small flex items-baseline gap-2 py-2 text-on-surface">
             Als Nächstes
-            <span className="type-label-small text-on-surface-variant">
+            <span className="type-label-small text-on-surface-mittel">
               {plan.kommend.length}
             </span>
           </h3>

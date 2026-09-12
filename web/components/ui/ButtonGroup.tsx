@@ -1,8 +1,8 @@
 import { cn } from "@/lib/cn";
 
-/* M3 Connected Button Group: verbundene Aktions-Buttons in einer Reihe.
-   Außenecken gerundet, Innenecken eckig, 2px-Lücke (Container scheint durch).
-   Für GRUPPIERTE AKTIONEN — Single-Select-Auswahl macht die SegmentedControl. */
+/* Verbundene Knopfgruppe: Aktions-Knöpfe in einer Reihe. Aussenecken gerundet,
+   Innenecken eckig, 2 px Lücke (der Grund scheint durch).
+   Für GRUPPIERTE AKTIONEN — die Einfachauswahl macht die SegmentedControl. */
 export function ButtonGroup({
   children,
   ariaLabel,

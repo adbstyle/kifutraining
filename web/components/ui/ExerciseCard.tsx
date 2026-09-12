@@ -33,13 +33,17 @@ export function ExerciseCard({
     .join(" · ");
 
   return (
-    <Card className="group overflow-hidden transition-colors hover:border-on-surface/45">
+    <Card className="group overflow-hidden">
+      {/* Die ganze Karte ist eine Trefferfläche — darum trägt der Link die
+          Zustands-Ebene (`state`) und nicht der Kartenrand: die Karte hat
+          keinen mehr, und ein Overlay über der gesamten Fläche zeigt
+          deutlicher, was angefasst wird, als ein aufgehellter Strich. */}
       <Link
         href={`/uebung/${ex.slug}`}
-        className="focus-ring-inset block rounded-[4px]"
+        className="state focus-ring-inset block rounded-flaeche"
       >
         {/* Aktives Bild: Diagramm, Foto oder Platzhalter */}
-        <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-outline-variant">
+        <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-linie">
           <UebungsBild
             name={ex.name}
             bildUrl={ex.bildUrl}
@@ -49,11 +53,11 @@ export function ExerciseCard({
           />
 
           {/* Lesbarkeits-Scrim für die Overlays oben — auf der dunklen
-              Kreide-Skizze kaum sichtbar, sorgt auf hellen Diagramm-Bildern
-              für Kontrast. */}
+              Platzhalter-Skizze kaum sichtbar, sorgt auf hellen
+              Diagramm-Bildern für Kontrast. */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/55 to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-scrim/55 to-transparent"
           />
 
           {/* Alterskategorien oben links. Der Aktions-Slot liegt oben rechts
@@ -75,7 +79,7 @@ export function ExerciseCard({
           <h3 className="type-title-medium text-on-surface transition-colors group-hover:text-primary">
             {ex.name}
           </h3>
-          <p className="type-label-small mt-1 text-on-surface-variant">
+          <p className="type-label-small mt-1 text-on-surface-mittel">
             {meta}
           </p>
         </div>

@@ -1,10 +1,12 @@
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-/* M3 Snackbar — kurze Rückmeldung am unteren Rand. Inverse-Farben (helle
-   Fläche, dunkler Text) für Kontrast gegen das dunkle UI. Optionale Aktion +
-   Schliessen. Gespeist aus --snackbar-*-Component-Tokens. Präsentational:
-   open/Timer steuert die Eltern-Komponente.
+/* M2 Snackbar — kurze Rückmeldung am unteren Rand. Sie hebt sich über die
+   Höhe ab (06dp + Schatten), nicht über eine umgekehrte Fläche: eine helle
+   Insel mit dunkler Schrift wäre im dunklen Bild ein Fremdkörper, und die
+   Handlung darauf könnte die Primary der App nicht mehr tragen. Optionale
+   Aktion + Schliessen. Präsentational: open/Timer steuert die
+   Eltern-Komponente.
 
    Zwei Platzierungen. `inline` hängt die Meldung dort ein, wo sie steht — gut,
    solange der auslösende Knopf daneben liegt. `fixed` heftet sie an den unteren
@@ -37,7 +39,7 @@ export function Snackbar({
       role="status"
       aria-live="polite"
       className={cn(
-        "inline-flex items-center gap-3 rounded-(--snackbar-shape) bg-(--snackbar-container) px-4 py-3 text-(--snackbar-label) shadow-e4",
+        "inline-flex items-center gap-3 rounded-flaeche bg-elev-06 px-4 py-3 text-on-surface shadow-dp-06",
         placement === "fixed" &&
           "fixed bottom-4 left-1/2 z-50 max-w-[calc(100vw-2rem)] -translate-x-1/2",
         className,
@@ -48,7 +50,7 @@ export function Snackbar({
         <button
           type="button"
           onClick={onAction}
-          className="focus-ring type-label-large -my-1 rounded-[3px] px-2 py-1 text-(--snackbar-action) transition-colors hover:bg-scrim/10"
+          className="state focus-ring type-label-large -my-1 rounded-flaeche px-2 py-1 text-primary"
         >
           {actionLabel}
         </button>
@@ -58,7 +60,7 @@ export function Snackbar({
           type="button"
           onClick={onClose}
           aria-label="Schliessen"
-          className="focus-ring -mr-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-(--snackbar-label) transition-colors hover:bg-scrim/10"
+          className="state focus-ring -mr-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-on-surface"
         >
           <X size={18} strokeWidth={2} aria-hidden />
         </button>

@@ -1,12 +1,14 @@
 import { cn } from "@/lib/cn";
 
-/* Ersatzdarstellung für Übungen ohne Feld-Diagramm:
-   eine gezeichnete Kreide-Spielfeldskizze (NFR: Platzhalter statt Lücke). */
+/* Ersatzdarstellung für Übungen ohne Feld-Diagramm (NFR: Platzhalter statt
+   Lücke): eine schraffierte Fläche auf 02dp mit einer leisen Spielfeldskizze.
+   Die Skizze zeichnet in `on-surface` und bleibt damit auf jeder Höhenstufe
+   dieselbe — sie ist eine Andeutung, kein Bild. */
 export function FieldPlaceholder({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex items-center justify-center bg-surface-container chalk-hatch",
+        "flex items-center justify-center bg-elev-02 schraffur",
         className,
       )}
       aria-hidden="true"

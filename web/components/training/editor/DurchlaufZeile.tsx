@@ -125,12 +125,12 @@ export function DurchlaufZeile({
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-      <span className="w-[78px] shrink-0 type-label-small text-on-surface-variant">
+      <span className="w-[78px] shrink-0 type-label-small text-on-surface-mittel">
         Durchlauf
       </span>
 
       {zugewiesen.length === 0 ? (
-        <span className="type-body-medium text-on-surface-variant">Alle gemeinsam</span>
+        <span className="type-body-medium text-on-surface-mittel">Alle gemeinsam</span>
       ) : (
         <ol className="flex flex-wrap items-center gap-1.5">
           {zugewiesen.map((g, i) => {
@@ -169,17 +169,19 @@ export function DurchlaufZeile({
                   label={g.name}
                   // Der sichtbare Name zuerst — Sprachsteuerung trifft ihn
                   // weiter —, dann die Stellung in der Folge und, wenn es
-                  // etwas zu melden gibt, der Grund der Warnfarbe.
+                  // etwas zu melden gibt, der Grund der roten Kontur. Sie
+                  // sperrt nichts: Ein Befund sieht aus wie ein Fehler, lässt
+                  // sich aber stehen lassen (AK 15).
                   ariaLabel={`${g.name}, Wechsel ${i + 1} von ${wechselGesamt}${
                     grund ? `, ${grund}` : ""
                   }`}
-                  tone={grund ? "warning" : "neutral"}
+                  tone={grund ? "befund" : "neutral"}
                   leading={
                     grund ? (
                       <TriangleAlert
                         size={14}
                         strokeWidth={2}
-                        className="shrink-0 text-warning"
+                        className="shrink-0 text-error"
                         aria-hidden
                       />
                     ) : undefined
@@ -187,7 +189,7 @@ export function DurchlaufZeile({
                   items={eintraege}
                 />
                 {i < zugewiesen.length - 1 && (
-                  <span aria-hidden className="inline-flex text-on-surface-variant">
+                  <span aria-hidden className="inline-flex text-on-surface-mittel">
                     <ArrowRight size={14} strokeWidth={2} />
                   </span>
                 )}

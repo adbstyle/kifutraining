@@ -26,11 +26,17 @@ export function TrainingCard({
   /** Optionaler „Geändert"-Hinweis (eigene Übersicht, Story #13 AC2). */
   updatedLabel?: string;
 }) {
+  // Die Kachel hat keinen Rand mehr, den ein Hover aufhellen könnte — das
+  // übernimmt die Zustands-Ebene: Sie liegt in der Farbe des Inhalts über der
+  // Fläche und hellt Karte und Schrift im selben Ton auf. Sie sitzt auf dem
+  // LINK, nicht auf der Karte: Der Link deckt die ganze Kachel, und nur er
+  // kann Fokus und Druck überhaupt melden — auf dem <div> bliebe die Ebene
+  // beim Tabben und beim Drücken stumm.
   return (
-    <Card className="group transition-colors hover:border-on-surface/45">
+    <Card className="group">
       <Link
         href={href}
-        className="focus-ring-inset block rounded-[4px] p-4"
+        className="state focus-ring-inset block rounded-flaeche p-4"
       >
         <div className="mb-2 flex flex-wrap items-center gap-2">
           {training.stufen.map((k) => (
@@ -44,12 +50,14 @@ export function TrainingCard({
           {/* Führt das Training mehrere Varianten des Hauptteils, steht das
               schon in der Übersicht (#206 AK 1) — sonst müsste man jedes
               Training öffnen, um Alternativen zu finden. Bei genau einer
-              Variante bleibt die Zeile stumm (AK 3). Bewusst neutral: die
-              Variantenzahl ist keine Alterskategorie und borgt deren
-              Farbcodierung nicht. Plural immer, die Marke erscheint erst ab
-              zwei. */}
+              Variante bleibt die Zeile stumm (AK 3). Der eigene Ton trägt
+              Primary-Kontur statt einer Kategorie-Farbe: Die Variantenzahl ist
+              keine Alterskategorie und borgt deren gelernte Codierung nicht —
+              umrandet heisst hier wie überall «gilt», und was gilt, ist die
+              Wahl zwischen mehreren Hauptteilen. Plural immer, die Marke
+              erscheint erst ab zwei. */}
           {training.variantenZahl > 1 && (
-            <Badge tone="neutral">
+            <Badge tone="varianten">
               <Layers size={12} strokeWidth={2.5} aria-hidden />
               {training.variantenZahl} Varianten
             </Badge>
@@ -70,7 +78,7 @@ export function TrainingCard({
         {/* Urheber: der Anzeigename, nie die E-Mail. Bei anonymisierten
             Trainings (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
         {zeigeUrheber && training.urheber && (
-          <p className="mt-1 type-body-small text-on-surface-variant">
+          <p className="mt-1 type-body-small text-on-surface-mittel">
             von {training.urheber}
           </p>
         )}
@@ -78,7 +86,7 @@ export function TrainingCard({
         {/* Übungszahl und Dauer der ERSTEN Variante (#206 AK 2) — ein Training
             spielt nur eine Variante, die Summe über alle wäre eine Dauer, die
             es nie hat. Gerechnet wird das in `mapListRow`. */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 type-label-medium text-on-surface-variant">
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 type-label-medium text-on-surface-mittel">
           <span className="inline-flex items-center gap-1.5">
             <ListChecks size={15} strokeWidth={2} aria-hidden />
             {training.exerciseCount} {training.exerciseCount === 1 ? "Übung" : "Übungen"}
@@ -90,7 +98,7 @@ export function TrainingCard({
         </div>
 
         {updatedLabel && (
-          <p className="mt-2 type-label-small text-on-surface-variant">
+          <p className="mt-2 type-label-small text-on-surface-mittel">
             Geändert: {updatedLabel}
           </p>
         )}

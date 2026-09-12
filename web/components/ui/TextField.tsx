@@ -7,29 +7,41 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   /** Der Hinweis unter dem Feld. `ReactNode`, damit ein Teil davon anders
       gefärbt sein kann als der Rest — Anlass war die Gruppenzeile (Story #151),
-      die Zeitsumme und Konflikt in einer Zeile trug, nur der Konflikt bernstein. */
+      die Zeitsumme und Konflikt in einer Zeile trug, nur den Konflikt gefärbt. */
   supportingText?: ReactNode;
   error?: boolean;
-  /** Bernsteiner Rahmen: ein BEFUND am Feld, keine Fehleingabe — der Wert ist
-      gespeichert und richtig erfasst, geht aber mit anderen nicht auf (Story
-      #151: ungleich lange Übungen im selben Wechsel). Rangfolge am Rahmen:
-      error > warning > focus — was sich nicht speichern lässt, verdrängt den
+  /** Ein BEFUND am Feld, keine Fehleingabe — der Wert ist gespeichert und
+      richtig erfasst, geht aber mit anderen nicht auf (Story #151: ungleich
+      lange Übungen im selben Wechsel). Befund und Fehleingabe tragen dieselbe
+      Farbe; sie unterscheiden sich in `aria-invalid` und im Verhalten, nicht
+      im Bild — eine eigene dritte Farbe hätte niemand gelernt, und sie stünde
+      neben Error nur für «auch schlimm». Rangfolge am Rahmen:
+      error > befund > focus — was sich nicht speichern lässt, verdrängt den
       Hinweis auf etwas Gespeichertes, und beide überdauern den Fokus. */
-  warning?: boolean;
+  befund?: boolean;
   /** Führendes Icon (Lucide) im Feld — z. B. Lupe für Suche. Input und Label
       rücken automatisch ein, damit nichts mit dem Icon überlappt. */
   leadingIcon?: LucideIcon;
   /** Dichte Variante für Filterzeilen und dichte Listenzeilen: h-12 statt h-14
       (Höhe des MultiSelect-Triggers, damit alles in einer Zeile fluchtet),
-      getönte Fläche, KEIN schwebendes Label — `label` wird zum `aria-label`,
-      sichtbar beschriftet der `placeholder`. */
+      getönte Fläche (02dp), KEIN schwebendes Label — `label` wird zum
+      `aria-label`, sichtbar beschriftet der `placeholder`. */
   dense?: boolean;
 }
 
-// Schwebendes Label (KiFu-Label-Stil: mono/uppercase). Float via :placeholder-shown
-// (Input trägt placeholder=" "). Ruhend vertikal in der Feldmitte (top-1/2).
+// Schwebendes Label (Label-Stil: mono/versal). Float via :placeholder-shown
+// (Input trägt placeholder=" "). Ruhend vertikal in der Feldmitte (top-1/2) in
+// `type-label-small`, geschwebt in `type-plakette` — auf der Kontur ist das
+// Label nur noch eine Beschriftung und darf auf 10 px schrumpfen.
+//
+// Beim Schweben stanzt es die Kontur aus und braucht dafür die Farbe der
+// Fläche DAHINTER: `--feld-grund` ist die Stellschraube. Vorbelegt mit dem
+// Grund (00dp); jede Fläche, die Felder trägt, erklärt ihre Stufe selbst —
+// Card (01), Unterblock (02), Übungszeile (01), Dialog (24) setzen
+// `[--feld-grund:var(--color-elev-NN)]`. So kann ein Feld nirgends ein
+// falsches Rechteck stanzen, ohne dass der Aufrufer daran denken müsste.
 const labelBase =
-  "pointer-events-none absolute top-1/2 -translate-y-1/2 bg-surface px-1 font-mono text-xs uppercase tracking-wider transition-all duration-150 peer-focus:top-0 peer-focus:text-[10px] peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-[10px]";
+  "pointer-events-none absolute top-1/2 -translate-y-1/2 type-label-small bg-(--feld-grund,var(--color-elev-00)) px-1 transition-all duration-150 peer-focus:top-0 peer-focus:type-plakette peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:type-plakette";
 
 // Horizontale Lage des Labels. Ohne Icon konstant bei left-3 (Text bündig mit
 // dem Input-px-4). Mit Icon ruht das Label rechts neben dem Icon (left-10) und
@@ -39,9 +51,10 @@ const labelLeftRest = "left-3";
 const labelLeftIcon =
   "left-10 peer-focus:left-3 peer-[:not(:placeholder-shown)]:left-3";
 
-/* M3 Text-Field (outlined) mit schwebendem Label, optionalem führenden Icon,
-   Supporting-Text und Error-State. Gespeist aus --field-*-Component-Tokens.
-   `id` optional (sonst von React vergeben).
+/* M2 Text-Field (outlined) mit schwebendem Label, optionalem führenden Icon,
+   Supporting-Text und Error-State. Die Kontur trägt das Feld (1.5 px in
+   `kante`), die Fläche bleibt der Grund — gefüllt wäre ein Feld eine Fläche
+   mehr, die nichts bedeutet. `id` optional (sonst von React vergeben).
 
    `dense` ist die zweite Bauform: ein flaches, getöntes Feld auf Höhe des
    MultiSelect-Triggers (h-12), wie es die Filterzeilen brauchen. Dort trägt der
@@ -54,7 +67,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       label,
       supportingText,
       error = false,
-      warning = false,
+      befund = false,
       leadingIcon: Icon,
       dense = false,
       id,
@@ -78,23 +91,21 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
     // aus den bisherigen Filterzeilen) und hoch (h-14, schwebendes Label).
     const feld = dense
       ? cn(
-          "focus-ring type-body-medium h-12 w-full rounded-[4px] border-[1.5px] bg-surface-container-low text-on-surface placeholder:text-on-surface-variant",
+          "focus-ring type-body-medium h-12 w-full rounded-flaeche kontur bg-elev-02 text-on-surface placeholder:text-on-surface-mittel",
           Icon ? "pl-10 pr-3" : "px-3",
-          error ? "border-error" : warning ? "border-warning" : "border-outline",
+          error || befund ? "border-error" : "border-kante",
         )
       : cn(
-          "peer type-body-large h-14 w-full rounded-(--field-shape) border-[1.5px] bg-transparent px-4 text-(--field-text) outline-none transition-[border-color] duration-150 focus:border-2",
+          "peer type-body-large h-14 w-full rounded-flaeche kontur bg-transparent px-4 text-on-surface outline-none transition-[border-color] duration-150 focus:border-2",
           Icon && "pl-11",
-          // Rangfolge der Rahmenfarbe: error > warning > focus. Der Fokus
+          // Rangfolge der Rahmenfarbe: error > befund > focus. Der Fokus
           // färbt nur den ruhigen Rahmen um; einen Befund überschriebe er
           // sonst genau in dem Moment, in dem hingeschaut wird (die dichte
           // Bauform hält es mit ihrem focus-ring schon immer so). Sichtbar
           // bleibt der Fokus über den dickeren Rahmen (focus:border-2).
-          error
-            ? "border-(--field-error)"
-            : warning
-              ? "border-warning"
-              : "border-(--field-outline) focus:border-(--field-focus)",
+          error || befund
+            ? "border-error"
+            : "border-kante focus:border-primary",
         );
 
     return (
@@ -107,7 +118,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
               strokeWidth={2}
               aria-hidden
               className={cn(
-                "pointer-events-none absolute top-1/2 -translate-y-1/2 text-on-surface-variant",
+                "pointer-events-none absolute top-1/2 -translate-y-1/2 text-on-surface-mittel",
                 dense ? "left-3" : "left-4",
               )}
             />
@@ -131,9 +142,12 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
               className={cn(
                 labelBase,
                 Icon ? labelLeftIcon : labelLeftRest,
+                // Nur `error` färbt Label und Hinweis: Der Befund meldet sich
+                // am Rahmen und in seinem eigenen Hinweistext, die Beschriftung
+                // des Felds bleibt davon unberührt.
                 error
-                  ? "text-(--field-error)"
-                  : "text-(--field-label) peer-focus:text-(--field-focus)",
+                  ? "text-error"
+                  : "text-on-surface-mittel peer-focus:text-primary",
               )}
             >
               {label}
@@ -148,7 +162,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
               // Dicht fluchtet der Supporting-Text mit dem Feldrand (px-3),
               // nicht mit dem breiteren Innenabstand des hohen Felds.
               dense ? "px-1" : "px-4",
-              error ? "text-(--field-error)" : "text-(--field-label)",
+              error ? "text-error" : "text-on-surface-mittel",
             )}
           >
             {supportingText}

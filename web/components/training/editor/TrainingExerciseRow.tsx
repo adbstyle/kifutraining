@@ -18,7 +18,14 @@ import type { TrainingExerciseItem } from "@/lib/queries/trainings";
  *  trägt alles, was jede Zuordnung hat, darunter das zweite Geschoss — die
  *  Etage mit Notiz und, im Hauptteil, dem Durchlauf (Stories #150/#152).
  *  Getrennt sind die beiden durch Abstand und nicht durch eine Haarlinie: Es
- *  ist eine Zeile, kein Kasten mit zwei Fächern. */
+ *  ist eine Zeile, kein Kasten mit zwei Fächern.
+ *
+ *  Die Zeile bleibt auf der Stufe der Karte (`elev-01`) — sie ist deren
+ *  Inhalt und nicht etwas, das darüber schwebt. Getrennt wird sie darum von
+ *  der Haarlinie: Auf der Karte trüge eine höhere Fläche die Zeile optisch
+ *  hinaus, und im Block (`elev-02`) liest sie sich als das, was IM Block
+ *  liegt. Eine Stufe, die überall gleich aussieht, statt zweier, die je nach
+ *  Ort kippen. */
 export function TrainingExerciseRow({
   item,
   index,
@@ -44,7 +51,8 @@ export function TrainingExerciseRow({
   trainingStufen: string[];
   showDuration: boolean;
   /** Steht die Dauer dieser Übung in einem ungleich langen Wechsel? Färbt den
-   *  Rahmen des Dauerfelds bernstein (Story #150 `dauerWarnung`). */
+   *  Rahmen des Dauerfelds rot (Story #150 `dauerWarnung`) — ein Befund, keine
+   *  Fehleingabe: Er trägt dieselbe Farbe, bleibt aber speicherbar. */
   dauerWarnung?: boolean;
   /** Das zweite Geschoss der Zeile (`UebungsEtage`). */
   etage?: ReactNode;
@@ -59,7 +67,7 @@ export function TrainingExerciseRow({
     item.kategorien.length > 0 && !stufenAbgedeckt(trainingStufen, item.kategorien);
 
   return (
-    <li className="flex flex-col rounded-[4px] border border-outline-variant bg-surface-container-low px-3 py-2.5">
+    <li className="flex flex-col rounded-flaeche border border-linie bg-elev-01 px-3 py-2.5 [--feld-grund:var(--color-elev-01)]">
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Hoch/Runter */}
         <span className="flex shrink-0 flex-col">
@@ -68,7 +76,7 @@ export function TrainingExerciseRow({
             aria-label="Nach oben"
             onClick={() => onMove(-1)}
             disabled={isFirst}
-            className="focus-ring inline-flex h-5 w-6 items-center justify-center rounded text-on-surface-variant transition-colors hover:bg-on-surface/8 disabled:opacity-30"
+            className="state focus-ring inline-flex h-5 w-6 items-center justify-center rounded-flaeche text-on-surface-mittel disabled:opacity-30"
           >
             <ChevronUp size={16} strokeWidth={2.5} aria-hidden />
           </button>
@@ -77,13 +85,13 @@ export function TrainingExerciseRow({
             aria-label="Nach unten"
             onClick={() => onMove(1)}
             disabled={isLast}
-            className="focus-ring inline-flex h-5 w-6 items-center justify-center rounded text-on-surface-variant transition-colors hover:bg-on-surface/8 disabled:opacity-30"
+            className="state focus-ring inline-flex h-5 w-6 items-center justify-center rounded-flaeche text-on-surface-mittel disabled:opacity-30"
           >
             <ChevronDown size={16} strokeWidth={2.5} aria-hidden />
           </button>
         </span>
 
-        <span className="w-4 shrink-0 text-center type-label-medium text-on-surface-variant">
+        <span className="w-4 shrink-0 text-center type-label-medium text-on-surface-mittel">
           {index + 1}
         </span>
 
@@ -100,7 +108,7 @@ export function TrainingExerciseRow({
             <span className="truncate type-body-medium text-on-surface">{item.name}</span>
             {mismatch && (
               <span title="Deckt keine der Trainings-Stufen ab">
-                <TriangleAlert size={15} className="shrink-0 text-signal" aria-hidden />
+                <TriangleAlert size={15} className="shrink-0 text-primary" aria-hidden />
               </span>
             )}
           </span>
@@ -129,18 +137,23 @@ export function TrainingExerciseRow({
                 // der ersten (#201 AK 6).
                 href={`/training/${trainingId}/uebung/${item.id}/edit${varianteAnhang(varianteId)}`}
                 aria-label={`${item.name} bearbeiten`}
-                className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/8 hover:text-primary"
+                className="state focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-mittel"
               >
                 <Pencil size={16} strokeWidth={2.5} aria-hidden />
               </Link>
             </Tooltip>
 
+            {/* Der einzige Knopf der Zeile, der etwas wegnimmt — er färbt sich
+                beim Überfahren ein. Nicht dauerhaft rot: An jeder Zeile stünde
+                sonst ein Alarm, und die Zeile hat nichts Alarmierendes. Die
+                Zustands-Ebene nimmt die Farbe des Zeichens mit, der Overlay
+                wird damit im selben Zug rötlich. */}
             <Tooltip label="Übung entfernen">
               <button
                 type="button"
                 aria-label="Übung entfernen"
                 onClick={onRemove}
-                className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-error/10 hover:text-error"
+                className="state focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-mittel transition-colors hover:text-error"
               >
                 <Trash2 size={16} strokeWidth={2.5} aria-hidden />
               </button>

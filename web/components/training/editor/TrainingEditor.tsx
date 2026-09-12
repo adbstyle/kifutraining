@@ -577,8 +577,11 @@ export function TrainingEditor({
         onLoeschen={() => setDeleteOpen(true)}
       />
 
-      {/* Summenleiste */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-[4px] border-[1.5px] border-outline bg-surface-container px-4 py-3">
+      {/* Summenleiste — eine Fläche auf der Stufe der Karten daneben, denn sie
+          liegt wie diese direkt auf dem Grund. Ohne Kontur: Höhe und Rand
+          sagten dasselbe zweimal, und ein Umriss ist im Bild die Sprache der
+          Meldungen, nicht die einer Auskunft. */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-flaeche bg-elev-01 px-4 py-3">
         <span className="inline-flex items-center gap-2 type-title-medium text-on-surface">
           <Clock size={18} strokeWidth={2} aria-hidden />
           Gesamtdauer: {formatDuration(totalDuration)}
@@ -588,7 +591,7 @@ export function TrainingEditor({
             AC 5 / Out of Scope 1). */}
         {junioren && <GesamtAbgleich sum={totalDuration} soll={GESAMTDAUER_JUNIOREN} />}
         {totalMissing > 0 && (
-          <span className="type-label-medium text-on-surface-variant">
+          <span className="type-label-medium text-on-surface-mittel">
             {totalMissing} {totalMissing === 1 ? "Übung ohne" : "Übungen ohne"} Dauer
           </span>
         )}
@@ -721,7 +724,7 @@ export function TrainingEditor({
               <li key={m.id} className="type-body-medium text-on-surface">
                 · {m.name}
                 {name && (
-                  <span className="text-on-surface-variant"> (Variante „{name}")</span>
+                  <span className="text-on-surface-mittel"> (Variante „{name}")</span>
                 )}
               </li>
             );

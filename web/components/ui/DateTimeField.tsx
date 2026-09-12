@@ -17,8 +17,10 @@ export interface DateTimeFieldProps
 
    Das native Steuerelement ist Absicht: Datumsauswahl, Tastatureingabe und
    Lokalisierung kommen vom Betriebssystem und funktionieren mobil wie am
-   Desktop besser als jede eigene Nachbildung. Gespeist aus denselben
-   --field-*-Component-Tokens wie das TextField.
+   Desktop besser als jede eigene Nachbildung. Kontur, Höhe und Fokus folgen
+   dem TextField. Das feststehende Label trägt `type-label-small` wie die
+   Beschriftungen über Select und MultiSelect — `type-plakette` gehört dem
+   schwebenden Label, das sich beim Stanzen der Kontur kleiner macht.
 
    Eigene Komponente (statt einer bloss aufgerufenen Funktion), damit `useId`
    ein regulärer Hook-Aufruf in einem eigenen Render bleibt. */
@@ -37,8 +39,8 @@ const DateTimeBase = forwardRef<
       <label
         htmlFor={fid}
         className={cn(
-          "mb-1 block px-1 font-mono text-[10px] uppercase tracking-wider",
-          error ? "text-(--field-error)" : "text-(--field-label)",
+          "type-label-small mb-1 block px-1",
+          error ? "text-error" : "text-on-surface-mittel",
         )}
       >
         {label}
@@ -48,10 +50,8 @@ const DateTimeBase = forwardRef<
         ref={ref}
         type={type}
         className={cn(
-          "type-body-large h-14 w-full rounded-(--field-shape) border-[1.5px] bg-transparent px-4 text-(--field-text) outline-none transition-[border-color] duration-150 focus:border-2",
-          error
-            ? "border-(--field-error)"
-            : "border-(--field-outline) focus:border-(--field-focus)",
+          "type-body-large h-14 w-full rounded-flaeche kontur bg-transparent px-4 text-on-surface outline-none transition-[border-color] duration-150 focus:border-2",
+          error ? "border-error" : "border-kante focus:border-primary",
         )}
         {...props}
       />
@@ -59,7 +59,7 @@ const DateTimeBase = forwardRef<
         <p
           className={cn(
             "type-body-small mt-1 px-4",
-            error ? "text-(--field-error)" : "text-(--field-label)",
+            error ? "text-error" : "text-on-surface-mittel",
           )}
         >
           {supportingText}

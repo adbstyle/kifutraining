@@ -58,7 +58,7 @@ export function EinordnungField({
   return (
     <div>
       <p
-        className={`type-label-small mb-2 ${error ? "text-error" : "text-on-surface-variant"}`}
+        className={`type-label-small mb-2 ${error ? "text-error" : "text-on-surface-mittel"}`}
       >
         {zweistufig ? "Trainingsteil und Block" : "Trainingsteil"}
       </p>
@@ -93,17 +93,17 @@ export function EinordnungField({
         </ChoiceChipGroup>
       )}
       <p
-        className={`type-body-small mt-1.5 ${error ? "text-error" : "text-on-surface-variant"}`}
+        className={`type-body-small mt-1.5 ${error ? "text-error" : "text-on-surface-mittel"}`}
       >
         {error ?? supportingText}
       </p>
       {/* Dezenter Hinweis nach dem Muster der Hinweiszeile des
           Trainings-Editors (Styleguide «Leerzustand & Hinweiszeile»):
-          Info-Zeichen in Signalfarbe, Text im Fliesstext-Schnitt. Er meldet
-          eine Folge, blockiert aber nichts. */}
+          nur das Zeichen trägt Farbe (Primary), der Text bleibt im
+          Fliesstext-Schnitt. Er meldet eine Folge, blockiert aber nichts. */}
       {hinweis && (
-        <p className="mt-1.5 flex items-start gap-2 type-body-small text-on-surface-variant">
-          <Info size={15} className="mt-0.5 shrink-0 text-signal" aria-hidden />
+        <p className="mt-1.5 flex items-start gap-2 type-body-small text-on-surface-mittel">
+          <Info size={15} className="mt-0.5 shrink-0 text-primary" aria-hidden />
           {hinweis}
         </p>
       )}

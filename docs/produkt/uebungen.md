@@ -18,7 +18,7 @@ beiden Altersstufen zugleich.
 
 Der Bestand speist sich aus zwei Quellen. Die eine sind fünfundsiebzig kuratierte Übungen nach
 dem offiziellen SFV-Manual Kinderfussball: Aufbau, Regeln und Ablauf stammen aus dem Manual,
-der Text ist in eigener Formulierung geschrieben. Sie tragen eine dunkle Plakette „Kifu-Manual" und
+der Text ist in eigener Formulierung geschrieben. Sie tragen eine umrandete Plakette „Kifu-Manual" und
 sind über die Oberfläche für niemanden veränderbar — auch nicht für den Betreiber. Aktualisiert
 werden sie ausschliesslich, indem der Bestand als Ganzes neu geladen wird. Für den
 Juniorenfussball gibt es keinen solchen kuratierten Bestand.

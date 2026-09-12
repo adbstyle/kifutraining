@@ -9,7 +9,12 @@ export interface SegmentOption<T extends string> {
 
 /* Primärer Trainingsteil-Schalter im Übungspool.
    role=tablist + Pfeiltasten-Navigation (a11y). Horizontal
-   scrollbar auf Mobile. */
+   scrollbar auf Mobile.
+
+   EINE Kontur um die ganze Leiste, kein Polster und keine Lücke dazwischen:
+   Die Segmente stossen aneinander, das aktive ist die hellere Fläche IN der
+   Leiste — nicht eine eigene Pille, die in einem Kasten schwimmt. Darum trägt
+   auch nur die Leiste eine Rundung; die Segmente werden von ihr beschnitten. */
 export function SegmentedControl<T extends string>({
   options,
   value,
@@ -36,7 +41,10 @@ export function SegmentedControl<T extends string>({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        "inline-flex gap-1 overflow-x-auto rounded-[4px] bg-surface-container border-[1.5px] border-outline p-1",
+        // `overflow-x-auto` beschneidet bereits auf den Radius und lässt die
+        // Leiste auf schmalen Schirmen weiterhin scrollen; senkrecht wird hart
+        // abgeschnitten, damit die Ecken sauber bleiben.
+        "inline-flex overflow-x-auto overflow-y-hidden rounded-flaeche kontur border-kante",
         className,
       )}
     >
@@ -56,10 +64,13 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(opt.value)}
             onKeyDown={(e) => handleKey(e, i)}
             className={cn(
-              "focus-ring type-title-small shrink-0 rounded-[3px] px-4 py-2 transition-colors",
+              // `focus-ring-inset` statt `focus-ring`: Die Leiste beschneidet
+              // ihren Inhalt, ein Ring mit Aussen-Offset fiele darum an den
+              // Rändern der Kontur zum Opfer.
+              "focus-ring-inset type-title-small shrink-0 px-4 py-2 transition-colors",
               active
-                ? "bg-primary text-on-primary"
-                : "text-on-surface-variant hover:text-on-surface hover:bg-on-surface/8",
+                ? "bg-elev-08 text-on-surface"
+                : "text-on-surface-mittel state",
             )}
           >
             {opt.label}

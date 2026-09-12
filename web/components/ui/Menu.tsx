@@ -22,9 +22,9 @@ export interface MenuItemDef {
   onSelect?: () => void;
 }
 
-/* M3 Menu — verankertes Dropdown. In einen `relative` Wrapper neben den
-   Trigger setzen. Schliesst bei Outside-Click und Escape. Gespeist aus
-   --menu-*-Component-Tokens.
+/* M2 Menu — verankertes Dropdown. In einen `relative` Wrapper neben den
+   Trigger setzen. Schliesst bei Outside-Click und Escape. Das Panel schwebt:
+   08dp, Haarlinie als Abschluss, Schatten darunter.
 
    `triggerRef`: Ref auf das öffnende Trigger-Element. Wird der Trigger als
    Toggle benutzt (öffnet UND schliesst per Klick), MUSS er hier übergeben
@@ -129,7 +129,7 @@ export function Menu({
       role="menu"
       onKeyDown={onNavKey}
       className={cn(
-        "absolute z-50 mt-1 min-w-48 rounded-(--menu-shape) border border-outline-variant bg-(--menu-container) py-1 shadow-e4",
+        "absolute z-50 mt-1 min-w-48 rounded-flaeche border border-linie bg-elev-08 py-1 shadow-dp-08",
         className,
       )}
     >
@@ -144,22 +144,29 @@ export function Menu({
               item.onSelect?.();
               schliessenMitFokus();
             }}
+            /* Die Zeile trägt die Zustands-Ebene selbst (Hover, Tastaturfokus);
+               ein eigener Ring bliebe im Panel ohnehin am Rand hängen, darum
+               outline-none. Destruktives steht in Error-Schrift neben seinem
+               Zeichen; auf 08dp bleibt das unter der Fliesstext-Schwelle —
+               bewusst, denn die Farbe wiederholt hier nur, was Icon und
+               Wortlaut ohnehin sagen. Die gerechnete Zahl und die Begründung
+               stehen im Styleguide (15 «Menü»). */
             className={cn(
-              "type-body-medium flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-on-surface/8 focus-visible:bg-on-surface/8 focus-visible:outline-none",
-              item.danger ? "text-error" : "text-(--menu-label)",
+              "state type-body-medium flex w-full items-center gap-3 px-3 py-2 text-left focus-visible:outline-none",
+              item.danger ? "text-error" : "text-on-surface",
             )}
           >
             {Icon && (
               <Icon
                 size={18}
                 strokeWidth={2}
-                className={item.danger ? undefined : "text-(--menu-leading)"}
+                className={item.danger ? undefined : "text-on-surface-mittel"}
                 aria-hidden
               />
             )}
             <span className="flex-1">{item.label}</span>
             {item.trailing && (
-              <span className="type-label-small text-on-surface-variant">
+              <span className="type-label-small text-on-surface-mittel">
                 {item.trailing}
               </span>
             )}

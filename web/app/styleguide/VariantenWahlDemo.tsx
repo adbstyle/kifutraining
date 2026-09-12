@@ -20,13 +20,13 @@ export function VariantenWahlDemo() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
+        <p className="type-label-small mb-2 text-on-surface-mittel">
           drei Varianten — ein Element von n, Pfeiltasten bewegen die Auswahl
         </p>
         <VariantenWahl varianten={varianten} aktiv={aktiv} onWechsel={setAktiv} />
       </div>
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
+        <p className="type-label-small mb-2 text-on-surface-mittel">
           eine Variante — der Baustein rendert nichts (unten steht nur dieser Satz)
         </p>
         <VariantenWahl

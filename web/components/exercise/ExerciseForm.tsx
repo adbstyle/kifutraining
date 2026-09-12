@@ -9,6 +9,7 @@ import {
   FilterChip,
   Button,
   AltersstufeField,
+  Meldung,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
@@ -70,7 +71,7 @@ export type ExerciseInitial = {
 function Group({ title, error, children }: { title: string; error?: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className={`type-label-small mb-2 ${error ? "text-error" : "text-on-surface-variant"}`}>
+      <p className={`type-label-small mb-2 ${error ? "text-error" : "text-on-surface-mittel"}`}>
         {title}
       </p>
       <div className="flex flex-wrap gap-2">{children}</div>
@@ -340,19 +341,15 @@ export function ExerciseForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-7">
-      {state.message && (
-        <p className="type-body-small rounded-[4px] border border-error/40 bg-error/10 p-3 text-on-surface">
-          {state.message}
-        </p>
-      )}
+      {state.message && <Meldung tone="fehler">{state.message}</Meldung>}
 
       {/* Die Umwandlung ist vorgemerkt, nicht geschehen: Das Formular zeigt
           bereits die Zielstufe, die Übung liegt aber unverändert in der
           Datenbank (Story 4 PC 5). Der Hinweis sagt, was noch fehlt. */}
       {umwandlung && (
-        <p className="type-body-small rounded-[4px] border border-primary/40 bg-primary/10 p-3 text-on-surface">
+        <Meldung tone="erfolg">
           Umwandlung vorgemerkt — sie wird mit «Umwandeln und speichern» wirksam.
-        </p>
+        </Meldung>
       )}
 
       <TextField
@@ -459,7 +456,7 @@ export function ExerciseForm({
       )}
 
       {teil && (istFahrplan ? (
-        <fieldset className="flex flex-col gap-5 rounded-[6px] border border-outline-variant p-5">
+        <fieldset className="flex flex-col gap-5 rounded-flaeche border border-linie p-5">
           <legend className="type-label-medium px-2 text-primary">Methodischer Fahrplan</legend>
           <TextArea
             label="① Offen starten"
@@ -519,7 +516,7 @@ export function ExerciseForm({
               })),
             ]}
           />
-          <p className={`type-body-small mt-1.5 ${err.hauptteilkategorie ? "text-error" : "text-on-surface-variant"}`}>
+          <p className={`type-body-small mt-1.5 ${err.hauptteilkategorie ? "text-error" : "text-on-surface-mittel"}`}>
             {err.hauptteilkategorie ?? "Pflichtfeld — der Trainingsinhalt des Hauptteils."}
           </p>
         </div>
@@ -560,7 +557,7 @@ export function ExerciseForm({
       )}
 
       <div>
-        <p className={`type-label-small mb-2 ${err.anzahl_max ? "text-error" : "text-on-surface-variant"}`}>
+        <p className={`type-label-small mb-2 ${err.anzahl_max ? "text-error" : "text-on-surface-mittel"}`}>
           Anzahl Kinder
         </p>
         <div className="flex items-start gap-3 sm:max-w-sm">
@@ -573,7 +570,7 @@ export function ExerciseForm({
             className="flex-1"
             defaultValue={initial.anzahl_kinder?.min ?? undefined}
           />
-          <span aria-hidden className="type-body-large flex h-14 items-center text-on-surface-variant">
+          <span aria-hidden className="type-body-large flex h-14 items-center text-on-surface-mittel">
             –
           </span>
           <TextField
@@ -587,7 +584,7 @@ export function ExerciseForm({
             defaultValue={initial.anzahl_kinder?.max ?? undefined}
           />
         </div>
-        <p className={`type-body-small mt-1.5 ${err.anzahl_max ? "text-error" : "text-on-surface-variant"}`}>
+        <p className={`type-body-small mt-1.5 ${err.anzahl_max ? "text-error" : "text-on-surface-mittel"}`}>
           {err.anzahl_max ?? "Mindest- und Höchstzahl der Kinder, z. B. 4 bis 8. Leer lassen, wenn beliebig."}
         </p>
       </div>
@@ -596,7 +593,7 @@ export function ExerciseForm({
       <TextArea label="Varianten (optional, eine pro Zeile)" name="varianten" defaultValue={initial.varianten?.join("\n")} />
 
       <div>
-        <label htmlFor="bild" className="type-label-small mb-2 block text-on-surface-variant">
+        <label htmlFor="bild" className="type-label-small mb-2 block text-on-surface-mittel">
           Feld-Diagramm (optional)
         </label>
         <input
@@ -605,20 +602,20 @@ export function ExerciseForm({
           type="file"
           accept={IMAGE_ACCEPT}
           onChange={() => setBildError(null)}
-          className="focus-ring type-body-medium block w-full rounded-(--field-shape) border-[1.5px] border-(--field-outline) text-on-surface-variant file:mr-4 file:border-0 file:bg-secondary-container file:px-4 file:py-2.5 file:font-mono file:text-xs file:uppercase file:tracking-wider file:text-on-secondary-container"
+          className="focus-ring type-body-medium block w-full rounded-flaeche kontur border-kante text-on-surface-mittel file:mr-4 file:border-0 file:bg-elev-08 file:px-4 file:py-2.5 file:font-mono file:text-xs file:uppercase file:tracking-wider file:text-on-surface"
         />
-        <p className={`type-body-small mt-1.5 ${err.bild || bildError ? "text-error" : "text-on-surface-variant"}`}>
+        <p className={`type-body-small mt-1.5 ${err.bild || bildError ? "text-error" : "text-on-surface-mittel"}`}>
           {err.bild ?? bildError ?? "JPG, PNG, WebP oder HEIC. Grosse Bilder werden automatisch verkleinert."}
         </p>
         {initial.bildUrl && !err.bild && !bildError && (
-          <p className="type-body-small mt-1 text-on-surface-variant">
+          <p className="type-body-small mt-1 text-on-surface-mittel">
             {bildEntfernen
               ? "Das aktuelle Bild wird beim Speichern entfernt."
               : "Aktuelles Bild bleibt erhalten, wenn du keines hochlädst."}
           </p>
         )}
         {bildEntfernenMoeglich && initial.bildUrl && (
-          <label className="mt-2 flex items-center gap-2 type-body-small text-on-surface-variant">
+          <label className="mt-2 flex items-center gap-2 type-body-small text-on-surface-mittel">
             <input
               type="checkbox"
               checked={bildEntfernen}
@@ -630,7 +627,7 @@ export function ExerciseForm({
         )}
       </div>
 
-      <div className="flex items-center gap-3 border-t border-outline-variant pt-5">
+      <div className="flex items-center gap-3 border-t border-linie pt-5">
         <Button type="submit" size="lg" disabled={isPending || isCompressing}>
           <Save size={20} strokeWidth={2} aria-hidden />
           {isCompressing
@@ -642,7 +639,7 @@ export function ExerciseForm({
                 : submitLabel}
         </Button>
         {fussnote && (
-          <p className="type-body-small text-on-surface-variant">{fussnote}</p>
+          <p className="type-body-small text-on-surface-mittel">{fussnote}</p>
         )}
       </div>
     </form>

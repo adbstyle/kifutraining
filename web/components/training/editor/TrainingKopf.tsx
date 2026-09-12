@@ -53,7 +53,7 @@ export function TrainingKopf({
               type="button"
               onClick={onUmbenennen}
               aria-label="Namen bearbeiten"
-              className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/8"
+              className="state focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-mittel"
             >
               <Pencil size={16} strokeWidth={2} aria-hidden />
             </button>
@@ -68,7 +68,7 @@ export function TrainingKopf({
             {training.team ? (
               <Link
                 href={`/team/${training.team.id}`}
-                className="focus-ring inline-flex items-center gap-1.5 rounded-[4px] type-label-medium text-on-surface-variant hover:text-primary"
+                className="focus-ring inline-flex items-center gap-1.5 rounded-flaeche type-label-medium text-on-surface-mittel hover:text-primary"
               >
                 <Users size={16} strokeWidth={2} aria-hidden />
                 Team-Training von {training.team.name}
@@ -95,10 +95,13 @@ export function TrainingKopf({
               <InTeamStellenControl trainingId={training.id} teams={teams} />
             </>
           )}
+          {/* Die Zustands-Ebene nimmt die Farbe des Inhalts mit — an einem
+              Knopf in Error-Schrift ist der Overlay damit von selbst rötlich,
+              ohne eine eigene Hover-Fläche. */}
           <button
             type="button"
             onClick={onLoeschen}
-            className="focus-ring inline-flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 type-label-large text-error transition-colors hover:bg-error/10"
+            className="state focus-ring inline-flex items-center gap-1.5 rounded-flaeche px-3 py-1.5 type-label-large text-error"
           >
             <Trash2 size={18} strokeWidth={2} aria-hidden />
             Löschen

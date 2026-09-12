@@ -68,13 +68,27 @@ function initialsOf(name: string) {
     .join("");
 }
 
+/* ── Gemeinsame Klassenbündel ───────────────────────────────────────
+   Überfahren, Fokussieren und Drücken kommen aus `state`, einer Overlay-
+   Ebene in der Farbe des Inhalts. Sie steht einmal hier im Bündel und
+   nicht an jeder Aufrufstelle — Nav-Link, Menü- und Drawer-Zeile tragen
+   denselben Zustand, ohne ihn dreimal zu pflegen. */
+const navLink =
+  "focus-ring state type-label-medium relative flex h-16 items-center px-3 transition-colors";
+const menueZeile =
+  "focus-ring state group flex items-start gap-3 rounded-flaeche p-2.5 transition-colors";
+const drawerZeile =
+  "focus-ring state type-label-large flex h-12 items-center rounded-flaeche px-3 transition-colors";
+
 /* ── Header ─────────────────────────────────────────────────────────
-   Top-Navigation im KiFu-„Taktik-Editorial"-Stil. Klebt oben (sticky),
-   Kreide-Linie als untere Kante, dezenter Blur. Primär-Links als mono-
-   Labels mit Signal-Unterstrich (aktiv) und aufklappbarem Flyout; Such-
-   Trigger mit ⌘K (global), Notifications-Glocke mit Badge, Avatar-Konto-
-   Menü, CTA. Unter `lg` kollabiert alles in einen Hamburger → Drawer.
-   Gespeist aus System-Rollen/Component-Tokens (--menu-*, --field-*). */
+   Top-Navigation. Klebt oben (sticky) und trägt deshalb eine deckende
+   Fläche auf 04dp: über einer zehnstufigen Höhenleiter wandert eine
+   halbtransparente Leiste beim Scrollen sichtbar mit — jede Stufe, die
+   unter ihr durchzieht, färbte sie um. Untere Kante als Haarlinie.
+   Primär-Links als Mono-Labels mit 2-px-Unterstrich in Primary (aktiv)
+   und aufklappbarem Flyout; Such-Trigger mit ⌘K (global), Notifications-
+   Glocke mit Plakette, Avatar-Konto-Menü, CTA. Unter `lg` kollabiert
+   alles in einen Hamburger → Drawer (08dp). */
 export function Header({
   brand = "KiFu",
   brandHref = "/",
@@ -143,21 +157,23 @@ export function Header({
   const Brand = (
     <Link
       href={brandHref}
-      className="focus-ring type-headline-small shrink-0 rounded-[3px] text-on-surface transition-colors hover:text-primary"
+      className="focus-ring type-headline-small shrink-0 rounded-flaeche text-on-surface transition-colors hover:text-primary"
     >
       {brand}
     </Link>
   );
 
+  // Wie jedes Eingabefeld: Kontur statt Fläche — so bleibt die Leiste
+  // darunter als eine Fläche stehen, statt in zwei Töne zu zerfallen.
   const searchTrigger = onSearch && (
     <button
       type="button"
       onClick={onSearch}
-      className="focus-ring type-body-medium group hidden h-10 min-w-0 shrink items-center gap-2 rounded-(--field-shape) border-[1.5px] border-(--field-outline) bg-surface px-3 text-(--field-label) transition-colors hover:border-on-surface/30 hover:text-on-surface md:flex md:w-44 lg:w-56"
+      className="focus-ring state type-body-medium hidden h-10 min-w-0 shrink items-center gap-2 rounded-flaeche kontur border-kante bg-transparent px-3 text-on-surface-mittel transition-colors hover:text-on-surface md:flex md:w-44 lg:w-56"
     >
       <Search size={16} strokeWidth={2} aria-hidden className="shrink-0" />
       <span className="flex-1 truncate text-left">Suchen …</span>
-      <kbd className="type-label-small shrink-0 rounded-[3px] border border-outline-variant px-1.5 py-0.5 text-on-surface-variant">
+      <kbd className="type-label-small shrink-0 rounded-flaeche border border-linie px-1.5 py-0.5 text-on-surface-mittel">
         {searchShortcut}
       </kbd>
     </button>
@@ -167,7 +183,7 @@ export function Header({
     <>
     <header
       className={cn(
-        "sticky top-0 z-40 border-b border-outline-variant bg-surface/85 backdrop-blur-md",
+        "sticky top-0 z-40 border-b border-linie bg-elev-04",
         className,
       )}
     >
@@ -185,10 +201,10 @@ export function Header({
                   href={item.href ?? "#"}
                   aria-current={item.current ? "page" : undefined}
                   className={cn(
-                    "focus-ring type-label-medium relative flex h-16 items-center px-3 transition-colors",
+                    navLink,
                     item.current
                       ? "text-on-surface"
-                      : "text-on-surface-variant hover:text-on-surface",
+                      : "text-on-surface-mittel hover:text-on-surface",
                   )}
                 >
                   {item.label}
@@ -207,10 +223,11 @@ export function Header({
                   aria-current={item.current ? "page" : undefined}
                   onClick={() => setOpenNav(isOpen ? null : i)}
                   className={cn(
-                    "focus-ring type-label-medium relative flex h-16 items-center gap-1 px-3 transition-colors",
+                    navLink,
+                    "gap-1",
                     item.current || isOpen
                       ? "text-on-surface"
-                      : "text-on-surface-variant hover:text-on-surface",
+                      : "text-on-surface-mittel hover:text-on-surface",
                   )}
                 >
                   {item.label}
@@ -228,7 +245,7 @@ export function Header({
                 {isOpen && (
                   <div
                     role="menu"
-                    className="absolute left-0 top-full z-50 mt-1 w-80 overflow-hidden rounded-(--menu-shape) border border-outline-variant bg-(--menu-container) p-1.5 shadow-e4"
+                    className="absolute left-0 top-full z-50 mt-1 w-80 overflow-hidden rounded-flaeche border border-linie bg-elev-08 p-1.5 shadow-dp-08"
                   >
                     {item.items.map((sub) => {
                       const SubIcon = sub.icon;
@@ -242,10 +259,12 @@ export function Header({
                           href={sub.href}
                           role="menuitem"
                           onClick={() => setOpenNav(null)}
-                          className="focus-ring group flex items-start gap-3 rounded-[3px] p-2.5 transition-colors hover:bg-on-surface/8"
+                          className={menueZeile}
                         >
                           {SubIcon && (
-                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[3px] border border-outline-variant bg-surface text-on-surface-variant transition-colors group-hover:border-primary/40 group-hover:text-primary">
+                            // Die Kachel bleibt leer: im Menü auf 08dp wäre
+                            // eine eigene Fläche ein Loch nach unten.
+                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-flaeche border border-linie text-on-surface-mittel transition-colors group-hover:border-primary/40 group-hover:text-primary">
                               <SubIcon size={18} strokeWidth={2} aria-hidden />
                             </span>
                           )}
@@ -254,7 +273,7 @@ export function Header({
                               {sub.label}
                             </span>
                             {sub.description && (
-                              <span className="type-body-small block text-on-surface-variant">
+                              <span className="type-body-small block text-on-surface-mittel">
                                 {sub.description}
                               </span>
                             )}
@@ -285,7 +304,7 @@ export function Header({
               <IconButton icon={Bell} label={`${notifications} neue Benachrichtigungen`} />
               <span
                 aria-hidden
-                className="pointer-events-none absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 font-mono text-[10px] font-bold leading-none text-on-primary"
+                className="type-plakette pointer-events-none absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-on-primary"
               >
                 {notifications > 9 ? "9+" : notifications}
               </span>
@@ -318,7 +337,10 @@ export function Header({
                 aria-expanded={accountOpen}
                 aria-label={`Konto: ${account.name}`}
                 onClick={() => setAccountOpen((o) => !o)}
-                className="focus-ring type-label-medium grid h-10 w-10 place-items-center rounded-full bg-(--chip-selected-container) text-(--chip-selected-label) transition-[outline-color] hover:outline hover:outline-2 hover:outline-primary/40"
+                // Kein Hover-Umriss mehr: er sässe genau dort, wo der
+                // Tastaturfokus seinen Ring zeichnet. Den Zustand trägt
+                // `state`, der Fokus bleibt allein am Ring erkennbar.
+                className="focus-ring state type-label-medium grid h-10 w-10 place-items-center rounded-full bg-elev-08 text-on-surface"
               >
                 {account.initials ?? initialsOf(account.name)}
               </button>
@@ -372,11 +394,11 @@ export function Header({
           role="dialog"
           aria-label="Navigation"
           className={cn(
-            "absolute inset-y-0 right-0 flex w-80 max-w-[85vw] flex-col border-l border-outline-variant bg-surface-container-high shadow-e5 transition-transform duration-200 ease-out",
+            "absolute inset-y-0 right-0 flex w-80 max-w-[85vw] flex-col border-l border-linie bg-elev-08 shadow-dp-08 transition-transform duration-200 ease-out",
             drawerOpen ? "translate-x-0" : "translate-x-full",
           )}
         >
-          <div className="flex h-16 shrink-0 items-center justify-between border-b border-outline-variant px-4">
+          <div className="flex h-16 shrink-0 items-center justify-between border-b border-linie px-4">
             <span className="type-headline-small text-on-surface">{brand}</span>
             <IconButton
               icon={X}
@@ -393,11 +415,11 @@ export function Header({
                   setDrawerOpen(false);
                   onSearch();
                 }}
-                className="focus-ring type-body-medium mb-3 flex h-11 w-full items-center gap-2 rounded-(--field-shape) border-[1.5px] border-(--field-outline) bg-surface px-3 text-(--field-label)"
+                className="focus-ring state type-body-medium mb-3 flex h-11 w-full items-center gap-2 rounded-flaeche kontur border-kante bg-transparent px-3 text-on-surface-mittel"
               >
                 <Search size={18} strokeWidth={2} aria-hidden />
                 Suchen …
-                <kbd className="type-label-small ml-auto rounded-[3px] border border-outline-variant px-1.5 py-0.5 text-on-surface-variant">
+                <kbd className="type-label-small ml-auto rounded-flaeche border border-linie px-1.5 py-0.5 text-on-surface-mittel">
                   {searchShortcut}
                 </kbd>
               </button>
@@ -413,13 +435,20 @@ export function Header({
                       aria-current={item.current ? "page" : undefined}
                       onClick={() => setDrawerOpen(false)}
                       className={cn(
-                        "focus-ring type-label-large flex h-12 items-center rounded-[3px] px-3 transition-colors",
+                        drawerZeile,
                         item.current
-                          ? "bg-(--nav-indicator) text-(--nav-item-active-label)"
-                          : "text-on-surface-variant hover:bg-on-surface/8 hover:text-on-surface",
+                          ? "text-on-surface"
+                          : "text-on-surface-mittel hover:text-on-surface",
                       )}
                     >
                       {item.label}
+                      {/* Der Drawer liegt selbst auf 08dp — eine gefüllte
+                          Aktivzeile hätte dort nichts, wovon sie sich abhebt.
+                          Stattdessen derselbe 2-px-Strich wie oben in der
+                          Leiste, hier an der Kante statt unter dem Wort. */}
+                      {item.current && (
+                        <span aria-hidden className="absolute inset-y-2 left-0 w-[2px] bg-primary" />
+                      )}
                     </Link>
                   );
                 }
@@ -431,10 +460,11 @@ export function Header({
                       aria-expanded={sectionOpen}
                       onClick={() => setOpenSection(sectionOpen ? null : i)}
                       className={cn(
-                        "focus-ring type-label-large flex h-12 w-full items-center justify-between rounded-[3px] px-3 transition-colors",
+                        drawerZeile,
+                        "w-full justify-between",
                         item.current
                           ? "text-on-surface"
-                          : "text-on-surface-variant hover:bg-on-surface/8 hover:text-on-surface",
+                          : "text-on-surface-mittel hover:text-on-surface",
                       )}
                     >
                       {item.label}
@@ -446,7 +476,7 @@ export function Header({
                       />
                     </button>
                     {sectionOpen && (
-                      <div className="mb-1 ml-3 flex flex-col border-l border-outline-variant pl-3">
+                      <div className="mb-1 ml-3 flex flex-col border-l border-linie pl-3">
                         {item.items.map((sub) => {
                           const SubIcon = sub.icon;
                           return (
@@ -456,7 +486,7 @@ export function Header({
                               key={sub.label}
                               href={sub.href}
                               onClick={() => setDrawerOpen(false)}
-                              className="focus-ring type-body-medium flex items-center gap-2.5 rounded-[3px] px-2 py-2.5 text-on-surface-variant transition-colors hover:bg-on-surface/8 hover:text-on-surface"
+                              className="focus-ring state type-body-medium flex items-center gap-2.5 rounded-flaeche px-2 py-2.5 text-on-surface-mittel transition-colors hover:text-on-surface"
                             >
                               {SubIcon && (
                                 <SubIcon size={18} strokeWidth={2} aria-hidden className="shrink-0" />
@@ -475,10 +505,13 @@ export function Header({
 
           {/* Drawer-Footer: Konto + CTA */}
           {(account || cta) && (
-            <div className="shrink-0 border-t border-outline-variant p-3">
+            <div className="shrink-0 border-t border-linie p-3">
               {account && (
                 <div className="mb-3 flex items-center gap-3 px-1">
-                  <span className="type-label-medium grid h-10 w-10 shrink-0 place-items-center rounded-full bg-(--chip-selected-container) text-(--chip-selected-label)">
+                  {/* Im Drawer liegt die Scheibe auf ihrer eigenen Höhenstufe
+                      und verschwände ohne Rand — die Haarlinie hält sie als
+                      Form sichtbar. */}
+                  <span className="type-label-medium grid h-10 w-10 shrink-0 place-items-center rounded-full border border-linie bg-elev-08 text-on-surface">
                     {account.initials ?? initialsOf(account.name)}
                   </span>
                   <span className="min-w-0">
@@ -486,7 +519,7 @@ export function Header({
                       {account.name}
                     </span>
                     {account.email && (
-                      <span className="type-body-small block truncate text-on-surface-variant">
+                      <span className="type-body-small block truncate text-on-surface-mittel">
                         {account.email}
                       </span>
                     )}
@@ -504,7 +537,7 @@ export function Header({
                       setDrawerOpen(false);
                     }}
                     className={cn(
-                      "focus-ring type-body-medium flex w-full items-center gap-3 rounded-[3px] px-3 py-2.5 text-left transition-colors hover:bg-on-surface/8",
+                      "focus-ring state type-body-medium flex w-full items-center gap-3 rounded-flaeche px-3 py-2.5 text-left transition-colors",
                       it.danger ? "text-error" : "text-on-surface",
                     )}
                   >

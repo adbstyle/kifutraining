@@ -31,7 +31,7 @@ export function ChipsDemo() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
+        <p className="type-label-small mb-2 text-on-surface-mittel">
           Filter-Chips (toggelbar)
         </p>
         <div className="flex flex-wrap gap-2">
@@ -44,7 +44,7 @@ export function ChipsDemo() {
       </div>
 
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
+        <p className="type-label-small mb-2 text-on-surface-mittel">
           Assist · Suggestion · Elevated
         </p>
         <div className="flex flex-wrap gap-2">
@@ -57,12 +57,12 @@ export function ChipsDemo() {
       </div>
 
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
+        <p className="type-label-small mb-2 text-on-surface-mittel">
           Input-Chips (entfernbar)
         </p>
         <div className="flex flex-wrap gap-2">
           {tags.length === 0 && (
-            <span className="type-body-small text-on-surface-variant">
+            <span className="type-body-small text-on-surface-mittel">
               — alle entfernt —
             </span>
           )}

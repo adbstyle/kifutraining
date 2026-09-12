@@ -48,7 +48,7 @@ export function ChipMenuDemo() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
+        <p className="type-label-small mb-2 text-on-surface-mittel">
           Sequenz aus Nutzertext — jeder Chip ein Bedienelement, ein Tabstopp
         </p>
         <div className="flex flex-wrap items-center gap-1.5">
@@ -61,7 +61,7 @@ export function ChipMenuDemo() {
             size={14}
             strokeWidth={2}
             aria-hidden
-            className="shrink-0 text-on-surface-variant"
+            className="shrink-0 text-on-surface-mittel"
           />
           <ChipMenu
             label="Gruppe 2"
@@ -72,7 +72,7 @@ export function ChipMenuDemo() {
             size={14}
             strokeWidth={2}
             aria-hidden
-            className="shrink-0 text-on-surface-variant"
+            className="shrink-0 text-on-surface-mittel"
           />
           <ChipMenu
             label="Torhüter"
@@ -85,12 +85,12 @@ export function ChipMenuDemo() {
       <GeteilterChipDemo onMeldung={setGewaehlt} />
 
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
-          tone=&quot;warning&quot; — Rahmen und Chevron, nie die Fläche; dazu ein
+        <p className="type-label-small mb-2 text-on-surface-mittel">
+          tone=&quot;befund&quot; — Rahmen und Chevron, nie die Fläche; dazu ein
           gedämpfter <code>trailing</code>-Zusatz
         </p>
         <ChipMenu
-          tone="warning"
+          tone="befund"
           label="Rot"
           ariaLabel="Rot — doppelt belegt"
           leading={
@@ -98,15 +98,15 @@ export function ChipMenuDemo() {
               size={16}
               strokeWidth={2}
               aria-hidden
-              className="shrink-0 text-warning"
+              className="shrink-0 text-error"
             />
           }
-          trailing={<span className="text-on-surface-variant">· 24 min</span>}
+          trailing={<span className="text-on-surface-mittel">· 24 min</span>}
           items={eintraege("Rot", false, true)}
         />
       </div>
 
-      <p className="type-body-small text-on-surface-variant">
+      <p className="type-body-small text-on-surface-mittel">
         {gewaehlt ? `gewählt: ${gewaehlt}` : "klicken oder Enter, dann ↑/↓"}
       </p>
     </div>
@@ -158,7 +158,7 @@ function GeteilterChipDemo({ onMeldung }: { onMeldung: (text: string) => void })
 
   return (
     <div>
-      <p className="type-label-small mb-2 text-on-surface-variant">
+      <p className="type-label-small mb-2 text-on-surface-mittel">
         geteilt — links wählt (<code>aria-pressed</code>), rechts öffnet das Menü
         (44 px)
       </p>
@@ -175,7 +175,7 @@ function GeteilterChipDemo({ onMeldung }: { onMeldung: (text: string) => void })
           />
         ))}
       </div>
-      <p className="type-body-small mt-2 text-on-surface-variant">
+      <p className="type-body-small mt-2 text-on-surface-mittel">
         angezeigt: {aktiv}
       </p>
     </div>

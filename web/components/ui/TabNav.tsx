@@ -31,7 +31,7 @@ export function TabNav({
   return (
     <nav
       aria-label={ariaLabel}
-      className={cn("border-b border-outline-variant", className)}
+      className={cn("border-b border-linie", className)}
     >
       <ul className="-mb-px flex gap-1 overflow-x-auto">
         {items.map((item) => (
@@ -43,10 +43,8 @@ export function TabNav({
               href={item.href}
               aria-current={item.current ? "page" : undefined}
               className={cn(
-                "focus-ring type-label-large relative flex h-11 items-center gap-2 whitespace-nowrap px-3 transition-colors",
-                item.current
-                  ? "text-on-surface"
-                  : "text-on-surface-variant hover:text-on-surface",
+                "state focus-ring type-label-large relative flex h-11 items-center gap-2 whitespace-nowrap px-3 transition-colors",
+                item.current ? "text-on-surface" : "text-on-surface-mittel",
               )}
             >
               {item.label}

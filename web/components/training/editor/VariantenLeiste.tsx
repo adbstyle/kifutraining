@@ -70,7 +70,7 @@ export function VariantenLeiste({
         size={18}
         strokeWidth={2}
         aria-hidden
-        className="shrink-0 text-on-surface-variant"
+        className="shrink-0 text-on-surface-mittel"
       />
 
       {varianten.length > 1 &&

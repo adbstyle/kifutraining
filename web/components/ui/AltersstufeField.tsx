@@ -53,11 +53,11 @@ export function AltersstufeField({
   if (!onChange)
     return (
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">Altersstufe</p>
+        <p className="type-label-small mb-2 text-on-surface-mittel">Altersstufe</p>
         <div className="flex flex-wrap items-center gap-2">
           {wert && <Badge tone="neutral">{altersstufeLabels[wert]}</Badge>}
           {aktion}
-          <p className="type-body-small text-on-surface-variant">
+          <p className="type-body-small text-on-surface-mittel">
             {festHinweis ??
               "Steht fest — Felder und Werte folgen dem Manual dieser Stufe."}
           </p>
@@ -67,7 +67,7 @@ export function AltersstufeField({
 
   return (
     <div>
-      <p className="type-label-small mb-2 text-on-surface-variant">Altersstufe</p>
+      <p className="type-label-small mb-2 text-on-surface-mittel">Altersstufe</p>
       <SegmentedControl
         ariaLabel="Altersstufe"
         options={optionen}
@@ -75,7 +75,7 @@ export function AltersstufeField({
         onChange={onChange}
       />
       <p
-        className={`type-body-small mt-1.5 ${fehler ? "text-error" : "text-on-surface-variant"}`}
+        className={`type-body-small mt-1.5 ${fehler ? "text-error" : "text-on-surface-mittel"}`}
       >
         {fehler ??
           hinweis ??

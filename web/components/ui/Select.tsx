@@ -34,10 +34,10 @@ export interface SelectProps {
   className?: string;
 }
 
-/* M3 Single-Select — kein natives <select>. Der Trigger trägt den Feld-Token-
-   Kontrakt (wie TextField/SelectField-Feldrahmen), das aufgeklappte Panel den
-   Menu-Token-Kontrakt (gerundet, dunkle Surface, Hover, ✓ auf der aktiven
-   Auswahl). Listbox-Semantik + vollständige Tastatursteuerung. */
+/* M2 Single-Select — kein natives <select>. Der Trigger ist gebaut wie ein
+   Feld (Kontur in `kante`, offener Grund), das aufgeklappte Panel wie ein
+   Menü (08dp, Haarlinie, Schatten, ✓ auf der aktuellen Auswahl).
+   Listbox-Semantik + vollständige Tastatursteuerung. */
 export function Select({
   label,
   options,
@@ -171,7 +171,7 @@ export function Select({
       <label
         htmlFor={fid}
         className={cn(
-          "type-label-small mb-2 block text-(--field-label)",
+          "type-label-small mb-2 block text-on-surface-mittel",
           hideLabel && "sr-only",
         )}
       >
@@ -190,8 +190,10 @@ export function Select({
           onClick={() => !disabled && setOpen((o) => !o)}
           onKeyDown={onTriggerKey}
           className={cn(
-            "focus-ring type-body-large flex h-12 w-full items-center justify-between gap-2 rounded-(--field-shape) border-[1.5px] bg-surface px-3 text-left text-(--field-text)",
-            error ? "border-error" : "border-(--field-outline)",
+            "focus-ring type-body-large flex h-12 w-full items-center justify-between gap-2 rounded-flaeche kontur bg-transparent px-3 text-left text-on-surface",
+            // Offen zieht der Trigger die Kontur auf Primary — er gehört
+            // dann zum Panel darunter und soll das auch zeigen.
+            error ? "border-error" : open ? "border-primary" : "border-kante",
             disabled && "cursor-not-allowed opacity-50",
           )}
         >
@@ -201,7 +203,7 @@ export function Select({
             strokeWidth={2}
             aria-hidden
             className={cn(
-              "shrink-0 text-on-surface-variant transition-transform",
+              "shrink-0 text-on-surface-mittel transition-transform",
               open && "rotate-180",
             )}
           />
@@ -216,7 +218,7 @@ export function Select({
             aria-label={label}
             aria-activedescendant={optId(active)}
             onKeyDown={onListKey}
-            className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-(--menu-shape) border border-outline-variant bg-(--menu-container) py-1 shadow-e4 focus:outline-none"
+            className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-flaeche border border-linie bg-elev-08 py-1 shadow-dp-08 focus:outline-none"
           >
             {options.map((o, i) => {
               const isSelected = i === selectedIndex;
@@ -229,7 +231,7 @@ export function Select({
                   <li
                     id={gruppenId(kopf)}
                     role="presentation"
-                    className="px-3 pb-1 pt-2 type-label-small text-on-surface-variant"
+                    className="px-3 pb-1 pt-2 type-label-small text-on-surface-mittel"
                   >
                     {kopf}
                   </li>
@@ -245,11 +247,15 @@ export function Select({
                   }}
                   onClick={() => commit(i)}
                   className={cn(
-                    "type-body-medium flex cursor-pointer items-center gap-3 px-3 py-2 text-(--menu-label)",
-                    isActive && "bg-on-surface/8",
+                    // Der echte Fokus liegt auf der Listbox, nicht auf der
+                    // Zeile — die Tastatur-Aktivzeile leiht sich darum die
+                    // Fokus-Deckung der Zustands-Ebene (`state-aktiv`),
+                    // während Hover aus `state` selbst kommt.
+                    "state type-body-medium flex cursor-pointer items-center gap-3 px-3 py-2 text-on-surface",
+                    isActive && "state-aktiv",
                   )}
                 >
-                  <span className="grid w-[18px] shrink-0 place-items-center text-(--menu-leading)">
+                  <span className="grid w-[18px] shrink-0 place-items-center text-on-surface-mittel">
                     {isSelected && <Check size={18} strokeWidth={2} aria-hidden />}
                   </span>
                   <span className="min-w-0 flex-1 truncate">{o.label}</span>
@@ -263,7 +269,7 @@ export function Select({
         {name && <input type="hidden" name={name} value={current} />}
       </div>
       {supportingText && (
-        <p className={cn("type-body-small mt-1 px-1", error ? "text-error" : "text-(--field-label)")}>
+        <p className={cn("type-body-small mt-1 px-1", error ? "text-error" : "text-on-surface-mittel")}>
           {supportingText}
         </p>
       )}

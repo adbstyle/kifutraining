@@ -1,22 +1,18 @@
 "use client";
 
+import { katPlakette } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { kategorieStufe } from "@/lib/labels";
 import { kategorienSlugs, type KategorieSlug } from "@/lib/vocab";
 
-const katColor: Record<KategorieSlug, string> = {
-  G: "bg-kat-g text-rasen-950 border-transparent",
-  F: "bg-kat-f text-rasen-950 border-transparent",
-  E: "bg-kat-e text-rasen-950 border-transparent",
-  D: "bg-kat-d text-rasen-950 border-transparent",
-  C: "bg-kat-c text-rasen-950 border-transparent",
-  B: "bg-kat-b text-rasen-950 border-transparent",
-  A: "bg-kat-a text-rasen-950 border-transparent",
-};
-
 /* Stufen-Auswahl als toggelbare Chips — die Alterskategorien eines Trainings
-   (Story #10 AC3, Story #12 AC2). Im ausgewählten Zustand in der festen
-   Stufen-Farbe, sonst als Outline-Chip. Kontrolliert.
+   (Story #10 AC3, Story #12 AC2). Kontrolliert.
+
+   Wie eine Alterskategorie aussieht, entscheidet EINE Stelle: `katPlakette`
+   aus `Chip.tsx`. Hier stand dieselbe Farbtabelle ein zweites Mal — und damit
+   die Gefahr, dass Auswahl und Anzeige derselben Kategorie auseinanderlaufen.
+   Diese Datei bestimmt nur noch, WAS gewählt ist, nicht wie es aussieht: die
+   Gewählten tragen ihre Kategorie-Kontur, die Übrigen die neutrale Kante.
 
    Angeboten werden nur die Kategorien der Altersstufe des Trainings
    (`kategorien`; Story 5 AK 4) — G bis A stehen nie gemeinsam zur Wahl. Beim
@@ -49,10 +45,10 @@ export function StufenField({
             aria-pressed={selected}
             aria-label={kategorieStufe[k]}
             className={cn(
-              "focus-ring inline-flex items-center gap-1.5 rounded-[4px] border-[1.5px] px-3 py-1.5 type-label-large transition-colors",
+              "state focus-ring inline-flex items-center gap-1.5 rounded-plakette px-3 py-1.5 type-label-large transition-colors",
               selected
-                ? katColor[k]
-                : "border-outline text-on-surface hover:bg-on-surface/8",
+                ? katPlakette[k]
+                : "kontur border-kante text-on-surface-mittel",
             )}
           >
             <span className="font-mono font-bold">{k}</span>
