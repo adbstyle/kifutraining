@@ -282,7 +282,12 @@ export function MultiSelect({
             // aussen, und der Inhalt fügt sich. `min-w-0` allein genügt nicht:
             // Es wirkt nur auf dem Weg nach oben, und schon ein fremdes <div>
             // um das Feld herum unterbricht die Kette.
-            "focus-ring type-body-large flex h-12 w-full items-center gap-2 contain-inline-size rounded-flaeche kontur bg-transparent px-4 text-on-surface",
+            // `min-w-40` ist der Preis dafür: Wo die Breite NICHT von aussen
+            // kommt — ein Elternteil, der sich um seinen Inhalt legt —, hätte
+            // das Feld sonst keine, es fiele auf Polsterung und Pfeil zusammen
+            // (gemessen: 35 px). Die Schranke liegt unter jeder Breite, die die
+            // Filterzeile vergibt (schmalste: 192 px), ändert dort also nichts.
+            "focus-ring type-body-large flex h-12 w-full min-w-40 items-center gap-2 contain-inline-size rounded-flaeche kontur bg-transparent px-4 text-on-surface",
             error ? "border-error" : "border-kante",
             // Offen zieht der Trigger die Kontur auf Primary — er gehört dann
             // zum Panel darunter und soll das auch zeigen.
