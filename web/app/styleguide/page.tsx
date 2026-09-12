@@ -1595,20 +1595,25 @@ export default function Styleguide() {
 
       <Section n="17" title="Mehrfachauswahl">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Auswahl <strong>mehrerer</strong> Werte: einzeiliger Feld-Trigger mit
-          inline entfernbaren Tags öffnet ein Panel mit Suchfeld im Kopf,
-          Optionsliste (eckige Checkbox, <code>rounded-plakette</code>) und
-          Aktions-Fuss (<code>Zurücksetzen</code> /{" "}
-          <code>Alle auswählen</code>, respektiert den aktiven Filter). Passen
-          nicht alle Tags in die Zelle, bündelt eine <code>+N</code>-Plakette die
-          überzähligen — die sichtbare Anzahl wird per Messung an die Feldbreite
-          angepasst (mit der Breite mit- und abnehmend). Trigger wie ein Feld,
-          Panel wie ein Menü — und das Label wie am Textfeld (14), nur von Hand
-          geschaltet, denn ein Trigger ohne <code>&lt;input&gt;</code> kennt
-          kein <code>:placeholder-shown</code>. Ruhend steht dort der Leerfall
-          in Worten («Alle Stufen», der <code>placeholder</code>) — genau da,
-          wo gleich die Tags stehen. Beim ersten Wert, und ebenso solange das
-          Panel offen ist, schwebt an seiner Stelle der Name der Dimension
+          Auswahl <strong>mehrerer</strong> Werte: einzeiliger Feld-Trigger,
+          der die gewählten Werte als kommagetrennte Zeile zeigt, öffnet ein
+          Panel mit Suchfeld im Kopf, Optionsliste (eckige Checkbox,{" "}
+          <code>rounded-plakette</code>) und Aktions-Fuss
+          (<code>Zurücksetzen</code> / <code>Alle auswählen</code>, respektiert
+          den aktiven Filter). Das Feld trägt seinen Wert wie die Einzelauswahl
+          (16): eine Zeile Text, am Ende abgeschnitten (<code>truncate</code>) —
+          keine Tags im Feld und kein <code>+N</code>-Zähler. Entfernt wird in
+          der Liste, wo auch gewählt wird; ein Kreuzchen pro Wert im Feld wäre
+          ein zweiter Ort dafür, und gefüllte Tags im Feld eine Fläche, die die
+          Kontur überstrahlt, in der sie liegt. Die Werte stehen in der
+          Reihenfolge der Optionsliste, nicht in der des Anklickens: Dieselbe
+          Auswahl soll immer gleich lauten. Trigger wie ein Feld, Panel wie ein
+          Menü — und das Label wie am Textfeld (14), nur von Hand geschaltet,
+          denn ein Trigger ohne <code>&lt;input&gt;</code> kennt kein{" "}
+          <code>:placeholder-shown</code>. Ruhend steht dort der Leerfall in
+          Worten («Alle Stufen», der <code>placeholder</code>) — genau da, wo
+          gleich der Wert steht. Beim ersten Wert, und ebenso solange das Panel
+          offen ist, schwebt an seiner Stelle der Name der Dimension
           («Alterskategorie», das <code>label</code>) auf die Kontur. Zwei
           Sätze für zwei Zustände, weil sie Verschiedenes sagen; der
           barrierefreie Name bleibt konstant das <code>label</code> — ein Feld
