@@ -42,9 +42,13 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
  * seit je ein Satz ist («Alle Stufen»), stünden in einer Zeile daneben sichtbar
  * anders da.
  *
- * GESCHWEBT sitzt es auf der Kontur und ist nur noch eine Marke am Feld. Dort
- * gilt der Label-Stil des Hauses (`type-plakette`, mono/versal, 10 px): Es
- * konkurriert nicht mehr mit dem Wert, sondern benennt ihn.
+ * GESCHWEBT sitzt es auf der Kontur und benennt das Feld nur noch. Es bleibt
+ * dieselbe Schrift, zwei Stufen kleiner (`type-body-small`, 12 px) — dasselbe
+ * Wort, leiser gesagt. Der Label-Stil des Hauses (mono/versal) stünde hier
+ * quer: Er ruft Aufmerksamkeit, und ein Label, das gerade aus dem Weg gegangen
+ * ist, will keine. Auf der Kontur liest sich das Feld dann von oben nach unten
+ * in einer Schrift — Name, Wert, Hinweistext (der ebenfalls `type-body-small`
+ * trägt).
  *
  * Beim Schweben stanzt es die Kontur aus und braucht dafür die Farbe der
  * Fläche DAHINTER: `--feld-grund` ist die Stellschraube. Vorbelegt mit dem
@@ -59,11 +63,11 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 export const feldLabelBase =
   "pointer-events-none absolute -translate-y-1/2 bg-(--feld-grund,var(--color-elev-00)) px-1 transition-all duration-150";
 export const feldLabelRuhend = "top-1/2 type-body-large";
-export const feldLabelSchwebend = "top-0 type-plakette";
+export const feldLabelSchwebend = "top-0 type-body-small";
 
 // Für das TextField hängen die beiden Zustände am Platzhalter (`placeholder=" "`)
 // und am Fokus des Nachbar-Inputs (`peer`).
-const labelBase = `${feldLabelBase} ${feldLabelRuhend} peer-focus:top-0 peer-focus:type-plakette peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:type-plakette`;
+const labelBase = `${feldLabelBase} ${feldLabelRuhend} peer-focus:top-0 peer-focus:type-body-small peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:type-body-small`;
 
 // Horizontale Lage des Labels. Ohne Icon konstant bei left-3 (Text bündig mit
 // dem Input-px-4). Mit Icon ruht das Label rechts neben dem Icon (left-10) und

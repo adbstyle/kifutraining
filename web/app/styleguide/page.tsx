@@ -1320,12 +1320,16 @@ export default function Styleguide() {
           Mono-Versalien sähe es aus wie eine Beschriftung, die zufällig im Feld
           liegt, und Auswahlfelder, deren Leerfall seit je ein Satz ist («Alle
           Stufen»), stünden in derselben Zeile sichtbar anders da. Geschwebt
-          sitzt es auf der Kontur und ist nur noch eine Marke am Feld — dort
-          gilt der Label-Stil des Hauses (<code>type-plakette</code>,
-          mono/versal, 10 px), denn es konkurriert nicht mehr mit dem Wert,
-          sondern benennt ihn. Dieselben zwei Lagen tragen Text-Area,
-          Einfach- und Mehrfachauswahl (16 und 17); die drei Klassenbündel
-          stehen als <code>feldLabelBase</code> / <code>-Ruhend</code> /{" "}
+          sitzt es auf der Kontur und benennt das Feld nur noch — dieselbe
+          Schrift, zwei Stufen kleiner (<code>type-body-small</code>, 12 px):
+          dasselbe Wort, leiser gesagt. Der Label-Stil des Hauses
+          (mono/versal) stünde hier quer, denn er ruft Aufmerksamkeit, und ein
+          Label, das gerade aus dem Weg gegangen ist, will keine. So liest sich
+          das Feld von oben nach unten in einer Schrift: Name, Wert,
+          Hinweistext — die beiden Kleinen im selben Grad. Dieselben zwei Lagen
+          tragen Text-Area, Datum &amp; Zeit sowie Einfach- und Mehrfachauswahl
+          (16 und 17); die drei Klassenbündel stehen als{" "}
+          <code>feldLabelBase</code> / <code>-Ruhend</code> /{" "}
           <code>-Schwebend</code> im TextField.
         </p>
         <div className="grid max-w-md gap-6">
@@ -1461,11 +1465,12 @@ export default function Styleguide() {
           Datum &amp; Uhrzeit
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Für Trainings-Termine. Bewusst <strong>ohne</strong> schwebendes
-          Label: native <code>date</code>/<code>time</code>-Felder zeigen immer
-          eine Platzhalter-Maske, das Label schwebte also sofort und dauerhaft.
-          Stattdessen ein fest darüberstehendes Label im selben
-          Mono-Versal-Stil. Das native Steuerelement ist Absicht —
+          Für Trainings-Termine. Das Label liegt auf der Kontur wie überall,
+          aber es <strong>schwebt nicht</strong>: Native <code>date</code>/
+          <code>time</code>-Felder zeigen immer ihre Platzhalter-Maske, es gäbe
+          also keine Ruhelage im Feld und die Bewegung liefe nie. Es steht von
+          Anfang an oben — wie bei der Einfachauswahl (16), die aus demselben
+          Grund immer einen Wert hat. Das native Steuerelement ist Absicht —
           Datumsauswahl, Tastatureingabe und Lokalisierung kommen vom
           Betriebssystem.
         </p>
@@ -1519,12 +1524,10 @@ export default function Styleguide() {
           zwar immer: Eine Einfachauswahl hat stets einen Wert, und sei es der
           Leerfall («— kein Feldtyp —»), also gibt es keine Ruhelage, in der das
           Label im Feld stünde. Ein Label <em>über</em> dem Feld, wie es hier
-          früher stand, wäre nach dem Angleichen der Mehrfachauswahl (17) die
-          letzte Auswahl gewesen, die nicht wie ein Feld aussieht. Aussen
-          beschriftet bleibt allein Datum &amp; Zeit (14) — dort aus einem
-          eigenen Grund: Ein natives Datumsfeld zeigt sein{" "}
-          <code>dd.mm.yyyy</code> immer, ein Label hätte also nie eine Ruhelage
-          und stünde von Anfang an auf der Kontur.
+          früher stand, gibt es im Kit nicht mehr — jede Beschriftung liegt auf
+          oder in ihrer Kontur. Datum &amp; Zeit (14) macht es aus demselben
+          Grund so: Ein natives Datumsfeld zeigt sein <code>tt.mm.jjjj</code>
+          immer, sein Label hat also ebenfalls nie eine Ruhelage.
         </p>
         <div className="grid max-w-md gap-6">
           <Select

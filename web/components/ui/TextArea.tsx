@@ -52,8 +52,8 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
               // erste Zeile (top-5 = pt-5 des Felds), weil das Feld mehrzeilig
               // ist und der Wert oben anfängt.
               "pointer-events-none absolute left-3 top-5 type-body-large bg-(--feld-grund,var(--color-elev-00)) px-1 transition-all duration-150",
-              "peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:type-plakette",
-              "peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:type-plakette",
+              "peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:type-body-small",
+              "peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:type-body-small",
               error
                 ? "text-error"
                 : "text-on-surface-mittel peer-focus:text-primary",
