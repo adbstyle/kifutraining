@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
-import { Button, Dialog, TextField, Meldung } from "@/components/ui";
+import { Button, Dialog, SearchField, Meldung } from "@/components/ui";
 import { DiagrammView } from "./DiagrammView";
 import { parseDiagramm } from "@/lib/diagramm";
 import { normalizeSearch } from "@/lib/search";
@@ -100,9 +99,8 @@ export function VorlagePicker({
             {fehler}
           </Meldung>
         )}
-        <TextField
+        <SearchField
           label="Übung suchen"
-          leadingIcon={Search}
           value={suche}
           onChange={(e) => setSuche(e.target.value)}
           className="mb-4"

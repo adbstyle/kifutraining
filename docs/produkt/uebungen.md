@@ -109,7 +109,9 @@ Training. Unvollständige Fassungen lassen sich erst nach Ergänzung kopieren.
 ## Finden
 
 Gesucht wird über den gesamten Text einer Übung, also auch über Material, Varianten und Ablauf;
-Wortteile genügen. Der Katalog zeigt beide Altersstufen nebeneinander — er ist der eine Ort, an
+Wortteile genügen. Sobald etwas im Suchfeld steht, tritt an die Stelle der Lupe ein Kreuz, das die
+Suche mit einem Klick leert und den Cursor darin stehen lässt; die übrigen Filter bleiben dabei
+gesetzt. Der Katalog zeigt beide Altersstufen nebeneinander — er ist der eine Ort, an
 dem der ganze sichtbare Bestand zusammensteht. Gefiltert wird nach Trainingsteil, wobei die
 Kinderfussball-Teile und die sieben Junioren-Blöcke in zwei beschrifteten Gruppen stehen — das
 Auffangen kommt in beiden Gruppen vor und heisst dort gleich; die Beschriftung sagt, welches

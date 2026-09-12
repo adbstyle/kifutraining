@@ -61,16 +61,15 @@ export function MultiSelectDemo() {
         supportingText="searchable={false} actions={false}: Trigger treibt die Liste, ↑/↓ + Enter."
       />
 
-      {/* Ohne sichtbares Label — der Placeholder (Empty-State) beschriftet das
-          Feld; Label bleibt für Screenreader erhalten (sr-only). Für dichte
-          Filterzeilen, in denen Felder Seite an Seite stehen. */}
+      {/* Leerfall — nichts gewählt: Der Platzhalter steht als ruhendes Label im
+          Feld. Beim ersten Wert schwebt an seiner Stelle «Alterskategorie» auf
+          die Kontur. */}
       <MultiSelect
         label="Alterskategorie"
-        hideLabel
         searchable={false}
         options={themen}
         placeholder="Alle Stufen"
-        supportingText="hideLabel: Label sr-only, Placeholder dient als Beschriftung."
+        supportingText="Leer: der Platzhalter beschriftet · gewählt: das Label schwebt."
       />
 
       {/* Gruppiert — Optionen aus zwei Welten unter je einer nicht wählbaren

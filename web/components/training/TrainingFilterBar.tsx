@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search, ClipboardList } from "lucide-react";
-import { FilterChip, MultiSelect, Button, TextField } from "@/components/ui";
+import { ClipboardList } from "lucide-react";
+import { FilterChip, MultiSelect, Button, SearchField } from "@/components/ui";
 import { useDebouncedWert } from "@/lib/use-debounce";
 import { stufenOptionen } from "@/lib/filter-optionen";
 
@@ -68,16 +68,14 @@ export function TrainingFilterBar({
 
   return (
     // Eine durchgehende, umbrechende Zeile: Suchfeld zuerst, dann die Filter
-    // direkt dahinter angereiht. Labels sind in die Felder gewandert (Empty-
-    // State als Beschriftung), darum alle Elemente auf gleicher Höhe: 48 px,
-    // beim Chip über `groesse="leiste"` statt über eine Klasse von aussen.
+    // direkt dahinter angereiht. Labels stehen in den Feldern (ruhend als
+    // Beschriftung, geschwebt auf der Kontur), darum alle Elemente auf
+    // gleicher Höhe: 48 px, beim Feld über die dichte Bauform, beim Chip über
+    // `groesse="leiste"` statt über eine Klasse von aussen.
     <div className="mb-6 flex flex-wrap items-center gap-3">
-      <TextField
+      <SearchField
         dense
-        type="search"
         label="Nach Trainingsnamen suchen"
-        leadingIcon={Search}
-        placeholder="Nach Trainingsnamen suchen…"
         value={text}
         onChange={(e) => onSearch(e.target.value)}
         className="w-full sm:w-72"
@@ -85,7 +83,6 @@ export function TrainingFilterBar({
 
       <MultiSelect
         label="Alterskategorie"
-        hideLabel
         options={stufenOptionen}
         value={stufen}
         onChange={setStufen}
