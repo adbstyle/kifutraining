@@ -1695,13 +1695,37 @@ export default function Styleguide() {
           damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Das Diagramm ist Gegenstand, nicht Oberfläche.</strong> Das
-          Feldgrün, die Figuren und die Symbole bleiben unangetastet — sie
-          gehören zum Abgebildeten wie ein Foto und folgen nicht der Palette.
-          Auf die Tokens gelegt ist nur das Drumherum des Editors: der Rahmen
-          um die Fläche (<code>border-linie</code>), die Leisten
-          (<code>bg-elev-08</code>, <code>shadow-dp-08</code>) und die aktive
-          Werkzeug-Kachel (<code>border-primary</code>).
+          <strong>Das Diagramm ist Gegenstand, nicht Oberfläche</strong> — es
+          folgt weiterhin nicht der Palette der Anwendung. Es hat aber eine
+          <strong> eigene</strong>, und die kennt mehr als einen Satz: dieselbe gespeicherte Zeichnung erscheint am Bildschirm auf
+          einem Nachtrasen und kommt auf Papier weiss aus dem Drucker. Die
+          Rollen heissen <code>--diagramm-*</code> und stehen bewusst neben dem{" "}
+          <code>@theme</code>-Block, ohne <code>--color-</code>-Präfix: Tailwind
+          macht aus jeder Farbrolle des Themes eine Utility, und{" "}
+          <code>bg-rasen</code> auf einem Knopf wäre genau die Vermischung, die
+          dieser Absatz seit je verhindert. Auf die Tokens der Anwendung gelegt
+          ist wie bisher nur das Drumherum des Editors: der Rahmen um die Fläche
+          (<code>border-linie</code>), die Leisten (<code>bg-elev-08</code>,{" "}
+          <code>shadow-dp-08</code>) und die aktive Werkzeug-Kachel (
+          <code>border-primary</code>).
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Zwei Sätze, ein Bestand: Gespeichert wird nur der Farb-Slug, was er
+          zeigt, entscheidet das Medium. Am Bildschirm liegt der Rasen
+          tief im entsättigten Grün des App-Grunds, die Bewegungspfeile werden
+          hell und die Elementfarben sind angehoben — die Manual-Palette kam auf dem dunklen
+          Grund bei Rot auf 2.6:1 und bei Blau auf 2.2:1, zwei Mannschaften, die
+          sich nicht mehr unterscheiden liessen. Auf Papier kehrt sich fast
+          alles um: weisse Fläche mit 6-%-Raster, schwarze Pfeile wie in der
+          Zeichenerklärung des Manuals, und alles, was am Bildschirm hell
+          gezeichnet ist, kippt ins Graue, weil Weiss auf Papier nicht
+          existiert. Einzige Ausnahme ist der Ball — er bleibt weiss und bekommt
+          eine kräftigere Kontur, sonst wäre er ein grauer Fleck unter lauter
+          grauen Flecken. Die Werte stehen in <code>app/globals.css</code>, die
+          Rollennamen in <code>lib/diagramm-farben.ts</code>;{" "}
+          <code>npm run check:diagramm-farben</code> rechnet beide Sätze nach
+          (3:1 nach WCAG 1.4.11 — auf dem Rasen steht kein Text) und verbietet
+          im Zeichencode jeden rohen Farbwert.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Spieler und Torwart sind Cartoon-Kinder, der <strong>Trainer</strong>{" "}
@@ -2254,8 +2278,15 @@ export default function Styleguide() {
           </li>
           <li>
             <code>print-color-adjust: exact</code> bleibt gesetzt, damit
-            Diagramme und Kategorien wirklich farbig kommen; App-Chrome ist über{" "}
-            <code>print:hidden</code> ausgeblendet.
+            Diagramme und Kategorien wirklich so kommen, wie sie gesetzt sind;
+            App-Chrome ist über <code>print:hidden</code> ausgeblendet.
+          </li>
+          <li>
+            <strong>Das Feld-Diagramm hat einen eigenen Druck-Satz</strong>{" "}
+            (Abschnitt 20): weisse Fläche statt Rasengrün, schwarze Pfeile,
+            gedämpfte Elementfarben. Der grüne Rasen deckte 1600×1000 und kam
+            auf geschätzt 125 % Farbauftrag — das Blatt allein trug damit fast
+            den ganzen Verbrauch; weiss mit Raster liegt bei rund 3 %.
           </li>
         </ul>
       </Section>

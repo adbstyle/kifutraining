@@ -41,6 +41,17 @@ jobs:
       # Palette. Tailwind v4 meldet unbekannte Utilities nicht — eine vergessene
       # Klasse erzeugt still keine Regel, und der Text erbt die Elternfarbe.
       - run: npm run check:farben
+      # Farbsätze des Feld-Diagramms: Vollständigkeit der Rollen in beiden
+      # Sätzen (Bildschirm und Papier), Kontrast 3:1 nach WCAG 1.4.11 für
+      # gezeichnete Gegenstände, und das Verbot roher Farbwerte im
+      # Zeichencode. Ohne Letzteres wäre der angekündigte Light-Modus keine
+      # Wertetabelle mehr, sondern wieder Nacharbeit in vier Dateien.
+      - run: npm run check:diagramm-farben
+      # Die Figuren-Vielfalt hängt an einem Hash über die Element-id, der auf
+      # Feldplätze zeigt. Wer SKIN oder HAAR umsortiert, gibt jedem
+      # bestehenden Kind ein anderes Gesicht — ohne dass sich ein Datensatz
+      # ändert und ohne dass der Typecheck etwas merkt.
+      - run: npm run check:figuren
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)
