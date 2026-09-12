@@ -91,10 +91,21 @@ pruefe("Der Druck überschreibt nur bekannte Rollen", () => {
   assert.deepEqual(unbekannt, []);
 });
 
-pruefe("Die Strichstärke des Balls ist in beiden Sätzen eine Zahl", () => {
+pruefe("Jedes Mass ist in beiden Sätzen eine Zahl", () => {
   for (const { name, werte } of SAETZE) {
-    const wert = werte.get("ball-strich");
-    assert.ok(wert && /^\d+(\.\d+)?$/.test(wert), `${name}: ball-strich ist "${wert}"`);
+    for (const rolle of DIAGRAMM_MASSROLLEN) {
+      const wert = werte.get(rolle);
+      assert.ok(wert && /^\d+(\.\d+)?$/.test(wert), `${name}: ${rolle} ist "${wert}"`);
+    }
+  }
+});
+
+pruefe("Eine gefüllte Zone bleibt eine Fläche, kein Nebel", () => {
+  // Die Füllung ist ein Hinweis, kein Anstrich — aber unter etwa einem Zehntel
+  // Deckung sieht man auf Papier nur noch den Umriss.
+  for (const { name, werte } of SAETZE) {
+    const deckung = Number(werte.get("form-deckung"));
+    assert.ok(deckung >= 0.1 && deckung <= 0.4, `${name}: form-deckung ${deckung}`);
   }
 });
 

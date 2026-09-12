@@ -142,6 +142,10 @@ export const DIAGRAMM_MASSROLLEN = [
   /** Strichstärke der Ball-Kontur: auf Papier kräftiger, damit der Ball
    *  zwischen lauter Grautönen erkennbar bleibt. */
   "ball-strich",
+  /** Deckung einer gefüllten Zone. Den Umriss zeichnet die volle Farbe —
+   *  die Füllung sagt nur, wohin die Zone reicht, und darf auf Papier
+   *  deshalb deutlich leiser sein. */
+  "form-deckung",
 ] as const;
 
 export type DiagrammFarbrolle = (typeof DIAGRAMM_FARBROLLEN)[number];

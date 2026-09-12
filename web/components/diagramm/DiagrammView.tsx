@@ -224,7 +224,7 @@ export function FormGrafik({ element }: { element: FormElement }) {
   const farbe = FARBEN[element.farbe ?? FORM_DEFAULT_FARBE];
   const stil = {
     fill: element.gefuellt ? farbe : "transparent",
-    fillOpacity: element.gefuellt ? 0.28 : undefined,
+    fillOpacity: element.gefuellt ? dv("form-deckung") : undefined,
     stroke: farbe,
     strokeWidth: 4,
   };
