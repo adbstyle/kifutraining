@@ -221,9 +221,27 @@ pruefe("Primary auf den obersten Stufen bleibt über 4.2:1", () => {
   }
 });
 
-pruefe("Error trägt als Schrift auf dem Grund", () => {
-  const wert = kontrast(ERROR, ELEV[0].hex);
-  assert.ok(wert >= 4.5, `error auf elev-00: ${z(wert)}:1`);
+// Error auf JEDER Stufe, nicht nur auf dem Grund: Das war die Lücke, durch
+// die die Kontrast-Regression kam. Materials Baseline #cf6679 trug auf elev-00
+// (5.09) und fiel im Menü auf 3.62, im Dialog auf 3.17 — die Prüfung sah nur
+// den Grund und schwieg. Error steht in dieser Anwendung aber fast nie als
+// Fläche, sondern als Schrift auf Karte, Menüzeile und Dialog.
+pruefe("Error trägt als Schrift auf JEDER Höhenstufe", () => {
+  for (const stufe of ELEV) {
+    const wert = kontrast(ERROR, stufe.hex);
+    assert.ok(wert >= 4.5, `error auf ${elevName(stufe.dp)}: ${z(wert)}:1`);
+  }
+});
+
+pruefe("Error trägt als Kontur auf jeder Höhenstufe", () => {
+  // Die 1.5-px-Kontur (Feld im Fehler, Meldung, destruktiver Knopf) ist ein
+  // grafisches Objekt: 3:1 nach WCAG 1.4.11, nicht 4.5:1. Geprüft wird die
+  // VOLLE Rolle — eine Kontur mit Alpha fällt darunter (siehe Wächter unten)
+  // und ist darum in Klassenstrings verboten, nicht hier wegdefiniert.
+  for (const stufe of ELEV) {
+    const wert = kontrast(ERROR, stufe.hex);
+    assert.ok(wert >= 3.0, `error-Kontur auf ${elevName(stufe.dp)}: ${z(wert)}:1`);
+  }
 });
 
 pruefe("Die Aufschrift gefüllter Flächen trägt", () => {
@@ -258,6 +276,21 @@ pruefe("Keine Alterskategorie ist mit Primary verwechselbar", () => {
   for (const [schluessel, hex] of Object.entries(KAT)) {
     const abstand = rgbAbstand(hex, PRIMARY);
     assert.ok(abstand >= 50, `kat-${schluessel} zu primary: ${z(abstand)}`);
+  }
+});
+
+pruefe("Error und die Alterskategorien bleiben unterscheidbar", () => {
+  // Beide erscheinen als Kontur, und sie können am selben Ort stehen: die
+  // Kategorie-Plakette und ein Fehlerrahmen auf derselben Karte. kat-c
+  // (#f48fb1) ist der engste Nachbar — mit dem helleren Error rückt er von 79
+  // auf 32 RGB-Einheiten heran. Das ist gewollt und trägt, weil nicht die
+  // Farbe die beiden trennt, sondern die FORM: eine 22-px-Plakette mit einem
+  // Buchstaben darin gegen einen Feldrahmen mit einem Satz darunter. Sie haben
+  // nie dieselbe Rolle am selben Ort. Die Schwelle hält den Abstand bloss
+  // fest: Wer Error oder kat-c weiter aneinander schiebt, muss hier vorbei.
+  for (const [schluessel, hex] of Object.entries(KAT)) {
+    const abstand = rgbAbstand(hex, ERROR);
+    assert.ok(abstand >= 30, `kat-${schluessel} zu error: ${z(abstand)}`);
   }
 });
 
@@ -350,6 +383,10 @@ const VERBOTEN: [RegExp, string][] = [
   // `rounded-[--x]` sind beide am System vorbei.
   [/rounded-\[/, "freie Radien — nur rounded-plakette/-flaeche/-dialog/-full"],
   [/border-\[1\.5px\]/, "ersetzt durch @utility kontur"],
+  // Alpha auf einer KONTUR bricht die 3:1-Regel für grafische Objekte: Die
+  // Kontur ist das Einzige, was die Fläche begrenzt, und `border-error/40` kam
+  // im Dialog auf 1.91:1. Volles `border-error` trägt dort 4.56:1.
+  [/border-error\/\d/, "Kontur mit Alpha — Error umrandet voll oder nicht"],
   [/bg-on-surface\/8/, "Hover gehört in @utility state"],
   [/translate-y-px/, "Knöpfe springen nicht mehr"],
   [/font-display/, "entfallen — es gibt nur sans und mono"],
@@ -415,12 +452,14 @@ for (const stufe of ELEV) {
       `error ${z(kontrast(ERROR, stufe.hex))}`,
   );
 }
-console.log("  Alterskategorien (elev-00 / elev-01 / RGB-Abstand zu primary):");
+console.log(
+  "  Alterskategorien (elev-00 / elev-01 / RGB-Abstand zu primary / zu error):",
+);
 for (const [schluessel, hex] of Object.entries(KAT)) {
   console.log(
     `    kat-${schluessel}  ${hex}  ` +
       `${z(kontrast(hex, elev(0)))}  ${z(kontrast(hex, elev(1)))}  ` +
-      `Abstand ${z(rgbAbstand(hex, PRIMARY))}`,
+      `Abstand ${z(rgbAbstand(hex, PRIMARY))}  ${z(rgbAbstand(hex, ERROR))}`,
   );
 }
 console.log(
