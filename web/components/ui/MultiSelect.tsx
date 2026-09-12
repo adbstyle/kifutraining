@@ -240,7 +240,12 @@ export function MultiSelect({
   const schwebt = !showPlaceholder || open;
 
   return (
-    <div className={className}>
+    // `min-w-0`: Die Wertzeile läuft auf einer Zeile (`truncate`) und hat damit
+    // eine natürliche Mindestbreite. In einem Grid- oder Flex-Elternteil
+    // (Filterzeile, Styleguide-Raster) zöge die über `min-width: auto` das
+    // ganze Feld breiter als seine Spalte — abgeschnitten würde dann nie,
+    // stattdessen sprengte das Feld das Raster.
+    <div className={cn("min-w-0", className)}>
       {/* Der barrierefreie Name des Triggers und der Liste. Er bleibt konstant
           `label` («Trainingsteil»), während das sichtbare Label je nach Zustand
           zwei verschiedene Sätze zeigt — der Vorlesehilfe darf ein Feld nicht
@@ -269,7 +274,15 @@ export function MultiSelect({
           onClick={() => !disabled && setOpen((o) => !o)}
           onKeyDown={onTriggerKey}
           className={cn(
-            "focus-ring type-body-large flex h-12 w-full items-center gap-2 rounded-flaeche kontur bg-transparent px-4 text-on-surface",
+            // `contain-inline-size` ist hier nicht Kosmetik, sondern das, was das
+            // Abschneiden überhaupt erst erlaubt: Eine Textzeile ohne Umbruch
+            // meldet ihre volle Breite als Mindestbreite nach oben und zöge
+            // sonst das Feld — und mit ihm seine Rasterspalte — beliebig breit,
+            // statt zu kürzen. Mit Inline-Containment kommt die Breite von
+            // aussen, und der Inhalt fügt sich. `min-w-0` allein genügt nicht:
+            // Es wirkt nur auf dem Weg nach oben, und schon ein fremdes <div>
+            // um das Feld herum unterbricht die Kette.
+            "focus-ring type-body-large flex h-12 w-full items-center gap-2 contain-inline-size rounded-flaeche kontur bg-transparent px-4 text-on-surface",
             error ? "border-error" : "border-kante",
             // Offen zieht der Trigger die Kontur auf Primary — er gehört dann
             // zum Panel darunter und soll das auch zeigen.
