@@ -33,8 +33,14 @@
      Akzent würde neben Primary nur konkurrieren, ohne etwas zu benennen. */
   --color-secondary: #03dac6;
   --color-on-secondary: #000000;
-  --color-error: #cf6679;
-  --color-on-error: #000000;
+  /* Eine Stufe heller als Materials Baseline (#cf6679). Die Baseline ist als
+     FLÄCHE gedacht und trägt als Schrift nur auf dem Grund (5.09) — im Dialog
+     fällt sie auf 3.17. Diese Anwendung setzt Error aber fast überall als
+     SCHRIFT: auf Karten, in Menüzeilen, in Dialogen. #e58a95 trägt dort
+     durchweg über 4.5:1 (00dp 7.33 · 01dp 6.47 · 08dp 5.22 · 24dp 4.56),
+     nachgerechnet in scripts/pruefe-farben.ts auf jeder Stufe. */
+  --color-error: #e58a95;
+  --color-on-error: #000000; /* 8.40 auf Error */
   --color-scrim: #000000;
 
   /* ─── Schrift und Striche: Weiss in vier Deckungen ───

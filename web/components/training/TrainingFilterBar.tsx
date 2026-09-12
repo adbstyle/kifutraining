@@ -69,7 +69,8 @@ export function TrainingFilterBar({
   return (
     // Eine durchgehende, umbrechende Zeile: Suchfeld zuerst, dann die Filter
     // direkt dahinter angereiht. Labels sind in die Felder gewandert (Empty-
-    // State als Beschriftung), darum alle Elemente auf gleicher Höhe (h-12).
+    // State als Beschriftung), darum alle Elemente auf gleicher Höhe: 48 px,
+    // beim Chip über `groesse="leiste"` statt über eine Klasse von aussen.
     <div className="mb-6 flex flex-wrap items-center gap-3">
       <TextField
         dense
@@ -97,7 +98,7 @@ export function TrainingFilterBar({
           selected={mine}
           onClick={toggleMine}
           icon={ClipboardList}
-          className="h-12"
+          groesse="leiste"
         >
           Meine Trainings
         </FilterChip>

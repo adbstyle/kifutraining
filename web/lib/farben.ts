@@ -69,7 +69,15 @@ export const PRIMARY = "#bb86fc";
 export const ON_PRIMARY = "#000000";
 export const SECONDARY = "#03dac6";
 export const ON_SECONDARY = "#000000";
-export const ERROR = "#cf6679";
+/**
+ * Eine Stufe heller als Materials Baseline (#cf6679): Die ist als Fläche
+ * gedacht und trägt als Schrift nur auf dem Grund (5.09), im Dialog fällt sie
+ * auf 3.17. Diese Anwendung setzt Error fast überall als SCHRIFT — auf Karten,
+ * in Menüzeilen, in Dialogen —, darum der hellere Ton: er trägt auf jeder
+ * Höhenstufe über 4.5:1. Der Druckwert (`DRUCK.error`) bleibt davon unberührt,
+ * er hat auf Papier ein anderes Problem.
+ */
+export const ERROR = "#e58a95";
 export const ON_ERROR = "#000000";
 /** Verdunkelung hinter Dialogen und über Bildern; nie als Schriftfarbe. */
 export const SCRIM = "#000000";

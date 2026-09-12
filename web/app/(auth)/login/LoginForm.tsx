@@ -44,7 +44,12 @@ function NeedsConfirmation({ email }: { email?: string }) {
   }
 
   return (
-    <Meldung tone="fehler">
+    /* `status` statt des Fehler-Vorgabewerts `alert`: Der Kasten enthält ein
+       Bedienelement, und `alert` ist atomar — die Vorlesehilfe läse bei jeder
+       Änderung darin (jeder Klick auf den Knopf ändert seine Beschriftung) den
+       ganzen Kasten unterbrechend neu vor. ARIA verlangt zudem, dass `alert`
+       keine fokussierbaren Inhalte trägt. */
+    <Meldung tone="fehler" role="status">
       <p>Bitte bestätige zuerst deine E-Mail-Adresse. Den Link nicht erhalten?</p>
       <form action={formAction} className="mt-3">
         <input type="hidden" name="email" value={email ?? ""} />

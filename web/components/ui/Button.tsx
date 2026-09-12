@@ -51,7 +51,12 @@ const variants: Record<Variant, string> = {
   text: "bg-transparent text-primary",
   // Destruktiv: Error umrandet und beschriftet, füllt aber nie — eine rote
   // Fläche wäre lauter als die Handlung, die sie auslöst.
-  danger: "bg-transparent text-error kontur border-error/40",
+  // Die Kontur trägt Error VOLL, nicht gedämpft: Der destruktive Knopf steht
+  // fast immer im Dialog (24dp), und dort kam eine 40-%-Kontur auf 1.91:1 —
+  // unter den 3:1 für grafische Objekte, praktisch unsichtbar. Volles Error
+  // trägt auch dort 4.56:1, und der Rahmen ist hier das einzige, was den
+  // Knopf als Fläche überhaupt begrenzt.
+  danger: "bg-transparent text-error kontur border-error",
   // Eine Stufe UNTER `text` — für Handlungen, die am Rand mitlaufen. Nicht
   // leiser in der Farbe (Primary bleibt, es ist dieselbe Emphase), sondern in
   // der Schrift: normal gesetzt statt mono-versal.

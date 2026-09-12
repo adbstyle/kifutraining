@@ -293,6 +293,16 @@ export function ExercisePickerDialog({
               const count = counts[ex.id] ?? 0;
               const mismatch = !stufenAbgedeckt(trainingStufen, ex.kategorien);
               return (
+                /* Die Zustands-Ebene sitzt hier bewusst auf dem `<li>` und
+                   nicht auf dem interaktiven Kind — anders als bei den Karten,
+                   wo ein Link die ganze Fläche trägt. Die Zeile ist kein
+                   Bedienelement: Sie ist nicht fokussierbar, hat keine Rolle
+                   und löst nichts aus. Was `state` hier leistet, ist allein
+                   die Zeigerspur über die volle Breite — Name links, Knopf
+                   rechts —, damit sichtbar bleibt, welcher Übung der Knopf am
+                   Rand gehört. Ein Fokus-Anteil wäre nicht halb, sondern falsch:
+                   Die Tastatur landet auf dem Übernehmen-Knopf, und der trägt
+                   seinen Ring und seine eigene Ebene (`IconButton`). */
                 <li
                   key={ex.id}
                   className="state flex items-center gap-2 rounded-flaeche px-2"
