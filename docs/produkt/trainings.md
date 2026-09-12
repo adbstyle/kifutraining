@@ -397,7 +397,8 @@ eigenen ein. An jedem Eintrag stehen Altersstufe und Alterskategorien, an jedem 
 zusätzlich, ob er ein Entwurf oder öffentlich ist; er führt in die Bearbeitung, ein fremder in
 die Ansicht. Besucher ohne Konto sehen ausschliesslich die öffentlichen Trainings. Gesucht wird
 über den Namen, gefiltert nach Alterskategorie, deren Werte wie im Übungskatalog nach
-Altersstufe beschriftet sind. Ohne Suchbegriff steht das zuletzt Geänderte
+Altersstufe beschriftet sind; das Suchfeld lässt sich wie dort mit einem Klick auf das Kreuz
+leeren. Ohne Suchbegriff steht das zuletzt Geänderte
 oben, mit Suchbegriff das, was am ehesten gemeint ist. Führt ein Training mehr als eine Variante
 seines Hauptteils, steht deren Zahl als Marke am Eintrag — hier wie im Trainingsbestand eines
 Teams; sonst bliebe verborgen, dass es Alternativen gibt. Übungszahl und Dauer daneben beziehen

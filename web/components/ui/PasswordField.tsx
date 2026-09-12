@@ -2,18 +2,21 @@
 
 import { forwardRef, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { TextField, type TextFieldProps } from "./TextField";
+import {
+  TextField,
+  feldTrailingKnopf,
+  feldTrailingPadding,
+  feldTrailingSlot,
+  type TextFieldProps,
+} from "./TextField";
 
 export type PasswordFieldProps = Omit<TextFieldProps, "type" | "leadingIcon">;
 
 /** Passwortfeld auf Basis von TextField mit Sichtbarkeits-Toggle.
- *  Der Toggle ist absolut an der rechten Kante der Inputzeile (h-14) verankert,
- *  damit er nicht mit dem darunterliegenden supportingText kollidiert. Die
- *  Verankerung sitzt auf einem eigenen Wrapper, damit der Knopf selbst die
- *  Zustands-Ebene (`state`) tragen kann — die will ihn ihrerseits auf
- *  `position: relative` stellen. */
+ *  Der Toggle sitzt im Trailing-Slot des Felds (siehe `feldTrailingSlot`) —
+ *  demselben Platz, an dem das Suchfeld sein Kreuz trägt. */
 export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, dense, ...props }, ref) => {
     const [show, setShow] = useState(false);
     const Icon = show ? EyeOff : Eye;
     return (
@@ -21,17 +24,18 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
         <div className="relative">
           <TextField
             ref={ref}
+            dense={dense}
             type={show ? "text" : "password"}
-            className="[&_input]:pr-12"
+            className={feldTrailingPadding}
             {...props}
           />
-          <span className="absolute right-2 top-0">
+          <span className={feldTrailingSlot(dense)}>
             <button
               type="button"
               onClick={() => setShow((s) => !s)}
               aria-label={show ? "Passwort verbergen" : "Passwort anzeigen"}
               aria-pressed={show}
-              className="state focus-ring flex h-14 items-center rounded-flaeche px-2 text-on-surface-mittel"
+              className={feldTrailingKnopf}
             >
               <Icon size={18} strokeWidth={2} aria-hidden />
             </button>

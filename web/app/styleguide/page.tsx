@@ -12,6 +12,7 @@ import {
   TabNav,
   Tooltip,
   TextField,
+  SearchField,
   PasswordField,
   TextArea,
   DateField,
@@ -37,6 +38,7 @@ import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import {
   Search,
+  Users,
   SlidersHorizontal,
   Plus,
   X,
@@ -1300,7 +1302,8 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Umrissen, mit schwebendem Label in Mono-Versalien: Kontur auf der
           Kante (1.5 px), <code>rounded-flaeche</code>, durchsichtige Fläche und{" "}
-          <code>h-14</code>. Im Fokus wird die Kontur 2 px stark und Primary;
+          <code>h-14</code> — beziehungsweise <code>h-12</code>, wo es dicht
+          steht (siehe unten); mehr Bauformen gibt es nicht. Im Fokus wird die Kontur 2 px stark und Primary;
           die Zustands-Ebene bleibt hier aussen vor, denn ein{" "}
           <code>&lt;input&gt;</code> hat kein <code>::after</code> — Ring und
           Rahmen tragen den Fokus allein. Das schwebende Label stanzt ein Loch in
@@ -1311,7 +1314,7 @@ export default function Styleguide() {
         </p>
         <div className="grid max-w-md gap-6">
           <TextField label="Übungsname" supportingText="Pflichtfeld" />
-          <TextField label="Suche" type="search" leadingIcon={Search} />
+          <SearchField label="Suche" />
           <TextField
             label="Anzahl Kinder"
             type="number"
@@ -1331,33 +1334,49 @@ export default function Styleguide() {
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
-          Dichte Variante (<code>dense</code>)
+          Suchfeld (<code>SearchField</code>)
+        </h3>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Dasselbe Feld, dessen Zeichen aber <strong>rechts</strong> steht — an
+          demselben Platz, an dem das Passwortfeld sein Auge trägt. Das ist die
+          Hausregel: <strong>links steht Schmuck, rechts steht
+          Bedienbares.</strong> Und das Zeichen am Suchfeld ist beides
+          nacheinander — solange nichts eingegeben ist, sagt die Lupe, wofür das
+          Feld da ist; sobald etwas dasteht, tritt an ihre Stelle ein Kreuz, das
+          die Suche mit einem Klick leert und den Cursor zurück ins Feld setzt.
+          Nebenbei bekommt das schwebende Label seinen ruhigen Platz an der
+          linken Kante zurück. Das Kreuz meldet sich über dasselbe{" "}
+          <code>onChange</code> wie eine Tastatureingabe — es gibt keinen
+          zweiten Rückkanal, den ein Aufrufer vergessen könnte, und eine
+          verzögerte Suche verzögert auch das Leeren.
+        </p>
+        <div className="grid max-w-md gap-6">
+          <SearchField label="Übungen durchsuchen" />
+          <SearchField dense label="Übungen durchsuchen" defaultValue="Passspiel" />
+        </div>
+
+        <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
+          Dichte Bauform (<code>dense</code>)
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Warum das hohe Feld nicht reicht: In Filterzeilen und dichten
           Listenzeilen stehen Felder neben Select-Triggern und Chips und müssen
-          mit ihnen fluchten — <code>h-12</code> statt <code>h-14</code>, dazu
-          eine Stufe Fläche (<code>bg-elev-02</code>), weil ein dichtes Feld
-          ohne Label über seine Fläche lesbar bleiben muss. Dort beschriftet der
-          Platzhalter („Übungen durchsuchen…"), das schwebende Label hätte weder
-          Platz noch Aufgabe; es ist abgeschaltet und wandert als{" "}
-          <code>aria-label</code> an das Feld. <code>supportingText</code> und{" "}
-          <code>error</code> funktionieren unverändert.
+          mit ihnen fluchten — <code>h-12</code> statt <code>h-14</code>.{" "}
+          <strong>Das ist der ganze Unterschied.</strong> Kontur, Radius,
+          durchsichtige Fläche, Schriftgrad und schwebendes Label sind
+          dieselben; <code>supportingText</code>, <code>error</code> und{" "}
+          <code>befund</code> ebenso. Eine dichte Bauform ist dasselbe Feld,
+          enger gestellt — sähe sie anders aus, wäre sie ein zweites Feld, und
+          die Filterzeile müsste erklären, warum ihre Felder nicht wie Felder
+          aussehen.
         </p>
         <div className="grid max-w-md gap-6">
-          <TextField
-            dense
-            label="Übungen durchsuchen"
-            type="search"
-            leadingIcon={Search}
-            placeholder="Übungen durchsuchen…"
-          />
+          <TextField dense label="Verfügbare Kinder" type="number" min={1} leadingIcon={Users} />
           <TextField
             dense
             label="Verfügbare Kinder"
             type="number"
             min={1}
-            placeholder="Kinder"
             error
             supportingText="Bitte eine Zahl ≥ 1 eingeben."
           />
@@ -1399,11 +1418,11 @@ export default function Styleguide() {
         <div className="grid max-w-md gap-6">
           <TextField
             dense
-            label="Dauer in Minuten"
+            label="Minuten"
+            aria-label="Dauer in Minuten"
             type="number"
             min={0}
             defaultValue="15"
-            placeholder="min"
             leadingIcon={Clock}
             className="w-28"
             befund

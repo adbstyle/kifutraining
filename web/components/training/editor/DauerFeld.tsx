@@ -35,7 +35,7 @@ const WARNUNG_HINWEIS = "Ungleiche Dauer im selben Wechsel.";
  *
  * Bewusste Abweichung vom Entwurf: Das Feld zeigt den Wert OHNE Einheit. Ein
  * natives Zahlenfeld kann kein Suffix im Feld tragen; die Einheit steht darum
- * im Platzhalter, im Feldnamen («Dauer in Minuten») und im Uhr-Icon.
+ * im Feldnamen («Minuten», voll «Dauer in Minuten») und im Uhr-Icon.
  */
 export function DauerFeld({
   value,
@@ -117,8 +117,12 @@ export function DauerFeld({
         inputMode="numeric"
         min={0}
         step={DAUER_SCHRITT}
-        label="Dauer in Minuten"
-        placeholder="min"
+        /* Sichtbar nur «Minuten» — mehr trägt ein 112 px schmales Feld als
+           schwebendes Label nicht. Der volle Name bleibt der Vorlesehilfe
+           erhalten; er enthält das sichtbare Wort, ist also auch per Sprache
+           bedienbar (WCAG 2.5.3). */
+        label="Minuten"
+        aria-label="Dauer in Minuten"
         leadingIcon={Clock}
         className="w-28 shrink-0"
         value={entwurf}

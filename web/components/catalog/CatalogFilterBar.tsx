@@ -1,9 +1,9 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { FilterChip, MultiSelect, Button, TextField } from "@/components/ui";
+import { FilterChip, MultiSelect, Button, SearchField, TextField } from "@/components/ui";
 import { useDebouncedWert } from "@/lib/use-debounce";
 import {
   einordnungFilterOptionen,
@@ -96,12 +96,9 @@ export function CatalogFilterBar({
 
   return (
     <div className="mb-6 flex flex-wrap items-center gap-3">
-      <DebouncedField
-        type="search"
-        icon={Search}
+      <DebouncedSuche
         initial={filters.q ?? ""}
-        placeholder="Übungen durchsuchen…"
-        ariaLabel="Übungen durchsuchen"
+        label="Übungen durchsuchen"
         className="w-full sm:w-72"
         onCommit={(v) => setScalar("q", v)}
       />
@@ -163,10 +160,12 @@ export function CatalogFilterBar({
         min={1}
         icon={Users}
         initial={filters.kinder?.toString() ?? ""}
-        placeholder="Kinder"
         ariaLabel="Verfügbare Kinder"
         title="Zeigt Übungen, die mit so vielen Kindern durchführbar sind."
-        className="w-full sm:w-40"
+        /* Breiter als früher (w-40): Seit das Feld sein Label statt eines
+           Platzhalters trägt, muss «Verfügbare Kinder» neben dem Icon
+           hineinpassen, ohne abgeschnitten zu werden. */
+        className="w-full sm:w-48"
         onCommit={(v) => setScalar("kinder", v)}
       />
 
@@ -210,7 +209,6 @@ function DebouncedField({
   type?: string;
   inputMode?: "numeric";
   min?: number;
-  placeholder?: string;
   title?: string;
 }) {
   const [wert, aendern] = useDebouncedWert(initial, onCommit);
@@ -224,6 +222,34 @@ function DebouncedField({
       onChange={(e) => aendern(e.target.value)}
       className={className}
       {...props}
+    />
+  );
+}
+
+/* Dasselbe für die Suche, nur auf dem `SearchField` des Kits: Lupe rechts, nach
+   der ersten Eingabe ein Kreuz zum Leeren. Das Kreuz meldet sich über dasselbe
+   `onChange` — die Verzögerung greift also auch für es, und die URL verliert
+   `?q=` eine Tipppause später. */
+function DebouncedSuche({
+  initial,
+  onCommit,
+  label,
+  className,
+}: {
+  initial: string;
+  onCommit: (value: string) => void;
+  label: string;
+  className?: string;
+}) {
+  const [wert, aendern] = useDebouncedWert(initial, onCommit);
+
+  return (
+    <SearchField
+      dense
+      label={label}
+      value={wert}
+      onChange={(e) => aendern(e.target.value)}
+      className={className}
     />
   );
 }

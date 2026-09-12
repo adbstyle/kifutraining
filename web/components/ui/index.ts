@@ -54,5 +54,7 @@ export { TabNav } from "./TabNav";
 export type { TabNavItem } from "./TabNav";
 export { Breadcrumbs } from "./Breadcrumbs";
 export type { BreadcrumbItem } from "./Breadcrumbs";
+export { SearchField } from "./SearchField";
+export type { SearchFieldProps } from "./SearchField";
 export { PasswordField } from "./PasswordField";
 export type { PasswordFieldProps } from "./PasswordField";

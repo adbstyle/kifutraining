@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, TriangleAlert } from "lucide-react";
+import { Plus, TriangleAlert } from "lucide-react";
 import {
   Dialog,
   KategorieChip,
@@ -11,6 +11,7 @@ import {
   IconButton,
   Badge,
   Meldung,
+  SearchField,
 } from "@/components/ui";
 import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import { stufenAbgedeckt } from "@/lib/training";
@@ -201,24 +202,16 @@ export function ExercisePickerDialog({
           <Badge tone="neutral">{altersstufeLabels[altersstufe]}</Badge>
         </div>
 
-        {/* Suche. Offen statt gefüllt: Das Feld liegt im Dialog, und eine
-            eigene Fläche darunter ginge in der Höhenleiter abwärts — die
-            Kontur umreisst es, der Dialoggrund bleibt stehen. */}
-        <label className="relative block">
-          <Search
-            size={18}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-mittel"
-            aria-hidden
-          />
-          <input
-            type="search"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Übungen durchsuchen…"
-            aria-label="Übungen durchsuchen"
-            className="focus-ring w-full rounded-flaeche kontur border-kante bg-transparent py-2.5 pl-10 pr-3 type-body-medium text-on-surface placeholder:text-on-surface-mittel"
-          />
-        </label>
+        {/* Suche aus dem Kit. Offen statt gefüllt: Das Feld liegt im Dialog,
+            und eine eigene Fläche darunter ginge in der Höhenleiter abwärts —
+            die Kontur umreisst es, der Dialoggrund bleibt stehen. Dicht, weil
+            der Dialog seine Höhe für die Trefferliste braucht. */}
+        <SearchField
+          dense
+          label="Übungen durchsuchen"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
 
         {/* Erscheinungsform-Filter — nur das Vokabular dieser Altersstufe und
             nur in Einordnungen, die überhaupt eine tragen. */}
