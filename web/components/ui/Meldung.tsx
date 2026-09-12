@@ -25,7 +25,11 @@ type Ton = "fehler" | "erfolg";
 
    Die Vorlesehilfe erfährt es über `role`: eine Fehlermeldung unterbricht
    (`alert`), eine Bestätigung reiht sich ein (`status`). Wer es anders braucht,
-   überschreibt es. */
+   überschreibt es — und eine Meldung, die ein BEDIENELEMENT enthält, muss das
+   tun: Sie trägt `status`, nicht `alert`. `alert` ist atomar, jede Änderung
+   darin liesse den ganzen Kasten unterbrechend neu vorlesen, und ARIA verlangt
+   für `alert` ohnehin Inhalt ohne Fokus (Beispiel: der Login-Hinweis zur
+   unbestätigten Adresse mit seinem «erneut senden»-Knopf). */
 const toene: Record<Ton, string> = {
   fehler: "border-error text-error",
   erfolg: "border-primary text-primary",

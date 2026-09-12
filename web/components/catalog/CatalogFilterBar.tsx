@@ -30,7 +30,7 @@ export type CatalogFilters = {
 
 /* Such-/Filterleiste für den Übungspool — eine durchgehende, umbrechende Zeile
    statt Sidebar, analog zur Trainings-Filter-Bar. Mehrfach-Dimensionen sind
-   MultiSelect-Dropdowns (Placeholder = Empty-State-Beschriftung), Suche und
+   MultiSelect-Dropdowns (Leerfall als ruhendes Label), Suche und
    „Verfügbare Kinder" sind debounced Felder, Favoriten ein Toggle-Chip.
    URL ist die Quelle der Wahrheit: jede Änderung schreibt in die URL und löst
    eine neue Server-Abfrage aus. */
@@ -166,13 +166,13 @@ export function CatalogFilterBar({
       />
 
       {showMine && (
-        <FilterChip selected={!!filters.mine} onClick={toggleMine} className="h-12">
+        <FilterChip selected={!!filters.mine} onClick={toggleMine} groesse="leiste">
           Meine Übungen
         </FilterChip>
       )}
 
       {canFavorite && (
-        <FilterChip selected={!!filters.fav} onClick={toggleFav} className="h-12">
+        <FilterChip selected={!!filters.fav} onClick={toggleFav} groesse="leiste">
           Favoriten
         </FilterChip>
       )}

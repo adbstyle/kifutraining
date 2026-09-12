@@ -218,7 +218,7 @@ const akzentRollen: [string, string, string, string, string][] = [
     "error",
     "bg-error",
     ERROR.toUpperCase(),
-    `Fehleingabe und Befund. ${v(kontrast(ERROR, GRUND))} auf dem Grund.`,
+    `Fehleingabe und Befund, fast immer als Schrift. ${v(kontrast(ERROR, GRUND))} auf dem Grund, ${v(kontrast(ERROR, elev(24)))} noch im Dialog.`,
     "text-on-error",
   ],
   [
@@ -353,13 +353,19 @@ const radien: [string, string, string][] = [
 
 const hoehen: [string, string][] = [
   ["h-[22px] · 22 px", "Plakette und Kategorie-Chip — die kleinste beschriftete Fläche."],
-  ["h-8 · 32 px", "Label-Chip: Filter, Assist, Suggestion, Input — alles mit Vokabular-Aufschrift."],
+  [
+    "h-8 · 32 px",
+    "Label-Chip im Grundmass: Filter, Assist, Suggestion, Input — alles mit Vokabular-Aufschrift.",
+  ],
   [
     "h-9 · 36 px",
     "Knopf klein, Nutzertext-Chip, geteilter Chip, leiser Knopf — sie stehen in einer Leiste nebeneinander und fluchten darum.",
   ],
   ["h-11 · 44 px", "Knopf mittel, Icon-Knopf, Menühälfte — Mindestmass für den Finger."],
-  ["h-12 · 48 px", "Dichtes Feld in Filter- und Listenzeilen."],
+  [
+    "h-12 · 48 px",
+    "Dichtes Feld in Filter- und Listenzeilen — und der Filter-Chip daneben (groesse=\u00ableiste\u00bb), damit die Leiste eine Linie bleibt.",
+  ],
   ["h-14 · 56 px", "Hohes Feld, grosser Knopf — auf dem Platz, mit Handschuhen."],
 ];
 
@@ -477,6 +483,25 @@ export default function Styleguide() {
             />
           ))}
         </div>
+
+        <p className="type-body-medium mb-6 max-w-2xl text-on-surface-mittel">
+          <strong>Error liegt eine Stufe über Materials Baseline.</strong> Die
+          Baseline (<code>#cf6679</code>) ist als <em>Fläche</em> gedacht: Als
+          Schrift trägt sie nur auf dem Grund und fällt im Dialog auf{" "}
+          {v(kontrast("#cf6679", elev(24)))} — die Anwendung setzt Error aber
+          fast nie als Fläche, sondern als Schrift auf der Karte, in der
+          Menüzeile und im Dialog. Der hellere Ton trägt auf{" "}
+          <strong>jeder</strong> Höhenstufe über 4.5:1, am engsten auf 24dp
+          mit {v(kontrast(ERROR, elev(24)))}, und die gefüllte Fehlerfläche
+          behält ihre schwarze Aufschrift ({v(kontrast(ON_ERROR, ERROR))}).
+          Nachgerechnet wird das seither auf jeder Stufe und zusätzlich als
+          Kontur (<code>scripts/pruefe-farben.ts</code>), nicht mehr nur auf
+          dem Grund — dort lag die Lücke, durch die die Baseline kam. Näher
+          rückt Error damit an <code>kat-c</code> (Abstand{" "}
+          {rgbAbstand(ERROR, KAT.c).toFixed(0)} im RGB-Würfel): Getrennt hält
+          die beiden nicht die Farbe, sondern die Form — eine Plakette mit
+          einem Buchstaben gegen einen Feldrahmen mit einem Satz darunter.
+        </p>
 
         <p className="type-label-small mb-2 text-on-surface-mittel">
           Schrift — Weiss in drei Deckungen
@@ -1125,6 +1150,19 @@ export default function Styleguide() {
           nicht angewandt; die Rolle bleibt besetzt, damit die Chip-Leiter
           vollständig ist.
         </p>
+        <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+          <strong>Zwei Höhen, geführt statt von aussen.</strong> Ein Chip im
+          Fliesstext oder in einer Chip-Reihe trägt das Grundmass (32 px). Steht
+          er in einer <strong>Filterleiste</strong>, fluchtet er mit den dichten
+          Feldern daneben und nimmt deren 48 px — über{" "}
+          <code>groesse=&quot;leiste&quot;</code> am{" "}
+          <code>FilterChip</code>, nicht über eine Höhenklasse im{" "}
+          <code>className</code>: <code>cn</code> ist ein reiner Joiner, eine
+          Höhe von aussen entschiede allein über die Reihenfolge im erzeugten
+          CSS. Dieselbe Überlegung wie bei <code>look</code> am{" "}
+          <code>ChoiceChip</code>. Den Nutzertext-Chip betrifft es nicht — er
+          bleibt bei 36 px, weil er neben dem leisen Knopf steht (siehe 08).
+        </p>
         <ChipsDemo />
       </Section>
 
@@ -1490,12 +1528,14 @@ export default function Styleguide() {
           Schrift, nie als Fläche.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Bewusste Abweichung:</strong> Error auf 08dp kommt auf{" "}
-          {v(kontrast(ERROR, elev(8)))} — unter den 4.5:1 für Fliesstext, über
-          den 3:1 für grosse Schrift. Die Zeile trägt darum nie die Farbe
-          allein: Sie steht abgesetzt am Fuss, hat ihr eigenes Zeichen, und der
-          Vorgang ist zweistufig (Eintrag → Bestätigungsdialog). Das Rot
-          verstärkt eine Aussage, die auch ohne es ankommt.
+          Error trägt hier als Fliesstext: Das Panel liegt auf 08dp, und dort
+          kommt die Rolle auf {v(kontrast(ERROR, elev(8)))}. Mit Materials
+          Baseline war das eine bewusste Abweichung ({v(kontrast("#cf6679", elev(8)))}
+          {" "}— unter den 4.5:1); seit Error eine Stufe heller ist (siehe 01),
+          ist es keine mehr. Die Zeile trägt die Farbe trotzdem nicht allein:
+          Sie steht abgesetzt am Fuss, hat ihr eigenes Zeichen, und der Vorgang
+          ist zweistufig (Eintrag → Bestätigungsdialog). Das Rot verstärkt eine
+          Aussage, die auch ohne es ankommt.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Tastatur:</strong> Beim Öffnen springt der Fokus auf den
