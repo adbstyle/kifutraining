@@ -105,7 +105,6 @@ export function CatalogFilterBar({
 
       <MultiSelect
         label="Trainingsteil"
-        hideLabel
         options={einordnungFilterOptionen}
         value={filters.teil}
         onChange={(v) => setList("teil", v)}
@@ -115,7 +114,6 @@ export function CatalogFilterBar({
       />
       <MultiSelect
         label="Alterskategorie"
-        hideLabel
         options={stufenOptionen}
         value={filters.kat}
         onChange={(v) => setList("kat", v)}
@@ -125,7 +123,6 @@ export function CatalogFilterBar({
       />
       <MultiSelect
         label="Feldtyp"
-        hideLabel
         options={feldOptionen}
         value={filters.feld}
         onChange={(v) => setList("feld", v)}
@@ -135,7 +132,6 @@ export function CatalogFilterBar({
       />
       <MultiSelect
         label="Erscheinungsform"
-        hideLabel
         options={formOptionen}
         value={filters.form}
         onChange={(v) => setList("form", v)}
@@ -145,7 +141,6 @@ export function CatalogFilterBar({
       />
       <MultiSelect
         label="Übungstyp"
-        hideLabel
         options={typOptionen}
         value={filters.typ}
         onChange={(v) => setList("typ", v)}
@@ -163,9 +158,10 @@ export function CatalogFilterBar({
         ariaLabel="Verfügbare Kinder"
         title="Zeigt Übungen, die mit so vielen Kindern durchführbar sind."
         /* Breiter als früher (w-40): Seit das Feld sein Label statt eines
-           Platzhalters trägt, muss «Verfügbare Kinder» neben dem Icon
-           hineinpassen, ohne abgeschnitten zu werden. */
-        className="w-full sm:w-48"
+           Platzhalters trägt, muss «Verfügbare Kinder» in der Schrift des
+           Werts neben dem Icon hineinpassen, ohne an die rechte Kante zu
+           stossen. */
+        className="w-full sm:w-52"
         onCommit={(v) => setScalar("kinder", v)}
       />
 

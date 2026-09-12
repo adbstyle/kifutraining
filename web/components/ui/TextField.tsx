@@ -32,19 +32,38 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   dense?: boolean;
 }
 
-// Schwebendes Label (Label-Stil: mono/versal). Float via :placeholder-shown
-// (Input trägt placeholder=" "). Ruhend vertikal in der Feldmitte (top-1/2) in
-// `type-label-small`, geschwebt in `type-plakette` — auf der Kontur ist das
-// Label nur noch eine Beschriftung und darf auf 10 px schrumpfen.
-//
-// Beim Schweben stanzt es die Kontur aus und braucht dafür die Farbe der
-// Fläche DAHINTER: `--feld-grund` ist die Stellschraube. Vorbelegt mit dem
-// Grund (00dp); jede Fläche, die Felder trägt, erklärt ihre Stufe selbst —
-// Card (01), Unterblock (02), Übungszeile (01), Dialog (24) setzen
-// `[--feld-grund:var(--color-elev-NN)]`. So kann ein Feld nirgends ein
-// falsches Rechteck stanzen, ohne dass der Aufrufer daran denken müsste.
-const labelBase =
-  "pointer-events-none absolute top-1/2 -translate-y-1/2 type-label-small bg-(--feld-grund,var(--color-elev-00)) px-1 transition-all duration-150 peer-focus:top-0 peer-focus:type-plakette peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:type-plakette";
+/* Das schwebende Label — zwei Zustände, und sie sagen Verschiedenes.
+ *
+ * RUHEND steht es IM Feld, an genau der Stelle, an der gleich der Wert stehen
+ * wird. Es trägt darum die Schrift des Werts (`type-body-large`) und
+ * unterscheidet sich von ihm nur in der Farbe: Was dort steht, ist noch nichts
+ * Eingegebenes. In der Label-Schrift (mono/versal) sähe es aus wie eine
+ * Beschriftung, die zufällig im Feld liegt — und Auswahlfelder, deren Leerfall
+ * seit je ein Satz ist («Alle Stufen»), stünden in einer Zeile daneben sichtbar
+ * anders da.
+ *
+ * GESCHWEBT sitzt es auf der Kontur und ist nur noch eine Marke am Feld. Dort
+ * gilt der Label-Stil des Hauses (`type-plakette`, mono/versal, 10 px): Es
+ * konkurriert nicht mehr mit dem Wert, sondern benennt ihn.
+ *
+ * Beim Schweben stanzt es die Kontur aus und braucht dafür die Farbe der
+ * Fläche DAHINTER: `--feld-grund` ist die Stellschraube. Vorbelegt mit dem
+ * Grund (00dp); jede Fläche, die Felder trägt, erklärt ihre Stufe selbst —
+ * Card (01), Unterblock (02), Übungszeile (01), Dialog (24) setzen
+ * `[--feld-grund:var(--color-elev-NN)]`. So kann ein Feld nirgends ein
+ * falsches Rechteck stanzen, ohne dass der Aufrufer daran denken müsste.
+ *
+ * Die drei Bausteine sind exportiert, weil Select und MultiSelect dasselbe
+ * Label tragen — sie schalten es aber selbst um (`schwebt ? … : …`), denn ein
+ * Trigger ohne `<input>` kennt kein `:placeholder-shown`. */
+export const feldLabelBase =
+  "pointer-events-none absolute -translate-y-1/2 bg-(--feld-grund,var(--color-elev-00)) px-1 transition-all duration-150";
+export const feldLabelRuhend = "top-1/2 type-body-large";
+export const feldLabelSchwebend = "top-0 type-plakette";
+
+// Für das TextField hängen die beiden Zustände am Platzhalter (`placeholder=" "`)
+// und am Fokus des Nachbar-Inputs (`peer`).
+const labelBase = `${feldLabelBase} ${feldLabelRuhend} peer-focus:top-0 peer-focus:type-plakette peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:type-plakette`;
 
 // Horizontale Lage des Labels. Ohne Icon konstant bei left-3 (Text bündig mit
 // dem Input-px-4). Mit Icon ruht das Label rechts neben dem Icon (left-10) und

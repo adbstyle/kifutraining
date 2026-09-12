@@ -81,7 +81,6 @@ export function TrainingFilterBar({
 
       <MultiSelect
         label="Alterskategorie"
-        hideLabel
         options={stufenOptionen}
         value={stufen}
         onChange={setStufen}

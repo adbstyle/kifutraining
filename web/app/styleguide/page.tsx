@@ -52,7 +52,6 @@ import {
   User,
   Pencil,
   Info,
-  Clock,
   SearchX,
   MailCheck,
 } from "lucide-react";
@@ -1300,8 +1299,8 @@ export default function Styleguide() {
 
       <Section n="14" title="Textfelder, Text-Area, Datum &amp; Zeit">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Umrissen, mit schwebendem Label in Mono-Versalien: Kontur auf der
-          Kante (1.5 px), <code>rounded-flaeche</code>, durchsichtige Fläche und{" "}
+          Umrissen, mit schwebendem Label: Kontur auf der Kante (1.5 px),{" "}
+          <code>rounded-flaeche</code>, durchsichtige Fläche und{" "}
           <code>h-14</code> — beziehungsweise <code>h-12</code>, wo es dicht
           steht (siehe unten); mehr Bauformen gibt es nicht. Im Fokus wird die Kontur 2 px stark und Primary;
           die Zustands-Ebene bleibt hier aussen vor, denn ein{" "}
@@ -1311,6 +1310,23 @@ export default function Styleguide() {
           <code>--feld-grund</code> (voreingestellt der Grund, 00dp — Karte,
           Block, Übungszeile und Dialog setzen ihre Stufe selbst, ein Feld muss
           nichts wissen).
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Das Label trägt in seinen zwei Lagen zwei Schriften, und das
+          ist Absicht.</strong> Ruhend steht es <em>im</em> Feld, an genau der
+          Stelle, an der gleich der Wert stehen wird — also in der Schrift des
+          Werts (<code>type-body-large</code>), unterschieden nur durch die
+          blassere Farbe: Was dort steht, ist noch nichts Eingegebenes. In
+          Mono-Versalien sähe es aus wie eine Beschriftung, die zufällig im Feld
+          liegt, und Auswahlfelder, deren Leerfall seit je ein Satz ist («Alle
+          Stufen»), stünden in derselben Zeile sichtbar anders da. Geschwebt
+          sitzt es auf der Kontur und ist nur noch eine Marke am Feld — dort
+          gilt der Label-Stil des Hauses (<code>type-plakette</code>,
+          mono/versal, 10 px), denn es konkurriert nicht mehr mit dem Wert,
+          sondern benennt ihn. Dieselben zwei Lagen tragen Text-Area,
+          Einfach- und Mehrfachauswahl (16 und 17); die drei Klassenbündel
+          stehen als <code>feldLabelBase</code> / <code>-Ruhend</code> /{" "}
+          <code>-Schwebend</code> im TextField.
         </p>
         <div className="grid max-w-md gap-6">
           <TextField label="Übungsname" supportingText="Pflichtfeld" />
@@ -1423,7 +1439,6 @@ export default function Styleguide() {
             type="number"
             min={0}
             defaultValue="15"
-            leadingIcon={Clock}
             className="w-28"
             befund
           />
@@ -1500,7 +1515,16 @@ export default function Styleguide() {
           <code>state-aktiv</code> — dieselbe Deckung wie der Fokus, aber ohne
           echten <code>:focus-visible</code>, denn der liegt auf dem Trigger.
           Listbox-Semantik mit voller Tastatursteuerung (↑/↓, Home/End, Enter,
-          Esc).
+          Esc). Das Label schwebt auf der Kontur wie am Textfeld (14) — und
+          zwar immer: Eine Einfachauswahl hat stets einen Wert, und sei es der
+          Leerfall («— kein Feldtyp —»), also gibt es keine Ruhelage, in der das
+          Label im Feld stünde. Ein Label <em>über</em> dem Feld, wie es hier
+          früher stand, wäre nach dem Angleichen der Mehrfachauswahl (17) die
+          letzte Auswahl gewesen, die nicht wie ein Feld aussieht. Aussen
+          beschriftet bleibt allein Datum &amp; Zeit (14) — dort aus einem
+          eigenen Grund: Ein natives Datumsfeld zeigt sein{" "}
+          <code>dd.mm.yyyy</code> immer, ein Label hätte also nie eine Ruhelage
+          und stünde von Anfang an auf der Kontur.
         </p>
         <div className="grid max-w-md gap-6">
           <Select
@@ -1514,17 +1538,14 @@ export default function Styleguide() {
             ]}
             supportingText="Öffnet ein eigenes Panel statt des Betriebssystem-Dropdowns."
           />
-          {/* hideLabel: Label sr-only, der Empty-State (erste Option) beschriftet
-              das Feld — für dichte Filterzeilen mit Feldern Seite an Seite. */}
           <Select
             label="Sichtbarkeit"
-            hideLabel
             options={[
               { value: "all", label: "Alle" },
               { value: "public", label: "Community" },
               { value: "private", label: "Privat" },
             ]}
-            supportingText="hideLabel: Label sr-only, Empty-State dient als Beschriftung."
+            supportingText="Die erste Option ist der Leerfall — das Label schwebt trotzdem."
           />
         </div>
       </Section>
@@ -1539,7 +1560,17 @@ export default function Styleguide() {
           nicht alle Tags in die Zelle, bündelt eine <code>+N</code>-Plakette die
           überzähligen — die sichtbare Anzahl wird per Messung an die Feldbreite
           angepasst (mit der Breite mit- und abnehmend). Trigger wie ein Feld,
-          Panel wie ein Menü. Combobox- und Listbox-Semantik
+          Panel wie ein Menü — und das Label wie am Textfeld (14), nur von Hand
+          geschaltet, denn ein Trigger ohne <code>&lt;input&gt;</code> kennt
+          kein <code>:placeholder-shown</code>. Ruhend steht dort der Leerfall
+          in Worten («Alle Stufen», der <code>placeholder</code>) — genau da,
+          wo gleich die Tags stehen. Beim ersten Wert, und ebenso solange das
+          Panel offen ist, schwebt an seiner Stelle der Name der Dimension
+          («Alterskategorie», das <code>label</code>) auf die Kontur. Zwei
+          Sätze für zwei Zustände, weil sie Verschiedenes sagen; der
+          barrierefreie Name bleibt konstant das <code>label</code> — ein Feld
+          darf nicht umbenannt werden, bloss weil jemand etwas ausgewählt hat.
+          Combobox- und Listbox-Semantik
           (<code>aria-multiselectable</code>) mit voller Tastatursteuerung (↑/↓,
           Home/End, Enter toggelt, Esc schliesst). <code>searchable</code> /{" "}
           <code>actions</code> einzeln abschaltbar für kurze feste Listen.{" "}

@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useId, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { feldLabelBase, feldLabelSchwebend } from "./TextField";
 
 export interface SelectOption {
   value: string;
@@ -24,9 +25,6 @@ export interface SelectProps {
   onChange?: (value: string) => void;
   /** Optionales Hidden-Input, damit das Feld an nativer Form-Serialisierung teilnimmt. */
   name?: string;
-  /** Label nur für Screenreader (visuell ausgeblendet) — z. B. wenn der
-      Empty-State des Felds bereits als Beschriftung dient. */
-  hideLabel?: boolean;
   supportingText?: string;
   error?: boolean;
   disabled?: boolean;
@@ -37,7 +35,13 @@ export interface SelectProps {
 /* M2 Single-Select — kein natives <select>. Der Trigger ist gebaut wie ein
    Feld (Kontur in `kante`, offener Grund), das aufgeklappte Panel wie ein
    Menü (08dp, Haarlinie, Schatten, ✓ auf der aktuellen Auswahl).
-   Listbox-Semantik + vollständige Tastatursteuerung. */
+   Listbox-Semantik + vollständige Tastatursteuerung.
+
+   Das Label schwebt wie beim TextField auf der Kontur — und zwar immer: Ein
+   Single-Select hat stets einen Wert (und sei es der Leerfall «— kein Feldtyp —»),
+   also gibt es keine Ruhelage, in der das Label im Feld stünde. Ein Label ÜBER
+   dem Feld, wie es hier früher stand, war der einzige Ort im Kit, an dem eine
+   Beschriftung ausserhalb der Kontur lag. */
 export function Select({
   label,
   options,
@@ -45,7 +49,6 @@ export function Select({
   defaultValue,
   onChange,
   name,
-  hideLabel,
   supportingText,
   error,
   disabled,
@@ -168,15 +171,6 @@ export function Select({
 
   return (
     <div className={className}>
-      <label
-        htmlFor={fid}
-        className={cn(
-          "type-label-small mb-2 block text-on-surface-mittel",
-          hideLabel && "sr-only",
-        )}
-      >
-        {label}
-      </label>
       <div ref={rootRef} className="relative">
         <button
           id={fid}
@@ -190,7 +184,7 @@ export function Select({
           onClick={() => !disabled && setOpen((o) => !o)}
           onKeyDown={onTriggerKey}
           className={cn(
-            "focus-ring type-body-large flex h-12 w-full items-center justify-between gap-2 rounded-flaeche kontur bg-transparent px-3 text-left text-on-surface",
+            "focus-ring type-body-large flex h-12 w-full items-center justify-between gap-2 rounded-flaeche kontur bg-transparent px-4 text-left text-on-surface",
             // Offen zieht der Trigger die Kontur auf Primary — er gehört
             // dann zum Panel darunter und soll das auch zeigen.
             error ? "border-error" : open ? "border-primary" : "border-kante",
@@ -208,6 +202,18 @@ export function Select({
             )}
           />
         </button>
+
+        <label
+          htmlFor={fid}
+          className={cn(
+            feldLabelBase,
+            feldLabelSchwebend,
+            "left-3",
+            error ? "text-error" : open ? "text-primary" : "text-on-surface-mittel",
+          )}
+        >
+          {label}
+        </label>
 
         {open && (
           <ul
@@ -269,7 +275,7 @@ export function Select({
         {name && <input type="hidden" name={name} value={current} />}
       </div>
       {supportingText && (
-        <p className={cn("type-body-small mt-1 px-1", error ? "text-error" : "text-on-surface-mittel")}>
+        <p className={cn("type-body-small mt-1 px-4", error ? "text-error" : "text-on-surface-mittel")}>
           {supportingText}
         </p>
       )}

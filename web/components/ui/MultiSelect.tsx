@@ -5,6 +5,11 @@ import { Check, CheckCheck, ChevronDown, RotateCcw, Search, X } from "lucide-rea
 import { cn } from "@/lib/cn";
 import { IconButton } from "./IconButton";
 import { chipTextSelected } from "./Chip";
+import {
+  feldLabelBase,
+  feldLabelRuhend,
+  feldLabelSchwebend,
+} from "./TextField";
 import type { SelectOption } from "./Select";
 
 export interface MultiSelectProps {
@@ -22,9 +27,9 @@ export interface MultiSelectProps {
   searchable?: boolean;
   /** Footer mit „Zurücksetzen" / „Alle auswählen" (Default). */
   actions?: boolean;
-  /** Label nur für Screenreader (visuell ausgeblendet) — z. B. wenn der
-      Placeholder (Empty-State) bereits als Beschriftung dient. */
-  hideLabel?: boolean;
+  /** Der Leerfall in Worten — «Alle Stufen» statt eines leeren Felds. Er steht
+      im ruhenden Label; sobald etwas gewählt ist, schwebt an dessen Stelle
+      `label` auf die Kontur. Voreingestellt «Auswählen …». */
   placeholder?: string;
   supportingText?: string;
   error?: boolean;
@@ -54,7 +59,6 @@ export function MultiSelect({
   name,
   searchable = true,
   actions = true,
-  hideLabel,
   placeholder,
   supportingText,
   error,
@@ -294,6 +298,10 @@ export function MultiSelect({
   }
 
   const showPlaceholder = selectedOptions.length === 0;
+  // Das Label schwebt, sobald etwas gewählt ist — und auch, solange das Panel
+  // offen steht: Dann liegt die Aufmerksamkeit auf der Liste, und der Leerfall
+  // im Feld wäre eine Aussage über einen Zustand, der sich gerade ändert.
+  const schwebt = !showPlaceholder || open;
 
   // Ein entfernbarer Tag. `measuring`: Variante fürs Mess-Layer (gleiche Breite,
   // ohne Handler) — `shrink-0` hält die natürliche Breite in der clippenden Zeile.
@@ -337,13 +345,11 @@ export function MultiSelect({
 
   return (
     <div className={className}>
-      <span
-        id={`${fid}-label`}
-        className={cn(
-          "type-label-small mb-2 block text-on-surface-mittel",
-          hideLabel && "sr-only",
-        )}
-      >
+      {/* Der barrierefreie Name des Triggers und der Liste. Er bleibt konstant
+          `label` («Trainingsteil»), während das sichtbare Label je nach Zustand
+          zwei verschiedene Sätze zeigt — der Vorlesehilfe darf ein Feld nicht
+          umbenannt werden, bloss weil jemand etwas ausgewählt hat. */}
+      <span id={`${fid}-label`} className="sr-only">
         {label}
       </span>
 
@@ -367,7 +373,7 @@ export function MultiSelect({
           onClick={() => !disabled && setOpen((o) => !o)}
           onKeyDown={onTriggerKey}
           className={cn(
-            "focus-ring flex h-12 w-full items-center gap-1.5 rounded-flaeche kontur bg-transparent px-2",
+            "focus-ring flex h-12 w-full items-center gap-1.5 rounded-flaeche kontur bg-transparent px-3",
             error ? "border-error" : "border-kante",
             // Offen zieht der Trigger die Kontur auf Primary — er gehört dann
             // zum Panel darunter und soll das auch zeigen.
@@ -375,15 +381,15 @@ export function MultiSelect({
             disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
           )}
         >
+          {/* Der Leerfall steht nicht mehr hier drin, sondern im Label darüber
+              — sonst stünden im selben Feld zwei Beschriftungen übereinander.
+              Bleibt die Tag-Zeile; `pl-1` rückt die Tags auf dieselbe Kante wie
+              das Label (px-3 + dessen px-1). */}
           <div
             ref={contentRef}
-            className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden"
+            className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden pl-1"
           >
-            {showPlaceholder ? (
-              <span className="type-body-large truncate px-1 text-on-surface-mittel">
-                {placeholder ?? "Auswählen …"}
-              </span>
-            ) : (
+            {!showPlaceholder && (
               <>
                 {visibleOptions.map((o) => renderChip(o))}
                 {hiddenCount > 0 && (
@@ -421,6 +427,29 @@ export function MultiSelect({
             {selectedOptions.map((o) => renderChip(o, true))}
           </div>
         </div>
+
+        {/* Das Label wie am TextField, nur von Hand geschaltet: Ein Trigger
+            ohne <input> kennt kein `:placeholder-shown`. Ruhend zeigt es den
+            Leerfall («Alle Stufen») dort, wo gleich die Tags stehen; sobald
+            etwas gewählt ist — oder das Panel offen ist und die Wahl also
+            gerade läuft —, schwebt an dessen Stelle der Name der Dimension auf
+            die Kontur. `aria-hidden`, weil der Name des Felds aus dem
+            sr-only-Label oben kommt und sich nicht ändern darf. */}
+        <span
+          aria-hidden
+          className={cn(
+            feldLabelBase,
+            "left-3",
+            schwebt ? feldLabelSchwebend : feldLabelRuhend,
+            error
+              ? "text-error"
+              : schwebt && open
+                ? "text-primary"
+                : "text-on-surface-mittel",
+          )}
+        >
+          {schwebt ? label : (placeholder ?? "Auswählen …")}
+        </span>
 
         {open && (
           <div className="absolute z-50 mt-1 flex max-h-80 w-full flex-col overflow-hidden rounded-flaeche border border-linie bg-elev-08 shadow-dp-08">
