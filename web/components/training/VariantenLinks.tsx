@@ -61,7 +61,7 @@ export function VariantenLinks({
       {/* Dasselbe Zeichen wie an der Variantenleiste des Editors. Hier trägt es
           mehr als dort: Die Zeile steht frei auf der Seite, ohne Kartenkopf,
           der sie einordnen würde. */}
-      <Layers size={18} strokeWidth={2} aria-hidden className="shrink-0 text-on-surface-variant" />
+      <Layers size={18} strokeWidth={2} aria-hidden className="shrink-0 text-on-surface-mittel" />
       {varianten.map((v) => (
         <Link
           key={v.id}

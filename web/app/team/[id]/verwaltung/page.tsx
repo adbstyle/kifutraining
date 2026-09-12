@@ -39,11 +39,11 @@ export default async function TeamVerwaltungPage({
       <Card className="p-5 sm:p-6">
         <h2 className="type-title-large text-on-surface">
           Mitglieder
-          <span className="type-label-small ml-2 text-on-surface-variant">
+          <span className="type-label-small ml-2 text-on-surface-mittel">
             {team.mitglieder.length}
           </span>
         </h2>
-        <p className="type-body-medium mt-2 text-on-surface-variant">
+        <p className="type-body-medium mt-2 text-on-surface-mittel">
           Alle Mitglieder sind gleichberechtigt: Jede und jeder darf das Team
           umbenennen, Trainings bearbeiten und weitere Trainer:innen aufnehmen.
         </p>
@@ -58,7 +58,7 @@ export default async function TeamVerwaltungPage({
 
       <Card className="p-5 sm:p-6">
         <h2 className="type-title-large text-on-surface">Mitgliedschaft beenden</h2>
-        <p className="type-body-medium mt-2 mb-4 text-on-surface-variant">
+        <p className="type-body-medium mt-2 mb-4 text-on-surface-mittel">
           Verlassen betrifft nur dich; Auflösen löscht das Team samt seinen
           Trainings und Terminen für alle.
         </p>

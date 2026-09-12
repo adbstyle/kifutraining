@@ -10,7 +10,7 @@ import { DAUER_SCHRITT } from "@/lib/training";
  *  schöbe die halbe Übungszeile auseinander. */
 const UNGUELTIG = "Ganze Zahl ab 0.";
 
-/** Der bernsteine Rahmen ist nur sehend wahrnehmbar. Dieser Satz sagt dasselbe
+/** Der rote Rahmen ist nur sehend wahrnehmbar. Dieser Satz sagt dasselbe
  *  für Screenreader; er hängt als Beschreibung am Feld. Kein `title`: Ein
  *  Tooltip ist auf dem Touchgerät unerreichbar. */
 const WARNUNG_HINWEIS = "Ungleiche Dauer im selben Wechsel.";
@@ -44,8 +44,11 @@ export function DauerFeld({
 }: {
   /** Die erfasste Dauer in Minuten, `null` ohne Dauer. */
   value: number | null;
-  /** Steht diese Dauer in einem ungleich langen Wechsel? Färbt den Rahmen
-   *  bernstein (Story #150 `dauerWarnung`) — ein Befund, kein Fehler. */
+  /** Steht diese Dauer in einem ungleich langen Wechsel? Färbt den Rahmen rot
+   *  (Story #150 `dauerWarnung`) — ein Befund, kein Fehler: Befund und
+   *  Fehleingabe tragen dieselbe Farbe, unterschieden sind sie in
+   *  `aria-invalid` und im Verhalten (der Befund bleibt speicherbar), nicht
+   *  im Bild. */
   warnung?: boolean;
   /** Der neue Wert; `null` heisst «ohne Dauer». Persistiert der Aufrufer. */
   onChange: (next: number | null) => void;
@@ -130,12 +133,15 @@ export function DauerFeld({
         onBlur={(e) => speichere(e.currentTarget)}
         onKeyDown={beiTaste}
         error={fehler}
-        warning={zeigeWarnung}
+        befund={zeigeWarnung}
         supportingText={fehler ? UNGUELTIG : undefined}
         /* Nur setzen, wenn es etwas zu beschreiben gibt: Ein durchgereichtes
            `undefined` überschriebe die Verknüpfung, die das Kit im Fehlerfall
            selbst auf den Hinweistext legt. Beides zugleich kommt nicht vor —
-           `error` verdrängt `warning`. */
+           `error` verdrängt `befund`. Sichtbar sind die beiden ohnehin
+           dasselbe rote Feld; `error` setzt zusätzlich `aria-invalid`, der
+           Befund nicht: Er ist ein Hinweis auf die Planung, keine
+           zurückgewiesene Eingabe. */
         {...(zeigeWarnung ? { "aria-describedby": warnId } : {})}
       />
       {zeigeWarnung && (

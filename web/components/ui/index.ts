@@ -3,21 +3,20 @@ export { ButtonGroup } from "./ButtonGroup";
 export { Badge, HerkunftBadge } from "./Badge";
 export {
   KategorieChip,
+  katPlakette,
   FilterChip,
   ChoiceChip,
   ChoiceChipGroup,
   AssistChip,
   SuggestionChip,
   InputChip,
-  chipBase,
-  chipOutlined,
-  chipSelected,
-  chipTextHuelle,
   chipTextBase,
   chipTextOutlined,
   chipTextSelected,
 } from "./Chip";
 export { Card } from "./Card";
+export { Leerzustand } from "./Leerzustand";
+export { Meldung } from "./Meldung";
 export { UebungsBild } from "./UebungsBild";
 export { FieldPlaceholder } from "./FieldPlaceholder";
 export { ExerciseCard } from "./ExerciseCard";
@@ -48,7 +47,7 @@ export { Disclosure } from "./Disclosure";
 export type { DisclosureProps } from "./Disclosure";
 export { Dialog } from "./Dialog";
 export { Snackbar } from "./Snackbar";
-export { IconButton, IconButtonLink, iconButtonClasses } from "./IconButton";
+export { IconButton, IconButtonLink } from "./IconButton";
 export type { IconButtonProps, IconButtonLinkProps } from "./IconButton";
 export { Tooltip } from "./Tooltip";
 export { TabNav } from "./TabNav";

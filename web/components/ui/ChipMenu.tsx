@@ -84,7 +84,7 @@ export function ChipMenu({
   leading?: ReactNode;
   /** Gedämpfter Zusatz NACH dem Label — eine Angabe zum Wert, keine Handlung
    *  (z. B. „· 24 min"). Der Aufrufer setzt die Farbe
-   *  (`text-on-surface-variant`), damit sie nicht mit dem Namen konkurriert. */
+   *  (`text-on-surface-mittel`), damit sie nicht mit dem Namen konkurriert. */
   trailing?: ReactNode;
   /** a11y-Name des ungeteilten Chips, wenn das blosse Label zu wenig sagt
    *  („Gruppe 2, Wechsel 2 von 3"). Im geteilten Fall benennen
@@ -100,9 +100,16 @@ export function ChipMenu({
   /** Nur geteilt: a11y-Name der rechten (öffnenden) Hälfte. Vorgabe
    *  „Menü zu „{label}"". */
   menuAriaLabel?: string;
-  /** `warning`: etwas stimmt nicht, lässt sich aber speichern. Färbt nur Rahmen
-   *  und Chevron — nie die Fläche (siehe Warnrolle in globals.css). */
-  tone?: "neutral" | "warning";
+  /** `befund`: etwas stimmt nicht, lässt sich aber speichern. Färbt nur Rahmen
+   *  und Chevron — nie die Fläche.
+   *
+   *  Befund und Fehleingabe tragen dieselbe Farbe; sie unterscheiden sich in
+   *  `aria-invalid` und im Verhalten, nicht im Bild. Eine eigene dritte Farbe
+   *  fürs blosse Hinschauen gibt es bewusst nicht mehr: Sie stand ausserhalb
+   *  der Rollen und musste Stück für Stück mitgepflegt werden, während der
+   *  Unterschied ohnehin nicht in der Farbe liegt, sondern darin, ob sich
+   *  speichern lässt. */
+  tone?: "neutral" | "befund";
   disabled?: boolean;
   /** Ausrichtung/Breite des Menüs, z. B. `right-0`. */
   menuClassName?: string;
@@ -139,24 +146,25 @@ export function ChipMenu({
     };
   }
 
-  // Warnung schlägt die Auswahl am RAHMEN (sie ist die Meldung), nie an der
-  // Fläche — bernsteine Füllung ist per Regel ausgeschlossen.
+  // Der Befund schlägt die Auswahl am RAHMEN (er ist die Meldung), nie an der
+  // Fläche — Farbe trägt hier, sie füllt nicht.
   const randfarbe =
-    tone === "warning"
-      ? "border-warning"
+    tone === "befund"
+      ? "border-error"
       : selected
-        ? "border-transparent"
-        : "border-outline";
-  const flaeche = selected
-    ? "bg-(--chip-selected-container) text-(--chip-selected-label)"
-    : "text-on-surface";
+        ? "border-primary"
+        : "border-kante";
+  // Gewählt wie jeder Nutzertext-Chip (`chipTextSelected`): Primary umrandet
+  // und beschriftet, dazu ein sehr leiser Grund — nicht gefüllt, sonst kippte
+  // der selbst vergebene Name in schwarze Schrift.
+  const flaeche = selected ? "bg-primary/12 text-primary" : "text-on-surface";
 
   const chevron = (
     <ChevronDown
       size={14}
       strokeWidth={2}
       aria-hidden
-      className={cn("shrink-0", tone === "warning" && "text-warning")}
+      className={cn("shrink-0", tone === "befund" && "text-error")}
     />
   );
 
@@ -189,8 +197,8 @@ export function ChipMenu({
             aria-label={selectAriaLabel}
             onClick={onSelect}
             className={cn(
-              "focus-ring inline-flex min-w-0 items-center gap-1.5 rounded-l-full px-3 transition-colors",
-              disabled ? "cursor-not-allowed opacity-50" : "hover:bg-on-surface/8",
+              "state focus-ring inline-flex min-w-0 items-center gap-1.5 rounded-l-full px-3 transition-colors",
+              disabled && "cursor-not-allowed opacity-50",
             )}
           >
             {leading}
@@ -199,15 +207,19 @@ export function ChipMenu({
           </button>
           {/* 44 px breit — die Menü-Hälfte ist ein eigenständiges Touch-Ziel
               und nicht ein angehängtes 16px-Chevron. Der Trennstrich ist der
-              linke Rand dieser Hälfte; auf dem gefüllten (gewählten) Chip
-              braucht er mehr Deckkraft, sonst verschwindet er in der Fläche. */}
+              linke Rand dieser Hälfte und darum die einzige Stelle, an der
+              `border-l-[1.5px]` statt der `kontur`-Utility steht: Die Utility
+              setzt alle vier Seiten, hier ist nur eine gemeint — ein Strich
+              MITTEN im Chip, nicht ein zweiter Umriss um die halbe Pille.
+              Auf dem gewählten Chip trägt er Primary wie der Umriss, sonst
+              die Kante. */}
           <button
             {...menuProps}
             aria-label={menuAriaLabel ?? `Menü zu „${label}“`}
             className={cn(
-              "focus-ring inline-flex w-11 shrink-0 items-center justify-center rounded-r-full border-l-[1.5px] transition-colors",
-              selected ? "border-on-surface/20" : "border-outline",
-              disabled ? "cursor-not-allowed opacity-50" : "hover:bg-on-surface/8",
+              "state focus-ring inline-flex w-11 shrink-0 items-center justify-center rounded-r-full border-l-[1.5px] transition-colors",
+              selected ? "border-primary/50" : "border-kante",
+              disabled && "cursor-not-allowed opacity-50",
             )}
           >
             {chevron}
@@ -225,7 +237,7 @@ export function ChipMenu({
             chipTextBase,
             randfarbe,
             flaeche,
-            disabled ? "cursor-not-allowed opacity-50" : "hover:bg-on-surface/8",
+            disabled && "cursor-not-allowed opacity-50",
           )}
         >
           {leading}

@@ -50,7 +50,7 @@ export function TeilKarte({
         <div className="flex items-center gap-2">
           <h2 className="type-title-medium text-on-surface">{teil.label}</h2>
           {teil.sum > 0 && (
-            <span className="type-label-medium text-on-surface-variant">
+            <span className="type-label-medium text-on-surface-mittel">
               {formatDuration(teil.sum)}
             </span>
           )}
@@ -78,7 +78,7 @@ export function TeilKarte({
           ganze Karte gilt —, und die Linie trennt sie zusammen von den Blöcken
           mit den Übungen (#209 AK 1). */}
       {(varianten || gruppen?.leiste) && (
-        <div className="mt-4 flex flex-col gap-2 border-b border-outline-variant pb-4">
+        <div className="mt-4 flex flex-col gap-2 border-b border-linie pb-4">
           {varianten}
           {gruppen?.leiste}
         </div>
@@ -102,14 +102,14 @@ export function TeilKarte({
       {(teil.tooMany || teil.missing > 0) && (
         <div className="mt-3 flex flex-col gap-1">
           {teil.tooMany && (
-            <p className="flex items-center gap-2 type-label-medium text-on-surface-variant">
-              <Info size={15} className="shrink-0 text-signal" aria-hidden />
+            <p className="flex items-center gap-2 type-label-medium text-on-surface-mittel">
+              <Info size={15} className="shrink-0 text-primary" aria-hidden />
               Ungewöhnlich viele Übungen für diesen Trainingsteil — erlaubt, achte
               nur auf die Gesamtdauer.
             </p>
           )}
           {teil.missing > 0 && (
-            <p className="type-label-medium text-on-surface-variant">
+            <p className="type-label-medium text-on-surface-mittel">
               {teil.missing} {teil.missing === 1 ? "Übung" : "Übungen"} ohne erfasste
               Dauer (zählt nicht zur Summe).
             </p>

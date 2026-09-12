@@ -1,5 +1,5 @@
 import { SearchX, Heart, Plus } from "lucide-react";
-import { ExerciseCard, ButtonLink } from "@/components/ui";
+import { ExerciseCard, ButtonLink, Leerzustand, Meldung } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { CatalogFilterBar, type CatalogFilters } from "@/components/catalog/CatalogFilterBar";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
@@ -91,7 +91,7 @@ export default async function Home({
             </ButtonLink>
           )}
         </div>
-        <p className="type-body-large mt-3 max-w-2xl text-on-surface-variant">
+        <p className="type-body-large mt-3 max-w-2xl text-on-surface-mittel">
           Der offizielle Kinderfussball-Bestand und Übungen der Community —
           durchsuchbar und filterbar nach Trainingsteil, Alter, Feld und mehr.
           Trainings stellst du nach dem Schema des Kinderfussballs oder des
@@ -100,47 +100,33 @@ export default async function Home({
       </header>
 
       {error && (
-        <div className="type-body-small rounded-[4px] border border-error/40 bg-error/10 p-4 text-on-surface">
+        <Meldung tone="fehler">
           Datenbank nicht erreichbar oder noch nicht geseedet:{" "}
           <code className="ml-1">{error}</code>
-          <div className="mt-1 text-on-surface-variant">
+          <div className="mt-1">
             Lokal: <code>npm run db:start</code> → <code>npm run db:reset</code> →{" "}
             <code>npm run seed</code>.
           </div>
-        </div>
+        </Meldung>
       )}
 
       {rows && (
         <>
           <CatalogFilterBar filters={filters} canFavorite={canFavorite} showMine={!!user} />
 
-          <p className="type-label-small mb-4 text-on-surface-variant">
+          <p className="type-label-small mb-4 text-on-surface-mittel">
             {rows.length} {rows.length === 1 ? "Übung" : "Übungen"}
           </p>
 
           {rows.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 rounded-[6px] border border-outline-variant bg-surface-container-low px-6 py-16 text-center">
-              {filters.fav ? (
-                <>
-                  <Heart size={40} strokeWidth={1.5} className="text-on-surface-variant" aria-hidden />
-                  <p className="type-title-medium text-on-surface">Noch keine Favoriten</p>
-                  <p className="type-body-medium max-w-sm text-on-surface-variant">
-                    Markiere Übungen mit dem Herz-Symbol, um sie hier
-                    wiederzufinden. Andere Filter könnten die Auswahl zusätzlich
-                    einschränken.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <SearchX size={40} strokeWidth={1.5} className="text-on-surface-variant" aria-hidden />
-                  <p className="type-title-medium text-on-surface">Keine Übung gefunden</p>
-                  <p className="type-body-medium max-w-sm text-on-surface-variant">
-                    Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne
-                    Filter oder setze sie zurück.
-                  </p>
-                </>
-              )}
-            </div>
+            <Leerzustand
+              icon={filters.fav ? Heart : SearchX}
+              titel={filters.fav ? "Noch keine Favoriten" : "Keine Übung gefunden"}
+            >
+              {filters.fav
+                ? "Markiere Übungen mit dem Herz-Symbol, um sie hier wiederzufinden. Andere Filter könnten die Auswahl zusätzlich einschränken."
+                : "Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne Filter oder setze sie zurück."}
+            </Leerzustand>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {rows.map((row) => (

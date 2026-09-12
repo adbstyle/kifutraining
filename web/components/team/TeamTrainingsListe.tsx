@@ -106,7 +106,7 @@ export function TeamTrainingsListe({
                   gleichnamige Einheiten sind sonst nicht auseinanderzuhalten. */}
               <Link
                 href={`/training/${t.id}/edit`}
-                className="focus-ring group block min-w-0 flex-1 rounded-[4px]"
+                className="focus-ring group block min-w-0 flex-1 rounded-flaeche"
               >
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   {t.stufen.map((k) => (
@@ -117,11 +117,12 @@ export function TeamTrainingsListe({
                       zeigt Varianten genauso an (#206 AK 1). Die Liste
                       dupliziert die Kachel-Anzeige bewusst — sie trägt eigene
                       Aktionen und lässt sich darum nicht durch TrainingCard
-                      ersetzen. Neutral, weil die Variantenzahl keine
+                      ersetzen. Umrandet in Primary (`varianten`), weil die Zahl
+                      eine Eigenschaft des Trainings meldet und keine
                       Alterskategorie ist; Plural immer, die Marke erscheint
                       erst ab zwei (AK 3). */}
                   {t.variantenZahl > 1 && (
-                    <Badge tone="neutral">
+                    <Badge tone="varianten">
                       <Layers size={12} strokeWidth={2.5} aria-hidden />
                       {t.variantenZahl} Varianten
                     </Badge>
@@ -144,7 +145,7 @@ export function TeamTrainingsListe({
                 </h3>
                 {/* Kennzahlen der ERSTEN Variante (#206 AK 2), gerechnet in
                     `mapListRow` — ein Training spielt nur eine Variante. */}
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 type-label-medium text-on-surface-variant">
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 type-label-medium text-on-surface-mittel">
                   <span className="inline-flex items-center gap-1.5">
                     <ListChecks size={15} strokeWidth={2} aria-hidden />
                     {t.exerciseCount} {t.exerciseCount === 1 ? "Übung" : "Übungen"}

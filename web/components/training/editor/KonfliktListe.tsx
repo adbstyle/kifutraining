@@ -11,7 +11,10 @@ import type { Konflikt } from "@/lib/gruppen";
  *
  *  Gemeldet, nie gesperrt (AK 15): Der Trainer weiss Dinge, die die Anwendung
  *  nicht weiss — vielleicht laufen zwei Stationen bewusst unterschiedlich lang.
- *  Darum die Warnrolle (Bernstein) und nicht der Fehlerton. */
+ *  Der Befund trägt darum dieselbe Farbe wie eine Fehleingabe: Unterschieden
+ *  sind die beiden im Verhalten — der Befund lässt sich speichern und sperrt
+ *  nichts —, nicht im Bild. Eine dritte Signalfarbe nur für «gemeldet, aber
+ *  erlaubt» wäre eine Vokabel mehr zu lernen, ohne dass sie etwas sagte. */
 export function KonfliktListe({ konflikte }: { konflikte: Konflikt[] }) {
   if (konflikte.length === 0) return null;
   return (
@@ -19,12 +22,12 @@ export function KonfliktListe({ konflikte }: { konflikte: Konflikt[] }) {
       {konflikte.map((k) => (
         <p
           key={k.text}
-          className="flex items-center gap-2 type-label-medium text-on-surface-variant"
+          className="flex items-center gap-2 type-label-medium text-on-surface-mittel"
         >
           <TriangleAlert
             size={15}
             strokeWidth={2}
-            className="shrink-0 text-warning"
+            className="shrink-0 text-error"
             aria-hidden
           />
           {k.text}

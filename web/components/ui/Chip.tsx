@@ -4,20 +4,31 @@ import { cn } from "@/lib/cn";
 import { kategorieStufe } from "@/lib/labels";
 import type { KategorieSlug } from "@/lib/vocab";
 
-/* ── Alterskategorie-Badge (G bis A) ──────────────────────────
-   Je Stufe ein eigenes Badge in fester, lernbarer Farbe — deckend
-   gefüllt, dunkle Tafel-Tinte (rasen-950) als Schrift. Teilt die
-   Formensprache des Herkunfts-Badges (gleiche Höhe/Padding/Typo),
-   bleibt aber ein Domänen-Element ausserhalb der M3-Chip-Tokens.
-   Immer mit Buchstabe, nie nur über Farbe (a11y). */
-const katColor: Record<KategorieSlug, string> = {
-  G: "bg-kat-g text-rasen-950",
-  F: "bg-kat-f text-rasen-950",
-  E: "bg-kat-e text-rasen-950",
-  D: "bg-kat-d text-rasen-950",
-  C: "bg-kat-c text-rasen-950",
-  B: "bg-kat-b text-rasen-950",
-  A: "bg-kat-a text-rasen-950",
+/* ── Alterskategorie-Plakette (G bis A) ──────────────────────
+   Je Stufe eine eigene, fest lernbare Farbe — als KONTUR und Schrift,
+   nicht als Fläche: Die Farbe trägt die Stufe, sie füllt sie nicht.
+   Gefüllt stünden sieben Werte nebeneinander als Flickenteppich und
+   konkurrierten mit jedem gefüllten Knopf daneben; als Umriss bleiben
+   sie leise, und der Buchstabe unterscheidet ohnehin mit (a11y: nie
+   nur über Farbe).
+   Einzige Ausnahme ist der DRUCK: Auf Papier ist eine helle Kontur
+   kaum zu sehen — kat-a (#cfd8dc) verschwände auf Weiss ganz. Dort
+   kippt die Plakette darum in die gefüllte Form mit dunkler Schrift.
+   Die Schrift bleibt dabei `text-on-surface`: Im Druck-`:root` ist diese
+   Rolle bereits die Tinte, ein getippter Hex wäre eine dritte Stelle,
+   an der dieselbe Farbe steht.
+
+   Exportiert, weil `components/training/StufenField.tsx` dieselbe
+   Plakette in seinen Auswahl-Kacheln trägt: EINE Tabelle für beide
+   Orte statt zweier, die auseinanderlaufen. */
+export const katPlakette: Record<KategorieSlug, string> = {
+  G: "kontur border-current text-kat-g bg-transparent print:bg-kat-g print:text-on-surface print:border-transparent",
+  F: "kontur border-current text-kat-f bg-transparent print:bg-kat-f print:text-on-surface print:border-transparent",
+  E: "kontur border-current text-kat-e bg-transparent print:bg-kat-e print:text-on-surface print:border-transparent",
+  D: "kontur border-current text-kat-d bg-transparent print:bg-kat-d print:text-on-surface print:border-transparent",
+  C: "kontur border-current text-kat-c bg-transparent print:bg-kat-c print:text-on-surface print:border-transparent",
+  B: "kontur border-current text-kat-b bg-transparent print:bg-kat-b print:text-on-surface print:border-transparent",
+  A: "kontur border-current text-kat-a bg-transparent print:bg-kat-a print:text-on-surface print:border-transparent",
 };
 
 export function KategorieChip({ k }: { k: KategorieSlug }) {
@@ -25,8 +36,10 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
     <span
       title={kategorieStufe[k]}
       className={cn(
-        "inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 font-mono text-[10px] font-bold uppercase leading-none",
-        katColor[k],
+        // 22 px wie die `Badge` — beide sind Plaketten, und der Styleguide
+        // nennt für sie EIN Mass.
+        "type-plakette inline-flex h-[22px] items-center justify-center rounded-plakette px-2",
+        katPlakette[k],
       )}
     >
       {k}
@@ -34,24 +47,46 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
   );
 }
 
-/* ── M3-Chips ─────────────────────────────────────────────────
-   Gemeinsame Basis + --chip-*-Component-Tokens (siehe globals.css).
-   Vier Typen nach M3: Assist · Filter · Input · Suggestion.
+/* ── Chips ────────────────────────────────────────────────────
+   Eine gemeinsame Basis, vier Typen: Assist · Filter · Input · Suggestion.
+   Die Rollen stehen direkt in den Bündeln — gewählt füllt Primary, ungewählt
+   umrandet die Kante, und `state` in der Basis trägt Überfahren, Fokus und
+   Druck. Darum trägt kein Bündel mehr eine eigene Überfahr-Fläche: Die
+   Zustands-Ebene färbt sich in der Farbe des Chip-Inhalts ein und passt so
+   auf jede Variante.
 
-   Die drei Klassenbündel sind exportiert (wie `iconButtonClasses`), weil ein
-   Chip nicht immer eine Schaltfläche ist: Auf den Server-Seiten trägt ein LINK
-   die Chip-Optik (`VariantenLinks` — jede Variante hat dort eine eigene
-   Adresse). Ein <a> als <button> zu verkleiden wäre falsch, die Optik ein
-   zweites Mal abzuschreiben ebenso — sie liefe auseinander, sobald die
-   --chip-Tokens sich ändern. */
-export const chipBase =
-  "focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-(--chip-shape) border-[1.5px] px-3 py-1.5 transition-colors";
-export const chipOutlined =
-  "border-(--chip-outline) bg-transparent text-(--chip-label) hover:bg-on-surface/8 hover:text-on-surface";
-export const chipSelected =
-  "border-transparent bg-(--chip-selected-container) text-(--chip-selected-label)";
-const chipElevated =
-  "border-transparent bg-(--chip-elevated-container) text-on-surface shadow-e3 hover:shadow-e4";
+   Die drei Bündel bleiben modul-lokal: Jeder Chip mit Vokabular-Beschriftung
+   ist in dieser Datei gebaut, und ein Bündel nach aussen zu geben lüde dazu
+   ein, die Chip-Optik anderswo neu zusammenzusetzen. Exportiert sind nur die
+   Nutzertext-Bündel weiter unten — die tragen auch Links und den geteilten
+   Chip, die hier nicht wohnen.
+
+   Höhe fest gesetzt statt über die Polsterung: Aus `py-1.5` folgten 31 px, und
+   der Chip stünde neben jedem anderen 32-px-Element um einen Pixel versetzt. */
+const chipBase =
+  "state focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-full kontur px-3 transition-colors";
+
+/* Die Höhe ist ein eigener Slot und steht NICHT in `chipBase` — `cn` ist ein
+   reiner Joiner (kein tailwind-merge), eine Basis-Höhe liesse sich von aussen
+   also nicht überschreiben: Wer `className="h-12"` mitgäbe, überliesse die
+   Entscheidung der Reihenfolge im erzeugten CSS. Genau die Falle, um die es
+   schon bei `look` geht. Darum eine geführte Prop.
+
+   `normal` (32 px) ist das Grundmass des Label-Chips: Es gilt im Fliesstext
+   und in jeder Chip-Reihe. `leiste` (48 px) ist das Mass der dichten Felder —
+   ein Chip in einer FILTERLEISTE steht neben Suchfeld und Auswahlfeld und muss
+   mit ihnen fluchten, sonst zerfällt die Zeile optisch in zwei Bänder.
+   Nur der Filter-Chip kennt die Prop, weil nur er in solchen Leisten steht;
+   die übrigen Typen tragen das Grundmass. */
+const chipHoehen = { normal: "h-8", leiste: "h-12" } as const;
+/* Modul-lokal wie die Bündel: Die Aufrufstellen schreiben das Wort
+   («leiste»), niemand ausserhalb braucht den Typ zu benennen. */
+type ChipGroesse = keyof typeof chipHoehen;
+const chipOutlined = "border-kante bg-transparent text-on-surface";
+const chipSelected = "border-transparent bg-primary text-on-primary";
+/* Schwebender Chip: eine Höhenstufe plus Schatten statt einer Kontur — er
+   liegt über der Fläche, statt in sie eingeschrieben zu sein. */
+const chipElevated = "border-transparent bg-elev-06 text-on-surface shadow-dp-04";
 
 /* ── Chip-Optik für NUTZERTEXT ────────────────────────────────
    Dieselbe Pille, aber normal gesetzt statt mono/versal: `type-label-medium`
@@ -67,30 +102,40 @@ const chipElevated =
    ZWEI Bündel, weil der geteilte Chip die Pille anders füllt: `chipTextHuelle`
    ist der Umriss — Schrift, Höhe, Rundung, Rahmen —, den er als Gruppe um
    seine beiden Hälften legt (dort `items-stretch`, damit jede die volle
-   Trefferhöhe bekommt, und die Polsterung sitzt je Hälfte). Alles Einteilige
-   nimmt `chipTextBase`: dieselbe Hülle plus Fokusring, Ausrichtung und
-   Polsterung. So ändert sich die Nutzertext-Pille an EINER Stelle. */
+   Trefferhöhe bekommt, und die Polsterung sitzt je Hälfte). Die Zustands-Ebene
+   gehört dort nicht an die Gruppe, sondern an jede Hälfte einzeln — sonst
+   leuchtete der ganze Chip auf, wenn nur eine Hälfte überfahren wird. Alles
+   Einteilige nimmt `chipTextBase`: dieselbe Hülle plus `state`, Fokusring,
+   Ausrichtung und Polsterung. So ändert sich die Nutzertext-Pille an EINER
+   Stelle. */
 export const chipTextHuelle =
-  "type-body-medium inline-flex h-9 rounded-full border-[1.5px] normal-case transition-colors";
-export const chipTextBase = `${chipTextHuelle} focus-ring items-center gap-1.5 px-3`;
-export const chipTextOutlined =
-  "border-outline text-on-surface hover:bg-on-surface/8";
-export const chipTextSelected =
-  "border-transparent bg-(--chip-selected-container) text-(--chip-selected-label)";
+  "type-body-medium inline-flex h-9 rounded-full kontur normal-case transition-colors";
+export const chipTextBase = `${chipTextHuelle} state focus-ring items-center gap-1.5 px-3`;
+export const chipTextOutlined = "border-kante text-on-surface";
+/* Gewählter Nutzertext-Chip: umrandet und beschriftet in Primary, dazu ein
+   sehr leiser Grund. Nicht gefüllt wie der Filter-Chip — eine gefüllte Pille
+   kehrte den Nutzertext in schwarze Schrift, und der Name, den die Trainerin
+   vergeben hat, soll auch gewählt wie ihr Name aussehen. */
+export const chipTextSelected = "border-primary bg-primary/12 text-primary";
 
-/* Filter-Chip (toggelbar) — selected: secondary-container + Check (M3).
+/* Filter-Chip (toggelbar) — gewählt: gefüllt in Primary, mit Häkchen.
    Optionales führendes Icon, wenn nicht selektiert. */
 export function FilterChip({
   selected = false,
   onClick,
   children,
   icon: Icon,
+  groesse = "normal",
   className,
 }: {
   selected?: boolean;
   onClick?: () => void;
   children: React.ReactNode;
   icon?: LucideIcon;
+  /** `normal` (Vorgabe, 32 px) im Fliesstext und in Chip-Reihen; `leiste`
+   *  (48 px) in einer Filterleiste, wo der Chip mit den dichten Feldern
+   *  fluchtet. Bewusst eine Prop statt `className` — siehe `chipHoehen`. */
+  groesse?: ChipGroesse;
   className?: string;
 }) {
   return (
@@ -98,7 +143,12 @@ export function FilterChip({
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={cn(chipBase, selected ? chipSelected : chipOutlined, className)}
+      className={cn(
+        chipBase,
+        chipHoehen[groesse],
+        selected ? chipSelected : chipOutlined,
+        className,
+      )}
     >
       {selected ? (
         <Check size={14} strokeWidth={2.5} aria-hidden />
@@ -118,7 +168,7 @@ export function FilterChip({
    (role=radiogroup / role=radio, aria-checked) statt der tab-artigen
    Segmentleiste, mit Pfeiltasten-Navigation und wanderndem Tabstopp.
 
-   Optik: die bestehenden --chip-Tokens, ausgewählt wie der Filter-Chip.
+   Optik: dieselben Chip-Bündel, ausgewählt wie der Filter-Chip.
    Kein Häkchen — es ist eine Einfachauswahl, nicht ein Ein/Aus-Zustand,
    und der Umriss-Wechsel trägt die Aussage bereits.
 
@@ -179,7 +229,9 @@ export function ChoiceChip({
       onClick={onSelect}
       onKeyDown={handleKey}
       className={cn(
-        look === "nutzertext" ? chipTextBase : chipBase,
+        // Der Nutzertext-Chip trägt seine Höhe (h-9) in der eigenen Hülle —
+        // er fluchtet mit dem leisen Knopf, nicht mit dem Label-Chip.
+        look === "nutzertext" ? chipTextBase : `${chipBase} ${chipHoehen.normal}`,
         look === "nutzertext"
           ? selected
             ? chipTextSelected
@@ -218,7 +270,7 @@ export function ChoiceChipGroup({
 }
 
 /* Assist-Chip — schlägt eine Aktion vor (führendes Icon + Label).
-   `elevated`: weicher M3-Schatten statt Outline.
+   `elevated`: Höhenstufe plus Schatten statt Kontur.
 
    Öffnet die vorgeschlagene Aktion ein Menü, braucht der Chip einen Namen
    dafür (`ariaLabel`, wenn dasselbe Label mehrfach auf der Seite steht), die
@@ -255,7 +307,12 @@ export function AssistChip({
       aria-label={ariaLabel}
       aria-haspopup={ariaHasPopup}
       aria-expanded={ariaHasPopup ? ariaExpanded : undefined}
-      className={cn(chipBase, elevated ? chipElevated : chipOutlined, className)}
+      className={cn(
+        chipBase,
+        chipHoehen.normal,
+        elevated ? chipElevated : chipOutlined,
+        className,
+      )}
     >
       {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
       {children}
@@ -277,7 +334,7 @@ export function SuggestionChip({
     <button
       type="button"
       onClick={onClick}
-      className={cn(chipBase, chipOutlined, className)}
+      className={cn(chipBase, chipHoehen.normal, chipOutlined, className)}
     >
       {children}
     </button>
@@ -298,7 +355,7 @@ export function InputChip({
   className?: string;
 }) {
   return (
-    <span className={cn(chipBase, chipOutlined, "pr-2", className)}>
+    <span className={cn(chipBase, chipHoehen.normal, chipOutlined, "pr-2", className)}>
       {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
       {children}
       {onRemove && (
@@ -306,7 +363,7 @@ export function InputChip({
           type="button"
           onClick={onRemove}
           aria-label="Entfernen"
-          className="focus-ring -mr-1 ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface/12 hover:text-on-surface"
+          className="state focus-ring -mr-1 ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-on-surface-mittel transition-colors"
         >
           <X size={14} strokeWidth={2.5} aria-hidden />
         </button>

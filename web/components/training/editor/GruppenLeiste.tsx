@@ -20,9 +20,12 @@ import { ordnungsEintraege, useChipFokus } from "./useChipFokus";
  *
  * Der Chip nennt die zugewiesene Zeit als gedämpften Zusatz (Story #151): Sie
  * ist eine Auskunft, keine Handlung, und darf dem Namen nicht die Schau
- * stehlen. Ein Konflikt der Verteilung färbt Rahmen und Zeichen bernstein
- * (#150) — den Klartext dazu trägt der Kartenfuss, denn ein Konflikt hängt nie
- * an einer Gruppe allein.
+ * stehlen. Ein Konflikt der Verteilung färbt Rahmen und Zeichen rot (#150) —
+ * denselben Ton wie eine Fehleingabe, denn eine dritte Signalfarbe für
+ * «gemeldet, aber erlaubt» wäre eine Vokabel mehr, ohne mehr zu sagen;
+ * unterschieden sind die beiden im Verhalten, nicht im Bild (der Befund
+ * sperrt nichts). Den Klartext dazu trägt der Kartenfuss, denn ein Konflikt
+ * hängt nie an einer Gruppe allein.
  *
  * Fokusführung, Ansage und die Menüeinträge des Ordnens teilt sie sich mit der
  * Variantenleiste (`useChipFokus`); hier bleiben das Bild und die Zeitsumme.
@@ -77,7 +80,7 @@ export function GruppenLeiste({
         size={18}
         strokeWidth={2}
         aria-hidden
-        className="shrink-0 text-on-surface-variant"
+        className="shrink-0 text-on-surface-mittel"
       />
 
       {gruppen.map((g, i) => {
@@ -91,21 +94,21 @@ export function GruppenLeiste({
             label={g.name}
             // Der sichtbare Name zuerst — Sprachsteuerung trifft ihn weiter —,
             // dann die Zeitsumme als ganzer Satz und, wenn es etwas zu melden
-            // gibt, der Grund der Warnfarbe.
+            // gibt, der Grund der roten Kontur.
             ariaLabel={`${g.name}, ${zeitText(summe, zeitZusatz)}${grund ? `, ${grund}` : ""}`}
-            tone={grund ? "warning" : "neutral"}
+            tone={grund ? "befund" : "neutral"}
             leading={
               grund ? (
                 <TriangleAlert
                   size={14}
                   strokeWidth={2}
-                  className="shrink-0 text-warning"
+                  className="shrink-0 text-error"
                   aria-hidden
                 />
               ) : undefined
             }
             trailing={
-              <span className="text-on-surface-variant">· {zeitKurz(summe)}</span>
+              <span className="text-on-surface-mittel">· {zeitKurz(summe)}</span>
             }
             items={ordnungsEintraege({
               erster: i === 0,

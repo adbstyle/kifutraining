@@ -57,7 +57,7 @@ export function OverflowMenuDemo() {
     <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
       <Reihe name="Karte A" onAktion={setGewaehlt} />
       <Reihe name="Karte B" onAktion={setGewaehlt} />
-      <span className="type-label-small text-on-surface-variant">
+      <span className="type-label-small text-on-surface-mittel">
         {gewaehlt ? `gewählt: ${gewaehlt}` : "hovern, klicken, ⋮ öffnen"}
       </span>
     </div>

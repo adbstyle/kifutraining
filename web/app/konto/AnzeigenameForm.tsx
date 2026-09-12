@@ -39,7 +39,7 @@ export function AnzeigenameForm({
 
   return (
     <>
-      <p className="type-body-medium text-on-surface-variant">
+      <p className="type-body-medium text-on-surface-mittel">
         {eigen ? (
           // Ohne Satzzeichen nach dem Namen: er darf selbst auf einen Punkt
           // enden («Sina M.») und ergäbe sonst zwei.
@@ -53,7 +53,7 @@ export function AnzeigenameForm({
           </>
         )}
       </p>
-      <p className="type-body-small mt-1 text-on-surface-variant">
+      <p className="type-body-small mt-1 text-on-surface-mittel">
         Für Team-Mitglieder und an deinen veröffentlichten Vorlagen öffentlich
         sichtbar. Deine E-Mail-Adresse sieht niemand.
       </p>

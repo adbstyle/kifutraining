@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { LogIn, MailCheck, Send } from "lucide-react";
-import { TextField, PasswordField, Button } from "@/components/ui";
+import { TextField, PasswordField, Button, Meldung } from "@/components/ui";
 import { login, resendConfirmation, type AuthState } from "@/lib/actions/auth";
 
 const initial: AuthState = { status: "idle" };
@@ -36,26 +36,26 @@ function NeedsConfirmation({ email }: { email?: string }) {
 
   if (state.status === "confirm") {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-[4px] border border-primary/40 bg-primary/10 p-3 text-center">
-        <MailCheck size={28} strokeWidth={1.5} className="text-primary" aria-hidden />
-        <p className="type-body-small text-on-surface">
-          Bestätigungsmail erneut an{" "}
-          <strong>{state.email ?? email}</strong> gesendet.
-        </p>
-      </div>
+      <Meldung tone="erfolg" icon={MailCheck}>
+        Bestätigungsmail erneut an <strong>{state.email ?? email}</strong>{" "}
+        gesendet.
+      </Meldung>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-[4px] border border-error/40 bg-error/10 p-3">
-      <p className="type-body-small text-on-surface">
-        Bitte bestätige zuerst deine E-Mail-Adresse. Den Link nicht erhalten?
-      </p>
-      <form action={formAction}>
+    /* `status` statt des Fehler-Vorgabewerts `alert`: Der Kasten enthält ein
+       Bedienelement, und `alert` ist atomar — die Vorlesehilfe läse bei jeder
+       Änderung darin (jeder Klick auf den Knopf ändert seine Beschriftung) den
+       ganzen Kasten unterbrechend neu vor. ARIA verlangt zudem, dass `alert`
+       keine fokussierbaren Inhalte trägt. */
+    <Meldung tone="fehler" role="status">
+      <p>Bitte bestätige zuerst deine E-Mail-Adresse. Den Link nicht erhalten?</p>
+      <form action={formAction} className="mt-3">
         <input type="hidden" name="email" value={email ?? ""} />
         <ResendButton />
       </form>
-    </div>
+    </Meldung>
   );
 }
 
@@ -94,7 +94,7 @@ export function LoginForm({ redirect }: { redirect: string }) {
           <Link href="/passwort-vergessen" className="type-label-medium text-primary underline">
             Passwort vergessen?
           </Link>
-          <Link href="/registrieren" className="type-label-medium text-on-surface-variant underline">
+          <Link href="/registrieren" className="type-label-medium text-on-surface-mittel underline">
             Registrieren
           </Link>
         </div>

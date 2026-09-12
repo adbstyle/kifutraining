@@ -6,8 +6,9 @@ import {
   AssistChip,
   SuggestionChip,
   InputChip,
+  TextField,
 } from "@/components/ui";
-import { Plus, BookOpen, User } from "lucide-react";
+import { Plus, BookOpen, User, Search } from "lucide-react";
 
 const FILTERS: [string, string][] = [
   ["hauptteil", "Hauptteil"],
@@ -31,7 +32,7 @@ export function ChipsDemo() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
+        <p className="type-label-small mb-2 text-on-surface-mittel">
           Filter-Chips (toggelbar)
         </p>
         <div className="flex flex-wrap gap-2">
@@ -44,7 +45,33 @@ export function ChipsDemo() {
       </div>
 
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
+        <p className="type-label-small mb-2 text-on-surface-mittel">
+          Filter-Chip in der Leiste (<code>groesse=&quot;leiste&quot;</code>)
+        </p>
+        {/* Neben dem dichten Feld gezeigt, weil sich die Höhe nur im Vergleich
+            beurteilen lässt: Der Chip soll mit dem Feld auf einer Linie
+            sitzen, nicht daneben schweben. */}
+        <div className="flex flex-wrap items-center gap-3">
+          <TextField
+            dense
+            label="Übungen durchsuchen"
+            type="search"
+            leadingIcon={Search}
+            placeholder="Übungen durchsuchen…"
+            className="w-full sm:w-64"
+          />
+          <FilterChip
+            selected={filters.has("meine")}
+            onClick={() => toggle("meine")}
+            groesse="leiste"
+          >
+            Meine Übungen
+          </FilterChip>
+        </div>
+      </div>
+
+      <div>
+        <p className="type-label-small mb-2 text-on-surface-mittel">
           Assist · Suggestion · Elevated
         </p>
         <div className="flex flex-wrap gap-2">
@@ -57,12 +84,12 @@ export function ChipsDemo() {
       </div>
 
       <div>
-        <p className="type-label-small mb-2 text-on-surface-variant">
+        <p className="type-label-small mb-2 text-on-surface-mittel">
           Input-Chips (entfernbar)
         </p>
         <div className="flex flex-wrap gap-2">
           {tags.length === 0 && (
-            <span className="type-body-small text-on-surface-variant">
+            <span className="type-body-small text-on-surface-mittel">
               — alle entfernt —
             </span>
           )}

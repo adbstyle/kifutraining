@@ -25,7 +25,7 @@ export default async function NewPasswordPage() {
         {user ? (
           <NewPasswordForm />
         ) : (
-          <p className="type-body-medium text-on-surface-variant">
+          <p className="type-body-medium text-on-surface-mittel">
             Der Link ist ungültig oder abgelaufen.{" "}
             <Link href="/passwort-vergessen" className="text-primary underline">
               Neuen Link anfordern

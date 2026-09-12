@@ -4,55 +4,63 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 
-// M3-Emphase-Stufen (filled → text) + destruktiv + leise. Werte kommen aus den
-// --button-*-Component-Tokens in globals.css (zeigen auf die System-Rollen).
+// Emphase-Stufen (filled → text) + destruktiv + leise. Die Werte stehen direkt
+// als Rollen hier — je Variante eine Höhenstufe oder eine Kontur, keine
+// Zwischenschicht aus Component-Tokens mehr: Wer den Knopf liest, sieht, auf
+// welcher Höhe er sitzt, ohne in globals.css nachschlagen zu müssen.
 //
-// Warum eine sechste Stufe (`quiet`): Versalien sind für eine Randhandlung zu
+// Warum es `quiet` überhaupt gibt: Versalien sind für eine Randhandlung zu
 // laut. «+ Variante hinzufügen» steht in einer Leiste NEBEN Chips, die
 // Nutzertext tragen und darum normal gesetzt sind — ein mono-versaler Knopf
 // daneben schriee, und die Leiste zerfiele in zwei Stimmen. `quiet` behält die
-// Signalfarbe des `text`-Knopfes (es ist dieselbe Emphase-Ebene), lässt aber
+// Primary-Farbe des `text`-Knopfes (es ist dieselbe Emphase-Ebene), lässt aber
 // die Versalien fallen: so liest sich die Leiste als EINE Zeile.
 type Variant = "filled" | "tonal" | "elevated" | "outlined" | "text" | "danger" | "quiet";
 type Size = "sm" | "md" | "lg";
 
+// `state` gehört in die Basis und nicht an die Varianten: Die Zustands-Ebene
+// färbt sich in der Farbe des Inhalts ein und gilt darum für jede Variante
+// gleich — vom gefüllten bis zum blossen Textknopf. Damit entfällt jede eigene
+// Überfahr-Fläche je Variante; ein Versatz nach unten beim Drücken ebenso, die
+// Ebene meldet den Druck bereits.
 const base =
-  "focus-ring inline-flex items-center justify-center rounded-(--button-shape) transition-[background-color,box-shadow,transform,color] duration-150 disabled:opacity-40 disabled:pointer-events-none select-none";
+  "state focus-ring inline-flex items-center justify-center rounded-flaeche transition-colors duration-150 disabled:opacity-40 disabled:pointer-events-none select-none";
 
 /** Schrift und Icon-Abstand einer Variante. Eigener Slot und nicht in `base`,
  *  weil `cn` ein reiner Joiner ist (kein tailwind-merge): In den fertigen
  *  String darf genau EINE Typo-Klasse gelangen, eine Basis-Klasse liesse sich
  *  nicht überschreiben. `quiet` ist als einzige eine Schrift-Stufe — siehe
- *  oben —, alle übrigen tragen die M3-Button-Typo. */
+ *  oben —, alle übrigen tragen die Label-Typo des Knopfes. */
 function typo(variant: Variant): string {
   return variant === "quiet" ? "type-title-small gap-1.5" : "type-label-large gap-2";
 }
 
 // Nur noch Farbe und Fläche — Schrift kommt aus `typo`, Höhe und Polsterung
-// aus `sizes` bzw. dem `quiet`-Mass.
+// aus `sizes` bzw. dem `quiet`-Mass, der Zustand aus `state` in `base`.
 const variants: Record<Variant, string> = {
-  // Höchste Emphase — M3 Filled: flächig, Hover via State-Layer (kein Schatten,
-  // keine Helligkeitsänderung). Press-Nudge wie bei allen Varianten.
-  filled:
-    "bg-(--button-filled-container) text-(--button-filled-label) hover:bg-(--button-filled-container-hover) active:translate-y-px",
-  // Mittlere Emphase — tonale Fläche
-  tonal:
-    "bg-(--button-tonal-container) text-(--button-tonal-label) hover:bg-(--button-tonal-container-hover) active:translate-y-px",
-  // Mittlere Emphase mit weichem M3-Schatten (Kontrast zum harten Filled-Schatten)
-  elevated:
-    "bg-(--button-elevated-container) text-(--button-elevated-label) shadow-e3 hover:bg-(--button-elevated-container-hover) hover:shadow-e4 active:translate-y-px",
-  // Mittlere Emphase — nur Rand, State-Layer auf transparentem Grund
-  outlined:
-    "bg-transparent text-(--button-outlined-label) border-[1.5px] border-(--button-outlined-outline) hover:bg-on-surface/8 active:translate-y-px",
-  // Niedrigste Emphase
-  text: "bg-transparent text-(--button-text-label) hover:bg-on-surface/8",
-  // Destruktiv — Error-Rolle
-  danger:
-    "bg-transparent text-(--button-danger-label) border-[1.5px] border-(--button-danger-outline) hover:bg-error/10",
+  // Höchste Emphase: die einzige Variante, die den Akzent als FLÄCHE trägt.
+  filled: "bg-primary text-on-primary",
+  // Mittlere Emphase — eine Höhenstufe statt einer Akzentfläche.
+  tonal: "bg-elev-08 text-on-surface",
+  // Wie tonal, aber schwebend: eine Stufe darunter im Grund, dafür ein
+  // Schatten, der sie vom Untergrund abhebt — und die Schrift im Akzent.
+  elevated: "bg-elev-06 text-primary shadow-dp-04",
+  // Mittlere Emphase — nur Kontur, die Fläche bleibt der Grund.
+  outlined: "bg-transparent text-on-surface kontur border-kante",
+  // Niedrigste Emphase — nichts als Schrift im Akzent.
+  text: "bg-transparent text-primary",
+  // Destruktiv: Error umrandet und beschriftet, füllt aber nie — eine rote
+  // Fläche wäre lauter als die Handlung, die sie auslöst.
+  // Die Kontur trägt Error VOLL, nicht gedämpft: Der destruktive Knopf steht
+  // fast immer im Dialog (24dp), und dort kam eine 40-%-Kontur auf 1.91:1 —
+  // unter den 3:1 für grafische Objekte, praktisch unsichtbar. Volles Error
+  // trägt auch dort 4.56:1, und der Rahmen ist hier das einzige, was den
+  // Knopf als Fläche überhaupt begrenzt.
+  danger: "bg-transparent text-error kontur border-error",
   // Eine Stufe UNTER `text` — für Handlungen, die am Rand mitlaufen. Nicht
-  // leiser in der Farbe (die Signalfarbe bleibt, es ist dieselbe Emphase),
-  // sondern in der Schrift: Source Serif 600 statt mono-versal.
-  quiet: "bg-transparent text-(--button-text-label) hover:bg-on-surface/8",
+  // leiser in der Farbe (Primary bleibt, es ist dieselbe Emphase), sondern in
+  // der Schrift: normal gesetzt statt mono-versal.
+  quiet: "bg-transparent text-primary",
 };
 
 const sizes: Record<Size, string> = {

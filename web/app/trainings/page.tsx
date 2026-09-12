@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus, ClipboardList, SearchX, Sparkles } from "lucide-react";
-import { ButtonLink } from "@/components/ui";
+import { ButtonLink, Leerzustand } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { TrainingCard } from "@/components/training/TrainingCard";
 import { TrainingFilterBar } from "@/components/training/TrainingFilterBar";
@@ -53,7 +53,7 @@ export default async function TrainingsPage({
             </ButtonLink>
           )}
         </div>
-        <p className="type-body-medium mt-2 max-w-2xl text-on-surface-variant">
+        <p className="type-body-medium mt-2 max-w-2xl text-on-surface-mittel">
           {mine
             ? "Deine eigenen Trainings, Entwürfe eingeschlossen. Team-Trainings findest du im jeweiligen Team."
             : user
@@ -65,34 +65,27 @@ export default async function TrainingsPage({
       <TrainingFilterBar q={q} stufen={stufen} mine={mine} showMine={!!user} />
 
       {trainings.length === 0 ? (
-        <EmptyState
-          icon={
-            filtersActive ? (
-              <SearchX size={40} strokeWidth={1.5} aria-hidden />
-            ) : (
-              <ClipboardList size={40} strokeWidth={1.5} aria-hidden />
-            )
-          }
-          title={
+        <Leerzustand
+          icon={filtersActive ? SearchX : ClipboardList}
+          titel={
             filtersActive
               ? "Keine Trainings gefunden"
               : mine
                 ? "Noch kein eigenes Training"
                 : "Noch keine Trainings"
           }
-          text={
-            filtersActive
-              ? "Kein Training entspricht der aktiven Suche oder den Filtern. Passe die Kriterien an."
-              : mine
-                ? "Stelle aus dem Übungsbestand dein erstes Training zusammen — es bleibt ein Entwurf, bis du es veröffentlichst."
-                : user
-                  ? "Stelle dein erstes Training zusammen. Veröffentlichst du es, steht es der Community zur Verfügung."
-                  : "Es wurde noch kein Training veröffentlicht. Schau später wieder vorbei."
-          }
-        />
+        >
+          {filtersActive
+            ? "Kein Training entspricht der aktiven Suche oder den Filtern. Passe die Kriterien an."
+            : mine
+              ? "Stelle aus dem Übungsbestand dein erstes Training zusammen — es bleibt ein Entwurf, bis du es veröffentlichst."
+              : user
+                ? "Stelle dein erstes Training zusammen. Veröffentlichst du es, steht es der Community zur Verfügung."
+                : "Es wurde noch kein Training veröffentlicht. Schau später wieder vorbei."}
+        </Leerzustand>
       ) : (
         <>
-          <p className="type-label-small mb-4 text-on-surface-variant">
+          <p className="type-label-small mb-4 text-on-surface-mittel">
             {trainings.length} {trainings.length === 1 ? "Training" : "Trainings"}
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -117,9 +110,9 @@ export default async function TrainingsPage({
       )}
 
       {!user && (
-        <div className="mt-8 flex items-center gap-3 rounded-[4px] border border-outline-variant bg-surface-container-low px-4 py-3">
+        <div className="mt-8 flex items-center gap-3 rounded-flaeche bg-elev-01 px-4 py-3">
           <Sparkles size={18} className="shrink-0 text-primary" aria-hidden />
-          <p className="type-body-small text-on-surface-variant">
+          <p className="type-body-small text-on-surface-mittel">
             Mit einem Konto kannst du eigene Trainings erstellen und
             verwalten.{" "}
             <Link href="/login" className="text-primary underline">
@@ -129,23 +122,5 @@ export default async function TrainingsPage({
         </div>
       )}
     </main>
-  );
-}
-
-function EmptyState({
-  icon,
-  title,
-  text,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-[6px] border border-outline-variant bg-surface-container-low px-6 py-16 text-center text-on-surface-variant">
-      {icon}
-      <p className="type-title-medium text-on-surface">{title}</p>
-      <p className="type-body-medium max-w-sm">{text}</p>
-    </div>
   );
 }

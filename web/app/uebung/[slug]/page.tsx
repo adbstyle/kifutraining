@@ -54,7 +54,7 @@ function Meta({
 }) {
   return (
     <div>
-      <p className="type-label-small text-on-surface-variant">{label}</p>
+      <p className="type-label-small text-on-surface-mittel">{label}</p>
       <div className="type-body-large mt-1 text-on-surface">{children}</div>
     </div>
   );
@@ -160,7 +160,7 @@ export default async function ExerciseDetailPage({
                   <KategorieChip key={k} k={k as KategorieSlug} />
                 ))}
               </div>
-              <span aria-hidden className="h-3.5 w-px bg-outline-variant" />
+              <span aria-hidden className="h-3.5 w-px bg-linie" />
             </>
           )}
           <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
@@ -208,14 +208,14 @@ export default async function ExerciseDetailPage({
         </div>
         <h1 className="type-headline-large text-on-surface">{ex.name}</h1>
         {meta.length > 0 && (
-          <p className="type-label-medium mt-2 text-on-surface-variant">
+          <p className="type-label-medium mt-2 text-on-surface-mittel">
             {meta.join(" · ")}
           </p>
         )}
       </header>
 
       {/* Aktives Bild — gezeichnetes Diagramm, Foto oder Platzhalter */}
-      <div className="relative mt-8 aspect-[16/9] w-full overflow-hidden rounded-[6px] border border-outline-variant">
+      <div className="relative mt-8 aspect-[16/9] w-full overflow-hidden rounded-flaeche border border-linie">
         <UebungsBild
           name={ex.name}
           bildUrl={ex.bild_url}
@@ -262,11 +262,11 @@ export default async function ExerciseDetailPage({
           {ex.methodischer_fahrplan ? (
             <MethodischerFahrplan fahrplan={ex.methodischer_fahrplan} />
           ) : ex.aufbau ? (
-            <p className="type-body-large whitespace-pre-line text-on-surface-variant">
+            <p className="type-body-large whitespace-pre-line text-on-surface-mittel">
               {ex.aufbau}
             </p>
           ) : (
-            <p className="type-body-medium text-on-surface-variant">
+            <p className="type-body-medium text-on-surface-mittel">
               Kein Ablauf erfasst.
             </p>
           )}
@@ -279,7 +279,7 @@ export default async function ExerciseDetailPage({
           <h2 className="type-headline-small mb-4 text-on-surface">
             Varianten
           </h2>
-          <ul className="type-body-large list-disc space-y-1 pl-5 text-on-surface-variant">
+          <ul className="type-body-large list-disc space-y-1 pl-5 text-on-surface-mittel">
             {ex.varianten.map((v, i) => (
               <li key={i}>{v}</li>
             ))}
@@ -322,16 +322,16 @@ export default async function ExerciseDetailPage({
           Bewusste Abweichung vom Trainings-Druck, der keine Herkunft trägt: ein
           Blatt aus der Bibliothek weist seine Quelle aus (PO 2026-08-28), für
           das Training bleibt der Entscheid von 2026-08-23 unverändert. */}
-      <footer className="mt-10 hidden border-t border-outline-variant pt-4 print:block">
+      <footer className="mt-10 hidden border-t border-linie pt-4 print:block">
         {ex.source === "manual" ? (
-          <p className="type-body-small text-on-surface-variant">
+          <p className="type-body-small text-on-surface-mittel">
             Übung nach dem{" "}
             <strong className="text-on-surface">Manual Kinderfussball</strong>{" "}
             des Schweizerischen Fussballverbands (SFV) — Aufbau und Regeln aus dem
             Manual, Text in eigener Formulierung.
           </p>
         ) : (
-          <p className="type-body-small text-on-surface-variant">
+          <p className="type-body-small text-on-surface-mittel">
             Übung aus der{" "}
             <strong className="text-on-surface">Gemeinschaft</strong> der
             Trainerinnen und Trainer, nicht aus dem kuratierten Manual-Bestand.
@@ -343,14 +343,14 @@ export default async function ExerciseDetailPage({
 
       {/* Quellen-/Urheberangabe (Manual), nur am Bildschirm */}
       {ex.source === "manual" && (
-        <footer className="mt-12 flex items-start gap-2 border-t border-outline-variant pt-5 print:hidden">
+        <footer className="mt-12 flex items-start gap-2 border-t border-linie pt-5 print:hidden">
           <BookOpen
             size={18}
             strokeWidth={2}
-            className="mt-0.5 shrink-0 text-on-surface-variant"
+            className="mt-0.5 shrink-0 text-on-surface-mittel"
             aria-hidden
           />
-          <p className="type-body-small text-on-surface-variant">
+          <p className="type-body-small text-on-surface-mittel">
             Übung nach dem{" "}
             <strong className="text-on-surface">Manual Kinderfussball</strong>{" "}
             des Schweizerischen Fussballverbands (SFV) — Aufbau und Regeln aus dem

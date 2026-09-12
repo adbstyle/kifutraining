@@ -32,7 +32,7 @@ export function SpielfeldgroesseField({
   return (
     <div>
       <p
-        className={`type-label-small mb-2 ${error ? "text-error" : "text-on-surface-variant"}`}
+        className={`type-label-small mb-2 ${error ? "text-error" : "text-on-surface-mittel"}`}
       >
         Spielfeldgrösse (optional)
       </p>
@@ -50,7 +50,7 @@ export function SpielfeldgroesseField({
         />
         <span
           aria-hidden
-          className="type-body-large flex h-14 items-center text-on-surface-variant"
+          className="type-body-large flex h-14 items-center text-on-surface-mittel"
         >
           ×
         </span>
@@ -67,7 +67,7 @@ export function SpielfeldgroesseField({
         />
       </div>
       <p
-        className={`type-body-small mt-1.5 ${error ? "text-error" : "text-on-surface-variant"}`}
+        className={`type-body-small mt-1.5 ${error ? "text-error" : "text-on-surface-mittel"}`}
       >
         {error ??
           "In Metern, wie im Manual — z. B. 35 × 20. Entweder beide Masse oder keines."}

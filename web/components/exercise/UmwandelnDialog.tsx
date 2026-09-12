@@ -161,7 +161,7 @@ export function UmwandelnDialog({
 
         <div>
           <p
-            className={`type-label-small mb-2 ${fehler.kat ? "text-error" : "text-on-surface-variant"}`}
+            className={`type-label-small mb-2 ${fehler.kat ? "text-error" : "text-on-surface-mittel"}`}
           >
             Alterskategorie
           </p>
@@ -179,7 +179,7 @@ export function UmwandelnDialog({
             ))}
           </div>
           <p
-            className={`type-body-small mt-1.5 ${fehler.kat ? "text-error" : "text-on-surface-variant"}`}
+            className={`type-body-small mt-1.5 ${fehler.kat ? "text-error" : "text-on-surface-mittel"}`}
           >
             {fehler.kat ?? "Mindestens eine Kategorie dieser Altersstufe."}
           </p>

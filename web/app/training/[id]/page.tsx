@@ -81,7 +81,7 @@ export default async function TrainingViewPage({
         {/* Urheber: der Anzeigename, nie die E-Mail. Bei anonymisierten
             Trainings (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
         {training.urheber && (
-          <p className="mt-1 type-body-medium text-on-surface-variant">
+          <p className="mt-1 type-body-medium text-on-surface-mittel">
             von {training.urheber}
           </p>
         )}
@@ -94,7 +94,7 @@ export default async function TrainingViewPage({
           {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
           ))}
-          <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-variant">
+          <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-mittel">
             <Clock size={16} strokeWidth={2} aria-hidden />
             {hasAnyDuration ? formatDuration(total) : "Keine Dauer erfasst"}
           </span>
@@ -147,7 +147,7 @@ export default async function TrainingViewPage({
             PC 1). Ohne Ziel bleibt der Bereich weg (PC 2). */}
         {training.ziel && (
           <p className="mt-3 type-body-medium text-on-surface">
-            <span className="type-label-small text-on-surface-variant">Ziel: </span>
+            <span className="type-label-small text-on-surface-mittel">Ziel: </span>
             {training.ziel}
           </p>
         )}
@@ -169,14 +169,14 @@ export default async function TrainingViewPage({
           return (
             <section
               key={s.key}
-              className="rounded-[4px] border-[1.5px] border-outline bg-surface-container-low p-4 sm:p-5"
+              className="rounded-flaeche bg-elev-01 p-4 sm:p-5"
             >
               <h2 className="mb-3 type-title-medium text-on-surface">
                 {/* Welche Variante hier steht, gehört an den Hauptteil selbst —
                     nicht nur an die Wahl darüber (#203 AK 5). */}
                 {abschnittMitVariante(s.key, s.label, aktive, training.varianten)}
                 {s.sum > 0 && (
-                  <span className="ml-2 type-label-medium text-on-surface-variant">
+                  <span className="ml-2 type-label-medium text-on-surface-mittel">
                     {formatDuration(s.sum)}
                   </span>
                 )}
@@ -185,10 +185,10 @@ export default async function TrainingViewPage({
                 {blocks.map((b) => (
                   <div key={b.key}>
                     {b.label && (
-                      <h3 className="mb-2 type-title-small text-on-surface-variant">
+                      <h3 className="mb-2 type-title-small text-on-surface-mittel">
                         {b.label}
                         {b.sum > 0 && (
-                          <span className="ml-2 type-label-medium text-on-surface-variant">
+                          <span className="ml-2 type-label-medium text-on-surface-mittel">
                             {formatDuration(b.sum)}
                           </span>
                         )}
@@ -206,7 +206,7 @@ export default async function TrainingViewPage({
                           // Eintrag: sie hängt von ihm nicht mehr ab, und ihr
                           // Inhalt kann inzwischen abweichen (Story 6 AK 10).
                           <li key={item.id} className="flex items-center gap-3 px-2 py-2">
-                            <span className="w-5 shrink-0 text-center type-label-medium text-on-surface-variant">
+                            <span className="w-5 shrink-0 text-center type-label-medium text-on-surface-mittel">
                               {i + 1}
                             </span>
                             <ExerciseThumb
@@ -221,7 +221,7 @@ export default async function TrainingViewPage({
                               </span>
                             </span>
                             {dur && (
-                              <span className="shrink-0 type-label-medium text-on-surface-variant">
+                              <span className="shrink-0 type-label-medium text-on-surface-mittel">
                                 {dur}
                               </span>
                             )}
@@ -244,9 +244,9 @@ export default async function TrainingViewPage({
       </div>
 
       {!user && (
-        <div className="mt-8 flex items-center gap-3 rounded-[4px] border border-outline-variant bg-surface-container-low px-4 py-3">
+        <div className="mt-8 flex items-center gap-3 rounded-flaeche bg-elev-01 px-4 py-3">
           <Sparkles size={18} className="shrink-0 text-primary" aria-hidden />
-          <p className="type-body-small text-on-surface-variant">
+          <p className="type-body-small text-on-surface-mittel">
             Mit einem Konto kannst du eigene Trainings erstellen und
             verwalten.{" "}
             <Link href="/login" className="text-primary underline">

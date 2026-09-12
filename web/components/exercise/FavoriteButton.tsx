@@ -8,7 +8,7 @@ import { setFavorite } from "@/lib/actions/favorites";
 /**
  * Favoriten-Umschalter für eine Übung (Story "Übungen favorisieren").
  *
- * Ist ein {@link IconButton} aus dem UI-Kit — der Button-Shell (Größe,
+ * Ist ein {@link IconButton} aus dem UI-Kit — der Button-Shell (Grösse,
  * State-Layer, Focus-Ring, primary im aktiven Zustand) kommt vollständig von
  * dort. Dieses Feature-Bauteil steuert nur das Verhalten und die eine bewusste
  * Stil-Ausnahme.

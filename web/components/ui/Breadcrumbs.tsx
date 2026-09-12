@@ -14,12 +14,16 @@ export interface BreadcrumbItem {
   icon?: LucideIcon;
 }
 
-/* ── M3 Breadcrumbs ───────────────────────────────────────────────────
+/* ── Brotkrumen ───────────────────────────────────────────────────────
    Sekundäre Pfad-Navigation. Datengetrieben wie Header/Menu: ein
    `items`-Array, das letzte Item ohne `href` ist die aktuelle Seite.
    Lange Pfade kollabieren (maxItems) zu einem aufklappbaren „…"-Button.
    Separator als ChevronRight (kanonisches Icon), per `separator` ersetzbar.
-   Gespeist aus --breadcrumb-*-Component-Tokens. */
+
+   Drei Schriftdeckungen und sonst nichts: Der zurückliegende Pfad steht
+   gedämpft (`on-surface-mittel`), die aktuelle Seite voll, die Trenner nur so
+   kräftig wie eine Kante — sie zählen nicht zum Text. Farbe braucht eine
+   Brotkrume keine; sie sagt, wo man ist, und löst nichts aus. */
 export function Breadcrumbs({
   items,
   separator,
@@ -56,7 +60,7 @@ export function Breadcrumbs({
   const SepEl = (
     <span
       aria-hidden
-      className="flex shrink-0 select-none items-center text-(--breadcrumb-separator)"
+      className="flex shrink-0 select-none items-center text-kante"
     >
       {sep}
     </span>
@@ -87,7 +91,7 @@ export function Breadcrumbs({
                     type="button"
                     onClick={() => setExpanded(true)}
                     aria-label="Ausgeblendeten Pfad anzeigen"
-                    className="focus-ring inline-flex h-6 w-7 shrink-0 items-center justify-center rounded-[3px] text-(--breadcrumb-label) transition-colors hover:bg-on-surface/8 hover:text-(--breadcrumb-label-hover)"
+                    className="state focus-ring inline-flex h-6 w-7 shrink-0 items-center justify-center rounded-flaeche text-on-surface-mittel transition-colors"
                   >
                     <MoreHorizontal size={16} strokeWidth={2} aria-hidden />
                   </button>
@@ -98,7 +102,7 @@ export function Breadcrumbs({
               {item.href && !isCurrent ? (
                 <Link
                   href={item.href}
-                  className="focus-ring type-body-medium flex min-w-0 items-center gap-1.5 rounded-[2px] text-(--breadcrumb-label) underline decoration-transparent decoration-1 underline-offset-[3px] transition-colors hover:text-(--breadcrumb-label-hover) hover:decoration-current"
+                  className="state focus-ring type-body-medium flex min-w-0 items-center gap-1.5 rounded-plakette text-on-surface-mittel underline decoration-transparent decoration-1 underline-offset-[3px] transition-colors hover:decoration-current"
                 >
                   {content}
                 </Link>
@@ -108,8 +112,8 @@ export function Breadcrumbs({
                   className={cn(
                     "flex min-w-0 items-center gap-1.5",
                     isCurrent
-                      ? "type-title-small text-(--breadcrumb-current)"
-                      : "type-body-medium text-(--breadcrumb-label)",
+                      ? "type-title-small text-on-surface"
+                      : "type-body-medium text-on-surface-mittel",
                   )}
                 >
                   {content}

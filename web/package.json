@@ -1,6 +1,6 @@
 {
   "name": "kifu-web",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "license": "CC-BY-SA-4.0",
   "private": true,
   "type": "module",
@@ -23,6 +23,7 @@
     "check:diagramme": "tsx scripts/check-diagramme.ts",
     "check:gruppen": "tsx scripts/pruefe-gruppen.ts",
     "check:varianten": "tsx scripts/pruefe-varianten.ts",
+    "check:farben": "tsx scripts/pruefe-farben.ts",
     "sync:storage": "tsx scripts/sync-storage-staging.ts"
   },
   "dependencies": {

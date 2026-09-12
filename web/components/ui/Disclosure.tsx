@@ -52,12 +52,12 @@ export function Disclosure({
           aria-expanded={offen}
           aria-controls={inhaltId}
           onClick={() => setOffen((o) => !o)}
-          className="focus-ring type-title-small flex w-full items-center justify-between gap-3 rounded-[3px] py-2 text-on-surface transition-colors hover:text-primary"
+          className="state focus-ring type-title-small flex w-full items-center justify-between gap-3 rounded-flaeche py-2 text-on-surface transition-colors"
         >
           <span className="flex items-baseline gap-2">
             {title}
             {count != null && (
-              <span className="type-label-small text-on-surface-variant">{count}</span>
+              <span className="type-label-small text-on-surface-mittel">{count}</span>
             )}
           </span>
           <ChevronDown
