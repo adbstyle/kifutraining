@@ -476,10 +476,11 @@
     --diagramm-ball-zeichnung: #1f2421;
     --diagramm-ball-strich: 2;
     /* Zonen sind gross, und die Füllung ist nur ein Hinweis — den Umriss
-       zeichnet die volle Farbe. Auf 0.28 kam ein gelbes Feld auf 33 %
-       Farbauftrag und damit gleich hinter den Rasen; 0.15 halbiert das,
-       ohne dass die Fläche aufhört, eine Fläche zu sein. */
-    --diagramm-form-deckung: 0.15;
+       zeichnet die volle Farbe in 4 px. Auf 0.28 kam ein gelbes Feld auf
+       33 % Farbauftrag und damit gleich hinter den Rasen; 0.12 drückt das
+       auf 14 %. Viel tiefer geht nicht: unter einem Zehntel bleibt vom
+       Feld nur noch der Rahmen. */
+    --diagramm-form-deckung: 0.12;
 
     /* Heller als das Gerät, damit die Figuren nicht mit ihm konkurrieren. */
     --diagramm-figur-stutzen: #aeb5b0;
