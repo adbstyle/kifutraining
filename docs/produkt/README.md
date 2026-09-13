@@ -9,6 +9,11 @@ Antwort auf die Frage „Was geht heute?" für alle, die nicht im Code nachsehen
 | [Übungen](uebungen.md) | Altersstufen, Übungsbestand, eigene Übungen, Feld-Diagramme, Favoriten |
 | [Trainings](trainings.md) | Trainings der beiden Altersstufen zusammenstellen, durchführen, drucken, veröffentlichen |
 | [Team-Bereich](team-bereich.md) | Trainerteams, Team-Trainings, Termine und Trainingsplan |
+| [Was überall gilt](was-ueberall-gilt.md) | Sprache und Region, Erscheinungsbild, Lesbarkeit, Suchen, Drucken, Verhalten im Fehlerfall |
+
+Die letzte Seite ist die Ausnahme von der Gliederung nach Bereichen: Dort steht, was keinem
+Bereich allein gehört. Wer etwas Querschnittliches beschreibt, schreibt es dorthin und verweist
+aus dem Bereich darauf — nicht umgekehrt, sonst steht dasselbe bald an vier Stellen halb.
 
 ## Pflicht zur Aktualisierung
 
@@ -28,6 +33,25 @@ er als erledigt markiert und nicht mehr nachgeführt; er beschreibt dann den Sta
 Entstehungszeit, nicht den heutigen. Wo Story und Produktdokumentation auseinandergehen, gilt
 diese Dokumentation — und wo diese Dokumentation und die Anwendung auseinandergehen, gilt die
 Anwendung und diese Seite ist zu berichtigen.
+
+## Nichtfunktionale Anforderungen gehören nicht hierher
+
+Das Querschnittliche verführt dazu, hier Anforderungen abzulegen — „Kontrast mindestens 4.5:1",
+„erste Antwort unter einer Sekunde". Das ist die Verwechslung, gegen die diese Sammlung gebaut
+ist: Eine Anforderung ist ein **Auftrag**, diese Seiten beschreiben den **Ist-Zustand**. Hierher
+gehört „die Schrift ist auf jedem Untergrund lesbar", nicht die Zahl, an der das gemessen wird.
+
+Anforderungen haben zwei bestehende Orte, und ein dritter wäre genau die Ambiguität, die wir
+sonst vermeiden:
+
+- **Messbare Ziele** — ein Wert, eine Frist, eine Schwelle — werden als GitHub-Issue erfasst,
+  wie jede andere Story auch.
+- **Dauerhafte Invarianten**, die für jede künftige Änderung gelten, stehen in der `CLAUDE.md`
+  im Repo-Wurzelverzeichnis. Dort wohnen sie schon: forward-only Migrationen, Supabase
+  ausschliesslich serverseitig, clientseitige Bildverkleinerung, Styleguide-first.
+
+Ist ein solcher Auftrag umgesetzt und auf Produktion sichtbar, wird sein **Ergebnis** hier
+beschrieben — in der Sprache dessen, was eine Trainerin erlebt.
 
 ## Stil
 
