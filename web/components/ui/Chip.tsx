@@ -161,12 +161,12 @@ export function FilterChip({
 }
 
 /* ── Choice-Chip-Gruppe (Einfachauswahl, offen) ───────────────
-   Dasselbe, was die SegmentedControl leistet — genau EIN Wert aus einer
-   offen liegenden Menge —, aber für Werte, die in keine Segmentleiste
-   passen: «Spielformen und unterstützende Übungen» ist als Segment
-   unlesbar, als umbrechender Chip nicht. Darum Radiogroup-Semantik
-   (role=radiogroup / role=radio, aria-checked) statt der tab-artigen
-   Segmentleiste, mit Pfeiltasten-Navigation und wanderndem Tabstopp.
+   Genau EIN Wert aus einer offen liegenden Menge — für Werte, die in keiner
+   einzeiligen Leiste Platz hätten und darum UMBRECHEN müssen: Varianten-
+   bezeichnungen dürfen vierzig Zeichen lang sein, und eine seitlich
+   scrollende Reihe zeigte sie nicht mehr nebeneinander. Radiogroup-Semantik
+   (role=radiogroup / role=radio, aria-checked) — es ist ein Eingabefeld und
+   keine Ansicht —, mit Pfeiltasten-Navigation und wanderndem Tabstopp.
 
    Optik: dieselben Chip-Bündel, ausgewählt wie der Filter-Chip.
    Kein Häkchen — es ist eine Einfachauswahl, nicht ein Ein/Aus-Zustand,
@@ -247,8 +247,7 @@ export function ChoiceChip({
   );
 }
 
-/** Der Container der Choice-Chips. Umbricht — das ist sein ganzer Zweck
- *  gegenüber der horizontal scrollenden SegmentedControl. */
+/** Der Container der Choice-Chips. Umbricht — das ist sein ganzer Zweck. */
 export function ChoiceChipGroup({
   ariaLabel,
   children,

@@ -24,7 +24,6 @@ import {
   Meldung,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
-import { SegmentedDemo } from "./SegmentedDemo";
 import { ChipsDemo } from "./ChipsDemo";
 import { ChoiceChipDemo } from "./ChoiceChipDemo";
 import { MenuDemo } from "./MenuDemo";
@@ -346,7 +345,7 @@ const spacingSteps: [string, string][] = [
 
 const radien: [string, string, string][] = [
   ["rounded-plakette", "2 px", "Plakette, Kategorie-Chip — die kleinste beschriftete Fläche."],
-  ["rounded-flaeche", "4 px", "Karte, Feld, Knopf, Menü, Snackbar, Segmentleiste."],
+  ["rounded-flaeche", "4 px", "Karte, Feld, Knopf, Menü, Snackbar, Auswahl-Panel."],
   ["rounded-dialog", "6 px", "Nur der Dialog: die grösste Fläche verträgt mehr Rundung."],
   ["rounded-full", "voll", "Chips und runde Knöpfe — alles, was man antippt und loslässt."],
 ];
@@ -1031,8 +1030,9 @@ export default function Styleguide() {
           Trainingsplan, Trainings und Verwaltung. Bewusst Links statt
           Schaltflächen: jede Ansicht hat ihre eigene Adresse, ist damit
           weitergebbar, und der Zurück-Schritt des Browsers funktioniert.
-          Deshalb nicht <code>SegmentedControl</code> — die ist ein Eingabefeld
-          für eine Auswahl, kein Navigationsmittel. Die Leiste trennt sich nach
+          Deshalb auch kein Auswahl-Baustein aus 10 oder 16 — die sind
+          Eingabefelder für eine Auswahl, kein Navigationsmittel, und ihr Wert
+          lebt im Formularzustand. Die Leiste trennt sich nach
           unten mit <code>border-linie</code>, die offene Ansicht trägt einen
           2 px starken Strich in Primary.
         </p>
@@ -1169,11 +1169,9 @@ export default function Styleguide() {
       <Section n="10" title="Offene Einfachauswahl">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Genau <strong>ein</strong> Wert aus einer Menge, die offen liegt —
-          kein aufklappendes Menü. Zwei Bausteine für dieselbe Aufgabe, die
-          Wahl entscheidet die <strong>Länge der Werte</strong>:{" "}
-          <code>SegmentedControl</code> für kurze Beschriftungen,{" "}
-          <code>ChoiceChipGroup</code> für lange, die umbrechen müssen. Beides
-          trägt Pfeiltasten-Navigation und einen wandernden Tabstopp.
+          kein aufklappendes Menü. <strong>Ein</strong> Baustein:{" "}
+          <code>ChoiceChipGroup</code>, mit Pfeiltasten-Navigation und
+          wanderndem Tabstopp.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Die offene Einfachauswahl ist seit dem 2026-09-13 der{" "}
@@ -1182,37 +1180,27 @@ export default function Styleguide() {
           Mehrfachauswahl in der Mehrfachauswahl (17) — siehe den Kasten unten.
           Offen bleibt, was in kein Menü gehört: die{" "}
           <strong>Variantenwahl</strong> (24), deren Werte der Trainer selbst
-          benannt hat. <code>SegmentedControl</code> hat damit heute keine
-          Anwendung mehr in der Applikation und steht als Baustein bereit.
+          benannt hat. Hier stand bis dahin eine zweite Bauform,{" "}
+          <code>SegmentedControl</code> — eine tab-artige Leiste für kurze
+          Werte, die Altersstufe und Trainingsteil trug. Mit deren Umzug ins
+          Auswahlmenü hatte sie keine Anwendung mehr; sie ist aus dem Kit
+          entfernt, statt als Angebot ohne Gebrauch stehen zu bleiben.
         </p>
         <p className="type-label-small mb-2 text-on-surface-mittel">
-          <code>SegmentedControl</code> — kurze Werte, eine Zeile
-        </p>
-        <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-          Tab-artig (<code>role=tablist</code>). Die Leiste ist <em>eine</em>{" "}
-          Fläche: Kontur aussen herum, kein Innenpolster, keine Lücke zwischen
-          den Segmenten — das aktive Segment hebt sich über die Höhe ab (08dp),
-          die übrigen bleiben auf dem Grund und tragen gedämpfte Schrift. Auf
-          Mobile horizontal scrollbar. Ab etwa vier Wörtern pro Segment kippt
-          das: die Leiste scrollt, und der Nutzer sieht seine Optionen nicht
-          mehr nebeneinander — dann Chips.
-        </p>
-        <SegmentedDemo />
-
-        <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
           <code>ChoiceChipGroup</code> — lange Werte, umbrechend
         </p>
         <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
           Radiogroup-Semantik (<code>role=radiogroup</code> /{" "}
-          <code>role=radio</code>, <code>aria-checked</code>) statt der
-          tab-artigen Leiste — es ist ein Eingabefeld, keine Ansicht. Optik aus
-          den Chip-Bündeln, ausgewählt wie der Filter-Chip, aber{" "}
+          <code>role=radio</code>, <code>aria-checked</code>) — es ist ein
+          Eingabefeld, keine Ansicht, und darum keine Tabs. Optik aus den
+          Chip-Bündeln, ausgewählt wie der Filter-Chip, aber{" "}
           <strong>ohne Häkchen</strong>: Einfachauswahl ist kein
           Ein/Aus-Zustand, und der Umriss-Wechsel trägt die Aussage bereits.
-          Anlass war der Junioren-Block «Spielformen und unterstützende
-          Übungen» — als Segment unlesbar, als Chip nicht. Er steht heute in
-          einem Auswahlmenü (16); in Gebrauch ist der Baustein bei der{" "}
-          <strong>Variantenwahl</strong> (24).
+          Die Chips <strong>umbrechen</strong> — das ist ihr eigentlicher
+          Vorzug: Eine Reihe, die stattdessen seitlich scrollte, zeigte dem
+          Nutzer seine Optionen nicht mehr nebeneinander. In Gebrauch ist der
+          Baustein bei der <strong>Variantenwahl</strong> (24), deren
+          Bezeichnungen bis vierzig Zeichen lang sein dürfen.
         </p>
         <ChoiceChipDemo />
 
@@ -2213,10 +2201,10 @@ export default function Styleguide() {
         <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
           <li>
             Die Werte sind <strong>Nutzertext</strong> — bis vierzig Zeichen,
-            vom Trainer vergeben. Eine <code>SegmentedControl</code> scrollte
-            damit, und er sähe seine Varianten nicht mehr nebeneinander. Aus
-            demselben Grund steht die gewählte Variante umrandet und nicht
-            gefüllt (siehe 09).
+            vom Trainer vergeben. Eine Reihe, die damit seitlich scrollte,
+            zeigte ihm seine Varianten nicht mehr nebeneinander; Chips
+            umbrechen stattdessen. Aus demselben Grund steht die gewählte
+            Variante umrandet und nicht gefüllt (siehe 09).
           </li>
           <li>
             Es ist <strong>ein Element von n</strong> und keine Ansicht:

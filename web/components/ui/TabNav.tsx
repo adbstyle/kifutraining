@@ -12,8 +12,9 @@ export interface TabNavItem {
 
    Bewusst Links und keine Schaltflächen: jede Ansicht hat ihre eigene Adresse,
    ist damit weitergebbar und der Zurück-Schritt des Browsers funktioniert.
-   Deshalb auch nicht `SegmentedControl` — die ist ein Eingabefeld für eine
-   Auswahl, kein Navigationsmittel, und ihre Auswahl lebt im Formularzustand.
+   Deshalb auch kein Auswahl-Baustein (`ChoiceChipGroup`, `Select`) — die sind
+   Eingabefelder für eine Auswahl, kein Navigationsmittel, und ihr Wert lebt im
+   Formularzustand.
 
    Die Optik folgt der Hauptnavigation (Label plus Unterstreichung), damit
    „hier wechselt man den Ort" überall dasselbe Bild ergibt. `aria-current`
