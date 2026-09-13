@@ -48,7 +48,9 @@ export function AltersstufeField({
    *  Stufenwechsel ist an einer gespeicherten Übung kein Feld, sondern ein
    *  eigener, zu bestätigender Vorgang. */
   aktion?: ReactNode;
-  /** Erklärung unter der Wahl; ersetzt den Übungs-Standardtext. */
+  /** Erklärung unter der Wahl. Ohne bleibt die Zeile leer: An der Übung sagt
+   *  der Feldname alles, und was die Wahl nach sich zieht, sieht man an der
+   *  Maske selbst. Das Training erklärt sie, weil sie dort lebenslang bindet. */
   hinweis?: string;
   /** Fehlermeldung, wenn die Wahl fehlt. */
   fehler?: string;
@@ -79,11 +81,7 @@ export function AltersstufeField({
       options={wert === null ? [{ value: "", label: "— Altersstufe wählen —" }, ...optionen] : optionen}
       onChange={(v) => istAltersstufe(v) && onChange(v)}
       error={!!fehler}
-      supportingText={
-        fehler ??
-        hinweis ??
-        "Nach welchem Manual du erfasst. Bestimmt Einordnung, Alterskategorien und alle weiteren Felder."
-      }
+      supportingText={fehler ?? hinweis}
     />
   );
 }

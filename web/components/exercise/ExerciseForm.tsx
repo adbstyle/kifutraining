@@ -314,7 +314,7 @@ export function ExerciseForm({
       )}
 
       <TextField
-        label="Name der Übung"
+        label="Name"
         name="name"
         defaultValue={initial.name}
         required
