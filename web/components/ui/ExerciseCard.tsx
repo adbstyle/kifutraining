@@ -1,17 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { HerkunftBadge } from "./Badge";
-import { KategorieChip } from "./Chip";
 import { Card } from "./Card";
 import { UebungsBild } from "./UebungsBild";
-import type { KategorieSlug } from "@/lib/vocab";
 
 export interface ExerciseCardData {
   slug: string;
   name: string;
   trainingsteilLabel: string;
   hauptteilkategorieLabel?: string | null;
-  kategorien: KategorieSlug[];
   herkunft: "manual" | "user";
   visibility?: "public" | "private";
   bildUrl?: string | null;
@@ -60,16 +57,13 @@ export function ExerciseCard({
             className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-scrim/55 to-transparent"
           />
 
-          {/* Alterskategorien oben links. Der Aktions-Slot liegt oben rechts
-              (ausserhalb des Links, s. u.), die Herkunft unten links. */}
-          {ex.kategorien.length > 0 && (
-            <div className="absolute left-2 top-2 flex gap-1">
-              {ex.kategorien.map((k) => (
-                <KategorieChip key={k} k={k} />
-              ))}
-            </div>
-          )}
-          <div className="absolute bottom-2 left-2">
+          {/* Herkunft oben links, wo vorher die Alterskategorien standen: Beim
+              Überfliegen einer Kachelreihe ist die erste Frage, ob eine Übung
+              aus dem Manual kommt, aus der Gemeinschaft oder noch der eigene
+              Entwurf ist — die Alterskategorie beantwortet der Filter, mit dem
+              man ohnehin hergekommen ist. Der Aktions-Slot liegt oben rechts
+              (ausserhalb des Links, s. u.); beide deckt derselbe Verlauf. */}
+          <div className="absolute left-2 top-2">
             <HerkunftBadge herkunft={ex.herkunft} visibility={ex.visibility} />
           </div>
         </div>
