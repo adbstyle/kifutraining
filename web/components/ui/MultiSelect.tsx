@@ -1,10 +1,9 @@
 "use client";
 
-import { Fragment, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Check, CheckCheck, ChevronDown, RotateCcw, Search, X } from "lucide-react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
+import { Check, CheckCheck, ChevronDown, RotateCcw, Search } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { IconButton } from "./IconButton";
-import { chipTextSelected } from "./Chip";
 import {
   feldLabelBase,
   feldLabelRuhend,
@@ -38,18 +37,19 @@ export interface MultiSelectProps {
   className?: string;
 }
 
-/* M2 Multi-Select — einzeiliger Feld-Trigger mit inline entfernbaren Tags
-   öffnet ein Panel mit Suchfeld (Kopf), Optionsliste (eckige Checkbox) und
-   Aktions-Footer (Zurücksetzen / Alle auswählen). Der Trigger ist gebaut wie
-   ein Feld (Kontur in `kante`, offener Grund), das Panel wie ein Menü
-   (08dp, Haarlinie, Schatten).
-   Der Trigger bleibt auf eine Zeile begrenzt: passen nicht alle Tags in die
-   Zelle, werden die überzähligen zu einem Zähler-Badge (+N) gebündelt — die
-   sichtbare Anzahl wird per Messung (verstecktes Mess-Layer + ResizeObserver)
-   an die Feldbreite angepasst. Combobox-/Listbox-Semantik
-   (aria-multiselectable) mit voller Tastatursteuerung (↑/↓, Home/End, Enter
-   toggelt, Esc schliesst). Panel bleibt nach Auswahl offen. „Alle auswählen"
-   respektiert den aktiven Suchfilter. */
+/* M2 Multi-Select — einzeiliger Feld-Trigger, der die Auswahl als
+   kommaseparierte Liste zeigt, und ein Panel mit Suchfeld (Kopf), Optionsliste
+   (eckige Checkbox) und Aktions-Footer (Zurücksetzen / Alle auswählen). Der
+   Trigger ist gebaut wie ein Feld (Kontur in `kante`, offener Grund), das
+   Panel wie ein Menü (08dp, Haarlinie, Schatten).
+   Der Trigger trägt den Wert wie die Einzelauswahl: eine Zeile Text, am Ende
+   abgeschnitten (`truncate`) — keine Tags, kein Zähler. Was nicht mehr in die
+   Zeile passt, steht in der Liste darunter, und dort wird auch entfernt; ein
+   Kreuzchen pro Wert im Feld wäre ein zweiter Ort fürs Abwählen.
+   Combobox-/Listbox-Semantik (aria-multiselectable) mit voller
+   Tastatursteuerung (↑/↓, Home/End, Enter toggelt, Esc schliesst). Panel
+   bleibt nach Auswahl offen. „Alle auswählen" respektiert den aktiven
+   Suchfilter. */
 export function MultiSelect({
   label,
   options,
@@ -89,11 +89,6 @@ export function MultiSelect({
   const triggerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
-  // Einzeiliger Trigger: `contentRef` ist die clippende Tag-Zeile, `measureRef`
-  // ein unsichtbares Layer, das alle Tags in voller Breite hält. Daraus wird
-  // berechnet, wie viele Tags reinpassen (Rest → „+N"-Badge).
-  const contentRef = useRef<HTMLDivElement>(null);
-  const measureRef = useRef<HTMLDivElement>(null);
   // Nur Tastatur-Navigation soll die aktive Option ins Sichtfeld scrollen.
   // Hover setzt `active` ebenfalls — würde das scrollen, springt die Liste
   // bei jeder Mausbewegung (scrollIntoView auf der überlaufenden Liste).
@@ -106,18 +101,11 @@ export function MultiSelect({
     return options.filter((o) => o.label.toLowerCase().includes(q));
   }, [options, query, searchable]);
 
-  // Tags in Auswahl-Reihenfolge; Label-Lookup über die Optionen.
-  const selectedOptions = current
-    .map((v) => options.find((o) => o.value === v))
-    .filter((o): o is SelectOption => Boolean(o));
-
-  // Wie viele Tags in eine Zeile passen. Start = alle (Layout-Effekt korrigiert
-  // vor dem ersten Paint). Stabiler Mess-Trigger via Schlüssel statt Array-ID.
-  const selectedKey = current.join("|");
-  const [visibleCount, setVisibleCount] = useState(selectedOptions.length);
-  const visibleOptions = selectedOptions.slice(0, visibleCount);
-  const hiddenOptions = selectedOptions.slice(visibleCount);
-  const hiddenCount = hiddenOptions.length;
+  // Die gewählten Werte in der Reihenfolge der Optionsliste, nicht in der des
+  // Anklickens: Eine Textzeile soll bei gleicher Auswahl gleich lauten, sonst
+  // liest sich dasselbe Feld nach jedem Ab- und Wiederanwählen anders.
+  const selectedOptions = options.filter((o) => current.includes(o.value));
+  const anzeigeText = selectedOptions.map((o) => o.label).join(", ");
 
   function emit(next: string[]) {
     if (!isControlled) setInternal(next);
@@ -130,10 +118,6 @@ export function MultiSelect({
         ? current.filter((v) => v !== value)
         : [...current, value],
     );
-  }
-
-  function remove(value: string) {
-    emit(current.filter((v) => v !== value));
   }
 
   // Footer-Aktionen. „Alle auswählen" vereinigt die aktuelle Auswahl mit den
@@ -195,54 +179,6 @@ export function MultiSelect({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  // Sichtbare Tag-Anzahl an die Feldbreite anpassen. Misst die natürlichen
-  // Tag-Breiten im versteckten Layer und füllt die Zeile, bis nur noch Platz
-  // fürs „+N"-Badge bliebe. Reagiert via ResizeObserver auf Breitenänderungen.
-  useLayoutEffect(() => {
-    const content = contentRef.current;
-    const measure = measureRef.current;
-    if (!content || !measure) return;
-
-    const GAP = 6; // gap-1.5
-    const BADGE_RESERVE = 46; // Platz fürs „+N"-Badge inkl. Gap
-
-    function recompute() {
-      const chips = Array.from(measure!.children) as HTMLElement[];
-      const n = chips.length;
-      if (n === 0) {
-        setVisibleCount(0);
-        return;
-      }
-      const avail = content!.clientWidth;
-      const widths = chips.map((c) => c.offsetWidth);
-      const totalAll = widths.reduce((a, b) => a + b, 0) + GAP * (n - 1);
-      if (totalAll <= avail) {
-        setVisibleCount(n);
-        return;
-      }
-      // Nicht alles passt → Platz fürs Badge reservieren und auffüllen.
-      let used = 0;
-      let count = 0;
-      for (let i = 0; i < n; i++) {
-        const w = widths[i] + (count > 0 ? GAP : 0);
-        if (used + w + GAP + BADGE_RESERVE <= avail) {
-          used += w;
-          count++;
-        } else {
-          break;
-        }
-      }
-      setVisibleCount(count);
-    }
-
-    recompute();
-    const ro = new ResizeObserver(recompute);
-    ro.observe(content);
-    return () => ro.disconnect();
-    // selectedKey: Neuberechnung bei geänderter Auswahl; options: Label-Wechsel.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedKey, options]);
-
   // Listen-Navigation — geteilt von Suchfeld (searchable) und Trigger (sonst).
   function onNavKey(e: React.KeyboardEvent) {
     switch (e.key) {
@@ -303,48 +239,13 @@ export function MultiSelect({
   // im Feld wäre eine Aussage über einen Zustand, der sich gerade ändert.
   const schwebt = !showPlaceholder || open;
 
-  // Ein entfernbarer Tag. `measuring`: Variante fürs Mess-Layer (gleiche Breite,
-  // ohne Handler) — `shrink-0` hält die natürliche Breite in der clippenden Zeile.
-  function renderChip(o: SelectOption, measuring = false) {
-    return (
-      // Gewählt heisst hier umrandet, nicht gefüllt: Die Tags sitzen IM Feld,
-      // eine volle Primary-Fläche pro Wert überstrahlte die Kontur des Felds,
-      // in dem sie stehen. Darum dieselbe Lesart wie beim gewählten
-      // Nutzertext-Chip — Primary auf Kontur und Schrift, die Fläche nur
-      // angehaucht. Das Farbtripel kommt darum aus `chipTextSelected` und
-      // steht nicht ein zweites Mal hier; eigen bleiben nur Höhe, Polsterung
-      // und Schrift, weil ein Tag im Feld-Trigger kleiner ist als ein Chip.
-      <span
-        key={o.value}
-        className={cn(
-          "type-label-small inline-flex shrink-0 items-center gap-1 rounded-full kontur py-0.5 pl-2.5 pr-1",
-          chipTextSelected,
-        )}
-      >
-        {o.label}
-        <button
-          type="button"
-          tabIndex={-1}
-          disabled={disabled || measuring}
-          onClick={
-            measuring
-              ? undefined
-              : (e) => {
-                  e.stopPropagation();
-                  remove(o.value);
-                }
-          }
-          aria-label={`${o.label} entfernen`}
-          className="state focus-ring inline-flex h-4 w-4 items-center justify-center rounded-full text-primary"
-        >
-          <X size={13} strokeWidth={2.5} aria-hidden />
-        </button>
-      </span>
-    );
-  }
-
   return (
-    <div className={className}>
+    // `min-w-0`: Die Wertzeile läuft auf einer Zeile (`truncate`) und hat damit
+    // eine natürliche Mindestbreite. In einem Grid- oder Flex-Elternteil
+    // (Filterzeile, Styleguide-Raster) zöge die über `min-width: auto` das
+    // ganze Feld breiter als seine Spalte — abgeschnitten würde dann nie,
+    // stattdessen sprengte das Feld das Raster.
+    <div className={cn("min-w-0", className)}>
       {/* Der barrierefreie Name des Triggers und der Liste. Er bleibt konstant
           `label` («Trainingsteil»), während das sichtbare Label je nach Zustand
           zwei verschiedene Sätze zeigt — der Vorlesehilfe darf ein Feld nicht
@@ -356,8 +257,8 @@ export function MultiSelect({
       <div ref={rootRef} className="relative">
         {/* Trigger = Feld-Kontrakt, auf eine Zeile begrenzt. Ohne Suche ist er
             die Combobox (treibt die Liste), mit Suche ein Button, der das Panel
-            öffnet (Fokus springt dann ins Suchfeld). Die Tag-Zeile clippt;
-            überzählige Tags bündelt das „+N"-Badge. */}
+            öffnet (Fokus springt dann ins Suchfeld). Der Wert steht als eine
+            Zeile Text und wird am Ende abgeschnitten. */}
         <div
           id={fid}
           ref={triggerRef}
@@ -373,7 +274,20 @@ export function MultiSelect({
           onClick={() => !disabled && setOpen((o) => !o)}
           onKeyDown={onTriggerKey}
           className={cn(
-            "focus-ring flex h-12 w-full items-center gap-1.5 rounded-flaeche kontur bg-transparent px-3",
+            // `contain-inline-size` ist hier nicht Kosmetik, sondern das, was das
+            // Abschneiden überhaupt erst erlaubt: Eine Textzeile ohne Umbruch
+            // meldet ihre volle Breite als Mindestbreite nach oben und zöge
+            // sonst das Feld — und mit ihm seine Rasterspalte — beliebig breit,
+            // statt zu kürzen. Mit Inline-Containment kommt die Breite von
+            // aussen, und der Inhalt fügt sich. `min-w-0` allein genügt nicht:
+            // Es wirkt nur auf dem Weg nach oben, und schon ein fremdes <div>
+            // um das Feld herum unterbricht die Kette.
+            // `min-w-40` ist der Preis dafür: Wo die Breite NICHT von aussen
+            // kommt — ein Elternteil, der sich um seinen Inhalt legt —, hätte
+            // das Feld sonst keine, es fiele auf Polsterung und Pfeil zusammen
+            // (gemessen: 35 px). Die Schranke liegt unter jeder Breite, die die
+            // Filterzeile vergibt (schmalste: 192 px), ändert dort also nichts.
+            "focus-ring type-body-large flex h-12 w-full min-w-40 items-center gap-2 contain-inline-size rounded-flaeche kontur bg-transparent px-4 text-on-surface",
             error ? "border-error" : "border-kante",
             // Offen zieht der Trigger die Kontur auf Primary — er gehört dann
             // zum Panel darunter und soll das auch zeigen.
@@ -381,56 +295,29 @@ export function MultiSelect({
             disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
           )}
         >
-          {/* Der Leerfall steht nicht mehr hier drin, sondern im Label darüber
-              — sonst stünden im selben Feld zwei Beschriftungen übereinander.
-              Bleibt die Tag-Zeile; `pl-1` rückt die Tags auf dieselbe Kante wie
-              das Label (px-3 + dessen px-1). */}
-          <div
-            ref={contentRef}
-            className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden pl-1"
-          >
-            {!showPlaceholder && (
-              <>
-                {visibleOptions.map((o) => renderChip(o))}
-                {hiddenCount > 0 && (
-                  <span
-                    aria-label={`${hiddenCount} weitere ausgewählt`}
-                    title={hiddenOptions.map((o) => o.label).join(", ")}
-                    className={cn(
-                      "type-label-small inline-flex shrink-0 items-center rounded-full kontur px-2 py-0.5 tabular-nums",
-                      chipTextSelected,
-                    )}
-                  >
-                    +{hiddenCount}
-                  </span>
-                )}
-              </>
-            )}
-          </div>
+          {/* Der Leerfall steht nicht hier drin, sondern im Label darüber —
+              sonst stünden im selben Feld zwei Beschriftungen übereinander.
+              Bleibt die Wertzeile: die gewählten Werte durch Komma getrennt,
+              eine Zeile, am Ende abgeschnitten — wie die Einzelauswahl ihren
+              einen Wert zeigt. */}
+          <span className="min-w-0 flex-1 truncate text-left">
+            {anzeigeText}
+          </span>
 
           <ChevronDown
             size={18}
             strokeWidth={2}
             aria-hidden
             className={cn(
-              "mr-1 shrink-0 self-center text-on-surface-mittel transition-transform",
+              "shrink-0 text-on-surface-mittel transition-transform",
               open && "rotate-180",
             )}
           />
-
-          {/* Mess-Layer: alle Tags in voller Breite, unsichtbar & layout-neutral. */}
-          <div
-            ref={measureRef}
-            aria-hidden
-            className="pointer-events-none invisible absolute left-0 top-0 flex flex-nowrap items-center gap-1.5 whitespace-nowrap"
-          >
-            {selectedOptions.map((o) => renderChip(o, true))}
-          </div>
         </div>
 
         {/* Das Label wie am TextField, nur von Hand geschaltet: Ein Trigger
             ohne <input> kennt kein `:placeholder-shown`. Ruhend zeigt es den
-            Leerfall («Alle Stufen») dort, wo gleich die Tags stehen; sobald
+            Leerfall («Alle Stufen») dort, wo gleich der Wert steht; sobald
             etwas gewählt ist — oder das Panel offen ist und die Wahl also
             gerade läuft —, schwebt an dessen Stelle der Name der Dimension auf
             die Kontur. `aria-hidden`, weil der Name des Felds aus dem
