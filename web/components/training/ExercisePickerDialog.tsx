@@ -7,7 +7,7 @@ import {
   Dialog,
   KategorieChip,
   HerkunftBadge,
-  FilterChip,
+  MultiSelect,
   IconButton,
   Badge,
   Meldung,
@@ -17,16 +17,17 @@ import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import { stufenAbgedeckt } from "@/lib/training";
 import {
   altersstufe as altersstufeLabels,
-  uebungstyp as uebungstypLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
 import {
-  erscheinungsformenFuer,
+  erscheinungsformOptionen,
+  uebungstypOptionen,
+} from "@/lib/filter-optionen";
+import {
   traegtErscheinungsform,
   traegtUebungstyp,
   type Altersstufe,
 } from "@/lib/altersstufe";
-import { ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
 import type { Einordnung } from "@/lib/junioren";
 import type { ExerciseListRow } from "@/lib/queries/exercises";
 
@@ -104,7 +105,7 @@ export function ExercisePickerDialog({
   // Felder zeigt.
   const hatErscheinungsform = traegtErscheinungsform(altersstufe, trainingsteil);
   const hatUebungstyp = traegtUebungstyp(altersstufe, trainingsteil);
-  const formen = erscheinungsformenFuer(altersstufe);
+  const formen = erscheinungsformOptionen(altersstufe);
 
   // Ist der leere Bestand eine Folge der Eingrenzung — oder gibt es für diesen
   // Block schlicht noch keine Übung? Die beiden Fälle brauchen verschiedene
@@ -148,10 +149,6 @@ export function ExercisePickerDialog({
     }, 250);
     return () => clearTimeout(t);
   }, [open, q, form, typ, hauptteilkategorie, trainingsteil, trainingId]);
-
-  function toggle(list: string[], set: (v: string[]) => void, value: string) {
-    set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
-  }
 
   function bump(id: string, delta: number) {
     // Funktionales Update: der frühere Ref-Spiegel stammte aus der entfernten
@@ -213,36 +210,45 @@ export function ExercisePickerDialog({
           onChange={(e) => setQ(e.target.value)}
         />
 
-        {/* Erscheinungsform-Filter — nur das Vokabular dieser Altersstufe und
-            nur in Einordnungen, die überhaupt eine tragen. */}
-        {hatErscheinungsform && (
-          <div className="flex flex-wrap gap-2">
-            {formen.map((slug) => (
-              <FilterChip
-                key={slug}
-                selected={form.includes(slug)}
-                onClick={() => toggle(form, setForm, slug)}
-              >
-                {ERSCHEINUNGSFORM_LABEL[slug] ?? slug}
-              </FilterChip>
-            ))}
-          </div>
-        )}
-
-        {/* Übungstyp-Filter — nur wo eine Übung überhaupt einen tragen kann:
-            im Juniorenfussball, und dort nur in den Blöcken mit Spielformen
-            (Story 9 AC 6, eingegrenzt durch Story 3/6 der Übungswelten). */}
-        {hatUebungstyp && (
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(uebungstypLabels).map(([slug, label]) => (
-              <FilterChip
-                key={slug}
-                selected={typ.includes(slug)}
-                onClick={() => toggle(typ, setTyp, slug)}
-              >
-                {label}
-              </FilterChip>
-            ))}
+        {/* Die eingrenzenden Dimensionen als Mehrfachauswahl des Kits — eine
+            umbrechende Zeile, beide Felder gleich breit. Aufgeklappte
+            Chip-Reihen standen hier früher: Die Junioren-Erscheinungsformen
+            sind ganze Sätze, zwölf davon füllten den Dialog, bevor die erste
+            Übung zu sehen war. Die Trefferliste ist der Inhalt dieses Dialogs,
+            nicht das Filtervokabular.
+            Welche Felder überhaupt erscheinen, entscheidet dasselbe Gating wie
+            am Übungsformular: Erscheinungsformen tragen nicht alle
+            Einordnungen, den Übungstyp kennt nur der Juniorenfussball, dort nur
+            in den Blöcken mit Spielformen (Story 9 AC 6).
+            Anders als die Filterleiste des Katalogs behalten beide Felder die
+            Suche im Panel (`searchable` bleibt auf seinem Vorgabewert): Die
+            Junioren-Erscheinungsformen sind ganze Sätze, elf davon, und im
+            Dialog steht weniger Höhe zur Verfügung als auf der Katalogseite.
+            Der Übungstyp mit seinen drei Werten braucht sie nicht, bekommt sie
+            aber trotzdem — zwei Felder nebeneinander, von denen sich nur eines
+            durchsuchen lässt, wären die grössere Irritation. */}
+        {(hatErscheinungsform || hatUebungstyp) && (
+          <div className="flex flex-wrap gap-3">
+            {hatErscheinungsform && (
+              <MultiSelect
+                label="Erscheinungsform"
+                options={formen}
+                value={form}
+                onChange={setForm}
+                placeholder="Alle Erscheinungsformen"
+                className="min-w-48 flex-1"
+              />
+            )}
+            {hatUebungstyp && (
+              <MultiSelect
+                label="Übungstyp"
+                options={uebungstypOptionen}
+                value={typ}
+                onChange={setTyp}
+                placeholder="Alle Übungstypen"
+                className="min-w-48 flex-1"
+              />
+            )}
           </div>
         )}
 
