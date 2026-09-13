@@ -1253,10 +1253,13 @@ export default function Styleguide() {
           Höhe und Kontur nebeneinander sagten dasselbe zweimal. Das Bild ist das
           einzige satte Farbfeld auf der Karte; an seinem <strong>Kopf</strong>{" "}
           liegt ein Verlauf aus <code>scrim</code> (<code>top-0 h-16</code>) —
-          er schützt, was dort steht: die Kategorie-Plaketten links und den
-          Favoriten-Knopf rechts. Titel und Herkunft brauchen ihn nicht; der
-          Titel steht auf der Kartenfläche unter dem Bild, die Herkunft auf
-          ihrer eigenen Plakette. Überfahren färbt die ganze Karte über{" "}
+          er schützt, was dort steht: die Herkunfts-Plakette links und den
+          Favoriten-Knopf rechts. Die <strong>Alterskategorie steht nicht auf
+          der Karte</strong>: Sie ist der Filter, mit dem man die Liste betritt,
+          und auf jeder Kachel derselben Liste wiederholte sie bloss die eigene
+          Auswahl — die Herkunft dagegen ist auf jeder Kachel eine andere. Den
+          Titel trägt die Kartenfläche unter dem Bild; er braucht den Verlauf
+          nicht. Überfahren färbt die ganze Karte über{" "}
           <code>state</code> — kein eigener Hover-Ton, und die Ebene sitzt auf
           dem Link, der die Karte deckt.
         </p>
@@ -1268,7 +1271,6 @@ export default function Styleguide() {
               slug: "schiessbude",
               name: "Schiessbude",
               trainingsteilLabel: "Ausklang",
-              kategorien: ["G", "F", "E"],
               herkunft: "manual",
             }}
             actionSlot={
@@ -1286,7 +1288,6 @@ export default function Styleguide() {
               name: "Mein 4-gegen-4",
               trainingsteilLabel: "Hauptteil",
               hauptteilkategorieLabel: "Fussball spielen lernen",
-              kategorien: ["F", "E"],
               herkunft: "user",
               visibility: "private",
             }}
@@ -1296,7 +1297,6 @@ export default function Styleguide() {
               slug: "toblerone",
               name: "Toblerone",
               trainingsteilLabel: "Einleitung",
-              kategorien: ["G"],
               herkunft: "user",
               visibility: "public",
             }}
