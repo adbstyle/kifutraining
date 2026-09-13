@@ -391,10 +391,12 @@ const iconSet = [
   User,
 ];
 
-const fahrplan: [string, string, string][] = [
-  ["①", "Offen starten", "Die Kinder dribbeln auf die Abschlusszone zu und schliessen ab."],
-  ["②", "Üben", "Mit linkem und rechtem Fuss kontrolliert führen und in die freie Ecke zielen."],
-  ["③", "Wett-eifern", "Wie viele Treffer gelingen mit links, wie viele mit rechts?"],
+/* Beispieltexte für die drei Stufen des methodischen Fahrplans; die
+   Stufennamen führt die Komponente selbst. */
+const fahrplan = [
+  "Die Kinder dribbeln auf die Abschlusszone zu und schliessen ab.",
+  "Mit linkem und rechtem Fuss kontrolliert führen und in die freie Ecke zielen.",
+  "Wie viele Treffer gelingen mit links, wie viele mit rechts?",
 ];
 
 /* Der Druckblock lässt sich am Bildschirm nicht zeigen, indem man ihn
@@ -1317,9 +1319,9 @@ export default function Styleguide() {
         <Card className="max-w-xl p-6">
           <MethodischerFahrplan
             fahrplan={{
-              offen_starten: fahrplan[0][2],
-              ueben: [fahrplan[1][2]],
-              wetteifern: fahrplan[2][2],
+              offen_starten: fahrplan[0],
+              ueben: [fahrplan[1]],
+              wetteifern: fahrplan[2],
             }}
           />
         </Card>
