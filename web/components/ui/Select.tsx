@@ -99,8 +99,16 @@ export function Select({
   // Ein Wert, der nicht in den Optionen steht, hat KEINE Auswahl — nicht die
   // erste. Sonst behauptete das Feld einen Zustand, den der Datensatz nicht
   // hat, und ein unbedachtes Speichern schriebe ihn fest.
+  //
+  // `foundIndex === -1` ist mit `placeholder` der Normalfall, nicht die
+  // Ausnahme: Ein Feld, das noch nichts gewählt hat, findet keinen Treffer.
+  // Darum zwei Grössen, die auseinanderzuhalten sind — `foundIndex` sagt, WAS
+  // gewählt ist (nichts, wenn -1), `startIndex` nur, wo die Tastatur zu laufen
+  // beginnt, wenn die Liste aufgeht. Wer den Startpunkt zum Häkchen macht,
+  // markiert die erste Option als gewählt, während das Feld den Platzhalter
+  // zeigt.
   const foundIndex = options.findIndex((o) => o.value === current);
-  const selectedIndex = foundIndex === -1 ? 0 : foundIndex;
+  const startIndex = foundIndex === -1 ? 0 : foundIndex;
   const selected = foundIndex === -1 ? undefined : options[foundIndex];
 
   const [open, setOpen] = useState(false);
@@ -112,7 +120,7 @@ export function Select({
   // Zustand, der sich gerade ändert (dieselbe Regel wie an der
   // Mehrfachauswahl).
   const zeigtPlatzhalter = !!placeholder && !current;
-  const [active, setActive] = useState(selectedIndex);
+  const [active, setActive] = useState(startIndex);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -136,7 +144,7 @@ export function Select({
   useEffect(() => {
     if (!open) return;
     kbdNav.current = true;
-    setActive(selectedIndex);
+    setActive(startIndex);
     listRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -254,7 +262,6 @@ export function Select({
 
         <span
           aria-hidden
-          onClick={() => !disabled && btnRef.current?.focus()}
           className={cn(
             feldLabelBase,
             "left-3",
@@ -277,7 +284,9 @@ export function Select({
             className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-flaeche border border-linie bg-elev-08 py-1 shadow-dp-08 focus:outline-none"
           >
             {options.map((o, i) => {
-              const isSelected = i === selectedIndex;
+              // Das Häkchen hängt an `foundIndex`, nicht am Startpunkt der
+              // Tastatur: Ohne Treffer ist KEINE Option gewählt.
+              const isSelected = i === foundIndex;
               const isActive = i === active;
               // Gruppen-Überschrift, sobald eine neue Gruppe beginnt.
               const kopf = o.group && o.group !== options[i - 1]?.group ? o.group : null;
