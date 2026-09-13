@@ -8,6 +8,7 @@ import { TrainingFilterBar } from "@/components/training/TrainingFilterBar";
 import { getTrainingPool } from "@/lib/queries/trainings";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/training";
+import { flag, liste, text, type RohWert } from "@/lib/such-parameter";
 import { kategorienSlugs } from "@/lib/vocab";
 
 export const dynamic = "force-dynamic";
@@ -19,29 +20,29 @@ export default async function TrainingsPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    q?: string;
-    stufen?: string;
-    mine?: string;
-    deleted?: string;
+    q?: RohWert;
+    stufen?: RohWert;
+    mine?: RohWert;
+    deleted?: RohWert;
   }>;
 }) {
   const sp = await searchParams;
-  const q = sp.q?.trim() ?? "";
-  const stufen = (sp.stufen ?? "").split(",").filter((s) => kategorienSlugs.includes(s as never));
+  const q = text(sp.q) ?? "";
+  const stufen = liste(sp.stufen).filter((s) => kategorienSlugs.includes(s as never));
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   // „Meine Trainings" ist nur angemeldet sinnvoll — anonym gibt es keine.
-  const mine = !!user && sp.mine === "1";
+  const mine = !!user && flag(sp.mine);
   const filtersActive = !!q || stufen.length > 0;
 
   const trainings = await getTrainingPool({ q, stufen, mine });
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      {sp.deleted && <Flash message="Training gelöscht." />}
+      {flag(sp.deleted) && <Flash message="Training gelöscht." />}
 
       <header className="mb-8">
         <div className="flex items-center justify-between gap-4">

@@ -41,6 +41,13 @@ jobs:
       # Palette. Tailwind v4 meldet unbekannte Utilities nicht — eine vergessene
       # Klasse erzeugt still keine Regel, und der Text erbt die Elternfarbe.
       - run: npm run check:farben
+      # Ehrliche Such-Parameter: Next liefert für jeden Query-Parameter
+      # `string | string[] | undefined` und fasst wiederholte Namen nie
+      # zusammen. `searchParams: Promise<{ q?: string }>` ist für tsc trotzdem
+      # unauffällig — der Fehler zeigt sich erst im Betrieb als HTTP 500
+      # (`.trim is not a function`). Genau daran hingen drei Abstürze auf
+      # Produktion; nur dieser Wächter fängt einen Rückfall.
+      - run: npm run check:such-parameter
       # Farbsätze des Feld-Diagramms: Vollständigkeit der Rollen in beiden
       # Sätzen (Bildschirm und Papier), Kontrast 3:1 nach WCAG 1.4.11 für
       # gezeichnete Gegenstände, und das Verbot roher Farbwerte im

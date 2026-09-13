@@ -4,6 +4,7 @@ import { getTerminZuTraining } from "@/lib/queries/termine";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { TrainingDurchfuehren } from "@/components/training/TrainingDurchfuehren";
 import { trainingsKrumen } from "@/lib/brotkrumen";
+import { text, type RohWert } from "@/lib/such-parameter";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -16,7 +17,7 @@ export default async function TrainingDurchfuehrenPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ termin?: string; variante?: string }>;
+  searchParams: Promise<{ termin?: RohWert; variante?: RohWert }>;
 }) {
   const { id } = await params;
   const training = await getTrainingView(id);
@@ -26,7 +27,9 @@ export default async function TrainingDurchfuehrenPage({
   // der Termin DES TRAININGS, nicht der übergebene — so kann eine manipulierte
   // Adresse keinen fremden Termin an ein Training heften. Die RLS gibt Termine
   // ohnehin nur Team-Mitgliedern.
-  const { termin: terminParam, variante } = await searchParams;
+  const sp = await searchParams;
+  const terminParam = text(sp.termin);
+  const variante = text(sp.variante);
   const termin = terminParam ? await getTerminZuTraining(id) : null;
 
   return (

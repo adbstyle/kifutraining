@@ -7,6 +7,7 @@ import { trainingsKrumen } from "@/lib/brotkrumen";
 import { saveFassungDiagramm } from "@/lib/actions/fassung";
 import { parseDiagramm, LEERES_DIAGRAMM } from "@/lib/diagramm";
 import { VARIANTE_PARAM, varianteAnhang } from "@/lib/varianten";
+import { text, type RohParameter } from "@/lib/such-parameter";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -24,14 +25,13 @@ export default async function FassungDiagrammPage({
   searchParams,
 }: {
   params: Promise<{ id: string; teId: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<RohParameter>;
 }) {
   const { id, teId } = await params;
   // Die Variante reist über die Brotkrumen zurück (#201): Der Rückweg führt
   // über die Fassungs-Bearbeitung in den Editor, und beide Stufen sollen die
   // Zusammenstellung zeigen, aus der der Trainer gekommen ist.
-  const varianteRoh = (await searchParams)[VARIANTE_PARAM];
-  const variante = Array.isArray(varianteRoh) ? varianteRoh[0] : varianteRoh;
+  const variante = text((await searchParams)[VARIANTE_PARAM]);
   const anhang = varianteAnhang(variante);
   const f = await getFassungZumBearbeiten(teId);
   if (!f || f.trainingId !== id) notFound();

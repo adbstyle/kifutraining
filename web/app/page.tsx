@@ -10,27 +10,15 @@ import {
   type ExerciseFilters,
 } from "@/lib/queries/exercises";
 import { alsEinordnungsFilter, einordnungNachSpalten } from "@/lib/filter-optionen";
+import { flag, liste, text, zahl, type RohParameter } from "@/lib/such-parameter";
 
 // Server-only Datenzugriff (anon-Key + RLS); kein Prerender ohne DB.
 export const dynamic = "force-dynamic";
 
-type SearchParams = Record<string, string | string[] | undefined>;
-
-function list(v: string | string[] | undefined): string[] {
-  if (!v) return [];
-  return (Array.isArray(v) ? v.join(",") : v).split(",").filter(Boolean);
-}
-
-function num(v: string | string[] | undefined): number | undefined {
-  const s = Array.isArray(v) ? v[0] : v;
-  const n = s ? Number.parseInt(s, 10) : NaN;
-  return Number.isFinite(n) && n > 0 ? n : undefined;
-}
-
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<SearchParams>;
+  searchParams: Promise<RohParameter>;
 }) {
   const sp = await searchParams;
 
@@ -48,15 +36,15 @@ export default async function Home({
     // unsichtbarer, aber wirksamer Filter stehenzubleiben (Story #129 PC 3).
     // Den früheren `?hkat=`-Parameter liest der Katalog gar nicht mehr: die
     // Hauptteilkategorie wird ausschliesslich über diesen Filter gesteuert.
-    teil: alsEinordnungsFilter(list(sp.teil)),
-    kat: list(sp.kat),
-    feld: list(sp.feld),
-    form: list(sp.form),
-    typ: list(sp.typ),
-    kinder: num(sp.kinder),
-    q: typeof sp.q === "string" ? sp.q : undefined,
-    fav: sp.fav === "1",
-    mine: !!user && sp.mine === "1",
+    teil: alsEinordnungsFilter(liste(sp.teil)),
+    kat: liste(sp.kat),
+    feld: liste(sp.feld),
+    form: liste(sp.form),
+    typ: liste(sp.typ),
+    kinder: zahl(sp.kinder),
+    q: text(sp.q),
+    fav: flag(sp.fav),
+    mine: !!user && flag(sp.mine),
   };
   // Die Einordnungen wirken untereinander als ODER und stehen in zwei Spalten
   // — der Query-Layer bekommt sie darum als `einordnung`, nicht als `teil`.
@@ -77,10 +65,10 @@ export default async function Home({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      {sp.account_deleted && (
+      {flag(sp.account_deleted) && (
         <Flash message="Konto gelöscht. Deine öffentlichen Übungen bleiben anonym erhalten." />
       )}
-      {sp.deleted && <Flash message="Übung gelöscht." />}
+      {flag(sp.deleted) && <Flash message="Übung gelöscht." />}
       <header className="mb-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="type-display-small text-on-surface">Übungen</h1>

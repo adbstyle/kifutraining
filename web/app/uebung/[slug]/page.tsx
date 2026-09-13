@@ -31,6 +31,7 @@ import {
 import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
 import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
+import { flag, type RohWert } from "@/lib/such-parameter";
 
 export const dynamic = "force-dynamic";
 
@@ -76,20 +77,20 @@ export default async function ExerciseDetailPage({
 }: {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{
-    created?: string;
-    updated?: string;
-    kopiert?: string;
+    created?: RohWert;
+    updated?: RohWert;
+    kopiert?: RohWert;
   }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
   const ex = await getExerciseDetail(slug);
   if (!ex) notFound();
-  const flash = sp.created
+  const flash = flag(sp.created)
     ? "Übung erstellt."
-    : sp.updated
+    : flag(sp.updated)
       ? "Änderungen gespeichert."
-      : sp.kopiert
+      : flag(sp.kopiert)
         ? "Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen."
         : null;
 

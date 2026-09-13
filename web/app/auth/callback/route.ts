@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { pfad } from "@/lib/such-parameter";
 
 /** PKCE-Code-Rücksprung (`?code=`): Code gegen eine Session tauschen (setzt die
  *  HttpOnly-Cookies via @supabase/ssr) und zum Ziel weiterleiten.
@@ -8,8 +9,9 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
-  const safeNext = next.startsWith("/") ? next : "/";
+  // Dasselbe Ziel-Regelwerk wie beim Login (`pfad`): nur ein echter interner
+  // Pfad, kein schema-relatives `//host`.
+  const safeNext = pfad(searchParams.get("next") ?? undefined);
 
   // Auf den tatsächlichen Host-Header weiterleiten (nicht auf das evtl.
   // normalisierte request.url-Origin): sonst wechselt der Host z. B. von
