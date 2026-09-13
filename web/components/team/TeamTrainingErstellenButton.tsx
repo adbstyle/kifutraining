@@ -92,24 +92,22 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
             fehler={fehler.altersstufe}
           />
 
-          <div>
-            <p className="mb-2 type-label-large text-on-surface">Alterskategorien</p>
-            <p className="mb-3 type-body-small text-on-surface-mittel">
-              {altersstufe
-                ? "Mindestens eine ist nötig; ihr könnt die Auswahl später jederzeit ändern."
-                : "Wähle zuerst die Altersstufe — sie bestimmt, welche Alterskategorien es hier gibt."}
+          {/* Ohne gewählte Altersstufe gibt es das Feld nicht — welche
+              Kategorien es überhaupt gibt, folgt aus ihr. */}
+          {altersstufe ? (
+            <StufenField
+              value={stufen}
+              onChange={setStufen}
+              kategorien={kategorienFuer(altersstufe)}
+              error={fehler.stufen}
+              supportingText="Mindestens eine ist nötig; ihr könnt die Auswahl später jederzeit ändern."
+            />
+          ) : (
+            <p className="type-body-small text-on-surface-mittel">
+              Wähle zuerst die Altersstufe — sie bestimmt, welche
+              Alterskategorien es hier gibt.
             </p>
-            {altersstufe && (
-              <StufenField
-                value={stufen}
-                onChange={setStufen}
-                kategorien={kategorienFuer(altersstufe)}
-              />
-            )}
-            {fehler.stufen && (
-              <p className="mt-2 type-body-small text-error">{fehler.stufen}</p>
-            )}
-          </div>
+          )}
         </div>
       </Dialog>
     </>

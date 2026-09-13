@@ -2,24 +2,31 @@
 
 import { useState } from "react";
 import { ChoiceChip, ChoiceChipGroup } from "@/components/ui";
-import { JUNIOREN_TEILE } from "@/lib/junioren";
 
-/* Zeigt die ChoiceChipGroup an ihrem Anlassfall: den Blöcken des
-   Junioren-Hauptteils, deren längster Name in keine Segmentleiste passt. */
-const bloecke = JUNIOREN_TEILE.flatMap((t) => t.bloecke);
+/* Zeigt die ChoiceChipGroup an ihrem Anwendungsfall: den Varianten eines
+   Hauptteils (24). Die Bezeichnungen sind Nutzertext und dürfen bis vierzig
+   Zeichen lang sein — genau die Werte, die in einer Reihe umbrechen müssen,
+   statt seitlich aus dem Bild zu scrollen. Die Werte hier sind erfunden;
+   echte stehen im Training. */
+const varianten = [
+  "Grundfassung",
+  "21 Kinder, zwei Trainer",
+  "Halle bei Regen",
+  "Kleine Gruppe",
+];
 
 export function ChoiceChipDemo() {
-  const [wert, setWert] = useState<string>("jun-spielformen");
+  const [wert, setWert] = useState<string>(varianten[0]);
   return (
-    <ChoiceChipGroup ariaLabel="Block des Junioren-Trainingsschemas">
-      {bloecke.map((b, i) => (
+    <ChoiceChipGroup ariaLabel="Variante des Hauptteils">
+      {varianten.map((v, i) => (
         <ChoiceChip
-          key={b.slug}
-          selected={wert === b.slug}
-          tabStop={i === 0 && !bloecke.some((x) => x.slug === wert)}
-          onSelect={() => setWert(b.slug)}
+          key={v}
+          selected={wert === v}
+          tabStop={i === 0 && !varianten.includes(wert)}
+          onSelect={() => setWert(v)}
         >
-          {b.label}
+          {v}
         </ChoiceChip>
       ))}
     </ChoiceChipGroup>

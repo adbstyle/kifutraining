@@ -1,34 +1,32 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { ChoiceChip, ChoiceChipGroup, SegmentedControl } from "@/components/ui";
+import { Select } from "@/components/ui";
 import { einordnungenFuer, type Altersstufe } from "@/lib/altersstufe";
 
 /** Wo eine Übung in ihrem Trainingsschema liegt (Story 2 AK 1, Story 3 AK 3/4).
  *
- *  Kinderfussball: die vier Trainingsteile in einer Segmentleiste — kurze
- *  Wörter, eine Ebene, fertig.
+ *  Eine Einfachauswahl mit Panel (Styleguide 16) — dieselbe Form, in der die
+ *  Maske inzwischen jede Einfachauswahl führt (PO-Vorgabe 2026-09-13). Sie lag
+ *  eine Zeit lang offen (Segmentleiste, im Juniorenschema mit einer zweiten
+ *  Reihe Chips), weil die Einordnung über die halbe Maske darunter entscheidet
+ *  und das sichtbar sein sollte.
  *
- *  Juniorenfussball: zwei Ebenen. Oben der Trainingsteil als Segmentleiste,
- *  darunter seine Blöcke als Choice-Chips. Gewählt wird der Block; der
- *  Trainingsteil bleibt daneben stehen, damit die Zugehörigkeit sichtbar ist
- *  (AK 3) — das Manual selbst führt die Blöcke nie ohne ihren Teil. Chips statt
- *  Segmente, weil «Spielformen und unterstützende Übungen» in keiner
- *  Segmentleiste lesbar bleibt; sie umbrechen.
+ *  Kinderfussball: die vier Trainingsteile als flache Liste — dort ist der
+ *  Trainingsteil selbst die Einordnung.
  *
- *  Ein Teil mit genau EINEM Block ist dabei keine zweite Ebene: Seine Chip-
- *  Reihe wäre eine Wahl ohne Alternative, und der Chip trüge denselben Namen
- *  wie das Segment darüber. Ihn zu wählen wählt darum unmittelbar seinen Block,
- *  Chips erscheinen bei ihm keine (Story #127).
+ *  Juniorenfussball: alle sieben Blöcke in EINER Liste, der Trainingsteil als
+ *  nicht wählbare Kopfzeile darüber (`group`). Gewählt wird der Block; der
+ *  Trainingsteil bleibt als Kopfzeile daneben stehen, damit die Zugehörigkeit
+ *  sichtbar ist (AK 3) — das Manual selbst führt die Blöcke nie ohne ihren
+ *  Teil. Weil `Select` die Kopfzeile positional setzt, müssen die Optionen
+ *  gruppensortiert kommen; `einordnungenFuer()` liefert sie so.
  *
- *  Der Trainingsteil ist reine Anzeige-Navigation und wird nirgends
- *  gespeichert: gespeichert ist immer nur die Einordnung selbst. Beim
- *  Bearbeiten leitet der Aufrufer den Teil aus dem gespeicherten Block ab. */
+ *  Der Trainingsteil ist damit reine Beschriftung und wird nirgends
+ *  gespeichert: gespeichert ist immer nur die Einordnung selbst. */
 export function EinordnungField({
   altersstufe,
   wert,
-  teil,
-  onTeilChange,
   onChange,
   error,
   supportingText,
@@ -37,9 +35,6 @@ export function EinordnungField({
   altersstufe: Altersstufe;
   /** Die gewählte Einordnung (Kinderfussball-Trainingsteil oder Junioren-Block). */
   wert: string;
-  /** Nur im Juniorenfussball: der aufgeschlagene Trainingsteil. */
-  teil: string;
-  onTeilChange: (teil: string) => void;
   onChange: (einordnung: string) => void;
   error?: string;
   supportingText?: string;
@@ -50,53 +45,40 @@ export function EinordnungField({
 }) {
   const gruppen = einordnungenFuer(altersstufe);
   const zweistufig = gruppen.some((g) => g.bloecke.length > 0);
-  const offeneGruppe = gruppen.find((g) => g.teil === teil) ?? gruppen[0];
-  // Die Chip-Reihe lohnt erst ab zwei Blöcken; darunter ist die Wahl bereits
-  // mit dem Segment getroffen.
-  const chipsSichtbar = zweistufig && offeneGruppe.bloecke.length > 1;
+
+  const optionen = gruppen.flatMap((g) => {
+    if (g.bloecke.length === 0) return [{ value: g.teil, label: g.label }];
+    // Ein Teil mit genau EINEM gleichnamigen Block bekommt keine Kopfzeile:
+    // Sie stünde wortgleich über ihrer einzigen Option und gliederte nichts —
+    // «Auffangen / Auffangen». Dieselbe Regel, die früher seine Chip-Reihe
+    // unterdrückte (Story #127), nur an der Optionsliste.
+    const eigenstaendig = g.bloecke.length === 1 && g.bloecke[0].label === g.label;
+    return g.bloecke.map((b) => ({
+      value: b.slug,
+      label: b.label,
+      ...(eigenstaendig ? {} : { group: g.label }),
+    }));
+  });
 
   return (
     <div>
-      <p
-        className={`type-label-small mb-2 ${error ? "text-error" : "text-on-surface-mittel"}`}
-      >
-        {zweistufig ? "Trainingsteil und Block" : "Trainingsteil"}
-      </p>
-      <SegmentedControl
-        ariaLabel="Trainingsteil"
-        options={gruppen.map((g) => ({ value: g.teil, label: g.label }))}
-        // Einstufig ist der Trainingsteil selbst die Einordnung.
-        value={zweistufig ? offeneGruppe.teil : wert || null}
-        onChange={(v) => {
-          if (!zweistufig) return onChange(v);
-          onTeilChange(v);
-          // Einblockiger Teil: die Wahl ist mit dem Segment schon getroffen.
-          const gruppe = gruppen.find((g) => g.teil === v);
-          if (gruppe?.bloecke.length === 1) onChange(gruppe.bloecke[0].slug);
-        }}
+      <Select
+        label={zweistufig ? "Trainingsteil und Block" : "Trainingsteil"}
+        // Breiter als die übrigen Auswahlfelder, aber nicht über die ganze
+        // Spalte: «Spielformen und unterstützende Übungen» soll ungekürzt in
+        // die Wertzeile passen.
+        className="max-w-lg"
+        options={optionen}
+        // Kein Leerwert in der Liste, sondern ein Platzhalter: Die Einordnung
+        // ist Pflicht — «noch nichts gewählt» ist ein Zustand des Formulars,
+        // keine Angabe über die Übung, und darf darum nicht wie eine
+        // getroffene Wahl im Feld stehen.
+        placeholder="Einordnung wählen …"
+        value={wert}
+        onChange={onChange}
+        error={!!error}
+        supportingText={error ?? supportingText}
       />
-      {chipsSichtbar && (
-        <ChoiceChipGroup
-          ariaLabel={`Block im Trainingsteil ${offeneGruppe.label}`}
-          className="mt-3"
-        >
-          {offeneGruppe.bloecke.map((b, i) => (
-            <ChoiceChip
-              key={b.slug}
-              selected={wert === b.slug}
-              tabStop={i === 0 && !offeneGruppe.bloecke.some((x) => x.slug === wert)}
-              onSelect={() => onChange(b.slug)}
-            >
-              {b.label}
-            </ChoiceChip>
-          ))}
-        </ChoiceChipGroup>
-      )}
-      <p
-        className={`type-body-small mt-1.5 ${error ? "text-error" : "text-on-surface-mittel"}`}
-      >
-        {error ?? supportingText}
-      </p>
       {/* Dezenter Hinweis nach dem Muster der Hinweiszeile des
           Trainings-Editors (Styleguide «Leerzustand & Hinweiszeile»):
           nur das Zeichen trägt Farbe (Primary), der Text bleibt im

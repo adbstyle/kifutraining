@@ -2,25 +2,28 @@
 
 import type { ReactNode } from "react";
 import { Badge } from "./Badge";
-import { SegmentedControl } from "./SegmentedControl";
+import { Select } from "./Select";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
-import { ALTERSSTUFEN, type Altersstufe } from "@/lib/altersstufe";
+import { ALTERSSTUFEN, istAltersstufe, type Altersstufe } from "@/lib/altersstufe";
 
-const optionen = ALTERSSTUFEN.map((s) => ({ value: s, label: altersstufeLabels[s] }));
+const optionen = ALTERSSTUFEN.map((s) => ({ value: s as string, label: altersstufeLabels[s] }));
 
 /** Nach welchem Lehrmittel eine Übung oder ein Training geführt wird
  *  (Story 3 AK 1/2, Story 5 AK 1/3).
  *
- *  Beim Erfassen eine offene Wahl, kein aufklappendes Menü — Vorgabe des
- *  Product Owners: die Altersstufe entscheidet über jedes weitere Feld des
- *  Formulars, und diese Tragweite soll man sehen, ohne erst zu klicken. Zwei
- *  Werte passen in eine Segmentleiste, darum dieselbe wie bei der
- *  Kinderfussball-Einordnung.
+ *  Die Wahl ist eine Einfachauswahl mit Panel (Styleguide 16) — dasselbe
+ *  Auswahlfeld, das auch Feldtyp, Hauptteilkategorie und Übungstyp tragen. Sie
+ *  lag eine Zeit lang offen in einer Segmentleiste, weil die Tragweite der
+ *  Altersstufe sichtbar sein sollte, ohne erst zu klicken; die Maske führt
+ *  ihre Auswahlfelder inzwischen durchgängig in dieser einen Form
+ *  (PO-Vorgabe 2026-09-13), und ein einzelnes offen liegendes Feld darin wäre
+ *  eine Ausnahme ohne eigenen Grund.
  *
  *  `wert = null` heisst «noch nicht gewählt». Am Training ist das der
  *  Ausgangszustand: dort bindet die Wahl lebenslang und darf nicht durch eine
- *  Voreinstellung durchrutschen. An der Übung ist sie vorbelegt, weil eine
- *  Übung umwandelbar bleibt (Story 4).
+ *  Voreinstellung durchrutschen — deshalb steht dann der Leerfall als erste
+ *  Option in der Liste. An der Übung ist sie vorbelegt, weil eine Übung
+ *  umwandelbar bleibt (Story 4); dort gibt es den Leerfall gar nicht.
  *
  *  Steht die Stufe fest, wird sie nur noch benannt (AK 2/3). Sie zu ändern ist
  *  bei der Übung ein eigener, ausdrücklicher Weg (Story 4) und beim Training
@@ -41,11 +44,13 @@ export function AltersstufeField({
   festHinweis?: string;
   /** Bedienelement neben dem Badge — der einzige Weg, eine feststehende
    *  Altersstufe doch noch zu verlassen: das Überführen einer eigenen Übung
-   *  (Story 4). Es steht bewusst hier und nicht in der Segmentleiste: ein
+   *  (Story 4). Es steht bewusst hier und nicht im Auswahlfeld: ein
    *  Stufenwechsel ist an einer gespeicherten Übung kein Feld, sondern ein
    *  eigener, zu bestätigender Vorgang. */
   aktion?: ReactNode;
-  /** Erklärung unter der Wahl; ersetzt den Übungs-Standardtext. */
+  /** Erklärung unter der Wahl. Ohne bleibt die Zeile leer: An der Übung sagt
+   *  der Feldname alles, und was die Wahl nach sich zieht, sieht man an der
+   *  Maske selbst. Das Training erklärt sie, weil sie dort lebenslang bindet. */
   hinweis?: string;
   /** Fehlermeldung, wenn die Wahl fehlt. */
   fehler?: string;
@@ -66,21 +71,19 @@ export function AltersstufeField({
     );
 
   return (
-    <div>
-      <p className="type-label-small mb-2 text-on-surface-mittel">Altersstufe</p>
-      <SegmentedControl
-        ariaLabel="Altersstufe"
-        options={optionen}
-        value={wert}
-        onChange={onChange}
-      />
-      <p
-        className={`type-body-small mt-1.5 ${fehler ? "text-error" : "text-on-surface-mittel"}`}
-      >
-        {fehler ??
-          hinweis ??
-          "Nach welchem Manual du erfasst. Bestimmt Einordnung, Alterskategorien und alle weiteren Felder."}
-      </p>
-    </div>
+    <Select
+      label="Altersstufe"
+      className="max-w-xs"
+      value={wert ?? ""}
+      options={optionen}
+      // Kein Leerwert in der Liste, sondern ein Platzhalter: «noch nicht
+      // gewählt» ist der Ausgangszustand am Training, keine Altersstufe.
+      // Einmal gesetzt, lässt sie sich auch nicht mehr auf «keine»
+      // zurückstellen — sie ist an Übung wie Training eine Pflichtangabe.
+      placeholder="Altersstufe wählen …"
+      onChange={(v) => istAltersstufe(v) && onChange(v)}
+      error={!!fehler}
+      supportingText={fehler ?? hinweis}
+    />
   );
 }
