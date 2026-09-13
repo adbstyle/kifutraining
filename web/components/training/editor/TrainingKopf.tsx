@@ -124,16 +124,16 @@ export function TrainingKopf({
         />
       </div>
 
+      {/* Nur die Kategorien der Altersstufe dieses Trainings: Sie folgen ihr,
+          statt sie zu bestimmen (Story 5 AK 4). Ein Wechsel der Altersstufe
+          ist bewusst nirgends vorgesehen (AK 5) — wer für die andere plant,
+          legt ein neues Training an. */}
       <div className="mt-4">
-        <p className="mb-2 type-label-large text-on-surface">Alterskategorien</p>
-        {/* Nur die Kategorien der Altersstufe dieses Trainings: Sie folgen ihr,
-            statt sie zu bestimmen (Story 5 AK 4). Ein Wechsel der Altersstufe
-            ist bewusst nirgends vorgesehen (AK 5) — wer für die andere plant,
-            legt ein neues Training an. */}
         <StufenField
           value={stufen}
           onChange={onStufen}
           kategorien={kategorienFuer(training.altersstufe)}
+          supportingText="Für welche Alterskategorien dieses Training gedacht ist."
         />
       </div>
     </Card>

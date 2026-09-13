@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Dialog, FilterChip, Select } from "@/components/ui";
+import { Button, Dialog, MultiSelect, Select } from "@/components/ui";
 import { EinordnungField } from "@/components/exercise/EinordnungField";
 import {
   altersstufe as altersstufeLabels,
@@ -10,9 +10,7 @@ import {
 import { kategorieStufe } from "@/lib/labels";
 import {
   andereAltersstufe,
-  einordnungenFuer,
   kategorienFuer,
-  teilDerEinordnung,
   traegtHauptteilkategorie,
   ueberfuehrungsVorschlag,
   type Altersstufe,
@@ -63,10 +61,6 @@ export function UmwandelnDialog({
   );
 
   const [teil, setTeil] = useState(vorschlag?.einordnung ?? "");
-  // Nur Anzeige-Navigation im Juniorenschema (siehe EinordnungField).
-  const [offenerTeil, setOffenerTeil] = useState(() =>
-    teilDerEinordnung(ziel, vorschlag?.einordnung ?? ""),
-  );
   const [hkat, setHkat] = useState(vorschlag?.hauptteilkategorie ?? "");
   // Die Alterskategorien beginnen leer: G–E und D–A sind getrennte Mengen,
   // aus der bisherigen Wahl lässt sich keine übertragen.
@@ -78,15 +72,6 @@ export function UmwandelnDialog({
   }>({});
 
   const zeigtHkat = traegtHauptteilkategorie(ziel, teil);
-
-  function wechsleTeil(neuerTeil: string) {
-    const gruppe = einordnungenFuer(ziel).find((g) => g.teil === neuerTeil);
-    if (!gruppe) return;
-    if (gruppe.bloecke.length === 0) return setTeil(neuerTeil);
-    if (gruppe.bloecke.some((b) => b.slug === teil)) return setOffenerTeil(neuerTeil);
-    setOffenerTeil(neuerTeil);
-    setTeil(gruppe.bloecke[0].slug);
-  }
 
   function bestaetigen() {
     const neu: typeof fehler = {};
@@ -131,8 +116,6 @@ export function UmwandelnDialog({
         <EinordnungField
           altersstufe={ziel}
           wert={teil}
-          teil={offenerTeil}
-          onTeilChange={wechsleTeil}
           onChange={setTeil}
           error={fehler.einordnung}
           supportingText={
@@ -147,43 +130,30 @@ export function UmwandelnDialog({
             label="Hauptteilkategorie"
             value={hkat}
             onChange={setHkat}
-            options={[
-              { value: "", label: "— Kategorie wählen —" },
-              ...(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
-                value: k,
-                label: hkatLabels[k],
-              })),
-            ]}
+            options={(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
+              value: k,
+              label: hkatLabels[k],
+            }))}
+            placeholder="Kategorie wählen …"
             supportingText={fehler.hauptteilkategorie ?? "Der Trainingsinhalt des Hauptteils."}
             error={!!fehler.hauptteilkategorie}
           />
         )}
 
-        <div>
-          <p
-            className={`type-label-small mb-2 ${fehler.kat ? "text-error" : "text-on-surface-mittel"}`}
-          >
-            Alterskategorie
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {kategorienFuer(ziel).map((k) => (
-              <FilterChip
-                key={k}
-                selected={kat.includes(k)}
-                onClick={() =>
-                  setKat(kat.includes(k) ? kat.filter((x) => x !== k) : [...kat, k])
-                }
-              >
-                <span title={kategorieStufe[k as keyof typeof kategorieStufe]}>{k}</span>
-              </FilterChip>
-            ))}
-          </div>
-          <p
-            className={`type-body-small mt-1.5 ${fehler.kat ? "text-error" : "text-on-surface-mittel"}`}
-          >
-            {fehler.kat ?? "Mindestens eine Kategorie dieser Altersstufe."}
-          </p>
-        </div>
+        <MultiSelect
+          label="Alterskategorie"
+          options={kategorienFuer(ziel).map((k) => ({
+            value: k,
+            label: kategorieStufe[k as keyof typeof kategorieStufe],
+          }))}
+          value={kat}
+          onChange={setKat}
+          searchable={false}
+          actions={false}
+          placeholder="Kategorien wählen …"
+          error={!!fehler.kat}
+          supportingText={fehler.kat ?? "Mindestens eine Kategorie dieser Altersstufe."}
+        />
       </div>
     </Dialog>
   );

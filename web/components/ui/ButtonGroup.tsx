@@ -2,7 +2,8 @@ import { cn } from "@/lib/cn";
 
 /* Verbundene Knopfgruppe: Aktions-Knöpfe in einer Reihe. Aussenecken gerundet,
    Innenecken eckig, 2 px Lücke (der Grund scheint durch).
-   Für GRUPPIERTE AKTIONEN — die Einfachauswahl macht die SegmentedControl. */
+   Für GRUPPIERTE AKTIONEN — die Einfachauswahl machen die ChoiceChipGroup
+   (offen, 10) und das Auswahlfeld mit Panel (16). */
 export function ButtonGroup({
   children,
   ariaLabel,
