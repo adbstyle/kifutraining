@@ -6,7 +6,7 @@ import {
   TextField,
   TextArea,
   Select,
-  FilterChip,
+  MultiSelect,
   Button,
   AltersstufeField,
   Meldung,
@@ -28,10 +28,8 @@ import {
   FREIES_SPIEL,
   andereAltersstufe,
   brauchtFahrplan,
-  einordnungenFuer,
   erscheinungsformenFuer,
   kategorienFuer,
-  teilDerEinordnung,
   traegtErscheinungsform,
   traegtFeldtyp,
   traegtHauptteilkategorie,
@@ -67,19 +65,6 @@ export type ExerciseInitial = {
   varianten?: string[];
   bildUrl?: string | null;
 };
-
-function Group({ title, error, children }: { title: string; error?: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <p className={`type-label-small mb-2 ${error ? "text-error" : "text-on-surface-mittel"}`}>
-        {title}
-      </p>
-      <div className="flex flex-wrap gap-2">{children}</div>
-      {error && <p className="type-body-small mt-1.5 text-error">{error}</p>}
-    </div>
-  );
-}
-
 
 export function ExerciseForm({
   action,
@@ -121,11 +106,6 @@ export function ExerciseForm({
 
   const [stufe, setStufe] = useState<Altersstufe>(initialeStufe);
   const [teil, setTeil] = useState<string>(initial.trainingsteil ?? "");
-  // Nur Anzeige-Navigation im Juniorenschema: welcher Trainingsteil
-  // aufgeschlagen ist. Gespeichert wird immer die Einordnung selbst.
-  const [offenerTeil, setOffenerTeil] = useState<string>(
-    teilDerEinordnung(initialeStufe, initial.trainingsteil ?? ""),
-  );
   const [kat, setKat] = useState<string[]>(initial.kategorien ?? []);
   const [form, setForm] = useState<string[]>(initial.erscheinungsform ?? []);
   const [feld, setFeld] = useState<string>(initial.feldtyp ?? "");
@@ -189,9 +169,6 @@ export function ExerciseForm({
             : "die erfassten Angaben entfallen"
         } beim Speichern.`;
 
-  const toggle = (arr: string[], set: (v: string[]) => void, v: string) =>
-    set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
-
   /** Einordnung wechseln und den bisherigen Ablauftext als Ausgangstext in die
    *  neue Form überführen (Story 2 AK 3) — redigiert wird von Hand. Gilt nur
    *  INNERHALB einer Altersstufe; der Stufenwechsel leert stattdessen. */
@@ -205,21 +182,7 @@ export function ExerciseForm({
       setAufbau(neu.aufbau);
     }
     setTeil(neuerTeil);
-    setOffenerTeil(teilDerEinordnung(stufe, neuerTeil));
     setHkat(neueHkat);
-  }
-
-  /** Im Juniorenschema den Trainingsteil aufschlagen. Er ist nicht selbst die
-   *  Einordnung — gespeichert wird der Block. Damit Segment und Auswahl nie
-   *  auseinanderlaufen (und das Formular nie still einen Block behält, den man
-   *  gar nicht mehr sieht), zieht der Teilwechsel die Einordnung mit: liegt die
-   *  bisherige in diesem Teil, bleibt sie; sonst gilt sein erster Block. */
-  function wechsleTeil(neuerTeil: string) {
-    const gruppe = einordnungenFuer(stufe).find((g) => g.teil === neuerTeil);
-    if (!gruppe) return;
-    if (gruppe.bloecke.length === 0) return wechsleEinordnung(neuerTeil, hkat);
-    if (gruppe.bloecke.some((b) => b.slug === teil)) return setOffenerTeil(neuerTeil);
-    wechsleEinordnung(gruppe.bloecke[0].slug, hkat);
   }
 
   /** Altersstufe wechseln — nur beim Erfassen möglich, an einer noch nicht
@@ -231,7 +194,6 @@ export function ExerciseForm({
   function wechsleAltersstufe(neu: Altersstufe) {
     setStufe(neu);
     setTeil("");
-    setOffenerTeil(einordnungenFuer(neu)[0].teil);
     setKat([]);
     setForm([]);
     setHkat("");
@@ -269,7 +231,6 @@ export function ExerciseForm({
     }
     setStufe(u.altersstufe);
     setTeil(u.einordnung);
-    setOffenerTeil(teilDerEinordnung(u.altersstufe, u.einordnung));
     setHkat(u.hauptteilkategorie ?? "");
     setKat(u.kategorien);
     // Stufenfremde Angaben: die beiden Manuals führen getrennte Kataloge, und
@@ -399,18 +360,9 @@ export function ExerciseForm({
         />
       )}
 
-      {/* Die Einordnung liegt wieder offen statt in einem Auswahlmenü. Sie war
-          eine Zeit lang ein Select, weil sieben Werte aus zwei Welten in einer
-          Liste standen und keine Segmentleiste sie trug. Mit der Trennung der
-          Altersstufen ist dieser Grund entfallen: Es sind nie mehr als vier
-          Kinderfussball-Teile oder vier Junioren-Teile mit ihren Blöcken, und
-          welche Einordnung gilt, entscheidet über die halbe Maske darunter —
-          das gehört sichtbar, nicht eingeklappt (PO-Vorgabe 2026-08-30). */}
       <EinordnungField
         altersstufe={stufe}
         wert={teil}
-        teil={offenerTeil}
-        onTeilChange={wechsleTeil}
         onChange={(v) => wechsleEinordnung(v, hkat)}
         error={err.trainingsteil}
         supportingText={
@@ -421,13 +373,31 @@ export function ExerciseForm({
         hinweis={entfallHinweis}
       />
 
-      <Group title="Alterskategorie" error={err.kat}>
-        {kategorienFuer(stufe).map((k) => (
-          <FilterChip key={k} selected={kat.includes(k)} onClick={() => toggle(kat, setKat, k)}>
-            <span title={kategorieStufe[k as keyof typeof kategorieStufe]}>{k}</span>
-          </FilterChip>
-        ))}
-      </Group>
+      {/* Die Werte stehen ausgeschrieben («G-Junior:innen») statt als blosser
+          Buchstabe: In einer Optionsliste ist ein einzelnes «G» kein Wort,
+          sondern ein Kürzel ohne Kontext — der Katalogfilter beschriftet sie
+          aus demselben Grund so. Weder Suche noch Aktions-Fuss: drei bis vier
+          kurze Werte liest man schneller, als man sie filtert. */}
+      <MultiSelect
+        label="Alterskategorie"
+        // Wie Einordnung und Erscheinungsform in der breiten Spur: Die Maske
+        // führt zwei Feldbreiten — knapp für kurze Werte (Altersstufe,
+        // Feldtyp, Übungstyp, Hauptteilkategorie), breit für ausgeschriebene.
+        // Vier gewählte Kategorien passen auch so nicht in eine Zeile; sie
+        // werden abgeschnitten, wie es die Mehrfachauswahl vorsieht.
+        className="max-w-lg"
+        options={kategorienFuer(stufe).map((k) => ({
+          value: k,
+          label: kategorieStufe[k as keyof typeof kategorieStufe],
+        }))}
+        value={kat}
+        onChange={setKat}
+        searchable={false}
+        actions={false}
+        placeholder="Kategorien wählen …"
+        error={!!err.kat}
+        supportingText={err.kat ?? "Für welche Alterskategorien die Übung taugt."}
+      />
 
       {zeigtFeldtyp && (
         <Select
@@ -502,24 +472,23 @@ export function ExerciseForm({
       ))}
 
       {zeigtHkat && (
-        <div>
-          <Select
-            label="Hauptteilkategorie"
-            className="max-w-xs"
-            value={hkat}
-            onChange={(v) => wechsleEinordnung(teil, v)}
-            options={[
-              { value: "", label: "— Kategorie wählen —" },
-              ...(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
-                value: k,
-                label: hkatLabels[k],
-              })),
-            ]}
-          />
-          <p className={`type-body-small mt-1.5 ${err.hauptteilkategorie ? "text-error" : "text-on-surface-mittel"}`}>
-            {err.hauptteilkategorie ?? "Pflichtfeld — der Trainingsinhalt des Hauptteils."}
-          </p>
-        </div>
+        <Select
+          label="Hauptteilkategorie"
+          className="max-w-xs"
+          value={hkat}
+          onChange={(v) => wechsleEinordnung(teil, v)}
+          options={[
+            { value: "", label: "— Kategorie wählen —" },
+            ...(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
+              value: k,
+              label: hkatLabels[k],
+            })),
+          ]}
+          error={!!err.hauptteilkategorie}
+          supportingText={
+            err.hauptteilkategorie ?? "Pflichtfeld — der Trainingsinhalt des Hauptteils."
+          }
+        />
       )}
 
       {/* Übungstyp: optionale Selbstauskunft des Junioren-Manuals, und nur in
@@ -527,33 +496,36 @@ export function ExerciseForm({
           Kurzdefinition steht beim Zuweisen dabei — «Spielform» bezeichnet im
           Lehrmittel drei verschiedene Dinge (Story 9 AC 4). */}
       {zeigtTyp && (
-        <div>
-          <Select
-            label="Übungstyp (optional)"
-            value={uebungstyp}
-            onChange={setUebungstyp}
-            options={[
-              { value: "", label: "— kein Übungstyp —" },
-              ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
-            ]}
-            supportingText={
-              uebungstyp ? UEBUNGSTYP_DEFINITION[uebungstyp] : "Wie das Manual die Trainingsform einordnet."
-            }
-          />
-        </div>
+        <Select
+          label="Übungstyp (optional)"
+          value={uebungstyp}
+          onChange={setUebungstyp}
+          options={[
+            { value: "", label: "— kein Übungstyp —" },
+            ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
+          ]}
+          supportingText={
+            uebungstyp ? UEBUNGSTYP_DEFINITION[uebungstyp] : "Wie das Manual die Trainingsform einordnet."
+          }
+        />
       )}
 
       {/* Die Erscheinungsformen des Manuals, dem diese Übung folgt — in der
           Reihenfolge ihrer Quelle. Eine Gruppierung nach Spielphasen hat der
           Product Owner bewusst abgelehnt (Story 12 Out of Scope 2). */}
       {zeigtForm && (
-        <Group title="Erscheinungsform (optional)">
-          {erscheinungsformenFuer(stufe).map((f) => (
-            <FilterChip key={f} selected={form.includes(f)} onClick={() => toggle(form, setForm, f)}>
-              {ERSCHEINUNGSFORM_LABEL[f] ?? f}
-            </FilterChip>
-          ))}
-        </Group>
+        <MultiSelect
+          label="Erscheinungsform (optional)"
+          className="max-w-lg"
+          options={erscheinungsformenFuer(stufe).map((f) => ({
+            value: f,
+            label: ERSCHEINUNGSFORM_LABEL[f] ?? f,
+          }))}
+          value={form}
+          onChange={setForm}
+          placeholder="Keine Erscheinungsform"
+          supportingText="Welche Erscheinungsformen des Manuals die Übung bedient."
+        />
       )}
 
       <div>

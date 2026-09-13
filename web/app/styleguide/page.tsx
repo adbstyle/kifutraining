@@ -1171,10 +1171,19 @@ export default function Styleguide() {
           Genau <strong>ein</strong> Wert aus einer Menge, die offen liegt —
           kein aufklappendes Menü. Zwei Bausteine für dieselbe Aufgabe, die
           Wahl entscheidet die <strong>Länge der Werte</strong>:{" "}
-          <code>SegmentedControl</code> für kurze Beschriftungen (Trainingsteil,
-          Altersstufe), <code>ChoiceChipGroup</code> für lange, die umbrechen
-          müssen. Beides trägt Pfeiltasten-Navigation und einen wandernden
-          Tabstopp.
+          <code>SegmentedControl</code> für kurze Beschriftungen,{" "}
+          <code>ChoiceChipGroup</code> für lange, die umbrechen müssen. Beides
+          trägt Pfeiltasten-Navigation und einen wandernden Tabstopp.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Die offene Einfachauswahl ist seit dem 2026-09-13 der{" "}
+          <strong>Sonderfall</strong>, nicht die Regel: Formulare führen ihre
+          Einfachauswahl in der Einfachauswahl mit Panel (16), ihre
+          Mehrfachauswahl in der Mehrfachauswahl (17) — siehe den Kasten unten.
+          Offen bleibt, was in kein Menü gehört: die{" "}
+          <strong>Variantenwahl</strong> (24), deren Werte der Trainer selbst
+          benannt hat. <code>SegmentedControl</code> hat damit heute keine
+          Anwendung mehr in der Applikation und steht als Baustein bereit.
         </p>
         <p className="type-label-small mb-2 text-on-surface-mittel">
           <code>SegmentedControl</code> — kurze Werte, eine Zeile
@@ -1201,24 +1210,29 @@ export default function Styleguide() {
           <strong>ohne Häkchen</strong>: Einfachauswahl ist kein
           Ein/Aus-Zustand, und der Umriss-Wechsel trägt die Aussage bereits.
           Anlass war der Junioren-Block «Spielformen und unterstützende
-          Übungen» — als Segment unlesbar, als Chip nicht.
+          Übungen» — als Segment unlesbar, als Chip nicht. Er steht heute in
+          einem Auswahlmenü (16); in Gebrauch ist der Baustein bei der{" "}
+          <strong>Variantenwahl</strong> (24).
         </p>
         <ChoiceChipDemo />
 
         <div className="mt-6 rounded-flaeche bg-elev-01 p-4">
           <p className="type-label-large mb-1 text-on-surface">
-            Warum die Einordnung einer Übung wieder offen liegt
+            Warum das Übungsformular nichts mehr offen legt
           </p>
           <p className="type-body-medium max-w-2xl text-on-surface-mittel">
-            Sie war eine Zeit lang ein <code>Select</code>, weil sieben Werte aus
-            zwei Lehrmitteln in einer Liste standen und keine Segmentleiste sie
-            trug. Mit der Trennung der Altersstufen ist dieser Grund entfallen:
-            Es sind nie mehr als vier Kinderfussball-Trainingsteile oder drei
-            Junioren-Trainingsteile mit ihren Blöcken. Und weil die Einordnung
-            über die halbe Maske darunter entscheidet, gehört sie sichtbar statt
-            eingeklappt (PO-Vorgabe 2026-08-30). Im Juniorenschema stehen beide
-            Bausteine übereinander: Segmentleiste für den Trainingsteil, Chips
-            für seine Blöcke — so bleibt sichtbar, wozu ein Block gehört.
+            Altersstufe und Einordnung lagen zwischen dem 2026-08-30 und dem
+            2026-09-13 offen, mit einem guten Grund: Beide entscheiden über die
+            halbe Maske darunter, und diese Tragweite sollte man sehen, ohne
+            erst zu klicken. Das Argument gilt weiter — es verliert nur gegen
+            ein stärkeres. Ein Formular mit sieben Auswahlfeldern, von denen
+            zwei eine Segmentleiste sind, eins eine Chip-Reihe, zwei ein
+            Auswahlmenü und zwei ein Chip-Bündel, sieht nicht nach Gewichtung
+            aus, sondern nach Zufall: Der Trainer liest keine Rangordnung ab,
+            er lernt vier Bedienweisen für dieselbe Handlung. Seit dem
+            2026-09-13 führt die Maske darum jede Einfachauswahl als 16 und jede
+            Mehrfachauswahl als 17 (PO-Vorgabe). Die Tragweite trägt jetzt der
+            Hilfstext unter dem Feld, nicht seine Bauform.
           </p>
         </div>
 
@@ -1228,20 +1242,23 @@ export default function Styleguide() {
           </p>
           <p className="type-body-medium max-w-2xl text-on-surface-mittel">
             Übung und Training wählen dieselbe Altersstufe und teilen sich darum
-            denselben Baustein im Kit. Er hat drei Zustände: <strong>offene
-            Wahl</strong> (Segmentleiste), <strong>fest</strong> (neutrale{" "}
+            denselben Baustein im Kit — auch wenn er seit dem 2026-09-13 keine
+            offene Wahl mehr ist. Er hat drei Zustände: <strong>Wahl</strong>{" "}
+            (ein <code>Select</code>, siehe 16), <strong>fest</strong> (neutrale{" "}
             <code>Badge</code> plus Erklärsatz) und <strong>ungewählt</strong>{" "}
             (<code>wert = null</code>). Der letzte ist der Ausgangszustand am
             Training: Die Wahl bindet dort lebenslang und darf nicht durch eine
-            Voreinstellung durchrutschen — an der Übung ist sie vorbelegt, weil
-            eine Übung umwandelbar bleibt. Die Plakette ist bewusst neutral: Die
-            Altersstufe ist keine Alterskategorie und borgt deren gelernte
-            Farbcodierung nicht. Der feste Zustand nimmt über{" "}
-            <code>aktion</code> ein Bedienelement neben der Plakette auf — dort
-            hängt das Überführen einer eigenen Übung in die andere Altersstufe.
-            Es gehört nicht in die Segmentleiste: An einer gespeicherten Übung
-            ist der Stufenwechsel kein Feld, sondern ein eigener, zu
-            bestätigender Vorgang.
+            Voreinstellung durchrutschen — also steht dort der Leerfall als
+            erste Option in der Liste, und nur dort. An der Übung ist sie
+            vorbelegt, weil eine Übung umwandelbar bleibt; einmal gesetzt,
+            lässt sich die Stufe nicht auf «keine» zurückstellen. Die Plakette
+            ist bewusst neutral: Die Altersstufe ist keine Alterskategorie und
+            borgt deren gelernte Farbcodierung nicht. Der feste Zustand nimmt
+            über <code>aktion</code> ein Bedienelement neben der Plakette auf —
+            dort hängt das Überführen einer eigenen Übung in die andere
+            Altersstufe. Es gehört nicht ins Auswahlfeld: An einer
+            gespeicherten Übung ist der Stufenwechsel kein Feld, sondern ein
+            eigener, zu bestätigender Vorgang.
           </p>
         </div>
       </Section>
@@ -1569,6 +1586,21 @@ export default function Styleguide() {
           Grund so: Ein natives Datumsfeld zeigt sein <code>tt.mm.jjjj</code>
           immer, sein Label hat also ebenfalls nie eine Ruhelage.
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <code>group</code> stellt einer Option eine nicht wählbare Kopfzeile
+          voran, sobald die Gruppe wechselt — wie bei der Mehrfachauswahl (17)
+          und mit derselben Pflicht: Die Optionen müssen gruppensortiert
+          übergeben werden, sonst erscheint dieselbe Kopfzeile mehrfach. Das
+          trägt die <strong>Einordnung einer Junioren-Übung</strong>: Gewählt
+          wird einer der sieben Blöcke, der Trainingsteil steht als Kopfzeile
+          darüber — so bleibt sichtbar, wozu ein Block gehört, ohne dass das
+          Formular eine zweite Bedienebene aufmachen muss. Im Kinderfussball
+          fällt die Gruppierung weg; dort ist der Trainingsteil selbst die
+          Einordnung, vier flache Werte. Im Übungsformular laufen ausserdem
+          Altersstufe, Hauptteilkategorie, Feldtyp und Übungstyp über diesen
+          Baustein — jede Einfachauswahl der Maske, ohne Ausnahme
+          (PO-Vorgabe 2026-09-13, siehe 10).
+        </p>
         <div className="grid max-w-md gap-6">
           <Select
             label="Feldtyp"
@@ -1634,6 +1666,20 @@ export default function Styleguide() {
           <code>aria-describedby</code> auf sie, damit die Zugehörigkeit auch
           vorgelesen wird («Wert, Gruppe») — sonst hörte man eine lange Liste
           ohne jede Gliederung.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Der Baustein trägt beide Mehrfachauswahlen des Übungsformulars —{" "}
+          <strong>Alterskategorie</strong> und{" "}
+          <strong>Erscheinungsform</strong> — und nicht mehr nur die
+          Filterzeilen. Im Formular unterscheiden sich die beiden in der
+          Ausstattung: Die Alterskategorie schaltet <code>searchable</code> und{" "}
+          <code>actions</code> ab (drei bis vier kurze Werte liest man
+          schneller, als man sie filtert), die Erscheinungsform behält beides
+          (der Junioren-Katalog führt elf Werte, und jeder ist ein ganzer Satz).
+          Und der <code>placeholder</code> sagt hier nicht mehr den Leerfall
+          einer Abfrage («Alle Stufen»), sondern den einer Eingabe
+          («Kategorien wählen …»): Im Filter heisst nichts gewählt <em>alles</em>,
+          im Formular heisst es <em>nichts</em>.
         </p>
         <MultiSelectDemo />
       </Section>
