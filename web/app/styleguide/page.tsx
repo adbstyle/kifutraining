@@ -1569,14 +1569,30 @@ export default function Styleguide() {
           <code>state-aktiv</code> — dieselbe Deckung wie der Fokus, aber ohne
           echten <code>:focus-visible</code>, denn der liegt auf dem Trigger.
           Listbox-Semantik mit voller Tastatursteuerung (↑/↓, Home/End, Enter,
-          Esc). Das Label schwebt auf der Kontur wie am Textfeld (14) — und
-          zwar immer: Eine Einfachauswahl hat stets einen Wert, und sei es der
-          Leerfall («— kein Feldtyp —»), also gibt es keine Ruhelage, in der das
-          Label im Feld stünde. Ein Label <em>über</em> dem Feld, wie es hier
-          früher stand, gibt es im Kit nicht mehr — jede Beschriftung liegt auf
-          oder in ihrer Kontur. Datum &amp; Zeit (14) macht es aus demselben
-          Grund so: Ein natives Datumsfeld zeigt sein <code>tt.mm.jjjj</code>
-          immer, sein Label hat also ebenfalls nie eine Ruhelage.
+          Esc). Das Label schwebt auf der Kontur wie am Textfeld (14). Ein
+          Label <em>über</em> dem Feld, wie es hier früher stand, gibt es im
+          Kit nicht mehr — jede Beschriftung liegt auf oder in ihrer Kontur.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Leerwert und Platzhalter sind zweierlei</strong>, und das Feld
+          zeigt sie verschieden. «— kein Feldtyp —» ist ein <em>Wert</em>: Die
+          Übung hat keinen, das ist die Antwort, und sie steht als Option in der
+          Liste und danach als Wert im Feld — das Label schwebt wie bei jedem
+          anderen. «Einordnung wählen …» ist <em>keine Antwort</em>, sondern das
+          Fehlen einer: Dafür gibt es <code>placeholder</code>, dann ruht das
+          Label im Feld und trägt diesen Satz, grau und im Label-Schnitt —
+          genau wie an der Mehrfachauswahl (17). Sobald gewählt ist, oder
+          solange das Panel offen steht, schwebt <code>label</code> an seine
+          Stelle. Ein Feld hat das eine oder das andere, nie beides; wer «noch
+          nichts gewählt» als Option in die Liste schriebe, liesse es aussehen
+          wie eine getroffene Wahl. Der barrierefreie Name bleibt dabei konstant
+          das <code>label</code> — ein Feld darf nicht umbenannt werden, bloss
+          weil jemand noch nichts gewählt hat.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Datum &amp; Zeit (14) kennt darum keine Ruhelage: Ein natives
+          Datumsfeld zeigt sein <code>tt.mm.jjjj</code> immer, sein Label hat
+          also nie eine.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <code>group</code> stellt einer Option eine nicht wählbare Kopfzeile
@@ -1607,12 +1623,25 @@ export default function Styleguide() {
           />
           <Select
             label="Sichtbarkeit"
+            defaultValue="all"
             options={[
               { value: "all", label: "Alle" },
               { value: "public", label: "Community" },
               { value: "private", label: "Privat" },
             ]}
-            supportingText="Die erste Option ist der Leerfall — das Label schwebt trotzdem."
+            supportingText="Jede Option ist ein Wert — kein Platzhalter nötig."
+          />
+          <Select
+            label="Trainingsteil"
+            defaultValue=""
+            placeholder="Einordnung wählen …"
+            options={[
+              { value: "auffangen", label: "Auffangen" },
+              { value: "einleitung", label: "Einleitung" },
+              { value: "hauptteil", label: "Hauptteil" },
+              { value: "ausklang", label: "Ausklang" },
+            ]}
+            supportingText="Noch nichts gewählt: Das Label ruht im Feld und trägt den Platzhalter."
           />
         </div>
       </Section>

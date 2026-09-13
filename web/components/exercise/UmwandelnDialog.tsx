@@ -130,13 +130,11 @@ export function UmwandelnDialog({
             label="Hauptteilkategorie"
             value={hkat}
             onChange={setHkat}
-            options={[
-              { value: "", label: "— Kategorie wählen —" },
-              ...(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
-                value: k,
-                label: hkatLabels[k],
-              })),
-            ]}
+            options={(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
+              value: k,
+              label: hkatLabels[k],
+            }))}
+            placeholder="Kategorie wählen …"
             supportingText={fehler.hauptteilkategorie ?? "Der Trainingsinhalt des Hauptteils."}
             error={!!fehler.hauptteilkategorie}
           />

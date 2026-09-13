@@ -75,10 +75,12 @@ export function AltersstufeField({
       label="Altersstufe"
       className="max-w-xs"
       value={wert ?? ""}
-      // Der Leerfall steht nur, solange nichts gewählt ist. Einmal gesetzt,
-      // lässt sich die Altersstufe nicht mehr auf «keine» zurückstellen — sie
-      // ist an Übung wie Training eine geführte Pflichtangabe.
-      options={wert === null ? [{ value: "", label: "— Altersstufe wählen —" }, ...optionen] : optionen}
+      options={optionen}
+      // Kein Leerwert in der Liste, sondern ein Platzhalter: «noch nicht
+      // gewählt» ist der Ausgangszustand am Training, keine Altersstufe.
+      // Einmal gesetzt, lässt sie sich auch nicht mehr auf «keine»
+      // zurückstellen — sie ist an Übung wie Training eine Pflichtangabe.
+      placeholder="Altersstufe wählen …"
       onChange={(v) => istAltersstufe(v) && onChange(v)}
       error={!!fehler}
       supportingText={fehler ?? hinweis}

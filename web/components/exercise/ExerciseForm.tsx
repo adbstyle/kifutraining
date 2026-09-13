@@ -477,13 +477,14 @@ export function ExerciseForm({
           className="max-w-xs"
           value={hkat}
           onChange={(v) => wechsleEinordnung(teil, v)}
-          options={[
-            { value: "", label: "— Kategorie wählen —" },
-            ...(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
-              value: k,
-              label: hkatLabels[k],
-            })),
-          ]}
+          options={(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
+            value: k,
+            label: hkatLabels[k],
+          }))}
+          // Pflichtangabe ohne Leerwert — darum ein Platzhalter statt einer
+          // Leer-Option (anders als Feldtyp und Übungstyp darüber, die einen
+          // echten «kein …»-Wert kennen).
+          placeholder="Kategorie wählen …"
           error={!!err.hauptteilkategorie}
           supportingText={
             err.hauptteilkategorie ?? "Pflichtfeld — der Trainingsinhalt des Hauptteils."

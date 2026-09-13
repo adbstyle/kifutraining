@@ -68,9 +68,12 @@ export function EinordnungField({
         // Spalte: «Spielformen und unterstützende Übungen» soll ungekürzt in
         // die Wertzeile passen.
         className="max-w-lg"
-        // Der Leerfall steht nur, solange nichts gewählt ist — die Einordnung
-        // ist Pflicht, und einmal getroffen gibt es kein Zurück auf «keine».
-        options={wert ? optionen : [{ value: "", label: "— Einordnung wählen —" }, ...optionen]}
+        options={optionen}
+        // Kein Leerwert in der Liste, sondern ein Platzhalter: Die Einordnung
+        // ist Pflicht — «noch nichts gewählt» ist ein Zustand des Formulars,
+        // keine Angabe über die Übung, und darf darum nicht wie eine
+        // getroffene Wahl im Feld stehen.
+        placeholder="Einordnung wählen …"
         value={wert}
         onChange={onChange}
         error={!!error}

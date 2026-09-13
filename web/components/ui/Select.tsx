@@ -3,7 +3,11 @@
 import { Fragment, useEffect, useId, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { feldLabelBase, feldLabelSchwebend } from "./TextField";
+import {
+  feldLabelBase,
+  feldLabelRuhend,
+  feldLabelSchwebend,
+} from "./TextField";
 
 export interface SelectOption {
   value: string;
@@ -25,6 +29,15 @@ export interface SelectProps {
   onChange?: (value: string) => void;
   /** Optionales Hidden-Input, damit das Feld an nativer Form-Serialisierung teilnimmt. */
   name?: string;
+  /** Der Leerfall in Worten, für Felder, die noch KEINE Wahl haben
+   *  («Einordnung wählen …»). Solange der Wert leer ist, ruht das Label im
+   *  Feld und zeigt diesen Satz; sobald gewählt ist, schwebt an seiner Stelle
+   *  `label` auf die Kontur — genau wie an der Mehrfachauswahl.
+   *
+   *  NICHT zu verwechseln mit einer Leer-Option in `options` («— kein
+   *  Feldtyp —»): Die ist ein gewählter Wert und steht darum als Wert im Feld.
+   *  Ein Feld hat das eine oder das andere, nie beides. */
+  placeholder?: string;
   supportingText?: string;
   error?: boolean;
   disabled?: boolean;
@@ -37,11 +50,24 @@ export interface SelectProps {
    Menü (08dp, Haarlinie, Schatten, ✓ auf der aktuellen Auswahl).
    Listbox-Semantik + vollständige Tastatursteuerung.
 
-   Das Label schwebt wie beim TextField auf der Kontur — und zwar immer: Ein
-   Single-Select hat stets einen Wert (und sei es der Leerfall «— kein Feldtyp —»),
-   also gibt es keine Ruhelage, in der das Label im Feld stünde. Ein Label ÜBER
-   dem Feld, wie es hier früher stand, war der einzige Ort im Kit, an dem eine
-   Beschriftung ausserhalb der Kontur lag. */
+   Das Label schwebt wie beim TextField auf der Kontur. Ein Label ÜBER dem
+   Feld, wie es hier früher stand, war der einzige Ort im Kit, an dem eine
+   Beschriftung ausserhalb der Kontur lag.
+
+   Eine Ruhelage gibt es nur mit `placeholder` — und die sagt etwas anderes als
+   ein Leerwert. Zwei Fälle, die sich nicht mischen:
+
+   1. Der Leerfall ist ein WERT: «— kein Feldtyp —» heisst «diese Übung hat
+      keinen». Er steht als Option in `options` und darum, gewählt, als Wert im
+      Feld; das Label schwebt wie bei jedem anderen Wert.
+   2. Es ist noch NICHTS gewählt: Die Einordnung einer neuen Übung hat keinen
+      Leerwert, sie hat noch keine Antwort. Dann ruht das Label im Feld und
+      zeigt den `placeholder` («Einordnung wählen …»), grau und in Label-
+      Schnitt — es soll nicht wie eine getroffene Wahl aussehen. Sobald gewählt
+      ist (oder das Panel offen steht), schwebt `label` an seine Stelle.
+
+   Der barrierefreie Name bleibt in beiden Fällen konstant `label`: Ein Feld
+   darf nicht umbenannt werden, bloss weil jemand noch nichts gewählt hat. */
 export function Select({
   label,
   options,
@@ -49,6 +75,7 @@ export function Select({
   defaultValue,
   onChange,
   name,
+  placeholder,
   supportingText,
   error,
   disabled,
@@ -77,6 +104,14 @@ export function Select({
   const selected = foundIndex === -1 ? undefined : options[foundIndex];
 
   const [open, setOpen] = useState(false);
+
+  // Ruhender Platzhalter statt schwebendem Label: nur wo das Feld einen
+  // `placeholder` mitbringt UND noch nichts gewählt ist. Sobald das Panel
+  // offen steht, schwebt das Label trotzdem — dann liegt die Aufmerksamkeit
+  // auf der Liste, und der Leerfall im Feld wäre eine Aussage über einen
+  // Zustand, der sich gerade ändert (dieselbe Regel wie an der
+  // Mehrfachauswahl).
+  const zeigtPlatzhalter = !!placeholder && !current;
   const [active, setActive] = useState(selectedIndex);
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -181,6 +216,7 @@ export function Select({
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
+          aria-labelledby={`${fid}-label`}
           onClick={() => !disabled && setOpen((o) => !o)}
           onKeyDown={onTriggerKey}
           className={cn(
@@ -191,7 +227,12 @@ export function Select({
             disabled && "cursor-not-allowed opacity-50",
           )}
         >
-          <span className="min-w-0 flex-1 truncate">{selected?.label}</span>
+          {/* Der Platzhalter steht nicht hier drin, sondern im ruhenden Label
+              darüber — sonst stünden im selben Feld zwei Beschriftungen
+              übereinander. */}
+          <span className="min-w-0 flex-1 truncate">
+            {zeigtPlatzhalter ? "" : selected?.label}
+          </span>
           <ChevronDown
             size={18}
             strokeWidth={2}
@@ -203,17 +244,26 @@ export function Select({
           />
         </button>
 
-        <label
-          htmlFor={fid}
+        {/* Der barrierefreie Name des Triggers und der Liste. Er bleibt
+            konstant `label`, während das sichtbare Label je nach Zustand zwei
+            verschiedene Sätze zeigt — der Vorlesehilfe darf ein Feld nicht
+            umbenannt werden, bloss weil noch nichts gewählt ist. */}
+        <span id={`${fid}-label`} className="sr-only">
+          {label}
+        </span>
+
+        <span
+          aria-hidden
+          onClick={() => !disabled && btnRef.current?.focus()}
           className={cn(
             feldLabelBase,
-            feldLabelSchwebend,
             "left-3",
+            zeigtPlatzhalter && !open ? feldLabelRuhend : feldLabelSchwebend,
             error ? "text-error" : open ? "text-primary" : "text-on-surface-mittel",
           )}
         >
-          {label}
-        </label>
+          {zeigtPlatzhalter && !open ? placeholder : label}
+        </span>
 
         {open && (
           <ul
