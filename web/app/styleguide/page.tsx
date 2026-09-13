@@ -1253,10 +1253,13 @@ export default function Styleguide() {
           Höhe und Kontur nebeneinander sagten dasselbe zweimal. Das Bild ist das
           einzige satte Farbfeld auf der Karte; an seinem <strong>Kopf</strong>{" "}
           liegt ein Verlauf aus <code>scrim</code> (<code>top-0 h-16</code>) —
-          er schützt, was dort steht: die Kategorie-Plaketten links und den
-          Favoriten-Knopf rechts. Titel und Herkunft brauchen ihn nicht; der
-          Titel steht auf der Kartenfläche unter dem Bild, die Herkunft auf
-          ihrer eigenen Plakette. Überfahren färbt die ganze Karte über{" "}
+          er schützt, was dort steht: die Herkunfts-Plakette links und den
+          Favoriten-Knopf rechts. Die <strong>Alterskategorie steht nicht auf
+          der Karte</strong>: Sie ist der Filter, mit dem man die Liste betritt,
+          und auf jeder Kachel derselben Liste wiederholte sie bloss die eigene
+          Auswahl — die Herkunft dagegen ist auf jeder Kachel eine andere. Den
+          Titel trägt die Kartenfläche unter dem Bild; er braucht den Verlauf
+          nicht. Überfahren färbt die ganze Karte über{" "}
           <code>state</code> — kein eigener Hover-Ton, und die Ebene sitzt auf
           dem Link, der die Karte deckt.
         </p>
@@ -1268,7 +1271,6 @@ export default function Styleguide() {
               slug: "schiessbude",
               name: "Schiessbude",
               trainingsteilLabel: "Ausklang",
-              kategorien: ["G", "F", "E"],
               herkunft: "manual",
             }}
             actionSlot={
@@ -1286,7 +1288,6 @@ export default function Styleguide() {
               name: "Mein 4-gegen-4",
               trainingsteilLabel: "Hauptteil",
               hauptteilkategorieLabel: "Fussball spielen lernen",
-              kategorien: ["F", "E"],
               herkunft: "user",
               visibility: "private",
             }}
@@ -1296,7 +1297,6 @@ export default function Styleguide() {
               slug: "toblerone",
               name: "Toblerone",
               trainingsteilLabel: "Einleitung",
-              kategorien: ["G"],
               herkunft: "user",
               visibility: "public",
             }}
@@ -1700,13 +1700,39 @@ export default function Styleguide() {
           damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Das Diagramm ist Gegenstand, nicht Oberfläche.</strong> Das
-          Feldgrün, die Figuren und die Symbole bleiben unangetastet — sie
-          gehören zum Abgebildeten wie ein Foto und folgen nicht der Palette.
-          Auf die Tokens gelegt ist nur das Drumherum des Editors: der Rahmen
-          um die Fläche (<code>border-linie</code>), die Leisten
-          (<code>bg-elev-08</code>, <code>shadow-dp-08</code>) und die aktive
-          Werkzeug-Kachel (<code>border-primary</code>).
+          <strong>Das Diagramm ist Gegenstand, nicht Oberfläche</strong> — es
+          folgt weiterhin nicht der Palette der Anwendung. Es hat aber eine
+          <strong> eigene</strong>, und die kennt mehr als einen Satz: dieselbe gespeicherte Zeichnung erscheint am Bildschirm auf
+          einem Nachtrasen und kommt auf Papier weiss aus dem Drucker. Die
+          Rollen heissen <code>--diagramm-*</code> und stehen bewusst neben dem{" "}
+          <code>@theme</code>-Block, ohne <code>--color-</code>-Präfix: Tailwind
+          macht aus jeder Farbrolle des Themes eine Utility, und{" "}
+          <code>bg-rasen</code> auf einem Knopf wäre genau die Vermischung, die
+          dieser Absatz seit je verhindert. Auf die Tokens der Anwendung gelegt
+          ist nur das Drumherum des Editors: die Leisten (
+          <code>bg-elev-08</code>, <code>shadow-dp-08</code>) und die aktive
+          Werkzeug-Kachel (<code>border-primary</code>). Einen Rahmen um die
+          Zeichenfläche gibt es dort nicht mehr — das Feld zeichnet seine Kante
+          selbst (<code>--diagramm-feldkante</code>), und ein zweiter Strich
+          davor legte nur eine Linie auf die andere.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Zwei Sätze, ein Bestand: Gespeichert wird nur der Farb-Slug, was er
+          zeigt, entscheidet das Medium. Am Bildschirm liegt der Rasen
+          tief im entsättigten Grün des App-Grunds, die Bewegungspfeile werden
+          hell und die Elementfarben sind angehoben — die Manual-Palette kam auf dem dunklen
+          Grund bei Rot auf 2.6:1 und bei Blau auf 2.2:1, zwei Mannschaften, die
+          sich nicht mehr unterscheiden liessen. Auf Papier kehrt sich fast
+          alles um: weisse Fläche mit 6-%-Raster, schwarze Pfeile wie in der
+          Zeichenerklärung des Manuals, und alles, was am Bildschirm hell
+          gezeichnet ist, kippt ins Graue, weil Weiss auf Papier nicht
+          existiert. Einzige Ausnahme ist der Ball — er bleibt weiss und bekommt
+          eine kräftigere Kontur, sonst wäre er ein grauer Fleck unter lauter
+          grauen Flecken. Die Werte stehen in <code>app/globals.css</code>, die
+          Rollennamen in <code>lib/diagramm-farben.ts</code>;{" "}
+          <code>npm run check:diagramm-farben</code> rechnet beide Sätze nach
+          (3:1 nach WCAG 1.4.11 — auf dem Rasen steht kein Text) und verbietet
+          im Zeichencode jeden rohen Farbwert.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Spieler und Torwart sind Cartoon-Kinder, der <strong>Trainer</strong>{" "}
@@ -2259,8 +2285,15 @@ export default function Styleguide() {
           </li>
           <li>
             <code>print-color-adjust: exact</code> bleibt gesetzt, damit
-            Diagramme und Kategorien wirklich farbig kommen; App-Chrome ist über{" "}
-            <code>print:hidden</code> ausgeblendet.
+            Diagramme und Kategorien wirklich so kommen, wie sie gesetzt sind;
+            App-Chrome ist über <code>print:hidden</code> ausgeblendet.
+          </li>
+          <li>
+            <strong>Das Feld-Diagramm hat einen eigenen Druck-Satz</strong>{" "}
+            (Abschnitt 20): weisse Fläche statt Rasengrün, schwarze Pfeile,
+            gedämpfte Elementfarben. Der grüne Rasen deckte 1600×1000 und kam
+            auf geschätzt 125 % Farbauftrag — das Blatt allein trug damit fast
+            den ganzen Verbrauch; weiss mit Raster liegt bei rund 3 %.
           </li>
         </ul>
       </Section>

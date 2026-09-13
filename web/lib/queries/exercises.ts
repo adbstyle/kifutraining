@@ -1,8 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  hauptteilkategorie as hauptteilkategorieLabels,
-  type KategorieSlug,
-} from "@/lib/vocab";
+import { hauptteilkategorie as hauptteilkategorieLabels } from "@/lib/vocab";
 import { likePattern } from "@/lib/search";
 import type { Altersstufe } from "@/lib/altersstufe";
 import { EINORDNUNG_LABEL } from "@/lib/labels";
@@ -280,7 +277,6 @@ export function toCardData(row: ExerciseListRow): ExerciseCardData {
           row.hauptteilkategorie as keyof typeof hauptteilkategorieLabels
         ] ?? row.hauptteilkategorie
       : null,
-    kategorien: row.kategorien as KategorieSlug[],
     herkunft: row.source,
     visibility: row.visibility,
     bildUrl: row.bild_url,

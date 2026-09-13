@@ -8,6 +8,8 @@
  * Diagramme nie verschieben (Decision Record Spike #48, Gate 1+3).
  */
 
+import { dv } from "./diagramm-farben";
+
 /** Logische Zeichenfläche: 16:10 wie die SFV-Manual-Diagramme. */
 export const FLAECHE = { breite: 1600, hoehe: 1000 } as const;
 
@@ -15,15 +17,17 @@ export const FLAECHE = { breite: 1600, hoehe: 1000 } as const;
 export const DIAGRAMM_VERSION = 1;
 
 /** Farbpalette für färbbare Elemente (Pylonen, Teller, Stangen, Linien, Zonen,
- *  Spieler-Teams). Slugs werden gespeichert, Hex nur gerendert. */
+ *  Spieler-Teams). Gespeichert wird der Slug; was er zeigt, entscheidet das
+ *  Medium — die Werte der Rollen stehen in `app/globals.css`, je einer für den
+ *  Bildschirm und einer für das Papier. */
 export const FARBEN = {
-  rot: "#d32f2f",
-  blau: "#1565c0",
-  gelb: "#f9a825",
-  gruen: "#2e7d32",
-  orange: "#ef6c00",
-  weiss: "#ffffff",
-  schwarz: "#212121",
+  rot: dv("rot"),
+  blau: dv("blau"),
+  gelb: dv("gelb"),
+  gruen: dv("gruen"),
+  orange: dv("orange"),
+  weiss: dv("weiss"),
+  schwarz: dv("schwarz"),
 } as const;
 export type FarbSlug = keyof typeof FARBEN;
 export const farbSlugs = Object.keys(FARBEN) as FarbSlug[];

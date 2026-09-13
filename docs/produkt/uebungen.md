@@ -111,20 +111,23 @@ Training. Unvollständige Fassungen lassen sich erst nach Ergänzung kopieren.
 Gesucht wird über den gesamten Text einer Übung, also auch über Material, Varianten und Ablauf;
 Wortteile genügen. Sobald etwas im Suchfeld steht, tritt an die Stelle der Lupe ein Kreuz, das die
 Suche mit einem Klick leert und den Cursor darin stehen lässt; die übrigen Filter bleiben dabei
-gesetzt. Der Katalog zeigt beide Altersstufen nebeneinander — er ist der eine Ort, an
-dem der ganze sichtbare Bestand zusammensteht. Gefiltert wird nach Trainingsteil, wobei die
-Kinderfussball-Teile und die sieben Junioren-Blöcke in zwei beschrifteten Gruppen stehen — das
-Auffangen kommt in beiden Gruppen vor und heisst dort gleich; die Beschriftung sagt, welches
-gemeint ist. Der Kinderfussball-Hauptteil steht dort nicht als Ganzes, sondern als seine drei
-Hauptteilkategorien: Gewählt wird in beiden Welten die feinste Ebene, die das jeweilige Lehrmittel
-kennt, und einen eigenen Hauptteilkategorie-Filter gibt es darum nicht. Weiter gefiltert wird nach
-Alterskategorie, Feldtyp, Erscheinungsform und Übungstyp, jeweils mit Mehrfachauswahl, sowie nach
-der Zahl der verfügbaren Kinder — dann erscheinen alle Übungen, die mit mindestens so vielen
-durchführbar sind. Auch diese Filter beschriften ihre Werte nach Altersstufe: die Erscheinungsformen
-beider Manuals, die Alterskategorien G bis A, und ebenso die zwei Filter, die ganz einer Altersstufe
-gehören — der Feldtyp dem Kinderfussball, der Übungstyp dem Juniorenfussball. Die Beschriftung ist
-Text und wird mitvorgelesen, nicht bloss Farbe. Mehrere Werte derselben Art werden als „oder"
-verstanden, verschiedene Arten als „und".
+gesetzt. Der Katalog zeigt beide Altersstufen nebeneinander — er ist der eine Ort, an dem der ganze
+sichtbare Bestand zusammensteht. Jede Übung steht dort als Kachel: Bild oder Diagramm, darunter
+Name und Einordnung, und auf dem Bild die Herkunft — Kifu-Manual, Community oder der eigene
+Entwurf. Die Alterskategorie steht nicht auf der Kachel; sie ist der Filter, mit dem man die Liste
+betritt, und stünde sonst auf jeder Kachel derselben Liste noch einmal. Gefiltert wird nach
+Trainingsteil, wobei die Kinderfussball-Teile und die sieben Junioren-Blöcke in zwei beschrifteten
+Gruppen stehen — das Auffangen kommt in beiden Gruppen vor und heisst dort gleich; die Beschriftung
+sagt, welches gemeint ist. Der Kinderfussball-Hauptteil steht dort nicht als Ganzes, sondern als
+seine drei Hauptteilkategorien: Gewählt wird in beiden Welten die feinste Ebene, die das jeweilige
+Lehrmittel kennt, und einen eigenen Hauptteilkategorie-Filter gibt es darum nicht. Weiter gefiltert
+wird nach Alterskategorie, Feldtyp, Erscheinungsform und Übungstyp, jeweils mit Mehrfachauswahl,
+sowie nach der Zahl der verfügbaren Kinder — dann erscheinen alle Übungen, die mit mindestens so
+vielen durchführbar sind. Auch diese Filter beschriften ihre Werte nach Altersstufe: die
+Erscheinungsformen beider Manuals, die Alterskategorien G bis A, und ebenso die zwei Filter, die
+ganz einer Altersstufe gehören — der Feldtyp dem Kinderfussball, der Übungstyp dem
+Juniorenfussball. Die Beschriftung ist Text und wird mitvorgelesen, nicht bloss Farbe. Mehrere
+Werte derselben Art werden als „oder" verstanden, verschiedene Arten als „und".
 
 Angemeldete haben zwei weitere Sichten: die eigenen Übungen und die Favoriten. Favorisieren
 kann jeder jede sichtbare Übung, auch die aus dem Manual und die fremder Trainer.
@@ -137,6 +140,15 @@ Blickrichtungen, Bälle, Bewegungspfade für Laufweg, Dribbling und Pass sowie f
 Textfelder. Elemente lassen sich setzen, verschieben, drehen, einfärben, in der Grösse
 verändern, mehrfach auswählen, kopieren und löschen; jeder Schritt ist widerrufbar. Gespeichert
 wird laufend im Hintergrund.
+
+Dasselbe Diagramm sieht am Bildschirm anders aus als auf Papier, und beides ist Absicht. Am
+Bildschirm liegt es auf einem dunklen Rasen, passend zur übrigen Anwendung, mit hellen
+Bewegungspfeilen und kräftigeren Farben für Leibchen und Material. Auf Papier kommt dieselbe
+Zeichnung auf weissem Grund mit angedeuteten Mähstreifen, schwarzen Pfeilen wie in der
+Zeichenerklärung des Manuals und dunkleren Farben. Das spart Druckfarbe — der grüne Rasen füllte
+bisher das ganze Blatt — und bleibt auf einem einfachen Bürodrucker lesbar. Wer eine Farbe wählt,
+wählt nicht einen Farbton, sondern «rot» oder «blau»; wie kräftig der ausfällt, entscheidet die
+Anwendung je nach Bildschirm oder Papier.
 
 Ein vorhandenes Diagramm kann als Vorlage in eine andere eigene Übung kopiert werden. Zur
 Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar über den Namen der
