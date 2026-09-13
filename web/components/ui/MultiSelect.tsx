@@ -37,6 +37,14 @@ export interface MultiSelectProps {
   className?: string;
 }
 
+/* Die Masse des Panels in px. `PANEL_MAX_HOEHE` ist die Vorgabe (das frühere
+   `max-h-80`), `PANEL_MIN_HOEHE` die Untergrenze, unter die keine Messung
+   drücken darf — etwa zwei Zeilen plus Kopf und Fuss. `PANEL_ABSTAND` ist der
+   Spalt zwischen Feld und Panel (`mt-1`/`mb-1`). */
+const PANEL_MAX_HOEHE = 320;
+const PANEL_MIN_HOEHE = 160;
+const PANEL_ABSTAND = 4;
+
 /* M2 Multi-Select — einzeiliger Feld-Trigger, der die Auswahl als
    kommaseparierte Liste zeigt, und ein Panel mit Suchfeld (Kopf), Optionsliste
    (eckige Checkbox) und Aktions-Footer (Zurücksetzen / Alle auswählen). Der
@@ -84,6 +92,13 @@ export function MultiSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
+  // Wohin das Panel aufklappt und wie hoch es werden darf — gemessen, nicht
+  // gesetzt (siehe `messePlatz`). Bis zur ersten Messung gilt die Vorgabe:
+  // nach unten, volle Höhe.
+  const [platz, setPlatz] = useState<{ oben: boolean; maxHoehe: number }>({
+    oben: false,
+    maxHoehe: PANEL_MAX_HOEHE,
+  });
 
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -135,8 +150,55 @@ export function MultiSelect({
     (searchable ? searchRef : triggerRef).current?.focus();
   }
 
+  /* Wie viel Raum das Panel wirklich hat — und auf welcher Seite.
+
+     Nötig, weil eine feste Höhe nur dort stimmt, wo unter dem Feld auch 320 px
+     liegen. Im Übungs-Picker etwa steht das Feld in einem nativen <dialog>;
+     der schrumpft auf seinen Inhalt und trägt aus der Browser-Vorgabe
+     `overflow: auto`. Ist die Trefferliste darunter kurz oder leer — also
+     genau dann, wenn jemand den Filter öffnet, um die Eingrenzung zu lockern
+     —, schnitt der Dialog die untere Hälfte des Panels ab, mitsamt seinem
+     Aktions-Footer.
+
+     Gemessen wird gegen den nächsten Vorfahren, der überhaupt abschneidet
+     (`overflow` ≠ `visible`), sonst gegen das Sichtfeld. Die Seite mit mehr
+     Raum gewinnt; die Höhe ist der kleinere Wert aus Vorgabe und dem, was dort
+     hinpasst. Die Liste im Panel scrollt ohnehin — ein knapperes Panel zeigt
+     also weniger auf einmal, verliert aber nichts. */
+  function messePlatz() {
+    const t = triggerRef.current;
+    if (!t) return;
+    const feld = t.getBoundingClientRect();
+
+    let grenze = { top: 0, bottom: window.innerHeight };
+    for (let el = t.parentElement; el; el = el.parentElement) {
+      if (getComputedStyle(el).overflow !== "visible") {
+        const r = el.getBoundingClientRect();
+        grenze = {
+          top: Math.max(grenze.top, r.top),
+          bottom: Math.min(grenze.bottom, r.bottom),
+        };
+        break;
+      }
+    }
+
+    const unten = grenze.bottom - feld.bottom - PANEL_ABSTAND;
+    const oben = feld.top - grenze.top - PANEL_ABSTAND;
+    const nachOben = unten < Math.min(PANEL_MAX_HOEHE, oben);
+    setPlatz({
+      oben: nachOben,
+      // Nie unter die Untergrenze: Lieber ragt das Panel ein Stück hinaus, als
+      // dass es auf einen unbedienbaren Spalt zusammenfällt.
+      maxHoehe: Math.max(
+        PANEL_MIN_HOEHE,
+        Math.min(PANEL_MAX_HOEHE, nachOben ? oben : unten),
+      ),
+    });
+  }
+
   function openPanel() {
     if (disabled) return;
+    messePlatz();
     setOpen(true);
   }
   function closePanel() {
@@ -271,7 +333,11 @@ export function MultiSelect({
           aria-activedescendant={
             !searchable && open && filtered[active] ? optId(active) : undefined
           }
-          onClick={() => !disabled && setOpen((o) => !o)}
+          onClick={() => {
+            if (disabled) return;
+            if (!open) messePlatz();
+            setOpen((o) => !o);
+          }}
           onKeyDown={onTriggerKey}
           className={cn(
             // `contain-inline-size` ist hier nicht Kosmetik, sondern das, was das
@@ -339,7 +405,13 @@ export function MultiSelect({
         </span>
 
         {open && (
-          <div className="absolute z-50 mt-1 flex max-h-80 w-full flex-col overflow-hidden rounded-flaeche border border-linie bg-elev-08 shadow-dp-08">
+          <div
+            style={{ maxHeight: platz.maxHoehe }}
+            className={cn(
+              "absolute z-50 flex w-full flex-col overflow-hidden rounded-flaeche border border-linie bg-elev-08 shadow-dp-08",
+              platz.oben ? "bottom-full mb-1" : "top-full mt-1",
+            )}
+          >
             {searchable && (
               <div className="flex shrink-0 items-center gap-2 border-b border-linie px-3">
                 <Search

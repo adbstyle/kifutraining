@@ -213,7 +213,7 @@ export function ExercisePickerDialog({
         {/* Die eingrenzenden Dimensionen als Mehrfachauswahl des Kits — eine
             umbrechende Zeile, beide Felder gleich breit. Aufgeklappte
             Chip-Reihen standen hier früher: Die Junioren-Erscheinungsformen
-            sind ganze Sätze, zwölf davon füllten den Dialog, bevor die erste
+            sind ganze Sätze, elf davon füllten den Dialog, bevor die erste
             Übung zu sehen war. Die Trefferliste ist der Inhalt dieses Dialogs,
             nicht das Filtervokabular.
             Welche Felder überhaupt erscheinen, entscheidet dasselbe Gating wie
@@ -221,12 +221,12 @@ export function ExercisePickerDialog({
             Einordnungen, den Übungstyp kennt nur der Juniorenfussball, dort nur
             in den Blöcken mit Spielformen (Story 9 AC 6).
             Anders als die Filterleiste des Katalogs behalten beide Felder die
-            Suche im Panel (`searchable` bleibt auf seinem Vorgabewert): Die
-            Junioren-Erscheinungsformen sind ganze Sätze, elf davon, und im
-            Dialog steht weniger Höhe zur Verfügung als auf der Katalogseite.
-            Der Übungstyp mit seinen drei Werten braucht sie nicht, bekommt sie
-            aber trotzdem — zwei Felder nebeneinander, von denen sich nur eines
-            durchsuchen lässt, wären die grössere Irritation. */}
+            Suche im Panel (`searchable` bleibt auf seinem Vorgabewert): Im
+            Dialog steht weniger Höhe zur Verfügung als auf der Katalogseite,
+            und die langen Satz-Labels finden sich so schneller. Der Übungstyp
+            mit seinen drei Werten braucht sie nicht, bekommt sie aber trotzdem
+            — zwei Felder nebeneinander, von denen sich nur eines durchsuchen
+            lässt, wären die grössere Irritation. */}
         {(hatErscheinungsform || hatUebungstyp) && (
           <div className="flex flex-wrap gap-3">
             {hatErscheinungsform && (
