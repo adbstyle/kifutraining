@@ -43,6 +43,7 @@ import {
   rgbAbstand,
   ueberlagern,
 } from "../lib/farben";
+import { blockVon, normalisiere, tokens } from "./css-tokens";
 
 const WEB = resolve(fileURLToPath(import.meta.url), "../..");
 
@@ -68,61 +69,10 @@ const z = (wert: number) => wert.toFixed(2);
 // greifen, wenn niemand `next build` laufen lässt.
 const CSS = readFileSync(join(WEB, "app/globals.css"), "utf8");
 
-/** Den Inhalt des Blocks, dessen `{` ab `ab` als erstes kommt — mit Zählung der
- *  Klammern, damit verschachtelte Regeln (`&:hover { … }`) nicht abschneiden. */
-function blockAb(css: string, ab: number, was: string): string {
-  const auf = css.indexOf("{", ab);
-  if (auf < 0) throw new Error(`${was}: keine öffnende Klammer gefunden.`);
-  let tiefe = 0;
-  for (let i = auf; i < css.length; i++) {
-    if (css[i] === "{") tiefe++;
-    else if (css[i] === "}" && --tiefe === 0) return css.slice(auf + 1, i);
-  }
-  throw new Error(`${was}: Block wird nicht geschlossen.`);
-}
-
-function blockVon(css: string, anfang: RegExp, was: string): string {
-  const treffer = anfang.exec(css);
-  if (!treffer) throw new Error(`${was}: nicht gefunden in app/globals.css.`);
-  return blockAb(css, treffer.index, was);
-}
-
-/** Einen CSS-Farbwert auf die Schreibweise von `lib/farben.ts` bringen:
- *  Kleinschrift, Hex statt `rgb()`, und ein volldeckendes `ff` weg — `#ffffffff`
- *  und `#ffffff` sind dieselbe Farbe, und der Vergleich soll an der Farbe
- *  scheitern, nicht an der Notation. */
-function normalisiere(wert: string): string {
-  const roh = wert
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .trim()
-    .toLowerCase();
-  const rgb = /^rgba?\(([^)]*)\)$/.exec(roh);
-  if (rgb) {
-    const teile = rgb[1].split(/[\s,/]+/).filter(Boolean);
-    const kanal = (t: string) =>
-      Math.round(t.endsWith("%") ? (parseFloat(t) / 100) * 255 : parseFloat(t));
-    const alpha = teile[3] === undefined ? 1 : parseFloat(teile[3]) / (teile[3].endsWith("%") ? 100 : 1);
-    const hex = teile
-      .slice(0, 3)
-      .map((t) => kanal(t).toString(16).padStart(2, "0"))
-      .join("");
-    return alpha >= 1 ? `#${hex}` : `#${hex}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
-  }
-  return /^#[0-9a-f]{6}ff$/.test(roh) ? roh.slice(0, 7) : roh;
-}
-
-/** Alle `--color-*`-Zuweisungen eines Blocks als Rolle → Wert. */
-function farbTokens(block: string): Map<string, string> {
-  const tokens = new Map<string, string>();
-  for (const treffer of block.matchAll(/--color-([a-z0-9-]+)\s*:\s*([^;]+);/gi)) {
-    tokens.set(treffer[1].toLowerCase(), normalisiere(treffer[2]));
-  }
-  return tokens;
-}
-
-const THEME = farbTokens(blockVon(CSS, /@theme\b/, "@theme-Block"));
-const PRINT = farbTokens(
+const THEME = tokens(blockVon(CSS, /@theme\b/, "@theme-Block"), "color");
+const PRINT = tokens(
   blockVon(blockVon(CSS, /@media\s+print\b/, "@media print"), /:root\b/, "print :root"),
+  "color",
 );
 
 // ── 1. Zwilling: farben.ts und globals.css sagen dasselbe ───────────────────
@@ -355,7 +305,10 @@ pruefe("Die beiden gedruckten Kategorie-Flächen tragen ihre Schrift", () => {
 // keine Regel, und der Text erbt still die Farbe des Elternelements. Weder
 // Build noch Typecheck schlagen an — nur dieser Wächter.
 const VERBOTEN: [RegExp, string][] = [
-  [/rasen-/, "alte Rasen-Palette"],
+  // Gemeint sind die Utilities der entfernten Rasen-Palette (`bg-rasen-500`),
+  // nicht das Wort: seit das Diagramm eigene Rollen hat, heisst eine davon
+  // `--diagramm-rasen-streifen` und ist genau richtig so.
+  [/\b(?:bg|text|border|fill|stroke|ring|from|via|to)-rasen-/, "alte Rasen-Palette"],
   [/chalk/, "alte Kreide-Palette"],
   [/(?<![\wä-ü])signal(?![\wä-ü])|-signal\b/, "alter Signal-Akzent"],
   [/surface-container/, "M3-Surface-Leiter (ersetzt durch elev-*)"],
@@ -403,6 +356,7 @@ const NUR_STYLEGUIDE: [RegExp, string] = [
   "Secondary wird nirgends angewendet — ausser im Styleguide als Beleg",
 ];
 
+/** Alle Quelldateien unter `wurzel`, die der Altlasten-Wächter durchsieht. */
 function quelldateien(wurzel: string): string[] {
   const gefunden: string[] = [];
   const lauf = (ordner: string) => {
