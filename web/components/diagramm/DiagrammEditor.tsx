@@ -253,7 +253,7 @@ type Kachel = {
  *  aria-label (kein sichtbarer Text). Aktive Zeichen-Werkzeuge sind markiert. */
 function GlyphKachel({ label, element, active = false, disabled = false, onClick }: Kachel) {
   return (
-    <Tooltip label={label} placement="bottom">
+    <Tooltip label={label}>
       <button
         type="button"
         aria-label={label}
