@@ -1058,10 +1058,15 @@ export function DiagrammEditor({
       )}
 
       {/* Zeichenfläche — selektionsabhängige Optionen schweben kontextuell am
-          Element (ElementLeiste), nicht mehr als Zeilen darüber (#65). */}
+          Element (ElementLeiste), nicht mehr als Zeilen darüber (#65).
+
+          Ohne Rahmen: Das Feld zeichnet seine Kante seit den eigenen
+          Farbsätzen selbst (`--diagramm-feldkante`, siehe `Rasen()`). Ein
+          zweiter Strich davor legte nur eine Linie auf die andere. Der Fokus
+          liegt ohnehin auf dem Outline-Ring, nicht auf der Kontur. */}
       <div
         ref={wrapRef}
-        className="relative overflow-hidden rounded-flaeche border border-linie focus-ring"
+        className="relative overflow-hidden rounded-flaeche focus-ring"
         tabIndex={0}
         role="application"
         aria-label="Zeichenfläche für das Feld-Diagramm"

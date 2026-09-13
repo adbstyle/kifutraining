@@ -1651,10 +1651,12 @@ export default function Styleguide() {
           macht aus jeder Farbrolle des Themes eine Utility, und{" "}
           <code>bg-rasen</code> auf einem Knopf wäre genau die Vermischung, die
           dieser Absatz seit je verhindert. Auf die Tokens der Anwendung gelegt
-          ist wie bisher nur das Drumherum des Editors: der Rahmen um die Fläche
-          (<code>border-linie</code>), die Leisten (<code>bg-elev-08</code>,{" "}
-          <code>shadow-dp-08</code>) und die aktive Werkzeug-Kachel (
-          <code>border-primary</code>).
+          ist nur das Drumherum des Editors: die Leisten (
+          <code>bg-elev-08</code>, <code>shadow-dp-08</code>) und die aktive
+          Werkzeug-Kachel (<code>border-primary</code>). Einen Rahmen um die
+          Zeichenfläche gibt es dort nicht mehr — das Feld zeichnet seine Kante
+          selbst (<code>--diagramm-feldkante</code>), und ein zweiter Strich
+          davor legte nur eine Linie auf die andere.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Zwei Sätze, ein Bestand: Gespeichert wird nur der Farb-Slug, was er
