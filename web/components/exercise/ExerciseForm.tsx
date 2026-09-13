@@ -319,7 +319,7 @@ export function ExerciseForm({
         defaultValue={initial.name}
         required
         error={!!err.name}
-        supportingText={err.name ?? "Pflichtfeld"}
+        supportingText={err.name}
       />
 
       {afterName}
