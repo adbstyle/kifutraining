@@ -18,10 +18,11 @@ import type { KategorieSlug } from "@/lib/vocab";
    Rolle bereits die Tinte, ein getippter Hex wäre eine dritte Stelle,
    an der dieselbe Farbe steht.
 
-   Exportiert, weil `components/training/StufenField.tsx` dieselbe
-   Plakette in seinen Auswahl-Kacheln trägt: EINE Tabelle für beide
-   Orte statt zweier, die auseinanderlaufen. */
-export const katPlakette: Record<KategorieSlug, string> = {
+   Modul-lokal: Seit dem 2026-09-13 wählt man Alterskategorien in einer
+   Mehrfachauswahl (17) und nicht mehr in farbigen Kacheln — die Tabelle hat
+   damit nur noch einen Nutzer, die Plakette hier drunter. Sie sagt, WELCHE
+   Kategorie angezeigt wird; beim Auswählen steht der Name ausgeschrieben. */
+const katPlakette: Record<KategorieSlug, string> = {
   G: "kontur border-current text-kat-g bg-transparent print:bg-kat-g print:text-on-surface print:border-transparent",
   F: "kontur border-current text-kat-f bg-transparent print:bg-kat-f print:text-on-surface print:border-transparent",
   E: "kontur border-current text-kat-e bg-transparent print:bg-kat-e print:text-on-surface print:border-transparent",

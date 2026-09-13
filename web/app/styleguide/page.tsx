@@ -1126,9 +1126,13 @@ export default function Styleguide() {
           Katalog dasselbe Bild. Im <strong>Druck</strong> kippen sie in die
           gefüllte Form mit dunkler Schrift: Auf Papier ist eine helle Kontur
           kaum zu sehen. Die Tabelle steht einmal in <code>Chip.tsx</code>{" "}
-          (<code>katPlakette</code>) und wird von{" "}
-          <code>StufenField</code> mitbenutzt, statt dort ein zweites Mal
-          abgeschrieben zu werden.
+          (<code>katPlakette</code>) und gilt überall, wo eine Kategorie{" "}
+          <em>angezeigt</em> wird. Wo eine <em>gewählt</em> wird, gilt sie seit
+          dem 2026-09-13 nicht mehr: Die Alterskategorien stehen am Training,
+          am Team und an der Übung in einer Mehrfachauswahl (17), und die führt
+          Text, keine Plaketten. Die Farbe sagt, welche Kategorie man vor sich
+          hat — beim Auswählen steht deren Name ohnehin ausgeschrieben da
+          (PO-Entscheid).
         </p>
 
         <p className="type-label-small mb-2 text-on-surface-mittel">Chips</p>

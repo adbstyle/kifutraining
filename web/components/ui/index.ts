@@ -3,7 +3,6 @@ export { ButtonGroup } from "./ButtonGroup";
 export { Badge, HerkunftBadge } from "./Badge";
 export {
   KategorieChip,
-  katPlakette,
   FilterChip,
   ChoiceChip,
   ChoiceChipGroup,
