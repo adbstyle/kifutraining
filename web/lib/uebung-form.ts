@@ -122,7 +122,7 @@ export function parseUebungsInhalt(
     const wett = clean(form.get("wetteifern"));
     if (!offen) errors.offen_starten = "Bitte beschreiben, wie die Übung offen startet.";
     if (ueben.length === 0) errors.ueben = "Bitte mindestens einen Übungsschritt angeben.";
-    if (!wett) errors.wetteifern = "Bitte den Wett-eifern-Teil beschreiben.";
+    if (!wett) errors.wetteifern = "Bitte den Wetteifern-Teil beschreiben.";
     methodischer_fahrplan = { offen_starten: offen, ueben, wetteifern: wett };
   } else if (trainingsteil) {
     aufbau = clean(form.get("aufbau"));

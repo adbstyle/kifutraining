@@ -429,7 +429,7 @@ export function ExerciseForm({
         <fieldset className="flex flex-col gap-5 rounded-flaeche border border-linie p-5">
           <legend className="type-label-medium px-2 text-primary">Methodischer Fahrplan</legend>
           <TextArea
-            label="① Offen starten"
+            label="Offen starten"
             name="offen_starten"
             value={offenStarten}
             onChange={(e) => setOffenStarten(e.target.value)}
@@ -437,7 +437,7 @@ export function ExerciseForm({
             supportingText={err.offen_starten ?? "Pflichtfeld — wie die Übung offen startet."}
           />
           <TextArea
-            label="② Üben — ein Schritt pro Zeile"
+            label="Üben"
             name="ueben"
             value={ueben}
             onChange={(e) => setUeben(e.target.value)}
@@ -447,7 +447,7 @@ export function ExerciseForm({
             }
           />
           <TextArea
-            label="③ Wett-eifern"
+            label="Wetteifern"
             name="wetteifern"
             value={wetteifern}
             onChange={(e) => setWetteifern(e.target.value)}
