@@ -15,12 +15,13 @@
 //   Betrieb als HTTP 500. Genau daran hingen drei Abstürze auf Produktion.
 //   Nur ein eigener Wächter fängt einen Rückfall.
 //
-// GRENZE, bewusst und benannt: Der Scanner liest nur Typen, die IM SELBEN
-// File direkt hinter `searchParams:` stehen — dort allerdings JEDE Fundstelle,
-// nicht bloss die erste (eine Datei trägt schnell zwei, sobald ein
-// `generateMetadata` dazukommt). Wer die Signatur in ein ausgelagertes
-// Interface schöbe, liefe am Scanner vorbei. Für die heutigen Seiten genügt
-// das; es ist eine Konvention, kein stiller blinder Fleck.
+// GRENZE, bewusst und benannt: Geprüft wird nur, was IM SELBEN File direkt
+// hinter `searchParams:` steht — dort allerdings jede Fundstelle, nicht bloss
+// die erste (eine Datei trägt schnell zwei, sobald ein `generateMetadata`
+// dazukommt). Wer die Signatur in ein ausgelagertes Interface schöbe, liefe
+// am Wächter vorbei; das ist eine Konvention, kein stiller blinder Fleck.
+// Wo der Abgleich nicht trägt, sagt er das (siehe Abschnitt 2) — er schweigt
+// nie an einer Stelle, die er nicht beurteilen kann.
 //
 //   npm run check:such-parameter
 import assert from "node:assert/strict";
@@ -111,114 +112,69 @@ pruefe("pfad() lässt nur ein Ziel innerhalb der Anwendung zu", () => {
 });
 
 // ── 2. Wächter: keine Seite deklariert ein Feld zu eng ──────────────────────
+//
+// Bewusst ein Textabgleich und KEIN Parser. Die erste Fassung zerlegte den Typ
+// klammertief von Hand — 200 Zeilen, die drei eigene Fehler trugen, einer davon
+// meldete einwandfreien Code und hätte die CI blockiert. Ein Wächter, der
+// selbst gewartet werden muss, kostet mehr, als er einbringt.
+//
+// Diese Fassung deckt jede Deklaration ab, die in `app/` real vorkommt. Ein
+// Feldtyp mit eigenen spitzen Klammern (`Record<string, string>`) bricht den
+// Abgleich ab — dann meldet der Wächter „nicht prüfbar" und schweigt nicht
+// etwa. Er täuscht also nie Sicherheit vor, die er nicht hat.
 
-/** Kommentare raus, bevor irgendetwas zerlegt wird.
- *
- *  Zwei Gründe, und beide sind schon aufgetreten: Ein Doc-Kommentar am Feld
- *  darf einen Doppelpunkt tragen („Achtung: nur intern"), und die Trennung von
- *  Name und Typ sucht genau den ersten Doppelpunkt — sie risse sonst mitten im
- *  Kommentar. Und auskommentierter Code ist kein Code: Eine stillgelegte
- *  Deklaration soll den Wächter nicht auslösen.
- *
- *  Zeilenenden bleiben erhalten (`[^\n]*`), damit keine zwei Zeilen
- *  zusammenfallen. */
+/** Kommentare raus, bevor abgeglichen wird: Ein Doc-Kommentar darf einen
+ *  Doppelpunkt tragen, und auskommentierter Code ist kein Code. Zeilenenden
+ *  bleiben erhalten, damit keine zwei Zeilen zusammenfallen. */
 function ohneKommentare(quelle: string): string {
   return quelle.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
 }
 
-/** JEDE `searchParams:`-Deklaration der Datei, in Reihenfolge — klammertief
- *  bis zur schliessenden `>` von `Promise<…>`. Nicht per Regex `[^>]*`, weil
- *  ein Feldtyp selbst spitze Klammern tragen darf.
- *
- *  ALLE, nicht nur die erste: Eine Datei kann zwei tragen — ein
- *  `generateMetadata` über der Seitenkomponente. Prüfte der Wächter bloss die
- *  erste, deckte eine ehrliche Metadaten-Signatur eine unehrliche Seite
- *  darunter zu, und genau der Rückfall, den er verhindern soll, käme
- *  ungesehen durch.
- *
- *  `null` steht für „gefunden, aber nicht als `Promise<…>` lesbar" — das
- *  meldet der Aufrufer, statt es zu verschweigen. */
-function parameterTypen(quelle: string): (string | null)[] {
-  const gefunden: (string | null)[] = [];
-  const marke = "searchParams:";
-  for (let ab = 0; ; ) {
-    const treffer = quelle.indexOf(marke, ab);
-    if (treffer === -1) return gefunden;
-    ab = treffer + marke.length;
-
-    const rest = quelle.slice(ab);
-    const kopf = /^\s*Promise\s*</.exec(rest);
-    if (!kopf) {
-      gefunden.push(null);
-      continue;
-    }
-    let i = kopf[0].length;
-    const von = i;
-    let tiefe = 1;
-    for (; i < rest.length && tiefe > 0; i++) {
-      if (rest[i] === "<") tiefe++;
-      else if (rest[i] === ">") tiefe--;
-    }
-    gefunden.push(tiefe === 0 ? rest.slice(von, i - 1).trim() : null);
-  }
-}
-
-/** Zerlegt `{ a?: X; b?: Y }` in seine Felder — klammertief, damit ein
- *  Feldtyp wie `Record<string, string>` nicht am Trennzeichen zerreisst. */
-function felder(objektTyp: string): { name: string; typ: string }[] {
-  const inhalt = objektTyp.trim().replace(/^\{/, "").replace(/\}$/, "");
-  const teile: string[] = [];
-  let tiefe = 0;
-  let aktuell = "";
-  for (const z of inhalt) {
-    if ("{[(<".includes(z)) tiefe++;
-    if ("}])>".includes(z)) tiefe--;
-    if ((z === ";" || z === ",") && tiefe === 0) {
-      teile.push(aktuell);
-      aktuell = "";
-    } else aktuell += z;
-  }
-  teile.push(aktuell);
-
-  return teile
-    .map((t) => t.trim())
-    .filter(Boolean)
-    .map((teil) => {
-      // Index-Signatur `[key: string]: T` — der trennende Doppelpunkt ist der
-      // NACH der schliessenden eckigen Klammer, nicht der darin.
-      if (teil.startsWith("[")) {
-        const zu = teil.indexOf("]");
-        return { name: teil.slice(0, zu + 1), typ: teil.slice(zu + 2).trim() };
-      }
-      const dp = teil.indexOf(":");
-      // Das Fragezeichen gehört zur Optionalität, nicht zum Namen — ohne es
-      // liest sich die Meldung wie der Parameter in der Adresse.
-      return {
-        name: teil.slice(0, dp).trim().replace(/\?$/, ""),
-        typ: teil.slice(dp + 1).trim(),
-      };
-    });
-}
+/** `searchParams: Promise<…>` — jede Fundstelle der Datei, nicht nur die
+ *  erste: Ein `generateMetadata` über der Seitenkomponente deckte sonst eine
+ *  unehrliche Signatur darunter zu. */
+const DEKLARATION = /searchParams\s*:\s*Promise\s*<([^>]*)>/g;
+/** Eine Index-Signatur `[key: string]: T` — ihr Doppelpunkt steht NACH der
+ *  schliessenden eckigen Klammer, darum ein eigener Abgleich. */
+const INDEX_SIGNATUR = /\[[^\]]*\]\s*:\s*([^;,}]+)/g;
+/** Ein gewöhnliches Feld `name?: T`. */
+const FELD = /([A-Za-z_$][\w$]*)\s*\??\s*:\s*([^;,}]+)/g;
 
 /** Ehrlich ist ein Feldtyp, der BEIDE Gestalten zulässt: den einzelnen Wert
- *  und die Liste. Ein Feld aus `searchParams` kann keine von beiden
- *  ausschliessen — `?kat=a` liefert einen String, `?kat=a&kat=b` ein Array,
- *  und Next entscheidet das nach der Adresse, nicht nach dem Typ.
- *
- *  Beide Richtungen sind derselbe Fehler: `{ kat?: string }` bricht an
- *  `.trim()`, `{ kat?: string[] }` an `.map()`. Nur auf `string[]` zu prüfen
- *  liesse die zweite Hälfte durch — und wer `string[]` schreibt, hat gerade
- *  bewusst über den Typ nachgedacht und sich trotzdem für eine Gestalt
- *  entschieden. */
+ *  und die Liste. Ein Feld aus `searchParams` kann keine ausschliessen —
+ *  `?kat=a` liefert einen String, `?kat=a&kat=b` ein Array, und Next
+ *  entscheidet das nach der Adresse, nicht nach dem Typ. Beide Richtungen sind
+ *  derselbe Fehler: `{ kat?: string }` bricht an `.trim()`, `{ kat?: string[] }`
+ *  an `.map()`. */
 function istEhrlich(typ: string): boolean {
-  if (typ === "RohWert") return true;
+  if (typ.trim() === "RohWert") return true;
   const listenfrei = typ.replace(/string\s*\[\s*\]/g, "");
   return /string\s*\[\s*\]/.test(typ) && /\bstring\b/.test(listenfrei);
 }
 
-/** Als ganze Signatur zulässig: der Sammeltyp für Seiten, die einen Parameter
- *  unter importiertem Namen lesen. */
-const GANZE_SIGNATUR = ["RohParameter"];
+/** Was an einer Quelle zu beanstanden ist, als fertige Meldungen. EINE
+ *  Funktion für den Ernstfall und die Gegenprobe: Prüfte die Gegenprobe einen
+ *  Nachbau, bewiese sie bloss, dass der Nachbau funktioniert — und genau der
+ *  Pfad, der in der CI läuft, bliebe ungetestet. */
+function beanstandungen(quelle: string, wo: string): string[] {
+  const treffer: string[] = [];
+  for (const [, inneres] of ohneKommentare(quelle).matchAll(DEKLARATION)) {
+    const inhalt = inneres.trim();
+    if (inhalt === "RohParameter") continue;
+    if (!inhalt.startsWith("{") || !inhalt.endsWith("}")) {
+      treffer.push(`${wo}: searchParams als „${inhalt}" — nicht prüfbar; RohParameter oder ein Objektliteral erwartet`);
+      continue;
+    }
+    const melde = (name: string, typ: string) => {
+      if (!istEhrlich(typ)) {
+        treffer.push(`${wo}: Feld „${name}" ist „${typ.trim()}" — RohWert aus lib/such-parameter.ts nehmen`);
+      }
+    };
+    for (const [, typ] of inhalt.matchAll(INDEX_SIGNATUR)) melde("[key]", typ);
+    for (const [, name, typ] of inhalt.replace(INDEX_SIGNATUR, "").matchAll(FELD)) melde(name, typ);
+  }
+  return treffer;
+}
 
 function seiten(wurzel: string): string[] {
   const gefunden: string[] = [];
@@ -234,33 +190,6 @@ function seiten(wurzel: string): string[] {
   return gefunden;
 }
 
-/** Was an einer Quelle zu beanstanden ist, als fertige Meldungen.
- *
- *  Bewusst EINE Funktion für den Ernstfall und die Gegenprobe weiter unten:
- *  Prüfte die Gegenprobe einen nachgebauten Weg, bewiese sie nur, dass der
- *  Nachbau funktioniert — und genau der Pfad, der in der CI läuft, bliebe
- *  ungetestet. */
-function beanstandungen(quelle: string, wo: string): string[] {
-  const treffer: string[] = [];
-  for (const typ of parameterTypen(ohneKommentare(quelle))) {
-    if (typ === null) {
-      treffer.push(`${wo}: searchParams ohne lesbares Promise<…> — so kann ich nicht prüfen`);
-      continue;
-    }
-    if (GANZE_SIGNATUR.includes(typ)) continue;
-    if (!typ.startsWith("{")) {
-      treffer.push(`${wo}: unbekannte Form „${typ}" — Objektliteral oder RohParameter erwartet`);
-      continue;
-    }
-    for (const { name, typ: feldTyp } of felder(typ)) {
-      if (!istEhrlich(feldTyp)) {
-        treffer.push(`${wo}: Feld „${name}" ist „${feldTyp}" — RohWert aus lib/such-parameter.ts nehmen`);
-      }
-    }
-  }
-  return treffer;
-}
-
 const SEITEN = seiten(join(WEB, "app"));
 
 pruefe(`Jede Seite deklariert searchParams ehrlich (${SEITEN.length} Seiten)`, () => {
@@ -271,25 +200,19 @@ pruefe(`Jede Seite deklariert searchParams ehrlich (${SEITEN.length} Seiten)`, (
 });
 
 // ── 3. Gegenprobe auf den Wächter selbst ───────────────────────────────────
-// Ein kaputter Parser ist schlimmer als gar keiner: Er winkt alles durch und
-// sieht dabei aus wie eine bestandene Prüfung. Darum steht jeder Fall, den
-// dieser Scanner können muss, hier als eigene Behauptung.
+// Ein kaputter Wächter ist schlimmer als gar keiner: Er winkt alles durch und
+// sieht dabei aus wie eine bestandene Prüfung.
 
-/** Die beanstandeten FELDNAMEN einer Quelle — dieselbe Prüfung wie in der CI,
- *  nur auf das Wesentliche eingedampft, damit die Behauptungen lesbar
- *  bleiben. */
+/** Die beanstandeten Feldnamen einer Quelle — derselbe Weg wie in der CI. */
 function beanstandet(quelle: string): string[] {
   return beanstandungen(quelle, "x").map((m) => m.replace(/^x: Feld „([^"]+)".*$/u, "$1"));
 }
 
-pruefe("Gegenprobe: zu eng als einzelner Wert deklariert", () => {
+pruefe("Gegenprobe: zu eng als einzelner Wert", () => {
   assert.deepEqual(beanstandet(`searchParams: Promise<{ q?: string; kat?: RohWert }>;`), ["q"]);
 });
 
-pruefe("Gegenprobe: zu eng als Liste deklariert", () => {
-  // Die andere Hälfte derselben Lüge: `?kat=a` liefert einen String, und
-  // `.map()` darauf wirft. Ein Wächter, der nur `string[]` verlangte, hielte
-  // ausgerechnet diese Deklaration für vorbildlich.
+pruefe("Gegenprobe: zu eng als Liste", () => {
   assert.deepEqual(beanstandet(`searchParams: Promise<{ kat?: string[] }>;`), ["kat"]);
   assert.equal(istEhrlich("string[]"), false);
   assert.equal(istEhrlich("string"), false);
@@ -297,34 +220,41 @@ pruefe("Gegenprobe: zu eng als Liste deklariert", () => {
   assert.equal(istEhrlich("RohWert"), true);
 });
 
-pruefe("Gegenprobe: ehrliche Deklarationen bleiben unbeanstandet", () => {
+pruefe("Gegenprobe: Ehrliches bleibt unbeanstandet", () => {
   assert.deepEqual(
     beanstandet(`searchParams: Promise<{ q?: RohWert; n?: string | string[] | undefined }>;`),
     [],
   );
   assert.deepEqual(beanstandet(`searchParams: Promise<RohParameter>;`), []);
+  assert.deepEqual(beanstandet(`searchParams: Promise<{ [key: string]: string | string[] | undefined }>;`), []);
   // `params` ist nicht `searchParams` — ein enger Typ ist dort richtig.
   assert.deepEqual(beanstandet(`params: Promise<{ slug: string }>;`), []);
 });
 
-pruefe("Gegenprobe: ein Doppelpunkt im Kommentar reisst nichts auseinander", () => {
-  // Ohne Kommentar-Bereinigung träfe die Trennung von Name und Typ den
-  // Doppelpunkt IM Kommentar — der Wächter meldete dann einwandfreien Code.
+pruefe("Gegenprobe: eine zu enge Index-Signatur fällt auf", () => {
+  assert.deepEqual(beanstandet(`searchParams: Promise<{ [key: string]: string }>;`), ["[key]"]);
+});
+
+pruefe("Gegenprobe: Kommentare stören nicht", () => {
+  // Ohne Bereinigung risse die Trennung am Doppelpunkt IM Kommentar.
   assert.deepEqual(
     beanstandet(`searchParams: Promise<{\n  /** Achtung: nur intern. */\n  q?: RohWert;\n}>;`),
     [],
   );
-  // Auskommentierter Code ist kein Code.
   assert.deepEqual(beanstandet(`// searchParams: Promise<{ q?: string }>;`), []);
 });
 
-pruefe("Gegenprobe: die zweite Deklaration derselben Datei wird mitgeprüft", () => {
-  // Ein generateMetadata über der Seitenkomponente darf keine unehrliche
-  // Signatur darunter zudecken.
+pruefe("Gegenprobe: die zweite Deklaration derselben Datei zählt mit", () => {
   const zwei =
     `export async function generateMetadata({ searchParams }: { searchParams: Promise<RohParameter> }) {}\n` +
     `export default async function Page({ searchParams }: { searchParams: Promise<{ created?: string }> }) {}`;
   assert.deepEqual(beanstandet(zwei), ["created"]);
+});
+
+pruefe("Gegenprobe: Unlesbares wird gemeldet, nicht verschwiegen", () => {
+  // Spitze Klammern im Feldtyp brechen den Abgleich ab — der Wächter sagt das,
+  // statt Sicherheit vorzutäuschen, die er nicht hat.
+  assert.deepEqual(beanstandungen(`searchParams: Promise<{ x?: Record<string, string> }>;`, "x").length, 1);
 });
 
 console.log(
