@@ -262,7 +262,7 @@ export default async function ExerciseDetailPage({
           {ex.methodischer_fahrplan ? (
             <MethodischerFahrplan fahrplan={ex.methodischer_fahrplan} />
           ) : ex.aufbau ? (
-            <p className="type-body-large whitespace-pre-line text-on-surface-mittel">
+            <p className="type-body-large whitespace-pre-line text-on-surface">
               {ex.aufbau}
             </p>
           ) : (
@@ -279,7 +279,7 @@ export default async function ExerciseDetailPage({
           <h2 className="type-title-medium mb-3 text-on-surface-mittel">
             Varianten
           </h2>
-          <ul className="type-body-large list-disc space-y-1 pl-5 text-on-surface-mittel">
+          <ul className="type-body-large list-disc space-y-1 pl-5 text-on-surface">
             {ex.varianten.map((v, i) => (
               <li key={i}>{v}</li>
             ))}

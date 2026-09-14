@@ -171,7 +171,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
         {item.fahrplan ? (
           <MethodischerFahrplan fahrplan={item.fahrplan} />
         ) : item.aufbau ? (
-          <p className="type-body-medium whitespace-pre-line text-on-surface-mittel">
+          <p className="type-body-large whitespace-pre-line text-on-surface">
             {item.aufbau}
           </p>
         ) : (
