@@ -39,11 +39,19 @@ export interface MultiSelectProps {
 
 /* Die Masse des Panels in px. `PANEL_MAX_HOEHE` ist die Vorgabe (das frühere
    `max-h-80`), `PANEL_MIN_HOEHE` die Untergrenze, unter die keine Messung
-   drücken darf — etwa zwei Zeilen plus Kopf und Fuss. `PANEL_ABSTAND` ist der
-   Spalt zwischen Feld und Panel (`mt-1`/`mb-1`). */
+   drücken darf — etwa zwei Zeilen plus Kopf und Fuss.
+
+   Der Spalt zwischen Feld und Panel ist nach oben grösser als nach unten, und
+   das ist keine Kosmetik: Die schwebende Beschriftung sitzt mit
+   `-translate-y-1/2` auf der oberen Kontur, ragt also um ihre halbe Zeilenhöhe
+   (18 px / 2) über das Feld hinaus. Ein Panel, das mit denselben 4 px nach
+   oben aufklappt, legt sich mit seinem `z-50` über genau diese Hälfte und
+   schneidet dem Feld den Namen an — bei «Übungstyp» zuerst die Umlautpunkte.
+   Nach unten gibt es nichts freizuhalten. */
 const PANEL_MAX_HOEHE = 320;
 const PANEL_MIN_HOEHE = 160;
-const PANEL_ABSTAND = 4;
+const PANEL_ABSTAND_UNTEN = 4;
+const PANEL_ABSTAND_OBEN = 10;
 
 /* M2 Multi-Select — einzeiliger Feld-Trigger, der die Auswahl als
    kommaseparierte Liste zeigt, und ein Panel mit Suchfeld (Kopf), Optionsliste
@@ -108,6 +116,9 @@ export function MultiSelect({
   // Hover setzt `active` ebenfalls — würde das scrollen, springt die Liste
   // bei jeder Mausbewegung (scrollIntoView auf der überlaufenden Liste).
   const kbdNav = useRef(false);
+  // Der Vorfahre, gegen den zuletzt gemessen wurde (null = das Sichtfeld).
+  // Solange das Panel offen ist, wird er beobachtet — siehe den Effekt unten.
+  const grenzRef = useRef<HTMLElement | null>(null);
 
   // Sichtbare (gefilterte) Optionen. Ohne Suche bleibt die volle Liste.
   const filtered = useMemo(() => {
@@ -171,6 +182,7 @@ export function MultiSelect({
     const feld = t.getBoundingClientRect();
 
     let grenze = { top: 0, bottom: window.innerHeight };
+    let grenzElement: HTMLElement | null = null;
     for (let el = t.parentElement; el; el = el.parentElement) {
       if (getComputedStyle(el).overflow !== "visible") {
         const r = el.getBoundingClientRect();
@@ -178,12 +190,14 @@ export function MultiSelect({
           top: Math.max(grenze.top, r.top),
           bottom: Math.min(grenze.bottom, r.bottom),
         };
+        grenzElement = el;
         break;
       }
     }
+    grenzRef.current = grenzElement;
 
-    const unten = grenze.bottom - feld.bottom - PANEL_ABSTAND;
-    const oben = feld.top - grenze.top - PANEL_ABSTAND;
+    const unten = grenze.bottom - feld.bottom - PANEL_ABSTAND_UNTEN;
+    const oben = feld.top - grenze.top - PANEL_ABSTAND_OBEN;
     const nachOben = unten < Math.min(PANEL_MAX_HOEHE, oben);
     setPlatz({
       oben: nachOben,
@@ -227,6 +241,32 @@ export function MultiSelect({
     kbdNav.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, open]);
+
+  // Die Messung beim Öffnen ist eine Momentaufnahme — sie veraltet, sobald
+  // sich darunter etwas verschiebt. Der scharfe Fall steht im Übungs-Picker:
+  // Das Panel bleibt nach einer Wahl bewusst offen, und genau diese Wahl kürzt
+  // die Trefferliste unter ihm. Der Dialog schrumpft auf seinen Inhalt, die
+  // Kante wandert nach oben — und das Panel, das eben noch hineinpasste, ragt
+  // hinaus. Darum beobachten wir, solange offen, den Vorfahren, gegen den
+  // gemessen wurde, und hören aufs Fenster (Grösse wie Drehung des Geräts).
+  // Kein Rückkopplungsrisiko: Das Panel ist absolut positioniert und ändert
+  // die Grösse des beobachteten Elements nicht.
+  useEffect(() => {
+    if (!open) return;
+    const nachmessen = () => messePlatz();
+    window.addEventListener("resize", nachmessen);
+    const beobachter = grenzRef.current
+      ? new ResizeObserver(nachmessen)
+      : null;
+    if (beobachter && grenzRef.current) beobachter.observe(grenzRef.current);
+    return () => {
+      window.removeEventListener("resize", nachmessen);
+      beobachter?.disconnect();
+    };
+    // `messePlatz` liest nur Refs und ruft `setPlatz` — beide über Renders
+    // hinweg stabil, eine veraltete Closure kann hier nichts Falsches tun.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Outside-Click schliesst und setzt die Suche zurück.
   useEffect(() => {
@@ -409,7 +449,7 @@ export function MultiSelect({
             style={{ maxHeight: platz.maxHoehe }}
             className={cn(
               "absolute z-50 flex w-full flex-col overflow-hidden rounded-flaeche border border-linie bg-elev-08 shadow-dp-08",
-              platz.oben ? "bottom-full mb-1" : "top-full mt-1",
+              platz.oben ? "bottom-full mb-2.5" : "top-full mt-1",
             )}
           >
             {searchable && (
