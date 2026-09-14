@@ -48,6 +48,12 @@ import { HAUPTTEILKATEGORIEN } from "@/lib/training";
  *  einer Client-Komponente hängt (es wird auch serverseitig gelesen). */
 export type FilterOption = { value: string; label: string; group: string };
 
+/** Dieselbe Option ohne Gruppe — für Felder, die von vornherein nur in EINER
+ *  Altersstufe stehen (der Übungs-Picker eines Trainings). Dort wäre die
+ *  Gruppen-Kopfzeile eine Wiederholung: Welche Welt gemeint ist, sagt der
+ *  Dialog bereits in seinem Kopf. */
+export type EinfacheOption = { value: string; label: string };
+
 const gruppe = (stufe: Altersstufe) => altersstufeLabels[stufe];
 
 /** Die eine Altersstufe, deren Übungen eine ganze Dimension überhaupt tragen.
@@ -166,12 +172,19 @@ export const stufenOptionen: FilterOption[] = ALTERSSTUFEN.flatMap((stufe) =>
  *  beschriftet. Innerhalb einer Stufe ohne weitere Untergliederung nach
  *  Spielphasen (Story #131 Out of Scope 6). */
 export const formOptionen: FilterOption[] = ALTERSSTUFEN.flatMap((stufe) =>
-  erscheinungsformenFuer(stufe).map((f) => ({
+  erscheinungsformOptionen(stufe).map((o) => ({ ...o, group: gruppe(stufe) })),
+);
+
+/** Die Erscheinungsformen EINER Altersstufe, ungruppiert — was der
+ *  Übungs-Picker anbietet, dessen Bestand ohnehin auf die Altersstufe des
+ *  Trainings eingegrenzt ist. Dieselbe Quelle wie die Filterleiste, damit
+ *  Beschriftung und Reihenfolge an beiden Orten dieselben bleiben. */
+export function erscheinungsformOptionen(stufe: Altersstufe): EinfacheOption[] {
+  return erscheinungsformenFuer(stufe).map((f) => ({
     value: f,
     label: ERSCHEINUNGSFORM_LABEL[f] ?? f,
-    group: gruppe(stufe),
-  })),
-);
+  }));
+}
 
 /** Feldtyp — Kleinfeld/Grossfeld/Freies Feld ist eine Kategorie des Manuals
  *  Fussball Kinder; das Junioren-Manual führt an seiner Stelle eine
@@ -184,17 +197,22 @@ export const feldOptionen: FilterOption[] = (
   group: gruppe(stufeDerDimension((stufe) => traegtFeldtyp(stufe))),
 }));
 
+/** Die Übungstypen ungruppiert — für den Übungs-Picker, der immer in genau
+ *  einer Altersstufe steht. Anders als bei der Erscheinungsform hängt die
+ *  Liste an keiner Stufe: Die Typologie ist als Ganzes die des
+ *  Juniorenfussballs, sie wird nur dort überhaupt angeboten. */
+export const uebungstypOptionen: EinfacheOption[] = (
+  Object.keys(uebungstypLabels) as UebungstypSlug[]
+).map((t) => ({ value: t, label: uebungstypLabels[t] }));
+
 /** Übungstyp — die Typologie des Manuals Fussball Jugendliche; der
  *  Kinderfussball kennt sie gar nicht. Eine Gruppe, entsprechend beschriftet.
  *
  *  Die Stufe wird erfragt, nicht gesetzt: Trägt IRGENDEINE Einordnung dieser
  *  Stufe einen Übungstyp, gehört die Dimension ihr. Damit hängt die
  *  Beschriftung nicht an einer hier wiederholten Blockliste. */
-export const typOptionen: FilterOption[] = (
-  Object.keys(uebungstypLabels) as UebungstypSlug[]
-).map((t) => ({
-  value: t,
-  label: uebungstypLabels[t],
+export const typOptionen: FilterOption[] = uebungstypOptionen.map((o) => ({
+  ...o,
   group: gruppe(
     stufeDerDimension((stufe) =>
       einordnungsSlugsFuer(stufe).some((e) => traegtUebungstyp(stufe, e)),
