@@ -310,7 +310,16 @@ const VERBOTEN: [RegExp, string][] = [
   // `--diagramm-rasen-streifen` und ist genau richtig so.
   [/\b(?:bg|text|border|fill|stroke|ring|from|via|to)-rasen-/, "alte Rasen-Palette"],
   [/chalk/, "alte Kreide-Palette"],
-  [/(?<![\wä-ü])signal(?![\wä-ü])|-signal\b/, "alter Signal-Akzent"],
+  // Gemeint ist die Utility der entfernten Signal-Farbe (`bg-signal`), nicht
+  // das Wort: `signal` ist auch die Standard-Eigenschaft von `RequestInit`
+  // (`fetch(url, { signal })`, siehe lib/supabase/fetch.ts) und lässt sich dort
+  // nicht umbenennen. Die frühere Fassung verbot das blosse Wort und schlug
+  // darum bei einwandfreiem Code an — dieselbe Verengung wie bei `rasen`
+  // darüber.
+  [
+    /\b(?:bg|text|border|fill|stroke|ring|from|via|to)-signal\b|--color-signal\b/,
+    "alter Signal-Akzent",
+  ],
   [/surface-container/, "M3-Surface-Leiter (ersetzt durch elev-*)"],
   [/surface-dim/, "M3-Surface-Leiter"],
   [/surface-bright/, "M3-Surface-Leiter"],

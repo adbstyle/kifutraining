@@ -48,6 +48,13 @@ jobs:
       # (`.trim is not a function`). Genau daran hingen drei Abstürze auf
       # Produktion; nur dieser Wächter fängt einen Rückfall.
       - run: npm run check:such-parameter
+      # Der zweite Versuch der Supabase-Clients. Geprüft wird vor allem die
+      # eine Grenze, die Daten schützt: Wiederholt wird nur Lesen. Ein 504
+      # heisst „keine Antwort erhalten", nicht „nichts passiert" — ein
+      # wiederholtes POST legte den Datensatz ein zweites Mal an. Ob wirklich
+      # wiederholt wurde, sieht man nur am Server; darum zählt der Wächter die
+      # Aufrufe gegen einen echten lokalen.
+      - run: npm run check:supabase-fetch
       # Farbsätze des Feld-Diagramms: Vollständigkeit der Rollen in beiden
       # Sätzen (Bildschirm und Papier), Kontrast 3:1 nach WCAG 1.4.11 für
       # gezeichnete Gegenstände, und das Verbot roher Farbwerte im

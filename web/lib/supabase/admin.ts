@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { env } from "@/lib/env";
+import { fetchMitZweitemVersuch } from "./fetch";
 
 /**
  * Service-Role-Client — UMGEHT RLS.
@@ -17,5 +18,7 @@ import { env } from "@/lib/env";
 export function createAdminClient() {
   return createClient(env.supabaseUrl(), env.supabaseServiceRoleKey(), {
     auth: { autoRefreshToken: false, persistSession: false },
+    // Auch das Seed-Script und die Aufräum-Nachläufe lesen über die Gateway.
+    global: { fetch: fetchMitZweitemVersuch },
   });
 }
