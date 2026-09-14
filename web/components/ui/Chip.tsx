@@ -90,7 +90,7 @@ const chipSelected = "border-transparent bg-primary text-on-primary";
 const chipElevated = "border-transparent bg-elev-06 text-on-surface shadow-dp-04";
 
 /* ── Chip-Optik für NUTZERTEXT ────────────────────────────────
-   Dieselbe Pille, aber normal gesetzt statt mono/versal: `type-label-medium`
+   Dieselbe Pille, aber normal gesetzt statt versal: `type-label-medium`
    verfälscht, was die Trainerin selbst geschrieben hat («21 Kinder, zwei
    Trainer» in Versalien liest sich als Rubrik, nicht als ihre Bezeichnung).
    Dieselbe Regel, aus der schon `ChipMenu` `type-body-medium` trägt.

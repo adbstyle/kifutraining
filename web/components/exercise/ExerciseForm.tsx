@@ -429,7 +429,7 @@ export function ExerciseForm({
         <fieldset className="flex flex-col gap-5 rounded-flaeche border border-linie p-5">
           <legend className="type-label-medium px-2 text-primary">Methodischer Fahrplan</legend>
           <TextArea
-            label="① Offen starten"
+            label="Offen starten"
             name="offen_starten"
             value={offenStarten}
             onChange={(e) => setOffenStarten(e.target.value)}
@@ -437,7 +437,7 @@ export function ExerciseForm({
             supportingText={err.offen_starten ?? "Pflichtfeld — wie die Übung offen startet."}
           />
           <TextArea
-            label="② Üben — ein Schritt pro Zeile"
+            label="Üben"
             name="ueben"
             value={ueben}
             onChange={(e) => setUeben(e.target.value)}
@@ -447,7 +447,7 @@ export function ExerciseForm({
             }
           />
           <TextArea
-            label="③ Wett-eifern"
+            label="Wetteifern"
             name="wetteifern"
             value={wetteifern}
             onChange={(e) => setWetteifern(e.target.value)}
@@ -575,7 +575,7 @@ export function ExerciseForm({
           type="file"
           accept={IMAGE_ACCEPT}
           onChange={() => setBildError(null)}
-          className="focus-ring type-body-medium block w-full rounded-flaeche kontur border-kante text-on-surface-mittel file:mr-4 file:border-0 file:bg-elev-08 file:px-4 file:py-2.5 file:font-mono file:text-xs file:uppercase file:tracking-wider file:text-on-surface"
+          className="focus-ring type-body-medium block w-full rounded-flaeche kontur border-kante text-on-surface-mittel file:mr-4 file:border-0 file:bg-elev-08 file:type-label-medium file:px-4 file:py-2.5 file:text-on-surface"
         />
         <p className={`type-body-small mt-1.5 ${err.bild || bildError ? "text-error" : "text-on-surface-mittel"}`}>
           {err.bild ?? bildError ?? "JPG, PNG, WebP oder HEIC. Grosse Bilder werden automatisch verkleinert."}

@@ -285,10 +285,10 @@ const typeScale: [string, string, string][] = [
   ["type-body-large", "Body Large", "Geist 400 · 16/24"],
   ["type-body-medium", "Body Medium", "Geist 400 · 14/21"],
   ["type-body-small", "Body Small", "Geist 400 · 12/18 · +.005 em"],
-  ["type-label-large", "Label Large", "Geist Mono 700 · 14/20 · +.06 em · versal"],
-  ["type-label-medium", "Label Medium", "Geist Mono 700 · 12/16 · +.07 em · versal"],
-  ["type-label-small", "Label Small", "Geist Mono 400 · 11/16 · +.07 em · versal"],
-  ["type-plakette", "Plakette", "Geist Mono 700 · 10/14 · +.06 em · versal"],
+  ["type-label-large", "Label Large", "Geist 600 · 14/20 · +.08 em · versal"],
+  ["type-label-medium", "Label Medium", "Geist 600 · 12/16 · +.09 em · versal"],
+  ["type-label-small", "Label Small", "Geist 500 · 11/16 · +.09 em · versal"],
+  ["type-plakette", "Plakette", "Geist 700 · 10/14 · +.10 em · versal"],
 ];
 
 /* Literale Klassennamen, damit Tailwind sie findet — aus einer Schleife
@@ -391,10 +391,12 @@ const iconSet = [
   User,
 ];
 
-const fahrplan: [string, string, string][] = [
-  ["①", "Offen starten", "Die Kinder dribbeln auf die Abschlusszone zu und schliessen ab."],
-  ["②", "Üben", "Mit linkem und rechtem Fuss kontrolliert führen und in die freie Ecke zielen."],
-  ["③", "Wett-eifern", "Wie viele Treffer gelingen mit links, wie viele mit rechts?"],
+/* Beispieltexte für die drei Stufen des methodischen Fahrplans; die
+   Stufennamen führt die Komponente selbst. */
+const fahrplan = [
+  "Die Kinder dribbeln auf die Abschlusszone zu und schliessen ab.",
+  "Mit linkem und rechtem Fuss kontrolliert führen und in die freie Ecke zielen.",
+  "Wie viele Treffer gelingen mit links, wie viele mit rechts?",
 ];
 
 /* Der Druckblock lässt sich am Bildschirm nicht zeigen, indem man ihn
@@ -575,12 +577,12 @@ export default function Styleguide() {
 
       <Section n="02" title="Typografie">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Eine Familie für alles Gelesene, ihre Schwester für alles
-          Gezählte.</strong> Geist trägt Display, Titel und Fliesstext; Geist
-          Mono trägt Label und Plakette — dort fluchten Dauern, Wechsel und
-          Hex-Werte in Kolonnen von selbst, und beide Familien stammen aus
-          derselben Feder, treffen also im Bild aufeinander wie zwei Schnitte
-          und nicht wie zwei Schriften.
+          <strong>Eine Familie für alles.</strong> Geist trägt Display, Titel,
+          Fliesstext, Label und Plakette; unterschieden werden die Rollen über
+          Gewicht, Versalien und Sperrung, nicht über eine zweite Schrift. Was
+          in Kolonnen fluchten muss — Dauern, Zählungen, Positionsnummern —,
+          hält <code>font-variant-numeric: tabular-nums</code> auf jeder
+          Label-Stufe bündig; dafür braucht es keine Monospace mehr.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Display und Headline stehen versal und leicht gesperrt: Eine
@@ -589,8 +591,17 @@ export default function Styleguide() {
           kompakt bleiben.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Label gehen den umgekehrten Weg und trennen sich damit von den
+          Headlines, obwohl beide versal stehen: ein Gewicht <em>tiefer</em> als
+          die Titel (600 statt 700) und mit 8–10 % rund dreimal so weit
+          gesperrt. Bei 700 und engem Tracking läsen sie sich als Headlines in
+          Miniatur; bei 400 verlöre die kleinste Stufe auf dem dunklen Grund
+          ihre Stämme — darum steht Label Small auf 500.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Regel: Nutzertext nie in Label-Typografie.</strong> Die{" "}
-          <code>type-label-*</code>-Stufen sind mono, fett und <em>versal</em> —
+          <code>type-label-*</code>-Stufen sind gesperrt, halbfett und{" "}
+          <em>versal</em> —
           sie verändern, was dasteht. Für Beschriftungen, die wir selbst
           schreiben, ist das gewollt; ein Gruppenname wie „Grosse" käme daraus
           als „GROSSE" zurück und wäre nicht mehr das, was die Trainerin
@@ -611,8 +622,10 @@ export default function Styleguide() {
         <p className="type-body-medium mt-5 max-w-2xl text-on-surface-mittel">
           <code>type-plakette</code> ist die jüngste Stufe: die kleinste
           beschriftbare Fläche (Badge, Kategorie-Plakette, Zähler an der
-          Glocke). Unter 10 px wird die Mono unleserlich — darunter geht nichts
-          mehr.
+          Glocke). Unter 10 px wird auch die weit gesperrte Versal unleserlich —
+          darunter geht nichts mehr. Sie ist die einzige Label-Stufe, die bei
+          700 bleibt: bei 600 fiele sie in dieser Grösse gegen ihre eigene
+          Kontur ab.
         </p>
       </Section>
 
@@ -1317,9 +1330,9 @@ export default function Styleguide() {
         <Card className="max-w-xl p-6">
           <MethodischerFahrplan
             fahrplan={{
-              offen_starten: fahrplan[0][2],
-              ueben: [fahrplan[1][2]],
-              wetteifern: fahrplan[2][2],
+              offen_starten: fahrplan[0],
+              ueben: [fahrplan[1]],
+              wetteifern: fahrplan[2],
             }}
           />
         </Card>

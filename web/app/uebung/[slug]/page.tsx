@@ -255,14 +255,14 @@ export default async function ExerciseDetailPage({
 
       {/* Ablauf */}
       <section className="mt-10">
-        <h2 className="type-headline-small mb-4 text-on-surface">
+        <h2 className="type-title-medium mb-3 text-on-surface-mittel">
           Übungsablauf
         </h2>
         <Card className="p-6">
           {ex.methodischer_fahrplan ? (
             <MethodischerFahrplan fahrplan={ex.methodischer_fahrplan} />
           ) : ex.aufbau ? (
-            <p className="type-body-large whitespace-pre-line text-on-surface-mittel">
+            <p className="type-body-large whitespace-pre-line text-on-surface">
               {ex.aufbau}
             </p>
           ) : (
@@ -276,10 +276,10 @@ export default async function ExerciseDetailPage({
       {/* Varianten */}
       {ex.varianten.length > 0 && (
         <section className="mt-8">
-          <h2 className="type-headline-small mb-4 text-on-surface">
+          <h2 className="type-title-medium mb-3 text-on-surface-mittel">
             Varianten
           </h2>
-          <ul className="type-body-large list-disc space-y-1 pl-5 text-on-surface-mittel">
+          <ul className="type-body-large list-disc space-y-1 pl-5 text-on-surface">
             {ex.varianten.map((v, i) => (
               <li key={i}>{v}</li>
             ))}
