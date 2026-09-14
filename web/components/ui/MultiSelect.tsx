@@ -176,9 +176,9 @@ export function MultiSelect({
      Raum gewinnt; die Höhe ist der kleinere Wert aus Vorgabe und dem, was dort
      hinpasst. Die Liste im Panel scrollt ohnehin — ein knapperes Panel zeigt
      also weniger auf einmal, verliert aber nichts. */
-  function messePlatz() {
+  function messePlatz(): boolean {
     const t = triggerRef.current;
-    if (!t) return;
+    if (!t) return true;
     const feld = t.getBoundingClientRect();
 
     let grenze = { top: 0, bottom: window.innerHeight };
@@ -208,6 +208,11 @@ export function MultiSelect({
         Math.min(PANEL_MAX_HOEHE, nachOben ? oben : unten),
       ),
     });
+
+    // Liegt das Feld selbst noch im sichtbaren Bereich? Ist es ganz
+    // hinausgescrollt, hilft keine Messung mehr: Das Panel hängt am Feld und
+    // ist mit ihm draussen. Der Aufrufer entscheidet, was dann zu tun ist.
+    return feld.bottom > grenze.top && feld.top < grenze.bottom;
   }
 
   function openPanel() {
@@ -243,23 +248,54 @@ export function MultiSelect({
   }, [active, open]);
 
   // Die Messung beim Öffnen ist eine Momentaufnahme — sie veraltet, sobald
-  // sich darunter etwas verschiebt. Der scharfe Fall steht im Übungs-Picker:
-  // Das Panel bleibt nach einer Wahl bewusst offen, und genau diese Wahl kürzt
-  // die Trefferliste unter ihm. Der Dialog schrumpft auf seinen Inhalt, die
-  // Kante wandert nach oben — und das Panel, das eben noch hineinpasste, ragt
-  // hinaus. Darum beobachten wir, solange offen, den Vorfahren, gegen den
-  // gemessen wurde, und hören aufs Fenster (Grösse wie Drehung des Geräts).
-  // Kein Rückkopplungsrisiko: Das Panel ist absolut positioniert und ändert
-  // die Grösse des beobachteten Elements nicht.
+  // sich darunter etwas verschiebt. Solange das Panel offen ist, wird sie
+  // darum an den drei Wegen nachgezogen, auf denen sich seine Geometrie
+  // überhaupt ändern kann:
+  //
+  // 1. `scroll` am Dokument, in der Capture-Phase. Das Scroll-Ereignis steigt
+  //    nicht auf, wenn ein Kasten im Inneren scrollt statt der Seite — beim
+  //    Abwärtsfangen erwischt man beide. Der häufigste Fall überhaupt: Ein
+  //    nach oben geklapptes Panel wandert beim Weiterscrollen aus dem oberen
+  //    Rand, bis nur noch ein Streifen dasteht.
+  // 2. Grösse des Vorfahren, gegen den gemessen wurde (`ResizeObserver`). Der
+  //    scharfe Fall steht im Übungs-Picker: Das Panel bleibt nach einer Wahl
+  //    bewusst offen, und genau diese Wahl kürzt die Trefferliste unter ihm —
+  //    der Dialog schrumpft auf seinen Inhalt, die Kante wandert nach oben,
+  //    und das eben noch passende Panel ragt hinaus.
+  // 3. `resize` am Fenster — Fenstergrösse wie Drehung des Geräts.
+  //
+  // Scrollt das Feld ganz aus dem Bild, wird zugeklappt statt nachgemessen:
+  // Das Panel hängt am Feld und ist mit ihm draussen — ein Streifen davon am
+  // Rand wäre nur noch ein Rest ohne seinen Bezug. Der Fokus bleibt dabei, wo
+  // er ist (kein `closePanel`), sonst risse das Zuklappen die Seite an eine
+  // Stelle zurück, von der der Nutzer gerade weggescrollt ist.
+  //
+  // Gemessen wird höchstens einmal pro Bild: `scroll` feuert dicht, und die
+  // Messung liest Layout (`getBoundingClientRect`, `getComputedStyle` über die
+  // Vorfahren). Kein Rückkopplungsrisiko: Das Panel ist absolut positioniert
+  // und ändert die Grösse des beobachteten Elements nicht.
   useEffect(() => {
     if (!open) return;
-    const nachmessen = () => messePlatz();
+    let bild = 0;
+    const nachmessen = () => {
+      if (bild) return;
+      bild = requestAnimationFrame(() => {
+        bild = 0;
+        if (!messePlatz()) {
+          setOpen(false);
+          setQuery("");
+        }
+      });
+    };
+    document.addEventListener("scroll", nachmessen, true);
     window.addEventListener("resize", nachmessen);
     const beobachter = grenzRef.current
       ? new ResizeObserver(nachmessen)
       : null;
     if (beobachter && grenzRef.current) beobachter.observe(grenzRef.current);
     return () => {
+      if (bild) cancelAnimationFrame(bild);
+      document.removeEventListener("scroll", nachmessen, true);
       window.removeEventListener("resize", nachmessen);
       beobachter?.disconnect();
     };
