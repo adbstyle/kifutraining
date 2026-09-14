@@ -575,7 +575,7 @@ export function ExerciseForm({
           type="file"
           accept={IMAGE_ACCEPT}
           onChange={() => setBildError(null)}
-          className="focus-ring type-body-medium block w-full rounded-flaeche kontur border-kante text-on-surface-mittel file:mr-4 file:border-0 file:bg-elev-08 file:px-4 file:py-2.5 file:font-mono file:text-xs file:uppercase file:tracking-wider file:text-on-surface"
+          className="focus-ring type-body-medium block w-full rounded-flaeche kontur border-kante text-on-surface-mittel file:mr-4 file:border-0 file:bg-elev-08 file:type-label-medium file:px-4 file:py-2.5 file:text-on-surface"
         />
         <p className={`type-body-small mt-1.5 ${err.bild || bildError ? "text-error" : "text-on-surface-mittel"}`}>
           {err.bild ?? bildError ?? "JPG, PNG, WebP oder HEIC. Grosse Bilder werden automatisch verkleinert."}

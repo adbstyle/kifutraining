@@ -86,10 +86,10 @@
   --shadow-dp-08: 0 4px 12px rgb(0 0 0 / 0.6);
   --shadow-dp-24: 0 8px 24px rgb(0 0 0 / 0.6);
 
-  /* ─── Schrift: eine Familie für alles Gelesene, ihre Schwester für
-     alles Gezählte. ─── */
+  /* ─── Schrift: eine Familie für alles — Gelesenes wie Gezähltes.
+     Unterschieden wird über Gewicht, Versalien und Sperrung, nicht über
+     eine zweite Familie. ─── */
   --font-sans: var(--font-geist), "Helvetica Neue", Arial, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 /* ═══ Diagramm ════════════════════════════════════════════════════════
@@ -311,8 +311,12 @@
    Display und Headline versal und leicht gesperrt: eine Neo-Grotesk
    trägt Versalien eng, mehr als 3.5 % risse die Wörter auseinander.
    Titel bekommen dafür ein negatives Tracking, damit sie kompakt
-   bleiben. Label und Plakette stehen in der Mono — sie beschriften
-   und zählen, und Kolonnen fluchten dort von selbst. */
+   bleiben. Label stehen ebenfalls versal, gehen aber den umgekehrten
+   Weg und trennen sich gerade dadurch von den Headlines: ein Gewicht
+   TIEFER (600) und mit 8–10 % rund dreimal so weit gesperrt. Bei 700
+   und engem Tracking läsen sie sich als Headlines in Miniatur.
+   `tabular-nums` auf jeder Label-Stufe, weil Label zählen — Dauern,
+   Zählungen, Positionsnummern fluchten sonst nicht. */
 @utility type-display-large {
   font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
   font-size: 57px; line-height: 60px; letter-spacing: 0.035em;
@@ -362,22 +366,24 @@
   font-size: 12px; line-height: 18px; letter-spacing: 0.005em;
 }
 @utility type-label-large {
-  font-family: var(--font-mono); font-weight: 700; text-transform: uppercase;
-  font-size: 14px; line-height: 20px; letter-spacing: 0.06em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: uppercase;
+  font-size: 14px; line-height: 20px; letter-spacing: 0.08em; font-variant-numeric: tabular-nums;
 }
 @utility type-label-medium {
-  font-family: var(--font-mono); font-weight: 700; text-transform: uppercase;
-  font-size: 12px; line-height: 16px; letter-spacing: 0.07em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: uppercase;
+  font-size: 12px; line-height: 16px; letter-spacing: 0.09em; font-variant-numeric: tabular-nums;
 }
 @utility type-label-small {
-  font-family: var(--font-mono); font-weight: 400; text-transform: uppercase;
-  font-size: 11px; line-height: 16px; letter-spacing: 0.07em;
+  font-family: var(--font-sans); font-weight: 500; text-transform: uppercase;
+  font-size: 11px; line-height: 16px; letter-spacing: 0.09em; font-variant-numeric: tabular-nums;
 }
 /* Plakette: die kleinste beschriftbare Fläche (Badge, Kategorie-Chip).
-   Unter 10 px wird die Mono unleserlich, darunter geht nichts mehr. */
+   Unter 10 px wird auch die weit gesperrte Versal unleserlich, darunter
+   geht nichts mehr. Als einzige Label-Stufe bleibt sie bei 700 — bei 600
+   fiele sie in dieser Grösse gegen ihre Kontur ab. */
 @utility type-plakette {
-  font-family: var(--font-mono); font-weight: 700; text-transform: uppercase;
-  font-size: 10px; line-height: 14px; letter-spacing: 0.06em;
+  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
+  font-size: 10px; line-height: 14px; letter-spacing: 0.10em; font-variant-numeric: tabular-nums;
 }
 
 @layer base {
