@@ -34,6 +34,7 @@ import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
+import { FehlerseiteDemo } from "./FehlerseiteDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import {
   Search,
@@ -2376,6 +2377,45 @@ export default function Styleguide() {
             den ganzen Verbrauch; weiss mit Raster liegt bei rund 3 %.
           </li>
         </ul>
+      </Section>
+
+      <Section n="26" title="Fehler-Grenze">
+        <p className="type-body-medium max-w-2xl text-on-surface-mittel">
+          Wirft eine Seite beim Rendern, zeigte Next bislang seine nackte
+          Vorgabeseite — «Application error: a server-side exception has
+          occurred», weiss, ohne Weg zurück. Zwei Dateien fangen das ab:{" "}
+          <code>app/error.tsx</code> für alles unterhalb des Root-Layouts
+          (Navigation und Kopf bleiben stehen) und{" "}
+          <code>app/global-error.tsx</code> für den seltenen Fall, dass das
+          Layout selbst bricht. Letztere ersetzt das Layout und bringt darum
+          Schriften und Stylesheet selbst mit — ohne App-Navigation und ohne
+          Team-Kontext, denn genau die könnten den Fehler ausgelöst haben.
+        </p>
+        <p className="type-body-medium mt-4 max-w-2xl text-on-surface-mittel">
+          <strong>Kein eigener Baustein:</strong> Der Fehlerfall füllt eine
+          ganze Seite und ist damit derselbe Fall wie eine leere Liste — er
+          nutzt den <code>Leerzustand</code> aus Abschnitt 22. Die{" "}
+          <code>Meldung</code> bleibt der Zeile vorbehalten, die zu einem
+          einzelnen Vorgang gehört.
+        </p>
+        <p className="type-body-medium mt-4 max-w-2xl text-on-surface-mittel">
+          <strong>«Nochmals versuchen» holt wirklich neue Daten.</strong>{" "}
+          <code>reset()</code> allein setzt nur die Grenze zurück und rendert
+          denselben, bereits gescheiterten Server-Payload erneut — der Knopf
+          täte sichtbar nichts. Er ruft darum{" "}
+          <code>router.refresh()</code> und <code>reset()</code> in einer
+          Transition und bleibt so lange deaktiviert.
+        </p>
+        <p className="type-body-medium mb-6 max-w-2xl text-on-surface-mittel">
+          Die Fehler-ID ist Nexts Digest — das Einzige, womit sich eine
+          Meldung später im Server-Log wiederfinden lässt. Er steht leise
+          darunter (<code>type-label-small</code>,{" "}
+          <code>text-on-surface-tief</code>): eine Fussnote für den Support,
+          keine zweite Fehlermeldung.
+        </p>
+        <div className="max-w-xl">
+          <FehlerseiteDemo />
+        </div>
       </Section>
     </main>
   );

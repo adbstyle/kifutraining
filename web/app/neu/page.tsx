@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { createExercise } from "@/lib/actions/exercises";
 import { alsAltersstufe, einordnungsSlugsFuer } from "@/lib/altersstufe";
+import { text, type RohWert } from "@/lib/such-parameter";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Neue Übung — KiFu", robots: { index: false } };
@@ -9,16 +10,19 @@ export const metadata: Metadata = { title: "Neue Übung — KiFu", robots: { ind
 export default async function NeuePage({
   searchParams,
 }: {
-  searchParams: Promise<{ stufe?: string; teil?: string }>;
+  searchParams: Promise<{ stufe?: RohWert; teil?: RohWert }>;
 }) {
   const sp = await searchParams;
   // Vorbelegung aus der Adresse: wer aus einem leeren Trainingsblock heraus
   // erfasst, soll dort nicht zweimal wählen müssen. Unbekanntes wird still
   // ignoriert — die Vorbelegung ist Bequemlichkeit, kein Vertrag. Der
   // Kinderfussball bleibt die Vorgabe (Story 1 AC 8).
-  const altersstufe = alsAltersstufe(sp.stufe);
+  const altersstufe = alsAltersstufe(text(sp.stufe));
+  const teilWunsch = text(sp.teil);
   const teil =
-    sp.teil && einordnungsSlugsFuer(altersstufe).includes(sp.teil) ? sp.teil : undefined;
+    teilWunsch && einordnungsSlugsFuer(altersstufe).includes(teilWunsch)
+      ? teilWunsch
+      : undefined;
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">

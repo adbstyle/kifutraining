@@ -3,6 +3,7 @@ import { Flash } from "@/components/Flash";
 import { TrainingsPlan } from "@/components/team/TrainingsPlan";
 import { getTeamPlan, teilePlan } from "@/lib/queries/termine";
 import { heuteAmTrainingsort } from "@/lib/zeit";
+import { flag, type RohWert } from "@/lib/such-parameter";
 
 /* Der Trainingsplan eines Teams — die Einstiegsansicht (Story 17 AK 3).
  *
@@ -23,10 +24,10 @@ export default async function TeamPlanPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ angesetzt?: string }>;
+  searchParams: Promise<{ angesetzt?: RohWert }>;
 }) {
   const { id } = await params;
-  const { angesetzt } = await searchParams;
+  const angesetzt = flag((await searchParams).angesetzt);
   const plan = teilePlan(await getTeamPlan(id), heuteAmTrainingsort());
   const leer = plan.kommend.length === 0 && plan.vergangen.length === 0;
 

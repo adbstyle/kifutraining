@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { pfad } from "@/lib/such-parameter";
 
 /** Bestätigt Signup- und Recovery-Links über token_hash + verifyOtp.
  *  Im Gegensatz zum PKCE-Code-Tausch braucht das KEINEN code_verifier-Cookie
@@ -9,8 +10,9 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/";
-  const safeNext = next.startsWith("/") ? next : "/";
+  // Dasselbe Ziel-Regelwerk wie beim Login (`pfad`): nur ein echter interner
+  // Pfad, kein schema-relatives `//host`.
+  const safeNext = pfad(searchParams.get("next") ?? undefined);
 
   // Auf den tatsächlichen Host-Header weiterleiten (nicht auf das evtl.
   // normalisierte request.url-Origin): sonst wechselt der Host z. B. von
