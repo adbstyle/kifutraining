@@ -20,7 +20,7 @@ import { Button, ButtonLink, Leerzustand } from "@/components/ui";
    `reset()` schaltet danach von der Fehleransicht zurück. Beides in EINER
    Transition, damit der Knopf so lange als arbeitend erkennbar bleibt.
 
-   WARUM DER FEHLERCODE DASTEHT: Der Digest ist Nexts Kennzeichen für den
+   WARUM DIE FEHLER-ID DASTEHT: Der Digest ist Nexts Kennzeichen für den
    zugehörigen Server-Log-Eintrag und das Einzige, womit sich ein gemeldeter
    Fehler später wiederfinden lässt. Er steht darum leise dabei — als Fussnote
    für den Support, nicht als zweite Fehlermeldung. */
