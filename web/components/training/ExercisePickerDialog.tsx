@@ -7,7 +7,7 @@ import {
   Dialog,
   KategorieChip,
   HerkunftBadge,
-  FilterChip,
+  MultiSelect,
   IconButton,
   Badge,
   Meldung,
@@ -17,16 +17,17 @@ import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import { stufenAbgedeckt } from "@/lib/training";
 import {
   altersstufe as altersstufeLabels,
-  uebungstyp as uebungstypLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
 import {
-  erscheinungsformenFuer,
+  erscheinungsformOptionen,
+  uebungstypOptionen,
+} from "@/lib/filter-optionen";
+import {
   traegtErscheinungsform,
   traegtUebungstyp,
   type Altersstufe,
 } from "@/lib/altersstufe";
-import { ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
 import type { Einordnung } from "@/lib/junioren";
 import type { ExerciseListRow } from "@/lib/queries/exercises";
 
@@ -104,7 +105,7 @@ export function ExercisePickerDialog({
   // Felder zeigt.
   const hatErscheinungsform = traegtErscheinungsform(altersstufe, trainingsteil);
   const hatUebungstyp = traegtUebungstyp(altersstufe, trainingsteil);
-  const formen = erscheinungsformenFuer(altersstufe);
+  const formen = erscheinungsformOptionen(altersstufe);
 
   // Ist der leere Bestand eine Folge der Eingrenzung — oder gibt es für diesen
   // Block schlicht noch keine Übung? Die beiden Fälle brauchen verschiedene
@@ -149,10 +150,6 @@ export function ExercisePickerDialog({
     return () => clearTimeout(t);
   }, [open, q, form, typ, hauptteilkategorie, trainingsteil, trainingId]);
 
-  function toggle(list: string[], set: (v: string[]) => void, value: string) {
-    set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
-  }
-
   function bump(id: string, delta: number) {
     // Funktionales Update: der frühere Ref-Spiegel stammte aus der entfernten
     // «−»-Mechanik und ist ohne synchrone Guards nicht mehr nötig.
@@ -191,7 +188,12 @@ export function ExercisePickerDialog({
       open={open}
       onClose={onClose}
       title={`Übung hinzufügen — ${zielLabel}`}
-      className="w-[min(42rem,calc(100vw-2rem))]"
+      /* Breiter als die 28rem des Kit-Dialogs. Der Dialog trägt eine
+         Trefferliste, deren Zeilen Name, Alterskategorien und Herkunft
+         nebeneinander führen, und darüber Felder, deren Optionen ganze Sätze
+         sind — der längste misst 484 px. Mit 52rem bleiben innen 784 px: die
+         Sätze passen ganz, und die Trefferzeilen bekommen Luft. */
+      className="w-[min(52rem,calc(100vw-2rem))]"
     >
       <div className="flex flex-col gap-4">
         {/* Aus welcher Welt hier gewählt wird. Beide Schemata kennen einen
@@ -213,49 +215,80 @@ export function ExercisePickerDialog({
           onChange={(e) => setQ(e.target.value)}
         />
 
-        {/* Erscheinungsform-Filter — nur das Vokabular dieser Altersstufe und
-            nur in Einordnungen, die überhaupt eine tragen. */}
-        {hatErscheinungsform && (
-          <div className="flex flex-wrap gap-2">
-            {formen.map((slug) => (
-              <FilterChip
-                key={slug}
-                selected={form.includes(slug)}
-                onClick={() => toggle(form, setForm, slug)}
-              >
-                {ERSCHEINUNGSFORM_LABEL[slug] ?? slug}
-              </FilterChip>
-            ))}
-          </div>
-        )}
-
-        {/* Übungstyp-Filter — nur wo eine Übung überhaupt einen tragen kann:
-            im Juniorenfussball, und dort nur in den Blöcken mit Spielformen
-            (Story 9 AC 6, eingegrenzt durch Story 3/6 der Übungswelten). */}
-        {hatUebungstyp && (
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(uebungstypLabels).map(([slug, label]) => (
-              <FilterChip
-                key={slug}
-                selected={typ.includes(slug)}
-                onClick={() => toggle(typ, setTyp, slug)}
-              >
-                {label}
-              </FilterChip>
-            ))}
+        {/* Die eingrenzenden Dimensionen als Mehrfachauswahl des Kits — eine
+            umbrechende Zeile, beide Felder gleich breit. Aufgeklappte
+            Chip-Reihen standen hier früher: Die Junioren-Erscheinungsformen
+            sind ganze Sätze, elf davon füllten den Dialog, bevor die erste
+            Übung zu sehen war. Die Trefferliste ist der Inhalt dieses Dialogs,
+            nicht das Filtervokabular.
+            Welche Felder überhaupt erscheinen, entscheidet dasselbe Gating wie
+            am Übungsformular: Erscheinungsformen tragen nicht alle
+            Einordnungen, den Übungstyp kennt nur der Juniorenfussball, dort nur
+            in den Blöcken mit Spielformen (Story 9 AC 6).
+            Anders als die Filterleiste des Katalogs behalten beide Felder die
+            Suche im Panel (`searchable` bleibt auf seinem Vorgabewert): Im
+            Dialog steht weniger Höhe zur Verfügung als auf der Katalogseite,
+            und die langen Satz-Labels finden sich so schneller. Der Übungstyp
+            mit seinen drei Werten braucht sie nicht, bekommt sie aber trotzdem
+            — zwei Felder, von denen sich nur eines durchsuchen lässt, wären
+            die grössere Irritation. */}
+        {(hatErscheinungsform || hatUebungstyp) && (
+          // Untereinander, nicht nebeneinander. Das Panel ist so breit wie sein
+          // Feld, und die Erscheinungsformen des Juniorenschemas sind ganze
+          // Sätze: Der längste braucht 484 px, nebeneinander blieben je 386 —
+          // sieben von elf Optionen brachen am Ende ab. Über die volle Breite
+          // passen alle elf. Zwei Felder nebeneinander unterzubringen wäre
+          // Ökonomie auf Kosten dessen, was in ihnen steht.
+          <div className="flex flex-col gap-3">
+            {hatErscheinungsform && (
+              <MultiSelect
+                label="Erscheinungsform"
+                options={formen}
+                value={form}
+                onChange={setForm}
+                placeholder="Alle Erscheinungsformen"
+              />
+            )}
+            {hatUebungstyp && (
+              <MultiSelect
+                label="Übungstyp"
+                options={uebungstypOptionen}
+                value={typ}
+                onChange={setTyp}
+                placeholder="Alle Übungstypen"
+              />
+            )}
           </div>
         )}
 
         {error && <Meldung tone="fehler">{error}</Meldung>}
 
-        {/* Trefferliste */}
-        <ul className="-mx-2 max-h-[min(24rem,50vh)] overflow-y-auto">
+        {/* Trefferliste. Die Mindesthöhe ist das, was dem Dialog seine Statur
+            gibt: Ohne sie fällt er auf seinen Inhalt zusammen, sobald die Liste
+            kurz oder leer ist — und dann bleibt der Mehrfachauswahl darüber so
+            wenig Raum, dass ihr Panel auf zwei Zeilen zusammenschnurrt oder
+            nach oben über den Titel klappt. Sie hält ausserdem die Höhe ruhig:
+            Der Dialog springt beim Eingrenzen nicht mehr auf und zu.
+            Nach oben gedeckelt bleibt sie wie bisher; beide Schranken weichen
+            auf kleinen Schirmen dem Sichtfeld.
+            Bewusst in Kauf genommen: Auf einem Telefon im Querformat (gemessen
+            844×390) wird der Dialog höher als das Sichtfeld und scrollt — von
+            der Trefferliste steht dann nur noch eine Zeile im Bild. Die feste
+            Kopfzone aus Titel, Badge, Suchfeld und den zwei Feldern misst rund
+            290 px und schrumpft nicht mit. Die Felder dafür erst ab einer
+            Sichtfeldhöhe zu stapeln hiesse, im Querformat das Abschneiden der
+            Optionen zurückzuholen — ein Tausch, kein Gewinn. Ein Training wird
+            am Schreibtisch oder im Hochformat zusammengestellt; dort stimmt
+            das Bild. */}
+        <ul className="-mx-2 flex min-h-[min(20rem,45vh)] max-h-[min(24rem,50vh)] flex-col overflow-y-auto">
           {loading && results.length === 0 ? (
-            <li className="px-2 py-6 text-center type-body-medium text-on-surface-mittel">
+            <li className="flex flex-1 items-center justify-center px-2 py-6 text-center type-body-medium text-on-surface-mittel">
               Lädt…
             </li>
           ) : results.length === 0 ? (
-            <li className="flex flex-col items-center gap-3 px-2 py-6 text-center type-body-medium text-on-surface-mittel">
+            // `flex-1` zentriert die Meldung in der nun hohen Liste — am oberen
+            // Rand eines leeren Kastens sähe sie wie ein Rest aus.
+            <li className="flex flex-1 flex-col items-center justify-center gap-3 px-2 py-6 text-center type-body-medium text-on-surface-mittel">
               {filterAktiv ? (
                 // Eingegrenzt: es gibt hier etwas, nur nicht das Gesuchte.
                 "Keine passende Übung gefunden."
@@ -298,7 +331,11 @@ export function ExercisePickerDialog({
                    seinen Ring und seine eigene Ebene (`IconButton`). */
                 <li
                   key={ex.id}
-                  className="state flex items-center gap-2 rounded-flaeche px-2"
+                  /* `shrink-0`: Die Liste ist seit der Mindesthöhe ein
+                     Flex-Container. Ohne die Schranke stauchten sich die Zeilen
+                     bei vielen Treffern gegenseitig, statt dass die Liste
+                     scrollt. */
+                  className="state flex shrink-0 items-center gap-2 rounded-flaeche px-2"
                 >
                   <span className="flex min-w-0 flex-1 flex-col gap-1 py-2.5">
                     <span className="flex items-center gap-2">
