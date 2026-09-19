@@ -270,7 +270,16 @@ export function ExercisePickerDialog({
             nach oben über den Titel klappt. Sie hält ausserdem die Höhe ruhig:
             Der Dialog springt beim Eingrenzen nicht mehr auf und zu.
             Nach oben gedeckelt bleibt sie wie bisher; beide Schranken weichen
-            auf kleinen Schirmen dem Sichtfeld. */}
+            auf kleinen Schirmen dem Sichtfeld.
+            Bewusst in Kauf genommen: Auf einem Telefon im Querformat (gemessen
+            844×390) wird der Dialog höher als das Sichtfeld und scrollt — von
+            der Trefferliste steht dann nur noch eine Zeile im Bild. Die feste
+            Kopfzone aus Titel, Badge, Suchfeld und den zwei Feldern misst rund
+            290 px und schrumpft nicht mit. Die Felder dafür erst ab einer
+            Sichtfeldhöhe zu stapeln hiesse, im Querformat das Abschneiden der
+            Optionen zurückzuholen — ein Tausch, kein Gewinn. Ein Training wird
+            am Schreibtisch oder im Hochformat zusammengestellt; dort stimmt
+            das Bild. */}
         <ul className="-mx-2 flex min-h-[min(20rem,45vh)] max-h-[min(24rem,50vh)] flex-col overflow-y-auto">
           {loading && results.length === 0 ? (
             <li className="flex flex-1 items-center justify-center px-2 py-6 text-center type-body-medium text-on-surface-mittel">
