@@ -1,117 +1,76 @@
 "use client";
 
 import Link from "next/link";
-import { Trash2, Pencil, Users } from "lucide-react";
-import { Card, Badge, TextArea } from "@/components/ui";
+import { Users } from "lucide-react";
+import { Card, Badge, HeadlineField, TextArea } from "@/components/ui";
 import { StufenField } from "../StufenField";
-import { SichtbarkeitControl } from "../SichtbarkeitControl";
-import { InTeamStellenControl } from "../InTeamStellenControl";
+import { useBlurSpeichern } from "./useBlurSpeichern";
 import { kategorienFuer } from "@/lib/altersstufe";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
-import { ZIEL_MAX } from "@/lib/training";
-import type { FehlendeBedingung } from "@/lib/training-bedingungen";
+import { TRAINING_NAME_MAX, ZIEL_MAX, trainingNameProblem } from "@/lib/training";
 import type { TrainingDetail } from "@/lib/queries/trainings";
-import type { TeamUebersicht } from "@/lib/queries/teams";
 
-/** Kopf des Editors: Name, Zugehörigkeit, Ziel, Alterskategorien und die
- *  Aktionen am Training selbst (veröffentlichen, ins Team stellen, löschen).
- *  Die Dialoge dahinter führt der Editor — hier stehen nur die Auslöser. */
+/** Kopf des Editors: Name, Zugehörigkeit, Ziel und Alterskategorien.
+ *
+ *  Der Name ist hier das Feld und nicht mehr eine Überschrift mit einem Stift
+ *  daneben (#250): geändert wird er dort, wo er steht. Die Aktionen AM
+ *  Training stehen bewusst nicht in dieser Karte, sondern eine Zeile höher
+ *  neben den Brotkrumen (#249 AK 8) — sie betreffen das Training als Ganzes
+ *  und nicht seine Angaben. */
 export function TrainingKopf({
   training,
-  teams,
   oeffentlich,
-  fehlendeBedingungen,
   stufen,
   onStufen,
   ziel,
   onZielChange,
   onZielSpeichern,
-  onUmbenennen,
-  onLoeschen,
+  name,
+  onNameSpeichern,
+  melde,
 }: {
   training: TrainingDetail;
-  teams: TeamUebersicht[];
   oeffentlich: boolean;
-  fehlendeBedingungen: FehlendeBedingung[];
   stufen: string[];
   onStufen: (next: string[]) => void;
   ziel: string;
   onZielChange: (next: string) => void;
   onZielSpeichern: () => void;
-  onUmbenennen: () => void;
-  onLoeschen: () => void;
+  /** Der laufende Name — im Editor optimistisch überlagert. */
+  name: string;
+  onNameSpeichern: (next: string) => void;
+  /** Rückmeldungen an die Snackbar des Editors. */
+  melde: (nachricht: string) => void;
 }) {
   return (
     <Card className="p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="type-headline-medium truncate text-on-surface">
-              {training.name}
-            </h1>
-            <button
-              type="button"
-              onClick={onUmbenennen}
-              aria-label="Namen bearbeiten"
-              className="state focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-mittel"
-            >
-              <Pencil size={16} strokeWidth={2} aria-hidden />
-            </button>
-          </div>
-          {/* Team-Training oder persönliches? Die Marke sagt, wem es gehört —
-              und bei persönlichen zusätzlich, ob es öffentlich ist. Daneben,
-              in derselben Zeile, welchem Lehrmittel es folgt (Story 5 AK 3):
-              beide Schemata teilen Begriffe wie „Hauptteil", der Trainer muss
-              jederzeit sehen, in welchem er plant. Neutral statt in einer
-              Kategorie-Farbe — die Altersstufe ist keine Alterskategorie. */}
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {training.team ? (
-              <Link
-                href={`/team/${training.team.id}`}
-                className="focus-ring inline-flex items-center gap-1.5 rounded-flaeche type-label-medium text-on-surface-mittel hover:text-primary"
-              >
-                <Users size={16} strokeWidth={2} aria-hidden />
-                Team-Training von {training.team.name}
-              </Link>
-            ) : (
-              <Badge tone={oeffentlich ? "oeffentlich" : "entwurf"}>
-                {oeffentlich ? "Öffentlich" : "✎ Entwurf"}
-              </Badge>
-            )}
-            <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
-          </div>
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          {/* Veröffentlichen und Ins-Team-Stellen gibt es nur für das eigene
-              Training: ein Team-Training gehört dem Team, nicht einer Person. */}
-          {!training.team && (
-            <>
-              <SichtbarkeitControl
-                trainingId={training.id}
-                oeffentlich={oeffentlich}
-                fehlend={fehlendeBedingungen}
-                varianten={training.varianten}
-              />
-              <InTeamStellenControl trainingId={training.id} teams={teams} />
-            </>
-          )}
-          {/* Die Zustands-Ebene nimmt die Farbe des Inhalts mit — an einem
-              Knopf in Error-Schrift ist der Overlay damit von selbst rötlich,
-              ohne eine eigene Hover-Fläche. */}
-          <button
-            type="button"
-            onClick={onLoeschen}
-            className="state focus-ring inline-flex items-center gap-1.5 rounded-flaeche px-3 py-1.5 type-label-large text-error"
+      <NameFeld name={name} onSpeichern={onNameSpeichern} melde={melde} />
+      {/* Team-Training oder persönliches? Die Marke sagt, wem es gehört — und
+          bei persönlichen zusätzlich, ob es öffentlich ist. Daneben, in
+          derselben Zeile, welchem Lehrmittel es folgt (Story 5 AK 3): beide
+          Schemata teilen Begriffe wie „Hauptteil", der Trainer muss jederzeit
+          sehen, in welchem er plant. Neutral statt in einer Kategorie-Farbe —
+          die Altersstufe ist keine Alterskategorie. */}
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {training.team ? (
+          <Link
+            href={`/team/${training.team.id}`}
+            className="focus-ring inline-flex items-center gap-1.5 rounded-flaeche type-label-medium text-on-surface-mittel hover:text-primary"
           >
-            <Trash2 size={18} strokeWidth={2} aria-hidden />
-            Löschen
-          </button>
-        </div>
+            <Users size={16} strokeWidth={2} aria-hidden />
+            Team-Training von {training.team.name}
+          </Link>
+        ) : (
+          <Badge tone={oeffentlich ? "oeffentlich" : "entwurf"}>
+            {oeffentlich ? "Öffentlich" : "✎ Entwurf"}
+          </Badge>
+        )}
+        <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
       </div>
 
       {/* Ziel: optional, jederzeit änder- und entfernbar (Story 10 AC 3).
           Gespeichert wird beim Verlassen des Felds — wie der Trainingsname
-          über einen eigenen Schritt, nicht bei jedem Tastendruck. */}
+          direkt darüber. */}
       <div className="mt-4">
         <TextArea
           label="Ziel (optional)"
@@ -137,5 +96,51 @@ export function TrainingKopf({
         />
       </div>
     </Card>
+  );
+}
+
+/**
+ * Das Namensfeld im Kopf (#250).
+ *
+ * Gespeichert wird beim Verlassen des Felds — ohne Eingabetaste und ohne
+ * Bestätigung (Entscheid 2). Eine leere oder nur aus Leerzeichen bestehende
+ * Eingabe fällt auf den zuletzt gespeicherten Namen zurück und meldet sich am
+ * Bildschirmrand (PC 2/3); am Feld stünde die Meldung neben einem Wert, der
+ * bereits wieder der alte ist. Die Mechanik dahinter teilt es sich mit dem
+ * Notizfeld (`useBlurSpeichern`), die Regel nicht.
+ *
+ * Daneben steht eine echte, nur vorgelesene Überschrift: Ein `<input>` ist
+ * keine, und ohne sie verlöre die Editor-Seite ihre Gliederung — wer mit einer
+ * Vorlesehilfe über Überschriften navigiert, fände den Trainingsnamen nicht
+ * mehr. Sichtbar wäre sie doppelt gemoppelt, denn das Feld zeigt denselben
+ * Text in derselben Schrift.
+ */
+function NameFeld({
+  name,
+  onSpeichern,
+  melde,
+}: {
+  name: string;
+  onSpeichern: (next: string) => void;
+  melde: (nachricht: string) => void;
+}) {
+  const { entwurf, setEntwurf, beiVerlassen } = useBlurSpeichern({
+    wert: name,
+    pruefe: trainingNameProblem,
+    speichere: onSpeichern,
+    onFehler: melde,
+  });
+
+  return (
+    <>
+      <h1 className="sr-only">{name}</h1>
+      <HeadlineField
+        aria-label="Name des Trainings"
+        maxLength={TRAINING_NAME_MAX}
+        value={entwurf}
+        onChange={(e) => setEntwurf(e.target.value)}
+        onBlur={beiVerlassen}
+      />
+    </>
   );
 }

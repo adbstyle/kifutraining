@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Breadcrumbs } from "@/components/ui";
 import { TrainingEditor } from "@/components/training/editor/TrainingEditor";
 import { getTrainingForEdit } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
@@ -35,15 +34,19 @@ export default async function TrainingEditPage({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-      <Breadcrumbs items={trainingsKrumen(training)} />
-      <div className="mt-4">
-        {/* Die Variante kommt als Prop von der Server-Seite, nicht über
-            `useSearchParams`: Der Editor wechselt sie ohne Navigation (nur
-            `history.replaceState`), und ein Hook, der die Adresse liest,
-            machte aus der Adresse die Quelle der Anzeige — dann rechnete jeder
-            Wechsel die ganze Seite neu. */}
-        <TrainingEditor training={training} teams={teams} varianteParam={variante} />
-      </div>
+      {/* Die Brotkrumen gehen in den Editor hinein, statt darüber zu stehen:
+          Neben ihnen stehen die Aktionen am Training (#249 AK 8), und die
+          kennen nur die Laufzeit des Editors — die angezeigte Variante und die
+          Snackbar am unteren Rand. Übergeben werden die Krumen als Daten und
+          nicht als fertiges Element: Ein Element aus einer Server-Komponente
+          in eine Client-Komponente zu reichen, ist ein Umweg, den die Liste
+          selbst nicht braucht. */}
+      <TrainingEditor
+        training={training}
+        teams={teams}
+        varianteParam={variante}
+        brotkrumen={trainingsKrumen(training)}
+      />
     </main>
   );
 }

@@ -110,6 +110,36 @@ export const LEER_HINWEIS: Record<string, string> = {
  *  einzigen bereits bestehenden Textbegrenzung der Applikation. */
 export const ZIEL_MAX = 200;
 
+/** Obergrenze des Trainingsnamens in Zeichen (#250 AK 6, getrimmt gezählt).
+ *
+ *  Doppelt so viel wie eine Gruppe oder eine Variante (je 40) und weniger als
+ *  das Ziel (200): Der Name benennt die Einheit, er beschreibt sie nicht.
+ *
+ *  Anders als `ZIEL_MAX` und `NOTIZ_MAX` hat diese Grenze bewusst KEINEN
+ *  SQL-Zwilling. Die Spalte `trainings.name` trägt seit jeher unbegrenzte,
+ *  echte Nutzerdaten; ein nachgereichter CHECK griffe — auch als `NOT VALID` —
+ *  bei jedem späteren UPDATE einer Altzeile und sperrte dort dann auch
+ *  Änderungen am Ziel oder an den Stufen. Ziel und Notiz bekamen ihren CHECK,
+ *  weil ihre Spalten damals neu und leer waren. Die Trust-Boundary ist hier
+ *  also `renameTraining`, nicht die Datenbank. */
+export const TRAINING_NAME_MAX = 80;
+
+/** Was einem Trainingsnamen im Weg steht — `null`, wenn er sich speichern
+ *  lässt. Bewusst nicht `nameProblem` genannt: So heisst bereits die Regel für
+ *  Gruppenbezeichnungen (`@/lib/gruppen`), und beide werden im Editor
+ *  nebeneinander gebraucht.
+ *
+ *  Nicht über `bezeichnungProblem` gebaut, obwohl es ähnlich aussieht: Jene
+ *  Regel prüft zusätzlich auf Eindeutigkeit innerhalb eines Trainings — genau
+ *  das verlangt der Trainingsname ausdrücklich nicht (#250 Out of Scope 4). */
+export function trainingNameProblem(name: string): string | null {
+  const getrimmt = name.trim();
+  if (!getrimmt) return "Ein Training braucht einen Namen.";
+  if (getrimmt.length > TRAINING_NAME_MAX)
+    return `Höchstens ${TRAINING_NAME_MAX} Zeichen.`;
+  return null;
+}
+
 /** Obergrenze der Notiz an einer Übung des Trainings in Zeichen (Story #152,
  *  getrimmt gezählt).
  *

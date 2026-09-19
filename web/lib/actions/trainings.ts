@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
-import { stufenAbgedeckt, teilTraegtDauer, NOTIZ_MAX, ZIEL_MAX } from "@/lib/training";
+import {
+  stufenAbgedeckt,
+  teilTraegtDauer,
+  trainingNameProblem,
+  NOTIZ_MAX,
+  ZIEL_MAX,
+} from "@/lib/training";
 import { bildUrlToPath } from "@/lib/storage";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
@@ -525,7 +531,10 @@ export async function renameTraining(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
   const trimmed = name.trim();
-  if (!trimmed) return { ok: false, error: "Bitte einen Namen angeben." };
+  // Dieselbe Regel wie am Feld im Editor-Kopf — hier als Trust-Boundary, denn
+  // die Spalte trägt keinen CHECK (Begründung bei `TRAINING_NAME_MAX`).
+  const problem = trainingNameProblem(name);
+  if (problem) return { ok: false, error: problem };
 
   // Kein Owner-Filter mehr: Team-Trainings darf jedes Mitglied umbenennen
   // (Story 6). Die RLS entscheidet — `select` zeigt, ob wirklich etwas getroffen
