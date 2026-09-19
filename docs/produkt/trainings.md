@@ -51,6 +51,26 @@ weitere kommen nicht dazu. Mehrfach besetzen lässt sich einzig der Hauptteil: E
 mehrere benannte Varianten davon führen, von denen jeweils eine gilt. Die Gliederung bleibt dabei
 dieselbe — eine Variante ist ein zweiter Inhalt für denselben Teil, kein zweiter Teil.
 
+## Was sich an einem Training tun lässt
+
+Die Aktionen am Training stehen zuoberst auf der Seite, in derselben Zeile wie die Brotkrumen
+und rechtsbündig — beim Ansehen wie beim Zusammenstellen an derselben Stelle. Es ist dieselbe
+Bauform wie an einer Übung: eine Reihe beschriftungsloser Zeichen, deren Bedeutung beim Zeigen
+und beim Tastaturfokus erscheint, und am Ende die drei Punkte für alles Weitere. Auf dem Papier
+erscheint die Reihe nicht; sie gehört zur Bedienung der Seite.
+
+Offen stehen die drei Handgriffe des Alltags: durchführen, drucken, bearbeiten. Das Zeichen für
+Bearbeiten fehlt, während man das Training bereits bearbeitet — dort ist man ja schon. Gedruckt
+wird dagegen von beiden Orten aus.
+
+Hinter den drei Punkten liegt, was seltener gebraucht wird oder nicht danebengreifen darf, immer
+in derselben Reihenfolge: übernehmen, veröffentlichen beziehungsweise auf Entwurf setzen, ins
+Team stellen und zuunterst löschen. Übernehmen und Ins-Team-Stellen fragen in einem zweiten
+Schritt nach dem Ziel — man selbst oder eines der eigenen Teams —, und beim Löschen ist ein
+zweites Mal zu bestätigen. Angeboten wird jeweils nur, was dem Betrachter offensteht: Wer ein
+fremdes Training bloss ansieht, findet die drei Punkte gar nicht, und an einem Team-Training
+gibt es weder Veröffentlichen noch Ins-Team-Stellen.
+
 ## Zusammenstellen
 
 Ein neues Training beginnt mit einem Namen, der Altersstufe und mindestens einer
@@ -58,6 +78,15 @@ Alterskategorie; zur Wahl stehen dabei nur die Kategorien der gewählten Alterss
 Kategorie entsteht kein Training, und die letzte lässt sich später auch nicht mehr entfernen.
 Ein Ziel darf gleich mitgegeben werden: ein kurzer Satz dazu, woran das Team in dieser Einheit
 arbeitet, freiwillig, höchstens zweihundert Zeichen und jederzeit änderbar.
+
+Der Name lässt sich später dort ändern, wo er steht: Beim Zusammenstellen ist die Überschrift des
+Trainings selbst das Feld. Dass sie beschreibbar ist, sagt eine Fläche, die beim Zeigen darunter
+erscheint; angefasst trägt sie die Kontur eines Feldes. Übernommen wird der neue Name beim
+Verlassen des Feldes — ohne Eingabetaste und ohne Bestätigung. Wer das Feld leer oder nur mit
+Leerzeichen verlässt, bekommt den zuletzt gespeicherten Namen zurück und dazu den Hinweis, dass
+ein Training einen Namen braucht. Höchstens achtzig Zeichen. Geändert wird er nur hier: aus der
+Übersicht heraus nicht und auf der Ansichtsseite auch nicht, selbst mit Bearbeitungsrecht. Eine
+Historie führt die Anwendung nicht, und bereits übernommene Kopien behalten ihren eigenen Namen.
 
 Danach füllt der Trainer die Teile. Über eine Auswahl durchsucht und filtert er den für ihn
 sichtbaren Übungsbestand und übernimmt, was passt. Angeboten wird nur, was zur Altersstufe des
