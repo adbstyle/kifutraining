@@ -188,7 +188,12 @@ export function ExercisePickerDialog({
       open={open}
       onClose={onClose}
       title={`Übung hinzufügen — ${zielLabel}`}
-      className="w-[min(42rem,calc(100vw-2rem))]"
+      /* Breiter als die 28rem des Kit-Dialogs. Der Dialog trägt eine
+         Trefferliste, deren Zeilen Name, Alterskategorien und Herkunft
+         nebeneinander führen, und darüber Felder, deren Optionen ganze Sätze
+         sind — der längste misst 484 px. Mit 52rem bleiben innen 784 px: die
+         Sätze passen ganz, und die Trefferzeilen bekommen Luft. */
+      className="w-[min(52rem,calc(100vw-2rem))]"
     >
       <div className="flex flex-col gap-4">
         {/* Aus welcher Welt hier gewählt wird. Beide Schemata kennen einen
@@ -225,10 +230,16 @@ export function ExercisePickerDialog({
             Dialog steht weniger Höhe zur Verfügung als auf der Katalogseite,
             und die langen Satz-Labels finden sich so schneller. Der Übungstyp
             mit seinen drei Werten braucht sie nicht, bekommt sie aber trotzdem
-            — zwei Felder nebeneinander, von denen sich nur eines durchsuchen
-            lässt, wären die grössere Irritation. */}
+            — zwei Felder, von denen sich nur eines durchsuchen lässt, wären
+            die grössere Irritation. */}
         {(hatErscheinungsform || hatUebungstyp) && (
-          <div className="flex flex-wrap gap-3">
+          // Untereinander, nicht nebeneinander. Das Panel ist so breit wie sein
+          // Feld, und die Erscheinungsformen des Juniorenschemas sind ganze
+          // Sätze: Der längste braucht 484 px, nebeneinander blieben je 386 —
+          // sieben von elf Optionen brachen am Ende ab. Über die volle Breite
+          // passen alle elf. Zwei Felder nebeneinander unterzubringen wäre
+          // Ökonomie auf Kosten dessen, was in ihnen steht.
+          <div className="flex flex-col gap-3">
             {hatErscheinungsform && (
               <MultiSelect
                 label="Erscheinungsform"
@@ -236,7 +247,6 @@ export function ExercisePickerDialog({
                 value={form}
                 onChange={setForm}
                 placeholder="Alle Erscheinungsformen"
-                className="min-w-48 flex-1"
               />
             )}
             {hatUebungstyp && (
@@ -246,7 +256,6 @@ export function ExercisePickerDialog({
                 value={typ}
                 onChange={setTyp}
                 placeholder="Alle Übungstypen"
-                className="min-w-48 flex-1"
               />
             )}
           </div>
@@ -254,14 +263,32 @@ export function ExercisePickerDialog({
 
         {error && <Meldung tone="fehler">{error}</Meldung>}
 
-        {/* Trefferliste */}
-        <ul className="-mx-2 max-h-[min(24rem,50vh)] overflow-y-auto">
+        {/* Trefferliste. Die Mindesthöhe ist das, was dem Dialog seine Statur
+            gibt: Ohne sie fällt er auf seinen Inhalt zusammen, sobald die Liste
+            kurz oder leer ist — und dann bleibt der Mehrfachauswahl darüber so
+            wenig Raum, dass ihr Panel auf zwei Zeilen zusammenschnurrt oder
+            nach oben über den Titel klappt. Sie hält ausserdem die Höhe ruhig:
+            Der Dialog springt beim Eingrenzen nicht mehr auf und zu.
+            Nach oben gedeckelt bleibt sie wie bisher; beide Schranken weichen
+            auf kleinen Schirmen dem Sichtfeld.
+            Bewusst in Kauf genommen: Auf einem Telefon im Querformat (gemessen
+            844×390) wird der Dialog höher als das Sichtfeld und scrollt — von
+            der Trefferliste steht dann nur noch eine Zeile im Bild. Die feste
+            Kopfzone aus Titel, Badge, Suchfeld und den zwei Feldern misst rund
+            290 px und schrumpft nicht mit. Die Felder dafür erst ab einer
+            Sichtfeldhöhe zu stapeln hiesse, im Querformat das Abschneiden der
+            Optionen zurückzuholen — ein Tausch, kein Gewinn. Ein Training wird
+            am Schreibtisch oder im Hochformat zusammengestellt; dort stimmt
+            das Bild. */}
+        <ul className="-mx-2 flex min-h-[min(20rem,45vh)] max-h-[min(24rem,50vh)] flex-col overflow-y-auto">
           {loading && results.length === 0 ? (
-            <li className="px-2 py-6 text-center type-body-medium text-on-surface-mittel">
+            <li className="flex flex-1 items-center justify-center px-2 py-6 text-center type-body-medium text-on-surface-mittel">
               Lädt…
             </li>
           ) : results.length === 0 ? (
-            <li className="flex flex-col items-center gap-3 px-2 py-6 text-center type-body-medium text-on-surface-mittel">
+            // `flex-1` zentriert die Meldung in der nun hohen Liste — am oberen
+            // Rand eines leeren Kastens sähe sie wie ein Rest aus.
+            <li className="flex flex-1 flex-col items-center justify-center gap-3 px-2 py-6 text-center type-body-medium text-on-surface-mittel">
               {filterAktiv ? (
                 // Eingegrenzt: es gibt hier etwas, nur nicht das Gesuchte.
                 "Keine passende Übung gefunden."
@@ -304,7 +331,11 @@ export function ExercisePickerDialog({
                    seinen Ring und seine eigene Ebene (`IconButton`). */
                 <li
                   key={ex.id}
-                  className="state flex items-center gap-2 rounded-flaeche px-2"
+                  /* `shrink-0`: Die Liste ist seit der Mindesthöhe ein
+                     Flex-Container. Ohne die Schranke stauchten sich die Zeilen
+                     bei vielen Treffern gegenseitig, statt dass die Liste
+                     scrollt. */
+                  className="state flex shrink-0 items-center gap-2 rounded-flaeche px-2"
                 >
                   <span className="flex min-w-0 flex-1 flex-col gap-1 py-2.5">
                     <span className="flex items-center gap-2">
