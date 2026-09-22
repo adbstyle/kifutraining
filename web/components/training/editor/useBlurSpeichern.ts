@@ -24,6 +24,9 @@ import { useRef, useState } from "react";
  * Geteilt wird die Technik, nicht die Regel — dieselbe Trennung wie zwischen
  * `BezeichnungDialog` und `bezeichnungProblem`.
  *
+ * Beim Verlassen steht am Ende immer der getrimmte Wert im Feld: Was gilt, ist
+ * auch das, was zu sehen ist.
+ *
  * Ein abgewiesener Wert fällt auf den zuletzt gesehenen zurück und meldet sich
  * über `onFehler`. Der Fokus bleibt dabei nicht am Feld hängen (#250 Entscheid
  * 3): Wer das Feld verlässt, will weiter — Tastatur und Vorlesehilfe dürfen
@@ -76,6 +79,12 @@ export function useBlurSpeichern({
       onFehler?.(problem);
       return;
     }
+    // Der getrimmte Wert ist der, der gilt — also steht er auch im Feld. Ohne
+    // diese Zeile bliebe eine Eingabe, die sich vom gespeicherten Wert NUR in
+    // umgebenden Leerzeichen unterscheidet, für immer so stehen: Gespeichert
+    // wird sie zu Recht nicht, und weil `wert` sich dabei nicht ändert, greift
+    // auch die Rücknahme oben nie.
+    setEntwurfIntern(getrimmt);
     if (getrimmt === wert || getrimmt === gesendet.current) return;
     gesendet.current = getrimmt;
     speichere(getrimmt);

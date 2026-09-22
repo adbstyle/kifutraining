@@ -107,6 +107,12 @@ export function TrainingAktionen({
   const [eigeneNotiz, setEigeneNotiz] = useState<string | null>(null);
   const setNotice = melde ?? setEigeneNotiz;
   const [sichtbarkeit, setSichtbarkeit] = useState<SichtbarkeitSchritt | null>(null);
+  // Was die Datenebene zuletzt vermisst hat. Die Vorschau in
+  // `fehlendeBedingungen` rechnet aus dem Stand, den diese Seite beim Rendern
+  // sah; die Action sieht den Stand im Augenblick des Schreibens. Weichen sie
+  // ab, gilt die Action — und genau dann ist die Vorschau leer, denn sonst
+  // wäre es gar nicht erst zur Bestätigung gekommen.
+  const [vermisst, setVermisst] = useState<FehlendeBedingung[] | null>(null);
   const [zielWahl, setZielWahl] = useState<"uebernehmen" | "ins_team_stellen" | null>(
     null,
   );
@@ -174,7 +180,10 @@ export function TrainingAktionen({
         setNotice("Das Training ist jetzt öffentlich.");
       } else if (res.status === "incomplete") {
         // Zwischen zwei Blicken hat sich etwas geändert — die Bedingungen
-        // stehen dann statt der Bestätigung da, nicht daneben.
+        // stehen dann statt der Bestätigung da, nicht daneben. Genannt wird,
+        // was die Action vermisst, nicht was die Vorschau vermisste: Die ist
+        // an dieser Stelle leer.
+        setVermisst(res.missing);
         setSichtbarkeit("unvollstaendig");
       } else {
         setSichtbarkeit(null);
@@ -204,8 +213,10 @@ export function TrainingAktionen({
     eintraege.push({
       label: "Veröffentlichen",
       icon: Globe,
-      onSelect: () =>
-        setSichtbarkeit(fehlendeBedingungen.length > 0 ? "unvollstaendig" : "tragweite"),
+      onSelect: () => {
+        setVermisst(null);
+        setSichtbarkeit(fehlendeBedingungen.length > 0 ? "unvollstaendig" : "tragweite");
+      },
     });
   if (rechte.sichtbarkeit === "auf_entwurf")
     eintraege.push({
@@ -278,7 +289,7 @@ export function TrainingAktionen({
         <SichtbarkeitDialoge
           schritt={sichtbarkeit}
           onClose={() => setSichtbarkeit(null)}
-          fehlend={fehlendeBedingungen}
+          fehlend={vermisst ?? fehlendeBedingungen}
           varianten={varianten}
           pending={pending}
           onVeroeffentlichen={veroeffentlichenJetzt}

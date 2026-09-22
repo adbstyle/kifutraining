@@ -4,7 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import { TextField, TextArea, Button, AltersstufeField, Meldung } from "@/components/ui";
 import { StufenField } from "./StufenField";
 import { kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
-import { ZIEL_MAX } from "@/lib/training";
+import { TRAINING_NAME_MAX, ZIEL_MAX } from "@/lib/training";
 import { createTraining, type TrainingFormState } from "@/lib/actions/trainings";
 
 /* Formular „Neues Training anlegen" (Story #10 AC1/AC2/AC3, Story 5 AK 1/2/4).
@@ -63,6 +63,7 @@ export function TrainingCreateForm() {
         name="name"
         value={name}
         onChange={(e) => setName(e.target.value)}
+        maxLength={TRAINING_NAME_MAX}
         error={!!state.errors?.name}
         supportingText={state.errors?.name}
         required
