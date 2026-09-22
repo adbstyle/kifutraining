@@ -152,7 +152,11 @@ export async function createTraining(
 
   const name = clean(form.get("name"));
   const stufen = validStufen(csv(form.get("stufen")));
-  if (!name) return { status: "error", errors: { name: "Bitte einen Namen angeben." } };
+  // Dieselbe Regel wie beim Umbenennen. Ohne sie entstünde hier ein Name, den
+  // das Feld im Editor-Kopf nicht mehr speichern könnte — die Grenze sperrte
+  // dann ausgerechnet das Werkzeug, mit dem man sie einhält.
+  const namensProblem = trainingNameProblem(name);
+  if (namensProblem) return { status: "error", errors: { name: namensProblem } };
 
   // Die Altersstufe ist Pflicht und hat bewusst KEINEN Rückfall: Sie bindet
   // lebenslang (Story 5 AK 5), und eine stille Vorgabe wäre genau das
