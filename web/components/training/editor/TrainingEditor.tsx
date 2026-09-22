@@ -3,10 +3,17 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Clock } from "lucide-react";
-import { Dialog, Snackbar, Button, TextField } from "@/components/ui";
+import {
+  Breadcrumbs,
+  Button,
+  Dialog,
+  Snackbar,
+  type BreadcrumbItem,
+} from "@/components/ui";
 import { ExercisePickerDialog } from "../ExercisePickerDialog";
 import { GesamtAbgleich } from "../ZeitAbgleich";
 import { TrainingKopf } from "./TrainingKopf";
+import { TrainingAktionen } from "../TrainingAktionen";
 import { TeilKarte } from "./TeilKarte";
 import { VariantenLeiste } from "./VariantenLeiste";
 import { VarianteAnlegenDialog } from "./VarianteAnlegenDialog";
@@ -55,10 +62,10 @@ import {
   renameTraining,
   setTrainingStufen,
   setTrainingZiel,
-  deleteTraining,
 } from "@/lib/actions/trainings";
 import type { HauptteilkategorieSlug } from "@/lib/vocab";
 import type { TrainingActionResult } from "@/lib/actions/trainings";
+import type { Bearbeitungsziel } from "@/lib/training-zugriff";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings";
 import type { TeamUebersicht } from "@/lib/queries/teams";
 
@@ -79,10 +86,14 @@ export function TrainingEditor({
   /** Die Variante des Hauptteils aus der Adresse (#201 AK 6/7). Sie ist der
    *  Startwert, nicht die laufende Quelle: Gewechselt wird ohne Navigation. */
   varianteParam,
+  brotkrumen,
 }: {
   training: TrainingDetail;
   teams?: TeamUebersicht[];
   varianteParam?: string;
+  /** Die Brotkrumen der Seite. Sie stehen hier drin, weil die Aktionsreihe
+   *  neben ihnen sitzt und die Laufzeit des Editors braucht. */
+  brotkrumen?: BreadcrumbItem[];
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -100,10 +111,10 @@ export function TrainingEditor({
   const [stufen, setStufen] = useState<string[]>(training.stufen);
   const [ziel, setZiel] = useState<string>(training.ziel ?? "");
   const [notice, setNotice] = useState<string | null>(null);
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [nameInput, setNameInput] = useState(training.name);
-  const [nameError, setNameError] = useState<string | undefined>();
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  // Der Name liegt lokal über dem Serverstand — wie Ziel und Dauern: Das Feld
+  // im Kopf speichert beim Verlassen, und bis das Auffrischen zurück ist,
+  // stünde dort sonst wieder der alte Name (#250 AK 4).
+  const [name, setName] = useState(training.name);
   // Die abweichenden Übungen aus dem Stufen-Abgleich — mit ihrer Variante, denn
   // der Abgleich umfasst alle (#201 AK 11).
   const [mismatch, setMismatch] = useState<
@@ -397,15 +408,20 @@ export function TrainingEditor({
     });
   }
 
-  function saveName() {
+  /** Den Namen speichern — optimistisch wie das Ziel. Scheitert es, springt
+   *  der Kopf auf den alten Namen zurück und die Snackbar sagt, warum
+   *  (#250 PC 1/2). */
+  function speichereName(naechster: string) {
+    const vorher = name;
+    setName(naechster);
     startTransition(async () => {
-      const r = await renameTraining(training.id, nameInput);
-      if (r.ok) {
-        setRenameOpen(false);
-        router.refresh();
-      } else {
-        setNameError(r.error);
+      const r = await renameTraining(training.id, naechster);
+      if (!r.ok) {
+        setName(vorher);
+        setNotice(r.error ?? "Speichern fehlgeschlagen.");
+        return;
       }
+      router.refresh();
     });
   }
 
@@ -456,6 +472,12 @@ export function TrainingEditor({
   // erneut. Eine Übung im Hauptteil braucht es nicht eigens zu prüfen — das
   // freie Spiel liegt dort und deckt es zwingend ab.
   const oeffentlich = training.visibility === "public";
+  // Wer hier steht, darf bearbeiten — `getTrainingForEdit` gibt nichts anderes
+  // heraus. Die Aktionsreihe will es trotzdem als Ziel wissen, weil sie
+  // dieselbe Regel an beiden Orten anwendet (`trainingAktionsRechte`).
+  const bearbeitungsziel: Bearbeitungsziel = training.team
+    ? { art: "team", teamId: training.team.id }
+    : { art: "persoenlich", ownerId: training.ownerId ?? "" };
 
   // Anlegen oder umbenennen? Der Gruppen-Dialog unterscheidet sich in sechs
   // Angaben, und jede fragte sonst dieselbe Bedingung erneut.
@@ -559,22 +581,37 @@ export function TrainingEditor({
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Brotkrumen links, Aktionen rechts — dieselbe Zeile und dieselbe
+          Stelle wie auf der Ansichtsseite (#249 AK 8). */}
+      <div className="flex items-center gap-3">
+        {brotkrumen && <Breadcrumbs items={brotkrumen} className="min-w-0" />}
+        <TrainingAktionen
+          ort="editor"
+          trainingId={training.id}
+          name={name}
+          visibility={oeffentlich ? "public" : "private"}
+          teamId={training.team?.id ?? null}
+          angemeldet
+          bearbeitungsziel={bearbeitungsziel}
+          teams={teams}
+          fehlendeBedingungen={fehlendeBedingungen}
+          varianten={varianten}
+          aktiveVarianteId={aktive?.id}
+          melde={setNotice}
+        />
+      </div>
+
       <TrainingKopf
         training={training}
-        teams={teams}
         oeffentlich={oeffentlich}
-        fehlendeBedingungen={fehlendeBedingungen}
         stufen={stufen}
         onStufen={changeStufen}
         ziel={ziel}
         onZielChange={setZiel}
         onZielSpeichern={speichereZiel}
-        onUmbenennen={() => {
-          setNameInput(training.name);
-          setNameError(undefined);
-          setRenameOpen(true);
-        }}
-        onLoeschen={() => setDeleteOpen(true)}
+        name={name}
+        onNameSpeichern={speichereName}
+        melde={setNotice}
       />
 
       {/* Summenleiste — eine Fläche auf der Stufe der Karten daneben, denn sie
@@ -660,32 +697,6 @@ export function TrainingEditor({
           );
         })()}
 
-      {/* Namen bearbeiten */}
-      <Dialog
-        open={renameOpen}
-        onClose={() => setRenameOpen(false)}
-        title="Name bearbeiten"
-        actions={
-          <>
-            <Button variant="text" onClick={() => setRenameOpen(false)}>
-              Abbrechen
-            </Button>
-            <Button variant="filled" onClick={saveName}>
-              Speichern
-            </Button>
-          </>
-        }
-      >
-        <TextField
-          label="Name des Trainings"
-          value={nameInput}
-          onChange={(e) => setNameInput(e.target.value)}
-          error={!!nameError}
-          supportingText={nameError}
-          autoFocus
-        />
-      </Dialog>
-
       {/* Stufen-Abweichungs-Hinweis */}
       <Dialog
         open={mismatch != null}
@@ -730,38 +741,6 @@ export function TrainingEditor({
             );
           })}
         </ul>
-      </Dialog>
-
-      {/* Training löschen */}
-      <Dialog
-        open={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
-        title="Training löschen?"
-        actions={
-          <>
-            <Button variant="text" onClick={() => setDeleteOpen(false)}>
-              Abbrechen
-            </Button>
-            <form action={deleteTraining.bind(null, training.id)}>
-              <Button type="submit" variant="danger">
-                Endgültig löschen
-              </Button>
-            </form>
-          </>
-        }
-      >
-        <p>
-          Das Training „{training.name}" und alle seine Übungszuordnungen werden
-          unwiderruflich gelöscht.
-        </p>
-        {/* Beim öffentlichen Training ist das Löschen mehr als ein Aufräumen im
-            eigenen Bestand: es verschwindet aus der Öffentlichkeit (AK 8). */}
-        {oeffentlich && (
-          <p className="mt-3">
-            Das Training verschwindet damit auch aus dem öffentlichen Bestand.
-            Kopien, die andere bereits übernommen haben, bleiben bestehen.
-          </p>
-        )}
       </Dialog>
 
       {/* Gruppe entfernen, solange sie Übungen zugewiesen ist (AK 8) */}

@@ -12,6 +12,7 @@ import {
   TabNav,
   Tooltip,
   TextField,
+  HeadlineField,
   SearchField,
   PasswordField,
   TextArea,
@@ -1433,6 +1434,47 @@ export default function Styleguide() {
         <div className="grid max-w-md gap-6">
           <SearchField label="Übungen durchsuchen" />
           <SearchField dense label="Übungen durchsuchen" defaultValue="Passspiel" />
+        </div>
+
+        <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
+          Kopf-Feld (<code>HeadlineField</code>)
+        </h3>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Für den Fall, in dem ein vom Trainer vergebener Name dort geändert
+          wird, wo er steht — der Trainingsname im Editor-Kopf. Es trägt die
+          Schrift der Überschrift (<code>type-headline-medium</code>), damit der
+          Kopf seine Gliederung behält, und zeigt sich in{" "}
+          <strong>drei Lagen</strong>: Ruhend sieht man eine Überschrift und
+          kein Feld — keine Kontur, keine Fläche. Beim Zeigen legt sich eine
+          Fläche darunter (<code>bg-elev-04</code>), und die ist die ganze
+          Ankündigung: Hier lässt sich etwas eintragen. Erst im Fokus kommt die
+          Kontur in Primary. Die Stufe 04 ist mit Absicht kein Nachbar der
+          Karte, auf der das Feld gewöhnlich liegt (01): Eine Stufe darüber wäre
+          rechnerisch eine Fläche und am Bildschirm keine.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Warum nicht wie bei <code>TextField</code> die Kontur in Ruhe? Weil
+          das Feld hier nicht in einem Formular steht, sondern in einem Kopf.
+          Eine Kontur machte aus der Überschrift dauerhaft ein Bedienelement und
+          zöge Aufmerksamkeit auf etwas, das man selten braucht; die Fläche beim
+          Zeigen sagt dasselbe, aber erst dann, wenn jemand hinschaut. Die
+          Konturstärke bleibt zwischen Ruhe und Fokus gleich und wechselt nur die
+          Farbe — ein Sprung von 1.5 auf 2 px verschöbe bei 28 px Schrift die
+          ganze Zeile sichtbar.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Kein schwebendes Label:</strong> Der Wert <em>ist</em> bereits
+          die Überschrift, ein Label daneben benennte dieselbe Sache ein zweites
+          Mal. Den Namen trägt darum <code>aria-label</code> — Pflicht, nicht
+          Kür. Und weil ein <code>&lt;input&gt;</code> keine Überschrift ist,
+          gehört daneben eine echte, nur vorgelesene (<code>sr-only</code>),
+          sonst verlöre die Seite ihre Gliederung.
+        </p>
+        <div className="grid max-w-md gap-6">
+          <HeadlineField
+            aria-label="Name des Trainings"
+            defaultValue="Passspiel im Quadrat"
+          />
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">

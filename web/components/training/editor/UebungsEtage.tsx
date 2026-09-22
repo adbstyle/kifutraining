@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { TextArea } from "@/components/ui";
+import { useBlurSpeichern } from "./useBlurSpeichern";
 import { NOTIZ_MAX } from "@/lib/training";
 
 /**
@@ -63,30 +64,12 @@ function NotizFeld({
   notiz: string | null;
   onNotiz: (next: string) => void;
 }) {
-  const [entwurf, setEntwurf] = useState(notiz ?? "");
-  // Der Text, der zuletzt zum Speichern hinausging. Ohne diese Schranke
-  // schriebe jedes Verlassen des Felds erneut — auch das direkt nach einer
-  // Rücknahme. Ref statt State: sie muss beim nächsten Aufruf schon gelten,
-  // nicht erst beim nächsten Rendern.
-  const gesendet = useRef<string | undefined>(undefined);
-  // Der zuletzt von aussen gesehene Wert. Ändert er sich — nach einer Rücknahme
-  // durch den Server oder durch frische Serverdaten —, gilt er und nicht mehr,
-  // was im Feld steht.
-  const [gesehen, setGesehen] = useState(notiz);
-  if (notiz !== gesehen) {
-    setGesehen(notiz);
-    setEntwurf(notiz ?? "");
-    gesendet.current = undefined;
-  }
-
-  function speichere() {
-    const getrimmt = entwurf.trim();
-    // Ein unveränderter Text ist kein Speichervorgang — sonst schriebe jedes
-    // Vorbeitabben in die Datenbank —, und derselbe Text kein zweiter Auftrag.
-    if (getrimmt === (notiz ?? "") || getrimmt === gesendet.current) return;
-    gesendet.current = getrimmt;
-    onNotiz(getrimmt);
-  }
+  // Ohne `pruefe`: Der leere Text ist hier ein gültiger Wert und heisst
+  // «keine Notiz» — es gibt nichts abzuweisen und nichts zurückzunehmen.
+  const { entwurf, setEntwurf, beiVerlassen } = useBlurSpeichern({
+    wert: notiz ?? "",
+    speichere: onNotiz,
+  });
 
   return (
     <TextArea
@@ -97,13 +80,8 @@ function NotizFeld({
       aria-label={`Notiz zu ${uebungName}`}
       maxLength={NOTIZ_MAX}
       value={entwurf}
-      onChange={(e) => {
-        setEntwurf(e.target.value);
-        // Wer weiterschreibt, hebt die Schranke auf: Derselbe Text darf danach
-        // erneut hinaus — etwa, wenn der Server ihn zwischenzeitlich zurücknahm.
-        gesendet.current = undefined;
-      }}
-      onBlur={speichere}
+      onChange={(e) => setEntwurf(e.target.value)}
+      onBlur={beiVerlassen}
     />
   );
 }

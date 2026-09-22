@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
-import { stufenAbgedeckt, teilTraegtDauer, NOTIZ_MAX, ZIEL_MAX } from "@/lib/training";
+import {
+  stufenAbgedeckt,
+  teilTraegtDauer,
+  trainingNameProblem,
+  NOTIZ_MAX,
+  ZIEL_MAX,
+} from "@/lib/training";
 import { bildUrlToPath } from "@/lib/storage";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
@@ -146,7 +152,11 @@ export async function createTraining(
 
   const name = clean(form.get("name"));
   const stufen = validStufen(csv(form.get("stufen")));
-  if (!name) return { status: "error", errors: { name: "Bitte einen Namen angeben." } };
+  // Dieselbe Regel wie beim Umbenennen. Ohne sie entstünde hier ein Name, den
+  // das Feld im Editor-Kopf nicht mehr speichern könnte — die Grenze sperrte
+  // dann ausgerechnet das Werkzeug, mit dem man sie einhält.
+  const namensProblem = trainingNameProblem(name);
+  if (namensProblem) return { status: "error", errors: { name: namensProblem } };
 
   // Die Altersstufe ist Pflicht und hat bewusst KEINEN Rückfall: Sie bindet
   // lebenslang (Story 5 AK 5), und eine stille Vorgabe wäre genau das
@@ -525,7 +535,10 @@ export async function renameTraining(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
   const trimmed = name.trim();
-  if (!trimmed) return { ok: false, error: "Bitte einen Namen angeben." };
+  // Dieselbe Regel wie am Feld im Editor-Kopf — hier als Trust-Boundary, denn
+  // die Spalte trägt keinen CHECK (Begründung bei `TRAINING_NAME_MAX`).
+  const problem = trainingNameProblem(name);
+  if (problem) return { ok: false, error: problem };
 
   // Kein Owner-Filter mehr: Team-Trainings darf jedes Mitglied umbenennen
   // (Story 6). Die RLS entscheidet — `select` zeigt, ob wirklich etwas getroffen

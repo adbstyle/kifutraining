@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Clock, Sparkles, Play, Printer } from "lucide-react";
-import { Badge, Breadcrumbs, KategorieChip, ButtonLink } from "@/components/ui";
+import { Clock, Sparkles } from "lucide-react";
+import { Badge, Breadcrumbs, KategorieChip } from "@/components/ui";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { Flash } from "@/components/Flash";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
-import { TrainingUebernehmenControl } from "@/components/training/TrainingUebernehmenControl";
+import { TrainingAktionen } from "@/components/training/TrainingAktionen";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { getTrainingView } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
+import { fehlendeBedingungenAus } from "@/lib/training-bedingungen";
 import { createClient } from "@/lib/supabase/server";
 import { leseGliederung, formatDuration } from "@/lib/training";
 import {
   abschnittMitVariante,
-  mitVariante,
   sichtbareZuordnungen,
   varianteAnhang,
   varianteAus,
@@ -45,18 +45,31 @@ export default async function TrainingViewPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const darfBearbeiten =
-    !!user &&
-    !!bearbeitungszielVon(
-      {
-        owner_id: training.ownerId,
-        team_id: training.team?.id ?? null,
-      },
-      user.id,
-    );
-  // Übernahme-Ziele: nur bei öffentlichen Trainings und nur angemeldet nötig.
-  const teams =
-    user && training.visibility === "public" ? await getMeineTeams() : [];
+  const bearbeitungsziel = user
+    ? bearbeitungszielVon(
+        {
+          owner_id: training.ownerId,
+          team_id: training.team?.id ?? null,
+        },
+        user.id,
+      )
+    : null;
+  // Die Teams sind Ziel zweier Aktionen: Übernehmen (an jedem öffentlichen
+  // Training) und Ins-Team-Stellen (am eigenen, auch am privaten). Darum für
+  // jeden Angemeldeten geladen, nicht mehr nur bei öffentlichen.
+  const teams = user ? await getMeineTeams() : [];
+  // Was dem Training zum Veröffentlichen fehlt — dieselbe Funktion, die der
+  // Editor und die Server Action nutzen. Gebraucht wird sie nur, wo die Aktion
+  // überhaupt offensteht: am eigenen, nicht dem Team gehörenden Training.
+  const fehlendeBedingungen =
+    bearbeitungsziel?.art === "persoenlich"
+      ? fehlendeBedingungenAus(
+          training.altersstufe,
+          training.stufen,
+          training.exercises,
+          training.varianten,
+        )
+      : [];
 
   // Angesehen wird genau eine Variante des Hauptteils, zu Beginn die erste
   // (#203 AK 1/7). Die Wahl steht im Suchparameter und nicht im Zustand: Diese
@@ -74,7 +87,26 @@ export default async function TrainingViewPage({
       {sp.uebernommen && (
         <Flash message="Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen." />
       )}
-      <Breadcrumbs items={trainingsKrumen(training)} />
+      {/* Die Aktionen stehen auf der Brotkrumen-Zeile, rechtsbündig — dieselbe
+          Stelle wie im Editor (#249 AK 8). Dort oben gehören sie hin: Sie
+          betreffen das Training als Ganzes, nicht seine Überschrift, und der
+          Kopf darunter bleibt ungestört. */}
+      <div className="flex items-center gap-3">
+        <Breadcrumbs items={trainingsKrumen(training)} className="min-w-0" />
+        <TrainingAktionen
+          ort="ansicht"
+          trainingId={training.id}
+          name={training.name}
+          visibility={training.visibility}
+          teamId={training.team?.id ?? null}
+          angemeldet={!!user}
+          bearbeitungsziel={bearbeitungsziel}
+          teams={teams}
+          fehlendeBedingungen={fehlendeBedingungen}
+          varianten={training.varianten}
+          aktiveVarianteId={aktive?.id}
+        />
+      </div>
 
       <header className="mb-6 mt-4">
         <h1 className="type-headline-large text-on-surface">{training.name}</h1>
@@ -100,48 +132,6 @@ export default async function TrainingViewPage({
           </span>
         </div>
 
-        {/* Weiter geht es in der Variante, die hier offen liegt: Wer sie
-            gewählt hat, will sie durchführen, drucken oder bearbeiten — nicht
-            wieder die erste (#203 AK 1). `mitVariante` hängt die Angabe nur an,
-            wenn es überhaupt etwas zu wählen gibt. */}
-        <div className="mt-4 flex flex-wrap gap-2">
-          <ButtonLink
-            href={mitVariante(
-              `/training/${training.id}/durchfuehren`,
-              aktive?.id,
-              training.varianten,
-            )}
-            variant="tonal"
-            size="sm"
-          >
-            <Play size={18} strokeWidth={2} aria-hidden />
-            Durchführen
-          </ButtonLink>
-          <ButtonLink
-            href={mitVariante(`/training/${training.id}/druck`, aktive?.id, training.varianten)}
-            variant="outlined"
-            size="sm"
-          >
-            <Printer size={18} strokeWidth={2} aria-hidden />
-            Drucken
-          </ButtonLink>
-          {/* Bearbeiten am eigenen Training bzw. im eigenen Team — auch wenn es
-              öffentlich ist: Veröffentlichen ist ein Zustand, kein Einfrieren. */}
-          {darfBearbeiten && (
-            <ButtonLink
-              href={mitVariante(`/training/${training.id}/edit`, aktive?.id, training.varianten)}
-              variant="text"
-              size="sm"
-            >
-              Bearbeiten
-            </ButtonLink>
-          )}
-          {/* Übernehmen (Story 11) — für alle Angemeldeten, auch für den
-              Urheber selbst: die Kopie ist ein eigenes Trainingsobjekt. */}
-          {user && training.visibility === "public" && (
-            <TrainingUebernehmenControl quelleId={training.id} teams={teams} />
-          )}
-        </div>
         {/* Das Ziel sehen auch Betrachter eines veröffentlichten Trainings:
             feldweises Verbergen kennt das Zugriffsmodell nicht (Story 10
             PC 1). Ohne Ziel bleibt der Bereich weg (PC 2). */}
