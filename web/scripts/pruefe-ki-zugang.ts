@@ -52,8 +52,15 @@ import {
   trainingsteilSlugs,
   uebungstypSlugs,
 } from "../lib/vocab";
-import { BLOCK_ERSCHEINUNGSFORM } from "../lib/junioren";
-import { altersstufeDerEinordnung } from "../lib/altersstufe";
+import {
+  BANDBREITEN,
+  BLOCK_ERSCHEINUNGSFORM,
+  GESAMTDAUER_JUNIOREN,
+  JUNIOREN_PFLICHT_BLOECKE,
+} from "../lib/junioren";
+import { FREIES_SPIEL, altersstufeDerEinordnung, einordnungenFuer } from "../lib/altersstufe";
+import { ANZAHL_HINWEIS, HAUPTTEILKATEGORIE_SLUGS, LEER_HINWEIS, OHNE_DAUER_TEILE } from "../lib/training";
+import { istHauptteil } from "../lib/gruppen";
 import { VokabularSchema, baueVokabular } from "../lib/mcp/vokabular";
 import { SucheEingabe } from "../lib/mcp/eingaben";
 import { ausKern, erfolg, fehlerErgebnis } from "../lib/mcp/ergebnis";
@@ -355,6 +362,111 @@ pruefe("suchfilter_einordnung: jede Einordnung genau einmal, bei ihrer Altersstu
       : altersstufeDerEinordnung(o.wert);
     assert.equal(o.altersstufe, soll, o.wert);
   }
+});
+
+// ── Abschnitt «schema» (#199 AK 2, NFR 1/2) ─────────────────────────────────
+// Gegen die Quellen geprüft, aus denen er NICHT gebaut ist (einordnungenFuer,
+// BANDBREITEN, JUNIOREN_PFLICHT_BLOECKE, OHNE_DAUER_TEILE, istHauptteil,
+// LEER_HINWEIS): Er entsteht aus der Editor-Gliederung und dem Spiegel der
+// DB-Bedingungen — läuft eine davon auseinander, fällt es hier auf.
+const schemaVon = (s: string) => {
+  const a = vok.schema.altersstufen.find((x) => x.altersstufe === s);
+  assert.ok(a, `Schema ${s} fehlt`);
+  return a;
+};
+const schemaBloecke = (s: string) => schemaVon(s).teile.flatMap((t) => t.bloecke);
+/** Wo der Editor die Stelle kennt: die Hauptteilkategorie im
+ *  Kinderfussball-Hauptteil, sonst die Einordnung. */
+const stelle = (b: { einordnung: string; hauptteilkategorie: string | null }) =>
+  b.hauptteilkategorie ?? b.einordnung;
+
+pruefe("schema: je Altersstufe, in der Reihenfolge von vocab.ts, Richtwerte als Orientierung", () => {
+  assert.deepEqual(vok.schema.altersstufen.map((a) => a.altersstufe), [...altersstufeSlugs]);
+  assert.equal(vok.schema.richtwerte_sind_orientierung, true);
+  assert.match(vok.schema.richtwerte_hinweis, /Orientierung, keine Bedingung/);
+  assert.equal(schemaVon("juniorenfussball").gesamtdauer_min, GESAMTDAUER_JUNIOREN);
+  assert.equal(schemaVon("kinderfussball").gesamtdauer_min, null);
+});
+
+pruefe("schema: Teile und Blöcke = einordnungenFuer, der Kinderfussball-Hauptteil in drei Kategorien", () => {
+  for (const s of altersstufeSlugs) {
+    const soll = einordnungenFuer(s);
+    const ist = schemaVon(s).teile;
+    assert.deepEqual(ist.map((t) => t.slug), soll.map((g) => g.teil), `Teile ${s}`);
+    assert.deepEqual(ist.map((t) => t.reihenfolge), soll.map((_, i) => i + 1), `Reihenfolge ${s}`);
+    ist.forEach((t, i) => {
+      const g = soll[i];
+      const bloecke = t.bloecke.map((b) => `${b.einordnung}/${b.hauptteilkategorie ?? ""}`);
+      if (g.bloecke.length > 0)
+        assert.deepEqual(bloecke, g.bloecke.map((b) => `${b.slug}/`), `Blöcke ${s}/${t.slug}`);
+      else if (t.hauptteilkategorie_pflicht)
+        assert.deepEqual(bloecke, HAUPTTEILKATEGORIE_SLUGS.map((h) => `${g.teil}/${h}`), `Kategorien ${s}/${t.slug}`);
+      else assert.deepEqual(bloecke, [`${g.teil}/`], `Block ${s}/${t.slug}`);
+    });
+  }
+  // Die Pflicht zur Hauptteilkategorie steht genau am Kinderfussball-Hauptteil;
+  // der Juniorenfussball kennt keine (PC 3).
+  const mitPflicht = vok.schema.altersstufen.flatMap((a) =>
+    a.teile.filter((t) => t.hauptteilkategorie_pflicht).map((t) => `${a.altersstufe}/${t.slug}`),
+  );
+  assert.deepEqual(mitPflicht, ["kinderfussball/hauptteil"]);
+  assert.ok(schemaBloecke("juniorenfussball").every((b) => b.hauptteilkategorie === null));
+});
+
+pruefe("schema: jeder Richtwert aus BANDBREITEN genau einmal, nur im Juniorenfussball", () => {
+  const ist: Record<string, { min: number; max: number }> = {};
+  for (const t of schemaVon("juniorenfussball").teile) {
+    if (t.richtwert) ist[t.slug] = { min: t.richtwert.min_min, max: t.richtwert.max_min };
+    for (const b of t.bloecke)
+      if (b.richtwert) ist[b.einordnung] = { min: b.richtwert.min_min, max: b.richtwert.max_min };
+  }
+  assert.deepEqual(ist, { ...BANDBREITEN });
+  const kifu = schemaVon("kinderfussball").teile;
+  assert.ok(kifu.every((t) => t.richtwert === null && t.bloecke.every((b) => b.richtwert === null)));
+});
+
+pruefe("schema: ohne Dauer genau OHNE_DAUER_TEILE, Gruppen genau istHauptteil", () => {
+  for (const s of altersstufeSlugs) {
+    for (const b of schemaBloecke(s)) {
+      assert.equal(b.traegt_dauer, !OHNE_DAUER_TEILE.has(b.einordnung), `Dauer ${b.einordnung}`);
+      assert.equal(b.traegt_gruppen, istHauptteil(b.einordnung), `Gruppen ${b.einordnung}`);
+    }
+    for (const t of schemaVon(s).teile)
+      assert.equal(t.traegt_dauer, !OHNE_DAUER_TEILE.has(t.slug), `Dauer Teil ${s}/${t.slug}`);
+  }
+  // Das Auffangen beider Altersstufen: weder Dauer noch Richtwert (PC 2).
+  for (const s of altersstufeSlugs) {
+    const auffangen = schemaVon(s).teile[0];
+    assert.equal(auffangen.slug, "auffangen");
+    assert.equal(auffangen.traegt_dauer, false);
+    assert.equal(auffangen.richtwert, null);
+  }
+});
+
+pruefe("schema: Pflicht zum Veröffentlichen = JUNIOREN_PFLICHT_BLOECKE bzw. Einleitung und freies Spiel", () => {
+  const pflicht = (s: string) => schemaBloecke(s).filter((b) => b.pflicht_zum_veroeffentlichen).map(stelle);
+  assert.deepEqual(pflicht("juniorenfussball"), [...JUNIOREN_PFLICHT_BLOECKE]);
+  assert.deepEqual(pflicht("kinderfussball"), ["einleitung", FREIES_SPIEL]);
+});
+
+pruefe("schema: Leer-Hinweise = LEER_HINWEIS, anziehende Formen = BLOCK_ERSCHEINUNGSFORM", () => {
+  const alle = altersstufeSlugs.flatMap(schemaBloecke);
+  assert.deepEqual(
+    Object.fromEntries(alle.filter((b) => b.leer_hinweis).map((b) => [stelle(b), b.leer_hinweis])),
+    { ...LEER_HINWEIS },
+  );
+  assert.deepEqual(
+    Object.fromEntries(
+      alle.filter((b) => b.zieht_erscheinungsform_an).map((b) => [b.einordnung, b.zieht_erscheinungsform_an]),
+    ),
+    { ...BLOCK_ERSCHEINUNGSFORM },
+  );
+});
+
+pruefe("schema: «ungewöhnlich viele» nur im Kinderfussball, ab ANZAHL_HINWEIS + 1", () => {
+  for (const t of schemaVon("kinderfussball").teile)
+    assert.equal(t.anzahl_hinweis_ab, ANZAHL_HINWEIS[t.slug as keyof typeof ANZAHL_HINWEIS] + 1, t.slug);
+  assert.ok(schemaVon("juniorenfussball").teile.every((t) => t.anzahl_hinweis_ab === null));
 });
 
 pruefe("Kein Label im Vokabular ist leer", () => {

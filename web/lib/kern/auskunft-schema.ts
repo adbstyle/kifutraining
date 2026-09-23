@@ -18,6 +18,20 @@ function baueSchema(streng: boolean) {
   const W = streng ? z.strictObject(Wert.shape) : Wert;
   const IdName = obj({ id: z.string(), name: z.string() });
 
+  /** Der Zeitrichtwert des Manuals Fussball Jugendliche an dieser Stelle
+   *  (#199 AK 8) — Orientierung, keine Bedingung (NFR 2): Speichern und
+   *  Veröffentlichen bleiben unberührt. `abweichung_min` ist die Abweichung
+   *  der Summe vom Band (negativ = darunter, 0 = innerhalb oder noch keine
+   *  Dauer erfasst), wie der Editor sie hinter den Richtwert setzt. `null`
+   *  im Kinderfussball (das Manual gibt keine Zeiten vor), im Auffangen (zählt
+   *  nicht zur Trainingszeit) und an einem Block, dessen Teil nicht
+   *  untergliedert ist (der Richtwert steht dann am Teil). */
+  const Richtwert = obj({
+    min_min: z.number().int(),
+    max_min: z.number().int(),
+    abweichung_min: z.number().int(),
+  }).nullable();
+
   const Uebung = obj({
     /** Die Kennung für die Bearbeitungs-Werkzeuge. */
     fassung_id: z.string(),
@@ -70,6 +84,7 @@ function baueSchema(streng: boolean) {
     traegt_dauer: z.boolean(),
     traegt_gruppen: z.boolean(),
     summe_min: z.number().int(),
+    richtwert: Richtwert,
     /** Nur bei einem leeren Block, den das Lehrmittel als gesetzt ansieht —
      *  der Satz, den der Editor dort zeigt. */
     leer_hinweis: z.string().optional(),
@@ -83,6 +98,7 @@ function baueSchema(streng: boolean) {
     summe_min: z.number().int(),
     /** Übungen mit Dauer-Feld, aber ohne erfasste Dauer. */
     ohne_dauer: z.number().int(),
+    richtwert: Richtwert,
     bloecke: z.array(Block),
     /** Kinderfussball-Hauptteil-Übungen ohne Hauptteilkategorie
      *  (Altbestand): in keinem Block, aber nicht still weg. */
@@ -159,6 +175,9 @@ function baueSchema(streng: boolean) {
         variante_id: z.string().optional(),
         summe_min: z.number().int(),
         ohne_dauer: z.number().int(),
+        /** Juniorenfussball: die vorgesehenen 90 Minuten (min = max) samt
+         *  Abweichung; `null` im Kinderfussball. */
+        richtwert: Richtwert,
       }),
     ),
     /** Der Durchlauf des Hauptteils je Variante (#194 AK 8, NFR 1). */
@@ -178,6 +197,5 @@ export const TrainingAuskunftStreng = baueSchema(true).Training;
 
 export type TrainingAuskunft = z.infer<typeof schema.Training>;
 export type TeilAuskunft = z.infer<typeof schema.Teil>;
-export type BlockAuskunft = z.infer<typeof schema.Block>;
 export type UebungAuskunft = z.infer<typeof schema.Uebung>;
 export type DurchlaufAuskunft = z.infer<typeof schema.Durchlauf>;

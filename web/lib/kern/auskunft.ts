@@ -20,8 +20,10 @@
 // steht nicht im `TrainingDetail`, und `anstehend` hängt am heutigen Tag, den
 // der Aufrufer bestimmt (am Trainingsort, lib/zeit.ts).
 //
-// Noch nicht enthalten, weil erst ihre Stories sie bringen: Zeitrichtwerte
-// (#199).
+// Die Zeitrichtwerte (#199 AK 8) rechnet `zeitAbgleich`/`gesamtAbgleich`
+// aus lib/junioren.ts — dieselben Funktionen wie die Anzeige im Editor und
+// die Hinweise (lib/hinweise.ts), mit derselben Regel, wo ein Richtwert
+// steht: am Teil, und am Block nur, wo er eine eigene Fläche trägt.
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
 import {
@@ -40,6 +42,7 @@ import { sichtbarkeitVon, wert, wertOderNull } from "@/lib/wert";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings-fuer";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort } from "@/lib/zeit";
+import { GESAMTDAUER_JUNIOREN, gesamtAbgleich, zeitAbgleich } from "@/lib/junioren";
 import type {
   DurchlaufAuskunft,
   TeilAuskunft,
@@ -48,6 +51,13 @@ import type {
 } from "@/lib/kern/auskunft-schema";
 
 export type { TrainingAuskunft } from "@/lib/kern/auskunft-schema";
+
+/** Der Zeitrichtwert einer Stelle samt Abweichung ihrer Summe — `null`, wo
+ *  das Schema keinen führt (kein `richtwertSlug` oder keine Bandbreite). */
+function richtwertAuskunft(slug: string | undefined, summeMin: number): TeilAuskunft["richtwert"] {
+  const a = slug ? zeitAbgleich(slug, summeMin) : null;
+  return a ? { min_min: a.band.min, max_min: a.band.max, abweichung_min: a.abweichungMin } : null;
+}
 
 function uebungAuskunft(f: TrainingExerciseItem, trainingStufen: readonly string[]): UebungAuskunft {
   const fp = f.fahrplan;
@@ -171,6 +181,7 @@ export function trainingAuskunft(
         ...(imHauptteil && mehrere && v ? { variante: { id: v.id, name: v.name } } : {}),
         summe_min: teil.sum,
         ohne_dauer: teil.missing,
+        richtwert: richtwertAuskunft(teil.richtwertSlug, teil.sum),
         bloecke: teil.bloecke.map((b) => ({
           einordnung: wert(EINORDNUNG_LABEL, b.einordnung),
           hauptteilkategorie: wertOderNull(hauptteilkategorieLabels, b.hkat),
@@ -178,16 +189,29 @@ export function trainingAuskunft(
           traegt_dauer: b.traegtDauer,
           traegt_gruppen: b.traegtGruppen,
           summe_min: b.sum,
+          // Ein einblockiger Teil nennt seinen Richtwert einmal, am Teil —
+          // wie `Unterblock` im Editor und die Hinweise.
+          richtwert: richtwertAuskunft(b.flaeche ? b.richtwertSlug : undefined, b.sum),
           ...(b.items.length === 0 && b.leerHinweis ? { leer_hinweis: b.leerHinweis } : {}),
           uebungen: b.items.map(alsUebung),
         })),
         ...(ohneKategorie.length > 0 ? { ohne_kategorie: ohneKategorie.map(alsUebung) } : {}),
       });
     }
+    const summe = gliederung.reduce((a, t) => a + t.sum, 0);
     gesamt.push({
       ...(mehrere && v ? { variante_id: v.id } : {}),
-      summe_min: gliederung.reduce((a, t) => a + t.sum, 0),
+      summe_min: summe,
       ohne_dauer: gliederung.reduce((a, t) => a + t.missing, 0),
+      // Wie die Summenleiste des Editors: nur im Juniorenfussball.
+      richtwert:
+        d.altersstufe === "juniorenfussball"
+          ? {
+              min_min: GESAMTDAUER_JUNIOREN,
+              max_min: GESAMTDAUER_JUNIOREN,
+              abweichung_min: gesamtAbgleich(summe, GESAMTDAUER_JUNIOREN).abweichungMin,
+            }
+          : null,
     });
     durchlauf.push(durchlaufAuskunft(sichtbar, d.gruppen, v && { id: v.id, mehrere }));
   });

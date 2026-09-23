@@ -45,17 +45,33 @@ Bestand, den man auch selbst in der Anwendung sieht, mit denselben Filtern und d
 für Altersstufe, Trainingsteil und die übrigen Angaben. Private Übungen anderer bleiben auch
 dem Assistenten verborgen.
 
-Der Assistent kann ausserdem ein Kinderfussball-Training anlegen — mit Name, Alterskategorien
-und auf Wunsch einem Ziel — und ihm Übungen zuordnen. Das Training entsteht als privater
-Entwurf im eigenen Bestand und sieht in der Anwendung genauso aus, als hätte man es selbst
-zusammengestellt. Dabei gelten dieselben Regeln wie in der Anwendung: Zu einem Trainingsteil
-bietet der Assistent nur an, was dort hineinpasst, im Hauptteil passend zur gewählten
-Hauptteilkategorie, und er erfährt, ob der Bestand für einen Teil gar nichts führt oder nur
-die Suche zu eng war. Jede zugeordnete Übung kommt als eigene Kopie samt Bild und Diagramm ans
-Ende ihres Teils; dieselbe Übung darf mehrfach vorkommen. Passt eine Übung nicht, nennt die
-Anwendung dem Assistenten die verletzte Regel, damit er sich ohne Rückfrage korrigieren kann,
-und die bisherigen Zuordnungen bleiben stehen. Junioren-Trainings legt der Assistent noch
-nicht an.
+Der Assistent kann ausserdem Trainings beider Altersstufen anlegen — mit Name, Altersstufe,
+Alterskategorien und auf Wunsch einem Ziel — und ihnen Übungen zuordnen. Das Training entsteht
+als privater Entwurf im eigenen Bestand und sieht in der Anwendung genauso aus, als hätte man es
+selbst zusammengestellt. Die Altersstufe steht danach fest; eine Alterskategorie der anderen
+Altersstufe lehnt die Anwendung ab und nennt die zulässigen. Dabei gelten dieselben Regeln wie in
+der Anwendung: Zu einem Trainingsteil oder Block bietet der Assistent nur an, was dort
+hineinpasst, im Kinderfussball-Hauptteil passend zur gewählten Hauptteilkategorie, und er
+erfährt, ob der Bestand dafür gar nichts führt oder nur die Suche zu eng war. Jede zugeordnete
+Übung kommt als eigene Kopie samt Bild und Diagramm ans Ende ihres Teils bzw. Blocks; dieselbe
+Übung darf mehrfach vorkommen. Eine Übung der anderen Altersstufe nimmt kein Training an. Passt
+eine Übung nicht, nennt die Anwendung dem Assistenten die verletzte Regel, damit er sich ohne
+Rückfrage korrigieren kann, und die bisherigen Zuordnungen bleiben stehen.
+
+Welche Teile und Blöcke eine Altersstufe kennt, muss der Assistent nicht selbst wissen: Er ruft
+das Schema ab — im Kinderfussball die vier Trainingsteile mit den drei Hauptteilkategorien, im
+Juniorenfussball Auffangen, Einstieg, Hauptteil und Abschluss mit ihren sieben Blöcken, jeweils
+in ihrer Reihenfolge, dazu, wo eine Dauer erfasst wird, wo Gruppen durchlaufen, welche Blöcke
+ein öffentliches Training braucht und welche leer einen Hinweis tragen. Im Juniorenfussball gibt
+es keine Hauptteilkategorie, und der Assistent ordnet eine Übung genau dem Block zu, den er
+wählt. Das Aufwärmen und die Explosivität bieten wie in der Anwendung auch Übungen an, die deren
+Inhalt als Erscheinungsform tragen, gleich wo sie eingeordnet sind. Spielfeldgrösse und Übungstyp
+einer Junioren-Übung kommen aus der Vorlage mit. Zu jedem Teil und Block nennt die Anwendung den
+Zeitrichtwert des Manuals und, sobald eine Dauer erfasst ist, die Abweichung davon, dazu die
+vorgesehenen 90 Minuten; das ist Orientierung, keine Bedingung. Das Auffangen trägt in beiden
+Altersstufen weder Dauer noch Richtwert. Weil es für den Juniorenfussball keinen kuratierten
+Übungsbestand gibt, sind dort anfangs oft nur die eigenen Übungen sichtbar; bleibt ein Block
+leer, erfährt der Assistent das benannt, statt dass er ausweicht.
 
 Bestehende Trainings kann der Assistent überarbeiten, gleich welcher Altersstufe. Er sucht die
 eigenen Trainings oder die öffentlichen der Community nach Namen und Alterskategorie und ruft
@@ -148,8 +164,9 @@ entsteht eine eigenständige Kopie im selben Team mit eigenem Termin, während d
 Training seinen behält. Einen Termin an einem persönlichen Training, ein Datum, das es nicht
 gibt, oder eine ungültige Uhrzeit lehnt die Anwendung ab und nennt den Grund. Ein Team, in dem
 man nicht Mitglied ist, gilt als nicht gefunden. Teams gründen, umbenennen, auflösen oder
-Mitglieder verwalten kann der Assistent nicht. Weitere Fähigkeiten kommen nach und nach dazu;
-dieser Abschnitt wächst mit ihnen.
+Mitglieder verwalten kann der Assistent nicht. Damit legt der Assistent Trainings beider
+Altersstufen an und führt sie weitgehend wie die Anwendung; was ihm fehlt, steht unter den
+bekannten Grenzen. Eigene Übungen legt er noch nicht an.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man in den Einstellungen des Assistenten die
 Adresse `https://ki-fu.ch/api/mcp` ein; die Konto-Seite nennt sie ebenfalls. Der Assistent
@@ -223,12 +240,27 @@ Ein KI-Zugang reicht so weit wie das Konto selbst; begrenzt wird er allein durch
 Fähigkeiten, die die Anwendung dem Assistenten anbietet, nicht durch eine abgestufte
 Berechtigung. Den Namen, unter dem sich ein Assistent meldet, prüft niemand. Wer sich mitten im
 Verbinden erst registriert, muss das Verbinden nach der Bestätigung der Adresse neu starten.
-Wann und wie oft ein Zugang benutzt wurde, ist nicht einsehbar, und der Name eines Zugangs
-lässt sich nach dem Erlauben nicht mehr ändern. Die Grenze von fünf Zugängen gilt nur auf dem
-Weg über die Erlauben-Seite der Anwendung; ein Zugang, der an ihr vorbei zustande käme, würde
-nicht mitgezählt. Ändert jemand dasselbe Training gleichzeitig in der Anwendung, merkt das
-niemand; ein bereits offener Browser-Tab zeigt eine Änderung des Assistenten erst nach dem
-Neuladen.
+Wann und wie oft ein Zugang benutzt wurde, ist nicht einsehbar; was über ihn geschah, wird nicht
+gesondert festgehalten, und der Name eines Zugangs lässt sich nach dem Erlauben nicht mehr
+ändern. Die Grenze von fünf Zugängen gilt nur auf dem Weg über die Erlauben-Seite der
+Anwendung; ein Zugang, der an ihr vorbei zustande käme, würde nicht mitgezählt. Ändert jemand
+dasselbe Training gleichzeitig in der Anwendung, merkt das niemand; ein bereits offener
+Browser-Tab zeigt eine Änderung des Assistenten erst nach dem Neuladen. Im Training ist eine
+Änderung des Assistenten nicht von einer eigenen zu unterscheiden.
+
+Der Assistent ordnet nur zu, was der Bestand hergibt; er erfindet keine Übungen und ändert den
+Inhalt einer zugeordneten Übung nicht. Feld-Diagramme erstellt er nicht, und Fotos lädt er
+nicht hoch. Varianten des Hauptteils legt der Assistent weder an noch benennt, entfernt oder
+ordnet er sie; er liest sie und ordnet Übungen einer bestehenden Variante zu. Die Reihenfolge
+der Gruppen untereinander ändert er nicht. Die Favoriten erreicht er nicht, Teams gründet oder besetzt er nicht. Eine Übung
+überführt er nicht in die andere Altersstufe, und die Altersstufe eines Trainings wechselt er so
+wenig wie die Anwendung. Für den Juniorenfussball gibt es keinen kuratierten Übungsbestand; ein
+Block, zu dem der sichtbare Bestand nichts führt, bleibt leer und wird gemeldet. Die
+Zeitrichtwerte erzwingt die Anwendung weder beim Speichern noch beim Veröffentlichen. Was im
+Gespräch zur Sprache kommt — etwa die Zahl der verfügbaren Kinder oder ein Problem der Mannschaft
+—, hält das Training nicht fest, und ob eine Übung zur Zahl der Kinder passt, prüft die
+Anwendung auch beim Assistenten nicht. Einen eigenen KI-Assistenten bringt die Anwendung nicht
+mit; man verbindet den, den man selbst nutzt.
 
 Bricht ein Übernehmen durch den Assistenten ab, ohne dass die Anwendung einen Fehler bemerkt —
 etwa durch eine Zeitüberschreitung oder einen Absturz mitten im Kopieren —, kann eine

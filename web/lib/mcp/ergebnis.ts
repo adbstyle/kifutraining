@@ -31,7 +31,7 @@ export function erfolg<T extends Record<string, unknown>>(wert: T): CallToolResu
  *  nur die camelCase-Felder (auch die in `fehlend`) in snake_case wie alle
  *  Ausgaben. Abgeleitet,
  *  damit ein neues Feld in `KernFehler` ohne Zutun auch hier erscheint. */
-export type FehlerAusgabe = Omit<KernFehler, "ok" | "retryAfter" | "varianteId" | "fehlend"> & {
+type FehlerAusgabe = Omit<KernFehler, "ok" | "retryAfter" | "varianteId" | "fehlend"> & {
   retry_after?: number;
   variante_id?: string;
   /** Alle fehlenden Veröffentlichungs-Bedingungen (#196 NFR 2), je Eintrag

@@ -32,7 +32,7 @@ const ART_ERKLAERT: Record<HinweisArt, string> = {
 };
 
 export const trainingHinweiseAbrufen = werkzeug({
-  name: "training_hinweise",
+  name: "training_hinweise_abrufen",
   titel: "Hinweise zu einem Training",
   beschreibung:
     "Liefert alle fachlichen Hinweise, die KiFu zu einem Training zeigt, in einer Liste — " +

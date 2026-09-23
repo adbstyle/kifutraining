@@ -13,7 +13,8 @@ import {
   traegtHauptteilkategorie,
   type Altersstufe,
 } from "@/lib/altersstufe";
-import { kategorieStufe } from "@/lib/labels";
+import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL, kategorieStufe } from "@/lib/labels";
+import { BLOCK_ERSCHEINUNGSFORM } from "@/lib/junioren";
 import { HAUPTTEILKATEGORIEN, TRAINING_NAME_MAX, ZIEL_MAX } from "@/lib/training";
 import { formOptionen, typOptionen } from "@/lib/filter-optionen";
 import { abgebildet } from "@/lib/kern/ergebnis";
@@ -25,7 +26,8 @@ import { alsTreffer } from "@/lib/mcp/werkzeuge/uebungen";
 import { werkzeug } from "@/lib/mcp/werkzeug";
 
 /**
- * Ein Training anlegen und ihm Übungen zuordnen (Story #192).
+ * Ein Training anlegen und ihm Übungen zuordnen (Story #192; seit #199 in
+ * beiden Altersstufen).
  *
  * Drei dünne Adapter über den Fachkern (lib/kern/training.ts,
  * lib/kern/fassung.ts), denselben Funktionen, die das Anlege-Formular und
@@ -38,11 +40,7 @@ import { werkzeug } from "@/lib/mcp/werkzeug";
  * data/vokabular.yaml erscheint hier ohne Zutun.
  */
 
-/** Altersstufen, für die sich über den KI-Client ein Training anlegen lässt.
- *  #192 OoS 5: noch nicht Juniorenfussball — das öffnet #199. */
-const ANLEGBAR: readonly Altersstufe[] = ["kinderfussball"];
-
-export const liste = (werte: readonly { slug: string; label: string }[]) =>
+const liste = (werte: readonly { slug: string; label: string }[]) =>
   werte.map((w) => `${w.slug} (${w.label})`).join(", ");
 
 /** Das Trainingsschema einer Altersstufe als ein Satz: Teile, Blöcke,
@@ -64,7 +62,21 @@ const SCHEMA_TEXT = ALTERSSTUFEN.map(schemaText).join(" ");
  *  entscheidet der Kern an dessen Altersstufe und nennt sonst die zulässigen. */
 const EINORDNUNGEN = [...new Set(ALTERSSTUFEN.flatMap(einordnungsSlugsFuer))];
 
-export const PFLICHT_SATZ =
+/** Die anziehenden Erscheinungsformen des Juniorenschemas als Satz (#199
+ *  AK 5) — aus `BLOCK_ERSCHEINUNGSFORM`, der einzigen Stelle, an der sie
+ *  geführt werden. */
+const ANZIEHEND_TEXT =
+  "Im Juniorenfussball zeigen " +
+  Object.entries(BLOCK_ERSCHEINUNGSFORM)
+    .map(
+      ([block, form]) =>
+        `${block} (${EINORDNUNG_LABEL[block as keyof typeof EINORDNUNG_LABEL]}) auch Übungen mit der ` +
+        `Erscheinungsform ${form} (${ERSCHEINUNGSFORM_LABEL[form as keyof typeof ERSCHEINUNGSFORM_LABEL]})`,
+    )
+    .join(" und ") +
+  ", gleich wo sie eingeordnet sind.";
+
+const PFLICHT_SATZ =
   "Im Kinderfussball-Hauptteil ist die Hauptteilkategorie Pflicht; ausserhalb davon bleibt sie leer.";
 
 export const Einordnung = alsEnum(EINORDNUNGEN).describe(
@@ -127,14 +139,14 @@ export function kategorienText(stufen: readonly Altersstufe[]): string {
 
 const AnlegenEingabe = z.object({
   name: z.string().describe(`Name des Trainings, höchstens ${TRAINING_NAME_MAX} Zeichen.`),
-  altersstufe: alsEnum(ANLEGBAR).describe(
-    `Altersstufe: ${ANLEGBAR.map((s) => `${s} (${altersstufeLabels[s]})`).join(", ")}. ` +
-      "Sie steht danach fest.",
+  altersstufe: alsEnum(ALTERSSTUFEN).describe(
+    `Altersstufe: ${ALTERSSTUFEN.map((s) => `${s} (${altersstufeLabels[s]})`).join(", ")}. ` +
+      "Sie bestimmt das Trainingsschema und steht danach fest.",
   ),
   stufen: z
     .array(alsEnum(kategorienSlugs))
     .describe(
-      `Alterskategorien, mindestens eine, alle aus der gewählten Altersstufe. ${kategorienText(ANLEGBAR)}.`,
+      `Alterskategorien, mindestens eine, alle aus der gewählten Altersstufe. ${kategorienText(ALTERSSTUFEN)}.`,
     ),
   ziel: z
     .string()
@@ -163,7 +175,13 @@ export const trainingAnlegen = werkzeug({
     "Ohne «team_id» in deinem persönlichen Bestand, mit «team_id» direkt im Bestand eines " +
     "deiner Teams: Dann gehört es dem Team, jedes Mitglied kann es bearbeiten, und " +
     "veröffentlichen lässt es sich nicht. " +
-    "Heute nur Kinderfussball. Liefert die Kennung und die Adresse des Editors in KiFu. " +
+    "Beide Altersstufen: " +
+    `${SCHEMA_TEXT} ` +
+    "Im Juniorenfussball gibt es keine Hauptteilkategorie. Das Auffangen trägt in beiden " +
+    "Altersstufen keine Dauer. Die Zeitrichtwerte des Juniorenfussballs sind Orientierung, " +
+    "keine Bedingung. Teile, Blöcke und Richtwerte samt Pflichten nennt «vokabular» im " +
+    "Abschnitt «schema». " +
+    "Liefert die Kennung und die Adresse des Editors in KiFu. " +
     `Übungen kommen danach mit «training_uebung_zuordnen» dazu. ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: AnlegenEingabe,
@@ -220,8 +238,10 @@ export const trainingUebungenFuerBlock = werkzeug({
     "dieselbe Auswahl wie «Übung hinzufügen» im Editor: passend zur Altersstufe des " +
     "Trainings, zum Trainingsteil bzw. Block und im Kinderfussball-Hauptteil zur " +
     "Hauptteilkategorie. Nur Übungen, die dein Konto in KiFu sieht. Sortiert nach Name. " +
+    `${ANZIEHEND_TEXT} ` +
     "Ohne Treffer sagt «leer», ob der Bestand dafür nichts führt oder nur die " +
-    `Eingrenzung zu eng war. ${PFLICHT_SATZ} ${KENNUNG_FEHLER}`,
+    "Eingrenzung zu eng war; für den Juniorenfussball gibt es keinen kuratierten Bestand, " +
+    `dort sind anfangs oft nur eigene Übungen sichtbar. ${PFLICHT_SATZ} ${KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: FuerBlockEingabe,
   ausgabe: FuerBlockAusgabe,
@@ -275,7 +295,10 @@ export const trainingUebungZuordnen = werkzeug({
     "eine eigenständige Kopie samt Bild und Diagramm; die Vorlage bleibt unverändert. " +
     "Dieselbe Übung darf mehrfach vorkommen. Angenommen wird nur, was zur Altersstufe " +
     "des Trainings, zum Block und im Kinderfussball-Hauptteil zur Hauptteilkategorie " +
-    `passt — sonst nennt die Meldung die verletzte Regel. ${PFLICHT_SATZ} ` +
+    "passt — eine Übung der anderen Altersstufe wird abgewiesen, und die Meldung nennt die " +
+    `verletzte Regel. ${PFLICHT_SATZ} ` +
+    "Alle Inhalte kommen aus der Vorlage, im Juniorenfussball auch Spielfeldgrösse und " +
+    "Übungstyp; «training_abrufen» zeigt sie danach an der Übung. " +
     "Scheitert eine Zuordnung, bleiben alle vorherigen bestehen; bei «konflikt» genügt " +
     `es, denselben Aufruf zu wiederholen. ${KENNUNG_FEHLER}`,
   nurLesen: false,

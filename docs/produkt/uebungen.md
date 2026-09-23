@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-09-09. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-09-23. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -131,6 +131,10 @@ Werte derselben Art werden als „oder" verstanden, verschiedene Arten als „un
 
 Angemeldete haben zwei weitere Sichten: die eigenen Übungen und die Favoriten. Favorisieren
 kann jeder jede sichtbare Übung, auch die aus dem Manual und die fremder Trainer.
+
+Derselbe Bestand lässt sich auch im Gespräch mit einem verbundenen KI-Assistenten durchsuchen
+und abrufen, mit denselben Filtern und ohne die privaten Übungen anderer (siehe
+[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
 ## Feld-Diagramme
 

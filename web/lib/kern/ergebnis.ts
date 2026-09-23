@@ -144,7 +144,7 @@ export const MELDUNG_WIEDERHOLEN =
  *  `fehlerMeldung` (die Meldung ist wortgleich), dazu die Einordnung:
  *
  *  1. eine verletzte Veröffentlichungs-Bedingung → `bedingung`, samt
- *     `bedingung`/`varianteId` zum Zuspitzen (ersetzt `aktionsFehler`);
+ *     `bedingung`/`varianteId` zum Zuspitzen;
  *  2. eine andere fachliche Regel der Datenebene → `regel`;
  *  3. von der RLS abgewiesen → `keine_rechte`;
  *  4. sonst `technisch` — `fehlerMeldung` protokolliert den Rohtext.

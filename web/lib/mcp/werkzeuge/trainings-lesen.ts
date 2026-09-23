@@ -16,6 +16,7 @@ import {
   TeamId,
   TrainingId,
 } from "@/lib/mcp/werkzeuge/trainings";
+import { RICHTWERTE_HINWEIS } from "@/lib/mcp/vokabular";
 import { werkzeug } from "@/lib/mcp/werkzeug";
 
 /**
@@ -46,11 +47,17 @@ export const trainingAbrufen = werkzeug({
     "Übung mit Inhalt, Dauer, Notiz und den Gruppen ihres Durchlaufs; «fassung_id» ist die " +
     "Kennung für die Bearbeitungs-Werkzeuge. «uebungen_gesamt» zählt die Übungen aller " +
     "Varianten zusammen; «gesamt» nennt die Dauer je Variante, «durchlauf» je Variante die " +
-    "Wechsel der Gruppen (wie «training_durchlauf_abrufen»). Lesbar ist jedes Training, " +
+    "Wechsel der Gruppen (wie «training_durchlauf_abrufen»). Im Juniorenfussball trägt jeder " +
+    "Teil und jeder Block eines untergliederten Teils «richtwert»: den Zeitrichtwert des " +
+    "Manuals (min_min–max_min) und «abweichung_min», die Abweichung der Summe davon " +
+    "(0 = innerhalb oder noch keine Dauer); «gesamt» die vorgesehenen 90 Minuten; im " +
+    `Kinderfussball und im Auffangen steht null. ${RICHTWERTE_HINWEIS} Das Schema ohne ` +
+    "konkretes Training nennt «vokabular» im Abschnitt «schema». " +
+    "Lesbar ist jedes Training, " +
     "das dein Konto in KiFu sieht; ändern lassen sich nur die mit «bearbeitbar». Ein " +
     "Team-Training trägt in «termin» seinen Termin (höchstens einen; «anstehend» sagt, ob er " +
     "heute oder später ist), sonst steht dort null. Ob es " +
-    "veröffentlicht werden kann und was dazu fehlt, zeigt «training_hinweise». " +
+    "veröffentlicht werden kann und was dazu fehlt, zeigt «training_hinweise_abrufen». " +
     `${KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ training_id: TrainingId }),

@@ -20,7 +20,7 @@ import { werkzeug } from "@/lib/mcp/werkzeug";
  * Bewusst nicht dabei: die Reihenfolge der Gruppen ändern (#194 OoS 2),
  * Kinderzahl oder Namen von Kindern (OoS 1), eine Rückfrage vor dem Entfernen
  * (OoS 3 — die Auskunft steht vorher in «training_durchlauf_abrufen») und
- * Konflikte der Verteilung (OoS 5, kommt mit «training_hinweise»).
+ * Konflikte der Verteilung (OoS 5, kommt mit «training_hinweise_abrufen»).
  */
 
 export const GruppeId = kennung(

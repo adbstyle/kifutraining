@@ -15,7 +15,7 @@ import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/er
 
 /**
  * Trainings lesen (#193 AK 1/2, #195, #198 AK 2) — für die KI-Werkzeuge «training_abrufen»,
- * «trainings_suchen» und «training_hinweise». Dieselben Queries wie Editor, Ansicht und
+ * «trainings_suchen» und «training_hinweise_abrufen». Dieselben Queries wie Editor, Ansicht und
  * Trainings-Übersicht (lib/queries/trainings-fuer.ts); was sichtbar ist,
  * entscheidet allein die RLS.
  *

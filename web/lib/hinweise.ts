@@ -289,7 +289,7 @@ export function hinweiseFuer(t: HinweisTraining, userId: string): Hinweis[] {
   });
 }
 
-// ── Aussen: der Vertrag des Werkzeugs «training_hinweise» ───────────────────
+// ── Aussen: der Vertrag des Werkzeugs «training_hinweise_abrufen» ───────────────────
 // Einmal als zod-Schema (wie lib/kern/auskunft-schema.ts): Das Werkzeug meldet
 // es als `outputSchema`, `alsAuskunft` baut danach, und das SDK prüft jede
 // Antwort. Aussen snake_case wie alle Werkzeug-Ergebnisse.

@@ -45,9 +45,8 @@ const { createBearerClient } = await import("../lib/supabase/bearer");
 const { legeTrainingAn, benenneTrainingUm, setzeStufen, setzeZiel, veroeffentliche, setzeAufEntwurf } =
   await import("../lib/kern/training");
 const { TRAGWEITE_VEROEFFENTLICHEN } = await import("../lib/training-bedingungen");
-const { ordneUebungZu, entferneUebung, setzeDauer, setzeNotiz, setzeUebungsfolge } = await import(
-  "../lib/kern/fassung"
-);
+const { ordneUebungZu, entferneUebung, setzeDauer, setzeNotiz, setzeUebungsfolge, vorlagenFuerBlock } =
+  await import("../lib/kern/fassung");
 const { trainingAbrufen, trainingsSuchen } = await import("../lib/kern/lesen");
 const { legeGruppeAn, benenneGruppe, entferneGruppe, setzeDurchlauf } = await import("../lib/kern/gruppen");
 const { loescheTraining, loescheTrainingMitBildern } = await import("../lib/kern/loeschen");
@@ -152,6 +151,10 @@ async function aufraeumen() {
         await admin.from("trainings").update({ visibility: "private" }).eq("id", t.id);
         await loescheTrainingMitBildern(admin as never, t.id);
       }
+      // Eigene Übungen fielen beim Löschen des Kontos nicht mit
+      // (`owner_id … on delete set null`) — sie blieben verwaist liegen.
+      const { error: exFehler } = await admin.from("exercises").delete().eq("owner_id", id);
+      if (exFehler) throw exFehler;
       const { error } = await admin.auth.admin.deleteUser(id);
       if (error) throw error;
     } catch (e) {
@@ -506,6 +509,125 @@ try {
       [["A@jun-spielformen", "B@jun-spiel"], ["A@jun-spiel", "B@jun-spielformen"]],
     );
     assert.deepEqual(d.zeit_je_gruppe.map((z) => z.text), ["Zugewiesen 30 min", "Zugewiesen 30 min"]);
+  });
+
+  // ── Juniorenfussball anlegen und füllen (#199) ───────────────────────────
+  await pruefe("Juniorenfussball: Kategorien, anziehende Form, Übernahme, andere Stufe, Auffangen, Hauptteilkategorie, leerer Block, Richtwerte", async () => {
+    // AK 9: eine Kategorie des Kinderfussballs wird mit den zulässigen abgewiesen.
+    const g = fehler(
+      await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Jun", altersstufe: "juniorenfussball", stufen: ["G"] }),
+      "regel",
+      "Diese Alterskategorie gehört nicht zur gewählten Altersstufe. Wähle nur Kategorien dieser Altersstufe.",
+    ) as { zulaessig?: readonly string[] };
+    assert.deepEqual(g.zulaessig, ["D", "C", "B", "A"]);
+    const tj = wert(
+      await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Jun", altersstufe: "juniorenfussball", stufen: ["D"] }),
+    ).id;
+
+    // Kein kuratierter Junioren-Bestand — zwei private Übungen des Kontos:
+    // eine in den Spielformen mit «Den Körper stabil halten», eine im Auffangen.
+    const eigene = async (trainingsteil: string, extra: Record<string, unknown>) => {
+      const { data, error } = await admin
+        .from("exercises")
+        .insert({
+          slug: `kern-db-jun-${randomBytes(4).toString("hex")}`,
+          name: `Kern-DB ${trainingsteil}`,
+          altersstufe: "juniorenfussball",
+          trainingsteil,
+          kategorien: ["D"],
+          aufbau: "Im Wechsel",
+          owner_id: a.id,
+          visibility: "private",
+          ...extra,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id as string;
+    };
+    const stabil = await eigene("jun-spielformen", {
+      erscheinungsform: ["koerper-stabil-halten"],
+      uebungstyp: "isolierte-form",
+      spielfeld_laenge_m: 20,
+      spielfeld_breite_m: 15,
+    });
+    const ankommen = await eigene("jun-auffangen", {});
+
+    // AK 4/5: Das Aufwärmen zeigt die Übung über ihre Erscheinungsform, obwohl
+    // sie in den Spielformen liegt; ein Kinderfussball-Teil ist hier kein Block.
+    const auf = wert(
+      await vorlagenFuerBlock(a.supabase, a.id, { trainingId: tj, einordnung: "jun-aufwaermen", favoriten: false, mitLeerGrund: true }),
+    );
+    assert.ok(auf.treffer.some((t) => t.id === stabil), "Aufwärmen zieht «koerper-stabil-halten» an");
+    assert.equal(auf.leer, null);
+    const kifuTeil = fehler(
+      await vorlagenFuerBlock(a.supabase, a.id, { trainingId: tj, einordnung: "einleitung" }),
+      "regel",
+      "Dieser Block gehört nicht zum Trainingsschema Juniorenfussball.",
+    ) as { zulaessig?: readonly string[] };
+    assert.ok(kifuTeil.zulaessig?.includes("jun-aufwaermen"));
+
+    // AK 3, PC 1: Zuordnen in den gewählten Block — keine abgeleitete Einordnung.
+    const w = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tj, einordnung: "jun-aufwaermen", exerciseId: stabil }));
+    const af = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tj, einordnung: "jun-auffangen", exerciseId: ankommen }));
+
+    // AK 10: eine Kinderfussball-Übung passt in kein Junioren-Training.
+    fehler(
+      await ordneUebungZu(a.supabase, a.id, { trainingId: tj, einordnung: "jun-aufwaermen", exerciseId: ein }),
+      "regel",
+      "Diese Übung gehört zur Altersstufe Kinderfussball und passt darum nicht in ein Training der Altersstufe Juniorenfussball.",
+    );
+    // PC 3: keine Hauptteilkategorie im Juniorenfussball.
+    fehler(
+      await ordneUebungZu(a.supabase, a.id, {
+        trainingId: tj,
+        einordnung: "jun-spielformen",
+        hauptteilkategorie: "fussball-spielen",
+        exerciseId: stabil,
+      }),
+      "regel",
+      "Eine Hauptteilkategorie gibt es nur im Kinderfussball-Hauptteil.",
+    );
+    // PC 2: Das Auffangen nimmt keine Dauer an.
+    fehler(
+      await setzeDauer(a.supabase, a.id, { fassungId: af.fassungId, minuten: 10 }),
+      "regel",
+      "Für das Auffangen kann keine Dauer gesetzt werden.",
+    );
+    wert(await setzeDauer(a.supabase, a.id, { fassungId: w.fassungId, minuten: 15 }));
+
+    // AK 6: Explosivität — leer, solange der sichtbare Bestand dafür nichts
+    // führt (lokal kann ein öffentlicher Junioren-Bestand bestehen).
+    const { count } = await admin
+      .from("exercises")
+      .select("id", { count: "exact", head: true })
+      .eq("altersstufe", "juniorenfussball")
+      .or(`owner_id.eq.${a.id},visibility.eq.public`)
+      .or("trainingsteil.eq.jun-explosivitaet,erscheinungsform.cs.{explosiv-dynamisch-agieren}");
+    const ex = wert(
+      await vorlagenFuerBlock(a.supabase, a.id, { trainingId: tj, einordnung: "jun-explosivitaet", favoriten: false, mitLeerGrund: true }),
+    );
+    if (!count)
+      assert.deepEqual(ex.leer, {
+        grund: "bestand_leer",
+        text: "Für „Explosivität\" gibt es in deinem sichtbaren Bestand noch keine Übung der Altersstufe Juniorenfussball.",
+      });
+    else assert.equal(ex.treffer.length > 0, true);
+
+    // AK 7/8: Spielfeld und Übungstyp aus der Vorlage; Richtwert und Abweichung.
+    const aus = wert(await trainingAbrufen(a.supabase, a.id, { trainingId: tj }));
+    const bloecke = aus.teile.flatMap((t) => t.bloecke);
+    const aufwaermen = bloecke.find((b) => b.einordnung.slug === "jun-aufwaermen")!;
+    const u = aufwaermen.uebungen[0];
+    assert.equal(u.fassung_id, w.fassungId);
+    assert.equal(u.einordnung.slug, "jun-aufwaermen");
+    assert.equal(u.hauptteilkategorie, null);
+    assert.deepEqual(u.spielfeld, { laenge_m: 20, breite_m: 15 });
+    assert.equal(u.uebungstyp?.slug, "isolierte-form");
+    assert.deepEqual(aufwaermen.richtwert, { min_min: 10, max_min: 12, abweichung_min: 3 });
+    assert.deepEqual(aus.teile.find((t) => t.teil.slug === "einstieg")!.richtwert, { min_min: 20, max_min: 30, abweichung_min: -5 });
+    assert.equal(aus.teile.find((t) => t.teil.slug === "auffangen")!.richtwert, null);
+    assert.deepEqual(aus.gesamt[0].richtwert, { min_min: 90, max_min: 90, abweichung_min: -75 });
   });
 
   // ── Veröffentlichen und zurückziehen (#196) ──────────────────────────────

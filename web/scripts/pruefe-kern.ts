@@ -35,6 +35,7 @@ import { FREMDES_TRAINING, MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler } fr
 import { KEINE_PASSENDE_UEBUNG, LEER_HINWEIS, leerBestandText, zielLabel } from "../lib/training";
 import { trainingAuskunft as auskunftRoh } from "../lib/kern/auskunft";
 import { TrainingAuskunftStreng } from "../lib/kern/auskunft-schema";
+import { zeitAbgleich } from "../lib/junioren";
 import { verteilungAus } from "../lib/gruppen";
 import { leerZuNull, terminProblem } from "../lib/termin";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
@@ -321,9 +322,11 @@ pruefe("Auskunft: Hauptteil je Variante, leere Blöcke, Altbestand ohne Kategori
   assert.deepEqual(e1.kategorien, [{ slug: "E", label: "E-Junior:innen" }]);
   // Summen je Variante.
   assert.deepEqual(a.gesamt, [
-    { variante_id: "v1", summe_min: 30, ohne_dauer: 1 },
-    { variante_id: "v2", summe_min: 10, ohne_dauer: 0 },
+    { variante_id: "v1", summe_min: 30, ohne_dauer: 1, richtwert: null },
+    { variante_id: "v2", summe_min: 10, ohne_dauer: 0, richtwert: null },
   ]);
+  // Das Kinderfussball-Manual gibt keine Zeiten vor (#199 AK 8).
+  assert.ok(a.teile.every((t) => t.richtwert === null && t.bloecke.every((b) => b.richtwert === null)));
   assert.equal(a.uebungen_gesamt, 3);
   assert.equal(a.bearbeitbar, true);
   assert.deepEqual(a.bestand, { art: "persoenlich", eigen: true });
@@ -336,7 +339,7 @@ pruefe("Auskunft: bei einer Variante kein «variante», fremdes öffentliches Tr
     { userId: ICH },
   );
   assert.ok(a.teile.every((t) => t.variante === undefined));
-  assert.deepEqual(a.gesamt, [{ summe_min: 0, ohne_dauer: 0 }]);
+  assert.deepEqual(a.gesamt, [{ summe_min: 0, ohne_dauer: 0, richtwert: null }]);
   assert.equal(a.bearbeitbar, false);
   assert.deepEqual(a.bestand, { art: "persoenlich", eigen: false });
   assert.equal(a.sichtbarkeit, "oeffentlich");
@@ -363,6 +366,48 @@ pruefe("Auskunft Juniorenfussball: vier Teile, sieben Blöcke, Beschreibung als 
   assert.equal(auffangen.leer_hinweis, undefined, "leeres Auffangen ist kein Mangel");
   assert.deepEqual(a.bestand, { art: "team", team: { id: "team1", name: "Da" } });
   assert.equal(a.bearbeitbar, true);
+});
+
+pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit Abweichung (#199 AK 8)", () => {
+  const a = trainingAuskunft(
+    training({
+      altersstufe: "juniorenfussball",
+      stufen: ["C"],
+      exercises: [
+        fassung("auf", "jun-auffangen"),
+        fassung("w", "jun-aufwaermen", { durationMin: 15 }),
+        fassung("x", "jun-explosivitaet", { durationMin: 8 }),
+        fassung("sf", "jun-spielformen", { varianteId: "v1", durationMin: 20 }),
+        fassung("ab", "jun-abschluss", { durationMin: 12 }),
+      ],
+    }),
+    { userId: ICH },
+  );
+  const teil = (slug: string) => a.teile.find((t) => t.teil.slug === slug)!;
+  const block = (slug: string) =>
+    a.teile.flatMap((t) => t.bloecke).find((b) => b.einordnung.slug === slug)!;
+  // Das Auffangen zählt nicht zur Trainingszeit: kein Richtwert, nirgends (PC 2).
+  assert.equal(teil("auffangen").richtwert, null);
+  assert.equal(block("jun-auffangen").richtwert, null);
+  // Teil: Einstieg 23 min im Band 20–30.
+  assert.deepEqual(teil("einstieg").richtwert, { min_min: 20, max_min: 30, abweichung_min: 0 });
+  // Blöcke: Aufwärmen 15 über 10–12, Spielform leer (keine Bewertung).
+  assert.deepEqual(block("jun-aufwaermen").richtwert, { min_min: 10, max_min: 12, abweichung_min: 3 });
+  assert.deepEqual(block("jun-spielform-trainingsziel").richtwert, { min_min: 6, max_min: 8, abweichung_min: 0 });
+  assert.deepEqual(block("jun-spielformen").richtwert, { min_min: 30, max_min: 45, abweichung_min: -10 });
+  assert.deepEqual(teil("hauptteil").richtwert, { min_min: 45, max_min: 65, abweichung_min: -25 });
+  // Einblockiger Teil: der Richtwert steht am Teil, nicht zweimal.
+  assert.deepEqual(teil("abschluss").richtwert, { min_min: 5, max_min: 10, abweichung_min: 2 });
+  assert.equal(block("jun-abschluss").richtwert, null);
+  // Gesamt: 55 min gegen die vorgesehenen 90.
+  assert.deepEqual(a.gesamt, [
+    { summe_min: 55, ohne_dauer: 0, richtwert: { min_min: 90, max_min: 90, abweichung_min: -35 } },
+  ]);
+  // Dieselbe Rechnung wie der Editor und die Hinweise.
+  assert.equal(block("jun-aufwaermen").richtwert?.abweichung_min, zeitAbgleich("jun-aufwaermen", 15)?.abweichungMin);
+  // Ohne erfasste Dauer: Richtwert ja, Abweichung 0 (keine Bewertung, wie im Editor).
+  const leer = trainingAuskunft(training({ altersstufe: "juniorenfussball", stufen: ["C"] }), { userId: ICH });
+  assert.deepEqual(leer.gesamt[0].richtwert, { min_min: 90, max_min: 90, abweichung_min: 0 });
 });
 
 pruefe("Auskunft-Vertrag: das strenge Schema weist ein undeklariertes Feld ab", () => {
@@ -664,7 +709,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
       "training_uebung_durchlauf_setzen",
       "training_durchlauf_abrufen",
     ],
-    "#195": ["training_hinweise"],
+    "#195": ["training_hinweise_abrufen"],
     "#196": ["training_veroeffentlichen", "training_auf_entwurf_setzen"],
     "#197": ["training_kopieren", "training_loeschen"],
     "#198": [

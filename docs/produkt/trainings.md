@@ -71,6 +71,12 @@ zweites Mal zu bestätigen. Angeboten wird jeweils nur, was dem Betrachter offen
 fremdes Training bloss ansieht, findet die drei Punkte gar nicht, und an einem Team-Training
 gibt es weder Veröffentlichen noch Ins-Team-Stellen.
 
+Trainings beider Altersstufen lassen sich auch im Gespräch mit einem verbundenen KI-Assistenten
+anlegen, zusammenstellen, veröffentlichen, übernehmen und löschen (siehe
+[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)). Es gelten dieselben Regeln, der
+Assistent erfährt dieselben Hinweise und Zeitrichtwerte, und was er zusammenstellt, sieht hier
+genauso aus, als hätte man es selbst getan.
+
 ## Zusammenstellen
 
 Ein neues Training beginnt mit einem Namen, der Altersstufe und mindestens einer
@@ -79,7 +85,7 @@ Kategorie entsteht kein Training, und die letzte lässt sich später auch nicht 
 Ein Ziel darf gleich mitgegeben werden: ein kurzer Satz dazu, woran das Team in dieser Einheit
 arbeitet, freiwillig, höchstens zweihundert Zeichen und jederzeit änderbar. Der Name darf
 höchstens achtzig Zeichen lang sein, auch bei einem Training, das direkt im Team entsteht.
-Anlegen und Übungen zuordnen lässt sich ein Kinderfussball-Training auch über einen verbundenen
+Anlegen und Übungen zuordnen lässt sich ein Training beider Altersstufen auch über einen verbundenen
 KI-Assistenten, nach denselben Regeln (siehe [Konto und Zugang](konto-und-zugang.md)). Über ihn
 lässt sich auch ein bestehendes Training beider Altersstufen überarbeiten — Name, Ziel,
 Alterskategorien, Dauer, Notizen, Reihenfolge und das Entfernen von Übungen.

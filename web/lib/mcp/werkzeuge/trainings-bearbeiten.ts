@@ -268,7 +268,7 @@ export const trainingVeroeffentlichen = werkzeug({
     "Kopie und nichts wird eingefroren: Das Training bleibt bearbeitbar, die Öffentlichkeit " +
     "sieht jeweils den aktuellen Stand. Ein Team-Training lässt sich nicht veröffentlichen " +
     "(«regel»); es muss zuerst in den persönlichen Bestand übernommen werden. Ob alle " +
-    "Bedingungen erfüllt sind, zeigt vorher «training_hinweise» (Einträge mit «sperrt: " +
+    "Bedingungen erfüllt sind, zeigt vorher «training_hinweise_abrufen» (Einträge mit «sperrt: " +
     "true»). Fehlt etwas, lehnt das Werkzeug mit der Fehlerart «bedingung» ab und nennt ALLE " +
     "fehlenden Bedingungen; ergänzt wird nichts von selbst. Solange das Training öffentlich " +
     "ist, weist KiFu jede Änderung ab, die eine Bedingung verletzte — dann zuerst " +
