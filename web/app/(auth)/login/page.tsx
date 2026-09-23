@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, Meldung } from "@/components/ui";
+import { sichererRuecksprung } from "@/lib/weiterleitung";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
@@ -14,7 +15,9 @@ export default async function LoginPage({
   searchParams: Promise<{ redirect?: string; error?: string }>;
 }) {
   const sp = await searchParams;
-  const redirect = sp.redirect?.startsWith("/") ? sp.redirect : "/";
+  // Nur relative Ziele dieser Anwendung: `//evil.example` und Verwandte
+  // fallen auf die Startseite (#142 — der Erlauben-Ablauf führt über hier).
+  const redirect = sichererRuecksprung(sp.redirect);
 
   return (
     <>

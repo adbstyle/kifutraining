@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
 import { LogOut, Bookmark, ChevronRight } from "lucide-react";
-import { Card, Button } from "@/components/ui";
+import { Card, Button, Meldung } from "@/components/ui";
 import { KontoClient } from "./KontoClient";
 import { AnzeigenameForm } from "./AnzeigenameForm";
+import { KiZugaengeListe } from "./KiZugaengeListe";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
 import { getMeinAnzeigename, hatEigenenAnzeigenamen } from "@/lib/queries/profil";
+import { getMeineZugaenge } from "@/lib/queries/ki-zugaenge";
+import { KI_ZUGAENGE_MAX } from "@/lib/mcp/regeln";
+import { oeffentlicherOrigin } from "@/lib/origin";
+import { MCP_PFAD } from "@/lib/mcp/pfad";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = { title: "Konto — KiFu", robots: { index: false } };
 
 export default async function KontoPage() {
@@ -16,9 +22,11 @@ export default async function KontoPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [anzeigeName, eigenerName] = await Promise.all([
+  const [anzeigeName, eigenerName, zugaenge, origin] = await Promise.all([
     getMeinAnzeigename(),
     hatEigenenAnzeigenamen(),
+    getMeineZugaenge(),
+    oeffentlicherOrigin(),
   ]);
 
   return (
@@ -68,12 +76,36 @@ export default async function KontoPage() {
         />
       </Link>
 
+      {/* KI-Zugänge (Story #142 AK 5, AK 6). Die Adresse steht hier, weil der
+          Trainer sie in seinen KI-Client eintragen muss; ein Geheimnis gibt es
+          nicht (NFR 4) — erlaubt wird im Browser. */}
+      <Card className="mb-4 p-6">
+        <h2 className="type-title-large text-on-surface">KI-Zugänge</h2>
+        <p className="type-body-medium mt-2 text-on-surface-mittel">
+          Verbinde einen KI-Assistenten wie Claude mit deinem Konto: Trage in
+          seinen Einstellungen die Adresse{" "}
+          <strong className="break-all text-on-surface">{`${origin}${MCP_PFAD}`}</strong>{" "}
+          ein und erlaube den Zugriff im Browser. Höchstens {KI_ZUGAENGE_MAX}{" "}
+          Zugänge gleichzeitig.
+        </p>
+        <div className="mt-4">
+          {zugaenge === null ? (
+            <Meldung tone="fehler">
+              Deine KI-Zugänge lassen sich gerade nicht anzeigen. Bitte lade die
+              Seite später erneut.
+            </Meldung>
+          ) : (
+            <KiZugaengeListe zugaenge={zugaenge} />
+          )}
+        </div>
+      </Card>
+
       <Card className="p-6">
         <h2 className="type-title-large text-on-surface">Konto löschen</h2>
         <p className="type-body-medium mt-2 text-on-surface-mittel">
           Wenn du die Plattform verlässt, bleiben deine öffentlich geteilten
           Übungen anonymisiert für andere erhalten. Deine privaten Entwürfe werden
-          gelöscht.
+          gelöscht. Verbundene KI-Assistenten verlieren ihren Zugang.
         </p>
         <div className="mt-5">
           <KontoClient />

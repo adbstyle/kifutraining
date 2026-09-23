@@ -14,6 +14,12 @@ name: Sync Staging (Prod-Spiegel, manuell)
 #   wären ungültig; TRUNCATE ... CASCADE räumt sie auf Staging mit ab)
 # - storage.* (Objekt-Metadaten entstehen über die Storage-API beim Kopieren
 #   der Dateien, siehe web/scripts/sync-storage-staging.ts)
+# - auth.oauth_* (KI-Zugänge, Story #142): die OAuth-Zustimmungen fallen auf
+#   Staging mit `truncate auth.users cascade` weg, Prod-Clients werden nicht
+#   übernommen. KI-Zugänge auf Staging sind darum nach JEDEM Sync weg — neu
+#   verbinden. Die mitkopierten `ki_zugang_namen` zeigen auf Prod-Client-IDs;
+#   ohne passende Zustimmung erscheinen sie nirgends (die Konto-Liste geht
+#   von den Zustimmungen aus). `ki_aufrufe` ist ein flüchtiger Zähler.
 #
 # Voraussetzung: Staging-Schema ist per deploy-staging.yml aktuell (develop >= main).
 # Das deckt nur ADDITIVE Migrationen ab. Trägt develop eine Migration, die eine
@@ -35,7 +41,7 @@ env:
   # Sortierung im Guard-Query entsprechen. Neue public-Tabelle in einer
   # Migration? -> hier ergänzen, sonst bricht der Guard den Sync bewusst ab
   # (statt die Tabelle still leer zu lassen).
-  PUBLIC_TABLES: "exercise_favorites exercises profiles team_members teams trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings"
+  PUBLIC_TABLES: "exercise_favorites exercises ki_aufrufe ki_zugang_namen profiles team_members teams trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings"
 
 jobs:
   sync:

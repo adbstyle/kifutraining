@@ -52,6 +52,11 @@ jobs:
       # bestehenden Kind ein anderes Gesicht — ohne dass sich ein Datensatz
       # ändert und ohne dass der Typecheck etwas merkt.
       - run: npm run check:figuren
+      # KI-Zugang (Story #142): die TS-Zwillinge der Grenzen (600 Aufrufe je
+      # Stunde in ki_aufruf_zaehlen, CHECK kzn_name_laenge), das Werkzeug
+      # «vokabular» vollständig gegen vocab.ts, und dass Suchfilter nur
+      # Enum-Werte annehmen — freie Strings landeten sonst im PostgREST-`or=`.
+      - run: npm run check:ki-zugang
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)

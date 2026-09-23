@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { hauptteilkategorie as hauptteilkategorieLabels } from "@/lib/vocab";
 import { likePattern } from "@/lib/search";
@@ -68,12 +69,11 @@ export type ExerciseListRow = {
   is_favorited: boolean;
 };
 
-type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 /** Übungs-IDs, die der angemeldete USER favorisiert hat. RLS liefert nur eigene
  *  Favoriten — anonyme Aufrufer bekommen ein leeres Set. */
 async function getFavoriteIds(
-  supabase: SupabaseServerClient,
+  supabase: SupabaseClient,
   userId: string | undefined,
 ): Promise<Set<string>> {
   if (!userId) return new Set();
@@ -86,7 +86,8 @@ async function getFavoriteIds(
 }
 
 /** Übungen gemäss gesetzten Filtern. Dimensionen sind mit UND verknüpft,
- *  mehrere Werte innerhalb einer Dimension mit ODER (Story 3 EK9). */
+ *  mehrere Werte innerhalb einer Dimension mit ODER (Story 3 EK9).
+ *  Adapter für die Oberfläche: Cookie-Session, User aus der Session. */
 export async function getExercises(
   f: ExerciseFilters = {},
 ): Promise<ExerciseListRow[]> {
@@ -94,23 +95,44 @@ export async function getExercises(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const favIds = await getFavoriteIds(supabase, user?.id);
+  return getExercisesFuer(supabase, user?.id ?? null, f);
+}
+
+/** Dieselbe Suche für einen Client, der bereits als Nutzer spricht (Cookie-
+ *  Session ODER OAuth-Bearer). Die userId kommt als Parameter: am Bearer-
+ *  Client (persistSession: false) kennt `auth.getUser()` ohne Token keinen
+ *  User — die Abfrage liefe still wie anonym. Der Katalog und das KI-Werkzeug
+ *  «uebungen_suchen» laufen damit über denselben Abfrageweg — dieselben
+ *  Filter, dieselbe Sortierung, dieselbe Sichtbarkeit (#142 AK 7, NFR 5).
+ *
+ *  `favoriten: false` lässt die Favoriten ganz aus: keine Abfrage auf
+ *  `exercise_favorites`, `is_favorited` immer false, `f.fav` wirkungslos.
+ *  Ein KI-Zugang erreicht die Favoriten nicht (Erlauben-Seite,
+ *  `ZUGANG_DARF_NICHT` in lib/mcp/umfang.ts). */
+export async function getExercisesFuer(
+  supabase: SupabaseClient,
+  userId: string | null,
+  f: ExerciseFilters = {},
+  opt: { favoriten?: boolean } = {},
+): Promise<ExerciseListRow[]> {
+  const mitFavoriten = opt.favoriten ?? true;
+  const favIds = mitFavoriten ? await getFavoriteIds(supabase, userId ?? undefined) : new Set<string>();
 
   // Favoriten-Filter ist nur angemeldet wirksam; ohne Favoriten -> leere Liste.
-  if (f.fav) {
-    if (!user || favIds.size === 0) return [];
+  if (f.fav && mitFavoriten) {
+    if (!userId || favIds.size === 0) return [];
   }
   // „Nur meine Übungen" ist ebenfalls nur angemeldet wirksam.
-  if (f.mine && !user) return [];
+  if (f.mine && !userId) return [];
 
   let query = supabase.from("exercises").select(LIST_COLUMNS).order("name");
 
   // Filter serverseitig per ID-Liste (kombiniert sauber mit Suche/Filtern).
   // Bei sehr vielen Favoriten könnte die Query-URL lang werden; im
   // Kinderfussball-Kontext unkritisch. Sonst später als JOIN/View lösen.
-  if (f.fav) query = query.in("id", [...favIds]);
+  if (f.fav && mitFavoriten) query = query.in("id", [...favIds]);
   // Eigene Übungen: öffentliche wie private, keine fremden/Manual-Übungen.
-  if (f.mine && user) query = query.eq("owner_id", user.id);
+  if (f.mine && userId) query = query.eq("owner_id", userId);
   if (f.altersstufe) query = query.eq("altersstufe", f.altersstufe);
   if (f.kat?.length) query = query.overlaps("kategorien", f.kat);
   if (f.feld?.length) query = query.in("feldtyp", f.feld);
@@ -196,19 +218,31 @@ export type ExerciseDetail = {
   owner_id: string | null;
 };
 
+// Felder der Detailansicht — dieselben für die Seite und das KI-Werkzeug
+// «uebung_abrufen» (#142 NFR 5: keine zweite Spaltenliste).
+const DETAIL_COLUMNS =
+  "id, slug, name, altersstufe, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id";
+
 /** Eine Übung per Slug (volle Felder). RLS blendet private Übungen für
  *  Nicht-Eigentümer aus -> null (Story 4 Postcondition). */
 export async function getExerciseDetail(
   slug: string,
 ): Promise<ExerciseDetail | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("exercises")
-    .select(
-      "id, slug, name, altersstufe, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id",
-    )
-    .eq("slug", slug)
-    .maybeSingle();
+  return getExerciseDetailFuer(await createClient(), { slug });
+}
+
+/** Dieselbe Detailabfrage für einen bereits als Nutzer sprechenden Client,
+ *  per Slug oder per id. Sichtbarkeit entscheidet allein RLS: eine fremde
+ *  private Übung ist `null` — genau wie eine, die es nicht gibt (#142 AK 10). */
+export async function getExerciseDetailFuer(
+  supabase: SupabaseClient,
+  schluessel: { slug: string } | { id: string },
+): Promise<ExerciseDetail | null> {
+  const query = supabase.from("exercises").select(DETAIL_COLUMNS);
+  const { data, error } = await ("id" in schluessel
+    ? query.eq("id", schluessel.id)
+    : query.eq("slug", schluessel.slug)
+  ).maybeSingle();
   if (error) throw error;
   return (data as ExerciseDetail | null) ?? null;
 }
