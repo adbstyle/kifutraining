@@ -99,8 +99,20 @@ Trainings abdecken. Jeder Hinweis nennt seine Stelle — Trainingsteil, Block od
 Hauptteilkategorie, bei mehreren Varianten die Variante, dazu die betroffenen Übungen, die Gruppe
 und die Wechsel —, damit der Assistent ihn ohne Rückfrage beheben kann. Hinweise sind keine
 Fehler: Nur die Veröffentlichungsbedingungen sperren etwas, und zwar das Veröffentlichen; alles
-andere ist Orientierung. Das Abrufen ändert am Training nichts. Weitere Fähigkeiten kommen nach
-und nach dazu; dieser Abschnitt wächst mit ihnen.
+andere ist Orientierung. Das Abrufen ändert am Training nichts.
+
+Ein eigenes persönliches Training kann der Assistent veröffentlichen und wieder auf Entwurf
+setzen. Er fragt dafür nicht nach, gibt aber vorher Auskunft: Die Hinweise zeigen, ob alle
+Bedingungen erfüllt sind, und er weiss, dass das Training danach für alle sichtbar ist und der
+eigene Anzeigename als Urheber daran steht; nach dem Veröffentlichen nennt er diesen Namen.
+Es gelten dieselben Bedingungen wie in der Anwendung. Fehlt etwas, lehnt die Anwendung ab und
+nennt jede fehlende Bedingung einzeln; ergänzt wird nichts von selbst. Es entsteht keine Kopie:
+Das Training bleibt bearbeitbar, und solange es öffentlich ist, weist die Anwendung auch beim
+Assistenten jede Änderung ab, die es unter die Bedingungen brächte. Auf Entwurf gesetzt,
+verschwindet es aus dem öffentlichen Bestand; bereits übernommene Kopien anderer bleiben
+bestehen. Ein Team-Training lässt sich nicht veröffentlichen, ein fremdes Training weder
+veröffentlichen noch zurückziehen. Weitere Fähigkeiten kommen nach und nach dazu; dieser
+Abschnitt wächst mit ihnen.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man in den Einstellungen des Assistenten die
 Adresse `https://ki-fu.ch/api/mcp` ein; die Konto-Seite nennt sie ebenfalls. Der Assistent

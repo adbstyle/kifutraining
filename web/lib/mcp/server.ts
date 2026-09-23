@@ -9,12 +9,14 @@ import {
 } from "@/lib/mcp/werkzeuge/trainings";
 import { trainingAbrufen, trainingsSuchen } from "@/lib/mcp/werkzeuge/trainings-lesen";
 import {
+  trainingAufEntwurfSetzen,
   trainingKategorienSetzen,
   trainingUebungDauerSetzen,
   trainingUebungEntfernen,
   trainingUebungenOrdnen,
   trainingUebungNotizSetzen,
   trainingUmbenennen,
+  trainingVeroeffentlichen,
   trainingZielSetzen,
 } from "@/lib/mcp/werkzeuge/trainings-bearbeiten";
 import {
@@ -54,6 +56,8 @@ export const WERKZEUGE = [
   trainingUebungDurchlaufSetzen,
   trainingDurchlaufAbrufen,
   trainingHinweiseAbrufen,
+  trainingVeroeffentlichen,
+  trainingAufEntwurfSetzen,
 ] as const;
 
 export function registriereWerkzeuge(server: McpServer): void {

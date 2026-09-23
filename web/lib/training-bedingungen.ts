@@ -79,6 +79,14 @@ export function varianteAusFehler(message: string): string | null {
  *  KI-Assistenten (#195 AK 2). */
 export const ZUM_VEROEFFENTLICHEN_FEHLT = "Zum Veröffentlichen fehlt noch:";
 
+/** Die Tragweite des Veröffentlichens — im Bestätigungsdialog der Oberfläche
+ *  und im Ergebnis sowie in der Beschreibung des KI-Werkzeugs
+ *  «training_veroeffentlichen» (#196 AK 5): Der Anzeigename wird mit dem
+ *  Training öffentlich. Eine Quelle, damit beide Wege dasselbe sagen. */
+export const TRAGWEITE_VEROEFFENTLICHEN =
+  "Das Training wird für alle sichtbar — mit allen Inhalten, Bildern und " +
+  "Feld-Diagrammen. Dein Anzeigename steht als Urheber daran und ist für alle sichtbar.";
+
 /** Was fehlt, aus Sicht des Trainers — mit der Variante, wenn es eine zu
  *  nennen gibt (#204 AK 2). Ergänzt den Satz «Es fehlt …».
  *
@@ -96,7 +104,7 @@ export function bedingungText(bedingung: Bedingung, varianteName?: string): stri
  *  («in jeder Variante») statt die eine zu nennen: Diese Übersetzung steht
  *  jeder Action zur Verfügung, die einen rohen DB-Fehler bekommt — auch denen,
  *  die nur die Fehlermeldung kennen und nicht das Training mit seinen
- *  Variantennamen. Wer den Kontext hat (`veroeffentlicheTraining`), liefert
+ *  Variantennamen. Wer den Kontext hat (`veroeffentliche` im Fachkern), liefert
  *  stattdessen `FehlendeBedingung[]` und die Oberfläche nennt Variante und
  *  Block. */
 function bedingungsMeldung(bedingung: Bedingung, jeVariante: boolean): string {

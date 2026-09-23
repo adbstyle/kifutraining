@@ -452,7 +452,8 @@ pruefe("fehlerErgebnis: jedes gesetzte Feld eines Kern-Fehlers kommt an", () => 
     "Schlüssel in structuredContent.fehler",
   );
   assert.deepEqual(f.bedingung, "einleitung");
-  assert.deepEqual(f.fehlend, voll.fehlend);
+  // Auch in `fehlend` snake_case (#196): aussen trägt nichts camelCase.
+  assert.deepEqual(f.fehlend, [{ bedingung: "einleitung", variante_id: null }]);
   assert.equal(f.variante_id, "v1");
   // `false` ist eine Auskunft und bleibt; Leeres fällt weg.
   assert.equal(f.wiederholbar, false);

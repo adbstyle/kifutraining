@@ -42,7 +42,9 @@ export const trainingAbrufen = werkzeug({
     "Kennung für die Bearbeitungs-Werkzeuge. «uebungen_gesamt» zählt die Übungen aller " +
     "Varianten zusammen; «gesamt» nennt die Dauer je Variante, «durchlauf» je Variante die " +
     "Wechsel der Gruppen (wie «training_durchlauf_abrufen»). Lesbar ist jedes Training, " +
-    `das dein Konto in KiFu sieht; ändern lassen sich nur die mit «bearbeitbar». ${KENNUNG_FEHLER}`,
+    "das dein Konto in KiFu sieht; ändern lassen sich nur die mit «bearbeitbar». Ob es " +
+    "veröffentlicht werden kann und was dazu fehlt, zeigt «training_hinweise». " +
+    `${KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ training_id: TrainingId }),
   // Editor, wenn bearbeitbar, sonst die Ansicht.

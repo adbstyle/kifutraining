@@ -14,6 +14,13 @@ import {
   ok,
   type KernErgebnis,
 } from "@/lib/kern/ergebnis";
+import {
+  TRAGWEITE_VEROEFFENTLICHEN,
+  ZUM_VEROEFFENTLICHEN_FEHLT,
+  bedingungText,
+  fehlendeBedingungenAus,
+  type FehlendeBedingung,
+} from "@/lib/training-bedingungen";
 
 /**
  * Ein Training anlegen (Story #10, Story 5, Team-Epic Story 3, #192 AK 1/2).
@@ -230,4 +237,152 @@ export async function setzeStufen(
     .map((f) => ({ fassungId: f.id as string, name: f.name as string, varianteId: f.variante_id }));
 
   return ok({ trainingId: e.trainingId, stufen, nichtMehrPassend });
+}
+
+// ── Veröffentlichen und zurückziehen (Story A, #196) ────────────────────────
+//
+// Eine Regelquelle für den Editor (`veroeffentlicheTraining`,
+// `setzeTrainingAufEntwurf`) und die KI-Werkzeuge «training_veroeffentlichen»,
+// «training_auf_entwurf_setzen». Veröffentlichen ist ein Zustand, keine
+// Kopie: dasselbe Training wird sichtbar und bleibt bearbeitbar (#196 PC 1).
+// Die Bedingungen setzt die Datenbank durch (`training_pruefe_oeffentlich`),
+// solange das Training öffentlich ist — auch gegen spätere Änderungen
+// (#196 AK 7). Hier geht es darum, ALLE fehlenden vorab in Klartext zu
+// nennen (NFR 2); die Datenebene kennt nur die erste.
+
+/** Ein Team-Training ist nie öffentlich (`tr_team_nie_public`). */
+export const TEAM_NICHT_VEROEFFENTLICHBAR =
+  "Ein Team-Training lässt sich nicht veröffentlichen. Übernimm es zuerst in deinen persönlichen Bestand.";
+
+/** Dasselbe von der anderen Seite: Ohne «öffentlich» gibt es kein Zurück. */
+export const TEAM_OHNE_ENTWURF =
+  "Ein Team-Training ist nie öffentlich und hat darum keinen Entwurfs-Zustand.";
+
+type Bedingungsstand = {
+  stufen: string[] | null;
+  training_exercises:
+    | { trainingsteil: string; hauptteilkategorie: string | null; variante_id: string | null }[]
+    | null;
+  training_varianten: { id: string; name: string; position: number }[] | null;
+};
+
+/** Die Ablehnung mit allen fehlenden Bedingungen: «Zum Veröffentlichen fehlt
+ *  noch: a; b.» — die Variante erst ab zwei genannt, wie in der Oberfläche
+ *  (`fehlendeBedingungenAus` setzt `varianteId` nur dann). */
+function fehltZumVeroeffentlichen(
+  fehlend: FehlendeBedingung[],
+  varianten: readonly { id: string; name: string }[],
+) {
+  const teile = fehlend.map((b) =>
+    bedingungText(b.bedingung, varianten.find((v) => v.id === b.varianteId)?.name),
+  );
+  const [erste] = fehlend;
+  return fehlschlag("bedingung", `${ZUM_VEROEFFENTLICHEN_FEHLT} ${teile.join("; ")}.`, {
+    feld: "training_id",
+    fehlend,
+    bedingung: erste.bedingung,
+    varianteId: erste.varianteId ?? undefined,
+  });
+}
+
+/** Ein eigenes persönliches Training öffentlich schalten (Story A AK 1,
+ *  #196 AK 1/4–6, PC 1/4, NFR 1/2).
+ *
+ *  `urheber` ist der Anzeigename, der nun am Training steht, `tragweite` der
+ *  Satz aus dem Bestätigungsdialog der Oberfläche — der KI-Weg fragt nicht
+ *  nach (#196 OoS 2), er gibt Auskunft und handelt. */
+export async function veroeffentliche(
+  supabase: SupabaseClient,
+  userId: string,
+  e: { trainingId: string },
+): Promise<
+  KernErgebnis<{
+    trainingId: string;
+    sichtbarkeit: "oeffentlich";
+    urheber: string | null;
+    tragweite: string;
+  }>
+> {
+  const zugriff = await ladeTrainingZumBearbeiten<Bedingungsstand>(
+    supabase,
+    userId,
+    e.trainingId,
+    "stufen, training_exercises ( trainingsteil, hauptteilkategorie, variante_id ), training_varianten ( id, name, position )",
+  );
+  if (!zugriff.ok) return zugriff;
+  const { zeile, ziel } = zugriff.wert;
+  if (ziel.art === "team")
+    return fehlschlag("regel", TEAM_NICHT_VEROEFFENTLICHBAR, { feld: "training_id" });
+
+  // Die Hauptteil-Bedingung gilt je Variante (#204 AK 1). Sortiert wird hier:
+  // PostgREST garantiert für einen eingebetteten Satz keine Reihenfolge, und
+  // die Meldung soll die Varianten in derselben Folge nennen wie die
+  // Oberfläche (`position`, bei Gleichstand `id`, wie in
+  // `training_fehlende_bedingungen`).
+  const varianten = (zeile.training_varianten ?? [])
+    .slice()
+    .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
+  const fehlend = fehlendeBedingungenAus(
+    zeile.altersstufe,
+    zeile.stufen ?? [],
+    (zeile.training_exercises ?? []).map((f) => ({
+      trainingsteil: f.trainingsteil,
+      hauptteilkategorie: f.hauptteilkategorie,
+      varianteId: f.variante_id,
+    })),
+    varianten,
+  );
+  if (fehlend.length > 0) return fehltZumVeroeffentlichen(fehlend, varianten);
+
+  const { data, error } = await supabase
+    .from("trainings")
+    .update({ visibility: "public" })
+    .eq("id", e.trainingId)
+    .eq("owner_id", userId)
+    .select("id, urheber")
+    .maybeSingle<{ id: string; urheber: string | null }>();
+  if (error) {
+    // Weist die Datenebene ab, hat sich der Stand seit dem Lesen geändert —
+    // dieselbe Aussage wie die Vorabprüfung, nur mit genau einer Bedingung
+    // (mehr gibt ein `raise` nicht her).
+    const f = ausDbFehler(error);
+    return f.art === "bedingung" && f.bedingung
+      ? fehltZumVeroeffentlichen([{ bedingung: f.bedingung, varianteId: f.varianteId ?? null }], varianten)
+      : f;
+  }
+  if (!data) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.training, { feld: "training_id" });
+  return ok({
+    trainingId: e.trainingId,
+    sichtbarkeit: "oeffentlich",
+    urheber: data.urheber,
+    tragweite: TRAGWEITE_VEROEFFENTLICHEN,
+  });
+}
+
+/** Ein öffentliches Training auf Entwurf zurücknehmen (Story A AK 3,
+ *  #196 AK 2, PC 2/3).
+ *
+ *  Es verschwindet aus der Öffentlichkeit und bleibt im Übrigen unberührt.
+ *  Kopien, die andere übernommen haben, bleiben bestehen — sie sind
+ *  eigenständige Trainings. Ein Entwurf bleibt Entwurf (kein Fehler). */
+export async function setzeAufEntwurf(
+  supabase: SupabaseClient,
+  userId: string,
+  e: { trainingId: string },
+): Promise<KernErgebnis<{ trainingId: string; sichtbarkeit: "entwurf" }>> {
+  const zugriff = await ladeTrainingZumBearbeiten(supabase, userId, e.trainingId);
+  if (!zugriff.ok) return zugriff;
+  if (zugriff.wert.ziel.art === "team")
+    return fehlschlag("regel", TEAM_OHNE_ENTWURF, { feld: "training_id" });
+
+  const { data, error } = await supabase
+    .from("trainings")
+    .update({ visibility: "private" })
+    .eq("id", e.trainingId)
+    .eq("owner_id", userId)
+    .select("id")
+    .maybeSingle();
+  if (error) return ausDbFehler(error);
+  if (!data) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.training, { feld: "training_id" });
+  return ok({ trainingId: e.trainingId, sichtbarkeit: "entwurf" });
 }

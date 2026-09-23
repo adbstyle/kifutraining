@@ -5,7 +5,14 @@ import { ALTERSSTUFEN } from "@/lib/altersstufe";
 import { EINORDNUNG_LABEL, kategorieStufe } from "@/lib/labels";
 import { NOTIZ_MAX, OHNE_DAUER_TEILE, TRAINING_NAME_MAX, ZIEL_MAX } from "@/lib/training";
 import { abgebildet } from "@/lib/kern/ergebnis";
-import { benenneTrainingUm, setzeStufen, setzeZiel } from "@/lib/kern/training";
+import {
+  benenneTrainingUm,
+  setzeAufEntwurf,
+  setzeStufen,
+  setzeZiel,
+  veroeffentliche,
+} from "@/lib/kern/training";
+import { TRAGWEITE_VEROEFFENTLICHEN } from "@/lib/training-bedingungen";
 import { entferneUebung, setzeDauer, setzeNotiz, setzeUebungsfolge } from "@/lib/kern/fassung";
 import { Wert, alsEnum, kennung, wert } from "@/lib/mcp/bausteine";
 import {
@@ -248,4 +255,54 @@ export const trainingUebungNotizSetzen = werkzeug({
     });
     return abgebildet(r, (w) => ({ notiz: w.notiz }));
   },
+});
+
+// ── training_veroeffentlichen / training_auf_entwurf_setzen (#196) ───────────
+
+export const trainingVeroeffentlichen = werkzeug({
+  name: "training_veroeffentlichen",
+  titel: "Training veröffentlichen",
+  beschreibung:
+    "Schaltet ein eigenes persönliches Training öffentlich — ohne Rückfrage. Tragweite, die " +
+    `du dem Trainer vorher nennen solltest: «${TRAGWEITE_VEROEFFENTLICHEN}» Es entsteht keine ` +
+    "Kopie und nichts wird eingefroren: Das Training bleibt bearbeitbar, die Öffentlichkeit " +
+    "sieht jeweils den aktuellen Stand. Ein Team-Training lässt sich nicht veröffentlichen " +
+    "(«regel»); es muss zuerst in den persönlichen Bestand übernommen werden. Ob alle " +
+    "Bedingungen erfüllt sind, zeigt vorher «training_hinweise» (Einträge mit «sperrt: " +
+    "true»). Fehlt etwas, lehnt das Werkzeug mit der Fehlerart «bedingung» ab und nennt ALLE " +
+    "fehlenden Bedingungen; ergänzt wird nichts von selbst. Solange das Training öffentlich " +
+    "ist, weist KiFu jede Änderung ab, die eine Bedingung verletzte — dann zuerst " +
+    "«training_auf_entwurf_setzen». Das Ergebnis nennt den Anzeigenamen, der nun als Urheber " +
+    `sichtbar ist («urheber»), und die Tragweite. ${KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({ training_id: TrainingId }),
+  ausgabe: z.object({
+    sichtbarkeit: z.literal("oeffentlich"),
+    urheber: z.string().nullable(),
+    tragweite: z.string(),
+  }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(
+      await veroeffentliche(zugang.supabase, zugang.userId, { trainingId: e.training_id }),
+      (w) => ({ sichtbarkeit: w.sichtbarkeit, urheber: w.urheber, tragweite: w.tragweite }),
+    ),
+});
+
+export const trainingAufEntwurfSetzen = werkzeug({
+  name: "training_auf_entwurf_setzen",
+  titel: "Training auf Entwurf setzen",
+  beschreibung:
+    "Nimmt ein eigenes öffentliches Training aus dem öffentlichen Bestand; im Übrigen bleibt " +
+    "es unberührt. Kopien, die andere bereits übernommen haben, bleiben bestehen — sie sind " +
+    "eigenständige Trainings; benachrichtigt wird niemand. Ein Entwurf bleibt Entwurf. " +
+    "Team-Trainings sind nie öffentlich («regel»). Danach lassen sich auch Änderungen machen, " +
+    `die ein öffentliches Training nicht erlaubt. ${KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({ training_id: TrainingId }),
+  ausgabe: z.object({ sichtbarkeit: z.literal("entwurf") }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(
+      await setzeAufEntwurf(zugang.supabase, zugang.userId, { trainingId: e.training_id }),
+      (w) => ({ sichtbarkeit: w.sichtbarkeit }),
+    ),
 });

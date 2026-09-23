@@ -42,7 +42,9 @@ for (const n of ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY
 
 // Erst nach der Env: lib/env liest sie beim Aufruf.
 const { createBearerClient } = await import("../lib/supabase/bearer");
-const { legeTrainingAn, benenneTrainingUm, setzeStufen, setzeZiel } = await import("../lib/kern/training");
+const { legeTrainingAn, benenneTrainingUm, setzeStufen, setzeZiel, veroeffentliche, setzeAufEntwurf } =
+  await import("../lib/kern/training");
+const { TRAGWEITE_VEROEFFENTLICHEN } = await import("../lib/training-bedingungen");
 const { ordneUebungZu, entferneUebung, setzeDauer, setzeNotiz, setzeUebungsfolge } = await import(
   "../lib/kern/fassung"
 );
@@ -83,6 +85,8 @@ function fehler(
 
 type Konto = { id: string; supabase: SupabaseClient };
 const konten: string[] = [];
+/** Wegwerf-Teams; ihre Trainings kaskadieren beim Löschen mit. */
+const teams: string[] = [];
 
 async function wegwerfKonto(): Promise<Konto> {
   const email = `kern-db-${randomBytes(6).toString("hex")}@test.local`;
@@ -124,6 +128,10 @@ async function positionen(trainingId: string, teil: string) {
  *  Konten stehen lassen noch den eigentlichen Prüffehler überdecken — er wird
  *  nur gemeldet. */
 async function aufraeumen() {
+  for (const id of teams) {
+    const { error } = await admin.from("teams").delete().eq("id", id);
+    if (error) console.error(`[aufräumen] Team ${id} nicht entfernt:`, error.message);
+  }
   for (const id of konten) {
     try {
       const { data } = await admin.from("trainings").select("id").eq("owner_id", id);
@@ -486,6 +494,94 @@ try {
       [["A@jun-spielformen", "B@jun-spiel"], ["A@jun-spiel", "B@jun-spielformen"]],
     );
     assert.deepEqual(d.zeit_je_gruppe.map((z) => z.text), ["Zugewiesen 30 min", "Zugewiesen 30 min"]);
+  });
+
+  // ── Veröffentlichen und zurückziehen (#196) ──────────────────────────────
+  await pruefe("Veröffentlichen: alle fehlenden Bedingungen, Urheber, Gate (AK 7), Entwurf, Team und fremd abgewiesen", async () => {
+    const tp = wert(
+      await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Öffentlich", altersstufe: "kinderfussball", stufen: ["F"] }),
+    ).id;
+    // Leer: JEDE fehlende Bedingung einzeln, nicht nur die erste (NFR 2).
+    const leer = fehler(
+      await veroeffentliche(a.supabase, a.id, { trainingId: tp }),
+      "bedingung",
+      "Zum Veröffentlichen fehlt noch: mindestens eine Übung in der Einleitung; " +
+        "mindestens eine Übung im freien Spiel.",
+    ) as { fehlend?: unknown };
+    assert.deepEqual(leer.fehlend, [
+      { bedingung: "einleitung", varianteId: null },
+      { bedingung: "freies_spiel", varianteId: null },
+    ]);
+
+    const einl = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tp, einordnung: "einleitung", exerciseId: ein }));
+    fehler(
+      await veroeffentliche(a.supabase, a.id, { trainingId: tp }),
+      "bedingung",
+      "Zum Veröffentlichen fehlt noch: mindestens eine Übung im freien Spiel.",
+    );
+    wert(
+      await ordneUebungZu(a.supabase, a.id, {
+        trainingId: tp,
+        einordnung: "hauptteil",
+        hauptteilkategorie: "fussball-spielen",
+        exerciseId: frei,
+      }),
+    );
+    const pub = wert(await veroeffentliche(a.supabase, a.id, { trainingId: tp }));
+    const { data: name } = await admin.rpc("anzeige_name", { p_user: a.id });
+    assert.deepEqual(pub, {
+      trainingId: tp,
+      sichtbarkeit: "oeffentlich",
+      urheber: name,
+      tragweite: TRAGWEITE_VEROEFFENTLICHEN,
+    });
+    const { data: zeile } = await admin.from("trainings").select("visibility").eq("id", tp).single();
+    assert.equal(zeile?.visibility, "public");
+
+    // Ein fremdes öffentliches Training: sichtbar, aber weder zu veröffentlichen
+    // noch zurückzuziehen (OoS 1).
+    const FREMD = "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.";
+    fehler(await veroeffentliche(b.supabase, b.id, { trainingId: tp }), "keine_rechte", FREMD);
+    fehler(await setzeAufEntwurf(b.supabase, b.id, { trainingId: tp }), "keine_rechte", FREMD);
+
+    // Öffentlich: Die letzte Einleitungs-Übung lässt sich nicht entfernen (AK 7).
+    const gate = fehler(
+      await entferneUebung(a.supabase, a.id, { fassungId: einl.fassungId }),
+      "bedingung",
+      "Ein öffentliches Training braucht mindestens eine Übung in der Einleitung. " +
+        "Setze es zuerst auf Entwurf, wenn du es so ändern willst.",
+    ) as { bedingung?: string; varianteId?: string };
+    assert.equal(gate.bedingung, "einleitung");
+    assert.equal(gate.varianteId, undefined);
+
+    // Entwurf: danach geht es; ein zweites Mal bleibt Entwurf.
+    assert.deepEqual(wert(await setzeAufEntwurf(a.supabase, a.id, { trainingId: tp })), {
+      trainingId: tp,
+      sichtbarkeit: "entwurf",
+    });
+    wert(await setzeAufEntwurf(a.supabase, a.id, { trainingId: tp }));
+    wert(await entferneUebung(a.supabase, a.id, { fassungId: einl.fassungId }));
+
+    // Team-Training: nie öffentlich, beide Richtungen als Regel (AK 6).
+    const { data: team, error } = await admin.from("teams").insert({ name: "Kern-DB-Team" }).select("id").single();
+    if (error) throw error;
+    teams.push(team.id);
+    const { error: e2 } = await admin.from("team_members").insert({ team_id: team.id, user_id: a.id });
+    if (e2) throw e2;
+    const tt = wert(
+      await legeTrainingAn(a.supabase, a.id, { name: "Team", altersstufe: "kinderfussball", stufen: ["F"], teamId: team.id }),
+    ).id;
+    fehler(
+      await veroeffentliche(a.supabase, a.id, { trainingId: tt }),
+      "regel",
+      "Ein Team-Training lässt sich nicht veröffentlichen. Übernimm es zuerst in deinen persönlichen Bestand.",
+    );
+    fehler(
+      await setzeAufEntwurf(a.supabase, a.id, { trainingId: tt }),
+      "regel",
+      "Ein Team-Training ist nie öffentlich und hat darum keinen Entwurfs-Zustand.",
+    );
+    fehler(await veroeffentliche(a.supabase, a.id, { trainingId: randomUUID() }), "nicht_gefunden", "Training nicht gefunden.");
   });
 
   // ── Fremd und unbekannt (#193 AK 12/14, OoS 7) ───────────────────────────

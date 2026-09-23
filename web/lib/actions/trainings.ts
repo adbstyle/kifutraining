@@ -8,9 +8,16 @@ import { ZIEL_MAX } from "@/lib/training";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
 import { kategorienSlugs } from "@/lib/vocab";
-import { alsAltersstufe } from "@/lib/altersstufe";
-import { NICHT_GEFUNDEN, ausDbFehler } from "@/lib/kern/ergebnis";
-import { benenneTrainingUm, legeTrainingAn, setzeStufen, setzeZiel } from "@/lib/kern/training";
+import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag } from "@/lib/kern/ergebnis";
+import {
+  TEAM_OHNE_ENTWURF,
+  benenneTrainingUm,
+  legeTrainingAn,
+  setzeAufEntwurf,
+  setzeStufen,
+  setzeZiel,
+  veroeffentliche,
+} from "@/lib/kern/training";
 import {
   entferneUebung,
   ordneUebungZu,
@@ -25,13 +32,7 @@ import {
   editorAktion,
   oberflaechenMeldung,
 } from "@/lib/actions/adapter";
-import {
-  type Bedingung,
-  bedingungAusFehler,
-  type FehlendeBedingung,
-  fehlendeBedingungenAus,
-  varianteAusFehler,
-} from "@/lib/training-bedingungen";
+import type { Bedingung, FehlendeBedingung } from "@/lib/training-bedingungen";
 
 export type TrainingFormState = {
   status: "idle" | "error";
@@ -152,99 +153,26 @@ export type PublishResult =
   | { status: "incomplete"; missing: FehlendeBedingung[] }
   | { status: "error"; error: string };
 
-/** Welche Bedingungen dem Training fehlen, um öffentlich zu sein. Die Datenbank
- *  prüft dieselben und ist die letzte Instanz; hier geht es darum, das Fehlende
- *  in Klartext benennen zu können, statt einen rohen Trigger-Fehler zu zeigen. */
-async function fehlendeBedingungen(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  trainingId: string,
-  ownerId: string,
-): Promise<{ missing: FehlendeBedingung[] } | { error: string }> {
-  // Ohne owner_id-Filter lesen: sonst käme ein Team-Training gar nicht zurück
-  // und der Trainer bekäme «nicht gefunden» statt des Hinweises, dass er es
-  // zuerst zu sich übernehmen muss.
-  const { data: training } = await supabase
-    .from("trainings")
-    .select(
-      "owner_id, team_id, altersstufe, stufen, training_exercises ( trainingsteil, hauptteilkategorie, variante_id ), training_varianten ( id, position )",
-    )
-    .eq("id", trainingId)
-    .maybeSingle();
-  if (!training) return { error: "Training nicht gefunden." };
-  if (training.team_id)
-    return {
-      error:
-        "Ein Team-Training lässt sich nicht veröffentlichen. Übernimm es zuerst in deinen persönlichen Bestand.",
-    };
-  if (training.owner_id !== ownerId) return { error: "Training nicht gefunden." };
-
-  // Die Hauptteil-Bedingung gilt je Variante (#204 AK 1) — darum kommen die
-  // Varianten mit. Sortiert wird hier: PostgREST garantiert für einen
-  // eingebetteten Satz keine Reihenfolge, und die Meldung soll die Varianten in
-  // derselben Folge nennen wie die Oberfläche (`position`, bei Gleichstand
-  // `id`, wie in `training_fehlende_bedingungen`).
-  const fassungen = (training.training_exercises ?? []).map((f) => ({
-    trainingsteil: f.trainingsteil,
-    hauptteilkategorie: f.hauptteilkategorie,
-    varianteId: f.variante_id,
-  }));
-  const varianten = (training.training_varianten ?? [])
-    .slice()
-    .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
-  return {
-    missing: fehlendeBedingungenAus(
-      alsAltersstufe(training.altersstufe),
-      training.stufen ?? [],
-      fassungen,
-      varianten,
-    ),
-  };
-}
-
 /** Ein persönliches Training öffentlich schalten (Story A AK 1).
  *
  *  Es entsteht keine Kopie: dasselbe Training wird sichtbar und bleibt
  *  bearbeitbar. Die Community sieht damit immer den aktuellen Stand.
  *
  *  Die Bestätigung der Tragweite — inklusive des öffentlich werdenden
- *  Anzeigenamens — erfolgt in der Oberfläche (AK 2); die Prüfung hier ist die
- *  serverseitige Trust-Boundary. */
+ *  Anzeigenamens — erfolgt in der Oberfläche (AK 2); die Regeln stehen im
+ *  Fachkern (`veroeffentliche`), den auch das KI-Werkzeug
+ *  «training_veroeffentlichen» nutzt. */
 export async function veroeffentlicheTraining(
   trainingId: string,
 ): Promise<PublishResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { status: "error", error: NICHT_ANGEMELDET };
+  const a = await angemeldet();
+  if (!a) return { status: "error", error: NICHT_ANGEMELDET };
 
-  const gate = await fehlendeBedingungen(supabase, trainingId, user.id);
-  if ("error" in gate) return { status: "error", error: gate.error };
-  if (gate.missing.length > 0) return { status: "incomplete", missing: gate.missing };
-
-  const { data, error } = await supabase
-    .from("trainings")
-    .update({ visibility: "public" })
-    .eq("id", trainingId)
-    .eq("owner_id", user.id)
-    .select("id")
-    .maybeSingle();
-  if (error) {
-    // Weist die Datenebene ab, ist das keine technische Panne, sondern dieselbe
-    // Aussage wie die Vorabprüfung — nur hat sich der Stand zwischenzeitlich
-    // geändert. Entsprechend übersetzt statt roh durchgereicht.
-    const bedingung = bedingungAusFehler(error.message);
-    // Die Datenebene nennt genau eine verletzte Bedingung — und bei einer
-    // Hauptteil-Bedingung die Variante dazu (#204 AK 2). Mehr als die erste gibt
-    // ein `raise` nicht her; die Vorabprüfung oben zeigt dafür alle.
-    return bedingung
-      ? {
-          status: "incomplete",
-          missing: [{ bedingung, varianteId: varianteAusFehler(error.message) }],
-        }
-      : { status: "error", error: error.message };
-  }
-  if (!data) return { status: "error", error: "Training nicht gefunden." };
+  const r = await veroeffentliche(a.supabase, a.userId, { trainingId });
+  if (!r.ok)
+    return r.art === "bedingung"
+      ? { status: "incomplete", missing: r.fehlend ?? [] }
+      : { status: "error", error: oberflaechenMeldung(r) };
 
   revalidatePath("/trainings");
   revalidiereTraining(trainingId);
@@ -255,29 +183,21 @@ export async function veroeffentlicheTraining(
  *
  *  Es verschwindet aus der Öffentlichkeit und bleibt im Übrigen unberührt.
  *  Kopien, die andere übernommen haben, bleiben bestehen — sie sind
- *  eigenständige Trainings, das Übernehmen kopiert. */
+ *  eigenständige Trainings, das Übernehmen kopiert. Die Regeln stehen in
+ *  `setzeAufEntwurf`. */
 export async function setzeTrainingAufEntwurf(
   trainingId: string,
 ): Promise<TrainingActionResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: NICHT_ANGEMELDET };
-
-  const { data, error } = await supabase
-    .from("trainings")
-    .update({ visibility: "private" })
-    .eq("id", trainingId)
-    .eq("owner_id", user.id)
-    .select("id")
-    .maybeSingle();
-  if (error) return { ok: false, error: error.message };
-  if (!data) return { ok: false, error: "Training nicht gefunden." };
-
-  revalidatePath("/trainings");
-  revalidiereTraining(trainingId);
-  return { ok: true };
+  const r = await editorAktion(async (supabase, userId) => {
+    const k = await setzeAufEntwurf(supabase, userId, { trainingId });
+    // Die Oberfläche bietet das Zurücknehmen an einem Team-Training nie an;
+    // kommt der Aufruf trotzdem, bleibt es beim bisherigen Text.
+    return !k.ok && k.meldung === TEAM_OHNE_ENTWURF
+      ? fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.training)
+      : k;
+  });
+  if (r.ok) revalidatePath("/trainings");
+  return r;
 }
 
 // ── Story #12: Training bearbeiten, umsortieren, entfernen, löschen ──────────────
