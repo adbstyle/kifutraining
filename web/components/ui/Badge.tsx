@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { HERKUNFT_LABEL, herkunftArt } from "@/lib/labels";
 
 type Tone = "manual" | "entwurf" | "oeffentlich" | "neutral" | "varianten";
 
@@ -29,11 +30,13 @@ const tones: Record<Tone, string> = {
 /* Nur die Töne, deren Aufschrift IMMER dieselbe ist, führen hier eine Vorgabe.
    `neutral` und `varianten` beschriften sich aus ihren Daten (Altersstufe,
    Anzahl) — ein leerer Eintrag täuschte eine Vorgabe vor, die es nicht gibt.
-   Darum `Partial`: Fehlt der Ton hier, verlangt die Plakette ihren Text. */
+   Darum `Partial`: Fehlt der Ton hier, verlangt die Plakette ihren Text.
+   Die Aufschriften selbst stehen in `HERKUNFT_LABEL` (lib/labels.ts): dieselben
+   Wörter gibt das KI-Werkzeug «uebungen_suchen» aus (#142). */
 const defaultLabel: Partial<Record<Tone, string>> = {
-  manual: "Kifu-Manual",
-  entwurf: "Entwurf",
-  oeffentlich: "Community",
+  manual: HERKUNFT_LABEL.manual,
+  entwurf: HERKUNFT_LABEL.entwurf,
+  oeffentlich: HERKUNFT_LABEL.oeffentlich,
 };
 
 export function Badge({
@@ -67,7 +70,8 @@ export function HerkunftBadge({
   herkunft: "manual" | "user";
   visibility?: "public" | "private";
 }) {
-  if (herkunft === "manual") return <Badge tone="manual" />;
-  if (visibility === "public") return <Badge tone="oeffentlich" />;
-  return <Badge tone="entwurf">✎ Entwurf</Badge>;
+  const art = herkunftArt(herkunft, visibility);
+  // Der Entwurf trägt auf der Plakette zusätzlich den Stift.
+  if (art === "entwurf") return <Badge tone="entwurf">✎ {HERKUNFT_LABEL.entwurf}</Badge>;
+  return <Badge tone={art} />;
 }

@@ -74,6 +74,19 @@ export function varianteAusFehler(message: string): string | null {
   return marker === "VARIANTE" && id ? id : null;
 }
 
+/** Die Einleitung der Liste fehlender Bedingungen — im Dialog «Noch nicht
+ *  veröffentlichbar» und vor jedem Veröffentlichungs-Hinweis an den
+ *  KI-Assistenten (#195 AK 2). */
+export const ZUM_VEROEFFENTLICHEN_FEHLT = "Zum Veröffentlichen fehlt noch:";
+
+/** Die Tragweite des Veröffentlichens — im Bestätigungsdialog der Oberfläche
+ *  und im Ergebnis sowie in der Beschreibung des KI-Werkzeugs
+ *  «training_veroeffentlichen» (#196 AK 5): Der Anzeigename wird mit dem
+ *  Training öffentlich. Eine Quelle, damit beide Wege dasselbe sagen. */
+export const TRAGWEITE_VEROEFFENTLICHEN =
+  "Das Training wird für alle sichtbar — mit allen Inhalten, Bildern und " +
+  "Feld-Diagrammen. Dein Anzeigename steht als Urheber daran und ist für alle sichtbar.";
+
 /** Was fehlt, aus Sicht des Trainers — mit der Variante, wenn es eine zu
  *  nennen gibt (#204 AK 2). Ergänzt den Satz «Es fehlt …».
  *
@@ -91,7 +104,7 @@ export function bedingungText(bedingung: Bedingung, varianteName?: string): stri
  *  («in jeder Variante») statt die eine zu nennen: Diese Übersetzung steht
  *  jeder Action zur Verfügung, die einen rohen DB-Fehler bekommt — auch denen,
  *  die nur die Fehlermeldung kennen und nicht das Training mit seinen
- *  Variantennamen. Wer den Kontext hat (`veroeffentlicheTraining`), liefert
+ *  Variantennamen. Wer den Kontext hat (`veroeffentliche` im Fachkern), liefert
  *  stattdessen `FehlendeBedingung[]` und die Oberfläche nennt Variante und
  *  Block. */
 function bedingungsMeldung(bedingung: Bedingung, jeVariante: boolean): string {
@@ -280,6 +293,38 @@ function variantenMeldung(message: string): string | null {
   return null;
 }
 
+/** Die Marker der RPC `setze_uebungsfolge` (#193 AK 9) und ihr Klartext. Über
+ *  die Oberfläche unerreichbar — sie verschiebt nur um eine Position; die
+ *  Folge in einem Zug setzt allein der KI-Assistent. Die Texte nennen darum
+ *  den Weg, den er ohne Rückfrage gehen kann (#193 NFR 2). Exportiert, weil
+ *  die Vorprüfung im Kern (`setzeUebungsfolge`) dieselben Sätze um die Namen
+ *  der betroffenen Übungen ergänzt. */
+export const UEBUNGSFOLGE_MELDUNG = {
+  UEBUNGSFOLGE_DOPPELT: "Eine Übung steht in der Reihenfolge mehrfach.",
+  UEBUNGSFOLGE_UNVOLLSTAENDIG:
+    "Die Reihenfolge muss genau die Übungen dieses Abschnitts nennen — jede einmal. " +
+    "Lies das Training neu und sende die vollständige Folge.",
+  UEBUNGSFOLGE_ABSCHNITT_LEER: "In diesem Abschnitt steht keine Übung.",
+} as const;
+
+/** Termine gibt es nur an Team-Trainings (Team-Epic Out of Scope 3). Der
+ *  Fachkern weist einen Termin an einem persönlichen Training mit diesem Satz
+ *  vorab ab (#198 AK 10); die Datenebene ist der Rückhalt. */
+export const TERMIN_NUR_FUER_TEAM =
+  "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.";
+
+/** Der Marker, mit dem die Datenebene einen Termin an einem persönlichen
+ *  Training abweist (Team-Epic, #156). Bisher unübersetzt — der Trainer sah
+ *  den Rohtext. */
+const TERMIN_MARKER: [string, string][] = [["TERMIN_NUR_FUER_TEAM_TRAININGS", TERMIN_NUR_FUER_TEAM]];
+
+/** Die Meldung zu einem Marker aus Übungsfolge oder Termin, sonst `null`. */
+function weitereMeldung(message: string): string | null {
+  for (const [marker, klartext] of [...Object.entries(UEBUNGSFOLGE_MELDUNG), ...TERMIN_MARKER])
+    if (message.includes(marker)) return klartext;
+  return null;
+}
+
 /** Der Marker, mit dem Postgres eine von der RLS abgewiesene Änderung meldet
  *  («new row violates row-level security policy for table …»). */
 const RLS_VERLETZUNG = "row-level security";
@@ -292,10 +337,28 @@ const ALLGEMEIN = "Das liess sich nicht speichern. Bitte versuche es noch einmal
 /** Die Meldung zu einer von der RLS abgewiesenen Änderung, sonst `null`. Sie
  *  trifft, wer an einem fremden Training arbeitet — etwa weil er das Team
  *  inzwischen verlassen hat oder eine veraltete Ansicht offen hält. */
+export function istRlsVerletzung(message: string): boolean {
+  return message.includes(RLS_VERLETZUNG);
+}
+
 function berechtigungsMeldung(message: string): string | null {
-  return message.includes(RLS_VERLETZUNG)
+  return istRlsVerletzung(message)
     ? "Keine Berechtigung für diese Änderung."
     : null;
+}
+
+/** Die Erklärung eines DB-Fehlers, wenn eine fachliche Regel ihn erklärt —
+ *  sonst `null`. Die Kette von `fehlerMeldung` ohne Protokoll und ohne
+ *  Rückfall: Der Fachkern (lib/kern) unterscheidet damit eine verletzte Regel
+ *  (`art: "regel"`) von einem unerwarteten Fehler (`art: "technisch"`). */
+export function fachlicheMeldung(message: string): string | null {
+  return (
+    bedingungsFehler(message) ??
+    schemaMeldung(message) ??
+    gruppenMeldung(message) ??
+    variantenMeldung(message) ??
+    weitereMeldung(message)
+  );
 }
 
 /** Die Meldung zu einem DB-Fehler: die Erklärung, wenn eine Regel greift,
@@ -314,11 +377,7 @@ function berechtigungsMeldung(message: string): string | null {
  *  eine Meldung, ist aber kein erwarteter Verlauf. Was ein Marker oder ein
  *  Constraint fachlich erklärt, ist erwartet und bleibt ungeloggt. */
 export function fehlerMeldung(message: string): string {
-  const fachlich =
-    bedingungsFehler(message) ??
-    schemaMeldung(message) ??
-    gruppenMeldung(message) ??
-    variantenMeldung(message);
+  const fachlich = fachlicheMeldung(message);
   if (fachlich) return fachlich;
   console.error(`[db] ${message}`);
   return berechtigungsMeldung(message) ?? ALLGEMEIN;

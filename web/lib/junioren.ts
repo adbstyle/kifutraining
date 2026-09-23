@@ -199,6 +199,66 @@ export const BANDBREITEN: Record<string, { min: number; max: number }> = {
 /** Vorgesehene Gesamtdauer eines Junioren-Trainings (Manual S. 43). */
 export const GESAMTDAUER_JUNIOREN = 90;
 
+/** Die Abweichung als Anhang: « (+5 min)», « (-5 min)» oder leer. Das Minus ist
+ *  ein ASCII-Minus — so hat es die Oberfläche immer gezeigt. Der führende
+ *  Leerraum gehört dazu: Die Komponente setzt den Anhang farbig direkt hinter
+ *  den Richtwert. */
+function abweichungAnhang(abweichungMin: number): string {
+  if (abweichungMin === 0) return "";
+  return ` (${abweichungMin > 0 ? `+${abweichungMin}` : abweichungMin} min)`;
+}
+
+/** Der Soll-Ist-Abgleich einer Dauer-Summe gegen die Zeitbandbreite des
+ *  Juniorenschemas (Story 6) — Rechnung UND Wortlaut an einer Stelle, für den
+ *  Editor (`ZeitAbgleich`) und die Hinweise an den KI-Assistenten (#195 AK 5).
+ *
+ *  `null`, wo es keine Bandbreite gibt (Auffangen, einblockige Blöcke). Rein
+ *  informativ: Speichern und Veröffentlichen bleiben unberührt (AC 6). Ohne
+ *  erfasste Dauer steht nur der Richtwert, ohne Bewertung (AC 3); Werte exakt
+ *  auf einer Grenze zählen als innerhalb. */
+export function zeitAbgleich(
+  slug: string,
+  summeMin: number,
+): {
+  /** «Richtwert 20–30 min» — mit Halbgeviertstrich. */
+  richtwertText: string;
+  /** « (+5 min)» oder leer. */
+  abweichungText: string;
+  abweichungMin: number;
+  band: { min: number; max: number };
+} | null {
+  const band = BANDBREITEN[slug];
+  if (!band) return null;
+  const abweichungMin =
+    summeMin === 0
+      ? 0
+      : summeMin < band.min
+        ? summeMin - band.min
+        : summeMin > band.max
+          ? summeMin - band.max
+          : 0;
+  return {
+    richtwertText: `Richtwert ${band.min}–${band.max} min`,
+    abweichungText: abweichungAnhang(abweichungMin),
+    abweichungMin,
+    band,
+  };
+}
+
+/** Die Gesamtdauer gegen die vorgesehenen Minuten (Story 6 AC 4): «vorgesehen
+ *  90 min», dazu die Abweichung, sobald überhaupt eine Dauer erfasst ist. */
+export function gesamtAbgleich(
+  summeMin: number,
+  sollMin: number,
+): { vorgesehenText: string; abweichungText: string; abweichungMin: number } {
+  const abweichungMin = summeMin > 0 ? summeMin - sollMin : 0;
+  return {
+    vorgesehenText: `vorgesehen ${sollMin} min`,
+    abweichungText: abweichungAnhang(abweichungMin),
+    abweichungMin,
+  };
+}
+
 /** Für die Veröffentlichung zwingend belegte Blöcke (Story 7 AC 1).
  *
  *  Drei Blöcke fehlen bewusst: das Spiel, weil es als freies Spiel von der
@@ -223,7 +283,7 @@ export const JUNIOREN_PFLICHT_BLOECKE = [
 // Junioren-Datei.
 
 // Was ein Trainingsblock aufnehmen darf, entscheidet nicht diese Datei,
-// sondern `vorlagenFilterFuer()` in web/lib/altersstufe.ts. Von hier holt es
+// sondern `zielblock()` in web/lib/altersstufe.ts. Von hier holt es
 // sich einzig die Zuordnung `BLOCK_ERSCHEINUNGSFORM` unten — sie ist eine
 // fachliche Angabe des Juniorenschemas und gehört darum hierher, die
 // Entscheidung selbst nicht. Die Abbildungsregel weiter oben dient allein
@@ -256,9 +316,9 @@ export const JUNIOREN_PFLICHT_BLOECKE = [
  *  Erscheinungsform.
  *
  *  Diese Konstante ist die EINZIGE Stelle, an der die Zuordnung geführt wird.
- *  Gelesen wird sie über `vorlagenFilterFuer()` in web/lib/altersstufe.ts —
- *  und zwar von BEIDEN Seiten: von der Anzeige (`pickExercises`) und von der
- *  Zuordnungsprüfung (`addTrainingExercise`). Beide müssen dieselbe Antwort
+ *  Gelesen wird sie über `zielblock()` in web/lib/altersstufe.ts — und zwar
+ *  von BEIDEN Seiten: von der Anzeige (`vorlagenFuerBlock`) und von der
+ *  Zuordnungsprüfung (`ordneUebungZu`, beide in web/lib/kern/fassung.ts). Beide müssen dieselbe Antwort
  *  geben, sonst schlüge der Picker Übungen vor, die das Übernehmen abweist. */
 export const BLOCK_ERSCHEINUNGSFORM: Partial<Record<JuniorenBlockSlug, string>> = {
   "jun-explosivitaet": "explosiv-dynamisch-agieren",

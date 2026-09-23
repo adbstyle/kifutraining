@@ -15,6 +15,7 @@ import {
   FASSUNG_KOPIE_SELECT,
 } from "@/lib/fassung";
 import { revalidiereTraining } from "@/lib/revalidate";
+import { naechstePosition } from "@/lib/kern/fassung";
 import { alsAltersstufe } from "@/lib/altersstufe";
 import { teilTraegtDauer } from "@/lib/training";
 import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
@@ -58,33 +59,6 @@ async function ladeFassung(
     // (Story 1). Der Rückfall ist bloss der Typ-Guard: die Spalte ist NOT NULL.
     altersstufe: alsAltersstufe(training.altersstufe),
   };
-}
-
-/** Die nächste freie Position im Zielabschnitt. Eine umgeordnete Fassung reiht
- *  sich am Ende ein (Story 5 AK 7).
- *
- *  Im Hauptteil zählt der Abschnitt je VARIANTE (#201): Dieselbe Position
- *  existiert dort mehrfach, einmal je Zusammenstellung. Der Filter hängt an der
- *  Einordnung und nicht an `hauptteilkategorie` — die Junioren-Hauptteilblöcke
- *  tragen keine Unterkategorie und führen trotzdem Varianten. */
-async function naechstePosition(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  trainingId: string,
-  trainingsteil: string,
-  hauptteilkategorie: string | null,
-  varianteId: string | null,
-  eigeneId: string,
-): Promise<number> {
-  let q = supabase
-    .from("training_exercises")
-    .select("position")
-    .eq("training_id", trainingId)
-    .eq("trainingsteil", trainingsteil)
-    .neq("id", eigeneId);
-  q = hauptteilkategorie ? q.eq("hauptteilkategorie", hauptteilkategorie) : q;
-  q = istHauptteil(trainingsteil) && varianteId ? q.eq("variante_id", varianteId) : q;
-  const { data } = await q.order("position", { ascending: false }).limit(1).maybeSingle();
-  return (data?.position ?? -1) + 1;
 }
 
 /** Eine Fassung im Training bearbeiten (Story 5).
@@ -156,14 +130,15 @@ export async function updateFassung(
     hkat !== fassung.hauptteilkategorie ||
     neueVariante !== fassung.variante_id;
   if (wechsel) {
-    update.position = await naechstePosition(
-      supabase,
-      fassung.training_id,
-      trainingsteil,
-      trainingsteil === "hauptteil" ? hkat : null,
-      gehtInHauptteil ? neueVariante : null,
-      fassungId,
-    );
+    // Eine umgeordnete Fassung reiht sich am Ende ein (Story 5 AK 7) — derselbe
+    // Helfer wie beim Zuordnen (lib/kern/fassung.ts).
+    update.position = await naechstePosition(supabase, {
+      trainingId: fassung.training_id,
+      einordnung: trainingsteil,
+      hauptteilkategorie: trainingsteil === "hauptteil" ? hkat : null,
+      varianteId: gehtInHauptteil ? neueVariante : null,
+      ausser: fassungId,
+    });
     // Wandert die Fassung in ein Auffangen, entfällt ihre Dauer — sie zählt
     // dort nicht zur Trainingszeit. Ohne dieses Leeren liefe das UPDATE in den
     // CHECK `dauer_nicht_auffangen`.
@@ -177,7 +152,6 @@ export async function updateFassung(
   const entfernen = String(form.get("bild_entfernen") ?? "") === "1";
   const altPfad = bildUrlToPath(fassung.bild_url);
   let neuPfad: string | null = null;
-
 
   if (neuesBild) {
     const invalid = storedImageError(datei.type, datei.size);

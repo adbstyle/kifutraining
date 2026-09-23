@@ -28,10 +28,6 @@ import { GRUPPE_NAME_MAX, istHauptteil, nameProblem, zeitKurz } from "@/lib/grup
 import type { ZeilenKontext } from "./ExerciseList";
 import { GESAMTDAUER_JUNIOREN, type Einordnung } from "@/lib/junioren";
 import {
-  junioren_block as juniorenBlockLabels,
-  type JuniorenBlockSlug,
-} from "@/lib/vocab";
-import {
   bedingungsMeldungFuer,
   fehlendeBedingungenAus,
 } from "@/lib/training-bedingungen";
@@ -48,7 +44,6 @@ import {
   type Variante,
 } from "@/lib/varianten";
 import {
-  TRAININGSTEILE,
   HAUPTTEILKATEGORIEN,
   editorGliederung,
   teilTraegtDauer,
@@ -664,10 +659,6 @@ export function TrainingEditor({
       {/* Ein Picker, gesteuert über `open` (Trainingsteil + ggf. Unterkategorie). */}
       {open &&
         (() => {
-          const teilLabel =
-            TRAININGSTEILE.find((t) => t.slug === open.teil)?.label ??
-            juniorenBlockLabels[open.teil as JuniorenBlockSlug] ??
-            open.teil;
           const sub = open.hkat
             ? HAUPTTEILKATEGORIEN.find((h) => h.slug === open.hkat)
             : undefined;
@@ -678,9 +669,7 @@ export function TrainingEditor({
               trainingId={training.id}
               altersstufe={training.altersstufe}
               trainingsteil={open.teil}
-              trainingsteilLabel={teilLabel}
               hauptteilkategorie={sub?.slug}
-              hauptteilkategorieLabel={sub?.label}
               trainingStufen={stufen}
               // Im Hauptteil kommt die Übung in die angezeigte Variante
               // (#201 AK 8). Ausserhalb gibt es keine — dort gilt sie für alle.

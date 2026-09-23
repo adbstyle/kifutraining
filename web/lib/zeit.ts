@@ -22,17 +22,26 @@
 
 export const TRAININGS_ZEITZONE = "Europe/Zurich";
 
-/** Der heutige Kalendertag am Trainingsort als `YYYY-MM-DD`. */
-export function heuteAmTrainingsort(): string {
+/** Der Kalendertag eines Zeitpunkts am Trainingsort als `YYYY-MM-DD` — auch
+ *  für Zeitpunkte, die keine Termine sind (etwa wann ein KI-Zugang erlaubt
+ *  wurde): kurz nach Mitternacht gehört zum Schweizer Tag, nicht zum UTC-Tag
+ *  des Servers. Ein ungültiges Datum ergibt `""` statt «NaN-NaN-NaN». */
+export function kalendertagAmTrainingsort(d: Date = new Date()): string {
+  if (Number.isNaN(d.getTime())) return "";
   const teile = new Intl.DateTimeFormat("de-CH", {
     timeZone: TRAININGS_ZEITZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).formatToParts(new Date());
+  }).formatToParts(d);
   const wert = (typ: Intl.DateTimeFormatPartTypes) =>
     teile.find((p) => p.type === typ)?.value ?? "";
   return `${wert("year")}-${wert("month")}-${wert("day")}`;
+}
+
+/** Der heutige Kalendertag am Trainingsort als `YYYY-MM-DD`. */
+export function heuteAmTrainingsort(): string {
+  return kalendertagAmTrainingsort();
 }
 
 /**

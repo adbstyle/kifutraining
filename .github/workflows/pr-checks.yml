@@ -52,6 +52,23 @@ jobs:
       # bestehenden Kind ein anderes Gesicht — ohne dass sich ein Datensatz
       # ändert und ohne dass der Typecheck etwas merkt.
       - run: npm run check:figuren
+      # KI-Zugang (Story #142): die TS-Zwillinge der Grenzen (600 Aufrufe je
+      # Stunde in ki_aufruf_zaehlen, CHECK kzn_name_laenge), das Werkzeug
+      # «vokabular» vollständig gegen vocab.ts, und dass Suchfilter nur
+      # Enum-Werte annehmen — freie Strings landeten sonst im PostgREST-`or=`.
+      - run: npm run check:ki-zugang
+      # Fachkern (Epic #190): die Zielblock-Regel samt Pflichttext «Im
+      # Kinderfussball-Hauptteil ist die Hauptteilkategorie Pflicht» (#192
+      # NFR 4), die Übersetzung von DB-Fehlern (wortgleich mit der
+      # Oberfläche), und zwei Wächter: kein "use server" und kein next/ in
+      # lib/kern — eine Kern-Funktion nimmt die userId als Parameter und wäre
+      # als Server Action ein offener Endpunkt —, dazu eindeutige
+      # snake_case-Namen im Werkzeugsatz.
+      - run: npm run check:kern
+      # Hinweise an den KI-Assistenten (Story #195): dieselben Hinweise wie im
+      # Editor, je Variante, wortgleich — die Textkonstanten gegen die früheren
+      # JSX-Literale, und dass die Komponenten keine eigenen Literale mehr tragen.
+      - run: npm run check:hinweise
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)
@@ -76,6 +93,7 @@ jobs:
           eval "$(supabase status -o env)"
           {
             echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
           } >> "$GITHUB_ENV"
       # Manual-Seed gegen die Wegwerf-DB: prüft auf JEDEM PR den Seed-Runtime
@@ -86,3 +104,12 @@ jobs:
         run: |
           npm ci
           npm run seed
+      # Fachkern gegen die echte Datenbank (Epic #190): zwei Wegwerf-Konten,
+      # ein Nutzer-Client wie beim KI-Zugang (Bearer, RLS wirkt), dann
+      # Zuordnen, Positionen je Variante, Dauer im Auffangen, Kategorien,
+      # Übungsfolge samt RPC-Markern, Entfernen, und «nicht gefunden» gegen
+      # «keine Rechte» an einem fremden öffentlichen Training. Braucht die
+      # Manual-Übungen aus dem Schritt davor.
+      - name: Fachkern gegen Wegwerf-DB
+        working-directory: web
+        run: npm run check:kern-db

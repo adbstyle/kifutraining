@@ -1,4 +1,5 @@
 import {
+  altersstufe as altersstufeLabels,
   altersstufeSlugs,
   erscheinungsformSlugs,
   erscheinungsform_juniorenSlugs,
@@ -342,40 +343,92 @@ export type VorlagenFilter = {
   erscheinungsformen?: readonly string[];
 };
 
-/** Welche Bibliotheks-Übungen darf dieser Block eines Trainings aufnehmen?
+/** Ein Problem am Zielblock — mit dem Eingabefeld, das es verursacht, und
+ *  wo es eine Aufzählung gibt, den zulässigen Werten. */
+export type ZielblockProblem = {
+  feld: "einordnung" | "hauptteilkategorie";
+  text: string;
+  zulaessig?: readonly string[];
+};
+
+/** Welche Bibliotheks-Übungen darf dieser Block eines Trainings aufnehmen —
+ *  oder was stimmt am Block nicht?
  *
  *  Eine Übung passt genau dann, wenn ihre Altersstufe der des Trainings
  *  entspricht UND entweder ihre Einordnung dem Zielblock entspricht ODER sie
  *  eine Erscheinungsform trägt, die diesen Block anzieht (Story #134,
  *  `BLOCK_ERSCHEINUNGSFORM` in web/lib/junioren.ts) — im
- *  Kinderfussball-Hauptteil zusätzlich die Hauptteilkategorie. Der zweite Zweig
- *  gibt es nur im Juniorenfussball und nur für die zwei Blöcke, denen das
+ *  Kinderfussball-Hauptteil zusätzlich die Hauptteilkategorie. Den zweiten
+ *  Zweig gibt es nur im Juniorenfussball und nur für die zwei Blöcke, denen das
  *  Manual eine Athletik-Erscheinungsform zuordnet; im Kinderfussball bleibt es
  *  bei der Einordnung allein. Beide Altersstufen führen ihren eigenen Bestand;
  *  über die Stufengrenze wird nichts zugeordnet (Story 6 AK 1/2,
  *  Übungswelten).
  *
- *  Diese Funktion speist BEIDES: was der Picker anzeigt und was die Server
- *  Action beim Zuordnen akzeptiert (`pickExercises` und `addTrainingExercise`).
- *  Beide MÜSSEN dieselbe Antwort geben, sonst zeigte der Picker Treffer, die
- *  das Hinzufügen abweist. Wer die Antwort auf eine konkrete Vorlage braucht,
+ *  Diese Funktion speist BEIDES: was die Übungsauswahl eines Blocks anbietet
+ *  und was das Zuordnen annimmt — `vorlagenFuerBlock` und `ordneUebungZu` in
+ *  web/lib/kern/fassung.ts, die der Picker der Oberfläche und die KI-Werkzeuge
+ *  gleichermassen aufrufen. Wer die Antwort auf eine konkrete Vorlage braucht,
  *  nimmt `vorlagePasst()` gleich unten — die Anzeige stellt denselben Filter
  *  als Abfrage, die Annahme prüft ihn Zeile für Zeile.
  *
- *  `null` heisst: kein gültiges Zuordnungsziel für diese Altersstufe — der
- *  Block gehört dem anderen Lehrmittel an, oder die im Hauptteil zwingende
- *  Kategorie fehlt.
+ *  Ist der Block kein gültiges Ziel, benennt `problem` den Grund (#192 NFR 4,
+ *  Spike #191). Die Oberfläche trifft diese Fälle nie, weil der Editor nur
+ *  gültige Blöcke anbietet; ein KI-Client dagegen probiert — und «gehört nicht
+ *  zum Trainingsschema» wäre bei einem Hauptteil ohne Kategorie irreführend:
  *
- *  Spiegelt die CHECKs `te_trainingsteil_je_altersstufe`,
+ *  1. Die Einordnung gehört nicht zur Altersstufe → `feld: "einordnung"`,
+ *     `zulaessig` nennt die Einordnungen dieser Altersstufe.
+ *  2. Kinderfussball-Hauptteil ohne (gültige) Hauptteilkategorie → die
+ *     Pflicht samt der zulässigen Werte im Text.
+ *  3. Eine Hauptteilkategorie ausserhalb des Kinderfussball-Hauptteils →
+ *     abgewiesen statt still verworfen, damit der Aufrufer nicht glaubt, sie
+ *     sei gesetzt.
+ *
+ *  Spiegelt die CHECKs `te_trainingsteil_je_altersstufe` (Fall 1),
  *  `te_kategorien_je_altersstufe` und `hauptteilkategorie_genau_bei_hauptteil`
  *  zusammen mit dem Trigger `te_altersstufe_erben`, der einer Fassung die
- *  Altersstufe ihres Trainings gibt. */
-export function vorlagenFilterFuer(
+ *  Altersstufe ihres Trainings gibt. Für die Fälle 2 und 3 prüft die
+ *  Datenebene an Fassungen bloss die Wertemenge
+ *  (`training_exercises_hauptteilkategorie_check`) — die Trust-Boundary ist
+ *  dort `ordneUebungZu`. */
+export function zielblock(
   stufe: Altersstufe,
   einordnung: string,
   hauptteilkategorie?: string | null,
-): VorlagenFilter | null {
-  if (!einordnungsSlugsFuer(stufe).includes(einordnung)) return null;
+): { ok: true; filter: VorlagenFilter } | { ok: false; problem: ZielblockProblem } {
+  const einordnungen = einordnungsSlugsFuer(stufe);
+  if (!einordnungen.includes(einordnung))
+    return {
+      ok: false,
+      problem: {
+        feld: "einordnung",
+        text: `Dieser Block gehört nicht zum Trainingsschema ${altersstufeLabels[stufe]}.`,
+        zulaessig: einordnungen,
+      },
+    };
+  if (traegtHauptteilkategorie(stufe, einordnung)) {
+    if (
+      !hauptteilkategorie ||
+      !(hauptteilkategorieSlugs as readonly string[]).includes(hauptteilkategorie)
+    )
+      return {
+        ok: false,
+        problem: {
+          feld: "hauptteilkategorie",
+          text: `Im Kinderfussball-Hauptteil ist die Hauptteilkategorie Pflicht: ${hauptteilkategorieSlugs.join(", ")}.`,
+        },
+      };
+    return { ok: true, filter: { altersstufe: stufe, trainingsteil: einordnung, hauptteilkategorie } };
+  }
+  if (hauptteilkategorie)
+    return {
+      ok: false,
+      problem: {
+        feld: "hauptteilkategorie",
+        text: "Eine Hauptteilkategorie gibt es nur im Kinderfussball-Hauptteil.",
+      },
+    };
   // Die anziehende Erscheinungsform gibt es nur im Juniorenfussball und nur
   // dort, wo die Zuordnung einen Eintrag führt. Im Kinderfussball bleibt der
   // angebotene Bestand allein an die Einordnung gebunden (Story #134 Out of
@@ -385,24 +438,23 @@ export function vorlagenFilterFuer(
     stufe === "juniorenfussball"
       ? BLOCK_ERSCHEINUNGSFORM[einordnung as keyof typeof BLOCK_ERSCHEINUNGSFORM]
       : undefined;
-  const erscheinungsformen = anziehend ? [anziehend] : undefined;
-  if (!traegtHauptteilkategorie(stufe, einordnung))
-    return { altersstufe: stufe, trainingsteil: einordnung, erscheinungsformen };
-  if (
-    !hauptteilkategorie ||
-    !(hauptteilkategorieSlugs as readonly string[]).includes(hauptteilkategorie)
-  )
-    return null;
-  return { altersstufe: stufe, trainingsteil: einordnung, hauptteilkategorie };
+  return {
+    ok: true,
+    filter: {
+      altersstufe: stufe,
+      trainingsteil: einordnung,
+      erscheinungsformen: anziehend ? [anziehend] : undefined,
+    },
+  };
 }
 
 /** Passt diese konkrete Vorlage in den Block, den der Filter beschreibt?
  *
- *  Das Gegenstück zur Abfrage, die `pickExercises` aus demselben Filter baut:
- *  Dort wird die Bedingung an die Datenbank gestellt, hier an eine bereits
- *  gelesene Zeile. Beide lesen dieselben Felder desselben Filters, damit der
- *  Picker nichts vorschlagen kann, was `addTrainingExercise` danach abweist
- *  (Story #134 NFR 1/3).
+ *  Das Gegenstück zur Abfrage, die `vorlagenFuerBlock` (web/lib/kern/fassung.ts)
+ *  aus demselben Filter baut: Dort wird die Bedingung an die Datenbank
+ *  gestellt, hier an eine bereits gelesene Zeile. Beide lesen dieselben Felder
+ *  desselben Filters, damit die Auswahl nichts vorschlagen kann, was
+ *  `ordneUebungZu` danach abweist (Story #134 NFR 1/3).
  *
  *  Die Altersstufe ist NICHT Teil dieser Antwort. Sie ist die oberste
  *  Dimension und braucht beim Zuordnen eine eigene Meldung — «passt nicht zu
@@ -411,7 +463,7 @@ export function vorlagenFilterFuer(
  *
  *  Auf der Datenebene prüft dies KEIN Constraint: Seit dem Fassungsmodell gibt
  *  es keinen `plan_exercise_phase_guard` mehr, der eine Fassung inhaltlich
- *  gegen ihren Block hielte. Die Regel lebt allein in der Server Action, und
+ *  gegen ihren Block hielte. Die Regel lebt allein in `ordneUebungZu`, und
  *  das bleibt so — sie ist eine Vorschlags- und Annahmeregel für neue
  *  Zuordnungen, keine Invariante über dem Bestand (Story #134 NFR 4). */
 export function vorlagePasst(

@@ -1,10 +1,11 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { oeffentlicherOrigin } from "@/lib/origin";
+import { sichererRuecksprung } from "@/lib/weiterleitung";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { eigeneBildPfade } from "@/lib/fassung";
 import {
@@ -22,26 +23,13 @@ export type AuthState = {
   email?: string;
 };
 
-/** Kanonischer Origin für Auth-Redirects. In Prod via APP_ORIGIN festnageln
- *  (gegen Host-Header-Spoofing); lokal aus den Request-Headern abgeleitet. */
-async function appOrigin(): Promise<string> {
-  if (process.env.APP_ORIGIN) return process.env.APP_ORIGIN;
-  const h = await headers();
-  const host = h.get("host") ?? "127.0.0.1:3000";
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}`;
-}
-
-function safeNext(raw: FormDataEntryValue | null): string {
-  const v = String(raw ?? "/");
-  return v.startsWith("/") ? v : "/";
-}
-
 /** Login per E-Mail + Passwort (Story 5). */
 export async function login(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const next = safeNext(formData.get("redirect"));
+  // Dieselbe Prüfung wie auf der Login-Seite: Das Formularfeld lässt sich
+  // auch ohne die Seite befüllen (#142, offene Weiterleitung).
+  const next = sichererRuecksprung(formData.get("redirect"));
 
   if (!EMAIL_RE.test(email) || password.length === 0) {
     return { status: "error", message: "Bitte E-Mail und Passwort eingeben.", email };
@@ -79,7 +67,7 @@ export async function register(_prev: AuthState, formData: FormData): Promise<Au
     return { status: "error", message: "Die Passwörter stimmen nicht überein.", email };
   }
 
-  const origin = await appOrigin();
+  const origin = await oeffentlicherOrigin();
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
     email,
@@ -104,7 +92,7 @@ export async function register(_prev: AuthState, formData: FormData): Promise<Au
 export async function resendConfirmation(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim();
   if (!EMAIL_RE.test(email)) return { status: "error", message: "Ungültige E-Mail-Adresse." };
-  const origin = await appOrigin();
+  const origin = await oeffentlicherOrigin();
   const supabase = await createClient();
   await supabase.auth.resend({
     type: "signup",
@@ -120,7 +108,7 @@ export async function requestPasswordReset(_prev: AuthState, formData: FormData)
   if (!EMAIL_RE.test(email)) {
     return { status: "error", message: "Bitte eine gültige E-Mail-Adresse eingeben." };
   }
-  const origin = await appOrigin();
+  const origin = await oeffentlicherOrigin();
   const supabase = await createClient();
   // Fehler bewusst nicht durchreichen.
   await supabase.auth.resetPasswordForEmail(email, {

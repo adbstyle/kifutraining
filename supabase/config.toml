@@ -377,11 +377,15 @@ enabled = false
 # OAuth server configuration
 [auth.oauth_server]
 # Enable OAuth server functionality
-enabled = false
+# KI-Clients verbinden sich per OAuth 2.1 mit dem Konto (Story #142). Staging
+# und Prod: im Dashboard nachziehen — `db push` überträgt Auth-Konfig nicht.
+enabled = true
 # Path for OAuth consent flow UI
 authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
-allow_dynamic_registration = false
+# Nötig, weil MCP-Clients (Claude Code/Desktop, claude.ai) sich selbst
+# registrieren; CIMD kennt Supabase Auth nicht (Spike #141).
+allow_dynamic_registration = true
 
 [edge_runtime]
 enabled = true
