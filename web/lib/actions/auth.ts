@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { eigeneBildPfade } from "@/lib/fassung";
+import { pfad } from "@/lib/such-parameter";
 import {
   raeumeGeloeschteFassungsBilder,
   teamBildKandidaten,
@@ -32,9 +33,14 @@ async function appOrigin(): Promise<string> {
   return `${proto}://${host}`;
 }
 
+/* Das Rücksprungziel kommt aus einem versteckten Feld und damit letztlich aus
+   der Adresse — es darf die Anwendung niemals verlassen. Die Prüfung liegt in
+   `pfad()` und nicht hier: Ein blosses `startsWith("/")` liesse
+   `//evil.example` durch (schema-relative URL), und `redirect()` schickte den
+   Browser auf einen fremden Host. Eine Datei hochgeladen bekommen wir hier
+   nicht — ein `File` gilt darum wie nichts. */
 function safeNext(raw: FormDataEntryValue | null): string {
-  const v = String(raw ?? "/");
-  return v.startsWith("/") ? v : "/";
+  return pfad(typeof raw === "string" ? raw : undefined);
 }
 
 /** Login per E-Mail + Passwort (Story 5). */

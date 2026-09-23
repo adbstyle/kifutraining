@@ -4,6 +4,7 @@ import { TrainingEditor } from "@/components/training/editor/TrainingEditor";
 import { getTrainingForEdit } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { trainingsKrumen } from "@/lib/brotkrumen";
+import { text, type RohWert } from "@/lib/such-parameter";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -21,10 +22,10 @@ export default async function TrainingEditPage({
    *  stammt vom Rückweg aus der Fassungs-Bearbeitung und wird hier nicht
    *  ausgewertet; er steht in der Signatur, damit sichtbar ist, womit diese
    *  Seite aufgerufen wird. */
-  searchParams: Promise<{ variante?: string; bearbeitet?: string }>;
+  searchParams: Promise<{ variante?: RohWert; bearbeitet?: RohWert }>;
 }) {
   const { id } = await params;
-  const { variante } = await searchParams;
+  const variante = text((await searchParams).variante);
   const training = await getTrainingForEdit(id);
   // Nicht vorhanden oder fremd -> zurück in die eigene Übersicht (kein Schreib-
   // zugriff auf fremde Trainings, Story #12 AC8).

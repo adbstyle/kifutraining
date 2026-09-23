@@ -7,6 +7,7 @@ import { updateFassung } from "@/lib/actions/fassung";
 import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
 import { trainingsKrumen } from "@/lib/brotkrumen";
 import { VARIANTE_PARAM, varianteAnhang } from "@/lib/varianten";
+import { text, type RohParameter } from "@/lib/such-parameter";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -24,15 +25,14 @@ export default async function FassungBearbeitenPage({
   searchParams,
 }: {
   params: Promise<{ id: string; teId: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<RohParameter>;
 }) {
   const { id, teId } = await params;
   // Aus welcher Variante des Hauptteils heraus die Fassung geöffnet wurde
   // (#201). Sie wird gebraucht, um nach dem Speichern dorthin zurückzuführen —
   // und für den einen Fall, in dem die Fassung von ausserhalb in den Hauptteil
   // wandert und erstmals eine Variante braucht.
-  const varianteRoh = (await searchParams)[VARIANTE_PARAM];
-  const variante = Array.isArray(varianteRoh) ? varianteRoh[0] : varianteRoh;
+  const variante = text((await searchParams)[VARIANTE_PARAM]);
   const anhang = varianteAnhang(variante);
   const f = await getFassungZumBearbeiten(teId);
   // Auch ein fremdes oder nicht existierendes Training endet hier — beides ist

@@ -22,6 +22,7 @@ import {
   varianteAus,
 } from "@/lib/varianten";
 import { trainingsKrumen } from "@/lib/brotkrumen";
+import { flag, text, type RohWert } from "@/lib/such-parameter";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -34,7 +35,7 @@ export default async function TrainingViewPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ uebernommen?: string; variante?: string }>;
+  searchParams: Promise<{ uebernommen?: RohWert; variante?: RohWert }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -74,7 +75,7 @@ export default async function TrainingViewPage({
   // Angesehen wird genau eine Variante des Hauptteils, zu Beginn die erste
   // (#203 AK 1/7). Die Wahl steht im Suchparameter und nicht im Zustand: Diese
   // Seite sehen auch Betrachter ohne Konto, und ein Link braucht keine Rechte.
-  const aktive = varianteAus(sp.variante, training.varianten);
+  const aktive = varianteAus(text(sp.variante), training.varianten);
   const sections = leseGliederung(
     training.altersstufe,
     sichtbareZuordnungen(training.exercises, aktive?.id),
@@ -84,7 +85,7 @@ export default async function TrainingViewPage({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-      {sp.uebernommen && (
+      {flag(sp.uebernommen) && (
         <Flash message="Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen." />
       )}
       {/* Die Aktionen stehen auf der Brotkrumen-Zeile, rechtsbündig — dieselbe

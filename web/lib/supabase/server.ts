@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { env } from "@/lib/env";
+import { fetchMitZweitemVersuch } from "./fetch";
 
 /**
  * Request-gebundener Supabase-Client (server-only).
@@ -13,6 +14,9 @@ export async function createClient() {
   const cookieStore = await cookies();
 
   return createServerClient(env.supabaseUrl(), env.supabaseAnonKey(), {
+    // Ein zweiter Versuch bei transienten Gateway-Fehlern — nur lesend, siehe
+    // `./fetch`.
+    global: { fetch: fetchMitZweitemVersuch },
     cookies: {
       getAll() {
         return cookieStore.getAll();

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, Meldung } from "@/components/ui";
+import { pfad, text, type RohWert } from "@/lib/such-parameter";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
@@ -11,10 +12,11 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirect?: string; error?: string }>;
+  searchParams: Promise<{ redirect?: RohWert; error?: RohWert }>;
 }) {
   const sp = await searchParams;
-  const redirect = sp.redirect?.startsWith("/") ? sp.redirect : "/";
+  const redirect = pfad(sp.redirect);
+  const fehler = text(sp.error);
 
   return (
     <>
@@ -27,7 +29,7 @@ export default async function LoginPage({
         </p>
       </header>
 
-      {sp.error && (
+      {fehler && (
         <Meldung tone="fehler" className="mb-4">
           Der Bestätigungslink war ungültig oder abgelaufen. Bitte melde dich an
           oder fordere einen neuen Link an.

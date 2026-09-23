@@ -6,6 +6,7 @@ import { TrainingExerciseDetail } from "@/components/training/TrainingExerciseDe
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { getTrainingView } from "@/lib/queries/trainings";
 import { leseGliederung, formatDuration } from "@/lib/training";
+import { text, type RohWert } from "@/lib/such-parameter";
 import {
   abschnittMitVariante,
   sichtbareZuordnungen,
@@ -24,10 +25,10 @@ export default async function TrainingDruckPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ variante?: string }>;
+  searchParams: Promise<{ variante?: RohWert }>;
 }) {
   const { id } = await params;
-  const { variante: varianteParam } = await searchParams;
+  const varianteParam = text((await searchParams).variante);
   const training = await getTrainingView(id);
   if (!training) return <TrainingNotAvailable />;
 

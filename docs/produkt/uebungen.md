@@ -109,9 +109,9 @@ Training. Unvollständige Fassungen lassen sich erst nach Ergänzung kopieren.
 ## Finden
 
 Gesucht wird über den gesamten Text einer Übung, also auch über Material, Varianten und Ablauf;
-Wortteile genügen. Sobald etwas im Suchfeld steht, tritt an die Stelle der Lupe ein Kreuz, das die
-Suche mit einem Klick leert und den Cursor darin stehen lässt; die übrigen Filter bleiben dabei
-gesetzt. Der Katalog zeigt beide Altersstufen nebeneinander — er ist der eine Ort, an dem der ganze
+wie sich das Suchfeld dabei verhält, gilt überall gleich und steht unter
+[Was überall gilt](was-ueberall-gilt.md#suchen-und-filtern). Der Katalog zeigt beide
+Altersstufen nebeneinander — er ist der eine Ort, an dem der ganze
 sichtbare Bestand zusammensteht. Jede Übung steht dort als Kachel: Bild oder Diagramm, darunter
 Name und Einordnung, und auf dem Bild die Herkunft — Kifu-Manual, Community oder der eigene
 Entwurf. Die Alterskategorie steht nicht auf der Kachel; sie ist der Filter, mit dem man die Liste
@@ -181,10 +181,9 @@ Auf dem Platz zählt, was zu tun ist; ein einzelnes Blatt aus der Bibliothek sol
 nennen.
 
 Der Druck startet direkt von der Übungsseite: das Drucker-Symbol steht neben dem Herz, und der
-Druckdialog des Geräts öffnet sich sofort. Auf dem Blatt bleibt von der Bedienung nichts übrig.
-Gedruckt wird mit den Bordmitteln des Geräts, auf dem Rechner wie auf dem Telefon; das Sichern
-als PDF übernimmt der Druckdialog. Eine eigene PDF-Datei erzeugt die Anwendung nicht, und
-mehrere Übungen in einem Vorgang lassen sich nicht drucken.
+Druckdialog des Geräts öffnet sich sofort. Wie gedruckt wird und was dabei für jedes Blatt
+gilt — Bordmittel des Geräts, kein eigenes PDF, kein Sammeldruck —, steht unter
+[Was überall gilt](was-ueberall-gilt.md#drucken).
 
 ## Bekannte Grenzen
 

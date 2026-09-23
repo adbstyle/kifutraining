@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { PFAD_HEADER } from "@/lib/pfad";
+import { fetchMitZweitemVersuch } from "./fetch";
 
 // URL-Präfixe, die ein eingeloggtes Konto erfordern (UX-Guard; die echte
 // Durchsetzung bleibt RLS). Route-Groups wie (app) wirken nicht auf die URL,
@@ -39,6 +40,11 @@ export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: pfadHeader(request) } });
 
   const supabase = createServerClient(env.supabaseUrl(), env.supabaseAnonKey(), {
+    // Die Middleware läuft bei JEDEM Seitenaufruf und fragt dabei `auth/v1/user`
+    // — auch dieser Aufruf lief in den Prod-Logs schon in den Gateway-Timeout.
+    // Scheitert er, gilt der Trainer still als abgemeldet und landet auf einer
+    // geschützten Seite beim Login. Der zweite Versuch fängt genau das ab.
+    global: { fetch: fetchMitZweitemVersuch },
     cookies: {
       getAll() {
         return request.cookies.getAll();
