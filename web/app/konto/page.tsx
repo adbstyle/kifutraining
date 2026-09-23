@@ -82,11 +82,33 @@ export default async function KontoPage() {
       <Card className="mb-4 p-6">
         <h2 className="type-title-large text-on-surface">KI-Zugänge</h2>
         <p className="type-body-medium mt-2 text-on-surface-mittel">
-          Verbinde einen KI-Assistenten wie Claude mit deinem Konto: Trage in
-          seinen Einstellungen die Adresse{" "}
-          <strong className="break-all text-on-surface">{`${origin}${MCP_PFAD}`}</strong>{" "}
-          ein und erlaube den Zugriff im Browser. Höchstens {KI_ZUGAENGE_MAX}{" "}
-          Zugänge gleichzeitig.
+          Verbinde einen KI-Assistenten mit deinem Konto. Er sucht dann Übungen
+          und stellt Trainings für dich zusammen. Die Adresse dafür ist{" "}
+          <strong className="break-all text-on-surface">{`${origin}${MCP_PFAD}`}</strong>.
+          Ein Passwort oder Schlüssel brauchst du nicht: Du erlaubst den Zugriff
+          im Browser, mit deiner Anmeldung hier.
+        </p>
+        {/* Zwei konkrete Wege statt «in seinen Einstellungen»: Der Trainer weiss
+            nicht, wo ein Client die Adresse erwartet (Rückmeldung 2026-09-23).
+            Jeder Client, der Werkzeuge über MCP einbindet, funktioniert gleich. */}
+        <ol className="type-body-medium mt-3 list-decimal space-y-2 pl-5 text-on-surface-mittel">
+          <li>
+            <strong className="text-on-surface">Claude Desktop oder claude.ai:</strong>{" "}
+            Einstellungen → Connectors → «Custom connector» hinzufügen → Adresse
+            eintragen. Der Browser öffnet sich: anmelden, dem Zugang einen Namen
+            geben, «Erlauben».
+          </li>
+          <li>
+            <strong className="text-on-surface">Claude Code im Terminal:</strong>{" "}
+            <code className="break-all text-on-surface">{`claude mcp add --transport http kifu ${origin}${MCP_PFAD}`}</code>,
+            danach in der Sitzung <code className="text-on-surface">/mcp</code> → kifu →
+            «Authenticate»; der Rest läuft wie oben im Browser.
+          </li>
+        </ol>
+        <p className="type-body-small mt-3 text-on-surface-mittel">
+          Andere Assistenten, die Werkzeuge über MCP einbinden, gehen gleich.
+          Höchstens {KI_ZUGAENGE_MAX} Zugänge gleichzeitig; jeden kannst du hier
+          einzeln widerrufen.
         </p>
         <div className="mt-4">
           {zugaenge === null ? (

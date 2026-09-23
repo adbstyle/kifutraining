@@ -168,10 +168,12 @@ Mitglieder verwalten kann der Assistent nicht. Damit legt der Assistent Training
 Altersstufen an und führt sie weitgehend wie die Anwendung; was ihm fehlt, steht unter den
 bekannten Grenzen. Eigene Übungen legt er noch nicht an.
 
-Verbunden wird in zwei Schritten. Zuerst trägt man in den Einstellungen des Assistenten die
-Adresse `https://ki-fu.ch/api/mcp` ein; die Konto-Seite nennt sie ebenfalls. Der Assistent
-öffnet daraufhin im Browser eine Seite der Anwendung, auf der man den Zugriff erlaubt oder
-ablehnt. Wer dort nicht angemeldet ist, meldet sich zuerst an und kommt danach auf dieselbe
+Verbunden wird in zwei Schritten. Zuerst trägt man die Adresse `https://ki-fu.ch/api/mcp` in
+den Assistenten ein; die Konto-Seite nennt sie ebenfalls und zeigt die zwei gängigen Wege: In
+Claude Desktop oder auf claude.ai unter Einstellungen → Connectors als «Custom connector», in
+Claude Code im Terminal mit dem dort genannten Befehl. Jeder andere Assistent, der Werkzeuge über
+MCP einbindet, geht gleich. Der Assistent öffnet daraufhin im Browser eine Seite der Anwendung,
+auf der man den Zugriff erlaubt oder ablehnt. Wer dort nicht angemeldet ist, meldet sich zuerst an und kommt danach auf dieselbe
 Seite zurück, wo er weiterhin ablehnen kann. Ein Passwort oder einen Schlüssel muss man dem
 Assistenten nie geben.
 
