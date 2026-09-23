@@ -145,13 +145,13 @@ export function TeamTrainingsListe({
                 </h3>
                 {/* Kennzahlen der ERSTEN Variante (#206 AK 2), gerechnet in
                     `mapListRow` — ein Training spielt nur eine Variante. */}
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 type-label-medium text-on-surface-mittel">
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 type-body-medium text-on-surface-mittel">
                   <span className="inline-flex items-center gap-1.5">
-                    <ListChecks size={15} strokeWidth={2} aria-hidden />
+                    <ListChecks size={16} strokeWidth={2} aria-hidden />
                     {t.exerciseCount} {t.exerciseCount === 1 ? "Übung" : "Übungen"}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <Clock size={15} strokeWidth={2} aria-hidden />
+                    <Clock size={16} strokeWidth={2} aria-hidden />
                     {t.hasAnyDuration ? formatDuration(t.totalDuration) : "Keine Dauer"}
                   </span>
                 </div>
