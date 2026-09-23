@@ -422,9 +422,11 @@ entsteht eine private, frei bearbeitbare Kopie des ganzen Trainings.
 
 Die Übersicht zeigt beides zusammen: die öffentlichen Trainings der Community, die auch ohne
 Konto zugänglich sind, und die eigenen, Entwürfe eingeschlossen. Ein Schalter grenzt auf die
-eigenen ein. An jedem Eintrag stehen Altersstufe und Alterskategorien, an jedem eigenen
-zusätzlich, ob er ein Entwurf oder öffentlich ist; er führt in die Bearbeitung, ein fremder in
-die Ansicht. Besucher ohne Konto sehen ausschliesslich die öffentlichen Trainings. Gesucht wird
+eigenen ein. An jedem Eintrag stehen die Alterskategorien, an denen sich auch die Altersstufe
+abliest; die Altersstufe selbst ist nur angeschrieben, solange ein Entwurf noch keine Kategorie
+hat. An jedem eigenen Eintrag steht zusätzlich, ob er ein Entwurf oder öffentlich ist; er führt
+in die Bearbeitung, ein fremder in die Ansicht. Den Abschluss jedes Eintrags bilden Urheber (nur
+an fremden) und das Datum der letzten Änderung in kurzer Form (16.09.26). Besucher ohne Konto sehen ausschliesslich die öffentlichen Trainings. Gesucht wird
 über den Namen, gefiltert nach Alterskategorie, deren Werte wie im Übungskatalog nach
 Altersstufe beschriftet sind; das Suchfeld lässt sich wie dort mit einem Klick auf das Kreuz
 leeren. Ohne Suchbegriff steht das zuletzt Geänderte

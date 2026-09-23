@@ -42,11 +42,15 @@ export function TrainingCard({
           {training.stufen.map((k) => (
             <KategorieChip key={k} k={k} />
           ))}
-          {/* Welchem Lehrmittel das Training folgt (Story 5 AK 3). Bewusst
-              neutral statt in einer Kategorie-Farbe: die Altersstufe ist keine
-              Alterskategorie und darf deren gelernte Codierung nicht borgen —
-              derselbe Look wie am Übungsformular. */}
-          <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
+          {/* Welchem Lehrmittel das Training folgt (Story 5 AK 3), liest sich
+              schon an den Alterskategorien ab — G/F/E ist Kinder-, D–A
+              Juniorenfussball. Die Marke steht darum nur noch, wo keine
+              Kategorie gewählt ist (Entwurf). Bewusst neutral statt in einer
+              Kategorie-Farbe: die Altersstufe ist keine Alterskategorie und
+              darf deren gelernte Codierung nicht borgen. */}
+          {training.stufen.length === 0 && (
+            <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
+          )}
           {/* Führt das Training mehrere Varianten des Hauptteils, steht das
               schon in der Übersicht (#206 AK 1) — sonst müsste man jedes
               Training öffnen, um Alternativen zu finden. Bei genau einer
@@ -75,32 +79,32 @@ export function TrainingCard({
           {training.name}
         </h3>
 
-        {/* Urheber: der Anzeigename, nie die E-Mail. Bei anonymisierten
-            Trainings (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
-        {zeigeUrheber && training.urheber && (
-          <p className="mt-1 type-body-small text-on-surface-mittel">
-            von {training.urheber}
-          </p>
-        )}
-
         {/* Übungszahl und Dauer der ERSTEN Variante (#206 AK 2) — ein Training
             spielt nur eine Variante, die Summe über alle wäre eine Dauer, die
             es nie hat. Gerechnet wird das in `mapListRow`. */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 type-label-medium text-on-surface-mittel">
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 type-body-medium text-on-surface-mittel">
           <span className="inline-flex items-center gap-1.5">
-            <ListChecks size={15} strokeWidth={2} aria-hidden />
+            <ListChecks size={16} strokeWidth={2} aria-hidden />
             {training.exerciseCount} {training.exerciseCount === 1 ? "Übung" : "Übungen"}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Clock size={15} strokeWidth={2} aria-hidden />
+            <Clock size={16} strokeWidth={2} aria-hidden />
             {training.hasAnyDuration ? formatDuration(training.totalDuration) : "Keine Dauer"}
           </span>
         </div>
 
-        {updatedLabel && (
-          <p className="mt-2 type-label-small text-on-surface-mittel">
-            Geändert: {updatedLabel}
-          </p>
+        {/* Herkunft und Stand schliessen die Kachel ab — sie ordnen ein, der
+            Inhalt steht darüber. Urheber: der Anzeigename, nie die E-Mail; bei
+            anonymisierten Trainings (Konto gelöscht) entfällt er ganz
+            (Story 15). */}
+        {((zeigeUrheber && training.urheber) || updatedLabel) && (
+          <div className="mt-3 flex flex-wrap gap-x-2 type-body-small text-on-surface-mittel">
+            {zeigeUrheber && training.urheber && <span>von {training.urheber}</span>}
+            {zeigeUrheber && training.urheber && updatedLabel && (
+              <span aria-hidden>·</span>
+            )}
+            {updatedLabel && <span>Geändert am {updatedLabel}</span>}
+          </div>
         )}
       </Link>
     </Card>

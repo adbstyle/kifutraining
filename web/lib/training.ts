@@ -509,12 +509,15 @@ export function editorGliederung<
   });
 }
 
-/** Datum lesbar formatieren (de-CH, z. B. "8. Juni 2026"). */
+/** Datum kompakt formatieren (de-CH, z. B. "08.06.26"). Fest auf Zürcher
+ *  Zeit: der Server rendert sonst in UTC, und eine Änderung kurz nach
+ *  Mitternacht trüge das Datum des Vortags. */
 export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("de-CH", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    timeZone: "Europe/Zurich",
   }).format(new Date(iso));
 }
 
