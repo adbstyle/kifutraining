@@ -9,6 +9,7 @@
 //
 // REIN: keine Server-Importe — `check:ki-zugang` lädt diese Datei mit tsx.
 import { z } from "zod";
+import { UUID_FORMAT } from "@/lib/kennung";
 
 /** Ein nicht-leeres Vokabular als zod-Enum. Leer hiesse: das Vokabular ist
  *  kaputt generiert — dann soll das Laden scheitern, nicht still alles
@@ -60,12 +61,10 @@ export function katalogFilter(optionen: readonly Option[], vorspann: string) {
     .describe(`${vorspann} Mehrere Werte wirken als ODER. ${liste}.`);
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** Ist das eine UUID? Guard für Kennungen von aussen, bevor sie eine
- *  uuid-Spalte erreichen (dort gäbe es sonst einen Datenbankfehler). */
-export function istUuid(wert: unknown): wert is string {
-  return typeof wert === "string" && UUID.test(wert);
+/** Eine Kennung (UUID) als Eingabe — im Format von `istUuid` (lib/kennung.ts)
+ *  statt `z.uuid()`, das streng nach RFC-Version und -Variante prüft. */
+export function kennung(beschreibung: string) {
+  return z.string().trim().regex(UUID_FORMAT, "Keine gültige Kennung (UUID).").describe(beschreibung);
 }
 
 /** Was jede Übung in jedem Werkzeug trägt — die Angaben der Katalog-Karte

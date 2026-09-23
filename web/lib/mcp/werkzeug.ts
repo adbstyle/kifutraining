@@ -31,6 +31,13 @@ import { meldungGebremst } from "@/lib/mcp/regeln";
  *    übersetzen. Unerwartetes wird zu `technisch`; der Rohtext steht nur im
  *    Server-Log.
  *
+ * Eingabeschemas prüfen NUR Typ, Enum aus dem Vokabular und Kennungsformat
+ * — keine Längen, kein «mindestens eins», keine Fachregel. Die Regeln stehen
+ * im Fachkern (lib/kern), den auch die Oberfläche nutzt: So gibt es jede
+ * Regel genau einmal, und ihre Meldung ist wortgleich mit der Oberfläche
+ * samt `feld` und `zulaessig`, statt einer Validierungsmeldung des SDK.
+ * (Obergrenzen für Seitengrössen wie `limit` sind keine Fachregel.)
+ *
  * Weil `ausfuehren` ein `KernErgebnis<z.infer<Ausgabe>>` liefern muss, prüft
  * schon der Compiler, dass `structuredContent` zum angekündigten
  * `outputSchema` passt; zur Laufzeit prüft es das SDK zusätzlich.

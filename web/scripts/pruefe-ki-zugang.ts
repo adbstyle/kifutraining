@@ -440,6 +440,7 @@ pruefe("fehlerErgebnis: jedes gesetzte Feld eines Kern-Fehlers kommt an", () => 
     fehlend: [{ bedingung: "einleitung", varianteId: null }],
     wiederholbar: false,
     retryAfter: 7,
+    fremd: true,
     hinweis: "Es ist keine Kopie entstanden.",
   };
   const aussen = (k: string) =>

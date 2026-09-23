@@ -6,8 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { kopiereTraining } from "@/lib/training-kopie";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
-import { istAltersstufe, kategorienFuer } from "@/lib/altersstufe";
-import { fehlerMeldung } from "@/lib/training-bedingungen";
+import { legeTrainingAn } from "@/lib/kern/training";
+import { angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
 
 /**
  * Trainings zwischen Person und Team bewegen (Team-Epic Story 5).
@@ -104,52 +104,19 @@ export async function erstelleTeamTraining(
   altersstufe: string,
   stufen: string[],
 ): Promise<{ ok: false; error: string } | void> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: "Nicht angemeldet." };
 
-  const trimmed = name.trim();
-  if (!trimmed) return { ok: false, error: "Bitte einen Namen angeben." };
-  if (!istAltersstufe(altersstufe))
-    return { ok: false, error: "Bitte die Altersstufe wählen." };
-
-  const erlaubt = kategorienFuer(altersstufe);
-  const gewaehlt = stufen.filter((s) => erlaubt.includes(s));
-  if (gewaehlt.length === 0)
-    return { ok: false, error: "Bitte mindestens eine Alterskategorie wählen." };
-  if (gewaehlt.length !== stufen.length)
-    return {
-      ok: false,
-      error:
-        "Diese Alterskategorie gehört nicht zur gewählten Altersstufe. " +
-        "Wähle nur Kategorien dieser Altersstufe.",
-    };
-
-  const { data, error } = await supabase
-    .from("trainings")
-    .insert({
-      name: trimmed,
-      team_id: teamId,
-      altersstufe,
-      stufen: gewaehlt,
-      visibility: "private",
-    })
-    .select("id")
-    .single();
+  // Dieselben Regeln wie beim persönlichen Anlegen und beim KI-Werkzeug
+  // (lib/kern/training.ts) — seit #192 auch die Namensgrenze von 80 Zeichen.
+  const r = await legeTrainingAn(a.supabase, a.userId, { name, altersstufe, stufen, teamId });
   // Ein stilles `return` liesse den Dialog wortlos stehen: der Erfolg zeigt
-  // sich nur an der Weiterleitung, ein Fehlschlag an gar nichts. Übersetzt statt
-  // roh: die Marker der Datenebene versteht sonst niemand.
-  if (error || !data)
-    return {
-      ok: false,
-      error: error ? fehlerMeldung(error.message) : "Erstellen fehlgeschlagen.",
-    };
+  // sich nur an der Weiterleitung, ein Fehlschlag an gar nichts.
+  if (!r.ok) return { ok: false, error: oberflaechenMeldung(r) };
 
   revalidiereTeam(teamId);
-  revalidiereTraining(data.id);
-  redirect(`/training/${data.id}/edit`);
+  revalidiereTraining(r.wert.id);
+  redirect(`/training/${r.wert.id}/edit`);
 }
 
 /** Ein öffentliches Training übernehmen (Story 11) — zu sich selbst oder in ein

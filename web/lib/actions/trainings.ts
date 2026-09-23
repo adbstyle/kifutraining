@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getExercises, type ExerciseListRow } from "@/lib/queries/exercises";
+import type { ExerciseListRow } from "@/lib/queries/exercises";
 import {
   stufenAbgedeckt,
   teilTraegtDauer,
@@ -14,24 +14,12 @@ import {
 import { bildUrlToPath } from "@/lib/storage";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
-import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
-import {
-  istEigeneFassungsDatei,
-  kopiereBild,
-  kopiereDiagrammVon,
-  entferneStorageObjekt,
-  inhaltFelder,
-  VORLAGE_SELECT,
-} from "@/lib/fassung";
-import { kategorienSlugs, altersstufe as altersstufeLabels } from "@/lib/vocab";
-import { istHauptteil } from "@/lib/gruppen";
-import {
-  alsAltersstufe,
-  istAltersstufe,
-  kategorienFuer,
-  vorlagePasst,
-  vorlagenFilterFuer,
-} from "@/lib/altersstufe";
+import { istEigeneFassungsDatei, entferneStorageObjekt } from "@/lib/fassung";
+import { kategorienSlugs } from "@/lib/vocab";
+import { alsAltersstufe, kategorienFuer } from "@/lib/altersstufe";
+import { legeTrainingAn } from "@/lib/kern/training";
+import { ordneUebungZu, vorlagenFuerBlock } from "@/lib/kern/fassung";
+import { alsActionResult, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
 import {
   type Bedingung,
   bedingungAusFehler,
@@ -102,23 +90,6 @@ function validStufen(values: string[]): string[] {
 
 // ── Fassungen: Kopieren einer Vorlage ins Training ───────────────────────────
 
-/** Eine Bibliotheks-Übung, wie sie für das Kopieren gelesen wird (VORLAGE_SELECT). */
-type Vorlage = {
-  id: string;
-  name: string;
-  /** Nach welchem Lehrmittel die Vorlage geführt wird — der Guard beim
-   *  Zuordnen prüft sie gegen die Altersstufe des Trainings (Story 6 AK 4). */
-  altersstufe: string;
-  trainingsteil: string;
-  hauptteilkategorie: string | null;
-  /** Die Erscheinungsformen der Vorlage. Sie kommen als Inhaltsfeld ohnehin
-   *  mit (`FASSUNG_INHALT_FELDER`); der Guard beim Zuordnen liest sie, weil ein
-   *  Block auch über sie gefüllt werden darf (Story #134). */
-  erscheinungsform: string[] | null;
-  bild_url: string | null;
-  diagramm: unknown;
-} & Record<string, unknown>;
-
 /** Die Bilddatei einer Fassung entfernen (Story 3 AK 13).
  *
  *  Gelöscht wird ausschliesslich die eigene Kopie: der Dateiname muss die
@@ -144,73 +115,27 @@ export async function createTraining(
   _prev: TrainingFormState,
   form: FormData,
 ): Promise<TrainingFormState> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Nicht angemeldet." };
+  const a = await angemeldet();
+  if (!a) return { status: "error", message: "Nicht angemeldet." };
 
-  const name = clean(form.get("name"));
-  const stufen = validStufen(csv(form.get("stufen")));
-  // Dieselbe Regel wie beim Umbenennen. Ohne sie entstünde hier ein Name, den
-  // das Feld im Editor-Kopf nicht mehr speichern könnte — die Grenze sperrte
-  // dann ausgerechnet das Werkzeug, mit dem man sie einhält.
-  const namensProblem = trainingNameProblem(name);
-  if (namensProblem) return { status: "error", errors: { name: namensProblem } };
-
-  // Die Altersstufe ist Pflicht und hat bewusst KEINEN Rückfall: Sie bindet
-  // lebenslang (Story 5 AK 5), und eine stille Vorgabe wäre genau das
-  // Durchrutschen, das die Story ausschliesst. Die Datenebene führt die Spalte
-  // seit der Migration `training_altersstufe_default_drop` ohne Default.
-  const altersstufe = clean(form.get("altersstufe"));
-  if (!istAltersstufe(altersstufe))
-    return { status: "error", message: "Bitte die Altersstufe wählen." };
-
-  // Mindestens eine Alterskategorie, ab dem Anlegen (PO 2026-08-30). Bestehende
-  // Trainings ohne bleiben bearbeitbar; ein neues entsteht nicht mehr so. Die
-  // Datenebene setzt es als Trigger `trainings_stufe_pflicht` ebenfalls durch.
-  if (stufen.length === 0)
-    return {
-      status: "error",
-      message: "Bitte mindestens eine Alterskategorie wählen.",
-    };
-  // Die Kategorien folgen der gewählten Altersstufe; sie bestimmen sie nicht
-  // mehr (Story 5 AK 4). Ein stufenfremder Wert wird abgewiesen statt still
-  // weggefiltert — sonst entstünde ein Training mit weniger Kategorien, als der
-  // Trainer gewählt hat.
-  const erlaubt = kategorienFuer(altersstufe);
-  if (stufen.some((s) => !erlaubt.includes(s)))
-    return {
-      status: "error",
-      message:
-        "Diese Alterskategorie gehört nicht zur gewählten Altersstufe. " +
-        "Wähle nur Kategorien dieser Altersstufe.",
-    };
-
-  const { data, error } = await supabase
-    .from("trainings")
-    .insert({
-      name,
-      ziel: zielWert(form.get("ziel")),
-      owner_id: user.id,
-      stufen,
-      altersstufe,
-      visibility: "private",
-    })
-    .select("id")
-    .single();
-
-  if (error || !data) {
-    // Übersetzt, nicht roh: eine gemischte Stufenwahl kommt hier als
-    // Constraint-Meldung an, und die versteht niemand (Epic #71).
-    return {
-      status: "error",
-      message: error ? fehlerMeldung(error.message) : "Speichern fehlgeschlagen.",
-    };
-  }
+  // Das Formular liefert Rohwerte; die Regeln — Name, Altersstufe, Kategorien —
+  // stehen im Fachkern, den auch das KI-Werkzeug «training_anlegen» nutzt.
+  // `zielWert` kürzt still auf ZIEL_MAX wie bisher; `validStufen` lässt nur
+  // bekannte Kategorien durch.
+  const r = await legeTrainingAn(a.supabase, a.userId, {
+    name: clean(form.get("name")),
+    altersstufe: clean(form.get("altersstufe")),
+    stufen: validStufen(csv(form.get("stufen"))),
+    ziel: zielWert(form.get("ziel")),
+  });
+  // Nur der Name hat ein eigenes Feld; alles andere steht über dem Formular.
+  if (!r.ok)
+    return r.feld === "name"
+      ? { status: "error", errors: { name: oberflaechenMeldung(r) } }
+      : { status: "error", message: oberflaechenMeldung(r) };
 
   revalidatePath("/trainings");
-  redirect(`/training/${data.id}/edit`);
+  redirect(`/training/${r.wert.id}/edit`);
 }
 
 // ── Story #10: Übung einem Trainingsteil zuordnen ────────────────────────────
@@ -234,122 +159,22 @@ export async function addTrainingExercise(
   exerciseId: string,
   hauptteilkategorie?: string | null,
   /** Die Variante des Hauptteils, in die die Übung kommt (#201 AK 8). Ohne sie
-   *  greift die Regel der Datenebene «die erste» (`te_variante_ausrichten`);
-   *  der Editor gibt sie immer ausdrücklich mit. Ausserhalb des Hauptteils
-   *  ohne Bedeutung — der Trigger nullt sie dort. */
+   *  die erste — dieselbe Regel wie `te_variante_ausrichten`; der Editor gibt
+   *  sie immer ausdrücklich mit. Ausserhalb des Hauptteils ohne Bedeutung. */
   varianteId?: string,
 ): Promise<TrainingActionResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: "Nicht angemeldet." };
 
-  // Schreibrecht prüfen (UX-Guard; RLS setzt es ohnehin serverseitig durch).
-  // Team-Trainings sind für jedes Mitglied bearbeitbar (Story 6, Team-Epic) —
-  // und ihre Bildkopien gehören in den Team-Ordner, nicht in den persönlichen.
-  // Die Altersstufe kommt aus derselben Zeile: sie ist eine Eigenschaft des
-  // Trainings und darf nie vom Aufrufer stammen.
-  const { data: training } = await supabase
-    .from("trainings")
-    .select("owner_id, team_id, altersstufe")
-    .eq("id", trainingId)
-    .maybeSingle();
-  if (!training) return { ok: false, error: "Training nicht gefunden." };
-  const ziel = bearbeitungszielVon(training, user.id);
-  if (!ziel) return { ok: false, error: "Training nicht gefunden." };
-  if (!istAltersstufe(training.altersstufe))
-    return { ok: false, error: "Das Training hat keine gültige Altersstufe." };
-
-  // Welche Übung dieser Block aufnehmen darf — dieselbe Quelle, aus der der
-  // Picker anbietet (`vorlagenFilterFuer`).
-  const filter = vorlagenFilterFuer(training.altersstufe, trainingsteil, hauptteilkategorie);
-  if (!filter)
-    return {
-      ok: false,
-      error: `Dieser Block gehört nicht zum Trainingsschema ${altersstufeLabels[training.altersstufe]}.`,
-    };
-  const hkat = filter.hauptteilkategorie ?? null;
-
-  // Vorlage mit allen Inhalten holen (RLS lässt nur Sichtbares durch).
-  const { data: ex } = await supabase
-    .from("exercises")
-    .select(VORLAGE_SELECT)
-    .eq("id", exerciseId)
-    .maybeSingle<Vorlage>();
-  if (!ex) return { ok: false, error: "Übung nicht verfügbar." };
-  // Passt die Vorlage zu diesem Block? Erst die Altersstufe — sie ist die
-  // oberste Dimension, und ihre Verletzung braucht eine eigene Meldung: «passt
-  // nicht zu diesem Block» liesse den Trainer einen anderen Block suchen, den
-  // es für diese Übung gar nicht gibt.
-  if (!istAltersstufe(ex.altersstufe) || ex.altersstufe !== filter.altersstufe)
-    return {
-      ok: false,
-      error: `Diese Übung gehört zur Altersstufe ${
-        istAltersstufe(ex.altersstufe) ? altersstufeLabels[ex.altersstufe] : "einer anderen"
-      } und passt darum nicht in ein Training der Altersstufe ${altersstufeLabels[filter.altersstufe]}.`,
-    };
-  // Einordnung ODER anziehende Erscheinungsform — dieselbe Entscheidung, die
-  // der Picker als Abfrage stellt (`vorlagePasst` liest denselben Filter).
-  if (!vorlagePasst(filter, ex))
-    return { ok: false, error: "Übung passt nicht zu diesem Block." };
-
-  // Nächste Position bestimmen (eindeutige Reihenfolge je Unterkategorie im
-  // Hauptteil, sonst je Trainingsteil — und im Hauptteil zusätzlich je
-  // Variante, #201).
-  //
-  // Der Variantenfilter hängt an der EINORDNUNG, nicht an `hkat`: Die
-  // Junioren-Hauptteilblöcke tragen keine Unterkategorie und führen trotzdem
-  // Varianten. Ohne die Unterscheidung begänne die zweite Variante dort bei
-  // einer Position, die in ihr längst frei ist.
-  let posQuery = supabase
-    .from("training_exercises")
-    .select("position")
-    .eq("training_id", trainingId)
-    .eq("trainingsteil", trainingsteil);
-  posQuery = hkat ? posQuery.eq("hauptteilkategorie", hkat) : posQuery;
-  posQuery =
-    istHauptteil(trainingsteil) && varianteId
-      ? posQuery.eq("variante_id", varianteId)
-      : posQuery;
-  const { data: last } = await posQuery
-    .order("position", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const position = (last?.position ?? -1) + 1;
-
-  // Die ID vorab erzeugen: sie benennt die Bildkopie, die VOR dem Insert
-  // entstehen muss (der Pfad steht dann bereits in bild_url). Scheitert der
-  // Insert, bleibt höchstens eine unreferenzierte Datei liegen, die ein
-  // erneuter Versuch überschreibt — nie eine Fassung ohne Inhalt.
-  const fassungId = crypto.randomUUID();
-  const bild = await kopiereBild(supabase, ex.bild_url, bildOrdnerFuer(ziel), fassungId);
-  if (bild.error) return { ok: false, error: bild.error };
-
-  const { error } = await supabase.from("training_exercises").insert({
-    id: fassungId,
-    training_id: trainingId,
-    trainingsteil,
-    hauptteilkategorie: hkat,
-    // Nur im Hauptteil: ausserhalb würde der CHECK
-    // `te_variante_genau_bei_hauptteil` greifen, und der Trigger nullt sie
-    // ohnehin.
-    ...(istHauptteil(trainingsteil) && varianteId ? { variante_id: varianteId } : {}),
-    position,
-    ...inhaltFelder(ex),
-    bild_url: bild.url,
-    diagramm: kopiereDiagrammVon(ex.diagramm),
+  const r = await ordneUebungZu(a.supabase, a.userId, {
+    trainingId,
+    einordnung: trainingsteil,
+    exerciseId,
+    hauptteilkategorie,
+    varianteId,
   });
-  if (error) {
-    await entferneStorageObjekt(supabase, bild.pfad);
-    // Übersetzt statt roh: Eine Übung, deren Werte nicht zur Altersstufe des
-    // Trainings passen, weist die Datenebene als Constraint-Verletzung ab
-    // (Story 1).
-    return { ok: false, error: fehlerMeldung(error.message) };
-  }
-
-  revalidiereTraining(trainingId);
-  return { ok: true };
+  if (r.ok) revalidiereTraining(trainingId);
+  return alsActionResult(r);
 }
 
 // ── Story A: Veröffentlichen ist ein Zustand, keine Kopie ────────────────────
@@ -845,8 +670,9 @@ export async function setzeNotiz(
  *  Story #134 auch die Übungen, die seine Erscheinungsform anzieht — im
  *  Juniorenfussball füllt «Explosiv und dynamisch agieren» die Explosivität und
  *  «Den Körper stabil halten» das Aufwärmen. Alles kommt aus
- *  `vorlagenFilterFuer` — derselben Funktion, nach der `addTrainingExercise`
- *  entscheidet, sonst zeigte der Picker Treffer, die das Hinzufügen abweist.
+ *  `zielblock` (über `vorlagenFuerBlock`) — derselben Funktion, nach der
+ *  `ordneUebungZu` entscheidet, sonst zeigte der Picker Treffer, die das
+ *  Hinzufügen abweist.
  *
  *  Die Altersstufe stammt aus dem geladenen Training, nie vom Aufrufer: sonst
  *  liesse sich der Bestand der anderen Welt hereinholen — anzeigen liesse er
@@ -858,35 +684,22 @@ export async function pickExercises(
   hauptteilkategorie?: string | null,
   opts: { form?: string[]; typ?: string[]; q?: string } = {},
 ): Promise<ExerciseListRow[]> {
+  // Anonym bleibt die Abfrage möglich (öffentliche Trainings, RLS) — darum
+  // hier ohne `angemeldet()`.
   const supabase = await createClient();
-  const { data: training } = await supabase
-    .from("trainings")
-    .select("altersstufe")
-    .eq("id", trainingId)
-    .maybeSingle();
-  if (!training || !istAltersstufe(training.altersstufe)) return [];
-
-  const filter = vorlagenFilterFuer(training.altersstufe, einordnung, hauptteilkategorie);
-  if (!filter) return [];
-  return getExercises({
-    altersstufe: filter.altersstufe,
-    // Einordnung und anziehende Erscheinungsform als EINE ODER-Dimension: der
-    // Block zeigt seinen eigenen Bestand plus die Übungen, die er anzieht
-    // (Story #134 AC 1/2/4/5).
-    einordnung: {
-      teile: [filter.trainingsteil],
-      formen: filter.erscheinungsformen ? [...filter.erscheinungsformen] : undefined,
-    },
-    // Die Hauptteilkategorie bleibt der harte UND-Filter: Sie grenzt eine
-    // Kinderfussball-Hauptteil-Zuordnung auf die fixierte Unterkategorie ein
-    // (Story #23), sie ist keine Alternative zur Einordnung. Vorschläge gibt es
-    // im Kinderfussball ohnehin keine.
-    hkat: filter.hauptteilkategorie ? [filter.hauptteilkategorie] : undefined,
-    // Nutzerfilter — sie grenzen die ganze Vorschlagsmenge weiter ein, egal
-    // woher ein Treffer kommt (Story #134 AC 6). `opts.form` ist der
-    // Erscheinungsform-Filter des Trainers, nicht die Vorschlagsquelle oben.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  // Dieselbe Abfrage wie das KI-Werkzeug «training_uebungen_fuer_block», ohne
+  // Leer-Grund (der Picker kennt seine Filter selbst). Ein Fehler (Training
+  // unsichtbar, Block unbekannt) heisst hier wie bisher: keine Vorschläge.
+  const r = await vorlagenFuerBlock(supabase, user?.id ?? null, {
+    trainingId,
+    einordnung,
+    hauptteilkategorie,
     form: opts.form,
     typ: opts.typ,
     q: opts.q,
   });
+  return r.ok ? r.wert.treffer : [];
 }

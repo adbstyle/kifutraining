@@ -5,7 +5,7 @@ import { brauchtFahrplan, type Altersstufe } from "@/lib/altersstufe";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { kopiereDiagramm, parseDiagramm } from "@/lib/diagramm";
 import { userSlug } from "@/lib/slug";
-import type { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /** Die inhaltlichen Felder, die eine Fassung von ihrer Vorlage übernimmt.
  *  Bewusst NICHT dabei: slug, source, owner_id, visibility (Bibliotheks-
@@ -167,8 +167,6 @@ export function teamOrdner(teamId: string): BildOrdner {
 // Geteilt zwischen dem Übernehmen einer Vorlage ins Training und dem Kopieren
 // einer Fassung in die Bibliothek: beide erzeugen eine entkoppelte Kopie.
 
-type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
-
 /** Das Diagramm entkoppelt kopieren (frische Element-IDs). `parseDiagramm` ist
  *  die Trust-Boundary: ein strukturell unbrauchbares Diagramm ergibt keine
  *  Kopie, statt den ganzen Kopiervorgang scheitern zu lassen. */
@@ -176,6 +174,10 @@ export function kopiereDiagrammVon(quelle: unknown): unknown {
   const data = parseDiagramm(quelle);
   return data && data.elemente.length > 0 ? kopiereDiagramm(data) : null;
 }
+
+/** Die Meldung, wenn die Bildkopie scheitert. */
+export const BILDKOPIE_FEHLGESCHLAGEN =
+  "Das Bild liess sich nicht kopieren. Bitte versuche es noch einmal.";
 
 /** Eine Bilddatei byte-identisch in den Ziel-Ordner kopieren.
  *
@@ -195,7 +197,12 @@ export async function kopiereBild(
 
   const zielPfad = fassungBildPfad(ordner, zielId, quellPfad);
   const { error } = await supabase.storage.from(STORAGE_BUCKET).copy(quellPfad, zielPfad);
-  if (error) return { url: null, pfad: null, error: `Bildkopie fehlgeschlagen: ${error.message}` };
+  if (error) {
+    // Der Rohtext nennt Pfade und Storage-Interna — er gehört ins Protokoll,
+    // nicht vor den Trainer oder den KI-Client.
+    console.error(`[storage] Bildkopie ${quellPfad} → ${zielPfad}: ${error.message}`);
+    return { url: null, pfad: null, error: BILDKOPIE_FEHLGESCHLAGEN };
+  }
 
   return {
     url: supabase.storage.from(STORAGE_BUCKET).getPublicUrl(zielPfad).data.publicUrl,

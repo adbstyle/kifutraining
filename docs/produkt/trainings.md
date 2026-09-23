@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-09-11. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-09-23. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -77,7 +77,10 @@ Ein neues Training beginnt mit einem Namen, der Altersstufe und mindestens einer
 Alterskategorie; zur Wahl stehen dabei nur die Kategorien der gewählten Altersstufe. Ohne
 Kategorie entsteht kein Training, und die letzte lässt sich später auch nicht mehr entfernen.
 Ein Ziel darf gleich mitgegeben werden: ein kurzer Satz dazu, woran das Team in dieser Einheit
-arbeitet, freiwillig, höchstens zweihundert Zeichen und jederzeit änderbar.
+arbeitet, freiwillig, höchstens zweihundert Zeichen und jederzeit änderbar. Der Name darf
+höchstens achtzig Zeichen lang sein, auch bei einem Training, das direkt im Team entsteht.
+Anlegen und Übungen zuordnen lässt sich ein Kinderfussball-Training auch über einen verbundenen
+KI-Assistenten, nach denselben Regeln (siehe [Konto und Zugang](konto-und-zugang.md)).
 
 Der Name lässt sich später dort ändern, wo er steht: Beim Zusammenstellen ist die Überschrift des
 Trainings selbst das Feld. Dass sie beschreibbar ist, sagt eine Fläche, die beim Zeigen darunter

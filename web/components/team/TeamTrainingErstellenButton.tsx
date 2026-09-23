@@ -6,6 +6,7 @@ import { AltersstufeField, Button, Dialog, TextField } from "@/components/ui";
 import { StufenField } from "@/components/training/StufenField";
 import { kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
 import { erstelleTeamTraining } from "@/lib/actions/team-trainings";
+import { trainingNameProblem } from "@/lib/training";
 
 /* Ein Training direkt im Team anlegen (Story 5 AK 5). Es gehört von Anfang an
    dem Team — niemand muss es erst „stellen".
@@ -33,8 +34,11 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
   }
 
   function anlegen() {
-    if (!name.trim()) {
-      setFehler({ name: "Bitte einen Namen angeben." });
+    // Dieselbe Regel wie auf dem Server (lib/kern/training.ts): nicht leer,
+    // höchstens 80 Zeichen — hier nur, damit der Fehler ohne Roundtrip steht.
+    const namensProblem = trainingNameProblem(name);
+    if (namensProblem) {
+      setFehler({ name: namensProblem });
       return;
     }
     if (!altersstufe) {

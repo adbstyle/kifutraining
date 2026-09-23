@@ -43,9 +43,19 @@ Ein KI-Assistent wie Claude lässt sich mit dem eigenen Konto verbinden. Er kann
 Gespräch im Übungsbestand suchen und einzelne Übungen mit allen Angaben abrufen — denselben
 Bestand, den man auch selbst in der Anwendung sieht, mit denselben Filtern und denselben Werten
 für Altersstufe, Trainingsteil und die übrigen Angaben. Private Übungen anderer bleiben auch
-dem Assistenten verborgen. Anlegen oder ändern kann der Assistent heute noch nichts: er sucht
-und liest nur. Weitere Fähigkeiten kommen nach und nach dazu; dieser Abschnitt wächst mit
-ihnen.
+dem Assistenten verborgen.
+
+Der Assistent kann ausserdem ein Kinderfussball-Training anlegen — mit Name, Alterskategorien
+und auf Wunsch einem Ziel — und ihm Übungen zuordnen. Das Training entsteht als privater
+Entwurf im eigenen Bestand und sieht in der Anwendung genauso aus, als hätte man es selbst
+zusammengestellt. Dabei gelten dieselben Regeln wie in der Anwendung: Zu einem Trainingsteil
+bietet der Assistent nur an, was dort hineinpasst, im Hauptteil passend zur gewählten
+Hauptteilkategorie, und er erfährt, ob der Bestand für einen Teil gar nichts führt oder nur
+die Suche zu eng war. Jede zugeordnete Übung kommt als eigene Kopie samt Bild und Diagramm ans
+Ende ihres Teils; dieselbe Übung darf mehrfach vorkommen. Passt eine Übung nicht, nennt die
+Anwendung dem Assistenten die verletzte Regel, damit er sich ohne Rückfrage korrigieren kann,
+und die bisherigen Zuordnungen bleiben stehen. Junioren-Trainings legt der Assistent noch
+nicht an. Weitere Fähigkeiten kommen nach und nach dazu; dieser Abschnitt wächst mit ihnen.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man in den Einstellungen des Assistenten die
 Adresse `https://ki-fu.ch/api/mcp` ein; die Konto-Seite nennt sie ebenfalls. Der Assistent

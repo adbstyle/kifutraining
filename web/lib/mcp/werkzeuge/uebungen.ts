@@ -1,12 +1,11 @@
 import "server-only";
 import type { z } from "zod";
+import { getExerciseDetailFuer, type ExerciseDetail } from "@/lib/queries/exercises";
 import {
-  getExerciseDetailFuer,
   getExercisesFuer,
-  type ExerciseDetail,
   type ExerciseFilters,
   type ExerciseListRow,
-} from "@/lib/queries/exercises";
+} from "@/lib/queries/uebungen-fuer";
 import {
   altersstufe as altersstufeLabels,
   feldtyp as feldtypLabels,
@@ -24,7 +23,8 @@ import {
 import { einordnungNachSpalten } from "@/lib/filter-optionen";
 import { hatDiagramm } from "@/lib/diagramm";
 import { NICHT_GEFUNDEN, fehlschlag, ok } from "@/lib/kern/ergebnis";
-import { istUuid, wert, wertOderNull, type UebungKopf } from "@/lib/mcp/bausteine";
+import { istUuid } from "@/lib/kennung";
+import { wert, wertOderNull, type UebungKopf } from "@/lib/mcp/bausteine";
 import {
   AbrufEingabe,
   SucheAusgabe,
@@ -83,7 +83,8 @@ function kopf(ex: Grunddaten, zugang: Zugang, mitDiagramm: boolean): z.infer<typ
 
 const kategorienVon = (k: string[] | null) => (k ?? []).map((s) => wert(kategorieStufe, s));
 
-function alsTreffer(row: ExerciseListRow, zugang: Zugang): z.infer<typeof SuchTreffer> {
+/** Ein Suchtreffer — auch für «training_uebungen_fuer_block» (#192 NFR 2). */
+export function alsTreffer(row: ExerciseListRow, zugang: Zugang): z.infer<typeof SuchTreffer> {
   return { ...kopf(row, zugang, hatDiagramm(row.diagramm)), kategorien: kategorienVon(row.kategorien) };
 }
 

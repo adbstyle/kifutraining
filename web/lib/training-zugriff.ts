@@ -9,9 +9,7 @@
 // Die RLS bleibt die Autorität — hier geht es um klare Meldungen und um den
 // richtigen Bild-Ordner, nicht um Zugriffsschutz.
 import { teamOrdner, userOrdner, type BildOrdner } from "@/lib/fassung";
-import type { createClient } from "@/lib/supabase/server";
-
-type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /** Wem das Training gehört — und damit, wohin seine Bilder gehören. */
 export type Bearbeitungsziel =

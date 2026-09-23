@@ -1,8 +1,10 @@
 import { JUNIOREN_TEILE, istEinblockig, type Einordnung } from "@/lib/junioren";
 import { istHauptteil } from "@/lib/gruppen";
 import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
+import { EINORDNUNG_LABEL } from "@/lib/labels";
 import type { JuniorenBlockSlug } from "@/lib/vocab";
 import {
+  altersstufe as altersstufeLabels,
   trainingsteil as trainingsteilLabels,
   hauptteilkategorie as hauptteilkategorieLabels,
   type TrainingsteilSlug,
@@ -109,6 +111,29 @@ export const LEER_HINWEIS: Record<string, string> = {
 /** Obergrenze des Trainingsziels in Zeichen (Story 10 AC 6). Entspricht der
  *  einzigen bereits bestehenden Textbegrenzung der Applikation. */
 export const ZIEL_MAX = 200;
+
+/** Die beiden Leer-Zustände der Übungsauswahl zu einem Block (Story 6 AK 3,
+ *  #192 AK 8) — eine Quelle für den Picker und das KI-Werkzeug
+ *  «training_uebungen_fuer_block». Sie brauchen verschiedene Auswege: Eine zu
+ *  enge Eingrenzung lockert man, einen leeren Bestand füllt man. */
+export const KEINE_PASSENDE_UEBUNG = "Keine passende Übung gefunden.";
+
+/** Was eine Übungsauswahl füllt, als Klartext: der Block, im
+ *  Kinderfussball-Hauptteil «Hauptteil · Kategorie». Ein Text für Titel und
+ *  Leermeldung des Pickers und für den Leer-Grund des KI-Werkzeugs. */
+export function zielLabel(einordnung: string, hauptteilkategorie?: string | null): string {
+  const block = EINORDNUNG_LABEL[einordnung] ?? einordnung;
+  if (!hauptteilkategorie) return block;
+  const kategorie =
+    hauptteilkategorieLabels[hauptteilkategorie as HauptteilkategorieSlug] ?? hauptteilkategorie;
+  return `${block} · ${kategorie}`;
+}
+
+/** Der sichtbare Bestand hält für diesen Block gar nichts bereit. `zielLabel`
+ *  ist der Block, im Kinderfussball-Hauptteil «Hauptteil · Kategorie». */
+export function leerBestandText(zielLabel: string, stufe: Altersstufe): string {
+  return `Für „${zielLabel}" gibt es in deinem sichtbaren Bestand noch keine Übung der Altersstufe ${altersstufeLabels[stufe]}.`;
+}
 
 /** Obergrenze des Trainingsnamens in Zeichen (#250 AK 6, getrimmt gezählt).
  *

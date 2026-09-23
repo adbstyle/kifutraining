@@ -57,6 +57,14 @@ jobs:
       # «vokabular» vollständig gegen vocab.ts, und dass Suchfilter nur
       # Enum-Werte annehmen — freie Strings landeten sonst im PostgREST-`or=`.
       - run: npm run check:ki-zugang
+      # Fachkern (Epic #190): die Zielblock-Regel samt Pflichttext «Im
+      # Kinderfussball-Hauptteil ist die Hauptteilkategorie Pflicht» (#192
+      # NFR 4), die Übersetzung von DB-Fehlern (wortgleich mit der
+      # Oberfläche), und zwei Wächter: kein "use server" und kein next/ in
+      # lib/kern — eine Kern-Funktion nimmt die userId als Parameter und wäre
+      # als Server Action ein offener Endpunkt —, dazu eindeutige
+      # snake_case-Namen im Werkzeugsatz.
+      - run: npm run check:kern
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)

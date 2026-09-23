@@ -223,7 +223,7 @@ export const JUNIOREN_PFLICHT_BLOECKE = [
 // Junioren-Datei.
 
 // Was ein Trainingsblock aufnehmen darf, entscheidet nicht diese Datei,
-// sondern `vorlagenFilterFuer()` in web/lib/altersstufe.ts. Von hier holt es
+// sondern `zielblock()` in web/lib/altersstufe.ts. Von hier holt es
 // sich einzig die Zuordnung `BLOCK_ERSCHEINUNGSFORM` unten — sie ist eine
 // fachliche Angabe des Juniorenschemas und gehört darum hierher, die
 // Entscheidung selbst nicht. Die Abbildungsregel weiter oben dient allein
@@ -256,9 +256,9 @@ export const JUNIOREN_PFLICHT_BLOECKE = [
  *  Erscheinungsform.
  *
  *  Diese Konstante ist die EINZIGE Stelle, an der die Zuordnung geführt wird.
- *  Gelesen wird sie über `vorlagenFilterFuer()` in web/lib/altersstufe.ts —
- *  und zwar von BEIDEN Seiten: von der Anzeige (`pickExercises`) und von der
- *  Zuordnungsprüfung (`addTrainingExercise`). Beide müssen dieselbe Antwort
+ *  Gelesen wird sie über `zielblock()` in web/lib/altersstufe.ts — und zwar
+ *  von BEIDEN Seiten: von der Anzeige (`vorlagenFuerBlock`) und von der
+ *  Zuordnungsprüfung (`ordneUebungZu`, beide in web/lib/kern/fassung.ts). Beide müssen dieselbe Antwort
  *  geben, sonst schlüge der Picker Übungen vor, die das Übernehmen abweist. */
 export const BLOCK_ERSCHEINUNGSFORM: Partial<Record<JuniorenBlockSlug, string>> = {
   "jun-explosivitaet": "explosiv-dynamisch-agieren",

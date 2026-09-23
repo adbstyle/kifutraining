@@ -14,7 +14,12 @@ import {
   SearchField,
 } from "@/components/ui";
 import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
-import { stufenAbgedeckt } from "@/lib/training";
+import {
+  KEINE_PASSENDE_UEBUNG,
+  leerBestandText,
+  stufenAbgedeckt,
+  zielLabel,
+} from "@/lib/training";
 import {
   altersstufe as altersstufeLabels,
   type KategorieSlug,
@@ -44,9 +49,7 @@ export function ExercisePickerDialog({
   trainingId,
   altersstufe,
   trainingsteil,
-  trainingsteilLabel,
   hauptteilkategorie,
-  hauptteilkategorieLabel,
   varianteId,
   trainingStufen,
   onAdded,
@@ -61,10 +64,8 @@ export function ExercisePickerDialog({
   /** Ziel-Einordnung: ein Kinderfussball-Trainingsteil oder ein
    *  Junioren-Unterblock (Epic #71). */
   trainingsteil: Einordnung;
-  trainingsteilLabel: string;
   /** Im Kinderfussball-Hauptteil: die fixierte Unterkategorie, sonst undefined. */
   hauptteilkategorie?: string;
-  hauptteilkategorieLabel?: string;
   /** Im Hauptteil: die Variante, in die die Übung kommt (#201 AK 8). Der Editor
    *  gibt die angezeigte mit; ausserhalb des Hauptteils bleibt sie leer, dort
    *  gilt die Übung für alle Varianten. */
@@ -94,9 +95,7 @@ export function ExercisePickerDialog({
 
   // Welches Ziel der Picker füllt — im Kinderfussball-Hauptteil Block und
   // Unterkategorie zusammen. Ein Text für Titel und Leermeldung.
-  const zielLabel = hauptteilkategorieLabel
-    ? `${trainingsteilLabel} · ${hauptteilkategorieLabel}`
-    : trainingsteilLabel;
+  const ziel = zielLabel(trainingsteil, hauptteilkategorie);
 
   // Angeboten wird nur, was hier auch etwas findet: Erscheinungsformen tragen
   // nicht alle Einordnungen, und den Übungstyp kennt nur der Juniorenfussball,
@@ -187,7 +186,7 @@ export function ExercisePickerDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={`Übung hinzufügen — ${zielLabel}`}
+      title={`Übung hinzufügen — ${ziel}`}
       /* Breiter als die 28rem des Kit-Dialogs. Der Dialog trägt eine
          Trefferliste, deren Zeilen Name, Alterskategorien und Herkunft
          nebeneinander führen, und darüber Felder, deren Optionen ganze Sätze
@@ -291,7 +290,7 @@ export function ExercisePickerDialog({
             <li className="flex flex-1 flex-col items-center justify-center gap-3 px-2 py-6 text-center type-body-medium text-on-surface-mittel">
               {filterAktiv ? (
                 // Eingegrenzt: es gibt hier etwas, nur nicht das Gesuchte.
-                "Keine passende Übung gefunden."
+                KEINE_PASSENDE_UEBUNG
               ) : (
                 // Der sichtbare Bestand dieser Altersstufe hält für diesen
                 // Block gar nichts bereit (Story 6 AK 3). Das ist im
@@ -299,11 +298,7 @@ export function ExercisePickerDialog({
                 // Altersstufen hat den Manual-Bestand des Kinderfussballs hier
                 // herausgenommen — der eigene Bestand entsteht erst.
                 <>
-                  <span>
-                    Für „{zielLabel}" gibt es in deinem sichtbaren Bestand noch keine
-                    Übung der Altersstufe {altersstufeLabels[altersstufe]}. Erfasse
-                    zuerst eine.
-                  </span>
+                  <span>{leerBestandText(ziel, altersstufe)} Erfasse zuerst eine.</span>
                   <Link
                     href={`/neu?stufe=${altersstufe}&teil=${trainingsteil}`}
                     className="state focus-ring inline-flex items-center gap-1.5 rounded-flaeche px-3 py-1.5 type-label-large text-primary"

@@ -5,9 +5,30 @@
 // weder ein Redirect noch ein FormState noch ein MCP-Ergebnis, sondern diese
 // eine Form, die beide Adapter — Server Action und MCP-Werkzeug — übersetzen.
 //
+// Konvention (verbindlich für lib/kern/**):
+// - Eine Operation hat die Form `(supabase, userId, eingabe) → Promise<KernErgebnis<T>>`.
+//   Der Client spricht bereits als Nutzer; die userId kommt als Parameter,
+//   weil der Bearer-Client sie nicht selbst erfragen kann. Interne Helfer
+//   (Laden, Position) dürfen davon abweichen.
+// - Kern-Eingaben und `wert` sind camelCase (`trainingId`, `varianteId`);
+//   die MCP-Adapter übersetzen nach snake_case.
+// - `feld` nennt dagegen schon den Eingabenamen des KI-Werkzeugs in
+//   snake_case (`training_id`, `exercise_id`, `hauptteilkategorie`), damit der
+//   Assistent das Feld ohne Übersetzung findet. Die Oberfläche braucht davon
+//   nur `name`.
+// - Der Kern wirft nie; unerwartete Fehler werden `technisch`.
+//
 // REIN: keine Importe aus `next/*`, `server-only` oder Datenbank-Modulen —
 // die Prüfskripte (`tsx scripts/pruefe-*.ts`) laden diese Datei ohne Server.
-import type { Bedingung, FehlendeBedingung } from "@/lib/training-bedingungen";
+import {
+  bedingungAusFehler,
+  fachlicheMeldung,
+  fehlerMeldung,
+  istRlsVerletzung,
+  varianteAusFehler,
+  type Bedingung,
+  type FehlendeBedingung,
+} from "@/lib/training-bedingungen";
 
 /** Wie ein Fehler einzuordnen ist — damit der Assistent weiss, ob er die
  *  Eingabe korrigieren, eine Regel beachten, wiederholen oder aufgeben soll.
@@ -62,6 +83,10 @@ export type KernFehler = {
   wiederholbar?: boolean;
   /** Nur bei `art: "gebremst"`: Sekunden bis zum nächsten möglichen Aufruf. */
   retryAfter?: number;
+  /** Nur bei `art: "keine_rechte"`: Das Training ist sichtbar, gehört aber
+   *  jemand anderem (fremd und öffentlich). Die Oberfläche meldet es dann wie
+   *  «nicht gefunden» (`oberflaechenMeldung`), nur der KI-Weg eigens. */
+  fremd?: true;
   /** Zusatz nur für den Assistenten (die Oberfläche zeigt ihn nie), etwa
    *  «Es ist keine Kopie entstanden.» */
   hinweis?: string;
@@ -81,10 +106,50 @@ export function fehlschlag(
   return { ok: false, art, meldung, ...extra };
 }
 
-/** Die Standard-Texte für «nicht sichtbar», je Gegenstand. Heute nur die
- *  Übung (#142); Training, Fassung, Gruppe, Termin und Team kommen mit den
- *  Werkzeugen aus #192 ff. dazu — wortgleich mit den bisherigen Meldungen der
- *  Server Actions. */
+/** Die Standard-Texte für «nicht sichtbar», je Gegenstand — wortgleich mit
+ *  den bisherigen Meldungen der Server Actions. Gruppe, Termin und Fassung
+ *  kommen mit den Werkzeugen aus #193 ff. dazu. */
 export const NICHT_GEFUNDEN = {
   uebung: "Diese Übung gibt es nicht oder sie ist für dein Konto nicht sichtbar.",
+  training: "Training nicht gefunden.",
+  /** Eine Vorlage, die zugeordnet werden soll (Wortlaut des Pickers). */
+  vorlage: "Übung nicht verfügbar.",
+  team: "Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist.",
 } as const;
+
+/** Ein sichtbares, aber nicht bearbeitbares Training — ein fremdes
+ *  öffentliches (PO 2026-09-23). Nur der KI-Weg meldet das eigens; die
+ *  Oberfläche bleibt bei «Training nicht gefunden.». */
+export const FREMDES_TRAINING =
+  "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.";
+
+/** Zwei Aufrufe haben gleichzeitig dieselbe Position vergeben (Unique-Index
+ *  `training_ex_pos_*`, #192 NFR 5). Nichts wurde überschrieben; ein zweiter
+ *  Versuch rechnet die Position neu. */
+export const MELDUNG_WIEDERHOLEN =
+  "Gleichzeitig hat sich an derselben Stelle etwas geändert. Es genügt, es noch einmal zu versuchen.";
+
+/** Ein Datenbankfehler als Kern-Fehler — dieselbe Übersetzung wie
+ *  `fehlerMeldung` (die Meldung ist wortgleich), dazu die Einordnung:
+ *
+ *  1. eine verletzte Veröffentlichungs-Bedingung → `bedingung`, samt
+ *     `bedingung`/`varianteId` zum Zuspitzen (ersetzt `aktionsFehler`);
+ *  2. eine andere fachliche Regel der Datenebene → `regel`;
+ *  3. von der RLS abgewiesen → `keine_rechte`;
+ *  4. sonst `technisch` — `fehlerMeldung` protokolliert den Rohtext.
+ *
+ *  Eine Kollision an einem Unique-Index (23505) ordnet der Aufrufer selbst
+ *  ein: nur er weiss, ob sie Nebenläufigkeit (`konflikt`) oder eine Regel
+ *  (etwa ein doppelter Name) bedeutet. */
+export function ausDbFehler(e: { message: string }): KernFehler {
+  const meldung = fehlerMeldung(e.message);
+  const bedingung = bedingungAusFehler(e.message);
+  if (bedingung)
+    return fehlschlag("bedingung", meldung, {
+      bedingung,
+      varianteId: varianteAusFehler(e.message) ?? undefined,
+    });
+  if (fachlicheMeldung(e.message)) return fehlschlag("regel", meldung);
+  if (istRlsVerletzung(e.message)) return fehlschlag("keine_rechte", meldung);
+  return fehlschlag("technisch", meldung);
+}

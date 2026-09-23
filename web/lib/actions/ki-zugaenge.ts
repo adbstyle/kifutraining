@@ -25,7 +25,7 @@ import {
   istAnfrageKennung,
   zugangsnameProblem,
 } from "@/lib/mcp/regeln";
-import { istUuid } from "@/lib/mcp/bausteine";
+import { istUuid } from "@/lib/kennung";
 
 export type ZustimmungErgebnis =
   | { status: "weiter"; url: string }

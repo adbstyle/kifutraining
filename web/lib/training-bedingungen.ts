@@ -292,10 +292,27 @@ const ALLGEMEIN = "Das liess sich nicht speichern. Bitte versuche es noch einmal
 /** Die Meldung zu einer von der RLS abgewiesenen Änderung, sonst `null`. Sie
  *  trifft, wer an einem fremden Training arbeitet — etwa weil er das Team
  *  inzwischen verlassen hat oder eine veraltete Ansicht offen hält. */
+export function istRlsVerletzung(message: string): boolean {
+  return message.includes(RLS_VERLETZUNG);
+}
+
 function berechtigungsMeldung(message: string): string | null {
-  return message.includes(RLS_VERLETZUNG)
+  return istRlsVerletzung(message)
     ? "Keine Berechtigung für diese Änderung."
     : null;
+}
+
+/** Die Erklärung eines DB-Fehlers, wenn eine fachliche Regel ihn erklärt —
+ *  sonst `null`. Die Kette von `fehlerMeldung` ohne Protokoll und ohne
+ *  Rückfall: Der Fachkern (lib/kern) unterscheidet damit eine verletzte Regel
+ *  (`art: "regel"`) von einem unerwarteten Fehler (`art: "technisch"`). */
+export function fachlicheMeldung(message: string): string | null {
+  return (
+    bedingungsFehler(message) ??
+    schemaMeldung(message) ??
+    gruppenMeldung(message) ??
+    variantenMeldung(message)
+  );
 }
 
 /** Die Meldung zu einem DB-Fehler: die Erklärung, wenn eine Regel greift,
@@ -314,11 +331,7 @@ function berechtigungsMeldung(message: string): string | null {
  *  eine Meldung, ist aber kein erwarteter Verlauf. Was ein Marker oder ein
  *  Constraint fachlich erklärt, ist erwartet und bleibt ungeloggt. */
 export function fehlerMeldung(message: string): string {
-  const fachlich =
-    bedingungsFehler(message) ??
-    schemaMeldung(message) ??
-    gruppenMeldung(message) ??
-    variantenMeldung(message);
+  const fachlich = fachlicheMeldung(message);
   if (fachlich) return fachlich;
   console.error(`[db] ${message}`);
   return berechtigungsMeldung(message) ?? ALLGEMEIN;
