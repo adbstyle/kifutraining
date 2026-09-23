@@ -73,8 +73,21 @@ alle Übungen des Abschnitts nennen, sonst ändert sich nichts und er erfährt, 
 nicht dazugehören. Den Inhalt einer Übung, ihren Trainingsteil oder die Altersstufe eines
 Trainings ändert er nicht. Ein Training, das jemand anderem gehört und öffentlich ist, darf er
 lesen, aber nicht ändern, und bekommt genau das gesagt; ein Training, das er nicht sehen darf,
-gilt als nicht gefunden — ob es fehlt oder jemand anderem gehört, bleibt offen. Weitere
-Fähigkeiten kommen nach und nach dazu; dieser Abschnitt wächst mit ihnen.
+gilt als nicht gefunden — ob es fehlt oder jemand anderem gehört, bleibt offen.
+
+Auch Gruppen und ihren Durchlauf durch den Hauptteil führt der Assistent. Er legt Gruppen an,
+benennt sie um und entfernt sie — mit denselben Regeln wie in der Anwendung: nicht leer,
+höchstens vierzig Zeichen, im Training nur einmal vergeben. Neue Gruppen stehen hinter den
+bestehenden; die Reihenfolge der Gruppen ändert er nicht. Für jede Übung des Hauptteils legt er
+fest, welche Gruppen sie in welcher Abfolge durchlaufen, und ersetzt dabei den bisherigen
+Durchlauf ganz; ein leerer Durchlauf heisst wie in der Anwendung, dass alle gemeinsam üben. Eine
+Gruppe eines anderen Trainings, dieselbe Gruppe zweimal oder eine Übung ausserhalb des
+Hauptteils lehnt die Anwendung ab und nennt die Regel. Den Durchlauf des ganzen Hauptteils ruft
+er je Variante auf einmal ab: jeden Wechsel mit der Belegung der Übungen und je Gruppe die
+zugewiesene Zeit; im Juniorenfussball zählen die Wechsel über beide Hauptteil-Blöcke durch. Er
+sieht auch, an wie vielen Übungen eine Gruppe steht — eine Gruppe entfernt er ohne Rückfrage,
+und sie verschwindet dabei aus jedem Durchlauf. Konflikte der Verteilung, etwa eine Gruppe an
+zwei Übungen im selben Wechsel, nennt die Anwendung dem Assistenten noch nicht. Weitere Fähigkeiten kommen nach und nach dazu; dieser Abschnitt wächst mit ihnen.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man in den Einstellungen des Assistenten die
 Adresse `https://ki-fu.ch/api/mcp` ein; die Konto-Seite nennt sie ebenfalls. Der Assistent

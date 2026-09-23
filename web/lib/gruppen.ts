@@ -81,6 +81,43 @@ export type Verteilung = {
   gruppen: string[];
 }[];
 
+/** Was `verteilungAus` von einer Fassung braucht — der Ausschnitt von
+ *  `TrainingExerciseItem`, den Editor und KI-Auskunft gleichermassen haben. */
+export type VerteilbareFassung = {
+  id: string;
+  name: string;
+  trainingsteil: string;
+  durationMin: number | null;
+  gruppen: readonly { id: string }[];
+};
+
+/**
+ * Die Verteilung aus den Fassungen EINER Variante: ihre Hauptteil-Fassungen
+ * in der gegebenen (Anzeige-)Reihenfolge, im Juniorenfussball über BEIDE
+ * Blöcke hinweg (AK 5) — der Wechsel ist eine Aussage über den ganzen
+ * Hauptteil, blockweise gerechnet bliebe eine Doppelbelegung über die
+ * Blockgrenze unentdeckt.
+ *
+ * `folgeVon` legt eine lokal gesetzte Folge über den Serverstand (der Editor
+ * überlagert optimistisch); `undefined` heisst «es gilt der Serverstand».
+ * Editor und KI-Auskunft rechnen mit dieser einen Funktion, damit beide
+ * dieselbe Verteilung sehen.
+ */
+export function verteilungAus<F extends VerteilbareFassung>(
+  zuordnungen: readonly F[],
+  folgeVon?: (fassung: F) => string[] | undefined,
+): Verteilung {
+  return zuordnungen
+    .filter((f) => istHauptteil(f.trainingsteil))
+    .map((f) => ({
+      id: f.id,
+      name: f.name,
+      einordnung: f.trainingsteil,
+      dauer: f.durationMin,
+      gruppen: folgeVon?.(f) ?? f.gruppen.map((g) => g.id),
+    }));
+}
+
 /** Wie viele Wechsel der Hauptteil hat: die längste Folge. Der Durchlauf einer
  *  einzelnen Übung kann kürzer sein — sie steht dann nicht in jedem Wechsel. */
 export function wechselZahl(v: Verteilung): number {

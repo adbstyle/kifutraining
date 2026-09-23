@@ -13,9 +13,11 @@
 // nur ein zweiter Mapper läse. Der Vertrag selbst — Felder, Typen,
 // Bedeutung — steht einmal als zod-Schema in lib/kern/auskunft-schema.ts.
 //
-// Noch nicht enthalten, weil erst ihre Stories sie bringen: Durchlauf je
-// Variante (#194), Hinweise und Zeitrichtwerte (#195, #199), Veröffentlichung
-// (#196), Termin (#198).
+// Der Durchlauf je Variante (#194) rechnet mit derselben Verteilung wie der
+// Editor (`verteilungAus`, `wechselZahl`, `zeitJeGruppe`).
+//
+// Noch nicht enthalten, weil erst ihre Stories sie bringen: Hinweise und
+// Zeitrichtwerte (#195, #199), Veröffentlichung (#196), Termin (#198).
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
 import {
@@ -28,10 +30,16 @@ import { HAUPTTEILKATEGORIE_SLUGS, editorGliederung, stufenAbgedeckt } from "@/l
 import { sichtbareZuordnungen, type Variante } from "@/lib/varianten";
 import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL, kategorieStufe } from "@/lib/labels";
 import { hatDiagramm } from "@/lib/diagramm";
+import { istHauptteil, verteilungAus, wechselZahl, zeitJeGruppe, zeitText } from "@/lib/gruppen";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
 import { sichtbarkeitVon, wert, wertOderNull } from "@/lib/wert";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings-fuer";
-import type { TeilAuskunft, TrainingAuskunft, UebungAuskunft } from "@/lib/kern/auskunft-schema";
+import type {
+  DurchlaufAuskunft,
+  TeilAuskunft,
+  TrainingAuskunft,
+  UebungAuskunft,
+} from "@/lib/kern/auskunft-schema";
 
 export type { TrainingAuskunft } from "@/lib/kern/auskunft-schema";
 
@@ -78,6 +86,41 @@ function uebungAuskunft(f: TrainingExerciseItem, trainingStufen: readonly string
   };
 }
 
+/** Der Durchlauf des Hauptteils EINER Variante (#194 AK 8, PC 3): dieselbe
+ *  Verteilung wie im Editor, im Juniorenfussball also über beide
+ *  Hauptteil-Blöcke hinweg. Die Belegung eines Wechsels folgt der
+ *  Reihenfolge der Gruppen, damit sie stabil steht. */
+function durchlaufAuskunft(
+  sichtbar: readonly TrainingExerciseItem[],
+  gruppen: readonly { id: string; name: string }[],
+  variante: { id: string; mehrere: boolean } | undefined,
+): DurchlaufAuskunft {
+  const verteilung = verteilungAus(sichtbar);
+  const zeiten = zeitJeGruppe(verteilung);
+  const zahl = wechselZahl(verteilung);
+  const wechsel: DurchlaufAuskunft["wechsel"] = [];
+  for (let w = 0; w < zahl; w++) {
+    const belegung: DurchlaufAuskunft["wechsel"][number]["belegung"] = [];
+    for (const g of gruppen)
+      for (const f of verteilung)
+        if (f.gruppen[w] === g.id)
+          belegung.push({ gruppe_id: g.id, gruppe: g.name, fassung_id: f.id, uebung: f.name });
+    wechsel.push({ nr: w + 1, belegung });
+  }
+  // Dieselbe Einschränkung wie am Chip der Gruppenleiste (#201 AK 9).
+  const zusatz = variante?.mehrere ? "in dieser Variante" : undefined;
+  return {
+    ...(variante?.mehrere ? { variante_id: variante.id } : {}),
+    wechsel_zahl: zahl,
+    wechsel,
+    zeit_je_gruppe: gruppen.map((g) => ({
+      gruppe_id: g.id,
+      gruppe: g.name,
+      text: zeitText(zeiten.get(g.id), zusatz),
+    })),
+  };
+}
+
 /** Ein Training als Auskunft — für `userId` (entscheidet `eigen` und
  *  `bearbeitbar`). */
 export function trainingAuskunft(d: TrainingDetail, k: { userId: string }): TrainingAuskunft {
@@ -89,6 +132,7 @@ export function trainingAuskunft(d: TrainingDetail, k: { userId: string }): Trai
 
   const teile: TeilAuskunft[] = [];
   const gesamt: TrainingAuskunft["gesamt"] = [];
+  const durchlauf: DurchlaufAuskunft[] = [];
 
   varianten.forEach((v, i) => {
     const sichtbar = sichtbareZuordnungen(d.exercises, v?.id);
@@ -97,11 +141,11 @@ export function trainingAuskunft(d: TrainingDetail, k: { userId: string }): Trai
       // In BEIDEN Schemata heisst der Hauptteil `hauptteil` (vgl.
       // `abschnittMitVariante`). Die übrigen Teile sind in jeder Variante
       // gleich und erscheinen einmal — aus der ersten.
-      const istHauptteil = teil.key === "hauptteil";
-      if (!istHauptteil && i > 0) continue;
+      const imHauptteil = teil.key === "hauptteil";
+      if (!imHauptteil && i > 0) continue;
 
       const ohneKategorie =
-        istHauptteil && d.altersstufe === "kinderfussball"
+        imHauptteil && d.altersstufe === "kinderfussball"
           ? sichtbar.filter(
               (f) =>
                 f.trainingsteil === "hauptteil" &&
@@ -113,7 +157,7 @@ export function trainingAuskunft(d: TrainingDetail, k: { userId: string }): Trai
 
       teile.push({
         teil: { slug: teil.key, label: teil.label },
-        ...(istHauptteil && mehrere && v ? { variante: { id: v.id, name: v.name } } : {}),
+        ...(imHauptteil && mehrere && v ? { variante: { id: v.id, name: v.name } } : {}),
         summe_min: teil.sum,
         ohne_dauer: teil.missing,
         bloecke: teil.bloecke.map((b) => ({
@@ -134,7 +178,14 @@ export function trainingAuskunft(d: TrainingDetail, k: { userId: string }): Trai
       summe_min: gliederung.reduce((a, t) => a + t.sum, 0),
       ohne_dauer: gliederung.reduce((a, t) => a + t.missing, 0),
     });
+    durchlauf.push(durchlaufAuskunft(sichtbar, d.gruppen, v && { id: v.id, mehrere }));
   });
+
+  // An wie vielen Übungen eine Gruppe steht — über alle Varianten, wie die
+  // Rückfrage vor dem Entfernen im Editor (#194 AK 5).
+  const hauptteil = d.exercises.filter((f) => istHauptteil(f.trainingsteil));
+  const anUebungen = (gruppeId: string) =>
+    hauptteil.filter((f) => f.gruppen.some((g) => g.id === gruppeId)).length;
 
   // Die Hauptteile stehen nach der Schleife hinter den übrigen Teilen der
   // ersten Variante; zurück in die Reihenfolge des Schemas, Varianten
@@ -158,8 +209,9 @@ export function trainingAuskunft(d: TrainingDetail, k: { userId: string }): Trai
       bearbeitungszielVon({ owner_id: d.ownerId, team_id: d.team?.id ?? null }, k.userId) !== null,
     uebungen_gesamt: d.exercises.length,
     varianten: d.varianten.map((v) => ({ id: v.id, name: v.name })),
-    gruppen: d.gruppen,
+    gruppen: d.gruppen.map((g) => ({ id: g.id, name: g.name, an_uebungen: anUebungen(g.id) })),
     teile,
     gesamt,
+    durchlauf,
   };
 }

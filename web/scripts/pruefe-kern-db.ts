@@ -47,6 +47,7 @@ const { ordneUebungZu, entferneUebung, setzeDauer, setzeNotiz, setzeUebungsfolge
   "../lib/kern/fassung"
 );
 const { trainingAbrufen, trainingsSuchen } = await import("../lib/kern/lesen");
+const { legeGruppeAn, benenneGruppe, entferneGruppe, setzeDurchlauf } = await import("../lib/kern/gruppen");
 const { loescheTrainingMitBildern } = await import("../lib/training-loeschen");
 
 const URL_ = process.env.SUPABASE_URL!;
@@ -358,6 +359,135 @@ try {
     assert.ok(!o.treffer.some((x) => x.id === t), "ein Entwurf ist nicht öffentlich");
   });
 
+  // ── Gruppen und Durchlauf (#194) ─────────────────────────────────────────
+  await pruefe("Gruppen: anlegen, Namensregeln (41 Zeichen, doppelt), umbenennen", async () => {
+    // «Rot» steht aus dem Entfernen-Szenario oben schon am Training.
+    const gelb = wert(await legeGruppeAn(a.supabase, a.id, { trainingId: t, name: " Gelb " })).gruppe;
+    assert.equal(gelb.name, "Gelb");
+    fehler(await legeGruppeAn(a.supabase, a.id, { trainingId: t, name: "   " }), "eingabe", "Bitte eine Bezeichnung eingeben.");
+    fehler(await legeGruppeAn(a.supabase, a.id, { trainingId: t, name: "b".repeat(41) }), "eingabe", "Höchstens 40 Zeichen.");
+    fehler(
+      await legeGruppeAn(a.supabase, a.id, { trainingId: t, name: "gelb" }),
+      "regel",
+      "Diese Bezeichnung gibt es in diesem Training schon.",
+    );
+    const blau = wert(await legeGruppeAn(a.supabase, a.id, { trainingId: t, name: "Blau" })).gruppe;
+    fehler(
+      await benenneGruppe(a.supabase, a.id, { gruppeId: blau.id, name: "GELB" }),
+      "regel",
+      "Diese Bezeichnung gibt es in diesem Training schon.",
+    );
+    // Die eigene Bezeichnung zählt nicht als vergeben.
+    assert.deepEqual(wert(await benenneGruppe(a.supabase, a.id, { gruppeId: gelb.id, name: "gelb" })), {
+      trainingId: t,
+      name: "gelb",
+    });
+    fehler(await benenneGruppe(a.supabase, a.id, { gruppeId: randomUUID(), name: "x" }), "nicht_gefunden", "Gruppe nicht gefunden.");
+  });
+
+  await pruefe("Durchlauf: setzen, ersetzen, leeren; fremde, doppelte Gruppe und Einleitung abgewiesen", async () => {
+    const { data: gs } = await admin.from("training_gruppen").select("id, name").eq("training_id", t);
+    const gelb = gs!.find((g) => g.name === "gelb")!;
+    const blau = gs!.find((g) => g.name === "Blau")!;
+    const [h] = await positionen(t, "hauptteil");
+    const folge = async () =>
+      (
+        await admin
+          .from("training_exercise_gruppen")
+          .select("gruppe_id")
+          .eq("training_exercise_id", h.id)
+          .order("position")
+      ).data!.map((z) => z.gruppe_id);
+
+    const r = wert(await setzeDurchlauf(a.supabase, a.id, { fassungId: h.id, gruppeIds: [blau.id, gelb.id] }));
+    assert.deepEqual(r.gruppen.map((g) => g.name), ["Blau", "gelb"]);
+    assert.deepEqual(await folge(), [blau.id, gelb.id]);
+    wert(await setzeDurchlauf(a.supabase, a.id, { fassungId: h.id, gruppeIds: [gelb.id] }));
+    assert.deepEqual(await folge(), [gelb.id], "ersetzt vollständig (PC 1)");
+
+    fehler(
+      await setzeDurchlauf(a.supabase, a.id, { fassungId: h.id, gruppeIds: [gelb.id, gelb.id] }),
+      "regel",
+      "Eine Gruppe steht im Durchlauf mehrfach.",
+    );
+    // Eine Gruppe eines ZWEITEN Trainings desselben Kontos.
+    const t2 = wert(
+      await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Zweit", altersstufe: "kinderfussball", stufen: ["F"] }),
+    ).id;
+    const gruen = wert(await legeGruppeAn(a.supabase, a.id, { trainingId: t2, name: "Grün" })).gruppe;
+    const f = fehler(
+      await setzeDurchlauf(a.supabase, a.id, { fassungId: h.id, gruppeIds: [gruen.id] }),
+      "regel",
+      "Diese Gruppe gehört zu einem anderen Training.",
+    ) as { zulaessig?: readonly string[] };
+    assert.deepEqual([...(f.zulaessig ?? [])].sort(), gs!.map((g) => g.id).sort(), "alle Gruppen des Trainings");
+    fehler(
+      await setzeDurchlauf(a.supabase, a.id, { fassungId: e1.fassungId, gruppeIds: [gelb.id] }),
+      "regel",
+      "Gruppen lassen sich nur im Hauptteil verteilen.",
+    );
+    assert.deepEqual(await folge(), [gelb.id], "abgewiesen heisst unverändert");
+
+    // Leeren = alle gemeinsam, dann wieder setzen für das Entfernen.
+    wert(await setzeDurchlauf(a.supabase, a.id, { fassungId: h.id, gruppeIds: [] }));
+    assert.deepEqual(await folge(), []);
+    wert(await setzeDurchlauf(a.supabase, a.id, { fassungId: h.id, gruppeIds: [gelb.id, blau.id] }));
+
+    const aus = wert(await trainingAbrufen(a.supabase, a.id, { trainingId: t }));
+    assert.deepEqual(
+      aus.gruppen.filter((g) => g.id === gelb.id || g.id === blau.id).map((g) => [g.name, g.an_uebungen]),
+      [["gelb", 1], ["Blau", 1]],
+    );
+    const d = aus.durchlauf.find((x) => x.wechsel.some((w) => w.belegung.some((b) => b.fassung_id === h.id)))!;
+    assert.equal(d.wechsel_zahl, 2);
+
+    // Entfernen nennt die Zahl der Übungen und räumt den Durchlauf.
+    assert.deepEqual(wert(await entferneGruppe(a.supabase, a.id, { gruppeId: gelb.id })), {
+      trainingId: t,
+      name: "gelb",
+      anUebungen: 1,
+    });
+    assert.deepEqual(await folge(), [blau.id], "aus dem Durchlauf entfernt (PC 2)");
+    fehler(await entferneGruppe(a.supabase, a.id, { gruppeId: gelb.id }), "nicht_gefunden", "Gruppe nicht gefunden.");
+  });
+
+  await pruefe("Durchlauf Juniorenfussball: Wechsel über beide Hauptteil-Blöcke (PC 3)", async () => {
+    const tj = wert(
+      await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Junioren", altersstufe: "juniorenfussball", stufen: ["D"] }),
+    ).id;
+    const { data: v } = await admin.from("training_varianten").select("id").eq("training_id", tj).single();
+    // Kein Manual-Bestand im Juniorenfussball — die Fassungen direkt anlegen.
+    const { data: fs, error } = await admin
+      .from("training_exercises")
+      .insert(
+        (["jun-spielformen", "jun-spiel"] as const).map((teil) => ({
+          training_id: tj,
+          trainingsteil: teil,
+          altersstufe: "juniorenfussball",
+          variante_id: v!.id,
+          position: 0,
+          name: teil,
+          aufbau: "Frei",
+          duration_min: 15,
+        })),
+      )
+      .select("id, trainingsteil");
+    if (error) throw error;
+    const spielformen = fs!.find((x) => x.trainingsteil === "jun-spielformen")!.id;
+    const spiel = fs!.find((x) => x.trainingsteil === "jun-spiel")!.id;
+    const a1 = wert(await legeGruppeAn(a.supabase, a.id, { trainingId: tj, name: "A" })).gruppe;
+    const b1 = wert(await legeGruppeAn(a.supabase, a.id, { trainingId: tj, name: "B" })).gruppe;
+    wert(await setzeDurchlauf(a.supabase, a.id, { fassungId: spielformen, gruppeIds: [a1.id, b1.id] }));
+    wert(await setzeDurchlauf(a.supabase, a.id, { fassungId: spiel, gruppeIds: [b1.id, a1.id] }));
+    const [d] = wert(await trainingAbrufen(a.supabase, a.id, { trainingId: tj })).durchlauf;
+    assert.equal(d.wechsel_zahl, 2);
+    assert.deepEqual(
+      d.wechsel.map((w) => w.belegung.map((b) => `${b.gruppe}@${b.uebung}`)),
+      [["A@jun-spielformen", "B@jun-spiel"], ["A@jun-spiel", "B@jun-spielformen"]],
+    );
+    assert.deepEqual(d.zeit_je_gruppe.map((z) => z.text), ["Zugewiesen 30 min", "Zugewiesen 30 min"]);
+  });
+
   // ── Fremd und unbekannt (#193 AK 12/14, OoS 7) ───────────────────────────
   await pruefe("Fremdes öffentliches Training: lesbar, Änderung → keine_rechte; Unsichtbares → nicht_gefunden", async () => {
     const tb = wert(
@@ -383,6 +513,17 @@ try {
     assert.equal(fehler(await benenneTrainingUm(a.supabase, a.id, { trainingId: tb, name: "X" }), "keine_rechte", FREMD).fremd, true);
     fehler(await setzeDauer(a.supabase, a.id, { fassungId: fb.fassungId, minuten: 3 }), "keine_rechte", FREMD);
     fehler(await entferneUebung(a.supabase, a.id, { fassungId: fb.fassungId }), "keine_rechte", FREMD);
+    // Gruppen: B legt eine an, A darf sie weder ändern noch entfernen, noch am
+    // fremden Training anlegen oder den Durchlauf setzen.
+    const gb = wert(await legeGruppeAn(b.supabase, b.id, { trainingId: tb, name: "Fremd" })).gruppe;
+    fehler(await legeGruppeAn(a.supabase, a.id, { trainingId: tb, name: "X" }), "keine_rechte", FREMD);
+    fehler(await benenneGruppe(a.supabase, a.id, { gruppeId: gb.id, name: "X" }), "keine_rechte", FREMD);
+    fehler(await entferneGruppe(a.supabase, a.id, { gruppeId: gb.id }), "keine_rechte", FREMD);
+    fehler(
+      await setzeDurchlauf(a.supabase, a.id, { fassungId: fb.fassungId, gruppeIds: [gb.id] }),
+      "keine_rechte",
+      FREMD,
+    );
     fehler(
       await setzeUebungsfolge(a.supabase, a.id, { trainingId: tb, einordnung: "einleitung", fassungIds: [fb.fassungId] }),
       "keine_rechte",

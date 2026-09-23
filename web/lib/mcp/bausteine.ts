@@ -50,9 +50,20 @@ export function katalogFilter(optionen: readonly Option[], vorspann: string) {
 }
 
 /** Eine Kennung (UUID) als Eingabe — im Format von `istUuid` (lib/kennung.ts)
- *  statt `z.uuid()`, das streng nach RFC-Version und -Variante prüft. */
+ *  statt `z.uuid()`, das streng nach RFC-Version und -Variante prüft.
+ *
+ *  Kleingeschrieben an dieser EINEN Stelle: Postgres liefert Kennungen klein,
+ *  und der Kern vergleicht sie als Text (etwa die Gruppen eines Durchlaufs
+ *  gegen die des Trainings). Eine grossgeschriebene Kennung vom Assistenten
+ *  wäre sonst «fremd», obwohl sie dieselbe ist. `toLowerCase()` statt
+ *  `transform`, damit das Eingabeschema als JSON-Schema darstellbar bleibt. */
 export function kennung(beschreibung: string) {
-  return z.string().trim().regex(UUID_FORMAT, "Keine gültige Kennung (UUID).").describe(beschreibung);
+  return z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(UUID_FORMAT, "Keine gültige Kennung (UUID).")
+    .describe(beschreibung);
 }
 
 /** Was jede Übung in jedem Werkzeug trägt — die Angaben der Katalog-Karte

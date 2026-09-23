@@ -89,6 +89,36 @@ function baueSchema(streng: boolean) {
     ohne_kategorie: z.array(Uebung).optional(),
   });
 
+  const Gruppe = obj({
+    id: z.string(),
+    name: z.string(),
+    /** An wie vielen Hauptteil-Übungen die Gruppe im Durchlauf steht — über
+     *  ALLE Varianten: so viele Zuweisungen fielen beim Entfernen weg. */
+    an_uebungen: z.number().int(),
+  });
+
+  const Durchlauf = obj({
+    /** Erst ab zwei Varianten: für welche dieser Durchlauf gilt. */
+    variante_id: z.string().optional(),
+    /** Wie viele Wechsel der Hauptteil hat: der längste Durchlauf einer
+     *  Übung. Im Juniorenfussball über beide Hauptteil-Blöcke gezählt. */
+    wechsel_zahl: z.number().int(),
+    /** Je Wechsel (1-basiert), welche Gruppe an welcher Übung steht, in der
+     *  Reihenfolge der Gruppen. Eine Übung ohne Gruppen (alle gemeinsam)
+     *  steht in keinem Wechsel. */
+    wechsel: z.array(
+      obj({
+        nr: z.number().int(),
+        belegung: z.array(
+          obj({ gruppe_id: z.string(), gruppe: z.string(), fassung_id: z.string(), uebung: z.string() }),
+        ),
+      }),
+    ),
+    /** Je Gruppe die zugewiesene Zeit, wie der Editor sie nennt
+     *  («Zugewiesen 40 min», «Zugewiesen —» ohne erfasste Dauer). */
+    zeit_je_gruppe: z.array(obj({ gruppe_id: z.string(), gruppe: z.string(), text: z.string() })),
+  });
+
   const Training = obj({
     id: z.string(),
     name: z.string(),
@@ -107,7 +137,8 @@ function baueSchema(streng: boolean) {
     /** Alle Übungen des Trainings über ALLE Varianten des Hauptteils. */
     uebungen_gesamt: z.number().int(),
     varianten: z.array(IdName),
-    gruppen: z.array(IdName),
+    /** Die Gruppen des Trainings in ihrer Reihenfolge. */
+    gruppen: z.array(Gruppe),
     /** Der Hauptteil erscheint einmal je Variante, die übrigen Teile einmal. */
     teile: z.array(Teil),
     /** Je Variante die Summe — ein Training mit zwei Hauptteilen spielt nur
@@ -119,14 +150,18 @@ function baueSchema(streng: boolean) {
         ohne_dauer: z.number().int(),
       }),
     ),
+    /** Der Durchlauf des Hauptteils je Variante (#194 AK 8, NFR 1). */
+    durchlauf: z.array(Durchlauf),
   });
 
-  return { Uebung, Block, Teil, Training };
+  return { Uebung, Block, Teil, Durchlauf, Training };
 }
 
 const schema = baueSchema(false);
 
 export const TrainingAuskunft = schema.Training;
+/** Der Ausschnitt für «training_durchlauf_abrufen»: Gruppen und Durchlauf. */
+export const DurchlaufAusschnitt = schema.Training.pick({ gruppen: true, durchlauf: true });
 /** Dasselbe Schema mit `strictObject` auf allen Ebenen — nur für Prüfungen. */
 export const TrainingAuskunftStreng = baueSchema(true).Training;
 
@@ -134,3 +169,4 @@ export type TrainingAuskunft = z.infer<typeof schema.Training>;
 export type TeilAuskunft = z.infer<typeof schema.Teil>;
 export type BlockAuskunft = z.infer<typeof schema.Block>;
 export type UebungAuskunft = z.infer<typeof schema.Uebung>;
+export type DurchlaufAuskunft = z.infer<typeof schema.Durchlauf>;

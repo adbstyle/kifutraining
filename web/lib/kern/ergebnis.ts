@@ -114,8 +114,8 @@ export function fehlschlag(
 }
 
 /** Die Standard-Texte für «nicht sichtbar», je Gegenstand — wortgleich mit
- *  den bisherigen Meldungen der Server Actions. Gruppe und Termin kommen mit
- *  den Werkzeugen aus #194 ff. dazu. */
+ *  den bisherigen Meldungen der Server Actions. Der Termin kommt mit #198
+ *  dazu. */
 export const NICHT_GEFUNDEN = {
   uebung: "Diese Übung gibt es nicht oder sie ist für dein Konto nicht sichtbar.",
   training: "Training nicht gefunden.",
@@ -124,6 +124,7 @@ export const NICHT_GEFUNDEN = {
   /** Eine Vorlage, die zugeordnet werden soll (Wortlaut des Pickers). */
   vorlage: "Übung nicht verfügbar.",
   team: "Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist.",
+  gruppe: "Gruppe nicht gefunden.",
 } as const;
 
 /** Ein sichtbares, aber nicht bearbeitbares Training — ein fremdes

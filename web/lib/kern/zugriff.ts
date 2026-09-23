@@ -150,6 +150,36 @@ export async function ladeFassungZumBearbeiten<F extends object = object>(
   });
 }
 
+export type GruppeKopfZeile = { id: string; name: string; training_id: string };
+
+/** Eine Gruppe eines Trainings zum Bearbeiten laden (#194) — dieselben drei
+ *  Ausgänge wie bei der Fassung: unsichtbar → `nicht_gefunden` («Gruppe nicht
+ *  gefunden.»), sichtbar in einem fremden öffentlichen Training →
+ *  `keine_rechte` mit `fremd: true`. Das Training kommt im selben Aufruf mit
+ *  (`trainings!inner`): Die Gruppe hängt an seiner RLS-Kette. */
+export async function ladeGruppeZumBearbeiten(
+  supabase: SupabaseClient,
+  userId: string,
+  gruppeId: string,
+): Promise<KernErgebnis<{ gruppe: GruppeKopfZeile; ziel: Bearbeitungsziel }>> {
+  if (!istUuid(gruppeId))
+    return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.gruppe, { feld: "gruppe_id" });
+
+  const { data, error } = await supabase
+    .from("training_gruppen")
+    .select("id, name, training_id, trainings!inner ( owner_id, team_id )")
+    .eq("id", gruppeId)
+    .maybeSingle<GruppeKopfZeile & { trainings: TrainingsEigentum | null }>();
+  if (error) return ausDbFehler(error);
+  if (!data?.trainings)
+    return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.gruppe, { feld: "gruppe_id" });
+
+  const ziel = bearbeitungszielVon(data.trainings, userId);
+  if (!ziel)
+    return fehlschlag("keine_rechte", FREMDES_TRAINING, { feld: "gruppe_id", fremd: true });
+  return ok({ gruppe: { id: data.id, name: data.name, training_id: data.training_id }, ziel });
+}
+
 /** Eine Zeile per Kennung aktualisieren und prüfen, dass der Update traf.
  *
  *  Kein Owner-Filter: Wer schreiben darf, entscheidet die RLS (an einem

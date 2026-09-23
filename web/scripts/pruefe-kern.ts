@@ -35,6 +35,7 @@ import { FREMDES_TRAINING, MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler } fr
 import { KEINE_PASSENDE_UEBUNG, LEER_HINWEIS, leerBestandText, zielLabel } from "../lib/training";
 import { trainingAuskunft as auskunftRoh } from "../lib/kern/auskunft";
 import { TrainingAuskunftStreng } from "../lib/kern/auskunft-schema";
+import { verteilungAus } from "../lib/gruppen";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 
 let gelaufen = 0;
@@ -186,6 +187,7 @@ pruefe("Standard-Texte des Kerns sind eingefroren", () => {
   assert.equal(NICHT_GEFUNDEN.training, "Training nicht gefunden.");
   assert.equal(NICHT_GEFUNDEN.fassung, "Zuordnung nicht gefunden.");
   assert.equal(NICHT_GEFUNDEN.vorlage, "Übung nicht verfügbar.");
+  assert.equal(NICHT_GEFUNDEN.gruppe, "Gruppe nicht gefunden.");
   assert.equal(
     FREMDES_TRAINING,
     "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.",
@@ -369,6 +371,98 @@ pruefe("Auskunft-Vertrag: das strenge Schema weist ein undeklariertes Feld ab", 
   assert.throws(() => TrainingAuskunftStreng.parse({ ...a, teile: [teil] }));
 });
 
+// ── Durchlauf (#194 AK 8, PC 3, NFR 1) ──────────────────────────────────────
+// Editor und Auskunft rechnen mit derselben Verteilung (`verteilungAus`); im
+// Juniorenfussball zählt der Wechsel über BEIDE Hauptteil-Blöcke.
+
+const ROT = { id: "g-rot", name: "Rot" };
+const BLAU = { id: "g-blau", name: "Blau" };
+
+pruefe("verteilungAus: nur Hauptteil, Anzeigereihenfolge, lokale Folge vor Serverstand", () => {
+  const zuordnungen = [
+    fassung("e1", "einleitung", { gruppen: [ROT] }),
+    fassung("s1", "jun-spielformen", { durationMin: 15, gruppen: [ROT, BLAU] }),
+    fassung("s2", "jun-spiel", { gruppen: [BLAU] }),
+  ];
+  assert.deepEqual(verteilungAus(zuordnungen), [
+    { id: "s1", name: "Übung s1", einordnung: "jun-spielformen", dauer: 15, gruppen: ["g-rot", "g-blau"] },
+    { id: "s2", name: "Übung s2", einordnung: "jun-spiel", dauer: null, gruppen: ["g-blau"] },
+  ]);
+  const lokal = verteilungAus(zuordnungen, (f) => (f.id === "s2" ? [] : undefined));
+  assert.deepEqual(lokal.map((f) => f.gruppen), [["g-rot", "g-blau"], []]);
+});
+
+pruefe("Auskunft Juniorenfussball: Wechsel über beide Hauptteil-Blöcke, an_uebungen, Zeit je Gruppe", () => {
+  const a = trainingAuskunft(
+    training({
+      altersstufe: "juniorenfussball",
+      stufen: ["D"],
+      gruppen: [ROT, BLAU],
+      exercises: [
+        fassung("s1", "jun-spielformen", { varianteId: "v1", durationMin: 15, gruppen: [ROT, BLAU] }),
+        fassung("s2", "jun-spiel", { varianteId: "v1", durationMin: 15, gruppen: [BLAU, ROT] }),
+        fassung("s3", "jun-spiel", { varianteId: "v1", durationMin: 10, gruppen: [] }),
+      ],
+    }),
+    { userId: ICH },
+  );
+  assert.deepEqual(a.gruppen, [
+    { id: "g-rot", name: "Rot", an_uebungen: 2 },
+    { id: "g-blau", name: "Blau", an_uebungen: 2 },
+  ]);
+  assert.equal(a.durchlauf.length, 1);
+  const [d] = a.durchlauf;
+  assert.equal(d.variante_id, undefined, "erst ab zwei Varianten");
+  assert.equal(d.wechsel_zahl, 2);
+  assert.deepEqual(d.wechsel, [
+    {
+      nr: 1,
+      belegung: [
+        { gruppe_id: "g-rot", gruppe: "Rot", fassung_id: "s1", uebung: "Übung s1" },
+        { gruppe_id: "g-blau", gruppe: "Blau", fassung_id: "s2", uebung: "Übung s2" },
+      ],
+    },
+    {
+      nr: 2,
+      belegung: [
+        { gruppe_id: "g-rot", gruppe: "Rot", fassung_id: "s2", uebung: "Übung s2" },
+        { gruppe_id: "g-blau", gruppe: "Blau", fassung_id: "s1", uebung: "Übung s1" },
+      ],
+    },
+  ]);
+  assert.deepEqual(d.zeit_je_gruppe, [
+    { gruppe_id: "g-rot", gruppe: "Rot", text: "Zugewiesen 30 min" },
+    { gruppe_id: "g-blau", gruppe: "Blau", text: "Zugewiesen 30 min" },
+  ]);
+});
+
+pruefe("Auskunft: Durchlauf je Variante, an_uebungen über alle Varianten, Gruppe ohne Zuweisung", () => {
+  const a = trainingAuskunft(
+    training({
+      gruppen: [ROT, BLAU],
+      varianten: [
+        { id: "v1", name: "12 Kinder" },
+        { id: "v2", name: "20 Kinder" },
+      ],
+      exercises: [
+        fassung("h1", "hauptteil", { hauptteilkategorie: "fussball-spielen", varianteId: "v1", durationMin: 20, gruppen: [ROT] }),
+        fassung("h2", "hauptteil", { hauptteilkategorie: "fussball-spielen", varianteId: "v2", gruppen: [ROT] }),
+      ],
+    }),
+    { userId: ICH },
+  );
+  assert.deepEqual(a.gruppen.map((g) => g.an_uebungen), [2, 0]);
+  assert.deepEqual(a.durchlauf.map((d) => [d.variante_id, d.wechsel_zahl]), [["v1", 1], ["v2", 1]]);
+  assert.deepEqual(a.durchlauf[0].zeit_je_gruppe.map((z) => z.text), [
+    "Zugewiesen 20 min in dieser Variante",
+    "Zugewiesen —",
+  ]);
+  assert.deepEqual(a.durchlauf[1].zeit_je_gruppe.map((z) => z.text), ["Zugewiesen —", "Zugewiesen —"]);
+  // Ohne Gruppen gibt es keinen Wechsel.
+  const leer = trainingAuskunft(training({}), { userId: ICH });
+  assert.deepEqual(leer.durchlauf, [{ wechsel_zahl: 0, wechsel: [], zeit_je_gruppe: [] }]);
+});
+
 // ── Statische Wächter ───────────────────────────────────────────────────────
 const web = resolve(fileURLToPath(import.meta.url), "../..");
 const kern = join(web, "lib/kern");
@@ -465,7 +559,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
   // Jedes Werkzeug, das eine Kennung aus dem Trainings-Bestand annimmt,
   // erklärt «nicht_gefunden» gegen «keine_rechte» (#193 AK 14). Geprüft am
   // Quelltext: Enthält die Eingabe — inline oder als benannte Konstante —
-  // `TrainingId` oder `FassungId`, muss der Block `KENNUNG_FEHLER` tragen.
+  // `TrainingId`, `FassungId` oder `GruppeId`, muss der Block `KENNUNG_FEHLER` tragen.
   for (const d of readdirSync(ordner).filter((f) => f.endsWith(".ts"))) {
     const text = readFileSync(join(ordner, d), "utf8");
     for (const m of text.matchAll(/export const (\w+) = werkzeug\(\{([\s\S]*?)\n\}\);/g)) {
@@ -474,7 +568,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
       const eingabe = verweis
         ? (new RegExp(`const ${verweis} = z\\.object\\(\\{([\\s\\S]*?)\\n\\}\\);`).exec(text)?.[1] ?? "")
         : block;
-      if (/\b(TrainingId|FassungId)\b/.test(eingabe))
+      if (/\b(TrainingId|FassungId|GruppeId)\b/.test(eingabe))
         assert.ok(block.includes("KENNUNG_FEHLER"), `${m[1]} nimmt eine Kennung, erklärt aber KENNUNG_FEHLER nicht`);
     }
   }
@@ -491,6 +585,13 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
       "training_uebungen_ordnen",
       "training_uebung_dauer_setzen",
       "training_uebung_notiz_setzen",
+    ],
+    "#194": [
+      "gruppe_anlegen",
+      "gruppe_umbenennen",
+      "gruppe_entfernen",
+      "training_uebung_durchlauf_setzen",
+      "training_durchlauf_abrufen",
     ],
   };
   for (const [story, erwartet] of Object.entries(jeStory))

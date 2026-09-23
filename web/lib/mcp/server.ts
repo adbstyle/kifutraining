@@ -17,6 +17,13 @@ import {
   trainingUmbenennen,
   trainingZielSetzen,
 } from "@/lib/mcp/werkzeuge/trainings-bearbeiten";
+import {
+  gruppeAnlegen,
+  gruppeEntfernen,
+  gruppeUmbenennen,
+  trainingDurchlaufAbrufen,
+  trainingUebungDurchlaufSetzen,
+} from "@/lib/mcp/werkzeuge/gruppen";
 
 /** Der vollständige Werkzeugsatz (Story #142; Epic #139 und #190 hängen ihre
  *  Werkzeuge hier an). Der Werkzeugsatz IST die Grenze eines Zugangs: das
@@ -40,6 +47,11 @@ export const WERKZEUGE = [
   trainingUebungenOrdnen,
   trainingUebungDauerSetzen,
   trainingUebungNotizSetzen,
+  gruppeAnlegen,
+  gruppeUmbenennen,
+  gruppeEntfernen,
+  trainingUebungDurchlaufSetzen,
+  trainingDurchlaufAbrufen,
 ] as const;
 
 export function registriereWerkzeuge(server: McpServer): void {

@@ -34,12 +34,14 @@ export const trainingAbrufen = werkzeug({
   titel: "Training abrufen",
   beschreibung:
     "Liefert ein Training vollständig: Name, Ziel, Altersstufe, Alterskategorien, " +
-    "Sichtbarkeit, Bestand (persönlich oder Team), Varianten des Hauptteils und Gruppen — " +
+    "Sichtbarkeit, Bestand (persönlich oder Team), Varianten des Hauptteils und Gruppen (mit " +
+    "«an_uebungen») — " +
     "und die Gliederung wie im Editor: alle Trainingsteile und Blöcke in fester Reihenfolge, " +
     "auch die leeren, der Hauptteil einmal je Variante (mit «variante» erst ab zwei). Jede " +
     "Übung mit Inhalt, Dauer, Notiz und den Gruppen ihres Durchlaufs; «fassung_id» ist die " +
     "Kennung für die Bearbeitungs-Werkzeuge. «uebungen_gesamt» zählt die Übungen aller " +
-    "Varianten zusammen; «gesamt» nennt die Dauer je Variante. Lesbar ist jedes Training, " +
+    "Varianten zusammen; «gesamt» nennt die Dauer je Variante, «durchlauf» je Variante die " +
+    "Wechsel der Gruppen (wie «training_durchlauf_abrufen»). Lesbar ist jedes Training, " +
     `das dein Konto in KiFu sieht; ändern lassen sich nur die mit «bearbeitbar». ${KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ training_id: TrainingId }),
