@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { ExerciseListRow } from "@/lib/queries/exercises";
 import { ZIEL_MAX } from "@/lib/training";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
-import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
+import { loescheTraining } from "@/lib/kern/loeschen";
 import { kategorienSlugs } from "@/lib/vocab";
 import { NICHT_GEFUNDEN, ausDbFehler, fehlschlag } from "@/lib/kern/ergebnis";
 import {
@@ -302,28 +302,19 @@ export async function removeTrainingExercise(
  *  (Story 6); die Rückkehr führt dann in den Team-Bereich statt in die eigene
  *  Übersicht. Wer nur seine eigene Kopie will, übernimmt sie vorher zu sich. */
 export async function deleteTraining(trainingId: string): Promise<void> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
+  const a = await angemeldet();
+  if (!a) return;
 
-  const { data: training } = await supabase
-    .from("trainings")
-    .select("team_id")
-    .eq("id", trainingId)
-    .maybeSingle();
-  if (!training) return;
+  // Kein Erfolgssignal ohne tatsächliche Löschung: Unsichtbar, fremd oder von
+  // der Datenbank abgewiesen endet still wie bisher — der Dialog bleibt stehen.
+  const r = await loescheTraining(a.supabase, a.userId, { trainingId });
+  if (!r.ok) return;
 
-  // Kein Erfolgssignal ohne tatsächliche Löschung: der Helfer meldet `false`,
-  // wenn die RLS nichts durchgelassen hat.
-  if (!(await loescheTrainingMitBildern(supabase, trainingId))) return;
-
-  if (training.team_id) {
-    revalidiereTeam(training.team_id);
+  if (r.wert.teamId) {
+    revalidiereTeam(r.wert.teamId);
     // Zurück in die Ansicht, aus der das Training verschwunden ist — dort
     // erwartet der Trainer den Beleg, dass es weg ist (Story 17).
-    redirect(`/team/${training.team_id}/trainings`);
+    redirect(`/team/${r.wert.teamId}/trainings`);
   }
   revalidatePath("/trainings");
   redirect("/trainings?mine=1&deleted=1");

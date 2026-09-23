@@ -2,12 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { kopiereTraining } from "@/lib/training-kopie";
-import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
+import { kopiereTrainingNach, type KopieNach } from "@/lib/kern/kopie";
+import { loescheTraining } from "@/lib/kern/loeschen";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { legeTrainingAn } from "@/lib/kern/training";
-import { angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
+import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
 
 /**
  * Trainings zwischen Person und Team bewegen (Team-Epic Story 5).
@@ -22,6 +21,19 @@ export type TeamTrainingResult =
   | { ok: true; trainingId: string }
   | { ok: false; error: string };
 
+/** Eine Kopie über den Kern (`kopiereTrainingNach`) — der Ablauf, den alle
+ *  drei Kopier-Actions teilen. Die Meldung ist die der Oberfläche; der
+ *  `hinweis` für den Assistenten bleibt hier unbeachtet. Die Revalidierung
+ *  übernimmt der Aufrufer, weil nur er weiss, welche Ansichten betroffen
+ *  sind. */
+async function kopie(e: KopieNach): Promise<TeamTrainingResult> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await kopiereTrainingNach(a.supabase, a.userId, e);
+  if (!r.ok) return { ok: false, error: oberflaechenMeldung(r) };
+  return { ok: true, trainingId: r.wert.id };
+}
+
 /** Ein eigenes Training als Kopie ins Team stellen (AK 1–4).
  *
  *  Auch Entwürfe: für das Team gilt kein Vollständigkeits-Gate — das gibt es
@@ -31,17 +43,9 @@ export async function stelleInsTeam(
   trainingId: string,
   teamId: string,
 ): Promise<TeamTrainingResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-
-  const kopie = await kopiereTraining(supabase, trainingId, { art: "team", teamId });
-  if (!kopie.ok) return { ok: false, error: kopie.error };
-
-  revalidiereTeam(teamId);
-  return { ok: true, trainingId: kopie.neueId };
+  const r = await kopie({ quelleId: trainingId, teamId });
+  if (r.ok) revalidiereTeam(teamId);
+  return r;
 }
 
 /** Ein Team-Training als persönliche Kopie zu sich übernehmen (AK 6).
@@ -49,20 +53,9 @@ export async function stelleInsTeam(
  *  Die Kopie ist privat und gehört dem Übernehmenden allein — spätere
  *  Änderungen am Team-Training erreichen sie nicht mehr. */
 export async function uebernimmZuMir(teamTrainingId: string): Promise<TeamTrainingResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-
-  const kopie = await kopiereTraining(supabase, teamTrainingId, {
-    art: "persoenlich",
-    ownerId: user.id,
-  });
-  if (!kopie.ok) return { ok: false, error: kopie.error };
-
-  revalidatePath("/trainings");
-  return { ok: true, trainingId: kopie.neueId };
+  const r = await kopie({ quelleId: teamTrainingId });
+  if (r.ok) revalidatePath("/trainings");
+  return r;
 }
 
 /** Ein Training aus dem Team-Bestand entfernen (AK 7). Ein angesetzter Termin
@@ -71,23 +64,23 @@ export async function uebernimmZuMir(teamTrainingId: string): Promise<TeamTraini
 export async function entferneTeamTraining(
   teamTrainingId: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
 
-  const { data: training } = await supabase
-    .from("trainings")
-    .select("team_id")
-    .eq("id", teamTrainingId)
-    .maybeSingle();
-  if (!training?.team_id) return { ok: false, error: "Team-Training nicht gefunden." };
+  const r = await loescheTraining(a.supabase, a.userId, { trainingId: teamTrainingId, nurTeam: true });
+  // Die bisherigen Texte des Team-Bestands: unsichtbar oder persönlich heisst
+  // hier «Team-Training nicht gefunden.», ein abgewiesenes Löschen
+  // «Entfernen fehlgeschlagen.».
+  if (!r.ok)
+    return {
+      ok: false,
+      error:
+        r.art === "nicht_gefunden" || r.art === "keine_rechte"
+          ? "Team-Training nicht gefunden."
+          : "Entfernen fehlgeschlagen.",
+    };
 
-  const geloescht = await loescheTrainingMitBildern(supabase, teamTrainingId);
-  if (!geloescht) return { ok: false, error: "Entfernen fehlgeschlagen." };
-
-  revalidiereTeam(training.team_id);
+  revalidiereTeam(r.wert.teamId!);
   return { ok: true };
 }
 
@@ -130,20 +123,10 @@ export async function uebernimmTraining(
   quelleId: string,
   ziel: { art: "persoenlich" } | { art: "team"; teamId: string },
 ): Promise<TeamTrainingResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-
-  const kopie = await kopiereTraining(
-    supabase,
-    quelleId,
-    ziel.art === "team" ? { art: "team", teamId: ziel.teamId } : { art: "persoenlich", ownerId: user.id },
-  );
-  if (!kopie.ok) return { ok: false, error: kopie.error };
+  const r = await kopie({ quelleId, teamId: ziel.art === "team" ? ziel.teamId : undefined });
+  if (!r.ok) return r;
 
   if (ziel.art === "team") revalidiereTeam(ziel.teamId);
   revalidatePath("/trainings");
-  return { ok: true, trainingId: kopie.neueId };
+  return r;
 }

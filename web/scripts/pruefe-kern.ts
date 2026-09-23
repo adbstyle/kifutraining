@@ -514,6 +514,14 @@ pruefe("lib/kern: kein \"use server\", keine Adapter-Importe (auch eine Ebene ti
   }
 });
 
+pruefe("Kopieren und Löschen leben im Kern: die alten Orte sind weg (#197)", () => {
+  // Zwei Orte für dieselbe Choreografie hiessen zwei Wahrheiten darüber, was
+  // zu einer vollständigen Kopie gehört und wann «nichts entstanden» ist.
+  for (const alt of ["lib/training-kopie.ts", "lib/training-loeschen.ts"])
+    assert.ok(!existsSync(join(web, alt)), `${alt} existiert wieder — gehört nach lib/kern/`);
+  for (const neu of ["kopie.ts", "loeschen.ts"]) assert.ok(existsSync(join(kern, neu)), `lib/kern/${neu} fehlt`);
+});
+
 pruefe("Queries ohne Cookie-Client (lib/queries/*-fuer.ts): kein next/, kein react, kein server.ts", () => {
   // Der Kern liest Trainings und Übungen über diese Dateien. `react`s `cache`
   // bindet an einen Request und fehlte in einem Route Handler ebenso wie der
@@ -595,6 +603,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     ],
     "#195": ["training_hinweise"],
     "#196": ["training_veroeffentlichen", "training_auf_entwurf_setzen"],
+    "#197": ["training_kopieren", "training_loeschen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);

@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-09-11. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-09-23. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -23,8 +23,8 @@ Ein Training gehört entweder einer Person oder einem Team, nie beiden. Geteilt 
 kopiert immer: Wer ein eigenes Training ins Team stellt, erzeugt eine eigenständige Kopie —
 das persönliche Original bleibt unberührt, und spätere Änderungen wirken in keine Richtung.
 Dasselbe gilt umgekehrt beim Übernehmen eines Team-Trainings zu sich. Eine Kopie ist dabei
-vollständig: Sie führt neben den Übungen samt Bild und Diagramm auch die Gruppen des Trainings,
-deren Verteilung im Hauptteil und die Notizen der Übungen — das Team findet dieselbe Einheit vor
+vollständig: Sie führt neben den Übungen samt Bild und Diagramm auch das Ziel, die Gruppen des
+Trainings, deren Verteilung im Hauptteil und die Notizen der Übungen — das Team findet dieselbe Einheit vor
 und muss nichts davon neu eintragen. Hält das Training mehrere Varianten seines Hauptteils bereit,
 kommen alle mit, in derselben Reihenfolge und unter denselben Bezeichnungen; ausgewählt wird dabei
 nichts. Auch sie sind danach eigenständig: Wer in der Kopie eine Variante umbaut, umbenennt oder

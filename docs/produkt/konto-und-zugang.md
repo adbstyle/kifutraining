@@ -111,8 +111,23 @@ Das Training bleibt bearbeitbar, und solange es öffentlich ist, weist die Anwen
 Assistenten jede Änderung ab, die es unter die Bedingungen brächte. Auf Entwurf gesetzt,
 verschwindet es aus dem öffentlichen Bestand; bereits übernommene Kopien anderer bleiben
 bestehen. Ein Team-Training lässt sich nicht veröffentlichen, ein fremdes Training weder
-veröffentlichen noch zurückziehen. Weitere Fähigkeiten kommen nach und nach dazu; dieser
-Abschnitt wächst mit ihnen.
+veröffentlichen noch zurückziehen.
+
+Der Assistent kann ausserdem ein Training übernehmen: ein öffentliches der Community, das er
+über die Suche im öffentlichen Bestand findet und vorher vollständig abrufen kann, oder ein
+eigenes, das so eine zweite, unabhängige Fassung bekommt. Wie beim Übernehmen in der Anwendung
+entsteht eine private Kopie im persönlichen Bestand, in derselben Altersstufe und samt Ziel,
+Übungen, Bildern, Diagrammen, Varianten, Gruppen, Durchlauf und Notizen; die Quelle bleibt
+unberührt, und dasselbe Training lässt sich beliebig oft übernehmen. Scheitert das Kopieren mit
+einer Meldung, räumt die Anwendung weg, was schon entstanden war, und sagt dem Assistenten,
+dass nichts entstanden ist und er es gefahrlos wiederholen kann — oder, falls auch das Aufräumen
+scheiterte, welche unvollständige Kopie stehen blieb. Ein eigenes Training oder eines der
+eigenen Teams kann der Assistent auch löschen. Er fragt dafür nicht nach, weiss aber vorher, wie
+viele Übungen es trägt und ob es öffentlich ist, und nennt danach, was mitging. Das Training
+verschwindet samt Übungen, Bildern und einem angesetzten Termin, ein öffentliches zugleich aus
+dem öffentlichen Bestand; Kopien, die andere übernommen haben, bleiben. Ein fremdes Training
+lässt sich nicht löschen. Weitere Fähigkeiten kommen nach und nach dazu; dieser Abschnitt wächst
+mit ihnen.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man in den Einstellungen des Assistenten die
 Adresse `https://ki-fu.ch/api/mcp` ein; die Konto-Seite nennt sie ebenfalls. Der Assistent
@@ -192,3 +207,11 @@ Weg über die Erlauben-Seite der Anwendung; ein Zugang, der an ihr vorbei zustan
 nicht mitgezählt. Ändert jemand dasselbe Training gleichzeitig in der Anwendung, merkt das
 niemand; ein bereits offener Browser-Tab zeigt eine Änderung des Assistenten erst nach dem
 Neuladen.
+
+Bricht ein Übernehmen durch den Assistenten ab, ohne dass die Anwendung einen Fehler bemerkt —
+etwa durch eine Zeitüberschreitung oder einen Absturz mitten im Kopieren —, kann eine
+unvollständige Kopie als eigenes Training stehen bleiben; sie ist nicht als unfertig erkennbar
+und wird nicht nachträglich aufgeräumt. Ebenso kann die Kopie vollständig entstanden sein, ohne
+dass der Assistent davon erfährt. Bleibt die Rückmeldung aus, prüft der Assistent darum vor einem
+zweiten Versuch den eigenen Bestand. Übernehmen kann der Assistent vorerst nur in den persönlichen Bestand, nicht in ein
+Team.

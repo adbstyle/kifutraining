@@ -104,7 +104,8 @@ export const trainingsSuchen = werkzeug({
     "Geänderte zuerst, mit Suchtext kürzere Namen zuerst. Eingrenzen nach " +
     "Alterskategorie (ODER). «uebungszahl» und «dauer_min» beziehen sich wie die Kachel der " +
     "Übersicht auf die erste Variante; «varianten_zahl» sagt, wie viele es gibt. " +
-    "Team-Trainings erscheinen hier nicht. Das ganze Training liefert «training_abrufen».",
+    "Team-Trainings erscheinen hier nicht. Das ganze Training liefert «training_abrufen», " +
+    "übernehmen lässt es sich mit «training_kopieren».",
   nurLesen: true,
   eingabe: SuchenEingabe,
   ausgabe: z.object({ treffer: z.array(SuchenTreffer), weitere: z.boolean() }),

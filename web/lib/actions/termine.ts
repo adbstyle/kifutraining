@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { kopiereTraining } from "@/lib/training-kopie";
-import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
+import { kopiereTraining } from "@/lib/kern/kopie";
+import { loescheTrainingMitBildern } from "@/lib/kern/loeschen";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 
 /**

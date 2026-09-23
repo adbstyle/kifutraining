@@ -50,7 +50,9 @@ const { ordneUebungZu, entferneUebung, setzeDauer, setzeNotiz, setzeUebungsfolge
 );
 const { trainingAbrufen, trainingsSuchen } = await import("../lib/kern/lesen");
 const { legeGruppeAn, benenneGruppe, entferneGruppe, setzeDurchlauf } = await import("../lib/kern/gruppen");
-const { loescheTrainingMitBildern } = await import("../lib/training-loeschen");
+const { loescheTraining, loescheTrainingMitBildern } = await import("../lib/kern/loeschen");
+const { kopiereTrainingNach, HINWEIS_NICHTS_ENTSTANDEN } = await import("../lib/kern/kopie");
+const { ladeTrainingDetail } = await import("../lib/queries/trainings-fuer");
 
 const URL_ = process.env.SUPABASE_URL!;
 const admin = createClient(URL_, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -87,6 +89,8 @@ type Konto = { id: string; supabase: SupabaseClient };
 const konten: string[] = [];
 /** Wegwerf-Teams; ihre Trainings kaskadieren beim Löschen mit. */
 const teams: string[] = [];
+/** Eigens hochgeladene Storage-Dateien (Bucket exercise-images). */
+const dateien: string[] = [];
 
 async function wegwerfKonto(): Promise<Konto> {
   const email = `kern-db-${randomBytes(6).toString("hex")}@test.local`;
@@ -128,6 +132,10 @@ async function positionen(trainingId: string, teil: string) {
  *  Konten stehen lassen noch den eigentlichen Prüffehler überdecken — er wird
  *  nur gemeldet. */
 async function aufraeumen() {
+  if (dateien.length) {
+    const { error } = await admin.storage.from("exercise-images").remove(dateien);
+    if (error) console.error("[aufräumen] Dateien nicht entfernt:", error.message);
+  }
   for (const id of teams) {
     const { error } = await admin.from("teams").delete().eq("id", id);
     if (error) console.error(`[aufräumen] Team ${id} nicht entfernt:`, error.message);
@@ -630,6 +638,193 @@ try {
     fehler(await setzeZiel(a.supabase, a.id, { trainingId: randomUUID(), ziel: "x" }), "nicht_gefunden", "Training nicht gefunden.");
     fehler(await setzeNotiz(a.supabase, a.id, { fassungId: randomUUID(), notiz: "x" }), "nicht_gefunden", "Zuordnung nicht gefunden.");
     fehler(await entferneUebung(a.supabase, a.id, { fassungId: "keine-uuid" }), "nicht_gefunden", "Zuordnung nicht gefunden.");
+  });
+
+  // ── Übernehmen und Löschen (#197) ────────────────────────────────────────
+  // Die Quelle: ein öffentliches Training von B mit allem, was eine Kopie
+  // tragen muss — Ziel, zwei Varianten, Gruppen, Durchlauf, Notiz, Dauer.
+  const tq = wert(
+    await legeTrainingAn(b.supabase, b.id, {
+      name: "Kern-DB-Quelle",
+      altersstufe: "kinderfussball",
+      stufen: ["F", "E"],
+      ziel: "Passspiel unter Druck",
+    }),
+  ).id;
+  {
+    const qe = wert(await ordneUebungZu(b.supabase, b.id, { trainingId: tq, einordnung: "einleitung", exerciseId: ein }));
+    wert(await setzeNotiz(b.supabase, b.id, { fassungId: qe.fassungId, notiz: "Hütchen bereitlegen" }));
+    wert(await setzeDauer(b.supabase, b.id, { fassungId: qe.fassungId, minuten: 10 }));
+    const qh1 = wert(
+      await ordneUebungZu(b.supabase, b.id, {
+        trainingId: tq,
+        einordnung: "hauptteil",
+        hauptteilkategorie: "fussball-spielen",
+        exerciseId: frei,
+      }),
+    );
+    wert(await setzeDauer(b.supabase, b.id, { fassungId: qh1.fassungId, minuten: 15 }));
+    const { data: v2, error } = await admin
+      .from("training_varianten")
+      .insert({ training_id: tq, name: "Regen", position: 1 })
+      .select("id")
+      .single();
+    if (error) throw error;
+    wert(
+      await ordneUebungZu(b.supabase, b.id, {
+        trainingId: tq,
+        einordnung: "hauptteil",
+        hauptteilkategorie: "fussball-spielen",
+        exerciseId: frei,
+        varianteId: v2.id,
+      }),
+    );
+    const blau = wert(await legeGruppeAn(b.supabase, b.id, { trainingId: tq, name: "Blau" })).gruppe;
+    const gelb = wert(await legeGruppeAn(b.supabase, b.id, { trainingId: tq, name: "Gelb" })).gruppe;
+    wert(await setzeDurchlauf(b.supabase, b.id, { fassungId: qh1.fassungId, gruppeIds: [gelb.id, blau.id] }));
+    wert(await veroeffentliche(b.supabase, b.id, { trainingId: tq }));
+  }
+
+  /** Das Orakel: ein Training ohne das, was eine Kopie neu bekommt —
+   *  Kennungen, Eigentum, Sichtbarkeit, Zeitstempel. Varianten und Gruppen
+   *  werden über ihre Reihenfolge abgebildet, damit auch die Zuordnung der
+   *  Übungen zu ihnen verglichen wird; jede übrige Kennung (auch im Diagramm)
+   *  wird unkenntlich. */
+  const inhalt = async (id: string) => {
+    const d = await ladeTrainingDetail(a.supabase, id);
+    assert.ok(d, `Training ${id} nicht lesbar`);
+    const v = new Map(d.varianten.map((x, i) => [x.id, `V${i}`]));
+    const g = new Map(d.gruppen.map((x, i) => [x.id, `G${i}`]));
+    const { id: _i, ownerId: _o, visibility: _v, urheber: _u, createdAt: _c, updatedAt: _up, ...rest } = d;
+    const roh = JSON.stringify({
+      ...rest,
+      varianten: d.varianten.map((x) => ({ ...x, id: v.get(x.id) })),
+      gruppen: d.gruppen.map((x) => ({ ...x, id: g.get(x.id) })),
+      exercises: d.exercises
+        .map(({ id: _f, ...f }) => ({
+          ...f,
+          varianteId: f.varianteId ? v.get(f.varianteId) : null,
+          gruppen: f.gruppen.map((x) => g.get(x.id)),
+        }))
+        .map((f) => JSON.stringify(f))
+        .sort(),
+    });
+    return JSON.parse(roh.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, "#"));
+  };
+
+  let k1 = "";
+  await pruefe("Übernehmen: öffentliches Training → private, vollständige Kopie; Quelle unberührt; mehrfach", async () => {
+    const vorher = await ladeTrainingDetail(admin as never, tq);
+    const r = wert(await kopiereTrainingNach(a.supabase, a.id, { quelleId: tq }));
+    k1 = r.id;
+    assert.deepEqual(r.ziel, { art: "persoenlich" });
+    const { data: zeile } = await admin.from("trainings").select("owner_id, team_id, visibility, ziel").eq("id", k1).single();
+    assert.deepEqual(zeile, { owner_id: a.id, team_id: null, visibility: "private", ziel: "Passspiel unter Druck" });
+
+    const q = await inhalt(tq);
+    assert.equal(q.ziel, "Passspiel unter Druck");
+    assert.equal(q.varianten.length, 2);
+    assert.equal(q.gruppen.length, 2);
+    assert.deepEqual(await inhalt(k1), q, "die Kopie trägt denselben Inhalt wie die Quelle");
+    assert.deepEqual(await ladeTrainingDetail(admin as never, tq), vorher, "die Quelle bleibt unberührt");
+
+    const k2 = wert(await kopiereTrainingNach(a.supabase, a.id, { quelleId: tq })).id;
+    assert.notEqual(k2, k1, "jede Übernahme ist ein eigenes Training");
+    // Auch ein eigenes Training lässt sich übernehmen — eine zweite Fassung.
+    const k3 = wert(await kopiereTrainingNach(a.supabase, a.id, { quelleId: k1 })).id;
+    assert.deepEqual(await inhalt(k3), q);
+
+    // Unsichtbares und Zufälliges: nichts entstanden.
+    const privat = wert(
+      await legeTrainingAn(b.supabase, b.id, { name: "Privat", altersstufe: "kinderfussball", stufen: ["F"] }),
+    ).id;
+    for (const id of [privat, randomUUID(), "keine-uuid"]) {
+      const f = fehler(
+        await kopiereTrainingNach(a.supabase, a.id, { quelleId: id }),
+        "nicht_gefunden",
+        "Das Training ist nicht (mehr) verfügbar.",
+      ) as { hinweis?: string };
+      assert.equal(f.hinweis, HINWEIS_NICHTS_ENTSTANDEN);
+    }
+    // Ein fremdes Team: nicht gefunden, bevor etwas entsteht.
+    fehler(
+      await kopiereTrainingNach(a.supabase, a.id, { quelleId: tq, teamId: randomUUID() }),
+      "nicht_gefunden",
+      "Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist.",
+    );
+  });
+
+  await pruefe("Übernehmen: gescheiterte Bildkopie → Meldung, «nichts entstanden», kein Training übrig (PC 2, NFR 2)", async () => {
+    const tf = wert(
+      await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Bildfehler", altersstufe: "kinderfussball", stufen: ["F"] }),
+    ).id;
+    const fe = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tf, einordnung: "einleitung", exerciseId: ein }));
+    const fe2 = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tf, einordnung: "einleitung", exerciseId: ein }));
+    // Eine Fassung zeigt auf eine Datei, die es im Speicher nicht gibt …
+    const { error } = await admin
+      .from("training_exercises")
+      .update({ bild_url: `${URL_}/storage/v1/object/public/exercise-images/user/${a.id}/fehlt-${randomUUID()}.webp` })
+      .eq("id", fe.fassungId);
+    if (error) throw error;
+    // … die andere auf eine echte: Deren Kopie gelingt und muss beim Abbruch
+    // wieder fallen.
+    const ordner = `user/${a.id}`;
+    const echt = `${ordner}/${fe2.fassungId}.webp`;
+    const { error: upFehler } = await admin.storage
+      .from("exercise-images")
+      .upload(echt, new Blob([new Uint8Array([82, 73, 70, 70, 0, 0, 0, 0, 87, 69, 66, 80])], { type: "image/webp" }), {
+        contentType: "image/webp",
+      });
+    if (upFehler) throw upFehler;
+    dateien.push(echt);
+    const { error: e3 } = await admin
+      .from("training_exercises")
+      .update({ bild_url: `${URL_}/storage/v1/object/public/exercise-images/${echt}` })
+      .eq("id", fe2.fassungId);
+    if (e3) throw e3;
+    const imOrdner = async () =>
+      ((await admin.storage.from("exercise-images").list(ordner, { limit: 100 })).data ?? [])
+        .map((d) => `${ordner}/${d.name}`)
+        .sort();
+    const dateienVorher = await imOrdner();
+    assert.deepEqual(dateienVorher, [echt]);
+    const zahl = async () =>
+      (await admin.from("trainings").select("*", { count: "exact", head: true }).eq("owner_id", a.id)).count;
+    const vorher = await zahl();
+    const f = fehler(
+      await kopiereTrainingNach(a.supabase, a.id, { quelleId: tf }),
+      "technisch",
+      "Das Bild liess sich nicht kopieren. Bitte versuche es noch einmal.",
+    ) as { hinweis?: string };
+    assert.equal(f.hinweis, "Es ist keine Kopie entstanden — der Versuch lässt sich gefahrlos wiederholen.");
+    assert.equal(await zahl(), vorher, "in der Datenbank steht kein neues Training");
+    assert.deepEqual(await imOrdner(), dateienVorher, "die gelungene Bildkopie ist wieder entfernt");
+  });
+
+  await pruefe("Löschen: Auskunft vorher gelesen, danach weg; fremd → keine_rechte; unbekannt → nicht_gefunden", async () => {
+    // Die Kopie erfüllt die Bedingungen der Quelle — veröffentlichen, dann löschen.
+    wert(await veroeffentliche(a.supabase, a.id, { trainingId: k1 }));
+    // Nur Team-Trainings: ein persönliches bleibt stehen.
+    fehler(await loescheTraining(a.supabase, a.id, { trainingId: k1, nurTeam: true }), "nicht_gefunden", "Training nicht gefunden.");
+    assert.deepEqual(wert(await loescheTraining(a.supabase, a.id, { trainingId: k1 })), {
+      name: "Kern-DB-Quelle",
+      uebungen: 3,
+      warOeffentlich: true,
+      teamId: null,
+      terminEntfiel: false,
+    });
+    fehler(await trainingAbrufen(a.supabase, a.id, { trainingId: k1 }), "nicht_gefunden", "Training nicht gefunden.");
+    fehler(await loescheTraining(a.supabase, a.id, { trainingId: k1 }), "nicht_gefunden", "Training nicht gefunden.");
+    const { count } = await admin.from("training_exercises").select("*", { count: "exact", head: true }).eq("training_id", k1);
+    assert.equal(count, 0, "die Übungen gehen mit (PC 5)");
+
+    const FREMD = "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.";
+    fehler(await loescheTraining(a.supabase, a.id, { trainingId: tq }), "keine_rechte", FREMD);
+    fehler(await loescheTraining(a.supabase, a.id, { trainingId: randomUUID() }), "nicht_gefunden", "Training nicht gefunden.");
+    // Die Kopien anderer bleiben, wenn die Quelle geht (PC 7).
+    const kb = wert(await kopiereTrainingNach(a.supabase, a.id, { quelleId: tq })).id;
+    wert(await loescheTraining(b.supabase, b.id, { trainingId: tq }));
+    assert.ok(await ladeTrainingDetail(a.supabase, kb), "die Übernahme von A besteht weiter");
   });
 } finally {
   await aufraeumen();

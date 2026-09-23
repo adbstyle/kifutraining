@@ -421,7 +421,7 @@ Team-Trainings sind nicht direkt veröffentlichbar. Wer eine Team-Arbeit veröff
 übernimmt sie zuerst in seinen persönlichen Bestand.
 
 Jedes öffentliche Training kann jede angemeldete Person übernehmen, auch ihr Urheber selbst. Es
-entsteht eine private, frei bearbeitbare Kopie des ganzen Trainings.
+entsteht eine private, frei bearbeitbare Kopie des ganzen Trainings, samt seinem Ziel.
 
 ## Finden
 
