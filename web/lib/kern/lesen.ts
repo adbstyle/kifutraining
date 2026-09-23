@@ -6,11 +6,12 @@ import {
   type TrainingListRow,
 } from "@/lib/queries/trainings-fuer";
 import { trainingAuskunft, type TrainingAuskunft } from "@/lib/kern/auskunft";
+import { hinweiseFuer, type Hinweis } from "@/lib/hinweise";
 import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
 
 /**
- * Trainings lesen (#193 AK 1/2) — für die KI-Werkzeuge «training_abrufen» und
- * «trainings_suchen». Dieselben Queries wie Editor, Ansicht und
+ * Trainings lesen (#193 AK 1/2, #195) — für die KI-Werkzeuge «training_abrufen»,
+ * «trainings_suchen» und «training_hinweise». Dieselben Queries wie Editor, Ansicht und
  * Trainings-Übersicht (lib/queries/trainings-fuer.ts); was sichtbar ist,
  * entscheidet allein die RLS.
  *
@@ -43,6 +44,22 @@ export async function trainingAbrufen(
   if (!detail.wert)
     return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.training, { feld: "training_id" });
   return ok(trainingAuskunft(detail.wert, { userId }));
+}
+
+/** Die fachlichen Hinweise zu einem Training (#195) — zu jedem, das dieses
+ *  Konto sieht, wie `trainingAbrufen`. Liest nur (PC 1). Was fehlt, damit es
+ *  öffentlich werden darf, steht nur beim eigenen persönlichen Training dabei;
+ *  alles Übrige ist eine Eigenschaft des Trainings und gilt für jeden Leser. */
+export async function trainingHinweise(
+  supabase: SupabaseClient,
+  userId: string,
+  e: { trainingId: string },
+): Promise<KernErgebnis<{ hinweise: Hinweis[] }>> {
+  const detail = await ohneWurf("trainingHinweise", () => ladeTrainingDetail(supabase, e.trainingId));
+  if (!detail.ok) return detail;
+  if (!detail.wert)
+    return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.training, { feld: "training_id" });
+  return ok({ hinweise: hinweiseFuer(detail.wert, userId) });
 }
 
 export type TrainingsSuche = {

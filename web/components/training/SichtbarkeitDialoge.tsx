@@ -1,7 +1,11 @@
 "use client";
 
 import { Dialog, Button } from "@/components/ui";
-import { bedingungText, type FehlendeBedingung } from "@/lib/training-bedingungen";
+import {
+  ZUM_VEROEFFENTLICHEN_FEHLT,
+  bedingungText,
+  type FehlendeBedingung,
+} from "@/lib/training-bedingungen";
 import type { Variante } from "@/lib/varianten";
 
 /** Was gerade offen ist. `null` = nichts.
@@ -68,7 +72,7 @@ export function SichtbarkeitDialoge({
           </Button>
         }
       >
-        <p className="mb-3">Zum Veröffentlichen fehlt noch:</p>
+        <p className="mb-3">{ZUM_VEROEFFENTLICHEN_FEHLT}</p>
         <ul className="flex flex-col gap-1">
           {fehlend.map((b) => (
             <li

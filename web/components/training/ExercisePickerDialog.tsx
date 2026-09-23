@@ -16,6 +16,7 @@ import {
 import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import {
   KEINE_PASSENDE_UEBUNG,
+  STUFE_ABWEICHEND_TEXT,
   leerBestandText,
   stufenAbgedeckt,
   zielLabel,
@@ -341,7 +342,7 @@ export function ExercisePickerDialog({
                         <TriangleAlert
                           size={14}
                           className="shrink-0 text-primary"
-                          aria-label="Deckt keine der Trainings-Stufen ab"
+                          aria-label={STUFE_ABWEICHEND_TEXT}
                         />
                       )}
                     </span>

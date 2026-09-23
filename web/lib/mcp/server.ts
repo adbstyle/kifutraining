@@ -24,6 +24,7 @@ import {
   trainingDurchlaufAbrufen,
   trainingUebungDurchlaufSetzen,
 } from "@/lib/mcp/werkzeuge/gruppen";
+import { trainingHinweiseAbrufen } from "@/lib/mcp/werkzeuge/hinweise";
 
 /** Der vollständige Werkzeugsatz (Story #142; Epic #139 und #190 hängen ihre
  *  Werkzeuge hier an). Der Werkzeugsatz IST die Grenze eines Zugangs: das
@@ -52,6 +53,7 @@ export const WERKZEUGE = [
   gruppeEntfernen,
   trainingUebungDurchlaufSetzen,
   trainingDurchlaufAbrufen,
+  trainingHinweiseAbrufen,
 ] as const;
 
 export function registriereWerkzeuge(server: McpServer): void {

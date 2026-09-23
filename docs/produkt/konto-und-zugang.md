@@ -86,8 +86,21 @@ Hauptteils lehnt die Anwendung ab und nennt die Regel. Den Durchlauf des ganzen 
 er je Variante auf einmal ab: jeden Wechsel mit der Belegung der Übungen und je Gruppe die
 zugewiesene Zeit; im Juniorenfussball zählen die Wechsel über beide Hauptteil-Blöcke durch. Er
 sieht auch, an wie vielen Übungen eine Gruppe steht — eine Gruppe entfernt er ohne Rückfrage,
-und sie verschwindet dabei aus jedem Durchlauf. Konflikte der Verteilung, etwa eine Gruppe an
-zwei Übungen im selben Wechsel, nennt die Anwendung dem Assistenten noch nicht. Weitere Fähigkeiten kommen nach und nach dazu; dieser Abschnitt wächst mit ihnen.
+und sie verschwindet dabei aus jedem Durchlauf.
+
+Zu jedem Training, das er lesen kann, ruft der Assistent auf einmal alle fachlichen Hinweise ab,
+die die Anwendung dazu zeigt, im selben Wortlaut: was zum Veröffentlichen noch fehlt (nur beim
+eigenen persönlichen Training, weil nur dort veröffentlicht wird), eine Gruppe, die im selben
+Wechsel an mehreren Übungen steht, ungleich lange Übungen eines Wechsels, Abweichungen vom
+Zeitrichtwert an Teil, Block und Gesamtdauer samt Richtung (nur im Juniorenfussball), leere
+Blöcke, die einen Hinweis tragen, ungewöhnlich viele Übungen in einem Trainingsteil (nur im
+Kinderfussball), Übungen ohne erfasste Dauer und Übungen, die keine Alterskategorie des
+Trainings abdecken. Jeder Hinweis nennt seine Stelle — Trainingsteil, Block oder
+Hauptteilkategorie, bei mehreren Varianten die Variante, dazu die betroffenen Übungen, die Gruppe
+und die Wechsel —, damit der Assistent ihn ohne Rückfrage beheben kann. Hinweise sind keine
+Fehler: Nur die Veröffentlichungsbedingungen sperren etwas, und zwar das Veröffentlichen; alles
+andere ist Orientierung. Das Abrufen ändert am Training nichts. Weitere Fähigkeiten kommen nach
+und nach dazu; dieser Abschnitt wächst mit ihnen.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man in den Einstellungen des Assistenten die
 Adresse `https://ki-fu.ch/api/mcp` ein; die Konto-Seite nennt sie ebenfalls. Der Assistent

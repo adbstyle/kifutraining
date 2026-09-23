@@ -71,6 +71,22 @@ export const ANZAHL_HINWEIS: Record<TrainingsteilSlug, number> = {
   ausklang: 3,
 };
 
+/** Der Wortlaut zu `ANZAHL_HINWEIS` — am Fuss der Teil-Karte und als Hinweis
+ *  an den KI-Assistenten (#195 AK 7). */
+export const ANZAHL_HINWEIS_TEXT =
+  "Ungewöhnlich viele Übungen für diesen Trainingsteil — erlaubt, achte nur auf die Gesamtdauer.";
+
+/** Wie viele Übungen eines Teils keine Dauer tragen — am Fuss der Teil-Karte
+ *  und als Hinweis an den KI-Assistenten. */
+export function ohneDauerText(n: number): string {
+  return `${n} ${n === 1 ? "Übung" : "Übungen"} ohne erfasste Dauer (zählt nicht zur Summe).`;
+}
+
+/** Eine Übung, die keine der Alterskategorien des Trainings abdeckt
+ *  (`stufenAbgedeckt`) — der Titel am Warnzeichen der Zeile und der Hinweis an
+ *  den KI-Assistenten. */
+export const STUFE_ABWEICHEND_TEXT = "Deckt keine der Trainings-Stufen ab";
+
 /** Was der Editor zu einem leeren Abschnitt meldet, den das Lehrmittel als
  *  gesetzt ansieht — der VOLLSTÄNDIGE Wortlaut, an einem Ort und für beide
  *  Altersstufen (Story #126).

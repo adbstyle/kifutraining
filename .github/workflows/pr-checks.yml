@@ -65,6 +65,10 @@ jobs:
       # als Server Action ein offener Endpunkt —, dazu eindeutige
       # snake_case-Namen im Werkzeugsatz.
       - run: npm run check:kern
+      # Hinweise an den KI-Assistenten (Story #195): dieselben Hinweise wie im
+      # Editor, je Variante, wortgleich — die Textkonstanten gegen die früheren
+      # JSX-Literale, und dass die Komponenten keine eigenen Literale mehr tragen.
+      - run: npm run check:hinweise
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)

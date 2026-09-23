@@ -74,6 +74,11 @@ export function varianteAusFehler(message: string): string | null {
   return marker === "VARIANTE" && id ? id : null;
 }
 
+/** Die Einleitung der Liste fehlender Bedingungen — im Dialog «Noch nicht
+ *  veröffentlichbar» und vor jedem Veröffentlichungs-Hinweis an den
+ *  KI-Assistenten (#195 AK 2). */
+export const ZUM_VEROEFFENTLICHEN_FEHLT = "Zum Veröffentlichen fehlt noch:";
+
 /** Was fehlt, aus Sicht des Trainers — mit der Variante, wenn es eine zu
  *  nennen gibt (#204 AK 2). Ergänzt den Satz «Es fehlt …».
  *

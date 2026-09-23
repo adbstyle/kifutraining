@@ -593,6 +593,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
       "training_uebung_durchlauf_setzen",
       "training_durchlauf_abrufen",
     ],
+    "#195": ["training_hinweise"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
