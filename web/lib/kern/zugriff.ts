@@ -90,6 +90,92 @@ export async function ladeTrainingZumBearbeiten<Z extends object = object>(
   return ok({ zeile: zeile.wert, ziel });
 }
 
+/** Was jede Fassung zum Einordnen trägt: wo sie steht und wie sie heisst. */
+const FASSUNG_GRUNDSPALTEN = "id, training_id, trainingsteil, hauptteilkategorie, variante_id, name";
+
+export type FassungKopfZeile = {
+  id: string;
+  training_id: string;
+  trainingsteil: string;
+  hauptteilkategorie: string | null;
+  variante_id: string | null;
+  name: string;
+};
+
+/** Eine Übung im Training (Fassung) zum Bearbeiten laden — dieselben drei
+ *  Ausgänge wie beim Training, nur gilt die Kennung der Fassung:
+ *  unsichtbar → `nicht_gefunden` («Zuordnung nicht gefunden.»), sichtbar in
+ *  einem fremden öffentlichen Training → `keine_rechte` mit `fremd: true`.
+ *
+ *  Das Training kommt im selben Aufruf mit (`trainings!inner`): Die Fassung
+ *  hängt an seiner RLS-Kette, und ihre Rechte SIND seine Rechte. */
+export async function ladeFassungZumBearbeiten<F extends object = object>(
+  supabase: SupabaseClient,
+  userId: string,
+  fassungId: string,
+  /** Zusätzliche Spalten der Fassung (PostgREST-Select), etwa `"bild_url"`. */
+  spalten?: string,
+): Promise<
+  KernErgebnis<{ fassung: FassungKopfZeile & F; ziel: Bearbeitungsziel; altersstufe: Altersstufe }>
+> {
+  if (!istUuid(fassungId))
+    return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.fassung, { feld: "fassung_id" });
+
+  const auswahl = [FASSUNG_GRUNDSPALTEN, spalten, "trainings!inner ( owner_id, team_id, altersstufe )"]
+    .filter(Boolean)
+    .join(", ");
+  const { data, error } = await supabase
+    .from("training_exercises")
+    .select(auswahl)
+    .eq("id", fassungId)
+    .maybeSingle<
+      FassungKopfZeile &
+        F & { trainings: TrainingsEigentum & { altersstufe: string } | null }
+    >();
+  if (error) return ausDbFehler(error);
+  if (!data?.trainings)
+    return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.fassung, { feld: "fassung_id" });
+
+  const { trainings: training, ...fassung } = data;
+  const ziel = bearbeitungszielVon(training, userId);
+  if (!ziel)
+    return fehlschlag("keine_rechte", FREMDES_TRAINING, { feld: "fassung_id", fremd: true });
+  // Typ-Guard wie beim Training: die Spalte ist NOT NULL und per CHECK begrenzt.
+  if (!istAltersstufe(training.altersstufe))
+    return fehlschlag("technisch", "Das Training hat keine gültige Altersstufe.");
+  return ok({
+    fassung: fassung as unknown as FassungKopfZeile & F,
+    ziel,
+    altersstufe: training.altersstufe,
+  });
+}
+
+/** Eine Zeile per Kennung aktualisieren und prüfen, dass der Update traf.
+ *
+ *  Kein Owner-Filter: Wer schreiben darf, entscheidet die RLS (an einem
+ *  Team-Training jedes Mitglied). `select` danach zeigt, ob wirklich eine
+ *  Zeile getroffen wurde — ein Nulltreffer meldete sonst stillen Erfolg und
+ *  wird hier `nicht_gefunden`. Ein Datenbankfehler geht durch `ausDbFehler`.
+ *  Der Aufrufer hat die Zeile davor mit `lade…ZumBearbeiten` eingeordnet; ein
+ *  Nulltreffer hier heisst also «inzwischen weg». */
+export async function aktualisiereZeile(
+  supabase: SupabaseClient,
+  tabelle: "trainings" | "training_exercises",
+  id: string,
+  werte: Record<string, unknown>,
+  o: { nichtGefunden: string; feld?: string },
+): Promise<KernErgebnis<undefined>> {
+  const { data, error } = await supabase
+    .from(tabelle)
+    .update(werte)
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (error) return ausDbFehler(error);
+  if (!data) return fehlschlag("nicht_gefunden", o.nichtGefunden, o.feld ? { feld: o.feld } : {});
+  return ok(undefined);
+}
+
 /** Ist der Aufrufer Mitglied dieses Teams? Die SELECT-Policy auf `teams` lässt
  *  nur Mitglieder lesen — eine sichtbare Zeile IST die Mitgliedschaft. */
 export async function pruefeTeamMitglied(

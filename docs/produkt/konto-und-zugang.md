@@ -55,7 +55,26 @@ die Suche zu eng war. Jede zugeordnete Übung kommt als eigene Kopie samt Bild u
 Ende ihres Teils; dieselbe Übung darf mehrfach vorkommen. Passt eine Übung nicht, nennt die
 Anwendung dem Assistenten die verletzte Regel, damit er sich ohne Rückfrage korrigieren kann,
 und die bisherigen Zuordnungen bleiben stehen. Junioren-Trainings legt der Assistent noch
-nicht an. Weitere Fähigkeiten kommen nach und nach dazu; dieser Abschnitt wächst mit ihnen.
+nicht an.
+
+Bestehende Trainings kann der Assistent überarbeiten, gleich welcher Altersstufe. Er sucht die
+eigenen Trainings oder die öffentlichen der Community nach Namen und Alterskategorie und ruft
+ein Training vollständig ab: alle Angaben, alle Teile und Blöcke wie im Editor, auch die
+leeren, den Hauptteil einmal je Variante, und jede Übung mit Inhalt, Dauer, Notiz und den
+Gruppen ihres Durchlaufs. Ändern kann er Name, Ziel und Alterskategorien — mindestens eine
+bleibt; Übungen, die danach zu keiner Kategorie mehr passen, bleiben im Training und werden ihm
+genannt. Er setzt und entfernt die Dauer einer Übung (nicht im Auffangen), hält Notizen fest
+oder leert sie und entfernt Übungen; dabei erfährt er, welche Gruppen ihren Durchlauf tragen
+und ob eine Notiz mitfällt. Anders als die Anwendung, die eine Übung jeweils um einen Platz
+verschiebt, legt der Assistent die Reihenfolge eines ganzen Abschnitts in einem Zug fest. Ein
+Abschnitt ist ein Trainingsteil bzw. Block, im Kinderfussball-Hauptteil zusätzlich eine
+Hauptteilkategorie und im Hauptteil beider Altersstufen eine Variante. Der Assistent muss dafür
+alle Übungen des Abschnitts nennen, sonst ändert sich nichts und er erfährt, welche fehlen oder
+nicht dazugehören. Den Inhalt einer Übung, ihren Trainingsteil oder die Altersstufe eines
+Trainings ändert er nicht. Ein Training, das jemand anderem gehört und öffentlich ist, darf er
+lesen, aber nicht ändern, und bekommt genau das gesagt; ein Training, das er nicht sehen darf,
+gilt als nicht gefunden — ob es fehlt oder jemand anderem gehört, bleibt offen. Weitere
+Fähigkeiten kommen nach und nach dazu; dieser Abschnitt wächst mit ihnen.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man in den Einstellungen des Assistenten die
 Adresse `https://ki-fu.ch/api/mcp` ein; die Konto-Seite nennt sie ebenfalls. Der Assistent
@@ -132,4 +151,6 @@ Verbinden erst registriert, muss das Verbinden nach der Bestätigung der Adresse
 Wann und wie oft ein Zugang benutzt wurde, ist nicht einsehbar, und der Name eines Zugangs
 lässt sich nach dem Erlauben nicht mehr ändern. Die Grenze von fünf Zugängen gilt nur auf dem
 Weg über die Erlauben-Seite der Anwendung; ein Zugang, der an ihr vorbei zustande käme, würde
-nicht mitgezählt.
+nicht mitgezählt. Ändert jemand dasselbe Training gleichzeitig in der Anwendung, merkt das
+niemand; ein bereits offener Browser-Tab zeigt eine Änderung des Assistenten erst nach dem
+Neuladen.

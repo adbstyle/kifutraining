@@ -280,6 +280,37 @@ function variantenMeldung(message: string): string | null {
   return null;
 }
 
+/** Die Marker der RPC `setze_uebungsfolge` (#193 AK 9) und ihr Klartext. Über
+ *  die Oberfläche unerreichbar — sie verschiebt nur um eine Position; die
+ *  Folge in einem Zug setzt allein der KI-Assistent. Die Texte nennen darum
+ *  den Weg, den er ohne Rückfrage gehen kann (#193 NFR 2). Exportiert, weil
+ *  die Vorprüfung im Kern (`setzeUebungsfolge`) dieselben Sätze um die Namen
+ *  der betroffenen Übungen ergänzt. */
+export const UEBUNGSFOLGE_MELDUNG = {
+  UEBUNGSFOLGE_DOPPELT: "Eine Übung steht in der Reihenfolge mehrfach.",
+  UEBUNGSFOLGE_UNVOLLSTAENDIG:
+    "Die Reihenfolge muss genau die Übungen dieses Abschnitts nennen — jede einmal. " +
+    "Lies das Training neu und sende die vollständige Folge.",
+  UEBUNGSFOLGE_ABSCHNITT_LEER: "In diesem Abschnitt steht keine Übung.",
+} as const;
+
+/** Der Marker, mit dem die Datenebene einen Termin an einem persönlichen
+ *  Training abweist (Team-Epic, #156). Bisher unübersetzt — der Trainer sah
+ *  den Rohtext. */
+const TERMIN_MARKER: [string, string][] = [
+  [
+    "TERMIN_NUR_FUER_TEAM_TRAININGS",
+    "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.",
+  ],
+];
+
+/** Die Meldung zu einem Marker aus Übungsfolge oder Termin, sonst `null`. */
+function weitereMeldung(message: string): string | null {
+  for (const [marker, klartext] of [...Object.entries(UEBUNGSFOLGE_MELDUNG), ...TERMIN_MARKER])
+    if (message.includes(marker)) return klartext;
+  return null;
+}
+
 /** Der Marker, mit dem Postgres eine von der RLS abgewiesene Änderung meldet
  *  («new row violates row-level security policy for table …»). */
 const RLS_VERLETZUNG = "row-level security";
@@ -311,7 +342,8 @@ export function fachlicheMeldung(message: string): string | null {
     bedingungsFehler(message) ??
     schemaMeldung(message) ??
     gruppenMeldung(message) ??
-    variantenMeldung(message)
+    variantenMeldung(message) ??
+    weitereMeldung(message)
   );
 }
 

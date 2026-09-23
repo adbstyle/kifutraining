@@ -4,26 +4,30 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { ExerciseListRow } from "@/lib/queries/exercises";
-import {
-  stufenAbgedeckt,
-  teilTraegtDauer,
-  trainingNameProblem,
-  NOTIZ_MAX,
-  ZIEL_MAX,
-} from "@/lib/training";
-import { bildUrlToPath } from "@/lib/storage";
+import { ZIEL_MAX } from "@/lib/training";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { loescheTrainingMitBildern } from "@/lib/training-loeschen";
-import { istEigeneFassungsDatei, entferneStorageObjekt } from "@/lib/fassung";
 import { kategorienSlugs } from "@/lib/vocab";
-import { alsAltersstufe, kategorienFuer } from "@/lib/altersstufe";
-import { legeTrainingAn } from "@/lib/kern/training";
-import { ordneUebungZu, vorlagenFuerBlock } from "@/lib/kern/fassung";
-import { alsActionResult, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
+import { alsAltersstufe } from "@/lib/altersstufe";
+import { NICHT_GEFUNDEN, ausDbFehler } from "@/lib/kern/ergebnis";
+import { benenneTrainingUm, legeTrainingAn, setzeStufen, setzeZiel } from "@/lib/kern/training";
+import {
+  entferneUebung,
+  ordneUebungZu,
+  setzeDauer,
+  setzeNotiz as setzeNotizImKern,
+  vorlagenFuerBlock,
+} from "@/lib/kern/fassung";
+import {
+  NICHT_ANGEMELDET,
+  alsActionResult,
+  angemeldet,
+  editorAktion,
+  oberflaechenMeldung,
+} from "@/lib/actions/adapter";
 import {
   type Bedingung,
   bedingungAusFehler,
-  fehlerMeldung,
   type FehlendeBedingung,
   fehlendeBedingungenAus,
   varianteAusFehler,
@@ -48,20 +52,6 @@ export type TrainingActionResult = {
   bedingung?: Bedingung;
   varianteId?: string;
 };
-
-/** Ein abgelehntes Schreiben als Ergebnis — Meldung und, wenn es eine
- *  Bedingung war, die Angaben zum Zuspitzen.
- *
- *  Eine Stelle für alle Fassungs-Actions: Jede von ihnen kann an demselben
- *  Gate scheitern, und keine soll die Übersetzung selbst zusammensetzen. */
-function aktionsFehler(message: string): TrainingActionResult {
-  return {
-    ok: false,
-    error: fehlerMeldung(message),
-    bedingung: bedingungAusFehler(message) ?? undefined,
-    varianteId: varianteAusFehler(message) ?? undefined,
-  };
-}
 
 /** Ergebnis des Stufen-Setzens inkl. abweichender Übungen (Story #12 AC3).
  *
@@ -88,25 +78,6 @@ function validStufen(values: string[]): string[] {
   return values.filter((s) => kategorienSlugs.includes(s as never));
 }
 
-// ── Fassungen: Kopieren einer Vorlage ins Training ───────────────────────────
-
-/** Die Bilddatei einer Fassung entfernen (Story 3 AK 13).
- *
- *  Gelöscht wird ausschliesslich die eigene Kopie: der Dateiname muss die
- *  Zuordnungs-ID tragen, wie `fassungBildPfad` sie bildet. Zeigt die URL auf
- *  etwas anderes — etwa noch auf das Bild der Vorlage, solange eine Zuordnung
- *  nicht überführt ist — bleibt die Datei unangetastet. Ein verwaistes Bild ist
- *  harmlos, ein gelöschtes Vorlagenbild wäre Datenverlust für alle. */
-async function entferneFassungsBild(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  bildUrl: string | null,
-  fassungId: string,
-) {
-  const pfad = bildUrlToPath(bildUrl);
-  if (!pfad || !istEigeneFassungsDatei(pfad, fassungId)) return;
-  await entferneStorageObjekt(supabase, pfad);
-}
-
 // ── Story #10: Training anlegen ──────────────────────────────────────────────────
 
 /** Neues Training anlegen (Story #10 AC1/AC2/AC3, Story 5 AK 1/2). Standardmässig
@@ -116,7 +87,7 @@ export async function createTraining(
   form: FormData,
 ): Promise<TrainingFormState> {
   const a = await angemeldet();
-  if (!a) return { status: "error", message: "Nicht angemeldet." };
+  if (!a) return { status: "error", message: NICHT_ANGEMELDET };
 
   // Das Formular liefert Rohwerte; die Regeln — Name, Altersstufe, Kategorien —
   // stehen im Fachkern, den auch das KI-Werkzeug «training_anlegen» nutzt.
@@ -163,18 +134,15 @@ export async function addTrainingExercise(
    *  sie immer ausdrücklich mit. Ausserhalb des Hauptteils ohne Bedeutung. */
   varianteId?: string,
 ): Promise<TrainingActionResult> {
-  const a = await angemeldet();
-  if (!a) return { ok: false, error: "Nicht angemeldet." };
-
-  const r = await ordneUebungZu(a.supabase, a.userId, {
-    trainingId,
-    einordnung: trainingsteil,
-    exerciseId,
-    hauptteilkategorie,
-    varianteId,
-  });
-  if (r.ok) revalidiereTraining(trainingId);
-  return alsActionResult(r);
+  return editorAktion((supabase, userId) =>
+    ordneUebungZu(supabase, userId, {
+      trainingId,
+      einordnung: trainingsteil,
+      exerciseId,
+      hauptteilkategorie,
+      varianteId,
+    }),
+  );
 }
 
 // ── Story A: Veröffentlichen ist ein Zustand, keine Kopie ────────────────────
@@ -248,7 +216,7 @@ export async function veroeffentlicheTraining(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", error: "Nicht angemeldet." };
+  if (!user) return { status: "error", error: NICHT_ANGEMELDET };
 
   const gate = await fehlendeBedingungen(supabase, trainingId, user.id);
   if ("error" in gate) return { status: "error", error: gate.error };
@@ -295,7 +263,7 @@ export async function setzeTrainingAufEntwurf(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  if (!user) return { ok: false, error: NICHT_ANGEMELDET };
 
   const { data, error } = await supabase
     .from("trainings")
@@ -314,7 +282,6 @@ export async function setzeTrainingAufEntwurf(
 
 // ── Story #12: Training bearbeiten, umsortieren, entfernen, löschen ──────────────
 
-/** Trainingsnamen ändern (Story #12 AC1); leerer Name unzulässig. */
 /** Leere und reine Leerzeichen-Eingaben sind kein Ziel (Story 10 PC 3). */
 function zielWert(v: FormDataEntryValue | null): string | null {
   const t = String(v ?? "").trim();
@@ -329,55 +296,17 @@ export async function setTrainingZiel(
   trainingId: string,
   ziel: string,
 ): Promise<TrainingActionResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-  const wert = ziel.trim() === "" ? null : ziel.trim();
-  if (wert && wert.length > ZIEL_MAX)
-    return { ok: false, error: `Das Ziel darf höchstens ${ZIEL_MAX} Zeichen lang sein.` };
-
-  const { data, error } = await supabase
-    .from("trainings")
-    .update({ ziel: wert })
-    .eq("id", trainingId)
-    .select("id")
-    .maybeSingle();
-  if (error) return { ok: false, error: fehlerMeldung(error.message) };
-  if (!data) return { ok: false, error: "Training nicht gefunden." };
-  revalidiereTraining(trainingId);
-  return { ok: true };
+  return editorAktion((supabase, userId) => setzeZiel(supabase, userId, { trainingId, ziel }));
 }
 
+/** Trainingsnamen ändern (Story #12 AC1); leerer Name unzulässig. Die Regel
+ *  steht im Fachkern (`benenneTrainingUm`), den auch das KI-Werkzeug
+ *  «training_umbenennen» nutzt. */
 export async function renameTraining(
   trainingId: string,
   name: string,
 ): Promise<TrainingActionResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-  const trimmed = name.trim();
-  // Dieselbe Regel wie am Feld im Editor-Kopf — hier als Trust-Boundary, denn
-  // die Spalte trägt keinen CHECK (Begründung bei `TRAINING_NAME_MAX`).
-  const problem = trainingNameProblem(name);
-  if (problem) return { ok: false, error: problem };
-
-  // Kein Owner-Filter mehr: Team-Trainings darf jedes Mitglied umbenennen
-  // (Story 6). Die RLS entscheidet — `select` zeigt, ob wirklich etwas getroffen
-  // wurde, sonst meldete ein Nulltreffer stillen Erfolg.
-  const { data, error } = await supabase
-    .from("trainings")
-    .update({ name: trimmed })
-    .eq("id", trainingId)
-    .select("id")
-    .maybeSingle();
-  if (error) return { ok: false, error: error.message };
-  if (!data) return { ok: false, error: "Training nicht gefunden." };
-  revalidiereTraining(trainingId);
-  return { ok: true };
+  return editorAktion((supabase, userId) => benenneTrainingUm(supabase, userId, { trainingId, name }));
 }
 
 /** Stufen eines Trainings setzen/ergänzen/entfernen (Story #12 AC2). Liefert die
@@ -387,73 +316,20 @@ export async function setTrainingStufen(
   trainingId: string,
   stufen: string[],
 ): Promise<StufenResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-
-  const valid = validStufen(stufen);
-
-  // «Mindestens eine, immer — nicht erst beim Veröffentlichen» (PO 2026-08-30).
-  // Der DB-Trigger `trainings_stufe_pflicht` greift bewusst nur beim Anlegen,
-  // damit bestehende kategorielose Trainings bearbeitbar bleiben; das Leeren
-  // der letzten Kategorie im Editor fiele sonst durch beide Netze.
-  if (valid.length === 0)
-    return { ok: false, error: "Bitte mindestens eine Alterskategorie wählen." };
-
-  // Direktes Update statt RPC: Die frühere `set_training_stufen` übertrug beim
-  // Wechsel des Trainingsschemas alle Fassungen und merkte sich ihre bisherige
-  // Einordnung. Den Wechsel gibt es nicht mehr — die Altersstufe eines
-  // Trainings steht ab dem Anlegen fest (Story 1). Die Berechtigung trägt die
-  // RLS-Policy `tr_update`, den Wertebereich der CHECK.
-  const { data: training } = await supabase
-    .from("trainings")
-    .select("altersstufe")
-    .eq("id", trainingId)
-    .maybeSingle();
-  if (!training) return { ok: false, error: "Training nicht gefunden." };
-
-  // Vorgelagert statt am Constraint-Fehler: die Datenebene würde denselben
-  // Versuch abweisen, aber ohne den Hinweis auf den gangbaren Weg.
-  const erlaubt = kategorienFuer(alsAltersstufe(training.altersstufe));
-  if (valid.some((s) => !erlaubt.includes(s)))
-    return {
-      ok: false,
-      error:
-        "Diese Alterskategorie gehört nicht zur Altersstufe dieses Trainings. " +
-        "Lege für die andere Altersstufe ein neues Training an.",
-    };
-
-  const { data, error } = await supabase
-    .from("trainings")
-    .update({ stufen: valid })
-    .eq("id", trainingId)
-    .select("id")
-    .maybeSingle();
-  if (error) return { ok: false, error: fehlerMeldung(error.message) };
-  if (!data) return { ok: false, error: "Training nicht gefunden." };
-
-  // Abweichende Fassungen ermitteln — anhand IHRER Alterskategorien: die
-  // Fassung ist im Training frei bearbeitbar und die einzige Quelle. Das ist
-  // der Stufen-Abgleich innerhalb eines Schemas und unabhängig vom Wechsel.
-  let mismatched: { id: string; name: string; varianteId: string | null }[] = [];
-  if (valid.length > 0) {
-    const { data: rows } = await supabase
-      .from("training_exercises")
-      .select("id, name, kategorien, variante_id")
-      .eq("training_id", trainingId);
-    mismatched = (rows ?? [])
-      // Ohne Kategorien gibt es nichts abzudecken — solche Fassungen gelten
-      // nicht als abweichend.
-      .filter((r) => (r.kategorien ?? []).length > 0 && !stufenAbgedeckt(valid, r.kategorien))
-      // Ohne Varianten-Filter: Der Abgleich gilt fürs ganze Training, also für
-      // alle Varianten (#201 AK 11).
-      .map((r) => ({ id: r.id, name: r.name, varianteId: r.variante_id }));
-  }
-
-  revalidiereTraining(trainingId);
-  return { ok: true, mismatched };
+  // Unbekannte Werte fallen still weg wie bisher; alles Weitere — mindestens
+  // eine, passend zur Altersstufe — prüft der Kern (`setzeStufen`).
+  return editorAktion(
+    (supabase, userId) => setzeStufen(supabase, userId, { trainingId, stufen: validStufen(stufen) }),
+    {
+      zusatz: (w) => ({
+        mismatched: w.nichtMehrPassend.map((f) => ({
+          id: f.fassungId,
+          name: f.name,
+          varianteId: f.varianteId,
+        })),
+      }),
+    },
+  );
 }
 
 /** Zuordnung innerhalb ihres Trainingsteils umsortieren (Story #12 AC4). */
@@ -465,7 +341,7 @@ export async function moveTrainingExercise(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  if (!user) return { ok: false, error: NICHT_ANGEMELDET };
 
   const { data: pe } = await supabase
     .from("training_exercises")
@@ -480,52 +356,21 @@ export async function moveTrainingExercise(
   });
   // Übersetzt statt roh: Die RPC meldet fehlendes Schreibrecht und — seit #201 —
   // eine fremde Variante im Klartext der Datenebene, nicht in dem des Trainers.
-  if (error) return aktionsFehler(error.message);
+  if (error) return alsActionResult(ausDbFehler(error), NICHT_GEFUNDEN.fassung);
   revalidiereTraining(pe.training_id);
   return { ok: true };
 }
 
-/** Eine Zuordnung aus ihrem Trainingsteil entfernen (Story #12 AC5). */
+/** Eine Zuordnung aus ihrem Trainingsteil entfernen (Story #12 AC5). Scheitert
+ *  sie am Gate eines öffentlichen Trainings, trägt das Ergebnis die verletzte
+ *  Bedingung samt Variante mit (#204 AK 3). */
 export async function removeTrainingExercise(
   trainingExerciseId: string,
 ): Promise<TrainingActionResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-
-  const { data: pe } = await supabase
-    .from("training_exercises")
-    .select("training_id, bild_url")
-    .eq("id", trainingExerciseId)
-    .maybeSingle();
-  if (!pe) return { ok: false, error: "Zuordnung nicht gefunden." };
-  const trainingId = pe.training_id;
-
-  // `select` zeigt, ob wirklich eine Zeile fiel: ein Nulltreffer (die RLS liess
-  // nichts durch, etwa in einem fremden Training) kommt ohne Fehler zurück.
-  // Ohne diese Prüfung fiele gleich darauf die Bilddatei — und die Fassung
-  // bliebe mit toter bild_url stehen.
-  const { data: geloescht, error } = await supabase
-    .from("training_exercises")
-    .delete()
-    .eq("id", trainingExerciseId)
-    .select("id")
-    .maybeSingle();
-  // War es die letzte Fassung, die ein öffentliches Training braucht, weist die
-  // Datenebene ab; die Meldung nennt den Weg über den Entwurf (Story A AK 7) —
-  // und trägt die verletzte Bedingung samt Variante mit, damit der Editor sie
-  // benennen kann (#204 AK 3).
-  if (error) return aktionsFehler(error.message);
-  if (!geloescht) return { ok: false, error: "Zuordnung nicht gefunden." };
-
-  // Erst nach erfolgreichem Löschen die eigene Bilddatei entfernen — nie das
-  // Bild einer noch existierenden Fassung, und nie das Bild der Vorlage.
-  await entferneFassungsBild(supabase, pe.bild_url, trainingExerciseId);
-
-  revalidiereTraining(trainingId);
-  return { ok: true };
+  return editorAktion(
+    (supabase, userId) => entferneUebung(supabase, userId, { fassungId: trainingExerciseId }),
+    { nichtGefunden: NICHT_GEFUNDEN.fassung },
+  );
 }
 
 /** Gesamtes Training löschen (Story #12 AC6/AC7); die Zuordnungen kaskadieren.
@@ -567,96 +412,31 @@ export async function deleteTraining(trainingId: string): Promise<void> {
 // ── Story #11: Dauer je Zuordnung erfassen/ändern/entfernen ──────────────────
 
 /** Dauer einer Zuordnung setzen (ganze Minuten ab 0) oder entfernen (null).
- *  Persistiert unmittelbar (Story #11 AC1/AC2). RLS stellt sicher, dass nur der
- *  Eigentümer schreibt. */
+ *  Persistiert unmittelbar (Story #11 AC1/AC2); die Regeln stehen in
+ *  `setzeDauer`. */
 export async function setExerciseDuration(
   trainingExerciseId: string,
   minutes: number | null,
 ): Promise<TrainingActionResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-
-  // Jede ganze Zahl ab 0 (PO-Entscheid 2026-09-08, Story #151). Die frühere
-  // Fünferschranke ist weg; die Datenbank kannte sie ohnehin nie — ihr CHECK an
-  // `duration_min` verlangt bloss `>= 0`.
-  if (minutes !== null && (!Number.isInteger(minutes) || minutes < 0))
-    return { ok: false, error: "Die Dauer muss eine ganze Zahl in Minuten sein." };
-
-  // Trust Boundary: Das „Auffangen" trägt keine Dauer (DB-CHECK erzwingt dies;
-  // hier mit klarer Meldung statt Constraint-Fehler abfangen). Gefragt wird die
-  // gespeicherte Einordnung — ein Kinderfussball-Trainingsteil oder ein
-  // Junioren-Block —, denn seit Story #128 gibt es das Auffangen in beiden
-  // Altersstufen. Das Leeren (null) bleibt immer erlaubt.
-  if (minutes !== null) {
-    const { data: row } = await supabase
-      .from("training_exercises")
-      .select("trainingsteil")
-      .eq("id", trainingExerciseId)
-      .maybeSingle();
-    if (row && !teilTraegtDauer(row.trainingsteil))
-      return { ok: false, error: "Für das Auffangen kann keine Dauer gesetzt werden." };
-  }
-
-  const { data, error } = await supabase
-    .from("training_exercises")
-    .update({ duration_min: minutes })
-    .eq("id", trainingExerciseId)
-    .select("training_id")
-    .maybeSingle();
-  if (error) return aktionsFehler(error.message);
-  if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
-  revalidiereTraining(data.training_id);
-  return { ok: true };
+  return editorAktion(
+    (supabase, userId) =>
+      setzeDauer(supabase, userId, { fassungId: trainingExerciseId, minuten: minutes }),
+    { nichtGefunden: NICHT_GEFUNDEN.fassung },
+  );
 }
 
 // ── Story #152: Notiz je Übung des Trainings ─────────────────────────────────
 
-/**
- * Die Notiz einer Zuordnung setzen, ändern oder entfernen (AK 1/2).
- *
- * Der leere Text ist kein Fehler, sondern das Entfernen: Wer die Notiz
- * auswischt, will sie los — in der Datenbank steht dann wieder `null` und nicht
- * eine leere Zeichenkette, sonst gäbe es zwei Schreibweisen für dasselbe
- * Nichts und die Anzeige müsste beide kennen.
- *
- * Kein Owner-Filter, wie bei der Dauer: Die RLS entscheidet, wer schreiben
- * darf — an einem Team-Training jedes Mitglied (Team-Epic Story 6). Der
- * `select` danach zeigt, ob wirklich eine Zeile getroffen wurde; ein
- * Nulltreffer meldete sonst stillen Erfolg.
- *
- * Die Notiz gilt an JEDER Übung: Anders als bei der Dauer gibt es keine
- * Einordnung, die sie nicht trägt.
- */
+/** Die Notiz einer Zuordnung setzen, ändern oder entfernen (AK 1/2); leer
+ *  heisst entfernen. Die Regeln stehen in `setzeNotiz` des Fachkerns. */
 export async function setzeNotiz(
   trainingExerciseId: string,
   notiz: string,
 ): Promise<TrainingActionResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-
-  const wert = notiz.trim() === "" ? null : notiz.trim();
-  // Trust Boundary: Der CHECK an `training_exercises.notiz` weist zu langen
-  // Text ohnehin ab — hier mit einem Satz, der ans Feld passt, statt mit einem
-  // rohen Constraint-Fehler.
-  if (wert && wert.length > NOTIZ_MAX)
-    return { ok: false, error: `Höchstens ${NOTIZ_MAX} Zeichen.` };
-
-  const { data, error } = await supabase
-    .from("training_exercises")
-    .update({ notiz: wert })
-    .eq("id", trainingExerciseId)
-    .select("training_id")
-    .maybeSingle();
-  if (error) return aktionsFehler(error.message);
-  if (!data) return { ok: false, error: "Zuordnung nicht gefunden." };
-  revalidiereTraining(data.training_id);
-  return { ok: true };
+  return editorAktion(
+    (supabase, userId) => setzeNotizImKern(supabase, userId, { fassungId: trainingExerciseId, notiz }),
+    { nichtGefunden: NICHT_GEFUNDEN.fassung },
+  );
 }
 
 // ── Story #10: Übungsauswahl (Picker) ────────────────────────────────────────

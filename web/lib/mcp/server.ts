@@ -7,6 +7,16 @@ import {
   trainingUebungenFuerBlock,
   trainingUebungZuordnen,
 } from "@/lib/mcp/werkzeuge/trainings";
+import { trainingAbrufen, trainingsSuchen } from "@/lib/mcp/werkzeuge/trainings-lesen";
+import {
+  trainingKategorienSetzen,
+  trainingUebungDauerSetzen,
+  trainingUebungEntfernen,
+  trainingUebungenOrdnen,
+  trainingUebungNotizSetzen,
+  trainingUmbenennen,
+  trainingZielSetzen,
+} from "@/lib/mcp/werkzeuge/trainings-bearbeiten";
 
 /** Der vollständige Werkzeugsatz (Story #142; Epic #139 und #190 hängen ihre
  *  Werkzeuge hier an). Der Werkzeugsatz IST die Grenze eines Zugangs: das
@@ -21,6 +31,15 @@ export const WERKZEUGE = [
   trainingAnlegen,
   trainingUebungenFuerBlock,
   trainingUebungZuordnen,
+  trainingAbrufen,
+  trainingsSuchen,
+  trainingUmbenennen,
+  trainingZielSetzen,
+  trainingKategorienSetzen,
+  trainingUebungEntfernen,
+  trainingUebungenOrdnen,
+  trainingUebungDauerSetzen,
+  trainingUebungNotizSetzen,
 ] as const;
 
 export function registriereWerkzeuge(server: McpServer): void {

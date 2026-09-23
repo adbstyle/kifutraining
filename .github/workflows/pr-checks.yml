@@ -89,6 +89,7 @@ jobs:
           eval "$(supabase status -o env)"
           {
             echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
           } >> "$GITHUB_ENV"
       # Manual-Seed gegen die Wegwerf-DB: prüft auf JEDEM PR den Seed-Runtime
@@ -99,3 +100,12 @@ jobs:
         run: |
           npm ci
           npm run seed
+      # Fachkern gegen die echte Datenbank (Epic #190): zwei Wegwerf-Konten,
+      # ein Nutzer-Client wie beim KI-Zugang (Bearer, RLS wirkt), dann
+      # Zuordnen, Positionen je Variante, Dauer im Auffangen, Kategorien,
+      # Übungsfolge samt RPC-Markern, Entfernen, und «nicht gefunden» gegen
+      # «keine Rechte» an einem fremden öffentlichen Training. Braucht die
+      # Manual-Übungen aus dem Schritt davor.
+      - name: Fachkern gegen Wegwerf-DB
+        working-directory: web
+        run: npm run check:kern-db

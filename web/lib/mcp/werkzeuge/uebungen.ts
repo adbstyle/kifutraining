@@ -24,7 +24,7 @@ import { einordnungNachSpalten } from "@/lib/filter-optionen";
 import { hatDiagramm } from "@/lib/diagramm";
 import { NICHT_GEFUNDEN, fehlschlag, ok } from "@/lib/kern/ergebnis";
 import { istUuid } from "@/lib/kennung";
-import { wert, wertOderNull, type UebungKopf } from "@/lib/mcp/bausteine";
+import { sichtbarkeitVon, wert, wertOderNull, type UebungKopf } from "@/lib/mcp/bausteine";
 import {
   AbrufEingabe,
   SucheAusgabe,
@@ -75,7 +75,7 @@ function kopf(ex: Grunddaten, zugang: Zugang, mitDiagramm: boolean): z.infer<typ
     hauptteilkategorie: wertOderNull(hauptteilkategorieLabels, ex.hauptteilkategorie),
     feldtyp: wertOderNull(feldtypLabels, ex.feldtyp),
     herkunft: wert(HERKUNFT_LABEL, herkunftArt(ex.source, ex.visibility)),
-    sichtbarkeit: ex.visibility,
+    sichtbarkeit: sichtbarkeitVon(ex.visibility),
     bild_url: ex.bild_url,
     hat_diagramm: mitDiagramm,
   };

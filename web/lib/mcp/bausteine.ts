@@ -5,7 +5,9 @@
 // `{ slug, label }` —, nie als nackter Slug mit einem getrennten
 // `…_label`-Feld daneben. So liest der Assistent jede Angabe gleich, und der
 // Klartext ist immer der, den die Oberfläche zeigt. Nur die Sichtbarkeit
-// bleibt ein Enum: sie ist ein Zustand, keine Angabe aus dem Vokabular.
+// bleibt ein Enum (`oeffentlich` | `entwurf`): sie ist ein Zustand, keine
+// Angabe aus dem Vokabular. Beide stehen neutral in lib/wert.ts, weil auch der
+// Fachkern sie braucht.
 //
 // REIN: keine Server-Importe — `check:ki-zugang` lädt diese Datei mit tsx.
 import { z } from "zod";
@@ -19,22 +21,8 @@ export function alsEnum<T extends string>(werte: readonly T[]) {
   return z.enum(werte as unknown as [T, ...T[]]);
 }
 
-/** Ein geführter Wert samt Klartext. */
-export const Wert = z.object({ slug: z.string(), label: z.string() });
-export type WertT = z.infer<typeof Wert>;
-
-/** Slug → Wert. Fehlt ein Label, steht der Slug selbst da — derselbe
- *  Rückfall überall, damit nie ein leeres Label ausgegeben wird. */
-export function wert(labels: Readonly<Record<string, string>>, slug: string): WertT {
-  return { slug, label: labels[slug] || slug };
-}
-
-export function wertOderNull(
-  labels: Readonly<Record<string, string>>,
-  slug: string | null | undefined,
-): WertT | null {
-  return slug ? wert(labels, slug) : null;
-}
+import { Sichtbarkeit, Wert } from "@/lib/wert";
+export { Sichtbarkeit, Wert, sichtbarkeitVon, wert, wertOderNull } from "@/lib/wert";
 
 /** Eine Option einer Filterleiste (lib/filter-optionen.ts). */
 type Option = { value: string; label: string; group?: string };
@@ -84,7 +72,7 @@ export const UebungKopf = z.object({
   /** Kifu-Manual, Community (öffentlich) oder Entwurf (privat) — dieselbe
    *  Plakette wie auf der Karte. */
   herkunft: Wert,
-  sichtbarkeit: z.enum(["public", "private"]),
+  sichtbarkeit: Sichtbarkeit,
   bild_url: z.string().nullable(),
   hat_diagramm: z.boolean(),
 });

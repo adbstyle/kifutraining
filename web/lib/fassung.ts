@@ -218,6 +218,24 @@ export async function entferneStorageObjekt(
   if (pfad) await supabase.storage.from(STORAGE_BUCKET).remove([pfad]);
 }
 
+/** Die Bilddatei einer Fassung entfernen (Story 3 AK 13) — nach dem Löschen
+ *  der Fassung.
+ *
+ *  Gelöscht wird ausschliesslich die eigene Kopie: der Dateiname muss die
+ *  Zuordnungs-ID tragen, wie `fassungBildPfad` sie bildet. Zeigt die URL auf
+ *  etwas anderes — etwa noch auf das Bild der Vorlage, solange eine Zuordnung
+ *  nicht überführt ist — bleibt die Datei unangetastet. Ein verwaistes Bild ist
+ *  harmlos, ein gelöschtes Vorlagenbild wäre Datenverlust für alle. */
+export async function entferneFassungsBild(
+  supabase: SupabaseClient,
+  bildUrl: string | null,
+  fassungId: string,
+) {
+  const pfad = bildUrlToPath(bildUrl);
+  if (!pfad || !istEigeneFassungsDatei(pfad, fassungId)) return;
+  await entferneStorageObjekt(supabase, pfad);
+}
+
 /** Mehrere Storage-Objekte in EINEM Aufruf entfernen (no-op bei leerer Liste).
  *  Beim Abräumen ganzer Trainings oder Teams sind das je Vorgang Dutzende
  *  Dateien — einzeln nacheinander kostet je einen Roundtrip. */

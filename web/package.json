@@ -28,6 +28,7 @@
     "check:figuren": "tsx scripts/pruefe-figuren.ts",
     "check:ki-zugang": "tsx scripts/pruefe-ki-zugang.ts",
     "check:kern": "tsx scripts/pruefe-kern.ts",
+    "check:kern-db": "tsx --conditions=react-server scripts/pruefe-kern-db.ts",
     "sync:storage": "tsx scripts/sync-storage-staging.ts"
   },
   "dependencies": {

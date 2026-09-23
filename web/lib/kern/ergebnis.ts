@@ -98,6 +98,13 @@ export function ok<T>(wert: T): KernErgebnis<T> {
   return { ok: true, wert };
 }
 
+/** Ein Ergebnis umformen: der Wert über `f`, ein Fehler unverändert. Der
+ *  Normalfall jedes Adapters (camelCase → snake_case, Kennung → Adresse),
+ *  ohne `if (!r.ok) return r;` in jedem Werkzeug. */
+export function abgebildet<T, U>(r: KernErgebnis<T>, f: (wert: T) => U): KernErgebnis<U> {
+  return r.ok ? ok(f(r.wert)) : r;
+}
+
 export function fehlschlag(
   art: FehlerArt,
   meldung: string,
@@ -107,11 +114,13 @@ export function fehlschlag(
 }
 
 /** Die Standard-Texte für «nicht sichtbar», je Gegenstand — wortgleich mit
- *  den bisherigen Meldungen der Server Actions. Gruppe, Termin und Fassung
- *  kommen mit den Werkzeugen aus #193 ff. dazu. */
+ *  den bisherigen Meldungen der Server Actions. Gruppe und Termin kommen mit
+ *  den Werkzeugen aus #194 ff. dazu. */
 export const NICHT_GEFUNDEN = {
   uebung: "Diese Übung gibt es nicht oder sie ist für dein Konto nicht sichtbar.",
   training: "Training nicht gefunden.",
+  /** Eine Übung im Training (Fassung, `training_exercises`). */
+  fassung: "Zuordnung nicht gefunden.",
   /** Eine Vorlage, die zugeordnet werden soll (Wortlaut des Pickers). */
   vorlage: "Übung nicht verfügbar.",
   team: "Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist.",
@@ -138,10 +147,15 @@ export const MELDUNG_WIEDERHOLEN =
  *  3. von der RLS abgewiesen → `keine_rechte`;
  *  4. sonst `technisch` — `fehlerMeldung` protokolliert den Rohtext.
  *
+ *  Vorab: ein Deadlock (Postgres `40P01`) → `konflikt`, `wiederholbar`.
+ *
  *  Eine Kollision an einem Unique-Index (23505) ordnet der Aufrufer selbst
  *  ein: nur er weiss, ob sie Nebenläufigkeit (`konflikt`) oder eine Regel
  *  (etwa ein doppelter Name) bedeutet. */
-export function ausDbFehler(e: { message: string }): KernFehler {
+export function ausDbFehler(e: { message: string; code?: string }): KernFehler {
+  // Ein Deadlock (40P01) bricht Postgres selbst ab und rollt zurück — nichts
+  // wurde geschrieben, ein zweiter Versuch geht in aller Regel durch.
+  if (e.code === "40P01") return fehlschlag("konflikt", MELDUNG_WIEDERHOLEN, { wiederholbar: true });
   const meldung = fehlerMeldung(e.message);
   const bedingung = bedingungAusFehler(e.message);
   if (bedingung)

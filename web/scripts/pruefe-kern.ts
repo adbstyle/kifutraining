@@ -32,7 +32,10 @@ import { hauptteilkategorieSlugs } from "../lib/vocab";
 import { einordnungsSlugsFuer, zielblock, type Altersstufe } from "../lib/altersstufe";
 import { fachlicheMeldung, fehlerMeldung } from "../lib/training-bedingungen";
 import { FREMDES_TRAINING, MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler } from "../lib/kern/ergebnis";
-import { KEINE_PASSENDE_UEBUNG, leerBestandText, zielLabel } from "../lib/training";
+import { KEINE_PASSENDE_UEBUNG, LEER_HINWEIS, leerBestandText, zielLabel } from "../lib/training";
+import { trainingAuskunft as auskunftRoh } from "../lib/kern/auskunft";
+import { TrainingAuskunftStreng } from "../lib/kern/auskunft-schema";
+import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 
 let gelaufen = 0;
 
@@ -124,6 +127,20 @@ pruefe("fachlicheMeldung erklärt Marker, fehlerMeldung bleibt wortgleich", () =
         "Setze es zuerst auf Entwurf, wenn du es so ändern willst.",
     ],
   ];
+  // #193: die Marker der Übungsfolge und der bisher unübersetzte Termin-Marker.
+  beispiele.push(
+    ["UEBUNGSFOLGE_DOPPELT", "Eine Übung steht in der Reihenfolge mehrfach."],
+    [
+      "UEBUNGSFOLGE_UNVOLLSTAENDIG",
+      "Die Reihenfolge muss genau die Übungen dieses Abschnitts nennen — jede einmal. " +
+        "Lies das Training neu und sende die vollständige Folge.",
+    ],
+    ["UEBUNGSFOLGE_ABSCHNITT_LEER", "In diesem Abschnitt steht keine Übung."],
+    [
+      "TERMIN_NUR_FUER_TEAM_TRAININGS: Training x",
+      "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.",
+    ],
+  );
   for (const [roh, klartext] of beispiele) {
     assert.equal(fachlicheMeldung(roh), klartext, roh);
     assert.equal(fehlerMeldung(roh), klartext, roh);
@@ -151,6 +168,12 @@ pruefe("ausDbFehler ordnet ein: bedingung, regel, keine_rechte, technisch", () =
       "Setze es zuerst auf Entwurf, wenn du es so ändern willst.",
   );
   assert.equal(ausDbFehler({ message: "STUFE_FEHLT" }).art, "regel");
+  assert.equal(ausDbFehler({ message: "UEBUNGSFOLGE_UNVOLLSTAENDIG" }).art, "regel");
+  // Deadlock: Postgres hat zurückgerollt, ein zweiter Versuch genügt.
+  const d = ausDbFehler({ message: "deadlock detected", code: "40P01" });
+  assert.equal(d.art, "konflikt");
+  assert.equal(d.wiederholbar, true);
+  assert.equal(d.meldung, MELDUNG_WIEDERHOLEN);
   const rls = still(() => ausDbFehler({ message: "new row violates row-level security policy" }));
   assert.equal(rls.art, "keine_rechte");
   assert.equal(rls.meldung, "Keine Berechtigung für diese Änderung.");
@@ -161,6 +184,7 @@ pruefe("ausDbFehler ordnet ein: bedingung, regel, keine_rechte, technisch", () =
 
 pruefe("Standard-Texte des Kerns sind eingefroren", () => {
   assert.equal(NICHT_GEFUNDEN.training, "Training nicht gefunden.");
+  assert.equal(NICHT_GEFUNDEN.fassung, "Zuordnung nicht gefunden.");
   assert.equal(NICHT_GEFUNDEN.vorlage, "Übung nicht verfügbar.");
   assert.equal(
     FREMDES_TRAINING,
@@ -181,6 +205,170 @@ pruefe("Leer-Texte und Ziel des Pickers sind wortgleich mit dem früheren JSX", 
   );
 });
 
+// ── Auskunft «training_abrufen» (#193 AK 1, NFR 1) ─────────────────────────
+// Die Gliederung muss dieselbe sein wie im Editor: alle Teile und Blöcke,
+// auch leere, der Hauptteil einmal je Variante — sonst fehlt dem Assistenten
+// genau die Lücke, die er füllen soll.
+
+const ICH = "00000000-0000-0000-0000-00000000000a";
+
+/** Jede Beispiel-Auskunft läuft durch das STRENGE Schema (strictObject auf
+ *  allen Ebenen): Baut der Mapper ein Feld, das der Vertrag nicht kennt,
+ *  scheitert es hier — im Betrieb fiele es sonst still weg. */
+const trainingAuskunft: typeof auskunftRoh = (d, k) => TrainingAuskunftStreng.parse(auskunftRoh(d, k));
+
+function fassung(id: string, teil: string, extra: Partial<TrainingExerciseItem> = {}): TrainingExerciseItem {
+  return {
+    id,
+    trainingsteil: teil as TrainingExerciseItem["trainingsteil"],
+    hauptteilkategorie: null,
+    varianteId: null,
+    position: 0,
+    durationMin: null,
+    notiz: null,
+    name: `Übung ${id}`,
+    kategorien: [],
+    erscheinungsform: [],
+    feldtyp: null,
+    spielfeldLaengeM: null,
+    spielfeldBreiteM: null,
+    uebungstyp: null,
+    anzahlKinder: null,
+    material: [],
+    fahrplan: null,
+    aufbau: null,
+    bildUrl: null,
+    bildQuelle: null,
+    diagramm: null,
+    gruppen: [],
+    uebungsvarianten: [],
+    ...extra,
+  };
+}
+
+function training(extra: Partial<TrainingDetail>): TrainingDetail {
+  return {
+    id: "t1",
+    name: "Probe",
+    ownerId: ICH,
+    visibility: "private",
+    altersstufe: "kinderfussball",
+    stufen: ["F"],
+    ziel: null,
+    team: null,
+    terminDatum: null,
+    urheber: "Ich",
+    createdAt: "2026-09-23T00:00:00Z",
+    updatedAt: "2026-09-23T00:00:00Z",
+    exercises: [],
+    gruppen: [],
+    varianten: [{ id: "v1", name: "Variante 1" }],
+    ...extra,
+  };
+}
+
+pruefe("Auskunft: Hauptteil je Variante, leere Blöcke, Altbestand ohne Kategorie, Übungsvarianten", () => {
+  const a = trainingAuskunft(
+    training({
+      varianten: [
+        { id: "v1", name: "12 Kinder" },
+        { id: "v2", name: "20 Kinder" },
+      ],
+      exercises: [
+        fassung("e1", "einleitung", { durationMin: 10, kategorien: ["E"] }),
+        fassung("f1", "hauptteil", {
+          hauptteilkategorie: "fussball-spielen",
+          varianteId: "v1",
+          durationMin: 20,
+          uebungsvarianten: ["Mit zwei Bällen"],
+          fahrplan: { offen_starten: "Los", ueben: ["a"], wetteifern: null },
+        }),
+        fassung("alt", "hauptteil", { varianteId: "v1" }),
+      ],
+    }),
+    { userId: ICH },
+  );
+  // Reihenfolge des Schemas, der Hauptteil zweimal nebeneinander.
+  assert.deepEqual(
+    a.teile.map((t) => `${t.teil.slug}${t.variante ? `:${t.variante.id}` : ""}`),
+    ["auffangen", "einleitung", "hauptteil:v1", "hauptteil:v2", "ausklang"],
+  );
+  const [h1, h2] = a.teile.filter((t) => t.teil.slug === "hauptteil");
+  assert.equal(h1.variante?.name, "12 Kinder");
+  // Alle drei Hauptteilkategorien als Block, auch leer.
+  assert.deepEqual(
+    h2.bloecke.map((b) => b.hauptteilkategorie?.slug),
+    ["fussball-spielen-lernen", "vielseitigkeit-erleben", "fussball-spielen"],
+  );
+  const freiesSpielV2 = h2.bloecke.find((b) => b.hauptteilkategorie?.slug === "fussball-spielen")!;
+  assert.equal(freiesSpielV2.uebungen.length, 0);
+  assert.equal(freiesSpielV2.leer_hinweis, LEER_HINWEIS["fussball-spielen"]);
+  const freiesSpielV1 = h1.bloecke.find((b) => b.hauptteilkategorie?.slug === "fussball-spielen")!;
+  assert.equal(freiesSpielV1.leer_hinweis, undefined, "ein belegter Block trägt keinen Leer-Hinweis");
+  const f1 = freiesSpielV1.uebungen[0];
+  assert.deepEqual(f1.uebungsvarianten, ["Mit zwei Bällen"]);
+  assert.deepEqual(f1.ablauf, { art: "fahrplan", offen_starten: "Los", ueben: ["a"], wetteifern: null });
+  // Der Altbestand ohne Kategorie steht in keinem Block, aber nicht still weg.
+  assert.deepEqual(h1.ohne_kategorie?.map((u) => u.fassung_id), ["alt"]);
+  assert.equal(h2.ohne_kategorie, undefined);
+  // Die Einleitung gilt für beide Varianten und erscheint einmal.
+  assert.equal(a.teile.filter((t) => t.teil.slug === "einleitung").length, 1);
+  const e1 = a.teile[1].bloecke[0].uebungen[0];
+  assert.equal(e1.deckt_stufen, false, "E deckt F nicht ab");
+  assert.deepEqual(e1.kategorien, [{ slug: "E", label: "E-Junior:innen" }]);
+  // Summen je Variante.
+  assert.deepEqual(a.gesamt, [
+    { variante_id: "v1", summe_min: 30, ohne_dauer: 1 },
+    { variante_id: "v2", summe_min: 10, ohne_dauer: 0 },
+  ]);
+  assert.equal(a.uebungen_gesamt, 3);
+  assert.equal(a.bearbeitbar, true);
+  assert.deepEqual(a.bestand, { art: "persoenlich", eigen: true });
+  assert.equal(a.sichtbarkeit, "entwurf");
+});
+
+pruefe("Auskunft: bei einer Variante kein «variante», fremdes öffentliches Training nicht bearbeitbar", () => {
+  const a = trainingAuskunft(
+    training({ ownerId: "00000000-0000-0000-0000-00000000000b", visibility: "public" }),
+    { userId: ICH },
+  );
+  assert.ok(a.teile.every((t) => t.variante === undefined));
+  assert.deepEqual(a.gesamt, [{ summe_min: 0, ohne_dauer: 0 }]);
+  assert.equal(a.bearbeitbar, false);
+  assert.deepEqual(a.bestand, { art: "persoenlich", eigen: false });
+  assert.equal(a.sichtbarkeit, "oeffentlich");
+});
+
+pruefe("Auskunft Juniorenfussball: vier Teile, sieben Blöcke, Beschreibung als Ablauf", () => {
+  const a = trainingAuskunft(
+    training({
+      altersstufe: "juniorenfussball",
+      stufen: ["D"],
+      team: { id: "team1", name: "Da" },
+      ownerId: null,
+      exercises: [fassung("s1", "jun-spiel", { varianteId: "v1", aufbau: "Frei spielen" })],
+    }),
+    { userId: ICH },
+  );
+  assert.deepEqual(a.teile.map((t) => t.teil.slug), ["auffangen", "einstieg", "hauptteil", "abschluss"]);
+  assert.equal(a.teile.flatMap((t) => t.bloecke).length, 7);
+  const spiel = a.teile[2].bloecke.find((b) => b.einordnung.slug === "jun-spiel")!;
+  assert.deepEqual(spiel.uebungen[0].ablauf, { art: "beschreibung", text: "Frei spielen" });
+  assert.equal(spiel.traegt_gruppen, true);
+  const auffangen = a.teile[0].bloecke[0];
+  assert.equal(auffangen.traegt_dauer, false);
+  assert.equal(auffangen.leer_hinweis, undefined, "leeres Auffangen ist kein Mangel");
+  assert.deepEqual(a.bestand, { art: "team", team: { id: "team1", name: "Da" } });
+  assert.equal(a.bearbeitbar, true);
+});
+
+pruefe("Auskunft-Vertrag: das strenge Schema weist ein undeklariertes Feld ab", () => {
+  const a = trainingAuskunft(training({}), { userId: ICH });
+  assert.throws(() => TrainingAuskunftStreng.parse({ ...a, uebungszahl: 1 }));
+  const teil = { ...a.teile[1], extra: true };
+  assert.throws(() => TrainingAuskunftStreng.parse({ ...a, teile: [teil] }));
+});
+
 // ── Statische Wächter ───────────────────────────────────────────────────────
 const web = resolve(fileURLToPath(import.meta.url), "../..");
 const kern = join(web, "lib/kern");
@@ -188,7 +376,7 @@ const kern = join(web, "lib/kern");
 /** Kern-Dateien ohne Datenbankzugriff: Sie bleiben ohne `server-only`, damit
  *  Prüfskripte wie dieses sie mit tsx laden können (`server-only` wirft
  *  ausserhalb der react-server-Bedingung). */
-const REIN = new Set(["ergebnis.ts"]);
+const REIN = new Set(["ergebnis.ts", "auskunft.ts", "auskunft-schema.ts"]);
 
 /** Was der Kern nicht importieren darf — direkt nicht und über eine
  *  importierte `@/lib/*`-Datei auch nicht. */
@@ -232,6 +420,22 @@ pruefe("lib/kern: kein \"use server\", keine Adapter-Importe (auch eine Ebene ti
   }
 });
 
+pruefe("Queries ohne Cookie-Client (lib/queries/*-fuer.ts): kein next/, kein react, kein server.ts", () => {
+  // Der Kern liest Trainings und Übungen über diese Dateien. `react`s `cache`
+  // bindet an einen Request und fehlte in einem Route Handler ebenso wie der
+  // Cookie-Client — darum bleiben `getTrainingNavKontext` und die
+  // Cookie-Wrapper in den Nachbardateien.
+  const ordner = join(web, "lib/queries");
+  const dateien = readdirSync(ordner).filter((d) => d.endsWith("-fuer.ts"));
+  assert.ok(dateien.includes("trainings-fuer.ts") && dateien.includes("uebungen-fuer.ts"));
+  for (const d of dateien)
+    for (const spez of importeVon(readFileSync(join(ordner, d), "utf8")))
+      assert.ok(
+        !/^next\//.test(spez) && spez !== "react" && spez !== "@/lib/supabase/server",
+        `${d} importiert ${spez}`,
+      );
+});
+
 // Der Katalog-Wächter liest Quelltext statt die Werte zu importieren: Der
 // Werkzeugsatz (lib/mcp/server.ts) und jedes Werkzeug tragen `server-only`,
 // und das wirft unter tsx. Die Werte über die react-server-Bedingung zu laden,
@@ -258,8 +462,39 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
   const namen = registriert.map((id) => nameVon.get(id)!);
   assert.equal(new Set(namen).size, namen.length, `doppelte Namen: ${namen.join(", ")}`);
   for (const n of namen) assert.match(n, /^[a-z][a-z0-9]*(_[a-z0-9]+)*$/, `${n} ist nicht snake_case`);
-  for (const n of ["training_anlegen", "training_uebungen_fuer_block", "training_uebung_zuordnen"])
-    assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (#192)`);
+  // Jedes Werkzeug, das eine Kennung aus dem Trainings-Bestand annimmt,
+  // erklärt «nicht_gefunden» gegen «keine_rechte» (#193 AK 14). Geprüft am
+  // Quelltext: Enthält die Eingabe — inline oder als benannte Konstante —
+  // `TrainingId` oder `FassungId`, muss der Block `KENNUNG_FEHLER` tragen.
+  for (const d of readdirSync(ordner).filter((f) => f.endsWith(".ts"))) {
+    const text = readFileSync(join(ordner, d), "utf8");
+    for (const m of text.matchAll(/export const (\w+) = werkzeug\(\{([\s\S]*?)\n\}\);/g)) {
+      const block = m[2];
+      const verweis = /eingabe:\s*(\w+),/.exec(block)?.[1];
+      const eingabe = verweis
+        ? (new RegExp(`const ${verweis} = z\\.object\\(\\{([\\s\\S]*?)\\n\\}\\);`).exec(text)?.[1] ?? "")
+        : block;
+      if (/\b(TrainingId|FassungId)\b/.test(eingabe))
+        assert.ok(block.includes("KENNUNG_FEHLER"), `${m[1]} nimmt eine Kennung, erklärt aber KENNUNG_FEHLER nicht`);
+    }
+  }
+
+  const jeStory: Record<string, string[]> = {
+    "#192": ["training_anlegen", "training_uebungen_fuer_block", "training_uebung_zuordnen"],
+    "#193": [
+      "training_abrufen",
+      "trainings_suchen",
+      "training_umbenennen",
+      "training_ziel_setzen",
+      "training_kategorien_setzen",
+      "training_uebung_entfernen",
+      "training_uebungen_ordnen",
+      "training_uebung_dauer_setzen",
+      "training_uebung_notiz_setzen",
+    ],
+  };
+  for (const [story, erwartet] of Object.entries(jeStory))
+    for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

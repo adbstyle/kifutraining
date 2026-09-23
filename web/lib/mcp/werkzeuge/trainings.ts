@@ -16,7 +16,7 @@ import {
 import { kategorieStufe } from "@/lib/labels";
 import { HAUPTTEILKATEGORIEN, TRAINING_NAME_MAX, ZIEL_MAX } from "@/lib/training";
 import { formOptionen, typOptionen } from "@/lib/filter-optionen";
-import { ok } from "@/lib/kern/ergebnis";
+import { abgebildet } from "@/lib/kern/ergebnis";
 import { legeTrainingAn } from "@/lib/kern/training";
 import { ordneUebungZu, vorlagenFuerBlock } from "@/lib/kern/fassung";
 import { alsEnum, katalogFilter, kennung } from "@/lib/mcp/bausteine";
@@ -42,7 +42,7 @@ import { werkzeug } from "@/lib/mcp/werkzeug";
  *  #192 OoS 5: noch nicht Juniorenfussball — das öffnet #199. */
 const ANLEGBAR: readonly Altersstufe[] = ["kinderfussball"];
 
-const liste = (werte: readonly { slug: string; label: string }[]) =>
+export const liste = (werte: readonly { slug: string; label: string }[]) =>
   werte.map((w) => `${w.slug} (${w.label})`).join(", ");
 
 /** Das Trainingsschema einer Altersstufe als ein Satz: Teile, Blöcke,
@@ -64,16 +64,43 @@ const SCHEMA_TEXT = ALTERSSTUFEN.map(schemaText).join(" ");
  *  entscheidet der Kern an dessen Altersstufe und nennt sonst die zulässigen. */
 const EINORDNUNGEN = [...new Set(ALTERSSTUFEN.flatMap(einordnungsSlugsFuer))];
 
-const PFLICHT_SATZ =
+export const PFLICHT_SATZ =
   "Im Kinderfussball-Hauptteil ist die Hauptteilkategorie Pflicht; ausserhalb davon bleibt sie leer.";
 
-const Einordnung = alsEnum(EINORDNUNGEN).describe(
+export const Einordnung = alsEnum(EINORDNUNGEN).describe(
   `Wohin die Übung gehört: im Kinderfussball der Trainingsteil, im Juniorenfussball der Block. ${SCHEMA_TEXT}`,
 );
-const Hauptteilkategorie = alsEnum(hauptteilkategorieSlugs)
+export const Hauptteilkategorie = alsEnum(hauptteilkategorieSlugs)
   .optional()
   .describe(`${PFLICHT_SATZ} Werte: ${liste(HAUPTTEILKATEGORIEN)}.`);
-const TrainingId = kennung("Kennung des Trainings, etwa aus «training_anlegen».");
+export const TrainingId = kennung(
+  "Kennung des Trainings, etwa aus «training_anlegen» oder «trainings_suchen».",
+);
+export const FassungId = kennung(
+  "Kennung der Übung im Training («fassung_id» aus «training_abrufen»).",
+);
+
+/** Was die Fehler zu einer Kennung bedeuten (#193 AK 14, OoS 7). Gehört an
+ *  JEDE Beschreibung eines Werkzeugs, das `training_id` oder `fassung_id`
+ *  annimmt — `check:kern` wacht darüber. */
+export const KENNUNG_FEHLER =
+  "Fehlerarten zur Kennung: «nicht_gefunden» — für dein Konto nicht sichtbar (es gibt sie " +
+  "nicht, sie wurde gelöscht oder gehört jemand anderem privat; bewusst nicht " +
+  "unterscheidbar); «keine_rechte» — ein öffentliches Training eines anderen Kontos: " +
+  "ansehen und übernehmen ja, ändern nein.";
+
+/** Die Alterskategorien je Altersstufe als ein Satz, etwa «Kinderfussball: G
+ *  (G-Junior:innen), F (…)» — für jede Beschreibung, die Kategorien annimmt. */
+export function kategorienText(stufen: readonly Altersstufe[]): string {
+  return stufen
+    .map(
+      (s) =>
+        `${altersstufeLabels[s]}: ${kategorienFuer(s)
+          .map((k) => `${k} (${kategorieStufe[k as keyof typeof kategorieStufe] ?? k})`)
+          .join(", ")}`,
+    )
+    .join(". ");
+}
 
 // ── training_anlegen ────────────────────────────────────────────────────────
 
@@ -86,14 +113,7 @@ const AnlegenEingabe = z.object({
   stufen: z
     .array(alsEnum(kategorienSlugs))
     .describe(
-      "Alterskategorien, mindestens eine, alle aus der gewählten Altersstufe. " +
-        ANLEGBAR.map(
-          (s) =>
-            `${altersstufeLabels[s]}: ${kategorienFuer(s)
-              .map((k) => `${k} (${kategorieStufe[k as keyof typeof kategorieStufe] ?? k})`)
-              .join(", ")}`,
-        ).join(". ") +
-        ".",
+      `Alterskategorien, mindestens eine, alle aus der gewählten Altersstufe. ${kategorienText(ANLEGBAR)}.`,
     ),
   ziel: z
     .string()
@@ -120,11 +140,10 @@ export const trainingAnlegen = werkzeug({
   ausgabe: AnlegenAusgabe,
   ausfuehren: async (e, zugang) => {
     const r = await legeTrainingAn(zugang.supabase, zugang.userId, e);
-    if (!r.ok) return r;
-    return ok({
-      training_id: r.wert.id,
-      url: zugang.url("training", r.wert.id, "edit"),
-    });
+    return abgebildet(r, (w) => ({
+      training_id: w.id,
+      url: zugang.url("training", w.id, "edit"),
+    }));
   },
 });
 
@@ -165,7 +184,7 @@ export const trainingUebungenFuerBlock = werkzeug({
     "Trainings, zum Trainingsteil bzw. Block und im Kinderfussball-Hauptteil zur " +
     "Hauptteilkategorie. Nur Übungen, die dein Konto in KiFu sieht. Sortiert nach Name. " +
     "Ohne Treffer sagt «leer», ob der Bestand dafür nichts führt oder nur die " +
-    `Eingrenzung zu eng war. ${PFLICHT_SATZ}`,
+    `Eingrenzung zu eng war. ${PFLICHT_SATZ} ${KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: FuerBlockEingabe,
   ausgabe: FuerBlockAusgabe,
@@ -182,12 +201,11 @@ export const trainingUebungenFuerBlock = werkzeug({
       favoriten: false,
       mitLeerGrund: true,
     });
-    if (!r.ok) return r;
-    return ok({
-      treffer: r.wert.treffer.map((t) => alsTreffer(t, zugang)),
-      weitere: r.wert.weitere,
-      leer: r.wert.leer,
-    });
+    return abgebildet(r, (w) => ({
+      treffer: w.treffer.map((t) => alsTreffer(t, zugang)),
+      weitere: w.weitere,
+      leer: w.leer,
+    }));
   },
 });
 
@@ -222,7 +240,7 @@ export const trainingUebungZuordnen = werkzeug({
     "des Trainings, zum Block und im Kinderfussball-Hauptteil zur Hauptteilkategorie " +
     `passt — sonst nennt die Meldung die verletzte Regel. ${PFLICHT_SATZ} ` +
     "Scheitert eine Zuordnung, bleiben alle vorherigen bestehen; bei «konflikt» genügt " +
-    "es, denselben Aufruf zu wiederholen.",
+    `es, denselben Aufruf zu wiederholen. ${KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: ZuordnenEingabe,
   ausgabe: ZuordnenAusgabe,
@@ -234,12 +252,11 @@ export const trainingUebungZuordnen = werkzeug({
       hauptteilkategorie: e.hauptteilkategorie,
       varianteId: e.variante_id,
     });
-    if (!r.ok) return r;
-    return ok({
-      fassung_id: r.wert.fassungId,
-      position: r.wert.position,
-      variante_id: r.wert.varianteId,
-      name: r.wert.name,
-    });
+    return abgebildet(r, (w) => ({
+      fassung_id: w.fassungId,
+      position: w.position,
+      variante_id: w.varianteId,
+      name: w.name,
+    }));
   },
 });
