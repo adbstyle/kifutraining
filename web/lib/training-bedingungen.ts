@@ -307,15 +307,16 @@ export const UEBUNGSFOLGE_MELDUNG = {
   UEBUNGSFOLGE_ABSCHNITT_LEER: "In diesem Abschnitt steht keine Übung.",
 } as const;
 
+/** Termine gibt es nur an Team-Trainings (Team-Epic Out of Scope 3). Der
+ *  Fachkern weist einen Termin an einem persönlichen Training mit diesem Satz
+ *  vorab ab (#198 AK 10); die Datenebene ist der Rückhalt. */
+export const TERMIN_NUR_FUER_TEAM =
+  "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.";
+
 /** Der Marker, mit dem die Datenebene einen Termin an einem persönlichen
  *  Training abweist (Team-Epic, #156). Bisher unübersetzt — der Trainer sah
  *  den Rohtext. */
-const TERMIN_MARKER: [string, string][] = [
-  [
-    "TERMIN_NUR_FUER_TEAM_TRAININGS",
-    "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.",
-  ],
-];
+const TERMIN_MARKER: [string, string][] = [["TERMIN_NUR_FUER_TEAM_TRAININGS", TERMIN_NUR_FUER_TEAM]];
 
 /** Die Meldung zu einem Marker aus Übungsfolge oder Termin, sonst `null`. */
 function weitereMeldung(message: string): string | null {

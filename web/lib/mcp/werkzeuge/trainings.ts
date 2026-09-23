@@ -89,6 +89,27 @@ export const KENNUNG_FEHLER =
   "unterscheidbar); «keine_rechte» — ein öffentliches Training eines anderen Kontos: " +
   "ansehen und übernehmen ja, ändern nein.";
 
+/** Die Kennung eines Teams (#198). Sichtbar sind nur die eigenen Teams. */
+export const TeamId = kennung("Kennung eines deiner Teams, aus «teams_abrufen».");
+export const TerminId = kennung(
+  "Kennung des Termins («id» eines Eintrags aus «team_plan_abrufen» oder «termin.id» aus " +
+    "«training_abrufen»/«trainings_suchen»).",
+);
+
+/** Was ein Fehler zu einer Team-Kennung bedeutet (#198 AK 11). Gehört an
+ *  JEDE Beschreibung eines Werkzeugs, das `team_id` annimmt — `check:kern`
+ *  wacht darüber. */
+export const TEAM_KENNUNG_FEHLER =
+  "Fehlerart zur Team-Kennung: «nicht_gefunden» — kein Team, in dem du Mitglied bist (es gibt " +
+  "es nicht, oder du gehörst nicht dazu; bewusst nicht unterscheidbar). Deine Teams nennt " +
+  "«teams_abrufen».";
+
+/** Dasselbe für eine Termin-Kennung. Termine sehen nur Mitglieder des Teams. */
+export const TERMIN_KENNUNG_FEHLER =
+  "Fehlerart zur Termin-Kennung: «nicht_gefunden» — kein Termin eines deiner Teams (es gibt " +
+  "ihn nicht, er wurde entfernt, oder er gehört einem fremden Team; bewusst nicht " +
+  "unterscheidbar).";
+
 /** Die Alterskategorien je Altersstufe als ein Satz, etwa «Kinderfussball: G
  *  (G-Junior:innen), F (…)» — für jede Beschreibung, die Kategorien annimmt. */
 export function kategorienText(stufen: readonly Altersstufe[]): string {
@@ -119,10 +140,16 @@ const AnlegenEingabe = z.object({
     .string()
     .optional()
     .describe(`Ziel des Trainings (optional), höchstens ${ZIEL_MAX} Zeichen.`),
+  team_id: TeamId.optional().describe(
+    "Optional: direkt im Bestand dieses Teams anlegen (Kennung aus «teams_abrufen»). Ohne " +
+      "Angabe entsteht das Training in deinem persönlichen Bestand.",
+  ),
 });
 
 const AnlegenAusgabe = z.object({
   training_id: z.string(),
+  /** Das Team, dem das Training gehört; `null` im persönlichen Bestand. */
+  team_id: z.string().nullable(),
   /** Der Editor des Trainings in KiFu. */
   url: z.string(),
 });
@@ -131,17 +158,27 @@ export const trainingAnlegen = werkzeug({
   name: "training_anlegen",
   titel: "Training anlegen",
   beschreibung:
-    "Legt in deinem persönlichen Bestand ein neues Training als privaten Entwurf an — " +
+    "Legt ein neues Training als privaten Entwurf an — " +
     "mit Name, Altersstufe, mindestens einer Alterskategorie und optional einem Ziel. " +
+    "Ohne «team_id» in deinem persönlichen Bestand, mit «team_id» direkt im Bestand eines " +
+    "deiner Teams: Dann gehört es dem Team, jedes Mitglied kann es bearbeiten, und " +
+    "veröffentlichen lässt es sich nicht. " +
     "Heute nur Kinderfussball. Liefert die Kennung und die Adresse des Editors in KiFu. " +
-    "Übungen kommen danach mit «training_uebung_zuordnen» dazu.",
+    `Übungen kommen danach mit «training_uebung_zuordnen» dazu. ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: AnlegenEingabe,
   ausgabe: AnlegenAusgabe,
   ausfuehren: async (e, zugang) => {
-    const r = await legeTrainingAn(zugang.supabase, zugang.userId, e);
+    const r = await legeTrainingAn(zugang.supabase, zugang.userId, {
+      name: e.name,
+      altersstufe: e.altersstufe,
+      stufen: e.stufen,
+      ziel: e.ziel,
+      teamId: e.team_id,
+    });
     return abgebildet(r, (w) => ({
       training_id: w.id,
+      team_id: w.teamId,
       url: zugang.url("training", w.id, "edit"),
     }));
   },

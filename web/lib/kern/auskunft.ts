@@ -16,8 +16,12 @@
 // Der Durchlauf je Variante (#194) rechnet mit derselben Verteilung wie der
 // Editor (`verteilungAus`, `wechselZahl`, `zeitJeGruppe`).
 //
-// Noch nicht enthalten, weil erst ihre Stories sie bringen: Hinweise und
-// Zeitrichtwerte (#195, #199), Veröffentlichung (#196), Termin (#198).
+// Der Termin eines Team-Trainings (#198) kommt als Parameter herein — er
+// steht nicht im `TrainingDetail`, und `anstehend` hängt am heutigen Tag, den
+// der Aufrufer bestimmt (am Trainingsort, lib/zeit.ts).
+//
+// Noch nicht enthalten, weil erst ihre Stories sie bringen: Zeitrichtwerte
+// (#199).
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
 import {
@@ -34,6 +38,8 @@ import { istHauptteil, verteilungAus, wechselZahl, zeitJeGruppe, zeitText } from
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
 import { sichtbarkeitVon, wert, wertOderNull } from "@/lib/wert";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings-fuer";
+import type { TerminZeile } from "@/lib/queries/termine-fuer";
+import { heuteAmTrainingsort } from "@/lib/zeit";
 import type {
   DurchlaufAuskunft,
   TeilAuskunft,
@@ -122,8 +128,13 @@ function durchlaufAuskunft(
 }
 
 /** Ein Training als Auskunft — für `userId` (entscheidet `eigen` und
- *  `bearbeitbar`). */
-export function trainingAuskunft(d: TrainingDetail, k: { userId: string }): TrainingAuskunft {
+ *  `bearbeitbar`). `termin` ist der Termin des Team-Trainings, falls es einen
+ *  trägt; `heute` (`YYYY-MM-DD`) entscheidet `anstehend` — ohne Angabe der
+ *  heutige Tag am Trainingsort. */
+export function trainingAuskunft(
+  d: TrainingDetail,
+  k: { userId: string; termin?: TerminZeile | null; heute?: string },
+): TrainingAuskunft {
   const mehrere = d.varianten.length > 1;
   // Jedes Training führt mindestens eine Variante; der Rückfall hält die
   // Auskunft trotzdem vollständig, falls der Embed einmal leer ausfällt.
@@ -207,6 +218,18 @@ export function trainingAuskunft(d: TrainingDetail, k: { userId: string }): Trai
       : { art: "persoenlich", eigen: d.ownerId === k.userId },
     bearbeitbar:
       bearbeitungszielVon({ owner_id: d.ownerId, team_id: d.team?.id ?? null }, k.userId) !== null,
+    termin: k.termin
+      ? {
+          id: k.termin.id,
+          datum: k.termin.datum,
+          beginn: k.termin.beginn,
+          ort: k.termin.ort,
+          bemerkung: k.termin.bemerkung,
+          // Dieselbe Grenze wie der Plan (`teilePlan`): der heutige Tag zählt
+          // ganz zum Anstehenden.
+          anstehend: k.termin.datum >= (k.heute ?? heuteAmTrainingsort()),
+        }
+      : null,
     uebungen_gesamt: d.exercises.length,
     varianten: d.varianten.map((v) => ({ id: v.id, name: v.name })),
     gruppen: d.gruppen.map((g) => ({ id: g.id, name: g.name, an_uebungen: anUebungen(g.id) })),

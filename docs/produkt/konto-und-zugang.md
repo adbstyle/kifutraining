@@ -126,8 +126,30 @@ eigenen Teams kann der Assistent auch löschen. Er fragt dafür nicht nach, weis
 viele Übungen es trägt und ob es öffentlich ist, und nennt danach, was mitging. Das Training
 verschwindet samt Übungen, Bildern und einem angesetzten Termin, ein öffentliches zugleich aus
 dem öffentlichen Bestand; Kopien, die andere übernommen haben, bleiben. Ein fremdes Training
-lässt sich nicht löschen. Weitere Fähigkeiten kommen nach und nach dazu; dieser Abschnitt wächst
-mit ihnen.
+lässt sich nicht löschen.
+
+Auch in den eigenen Teams arbeitet der Assistent. Er nennt die Teams, in denen man Mitglied ist,
+mit Namen und Mitgliederzahl, sucht im Trainingsbestand eines Teams wie im eigenen — jedes
+Team-Training mit seinem Termin, falls es angesetzt ist — und ruft den Trainingsplan eines Teams
+ab, bereits getrennt in Anstehendes und Vergangenes. Die Grenze liegt wie im Team-Bereich am
+heutigen Tag in der Schweiz; die Einheit von heute zählt noch zum Anstehenden, und der Assistent
+muss nicht selbst rechnen. Ein Training legt er auf Wunsch direkt im Team an, stellt ein eigenes
+Training als Kopie ins Team oder übernimmt ein Team-Training als Kopie in den persönlichen
+Bestand; das Original bleibt jeweils, wie es ist, und ein Termin geht nie mit. Team-Trainings
+überarbeitet er mit denselben Möglichkeiten wie persönliche; veröffentlichen lassen sie sich
+nicht.
+
+Ein Team-Training setzt der Assistent auf ein Datum an, auf Wunsch mit Beginn, Ort und
+Bemerkung; es erscheint danach im Trainingsplan des Teams. Einen Termin ändert er — nur die
+Angaben, die er nennt; Beginn, Ort und Bemerkung kann er auch leeren — oder entfernt ihn, wobei
+das Training im Team-Bestand bleibt. Wie in der Anwendung trägt ein Training höchstens einen
+Termin: Wer dasselbe Training ein weiteres Mal ansetzen will, setzt es erneut an, und dabei
+entsteht eine eigenständige Kopie im selben Team mit eigenem Termin, während das bisherige
+Training seinen behält. Einen Termin an einem persönlichen Training, ein Datum, das es nicht
+gibt, oder eine ungültige Uhrzeit lehnt die Anwendung ab und nennt den Grund. Ein Team, in dem
+man nicht Mitglied ist, gilt als nicht gefunden. Teams gründen, umbenennen, auflösen oder
+Mitglieder verwalten kann der Assistent nicht. Weitere Fähigkeiten kommen nach und nach dazu;
+dieser Abschnitt wächst mit ihnen.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man in den Einstellungen des Assistenten die
 Adresse `https://ki-fu.ch/api/mcp` ein; die Konto-Seite nennt sie ebenfalls. Der Assistent
@@ -213,5 +235,6 @@ etwa durch eine Zeitüberschreitung oder einen Absturz mitten im Kopieren —, k
 unvollständige Kopie als eigenes Training stehen bleiben; sie ist nicht als unfertig erkennbar
 und wird nicht nachträglich aufgeräumt. Ebenso kann die Kopie vollständig entstanden sein, ohne
 dass der Assistent davon erfährt. Bleibt die Rückmeldung aus, prüft der Assistent darum vor einem
-zweiten Versuch den eigenen Bestand. Übernehmen kann der Assistent vorerst nur in den persönlichen Bestand, nicht in ein
-Team.
+zweiten Versuch den eigenen Bestand bzw. den des Teams. Dasselbe gilt für das erneute Ansetzen,
+das ebenfalls kopiert. Serientermine, abgesagte Einheiten und ob eine Einheit stattgefunden hat,
+kennt die Anwendung auch über den Assistenten nicht.

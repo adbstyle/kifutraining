@@ -3,20 +3,24 @@ import { z } from "zod";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import { kopiereTrainingNach } from "@/lib/kern/kopie";
 import { loescheTraining } from "@/lib/kern/loeschen";
-import { KENNUNG_FEHLER, TrainingId } from "@/lib/mcp/werkzeuge/trainings";
+import {
+  KENNUNG_FEHLER,
+  TEAM_KENNUNG_FEHLER,
+  TeamId,
+  TrainingId,
+} from "@/lib/mcp/werkzeuge/trainings";
 import { werkzeug } from "@/lib/mcp/werkzeug";
 
 /**
- * Ein Training übernehmen und ein eigenes löschen (Story #197).
+ * Ein Training übernehmen und ein eigenes löschen (Story #197), zu sich oder
+ * ins Team (#198 AK 5/6).
  *
  * Dünne Adapter über den Fachkern (lib/kern/kopie.ts, lib/kern/loeschen.ts)
- * — dieselben Funktionen wie «Übernehmen» und «Löschen» in der Oberfläche.
- * Ins Team übernehmen kommt mit #198 (`team_id`); bis dahin entsteht die
- * Kopie immer im persönlichen Bestand.
+ * — dieselben Funktionen wie «Übernehmen», «Ins Team stellen», «Zu mir
+ * übernehmen» und «Löschen» in der Oberfläche.
  */
 
-/** Wohin die Kopie ging. Die Team-Form ist bereits beschrieben, weil der Kern
- *  sie kennt; dieses Werkzeug liefert vorerst nur «persoenlich». */
+/** Wohin die Kopie ging. */
 const KopieZielAusgabe = z.discriminatedUnion("art", [
   z.object({ art: z.literal("persoenlich") }),
   z.object({ art: z.literal("team"), team: z.object({ id: z.string(), name: z.string() }) }),
@@ -28,24 +32,34 @@ export const trainingKopieren = werkzeug({
   name: "training_kopieren",
   titel: "Training übernehmen",
   beschreibung:
-    "Übernimmt ein Training als eigenständige Kopie in deinen persönlichen Bestand: samt " +
+    "Übernimmt ein Training als eigenständige Kopie — ohne «team_id» in deinen persönlichen " +
+    "Bestand, mit «team_id» in den Bestand eines deiner Teams: samt " +
     "allen Übungen, Bildern, Diagrammen, Gruppen, Durchlauf, Notizen, Dauern, Ziel und allen " +
     "Varianten des Hauptteils, in derselben Altersstufe. Die Kopie ist ein privater Entwurf " +
     "ohne Verbindung zur Quelle; die Quelle bleibt unberührt, und woraus die Kopie hervorging, " +
     "wird nicht festgehalten. Übernehmen lässt sich jedes Training, das du lesen kannst — ein " +
     "öffentliches der Community (etwa aus «trainings_suchen» mit «bestand: oeffentlich») oder " +
     "ein eigenes, das dann eine zweite, unabhängige Fassung bekommt —, und dasselbe Training " +
-    "beliebig oft; jede Kopie hat ihre eigene Kennung. Scheitert das Kopieren mit einer " +
+    "beliebig oft; jede Kopie hat ihre eigene Kennung. So stellst du ein eigenes Training " +
+    "ins Team (mit «team_id») oder übernimmst ein Team-Training zu dir (ohne «team_id»); das " +
+    "Original bleibt in beiden Fällen, wie es ist. Ein Termin geht nie mit. " +
+    "Scheitert das Kopieren mit einer " +
     "Meldung, räumt KiFu weg, was schon entstanden war, und «hinweis» sagt, dass nichts " +
     "entstanden ist (dann ist ein Wiederholen gefahrlos) — oder, falls auch das Aufräumen " +
     "scheiterte, welche unvollständige Kopie stehen blieb. Bricht der Vorgang dagegen ohne " +
     "Meldung ab — durch eine Zeitüberschreitung oder einen Absturz mitten im Kopieren —, kann " +
     "eine unvollständige Kopie stehen bleiben, die nicht als unfertig erkennbar ist, oder die " +
     "Kopie ist vollständig entstanden, ohne dass du davon erfährst. Prüfe dann vorher und " +
-    "nachher mit «trainings_suchen» (bestand: eigene), bevor du es noch einmal versuchst. " +
-    KENNUNG_FEHLER,
+    "nachher mit «trainings_suchen» (bestand: eigene bzw. team), bevor du es noch einmal " +
+    `versuchst. ${KENNUNG_FEHLER} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
-  eingabe: z.object({ training_id: TrainingId }),
+  eingabe: z.object({
+    training_id: TrainingId,
+    team_id: TeamId.optional().describe(
+      "Optional: die Kopie gehört diesem deiner Teams (Kennung aus «teams_abrufen»). Ohne " +
+        "Angabe entsteht sie in deinem persönlichen Bestand.",
+    ),
+  }),
   ausgabe: z.object({
     /** Kennung der neuen Kopie — für alle Bearbeitungs-Werkzeuge. */
     training_id: z.string(),
@@ -54,7 +68,10 @@ export const trainingKopieren = werkzeug({
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
-      await kopiereTrainingNach(zugang.supabase, zugang.userId, { quelleId: e.training_id }),
+      await kopiereTrainingNach(zugang.supabase, zugang.userId, {
+        quelleId: e.training_id,
+        teamId: e.team_id,
+      }),
       (w) => ({ training_id: w.id, ziel: w.ziel, url: zugang.url("training", w.id, "edit") }),
     ),
 });

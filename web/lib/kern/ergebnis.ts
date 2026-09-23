@@ -114,8 +114,7 @@ export function fehlschlag(
 }
 
 /** Die Standard-Texte für «nicht sichtbar», je Gegenstand — wortgleich mit
- *  den bisherigen Meldungen der Server Actions. Der Termin kommt mit #198
- *  dazu. */
+ *  den bisherigen Meldungen der Server Actions. */
 export const NICHT_GEFUNDEN = {
   uebung: "Diese Übung gibt es nicht oder sie ist für dein Konto nicht sichtbar.",
   training: "Training nicht gefunden.",
@@ -125,6 +124,8 @@ export const NICHT_GEFUNDEN = {
   vorlage: "Übung nicht verfügbar.",
   team: "Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist.",
   gruppe: "Gruppe nicht gefunden.",
+  /** Ein Termin eines Team-Trainings (#198); sichtbar nur Mitgliedern. */
+  termin: "Termin nicht gefunden.",
 } as const;
 
 /** Ein sichtbares, aber nicht bearbeitbares Training — ein fremdes

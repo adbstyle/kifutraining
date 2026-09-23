@@ -87,6 +87,10 @@ Termin wird entfernt. Sie hält auch nicht fest, wer an einem Termin im Einsatz 
 stattgefunden hat; der Trainingsplan bildet die Planung ab, nicht den Nachweis der geleisteten
 Lektion. Erinnerungen, Benachrichtigungen und Kalender-Export gibt es nicht.
 
+Team-Trainings und Termine lassen sich auch über einen verbundenen KI-Assistenten führen (siehe
+[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)). Es gelten dieselben Regeln, und
+was er ansetzt, steht im selben Trainingsplan. Die Teams selbst verwaltet er nicht.
+
 ## Veröffentlichen
 
 Ein persönliches Training lässt sich öffentlich schalten und jederzeit wieder auf Entwurf

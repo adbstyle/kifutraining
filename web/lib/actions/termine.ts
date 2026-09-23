@@ -1,183 +1,105 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import { kopiereTraining } from "@/lib/kern/kopie";
-import { loescheTrainingMitBildern } from "@/lib/kern/loeschen";
+import {
+  aendereTermin,
+  entferneTermin as entferneTerminImKern,
+  setzeAn,
+  setzeErneutAn as setzeErneutAnImKern,
+} from "@/lib/kern/termine";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
+import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
+import type { TerminFelder } from "@/lib/termin";
 
 /**
- * Termine ansetzen, ändern, entfernen (Team-Epic Stories 7–9).
+ * Termine ansetzen, ändern, entfernen (Team-Epic Stories 7–9) — dünne
+ * Adapter über den Fachkern (lib/kern/termine.ts), dieselben Funktionen wie
+ * die KI-Werkzeuge «termin_*» und «training_erneut_ansetzen» (#198).
  *
- * Ein Training trägt höchstens einen Termin — das ist Schema-Invariante
- * (UNIQUE auf training_id). Wer dasselbe Training erneut ansetzt, bekommt
- * deshalb eine eigenständige Kopie: so bleibt jedes Datum bei dem Stand, mit
- * dem es tatsächlich durchgeführt wurde, und spätere Anpassungen für den
- * nächsten Termin ändern die Vergangenheit nicht.
+ * Ein Training trägt höchstens einen Termin; wer es erneut ansetzt, bekommt
+ * eine eigenständige Kopie (Begründung im Kern). Der Kern liefert Training
+ * und Team zurück — die Adapter revalidieren damit, ohne sie nachzulesen.
  */
 
-export type TerminFelder = {
-  datum: string;
-  beginn?: string | null;
-  ort?: string | null;
-  bemerkung?: string | null;
-};
+export type { TerminFelder } from "@/lib/termin";
 
 export type TerminResult = { ok: true; terminId: string } | { ok: false; error: string };
 
-/** Leere Eingaben sind „nicht erfasst", nicht „leerer Text". */
-function leerZuNull(v: string | null | undefined): string | null {
-  const t = (v ?? "").trim();
-  return t === "" ? null : t;
-}
-
-function pruefeFelder(f: TerminFelder): { ok: true } | { ok: false; error: string } {
-  // `YYYY-MM-DD` kommt vom nativen Datumsfeld; alles andere ist ein
-  // manipulierter Aufruf und wird hier abgewiesen statt in der DB.
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(f.datum ?? ""))
-    return { ok: false, error: "Bitte ein Datum angeben." };
-  const beginn = leerZuNull(f.beginn);
-  if (beginn && !/^\d{2}:\d{2}$/.test(beginn))
-    return { ok: false, error: "Bitte eine gültige Uhrzeit angeben." };
-  return { ok: true };
-}
-
-async function revalidiereTeamPlan(supabase: Awaited<ReturnType<typeof createClient>>, trainingId: string) {
-  const { data } = await supabase
-    .from("trainings")
-    .select("team_id")
-    .eq("id", trainingId)
-    .maybeSingle();
-  if (data?.team_id) revalidiereTeam(data.team_id);
-  revalidiereTraining(trainingId);
-}
-
-/** Ein Team-Training auf ein Datum ansetzen (Story 7 AK 1–4). Nur für
- *  Trainings ohne Termin — die UNIQUE-Bedingung fängt das Wettrennen zweier
- *  gleichzeitiger Ansetzungen ab. */
+/** Ein Team-Training auf ein Datum ansetzen (Story 7 AK 1–4). */
 export async function erstelleTermin(
   teamTrainingId: string,
   felder: TerminFelder,
 ): Promise<TerminResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await setzeAn(a.supabase, a.userId, { ...felder, trainingId: teamTrainingId });
+  if (!r.ok) return { ok: false, error: oberflaechenMeldung(r) };
 
-  const geprueft = pruefeFelder(felder);
-  if (!geprueft.ok) return geprueft;
-
-  const { data, error } = await supabase
-    .from("training_termine")
-    .insert({
-      training_id: teamTrainingId,
-      datum: felder.datum,
-      beginn: leerZuNull(felder.beginn),
-      ort: leerZuNull(felder.ort),
-      bemerkung: leerZuNull(felder.bemerkung),
-    })
-    .select("id")
-    .single();
-  if (error || !data)
-    return {
-      ok: false,
-      error: error?.code === "23505"
-        ? "Dieses Training ist bereits angesetzt. Setze es erneut an, um eine weitere Einheit zu planen."
-        : (error?.message ?? "Ansetzen fehlgeschlagen."),
-    };
-
-  await revalidiereTeamPlan(supabase, teamTrainingId);
-  return { ok: true, terminId: data.id };
+  revalidiereTeam(r.wert.teamId);
+  revalidiereTraining(r.wert.trainingId);
+  return { ok: true, terminId: r.wert.terminId };
 }
 
-/** Datum, Beginn, Ort oder Bemerkung eines Termins ändern (Story 7 AK 5). */
+/** Datum, Beginn, Ort oder Bemerkung eines Termins ändern (Story 7 AK 5).
+ *  Der Dialog sendet immer alle Felder; ein leeres heisst «leeren». */
 export async function aktualisiereTermin(
   terminId: string,
   felder: TerminFelder,
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createClient();
-  const geprueft = pruefeFelder(felder);
-  if (!geprueft.ok) return geprueft;
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await aendereTermin(a.supabase, a.userId, {
+    terminId,
+    datum: felder.datum,
+    beginn: felder.beginn ?? null,
+    ort: felder.ort ?? null,
+    bemerkung: felder.bemerkung ?? null,
+  });
+  if (!r.ok) return { ok: false, error: r.meldung };
 
-  const { data, error } = await supabase
-    .from("training_termine")
-    .update({
-      datum: felder.datum,
-      beginn: leerZuNull(felder.beginn),
-      ort: leerZuNull(felder.ort),
-      bemerkung: leerZuNull(felder.bemerkung),
-    })
-    .eq("id", terminId)
-    .select("training_id")
-    .maybeSingle();
-  if (error) return { ok: false, error: error.message };
-  if (!data) return { ok: false, error: "Termin nicht gefunden." };
-
-  await revalidiereTeamPlan(supabase, data.training_id);
+  if (r.wert.teamId) revalidiereTeam(r.wert.teamId);
+  revalidiereTraining(r.wert.trainingId);
   return { ok: true };
 }
 
-/** Einen Termin entfernen (Story 9). Das Training bleibt im Team-Bestand — es
- *  ist danach nur nicht mehr angesetzt. Ein bereits entfernter Termin gilt als
- *  erledigt, nicht als Fehler. */
+/** Einen Termin entfernen (Story 9). Das Training bleibt im Team-Bestand. Ein
+ *  bereits entfernter Termin gilt als erledigt, nicht als Fehler. */
 export async function entferneTermin(
   terminId: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createClient();
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await entferneTerminImKern(a.supabase, a.userId, { terminId });
+  if (!r.ok) return { ok: false, error: r.meldung };
 
-  const { data, error } = await supabase
-    .from("training_termine")
-    .delete()
-    .eq("id", terminId)
-    .select("training_id")
-    .maybeSingle();
-  if (error) return { ok: false, error: error.message };
-  if (!data) return { ok: true };
-
-  await revalidiereTeamPlan(supabase, data.training_id);
+  if (r.wert.teamId) revalidiereTeam(r.wert.teamId);
+  if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
   return { ok: true };
 }
 
-/** Ein bereits angesetztes Team-Training erneut ansetzen (Story 8).
- *
- *  Es entsteht eine eigenständige Kopie im selben Team, die den neuen Termin
- *  bekommt — das bisherige Training behält seinen. Scheitert etwas, räumt der
- *  Kopier-Baustein auf; ein Termin ohne Training kann so nicht entstehen. */
+/** Ein bereits angesetztes Team-Training erneut ansetzen (Story 8): eine
+ *  eigenständige Kopie im selben Team mit dem neuen Termin — das bisherige
+ *  Training behält seinen. */
 export async function setzeErneutAn(
   teamTrainingId: string,
   felder: TerminFelder,
 ): Promise<TerminResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await setzeErneutAnImKern(a.supabase, a.userId, { ...felder, trainingId: teamTrainingId });
+  // Wie beim Entfernen aus dem Team-Bestand: Was nicht sichtbar oder nicht
+  // bearbeitbar ist, heisst in dieser Ansicht weiter «Team-Training nicht
+  // gefunden.» — der Trainer steht im Team-Bereich, nicht vor einem
+  // beliebigen Training. Alle anderen Regeln kommen übersetzt aus dem Kern.
+  if (!r.ok)
+    return {
+      ok: false,
+      error:
+        r.art === "nicht_gefunden" || r.art === "keine_rechte"
+          ? "Team-Training nicht gefunden."
+          : oberflaechenMeldung(r),
+    };
 
-  const geprueft = pruefeFelder(felder);
-  if (!geprueft.ok) return geprueft;
-
-  const { data: quelle } = await supabase
-    .from("trainings")
-    .select("team_id")
-    .eq("id", teamTrainingId)
-    .maybeSingle();
-  if (!quelle?.team_id) return { ok: false, error: "Team-Training nicht gefunden." };
-
-  const kopie = await kopiereTraining(supabase, teamTrainingId, {
-    art: "team",
-    teamId: quelle.team_id,
-  });
-  if (!kopie.ok) return { ok: false, error: kopie.error };
-
-  const termin = await erstelleTermin(kopie.neueId, felder);
-  if (!termin.ok) {
-    // Kein Training ohne Zweck stehen lassen: die Kopie war nur für diesen
-    // Termin gedacht — samt ihrer Bilddateien wieder abräumen.
-    await loescheTrainingMitBildern(supabase, kopie.neueId);
-    return termin;
-  }
-
-  revalidiereTeam(quelle.team_id);
-  return termin;
+  revalidiereTeam(r.wert.teamId);
+  revalidiereTraining(r.wert.trainingId);
+  return { ok: true, terminId: r.wert.terminId };
 }

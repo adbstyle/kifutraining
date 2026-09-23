@@ -36,6 +36,7 @@ import { KEINE_PASSENDE_UEBUNG, LEER_HINWEIS, leerBestandText, zielLabel } from 
 import { trainingAuskunft as auskunftRoh } from "../lib/kern/auskunft";
 import { TrainingAuskunftStreng } from "../lib/kern/auskunft-schema";
 import { verteilungAus } from "../lib/gruppen";
+import { leerZuNull, terminProblem } from "../lib/termin";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 
 let gelaufen = 0;
@@ -371,6 +372,61 @@ pruefe("Auskunft-Vertrag: das strenge Schema weist ein undeklariertes Feld ab", 
   assert.throws(() => TrainingAuskunftStreng.parse({ ...a, teile: [teil] }));
 });
 
+pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen Tag (#198)", () => {
+  const team = training({ ownerId: null, team: { id: "team1", name: "Ea" } });
+  const termin = {
+    id: "tt1",
+    datum: "2026-09-23",
+    beginn: "18:30",
+    ort: "Allmend",
+    bemerkung: null,
+    training: { id: "t1", name: "Probe", stufen: ["F" as const] },
+  };
+  const heute = trainingAuskunft(team, { userId: ICH, termin, heute: "2026-09-23" });
+  assert.deepEqual(heute.termin, {
+    id: "tt1",
+    datum: "2026-09-23",
+    beginn: "18:30",
+    ort: "Allmend",
+    bemerkung: null,
+    anstehend: true,
+  });
+  // Der heutige Tag zählt ganz zum Anstehenden — wie im Plan (`teilePlan`).
+  assert.equal(trainingAuskunft(team, { userId: ICH, termin, heute: "2026-09-24" }).termin?.anstehend, false);
+  assert.equal(trainingAuskunft(team, { userId: ICH, termin: null }).termin, null);
+  assert.equal(trainingAuskunft(training({}), { userId: ICH }).termin, null);
+  // Ein undeklariertes Feld im Termin fiele im strengen Schema auf.
+  assert.throws(() => TrainingAuskunftStreng.parse({ ...heute, termin: { ...heute.termin, extra: 1 } }));
+});
+
+// ── Termin-Felder (#198 AK 7/8) ─────────────────────────────────────────────
+// Die Texte sind die bisherigen der Server Actions. Neu ist die echte
+// Kalenderprüfung: «2026-02-30» und «25:99» passten auf das Muster und
+// scheiterten erst in der Datenbank — als «liess sich nicht speichern».
+pruefe("terminProblem: gültig, leer, erfundene Tage und Uhrzeiten", () => {
+  const DATUM = { feld: "datum", text: "Bitte ein Datum angeben." };
+  const ZEIT = { feld: "beginn", text: "Bitte eine gültige Uhrzeit angeben." };
+  assert.equal(terminProblem({ datum: "2026-09-23" }), null);
+  assert.equal(terminProblem({ datum: "2028-02-29", beginn: "00:00" }), null, "Schalttag");
+  assert.equal(terminProblem({ datum: "2026-12-31", beginn: "23:59" }), null);
+  assert.equal(terminProblem({ datum: "2026-09-23", beginn: "" }), null, "leerer Beginn = keiner");
+  assert.equal(terminProblem({ datum: "2026-09-23", beginn: null }), null);
+  for (const datum of ["", undefined, null, "2026-02-30", "2027-02-29", "2026-13-01", "2026-04-31", "0000-01-01", "2026-9-3", "23.09.2026"])
+    assert.deepEqual(terminProblem({ datum }), DATUM, `Datum ${datum}`);
+  for (const beginn of ["25:99", "24:00", "18:60", "8:30", "18.30", "18:30:00"])
+    assert.deepEqual(terminProblem({ datum: "2026-09-23", beginn }), ZEIT, `Beginn ${beginn}`);
+  assert.equal(leerZuNull("  "), null);
+  assert.equal(leerZuNull(" Allmend "), "Allmend");
+  assert.equal(leerZuNull(undefined), null);
+});
+
+pruefe("Termin-Marker: vorab und aus der Datenbank derselbe Satz", () => {
+  const f = still(() => ausDbFehler({ message: "TERMIN_NUR_FUER_TEAM_TRAININGS" }));
+  assert.equal(f.art, "regel");
+  assert.equal(f.meldung, "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.");
+  assert.equal(NICHT_GEFUNDEN.termin, "Termin nicht gefunden.");
+});
+
 // ── Durchlauf (#194 AK 8, PC 3, NFR 1) ──────────────────────────────────────
 // Editor und Auskunft rechnen mit derselben Verteilung (`verteilungAus`); im
 // Juniorenfussball zählt der Wechsel über BEIDE Hauptteil-Blöcke.
@@ -577,7 +633,14 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
         ? (new RegExp(`const ${verweis} = z\\.object\\(\\{([\\s\\S]*?)\\n\\}\\);`).exec(text)?.[1] ?? "")
         : block;
       if (/\b(TrainingId|FassungId|GruppeId)\b/.test(eingabe))
-        assert.ok(block.includes("KENNUNG_FEHLER"), `${m[1]} nimmt eine Kennung, erklärt aber KENNUNG_FEHLER nicht`);
+        assert.ok(/\bKENNUNG_FEHLER\b/.test(block), `${m[1]} nimmt eine Kennung, erklärt aber KENNUNG_FEHLER nicht`);
+      // Dasselbe für Teams und Termine (#198 AK 11). «termin_entfernen» ist
+      // ausgenommen: Es kennt kein «nicht_gefunden» — ein fehlender Termin
+      // gilt als entfernt.
+      if (/\bTeamId\b/.test(eingabe))
+        assert.ok(block.includes("TEAM_KENNUNG_FEHLER"), `${m[1]} nimmt team_id, erklärt aber TEAM_KENNUNG_FEHLER nicht`);
+      if (/\bTerminId\b/.test(eingabe) && m[1] !== "terminEntfernen")
+        assert.ok(block.includes("TERMIN_KENNUNG_FEHLER"), `${m[1]} nimmt termin_id, erklärt aber TERMIN_KENNUNG_FEHLER nicht`);
     }
   }
 
@@ -604,6 +667,14 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#195": ["training_hinweise"],
     "#196": ["training_veroeffentlichen", "training_auf_entwurf_setzen"],
     "#197": ["training_kopieren", "training_loeschen"],
+    "#198": [
+      "teams_abrufen",
+      "team_plan_abrufen",
+      "termin_ansetzen",
+      "termin_aendern",
+      "termin_entfernen",
+      "training_erneut_ansetzen",
+    ],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);

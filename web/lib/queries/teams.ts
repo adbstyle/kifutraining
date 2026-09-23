@@ -1,5 +1,8 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { getMeineTeamsFuer, type TeamUebersicht } from "@/lib/queries/teams-fuer";
+
+export type { TeamUebersicht } from "@/lib/queries/teams-fuer";
 
 /**
  * Query-Layer für Teams (Team-Epic Stories 3, 4, 5).
@@ -10,12 +13,6 @@ import { createClient } from "@/lib/supabase/server";
  * liefert ausschliesslich Anzeigenamen (Story 1 NFR 4), darum die RPC statt
  * eines Joins auf auth.users.
  */
-
-export type TeamUebersicht = {
-  id: string;
-  name: string;
-  mitgliederAnzahl: number;
-};
 
 export type TeamMitglied = {
   userId: string;
@@ -28,25 +25,15 @@ export type TeamDetail = {
   mitglieder: TeamMitglied[];
 };
 
-/** Die Teams des angemeldeten Kontos, alphabetisch. Anonym: leere Liste. */
+/** Die Teams des angemeldeten Kontos, alphabetisch (`getMeineTeamsFuer`).
+ *  Anonym: leere Liste. */
 export async function getMeineTeams(): Promise<TeamUebersicht[]> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return [];
-
-  const { data, error } = await supabase
-    .from("teams")
-    .select("id, name, team_members ( user_id )")
-    .order("name");
-  if (error) throw error;
-
-  return (data ?? []).map((t) => ({
-    id: t.id,
-    name: t.name,
-    mitgliederAnzahl: (t.team_members ?? []).length,
-  }));
+  return getMeineTeamsFuer(supabase);
 }
 
 /** Ein Team samt Mitgliedern. `null`, wenn es das Team nicht gibt oder der

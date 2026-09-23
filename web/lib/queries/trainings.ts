@@ -1,13 +1,11 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { kurzeZeit } from "@/lib/queries/termine";
 import {
-  LIST_SELECT,
   einzelnerTermin,
+  getTeamTrainingsFuer,
   getTrainingPoolFuer,
   ladeTrainingDetail,
-  mapListRow,
-  type RawListTraining,
+  type TeamTrainingRow,
   type TrainingDetail,
   type TrainingListFilters,
   type TrainingListRow,
@@ -29,6 +27,7 @@ import {
 
 export {
   einzelnerTermin,
+  type TeamTrainingRow,
   type TrainingDetail,
   type TrainingExerciseItem,
   type TrainingListFilters,
@@ -129,68 +128,8 @@ export async function getTrainingPool(
 
 // ── Team-Trainings (Team-Epic Story 5) ───────────────────────────────────────
 
-/** Ein Team-Training im Bestand des Teams. Wie eine Pool-Zeile, zusätzlich mit
- *  dem Termin, falls es angesetzt ist. */
-export type TeamTrainingRow = TrainingListRow & {
-  /** Der Termin dieses Trainings, falls es angesetzt ist. Höchstens einer je
-   *  Training — eine weitere Einheit entsteht als Kopie (Story 8). Beginn, Ort
-   *  und Bemerkung dienen als Vorbelegung beim erneuten Ansetzen, damit der
-   *  Weg aus dem Bestand derselbe ist wie aus dem Plan (Story 16 AK 3). */
-  termin: {
-    id: string;
-    /** Der Tag der Einheit als `YYYY-MM-DD`. Er unterscheidet angesetzte
-     *  Einheiten desselben Trainings im Bestand voneinander (#156 AK 7). */
-    datum: string;
-    beginn: string | null;
-    ort: string | null;
-    bemerkung: string | null;
-  } | null;
-};
-
-const TEAM_LIST_SELECT = `${LIST_SELECT}, training_termine ( id, datum, beginn, ort, bemerkung )`;
-
-/** Der Trainingsbestand eines Teams. Team-Trainings erscheinen NIE im
- *  Trainings-Pool — sie gehören dem Team, nicht der Öffentlichkeit und keiner
- *  Person. Sichtbar sind sie nur Mitgliedern; das setzt die RLS durch. */
+/** Der Trainingsbestand eines Teams mit der Anmeldung aus den Cookies —
+ *  Abfrage und Mapping in `getTeamTrainingsFuer`. */
 export async function getTeamTrainings(teamId: string): Promise<TeamTrainingRow[]> {
-  // Ungültige UUID würde die Query mit Fehler abbrechen; defensiv abfangen.
-  // Der Guard im Layout greift hier nicht — Layout und Page rendern parallel;
-  // die leere Liste verhindert den 500 vor dem Redirect.
-  if (!/^[0-9a-f-]{36}$/i.test(teamId)) return [];
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("trainings")
-    .select(TEAM_LIST_SELECT)
-    .eq("team_id", teamId)
-    .order("updated_at", { ascending: false })
-    .order("id");
-  if (error) throw error;
-
-  return (data ?? []).map((raw) => {
-    // Bewusst eigener Name: `RawTermin` in queries/termine.ts bezeichnet die
-    // vollständige Termin-Zeile, hier stehen nur die Felder der Vorbelegung.
-    type RawTerminVorbelegung = {
-      id: string;
-      datum: string;
-      beginn: string | null;
-      ort: string | null;
-      bemerkung: string | null;
-    };
-    const r = raw as unknown as RawListTraining & {
-      training_termine: RawTerminVorbelegung | RawTerminVorbelegung[] | null;
-    };
-    const termin = einzelnerTermin(r.training_termine);
-    return {
-      ...mapListRow(r),
-      termin: termin
-        ? {
-            id: termin.id,
-            datum: termin.datum,
-            beginn: kurzeZeit(termin.beginn),
-            ort: termin.ort,
-            bemerkung: termin.bemerkung,
-          }
-        : null,
-    };
-  });
+  return getTeamTrainingsFuer(await createClient(), teamId);
 }

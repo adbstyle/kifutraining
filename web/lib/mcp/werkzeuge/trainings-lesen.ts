@@ -10,7 +10,12 @@ import {
   trainingsSuchen as trainingsSuchenImKern,
 } from "@/lib/kern/lesen";
 import { Sichtbarkeit, Wert, alsEnum, katalogFilter, sichtbarkeitVon, wert } from "@/lib/mcp/bausteine";
-import { KENNUNG_FEHLER, TrainingId } from "@/lib/mcp/werkzeuge/trainings";
+import {
+  KENNUNG_FEHLER,
+  TEAM_KENNUNG_FEHLER,
+  TeamId,
+  TrainingId,
+} from "@/lib/mcp/werkzeuge/trainings";
 import { werkzeug } from "@/lib/mcp/werkzeug";
 
 /**
@@ -42,7 +47,9 @@ export const trainingAbrufen = werkzeug({
     "Kennung für die Bearbeitungs-Werkzeuge. «uebungen_gesamt» zählt die Übungen aller " +
     "Varianten zusammen; «gesamt» nennt die Dauer je Variante, «durchlauf» je Variante die " +
     "Wechsel der Gruppen (wie «training_durchlauf_abrufen»). Lesbar ist jedes Training, " +
-    "das dein Konto in KiFu sieht; ändern lassen sich nur die mit «bearbeitbar». Ob es " +
+    "das dein Konto in KiFu sieht; ändern lassen sich nur die mit «bearbeitbar». Ein " +
+    "Team-Training trägt in «termin» seinen Termin (höchstens einen; «anstehend» sagt, ob er " +
+    "heute oder später ist), sonst steht dort null. Ob es " +
     "veröffentlicht werden kann und was dazu fehlt, zeigt «training_hinweise». " +
     `${KENNUNG_FEHLER}`,
   nurLesen: true,
@@ -62,9 +69,13 @@ export const trainingAbrufen = werkzeug({
 // ── trainings_suchen ────────────────────────────────────────────────────────
 
 const SuchenEingabe = z.object({
-  bestand: alsEnum(["eigene", "oeffentlich"] as const).describe(
+  bestand: alsEnum(["eigene", "oeffentlich", "team"] as const).describe(
     "eigene: deine persönlichen Trainings, Entwürfe eingeschlossen. " +
-      "oeffentlich: alle öffentlichen Trainings der Community, auch deine eigenen öffentlichen.",
+      "oeffentlich: alle öffentlichen Trainings der Community, auch deine eigenen öffentlichen. " +
+      "team: der Trainingsbestand eines deiner Teams — dann mit «team_id».",
+  ),
+  team_id: TeamId.optional().describe(
+    "Nur mit «bestand: team», dort Pflicht: das Team (Kennung aus «teams_abrufen»).",
   ),
   q: z
     .string()
@@ -93,19 +104,34 @@ const SuchenTreffer = z.object({
   varianten_zahl: z.number().int(),
   urheber: z.string().nullable(),
   geaendert_am: z.string(),
+  /** Nur im Team-Bestand: der Termin des Trainings, `null` ohne. */
+  termin: z
+    .object({
+      id: z.string(),
+      datum: z.string(),
+      beginn: z.string().nullable(),
+      ort: z.string().nullable(),
+      bemerkung: z.string().nullable(),
+      anstehend: z.boolean(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export const trainingsSuchen = werkzeug({
   name: "trainings_suchen",
   titel: "Trainings suchen",
   beschreibung:
-    "Durchsucht deine eigenen Trainings oder die öffentlichen Trainings der Community — " +
+    "Durchsucht deine eigenen Trainings, die öffentlichen Trainings der Community oder den " +
+    "Trainingsbestand eines deiner Teams — " +
     "dieselbe Suche wie die Trainings-Übersicht in KiFu: ohne Suchtext das zuletzt " +
     "Geänderte zuerst, mit Suchtext kürzere Namen zuerst. Eingrenzen nach " +
     "Alterskategorie (ODER). «uebungszahl» und «dauer_min» beziehen sich wie die Kachel der " +
     "Übersicht auf die erste Variante; «varianten_zahl» sagt, wie viele es gibt. " +
-    "Team-Trainings erscheinen hier nicht. Das ganze Training liefert «training_abrufen», " +
-    "übernehmen lässt es sich mit «training_kopieren».",
+    "Team-Trainings erscheinen nur mit «bestand: team»; dort trägt jeder Treffer seinen " +
+    "Termin («termin», null ohne) — «eigen» ist bei ihnen immer false, bearbeiten darf sie " +
+    "jedes Mitglied. Das ganze Training liefert «training_abrufen», " +
+    `übernehmen lässt es sich mit «training_kopieren». ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: true,
   eingabe: SuchenEingabe,
   ausgabe: z.object({ treffer: z.array(SuchenTreffer), weitere: z.boolean() }),
@@ -113,6 +139,7 @@ export const trainingsSuchen = werkzeug({
     abgebildet(
       await trainingsSuchenImKern(zugang.supabase, zugang.userId, {
         bestand: e.bestand,
+        teamId: e.team_id,
         q: e.q,
         kategorien: e.kategorien,
         limit: e.limit,
@@ -121,7 +148,11 @@ export const trainingsSuchen = werkzeug({
         treffer: w.treffer.map((t) => ({
           id: t.id,
           name: t.name,
-          url: t.istEigen ? zugang.url("training", t.id, "edit") : zugang.url("training", t.id),
+          // Editor, wo bearbeitet werden darf: eigene und Team-Trainings.
+          url:
+            t.istEigen || e.bestand === "team"
+              ? zugang.url("training", t.id, "edit")
+              : zugang.url("training", t.id),
           altersstufe: wert(altersstufeLabels, t.altersstufe),
           stufen: t.stufen.map((s) => wert(kategorieStufe, s)),
           sichtbarkeit: sichtbarkeitVon(t.visibility),
@@ -131,6 +162,7 @@ export const trainingsSuchen = werkzeug({
           varianten_zahl: t.variantenZahl,
           urheber: t.urheber,
           geaendert_am: t.updatedAt,
+          ...(t.termin !== undefined ? { termin: t.termin } : {}),
         })),
         weitere: w.weitere,
       }),

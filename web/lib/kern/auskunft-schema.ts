@@ -134,6 +134,17 @@ function baueSchema(streng: boolean) {
       obj({ art: z.literal("team"), team: IdName }),
     ]),
     bearbeitbar: z.boolean(),
+    /** Der Termin eines Team-Trainings (#198) — höchstens einer je Training;
+     *  `null` ohne Termin und bei persönlichen Trainings (die keinen tragen
+     *  können). `anstehend`: heute oder später, am Trainingsort gemessen. */
+    termin: obj({
+      id: z.string(),
+      datum: z.string(),
+      beginn: z.string().nullable(),
+      ort: z.string().nullable(),
+      bemerkung: z.string().nullable(),
+      anstehend: z.boolean(),
+    }).nullable(),
     /** Alle Übungen des Trainings über ALLE Varianten des Hauptteils. */
     uebungen_gesamt: z.number().int(),
     varianten: z.array(IdName),
