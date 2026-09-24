@@ -35,7 +35,13 @@ begin
   -- Berechtigung als erste Anweisung, dieselbe Bedingung wie in den
   -- `tv_*`-Policies. `for update of t` serialisiert gegen `lege_variante_an`,
   -- `entferne_variante` und `verschiebe_variante` — alle sperren zuerst das
-  -- Training, darum gibt es keine umgekehrte Sperrreihenfolge.
+  -- Training. Umgekehrt sperrt nur das Umbenennen (`benenneVariante` in
+  -- web/lib/kern/varianten.ts ändert `training_varianten` direkt): erst die
+  -- Varianten-Zeile, dann über den Trigger `tv_touch` das Training. Trifft
+  -- es gleichzeitig auf diese Folge, ist ein Deadlock möglich — Postgres
+  -- rollt eine Seite zurück, die Anwendung meldet `konflikt`/`wiederholbar`
+  -- (`ausDbFehler`: 40P01). Dasselbe Muster besteht schon zwischen
+  -- `verschiebe_variante` und dem Umbenennen.
   perform 1
      from trainings t
     where t.id = p_training

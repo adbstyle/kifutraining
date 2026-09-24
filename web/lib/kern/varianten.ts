@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { VARIANTENFOLGE_MELDUNG, fachlicheMeldung } from "@/lib/training-bedingungen";
+import { VARIANTENFOLGE_MELDUNG, VARIANTE_FREMD, fachlicheMeldung } from "@/lib/training-bedingungen";
 import { varianteNameProblem, type Variante } from "@/lib/varianten";
 import { bildOrdnerFuer } from "@/lib/training-zugriff";
 import {
@@ -10,6 +10,7 @@ import {
   kopiereDiagrammVon,
 } from "@/lib/fassung";
 import { ladeTrainingZumBearbeiten, ladeVarianteZumBearbeiten } from "@/lib/kern/zugriff";
+import { pruefeVollstaendigeFolge } from "@/lib/kern/folge";
 import {
   NICHT_GEFUNDEN,
   ausDbFehler,
@@ -54,10 +55,6 @@ import {
 /** Die Auskunft für den Fall, der nach Lage der Daten nicht eintreten kann.
  *  Sie nennt keine Ursache, weil es keine bekannte gibt. */
 export const VARIANTE_NICHT_ANGELEGT = "Die Variante liess sich nicht anlegen.";
-
-/** Der Klartext eines Varianten-Markers — derselbe Satz, den die Oberfläche
- *  zeigt, wenn die Datenbank abweist (`fachlicheMeldung`). */
-const markerText = (marker: "VARIANTE_FREMDES_TRAINING") => fachlicheMeldung(marker) ?? marker;
 
 /** Die Varianten eines Trainings in ihrer Reihenfolge (position, id) — dieselbe
  *  Ordnung wie Anzeige, Trigger `te_variante_ausrichten` und Kopie. Geteilt mit
@@ -122,7 +119,7 @@ export async function legeVarianteAn(
     ? bestehende.find((v) => v.id === e.quelleVarianteId)
     : bestehende[0];
   if (!quelle)
-    return fehlschlag("regel", markerText("VARIANTE_FREMDES_TRAINING"), {
+    return fehlschlag("regel", VARIANTE_FREMD, {
       feld: "quelle_variante_id",
       zulaessig: bestehende.map((v) => v.id),
     });
@@ -304,8 +301,10 @@ export async function entferneVariante(
  * zeigt KiFu beim Öffnen (#201 AK 7).
  *
  * Verlangt ist die VOLLSTÄNDIGE Folge — eine Teilfolge liesse offen, wohin die
- * übrigen gehören. Die Vorprüfung hier nennt doppelte, fehlende und fremde
- * Varianten mit Namen (Muster `setzeUebungsfolge`); die RPC
+ * übrigen gehören. Die Vorprüfung (`pruefeVollstaendigeFolge`, geteilt mit
+ * `setzeUebungsfolge`) nennt doppelte und fehlende Varianten mit Namen und
+ * Kennung, fremde nur mit Kennung — sie haben hier keinen Namen —, und
+ * `zulaessig` nennt die Kennungen des Trainings; geändert wird dann nichts. Die RPC
  * `setze_variantenfolge` prüft dasselbe unter Sperre des Trainings noch einmal
  * und schreibt atomar — was zwischen Vorprüfung und Schreiben dazukommt, weist
  * sie als unvollständig ab.
@@ -320,30 +319,14 @@ export async function setzeVariantenfolge(
   const alle = await variantenVon(supabase, e.trainingId);
   if (!alle.ok) return alle;
 
-  const nachId = new Map(alle.wert.map((v) => [v.id, v]));
-  // Name UND Kennung: Die Kennung ist, was der Assistent zurückschickt; der
-  // Name, woran er erkennt, welche gemeint ist.
-  const genannt = (id: string) => (nachId.has(id) ? `„${nachId.get(id)!.name}" (${id})` : id);
-
   const ids = e.varianteIds;
-  const doppelt = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
-  if (doppelt.length > 0)
-    return fehlschlag(
-      "regel",
-      `${VARIANTENFOLGE_MELDUNG.VARIANTENFOLGE_DOPPELT} Mehrfach: ${doppelt.map(genannt).join(", ")}.`,
-      { feld: "variante_ids" },
-    );
-  const fehlen = alle.wert.filter((v) => !ids.includes(v.id));
-  const fremd = ids.filter((id) => !nachId.has(id));
-  if (fehlen.length > 0 || fremd.length > 0) {
-    const teile: string[] = [VARIANTENFOLGE_MELDUNG.VARIANTENFOLGE_UNVOLLSTAENDIG];
-    if (fehlen.length > 0) teile.push(`Es fehlen: ${fehlen.map((v) => genannt(v.id)).join(", ")}.`);
-    if (fremd.length > 0) teile.push(`Nicht in diesem Training: ${fremd.join(", ")}.`);
-    return fehlschlag("regel", teile.join(" "), {
-      feld: "variante_ids",
-      zulaessig: alle.wert.map((v) => v.id),
-    });
-  }
+  const problem = pruefeVollstaendigeFolge(ids, alle.wert, {
+    doppelt: VARIANTENFOLGE_MELDUNG.VARIANTENFOLGE_DOPPELT,
+    unvollstaendig: VARIANTENFOLGE_MELDUNG.VARIANTENFOLGE_UNVOLLSTAENDIG,
+    bereich: "Training",
+    feld: "variante_ids",
+  });
+  if (problem) return problem;
 
   const { error } = await supabase.rpc("setze_variantenfolge", {
     p_training: e.trainingId,
@@ -351,5 +334,6 @@ export async function setzeVariantenfolge(
   });
   if (error) return ausDbFehler(error);
 
+  const nachId = new Map(alle.wert.map((v) => [v.id, v]));
   return ok({ trainingId: e.trainingId, folge: ids.map((id) => nachId.get(id)!) });
 }

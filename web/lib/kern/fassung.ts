@@ -17,7 +17,7 @@ import {
   teilTraegtDauer,
   zielLabel,
 } from "@/lib/training";
-import { UEBUNGSFOLGE_MELDUNG } from "@/lib/training-bedingungen";
+import { UEBUNGSFOLGE_MELDUNG, VARIANTE_FREMD } from "@/lib/training-bedingungen";
 import { bildOrdnerFuer } from "@/lib/training-zugriff";
 import {
   entferneFassungsBild,
@@ -40,6 +40,7 @@ import {
   ladeTrainingZumLesen,
 } from "@/lib/kern/zugriff";
 import { variantenVon } from "@/lib/kern/varianten";
+import { pruefeVollstaendigeFolge } from "@/lib/kern/folge";
 import {
   MELDUNG_WIEDERHOLEN,
   NICHT_GEFUNDEN,
@@ -279,7 +280,7 @@ async function loeseVarianteAuf(
   if (angabe) {
     // Derselbe Text wie der Marker `VARIANTE_FREMDES_TRAINING` des Triggers.
     if (!ids.includes(angabe))
-      return fehlschlag("regel", "Diese Variante gehört zu einem anderen Training.", {
+      return fehlschlag("regel", VARIANTE_FREMD, {
         feld: "variante_id",
         zulaessig: ids,
       });
@@ -606,34 +607,17 @@ export async function setzeUebungsfolge(
       f.hauptteilkategorie === hkat &&
       f.variante_id === varianteId,
   );
-  const imAbschnitt = new Set(abschnitt.map((f) => f.id));
-  // Name UND Kennung: Dieselbe Übung darf mehrfach im Training stehen
-  // (#192), der Name allein sagte dann nicht, welche gemeint ist.
-  const genannt = (id: string) => (nameVon.has(id) ? `„${nameVon.get(id)}" (${id})` : id);
-
-  const doppelt = [...new Set(e.fassungIds.filter((id, i) => e.fassungIds.indexOf(id) !== i))];
-  if (doppelt.length > 0)
-    return fehlschlag(
-      "regel",
-      `${UEBUNGSFOLGE_MELDUNG.UEBUNGSFOLGE_DOPPELT} Mehrfach: ${doppelt.map(genannt).join(", ")}.`,
-      { feld: "fassung_ids" },
-    );
-  if (abschnitt.length === 0)
-    return fehlschlag("regel", UEBUNGSFOLGE_MELDUNG.UEBUNGSFOLGE_ABSCHNITT_LEER, {
-      feld: "einordnung",
-    });
-  const fehlen = abschnitt.filter((f) => !e.fassungIds.includes(f.id));
-  const fremd = e.fassungIds.filter((id) => !imAbschnitt.has(id));
-  if (fehlen.length > 0 || fremd.length > 0) {
-    const teile = [UEBUNGSFOLGE_MELDUNG.UEBUNGSFOLGE_UNVOLLSTAENDIG];
-    if (fehlen.length > 0) teile.push(`Es fehlen: ${fehlen.map((f) => genannt(f.id)).join(", ")}.`);
-    if (fremd.length > 0)
-      teile.push(`Nicht in diesem Abschnitt: ${fremd.map(genannt).join(", ")}.`);
-    return fehlschlag("regel", teile.join(" "), {
-      feld: "fassung_ids",
-      zulaessig: abschnitt.map((f) => f.id),
-    });
-  }
+  // Namen über den Abschnitt hinaus: Eine Kennung aus einem anderen Abschnitt
+  // lässt sich so mit Namen nennen.
+  const problem = pruefeVollstaendigeFolge(e.fassungIds, abschnitt, {
+    doppelt: UEBUNGSFOLGE_MELDUNG.UEBUNGSFOLGE_DOPPELT,
+    unvollstaendig: UEBUNGSFOLGE_MELDUNG.UEBUNGSFOLGE_UNVOLLSTAENDIG,
+    bereich: "Abschnitt",
+    feld: "fassung_ids",
+    namen: nameVon,
+    leer: { meldung: UEBUNGSFOLGE_MELDUNG.UEBUNGSFOLGE_ABSCHNITT_LEER, feld: "einordnung" },
+  });
+  if (problem) return problem;
 
   const { error: rpcFehler } = await supabase.rpc("setze_uebungsfolge", {
     p_training: e.trainingId,

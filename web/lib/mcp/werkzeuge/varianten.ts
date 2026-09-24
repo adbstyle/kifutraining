@@ -144,8 +144,9 @@ export const variantenOrdnen = werkzeug({
     "Legt die Reihenfolge der Varianten des Hauptteils in einem Zug fest. «variante_ids» nennt " +
     "ALLE Varianten des Trainings, jede genau einmal, in der gewünschten Folge — die Kennungen " +
     "stehen in «training_abrufen» unter «varianten». Die vorderste zeigt KiFu beim Öffnen des " +
-    "Trainings. Fehlt eine oder gehört eine nicht dazu, nennt die Meldung sie mit Namen und " +
-    `ändert nichts. ${KENNUNG_FEHLER}`,
+    "Trainings. Fehlt eine, nennt die Meldung sie mit Namen und Kennung; gehört eine nicht " +
+    "dazu, nennt sie deren Kennung, und «zulaessig» nennt die Kennungen des Trainings — " +
+    `geändert wird dann nichts. ${KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     training_id: TrainingId,

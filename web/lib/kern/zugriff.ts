@@ -180,7 +180,7 @@ export async function ladeGruppeZumBearbeiten(
   return ok({ gruppe: { id: data.id, name: data.name, training_id: data.training_id }, ziel });
 }
 
-export type VarianteKopfZeile = { id: string; name: string; training_id: string; position: number };
+export type VarianteKopfZeile = { id: string; name: string; training_id: string };
 
 /** Eine Variante des Hauptteils zum Bearbeiten laden (#263) — dieselben drei
  *  Ausgänge wie bei der Gruppe: unsichtbar → `nicht_gefunden` («Variante nicht
@@ -197,7 +197,7 @@ export async function ladeVarianteZumBearbeiten(
 
   const { data, error } = await supabase
     .from("training_varianten")
-    .select("id, name, training_id, position, trainings!inner ( owner_id, team_id )")
+    .select("id, name, training_id, trainings!inner ( owner_id, team_id )")
     .eq("id", varianteId)
     .maybeSingle<VarianteKopfZeile & { trainings: TrainingsEigentum | null }>();
   if (error) return ausDbFehler(error);
@@ -207,10 +207,7 @@ export async function ladeVarianteZumBearbeiten(
   const ziel = bearbeitungszielVon(data.trainings, userId);
   if (!ziel)
     return fehlschlag("keine_rechte", FREMDES_TRAINING, { feld: "variante_id", fremd: true });
-  return ok({
-    variante: { id: data.id, name: data.name, training_id: data.training_id, position: data.position },
-    ziel,
-  });
+  return ok({ variante: { id: data.id, name: data.name, training_id: data.training_id }, ziel });
 }
 
 /** Eine Zeile per Kennung aktualisieren und prüfen, dass der Update traf.

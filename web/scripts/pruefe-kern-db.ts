@@ -92,6 +92,9 @@ function fehler(
   return r;
 }
 
+/** Die Meldung an einem fremden öffentlichen Training (eingefroren). */
+const FREMD = "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.";
+
 type Konto = { id: string; supabase: SupabaseClient };
 const konten: string[] = [];
 /** Wegwerf-Teams; ihre Trainings kaskadieren beim Löschen mit. */
@@ -678,7 +681,6 @@ try {
 
     // Ein fremdes öffentliches Training: sichtbar, aber weder zu veröffentlichen
     // noch zurückzuziehen (OoS 1).
-    const FREMD = "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.";
     fehler(await veroeffentliche(b.supabase, b.id, { trainingId: tp }), "keine_rechte", FREMD);
     fehler(await setzeAufEntwurf(b.supabase, b.id, { trainingId: tp }), "keine_rechte", FREMD);
 
@@ -723,7 +725,7 @@ try {
   });
 
   // ── Fremd und unbekannt (#193 AK 12/14, OoS 7) ───────────────────────────
-  await pruefe("Fremdes öffentliches Training: lesbar, Änderung → keine_rechte; Unsichtbares → nicht_gefunden", async () => {
+  await pruefe("Fremdes öffentliches Training: lesbar, Änderung (auch an Varianten) → keine_rechte; Unsichtbares → nicht_gefunden", async () => {
     const tb = wert(
       await legeTrainingAn(b.supabase, b.id, { name: "Fremd öffentlich", altersstufe: "kinderfussball", stufen: ["F"] }),
     ).id;
@@ -742,7 +744,6 @@ try {
       await legeTrainingAn(b.supabase, b.id, { name: "Fremd privat", altersstufe: "kinderfussball", stufen: ["F"] }),
     ).id;
 
-    const FREMD = "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.";
     assert.equal(wert(await trainingAbrufen(a.supabase, a.id, { trainingId: tb })).bearbeitbar, false);
     assert.equal(fehler(await benenneTrainingUm(a.supabase, a.id, { trainingId: tb, name: "X" }), "keine_rechte", FREMD).fremd, true);
     fehler(await setzeDauer(a.supabase, a.id, { fassungId: fb.fassungId, minuten: 3 }), "keine_rechte", FREMD);
@@ -763,6 +764,17 @@ try {
       "keine_rechte",
       FREMD,
     );
+    // Varianten (#263): A darf an Bs Training weder anlegen, umbenennen,
+    // entfernen noch ordnen; eine Variante eines privaten fremden Trainings
+    // gibt es für A nicht.
+    const [vb] = wert(await trainingAbrufen(b.supabase, b.id, { trainingId: tb })).varianten;
+    fehler(await legeVarianteAn(a.supabase, a.id, { trainingId: tb, name: "x" }), "keine_rechte", FREMD);
+    fehler(await benenneVariante(a.supabase, a.id, { varianteId: vb.id, name: "x" }), "keine_rechte", FREMD);
+    fehler(await entferneVariante(a.supabase, a.id, { varianteId: vb.id }), "keine_rechte", FREMD);
+    fehler(await setzeVariantenfolge(a.supabase, a.id, { trainingId: tb, varianteIds: [vb.id] }), "keine_rechte", FREMD);
+    const { data: vp } = await admin.from("training_varianten").select("id").eq("training_id", privat).single();
+    fehler(await benenneVariante(a.supabase, a.id, { varianteId: vp!.id, name: "x" }), "nicht_gefunden", "Variante nicht gefunden.");
+    fehler(await legeVarianteAn(a.supabase, a.id, { trainingId: privat, name: "x" }), "nicht_gefunden", "Training nicht gefunden.");
     // Privat-fremd und zufällig: ununterscheidbar «nicht gefunden».
     fehler(await trainingAbrufen(a.supabase, a.id, { trainingId: privat }), "nicht_gefunden", "Training nicht gefunden.");
     fehler(await setzeZiel(a.supabase, a.id, { trainingId: randomUUID(), ziel: "x" }), "nicht_gefunden", "Training nicht gefunden.");
@@ -869,27 +881,6 @@ try {
       "Die letzte Variante des Hauptteils lässt sich nicht entfernen.",
     );
     fehler(await entferneVariante(a.supabase, a.id, { varianteId: v2.id }), "nicht_gefunden", "Variante nicht gefunden.");
-
-    // Fremd und unsichtbar.
-    const tfo = wert(
-      await legeTrainingAn(b.supabase, b.id, { name: "Fremd mit Varianten", altersstufe: "kinderfussball", stufen: ["F"] }),
-    ).id;
-    wert(await ordneUebungZu(b.supabase, b.id, { trainingId: tfo, einordnung: "einleitung", exerciseId: ein }));
-    wert(await ordneUebungZu(b.supabase, b.id, { trainingId: tfo, ...hauptteil }));
-    const { error } = await b.supabase.from("trainings").update({ visibility: "public" }).eq("id", tfo);
-    if (error) throw error;
-    const [vf] = wert(await trainingAbrufen(b.supabase, b.id, { trainingId: tfo })).varianten;
-    const FREMD = "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.";
-    fehler(await legeVarianteAn(a.supabase, a.id, { trainingId: tfo, name: "x" }), "keine_rechte", FREMD);
-    fehler(await benenneVariante(a.supabase, a.id, { varianteId: vf.id, name: "x" }), "keine_rechte", FREMD);
-    fehler(await entferneVariante(a.supabase, a.id, { varianteId: vf.id }), "keine_rechte", FREMD);
-    fehler(await setzeVariantenfolge(a.supabase, a.id, { trainingId: tfo, varianteIds: [vf.id] }), "keine_rechte", FREMD);
-    const tpr = wert(
-      await legeTrainingAn(b.supabase, b.id, { name: "Fremd privat Varianten", altersstufe: "kinderfussball", stufen: ["F"] }),
-    ).id;
-    const { data: vp } = await admin.from("training_varianten").select("id").eq("training_id", tpr).single();
-    fehler(await benenneVariante(a.supabase, a.id, { varianteId: vp!.id, name: "x" }), "nicht_gefunden", "Variante nicht gefunden.");
-    fehler(await legeVarianteAn(a.supabase, a.id, { trainingId: tpr, name: "x" }), "nicht_gefunden", "Training nicht gefunden.");
   });
 
   // ── Übernehmen und Löschen (#197) ────────────────────────────────────────
@@ -1070,7 +1061,6 @@ try {
     const { count } = await admin.from("training_exercises").select("*", { count: "exact", head: true }).eq("training_id", k1);
     assert.equal(count, 0, "die Übungen gehen mit (PC 5)");
 
-    const FREMD = "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.";
     fehler(await loescheTraining(a.supabase, a.id, { trainingId: tq }), "keine_rechte", FREMD);
     fehler(await loescheTraining(a.supabase, a.id, { trainingId: randomUUID() }), "nicht_gefunden", "Training nicht gefunden.");
     // Die Kopien anderer bleiben, wenn die Quelle geht (PC 7).

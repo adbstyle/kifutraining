@@ -261,6 +261,11 @@ function gruppenMeldung(message: string): string | null {
   return null;
 }
 
+/** Eine Variante, die nicht zum Training gehört — der Klartext des Markers
+ *  `VARIANTE_FREMDES_TRAINING`. Exportiert, weil der Kern denselben Satz
+ *  vorab meldet (`loeseVarianteAuf`, `legeVarianteAn`). */
+export const VARIANTE_FREMD = "Diese Variante gehört zu einem anderen Training.";
+
 /** Die Marker der Varianten-Datenebene (#201) und ihr Klartext.
  *
  *  - `VARIANTE_FREMDES_TRAINING` (Trigger `te_variante_ausrichten`, RPC
@@ -277,7 +282,7 @@ function gruppenMeldung(message: string): string | null {
  *    parallel eine Übung ergänzt hat. Lieber keine Variante als eine, der
  *    Übungen fehlen. */
 const VARIANTEN_MARKER: [string, string][] = [
-  ["VARIANTE_FREMDES_TRAINING", "Diese Variante gehört zu einem anderen Training."],
+  ["VARIANTE_FREMDES_TRAINING", VARIANTE_FREMD],
   ["LETZTE_VARIANTE", "Die letzte Variante des Hauptteils lässt sich nicht entfernen."],
   [
     "VARIANTE_KOPIE_UNVOLLSTAENDIG",

@@ -593,7 +593,7 @@ const kern = join(web, "lib/kern");
 /** Kern-Dateien ohne Datenbankzugriff: Sie bleiben ohne `server-only`, damit
  *  Prüfskripte wie dieses sie mit tsx laden können (`server-only` wirft
  *  ausserhalb der react-server-Bedingung). */
-const REIN = new Set(["ergebnis.ts", "auskunft.ts", "auskunft-schema.ts"]);
+const REIN = new Set(["ergebnis.ts", "folge.ts", "auskunft.ts", "auskunft-schema.ts"]);
 
 /** Was der Kern nicht importieren darf — direkt nicht und über eine
  *  importierte `@/lib/*`-Datei auch nicht. */
