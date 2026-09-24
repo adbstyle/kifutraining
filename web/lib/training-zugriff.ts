@@ -9,7 +9,6 @@
 // Die RLS bleibt die Autorität — hier geht es um klare Meldungen und um den
 // richtigen Bild-Ordner, nicht um Zugriffsschutz.
 import { teamOrdner, userOrdner, type BildOrdner } from "@/lib/fassung";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 /** Wem das Training gehört — und damit, wohin seine Bilder gehören. */
 export type Bearbeitungsziel =
@@ -40,21 +39,6 @@ export function bearbeitungszielVon(
   if (training.team_id) return { art: "team", teamId: training.team_id };
   if (training.owner_id === userId) return { art: "persoenlich", ownerId: userId };
   return null;
-}
-
-/** Das Bearbeitungsziel eines Trainings, oder `null` wenn es der USER nicht
- *  bearbeiten darf (fremd oder nicht vorhanden). */
-export async function ladeBearbeitungsziel(
-  supabase: SupabaseClient,
-  trainingId: string,
-  userId: string,
-): Promise<Bearbeitungsziel | null> {
-  const { data } = await supabase
-    .from("trainings")
-    .select("owner_id, team_id")
-    .eq("id", trainingId)
-    .maybeSingle();
-  return data ? bearbeitungszielVon(data, userId) : null;
 }
 
 /** Der Storage-Ordner für die Bildkopien dieses Trainings. */

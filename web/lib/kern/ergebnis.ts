@@ -20,6 +20,7 @@
 //
 // REIN: keine Importe aus `next/*`, `server-only` oder Datenbank-Modulen —
 // die Prüfskripte (`tsx scripts/pruefe-*.ts`) laden diese Datei ohne Server.
+import { MELDUNG_VERGEBEN } from "@/lib/bezeichnung";
 import {
   bedingungAusFehler,
   fachlicheMeldung,
@@ -126,6 +127,9 @@ export const NICHT_GEFUNDEN = {
   gruppe: "Gruppe nicht gefunden.",
   /** Ein Termin eines Team-Trainings (#198); sichtbar nur Mitgliedern. */
   termin: "Termin nicht gefunden.",
+  /** Eine Variante des Hauptteils (#201, KI-Weg #263). Wortgleich mit den
+   *  bisherigen Actions. */
+  variante: "Variante nicht gefunden.",
 } as const;
 
 /** Ein sichtbares, aber nicht bearbeitbares Training — ein fremdes
@@ -168,4 +172,23 @@ export function ausDbFehler(e: { message: string; code?: string }): KernFehler {
   if (fachlicheMeldung(e.message)) return fehlschlag("regel", meldung);
   if (istRlsVerletzung(e.message)) return fehlschlag("keine_rechte", meldung);
   return fehlschlag("technisch", meldung);
+}
+
+/** Das Problem einer Bezeichnung (`bezeichnungProblem`, Gruppe oder
+ *  Variante) als Kern-Fehler: leer oder zu lang ist eine Eingabe, eine
+ *  vergebene Bezeichnung eine Regel des Trainings. Geteilt von Gruppen und
+ *  Varianten — dieselbe Regel, dieselbe Einordnung. */
+export function bezeichnungsFehler(problem: string, feld: string): KernFehler {
+  return fehlschlag(problem === MELDUNG_VERGEBEN ? "regel" : "eingabe", problem, { feld });
+}
+
+/** Ein Schreibfehler an einer Tabelle mit Namens-Unique-Index
+ *  (`tg_name_je_training`, `tv_name_je_training`): 23505 ist die vergebene
+ *  Bezeichnung — eine Regel, keine Nebenläufigkeit, die ein zweiter Versuch
+ *  löste —, alles andere geht durch `ausDbFehler`. */
+export function bezeichnungsSchreibFehler(
+  e: { message: string; code?: string },
+  feld = "name",
+): KernFehler {
+  return e.code === "23505" ? fehlschlag("regel", MELDUNG_VERGEBEN, { feld }) : ausDbFehler(e);
 }

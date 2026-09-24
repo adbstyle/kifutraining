@@ -1,6 +1,5 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { MELDUNG_VERGEBEN } from "@/lib/bezeichnung";
 import { istHauptteil, nameProblem } from "@/lib/gruppen";
 import { fachlicheMeldung } from "@/lib/training-bedingungen";
 import {
@@ -12,10 +11,11 @@ import {
   MELDUNG_WIEDERHOLEN,
   NICHT_GEFUNDEN,
   ausDbFehler,
+  bezeichnungsFehler,
+  bezeichnungsSchreibFehler,
   fehlschlag,
   ok,
   type KernErgebnis,
-  type KernFehler,
 } from "@/lib/kern/ergebnis";
 
 /**
@@ -42,7 +42,8 @@ import {
  * und jede Konfliktmeldung der Verteilung (#195).
  */
 
-/** Die Unique-Verletzung des Index `tg_name_je_training`. */
+/** Die Unique-Verletzung (23505) — in `setzeDurchlauf` Nebenläufigkeit am
+ *  Primärschlüssel bzw. `teg_position_je_fassung`. */
 const UNIQUE_VERLETZUNG = "23505";
 
 /** Die Auskunft für den Fall, der nach Lage der Daten nicht eintreten kann.
@@ -76,20 +77,6 @@ async function gruppenVon(
   return ok(data ?? []);
 }
 
-/** `nameProblem` als Kern-Fehler: leer oder zu lang ist eine Eingabe, eine
- *  vergebene Bezeichnung eine Regel des Trainings. */
-function namensFehler(problem: string): KernFehler {
-  return fehlschlag(problem === MELDUNG_VERGEBEN ? "regel" : "eingabe", problem, { feld: "name" });
-}
-
-/** Ein Schreibfehler an `training_gruppen`: 23505 ist die vergebene
- *  Bezeichnung, alles andere geht durch `ausDbFehler`. */
-function schreibFehler(e: { message: string; code?: string }): KernFehler {
-  return e.code === UNIQUE_VERLETZUNG
-    ? fehlschlag("regel", MELDUNG_VERGEBEN, { feld: "name" })
-    : ausDbFehler(e);
-}
-
 // ── Gruppen ─────────────────────────────────────────────────────────────────
 
 /** Eine Gruppe am Training anlegen (#149 AK 1, #194 AK 1/9). Sie steht
@@ -106,14 +93,14 @@ export async function legeGruppeAn(
 
   const name = e.name.trim();
   const problem = nameProblem(name, bestehende.wert);
-  if (problem) return namensFehler(problem);
+  if (problem) return bezeichnungsFehler(problem, "name");
 
   const { data, error } = await supabase
     .from("training_gruppen")
     .insert({ training_id: e.trainingId, name })
     .select("id, name")
     .maybeSingle();
-  if (error) return schreibFehler(error);
+  if (error) return bezeichnungsSchreibFehler(error);
   // Defensiv: Ein geglückter Insert liefert die Zeile, ein fehlendes Recht
   // einen Fehler — einen dritten Ausgang gibt es nicht. Ein stiller Erfolg
   // ohne Gruppe wäre das Schlimmere.
@@ -136,7 +123,7 @@ export async function benenneGruppe(
 
   const name = e.name.trim();
   const problem = nameProblem(name, bestehende.wert, e.gruppeId);
-  if (problem) return namensFehler(problem);
+  if (problem) return bezeichnungsFehler(problem, "name");
 
   const { data, error } = await supabase
     .from("training_gruppen")
@@ -144,7 +131,7 @@ export async function benenneGruppe(
     .eq("id", e.gruppeId)
     .select("id")
     .maybeSingle();
-  if (error) return schreibFehler(error);
+  if (error) return bezeichnungsSchreibFehler(error);
   if (!data) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.gruppe, { feld: "gruppe_id" });
   return ok({ trainingId, name });
 }
