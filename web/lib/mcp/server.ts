@@ -26,6 +26,12 @@ import {
   trainingDurchlaufAbrufen,
   trainingUebungDurchlaufSetzen,
 } from "@/lib/mcp/werkzeuge/gruppen";
+import {
+  varianteAnlegen,
+  varianteEntfernen,
+  varianteUmbenennen,
+  variantenOrdnen,
+} from "@/lib/mcp/werkzeuge/varianten";
 import { trainingHinweiseAbrufen } from "@/lib/mcp/werkzeuge/hinweise";
 import { trainingKopieren, trainingLoeschen } from "@/lib/mcp/werkzeuge/trainings-bestand";
 import {
@@ -64,6 +70,10 @@ export const WERKZEUGE = [
   gruppeEntfernen,
   trainingUebungDurchlaufSetzen,
   trainingDurchlaufAbrufen,
+  varianteAnlegen,
+  varianteUmbenennen,
+  varianteEntfernen,
+  variantenOrdnen,
   trainingHinweiseAbrufen,
   trainingVeroeffentlichen,
   trainingAufEntwurfSetzen,

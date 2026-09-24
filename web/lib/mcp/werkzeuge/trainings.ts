@@ -91,6 +91,12 @@ export const TrainingId = kennung(
 export const FassungId = kennung(
   "Kennung der Übung im Training («fassung_id» aus «training_abrufen»).",
 );
+/** Die Kennung einer Variante des Hauptteils (#263). Hier und nicht in
+ *  werkzeuge/varianten.ts: Zuordnen, Ordnen und die Varianten-Werkzeuge
+ *  brauchen sie — so entsteht kein Import-Zyklus. */
+export const VarianteId = kennung(
+  "Kennung einer Variante des Hauptteils («varianten[].id» aus «training_abrufen»).",
+);
 
 /** Was die Fehler zu einer Kennung bedeuten (#193 AK 14, OoS 7). Gehört an
  *  JEDE Beschreibung eines Werkzeugs, das `training_id` oder `fassung_id`
@@ -273,10 +279,10 @@ const ZuordnenEingabe = z.object({
   exercise_id: kennung("Kennung (id) der Übung, etwa aus «training_uebungen_fuer_block»."),
   einordnung: Einordnung,
   hauptteilkategorie: Hauptteilkategorie,
-  variante_id: kennung(
-    "Nur im Hauptteil und nur, wenn das Training mehrere Varianten führt: in welche. " +
-      "Ohne Angabe die erste.",
-  ).optional(),
+  variante_id: VarianteId.optional().describe(
+    "Nur im Hauptteil: in welche Variante. Pflicht, sobald das Training mehrere führt; " +
+      "bei genau einer darf sie fehlen.",
+  ),
 });
 
 const ZuordnenAusgabe = z.object({
@@ -300,7 +306,9 @@ export const trainingUebungZuordnen = werkzeug({
     "Alle Inhalte kommen aus der Vorlage, im Juniorenfussball auch Spielfeldgrösse und " +
     "Übungstyp; «training_abrufen» zeigt sie danach an der Übung. " +
     "Scheitert eine Zuordnung, bleiben alle vorherigen bestehen; bei «konflikt» genügt " +
-    `es, denselben Aufruf zu wiederholen. ${KENNUNG_FEHLER}`,
+    "es, denselben Aufruf zu wiederholen. Führt das Training mehrere Varianten des " +
+    "Hauptteils, ist für eine Übung im Hauptteil «variante_id» Pflicht; ohne sie lehnt das " +
+    `Werkzeug mit «eingabe» ab und nennt die Varianten in «zulaessig». ${KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: ZuordnenEingabe,
   ausgabe: ZuordnenAusgabe,

@@ -7,8 +7,9 @@
 //
 // Der Wert gegenüber `check:kern`: Rechte («nicht gefunden» vs. «keine
 // Rechte» an einem fremden öffentlichen Training), Positionen je Variante,
-// die neue RPC `setze_uebungsfolge` samt ihren Markern und die Meldungstexte
-// gegen eingefrorene Literale — nichts davon ist ohne Datenbank prüfbar.
+// die RPCs `setze_uebungsfolge` und `setze_variantenfolge` samt ihren Markern
+// und die Meldungstexte gegen eingefrorene Literale — nichts davon ist ohne
+// Datenbank prüfbar.
 //
 // Läuft gegen den lokalen Stack bzw. im PR-Check gegen die Wegwerf-DB nach
 // dem Manual-Seed (es braucht Manual-Übungen). Legt zwei Wegwerf-Konten an und
@@ -49,6 +50,9 @@ const { ordneUebungZu, entferneUebung, setzeDauer, setzeNotiz, setzeUebungsfolge
   await import("../lib/kern/fassung");
 const { trainingAbrufen, trainingsSuchen } = await import("../lib/kern/lesen");
 const { legeGruppeAn, benenneGruppe, entferneGruppe, setzeDurchlauf } = await import("../lib/kern/gruppen");
+const { legeVarianteAn, benenneVariante, entferneVariante, setzeVariantenfolge } = await import(
+  "../lib/kern/varianten"
+);
 const { loescheTraining, loescheTrainingMitBildern } = await import("../lib/kern/loeschen");
 const { kopiereTrainingNach, HINWEIS_NICHTS_ENTSTANDEN } = await import("../lib/kern/kopie");
 const { ladeTrainingDetail } = await import("../lib/queries/trainings-fuer");
@@ -764,6 +768,128 @@ try {
     fehler(await setzeZiel(a.supabase, a.id, { trainingId: randomUUID(), ziel: "x" }), "nicht_gefunden", "Training nicht gefunden.");
     fehler(await setzeNotiz(a.supabase, a.id, { fassungId: randomUUID(), notiz: "x" }), "nicht_gefunden", "Zuordnung nicht gefunden.");
     fehler(await entferneUebung(a.supabase, a.id, { fassungId: "keine-uuid" }), "nicht_gefunden", "Zuordnung nicht gefunden.");
+  });
+
+  // ── Varianten (#263) ─────────────────────────────────────────────────────
+  await pruefe("Varianten: anlegen mit Mitbenennen, Namen, Quelle, Pflicht beim Zuordnen, umbenennen, ordnen, entfernen bis zur Auflösung", async () => {
+    const VERGEBEN = "Diese Bezeichnung gibt es in diesem Training schon.";
+    const hauptteil = { einordnung: "hauptteil", hauptteilkategorie: "fussball-spielen", exerciseId: frei };
+    const tv = wert(
+      await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Varianten", altersstufe: "kinderfussball", stufen: ["F"] }),
+    ).id;
+    // Eine Variante: ohne «variante_id» geht es.
+    const h1 = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tv, ...hauptteil }));
+    const [v1] = wert(await trainingAbrufen(a.supabase, a.id, { trainingId: tv })).varianten;
+    assert.equal(v1.name, "Variante 1");
+
+    // Anlegen der zweiten, die Quelle wird mitbenannt; der Name wird getrimmt.
+    const r2 = wert(
+      await legeVarianteAn(a.supabase, a.id, { trainingId: tv, name: " 20 Kinder ", nameQuelle: "12 Kinder" }),
+    );
+    assert.deepEqual(r2.quelle, { id: v1.id, name: "12 Kinder" });
+    assert.equal(r2.variante.name, "20 Kinder");
+    assert.equal(r2.uebungenKopiert, 1);
+    const v2 = r2.variante;
+    const { data: kopien } = await admin.from("training_exercises").select("id").eq("variante_id", v2.id);
+    assert.equal(kopien?.length, 1);
+    assert.notEqual(kopien![0].id, h1.fassungId, "die Kopie ist eine eigene Fassung");
+
+    // Namensregeln — am richtigen Feld.
+    const n1 = await legeVarianteAn(a.supabase, a.id, { trainingId: tv, name: "20 KINDER" });
+    fehler(n1, "regel", VERGEBEN);
+    assert.equal(!n1.ok && n1.feld, "name");
+    const n2 = await legeVarianteAn(a.supabase, a.id, { trainingId: tv, name: "x", nameQuelle: "20 kinder" });
+    fehler(n2, "regel", VERGEBEN);
+    assert.equal(!n2.ok && n2.feld, "name_quelle");
+    fehler(await legeVarianteAn(a.supabase, a.id, { trainingId: tv, name: "   " }), "eingabe", "Bitte eine Bezeichnung eingeben.");
+    // Eine Quelle, die nicht zum Training gehört, nennt die zulässigen.
+    const q = await legeVarianteAn(a.supabase, a.id, { trainingId: tv, name: "x", quelleVarianteId: randomUUID() });
+    fehler(q, "regel", "Diese Variante gehört zu einem anderen Training.");
+    assert.deepEqual(!q.ok && q.zulaessig, [v1.id, v2.id]);
+
+    // Zwei Varianten: Zuordnen ohne Angabe wird abgewiesen, mit Angabe geht es.
+    const z = await ordneUebungZu(a.supabase, a.id, { trainingId: tv, ...hauptteil });
+    fehler(z, "eingabe", "Dieses Training führt mehrere Varianten des Hauptteils. Gib an, in welche die Übung kommt.");
+    assert.deepEqual(!z.ok && z.zulaessig, [v1.id, v2.id]);
+    assert.equal(!z.ok && z.feld, "variante_id");
+    assert.equal(wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tv, ...hauptteil, varianteId: v2.id })).varianteId, v2.id);
+
+    // Umbenennen — die eigene Bezeichnung zählt nicht als vergeben.
+    assert.deepEqual(wert(await benenneVariante(a.supabase, a.id, { varianteId: v1.id, name: "12 kinder" })), {
+      trainingId: tv,
+      name: "12 kinder",
+    });
+    fehler(await benenneVariante(a.supabase, a.id, { varianteId: v1.id, name: "20 Kinder" }), "regel", VERGEBEN);
+    fehler(await benenneVariante(a.supabase, a.id, { varianteId: randomUUID(), name: "x" }), "nicht_gefunden", "Variante nicht gefunden.");
+    fehler(await benenneVariante(a.supabase, a.id, { varianteId: "keine-uuid", name: "x" }), "nicht_gefunden", "Variante nicht gefunden.");
+
+    // Eine dritte (Kopie der zweiten), dann ordnen.
+    const v3 = wert(await legeVarianteAn(a.supabase, a.id, { trainingId: tv, quelleVarianteId: v2.id, name: "Regen" })).variante;
+    const reihenfolge = async () => {
+      const { data } = await admin.from("training_varianten").select("id, position").eq("training_id", tv);
+      return Object.fromEntries((data ?? []).map((v) => [v.id, v.position]));
+    };
+    assert.deepEqual(
+      wert(await setzeVariantenfolge(a.supabase, a.id, { trainingId: tv, varianteIds: [v3.id, v1.id, v2.id] })).folge.map((v) => v.name),
+      ["Regen", "12 kinder", "20 Kinder"],
+    );
+    assert.deepEqual(await reihenfolge(), { [v3.id]: 0, [v1.id]: 1, [v2.id]: 2 });
+    const u = await setzeVariantenfolge(a.supabase, a.id, { trainingId: tv, varianteIds: [v3.id] });
+    fehler(
+      u,
+      "regel",
+      /^Die Reihenfolge muss genau die Varianten dieses Trainings nennen — jede einmal\. Lies das Training neu und sende die vollständige Folge\. Es fehlen: „/,
+    );
+    assert.deepEqual([...(!u.ok && u.zulaessig ? u.zulaessig : [])].sort(), [v1.id, v2.id, v3.id].sort());
+    fehler(
+      await setzeVariantenfolge(a.supabase, a.id, { trainingId: tv, varianteIds: [v3.id, v3.id, v1.id] }),
+      "regel",
+      /^Eine Variante steht in der Reihenfolge mehrfach\. Mehrfach: „/,
+    );
+    // Die RPC selbst — der Rückhalt, falls die Vorprüfung umgangen wird.
+    const rpc = (k: Konto, ids: string[]) => k.supabase.rpc("setze_variantenfolge", { p_training: tv, p_ids: ids });
+    assert.match((await rpc(a, [v3.id])).error?.message ?? "", /VARIANTENFOLGE_UNVOLLSTAENDIG/);
+    assert.match((await rpc(a, [v3.id, v3.id, v1.id, v2.id])).error?.message ?? "", /VARIANTENFOLGE_DOPPELT/);
+    assert.match((await rpc(b, [v3.id, v1.id, v2.id])).error?.message ?? "", /not found or not editable/);
+    assert.deepEqual(await reihenfolge(), { [v3.id]: 0, [v1.id]: 1, [v2.id]: 2 }, "abgewiesene Folgen ändern nichts");
+
+    // Entfernen bis zur Auflösung.
+    const e3 = wert(await entferneVariante(a.supabase, a.id, { varianteId: v3.id }));
+    assert.equal(e3.aufgeloest, false);
+    assert.equal(e3.verbleibend.length, 2);
+    // «Regen» kopierte «20 Kinder» mit beiden Übungen (Kopie + Zuordnung oben).
+    assert.equal(e3.uebungenEntfernt, 2);
+    const e2 = wert(await entferneVariante(a.supabase, a.id, { varianteId: v2.id }));
+    assert.equal(e2.aufgeloest, true);
+    assert.deepEqual(e2.verbleibend, [{ id: v1.id, name: "Variante 1" }]);
+    assert.deepEqual(await reihenfolge(), { [v1.id]: 0 });
+    fehler(
+      await entferneVariante(a.supabase, a.id, { varianteId: v1.id }),
+      "regel",
+      "Die letzte Variante des Hauptteils lässt sich nicht entfernen.",
+    );
+    fehler(await entferneVariante(a.supabase, a.id, { varianteId: v2.id }), "nicht_gefunden", "Variante nicht gefunden.");
+
+    // Fremd und unsichtbar.
+    const tfo = wert(
+      await legeTrainingAn(b.supabase, b.id, { name: "Fremd mit Varianten", altersstufe: "kinderfussball", stufen: ["F"] }),
+    ).id;
+    wert(await ordneUebungZu(b.supabase, b.id, { trainingId: tfo, einordnung: "einleitung", exerciseId: ein }));
+    wert(await ordneUebungZu(b.supabase, b.id, { trainingId: tfo, ...hauptteil }));
+    const { error } = await b.supabase.from("trainings").update({ visibility: "public" }).eq("id", tfo);
+    if (error) throw error;
+    const [vf] = wert(await trainingAbrufen(b.supabase, b.id, { trainingId: tfo })).varianten;
+    const FREMD = "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.";
+    fehler(await legeVarianteAn(a.supabase, a.id, { trainingId: tfo, name: "x" }), "keine_rechte", FREMD);
+    fehler(await benenneVariante(a.supabase, a.id, { varianteId: vf.id, name: "x" }), "keine_rechte", FREMD);
+    fehler(await entferneVariante(a.supabase, a.id, { varianteId: vf.id }), "keine_rechte", FREMD);
+    fehler(await setzeVariantenfolge(a.supabase, a.id, { trainingId: tfo, varianteIds: [vf.id] }), "keine_rechte", FREMD);
+    const tpr = wert(
+      await legeTrainingAn(b.supabase, b.id, { name: "Fremd privat Varianten", altersstufe: "kinderfussball", stufen: ["F"] }),
+    ).id;
+    const { data: vp } = await admin.from("training_varianten").select("id").eq("training_id", tpr).single();
+    fehler(await benenneVariante(a.supabase, a.id, { varianteId: vp!.id, name: "x" }), "nicht_gefunden", "Variante nicht gefunden.");
+    fehler(await legeVarianteAn(a.supabase, a.id, { trainingId: tpr, name: "x" }), "nicht_gefunden", "Training nicht gefunden.");
   });
 
   // ── Übernehmen und Löschen (#197) ────────────────────────────────────────

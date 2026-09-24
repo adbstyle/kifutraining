@@ -21,6 +21,7 @@ import {
   Hauptteilkategorie,
   KENNUNG_FEHLER,
   TrainingId,
+  VarianteId,
   kategorienText,
 } from "@/lib/mcp/werkzeuge/trainings";
 import { werkzeug } from "@/lib/mcp/werkzeug";
@@ -183,9 +184,9 @@ export const trainingUebungenOrdnen = werkzeug({
     training_id: TrainingId,
     einordnung: Einordnung,
     hauptteilkategorie: Hauptteilkategorie,
-    variante_id: kennung(
+    variante_id: VarianteId.optional().describe(
       "Nur im Hauptteil: welche Variante. Pflicht, wenn das Training mehrere führt.",
-    ).optional(),
+    ),
     fassung_ids: z
       .array(kennung("Kennung einer Übung im Training («fassung_id»)."))
       .describe("Alle Übungen des Abschnitts in der neuen Reihenfolge."),
