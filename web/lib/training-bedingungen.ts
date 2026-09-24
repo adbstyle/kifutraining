@@ -261,6 +261,11 @@ function gruppenMeldung(message: string): string | null {
   return null;
 }
 
+/** Eine Variante, die nicht zum Training gehört — der Klartext des Markers
+ *  `VARIANTE_FREMDES_TRAINING`. Exportiert, weil der Kern denselben Satz
+ *  vorab meldet (`loeseVarianteAuf`, `legeVarianteAn`). */
+export const VARIANTE_FREMD = "Diese Variante gehört zu einem anderen Training.";
+
 /** Die Marker der Varianten-Datenebene (#201) und ihr Klartext.
  *
  *  - `VARIANTE_FREMDES_TRAINING` (Trigger `te_variante_ausrichten`, RPC
@@ -277,7 +282,7 @@ function gruppenMeldung(message: string): string | null {
  *    parallel eine Übung ergänzt hat. Lieber keine Variante als eine, der
  *    Übungen fehlen. */
 const VARIANTEN_MARKER: [string, string][] = [
-  ["VARIANTE_FREMDES_TRAINING", "Diese Variante gehört zu einem anderen Training."],
+  ["VARIANTE_FREMDES_TRAINING", VARIANTE_FREMD],
   ["LETZTE_VARIANTE", "Die letzte Variante des Hauptteils lässt sich nicht entfernen."],
   [
     "VARIANTE_KOPIE_UNVOLLSTAENDIG",
@@ -307,6 +312,20 @@ export const UEBUNGSFOLGE_MELDUNG = {
   UEBUNGSFOLGE_ABSCHNITT_LEER: "In diesem Abschnitt steht keine Übung.",
 } as const;
 
+/** Die Marker der RPC `setze_variantenfolge` (#263) und ihr Klartext. Über
+ *  die Oberfläche unerreichbar — sie tauscht nur Nachbarn; die Folge in einem
+ *  Zug setzt allein der KI-Assistent. Exportiert, weil die Vorprüfung im Kern
+ *  (`setzeVariantenfolge`) dieselben Sätze um die Namen ergänzt.
+ *
+ *  Kein Marker hier enthält einen anderen (`UEBUNGSFOLGE_*`, `VARIANTE_*`) —
+ *  die `includes`-Suche bleibt eindeutig. */
+export const VARIANTENFOLGE_MELDUNG = {
+  VARIANTENFOLGE_DOPPELT: "Eine Variante steht in der Reihenfolge mehrfach.",
+  VARIANTENFOLGE_UNVOLLSTAENDIG:
+    "Die Reihenfolge muss genau die Varianten dieses Trainings nennen — jede einmal. " +
+    "Lies das Training neu und sende die vollständige Folge.",
+} as const;
+
 /** Termine gibt es nur an Team-Trainings (Team-Epic Out of Scope 3). Der
  *  Fachkern weist einen Termin an einem persönlichen Training mit diesem Satz
  *  vorab ab (#198 AK 10); die Datenebene ist der Rückhalt. */
@@ -318,9 +337,14 @@ export const TERMIN_NUR_FUER_TEAM =
  *  den Rohtext. */
 const TERMIN_MARKER: [string, string][] = [["TERMIN_NUR_FUER_TEAM_TRAININGS", TERMIN_NUR_FUER_TEAM]];
 
-/** Die Meldung zu einem Marker aus Übungsfolge oder Termin, sonst `null`. */
+/** Die Meldung zu einem Marker aus Übungsfolge, Variantenfolge oder Termin,
+ *  sonst `null`. */
 function weitereMeldung(message: string): string | null {
-  for (const [marker, klartext] of [...Object.entries(UEBUNGSFOLGE_MELDUNG), ...TERMIN_MARKER])
+  for (const [marker, klartext] of [
+    ...Object.entries(UEBUNGSFOLGE_MELDUNG),
+    ...Object.entries(VARIANTENFOLGE_MELDUNG),
+    ...TERMIN_MARKER,
+  ])
     if (message.includes(marker)) return klartext;
   return null;
 }

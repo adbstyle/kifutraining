@@ -104,6 +104,19 @@ zugewiesene Zeit; im Juniorenfussball zählen die Wechsel über beide Hauptteil-
 sieht auch, an wie vielen Übungen eine Gruppe steht — eine Gruppe entfernt er ohne Rückfrage,
 und sie verschwindet dabei aus jedem Durchlauf.
 
+Auch die Varianten des Hauptteils führt der Assistent. Er legt eine weitere an — wie in der
+Anwendung stets als Kopie einer bestehenden, samt Übungen, Notizen, Bildern, Diagrammen und
+Gruppen im Durchlauf; nennt er keine, kopiert er die vorderste. Beim Anlegen der zweiten kann er
+die bisherige mitbenennen; bis dahin trägt sie unsichtbar den Namen „Variante 1", und benennt er
+sie nicht, steht dieser Name danach sichtbar da. Er benennt
+Varianten um, nach denselben Regeln wie Gruppen, und entfernt sie ohne Rückfrage samt ihren
+Übungen; bleibt dabei eine einzige übrig, wird sie wie in der Anwendung aufgelöst. Die letzte
+Variante lässt sich nicht entfernen. Anders als die Anwendung, die eine Variante jeweils um einen
+Platz verschiebt, legt er ihre Reihenfolge in einem Zug fest und nennt dafür alle; die vorderste
+gilt beim Öffnen. Führt ein Training mehrere Varianten, sagt der Assistent beim Zuordnen einer
+Übung im Hauptteil und beim Ordnen eines Hauptteil-Abschnitts, welche er meint; ohne diese Angabe
+lehnt die Anwendung ab und nennt die Varianten.
+
 Zu jedem Training, das er lesen kann, ruft der Assistent auf einmal alle fachlichen Hinweise ab,
 die die Anwendung dazu zeigt, im selben Wortlaut: was zum Veröffentlichen noch fehlt (nur beim
 eigenen persönlichen Training, weil nur dort veröffentlicht wird), eine Gruppe, die im selben
@@ -252,8 +265,10 @@ Browser-Tab zeigt eine Änderung des Assistenten erst nach dem Neuladen. Im Trai
 
 Der Assistent ordnet nur zu, was der Bestand hergibt; er erfindet keine Übungen und ändert den
 Inhalt einer zugeordneten Übung nicht. Feld-Diagramme erstellt er nicht, und Fotos lädt er
-nicht hoch. Varianten des Hauptteils legt der Assistent weder an noch benennt, entfernt oder
-ordnet er sie; er liest sie und ordnet Übungen einer bestehenden Variante zu. Die Reihenfolge
+nicht hoch. Eine leere Variante legt der Assistent so wenig an wie die Anwendung, und eine
+einzelne Übung kopiert oder verschiebt er nicht von einer Variante in eine andere. Anders als
+der Dialog der Anwendung erzwingt der Weg über den Assistenten beim Anlegen der zweiten Variante
+keinen neuen Namen für die bisherige. Die Reihenfolge
 der Gruppen untereinander ändert er nicht. Die Favoriten erreicht er nicht, Teams gründet oder besetzt er nicht. Eine Übung
 überführt er nicht in die andere Altersstufe, und die Altersstufe eines Trainings wechselt er so
 wenig wie die Anwendung. Für den Juniorenfussball gibt es keinen kuratierten Übungsbestand; ein

@@ -144,6 +144,25 @@ pruefe("fachlicheMeldung erklärt Marker, fehlerMeldung bleibt wortgleich", () =
       "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.",
     ],
   );
+  // #263: die Varianten-Marker, die der KI-Weg jetzt erreicht, und die der
+  // neuen Variantenfolge.
+  beispiele.push(
+    [
+      "LETZTE_VARIANTE: Training x haette keinen Hauptteil mehr",
+      "Die letzte Variante des Hauptteils lässt sich nicht entfernen.",
+    ],
+    [
+      "VARIANTE_KOPIE_UNVOLLSTAENDIG: 2 Fassungen angemeldet, 3 erwartet",
+      "Die Variante liess sich nicht vollständig kopieren. " +
+        "Lade das Training neu und versuche es noch einmal.",
+    ],
+    ["VARIANTENFOLGE_DOPPELT", "Eine Variante steht in der Reihenfolge mehrfach."],
+    [
+      "VARIANTENFOLGE_UNVOLLSTAENDIG",
+      "Die Reihenfolge muss genau die Varianten dieses Trainings nennen — jede einmal. " +
+        "Lies das Training neu und sende die vollständige Folge.",
+    ],
+  );
   for (const [roh, klartext] of beispiele) {
     assert.equal(fachlicheMeldung(roh), klartext, roh);
     assert.equal(fehlerMeldung(roh), klartext, roh);
@@ -172,6 +191,8 @@ pruefe("ausDbFehler ordnet ein: bedingung, regel, keine_rechte, technisch", () =
   );
   assert.equal(ausDbFehler({ message: "STUFE_FEHLT" }).art, "regel");
   assert.equal(ausDbFehler({ message: "UEBUNGSFOLGE_UNVOLLSTAENDIG" }).art, "regel");
+  assert.equal(ausDbFehler({ message: "VARIANTENFOLGE_UNVOLLSTAENDIG" }).art, "regel");
+  assert.equal(ausDbFehler({ message: "LETZTE_VARIANTE: Training x" }).art, "regel");
   // Deadlock: Postgres hat zurückgerollt, ein zweiter Versuch genügt.
   const d = ausDbFehler({ message: "deadlock detected", code: "40P01" });
   assert.equal(d.art, "konflikt");
@@ -190,6 +211,7 @@ pruefe("Standard-Texte des Kerns sind eingefroren", () => {
   assert.equal(NICHT_GEFUNDEN.fassung, "Zuordnung nicht gefunden.");
   assert.equal(NICHT_GEFUNDEN.vorlage, "Übung nicht verfügbar.");
   assert.equal(NICHT_GEFUNDEN.gruppe, "Gruppe nicht gefunden.");
+  assert.equal(NICHT_GEFUNDEN.variante, "Variante nicht gefunden.");
   assert.equal(
     FREMDES_TRAINING,
     "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.",
@@ -571,7 +593,7 @@ const kern = join(web, "lib/kern");
 /** Kern-Dateien ohne Datenbankzugriff: Sie bleiben ohne `server-only`, damit
  *  Prüfskripte wie dieses sie mit tsx laden können (`server-only` wirft
  *  ausserhalb der react-server-Bedingung). */
-const REIN = new Set(["ergebnis.ts", "auskunft.ts", "auskunft-schema.ts"]);
+const REIN = new Set(["ergebnis.ts", "folge.ts", "auskunft.ts", "auskunft-schema.ts"]);
 
 /** Was der Kern nicht importieren darf — direkt nicht und über eine
  *  importierte `@/lib/*`-Datei auch nicht. */
@@ -668,7 +690,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
   // Jedes Werkzeug, das eine Kennung aus dem Trainings-Bestand annimmt,
   // erklärt «nicht_gefunden» gegen «keine_rechte» (#193 AK 14). Geprüft am
   // Quelltext: Enthält die Eingabe — inline oder als benannte Konstante —
-  // `TrainingId`, `FassungId` oder `GruppeId`, muss der Block `KENNUNG_FEHLER` tragen.
+  // `TrainingId`, `FassungId`, `GruppeId` oder `VarianteId`, muss der Block
+  // `KENNUNG_FEHLER` tragen.
   for (const d of readdirSync(ordner).filter((f) => f.endsWith(".ts"))) {
     const text = readFileSync(join(ordner, d), "utf8");
     for (const m of text.matchAll(/export const (\w+) = werkzeug\(\{([\s\S]*?)\n\}\);/g)) {
@@ -677,7 +700,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
       const eingabe = verweis
         ? (new RegExp(`const ${verweis} = z\\.object\\(\\{([\\s\\S]*?)\\n\\}\\);`).exec(text)?.[1] ?? "")
         : block;
-      if (/\b(TrainingId|FassungId|GruppeId)\b/.test(eingabe))
+      if (/\b(TrainingId|FassungId|GruppeId|VarianteId)\b/.test(eingabe))
         assert.ok(/\bKENNUNG_FEHLER\b/.test(block), `${m[1]} nimmt eine Kennung, erklärt aber KENNUNG_FEHLER nicht`);
       // Dasselbe für Teams und Termine (#198 AK 11). «termin_entfernen» ist
       // ausgenommen: Es kennt kein «nicht_gefunden» — ein fehlender Termin
@@ -720,6 +743,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
       "termin_entfernen",
       "training_erneut_ansetzen",
     ],
+    "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);

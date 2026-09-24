@@ -180,6 +180,36 @@ export async function ladeGruppeZumBearbeiten(
   return ok({ gruppe: { id: data.id, name: data.name, training_id: data.training_id }, ziel });
 }
 
+export type VarianteKopfZeile = { id: string; name: string; training_id: string };
+
+/** Eine Variante des Hauptteils zum Bearbeiten laden (#263) — dieselben drei
+ *  Ausgänge wie bei der Gruppe: unsichtbar → `nicht_gefunden` («Variante nicht
+ *  gefunden.»), sichtbar in einem fremden öffentlichen Training →
+ *  `keine_rechte` mit `fremd: true`. Das Training kommt im selben Aufruf mit
+ *  (`trainings!inner`): Die Variante hängt an seiner RLS-Kette (`tv_select`). */
+export async function ladeVarianteZumBearbeiten(
+  supabase: SupabaseClient,
+  userId: string,
+  varianteId: string,
+): Promise<KernErgebnis<{ variante: VarianteKopfZeile; ziel: Bearbeitungsziel }>> {
+  if (!istUuid(varianteId))
+    return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.variante, { feld: "variante_id" });
+
+  const { data, error } = await supabase
+    .from("training_varianten")
+    .select("id, name, training_id, trainings!inner ( owner_id, team_id )")
+    .eq("id", varianteId)
+    .maybeSingle<VarianteKopfZeile & { trainings: TrainingsEigentum | null }>();
+  if (error) return ausDbFehler(error);
+  if (!data?.trainings)
+    return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.variante, { feld: "variante_id" });
+
+  const ziel = bearbeitungszielVon(data.trainings, userId);
+  if (!ziel)
+    return fehlschlag("keine_rechte", FREMDES_TRAINING, { feld: "variante_id", fremd: true });
+  return ok({ variante: { id: data.id, name: data.name, training_id: data.training_id }, ziel });
+}
+
 /** Eine Zeile per Kennung aktualisieren und prüfen, dass der Update traf.
  *
  *  Kein Owner-Filter: Wer schreiben darf, entscheidet die RLS (an einem

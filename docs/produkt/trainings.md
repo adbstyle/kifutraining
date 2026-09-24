@@ -88,7 +88,8 @@ höchstens achtzig Zeichen lang sein, auch bei einem Training, das direkt im Tea
 Anlegen und Übungen zuordnen lässt sich ein Training beider Altersstufen auch über einen verbundenen
 KI-Assistenten, nach denselben Regeln (siehe [Konto und Zugang](konto-und-zugang.md)). Über ihn
 lässt sich auch ein bestehendes Training beider Altersstufen überarbeiten — Name, Ziel,
-Alterskategorien, Dauer, Notizen, Reihenfolge und das Entfernen von Übungen.
+Alterskategorien, Dauer, Notizen, Reihenfolge und das Entfernen von Übungen sowie die Varianten
+des Hauptteils.
 
 Der Name lässt sich später dort ändern, wo er steht: Beim Zusammenstellen ist die Überschrift des
 Trainings selbst das Feld. Dass sie beschreibbar ist, sagt eine Fläche, die beim Zeigen darunter
@@ -381,7 +382,8 @@ denen jeder eine eigene Adresse trägt; auf dem Papier erscheint diese Reihe nic
 Bedienung der Seite. Die Reihe liest sich in allen drei Ansichten wie beim Zusammenstellen —
 dieselben gemischt geschriebenen Chips, der angezeigte in der Akzentfarbe umrandet —, trägt hier
 aber kein Menü:
-Benannt, geordnet und entfernt werden Varianten allein beim Zusammenstellen. Wechseln darf dabei
+Benannt, geordnet und entfernt werden Varianten allein beim Zusammenstellen — oder über einen
+verbundenen KI-Assistenten. Wechseln darf dabei
 auch, wer das Training gar nicht bearbeiten kann: Es ist ein Weg durch dasselbe Training, keine
 Änderung daran. Die Überschrift des Hauptteils trägt in allen drei Ansichten die Bezeichnung der
 Variante, etwa „Hauptteil · 21 Kinder". Der Ausdruck nennt sie zusätzlich im Kopf neben Name und
@@ -489,7 +491,8 @@ sind die Veröffentlichungsbedingungen: sie sperren.
 
 Die Reihenfolge von Gruppen und Varianten setzt der Trainer Schritt für Schritt über das Menü am
 Chip, nach vorne oder nach hinten. Ziehen und Ablegen gibt es nicht; eine lange Leiste will darum
-mehrmals angefasst werden.
+mehrmals angefasst werden. Ein verbundener KI-Assistent legt die Reihenfolge der Varianten
+dagegen in einem Zug fest.
 
 Varianten gibt es allein für den Hauptteil; wer unterschiedliche Einleitungen oder Ausklänge
 braucht, führt zwei Trainings. Eine Kinderzahl hält die Anwendung weder am Training noch an einer

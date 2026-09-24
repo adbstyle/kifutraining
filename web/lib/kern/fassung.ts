@@ -17,7 +17,7 @@ import {
   teilTraegtDauer,
   zielLabel,
 } from "@/lib/training";
-import { UEBUNGSFOLGE_MELDUNG } from "@/lib/training-bedingungen";
+import { UEBUNGSFOLGE_MELDUNG, VARIANTE_FREMD } from "@/lib/training-bedingungen";
 import { bildOrdnerFuer } from "@/lib/training-zugriff";
 import {
   entferneFassungsBild,
@@ -39,6 +39,8 @@ import {
   ladeTrainingZumBearbeiten,
   ladeTrainingZumLesen,
 } from "@/lib/kern/zugriff";
+import { variantenVon } from "@/lib/kern/varianten";
+import { pruefeVollstaendigeFolge } from "@/lib/kern/folge";
 import {
   MELDUNG_WIEDERHOLEN,
   NICHT_GEFUNDEN,
@@ -122,9 +124,9 @@ export type UebungZuordnen = {
   einordnung: string;
   exerciseId: string;
   hauptteilkategorie?: string | null;
-  /** Die Variante des Hauptteils (#201 AK 8). Ohne Angabe die erste nach
-   *  Position — dieselbe Regel wie der Trigger `te_variante_ausrichten`.
-   *  Ausserhalb des Hauptteils ohne Bedeutung. */
+  /** Die Variante des Hauptteils (#201 AK 8). Pflicht, sobald das Training
+   *  mehrere führt (#263); bei genau einer darf sie fehlen. Ausserhalb des
+   *  Hauptteils ohne Bedeutung. */
   varianteId?: string | null;
 };
 
@@ -198,9 +200,16 @@ export async function ordneUebungZu(
     return fehlschlag("regel", "Übung passt nicht zu diesem Block.", { feld: "exercise_id" });
 
   // Die Variante auflösen — im Hauptteil beider Altersstufen. Die Position
-  // zählt je Variante; wer sie offen lässt, bekommt die erste, wie der Trigger
-  // es ohnehin täte — nur rechnet die Position dann schon richtig.
-  const variante = await loeseVarianteAuf(supabase, e.trainingId, e.einordnung, e.varianteId, false);
+  // zählt je Variante; ab zwei Varianten muss der Aufrufer sagen, in welche
+  // die Übung kommt (#263) — still in die erste gelegt, landete sie dort, wo
+  // niemand sie erwartet.
+  const variante = await loeseVarianteAuf(
+    supabase,
+    e.trainingId,
+    e.einordnung,
+    e.varianteId,
+    "Gib an, in welche die Übung kommt.",
+  );
   if (!variante.ok) return variante;
   const varianteId = variante.wert;
 
@@ -246,46 +255,42 @@ export async function ordneUebungZu(
   return ok({ trainingId: e.trainingId, fassungId, position, varianteId, name: ex.name });
 }
 
+/** Der erste Satz, wenn ab zwei Varianten die Angabe fehlt. */
+const MEHRERE_VARIANTEN = "Dieses Training führt mehrere Varianten des Hauptteils.";
+
 /** Die Variante eines Abschnitts auflösen — nur im Hauptteil beider
  *  Altersstufen, sonst `null` (dort gibt es keine Varianten, eine Angabe ist
  *  ohne Bedeutung).
  *
- *  Eine angegebene Variante muss zum Training gehören. Ohne Angabe gilt die
- *  erste nach Position — dieselbe Regel wie der Trigger
- *  `te_variante_ausrichten`; mit `pflichtAbZwei` ist die Angabe ab zwei
- *  Varianten Pflicht: Wer eine Reihenfolge setzt, muss wissen, welche
- *  Zusammenstellung er ordnet. */
+ *  Eine angegebene Variante muss zum Training gehören. Ab zwei Varianten ist
+ *  die Angabe Pflicht (#263): Wer zuordnet oder ordnet, muss wissen, welche
+ *  Zusammenstellung er meint. Bei genau einer gilt diese. */
 async function loeseVarianteAuf(
   supabase: SupabaseClient,
   trainingId: string,
   einordnung: string,
   angabe: string | null | undefined,
-  pflichtAbZwei: boolean,
+  /** Der Satz, der sagt, wozu die Angabe gebraucht wird. */
+  wozu: string,
 ): Promise<KernErgebnis<string | null>> {
   if (!istHauptteil(einordnung)) return ok(null);
-  const { data: varianten, error } = await supabase
-    .from("training_varianten")
-    .select("id")
-    .eq("training_id", trainingId)
-    .order("position")
-    .order("id");
-  if (error) return ausDbFehler(error);
-  const ids = (varianten ?? []).map((v) => v.id as string);
+  const varianten = await variantenVon(supabase, trainingId);
+  if (!varianten.ok) return varianten;
+  const ids = varianten.wert.map((v) => v.id);
   if (angabe) {
     // Derselbe Text wie der Marker `VARIANTE_FREMDES_TRAINING` des Triggers.
     if (!ids.includes(angabe))
-      return fehlschlag("regel", "Diese Variante gehört zu einem anderen Training.", {
+      return fehlschlag("regel", VARIANTE_FREMD, {
         feld: "variante_id",
         zulaessig: ids,
       });
     return ok(angabe);
   }
-  if (pflichtAbZwei && ids.length > 1)
-    return fehlschlag(
-      "eingabe",
-      "Dieses Training führt mehrere Varianten des Hauptteils. Gib an, welche du ordnest.",
-      { feld: "variante_id", zulaessig: ids },
-    );
+  if (ids.length > 1)
+    return fehlschlag("eingabe", `${MEHRERE_VARIANTEN} ${wozu}`, {
+      feld: "variante_id",
+      zulaessig: ids,
+    });
   return ok(ids[0] ?? null);
 }
 
@@ -570,7 +575,13 @@ export async function setzeUebungsfolge(
   if (!block.ok) return block;
   const hkat = block.wert.hauptteilkategorie ?? null;
 
-  const variante = await loeseVarianteAuf(supabase, e.trainingId, e.einordnung, e.varianteId, true);
+  const variante = await loeseVarianteAuf(
+    supabase,
+    e.trainingId,
+    e.einordnung,
+    e.varianteId,
+    "Gib an, welche du ordnest.",
+  );
   if (!variante.ok) return variante;
   const varianteId = variante.wert;
 
@@ -596,34 +607,17 @@ export async function setzeUebungsfolge(
       f.hauptteilkategorie === hkat &&
       f.variante_id === varianteId,
   );
-  const imAbschnitt = new Set(abschnitt.map((f) => f.id));
-  // Name UND Kennung: Dieselbe Übung darf mehrfach im Training stehen
-  // (#192), der Name allein sagte dann nicht, welche gemeint ist.
-  const genannt = (id: string) => (nameVon.has(id) ? `„${nameVon.get(id)}" (${id})` : id);
-
-  const doppelt = [...new Set(e.fassungIds.filter((id, i) => e.fassungIds.indexOf(id) !== i))];
-  if (doppelt.length > 0)
-    return fehlschlag(
-      "regel",
-      `${UEBUNGSFOLGE_MELDUNG.UEBUNGSFOLGE_DOPPELT} Mehrfach: ${doppelt.map(genannt).join(", ")}.`,
-      { feld: "fassung_ids" },
-    );
-  if (abschnitt.length === 0)
-    return fehlschlag("regel", UEBUNGSFOLGE_MELDUNG.UEBUNGSFOLGE_ABSCHNITT_LEER, {
-      feld: "einordnung",
-    });
-  const fehlen = abschnitt.filter((f) => !e.fassungIds.includes(f.id));
-  const fremd = e.fassungIds.filter((id) => !imAbschnitt.has(id));
-  if (fehlen.length > 0 || fremd.length > 0) {
-    const teile = [UEBUNGSFOLGE_MELDUNG.UEBUNGSFOLGE_UNVOLLSTAENDIG];
-    if (fehlen.length > 0) teile.push(`Es fehlen: ${fehlen.map((f) => genannt(f.id)).join(", ")}.`);
-    if (fremd.length > 0)
-      teile.push(`Nicht in diesem Abschnitt: ${fremd.map(genannt).join(", ")}.`);
-    return fehlschlag("regel", teile.join(" "), {
-      feld: "fassung_ids",
-      zulaessig: abschnitt.map((f) => f.id),
-    });
-  }
+  // Namen über den Abschnitt hinaus: Eine Kennung aus einem anderen Abschnitt
+  // lässt sich so mit Namen nennen.
+  const problem = pruefeVollstaendigeFolge(e.fassungIds, abschnitt, {
+    doppelt: UEBUNGSFOLGE_MELDUNG.UEBUNGSFOLGE_DOPPELT,
+    unvollstaendig: UEBUNGSFOLGE_MELDUNG.UEBUNGSFOLGE_UNVOLLSTAENDIG,
+    bereich: "Abschnitt",
+    feld: "fassung_ids",
+    namen: nameVon,
+    leer: { meldung: UEBUNGSFOLGE_MELDUNG.UEBUNGSFOLGE_ABSCHNITT_LEER, feld: "einordnung" },
+  });
+  if (problem) return problem;
 
   const { error: rpcFehler } = await supabase.rpc("setze_uebungsfolge", {
     p_training: e.trainingId,

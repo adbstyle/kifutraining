@@ -130,9 +130,9 @@ export async function addTrainingExercise(
   trainingsteil: string,
   exerciseId: string,
   hauptteilkategorie?: string | null,
-  /** Die Variante des Hauptteils, in die die Übung kommt (#201 AK 8). Ohne sie
-   *  die erste — dieselbe Regel wie `te_variante_ausrichten`; der Editor gibt
-   *  sie immer ausdrücklich mit. Ausserhalb des Hauptteils ohne Bedeutung. */
+  /** Die Variante des Hauptteils, in die die Übung kommt (#201 AK 8). Pflicht,
+   *  sobald das Training mehrere führt (#263); der Editor gibt sie immer
+   *  ausdrücklich mit. Ausserhalb des Hauptteils ohne Bedeutung. */
   varianteId?: string,
 ): Promise<TrainingActionResult> {
   return editorAktion((supabase, userId) =>

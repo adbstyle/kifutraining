@@ -40,7 +40,8 @@ export const trainingAbrufen = werkzeug({
   titel: "Training abrufen",
   beschreibung:
     "Liefert ein Training vollständig: Name, Ziel, Altersstufe, Alterskategorien, " +
-    "Sichtbarkeit, Bestand (persönlich oder Team), Varianten des Hauptteils und Gruppen (mit " +
+    "Sichtbarkeit, Bestand (persönlich oder Team), Varianten des Hauptteils (in ihrer " +
+    "Reihenfolge — die vorderste zeigt KiFu beim Öffnen) und Gruppen (mit " +
     "«an_uebungen») — " +
     "und die Gliederung wie im Editor: alle Trainingsteile und Blöcke in fester Reihenfolge, " +
     "auch die leeren, der Hauptteil einmal je Variante (mit «variante» erst ab zwei). Jede " +
