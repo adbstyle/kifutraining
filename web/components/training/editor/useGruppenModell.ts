@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   istHauptteil,
   konfliktBefund,
+  verteilungAus,
   wechselZahl,
   zeitJeGruppe,
   type Befund,
@@ -85,16 +86,7 @@ export function useGruppenModell({
    *  Wechsel ist eine Aussage über das ganze Training, und blockweise gerechnet
    *  bliebe die Doppelbelegung über die Blockgrenze unentdeckt. */
   const verteilung: Verteilung = useMemo(
-    () =>
-      zuordnungen
-        .filter((f) => istHauptteil(f.trainingsteil))
-        .map((f) => ({
-          id: f.id,
-          name: f.name,
-          einordnung: f.trainingsteil,
-          dauer: f.durationMin,
-          gruppen: folgen[f.id] ?? f.gruppen.map((g) => g.id),
-        })),
+    () => verteilungAus(zuordnungen, (f) => folgen[f.id]),
     [zuordnungen, folgen],
   );
 

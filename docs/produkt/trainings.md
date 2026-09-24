@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-09-11. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-09-23. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -71,13 +71,25 @@ zweites Mal zu bestätigen. Angeboten wird jeweils nur, was dem Betrachter offen
 fremdes Training bloss ansieht, findet die drei Punkte gar nicht, und an einem Team-Training
 gibt es weder Veröffentlichen noch Ins-Team-Stellen.
 
+Trainings beider Altersstufen lassen sich auch im Gespräch mit einem verbundenen KI-Assistenten
+anlegen, zusammenstellen, veröffentlichen, übernehmen und löschen (siehe
+[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)). Es gelten dieselben Regeln, der
+Assistent erfährt dieselben Hinweise und Zeitrichtwerte, und was er zusammenstellt, sieht hier
+genauso aus, als hätte man es selbst getan.
+
 ## Zusammenstellen
 
 Ein neues Training beginnt mit einem Namen, der Altersstufe und mindestens einer
 Alterskategorie; zur Wahl stehen dabei nur die Kategorien der gewählten Altersstufe. Ohne
 Kategorie entsteht kein Training, und die letzte lässt sich später auch nicht mehr entfernen.
 Ein Ziel darf gleich mitgegeben werden: ein kurzer Satz dazu, woran das Team in dieser Einheit
-arbeitet, freiwillig, höchstens zweihundert Zeichen und jederzeit änderbar.
+arbeitet, freiwillig, höchstens zweihundert Zeichen und jederzeit änderbar. Der Name darf
+höchstens achtzig Zeichen lang sein, auch bei einem Training, das direkt im Team entsteht.
+Anlegen und Übungen zuordnen lässt sich ein Training beider Altersstufen auch über einen verbundenen
+KI-Assistenten, nach denselben Regeln (siehe [Konto und Zugang](konto-und-zugang.md)). Über ihn
+lässt sich auch ein bestehendes Training beider Altersstufen überarbeiten — Name, Ziel,
+Alterskategorien, Dauer, Notizen, Reihenfolge und das Entfernen von Übungen sowie die Varianten
+des Hauptteils.
 
 Der Name lässt sich später dort ändern, wo er steht: Beim Zusammenstellen ist die Überschrift des
 Trainings selbst das Feld. Dass sie beschreibbar ist, sagt eine Fläche, die beim Zeigen darunter
@@ -370,7 +382,8 @@ denen jeder eine eigene Adresse trägt; auf dem Papier erscheint diese Reihe nic
 Bedienung der Seite. Die Reihe liest sich in allen drei Ansichten wie beim Zusammenstellen —
 dieselben gemischt geschriebenen Chips, der angezeigte in der Akzentfarbe umrandet —, trägt hier
 aber kein Menü:
-Benannt, geordnet und entfernt werden Varianten allein beim Zusammenstellen. Wechseln darf dabei
+Benannt, geordnet und entfernt werden Varianten allein beim Zusammenstellen — oder über einen
+verbundenen KI-Assistenten. Wechseln darf dabei
 auch, wer das Training gar nicht bearbeiten kann: Es ist ein Weg durch dasselbe Training, keine
 Änderung daran. Die Überschrift des Hauptteils trägt in allen drei Ansichten die Bezeichnung der
 Variante, etwa „Hauptteil · 21 Kinder". Der Ausdruck nennt sie zusätzlich im Kopf neben Name und
@@ -416,7 +429,7 @@ Team-Trainings sind nicht direkt veröffentlichbar. Wer eine Team-Arbeit veröff
 übernimmt sie zuerst in seinen persönlichen Bestand.
 
 Jedes öffentliche Training kann jede angemeldete Person übernehmen, auch ihr Urheber selbst. Es
-entsteht eine private, frei bearbeitbare Kopie des ganzen Trainings.
+entsteht eine private, frei bearbeitbare Kopie des ganzen Trainings, samt seinem Ziel.
 
 ## Finden
 
@@ -478,7 +491,8 @@ sind die Veröffentlichungsbedingungen: sie sperren.
 
 Die Reihenfolge von Gruppen und Varianten setzt der Trainer Schritt für Schritt über das Menü am
 Chip, nach vorne oder nach hinten. Ziehen und Ablegen gibt es nicht; eine lange Leiste will darum
-mehrmals angefasst werden.
+mehrmals angefasst werden. Ein verbundener KI-Assistent legt die Reihenfolge der Varianten
+dagegen in einem Zug fest.
 
 Varianten gibt es allein für den Hauptteil; wer unterschiedliche Einleitungen oder Ausklänge
 braucht, führt zwei Trainings. Eine Kinderzahl hält die Anwendung weder am Training noch an einer

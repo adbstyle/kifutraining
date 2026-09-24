@@ -81,14 +81,62 @@ export type Verteilung = {
   gruppen: string[];
 }[];
 
+/** Was `verteilungAus` von einer Fassung braucht — der Ausschnitt von
+ *  `TrainingExerciseItem`, den Editor und KI-Auskunft gleichermassen haben. */
+export type VerteilbareFassung = {
+  id: string;
+  name: string;
+  trainingsteil: string;
+  durationMin: number | null;
+  gruppen: readonly { id: string }[];
+};
+
+/**
+ * Die Verteilung aus den Fassungen EINER Variante: ihre Hauptteil-Fassungen
+ * in der gegebenen (Anzeige-)Reihenfolge, im Juniorenfussball über BEIDE
+ * Blöcke hinweg (AK 5) — der Wechsel ist eine Aussage über den ganzen
+ * Hauptteil, blockweise gerechnet bliebe eine Doppelbelegung über die
+ * Blockgrenze unentdeckt.
+ *
+ * `folgeVon` legt eine lokal gesetzte Folge über den Serverstand (der Editor
+ * überlagert optimistisch); `undefined` heisst «es gilt der Serverstand».
+ * Editor und KI-Auskunft rechnen mit dieser einen Funktion, damit beide
+ * dieselbe Verteilung sehen.
+ */
+export function verteilungAus<F extends VerteilbareFassung>(
+  zuordnungen: readonly F[],
+  folgeVon?: (fassung: F) => string[] | undefined,
+): Verteilung {
+  return zuordnungen
+    .filter((f) => istHauptteil(f.trainingsteil))
+    .map((f) => ({
+      id: f.id,
+      name: f.name,
+      einordnung: f.trainingsteil,
+      dauer: f.durationMin,
+      gruppen: folgeVon?.(f) ?? f.gruppen.map((g) => g.id),
+    }));
+}
+
 /** Wie viele Wechsel der Hauptteil hat: die längste Folge. Der Durchlauf einer
  *  einzelnen Übung kann kürzer sein — sie steht dann nicht in jedem Wechsel. */
 export function wechselZahl(v: Verteilung): number {
   return v.reduce((max, f) => Math.max(max, f.gruppen.length), 0);
 }
 
-/** Ein gemeldeter Konflikt der Verteilung. Gemeldet, nie gesperrt (AK 15). */
-export type Konflikt = { art: "doppelt" | "ungleich"; text: string };
+/** Ein gemeldeter Konflikt der Verteilung. Gemeldet, nie gesperrt (AK 15).
+ *
+ *  `text` ist die Meldung am Kartenfuss; die übrigen Felder benennen die Stelle
+ *  für den KI-Assistenten (#195 AK 3/4, NFR 2) — die Oberfläche liest sie nicht.
+ *  `wechsel` zählt 1-basiert wie der Text («1. Wechsel»), `fassungIds` sind die
+ *  beteiligten Übungen, `gruppeId` gibt es nur bei «doppelt». */
+export type Konflikt = {
+  art: "doppelt" | "ungleich";
+  text: string;
+  gruppeId?: string;
+  wechsel: number[];
+  fassungIds: string[];
+};
 
 /** Was `konfliktBefund` zurückgibt — eine Rechnung, drei Anzeigeorte. */
 export type Befund = {
@@ -170,7 +218,13 @@ export function konfliktBefund(
       const treffer = v.filter((f) => f.gruppen[w] === g.id);
       if (treffer.length < 2) continue;
       const wo = `im ${w + 1}. Wechsel an ${zahlwort(treffer.length)} Übungen`;
-      konflikte.push({ art: "doppelt", text: `${g.name} steht ${wo}.` });
+      konflikte.push({
+        art: "doppelt",
+        text: `${g.name} steht ${wo}.`,
+        gruppeId: g.id,
+        wechsel: [w + 1],
+        fassungIds: treffer.map((f) => f.id),
+      });
       for (const f of treffer) chipWarnung.add(`${f.id}|${g.id}`);
       // Der Chip der Gruppenleiste trägt einen Kurztext, keine Sammlung: der
       // erste Konflikt sagt bereits, dass an dieser Gruppe etwas zu richten ist.
@@ -182,30 +236,36 @@ export function konfliktBefund(
   // Erst je Wechsel die beteiligten Dauern, dann die Verdichtung: getrennt,
   // weil die Verdichtung nur Nachbarn mit derselben Dauermenge zusammenzieht
   // und dafür die Rohbefunde in Wechselreihenfolge braucht.
-  const roh: { w: number; dauern: number[] }[] = [];
+  const roh: { w: number; dauern: number[]; ids: string[] }[] = [];
   for (let w = 0; w < wechsel; w++) {
     const beteiligt = v.filter((f) => f.gruppen[w] != null && f.dauer != null);
     const dauern = [...new Set(beteiligt.map((f) => f.dauer as number))].sort((a, b) => a - b);
     if (dauern.length < 2) continue;
-    roh.push({ w, dauern });
+    roh.push({ w, dauern, ids: beteiligt.map((f) => f.id) });
     for (const f of beteiligt) dauerWarnung.add(f.id);
   }
 
-  const verdichtet: { wechsel: number[]; dauern: number[] }[] = [];
+  const verdichtet: { wechsel: number[]; dauern: number[]; ids: Set<string> }[] = [];
   for (const r of roh) {
     const letzte = verdichtet[verdichtet.length - 1];
     const anschluss =
       letzte &&
       letzte.wechsel[letzte.wechsel.length - 1] === r.w - 1 &&
       gleicheDauern(letzte.dauern, r.dauern);
-    if (anschluss) letzte.wechsel.push(r.w);
-    else verdichtet.push({ wechsel: [r.w], dauern: r.dauern });
+    if (anschluss) {
+      letzte.wechsel.push(r.w);
+      r.ids.forEach((id) => letzte.ids.add(id));
+    } else verdichtet.push({ wechsel: [r.w], dauern: r.dauern, ids: new Set(r.ids) });
   }
 
   for (const e of verdichtet) {
     konflikte.push({
       art: "ungleich",
       text: `Im ${wechselAufzaehlung(e.wechsel)} sind die Übungen ungleich lang (${dauerAufzaehlung(e.dauern)}).`,
+      // Alle verdichteten Wechsel, auch die, die der Text abkürzt («und
+      // weiteren») — der Assistent soll jede Stelle finden.
+      wechsel: e.wechsel.map((w) => w + 1),
+      fassungIds: [...e.ids],
     });
   }
 

@@ -1,7 +1,12 @@
 "use client";
 
 import { Dialog, Button } from "@/components/ui";
-import { bedingungText, type FehlendeBedingung } from "@/lib/training-bedingungen";
+import {
+  TRAGWEITE_VEROEFFENTLICHEN,
+  ZUM_VEROEFFENTLICHEN_FEHLT,
+  bedingungText,
+  type FehlendeBedingung,
+} from "@/lib/training-bedingungen";
 import type { Variante } from "@/lib/varianten";
 
 /** Was gerade offen ist. `null` = nichts.
@@ -68,7 +73,7 @@ export function SichtbarkeitDialoge({
           </Button>
         }
       >
-        <p className="mb-3">Zum Veröffentlichen fehlt noch:</p>
+        <p className="mb-3">{ZUM_VEROEFFENTLICHEN_FEHLT}</p>
         <ul className="flex flex-col gap-1">
           {fehlend.map((b) => (
             <li
@@ -97,11 +102,7 @@ export function SichtbarkeitDialoge({
           </>
         }
       >
-        <p>
-          Das Training wird für alle sichtbar — mit allen Inhalten, Bildern und
-          Feld-Diagrammen. Dein Anzeigename steht als Urheber daran und ist für
-          alle sichtbar.
-        </p>
+        <p>{TRAGWEITE_VEROEFFENTLICHEN}</p>
         <p className="mt-3">
           Du kannst es weiter bearbeiten; die Community sieht dann jeweils deinen
           aktuellen Stand. Solange es öffentlich ist, braucht es aber eine

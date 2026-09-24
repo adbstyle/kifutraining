@@ -210,6 +210,34 @@ pruefe("Dieselbe Gruppe im selben Wechsel an zwei Übungen wird gemeldet", () =>
   assert.equal(b.gruppenWarnung.get("g1"), "Steht im 1. Wechsel an zwei Übungen.");
 });
 
+pruefe("Ein Konflikt benennt seine Stelle: Gruppe, Wechsel (1-basiert), Übungen (#195)", () => {
+  const doppelt = konfliktBefund(
+    kifu([
+      ["A", 10, ["g2", "g1"]],
+      ["B", 10, ["th", "g1"]],
+    ]),
+    G,
+  ).konflikte[0];
+  assert.equal(doppelt.gruppeId, "g1");
+  assert.deepEqual(doppelt.wechsel, [2]);
+  assert.deepEqual(doppelt.fassungIds, ["te1", "te2"]);
+
+  // Verdichtete Wechsel: alle Wechsel und alle beteiligten Übungen, auch die,
+  // die der Text mit «und weiteren» abkürzt; keine Gruppe.
+  const ungleich = konfliktBefund(
+    kifu([
+      ["A", 15, ["g1", "g2", "th", "g1"]],
+      ["B", 10, ["g2", "th", "g1", "g2"]],
+      ["C", null, ["th"]],
+    ]),
+    G,
+  ).konflikte;
+  assert.equal(ungleich.length, 1);
+  assert.equal(ungleich[0].gruppeId, undefined);
+  assert.deepEqual(ungleich[0].wechsel, [1, 2, 3, 4]);
+  assert.deepEqual(ungleich[0].fassungIds, ["te1", "te2"]);
+});
+
 pruefe("Dieselbe Gruppe in VERSCHIEDENEN Wechseln ist kein Konflikt (AK 4)", () => {
   const b = konfliktBefund(
     kifu([

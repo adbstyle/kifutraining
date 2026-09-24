@@ -7,7 +7,7 @@ import { KategorieChip, Tooltip } from "@/components/ui";
 import { ExerciseThumb } from "../ExerciseThumb";
 import { InBibliothekButton } from "../InBibliothekButton";
 import { DauerFeld } from "./DauerFeld";
-import { stufenAbgedeckt } from "@/lib/training";
+import { STUFE_ABWEICHEND_TEXT, stufenAbgedeckt } from "@/lib/training";
 import { varianteAnhang } from "@/lib/varianten";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
 
@@ -107,7 +107,7 @@ export function TrainingExerciseRow({
           <span className="flex items-center gap-2">
             <span className="truncate type-body-medium text-on-surface">{item.name}</span>
             {mismatch && (
-              <span title="Deckt keine der Trainings-Stufen ab">
+              <span title={STUFE_ABWEICHEND_TEXT}>
                 <TriangleAlert size={15} className="shrink-0 text-primary" aria-hidden />
               </span>
             )}

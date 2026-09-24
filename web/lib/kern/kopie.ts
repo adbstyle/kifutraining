@@ -1,8 +1,10 @@
-// Der zentrale Kopier-Baustein für Trainings (Team-Epic, Kopie-Modell).
+// Der zentrale Kopier-Baustein für Trainings (Team-Epic, Kopie-Modell; seit
+// #197 im Fachkern).
 //
 // Geteilt wird nie, kopiert immer: ins Team stellen, zu mir übernehmen, ein
-// öffentliches Training bzw. eine Vorlage übernehmen und je Termin ansetzen —
-// alle vier gehen durch `kopiereTraining`. Das Veröffentlichen gehört nicht
+// öffentliches Training übernehmen und je Termin ansetzen — alle gehen durch
+// `kopiereTraining`, die ersten drei (und das KI-Werkzeug «training_kopieren»)
+// über `kopiereTrainingNach`. Das Veröffentlichen gehört nicht
 // dazu: Es schaltet dasselbe Training sichtbar und kopiert nichts.
 //
 // Damit gibt es genau eine Stelle, die weiss, was zu einer vollständigen,
@@ -11,6 +13,8 @@
 //
 // Die Fassungs-Bausteine (`kopiereBild`, `inhaltFelder`, `kopiereDiagrammVon`)
 // stammen aus dem Bibliotheks-Epic und werden hier wiederverwendet.
+import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   FASSUNG_INHALT_FELDER,
   FASSUNG_ZUORDNUNG_FELDER,
@@ -22,27 +26,60 @@ import {
   userOrdner,
   type BildOrdner,
 } from "@/lib/fassung";
-import { fehlerMeldung } from "@/lib/training-bedingungen";
-import type { createClient } from "@/lib/supabase/server";
-
-type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
+import { ladeTrainingZumLesen, pruefeTeamMitglied } from "@/lib/kern/zugriff";
+import {
+  ausDbFehler,
+  fehlschlag,
+  ok,
+  type FehlerArt,
+  type KernErgebnis,
+} from "@/lib/kern/ergebnis";
 
 /** Wohin kopiert wird. Der Diskriminator bestimmt Eigentum, Sichtbarkeit und
  *  den Storage-Ordner der Bildkopien in einem Zug.
  *
- *  Für Vorlagen gibt es bewusst KEINE eigene Art: eine Vorlage entsteht als
- *  persönliche Kopie und wird erst danach freigegeben. Grund ist die RLS —
- *  Fassungen lassen sich nur in ein privates Training einfügen, weil eine
- *  öffentliche Vorlage eingefroren ist. */
+ *  Eine Kopie ist immer privat, auch die eines öffentlichen Trainings (#197
+ *  PC 4); öffentlich wird sie erst, wenn ihr neuer Eigentümer sie
+ *  veröffentlicht. Eine «öffentliche» Art gibt es darum nicht. */
 export type KopieZiel =
-  /** Zu mir übernehmen, eine Vorlage übernehmen, Vorlage vorbereiten. */
+  /** Zu mir übernehmen, ein öffentliches Training übernehmen. */
   | { art: "persoenlich"; ownerId: string }
   /** Ins Team stellen bzw. je Termin ansetzen — Eigentum des Teams. */
   | { art: "team"; teamId: string };
 
+/** Das Ergebnis einer Kopie. Ein Fehlschlag sagt zusätzlich, was davon übrig
+ *  ist (#197 PC 2, NFR 2):
+ *
+ *  - `nichtsEntstanden: true` — entweder scheiterte es vor dem Anlegen der
+ *    Kopie, oder das Aufräumen hat die halbe Kopie nachweislich wieder
+ *    entfernt. Ein zweiter Versuch ist gefahrlos.
+ *  - `nichtsEntstanden: false` samt `rest` — das Aufräumen selbst scheiterte;
+ *    `rest` ist die Kennung der stehen gebliebenen, unvollständigen Kopie.
+ *
+ *  `error` ist die Meldung, wie die Oberfläche sie zeigt; `art` ordnet sie für
+ *  den Fachkern ein (`ausDbFehler`). Einen Prozessabbruch mitten im Kopieren
+ *  bemerkt niemand — dann kommt gar kein Ergebnis zurück (#197 OoS 6). */
 export type KopieErgebnis =
   | { ok: true; neueId: string }
-  | { ok: false; error: string };
+  | ({ ok: false; error: string; art: FehlerArt } & (
+      | { nichtsEntstanden: true }
+      | { nichtsEntstanden: false; rest: string }
+    ));
+
+/** Ein Fehlschlag, bevor es eine Kopie gibt — da ist nie etwas entstanden. */
+function vorher(error: string, art: FehlerArt = "technisch"): KopieErgebnis {
+  return { ok: false, error, art, nichtsEntstanden: true };
+}
+
+/** Ein Datenbankfehler als Meldung samt Einordnung — die Meldung ist
+ *  wortgleich mit `fehlerMeldung` (siehe `ausDbFehler`). */
+function db(e: { message: string; code?: string }): { error: string; art: FehlerArt } {
+  const f = ausDbFehler(e);
+  return { error: f.meldung, art: f.art };
+}
+
+/** Die Meldung, wenn die Quelle für dieses Konto nicht (mehr) sichtbar ist. */
+export const QUELLE_NICHT_VERFUEGBAR = "Das Training ist nicht (mehr) verfügbar.";
 
 /** Die Felder einer Fassung, die in die Kopie übergehen: die Zuordnung
  *  (Einordnung, Reihenfolge, Dauer, Notiz), dazu Inhalt, Bild und Diagramm.
@@ -109,8 +146,11 @@ function zielFelder(ziel: KopieZiel): {
  *  Moment eigenständig und frei änderbar, und ein Vermerk darauf, dass sie
  *  einmal aus etwas anderem hervorging, sagte darüber nichts Brauchbares.
  *
- *  Bei einem Fehler werden bereits kopierte Bilder und die halbe Kopie wieder
- *  entfernt — es bleibt nie eine Teilkopie zurück. */
+ *  Bei einem gemeldeten Fehler werden bereits kopierte Bilder und die halbe
+ *  Kopie wieder entfernt; ob das gelang, sagt `nichtsEntstanden`. Bricht der
+ *  Prozess selbst ab (Zeitüberschreitung), bleibt eine Teilkopie stehen — eine
+ *  Datenbank-Transaktion kann die Bilddateien nicht einschliessen (#197
+ *  OoS 6). */
 export async function kopiereTraining(
   supabase: SupabaseClient,
   quelleId: string,
@@ -121,10 +161,10 @@ export async function kopiereTraining(
   // Quelle lesen — die RLS lässt nur durch, was der Handelnde sehen darf.
   const { data: quelle } = await supabase
     .from("trainings")
-    .select("id, name, altersstufe, stufen")
+    .select("id, name, altersstufe, stufen, ziel")
     .eq("id", quelleId)
     .maybeSingle();
-  if (!quelle) return { ok: false, error: "Das Training ist nicht (mehr) verfügbar." };
+  if (!quelle) return vorher(QUELLE_NICHT_VERFUEGBAR, "nicht_gefunden");
 
   const { data: quellFassungen, error: leseFehler } = await supabase
     .from("training_exercises")
@@ -132,7 +172,10 @@ export async function kopiereTraining(
     .eq("training_id", quelleId);
   // Übersetzt statt roh: Auch ein Lesefehler landet als Meldung beim Trainer,
   // und ein Postgres-Text nennt dort Tabellen statt eines Wegs (Issue #41).
-  if (leseFehler) return { ok: false, error: fehlerMeldung(leseFehler.message) };
+  if (leseFehler) {
+    const f = db(leseFehler);
+    return vorher(f.error, f.art);
+  }
 
   // Die Varianten des Hauptteils, in der Reihenfolge des Originals (#205 AK 1).
   // Vor dem Insert des Ziels gelesen: Scheitert die Abfrage, entsteht gar keine
@@ -143,8 +186,10 @@ export async function kopiereTraining(
     .eq("training_id", quelleId)
     .order("position")
     .order("id");
-  if (variantenLeseFehler)
-    return { ok: false, error: fehlerMeldung(variantenLeseFehler.message) };
+  if (variantenLeseFehler) {
+    const f = db(variantenLeseFehler);
+    return vorher(f.error, f.art);
+  }
 
   const { data: neu, error: insertFehler } = await supabase
     .from("trainings")
@@ -155,6 +200,9 @@ export async function kopiereTraining(
       // sind dieselben wie die des Originals (Story 1, Übungswelten).
       altersstufe: quelle.altersstufe,
       stufen: quelle.stufen ?? [],
+      // Das Ziel gehört zum Training und reist mit (Team-Epic, Spec
+      // 2026-08-16 Story 11); bis #197 fiel es beim Kopieren still weg.
+      ziel: quelle.ziel,
       ...spalten,
     })
     .select("id")
@@ -162,21 +210,35 @@ export async function kopiereTraining(
   // Übersetzt statt roh: Stammt die Quelle noch aus der Zeit vor der
   // Kategorie-Pflicht, weist der Trigger `trainings_stufe_pflicht` die Kopie mit
   // dem Marker `STUFE_FEHLT` ab — den läse sonst der Trainer.
-  if (insertFehler || !neu)
-    return {
-      ok: false,
-      error: insertFehler
-        ? fehlerMeldung(insertFehler.message)
-        : "Kopieren fehlgeschlagen.",
-    };
+  if (insertFehler || !neu) {
+    if (!insertFehler) return vorher("Kopieren fehlgeschlagen.");
+    const f = db(insertFehler);
+    return vorher(f.error, f.art);
+  }
 
   // Ab hier kann eine Teilkopie entstehen: jeder weitere Fehlerpfad räumt die
-  // bereits erzeugten Bilddateien und das Ziel-Training wieder ab.
+  // bereits erzeugten Bilddateien und das Ziel-Training wieder ab — und prüft,
+  // ob das Training wirklich weg ist. Sonst hiesse «nichts entstanden» eine
+  // Zusage, die niemand eingelöst hat (#197 NFR 2). Ein Datenbankfehler kommt
+  // roh herein und wird hier übersetzt, ein eigener Text unverändert.
   const kopierteBilder: string[] = [];
-  const abbrechen = async (fehler: string): Promise<KopieErgebnis> => {
+  const abbrechen = async (
+    grund: string | { message: string; code?: string },
+  ): Promise<KopieErgebnis> => {
+    const { error, art } =
+      typeof grund === "string" ? { error: grund, art: "technisch" as const } : db(grund);
     await entferneStorageObjekte(supabase, kopierteBilder);
-    await supabase.from("trainings").delete().eq("id", neu.id);
-    return { ok: false, error: fehler };
+    const { data: weg, error: loeschFehler } = await supabase
+      .from("trainings")
+      .delete()
+      .eq("id", neu.id)
+      .select("id");
+    if (!loeschFehler && weg?.length) return { ok: false, error, art, nichtsEntstanden: true };
+    console.error(
+      `[kopie] Aufräumen der Teilkopie ${neu.id} fehlgeschlagen:`,
+      loeschFehler?.message ?? "keine Zeile gelöscht",
+    );
+    return { ok: false, error, art, nichtsEntstanden: false, rest: neu.id };
   };
 
   // Die Varianten zuerst: Jede Hauptteil-Fassung zeigt auf eine, und der
@@ -200,14 +262,14 @@ export async function kopiereTraining(
       .select("id")
       .eq("training_id", neu.id)
       .maybeSingle();
-    if (autoFehler) return abbrechen(fehlerMeldung(autoFehler.message));
+    if (autoFehler) return abbrechen(autoFehler);
     if (!auto) return abbrechen("Die Varianten des Hauptteils liessen sich nicht kopieren.");
 
     const { error } = await supabase
       .from("training_varianten")
       .update({ name: varianten[0].name, position: 0 })
       .eq("id", auto.id);
-    if (error) return abbrechen(fehlerMeldung(error.message));
+    if (error) return abbrechen(error);
     varianteMap.set(varianten[0].id, auto.id);
 
     const weitere = varianten.slice(1).map((v, i) => ({
@@ -221,7 +283,7 @@ export async function kopiereTraining(
       const { error: weitereFehler } = await supabase
         .from("training_varianten")
         .insert(weitere);
-      if (weitereFehler) return abbrechen(fehlerMeldung(weitereFehler.message));
+      if (weitereFehler) return abbrechen(weitereFehler);
     }
   }
 
@@ -237,7 +299,7 @@ export async function kopiereTraining(
     // gesetzte Position, die ID entscheidet den Gleichstand.
     .order("position")
     .order("id");
-  if (gruppenLeseFehler) return abbrechen(fehlerMeldung(gruppenLeseFehler.message));
+  if (gruppenLeseFehler) return abbrechen(gruppenLeseFehler);
 
   // Von der alten auf die neue Gruppen-ID: die Zuweisungen weiter unten reden
   // noch in den IDs der Quelle.
@@ -259,7 +321,7 @@ export async function kopiereTraining(
         position: g.position,
       })),
     );
-    if (error) return abbrechen(fehlerMeldung(error.message));
+    if (error) return abbrechen(error);
   }
 
   // Die IDs entstehen vorab: sie benennen die Bildkopien, die vor dem Insert
@@ -306,7 +368,7 @@ export async function kopiereTraining(
         diagramm: kopiereDiagrammVon(f.diagramm),
       })),
     );
-    if (error) return abbrechen(fehlerMeldung(error.message));
+    if (error) return abbrechen(error);
   }
 
   // Zuletzt die Verteilung: Gruppen und Fassungen der Kopie stehen jetzt, und
@@ -319,7 +381,7 @@ export async function kopiereTraining(
         "training_exercise_id",
         fassungen.map((f) => f.id),
       );
-    if (zuweisungLeseFehler) return abbrechen(fehlerMeldung(zuweisungLeseFehler.message));
+    if (zuweisungLeseFehler) return abbrechen(zuweisungLeseFehler);
 
     const fassungMap = new Map(bilder.map(({ quelle: f, neueId }) => [f.id, neueId]));
     const zeilen: { training_exercise_id: string; gruppe_id: string; position: number }[] = [];
@@ -346,9 +408,77 @@ export async function kopiereTraining(
       const { error } = await supabase.from("training_exercise_gruppen").insert(zeilen);
       // Übersetzt statt roh: `teg_guard` meldet sich mit den Markern
       // `GRUPPE_NUR_HAUPTTEIL`/`GRUPPE_FREMDES_TRAINING`.
-      if (error) return abbrechen(fehlerMeldung(error.message));
+      if (error) return abbrechen(error);
     }
   }
 
   return { ok: true, neueId: neu.id };
+}
+
+// ── Übernehmen: die Kopie als Kern-Operation (#197) ─────────────────────────
+
+/** Für den Assistenten: Ein zweiter Versuch ist gefahrlos (#197 NFR 2). Die
+ *  Oberfläche zeigt `hinweis` nie. */
+export const HINWEIS_NICHTS_ENTSTANDEN =
+  "Es ist keine Kopie entstanden — der Versuch lässt sich gefahrlos wiederholen.";
+
+/** Für den Assistenten: Das Aufräumen scheiterte, eine Teilkopie steht. */
+export function hinweisRest(rest: string): string {
+  return `Eine unvollständige Kopie ist stehen geblieben (Kennung ${rest}); lösche sie mit training_loeschen.`;
+}
+
+export type KopieNach = {
+  quelleId: string;
+  /** Ohne: in den persönlichen Bestand. Mit: ins Team (Mitgliedschaft Pflicht). */
+  teamId?: string;
+};
+
+export type KopieWohin = { art: "persoenlich" } | { art: "team"; team: { id: string; name: string } };
+
+/** Ein Training als eigenständige, private Kopie übernehmen — zu sich oder in
+ *  ein eigenes Team (#197 AK 3–5, PC 1–4; Team-Epic Story 5 und 11).
+ *
+ *  Quelle ist jedes Training, das dieses Konto lesen kann: ein eigenes, eines
+ *  der eigenen Teams oder ein fremdes öffentliches. Unsichtbares heisst
+ *  «nicht gefunden» (#197 OoS 7). Die Quelle bleibt unberührt, und dieselbe
+ *  Quelle lässt sich beliebig oft übernehmen — jede Kopie ist ein eigenes
+ *  Training.
+ *
+ *  Ein Fehlschlag trägt für den Assistenten `hinweis`: ob nichts entstanden
+ *  ist oder welche Teilkopie stehen blieb. */
+export async function kopiereTrainingNach(
+  supabase: SupabaseClient,
+  userId: string,
+  e: KopieNach,
+): Promise<KernErgebnis<{ id: string; ziel: KopieWohin }>> {
+  const nichts = { hinweis: HINWEIS_NICHTS_ENTSTANDEN };
+
+  // Vorab lesen: Kennungs-Guard und «nicht gefunden» wie überall im Kern,
+  // bevor irgendetwas entsteht. Die Meldung bleibt die der Oberfläche.
+  const quelle = await ladeTrainingZumLesen(supabase, e.quelleId);
+  if (!quelle.ok)
+    return quelle.art === "nicht_gefunden"
+      ? fehlschlag("nicht_gefunden", QUELLE_NICHT_VERFUEGBAR, { feld: "training_id", ...nichts })
+      : { ...quelle, ...nichts };
+
+  let wohin: KopieWohin = { art: "persoenlich" };
+  if (e.teamId !== undefined) {
+    const team = await pruefeTeamMitglied(supabase, e.teamId);
+    if (!team.ok) return { ...team, ...nichts };
+    wohin = { art: "team", team: team.wert };
+  }
+
+  const kopie = await kopiereTraining(
+    supabase,
+    e.quelleId,
+    wohin.art === "team"
+      ? { art: "team", teamId: wohin.team.id }
+      : { art: "persoenlich", ownerId: userId },
+  );
+  if (!kopie.ok)
+    return fehlschlag(kopie.art, kopie.error, {
+      hinweis: kopie.nichtsEntstanden ? HINWEIS_NICHTS_ENTSTANDEN : hinweisRest(kopie.rest),
+    });
+
+  return ok({ id: kopie.neueId, ziel: wohin });
 }

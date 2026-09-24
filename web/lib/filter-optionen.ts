@@ -2,14 +2,11 @@ import {
   altersstufe as altersstufeLabels,
   feldtyp as feldtypLabels,
   hauptteilkategorieSlugs,
-  junioren_block as juniorenBlockLabels,
-  trainingsteil as trainingsteilLabels,
-  trainingsteilSlugs,
   uebungstyp as uebungstypLabels,
   type FeldtypSlug,
   type UebungstypSlug,
 } from "@/lib/vocab";
-import { ERSCHEINUNGSFORM_LABEL, kategorieStufe } from "@/lib/labels";
+import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL, kategorieStufe } from "@/lib/labels";
 import {
   ALTERSSTUFEN,
   einordnungsSlugsFuer,
@@ -69,25 +66,28 @@ function stufeDerDimension(traegt: (stufe: Altersstufe) => boolean): Altersstufe
 
 // ── Einordnung (Filter „Trainingsteil") ─────────────────────────────────────
 
-/** Die wählbaren Einordnungen des Kinderfussballs — die Trainingsteile des
- *  Manuals Fussball Kinder, den Hauptteil aufgelöst in seine drei
- *  Hauptteilkategorien (Story #129 AC 1–3).
+/** Die wählbaren Einordnungen EINER Altersstufe, ungruppiert — die feinste
+ *  Ebene, die das jeweilige Lehrmittel kennt (Story #129 AC 1–3):
  *
- *  Fachlich ist die Hauptteilkategorie die zweite Ebene unter dem Hauptteil —
- *  genau die Rolle, die im Juniorenschema die Blöcke spielen. In beiden Welten
- *  wird darum die feinste Ebene gewählt, die das jeweilige Lehrmittel kennt;
- *  «Hauptteil» als Ganzes ist kein wählbarer Wert mehr. Die Reihenfolge
- *  innerhalb des Hauptteils ist die feste methodische des SFV (Abb. 14) aus
- *  `HAUPTTEILKATEGORIEN`. */
-const kifuEinordnungen: { value: string; label: string }[] = trainingsteilSlugs.flatMap(
-  (teil) =>
-    traegtHauptteilkategorie("kinderfussball", teil)
+ *  Kinderfussball: die Trainingsteile des Manuals Fussball Kinder, den
+ *  Hauptteil aufgelöst in seine drei Hauptteilkategorien. Fachlich ist die
+ *  Hauptteilkategorie die zweite Ebene unter dem Hauptteil — genau die Rolle,
+ *  die im Juniorenschema die Blöcke spielen; «Hauptteil» als Ganzes ist kein
+ *  wählbarer Wert mehr. Die Reihenfolge innerhalb des Hauptteils ist die feste
+ *  methodische des SFV (Abb. 14) aus `HAUPTTEILKATEGORIEN`.
+ *  Juniorenfussball: die sieben Blöcke in der Reihenfolge des Schemas.
+ *
+ *  Auch das KI-Werkzeug «vokabular» liest die Werte hier, je Altersstufe
+ *  (#142) — darum getrennt von der gruppierten Liste unten. */
+export function einordnungFilterOptionenFuer(stufe: Altersstufe): EinfacheOption[] {
+  return einordnungsSlugsFuer(stufe).flatMap((e) =>
+    traegtHauptteilkategorie(stufe, e)
       ? HAUPTTEILKATEGORIEN.map((h) => ({ value: h.slug as string, label: h.label }))
-      : [{ value: teil as string, label: trainingsteilLabels[teil] }],
-);
+      : [{ value: e, label: EINORDNUNG_LABEL[e] ?? e }],
+  );
+}
 
-/** Die Optionen des Trainingsteil-Filters über beide Welten: die Einordnungen
- *  des Kinderfussballs und die sieben Blöcke des Juniorenschemas, in zwei nach
+/** Die Optionen des Trainingsteil-Filters über beide Welten, in zwei nach
  *  Altersstufe beschrifteten Gruppen. Der Katalog filtert bewusst über BEIDE
  *  Altersstufen — er ist der eine Ort, an dem der ganze sichtbare Bestand
  *  nebeneinandersteht.
@@ -99,14 +99,9 @@ const kifuEinordnungen: { value: string; label: string }[] = trainingsteilSlugs.
  *  ACHTUNG: gruppensortiert lassen. Die Kopfzeile im MultiSelect entsteht
  *  positional (neue Gruppe = neue Kopfzeile) — durchmischte Optionen erzeugen
  *  dieselbe Kopfzeile mehrfach. */
-export const einordnungFilterOptionen: FilterOption[] = [
-  ...kifuEinordnungen.map((o) => ({ ...o, group: gruppe("kinderfussball") })),
-  ...Object.entries(juniorenBlockLabels).map(([value, label]) => ({
-    value,
-    label: label as string,
-    group: gruppe("juniorenfussball"),
-  })),
-];
+export const einordnungFilterOptionen: FilterOption[] = ALTERSSTUFEN.flatMap((stufe) =>
+  einordnungFilterOptionenFuer(stufe).map((o) => ({ ...o, group: gruppe(stufe) })),
+);
 
 const EINORDNUNG_FILTER_SLUGS = new Set(einordnungFilterOptionen.map((o) => o.value));
 const HKAT_SLUGS = new Set<string>(hauptteilkategorieSlugs);

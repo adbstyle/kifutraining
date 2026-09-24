@@ -9,6 +9,22 @@ const nextConfig: NextConfig = {
     // statt eines rohen Plattformfehlers. Vercel-Limit (~4,5 MB) bleibt Obergrenze.
     serverActions: { bodySizeLimit: "3mb" },
   },
+  // Die Erlauben-Seite für KI-Clients (#142) ist bei offener Client-
+  // Registrierung die EINZIGE Schranke vor einem Zugang zum Konto. Eingebettet
+  // in eine fremde Seite liesse sich ein Klick auf «Erlauben» unterschieben
+  // (Clickjacking) — darum darf sie in keinem Rahmen stehen. Beide Header:
+  // `frame-ancestors` ist der Standard, `X-Frame-Options` fängt ältere Browser.
+  async headers() {
+    return [
+      {
+        source: "/oauth/consent",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+        ],
+      },
+    ];
+  },
   images: {
     // Feld-Diagramme werden aus Supabase Storage ausgeliefert (öffentliche URLs).
     remotePatterns: [

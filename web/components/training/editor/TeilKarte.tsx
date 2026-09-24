@@ -6,7 +6,13 @@ import { Card, IconButton, Tooltip } from "@/components/ui";
 import { ZeitAbgleich } from "../ZeitAbgleich";
 import { Unterblock } from "./Unterblock";
 import type { ZeilenKontext } from "./ExerciseList";
-import { formatDuration, type EditorBlock, type EditorTeil } from "@/lib/training";
+import {
+  ANZAHL_HINWEIS_TEXT,
+  formatDuration,
+  ohneDauerText,
+  type EditorBlock,
+  type EditorTeil,
+} from "@/lib/training";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
 
 /** Eine Karte je Trainingsteil — dieselbe für beide Altersstufen, weil die
@@ -104,14 +110,12 @@ export function TeilKarte({
           {teil.tooMany && (
             <p className="flex items-center gap-2 type-label-medium text-on-surface-mittel">
               <Info size={15} className="shrink-0 text-primary" aria-hidden />
-              Ungewöhnlich viele Übungen für diesen Trainingsteil — erlaubt, achte
-              nur auf die Gesamtdauer.
+              {ANZAHL_HINWEIS_TEXT}
             </p>
           )}
           {teil.missing > 0 && (
             <p className="type-label-medium text-on-surface-mittel">
-              {teil.missing} {teil.missing === 1 ? "Übung" : "Übungen"} ohne erfasste
-              Dauer (zählt nicht zur Summe).
+              {ohneDauerText(teil.missing)}
             </p>
           )}
         </div>
