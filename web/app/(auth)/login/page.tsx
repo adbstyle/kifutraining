@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Card, Meldung } from "@/components/ui";
+import { Card, Banner } from "@/components/ui";
 import { sichererRuecksprung } from "@/lib/weiterleitung";
 import { LoginForm } from "./LoginForm";
 
@@ -31,10 +31,10 @@ export default async function LoginPage({
       </header>
 
       {sp.error && (
-        <Meldung tone="fehler" className="mb-4">
+        <Banner tone="fehler" className="mb-4">
           Der Bestätigungslink war ungültig oder abgelaufen. Bitte melde dich an
           oder fordere einen neuen Link an.
-        </Meldung>
+        </Banner>
       )}
 
       <Card className="p-6">

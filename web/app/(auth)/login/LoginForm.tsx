@@ -3,8 +3,8 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
-import { LogIn, MailCheck, Send } from "lucide-react";
-import { TextField, PasswordField, Button, Meldung } from "@/components/ui";
+import { LogIn, MailCheck } from "lucide-react";
+import { TextField, PasswordField, Button, Banner } from "@/components/ui";
 import { login, resendConfirmation, type AuthState } from "@/lib/actions/auth";
 
 const initial: AuthState = { status: "idle" };
@@ -22,8 +22,7 @@ function SubmitButton() {
 function ResendButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="outlined" disabled={pending} className="w-full">
-      <Send size={16} strokeWidth={2} aria-hidden />
+    <Button type="submit" variant="text" size="sm" disabled={pending}>
       {pending ? "Wird gesendet …" : "Bestätigung erneut senden"}
     </Button>
   );
@@ -36,26 +35,28 @@ function NeedsConfirmation({ email }: { email?: string }) {
 
   if (state.status === "confirm") {
     return (
-      <Meldung tone="erfolg" icon={MailCheck}>
+      <Banner icon={MailCheck}>
         Bestätigungsmail erneut an <strong>{state.email ?? email}</strong>{" "}
         gesendet.
-      </Meldung>
+      </Banner>
     );
   }
 
   return (
-    /* `status` statt des Fehler-Vorgabewerts `alert`: Der Kasten enthält ein
-       Bedienelement, und `alert` ist atomar — die Vorlesehilfe läse bei jeder
-       Änderung darin (jeder Klick auf den Knopf ändert seine Beschriftung) den
-       ganzen Kasten unterbrechend neu vor. ARIA verlangt zudem, dass `alert`
-       keine fokussierbaren Inhalte trägt. */
-    <Meldung tone="fehler" role="status">
-      <p>Bitte bestätige zuerst deine E-Mail-Adresse. Den Link nicht erhalten?</p>
-      <form action={formAction} className="mt-3">
-        <input type="hidden" name="email" value={email ?? ""} />
-        <ResendButton />
-      </form>
-    </Meldung>
+    /* Mit Knopf trägt der Banner `status` statt `alert` (siehe Banner): jeder
+       Klick ändert die Beschriftung, `alert` läse den Banner jedes Mal
+       unterbrechend neu vor. */
+    <Banner
+      tone="fehler"
+      actions={
+        <form action={formAction}>
+          <input type="hidden" name="email" value={email ?? ""} />
+          <ResendButton />
+        </form>
+      }
+    >
+      Bitte bestätige zuerst deine E-Mail-Adresse. Den Link nicht erhalten?
+    </Banner>
   );
 }
 

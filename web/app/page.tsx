@@ -1,5 +1,5 @@
 import { SearchX, Heart, Plus } from "lucide-react";
-import { ExerciseCard, ButtonLink, Leerzustand, Meldung } from "@/components/ui";
+import { ExerciseCard, ButtonLink, Leerzustand, Banner } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { CatalogFilterBar, type CatalogFilters } from "@/components/catalog/CatalogFilterBar";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
@@ -100,14 +100,14 @@ export default async function Home({
       </header>
 
       {error && (
-        <Meldung tone="fehler">
+        <Banner tone="fehler">
           Datenbank nicht erreichbar oder noch nicht geseedet:{" "}
           <code className="ml-1">{error}</code>
           <div className="mt-1">
             Lokal: <code>npm run db:start</code> → <code>npm run db:reset</code> →{" "}
             <code>npm run seed</code>.
           </div>
-        </Meldung>
+        </Banner>
       )}
 
       {rows && (
