@@ -17,6 +17,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { farbSlugs, parseDiagramm, type DiagrammData, type DiagrammElement } from "../lib/diagramm";
 import yaml from "js-yaml";
+import { gesamtMaterial, type MaterialFassung } from "../lib/material-gesamt";
 import {
   FARBE_LABEL,
   MATERIAL_ARTEN,
@@ -290,6 +291,115 @@ pruefe("Text: Einzahl, Mehrzahl und Farbe", () => {
   assert.equal(postenText({ art: "tor", farbe: null, menge: 1 }), "1 Tor");
   assert.equal(postenText({ art: "pylone", farbe: "gruen", menge: 4 }), "4 Pylonen, grün");
   assert.equal(postenText({ art: "fussball", farbe: null, menge: 12 }), "12 Fussbälle");
+});
+
+// ── Gesamtliste eines Trainings (Story #271) ───────────────────────────────
+function fassung(
+  id: string,
+  trainingsteil: string,
+  liste: [string, string | null, number][],
+  extra: Partial<MaterialFassung> = {},
+): MaterialFassung {
+  return {
+    id,
+    name: `Übung ${id}`,
+    trainingsteil,
+    varianteId: istH(trainingsteil) ? "v1" : null,
+    materialListe: parseMaterialListe(liste.map(([art, farbe, menge]) => ({ art, farbe, menge }))),
+    material: [],
+    gruppen: [],
+    ...extra,
+  };
+}
+const istH = (t: string) => ["hauptteil", "jun-spielformen", "jun-spiel"].includes(t);
+const g = (...ids: string[]) => ids.map((id) => ({ id }));
+const V1 = [{ id: "v1" }];
+
+pruefe("Gesamt: nacheinander laufende Teile zählen mit ihrem grössten Bedarf", () => {
+  const r = gesamtMaterial(
+    [
+      fassung("a", "einleitung", [["pylone", "rot", 4], ["fussball", null, 6]]),
+      fassung("b", "ausklang", [["pylone", "rot", 8]]),
+    ],
+    V1,
+  );
+  assert.deepEqual(r.liste, parseMaterialListe([{ art: "pylone", farbe: "rot", menge: 8 }, { art: "fussball", menge: 6 }]));
+});
+
+pruefe("Gesamt: parallele Gruppen zählen zusammen, eine Station nur einmal", () => {
+  // Drei Stationen, drei Gruppen im Kreislauf: in jedem Wechsel sind alle
+  // drei Stationen belegt.
+  const r = gesamtMaterial(
+    [
+      fassung("s1", "hauptteil", [["minitor", null, 2]], { gruppen: g("A", "B", "C") }),
+      fassung("s2", "hauptteil", [["minitor", null, 2], ["fussball", null, 4]], { gruppen: g("B", "C", "A") }),
+      fassung("s3", "hauptteil", [["fussball", null, 3]], { gruppen: g("C", "A", "B") }),
+      fassung("e", "einleitung", [["fussball", null, 12]]),
+    ],
+    V1,
+  );
+  assert.deepEqual(r.liste, parseMaterialListe([{ art: "minitor", menge: 4 }, { art: "fussball", menge: 12 }]));
+});
+
+pruefe("Gesamt: kürzere Durchläufe fallen aus späteren Wechseln heraus", () => {
+  const r = gesamtMaterial(
+    [
+      fassung("x", "hauptteil", [["pylone", "blau", 6]], { gruppen: g("A", "B") }),
+      fassung("y", "hauptteil", [["pylone", "blau", 4]], { gruppen: g("B") }),
+    ],
+    V1,
+  );
+  // Wechsel 1: x + y = 10; Wechsel 2: nur x = 6.
+  assert.deepEqual(r.liste, parseMaterialListe([{ art: "pylone", farbe: "blau", menge: 10 }]));
+});
+
+pruefe("Gesamt: ein Hauptteil ohne Gruppen läuft nacheinander ab", () => {
+  const r = gesamtMaterial(
+    [
+      fassung("h1", "hauptteil", [["tor", null, 2]]),
+      fassung("h2", "hauptteil", [["tor", null, 1], ["reifen", null, 5]]),
+    ],
+    V1,
+  );
+  assert.deepEqual(r.liste, parseMaterialListe([{ art: "tor", menge: 2 }, { art: "reifen", menge: 5 }]));
+});
+
+pruefe("Gesamt: Varianten sind Alternativen und zählen mit ihrem grössten Bedarf", () => {
+  const r = gesamtMaterial(
+    [
+      fassung("v1a", "hauptteil", [["minitor", null, 4]], { varianteId: "v1" }),
+      fassung("v2a", "hauptteil", [["minitor", null, 2], ["handball", null, 3]], { varianteId: "v2" }),
+    ],
+    [{ id: "v1" }, { id: "v2" }],
+  );
+  assert.deepEqual(r.liste, parseMaterialListe([{ art: "minitor", menge: 4 }, { art: "handball", menge: 3 }]));
+});
+
+pruefe("Gesamt: Junioren-Hauptteil — ein Wechsel gilt über beide Blöcke", () => {
+  const r = gesamtMaterial(
+    [
+      fassung("j1", "jun-spielformen", [["tor", null, 2]], { gruppen: g("A") }),
+      fassung("j2", "jun-spiel", [["tor", null, 2]], { gruppen: g("B") }),
+    ],
+    V1,
+  );
+  assert.deepEqual(r.liste, parseMaterialListe([{ art: "tor", menge: 4 }]));
+});
+
+pruefe("Gesamt: freie Ergänzungen je Übung, unverrechnet, über alle Varianten", () => {
+  const r = gesamtMaterial(
+    [
+      fassung("a", "einleitung", [], { material: ["Pfeife"] }),
+      fassung("b", "hauptteil", [], { varianteId: "v2", material: ["Stoppuhr", "Pfeife"] }),
+      fassung("c", "ausklang", []),
+    ],
+    [{ id: "v1" }, { id: "v2" }],
+  );
+  assert.deepEqual(r.liste, []);
+  assert.deepEqual(r.ergaenzungen, [
+    { fassungId: "a", uebung: "Übung a", texte: ["Pfeife"] },
+    { fassungId: "b", uebung: "Übung b", texte: ["Stoppuhr", "Pfeife"] },
+  ]);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden${gescheitert ? `, ${gescheitert} gescheitert` : ""}.`);

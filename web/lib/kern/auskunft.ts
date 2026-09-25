@@ -26,7 +26,8 @@
 // steht: am Teil, und am Block nur, wo er eine eigene Fläche trägt.
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
-import { materialAusgabe } from "@/lib/material-ausgabe";
+import { gesamtMaterialAusgabe, materialAusgabe } from "@/lib/material-ausgabe";
+import { gesamtMaterial } from "@/lib/material-gesamt";
 import {
   altersstufe as altersstufeLabels,
   feldtyp as feldtypLabels,
@@ -257,6 +258,7 @@ export function trainingAuskunft(
       : null,
     uebungen_gesamt: d.exercises.length,
     varianten: d.varianten.map((v) => ({ id: v.id, name: v.name })),
+    material_gesamt: gesamtMaterialAusgabe(gesamtMaterial(d.exercises, d.varianten)),
     gruppen: d.gruppen.map((g) => ({ id: g.id, name: g.name, an_uebungen: anUebungen(g.id) })),
     teile,
     gesamt,

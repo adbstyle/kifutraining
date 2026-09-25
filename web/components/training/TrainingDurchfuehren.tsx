@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
 import { TrainingExerciseDetail } from "./TrainingExerciseDetail";
 import { VariantenWahl } from "./VariantenWahl";
+import { GesamtMaterialListe } from "./GesamtMaterialListe";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui";
 import { leseGliederung, formatDuration } from "@/lib/training";
 import { datumKurz } from "@/lib/zeit";
@@ -222,6 +223,15 @@ export function TrainingDurchfuehren({
             <span className="type-label-small text-on-surface-mittel">Ziel: </span>
             {training.ziel}
           </p>
+        )}
+        {/* Das Material gehört wie das Ziel an den Start: gebraucht wird es,
+            bevor die erste Übung beginnt (Story #271). */}
+        {idx === 0 && (
+          <GesamtMaterialListe
+            exercises={training.exercises}
+            varianten={training.varianten}
+            className="mt-4"
+          />
         )}
       </header>
 

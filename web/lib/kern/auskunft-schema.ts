@@ -12,7 +12,7 @@
 // REIN: nur zod und lib/wert — `check:kern` lädt diese Datei mit tsx.
 import { z } from "zod";
 import { Sichtbarkeit, Wert } from "@/lib/wert";
-import { materialSchema } from "@/lib/material-ausgabe";
+import { gesamtMaterialSchema, materialSchema } from "@/lib/material-ausgabe";
 
 function baueSchema(streng: boolean) {
   const obj = streng ? z.strictObject : z.object;
@@ -166,6 +166,8 @@ function baueSchema(streng: boolean) {
     /** Alle Übungen des Trainings über ALLE Varianten des Hauptteils. */
     uebungen_gesamt: z.number().int(),
     varianten: z.array(IdName),
+    /** Die Gesamt-Materialliste (Story #271) — gilt für jede Variante. */
+    material_gesamt: gesamtMaterialSchema(streng),
     /** Die Gruppen des Trainings in ihrer Reihenfolge. */
     gruppen: z.array(Gruppe),
     /** Der Hauptteil erscheint einmal je Variante, die übrigen Teile einmal. */

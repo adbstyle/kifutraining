@@ -6,11 +6,12 @@
 // Eine Quelle für «uebung_abrufen» (lib/mcp) und «training_abrufen»
 // (lib/kern), damit beide dasselbe sagen.
 //
-// REIN: nur zod, lib/wert und lib/material — die Prüfskripte laden diese Datei
+// REIN: nur zod, lib/wert und lib/material(-gesamt) — die Prüfskripte laden diese Datei
 // mit tsx.
 import { z } from "zod";
 import { Wert, wert } from "@/lib/wert";
 import { FARBE_LABEL, MATERIAL_KATALOG, type MaterialPosten } from "@/lib/material";
+import type { GesamtMaterial } from "@/lib/material-gesamt";
 
 /** Das Ausgabe-Schema; `streng` nimmt `z.strictObject` auf allen Ebenen (siehe
  *  lib/kern/auskunft-schema.ts). */
@@ -41,5 +42,27 @@ export function materialAusgabe(
       menge: p.menge,
     })),
     ergaenzung: [...ergaenzung],
+  };
+}
+
+/** Die Gesamt-Materialliste eines Trainings (Story #271) für
+ *  «training_abrufen»: höchster gleichzeitiger Bedarf über alle Varianten,
+ *  dazu die freien Ergänzungen je Übung. */
+export function gesamtMaterialSchema(streng = false) {
+  const obj = streng ? z.strictObject : z.object;
+  return obj({
+    /** Was das Training zu einem Zeitpunkt höchstens gleichzeitig braucht —
+     *  parallele Gruppen zusammengezählt, nacheinander Laufendes und
+     *  Varianten mit ihrem grössten Bedarf. */
+    liste: materialSchema(streng).shape.liste,
+    /** Die freien Ergänzungen je Übung, nicht verrechnet. */
+    ergaenzungen: z.array(obj({ fassung_id: z.string(), uebung: z.string(), texte: z.array(z.string()) })),
+  });
+}
+
+export function gesamtMaterialAusgabe(g: GesamtMaterial): z.infer<ReturnType<typeof gesamtMaterialSchema>> {
+  return {
+    liste: materialAusgabe(g.liste, []).liste,
+    ergaenzungen: g.ergaenzungen.map((e) => ({ fassung_id: e.fassungId, uebung: e.uebung, texte: e.texte })),
   };
 }

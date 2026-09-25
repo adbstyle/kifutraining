@@ -48,7 +48,11 @@ export const trainingAbrufen = werkzeug({
     "Übung mit Inhalt, Dauer, Notiz und den Gruppen ihres Durchlaufs; «fassung_id» ist die " +
     "Kennung für die Bearbeitungs-Werkzeuge. «uebungen_gesamt» zählt die Übungen aller " +
     "Varianten zusammen; «gesamt» nennt die Dauer je Variante, «durchlauf» je Variante die " +
-    "Wechsel der Gruppen (wie «training_durchlauf_abrufen»). Im Juniorenfussball trägt jeder " +
+    "Wechsel der Gruppen (wie «training_durchlauf_abrufen»). «material_gesamt» nennt das " +
+    "Material, das das Training höchstens gleichzeitig braucht (parallele Gruppen " +
+    "zusammengezählt, nacheinander Laufendes und Varianten mit ihrem grössten Bedarf), dazu " +
+    "die freien Ergänzungen je Übung; jede Übung trägt ihr Material gegliedert in «liste» " +
+    "(aus dem Diagramm-Vorrat) und «ergaenzung». Im Juniorenfussball trägt jeder " +
     "Teil und jeder Block eines untergliederten Teils «richtwert»: den Zeitrichtwert des " +
     "Manuals (min_min–max_min) und «abweichung_min», die Abweichung der Summe davon " +
     "(0 = innerhalb oder noch keine Dauer); «gesamt» die vorgesehenen 90 Minuten; im " +
