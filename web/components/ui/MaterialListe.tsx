@@ -1,4 +1,4 @@
-import { postenText, type MaterialPosten } from "@/lib/material";
+import { postenText, schluessel, type MaterialPosten } from "@/lib/material";
 
 /* Das Material einer Übung zum Lesen (Story #267 AK 7) — gegliedert: oben die
    gezählte Liste aus dem Diagramm-Vorrat, einer pro Zeile, darunter die freie
@@ -23,7 +23,7 @@ export function MaterialListe({
       {liste.length > 0 && (
         <ul className="flex flex-col gap-0.5">
           {liste.map((p) => (
-            <li key={`${p.art}:${p.farbe ?? ""}`}>{postenText(p)}</li>
+            <li key={schluessel(p)}>{postenText(p)}</li>
           ))}
         </ul>
       )}

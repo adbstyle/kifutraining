@@ -22,7 +22,7 @@
  * verrechnet (Epic Out of Scope 4), sondern je Übung aufgeführt.
  */
 import { istHauptteil } from "@/lib/gruppen";
-import { normalisiere, type MaterialPosten } from "@/lib/material";
+import { normalisiere, schluessel, type MaterialPosten } from "@/lib/material";
 
 /** Was die Gesamtliste von einer Fassung braucht — der Ausschnitt von
  *  `TrainingExerciseItem`, den Editor, Ansichten und KI-Auskunft haben. */
@@ -72,7 +72,7 @@ export function gesamtMaterial(
   const hoechst = new Map<string, MaterialPosten>();
   for (const posten of fenster)
     for (const p of posten) {
-      const k = `${p.art}:${p.farbe ?? ""}`;
+      const k = schluessel(p);
       if ((hoechst.get(k)?.menge ?? 0) < p.menge) hoechst.set(k, p);
     }
 

@@ -49,7 +49,13 @@ import {
   listeAusZeilen,
   zeilenAus,
 } from "@/components/exercise/MaterialField";
-import { gleicheListe, materialAenderungen, type MaterialPosten } from "@/lib/material";
+import {
+  AENDERUNG_BEIBEHALTEN,
+  AENDERUNG_UEBERNEHMEN,
+  gleicheListe,
+  materialAenderungen,
+  type MaterialPosten,
+} from "@/lib/material";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
 
@@ -636,11 +642,14 @@ export function ExerciseForm({
         error={materialError ?? undefined}
         hinweis={
           aenderungen.length > 0 ? (
-            <AenderungMeldung
-              aenderungen={aenderungen}
-              onUebernehmen={uebernehmeVorschlag}
-              onBeibehalten={() => setBasisBestaetigt(true)}
-            />
+            <AenderungMeldung aenderungen={aenderungen}>
+              <Button type="button" variant="text" size="sm" onClick={uebernehmeVorschlag}>
+                {AENDERUNG_UEBERNEHMEN}
+              </Button>
+              <Button type="button" variant="text" size="sm" onClick={() => setBasisBestaetigt(true)}>
+                {AENDERUNG_BEIBEHALTEN}
+              </Button>
+            </AenderungMeldung>
           ) : zeigtVorschlag ? (
             <VorschlagMeldung vorschlag={vorschlag} onUebernehmen={uebernehmeVorschlag} />
           ) : basisBestaetigt ? (

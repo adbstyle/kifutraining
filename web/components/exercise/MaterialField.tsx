@@ -217,29 +217,23 @@ export function VorschlagMeldung({
 
 /** Der Hinweis, dass eine Diagrammänderung das Material verändert hat (Story
  *  #269): was sich geändert hat, und die Wahl zwischen dem neuen Vorschlag und
- *  dem bisherigen Material. Wirksam wird die Wahl beim Speichern. */
+ *  dem bisherigen Material. Die Knöpfe bringt der Aufrufer mit — im Formular
+ *  wirken sie beim Speichern, auf der Übungsseite sofort. */
 export function AenderungMeldung({
   aenderungen,
-  onUebernehmen,
-  onBeibehalten,
+  children,
+  className,
 }: {
   aenderungen: readonly MaterialAenderung[];
-  onUebernehmen: () => void;
-  onBeibehalten: () => void;
+  children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <Meldung tone="erfolg" role="status">
+    <Meldung tone="erfolg" role="status" className={className}>
       <p>
         Das Feld-Diagramm zeigt inzwischen anderes Material: {aenderungenText(aenderungen)}.
       </p>
-      <div className="mt-2 flex flex-wrap gap-2">
-        <Button type="button" variant="text" size="sm" onClick={onUebernehmen}>
-          Neuen Vorschlag übernehmen
-        </Button>
-        <Button type="button" variant="text" size="sm" onClick={onBeibehalten}>
-          Material beibehalten
-        </Button>
-      </div>
+      <div className="mt-2 flex flex-wrap gap-2">{children}</div>
     </Meldung>
   );
 }

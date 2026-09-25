@@ -11,7 +11,6 @@ import {
   PrintButton,
   UebungsBild,
   MaterialListe,
-  Meldung,
   Button,
 } from "@/components/ui";
 import { Flash } from "@/components/Flash";
@@ -34,8 +33,10 @@ import {
 import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
 import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
+import { AenderungMeldung } from "@/components/exercise/MaterialField";
 import {
-  aenderungenText,
+  AENDERUNG_BEIBEHALTEN,
+  AENDERUNG_UEBERNEHMEN,
   hatMaterial,
   materialAenderungen,
   materialBasisAusDiagramm,
@@ -243,24 +244,18 @@ export default async function ExerciseDetailPage({
           die Eigentümerin sieht es — sie allein kann antworten. Nicht im
           Druck: der Hinweis gilt dem Bearbeiten, nicht dem Platz. */}
       {materialHinweis.length > 0 && (
-        <Meldung tone="erfolg" role="status" className="mt-6 print:hidden">
-          <p>
-            Das Feld-Diagramm zeigt inzwischen anderes Material:{" "}
-            {aenderungenText(materialHinweis)}.
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
-              <Button type="submit" variant="text" size="sm">
-                Neuen Vorschlag übernehmen
-              </Button>
-            </form>
-            <form action={behalteMaterial.bind(null, ex.id)}>
-              <Button type="submit" variant="text" size="sm">
-                Material beibehalten
-              </Button>
-            </form>
-          </div>
-        </Meldung>
+        <AenderungMeldung aenderungen={materialHinweis} className="mt-6 print:hidden">
+          <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
+            <Button type="submit" variant="text" size="sm">
+              {AENDERUNG_UEBERNEHMEN}
+            </Button>
+          </form>
+          <form action={behalteMaterial.bind(null, ex.id)}>
+            <Button type="submit" variant="text" size="sm">
+              {AENDERUNG_BEIBEHALTEN}
+            </Button>
+          </form>
+        </AenderungMeldung>
       )}
 
       {/* Eckdaten — unterhalb des Bildes.

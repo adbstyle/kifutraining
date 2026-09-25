@@ -111,8 +111,13 @@ function istFarbe(v: unknown): v is FarbSlug {
 }
 
 /** Schlüssel eines Postens: Art und Farbe bestimmen, was zusammengezählt wird. */
-function schluessel(art: MaterialArt, farbe: FarbSlug | null): string {
-  return `${art}:${farbe ?? ""}`;
+export function schluessel(p: { art: MaterialArt; farbe: FarbSlug | null }): string {
+  return `${p.art}:${p.farbe ?? ""}`;
+}
+
+/** Die Reihenfolge der Liste: Katalog, darin die Farbreihenfolge. */
+function rang(p: { art: MaterialArt; farbe: FarbSlug | null }): number {
+  return MATERIAL_ARTEN.indexOf(p.art) * 100 + (p.farbe ? farbSlugs.indexOf(p.farbe) + 1 : 0);
 }
 
 /** Die Farbe, unter der ein Posten geführt wird: färbbares Material immer mit
@@ -129,15 +134,13 @@ function wirksameFarbe(art: MaterialArt, farbe: unknown): FarbSlug | null {
 export function normalisiere(posten: readonly MaterialPosten[]): MaterialPosten[] {
   const summen = new Map<string, MaterialPosten>();
   for (const p of posten) {
-    const k = schluessel(p.art, p.farbe);
+    const k = schluessel(p);
     const bisher = summen.get(k);
     summen.set(k, {
       ...p,
       menge: Math.min(MATERIAL_MENGE_MAX, (bisher?.menge ?? 0) + p.menge),
     });
   }
-  const rang = (p: MaterialPosten) =>
-    MATERIAL_ARTEN.indexOf(p.art) * 100 + (p.farbe ? farbSlugs.indexOf(p.farbe) + 1 : 0);
   return [...summen.values()].sort((a, b) => rang(a) - rang(b));
 }
 
@@ -239,8 +242,8 @@ export function materialAenderungen(
   vorschlag: readonly MaterialPosten[],
 ): MaterialAenderung[] {
   if (basis === null) return [];
-  const vorher = new Map(basis.map((p) => [schluessel(p.art, p.farbe), p]));
-  const nachher = new Map(vorschlag.map((p) => [schluessel(p.art, p.farbe), p]));
+  const vorher = new Map(basis.map((p) => [schluessel(p), p]));
+  const nachher = new Map(vorschlag.map((p) => [schluessel(p), p]));
   const aenderungen: MaterialAenderung[] = [];
   for (const k of new Set([...vorher.keys(), ...nachher.keys()])) {
     const a = vorher.get(k);
@@ -249,10 +252,12 @@ export function materialAenderungen(
     if ((a?.menge ?? 0) !== (b?.menge ?? 0))
       aenderungen.push({ art: p.art, farbe: p.farbe, vorher: a?.menge ?? 0, nachher: b?.menge ?? 0 });
   }
-  const rang = (p: MaterialAenderung) =>
-    MATERIAL_ARTEN.indexOf(p.art) * 100 + (p.farbe ? farbSlugs.indexOf(p.farbe) + 1 : 0);
   return aenderungen.sort((x, y) => rang(x) - rang(y));
 }
+
+/** Die beiden Antworten auf den Hinweis — dieselben Worte an jeder Stelle. */
+export const AENDERUNG_UEBERNEHMEN = "Neuen Vorschlag übernehmen";
+export const AENDERUNG_BEIBEHALTEN = "Material beibehalten";
 
 /** Die Änderungen als eine Zeile Text — «Pylonen, rot: 4 → 5 · Tore: 2 → 0». */
 export function aenderungenText(aenderungen: readonly MaterialAenderung[]): string {
