@@ -1,21 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Snackbar } from "@/components/ui";
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 
-/** Kurze Erfolgsmeldung (z. B. nach Erstellen/Bearbeiten), liest einen
- *  Query-Param via Prop, blendet sich nach ein paar Sekunden aus. */
-export function Flash({ message }: { message: string }) {
-  const [open, setOpen] = useState(true);
+/** Meldet eine Bestätigung, die über die Adresse in diese Ansicht gereist ist
+ *  (etwa `?created=1` nach dem Erstellen), an den Snackbar-Platz. Die Meldung
+ *  kann nicht vor dem Wechsel entstehen: Der Platz verwirft beim Pfadwechsel
+ *  alles, was auf der alten Ansicht gemeldet wurde.
+ *
+ *  Danach nimmt sie ihre Parameter aus der Adresse, sonst käme die Bestätigung
+ *  beim Neuladen oder über «Zurück» ein zweites Mal (#234). Rendert nichts. */
+export function Flash({ message, param }: { message: string; param: string | readonly string[] }) {
+  const melde = useSnackbar();
+  const router = useRouter();
+  // Der Entwicklungsmodus lässt Effekte doppelt laufen; gemeldet wird einmal.
+  const gemeldet = useRef(false);
+
   useEffect(() => {
-    const t = setTimeout(() => setOpen(false), 4500);
-    return () => clearTimeout(t);
-  }, []);
-  return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-4">
-      <div className="pointer-events-auto">
-        <Snackbar open={open} message={message} onClose={() => setOpen(false)} />
-      </div>
-    </div>
-  );
+    if (gemeldet.current) return;
+    gemeldet.current = true;
+    melde(message);
+    const url = new URL(window.location.href);
+    for (const p of typeof param === "string" ? [param] : param) url.searchParams.delete(p);
+    router.replace(url.pathname + url.search + url.hash, { scroll: false });
+  }, [melde, message, param, router]);
+
+  return null;
 }

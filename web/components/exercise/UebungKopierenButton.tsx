@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Copy } from "lucide-react";
-import { IconButton, Snackbar, Tooltip } from "@/components/ui";
+import { IconButton, Tooltip } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { kopiereUebung } from "@/lib/actions/exercises";
 
 /**
@@ -31,29 +32,25 @@ export function UebungKopierenButton({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const melde = useSnackbar();
 
   function kopieren() {
-    setError(null);
     startTransition(async () => {
       const res = await kopiereUebung(exerciseId);
       if (res.ok) router.push(`/uebung/${res.slug}?kopiert=1`);
-      else setError(res.error);
+      else melde(res.error);
     });
   }
 
   return (
-    <>
-      <Tooltip label="Kopieren">
-        <IconButton
-          icon={Copy}
-          label={`„${name}" in meinen Bestand kopieren`}
-          size="sm"
-          disabled={pending}
-          onClick={kopieren}
-        />
-      </Tooltip>
-      <Snackbar open={!!error} message={error ?? ""} onClose={() => setError(null)} />
-    </>
+    <Tooltip label="Kopieren">
+      <IconButton
+        icon={Copy}
+        label={`„${name}" in meinen Bestand kopieren`}
+        size="sm"
+        disabled={pending}
+        onClick={kopieren}
+      />
+    </Tooltip>
   );
 }

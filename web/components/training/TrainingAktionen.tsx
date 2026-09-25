@@ -17,10 +17,10 @@ import {
   Dialog,
   IconButtonLink,
   OverflowMenu,
-  Snackbar,
   Tooltip,
   type MenuItemDef,
 } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import {
   SichtbarkeitDialoge,
   type SichtbarkeitSchritt,
@@ -76,7 +76,6 @@ export function TrainingAktionen({
   fehlendeBedingungen,
   varianten,
   aktiveVarianteId,
-  melde,
 }: {
   ort: "ansicht" | "editor";
   trainingId: string;
@@ -96,16 +95,10 @@ export function TrainingAktionen({
   /** Die angezeigte Variante — sie reist an Durchführen, Drucken und
    *  Bearbeiten mit (#203 AK 1). */
   aktiveVarianteId?: string;
-  /** Wohin die Rückmeldungen gehen. Der Editor führt bereits eine Snackbar am
-   *  unteren Rand und reicht sie hier herein; zwei fest verankerte lägen sonst
-   *  deckungsgleich übereinander. Ohne Angabe — auf der Ansichtsseite —
-   *  bringt die Reihe ihre eigene mit. */
-  melde?: (nachricht: string) => void;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [eigeneNotiz, setEigeneNotiz] = useState<string | null>(null);
-  const setNotice = melde ?? setEigeneNotiz;
+  const melde = useSnackbar();
   const [sichtbarkeit, setSichtbarkeit] = useState<SichtbarkeitSchritt | null>(null);
   // Was die Datenebene zuletzt vermisst hat. Die Vorschau in
   // `fehlendeBedingungen` rechnet aus dem Stand, den diese Seite beim Rendern
@@ -152,7 +145,7 @@ export function TrainingAktionen({
         // bei Trainings wie bei Übungen.
         router.push(`/training/${res.trainingId}?uebernommen=1`);
       } else {
-        setNotice(res.error);
+        melde(res.error);
       }
     });
   }
@@ -164,9 +157,9 @@ export function TrainingAktionen({
       setZielWahl(null);
       if (res.ok) {
         router.refresh();
-        setNotice(`Kopie in „${wahl.teamName}" gestellt.`);
+        melde(`Kopie in „${wahl.teamName}" gestellt.`);
       } else {
-        setNotice(res.error);
+        melde(res.error);
       }
     });
   }
@@ -177,7 +170,7 @@ export function TrainingAktionen({
       router.refresh();
       if (res.status === "published") {
         setSichtbarkeit(null);
-        setNotice("Das Training ist jetzt öffentlich.");
+        melde("Das Training ist jetzt öffentlich.");
       } else if (res.status === "incomplete") {
         // Zwischen zwei Blicken hat sich etwas geändert — die Bedingungen
         // stehen dann statt der Bestätigung da, nicht daneben. Genannt wird,
@@ -187,7 +180,7 @@ export function TrainingAktionen({
         setSichtbarkeit("unvollstaendig");
       } else {
         setSichtbarkeit(null);
-        setNotice(res.error);
+        melde(res.error);
       }
     });
   }
@@ -197,7 +190,7 @@ export function TrainingAktionen({
       const res = await setzeTrainingAufEntwurf(trainingId);
       setSichtbarkeit(null);
       router.refresh();
-      setNotice(
+      melde(
         res.ok ? "Das Training ist wieder ein Entwurf." : (res.error ?? "Fehlgeschlagen."),
       );
     });
@@ -340,16 +333,6 @@ export function TrainingAktionen({
             </p>
           )}
         </Dialog>
-      )}
-
-      {/* Nur wo die Reihe ihre Meldungen selbst trägt (Ansichtsseite). */}
-      {!melde && (
-        <Snackbar
-          open={eigeneNotiz != null}
-          message={eigeneNotiz ?? ""}
-          onClose={() => setEigeneNotiz(null)}
-          placement="fixed"
-        />
       )}
     </>
   );

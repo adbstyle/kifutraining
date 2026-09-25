@@ -13,9 +13,9 @@ import {
   IconButtonLink,
   KategorieChip,
   OverflowMenu,
-  Snackbar,
   Tooltip,
 } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { cn } from "@/lib/cn";
 import { TerminDialog } from "./TerminDialog";
 import {
@@ -41,7 +41,7 @@ export function TrainingsPlan({ plan }: { plan: Plan }) {
   const [aendern, setAendern] = useState<TerminZeile | null>(null);
   const [erneut, setErneut] = useState<TerminZeile | null>(null);
   const [loeschen, setLoeschen] = useState<TerminZeile | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const melde = useSnackbar();
 
   const nichtsMehrOffen = plan.kommend.length === 0;
 
@@ -51,7 +51,7 @@ export function TrainingsPlan({ plan }: { plan: Plan }) {
       const res = await aktualisiereTermin(aendern.id, felder);
       setAendern(null);
       router.refresh();
-      setNotice(res.ok ? "Termin geändert." : (res.error ?? "Fehlgeschlagen."));
+      melde(res.ok ? "Termin geändert." : (res.error ?? "Fehlgeschlagen."));
     });
   }
 
@@ -61,7 +61,7 @@ export function TrainingsPlan({ plan }: { plan: Plan }) {
       const res = await setzeErneutAn(erneut.training.id, felder);
       setErneut(null);
       router.refresh();
-      setNotice(
+      melde(
         res.ok
           ? "Als eigenständige Kopie erneut angesetzt."
           : res.error,
@@ -74,7 +74,7 @@ export function TrainingsPlan({ plan }: { plan: Plan }) {
       const res = await entferneTermin(t.id);
       setLoeschen(null);
       router.refresh();
-      setNotice(
+      melde(
         res.ok
           ? "Termin entfernt. Das Training bleibt unter „Trainings“."
           : (res.error ?? "Fehlgeschlagen."),
@@ -305,8 +305,6 @@ export function TrainingsPlan({ plan }: { plan: Plan }) {
           bleibt unter „Trainings“ und lässt sich jederzeit neu ansetzen.
         </p>
       </Dialog>
-
-      <Snackbar open={notice != null} message={notice ?? ""} onClose={() => setNotice(null)} />
     </>
   );
 }

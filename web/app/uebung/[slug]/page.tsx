@@ -83,6 +83,9 @@ function anzahlText(a: ExerciseDetail["anzahl_kinder"]): string | null {
   return null;
 }
 
+/** Die Parameter, über die eine Bestätigung auf diese Seite reist. */
+const FLASH_PARAMS = ["created", "updated", "kopiert"] as const;
+
 export default async function ExerciseDetailPage({
   params,
   searchParams,
@@ -154,11 +157,7 @@ export default async function ExerciseDetailPage({
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-      {flash && (
-        <div className="print:hidden">
-          <Flash message={flash} />
-        </div>
-      )}
+      {flash && <Flash message={flash} param={FLASH_PARAMS} />}
       <div className="print:hidden">
         <Breadcrumbs items={crumbs} />
       </div>

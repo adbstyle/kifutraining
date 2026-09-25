@@ -20,9 +20,9 @@ import {
   IconButton,
   KategorieChip,
   OverflowMenu,
-  Snackbar,
   Tooltip,
 } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { TerminDialog } from "./TerminDialog";
 import { entferneTeamTraining, uebernimmZuMir } from "@/lib/actions/team-trainings";
 import { erstelleTermin, setzeErneutAn, type TerminFelder } from "@/lib/actions/termine";
@@ -44,7 +44,7 @@ export function TeamTrainingsListe({
   const [pending, startTransition] = useTransition();
   const [entfernen, setEntfernen] = useState<TeamTrainingRow | null>(null);
   const [ansetzen, setAnsetzen] = useState<TeamTrainingRow | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const melde = useSnackbar();
 
   /** Ansetzen und erneut Ansetzen sind derselbe Vorgang aus Sicht des Trainers
    *  — nur führt der zweite über eine eigenständige Kopie (Story 8). Welcher
@@ -58,12 +58,12 @@ export function TeamTrainingsListe({
         : await erstelleTermin(ansetzen.id, felder);
       setAnsetzen(null);
       if (!res.ok) {
-        setNotice(res.error);
+        melde(res.error);
         return;
       }
       // In den Trainingsplan wechseln — dort landet die neue Einheit. Die
-      // Bestätigung reist über die Adresse mit: eine Snackbar von hier stürbe
-      // mit dieser Komponente, sobald der Wechsel sie abräumt. Der Wechsel lädt
+      // Bestätigung reist über die Adresse mit: eine Snackbar von hier fiele
+      // beim Wechsel der Ansicht weg, weil sie zur alten gehört. Der Wechsel lädt
       // die Zielansicht ohnehin frisch; ein zusätzliches Auffrischen erübrigt sich.
       router.push(`/team/${teamId}?angesetzt=1`);
     });
@@ -72,7 +72,7 @@ export function TeamTrainingsListe({
   function uebernehmen(t: TeamTrainingRow) {
     startTransition(async () => {
       const res = await uebernimmZuMir(t.id);
-      setNotice(
+      melde(
         res.ok
           ? `„${t.name}" liegt jetzt als eigene Kopie bei dir.`
           : res.error,
@@ -86,9 +86,9 @@ export function TeamTrainingsListe({
       setEntfernen(null);
       if (res.ok) {
         router.refresh();
-        setNotice(`„${t.name}" wurde aus dem Team entfernt.`);
+        melde(`„${t.name}" wurde aus dem Team entfernt.`);
       } else {
-        setNotice(res.error ?? "Entfernen fehlgeschlagen.");
+        melde(res.error ?? "Entfernen fehlgeschlagen.");
       }
     });
   }
@@ -255,8 +255,6 @@ export function TeamTrainingsListe({
           bestehen — sie sind eigenständig.
         </p>
       </Dialog>
-
-      <Snackbar open={notice != null} message={notice ?? ""} onClose={() => setNotice(null)} />
     </>
   );
 }

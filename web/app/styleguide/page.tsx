@@ -1797,12 +1797,25 @@ export default function Styleguide() {
           denn der Dialog nennt seine Handlung auch im Text.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Die Snackbar kennt zwei Platzierungen: <code>inline</code> folgt dem
-          Dokumentfluss und passt, solange der auslösende Knopf daneben liegt;{" "}
-          <code>fixed</code> heftet sie an den unteren Rand des Sichtfelds. Auf
-          langen Seiten ist <code>fixed</code> Pflicht — hängt die Meldung im
-          Fluss am Seitenende, steht sie unter dem gesamten Inhalt und erreicht
-          niemanden, der oben geklickt hat.
+          Die Snackbar meldet einen <strong>Vorgang</strong>, der Banner (22)
+          einen <strong>Zustand</strong>. Darum hat sie genau einen Platz: unten
+          in der Mitte, für die ganze Anwendung. Niemand rendert sie selbst —
+          gemeldet wird über <code>useSnackbar()</code>, und der Platz im
+          Root-Layout zeigt immer nur <strong>eine</strong>. Weitere warten;
+          ihre Zeit läuft erst, wenn sie erscheinen. Nach 6 s geht sie von
+          selbst, solange nicht der Zeiger auf ihr liegt oder der Fokus in ihr
+          steht; das X schliesst sie sofort.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Sie ist <strong>tonlos</strong>: Ob etwas gescheitert ist, sagt der
+          Text, nicht die Farbe. Die Vorlesehilfe liest sie eingereiht vor, auch
+          einen Fehler — unterbrechen darf nur ein Banner. Sie gehört zur
+          Ansicht, in der sie entstand, und fällt beim Wechsel weg; wer eine
+          Bestätigung für die Zielansicht braucht, schickt sie über die Adresse
+          mit (<code>Flash</code>). Höchstens eine Aktion — Rückgängig, Erneut
+          versuchen —, nie ein blosses «OK». Und sie liegt unter jedem Dialog:
+          Scheitert ein Vorgang und bleibt der Dialog offen, steht der Grund als
+          Banner im Dialog.
         </p>
         <OverlaysDemo />
       </Section>

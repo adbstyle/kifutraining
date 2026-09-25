@@ -9,6 +9,7 @@ import {
   verschiebeVariante,
 } from "@/lib/actions/varianten";
 import { VARIANTE_VORGABENAME, type Variante } from "@/lib/varianten";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 
 /**
  * Das Varianten-Modell des Editors (#209): die Varianten des Hauptteils, ihre
@@ -42,14 +43,13 @@ import { VARIANTE_VORGABENAME, type Variante } from "@/lib/varianten";
  */
 export function useVariantenModell({
   varianten: vomServer,
-  melde,
 }: {
   /** Die Varianten, wie sie vom Server kamen (in ihrer `position`-Folge). */
   varianten: readonly Variante[];
-  /** Was in die Snackbar geht: abgelehnte Änderungen. */
-  melde: (text: string) => void;
 }) {
   const router = useRouter();
+  // Was in die Snackbar geht: abgelehnte Änderungen.
+  const melde = useSnackbar();
   const [varianten, setVarianten] = useState<readonly Variante[]>(vomServer);
   const gesehen = useRef(vomServer);
   if (gesehen.current !== vomServer) {

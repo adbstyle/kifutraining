@@ -85,7 +85,10 @@ export default async function TrainingViewPage({
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
       {sp.uebernommen && (
-        <Flash message="Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen." />
+        <Flash
+          message="Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen."
+          param="uebernommen"
+        />
       )}
       {/* Die Aktionen stehen auf der Brotkrumen-Zeile, rechtsbündig — dieselbe
           Stelle wie im Editor (#249 AK 8). Dort oben gehören sie hin: Sie
