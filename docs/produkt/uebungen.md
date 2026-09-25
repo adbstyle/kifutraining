@@ -203,7 +203,8 @@ Browser, bevor der Upload beginnt, auf höchstens zweitausend Bildpunkte an der 
 Jede Übung, die ein Trainer ansehen darf, lässt sich einzeln ausdrucken — auch ohne Konto und
 ohne dafür ein Training anzulegen. Das Blatt trägt Name, Alterskategorien, Bild oder Diagramm,
 den Trainingsteil oder Block, im Kinderfussball-Hauptteil dessen Kategorie, Feldtyp oder
-Spielfeldgrösse, dazu Kinderzahl und Material — die Liste und darunter die Ergänzung —, danach Ablauf und Varianten und zuunterst, was
+Spielfeldgrösse, dazu die Kinderzahl, danach Ablauf und Varianten, dann das Material — die
+Liste und darunter die Ergänzung — und zuunterst, was
 der Einordnung dient: Übungstyp und Erscheinungsform. Diese Reihenfolge gilt auf dem Papier wie
 am Bildschirm — wer eine Übung öffnet, liest zuerst, was gemacht wird, und trifft erst danach
 auf die beiden Einordnungsangaben, die dort beisammenstehen. Führt die Übung weder das eine
