@@ -9,9 +9,11 @@ import {
   MATERIAL_ARTEN,
   MATERIAL_KATALOG,
   MATERIAL_MENGE_MAX,
+  aenderungenText,
   istMaterialArt,
   normalisiere,
   postenText,
+  type MaterialAenderung,
   type MaterialArt,
   type MaterialPosten,
 } from "@/lib/material";
@@ -207,6 +209,35 @@ export function VorschlagMeldung({
       <div className="mt-2">
         <Button type="button" variant="text" size="sm" onClick={onUebernehmen}>
           Vorschlag übernehmen
+        </Button>
+      </div>
+    </Meldung>
+  );
+}
+
+/** Der Hinweis, dass eine Diagrammänderung das Material verändert hat (Story
+ *  #269): was sich geändert hat, und die Wahl zwischen dem neuen Vorschlag und
+ *  dem bisherigen Material. Wirksam wird die Wahl beim Speichern. */
+export function AenderungMeldung({
+  aenderungen,
+  onUebernehmen,
+  onBeibehalten,
+}: {
+  aenderungen: readonly MaterialAenderung[];
+  onUebernehmen: () => void;
+  onBeibehalten: () => void;
+}) {
+  return (
+    <Meldung tone="erfolg" role="status">
+      <p>
+        Das Feld-Diagramm zeigt inzwischen anderes Material: {aenderungenText(aenderungen)}.
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button type="button" variant="text" size="sm" onClick={onUebernehmen}>
+          Neuen Vorschlag übernehmen
+        </Button>
+        <Button type="button" variant="text" size="sm" onClick={onBeibehalten}>
+          Material beibehalten
         </Button>
       </div>
     </Meldung>

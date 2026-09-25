@@ -21,7 +21,9 @@ import {
   MATERIAL_ARTEN,
   MATERIAL_KATALOG,
   SPIELER_STANDARDFARBE,
+  aenderungenText,
   gleicheListe,
+  materialAenderungen,
   materialVorschlag,
   parseMaterialBasis,
   parseMaterialListe,
@@ -218,6 +220,31 @@ pruefe("Vergleich: gleiche Normalform ist gleich, jede Mengenänderung nicht", (
   const b = parseMaterialListe([{ art: "pylone", menge: 4 }, { art: "tor", menge: 2 }]);
   assert.ok(gleicheListe(a, b));
   assert.ok(!gleicheListe(a, parseMaterialListe([{ art: "tor", menge: 2 }, { art: "pylone", menge: 5 }])));
+});
+
+pruefe("Änderungen: nie übernommen oder unverändert heisst kein Hinweis", () => {
+  const v = parseMaterialListe([{ art: "tor", menge: 2 }]);
+  assert.deepEqual(materialAenderungen(null, v), []);
+  assert.deepEqual(materialAenderungen(v, v), []);
+});
+
+pruefe("Änderungen: mehr, weniger, neu und weggefallen, in Listenreihenfolge", () => {
+  const basis = parseMaterialListe([{ art: "tor", menge: 2 }, { art: "pylone", farbe: "rot", menge: 4 }]);
+  const jetzt = parseMaterialListe([{ art: "pylone", farbe: "rot", menge: 5 }, { art: "fussball", menge: 3 }]);
+  const a = materialAenderungen(basis, jetzt);
+  assert.deepEqual(a, [
+    { art: "tor", farbe: null, vorher: 2, nachher: 0 },
+    { art: "pylone", farbe: "rot", vorher: 4, nachher: 5 },
+    { art: "fussball", farbe: null, vorher: 0, nachher: 3 },
+  ]);
+  assert.equal(aenderungenText(a), "Tore: 2 → 0 · Pylonen, rot: 4 → 5 · Fussbälle: 0 → 3");
+});
+
+pruefe("Änderungen: eine verschobene Figur ändert den Vorschlag nicht", () => {
+  const vorher = materialVorschlag(diagramm(sym("pylone"), sym("spieler", "rot"), sym("spieler", "blau")));
+  const verschoben = diagramm(sym("pylone"), sym("spieler", "rot"), sym("spieler", "blau"));
+  (verschoben.elemente[1] as { x: number }).x = 900;
+  assert.deepEqual(materialAenderungen(vorher, materialVorschlag(verschoben)), []);
 });
 
 pruefe("Text: Einzahl, Mehrzahl und Farbe", () => {

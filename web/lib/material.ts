@@ -220,6 +220,47 @@ export function gleicheListe(a: readonly MaterialPosten[], b: readonly MaterialP
   );
 }
 
+/** Eine Änderung des Vorschlags gegenüber der Basis: Art und Farbe mit der
+ *  Menge vorher und nachher (0 = nicht vorhanden). */
+export type MaterialAenderung = {
+  art: MaterialArt;
+  farbe: FarbSlug | null;
+  vorher: number;
+  nachher: number;
+};
+
+/** Was eine Diagrammänderung am Material verändert hat (Story #269) — die
+ *  Posten, in denen der heutige Vorschlag von der Basis abweicht. Leer, wenn
+ *  nichts abweicht oder der Vorschlag nie übernommen wurde (Basis `null`):
+ *  eigene Anpassungen an der Liste zählen nie, verglichen wird Vorschlag mit
+ *  Vorschlag. */
+export function materialAenderungen(
+  basis: readonly MaterialPosten[] | null,
+  vorschlag: readonly MaterialPosten[],
+): MaterialAenderung[] {
+  if (basis === null) return [];
+  const vorher = new Map(basis.map((p) => [schluessel(p.art, p.farbe), p]));
+  const nachher = new Map(vorschlag.map((p) => [schluessel(p.art, p.farbe), p]));
+  const aenderungen: MaterialAenderung[] = [];
+  for (const k of new Set([...vorher.keys(), ...nachher.keys()])) {
+    const a = vorher.get(k);
+    const b = nachher.get(k);
+    const p = (b ?? a)!;
+    if ((a?.menge ?? 0) !== (b?.menge ?? 0))
+      aenderungen.push({ art: p.art, farbe: p.farbe, vorher: a?.menge ?? 0, nachher: b?.menge ?? 0 });
+  }
+  const rang = (p: MaterialAenderung) =>
+    MATERIAL_ARTEN.indexOf(p.art) * 100 + (p.farbe ? farbSlugs.indexOf(p.farbe) + 1 : 0);
+  return aenderungen.sort((x, y) => rang(x) - rang(y));
+}
+
+/** Die Änderungen als eine Zeile Text — «Pylonen, rot: 4 → 5 · Tore: 2 → 0». */
+export function aenderungenText(aenderungen: readonly MaterialAenderung[]): string {
+  return aenderungen
+    .map((a) => `${postenBezeichnung(a, 2)}: ${a.vorher} → ${a.nachher}`)
+    .join(" · ");
+}
+
 /** Die Bezeichnung eines Postens ohne Menge — «Pylone, orange» bzw. im Plural
  *  «Pylonen, orange». */
 export function postenBezeichnung(p: Pick<MaterialPosten, "art" | "farbe">, menge = 1): string {

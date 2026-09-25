@@ -11,6 +11,8 @@ import {
   PrintButton,
   UebungsBild,
   MaterialListe,
+  Meldung,
+  Button,
 } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { cn } from "@/lib/cn";
@@ -32,7 +34,15 @@ import {
 import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
 import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
-import { hatMaterial, parseMaterialListe } from "@/lib/material";
+import {
+  aenderungenText,
+  hatMaterial,
+  materialAenderungen,
+  materialBasisAusDiagramm,
+  parseMaterialBasis,
+  parseMaterialListe,
+} from "@/lib/material";
+import { behalteMaterial, uebernehmeMaterialVorschlag } from "@/lib/actions/material";
 
 export const dynamic = "force-dynamic";
 
@@ -131,6 +141,9 @@ export default async function ExerciseDetailPage({
   ].filter(Boolean);
   const anzahl = anzahlText(ex.anzahl_kinder);
   const materialListe = parseMaterialListe(ex.material_liste);
+  const materialHinweis = isOwner
+    ? materialAenderungen(parseMaterialBasis(ex.material_basis), materialBasisAusDiagramm(ex.diagramm))
+    : [];
   const hatEckdaten =
     !!spielfeld ||
     !!ex.hauptteilkategorie ||
@@ -227,6 +240,30 @@ export default async function ExerciseDetailPage({
           sizes="(max-width: 896px) 100vw, 896px"
         />
       </div>
+      {/* Hat eine Diagrammänderung das Material verändert (Story #269)? Nur
+          die Eigentümerin sieht es — sie allein kann antworten. Nicht im
+          Druck: der Hinweis gilt dem Bearbeiten, nicht dem Platz. */}
+      {materialHinweis.length > 0 && (
+        <Meldung tone="erfolg" role="status" className="mt-6 print:hidden">
+          <p>
+            Das Feld-Diagramm zeigt inzwischen anderes Material:{" "}
+            {aenderungenText(materialHinweis)}.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
+              <Button type="submit" variant="text" size="sm">
+                Neuen Vorschlag übernehmen
+              </Button>
+            </form>
+            <form action={behalteMaterial.bind(null, ex.id)}>
+              <Button type="submit" variant="text" size="sm">
+                Material beibehalten
+              </Button>
+            </form>
+          </div>
+        </Meldung>
+      )}
+
       {/* Eckdaten — unterhalb des Bildes.
 
           Der Trainingsteil steht am Bildschirm in den Brotkrumen und wäre hier

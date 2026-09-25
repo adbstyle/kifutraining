@@ -42,12 +42,13 @@ import { EinordnungField } from "@/components/exercise/EinordnungField";
 import { UmwandelnDialog, type Umwandlung } from "@/components/exercise/UmwandelnDialog";
 import { SpielfeldgroesseField } from "@/components/exercise/SpielfeldgroesseField";
 import {
+  AenderungMeldung,
   MaterialField,
   VorschlagMeldung,
   listeAusZeilen,
   zeilenAus,
 } from "@/components/exercise/MaterialField";
-import { gleicheListe, type MaterialPosten } from "@/lib/material";
+import { gleicheListe, materialAenderungen, type MaterialPosten } from "@/lib/material";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
 
@@ -168,6 +169,11 @@ export function ExerciseForm({
     materialBasis === null &&
     vorschlag.length > 0 &&
     !(aktuelleListe.ok && gleicheListe(aktuelleListe.liste, vorschlag));
+
+  // Hat eine Diagrammänderung den übernommenen Vorschlag verändert (Story
+  // #269)? Verglichen wird Vorschlag mit Basis — eigene Anpassungen an der
+  // Liste zählen nicht.
+  const aenderungen = basisBestaetigt ? [] : materialAenderungen(materialBasis, vorschlag);
 
   function uebernehmeVorschlag() {
     setMaterialZeilen(zeilenAus(vorschlag));
@@ -620,8 +626,18 @@ export function ExerciseForm({
         ergaenzung={initial.material ?? []}
         error={materialError ?? undefined}
         hinweis={
-          zeigtVorschlag ? (
+          aenderungen.length > 0 ? (
+            <AenderungMeldung
+              aenderungen={aenderungen}
+              onUebernehmen={uebernehmeVorschlag}
+              onBeibehalten={() => setBasisBestaetigt(true)}
+            />
+          ) : zeigtVorschlag ? (
             <VorschlagMeldung vorschlag={vorschlag} onUebernehmen={uebernehmeVorschlag} />
+          ) : basisBestaetigt ? (
+            <p className="type-body-small text-on-surface-mittel">
+              Wird mit dem Speichern übernommen.
+            </p>
           ) : undefined
         }
       />
