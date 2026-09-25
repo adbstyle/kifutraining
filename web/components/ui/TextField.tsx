@@ -28,7 +28,7 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
       Schriftgrad und schwebendes Label sind dieselben. Eine dichte Bauform ist
       dasselbe Feld, enger gestellt; sähe sie anders aus, wäre sie ein zweites
       Feld, und die Filterzeile müsste erklären, warum ihre Felder nicht wie
-      Felder aussehen. */
+      Felder aussehen. Zahlenfelder (`type="number"`) stehen immer dicht. */
   dense?: boolean;
 }
 
@@ -115,10 +115,19 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       dense = false,
       id,
       className,
+      onKeyDown,
+      onWheel,
       ...props
     },
     ref,
   ) => {
+    // Zahlenfelder (`type="number"`) stehen immer in der dichten Bauform —
+    // auf der Höhe der Auswahlfelder, neben denen sie meist stehen — und
+    // zählen nie von selbst: keine Pfeile im Feld, und weder Pfeiltasten noch
+    // Mausrad ändern den Wert. Eine Zahl wird getippt; ein versehentliches
+    // Scrollen über dem fokussierten Feld verstellte sie sonst unbemerkt.
+    const zahl = props.type === "number";
+    const dicht = dense || zahl;
     // Feld-id aus React statt aus dem Label-Text: Dialoge halten ihre Felder auch
     // im geschlossenen Zustand im DOM (natives <dialog>), zwei gleichzeitig
     // gemountete Dialoge mit gleichem Label ergäben sonst dieselbe id — Label-Klick
@@ -132,8 +141,10 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
 
     const feld = cn(
       "peer type-body-large w-full rounded-flaeche kontur bg-transparent px-4 text-on-surface outline-none transition-[border-color] duration-150 focus:border-2",
-      dense ? "h-12" : "h-14",
+      dicht ? "h-12" : "h-14",
       Icon && "pl-11",
+      zahl &&
+        "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
       // Rangfolge der Rahmenfarbe: error > befund > focus. Der Fokus färbt nur
       // den ruhigen Rahmen um; einen Befund überschriebe er sonst genau in dem
       // Moment, in dem hingeschaut wird. Sichtbar bleibt der Fokus über den
@@ -164,6 +175,16 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             aria-invalid={error || undefined}
             aria-describedby={hinweisId}
             className={feld}
+            onKeyDown={(e) => {
+              if (zahl && (e.key === "ArrowUp" || e.key === "ArrowDown")) e.preventDefault();
+              onKeyDown?.(e);
+            }}
+            onWheel={(e) => {
+              // Der Fokus geht: nur ein fokussiertes Zahlenfeld zählt beim
+              // Scrollen, und die Seite scrollt so ungestört weiter.
+              if (zahl && document.activeElement === e.currentTarget) e.currentTarget.blur();
+              onWheel?.(e);
+            }}
             {...props}
           />
           <label
