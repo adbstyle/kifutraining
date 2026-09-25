@@ -1,8 +1,8 @@
 "use client";
 
 import { useId } from "react";
-import { Plus, Trash2 } from "lucide-react";
-import { Button, IconButton, Meldung, Select, TextArea, TextField } from "@/components/ui";
+import { ListPlus, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Banner, Button, IconButton, Select, TextArea, TextField } from "@/components/ui";
 import { farbSlugs, type FarbSlug } from "@/lib/diagramm";
 import {
   FARBE_LABEL,
@@ -196,7 +196,7 @@ export function vorschlagText(liste: readonly MaterialPosten[]): string {
 }
 
 /** Das Angebot, den Vorschlag des Diagramms zu übernehmen (Story #267 AK 1/2). */
-export function VorschlagMeldung({
+export function VorschlagBanner({
   vorschlag,
   onUebernehmen,
 }: {
@@ -204,36 +204,36 @@ export function VorschlagMeldung({
   onUebernehmen: () => void;
 }) {
   return (
-    <Meldung tone="erfolg" role="status">
-      <p>Das Feld-Diagramm zeigt: {vorschlagText(vorschlag)}.</p>
-      <div className="mt-2">
+    <Banner
+      icon={ListPlus}
+      actions={
         <Button type="button" variant="text" size="sm" onClick={onUebernehmen}>
           Vorschlag übernehmen
         </Button>
-      </div>
-    </Meldung>
+      }
+    >
+      Das Feld-Diagramm zeigt: {vorschlagText(vorschlag)}.
+    </Banner>
   );
 }
 
 /** Der Hinweis, dass eine Diagrammänderung das Material verändert hat (Story
- *  #269): was sich geändert hat, und die Wahl zwischen dem neuen Vorschlag und
- *  dem bisherigen Material. Die Knöpfe bringt der Aufrufer mit — im Formular
+ *  #269): was sich geändert hat, und die Wahl zwischen dem bisherigen Material
+ *  und dem neuen Vorschlag. Die Knöpfe bringt der Aufrufer mit — im Formular
  *  wirken sie beim Speichern, auf der Übungsseite sofort. */
-export function AenderungMeldung({
+export function AenderungBanner({
   aenderungen,
-  children,
+  actions,
   className,
 }: {
   aenderungen: readonly MaterialAenderung[];
-  children: React.ReactNode;
+  /** «Material beibehalten» zuerst, «Neuen Vorschlag übernehmen» danach. */
+  actions: React.ReactNode;
   className?: string;
 }) {
   return (
-    <Meldung tone="erfolg" role="status" className={className}>
-      <p>
-        Das Feld-Diagramm zeigt inzwischen anderes Material: {aenderungenText(aenderungen)}.
-      </p>
-      <div className="mt-2 flex flex-wrap gap-2">{children}</div>
-    </Meldung>
+    <Banner icon={RefreshCw} actions={actions} className={className}>
+      Das Feld-Diagramm zeigt inzwischen anderes Material: {aenderungenText(aenderungen)}.
+    </Banner>
   );
 }

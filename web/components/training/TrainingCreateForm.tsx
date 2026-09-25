@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { TextField, TextArea, Button, AltersstufeField, Meldung } from "@/components/ui";
+import { TextField, TextArea, Button, AltersstufeField, Banner } from "@/components/ui";
 import { StufenField } from "./StufenField";
 import { kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
 import { TRAINING_NAME_MAX, ZIEL_MAX } from "@/lib/training";
@@ -55,7 +55,7 @@ export function TrainingCreateForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       {state.status === "error" && state.message && (
-        <Meldung tone="fehler">{state.message}</Meldung>
+        <Banner tone="fehler">{state.message}</Banner>
       )}
 
       <TextField

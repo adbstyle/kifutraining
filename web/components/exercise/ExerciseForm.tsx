@@ -9,7 +9,7 @@ import {
   MultiSelect,
   Button,
   AltersstufeField,
-  Meldung,
+  Banner,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
@@ -43,9 +43,9 @@ import { EinordnungField } from "@/components/exercise/EinordnungField";
 import { UmwandelnDialog, type Umwandlung } from "@/components/exercise/UmwandelnDialog";
 import { SpielfeldgroesseField } from "@/components/exercise/SpielfeldgroesseField";
 import {
-  AenderungMeldung,
+  AenderungBanner,
   MaterialField,
-  VorschlagMeldung,
+  VorschlagBanner,
   listeAusZeilen,
   zeilenAus,
 } from "@/components/exercise/MaterialField";
@@ -372,15 +372,15 @@ export function ExerciseForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-7">
-      {state.message && <Meldung tone="fehler">{state.message}</Meldung>}
+      {state.message && <Banner tone="fehler">{state.message}</Banner>}
 
       {/* Die Umwandlung ist vorgemerkt, nicht geschehen: Das Formular zeigt
           bereits die Zielstufe, die Übung liegt aber unverändert in der
           Datenbank (Story 4 PC 5). Der Hinweis sagt, was noch fehlt. */}
       {umwandlung && (
-        <Meldung tone="erfolg">
+        <Banner>
           Umwandlung vorgemerkt — sie wird mit «Umwandeln und speichern» wirksam.
-        </Meldung>
+        </Banner>
       )}
 
       <TextField
@@ -642,16 +642,21 @@ export function ExerciseForm({
         error={materialError ?? undefined}
         hinweis={
           aenderungen.length > 0 ? (
-            <AenderungMeldung aenderungen={aenderungen}>
-              <Button type="button" variant="text" size="sm" onClick={uebernehmeVorschlag}>
-                {AENDERUNG_UEBERNEHMEN}
-              </Button>
-              <Button type="button" variant="text" size="sm" onClick={() => setBasisBestaetigt(true)}>
-                {AENDERUNG_BEIBEHALTEN}
-              </Button>
-            </AenderungMeldung>
+            <AenderungBanner
+              aenderungen={aenderungen}
+              actions={
+                <>
+                  <Button type="button" variant="text" size="sm" onClick={() => setBasisBestaetigt(true)}>
+                    {AENDERUNG_BEIBEHALTEN}
+                  </Button>
+                  <Button type="button" variant="text" size="sm" onClick={uebernehmeVorschlag}>
+                    {AENDERUNG_UEBERNEHMEN}
+                  </Button>
+                </>
+              }
+            />
           ) : zeigtVorschlag ? (
-            <VorschlagMeldung vorschlag={vorschlag} onUebernehmen={uebernehmeVorschlag} />
+            <VorschlagBanner vorschlag={vorschlag} onUebernehmen={uebernehmeVorschlag} />
           ) : basisBestaetigt ? (
             <p className="type-body-small text-on-surface-mittel">
               Wird mit dem Speichern übernommen.

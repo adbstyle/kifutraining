@@ -10,7 +10,7 @@ import {
   MultiSelect,
   IconButton,
   Badge,
-  Meldung,
+  Banner,
   SearchField,
 } from "@/components/ui";
 import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
@@ -261,7 +261,7 @@ export function ExercisePickerDialog({
           </div>
         )}
 
-        {error && <Meldung tone="fehler">{error}</Meldung>}
+        {error && <Banner tone="fehler">{error}</Banner>}
 
         {/* Trefferliste. Die Mindesthöhe ist das, was dem Dialog seine Statur
             gibt: Ohne sie fällt er auf seinen Inhalt zusammen, sobald die Liste
