@@ -50,7 +50,7 @@ export function SpielfeldgroesseField({
         />
         <span
           aria-hidden
-          className="type-body-large flex h-14 items-center text-on-surface-mittel"
+          className="type-body-large flex h-12 items-center text-on-surface-mittel"
         >
           ×
         </span>

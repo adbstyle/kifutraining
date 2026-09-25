@@ -152,7 +152,7 @@ export function MaterialField({
                       ? `${MATERIAL_KATALOG[z.art].einzahl} entfernen`
                       : "Material entfernen"
                   }
-                  className="mt-2"
+                  className="mt-0.5"
                   onClick={() => onZeilenChange(zeilen.filter((x) => x.key !== z.key))}
                 />
               </li>

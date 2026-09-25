@@ -1494,6 +1494,14 @@ export default function Styleguide() {
           die Filterzeile müsste erklären, warum ihre Felder nicht wie Felder
           aussehen.
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Zahlenfelder</strong> (<code>type=&quot;number&quot;</code>)
+          stehen immer dicht, auf der Höhe der Auswahlfelder, neben denen sie
+          meist stehen — etwa die Menge neben der Material-Art. Sie zählen nie
+          von selbst: keine Pfeile im Feld, und weder Pfeiltasten noch Mausrad
+          ändern den Wert. Eine Zahl wird getippt; ein Scrollen über dem
+          fokussierten Feld verstellte sie sonst unbemerkt.
+        </p>
         <div className="grid max-w-md gap-6">
           <TextField dense label="Verfügbare Kinder" type="number" min={1} leadingIcon={Users} />
           <TextField

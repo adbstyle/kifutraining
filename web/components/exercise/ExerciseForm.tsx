@@ -613,7 +613,7 @@ export function ExerciseForm({
             className="flex-1"
             defaultValue={initial.anzahl_kinder?.min ?? undefined}
           />
-          <span aria-hidden className="type-body-large flex h-14 items-center text-on-surface-mittel">
+          <span aria-hidden className="type-body-large flex h-12 items-center text-on-surface-mittel">
             –
           </span>
           <TextField
