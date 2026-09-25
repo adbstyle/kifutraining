@@ -32,13 +32,28 @@ create function pg_temp.material_vorschlag(p_diagramm jsonb) returns jsonb
 language sql
 immutable
 as $$
+  -- Dieselbe Trust-Boundary wie `parseDiagramm`/`istElement`
+  -- (web/lib/diagramm.ts): ein Diagramm ohne Versionsnummer gilt als keines,
+  -- ein strukturell kaputtes Symbol fällt weg.
   with symbole as (
     select e->>'typ' as typ, e->>'farbe' as farbe
     from jsonb_array_elements(
-      case when jsonb_typeof(p_diagramm->'elemente') = 'array'
+      case when jsonb_typeof(p_diagramm->'version') = 'number'
+            and jsonb_typeof(p_diagramm->'elemente') = 'array'
            then p_diagramm->'elemente' else '[]'::jsonb end
     ) as e
     where e->>'art' = 'symbol'
+      and jsonb_typeof(e->'id') = 'string'
+      and jsonb_typeof(e->'typ') = 'string'
+      and jsonb_typeof(e->'x') = 'number'
+      and jsonb_typeof(e->'y') = 'number'
+      and (e->'rotation' is null
+           or (jsonb_typeof(e->'rotation') = 'number'
+               and (e->>'rotation')::numeric in (0, 45, 90, 135, 180, 225, 270, 315)))
+      and (e->'pose' is null
+           or e->>'pose' in ('stehen', 'stehen-hinten', 'laufen', 'laufen-hinten',
+                             'dribbeln', 'passen', 'schiessen', 'graetschen'))
+      and (e->'spiegeln' is null or jsonb_typeof(e->'spiegeln') = 'boolean')
   ),
   standard(typ, farbe) as (
     values ('pylone', 'orange'), ('teller', 'gelb'), ('stange', 'weiss'),
