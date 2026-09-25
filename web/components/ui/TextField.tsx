@@ -1,6 +1,7 @@
 import { forwardRef, useId } from "react";
 import type { InputHTMLAttributes, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+import { ZahlInput } from "./ZahlInput";
 import { cn } from "@/lib/cn";
 
 export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -115,19 +116,17 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       dense = false,
       id,
       className,
-      onKeyDown,
-      onWheel,
       ...props
     },
     ref,
   ) => {
     // Zahlenfelder (`type="number"`) stehen immer in der dichten Bauform —
     // auf der Höhe der Auswahlfelder, neben denen sie meist stehen — und
-    // zählen nie von selbst: keine Pfeile im Feld, und weder Pfeiltasten noch
-    // Mausrad ändern den Wert. Eine Zahl wird getippt; ein versehentliches
-    // Scrollen über dem fokussierten Feld verstellte sie sonst unbemerkt.
+    // zählen nie von selbst: keine Pfeile im Feld (CSS unten), und weder
+    // Pfeiltasten noch Mausrad ändern den Wert (`ZahlInput`).
     const zahl = props.type === "number";
     const dicht = dense || zahl;
+    const Eingabe = zahl ? ZahlInput : "input";
     // Feld-id aus React statt aus dem Label-Text: Dialoge halten ihre Felder auch
     // im geschlossenen Zustand im DOM (natives <dialog>), zwei gleichzeitig
     // gemountete Dialoge mit gleichem Label ergäben sonst dieselbe id — Label-Klick
@@ -164,7 +163,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
               className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-mittel"
             />
           )}
-          <input
+          <Eingabe
             id={fid}
             ref={ref}
             /* Der Platzhalter treibt die Float-Mechanik (:placeholder-shown)
@@ -175,16 +174,6 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             aria-invalid={error || undefined}
             aria-describedby={hinweisId}
             className={feld}
-            onKeyDown={(e) => {
-              if (zahl && (e.key === "ArrowUp" || e.key === "ArrowDown")) e.preventDefault();
-              onKeyDown?.(e);
-            }}
-            onWheel={(e) => {
-              // Der Fokus geht: nur ein fokussiertes Zahlenfeld zählt beim
-              // Scrollen, und die Seite scrollt so ungestört weiter.
-              if (zahl && document.activeElement === e.currentTarget) e.currentTarget.blur();
-              onWheel?.(e);
-            }}
             {...props}
           />
           <label
