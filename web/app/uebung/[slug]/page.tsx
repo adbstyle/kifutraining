@@ -147,8 +147,7 @@ export default async function ExerciseDetailPage({
   const hatEckdaten =
     !!spielfeld ||
     !!ex.hauptteilkategorie ||
-    !!anzahl ||
-    hatMaterial(materialListe, ex.material);
+    !!anzahl;
   // Übungstyp und Erscheinungsform zählen bewusst NICHT zu den Eckdaten: sie
   // stehen seit Story #124 unterhalb des Ablaufs (siehe dort).
   const hatEinordnung = !!ex.uebungstyp || ex.erscheinungsform.length > 0;
@@ -240,30 +239,6 @@ export default async function ExerciseDetailPage({
           sizes="(max-width: 896px) 100vw, 896px"
         />
       </div>
-      {/* Hat eine Diagrammänderung das Material verändert (Story #269)? Nur
-          die Eigentümerin sieht es — sie allein kann antworten. Nicht im
-          Druck: der Hinweis gilt dem Bearbeiten, nicht dem Platz. */}
-      {materialHinweis.length > 0 && (
-        <AenderungBanner
-          aenderungen={materialHinweis}
-          className="mt-6 print:hidden"
-          actions={
-            <>
-              <form action={behalteMaterial.bind(null, ex.id)}>
-                <Button type="submit" variant="text" size="sm">
-                  {AENDERUNG_BEIBEHALTEN}
-                </Button>
-              </form>
-              <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
-                <Button type="submit" variant="text" size="sm">
-                  {AENDERUNG_UEBERNEHMEN}
-                </Button>
-              </form>
-            </>
-          }
-        />
-      )}
-
       {/* Eckdaten — unterhalb des Bildes.
 
           Der Trainingsteil steht am Bildschirm in den Brotkrumen und wäre hier
@@ -288,11 +263,6 @@ export default async function ExerciseDetailPage({
           </Meta>
         )}
         {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
-        {hatMaterial(materialListe, ex.material) && (
-          <Meta label="Material">
-            <MaterialListe liste={materialListe} ergaenzung={ex.material} />
-          </Meta>
-        )}
       </div>
 
       {/* Ablauf */}
@@ -326,6 +296,45 @@ export default async function ExerciseDetailPage({
               <li key={i}>{v}</li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* Material — hinter Ablauf und Varianten (PO 2026-09-25): Wer die Seite
+          öffnet, liest zuerst, was gemacht wird, und danach, was es dafür
+          braucht. Der Hinweis auf eine Diagrammänderung steht bei dem, was er
+          betrifft. */}
+      {(hatMaterial(materialListe, ex.material) || materialHinweis.length > 0) && (
+        // Nur der Hinweis, noch kein Material: auf dem Ausdruck stünde sonst
+        // eine leere Überschrift.
+        <section className={cn("mt-8", !hatMaterial(materialListe, ex.material) && "print:hidden")}>
+          <h2 className="type-title-medium mb-3 text-on-surface-mittel">Material</h2>
+          {/* Hat eine Diagrammänderung das Material verändert (Story #269)? Nur
+              die Eigentümerin sieht es — sie allein kann antworten. Nicht im
+              Druck: der Hinweis gilt dem Bearbeiten, nicht dem Platz. */}
+          {materialHinweis.length > 0 && (
+            <AenderungBanner
+              aenderungen={materialHinweis}
+              className="mb-4 print:hidden"
+              actions={
+                <>
+                  <form action={behalteMaterial.bind(null, ex.id)}>
+                    <Button type="submit" variant="text" size="sm">
+                      {AENDERUNG_BEIBEHALTEN}
+                    </Button>
+                  </form>
+                  <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
+                    <Button type="submit" variant="text" size="sm">
+                      {AENDERUNG_UEBERNEHMEN}
+                    </Button>
+                  </form>
+                </>
+              }
+            />
+          )}
+
+          <div className="type-body-large text-on-surface">
+            <MaterialListe liste={materialListe} ergaenzung={ex.material} />
+          </div>
         </section>
       )}
 
