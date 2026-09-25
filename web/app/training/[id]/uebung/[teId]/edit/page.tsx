@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
+import { materialBasisAusDiagramm } from "@/lib/material";
 import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
 import { updateFassung } from "@/lib/actions/fassung";
 import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
@@ -67,6 +68,8 @@ export default async function FassungBearbeitenPage({
         altersstufe={f.trainingAltersstufe}
         stufenWahl="fest"
         kontext="fassung"
+        materialVorschlag={materialBasisAusDiagramm(f.diagramm)}
+        materialBasis={f.materialBasis}
         initial={{
           name: f.name,
           trainingsteil: f.trainingsteil,
@@ -79,6 +82,7 @@ export default async function FassungBearbeitenPage({
           uebungstyp: f.uebungstyp,
           anzahl_kinder: f.anzahlKinder,
           material: f.material,
+          materialListe: f.materialListe,
           methodischer_fahrplan: f.fahrplan,
           aufbau: f.aufbau,
           varianten: f.varianten,

@@ -35,12 +35,27 @@ import {
   traegtHauptteilkategorie,
   traegtSpielfeldgroesse,
   traegtUebungstyp,
+  FELDTYP_MIT_SPIELFELD,
   type Altersstufe,
 } from "@/lib/altersstufe";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { EinordnungField } from "@/components/exercise/EinordnungField";
 import { UmwandelnDialog, type Umwandlung } from "@/components/exercise/UmwandelnDialog";
 import { SpielfeldgroesseField } from "@/components/exercise/SpielfeldgroesseField";
+import {
+  AenderungMeldung,
+  MaterialField,
+  VorschlagMeldung,
+  listeAusZeilen,
+  zeilenAus,
+} from "@/components/exercise/MaterialField";
+import {
+  AENDERUNG_BEIBEHALTEN,
+  AENDERUNG_UEBERNEHMEN,
+  gleicheListe,
+  materialAenderungen,
+  type MaterialPosten,
+} from "@/lib/material";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
 
@@ -55,7 +70,10 @@ export type ExerciseInitial = {
   hauptteilkategorie?: string | null;
   uebungstyp?: string | null;
   anzahl_kinder?: { min?: number | null; max?: number | null } | null;
+  /** Die freie Ergänzung zum Material. */
   material?: string[];
+  /** Material aus dem Diagramm-Vorrat (Epic #266). */
+  materialListe?: MaterialPosten[];
   methodischer_fahrplan?: {
     offen_starten?: string;
     ueben?: string[];
@@ -77,6 +95,8 @@ export function ExerciseForm({
   afterName,
   bildEntfernenMoeglich = false,
   fussnote = "Neue Übungen sind zunächst privat (Entwurf).",
+  materialVorschlag,
+  materialBasis = null,
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
@@ -100,6 +120,11 @@ export function ExerciseForm({
   bildEntfernenMoeglich?: boolean;
   /** Hinweis neben der Speichern-Schaltfläche. */
   fussnote?: React.ReactNode;
+  /** Der Material-Vorschlag des gespeicherten Diagramms (Story #267) — auf
+   *  dem Server gerechnet; ohne Diagramm leer oder nicht gesetzt. */
+  materialVorschlag?: MaterialPosten[];
+  /** Der Vorschlag bei der letzten Übernahme; `null` = nie übernommen. */
+  materialBasis?: MaterialPosten[] | null;
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const err = state.errors ?? {};
@@ -136,6 +161,33 @@ export function ExerciseForm({
   );
   const [aufbau, setAufbau] = useState(initial.aufbau ?? "");
 
+  // Material (Epic #266): die Zeilen der Liste und ob der Trainer den
+  // Vorschlag in dieser Bearbeitung übernommen hat — nur dann setzt der
+  // Server die Basis neu.
+  const [materialZeilen, setMaterialZeilen] = useState(() =>
+    zeilenAus(initial.materialListe ?? []),
+  );
+  const [materialError, setMaterialError] = useState<string | null>(null);
+  const [basisBestaetigt, setBasisBestaetigt] = useState(false);
+  const vorschlag = materialVorschlag ?? [];
+  const aktuelleListe = listeAusZeilen(materialZeilen);
+  const zeigtVorschlag =
+    !basisBestaetigt &&
+    materialBasis === null &&
+    vorschlag.length > 0 &&
+    !(aktuelleListe.ok && gleicheListe(aktuelleListe.liste, vorschlag));
+
+  // Hat eine Diagrammänderung den übernommenen Vorschlag verändert (Story
+  // #269)? Verglichen wird Vorschlag mit Basis — eigene Anpassungen an der
+  // Liste zählen nicht.
+  const aenderungen = basisBestaetigt ? [] : materialAenderungen(materialBasis, vorschlag);
+
+  function uebernehmeVorschlag() {
+    setMaterialZeilen(zeilenAus(vorschlag));
+    setMaterialError(null);
+    setBasisBestaetigt(true);
+  }
+
   // Das Feld-Gating kommt geschlossen aus lib/altersstufe.ts — derselben
   // Quelle, gegen die die Server Action prüft und die die DB-CHECKs spiegelt.
   // Weicht das Formular davon ab, verlangt es entweder ein Feld, das der Server
@@ -145,7 +197,8 @@ export function ExerciseForm({
   const zeigtForm = traegtErscheinungsform(stufe, teil);
   const zeigtTyp = traegtUebungstyp(stufe, teil);
   const zeigtFeldtyp = traegtFeldtyp(stufe);
-  const zeigtSpielfeld = traegtSpielfeldgroesse(stufe);
+  // Im Kinderfussball nur beim freien Feld (Story #272).
+  const zeigtSpielfeld = traegtSpielfeldgroesse(stufe, feld || null);
   // Das freie Spiel trägt eine Beschreibung statt des Fahrplans (Story 2).
   const istFreiesSpiel = zeigtHkat && hkat === FREIES_SPIEL;
 
@@ -213,7 +266,8 @@ export function ExerciseForm({
    *  die Zielstufe kennt, kommt aus dem Dialog (Einordnung, Alterskategorien,
    *  im Kinderfussball-Hauptteil die Kategorie), der Ablauftext wandert in die
    *  Form der Zielstufe (PC 2), und was sie nicht kennt, fällt weg (PC 4) —
-   *  Erscheinungsformen, Übungstyp, Feldtyp bzw. Spielfeldgrösse. Titel, Bild,
+   *  Erscheinungsformen, Übungstyp und ein Feldtyp ohne Meter. Die Meter des
+   *  freien Felds bzw. die Spielfeldgrösse gehen mit (Story #272). Titel, Bild,
    *  Diagramm, Anzahl Kinder, Material und Varianten bleiben unangetastet
    *  (PC 1); sie hängen an keinem Lehrmittel.
    *
@@ -233,13 +287,19 @@ export function ExerciseForm({
     setTeil(u.einordnung);
     setHkat(u.hauptteilkategorie ?? "");
     setKat(u.kategorien);
-    // Stufenfremde Angaben: die beiden Manuals führen getrennte Kataloge, und
-    // Feldtyp und Spielfeldgrösse schliessen einander aus.
+    // Stufenfremde Angaben: die beiden Manuals führen getrennte Kataloge.
     setForm([]);
     setUebungstyp("");
-    setFeld("");
-    setLaenge("");
-    setBreite("");
+    // Die Meter reisen mit (Story #272 PC 2/5): Das freie Feld wird zur
+    // Spielfeldgrösse des Juniorenfussballs, und eine Junioren-Übung mit
+    // Spielfeldgrösse wird eine Übung auf freiem Feld. Ohne Meter gibt es
+    // nichts zu übertragen, der Feldtyp beginnt dann leer.
+    const mitMetern = zeigtSpielfeld && laenge !== "" && breite !== "";
+    setFeld(u.altersstufe === "kinderfussball" && mitMetern ? FELDTYP_MIT_SPIELFELD : "");
+    if (!mitMetern) {
+      setLaenge("");
+      setBreite("");
+    }
     setUmwandlung(true);
     setDialogOffen(false);
   }
@@ -277,6 +337,16 @@ export function ExerciseForm({
     }
 
     setBildError(null);
+
+    const material = listeAusZeilen(materialZeilen);
+    if (!material.ok) {
+      setMaterialError(material.error);
+      return;
+    }
+    setMaterialError(null);
+    fd.set("material_liste", JSON.stringify(material.liste));
+    fd.set("material_basis_bestaetigen", basisBestaetigt ? "1" : "");
+
     // Die Altersstufe wertet das Erstellen aus; beim Bearbeiten nimmt die
     // Server Action die gespeicherte bzw. die des Trainings (Story 1 AC 9) —
     // ausser der Trainer hat die Umwandlung ausdrücklich bestätigt (Story 4
@@ -562,7 +632,33 @@ export function ExerciseForm({
         </p>
       </div>
 
-      <TextArea label="Material (optional, eines pro Zeile)" name="material" defaultValue={initial.material?.join("\n")} />
+      <MaterialField
+        zeilen={materialZeilen}
+        onZeilenChange={(z) => {
+          setMaterialZeilen(z);
+          if (materialError) setMaterialError(null);
+        }}
+        ergaenzung={initial.material ?? []}
+        error={materialError ?? undefined}
+        hinweis={
+          aenderungen.length > 0 ? (
+            <AenderungMeldung aenderungen={aenderungen}>
+              <Button type="button" variant="text" size="sm" onClick={uebernehmeVorschlag}>
+                {AENDERUNG_UEBERNEHMEN}
+              </Button>
+              <Button type="button" variant="text" size="sm" onClick={() => setBasisBestaetigt(true)}>
+                {AENDERUNG_BEIBEHALTEN}
+              </Button>
+            </AenderungMeldung>
+          ) : zeigtVorschlag ? (
+            <VorschlagMeldung vorschlag={vorschlag} onUebernehmen={uebernehmeVorschlag} />
+          ) : basisBestaetigt ? (
+            <p className="type-body-small text-on-surface-mittel">
+              Wird mit dem Speichern übernommen.
+            </p>
+          ) : undefined
+        }
+      />
       <TextArea label="Varianten (optional, eine pro Zeile)" name="varianten" defaultValue={initial.varianten?.join("\n")} />
 
       <div>

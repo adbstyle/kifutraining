@@ -13,6 +13,20 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: minitor
+  menge: 4
+- art: reifen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 5
 methodischer_fahrplan:
   offen_starten: 'Drei gegen drei, die Tore stehen in der Feldmitte, Rücken an Rücken:
     Rot zielt auf die zwei Tore, die Weiss verteidigt, Weiss auf die zwei von Rot.'

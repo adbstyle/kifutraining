@@ -13,6 +13,23 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: minitor
+  menge: 2
+- art: teller
+  farbe: rot
+  menge: 4
+- art: teller
+  farbe: blau
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 3
 methodischer_fahrplan:
   offen_starten: Zwei Kinder starten gleichzeitig von der Seite, eines mit Ball. Ab
     der Markierung ist der Abschluss frei, ins linke oder ins rechte Tor. Tor oder

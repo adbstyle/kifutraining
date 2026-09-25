@@ -11,6 +11,17 @@ anzahl_kinder:
   min: 12
   max: 14
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 5
+- art: leibchen
+  farbe: weiss
+  menge: 5
+- art: fussball
+  menge: 2
 aufbau: Die Kinder treten abwechselnd zum Penalty an, jeder Treffer ist ein Punkt.
   Erster Durchgang linker Fuss, zweiter rechter Fuss, dritter nach freier Wahl. Wer
   hat nach drei Durchgängen die meisten Punkte?

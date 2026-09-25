@@ -8,6 +8,7 @@ import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import { alsAltersstufe, istAltersstufe } from "@/lib/altersstufe";
+import { materialBasisAusDiagramm } from "@/lib/material";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 import {
   VORLAGE_SELECT,
@@ -141,7 +142,7 @@ export async function updateExercise(
   // (z. B. Formatwechsel .png -> .webp), wird die alte Datei sonst zur Waise.
   const { data: bestand } = await supabase
     .from("exercises")
-    .select("altersstufe, bild_url")
+    .select("altersstufe, bild_url, diagramm")
     .eq("id", id)
     .eq("owner_id", user.id)
     .eq("source", "user")
@@ -169,6 +170,10 @@ export async function updateExercise(
   const hasImage = file instanceof File && file.size > 0;
 
   const update: Record<string, unknown> = { ...parsed.row };
+  // Hat der Trainer den Material-Vorschlag übernommen oder sein Material
+  // beibehalten, gilt der heutige Vorschlag als Basis (Epic #266).
+  if (form.get("material_basis_bestaetigen") === "1")
+    update.material_basis = materialBasisAusDiagramm(bestand.diagramm);
   let altPfad: string | null = null;
   let neuPfad: string | null = null;
   if (hasImage) {

@@ -10,6 +10,27 @@ anzahl_kinder:
   min: 12
   max: 14
 material: []
+material_liste:
+- art: pylone
+  farbe: rot
+  menge: 3
+- art: pylone
+  farbe: blau
+  menge: 3
+- art: pylone
+  farbe: weiss
+  menge: 3
+- art: leibchen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: leibchen
+  farbe: schwarz
+  menge: 4
+- art: fussball
+  menge: 12
 methodischer_fahrplan:
   offen_starten: Mehrere Dreiecke sind mit Pylonen abgesteckt, mindestens eines mehr,
     als es Teams gibt. Du bildest drei Teams und schickst jedes in ein eigenes Dreieck,

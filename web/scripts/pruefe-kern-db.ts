@@ -221,6 +221,42 @@ try {
     assert.equal(h2.varianteId, v2.id);
   });
 
+  // ── Material (Epic #266) ─────────────────────────────────────────────────
+  await pruefe("Material: Liste, Basis und Ergänzung reisen beim Zuordnen und Kopieren mit (#267 PC 3)", async () => {
+    const { data: quelle, error } = await admin.from("exercises").select("*").eq("id", ein).single();
+    if (error) throw error;
+    const liste = [{ art: "pylone", farbe: "rot", menge: 4 }];
+    const basis = [{ art: "pylone", farbe: "rot", menge: 3 }];
+    const { id: _id, slug: _slug, search_text: _s, created_at: _c, updated_at: _u, anzahl_kinder_min: _m, ...rest } = quelle;
+    const { data: eigene, error: e1 } = await admin
+      .from("exercises")
+      .insert({
+        ...rest,
+        slug: `kern-db-material-${randomBytes(4).toString("hex")}`,
+        source: "user",
+        owner_id: a.id,
+        visibility: "private",
+        material: ["Pfeife"],
+        material_liste: liste,
+        material_basis: basis,
+      })
+      .select("id")
+      .single();
+    if (e1) throw e1;
+    const tm = wert(
+      await legeTrainingAn(a.supabase, a.id, { name: "Material-Probe", altersstufe: "kinderfussball", stufen: ["F"] }),
+    ).id;
+    const f = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tm, einordnung: "einleitung", exerciseId: eigene.id }));
+    const zeile = async (trainingId: string) =>
+      (await admin.from("training_exercises").select("material, material_liste, material_basis").eq("training_id", trainingId).single()).data;
+    const erwartet = { material: ["Pfeife"], material_liste: liste, material_basis: basis };
+    assert.deepEqual(await zeile(tm), erwartet, "die Fassung trägt das Material der Übung");
+    const detail = await ladeTrainingDetail(admin as never, tm);
+    assert.deepEqual(detail!.exercises.find((x) => x.id === f.fassungId)!.materialListe, liste);
+    const kopie = wert(await kopiereTrainingNach(a.supabase, a.id, { quelleId: tm })).id;
+    assert.deepEqual(await zeile(kopie), erwartet, "die Trainingskopie trägt es ebenso");
+  });
+
   // ── Dauer ────────────────────────────────────────────────────────────────
   await pruefe("Dauer: gesetzt, entfernt; im Auffangen und negativ abgewiesen", async () => {
     assert.deepEqual(wert(await setzeDauer(a.supabase, a.id, { fassungId: e1.fassungId, minuten: 12 })), {

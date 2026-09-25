@@ -13,6 +13,27 @@ anzahl_kinder:
   min: 8
   max: 10
 material: []
+material_liste:
+- art: teller
+  farbe: blau
+  menge: 4
+- art: teller
+  farbe: gelb
+  menge: 4
+- art: teller
+  farbe: gruen
+  menge: 4
+- art: teller
+  farbe: weiss
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: fussball
+  menge: 4
 methodischer_fahrplan:
   offen_starten: 'Mehrere kleine Felder liegen nebeneinander wie Ligastufen, das Super-League-Feld
     zuoberst. In jedem Feld duellieren sich zwei Kinder eine Minute lang: Wer den

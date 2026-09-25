@@ -26,6 +26,8 @@
 // steht: am Teil, und am Block nur, wo er eine eigene Fläche trägt.
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
+import { gesamtMaterialAusgabe, materialAusgabe } from "@/lib/material-ausgabe";
+import { gesamtMaterial } from "@/lib/material-gesamt";
 import {
   altersstufe as altersstufeLabels,
   feldtyp as feldtypLabels,
@@ -82,7 +84,7 @@ function uebungAuskunft(f: TrainingExerciseItem, trainingStufen: readonly string
     anzahl_kinder: f.anzahlKinder
       ? { min: f.anzahlKinder.min ?? null, max: f.anzahlKinder.max ?? null }
       : null,
-    material: f.material,
+    material: materialAusgabe(f.materialListe, f.material),
     // Genau eine Form trägt den Ablauf (Fahrplan im Kinderfussball, Text im
     // Juniorenfussball, CHECK `ablauf_je_einordnung`).
     ablauf: fp
@@ -256,6 +258,7 @@ export function trainingAuskunft(
       : null,
     uebungen_gesamt: d.exercises.length,
     varianten: d.varianten.map((v) => ({ id: v.id, name: v.name })),
+    material_gesamt: gesamtMaterialAusgabe(gesamtMaterial(d.exercises, d.varianten)),
     gruppen: d.gruppen.map((g) => ({ id: g.id, name: g.name, an_uebungen: anUebungen(g.id) })),
     teile,
     gesamt,

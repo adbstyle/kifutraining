@@ -201,9 +201,9 @@ const ALTERSSTUFE_CHECKS: [string, string][] = [
     `Länge und Breite in ganzen Metern, zwischen ${SPIELFELD_MIN} und ${SPIELFELD_MAX}.`,
   ],
   [
-    "spielfeld_nur_junioren",
-    "Die Spielfeldgrösse ist eine Angabe des Manuals Fussball Jugendliche. " +
-      "Eine Kinderfussball-Übung trägt stattdessen einen Feldtyp.",
+    "spielfeld_je_feld",
+    "Eine Kinderfussball-Übung trägt eine Spielfeldgrösse nur auf freiem Feld; " +
+      "Kleinfeld und Grossfeld haben ihre Masse.",
   ],
   [
     "ex_uebungstyp_nur_junioren",

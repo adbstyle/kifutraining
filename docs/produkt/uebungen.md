@@ -40,7 +40,10 @@ lernen", „Vielseitigkeit erleben" oder „Fussball spielen" dazu. Der Ablauf s
 dreistufiger methodischer Fahrplan — offen starten, üben, wett-eifern —, ausser beim freien
 Spiel sowie in Auffangen und Ausklang, wo ein zusammenhängender Beschreibungstext gilt.
 Erscheinungsformen trägt eine Kinderfussball-Übung in der Einleitung und im Hauptteil. Das
-Spielfeld wird als Feldtyp angegeben: Kleinfeld, Grossfeld oder freies Feld.
+Spielfeld wird als Feldtyp angegeben: Kleinfeld, Grossfeld oder freies Feld. Beim freien Feld
+lässt sich zusätzlich seine Grösse in Metern angeben, denn anders als Klein- und Grossfeld sagt
+es nicht, wie gross abzustecken ist — freiwillig wie im Juniorenfussball, aber nur ganz. Wechselt
+der Feldtyp auf Kleinfeld oder Grossfeld, entfallen die Meter.
 
 Im Juniorenfussball ist die Zuordnung zweistufig: gewählt wird einer von sieben Blöcken, und der
 Trainingsteil, zu dem er gehört, bleibt dabei sichtbar. Der Einstieg umfasst Aufwärmen,
@@ -63,6 +66,35 @@ Anwendung unter der Zuordnung, welche seiner erfassten Angaben dabei entfallen w
 Beiden Altersstufen gemeinsam sind Name und mindestens eine Alterskategorie, dazu die Zahl der
 Kinder, für die die Übung taugt, das benötigte Material, mögliche Varianten und das Bild.
 
+## Material
+
+Das Material einer Übung steht zweigeteilt. Oben die Liste dessen, was sich im Feld-Diagramm
+zeichnen lässt — Tore und Minitore, Pylonen, Markierungsteller, Stangen, Reifen, Hürden,
+Überziehleibchen und die drei Balltypen —, je Posten mit Menge und, wo das Diagramm Farben kennt,
+mit Farbe. Darunter steht als freie Ergänzung alles, was das Diagramm nicht kennt, etwa Pfeife
+oder Stoppuhr. Nur die Liste wird gezählt und in der Materialliste eines Trainings verrechnet;
+die Ergänzung ist freier Text. Material, das eine Übung vor der Liste als Text trug, steht
+unverändert in der Ergänzung.
+
+Trägt die Übung ein Diagramm, schlägt das Formular die Liste vor, die das Diagramm zeigt: jedes
+gezeichnete Material-Symbol einzeln gezählt, nach Art und Farbe. Sind die Feldspieler in
+mindestens zwei Farben eingeteilt, kommt je Spieler ein Überziehleibchen in seiner Farbe dazu —
+eine einzige Spielerfarbe ist keine Einteilung, und Torwart und Trainer zählen nie. Gezeichnete
+Leibchen zählen zusätzlich, auch eines, das eine Figur in der Hand hält. Übernommen wird der
+Vorschlag nur auf Wunsch; danach lässt sich jede Menge und Farbe anpassen, ein Posten entfernen
+oder weiteres Material aus dem Vorrat des Diagramms hinzufügen. Eine Übung ohne Diagramm führt
+ihre Liste von Hand.
+
+Ändert der Trainer später das Diagramm so, dass sich der Vorschlag in Art, Farbe oder Menge
+ändert, bleibt das nicht unbemerkt. Die Anwendung nennt die geänderten Posten und lässt ihn den
+neuen Vorschlag übernehmen oder sein Material beibehalten — im Formular, auf der Seite der Übung
+und an der Übung im Trainings-Editor. Verglichen wird dabei der neue Vorschlag mit dem zuletzt
+übernommenen: Eigene Anpassungen an der Liste und bloss verschobene Figuren lösen keinen Hinweis
+aus, und die Ergänzung bleibt in jedem Fall stehen. Jede Kopie beobachtet ihr eigenes Diagramm;
+eine Änderung am Original erreicht bereits kopierte Übungen und Trainings nicht.
+
+Die Manual-Übungen tragen ihr Material ebenfalls als Liste, aus dem Vorschlag ihres Diagramms.
+
 Wechselt eine Übung innerhalb ihrer Altersstufe den Trainingsteil und ändert sich dabei die Form
 des Ablaufs, nimmt die Anwendung den bisherigen Text als Ausgangspunkt mit; ins Reine schreiben
 muss ihn der Trainer selbst.
@@ -78,9 +110,11 @@ Bestätigt wird im Dialog, wirksam wird die Überführung erst mit dem Speichern
 vorher verlässt, lässt die Übung unverändert zurück.
 
 Was die Zielstufe kennt, kommt mit: Name, Bild, Diagramm, Kinderzahl, Material und Varianten
-hängen an keinem Lehrmittel, und der Ablauftext wandert in die dort geltende Form. Was sie
-nicht kennt, fällt weg — Erscheinungsformen, Übungstyp und, je nach Richtung, Feldtyp oder
-Spielfeldgrösse. Aufbewahrt wird nichts: Eine Rückkehr ist wieder eine Überführung und beginnt
+hängen an keinem Lehrmittel, und der Ablauftext wandert in die dort geltende Form. Die Meter
+gehen ebenfalls mit: Das freie Feld mit seiner Grösse wird zur Spielfeldgrösse des
+Juniorenfussballs, und eine Junioren-Übung mit Spielfeldgrösse wird eine Übung auf freiem Feld.
+Was die Zielstufe nicht kennt, fällt weg — Erscheinungsformen, Übungstyp und ein Feldtyp ohne
+Meter. Aufbewahrt wird nichts: Eine Rückkehr ist wieder eine Überführung und beginnt
 von vorn. Fassungen, die aus dieser Übung in Trainings entstanden sind, bleiben unberührt.
 
 ## Kopieren
@@ -169,7 +203,7 @@ Browser, bevor der Upload beginnt, auf höchstens zweitausend Bildpunkte an der 
 Jede Übung, die ein Trainer ansehen darf, lässt sich einzeln ausdrucken — auch ohne Konto und
 ohne dafür ein Training anzulegen. Das Blatt trägt Name, Alterskategorien, Bild oder Diagramm,
 den Trainingsteil oder Block, im Kinderfussball-Hauptteil dessen Kategorie, Feldtyp oder
-Spielfeldgrösse, dazu Kinderzahl und Material, danach Ablauf und Varianten und zuunterst, was
+Spielfeldgrösse, dazu Kinderzahl und Material — die Liste und darunter die Ergänzung —, danach Ablauf und Varianten und zuunterst, was
 der Einordnung dient: Übungstyp und Erscheinungsform. Diese Reihenfolge gilt auf dem Papier wie
 am Bildschirm — wer eine Übung öffnet, liest zuerst, was gemacht wird, und trifft erst danach
 auf die beiden Einordnungsangaben, die dort beisammenstehen. Führt die Übung weder das eine
@@ -216,3 +250,12 @@ Kopie wechselt auch nicht von selbst die Altersstufe — wer sie in der anderen 
 sie anschliessend um. Innerhalb eines Trainings ist ausserdem nicht erkennbar, ob eine Übung
 ursprünglich aus dem Manual stammt; die Plakette trägt nur der unveränderte Bestand. Die Angabe
 zur Kinderzahl ist Selbstauskunft und wird nicht gegen das Diagramm geprüft.
+
+Die Material-Liste zählt, was gezeichnet ist, nicht wofür. Vier Pylonen bleiben vier Pylonen,
+auch wenn sie ein Tor bilden, und Teller am Feldrand zählen wie Teller im Feld. Die Mengen
+folgen dem Diagramm, nicht der Zahl der Kinder, die tatsächlich kommen. Weil die Manual-Diagramme
+die Kinder fast durchwegs in zwei Farben zeichnen, schlägt der Vorschlag dort in aller Regel
+Überziehleibchen für beide Farben vor; die Anwendung nimmt nicht an, dass ein Team in eigener
+Kleidung spielt. Eigene Material-Arten ausserhalb des Diagramm-Vorrats gibt es in der Liste
+nicht — dafür ist die Ergänzung da. Die Spielfeldgrösse leitet die Anwendung nie aus dem
+Diagramm ab; das Diagramm kennt keinen Massstab.

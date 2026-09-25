@@ -14,6 +14,17 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: minitor
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 2
 methodischer_fahrplan:
   offen_starten: Drei Rote greifen ohne Gegenspieler auf zwei Tore an. Sie haben fünf
     bis zehn Sekunden für den Abschluss, und alle drei müssen den Ball berührt haben.

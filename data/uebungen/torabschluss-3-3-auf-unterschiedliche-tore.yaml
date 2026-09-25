@@ -13,6 +13,25 @@ anzahl_kinder:
   min: 7
   max: 9
 material: []
+material_liste:
+- art: tor
+  menge: 1
+- art: minitor
+  menge: 2
+- art: pylone
+  farbe: rot
+  menge: 4
+- art: reifen
+  farbe: orange
+  menge: 5
+- art: leibchen
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 6
 methodischer_fahrplan:
   offen_starten: 'Drei gegen drei auf ungleiche Tore: Weiss spielt auf das grosse
     Tor mit Torspieler, Rot auf zwei Minitore. Sobald Rot in ein Minitor trifft, tauschen

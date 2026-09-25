@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { TriangleAlert, ChevronUp, ChevronDown, Trash2, Pencil } from "lucide-react";
+import { TriangleAlert, ChevronUp, ChevronDown, Trash2, Pencil, PackageSearch } from "lucide-react";
 import { KategorieChip, Tooltip } from "@/components/ui";
 import { ExerciseThumb } from "../ExerciseThumb";
 import { InBibliothekButton } from "../InBibliothekButton";
@@ -10,6 +10,12 @@ import { DauerFeld } from "./DauerFeld";
 import { STUFE_ABWEICHEND_TEXT, stufenAbgedeckt } from "@/lib/training";
 import { varianteAnhang } from "@/lib/varianten";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
+import { materialAenderungen, materialBasisAusDiagramm } from "@/lib/material";
+
+/** Der Hinweis an der Zeile, wenn eine Diagrammänderung das Material dieser
+ *  Übung verändert hat (Story #269). Beantwortet wird er im Bearbeiten. */
+export const MATERIAL_GEAENDERT_TEXT =
+  "Das Feld-Diagramm zeigt inzwischen anderes Material — beim Bearbeiten übernehmen oder beibehalten.";
 
 /** Eine Zuordnung im Editor: Reihenfolge, Bild, Name, Stufen, Dauer und die
  *  Aktionen an ihr.
@@ -65,6 +71,8 @@ export function TrainingExerciseRow({
   // sonst stünde ein Warndreieck, das keine Stufenwahl je entfernt.
   const mismatch =
     item.kategorien.length > 0 && !stufenAbgedeckt(trainingStufen, item.kategorien);
+  const materialGeaendert =
+    materialAenderungen(item.materialBasis, materialBasisAusDiagramm(item.diagramm)).length > 0;
 
   return (
     <li className="flex flex-col rounded-flaeche border border-linie bg-elev-01 px-3 py-2.5 [--feld-grund:var(--color-elev-01)]">
@@ -110,6 +118,16 @@ export function TrainingExerciseRow({
               <span title={STUFE_ABWEICHEND_TEXT}>
                 <TriangleAlert size={15} className="shrink-0 text-primary" aria-hidden />
               </span>
+            )}
+            {materialGeaendert && (
+              <Link
+                href={`/training/${trainingId}/uebung/${item.id}/edit${varianteAnhang(varianteId)}`}
+                title={MATERIAL_GEAENDERT_TEXT}
+                aria-label={MATERIAL_GEAENDERT_TEXT}
+                className="focus-ring inline-flex shrink-0 rounded-flaeche text-primary"
+              >
+                <PackageSearch size={15} aria-hidden />
+              </Link>
             )}
           </span>
           {item.kategorien.length > 0 && (

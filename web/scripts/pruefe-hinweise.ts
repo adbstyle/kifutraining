@@ -55,6 +55,8 @@ function fassung(id: string, teil: string, extra: Partial<TrainingExerciseItem> 
     uebungstyp: null,
     anzahlKinder: null,
     material: [],
+    materialListe: [],
+    materialBasis: null,
     fahrplan: null,
     aufbau: null,
     bildUrl: null,

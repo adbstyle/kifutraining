@@ -1,3 +1,4 @@
+import { GesamtMaterialListe } from "@/components/training/GesamtMaterialListe";
 import type { Metadata } from "next";
 import { Clock } from "lucide-react";
 import { KategorieChip, PrintButton } from "@/components/ui";
@@ -94,6 +95,11 @@ export default async function TrainingDruckPage({
             „{aktive.name}"
           </p>
         )}
+        <GesamtMaterialListe
+          exercises={training.exercises}
+          varianten={training.varianten}
+          className="mt-4"
+        />
       </header>
 
       {/* Seitenumbruch im Druck: zusammengehalten wird nur die einzelne Übung

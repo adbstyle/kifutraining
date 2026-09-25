@@ -17,6 +17,7 @@ import {
   traegtUebungstyp,
   type Altersstufe,
 } from "@/lib/altersstufe";
+import { parseMaterialListe } from "@/lib/material";
 
 /** Kleinste und grösste sinnvolle Kantenlänge eines Spielfelds in Metern.
  *  Spiegelt die CHECKs `ex_spielfeld_bereich` / `te_spielfeld_bereich`.
@@ -32,6 +33,15 @@ function lines(v: FormDataEntryValue | null): string[] {
     .split("\n")
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+/** JSON aus einem Formularfeld — `null`, wenn es fehlt oder kaputt ist. */
+function json(v: FormDataEntryValue | null): unknown {
+  try {
+    return JSON.parse(String(v ?? ""));
+  } catch {
+    return null;
+  }
 }
 
 function clean(v: FormDataEntryValue | null): string {
@@ -143,9 +153,8 @@ export function parseUebungsInhalt(
     ? csv(form.get("form")).filter((f) => erlaubteFormen.includes(f))
     : [];
 
-  // Feldtyp und Spielfeldgrösse schliessen einander aus: der Feldtyp ist eine
-  // Kategorie des Manuals Fussball Kinder, die Spielfeldgrösse führt das
-  // Junioren-Manual an seiner Stelle.
+  // Der Feldtyp ist eine Kategorie des Manuals Fussball Kinder; das
+  // Junioren-Manual führt an seiner Stelle die Spielfeldgrösse.
   const feldtypRoh = clean(form.get("feldtyp"));
   const feldtyp =
     traegtFeldtyp(altersstufe) && feldtypSlugs.includes(feldtypRoh as never)
@@ -154,10 +163,11 @@ export function parseUebungsInhalt(
 
   // Spielfeldgrösse: optional, aber paarweise — wer sie angibt, gibt Länge UND
   // Breite an (PO 2026-08-30). Spiegelt `ex_spielfeld_paarweise` und
-  // `ex_spielfeld_bereich`.
+  // `ex_spielfeld_bereich`. Im Kinderfussball nur beim freien Feld (Story
+  // #272): Wechselt der Feldtyp, fallen die Meter weg (PC 1).
   let spielfeld_laenge_m: number | null = null;
   let spielfeld_breite_m: number | null = null;
-  if (traegtSpielfeldgroesse(altersstufe)) {
+  if (traegtSpielfeldgroesse(altersstufe, feldtyp)) {
     const laengeRoh = clean(form.get("spielfeld_laenge"));
     const breiteRoh = clean(form.get("spielfeld_breite"));
     if (laengeRoh || breiteRoh) {
@@ -216,6 +226,14 @@ export function parseUebungsInhalt(
       erscheinungsform,
       hauptteilkategorie,
       anzahl_kinder,
+      // Die Liste kommt als JSON (MaterialField), die Ergänzung zeilenweise.
+      // Die Basis setzt NICHT das Formular, sondern die Server Action aus dem
+      // gespeicherten Diagramm (`materialBasisAusDiagramm`).
+      // Fehlt das Feld ganz, bleibt die gespeicherte Liste unberührt — ein
+      // Formular ohne Material-Feld darf sie nicht leeren.
+      ...(form.has("material_liste")
+        ? { material_liste: parseMaterialListe(json(form.get("material_liste"))) }
+        : {}),
       material: lines(form.get("material")),
       uebungstyp,
       methodischer_fahrplan,

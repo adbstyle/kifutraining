@@ -11,6 +11,17 @@ anzahl_kinder:
   min: 10
   max: 12
 material: []
+material_liste:
+- art: minitor
+  menge: 8
+- art: leibchen
+  farbe: rot
+  menge: 5
+- art: leibchen
+  farbe: weiss
+  menge: 5
+- art: fussball
+  menge: 2
 aufbau: 'Ein Kleinfeld mit zwei Toren steht bereit, bevor das erste Kind eintrifft.
   Wer kommt, spielt sofort mit: erst allein aufs leere Tor, dann zu zweit, und mit
   jedem weiteren Kind wird daraus ein grösseres Spiel, am Ende Vier gegen Vier. Sind

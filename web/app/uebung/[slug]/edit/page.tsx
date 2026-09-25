@@ -8,6 +8,11 @@ import { updateExercise } from "@/lib/actions/exercises";
 import { getExerciseDetail, getVorlagen } from "@/lib/queries/exercises";
 import { createClient } from "@/lib/supabase/server";
 import { hatDiagramm } from "@/lib/diagramm";
+import {
+  materialBasisAusDiagramm,
+  parseMaterialBasis,
+  parseMaterialListe,
+} from "@/lib/material";
 import { EINORDNUNG_LABEL } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
 
@@ -81,6 +86,8 @@ export default async function EditPage({
         // Nutzer-Übung — nur hier lässt sie sich in die andere Altersstufe
         // überführen (Story 4 AK 1/5).
         ueberfuehrbar
+        materialVorschlag={materialBasisAusDiagramm(ex.diagramm)}
+        materialBasis={parseMaterialBasis(ex.material_basis)}
         initial={{
           name: ex.name,
           trainingsteil: ex.trainingsteil,
@@ -93,6 +100,7 @@ export default async function EditPage({
           uebungstyp: ex.uebungstyp,
           anzahl_kinder: ex.anzahl_kinder,
           material: ex.material,
+          materialListe: parseMaterialListe(ex.material_liste),
           methodischer_fahrplan: ex.methodischer_fahrplan,
           aufbau: ex.aufbau,
           varianten: ex.varianten,

@@ -268,16 +268,25 @@ export function traegtFeldtyp(stufe: Altersstufe): boolean {
   return stufe === "kinderfussball";
 }
 
-/** Trägt eine Übung dieser Altersstufe eine Spielfeldgrösse?
+/** Der Feldtyp, bei dem auch eine Kinderfussball-Übung eine Spielfeldgrösse
+ *  trägt (Story #272): Kleinfeld und Grossfeld haben ihre Masse, das freie
+ *  Feld nicht. */
+export const FELDTYP_MIT_SPIELFELD = "freies_feld";
+
+/** Trägt eine Übung dieser Altersstufe und dieses Feldtyps eine
+ *  Spielfeldgrösse?
  *
- *  Das Gegenstück zum Feldtyp: nur im Juniorenfussball, wo das Manual sie zu
- *  praktisch jeder Trainingsform als eigene Angabe führt. Optional, aber
- *  paarweise — Länge und Breite in Metern.
+ *  Im Juniorenfussball immer — das Manual führt sie zu praktisch jeder
+ *  Trainingsform als eigene Angabe. Im Kinderfussball nur beim freien Feld
+ *  (Story #272): dort sagt der Feldtyp nicht, wie gross abzustecken ist.
+ *  Optional, aber paarweise — Länge und Breite in Metern.
  *
- *  Spiegelt die CHECKs `ex_spielfeld_nur_junioren` und
- *  `te_spielfeld_nur_junioren`. */
-export function traegtSpielfeldgroesse(stufe: Altersstufe): boolean {
-  return stufe === "juniorenfussball";
+ *  Spiegelt die CHECKs `ex_spielfeld_je_feld` und `te_spielfeld_je_feld`. */
+export function traegtSpielfeldgroesse(stufe: Altersstufe, feldtyp: string | null): boolean {
+  return (
+    stufe === "juniorenfussball" ||
+    (stufe === "kinderfussball" && feldtyp === FELDTYP_MIT_SPIELFELD)
+  );
 }
 
 /** Trägt diese Einordnung eine Hauptteilkategorie?

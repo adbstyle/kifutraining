@@ -13,6 +13,32 @@ anzahl_kinder:
   min: 9
   max: 11
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: pylone
+  farbe: rot
+  menge: 4
+- art: pylone
+  farbe: blau
+  menge: 4
+- art: teller
+  farbe: rot
+  menge: 1
+- art: teller
+  farbe: blau
+  menge: 1
+- art: stange
+  farbe: gelb
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: fussball
+  menge: 7
 methodischer_fahrplan:
   offen_starten: Vor der Abschlusszone steht eine Pylone. Das Kind dribbelt darauf
     zu, überwindet sie mit einer Finte, zieht in die Abschlusszone und schiesst aufs

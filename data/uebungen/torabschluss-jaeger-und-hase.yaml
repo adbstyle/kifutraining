@@ -12,6 +12,25 @@ anzahl_kinder:
   min: 10
   max: 12
 material: []
+material_liste:
+- art: teller
+  farbe: rot
+  menge: 2
+- art: teller
+  farbe: blau
+  menge: 2
+- art: teller
+  farbe: gelb
+  menge: 2
+- art: teller
+  farbe: orange
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 5
+- art: leibchen
+  farbe: weiss
+  menge: 5
 methodischer_fahrplan:
   offen_starten: Jäger und Hase stehen sich gegenüber. Auf dein Signal rennt der Hase
     los in die Jagdzone, ein markiertes Feld, und im selben Moment startet der Jäger.

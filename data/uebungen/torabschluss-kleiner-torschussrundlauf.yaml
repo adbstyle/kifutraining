@@ -14,6 +14,23 @@ anzahl_kinder:
   min: 9
   max: 11
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: teller
+  farbe: rot
+  menge: 7
+- art: teller
+  farbe: blau
+  menge: 7
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: fussball
+  menge: 7
 methodischer_fahrplan:
   offen_starten: 'Vor einem Tor mit Torspieler liegen mehrere Schussbahnen. Ein Kind
     dribbelt in eine Bahn und schiesst. Danach geht es selbst ins Tor, und der bisherige

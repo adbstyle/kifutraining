@@ -316,8 +316,12 @@ pruefe("Feldtypen nur im Kinderfussball, Übungstypen nur im Juniorenfussball", 
     "Übungstypen",
   );
   assert.deepEqual(stufe("kinderfussball").uebungstypen, []);
-  assert.equal(stufe("kinderfussball").spielfeldgroesse, false);
+  // Die Spielfeldgrösse: im Juniorenfussball immer, im Kinderfussball nur
+  // beim freien Feld (#272).
+  assert.equal(stufe("kinderfussball").spielfeldgroesse, true);
+  assert.equal(stufe("kinderfussball").spielfeldgroesse_bei_feldtyp?.slug, "freies_feld");
   assert.equal(stufe("juniorenfussball").spielfeldgroesse, true);
+  assert.equal(stufe("juniorenfussball").spielfeldgroesse_bei_feldtyp, null);
   for (const e of alleEinordnungen.filter((x) => x.stufe === "kinderfussball"))
     assert.equal(e.traegt_uebungstyp, false, e.slug);
 });

@@ -366,6 +366,15 @@ beide Ansichten nicht, sie ordnet ein und hilft auf dem Platz nicht weiter. Der 
 dasselbe als zusammenhängende, druckfertige Seite zum Mitnehmen, das Ziel im Kopf. Leere Blöcke
 erscheinen in beiden Ansichten nicht.
 
+Beim Zusammenstellen, zu Beginn der Durchführen-Ansicht und im Kopf des Drucks steht, welches
+Material das Training braucht — und zwar höchstens gleichzeitig, nicht die Summe über alle
+Übungen, denn Material einer beendeten Übung ist für die nächste wieder frei. Übungen, an denen
+im selben Wechsel parallele Gruppen stehen, zählen zusammen; eine Station, die mehrere Gruppen
+nacheinander durchlaufen, zählt einmal; nacheinander laufende Übungen und Trainingsteile zählen
+mit ihrem grössten Bedarf, ebenso die Varianten des Hauptteils — die Liste reicht für jede von
+ihnen. Die freien Ergänzungen der Übungen stehen darunter, je mit ihrer Übung und ohne
+Verrechnung. Auch wer ein Training bloss liest, sieht die Liste.
+
 Gleich unter dem Übungstitel steht, was für genau dieses Training gilt: zuerst der Durchlauf,
 darunter die Notiz. Der Durchlauf nennt die zugewiesenen Gruppen in ihrer Reihenfolge, durch
 Pfeile verbunden — als schlichte Textzeile, ohne Chips und ohne Farbe, denn auf dem Platz und
@@ -456,6 +465,11 @@ Ein Training trägt ausser Name, Altersstufe, Alterskategorien und Ziel keine ei
 eine Beschreibung gibt es nicht, und die Notiz hängt an einer Übung, nicht am Training. Eine
 Soll-Dauer gibt es ebenso wenig; im Juniorenfussball sind die Zeitangaben Richtwerte, im
 Kinderfussball nennt die Anwendung gar keine.
+
+Die Materialliste eines Trainings kennt nur die Gleichzeitigkeit, die das Training selbst
+festhält. Ob Material einer Übung beim Aufbau der nächsten noch steht, berücksichtigt sie nicht,
+und nach der Zahl der Kinder, die kommen, richtet sie sich nicht. Die freien Ergänzungen zählt sie
+nicht zusammen: Wer in zwei Übungen „Pfeife" notiert hat, liest sie zweimal.
 
 Die Altersstufe eines Trainings ändert sich nie, auch dann nicht, wenn eine Mannschaft
 aufsteigt — die Einheit wird für die neue Stufe neu angelegt. Gemischt trainierte Jahrgänge,

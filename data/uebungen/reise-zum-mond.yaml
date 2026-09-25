@@ -11,6 +11,26 @@ anzahl_kinder:
   min: 11
   max: 13
 material: []
+material_liste:
+- art: minitor
+  menge: 6
+- art: teller
+  farbe: rot
+  menge: 5
+- art: teller
+  farbe: gelb
+  menge: 5
+- art: reifen
+  farbe: blau
+  menge: 6
+- art: leibchen
+  farbe: rot
+  menge: 6
+- art: leibchen
+  farbe: weiss
+  menge: 6
+- art: fussball
+  menge: 12
 methodischer_fahrplan:
   offen_starten: 'Das Feld ist ein Universum: blaue Reifen sind Planeten, gelbe Teller
     sind Monde, die Minitore am Rand sind Sterne. Die Kinder dribbeln durchs Weltall

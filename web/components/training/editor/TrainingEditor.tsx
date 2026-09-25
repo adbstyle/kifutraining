@@ -13,6 +13,7 @@ import {
 import { ExercisePickerDialog } from "../ExercisePickerDialog";
 import { GesamtAbgleich } from "../ZeitAbgleich";
 import { TrainingKopf } from "./TrainingKopf";
+import { GesamtMaterialListe } from "../GesamtMaterialListe";
 import { TrainingAktionen } from "../TrainingAktionen";
 import { TeilKarte } from "./TeilKarte";
 import { VariantenLeiste } from "./VariantenLeiste";
@@ -628,6 +629,15 @@ export function TrainingEditor({
           </span>
         )}
       </div>
+
+      {/* Was das Training gleichzeitig höchstens braucht (Story #271) — auf
+          derselben Stufe wie die Summenleiste, die ebenfalls über das ganze
+          Training Auskunft gibt. */}
+      <GesamtMaterialListe
+        exercises={training.exercises}
+        varianten={varianten}
+        className="rounded-flaeche bg-elev-01 px-4 py-3"
+      />
 
       {teile.map((teil) => (
         <TeilKarte

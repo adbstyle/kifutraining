@@ -12,6 +12,23 @@ anzahl_kinder:
   min: 10
   max: 12
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: pylone
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: leibchen
+  farbe: schwarz
+  menge: 2
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: 4 gegen 4 mit zwei Jokern, die immer für das Team am Ball spielen.
     Alle Kinder greifen mit an.
