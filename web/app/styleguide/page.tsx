@@ -23,7 +23,7 @@ import {
   MaterialListe,
   Disclosure,
   Leerzustand,
-  Meldung,
+  Banner,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { ChipsDemo } from "./ChipsDemo";
@@ -56,6 +56,8 @@ import {
   Info,
   SearchX,
   MailCheck,
+  ListPlus,
+  RefreshCw,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
@@ -2113,7 +2115,7 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="22" title="Leerzustand, Hinweiszeile &amp; Meldung">
+      <Section n="22" title="Leerzustand, Hinweiszeile &amp; Banner">
         <p className="type-body-medium max-w-2xl text-on-surface-mittel">
           Ein leerer Abschnitt sagt zuerst nur, dass er leer ist —{" "}
           <code>type-body-small</code>, <code>text-on-surface-mittel</code>, kein
@@ -2211,38 +2213,78 @@ export default function Styleguide() {
         </div>
 
         <h3 className="mb-2 mt-10 type-title-medium text-on-surface">
-          Meldung (<code>Meldung</code>)
+          Banner (<code>Banner</code>)
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Die dritte Sorte Zeile: keine Auskunft über den Bestand, sondern über
-          den <strong>eigenen Vorgang</strong> — das Speichern ist gescheitert,
-          die Mail ist unterwegs, die Umwandlung ist vorgemerkt.{" "}
-          <strong>Farbe trägt, sie füllt nicht:</strong> Kontur und Schrift
-          stehen in Error beziehungsweise Primary, die Fläche bleibt der Grund
-          darunter. Eine gefüllte rote Box wäre lauter als das, was sie meldet,
-          und zwänge zugleich eine zweite Schriftfarbe auf — füllen darf in
-          dieser Palette nur der Knopf, der etwas auslöst.
+          Die dritte Sorte Zeile, nach Material 2: keine Auskunft über den
+          Bestand, sondern eine <strong>Nachricht an den Nutzer</strong> — das
+          Speichern ist gescheitert, die Mail ist unterwegs, das Feld-Diagramm
+          zeigt anderes Material. Ohne Knöpfe meldet der Banner bloss; mit ein
+          oder zwei Knöpfen verlangt er eine Antwort und bleibt stehen, bis eine
+          gewählt ist. <strong>Ein</strong> Baustein für beides — die frühere
+          umrandete Meldung ist in ihm aufgegangen, damit dieselbe Sache nicht in
+          zwei Sprachen erscheint.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Zwei Töne, nicht mehr: <code>fehler</code> meldet, dass etwas nicht
-          ging, <code>erfolg</code> bestätigt — gelungen oder vorgemerkt. Für
-          einen dritten, gelben Ton gibt es keine Rolle (siehe 01). Die
-          Vorlesehilfe erfährt den Unterschied über <code>role</code>: Der
-          Fehler unterbricht (<code>alert</code>), die Bestätigung reiht sich
-          ein (<code>status</code>). Anatomie einmal und nur hier —{" "}
-          <code>px-4 py-3</code>, <code>type-body-small</code>, führendes
-          Zeichen optional und <strong>links</strong>, denn eine Meldung ist
-          eine Zeile und kein Bild.
+          <strong>Keine Box:</strong> ein 5-%-Overlay (<code>on-surface/5</code>)
+          und darunter eine Haarlinie (<code>linie</code>). Das Overlay statt
+          einer festen Stufe hebt den Banner immer eine Stufe über das, worauf
+          er liegt — auf dem Grund genau <code>elev-01</code>, im Dialog über
+          dessen 24dp statt als dunkles Loch darin. Text{" "}
+          <code>type-body-medium</code> in <code>on-surface</code>: Primary
+          gehört den Handlungen, und ein Fehler bleibt als Schrift auf jeder
+          Fläche lesbar.
         </p>
-        <div className="grid max-w-2xl gap-3">
-          <Meldung tone="fehler">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Den <strong>Ton trägt das Zeichen</strong> — zwei Töne, nicht mehr:{" "}
+          <code>fehler</code> (<code>CircleAlert</code> in Error) meldet, dass
+          etwas nicht ging, <code>hinweis</code> (<code>Info</code> in Primary,
+          Vorgabe) alles andere. Das Zeichen lässt sich überschreiben, die
+          Farbe bleibt die des Tons. Es steht links in Materials 40-px-Spalte,
+          aber <strong>ohne</strong> den gefüllten Kreis: füllen darf nur der
+          auslösende Knopf (siehe 01). Die Knöpfe (<code>text</code>,{" "}
+          <code>sm</code>) stehen rechtsbündig,{" "}
+          <strong>abweisend links, bestätigend rechts</strong>; reicht die
+          Breite, stehen Text und Knöpfe in einer Zeile, sonst brechen die
+          Knöpfe darunter. Die Vorlesehilfe erfährt den Ton über{" "}
+          <code>role</code>: ein Fehler ohne Knöpfe unterbricht (
+          <code>alert</code>), alles andere reiht sich ein (<code>status</code>
+          ).
+        </p>
+        <div className="grid max-w-2xl gap-6">
+          <Banner tone="fehler">
             Das Training konnte nicht gespeichert werden. Bitte versuche es noch
             einmal.
-          </Meldung>
-          <Meldung tone="erfolg" icon={MailCheck}>
+          </Banner>
+          <Banner icon={MailCheck}>
             Bestätigungsmail erneut an <strong>trainerin@example.ch</strong>{" "}
             gesendet.
-          </Meldung>
+          </Banner>
+          <Banner
+            icon={RefreshCw}
+            actions={
+              <>
+                <Button type="button" variant="text" size="sm">
+                  Material beibehalten
+                </Button>
+                <Button type="button" variant="text" size="sm">
+                  Neuen Vorschlag übernehmen
+                </Button>
+              </>
+            }
+          >
+            Das Feld-Diagramm zeigt inzwischen anderes Material: Hürden: 0 → 1.
+          </Banner>
+          <Banner
+            icon={ListPlus}
+            actions={
+              <Button type="button" variant="text" size="sm">
+                Vorschlag übernehmen
+              </Button>
+            }
+          >
+            Das Feld-Diagramm zeigt: 2 Minitore.
+          </Banner>
         </div>
       </Section>
 
@@ -2449,9 +2491,8 @@ export default function Styleguide() {
           </li>
           <li>
             <strong>Vorschlag</strong> — das Angebot des Diagramms steht als{" "}
-            <code>Meldung</code> mit Knopf über der Liste: es bestätigt etwas
-            über den eigenen Vorgang, darum Ton <code>erfolg</code> und Rolle{" "}
-            <code>status</code> (eine Meldung mit Bedienelement, siehe 22).
+            <code>Banner</code> über der Liste: es verlangt eine Antwort
+            (übernehmen, bei einer Änderung auch beibehalten), siehe 22.
           </li>
           <li>
             <strong>Lesen</strong> — <code>MaterialListe</code>: ein Posten pro

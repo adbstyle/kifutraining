@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button, Meldung, TextField } from "@/components/ui";
+import { Button, Banner, TextField } from "@/components/ui";
 import {
   erlaubeZugang,
   lehneZugangAb,
@@ -60,7 +60,7 @@ export function ZustimmungFormular({
 
   if (weiter) {
     return (
-      <Meldung tone="erfolg">Du wirst zurück zu deinem KI-Client geleitet …</Meldung>
+      <Banner>Du wirst zurück zu deinem KI-Client geleitet …</Banner>
     );
   }
 
@@ -86,9 +86,9 @@ export function ZustimmungFormular({
       )}
 
       {meldung && (
-        <Meldung tone="fehler" className="mt-4">
+        <Banner tone="fehler" className="mt-4">
           {meldung}
-        </Meldung>
+        </Banner>
       )}
 
       <div className="mt-5 flex flex-wrap gap-3">

@@ -184,7 +184,7 @@ pruefe("Error trägt als Schrift auf JEDER Höhenstufe", () => {
 });
 
 pruefe("Error trägt als Kontur auf jeder Höhenstufe", () => {
-  // Die 1.5-px-Kontur (Feld im Fehler, Meldung, destruktiver Knopf) ist ein
+  // Die 1.5-px-Kontur (Feld im Fehler, destruktiver Knopf) ist ein
   // grafisches Objekt: 3:1 nach WCAG 1.4.11, nicht 4.5:1. Geprüft wird die
   // VOLLE Rolle — eine Kontur mit Alpha fällt darunter (siehe Wächter unten)
   // und ist darum in Klassenstrings verboten, nicht hier wegdefiniert.

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { LogOut, Bookmark, ChevronRight } from "lucide-react";
-import { Card, Button, Meldung } from "@/components/ui";
+import { Card, Button, Banner } from "@/components/ui";
 import { KontoClient } from "./KontoClient";
 import { AnzeigenameForm } from "./AnzeigenameForm";
 import { KiZugaengeListe } from "./KiZugaengeListe";
@@ -112,10 +112,10 @@ export default async function KontoPage() {
         </p>
         <div className="mt-4">
           {zugaenge === null ? (
-            <Meldung tone="fehler">
+            <Banner tone="fehler">
               Deine KI-Zugänge lassen sich gerade nicht anzeigen. Bitte lade die
               Seite später erneut.
-            </Meldung>
+            </Banner>
           ) : (
             <KiZugaengeListe zugaenge={zugaenge} />
           )}

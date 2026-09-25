@@ -15,7 +15,7 @@ export {
 } from "./Chip";
 export { Card } from "./Card";
 export { Leerzustand } from "./Leerzustand";
-export { Meldung } from "./Meldung";
+export { Banner } from "./Banner";
 export { UebungsBild } from "./UebungsBild";
 export { FieldPlaceholder } from "./FieldPlaceholder";
 export { ExerciseCard } from "./ExerciseCard";

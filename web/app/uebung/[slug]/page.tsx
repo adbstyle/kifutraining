@@ -33,7 +33,7 @@ import {
 import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
 import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
-import { AenderungMeldung } from "@/components/exercise/MaterialField";
+import { AenderungBanner } from "@/components/exercise/MaterialField";
 import {
   AENDERUNG_BEIBEHALTEN,
   AENDERUNG_UEBERNEHMEN,
@@ -312,18 +312,24 @@ export default async function ExerciseDetailPage({
               die Eigentümerin sieht es — sie allein kann antworten. Nicht im
               Druck: der Hinweis gilt dem Bearbeiten, nicht dem Platz. */}
           {materialHinweis.length > 0 && (
-            <AenderungMeldung aenderungen={materialHinweis} className="mb-4 print:hidden">
-              <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
-                <Button type="submit" variant="text" size="sm">
-                  {AENDERUNG_UEBERNEHMEN}
-                </Button>
-              </form>
-              <form action={behalteMaterial.bind(null, ex.id)}>
-                <Button type="submit" variant="text" size="sm">
-                  {AENDERUNG_BEIBEHALTEN}
-                </Button>
-              </form>
-            </AenderungMeldung>
+            <AenderungBanner
+              aenderungen={materialHinweis}
+              className="mb-4 print:hidden"
+              actions={
+                <>
+                  <form action={behalteMaterial.bind(null, ex.id)}>
+                    <Button type="submit" variant="text" size="sm">
+                      {AENDERUNG_BEIBEHALTEN}
+                    </Button>
+                  </form>
+                  <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
+                    <Button type="submit" variant="text" size="sm">
+                      {AENDERUNG_UEBERNEHMEN}
+                    </Button>
+                  </form>
+                </>
+              }
+            />
           )}
 
           <div className="type-body-large text-on-surface">
