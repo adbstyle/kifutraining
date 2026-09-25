@@ -14,6 +14,20 @@ anzahl_kinder:
   min: 4
   max: 6
 material: []
+material_liste:
+- art: minitor
+  menge: 4
+- art: pylone
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 1
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: Drei gegen eins — bei weniger Kindern auch 2 gegen 1. Weiss greift
     auf zwei Tore an; geschossen werden darf erst ab der Mittellinie. Tor oder Aus

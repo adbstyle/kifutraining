@@ -11,6 +11,18 @@ anzahl_kinder:
   min: 11
   max: 13
 material: []
+material_liste:
+- art: pylone
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 6
+- art: leibchen
+  farbe: weiss
+  menge: 6
+- art: fussball
+  menge: 12
 methodischer_fahrplan:
   offen_starten: In der Feldmitte liegt die Schatzinsel, ein markiertes Feld. Die
     Kinder dribbeln rundherum im Meer. Rufst du «Ahoi, Piraten!», stürmen alle dribbelnd

@@ -13,6 +13,23 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: minitor
+  menge: 4
+- art: teller
+  farbe: rot
+  menge: 4
+- art: reifen
+  farbe: orange
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 5
 methodischer_fahrplan:
   offen_starten: 'Drei gegen drei auf einem Feld mit zwei Minitoren pro Seite. Quer
     durch die Mitte verlaufen zwei kurze Linien: Wer mit dem Ball über eine davon

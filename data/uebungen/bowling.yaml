@@ -11,6 +11,27 @@ anzahl_kinder:
   min: 12
   max: 14
 material: []
+material_liste:
+- art: pylone
+  farbe: gelb
+  menge: 12
+- art: pylone
+  farbe: orange
+  menge: 12
+- art: teller
+  farbe: rot
+  menge: 6
+- art: teller
+  farbe: blau
+  menge: 6
+- art: leibchen
+  farbe: rot
+  menge: 6
+- art: leibchen
+  farbe: blau
+  menge: 6
+- art: fussball
+  menge: 6
 aufbau: Die Kinder spielen zu zweit; jedes Paar bekommt vier Pylonen und einen Ball.
   Die Pylonen stehen wie Kegel zusammen, ein Kind steht fünf Meter davor mit dem Ball,
   das andere auf der Gegenseite dahinter. Mit einem Pass sollen möglichst viele Pylonen

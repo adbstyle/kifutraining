@@ -14,6 +14,17 @@ anzahl_kinder:
   min: 8
   max: 10
 material: []
+material_liste:
+- art: minitor
+  menge: 6
+- art: leibchen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: fussball
+  menge: 4
 methodischer_fahrplan:
   offen_starten: Auf einer Seite stehen drei Tore. Alle Kinder starten gleichzeitig
     mit Ball von der anderen Seite und dribbeln durchs Gewusel nach vorn; am Ende

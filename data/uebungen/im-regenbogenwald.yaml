@@ -11,6 +11,27 @@ anzahl_kinder:
   min: 11
   max: 13
 material: []
+material_liste:
+- art: pylone
+  farbe: rot
+  menge: 4
+- art: pylone
+  farbe: blau
+  menge: 4
+- art: pylone
+  farbe: gelb
+  menge: 4
+- art: pylone
+  farbe: gruen
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 6
+- art: leibchen
+  farbe: weiss
+  menge: 6
+- art: fussball
+  menge: 12
 methodischer_fahrplan:
   offen_starten: Rund um ein Startfeld liegen mehrere Felder, jedes mit Pylonen einer
     Farbe markiert. Alle Kinder dribbeln frei im Startfeld. Hebst du eine farbige

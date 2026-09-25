@@ -14,6 +14,17 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: minitor
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 3
 methodischer_fahrplan:
   offen_starten: 'Ein Tor auf jeder Seite, dazwischen zwei Kinder im Eins gegen Eins:
     Beide wollen am Gegenüber vorbei und in dessen Tor treffen. Tor oder Aus beendet

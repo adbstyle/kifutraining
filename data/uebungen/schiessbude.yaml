@@ -11,6 +11,29 @@ anzahl_kinder:
   min: 10
   max: 12
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: pylone
+  farbe: gelb
+  menge: 4
+- art: pylone
+  farbe: orange
+  menge: 2
+- art: reifen
+  farbe: rot
+  menge: 4
+- art: reifen
+  farbe: blau
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 5
+- art: leibchen
+  farbe: weiss
+  menge: 5
+- art: fussball
+  menge: 11
 aufbau: Aus dem gesamten Material, das im Training herumliegt, wird im Tor eine Schiessbude
   aufgebaut — Pylonen, Reifen, Stangen, Bälle. Wer trifft die meisten Gegenstände?
 varianten: []

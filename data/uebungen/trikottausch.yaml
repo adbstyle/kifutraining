@@ -11,6 +11,27 @@ anzahl_kinder:
   min: 11
   max: 13
 material: []
+material_liste:
+- art: teller
+  farbe: rot
+  menge: 4
+- art: teller
+  farbe: gelb
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 10
+- art: leibchen
+  farbe: blau
+  menge: 5
+- art: leibchen
+  farbe: gelb
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 6
+- art: fussball
+  menge: 12
 methodischer_fahrplan:
   offen_starten: 'Jedes Kind dribbelt mit einem farbigen Leibchen in der Hand durch
     das Feld; in der Mitte ist ein kleineres Feld frei markiert. Auf dein Signal dribbeln

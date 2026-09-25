@@ -12,6 +12,23 @@ anzahl_kinder:
   min: 11
   max: 13
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: teller
+  farbe: rot
+  menge: 6
+- art: teller
+  farbe: weiss
+  menge: 6
+- art: leibchen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 5
+- art: fussball
+  menge: 6
 methodischer_fahrplan:
   offen_starten: 'Ein Kind von Rot startet mit Ball ins Feld und passt zum Weissen,
     das ihm gegenübersteht. Das Weisse nimmt ihn in die Schusszone mit und schiesst.

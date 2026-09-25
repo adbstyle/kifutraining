@@ -11,6 +11,21 @@ anzahl_kinder:
   min: 11
   max: 13
 material: []
+material_liste:
+- art: pylone
+  farbe: orange
+  menge: 6
+- art: reifen
+  farbe: orange
+  menge: 6
+- art: leibchen
+  farbe: rot
+  menge: 6
+- art: leibchen
+  farbe: weiss
+  menge: 6
+- art: fussball
+  menge: 12
 methodischer_fahrplan:
   offen_starten: 'Im Feld liegen Reifen und stehen Pylonen: Die Reifen sind Seen,
     die Pylonen Berge. Jedes Kind führt seinen Ball dazwischen hindurch. Auf dein

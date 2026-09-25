@@ -34,7 +34,28 @@
         "max": { "type": ["integer", "null"] }
       }
     },
-    "material": { "type": "array", "items": { "type": "string" } },
+    "material": {
+      "$comment": "Freie Ergänzung: was das Feld-Diagramm nicht kennt (Epic #266).",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "material_liste": {
+      "$comment": "Material aus dem Diagramm-Vorrat nach Art, Farbe, Menge (Story #270). Arten und Farben spiegeln MATERIAL_ARTEN und farbSlugs in web/lib/material.ts bzw. web/lib/diagramm.ts; npm run check:material hält sie gleich. Farbe nur bei färbbarem Material.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["art", "menge"],
+        "properties": {
+          "art": {
+            "enum": ["tor", "minitor", "pylone", "teller", "stange", "reifen", "huerde",
+                     "leibchen", "fussball", "handball", "tennisball"]
+          },
+          "farbe": { "enum": ["rot", "blau", "gelb", "gruen", "orange", "weiss", "schwarz"] },
+          "menge": { "type": "integer", "minimum": 1, "maximum": 999 }
+        }
+      }
+    },
     "aufbau": { "type": "string", "minLength": 1 },
     "methodischer_fahrplan": {
       "$comment": "Alle drei Stufen sind Pflicht — spiegelt den DB-Constraint fahrplan_vollstaendig, der seit Story 2 (Epic #72) quellenunabhängig gilt. So schlägt eine lückenhafte Übung schon bei validate.py fehl und nicht erst beim Seed.",

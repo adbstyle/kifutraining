@@ -12,6 +12,20 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: minitor
+  menge: 4
+- art: reifen
+  farbe: orange
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 5
 methodischer_fahrplan:
   offen_starten: 'Drei gegen drei mit vier Toren in den Ecken, je zwei blaue und zwei
     gelbe, diagonal gegenüber. Rot spielt auf die blauen Tore und verteidigt die gelben,

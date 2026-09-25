@@ -13,6 +13,13 @@ anzahl_kinder:
   min: 10
   max: 12
 material: []
+material_liste:
+- art: leibchen
+  farbe: rot
+  menge: 8
+- art: leibchen
+  farbe: weiss
+  menge: 2
 methodischer_fahrplan:
   offen_starten: 'Zwei Fänger jagen alle anderen. Wer berührt wird, bleibt als Tanne
     stehen: Arme ausgestreckt, Beine breit. Befreit wird eine Tanne, indem ein anderes

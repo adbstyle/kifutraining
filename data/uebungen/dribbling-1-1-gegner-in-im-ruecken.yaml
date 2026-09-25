@@ -13,6 +13,23 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: minitor
+  menge: 4
+- art: pylone
+  farbe: rot
+  menge: 2
+- art: teller
+  farbe: blau
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 6
+- art: leibchen
+  farbe: weiss
+  menge: 6
+- art: fussball
+  menge: 4
 methodischer_fahrplan:
   offen_starten: Du bildest Team Rot und Team Weiss. Zwei Rote stehen hinten und passen
     nach vorn zu ihren beiden Angreifern. Erst wenn der Pass gespielt ist, dürfen

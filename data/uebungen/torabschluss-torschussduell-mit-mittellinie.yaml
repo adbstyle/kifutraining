@@ -13,6 +13,20 @@ anzahl_kinder:
   min: 4
   max: 6
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: pylone
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: weiss
+  menge: 2
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: Zwei gegen zwei mit einer Mittellinie. In der eigenen Hälfte darf
     einzig der Torspieler verteidigen — die Feldspieler dürfen sich also im Angriff

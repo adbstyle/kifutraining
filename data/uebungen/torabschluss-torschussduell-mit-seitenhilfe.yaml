@@ -12,6 +12,20 @@ anzahl_kinder:
   min: 8
   max: 10
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: pylone
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: 2 gegen 2 im Feld, an den Seiten stehen Kinder ausserhalb als Joker,
     dazu die Torspieler. Die Teams holen sich die Joker ins Spiel, um zu treffen.

@@ -12,6 +12,20 @@ anzahl_kinder:
   min: 8
   max: 10
 material: []
+material_liste:
+- art: minitor
+  menge: 4
+- art: pylone
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: 2 gegen 2 im Feld, auf jeder Aussenbahn stehen zwei Kinder als Joker.
     Ein Joker darf den Ball höchstens zweimal berühren.

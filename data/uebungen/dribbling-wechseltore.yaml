@@ -13,6 +13,23 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: minitor
+  menge: 4
+- art: teller
+  farbe: rot
+  menge: 2
+- art: reifen
+  farbe: orange
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 5
 methodischer_fahrplan:
   offen_starten: 'Drei gegen drei, das Feld hat eine Mittellinie und in jeder Hälfte
     zwei Tore. Abschliessen darf nur, wer zuvor mit dem Ball die Mittellinie überquert

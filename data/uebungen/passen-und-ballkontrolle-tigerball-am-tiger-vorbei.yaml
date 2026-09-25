@@ -13,6 +13,18 @@ anzahl_kinder:
   min: 3
   max: 5
 material: []
+material_liste:
+- art: pylone
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 1
+- art: leibchen
+  farbe: weiss
+  menge: 2
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: Zwei Kinder spielen sich den Ball flach zu und bleiben dabei immer
     anspielbar. Zwischen ihnen lauert der Tiger. Gelingen drei Pässe, ohne dass der

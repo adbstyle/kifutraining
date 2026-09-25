@@ -11,6 +11,15 @@ anzahl_kinder:
   min: 10
   max: 12
 material: []
+material_liste:
+- art: leibchen
+  farbe: rot
+  menge: 9
+- art: leibchen
+  farbe: weiss
+  menge: 5
+- art: fussball
+  menge: 8
 methodischer_fahrplan:
   offen_starten: 'Zwei Kinder tragen ein Leibchen in der Hand — sie sind das Feuer.
     Alle anderen dribbeln im Feld und halten Abstand. Wen das Feuer berührt, der hat

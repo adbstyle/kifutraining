@@ -11,6 +11,32 @@ anzahl_kinder:
   min: 10
   max: 12
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: teller
+  farbe: rot
+  menge: 2
+- art: teller
+  farbe: blau
+  menge: 2
+- art: teller
+  farbe: gruen
+  menge: 2
+- art: teller
+  farbe: orange
+  menge: 2
+- art: teller
+  farbe: weiss
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 5
+- art: leibchen
+  farbe: weiss
+  menge: 5
+- art: fussball
+  menge: 10
 aufbau: Von einer Markierung aus soll der Ball durch die Luft ins Tor fliegen. Wer
   trifft, rückt eine Markierung weiter nach hinten; wer nicht trifft, versucht es
   in der folgenden Runde noch einmal aus derselben Distanz. Wer hat am Ende die meisten

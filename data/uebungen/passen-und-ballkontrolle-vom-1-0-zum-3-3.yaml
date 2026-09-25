@@ -13,6 +13,20 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: minitor
+  menge: 4
+- art: pylone
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 6
 methodischer_fahrplan:
   offen_starten: 'Ein Kind von Weiss dribbelt ins leere Feld und trifft so schnell
     es kann. Dann kommt ein Kind von Rot mit eigenem Ball dazu: Eins gegen Eins. Nach

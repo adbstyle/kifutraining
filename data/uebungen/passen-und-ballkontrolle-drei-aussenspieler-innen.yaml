@@ -12,6 +12,20 @@ anzahl_kinder:
   min: 12
   max: 14
 material: []
+material_liste:
+- art: minitor
+  menge: 4
+- art: pylone
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 6
+- art: leibchen
+  farbe: weiss
+  menge: 6
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: Drei gegen drei im Feld, dazu pro Team drei Aussenspieler — die Satelliten
     — rund um das Feld, jederzeit anspielbar. Spielt ein Satellit den Ball direkt

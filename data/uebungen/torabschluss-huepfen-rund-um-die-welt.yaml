@@ -13,6 +13,28 @@ anzahl_kinder:
   min: 11
   max: 13
 material: []
+material_liste:
+- art: teller
+  farbe: rot
+  menge: 2
+- art: teller
+  farbe: blau
+  menge: 2
+- art: reifen
+  farbe: rot
+  menge: 9
+- art: reifen
+  farbe: blau
+  menge: 10
+- art: reifen
+  farbe: gelb
+  menge: 6
+- art: leibchen
+  farbe: rot
+  menge: 6
+- art: leibchen
+  farbe: weiss
+  menge: 6
 methodischer_fahrplan:
   offen_starten: 'Farbige Reifen liegen verstreut in einem abgesteckten Feld. Die
     Kinder bewegen sich frei und hüpfen immer wieder in einen Reifen — einbeinig oder

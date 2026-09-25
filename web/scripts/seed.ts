@@ -11,6 +11,7 @@ import yaml from "js-yaml";
 import { createClient } from "@supabase/supabase-js";
 import { parseDiagramm, type DiagrammData } from "../lib/diagramm";
 import { diagrammProbleme } from "./diagramm-pruefung";
+import { materialVorschlag, parseMaterialListe } from "../lib/material";
 
 // .env.local laden, falls vorhanden (Prod übergibt Env inline).
 try {
@@ -110,6 +111,12 @@ async function seedExercises() {
       kategorien: u.kategorien ?? [],
       anzahl_kinder: u.anzahl_kinder ?? null,
       material: u.material ?? [],
+      // Die kuratierte Liste (Story #270); die Basis ist der Vorschlag des
+      // Diagramms — weicht die Liste davon ab, ist das eine bewusste
+      // Entscheidung des Betreibers, kein Hinweis-Fall. Eine Kopie erkennt
+      // damit eine spätere Änderung an IHREM Diagramm.
+      material_liste: parseMaterialListe(u.material_liste ?? []),
+      material_basis: diagramm ? materialVorschlag(diagramm) : null,
       // Übungsablauf je Einordnung: methodischer_fahrplan (jsonb) bei
       // einleitung/hauptteil, flaches aufbau bei auffangen/ausklang sowie bei
       // der Hauptteilkategorie «Fussball spielen» (freies Spiel, Story 2).

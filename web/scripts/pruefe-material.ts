@@ -15,7 +15,8 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { DiagrammData, DiagrammElement } from "../lib/diagramm";
+import { farbSlugs, parseDiagramm, type DiagrammData, type DiagrammElement } from "../lib/diagramm";
+import yaml from "js-yaml";
 import {
   FARBE_LABEL,
   MATERIAL_ARTEN,
@@ -31,6 +32,12 @@ import {
 } from "../lib/material";
 
 const WEB = resolve(fileURLToPath(import.meta.url), "../..");
+
+/** Die Material-Liste einer Übungs-YAML, roh. */
+function liesListe(text: string): unknown[] {
+  const doc = yaml.load(text) as { material_liste?: unknown[] };
+  return doc.material_liste ?? [];
+}
 
 let gelaufen = 0;
 let gescheitert = 0;
@@ -98,6 +105,38 @@ pruefe("material_suchtext nennt jede Farbe wie FARBE_LABEL", () => {
   for (const [slug, label] of Object.entries(FARBE_LABEL))
     assert.match(SUCHTEXT ?? "", new RegExp(`when '${slug}'\\s+then '${label}'`), slug);
 });
+
+// ── Zwilling 3: das JSON-Schema der Übungs-Datenbank ──────────────────────
+const SCHEMA = JSON.parse(readFileSync(join(WEB, "../schema/uebung.schema.json"), "utf8"));
+
+pruefe("uebung.schema.json kennt dieselben Arten und Farben", () => {
+  const items = SCHEMA.properties.material_liste.items.properties;
+  assert.deepEqual(items.art.enum, [...MATERIAL_ARTEN]);
+  assert.deepEqual(items.farbe.enum, [...farbSlugs]);
+});
+
+// ── Die Manual-Übungen (Story #270) ────────────────────────────────────────
+const UEBUNGEN = join(WEB, "../data/uebungen");
+const DIAGRAMME = join(WEB, "../data/diagramme");
+
+pruefe("jede Manual-Übung mit Diagramm trägt eine gültige Material-Liste", () => {
+  for (const datei of readdirSync(DIAGRAMME).filter((f) => f.endsWith(".json"))) {
+    const slug = datei.replace(/\.json$/, "");
+    const yaml = readFileSync(join(UEBUNGEN, `${slug}.yaml`), "utf8");
+    const roh = liesListe(yaml);
+    assert.ok(roh.length > 0, `${slug}: keine material_liste`);
+    assert.equal(parseMaterialListe(roh).length, roh.length, `${slug}: ungültiger oder doppelter Posten`);
+  }
+});
+
+// Abweichungen vom Vorschlag sind erlaubt — der Betreiber entscheidet —, aber
+// sichtbar: der Lauf nennt sie, damit keine unbemerkt entsteht.
+for (const datei of readdirSync(DIAGRAMME).filter((f) => f.endsWith(".json")).sort()) {
+  const slug = datei.replace(/\.json$/, "");
+  const liste = parseMaterialListe(liesListe(readFileSync(join(UEBUNGEN, `${slug}.yaml`), "utf8")));
+  const vorschlag = materialVorschlag(parseDiagramm(JSON.parse(readFileSync(join(DIAGRAMME, datei), "utf8"))));
+  if (!gleicheListe(liste, vorschlag)) console.log(`ℹ ${slug}: Material weicht bewusst vom Diagramm ab`);
+}
 
 // ── Regeln ─────────────────────────────────────────────────────────────────
 let n = 0;

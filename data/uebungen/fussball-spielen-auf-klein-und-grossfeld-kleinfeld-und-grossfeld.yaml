@@ -13,6 +13,19 @@ anzahl_kinder:
   min: 12
   max: 14
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: minitor
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 5
+- art: leibchen
+  farbe: weiss
+  menge: 5
+- art: fussball
+  menge: 2
 aufbau: Auf dem Kleinfeld spielen die Kinder je nach Anzahl 1 gegen 1 bis 4 gegen
   4. Auf dem Grossfeld geht es auf die grossen Tore, höchstens 6 gegen 6 inklusive
   Torspieler; wie viele Kinder dort maximal spielen, richtet sich nach dem Wettspielformat
