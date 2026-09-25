@@ -10,6 +10,8 @@ import {
   MethodischerFahrplan,
   PrintButton,
   UebungsBild,
+  MaterialListe,
+  Button,
 } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { cn } from "@/lib/cn";
@@ -31,6 +33,17 @@ import {
 import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
 import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
+import { AenderungMeldung } from "@/components/exercise/MaterialField";
+import {
+  AENDERUNG_BEIBEHALTEN,
+  AENDERUNG_UEBERNEHMEN,
+  hatMaterial,
+  materialAenderungen,
+  materialBasisAusDiagramm,
+  parseMaterialBasis,
+  parseMaterialListe,
+} from "@/lib/material";
+import { behalteMaterial, uebernehmeMaterialVorschlag } from "@/lib/actions/material";
 
 export const dynamic = "force-dynamic";
 
@@ -112,11 +125,10 @@ export default async function ExerciseDetailPage({
     { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
     { label: ex.name },
   ];
-  // Feldtyp und Spielfeldgrösse schliessen einander aus: der Feldtyp ist eine
-  // Kategorie des Manuals Fussball Kinder, die Spielfeldgrösse führt das
-  // Junioren-Manual an seiner Stelle (Story 3 AK 8/10).
+  // Die Spielfeldgrösse führt das Junioren-Manual an Stelle des Feldtyps
+  // (Story 3 AK 8/10); im Kinderfussball ergänzt sie das freie Feld (#272).
   const spielfeld =
-    traegtSpielfeldgroesse(ex.altersstufe) &&
+    traegtSpielfeldgroesse(ex.altersstufe, ex.feldtyp) &&
     ex.spielfeld_laenge_m != null &&
     ex.spielfeld_breite_m != null
       ? `${ex.spielfeld_laenge_m} × ${ex.spielfeld_breite_m} m`
@@ -128,11 +140,14 @@ export default async function ExerciseDetailPage({
     spielfeld,
   ].filter(Boolean);
   const anzahl = anzahlText(ex.anzahl_kinder);
+  const materialListe = parseMaterialListe(ex.material_liste);
+  const materialHinweis = isOwner
+    ? materialAenderungen(parseMaterialBasis(ex.material_basis), materialBasisAusDiagramm(ex.diagramm))
+    : [];
   const hatEckdaten =
     !!spielfeld ||
     !!ex.hauptteilkategorie ||
-    !!anzahl ||
-    ex.material.length > 0;
+    !!anzahl;
   // Übungstyp und Erscheinungsform zählen bewusst NICHT zu den Eckdaten: sie
   // stehen seit Story #124 unterhalb des Ablaufs (siehe dort).
   const hatEinordnung = !!ex.uebungstyp || ex.erscheinungsform.length > 0;
@@ -248,9 +263,6 @@ export default async function ExerciseDetailPage({
           </Meta>
         )}
         {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
-        {ex.material.length > 0 && (
-          <Meta label="Material">{ex.material.join(", ")}</Meta>
-        )}
       </div>
 
       {/* Ablauf */}
@@ -284,6 +296,39 @@ export default async function ExerciseDetailPage({
               <li key={i}>{v}</li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* Material — hinter Ablauf und Varianten (PO 2026-09-25): Wer die Seite
+          öffnet, liest zuerst, was gemacht wird, und danach, was es dafür
+          braucht. Der Hinweis auf eine Diagrammänderung steht bei dem, was er
+          betrifft. */}
+      {(hatMaterial(materialListe, ex.material) || materialHinweis.length > 0) && (
+        // Nur der Hinweis, noch kein Material: auf dem Ausdruck stünde sonst
+        // eine leere Überschrift.
+        <section className={cn("mt-8", !hatMaterial(materialListe, ex.material) && "print:hidden")}>
+          <h2 className="type-title-medium mb-3 text-on-surface-mittel">Material</h2>
+          {/* Hat eine Diagrammänderung das Material verändert (Story #269)? Nur
+              die Eigentümerin sieht es — sie allein kann antworten. Nicht im
+              Druck: der Hinweis gilt dem Bearbeiten, nicht dem Platz. */}
+          {materialHinweis.length > 0 && (
+            <AenderungMeldung aenderungen={materialHinweis} className="mb-4 print:hidden">
+              <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
+                <Button type="submit" variant="text" size="sm">
+                  {AENDERUNG_UEBERNEHMEN}
+                </Button>
+              </form>
+              <form action={behalteMaterial.bind(null, ex.id)}>
+                <Button type="submit" variant="text" size="sm">
+                  {AENDERUNG_BEIBEHALTEN}
+                </Button>
+              </form>
+            </AenderungMeldung>
+          )}
+
+          <div className="type-body-large text-on-surface">
+            <MaterialListe liste={materialListe} ergaenzung={ex.material} />
+          </div>
         </section>
       )}
 

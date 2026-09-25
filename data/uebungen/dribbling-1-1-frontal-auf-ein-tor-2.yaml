@@ -13,6 +13,20 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: minitor
+  menge: 2
+- art: teller
+  farbe: rot
+  menge: 8
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 3
 methodischer_fahrplan:
   offen_starten: Eins gegen Eins auf drei Tore in einer Reihe, das mittlere deutlich
     grösser als die beiden äusseren. Tor oder Aus beendet die Runde. Nach zwei Minuten

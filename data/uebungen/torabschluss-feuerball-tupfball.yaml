@@ -12,6 +12,24 @@ anzahl_kinder:
   min: 12
   max: 14
 material: []
+material_liste:
+- art: teller
+  farbe: rot
+  menge: 4
+- art: teller
+  farbe: gelb
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: blau
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: fussball
+  menge: 3
 methodischer_fahrplan:
   offen_starten: In jedem Viereck steht ein Dreierteam zusammen mit einem Eisbären
     des anderen Teams. Die drei spielen sich den Feuerball mit den Händen zu und versuchen,

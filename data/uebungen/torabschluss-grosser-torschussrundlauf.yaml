@@ -14,6 +14,22 @@ anzahl_kinder:
   min: 10
   max: 12
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: minitor
+  menge: 6
+- art: pylone
+  farbe: rot
+  menge: 6
+- art: leibchen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: fussball
+  menge: 7
 methodischer_fahrplan:
   offen_starten: 'In der Mitte liegt ein markiertes Viereck, rundherum stehen acht
     Tore. Gleichzeitiger Start für alle: aus dem Viereck heraus dribbeln und mit der

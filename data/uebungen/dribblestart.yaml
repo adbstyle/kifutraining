@@ -11,6 +11,35 @@ anzahl_kinder:
   min: 7
   max: 9
 material: []
+material_liste:
+- art: pylone
+  farbe: blau
+  menge: 2
+- art: pylone
+  farbe: orange
+  menge: 1
+- art: teller
+  farbe: rot
+  menge: 2
+- art: teller
+  farbe: gelb
+  menge: 2
+- art: stange
+  farbe: gelb
+  menge: 2
+- art: reifen
+  farbe: blau
+  menge: 3
+- art: huerde
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: fussball
+  menge: 8
 aufbau: 'Vor dem Training steht ein Feld bereit, in dem verschiedene Gegenstände als
   Hindernisse verteilt sind — Pylonen, Reifen, Stangen, was gerade da ist. Wer ankommt,
   holt sich einen Ball und dribbelt los: um die Hindernisse herum, ohne anzustossen,

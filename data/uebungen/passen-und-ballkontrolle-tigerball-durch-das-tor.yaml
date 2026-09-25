@@ -13,6 +13,18 @@ anzahl_kinder:
   min: 2
   max: 4
 material: []
+material_liste:
+- art: pylone
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 1
+- art: leibchen
+  farbe: weiss
+  menge: 1
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: Zwischen zwei Kindern steht ein Pylonentor. Das eine spielt den Ball
     flach durch das Tor, das andere nimmt ihn dahinter an und spielt ihn von dort

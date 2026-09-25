@@ -13,6 +13,17 @@ anzahl_kinder:
   min: 4
   max: 6
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: weiss
+  menge: 2
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: 2 gegen 2 auf zwei Tore mit Torspielern. Wer mutig dribbelt, sich
     freiläuft und zusammenspielt, schafft Überzahl — und trifft.

@@ -15,6 +15,7 @@
 //
 // REIN: keine Server-Importe — `check:ki-zugang` lädt diese Datei mit tsx.
 import { z } from "zod";
+import { materialSchema } from "@/lib/material-ausgabe";
 import { altersstufe as altersstufeLabels, altersstufeSlugs } from "@/lib/vocab";
 import {
   einordnungFilterOptionen,
@@ -106,7 +107,8 @@ export const UebungAusgabe = UebungKopf.extend({
   anzahl_kinder: z
     .object({ min: z.number().nullable(), max: z.number().nullable() })
     .nullable(),
-  material: z.array(z.string()),
+  /** Material gegliedert: Liste aus dem Diagramm-Vorrat und freie Ergänzung. */
+  material: materialSchema(),
   methodischer_fahrplan: z
     .object({
       offen_starten: z.string(),

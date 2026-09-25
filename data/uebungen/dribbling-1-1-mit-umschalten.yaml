@@ -12,6 +12,23 @@ anzahl_kinder:
   min: 7
   max: 9
 material: []
+material_liste:
+- art: minitor
+  menge: 2
+- art: teller
+  farbe: rot
+  menge: 4
+- art: teller
+  farbe: blau
+  menge: 2
+- art: leibchen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: fussball
+  menge: 5
 methodischer_fahrplan:
   offen_starten: Das erste Kind zieht mit dem Ball zur Schusszone und sucht im Eins
     gegen Eins den Abschluss. Kaum ist der Ball weg, wird es selbst zum Verteidiger

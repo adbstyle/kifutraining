@@ -13,6 +13,21 @@ anzahl_kinder:
   min: 3
   max: 5
 material: []
+material_liste:
+- art: pylone
+  farbe: rot
+  menge: 2
+- art: teller
+  farbe: gelb
+  menge: 8
+- art: leibchen
+  farbe: rot
+  menge: 2
+- art: leibchen
+  farbe: weiss
+  menge: 1
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: Zwei Kinder stehen je in einer eigenen Zone und spielen sich den
     Ball flach zu. Dazwischen lauert der Tiger und will die Pässe abfangen. Gelingt

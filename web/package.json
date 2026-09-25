@@ -1,6 +1,6 @@
 {
   "name": "kifu-web",
-  "version": "1.10.0",
+  "version": "1.12.0",
   "license": "CC-BY-SA-4.0",
   "private": true,
   "type": "module",
@@ -28,6 +28,7 @@
     "check:figuren": "tsx scripts/pruefe-figuren.ts",
     "check:ki-zugang": "tsx scripts/pruefe-ki-zugang.ts",
     "check:kern": "tsx scripts/pruefe-kern.ts",
+    "check:material": "tsx scripts/pruefe-material.ts",
     "check:hinweise": "tsx scripts/pruefe-hinweise.ts",
     "check:kern-db": "tsx --conditions=react-server scripts/pruefe-kern-db.ts",
     "sync:storage": "tsx scripts/sync-storage-staging.ts"

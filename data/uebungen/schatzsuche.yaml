@@ -11,6 +11,36 @@ anzahl_kinder:
   min: 9
   max: 11
 material: []
+material_liste:
+- art: minitor
+  menge: 3
+- art: teller
+  farbe: rot
+  menge: 2
+- art: teller
+  farbe: blau
+  menge: 2
+- art: teller
+  farbe: weiss
+  menge: 2
+- art: reifen
+  farbe: gelb
+  menge: 3
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: blau
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 6
+- art: handball
+  menge: 6
+- art: tennisball
+  menge: 6
 methodischer_fahrplan:
   offen_starten: Alle Kinder dribbeln auf der Schatzinsel, einem markierten Feld;
     ideal sind unterschiedliche Bälle. Auf dein Signal lässt jedes Kind seinen Ball

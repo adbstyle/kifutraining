@@ -14,6 +14,23 @@ anzahl_kinder:
   min: 8
   max: 10
 material: []
+material_liste:
+- art: minitor
+  menge: 2
+- art: pylone
+  farbe: orange
+  menge: 4
+- art: teller
+  farbe: blau
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 6
+- art: leibchen
+  farbe: weiss
+  menge: 2
+- art: fussball
+  menge: 6
 methodischer_fahrplan:
   offen_starten: Der Weg führt an einer Wache vorbei in die Torzone. Dort wartet eine
     zweite Wache, die es zu umspielen gilt, bevor das Kind auf das Tor abschliesst.

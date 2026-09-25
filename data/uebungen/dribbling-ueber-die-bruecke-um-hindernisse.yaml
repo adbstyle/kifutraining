@@ -14,6 +14,27 @@ anzahl_kinder:
   min: 7
   max: 9
 material: []
+material_liste:
+- art: pylone
+  farbe: orange
+  menge: 6
+- art: teller
+  farbe: rot
+  menge: 10
+- art: teller
+  farbe: blau
+  menge: 4
+- art: reifen
+  farbe: blau
+  menge: 6
+- art: leibchen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: fussball
+  menge: 8
 methodischer_fahrplan:
   offen_starten: Zwischen zwei Zonen liegt die Brücke, auf ihr stehen Pylonen als
     Hindernisse. Auf dein Signal dribbeln alle Kinder über die Brücke in die gegenüberliegende

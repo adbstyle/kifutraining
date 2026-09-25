@@ -69,6 +69,9 @@ jobs:
       # Editor, je Variante, wortgleich — die Textkonstanten gegen die früheren
       # JSX-Literale, und dass die Komponenten keine eigenen Literale mehr tragen.
       - run: npm run check:hinweise
+      # Material aus dem Diagramm (Epic #266): der Katalog gegen Symbol-Register
+      # und SQL-Suchfunktion, dazu Vorschlag, Normalform und Gesamtliste.
+      - run: npm run check:material
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)

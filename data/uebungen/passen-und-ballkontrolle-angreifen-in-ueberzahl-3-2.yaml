@@ -13,6 +13,20 @@ anzahl_kinder:
   min: 5
   max: 7
 material: []
+material_liste:
+- art: minitor
+  menge: 4
+- art: pylone
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 2
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: Rot greift auf zwei Tore an; geschossen werden darf erst ab der Mittellinie.
     Ein Verteidiger steht im Feld, der zweite wartet hinter den Toren und darf erst

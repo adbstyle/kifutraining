@@ -13,6 +13,15 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: Drei gegen drei ohne Tore. An beiden Enden liegt eine Endzone. Einen
     Punkt gibt es, wenn ein Kind den Ball in der gegnerischen Endzone unter Kontrolle

@@ -13,6 +13,20 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: minitor
+  menge: 4
+- art: pylone
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 3
+- art: fussball
+  menge: 1
 methodischer_fahrplan:
   offen_starten: Drei Rote starten ihren Angriff von der Grundlinie. Ein Weisses verteidigt
     von Anfang an im Feld. Sobald Rot den Ball zum ersten Mal berührt, kommen Weiss

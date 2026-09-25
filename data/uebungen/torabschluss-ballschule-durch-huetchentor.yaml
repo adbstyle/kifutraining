@@ -13,6 +13,23 @@ anzahl_kinder:
   min: 9
   max: 11
 material: []
+material_liste:
+- art: tor
+  menge: 2
+- art: pylone
+  farbe: rot
+  menge: 4
+- art: pylone
+  farbe: blau
+  menge: 4
+- art: leibchen
+  farbe: rot
+  menge: 3
+- art: leibchen
+  farbe: weiss
+  menge: 4
+- art: fussball
+  menge: 7
 methodischer_fahrplan:
   offen_starten: 'Vor dem Tor steht ein Pylonentor. Jedes Kind dribbelt heran, spielt
     sich den Ball durch das Pylonentor vor und schiesst. Dann Ball holen und auf der

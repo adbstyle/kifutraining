@@ -14,6 +14,18 @@ anzahl_kinder:
   min: 6
   max: 8
 material: []
+material_liste:
+- art: teller
+  farbe: blau
+  menge: 8
+- art: leibchen
+  farbe: rot
+  menge: 4
+- art: leibchen
+  farbe: weiss
+  menge: 2
+- art: fussball
+  menge: 4
 methodischer_fahrplan:
   offen_starten: Auf der Brücke zwischen den beiden Zonen stehen diesmal zwei Wachen.
     Die Kinder dribbeln an beiden vorbei und bringen den Ball in der Zone gegenüber

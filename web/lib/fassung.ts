@@ -24,6 +24,10 @@ export const FASSUNG_INHALT_FELDER = [
   "spielfeld_breite_m",
   "anzahl_kinder",
   "material",
+  // Die Material-Liste und ihre Basis (Epic #266) reisen mit: die Kopie trägt
+  // dasselbe Material und erkennt dieselbe spätere Diagrammänderung.
+  "material_liste",
+  "material_basis",
   "methodischer_fahrplan",
   "uebungstyp",
   "aufbau",
