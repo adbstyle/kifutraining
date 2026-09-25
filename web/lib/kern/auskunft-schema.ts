@@ -12,6 +12,7 @@
 // REIN: nur zod und lib/wert — `check:kern` lädt diese Datei mit tsx.
 import { z } from "zod";
 import { Sichtbarkeit, Wert } from "@/lib/wert";
+import { materialSchema } from "@/lib/material-ausgabe";
 
 function baueSchema(streng: boolean) {
   const obj = streng ? z.strictObject : z.object;
@@ -54,7 +55,8 @@ function baueSchema(streng: boolean) {
     spielfeld: obj({ laenge_m: z.number(), breite_m: z.number() }).nullable(),
     uebungstyp: W.nullable(),
     anzahl_kinder: obj({ min: z.number().nullable(), max: z.number().nullable() }).nullable(),
-    material: z.array(z.string()),
+    /** Das Material dieser Übung, gegliedert wie in der Oberfläche. */
+    material: materialSchema(streng),
     ablauf: z
       .discriminatedUnion("art", [
         obj({

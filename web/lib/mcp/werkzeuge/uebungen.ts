@@ -1,4 +1,6 @@
 import "server-only";
+import { materialAusgabe } from "@/lib/material-ausgabe";
+import { parseMaterialListe } from "@/lib/material";
 import type { z } from "zod";
 import { getExerciseDetailFuer, type ExerciseDetail } from "@/lib/queries/exercises";
 import {
@@ -106,7 +108,7 @@ function alsUebung(ex: ExerciseDetail, zugang: Zugang): z.infer<typeof UebungAus
     anzahl_kinder: ex.anzahl_kinder
       ? { min: ex.anzahl_kinder.min ?? null, max: ex.anzahl_kinder.max ?? null }
       : null,
-    material: ex.material ?? [],
+    material: materialAusgabe(parseMaterialListe(ex.material_liste), ex.material ?? []),
     methodischer_fahrplan: fahrplan
       ? {
           offen_starten: fahrplan.offen_starten ?? "",

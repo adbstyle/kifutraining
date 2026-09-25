@@ -17,6 +17,7 @@ import {
   traegtUebungstyp,
   type Altersstufe,
 } from "@/lib/altersstufe";
+import { parseMaterialListe } from "@/lib/material";
 
 /** Kleinste und grösste sinnvolle Kantenlänge eines Spielfelds in Metern.
  *  Spiegelt die CHECKs `ex_spielfeld_bereich` / `te_spielfeld_bereich`.
@@ -32,6 +33,15 @@ function lines(v: FormDataEntryValue | null): string[] {
     .split("\n")
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+/** JSON aus einem Formularfeld — `null`, wenn es fehlt oder kaputt ist. */
+function json(v: FormDataEntryValue | null): unknown {
+  try {
+    return JSON.parse(String(v ?? ""));
+  } catch {
+    return null;
+  }
 }
 
 function clean(v: FormDataEntryValue | null): string {
@@ -216,6 +226,14 @@ export function parseUebungsInhalt(
       erscheinungsform,
       hauptteilkategorie,
       anzahl_kinder,
+      // Die Liste kommt als JSON (MaterialField), die Ergänzung zeilenweise.
+      // Die Basis setzt NICHT das Formular, sondern die Server Action aus dem
+      // gespeicherten Diagramm (`materialBasisAusDiagramm`).
+      // Fehlt das Feld ganz, bleibt die gespeicherte Liste unberührt — ein
+      // Formular ohne Material-Feld darf sie nicht leeren.
+      ...(form.has("material_liste")
+        ? { material_liste: parseMaterialListe(json(form.get("material_liste"))) }
+        : {}),
       material: lines(form.get("material")),
       uebungstyp,
       methodischer_fahrplan,

@@ -56,7 +56,12 @@ export type ExerciseDetail = {
   spielfeld_breite_m: number | null;
   kategorien: string[];
   anzahl_kinder: { min?: number | null; max?: number | null } | null;
+  /** Die freie Ergänzung zum Material (Epic #266). */
   material: string[];
+  /** Material-Liste und -Basis roh aus der DB — gelesen wird über
+   *  `parseMaterialListe` / `parseMaterialBasis` (lib/material.ts). */
+  material_liste: unknown;
+  material_basis: unknown;
   methodischer_fahrplan: Fahrplan | null;
   aufbau: string | null;
   varianten: string[];
@@ -71,7 +76,7 @@ export type ExerciseDetail = {
 // Felder der Detailansicht — dieselben für die Seite und das KI-Werkzeug
 // «uebung_abrufen» (#142 NFR 5: keine zweite Spaltenliste).
 const DETAIL_COLUMNS =
-  "id, slug, name, altersstufe, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, kategorien, anzahl_kinder, material, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id";
+  "id, slug, name, altersstufe, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, kategorien, anzahl_kinder, material, material_liste, material_basis, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id";
 
 /** Eine Übung per Slug (volle Felder). RLS blendet private Übungen für
  *  Nicht-Eigentümer aus -> null (Story 4 Postcondition). */

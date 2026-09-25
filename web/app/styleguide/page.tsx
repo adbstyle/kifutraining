@@ -20,6 +20,7 @@ import {
   TimeField,
   Select,
   MethodischerFahrplan,
+  MaterialListe,
   Disclosure,
   Leerzustand,
   Meldung,
@@ -34,6 +35,7 @@ import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
+import { MaterialDemo } from "./MaterialDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import {
@@ -2418,6 +2420,52 @@ export default function Styleguide() {
             den ganzen Verbrauch; weiss mit Raster liegt bei rund 3 %.
           </li>
         </ul>
+      </Section>
+
+      <Section n="26" title="Material">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Das Material einer Übung (Epic „Material aus dem Feld-Diagramm") steht
+          <strong> zweigeteilt</strong>: oben die gezählte Liste aus dem
+          Diagramm-Vorrat nach Art, Farbe und Menge, darunter die freie
+          Ergänzung für alles, was das Diagramm nicht kennt. Die Gliederung ist
+          fachlich: nur die Liste wird in der Gesamtliste eines Trainings
+          verrechnet.
+        </p>
+        <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+          <li>
+            <strong>Erfassen</strong> — kein Repeat-Baustein im Kit, darum ein
+            eigenes Feld aus bestehenden Teilen: je Zeile <code>Select</code>{" "}
+            für Art und (nur bei färbbarem Material) Farbe, <code>TextField</code>{" "}
+            für die Menge, <code>IconButton</code> zum Entfernen. Hinzufügen ist
+            eine Randhandlung, darum <code>quiet</code> (siehe 08).
+          </li>
+          <li>
+            <strong>Vorschlag</strong> — das Angebot des Diagramms steht als{" "}
+            <code>Meldung</code> mit Knopf über der Liste: es bestätigt etwas
+            über den eigenen Vorgang, darum Ton <code>erfolg</code> und Rolle{" "}
+            <code>status</code> (eine Meldung mit Bedienelement, siehe 22).
+          </li>
+          <li>
+            <strong>Lesen</strong> — <code>MaterialListe</code>: ein Posten pro
+            Zeile, die Ergänzung als «Weiteres» abgesetzt. Präsentational, auf
+            Übungsseite, im Training und im Druck derselbe.
+          </li>
+        </ul>
+        <MaterialDemo />
+        <div className="mt-8 max-w-md">
+          <p className="type-label-small mb-2 text-on-surface-mittel">MaterialListe</p>
+          <div className="type-body-medium text-on-surface">
+            <MaterialListe
+              liste={[
+                { art: "minitor", farbe: null, menge: 2 },
+                { art: "pylone", farbe: "orange", menge: 4 },
+                { art: "leibchen", farbe: "rot", menge: 6 },
+                { art: "leibchen", farbe: "blau", menge: 6 },
+              ]}
+              ergaenzung={["Pfeife", "Stoppuhr"]}
+            />
+          </div>
+        </div>
       </Section>
     </main>
   );

@@ -41,6 +41,13 @@ import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { EinordnungField } from "@/components/exercise/EinordnungField";
 import { UmwandelnDialog, type Umwandlung } from "@/components/exercise/UmwandelnDialog";
 import { SpielfeldgroesseField } from "@/components/exercise/SpielfeldgroesseField";
+import {
+  MaterialField,
+  VorschlagMeldung,
+  listeAusZeilen,
+  zeilenAus,
+} from "@/components/exercise/MaterialField";
+import { gleicheListe, type MaterialPosten } from "@/lib/material";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
 
@@ -55,7 +62,10 @@ export type ExerciseInitial = {
   hauptteilkategorie?: string | null;
   uebungstyp?: string | null;
   anzahl_kinder?: { min?: number | null; max?: number | null } | null;
+  /** Die freie Ergänzung zum Material. */
   material?: string[];
+  /** Material aus dem Diagramm-Vorrat (Epic #266). */
+  materialListe?: MaterialPosten[];
   methodischer_fahrplan?: {
     offen_starten?: string;
     ueben?: string[];
@@ -77,6 +87,8 @@ export function ExerciseForm({
   afterName,
   bildEntfernenMoeglich = false,
   fussnote = "Neue Übungen sind zunächst privat (Entwurf).",
+  materialVorschlag,
+  materialBasis = null,
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
@@ -100,6 +112,11 @@ export function ExerciseForm({
   bildEntfernenMoeglich?: boolean;
   /** Hinweis neben der Speichern-Schaltfläche. */
   fussnote?: React.ReactNode;
+  /** Der Material-Vorschlag des gespeicherten Diagramms (Story #267) — auf
+   *  dem Server gerechnet; ohne Diagramm leer oder nicht gesetzt. */
+  materialVorschlag?: MaterialPosten[];
+  /** Der Vorschlag bei der letzten Übernahme; `null` = nie übernommen. */
+  materialBasis?: MaterialPosten[] | null;
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const err = state.errors ?? {};
@@ -135,6 +152,28 @@ export function ExerciseForm({
     initial.methodischer_fahrplan?.wetteifern ?? "",
   );
   const [aufbau, setAufbau] = useState(initial.aufbau ?? "");
+
+  // Material (Epic #266): die Zeilen der Liste und ob der Trainer den
+  // Vorschlag in dieser Bearbeitung übernommen hat — nur dann setzt der
+  // Server die Basis neu.
+  const [materialZeilen, setMaterialZeilen] = useState(() =>
+    zeilenAus(initial.materialListe ?? []),
+  );
+  const [materialError, setMaterialError] = useState<string | null>(null);
+  const [basisBestaetigt, setBasisBestaetigt] = useState(false);
+  const vorschlag = materialVorschlag ?? [];
+  const aktuelleListe = listeAusZeilen(materialZeilen);
+  const zeigtVorschlag =
+    !basisBestaetigt &&
+    materialBasis === null &&
+    vorschlag.length > 0 &&
+    !(aktuelleListe.ok && gleicheListe(aktuelleListe.liste, vorschlag));
+
+  function uebernehmeVorschlag() {
+    setMaterialZeilen(zeilenAus(vorschlag));
+    setMaterialError(null);
+    setBasisBestaetigt(true);
+  }
 
   // Das Feld-Gating kommt geschlossen aus lib/altersstufe.ts — derselben
   // Quelle, gegen die die Server Action prüft und die die DB-CHECKs spiegelt.
@@ -277,6 +316,16 @@ export function ExerciseForm({
     }
 
     setBildError(null);
+
+    const material = listeAusZeilen(materialZeilen);
+    if (!material.ok) {
+      setMaterialError(material.error);
+      return;
+    }
+    setMaterialError(null);
+    fd.set("material_liste", JSON.stringify(material.liste));
+    fd.set("material_basis_bestaetigen", basisBestaetigt ? "1" : "");
+
     // Die Altersstufe wertet das Erstellen aus; beim Bearbeiten nimmt die
     // Server Action die gespeicherte bzw. die des Trainings (Story 1 AC 9) —
     // ausser der Trainer hat die Umwandlung ausdrücklich bestätigt (Story 4
@@ -562,7 +611,20 @@ export function ExerciseForm({
         </p>
       </div>
 
-      <TextArea label="Material (optional, eines pro Zeile)" name="material" defaultValue={initial.material?.join("\n")} />
+      <MaterialField
+        zeilen={materialZeilen}
+        onZeilenChange={(z) => {
+          setMaterialZeilen(z);
+          if (materialError) setMaterialError(null);
+        }}
+        ergaenzung={initial.material ?? []}
+        error={materialError ?? undefined}
+        hinweis={
+          zeigtVorschlag ? (
+            <VorschlagMeldung vorschlag={vorschlag} onUebernehmen={uebernehmeVorschlag} />
+          ) : undefined
+        }
+      />
       <TextArea label="Varianten (optional, eine pro Zeile)" name="varianten" defaultValue={initial.varianten?.join("\n")} />
 
       <div>

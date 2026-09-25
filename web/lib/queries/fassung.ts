@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { parseMaterialBasis, parseMaterialListe, type MaterialPosten } from "@/lib/material";
 import type { Fahrplan } from "@/lib/queries/exercises";
 import { einzelnerTermin } from "@/lib/queries/trainings";
 import { FASSUNG_INHALT_FELDER } from "@/lib/fassung";
@@ -33,7 +34,10 @@ export type FassungZumBearbeiten = {
   spielfeldLaengeM: number | null;
   spielfeldBreiteM: number | null;
   anzahlKinder: { min?: number | null; max?: number | null } | null;
+  /** Die freie Ergänzung zum Material (Epic #266). */
   material: string[];
+  materialListe: MaterialPosten[];
+  materialBasis: MaterialPosten[] | null;
   fahrplan: Fahrplan | null;
   aufbau: string | null;
   varianten: string[];
@@ -82,6 +86,8 @@ export async function getFassungZumBearbeiten(
     spielfeld_breite_m: number | null;
     anzahl_kinder: { min?: number | null; max?: number | null } | null;
     material: string[] | null;
+    material_liste: unknown;
+    material_basis: unknown;
     methodischer_fahrplan: Fahrplan | null;
     aufbau: string | null;
     varianten: string[] | null;
@@ -137,6 +143,8 @@ export async function getFassungZumBearbeiten(
     spielfeldBreiteM: q.spielfeld_breite_m,
     anzahlKinder: q.anzahl_kinder,
     material: q.material ?? [],
+    materialListe: parseMaterialListe(q.material_liste),
+    materialBasis: parseMaterialBasis(q.material_basis),
     fahrplan: q.methodischer_fahrplan,
     aufbau: q.aufbau,
     varianten: q.varianten ?? [],

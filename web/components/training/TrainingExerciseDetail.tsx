@@ -1,6 +1,7 @@
 import { ArrowRight, Clock } from "lucide-react";
 import {
   KategorieChip,
+  MaterialListe,
   MethodischerFahrplan,
   UebungsBild,
 } from "@/components/ui";
@@ -12,6 +13,7 @@ import {
   type KategorieSlug,
 } from "@/lib/vocab";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
+import { hatMaterial } from "@/lib/material";
 
 function anzahlText(a: { min?: number | null; max?: number | null } | null): string | null {
   if (!a) return null;
@@ -43,6 +45,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
       ? formatDuration(item.durationMin)
       : null;
   const anzahl = anzahlText(item.anzahlKinder);
+  const mitMaterial = hatMaterial(item.materialListe, item.material);
   // Spielfeldgrösse und Feldtyp schliessen einander aus: der Feldtyp ist eine
   // Kategorie des Manuals Fussball Kinder, die Spielfeldgrösse führt das
   // Junioren-Manual an seiner Stelle (Story 3 AK 8/10). Geschrieben wie auf der
@@ -145,7 +148,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
         item.feldtyp ||
         spielfeld ||
         anzahl ||
-        item.material.length > 0) && (
+        mitMaterial) && (
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
           {item.feldtyp && (
             <Meta label="Feldtyp">
@@ -160,8 +163,10 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
             </Meta>
           )}
           {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
-          {item.material.length > 0 && (
-            <Meta label="Material">{item.material.join(", ")}</Meta>
+          {mitMaterial && (
+            <Meta label="Material">
+              <MaterialListe liste={item.materialListe} ergaenzung={item.material} />
+            </Meta>
           )}
         </div>
       )}

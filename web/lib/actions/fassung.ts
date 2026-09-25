@@ -22,6 +22,7 @@ import { bearbeitungszielVon, bildOrdnerFuer } from "@/lib/training-zugriff";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 import { istHauptteil } from "@/lib/gruppen";
 import { varianteAnhang } from "@/lib/varianten";
+import { materialBasisAusDiagramm } from "@/lib/material";
 
 export type SaveFassungResult = { ok: true } | { ok: false; error: string };
 
@@ -105,6 +106,10 @@ export async function updateFassung(
   const hkat = (inhalt.hauptteilkategorie as string | null) ?? null;
 
   const update: Record<string, unknown> = { ...inhalt };
+  // Material-Vorschlag übernommen oder Material beibehalten: der heutige
+  // Vorschlag des gespeicherten Diagramms wird die Basis (Epic #266).
+  if (form.get("material_basis_bestaetigen") === "1")
+    update.material_basis = materialBasisAusDiagramm(fassung.diagramm);
 
   // Einordnungswechsel: die Fassung wandert ans Ende ihres neuen Abschnitts.
   // Die Kategorie ausserhalb des Hauptteils ist in `inhalt` bereits null —

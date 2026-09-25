@@ -26,6 +26,7 @@
 // steht: am Teil, und am Block nur, wo er eine eigene Fläche trägt.
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
+import { materialAusgabe } from "@/lib/material-ausgabe";
 import {
   altersstufe as altersstufeLabels,
   feldtyp as feldtypLabels,
@@ -82,7 +83,7 @@ function uebungAuskunft(f: TrainingExerciseItem, trainingStufen: readonly string
     anzahl_kinder: f.anzahlKinder
       ? { min: f.anzahlKinder.min ?? null, max: f.anzahlKinder.max ?? null }
       : null,
-    material: f.material,
+    material: materialAusgabe(f.materialListe, f.material),
     // Genau eine Form trägt den Ablauf (Fahrplan im Kinderfussball, Text im
     // Juniorenfussball, CHECK `ablauf_je_einordnung`).
     ablauf: fp

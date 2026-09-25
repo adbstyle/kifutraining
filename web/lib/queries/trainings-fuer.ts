@@ -9,6 +9,7 @@ import type { Altersstufe } from "@/lib/altersstufe";
 import { FASSUNG_INHALT_FELDER, FASSUNG_ZUORDNUNG_FELDER } from "@/lib/fassung";
 import type { Variante } from "@/lib/varianten";
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
+import { parseMaterialBasis, parseMaterialListe, type MaterialPosten } from "@/lib/material";
 
 // Trainings lesen für einen Client, der bereits als Nutzer spricht (Cookie-
 // Session ODER OAuth-Bearer, Epic #190). Abgespalten aus
@@ -52,7 +53,12 @@ export type TrainingExerciseItem = {
   /** Übungstyp nach dem Manual Fussball Jugendliche (Story 9). */
   uebungstyp: string | null;
   anzahlKinder: { min?: number | null; max?: number | null } | null;
+  /** Die freie Ergänzung zum Material (Epic #266). */
   material: string[];
+  /** Material aus dem Diagramm-Vorrat nach Art, Farbe, Menge (Story #267). */
+  materialListe: MaterialPosten[];
+  /** Vorschlag bei der letzten Übernahme; `null` = nie übernommen (Story #269). */
+  materialBasis: MaterialPosten[] | null;
   fahrplan: Fahrplan | null;
   aufbau: string | null;
   bildUrl: string | null;
@@ -135,6 +141,8 @@ type RawInhalt = {
   uebungstyp: string | null;
   anzahl_kinder: { min?: number | null; max?: number | null } | null;
   material: string[] | null;
+  material_liste: unknown;
+  material_basis: unknown;
   methodischer_fahrplan: Fahrplan | null;
   aufbau: string | null;
   varianten: string[] | null;
@@ -250,6 +258,8 @@ export function mapTraining(raw: RawTraining): TrainingDetail {
         uebungstyp: te.uebungstyp,
         anzahlKinder: te.anzahl_kinder,
         material: te.material ?? [],
+        materialListe: parseMaterialListe(te.material_liste),
+        materialBasis: parseMaterialBasis(te.material_basis),
         fahrplan: te.methodischer_fahrplan,
         aufbau: te.aufbau,
         bildUrl: te.bild_url,
