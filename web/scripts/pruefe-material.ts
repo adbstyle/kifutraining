@@ -20,6 +20,7 @@ import {
   FARBE_LABEL,
   MATERIAL_ARTEN,
   MATERIAL_KATALOG,
+  SPIELER_STANDARDFARBE,
   gleicheListe,
   materialVorschlag,
   parseMaterialBasis,
@@ -66,6 +67,11 @@ for (const art of MATERIAL_ARTEN) {
     assert.equal(info.standardFarbe, faerbbar ? standard : null, "standardFarbe ≠ defaultFarbe");
   });
 }
+
+pruefe("Spieler: Standardfarbe wie im Symbol-Register", () => {
+  const standard = registerEintrag("spieler").match(/defaultFarbe:\s*"([a-z]+)"/)?.[1];
+  assert.equal(SPIELER_STANDARDFARBE, standard);
+});
 
 // ── Zwilling 2: die Suchfunktion der Datenbank ─────────────────────────────
 const MIGRATIONEN = join(WEB, "../supabase/migrations");
@@ -132,6 +138,45 @@ pruefe("Vorschlag: Figuren, Pfade, Formen und Texte sind kein Material", () => {
 pruefe("Vorschlag: Einzelteile bleiben einzeln (vier Pylonen sind kein Tor)", () => {
   const v = materialVorschlag(diagramm(sym("pylone"), sym("pylone"), sym("pylone"), sym("pylone")));
   assert.deepEqual(v, [{ art: "pylone", farbe: "orange", menge: 4 }]);
+});
+
+pruefe("Leibchen: ab zwei Spielerfarben je Feldspieler eines in seiner Farbe", () => {
+  const v = materialVorschlag(
+    diagramm(sym("spieler", "rot"), sym("spieler"), sym("spieler", "blau"), sym("spieler", "blau"), sym("spieler", "blau")),
+  );
+  assert.deepEqual(v, [
+    { art: "leibchen", farbe: "rot", menge: 2 },
+    { art: "leibchen", farbe: "blau", menge: 3 },
+  ]);
+});
+
+pruefe("Leibchen: eine einzige Spielerfarbe ist keine Einteilung", () => {
+  assert.deepEqual(materialVorschlag(diagramm(sym("spieler"), sym("spieler", "rot"), sym("spieler"))), []);
+});
+
+pruefe("Leibchen: Torwart und Trainer zählen nicht, auch nicht für die Farbzahl", () => {
+  assert.deepEqual(materialVorschlag(diagramm(sym("spieler"), sym("trainer", "blau"), sym("torwart"))), []);
+  assert.deepEqual(materialVorschlag(diagramm(sym("spieler"), sym("spieler", "blau"), sym("trainer"), sym("torwart"))), [
+    { art: "leibchen", farbe: "rot", menge: 1 },
+    { art: "leibchen", farbe: "blau", menge: 1 },
+  ]);
+});
+
+pruefe("Leibchen: gezeichnete zählen zusätzlich zu denen der Spieler", () => {
+  const v = materialVorschlag(
+    diagramm(sym("spieler", "rot"), sym("spieler", "weiss"), sym("leibchen", "rot"), sym("leibchen", "gelb")),
+  );
+  assert.deepEqual(v, [
+    { art: "leibchen", farbe: "rot", menge: 2 },
+    { art: "leibchen", farbe: "gelb", menge: 1 },
+    { art: "leibchen", farbe: "weiss", menge: 1 },
+  ]);
+});
+
+pruefe("Leibchen: gezeichnete zählen auch ohne farbig eingeteilte Spieler", () => {
+  assert.deepEqual(materialVorschlag(diagramm(sym("spieler"), sym("leibchen", "blau"))), [
+    { art: "leibchen", farbe: "blau", menge: 1 },
+  ]);
 });
 
 pruefe("Liste: unbrauchbare Posten fallen weg, nie das Ganze", () => {

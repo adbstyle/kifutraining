@@ -172,7 +172,8 @@ export function parseMaterialBasis(json: unknown): MaterialPosten[] | null {
 /** Der Material-Vorschlag eines Diagramms: jedes gezeichnete Material-Symbol
  *  einzeln gezählt, nach Art und Farbe (Story #267 AK 1). Einzelteile werden
  *  nicht zu zusammengesetzten Gegenständen verbunden — vier Pylonen bleiben
- *  vier Pylonen, auch wenn sie ein Tor bilden (Epic Out of Scope 5). */
+ *  vier Pylonen, auch wenn sie ein Tor bilden (Epic Out of Scope 5). Dazu
+ *  kommen die Überziehleibchen der farbig eingeteilten Feldspieler. */
 export function materialVorschlag(diagramm: DiagrammData | null): MaterialPosten[] {
   if (!diagramm) return [];
   const posten: MaterialPosten[] = [];
@@ -180,7 +181,28 @@ export function materialVorschlag(diagramm: DiagrammData | null): MaterialPosten
     if (el.art !== "symbol" || !istMaterialArt(el.typ)) continue;
     posten.push({ art: el.typ, farbe: wirksameFarbe(el.typ, el.farbe), menge: 1 });
   }
-  return normalisiere(posten);
+  return normalisiere([...posten, ...leibchenAusSpielern(diagramm)]);
+}
+
+/** Die Farbe, die eine Feldspielerfigur trägt: gesetzt oder die des
+ *  Diagramms. Spiegelt `defaultFarbe` des Spielers im Symbol-Register
+ *  (`check:material`). */
+export const SPIELER_STANDARDFARBE: FarbSlug = "rot";
+
+/** Überziehleibchen aus farbig eingeteilten Feldspielern (Story #268): Sind die
+ *  Feldspielerfiguren in mindestens zwei Farben eingeteilt, braucht jede ein
+ *  Leibchen ihrer Farbe — ein Team in eigener Kleidung nimmt die Anwendung
+ *  nicht an. Tragen alle dieselbe Farbe, ist die Farbe keine Einteilung und
+ *  ergibt kein Leibchen. Torwart und Trainer zählen nie. Gezeichnete Leibchen
+ *  zählt `materialVorschlag` zusätzlich — auch eines, das eine Figur hält. */
+function leibchenAusSpielern(diagramm: DiagrammData): MaterialPosten[] {
+  const farben: FarbSlug[] = [];
+  for (const el of diagramm.elemente) {
+    if (el.art !== "symbol" || el.typ !== "spieler") continue;
+    farben.push(istFarbe(el.farbe) ? el.farbe : SPIELER_STANDARDFARBE);
+  }
+  if (new Set(farben).size < 2) return [];
+  return farben.map((farbe) => ({ art: "leibchen", farbe, menge: 1 }));
 }
 
 /** Der Vorschlag eines gespeicherten Diagramms (JSONB) — die Basis, die eine
