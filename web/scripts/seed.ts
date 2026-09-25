@@ -87,6 +87,8 @@ function loadDiagramm(slug: string): DiagrammData | null {
 async function seedExercises() {
   const raw = loadYamlDir(UEBUNGEN_DIR);
   let count = 0;
+  /** Die Masse des freien Felds (schema/uebung.schema.json, Story #272). */
+  type Spielfeld = { laenge_m: number; breite_m: number };
   let mitDiagramm = 0;
   for (const u of raw) {
     // Diagramm-Vorlage (Epic #58) ist das einzige Anzeige-Bild einer
@@ -110,6 +112,9 @@ async function seedExercises() {
       feldtyp: u.feldtyp ?? null,
       kategorien: u.kategorien ?? [],
       anzahl_kinder: u.anzahl_kinder ?? null,
+      // Beim freien Feld die Masse des Manuals, sofern es welche nennt (#272).
+      spielfeld_laenge_m: (u.spielfeld as Spielfeld | undefined)?.laenge_m ?? null,
+      spielfeld_breite_m: (u.spielfeld as Spielfeld | undefined)?.breite_m ?? null,
       material: u.material ?? [],
       // Die kuratierte Liste (Story #270); die Basis ist der Vorschlag des
       // Diagramms — weicht die Liste davon ab, ist das eine bewusste

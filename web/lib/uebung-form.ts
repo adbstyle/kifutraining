@@ -153,9 +153,8 @@ export function parseUebungsInhalt(
     ? csv(form.get("form")).filter((f) => erlaubteFormen.includes(f))
     : [];
 
-  // Feldtyp und Spielfeldgrösse schliessen einander aus: der Feldtyp ist eine
-  // Kategorie des Manuals Fussball Kinder, die Spielfeldgrösse führt das
-  // Junioren-Manual an seiner Stelle.
+  // Der Feldtyp ist eine Kategorie des Manuals Fussball Kinder; das
+  // Junioren-Manual führt an seiner Stelle die Spielfeldgrösse.
   const feldtypRoh = clean(form.get("feldtyp"));
   const feldtyp =
     traegtFeldtyp(altersstufe) && feldtypSlugs.includes(feldtypRoh as never)
@@ -164,10 +163,11 @@ export function parseUebungsInhalt(
 
   // Spielfeldgrösse: optional, aber paarweise — wer sie angibt, gibt Länge UND
   // Breite an (PO 2026-08-30). Spiegelt `ex_spielfeld_paarweise` und
-  // `ex_spielfeld_bereich`.
+  // `ex_spielfeld_bereich`. Im Kinderfussball nur beim freien Feld (Story
+  // #272): Wechselt der Feldtyp, fallen die Meter weg (PC 1).
   let spielfeld_laenge_m: number | null = null;
   let spielfeld_breite_m: number | null = null;
-  if (traegtSpielfeldgroesse(altersstufe)) {
+  if (traegtSpielfeldgroesse(altersstufe, feldtyp)) {
     const laengeRoh = clean(form.get("spielfeld_laenge"));
     const breiteRoh = clean(form.get("spielfeld_breite"));
     if (laengeRoh || breiteRoh) {

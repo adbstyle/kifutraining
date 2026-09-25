@@ -50,8 +50,8 @@ export type ExerciseDetail = {
   hauptteilkategorie: string | null;
   uebungstyp: string | null;
   feldtyp: string | null;
-  /** Spielfeldgrösse in Metern — nur im Juniorenfussball, nur paarweise
-   *  belegt (Story 3, Übungswelten). */
+  /** Spielfeldgrösse in Metern — im Juniorenfussball, im Kinderfussball
+   *  beim freien Feld (#272); nur paarweise belegt (Story 3, Übungswelten). */
   spielfeld_laenge_m: number | null;
   spielfeld_breite_m: number | null;
   kategorien: string[];

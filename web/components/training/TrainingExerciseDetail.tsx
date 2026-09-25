@@ -46,10 +46,9 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
       : null;
   const anzahl = anzahlText(item.anzahlKinder);
   const mitMaterial = hatMaterial(item.materialListe, item.material);
-  // Spielfeldgrösse und Feldtyp schliessen einander aus: der Feldtyp ist eine
-  // Kategorie des Manuals Fussball Kinder, die Spielfeldgrösse führt das
-  // Junioren-Manual an seiner Stelle (Story 3 AK 8/10). Geschrieben wie auf der
-  // Übungs-Detailseite — «35 × 20 m».
+  // Die Spielfeldgrösse führt das Junioren-Manual an Stelle des Feldtyps
+  // (Story 3 AK 8/10); im Kinderfussball ergänzt sie das freie Feld (#272).
+  // Geschrieben wie auf der Übungs-Detailseite — «35 × 20 m».
   const spielfeld =
     item.spielfeldLaengeM != null && item.spielfeldBreiteM != null
       ? `${item.spielfeldLaengeM} × ${item.spielfeldBreiteM} m`

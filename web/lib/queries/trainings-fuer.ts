@@ -46,7 +46,8 @@ export type TrainingExerciseItem = {
   kategorien: string[];
   erscheinungsform: string[];
   feldtyp: string | null;
-  /** Spielfeldgrösse in Metern — das Junioren-Gegenstück zum Feldtyp. Immer
+  /** Spielfeldgrösse in Metern — im Juniorenfussball, im Kinderfussball beim
+   *  freien Feld (#272). Immer
    *  paarweise belegt oder beide `null` (CHECK `te_spielfeld_paarweise`). */
   spielfeldLaengeM: number | null;
   spielfeldBreiteM: number | null;

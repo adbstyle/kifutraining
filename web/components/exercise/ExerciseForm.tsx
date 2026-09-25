@@ -35,6 +35,7 @@ import {
   traegtHauptteilkategorie,
   traegtSpielfeldgroesse,
   traegtUebungstyp,
+  FELDTYP_MIT_SPIELFELD,
   type Altersstufe,
 } from "@/lib/altersstufe";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
@@ -190,7 +191,8 @@ export function ExerciseForm({
   const zeigtForm = traegtErscheinungsform(stufe, teil);
   const zeigtTyp = traegtUebungstyp(stufe, teil);
   const zeigtFeldtyp = traegtFeldtyp(stufe);
-  const zeigtSpielfeld = traegtSpielfeldgroesse(stufe);
+  // Im Kinderfussball nur beim freien Feld (Story #272).
+  const zeigtSpielfeld = traegtSpielfeldgroesse(stufe, feld || null);
   // Das freie Spiel trägt eine Beschreibung statt des Fahrplans (Story 2).
   const istFreiesSpiel = zeigtHkat && hkat === FREIES_SPIEL;
 
@@ -258,7 +260,8 @@ export function ExerciseForm({
    *  die Zielstufe kennt, kommt aus dem Dialog (Einordnung, Alterskategorien,
    *  im Kinderfussball-Hauptteil die Kategorie), der Ablauftext wandert in die
    *  Form der Zielstufe (PC 2), und was sie nicht kennt, fällt weg (PC 4) —
-   *  Erscheinungsformen, Übungstyp, Feldtyp bzw. Spielfeldgrösse. Titel, Bild,
+   *  Erscheinungsformen, Übungstyp und ein Feldtyp ohne Meter. Die Meter des
+   *  freien Felds bzw. die Spielfeldgrösse gehen mit (Story #272). Titel, Bild,
    *  Diagramm, Anzahl Kinder, Material und Varianten bleiben unangetastet
    *  (PC 1); sie hängen an keinem Lehrmittel.
    *
@@ -278,13 +281,19 @@ export function ExerciseForm({
     setTeil(u.einordnung);
     setHkat(u.hauptteilkategorie ?? "");
     setKat(u.kategorien);
-    // Stufenfremde Angaben: die beiden Manuals führen getrennte Kataloge, und
-    // Feldtyp und Spielfeldgrösse schliessen einander aus.
+    // Stufenfremde Angaben: die beiden Manuals führen getrennte Kataloge.
     setForm([]);
     setUebungstyp("");
-    setFeld("");
-    setLaenge("");
-    setBreite("");
+    // Die Meter reisen mit (Story #272 PC 2/5): Das freie Feld wird zur
+    // Spielfeldgrösse des Juniorenfussballs, und eine Junioren-Übung mit
+    // Spielfeldgrösse wird eine Übung auf freiem Feld. Ohne Meter gibt es
+    // nichts zu übertragen, der Feldtyp beginnt dann leer.
+    const mitMetern = zeigtSpielfeld && laenge !== "" && breite !== "";
+    setFeld(u.altersstufe === "kinderfussball" && mitMetern ? FELDTYP_MIT_SPIELFELD : "");
+    if (!mitMetern) {
+      setLaenge("");
+      setBreite("");
+    }
     setUmwandlung(true);
     setDialogOffen(false);
   }

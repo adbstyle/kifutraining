@@ -18,6 +18,16 @@
       "uniqueItems": true
     },
     "feldtyp": { "enum": ["kleinfeld", "grossfeld", "freies_feld", null] },
+    "spielfeld": {
+      "$comment": "Länge und Breite in Metern, nur beim freien Feld (Story #272) — spiegelt ex_spielfeld_je_feld und ex_spielfeld_bereich.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["laenge_m", "breite_m"],
+      "properties": {
+        "laenge_m": { "type": "integer", "minimum": 5, "maximum": 120 },
+        "breite_m": { "type": "integer", "minimum": 5, "maximum": 120 }
+      }
+    },
     "hauptteilkategorie": {
       "enum": ["fussball-spielen-lernen", "vielseitigkeit-erleben", "fussball-spielen"]
     },
@@ -80,6 +90,14 @@
     }
   },
   "allOf": [
+    {
+      "$comment": "Eine Spielfeldgrösse gibt es nur beim freien Feld; Kleinfeld und Grossfeld haben ihre Masse (Story #272).",
+      "if": { "required": ["spielfeld"] },
+      "then": {
+        "properties": { "feldtyp": { "const": "freies_feld" } },
+        "required": ["feldtyp"]
+      }
+    },
     {
       "$comment": "Ablauf-Form je Einordnung (Epic #72, Story 2): Einleitung und Hauptteil tragen den methodischen Fahrplan — ausser der Hauptteilkategorie «Fussball spielen», die als freies Spiel eine Beschreibung trägt.",
       "if": {

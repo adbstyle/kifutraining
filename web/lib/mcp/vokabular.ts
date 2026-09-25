@@ -29,7 +29,7 @@ import {
   traegtErscheinungsform,
   traegtFeldtyp,
   traegtHauptteilkategorie,
-  traegtSpielfeldgroesse,
+  FELDTYP_MIT_SPIELFELD,
   traegtUebungstyp,
   zielblock,
   type Altersstufe,
@@ -79,7 +79,12 @@ const AltersstufeSchema = z.object({
   hauptteilkategorien: z.array(z.object({ slug: z.string(), label: z.string(), ablauf: ABLAUF })),
   erscheinungsformen: z.array(Wert),
   feldtypen: z.array(Wert),
+  /** Kann eine Übung dieser Stufe eine Spielfeldgrösse (Länge × Breite in
+   *  Metern) tragen? */
   spielfeldgroesse: z.boolean(),
+  /** Nur bei diesem Feldtyp — im Kinderfussball das freie Feld; `null`, wo
+   *  sie nicht am Feldtyp hängt (Juniorenfussball). */
+  spielfeldgroesse_bei_feldtyp: Wert.nullable(),
   uebungstypen: z.array(z.object({ slug: z.string(), label: z.string(), definition: z.string() })),
 });
 
@@ -206,7 +211,10 @@ function baueAltersstufe(stufe: Altersstufe): z.infer<typeof AltersstufeSchema> 
       : [],
     erscheinungsformen: erscheinungsformOptionen(stufe).map(alsWert),
     feldtypen: traegtFeldtyp(stufe) ? feldOptionen.map(alsWert) : [],
-    spielfeldgroesse: traegtSpielfeldgroesse(stufe),
+    spielfeldgroesse: true,
+    spielfeldgroesse_bei_feldtyp: traegtFeldtyp(stufe)
+      ? alsWert(feldOptionen.find((o) => o.value === FELDTYP_MIT_SPIELFELD)!)
+      : null,
     uebungstypen: mitUebungstyp
       ? uebungstypOptionen.map((o) => ({
           ...alsWert(o),

@@ -124,11 +124,10 @@ export default async function ExerciseDetailPage({
     { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
     { label: ex.name },
   ];
-  // Feldtyp und Spielfeldgrösse schliessen einander aus: der Feldtyp ist eine
-  // Kategorie des Manuals Fussball Kinder, die Spielfeldgrösse führt das
-  // Junioren-Manual an seiner Stelle (Story 3 AK 8/10).
+  // Die Spielfeldgrösse führt das Junioren-Manual an Stelle des Feldtyps
+  // (Story 3 AK 8/10); im Kinderfussball ergänzt sie das freie Feld (#272).
   const spielfeld =
-    traegtSpielfeldgroesse(ex.altersstufe) &&
+    traegtSpielfeldgroesse(ex.altersstufe, ex.feldtyp) &&
     ex.spielfeld_laenge_m != null &&
     ex.spielfeld_breite_m != null
       ? `${ex.spielfeld_laenge_m} × ${ex.spielfeld_breite_m} m`

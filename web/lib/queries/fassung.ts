@@ -29,8 +29,8 @@ export type FassungZumBearbeiten = {
   kategorien: string[];
   erscheinungsform: string[];
   feldtyp: string | null;
-  /** Spielfeldgrösse in Metern — nur im Juniorenfussball, nur paarweise
-   *  belegt (Story 3, Übungswelten). */
+  /** Spielfeldgrösse in Metern — im Juniorenfussball, im Kinderfussball
+   *  beim freien Feld (#272); nur paarweise belegt (Story 3, Übungswelten). */
   spielfeldLaengeM: number | null;
   spielfeldBreiteM: number | null;
   anzahlKinder: { min?: number | null; max?: number | null } | null;
