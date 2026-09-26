@@ -238,7 +238,7 @@ export function parseUebungsInhalt(
       uebungstyp,
       methodischer_fahrplan,
       aufbau,
-      varianten: lines(form.get("varianten")),
+      varianten_text: clean(form.get("varianten")) || null,
     },
   };
 }

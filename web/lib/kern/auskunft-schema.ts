@@ -70,7 +70,7 @@ function baueSchema(streng: boolean) {
       .nullable(),
     /** Abwandlungen der Übung selbst (Freitext) — nicht die Varianten des
      *  Hauptteils. */
-    uebungsvarianten: z.array(z.string()),
+    uebungsvarianten: z.string().nullable(),
     hat_bild: z.boolean(),
     hat_diagramm: z.boolean(),
     /** Die Gruppen im Durchlauf, in Wechselreihenfolge; leer = alle gemeinsam. */

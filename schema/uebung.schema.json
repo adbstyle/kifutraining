@@ -78,7 +78,7 @@
         "wetteifern": { "type": "string", "minLength": 1 }
       }
     },
-    "varianten": { "type": "array", "items": { "type": "string" } },
+    "varianten": { "type": "string", "minLength": 1 },
     "quelle": {
       "type": "object",
       "required": ["datei", "seite"],

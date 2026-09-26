@@ -103,7 +103,7 @@ export default async function EditPage({
           materialListe: parseMaterialListe(ex.material_liste),
           methodischer_fahrplan: ex.methodischer_fahrplan,
           aufbau: ex.aufbau,
-          varianten: ex.varianten,
+          varianten: ex.varianten_text,
           bildUrl: ex.bild_url,
         }}
         submitLabel="Änderungen speichern"

@@ -6,6 +6,7 @@ import {
   Breadcrumbs,
   type BreadcrumbItem,
   Card,
+  Freitext,
   KategorieChip,
   MethodischerFahrplan,
   PrintButton,
@@ -271,9 +272,7 @@ export default async function ExerciseDetailPage({
           {ex.methodischer_fahrplan ? (
             <MethodischerFahrplan fahrplan={ex.methodischer_fahrplan} />
           ) : ex.aufbau ? (
-            <p className="type-body-large whitespace-pre-line text-on-surface">
-              {ex.aufbau}
-            </p>
+            <Freitext text={ex.aufbau} />
           ) : (
             <p className="type-body-medium text-on-surface-mittel">
               Kein Ablauf erfasst.
@@ -282,17 +281,15 @@ export default async function ExerciseDetailPage({
         </Card>
       </section>
 
-      {/* Varianten */}
-      {ex.varianten.length > 0 && (
+      {/* Varianten — dargestellt wie der Ablauf (Story #282) */}
+      {ex.varianten_text && (
         <section className="mt-8">
           <h2 className="type-title-medium mb-3 text-on-surface-mittel">
             Varianten
           </h2>
-          <ul className="type-body-large list-disc space-y-1 pl-5 text-on-surface">
-            {ex.varianten.map((v, i) => (
-              <li key={i}>{v}</li>
-            ))}
-          </ul>
+          <Card className="p-6">
+            <Freitext text={ex.varianten_text} />
+          </Card>
         </section>
       )}
 
