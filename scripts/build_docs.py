@@ -36,7 +36,7 @@ def render_exercise(doc, vocab):
     elif doc.get("aufbau"):
         lines += ["## Aufbau", "", doc["aufbau"], ""]
     if doc.get("varianten"):
-        lines += ["## Varianten", ""] + [f"- {v}" for v in doc["varianten"]] + [""]
+        lines += ["## Varianten", "", doc["varianten"], ""]
     lines += ["---", f"*Quelle: {doc['quelle']['datei']}, S. {doc['quelle']['seite']}*"]
     return "\n".join(lines)
 

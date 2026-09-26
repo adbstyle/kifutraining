@@ -31,7 +31,7 @@ export const FASSUNG_INHALT_FELDER = [
   "methodischer_fahrplan",
   "uebungstyp",
   "aufbau",
-  "varianten",
+  "varianten_text",
   "bild_quelle",
 ] as const;
 

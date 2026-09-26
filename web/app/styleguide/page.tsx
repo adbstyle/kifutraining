@@ -20,6 +20,7 @@ import {
   TimeField,
   Select,
   MethodischerFahrplan,
+  Freitext,
   MaterialListe,
   Disclosure,
   Leerzustand,
@@ -1340,6 +1341,20 @@ export default function Styleguide() {
               ueben: [fahrplan[1]],
               wetteifern: fahrplan[2],
             }}
+          />
+        </Card>
+        <p className="type-body-medium mb-3 mt-8 max-w-2xl text-on-surface-mittel">
+          <strong>Freitext</strong> — <code>Freitext</code>: Ablauf und Varianten
+          einer Übung (Story #282). Kein Markdown: Zeilenumbrüche bleiben, wie
+          sie erfasst sind; nur Zeilen mit «- »/«* » werden Aufzählung, Zeilen
+          mit «1. » nummerierte Liste — gesetzt wie die Üben-Schritte im
+          Fahrplan. Jede andere Zeile, auch eine Leerzeile, beendet eine Liste.
+        </p>
+        <Card className="max-w-xl p-6">
+          <Freitext
+            text={
+              "4 gegen 4 mit je 2 Zielspieler:innen pro Team.\nAlle bleiben in ihren Zonen.\n- Zeitdruck: Ball muss nach 4 Sekunden die Zone verlassen\n- Nur Direktpässe\n\nWertung:\n1. Vertikaler Ball ins Ziel: 1 Punkt\n2. Tor nach vertikalem Ball: 3 Punkte"
+            }
           />
         </Card>
       </Section>

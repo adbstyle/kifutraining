@@ -58,6 +58,7 @@ import {
 } from "@/lib/material";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
+import { FREITEXT_HINWEIS } from "@/lib/freitext";
 
 export type ExerciseInitial = {
   name?: string;
@@ -80,7 +81,7 @@ export type ExerciseInitial = {
     wetteifern?: string | null;
   } | null;
   aufbau?: string | null;
-  varianten?: string[];
+  varianten?: string | null;
   bildUrl?: string | null;
 };
 
@@ -534,9 +535,9 @@ export function ExerciseForm({
           error={!!err.aufbau}
           supportingText={
             err.aufbau ??
-            (istFreiesSpiel
+            `${istFreiesSpiel
               ? "Pflichtfeld — wie das Spiel gespielt wird."
-              : "Pflichtfeld — Aufbau und Ablauf der Übung.")
+              : "Pflichtfeld — Aufbau und Ablauf der Übung."} ${FREITEXT_HINWEIS}`
           }
         />
       ))}
@@ -664,7 +665,12 @@ export function ExerciseForm({
           ) : undefined
         }
       />
-      <TextArea label="Varianten (optional, eine pro Zeile)" name="varianten" defaultValue={initial.varianten?.join("\n")} />
+      <TextArea
+        label="Varianten (optional)"
+        name="varianten"
+        defaultValue={initial.varianten ?? ""}
+        supportingText={FREITEXT_HINWEIS}
+      />
 
       <div>
         <label htmlFor="bild" className="type-label-small mb-2 block text-on-surface-mittel">

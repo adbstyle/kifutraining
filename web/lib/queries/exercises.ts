@@ -64,7 +64,7 @@ export type ExerciseDetail = {
   material_basis: unknown;
   methodischer_fahrplan: Fahrplan | null;
   aufbau: string | null;
-  varianten: string[];
+  varianten_text: string | null;
   bild_url: string | null;
   diagramm: unknown;
   bild_quelle: "foto" | "diagramm" | null;
@@ -76,7 +76,7 @@ export type ExerciseDetail = {
 // Felder der Detailansicht — dieselben für die Seite und das KI-Werkzeug
 // «uebung_abrufen» (#142 NFR 5: keine zweite Spaltenliste).
 const DETAIL_COLUMNS =
-  "id, slug, name, altersstufe, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, kategorien, anzahl_kinder, material, material_liste, material_basis, methodischer_fahrplan, aufbau, varianten, bild_url, diagramm, bild_quelle, source, visibility, owner_id";
+  "id, slug, name, altersstufe, trainingsteil, erscheinungsform, hauptteilkategorie, uebungstyp, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, kategorien, anzahl_kinder, material, material_liste, material_basis, methodischer_fahrplan, aufbau, varianten_text, bild_url, diagramm, bild_quelle, source, visibility, owner_id";
 
 /** Eine Übung per Slug (volle Felder). RLS blendet private Übungen für
  *  Nicht-Eigentümer aus -> null (Story 4 Postcondition). */

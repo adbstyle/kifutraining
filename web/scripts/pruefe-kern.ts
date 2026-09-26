@@ -269,7 +269,7 @@ function fassung(id: string, teil: string, extra: Partial<TrainingExerciseItem> 
     bildQuelle: null,
     diagramm: null,
     gruppen: [],
-    uebungsvarianten: [],
+    uebungsvarianten: null,
     ...extra,
   };
 }
@@ -308,7 +308,7 @@ pruefe("Auskunft: Hauptteil je Variante, leere Blöcke, Altbestand ohne Kategori
           hauptteilkategorie: "fussball-spielen",
           varianteId: "v1",
           durationMin: 20,
-          uebungsvarianten: ["Mit zwei Bällen"],
+          uebungsvarianten: "- Mit zwei Bällen",
           fahrplan: { offen_starten: "Los", ueben: ["a"], wetteifern: null },
         }),
         fassung("alt", "hauptteil", { varianteId: "v1" }),
@@ -334,7 +334,7 @@ pruefe("Auskunft: Hauptteil je Variante, leere Blöcke, Altbestand ohne Kategori
   const freiesSpielV1 = h1.bloecke.find((b) => b.hauptteilkategorie?.slug === "fussball-spielen")!;
   assert.equal(freiesSpielV1.leer_hinweis, undefined, "ein belegter Block trägt keinen Leer-Hinweis");
   const f1 = freiesSpielV1.uebungen[0];
-  assert.deepEqual(f1.uebungsvarianten, ["Mit zwei Bällen"]);
+  assert.equal(f1.uebungsvarianten, "- Mit zwei Bällen");
   assert.deepEqual(f1.ablauf, { art: "fahrplan", offen_starten: "Los", ueben: ["a"], wetteifern: null });
   // Der Altbestand ohne Kategorie steht in keinem Block, aber nicht still weg.
   assert.deepEqual(h1.ohne_kategorie?.map((u) => u.fassung_id), ["alt"]);

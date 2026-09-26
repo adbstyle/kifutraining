@@ -105,10 +105,7 @@ def main():
                 }
             else:
                 doc["aufbau"] = ex["aufbau"]
-            doc.update({
-                "varianten": [],
-                "quelle": {"datei": PDF.name, "seite": page},
-            })
+            doc["quelle"] = {"datei": PDF.name, "seite": page}
             (UEB / f"{uid}.yaml").write_text(
                 yaml.safe_dump(doc, allow_unicode=True, sort_keys=False),
                 encoding="utf-8")
