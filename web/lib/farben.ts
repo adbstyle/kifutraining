@@ -95,6 +95,26 @@ export const LINIE = 0.12;
 /** Kontur von Feld, Chip und Knopf (1.5 px) — muss tragen, nicht nur teilen. */
 export const KANTE = 0.28;
 
+// ── Umgekehrte Fläche ──────────────────────────────────────────────────────
+/**
+ * Die eine Fläche, die die Palette umkehrt: die Snackbar (#234). Sie meldet
+ * einen Vorgang am Bildrand und geht von selbst — sie muss darum beim ersten
+ * Hinsehen auffallen. Auf elev-06 hob sie sich nur 1.36:1 vom Grund ab; hell
+ * steht sie bei rund 14:1. So meint Material die Snackbar auch (M2 Dark wie
+ * M3 «Inverse Surface»).
+ *
+ * Die Fläche ist Weiss in `deckung` über dem Grund — dieselbe Herleitung wie
+ * die Höhenleiter, nur am anderen Ende. Die Schrift darauf ist der Grund
+ * selbst, der Akzent das dunkle Violett, das auch auf Papier trägt: Auf der
+ * hellen Fläche hätte `PRIMARY` nur 2:1.
+ */
+export const UMKEHR = {
+  deckung: 0.87,
+  flaeche: "#e0e1e0",
+  schrift: GRUND,
+  akzent: "#4527a0",
+} as const;
+
 // ── Alterskategorien ───────────────────────────────────────────────────────
 /**
  * G/F/E Kinderfussball, D/C/B/A Juniorenfussball. Sie erscheinen als Kontur
@@ -152,6 +172,9 @@ export const BILDSCHIRM: Readonly<Record<string, string>> = {
   "on-surface-tief": hex8("#ffffff", SCHRIFT.tief),
   linie: hex8("#ffffff", LINIE),
   kante: hex8("#ffffff", KANTE),
+  umkehr: UMKEHR.flaeche,
+  "on-umkehr": UMKEHR.schrift,
+  "umkehr-akzent": UMKEHR.akzent,
   ...Object.fromEntries(Object.entries(KAT).map(([k, v]) => [`kat-${k}`, v])),
 };
 

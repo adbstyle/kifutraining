@@ -54,6 +54,13 @@
   --color-linie: #ffffff1f; /* 12 % — Trenner und Haarlinie, 1 px */
   --color-kante: #ffffff47; /* 28 % — Kontur von Feld, Chip, Knopf, 1.5 px */
 
+  /* ─── Umgekehrte Fläche — nur die Snackbar (#234). Weiss 87 % über dem
+     Grund; darauf der Grund als Schrift und das dunkle Violett als Akzent.
+     Angewandt über @utility umkehr, nie als einzelne Klasse. ─── */
+  --color-umkehr: #e0e1e0;
+  --color-on-umkehr: #101613;
+  --color-umkehr-akzent: #4527a0;
+
   /* ─── Alterskategorien — fest lernbare, distinkte Farben (nie nur Farbe).
      G/F/E Kinderfussball, D/C/B/A Juniorenfussball (Epic #71). Sie stehen
      als Kontur und Schrift, nie als Fläche — gefüllt wären sieben Werte
@@ -90,6 +97,23 @@
      Unterschieden wird über Gewicht, Versalien und Sperrung, nicht über
      eine zweite Familie. ─── */
   --font-sans: var(--font-geist), "Helvetica Neue", Arial, sans-serif;
+
+  /* ─── Bewegung: nur, wo etwas von selbst erscheint. Die Snackbar fährt
+     von unten ein — am Bildrand fällt Bewegung eher auf als Kontrast. Wer
+     reduzierte Bewegung eingestellt hat, sieht sie nur einblenden. ─── */
+  --animate-snackbar-ein: snackbar-ein 180ms cubic-bezier(0, 0, 0.2, 1);
+  --animate-einblenden: einblenden 150ms linear;
+  @keyframes snackbar-ein {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem);
+    }
+  }
+  @keyframes einblenden {
+    from {
+      opacity: 0;
+    }
+  }
 }
 
 /* ═══ Diagramm ════════════════════════════════════════════════════════
@@ -287,6 +311,17 @@
     outline: 2px solid var(--color-primary);
     outline-offset: -2px;
   }
+}
+
+/* Umgekehrte Fläche (Snackbar, #234). Innerhalb gelten die Rollen umgekehrt:
+   Schrift ist der Grund, Primary das dunkle Violett. So stehen Textknopf,
+   Zustands-Ebene und Fokus-Ring darin richtig, ohne dass ein Baustein eine
+   Sonderklasse kennen müsste — `#bb86fc` hätte auf der hellen Fläche nur 2:1. */
+@utility umkehr {
+  --color-on-surface: var(--color-on-umkehr);
+  --color-primary: var(--color-umkehr-akzent);
+  background-color: var(--color-umkehr);
+  color: var(--color-on-surface);
 }
 
 /* Kontur: 1.5 px trägt im Dunkeln, 1 px verschwindet gegen den Grund.
