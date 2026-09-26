@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
-import { Button, TextField, Snackbar } from "@/components/ui";
+import { Button, TextField } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { setzeAnzeigename } from "@/lib/actions/profil";
 
 /* Anzeigenamen setzen oder ändern (Team-Epic Story 2). Der Name ist die
@@ -21,7 +22,7 @@ export function AnzeigenameForm({
   const [pending, startTransition] = useTransition();
   const [wert, setWert] = useState(eigen ? aktuell : "");
   const [fehler, setFehler] = useState<string | undefined>();
-  const [notice, setNotice] = useState<string | null>(null);
+  const melde = useSnackbar();
 
   function speichern() {
     setFehler(undefined);
@@ -29,7 +30,7 @@ export function AnzeigenameForm({
       const res = await setzeAnzeigename(wert);
       if (res.ok) {
         setWert(res.anzeigeName);
-        setNotice("Anzeigename gespeichert.");
+        melde("Anzeigename gespeichert.");
         router.refresh();
       } else {
         setFehler(res.error);
@@ -79,8 +80,6 @@ export function AnzeigenameForm({
           Speichern
         </Button>
       </form>
-
-      <Snackbar open={notice != null} message={notice ?? ""} onClose={() => setNotice(null)} />
     </>
   );
 }

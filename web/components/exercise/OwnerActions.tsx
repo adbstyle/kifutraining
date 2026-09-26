@@ -10,8 +10,8 @@ import {
   Tooltip,
   OverflowMenu,
   Dialog,
-  Snackbar,
 } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import {
   setVisibility,
   deleteExercise,
@@ -51,7 +51,7 @@ export function OwnerActions({
 }) {
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [kopierFehler, setKopierFehler] = useState<string | null>(null);
+  const melde = useSnackbar();
   const [kopierLaeuft, starteKopie] = useTransition();
   const isPublic = visibility === "public";
   const next = isPublic ? "private" : "public";
@@ -59,13 +59,12 @@ export function OwnerActions({
 
   /* Kopieren: Der Server legt die Kopie an (Name samt Kopie-Kennzeichnung,
      Bild, Diagramm, privat) und meldet ihren Slug; von dort geht es unmittelbar
-     auf die Kopie (AK 4). Fehlschläge sagt der Snackbar (AK 7). */
+     auf die Kopie (AK 4). Fehlschläge sagt die Snackbar (AK 7). */
   function kopieren() {
-    setKopierFehler(null);
     starteKopie(async () => {
       const res = await kopiereUebung(id);
       if (res.ok) router.push(`/uebung/${res.slug}?kopiert=1`);
-      else setKopierFehler(res.error);
+      else melde(res.error);
     });
   }
 
@@ -132,12 +131,6 @@ export function OwnerActions({
         Diese Übung wird mitsamt Feld-Diagramm endgültig entfernt. Das kann nicht
         rückgängig gemacht werden.
       </Dialog>
-
-      <Snackbar
-        open={!!kopierFehler}
-        message={kopierFehler ?? ""}
-        onClose={() => setKopierFehler(null)}
-      />
     </>
   );
 }

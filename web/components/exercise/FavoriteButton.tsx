@@ -1,8 +1,9 @@
 "use client";
 
-import { useOptimistic, useState, useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import { Heart } from "lucide-react";
-import { IconButton, Snackbar } from "@/components/ui";
+import { IconButton } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { setFavorite } from "@/lib/actions/favorites";
 
 /**
@@ -39,7 +40,7 @@ export function FavoriteButton({
 }) {
   const [isFav, setOptimistic] = useOptimistic(initial);
   const [isPending, startTransition] = useTransition();
-  const [errorOpen, setErrorOpen] = useState(false);
+  const melde = useSnackbar();
 
   function toggle() {
     if (isPending) return; // verhindert widersprüchliche Zustände bei schnellen Doppelklicks
@@ -49,36 +50,21 @@ export function FavoriteButton({
       const res = await setFavorite(exerciseId, next);
       // Bei Fehlschlag macht useOptimistic die Änderung automatisch rückgängig,
       // da die echte Quelle (initial) unverändert bleibt.
-      if (!res.ok) setErrorOpen(true);
+      if (!res.ok) melde("Konnte nicht gespeichert werden. Bitte erneut versuchen.");
     });
   }
 
   return (
-    <>
-      <IconButton
-        icon={Heart}
-        label={isFav ? "Favorit entfernen" : "Als Favorit markieren"}
-        size={size}
-        variant={variant}
-        active={isFav}
-        onClick={toggle}
-        // Bewusste Abweichung: Herz im aktiven Zustand gefüllt (sonst outlined).
-        iconProps={{ fill: isFav ? "currentColor" : "none" }}
-        className={className}
-      />
-
-      {/* Fehler-Snackbar nur bei Bedarf im DOM (nicht je Karte dauerhaft). */}
-      {errorOpen && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-4">
-          <div className="pointer-events-auto">
-            <Snackbar
-              open
-              message="Konnte nicht gespeichert werden. Bitte erneut versuchen."
-              onClose={() => setErrorOpen(false)}
-            />
-          </div>
-        </div>
-      )}
-    </>
+    <IconButton
+      icon={Heart}
+      label={isFav ? "Favorit entfernen" : "Als Favorit markieren"}
+      size={size}
+      variant={variant}
+      active={isFav}
+      onClick={toggle}
+      // Bewusste Abweichung: Herz im aktiven Zustand gefüllt (sonst outlined).
+      iconProps={{ fill: isFav ? "currentColor" : "none" }}
+      className={className}
+    />
   );
 }
