@@ -41,7 +41,6 @@ aufbau: Von einer Markierung aus soll der Ball durch die Luft ins Tor fliegen. W
   trifft, rückt eine Markierung weiter nach hinten; wer nicht trifft, versucht es
   in der folgenden Runde noch einmal aus derselben Distanz. Wer hat am Ende die meisten
   Treffer?
-varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 82

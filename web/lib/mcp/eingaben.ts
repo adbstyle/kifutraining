@@ -116,8 +116,10 @@ export const UebungAusgabe = UebungKopf.extend({
       wetteifern: z.string().nullable(),
     })
     .nullable(),
+  /** Ablauf und Varianten sind Freitext (Story #282): eine Zeile mit «- »
+   *  oder «* » ist ein Aufzählungspunkt, eine mit «1. » ein nummerierter. */
   aufbau: z.string().nullable(),
-  varianten: z.array(z.string()),
+  varianten: z.string().nullable(),
   bild_quelle: z.enum(["foto", "diagramm"]).nullable(),
   /** Das Feld-Diagramm als Vektordaten (Epic #139: kein Bild). */
   diagramm: z.unknown().nullable(),

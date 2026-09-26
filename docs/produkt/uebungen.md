@@ -66,6 +66,14 @@ Anwendung unter der Zuordnung, welche seiner erfassten Angaben dabei entfallen w
 Beiden Altersstufen gemeinsam sind Name und mindestens eine Alterskategorie, dazu die Zahl der
 Kinder, für die die Übung taugt, das benötigte Material, mögliche Varianten und das Bild.
 
+Ablauf und Varianten sind Freitexte und stehen gleich da: Zeilenumbrüche und Leerzeilen bleiben,
+wie der Trainer sie gesetzt hat. Eine Zeile, die mit «- » oder «* » beginnt, wird zum
+Aufzählungspunkt, eine mit «1. » zum Punkt einer nummerierten Liste; aufeinanderfolgende Punkte
+bilden eine Liste, jede andere Zeile beendet sie. Mehr formatiert die Anwendung nicht — keine
+Fettschrift, keine Überschriften, keine Links, keine verschachtelten Listen; alles Übrige
+erscheint als Text. Die Stufen des methodischen Fahrplans bleiben ohne diese Formatierung. Die
+Varianten stehen unmittelbar nach dem Ablauf, ob er als Freitext oder als Fahrplan erfasst ist.
+
 ## Material
 
 Das Material einer Übung steht zweigeteilt. Oben die Liste dessen, was sich im Feld-Diagramm
@@ -142,7 +150,7 @@ Training. Unvollständige Fassungen lassen sich erst nach Ergänzung kopieren.
 
 ## Finden
 
-Gesucht wird über den gesamten Text einer Übung, also auch über Material, Varianten und Ablauf;
+Gesucht wird über den gesamten Text einer Übung, also auch über Material, Varianten und Ablauf — die Listenzeichen am Zeilenanfang zählen dabei nicht mit;
 Wortteile genügen. Sobald etwas im Suchfeld steht, tritt an die Stelle der Lupe ein Kreuz, das die
 Suche mit einem Klick leert und den Cursor darin stehen lässt; die übrigen Filter bleiben dabei
 gesetzt. Der Katalog zeigt beide Altersstufen nebeneinander — er ist der eine Ort, an dem der ganze
@@ -260,3 +268,7 @@ die Kinder fast durchwegs in zwei Farben zeichnen, schlägt der Vorschlag dort i
 Kleidung spielt. Eigene Material-Arten ausserhalb des Diagramm-Vorrats gibt es in der Liste
 nicht — dafür ist die Ergänzung da. Die Spielfeldgrösse leitet die Anwendung nie aus dem
 Diagramm ab; das Diagramm kennt keinen Massstab.
+
+Die Listenzeichen in Ablauf und Varianten lassen sich nicht abschalten: Beginnt eine Zeile mit
+«- », «* » oder einer Zahl mit Punkt und Leerzeichen — etwa «2. Halbzeit» —, wird sie zum
+Listenpunkt, auch wenn sie so nicht gemeint war.

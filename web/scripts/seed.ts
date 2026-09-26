@@ -127,7 +127,7 @@ async function seedExercises() {
       // der Hauptteilkategorie «Fussball spielen» (freies Spiel, Story 2).
       methodischer_fahrplan: u.methodischer_fahrplan ?? null,
       aufbau: u.aufbau ?? null,
-      varianten: u.varianten ?? [],
+      varianten: u.varianten ?? null,
       diagramm,
       bild_quelle: diagramm ? "diagramm" : null,
       // Manual-Übungen tragen kein Foto mehr (die Manual-Bitmaps sind

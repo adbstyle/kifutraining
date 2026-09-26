@@ -63,7 +63,7 @@ function fassung(id: string, teil: string, extra: Partial<TrainingExerciseItem> 
     bildQuelle: null,
     diagramm: null,
     gruppen: [],
-    uebungsvarianten: [],
+    uebungsvarianten: null,
     ...extra,
   };
 }

@@ -72,6 +72,9 @@ jobs:
       # Material aus dem Diagramm (Epic #266): der Katalog gegen Symbol-Register
       # und SQL-Suchfunktion, dazu Vorschlag, Normalform und Gesamtliste.
       - run: npm run check:material
+      # Freitext mit einfachen Listen (Story #282): Regeln für Ablauf und
+      # Varianten, dazu die Listenzeichen der SQL-Suchfunktion.
+      - run: npm run check:freitext
 
   migrations:
     name: Migrationen + Seed (Wegwerf-DB)

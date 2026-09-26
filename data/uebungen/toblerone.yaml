@@ -43,7 +43,6 @@ methodischer_fahrplan:
   wetteifern: 'Welches Team ist beim Signal zuerst vollzählig in einem freien Dreieck?
     Anspruchsvoller: Welches Team hat zuerst alle anderen Dreiecke besucht und steht
     wieder in seinem Startdreieck?'
-varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 62

@@ -64,7 +64,7 @@ export type ExerciseDetail = {
   material_basis: unknown;
   methodischer_fahrplan: Fahrplan | null;
   aufbau: string | null;
-  varianten: string[];
+  varianten: string | null;
   bild_url: string | null;
   diagramm: unknown;
   bild_quelle: "foto" | "diagramm" | null;

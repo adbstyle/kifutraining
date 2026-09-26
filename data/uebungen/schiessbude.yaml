@@ -36,7 +36,6 @@ material_liste:
   menge: 11
 aufbau: Aus dem gesamten Material, das im Training herumliegt, wird im Tor eine Schiessbude
   aufgebaut — Pylonen, Reifen, Stangen, Bälle. Wer trifft die meisten Gegenstände?
-varianten: []
 quelle:
   datei: Manual_Kinderfussball_D.pdf
   seite: 82

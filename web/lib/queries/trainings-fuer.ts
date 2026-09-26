@@ -70,12 +70,10 @@ export type TrainingExerciseItem = {
    *  Hauptteils immer leer. */
   gruppen: { id: string; name: string }[];
   /** Die Übungsvarianten DIESER Fassung — Abwandlungen der Übung selbst, als
-   *  Freitext (Spalte `varianten`). Bewusst anders benannt als
-   *  `TrainingDetail.varianten`, den Varianten des Hauptteils (#201): gleicher
-   *  Spaltenname, ganz andere Sache. Die Oberfläche liest das Feld nicht; der
-   *  KI-Assistent braucht es, um das Training vollständig zu kennen
-   *  (#193 NFR 1). */
-  uebungsvarianten: string[];
+   *  Freitext mit einfachen Listen (Spalte `varianten`, Story #282). Bewusst
+   *  anders benannt als `TrainingDetail.varianten`, den Varianten des
+   *  Hauptteils (#201): gleicher Spaltenname, ganz andere Sache. */
+  uebungsvarianten: string | null;
 };
 
 export type TrainingDetail = {
@@ -146,7 +144,7 @@ type RawInhalt = {
   material_basis: unknown;
   methodischer_fahrplan: Fahrplan | null;
   aufbau: string | null;
-  varianten: string[] | null;
+  varianten: string | null;
   bild_url: string | null;
   bild_quelle: "foto" | "diagramm" | null;
   diagramm: unknown;
@@ -266,7 +264,7 @@ export function mapTraining(raw: RawTraining): TrainingDetail {
         bildUrl: te.bild_url,
         bildQuelle: te.bild_quelle,
         diagramm: te.diagramm,
-        uebungsvarianten: te.varianten ?? [],
+        uebungsvarianten: te.varianten,
         gruppen: (te.training_exercise_gruppen ?? [])
           .slice()
           .sort((a, b) => a.position - b.position)

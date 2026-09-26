@@ -1,5 +1,6 @@
 import { ArrowRight, Clock } from "lucide-react";
 import {
+  Freitext,
   KategorieChip,
   MaterialListe,
   MethodischerFahrplan,
@@ -34,7 +35,7 @@ function Meta({ label, children }: { label: string; children: React.ReactNode })
 }
 
 /* Vollständige Durchführungs-Details einer Fassung im Training (Stories #17/#18):
-   Übungsablauf, Feld-Diagramm, Eckdaten und Dauer. Präsentational, daher in
+   Übungsablauf und Varianten, Feld-Diagramm, Eckdaten und Dauer. Präsentational, daher in
    Durchführungs- (Client) wie Druck-Ansicht (Server) nutzbar.
 
    Beide Ansichten sind fürs Training auf dem Platz gedacht und zeigen darum
@@ -175,13 +176,20 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
         {item.fahrplan ? (
           <MethodischerFahrplan fahrplan={item.fahrplan} />
         ) : item.aufbau ? (
-          <p className="type-body-large whitespace-pre-line text-on-surface">
-            {item.aufbau}
-          </p>
+          <Freitext text={item.aufbau} />
         ) : (
           <p className="type-body-medium text-on-surface-mittel">Kein Ablauf erfasst.</p>
         )}
       </div>
+
+      {/* Varianten — unmittelbar nach dem Ablauf und wie er dargestellt
+          (Story #282 AK 6–8): auf dem Platz wie im Druck zur Hand. */}
+      {item.uebungsvarianten && (
+        <div className="mt-4">
+          <p className="type-label-medium mb-2 text-on-surface-mittel">Varianten</p>
+          <Freitext text={item.uebungsvarianten} />
+        </div>
+      )}
 
       {/* Übungstyp — hinter dem Ablauf (Story #124, PO 2026-08-31): er ordnet
           die Übung ein und speist die Filter, für die Durchführung auf dem Platz

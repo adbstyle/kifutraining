@@ -361,7 +361,7 @@ Durchführen-Ansicht ist für den Platz gedacht: ein Trainingsteil nach dem ande
 belegten Blöcken, grosse Bedienflächen, und der Bildschirm bleibt wach, solange sie geöffnet
 ist. Das Ziel steht zu Beginn, wo es beim Anpfiff noch zählt. Jede Übung erscheint mit
 Diagramm, Feldtyp oder Spielfeldgrösse, Kinderzahl, Material und Dauer, darunter der volle
-Ablauf und zuunterst — wo die Übung einen trägt — der Übungstyp; die Erscheinungsform zeigen
+Ablauf, gleich danach die Varianten, wo die Übung welche führt, und zuunterst — wo die Übung einen trägt — der Übungstyp; die Erscheinungsform zeigen
 beide Ansichten nicht, sie ordnet ein und hilft auf dem Platz nicht weiter. Der Druck zeigt
 dasselbe als zusammenhängende, druckfertige Seite zum Mitnehmen, das Ziel im Kopf. Leere Blöcke
 erscheinen in beiden Ansichten nicht.
