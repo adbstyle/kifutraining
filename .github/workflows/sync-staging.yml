@@ -185,18 +185,6 @@ jobs:
               raise exception 'bild_url-Rewrite unvollständig: % Zeilen zeigen nicht auf den Staging-Host (Ref-Secrets prüfen)', falsch;
             end if;
           end $$;
-          -- Varianten-Freitext nachziehen (Story #282, Schritt 1): Solange Prod
-          -- die Spalte varianten_text noch nicht kennt, fehlt sie im Dump, und
-          -- der Abgleich-Trigger schweigt unter replica. Ohne diesen Nachzug
-          -- zeigte Staging keine Varianten. Sobald Prod die Spalte trägt, trifft
-          -- er keine Zeile mehr; Schritt 2 (#286) entfernt ihn mit der alten
-          -- Spalte.
-          update public.exercises
-             set varianten_text = public.varianten_als_text(varianten)
-           where varianten_text is null and cardinality(varianten) > 0;
-          update public.training_exercises
-             set varianten_text = public.varianten_als_text(varianten)
-           where varianten_text is null and cardinality(varianten) > 0;
           commit;
           SQL
           } | psql "$SUPABASE_STAGING_DB_URL" \
