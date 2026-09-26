@@ -7,9 +7,9 @@ import {
   Breadcrumbs,
   Button,
   Dialog,
-  Snackbar,
   type BreadcrumbItem,
 } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { ExercisePickerDialog } from "../ExercisePickerDialog";
 import { GesamtAbgleich } from "../ZeitAbgleich";
 import { TrainingKopf } from "./TrainingKopf";
@@ -106,7 +106,7 @@ export function TrainingEditor({
   const [notizen, setNotizen] = useState<Record<string, string | null>>({});
   const [stufen, setStufen] = useState<string[]>(training.stufen);
   const [ziel, setZiel] = useState<string>(training.ziel ?? "");
-  const [notice, setNotice] = useState<string | null>(null);
+  const melde = useSnackbar();
   // Der Name liegt lokal über dem Serverstand — wie Ziel und Dauern: Das Feld
   // im Kopf speichert beim Verlassen, und bis das Auffrischen zurück ist,
   // stünde dort sonst wieder der alte Name (#250 AK 4).
@@ -143,7 +143,6 @@ export function TrainingEditor({
   // der Serverstand kommt nach.
   const variantenModell = useVariantenModell({
     varianten: training.varianten,
-    melde: setNotice,
   });
   const varianten = variantenModell.varianten;
 
@@ -196,7 +195,6 @@ export function TrainingEditor({
     gruppenInitial: training.gruppen,
     zuordnungen: sichtbar,
     alleZuordnungen: zuordnungen,
-    melde: setNotice,
   });
 
   /** Die Adresse an die angezeigte Variante angleichen — ohne Navigation.
@@ -250,7 +248,7 @@ export function TrainingEditor({
     setAktiveVariante(varianteId);
     // Ab jetzt sind es mindestens zwei — die Adresse trägt die Variante.
     navigiereZu(varianteId, varianten.length + 1);
-    setNotice(`Variante „${name}" angelegt.`);
+    melde(`Variante „${name}" angelegt.`);
   }
 
   /** Eine Variante entfernen — mit Rückfrage, sobald etwas daran hängt (#202
@@ -283,7 +281,7 @@ export function TrainingEditor({
     // Bleibt eine einzige übrig, ist mehr geschehen als ein Entfernen: Der
     // Hauptteil trägt wieder keine Bezeichnung (Auflösung, #209 AK 7). Die
     // Quittung sagt es, weil die Leiste danach bloss stiller dasteht.
-    setNotice(
+    melde(
       rest.length === 1
         ? `Variante „${variante.name}" entfernt. Der Hauptteil steht wieder als einer da.`
         : `Variante „${variante.name}" entfernt.`,
@@ -301,7 +299,7 @@ export function TrainingEditor({
       const r = await setExerciseDuration(item.id, next);
       if (r.ok) return;
       setDurations((prev) => ({ ...prev, [item.id]: vorher }));
-      setNotice(r.error ?? "Speichern fehlgeschlagen.");
+      melde(r.error ?? "Speichern fehlgeschlagen.");
     });
   }
 
@@ -316,7 +314,7 @@ export function TrainingEditor({
       const r = await setzeNotiz(item.id, text);
       if (r.ok) return;
       setNotizen((prev) => ({ ...prev, [item.id]: vorher }));
-      setNotice(r.error ?? "Speichern fehlgeschlagen.");
+      melde(r.error ?? "Speichern fehlgeschlagen.");
     });
   }
 
@@ -365,7 +363,7 @@ export function TrainingEditor({
       // Am öffentlichen Training kann das Entfernen abgelehnt werden — es wäre
       // die letzte Übung, die es dort braucht. Ohne Meldung sähe der Trainer
       // die Übung einfach stehenbleiben (Story A AK 7).
-      if (!r.ok) setNotice(abweisung(r, "Entfernen fehlgeschlagen."));
+      if (!r.ok) melde(abweisung(r, "Entfernen fehlgeschlagen."));
     });
   }
 
@@ -384,7 +382,7 @@ export function TrainingEditor({
         // Auswahl zurücknehmen: sonst zeigte der Editor Stufen an, die nie
         // gespeichert wurden.
         setStufen(vorher);
-        setNotice(r.error ?? "Speichern fehlgeschlagen.");
+        melde(r.error ?? "Speichern fehlgeschlagen.");
         return;
       }
       if (r.mismatched && r.mismatched.length > 0) setMismatch(r.mismatched);
@@ -397,7 +395,7 @@ export function TrainingEditor({
       const r = await setTrainingZiel(training.id, ziel);
       if (!r.ok) {
         setZiel(training.ziel ?? "");
-        setNotice(r.error ?? "Speichern fehlgeschlagen.");
+        melde(r.error ?? "Speichern fehlgeschlagen.");
         return;
       }
       router.refresh();
@@ -414,7 +412,7 @@ export function TrainingEditor({
       const r = await renameTraining(training.id, naechster);
       if (!r.ok) {
         setName(vorher);
-        setNotice(r.error ?? "Speichern fehlgeschlagen.");
+        melde(r.error ?? "Speichern fehlgeschlagen.");
         return;
       }
       router.refresh();
@@ -431,7 +429,7 @@ export function TrainingEditor({
       }
       setMismatch(null);
       router.refresh();
-      if (fehler) setNotice(fehler);
+      if (fehler) melde(fehler);
     });
   }
 
@@ -593,7 +591,6 @@ export function TrainingEditor({
           fehlendeBedingungen={fehlendeBedingungen}
           varianten={varianten}
           aktiveVarianteId={aktive?.id}
-          melde={setNotice}
         />
       </div>
 
@@ -607,7 +604,6 @@ export function TrainingEditor({
         onZielSpeichern={speichereZiel}
         name={name}
         onNameSpeichern={speichereName}
-        melde={setNotice}
       />
 
       {/* Summenleiste — eine Fläche auf der Stufe der Karten daneben, denn sie
@@ -895,18 +891,6 @@ export function TrainingEditor({
         speichere={(name) =>
           bearbeitet ? modell.umbenennen(gruppeDialog.gruppe.id, name) : modell.anlegen(name)
         }
-      />
-
-      {/* Fest am unteren Rand statt im Fluss: der Editor ist eine lange Seite,
-          und die Meldung gehört zu einer Aktion irgendwo darin. Am Seitenende
-          eingehängt stünde sie mehr als tausend Bildpunkte unter dem Klick und
-          erreichte den Trainer nie — was gerade die abgelehnten Änderungen an
-          einem öffentlichen Training betrifft (Story A AK 7). */}
-      <Snackbar
-        open={notice != null}
-        message={notice ?? ""}
-        onClose={() => setNotice(null)}
-        placement="fixed"
       />
     </div>
   );

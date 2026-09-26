@@ -1,13 +1,7 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useContext, useMemo, useState } from "react";
+import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
 
 /**
  * Ob das geöffnete Training einem Team gehört — quer über die Navigation
@@ -55,10 +49,6 @@ export function TeamKontextProvider({ children }: { children: React.ReactNode })
 export function useTeamBereich(vomServer: boolean): boolean {
   return useContext(TeamKontext)?.gemeldet ?? vomServer;
 }
-
-// Auf dem Server gibt es keinen Layout-Effekt; React warnte sonst bei jedem
-// Ausliefern. Gerendert wird hier ohnehin nichts, was davon abhinge.
-const useIsomorpherEffekt = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /**
  * Meldet den Team-Kontext des geöffneten Trainings an die Navigation und

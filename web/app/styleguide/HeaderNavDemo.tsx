@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   LayoutGrid,
   Star,
@@ -11,7 +10,8 @@ import {
   Settings,
   Plus,
 } from "lucide-react";
-import { Header, Snackbar } from "@/components/ui";
+import { Header } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import type { HeaderNavItem, HeaderAccount } from "@/components/ui";
 
 const nav: HeaderNavItem[] = [
@@ -46,31 +46,22 @@ const account: HeaderAccount = {
 };
 
 export function HeaderNavDemo() {
-  const [snack, setSnack] = useState<string | null>(null);
+  const melde = useSnackbar();
 
   return (
     <div className="overflow-hidden rounded-flaeche border border-linie">
       {/* Im Styleguide in einem Rahmen gezeigt — in echt klebt der Header oben
-          am Viewport. Die Suche feuert hier nur eine Snackbar (Demo). */}
+          am Viewport. Die Suche meldet hier nur eine Snackbar (Demo). */}
       <Header
         nav={nav}
-        onSearch={() => setSnack("Suche geöffnet (⌘K)")}
+        onSearch={() => melde("Suche geöffnet (⌘K)")}
         notifications={2}
         account={account}
         cta={{ label: "Neue Übung", href: "/neu", icon: Plus }}
         className="!static"
       />
-      <div className="schraffur relative grid h-64 place-items-center">
+      <div className="schraffur grid h-64 place-items-center">
         <span className="type-label-small text-on-surface-mittel">Seiteninhalt</span>
-        <div className="absolute inset-x-0 bottom-4 flex justify-center">
-          <Snackbar
-            open={!!snack}
-            message={snack ?? ""}
-            actionLabel="OK"
-            onAction={() => setSnack(null)}
-            onClose={() => setSnack(null)}
-          />
-        </div>
       </div>
     </div>
   );

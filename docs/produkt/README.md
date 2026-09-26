@@ -9,6 +9,7 @@ Antwort auf die Frage „Was geht heute?" für alle, die nicht im Code nachsehen
 | [Übungen](uebungen.md) | Altersstufen, Übungsbestand, eigene Übungen, Feld-Diagramme, Favoriten |
 | [Trainings](trainings.md) | Trainings der beiden Altersstufen zusammenstellen, durchführen, drucken, veröffentlichen |
 | [Team-Bereich](team-bereich.md) | Trainerteams, Team-Trainings, Termine und Trainingsplan |
+| [Rückmeldungen](rueckmeldungen.md) | Wie die Anwendung über Vorgänge und Zustände Bescheid gibt |
 
 ## Pflicht zur Aktualisierung
 

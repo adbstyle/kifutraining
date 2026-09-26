@@ -32,7 +32,7 @@ export default async function TeamPlanPage({
 
   return (
     <section>
-      {angesetzt && <Flash message="Einheit angesetzt." />}
+      {angesetzt && <Flash message="Einheit angesetzt." param="angesetzt" />}
       <h2 className="mb-4 type-title-large text-on-surface">Trainingsplan</h2>
       {leer ? (
         <Leerzustand titel="Noch nichts angesetzt" dicht>

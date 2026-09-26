@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
-import { Button, Dialog, IconButton, Snackbar, TextField, Tooltip } from "@/components/ui";
+import { Button, Dialog, IconButton, TextField, Tooltip } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { benenneTeamUm } from "@/lib/actions/teams";
 
 /* Team-Kopf mit Umbenennen (Story 3 AK 5). Jedes Mitglied darf umbenennen —
@@ -14,7 +15,7 @@ export function TeamKopf({ teamId, name }: { teamId: string; name: string }) {
   const [open, setOpen] = useState(false);
   const [wert, setWert] = useState(name);
   const [fehler, setFehler] = useState<string | undefined>();
-  const [notice, setNotice] = useState<string | null>(null);
+  const melde = useSnackbar();
 
   function speichern() {
     setFehler(undefined);
@@ -23,7 +24,7 @@ export function TeamKopf({ teamId, name }: { teamId: string; name: string }) {
       if (res.ok) {
         setOpen(false);
         router.refresh();
-        setNotice("Teamname geändert.");
+        melde("Teamname geändert.");
       } else {
         setFehler(res.error);
       }
@@ -75,8 +76,6 @@ export function TeamKopf({ teamId, name }: { teamId: string; name: string }) {
           supportingText={fehler}
         />
       </Dialog>
-
-      <Snackbar open={notice != null} message={notice ?? ""} onClose={() => setNotice(null)} />
     </>
   );
 }

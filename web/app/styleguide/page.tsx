@@ -77,6 +77,7 @@ import {
   SCHRIFT,
   LINIE,
   KANTE,
+  UMKEHR,
   ZUSTAND,
   DRUCK,
   elev,
@@ -317,7 +318,7 @@ const elevVerwendung: Record<number, string> = {
   2: "Block im Teil, dichtes Feld, Platzhalter",
   3: "— frei —",
   4: "Kopfleiste (deckend, kein Blur)",
-  6: "Snackbar, Elevated-Knopf und -Chip, Overlay-Icon-Knopf",
+  6: "Elevated-Knopf und -Chip, Overlay-Icon-Knopf",
   8: "Menü, Select-Panel, Tonal-Knopf, Entwurf-Plakette, Drawer, aktives Segment, Avatar",
   12: "— frei —",
   16: "— frei —",
@@ -1779,12 +1780,19 @@ export default function Styleguide() {
           oberste Stufe: <code>bg-elev-24</code>,{" "}
           <code>rounded-dialog</code> — der einzige Ort mit 6 px —,{" "}
           <code>shadow-dp-24</code> und ein Scrim bei 60 %. Die{" "}
-          <strong>Snackbar</strong> schwebt eine Stufe darunter
-          (<code>bg-elev-06</code>, <code>shadow-dp-06</code>) und färbt nur
-          ihre Aktion in Primary. Sie ist damit keine umgekehrte Fläche mehr:
-          Eine helle Meldung im dunklen Bild stäche heraus statt zu melden, und
-          die Baseline hätte für ihre Schrift eine Rolle gebraucht, die es hier
-          nicht gibt.
+          <strong>Snackbar</strong> ist die eine <strong>umgekehrte</strong>{" "}
+          Fläche der Anwendung (<code>umkehr</code>): Weiss zu{" "}
+          {Math.round(UMKEHR.deckung * 100)} % über dem Grund, darauf der Grund
+          als Schrift ({v(kontrast(UMKEHR.schrift, UMKEHR.flaeche))}) und das
+          dunkle Violett als Aktion ({v(kontrast(UMKEHR.akzent, UMKEHR.flaeche))}).
+          Sie meldet am Bildrand und geht von selbst, also muss sie beim ersten
+          Hinsehen auffallen. Auf <code>elev-06</code> hob sie sich nur{" "}
+          {v(kontrast(elev(6), elev(0)))} vom Grund ab und blieb unbemerkt; hell
+          steht sie bei {v(kontrast(UMKEHR.flaeche, elev(0)))}. So meint Material
+          sie auch. Innerhalb der Fläche gelten die Rollen umgekehrt — Primary
+          ist dort das dunkle Violett —, damit Textknopf, Zustands-Ebene und
+          Fokus-Ring ohne Sonderklassen tragen. Beim Erscheinen fährt sie kurz
+          von unten ein; bei reduzierter Bewegung blendet sie nur ein.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Bewusste Abweichung:</strong> Die Textknöpfe im Dialog bleiben
@@ -1797,12 +1805,30 @@ export default function Styleguide() {
           denn der Dialog nennt seine Handlung auch im Text.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Die Snackbar kennt zwei Platzierungen: <code>inline</code> folgt dem
-          Dokumentfluss und passt, solange der auslösende Knopf daneben liegt;{" "}
-          <code>fixed</code> heftet sie an den unteren Rand des Sichtfelds. Auf
-          langen Seiten ist <code>fixed</code> Pflicht — hängt die Meldung im
-          Fluss am Seitenende, steht sie unter dem gesamten Inhalt und erreicht
-          niemanden, der oben geklickt hat.
+          Die Snackbar meldet einen <strong>Vorgang</strong>, der Banner (22)
+          einen <strong>Zustand</strong>. Darum hat sie genau einen Platz: unten
+          in der Mitte, für die ganze Anwendung. Niemand rendert sie selbst —
+          gemeldet wird über <code>useSnackbar()</code>, und der Platz im
+          Root-Layout zeigt immer nur <strong>eine</strong>. Weitere warten;
+          ihre Zeit läuft erst, wenn sie erscheinen. Jeder Aufruf des Hooks ist
+          eine eigene Stelle: Meldet sie erneut, ersetzt die neue Meldung ihre
+          ältere, und ein Text, der schon ansteht, kommt nicht zweimal in die
+          Reihe. Nach 6 s geht sie von
+          selbst, solange nicht der Zeiger auf ihr liegt oder der Fokus in ihr
+          steht; das X schliesst sie sofort und gibt den Fokus dorthin zurück,
+          woher er kam.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Sie ist <strong>tonlos</strong>: Ob etwas gescheitert ist, sagt der
+          Text, nicht die Farbe. Die Vorlesehilfe liest sie eingereiht vor, auch
+          einen Fehler, und nur den Text, nicht die Knöpfe — unterbrechen darf
+          nur ein Banner. Sie gehört zur
+          Ansicht, in der sie entstand, und fällt beim Wechsel weg; wer eine
+          Bestätigung für die Zielansicht braucht, schickt sie über die Adresse
+          mit (<code>Flash</code>). Höchstens eine Aktion — Rückgängig, Erneut
+          versuchen —, nie ein blosses «OK». Und sie liegt unter jedem Dialog:
+          Scheitert ein Vorgang und bleibt der Dialog offen, steht der Grund als
+          Banner im Dialog.
         </p>
         <OverlaysDemo />
       </Section>

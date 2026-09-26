@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { UserMinus, UserPlus, UserRound } from "lucide-react";
-import { Button, Dialog, IconButton, Snackbar, TextField, Tooltip } from "@/components/ui";
+import { Button, Dialog, IconButton, TextField, Tooltip } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { entferneMitglied, nimmMitgliedAuf, sucheTrainer } from "@/lib/actions/teams";
 import type { TeamMitglied } from "@/lib/queries/teams";
 
@@ -25,7 +26,7 @@ export function MitgliederListe({
   const [pending, startTransition] = useTransition();
   const [email, setEmail] = useState("");
   const [fehler, setFehler] = useState<string | undefined>();
-  const [notice, setNotice] = useState<string | null>(null);
+  const melde = useSnackbar();
   const [vorschau, setVorschau] = useState<string | null>(null);
   const [entfernen, setEntfernen] = useState<TeamMitglied | null>(null);
 
@@ -47,7 +48,7 @@ export function MitgliederListe({
       if (res.ok) {
         setEmail("");
         router.refresh();
-        setNotice(`${res.anzeigeName} ist jetzt im Team.`);
+        melde(`${res.anzeigeName} ist jetzt im Team.`);
       } else {
         setFehler(res.error);
       }
@@ -59,11 +60,11 @@ export function MitgliederListe({
       const res = await entferneMitglied(teamId, mitglied.userId);
       setEntfernen(null);
       if (res.status === "fehler") {
-        setNotice(res.error);
+        melde(res.error);
         return;
       }
       router.refresh();
-      setNotice(`${mitglied.anzeigeName} ist nicht mehr im Team.`);
+      melde(`${mitglied.anzeigeName} ist nicht mehr im Team.`);
     });
   }
 
@@ -168,8 +169,6 @@ export function MitgliederListe({
           Persönliche Trainings dieser Person bleiben unberührt.
         </p>
       </Dialog>
-
-      <Snackbar open={notice != null} message={notice ?? ""} onClose={() => setNotice(null)} />
     </>
   );
 }

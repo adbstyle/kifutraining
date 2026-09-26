@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Bot, Unlink } from "lucide-react";
-import { Button, Dialog, IconButton, Leerzustand, Snackbar, Tooltip } from "@/components/ui";
+import { Button, Dialog, IconButton, Leerzustand, Tooltip } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { widerrufeZugang } from "@/lib/actions/ki-zugaenge";
 import type { KiZugang } from "@/lib/queries/ki-zugaenge";
 import { datumKurz } from "@/lib/zeit";
@@ -16,7 +17,7 @@ import { datumKurz } from "@/lib/zeit";
 export function KiZugaengeListe({ zugaenge }: { zugaenge: KiZugang[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [notice, setNotice] = useState<string | null>(null);
+  const melde = useSnackbar();
   const [widerrufen, setWiderrufen] = useState<KiZugang | null>(null);
 
   function widerrufAusfuehren(zugang: KiZugang) {
@@ -24,11 +25,11 @@ export function KiZugaengeListe({ zugaenge }: { zugaenge: KiZugang[] }) {
       const res = await widerrufeZugang(zugang.clientId);
       setWiderrufen(null);
       if (!res.ok) {
-        setNotice(res.error);
+        melde(res.error);
         return;
       }
       router.refresh();
-      setNotice(`«${zugang.name}» ist widerrufen.`);
+      melde(`«${zugang.name}» ist widerrufen.`);
     });
   }
 
@@ -95,8 +96,6 @@ export function KiZugaengeListe({ zugaenge }: { zugaenge: KiZugang[] }) {
           Sitzung. Deine übrigen Zugänge bleiben bestehen.
         </p>
       </Dialog>
-
-      <Snackbar open={notice != null} message={notice ?? ""} onClose={() => setNotice(null)} />
     </>
   );
 }

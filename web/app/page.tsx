@@ -78,9 +78,12 @@ export default async function Home({
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       {sp.account_deleted && (
-        <Flash message="Konto gelöscht. Deine öffentlichen Übungen bleiben anonym erhalten." />
+        <Flash
+          message="Konto gelöscht. Deine öffentlichen Übungen bleiben anonym erhalten."
+          param="account_deleted"
+        />
       )}
-      {sp.deleted && <Flash message="Übung gelöscht." />}
+      {sp.deleted && <Flash message="Übung gelöscht." param="deleted" />}
       <header className="mb-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="type-display-small text-on-surface">Übungen</h1>

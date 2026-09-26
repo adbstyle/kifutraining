@@ -21,6 +21,7 @@ import {
 } from "@/lib/actions/gruppen";
 import { gleicheFolge, verschoben } from "@/lib/ordnung";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 
 /** Meldung einer Gruppen-Aktion: `null` heisst „gespeichert". */
 type Antwort = Promise<string | null>;
@@ -45,7 +46,6 @@ export function useGruppenModell({
   gruppenInitial,
   zuordnungen,
   alleZuordnungen,
-  melde,
 }: {
   trainingId: string;
   /** Die Gruppen, wie sie vom Server kamen — in der vom Trainer gesetzten
@@ -61,10 +61,10 @@ export function useGruppenModell({
    *  und die Überlagerung danach: Die Datenbank räumt die Zuweisungen per
    *  Kaskade in jeder Variante weg, nicht nur in der sichtbaren. */
   alleZuordnungen: TrainingExerciseItem[];
-  /** Was in die Snackbar geht: abgelehnte Aktionen, quittierte Entfernungen. */
-  melde: (text: string) => void;
 }) {
   const router = useRouter();
+  // Was in die Snackbar geht: abgelehnte Aktionen, quittierte Entfernungen.
+  const melde = useSnackbar();
   const [gruppen, setGruppen] = useState(gruppenInitial);
   // Die lokal gesetzten Folgen je Fassung. Fehlt ein Eintrag, gilt der
   // Serverstand der Fassung — darum ein `Record` und keine Vollkopie.

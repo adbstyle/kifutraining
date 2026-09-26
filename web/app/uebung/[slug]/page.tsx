@@ -83,28 +83,29 @@ function anzahlText(a: ExerciseDetail["anzahl_kinder"]): string | null {
   return null;
 }
 
+/** Die Bestätigungen, die über die Adresse auf diese Seite reisen — je
+ *  Parameter ihr Text. Eine Quelle für beides: `Flash` nimmt alle Parameter
+ *  wieder aus der Adresse, auch einen später hinzugekommenen. */
+const FLASH = {
+  created: "Übung erstellt.",
+  updated: "Änderungen gespeichert.",
+  kopiert: "Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen.",
+} as const;
+const FLASH_PARAMS = Object.keys(FLASH) as (keyof typeof FLASH)[];
+
 export default async function ExerciseDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{
-    created?: string;
-    updated?: string;
-    kopiert?: string;
-  }>;
+  searchParams: Promise<Partial<Record<keyof typeof FLASH, string>>>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
   const ex = await getExerciseDetail(slug);
   if (!ex) notFound();
-  const flash = sp.created
-    ? "Übung erstellt."
-    : sp.updated
-      ? "Änderungen gespeichert."
-      : sp.kopiert
-        ? "Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen."
-        : null;
+  const flashParam = FLASH_PARAMS.find((p) => sp[p]);
+  const flash = flashParam ? FLASH[flashParam] : null;
 
   const supabase = await createClient();
   const {
@@ -154,11 +155,7 @@ export default async function ExerciseDetailPage({
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-      {flash && (
-        <div className="print:hidden">
-          <Flash message={flash} />
-        </div>
-      )}
+      {flash && <Flash message={flash} param={FLASH_PARAMS} />}
       <div className="print:hidden">
         <Breadcrumbs items={crumbs} />
       </div>

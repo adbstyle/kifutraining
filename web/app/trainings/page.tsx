@@ -41,7 +41,7 @@ export default async function TrainingsPage({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      {sp.deleted && <Flash message="Training gelöscht." />}
+      {sp.deleted && <Flash message="Training gelöscht." param="deleted" />}
 
       <header className="mb-8">
         <div className="flex items-center justify-between gap-4">

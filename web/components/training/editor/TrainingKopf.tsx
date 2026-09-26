@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Users } from "lucide-react";
 import { Card, Badge, HeadlineField, TextArea } from "@/components/ui";
+import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { StufenField } from "../StufenField";
 import { useBlurSpeichern } from "./useBlurSpeichern";
 import { kategorienFuer } from "@/lib/altersstufe";
@@ -27,7 +28,6 @@ export function TrainingKopf({
   onZielSpeichern,
   name,
   onNameSpeichern,
-  melde,
 }: {
   training: TrainingDetail;
   oeffentlich: boolean;
@@ -39,12 +39,10 @@ export function TrainingKopf({
   /** Der laufende Name — im Editor optimistisch überlagert. */
   name: string;
   onNameSpeichern: (next: string) => void;
-  /** Rückmeldungen an die Snackbar des Editors. */
-  melde: (nachricht: string) => void;
 }) {
   return (
     <Card className="p-4 sm:p-5">
-      <NameFeld name={name} onSpeichern={onNameSpeichern} melde={melde} />
+      <NameFeld name={name} onSpeichern={onNameSpeichern} />
       {/* Team-Training oder persönliches? Die Marke sagt, wem es gehört — und
           bei persönlichen zusätzlich, ob es öffentlich ist. Daneben, in
           derselben Zeile, welchem Lehrmittel es folgt (Story 5 AK 3): beide
@@ -118,12 +116,11 @@ export function TrainingKopf({
 function NameFeld({
   name,
   onSpeichern,
-  melde,
 }: {
   name: string;
   onSpeichern: (next: string) => void;
-  melde: (nachricht: string) => void;
 }) {
+  const melde = useSnackbar();
   const { entwurf, setEntwurf, beiVerlassen } = useBlurSpeichern({
     wert: name,
     pruefe: trainingNameProblem,
