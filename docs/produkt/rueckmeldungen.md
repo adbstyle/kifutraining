@@ -19,11 +19,14 @@ unteren Bildschirmrand, die von selbst wieder geht.
 Jede Rückmeldung zu einem Vorgang erscheint an derselben Stelle, unten in der Mitte, egal wo
 auf der Seite der Trainer geklickt hat. Es steht immer nur eine da. Schliessen mehrere
 Vorgänge kurz nacheinander ab, zeigt die Anwendung ihre Rückmeldungen der Reihe nach; jede
-bekommt ihre volle Zeit erst, wenn sie erscheint, so läuft keine ungesehen ab.
+bekommt ihre volle Zeit erst, wenn sie erscheint, so läuft keine ungesehen ab. Eine neuere
+Rückmeldung zur selben Sache ersetzt die ältere — gelingt der zweite Versuch, steht der
+gescheiterte erste nicht mehr da —, und dieselbe Rückmeldung steht nie zweimal an.
 
 Nach sechs Sekunden verschwindet die Zeile von selbst. Solange der Zeiger auf ihr liegt oder
 sie mit der Tastatur angesteuert ist, wartet sie; über das Kreuz lässt sie sich jederzeit
-sofort schliessen. Ob ein Vorgang gescheitert ist, sagt ihr Text, nicht ihre Farbe. Wer mit
+sofort schliessen, und wer sie mit der Tastatur schliesst, steht danach wieder dort, wo er
+vorher war. Ob ein Vorgang gescheitert ist, sagt ihr Text, nicht ihre Farbe. Wer mit
 einer Vorlesehilfe arbeitet, hört jede Rückmeldung, ohne dabei unterbrochen zu werden.
 
 Die Zeile gehört zu der Ansicht, in der sie entstand: Wechselt der Trainer von sich aus auf

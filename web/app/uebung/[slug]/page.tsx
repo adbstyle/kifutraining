@@ -83,31 +83,29 @@ function anzahlText(a: ExerciseDetail["anzahl_kinder"]): string | null {
   return null;
 }
 
-/** Die Parameter, über die eine Bestätigung auf diese Seite reist. */
-const FLASH_PARAMS = ["created", "updated", "kopiert"] as const;
+/** Die Bestätigungen, die über die Adresse auf diese Seite reisen — je
+ *  Parameter ihr Text. Eine Quelle für beides: `Flash` nimmt alle Parameter
+ *  wieder aus der Adresse, auch einen später hinzugekommenen. */
+const FLASH = {
+  created: "Übung erstellt.",
+  updated: "Änderungen gespeichert.",
+  kopiert: "Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen.",
+} as const;
+const FLASH_PARAMS = Object.keys(FLASH) as (keyof typeof FLASH)[];
 
 export default async function ExerciseDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{
-    created?: string;
-    updated?: string;
-    kopiert?: string;
-  }>;
+  searchParams: Promise<Partial<Record<keyof typeof FLASH, string>>>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
   const ex = await getExerciseDetail(slug);
   if (!ex) notFound();
-  const flash = sp.created
-    ? "Übung erstellt."
-    : sp.updated
-      ? "Änderungen gespeichert."
-      : sp.kopiert
-        ? "Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen."
-        : null;
+  const flashParam = FLASH_PARAMS.find((p) => sp[p]);
+  const flash = flashParam ? FLASH[flashParam] : null;
 
   const supabase = await createClient();
   const {

@@ -7,6 +7,9 @@ import { useSnackbar } from "@/components/layout/SnackbarKontext";
 export function OverlaysDemo() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const melde = useSnackbar();
+  // Zwei Stellen, nicht eine: Meldet dieselbe Stelle zweimal, ersetzt die
+  // zweite Meldung die erste — anstehen sieht man nur, wenn zwei melden.
+  const meldeAndere = useSnackbar();
 
   return (
     <div className="space-y-4">
@@ -27,13 +30,13 @@ export function OverlaysDemo() {
         >
           Snackbar zeigen
         </Button>
-        {/* Zwei auf einmal: Die zweite wartet, bis die erste weg ist, und ihre
-            Zeit läuft erst ab dann. */}
+        {/* Zwei Stellen auf einmal: Die zweite wartet, bis die erste weg ist,
+            und ihre Zeit läuft erst ab dann. */}
         <Button
           variant="tonal"
           onClick={() => {
             melde("Termin geändert.");
-            melde("Ein öffentliches Training braucht mindestens eine Übung im freien Spiel.");
+            meldeAndere("Ein öffentliches Training braucht mindestens eine Übung im freien Spiel.");
           }}
         >
           Zwei nacheinander

@@ -1802,14 +1802,19 @@ export default function Styleguide() {
           in der Mitte, für die ganze Anwendung. Niemand rendert sie selbst —
           gemeldet wird über <code>useSnackbar()</code>, und der Platz im
           Root-Layout zeigt immer nur <strong>eine</strong>. Weitere warten;
-          ihre Zeit läuft erst, wenn sie erscheinen. Nach 6 s geht sie von
+          ihre Zeit läuft erst, wenn sie erscheinen. Jeder Aufruf des Hooks ist
+          eine eigene Stelle: Meldet sie erneut, ersetzt die neue Meldung ihre
+          ältere, und ein Text, der schon ansteht, kommt nicht zweimal in die
+          Reihe. Nach 6 s geht sie von
           selbst, solange nicht der Zeiger auf ihr liegt oder der Fokus in ihr
-          steht; das X schliesst sie sofort.
+          steht; das X schliesst sie sofort und gibt den Fokus dorthin zurück,
+          woher er kam.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Sie ist <strong>tonlos</strong>: Ob etwas gescheitert ist, sagt der
           Text, nicht die Farbe. Die Vorlesehilfe liest sie eingereiht vor, auch
-          einen Fehler — unterbrechen darf nur ein Banner. Sie gehört zur
+          einen Fehler, und nur den Text, nicht die Knöpfe — unterbrechen darf
+          nur ein Banner. Sie gehört zur
           Ansicht, in der sie entstand, und fällt beim Wechsel weg; wer eine
           Bestätigung für die Zielansicht braucht, schickt sie über die Adresse
           mit (<code>Flash</code>). Höchstens eine Aktion — Rückgängig, Erneut

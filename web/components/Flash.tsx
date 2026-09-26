@@ -10,7 +10,11 @@ import { useSnackbar } from "@/components/layout/SnackbarKontext";
  *  alles, was auf der alten Ansicht gemeldet wurde.
  *
  *  Danach nimmt sie ihre Parameter aus der Adresse, sonst käme die Bestätigung
- *  beim Neuladen oder über «Zurück» ein zweites Mal (#234). Rendert nichts. */
+ *  beim Neuladen oder über «Zurück» ein zweites Mal (#234). Bewusst über den
+ *  Router und nicht per `history.replaceState`: Der zweite Weg spart zwar die
+ *  Server-Runde, lässt aber den gespeicherten Seitenstand samt dieser Meldung
+ *  am Verlaufseintrag hängen — «Zurück» holte ihn wieder hervor, und mit ihm
+ *  die Bestätigung. Rendert nichts. */
 export function Flash({ message, param }: { message: string; param: string | readonly string[] }) {
   const melde = useSnackbar();
   const router = useRouter();
