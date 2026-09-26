@@ -90,7 +90,7 @@ export async function getFassungZumBearbeiten(
     material_basis: unknown;
     methodischer_fahrplan: Fahrplan | null;
     aufbau: string | null;
-    varianten: string | null;
+    varianten_text: string | null;
     bild_url: string | null;
     bild_quelle: "foto" | "diagramm" | null;
     diagramm: unknown;
@@ -147,7 +147,7 @@ export async function getFassungZumBearbeiten(
     materialBasis: parseMaterialBasis(q.material_basis),
     fahrplan: q.methodischer_fahrplan,
     aufbau: q.aufbau,
-    varianten: q.varianten,
+    varianten: q.varianten_text,
     bildUrl: q.bild_url,
     bildQuelle: q.bild_quelle,
     diagramm: q.diagramm,

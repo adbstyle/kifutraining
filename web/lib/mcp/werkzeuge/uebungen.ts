@@ -117,7 +117,7 @@ function alsUebung(ex: ExerciseDetail, zugang: Zugang): z.infer<typeof UebungAus
         }
       : null,
     aufbau: ex.aufbau,
-    varianten: ex.varianten,
+    varianten: ex.varianten_text,
     bild_quelle: ex.bild_quelle,
     diagramm: mitDiagramm ? ex.diagramm : null,
     // Statt der Eigentümer-ID: fremde Konto-IDs gibt kein Werkzeug aus.

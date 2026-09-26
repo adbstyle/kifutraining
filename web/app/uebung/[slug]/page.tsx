@@ -285,13 +285,13 @@ export default async function ExerciseDetailPage({
       </section>
 
       {/* Varianten — dargestellt wie der Ablauf (Story #282) */}
-      {ex.varianten && (
+      {ex.varianten_text && (
         <section className="mt-8">
           <h2 className="type-title-medium mb-3 text-on-surface-mittel">
             Varianten
           </h2>
           <Card className="p-6">
-            <Freitext text={ex.varianten} />
+            <Freitext text={ex.varianten_text} />
           </Card>
         </section>
       )}
