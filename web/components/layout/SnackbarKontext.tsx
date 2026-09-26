@@ -179,6 +179,7 @@ function SichtbareSnackbar({
   return (
     <div
       ref={flaeche}
+      className="motion-safe:animate-snackbar-ein motion-reduce:animate-einblenden"
       onFocus={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
           fokusVorher.current = e.relatedTarget instanceof HTMLElement ? e.relatedTarget : null;

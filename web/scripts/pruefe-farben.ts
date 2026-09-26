@@ -35,6 +35,7 @@ import {
   ON_PRIMARY,
   PRIMARY,
   SCHRIFT,
+  UMKEHR,
   elev,
   elevName,
   hex8,
@@ -200,6 +201,28 @@ pruefe("Die Aufschrift gefüllter Flächen trägt", () => {
   assert.ok(aufPrimary >= 4.5, `on-primary auf primary: ${z(aufPrimary)}:1`);
   const aufError = kontrast(ON_ERROR, ERROR);
   assert.ok(aufError >= 4.5, `on-error auf error: ${z(aufError)}:1`);
+});
+
+// ── Umgekehrte Fläche (Snackbar) ───────────────────────────────────────────
+pruefe("Die umgekehrte Fläche ist Weiss über dem Grund in ihrer Deckung", () => {
+  assert.equal(UMKEHR.flaeche, ueberlagern("#ffffff", UMKEHR.deckung, GRUND));
+});
+
+pruefe("Die umgekehrte Fläche hebt sich von jeder Höhenstufe ab", () => {
+  // Sie ist selbst das grafische Objekt, das auffallen soll: 3:1 nach
+  // WCAG 1.4.11 gegen alles, worüber sie schweben kann.
+  for (const stufe of ELEV) {
+    const wert = kontrast(UMKEHR.flaeche, stufe.hex);
+    assert.ok(wert >= 3.0, `umkehr über ${elevName(stufe.dp)}: ${z(wert)}:1`);
+  }
+});
+
+pruefe("Schrift und Akzent tragen auf der umgekehrten Fläche", () => {
+  const schrift = kontrast(UMKEHR.schrift, UMKEHR.flaeche);
+  assert.ok(schrift >= 4.5, `on-umkehr auf umkehr: ${z(schrift)}:1`);
+  // Der Akzent ist Textknopf UND Fokus-Ring — für beides reicht 4.5:1.
+  const akzent = kontrast(UMKEHR.akzent, UMKEHR.flaeche);
+  assert.ok(akzent >= 4.5, `umkehr-akzent auf umkehr: ${z(akzent)}:1`);
 });
 
 // ── 6. Alterskategorien ────────────────────────────────────────────────────
