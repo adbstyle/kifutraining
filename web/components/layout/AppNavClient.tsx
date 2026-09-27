@@ -5,6 +5,7 @@ import { LogOut, UserRound, ListChecks, ClipboardList } from "lucide-react";
 import { Header } from "@/components/ui";
 import type { HeaderNavItem, HeaderAccount } from "@/components/ui";
 import { useTeamBereich } from "./TeamKontext";
+import { nachVerlassenFrage } from "./VerlassenWarnung";
 
 /* App-Chrome: M3-Header-Navigation als Top-Bar (alle Breakpoints; unter `lg`
    Hamburger → Drawer). Server-Teil (AppNav) liest die Session und reicht den
@@ -70,18 +71,30 @@ export function AppNavClient({
         // bei einzeichigem Local-Part.
         initials: (userEmail?.split("@")[0]?.slice(0, 2).toUpperCase() || "K"),
         items: [
-          { label: "Konto", icon: UserRound, onSelect: () => router.push("/konto") },
+          // Das Menü springt per Router statt per Link — darum fragt es selbst
+          // nach, ob eine Seite mit ungesicherten Angaben verlassen werden
+          // darf (#246 AK 7); Links fängt die Warnung von sich aus ab.
+          {
+            label: "Konto",
+            icon: UserRound,
+            onSelect: () => nachVerlassenFrage(() => router.push("/konto")),
+          },
           {
             label: "Meine Übungen",
             icon: ListChecks,
-            onSelect: () => router.push("/?mine=1"),
+            onSelect: () => nachVerlassenFrage(() => router.push("/?mine=1")),
           },
           {
             label: "Meine Trainings",
             icon: ClipboardList,
-            onSelect: () => router.push("/trainings?mine=1"),
+            onSelect: () => nachVerlassenFrage(() => router.push("/trainings?mine=1")),
           },
-          { label: "Abmelden", icon: LogOut, danger: true, onSelect: () => signOutAction() },
+          {
+            label: "Abmelden",
+            icon: LogOut,
+            danger: true,
+            onSelect: () => nachVerlassenFrage(() => signOutAction()),
+          },
         ],
       }
     : undefined;

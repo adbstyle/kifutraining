@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { parseDiagramm, kopiereDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
+import { getVorlagen, type VorlageItem } from "@/lib/queries/exercises";
+import {
+  parseDiagramm,
+  parseDiagrammZumSpeichern,
+  kopiereDiagramm,
+  type DiagrammData,
+} from "@/lib/diagramm";
 
 export type SaveDiagrammResult = { ok: true } | { ok: false; error: string };
 
@@ -15,10 +21,13 @@ function revalidiereUebung(slug: string) {
 }
 
 /** Autosave des Diagramm-Editors (#49 AK6). RLS lässt nur eigene
- *  User-Übungen durch; parseDiagramm ist die Server-Trust-Boundary. */
+ *  User-Übungen durch; parseDiagramm ist die Server-Trust-Boundary.
+ *  `alsBild`: Der Stand enthält eine übernommene Vorlage — das Diagramm wird
+ *  dann das aktive Bild, wie beim Kopieren über `kopiereVorlage` (#61 PC4). */
 export async function saveDiagramm(
   exerciseId: string,
   data: DiagrammData,
+  optionen?: { alsBild: boolean },
 ): Promise<SaveDiagrammResult> {
   const supabase = await createClient();
   const {
@@ -26,9 +35,8 @@ export async function saveDiagramm(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
 
-  const diagramm = parseDiagramm(data);
-  if (!diagramm || diagramm.elemente.length > MAX_ELEMENTE)
-    return { ok: false, error: "Ungültiges Diagramm." };
+  const diagramm = parseDiagrammZumSpeichern(data);
+  if (!diagramm) return { ok: false, error: "Ungültiges Diagramm." };
 
   // bild_quelle konsistent zum Diagramm-Inhalt mitführen (#56 AK3): beim
   // ersten Element wird das Diagramm das aktive Bild; wird es geleert,
@@ -49,7 +57,9 @@ export async function saveDiagramm(
     ? aktuell.bild_quelle === "diagramm"
       ? null
       : aktuell.bild_quelle
-    : (aktuell.bild_quelle ?? "diagramm");
+    : optionen?.alsBild
+      ? "diagramm"
+      : (aktuell.bild_quelle ?? "diagramm");
 
   const { data: updated, error } = await supabase
     .from("exercises")
@@ -64,6 +74,13 @@ export async function saveDiagramm(
 
   revalidiereUebung(updated.slug);
   return { ok: true };
+}
+
+/** Der Vorlagen-Fundus für die Zeichenfläche beim Erfassen (#246): eigene
+ *  und Manual-Diagramme. Erst geholt, wenn die Fläche angezeigt wird — auf
+ *  einem schmalen Bildschirm, wo sie fehlt, nie. */
+export async function ladeVorlagen(): Promise<VorlageItem[]> {
+  return getVorlagen();
 }
 
 /** Ein bestehendes Diagramm als Vorlage in die eigene Übung kopieren (#61).

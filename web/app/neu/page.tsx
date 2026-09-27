@@ -36,6 +36,7 @@ export default async function NeuePage({
         stufenWahl="waehlbar"
         kontext="bibliothek"
         initial={{ trainingsteil: teil }}
+        diagrammZeichnen
         submitLabel="Übung speichern"
       />
     </main>

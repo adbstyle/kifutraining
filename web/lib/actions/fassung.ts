@@ -7,7 +7,7 @@ import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
-import { parseDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
+import { parseDiagrammZumSpeichern, type DiagrammData } from "@/lib/diagramm";
 import {
   fassungUnvollstaendig,
   istEigeneFassungsDatei,
@@ -299,9 +299,8 @@ export async function saveFassungDiagramm(
   const fassung = await ladeFassung(supabase, fassungId, user.id);
   if (!fassung) return { ok: false, error: "Übung nicht gefunden." };
 
-  const diagramm = parseDiagramm(data);
-  if (!diagramm || diagramm.elemente.length > MAX_ELEMENTE)
-    return { ok: false, error: "Ungültiges Diagramm." };
+  const diagramm = parseDiagrammZumSpeichern(data);
+  if (!diagramm) return { ok: false, error: "Ungültiges Diagramm." };
 
   // bild_quelle konsistent mitführen: das erste Element macht das Diagramm zum
   // aktiven Bild; wird es geleert, fällt die Wahl zurück.

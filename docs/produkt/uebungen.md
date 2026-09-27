@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-09-23. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-09-27. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -64,7 +64,15 @@ Hängt der Trainer eine Übung dorthin um, wo es eines dieser Felder nicht gibt,
 Anwendung unter der Zuordnung, welche seiner erfassten Angaben dabei entfallen werden.
 
 Beiden Altersstufen gemeinsam sind Name und mindestens eine Alterskategorie, dazu die Zahl der
-Kinder, für die die Übung taugt, das benötigte Material, mögliche Varianten und das Bild.
+Kinder, für die die Übung taugt, das benötigte Material, mögliche Varianten und das Bild — ein
+Feld-Diagramm, ein Foto oder beides. Das Diagramm zeichnet der Trainer schon beim Erfassen, auf
+der Zeichenfläche unmittelbar unter dem Namen; das Foto lädt er weiter unten im Feld „Foto" hoch.
+Beides ist freiwillig, und die Übung entsteht mit einem einzigen Speichern samt Diagramm.
+
+Bis dahin ist nichts gesichert. Will der Trainer die Erfassung mit ungesicherten Angaben
+verlassen — über einen Link, das Kontomenü, den Zurück-Knopf des Browsers, durch Neuladen oder
+Schliessen —, fragt die Anwendung nach, ob die Angaben verloren gehen sollen. Scheitert das
+Speichern, bleiben Angaben und Zeichnung stehen.
 
 Ablauf und Varianten sind Freitexte und stehen gleich da: Zeilenumbrüche und Leerzeilen bleiben,
 wie der Trainer sie gesetzt hat. Eine Zeile, die mit «- » oder «* » beginnt, wird zum
@@ -84,7 +92,8 @@ oder Stoppuhr. Nur die Liste wird gezählt und in der Materialliste eines Traini
 die Ergänzung ist freier Text. Material, das eine Übung vor der Liste als Text trug, steht
 unverändert in der Ergänzung.
 
-Trägt die Übung ein Diagramm, schlägt das Formular die Liste vor, die das Diagramm zeigt: jedes
+Trägt die Übung ein Diagramm, schlägt das Formular die Liste vor, die das Diagramm zeigt — beim
+Erfassen laufend aus der Zeichnung in der Maske: jedes
 gezeichnete Material-Symbol einzeln gezählt, nach Art und Farbe. Sind die Feldspieler in
 mindestens zwei Farben eingeteilt, kommt je Spieler ein Überziehleibchen in seiner Farbe dazu —
 eine einzige Spielerfarbe ist keine Einteilung, und Torwart und Trainer zählen nie. Gezeichnete
@@ -184,8 +193,16 @@ Zu jeder eigenen Übung lässt sich ein Feld-Diagramm zeichnen. Zur Verfügung s
 Material wie Pylonen, Stangen, Reifen und Hürden, Personen in verschiedenen Posen und
 Blickrichtungen, Bälle, Bewegungspfade für Laufweg, Dribbling und Pass sowie freie Formen und
 Textfelder. Elemente lassen sich setzen, verschieben, drehen, einfärben, in der Grösse
-verändern, mehrfach auswählen, kopieren und löschen; jeder Schritt ist widerrufbar. Gespeichert
-wird laufend im Hintergrund.
+verändern, mehrfach auswählen, kopieren und löschen; jeder Schritt ist widerrufbar.
+
+Gezeichnet wird an zwei Orten mit derselben Fläche und denselben Werkzeugen. Beim Erfassen einer
+neuen Übung sitzt sie in der Erfassungsmaske, und das Diagramm wird mit der Übung gespeichert,
+nicht vorher. Bei einer bestehenden Übung öffnet die Diagramm-Kachel im Bearbeiten-Formular den
+Diagramm-Editor auf einer eigenen Seite; dort wird laufend im Hintergrund gespeichert. Ein beim
+Erfassen gezeichnetes Diagramm liegt im Editor so vor, wie es gespeichert wurde. Zum Zeichnen
+braucht es einen breiteren Bildschirm als den eines Telefons; auf einem schmaleren sagt die
+Erfassungsmaske das an der Stelle der Fläche, und die Übung lässt sich dort ohne Diagramm
+erfassen.
 
 Dasselbe Diagramm sieht am Bildschirm anders aus als auf Papier, und beides ist Absicht. Am
 Bildschirm liegt es auf einem dunklen Rasen, passend zur übrigen Anwendung, mit hellen
@@ -201,10 +218,14 @@ Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar üb
 Quell-Übung und mit Vorschau; die Altersstufe spielt dabei keine Rolle. Fremde
 Trainer-Diagramme sind bewusst nicht dabei. Das Kopieren erzeugt eine eigenständige Kopie ohne
 Verbindung zum Original; ein bereits vorhandenes Diagramm wird erst nach Rückfrage ersetzt.
+Angeboten wird die Vorlage auf der leeren Zeichenfläche, auf der Zeichenfläche daneben auch, wenn
+schon etwas gezeichnet ist — beim Erfassen wie im Editor —, und im Bearbeiten-Formular. Auf der
+Zeichenfläche ist das Ersetzen ein gewöhnlicher Schritt: „Rückgängig" holt die Zeichnung zurück.
 
-Statt eines Diagramms kann auch ein Foto hochgeladen werden. Zulässig sind die gängigen Formate
-einschliesslich der HEIC-Bilder von iPhones. Grosse Bilder verkleinert die Anwendung schon im
-Browser, bevor der Upload beginnt, auf höchstens zweitausend Bildpunkte an der langen Kante.
+Statt eines Diagramms oder zusätzlich kann auch ein Foto hochgeladen werden. Zulässig sind die
+gängigen Formate einschliesslich der HEIC-Bilder von iPhones. Grosse Fotos verkleinert die
+Anwendung schon im Browser, bevor der Upload beginnt, auf höchstens zweitausend Bildpunkte an der
+langen Kante. Trägt eine Übung beides, zeigt sie das Diagramm; das Foto bleibt erhalten.
 
 ## Drucken
 
@@ -268,6 +289,10 @@ die Kinder fast durchwegs in zwei Farben zeichnen, schlägt der Vorschlag dort i
 Kleidung spielt. Eigene Material-Arten ausserhalb des Diagramm-Vorrats gibt es in der Liste
 nicht — dafür ist die Ergänzung da. Die Spielfeldgrösse leitet die Anwendung nie aus dem
 Diagramm ab; das Diagramm kennt keinen Massstab.
+
+Eine begonnene, noch nicht gespeicherte Übung bleibt nicht als Entwurf erhalten, und das beim
+Erfassen gezeichnete Diagramm wird bis zum Speichern nirgends zwischengesichert. Die
+Zeichenfläche ist für Maus und Tastatur gebaut, nicht für die Bedienung per Touch.
 
 Die Listenzeichen in Ablauf und Varianten lassen sich nicht abschalten: Beginnt eine Zeile mit
 «- », «* » oder einer Zahl mit Punkt und Leerzeichen — etwa «2. Halbzeit» —, wird sie zum

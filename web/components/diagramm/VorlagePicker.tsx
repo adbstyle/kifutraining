@@ -10,8 +10,8 @@ import type { VorlageItem } from "@/lib/queries/exercises";
 /**
  * Vorlagen-Auswahl (Epic #58, Story #61): öffnet einen Dialog mit den
  * verfügbaren Diagrammen (eigene + KiFu-Manual) als Vorschau. Beim Wählen ruft
- * sie `onPick` — die beiden Einstiege (Bearbeiten-Seite, leerer Editor) hängen
- * dort ihre Wirkung an. Besitzt die Zielübung schon ein Diagramm, ist eine
+ * sie `onPick` — die Einstiege (Bearbeiten-Seite, Zeichenfläche im Editor und
+ * beim Erfassen) hängen dort ihre Wirkung an. Besitzt die Zielübung schon ein Diagramm, ist eine
  * ausdrückliche Bestätigung nötig, bevor ersetzt wird (#61 AK4).
  *
  * Rendert keinen Einstieg, wenn keine Vorlage verfügbar ist (#61 AK6).
@@ -22,6 +22,7 @@ export function VorlagePicker({
   onPick,
   triggerLabel,
   triggerVariant = "outlined",
+  ersetzenText = "Das aktuelle Diagramm dieser Übung wird durch die gewählte Vorlage ersetzt. Das lässt sich nicht rückgängig machen.",
 }: {
   vorlagen: VorlageItem[];
   zielHatDiagramm: boolean;
@@ -30,6 +31,9 @@ export function VorlagePicker({
   onPick: (vorlage: VorlageItem) => Promise<string | null> | string | null;
   triggerLabel: string;
   triggerVariant?: "tonal" | "outlined" | "text";
+  /** Was die Bestätigung über das Ersetzen sagt. Auf der Zeichenfläche holt
+   *  «Rückgängig» die Zeichnung zurück, beim serverseitigen Kopieren nicht. */
+  ersetzenText?: string;
 }) {
   const [offen, setOffen] = useState(false);
   const [bestaetigen, setBestaetigen] = useState<VorlageItem | null>(null);
@@ -103,6 +107,12 @@ export function VorlagePicker({
           label="Übung suchen"
           value={suche}
           onChange={(e) => setSuche(e.target.value)}
+          // Die Suche filtert laufend; Enter hat nichts zu bestätigen. Liegt
+          // der Picker in einem Formular (Erfassen, #246), sendete Enter sonst
+          // die ganze Übung ab — der native <dialog> rendert kein Portal.
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.preventDefault();
+          }}
           className="mb-4"
         />
         {gefiltert.length === 0 ? (
@@ -155,8 +165,7 @@ export function VorlagePicker({
           </>
         }
       >
-        Das aktuelle Diagramm dieser Übung wird durch die gewählte Vorlage ersetzt.
-        Das lässt sich nicht rückgängig machen.
+        {ersetzenText}
       </Dialog>
     </>
   );
