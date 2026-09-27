@@ -285,8 +285,10 @@ export function DiagrammZeichnen({
   initial: DiagrammData;
   /** Verfügbare Vorlagen-Diagramme (#61, #246 AK 3). */
   vorlagen: VorlageItem[];
-  /** Nach jeder Änderung der Elemente — nie für den Anfangsstand. */
-  onChange: (data: DiagrammData) => void;
+  /** Nach jeder Änderung der Elemente — nie für den Anfangsstand, bei einem
+   *  Drag erst beim Loslassen. `ausVorlage`: die Änderung ist eine übernommene
+   *  Vorlage. */
+  onChange: (data: DiagrammData, info: { ausVorlage: boolean }) => void;
   /** Rendert den Kopf über den Werkzeugen; `aktionen` ist das Cluster aus
    *  Rückgängig, Wiederherstellen, Einfügen und Vorlage, das er platziert. */
   kopf: (aktionen: ReactNode) => ReactNode;
@@ -333,7 +335,11 @@ export function DiagrammZeichnen({
   // der Strict Mode spielt Effekte beim Mounten zweimal ab.
   const gemeldet = useRef(elemente);
   const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+  useLayoutEffect(() => {
+    onChangeRef.current = onChange;
+  });
+  // Die nächste Meldung stammt aus einer übernommenen Vorlage (#61 PC4).
+  const ausVorlage = useRef(false);
 
   // Kontextuelle Element-Leiste (#65): schwebt am ausgewählten Element und
   // verdrängt nichts im Layout — die Zeichenfläche bleibt ruhig stehen.
@@ -376,12 +382,17 @@ export function DiagrammZeichnen({
   }
 
   // Jede Änderung der Elemente nach aussen melden — was daraus wird (Autosave
-  // oder Formularwert), entscheidet die Hülle.
+  // oder Formularwert), entscheidet die Hülle. Während eines Drags nicht: Jede
+  // Pointer-Bewegung ändert die Elemente, und jede Meldung rendert die Hülle —
+  // in der Erfassungsmaske die ganze Maske — ein zweites Mal (#246 NFR 1).
+  // Gemeldet wird der Stand beim Loslassen.
   useEffect(() => {
-    if (gemeldet.current === elemente) return;
+    if (dragAktiv || gemeldet.current === elemente) return;
     gemeldet.current = elemente;
-    onChangeRef.current({ version: DIAGRAMM_VERSION, elemente });
-  }, [elemente]);
+    const vorlage = ausVorlage.current;
+    ausVorlage.current = false;
+    onChangeRef.current({ version: DIAGRAMM_VERSION, elemente }, { ausVorlage: vorlage });
+  }, [elemente, dragAktiv]);
 
   // Hinweis (#67 AK11) nach kurzer Zeit wieder ausblenden.
   useEffect(() => {
@@ -414,6 +425,7 @@ export function DiagrammZeichnen({
     const data = parseDiagramm(vorlage.diagramm);
     if (!data || data.elemente.length === 0) return "Die Vorlage enthält kein Diagramm.";
     merken();
+    ausVorlage.current = true;
     setElemente(kopiereDiagramm(data).elemente);
     setSelectedIds([]);
     setBearbeitenId(null);

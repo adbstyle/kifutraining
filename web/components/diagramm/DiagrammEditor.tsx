@@ -24,7 +24,10 @@ export function DiagrammEditor({
 }: {
   /** Wohin das Diagramm gespeichert wird — an eine Bibliotheks-Übung oder an
    *  eine Fassung im Training (Epic #72). Der Editor bleibt davon unabhängig. */
-  speichern: (data: DiagrammData) => Promise<{ ok: boolean; error?: string }>;
+  speichern: (
+    data: DiagrammData,
+    optionen?: { alsBild: boolean },
+  ) => Promise<{ ok: boolean; error?: string }>;
   name: string;
   crumbs: BreadcrumbItem[];
   initial: DiagrammData;
@@ -37,6 +40,9 @@ export function DiagrammEditor({
   // Saves laufen strikt nacheinander: ein langsamer älterer Save kann so
   // nie einen neueren Stand in der DB überschreiben.
   const saveKette = useRef<Promise<unknown>>(Promise.resolve());
+  // Eine übernommene Vorlage macht das Diagramm zum Bild der Übung (#61 PC4),
+  // wie das Kopieren über die Bearbeiten-Seite — bis ein Save das quittiert.
+  const vorlageAusstehend = useRef(false);
 
   // Autosave: debounced nach jeder Änderung (#49 AK6). Kein expliziter
   // Speicher-Schritt; Status informiert über ausstehend/gespeichert/Fehler.
@@ -46,7 +52,9 @@ export function DiagrammEditor({
     const timer = setTimeout(() => {
       setStatus("speichert");
       saveKette.current = saveKette.current.then(async () => {
-        const result = await speichern(stand);
+        const alsBild = vorlageAusstehend.current;
+        const result = await speichern(stand, alsBild ? { alsBild } : undefined);
+        if (result.ok && alsBild) vorlageAusstehend.current = false;
         setStatus(result.ok ? "gespeichert" : "fehler");
       });
     }, AUTOSAVE_MS);
@@ -64,7 +72,10 @@ export function DiagrammEditor({
     <DiagrammZeichnen
       initial={initial}
       vorlagen={vorlagen}
-      onChange={setStand}
+      onChange={(data, { ausVorlage }) => {
+        if (ausVorlage) vorlageAusstehend.current = true;
+        setStand(data);
+      }}
       // Kopf wie bei anderen Entitäten (Übungs-Detail): Breadcrumb links,
       // globale Aktionen als Icon-Cluster rechts (ml-auto), Titel darunter.
       kopf={(aktionen) => (

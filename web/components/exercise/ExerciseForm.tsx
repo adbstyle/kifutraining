@@ -60,7 +60,6 @@ import {
 import { DiagrammFeld } from "@/components/exercise/DiagrammFeld";
 import { VerlassenWarnung } from "@/components/layout/VerlassenWarnung";
 import { LEERES_DIAGRAMM, type DiagrammData } from "@/lib/diagramm";
-import type { VorlageItem } from "@/lib/queries/exercises";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
 import { FREITEXT_HINWEIS } from "@/lib/freitext";
@@ -136,7 +135,7 @@ export function ExerciseForm({
    *  Erfassen einer neuen Übung. Es geht mit dem Speichern mit, der
    *  Material-Vorschlag folgt ihm live, und wer die Erfassung mit
    *  ungesicherten Angaben verlassen will, wird gewarnt. */
-  diagrammZeichnen?: { vorlagen: VorlageItem[] };
+  diagrammZeichnen?: boolean;
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const err = state.errors ?? {};
@@ -457,7 +456,7 @@ export function ExerciseForm({
       {afterName}
 
       {diagrammZeichnen && (
-        <DiagrammFeld vorlagen={diagrammZeichnen.vorlagen} onChange={setDiagramm} />
+        <DiagrammFeld onChange={setDiagramm} />
       )}
 
       <AltersstufeField

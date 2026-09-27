@@ -12,11 +12,12 @@ type Ausstehend = { weiter: () => void; bleiben?: () => void };
  *  bleibt der von Next, damit der Router den Eintrag als seinen erkennt. */
 const WAECHTER = "__verlassenWarnung";
 
-const aufWaechter = () => !!window.history.state?.[WAECHTER];
+const traegtMarke = (state: unknown) =>
+  !!(state as Record<string, unknown> | null)?.[WAECHTER];
 
-function legeWaechter() {
-  window.history.pushState({ ...window.history.state, [WAECHTER]: true }, "", window.location.href);
-}
+/** Wie lange ein «Verlassen» per Zurück auf das `popstate` wartet. Bleibt es
+ *  aus, gab es keinen Eintrag davor (neuer Tab) — die Seite bleibt. */
+const ZURUECK_FRIST_MS = 500;
 
 /** Die aktive Warnung, solange eine Seite ungesicherte Angaben hält — im
  *  Browser gibt es höchstens eine. Navigationen ohne Link (das Kontomenü
@@ -65,13 +66,28 @@ export function VerlassenWarnung({
 }) {
   const router = useRouter();
   const [ausstehend, setAusstehend] = useState<Ausstehend | null>(null);
-  // Nach «Verlassen» ist der nächste Schritt zurück gewollt.
+  // Nach «Verlassen» ist der nächste Schritt zurück gewollt …
   const gehtZurueck = useRef(false);
+  // … und keine zweite Abfrage des Browsers, falls er das Dokument verlässt.
+  const freigegeben = useRef(false);
+  // Steht die Seite gerade auf ihrem Wächter? Die Marke im Verlaufs-Zustand
+  // allein genügt nicht: Next ersetzt den Zustand des aktuellen Eintrags bei
+  // eigenen Router-Updates und kann sie dabei verlieren.
+  const aufWaechterRef = useRef(false);
+  const zurueckFrist = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!aktiv) return;
 
+    const aufWaechter = () => aufWaechterRef.current || traegtMarke(window.history.state);
+    const legeWaechter = () => {
+      const state = { ...window.history.state, [WAECHTER]: true };
+      window.history.pushState(state, "", window.location.href);
+      aufWaechterRef.current = true;
+    };
+
     const vorEntladen = (e: BeforeUnloadEvent) => {
+      if (freigegeben.current) return;
       e.preventDefault();
       // Ältere Browser zeigen die Abfrage nur mit gesetztem returnValue.
       e.returnValue = "";
@@ -98,13 +114,26 @@ export function VerlassenWarnung({
     };
 
     // Zurück vom Wächter auf die Seite selbst: Der Router zeigt dieselbe
-    // Seite, sie bleibt stehen — jetzt wird gefragt.
-    const zurueck = () => {
-      if (gehtZurueck.current || aufWaechter()) return;
+    // Seite, sie bleibt stehen — jetzt wird gefragt. Führt das Ereignis
+    // dagegen vorwärts auf den Wächter, ist nichts zu tun.
+    const zurueck = (e: PopStateEvent) => {
+      if (gehtZurueck.current) {
+        if (zurueckFrist.current) clearTimeout(zurueckFrist.current);
+        return;
+      }
+      aufWaechterRef.current = traegtMarke(e.state);
+      if (aufWaechterRef.current) return;
       setAusstehend({
         weiter: () => {
           gehtZurueck.current = true;
           window.history.back();
+          // Ohne Eintrag davor tut `back()` nichts: Die Warnung bleibt dann
+          // scharf, statt still abgeschaltet zu sein.
+          zurueckFrist.current = setTimeout(() => {
+            gehtZurueck.current = false;
+            freigegeben.current = false;
+            legeWaechter();
+          }, ZURUECK_FRIST_MS);
         },
         // Escape schliesst den Dialog mit `cancel` UND `close`, beide rufen
         // «Weiter bearbeiten» — der Wächter darf trotzdem nur einmal liegen.
@@ -122,6 +151,7 @@ export function VerlassenWarnung({
     document.addEventListener("click", klick, true);
     window.addEventListener("popstate", zurueck);
     return () => {
+      if (zurueckFrist.current) clearTimeout(zurueckFrist.current);
       waechter = null;
       window.removeEventListener("beforeunload", vorEntladen);
       document.removeEventListener("click", klick, true);
@@ -137,6 +167,7 @@ export function VerlassenWarnung({
   function verlassen() {
     const weiter = ausstehend?.weiter;
     setAusstehend(null);
+    freigegeben.current = true;
     weiter?.();
   }
 
