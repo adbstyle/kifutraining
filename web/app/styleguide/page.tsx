@@ -1870,7 +1870,13 @@ export default function Styleguide() {
           Detailseite, Trainings, Druck und mobil; <code>UebungsBild</code>{" "}
           schaltet zwischen Diagramm, Foto und Platzhalter. Der interaktive
           Editor (<code>DiagrammEditor</code>) lebt auf{" "}
-          <code>/uebung/[slug]/diagramm</code> und braucht eine eigene Übung.
+          <code>/uebung/[slug]/diagramm</code> und braucht eine eigene Übung;
+          seine Zeichenfläche (<code>DiagrammZeichnen</code>) sitzt ohne
+          Autosave auch in der Erfassungsmaske einer neuen Übung, als{" "}
+          <code>DiagrammFeld</code> unter dem Namen. Dort wacht{" "}
+          <code>VerlassenWarnung</code> über ungesicherte Angaben — ein
+          Bestätigungs-Dialog aus dem Kit für Links, Kontomenü und
+          Browser-Zurück, die Abfrage des Browsers für Neuladen und Schliessen.
           Symbol-Geometrie ist im Register verankert (Anker = Mittelpunkt),
           damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.
         </p>

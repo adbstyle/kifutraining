@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { parseDiagramm, kopiereDiagramm, MAX_ELEMENTE, type DiagrammData } from "@/lib/diagramm";
+import {
+  parseDiagramm,
+  parseDiagrammZumSpeichern,
+  kopiereDiagramm,
+  type DiagrammData,
+} from "@/lib/diagramm";
 
 export type SaveDiagrammResult = { ok: true } | { ok: false; error: string };
 
@@ -26,9 +31,8 @@ export async function saveDiagramm(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
 
-  const diagramm = parseDiagramm(data);
-  if (!diagramm || diagramm.elemente.length > MAX_ELEMENTE)
-    return { ok: false, error: "Ungültiges Diagramm." };
+  const diagramm = parseDiagrammZumSpeichern(data);
+  if (!diagramm) return { ok: false, error: "Ungültiges Diagramm." };
 
   // bild_quelle konsistent zum Diagramm-Inhalt mitführen (#56 AK3): beim
   // ersten Element wird das Diagramm das aktive Bild; wird es geleert,

@@ -283,6 +283,14 @@ export function parseDiagramm(json: unknown): DiagrammData | null {
   return { version: d.version, elemente: d.elemente.map(migriereLegacy).filter(istElement) };
 }
 
+/** Ein Diagramm, wie es ein USER speichern darf: strukturell gültig und
+ *  höchstens `MAX_ELEMENTE` gross; sonst null. Die Trust-Boundary der Server
+ *  Actions — Autosave des Editors (Übung und Fassung) und Erfassen einer Übung (#246). */
+export function parseDiagrammZumSpeichern(json: unknown): DiagrammData | null {
+  const d = parseDiagramm(json);
+  return d && d.elemente.length <= MAX_ELEMENTE ? d : null;
+}
+
 /** Hat die Übung ein anzeigbares Diagramm? */
 export function hatDiagramm(json: unknown): boolean {
   const d = parseDiagramm(json);

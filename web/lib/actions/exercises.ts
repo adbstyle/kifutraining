@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { userSlug } from "@/lib/slug";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
@@ -9,6 +9,7 @@ import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import { alsAltersstufe, istAltersstufe } from "@/lib/altersstufe";
 import { materialBasisAusDiagramm } from "@/lib/material";
+import { parseDiagrammZumSpeichern, type DiagrammData } from "@/lib/diagramm";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 import {
   VORLAGE_SELECT,
@@ -54,6 +55,24 @@ async function uploadImage(
   };
 }
 
+/** Das beim Erfassen gezeichnete Diagramm aus dem Formular (#246). Dieselbe
+ *  Trust-Boundary wie der Autosave des Editors (`parseDiagrammZumSpeichern`).
+ *  Eine leere Zeichnung ist kein Diagramm — die Übung trägt dann keines, wie
+ *  eine nie gezeichnete. */
+function diagrammAusFormular(form: FormData): DiagrammData | null | "ungueltig" {
+  const roh = form.get("diagramm");
+  if (typeof roh !== "string" || roh === "") return null;
+  let json: unknown;
+  try {
+    json = JSON.parse(roh);
+  } catch {
+    return "ungueltig";
+  }
+  const diagramm = parseDiagrammZumSpeichern(json);
+  if (!diagramm) return "ungueltig";
+  return diagramm.elemente.length > 0 ? diagramm : null;
+}
+
 export async function createExercise(
   _prev: ExerciseFormState,
   form: FormData,
@@ -74,6 +93,10 @@ export async function createExercise(
 
   const parsed = parseUebungsInhalt(form, { altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
+
+  const diagramm = diagrammAusFormular(form);
+  if (diagramm === "ungueltig")
+    return { status: "error", message: "Das Feld-Diagramm konnte nicht gelesen werden." };
 
   const file = form.get("bild");
   const hasImage = file instanceof File && file.size > 0;
@@ -104,6 +127,17 @@ export async function createExercise(
       owner_id: user.id,
       visibility: "private", // Entwurf (EK8)
       bild_url: bildUrl,
+      // Übung und Diagramm entstehen gemeinsam (#246 PC 1). Das Diagramm wird
+      // das Bild der Übung (PC 3), ein zugleich hochgeladenes Foto bleibt als
+      // Umschalt-Option erhalten (PC 4) — dieselbe Automatik wie beim ersten
+      // Element im Editor.
+      diagramm,
+      bild_quelle: diagramm ? "diagramm" : null,
+      // Hat der Trainer den Vorschlag aus seiner Zeichnung übernommen oder
+      // sein Material beibehalten, gilt er als Basis (Epic #266) — gerechnet
+      // aus dem Diagramm, das hier gespeichert wird, nie aus dem Formular.
+      material_basis:
+        form.get("material_basis_bestaetigen") === "1" ? materialBasisAusDiagramm(diagramm) : null,
     })
     .select("slug")
     .single();
@@ -119,7 +153,10 @@ export async function createExercise(
   }
 
   revalidateLists();
-  redirect(`/uebung/${inserted.slug}?created=1`);
+  // Ersetzen statt anhängen: Der aktuelle Eintrag ist der Wächter der
+  // Verlassen-Warnung (#246 AK 7). Bliebe er stehen, bräuchte Zurück von der
+  // neuen Übung einen Schritt mehr.
+  redirect(`/uebung/${inserted.slug}?created=1`, RedirectType.replace);
 }
 
 /** Eigene Übung bearbeiten (Story 7 EK1). RLS stellt sicher, dass nur eigene

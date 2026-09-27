@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { createExercise } from "@/lib/actions/exercises";
 import { alsAltersstufe, einordnungsSlugsFuer } from "@/lib/altersstufe";
+import { getVorlagen } from "@/lib/queries/exercises";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Neue Übung — KiFu", robots: { index: false } };
@@ -20,6 +21,10 @@ export default async function NeuePage({
   const teil =
     sp.teil && einordnungsSlugsFuer(altersstufe).includes(sp.teil) ? sp.teil : undefined;
 
+  // Der Vorlagen-Fundus für das Diagramm (#246 AK 3) — derselbe wie im
+  // Diagramm-Editor: eigene Diagramme und die des Manuals.
+  const vorlagen = await getVorlagen();
+
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
       <header className="mb-8">
@@ -36,6 +41,7 @@ export default async function NeuePage({
         stufenWahl="waehlbar"
         kontext="bibliothek"
         initial={{ trainingsteil: teil }}
+        diagrammZeichnen={{ vorlagen }}
         submitLabel="Übung speichern"
       />
     </main>

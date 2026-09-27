@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState, startTransition } from "react";
+import { useMemo, useState, useActionState, startTransition } from "react";
 import { ArrowLeftRight, Save } from "lucide-react";
 import {
   TextField,
@@ -54,8 +54,13 @@ import {
   AENDERUNG_UEBERNEHMEN,
   gleicheListe,
   materialAenderungen,
+  materialBasisAusDiagramm,
   type MaterialPosten,
 } from "@/lib/material";
+import { DiagrammFeld } from "@/components/exercise/DiagrammFeld";
+import { VerlassenWarnung } from "@/components/layout/VerlassenWarnung";
+import { LEERES_DIAGRAMM, type DiagrammData } from "@/lib/diagramm";
+import type { VorlageItem } from "@/lib/queries/exercises";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
 import { FREITEXT_HINWEIS } from "@/lib/freitext";
@@ -98,6 +103,7 @@ export function ExerciseForm({
   fussnote = "Neue Übungen sind zunächst privat (Entwurf).",
   materialVorschlag,
   materialBasis = null,
+  diagrammZeichnen,
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
@@ -126,6 +132,11 @@ export function ExerciseForm({
   materialVorschlag?: MaterialPosten[];
   /** Der Vorschlag bei der letzten Übernahme; `null` = nie übernommen. */
   materialBasis?: MaterialPosten[] | null;
+  /** Das Feld-Diagramm gleich in der Maske zeichnen (#246) — nur beim
+   *  Erfassen einer neuen Übung. Es geht mit dem Speichern mit, der
+   *  Material-Vorschlag folgt ihm live, und wer die Erfassung mit
+   *  ungesicherten Angaben verlassen will, wird gewarnt. */
+  diagrammZeichnen?: { vorlagen: VorlageItem[] };
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const err = state.errors ?? {};
@@ -169,25 +180,54 @@ export function ExerciseForm({
     zeilenAus(initial.materialListe ?? []),
   );
   const [materialError, setMaterialError] = useState<string | null>(null);
-  const [basisBestaetigt, setBasisBestaetigt] = useState(false);
-  const vorschlag = materialVorschlag ?? [];
+
+  // Das Diagramm der Erfassung (#246); beim Bearbeiten lebt es auf seiner
+  // eigenen Seite und bleibt hier leer.
+  const [diagramm, setDiagramm] = useState<DiagrammData>(LEERES_DIAGRAMM);
+
+  // Der Vorschlag kommt beim Bearbeiten vom Server (gespeichertes Diagramm),
+  // beim Erfassen aus der Zeichnung in der Maske — dort ändert er sich, während
+  // der Trainer zeichnet.
+  const vorschlag = useMemo(
+    () => (diagrammZeichnen ? materialBasisAusDiagramm(diagramm) : (materialVorschlag ?? [])),
+    [diagrammZeichnen, diagramm, materialVorschlag],
+  );
+  // Der Vorschlag, den der Trainer in dieser Bearbeitung übernommen oder mit
+  // «Material beibehalten» quittiert hat; `null` = noch keiner. Er gilt als
+  // Basis, bis gespeichert ist — zeichnet der Trainer danach weiter, meldet
+  // der Änderungs-Hinweis den neuen Stand gegen genau diese Quittung.
+  const [quittiert, setQuittiert] = useState<MaterialPosten[] | null>(null);
+  const basis = quittiert ?? materialBasis;
+  // Nur eine Quittung des AKTUELLEN Vorschlags wird mitgeschickt; der Server
+  // setzt die Basis aus dem Diagramm, das er speichert.
+  const basisBestaetigt = quittiert !== null && gleicheListe(quittiert, vorschlag);
   const aktuelleListe = listeAusZeilen(materialZeilen);
   const zeigtVorschlag =
-    !basisBestaetigt &&
-    materialBasis === null &&
+    basis === null &&
     vorschlag.length > 0 &&
     !(aktuelleListe.ok && gleicheListe(aktuelleListe.liste, vorschlag));
 
   // Hat eine Diagrammänderung den übernommenen Vorschlag verändert (Story
   // #269)? Verglichen wird Vorschlag mit Basis — eigene Anpassungen an der
   // Liste zählen nicht.
-  const aenderungen = basisBestaetigt ? [] : materialAenderungen(materialBasis, vorschlag);
+  const aenderungen = materialAenderungen(basis, vorschlag);
 
   function uebernehmeVorschlag() {
     setMaterialZeilen(zeilenAus(vorschlag));
     setMaterialError(null);
-    setBasisBestaetigt(true);
+    setQuittiert(vorschlag);
   }
+
+  // Ungesicherte Angaben (#246 AK 7): getippt wurde in ein Formularfeld, eine
+  // Auswahl weicht vom Anfang ab, oder es ist gezeichnet. Die Auswahlen werden
+  // verglichen statt markiert — so gilt ein zurückgenommener Wechsel nicht als
+  // Änderung, und Strict Mode kann kein Erst-Render-Flag verwirren.
+  const [eingetippt, setEingetippt] = useState(false);
+  const auswahl = JSON.stringify([stufe, teil, kat, form, feld, laenge, breite, hkat, uebungstyp, materialZeilen]);
+  const [anfangsAuswahl] = useState(auswahl);
+  const ungesichert =
+    !!diagrammZeichnen &&
+    (eingetippt || auswahl !== anfangsAuswahl || diagramm.elemente.length > 0);
 
   // Das Feld-Gating kommt geschlossen aus lib/altersstufe.ts — derselben
   // Quelle, gegen die die Server Action prüft und die die DB-CHECKs spiegelt.
@@ -329,7 +369,7 @@ export function ExerciseForm({
         fd.set("bild", await compressImage(bild));
       } catch {
         setBildError(
-          "Das Bild konnte nicht verarbeitet werden. Bitte versuche es erneut oder wähle ein anderes Bild.",
+          "Das Foto konnte nicht verarbeitet werden. Bitte versuche es erneut oder wähle ein anderes Foto.",
         );
         return;
       } finally {
@@ -368,12 +408,33 @@ export function ExerciseForm({
     fd.set("spielfeld_laenge", zeigtSpielfeld ? laenge : "");
     fd.set("spielfeld_breite", zeigtSpielfeld ? breite : "");
     fd.set("bild_entfernen", bildEntfernen ? "1" : "");
+    // Das Diagramm der Erfassung geht mit der Übung in einem Vorgang (#246
+    // AK 5); geprüft wird es auf dem Server wie beim Autosave des Editors.
+    if (diagrammZeichnen) fd.set("diagramm", JSON.stringify(diagramm));
     startTransition(() => formAction(fd));
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+    <form
+      onSubmit={handleSubmit}
+      // Nur benannte Felder tragen Angaben; eine Suche in einem Dialog der
+      // Maske (Vorlagen, Auswahllisten) ist keine.
+      onInput={(e) => {
+        if ((e.target as HTMLInputElement).name) setEingetippt(true);
+      }}
+      className="flex flex-col gap-7"
+    >
       {state.message && <Banner tone="fehler">{state.message}</Banner>}
+
+      {diagrammZeichnen && (
+        <VerlassenWarnung
+          // Während des Speicherns nicht: Die Weiterleitung auf die neue Übung
+          // ist kein Verlassen.
+          aktiv={ungesichert && !isPending}
+          titel="Erfassung verlassen?"
+          text="Die Übung ist noch nicht gespeichert. Wenn du die Seite verlässt, gehen deine Angaben und die Zeichnung verloren."
+        />
+      )}
 
       {/* Die Umwandlung ist vorgemerkt, nicht geschehen: Das Formular zeigt
           bereits die Zielstufe, die Übung liegt aber unverändert in der
@@ -394,6 +455,10 @@ export function ExerciseForm({
       />
 
       {afterName}
+
+      {diagrammZeichnen && (
+        <DiagrammFeld vorlagen={diagrammZeichnen.vorlagen} onChange={setDiagramm} />
+      )}
 
       <AltersstufeField
         wert={stufe}
@@ -647,7 +712,7 @@ export function ExerciseForm({
               aenderungen={aenderungen}
               actions={
                 <>
-                  <Button type="button" variant="text" size="sm" onClick={() => setBasisBestaetigt(true)}>
+                  <Button type="button" variant="text" size="sm" onClick={() => setQuittiert(vorschlag)}>
                     {AENDERUNG_BEIBEHALTEN}
                   </Button>
                   <Button type="button" variant="text" size="sm" onClick={uebernehmeVorschlag}>
@@ -672,9 +737,13 @@ export function ExerciseForm({
         supportingText={FREITEXT_HINWEIS}
       />
 
+      {/* Das Foto heisst Foto: Beim Erfassen steht das Feld-Diagramm weit oben
+          unter dem Namen, hier trägt allein die Beschriftung die Unterscheidung
+          (#246 AK 8). Trägt die Übung beides, bleibt das Foto als Umschalt-
+          Option erhalten; angezeigt wird das Diagramm (PC 4). */}
       <div>
         <label htmlFor="bild" className="type-label-small mb-2 block text-on-surface-mittel">
-          Feld-Diagramm (optional)
+          Foto (optional)
         </label>
         <input
           id="bild"
@@ -685,13 +754,13 @@ export function ExerciseForm({
           className="focus-ring type-body-medium block w-full rounded-flaeche kontur border-kante text-on-surface-mittel file:mr-4 file:border-0 file:bg-elev-08 file:type-label-medium file:px-4 file:py-2.5 file:text-on-surface"
         />
         <p className={`type-body-small mt-1.5 ${err.bild || bildError ? "text-error" : "text-on-surface-mittel"}`}>
-          {err.bild ?? bildError ?? "JPG, PNG, WebP oder HEIC. Grosse Bilder werden automatisch verkleinert."}
+          {err.bild ?? bildError ?? "JPG, PNG, WebP oder HEIC. Grosse Fotos werden automatisch verkleinert."}
         </p>
         {initial.bildUrl && !err.bild && !bildError && (
           <p className="type-body-small mt-1 text-on-surface-mittel">
             {bildEntfernen
-              ? "Das aktuelle Bild wird beim Speichern entfernt."
-              : "Aktuelles Bild bleibt erhalten, wenn du keines hochlädst."}
+              ? "Das aktuelle Foto wird beim Speichern entfernt."
+              : "Aktuelles Foto bleibt erhalten, wenn du keines hochlädst."}
           </p>
         )}
         {bildEntfernenMoeglich && initial.bildUrl && (
@@ -702,7 +771,7 @@ export function ExerciseForm({
               onChange={(e) => setBildEntfernen(e.target.checked)}
               className="focus-ring h-4 w-4 accent-primary"
             />
-            Bild entfernen
+            Foto entfernen
           </label>
         )}
       </div>
@@ -711,7 +780,7 @@ export function ExerciseForm({
         <Button type="submit" size="lg" disabled={isPending || isCompressing}>
           <Save size={20} strokeWidth={2} aria-hidden />
           {isCompressing
-            ? "Bild wird optimiert …"
+            ? "Foto wird optimiert …"
             : isPending
               ? "Wird gespeichert …"
               : umwandlung
