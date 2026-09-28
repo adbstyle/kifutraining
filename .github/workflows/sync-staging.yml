@@ -32,11 +32,9 @@ name: Sync Staging (Prod-Spiegel, manuell)
 # Ebenso nur additiv: eine DATENPFLEGE-Migration auf develop, die main noch
 # nicht hat (sie formt Bestandszeilen um). Der Sync bringt die Prod-Zeilen in
 # ihrer alten Form zurück, und die Migration läuft auf Staging nicht erneut.
-# Solche Migrationen sind darum wiederholbar geschrieben: nach dem Sync die
-# Datei gegen Staging erneut ausführen, z. B.
-#   psql "$SUPABASE_STAGING_DB_URL" -v ON_ERROR_STOP=1 \
-#     -f supabase/migrations/20260928100000_fahrplan_freitext.sql
-# Sobald die Migration auf main ist, entfällt der Schritt.
+# Bis zum Release die Datei nach dem Sync gegen Staging erneut ausführen —
+# dafür muss sie wiederholbar geschrieben sein (Vorbild:
+# 20260928100000_fahrplan_freitext).
 on:
   workflow_dispatch:
     inputs:
