@@ -23,8 +23,8 @@ const TRENNER = ":";
  *  Reihe Chips), weil die Einordnung über die halbe Maske darunter entscheidet
  *  und das sichtbar sein sollte.
  *
- *  Kinderfussball: die vier Trainingsteile, der Hauptteil aber als Kopfzeile
- *  über seinen drei Kategorien — wie ein Junioren-Teil über seinen Blöcken.
+ *  Kinderfussball: die vier Trainingsteile als Kopfzeilen, der Hauptteil über
+ *  seinen drei Kategorien — wie ein Junioren-Teil über seinen Blöcken.
  *  Eine Wahl setzt so Trainingsteil und Hauptteilkategorie zugleich; ein
  *  zweites Auswahlfeld entfällt. Gespeichert bleiben beide getrennt.
  *
@@ -71,17 +71,13 @@ export function EinordnungField({
         label: hkatLabels[k],
         group: g.label,
       }));
-    if (g.bloecke.length === 0) return [{ value: g.teil, label: g.label }];
-    // Ein Teil mit genau EINEM gleichnamigen Block bekommt keine Kopfzeile:
-    // Sie stünde wortgleich über ihrer einzigen Option und gliederte nichts —
-    // «Auffangen / Auffangen». Dieselbe Regel, die früher seine Chip-Reihe
-    // unterdrückte (Story #127), nur an der Optionsliste.
-    const eigenstaendig = g.bloecke.length === 1 && g.bloecke[0].label === g.label;
-    return g.bloecke.map((b) => ({
-      value: b.slug,
-      label: b.label,
-      ...(eigenstaendig ? {} : { group: g.label }),
-    }));
+    // JEDER Teil steht unter seiner Kopfzeile, auch einer mit nur einer Wahl
+    // («Auffangen / Auffangen»): Eine Option ohne Kopfzeile liest sich sonst
+    // als Teil der Gruppe darüber — «Ausklang» sah aus, als gehöre er zum
+    // Hauptteil, «Abschluss» ebenso (PO 2026-09-28; hebt die Ausnahme für
+    // gleichnamige Einzelblöcke aus Story #127 auf).
+    if (g.bloecke.length === 0) return [{ value: g.teil, label: g.label, group: g.label }];
+    return g.bloecke.map((b) => ({ value: b.slug, label: b.label, group: g.label }));
   });
 
   const auswahl =
