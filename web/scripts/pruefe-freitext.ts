@@ -12,7 +12,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { freitextBloecke } from "../lib/freitext";
+import { alsAufzaehlung, freitextBloecke, freitextZeilen } from "../lib/freitext";
 
 const WEB = resolve(fileURLToPath(import.meta.url), "../..");
 
@@ -106,6 +106,28 @@ pruefe("überführter Bestand liest sich als eine Aufzählung (PC 3)", () => {
 });
 
 // ── Zwilling: die Suchfunktion der Datenbank ──────────────────────────────
+// ── Fahrplan-Stufe «Üben» ──────────────────────────────────────────────────
+pruefe("«Üben» speichert Zeilen: Rand-Leerzeilen weg, innere bleiben", () => {
+  assert.deepEqual(freitextZeilen("\n\n- a  \n\nText\n\n"), ["- a", "", "Text"]);
+  assert.deepEqual(freitextZeilen("  \n "), []);
+  assert.deepEqual(freitextZeilen(null), []);
+});
+
+pruefe("YAML-Schritte werden Aufzählungszeilen, markierte bleiben (idempotent)", () => {
+  assert.deepEqual(alsAufzaehlung(["Dribbeln", "- schon", "2. nummeriert"]), [
+    "- Dribbeln",
+    "- schon",
+    "2. nummeriert",
+  ]);
+  assert.deepEqual(alsAufzaehlung(alsAufzaehlung(["x"])), ["- x"]);
+});
+
+pruefe("übernommene Schritte lesen sich als eine Aufzählung", () => {
+  assert.deepEqual(freitextBloecke(alsAufzaehlung(["a", "b"]).join("\n")), [
+    { art: "aufzaehlung", punkte: ["a", "b"] },
+  ]);
+});
+
 const MIGRATIONEN = join(WEB, "../supabase/migrations");
 const SUCHTEXT = readdirSync(MIGRATIONEN)
   .sort()
@@ -113,10 +135,24 @@ const SUCHTEXT = readdirSync(MIGRATIONEN)
   .map((f) => readFileSync(join(MIGRATIONEN, f), "utf8"))
   .find((sql) => /function freitext_suchtext/.test(sql));
 
+const LISTENMUSTER = "^[ \\t]*([-*]|[0-9]+\\.)[ \\t]+";
+
 pruefe("freitext_suchtext entfernt dieselben Listenzeichen", () => {
   assert.ok(SUCHTEXT, "keine Migration definiert freitext_suchtext");
   const muster = SUCHTEXT.match(/regexp_replace\(p_text, '([^']*)'/)?.[1];
-  assert.equal(muster, "^[ \\t]*([-*]|[0-9]+\\.)[ \\t]+");
+  assert.equal(muster, LISTENMUSTER);
+});
+
+// Die Bestandsmigration der Fahrplan-Stufe «Üben» erkennt Listenzeilen selbst
+// (Zwilling von `alsAufzaehlung`) — mit demselben Muster wie die Suche.
+const FAHRPLAN = readdirSync(MIGRATIONEN)
+  .filter((f) => f.endsWith("_fahrplan_freitext.sql"))
+  .map((f) => readFileSync(join(MIGRATIONEN, f), "utf8"))[0];
+
+pruefe("Bestandsmigration «Üben» erkennt dieselben Listenzeichen", () => {
+  assert.ok(FAHRPLAN, "Migration fahrplan_freitext fehlt");
+  const muster = FAHRPLAN.match(/zeile ~ '([^']*)'/)?.[1];
+  assert.equal(muster, LISTENMUSTER);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden${gescheitert ? `, ${gescheitert} gescheitert` : ""}.`);

@@ -1349,17 +1349,18 @@ export default function Styleguide() {
           <MethodischerFahrplan
             fahrplan={{
               offen_starten: fahrplan[0],
-              ueben: [fahrplan[1]],
+              ueben: [`- ${fahrplan[1]}`],
               wetteifern: fahrplan[2],
             }}
           />
         </Card>
         <p className="type-body-medium mb-3 mt-8 max-w-2xl text-on-surface-mittel">
-          <strong>Freitext</strong> — <code>Freitext</code>: Ablauf und Varianten
-          einer Übung (Story #282). Kein Markdown: Zeilenumbrüche bleiben, wie
+          <strong>Freitext</strong> — <code>Freitext</code>: Ablauf, Fahrplan-Stufen
+          und Varianten einer Übung (Story #282). Kein Markdown: Zeilenumbrüche bleiben, wie
           sie erfasst sind; nur Zeilen mit «- »/«* » werden Aufzählung, Zeilen
-          mit «1. » nummerierte Liste — gesetzt wie die Üben-Schritte im
-          Fahrplan. Jede andere Zeile, auch eine Leerzeile, beendet eine Liste.
+          mit «1. » nummerierte Liste. Dieselben Regeln gelten für die drei
+          Stufen des methodischen Fahrplans. Jede andere Zeile, auch eine
+          Leerzeile, beendet eine Liste.
         </p>
         <Card className="max-w-xl p-6">
           <Freitext
