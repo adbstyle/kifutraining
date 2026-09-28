@@ -1,12 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Dialog, MultiSelect, Select } from "@/components/ui";
+import { Button, Dialog, MultiSelect } from "@/components/ui";
 import { EinordnungField } from "@/components/exercise/EinordnungField";
-import {
-  altersstufe as altersstufeLabels,
-  hauptteilkategorie as hkatLabels,
-} from "@/lib/vocab";
+import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { kategorieStufe } from "@/lib/labels";
 import {
   andereAltersstufe,
@@ -32,7 +29,7 @@ export type Umwandlung = {
  * ableiten kann (AK 4): die Einordnung — vorbelegt aus der Abbildungsregel,
  * soweit sie eine Entsprechung kennt (PC 3) — und die Alterskategorien, die
  * beide Stufen überschneidungsfrei führen. Im Kinderfussball-Hauptteil kommt
- * die dort zwingende Hauptteilkategorie dazu.
+ * die dort zwingende Hauptteilkategorie dazu — gewählt im selben Feld.
  *
  * Bewusst OHNE Aufstellung, welche Angaben bleiben, überführt werden oder
  * wegfallen: ein Satz zur Tragweite, mehr nicht (PO-Entscheid 2026-08-30,
@@ -113,32 +110,23 @@ export function UmwandelnDialog({
           {altersstufeLabels[ziel]} nicht gibt, fallen weg.
         </p>
 
+        {/* Im Kinderfussball-Hauptteil wählt dasselbe Feld die
+            Hauptteilkategorie mit (wie in der Übungsmaske). */}
         <EinordnungField
           altersstufe={ziel}
           wert={teil}
-          onChange={setTeil}
-          error={fehler.einordnung}
+          hauptteilkategorie={zeigtHkat ? hkat : ""}
+          onChange={(e, h) => {
+            setTeil(e);
+            setHkat(h);
+          }}
+          error={fehler.einordnung ?? fehler.hauptteilkategorie}
           supportingText={
             vorschlag
               ? "Vorgeschlagen aus der bisherigen Einordnung — du kannst anders wählen."
               : "Für die bisherige Einordnung gibt es hier keine Entsprechung."
           }
         />
-
-        {zeigtHkat && (
-          <Select
-            label="Hauptteilkategorie"
-            value={hkat}
-            onChange={setHkat}
-            options={(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
-              value: k,
-              label: hkatLabels[k],
-            }))}
-            placeholder="Kategorie wählen …"
-            supportingText={fehler.hauptteilkategorie ?? "Der Trainingsinhalt des Hauptteils."}
-            error={!!fehler.hauptteilkategorie}
-          />
-        )}
 
         <MultiSelect
           label="Alterskategorie"
