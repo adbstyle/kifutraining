@@ -162,7 +162,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
                 item.hauptteilkategorie}
             </Meta>
           )}
-          {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
+          {anzahl && <Meta label="Anzahl Spieler:innen">{anzahl}</Meta>}
           {mitMaterial && (
             <Meta label="Material">
               <MaterialListe liste={item.materialListe} ergaenzung={item.material} />

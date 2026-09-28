@@ -260,7 +260,7 @@ export default async function ExerciseDetailPage({
               ex.hauptteilkategorie}
           </Meta>
         )}
-        {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
+        {anzahl && <Meta label="Anzahl Spieler:innen">{anzahl}</Meta>}
       </div>
 
       {/* Ablauf */}
