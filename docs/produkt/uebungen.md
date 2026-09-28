@@ -36,7 +36,9 @@ gibt und welche davon Pflicht sind. Begriffe des anderen Lehrmittels erscheinen 
 
 Im Kinderfussball gehört jede Übung zu einem der vier Trainingsteile — Auffangen, Einleitung,
 Hauptteil, Ausklang. Im Hauptteil kommt zwingend eine der drei Kategorien „Fussball spielen
-lernen", „Vielseitigkeit erleben" oder „Fussball spielen" dazu. Der Ablauf steht als
+lernen", „Vielseitigkeit erleben" oder „Fussball spielen" dazu. Gewählt wird sie im selben
+Feld wie der Trainingsteil: Die Liste führt den Hauptteil als Kopfzeile über seinen drei
+Kategorien, so wie sie im Juniorenfussball die Blöcke unter ihrem Trainingsteil führt. Der Ablauf steht als
 dreistufiger methodischer Fahrplan — offen starten, üben, wett-eifern —, ausser beim freien
 Spiel sowie in Auffangen und Ausklang, wo ein zusammenhängender Beschreibungstext gilt.
 Erscheinungsformen trägt eine Kinderfussball-Übung in der Einleitung und im Hauptteil. Das
@@ -72,7 +74,8 @@ Die Maske ist so breit wie die Detailseite einer Übung und in derselben Reihenf
 Oben stehen die Brotkrumen — beim Erfassen „Übungspool › Neue Übung" —, darunter der Name als
 Überschrift, die sich direkt beschreiben lässt, wie der Trainingsname im Trainings-Editor.
 Darunter steht die „Zuordnung": Altersstufe und Alterskategorie auf einer Zeile, darunter
-der Trainingsteil, im Kinderfussball-Hauptteil mit der Hauptteilkategorie daneben. Es folgt das
+der Trainingsteil — im Kinderfussball-Hauptteil samt Hauptteilkategorie, im Juniorenfussball
+samt Block, jeweils in einem Feld. Es folgt das
 „Feld-Diagramm" — die Zeichenfläche beim Erfassen, die Diagramm-Kachel beim Bearbeiten —, darunter
 Feldtyp oder Spielfeldgrösse neben der Anzahl Spieler:innen. Die „Beschreibung" fasst Ablauf,
 Varianten sowie Erscheinungsform und Übungstyp zusammen, danach kommen „Material" und ganz am

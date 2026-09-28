@@ -16,7 +16,6 @@ import {
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
   feldtyp as feldLabels,
-  hauptteilkategorie as hkatLabels,
   uebungstyp as uebungstypLabels,
   uebungstypSlugs,
 } from "@/lib/vocab";
@@ -567,12 +566,16 @@ export function ExerciseForm({
           />
         )}
 
+        {/* Im Kinderfussball-Hauptteil wählt dasselbe Feld die
+            Hauptteilkategorie mit — wie den Block im Juniorenfussball. Es
+            steht in der linken Spalte unter der Altersstufe. */}
         <div className={PAAR}>
           <EinordnungField
             altersstufe={stufe}
             wert={teil}
-            onChange={(v) => wechsleEinordnung(v, hkat)}
-            error={err.trainingsteil}
+            hauptteilkategorie={zeigtHkat ? hkat : ""}
+            onChange={wechsleEinordnung}
+            error={err.trainingsteil ?? err.hauptteilkategorie}
             supportingText={
               kontext === "fassung"
                 ? "Wo die Übung in diesem Training liegt."
@@ -580,25 +583,6 @@ export function ExerciseForm({
             }
             hinweis={entfallHinweis}
           />
-          {zeigtHkat && (
-            <Select
-              label="Hauptteilkategorie"
-              value={hkat}
-              onChange={(v) => wechsleEinordnung(teil, v)}
-              options={(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
-                value: k,
-                label: hkatLabels[k],
-              }))}
-              // Pflichtangabe ohne Leerwert — darum ein Platzhalter statt einer
-              // Leer-Option (anders als Feldtyp und Übungstyp, die einen echten
-              // «kein …»-Wert kennen).
-              placeholder="Kategorie wählen …"
-              error={!!err.hauptteilkategorie}
-              supportingText={
-                err.hauptteilkategorie ?? "Pflichtfeld — der Trainingsinhalt des Hauptteils."
-              }
-            />
-          )}
         </div>
       </FormAbschnitt>
 
