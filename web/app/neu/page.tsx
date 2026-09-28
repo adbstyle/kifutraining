@@ -21,7 +21,7 @@ export default async function NeuePage({
     sp.teil && einordnungsSlugsFuer(altersstufe).includes(sp.teil) ? sp.teil : undefined;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
       <header className="mb-8">
         <p className="type-label-medium text-primary">Übungspool</p>
         <h1 className="type-headline-large mt-1 text-on-surface">Neue Übung erstellen</h1>

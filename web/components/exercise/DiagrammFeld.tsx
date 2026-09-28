@@ -14,8 +14,8 @@ const BREIT = "(min-width: 40rem)";
 /**
  * Das Feld-Diagramm in der Erfassungsmaske einer neuen Übung (#246): dieselbe
  * Zeichenfläche wie im Diagramm-Editor, nur ohne laufendes Sichern — der Stand
- * geht mit dem Speichern der Übung mit (AK 5, Out of Scope 3). Es sitzt unter
- * dem Namen, an der Stelle der Diagramm-Kachel beim Bearbeiten.
+ * geht mit dem Speichern der Übung mit (AK 5, Out of Scope 3). Es sitzt im
+ * Abschnitt «Feld-Diagramm», an der Stelle der Diagramm-Kachel beim Bearbeiten.
  *
  * Unter `sm` zeigt es statt der Fläche den Hinweis, dass Zeichnen mehr Platz
  * braucht (AK 9). Die Weiche ist reines CSS: Wer das Fenster verkleinert,
@@ -49,12 +49,8 @@ export function DiagrammFeld({ onChange }: { onChange: (data: DiagrammData) => v
           initial={LEERES_DIAGRAMM}
           vorlagen={vorlagen}
           onChange={onChange}
-          kopf={(aktionen) => (
-            <div className="flex flex-wrap items-center gap-2.5">
-              <p className="type-label-small text-on-surface-mittel">Feld-Diagramm (optional)</p>
-              <div className="ml-auto">{aktionen}</div>
-            </div>
-          )}
+          // Ohne Kopf: Die Überschrift trägt der Abschnitt «Feld-Diagramm» der
+          // Maske, die Aktionen rücken ans Ende der Werkzeug-Leiste.
           fuss={
             <p className="type-body-small text-on-surface-mittel">
               Wird mit der Übung gespeichert.
@@ -64,13 +60,10 @@ export function DiagrammFeld({ onChange }: { onChange: (data: DiagrammData) => v
       </div>
       <Card className="flex items-start gap-3 p-4 sm:hidden">
         <PenLine size={20} strokeWidth={1.5} className="mt-0.5 shrink-0 text-primary" aria-hidden />
-        <div>
-          <p className="type-label-small text-on-surface-mittel">Feld-Diagramm</p>
-          <p className="type-body-medium mt-1 text-on-surface-mittel">
-            Zum Zeichnen braucht es einen breiteren Bildschirm. Erfasse die Übung hier
-            ohne Diagramm — zeichnen kannst du es später beim Bearbeiten.
-          </p>
-        </div>
+        <p className="type-body-medium text-on-surface-mittel">
+          Zum Zeichnen braucht es einen breiteren Bildschirm. Erfasse die Übung hier
+          ohne Diagramm — zeichnen kannst du es später beim Bearbeiten.
+        </p>
       </Card>
     </div>
   );

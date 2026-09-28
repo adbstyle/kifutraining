@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-09-27. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-09-28. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -63,11 +63,19 @@ Spiel führen ihn, Abschluss und Auffangen nicht.
 Hängt der Trainer eine Übung dorthin um, wo es eines dieser Felder nicht gibt, sagt die
 Anwendung unter der Zuordnung, welche seiner erfassten Angaben dabei entfallen werden.
 
-Beiden Altersstufen gemeinsam sind Name und mindestens eine Alterskategorie, dazu die Zahl der
-Kinder, für die die Übung taugt, das benötigte Material, mögliche Varianten und das Bild — ein
-Feld-Diagramm, ein Foto oder beides. Das Diagramm zeichnet der Trainer schon beim Erfassen, auf
-der Zeichenfläche unmittelbar unter dem Namen; das Foto lädt er weiter unten im Feld „Foto" hoch.
-Beides ist freiwillig, und die Übung entsteht mit einem einzigen Speichern samt Diagramm.
+Beiden Altersstufen gemeinsam sind Name und mindestens eine Alterskategorie, dazu die Anzahl
+Spieler:innen, für die die Übung taugt, das benötigte Material, mögliche Varianten und das Bild — ein
+Feld-Diagramm, ein Foto oder beides. Das Diagramm zeichnet der Trainer schon beim Erfassen; beides
+ist freiwillig, und die Übung entsteht mit einem einzigen Speichern samt Diagramm.
+
+Die Maske ist so breit wie die Detailseite einer Übung und in derselben Reihenfolge gegliedert.
+Unter dem Namen steht die „Zuordnung": Altersstufe und Alterskategorie auf einer Zeile, darunter
+der Trainingsteil, im Kinderfussball-Hauptteil mit der Hauptteilkategorie daneben. Es folgt das
+„Feld-Diagramm" — die Zeichenfläche beim Erfassen, die Diagramm-Kachel beim Bearbeiten —, darunter
+Feldtyp oder Spielfeldgrösse neben der Anzahl Spieler:innen. Die „Beschreibung" fasst Ablauf,
+Varianten sowie Erscheinungsform und Übungstyp zusammen, danach kommen „Material" und ganz am
+Schluss das „Foto". Auf einem schmalen Bildschirm stehen die Paare untereinander. Dieselbe Maske
+gilt beim Erfassen, beim Bearbeiten einer eigenen Übung und für eine Übung im Training.
 
 Bis dahin ist nichts gesichert. Will der Trainer die Erfassung mit ungesicherten Angaben
 verlassen — über einen Link, das Kontomenü, den Zurück-Knopf des Browsers, durch Neuladen oder
@@ -126,7 +134,7 @@ Vorschlag, sofern das andere Lehrmittel eine Entsprechung kennt; sonst beginnt d
 Bestätigt wird im Dialog, wirksam wird die Überführung erst mit dem Speichern — wer die Seite
 vorher verlässt, lässt die Übung unverändert zurück.
 
-Was die Zielstufe kennt, kommt mit: Name, Bild, Diagramm, Kinderzahl, Material und Varianten
+Was die Zielstufe kennt, kommt mit: Name, Bild, Diagramm, Anzahl Spieler:innen, Material und Varianten
 hängen an keinem Lehrmittel, und der Ablauftext wandert in die dort geltende Form. Die Meter
 gehen ebenfalls mit: Das freie Feld mit seiner Grösse wird zur Spielfeldgrösse des
 Juniorenfussballs, und eine Junioren-Übung mit Spielfeldgrösse wird eine Übung auf freiem Feld.
@@ -232,7 +240,7 @@ langen Kante. Trägt eine Übung beides, zeigt sie das Diagramm; das Foto bleibt
 Jede Übung, die ein Trainer ansehen darf, lässt sich einzeln ausdrucken — auch ohne Konto und
 ohne dafür ein Training anzulegen. Das Blatt trägt Name, Alterskategorien, Bild oder Diagramm,
 den Trainingsteil oder Block, im Kinderfussball-Hauptteil dessen Kategorie, Feldtyp oder
-Spielfeldgrösse, dazu die Kinderzahl, danach Ablauf und Varianten, dann das Material — die
+Spielfeldgrösse, dazu die Anzahl Spieler:innen, danach Ablauf und Varianten, dann das Material — die
 Liste und darunter die Ergänzung — und zuunterst, was
 der Einordnung dient: Übungstyp und Erscheinungsform. Diese Reihenfolge gilt auf dem Papier wie
 am Bildschirm — wer eine Übung öffnet, liest zuerst, was gemacht wird, und trifft erst danach
@@ -279,7 +287,7 @@ Vorgang zu kopieren ist ebenfalls nicht vorgesehen; kopiert wird eine nach der a
 Kopie wechselt auch nicht von selbst die Altersstufe — wer sie in der anderen braucht, wandelt
 sie anschliessend um. Innerhalb eines Trainings ist ausserdem nicht erkennbar, ob eine Übung
 ursprünglich aus dem Manual stammt; die Plakette trägt nur der unveränderte Bestand. Die Angabe
-zur Kinderzahl ist Selbstauskunft und wird nicht gegen das Diagramm geprüft.
+zur Anzahl Spieler:innen ist Selbstauskunft und wird nicht gegen das Diagramm geprüft.
 
 Die Material-Liste zählt, was gezeichnet ist, nicht wofür. Vier Pylonen bleiben vier Pylonen,
 auch wenn sie ein Tor bilden, und Teller am Feldrand zählen wie Teller im Feld. Die Mengen

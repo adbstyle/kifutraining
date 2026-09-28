@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-09-23. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-09-28. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -360,7 +360,7 @@ Beide Ansichten stehen für jedes sichtbare Training offen, auch für fremde. Di
 Durchführen-Ansicht ist für den Platz gedacht: ein Trainingsteil nach dem anderen mit seinen
 belegten Blöcken, grosse Bedienflächen, und der Bildschirm bleibt wach, solange sie geöffnet
 ist. Das Ziel steht zu Beginn, wo es beim Anpfiff noch zählt. Jede Übung erscheint mit
-Diagramm, Feldtyp oder Spielfeldgrösse, Kinderzahl, Material und Dauer, darunter der volle
+Diagramm, Feldtyp oder Spielfeldgrösse, Anzahl Spieler:innen, Material und Dauer, darunter der volle
 Ablauf, gleich danach die Varianten, wo die Übung welche führt, und zuunterst — wo die Übung einen trägt — der Übungstyp; die Erscheinungsform zeigen
 beide Ansichten nicht, sie ordnet ein und hilft auf dem Platz nicht weiter. Der Druck zeigt
 dasselbe als zusammenhängende, druckfertige Seite zum Mitnehmen, das Ziel im Kopf. Leere Blöcke

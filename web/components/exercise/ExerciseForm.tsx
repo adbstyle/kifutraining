@@ -10,6 +10,7 @@ import {
   Button,
   AltersstufeField,
   Banner,
+  FormAbschnitt,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
@@ -22,6 +23,7 @@ import {
   kategorieStufe,
   UEBUNGSTYP_DEFINITION,
   ERSCHEINUNGSFORM_LABEL,
+  ANZAHL_SPIELER_LABEL,
   ueberfuehreAblauf,
 } from "@/lib/labels";
 import {
@@ -64,6 +66,26 @@ import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
 import { FREITEXT_HINWEIS } from "@/lib/freitext";
 
+/** Zwei zusammengehörige Felder auf einer Zeile, ab `sm`. */
+const PAAR = "grid gap-5 sm:grid-cols-2 sm:items-start";
+
+/** Die Namenszeile über einer Feldgruppe (Anzahl, Spielfeldgrösse, feste
+ *  Altersstufe) — dieselben Klassen wie `SpielfeldgroesseField` und
+ *  `AltersstufeField` sie tragen. */
+const GRUPPEN_LABEL = "type-label-small mb-2";
+
+/** Steht ein Feld mit schwebendem Label neben einer Feldgruppe, hält diese
+ *  unsichtbare Zeile den Platz ihrer Namenszeile frei: So stehen die Felder
+ *  auf einer Linie, ohne dass ein fester Versatz ihre Höhe nachbauen muss.
+ *  Nur nebeneinander nötig, gestapelt entfällt sie. */
+function GruppenLabelPlatz() {
+  return (
+    <p aria-hidden className={`${GRUPPEN_LABEL} invisible hidden sm:block`}>
+      &nbsp;
+    </p>
+  );
+}
+
 export type ExerciseInitial = {
   name?: string;
   trainingsteil?: string;
@@ -97,7 +119,7 @@ export function ExerciseForm({
   kontext,
   ueberfuehrbar = false,
   submitLabel,
-  afterName,
+  diagrammKachel,
   bildEntfernenMoeglich = false,
   fussnote = "Neue Übungen sind zunächst privat (Entwurf).",
   materialVorschlag,
@@ -120,8 +142,9 @@ export function ExerciseForm({
    *  ihres Trainings und kann sie nie eigenständig wechseln. */
   ueberfuehrbar?: boolean;
   submitLabel: string;
-  /** Optionaler Slot direkt unter dem Namensfeld (z. B. die Diagramm-Vorschau). */
-  afterName?: React.ReactNode;
+  /** Die Diagramm-Kachel einer gespeicherten Übung (Vorschau und Einstieg in
+   *  den Editor) — oben im Abschnitt «Feld-Diagramm». */
+  diagrammKachel?: React.ReactNode;
   /** Erlaubt, das vorhandene Bild ohne Ersatz zu entfernen (Fassungen, Story 5). */
   bildEntfernenMoeglich?: boolean;
   /** Hinweis neben der Speichern-Schaltfläche. */
@@ -282,7 +305,7 @@ export function ExerciseForm({
    *  gespeicherten Übung. Jedes stufenabhängige Feld beginnt leer: die beiden
    *  Manuals führen verschiedene Einordnungen, Alterskategorien,
    *  Erscheinungsformen und Ablaufformen, ein übernommener Wert wäre nie der
-   *  richtige. Name, Material, Varianten, Anzahl Kinder und Bild sind
+   *  richtige. Name, Material, Varianten, Anzahl Spieler:innen und Bild sind
    *  lehrmittelunabhängig und bleiben stehen. */
   function wechsleAltersstufe(neu: Altersstufe) {
     setStufe(neu);
@@ -308,7 +331,7 @@ export function ExerciseForm({
    *  Form der Zielstufe (PC 2), und was sie nicht kennt, fällt weg (PC 4) —
    *  Erscheinungsformen, Übungstyp und ein Feldtyp ohne Meter. Die Meter des
    *  freien Felds bzw. die Spielfeldgrösse gehen mit (Story #272). Titel, Bild,
-   *  Diagramm, Anzahl Kinder, Material und Varianten bleiben unangetastet
+   *  Diagramm, Anzahl Spieler:innen, Material und Varianten bleiben unangetastet
    *  (PC 1); sie hängen an keinem Lehrmittel.
    *
    *  Gespeichert wird nichts: Erst das Absenden des Formulars macht die
@@ -413,6 +436,16 @@ export function ExerciseForm({
     startTransition(() => formAction(fd));
   }
 
+  const spielfeldFeld = (
+    <SpielfeldgroesseField
+      laenge={laenge}
+      breite={breite}
+      onLaengeChange={setLaenge}
+      onBreiteChange={setBreite}
+      error={err.spielfeld}
+    />
+  );
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -421,7 +454,7 @@ export function ExerciseForm({
       onInput={(e) => {
         if ((e.target as HTMLInputElement).name) setEingetippt(true);
       }}
-      className="flex flex-col gap-7"
+      className="flex flex-col gap-10"
     >
       {state.message && <Banner tone="fehler">{state.message}</Banner>}
 
@@ -453,327 +486,362 @@ export function ExerciseForm({
         supportingText={err.name}
       />
 
-      {afterName}
-
-      {diagrammZeichnen && (
-        <DiagrammFeld onChange={setDiagramm} />
-      )}
-
-      <AltersstufeField
-        wert={stufe}
-        onChange={stufenWahl === "waehlbar" ? wechsleAltersstufe : undefined}
-        festHinweis={
-          kontext === "fassung"
-            ? "Folgt dem Training — Felder und Werte kommen aus dessen Manual."
-            : umwandlung
-              ? "Wird beim Speichern übernommen."
-              : undefined
-        }
-        aktion={
-          ueberfuehrbar &&
-          !umwandlung && (
-            <Button
-              type="button"
-              variant="text"
-              size="sm"
-              onClick={() => setDialogOffen(true)}
-            >
-              <ArrowLeftRight size={18} strokeWidth={2} aria-hidden />
-              In den {altersstufeLabels[andereAltersstufe(stufe)]} überführen
-            </Button>
-          )
-        }
-      />
-
-      {dialogOffen && (
-        <UmwandelnDialog
-          von={stufe}
-          einordnung={teil}
-          hauptteilkategorie={zeigtHkat ? hkat : null}
-          onClose={() => setDialogOffen(false)}
-          onConfirm={ueberfuehre}
-        />
-      )}
-
-      <EinordnungField
-        altersstufe={stufe}
-        wert={teil}
-        onChange={(v) => wechsleEinordnung(v, hkat)}
-        error={err.trainingsteil}
-        supportingText={
-          kontext === "fassung"
-            ? "Wo die Übung in diesem Training liegt."
-            : "Wo die Übung im Trainingsablauf ihren Platz hat."
-        }
-        hinweis={entfallHinweis}
-      />
-
-      {/* Die Werte stehen ausgeschrieben («G-Junior:innen») statt als blosser
-          Buchstabe: In einer Optionsliste ist ein einzelnes «G» kein Wort,
-          sondern ein Kürzel ohne Kontext — der Katalogfilter beschriftet sie
-          aus demselben Grund so. Weder Suche noch Aktions-Fuss: drei bis vier
-          kurze Werte liest man schneller, als man sie filtert. */}
-      <MultiSelect
-        label="Alterskategorie"
-        // Wie Einordnung und Erscheinungsform in der breiten Spur: Die Maske
-        // führt zwei Feldbreiten — knapp für kurze Werte (Altersstufe,
-        // Feldtyp, Übungstyp, Hauptteilkategorie), breit für ausgeschriebene.
-        // Vier gewählte Kategorien passen auch so nicht in eine Zeile; sie
-        // werden abgeschnitten, wie es die Mehrfachauswahl vorsieht.
-        className="max-w-lg"
-        options={kategorienFuer(stufe).map((k) => ({
-          value: k,
-          label: kategorieStufe[k as keyof typeof kategorieStufe],
-        }))}
-        value={kat}
-        onChange={setKat}
-        searchable={false}
-        actions={false}
-        placeholder="Kategorien wählen …"
-        error={!!err.kat}
-        supportingText={err.kat ?? "Für welche Alterskategorien die Übung taugt."}
-      />
-
-      {zeigtFeldtyp && (
-        <Select
-          label="Feldtyp (optional)"
-          className="max-w-xs"
-          value={feld}
-          onChange={setFeld}
-          options={[
-            { value: "", label: "— kein Feldtyp —" },
-            ...(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => ({
-              value: t,
-              label: feldLabels[t],
-            })),
-          ]}
-        />
-      )}
-
-      {zeigtSpielfeld && (
-        <SpielfeldgroesseField
-          laenge={laenge}
-          breite={breite}
-          onLaengeChange={setLaenge}
-          onBreiteChange={setBreite}
-          error={err.spielfeld}
-        />
-      )}
-
-      {teil && (istFahrplan ? (
-        <fieldset className="flex flex-col gap-5 rounded-flaeche border border-linie p-5">
-          <legend className="type-label-medium px-2 text-primary">Methodischer Fahrplan</legend>
-          <TextArea
-            label="Offen starten"
-            name="offen_starten"
-            value={offenStarten}
-            onChange={(e) => setOffenStarten(e.target.value)}
-            error={!!err.offen_starten}
-            supportingText={err.offen_starten ?? "Pflichtfeld — wie die Übung offen startet."}
-          />
-          <TextArea
-            label="Üben"
-            name="ueben"
-            value={ueben}
-            onChange={(e) => setUeben(e.target.value)}
-            error={!!err.ueben}
-            supportingText={
-              err.ueben ?? "Pflichtfeld — mindestens ein Schritt, einer pro Zeile."
+      {/* Die Maske folgt der Detailseite einer Übung: erst, wofür und wohin sie
+          gehört, dann das Bild, dann was gemacht wird, was es dafür braucht und
+          zuletzt das Foto. Zusammengehöriges steht nebeneinander — die
+          abhängige Angabe neben der, von der sie abhängt. Unter `sm` stehen
+          die Paare untereinander. */}
+      <FormAbschnitt titel="Zuordnung">
+        <div className={PAAR}>
+          <AltersstufeField
+            wert={stufe}
+            onChange={stufenWahl === "waehlbar" ? wechsleAltersstufe : undefined}
+            festHinweis={
+              kontext === "fassung"
+                ? "Folgt dem Training — Felder und Werte kommen aus dessen Manual."
+                : umwandlung
+                  ? "Wird beim Speichern übernommen."
+                  : undefined
+            }
+            aktion={
+              ueberfuehrbar &&
+              !umwandlung && (
+                <Button
+                  type="button"
+                  variant="text"
+                  size="sm"
+                  onClick={() => setDialogOffen(true)}
+                >
+                  <ArrowLeftRight size={18} strokeWidth={2} aria-hidden />
+                  In den {altersstufeLabels[andereAltersstufe(stufe)]} überführen
+                </Button>
+              )
             }
           />
-          <TextArea
-            label="Wetteifern"
-            name="wetteifern"
-            value={wetteifern}
-            onChange={(e) => setWetteifern(e.target.value)}
-            error={!!err.wetteifern}
-            supportingText={err.wetteifern ?? "Pflichtfeld — der spielerische Wettkampf-Teil."}
-          />
-        </fieldset>
-      ) : (
-        <TextArea
-          label={istFreiesSpiel ? "Beschreibung des Spiels" : "Aufbau / Beschreibung"}
-          name="aufbau"
-          value={aufbau}
-          onChange={(e) => setAufbau(e.target.value)}
-          error={!!err.aufbau}
-          supportingText={
-            err.aufbau ??
-            `${istFreiesSpiel
-              ? "Pflichtfeld — wie das Spiel gespielt wird."
-              : "Pflichtfeld — Aufbau und Ablauf der Übung."} ${FREITEXT_HINWEIS}`
-          }
-        />
-      ))}
 
-      {zeigtHkat && (
-        <Select
-          label="Hauptteilkategorie"
-          className="max-w-xs"
-          value={hkat}
-          onChange={(v) => wechsleEinordnung(teil, v)}
-          options={(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
-            value: k,
-            label: hkatLabels[k],
-          }))}
-          // Pflichtangabe ohne Leerwert — darum ein Platzhalter statt einer
-          // Leer-Option (anders als Feldtyp und Übungstyp darüber, die einen
-          // echten «kein …»-Wert kennen).
-          placeholder="Kategorie wählen …"
-          error={!!err.hauptteilkategorie}
-          supportingText={
-            err.hauptteilkategorie ?? "Pflichtfeld — der Trainingsinhalt des Hauptteils."
-          }
-        />
-      )}
-
-      {/* Übungstyp: optionale Selbstauskunft des Junioren-Manuals, und nur in
-          den Blöcken, in denen eine Spielform vorkommen kann. Die
-          Kurzdefinition steht beim Zuweisen dabei — «Spielform» bezeichnet im
-          Lehrmittel drei verschiedene Dinge (Story 9 AC 4). */}
-      {zeigtTyp && (
-        <Select
-          label="Übungstyp (optional)"
-          value={uebungstyp}
-          onChange={setUebungstyp}
-          options={[
-            { value: "", label: "— kein Übungstyp —" },
-            ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
-          ]}
-          supportingText={
-            uebungstyp ? UEBUNGSTYP_DEFINITION[uebungstyp] : "Wie das Manual die Trainingsform einordnet."
-          }
-        />
-      )}
-
-      {/* Die Erscheinungsformen des Manuals, dem diese Übung folgt — in der
-          Reihenfolge ihrer Quelle. Eine Gruppierung nach Spielphasen hat der
-          Product Owner bewusst abgelehnt (Story 12 Out of Scope 2). */}
-      {zeigtForm && (
-        <MultiSelect
-          label="Erscheinungsform (optional)"
-          className="max-w-lg"
-          options={erscheinungsformenFuer(stufe).map((f) => ({
-            value: f,
-            label: ERSCHEINUNGSFORM_LABEL[f] ?? f,
-          }))}
-          value={form}
-          onChange={setForm}
-          placeholder="Keine Erscheinungsform"
-          supportingText="Welche Erscheinungsformen des Manuals die Übung bedient."
-        />
-      )}
-
-      <div>
-        <p className={`type-label-small mb-2 ${err.anzahl_max ? "text-error" : "text-on-surface-mittel"}`}>
-          Anzahl Kinder
-        </p>
-        <div className="flex items-start gap-3 sm:max-w-sm">
-          <TextField
-            label="Minimum"
-            name="anzahl_min"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            className="flex-1"
-            defaultValue={initial.anzahl_kinder?.min ?? undefined}
-          />
-          <span aria-hidden className="type-body-large flex h-12 items-center text-on-surface-mittel">
-            –
-          </span>
-          <TextField
-            label="Maximum"
-            name="anzahl_max"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            className="flex-1"
-            error={!!err.anzahl_max}
-            defaultValue={initial.anzahl_kinder?.max ?? undefined}
-          />
+          {/* Die Werte stehen ausgeschrieben («G-Junior:innen») statt als blosser
+              Buchstabe: In einer Optionsliste ist ein einzelnes «G» kein Wort,
+              sondern ein Kürzel ohne Kontext — der Katalogfilter beschriftet sie
+              aus demselben Grund so. Weder Suche noch Aktions-Fuss: drei bis vier
+              kurze Werte liest man schneller, als man sie filtert. Vier gewählte
+              Kategorien passen nicht in die Zelle; sie werden abgeschnitten, wie
+              es die Mehrfachauswahl vorsieht. */}
+          <div>
+            {/* Die feste Altersstufe steht als Namenszeile und Badge da. */}
+            {stufenWahl === "fest" && <GruppenLabelPlatz />}
+            <MultiSelect
+              label="Alterskategorie"
+              options={kategorienFuer(stufe).map((k) => ({
+                value: k,
+                label: kategorieStufe[k as keyof typeof kategorieStufe],
+              }))}
+              value={kat}
+              onChange={setKat}
+              searchable={false}
+              actions={false}
+              placeholder="Kategorien wählen …"
+              error={!!err.kat}
+              supportingText={err.kat ?? "Für welche Alterskategorien die Übung taugt."}
+            />
+          </div>
         </div>
-        <p className={`type-body-small mt-1.5 ${err.anzahl_max ? "text-error" : "text-on-surface-mittel"}`}>
-          {err.anzahl_max ?? "Mindest- und Höchstzahl der Kinder, z. B. 4 bis 8. Leer lassen, wenn beliebig."}
-        </p>
-      </div>
 
-      <MaterialField
-        zeilen={materialZeilen}
-        onZeilenChange={(z) => {
-          setMaterialZeilen(z);
-          if (materialError) setMaterialError(null);
-        }}
-        ergaenzung={initial.material ?? []}
-        error={materialError ?? undefined}
-        hinweis={
-          aenderungen.length > 0 ? (
-            <AenderungBanner
-              aenderungen={aenderungen}
-              actions={
-                <>
-                  <Button type="button" variant="text" size="sm" onClick={() => setQuittiert(vorschlag)}>
-                    {AENDERUNG_BEIBEHALTEN}
-                  </Button>
-                  <Button type="button" variant="text" size="sm" onClick={uebernehmeVorschlag}>
-                    {AENDERUNG_UEBERNEHMEN}
-                  </Button>
-                </>
+        {dialogOffen && (
+          <UmwandelnDialog
+            von={stufe}
+            einordnung={teil}
+            hauptteilkategorie={zeigtHkat ? hkat : null}
+            onClose={() => setDialogOffen(false)}
+            onConfirm={ueberfuehre}
+          />
+        )}
+
+        <div className={PAAR}>
+          <EinordnungField
+            altersstufe={stufe}
+            wert={teil}
+            onChange={(v) => wechsleEinordnung(v, hkat)}
+            error={err.trainingsteil}
+            supportingText={
+              kontext === "fassung"
+                ? "Wo die Übung in diesem Training liegt."
+                : "Wo die Übung im Trainingsablauf ihren Platz hat."
+            }
+            hinweis={entfallHinweis}
+          />
+          {zeigtHkat && (
+            <Select
+              label="Hauptteilkategorie"
+              value={hkat}
+              onChange={(v) => wechsleEinordnung(teil, v)}
+              options={(Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
+                value: k,
+                label: hkatLabels[k],
+              }))}
+              // Pflichtangabe ohne Leerwert — darum ein Platzhalter statt einer
+              // Leer-Option (anders als Feldtyp und Übungstyp, die einen echten
+              // «kein …»-Wert kennen).
+              placeholder="Kategorie wählen …"
+              error={!!err.hauptteilkategorie}
+              supportingText={
+                err.hauptteilkategorie ?? "Pflichtfeld — der Trainingsinhalt des Hauptteils."
               }
             />
-          ) : zeigtVorschlag ? (
-            <VorschlagBanner vorschlag={vorschlag} onUebernehmen={uebernehmeVorschlag} />
-          ) : basisBestaetigt ? (
-            <p className="type-body-small text-on-surface-mittel">
-              Wird mit dem Speichern übernommen.
-            </p>
-          ) : undefined
-        }
-      />
-      <TextArea
-        label="Varianten (optional)"
-        name="varianten"
-        defaultValue={initial.varianten ?? ""}
-        supportingText={FREITEXT_HINWEIS}
-      />
+          )}
+        </div>
+      </FormAbschnitt>
 
-      {/* Das Foto heisst Foto: Beim Erfassen steht das Feld-Diagramm weit oben
-          unter dem Namen, hier trägt allein die Beschriftung die Unterscheidung
-          (#246 AK 8). Trägt die Übung beides, bleibt das Foto als Umschalt-
-          Option erhalten; angezeigt wird das Diagramm (PC 4). */}
-      <div>
-        <label htmlFor="bild" className="type-label-small mb-2 block text-on-surface-mittel">
-          Foto (optional)
-        </label>
-        <input
-          id="bild"
-          name="bild"
-          type="file"
-          accept={IMAGE_ACCEPT}
-          onChange={() => setBildError(null)}
-          className="focus-ring type-body-medium block w-full rounded-flaeche kontur border-kante text-on-surface-mittel file:mr-4 file:border-0 file:bg-elev-08 file:type-label-medium file:px-4 file:py-2.5 file:text-on-surface"
-        />
-        <p className={`type-body-small mt-1.5 ${err.bild || bildError ? "text-error" : "text-on-surface-mittel"}`}>
-          {err.bild ?? bildError ?? "JPG, PNG, WebP oder HEIC. Grosse Fotos werden automatisch verkleinert."}
-        </p>
-        {initial.bildUrl && !err.bild && !bildError && (
-          <p className="type-body-small mt-1 text-on-surface-mittel">
-            {bildEntfernen
-              ? "Das aktuelle Foto wird beim Speichern entfernt."
-              : "Aktuelles Foto bleibt erhalten, wenn du keines hochlädst."}
+      <FormAbschnitt titel="Feld-Diagramm (optional)">
+        {/* Die Kachel nicht über die ganze Breite: Bei 16:10 schöbe sie die
+            übrigen Felder beim Bearbeiten um eine Bildschirmhöhe nach unten. */}
+        {diagrammKachel && <div className="max-w-2xl">{diagrammKachel}</div>}
+        {diagrammZeichnen && <DiagrammFeld onChange={setDiagramm} />}
+
+        {/* Neben der Spielerzahl steht, was das Feld beschreibt: im
+            Kinderfussball der Feldtyp (beim freien Feld mit den Metern
+            darunter), im Juniorenfussball gleich die Spielfeldgrösse. */}
+        <div className={PAAR}>
+          {zeigtFeldtyp ? (
+            <div>
+              <GruppenLabelPlatz />
+              <Select
+                label="Feldtyp (optional)"
+                value={feld}
+                onChange={setFeld}
+                options={[
+                  { value: "", label: "— kein Feldtyp —" },
+                  ...(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => ({
+                    value: t,
+                    label: feldLabels[t],
+                  })),
+                ]}
+              />
+            </div>
+          ) : (
+            zeigtSpielfeld && spielfeldFeld
+          )}
+
+          <div>
+            <p className={`${GRUPPEN_LABEL} ${err.anzahl_max ? "text-error" : "text-on-surface-mittel"}`}>
+              {ANZAHL_SPIELER_LABEL}
+            </p>
+            <div className="flex items-start gap-3">
+              <TextField
+                label="Minimum"
+                name="anzahl_min"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                className="flex-1"
+                defaultValue={initial.anzahl_kinder?.min ?? undefined}
+              />
+              <span aria-hidden className="type-body-large flex h-12 items-center text-on-surface-mittel">
+                –
+              </span>
+              <TextField
+                label="Maximum"
+                name="anzahl_max"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                className="flex-1"
+                error={!!err.anzahl_max}
+                defaultValue={initial.anzahl_kinder?.max ?? undefined}
+              />
+            </div>
+            <p className={`type-body-small mt-1.5 ${err.anzahl_max ? "text-error" : "text-on-surface-mittel"}`}>
+              {err.anzahl_max ??
+                "Mindest- und Höchstzahl der Spieler:innen, z. B. 4 bis 8. Leer lassen, wenn beliebig."}
+            </p>
+          </div>
+        </div>
+        {zeigtFeldtyp && zeigtSpielfeld && spielfeldFeld}
+      </FormAbschnitt>
+
+      <FormAbschnitt titel="Beschreibung">
+        {/* Welche Form der Ablauf hat, entscheidet der Trainingsteil — bis er
+            gewählt ist, sagt der Abschnitt, wo das Feld bleibt. */}
+        {!teil && (
+          <p className="type-body-medium text-on-surface-mittel">
+            Wähle zuerst den Trainingsteil — danach beschreibst du hier den Ablauf.
           </p>
         )}
-        {bildEntfernenMoeglich && initial.bildUrl && (
-          <label className="mt-2 flex items-center gap-2 type-body-small text-on-surface-mittel">
-            <input
-              type="checkbox"
-              checked={bildEntfernen}
-              onChange={(e) => setBildEntfernen(e.target.checked)}
-              className="focus-ring h-4 w-4 accent-primary"
+        {teil && (istFahrplan ? (
+          <fieldset className="flex flex-col gap-5 rounded-flaeche border border-linie p-5">
+            <legend className="type-label-medium px-2 text-primary">Methodischer Fahrplan</legend>
+            <TextArea
+              label="Offen starten"
+              name="offen_starten"
+              value={offenStarten}
+              onChange={(e) => setOffenStarten(e.target.value)}
+              error={!!err.offen_starten}
+              supportingText={err.offen_starten ?? "Pflichtfeld — wie die Übung offen startet."}
             />
-            Foto entfernen
-          </label>
+            <TextArea
+              label="Üben"
+              name="ueben"
+              value={ueben}
+              onChange={(e) => setUeben(e.target.value)}
+              error={!!err.ueben}
+              supportingText={
+                err.ueben ?? "Pflichtfeld — mindestens ein Schritt, einer pro Zeile."
+              }
+            />
+            <TextArea
+              label="Wetteifern"
+              name="wetteifern"
+              value={wetteifern}
+              onChange={(e) => setWetteifern(e.target.value)}
+              error={!!err.wetteifern}
+              supportingText={err.wetteifern ?? "Pflichtfeld — der spielerische Wettkampf-Teil."}
+            />
+          </fieldset>
+        ) : (
+          <TextArea
+            label={istFreiesSpiel ? "Beschreibung des Spiels" : "Aufbau / Beschreibung"}
+            name="aufbau"
+            value={aufbau}
+            onChange={(e) => setAufbau(e.target.value)}
+            error={!!err.aufbau}
+            supportingText={
+              err.aufbau ??
+              `${istFreiesSpiel
+                ? "Pflichtfeld — wie das Spiel gespielt wird."
+                : "Pflichtfeld — Aufbau und Ablauf der Übung."} ${FREITEXT_HINWEIS}`
+            }
+          />
+        ))}
+
+        <TextArea
+          label="Varianten (optional)"
+          name="varianten"
+          defaultValue={initial.varianten ?? ""}
+          supportingText={FREITEXT_HINWEIS}
+        />
+
+        {/* Erscheinungsform und Übungstyp stehen beisammen wie im Abschnitt
+            «Einordnung» der Detailseite. */}
+        {(zeigtForm || zeigtTyp) && (
+          <div className={PAAR}>
+            {/* Die Erscheinungsformen des Manuals, dem diese Übung folgt — in
+                der Reihenfolge ihrer Quelle. Eine Gruppierung nach Spielphasen
+                hat der Product Owner bewusst abgelehnt (Story 12 Out of Scope 2). */}
+            {zeigtForm && (
+              <MultiSelect
+                label="Erscheinungsform (optional)"
+                options={erscheinungsformenFuer(stufe).map((f) => ({
+                  value: f,
+                  label: ERSCHEINUNGSFORM_LABEL[f] ?? f,
+                }))}
+                value={form}
+                onChange={setForm}
+                placeholder="Keine Erscheinungsform"
+                supportingText="Welche Erscheinungsformen des Manuals die Übung bedient."
+              />
+            )}
+
+            {/* Übungstyp: optionale Selbstauskunft des Junioren-Manuals, und nur
+                in den Blöcken, in denen eine Spielform vorkommen kann. Die
+                Kurzdefinition steht beim Zuweisen dabei — «Spielform» bezeichnet
+                im Lehrmittel drei verschiedene Dinge (Story 9 AC 4). */}
+            {zeigtTyp && (
+              <Select
+                label="Übungstyp (optional)"
+                value={uebungstyp}
+                onChange={setUebungstyp}
+                options={[
+                  { value: "", label: "— kein Übungstyp —" },
+                  ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
+                ]}
+                supportingText={
+                  uebungstyp
+                    ? UEBUNGSTYP_DEFINITION[uebungstyp]
+                    : "Wie das Manual die Trainingsform einordnet."
+                }
+              />
+            )}
+          </div>
         )}
-      </div>
+      </FormAbschnitt>
+
+      <FormAbschnitt titel="Material (optional)" fehler={!!materialError}>
+        {(titelId) => (
+          <MaterialField
+            beschriftetVon={titelId}
+            zeilen={materialZeilen}
+            onZeilenChange={(z) => {
+              setMaterialZeilen(z);
+              if (materialError) setMaterialError(null);
+            }}
+            ergaenzung={initial.material ?? []}
+            error={materialError ?? undefined}
+            hinweis={
+              aenderungen.length > 0 ? (
+                <AenderungBanner
+                  aenderungen={aenderungen}
+                  actions={
+                    <>
+                      <Button type="button" variant="text" size="sm" onClick={() => setQuittiert(vorschlag)}>
+                        {AENDERUNG_BEIBEHALTEN}
+                      </Button>
+                      <Button type="button" variant="text" size="sm" onClick={uebernehmeVorschlag}>
+                        {AENDERUNG_UEBERNEHMEN}
+                      </Button>
+                    </>
+                  }
+                />
+              ) : zeigtVorschlag ? (
+                <VorschlagBanner vorschlag={vorschlag} onUebernehmen={uebernehmeVorschlag} />
+              ) : basisBestaetigt ? (
+                <p className="type-body-small text-on-surface-mittel">
+                  Wird mit dem Speichern übernommen.
+                </p>
+              ) : undefined
+            }
+          />
+        )}
+      </FormAbschnitt>
+
+      {/* Das Foto heisst Foto und steht zuletzt, weit weg vom Feld-Diagramm —
+          allein die Überschrift trägt die Unterscheidung (#246 AK 8). Trägt
+          die Übung beides, bleibt das Foto als Umschalt-Option erhalten;
+          angezeigt wird das Diagramm (PC 4). */}
+      <FormAbschnitt titel="Foto (optional)">
+        {(titelId) => (
+          <div>
+            <input
+              id="bild"
+              name="bild"
+              type="file"
+              accept={IMAGE_ACCEPT}
+              aria-labelledby={titelId}
+              onChange={() => setBildError(null)}
+              className="focus-ring type-body-medium block w-full rounded-flaeche kontur border-kante text-on-surface-mittel file:mr-4 file:border-0 file:bg-elev-08 file:type-label-medium file:px-4 file:py-2.5 file:text-on-surface"
+            />
+            <p className={`type-body-small mt-1.5 ${err.bild || bildError ? "text-error" : "text-on-surface-mittel"}`}>
+              {err.bild ?? bildError ?? "JPG, PNG, WebP oder HEIC. Grosse Fotos werden automatisch verkleinert."}
+            </p>
+            {initial.bildUrl && !err.bild && !bildError && (
+              <p className="type-body-small mt-1 text-on-surface-mittel">
+                {bildEntfernen
+                  ? "Das aktuelle Foto wird beim Speichern entfernt."
+                  : "Aktuelles Foto bleibt erhalten, wenn du keines hochlädst."}
+              </p>
+            )}
+            {bildEntfernenMoeglich && initial.bildUrl && (
+              <label className="mt-2 flex items-center gap-2 type-body-small text-on-surface-mittel">
+                <input
+                  type="checkbox"
+                  checked={bildEntfernen}
+                  onChange={(e) => setBildEntfernen(e.target.checked)}
+                  className="focus-ring h-4 w-4 accent-primary"
+                />
+                Foto entfernen
+              </label>
+            )}
+          </div>
+        )}
+      </FormAbschnitt>
 
       <div className="flex items-center gap-3 border-t border-linie pt-5">
         <Button type="submit" size="lg" disabled={isPending || isCompressing}>

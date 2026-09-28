@@ -913,6 +913,17 @@ export default function Styleguide() {
           Fenstergrössen und Seitenränder; Max-Width für die Lesbarkeit,
           Spalten-Raster 4 / 8 / 12.
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Lange Formulare gliedert <code>FormAbschnitt</code>: eine Überschrift
+          in <code>type-title-medium</code>, gedämpft — dieselbe, die die
+          Abschnitte der Übungs-Detailseite tragen, damit Maske und Ansicht
+          gleich gegliedert sind. Die Übungsmaske ist darum auch so breit wie
+          die Detailseite (<code>max-w-4xl</code>) und stellt
+          Zusammengehöriges ab <code>sm</code> paarweise nebeneinander. Ein Feld
+          ohne eigenes Label (Dateifeld, Material-Gruppe) bekommt die Id der
+          Überschrift für <code>aria-labelledby</code>, statt den Namen doppelt
+          zu zeigen.
+        </p>
         <div className="space-y-2">
           {sizeClasses.map(([cls, range, note]) => (
             <div
@@ -1417,7 +1428,7 @@ export default function Styleguide() {
           <TextField label="Übungsname" supportingText="Pflichtfeld" />
           <SearchField label="Suche" />
           <TextField
-            label="Anzahl Kinder"
+            label="Anzahl Spieler:innen"
             type="number"
             defaultValue="1"
             error
