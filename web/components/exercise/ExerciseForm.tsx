@@ -23,6 +23,7 @@ import {
   kategorieStufe,
   UEBUNGSTYP_DEFINITION,
   ERSCHEINUNGSFORM_LABEL,
+  ANZAHL_SPIELER_LABEL,
   ueberfuehreAblauf,
 } from "@/lib/labels";
 import {
@@ -67,6 +68,23 @@ import { FREITEXT_HINWEIS } from "@/lib/freitext";
 
 /** Zwei zusammengehörige Felder auf einer Zeile, ab `sm`. */
 const PAAR = "grid gap-5 sm:grid-cols-2 sm:items-start";
+
+/** Die Namenszeile über einer Feldgruppe (Anzahl, Spielfeldgrösse, feste
+ *  Altersstufe) — dieselben Klassen wie `SpielfeldgroesseField` und
+ *  `AltersstufeField` sie tragen. */
+const GRUPPEN_LABEL = "type-label-small mb-2";
+
+/** Steht ein Feld mit schwebendem Label neben einer Feldgruppe, hält diese
+ *  unsichtbare Zeile den Platz ihrer Namenszeile frei: So stehen die Felder
+ *  auf einer Linie, ohne dass ein fester Versatz ihre Höhe nachbauen muss.
+ *  Nur nebeneinander nötig, gestapelt entfällt sie. */
+function GruppenLabelPlatz() {
+  return (
+    <p aria-hidden className={`${GRUPPEN_LABEL} invisible hidden sm:block`}>
+      &nbsp;
+    </p>
+  );
+}
 
 export type ExerciseInitial = {
   name?: string;
@@ -476,7 +494,6 @@ export function ExerciseForm({
       <FormAbschnitt titel="Zuordnung">
         <div className={PAAR}>
           <AltersstufeField
-            className=""
             wert={stufe}
             onChange={stufenWahl === "waehlbar" ? wechsleAltersstufe : undefined}
             festHinweis={
@@ -509,20 +526,24 @@ export function ExerciseForm({
               kurze Werte liest man schneller, als man sie filtert. Vier gewählte
               Kategorien passen nicht in die Zelle; sie werden abgeschnitten, wie
               es die Mehrfachauswahl vorsieht. */}
-          <MultiSelect
-            label="Alterskategorie"
-            options={kategorienFuer(stufe).map((k) => ({
-              value: k,
-              label: kategorieStufe[k as keyof typeof kategorieStufe],
-            }))}
-            value={kat}
-            onChange={setKat}
-            searchable={false}
-            actions={false}
-            placeholder="Kategorien wählen …"
-            error={!!err.kat}
-            supportingText={err.kat ?? "Für welche Alterskategorien die Übung taugt."}
-          />
+          <div>
+            {/* Die feste Altersstufe steht als Namenszeile und Badge da. */}
+            {stufenWahl === "fest" && <GruppenLabelPlatz />}
+            <MultiSelect
+              label="Alterskategorie"
+              options={kategorienFuer(stufe).map((k) => ({
+                value: k,
+                label: kategorieStufe[k as keyof typeof kategorieStufe],
+              }))}
+              value={kat}
+              onChange={setKat}
+              searchable={false}
+              actions={false}
+              placeholder="Kategorien wählen …"
+              error={!!err.kat}
+              supportingText={err.kat ?? "Für welche Alterskategorien die Übung taugt."}
+            />
+          </div>
         </div>
 
         {dialogOffen && (
@@ -571,7 +592,9 @@ export function ExerciseForm({
       </FormAbschnitt>
 
       <FormAbschnitt titel="Feld-Diagramm (optional)">
-        {diagrammKachel}
+        {/* Die Kachel nicht über die ganze Breite: Bei 16:10 schöbe sie die
+            übrigen Felder beim Bearbeiten um eine Bildschirmhöhe nach unten. */}
+        {diagrammKachel && <div className="max-w-2xl">{diagrammKachel}</div>}
         {diagrammZeichnen && <DiagrammFeld onChange={setDiagramm} />}
 
         {/* Neben der Spielerzahl steht, was das Feld beschreibt: im
@@ -579,29 +602,28 @@ export function ExerciseForm({
             darunter), im Juniorenfussball gleich die Spielfeldgrösse. */}
         <div className={PAAR}>
           {zeigtFeldtyp ? (
-            <Select
-              label="Feldtyp (optional)"
-              // Die Anzahl daneben trägt ihren Namen als Zeile über den beiden
-              // Zahlenfeldern; um deren Höhe rückt der Feldtyp nach unten, damit
-              // die Felder auf einer Linie stehen.
-              className="sm:mt-6"
-              value={feld}
-              onChange={setFeld}
-              options={[
-                { value: "", label: "— kein Feldtyp —" },
-                ...(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => ({
-                  value: t,
-                  label: feldLabels[t],
-                })),
-              ]}
-            />
+            <div>
+              <GruppenLabelPlatz />
+              <Select
+                label="Feldtyp (optional)"
+                value={feld}
+                onChange={setFeld}
+                options={[
+                  { value: "", label: "— kein Feldtyp —" },
+                  ...(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => ({
+                    value: t,
+                    label: feldLabels[t],
+                  })),
+                ]}
+              />
+            </div>
           ) : (
             zeigtSpielfeld && spielfeldFeld
           )}
 
           <div>
-            <p className={`type-label-small mb-2 ${err.anzahl_max ? "text-error" : "text-on-surface-mittel"}`}>
-              Anzahl Spieler:innen
+            <p className={`${GRUPPEN_LABEL} ${err.anzahl_max ? "text-error" : "text-on-surface-mittel"}`}>
+              {ANZAHL_SPIELER_LABEL}
             </p>
             <div className="flex items-start gap-3">
               <TextField
@@ -637,6 +659,13 @@ export function ExerciseForm({
       </FormAbschnitt>
 
       <FormAbschnitt titel="Beschreibung">
+        {/* Welche Form der Ablauf hat, entscheidet der Trainingsteil — bis er
+            gewählt ist, sagt der Abschnitt, wo das Feld bleibt. */}
+        {!teil && (
+          <p className="type-body-medium text-on-surface-mittel">
+            Wähle zuerst den Trainingsteil — danach beschreibst du hier den Ablauf.
+          </p>
+        )}
         {teil && (istFahrplan ? (
           <fieldset className="flex flex-col gap-5 rounded-flaeche border border-linie p-5">
             <legend className="type-label-medium px-2 text-primary">Methodischer Fahrplan</legend>
@@ -735,7 +764,7 @@ export function ExerciseForm({
         )}
       </FormAbschnitt>
 
-      <FormAbschnitt titel="Material (optional)">
+      <FormAbschnitt titel="Material (optional)" fehler={!!materialError}>
         {(titelId) => (
           <MaterialField
             beschriftetVon={titelId}

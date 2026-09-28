@@ -15,15 +15,7 @@ import {
 } from "@/lib/vocab";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
 import { hatMaterial } from "@/lib/material";
-
-function anzahlText(a: { min?: number | null; max?: number | null } | null): string | null {
-  if (!a) return null;
-  const { min, max } = a;
-  if (min != null && max != null) return min === max ? `${min}` : `${min}–${max}`;
-  if (min != null) return `ab ${min}`;
-  if (max != null) return `bis ${max}`;
-  return null;
-}
+import { ANZAHL_SPIELER_LABEL, anzahlSpielerText } from "@/lib/labels";
 
 function Meta({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -45,7 +37,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
     teilTraegtDauer(item.trainingsteil) && item.durationMin != null
       ? formatDuration(item.durationMin)
       : null;
-  const anzahl = anzahlText(item.anzahlKinder);
+  const anzahl = anzahlSpielerText(item.anzahlKinder);
   const mitMaterial = hatMaterial(item.materialListe, item.material);
   // Die Spielfeldgrösse führt das Junioren-Manual an Stelle des Feldtyps
   // (Story 3 AK 8/10); im Kinderfussball ergänzt sie das freie Feld (#272).
@@ -162,7 +154,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
                 item.hauptteilkategorie}
             </Meta>
           )}
-          {anzahl && <Meta label="Anzahl Spieler:innen">{anzahl}</Meta>}
+          {anzahl && <Meta label={ANZAHL_SPIELER_LABEL}>{anzahl}</Meta>}
           {mitMaterial && (
             <Meta label="Material">
               <MaterialListe liste={item.materialListe} ergaenzung={item.material} />

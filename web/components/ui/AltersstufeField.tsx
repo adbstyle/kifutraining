@@ -36,7 +36,7 @@ export function AltersstufeField({
   aktion,
   hinweis,
   fehler,
-  className = "max-w-xs",
+  className,
 }: {
   wert: Altersstufe | null;
   /** Fehlt, wo die Altersstufe feststeht und nur noch benannt wird. */
@@ -55,7 +55,7 @@ export function AltersstufeField({
   hinweis?: string;
   /** Fehlermeldung, wenn die Wahl fehlt. */
   fehler?: string;
-  /** Breite der Auswahl; in einer Rasterzelle füllt sie die Zelle. */
+  /** Breite der Auswahl. Ohne füllt sie ihren Platz (etwa eine Rasterzelle). */
   className?: string;
 }) {
   if (!onChange)

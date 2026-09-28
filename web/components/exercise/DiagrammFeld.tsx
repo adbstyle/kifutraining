@@ -49,8 +49,8 @@ export function DiagrammFeld({ onChange }: { onChange: (data: DiagrammData) => v
           initial={LEERES_DIAGRAMM}
           vorlagen={vorlagen}
           onChange={onChange}
-          // Die Überschrift trägt der Abschnitt «Feld-Diagramm» der Maske.
-          kopf={(aktionen) => <div className="flex justify-end">{aktionen}</div>}
+          // Ohne Kopf: Die Überschrift trägt der Abschnitt «Feld-Diagramm» der
+          // Maske, die Aktionen rücken ans Ende der Werkzeug-Leiste.
           fuss={
             <p className="type-body-small text-on-surface-mittel">
               Wird mit der Übung gespeichert.

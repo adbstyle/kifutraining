@@ -290,8 +290,9 @@ export function DiagrammZeichnen({
    *  Vorlage. */
   onChange: (data: DiagrammData, info: { ausVorlage: boolean }) => void;
   /** Rendert den Kopf über den Werkzeugen; `aktionen` ist das Cluster aus
-   *  Rückgängig, Wiederherstellen, Einfügen und Vorlage, das er platziert. */
-  kopf: (aktionen: ReactNode) => ReactNode;
+   *  Rückgängig, Wiederherstellen, Einfügen und Vorlage, das er platziert.
+   *  Ohne Kopf stehen die Aktionen am Ende der Werkzeug-Leiste. */
+  kopf?: (aktionen: ReactNode) => ReactNode;
   /** Optionale Zeile unter der Fläche (z. B. der Autosave-Status). */
   fuss?: ReactNode;
 }) {
@@ -1021,7 +1022,7 @@ export function DiagrammZeichnen({
   // Fläche in einem <form>, und dort sendet ein Knopf ohne Typ die Übung ab.
   return (
     <div className="flex flex-col gap-4">
-      {kopf(aktionen)}
+      {kopf?.(aktionen)}
 
       {/* Werkzeug-Palette: ein gruppiertes Glyph-Band. Jede Kachel zeigt das
           Element als Mini-Vorschau (WYSIWYG); der Name kommt nur über Tooltip +
@@ -1038,6 +1039,7 @@ export function DiagrammZeichnen({
             </div>
           </Fragment>
         ))}
+        {!kopf && <div className="ml-auto">{aktionen}</div>}
       </div>
 
       {/* Zeichen-Steuerung — nur sichtbar, während ein Pfad/Polygon gezeichnet wird. */}

@@ -83,6 +83,7 @@ export function TrainingCreateForm() {
       />
 
       <AltersstufeField
+        className="max-w-xs"
         wert={altersstufe}
         onChange={waehleAltersstufe}
         hinweis="Nach welchem Manual du planst. Bestimmt Trainingsteile, Gliederung und Alterskategorien — und steht danach fest."

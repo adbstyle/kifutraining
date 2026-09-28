@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, type ReactNode } from "react";
+import { cn } from "@/lib/cn";
 
 /**
  * Ein beschrifteter Abschnitt eines längeren Formulars — die Überschrift im
@@ -14,15 +15,22 @@ import { useId, type ReactNode } from "react";
  */
 export function FormAbschnitt({
   titel,
+  fehler = false,
   children,
 }: {
   titel: string;
+  /** Trägt ein Feld ohne eigenes Label einen Fehler, zeigt ihn die
+   *  Überschrift an — sie ist dann dessen Beschriftung. */
+  fehler?: boolean;
   children: ReactNode | ((titelId: string) => ReactNode);
 }) {
   const titelId = useId();
   return (
     <section aria-labelledby={titelId} className="flex flex-col gap-5">
-      <h2 id={titelId} className="type-title-medium text-on-surface-mittel">
+      <h2
+        id={titelId}
+        className={cn("type-title-medium", fehler ? "text-error" : "text-on-surface-mittel")}
+      >
         {titel}
       </h2>
       {typeof children === "function" ? children(titelId) : children}
