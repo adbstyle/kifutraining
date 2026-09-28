@@ -58,6 +58,7 @@ export default async function EditPage({
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
       <Breadcrumbs items={crumbs} className="mb-6" />
+      <h1 className="sr-only">Übung bearbeiten</h1>
       <ExerciseForm
         action={updateExercise.bind(null, ex.id)}
         diagrammKachel={

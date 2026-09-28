@@ -1472,7 +1472,8 @@ export default function Styleguide() {
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Für den Fall, in dem ein vom Trainer vergebener Name dort geändert
-          wird, wo er steht — der Trainingsname im Editor-Kopf. Es trägt die
+          wird, wo er steht — der Trainingsname im Editor-Kopf und der Name in
+          der Übungsmaske. Es trägt die
           Schrift der Überschrift (<code>type-headline-medium</code>), damit der
           Kopf seine Gliederung behält, und zeigt sich in{" "}
           <strong>drei Lagen</strong>: Ruhend sieht man eine Überschrift und
@@ -1506,6 +1507,10 @@ export default function Styleguide() {
             aria-label="Name des Trainings"
             defaultValue="Passspiel im Quadrat"
           />
+          {/* Leer zeigt es seinen Platzhalter gedämpft, sonst wäre es in Ruhe
+              nicht da; `error` stellt die Kontur auch in Ruhe in Fehlerfarbe. */}
+          <HeadlineField aria-label="Name der Übung" placeholder="Name der Übung" />
+          <HeadlineField aria-label="Name der Übung" placeholder="Name der Übung" error />
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">

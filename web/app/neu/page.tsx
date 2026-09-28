@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/ui";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { createExercise } from "@/lib/actions/exercises";
 import { alsAltersstufe, einordnungsSlugsFuer } from "@/lib/altersstufe";
@@ -22,14 +23,13 @@ export default async function NeuePage({
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-      <header className="mb-8">
-        <p className="type-label-medium text-primary">Übungspool</p>
-        <h1 className="type-headline-large mt-1 text-on-surface">Neue Übung erstellen</h1>
-        <p className="type-body-medium mt-2 text-on-surface-mittel">
-          Erfasse eine eigene Übung mit demselben Feldsatz wie die Manual-Übungen —
-          so ist sie gleichwertig durchsuch- und filterbar.
-        </p>
-      </header>
+      {/* Kopf wie im Trainings-Editor: Brotkrumen, darunter der Name als
+          Kopf-Feld der Maske. Die Überschrift trägt die Seite unsichtbar. */}
+      <Breadcrumbs
+        items={[{ label: "Übungspool", href: "/" }, { label: "Neue Übung" }]}
+        className="mb-6"
+      />
+      <h1 className="sr-only">Neue Übung</h1>
       <ExerciseForm
         action={createExercise}
         altersstufe={altersstufe}

@@ -11,6 +11,7 @@ import {
   AltersstufeField,
   Banner,
   FormAbschnitt,
+  HeadlineField,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
@@ -477,14 +478,24 @@ export function ExerciseForm({
         </Banner>
       )}
 
-      <TextField
-        label="Name"
-        name="name"
-        defaultValue={initial.name}
-        required
-        error={!!err.name}
-        supportingText={err.name}
-      />
+      {/* Der Name ist die Überschrift der Maske — dasselbe Kopf-Feld wie der
+          Trainingsname im Editor. Die echte Überschrift setzt die Seite. */}
+      <div>
+        <HeadlineField
+          aria-label="Name der Übung"
+          name="name"
+          placeholder="Name der Übung"
+          defaultValue={initial.name}
+          required
+          error={!!err.name}
+          aria-describedby={err.name ? "name-fehler" : undefined}
+        />
+        {err.name && (
+          <p id="name-fehler" className="type-body-small mt-1.5 text-error">
+            {err.name}
+          </p>
+        )}
+      </div>
 
       {/* Die Maske folgt der Detailseite einer Übung: erst, wofür und wohin sie
           gehört, dann das Bild, dann was gemacht wird, was es dafür braucht und
