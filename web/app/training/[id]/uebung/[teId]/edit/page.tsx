@@ -56,6 +56,7 @@ export default async function FassungBearbeitenPage({
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
       <Breadcrumbs items={crumbs} className="mb-6" />
+      <h1 className="sr-only">Übung bearbeiten</h1>
       <ExerciseForm
         action={updateFassung.bind(null, f.id, variante)}
         diagrammKachel={

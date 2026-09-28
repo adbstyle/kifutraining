@@ -7,6 +7,9 @@ export interface HeadlineFieldProps
   /** Pflicht: Das Feld trägt keine sichtbare Beschriftung, also muss der Name
    *  von hier kommen. Ohne ihn hörte eine Vorlesehilfe bloss «Eingabefeld». */
   "aria-label": string;
+  /** Fehlerzustand: Die Kontur steht dann auch in Ruhe, in der Fehlerfarbe —
+   *  ein leeres Pflichtfeld wäre sonst unsichtbar. */
+  error?: boolean;
 }
 
 /* Kopf-Feld — die Überschrift selbst ist das Eingabefeld.
@@ -58,17 +61,23 @@ export interface HeadlineFieldProps
  * Innenabstand steht als negativer Aussenabstand daneben, damit der Text
  * genau dort beginnt, wo die Überschrift begänne.
  *
+ * PLATZHALTER in gedämpfter Farbe: Beim Erfassen ist der Name noch leer, und
+ * ein ruhendes Feld ohne Wert wäre schlicht nicht da (Übungsmaske).
+ *
  * Verwendung:
  *   <HeadlineField aria-label="Name des Trainings" value={…} onChange={…} onBlur={…} /> */
 export const HeadlineField = forwardRef<HTMLInputElement, HeadlineFieldProps>(
-  ({ className, ...props }, ref) => (
+  ({ className, error = false, ...props }, ref) => (
     <input
       ref={ref}
       type="text"
+      aria-invalid={error || undefined}
       className={cn(
-        "type-headline-medium -mx-2 w-[calc(100%+1rem)] rounded-flaeche kontur border-transparent bg-transparent px-2 py-1 text-on-surface outline-none",
+        "type-headline-medium -mx-2 w-[calc(100%+1rem)] rounded-flaeche kontur bg-transparent px-2 py-1 text-on-surface outline-none",
+        "placeholder:text-on-surface-mittel",
         "transition-colors duration-150",
-        "hover:bg-elev-04 focus:border-primary focus:bg-transparent",
+        "hover:bg-elev-04 focus:bg-transparent",
+        error ? "border-error" : "border-transparent focus:border-primary",
         className,
       )}
       {...props}

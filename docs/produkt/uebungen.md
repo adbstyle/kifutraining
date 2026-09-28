@@ -69,7 +69,9 @@ Feld-Diagramm, ein Foto oder beides. Das Diagramm zeichnet der Trainer schon bei
 ist freiwillig, und die Übung entsteht mit einem einzigen Speichern samt Diagramm.
 
 Die Maske ist so breit wie die Detailseite einer Übung und in derselben Reihenfolge gegliedert.
-Unter dem Namen steht die „Zuordnung": Altersstufe und Alterskategorie auf einer Zeile, darunter
+Oben stehen die Brotkrumen — beim Erfassen „Übungspool › Neue Übung" —, darunter der Name als
+Überschrift, die sich direkt beschreiben lässt, wie der Trainingsname im Trainings-Editor.
+Darunter steht die „Zuordnung": Altersstufe und Alterskategorie auf einer Zeile, darunter
 der Trainingsteil, im Kinderfussball-Hauptteil mit der Hauptteilkategorie daneben. Es folgt das
 „Feld-Diagramm" — die Zeichenfläche beim Erfassen, die Diagramm-Kachel beim Bearbeiten —, darunter
 Feldtyp oder Spielfeldgrösse neben der Anzahl Spieler:innen. Die „Beschreibung" fasst Ablauf,
