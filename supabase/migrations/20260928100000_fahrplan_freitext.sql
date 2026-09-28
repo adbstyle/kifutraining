@@ -22,25 +22,34 @@ set lock_timeout = '5s';
 -- Beide Tabellen tragen den Fahrplan: die Fassung im Training ist eine
 -- eigenständige Kopie der Übung (Epic #72).
 --
--- Forward-only: reine Datenpflege, idempotent (bereits markierte Zeilen
--- bleiben, wie sie sind).
+-- Forward-only: reine Datenpflege. Die Datei ist WIEDERHOLBAR — die
+-- Hilfsfunktion wird angelegt und am Ende wieder entfernt, und umgeformt wird
+-- nur eine alte Schrittliste (siehe unten). Das braucht `sync-staging`:
+-- Spiegelt es Prod-Daten nach Staging, bevor diese Migration auf Prod läuft,
+-- kommen die Schritte ohne «- » an; dann diese Datei gegen Staging erneut
+-- ausführen (siehe Kopf von .github/workflows/sync-staging.yml). Nicht später:
+-- Ein Üben aus reinem Text ohne jedes Listenzeichen sieht aus wie eine alte
+-- Schrittliste und würde zur Aufzählung.
 -- ============================================================================
 
+-- Umgeformt wird nur eine ALTE Schrittliste: keine Zeile trägt schon ein
+-- Listenzeichen, keine ist leer. Ein Array mit einer Listen- oder Leerzeile
+-- ist bereits Freitext und bleibt, wie es ist — ein zweiter Lauf ändert
+-- darum nichts mehr.
 create function fahrplan_ueben_als_aufzaehlung(p_fahrplan jsonb) returns jsonb
 language sql immutable
 as $$
   select case
     when jsonb_typeof(p_fahrplan->'ueben') = 'array'
+     and not exists (
+           select 1
+             from jsonb_array_elements_text(p_fahrplan->'ueben') as t(zeile)
+            where zeile ~ '^[ \t]*([-*]|[0-9]+\.)[ \t]+' or btrim(zeile) = '')
       then jsonb_set(
         p_fahrplan,
         '{ueben}',
         coalesce(
-          (select jsonb_agg(
-                    case
-                      when zeile ~ '^[ \t]*([-*]|[0-9]+\.)[ \t]+' or btrim(zeile) = '' then zeile
-                      else '- ' || zeile
-                    end
-                    order by nr)
+          (select jsonb_agg('- ' || zeile order by nr)
              from jsonb_array_elements_text(p_fahrplan->'ueben') with ordinality as t(zeile, nr)),
           '[]'::jsonb))
     else p_fahrplan

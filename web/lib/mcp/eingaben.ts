@@ -25,6 +25,7 @@ import {
   typOptionen,
 } from "@/lib/filter-optionen";
 import { UebungKopf, Wert, alsEnum, katalogFilter } from "@/lib/mcp/bausteine";
+import { UEBEN_ZEILEN } from "@/lib/freitext";
 
 export const SucheEingabe = z.object({
   q: z
@@ -114,7 +115,7 @@ export const UebungAusgabe = UebungKopf.extend({
   methodischer_fahrplan: z
     .object({
       offen_starten: z.string(),
-      ueben: z.array(z.string()),
+      ueben: z.array(z.string()).describe(UEBEN_ZEILEN),
       wetteifern: z.string().nullable(),
     })
     .nullable(),

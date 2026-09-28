@@ -20,6 +20,12 @@ export type FreitextBlock =
 const AUFZAEHLUNG = /^[ \t]*[-*][ \t]+(.*)$/;
 const NUMMERIERT = /^[ \t]*(\d+)\.[ \t]+(.*)$/;
 
+/** Wie die gespeicherte Stufe «Üben» zu lesen ist — ausgeliefert in den
+ *  Schemas der KI-Auskunft, damit ein Client die Zeilen nicht für einzelne
+ *  Schritte hält. Hier, bei den Regeln, damit beide nicht auseinanderlaufen. */
+export const UEBEN_ZEILEN =
+  "Die Zeilen eines Freitexts wie `aufbau`, nicht einzelne Schritte: eine Zeile mit «- » oder «* » ist ein Aufzählungspunkt, eine mit «1. » ein nummerierter, eine leere Zeile beendet eine Liste; jede andere Zeile ist Text.";
+
 /** Ist diese Zeile ein Listenpunkt (Aufzählung oder nummeriert)? */
 function istListenzeile(zeile: string): boolean {
   return AUFZAEHLUNG.test(zeile) || NUMMERIERT.test(zeile);
@@ -38,7 +44,9 @@ export function freitextZeilen(text: string | null | undefined): string[] {
 /** Einzelne Schritte als Aufzählungszeilen — für Quellen, die «Üben» als Liste
  *  von Schritten führen (die YAML-Daten des Manuals). Eine Zeile, die schon
  *  ein Listenzeichen trägt, bleibt, wie sie ist; der Seed ist so idempotent.
- *  Zwilling der Bestandsmigration `fahrplan_freitext`. */
+ *  Gegenstück zur Bestandsmigration `fahrplan_freitext`, die dieselbe
+ *  Umformung an den gespeicherten Schrittlisten vornimmt; `check:freitext`
+ *  prüft, dass beide dasselbe Listenmuster erkennen. */
 export function alsAufzaehlung(schritte: readonly string[]): string[] {
   return schritte.map((s) => (istListenzeile(s) || !s.trim() ? s : `- ${s}`));
 }

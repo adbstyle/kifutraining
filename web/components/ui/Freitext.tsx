@@ -1,11 +1,12 @@
 import { cn } from "@/lib/cn";
 import { freitextBloecke } from "@/lib/freitext";
 
-/* Ein Freitext mit einfachen Listen (Story #282): Ablauf und Varianten einer
-   Übung. Die Regeln stehen in `lib/freitext.ts`; hier nur die Darstellung.
+/* Ein Freitext mit einfachen Listen (Story #282): Ablauf, die drei Stufen des
+   methodischen Fahrplans und Varianten einer Übung. Die Regeln stehen in
+   `lib/freitext.ts`; hier nur die Darstellung.
 
    Text trägt seine Zeilenumbrüche selbst (whitespace-pre-line), Listen stehen
-   wie die Üben-Schritte im methodischen Fahrplan. Alles läuft als React-Text
+   als Aufzählung bzw. nummerierte Liste darunter. Alles läuft als React-Text
    — eingegebenes HTML erscheint als Text und wird nie ausgeführt (NFR 2). */
 export function Freitext({ text, className }: { text: string; className?: string }) {
   return (

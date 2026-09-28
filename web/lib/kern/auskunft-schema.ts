@@ -13,6 +13,7 @@
 import { z } from "zod";
 import { Sichtbarkeit, Wert } from "@/lib/wert";
 import { gesamtMaterialSchema, materialSchema } from "@/lib/material-ausgabe";
+import { UEBEN_ZEILEN } from "@/lib/freitext";
 
 function baueSchema(streng: boolean) {
   const obj = streng ? z.strictObject : z.object;
@@ -64,7 +65,7 @@ function baueSchema(streng: boolean) {
         obj({
           art: z.literal("fahrplan"),
           offen_starten: z.string(),
-          ueben: z.array(z.string()),
+          ueben: z.array(z.string()).describe(UEBEN_ZEILEN),
           wetteifern: z.string().nullable(),
         }),
         obj({ art: z.literal("beschreibung"), text: z.string() }),
