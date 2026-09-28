@@ -661,9 +661,11 @@ export function ExerciseForm({
             Wähle zuerst den Trainingsteil — danach beschreibst du hier den Ablauf.
           </p>
         )}
+        {/* Der methodische Fahrplan als drei gewöhnliche Textfelder in der
+            Reihe des Abschnitts, wie die Varianten — ohne eigenen Rahmen und
+            ohne Überschrift: die Feldnamen sagen, was hinein gehört. */}
         {teil && (istFahrplan ? (
-          <fieldset className="flex flex-col gap-5 rounded-flaeche border border-linie p-5">
-            <legend className="type-label-medium px-2 text-primary">Methodischer Fahrplan</legend>
+          <>
             <TextArea
               label="Offen starten"
               name="offen_starten"
@@ -690,7 +692,7 @@ export function ExerciseForm({
               error={!!err.wetteifern}
               supportingText={err.wetteifern ?? "Pflichtfeld — der spielerische Wettkampf-Teil."}
             />
-          </fieldset>
+          </>
         ) : (
           <TextArea
             label={istFreiesSpiel ? "Beschreibung des Spiels" : "Aufbau / Beschreibung"}
