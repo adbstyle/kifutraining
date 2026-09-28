@@ -2,7 +2,18 @@
 
 import { Info } from "lucide-react";
 import { Select } from "@/components/ui";
-import { einordnungenFuer, type Altersstufe } from "@/lib/altersstufe";
+import {
+  einordnungenFuer,
+  traegtHauptteilkategorie,
+  type Altersstufe,
+} from "@/lib/altersstufe";
+import { hauptteilkategorie as hkatLabels } from "@/lib/vocab";
+
+/** Trennzeichen im Optionswert «hauptteil:<kategorie>» — Slugs enthalten
+ *  keinen Doppelpunkt. Der zusammengesetzte Wert lebt nur in diesem Feld;
+ *  nach aussen gehen Einordnung und Hauptteilkategorie getrennt, so wie sie
+ *  gespeichert und geprüft werden. */
+const TRENNER = ":";
 
 /** Wo eine Übung in ihrem Trainingsschema liegt (Story 2 AK 1, Story 3 AK 3/4).
  *
@@ -12,8 +23,10 @@ import { einordnungenFuer, type Altersstufe } from "@/lib/altersstufe";
  *  Reihe Chips), weil die Einordnung über die halbe Maske darunter entscheidet
  *  und das sichtbar sein sollte.
  *
- *  Kinderfussball: die vier Trainingsteile als flache Liste — dort ist der
- *  Trainingsteil selbst die Einordnung.
+ *  Kinderfussball: die vier Trainingsteile als Kopfzeilen, der Hauptteil über
+ *  seinen drei Kategorien — wie ein Junioren-Teil über seinen Blöcken.
+ *  Eine Wahl setzt so Trainingsteil und Hauptteilkategorie zugleich; ein
+ *  zweites Auswahlfeld entfällt. Gespeichert bleiben beide getrennt.
  *
  *  Juniorenfussball: alle sieben Blöcke in EINER Liste, der Trainingsteil als
  *  nicht wählbare Kopfzeile darüber (`group`). Gewählt wird der Block; der
@@ -27,6 +40,7 @@ import { einordnungenFuer, type Altersstufe } from "@/lib/altersstufe";
 export function EinordnungField({
   altersstufe,
   wert,
+  hauptteilkategorie = "",
   onChange,
   error,
   supportingText,
@@ -35,7 +49,10 @@ export function EinordnungField({
   altersstufe: Altersstufe;
   /** Die gewählte Einordnung (Kinderfussball-Trainingsteil oder Junioren-Block). */
   wert: string;
-  onChange: (einordnung: string) => void;
+  /** Die Hauptteilkategorie, wenn die Einordnung der Kinderfussball-Hauptteil ist. */
+  hauptteilkategorie?: string;
+  /** Die neue Einordnung samt Hauptteilkategorie — leer, wo es keine gibt. */
+  onChange: (einordnung: string, hauptteilkategorie: string) => void;
   error?: string;
   supportingText?: string;
   /** Was die gewählte Einordnung an bereits Erfasstem kosten wird. Steht unter
@@ -47,23 +64,36 @@ export function EinordnungField({
   const zweistufig = gruppen.some((g) => g.bloecke.length > 0);
 
   const optionen = gruppen.flatMap((g) => {
-    if (g.bloecke.length === 0) return [{ value: g.teil, label: g.label }];
-    // Ein Teil mit genau EINEM gleichnamigen Block bekommt keine Kopfzeile:
-    // Sie stünde wortgleich über ihrer einzigen Option und gliederte nichts —
-    // «Auffangen / Auffangen». Dieselbe Regel, die früher seine Chip-Reihe
-    // unterdrückte (Story #127), nur an der Optionsliste.
-    const eigenstaendig = g.bloecke.length === 1 && g.bloecke[0].label === g.label;
-    return g.bloecke.map((b) => ({
-      value: b.slug,
-      label: b.label,
-      ...(eigenstaendig ? {} : { group: g.label }),
-    }));
+    // Kinderfussball-Hauptteil: seine Kategorien unter ihm als Kopfzeile.
+    if (traegtHauptteilkategorie(altersstufe, g.teil))
+      return (Object.keys(hkatLabels) as (keyof typeof hkatLabels)[]).map((k) => ({
+        value: `${g.teil}${TRENNER}${k}`,
+        label: hkatLabels[k],
+        group: g.label,
+      }));
+    // JEDER Teil steht unter seiner Kopfzeile, auch einer mit nur einer Wahl
+    // («Auffangen / Auffangen»): Eine Option ohne Kopfzeile liest sich sonst
+    // als Teil der Gruppe darüber — «Ausklang» sah aus, als gehöre er zum
+    // Hauptteil, «Abschluss» ebenso (PO 2026-09-28; hebt die Ausnahme für
+    // gleichnamige Einzelblöcke aus Story #127 auf).
+    if (g.bloecke.length === 0) return [{ value: g.teil, label: g.label, group: g.label }];
+    return g.bloecke.map((b) => ({ value: b.slug, label: b.label, group: g.label }));
   });
+
+  const auswahl =
+    traegtHauptteilkategorie(altersstufe, wert) && hauptteilkategorie
+      ? `${wert}${TRENNER}${hauptteilkategorie}`
+      : wert;
+
+  function waehle(v: string) {
+    const [einordnung, hkat = ""] = v.split(TRENNER);
+    onChange(einordnung, hkat);
+  }
 
   return (
     <div>
       <Select
-        label={zweistufig ? "Trainingsteil und Block" : "Trainingsteil"}
+        label={zweistufig ? "Trainingsteil und Block" : "Trainingsteil und Hauptteilkategorie"}
         // Breiter als die übrigen Auswahlfelder, aber nicht über die ganze
         // Spalte: «Spielformen und unterstützende Übungen» soll ungekürzt in
         // die Wertzeile passen.
@@ -74,10 +104,17 @@ export function EinordnungField({
         // keine Angabe über die Übung, und darf darum nicht wie eine
         // getroffene Wahl im Feld stehen.
         placeholder="Einordnung wählen …"
-        value={wert}
-        onChange={onChange}
+        value={auswahl}
+        onChange={waehle}
         error={!!error}
-        supportingText={error ?? supportingText}
+        supportingText={
+          error ??
+          // Steht der Hauptteil ohne Kategorie da (Vorbelegung, Vorschlag beim
+          // Überführen), passt er zu keiner Option, und das Feld sähe leer aus.
+          (traegtHauptteilkategorie(altersstufe, wert) && !hauptteilkategorie
+            ? "Hauptteil — bitte noch die Kategorie wählen."
+            : supportingText)
+        }
       />
       {/* Dezenter Hinweis nach dem Muster der Hinweiszeile des
           Trainings-Editors (Styleguide «Leerzustand & Hinweiszeile»):

@@ -56,11 +56,12 @@ export default async function EditPage({
   const vorlagen = await getVorlagen(ex.id);
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
       <Breadcrumbs items={crumbs} className="mb-6" />
+      <h1 className="sr-only">Übung bearbeiten</h1>
       <ExerciseForm
         action={updateExercise.bind(null, ex.id)}
-        afterName={
+        diagrammKachel={
           <div className="flex flex-col gap-2">
             <DiagrammVorschau
               href={`/uebung/${slug}/diagramm`}

@@ -12,6 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 import { parseDiagramm, type DiagrammData } from "../lib/diagramm";
 import { diagrammProbleme } from "./diagramm-pruefung";
 import { materialVorschlag, parseMaterialListe } from "../lib/material";
+import { alsAufzaehlung } from "../lib/freitext";
 
 // .env.local laden, falls vorhanden (Prod übergibt Env inline).
 try {
@@ -39,6 +40,16 @@ if (!URL || !SERVICE_KEY) {
 const supabase = createClient(URL, SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
+
+/** Der Fahrplan einer YAML-Übung, wie die App ihn speichert: «Üben» ist
+ *  Freitext, gespeichert als Zeilen — die YAML-Daten führen die Schritte als
+ *  Liste, jeder wird zu einer Aufzählungszeile. */
+function fahrplanAusYaml(fp: unknown): unknown {
+  if (!fp || typeof fp !== "object") return null;
+  const f = fp as { ueben?: unknown };
+  if (!Array.isArray(f.ueben)) return fp;
+  return { ...f, ueben: alsAufzaehlung(f.ueben.map(String)) };
+}
 
 function loadYamlDir(dir: string): Record<string, unknown>[] {
   if (!existsSync(dir)) return [];
@@ -125,7 +136,9 @@ async function seedExercises() {
       // Übungsablauf je Einordnung: methodischer_fahrplan (jsonb) bei
       // einleitung/hauptteil, flaches aufbau bei auffangen/ausklang sowie bei
       // der Hauptteilkategorie «Fussball spielen» (freies Spiel, Story 2).
-      methodischer_fahrplan: u.methodischer_fahrplan ?? null,
+      // «Üben» ist Freitext; die YAML-Daten führen die Schritte als Liste,
+      // und jeder Schritt wird zu einer Aufzählungszeile (wie der Bestand).
+      methodischer_fahrplan: fahrplanAusYaml(u.methodischer_fahrplan),
       aufbau: u.aufbau ?? null,
       varianten_text: u.varianten ?? null,
       diagramm,

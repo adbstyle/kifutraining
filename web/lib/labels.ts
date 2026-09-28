@@ -135,3 +135,19 @@ export function herkunftText(
 ): string {
   return HERKUNFT_LABEL[herkunftArt(source, visibility)];
 }
+
+/** Wie die Spielerzahl einer Übung heisst — in Maske, Detailseite, Druck und
+ *  Trainings-Ansicht dasselbe Wort. Die Spalte heisst weiter `anzahl_kinder`. */
+export const ANZAHL_SPIELER_LABEL = "Anzahl Spieler:innen";
+
+/** Die Spielerzahl als Text: «4–8», «6», «ab 4», «bis 8»; null ohne Angabe. */
+export function anzahlSpielerText(
+  a: { min?: number | null; max?: number | null } | null | undefined,
+): string | null {
+  if (!a) return null;
+  const { min, max } = a;
+  if (min != null && max != null) return min === max ? `${min}` : `${min}–${max}`;
+  if (min != null) return `ab ${min}`;
+  if (max != null) return `bis ${max}`;
+  return null;
+}

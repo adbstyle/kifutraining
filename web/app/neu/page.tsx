@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/ui";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { createExercise } from "@/lib/actions/exercises";
-import { alsAltersstufe, einordnungsSlugsFuer } from "@/lib/altersstufe";
+import {
+  alsAltersstufe,
+  einordnungsSlugsFuer,
+  traegtHauptteilkategorie,
+} from "@/lib/altersstufe";
+import { hauptteilkategorieSlugs } from "@/lib/vocab";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Neue Übung — KiFu", robots: { index: false } };
@@ -9,7 +15,7 @@ export const metadata: Metadata = { title: "Neue Übung — KiFu", robots: { ind
 export default async function NeuePage({
   searchParams,
 }: {
-  searchParams: Promise<{ stufe?: string; teil?: string }>;
+  searchParams: Promise<{ stufe?: string; teil?: string; kategorie?: string }>;
 }) {
   const sp = await searchParams;
   // Vorbelegung aus der Adresse: wer aus einem leeren Trainingsblock heraus
@@ -19,23 +25,31 @@ export default async function NeuePage({
   const altersstufe = alsAltersstufe(sp.stufe);
   const teil =
     sp.teil && einordnungsSlugsFuer(altersstufe).includes(sp.teil) ? sp.teil : undefined;
+  // Die Hauptteilkategorie nur, wo die Einordnung sie trägt — ein leerer
+  // Kinderfussball-Hauptteil-Block schickt sie mit.
+  const kategorie =
+    teil &&
+    traegtHauptteilkategorie(altersstufe, teil) &&
+    (hauptteilkategorieSlugs as string[]).includes(sp.kategorie ?? "")
+      ? sp.kategorie
+      : undefined;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
-      <header className="mb-8">
-        <p className="type-label-medium text-primary">Übungspool</p>
-        <h1 className="type-headline-large mt-1 text-on-surface">Neue Übung erstellen</h1>
-        <p className="type-body-medium mt-2 text-on-surface-mittel">
-          Erfasse eine eigene Übung mit demselben Feldsatz wie die Manual-Übungen —
-          so ist sie gleichwertig durchsuch- und filterbar.
-        </p>
-      </header>
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+      {/* Kopf wie im Trainings-Editor: Brotkrumen, darunter der Name als
+          Kopf-Feld der Maske. Die Überschrift trägt die Seite unsichtbar. */}
+      <Breadcrumbs
+        items={[{ label: "Übungspool", href: "/" }, { label: "Neue Übung" }]}
+        className="mb-6"
+      />
+      <h1 className="sr-only">Neue Übung</h1>
       <ExerciseForm
         action={createExercise}
         altersstufe={altersstufe}
         stufenWahl="waehlbar"
         kontext="bibliothek"
-        initial={{ trainingsteil: teil }}
+        initial={{ trainingsteil: teil, hauptteilkategorie: kategorie }}
+        diagrammZeichnen
         submitLabel="Übung speichern"
       />
     </main>

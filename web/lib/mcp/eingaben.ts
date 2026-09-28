@@ -25,6 +25,7 @@ import {
   typOptionen,
 } from "@/lib/filter-optionen";
 import { UebungKopf, Wert, alsEnum, katalogFilter } from "@/lib/mcp/bausteine";
+import { UEBEN_ZEILEN } from "@/lib/freitext";
 
 export const SucheEingabe = z.object({
   q: z
@@ -109,10 +110,12 @@ export const UebungAusgabe = UebungKopf.extend({
     .nullable(),
   /** Material gegliedert: Liste aus dem Diagramm-Vorrat und freie Ergänzung. */
   material: materialSchema(),
+  /** Die drei Stufen sind Freitext wie `aufbau` und `varianten`; `ueben` sind
+   *  dessen Zeilen (eine mit «- » ist ein Aufzählungspunkt). */
   methodischer_fahrplan: z
     .object({
       offen_starten: z.string(),
-      ueben: z.array(z.string()),
+      ueben: z.array(z.string()).describe(UEBEN_ZEILEN),
       wetteifern: z.string().nullable(),
     })
     .nullable(),

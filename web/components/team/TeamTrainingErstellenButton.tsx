@@ -90,6 +90,7 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
           />
 
           <AltersstufeField
+            className="max-w-xs"
             wert={altersstufe}
             onChange={waehleAltersstufe}
             hinweis="Nach welchem Manual das Team plant. Bestimmt Trainingsteile, Gliederung und Alterskategorien — und steht danach fest."

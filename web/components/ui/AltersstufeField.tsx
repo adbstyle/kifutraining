@@ -36,6 +36,7 @@ export function AltersstufeField({
   aktion,
   hinweis,
   fehler,
+  className,
 }: {
   wert: Altersstufe | null;
   /** Fehlt, wo die Altersstufe feststeht und nur noch benannt wird. */
@@ -54,6 +55,8 @@ export function AltersstufeField({
   hinweis?: string;
   /** Fehlermeldung, wenn die Wahl fehlt. */
   fehler?: string;
+  /** Breite der Auswahl. Ohne füllt sie ihren Platz (etwa eine Rasterzelle). */
+  className?: string;
 }) {
   if (!onChange)
     return (
@@ -73,7 +76,7 @@ export function AltersstufeField({
   return (
     <Select
       label="Altersstufe"
-      className="max-w-xs"
+      className={className}
       value={wert ?? ""}
       options={optionen}
       // Kein Leerwert in der Liste, sondern ein Platzhalter: «noch nicht

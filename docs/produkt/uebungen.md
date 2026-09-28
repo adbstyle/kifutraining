@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-09-23. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-09-28. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -36,7 +36,11 @@ gibt und welche davon Pflicht sind. Begriffe des anderen Lehrmittels erscheinen 
 
 Im Kinderfussball gehört jede Übung zu einem der vier Trainingsteile — Auffangen, Einleitung,
 Hauptteil, Ausklang. Im Hauptteil kommt zwingend eine der drei Kategorien „Fussball spielen
-lernen", „Vielseitigkeit erleben" oder „Fussball spielen" dazu. Der Ablauf steht als
+lernen", „Vielseitigkeit erleben" oder „Fussball spielen" dazu. Gewählt wird sie im selben
+Feld wie der Trainingsteil: Die Liste führt jeden Trainingsteil als Kopfzeile — den Hauptteil
+über seinen drei Kategorien, die übrigen über sich selbst —, so wie sie im Juniorenfussball die
+Blöcke unter ihrem Trainingsteil führt. Auch ein Teil mit nur einer Wahl steht unter seiner
+Kopfzeile; sonst läse sich etwa der Ausklang als Teil des Hauptteils darüber. Der Ablauf steht als
 dreistufiger methodischer Fahrplan — offen starten, üben, wett-eifern —, ausser beim freien
 Spiel sowie in Auffangen und Ausklang, wo ein zusammenhängender Beschreibungstext gilt.
 Erscheinungsformen trägt eine Kinderfussball-Übung in der Einleitung und im Hauptteil. Das
@@ -63,15 +67,37 @@ Spiel führen ihn, Abschluss und Auffangen nicht.
 Hängt der Trainer eine Übung dorthin um, wo es eines dieser Felder nicht gibt, sagt die
 Anwendung unter der Zuordnung, welche seiner erfassten Angaben dabei entfallen werden.
 
-Beiden Altersstufen gemeinsam sind Name und mindestens eine Alterskategorie, dazu die Zahl der
-Kinder, für die die Übung taugt, das benötigte Material, mögliche Varianten und das Bild.
+Beiden Altersstufen gemeinsam sind Name und mindestens eine Alterskategorie, dazu die Anzahl
+Spieler:innen, für die die Übung taugt, das benötigte Material, mögliche Varianten und das Bild — ein
+Feld-Diagramm, ein Foto oder beides. Das Diagramm zeichnet der Trainer schon beim Erfassen; beides
+ist freiwillig, und die Übung entsteht mit einem einzigen Speichern samt Diagramm.
 
-Ablauf und Varianten sind Freitexte und stehen gleich da: Zeilenumbrüche und Leerzeilen bleiben,
+Die Maske ist so breit wie die Detailseite einer Übung und in derselben Reihenfolge gegliedert.
+Oben stehen die Brotkrumen — beim Erfassen „Übungspool › Neue Übung" —, darunter der Name als
+Überschrift, die sich direkt beschreiben lässt, wie der Trainingsname im Trainings-Editor.
+Darunter steht die „Zuordnung": Altersstufe und Alterskategorie auf einer Zeile, darunter
+der Trainingsteil — im Kinderfussball-Hauptteil samt Hauptteilkategorie, im Juniorenfussball
+samt Block, jeweils in einem Feld. Es folgt das
+„Feld-Diagramm" — die Zeichenfläche beim Erfassen, die Diagramm-Kachel beim Bearbeiten —, darunter
+Feldtyp oder Spielfeldgrösse neben der Anzahl Spieler:innen. Die „Beschreibung" fasst Ablauf,
+Varianten sowie Erscheinungsform und Übungstyp zusammen, danach kommen „Material" und ganz am
+Schluss das „Foto". Auf einem schmalen Bildschirm stehen die Paare untereinander. Dieselbe Maske
+gilt beim Erfassen, beim Bearbeiten einer eigenen Übung und für eine Übung im Training.
+
+Bis dahin ist nichts gesichert. Will der Trainer die Erfassung mit ungesicherten Angaben
+verlassen — über einen Link, das Kontomenü, den Zurück-Knopf des Browsers, durch Neuladen oder
+Schliessen —, fragt die Anwendung nach, ob die Angaben verloren gehen sollen. Scheitert das
+Speichern, bleiben Angaben und Zeichnung stehen.
+
+Ablauf und Varianten sind Freitexte und stehen gleich da, ebenso die drei Stufen des
+methodischen Fahrplans — Offen starten, Üben, Wetteifern: Zeilenumbrüche und Leerzeilen bleiben,
 wie der Trainer sie gesetzt hat. Eine Zeile, die mit «- » oder «* » beginnt, wird zum
 Aufzählungspunkt, eine mit «1. » zum Punkt einer nummerierten Liste; aufeinanderfolgende Punkte
 bilden eine Liste, jede andere Zeile beendet sie. Mehr formatiert die Anwendung nicht — keine
 Fettschrift, keine Überschriften, keine Links, keine verschachtelten Listen; alles Übrige
-erscheint als Text. Die Stufen des methodischen Fahrplans bleiben ohne diese Formatierung. Die
+erscheint als Text. Auch beim Üben ist eine Zeile ohne Listenzeichen gewöhnlicher Text; die
+Schritte der Manual-Übungen und der bisher erfassten Übungen stehen als Aufzählung da, wie
+vorher. Die Felder tragen keine Hilfetexte; nur ein Fehler beim Speichern erscheint darunter. Die
 Varianten stehen unmittelbar nach dem Ablauf, ob er als Freitext oder als Fahrplan erfasst ist.
 
 ## Material
@@ -84,7 +110,8 @@ oder Stoppuhr. Nur die Liste wird gezählt und in der Materialliste eines Traini
 die Ergänzung ist freier Text. Material, das eine Übung vor der Liste als Text trug, steht
 unverändert in der Ergänzung.
 
-Trägt die Übung ein Diagramm, schlägt das Formular die Liste vor, die das Diagramm zeigt: jedes
+Trägt die Übung ein Diagramm, schlägt das Formular die Liste vor, die das Diagramm zeigt — beim
+Erfassen laufend aus der Zeichnung in der Maske: jedes
 gezeichnete Material-Symbol einzeln gezählt, nach Art und Farbe. Sind die Feldspieler in
 mindestens zwei Farben eingeteilt, kommt je Spieler ein Überziehleibchen in seiner Farbe dazu —
 eine einzige Spielerfarbe ist keine Einteilung, und Torwart und Trainer zählen nie. Gezeichnete
@@ -117,7 +144,7 @@ Vorschlag, sofern das andere Lehrmittel eine Entsprechung kennt; sonst beginnt d
 Bestätigt wird im Dialog, wirksam wird die Überführung erst mit dem Speichern — wer die Seite
 vorher verlässt, lässt die Übung unverändert zurück.
 
-Was die Zielstufe kennt, kommt mit: Name, Bild, Diagramm, Kinderzahl, Material und Varianten
+Was die Zielstufe kennt, kommt mit: Name, Bild, Diagramm, Anzahl Spieler:innen, Material und Varianten
 hängen an keinem Lehrmittel, und der Ablauftext wandert in die dort geltende Form. Die Meter
 gehen ebenfalls mit: Das freie Feld mit seiner Grösse wird zur Spielfeldgrösse des
 Juniorenfussballs, und eine Junioren-Übung mit Spielfeldgrösse wird eine Übung auf freiem Feld.
@@ -184,8 +211,16 @@ Zu jeder eigenen Übung lässt sich ein Feld-Diagramm zeichnen. Zur Verfügung s
 Material wie Pylonen, Stangen, Reifen und Hürden, Personen in verschiedenen Posen und
 Blickrichtungen, Bälle, Bewegungspfade für Laufweg, Dribbling und Pass sowie freie Formen und
 Textfelder. Elemente lassen sich setzen, verschieben, drehen, einfärben, in der Grösse
-verändern, mehrfach auswählen, kopieren und löschen; jeder Schritt ist widerrufbar. Gespeichert
-wird laufend im Hintergrund.
+verändern, mehrfach auswählen, kopieren und löschen; jeder Schritt ist widerrufbar.
+
+Gezeichnet wird an zwei Orten mit derselben Fläche und denselben Werkzeugen. Beim Erfassen einer
+neuen Übung sitzt sie in der Erfassungsmaske, und das Diagramm wird mit der Übung gespeichert,
+nicht vorher. Bei einer bestehenden Übung öffnet die Diagramm-Kachel im Bearbeiten-Formular den
+Diagramm-Editor auf einer eigenen Seite; dort wird laufend im Hintergrund gespeichert. Ein beim
+Erfassen gezeichnetes Diagramm liegt im Editor so vor, wie es gespeichert wurde. Zum Zeichnen
+braucht es einen breiteren Bildschirm als den eines Telefons; auf einem schmaleren sagt die
+Erfassungsmaske das an der Stelle der Fläche, und die Übung lässt sich dort ohne Diagramm
+erfassen.
 
 Dasselbe Diagramm sieht am Bildschirm anders aus als auf Papier, und beides ist Absicht. Am
 Bildschirm liegt es auf einem dunklen Rasen, passend zur übrigen Anwendung, mit hellen
@@ -201,17 +236,21 @@ Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar üb
 Quell-Übung und mit Vorschau; die Altersstufe spielt dabei keine Rolle. Fremde
 Trainer-Diagramme sind bewusst nicht dabei. Das Kopieren erzeugt eine eigenständige Kopie ohne
 Verbindung zum Original; ein bereits vorhandenes Diagramm wird erst nach Rückfrage ersetzt.
+Angeboten wird die Vorlage auf der leeren Zeichenfläche, auf der Zeichenfläche daneben auch, wenn
+schon etwas gezeichnet ist — beim Erfassen wie im Editor —, und im Bearbeiten-Formular. Auf der
+Zeichenfläche ist das Ersetzen ein gewöhnlicher Schritt: „Rückgängig" holt die Zeichnung zurück.
 
-Statt eines Diagramms kann auch ein Foto hochgeladen werden. Zulässig sind die gängigen Formate
-einschliesslich der HEIC-Bilder von iPhones. Grosse Bilder verkleinert die Anwendung schon im
-Browser, bevor der Upload beginnt, auf höchstens zweitausend Bildpunkte an der langen Kante.
+Statt eines Diagramms oder zusätzlich kann auch ein Foto hochgeladen werden. Zulässig sind die
+gängigen Formate einschliesslich der HEIC-Bilder von iPhones. Grosse Fotos verkleinert die
+Anwendung schon im Browser, bevor der Upload beginnt, auf höchstens zweitausend Bildpunkte an der
+langen Kante. Trägt eine Übung beides, zeigt sie das Diagramm; das Foto bleibt erhalten.
 
 ## Drucken
 
 Jede Übung, die ein Trainer ansehen darf, lässt sich einzeln ausdrucken — auch ohne Konto und
 ohne dafür ein Training anzulegen. Das Blatt trägt Name, Alterskategorien, Bild oder Diagramm,
 den Trainingsteil oder Block, im Kinderfussball-Hauptteil dessen Kategorie, Feldtyp oder
-Spielfeldgrösse, dazu die Kinderzahl, danach Ablauf und Varianten, dann das Material — die
+Spielfeldgrösse, dazu die Anzahl Spieler:innen, danach Ablauf und Varianten, dann das Material — die
 Liste und darunter die Ergänzung — und zuunterst, was
 der Einordnung dient: Übungstyp und Erscheinungsform. Diese Reihenfolge gilt auf dem Papier wie
 am Bildschirm — wer eine Übung öffnet, liest zuerst, was gemacht wird, und trifft erst danach
@@ -258,7 +297,7 @@ Vorgang zu kopieren ist ebenfalls nicht vorgesehen; kopiert wird eine nach der a
 Kopie wechselt auch nicht von selbst die Altersstufe — wer sie in der anderen braucht, wandelt
 sie anschliessend um. Innerhalb eines Trainings ist ausserdem nicht erkennbar, ob eine Übung
 ursprünglich aus dem Manual stammt; die Plakette trägt nur der unveränderte Bestand. Die Angabe
-zur Kinderzahl ist Selbstauskunft und wird nicht gegen das Diagramm geprüft.
+zur Anzahl Spieler:innen ist Selbstauskunft und wird nicht gegen das Diagramm geprüft.
 
 Die Material-Liste zählt, was gezeichnet ist, nicht wofür. Vier Pylonen bleiben vier Pylonen,
 auch wenn sie ein Tor bilden, und Teller am Feldrand zählen wie Teller im Feld. Die Mengen
@@ -269,6 +308,10 @@ Kleidung spielt. Eigene Material-Arten ausserhalb des Diagramm-Vorrats gibt es i
 nicht — dafür ist die Ergänzung da. Die Spielfeldgrösse leitet die Anwendung nie aus dem
 Diagramm ab; das Diagramm kennt keinen Massstab.
 
-Die Listenzeichen in Ablauf und Varianten lassen sich nicht abschalten: Beginnt eine Zeile mit
+Eine begonnene, noch nicht gespeicherte Übung bleibt nicht als Entwurf erhalten, und das beim
+Erfassen gezeichnete Diagramm wird bis zum Speichern nirgends zwischengesichert. Die
+Zeichenfläche ist für Maus und Tastatur gebaut, nicht für die Bedienung per Touch.
+
+Die Listenzeichen in Ablauf, Fahrplan und Varianten lassen sich nicht abschalten: Beginnt eine Zeile mit
 «- », «* » oder einer Zahl mit Punkt und Leerzeichen — etwa «2. Halbzeit» —, wird sie zum
 Listenpunkt, auch wenn sie so nicht gemeint war.

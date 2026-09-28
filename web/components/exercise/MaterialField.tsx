@@ -75,6 +75,7 @@ export function MaterialField({
   ergaenzung,
   error,
   hinweis,
+  beschriftetVon,
 }: {
   zeilen: MaterialZeile[];
   onZeilenChange: (zeilen: MaterialZeile[]) => void;
@@ -83,8 +84,12 @@ export function MaterialField({
   ergaenzung: string[];
   error?: string;
   hinweis?: React.ReactNode;
+  /** Id einer Überschrift, die die Gruppe schon benennt (Abschnitt
+   *  «Material» der Übungsmaske). Dann entfällt die eigene Legende. */
+  beschriftetVon?: string;
 }) {
-  const legendeId = useId();
+  const eigeneId = useId();
+  const legendeId = beschriftetVon ?? eigeneId;
 
   function aendere(key: string, teil: Partial<MaterialZeile>) {
     onZeilenChange(zeilen.map((z) => (z.key === key ? { ...z, ...teil } : z)));
@@ -99,9 +104,11 @@ export function MaterialField({
 
   return (
     <div role="group" aria-labelledby={legendeId} className="flex flex-col gap-4">
-      <p id={legendeId} className={`type-label-small ${error ? "text-error" : "text-on-surface-mittel"}`}>
-        Material (optional)
-      </p>
+      {!beschriftetVon && (
+        <p id={legendeId} className={`type-label-small ${error ? "text-error" : "text-on-surface-mittel"}`}>
+          Material (optional)
+        </p>
+      )}
 
       {hinweis}
 

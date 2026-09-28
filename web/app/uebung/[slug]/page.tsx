@@ -31,7 +31,12 @@ import {
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
-import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
+import {
+  ANZAHL_SPIELER_LABEL,
+  EINORDNUNG_LABEL,
+  ERSCHEINUNGSFORM_LABEL,
+  anzahlSpielerText,
+} from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
 import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
 import { AenderungBanner } from "@/components/exercise/MaterialField";
@@ -72,16 +77,6 @@ function Meta({
       <div className="type-body-large mt-1 text-on-surface">{children}</div>
     </div>
   );
-}
-
-function anzahlText(a: ExerciseDetail["anzahl_kinder"]): string | null {
-  if (!a) return null;
-  const { min, max } = a;
-  if (min != null && max != null)
-    return min === max ? `${min}` : `${min}–${max}`;
-  if (min != null) return `ab ${min}`;
-  if (max != null) return `bis ${max}`;
-  return null;
 }
 
 /** Die Bestätigungen, die über die Adresse auf diese Seite reisen — je
@@ -141,7 +136,7 @@ export default async function ExerciseDetailPage({
       : null,
     spielfeld,
   ].filter(Boolean);
-  const anzahl = anzahlText(ex.anzahl_kinder);
+  const anzahl = anzahlSpielerText(ex.anzahl_kinder);
   const materialListe = parseMaterialListe(ex.material_liste);
   const materialHinweis = isOwner
     ? materialAenderungen(parseMaterialBasis(ex.material_basis), materialBasisAusDiagramm(ex.diagramm))
@@ -260,7 +255,7 @@ export default async function ExerciseDetailPage({
               ex.hauptteilkategorie}
           </Meta>
         )}
-        {anzahl && <Meta label="Anzahl Kinder">{anzahl}</Meta>}
+        {anzahl && <Meta label={ANZAHL_SPIELER_LABEL}>{anzahl}</Meta>}
       </div>
 
       {/* Ablauf */}

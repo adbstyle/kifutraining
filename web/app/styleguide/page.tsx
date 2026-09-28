@@ -913,6 +913,17 @@ export default function Styleguide() {
           Fenstergrössen und Seitenränder; Max-Width für die Lesbarkeit,
           Spalten-Raster 4 / 8 / 12.
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Lange Formulare gliedert <code>FormAbschnitt</code>: eine Überschrift
+          in <code>type-title-medium</code>, gedämpft — dieselbe, die die
+          Abschnitte der Übungs-Detailseite tragen, damit Maske und Ansicht
+          gleich gegliedert sind. Die Übungsmaske ist darum auch so breit wie
+          die Detailseite (<code>max-w-4xl</code>) und stellt
+          Zusammengehöriges ab <code>sm</code> paarweise nebeneinander. Ein Feld
+          ohne eigenes Label (Dateifeld, Material-Gruppe) bekommt die Id der
+          Überschrift für <code>aria-labelledby</code>, statt den Namen doppelt
+          zu zeigen.
+        </p>
         <div className="space-y-2">
           {sizeClasses.map(([cls, range, note]) => (
             <div
@@ -1338,17 +1349,18 @@ export default function Styleguide() {
           <MethodischerFahrplan
             fahrplan={{
               offen_starten: fahrplan[0],
-              ueben: [fahrplan[1]],
+              ueben: [`- ${fahrplan[1]}`],
               wetteifern: fahrplan[2],
             }}
           />
         </Card>
         <p className="type-body-medium mb-3 mt-8 max-w-2xl text-on-surface-mittel">
-          <strong>Freitext</strong> — <code>Freitext</code>: Ablauf und Varianten
-          einer Übung (Story #282). Kein Markdown: Zeilenumbrüche bleiben, wie
+          <strong>Freitext</strong> — <code>Freitext</code>: Ablauf, Fahrplan-Stufen
+          und Varianten einer Übung (Story #282). Kein Markdown: Zeilenumbrüche bleiben, wie
           sie erfasst sind; nur Zeilen mit «- »/«* » werden Aufzählung, Zeilen
-          mit «1. » nummerierte Liste — gesetzt wie die Üben-Schritte im
-          Fahrplan. Jede andere Zeile, auch eine Leerzeile, beendet eine Liste.
+          mit «1. » nummerierte Liste. Dieselben Regeln gelten für die drei
+          Stufen des methodischen Fahrplans. Jede andere Zeile, auch eine
+          Leerzeile, beendet eine Liste.
         </p>
         <Card className="max-w-xl p-6">
           <Freitext
@@ -1417,7 +1429,7 @@ export default function Styleguide() {
           <TextField label="Übungsname" supportingText="Pflichtfeld" />
           <SearchField label="Suche" />
           <TextField
-            label="Anzahl Kinder"
+            label="Anzahl Spieler:innen"
             type="number"
             defaultValue="1"
             error
@@ -1461,7 +1473,8 @@ export default function Styleguide() {
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Für den Fall, in dem ein vom Trainer vergebener Name dort geändert
-          wird, wo er steht — der Trainingsname im Editor-Kopf. Es trägt die
+          wird, wo er steht — der Trainingsname im Editor-Kopf und der Name in
+          der Übungsmaske. Es trägt die
           Schrift der Überschrift (<code>type-headline-medium</code>), damit der
           Kopf seine Gliederung behält, und zeigt sich in{" "}
           <strong>drei Lagen</strong>: Ruhend sieht man eine Überschrift und
@@ -1495,6 +1508,10 @@ export default function Styleguide() {
             aria-label="Name des Trainings"
             defaultValue="Passspiel im Quadrat"
           />
+          {/* Leer zeigt es seinen Platzhalter gedämpft, sonst wäre es in Ruhe
+              nicht da; `error` stellt die Kontur auch in Ruhe in Fehlerfarbe. */}
+          <HeadlineField aria-label="Name der Übung" placeholder="Name der Übung" />
+          <HeadlineField aria-label="Name der Übung" placeholder="Name der Übung" error />
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
@@ -1870,7 +1887,13 @@ export default function Styleguide() {
           Detailseite, Trainings, Druck und mobil; <code>UebungsBild</code>{" "}
           schaltet zwischen Diagramm, Foto und Platzhalter. Der interaktive
           Editor (<code>DiagrammEditor</code>) lebt auf{" "}
-          <code>/uebung/[slug]/diagramm</code> und braucht eine eigene Übung.
+          <code>/uebung/[slug]/diagramm</code> und braucht eine eigene Übung;
+          seine Zeichenfläche (<code>DiagrammZeichnen</code>) sitzt ohne
+          Autosave auch in der Erfassungsmaske einer neuen Übung, als{" "}
+          <code>DiagrammFeld</code> unter dem Namen. Dort wacht{" "}
+          <code>VerlassenWarnung</code> über ungesicherte Angaben — ein
+          Bestätigungs-Dialog aus dem Kit für Links, Kontomenü und
+          Browser-Zurück, die Abfrage des Browsers für Neuladen und Schliessen.
           Symbol-Geometrie ist im Register verankert (Anker = Mittelpunkt),
           damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.
         </p>
