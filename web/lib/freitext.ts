@@ -1,5 +1,5 @@
-/* Freitext mit einfachen Listen (Story #282) — für den Ablauf (`aufbau`) und
-   die Varianten einer Übung.
+/* Freitext mit einfachen Listen (Story #282) — für den Ablauf (`aufbau`), die
+   drei Stufen des methodischen Fahrplans und die Varianten einer Übung.
 
    Bewusst kein Markdown: Zeilenumbrüche und Leerzeilen bleiben, wie sie
    erfasst sind (AK 4). Formatiert wird ausschliesslich (AK 10):
@@ -20,10 +20,28 @@ export type FreitextBlock =
 const AUFZAEHLUNG = /^[ \t]*[-*][ \t]+(.*)$/;
 const NUMMERIERT = /^[ \t]*(\d+)\.[ \t]+(.*)$/;
 
-/** Hinweis unter den Eingabefeldern — hier, damit er mit den Regeln oben
- *  nicht auseinanderläuft (AK 5). */
-export const FREITEXT_HINWEIS =
-  "Eine Zeile mit «- » beginnen für eine Aufzählung, mit «1. » für eine nummerierte Liste.";
+/** Ist diese Zeile ein Listenpunkt (Aufzählung oder nummeriert)? */
+function istListenzeile(zeile: string): boolean {
+  return AUFZAEHLUNG.test(zeile) || NUMMERIERT.test(zeile);
+}
+
+/** Ein Freitext als Zeilen, wie die Stufe «Üben» des Fahrplans sie speichert:
+ *  Leerzeilen im Innern bleiben (sie beenden eine Liste), Leerzeilen am Rand
+ *  und Leerraum am Zeilenende fallen weg. Ohne Inhalt ein leeres Array. */
+export function freitextZeilen(text: string | null | undefined): string[] {
+  const zeilen = (text ?? "").replace(/\r\n?/g, "\n").split("\n").map((z) => z.trimEnd());
+  while (zeilen.length && !zeilen[0].trim()) zeilen.shift();
+  while (zeilen.length && !zeilen[zeilen.length - 1].trim()) zeilen.pop();
+  return zeilen;
+}
+
+/** Einzelne Schritte als Aufzählungszeilen — für Quellen, die «Üben» als Liste
+ *  von Schritten führen (die YAML-Daten des Manuals). Eine Zeile, die schon
+ *  ein Listenzeichen trägt, bleibt, wie sie ist; der Seed ist so idempotent.
+ *  Zwilling der Bestandsmigration `fahrplan_freitext`. */
+export function alsAufzaehlung(schritte: readonly string[]): string[] {
+  return schritte.map((s) => (istListenzeile(s) || !s.trim() ? s : `- ${s}`));
+}
 
 export function freitextBloecke(text: string | null | undefined): FreitextBlock[] {
   const bloecke: FreitextBlock[] = [];

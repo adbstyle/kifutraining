@@ -18,6 +18,7 @@ import {
   type Altersstufe,
 } from "@/lib/altersstufe";
 import { parseMaterialListe } from "@/lib/material";
+import { freitextZeilen } from "@/lib/freitext";
 
 /** Kleinste und grösste sinnvolle Kantenlänge eines Spielfelds in Metern.
  *  Spiegelt die CHECKs `ex_spielfeld_bereich` / `te_spielfeld_bereich`.
@@ -128,10 +129,12 @@ export function parseUebungsInhalt(
 
   if (istFahrplan) {
     const offen = clean(form.get("offen_starten"));
-    const ueben = lines(form.get("ueben"));
+    // «Üben» ist Freitext wie die Varianten, gespeichert als seine Zeilen —
+    // Leerzeilen im Innern gehören dazu, sie beenden eine Liste.
+    const ueben = freitextZeilen(String(form.get("ueben") ?? ""));
     const wett = clean(form.get("wetteifern"));
     if (!offen) errors.offen_starten = "Bitte beschreiben, wie die Übung offen startet.";
-    if (ueben.length === 0) errors.ueben = "Bitte mindestens einen Übungsschritt angeben.";
+    if (ueben.length === 0) errors.ueben = "Bitte beschreiben, was geübt wird.";
     if (!wett) errors.wetteifern = "Bitte den Wetteifern-Teil beschreiben.";
     methodischer_fahrplan = { offen_starten: offen, ueben, wetteifern: wett };
   } else if (trainingsteil) {

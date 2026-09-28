@@ -12,7 +12,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { freitextBloecke } from "../lib/freitext";
+import { alsAufzaehlung, freitextBloecke, freitextZeilen } from "../lib/freitext";
 
 const WEB = resolve(fileURLToPath(import.meta.url), "../..");
 
@@ -106,6 +106,28 @@ pruefe("überführter Bestand liest sich als eine Aufzählung (PC 3)", () => {
 });
 
 // ── Zwilling: die Suchfunktion der Datenbank ──────────────────────────────
+// ── Fahrplan-Stufe «Üben» ──────────────────────────────────────────────────
+pruefe("«Üben» speichert Zeilen: Rand-Leerzeilen weg, innere bleiben", () => {
+  assert.deepEqual(freitextZeilen("\n\n- a  \n\nText\n\n"), ["- a", "", "Text"]);
+  assert.deepEqual(freitextZeilen("  \n "), []);
+  assert.deepEqual(freitextZeilen(null), []);
+});
+
+pruefe("YAML-Schritte werden Aufzählungszeilen, markierte bleiben (idempotent)", () => {
+  assert.deepEqual(alsAufzaehlung(["Dribbeln", "- schon", "2. nummeriert"]), [
+    "- Dribbeln",
+    "- schon",
+    "2. nummeriert",
+  ]);
+  assert.deepEqual(alsAufzaehlung(alsAufzaehlung(["x"])), ["- x"]);
+});
+
+pruefe("übernommene Schritte lesen sich als eine Aufzählung", () => {
+  assert.deepEqual(freitextBloecke(alsAufzaehlung(["a", "b"]).join("\n")), [
+    { art: "aufzaehlung", punkte: ["a", "b"] },
+  ]);
+});
+
 const MIGRATIONEN = join(WEB, "../supabase/migrations");
 const SUCHTEXT = readdirSync(MIGRATIONEN)
   .sort()

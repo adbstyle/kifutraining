@@ -59,6 +59,8 @@ function baueSchema(streng: boolean) {
     material: materialSchema(streng),
     ablauf: z
       .discriminatedUnion("art", [
+        // Die drei Stufen sind Freitext wie die Varianten; `ueben` sind dessen
+        // Zeilen (eine mit «- » ist ein Aufzählungspunkt).
         obj({
           art: z.literal("fahrplan"),
           offen_starten: z.string(),

@@ -87,12 +87,15 @@ verlassen — über einen Link, das Kontomenü, den Zurück-Knopf des Browsers, 
 Schliessen —, fragt die Anwendung nach, ob die Angaben verloren gehen sollen. Scheitert das
 Speichern, bleiben Angaben und Zeichnung stehen.
 
-Ablauf und Varianten sind Freitexte und stehen gleich da: Zeilenumbrüche und Leerzeilen bleiben,
+Ablauf und Varianten sind Freitexte und stehen gleich da, ebenso die drei Stufen des
+methodischen Fahrplans — Offen starten, Üben, Wetteifern: Zeilenumbrüche und Leerzeilen bleiben,
 wie der Trainer sie gesetzt hat. Eine Zeile, die mit «- » oder «* » beginnt, wird zum
 Aufzählungspunkt, eine mit «1. » zum Punkt einer nummerierten Liste; aufeinanderfolgende Punkte
 bilden eine Liste, jede andere Zeile beendet sie. Mehr formatiert die Anwendung nicht — keine
 Fettschrift, keine Überschriften, keine Links, keine verschachtelten Listen; alles Übrige
-erscheint als Text. Die Stufen des methodischen Fahrplans bleiben ohne diese Formatierung. Die
+erscheint als Text. Auch beim Üben ist eine Zeile ohne Listenzeichen gewöhnlicher Text; die
+Schritte der Manual-Übungen und der bisher erfassten Übungen stehen als Aufzählung da, wie
+vorher. Die Felder tragen keine Hilfetexte; nur ein Fehler beim Speichern erscheint darunter. Die
 Varianten stehen unmittelbar nach dem Ablauf, ob er als Freitext oder als Fahrplan erfasst ist.
 
 ## Material
@@ -307,6 +310,6 @@ Eine begonnene, noch nicht gespeicherte Übung bleibt nicht als Entwurf erhalten
 Erfassen gezeichnete Diagramm wird bis zum Speichern nirgends zwischengesichert. Die
 Zeichenfläche ist für Maus und Tastatur gebaut, nicht für die Bedienung per Touch.
 
-Die Listenzeichen in Ablauf und Varianten lassen sich nicht abschalten: Beginnt eine Zeile mit
+Die Listenzeichen in Ablauf, Fahrplan und Varianten lassen sich nicht abschalten: Beginnt eine Zeile mit
 «- », «* » oder einer Zahl mit Punkt und Leerzeichen — etwa «2. Halbzeit» —, wird sie zum
 Listenpunkt, auch wenn sie so nicht gemeint war.

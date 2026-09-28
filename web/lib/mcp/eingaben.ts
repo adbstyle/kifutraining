@@ -109,6 +109,8 @@ export const UebungAusgabe = UebungKopf.extend({
     .nullable(),
   /** Material gegliedert: Liste aus dem Diagramm-Vorrat und freie Ergänzung. */
   material: materialSchema(),
+  /** Die drei Stufen sind Freitext wie `aufbau` und `varianten`; `ueben` sind
+   *  dessen Zeilen (eine mit «- » ist ein Aufzählungspunkt). */
   methodischer_fahrplan: z
     .object({
       offen_starten: z.string(),

@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { Freitext } from "./Freitext";
 
 export type FahrplanData = {
   offen_starten: string;
@@ -8,7 +9,8 @@ export type FahrplanData = {
 
 /* Signatur-Komponente: der methodische Fahrplan (Offen starten → Üben →
    Wetteifern) als Folge dreier Stufen. Leere Stufen (Altbestand) werden
-   weggelassen.
+   weggelassen. Jede Stufe ist Freitext wie Ablauf und Varianten: «Üben» ist
+   als seine Zeilen gespeichert, die übrigen als ein Text.
 
    Die Stufe beschriftet, der Ablauftext trägt: darum steht der Stufenname
    klein (type-title-small) und der Text darunter in type-body-large — er
@@ -45,17 +47,16 @@ export function MethodischerFahrplan({
       {present.map((s) => (
         <li key={s.key}>
           <p className="type-title-small text-on-surface">{s.title}</p>
-          {s.key === "ueben" ? (
-            <ul className="type-body-large mt-1.5 list-disc space-y-1 pl-5 text-on-surface">
-              {fahrplan.ueben!.map((u, j) => (
-                <li key={j}>{u}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="type-body-large mt-1.5 text-on-surface">
-              {s.key === "offen_starten" ? fahrplan.offen_starten : fahrplan.wetteifern}
-            </p>
-          )}
+          <Freitext
+            className="mt-1.5"
+            text={
+              s.key === "ueben"
+                ? fahrplan.ueben!.join("\n")
+                : s.key === "offen_starten"
+                  ? fahrplan.offen_starten
+                  : (fahrplan.wetteifern ?? "")
+            }
+          />
         </li>
       ))}
     </ol>

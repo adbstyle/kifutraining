@@ -64,7 +64,6 @@ import { VerlassenWarnung } from "@/components/layout/VerlassenWarnung";
 import { LEERES_DIAGRAMM, type DiagrammData } from "@/lib/diagramm";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
-import { FREITEXT_HINWEIS } from "@/lib/freitext";
 
 /** Zwei zusammengehörige Felder auf einer Zeile, ab `sm`. */
 const PAAR = "grid gap-5 sm:grid-cols-2 sm:items-start";
@@ -672,7 +671,7 @@ export function ExerciseForm({
               value={offenStarten}
               onChange={(e) => setOffenStarten(e.target.value)}
               error={!!err.offen_starten}
-              supportingText={err.offen_starten ?? "Pflichtfeld — wie die Übung offen startet."}
+              supportingText={err.offen_starten}
             />
             <TextArea
               label="Üben"
@@ -680,9 +679,7 @@ export function ExerciseForm({
               value={ueben}
               onChange={(e) => setUeben(e.target.value)}
               error={!!err.ueben}
-              supportingText={
-                err.ueben ?? "Pflichtfeld — mindestens ein Schritt, einer pro Zeile."
-              }
+              supportingText={err.ueben}
             />
             <TextArea
               label="Wetteifern"
@@ -690,7 +687,7 @@ export function ExerciseForm({
               value={wetteifern}
               onChange={(e) => setWetteifern(e.target.value)}
               error={!!err.wetteifern}
-              supportingText={err.wetteifern ?? "Pflichtfeld — der spielerische Wettkampf-Teil."}
+              supportingText={err.wetteifern}
             />
           </>
         ) : (
@@ -700,12 +697,7 @@ export function ExerciseForm({
             value={aufbau}
             onChange={(e) => setAufbau(e.target.value)}
             error={!!err.aufbau}
-            supportingText={
-              err.aufbau ??
-              `${istFreiesSpiel
-                ? "Pflichtfeld — wie das Spiel gespielt wird."
-                : "Pflichtfeld — Aufbau und Ablauf der Übung."} ${FREITEXT_HINWEIS}`
-            }
+            supportingText={err.aufbau}
           />
         ))}
 
@@ -713,7 +705,6 @@ export function ExerciseForm({
           label="Varianten (optional)"
           name="varianten"
           defaultValue={initial.varianten ?? ""}
-          supportingText={FREITEXT_HINWEIS}
         />
 
         {/* Erscheinungsform und Übungstyp stehen beisammen wie im Abschnitt
@@ -733,7 +724,6 @@ export function ExerciseForm({
                 value={form}
                 onChange={setForm}
                 placeholder="Keine Erscheinungsform"
-                supportingText="Welche Erscheinungsformen des Manuals die Übung bedient."
               />
             )}
 
