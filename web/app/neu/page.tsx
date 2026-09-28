@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/ui";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { createExercise } from "@/lib/actions/exercises";
-import { alsAltersstufe, einordnungsSlugsFuer } from "@/lib/altersstufe";
+import {
+  alsAltersstufe,
+  einordnungsSlugsFuer,
+  traegtHauptteilkategorie,
+} from "@/lib/altersstufe";
+import { hauptteilkategorieSlugs } from "@/lib/vocab";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Neue Übung — KiFu", robots: { index: false } };
@@ -10,7 +15,7 @@ export const metadata: Metadata = { title: "Neue Übung — KiFu", robots: { ind
 export default async function NeuePage({
   searchParams,
 }: {
-  searchParams: Promise<{ stufe?: string; teil?: string }>;
+  searchParams: Promise<{ stufe?: string; teil?: string; kategorie?: string }>;
 }) {
   const sp = await searchParams;
   // Vorbelegung aus der Adresse: wer aus einem leeren Trainingsblock heraus
@@ -20,6 +25,14 @@ export default async function NeuePage({
   const altersstufe = alsAltersstufe(sp.stufe);
   const teil =
     sp.teil && einordnungsSlugsFuer(altersstufe).includes(sp.teil) ? sp.teil : undefined;
+  // Die Hauptteilkategorie nur, wo die Einordnung sie trägt — ein leerer
+  // Kinderfussball-Hauptteil-Block schickt sie mit.
+  const kategorie =
+    teil &&
+    traegtHauptteilkategorie(altersstufe, teil) &&
+    (hauptteilkategorieSlugs as string[]).includes(sp.kategorie ?? "")
+      ? sp.kategorie
+      : undefined;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
@@ -35,7 +48,7 @@ export default async function NeuePage({
         altersstufe={altersstufe}
         stufenWahl="waehlbar"
         kontext="bibliothek"
-        initial={{ trainingsteil: teil }}
+        initial={{ trainingsteil: teil, hauptteilkategorie: kategorie }}
         diagrammZeichnen
         submitLabel="Übung speichern"
       />
