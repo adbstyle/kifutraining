@@ -107,7 +107,14 @@ export function EinordnungField({
         value={auswahl}
         onChange={waehle}
         error={!!error}
-        supportingText={error ?? supportingText}
+        supportingText={
+          error ??
+          // Steht der Hauptteil ohne Kategorie da (Vorbelegung, Vorschlag beim
+          // Überführen), passt er zu keiner Option, und das Feld sähe leer aus.
+          (traegtHauptteilkategorie(altersstufe, wert) && !hauptteilkategorie
+            ? "Hauptteil — bitte noch die Kategorie wählen."
+            : supportingText)
+        }
       />
       {/* Dezenter Hinweis nach dem Muster der Hinweiszeile des
           Trainings-Editors (Styleguide «Leerzustand & Hinweiszeile»):

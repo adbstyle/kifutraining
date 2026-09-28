@@ -301,7 +301,11 @@ export function ExercisePickerDialog({
                 <>
                   <span>{leerBestandText(ziel, altersstufe)} Erfasse zuerst eine.</span>
                   <Link
-                    href={`/neu?stufe=${altersstufe}&teil=${trainingsteil}`}
+                    // Im Kinderfussball-Hauptteil kennt der Block seine Kategorie;
+                    // sie reist mit, sonst stünde das Einordnungsfeld leer da.
+                    href={`/neu?stufe=${altersstufe}&teil=${trainingsteil}${
+                      hauptteilkategorie ? `&kategorie=${hauptteilkategorie}` : ""
+                    }`}
                     className="state focus-ring inline-flex items-center gap-1.5 rounded-flaeche px-3 py-1.5 type-label-large text-primary"
                   >
                     <Plus size={18} strokeWidth={2} aria-hidden />
