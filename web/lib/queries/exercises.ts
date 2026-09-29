@@ -1,13 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import { hauptteilkategorie as hauptteilkategorieLabels } from "@/lib/vocab";
 import {
   getExercisesFuer,
   type ExerciseFilters,
   type ExerciseListRow,
 } from "@/lib/queries/uebungen-fuer";
 import type { Altersstufe } from "@/lib/altersstufe";
-import { EINORDNUNG_LABEL } from "@/lib/labels";
+import { uebungEckdaten } from "@/lib/eckdaten";
 import { hatDiagramm } from "@/lib/diagramm";
 import type { ExerciseCardData } from "@/components/ui";
 
@@ -159,13 +158,7 @@ export function toCardData(row: ExerciseListRow): ExerciseCardData {
   return {
     slug: row.slug,
     name: row.name,
-    trainingsteilLabel:
-      EINORDNUNG_LABEL[row.trainingsteil] ?? row.trainingsteil,
-    hauptteilkategorieLabel: row.hauptteilkategorie
-      ? hauptteilkategorieLabels[
-          row.hauptteilkategorie as keyof typeof hauptteilkategorieLabels
-        ] ?? row.hauptteilkategorie
-      : null,
+    eckdaten: uebungEckdaten(row),
     herkunft: row.source,
     visibility: row.visibility,
     bildUrl: row.bild_url,

@@ -182,9 +182,19 @@ Wortteile genügen. Sobald etwas im Suchfeld steht, tritt an die Stelle der Lupe
 Suche mit einem Klick leert und den Cursor darin stehen lässt; die übrigen Filter bleiben dabei
 gesetzt. Der Katalog zeigt beide Altersstufen nebeneinander — er ist der eine Ort, an dem der ganze
 sichtbare Bestand zusammensteht. Jede Übung steht dort als Kachel: Bild oder Diagramm, darunter
-Name und Einordnung, und auf dem Bild die Herkunft — Kifu-Manual, Community oder der eigene
-Entwurf. Die Alterskategorie steht nicht auf der Kachel; sie ist der Filter, mit dem man die Liste
-betritt, und stünde sonst auf jeder Kachel derselben Liste noch einmal. Gefiltert wird nach
+der Name und die Eckdaten, und auf dem Bild die Herkunft — Kifu-Manual, Community oder der eigene
+Entwurf. Die Eckdaten sagen, ohne dass man die Übung öffnet, ob sie zu Mannschaft und Platz
+passt: die Alterskategorien als Buchstaben, immer aufsteigend von G bis A, die Einordnung, das
+Feld und die Anzahl Spieler:innen, etwa «F E · Fussball spielen lernen · Kleinfeld · 6–8 Sp.».
+Die Einordnung steht nur auf ihrer feinsten Ebene — im Kinderfussball-Hauptteil die
+Hauptteilkategorie, sonst der Trainingsteil oder der Junioren-Block. Als Feld steht die
+Spielfeldgrösse in Metern, wo eine erfasst ist, sonst der Feldtyp einer Kinderfussball-Übung;
+die Spielerzahl ist abgekürzt und wird von einer Sprachausgabe ausgeschrieben vorgelesen. Was
+eine Übung nicht erfasst hat, fehlt ohne Platzhalter. Die Eckdaten nehmen höchstens zwei Zeilen
+ein; was darüber hinausginge, endet in Auslassungspunkten. Die Alterskategorien stehen auch dann
+auf der Kachel, wenn nach ihnen gefiltert wird — der Filter ist freiwillig, und ohne ihn stehen G
+bis A gemischt in der Liste. Übungsseite und Druck zeigen die Einordnung weiterhin mit
+Trainingsteil und Hauptteilkategorie. Gefiltert wird nach
 Trainingsteil, wobei die Kinderfussball-Teile und die sieben Junioren-Blöcke in zwei beschrifteten
 Gruppen stehen — das Auffangen kommt in beiden Gruppen vor und heisst dort gleich; die Beschriftung
 sagt, welches gemeint ist. Der Kinderfussball-Hauptteil steht dort nicht als Ganzes, sondern als
