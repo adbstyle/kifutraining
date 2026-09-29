@@ -8,7 +8,7 @@ def test_vokabular_matches_schema_enums():
     props = schema["properties"]
 
     assert set(vocab["erscheinungsform"]) == set(props["erscheinungsform"]["items"]["enum"])
-    assert set(vocab["feldtyp"]) == {v for v in props["feldtyp"]["enum"] if v is not None}
+    assert set(vocab["feldtyp"]) == set(props["feldtyp"]["enum"])
     assert set(vocab["trainingsteil"]) == set(props["trainingsteil"]["enum"])
     assert set(vocab["hauptteilkategorie"]) == set(props["hauptteilkategorie"]["enum"])
 

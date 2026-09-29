@@ -1,6 +1,6 @@
 # Schiessbude
 
-**Trainingsteil:** ausklang · **Kategorien:** G, F, E
+**Trainingsteil:** ausklang · **Kategorien:** G, F, E · **Feldtyp:** Grossfeld
 
 ## Aufbau
 

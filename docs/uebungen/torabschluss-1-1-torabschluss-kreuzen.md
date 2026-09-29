@@ -1,6 +1,6 @@
 # 1:1 Torabschluss kreuzen
 
-**Trainingsteil:** hauptteil · **Kategorien:** E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
+**Trainingsteil:** hauptteil · **Kategorien:** E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Grossfeld
 
 ## Offen starten
 

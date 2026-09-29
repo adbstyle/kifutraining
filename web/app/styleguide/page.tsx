@@ -27,6 +27,7 @@ import {
   Banner,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
+import { uebungEckdaten } from "@/lib/eckdaten";
 import { ChipsDemo } from "./ChipsDemo";
 import { ChoiceChipDemo } from "./ChoiceChipDemo";
 import { MenuDemo } from "./MenuDemo";
@@ -1293,12 +1294,19 @@ export default function Styleguide() {
           einzige satte Farbfeld auf der Karte; an seinem <strong>Kopf</strong>{" "}
           liegt ein Verlauf aus <code>scrim</code> (<code>top-0 h-16</code>) —
           er schützt, was dort steht: die Herkunfts-Plakette links und den
-          Favoriten-Knopf rechts. Die <strong>Alterskategorie steht nicht auf
-          der Karte</strong>: Sie ist der Filter, mit dem man die Liste betritt,
-          und auf jeder Kachel derselben Liste wiederholte sie bloss die eigene
-          Auswahl — die Herkunft dagegen ist auf jeder Kachel eine andere. Den
-          Titel trägt die Kartenfläche unter dem Bild; er braucht den Verlauf
-          nicht. Überfahren färbt die ganze Karte über{" "}
+          Favoriten-Knopf rechts. Den Titel trägt die Kartenfläche unter dem
+          Bild; er braucht den Verlauf nicht. Darunter stehen die{" "}
+          <strong>Eckdaten</strong> in <code>type-body-medium</code>, getrennt
+          durch «·»: Alterskategorien als Buchstaben (aufsteigend G bis A),
+          die feinste Einordnung, das Feld und die Spieler:innen — genug, um
+          ohne Öffnen zu sehen, ob eine Übung zu Mannschaft und Platz passt.
+          Das Feld ist die Spielfeldgrösse, wo eine erfasst ist, sonst der
+          Feldtyp; die Spielerzahl kürzt «Sp.» ab und wird voll vorgelesen.
+          Was eine Übung nicht trägt, fällt ohne Platzhalter weg. Die Zeile
+          hat höchstens zwei Zeilen (<code>line-clamp-2</code>) und endet
+          sonst in Auslassungspunkten. Die Zeile setzt{" "}
+          <code>uebungEckdaten</code> zusammen — im Katalog wie in diesen
+          Beispielen. Überfahren färbt die ganze Karte über{" "}
           <code>state</code> — kein eigener Hover-Ton, und die Ebene sitzt auf
           dem Link, der die Karte deckt.
         </p>
@@ -1309,7 +1317,16 @@ export default function Styleguide() {
             ex={{
               slug: "schiessbude",
               name: "Schiessbude",
-              trainingsteilLabel: "Ausklang",
+              eckdaten: uebungEckdaten({
+                altersstufe: "kinderfussball",
+                trainingsteil: "ausklang",
+                hauptteilkategorie: null,
+                feldtyp: "kleinfeld",
+                spielfeld_laenge_m: null,
+                spielfeld_breite_m: null,
+                kategorien: ["E", "G", "F"],
+                anzahl_kinder: { min: 6, max: 10 },
+              }),
               herkunft: "manual",
             }}
             actionSlot={
@@ -1325,8 +1342,16 @@ export default function Styleguide() {
             ex={{
               slug: "mein-4-gegen-4",
               name: "Mein 4-gegen-4",
-              trainingsteilLabel: "Hauptteil",
-              hauptteilkategorieLabel: "Fussball spielen lernen",
+              eckdaten: uebungEckdaten({
+                altersstufe: "kinderfussball",
+                trainingsteil: "hauptteil",
+                hauptteilkategorie: "fussball-spielen-lernen",
+                feldtyp: "freies_feld",
+                spielfeld_laenge_m: 20,
+                spielfeld_breite_m: 15,
+                kategorien: ["F", "E"],
+                anzahl_kinder: { min: 8, max: 8 },
+              }),
               herkunft: "user",
               visibility: "private",
             }}
@@ -1335,7 +1360,16 @@ export default function Styleguide() {
             ex={{
               slug: "toblerone",
               name: "Toblerone",
-              trainingsteilLabel: "Einleitung",
+              eckdaten: uebungEckdaten({
+                altersstufe: "juniorenfussball",
+                trainingsteil: "jun-spielformen",
+                hauptteilkategorie: null,
+                feldtyp: null,
+                spielfeld_laenge_m: 40,
+                spielfeld_breite_m: 30,
+                kategorien: ["D", "C", "B", "A"],
+                anzahl_kinder: { min: 10 },
+              }),
               herkunft: "user",
               visibility: "public",
             }}
@@ -1442,6 +1476,10 @@ export default function Styleguide() {
           <TextArea
             label="Aufbau / Beschreibung"
             supportingText="Mehrzeilig — wächst bis 10 Zeilen, dann scrollen."
+          />
+          <TextArea
+            label="Weiteres Material"
+            placeholder="Mit placeholder: leer spricht der Platzhalter, das Label erscheint erst geschwebt."
           />
         </div>
 
@@ -1798,7 +1836,7 @@ export default function Styleguide() {
           (der Junioren-Katalog führt elf Werte, und jeder ist ein ganzer Satz).
           Und der <code>placeholder</code> sagt hier nicht mehr den Leerfall
           einer Abfrage («Alle Stufen»), sondern den einer Eingabe
-          («Kategorien wählen …»): Im Filter heisst nichts gewählt <em>alles</em>,
+          («Alterskategorie wählen …»): Im Filter heisst nichts gewählt <em>alles</em>,
           im Formular heisst es <em>nichts</em>.
         </p>
         <MultiSelectDemo />

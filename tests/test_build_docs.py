@@ -6,7 +6,7 @@ import build_docs
 VOCAB = {
     "erscheinungsform": {"spiel-kreativ-gestalten": "Das Spiel kreativ gestalten",
                          "ball-entschlossen-erobern": "Den Ball entschlossen erobern"},
-    "feldtyp": {"kleinfeld": "Kleinfeld"},
+    "feldtyp": {"kleinfeld": "Kleinfeld", "freies_feld": "Freies Feld"},
 }
 
 def test_render_exercise_markdown():
@@ -37,7 +37,7 @@ def test_render_exercise_markdown():
 def test_render_auffangen_aufbau():
     doc = {
         "id": "dribblestart", "name": "Dribblestart",
-        "trainingsteil": "auffangen", "kategorien": ["G", "F", "E"],
+        "trainingsteil": "auffangen", "feldtyp": "freies_feld", "kategorien": ["G", "F", "E"],
         "aufbau": "Den Kindern steht vor dem Training ein Feld zur Verfügung.",
         "quelle": {"datei": "Manual_Kinderfussball_D.pdf", "seite": 60},
     }

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Übung",
   "type": "object",
-  "required": ["id", "name", "trainingsteil", "kategorien", "quelle"],
+  "required": ["id", "name", "trainingsteil", "feldtyp", "kategorien", "quelle"],
   "additionalProperties": false,
   "properties": {
     "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
@@ -17,7 +17,10 @@
       },
       "uniqueItems": true
     },
-    "feldtyp": { "enum": ["kleinfeld", "grossfeld", "freies_feld", null] },
+    "feldtyp": {
+      "$comment": "Pflicht für jede Manual-Übung (Story #306): ohne erkennbares Spielfeld gilt das freie Feld.",
+      "enum": ["kleinfeld", "grossfeld", "freies_feld"]
+    },
     "spielfeld": {
       "$comment": "Länge und Breite in Metern, nur beim freien Feld (Story #272) — spiegelt ex_spielfeld_je_feld und ex_spielfeld_bereich.",
       "type": "object",
@@ -93,10 +96,7 @@
     {
       "$comment": "Eine Spielfeldgrösse gibt es nur beim freien Feld; Kleinfeld und Grossfeld haben ihre Masse (Story #272).",
       "if": { "required": ["spielfeld"] },
-      "then": {
-        "properties": { "feldtyp": { "const": "freies_feld" } },
-        "required": ["feldtyp"]
-      }
+      "then": { "properties": { "feldtyp": { "const": "freies_feld" } } }
     },
     {
       "$comment": "Ablauf-Form je Einordnung (Epic #72, Story 2): Einleitung und Hauptteil tragen den methodischen Fahrplan — ausser der Hauptteilkategorie «Fussball spielen», die als freies Spiel eine Beschreibung trägt.",

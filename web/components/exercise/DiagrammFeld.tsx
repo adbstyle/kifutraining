@@ -67,11 +67,6 @@ export function DiagrammFeld({
           initial={initial}
           vorlagen={vorlagen}
           onChange={onChange}
-          fuss={
-            <p className="type-body-small text-on-surface-mittel">
-              Wird mit der Übung gespeichert.
-            </p>
-          }
         />
       </div>
       <div className="flex flex-col gap-3 sm:hidden">

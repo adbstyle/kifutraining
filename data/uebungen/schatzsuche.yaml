@@ -2,7 +2,7 @@ id: schatzsuche
 name: Schatzsuche
 trainingsteil: einleitung
 erscheinungsform: []
-feldtyp: null
+feldtyp: freies_feld
 kategorien:
 - G
 - F

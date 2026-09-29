@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Check, ClipboardPaste, Copy, Ellipsis, FlipHorizontal2, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, Waypoints, X } from "lucide-react";
 import { Button, IconButton, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -278,7 +278,6 @@ export function DiagrammZeichnen({
   initial,
   vorlagen,
   onChange,
-  fuss,
 }: {
   initial: DiagrammData;
   /** Verfügbare Vorlagen-Diagramme (#61, #246 AK 3). */
@@ -287,8 +286,6 @@ export function DiagrammZeichnen({
    *  Drag erst beim Loslassen. `ausVorlage`: die Änderung ist eine übernommene
    *  Vorlage. */
   onChange: (data: DiagrammData, info: { ausVorlage: boolean }) => void;
-  /** Optionale Zeile unter der Fläche. */
-  fuss?: ReactNode;
 }) {
   const [elemente, setElemente] = useState<DiagrammElement[]>(initial.elemente);
   // Auswahl als Liste (#67): leer / ein Element / mehrere. Ein einzelnes Element
@@ -1291,7 +1288,6 @@ export function DiagrammZeichnen({
         )}
       </div>
 
-      {fuss}
       {hinweis && (
         <p className="type-body-small text-error" role="status" data-testid="diagramm-hinweis">
           {hinweis}

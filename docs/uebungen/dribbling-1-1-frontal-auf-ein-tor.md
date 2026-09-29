@@ -1,6 +1,6 @@
 # 1:1 frontal auf ein Tor
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Das Spiel kreativ gestalten, Den Ball entschlossen erobern · **Feldtyp:** Kleinfeld
 
 ## Offen starten
 

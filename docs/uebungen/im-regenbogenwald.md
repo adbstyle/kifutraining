@@ -1,6 +1,6 @@
 # Im Regenbogenwald
 
-**Trainingsteil:** einleitung · **Kategorien:** G, F, E
+**Trainingsteil:** einleitung · **Kategorien:** G, F, E · **Feldtyp:** Freies Feld
 
 ## Offen starten
 

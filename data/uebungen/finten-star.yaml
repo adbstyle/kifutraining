@@ -2,7 +2,7 @@ id: finten-star
 name: Finten-Star
 trainingsteil: einleitung
 erscheinungsform: []
-feldtyp: null
+feldtyp: freies_feld
 kategorien:
 - F
 - E

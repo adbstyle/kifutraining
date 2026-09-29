@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useActionState, startTransition } from "react";
-import { ArrowLeftRight, Save } from "lucide-react";
+import { ArrowLeftRight } from "lucide-react";
 import {
   TextField,
   TextArea,
@@ -119,7 +119,7 @@ export function ExerciseForm({
   ueberfuehrbar = false,
   submitLabel,
   bildEntfernenMoeglich = false,
-  fussnote = "Neue Übungen sind zunächst privat (Entwurf).",
+  fussnote,
   materialBasis = null,
   diagramm: gespeichertesDiagramm,
   vorlagenAusser,
@@ -557,9 +557,9 @@ export function ExerciseForm({
               onChange={setKat}
               searchable={false}
               actions={false}
-              placeholder="Kategorien wählen …"
+              placeholder="Alterskategorie wählen …"
               error={!!err.kat}
-              supportingText={err.kat ?? "Für welche Alterskategorien die Übung taugt."}
+              supportingText={err.kat}
             />
           </div>
         </div>
@@ -584,11 +584,6 @@ export function ExerciseForm({
             hauptteilkategorie={zeigtHkat ? hkat : ""}
             onChange={wechsleEinordnung}
             error={err.trainingsteil ?? err.hauptteilkategorie}
-            supportingText={
-              kontext === "fassung"
-                ? "Wo die Übung in diesem Training liegt."
-                : "Wo die Übung im Trainingsablauf ihren Platz hat."
-            }
             hinweis={entfallHinweis}
           />
         </div>
@@ -662,10 +657,9 @@ export function ExerciseForm({
                 defaultValue={initial.anzahl_kinder?.max ?? undefined}
               />
             </div>
-            <p className={`type-body-small mt-1.5 ${err.anzahl_max ? "text-error" : "text-on-surface-mittel"}`}>
-              {err.anzahl_max ??
-                "Mindest- und Höchstzahl der Spieler:innen, z. B. 4 bis 8. Leer lassen, wenn beliebig."}
-            </p>
+            {err.anzahl_max && (
+              <p className="type-body-small mt-1.5 text-error">{err.anzahl_max}</p>
+            )}
           </div>
         </div>
         {zeigtFeldtyp && zeigtSpielfeld && spielfeldFeld}
@@ -851,7 +845,6 @@ export function ExerciseForm({
 
       <div className="flex items-center gap-3 border-t border-linie pt-5">
         <Button type="submit" size="lg" disabled={isPending || isCompressing}>
-          <Save size={20} strokeWidth={2} aria-hidden />
           {isCompressing
             ? "Foto wird optimiert …"
             : isPending
