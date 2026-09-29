@@ -60,7 +60,9 @@ const { setzeAn, aendereTermin, entferneTermin, setzeErneutAn, BEREITS_ANGESETZT
   "../lib/kern/termine"
 );
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
-const { legeUebungAn } = await import("../lib/kern/uebungen");
+const { legeUebungAn, aendereUebung, veroeffentlicheUebung, setzeUebungAufEntwurf, TRAGWEITE_UEBUNG_VEROEFFENTLICHEN } =
+  await import("../lib/kern/uebungen");
+const { aktualisiereZeile, UEBUNG_ZEILE } = await import("../lib/kern/zugriff");
 const { getExercisesFuer } = await import("../lib/queries/uebungen-fuer");
 
 const URL_ = process.env.SUPABASE_URL!;
@@ -1425,6 +1427,197 @@ try {
       },
     ]);
     assert.equal(await uebungenVon(a.id), vorher, "nichts angelegt");
+  });
+
+  // ── Übung ändern und öffentlich schalten (#144) ──────────────────────────
+  const UNVERAENDERT = "Die Übung ist unverändert.";
+  const FREMDE_UEBUNG =
+    "Diese Übung stammt aus dem Kifu-Manual oder gehört jemand anderem. Du kannst sie ansehen und " +
+    "in deinen Bestand kopieren, aber nicht ändern.";
+  const NICHT_SICHTBAR = "Diese Übung gibt es nicht oder sie ist für dein Konto nicht sichtbar.";
+  const UEBUNG_SPALTEN =
+    "slug, name, trainingsteil, hauptteilkategorie, kategorien, methodischer_fahrplan, aufbau, " +
+    "varianten_text, erscheinungsform, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, anzahl_kinder, " +
+    "material_liste, material, visibility, updated_at";
+  /** Die Zeile ohne den Zeitstempel, den jeder Update neu setzt. */
+  const ohneZeit = ({ updated_at: _z, ...rest }: Record<string, unknown>) => rest;
+  const uebungszeile = async (id: string) => {
+    const { data, error } = await admin.from("exercises").select(UEBUNG_SPALTEN).eq("id", id).single<Record<string, unknown>>();
+    if (error) throw error;
+    return data;
+  };
+  const probe = wert(
+    await legeUebungAn(a.supabase, a.id, {
+      altersstufe: "kinderfussball",
+      name: "KI-Probe Ändern",
+      einordnung: "einleitung",
+      kategorien: ["F"],
+      offenStarten: "Offen",
+      ueben: "Üben",
+      wetteifern: "Wett",
+      varianten: "Mit zwei Bällen",
+      erscheinungsformen: ["mutig-tore-erzielen"],
+      material: { liste: [{ art: "pylone", farbe: "rot", menge: 4 }], ergaenzung: ["Pfeife"] },
+    }),
+  );
+
+  await pruefe("Übung ändern: nur das Genannte, null leert, material je Teil, Slug bleibt (AK 1)", async () => {
+    const vorher = await uebungszeile(probe.id);
+    const r = wert(await aendereUebung(a.supabase, a.id, { kennung: probe.id, aenderung: { name: "KI-Probe Neu" } }));
+    assert.deepEqual(r, { id: probe.id, slug: probe.slug, sichtbarkeit: "entwurf" });
+    assert.deepEqual(
+      ohneZeit(await uebungszeile(probe.id)),
+      { ...ohneZeit(vorher), name: "KI-Probe Neu" },
+      "nur der Name ändert sich, auch nicht der Slug",
+    );
+
+    wert(await aendereUebung(a.supabase, a.id, { kennung: probe.slug, aenderung: { varianten: null, material: { ergaenzung: [] } } }));
+    const danach = await uebungszeile(probe.id);
+    assert.equal(danach.varianten_text, null);
+    assert.deepEqual(danach.material, []);
+    assert.deepEqual(danach.material_liste, [{ art: "pylone", farbe: "rot", menge: 4 }], "die gezählte Liste bleibt");
+
+    // Leer oder nur die gleiche Altersstufe: nichts zu ändern bzw. nichts geändert.
+    fehler(await aendereUebung(a.supabase, a.id, { kennung: probe.id, aenderung: {} }), "eingabe", "Nenne mindestens eine Angabe, die sich ändern soll.");
+    wert(await aendereUebung(a.supabase, a.id, { kennung: probe.id, aenderung: {}, altersstufe: "kinderfussball" }));
+    assert.deepEqual(await uebungszeile(probe.id), danach, "kein Schreiben, auch updated_at bleibt");
+  });
+
+  await pruefe("Übung ändern: jsonb in anderer Schlüsselfolge gilt als gleich — geschrieben wird nur Geändertes", async () => {
+    // jsonb gibt Schlüssel in eigener Folge zurück ({max, min}, {ueben,
+    // wetteifern, offen_starten}); das darf nicht als Änderung zählen.
+    const zweite = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "kinderfussball",
+        name: "KI-Probe Zwei",
+        einordnung: "hauptteil",
+        hauptteilkategorie: "vielseitigkeit-erleben",
+        kategorien: ["E"],
+        offenStarten: "Offen",
+        ueben: ["- links", "- rechts"],
+        wetteifern: "Wett",
+        feldtyp: "freies_feld",
+        spielfeld: { laengeM: 30, breiteM: 20 },
+        anzahlKinder: { min: 6, max: 8 },
+        material: { liste: [{ art: "teller", menge: 8 }] },
+      }),
+    );
+    const vorher = await uebungszeile(zweite.id);
+    wert(await aendereUebung(a.supabase, a.id, { kennung: zweite.id, aenderung: {}, altersstufe: "kinderfussball" }));
+    assert.deepEqual(await uebungszeile(zweite.id), vorher, "nur die gleiche Altersstufe: nichts geschrieben, updated_at bleibt");
+    wert(await aendereUebung(a.supabase, a.id, { kennung: zweite.id, aenderung: { name: "KI-Probe Zwei neu" } }));
+    const danach = await uebungszeile(zweite.id);
+    assert.deepEqual(ohneZeit(danach), { ...ohneZeit(vorher), name: "KI-Probe Zwei neu" });
+    assert.notEqual(danach.updated_at, vorher.updated_at, "der Name wurde geschrieben");
+  });
+
+  await pruefe("Übung ändern: neue Einordnung nennt Altwerte und lässt die Übung sonst unverändert (AK 5, PC 2)", async () => {
+    const vorher = await uebungszeile(probe.id);
+    const r = await aendereUebung(a.supabase, a.id, { kennung: probe.id, aenderung: { einordnung: "ausklang" } });
+    fehler(r, "regel");
+    assert.ok(!r.ok);
+    assert.equal(r.hinweis, UNVERAENDERT);
+    assert.deepEqual(r.verstoesse?.map((v) => v.feld), ["aufbau", "offen_starten", "ueben", "wetteifern", "erscheinungsformen"]);
+    assert.ok(r.verstoesse?.[1].meldung.endsWith("setze «offen_starten» auf null, um sie zu entfernen."));
+    assert.deepEqual(await uebungszeile(probe.id), vorher, "die Übung ist unverändert");
+
+    // Die Altersstufe wechselt nie — der Verstoss reist mit den übrigen.
+    const stufe = await aendereUebung(a.supabase, a.id, { kennung: probe.id, aenderung: { name: " " }, altersstufe: "juniorenfussball" });
+    assert.ok(!stufe.ok);
+    assert.deepEqual(stufe.verstoesse?.map((v) => v.feld), ["altersstufe", "name"]);
+    assert.deepEqual(stufe.verstoesse?.[0].zulaessig, ["kinderfussball"]);
+
+    wert(
+      await aendereUebung(a.supabase, a.id, {
+        kennung: probe.id,
+        aenderung: { einordnung: "ausklang", offenStarten: null, ueben: null, wetteifern: null, erscheinungsformen: null, aufbau: "Auslaufen" },
+      }),
+    );
+    const danach = await uebungszeile(probe.id);
+    assert.equal(danach.trainingsteil, "ausklang");
+    assert.equal(danach.methodischer_fahrplan, null);
+    assert.equal(danach.aufbau, "Auslaufen");
+    assert.deepEqual(danach.erscheinungsform, []);
+  });
+
+  await pruefe("Übung ändern: nur eigene; Manual, fremde, unsichtbare und Junioren abgewiesen (AK 4, OoS 2/3)", async () => {
+    const manual = await vorlage("einleitung");
+    const f = fehler(await aendereUebung(a.supabase, a.id, { kennung: manual, aenderung: { name: "x" } }), "keine_rechte", FREMDE_UEBUNG);
+    assert.equal(f.fremd, true);
+    // Private Übung von a: für b unsichtbar; öffentlich: sichtbar, aber fremd.
+    fehler(await aendereUebung(b.supabase, b.id, { kennung: probe.id, aenderung: { name: "x" } }), "nicht_gefunden", NICHT_SICHTBAR);
+    fehler(await aendereUebung(a.supabase, a.id, { kennung: randomUUID(), aenderung: { name: "x" } }), "nicht_gefunden", NICHT_SICHTBAR);
+    fehler(await aendereUebung(a.supabase, a.id, { kennung: "gibt-es-nicht-000000", aenderung: { name: "x" } }), "nicht_gefunden", NICHT_SICHTBAR);
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: probe.id }));
+    const fremd = fehler(await aendereUebung(b.supabase, b.id, { kennung: probe.slug, aenderung: { name: "x" } }), "keine_rechte", FREMDE_UEBUNG);
+    assert.equal(fremd.fremd, true);
+    // Auch am Loader vorbei schützt die RLS (`ex_update`): Konto b schreibt die
+    // öffentliche Übung von a, trifft keine Zeile, und die Übung bleibt.
+    fehler(
+      await aktualisiereZeile(b.supabase, "exercises", probe.id, { name: "x" }, UEBUNG_ZEILE),
+      "nicht_gefunden",
+      NICHT_SICHTBAR,
+    );
+    assert.equal((await uebungszeile(probe.id)).name, "KI-Probe Neu");
+    wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: probe.id }));
+
+    const { data: jun, error } = await admin
+      .from("exercises")
+      .insert({
+        slug: `kern-db-jun-${randomBytes(4).toString("hex")}`,
+        name: "Kern-DB Junioren",
+        altersstufe: "juniorenfussball",
+        trainingsteil: "jun-spiel",
+        kategorien: ["D"],
+        aufbau: "Im Wechsel",
+        owner_id: a.id,
+        visibility: "private",
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    fehler(
+      await aendereUebung(a.supabase, a.id, { kennung: jun.id, aenderung: { name: "x" } }),
+      "regel",
+      "Übungen der Altersstufe Juniorenfussball lassen sich über den KI-Zugang noch nicht ändern.",
+    );
+    // Die Sichtbarkeit hängt an keiner Altersstufe.
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: jun.id }));
+    wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: jun.id }));
+  });
+
+  await pruefe("Übung ändern: die Fassung in einem Training bleibt unberührt (OoS 3)", async () => {
+    const tr = wert(await legeTrainingAn(a.supabase, a.id, { name: "Fassung-Probe", altersstufe: "kinderfussball", stufen: ["F"] })).id;
+    const f = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tr, einordnung: "ausklang", exerciseId: probe.id }));
+    wert(await aendereUebung(a.supabase, a.id, { kennung: probe.id, aenderung: { name: "KI-Probe Umbenannt", aufbau: "Neu" } }));
+    const { data } = await admin.from("training_exercises").select("name, aufbau").eq("id", f.fassungId).single();
+    assert.deepEqual(data, { name: "KI-Probe Neu", aufbau: "Auslaufen" });
+  });
+
+  await pruefe("Sichtbarkeit: öffentlich für alle mit Tragweite, zurückgezogen wieder privat, idempotent (AK 2/3, PC 3)", async () => {
+    const pub = wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: probe.slug }));
+    assert.deepEqual(pub, { id: probe.id, slug: probe.slug, sichtbarkeit: "oeffentlich", tragweite: TRAGWEITE_UEBUNG_VEROEFFENTLICHEN });
+    assert.equal(
+      TRAGWEITE_UEBUNG_VEROEFFENTLICHEN,
+      "Die Übung wird für alle sichtbar — mit allen Angaben, Bild und Feld-Diagramm — und trägt die " +
+        "Plakette «Community». Einen Trainernamen zeigt KiFu bei Übungen nicht.",
+    );
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: probe.id }));
+    const sieht = async () => (await b.supabase.from("exercises").select("id").eq("id", probe.id).maybeSingle()).data;
+    assert.ok(await sieht(), "ein anderes Konto sieht die öffentliche Übung");
+    fehler(await veroeffentlicheUebung(b.supabase, b.id, { kennung: probe.id }), "keine_rechte", FREMDE_UEBUNG);
+    fehler(await setzeUebungAufEntwurf(b.supabase, b.id, { kennung: probe.id }), "keine_rechte", FREMDE_UEBUNG);
+    fehler(await veroeffentlicheUebung(a.supabase, a.id, { kennung: await vorlage("einleitung") }), "keine_rechte", FREMDE_UEBUNG);
+
+    assert.deepEqual(wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: probe.id })), {
+      id: probe.id,
+      slug: probe.slug,
+      sichtbarkeit: "entwurf",
+    });
+    wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: probe.id }));
+    assert.equal(await sieht(), null, "zurückgezogen sieht es nur noch das eigene Konto");
+    fehler(await setzeUebungAufEntwurf(b.supabase, b.id, { kennung: probe.id }), "nicht_gefunden", NICHT_SICHTBAR);
+    fehler(await veroeffentlicheUebung(a.supabase, a.id, { kennung: randomUUID() }), "nicht_gefunden", NICHT_SICHTBAR);
   });
 } finally {
   await aufraeumen();

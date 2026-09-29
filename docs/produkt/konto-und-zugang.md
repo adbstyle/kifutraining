@@ -60,6 +60,21 @@ ungültig oder fehlt im Hauptteil die Hauptteilkategorie, kann der nächste Vers
 Verstösse nennen, die davon abhingen. Die Anzahl Spieler:innen
 und die Mengen der Materialliste nimmt sie nur als ganze Zahlen an.
 
+Ebenso ändert der Assistent eine eigene Übung des Kinderfussballs. Er nennt nur, was sich
+ändern soll; alles andere bleibt, wie es ist, und eine freiwillige Angabe entfernt er
+ausdrücklich. Geprüft wird danach die ganze Übung mit denselben Regeln wie beim Anlegen; verletzt
+sie eine, bleibt sie unverändert, und die Anwendung nennt jede verletzte Angabe. Wechselt die
+Einordnung, löscht die Anwendung gespeicherte Angaben, die die neue Einordnung nicht kennt,
+nicht still — sie nennt sie, und der Assistent entfernt sie ausdrücklich. Die Altersstufe
+einer Übung wechselt er nie, Bild und Feld-Diagramm ändert er nicht, und eine Übung, die schon
+in einem Training steht, behält dort ihre Fassung. Übungen aus dem Manual und die anderer
+Trainer ändert er nicht; er erfährt, dass sie nicht die eigenen sind. Eine eigene Übung beider
+Altersstufen schaltet der Assistent auch öffentlich und zieht sie wieder zurück, ohne
+nachzufragen. Vorher weiss er, was das bedeutet: Die Übung wird mit allen Angaben, Bild und
+Diagramm für alle sichtbar und trägt die Plakette „Community", einen Trainernamen zeigt sie
+nicht. Zurückgezogen verschwindet sie aus dem öffentlichen Bestand; was andere schon in ihre
+Trainings oder ihren Bestand übernommen haben, bleibt bestehen.
+
 Der Assistent kann ausserdem Trainings beider Altersstufen anlegen — mit Name, Altersstufe,
 Alterskategorien und auf Wunsch einem Ziel — und ihnen Übungen zuordnen. Das Training entsteht
 als privater Entwurf im eigenen Bestand und sieht in der Anwendung genauso aus, als hätte man es
@@ -208,7 +223,8 @@ Assistenten nie geben.
 Die Seite zum Erlauben nennt, welcher Assistent anfragt, mit welchem Konto man angemeldet ist
 und wohin es danach zurückgeht. Sie zählt auf, was ein Zugang künftig insgesamt darf — also
 auch das, was erst mit späteren Erweiterungen dazukommt und heute noch nicht geht: Übungen
-suchen und abrufen, eigene Übungen samt Feld-Diagramm anlegen und ändern, Trainings anlegen,
+suchen und abrufen, eigene Übungen samt Feld-Diagramm anlegen, kopieren, ändern, öffentlich
+schalten und zurückziehen, Trainings anlegen,
 überarbeiten, veröffentlichen, zurückziehen, übernehmen und löschen sowie Team-Trainings der
 eigenen Teams führen und auf Termine ansetzen. Nie erreichbar sind die Favoriten, die
 Verwaltung der Teams und das Konto selbst. Kommt eine dieser Fähigkeiten dazu, muss man nicht
@@ -274,14 +290,14 @@ Wann und wie oft ein Zugang benutzt wurde, ist nicht einsehbar; was über ihn ge
 gesondert festgehalten, und der Name eines Zugangs lässt sich nach dem Erlauben nicht mehr
 ändern. Die Grenze von fünf Zugängen gilt nur auf dem Weg über die Erlauben-Seite der
 Anwendung; ein Zugang, der an ihr vorbei zustande käme, würde nicht mitgezählt. Ändert jemand
-dasselbe Training gleichzeitig in der Anwendung, merkt das niemand; ein bereits offener
+dasselbe Training oder dieselbe Übung gleichzeitig in der Anwendung, merkt das niemand; ein bereits offener
 Browser-Tab zeigt eine Änderung des Assistenten erst nach dem Neuladen. Im Training ist eine
 Änderung des Assistenten nicht von einer eigenen zu unterscheiden.
 
 Einem Training ordnet der Assistent nur zu, was der Bestand hergibt; eine Übung, die dort
 fehlt, legt er zuerst als eigene an, und den Inhalt einer zugeordneten Übung ändert er nicht.
-Eigene Übungen legt er nur im Kinderfussball an, je Vorgang genau eine und nie als
-unvollständigen Entwurf; eine bestehende ändert er nicht. Feld-Diagramme erstellt er nicht, und
+Eigene Übungen legt und ändert er nur im Kinderfussball, je Vorgang genau eine und nie als
+unvollständigen Entwurf; löschen kann er sie nicht. Feld-Diagramme erstellt er nicht, und
 Fotos lädt er nicht hoch. Eine leere Variante legt der Assistent so wenig an wie die Anwendung, und eine
 einzelne Übung kopiert oder verschiebt er nicht von einer Variante in eine andere. Anders als
 der Dialog der Anwendung erzwingt der Weg über den Assistenten beim Anlegen der zweiten Variante

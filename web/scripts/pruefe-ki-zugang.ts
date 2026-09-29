@@ -63,7 +63,14 @@ import { ANZAHL_HINWEIS, HAUPTTEILKATEGORIE_SLUGS, LEER_HINWEIS, OHNE_DAUER_TEIL
 import { istHauptteil } from "../lib/gruppen";
 import { VokabularSchema, baueVokabular } from "../lib/mcp/vokabular";
 import { SucheEingabe } from "../lib/mcp/eingaben";
-import { UEBUNG_ANGABEN, UebungAnlegenEingabe, alsUebungInhalt, angabenText } from "../lib/mcp/uebung-eingaben";
+import {
+  UEBUNG_ANGABEN,
+  UebungAendernEingabe,
+  UebungAnlegenEingabe,
+  alsUebungInhalt,
+  alsUebungPatch,
+  angabenText,
+} from "../lib/mcp/uebung-eingaben";
 import { UEBUNG_STUFEN_KI } from "../lib/kern/uebung-inhalt";
 import { ausKern, erfolg, fehlerErgebnis } from "../lib/mcp/ergebnis";
 import type { CallToolResult } from "@modelcontextprotocol/server";
@@ -685,6 +692,30 @@ pruefe("alsUebungInhalt: jede Angabe kommt beim Kern an, null bleibt null", () =
     material: { liste: [{ art: "pylone", menge: 4 }], ergaenzung: ["Pfeife"] },
   });
   assert.equal(alsUebungInhalt(UebungAnlegenEingabe.parse({ ...ANLEGEN, spielfeld: null })).spielfeld, null);
+});
+
+pruefe("UebungAendernEingabe: Pflicht nur die Kennung, jede Angabe frei, null nur wo freiwillig (#144)", () => {
+  const K = { kennung: "mein-slug-abc123" };
+  assert.ok(UebungAendernEingabe.safeParse(K).success);
+  assert.ok(UebungAendernEingabe.safeParse({ ...K, name: "Neu", altersstufe: "juniorenfussball" }).success);
+  assert.ok(UebungAendernEingabe.safeParse({ ...K, varianten: null, spielfeld: null, material: null }).success);
+  assert.ok(!UebungAendernEingabe.safeParse({ name: "Neu" }).success, "ohne Kennung");
+  assert.ok(!UebungAendernEingabe.safeParse({ kennung: "  " }).success, "leere Kennung");
+  for (const pflicht of ["name", "einordnung", "kategorien"])
+    assert.ok(!UebungAendernEingabe.safeParse({ ...K, [pflicht]: null }).success, `${pflicht}: null`);
+  // Streng wie beim Anlegen: ein vertipptes Feld fällt nicht still weg.
+  assert.ok(!UebungAendernEingabe.safeParse({ ...K, erscheinungsform: [] }).success);
+  assert.ok(!UebungAendernEingabe.safeParse({ ...K, spielfeld: { laenge: 1, breite_m: 2 } }).success);
+});
+
+pruefe("alsUebungPatch: Fehlendes bleibt undefined («bleibt»), null bleibt null («leeren»)", () => {
+  const p = alsUebungPatch(UebungAendernEingabe.parse({ kennung: "k", name: "Neu", aufbau: null, spielfeld: null }));
+  assert.equal(p.name, "Neu");
+  assert.equal(p.aufbau, null);
+  assert.equal(p.spielfeld, null);
+  for (const bleibt of ["einordnung", "kategorien", "offenStarten", "material", "anzahlKinder"] as const)
+    assert.equal(p[bleibt], undefined, bleibt);
+  assert.ok(!("kennung" in p) && !("altersstufe" in p), "Kennung und Altersstufe sind keine Angaben");
 });
 
 pruefe("UEBUNG_ANGABEN: je Altersstufe des KI-Wegs Pflicht, Ablaufform und Spielfeld-Grenzen", () => {

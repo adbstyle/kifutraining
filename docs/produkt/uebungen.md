@@ -27,8 +27,9 @@ Die andere Quelle sind die Trainerinnen und Trainer selbst. Wer eine eigene Übu
 sie zunächst als Entwurf an; sie bleibt privat, bis er sie öffentlich schaltet. Danach trägt
 sie die Plakette „Community" und steht allen zur Verfügung. Die Sichtbarkeit lässt sich
 jederzeit in beide Richtungen umschalten. Eine eigene Übung des Kinderfussballs kann auch ein
-verbundener KI-Assistent anlegen; sie entsteht ebenso als Entwurf und folgt denselben Regeln
-wie im Formular (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
+verbundener KI-Assistent anlegen und ändern; sie entsteht ebenso als Entwurf und folgt
+denselben Regeln wie im Formular. Öffentlich schalten und zurückziehen kann er eigene Übungen
+beider Altersstufen (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
 ## Was eine Übung ausmacht
 

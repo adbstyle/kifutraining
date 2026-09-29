@@ -8,6 +8,7 @@ import {
   type TrainingsEigentum,
 } from "@/lib/training-zugriff";
 import {
+  FREMDE_UEBUNG,
   FREMDES_TRAINING,
   NICHT_GEFUNDEN,
   ausDbFehler,
@@ -210,6 +211,75 @@ export async function ladeVarianteZumBearbeiten(
   return ok({ variante: { id: data.id, name: data.name, training_id: data.training_id }, ziel });
 }
 
+// ── Übungen (Epic #139) ─────────────────────────────────────────────────────
+//
+// Dieselben drei Ausgänge wie beim Training: unsichtbar → `nicht_gefunden`,
+// sichtbar, aber nicht die eigene → `keine_rechte` mit `fremd: true`, sonst
+// die Zeile. Bearbeitbar ist nur eine eigene Übung (`source = 'user'`,
+// `owner_id` = Aufrufer) — dieselbe Bedingung wie die Policy `ex_update`.
+
+/** Was jede Übungszeile zum Einordnen trägt. */
+const UEBUNG_GRUNDSPALTEN = ["id", "slug", "owner_id", "source", "visibility", "altersstufe"];
+
+export type UebungKopfZeile = {
+  id: string;
+  slug: string;
+  owner_id: string | null;
+  source: "manual" | "user";
+  visibility: "public" | "private";
+  altersstufe: Altersstufe;
+};
+
+/** Eine Übung lesen, soweit die RLS sie zeigt — per id oder slug, ohne
+ *  Rechte-Einordnung. Unsichtbar oder unbekannt → `nicht_gefunden` am Feld
+ *  «kennung», wie «uebung_abrufen». */
+export async function ladeUebungZumLesen<Z extends object = object>(
+  supabase: SupabaseClient,
+  kennung: string,
+  /** Zusätzliche Spalten als flache Liste, etwa `VORLAGE_SELECT`; was schon
+   *  zu den Grundspalten gehört, steht nur einmal im Select. */
+  spalten?: string,
+): Promise<KernErgebnis<UebungKopfZeile & Z>> {
+  const auswahl = [
+    ...new Set([...UEBUNG_GRUNDSPALTEN, ...(spalten ?? "").split(",").map((s) => s.trim())]),
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const { data, error } = await supabase
+    .from("exercises")
+    .select(auswahl)
+    .eq(istUuid(kennung) ? "id" : "slug", kennung)
+    .maybeSingle<Omit<UebungKopfZeile, "altersstufe"> & { altersstufe: string } & Z>();
+  if (error) return ausDbFehler(error);
+  if (!data) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.uebung, { feld: "kennung" });
+  // Typ-Guard wie beim Training: die Spalte ist NOT NULL und per CHECK begrenzt.
+  if (!istAltersstufe(data.altersstufe))
+    return fehlschlag("technisch", "Die Übung hat keine gültige Altersstufe.");
+  return ok({ ...data, altersstufe: data.altersstufe });
+}
+
+/** Eine Übung zum Bearbeiten laden: wie `ladeUebungZumLesen`, aber eine
+ *  Manual-Übung, die öffentliche eines anderen Kontos oder eine verwaiste
+ *  (`owner_id` null nach Kontolöschung) → `keine_rechte` mit `fremd: true`. */
+export async function ladeUebungZumBearbeiten<Z extends object = object>(
+  supabase: SupabaseClient,
+  userId: string,
+  kennung: string,
+  spalten?: string,
+): Promise<KernErgebnis<UebungKopfZeile & Z>> {
+  const zeile = await ladeUebungZumLesen<Z>(supabase, kennung, spalten);
+  if (!zeile.ok) return zeile;
+  if (zeile.wert.source !== "user" || zeile.wert.owner_id !== userId)
+    return fehlschlag("keine_rechte", FREMDE_UEBUNG, { feld: "kennung", fremd: true });
+  return zeile;
+}
+
+/** Die Optionen von `aktualisiereZeile` für eine Übung. Schreiben darf nur
+ *  der Eigentümer — das stellen `ladeUebungZumBearbeiten` und die Policy
+ *  `ex_update` sicher; ein fremder Update trifft keine Zeile und wird so
+ *  `nicht_gefunden`. */
+export const UEBUNG_ZEILE = { nichtGefunden: NICHT_GEFUNDEN.uebung, feld: "kennung" } as const;
+
 /** Eine Zeile per Kennung aktualisieren und prüfen, dass der Update traf.
  *
  *  Kein Owner-Filter: Wer schreiben darf, entscheidet die RLS (an einem
@@ -220,7 +290,7 @@ export async function ladeVarianteZumBearbeiten(
  *  Nulltreffer hier heisst also «inzwischen weg». */
 export async function aktualisiereZeile(
   supabase: SupabaseClient,
-  tabelle: "trainings" | "training_exercises",
+  tabelle: "trainings" | "training_exercises" | "exercises",
   id: string,
   werte: Record<string, unknown>,
   o: { nichtGefunden: string; feld?: string },

@@ -44,14 +44,25 @@ import {
 } from "../lib/altersstufe";
 import {
   abgelehnt,
+  geaenderteSpalten,
+  inhaltAusZeile,
   pflichtangaben,
   pruefeUebungsInhalt,
+  ueberlagere,
   type Fund,
   type Pruefung,
   type UebungInhalt,
+  type UebungPatch,
+  type UebungsZeile,
 } from "../lib/kern/uebung-inhalt";
 import { fachlicheMeldung, fehlerMeldung } from "../lib/training-bedingungen";
-import { FREMDES_TRAINING, MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler } from "../lib/kern/ergebnis";
+import {
+  FREMDE_UEBUNG,
+  FREMDES_TRAINING,
+  MELDUNG_WIEDERHOLEN,
+  NICHT_GEFUNDEN,
+  ausDbFehler,
+} from "../lib/kern/ergebnis";
 import { KEINE_PASSENDE_UEBUNG, LEER_HINWEIS, leerBestandText, zielLabel } from "../lib/training";
 import { trainingAuskunft as auskunftRoh } from "../lib/kern/auskunft";
 import { TrainingAuskunftStreng } from "../lib/kern/auskunft-schema";
@@ -235,6 +246,12 @@ pruefe("Standard-Texte des Kerns sind eingefroren", () => {
   assert.equal(
     FREMDES_TRAINING,
     "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.",
+  );
+  assert.equal(NICHT_GEFUNDEN.uebung, "Diese Übung gibt es nicht oder sie ist für dein Konto nicht sichtbar.");
+  assert.equal(
+    FREMDE_UEBUNG,
+    "Diese Übung stammt aus dem Kifu-Manual oder gehört jemand anderem. Du kannst sie ansehen und " +
+      "in deinen Bestand kopieren, aber nicht ändern.",
   );
   assert.ok(MELDUNG_WIEDERHOLEN.includes("noch einmal zu versuchen"), "Wiederholen muss genannt sein (#192 NFR 5)");
 });
@@ -868,6 +885,160 @@ pruefe("Übungsinhalt: abgelehnt nennt alle Verstösse ohne Art, Art aus dem sch
   assert.equal(abgelehnt([eingabe], "h").art, "eingabe");
 });
 
+// ── Übung ändern (#144) ─────────────────────────────────────────────────────
+
+/** Eine gespeicherte Übung, wie sie die Datenbank nach dem Anlegen führt:
+ *  die Zeile des Formulars samt der Spalten, die es nicht setzt. */
+function gespeichert(i: UebungInhalt, stufe: Altersstufe = KIFU): UebungsZeile & { altersstufe: string } {
+  const p = pruefeInhalt(i, stufe);
+  assert.ok(p.ok, JSON.stringify(funde(p)));
+  return {
+    ...(p.row as Omit<UebungsZeile, "material_liste" | "material_basis" | "bild_quelle" | "bild_url" | "diagramm">),
+    // Ohne Liste gilt der Default der Spalte.
+    material_liste: p.row.material_liste ?? [],
+    material_basis: null,
+    bild_quelle: null,
+    bild_url: null,
+    diagramm: null,
+    altersstufe: stufe,
+  };
+}
+/** Änderung wie im Kern: überlagern, dann die ganze Übung prüfen. */
+function aendere(zeile: UebungsZeile & { altersstufe: string }, patch: UebungPatch) {
+  const stufe = zeile.altersstufe as Altersstufe;
+  const { inhalt, ausBestand } = ueberlagere(inhaltAusZeile(zeile), patch);
+  return pruefeUebungsInhalt(inhalt, { altersstufe: stufe, ausBestand });
+}
+
+const VOLL_EINLEITUNG = gespeichert({
+  ...EINLEITUNG,
+  ueben: ["- links", "", "Dann rechts"],
+  varianten: "Mit zwei Bällen",
+  erscheinungsformen: ["mutig-tore-erzielen", "spiel-kreativ-gestalten"],
+  feldtyp: "freies_feld",
+  spielfeld: { laengeM: 20, breiteM: 15 },
+  anzahlKinder: { min: 6, max: 8 },
+  material: { liste: [{ art: "pylone", farbe: "rot", menge: 4 }, { art: "fussball", menge: 2 }], ergaenzung: ["Pfeife"] },
+});
+const VOLL_JUNIOREN = gespeichert(
+  {
+    ...JUN_SPIEL,
+    varianten: "v",
+    erscheinungsformen: ["schnell-umschalten"],
+    uebungstyp: "spielform",
+    spielfeld: { laengeM: 40, breiteM: 30 },
+    anzahlKinder: { min: 10 },
+  },
+  JUN,
+);
+
+pruefe("Übung ändern: ohne Änderung dieselbe Zeile, nichts zu schreiben (beide Altersstufen)", () => {
+  for (const zeile of [VOLL_EINLEITUNG, VOLL_JUNIOREN, gespeichert(nurPflicht(KIFU, "hauptteil", "fussball-spielen"))]) {
+    const p = aendere(zeile, {});
+    assert.ok(p.ok, JSON.stringify(funde(p)));
+    assert.deepEqual(geaenderteSpalten(p.row, zeile), {}, zeile.trainingsteil);
+  }
+});
+
+pruefe("Übung ändern: jsonb in anderer Schlüsselfolge ist keine Änderung", () => {
+  // So gibt Postgres jsonb zurück: Schlüssel nach Länge, dann Bytes.
+  const zeile = {
+    ...VOLL_EINLEITUNG,
+    anzahl_kinder: { max: 8, min: 6 },
+    methodischer_fahrplan: { ueben: ["- links", "", "Dann rechts"], wetteifern: "Wetteifern", offen_starten: "Offen starten" },
+    material_liste: [
+      { art: "pylone", menge: 4, farbe: "rot" },
+      { art: "fussball", menge: 2, farbe: null },
+    ],
+  };
+  const p = aendere(zeile, {});
+  assert.ok(p.ok, JSON.stringify(funde(p)));
+  assert.deepEqual(geaenderteSpalten(p.row, zeile), {});
+});
+
+pruefe("Übung ändern: nur das Genannte ändert sich, null leert, material je Teil", () => {
+  const name = aendere(VOLL_EINLEITUNG, { name: "Neu" });
+  assert.ok(name.ok);
+  assert.deepEqual(geaenderteSpalten(name.row, VOLL_EINLEITUNG), { name: "Neu" });
+
+  const leer = aendere(VOLL_EINLEITUNG, { varianten: null, erscheinungsformen: null, spielfeld: null, anzahlKinder: null });
+  assert.ok(leer.ok, JSON.stringify(funde(leer)));
+  assert.deepEqual(geaenderteSpalten(leer.row, VOLL_EINLEITUNG), {
+    varianten_text: null,
+    erscheinungsform: [],
+    spielfeld_laenge_m: null,
+    spielfeld_breite_m: null,
+    anzahl_kinder: null,
+  });
+
+  // Die Ergänzung allein lässt die gezählte Liste stehen — und umgekehrt.
+  const ergaenzung = aendere(VOLL_EINLEITUNG, { material: { ergaenzung: ["Stoppuhr"] } });
+  assert.ok(ergaenzung.ok);
+  assert.deepEqual(geaenderteSpalten(ergaenzung.row, VOLL_EINLEITUNG), { material: ["Stoppuhr"] });
+  const liste = aendere(VOLL_EINLEITUNG, { material: { liste: [] } });
+  assert.ok(liste.ok);
+  assert.deepEqual(geaenderteSpalten(liste.row, VOLL_EINLEITUNG), { material_liste: [] });
+  const beides = aendere(VOLL_EINLEITUNG, { material: null });
+  assert.ok(beides.ok);
+  assert.deepEqual(geaenderteSpalten(beides.row, VOLL_EINLEITUNG), { material_liste: [], material: [] });
+
+  // Eine Änderung wird wie eine neue Übung geprüft: dieselben Verstösse.
+  einziger(aendere(VOLL_EINLEITUNG, { name: " " }), "name", "Bitte einen Namen angeben.", "eingabe");
+  einziger(
+    aendere(VOLL_EINLEITUNG, { uebungstyp: "spielform" }),
+    "uebungstyp",
+    "Den Übungstyp gibt es nur im Juniorenfussball — lass «uebungstyp» weg.",
+  );
+});
+
+pruefe("Übung ändern: neue Einordnung nennt stehengebliebene Angaben, statt sie still zu löschen", () => {
+  const stehen = " Die Angabe steht noch in der Übung — setze";
+  const p = aendere(VOLL_EINLEITUNG, { einordnung: "ausklang" });
+  assert.deepEqual(felder(p), ["aufbau", "offen_starten", "ueben", "wetteifern", "erscheinungsformen"]);
+  assert.equal(funde(p)[0].meldung, "Bitte den Aufbau beschreiben.");
+  for (const f of funde(p).slice(1)) {
+    assert.ok(f.meldung.includes(stehen), f.meldung);
+    assert.ok(f.meldung.endsWith(`«${f.feld}» auf null, um sie zu entfernen.`), f.meldung);
+  }
+  // Mit null für die Altlasten und dem neuen Pflichtfeld geht es durch.
+  const ok = aendere(VOLL_EINLEITUNG, {
+    einordnung: "ausklang",
+    offenStarten: null,
+    ueben: null,
+    wetteifern: null,
+    erscheinungsformen: null,
+    aufbau: "Auslaufen",
+  });
+  assert.ok(ok.ok, JSON.stringify(funde(ok)));
+  const werte = geaenderteSpalten(ok.row, VOLL_EINLEITUNG);
+  assert.deepEqual(Object.keys(werte).sort(), ["aufbau", "erscheinungsform", "methodischer_fahrplan", "trainingsteil"]);
+  assert.equal(werte.methodischer_fahrplan, null);
+
+  // Hauptteil → Einleitung: die gespeicherte Hauptteilkategorie wird genannt.
+  const hkat = aendere(gespeichert(nurPflicht(KIFU, "hauptteil", "fussball-spielen-lernen")), { einordnung: "einleitung" });
+  assert.deepEqual(felder(hkat), ["hauptteilkategorie"]);
+  assert.ok(funde(hkat)[0].meldung.startsWith("Eine Hauptteilkategorie gibt es nur im Kinderfussball-Hauptteil."));
+  // Hauptteilkategorie wechseln: die Ablaufform wechselt mit, in beide Richtungen.
+  const frei = gespeichert(nurPflicht(KIFU, "hauptteil", "fussball-spielen"));
+  const zumFahrplan = aendere(frei, { hauptteilkategorie: "fussball-spielen-lernen" });
+  assert.deepEqual(felder(zumFahrplan), ["offen_starten", "ueben", "wetteifern", "aufbau"]);
+  assert.ok(funde(zumFahrplan)[3].meldung.includes(stehen));
+  const fahrplan = gespeichert(nurPflicht(KIFU, "hauptteil", "vielseitigkeit-erleben"));
+  const zumSpiel = aendere(fahrplan, { hauptteilkategorie: "fussball-spielen" });
+  assert.deepEqual(felder(zumSpiel), ["aufbau", "offen_starten", "ueben", "wetteifern"]);
+  assert.equal(funde(zumSpiel)[0].meldung, "Bitte das Spiel beschreiben.");
+  // Feldtyp wechseln: die Meter des freien Felds bleiben stehen und werden genannt.
+  const feld = aendere(VOLL_EINLEITUNG, { feldtyp: "kleinfeld" });
+  assert.deepEqual(felder(feld), ["spielfeld"]);
+  assert.ok(funde(feld)[0].meldung.includes(stehen));
+  assert.ok(aendere(VOLL_EINLEITUNG, { feldtyp: "kleinfeld", spielfeld: null }).ok);
+
+  // Ein Wert, den die Änderung selbst sendet, trägt den Zusatz nicht.
+  const selbst = aendere(VOLL_EINLEITUNG, { einordnung: "ausklang", aufbau: "x", offenStarten: "neu", ueben: null, wetteifern: null, erscheinungsformen: null });
+  assert.deepEqual(felder(selbst), ["offen_starten"]);
+  assert.ok(!funde(selbst)[0].meldung.includes(stehen));
+});
+
 // ── Statische Wächter ───────────────────────────────────────────────────────
 const web = resolve(fileURLToPath(import.meta.url), "../..");
 const kern = join(web, "lib/kern");
@@ -974,14 +1145,23 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
   // Quelltext: Enthält die Eingabe — inline oder als benannte Konstante —
   // `TrainingId`, `FassungId`, `GruppeId` oder `VarianteId`, muss der Block
   // `KENNUNG_FEHLER` tragen.
+  // Eingabeschemas, die ein Werkzeug aus lib/mcp/uebung-eingaben.ts
+  // importiert (#144): ihre Definition zählt wie eine im Werkzeug selbst.
+  const uebungEingaben = readFileSync(join(web, "lib/mcp/uebung-eingaben.ts"), "utf8");
   for (const d of readdirSync(ordner).filter((f) => f.endsWith(".ts"))) {
     const text = readFileSync(join(ordner, d), "utf8");
     for (const m of text.matchAll(/export const (\w+) = werkzeug\(\{([\s\S]*?)\n\}\);/g)) {
       const block = m[2];
       const verweis = /eingabe:\s*(\w+),/.exec(block)?.[1];
       const eingabe = verweis
-        ? (new RegExp(`const ${verweis} = z\\.object\\(\\{([\\s\\S]*?)\\n\\}\\);`).exec(text)?.[1] ?? "")
+        ? (new RegExp(`const ${verweis} = z\\.object\\(\\{([\\s\\S]*?)\\n\\}\\);`).exec(text)?.[1] ??
+          new RegExp(`export const ${verweis} = ([\\s\\S]*?)\\n\\}\\);`).exec(uebungEingaben)?.[1] ??
+          "")
         : block;
+      // Dasselbe für Übungen (#144 AK 4): wer `UebungKennung` annimmt, erklärt
+      // «nicht_gefunden» gegen «keine_rechte».
+      if (/\bUebungKennung\b/.test(eingabe))
+        assert.ok(block.includes("UEBUNG_KENNUNG_FEHLER"), `${m[1]} nimmt eine Übungs-Kennung, erklärt aber UEBUNG_KENNUNG_FEHLER nicht`);
       if (/\b(TrainingId|FassungId|GruppeId|VarianteId)\b/.test(eingabe))
         assert.ok(/\bKENNUNG_FEHLER\b/.test(block), `${m[1]} nimmt eine Kennung, erklärt aber KENNUNG_FEHLER nicht`);
       // Dasselbe für Teams und Termine (#198 AK 11). «termin_entfernen» ist
@@ -996,6 +1176,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
 
   const jeStory: Record<string, string[]> = {
     "#143": ["uebung_anlegen"],
+    "#144": ["uebung_aendern", "uebung_veroeffentlichen", "uebung_auf_entwurf_setzen"],
     "#192":["training_anlegen", "training_uebungen_fuer_block", "training_uebung_zuordnen"],
     "#193": [
       "training_abrufen",

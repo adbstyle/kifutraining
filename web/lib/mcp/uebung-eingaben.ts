@@ -37,7 +37,13 @@ import { farbSlugs } from "@/lib/diagramm";
 import { MATERIAL_ARTEN, MATERIAL_KATALOG, MATERIAL_MENGE_MAX } from "@/lib/material";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
 import { FREITEXT_LISTEN, UEBEN_ZEILEN } from "@/lib/freitext";
-import { UEBUNG_STUFEN_KI, pflichtangaben, type UebungInhalt } from "@/lib/kern/uebung-inhalt";
+import {
+  UEBUNG_STUFEN_KI,
+  pflichtangaben,
+  type UebungInhalt,
+  type UebungPatch,
+} from "@/lib/kern/uebung-inhalt";
+import { AbrufEingabe } from "@/lib/mcp/eingaben";
 import {
   ALTERSSTUFEN_TEXT,
   Einordnung,
@@ -175,9 +181,35 @@ export const UebungAnlegenEingabe = Angaben.extend({
   ),
 });
 
-/** Die Werkzeug-Eingabe (snake_case) als Kern-Eingabe (camelCase). Was fehlt,
- *  bleibt `undefined`, was `null` ist, bleibt `null`. */
-export function alsUebungInhalt(e: z.infer<typeof Angaben>): UebungInhalt {
+/** Die Kennung einer Übung — derselbe Zuschnitt wie bei «uebung_abrufen». */
+export const UebungKennung = AbrufEingabe.shape.kennung.describe(
+  "id (UUID) oder slug der Übung, etwa aus «uebungen_suchen» oder «uebung_abrufen».",
+);
+
+/** Was die Fehler zu einer Übungs-Kennung bedeuten (#144 AK 4). Gehört an
+ *  JEDE Beschreibung eines Werkzeugs, das `UebungKennung` annimmt —
+ *  `check:kern` wacht darüber. */
+export const UEBUNG_KENNUNG_FEHLER =
+  "Fehlerarten zur Kennung: «nicht_gefunden» — für dein Konto nicht sichtbar (es gibt sie " +
+  "nicht, sie wurde gelöscht oder gehört jemand anderem privat; bewusst nicht " +
+  "unterscheidbar); «keine_rechte» — eine Übung aus dem Kifu-Manual oder die öffentliche eines " +
+  "anderen Kontos: ansehen ja, ändern nein.";
+
+/** Eine Änderung (#144): Pflicht ist nur die Kennung, jede Angabe ist frei. */
+const ALS_GANZES = "Beim Ändern ersetzt die neue Angabe die bisherige als Ganzes.";
+export const UebungAendernEingabe = z.strictObject({
+  kennung: UebungKennung,
+  ...Angaben.partial().shape,
+  spielfeld: Angaben.shape.spielfeld.describe(`${Angaben.shape.spielfeld.description} ${ALS_GANZES}`),
+  anzahl_kinder: Angaben.shape.anzahl_kinder.describe(`${Angaben.shape.anzahl_kinder.description} ${ALS_GANZES}`),
+  altersstufe: alsEnum(ALTERSSTUFEN)
+    .optional()
+    .describe("Nur zur Kontrolle: Die Altersstufe einer Übung ändert sich nie; weicht sie ab, lehnt KiFu ab."),
+});
+
+/** Eine Änderung (snake_case) als Kern-Eingabe (camelCase). Was fehlt, bleibt
+ *  `undefined` («bleibt, wie es ist»), was `null` ist, bleibt `null`. */
+export function alsUebungPatch(e: Partial<z.infer<typeof Angaben>>): UebungPatch {
   return {
     name: e.name,
     einordnung: e.einordnung,
@@ -195,4 +227,9 @@ export function alsUebungInhalt(e: z.infer<typeof Angaben>): UebungInhalt {
     anzahlKinder: e.anzahl_kinder,
     material: e.material,
   };
+}
+
+/** Die vollständige Werkzeug-Eingabe als Kern-Eingabe. */
+export function alsUebungInhalt(e: z.infer<typeof Angaben>): UebungInhalt {
+  return { ...alsUebungPatch(e), name: e.name, einordnung: e.einordnung, kategorien: e.kategorien };
 }

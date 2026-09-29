@@ -18,6 +18,7 @@
 //
 // REIN: keine Importe aus `next/*`, `server-only` oder Datenbank-Modulen —
 // `check:kern` lädt diese Datei mit tsx.
+import { isDeepStrictEqual } from "node:util";
 import { altersstufe as altersstufeLabels, hauptteilkategorieSlugs } from "@/lib/vocab";
 import {
   brauchtFahrplan,
@@ -32,7 +33,13 @@ import {
 } from "@/lib/altersstufe";
 import type { FarbSlug } from "@/lib/diagramm";
 import { ANZAHL_SPIELER_LABEL } from "@/lib/labels";
-import { MATERIAL_KATALOG, MATERIAL_MENGE_MAX, mengeGueltig, type MaterialArt } from "@/lib/material";
+import {
+  MATERIAL_KATALOG,
+  MATERIAL_MENGE_MAX,
+  mengeGueltig,
+  parseMaterialListe,
+  type MaterialArt,
+} from "@/lib/material";
 import { fachlicheMeldung } from "@/lib/training-bedingungen";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import { fehlschlag, type KernFehler, type Verstoss } from "@/lib/kern/ergebnis";
@@ -43,11 +50,12 @@ import { fehlschlag, type KernFehler, type Verstoss } from "@/lib/kern/ergebnis"
  *  beide. */
 export const UEBUNG_STUFEN_KI: readonly Altersstufe[] = ["kinderfussball"];
 
-/** Der Zusatz für den Assistenten an einer abgelehnten Anlage. */
+/** Der Zusatz für den Assistenten an einer abgelehnten Anlage bzw. Änderung. */
 export const NICHTS_ANGELEGT = "Es ist nichts angelegt worden.";
+export const UNVERAENDERT = "Die Übung ist unverändert.";
 
 /** Ein Posten der gezählten Materialliste, wie ihn ein Werkzeug sendet. */
-type MaterialEintrag ={ art: MaterialArt; farbe?: FarbSlug | null; menge: number };
+type MaterialEintrag = { art: MaterialArt; farbe?: FarbSlug | null; menge: number };
 
 /** Die fachlichen Angaben einer Übung, wie der Kern sie entgegennimmt. */
 export type UebungInhalt = {
@@ -76,6 +84,34 @@ export type UebungInhalt = {
 export type Fund = Verstoss & { art: "eingabe" | "regel" };
 
 export type Pruefung = { ok: true; row: Record<string, unknown> } | { ok: false; funde: Fund[] };
+
+/** Eine Änderung (#144): Was fehlt (`undefined`), bleibt; `null` leert eine
+ *  freiwillige Angabe. Bei `material` gilt das je Teil. */
+export type UebungPatch = Partial<UebungInhalt>;
+
+/** Eine gespeicherte Übung, gelesen mit `VORLAGE_SELECT` (lib/fassung.ts):
+ *  Einordnung, Inhalt, Bild und Diagramm. */
+export type UebungsZeile = {
+  trainingsteil: string;
+  hauptteilkategorie: string | null;
+  name: string;
+  kategorien: string[] | null;
+  erscheinungsform: string[] | null;
+  feldtyp: string | null;
+  spielfeld_laenge_m: number | null;
+  spielfeld_breite_m: number | null;
+  anzahl_kinder: { min?: number | null; max?: number | null } | null;
+  material: string[] | null;
+  material_liste: unknown;
+  material_basis: unknown;
+  methodischer_fahrplan: { offen_starten?: string | null; ueben?: string[] | null; wetteifern?: string | null } | null;
+  uebungstyp: string | null;
+  aufbau: string | null;
+  varianten_text: string | null;
+  bild_quelle: "foto" | "diagramm" | null;
+  bild_url: string | null;
+  diagramm: unknown;
+};
 
 /** Die Klartexte der Datenebene, wortgleich übernommen. Fehlt einer, weil ein
  *  Constraint umbenannt wurde, scheitert schon das Laden — wie bei einem
@@ -290,7 +326,16 @@ function mitPlatzhaltern(fd: FormData, fehler: Record<string, string>, stufe: Al
  *  Werte; fehlt im Hauptteil die Hauptteilkategorie, der des Ablaufs.
  *  Ohne Verstoss liefert sie die Zeile des Formulars — genau die, die auch
  *  das Formular speicherte. */
-export function pruefeUebungsInhalt(i: UebungInhalt, o: { altersstufe: Altersstufe }): Pruefung {
+export function pruefeUebungsInhalt(
+  i: UebungInhalt,
+  o: {
+    altersstufe: Altersstufe;
+    /** Beim Ändern (#144): die Eingabenamen, deren Wert aus der gespeicherten
+     *  Übung stammt. Verwirft die Regel einen davon, sagt die Meldung, wie er
+     *  sich entfernen lässt — gelöscht wird er nie still (PO 2026-09-29). */
+    ausBestand?: ReadonlySet<string>;
+  },
+): Pruefung {
   const stufe = o.altersstufe;
   // Eine fremde Einordnung geht leer ins Formular: Sonst folgten aus ihr
   // Fehler am Ablauf, die mit der Korrektur der Einordnung hinfällig sind.
@@ -308,7 +353,16 @@ export function pruefeUebungsInhalt(i: UebungInhalt, o: { altersstufe: Altersstu
 
   if (einordnungOk) {
     const zweit = erst.ok ? erst : parseUebungsInhalt(mitPlatzhaltern(fd, fehler, stufe), { altersstufe: stufe });
-    if (zweit.ok) funde.push(...verworfen(i, zweit.row, stufe, fehler));
+    if (zweit.ok)
+      for (const f of verworfen(i, zweit.row, stufe, fehler))
+        funde.push(
+          o.ausBestand?.has(f.feld)
+            ? {
+                ...f,
+                meldung: `${f.meldung} Die Angabe steht noch in der Übung — setze «${f.feld}» auf null, um sie zu entfernen.`,
+              }
+            : f,
+        );
   }
   return erst.ok && funde.length === 0 ? { ok: true, row: erst.row } : { ok: false, funde };
 }
@@ -339,4 +393,69 @@ export function abgelehnt(funde: readonly Fund[], hinweis: string): KernFehler {
     verstoesse: funde.map(({ art: _art, ...v }) => v),
     hinweis,
   });
+}
+
+// ── Ändern (#144) ───────────────────────────────────────────────────────────
+
+/** Die gespeicherte Übung als Kern-Eingabe — dieselbe Form, in der ein
+ *  Werkzeug sie sendet, damit eine Änderung sie nur überlagert. */
+export function inhaltAusZeile(z: UebungsZeile): UebungInhalt {
+  const fahrplan = z.methodischer_fahrplan;
+  return {
+    name: z.name,
+    einordnung: z.trainingsteil,
+    kategorien: z.kategorien ?? [],
+    hauptteilkategorie: z.hauptteilkategorie,
+    offenStarten: fahrplan?.offen_starten ?? null,
+    ueben: fahrplan?.ueben ?? null,
+    wetteifern: fahrplan?.wetteifern ?? null,
+    aufbau: z.aufbau,
+    varianten: z.varianten_text,
+    erscheinungsformen: z.erscheinungsform,
+    uebungstyp: z.uebungstyp,
+    feldtyp: z.feldtyp,
+    spielfeld:
+      z.spielfeld_laenge_m != null && z.spielfeld_breite_m != null
+        ? { laengeM: z.spielfeld_laenge_m, breiteM: z.spielfeld_breite_m }
+        : null,
+    anzahlKinder: z.anzahl_kinder,
+    material: { liste: parseMaterialListe(z.material_liste), ergaenzung: z.material ?? [] },
+  };
+}
+
+/** Eine Änderung über die gespeicherte Übung legen. Was die Änderung nicht
+ *  nennt, bleibt; `null` leert. `material` wird je Teil überlagert, `null`
+ *  leert beide. `ausBestand` sammelt die Eingabenamen der Angaben, die
+ *  unverändert aus dem Bestand kommen und etwas tragen. */
+export function ueberlagere(
+  bestand: UebungInhalt,
+  patch: UebungPatch,
+): { inhalt: UebungInhalt; ausBestand: Set<string> } {
+  const inhalt: Record<string, unknown> = { ...bestand };
+  const ausBestand = new Set<string>();
+  for (const k of Object.keys(bestand) as (keyof UebungInhalt)[]) {
+    if (k === "material") continue;
+    if (patch[k] !== undefined) inhalt[k] = patch[k];
+    else if (gesendet(bestand[k])) ausBestand.add(k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`));
+  }
+  const m = patch.material;
+  inhalt.material =
+    m === undefined
+      ? bestand.material
+      : m === null
+        ? { liste: [], ergaenzung: [] }
+        : { liste: m.liste ?? bestand.material?.liste, ergaenzung: m.ergaenzung ?? bestand.material?.ergaenzung };
+  return { inhalt: inhalt as UebungInhalt, ausBestand };
+}
+
+/** Die Spalten der geprüften Zeile, die sich vom Bestand unterscheiden —
+ *  verglichen unabhängig von der Schlüsselreihenfolge, in der jsonb sie
+ *  zurückgibt. Geschrieben wird nur sie: Was die Änderung nicht betrifft,
+ *  bleibt, wie es gespeichert ist — auch eine gleichzeitige Änderung in der
+ *  Oberfläche an einer anderen Angabe (#144 OoS 4). */
+export function geaenderteSpalten(
+  row: Record<string, unknown>,
+  zeile: Record<string, unknown>,
+): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(row).filter(([k, v]) => !isDeepStrictEqual(v, zeile[k])));
 }
