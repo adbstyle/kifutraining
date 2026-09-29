@@ -66,12 +66,7 @@ export function SpielfeldgroesseField({
           onChange={(e) => onBreiteChange(e.target.value)}
         />
       </div>
-      <p
-        className={`type-body-small mt-1.5 ${error ? "text-error" : "text-on-surface-mittel"}`}
-      >
-        {error ??
-          "In Metern, wie im Manual — z. B. 35 × 20. Entweder beide Masse oder keines."}
-      </p>
+      {error && <p className="type-body-small mt-1.5 text-error">{error}</p>}
     </div>
   );
 }
