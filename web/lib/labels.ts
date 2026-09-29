@@ -140,6 +140,16 @@ export function herkunftText(
  *  Trainings-Ansicht dasselbe Wort. Die Spalte heisst weiter `anzahl_kinder`. */
 export const ANZAHL_SPIELER_LABEL = "Anzahl Spieler:innen";
 
+/** Die Spielfeldgrösse als Text: «20 × 15 m»; null, solange das Paar aus Länge
+ *  und Breite nicht vollständig ist. Eine Schreibweise für Übungsseite und
+ *  Übungskarte (#305 NFR 2). */
+export function spielfeldText(
+  laengeM: number | null,
+  breiteM: number | null,
+): string | null {
+  return laengeM != null && breiteM != null ? `${laengeM} × ${breiteM} m` : null;
+}
+
 /** Die Spielerzahl als Text: «4–8», «6», «ab 4», «bis 8»; null ohne Angabe. */
 export function anzahlSpielerText(
   a: { min?: number | null; max?: number | null } | null | undefined,

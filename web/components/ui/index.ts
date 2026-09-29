@@ -20,7 +20,7 @@ export { Banner } from "./Banner";
 export { UebungsBild } from "./UebungsBild";
 export { FieldPlaceholder } from "./FieldPlaceholder";
 export { ExerciseCard } from "./ExerciseCard";
-export type { ExerciseCardData } from "./ExerciseCard";
+export type { Eckdatum, ExerciseCardData } from "./ExerciseCard";
 export { MethodischerFahrplan } from "./MethodischerFahrplan";
 export { MaterialListe } from "./MaterialListe";
 export { Freitext } from "./Freitext";

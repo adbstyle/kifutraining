@@ -36,6 +36,7 @@ import {
   EINORDNUNG_LABEL,
   ERSCHEINUNGSFORM_LABEL,
   anzahlSpielerText,
+  spielfeldText,
 } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
 import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
@@ -124,12 +125,9 @@ export default async function ExerciseDetailPage({
   ];
   // Die Spielfeldgrösse führt das Junioren-Manual an Stelle des Feldtyps
   // (Story 3 AK 8/10); im Kinderfussball ergänzt sie das freie Feld (#272).
-  const spielfeld =
-    traegtSpielfeldgroesse(ex.altersstufe, ex.feldtyp) &&
-    ex.spielfeld_laenge_m != null &&
-    ex.spielfeld_breite_m != null
-      ? `${ex.spielfeld_laenge_m} × ${ex.spielfeld_breite_m} m`
-      : null;
+  const spielfeld = traegtSpielfeldgroesse(ex.altersstufe, ex.feldtyp)
+    ? spielfeldText(ex.spielfeld_laenge_m, ex.spielfeld_breite_m)
+    : null;
   const meta = [
     traegtFeldtyp(ex.altersstufe) && ex.feldtyp
       ? feldLabels[ex.feldtyp as keyof typeof feldLabels]

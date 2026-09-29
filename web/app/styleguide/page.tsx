@@ -1294,12 +1294,17 @@ export default function Styleguide() {
           einzige satte Farbfeld auf der Karte; an seinem <strong>Kopf</strong>{" "}
           liegt ein Verlauf aus <code>scrim</code> (<code>top-0 h-16</code>) —
           er schützt, was dort steht: die Herkunfts-Plakette links und den
-          Favoriten-Knopf rechts. Die <strong>Alterskategorie steht nicht auf
-          der Karte</strong>: Sie ist der Filter, mit dem man die Liste betritt,
-          und auf jeder Kachel derselben Liste wiederholte sie bloss die eigene
-          Auswahl — die Herkunft dagegen ist auf jeder Kachel eine andere. Den
-          Titel trägt die Kartenfläche unter dem Bild; er braucht den Verlauf
-          nicht. Überfahren färbt die ganze Karte über{" "}
+          Favoriten-Knopf rechts. Den Titel trägt die Kartenfläche unter dem
+          Bild; er braucht den Verlauf nicht. Darunter stehen die{" "}
+          <strong>Eckdaten</strong> in <code>type-body-medium</code>, getrennt
+          durch «·»: Alterskategorien als Buchstaben (aufsteigend G bis A),
+          die feinste Einordnung, das Feld und die Spieler:innen — genug, um
+          ohne Öffnen zu sehen, ob eine Übung zu Mannschaft und Platz passt.
+          Das Feld ist die Spielfeldgrösse, wo eine erfasst ist, sonst der
+          Feldtyp; die Spielerzahl kürzt «Sp.» ab und wird voll vorgelesen.
+          Was eine Übung nicht trägt, fällt ohne Platzhalter weg. Die Zeile
+          hat höchstens zwei Zeilen (<code>line-clamp-2</code>) und endet
+          sonst in Auslassungspunkten. Überfahren färbt die ganze Karte über{" "}
           <code>state</code> — kein eigener Hover-Ton, und die Ebene sitzt auf
           dem Link, der die Karte deckt.
         </p>
@@ -1310,7 +1315,12 @@ export default function Styleguide() {
             ex={{
               slug: "schiessbude",
               name: "Schiessbude",
-              trainingsteilLabel: "Ausklang",
+              eckdaten: [
+                { text: "G F E" },
+                { text: "Ausklang" },
+                { text: "Kleinfeld" },
+                { text: "6–10 Sp.", vorgelesen: "6–10 Spieler:innen" },
+              ],
               herkunft: "manual",
             }}
             actionSlot={
@@ -1326,8 +1336,12 @@ export default function Styleguide() {
             ex={{
               slug: "mein-4-gegen-4",
               name: "Mein 4-gegen-4",
-              trainingsteilLabel: "Hauptteil",
-              hauptteilkategorieLabel: "Fussball spielen lernen",
+              eckdaten: [
+                { text: "F E" },
+                { text: "Fussball spielen lernen" },
+                { text: "20 × 15 m" },
+                { text: "8 Sp.", vorgelesen: "8 Spieler:innen" },
+              ],
               herkunft: "user",
               visibility: "private",
             }}
@@ -1336,7 +1350,12 @@ export default function Styleguide() {
             ex={{
               slug: "toblerone",
               name: "Toblerone",
-              trainingsteilLabel: "Einleitung",
+              eckdaten: [
+                { text: "D C B A" },
+                { text: "Spielformen und unterstützende Übungen" },
+                { text: "40 × 30 m" },
+                { text: "ab 10 Sp.", vorgelesen: "ab 10 Spieler:innen" },
+              ],
               herkunft: "user",
               visibility: "public",
             }}
