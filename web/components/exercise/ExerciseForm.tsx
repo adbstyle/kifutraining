@@ -21,7 +21,6 @@ import {
 } from "@/lib/vocab";
 import {
   kategorieStufe,
-  UEBUNGSTYP_DEFINITION,
   ERSCHEINUNGSFORM_LABEL,
   ANZAHL_SPIELER_LABEL,
   ueberfuehreAblauf,
@@ -741,9 +740,8 @@ export function ExerciseForm({
             )}
 
             {/* Übungstyp: optionale Selbstauskunft des Junioren-Manuals, und nur
-                in den Blöcken, in denen eine Spielform vorkommen kann. Die
-                Kurzdefinition steht beim Zuweisen dabei — «Spielform» bezeichnet
-                im Lehrmittel drei verschiedene Dinge (Story 9 AC 4). */}
+                in den Blöcken, in denen eine Spielform vorkommen kann. Ohne
+                Hilfstext, wie die übrigen Felder der Maske. */}
             {zeigtTyp && (
               <Select
                 label="Übungstyp (optional)"
@@ -753,11 +751,6 @@ export function ExerciseForm({
                   { value: "", label: "— kein Übungstyp —" },
                   ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
                 ]}
-                supportingText={
-                  uebungstyp
-                    ? UEBUNGSTYP_DEFINITION[uebungstyp]
-                    : "Wie das Manual die Trainingsform einordnet."
-                }
               />
             )}
           </div>
