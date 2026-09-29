@@ -220,14 +220,15 @@ function pruefeElement(
   }
   const art = e.art;
 
+  /** Ist die Lage des Elements lesbar? Erst dann misst die Grenze
+   *  «ausserhalb» — an denselben Stellen wie das Begrenzen im Editor. */
+  let lageLesbar = true;
   const zahlen = (...felder: string[]) => {
-    let ok = true;
     for (const f of felder) {
       if (istZahl(e[f])) continue;
       grenze("wert", f, `«${f}» muss eine Zahl sein.`);
-      ok = false;
+      lageLesbar = false;
     }
-    return ok;
   };
   const jaNein = (f: string) => {
     if (e[f] !== undefined && typeof e[f] !== "boolean") grenze("wert", f, `«${f}» muss true oder false sein.`);
@@ -241,54 +242,29 @@ function pruefeElement(
     grenze("unbekannt", angabe, e[angabe] === undefined ? `«${angabe}» fehlt.` : `${was} ${zeige(e[angabe])} gibt es nicht.`, werte);
     return false;
   };
-  const punkte = (): Punkt[] | null => {
-    if (Array.isArray(e.punkte) && e.punkte.every(istPunkt)) return e.punkte;
-    grenze("wert", "punkte", "«punkte» ist eine Liste von Punkten, jeder mit «x» und «y» als Zahl.");
-    return null;
-  };
-  const mindestens = (liste: Punkt[] | null, min: number, was: string): liste is Punkt[] => {
-    if (!liste) return false;
-    if (liste.length >= min) return true;
-    grenze("wert", "punkte", `${was} braucht mindestens ${min} Punkte, «punkte» hat ${liste.length}.`);
-    return false;
-  };
-  const mitteAufFlaeche = () => {
-    const p = { x: e.x as number, y: e.y as number };
-    if (ausserhalb(p))
-      grenze("ausserhalb", undefined, `Die Mitte liegt bei ${punktText(p)} und damit ausserhalb der Zeichenfläche ${FLAECHE_TEXT}.`);
-  };
-  const punkteAufFlaeche = (liste: Punkt[]) => {
-    const draussen = liste.flatMap((p, i) => (ausserhalb(p) ? [`der ${i + 1}. Punkt (${punktText(p)})`] : []));
-    if (draussen.length === 0) return;
-    const satz = undListe(draussen);
-    grenze(
-      "ausserhalb",
-      "punkte",
-      `${satz[0].toUpperCase()}${satz.slice(1)} ${draussen.length === 1 ? "liegt" : "liegen"} ausserhalb der Zeichenfläche ${FLAECHE_TEXT}.`,
-    );
+  const punkte = (min: number, was: string) => {
+    if (!Array.isArray(e.punkte) || !e.punkte.every(istPunkt)) {
+      grenze("wert", "punkte", "«punkte» ist eine Liste von Punkten, jeder mit «x» und «y» als Zahl.");
+      lageLesbar = false;
+    } else if (e.punkte.length < min) {
+      grenze("wert", "punkte", `${was} braucht mindestens ${min} Punkte, «punkte» hat ${e.punkte.length}.`);
+      lageLesbar = false;
+    }
   };
   /** Rahmen aus x/y (obere linke Ecke), breite und hoehe. */
   const rahmen = () => {
-    if (!zahlen("x", "y", "breite", "hoehe")) return;
-    const { x, y, breite, hoehe } = e as { x: number; y: number; breite: number; hoehe: number };
-    let positiv = true;
-    for (const [f, v] of [["breite", breite], ["hoehe", hoehe]] as const) {
-      if (v > 0) continue;
+    zahlen("x", "y", "breite", "hoehe");
+    for (const f of ["breite", "hoehe"] as const) {
+      if (!istZahl(e[f]) || e[f] > 0) continue;
       grenze("wert", f, `«${f}» muss grösser als 0 sein.`);
-      positiv = false;
+      lageLesbar = false;
     }
-    if (positiv && [{ x, y }, { x: x + breite, y: y + hoehe }].some(ausserhalb))
-      grenze(
-        "ausserhalb",
-        undefined,
-        `Der Rahmen reicht von x=${zahl(x)} bis ${zahl(x + breite)} und y=${zahl(y)} bis ${zahl(y + hoehe)} und damit über die Zeichenfläche hinaus ${FLAECHE_TEXT}.`,
-      );
   };
 
   switch (art) {
     case "symbol": {
       typ("typ", SYMBOL_TYPEN, "Das Symbol");
-      if (zahlen("x", "y")) mitteAufFlaeche();
+      zahlen("x", "y");
       if (e.rotation !== undefined && !eines(e.rotation, ROTATIONEN))
         grenze("unbekannt", "rotation", `Die Drehung ${zeige(e.rotation)} gibt es nicht.`, ROTATIONEN);
       farbe();
@@ -299,8 +275,7 @@ function pruefeElement(
     }
     case "pfad": {
       typ("typ", PFAD_TYPEN, "Den Pfadtyp");
-      const liste = punkte();
-      if (mindestens(liste, PUNKTE.pfad, "Ein Pfad")) punkteAufFlaeche(liste);
+      punkte(PUNKTE.pfad, "Ein Pfad");
       farbe();
       jaNein("gestrichelt");
       break;
@@ -309,26 +284,30 @@ function pruefeElement(
       const bekannt = typ("form", FORM_TYPEN, "Die Form");
       farbe();
       jaNein("gefuellt");
-      if (!bekannt) break;
+      if (!bekannt) {
+        lageLesbar = false;
+        break;
+      }
       if (e.form === "polygon") {
-        const liste = punkte();
-        if (mindestens(liste, PUNKTE.polygon, "Ein Polygon")) punkteAufFlaeche(liste);
+        punkte(PUNKTE.polygon, "Ein Polygon");
       } else if (e.form === "dreieck" && !(e.punkte === undefined || (Array.isArray(e.punkte) && e.punkte.length === 0))) {
-        const liste = punkte();
-        if (liste && liste.length !== PUNKTE.dreieck)
+        punkte(0, "Ein Dreieck");
+        const n = Array.isArray(e.punkte) ? e.punkte.length : 0;
+        if (lageLesbar && n !== PUNKTE.dreieck) {
           grenze(
             "wert",
             "punkte",
-            `Ein Dreieck hat genau ${PUNKTE.dreieck} «punkte» oder keine (dann spannen x, y, breite und hoehe es auf), «punkte» hat ${liste.length}.`,
+            `Ein Dreieck hat genau ${PUNKTE.dreieck} «punkte» oder keine (dann spannen x, y, breite und hoehe es auf), «punkte» hat ${n}.`,
           );
-        else if (liste) punkteAufFlaeche(liste);
+          lageLesbar = false;
+        }
       } else {
         rahmen();
       }
       break;
     }
     case "text": {
-      if (zahlen("x", "y")) mitteAufFlaeche();
+      zahlen("x", "y");
       if (typeof e.text !== "string") grenze("wert", "text", "«text» muss ein Text sein.");
       else if (e.text.length > MAX_TEXT_LAENGE)
         grenze("wert", "text", `Der Text hat ${e.text.length} Zeichen; erlaubt sind höchstens ${MAX_TEXT_LAENGE}.`);
@@ -336,9 +315,72 @@ function pruefeElement(
     }
   }
 
+  if (lageLesbar) {
+    const lage = grenzLage(normalisiere(e, art));
+    const draussen = lage.punkte.filter(ausserhalb);
+    if (draussen.length && lage.wie === "mitte") {
+      grenze("ausserhalb", undefined, `Die Mitte liegt bei ${punktText(draussen[0])} und damit ausserhalb der Zeichenfläche ${FLAECHE_TEXT}.`);
+    } else if (draussen.length && lage.wie === "rahmen") {
+      const [a, b] = lage.punkte;
+      grenze(
+        "ausserhalb",
+        undefined,
+        `Der Rahmen reicht von x=${zahl(a.x)} bis ${zahl(b.x)} und y=${zahl(a.y)} bis ${zahl(b.y)} und damit über die Zeichenfläche hinaus ${FLAECHE_TEXT}.`,
+      );
+    } else if (draussen.length) {
+      const satz = undListe(
+        lage.punkte.flatMap((p, i) => (ausserhalb(p) ? [`der ${i + 1}. Punkt (${punktText(p)})`] : [])),
+      );
+      grenze(
+        "ausserhalb",
+        "punkte",
+        `${satz[0].toUpperCase()}${satz.slice(1)} ${draussen.length === 1 ? "liegt" : "liegen"} ausserhalb der Zeichenfläche ${FLAECHE_TEXT}.`,
+      );
+    }
+  }
+
   if (grenzen.length) return { grenzen, eintrag: null, maengel: [] };
   const eintrag = { stelle, e: normalisiere(e, art) };
   return { grenzen, eintrag, maengel: elementMaengel(e, art, eintrag) };
+}
+
+/** Wo ein Element auf der Zeichenfläche liegen muss — die eine Definition für
+ *  die Grenze «ausserhalb» und für das Begrenzen einer Gruppe im Editor
+ *  (`gruppenVersatz`): bei Symbol und Text die Mitte, bei Pfad, Polygon und
+ *  Dreieck mit Ecken jeder Punkt, bei Rechteck, Ellipse und Dreieck ohne
+ *  Ecken der Rahmen (obere linke und untere rechte Ecke). Wie der Editor
+ *  beim Ziehen eines einzelnen Elements klemmt, darum nie der sichtbare
+ *  Rahmen eines Symbols oder einer Textbox. */
+export function grenzLage(e: DiagrammElement): { wie: "mitte" | "punkte" | "rahmen"; punkte: Punkt[] } {
+  switch (e.art) {
+    case "symbol":
+    case "text":
+      return { wie: "mitte", punkte: [{ x: e.x, y: e.y }] };
+    case "pfad":
+      return { wie: "punkte", punkte: e.punkte };
+    case "form":
+      return e.form === "polygon" || (e.form === "dreieck" && e.punkte?.length === PUNKTE.dreieck)
+        ? { wie: "punkte", punkte: e.punkte ?? [] }
+        : { wie: "rahmen", punkte: [{ x: e.x, y: e.y }, { x: e.x + e.breite, y: e.y + e.hoehe }] };
+  }
+}
+
+/** Der Versatz, um den sich eine Gruppe verschieben lässt, begrenzt an ihrer
+ *  Grenz-Box (`grenzLage` aller Elemente): So erzeugt keine
+ *  Gruppenbewegung eine Grenzverletzung, und eine Gruppe mit einem langen
+ *  Text oder mit Symbolen am Rand bleibt beweglich. Die Anordnung der
+ *  Elemente zueinander bleibt erhalten (#67 PC2/PC3). */
+export function gruppenVersatz(
+  els: readonly DiagrammElement[],
+  dx: number,
+  dy: number,
+): { dx: number; dy: number } {
+  const b = bbox(els.flatMap((e) => grenzLage(e).punkte));
+  const klemme = (v: number, max: number) => Math.min(Math.max(v, 0), max);
+  return {
+    dx: klemme(b.minX + dx, FLAECHE.breite - (b.maxX - b.minX)) - b.minX,
+    dy: klemme(b.minY + dy, FLAECHE.hoehe - (b.maxY - b.minY)) - b.minY,
+  };
 }
 
 /** Nur die Angaben aus `ELEMENT_ERLAUBT`. Polygone und Dreiecke mit Punkten
@@ -532,6 +574,22 @@ function torRichtungMaengel(eintraege: readonly Eintrag[]): Befund[] {
   return maengel;
 }
 
+/** Jedes Element für sich, höchstens die ersten `MAX_ELEMENTE`; eine id gilt
+ *  an ihrer ersten Stelle. */
+function pruefeElemente(liste: readonly unknown[]): { grenzen: Befund[]; eintraege: Eintrag[]; maengel: Befund[] } {
+  const grenzen: Befund[] = [];
+  const maengel: Befund[] = [];
+  const eintraege: Eintrag[] = [];
+  const ersteStelle = new Map<string, number>();
+  liste.slice(0, MAX_ELEMENTE).forEach((el, index) => {
+    const r = pruefeElement(el, index, ersteStelle);
+    grenzen.push(...r.grenzen);
+    maengel.push(...r.maengel);
+    if (r.eintrag) eintraege.push(r.eintrag);
+  });
+  return { grenzen, eintraege, maengel };
+}
+
 /** Prüft ein Diagramm, wie es von aussen kommt (Formular, KI-Assistent,
  *  Datenbank). Leer ist gültig: `{ elemente: [] }` hat keinen Befund. */
 export function pruefeDiagramm(roh: unknown): Pruefung {
@@ -550,15 +608,10 @@ export function pruefeDiagramm(roh: unknown): Pruefung {
       ),
     );
 
-  const eintraege: Eintrag[] = [];
-  const ersteStelle = new Map<string, number>();
-  roh.elemente.slice(0, MAX_ELEMENTE).forEach((el, index) => {
-    const r = pruefeElement(el, index, ersteStelle);
-    grenzen.push(...r.grenzen);
-    maengel.push(...r.maengel);
-    if (r.eintrag) eintraege.push(r.eintrag);
-  });
-  maengel.push(...leibchenMaengel(eintraege), ...torRichtungMaengel(eintraege));
+  const lauf = pruefeElemente(roh.elemente);
+  const eintraege = lauf.eintraege;
+  grenzen.push(...lauf.grenzen);
+  maengel.push(...lauf.maengel, ...leibchenMaengel(eintraege), ...torRichtungMaengel(eintraege));
   maengel.sort((a, b) => (a.index ?? -1) - (b.index ?? -1));
 
   return {
@@ -587,10 +640,51 @@ export function diagrammProbleme(daten: DiagrammData, rohAnzahl?: number): strin
   return probleme;
 }
 
-/** Die Meldung der Oberfläche, wenn das Diagramm aus der Maske eine Grenze
- *  verletzt. */
-export const DIAGRAMM_ABGELEHNT =
-  "Das Feld-Diagramm enthält Elemente, die sich nicht speichern lassen — etwa einen «?»-Platzhalter oder ein Element ausserhalb der Fläche. Entferne oder verschiebe sie und speichere erneut.";
+/** Nur, was die Zeichenfläche führen kann: die Elemente ohne Grenzverletzung,
+ *  normalisiert wie beim Speichern; bei doppelter id gilt die erste Stelle,
+ *  höchstens `MAX_ELEMENTE`. Aus derselben Einzelprüfung wie
+ *  `pruefeDiagramm` — so lässt sich eine übernommene Vorlage immer speichern,
+ *  und Vorschau und Übernahme zeigen dasselbe. */
+export function zeichenbaresDiagramm(roh: unknown): DiagrammData {
+  const liste = istObjekt(roh) && Array.isArray(roh.elemente) ? roh.elemente : [];
+  return { version: DIAGRAMM_VERSION, elemente: pruefeElemente(liste).eintraege.map((g) => g.e) };
+}
+
+const DIAGRAMM_UNLESBAR = "Das Feld-Diagramm konnte nicht gelesen werden.";
+
+/** Die Ablehnung für den Trainer: welche Art von Elementen, wie viele — ohne
+ *  Kennungen und Stellen, die er in der Maske nicht sieht. Ein Element zählt
+ *  einmal, in seiner schwersten Gruppe. */
+function ablehnung(grenzen: readonly Befund[]): string {
+  if (grenzen.some((b) => b.code === "aufbau" && b.index === undefined)) return DIAGRAMM_UNLESBAR;
+  const GRUPPEN = [
+    (n: number) => (n === 1 ? "1 Element, das KiFu nicht kennt (etwa ein «?»-Platzhalter)" : `${n} Elemente, die KiFu nicht kennt (etwa «?»-Platzhalter)`),
+    (n: number) => (n === 1 ? "1 beschädigtes Element" : `${n} beschädigte Elemente`),
+    (n: number) => (n === 1 ? "1 Element ausserhalb der Fläche" : `${n} Elemente ausserhalb der Fläche`),
+  ];
+  const gruppe = (b: Befund) => (b.code === "unbekannt" ? 0 : b.code === "ausserhalb" ? 2 : 1);
+  const jeElement = new Map<number, number>();
+  for (const b of grenzen)
+    if (b.index !== undefined) jeElement.set(b.index, Math.min(jeElement.get(b.index) ?? GRUPPEN.length, gruppe(b)));
+  const anzahl = GRUPPEN.map((_, g) => [...jeElement.values()].filter((x) => x === g).length);
+  const teile = GRUPPEN.flatMap((text, g) => (anzahl[g] ? [text(anzahl[g])] : []));
+  const zuViele = grenzen.some((b) => b.code === "anzahl");
+  if (zuViele) teile.push(`mehr als ${MAX_ELEMENTE} Elemente`);
+  return (
+    `Das Feld-Diagramm lässt sich so nicht speichern: ${undListe(teile)}. ` +
+    (zuViele && jeElement.size === 0 ? "Entferne einige und speichere erneut." : "Entferne oder verschiebe sie und speichere erneut.")
+  );
+}
+
+/** JSON mit sortierten Schlüsseln: jsonb liefert ein Objekt in eigener
+ *  Schlüsselfolge zurück, das Formular in der des Editors. */
+function kanonisch(v: unknown): string {
+  return JSON.stringify(v ?? null, (_k, w) =>
+    w && typeof w === "object" && !Array.isArray(w)
+      ? Object.fromEntries(Object.entries(w).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+      : w,
+  );
+}
 
 /** Die in der Maske gezeichnete Zeichnung aus dem Formular (#246, #247), nach
  *  denselben Grenzen wie ein vom KI-Assistenten gesetztes Diagramm
@@ -602,18 +696,19 @@ export const DIAGRAMM_ABGELEHNT =
  *  Das Formular schickt bei jedem Speichern das ganze Diagramm mit. Ist es
  *  unverändert gegenüber `gespeichert`, wird es nicht neu beanstandet — sonst
  *  liesse sich eine Übung mit einem Altbestand-Element nicht einmal mehr
- *  umbenennen. Es wird dann nachsichtig gelesen wie bisher. */
+ *  umbenennen. Es wird dann nachsichtig gelesen wie bisher. Sonst `fehler`:
+ *  die Meldung für den Trainer, welche Elemente sich nicht speichern lassen. */
 export function diagrammAusFormular(
   form: FormData,
   gespeichert?: unknown,
-): DiagrammData | null | undefined | "ungueltig" {
+): DiagrammData | null | undefined | { fehler: string } {
   const roh = form.get("diagramm");
   if (typeof roh !== "string" || roh === "") return undefined;
   let json: unknown;
   try {
     json = JSON.parse(roh);
   } catch {
-    return "ungueltig";
+    return { fehler: DIAGRAMM_UNLESBAR };
   }
   const { daten, grenzen } = pruefeDiagramm(json);
   if (daten) return daten.elemente.length > 0 ? daten : null;
@@ -622,10 +717,10 @@ export function diagrammAusFormular(
   if (
     gespeichert !== undefined &&
     nachsichtig &&
-    JSON.stringify(nachsichtig.elemente) === JSON.stringify(parseDiagramm(gespeichert)?.elemente)
+    kanonisch(nachsichtig.elemente) === kanonisch(parseDiagramm(gespeichert)?.elemente)
   )
     return nachsichtig.elemente.length > 0 ? nachsichtig : null;
 
   console.warn("[diagramm] Speichern abgelehnt:", grenzen.map((b) => b.meldung));
-  return "ungueltig";
+  return { fehler: ablehnung(grenzen) };
 }

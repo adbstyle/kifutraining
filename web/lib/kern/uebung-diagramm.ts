@@ -62,7 +62,7 @@ function diagrammVomAssistenten(
  *  Diagramm weder Funde noch Spalten. */
 export function diagrammZumAnlegen(e: {
   diagramm?: unknown;
-  material?: { liste?: readonly unknown[] } | null;
+  material?: { liste?: readonly unknown[] | null } | null;
 }): { funde: Fund[]; spalten: ReturnType<typeof diagrammSpalten> | null; maengel: Befund[] } {
   if (e.diagramm === undefined) return { funde: [], spalten: null, maengel: [] };
   const d = diagrammVomAssistenten(e.diagramm);

@@ -15,6 +15,7 @@ import { MangelAusgabe, alsMangel } from "@/lib/mcp/diagramm-eingaben";
 import {
   UEBUNG_ANGABEN,
   UEBUNG_KENNUNG_FEHLER,
+  UEBUNG_NUR_EIGENE_FEHLER,
   UebungAendernEingabe,
   UebungAnlegenEingabe,
   UebungKennung,
@@ -106,7 +107,8 @@ export const uebungAendern = werkzeug({
   beschreibung:
     "Ändert einzelne Angaben einer eigenen Übung. Was du nicht nennst, bleibt, wie es ist; " +
     "«null» entfernt eine freiwillige Angabe. Bei «spielfeld» und «anzahl_kinder» ersetzt die " +
-    "neue Angabe die bisherige als Ganzes, bei «material» je Teil («liste», «ergaenzung»). KiFu " +
+    "neue Angabe die bisherige als Ganzes, bei «material» je Teil («liste», «ergaenzung»; «null» " +
+    "leert einen Teil, «material»: «null» beide). KiFu " +
     `prüft danach die ganze Übung mit denselben Regeln wie das Formular. ${ABLEHNUNG} Wechselt ` +
     "die Einordnung, prüft KiFu auch die gespeicherten Angaben, die die neue Einordnung nicht " +
     "kennt, und löscht sie nicht still, sondern nennt sie: mit «null» entfernen und die neuen " +
@@ -116,7 +118,7 @@ export const uebungAendern = werkzeug({
     "ändert dieses Werkzeug nicht — das Diagramm setzt «uebung_diagramm_setzen», die Sichtbarkeit " +
     "«uebung_veroeffentlichen» und " +
     "«uebung_auf_entwurf_setzen»; steht die Übung schon in einem Training, behält sie dort ihre " +
-    `Fassung. ${UEBUNG_KENNUNG_FEHLER}`,
+    `Fassung. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
   nurLesen: false,
   eingabe: UebungAendernEingabe,
   ausgabe: z.object({ ...Kopf, sichtbarkeit: Sichtbarkeit }),
@@ -141,7 +143,7 @@ export const uebungVeroeffentlichen = werkzeug({
     "Tragweite, die du dem Trainer vorher nennen solltest: " +
     `«${TRAGWEITE_UEBUNG_VEROEFFENTLICHEN}» Es entsteht keine Kopie: Die Übung bleibt ` +
     "bearbeitbar, und die Öffentlichkeit sieht jeweils den aktuellen Stand. Eine öffentliche " +
-    `Übung bleibt öffentlich. ${UEBUNG_KENNUNG_FEHLER}`,
+    `Übung bleibt öffentlich. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ kennung: UebungKennung }),
   ausgabe: z.object({ ...Kopf, sichtbarkeit: z.literal("oeffentlich"), tragweite: z.string() }),
@@ -160,7 +162,7 @@ export const uebungAufEntwurfSetzen = werkzeug({
     "Nimmt eine eigene öffentliche Übung aus dem öffentlichen Bestand; sie bleibt als privater " +
     "Entwurf in deinem Bestand. Was andere bereits in ihre Trainings übernommen oder in ihren " +
     "Bestand kopiert haben, bleibt bestehen — es sind eigenständige Kopien; benachrichtigt wird " +
-    `niemand. Ein Entwurf bleibt Entwurf. ${UEBUNG_KENNUNG_FEHLER}`,
+    `niemand. Ein Entwurf bleibt Entwurf. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ kennung: UebungKennung }),
   ausgabe: z.object({ ...Kopf, sichtbarkeit: z.literal("entwurf") }),
@@ -184,8 +186,9 @@ export const uebungKopieren = werkzeug({
     "wirken in keine Richtung, und die Quelle bleibt unberührt. Die Kopie einer eigenen Übung " +
     "trägt im Namen den Zusatz «(Kopie)», die einer Manual- oder fremden Übung behält den Namen. " +
     "Danach lässt sich die Kopie mit «uebung_aendern» anpassen. Je Aufruf entsteht genau eine " +
-    "Kopie; scheitert es mit einer Meldung, bleibt nichts zurück (siehe «hinweis»), und ein " +
-    "zweiter Versuch ist gefahrlos. Bricht der Vorgang ohne Meldung ab (Zeitüberschreitung), " +
+    "Kopie; scheitert es mit einer Meldung, bleibt nichts zurück (siehe «hinweis»); bei " +
+    "«technisch» oder «konflikt» ist ein zweiter Versuch gefahrlos. Bricht der Vorgang ohne " +
+    "Meldung ab (Zeitüberschreitung), " +
     "kann die Kopie trotzdem entstanden sein — prüfe dann mit «uebungen_suchen» («nur_eigene»), " +
     "bevor du es noch einmal versuchst. Übungen aus Trainings («fassung_id» aus «training_abrufen») lassen sich hier nicht " +
     `kopieren — ihre Kennung ergibt «nicht_gefunden». ${UEBUNG_KENNUNG_FEHLER}`,

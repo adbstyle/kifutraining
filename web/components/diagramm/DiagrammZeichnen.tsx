@@ -32,6 +32,7 @@ import {
   type FormElement,
   type FormTyp,
 } from "@/lib/diagramm";
+import { gruppenVersatz } from "@/lib/diagramm-pruefung";
 import { VorlagePicker } from "./VorlagePicker";
 import type { VorlageItem } from "@/lib/queries/exercises";
 import { SYMBOLE, symbolDef, symbolMasse, symbolRotation } from "./symbols";
@@ -87,9 +88,10 @@ function verschiebeElement(el: DiagrammElement, dx: number, dy: number): Diagram
   }
 }
 
-/** Begrenzungsrahmen einer Auswahl (Vereinigung der Element-Boxen) in
- *  Flächen-Koordinaten — Anker für Gruppen-Versatz, Gruppen-Drag und die
- *  Verankerung der Mehrfach-Bedienleiste (#67). */
+/** Begrenzungsrahmen einer Auswahl (Vereinigung der sichtbaren Element-Boxen)
+ *  in Flächen-Koordinaten — für die Verankerung der Mehrfach-Bedienleiste
+ *  (#67). Begrenzt wird eine Gruppe dagegen an dem, was die Grenze
+ *  «ausserhalb» misst (`gruppenVersatz`). */
 function auswahlBox(els: DiagrammElement[]): { x: number; y: number; breite: number; hoehe: number } {
   const boxen = els.map(elementBBox);
   const minX = Math.min(...boxen.map((b) => b.x));
@@ -101,21 +103,10 @@ function auswahlBox(els: DiagrammElement[]): { x: number; y: number; breite: num
 
 /** Eigenständige Kopie einer Auswahl mit gemeinsamem diagonalem Versatz (#67 AK7).
  *  Frische IDs, tief kopierte Geometrie; der Versatz gilt für die ganze Gruppe,
- *  begrenzt an der Gruppen-Box — die relative Anordnung bleibt erhalten (PC2). */
+ *  begrenzt wie beim Ziehen — die relative Anordnung bleibt erhalten (PC2). */
 function versetzteGruppe(els: DiagrammElement[], versatz: number): DiagrammElement[] {
-  const box = auswahlBox(els);
-  const dx = boxVersatz(box.x, box.x + versatz, box.breite, FLAECHE.breite);
-  const dy = boxVersatz(box.y, box.y + versatz, box.hoehe, FLAECHE.hoehe);
+  const { dx, dy } = gruppenVersatz(els, versatz, versatz);
   return els.map((el) => ({ ...verschiebeElement(el, dx, dy), id: crypto.randomUUID() }));
-}
-
-/** Versatz einer Gruppen-Box auf einer Achse, begrenzt auf die Fläche. Passt
- *  die Box gar nicht auf die Fläche — Symbolrahmen am Rand oder ein langer
- *  Text ragen hinaus —, bleibt die Gruppe auf dieser Achse stehen: jede
- *  Begrenzung schöbe sonst ein Element mit seiner Mitte über den Rand, und die
- *  Übung liesse sich nicht mehr speichern (Story #145). */
-function boxVersatz(start: number, ziel: number, groesse: number, flaeche: number): number {
-  return groesse > flaeche ? 0 : clamp(ziel, flaeche - groesse) - start;
 }
 
 /** Achsenparalleles Rechteck aus zwei Eckpunkten (Auswahlrahmen). */
@@ -720,12 +711,11 @@ export function DiagrammZeichnen({
       setDragAktiv(true);
     }
     const p = flaechenPunkt(svg, e);
-    // Gruppen-Verschiebung (#67 AK8): gemeinsamer Versatz, an der Gruppen-Box
-    // begrenzt — die Anordnung der Elemente zueinander bleibt erhalten (PC3).
+    // Gruppen-Verschiebung (#67 AK8): gemeinsamer Versatz, begrenzt an dem,
+    // was die Grenze «ausserhalb» misst — die Anordnung der Elemente
+    // zueinander bleibt erhalten (PC3).
     if (drag.modus === "mehrfach") {
-      const box = auswahlBox(drag.orig);
-      const dx = boxVersatz(box.x, box.x + (p.x - drag.start.x), box.breite, FLAECHE.breite);
-      const dy = boxVersatz(box.y, box.y + (p.y - drag.start.y), box.hoehe, FLAECHE.hoehe);
+      const { dx, dy } = gruppenVersatz(drag.orig, p.x - drag.start.x, p.y - drag.start.y);
       const origMap = new Map(drag.orig.map((o) => [o.id, o]));
       setElemente((prev) =>
         prev.map((el) => {
@@ -773,10 +763,12 @@ export function DiagrammZeichnen({
           // Gezogene Kante folgt dem Pointer; die gegenüberliegende bleibt Anker.
           const links = drag.ecke === "tl" || drag.ecke === "bl";
           const oben = drag.ecke === "tl" || drag.ecke === "tr";
-          const x = links ? Math.min(px, rechts - FORM_MIN) : o.x;
-          const breite = links ? rechts - x : Math.max(FORM_MIN, px - o.x);
-          const y = oben ? Math.min(py, unten - FORM_MIN) : o.y;
-          const hoehe = oben ? unten - y : Math.max(FORM_MIN, py - o.y);
+          // FORM_MIN schiebt die Form nie über die Fläche: Liegt sie so nah
+          // am Rand, dass die Mindestkante nicht passt, bleibt sie schmaler.
+          const x = links ? Math.max(0, Math.min(px, rechts - FORM_MIN)) : o.x;
+          const breite = links ? rechts - x : Math.min(Math.max(FORM_MIN, px - o.x), FLAECHE.breite - o.x);
+          const y = oben ? Math.max(0, Math.min(py, unten - FORM_MIN)) : o.y;
+          const hoehe = oben ? unten - y : Math.min(Math.max(FORM_MIN, py - o.y), FLAECHE.hoehe - o.y);
           return { ...el, x, y, breite, hoehe };
         }
         if (drag.modus === "vertex") {
@@ -1340,7 +1332,7 @@ function elementBBox(element: DiagrammElement): {
 } {
   if (element.art === "symbol") {
     // Gedrehte Symbole: die Masse drehen mit, sonst liegt um eine waagrechte
-    // Stange ein hochkanter Rahmen und die Rand-Begrenzung rechnet falsch.
+    // Stange ein hochkanter Auswahlrahmen.
     const { breite, hoehe } = symbolMasse(element.typ, element.rotation);
     return { x: element.x - breite / 2, y: element.y - hoehe / 2, breite, hoehe };
   }

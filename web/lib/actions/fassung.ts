@@ -8,7 +8,7 @@ import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import { bildQuelleZurZeichnung, hatDiagramm } from "@/lib/diagramm";
-import { DIAGRAMM_ABGELEHNT, diagrammAusFormular } from "@/lib/diagramm-pruefung";
+import { diagrammAusFormular } from "@/lib/diagramm-pruefung";
 import {
   fassungUnvollstaendig,
   istEigeneFassungsDatei,
@@ -105,7 +105,7 @@ export async function updateFassung(
   const hkat = (inhalt.hauptteilkategorie as string | null) ?? null;
 
   const gezeichnet = diagrammAusFormular(form, fassung.diagramm);
-  if (gezeichnet === "ungueltig") return { status: "error", message: DIAGRAMM_ABGELEHNT };
+  if (gezeichnet && "fehler" in gezeichnet) return { status: "error", message: gezeichnet.fehler };
   // Die Zeichnung, die die Fassung nach dem Speichern trägt.
   const diagramm = gezeichnet !== undefined ? gezeichnet : fassung.diagramm;
 

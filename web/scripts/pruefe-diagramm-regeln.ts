@@ -9,7 +9,8 @@
 //   2026-09-29 (Story #145) gelten die Grenzen auch beim Speichern aus der
 //   Übungsmaske. Der Editor klemmt beim
 //   Ziehen eines Symbols die Mitte, nicht den Rahmen — eine Grenze am Rahmen
-//   machte solche Übungen unspeicherbar.
+//   machte solche Übungen unspeicherbar. Eine Gruppe begrenzt er an denselben
+//   Stellen (`grenzLage`), und eine übernommene Vorlage trägt nur Zeichenbares.
 // - **Grenze gegen Mangel.** Was die Fläche nicht führen kann, wird abgelehnt
 //   und je Element benannt; inhaltliche Befunde werden gespeichert und
 //   gemeldet (PO-Entscheid 2026-09-29, Story #145). Kippt ein Fall auf die
@@ -47,12 +48,14 @@ import {
 } from "../lib/diagramm";
 import {
   BEFUND_CODES,
-  DIAGRAMM_ABGELEHNT,
   ELEMENT_ERLAUBT,
   GRENZ_CODES,
   diagrammAusFormular,
   diagrammProbleme,
+  grenzLage,
+  gruppenVersatz,
   pruefeDiagramm,
+  zeichenbaresDiagramm,
   type Befund,
   type Pruefung,
 } from "../lib/diagramm-pruefung";
@@ -382,39 +385,144 @@ pruefe("11: eine Grenze an einem Element verhindert die Mängel der anderen nich
 });
 
 // ── 12. Speichern aus der Übungsmaske ─────────────────────────────────────
-pruefe("12: diagrammAusFormular — Grenzen beim Speichern, unveränderter Altbestand bleibt speicherbar", () => {
+pruefe("12: diagrammAusFormular — Grenzen beim Speichern mit Meldung für den Trainer, unveränderter Altbestand bleibt speicherbar", () => {
   const formular = (wert?: unknown) => {
     const f = new FormData();
     if (wert !== undefined) f.set("diagramm", typeof wert === "string" ? wert : JSON.stringify(wert));
     return f;
   };
+  const UNLESBAR = { fehler: "Das Feld-Diagramm konnte nicht gelesen werden." };
+  const abgelehnt = (teile: string, schluss = "Entferne oder verschiebe sie und speichere erneut.") => ({
+    fehler: `Das Feld-Diagramm lässt sich so nicht speichern: ${teile}. ${schluss}`,
+  });
   const warnungen: unknown[][] = [];
   const warn = console.warn;
   console.warn = (...args: unknown[]) => void warnungen.push(args);
   try {
     assert.equal(diagrammAusFormular(formular()), undefined);
     assert.equal(diagrammAusFormular(formular("")), undefined);
-    assert.equal(diagrammAusFormular(formular("{kaputt")), "ungueltig");
+    assert.deepEqual(diagrammAusFormular(formular("{kaputt")), UNLESBAR);
+    assert.deepEqual(diagrammAusFormular(formular({ version: 1 })), UNLESBAR);
     assert.equal(diagrammAusFormular(formular({ version: 1, elemente: [] })), null);
 
     const gueltig = { version: 1, elemente: [pylone("a", 100, 100, { label: "x" })] };
     assert.deepEqual(diagrammAusFormular(formular(gueltig)), { version: 1, elemente: [pylone("a", 100, 100)] });
 
+    // Ein Element zählt einmal, in seiner schwersten Gruppe: «b» ist
+    // unbekannt UND ausserhalb.
     const alt = { version: 1, elemente: [pylone("a", 100, 100), { id: "b", art: "symbol", typ: "torhueter", x: 1650, y: 40 }] };
-    assert.equal(diagrammAusFormular(formular(alt)), "ungueltig");
-    assert.equal(warnungen.length, 1);
-    assert.equal(warnungen[0][0], "[diagramm] Speichern abgelehnt:");
+    assert.deepEqual(
+      diagrammAusFormular(formular(alt)),
+      abgelehnt("1 Element, das KiFu nicht kennt (etwa ein «?»-Platzhalter)"),
+    );
+    assert.equal(warnungen.at(-1)?.[0], "[diagramm] Speichern abgelehnt:", "die Befunde stehen im Server-Log");
+    const gemischt = diagrammAusFormular(
+      formular({
+        version: 1,
+        elemente: [
+          { id: "tw", art: "symbol", typ: "torhueter", x: 800, y: 500 },
+          { id: "p", art: "pfad", typ: "pass", punkte: [{ x: 1, y: 1 }] },
+          pylone("r", 1700, 100),
+          pylone("o", 100, -5),
+        ],
+      }),
+    );
+    assert.deepEqual(
+      gemischt,
+      abgelehnt(
+        "1 Element, das KiFu nicht kennt (etwa ein «?»-Platzhalter), 1 beschädigtes Element und 2 Elemente ausserhalb der Fläche",
+      ),
+    );
+    assert.ok(!/elemente\[|«tw»|«r»/.test((gemischt as { fehler: string }).fehler), "keine Stellen, keine ids");
+
     assert.deepEqual(diagrammAusFormular(formular(alt), alt), alt, "unverändert → nachsichtig wie bisher");
+    // jsonb liefert die Schlüssel in eigener Folge zurück — das ist keine Änderung.
+    const umgestellt = { version: 1, elemente: alt.elemente.map((e) => Object.fromEntries(Object.entries(e).reverse())) };
+    assert.deepEqual(diagrammAusFormular(formular(alt), umgestellt), alt, "Schlüsselfolge egal");
     const geaendert = { ...alt, elemente: [...alt.elemente, pylone("c", 200, 200)] };
-    assert.equal(diagrammAusFormular(formular(geaendert), alt), "ungueltig");
-    assert.equal(diagrammAusFormular(formular(alt), null), "ungueltig");
+    assert.ok("fehler" in (diagrammAusFormular(formular(geaendert), alt) as object));
+    assert.ok("fehler" in (diagrammAusFormular(formular(alt), null) as object));
 
     const viele = Array.from({ length: MAX_ELEMENTE + 1 }, (_, i) => pylone(`p${i}`, 100 + (i % 20) * 60, 100 + Math.floor(i / 20) * 50));
-    assert.equal(diagrammAusFormular(formular({ version: 1, elemente: viele })), "ungueltig");
+    assert.deepEqual(
+      diagrammAusFormular(formular({ version: 1, elemente: viele })),
+      abgelehnt(`mehr als ${MAX_ELEMENTE} Elemente`, "Entferne einige und speichere erneut."),
+    );
   } finally {
     console.warn = warn;
   }
-  assert.match(DIAGRAMM_ABGELEHNT, /nicht speichern/);
+});
+
+// ── Grenz-Lage: Prüfung und Editor messen dasselbe ────────────────────────
+/** Wie der Editor ein Element verschiebt (DiagrammZeichnen.verschiebeElement). */
+function verschoben(e: DiagrammElement, dx: number, dy: number): DiagrammElement {
+  switch (e.art) {
+    case "symbol":
+    case "text":
+      return { ...e, x: e.x + dx, y: e.y + dy };
+    case "pfad":
+      return { ...e, punkte: e.punkte.map((p) => ({ x: p.x + dx, y: p.y + dy })) };
+    case "form":
+      return { ...e, x: e.x + dx, y: e.y + dy, punkte: e.punkte?.map((p) => ({ x: p.x + dx, y: p.y + dy })) };
+  }
+}
+
+pruefe("Grenz-Lage: Mitte, Punkte oder Rahmen — dieselben Stellen wie die Grenze «ausserhalb»", () => {
+  const ecken = [{ x: 10, y: 10 }, { x: 60, y: 10 }, { x: 30, y: 60 }];
+  assert.deepEqual(grenzLage({ id: "s", art: "symbol", typ: "spieler", x: 5, y: 6 }), { wie: "mitte", punkte: [{ x: 5, y: 6 }] });
+  assert.deepEqual(grenzLage({ id: "t", art: "text", x: 5, y: 6, text: "x" }), { wie: "mitte", punkte: [{ x: 5, y: 6 }] });
+  assert.deepEqual(grenzLage({ id: "p", art: "pfad", typ: "pass", punkte: ecken }).wie, "punkte");
+  const form = { id: "f", art: "form", x: 10, y: 10, breite: 50, hoehe: 50 } as const;
+  assert.deepEqual(grenzLage({ ...form, form: "polygon", punkte: ecken }), { wie: "punkte", punkte: ecken });
+  assert.deepEqual(grenzLage({ ...form, form: "dreieck", punkte: ecken }), { wie: "punkte", punkte: ecken });
+  for (const f of ["rechteck", "ellipse", "dreieck"] as const)
+    assert.deepEqual(grenzLage({ ...form, form: f }), { wie: "rahmen", punkte: [{ x: 10, y: 10 }, { x: 60, y: 60 }] }, f);
+});
+
+pruefe("Gruppenversatz: eine Gruppe mit langem Text oder Symbolen am Rand bleibt beweglich, keine Bewegung verletzt eine Grenze", () => {
+  const gruppe: DiagrammElement[] = [
+    // Die sichtbare Textbox ist breiter als die Fläche — früher stand die
+    // Gruppe darum still.
+    { id: "t", art: "text", x: 800, y: 500, text: "x".repeat(MAX_TEXT_LAENGE) },
+    { id: "l", art: "symbol", typ: "spieler", x: 0, y: 400 },
+    { id: "r", art: "symbol", typ: "spieler", x: 1200, y: 1000 },
+  ];
+  assert.deepEqual(gruppenVersatz(gruppe, 100, -50), { dx: 100, dy: -50 });
+  assert.deepEqual(gruppenVersatz(gruppe, -20, 30), { dx: 0, dy: 0 }, "am Rand stehen die Mitten schon");
+  const alle: DiagrammElement[] = [
+    ...gruppe,
+    { id: "p", art: "pfad", typ: "laufweg", punkte: [{ x: 100, y: 100 }, { x: 300, y: 200 }] },
+    { id: "f", art: "form", form: "rechteck", x: 1400, y: 10, breite: 200, hoehe: 100 },
+    { id: "v", art: "form", form: "polygon", x: 0, y: 0, breite: 0, hoehe: 0, punkte: [{ x: 500, y: 500 }, { x: 600, y: 900 }, { x: 550, y: 950 }] },
+  ];
+  for (const [dx, dy] of [[5000, 0], [-5000, 0], [0, 5000], [0, -5000], [333, -777], [-1, 1]]) {
+    const v = gruppenVersatz(alle, dx, dy);
+    assert.deepEqual(mit(...alle.map((e) => verschoben(e, v.dx, v.dy))).grenzen, [], `${dx}/${dy}`);
+  }
+});
+
+// ── Vorlagen: nur Zeichenbares ─────────────────────────────────────────────
+pruefe("zeichenbaresDiagramm: nur Elemente ohne Grenzverletzung, normalisiert, erste bei doppelter id, höchstens 300", () => {
+  const d = zeichenbaresDiagramm({
+    version: 1,
+    elemente: [
+      pylone("a", 100, 100, { label: "x" }),
+      { id: "tw", art: "symbol", typ: "torhueter", x: 800, y: 500 },
+      pylone("weit", 1700, 100),
+      pylone("a", 200, 200),
+      { id: "p", art: "pfad", typ: "pass", punkte: [{ x: 1, y: 1 }] },
+      7,
+      { id: "z", art: "zone", form: "rechteck", x: 10, y: 10, breite: 100, hoehe: 100 },
+    ],
+  });
+  assert.deepEqual(d, {
+    version: 1,
+    elemente: [pylone("a", 100, 100), { id: "z", art: "form", form: "rechteck", x: 10, y: 10, breite: 100, hoehe: 100 }],
+  });
+  assert.deepEqual(pruefeDiagramm(d).grenzen, [], "eine übernommene Vorlage lässt sich immer speichern");
+  const viele = Array.from({ length: MAX_ELEMENTE + 5 }, (_, i) => pylone(`p${i}`, 100 + (i % 20) * 60, 100 + Math.floor(i / 20) * 50));
+  assert.equal(zeichenbaresDiagramm({ elemente: viele }).elemente.length, MAX_ELEMENTE);
+  for (const roh of [null, {}, "x", { elemente: "x" }]) assert.deepEqual(zeichenbaresDiagramm(roh), { version: 1, elemente: [] });
 });
 
 // ── 13. Spalten beim Setzen ───────────────────────────────────────────────

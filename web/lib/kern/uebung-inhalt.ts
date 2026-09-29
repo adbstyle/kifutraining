@@ -69,7 +69,10 @@ export type UebungInhalt = {
   feldtyp?: string | null;
   spielfeld?: { laengeM: number; breiteM: number } | null;
   anzahlKinder?: { min?: number | null; max?: number | null } | null;
-  material?: { liste?: readonly MaterialEintrag[]; ergaenzung?: readonly string[] } | null;
+  material?: {
+    liste?: readonly MaterialEintrag[] | null;
+    ergaenzung?: readonly string[] | null;
+  } | null;
 };
 
 /** Ein Verstoss samt Einordnung: `regel` für einen Wert, der nicht zu
@@ -108,12 +111,12 @@ export type UebungsZeile = {
 };
 
 /** Die Klartexte der Datenebene, wortgleich übernommen. Fehlt einer, weil ein
- *  Constraint umbenannt wurde, scheitert schon das Laden — wie bei einem
- *  leeren Vokabular (`alsEnum`), statt dem Assistenten einen Namen zu melden. */
+ *  Constraint umbenannt wurde, gilt ein allgemeiner Satz — nie der Name des
+ *  Constraints, und das Laden scheitert nicht (diese Datei hängt über den
+ *  Kern auch an den Server Actions). Die Umbenennung fällt in `check:kern`
+ *  auf: dort sind die Texte eingefroren. */
 function dbRegel(constraint: string): string {
-  const text = fachlicheMeldung(constraint);
-  if (!text) throw new Error(`Kein Klartext für ${constraint}`);
-  return text;
+  return fachlicheMeldung(constraint) ?? "Dieser Wert passt nicht zur Einordnung oder Altersstufe der Übung.";
 }
 const REGEL = {
   erscheinungsform: dbRegel("erscheinungsform_je_altersstufe"),
@@ -347,18 +350,25 @@ export function pruefeUebungsInhalt(
 
   if (einordnungOk) {
     const zweit = erst.ok ? erst : parseUebungsInhalt(mitPlatzhaltern(fd, fehler, stufe), { altersstufe: stufe });
-    if (zweit.ok)
-      for (const f of verworfen(i, zweit.row, stufe, fehler))
-        funde.push(
-          o.ausBestand?.has(f.feld)
-            ? {
-                ...f,
-                meldung: `${f.meldung} Die Angabe steht noch in der Übung — setze «${f.feld}» auf null, um sie zu entfernen.`,
-              }
-            : f,
-        );
+    if (zweit.ok) funde.push(...verworfen(i, zweit.row, stufe, fehler));
   }
-  return erst.ok && funde.length === 0 ? { ok: true, row: erst.row } : { ok: false, funde };
+  return erst.ok && funde.length === 0
+    ? { ok: true, row: erst.row }
+    : { ok: false, funde: funde.map((f) => mitAltwertZusatz(f, o.ausBestand)) };
+}
+
+/** Die Pflichtangaben, die sich nicht auf `null` setzen lassen. */
+const NICHT_LEERBAR = new Set(["name", "einordnung", "kategorien"]);
+
+/** Beim Ändern: Stammt die beanstandete Angabe unverändert aus der
+ *  gespeicherten Übung, sagt der Verstoss, wie sie sich entfernen lässt —
+ *  ob die Regel sie verworfen hätte oder sie selbst unförmig ist (etwa eine
+ *  gespeicherte Anzahl 0). Massgeblich ist das oberste Feld
+ *  («anzahl_kinder.min» → «anzahl_kinder»). */
+function mitAltwertZusatz(f: Fund, ausBestand: ReadonlySet<string> | undefined): Fund {
+  const feld = f.feld.split(/[.[]/)[0];
+  if (!ausBestand?.has(feld) || NICHT_LEERBAR.has(feld)) return f;
+  return { ...f, meldung: `${f.meldung} Die Angabe steht noch in der Übung — setze «${feld}» auf null, um sie zu entfernen.` };
 }
 
 /** Die Pflichtangaben einer Übung — je Altersstufe, Einordnung und, wo sie
@@ -424,9 +434,10 @@ export function inhaltAusZeile(z: UebungsZeile): UebungInhalt {
 }
 
 /** Eine Änderung über die gespeicherte Übung legen. Was die Änderung nicht
- *  nennt, bleibt; `null` leert. `material` wird je Teil überlagert, `null`
- *  leert beide. `ausBestand` sammelt die Eingabenamen der Angaben, die
- *  unverändert aus dem Bestand kommen und etwas tragen. */
+ *  nennt, bleibt; `null` leert. `material` wird je Teil überlagert: `null`
+ *  an `liste` oder `ergaenzung` leert diesen Teil, `material: null` beide.
+ *  `ausBestand` sammelt die Eingabenamen der Angaben, die unverändert aus dem
+ *  Bestand kommen und etwas tragen. */
 export function ueberlagere(
   bestand: UebungInhalt,
   patch: UebungPatch,
@@ -438,13 +449,19 @@ export function ueberlagere(
     if (patch[k] !== undefined) inhalt[k] = patch[k];
     else if (gesendet(bestand[k])) ausBestand.add(k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`));
   }
+  // Je Teil: fehlt er, bleibt der gespeicherte; `null` leert ihn.
+  const teil = <T>(neu: readonly T[] | null | undefined, alt: readonly T[] | null | undefined) =>
+    neu === undefined ? alt : (neu ?? []);
   const m = patch.material;
   inhalt.material =
     m === undefined
       ? bestand.material
       : m === null
         ? { liste: [], ergaenzung: [] }
-        : { liste: m.liste ?? bestand.material?.liste, ergaenzung: m.ergaenzung ?? bestand.material?.ergaenzung };
+        : {
+            liste: teil(m.liste, bestand.material?.liste),
+            ergaenzung: teil(m.ergaenzung, bestand.material?.ergaenzung),
+          };
   return { inhalt: inhalt as UebungInhalt, ausBestand };
 }
 

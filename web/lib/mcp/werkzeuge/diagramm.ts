@@ -7,7 +7,7 @@ import { materialAusgabe, materialSchema } from "@/lib/material-ausgabe";
 import { DiagrammKatalogSchema, baueDiagrammKatalog } from "@/lib/mcp/diagramm-katalog";
 import { DiagrammEingabe, MANGEL_ERKLAERT, MangelAusgabe, alsMangel } from "@/lib/mcp/diagramm-eingaben";
 import { LeereEingabe } from "@/lib/mcp/eingaben";
-import { UEBUNG_KENNUNG_FEHLER, UebungKennung } from "@/lib/mcp/uebung-eingaben";
+import { UEBUNG_KENNUNG_FEHLER, UEBUNG_NUR_EIGENE_FEHLER, UebungKennung } from "@/lib/mcp/uebung-eingaben";
 import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
 
 /**
@@ -69,7 +69,7 @@ export const uebungDiagrammSetzen = werkzeug({
     "«maengel» inhaltliche Befunde am gespeicherten Diagramm, je mit Element und Behebung: " +
     `${MANGEL_CODES.map(code).join(", ")}. Sie sind keine Fehler: Das Diagramm ist gespeichert. ` +
     "Setze es korrigiert erneut, bevor du es dem Trainer als fertig meldest. Eine leere Liste " +
-    `heisst: nichts zu melden. ${UEBUNG_KENNUNG_FEHLER}`,
+    `heisst: nichts zu melden. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ kennung: UebungKennung, diagramm: DiagrammEingabe }),
   ausgabe: z.object({
@@ -102,7 +102,7 @@ export const uebungDiagrammMaengelAbrufen = werkzeug({
     `${GRENZ_CODES.map(code).join(", ")} für Angaben, die KiFu heute nicht mehr annähme (ein ` +
     "älteres Diagramm); vor einem erneuten Setzen sind sie zu beheben. Ob das Diagramm die Übung fachlich " +
     "richtig abbildet, beurteilt KiFu nicht. Eine leere Liste heisst: nichts zu melden. Ohne " +
-    `Diagramm ist «hat_diagramm» false. ${UEBUNG_KENNUNG_FEHLER}`,
+    `Diagramm ist «hat_diagramm» false. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
   nurLesen: true,
   eingabe: z.object({ kennung: UebungKennung }),
   ausgabe: z.object({ uebung: Uebung, hat_diagramm: z.boolean(), maengel: z.array(MangelAusgabe) }),

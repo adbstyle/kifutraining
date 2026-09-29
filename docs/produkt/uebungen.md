@@ -248,8 +248,9 @@ Beim Speichern prüft die Anwendung das Diagramm nach denselben Grenzen, die auc
 verbundenen KI-Assistenten gelten: nur Elemente, Farben, Posen und Drehungen, die die
 Zeichenfläche kennt, jedes Element auf der Fläche — bei Symbolen und Texten deren Mitte —,
 höchstens 300 Elemente, jedes mit eigener Kennung. Was die Fläche nicht führen kann, etwa ein
-«?»-Platzhalter aus einer alten Zeichnung, lässt sich nicht speichern; die Maske sagt das und
-bittet, das Element zu entfernen oder zu verschieben. Eine gespeicherte Zeichnung, die
+«?»-Platzhalter aus einer alten Zeichnung, lässt sich nicht speichern; die Maske nennt dann Art
+und Zahl der betroffenen Elemente — unbekannt, beschädigt, ausserhalb der Fläche oder zu viele —
+und bittet, sie zu entfernen oder zu verschieben. Eine gespeicherte Zeichnung, die
 unverändert zurückkommt, beanstandet sie nicht neu — eine Übung mit einer älteren Zeichnung lässt
 sich also weiterhin umbenennen. Der Assistent kann das Diagramm einer eigenen Übung auch selbst
 setzen und sich seine inhaltlichen Mängel melden lassen; die Anwendung selbst zeigt diese Mängel
@@ -265,13 +266,14 @@ wählt nicht einen Farbton, sondern «rot» oder «blau»; wie kräftig der ausf
 Anwendung je nach Bildschirm oder Papier.
 
 Ein vorhandenes Diagramm kann als Vorlage in eine andere eigene Übung oder eine Übung im Training
-kopiert werden. Zur
-Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar über den Namen der
-Quell-Übung und mit Vorschau; die Altersstufe spielt dabei keine Rolle. Fremde
+kopiert werden. Zur Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar
+über den Namen der Quell-Übung und mit Vorschau; die Altersstufe spielt dabei keine Rolle. Fremde
 Trainer-Diagramme sind bewusst nicht dabei. Das Kopieren erzeugt eine eigenständige Kopie ohne
 Verbindung zum Original; ein bereits vorhandenes Diagramm wird erst nach Rückfrage ersetzt.
-Angeboten wird die Vorlage auf der leeren Zeichenfläche und daneben auch, wenn schon etwas
-gezeichnet ist; die Übung selbst steht nicht zur Wahl. Das Ersetzen ist ein gewöhnlicher Schritt:
+Übernommen wird nur, was die Fläche führen kann: Trägt eine ältere Vorlage Elemente, die sich
+heute nicht mehr speichern liessen, fehlen sie schon in der Vorschau, und eine Vorlage ohne ein
+einziges solches Element steht nicht zur Wahl. Angeboten wird die Vorlage auf der leeren
+Zeichenfläche und daneben auch, wenn schon etwas gezeichnet ist; die Übung selbst steht nicht zur Wahl. Das Ersetzen ist ein gewöhnlicher Schritt:
 „Rückgängig" holt die Zeichnung zurück, und wirksam wird es erst mit dem Speichern der Übung.
 
 Statt eines Diagramms oder zusätzlich kann auch ein Foto hochgeladen werden. Zulässig sind die

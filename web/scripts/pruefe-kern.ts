@@ -32,6 +32,7 @@
 //
 //   npx tsx scripts/pruefe-kern.ts
 import assert from "node:assert/strict";
+import { isDeepStrictEqual } from "node:util";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -699,9 +700,12 @@ pruefe("Übungsinhalt: eine vollständige Einleitung ergibt die Zeile des Formul
     aufbau: null,
     varianten_text: "Mit zwei Bällen",
   });
-  // Ohne Materialliste bleibt sie aus der Zeile — dann gilt der Default.
+  // Ohne Materialliste bleibt sie aus der Zeile — dann gilt der Default;
+  // `null` an einem Teil heisst beim Anlegen dasselbe wie weglassen.
   const ohne = pruefeInhalt(EINLEITUNG);
   assert.ok(ohne.ok && !("material_liste" in ohne.row));
+  const leer = pruefeInhalt({ ...EINLEITUNG, material: { liste: null, ergaenzung: null } });
+  assert.ok(leer.ok && !("material_liste" in leer.row) && isDeepStrictEqual(leer.row.material, []));
 });
 
 pruefe("Übungsinhalt: Pflichtvertrag — pflichtangaben genügt, jede fehlende nennt genau ihr Feld", () => {
@@ -1061,6 +1065,13 @@ pruefe("Übung ändern: nur das Genannte ändert sich, null leert, material je T
   const liste = aendere(VOLL_EINLEITUNG, { material: { liste: [] } });
   assert.ok(liste.ok);
   assert.deepEqual(geaenderteSpalten(liste.row, VOLL_EINLEITUNG), { material_liste: [] });
+  // `null` an einem Teil leert genau diesen Teil.
+  const listeNull = aendere(VOLL_EINLEITUNG, { material: { liste: null } });
+  assert.ok(listeNull.ok);
+  assert.deepEqual(geaenderteSpalten(listeNull.row, VOLL_EINLEITUNG), { material_liste: [] });
+  const ergaenzungNull = aendere(VOLL_EINLEITUNG, { material: { ergaenzung: null } });
+  assert.ok(ergaenzungNull.ok);
+  assert.deepEqual(geaenderteSpalten(ergaenzungNull.row, VOLL_EINLEITUNG), { material: [] });
   const beides = aendere(VOLL_EINLEITUNG, { material: null });
   assert.ok(beides.ok);
   assert.deepEqual(geaenderteSpalten(beides.row, VOLL_EINLEITUNG), { material_liste: [], material: [] });
@@ -1115,6 +1126,20 @@ pruefe("Übung ändern: neue Einordnung nennt stehengebliebene Angaben, statt si
   assert.deepEqual(felder(feld), ["spielfeld"]);
   assert.ok(funde(feld)[0].meldung.includes(stehen));
   assert.ok(aendere(VOLL_EINLEITUNG, { feldtyp: "kleinfeld", spielfeld: null }).ok);
+
+  // Auch eine unförmige gespeicherte Angabe nennt den Weg zum Entfernen —
+  // am obersten Feld; die Pflichtangaben nie (sie lassen sich nicht leeren).
+  const altAnzahl = { ...VOLL_EINLEITUNG, anzahl_kinder: { min: 0, max: 8 } };
+  const nurName = aendere(altAnzahl, { name: "Neu" });
+  assert.deepEqual(felder(nurName), ["anzahl_kinder.min"]);
+  assert.ok(funde(nurName)[0].meldung.endsWith("setze «anzahl_kinder» auf null, um sie zu entfernen."));
+  assert.ok(aendere(altAnzahl, { name: "Neu", anzahlKinder: null }).ok);
+  const altKategorie = aendere({ ...VOLL_EINLEITUNG, kategorien: ["F", "D"] }, { varianten: "neu" });
+  assert.deepEqual(felder(altKategorie), ["kategorien"]);
+  assert.equal(
+    funde(altKategorie)[0].meldung,
+    "Diese Alterskategorie gehört nicht zur Altersstufe dieser Übung. Nicht zulässig: D.",
+  );
 
   // Ein Wert, den die Änderung selbst sendet, trägt den Zusatz nicht.
   const selbst = aendere(VOLL_EINLEITUNG, { einordnung: "ausklang", aufbau: "x", offenStarten: "neu", ueben: null, wetteifern: null, erscheinungsformen: null });
@@ -1260,8 +1285,16 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
         : block;
       // Dasselbe für Übungen (#144 AK 4): wer `UebungKennung` annimmt, erklärt
       // «nicht_gefunden» gegen «keine_rechte».
-      if (/\bUebungKennung\b/.test(eingabe))
+      // «keine_rechte» liefern nur die Werkzeuge, die an eigenen Übungen
+      // wirken; das Kopieren nimmt jede sichtbare (#317).
+      if (/\bUebungKennung\b/.test(eingabe)) {
         assert.ok(block.includes("UEBUNG_KENNUNG_FEHLER"), `${m[1]} nimmt eine Übungs-Kennung, erklärt aber UEBUNG_KENNUNG_FEHLER nicht`);
+        assert.equal(
+          block.includes("UEBUNG_NUR_EIGENE_FEHLER"),
+          m[1] !== "uebungKopieren",
+          `${m[1]}: UEBUNG_NUR_EIGENE_FEHLER gehört genau an die Werkzeuge, die nur eigene Übungen ändern`,
+        );
+      }
       if (/\b(TrainingId|FassungId|GruppeId|VarianteId)\b/.test(eingabe))
         assert.ok(/\bKENNUNG_FEHLER\b/.test(block), `${m[1]} nimmt eine Kennung, erklärt aber KENNUNG_FEHLER nicht`);
       // Dasselbe für Teams und Termine (#198 AK 11). «termin_entfernen» ist

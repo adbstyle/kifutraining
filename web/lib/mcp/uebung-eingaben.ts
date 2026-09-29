@@ -177,19 +177,25 @@ const Angaben = z.strictObject({
             menge: z.number(),
           }),
         )
+        .nullable()
         .optional()
         .describe(
           `Gezähltes Material: Art, Menge (ganze Zahl von 1 bis ${MATERIAL_MENGE_MAX}) und — nur bei ` +
             `${MATERIAL_ARTEN.filter((a) => MATERIAL_KATALOG[a].farbig).join(", ")} — die Farbe; ohne ` +
-            "Farbe gilt die des Diagramms.",
+            "Farbe gilt die des Diagramms. «null» leert die Liste.",
         ),
       ergaenzung: z
         .array(z.string())
+        .nullable()
         .optional()
-        .describe("Weiteres Material, das die Liste nicht kennt (Pfeife, Stoppuhr …), je Eintrag eine Zeile."),
+        .describe(
+          "Weiteres Material, das die Liste nicht kennt (Pfeife, Stoppuhr …), je Eintrag eine Zeile. " +
+            "«null» leert die Ergänzung.",
+        ),
     })
     .nullable()
-    .optional(),
+    .optional()
+    .describe("Material in zwei Teilen, «liste» und «ergaenzung». «null» leert beide."),
 });
 
 export const UebungAnlegenEingabe = Angaben.extend({
@@ -205,17 +211,22 @@ export const UebungKennung = AbrufEingabe.shape.kennung.describe(
   "id (UUID) oder slug der Übung, etwa aus «uebungen_suchen» oder «uebung_abrufen».",
 );
 
-/** Was die Fehler zu einer Übungs-Kennung bedeuten (#144 AK 4). Gehört an
+/** Was ein Fehler zu einer Übungs-Kennung bedeutet (#144 AK 4). Gehört an
  *  JEDE Beschreibung eines Werkzeugs, das `UebungKennung` annimmt —
  *  `check:kern` wacht darüber. */
 export const UEBUNG_KENNUNG_FEHLER =
-  "Fehlerarten zur Kennung: «nicht_gefunden» — für dein Konto nicht sichtbar (es gibt sie " +
-  "nicht, sie wurde gelöscht oder gehört jemand anderem privat; bewusst nicht " +
-  "unterscheidbar); «keine_rechte» — eine Übung aus dem Kifu-Manual oder die öffentliche eines " +
-  "anderen Kontos: ansehen und mit «uebung_kopieren» kopieren ja, ändern nein.";
+  "Fehlerart zur Kennung: «nicht_gefunden» — für dein Konto nicht sichtbar (es gibt sie " +
+  "nicht, sie wurde gelöscht oder gehört jemand anderem privat; bewusst nicht unterscheidbar).";
+
+/** Dazu bei jedem Werkzeug, das nur an EIGENEN Übungen wirkt (ändern,
+ *  Sichtbarkeit, Diagramm, Mängel) — «uebung_kopieren» liefert es nie. */
+export const UEBUNG_NUR_EIGENE_FEHLER =
+  "Fehlerart «keine_rechte» — eine Übung aus dem Kifu-Manual oder die öffentliche eines anderen " +
+  "Kontos: ansehen und mit «uebung_kopieren» kopieren ja, ändern nein.";
+
+const ALS_GANZES = "Beim Ändern ersetzt die neue Angabe die bisherige als Ganzes.";
 
 /** Eine Änderung (#144): Pflicht ist nur die Kennung, jede Angabe ist frei. */
-const ALS_GANZES = "Beim Ändern ersetzt die neue Angabe die bisherige als Ganzes.";
 export const UebungAendernEingabe = z.strictObject({
   kennung: UebungKennung,
   ...Angaben.partial().shape,

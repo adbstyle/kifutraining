@@ -1576,7 +1576,7 @@ try {
       "nur der Name ändert sich, auch nicht der Slug",
     );
 
-    wert(await aendereUebung(a.supabase, a.id, { kennung: probe.slug, aenderung: { varianten: null, material: { ergaenzung: [] } } }));
+    wert(await aendereUebung(a.supabase, a.id, { kennung: probe.slug, aenderung: { varianten: null, material: { ergaenzung: null } } }));
     const danach = await uebungszeile(probe.id);
     assert.equal(danach.varianten_text, null);
     assert.deepEqual(danach.material, []);
@@ -2126,7 +2126,8 @@ try {
       const r = await kopiereUebungNach(konto.supabase, konto.id, { kennung });
       fehler(r, "nicht_gefunden", UEBUNG_QUELLE_NICHT_VERFUEGBAR);
       assert.ok(!r.ok);
-      assert.equal(r.hinweis, HINWEIS_NICHTS_ENTSTANDEN);
+      // Ein zweiter Versuch ändert daran nichts — keine Aufforderung dazu.
+      assert.equal(r.hinweis, "Es ist keine Kopie entstanden.");
     }
     assert.deepEqual([await uebungenVon(a.id), await uebungenVon(b.id)], [vorherA, vorherB]);
   });
@@ -2201,7 +2202,7 @@ try {
     const uebersetzt = await kopiereUebungNach(kaputt, a.id, { kennung: mitBild.id });
     fehler(uebersetzt, "regel", "Diese Alterskategorie gehört nicht zur Altersstufe dieser Übung.");
     assert.ok(!uebersetzt.ok);
-    assert.equal(uebersetzt.hinweis, HINWEIS_NICHTS_ENTSTANDEN);
+    assert.equal(uebersetzt.hinweis, "Es ist keine Kopie entstanden.", "eine Regel ändert kein zweiter Versuch");
     assert.equal(await uebungenVon(a.id), vorher, "keine neue Übung");
     assert.deepEqual(await imBildOrdner(), dateienVorher, "die schon kopierte Datei ist wieder entfernt");
   });
@@ -2224,11 +2225,13 @@ try {
     // Die Maske schickt das gespeicherte Diagramm unverändert zurück …
     const form = new FormData();
     form.set("diagramm", JSON.stringify(parseDiagramm(gespeichert)));
-    assert.notEqual(diagrammAusFormular(form, gespeichert), "ungueltig", "die Kopie lässt sich speichern");
+    const r = diagrammAusFormular(form, gespeichert);
+    assert.ok(!(r && typeof r === "object" && "fehler" in r), "die Kopie lässt sich speichern");
     // … ein geändertes mit demselben Element weist sie ab.
     const geaendert = parseDiagramm(gespeichert)!;
     form.set("diagramm", JSON.stringify({ ...geaendert, elemente: [{ ...geaendert.elemente[0], x: 500 }] }));
-    assert.equal(diagrammAusFormular(form, gespeichert), "ungueltig");
+    const r2 = diagrammAusFormular(form, gespeichert);
+    assert.ok(r2 && typeof r2 === "object" && "fehler" in r2);
 
     // Ein leeres Diagramm fällt beim Kopieren weg — dann zeigt die Kopie
     // auch nicht «Diagramm» als Bild.

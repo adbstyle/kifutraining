@@ -4,7 +4,14 @@ import { ALTERSSTUFEN, istAltersstufe } from "@/lib/altersstufe";
 import { userSlug } from "@/lib/slug";
 import { VORLAGE_SELECT, kopieName, legeUebungsKopieAn } from "@/lib/fassung";
 import { sichtbarkeitVon, type Sichtbarkeit } from "@/lib/wert";
-import { abgebildet, ausDbFehler, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
+import {
+  abgebildet,
+  ausDbFehler,
+  fehlschlag,
+  ok,
+  type FehlerArt,
+  type KernErgebnis,
+} from "@/lib/kern/ergebnis";
 import {
   UEBUNG_ZEILE,
   aktualisiereZeile,
@@ -231,16 +238,24 @@ export async function kopiereUebungNach(
   userId: string,
   e: { kennung: string },
 ): Promise<KernErgebnis<{ id: string; slug: string; name: string; sichtbarkeit: "entwurf" }>> {
-  const nichts = { hinweis: HINWEIS_NICHTS_ENTSTANDEN };
   const quelle = await ladeUebungZumLesen<UebungsZeile>(supabase, e.kennung, VORLAGE_SELECT);
   if (!quelle.ok)
     return quelle.art === "nicht_gefunden"
-      ? fehlschlag("nicht_gefunden", UEBUNG_QUELLE_NICHT_VERFUEGBAR, { feld: "kennung", ...nichts })
-      : { ...quelle, ...nichts };
+      ? fehlschlag("nicht_gefunden", UEBUNG_QUELLE_NICHT_VERFUEGBAR, { feld: "kennung", hinweis: KEINE_KOPIE })
+      : { ...quelle, hinweis: nichtsEntstanden(quelle.art) };
   const q = quelle.wert;
 
   const name = q.owner_id === userId ? kopieName(q.name) : undefined;
   const kopie = await legeUebungsKopieAn(supabase, q, { ownerId: userId, altersstufe: q.altersstufe, name });
-  if (!kopie.ok) return fehlschlag(kopie.art, kopie.error, nichts);
+  if (!kopie.ok) return fehlschlag(kopie.art, kopie.error, { hinweis: nichtsEntstanden(kopie.art) });
   return ok({ id: kopie.id, slug: kopie.slug, name: name ?? q.name, sichtbarkeit: "entwurf" });
+}
+
+/** Was beim Assistenten von einer gescheiterten Kopie ankommt: Nur wo ein
+ *  zweiter Versuch Erfolg verspricht (unerwarteter Fehler, Nebenläufigkeit),
+ *  steht die Aufforderung dazu da — eine unsichtbare Quelle oder eine
+ *  verletzte Regel ändert ein zweiter Versuch nicht. */
+const KEINE_KOPIE = "Es ist keine Kopie entstanden.";
+function nichtsEntstanden(art: FehlerArt): string {
+  return art === "technisch" || art === "konflikt" ? HINWEIS_NICHTS_ENTSTANDEN : KEINE_KOPIE;
 }

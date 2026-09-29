@@ -700,6 +700,9 @@ pruefe("UebungAendernEingabe: Pflicht nur die Kennung, jede Angabe frei, null nu
   assert.ok(UebungAendernEingabe.safeParse(K).success);
   assert.ok(UebungAendernEingabe.safeParse({ ...K, name: "Neu", altersstufe: "juniorenfussball" }).success);
   assert.ok(UebungAendernEingabe.safeParse({ ...K, varianten: null, spielfeld: null, material: null }).success);
+  // Je Teil des Materials: `null` leert genau diesen Teil.
+  const teile = UebungAendernEingabe.parse({ ...K, material: { liste: null, ergaenzung: null } });
+  assert.deepEqual(alsUebungPatch(teile).material, { liste: null, ergaenzung: null });
   assert.ok(!UebungAendernEingabe.safeParse({ name: "Neu" }).success, "ohne Kennung");
   assert.ok(!UebungAendernEingabe.safeParse({ kennung: "  " }).success, "leere Kennung");
   for (const pflicht of ["name", "einordnung", "kategorien"])
