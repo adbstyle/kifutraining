@@ -9,6 +9,7 @@ import { abgebildet, ausDbFehler, fehlschlag, ok, type KernErgebnis } from "@/li
 import { UEBUNG_ZEILE, aktualisiereZeile, ladeUebungZumBearbeiten } from "@/lib/kern/zugriff";
 import { diagrammZumAnlegen } from "@/lib/kern/uebung-diagramm";
 import type { MaterialPosten } from "@/lib/material";
+import type { Befund } from "@/lib/diagramm-pruefung";
 import {
   NICHTS_ANGELEGT,
   UEBUNG_STUFEN_KI,
@@ -50,6 +51,8 @@ export async function legeUebungAn(
     sichtbarkeit: "entwurf";
     /** Nur mit Diagramm: die daraus gezählte Liste und die Ergänzung (#145 PC 6). */
     material?: { liste: MaterialPosten[]; ergaenzung: string[] };
+    /** Nur mit Diagramm: seine Mängel (#146 AK 3); leer = nichts zu melden. */
+    maengel?: Befund[];
   }>
 > {
   // Die Altersstufe ist Pflicht und hat keinen Rückfall — wie beim Anlegen
@@ -94,6 +97,7 @@ export async function legeUebungAn(
     sichtbarkeit: "entwurf",
     ...(d.spalten && {
       material: { liste: d.spalten.material_liste, ergaenzung: (p.row.material as string[] | undefined) ?? [] },
+      maengel: d.maengel,
     }),
   });
 }

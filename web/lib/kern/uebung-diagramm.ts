@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { aktivesBild, type DiagrammData } from "@/lib/diagramm";
+import { aktivesBild, hatDiagramm, type DiagrammData } from "@/lib/diagramm";
 import { pruefeDiagramm, type Befund } from "@/lib/diagramm-pruefung";
 import { diagrammSpalten } from "@/lib/diagramm-setzen";
 import type { MaterialPosten } from "@/lib/material";
@@ -18,6 +18,11 @@ import { UNVERAENDERT, alsVerstoesse, type Fund } from "@/lib/kern/uebung-inhalt
  * leeres Diagramm wird abgelehnt — entfernen lässt sich ein Diagramm nur in
  * KiFu selbst. Mit dem Diagramm zählt KiFu das Material (PC 4); die freie
  * Ergänzung bleibt (PC 5). Fassungen in Trainings berührt das Setzen nie.
+ *
+ * Mängel (Story #146) hindern nichts: Ein Diagramm, das die Grenzen einhält,
+ * wird gespeichert, und die Mängel gehen mit dem Ergebnis zurück (PC 1,
+ * AK 3) — wie die Hinweise eines Trainings (#195). `diagrammMaengel` liefert
+ * sie jederzeit, auch für ein in KiFu gezeichnetes Diagramm (AK 4).
  */
 
 /** Eine Grenzverletzung als Verstoss. `feld` ist der Pfad in der Eingabe des
@@ -40,29 +45,36 @@ export const MATERIAL_MIT_DIAGRAMM =
   "freie Ergänzung «material.ergaenzung» bleibt möglich.";
 
 /** Ein Diagramm, wie der Assistent es schickt: geprüft gegen die Grenzen, ein
- *  leeres abgelehnt. Ohne Fund das normalisierte Diagramm. */
-function diagrammVomAssistenten(roh: unknown): { ok: true; daten: DiagrammData } | { ok: false; funde: Fund[] } {
+ *  leeres abgelehnt. Ohne Fund das normalisierte Diagramm und seine Mängel. */
+function diagrammVomAssistenten(
+  roh: unknown,
+): { ok: true; daten: DiagrammData; maengel: Befund[] } | { ok: false; funde: Fund[] } {
   const p = pruefeDiagramm(roh);
   const funde: Fund[] = p.grenzen.map((b) => ({ ...alsVerstoss(b), art: "eingabe" }));
   if (p.daten?.elemente.length === 0) funde.push({ feld: "diagramm", meldung: DIAGRAMM_LEER, art: "eingabe" });
-  return p.daten && funde.length === 0 ? { ok: true, daten: p.daten } : { ok: false, funde };
+  return p.daten && funde.length === 0 ? { ok: true, daten: p.daten, maengel: p.maengel } : { ok: false, funde };
 }
 
 /** Das Diagramm beim Anlegen (#145 AK 5, 7): Die Funde gehören in DIESELBE
  *  Liste wie die Verstösse der übrigen Angaben; ohne Fund die Spalten, die
  *  der Insert über die Zeile des Formulars legt (Bild, Diagramm, gezählte
- *  Liste und Basis). Ohne Diagramm weder Funde noch Spalten. */
+ *  Liste und Basis), und die Mängel für das Ergebnis (#146 AK 3). Ohne
+ *  Diagramm weder Funde noch Spalten. */
 export function diagrammZumAnlegen(e: {
   diagramm?: unknown;
   material?: { liste?: readonly unknown[] } | null;
-}): { funde: Fund[]; spalten: ReturnType<typeof diagrammSpalten> | null } {
-  if (e.diagramm === undefined) return { funde: [], spalten: null };
+}): { funde: Fund[]; spalten: ReturnType<typeof diagrammSpalten> | null; maengel: Befund[] } {
+  if (e.diagramm === undefined) return { funde: [], spalten: null, maengel: [] };
   const d = diagrammVomAssistenten(e.diagramm);
   const funde = d.ok ? [] : [...d.funde];
   if (e.material?.liste?.length)
     funde.push({ feld: "material.liste", meldung: MATERIAL_MIT_DIAGRAMM, art: "regel" });
-  if (!d.ok || funde.length) return { funde, spalten: null };
-  return { funde, spalten: diagrammSpalten({ bild_quelle: null, bild_url: null, diagramm: null }, d.daten) };
+  if (!d.ok || funde.length) return { funde, spalten: null, maengel: [] };
+  return {
+    funde,
+    spalten: diagrammSpalten({ bild_quelle: null, bild_url: null, diagramm: null }, d.daten),
+    maengel: d.maengel,
+  };
 }
 
 export type DiagrammGesetzt = {
@@ -73,6 +85,8 @@ export type DiagrammGesetzt = {
   angezeigtesBild: "diagramm" | "foto";
   /** Die aus dem Diagramm gezählte Liste und die unveränderte Ergänzung. */
   material: { liste: MaterialPosten[]; ergaenzung: string[] };
+  /** Die Mängel des gespeicherten Diagramms (#146 AK 1–3); leer = nichts. */
+  maengel: Befund[];
 };
 
 /** Das Diagramm einer eigenen Übung setzen oder vollständig ersetzen (#145
@@ -117,5 +131,33 @@ export async function setzeDiagramm(
     // ist nur der Typ-Guard.
     angezeigtesBild: aktivesBild({ bildQuelle: s.bild_quelle, bildUrl: zeile.bild_url, diagramm: s.diagramm }) ?? "diagramm",
     material: { liste: s.material_liste, ergaenzung: zeile.material ?? [] },
+    maengel: d.maengel,
+  });
+}
+
+/** Die Befunde am gespeicherten Diagramm einer eigenen Übung (#146 AK 4) —
+ *  gleich, ob es der Assistent gesetzt oder der Trainer gezeichnet hat. Zu
+ *  den Mängeln kommen die Grenzen, die ein älteres Diagramm verletzt
+ *  (Altbestand): Setzen liesse es sich so nicht mehr. */
+export async function diagrammMaengel(
+  supabase: SupabaseClient,
+  userId: string,
+  e: { kennung: string },
+): Promise<KernErgebnis<{ id: string; slug: string; name: string; hatDiagramm: boolean; befunde: Befund[] }>> {
+  const zugriff = await ladeUebungZumBearbeiten<{ name: string; diagramm: unknown }>(
+    supabase,
+    userId,
+    e.kennung,
+    "name, diagramm",
+  );
+  if (!zugriff.ok) return zugriff;
+  const zeile = zugriff.wert;
+  const p = pruefeDiagramm(zeile.diagramm ?? { elemente: [] });
+  return ok({
+    id: zeile.id,
+    slug: zeile.slug,
+    name: zeile.name,
+    hatDiagramm: hatDiagramm(zeile.diagramm),
+    befunde: [...p.grenzen, ...p.maengel],
   });
 }

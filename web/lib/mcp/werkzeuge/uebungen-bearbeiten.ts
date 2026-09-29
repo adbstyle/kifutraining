@@ -10,6 +10,7 @@ import {
 } from "@/lib/kern/uebungen";
 import { materialAusgabe, materialSchema } from "@/lib/material-ausgabe";
 import { Sichtbarkeit } from "@/lib/mcp/bausteine";
+import { MangelAusgabe, alsMangel } from "@/lib/mcp/diagramm-eingaben";
 import {
   UEBUNG_ANGABEN,
   UEBUNG_KENNUNG_FEHLER,
@@ -64,14 +65,20 @@ export const uebungAnlegen = werkzeug({
     "Grenzen wie bei «uebung_diagramm_setzen»: Es wird das Bild der Übung, und KiFu zählt das " +
     "Material daraus selbst — dann «material.liste» weglassen, die Ergänzung bleibt möglich — und " +
     "nennt die gezählte Liste in «material». Verletzt das Diagramm eine Grenze, entsteht nichts, " +
-    "und «verstoesse» nennt die betroffenen Elemente zusammen mit den übrigen Angaben. Fotos nimmt " +
-    "das Werkzeug nicht an. Liefert Kennung, slug und die Adresse der Übung in KiFu.",
+    "und «verstoesse» nennt die betroffenen Elemente zusammen mit den übrigen Angaben. Die Mängel " +
+    "eines angenommenen Diagramms stehen in «maengel», wie bei «uebung_diagramm_setzen»: keine " +
+    "Fehler, die Übung ist angelegt. Fotos nimmt das Werkzeug nicht an. Liefert Kennung, slug und " +
+    "die Adresse der Übung in KiFu.",
   nurLesen: false,
   eingabe: UebungAnlegenEingabe,
   ausgabe: z.object({
     ...Kopf,
     sichtbarkeit: z.literal("entwurf"),
     material: materialSchema().optional().describe("Nur mit Diagramm: das daraus gezählte Material."),
+    maengel: z
+      .array(MangelAusgabe)
+      .optional()
+      .describe("Nur mit Diagramm: seine inhaltlichen Mängel; leer heisst nichts zu melden."),
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
@@ -84,6 +91,7 @@ export const uebungAnlegen = werkzeug({
         ...kopf(w, zugang),
         sichtbarkeit: w.sichtbarkeit,
         ...(w.material && { material: materialAusgabe(w.material.liste, w.material.ergaenzung) }),
+        ...(w.maengel && { maengel: w.maengel.map(alsMangel) }),
       }),
     ),
 });

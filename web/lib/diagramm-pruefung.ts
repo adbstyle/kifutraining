@@ -444,8 +444,8 @@ function elementMaengel(roh: Roh, art: ElementArt, { stelle, e }: Eintrag): Befu
  *  (etwa eine korrigierte Ankerhöhe) gehaltene Gegenstände still von der
  *  Hand — genau das ist bei der Fusskorrektur passiert, ohne dass eine
  *  Prüfung anschlug. */
-const HAND_TOLERANZ = 28;
-const FIGUR_NAEHE = 120;
+export const HAND_TOLERANZ = 28;
+export const FIGUR_NAEHE = 120;
 
 function leibchenMaengel(eintraege: readonly Eintrag[]): Befund[] {
   const figuren = eintraege.filter(

@@ -63,7 +63,9 @@ const { meineTeams, teamPlan } = await import("../lib/kern/team");
 const { legeUebungAn, aendereUebung, veroeffentlicheUebung, setzeUebungAufEntwurf, TRAGWEITE_UEBUNG_VEROEFFENTLICHEN } =
   await import("../lib/kern/uebungen");
 const { aktualisiereZeile, UEBUNG_ZEILE } = await import("../lib/kern/zugriff");
-const { setzeDiagramm, DIAGRAMM_LEER, MATERIAL_MIT_DIAGRAMM } = await import("../lib/kern/uebung-diagramm");
+const { setzeDiagramm, diagrammMaengel, DIAGRAMM_LEER, MATERIAL_MIT_DIAGRAMM } = await import(
+  "../lib/kern/uebung-diagramm"
+);
 const { pruefeDiagramm } = await import("../lib/diagramm-pruefung");
 const { materialVorschlag } = await import("../lib/material");
 const { getExercisesFuer } = await import("../lib/queries/uebungen-fuer");
@@ -1672,6 +1674,7 @@ try {
       anzahlElemente: FELD.elemente.length,
       angezeigtesBild: "diagramm",
       material: { liste: vorschlag(FELD), ergaenzung: ["Pfeife"] },
+      maengel: [],
     });
     const z = await diagrammzeile(u.id);
     assert.equal((z.diagramm as { elemente: unknown[] }).elemente.length, FELD.elemente.length);
@@ -1787,6 +1790,7 @@ try {
     };
     const u = wert(await legeUebungAn(a.supabase, a.id, { ...angaben, diagramm: FELD }));
     assert.deepEqual(u.material, { liste: vorschlag(FELD), ergaenzung: ["Pfeife"] });
+    assert.deepEqual(u.maengel, []);
     const z = await diagrammzeile(u.id);
     assert.equal(z.bild_quelle, "diagramm");
     assert.equal((z.diagramm as { elemente: unknown[] }).elemente.length, FELD.elemente.length);
@@ -1813,6 +1817,77 @@ try {
     assert.equal(r.hinweis, NICHTS_ANGELEGT);
     fehler(await legeUebungAn(a.supabase, a.id, { ...angaben, diagramm: { elemente: [] } }), "eingabe");
     assert.equal(await uebungenVon(a.id), vorher, "nichts angelegt");
+  });
+
+  // ── Mängel des Diagramms (#146) ──────────────────────────────────────────
+  /** Ein Leibchen 60 Einheiten neben einer Figur, aber an keiner Hand. */
+  const FREIES_LEIBCHEN = {
+    elemente: [
+      { id: "kind", art: "symbol", typ: "spieler", x: 600, y: 500 },
+      { id: "tuch", art: "symbol", typ: "leibchen", x: 600, y: 560 },
+    ],
+  };
+
+  await pruefe("Mängel: gespeichert UND gemeldet — beim Setzen, beim Anlegen und jederzeit abrufbar, gleich lautend (#146 AK 1–4, PC 1)", async () => {
+    const u = await kinderUebung("KI-Probe Mängel");
+    const r = wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: FREIES_LEIBCHEN }));
+    assert.deepEqual(r.maengel.map((b) => `${b.code}:${b.element}:${b.index}`), ["leibchen:tuch:1"]);
+    assert.match(r.maengel[0].meldung, /^Element «tuch» \(elemente\[1\]\): Das Leibchen liegt 60 Einheiten neben einer Figur/);
+    const z = await diagrammzeile(u.id);
+    assert.deepEqual((z.diagramm as { elemente: { id: string }[] }).elemente.map((e) => e.id), ["kind", "tuch"], "trotz Mangel gespeichert");
+
+    const abgerufen = wert(await diagrammMaengel(a.supabase, a.id, { kennung: u.slug }));
+    assert.deepEqual(abgerufen, { id: u.id, slug: u.slug, name: "KI-Probe Mängel", hatDiagramm: true, befunde: r.maengel });
+
+    const neu = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "kinderfussball",
+        name: "KI-Probe Mängel Anlegen",
+        einordnung: "einleitung",
+        kategorien: ["F"],
+        offenStarten: "Offen",
+        ueben: "Üben",
+        wetteifern: "Wett",
+        diagramm: FREIES_LEIBCHEN,
+      }),
+    );
+    assert.deepEqual(neu.maengel?.map((b) => b.code), ["leibchen"], "auch beim Anlegen");
+  });
+
+  await pruefe("Mängel: auch am in KiFu gezeichneten Diagramm, samt Altbestand; ohne Diagramm leer (#146 AK 4)", async () => {
+    const u = await kinderUebung("KI-Probe Mängel UI");
+    const leer = wert(await diagrammMaengel(a.supabase, a.id, { kennung: u.id }));
+    assert.deepEqual({ hat: leer.hatDiagramm, befunde: leer.befunde }, { hat: false, befunde: [] });
+    // Wie aus der Maske gespeichert: ein Feld mit einem Tor, das vom Feld weg
+    // öffnet — und ein älteres, unbekanntes Symbol, das heute eine Grenze wäre.
+    const { error } = await admin
+      .from("exercises")
+      .update({
+        diagramm: {
+          version: 1,
+          elemente: [
+            { id: "feld", art: "form", form: "rechteck", x: 200, y: 150, breite: 1200, hoehe: 700 },
+            { id: "tor", art: "symbol", typ: "tor", x: 800, y: 150, rotation: 180 },
+            { id: "alt", art: "symbol", typ: "torhueter", x: 800, y: 500 },
+          ],
+        },
+        bild_quelle: "diagramm",
+      })
+      .eq("id", u.id);
+    if (error) throw error;
+    const m = wert(await diagrammMaengel(a.supabase, a.id, { kennung: u.id }));
+    assert.equal(m.hatDiagramm, true);
+    assert.deepEqual(m.befunde.map((b) => `${b.art}:${b.code}:${b.element}`), ["grenze:unbekannt:alt", "mangel:tor_richtung:tor"]);
+  });
+
+  await pruefe("Mängel abrufen: nur eigene; Manual und fremd öffentlich → keine_rechte, privat fremd und unbekannt → nicht_gefunden", async () => {
+    const u = await kinderUebung("KI-Probe Mängel Rechte");
+    const manual = await vorlage("einleitung");
+    assert.equal(fehler(await diagrammMaengel(a.supabase, a.id, { kennung: manual }), "keine_rechte", FREMDE_UEBUNG).fremd, true);
+    fehler(await diagrammMaengel(b.supabase, b.id, { kennung: u.id }), "nicht_gefunden", NICHT_SICHTBAR);
+    fehler(await diagrammMaengel(a.supabase, a.id, { kennung: randomUUID() }), "nicht_gefunden", NICHT_SICHTBAR);
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: u.id }));
+    assert.equal(fehler(await diagrammMaengel(b.supabase, b.id, { kennung: u.slug }), "keine_rechte", FREMDE_UEBUNG).fremd, true);
   });
 } finally {
   await aufraeumen();

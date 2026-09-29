@@ -78,10 +78,9 @@ Trainings oder ihren Bestand übernommen haben, bleibt bestehen.
 Das Feld-Diagramm einer eigenen Übung beider Altersstufen setzt der Assistent ebenfalls, oder er
 ersetzt ein vorhandenes als Ganzes; beim Anlegen kann er es gleich mitgeben, dann aber ohne
 gezählte Materialliste — die zählt die Anwendung selbst, eine freie Ergänzung ist weiterhin
-möglich. Welche Elemente,
-Farben, Drehungen und Posen ein Diagramm führen kann und wie gross die Zeichenfläche ist, erfährt
-er vorher. Die Anwendung nimmt ein Diagramm nur an, wenn es dieselben Grenzen einhält wie ein in
-der Maske gezeichnetes (siehe [Übungen](uebungen.md#feld-diagramme)); sonst lehnt sie ab, nennt
+möglich. Welche Elemente, Farben, Drehungen und Posen ein Diagramm führen kann, wie gross die
+Zeichenfläche ist und wo die Figuren ihre Hände haben, erfährt er vorher. Die Anwendung nimmt ein
+Diagramm nur an, wenn es dieselben Grenzen einhält wie ein in der Maske gezeichnetes (siehe [Übungen](uebungen.md#feld-diagramme)); sonst lehnt sie ab, nennt
 jedes betroffene Element samt Grund und speichert nichts. Beim Anlegen stehen diese Gründe in
 derselben Rückmeldung wie die zu den übrigen Angaben, und die Übung entsteht nicht. Mit dem
 Diagramm ersetzt die Anwendung die gezählte Materialliste durch die aus dem Diagramm gezählte und
@@ -89,6 +88,15 @@ nennt sie dem Assistenten; die freie Ergänzung bleibt. Hatte die Übung kein Bi
 Diagramm ihr Bild; ein vorhandenes Foto bleibt das angezeigte Bild. In der Anwendung liegt das
 Diagramm danach wie jedes andere zum Weiterzeichnen bereit, und die Fassungen der Übung in
 Trainings bleiben unverändert.
+
+Mit dem Ergebnis des Setzens — auch beim Anlegen — meldet die Anwendung dem Assistenten jeden
+inhaltlichen Mangel einzeln, mit dem betroffenen Element und wie er sich beheben lässt: etwa ein
+Leibchen neben einer Figur, aber nicht an deren Hand, ein Tor an der Feldkante, das vom Feld weg
+öffnet, ein Symbol, dessen Rahmen über den Rand ragt, einen leeren Text oder eine Angabe, die das
+Element nicht vorsieht. Ein Mangel hindert nichts: Das Diagramm ist gespeichert, und der
+Assistent setzt es korrigiert neu. Die Mängel des Diagramms einer eigenen Übung ruft er
+ausserdem jederzeit ab, auch eines, das in der Anwendung gezeichnet wurde; ein älteres Diagramm
+nennt dabei auch, was die Anwendung heute nicht mehr annähme.
 
 Der Assistent kann ausserdem Trainings beider Altersstufen anlegen — mit Name, Altersstufe,
 Alterskategorien und auf Wunsch einem Ziel — und ihnen Übungen zuordnen. Das Training entsteht
@@ -314,9 +322,9 @@ fehlt, legt er zuerst als eigene an, und den Inhalt einer zugeordneten Übung ä
 Eigene Übungen legt und ändert er nur im Kinderfussball, je Vorgang genau eine und nie als
 unvollständigen Entwurf; löschen kann er sie nicht. Ein Feld-Diagramm setzt er nur als Ganzes
 und nur an eigenen Übungen: Einzelne Elemente ändert er nicht, und entfernen kann er ein
-Diagramm nicht. Das Diagramm sieht er nicht als Bild, und ob es die Übung inhaltlich richtig
-zeigt, erfährt er nicht; Angaben an einem Element, die das Diagramm nicht kennt, speichert die
-Anwendung nicht, ohne es ihm zu melden. Fotos lädt er nicht hoch. Eine leere Variante legt der Assistent so wenig an wie die Anwendung, und eine
+Diagramm nicht. Das Diagramm sieht er nicht als Bild. Die gemeldeten Mängel betreffen einzelne
+Elemente; ob das Diagramm die Übung fachlich richtig abbildet, beurteilt die Anwendung nicht, und
+in der Anwendung selbst erscheinen diese Mängel nirgends. Fotos lädt er nicht hoch. Eine leere Variante legt der Assistent so wenig an wie die Anwendung, und eine
 einzelne Übung kopiert oder verschiebt er nicht von einer Variante in eine andere. Anders als
 der Dialog der Anwendung erzwingt der Weg über den Assistenten beim Anlegen der zweiten Variante
 keinen neuen Namen für die bisherige. Die Reihenfolge

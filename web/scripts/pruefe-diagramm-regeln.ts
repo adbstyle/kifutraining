@@ -59,6 +59,7 @@ import {
 import { diagrammSpalten } from "../lib/diagramm-setzen";
 import { materialVorschlag } from "../lib/material";
 import { DiagrammKatalogSchema, baueDiagrammKatalog } from "../lib/mcp/diagramm-katalog";
+import { MANGEL_ERKLAERT, MangelAusgabe, alsMangel } from "../lib/mcp/diagramm-eingaben";
 import { SYMBOLE } from "../components/diagramm/symbols";
 import { haende } from "../components/diagramm/figur";
 import { sortiertNachEbene } from "../components/diagramm/DiagrammView";
@@ -507,6 +508,39 @@ pruefe("Katalog: die Beispiele sind befundfrei und zeigen Symbol, Pfad, Rechteck
   keineBefunde(pruefeDiagramm({ elemente: katalog.beispiele }));
   const gezeigt = new Set(katalog.beispiele.map((e) => (e.art === "form" ? e.form : e.art)));
   for (const was of ["symbol", "pfad", "rechteck", "polygon", "text"]) assert.ok(gezeigt.has(was), was);
+});
+
+pruefe("Katalog: die Hände je Figur und Pose tragen ein Leibchen ohne Mangel, gespiegelt mit umgekehrtem dx (#146)", () => {
+  const je = katalog.haende.je_figur;
+  assert.deepEqual(
+    je.map((h) => `${h.typ}/${h.pose}`),
+    [...FIGUR_TYPEN].flatMap((t) => (POSEN_TYPEN.has(t) ? SPIELER_POSEN.map((p) => `${t}/${p}`) : [`${t}/null`])),
+  );
+  assert.deepEqual(haende("spieler", undefined), haende("spieler", "stehen"), "ohne «pose» gilt «stehen»");
+  for (const h of je) {
+    for (const spiegeln of [false, true]) {
+      const figur = { id: "f", art: "symbol", typ: h.typ, x: 800, y: 500, ...(h.pose && { pose: h.pose }), spiegeln };
+      for (const [i, p] of h.punkte.entries()) {
+        const dx = spiegeln ? -p.dx : p.dx;
+        const an = mit(figur, { id: "lb", art: "symbol", typ: "leibchen", x: 800 + dx, y: 500 + p.dy });
+        assert.deepEqual(codes(an.maengel), [], `${h.typ}/${h.pose}/${spiegeln} Hand ${i}`);
+      }
+      const daneben = mit(figur, { id: "lb", art: "symbol", typ: "leibchen", x: 800, y: 500 + 60 });
+      assert.deepEqual(codes(daneben.maengel), ["leibchen"], `${h.typ}/${h.pose}/${spiegeln} daneben`);
+    }
+  }
+});
+
+pruefe("Mängel für den Assistenten: jeder Code erklärt, Befund als Ausgabe mit Element und Stelle (#146)", () => {
+  assert.deepEqual(Object.keys(MANGEL_ERKLAERT).sort(), [...BEFUND_CODES].sort());
+  for (const [c, text] of Object.entries(MANGEL_ERKLAERT)) assert.ok(text.trim(), c);
+  const [b] = mit(pylone("a", 800, 500), pylone("p", 800, 500, { rotation: 90 })).maengel;
+  const m = alsMangel(b);
+  assert.deepEqual(m, { code: "wirkungslos", element_id: "p", stelle: "elemente[1]", angabe: "rotation", meldung: b.meldung });
+  MangelAusgabe.parse(m);
+  const ganz = alsMangel(mit(...Array.from({ length: MAX_ELEMENTE + 1 }, (_, i) => pylone(`p${i}`, 100, 100))).grenzen[0]);
+  assert.deepEqual(Object.keys(ganz).sort(), ["code", "meldung"], "ein Befund zum Ganzen hat keine Stelle");
+  z.toJSONSchema(MangelAusgabe);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden${gescheitert ? `, ${gescheitert} gescheitert` : ""}.`);

@@ -250,7 +250,8 @@ höchstens 300 Elemente, jedes mit eigener Kennung. Was die Fläche nicht führe
 bittet, das Element zu entfernen oder zu verschieben. Eine gespeicherte Zeichnung, die
 unverändert zurückkommt, beanstandet sie nicht neu — eine Übung mit einer älteren Zeichnung lässt
 sich also weiterhin umbenennen. Der Assistent kann das Diagramm einer eigenen Übung auch selbst
-setzen (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
+setzen und sich seine inhaltlichen Mängel melden lassen; die Anwendung selbst zeigt diese Mängel
+nicht an (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
 Dasselbe Diagramm sieht am Bildschirm anders aus als auf Papier, und beides ist Absicht. Am
 Bildschirm liegt es auf einem dunklen Rasen, passend zur übrigen Anwendung, mit hellen

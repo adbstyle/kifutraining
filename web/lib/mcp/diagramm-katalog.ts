@@ -1,11 +1,13 @@
 // Der Diagramm-Katalog für den KI-Assistenten (#145 AK 1): welche Elemente
 // ein Feld-Diagramm führen kann, welche Werte sie annehmen und wie gross die
-// Zeichenfläche ist.
+// Zeichenfläche ist — dazu, wo die Figuren ihre Hände haben, damit ein
+// gehaltenes Leibchen keinen Mangel ergibt (#146).
 //
 // Hier wird NICHTS von Hand gezählt. Typen, Farben, Drehungen, Posen, Masse,
 // Färb- und Drehbarkeit, Grenzen und Punktzahlen stammen aus lib/diagramm.ts,
 // dem Symbol-Register (components/diagramm/symbols.tsx), der Prüfung
-// (lib/diagramm-pruefung.ts: erlaubte Felder, Tor-Drehung je Feldkante) und
+// (lib/diagramm-pruefung.ts: erlaubte Felder, Tor-Drehung je Feldkante,
+// Hand-Toleranz), den Figuren (components/diagramm/figur.tsx: Hände) und
 // lib/material.ts. Von Hand stehen nur die erklärenden Sätze.
 // `check:diagramm-regeln` hält den Katalog gegen diese Quellen und prüft, dass
 // die Beispiele befundfrei sind.
@@ -31,7 +33,15 @@ import {
   type PfadTyp,
 } from "@/lib/diagramm";
 import { SYMBOLE } from "@/components/diagramm/symbols";
-import { ELEMENT_ERLAUBT, KANTEN_SOLL, PUNKTE, type ElementArt } from "@/lib/diagramm-pruefung";
+import { haende, type FigurArt } from "@/components/diagramm/figur";
+import {
+  ELEMENT_ERLAUBT,
+  FIGUR_NAEHE,
+  HAND_TOLERANZ,
+  KANTEN_SOLL,
+  PUNKTE,
+  type ElementArt,
+} from "@/lib/diagramm-pruefung";
 import { FARBE_LABEL, SPIELER_STANDARDFARBE, istMaterialArt } from "@/lib/material";
 import { Wert, wert } from "@/lib/mcp/bausteine";
 
@@ -72,6 +82,17 @@ export const DiagrammKatalogSchema = z.object({
     }),
   ),
   formen: z.array(z.object({ form: z.string(), beschreibung: z.string(), farbe: Farbwahl })),
+  /** Die Hände je Figur und Pose, relativ zur Mitte der Figur (#146). */
+  haende: z.object({
+    hinweis: z.string(),
+    je_figur: z.array(
+      z.object({
+        typ: z.string(),
+        pose: z.string().nullable(),
+        punkte: z.array(z.object({ dx: z.number(), dy: z.number() })),
+      }),
+    ),
+  }),
   material: z.string(),
   beispiele: z.array(z.looseObject({ id: z.string(), art: z.enum(ARTEN) })),
 });
@@ -80,6 +101,7 @@ type DiagrammKatalog = z.infer<typeof DiagrammKatalogSchema>;
 
 const B = FLAECHE.breite;
 const H = FLAECHE.hoehe;
+const eineStelle = (v: number) => Math.round(v * 10) / 10;
 
 /** Nur die Linie wertet Farbe und Strichelung aus; Laufweg, Dribbling und
  *  Pass zeichnet KiFu in fester Optik (DiagrammView.PfadGrafik). */
@@ -126,7 +148,9 @@ export function baueDiagrammKatalog(): DiagrammKatalog {
     flaeche: { breite: B, hoehe: H },
     koordinaten:
       `Die Zeichenfläche misst ${B}×${H} Einheiten: x von 0 (links) bis ${B}, y von 0 (oben) bis ${H}. ` +
-      "Symbole und Texte stehen mit ihrer Mitte auf x/y; die Mitte muss auf der Fläche liegen. " +
+      "Symbole und Texte stehen mit ihrer Mitte auf x/y; die Mitte muss auf der Fläche liegen. Ragt der " +
+      "Rahmen eines Symbols («masse», mit der Drehung gedreht) über den Rand, speichert KiFu das Diagramm " +
+      "trotzdem und meldet in «maengel», wo die Mitte liegen muss. " +
       "Rechteck, Ellipse und Dreieck ohne «punkte»: x/y ist die obere linke Ecke, dazu «breite» und «hoehe» " +
       "(grösser als 0); der ganze Rahmen muss auf der Fläche liegen. Pfade, Polygone und Dreiecke mit «punkte»: " +
       "jeder Punkt muss auf der Fläche liegen, x, y, breite und hoehe rechnet KiFu selbst daraus. " +
@@ -167,6 +191,19 @@ export function baueDiagrammKatalog(): DiagrammKatalog {
       beschreibung: FORM_BESCHREIBUNG[form],
       farbe: { waehlbar: true, standard: FORM_DEFAULT_FARBE },
     })),
+    haende: {
+      hinweis:
+        `Ein gehaltenes Leibchen liegt höchstens ${HAND_TOLERANZ} Einheiten neben einer Hand: Mitte der Figur ` +
+        "plus dx/dy; mit «spiegeln»: true ist dx umgekehrt, ohne «pose» gilt «stehen». Liegt ein Leibchen " +
+        `näher als ${FIGUR_NAEHE} Einheiten an einer Figur, aber an keiner Hand, meldet KiFu einen Mangel.`,
+      je_figur: [...FIGUR_TYPEN].flatMap((typ) =>
+        (POSEN_TYPEN.has(typ) ? SPIELER_POSEN : [null]).map((pose) => ({
+          typ,
+          pose,
+          punkte: haende(typ as FigurArt, pose ?? undefined).map((h) => ({ dx: eineStelle(h.x), dy: eineStelle(h.y) })),
+        })),
+      ),
+    },
     material:
       "Aus dem Diagramm zählt KiFu das Material selbst: jedes Symbol mit «material»: true einmal, nach Art und " +
       "Farbe (ohne «farbe» die Standardfarbe). Figuren sind kein Material. Tragen die Feldspieler (spieler) " +
