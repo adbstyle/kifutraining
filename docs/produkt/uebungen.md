@@ -69,8 +69,9 @@ Anwendung unter der Zuordnung, welche seiner erfassten Angaben dabei entfallen w
 
 Beiden Altersstufen gemeinsam sind Name und mindestens eine Alterskategorie, dazu die Anzahl
 Spieler:innen, für die die Übung taugt, das benötigte Material, mögliche Varianten und das Bild — ein
-Feld-Diagramm, ein Foto oder beides. Das Diagramm zeichnet der Trainer schon beim Erfassen; beides
-ist freiwillig, und die Übung entsteht mit einem einzigen Speichern samt Diagramm.
+Feld-Diagramm, ein Foto oder beides. Das Diagramm zeichnet der Trainer direkt in der Maske, beim
+Erfassen wie beim Bearbeiten; beides ist freiwillig, und die Übung wird mit einem einzigen
+Speichern samt Diagramm gesichert.
 
 Die Maske ist so breit wie die Detailseite einer Übung und in derselben Reihenfolge gegliedert.
 Oben stehen die Brotkrumen — beim Erfassen „Übungspool › Neue Übung" —, darunter der Name als
@@ -78,16 +79,17 @@ Oben stehen die Brotkrumen — beim Erfassen „Übungspool › Neue Übung" —
 Darunter steht die „Zuordnung": Altersstufe und Alterskategorie auf einer Zeile, darunter
 der Trainingsteil — im Kinderfussball-Hauptteil samt Hauptteilkategorie, im Juniorenfussball
 samt Block, jeweils in einem Feld. Es folgt das
-„Feld-Diagramm" — die Zeichenfläche beim Erfassen, die Diagramm-Kachel beim Bearbeiten —, darunter
+„Feld-Diagramm" mit der Zeichenfläche, darunter
 Feldtyp oder Spielfeldgrösse neben der Anzahl Spieler:innen. Die „Beschreibung" fasst Ablauf,
 Varianten sowie Erscheinungsform und Übungstyp zusammen, danach kommen „Material" und ganz am
 Schluss das „Foto". Auf einem schmalen Bildschirm stehen die Paare untereinander. Dieselbe Maske
 gilt beim Erfassen, beim Bearbeiten einer eigenen Übung und für eine Übung im Training.
 
-Bis dahin ist nichts gesichert. Will der Trainer die Erfassung mit ungesicherten Angaben
-verlassen — über einen Link, das Kontomenü, den Zurück-Knopf des Browsers, durch Neuladen oder
-Schliessen —, fragt die Anwendung nach, ob die Angaben verloren gehen sollen. Scheitert das
-Speichern, bleiben Angaben und Zeichnung stehen.
+Bis dahin ist nichts gesichert. Will der Trainer die Maske mit ungesicherten Angaben oder einer
+ungesicherten Zeichnung verlassen — über einen Link, das Kontomenü, den Zurück-Knopf des
+Browsers, durch Neuladen oder Schliessen —, fragt die Anwendung nach, ob sie verloren gehen
+sollen; beim Bearbeiten bleibt dann der zuletzt gespeicherte Stand. Scheitert das Speichern,
+bleiben Angaben und Zeichnung stehen.
 
 Ablauf und Varianten sind Freitexte und stehen gleich da, ebenso die drei Stufen des
 methodischen Fahrplans — Offen starten, Üben, Wetteifern: Zeilenumbrüche und Leerzeilen bleiben,
@@ -122,7 +124,8 @@ ihre Liste von Hand.
 
 Ändert der Trainer später das Diagramm so, dass sich der Vorschlag in Art, Farbe oder Menge
 ändert, bleibt das nicht unbemerkt. Die Anwendung nennt die geänderten Posten und lässt ihn den
-neuen Vorschlag übernehmen oder sein Material beibehalten — im Formular, auf der Seite der Übung
+neuen Vorschlag übernehmen oder sein Material beibehalten — im Formular schon während des
+Zeichnens, vor dem Speichern, und danach auf der Seite der Übung
 und an der Übung im Trainings-Editor. Verglichen wird dabei der neue Vorschlag mit dem zuletzt
 übernommenen: Eigene Anpassungen an der Liste und bloss verschobene Figuren lösen keinen Hinweis
 aus, und die Ergänzung bleibt in jedem Fall stehen. Jede Kopie beobachtet ihr eigenes Diagramm;
@@ -213,14 +216,14 @@ Blickrichtungen, Bälle, Bewegungspfade für Laufweg, Dribbling und Pass sowie f
 Textfelder. Elemente lassen sich setzen, verschieben, drehen, einfärben, in der Grösse
 verändern, mehrfach auswählen, kopieren und löschen; jeder Schritt ist widerrufbar.
 
-Gezeichnet wird an zwei Orten mit derselben Fläche und denselben Werkzeugen. Beim Erfassen einer
-neuen Übung sitzt sie in der Erfassungsmaske, und das Diagramm wird mit der Übung gespeichert,
-nicht vorher. Bei einer bestehenden Übung öffnet die Diagramm-Kachel im Bearbeiten-Formular den
-Diagramm-Editor auf einer eigenen Seite; dort wird laufend im Hintergrund gespeichert. Ein beim
-Erfassen gezeichnetes Diagramm liegt im Editor so vor, wie es gespeichert wurde. Zum Zeichnen
-braucht es einen breiteren Bildschirm als den eines Telefons; auf einem schmaleren sagt die
-Erfassungsmaske das an der Stelle der Fläche, und die Übung lässt sich dort ohne Diagramm
-erfassen.
+Gezeichnet wird in der Maske der Übung, mit derselben Fläche und denselben Werkzeugen beim
+Erfassen einer neuen Übung, beim Bearbeiten einer eigenen und bei einer Übung im Training. Beim
+Bearbeiten liegt dort die bisherige Zeichnung zum Weiterzeichnen bereit. Das Diagramm wird mit
+der Übung gespeichert, nicht vorher; eine eigene Seite zum Zeichnen gibt es nicht, und eine
+frühere Adresse dieser Seite führt in die Maske — bei einer Übung im Training in die Variante,
+die sie trug. Zum Zeichnen braucht es einen breiteren Bildschirm als den eines Telefons; auf
+einem schmaleren sagt die Maske das an der Stelle der Fläche und zeigt beim Bearbeiten darüber
+die bisherige Zeichnung. Die übrigen Angaben lassen sich dort erfassen und bearbeiten.
 
 Dasselbe Diagramm sieht am Bildschirm anders aus als auf Papier, und beides ist Absicht. Am
 Bildschirm liegt es auf einem dunklen Rasen, passend zur übrigen Anwendung, mit hellen
@@ -231,14 +234,15 @@ bisher das ganze Blatt — und bleibt auf einem einfachen Bürodrucker lesbar. W
 wählt nicht einen Farbton, sondern «rot» oder «blau»; wie kräftig der ausfällt, entscheidet die
 Anwendung je nach Bildschirm oder Papier.
 
-Ein vorhandenes Diagramm kann als Vorlage in eine andere eigene Übung kopiert werden. Zur
+Ein vorhandenes Diagramm kann als Vorlage in eine andere eigene Übung oder eine Übung im Training
+kopiert werden. Zur
 Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar über den Namen der
 Quell-Übung und mit Vorschau; die Altersstufe spielt dabei keine Rolle. Fremde
 Trainer-Diagramme sind bewusst nicht dabei. Das Kopieren erzeugt eine eigenständige Kopie ohne
 Verbindung zum Original; ein bereits vorhandenes Diagramm wird erst nach Rückfrage ersetzt.
-Angeboten wird die Vorlage auf der leeren Zeichenfläche, auf der Zeichenfläche daneben auch, wenn
-schon etwas gezeichnet ist — beim Erfassen wie im Editor —, und im Bearbeiten-Formular. Auf der
-Zeichenfläche ist das Ersetzen ein gewöhnlicher Schritt: „Rückgängig" holt die Zeichnung zurück.
+Angeboten wird die Vorlage auf der leeren Zeichenfläche und daneben auch, wenn schon etwas
+gezeichnet ist; die Übung selbst steht nicht zur Wahl. Das Ersetzen ist ein gewöhnlicher Schritt:
+„Rückgängig" holt die Zeichnung zurück, und wirksam wird es erst mit dem Speichern der Übung.
 
 Statt eines Diagramms oder zusätzlich kann auch ein Foto hochgeladen werden. Zulässig sind die
 gängigen Formate einschliesslich der HEIC-Bilder von iPhones. Grosse Fotos verkleinert die
@@ -308,8 +312,9 @@ Kleidung spielt. Eigene Material-Arten ausserhalb des Diagramm-Vorrats gibt es i
 nicht — dafür ist die Ergänzung da. Die Spielfeldgrösse leitet die Anwendung nie aus dem
 Diagramm ab; das Diagramm kennt keinen Massstab.
 
-Eine begonnene, noch nicht gespeicherte Übung bleibt nicht als Entwurf erhalten, und das beim
-Erfassen gezeichnete Diagramm wird bis zum Speichern nirgends zwischengesichert. Die
+Eine begonnene, noch nicht gespeicherte Übung bleibt nicht als Entwurf erhalten, und ein in der
+Maske gezeichnetes Diagramm wird bis zum Speichern nirgends zwischengesichert — auch beim
+Bearbeiten nicht; bricht der Browser ab, ist die ungespeicherte Zeichnung verloren. Die
 Zeichenfläche ist für Maus und Tastatur gebaut, nicht für die Bedienung per Touch.
 
 Die Listenzeichen in Ablauf, Fahrplan und Varianten lassen sich nicht abschalten: Beginnt eine Zeile mit

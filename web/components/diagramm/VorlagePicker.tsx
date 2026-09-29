@@ -10,9 +10,9 @@ import type { VorlageItem } from "@/lib/queries/exercises";
 /**
  * Vorlagen-Auswahl (Epic #58, Story #61): öffnet einen Dialog mit den
  * verfügbaren Diagrammen (eigene + KiFu-Manual) als Vorschau. Beim Wählen ruft
- * sie `onPick` — die Einstiege (Bearbeiten-Seite, Zeichenfläche im Editor und
- * beim Erfassen) hängen dort ihre Wirkung an. Besitzt die Zielübung schon ein Diagramm, ist eine
- * ausdrückliche Bestätigung nötig, bevor ersetzt wird (#61 AK4).
+ * sie `onPick` — die Zeichenfläche hängt dort ihre Wirkung an. Trägt die
+ * Fläche schon eine Zeichnung, ist eine ausdrückliche Bestätigung nötig, bevor
+ * ersetzt wird (#61 AK4, #246 AK 4).
  *
  * Rendert keinen Einstieg, wenn keine Vorlage verfügbar ist (#61 AK6).
  */
@@ -22,7 +22,6 @@ export function VorlagePicker({
   onPick,
   triggerLabel,
   triggerVariant = "outlined",
-  ersetzenText = "Das aktuelle Diagramm dieser Übung wird durch die gewählte Vorlage ersetzt. Das lässt sich nicht rückgängig machen.",
 }: {
   vorlagen: VorlageItem[];
   zielHatDiagramm: boolean;
@@ -31,9 +30,6 @@ export function VorlagePicker({
   onPick: (vorlage: VorlageItem) => Promise<string | null> | string | null;
   triggerLabel: string;
   triggerVariant?: "tonal" | "outlined" | "text";
-  /** Was die Bestätigung über das Ersetzen sagt. Auf der Zeichenfläche holt
-   *  «Rückgängig» die Zeichnung zurück, beim serverseitigen Kopieren nicht. */
-  ersetzenText?: string;
 }) {
   const [offen, setOffen] = useState(false);
   const [bestaetigen, setBestaetigen] = useState<VorlageItem | null>(null);
@@ -165,7 +161,8 @@ export function VorlagePicker({
           </>
         }
       >
-        {ersetzenText}
+        Die Zeichnung auf der Fläche wird durch die gewählte Vorlage ersetzt. Mit «Rückgängig»
+        holst du sie zurück.
       </Dialog>
     </>
   );

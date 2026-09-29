@@ -1,7 +1,7 @@
 /**
  * Datenmodell des Spielfeld-Diagramms (Epic #47).
  *
- * Single Source für Editor (Client), Anzeige (Server) und Autosave-Action.
+ * Single Source für Zeichenfläche (Client), Anzeige (Server) und Speicher-Actions.
  * Die Geometrie der Symbole lebt bewusst NICHT hier, sondern im Symbol-
  * Register (components/diagramm/symbols.tsx) — Elemente speichern nur
  * Typ/Position/Rotation/Farbe, damit zentrale Symbol-Updates bestehende
@@ -40,7 +40,7 @@ export const LINIE_DEFAULT_FARBE: FarbSlug = "weiss";
 export const MAX_TEXT_LAENGE = 200;
 
 /** Höchstzahl Elemente pro Diagramm — Single Source für den Server-Sanity-Check
- *  (Autosave-Action) und den Client-Guard bei Bulk-Einfügen (#67 AK11). Weit
+ *  (Speicher-Actions) und den Client-Guard bei Bulk-Einfügen (#67 AK11). Weit
  *  über dem fachlichen Rahmen von ~50 Elementen (NFR Epic #47), schützt nur vor
  *  entarteten Payloads. */
 export const MAX_ELEMENTE = 300;
@@ -285,7 +285,7 @@ export function parseDiagramm(json: unknown): DiagrammData | null {
 
 /** Ein Diagramm, wie es ein USER speichern darf: strukturell gültig und
  *  höchstens `MAX_ELEMENTE` gross; sonst null. Die Trust-Boundary der Server
- *  Actions — Autosave des Editors (Übung und Fassung) und Erfassen einer Übung (#246). */
+ *  Actions, die eine Übung oder Fassung samt Zeichnung speichern (#246, #247). */
 export function parseDiagrammZumSpeichern(json: unknown): DiagrammData | null {
   const d = parseDiagramm(json);
   return d && d.elemente.length <= MAX_ELEMENTE ? d : null;
@@ -310,4 +310,37 @@ export function aktivesBild(args: {
   if (mitDiagramm) return "diagramm";
   if (args.bildUrl) return "foto";
   return null;
+}
+
+/** Die in der Maske gezeichnete Zeichnung aus dem Formular (#246, #247), über
+ *  dieselbe Trust-Boundary wie jedes gespeicherte Diagramm. `undefined`: das
+ *  Formular trägt keine Zeichnung, die gespeicherte bleibt unberührt. `null`:
+ *  eine leere Zeichnung — die Übung trägt dann keine, wie eine nie gezeichnete. */
+export function diagrammAusFormular(form: FormData): DiagrammData | null | undefined | "ungueltig" {
+  const roh = form.get("diagramm");
+  if (typeof roh !== "string" || roh === "") return undefined;
+  let json: unknown;
+  try {
+    json = JSON.parse(roh);
+  } catch {
+    return "ungueltig";
+  }
+  const diagramm = parseDiagrammZumSpeichern(json);
+  if (!diagramm) return "ungueltig";
+  return diagramm.elemente.length > 0 ? diagramm : null;
+}
+
+/** Die Bildwahl, die zur gespeicherten Zeichnung passt (#56 AK3): Mit der
+ *  ersten Zeichnung wird das Diagramm das Bild, eine übernommene Vorlage
+ *  macht es in jedem Fall dazu (#61 PC4). Wird die Zeichnung geleert, fällt
+ *  die Wahl zurück — sonst zeigte der Umschalter «Diagramm», während die
+ *  Weiche längst das Foto rendert. */
+export function bildQuelleZurZeichnung(
+  bisher: "foto" | "diagramm" | null,
+  diagramm: DiagrammData | null,
+  ausVorlage: boolean,
+): "foto" | "diagramm" | null {
+  if (!diagramm) return bisher === "diagramm" ? null : bisher;
+  if (ausVorlage) return "diagramm";
+  return bisher ?? "diagramm";
 }
