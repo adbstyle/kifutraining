@@ -1,6 +1,6 @@
 # Reise zum Mond
 
-**Trainingsteil:** einleitung · **Kategorien:** G, F, E
+**Trainingsteil:** einleitung · **Kategorien:** G, F, E · **Feldtyp:** Kleinfeld
 
 ## Offen starten
 

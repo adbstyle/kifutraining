@@ -1,6 +1,6 @@
 # Kickstart
 
-**Trainingsteil:** auffangen · **Kategorien:** G, F
+**Trainingsteil:** auffangen · **Kategorien:** G, F · **Feldtyp:** Kleinfeld
 
 ## Aufbau
 

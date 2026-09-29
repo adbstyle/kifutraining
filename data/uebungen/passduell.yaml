@@ -2,7 +2,7 @@ id: passduell
 name: Passduell
 trainingsteil: einleitung
 erscheinungsform: []
-feldtyp: null
+feldtyp: freies_feld
 kategorien:
 - F
 - E

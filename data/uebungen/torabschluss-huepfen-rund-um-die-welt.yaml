@@ -3,7 +3,7 @@ name: Hüpfen rund um die Welt
 trainingsteil: hauptteil
 erscheinungsform:
 - flink-geschickt-bewegen
-feldtyp: null
+feldtyp: freies_feld
 hauptteilkategorie: vielseitigkeit-erleben
 kategorien:
 - G

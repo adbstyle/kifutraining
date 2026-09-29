@@ -109,6 +109,15 @@ async function seedExercises() {
     const diagramm = loadDiagramm(u.id as string);
     if (diagramm) mitDiagramm++;
 
+    // Jede Manual-Übung trägt einen Feldtyp (Story #306); das Schema
+    // erzwingt ihn, der Seed verlässt sich aber nicht darauf, dass
+    // validate.py vorher lief.
+    if (!u.feldtyp) {
+      throw new Error(
+        `data/uebungen/${u.id}.yaml hat keinen Feldtyp.\nPrüfen mit: .venv/bin/python scripts/validate.py`,
+      );
+    }
+
     const row = {
       slug: u.id,
       name: u.name,
@@ -120,7 +129,7 @@ async function seedExercises() {
       trainingsteil: u.trainingsteil,
       erscheinungsform: u.erscheinungsform ?? [],
       hauptteilkategorie: u.hauptteilkategorie ?? null,
-      feldtyp: u.feldtyp ?? null,
+      feldtyp: u.feldtyp,
       kategorien: u.kategorien ?? [],
       anzahl_kinder: u.anzahl_kinder ?? null,
       // Beim freien Feld die Masse des Manuals, sofern es welche nennt (#272).

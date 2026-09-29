@@ -2,7 +2,7 @@ id: berge-und-seen
 name: Berge und Seen
 trainingsteil: einleitung
 erscheinungsform: []
-feldtyp: null
+feldtyp: freies_feld
 kategorien:
 - G
 - F

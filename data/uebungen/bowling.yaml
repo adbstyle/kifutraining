@@ -2,7 +2,7 @@ id: bowling
 name: Bowling
 trainingsteil: ausklang
 erscheinungsform: []
-feldtyp: null
+feldtyp: freies_feld
 kategorien:
 - G
 - F

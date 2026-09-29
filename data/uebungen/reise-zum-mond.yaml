@@ -2,7 +2,7 @@ id: reise-zum-mond
 name: Reise zum Mond
 trainingsteil: einleitung
 erscheinungsform: []
-feldtyp: null
+feldtyp: kleinfeld
 kategorien:
 - G
 - F
