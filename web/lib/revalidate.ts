@@ -16,7 +16,7 @@ export function revalidiereTeam(teamId: string) {
 }
 
 /** Alle Ansichten eines Trainings (inkl. der Übersicht) neu validieren; mit
- *  `fassungId` zusätzlich die Bearbeiten-Seiten dieser Fassung. */
+ *  `fassungId` zusätzlich die Bearbeiten-Seite dieser Fassung. */
 export function revalidiereTraining(trainingId: string, fassungId?: string) {
   revalidatePath("/trainings");
   revalidatePath(`/training/${trainingId}/edit`);
@@ -25,6 +25,5 @@ export function revalidiereTraining(trainingId: string, fassungId?: string) {
   revalidatePath(`/training/${trainingId}/druck`);
   if (fassungId) {
     revalidatePath(`/training/${trainingId}/uebung/${fassungId}/edit`);
-    revalidatePath(`/training/${trainingId}/uebung/${fassungId}/diagramm`);
   }
 }

@@ -27,6 +27,7 @@ import {
   Banner,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
+import { uebungEckdaten } from "@/lib/eckdaten";
 import { ChipsDemo } from "./ChipsDemo";
 import { ChoiceChipDemo } from "./ChoiceChipDemo";
 import { MenuDemo } from "./MenuDemo";
@@ -61,7 +62,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
-import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
 import { ROTATIONEN, SPIELER_POSEN, type DiagrammElement } from "@/lib/diagramm";
 import { cn } from "@/lib/cn";
 import { kategorieStufe } from "@/lib/labels";
@@ -1294,12 +1294,19 @@ export default function Styleguide() {
           einzige satte Farbfeld auf der Karte; an seinem <strong>Kopf</strong>{" "}
           liegt ein Verlauf aus <code>scrim</code> (<code>top-0 h-16</code>) —
           er schützt, was dort steht: die Herkunfts-Plakette links und den
-          Favoriten-Knopf rechts. Die <strong>Alterskategorie steht nicht auf
-          der Karte</strong>: Sie ist der Filter, mit dem man die Liste betritt,
-          und auf jeder Kachel derselben Liste wiederholte sie bloss die eigene
-          Auswahl — die Herkunft dagegen ist auf jeder Kachel eine andere. Den
-          Titel trägt die Kartenfläche unter dem Bild; er braucht den Verlauf
-          nicht. Überfahren färbt die ganze Karte über{" "}
+          Favoriten-Knopf rechts. Den Titel trägt die Kartenfläche unter dem
+          Bild; er braucht den Verlauf nicht. Darunter stehen die{" "}
+          <strong>Eckdaten</strong> in <code>type-body-medium</code>, getrennt
+          durch «·»: Alterskategorien als Buchstaben (aufsteigend G bis A),
+          die feinste Einordnung, das Feld und die Spieler:innen — genug, um
+          ohne Öffnen zu sehen, ob eine Übung zu Mannschaft und Platz passt.
+          Das Feld ist die Spielfeldgrösse, wo eine erfasst ist, sonst der
+          Feldtyp; die Spielerzahl kürzt «Sp.» ab und wird voll vorgelesen.
+          Was eine Übung nicht trägt, fällt ohne Platzhalter weg. Die Zeile
+          hat höchstens zwei Zeilen (<code>line-clamp-2</code>) und endet
+          sonst in Auslassungspunkten. Die Zeile setzt{" "}
+          <code>uebungEckdaten</code> zusammen — im Katalog wie in diesen
+          Beispielen. Überfahren färbt die ganze Karte über{" "}
           <code>state</code> — kein eigener Hover-Ton, und die Ebene sitzt auf
           dem Link, der die Karte deckt.
         </p>
@@ -1310,7 +1317,16 @@ export default function Styleguide() {
             ex={{
               slug: "schiessbude",
               name: "Schiessbude",
-              trainingsteilLabel: "Ausklang",
+              eckdaten: uebungEckdaten({
+                altersstufe: "kinderfussball",
+                trainingsteil: "ausklang",
+                hauptteilkategorie: null,
+                feldtyp: "kleinfeld",
+                spielfeld_laenge_m: null,
+                spielfeld_breite_m: null,
+                kategorien: ["E", "G", "F"],
+                anzahl_kinder: { min: 6, max: 10 },
+              }),
               herkunft: "manual",
             }}
             actionSlot={
@@ -1326,8 +1342,16 @@ export default function Styleguide() {
             ex={{
               slug: "mein-4-gegen-4",
               name: "Mein 4-gegen-4",
-              trainingsteilLabel: "Hauptteil",
-              hauptteilkategorieLabel: "Fussball spielen lernen",
+              eckdaten: uebungEckdaten({
+                altersstufe: "kinderfussball",
+                trainingsteil: "hauptteil",
+                hauptteilkategorie: "fussball-spielen-lernen",
+                feldtyp: "freies_feld",
+                spielfeld_laenge_m: 20,
+                spielfeld_breite_m: 15,
+                kategorien: ["F", "E"],
+                anzahl_kinder: { min: 8, max: 8 },
+              }),
               herkunft: "user",
               visibility: "private",
             }}
@@ -1336,7 +1360,16 @@ export default function Styleguide() {
             ex={{
               slug: "toblerone",
               name: "Toblerone",
-              trainingsteilLabel: "Einleitung",
+              eckdaten: uebungEckdaten({
+                altersstufe: "juniorenfussball",
+                trainingsteil: "jun-spielformen",
+                hauptteilkategorie: null,
+                feldtyp: null,
+                spielfeld_laenge_m: 40,
+                spielfeld_breite_m: 30,
+                kategorien: ["D", "C", "B", "A"],
+                anzahl_kinder: { min: 10 },
+              }),
               herkunft: "user",
               visibility: "public",
             }}
@@ -1443,6 +1476,10 @@ export default function Styleguide() {
           <TextArea
             label="Aufbau / Beschreibung"
             supportingText="Mehrzeilig — wächst bis 10 Zeilen, dann scrollen."
+          />
+          <TextArea
+            label="Weiteres Material"
+            placeholder="Mit placeholder: leer spricht der Platzhalter, das Label erscheint erst geschwebt."
           />
         </div>
 
@@ -1799,7 +1836,7 @@ export default function Styleguide() {
           (der Junioren-Katalog führt elf Werte, und jeder ist ein ganzer Satz).
           Und der <code>placeholder</code> sagt hier nicht mehr den Leerfall
           einer Abfrage («Alle Stufen»), sondern den einer Eingabe
-          («Kategorien wählen …»): Im Filter heisst nichts gewählt <em>alles</em>,
+          («Alterskategorie wählen …»): Im Filter heisst nichts gewählt <em>alles</em>,
           im Formular heisst es <em>nichts</em>.
         </p>
         <MultiSelectDemo />
@@ -1885,12 +1922,10 @@ export default function Styleguide() {
           Struktur und dem zentralen Symbol-Register gerendert —{" "}
           <code>DiagrammView</code> ist die eine Anzeige-Komponente für Karte,
           Detailseite, Trainings, Druck und mobil; <code>UebungsBild</code>{" "}
-          schaltet zwischen Diagramm, Foto und Platzhalter. Der interaktive
-          Editor (<code>DiagrammEditor</code>) lebt auf{" "}
-          <code>/uebung/[slug]/diagramm</code> und braucht eine eigene Übung;
-          seine Zeichenfläche (<code>DiagrammZeichnen</code>) sitzt ohne
-          Autosave auch in der Erfassungsmaske einer neuen Übung, als{" "}
-          <code>DiagrammFeld</code> unter dem Namen. Dort wacht{" "}
+          schaltet zwischen Diagramm, Foto und Platzhalter. Gezeichnet wird in
+          der Maske der Übung: Die Zeichenfläche (<code>DiagrammZeichnen</code>)
+          sitzt ohne Autosave als <code>DiagrammFeld</code> unter der
+          Zuordnung, beim Erfassen wie beim Bearbeiten. Dort wacht{" "}
           <code>VerlassenWarnung</code> über ungesicherte Angaben — ein
           Bestätigungs-Dialog aus dem Kit für Links, Kontomenü und
           Browser-Zurück, die Abfrage des Browsers für Neuladen und Schliessen.
@@ -2003,7 +2038,7 @@ export default function Styleguide() {
         </div>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Element-Optionen (Drehen, Farbe, Linienstil, Kopieren, Entfernen)
-          erscheinen im Editor als kontextuelle Bedienleiste, die am
+          erscheinen auf der Zeichenfläche als kontextuelle Bedienleiste, die am
           ausgewählten Element schwebt — ein bewusst neues Muster (#65): Das
           Kit kennt nur an DOM-Trigger verankerte Overlays (<code>Menu</code>,{" "}
           <code>Select</code>), aber kein Panel an einer Position innerhalb
@@ -2111,36 +2146,14 @@ export default function Styleguide() {
           />
         </div>
         <p className="type-body-medium mb-4 mt-8 max-w-2xl text-on-surface-mittel">
-          <code>DiagrammVorschau</code> ist der Einstieg in den Editor auf der
-          Bearbeiten-Seite: Die ganze Fläche ist ein Link auf{" "}
-          <code>/uebung/[slug]/diagramm</code>. Existiert ein Diagramm, zeigt sie
-          dessen Vorschau (immer das Diagramm, nie das Foto); sonst einen
-          Leerzustand, der zum Zeichnen auffordert. Der sichtbare Knopf ist reine
-          Optik (kein <code>&lt;button&gt;</code> in <code>&lt;a&gt;</code>) — der
-          Link trägt Klick und <code>aria-label</code>.
+          Gezeichnet wird in der Maske der Übung, beim Erfassen wie beim
+          Bearbeiten, in der Bibliothek wie im Training: <code>DiagrammFeld</code>{" "}
+          zeigt im Abschnitt «Feld-Diagramm» die Zeichenfläche{" "}
+          (<code>DiagrammZeichnen</code>), und die Zeichnung geht mit dem
+          Speichern der Übung mit. Eine eigene Editor-Seite gibt es nicht. Unter{" "}
+          <code>sm</code> steht an ihrer Stelle die bisherige Zeichnung mit dem
+          Hinweis, dass Zeichnen mehr Platz braucht.
         </p>
-        <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
-          <DiagrammVorschau
-            href="/uebung/beispiel/diagramm"
-            name="Abschlussspiel"
-            diagramm={{
-              version: 1,
-              elemente: [
-                { id: "sv-tor", art: "symbol", typ: "tor", x: 1380, y: 500, rotation: 270 },
-                { id: "sv-py1", art: "symbol", typ: "pylone", x: 480, y: 360, farbe: "rot" },
-                { id: "sv-py2", art: "symbol", typ: "pylone", x: 480, y: 640, farbe: "gelb" },
-                { id: "sv-sp", art: "symbol", typ: "spieler", x: 520, y: 500, pose: "dribbeln", farbe: "blau" },
-                { id: "sv-ba", art: "symbol", typ: "fussball", x: 600, y: 520 },
-                { id: "sv-lw", art: "pfad", typ: "laufweg", punkte: [{ x: 560, y: 520 }, { x: 950, y: 500 }, { x: 1260, y: 500 }] },
-              ],
-            }}
-          />
-          <DiagrammVorschau
-            href="/uebung/beispiel/diagramm"
-            name="Leeres Beispiel"
-            diagramm={null}
-          />
-        </div>
       </Section>
 
       <Section n="21" title="Disclosure">

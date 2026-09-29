@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { PenLine } from "lucide-react";
 import { Card } from "@/components/ui";
 import { DiagrammZeichnen } from "@/components/diagramm/DiagrammZeichnen";
-import { LEERES_DIAGRAMM, type DiagrammData } from "@/lib/diagramm";
+import { DiagrammView } from "@/components/diagramm/DiagrammView";
+import type { DiagrammData } from "@/lib/diagramm";
 import type { VorlageItem } from "@/lib/queries/exercises";
 import { ladeVorlagen } from "@/lib/actions/diagramm";
 
@@ -12,19 +13,36 @@ import { ladeVorlagen } from "@/lib/actions/diagramm";
 const BREIT = "(min-width: 40rem)";
 
 /**
- * Das Feld-Diagramm in der Erfassungsmaske einer neuen Übung (#246): dieselbe
- * Zeichenfläche wie im Diagramm-Editor, nur ohne laufendes Sichern — der Stand
- * geht mit dem Speichern der Übung mit (AK 5, Out of Scope 3). Es sitzt im
- * Abschnitt «Feld-Diagramm», an der Stelle der Diagramm-Kachel beim Bearbeiten.
+ * Das Feld-Diagramm in der Maske einer Übung — beim Erfassen (#246) wie beim
+ * Bearbeiten (#247), in der Bibliothek wie im Training. Die Zeichenfläche
+ * sichert nichts selbst: Der Stand geht mit dem Speichern der Übung mit. Es
+ * sitzt im Abschnitt «Feld-Diagramm» der Maske.
  *
  * Unter `sm` zeigt es statt der Fläche den Hinweis, dass Zeichnen mehr Platz
- * braucht (AK 9). Die Weiche ist reines CSS: Wer das Fenster verkleinert,
+ * braucht (#246 AK 9), beim Bearbeiten darüber die bisherige Zeichnung
+ * (#247 AK 9). Die Weiche ist reines CSS: Wer das Fenster verkleinert,
  * verliert eine begonnene Zeichnung nicht, sie wird nur nicht angezeigt.
  *
- * Die Vorlagen (AK 3) tragen jedes Diagramm vollständig mit. Geholt werden
+ * Die Vorlagen (#246 AK 3) tragen jedes Diagramm vollständig mit. Geholt werden
  * sie darum erst, sobald die Fläche zu sehen ist, und nicht mit der Seite.
  */
-export function DiagrammFeld({ onChange }: { onChange: (data: DiagrammData) => void }) {
+export function DiagrammFeld({
+  initial,
+  name,
+  vorlagenAusser,
+  schmalHinweis,
+  onChange,
+}: {
+  /** Die gespeicherte Zeichnung, beim Erfassen die leere Fläche. */
+  initial: DiagrammData;
+  /** Der Name der Übung, für die Beschriftung der Vorschau. */
+  name?: string;
+  /** Die Übung selbst taugt nicht als ihre eigene Vorlage. */
+  vorlagenAusser?: string;
+  /** Was der Trainer auf einem schmalen Bildschirm liest. */
+  schmalHinweis: string;
+  onChange: (data: DiagrammData, info: { ausVorlage: boolean }) => void;
+}) {
   const [vorlagen, setVorlagen] = useState<VorlageItem[]>([]);
 
   useEffect(() => {
@@ -33,38 +51,35 @@ export function DiagrammFeld({ onChange }: { onChange: (data: DiagrammData) => v
     const holen = () => {
       if (geholt || !breit.matches) return;
       geholt = true;
-      ladeVorlagen().then(setVorlagen, () => {
+      ladeVorlagen(vorlagenAusser).then(setVorlagen, () => {
         geholt = false;
       });
     };
     holen();
     breit.addEventListener("change", holen);
     return () => breit.removeEventListener("change", holen);
-  }, []);
+  }, [vorlagenAusser]);
 
   return (
     <div>
       <div className="hidden sm:block">
         <DiagrammZeichnen
-          initial={LEERES_DIAGRAMM}
+          initial={initial}
           vorlagen={vorlagen}
           onChange={onChange}
-          // Ohne Kopf: Die Überschrift trägt der Abschnitt «Feld-Diagramm» der
-          // Maske, die Aktionen rücken ans Ende der Werkzeug-Leiste.
-          fuss={
-            <p className="type-body-small text-on-surface-mittel">
-              Wird mit der Übung gespeichert.
-            </p>
-          }
         />
       </div>
-      <Card className="flex items-start gap-3 p-4 sm:hidden">
-        <PenLine size={20} strokeWidth={1.5} className="mt-0.5 shrink-0 text-primary" aria-hidden />
-        <p className="type-body-medium text-on-surface-mittel">
-          Zum Zeichnen braucht es einen breiteren Bildschirm. Erfasse die Übung hier
-          ohne Diagramm — zeichnen kannst du es später beim Bearbeiten.
-        </p>
-      </Card>
+      <div className="flex flex-col gap-3 sm:hidden">
+        {initial.elemente.length > 0 && (
+          <div className="aspect-[16/10] w-full overflow-hidden rounded-flaeche border border-linie">
+            <DiagrammView diagramm={initial} title={`Feld-Diagramm: ${name ?? "Übung"}`} />
+          </div>
+        )}
+        <Card className="flex items-start gap-3 p-4">
+          <PenLine size={20} strokeWidth={1.5} className="mt-0.5 shrink-0 text-primary" aria-hidden />
+          <p className="type-body-medium text-on-surface-mittel">{schmalHinweis}</p>
+        </Card>
+      </div>
     </div>
   );
 }

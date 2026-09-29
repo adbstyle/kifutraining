@@ -2,7 +2,7 @@ id: trikottausch
 name: Trikottausch
 trainingsteil: einleitung
 erscheinungsform: []
-feldtyp: null
+feldtyp: freies_feld
 kategorien:
 - G
 - F

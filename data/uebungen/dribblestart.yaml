@@ -2,7 +2,7 @@ id: dribblestart
 name: Dribblestart
 trainingsteil: auffangen
 erscheinungsform: []
-feldtyp: null
+feldtyp: freies_feld
 kategorien:
 - G
 - F

@@ -1,6 +1,6 @@
 # Dribblestart
 
-**Trainingsteil:** auffangen · **Kategorien:** G, F, E
+**Trainingsteil:** auffangen · **Kategorien:** G, F, E · **Feldtyp:** Freies Feld
 
 ## Aufbau
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useActionState, startTransition } from "react";
-import { ArrowLeftRight, Save } from "lucide-react";
+import { ArrowLeftRight } from "lucide-react";
 import {
   TextField,
   TextArea,
@@ -21,7 +21,6 @@ import {
 } from "@/lib/vocab";
 import {
   kategorieStufe,
-  UEBUNGSTYP_DEFINITION,
   ERSCHEINUNGSFORM_LABEL,
   ANZAHL_SPIELER_LABEL,
   ueberfuehreAblauf,
@@ -61,7 +60,7 @@ import {
 } from "@/lib/material";
 import { DiagrammFeld } from "@/components/exercise/DiagrammFeld";
 import { VerlassenWarnung } from "@/components/layout/VerlassenWarnung";
-import { LEERES_DIAGRAMM, type DiagrammData } from "@/lib/diagramm";
+import { LEERES_DIAGRAMM, parseDiagramm, type DiagrammData } from "@/lib/diagramm";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
 
@@ -118,12 +117,11 @@ export function ExerciseForm({
   kontext,
   ueberfuehrbar = false,
   submitLabel,
-  diagrammKachel,
   bildEntfernenMoeglich = false,
-  fussnote = "Neue Übungen sind zunächst privat (Entwurf).",
-  materialVorschlag,
+  fussnote,
   materialBasis = null,
-  diagrammZeichnen,
+  diagramm: gespeichertesDiagramm,
+  vorlagenAusser,
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
@@ -141,23 +139,18 @@ export function ExerciseForm({
    *  ihres Trainings und kann sie nie eigenständig wechseln. */
   ueberfuehrbar?: boolean;
   submitLabel: string;
-  /** Die Diagramm-Kachel einer gespeicherten Übung (Vorschau und Einstieg in
-   *  den Editor) — oben im Abschnitt «Feld-Diagramm». */
-  diagrammKachel?: React.ReactNode;
   /** Erlaubt, das vorhandene Bild ohne Ersatz zu entfernen (Fassungen, Story 5). */
   bildEntfernenMoeglich?: boolean;
   /** Hinweis neben der Speichern-Schaltfläche. */
   fussnote?: React.ReactNode;
-  /** Der Material-Vorschlag des gespeicherten Diagramms (Story #267) — auf
-   *  dem Server gerechnet; ohne Diagramm leer oder nicht gesetzt. */
-  materialVorschlag?: MaterialPosten[];
   /** Der Vorschlag bei der letzten Übernahme; `null` = nie übernommen. */
   materialBasis?: MaterialPosten[] | null;
-  /** Das Feld-Diagramm gleich in der Maske zeichnen (#246) — nur beim
-   *  Erfassen einer neuen Übung. Es geht mit dem Speichern mit, der
-   *  Material-Vorschlag folgt ihm live, und wer die Erfassung mit
-   *  ungesicherten Angaben verlassen will, wird gewarnt. */
-  diagrammZeichnen?: boolean;
+  /** Das gespeicherte Feld-Diagramm; beim Erfassen nicht gesetzt. Gezeichnet
+   *  wird in der Maske (#246, #247): Die Zeichnung geht mit dem Speichern mit,
+   *  und der Material-Vorschlag folgt ihr live. */
+  diagramm?: unknown;
+  /** Die Bibliotheks-Übung, die nicht als ihre eigene Vorlage erscheint. */
+  vorlagenAusser?: string;
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const err = state.errors ?? {};
@@ -202,17 +195,24 @@ export function ExerciseForm({
   );
   const [materialError, setMaterialError] = useState<string | null>(null);
 
-  // Das Diagramm der Erfassung (#246); beim Bearbeiten lebt es auf seiner
-  // eigenen Seite und bleibt hier leer.
-  const [diagramm, setDiagramm] = useState<DiagrammData>(LEERES_DIAGRAMM);
-
-  // Der Vorschlag kommt beim Bearbeiten vom Server (gespeichertes Diagramm),
-  // beim Erfassen aus der Zeichnung in der Maske — dort ändert er sich, während
-  // der Trainer zeichnet.
-  const vorschlag = useMemo(
-    () => (diagrammZeichnen ? materialBasisAusDiagramm(diagramm) : (materialVorschlag ?? [])),
-    [diagrammZeichnen, diagramm, materialVorschlag],
+  // Die Zeichnung in der Maske (#246, #247) — beim Bearbeiten ab der
+  // gespeicherten. Eine übernommene Vorlage macht das Diagramm beim Speichern
+  // zum Bild der Übung (#61 PC4).
+  const [anfangsDiagramm] = useState<DiagrammData>(
+    () => parseDiagramm(gespeichertesDiagramm) ?? LEERES_DIAGRAMM,
   );
+  const [diagramm, setDiagramm] = useState<DiagrammData>(anfangsDiagramm);
+  const [ausVorlage, setAusVorlage] = useState(false);
+  const [anfangsElemente] = useState(() => JSON.stringify(anfangsDiagramm.elemente));
+  const diagrammGeaendert = useMemo(
+    () => JSON.stringify(diagramm.elemente) !== anfangsElemente,
+    [diagramm, anfangsElemente],
+  );
+
+  // Der Vorschlag folgt der Zeichnung in der Maske — er ändert sich, während
+  // der Trainer zeichnet, und meldet eine Änderung schon vor dem Speichern
+  // (#247 AK 6/7).
+  const vorschlag = useMemo(() => materialBasisAusDiagramm(diagramm), [diagramm]);
   // Der Vorschlag, den der Trainer in dieser Bearbeitung übernommen oder mit
   // «Material beibehalten» quittiert hat; `null` = noch keiner. Er gilt als
   // Basis, bis gespeichert ist — zeichnet der Trainer danach weiter, meldet
@@ -239,16 +239,21 @@ export function ExerciseForm({
     setQuittiert(vorschlag);
   }
 
-  // Ungesicherte Angaben (#246 AK 7): getippt wurde in ein Formularfeld, eine
-  // Auswahl weicht vom Anfang ab, oder es ist gezeichnet. Die Auswahlen werden
-  // verglichen statt markiert — so gilt ein zurückgenommener Wechsel nicht als
-  // Änderung, und Strict Mode kann kein Erst-Render-Flag verwirren.
+  // Ungesicherte Angaben (#246 AK 7, #247 AK 8): getippt wurde in ein
+  // Formularfeld, eine Auswahl weicht vom Anfang ab, oder die Zeichnung. Die
+  // Auswahlen werden verglichen statt markiert — so gilt ein zurückgenommener
+  // Wechsel nicht als Änderung, und Strict Mode kann kein Erst-Render-Flag
+  // verwirren.
   const [eingetippt, setEingetippt] = useState(false);
-  const auswahl = JSON.stringify([stufe, teil, kat, form, feld, laenge, breite, hkat, uebungstyp, materialZeilen]);
+  const auswahl = JSON.stringify([
+    stufe, teil, kat, form, feld, laenge, breite, hkat, uebungstyp, materialZeilen,
+    umwandlung, bildEntfernen,
+  ]);
   const [anfangsAuswahl] = useState(auswahl);
-  const ungesichert =
-    !!diagrammZeichnen &&
-    (eingetippt || auswahl !== anfangsAuswahl || diagramm.elemente.length > 0);
+  const ungesichert = eingetippt || auswahl !== anfangsAuswahl || diagrammGeaendert;
+  // Nur beim Erfassen ist die Altersstufe wählbar — und ist noch nichts von
+  // der Übung gespeichert.
+  const erfassen = stufenWahl === "waehlbar";
 
   // Das Feld-Gating kommt geschlossen aus lib/altersstufe.ts — derselben
   // Quelle, gegen die die Server Action prüft und die die DB-CHECKs spiegelt.
@@ -429,9 +434,10 @@ export function ExerciseForm({
     fd.set("spielfeld_laenge", zeigtSpielfeld ? laenge : "");
     fd.set("spielfeld_breite", zeigtSpielfeld ? breite : "");
     fd.set("bild_entfernen", bildEntfernen ? "1" : "");
-    // Das Diagramm der Erfassung geht mit der Übung in einem Vorgang (#246
-    // AK 5); geprüft wird es auf dem Server wie beim Autosave des Editors.
-    if (diagrammZeichnen) fd.set("diagramm", JSON.stringify(diagramm));
+    // Die Zeichnung geht mit der Übung in einem Vorgang (#246 AK 5, #247
+    // PC 1); geprüft wird sie auf dem Server.
+    fd.set("diagramm", JSON.stringify(diagramm));
+    fd.set("diagramm_aus_vorlage", ausVorlage ? "1" : "");
     startTransition(() => formAction(fd));
   }
 
@@ -457,15 +463,17 @@ export function ExerciseForm({
     >
       {state.message && <Banner tone="fehler">{state.message}</Banner>}
 
-      {diagrammZeichnen && (
-        <VerlassenWarnung
-          // Während des Speicherns nicht: Die Weiterleitung auf die neue Übung
-          // ist kein Verlassen.
-          aktiv={ungesichert && !isPending}
-          titel="Erfassung verlassen?"
-          text="Die Übung ist noch nicht gespeichert. Wenn du die Seite verlässt, gehen deine Angaben und die Zeichnung verloren."
-        />
-      )}
+      <VerlassenWarnung
+        // Während des Speicherns nicht: Die Weiterleitung nach dem Speichern
+        // ist kein Verlassen.
+        aktiv={ungesichert && !isPending}
+        titel={erfassen ? "Erfassung verlassen?" : "Bearbeitung verlassen?"}
+        text={
+          erfassen
+            ? "Die Übung ist noch nicht gespeichert. Wenn du die Seite verlässt, gehen deine Angaben und die Zeichnung verloren."
+            : "Deine Änderungen sind noch nicht gespeichert. Wenn du die Seite verlässt, gehen sie verloren."
+        }
+      />
 
       {/* Die Umwandlung ist vorgemerkt, nicht geschehen: Das Formular zeigt
           bereits die Zielstufe, die Übung liegt aber unverändert in der
@@ -548,9 +556,9 @@ export function ExerciseForm({
               onChange={setKat}
               searchable={false}
               actions={false}
-              placeholder="Kategorien wählen …"
+              placeholder="Alterskategorie wählen …"
               error={!!err.kat}
-              supportingText={err.kat ?? "Für welche Alterskategorien die Übung taugt."}
+              supportingText={err.kat}
             />
           </div>
         </div>
@@ -575,21 +583,26 @@ export function ExerciseForm({
             hauptteilkategorie={zeigtHkat ? hkat : ""}
             onChange={wechsleEinordnung}
             error={err.trainingsteil ?? err.hauptteilkategorie}
-            supportingText={
-              kontext === "fassung"
-                ? "Wo die Übung in diesem Training liegt."
-                : "Wo die Übung im Trainingsablauf ihren Platz hat."
-            }
             hinweis={entfallHinweis}
           />
         </div>
       </FormAbschnitt>
 
       <FormAbschnitt titel="Feld-Diagramm (optional)">
-        {/* Die Kachel nicht über die ganze Breite: Bei 16:10 schöbe sie die
-            übrigen Felder beim Bearbeiten um eine Bildschirmhöhe nach unten. */}
-        {diagrammKachel && <div className="max-w-2xl">{diagrammKachel}</div>}
-        {diagrammZeichnen && <DiagrammFeld onChange={setDiagramm} />}
+        <DiagrammFeld
+          initial={anfangsDiagramm}
+          name={initial.name}
+          vorlagenAusser={vorlagenAusser}
+          schmalHinweis={
+            erfassen
+              ? "Zum Zeichnen braucht es einen breiteren Bildschirm. Erfasse die Übung hier ohne Diagramm — zeichnen kannst du es später beim Bearbeiten."
+              : "Zum Zeichnen braucht es einen breiteren Bildschirm. Die übrigen Angaben kannst du hier bearbeiten."
+          }
+          onChange={(data, info) => {
+            setDiagramm(data);
+            if (info.ausVorlage) setAusVorlage(true);
+          }}
+        />
 
         {/* Neben der Spielerzahl steht, was das Feld beschreibt: im
             Kinderfussball der Feldtyp (beim freien Feld mit den Metern
@@ -643,10 +656,9 @@ export function ExerciseForm({
                 defaultValue={initial.anzahl_kinder?.max ?? undefined}
               />
             </div>
-            <p className={`type-body-small mt-1.5 ${err.anzahl_max ? "text-error" : "text-on-surface-mittel"}`}>
-              {err.anzahl_max ??
-                "Mindest- und Höchstzahl der Spieler:innen, z. B. 4 bis 8. Leer lassen, wenn beliebig."}
-            </p>
+            {err.anzahl_max && (
+              <p className="type-body-small mt-1.5 text-error">{err.anzahl_max}</p>
+            )}
           </div>
         </div>
         {zeigtFeldtyp && zeigtSpielfeld && spielfeldFeld}
@@ -728,9 +740,8 @@ export function ExerciseForm({
             )}
 
             {/* Übungstyp: optionale Selbstauskunft des Junioren-Manuals, und nur
-                in den Blöcken, in denen eine Spielform vorkommen kann. Die
-                Kurzdefinition steht beim Zuweisen dabei — «Spielform» bezeichnet
-                im Lehrmittel drei verschiedene Dinge (Story 9 AC 4). */}
+                in den Blöcken, in denen eine Spielform vorkommen kann. Ohne
+                Hilfstext, wie die übrigen Felder der Maske. */}
             {zeigtTyp && (
               <Select
                 label="Übungstyp (optional)"
@@ -740,11 +751,6 @@ export function ExerciseForm({
                   { value: "", label: "— kein Übungstyp —" },
                   ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
                 ]}
-                supportingText={
-                  uebungstyp
-                    ? UEBUNGSTYP_DEFINITION[uebungstyp]
-                    : "Wie das Manual die Trainingsform einordnet."
-                }
               />
             )}
           </div>
@@ -832,7 +838,6 @@ export function ExerciseForm({
 
       <div className="flex items-center gap-3 border-t border-linie pt-5">
         <Button type="submit" size="lg" disabled={isPending || isCompressing}>
-          <Save size={20} strokeWidth={2} aria-hidden />
           {isCompressing
             ? "Foto wird optimiert …"
             : isPending

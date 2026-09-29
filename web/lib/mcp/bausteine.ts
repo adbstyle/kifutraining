@@ -80,6 +80,10 @@ export const UebungKopf = z.object({
   einordnung: Wert,
   hauptteilkategorie: Wert.nullable(),
   feldtyp: Wert.nullable(),
+  spielfeld: z.object({ laenge_m: z.number(), breite_m: z.number() }).nullable(),
+  anzahl_kinder: z
+    .object({ min: z.number().nullable(), max: z.number().nullable() })
+    .nullable(),
   /** Kifu-Manual, Community (öffentlich) oder Entwurf (privat) — dieselbe
    *  Plakette wie auf der Karte. */
   herkunft: Wert,

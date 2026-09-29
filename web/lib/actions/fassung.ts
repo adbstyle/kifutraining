@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
-import { parseDiagrammZumSpeichern, type DiagrammData } from "@/lib/diagramm";
+import { bildQuelleZurZeichnung, diagrammAusFormular, hatDiagramm } from "@/lib/diagramm";
 import {
   fassungUnvollstaendig,
   istEigeneFassungsDatei,
@@ -23,8 +23,6 @@ import { fehlerMeldung } from "@/lib/training-bedingungen";
 import { istHauptteil } from "@/lib/gruppen";
 import { varianteAnhang } from "@/lib/varianten";
 import { materialBasisAusDiagramm } from "@/lib/material";
-
-export type SaveFassungResult = { ok: true } | { ok: false; error: string };
 
 /** Die Fassung samt ihrem Training laden und das Schreibrecht prüfen. Die RLS
  *  setzt es ohnehin durch; hier geht es um eine klare Meldung statt eines
@@ -105,11 +103,28 @@ export async function updateFassung(
   const trainingsteil = String(inhalt.trainingsteil);
   const hkat = (inhalt.hauptteilkategorie as string | null) ?? null;
 
+  const gezeichnet = diagrammAusFormular(form);
+  if (gezeichnet === "ungueltig")
+    return { status: "error", message: "Das Feld-Diagramm konnte nicht gelesen werden." };
+  // Die Zeichnung, die die Fassung nach dem Speichern trägt.
+  const diagramm = gezeichnet !== undefined ? gezeichnet : fassung.diagramm;
+
   const update: Record<string, unknown> = { ...inhalt };
-  // Material-Vorschlag übernommen oder Material beibehalten: der heutige
-  // Vorschlag des gespeicherten Diagramms wird die Basis (Epic #266).
+  // Die Zeichnung geht mit den übrigen Angaben in einem Vorgang (#247 PC 1);
+  // die Bildwahl folgt ihr wie beim Erfassen. Ein Foto weiter unten hat das
+  // letzte Wort.
+  if (gezeichnet !== undefined) {
+    update.diagramm = gezeichnet;
+    update.bild_quelle = bildQuelleZurZeichnung(
+      fassung.bild_quelle as "foto" | "diagramm" | null,
+      gezeichnet,
+      form.get("diagramm_aus_vorlage") === "1",
+    );
+  }
+  // Material-Vorschlag übernommen oder Material beibehalten: der Vorschlag
+  // der gespeicherten Zeichnung wird die Basis (Epic #266).
   if (form.get("material_basis_bestaetigen") === "1")
-    update.material_basis = materialBasisAusDiagramm(fassung.diagramm);
+    update.material_basis = materialBasisAusDiagramm(diagramm);
 
   // Einordnungswechsel: die Fassung wandert ans Ende ihres neuen Abschnitts.
   // Die Kategorie ausserhalb des Hauptteils ist in `inhalt` bereits null —
@@ -177,7 +192,7 @@ export async function updateFassung(
     update.bild_url = null;
     // Ohne Foto kann die Anzeige nicht mehr darauf zeigen; ein vorhandenes
     // Diagramm wird zum aktiven Bild.
-    update.bild_quelle = fassung.diagramm ? "diagramm" : null;
+    update.bild_quelle = hatDiagramm(diagramm) ? "diagramm" : null;
   }
 
   const { error } = await supabase
@@ -214,7 +229,12 @@ export async function updateFassung(
   // geteilter Link), führt ihre eigene Variante zurück. Ausserhalb des
   // Hauptteils ist beides leer und der Anhang entfällt.
   const zurueck = `/training/${fassung.training_id}/edit?bearbeitet=1`;
-  redirect(`${zurueck}${varianteAnhang(variante ?? neueVariante ?? undefined, "&")}`);
+  // Ersetzen statt anhängen: Der aktuelle Eintrag ist der Wächter der
+  // Verlassen-Warnung (#247 AK 8).
+  redirect(
+    `${zurueck}${varianteAnhang(variante ?? neueVariante ?? undefined, "&")}`,
+    RedirectType.replace,
+  );
 }
 
 /** Eine Fassung, wie sie fürs Kopieren in die Bibliothek gelesen wird
@@ -282,43 +302,4 @@ export async function kopiereInBibliothek(
 
   revalidatePath("/");
   return kopie;
-}
-
-/** Das Diagramm einer Fassung speichern — das Pendant zu `saveDiagramm` für
- *  Bibliotheks-Übungen, nur dass das Schreibrecht am Training hängt. */
-export async function saveFassungDiagramm(
-  fassungId: string,
-  data: DiagrammData,
-): Promise<SaveFassungResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Nicht angemeldet." };
-
-  const fassung = await ladeFassung(supabase, fassungId, user.id);
-  if (!fassung) return { ok: false, error: "Übung nicht gefunden." };
-
-  const diagramm = parseDiagrammZumSpeichern(data);
-  if (!diagramm) return { ok: false, error: "Ungültiges Diagramm." };
-
-  // bild_quelle konsistent mitführen: das erste Element macht das Diagramm zum
-  // aktiven Bild; wird es geleert, fällt die Wahl zurück.
-  const leer = diagramm.elemente.length === 0;
-  const bild_quelle = leer
-    ? fassung.bild_quelle === "diagramm"
-      ? fassung.bild_url
-        ? "foto"
-        : null
-      : fassung.bild_quelle
-    : (fassung.bild_quelle ?? "diagramm");
-
-  const { error } = await supabase
-    .from("training_exercises")
-    .update({ diagramm, bild_quelle })
-    .eq("id", fassungId);
-  if (error) return { ok: false, error: error.message };
-
-  revalidiereTraining(fassung.training_id, fassungId);
-  return { ok: true };
 }

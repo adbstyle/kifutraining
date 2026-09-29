@@ -1,63 +1,14 @@
-import { notFound, redirect } from "next/navigation";
-import type { Metadata } from "next";
-import { DiagrammEditor } from "@/components/diagramm/DiagrammEditor";
-import type { BreadcrumbItem } from "@/components/ui";
-import { getExerciseDetail, getVorlagen } from "@/lib/queries/exercises";
-import { createClient } from "@/lib/supabase/server";
-import { parseDiagramm, LEERES_DIAGRAMM } from "@/lib/diagramm";
-import { saveDiagramm } from "@/lib/actions/diagramm";
-import { EINORDNUNG_LABEL } from "@/lib/labels";
-import { katalogFilterZiel } from "@/lib/filter-optionen";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: "Feld-Diagramm zeichnen — KiFu",
-  robots: { index: false },
-};
-
-export default async function DiagrammPage({
+/* Früher die eigene Seite des Diagramm-Editors. Seit #247 wird das Diagramm
+   in der Bearbeitungsmaske gezeichnet; eine alte Adresse (Lesezeichen,
+   Verlauf) führt dorthin, und die Maske prüft das Recht wie jeder Aufruf
+   (PC 4). */
+export default async function DiagrammWeiterleitung({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const ex = await getExerciseDetail(slug);
-  if (!ex) notFound();
-
-  // Diagramme gibt es nur für eigene Nutzer-Übungen (Epic #47 Precondition).
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (ex.source !== "user" || !user || ex.owner_id !== user.id) {
-    redirect(`/uebung/${slug}`);
-  }
-
-  // Brotkrumen wie auf der Übungs-Detailseite, nur eine Stufe tiefer: die
-  // Übung wird selbst zum Link, das Diagramm ist die aktuelle Seite.
-  // Der Brotkrumen-Link zielt auf die feinste Einordnung, die der Katalog
-  // filtern kann — im Kinderfussball-Hauptteil auf die Hauptteilkategorie
-  // (Story #129). Der TEXT bleibt die Einordnung selbst.
-  const teilLabel =
-    EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
-  const crumbs: BreadcrumbItem[] = [
-    { label: "Übungspool", href: "/" },
-    { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
-    { label: ex.name, href: `/uebung/${slug}` },
-    { label: "Feld-Diagramm" },
-  ];
-
-  const vorlagen = await getVorlagen(ex.id);
-
-  return (
-    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-      <DiagrammEditor
-        speichern={saveDiagramm.bind(null, ex.id)}
-        name={ex.name}
-        crumbs={crumbs}
-        initial={parseDiagramm(ex.diagramm) ?? LEERES_DIAGRAMM}
-        vorlagen={vorlagen}
-      />
-    </main>
-  );
+  redirect(`/uebung/${slug}/edit`);
 }
