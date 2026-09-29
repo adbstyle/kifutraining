@@ -2,10 +2,16 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ALTERSSTUFEN, istAltersstufe } from "@/lib/altersstufe";
 import { userSlug } from "@/lib/slug";
-import { VORLAGE_SELECT } from "@/lib/fassung";
+import { VORLAGE_SELECT, kopieName, legeUebungsKopieAn } from "@/lib/fassung";
 import { sichtbarkeitVon, type Sichtbarkeit } from "@/lib/wert";
 import { abgebildet, ausDbFehler, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
-import { UEBUNG_ZEILE, aktualisiereZeile, ladeUebungZumBearbeiten } from "@/lib/kern/zugriff";
+import {
+  UEBUNG_ZEILE,
+  aktualisiereZeile,
+  ladeUebungZumBearbeiten,
+  ladeUebungZumLesen,
+} from "@/lib/kern/zugriff";
+import { HINWEIS_NICHTS_ENTSTANDEN } from "@/lib/kern/kopie";
 import { diagrammZumAnlegen } from "@/lib/kern/uebung-diagramm";
 import type { MaterialPosten } from "@/lib/material";
 import type { Befund } from "@/lib/diagramm-pruefung";
@@ -24,7 +30,7 @@ import {
 } from "@/lib/kern/uebung-inhalt";
 
 /**
- * Eigene Übungen anlegen, ändern und öffentlich schalten (Epic #139).
+ * Eigene Übungen anlegen, ändern, öffentlich schalten und kopieren (Epic #139).
  *
  * Eine eigene Übung anlegen (Story #143; beide Altersstufen seit #147).
  *
@@ -197,4 +203,44 @@ export async function setzeUebungAufEntwurf(
     ...w,
     sichtbarkeit: "entwurf",
   }));
+}
+
+/** Die Quelle ist beim Kopieren nicht (mehr) sichtbar — wortgleich mit der
+ *  Oberfläche («Übung kopieren»). */
+export const UEBUNG_QUELLE_NICHT_VERFUEGBAR = "Die Übung ist nicht mehr verfügbar.";
+
+/**
+ * Eine sichtbare Übung in den eigenen Bestand kopieren (#171, Story 7
+ * Übungswelten; KI-Weg #317) — eine Regelquelle für den Knopf «Übung
+ * kopieren» und das Werkzeug «uebung_kopieren» (#317 NFR 1).
+ *
+ * Sichtbar heisst: was die RLS zeigt — die eigene, eine Manual-Übung oder die
+ * öffentliche eines anderen Kontos, in beiden Altersstufen. Kopiert wird nur
+ * aus dem Übungsbestand, nie eine Übung aus einem Training (#317 OoS 1): Die
+ * Kennung wird allein in `exercises` gesucht.
+ *
+ * Es entsteht ein privater Entwurf mit allen Angaben, eigener Bild- und
+ * Diagrammkopie und der Altersstufe der Quelle, ohne Verbindung zu ihr
+ * (#317 PC 1/2). Nur die Kopie einer EIGENEN Übung trägt «(Kopie)» im Namen
+ * (PC 3) — sie stünde sonst namensgleich neben der Quelle. Der Favoritenstatus
+ * reist nicht mit: die Kopie trägt eine neue ID. Scheitert es, bleibt nichts
+ * zurück — die Bildkopie fällt mit dem Insert weg.
+ */
+export async function kopiereUebungNach(
+  supabase: SupabaseClient,
+  userId: string,
+  e: { kennung: string },
+): Promise<KernErgebnis<{ id: string; slug: string; name: string; sichtbarkeit: "entwurf" }>> {
+  const nichts = { hinweis: HINWEIS_NICHTS_ENTSTANDEN };
+  const quelle = await ladeUebungZumLesen<UebungsZeile>(supabase, e.kennung, VORLAGE_SELECT);
+  if (!quelle.ok)
+    return quelle.art === "nicht_gefunden"
+      ? fehlschlag("nicht_gefunden", UEBUNG_QUELLE_NICHT_VERFUEGBAR, { feld: "kennung", ...nichts })
+      : { ...quelle, ...nichts };
+  const q = quelle.wert;
+
+  const name = q.owner_id === userId ? kopieName(q.name) : undefined;
+  const kopie = await legeUebungsKopieAn(supabase, q, { ownerId: userId, altersstufe: q.altersstufe, name });
+  if (!kopie.ok) return fehlschlag(kopie.art, kopie.error, nichts);
+  return ok({ id: kopie.id, slug: kopie.slug, name: name ?? q.name, sichtbarkeit: "entwurf" });
 }

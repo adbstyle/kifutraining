@@ -212,7 +212,7 @@ export const UEBUNG_KENNUNG_FEHLER =
   "Fehlerarten zur Kennung: «nicht_gefunden» — für dein Konto nicht sichtbar (es gibt sie " +
   "nicht, sie wurde gelöscht oder gehört jemand anderem privat; bewusst nicht " +
   "unterscheidbar); «keine_rechte» — eine Übung aus dem Kifu-Manual oder die öffentliche eines " +
-  "anderen Kontos: ansehen ja, ändern nein.";
+  "anderen Kontos: ansehen und mit «uebung_kopieren» kopieren ja, ändern nein.";
 
 /** Eine Änderung (#144): Pflicht ist nur die Kennung, jede Angabe ist frei. */
 const ALS_GANZES = "Beim Ändern ersetzt die neue Angabe die bisherige als Ganzes.";

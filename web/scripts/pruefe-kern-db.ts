@@ -60,13 +60,22 @@ const { setzeAn, aendereTermin, entferneTermin, setzeErneutAn, BEREITS_ANGESETZT
   "../lib/kern/termine"
 );
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
-const { legeUebungAn, aendereUebung, veroeffentlicheUebung, setzeUebungAufEntwurf, TRAGWEITE_UEBUNG_VEROEFFENTLICHEN } =
-  await import("../lib/kern/uebungen");
+const {
+  legeUebungAn,
+  aendereUebung,
+  veroeffentlicheUebung,
+  setzeUebungAufEntwurf,
+  kopiereUebungNach,
+  TRAGWEITE_UEBUNG_VEROEFFENTLICHEN,
+  UEBUNG_QUELLE_NICHT_VERFUEGBAR,
+} = await import("../lib/kern/uebungen");
 const { aktualisiereZeile, UEBUNG_ZEILE } = await import("../lib/kern/zugriff");
+const { FASSUNG_INHALT_FELDER } = await import("../lib/fassung");
+const { parseDiagramm } = await import("../lib/diagramm");
 const { setzeDiagramm, diagrammMaengel, DIAGRAMM_LEER, MATERIAL_MIT_DIAGRAMM } = await import(
   "../lib/kern/uebung-diagramm"
 );
-const { pruefeDiagramm } = await import("../lib/diagramm-pruefung");
+const { pruefeDiagramm, diagrammAusFormular } = await import("../lib/diagramm-pruefung");
 const { materialVorschlag } = await import("../lib/material");
 const { getExercisesFuer } = await import("../lib/queries/uebungen-fuer");
 
@@ -161,6 +170,12 @@ async function aufraeumen() {
   }
   for (const id of konten) {
     try {
+      // Bildkopien im Ordner des Kontos (Übungskopien #317) — auch die, die
+      // ein gescheitertes Szenario hinterliess.
+      const ordner = `user/${id}`;
+      const { data: imOrdner } = await admin.storage.from("exercise-images").list(ordner, { limit: 1000 });
+      if (imOrdner?.length)
+        await admin.storage.from("exercise-images").remove(imOrdner.map((d) => `${ordner}/${d.name}`));
       const { data } = await admin.from("trainings").select("id").eq("owner_id", id);
       for (const t of data ?? []) {
         // Ein öffentliches Training verlöre sonst beim Löschen die Pflicht-Übungen.
@@ -2004,6 +2019,227 @@ try {
     fehler(await diagrammMaengel(a.supabase, a.id, { kennung: randomUUID() }), "nicht_gefunden", NICHT_SICHTBAR);
     wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: u.id }));
     assert.equal(fehler(await diagrammMaengel(b.supabase, b.id, { kennung: u.slug }), "keine_rechte", FREMDE_UEBUNG).fremd, true);
+  });
+  // ── Übung kopieren (#317) ────────────────────────────────────────────────
+  const KOPIER_SPALTEN = [
+    "name",
+    "owner_id",
+    "source",
+    "visibility",
+    "altersstufe",
+    "trainingsteil",
+    "hauptteilkategorie",
+    "bild_url",
+    "diagramm",
+    ...FASSUNG_INHALT_FELDER,
+  ];
+  const kopierZeile = async (id: string) => {
+    const { data, error } = await admin
+      .from("exercises")
+      .select([...new Set(KOPIER_SPALTEN)].join(", "))
+      .eq("id", id)
+      .single<Record<string, unknown>>();
+    if (error) throw error;
+    return data;
+  };
+  const bildOrdner = `user/${a.id}`;
+  const bildUrl = (pfad: string) => `${URL_}/storage/v1/object/public/exercise-images/${pfad}`;
+  const imBildOrdner = async () =>
+    ((await admin.storage.from("exercise-images").list(bildOrdner, { limit: 100 })).data ?? [])
+      .map((d) => `${bildOrdner}/${d.name}`)
+      .sort();
+  const kinderUebungFuerKopie = async (name: string) =>
+    wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "kinderfussball",
+        name,
+        einordnung: "einleitung",
+        kategorien: ["F"],
+        offenStarten: "Offen",
+        ueben: "Üben",
+        wetteifern: "Wett",
+      }),
+    );
+
+  await pruefe("Übung kopieren: Manual-Übung → privater Entwurf mit allen Angaben und Diagramm, Quelle unberührt (AK 1, PC 1/2/4)", async () => {
+    const { data: m, error } = await admin
+      .from("exercises")
+      .select("id, slug")
+      .eq("source", "manual")
+      .not("diagramm", "is", null)
+      .order("name")
+      .limit(1)
+      .single();
+    if (error) throw error;
+    const quelle = await kopierZeile(m.id);
+    const k = wert(await kopiereUebungNach(a.supabase, a.id, { kennung: m.slug }));
+    assert.deepEqual([k.name, k.sichtbarkeit], [quelle.name, "entwurf"], "eine Manual-Kopie behält den Namen");
+    const kopie = await kopierZeile(k.id);
+    assert.deepEqual([kopie.owner_id, kopie.source, kopie.visibility], [a.id, "user", "private"]);
+    for (const f of ["altersstufe", "trainingsteil", "hauptteilkategorie", ...FASSUNG_INHALT_FELDER])
+      assert.deepEqual(kopie[f], quelle[f], f);
+    // Dasselbe Diagramm, aber entkoppelt: jede Element-ID neu.
+    const elemente = (d: unknown) => (d as { elemente: { id: string }[] }).elemente;
+    const ohneId = (d: unknown) => elemente(d).map(({ id: _id, ...rest }) => rest);
+    assert.deepEqual(ohneId(kopie.diagramm), ohneId(quelle.diagramm));
+    assert.ok(elemente(kopie.diagramm).every((e, i) => e.id !== elemente(quelle.diagramm)[i].id));
+    assert.deepEqual(await kopierZeile(m.id), quelle, "die Quelle bleibt unberührt");
+    assert.equal((await b.supabase.from("exercises").select("id").eq("id", k.id).maybeSingle()).data, null);
+  });
+
+  await pruefe("Übung kopieren: «(Kopie)» nur bei eigener Quelle, fremde behält den Namen, Junioren-Stufe bleibt (PC 2/3)", async () => {
+    const eigen = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "juniorenfussball",
+        name: "KI-Probe Kopierquelle",
+        einordnung: "jun-spiel",
+        kategorien: ["D"],
+        aufbau: "Spiel",
+      }),
+    );
+    const k1 = wert(await kopiereUebungNach(a.supabase, a.id, { kennung: eigen.id }));
+    assert.equal(k1.name, "KI-Probe Kopierquelle (Kopie)");
+    const k2 = wert(await kopiereUebungNach(a.supabase, a.id, { kennung: k1.slug }));
+    assert.equal(k2.name, "KI-Probe Kopierquelle (Kopie) (Kopie)");
+    assert.equal((await kopierZeile(k2.id)).altersstufe, "juniorenfussball");
+    assert.notEqual(k1.id, k2.id);
+
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: eigen.id }));
+    const fremd = wert(await kopiereUebungNach(b.supabase, b.id, { kennung: eigen.slug }));
+    assert.equal(fremd.name, "KI-Probe Kopierquelle", "die Kopie einer fremden Übung behält den Namen");
+    assert.deepEqual([(await kopierZeile(fremd.id)).owner_id, (await kopierZeile(fremd.id)).visibility], [b.id, "private"]);
+    wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: eigen.id }));
+  });
+
+  await pruefe("Übung kopieren: unsichtbar, unbekannt und aus einem Training → nicht_gefunden, nichts entsteht (OoS 1)", async () => {
+    const privat = await kinderUebungFuerKopie("KI-Probe privat");
+    const tr = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kopier-Probe", altersstufe: "kinderfussball", stufen: ["F"] })).id;
+    const fassung = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tr, einordnung: "einleitung", exerciseId: ein }));
+    const vorherA = await uebungenVon(a.id);
+    const vorherB = await uebungenVon(b.id);
+    for (const [konto, kennung] of [
+      [b, privat.id],
+      [a, randomUUID()],
+      [a, "gibt-es-nicht-000000"],
+      [a, fassung.fassungId],
+    ] as const) {
+      const r = await kopiereUebungNach(konto.supabase, konto.id, { kennung });
+      fehler(r, "nicht_gefunden", UEBUNG_QUELLE_NICHT_VERFUEGBAR);
+      assert.ok(!r.ok);
+      assert.equal(r.hinweis, HINWEIS_NICHTS_ENTSTANDEN);
+    }
+    assert.deepEqual([await uebungenVon(a.id), await uebungenVon(b.id)], [vorherA, vorherB]);
+  });
+
+  await pruefe("Übung kopieren: eigene Bilddatei, Quelldatei bleibt; fehlende Datei → nichts entsteht (PC 2)", async () => {
+    const mitBild = await kinderUebungFuerKopie("KI-Probe Bild");
+    const pfad = `${bildOrdner}/${mitBild.id}.webp`;
+    const { error: up } = await admin.storage
+      .from("exercise-images")
+      .upload(pfad, new Blob([new Uint8Array([82, 73, 70, 70, 0, 0, 0, 0, 87, 69, 66, 80])], { type: "image/webp" }), {
+        contentType: "image/webp",
+      });
+    if (up) throw up;
+    dateien.push(pfad);
+    const { error: e1 } = await admin
+      .from("exercises")
+      .update({ bild_url: bildUrl(pfad), bild_quelle: "foto" })
+      .eq("id", mitBild.id);
+    if (e1) throw e1;
+    const k = wert(await kopiereUebungNach(a.supabase, a.id, { kennung: mitBild.id }));
+    const kopie = await kopierZeile(k.id);
+    assert.equal(kopie.bild_url, bildUrl(`${bildOrdner}/${k.id}.webp`));
+    assert.equal(kopie.bild_quelle, "foto");
+    assert.ok((await imBildOrdner()).includes(pfad), "die Quelldatei bleibt");
+    assert.ok((await imBildOrdner()).includes(`${bildOrdner}/${k.id}.webp`), "die Kopie hat ihre eigene Datei");
+
+    const ohneDatei = await kinderUebungFuerKopie("KI-Probe Bild fehlt");
+    const { error: e2 } = await admin
+      .from("exercises")
+      .update({ bild_url: bildUrl(`${bildOrdner}/fehlt-${randomUUID()}.webp`) })
+      .eq("id", ohneDatei.id);
+    if (e2) throw e2;
+    const vorher = await uebungenVon(a.id);
+    const dateienVorher = await imBildOrdner();
+    const r = await kopiereUebungNach(a.supabase, a.id, { kennung: ohneDatei.id });
+    fehler(r, "technisch", "Das Bild liess sich nicht kopieren. Bitte versuche es noch einmal.");
+    assert.ok(!r.ok);
+    assert.equal(r.hinweis, HINWEIS_NICHTS_ENTSTANDEN);
+    assert.equal(await uebungenVon(a.id), vorher, "keine neue Übung");
+    assert.deepEqual(await imBildOrdner(), dateienVorher, "keine neue Datei");
+
+    // Weist die Datenbank ab, kommt die Meldung übersetzt, und die schon
+    // kopierte Datei fällt wieder weg: ein Client, dessen Insert scheitert.
+    const kaputt = new Proxy(a.supabase, {
+      get(ziel, name, empf) {
+        if (name === "from")
+          return (tabelle: string) => {
+            const echt = ziel.from(tabelle);
+            if (tabelle !== "exercises") return echt;
+            return new Proxy(echt, {
+              get(q, n) {
+                if (n === "insert")
+                  return () => ({
+                    select: () => ({
+                      single: async () => ({
+                        data: null,
+                        error: {
+                          message: 'new row for relation "exercises" violates check constraint "ex_kategorien_je_altersstufe"',
+                          code: "23514",
+                        },
+                      }),
+                    }),
+                  });
+                const v = Reflect.get(q, n);
+                return typeof v === "function" ? v.bind(q) : v;
+              },
+            });
+          };
+        return Reflect.get(ziel, name, empf);
+      },
+    });
+    const uebersetzt = await kopiereUebungNach(kaputt, a.id, { kennung: mitBild.id });
+    fehler(uebersetzt, "regel", "Diese Alterskategorie gehört nicht zur Altersstufe dieser Übung.");
+    assert.ok(!uebersetzt.ok);
+    assert.equal(uebersetzt.hinweis, HINWEIS_NICHTS_ENTSTANDEN);
+    assert.equal(await uebungenVon(a.id), vorher, "keine neue Übung");
+    assert.deepEqual(await imBildOrdner(), dateienVorher, "die schon kopierte Datei ist wieder entfernt");
+  });
+
+  await pruefe("Übung kopieren: Diagramm-Altbestand bleibt im Editor speicherbar, leeres Diagramm nicht als Bild", async () => {
+    // Ein Element, das die Zeichenfläche nicht kennt: für den Bestand
+    // lesbar (nachsichtig), für neue Diagramme eine Grenze.
+    const alt = await kinderUebungFuerKopie("KI-Probe Altbestand");
+    const { error } = await admin
+      .from("exercises")
+      .update({
+        diagramm: { version: 1, elemente: [{ id: "alt-1", art: "symbol", typ: "gibt-es-nicht", x: 400, y: 300 }] },
+        bild_quelle: "diagramm",
+      })
+      .eq("id", alt.id);
+    if (error) throw error;
+    const k = wert(await kopiereUebungNach(a.supabase, a.id, { kennung: alt.id }));
+    const gespeichert = (await kopierZeile(k.id)).diagramm;
+    assert.equal(pruefeDiagramm(gespeichert).grenzen.length, 1, "die Kopie trägt den Altbestand mit");
+    // Die Maske schickt das gespeicherte Diagramm unverändert zurück …
+    const form = new FormData();
+    form.set("diagramm", JSON.stringify(parseDiagramm(gespeichert)));
+    assert.notEqual(diagrammAusFormular(form, gespeichert), "ungueltig", "die Kopie lässt sich speichern");
+    // … ein geändertes mit demselben Element weist sie ab.
+    const geaendert = parseDiagramm(gespeichert)!;
+    form.set("diagramm", JSON.stringify({ ...geaendert, elemente: [{ ...geaendert.elemente[0], x: 500 }] }));
+    assert.equal(diagrammAusFormular(form, gespeichert), "ungueltig");
+
+    // Ein leeres Diagramm fällt beim Kopieren weg — dann zeigt die Kopie
+    // auch nicht «Diagramm» als Bild.
+    const leer = await kinderUebungFuerKopie("KI-Probe leeres Diagramm");
+    const { error: e2 } = await admin
+      .from("exercises")
+      .update({ diagramm: { version: 1, elemente: [] }, bild_quelle: "diagramm" })
+      .eq("id", leer.id);
+    if (e2) throw e2;
+    const kl = await kopierZeile(wert(await kopiereUebungNach(a.supabase, a.id, { kennung: leer.id })).id);
+    assert.deepEqual([kl.diagramm, kl.bild_quelle], [null, null]);
   });
 } finally {
   await aufraeumen();

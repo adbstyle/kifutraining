@@ -81,6 +81,14 @@ Diagramm für alle sichtbar und trägt die Plakette „Community", einen Trainer
 nicht. Zurückgezogen verschwindet sie aus dem öffentlichen Bestand; was andere schon in ihre
 Trainings oder ihren Bestand übernommen haben, bleibt bestehen.
 
+Jede Übung, die das Konto sieht — aus dem Manual, die öffentliche eines anderen Trainers oder
+eine eigene —, kopiert der Assistent auch in den eigenen Bestand, nach denselben Regeln wie
+„Übung kopieren" in der Anwendung: Es entsteht ein privater Entwurf mit allen Angaben, eigener
+Kopie von Bild und Feld-Diagramm und derselben Altersstufe, ohne Verbindung zur Quelle. Nur die
+Kopie einer eigenen Übung trägt den Zusatz „(Kopie)"; die einer Manual- oder fremden Übung
+behält ihren Namen. Der Assistent bekommt die Adresse der Kopie und kann sie danach ändern wie
+jede eigene Übung. Scheitert das Kopieren, bleibt nichts zurück.
+
 Das Feld-Diagramm einer eigenen Übung beider Altersstufen setzt der Assistent ebenfalls, oder er
 ersetzt ein vorhandenes als Ganzes; beim Anlegen kann er es gleich mitgeben, dann aber ohne
 gezählte Materialliste — die zählt die Anwendung selbst, eine freie Ergänzung ist weiterhin
@@ -325,8 +333,9 @@ Browser-Tab zeigt eine Änderung des Assistenten erst nach dem Neuladen. Im Trai
 
 Einem Training ordnet der Assistent nur zu, was der Bestand hergibt; eine Übung, die dort
 fehlt, legt er zuerst als eigene an, und den Inhalt einer zugeordneten Übung ändert er nicht.
-Eigene Übungen legt und ändert er je Vorgang genau eine und nie als unvollständigen Entwurf;
-löschen kann er sie nicht. Ein Feld-Diagramm setzt er nur als Ganzes
+Eigene Übungen legt, ändert und kopiert er je Vorgang genau eine, nie als unvollständigen
+Entwurf; löschen kann er sie nicht. Eine Übung aus einem Training kopiert er nicht in den
+eigenen Bestand — das geht nur in der Anwendung. Ein Feld-Diagramm setzt er nur als Ganzes
 und nur an eigenen Übungen: Einzelne Elemente ändert er nicht, und entfernen kann er ein
 Diagramm nicht. Das Diagramm sieht er nicht als Bild. Die gemeldeten Mängel betreffen einzelne
 Elemente; ob das Diagramm die Übung fachlich richtig abbildet, beurteilt die Anwendung nicht, und
@@ -350,5 +359,6 @@ unvollständige Kopie als eigenes Training stehen bleiben; sie ist nicht als unf
 und wird nicht nachträglich aufgeräumt. Ebenso kann die Kopie vollständig entstanden sein, ohne
 dass der Assistent davon erfährt. Bleibt die Rückmeldung aus, prüft der Assistent darum vor einem
 zweiten Versuch den eigenen Bestand bzw. den des Teams. Dasselbe gilt für das erneute Ansetzen,
-das ebenfalls kopiert. Serientermine, abgesagte Einheiten und ob eine Einheit stattgefunden hat,
+das ebenfalls kopiert. Bricht das Kopieren einer Übung auf diese Weise ab, kann eine kopierte
+Bilddatei ohne Übung liegen bleiben; zu sehen ist sie nirgends. Serientermine, abgesagte Einheiten und ob eine Einheit stattgefunden hat,
 kennt die Anwendung auch über den Assistenten nicht.

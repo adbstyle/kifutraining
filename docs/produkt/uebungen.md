@@ -179,7 +179,9 @@ dort trennt schon die Herkunft. Ein Favorit wird nie mitkopiert, auch wenn die Q
 
 Die eigene Übung wird über das Menü hinter den drei Punkten kopiert, die kuratierte oder fremde
 über das Kopieren-Symbol in derselben Zeile. Die Übungsliste bietet das Kopieren nicht an; der
-Weg führt über die Übung selbst.
+Weg führt über die Übung selbst. Ein verbundener KI-Assistent kopiert nach denselben Regeln,
+aber nur aus dem Übungsbestand, nicht aus einem Training (siehe
+[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
 Denselben Weg gibt es aus einem Training heraus: Eine Übung, die dort angepasst wurde, lässt
 sich als eigene Vorlage in die Bibliothek kopieren, auch aus einem fremden, veröffentlichten

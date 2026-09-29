@@ -4,6 +4,7 @@ import { abgebildet } from "@/lib/kern/ergebnis";
 import {
   TRAGWEITE_UEBUNG_VEROEFFENTLICHEN,
   aendereUebung,
+  kopiereUebungNach,
   legeUebungAn,
   setzeUebungAufEntwurf,
   veroeffentlicheUebung,
@@ -23,16 +24,16 @@ import {
 import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
 
 /**
- * Eigene Übungen erfassen, ändern und öffentlich schalten (Epic #139, ab
- * Story #143).
+ * Eigene Übungen erfassen, ändern, öffentlich schalten und sichtbare Übungen
+ * in den eigenen Bestand kopieren (Epic #139, ab Story #143).
  *
  * Dünne Adapter über den Fachkern (lib/kern/uebungen.ts), der dieselbe
  * Regelquelle wie das Übungsformular nutzt. Zod prüft nur Typ und Enum, streng
  * gegen unbekannte Felder; jede Fachregel prüft der Kern und nennt die
  * Verstösse auf einmal in `verstoesse` (#143 AK 6, NFR 2).
  *
- * Nie erreichbar (#144 OoS 1–3): eigene Übungen löschen, Manual- und fremde
- * Übungen ändern, Übungen in Trainings ändern.
+ * Nie erreichbar (#144 OoS 1–3, #317 OoS 1): eigene Übungen löschen, Manual-
+ * und fremde Übungen ändern, Übungen in Trainings ändern oder kopieren.
  */
 
 /** Kennung, slug und Seite der Übung — der Kopf jedes Ergebnisses hier. */
@@ -166,6 +167,35 @@ export const uebungAufEntwurfSetzen = werkzeug({
   ausfuehren: async (e, zugang) =>
     abgebildet(await setzeUebungAufEntwurf(zugang.supabase, zugang.userId, { kennung: e.kennung }), (w) => ({
       ...kopf(w, zugang),
+      sichtbarkeit: w.sichtbarkeit,
+    })),
+});
+
+// ── uebung_kopieren (#317) ──────────────────────────────────────────────────
+
+export const uebungKopieren = werkzeug({
+  name: "uebung_kopieren",
+  titel: "Übung in den eigenen Bestand kopieren",
+  beschreibung:
+    "Kopiert eine Übung, die dein Konto sieht — aus dem Kifu-Manual, die öffentliche eines " +
+    "anderen Kontos oder eine eigene, in beiden Altersstufen — in deinen Bestand, wie «Übung " +
+    "kopieren» in KiFu. Es entsteht ein privater Entwurf mit allen Angaben, eigener Kopie von Bild " +
+    "und Feld-Diagramm und derselben Altersstufe, ohne Verbindung zur Quelle: Spätere Änderungen " +
+    "wirken in keine Richtung, und die Quelle bleibt unberührt. Die Kopie einer eigenen Übung " +
+    "trägt im Namen den Zusatz «(Kopie)», die einer Manual- oder fremden Übung behält den Namen. " +
+    "Danach lässt sich die Kopie mit «uebung_aendern» anpassen. Je Aufruf entsteht genau eine " +
+    "Kopie; scheitert es mit einer Meldung, bleibt nichts zurück (siehe «hinweis»), und ein " +
+    "zweiter Versuch ist gefahrlos. Bricht der Vorgang ohne Meldung ab (Zeitüberschreitung), " +
+    "kann die Kopie trotzdem entstanden sein — prüfe dann mit «uebungen_suchen» («nur_eigene»), " +
+    "bevor du es noch einmal versuchst. Übungen aus Trainings («fassung_id» aus «training_abrufen») lassen sich hier nicht " +
+    `kopieren — ihre Kennung ergibt «nicht_gefunden». ${UEBUNG_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({ kennung: UebungKennung }),
+  ausgabe: z.object({ ...Kopf, name: z.string(), sichtbarkeit: z.literal("entwurf") }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await kopiereUebungNach(zugang.supabase, zugang.userId, { kennung: e.kennung }), (w) => ({
+      ...kopf(w, zugang),
+      name: w.name,
       sichtbarkeit: w.sichtbarkeit,
     })),
 });

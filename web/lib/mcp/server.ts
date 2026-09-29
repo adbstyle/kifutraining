@@ -6,6 +6,7 @@ import {
   uebungAendern,
   uebungAnlegen,
   uebungAufEntwurfSetzen,
+  uebungKopieren,
   uebungVeroeffentlichen,
 } from "@/lib/mcp/werkzeuge/uebungen-bearbeiten";
 import {
@@ -68,6 +69,7 @@ export const WERKZEUGE = [
   uebungAendern,
   uebungVeroeffentlichen,
   uebungAufEntwurfSetzen,
+  uebungKopieren,
   diagrammKatalogAbrufen,
   uebungDiagrammSetzen,
   uebungDiagrammMaengelAbrufen,

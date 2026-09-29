@@ -1277,6 +1277,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
   const jeStory: Record<string, string[]> = {
     "#143": ["uebung_anlegen"],
     "#144": ["uebung_aendern", "uebung_veroeffentlichen", "uebung_auf_entwurf_setzen"],
+    "#317": ["uebung_kopieren"],
     "#145": ["uebung_diagramm_setzen", "diagramm_katalog_abrufen"],
     "#146": ["uebung_diagramm_maengel_abrufen"],
     "#192":["training_anlegen", "training_uebungen_fuer_block", "training_uebung_zuordnen"],
