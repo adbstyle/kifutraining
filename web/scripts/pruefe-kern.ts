@@ -35,7 +35,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { erscheinungsformSlugs, hauptteilkategorieSlugs } from "../lib/vocab";
+import { erscheinungsform_juniorenSlugs, erscheinungsformSlugs, hauptteilkategorieSlugs } from "../lib/vocab";
 import {
   ALTERSSTUFEN,
   einordnungsSlugsFuer,
@@ -836,6 +836,77 @@ pruefe("Übungsinhalt: ganze Zahlen bei Anzahl und Menge, keine Farbe an Materia
   assert.ok(pruefeInhalt({ ...EINLEITUNG, material: { liste: [{ art: "leibchen", menge: 6 }] } }).ok);
 });
 
+pruefe("Übungsinhalt Juniorenfussball: alle Angaben ok, Kinderfussball-Angaben sind Verstösse (#147 AK 4)", () => {
+  const p = pruefeInhalt(
+    {
+      ...JUN_SPIEL,
+      kategorien: ["D", "C"],
+      varianten: "Mit Joker",
+      erscheinungsformen: ["schnell-umschalten"],
+      uebungstyp: "spielform",
+      spielfeld: { laengeM: 40, breiteM: 30 },
+      anzahlKinder: { min: 10, max: 14 },
+      material: { liste: [{ art: "minitor", menge: 2 }], ergaenzung: ["Pfeife"] },
+    },
+    JUN,
+  );
+  assert.ok(p.ok, JSON.stringify(funde(p)));
+  assert.deepEqual(p.row, {
+    name: "Probe",
+    altersstufe: "juniorenfussball",
+    trainingsteil: "jun-spiel",
+    kategorien: ["D", "C"],
+    feldtyp: null,
+    spielfeld_laenge_m: 40,
+    spielfeld_breite_m: 30,
+    erscheinungsform: ["schnell-umschalten"],
+    hauptteilkategorie: null,
+    anzahl_kinder: { min: 10, max: 14 },
+    material_liste: [{ art: "minitor", farbe: null, menge: 2 }],
+    material: ["Pfeife"],
+    uebungstyp: "spielform",
+    methodischer_fahrplan: null,
+    aufbau: "Aufbau",
+    varianten_text: "Mit Joker",
+  });
+  // Was nur der Kinderfussball kennt, wird genannt statt still verworfen.
+  einziger(
+    pruefeInhalt({ ...JUN_SPIEL, hauptteilkategorie: "fussball-spielen" }, JUN),
+    "hauptteilkategorie",
+    "Eine Hauptteilkategorie gibt es nur im Kinderfussball-Hauptteil.",
+  );
+  einziger(
+    pruefeInhalt({ ...JUN_SPIEL, offenStarten: "x" }, JUN),
+    "offen_starten",
+    "Hier gibt es keinen methodischen Fahrplan — der Ablauf steht in «aufbau».",
+  );
+  const e = einziger(
+    pruefeInhalt({ ...JUN_SPIEL, einordnung: "einleitung" }, JUN),
+    "einordnung",
+    '„einleitung" ist keine Einordnung der Altersstufe Juniorenfussball.',
+  );
+  assert.deepEqual(e.zulaessig, einordnungsSlugsFuer(JUN));
+  const k = einziger(
+    pruefeInhalt({ ...JUN_SPIEL, kategorien: ["D", "F"] }, JUN),
+    "kategorien",
+    "Diese Alterskategorie gehört nicht zur Altersstufe dieser Übung. Nicht zulässig: F.",
+  );
+  assert.deepEqual(k.zulaessig, ["D", "C", "B", "A"]);
+  const f = einziger(
+    pruefeInhalt({ ...JUN_SPIEL, erscheinungsformen: ["mutig-tore-erzielen"] }, JUN),
+    "erscheinungsformen",
+    "Diese Erscheinungsform gehört zum Manual der anderen Altersstufe. Nicht zulässig: mutig-tore-erzielen.",
+  );
+  assert.deepEqual(f.zulaessig, erscheinungsform_juniorenSlugs);
+  einziger(
+    pruefeInhalt({ ...nurPflicht(JUN, "jun-auffangen", null), erscheinungsformen: ["schnell-umschalten"] }, JUN),
+    "erscheinungsformen",
+    "Diese Einordnung trägt keine Erscheinungsform.",
+  );
+  // Ohne Feldtyp-Bedingung: Die Spielfeldgrösse gilt in jedem Junioren-Block.
+  assert.ok(pruefeInhalt({ ...nurPflicht(JUN, "jun-auffangen", null), spielfeld: { laengeM: 20, breiteM: 20 } }, JUN).ok);
+});
+
 pruefe("Übungsinhalt: alle Verstösse auf einmal (#143 AK 6)", () => {
   const p = pruefeInhalt({
     name: "",
@@ -940,6 +1011,16 @@ pruefe("Übung ändern: ohne Änderung dieselbe Zeile, nichts zu schreiben (beid
     assert.ok(p.ok, JSON.stringify(funde(p)));
     assert.deepEqual(geaenderteSpalten(p.row, zeile), {}, zeile.trainingsteil);
   }
+});
+
+pruefe("Übung ändern Juniorenfussball: neuer Block nennt Übungstyp und Erscheinungsform, die er nicht trägt (#147 AK 3)", () => {
+  const typ = fachlicheMeldung("ex_uebungstyp_nur_junioren")!;
+  const abschluss = aendere(VOLL_JUNIOREN, { einordnung: "jun-abschluss" });
+  assert.deepEqual(felder(abschluss), ["uebungstyp"]);
+  assert.ok(funde(abschluss)[0].meldung.startsWith(typ), "im Juniorenfussball gilt der Text der Datenebene");
+  assert.ok(funde(abschluss)[0].meldung.endsWith("setze «uebungstyp» auf null, um sie zu entfernen."));
+  assert.ok(aendere(VOLL_JUNIOREN, { einordnung: "jun-abschluss", uebungstyp: null }).ok);
+  assert.deepEqual(felder(aendere(VOLL_JUNIOREN, { einordnung: "jun-auffangen" })), ["erscheinungsformen", "uebungstyp"]);
 });
 
 pruefe("Übung ändern: jsonb in anderer Schlüsselfolge ist keine Änderung", () => {

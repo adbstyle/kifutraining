@@ -1397,23 +1397,108 @@ try {
       feld: "hauptteilkategorie",
       meldung: "Eine Hauptteilkategorie gibt es nur im Kinderfussball-Hauptteil.",
     });
+    // Im Kinderfussball gibt es gar keinen Übungstyp — nicht der Junioren-Text.
+    assert.equal(r.verstoesse?.[7].meldung, "Den Übungstyp gibt es nur im Juniorenfussball — lass «uebungstyp» weg.");
     assert.equal(await uebungenVon(a.id), vorher, "nichts angelegt");
   });
 
-  await pruefe("Übung anlegen: Juniorenfussball noch gesperrt, fremde Einordnung ohne Folgefehler", async () => {
+  await pruefe("Übung anlegen Juniorenfussball: jede Angabe landet in der Zeile (#147 AK 2, PC 1)", async () => {
+    const u = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "juniorenfussball",
+        name: "KI-Probe Junioren",
+        einordnung: "jun-spielformen",
+        kategorien: ["D", "C"],
+        aufbau: "Zwei gegen zwei auf Minitore",
+        varianten: "Mit Joker",
+        erscheinungsformen: ["offensive-zweikaempfe-bestreiten"],
+        uebungstyp: "spielform",
+        spielfeld: { laengeM: 25, breiteM: 20 },
+        anzahlKinder: { min: 8, max: 12 },
+        material: {
+          liste: [
+            { art: "leibchen", farbe: "blau", menge: 4 },
+            { art: "minitor", menge: 4 },
+          ],
+          ergaenzung: ["Pfeife"],
+        },
+      }),
+    );
+    const { data } = await admin
+      .from("exercises")
+      .select(
+        "altersstufe, trainingsteil, hauptteilkategorie, kategorien, methodischer_fahrplan, aufbau, " +
+          "varianten_text, erscheinungsform, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, anzahl_kinder, " +
+          "material_liste, material, uebungstyp, visibility, owner_id",
+      )
+      .eq("id", u.id)
+      .single();
+    assert.deepEqual(data, {
+      altersstufe: "juniorenfussball",
+      trainingsteil: "jun-spielformen",
+      hauptteilkategorie: null,
+      kategorien: ["D", "C"],
+      methodischer_fahrplan: null,
+      aufbau: "Zwei gegen zwei auf Minitore",
+      varianten_text: "Mit Joker",
+      erscheinungsform: ["offensive-zweikaempfe-bestreiten"],
+      feldtyp: null,
+      spielfeld_laenge_m: 25,
+      spielfeld_breite_m: 20,
+      anzahl_kinder: { min: 8, max: 12 },
+      material_liste: [
+        { art: "minitor", farbe: null, menge: 4 },
+        { art: "leibchen", farbe: "blau", menge: 4 },
+      ],
+      material: ["Pfeife"],
+      uebungstyp: "spielform",
+      visibility: "private",
+      owner_id: a.id,
+    });
+  });
+
+  await pruefe("Übung anlegen: Angaben der anderen Altersstufe werden genannt, fremde Einordnung ohne Folgefehler (#147 AK 4)", async () => {
     const vorher = await uebungenVon(a.id);
     const j = await legeUebungAn(a.supabase, a.id, {
       altersstufe: "juniorenfussball",
       name: "x",
-      einordnung: "jun-spiel",
-      kategorien: ["D"],
+      einordnung: "jun-abschluss",
+      kategorien: ["D", "F"],
       aufbau: "x",
+      hauptteilkategorie: "fussball-spielen",
+      offenStarten: "y",
+      feldtyp: "kleinfeld",
+      uebungstyp: "spielform",
     });
-    fehler(j, "regel", "Übungen der Altersstufe Juniorenfussball lassen sich über den KI-Zugang noch nicht anlegen.");
+    fehler(j, "regel");
     assert.ok(!j.ok);
-    assert.equal(j.feld, "altersstufe");
-    assert.deepEqual(j.zulaessig, ["kinderfussball"]);
     assert.equal(j.hinweis, NICHTS_ANGELEGT);
+    assert.deepEqual(j.verstoesse?.map((v) => v.feld), ["kategorien", "hauptteilkategorie", "offen_starten", "feldtyp", "uebungstyp"]);
+    // Im Juniorenfussball nennt die Meldung die Blöcke, die einen Übungstyp tragen.
+    assert.ok(j.verstoesse?.[4].meldung.startsWith("Der Übungstyp ist eine Angabe des Manuals Fussball Jugendliche"));
+    const kinderEinordnung = await legeUebungAn(a.supabase, a.id, {
+      altersstufe: "juniorenfussball",
+      name: "x",
+      einordnung: "einleitung",
+      kategorien: ["D"],
+      offenStarten: "y",
+    });
+    assert.ok(!kinderEinordnung.ok);
+    assert.deepEqual(kinderEinordnung.verstoesse, [
+      {
+        feld: "einordnung",
+        meldung: '„einleitung" ist keine Einordnung der Altersstufe Juniorenfussball.',
+        zulaessig: [
+          "jun-auffangen",
+          "jun-aufwaermen",
+          "jun-spielform-trainingsziel",
+          "jun-explosivitaet",
+          "jun-spielformen",
+          "jun-spiel",
+          "jun-abschluss",
+        ],
+      },
+    ]);
     const e = await legeUebungAn(a.supabase, a.id, {
       altersstufe: "kinderfussball",
       name: "x",
@@ -1545,7 +1630,7 @@ try {
     assert.deepEqual(danach.erscheinungsform, []);
   });
 
-  await pruefe("Übung ändern: nur eigene; Manual, fremde, unsichtbare und Junioren abgewiesen (AK 4, OoS 2/3)", async () => {
+  await pruefe("Übung ändern: nur eigene; Manual, fremde und unsichtbare abgewiesen (AK 4, OoS 2/3)", async () => {
     const manual = await vorlage("einleitung");
     const f = fehler(await aendereUebung(a.supabase, a.id, { kennung: manual, aenderung: { name: "x" } }), "keine_rechte", FREMDE_UEBUNG);
     assert.equal(f.fremd, true);
@@ -1566,29 +1651,60 @@ try {
     assert.equal((await uebungszeile(probe.id)).name, "KI-Probe Neu");
     wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: probe.id }));
 
-    const { data: jun, error } = await admin
-      .from("exercises")
-      .insert({
-        slug: `kern-db-jun-${randomBytes(4).toString("hex")}`,
-        name: "Kern-DB Junioren",
+  });
+
+  await pruefe("Übung ändern Juniorenfussball: ändern, zurücklesen, Altwerte nennen; die Altersstufe wechselt nie (#147 AK 3, OoS 1)", async () => {
+    const j = wert(
+      await legeUebungAn(a.supabase, a.id, {
         altersstufe: "juniorenfussball",
-        trainingsteil: "jun-spiel",
-        kategorien: ["D"],
-        aufbau: "Im Wechsel",
-        owner_id: a.id,
-        visibility: "private",
-      })
-      .select("id")
-      .single();
-    if (error) throw error;
-    fehler(
-      await aendereUebung(a.supabase, a.id, { kennung: jun.id, aenderung: { name: "x" } }),
-      "regel",
-      "Übungen der Altersstufe Juniorenfussball lassen sich über den KI-Zugang noch nicht ändern.",
+        name: "KI-Probe Junioren ändern",
+        einordnung: "jun-spiel",
+        kategorien: ["C"],
+        aufbau: "Spiel 7 gegen 7",
+        uebungstyp: "basisspielform",
+        spielfeld: { laengeM: 50, breiteM: 35 },
+      }),
     );
+    wert(
+      await aendereUebung(a.supabase, a.id, {
+        kennung: j.slug,
+        altersstufe: "juniorenfussball",
+        aenderung: {
+          kategorien: ["C", "B"],
+          erscheinungsformen: ["schnell-umschalten"],
+          spielfeld: { laengeM: 60, breiteM: 40 },
+          anzahlKinder: { min: 14 },
+          varianten: "Mit Torhütern",
+          material: { ergaenzung: ["Leibchen in zwei Farben"] },
+        },
+      }),
+    );
+    const zeile = await uebungszeile(j.id);
+    assert.deepEqual(
+      [zeile.kategorien, zeile.erscheinungsform, zeile.spielfeld_laenge_m, zeile.spielfeld_breite_m, zeile.anzahl_kinder, zeile.varianten_text, zeile.material],
+      [["C", "B"], ["schnell-umschalten"], 60, 40, { min: 14, max: null }, "Mit Torhütern", ["Leibchen in zwei Farben"]],
+    );
+    assert.equal(zeile.aufbau, "Spiel 7 gegen 7");
+
+    // Ein Block ohne Übungstyp: der gespeicherte wird genannt, im Wortlaut der Datenebene.
+    const abschluss = await aendereUebung(a.supabase, a.id, { kennung: j.id, aenderung: { einordnung: "jun-abschluss" } });
+    assert.ok(!abschluss.ok);
+    assert.deepEqual(abschluss.verstoesse?.map((v) => v.feld), ["uebungstyp"]);
+    assert.ok(abschluss.verstoesse?.[0].meldung.startsWith("Der Übungstyp ist eine Angabe des Manuals Fussball Jugendliche"));
+    assert.deepEqual(await uebungszeile(j.id), zeile, "die Übung ist unverändert");
+    wert(await aendereUebung(a.supabase, a.id, { kennung: j.id, aenderung: { einordnung: "jun-abschluss", uebungstyp: null } }));
+    assert.equal((await uebungszeile(j.id)).trainingsteil, "jun-abschluss");
+
+    // Die Altersstufe wechselt nie — auch nicht in den Kinderfussball.
+    const stufe = await aendereUebung(a.supabase, a.id, { kennung: j.id, aenderung: { name: "x" }, altersstufe: "kinderfussball" });
+    assert.ok(!stufe.ok);
+    assert.deepEqual(stufe.verstoesse?.map((v) => v.feld), ["altersstufe"]);
+    assert.deepEqual(stufe.verstoesse?.[0].zulaessig, ["juniorenfussball"]);
+    assert.equal((await uebungszeile(j.id)).name, "KI-Probe Junioren ändern");
+
     // Die Sichtbarkeit hängt an keiner Altersstufe.
-    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: jun.id }));
-    wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: jun.id }));
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: j.id }));
+    wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: j.id }));
   });
 
   await pruefe("Übung ändern: die Fassung in einem Training bleibt unberührt (OoS 3)", async () => {

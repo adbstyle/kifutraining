@@ -44,12 +44,6 @@ import { fachlicheMeldung } from "@/lib/training-bedingungen";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import { fehlschlag, type KernFehler, type Verstoss } from "@/lib/kern/ergebnis";
 
-/** Die Altersstufen, deren Übungen der KI-Zugang anlegt. Vorerst nur der
- *  Kinderfussball: Pflichtangaben und Regeln sind je Altersstufe verschieden,
- *  der erste Schnitt deckt eine ab (Epic #139). Die Prüfung unten kennt
- *  beide. */
-export const UEBUNG_STUFEN_KI: readonly Altersstufe[] = ["kinderfussball"];
-
 /** Der Zusatz für den Assistenten an einer abgelehnten Anlage bzw. Änderung. */
 export const NICHTS_ANGELEGT = "Es ist nichts angelegt worden.";
 export const UNVERAENDERT = "Die Übung ist unverändert.";

@@ -26,10 +26,10 @@ Juniorenfussball gibt es keinen solchen kuratierten Bestand.
 Die andere Quelle sind die Trainerinnen und Trainer selbst. Wer eine eigene Übung erfasst, legt
 sie zunächst als Entwurf an; sie bleibt privat, bis er sie öffentlich schaltet. Danach trägt
 sie die Plakette „Community" und steht allen zur Verfügung. Die Sichtbarkeit lässt sich
-jederzeit in beide Richtungen umschalten. Eine eigene Übung des Kinderfussballs kann auch ein
-verbundener KI-Assistent anlegen und ändern; sie entsteht ebenso als Entwurf und folgt
-denselben Regeln wie im Formular. Öffentlich schalten und zurückziehen kann er eigene Übungen
-beider Altersstufen (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
+jederzeit in beide Richtungen umschalten. Eine eigene Übung beider Altersstufen kann auch ein
+verbundener KI-Assistent anlegen, ändern, öffentlich schalten und zurückziehen; sie entsteht
+ebenso als Entwurf und folgt denselben Regeln wie im Formular, je Altersstufe den ihren (siehe
+[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
 ## Was eine Übung ausmacht
 

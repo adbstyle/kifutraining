@@ -23,6 +23,7 @@ import {
 } from "@/lib/vocab";
 import {
   ALTERSSTUFEN,
+  brauchtFahrplan,
   einordnungsSlugsFuer,
   erscheinungsformenFuer,
   kategorienFuer,
@@ -38,7 +39,6 @@ import { MATERIAL_ARTEN, MATERIAL_KATALOG, MATERIAL_MENGE_MAX } from "@/lib/mate
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
 import { FREITEXT_LISTEN, UEBEN_ZEILEN } from "@/lib/freitext";
 import {
-  UEBUNG_STUFEN_KI,
   pflichtangaben,
   type UebungInhalt,
   type UebungPatch,
@@ -74,14 +74,29 @@ export function angabenText(stufe: Altersstufe): string {
       gruppen.set(pflicht, orte);
     }
   }
-  const jeEinordnung = [...gruppen.entries()]
-    .map(([pflicht, orte]) => {
-      const wo = [...orte.entries()]
-        .map(([e, hs]) => (hs.length ? `${e} mit «hauptteilkategorie» ${hs.join(" oder ")}` : e))
-        .join(", ");
-      return `in ${wo}: ${pflicht}`;
-    })
-    .join("; ");
+  const jeEinordnung =
+    gruppen.size === 1
+      ? `in jeder Einordnung ${[...gruppen.keys()][0]}`
+      : "je nach Einordnung " +
+        [...gruppen.entries()]
+          .map(([pflicht, orte]) => {
+            const wo = [...orte.entries()]
+              .map(([e, hs]) => (hs.length ? `${e} mit «hauptteilkategorie» ${hs.join(" oder ")}` : e))
+              .join(", ");
+            return `in ${wo}: ${pflicht}`;
+          })
+          .join("; ");
+
+  // Was diese Altersstufe gar nicht führt — ein solcher Wert wird abgelehnt.
+  const fahrplan = einordnungen.some((e) =>
+    (traegtHauptteilkategorie(stufe, e) ? hauptteilkategorieSlugs : [null]).some((h) => brauchtFahrplan(stufe, e, h)),
+  );
+  const fehlt = [
+    ...(einordnungen.some((e) => traegtHauptteilkategorie(stufe, e)) ? [] : ["hauptteilkategorie"]),
+    ...(fahrplan ? [] : ["offen_starten", "ueben", "wetteifern"]),
+    ...(traegtFeldtyp(stufe) ? [] : ["feldtyp"]),
+    ...(einordnungen.some((e) => traegtUebungstyp(stufe, e)) ? [] : ["uebungstyp"]),
+  ];
 
   const mitForm = einordnungen.filter((e) => traegtErscheinungsform(stufe, e));
   const mitTyp = einordnungen.filter((e) => traegtUebungstyp(stufe, e));
@@ -99,13 +114,14 @@ export function angabenText(stufe: Altersstufe): string {
   ];
   return (
     `${altersstufeLabels[stufe]}: Pflicht sind «name», «einordnung» (${einordnungen.join(", ")}) und ` +
-    `«kategorien» (${kategorienFuer(stufe).join(", ")}), dazu je nach Einordnung ${jeEinordnung}. ` +
-    `Freiwillig: ${freiwillig.join(", ")}.`
+    `«kategorien» (${kategorienFuer(stufe).join(", ")}), dazu ${jeEinordnung}. ` +
+    `Freiwillig: ${freiwillig.join(", ")}.` +
+    (fehlt.length ? ` Nicht vorgesehen: ${zitiert(fehlt)}.` : "")
   );
 }
 
-/** Die Angaben aller Altersstufen, deren Übungen der KI-Zugang anlegt. */
-export const UEBUNG_ANGABEN = UEBUNG_STUFEN_KI.map(angabenText).join(" ");
+/** Die Angaben beider Altersstufen (#147 AK 1). */
+export const UEBUNG_ANGABEN = ALTERSSTUFEN.map(angabenText).join(" ");
 
 const Freitext = (was: string) => z.string().nullable().optional().describe(was);
 

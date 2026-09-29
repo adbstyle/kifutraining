@@ -73,7 +73,6 @@ import {
   alsUebungPatch,
   angabenText,
 } from "../lib/mcp/uebung-eingaben";
-import { UEBUNG_STUFEN_KI } from "../lib/kern/uebung-inhalt";
 import { ausKern, erfolg, fehlerErgebnis } from "../lib/mcp/ergebnis";
 import type { CallToolResult } from "@modelcontextprotocol/server";
 import type { KernFehler } from "../lib/kern/ergebnis";
@@ -733,9 +732,10 @@ pruefe("DiagrammEingabe: locker — jedes Element erreicht den Kern, Pflicht ist
   z.toJSONSchema(UebungAnlegenEingabe);
 });
 
-pruefe("UEBUNG_ANGABEN: je Altersstufe des KI-Wegs Pflicht, Ablaufform und Spielfeld-Grenzen", () => {
-  assert.deepEqual(UEBUNG_STUFEN_KI, ["kinderfussball"]);
-  const kifu = UEBUNG_ANGABEN;
+pruefe("UEBUNG_ANGABEN: beide Altersstufen mit Pflicht, Ablaufform und Spielfeld-Grenzen (#147 AK 1)", () => {
+  const kifu = angabenText("kinderfussball");
+  const jun = angabenText("juniorenfussball");
+  assert.equal(UEBUNG_ANGABEN, `${kifu} ${jun}`);
   for (const teil of [
     "Pflicht sind «name», «einordnung» (auffangen, einleitung, hauptteil, ausklang) und «kategorien» (G, F, E)",
     "in auffangen, ausklang: «aufbau»",
@@ -747,12 +747,21 @@ pruefe("UEBUNG_ANGABEN: je Altersstufe des KI-Wegs Pflicht, Ablaufform und Spiel
     "«spielfeld» (nur bei «feldtyp» freies_feld; Länge und Breite zusammen, ganze Meter von 5 bis 120)",
   ])
     assert.ok(kifu.includes(teil), `fehlt: ${teil}\n${kifu}`);
-  assert.ok(!kifu.includes("«uebungstyp»"), "der Kinderfussball kennt keinen Übungstyp");
-  // Der Juniorenfussball ist vorbereitet (#147): nur «aufbau», kein Feldtyp.
-  const jun = angabenText("juniorenfussball");
-  assert.ok(jun.includes("jun-abschluss: «aufbau»"), jun);
-  assert.ok(!jun.includes("«feldtyp»") && !jun.includes("«hauptteilkategorie»"), jun);
-  assert.ok(jun.includes("«uebungstyp» (basisspielform, spielform, isolierte-form; nur in jun-aufwaermen"), jun);
+  assert.ok(kifu.endsWith("Nicht vorgesehen: «uebungstyp»."), kifu);
+  // Juniorenfussball: in jedem Block der Beschreibungstext, kein Fahrplan,
+  // keine Hauptteilkategorie, kein Feldtyp; Spielfeld ohne Feldtyp-Bedingung.
+  for (const teil of [
+    "Pflicht sind «name», «einordnung» (jun-auffangen, jun-aufwaermen, jun-spielform-trainingsziel, " +
+      "jun-explosivitaet, jun-spielformen, jun-spiel, jun-abschluss) und «kategorien» (D, C, B, A), " +
+      "dazu in jeder Einordnung «aufbau».",
+    "«uebungstyp» (basisspielform, spielform, isolierte-form; nur in jun-aufwaermen, " +
+      "jun-spielform-trainingsziel, jun-explosivitaet, jun-spielformen, jun-spiel)",
+    "«spielfeld» (Länge und Breite zusammen, ganze Meter von 5 bis 120)",
+    "Nicht vorgesehen: «hauptteilkategorie», «offen_starten», «ueben», «wetteifern», «feldtyp».",
+  ])
+    assert.ok(jun.includes(teil), `fehlt: ${teil}\n${jun}`);
+  // Das Auffangen trägt keine Erscheinungsform.
+  assert.match(jun, /«erscheinungsformen» \([^)]*; nur in jun-aufwaermen, [^)]*jun-abschluss\)/);
 });
 
 pruefe("erfolg: structuredContent ist der Wert selbst, content derselbe als JSON", () => {

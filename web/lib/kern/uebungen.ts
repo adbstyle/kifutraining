@@ -1,6 +1,5 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { ALTERSSTUFEN, istAltersstufe } from "@/lib/altersstufe";
 import { userSlug } from "@/lib/slug";
 import { VORLAGE_SELECT } from "@/lib/fassung";
@@ -12,7 +11,6 @@ import type { MaterialPosten } from "@/lib/material";
 import type { Befund } from "@/lib/diagramm-pruefung";
 import {
   NICHTS_ANGELEGT,
-  UEBUNG_STUFEN_KI,
   UNVERAENDERT,
   abgelehnt,
   geaenderteSpalten,
@@ -28,10 +26,11 @@ import {
 /**
  * Eigene Übungen anlegen, ändern und öffentlich schalten (Epic #139).
  *
- * Eine eigene Übung anlegen (Story #143).
+ * Eine eigene Übung anlegen (Story #143; beide Altersstufen seit #147).
  *
  * Der Weg des KI-Werkzeugs «uebung_anlegen». Die Regeln sind die des
- * Formulars (`parseUebungsInhalt`, über lib/kern/uebung-inhalt.ts), die Übung
+ * Formulars (`parseUebungsInhalt`, über lib/kern/uebung-inhalt.ts), je
+ * Altersstufe die ihren (#147 AK 4, NFR 1), und die Übung
  * entsteht wie dort: als privater Entwurf des Aufrufers (#143 PC 1), mit
  * sprechendem Slug samt Zufalls-Suffix. Ein Feld-Diagramm kann mitkommen
  * (#145 AK 5): Es wird das Bild der Übung, und KiFu zählt das Material
@@ -64,12 +63,6 @@ export async function legeUebungAn(
       zulaessig: ALTERSSTUFEN,
       hinweis: NICHTS_ANGELEGT,
     });
-  if (!UEBUNG_STUFEN_KI.includes(altersstufe))
-    return fehlschlag(
-      "regel",
-      `Übungen der Altersstufe ${altersstufeLabels[altersstufe]} lassen sich über den KI-Zugang noch nicht anlegen.`,
-      { feld: "altersstufe", zulaessig: UEBUNG_STUFEN_KI, hinweis: NICHTS_ANGELEGT },
-    );
 
   // Alle Verstösse in einer Antwort, damit der Assistent in einem Zug
   // korrigiert (#143 AK 6) — die Angaben und das Diagramm zusammen (#145 AK 7).
@@ -130,12 +123,6 @@ export async function aendereUebung(
   const zugriff = await ladeUebungZumBearbeiten<UebungsZeile>(supabase, userId, e.kennung, VORLAGE_SELECT);
   if (!zugriff.ok) return zugriff;
   const zeile = zugriff.wert;
-  if (!UEBUNG_STUFEN_KI.includes(zeile.altersstufe))
-    return fehlschlag(
-      "regel",
-      `Übungen der Altersstufe ${altersstufeLabels[zeile.altersstufe]} lassen sich über den KI-Zugang noch nicht ändern.`,
-      { feld: "kennung", hinweis: UNVERAENDERT },
-    );
 
   const funde: Fund[] = [];
   if (e.altersstufe !== undefined && e.altersstufe !== zeile.altersstufe)

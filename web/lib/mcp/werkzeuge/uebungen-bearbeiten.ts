@@ -58,8 +58,9 @@ export const uebungAnlegen = werkzeug({
   titel: "Übung anlegen",
   beschreibung:
     "Legt eine eigene Übung als privaten Entwurf an — sichtbar nur für dich und in KiFu unter " +
-    "deinen eigenen Übungen, bis «uebung_veroeffentlichen» sie öffentlich schaltet. Aktuell nur " +
-    `Kinderfussball. Es gelten dieselben Regeln wie im Formular in KiFu. ${ABLEHNUNG} Danach die ` +
+    "deinen eigenen Übungen, bis «uebung_veroeffentlichen» sie öffentlich schaltet. Es gelten " +
+    "dieselben Regeln wie im Formular in KiFu, je Altersstufe die ihren; die Altersstufe steht " +
+    `danach fest. ${ABLEHNUNG} Danach die ` +
     `ganze Übung korrigiert noch einmal senden. ${UEBUNG_ANGABEN} Die Werte samt Klartext liefert ` +
     "«vokabular». Ein Feld-Diagramm lässt sich in «diagramm» gleich mitgeben, mit denselben " +
     "Grenzen wie bei «uebung_diagramm_setzen»: Es wird das Bild der Übung, und KiFu zählt das " +
@@ -109,8 +110,8 @@ export const uebungAendern = werkzeug({
     "die Einordnung, prüft KiFu auch die gespeicherten Angaben, die die neue Einordnung nicht " +
     "kennt, und löscht sie nicht still, sondern nennt sie: mit «null» entfernen und die neuen " +
     "Pflichtangaben mitsenden. Welche Angaben es gibt, welche Pflicht sind und welche Werte " +
-    "zulässig sind, steht bei «uebung_anlegen» und in «vokabular». Die Altersstufe ändert sich " +
-    "nie; aktuell lassen sich nur Übungen des Kinderfussballs ändern. Bild und Feld-Diagramm " +
+    "zulässig sind, steht bei «uebung_anlegen» und in «vokabular». Es gelten die Regeln der " +
+    "Altersstufe der Übung; die Altersstufe selbst ändert sich nie. Bild und Feld-Diagramm " +
     "ändert dieses Werkzeug nicht — das Diagramm setzt «uebung_diagramm_setzen», die Sichtbarkeit " +
     "«uebung_veroeffentlichen» und " +
     "«uebung_auf_entwurf_setzen»; steht die Übung schon in einem Training, behält sie dort ihre " +
