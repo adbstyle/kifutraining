@@ -60,6 +60,12 @@ export type FehlerArt =
   | "gebremst"
   | "technisch";
 
+/** Ein einzelner Verstoss einer abgelehnten Eingabe (#143 AK 6). `feld` ist
+ *  der Eingabename des Werkzeugs, bei Verschachtelung mit Pfad
+ *  («anzahl_kinder.max», «material.liste[1].menge»). `zulaessig` nennt, wo
+ *  es eine Aufzählung gibt, die zulässigen Werte. */
+export type Verstoss = { feld: string; meldung: string; zulaessig?: readonly string[] };
+
 export type KernFehler = {
   ok: false;
   /** Fertige, wortgleich mit der Oberfläche formulierte Meldung. Nie ein
@@ -88,6 +94,10 @@ export type KernFehler = {
    *  jemand anderem (fremd und öffentlich). Die Oberfläche meldet es dann wie
    *  «nicht gefunden» (`oberflaechenMeldung`), nur der KI-Weg eigens. */
   fremd?: true;
+  /** Alle Verstösse einer abgelehnten Übung auf einmal, statt nur des
+   *  ersten (#143 AK 6) — dann bleiben `feld` und `zulaessig` oben leer.
+   *  Nie eine leere Liste. */
+  verstoesse?: readonly Verstoss[];
   /** Zusatz nur für den Assistenten (die Oberfläche zeigt ihn nie), etwa
    *  «Es ist keine Kopie entstanden.» */
   hinweis?: string;

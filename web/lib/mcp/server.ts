@@ -2,6 +2,7 @@ import "server-only";
 import type { McpServer } from "@modelcontextprotocol/server";
 import { vokabular, werBinIch } from "@/lib/mcp/werkzeuge/konto";
 import { uebungAbrufen, uebungenSuchen } from "@/lib/mcp/werkzeuge/uebungen";
+import { uebungAnlegen } from "@/lib/mcp/werkzeuge/uebungen-bearbeiten";
 import {
   trainingAnlegen,
   trainingUebungenFuerBlock,
@@ -53,6 +54,7 @@ export const WERKZEUGE = [
   vokabular,
   uebungenSuchen,
   uebungAbrufen,
+  uebungAnlegen,
   trainingAnlegen,
   trainingUebungenFuerBlock,
   trainingUebungZuordnen,

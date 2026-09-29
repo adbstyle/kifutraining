@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-09-23. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-09-29. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -44,6 +44,21 @@ Gespräch im Übungsbestand suchen und einzelne Übungen mit allen Angaben abruf
 Bestand, den man auch selbst in der Anwendung sieht, mit denselben Filtern und denselben Werten
 für Altersstufe, Trainingsteil und die übrigen Angaben. Private Übungen anderer bleiben auch
 dem Assistenten verborgen.
+
+Eigene Übungen legt der Assistent ebenfalls an, und zwar im Kinderfussball. Er erfährt
+dafür, welche Angaben eine Übung führt, welche davon je nach Trainingsteil und
+Hauptteilkategorie Pflicht sind und welche Werte zulässig sind, und setzt dieselben Angaben wie
+das Formular — ohne Bild und ohne Feld-Diagramm. Die Übung entsteht als privater Entwurf unter
+den eigenen Übungen, und der Assistent bekommt die Adresse, unter der sie sich in der Anwendung
+öffnen lässt. Es gelten dieselben Regeln wie im Formular, nur die Reaktion ist strenger: Wo das
+Formular einen Wert gar nicht erst anbietet — eine Hauptteilkategorie ausserhalb des
+Hauptteils, eine Erscheinungsform des anderen Manuals, eine Spielfeldgrösse auf dem Kleinfeld —,
+fiele er dort still weg; beim Assistenten lehnt die Anwendung ab. Sie nennt dann jede verletzte
+Angabe einzeln samt den zulässigen Werten, auch jede fehlende Pflichtangabe, und legt nichts
+an; der Assistent korrigiert und schickt die ganze Übung noch einmal. Ist die Einordnung
+ungültig oder fehlt im Hauptteil die Hauptteilkategorie, kann der nächste Versuch weitere
+Verstösse nennen, die davon abhingen. Die Anzahl Spieler:innen
+und die Mengen der Materialliste nimmt sie nur als ganze Zahlen an.
 
 Der Assistent kann ausserdem Trainings beider Altersstufen anlegen — mit Name, Altersstufe,
 Alterskategorien und auf Wunsch einem Ziel — und ihnen Übungen zuordnen. Das Training entsteht
@@ -179,7 +194,7 @@ gibt, oder eine ungültige Uhrzeit lehnt die Anwendung ab und nennt den Grund. E
 man nicht Mitglied ist, gilt als nicht gefunden. Teams gründen, umbenennen, auflösen oder
 Mitglieder verwalten kann der Assistent nicht. Damit legt der Assistent Trainings beider
 Altersstufen an und führt sie weitgehend wie die Anwendung; was ihm fehlt, steht unter den
-bekannten Grenzen. Eigene Übungen legt er noch nicht an.
+bekannten Grenzen.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man die Adresse `https://ki-fu.ch/api/mcp` in
 den Assistenten ein; die Konto-Seite nennt sie ebenfalls und zeigt die zwei gängigen Wege: In
@@ -263,9 +278,11 @@ dasselbe Training gleichzeitig in der Anwendung, merkt das niemand; ein bereits 
 Browser-Tab zeigt eine Änderung des Assistenten erst nach dem Neuladen. Im Training ist eine
 Änderung des Assistenten nicht von einer eigenen zu unterscheiden.
 
-Der Assistent ordnet nur zu, was der Bestand hergibt; er erfindet keine Übungen und ändert den
-Inhalt einer zugeordneten Übung nicht. Feld-Diagramme erstellt er nicht, und Fotos lädt er
-nicht hoch. Eine leere Variante legt der Assistent so wenig an wie die Anwendung, und eine
+Einem Training ordnet der Assistent nur zu, was der Bestand hergibt; eine Übung, die dort
+fehlt, legt er zuerst als eigene an, und den Inhalt einer zugeordneten Übung ändert er nicht.
+Eigene Übungen legt er nur im Kinderfussball an, je Vorgang genau eine und nie als
+unvollständigen Entwurf; eine bestehende ändert er nicht. Feld-Diagramme erstellt er nicht, und
+Fotos lädt er nicht hoch. Eine leere Variante legt der Assistent so wenig an wie die Anwendung, und eine
 einzelne Übung kopiert oder verschiebt er nicht von einer Variante in eine andere. Anders als
 der Dialog der Anwendung erzwingt der Weg über den Assistenten beim Anlegen der zweiten Variante
 keinen neuen Namen für die bisherige. Die Reihenfolge

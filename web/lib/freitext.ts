@@ -20,11 +20,16 @@ export type FreitextBlock =
 const AUFZAEHLUNG = /^[ \t]*[-*][ \t]+(.*)$/;
 const NUMMERIERT = /^[ \t]*(\d+)\.[ \t]+(.*)$/;
 
+/** Die Listenregel oben als Satzteil — für die Schemas der KI-Werkzeuge, die
+ *  einen Freitext ausgeben oder annehmen. Hier, bei den Regeln, damit Text
+ *  und Muster nicht auseinanderlaufen. */
+export const FREITEXT_LISTEN =
+  "eine Zeile mit «- » oder «* » ist ein Aufzählungspunkt, eine mit «1. » ein nummerierter, eine leere Zeile beendet eine Liste; jede andere Zeile ist Text";
+
 /** Wie die gespeicherte Stufe «Üben» zu lesen ist — ausgeliefert in den
  *  Schemas der KI-Auskunft, damit ein Client die Zeilen nicht für einzelne
- *  Schritte hält. Hier, bei den Regeln, damit beide nicht auseinanderlaufen. */
-export const UEBEN_ZEILEN =
-  "Die Zeilen eines Freitexts wie `aufbau`, nicht einzelne Schritte: eine Zeile mit «- » oder «* » ist ein Aufzählungspunkt, eine mit «1. » ein nummerierter, eine leere Zeile beendet eine Liste; jede andere Zeile ist Text.";
+ *  Schritte hält. */
+export const UEBEN_ZEILEN = `Die Zeilen eines Freitexts wie \`aufbau\`, nicht einzelne Schritte: ${FREITEXT_LISTEN}.`;
 
 /** Ist diese Zeile ein Listenpunkt (Aufzählung oder nummeriert)? */
 function istListenzeile(zeile: string): boolean {

@@ -60,6 +60,8 @@ const { setzeAn, aendereTermin, entferneTermin, setzeErneutAn, BEREITS_ANGESETZT
   "../lib/kern/termine"
 );
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
+const { legeUebungAn } = await import("../lib/kern/uebungen");
+const { getExercisesFuer } = await import("../lib/queries/uebungen-fuer");
 
 const URL_ = process.env.SUPABASE_URL!;
 const admin = createClient(URL_, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -1255,6 +1257,174 @@ try {
     assert.ok(await ladeTrainingDetail(a.supabase, tt.id), "das Training bleibt im Team-Bestand");
     // Danach lässt es sich wieder ansetzen.
     wert(await setzeAn(a.supabase, a.id, { trainingId: tt.id, datum: tag(7) }));
+  });
+
+  // ── Übung anlegen (#143) ─────────────────────────────────────────────────
+  const uebungenVon = async (id: string) =>
+    (await admin.from("exercises").select("id", { count: "exact", head: true }).eq("owner_id", id)).count ?? 0;
+  const NICHTS_ANGELEGT = "Es ist nichts angelegt worden.";
+
+  await pruefe("Übung anlegen: privater Entwurf des Aufrufers, nur für ihn sichtbar, unter seinen eigenen (PC 1–3)", async () => {
+    const u = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "kinderfussball",
+        name: "KI-Probe Anlegen",
+        einordnung: "einleitung",
+        kategorien: ["F"],
+        offenStarten: "Offen",
+        ueben: "Üben",
+        wetteifern: "Wett",
+      }),
+    );
+    assert.match(u.slug, /^ki-probe-anlegen-[0-9a-f]{6}$/);
+    assert.equal(u.sichtbarkeit, "entwurf");
+    const { data: zeile } = await admin
+      .from("exercises")
+      .select("owner_id, source, visibility, altersstufe")
+      .eq("id", u.id)
+      .single();
+    assert.deepEqual(zeile, { owner_id: a.id, source: "user", visibility: "private", altersstufe: "kinderfussball" });
+    const { data: fremd } = await b.supabase.from("exercises").select("id").eq("id", u.id).maybeSingle();
+    assert.equal(fremd, null, "ein anderes Konto sieht den Entwurf nicht");
+    const eigene = await getExercisesFuer(a.supabase, a.id, { mine: true }, { favoriten: false });
+    assert.ok(eigene.some((x) => x.id === u.id), "unter den eigenen Übungen");
+  });
+
+  await pruefe("Übung anlegen: jede Angabe des Formulars landet in der Zeile (AK 3)", async () => {
+    const u = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "kinderfussball",
+        name: "KI-Probe Voll",
+        einordnung: "hauptteil",
+        hauptteilkategorie: "fussball-spielen-lernen",
+        kategorien: ["G", "F"],
+        offenStarten: "Offen",
+        ueben: ["- links", "- rechts"],
+        wetteifern: "Wett",
+        varianten: "Mit zwei Bällen",
+        erscheinungsformen: ["mutig-tore-erzielen"],
+        feldtyp: "freies_feld",
+        spielfeld: { laengeM: 25, breiteM: 20 },
+        anzahlKinder: { min: 6, max: 10 },
+        material: {
+          liste: [
+            { art: "fussball", menge: 6 },
+            { art: "pylone", farbe: "rot", menge: 4 },
+          ],
+          ergaenzung: ["Pfeife"],
+        },
+      }),
+    );
+    const { data } = await admin
+      .from("exercises")
+      .select(
+        "name, trainingsteil, hauptteilkategorie, kategorien, methodischer_fahrplan, aufbau, varianten_text, " +
+          "erscheinungsform, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, anzahl_kinder, material_liste, " +
+          "material, uebungstyp, bild_url, diagramm, bild_quelle, material_basis",
+      )
+      .eq("id", u.id)
+      .single();
+    assert.deepEqual(data, {
+      name: "KI-Probe Voll",
+      trainingsteil: "hauptteil",
+      hauptteilkategorie: "fussball-spielen-lernen",
+      kategorien: ["G", "F"],
+      methodischer_fahrplan: { offen_starten: "Offen", ueben: ["- links", "- rechts"], wetteifern: "Wett" },
+      aufbau: null,
+      varianten_text: "Mit zwei Bällen",
+      erscheinungsform: ["mutig-tore-erzielen"],
+      feldtyp: "freies_feld",
+      spielfeld_laenge_m: 25,
+      spielfeld_breite_m: 20,
+      anzahl_kinder: { min: 6, max: 10 },
+      // In der Normalform: Katalogreihenfolge, Farbe bei färbbarem Material.
+      material_liste: [
+        { art: "pylone", farbe: "rot", menge: 4 },
+        { art: "fussball", farbe: null, menge: 6 },
+      ],
+      material: ["Pfeife"],
+      uebungstyp: null,
+      bild_url: null,
+      diagramm: null,
+      bild_quelle: null,
+      material_basis: null,
+    });
+  });
+
+  await pruefe("Übung anlegen: abgelehnt nennt jeden Verstoss einzeln und legt nichts an (AK 5/6, PC 4)", async () => {
+    const vorher = await uebungenVon(a.id);
+    const r = await legeUebungAn(a.supabase, a.id, {
+      altersstufe: "kinderfussball",
+      name: " ",
+      einordnung: "auffangen",
+      kategorien: ["F", "D"],
+      hauptteilkategorie: "fussball-spielen",
+      offenStarten: "x",
+      erscheinungsformen: ["mutig-tore-erzielen"],
+      uebungstyp: "spielform",
+      anzahlKinder: { min: 1.5 },
+    });
+    fehler(
+      r,
+      "regel",
+      "Die Übung entspricht den Regeln nicht. Korrigiere die unter «verstoesse» genannten Angaben und sende sie noch einmal.",
+    );
+    assert.ok(!r.ok);
+    assert.equal(r.hinweis, NICHTS_ANGELEGT);
+    assert.deepEqual(r.verstoesse?.map((v) => v.feld), [
+      "name",
+      "kategorien",
+      "aufbau",
+      "anzahl_kinder.min",
+      "hauptteilkategorie",
+      "offen_starten",
+      "erscheinungsformen",
+      "uebungstyp",
+    ]);
+    assert.deepEqual(r.verstoesse?.[1], {
+      feld: "kategorien",
+      meldung: "Diese Alterskategorie gehört nicht zur Altersstufe dieser Übung. Nicht zulässig: D.",
+      zulaessig: ["G", "F", "E"],
+    });
+    assert.deepEqual(r.verstoesse?.[4], {
+      feld: "hauptteilkategorie",
+      meldung: "Eine Hauptteilkategorie gibt es nur im Kinderfussball-Hauptteil.",
+    });
+    assert.equal(await uebungenVon(a.id), vorher, "nichts angelegt");
+  });
+
+  await pruefe("Übung anlegen: Juniorenfussball noch gesperrt, fremde Einordnung ohne Folgefehler", async () => {
+    const vorher = await uebungenVon(a.id);
+    const j = await legeUebungAn(a.supabase, a.id, {
+      altersstufe: "juniorenfussball",
+      name: "x",
+      einordnung: "jun-spiel",
+      kategorien: ["D"],
+      aufbau: "x",
+    });
+    fehler(j, "regel", "Übungen der Altersstufe Juniorenfussball lassen sich über den KI-Zugang noch nicht anlegen.");
+    assert.ok(!j.ok);
+    assert.equal(j.feld, "altersstufe");
+    assert.deepEqual(j.zulaessig, ["kinderfussball"]);
+    assert.equal(j.hinweis, NICHTS_ANGELEGT);
+    const e = await legeUebungAn(a.supabase, a.id, {
+      altersstufe: "kinderfussball",
+      name: "x",
+      einordnung: "jun-spiel",
+      kategorien: ["F"],
+      aufbau: "x",
+      offenStarten: "y",
+    });
+    fehler(e, "regel");
+    assert.ok(!e.ok);
+    assert.deepEqual(e.verstoesse, [
+      {
+        feld: "einordnung",
+        meldung: '„jun-spiel" ist keine Einordnung der Altersstufe Kinderfussball.',
+        zulaessig: ["auffangen", "einleitung", "hauptteil", "ausklang"],
+      },
+    ]);
+    assert.equal(await uebungenVon(a.id), vorher, "nichts angelegt");
   });
 } finally {
   await aufraeumen();

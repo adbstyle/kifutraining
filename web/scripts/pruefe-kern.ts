@@ -1,10 +1,11 @@
 // Prüft die reinen Teile des Fachkerns (Epic #190, ab Story #192): die
 // Zielblock-Regel in web/lib/altersstufe.ts, die Übersetzung von
-// Datenbankfehlern (web/lib/training-bedingungen.ts, web/lib/kern/ergebnis.ts)
+// Datenbankfehlern (web/lib/training-bedingungen.ts, web/lib/kern/ergebnis.ts),
+// die Regeln des Übungsinhalts (web/lib/kern/uebung-inhalt.ts, Epic #139)
 // und zwei statische Wächter über web/lib/kern und den Werkzeugsatz. Ohne DB
 // und ohne Netz; läuft im PR-Check nach `check:ki-zugang`.
 //
-// Der Wert dieser Prüfung liegt an vier Stellen:
+// Der Wert dieser Prüfung liegt an fünf Stellen:
 //
 // - «Hauptteil ohne Kategorie» ist über die Oberfläche nicht auslösbar, über
 //   den KI-Client aber der Normalfall eines Fehlversuchs (Spike #191). Die
@@ -22,14 +23,33 @@
 //   Cookies und Revalidieren sind Sache der Adapter.
 // - Jedes Werkzeug im Werkzeugsatz hat einen eindeutigen snake_case-Namen, und
 //   kein Werkzeug liegt unregistriert herum.
+// - Eine Übung über den KI-Weg (#143) prüft dieselbe Regelquelle wie das
+//   Formular (`parseUebungsInhalt`). Die Übersetzung darf nichts verlieren:
+//   Jede Pflicht, jeder Wert, den das Formular still verwürfe, und jede
+//   unförmige Zahl erscheint als eigener Verstoss mit dem Feld des Werkzeugs.
 //
 //   npx tsx scripts/pruefe-kern.ts
 import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { hauptteilkategorieSlugs } from "../lib/vocab";
-import { einordnungsSlugsFuer, zielblock, type Altersstufe } from "../lib/altersstufe";
+import { erscheinungsformSlugs, hauptteilkategorieSlugs } from "../lib/vocab";
+import {
+  ALTERSSTUFEN,
+  einordnungsSlugsFuer,
+  kategorienFuer,
+  traegtHauptteilkategorie,
+  zielblock,
+  type Altersstufe,
+} from "../lib/altersstufe";
+import {
+  abgelehnt,
+  pflichtangaben,
+  pruefeUebungsInhalt,
+  type Fund,
+  type Pruefung,
+  type UebungInhalt,
+} from "../lib/kern/uebung-inhalt";
 import { fachlicheMeldung, fehlerMeldung } from "../lib/training-bedingungen";
 import { FREMDES_TRAINING, MELDUNG_WIEDERHOLEN, NICHT_GEFUNDEN, ausDbFehler } from "../lib/kern/ergebnis";
 import { KEINE_PASSENDE_UEBUNG, LEER_HINWEIS, leerBestandText, zielLabel } from "../lib/training";
@@ -588,6 +608,266 @@ pruefe("Auskunft: Durchlauf je Variante, an_uebungen über alle Varianten, Grupp
   assert.deepEqual(leer.durchlauf, [{ wechsel_zahl: 0, wechsel: [], zeit_je_gruppe: [] }]);
 });
 
+// ── Übungsinhalt über den KI-Weg (#143) ─────────────────────────────────────
+const KIFU: Altersstufe = "kinderfussball";
+const JUN: Altersstufe = "juniorenfussball";
+const pruefeInhalt = (i: UebungInhalt, stufe: Altersstufe = KIFU) =>
+  pruefeUebungsInhalt(i, { altersstufe: stufe });
+const funde = (p: Pruefung): Fund[] => (p.ok ? [] : p.funde);
+const felder = (p: Pruefung) => funde(p).map((f) => f.feld);
+
+/** Eine Eingabe mit genau den Pflichtangaben dieser Einordnung, ohne `ohne`. */
+function nurPflicht(stufe: Altersstufe, einordnung: string, hkat: string | null, ohne?: string): UebungInhalt {
+  const werte: Record<string, Partial<UebungInhalt>> = {
+    name: { name: "Probe" },
+    einordnung: { einordnung },
+    kategorien: { kategorien: [kategorienFuer(stufe)[0]] },
+    hauptteilkategorie: { hauptteilkategorie: hkat },
+    offen_starten: { offenStarten: "Offen starten" },
+    ueben: { ueben: "Üben" },
+    wetteifern: { wetteifern: "Wetteifern" },
+    aufbau: { aufbau: "Aufbau" },
+  };
+  return Object.assign(
+    { name: "", einordnung: "", kategorien: [] },
+    ...pflichtangaben(stufe, einordnung, hkat)
+      .filter((f) => f !== ohne)
+      .map((f) => werte[f]),
+  );
+}
+
+/** Genau ein Verstoss an diesem Feld, mit dieser Meldung und Art. */
+function einziger(p: Pruefung, feld: string, meldung: string, art: Fund["art"] = "regel") {
+  assert.deepEqual(felder(p), [feld]);
+  assert.equal(funde(p)[0].meldung, meldung);
+  assert.equal(funde(p)[0].art, art);
+  return funde(p)[0];
+}
+
+const EINLEITUNG = nurPflicht(KIFU, "einleitung", null);
+const AUFFANGEN = nurPflicht(KIFU, "auffangen", null);
+const JUN_SPIEL = nurPflicht(JUN, "jun-spiel", null);
+
+pruefe("Übungsinhalt: eine vollständige Einleitung ergibt die Zeile des Formulars", () => {
+  const p = pruefeInhalt({
+    ...EINLEITUNG,
+    kategorien: ["F", "E", "F"],
+    ueben: ["- links", "- rechts"],
+    varianten: "Mit zwei Bällen",
+    erscheinungsformen: ["mutig-tore-erzielen"],
+    feldtyp: "freies_feld",
+    spielfeld: { laengeM: 20, breiteM: 15 },
+    anzahlKinder: { min: 6, max: 8 },
+    material: { liste: [{ art: "pylone", menge: 4 }, { art: "pylone", farbe: "orange", menge: 2 }], ergaenzung: ["Pfeife"] },
+  });
+  assert.ok(p.ok, JSON.stringify(funde(p)));
+  assert.deepEqual(p.row, {
+    name: "Probe",
+    altersstufe: "kinderfussball",
+    trainingsteil: "einleitung",
+    kategorien: ["F", "E"],
+    feldtyp: "freies_feld",
+    spielfeld_laenge_m: 20,
+    spielfeld_breite_m: 15,
+    erscheinungsform: ["mutig-tore-erzielen"],
+    hauptteilkategorie: null,
+    anzahl_kinder: { min: 6, max: 8 },
+    // Normalform: ohne Farbe die des Diagramms, gleiche Posten zusammengezählt.
+    material_liste: [{ art: "pylone", farbe: "orange", menge: 6 }],
+    material: ["Pfeife"],
+    uebungstyp: null,
+    methodischer_fahrplan: { offen_starten: "Offen starten", ueben: ["- links", "- rechts"], wetteifern: "Wetteifern" },
+    aufbau: null,
+    varianten_text: "Mit zwei Bällen",
+  });
+  // Ohne Materialliste bleibt sie aus der Zeile — dann gilt der Default.
+  const ohne = pruefeInhalt(EINLEITUNG);
+  assert.ok(ohne.ok && !("material_liste" in ohne.row));
+});
+
+pruefe("Übungsinhalt: Pflichtvertrag — pflichtangaben genügt, jede fehlende nennt genau ihr Feld", () => {
+  // Bindet die erzeugte Beschreibung (angabenText) an das echte Verhalten von
+  // parseUebungsInhalt, in beiden Altersstufen (#143 AK 1, #147 AK 1).
+  for (const stufe of ALTERSSTUFEN)
+    for (const e of einordnungsSlugsFuer(stufe))
+      for (const h of traegtHauptteilkategorie(stufe, e) ? hauptteilkategorieSlugs : [null]) {
+        const wo = `${stufe}/${e}/${h}`;
+        const voll = pruefeInhalt(nurPflicht(stufe, e, h), stufe);
+        assert.ok(voll.ok, `${wo}: ${JSON.stringify(funde(voll))}`);
+        for (const f of pflichtangaben(stufe, e, h))
+          assert.deepEqual(felder(pruefeInhalt(nurPflicht(stufe, e, h, f), stufe)), [f], `${wo} ohne ${f}`);
+      }
+});
+
+pruefe("Übungsinhalt: Pflichttexte wortgleich mit dem Formular, samt Werten", () => {
+  einziger(pruefeInhalt({ ...EINLEITUNG, name: "  " }), "name", "Bitte einen Namen angeben.", "eingabe");
+  const k = einziger(
+    pruefeInhalt({ ...EINLEITUNG, kategorien: [] }),
+    "kategorien",
+    "Bitte mindestens eine Alterskategorie wählen.",
+    "eingabe",
+  );
+  assert.deepEqual(k.zulaessig, ["G", "F", "E"]);
+  const h = einziger(
+    pruefeInhalt(nurPflicht(KIFU, "hauptteil", "fussball-spielen", "hauptteilkategorie")),
+    "hauptteilkategorie",
+    "Bitte eine Hauptteilkategorie wählen. Bei «fussball-spielen» steht der Ablauf in «aufbau», " +
+      "sonst in «offen_starten», «ueben» und «wetteifern».",
+    "eingabe",
+  );
+  assert.deepEqual(h.zulaessig, hauptteilkategorieSlugs);
+  einziger(pruefeInhalt({ ...AUFFANGEN, aufbau: null }), "aufbau", "Bitte den Aufbau beschreiben.", "eingabe");
+  einziger(
+    pruefeInhalt({ ...EINLEITUNG, anzahlKinder: { min: 8, max: 6 } }),
+    "anzahl_kinder.max",
+    "Die Maximalanzahl darf nicht kleiner als die Mindestanzahl sein.",
+    "eingabe",
+  );
+  einziger(
+    pruefeInhalt({ ...JUN_SPIEL, spielfeld: { laengeM: 4, breiteM: 20 } }, JUN),
+    "spielfeld",
+    "Länge und Breite in ganzen Metern, zwischen 5 und 120.",
+    "eingabe",
+  );
+});
+
+pruefe("Übungsinhalt: was das Formular still verwürfe, ist ein benannter Verstoss (#143 AK 5)", () => {
+  einziger(
+    pruefeInhalt({ ...EINLEITUNG, hauptteilkategorie: "fussball-spielen" }),
+    "hauptteilkategorie",
+    "Eine Hauptteilkategorie gibt es nur im Kinderfussball-Hauptteil.",
+  );
+  einziger(
+    pruefeInhalt({ ...nurPflicht(KIFU, "hauptteil", "fussball-spielen"), offenStarten: "x" }),
+    "offen_starten",
+    "Hier gibt es keinen methodischen Fahrplan — der Ablauf steht in «aufbau».",
+  );
+  einziger(
+    pruefeInhalt({ ...EINLEITUNG, aufbau: "x" }),
+    "aufbau",
+    "Hier gilt der methodische Fahrplan («offen_starten», «ueben», «wetteifern»), nicht «aufbau».",
+  );
+  const form = einziger(
+    pruefeInhalt({ ...EINLEITUNG, erscheinungsformen: ["mutig-tore-erzielen", "schnell-umschalten"] }),
+    "erscheinungsformen",
+    "Diese Erscheinungsform gehört zum Manual der anderen Altersstufe. Nicht zulässig: schnell-umschalten.",
+  );
+  assert.deepEqual(form.zulaessig, erscheinungsformSlugs);
+  einziger(
+    pruefeInhalt({ ...AUFFANGEN, erscheinungsformen: ["mutig-tore-erzielen"] }),
+    "erscheinungsformen",
+    "Diese Einordnung trägt keine Erscheinungsform.",
+  );
+  einziger(pruefeInhalt({ ...JUN_SPIEL, feldtyp: "kleinfeld" }, JUN), "feldtyp", fachlicheMeldung("ex_feldtyp_nur_kifu")!);
+  einziger(
+    pruefeInhalt({ ...EINLEITUNG, feldtyp: "kleinfeld", spielfeld: { laengeM: 20, breiteM: 15 } }),
+    "spielfeld",
+    "Eine Kinderfussball-Übung trägt eine Spielfeldgrösse nur auf freiem Feld; Kleinfeld und Grossfeld haben ihre Masse.",
+  );
+  // Im Kinderfussball gibt es keinen Übungstyp; die Meldung der Datenebene
+  // nennt die Junioren-Blöcke und gilt darum nur dort.
+  einziger(
+    pruefeInhalt({ ...EINLEITUNG, uebungstyp: "spielform" }),
+    "uebungstyp",
+    "Den Übungstyp gibt es nur im Juniorenfussball — lass «uebungstyp» weg.",
+  );
+  einziger(
+    pruefeInhalt({ ...nurPflicht(JUN, "jun-abschluss", null), uebungstyp: "spielform" }, JUN),
+    "uebungstyp",
+    fachlicheMeldung("ex_uebungstyp_nur_junioren")!,
+  );
+  const kat = einziger(
+    pruefeInhalt({ ...EINLEITUNG, kategorien: ["F", "D", "C"] }),
+    "kategorien",
+    "Diese Alterskategorie gehört nicht zur Altersstufe dieser Übung. Nicht zulässig: D, C.",
+  );
+  assert.deepEqual(kat.zulaessig, ["G", "F", "E"]);
+  // Eine Einordnung der anderen Altersstufe — ohne Folgefehler am Ablauf,
+  // obwohl dort Fahrplan und Beschreibung zugleich stehen.
+  const e = einziger(
+    pruefeInhalt({ ...EINLEITUNG, einordnung: "jun-spiel", aufbau: "x", erscheinungsformen: ["schnell-umschalten"] }),
+    "einordnung",
+    '„jun-spiel" ist keine Einordnung der Altersstufe Kinderfussball.',
+  );
+  assert.deepEqual(e.zulaessig, ["auffangen", "einleitung", "hauptteil", "ausklang"]);
+  // Leerraum ist nichts Gesendetes: Er fällt auch im Formular weg.
+  assert.ok(pruefeInhalt({ ...EINLEITUNG, aufbau: "  ", hauptteilkategorie: "", uebungstyp: null }).ok);
+});
+
+pruefe("Übungsinhalt: ganze Zahlen bei Anzahl und Menge, keine Farbe an Material ohne Farben", () => {
+  const anzahl = "Die Anzahl Spieler:innen ist eine ganze Zahl ab 1.";
+  einziger(pruefeInhalt({ ...EINLEITUNG, anzahlKinder: { min: 0 } }), "anzahl_kinder.min", anzahl, "eingabe");
+  einziger(pruefeInhalt({ ...EINLEITUNG, anzahlKinder: { min: 1.5, max: 3 } }), "anzahl_kinder.min", anzahl, "eingabe");
+  einziger(pruefeInhalt({ ...EINLEITUNG, anzahlKinder: { max: 2.5 } }), "anzahl_kinder.max", anzahl, "eingabe");
+  const menge = "Die Menge ist eine ganze Zahl von 1 bis 999.";
+  for (const m of [0, 1000, 1.5])
+    einziger(
+      pruefeInhalt({ ...EINLEITUNG, material: { liste: [{ art: "fussball", menge: 1 }, { art: "teller", menge: m }] } }),
+      "material.liste[1].menge",
+      menge,
+      "eingabe",
+    );
+  einziger(
+    pruefeInhalt({ ...EINLEITUNG, material: { liste: [{ art: "tor", farbe: "rot", menge: 2 }] } }),
+    "material.liste[0].farbe",
+    "Tor gibt es nicht in Farben — lass «farbe» weg.",
+    "eingabe",
+  );
+  // Ohne Farbe gilt bei färbbarem Material die des Diagramms — kein Verstoss.
+  assert.ok(pruefeInhalt({ ...EINLEITUNG, material: { liste: [{ art: "leibchen", menge: 6 }] } }).ok);
+});
+
+pruefe("Übungsinhalt: alle Verstösse auf einmal (#143 AK 6)", () => {
+  const p = pruefeInhalt({
+    name: "",
+    einordnung: "auffangen",
+    kategorien: ["F", "D"],
+    hauptteilkategorie: "fussball-spielen",
+    offenStarten: "x",
+    erscheinungsformen: ["mutig-tore-erzielen"],
+    feldtyp: "kleinfeld",
+    spielfeld: { laengeM: 20, breiteM: 15 },
+    uebungstyp: "spielform",
+    anzahlKinder: { min: 1.5 },
+    material: { liste: [{ art: "tor", farbe: "rot", menge: 0 }] },
+  });
+  assert.deepEqual(felder(p).sort(), [
+    "anzahl_kinder.min",
+    "aufbau",
+    "erscheinungsformen",
+    "hauptteilkategorie",
+    "kategorien",
+    "material.liste[0].farbe",
+    "material.liste[0].menge",
+    "name",
+    "offen_starten",
+    "spielfeld",
+    "uebungstyp",
+  ]);
+  // Ohne Hauptteilkategorie ist die Form des Ablaufs offen: Keine Befunde
+  // zu Fahrplan oder Beschreibung, nur die Pflicht zur Kategorie.
+  const hkat = pruefeInhalt({ name: "", einordnung: "hauptteil", kategorien: ["F"], aufbau: "x", offenStarten: "y" });
+  assert.deepEqual(felder(hkat), ["name", "hauptteilkategorie"]);
+});
+
+pruefe("Übungsinhalt: abgelehnt nennt alle Verstösse ohne Art, Art aus dem schwersten", () => {
+  const eingabe: Fund = { feld: "name", meldung: "Bitte einen Namen angeben.", art: "eingabe" };
+  const regel: Fund = { feld: "kategorien", meldung: "m", zulaessig: ["G"], art: "regel" };
+  const f = abgelehnt([eingabe, regel], "Es ist nichts angelegt worden.");
+  assert.equal(f.art, "regel");
+  assert.equal(
+    f.meldung,
+    "Die Übung entspricht den Regeln nicht. Korrigiere die unter «verstoesse» genannten Angaben und sende sie noch einmal.",
+  );
+  assert.equal(f.hinweis, "Es ist nichts angelegt worden.");
+  assert.deepEqual(f.verstoesse, [
+    { feld: "name", meldung: "Bitte einen Namen angeben." },
+    { feld: "kategorien", meldung: "m", zulaessig: ["G"] },
+  ]);
+  assert.equal(f.feld, undefined);
+  assert.equal(abgelehnt([eingabe], "h").art, "eingabe");
+});
+
 // ── Statische Wächter ───────────────────────────────────────────────────────
 const web = resolve(fileURLToPath(import.meta.url), "../..");
 const kern = join(web, "lib/kern");
@@ -595,7 +875,7 @@ const kern = join(web, "lib/kern");
 /** Kern-Dateien ohne Datenbankzugriff: Sie bleiben ohne `server-only`, damit
  *  Prüfskripte wie dieses sie mit tsx laden können (`server-only` wirft
  *  ausserhalb der react-server-Bedingung). */
-const REIN = new Set(["ergebnis.ts", "folge.ts", "auskunft.ts", "auskunft-schema.ts"]);
+const REIN = new Set(["ergebnis.ts", "folge.ts", "auskunft.ts", "auskunft-schema.ts", "uebung-inhalt.ts"]);
 
 /** Was der Kern nicht importieren darf — direkt nicht und über eine
  *  importierte `@/lib/*`-Datei auch nicht. */
@@ -715,7 +995,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
   }
 
   const jeStory: Record<string, string[]> = {
-    "#192": ["training_anlegen", "training_uebungen_fuer_block", "training_uebung_zuordnen"],
+    "#143": ["uebung_anlegen"],
+    "#192":["training_anlegen", "training_uebungen_fuer_block", "training_uebung_zuordnen"],
     "#193": [
       "training_abrufen",
       "trainings_suchen",
