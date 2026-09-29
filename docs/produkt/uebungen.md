@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-09-28. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-09-29. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
