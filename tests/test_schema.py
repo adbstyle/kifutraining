@@ -32,7 +32,7 @@ def test_minimal_valid_uebung_passes():
 def test_einleitung_ohne_fahrplan_fails():
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     v = Draft202012Validator(schema)
-    doc = {"id": "x", "name": "X", "trainingsteil": "einleitung",
+    doc = {"id": "x", "name": "X", "trainingsteil": "einleitung", "feldtyp": "freies_feld",
            "kategorien": ["G"], "aufbau": "Setup ohne Fahrplan",
            "quelle": {"datei": "a.pdf", "seite": 1}}
     assert list(v.iter_errors(doc)) != []
@@ -41,7 +41,7 @@ def test_einleitung_ohne_fahrplan_fails():
 def test_auffangen_ohne_aufbau_fails():
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     v = Draft202012Validator(schema)
-    doc = {"id": "x", "name": "X", "trainingsteil": "auffangen",
+    doc = {"id": "x", "name": "X", "trainingsteil": "auffangen", "feldtyp": "freies_feld",
            "kategorien": ["G"],
            "quelle": {"datei": "a.pdf", "seite": 1}}
     assert list(v.iter_errors(doc)) != []
@@ -58,7 +58,7 @@ def test_auffangen_mit_aufbau_passes():
 def test_invalid_trainingsteil_fails():
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     v = Draft202012Validator(schema)
-    doc = {"id": "x", "name": "X", "trainingsteil": "quatsch",
+    doc = {"id": "x", "name": "X", "trainingsteil": "quatsch", "feldtyp": "freies_feld",
            "kategorien": ["G"], "aufbau": "...",
            "quelle": {"datei": "a.pdf", "seite": 1}}
     assert list(v.iter_errors(doc)) != []
@@ -74,7 +74,7 @@ def test_invalid_feldtyp_fails():
 def test_invalid_erscheinungsform_slug_fails():
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     v = Draft202012Validator(schema)
-    doc = {"id": "x", "name": "X", "trainingsteil": "hauptteil",
+    doc = {"id": "x", "name": "X", "trainingsteil": "hauptteil", "feldtyp": "kleinfeld",
            "erscheinungsform": ["nicht-im-vokabular"], "kategorien": ["G"],
            "aufbau": "...", "quelle": {"datei": "a.pdf", "seite": 1}}
     assert list(v.iter_errors(doc)) != []

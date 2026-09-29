@@ -48,9 +48,10 @@ Spielfeld wird als Feldtyp angegeben: Kleinfeld, Grossfeld oder freies Feld. Bei
 lässt sich zusätzlich seine Grösse in Metern angeben, denn anders als Klein- und Grossfeld sagt
 es nicht, wie gross abzustecken ist — freiwillig wie im Juniorenfussball, aber nur ganz. Wechselt
 der Feldtyp auf Kleinfeld oder Grossfeld, entfallen die Meter. Jede Manual-Übung trägt einen
-Feldtyp, so wie ihn die Abbildung im Manual erkennen lässt. Kleinfeld heisst: abgegrenztes Feld
-mit Minitoren. Grossfeld heisst: grosse Tore, die sich gegenüberstehen. Wo das Manual kein solches
-Spielfeld zeigt, gilt das freie Feld, und zwar ohne Meterangabe.
+Feldtyp, so wie ihn die Abbildung im Manual erkennen lässt. Stehen sich zwei grosse Tore gegenüber,
+ist es Grossfeld. Kleinfeld ist es, wenn sich Minitore gegenüberstehen oder die Kinder 3:3 in einem
+abgegrenzten Feld spielen, dem Kleinfeld-Format des Manuals. Zeigt das Manual keins von beidem,
+gilt das freie Feld, und zwar ohne Meterangabe.
 
 Im Juniorenfussball ist die Zuordnung zweistufig: gewählt wird einer von sieben Blöcken, und der
 Trainingsteil, zu dem er gehört, bleibt dabei sichtbar. Der Einstieg umfasst Aufwärmen,

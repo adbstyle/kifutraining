@@ -36,15 +36,17 @@ PAGE_HAUPTTEILKATEGORIE[81] = "fussball-spielen"
 
 
 def feldtyp_aus_text(text):
-    """Feldtyp best-effort aus Schlüsselwörtern ableiten; None wenn unklar."""
+    """Feldtyp best-effort aus Schlüsselwörtern ableiten.
+
+    Ohne erkennbares Spielfeld gilt das freie Feld (Story #306) — das Schema
+    kennt keine Übung ohne Feldtyp. Die Einstufung ist ein Rohstand und wird
+    am Manual-Bild geprüft."""
     low = text.lower()
     if "grossfeld" in low:
         return "grossfeld"
     if "kleinfeld" in low or "viereck" in low:
         return "kleinfeld"
-    if "freies feld" in low or "frei auf" in low or "freien feld" in low:
-        return "freies_feld"
-    return None
+    return "freies_feld"
 
 
 def page_text(page):

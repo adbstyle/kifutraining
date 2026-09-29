@@ -23,8 +23,7 @@ def render_exercise(doc, vocab):
     formen = [vocab["erscheinungsform"].get(s, s) for s in doc.get("erscheinungsform") or []]
     if formen:
         meta.append(f"**Erscheinungsform:** {', '.join(formen)}")
-    if doc.get("feldtyp"):
-        meta.append(f"**Feldtyp:** {vocab['feldtyp'].get(doc['feldtyp'], doc['feldtyp'])}")
+    meta.append(f"**Feldtyp:** {vocab['feldtyp'].get(doc['feldtyp'], doc['feldtyp'])}")
     lines += [" · ".join(meta), ""]
     fahrplan = doc.get("methodischer_fahrplan")
     if fahrplan:
