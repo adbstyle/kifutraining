@@ -212,7 +212,7 @@ pruefe("Auf Papier begrenzt eine Kante das weisse Feld", () => {
 });
 
 // ── 3. Kein roher Farbwert mehr im Zeichencode ─────────────────────────────
-// Die Dateien, die den Inhalt des Diagramms zeichnen. `DiagrammEditor.tsx`
+// Die Dateien, die den Inhalt des Diagramms zeichnen. `DiagrammZeichnen.tsx`
 // steht bewusst NICHT dabei: seine Auswahlrahmen und Anfasser sind
 // Bedienoberfläche, die über dem Diagramm liegt, kein Teil der Zeichnung —
 // sie folgen der Palette der Anwendung.

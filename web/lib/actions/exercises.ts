@@ -9,7 +9,7 @@ import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import { alsAltersstufe, istAltersstufe } from "@/lib/altersstufe";
 import { materialBasisAusDiagramm } from "@/lib/material";
-import { parseDiagrammZumSpeichern, type DiagrammData } from "@/lib/diagramm";
+import { bildQuelleZurZeichnung, diagrammAusFormular } from "@/lib/diagramm";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 import {
   VORLAGE_SELECT,
@@ -55,24 +55,6 @@ async function uploadImage(
   };
 }
 
-/** Das beim Erfassen gezeichnete Diagramm aus dem Formular (#246). Dieselbe
- *  Trust-Boundary wie der Autosave des Editors (`parseDiagrammZumSpeichern`).
- *  Eine leere Zeichnung ist kein Diagramm — die Übung trägt dann keines, wie
- *  eine nie gezeichnete. */
-function diagrammAusFormular(form: FormData): DiagrammData | null | "ungueltig" {
-  const roh = form.get("diagramm");
-  if (typeof roh !== "string" || roh === "") return null;
-  let json: unknown;
-  try {
-    json = JSON.parse(roh);
-  } catch {
-    return "ungueltig";
-  }
-  const diagramm = parseDiagrammZumSpeichern(json);
-  if (!diagramm) return "ungueltig";
-  return diagramm.elemente.length > 0 ? diagramm : null;
-}
-
 export async function createExercise(
   _prev: ExerciseFormState,
   form: FormData,
@@ -94,9 +76,10 @@ export async function createExercise(
   const parsed = parseUebungsInhalt(form, { altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
-  const diagramm = diagrammAusFormular(form);
-  if (diagramm === "ungueltig")
+  const gezeichnet = diagrammAusFormular(form);
+  if (gezeichnet === "ungueltig")
     return { status: "error", message: "Das Feld-Diagramm konnte nicht gelesen werden." };
+  const diagramm = gezeichnet ?? null;
 
   const file = form.get("bild");
   const hasImage = file instanceof File && file.size > 0;
@@ -179,7 +162,7 @@ export async function updateExercise(
   // (z. B. Formatwechsel .png -> .webp), wird die alte Datei sonst zur Waise.
   const { data: bestand } = await supabase
     .from("exercises")
-    .select("altersstufe, bild_url, diagramm")
+    .select("altersstufe, bild_url, bild_quelle, diagramm")
     .eq("id", id)
     .eq("owner_id", user.id)
     .eq("source", "user")
@@ -203,14 +186,31 @@ export async function updateExercise(
   const parsed = parseUebungsInhalt(form, { altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
+  const gezeichnet = diagrammAusFormular(form);
+  if (gezeichnet === "ungueltig")
+    return { status: "error", message: "Das Feld-Diagramm konnte nicht gelesen werden." };
+
   const file = form.get("bild");
   const hasImage = file instanceof File && file.size > 0;
 
   const update: Record<string, unknown> = { ...parsed.row };
+  // Die Zeichnung geht mit den übrigen Angaben in einem Vorgang (#247 PC 1);
+  // die Bildwahl folgt ihr wie beim Erfassen.
+  if (gezeichnet !== undefined) {
+    update.diagramm = gezeichnet;
+    update.bild_quelle = bildQuelleZurZeichnung(
+      bestand.bild_quelle as "foto" | "diagramm" | null,
+      gezeichnet,
+      form.get("diagramm_aus_vorlage") === "1",
+    );
+  }
   // Hat der Trainer den Material-Vorschlag übernommen oder sein Material
-  // beibehalten, gilt der heutige Vorschlag als Basis (Epic #266).
+  // beibehalten, gilt der Vorschlag der gespeicherten Zeichnung als Basis
+  // (Epic #266) — gerechnet auf dem Server, nie aus dem Formular.
   if (form.get("material_basis_bestaetigen") === "1")
-    update.material_basis = materialBasisAusDiagramm(bestand.diagramm);
+    update.material_basis = materialBasisAusDiagramm(
+      gezeichnet !== undefined ? gezeichnet : bestand.diagramm,
+    );
   let altPfad: string | null = null;
   let neuPfad: string | null = null;
   if (hasImage) {
@@ -248,7 +248,9 @@ export async function updateExercise(
 
   revalidateLists();
   revalidatePath(`/uebung/${updated.slug}`);
-  redirect(`/uebung/${updated.slug}?updated=1`);
+  // Ersetzen statt anhängen, wie nach dem Erfassen: Der aktuelle Eintrag ist
+  // der Wächter der Verlassen-Warnung (#247 AK 8).
+  redirect(`/uebung/${updated.slug}?updated=1`, RedirectType.replace);
 }
 
 /** Eine Übung, wie sie fürs Kopieren gelesen wird (`KOPIE_SELECT`). */

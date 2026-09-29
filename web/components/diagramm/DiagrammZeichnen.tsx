@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Check, ClipboardPaste, Copy, Ellipsis, FlipHorizontal2, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, Waypoints, X } from "lucide-react";
 import { Button, IconButton, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -270,17 +270,14 @@ function GlyphKachel({ label, element, active = false, disabled = false, onClick
 
 /**
  * Die Zeichenfläche des Feld-Diagramms samt Werkzeugen, Verlauf,
- * Zwischenablage und Vorlagen — ohne zu wissen, wohin der Stand geht. Der
- * Diagramm-Editor sichert ihn laufend an eine gespeicherte Zeile, die
- * Erfassungsmaske einer neuen Übung trägt ihn bis zum Speichern mit (#246).
- * Beide zeigen so dieselbe Fläche mit derselben Bedienung (#246 NFR 2).
+ * Zwischenablage und Vorlagen — ohne zu wissen, wohin der Stand geht. Die
+ * Maske einer Übung trägt ihn bis zum Speichern mit, beim Erfassen (#246) wie
+ * beim Bearbeiten (#247).
  */
 export function DiagrammZeichnen({
   initial,
   vorlagen,
   onChange,
-  kopf,
-  fuss,
 }: {
   initial: DiagrammData;
   /** Verfügbare Vorlagen-Diagramme (#61, #246 AK 3). */
@@ -289,12 +286,6 @@ export function DiagrammZeichnen({
    *  Drag erst beim Loslassen. `ausVorlage`: die Änderung ist eine übernommene
    *  Vorlage. */
   onChange: (data: DiagrammData, info: { ausVorlage: boolean }) => void;
-  /** Rendert den Kopf über den Werkzeugen; `aktionen` ist das Cluster aus
-   *  Rückgängig, Wiederherstellen, Einfügen und Vorlage, das er platziert.
-   *  Ohne Kopf stehen die Aktionen am Ende der Werkzeug-Leiste. */
-  kopf?: (aktionen: ReactNode) => ReactNode;
-  /** Optionale Zeile unter der Fläche (z. B. der Autosave-Status). */
-  fuss?: ReactNode;
 }) {
   const [elemente, setElemente] = useState<DiagrammElement[]>(initial.elemente);
   // Auswahl als Liste (#67): leer / ein Element / mehrere. Ein einzelnes Element
@@ -382,10 +373,10 @@ export function DiagrammZeichnen({
     setBearbeitenId(null);
   }
 
-  // Jede Änderung der Elemente nach aussen melden — was daraus wird (Autosave
-  // oder Formularwert), entscheidet die Hülle. Während eines Drags nicht: Jede
-  // Pointer-Bewegung ändert die Elemente, und jede Meldung rendert die Hülle —
-  // in der Erfassungsmaske die ganze Maske — ein zweites Mal (#246 NFR 1).
+  // Jede Änderung der Elemente nach aussen melden — die Maske trägt sie bis
+  // zum Speichern mit. Während eines Drags nicht: Jede Pointer-Bewegung ändert
+  // die Elemente, und jede Meldung rendert die ganze Maske ein zweites Mal
+  // (#246 NFR 1).
   // Gemeldet wird der Stand beim Loslassen.
   useEffect(() => {
     if (dragAktiv || gemeldet.current === elemente) return;
@@ -967,8 +958,7 @@ export function DiagrammZeichnen({
   ];
 
   // Globale Aktionen als Icon-Cluster — sie leben hier, weil sie Verlauf und
-  // Zwischenablage brauchen; wo das Cluster steht, entscheidet der Kopf der
-  // Hülle. Die Vorlage steht mit dabei, sobald gezeichnet ist: Auf der leeren
+  // Zwischenablage brauchen, und stehen am Ende der Werkzeug-Leiste. Die Vorlage steht mit dabei, sobald gezeichnet ist: Auf der leeren
   // Fläche bietet sie sich dort selbst an (#61), danach bliebe sie sonst
   // unerreichbar (#246 AK 3/4).
   const aktionen = (
@@ -981,7 +971,6 @@ export function DiagrammZeichnen({
             onPick={vorlageKopieren}
             triggerLabel="Aus Vorlage kopieren"
             triggerVariant="text"
-            ersetzenText="Die Zeichnung auf der Fläche wird durch die gewählte Vorlage ersetzt. Mit «Rückgängig» holst du sie zurück."
           />
         </span>
       )}
@@ -1018,12 +1007,10 @@ export function DiagrammZeichnen({
     </div>
   );
 
-  // Alle Knöpfe tragen `type="button"`: In der Erfassungsmaske liegt die
+  // Alle Knöpfe tragen `type="button"`: In der Maske liegt die
   // Fläche in einem <form>, und dort sendet ein Knopf ohne Typ die Übung ab.
   return (
     <div className="flex flex-col gap-4">
-      {kopf?.(aktionen)}
-
       {/* Werkzeug-Palette: ein gruppiertes Glyph-Band. Jede Kachel zeigt das
           Element als Mini-Vorschau (WYSIWYG); der Name kommt nur über Tooltip +
           aria-label. Cluster sind durch eine Haarlinie getrennt und brechen als
@@ -1039,7 +1026,7 @@ export function DiagrammZeichnen({
             </div>
           </Fragment>
         ))}
-        {!kopf && <div className="ml-auto">{aktionen}</div>}
+        <div className="ml-auto">{aktionen}</div>
       </div>
 
       {/* Zeichen-Steuerung — nur sichtbar, während ein Pfad/Polygon gezeichnet wird. */}
@@ -1301,7 +1288,6 @@ export function DiagrammZeichnen({
         )}
       </div>
 
-      {fuss}
       {hinweis && (
         <p className="type-body-small text-error" role="status" data-testid="diagramm-hinweis">
           {hinweis}

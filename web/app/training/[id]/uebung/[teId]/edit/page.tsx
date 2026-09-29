@@ -2,8 +2,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
-import { materialBasisAusDiagramm } from "@/lib/material";
-import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
 import { updateFassung } from "@/lib/actions/fassung";
 import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
 import { trainingsKrumen } from "@/lib/brotkrumen";
@@ -59,17 +57,10 @@ export default async function FassungBearbeitenPage({
       <h1 className="sr-only">Übung bearbeiten</h1>
       <ExerciseForm
         action={updateFassung.bind(null, f.id, variante)}
-        diagrammKachel={
-          <DiagrammVorschau
-            href={`/training/${f.trainingId}/uebung/${f.id}/diagramm${anhang}`}
-            name={f.name}
-            diagramm={f.diagramm}
-          />
-        }
+        diagramm={f.diagramm}
         altersstufe={f.trainingAltersstufe}
         stufenWahl="fest"
         kontext="fassung"
-        materialVorschlag={materialBasisAusDiagramm(f.diagramm)}
         materialBasis={f.materialBasis}
         initial={{
           name: f.name,

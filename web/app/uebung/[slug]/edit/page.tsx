@@ -2,17 +2,10 @@ import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
-import { DiagrammVorschau } from "@/components/diagramm/DiagrammVorschau";
-import { VorlageKopierenButton } from "@/components/diagramm/VorlageKopierenButton";
 import { updateExercise } from "@/lib/actions/exercises";
-import { getExerciseDetail, getVorlagen } from "@/lib/queries/exercises";
+import { getExerciseDetail } from "@/lib/queries/exercises";
 import { createClient } from "@/lib/supabase/server";
-import { hatDiagramm } from "@/lib/diagramm";
-import {
-  materialBasisAusDiagramm,
-  parseMaterialBasis,
-  parseMaterialListe,
-} from "@/lib/material";
+import { parseMaterialBasis, parseMaterialListe } from "@/lib/material";
 import { EINORDNUNG_LABEL } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
 
@@ -37,7 +30,7 @@ export default async function EditPage({
     redirect(`/uebung/${slug}`);
   }
 
-  // Brotkrumen wie in der Detailseite/im Diagramm-Editor, eine Stufe tiefer:
+  // Brotkrumen wie in der Detailseite, eine Stufe tiefer:
   // die Übung wird zum Link, „Übung bearbeiten" ist die aktuelle Seite und
   // ersetzt den separaten Seitentitel.
   // Der Brotkrumen-Link zielt auf die feinste Einordnung, die der Katalog
@@ -51,35 +44,16 @@ export default async function EditPage({
     { label: "Übung bearbeiten" },
   ];
 
-  // Vorlagen-Fundus für „Aus Vorlage kopieren" (eigene + KiFu-Manual),
-  // die Übung selbst ausgeklammert.
-  const vorlagen = await getVorlagen(ex.id);
-
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
       <Breadcrumbs items={crumbs} className="mb-6" />
       <h1 className="sr-only">Übung bearbeiten</h1>
       <ExerciseForm
         action={updateExercise.bind(null, ex.id)}
-        diagrammKachel={
-          <div className="flex flex-col gap-2">
-            <DiagrammVorschau
-              href={`/uebung/${slug}/diagramm`}
-              name={ex.name}
-              diagramm={ex.diagramm}
-            />
-            {vorlagen.length > 0 && (
-              <div className="flex justify-end">
-                <VorlageKopierenButton
-                  zielId={ex.id}
-                  slug={slug}
-                  zielHatDiagramm={hatDiagramm(ex.diagramm)}
-                  vorlagen={vorlagen}
-                />
-              </div>
-            )}
-          </div>
-        }
+        // Gezeichnet wird in der Maske (#247); als Vorlage taugt die Übung
+        // sich selbst nicht.
+        diagramm={ex.diagramm}
+        vorlagenAusser={ex.id}
         altersstufe={ex.altersstufe}
         stufenWahl="fest"
         kontext="bibliothek"
@@ -87,7 +61,6 @@ export default async function EditPage({
         // Nutzer-Übung — nur hier lässt sie sich in die andere Altersstufe
         // überführen (Story 4 AK 1/5).
         ueberfuehrbar
-        materialVorschlag={materialBasisAusDiagramm(ex.diagramm)}
         materialBasis={parseMaterialBasis(ex.material_basis)}
         initial={{
           name: ex.name,
