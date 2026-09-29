@@ -8,6 +8,7 @@ import {
   setzeUebungAufEntwurf,
   veroeffentlicheUebung,
 } from "@/lib/kern/uebungen";
+import { materialAusgabe, materialSchema } from "@/lib/material-ausgabe";
 import { Sichtbarkeit } from "@/lib/mcp/bausteine";
 import {
   UEBUNG_ANGABEN,
@@ -59,18 +60,31 @@ export const uebungAnlegen = werkzeug({
     "deinen eigenen Übungen, bis «uebung_veroeffentlichen» sie öffentlich schaltet. Aktuell nur " +
     `Kinderfussball. Es gelten dieselben Regeln wie im Formular in KiFu. ${ABLEHNUNG} Danach die ` +
     `ganze Übung korrigiert noch einmal senden. ${UEBUNG_ANGABEN} Die Werte samt Klartext liefert ` +
-    "«vokabular». Ein Feld-Diagramm und Fotos nimmt das Werkzeug nicht an. Liefert Kennung, slug " +
-    "und die Adresse der Übung in KiFu.",
+    "«vokabular». Ein Feld-Diagramm lässt sich in «diagramm» gleich mitgeben, mit denselben " +
+    "Grenzen wie bei «uebung_diagramm_setzen»: Es wird das Bild der Übung, und KiFu zählt das " +
+    "Material daraus selbst — dann «material.liste» weglassen, die Ergänzung bleibt möglich — und " +
+    "nennt die gezählte Liste in «material». Verletzt das Diagramm eine Grenze, entsteht nichts, " +
+    "und «verstoesse» nennt die betroffenen Elemente zusammen mit den übrigen Angaben. Fotos nimmt " +
+    "das Werkzeug nicht an. Liefert Kennung, slug und die Adresse der Übung in KiFu.",
   nurLesen: false,
   eingabe: UebungAnlegenEingabe,
-  ausgabe: z.object({ ...Kopf, sichtbarkeit: z.literal("entwurf") }),
+  ausgabe: z.object({
+    ...Kopf,
+    sichtbarkeit: z.literal("entwurf"),
+    material: materialSchema().optional().describe("Nur mit Diagramm: das daraus gezählte Material."),
+  }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
       await legeUebungAn(zugang.supabase, zugang.userId, {
         ...alsUebungInhalt(e),
         altersstufe: e.altersstufe,
+        diagramm: e.diagramm,
       }),
-      (w) => ({ ...kopf(w, zugang), sichtbarkeit: w.sichtbarkeit }),
+      (w) => ({
+        ...kopf(w, zugang),
+        sichtbarkeit: w.sichtbarkeit,
+        ...(w.material && { material: materialAusgabe(w.material.liste, w.material.ergaenzung) }),
+      }),
     ),
 });
 
@@ -89,7 +103,8 @@ export const uebungAendern = werkzeug({
     "Pflichtangaben mitsenden. Welche Angaben es gibt, welche Pflicht sind und welche Werte " +
     "zulässig sind, steht bei «uebung_anlegen» und in «vokabular». Die Altersstufe ändert sich " +
     "nie; aktuell lassen sich nur Übungen des Kinderfussballs ändern. Bild und Feld-Diagramm " +
-    "ändert dieses Werkzeug nicht, die Sichtbarkeit «uebung_veroeffentlichen» und " +
+    "ändert dieses Werkzeug nicht — das Diagramm setzt «uebung_diagramm_setzen», die Sichtbarkeit " +
+    "«uebung_veroeffentlichen» und " +
     "«uebung_auf_entwurf_setzen»; steht die Übung schon in einem Training, behält sie dort ihre " +
     `Fassung. ${UEBUNG_KENNUNG_FEHLER}`,
   nurLesen: false,

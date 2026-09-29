@@ -44,6 +44,7 @@ import {
   type UebungPatch,
 } from "@/lib/kern/uebung-inhalt";
 import { AbrufEingabe } from "@/lib/mcp/eingaben";
+import { DiagrammEingabe } from "@/lib/mcp/diagramm-eingaben";
 import {
   ALTERSSTUFEN_TEXT,
   Einordnung,
@@ -179,6 +180,8 @@ export const UebungAnlegenEingabe = Angaben.extend({
   altersstufe: alsEnum(ALTERSSTUFEN).describe(
     `Altersstufe: ${ALTERSSTUFEN_TEXT}. Sie bestimmt, welche Angaben die Übung führt.`,
   ),
+  // Nur beim Anlegen: Ändern setzt das Diagramm über «uebung_diagramm_setzen».
+  diagramm: DiagrammEingabe.optional(),
 });
 
 /** Die Kennung einer Übung — derselbe Zuschnitt wie bei «uebung_abrufen». */

@@ -7,6 +7,8 @@ import { VORLAGE_SELECT } from "@/lib/fassung";
 import { sichtbarkeitVon, type Sichtbarkeit } from "@/lib/wert";
 import { abgebildet, ausDbFehler, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
 import { UEBUNG_ZEILE, aktualisiereZeile, ladeUebungZumBearbeiten } from "@/lib/kern/zugriff";
+import { diagrammZumAnlegen } from "@/lib/kern/uebung-diagramm";
+import type { MaterialPosten } from "@/lib/material";
 import {
   NICHTS_ANGELEGT,
   UEBUNG_STUFEN_KI,
@@ -30,17 +32,26 @@ import {
  * Der Weg des KI-Werkzeugs «uebung_anlegen». Die Regeln sind die des
  * Formulars (`parseUebungsInhalt`, über lib/kern/uebung-inhalt.ts), die Übung
  * entsteht wie dort: als privater Entwurf des Aufrufers (#143 PC 1), mit
- * sprechendem Slug samt Zufalls-Suffix. Ein Bild und ein Feld-Diagramm kommen
- * über diesen Weg nicht mit.
+ * sprechendem Slug samt Zufalls-Suffix. Ein Feld-Diagramm kann mitkommen
+ * (#145 AK 5): Es wird das Bild der Übung, und KiFu zählt das Material
+ * daraus. Ein Foto kommt über diesen Weg nicht mit.
  *
  * Verletzt die Übung Regeln, entsteht nichts (PC 4), und die Antwort nennt
- * jede einzeln (AK 6).
+ * jede einzeln (AK 6) — die des Diagramms in derselben Liste (#145 AK 7).
  */
 export async function legeUebungAn(
   supabase: SupabaseClient,
   userId: string,
-  e: UebungInhalt & { altersstufe: string },
-): Promise<KernErgebnis<{ id: string; slug: string; sichtbarkeit: "entwurf" }>> {
+  e: UebungInhalt & { altersstufe: string; diagramm?: unknown },
+): Promise<
+  KernErgebnis<{
+    id: string;
+    slug: string;
+    sichtbarkeit: "entwurf";
+    /** Nur mit Diagramm: die daraus gezählte Liste und die Ergänzung (#145 PC 6). */
+    material?: { liste: MaterialPosten[]; ergaenzung: string[] };
+  }>
+> {
   // Die Altersstufe ist Pflicht und hat keinen Rückfall — wie beim Anlegen
   // eines Trainings: Sie bindet die Übung an ihr Lehrmittel.
   const altersstufe = e.altersstufe.trim();
@@ -58,14 +69,17 @@ export async function legeUebungAn(
     );
 
   // Alle Verstösse in einer Antwort, damit der Assistent in einem Zug
-  // korrigiert (#143 AK 6).
+  // korrigiert (#143 AK 6) — die Angaben und das Diagramm zusammen (#145 AK 7).
   const p = pruefeUebungsInhalt(e, { altersstufe });
-  if (!p.ok) return abgelehnt(p.funde, NICHTS_ANGELEGT);
+  const d = diagrammZumAnlegen(e);
+  if (!p.ok || d.funde.length) return abgelehnt([...(p.ok ? [] : p.funde), ...d.funde], NICHTS_ANGELEGT);
 
   const { data, error } = await supabase
     .from("exercises")
     .insert({
       ...p.row,
+      // Bild, Diagramm und die daraus gezählte Liste samt Basis (#145 PC 3, 4).
+      ...d.spalten,
       slug: userSlug(String(p.row.name)),
       source: "user",
       owner_id: userId,
@@ -74,7 +88,14 @@ export async function legeUebungAn(
     .select("id, slug")
     .single();
   if (error) return ausDbFehler(error);
-  return ok({ id: data.id as string, slug: data.slug as string, sichtbarkeit: "entwurf" });
+  return ok({
+    id: data.id as string,
+    slug: data.slug as string,
+    sichtbarkeit: "entwurf",
+    ...(d.spalten && {
+      material: { liste: d.spalten.material_liste, ergaenzung: (p.row.material as string[] | undefined) ?? [] },
+    }),
+  });
 }
 
 /**

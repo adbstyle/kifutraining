@@ -390,9 +390,15 @@ export function pflichtangaben(
  *  eine Fachregel verletzt, sonst `eingabe`. */
 export function abgelehnt(funde: readonly Fund[], hinweis: string): KernFehler {
   return fehlschlag(funde.some((f) => f.art === "regel") ? "regel" : "eingabe", ABGELEHNT, {
-    verstoesse: funde.map(({ art: _art, ...v }) => v),
+    verstoesse: alsVerstoesse(funde),
     hinweis,
   });
+}
+
+/** Funde als Verstösse der Antwort: ohne ihre Art, die nach aussen der ganze
+ *  Fehler trägt. */
+export function alsVerstoesse(funde: readonly Fund[]): Verstoss[] {
+  return funde.map(({ art: _art, ...v }) => v);
 }
 
 // ── Ändern (#144) ───────────────────────────────────────────────────────────

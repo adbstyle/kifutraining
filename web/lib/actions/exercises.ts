@@ -9,7 +9,8 @@ import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import { alsAltersstufe, istAltersstufe } from "@/lib/altersstufe";
 import { materialBasisAusDiagramm } from "@/lib/material";
-import { bildQuelleZurZeichnung, diagrammAusFormular } from "@/lib/diagramm";
+import { bildQuelleZurZeichnung } from "@/lib/diagramm";
+import { DIAGRAMM_ABGELEHNT, diagrammAusFormular } from "@/lib/diagramm-pruefung";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
 import {
   VORLAGE_SELECT,
@@ -77,8 +78,7 @@ export async function createExercise(
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
   const gezeichnet = diagrammAusFormular(form);
-  if (gezeichnet === "ungueltig")
-    return { status: "error", message: "Das Feld-Diagramm konnte nicht gelesen werden." };
+  if (gezeichnet === "ungueltig") return { status: "error", message: DIAGRAMM_ABGELEHNT };
   const diagramm = gezeichnet ?? null;
 
   const file = form.get("bild");
@@ -186,9 +186,10 @@ export async function updateExercise(
   const parsed = parseUebungsInhalt(form, { altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
-  const gezeichnet = diagrammAusFormular(form);
-  if (gezeichnet === "ungueltig")
-    return { status: "error", message: "Das Feld-Diagramm konnte nicht gelesen werden." };
+  // Die gespeicherte Zeichnung kommt mit: unverändert zurückgeschickt, wird
+  // sie nicht neu beanstandet (Altbestand).
+  const gezeichnet = diagrammAusFormular(form, bestand.diagramm);
+  if (gezeichnet === "ungueltig") return { status: "error", message: DIAGRAMM_ABGELEHNT };
 
   const file = form.get("bild");
   const hasImage = file instanceof File && file.size > 0;

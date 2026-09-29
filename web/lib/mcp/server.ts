@@ -8,6 +8,7 @@ import {
   uebungAufEntwurfSetzen,
   uebungVeroeffentlichen,
 } from "@/lib/mcp/werkzeuge/uebungen-bearbeiten";
+import { diagrammKatalogAbrufen, uebungDiagrammSetzen } from "@/lib/mcp/werkzeuge/diagramm";
 import {
   trainingAnlegen,
   trainingUebungenFuerBlock,
@@ -63,6 +64,8 @@ export const WERKZEUGE = [
   uebungAendern,
   uebungVeroeffentlichen,
   uebungAufEntwurfSetzen,
+  diagrammKatalogAbrufen,
+  uebungDiagrammSetzen,
   trainingAnlegen,
   trainingUebungenFuerBlock,
   trainingUebungZuordnen,

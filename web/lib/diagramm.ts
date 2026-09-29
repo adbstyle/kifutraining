@@ -215,9 +215,9 @@ export function kopiereDiagramm(data: DiagrammData): DiagrammData {
   };
 }
 
-const istZahl = (v: unknown): v is number =>
+export const istZahl = (v: unknown): v is number =>
   typeof v === "number" && Number.isFinite(v);
-const istPunkt = (v: unknown): v is Punkt =>
+export const istPunkt = (v: unknown): v is Punkt =>
   !!v && typeof v === "object" && istZahl((v as Punkt).x) && istZahl((v as Punkt).y);
 
 /** Defensive Prüfung eines Elements aus der DB. Unbekannte Symbol-Typen sind
@@ -267,7 +267,7 @@ function istElement(v: unknown): v is DiagrammElement {
 
 /** Altbestand: Formen hiessen früher "Zonen". Diskriminante beim Laden
  *  normalisieren, damit bereits gespeicherte Diagramme intakt bleiben. */
-function migriereLegacy(e: unknown): unknown {
+export function migriereLegacy(e: unknown): unknown {
   if (e && typeof e === "object" && (e as Record<string, unknown>).art === "zone") {
     return { ...(e as object), art: "form" };
   }
@@ -281,14 +281,6 @@ export function parseDiagramm(json: unknown): DiagrammData | null {
   const d = json as Record<string, unknown>;
   if (!istZahl(d.version) || !Array.isArray(d.elemente)) return null;
   return { version: d.version, elemente: d.elemente.map(migriereLegacy).filter(istElement) };
-}
-
-/** Ein Diagramm, wie es ein USER speichern darf: strukturell gültig und
- *  höchstens `MAX_ELEMENTE` gross; sonst null. Die Trust-Boundary der Server
- *  Actions, die eine Übung oder Fassung samt Zeichnung speichern (#246, #247). */
-export function parseDiagrammZumSpeichern(json: unknown): DiagrammData | null {
-  const d = parseDiagramm(json);
-  return d && d.elemente.length <= MAX_ELEMENTE ? d : null;
 }
 
 /** Hat die Übung ein anzeigbares Diagramm? */
@@ -310,24 +302,6 @@ export function aktivesBild(args: {
   if (mitDiagramm) return "diagramm";
   if (args.bildUrl) return "foto";
   return null;
-}
-
-/** Die in der Maske gezeichnete Zeichnung aus dem Formular (#246, #247), über
- *  dieselbe Trust-Boundary wie jedes gespeicherte Diagramm. `undefined`: das
- *  Formular trägt keine Zeichnung, die gespeicherte bleibt unberührt. `null`:
- *  eine leere Zeichnung — die Übung trägt dann keine, wie eine nie gezeichnete. */
-export function diagrammAusFormular(form: FormData): DiagrammData | null | undefined | "ungueltig" {
-  const roh = form.get("diagramm");
-  if (typeof roh !== "string" || roh === "") return undefined;
-  let json: unknown;
-  try {
-    json = JSON.parse(roh);
-  } catch {
-    return "ungueltig";
-  }
-  const diagramm = parseDiagrammZumSpeichern(json);
-  if (!diagramm) return "ungueltig";
-  return diagramm.elemente.length > 0 ? diagramm : null;
 }
 
 /** Die Bildwahl, die zur gespeicherten Zeichnung passt (#56 AK3): Mit der

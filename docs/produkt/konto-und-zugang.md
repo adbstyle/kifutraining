@@ -48,8 +48,8 @@ dem Assistenten verborgen.
 Eigene Übungen legt der Assistent ebenfalls an, und zwar im Kinderfussball. Er erfährt
 dafür, welche Angaben eine Übung führt, welche davon je nach Trainingsteil und
 Hauptteilkategorie Pflicht sind und welche Werte zulässig sind, und setzt dieselben Angaben wie
-das Formular — ohne Bild und ohne Feld-Diagramm. Die Übung entsteht als privater Entwurf unter
-den eigenen Übungen, und der Assistent bekommt die Adresse, unter der sie sich in der Anwendung
+das Formular — ohne Foto; ein Feld-Diagramm kann er gleich mitgeben (siehe unten). Die Übung
+entsteht als privater Entwurf unter den eigenen Übungen, und der Assistent bekommt die Adresse, unter der sie sich in der Anwendung
 öffnen lässt. Es gelten dieselben Regeln wie im Formular, nur die Reaktion ist strenger: Wo das
 Formular einen Wert gar nicht erst anbietet — eine Hauptteilkategorie ausserhalb des
 Hauptteils, eine Erscheinungsform des anderen Manuals, eine Spielfeldgrösse auf dem Kleinfeld —,
@@ -66,7 +66,7 @@ ausdrücklich. Geprüft wird danach die ganze Übung mit denselben Regeln wie be
 sie eine, bleibt sie unverändert, und die Anwendung nennt jede verletzte Angabe. Wechselt die
 Einordnung, löscht die Anwendung gespeicherte Angaben, die die neue Einordnung nicht kennt,
 nicht still — sie nennt sie, und der Assistent entfernt sie ausdrücklich. Die Altersstufe
-einer Übung wechselt er nie, Bild und Feld-Diagramm ändert er nicht, und eine Übung, die schon
+einer Übung wechselt er dabei nie, das Foto ändert er nicht, und eine Übung, die schon
 in einem Training steht, behält dort ihre Fassung. Übungen aus dem Manual und die anderer
 Trainer ändert er nicht; er erfährt, dass sie nicht die eigenen sind. Eine eigene Übung beider
 Altersstufen schaltet der Assistent auch öffentlich und zieht sie wieder zurück, ohne
@@ -74,6 +74,21 @@ nachzufragen. Vorher weiss er, was das bedeutet: Die Übung wird mit allen Angab
 Diagramm für alle sichtbar und trägt die Plakette „Community", einen Trainernamen zeigt sie
 nicht. Zurückgezogen verschwindet sie aus dem öffentlichen Bestand; was andere schon in ihre
 Trainings oder ihren Bestand übernommen haben, bleibt bestehen.
+
+Das Feld-Diagramm einer eigenen Übung beider Altersstufen setzt der Assistent ebenfalls, oder er
+ersetzt ein vorhandenes als Ganzes; beim Anlegen kann er es gleich mitgeben, dann aber ohne
+gezählte Materialliste — die zählt die Anwendung selbst, eine freie Ergänzung ist weiterhin
+möglich. Welche Elemente,
+Farben, Drehungen und Posen ein Diagramm führen kann und wie gross die Zeichenfläche ist, erfährt
+er vorher. Die Anwendung nimmt ein Diagramm nur an, wenn es dieselben Grenzen einhält wie ein in
+der Maske gezeichnetes (siehe [Übungen](uebungen.md#feld-diagramme)); sonst lehnt sie ab, nennt
+jedes betroffene Element samt Grund und speichert nichts. Beim Anlegen stehen diese Gründe in
+derselben Rückmeldung wie die zu den übrigen Angaben, und die Übung entsteht nicht. Mit dem
+Diagramm ersetzt die Anwendung die gezählte Materialliste durch die aus dem Diagramm gezählte und
+nennt sie dem Assistenten; die freie Ergänzung bleibt. Hatte die Übung kein Bild, wird das
+Diagramm ihr Bild; ein vorhandenes Foto bleibt das angezeigte Bild. In der Anwendung liegt das
+Diagramm danach wie jedes andere zum Weiterzeichnen bereit, und die Fassungen der Übung in
+Trainings bleiben unverändert.
 
 Der Assistent kann ausserdem Trainings beider Altersstufen anlegen — mit Name, Altersstufe,
 Alterskategorien und auf Wunsch einem Ziel — und ihnen Übungen zuordnen. Das Training entsteht
@@ -297,8 +312,11 @@ Browser-Tab zeigt eine Änderung des Assistenten erst nach dem Neuladen. Im Trai
 Einem Training ordnet der Assistent nur zu, was der Bestand hergibt; eine Übung, die dort
 fehlt, legt er zuerst als eigene an, und den Inhalt einer zugeordneten Übung ändert er nicht.
 Eigene Übungen legt und ändert er nur im Kinderfussball, je Vorgang genau eine und nie als
-unvollständigen Entwurf; löschen kann er sie nicht. Feld-Diagramme erstellt er nicht, und
-Fotos lädt er nicht hoch. Eine leere Variante legt der Assistent so wenig an wie die Anwendung, und eine
+unvollständigen Entwurf; löschen kann er sie nicht. Ein Feld-Diagramm setzt er nur als Ganzes
+und nur an eigenen Übungen: Einzelne Elemente ändert er nicht, und entfernen kann er ein
+Diagramm nicht. Das Diagramm sieht er nicht als Bild, und ob es die Übung inhaltlich richtig
+zeigt, erfährt er nicht; Angaben an einem Element, die das Diagramm nicht kennt, speichert die
+Anwendung nicht, ohne es ihm zu melden. Fotos lädt er nicht hoch. Eine leere Variante legt der Assistent so wenig an wie die Anwendung, und eine
 einzelne Übung kopiert oder verschiebt er nicht von einer Variante in eine andere. Anders als
 der Dialog der Anwendung erzwingt der Weg über den Assistenten beim Anlegen der zweiten Variante
 keinen neuen Namen für die bisherige. Die Reihenfolge

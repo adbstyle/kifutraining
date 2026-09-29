@@ -63,6 +63,9 @@ const { meineTeams, teamPlan } = await import("../lib/kern/team");
 const { legeUebungAn, aendereUebung, veroeffentlicheUebung, setzeUebungAufEntwurf, TRAGWEITE_UEBUNG_VEROEFFENTLICHEN } =
   await import("../lib/kern/uebungen");
 const { aktualisiereZeile, UEBUNG_ZEILE } = await import("../lib/kern/zugriff");
+const { setzeDiagramm, DIAGRAMM_LEER, MATERIAL_MIT_DIAGRAMM } = await import("../lib/kern/uebung-diagramm");
+const { pruefeDiagramm } = await import("../lib/diagramm-pruefung");
+const { materialVorschlag } = await import("../lib/material");
 const { getExercisesFuer } = await import("../lib/queries/uebungen-fuer");
 
 const URL_ = process.env.SUPABASE_URL!;
@@ -1618,6 +1621,198 @@ try {
     assert.equal(await sieht(), null, "zurückgezogen sieht es nur noch das eigene Konto");
     fehler(await setzeUebungAufEntwurf(b.supabase, b.id, { kennung: probe.id }), "nicht_gefunden", NICHT_SICHTBAR);
     fehler(await veroeffentlicheUebung(a.supabase, a.id, { kennung: randomUUID() }), "nicht_gefunden", NICHT_SICHTBAR);
+  });
+
+  // ── Feld-Diagramm setzen (#145) ──────────────────────────────────────────
+  /** Ein kleines Spielfeld: zwei Teams (ergibt Leibchen), drei Pylonen, ein Tor. */
+  const FELD = {
+    elemente: [
+      { id: "feld", art: "form", form: "rechteck", x: 200, y: 150, breite: 1200, hoehe: 700 },
+      { id: "tor", art: "symbol", typ: "tor", x: 800, y: 150, rotation: 0 },
+      { id: "rot-1", art: "symbol", typ: "spieler", x: 600, y: 500, farbe: "rot" },
+      { id: "blau-1", art: "symbol", typ: "spieler", x: 1000, y: 500, farbe: "blau" },
+      ...[400, 800, 1200].map((x, i) => ({ id: `py-${i}`, art: "symbol", typ: "pylone", x, y: 780, farbe: "gelb" })),
+    ],
+  };
+  const ZWEI_BAELLE = {
+    version: 1,
+    elemente: [
+      { id: "b1", art: "symbol", typ: "fussball", x: 700, y: 500 },
+      { id: "b2", art: "symbol", typ: "fussball", x: 900, y: 500 },
+    ],
+  };
+  const vorschlag = (d: unknown) => materialVorschlag(pruefeDiagramm(d).daten);
+  const DIAGRAMM_SPALTEN = "diagramm, bild_quelle, bild_url, material_liste, material_basis, material, updated_at";
+  const diagrammzeile = async (id: string) => {
+    const { data, error } = await admin.from("exercises").select(DIAGRAMM_SPALTEN).eq("id", id).single<Record<string, unknown>>();
+    if (error) throw error;
+    return data;
+  };
+  const kinderUebung = async (name: string) =>
+    wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "kinderfussball",
+        name,
+        einordnung: "einleitung",
+        kategorien: ["F"],
+        offenStarten: "Offen",
+        ueben: "Üben",
+        wetteifern: "Wett",
+        material: { liste: [{ art: "pylone", farbe: "rot", menge: 4 }], ergaenzung: ["Pfeife"] },
+      }),
+    );
+
+  await pruefe("Diagramm setzen: eigene Kinder- und Junioren-Übung, Bild, Liste = Basis = Vorschlag, Ergänzung bleibt; Ersetzen (AK 2/3, PC 1–6)", async () => {
+    const u = await kinderUebung("KI-Probe Diagramm");
+    const r = wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.slug, diagramm: FELD }));
+    assert.deepEqual(r, {
+      id: u.id,
+      slug: u.slug,
+      name: "KI-Probe Diagramm",
+      anzahlElemente: FELD.elemente.length,
+      angezeigtesBild: "diagramm",
+      material: { liste: vorschlag(FELD), ergaenzung: ["Pfeife"] },
+    });
+    const z = await diagrammzeile(u.id);
+    assert.equal((z.diagramm as { elemente: unknown[] }).elemente.length, FELD.elemente.length);
+    assert.equal((z.diagramm as { version: number }).version, 1);
+    assert.equal(z.bild_quelle, "diagramm");
+    // Die handgepflegte Liste (4 rote Pylonen) ist durch die gezählte ersetzt.
+    assert.deepEqual(z.material_liste, vorschlag(FELD));
+    assert.deepEqual(z.material_basis, vorschlag(FELD));
+    assert.deepEqual(z.material, ["Pfeife"]);
+
+    const ersetzt = wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: ZWEI_BAELLE }));
+    assert.equal(ersetzt.anzahlElemente, 2);
+    const z2 = await diagrammzeile(u.id);
+    assert.deepEqual((z2.diagramm as { elemente: { id: string }[] }).elemente.map((e) => e.id), ["b1", "b2"]);
+    assert.deepEqual(z2.material_liste, [{ art: "fussball", farbe: null, menge: 2 }]);
+    assert.deepEqual(z2.material_basis, z2.material_liste);
+
+    const { data: jun, error } = await admin
+      .from("exercises")
+      .insert({
+        slug: `kern-db-jun-dia-${randomBytes(4).toString("hex")}`,
+        name: "Kern-DB Junioren Diagramm",
+        altersstufe: "juniorenfussball",
+        trainingsteil: "jun-spiel",
+        kategorien: ["D"],
+        aufbau: "Im Wechsel",
+        owner_id: a.id,
+        visibility: "private",
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    assert.equal(wert(await setzeDiagramm(a.supabase, a.id, { kennung: jun.id, diagramm: FELD })).angezeigtesBild, "diagramm");
+    assert.equal((await diagrammzeile(jun.id)).bild_quelle, "diagramm");
+  });
+
+  await pruefe("Diagramm setzen: ein vorhandenes Foto bleibt das angezeigte Bild (PC 3)", async () => {
+    const u = await kinderUebung("KI-Probe Foto");
+    const { error } = await admin.from("exercises").update({ bild_url: "https://example.test/foto.webp", bild_quelle: null }).eq("id", u.id);
+    if (error) throw error;
+    assert.equal(wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: FELD })).angezeigtesBild, "foto");
+    const z = await diagrammzeile(u.id);
+    assert.equal(z.bild_quelle, "foto");
+    assert.equal(z.bild_url, "https://example.test/foto.webp");
+  });
+
+  await pruefe("Diagramm setzen: Grenzen → eingabe mit jedem Element, leer abgelehnt, Übung unverändert (AK 4/6)", async () => {
+    const u = await kinderUebung("KI-Probe Grenzen");
+    wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: ZWEI_BAELLE }));
+    const vorher = await diagrammzeile(u.id);
+    const r = fehler(
+      await setzeDiagramm(a.supabase, a.id, {
+        kennung: u.id,
+        diagramm: {
+          elemente: [
+            { id: "tw", art: "symbol", typ: "torhueter", x: 800, y: 500 },
+            { id: "weit", art: "symbol", typ: "pylone", x: 1700, y: 500 },
+            { id: "lila", art: "pfad", typ: "linie", punkte: [{ x: 1, y: 1 }, { x: 9, y: 9 }], farbe: "lila" },
+          ],
+        },
+      }),
+      "eingabe",
+      "Das Diagramm wurde nicht gesetzt: 3 Angaben verletzen die Grenzen eines Feld-Diagramms. Jede " +
+        "steht mit Element und Grund unter «verstoesse».",
+    ) as { verstoesse?: { feld: string; meldung: string }[]; hinweis?: string };
+    assert.deepEqual(r.verstoesse?.map((v) => v.feld), [
+      "diagramm.elemente[0].typ",
+      "diagramm.elemente[1]",
+      "diagramm.elemente[2].farbe",
+    ]);
+    assert.match(r.verstoesse![0].meldung, /^Element «tw» \(elemente\[0\]\): Das Symbol «torhueter» gibt es nicht\.$/);
+    assert.equal(r.hinweis, UNVERAENDERT);
+    const leer = fehler(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: { elemente: [] } }), "eingabe") as {
+      verstoesse?: { feld: string; meldung: string }[];
+    };
+    assert.deepEqual(leer.verstoesse, [{ feld: "diagramm", meldung: DIAGRAMM_LEER }]);
+    assert.deepEqual(await diagrammzeile(u.id), vorher, "die Übung ist unverändert");
+  });
+
+  await pruefe("Diagramm setzen: nur eigene; Manual und fremd öffentlich → keine_rechte, privat fremd und unbekannt → nicht_gefunden", async () => {
+    const u = await kinderUebung("KI-Probe Rechte");
+    const manual = await vorlage("einleitung");
+    assert.equal(fehler(await setzeDiagramm(a.supabase, a.id, { kennung: manual, diagramm: FELD }), "keine_rechte", FREMDE_UEBUNG).fremd, true);
+    fehler(await setzeDiagramm(b.supabase, b.id, { kennung: u.id, diagramm: FELD }), "nicht_gefunden", NICHT_SICHTBAR);
+    fehler(await setzeDiagramm(a.supabase, a.id, { kennung: randomUUID(), diagramm: FELD }), "nicht_gefunden", NICHT_SICHTBAR);
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: u.id }));
+    assert.equal(fehler(await setzeDiagramm(b.supabase, b.id, { kennung: u.slug, diagramm: FELD }), "keine_rechte", FREMDE_UEBUNG).fremd, true);
+    assert.equal((await diagrammzeile(u.id)).diagramm, null, "das fremde Setzen hat nichts geschrieben");
+  });
+
+  await pruefe("Diagramm setzen: die Fassung in einem Training bleibt unberührt (#145, OoS #144)", async () => {
+    const u = await kinderUebung("KI-Probe Fassung");
+    wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: ZWEI_BAELLE }));
+    const tr = wert(await legeTrainingAn(a.supabase, a.id, { name: "Diagramm-Fassung", altersstufe: "kinderfussball", stufen: ["F"] })).id;
+    const f = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tr, einordnung: "einleitung", exerciseId: u.id }));
+    const fassung = async () =>
+      (await admin.from("training_exercises").select("diagramm, material_liste").eq("id", f.fassungId).single()).data;
+    const vorher = await fassung();
+    wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: FELD }));
+    assert.deepEqual(await fassung(), vorher);
+  });
+
+  await pruefe("Übung anlegen mit Diagramm: Bild, gezählte Liste, Ergänzung; Angaben und Diagramm in EINER Ablehnung (#145 AK 5/7, PC 7)", async () => {
+    const angaben = {
+      altersstufe: "kinderfussball",
+      name: "KI-Probe Anlegen Diagramm",
+      einordnung: "einleitung",
+      kategorien: ["F"],
+      offenStarten: "Offen",
+      ueben: "Üben",
+      wetteifern: "Wett",
+      material: { ergaenzung: ["Pfeife"] },
+    };
+    const u = wert(await legeUebungAn(a.supabase, a.id, { ...angaben, diagramm: FELD }));
+    assert.deepEqual(u.material, { liste: vorschlag(FELD), ergaenzung: ["Pfeife"] });
+    const z = await diagrammzeile(u.id);
+    assert.equal(z.bild_quelle, "diagramm");
+    assert.equal((z.diagramm as { elemente: unknown[] }).elemente.length, FELD.elemente.length);
+    assert.deepEqual(z.material_liste, vorschlag(FELD));
+    assert.deepEqual(z.material_basis, vorschlag(FELD));
+    assert.deepEqual(z.material, ["Pfeife"]);
+    // Ohne Diagramm bleibt die Antwort wie in #143.
+    assert.equal("material" in wert(await legeUebungAn(a.supabase, a.id, angaben)), false);
+
+    const vorher = await uebungenVon(a.id);
+    const r = fehler(
+      await legeUebungAn(a.supabase, a.id, {
+        ...angaben,
+        kategorien: [],
+        material: { liste: [{ art: "pylone", farbe: "rot", menge: 4 }] },
+        diagramm: { elemente: [{ id: "tw", art: "symbol", typ: "torhueter", x: 800, y: 500 }] },
+      }),
+      "regel",
+    ) as { verstoesse?: { feld: string; meldung: string }[]; hinweis?: string };
+    const felder = r.verstoesse?.map((v) => v.feld) ?? [];
+    assert.ok(felder.includes("kategorien"), felder.join(", "));
+    assert.ok(felder.includes("diagramm.elemente[0].typ"), felder.join(", "));
+    assert.deepEqual(r.verstoesse?.find((v) => v.feld === "material.liste")?.meldung, MATERIAL_MIT_DIAGRAMM);
+    assert.equal(r.hinweis, NICHTS_ANGELEGT);
+    fehler(await legeUebungAn(a.supabase, a.id, { ...angaben, diagramm: { elemente: [] } }), "eingabe");
+    assert.equal(await uebungenVon(a.id), vorher, "nichts angelegt");
   });
 } finally {
   await aufraeumen();

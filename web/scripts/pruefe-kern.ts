@@ -27,6 +27,8 @@
 //   Formular (`parseUebungsInhalt`). Die Übersetzung darf nichts verlieren:
 //   Jede Pflicht, jeder Wert, den das Formular still verwürfe, und jede
 //   unförmige Zahl erscheint als eigener Verstoss mit dem Feld des Werkzeugs.
+//   Für das Feld-Diagramm (#145) gilt dasselbe: Übungsmaske und KI-Weg
+//   prüfen über lib/diagramm-pruefung.ts, nicht über einen zweiten Weg.
 //
 //   npx tsx scripts/pruefe-kern.ts
 import assert from "node:assert/strict";
@@ -1098,6 +1100,23 @@ pruefe("Kopieren und Löschen leben im Kern: die alten Orte sind weg (#197)", ()
   for (const neu of ["kopie.ts", "loeschen.ts"]) assert.ok(existsSync(join(kern, neu)), `lib/kern/${neu} fehlt`);
 });
 
+pruefe("Diagramm-Grenzen: eine Quelle für Übungsmaske und KI-Weg (#145 NFR 1)", () => {
+  // Speicher-Actions und Kern prüfen über lib/diagramm-pruefung.ts. Käme der
+  // alte, nachsichtige Speicherweg in lib/diagramm.ts zurück, nähme die Maske
+  // wieder an, was der KI-Weg ablehnt.
+  const importiert = (datei: string, name: string) =>
+    new RegExp(`import \\{[^}]*\\b${name}\\b[^}]*\\} from "@/lib/diagramm-pruefung"`).test(
+      readFileSync(join(web, datei), "utf8"),
+    );
+  const diagramm = readFileSync(join(web, "lib/diagramm.ts"), "utf8");
+  for (const alt of ["parseDiagrammZumSpeichern", "diagrammAusFormular"])
+    assert.ok(!new RegExp(`export function ${alt}\\b`).test(diagramm), `lib/diagramm.ts exportiert wieder ${alt}`);
+  for (const action of ["lib/actions/exercises.ts", "lib/actions/fassung.ts"])
+    assert.ok(importiert(action, "diagrammAusFormular"), `${action}: diagrammAusFormular nicht aus lib/diagramm-pruefung`);
+  assert.ok(importiert("lib/kern/uebung-diagramm.ts", "pruefeDiagramm"), "Kern prüft nicht über lib/diagramm-pruefung");
+  assert.match(readFileSync(join(kern, "uebungen.ts"), "utf8"), /\bdiagrammZumAnlegen\(/, "legeUebungAn prüft das Diagramm nicht");
+});
+
 pruefe("Queries ohne Cookie-Client (lib/queries/*-fuer.ts): kein next/, kein react, kein server.ts", () => {
   // Der Kern liest Trainings und Übungen über diese Dateien. `react`s `cache`
   // bindet an einen Request und fehlte in einem Route Handler ebenso wie der
@@ -1177,6 +1196,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
   const jeStory: Record<string, string[]> = {
     "#143": ["uebung_anlegen"],
     "#144": ["uebung_aendern", "uebung_veroeffentlichen", "uebung_auf_entwurf_setzen"],
+    "#145": ["uebung_diagramm_setzen", "diagramm_katalog_abrufen"],
     "#192":["training_anlegen", "training_uebungen_fuer_block", "training_uebung_zuordnen"],
     "#193": [
       "training_abrufen",

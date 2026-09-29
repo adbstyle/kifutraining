@@ -1,6 +1,6 @@
 // Prüft die Regeln des KI-Zugangs (Story #142): web/lib/mcp/regeln.ts,
 // web/lib/weiterleitung.ts und die reinen Werkzeug-Bausteine
-// web/lib/mcp/{vokabular,eingaben,uebung-eingaben,ergebnis}.ts. Ohne DB und ohne Netz; läuft
+// web/lib/mcp/{vokabular,eingaben,uebung-eingaben,diagramm-eingaben,ergebnis}.ts. Ohne DB und ohne Netz; läuft
 // im PR-Check neben `typecheck` und den übrigen `check:*`.
 //
 // Der Wert dieser Prüfung liegt an fünf Stellen:
@@ -63,6 +63,8 @@ import { ANZAHL_HINWEIS, HAUPTTEILKATEGORIE_SLUGS, LEER_HINWEIS, OHNE_DAUER_TEIL
 import { istHauptteil } from "../lib/gruppen";
 import { VokabularSchema, baueVokabular } from "../lib/mcp/vokabular";
 import { SucheEingabe } from "../lib/mcp/eingaben";
+import { DiagrammEingabe } from "../lib/mcp/diagramm-eingaben";
+import { z } from "zod";
 import {
   UEBUNG_ANGABEN,
   UebungAendernEingabe,
@@ -716,6 +718,19 @@ pruefe("alsUebungPatch: Fehlendes bleibt undefined («bleibt»), null bleibt nul
   for (const bleibt of ["einordnung", "kategorien", "offenStarten", "material", "anzahlKinder"] as const)
     assert.equal(p[bleibt], undefined, bleibt);
   assert.ok(!("kennung" in p) && !("altersstufe" in p), "Kennung und Altersstufe sind keine Angaben");
+});
+
+// ── Feld-Diagramm (#145) ────────────────────────────────────────────────────
+pruefe("DiagrammEingabe: locker — jedes Element erreicht den Kern, Pflicht ist nur «elemente» als Liste", () => {
+  // Der Kern benennt jedes schlechte Element einzeln; das Schema bricht nie
+  // beim ersten ab.
+  assert.ok(DiagrammEingabe.safeParse({ elemente: [1, "x", null] }).success);
+  assert.ok(DiagrammEingabe.safeParse({ elemente: [], version: 1 }).success);
+  for (const roh of [{}, { elemente: "x" }, null, []]) assert.ok(!DiagrammEingabe.safeParse(roh).success, JSON.stringify(roh));
+  // Nur beim Anlegen; an einer bestehenden Übung setzt «uebung_diagramm_setzen».
+  assert.ok(UebungAnlegenEingabe.safeParse({ ...ANLEGEN, diagramm: { elemente: [] } }).success);
+  assert.ok(!UebungAendernEingabe.safeParse({ kennung: "k", diagramm: { elemente: [] } }).success);
+  z.toJSONSchema(UebungAnlegenEingabe);
 });
 
 pruefe("UEBUNG_ANGABEN: je Altersstufe des KI-Wegs Pflicht, Ablaufform und Spielfeld-Grenzen", () => {

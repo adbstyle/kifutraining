@@ -242,6 +242,16 @@ die sie trug. Zum Zeichnen braucht es einen breiteren Bildschirm als den eines T
 einem schmaleren sagt die Maske das an der Stelle der Fläche und zeigt beim Bearbeiten darüber
 die bisherige Zeichnung. Die übrigen Angaben lassen sich dort erfassen und bearbeiten.
 
+Beim Speichern prüft die Anwendung das Diagramm nach denselben Grenzen, die auch für einen
+verbundenen KI-Assistenten gelten: nur Elemente, Farben, Posen und Drehungen, die die
+Zeichenfläche kennt, jedes Element auf der Fläche — bei Symbolen und Texten deren Mitte —,
+höchstens 300 Elemente, jedes mit eigener Kennung. Was die Fläche nicht führen kann, etwa ein
+«?»-Platzhalter aus einer alten Zeichnung, lässt sich nicht speichern; die Maske sagt das und
+bittet, das Element zu entfernen oder zu verschieben. Eine gespeicherte Zeichnung, die
+unverändert zurückkommt, beanstandet sie nicht neu — eine Übung mit einer älteren Zeichnung lässt
+sich also weiterhin umbenennen. Der Assistent kann das Diagramm einer eigenen Übung auch selbst
+setzen (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
+
 Dasselbe Diagramm sieht am Bildschirm anders aus als auf Papier, und beides ist Absicht. Am
 Bildschirm liegt es auf einem dunklen Rasen, passend zur übrigen Anwendung, mit hellen
 Bewegungspfeilen und kräftigeren Farben für Leibchen und Material. Auf Papier kommt dieselbe

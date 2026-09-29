@@ -104,9 +104,18 @@ function auswahlBox(els: DiagrammElement[]): { x: number; y: number; breite: num
  *  begrenzt an der Gruppen-Box — die relative Anordnung bleibt erhalten (PC2). */
 function versetzteGruppe(els: DiagrammElement[], versatz: number): DiagrammElement[] {
   const box = auswahlBox(els);
-  const dx = clamp(box.x + versatz, FLAECHE.breite - box.breite) - box.x;
-  const dy = clamp(box.y + versatz, FLAECHE.hoehe - box.hoehe) - box.y;
+  const dx = boxVersatz(box.x, box.x + versatz, box.breite, FLAECHE.breite);
+  const dy = boxVersatz(box.y, box.y + versatz, box.hoehe, FLAECHE.hoehe);
   return els.map((el) => ({ ...verschiebeElement(el, dx, dy), id: crypto.randomUUID() }));
+}
+
+/** Versatz einer Gruppen-Box auf einer Achse, begrenzt auf die Fläche. Passt
+ *  die Box gar nicht auf die Fläche — Symbolrahmen am Rand oder ein langer
+ *  Text ragen hinaus —, bleibt die Gruppe auf dieser Achse stehen: jede
+ *  Begrenzung schöbe sonst ein Element mit seiner Mitte über den Rand, und die
+ *  Übung liesse sich nicht mehr speichern (Story #145). */
+function boxVersatz(start: number, ziel: number, groesse: number, flaeche: number): number {
+  return groesse > flaeche ? 0 : clamp(ziel, flaeche - groesse) - start;
 }
 
 /** Achsenparalleles Rechteck aus zwei Eckpunkten (Auswahlrahmen). */
@@ -715,8 +724,8 @@ export function DiagrammZeichnen({
     // begrenzt — die Anordnung der Elemente zueinander bleibt erhalten (PC3).
     if (drag.modus === "mehrfach") {
       const box = auswahlBox(drag.orig);
-      const dx = clamp(box.x + (p.x - drag.start.x), FLAECHE.breite - box.breite) - box.x;
-      const dy = clamp(box.y + (p.y - drag.start.y), FLAECHE.hoehe - box.hoehe) - box.y;
+      const dx = boxVersatz(box.x, box.x + (p.x - drag.start.x), box.breite, FLAECHE.breite);
+      const dy = boxVersatz(box.y, box.y + (p.y - drag.start.y), box.hoehe, FLAECHE.hoehe);
       const origMap = new Map(drag.orig.map((o) => [o.id, o]));
       setElemente((prev) =>
         prev.map((el) => {
