@@ -1478,6 +1478,10 @@ export default function Styleguide() {
             label="Aufbau / Beschreibung"
             supportingText="Mehrzeilig — wächst bis 10 Zeilen, dann scrollen."
           />
+          <TextArea
+            label="Weiteres Material"
+            placeholder="Mit placeholder: leer spricht der Platzhalter, das Label erscheint erst geschwebt."
+          />
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
@@ -1833,7 +1837,7 @@ export default function Styleguide() {
           (der Junioren-Katalog führt elf Werte, und jeder ist ein ganzer Satz).
           Und der <code>placeholder</code> sagt hier nicht mehr den Leerfall
           einer Abfrage («Alle Stufen»), sondern den einer Eingabe
-          («Kategorien wählen …»): Im Filter heisst nichts gewählt <em>alles</em>,
+          («Alterskategorie wählen …»): Im Filter heisst nichts gewählt <em>alles</em>,
           im Formular heisst es <em>nichts</em>.
         </p>
         <MultiSelectDemo />

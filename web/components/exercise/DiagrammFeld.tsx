@@ -51,11 +51,6 @@ export function DiagrammFeld({ onChange }: { onChange: (data: DiagrammData) => v
           onChange={onChange}
           // Ohne Kopf: Die Überschrift trägt der Abschnitt «Feld-Diagramm» der
           // Maske, die Aktionen rücken ans Ende der Werkzeug-Leiste.
-          fuss={
-            <p className="type-body-small text-on-surface-mittel">
-              Wird mit der Übung gespeichert.
-            </p>
-          }
         />
       </div>
       <Card className="flex items-start gap-3 p-4 sm:hidden">

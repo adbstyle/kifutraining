@@ -188,10 +188,10 @@ export function MaterialField({
       </div>
 
       <TextArea
-        label="Weiteres Material (optional, eines pro Zeile)"
+        label="Weiteres Material"
+        placeholder="Weiteres Material (welches das Feld-Diagramm nicht erkennt, eines pro Zeile)"
         name="material"
         defaultValue={ergaenzung.join("\n")}
-        supportingText="Was das Feld-Diagramm nicht kennt, etwa Pfeife oder Stoppuhr."
       />
     </div>
   );

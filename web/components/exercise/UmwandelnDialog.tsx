@@ -138,7 +138,7 @@ export function UmwandelnDialog({
           onChange={setKat}
           searchable={false}
           actions={false}
-          placeholder="Kategorien wählen …"
+          placeholder="Alterskategorie wählen …"
           error={!!fehler.kat}
           supportingText={fehler.kat ?? "Mindestens eine Kategorie dieser Altersstufe."}
         />
