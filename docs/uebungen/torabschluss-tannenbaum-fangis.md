@@ -1,6 +1,6 @@
 # Tannenbaum-Fangis
 
-**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Vielseitigkeit erleben · **Erscheinungsform:** Sich flink und geschickt bewegen
+**Trainingsteil:** hauptteil · **Kategorien:** G, F, E · **Hauptteilkategorie:** Vielseitigkeit erleben · **Erscheinungsform:** Sich flink und geschickt bewegen · **Feldtyp:** Freies Feld
 
 ## Offen starten
 

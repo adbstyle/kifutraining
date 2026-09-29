@@ -50,7 +50,7 @@ def test_auffangen_ohne_aufbau_fails():
 def test_auffangen_mit_aufbau_passes():
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     v = Draft202012Validator(schema)
-    doc = {"id": "x", "name": "X", "trainingsteil": "auffangen",
+    doc = {"id": "x", "name": "X", "trainingsteil": "auffangen", "feldtyp": "freies_feld",
            "kategorien": ["G"], "aufbau": "Den Kindern steht ein Feld zur Verfügung.",
            "quelle": {"datei": "a.pdf", "seite": 1}}
     assert list(v.iter_errors(doc)) == []
@@ -86,7 +86,7 @@ def _hauptteil_doc(**extra):
     Der Fahrplan trägt alle drei Stufen — sie sind seit Story 2 quellenunabhängig
     Pflicht, wie der DB-Constraint fahrplan_vollstaendig."""
     doc = {"id": "x", "name": "X", "trainingsteil": "hauptteil",
-           "kategorien": ["G"],
+           "feldtyp": "kleinfeld", "kategorien": ["G"],
            "methodischer_fahrplan": {"offen_starten": "Start.",
                                      "ueben": ["Schritt."],
                                      "wetteifern": "Wettkampf."},
@@ -200,4 +200,21 @@ def test_fahrplan_mit_null_wetteifern_fails():
     v = Draft202012Validator(schema)
     doc = _hauptteil_doc(hauptteilkategorie="fussball-spielen-lernen")
     doc["methodischer_fahrplan"]["wetteifern"] = None
+    assert list(v.iter_errors(doc)) != []
+
+
+def test_ohne_feldtyp_fails():
+    """Story #306: Jede Manual-Übung trägt einen Feldtyp — fehlt er, bricht die Validierung."""
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    doc = _hauptteil_doc(hauptteilkategorie="fussball-spielen-lernen")
+    doc.pop("feldtyp")
+    assert list(v.iter_errors(doc)) != []
+
+
+def test_feldtyp_null_fails():
+    """Story #306: Ohne erkennbares Spielfeld gilt das freie Feld, nicht null."""
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    v = Draft202012Validator(schema)
+    doc = _hauptteil_doc(hauptteilkategorie="fussball-spielen-lernen", feldtyp=None)
     assert list(v.iter_errors(doc)) != []

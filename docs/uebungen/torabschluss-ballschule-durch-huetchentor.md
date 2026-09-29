@@ -1,6 +1,6 @@
 # Ballschule – durch Hütchentor
 
-**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern
+**Trainingsteil:** hauptteil · **Kategorien:** F, E · **Hauptteilkategorie:** Fussball spielen lernen · **Erscheinungsform:** Mutig Tore erzielen, Mutig Tore verhindern · **Feldtyp:** Grossfeld
 
 ## Offen starten
 

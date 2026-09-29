@@ -2,7 +2,7 @@ id: spiel-mit-dem-feuer
 name: Spiel mit dem Feuer
 trainingsteil: einleitung
 erscheinungsform: []
-feldtyp: null
+feldtyp: freies_feld
 kategorien:
 - G
 - F

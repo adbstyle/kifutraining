@@ -2,7 +2,7 @@ id: im-regenbogenwald
 name: Im Regenbogenwald
 trainingsteil: einleitung
 erscheinungsform: []
-feldtyp: null
+feldtyp: freies_feld
 kategorien:
 - G
 - F

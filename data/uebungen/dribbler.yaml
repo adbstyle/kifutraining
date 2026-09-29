@@ -2,7 +2,7 @@ id: dribbler
 name: Dribbler
 trainingsteil: einleitung
 erscheinungsform: []
-feldtyp: null
+feldtyp: freies_feld
 kategorien:
 - F
 - E

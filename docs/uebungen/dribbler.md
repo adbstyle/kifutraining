@@ -1,6 +1,6 @@
 # Dribbler
 
-**Trainingsteil:** einleitung · **Kategorien:** F, E
+**Trainingsteil:** einleitung · **Kategorien:** F, E · **Feldtyp:** Freies Feld
 
 ## Offen starten
 

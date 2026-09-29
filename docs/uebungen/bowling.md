@@ -1,6 +1,6 @@
 # Bowling
 
-**Trainingsteil:** ausklang · **Kategorien:** G, F, E
+**Trainingsteil:** ausklang · **Kategorien:** G, F, E · **Feldtyp:** Freies Feld
 
 ## Aufbau
 

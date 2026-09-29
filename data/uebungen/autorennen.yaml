@@ -2,7 +2,7 @@ id: autorennen
 name: Autorennen
 trainingsteil: einleitung
 erscheinungsform: []
-feldtyp: null
+feldtyp: freies_feld
 kategorien:
 - G
 - F
