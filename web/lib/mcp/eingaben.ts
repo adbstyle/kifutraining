@@ -16,7 +16,7 @@
 // REIN: keine Server-Importe — `check:ki-zugang` lädt diese Datei mit tsx.
 import { z } from "zod";
 import { materialSchema } from "@/lib/material-ausgabe";
-import { altersstufe as altersstufeLabels, altersstufeSlugs } from "@/lib/vocab";
+import { altersstufeSlugs } from "@/lib/vocab";
 import {
   einordnungFilterOptionen,
   feldOptionen,
@@ -24,7 +24,7 @@ import {
   stufenOptionen,
   typOptionen,
 } from "@/lib/filter-optionen";
-import { UebungKopf, Wert, alsEnum, katalogFilter } from "@/lib/mcp/bausteine";
+import { ALTERSSTUFEN_TEXT, UebungKopf, Wert, alsEnum, katalogFilter } from "@/lib/mcp/bausteine";
 import { UEBEN_ZEILEN } from "@/lib/freitext";
 
 export const SucheEingabe = z.object({
@@ -36,11 +36,7 @@ export const SucheEingabe = z.object({
     .describe("Freitext über Name, Aufbau, Ablauf, Material und Varianten; Wortteile genügen."),
   altersstufe: alsEnum(altersstufeSlugs)
     .optional()
-    .describe(
-      "Nur Übungen dieser Altersstufe: " +
-        altersstufeSlugs.map((s) => `${s} (${altersstufeLabels[s]})`).join(", ") +
-        ".",
-    ),
+    .describe(`Nur Übungen dieser Altersstufe: ${ALTERSSTUFEN_TEXT}.`),
   einordnung: katalogFilter(
     einordnungFilterOptionen,
     "Filter «Trainingsteil» wie im Katalog. Im Kinderfussball steht statt des Hauptteils " +

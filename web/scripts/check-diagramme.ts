@@ -6,7 +6,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { parseDiagramm } from "../lib/diagramm";
-import { diagrammProbleme } from "./diagramm-pruefung";
+import { diagrammProbleme } from "../lib/diagramm-pruefung";
 
 const DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../data/diagramme");
 const dateien = readdirSync(DIR).filter((f) => f.endsWith(".json")).sort();

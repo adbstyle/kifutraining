@@ -7,7 +7,8 @@ import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
 import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
-import { bildQuelleZurZeichnung, diagrammAusFormular, hatDiagramm } from "@/lib/diagramm";
+import { bildQuelleZurZeichnung, hatDiagramm } from "@/lib/diagramm";
+import { diagrammAusFormular } from "@/lib/diagramm-pruefung";
 import {
   fassungUnvollstaendig,
   istEigeneFassungsDatei,
@@ -103,9 +104,8 @@ export async function updateFassung(
   const trainingsteil = String(inhalt.trainingsteil);
   const hkat = (inhalt.hauptteilkategorie as string | null) ?? null;
 
-  const gezeichnet = diagrammAusFormular(form);
-  if (gezeichnet === "ungueltig")
-    return { status: "error", message: "Das Feld-Diagramm konnte nicht gelesen werden." };
+  const gezeichnet = diagrammAusFormular(form, fassung.diagramm);
+  if (gezeichnet && "fehler" in gezeichnet) return { status: "error", message: gezeichnet.fehler };
   // Die Zeichnung, die die Fassung nach dem Speichern trägt.
   const diagramm = gezeichnet !== undefined ? gezeichnet : fassung.diagramm;
 

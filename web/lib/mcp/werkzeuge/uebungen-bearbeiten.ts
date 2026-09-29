@@ -1,0 +1,204 @@
+import "server-only";
+import { z } from "zod";
+import { abgebildet } from "@/lib/kern/ergebnis";
+import {
+  TRAGWEITE_UEBUNG_VEROEFFENTLICHEN,
+  aendereUebung,
+  kopiereUebungNach,
+  legeUebungAn,
+  setzeUebungAufEntwurf,
+  veroeffentlicheUebung,
+} from "@/lib/kern/uebungen";
+import { materialAusgabe, materialSchema } from "@/lib/material-ausgabe";
+import { Sichtbarkeit } from "@/lib/mcp/bausteine";
+import { MangelAusgabe, alsMangel } from "@/lib/mcp/diagramm-eingaben";
+import {
+  UEBUNG_ANGABEN,
+  UEBUNG_KENNUNG_FEHLER,
+  UEBUNG_NUR_EIGENE_FEHLER,
+  UebungAendernEingabe,
+  UebungAnlegenEingabe,
+  UebungKennung,
+  alsUebungInhalt,
+  alsUebungPatch,
+} from "@/lib/mcp/uebung-eingaben";
+import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
+
+/**
+ * Eigene Übungen erfassen, ändern, öffentlich schalten und sichtbare Übungen
+ * in den eigenen Bestand kopieren (Epic #139, ab Story #143).
+ *
+ * Dünne Adapter über den Fachkern (lib/kern/uebungen.ts), der dieselbe
+ * Regelquelle wie das Übungsformular nutzt. Zod prüft nur Typ und Enum, streng
+ * gegen unbekannte Felder; jede Fachregel prüft der Kern und nennt die
+ * Verstösse auf einmal in `verstoesse` (#143 AK 6, NFR 2).
+ *
+ * Nie erreichbar (#144 OoS 1–3, #317 OoS 1): eigene Übungen löschen, Manual-
+ * und fremde Übungen ändern, Übungen in Trainings ändern oder kopieren.
+ */
+
+/** Kennung, slug und Seite der Übung — der Kopf jedes Ergebnisses hier. */
+const Kopf = { id: z.string(), slug: z.string(), url: z.string().describe("Die Seite der Übung in KiFu.") };
+const kopf = (w: { id: string; slug: string }, zugang: Zugang) => ({
+  id: w.id,
+  slug: w.slug,
+  url: zugang.url("uebung", w.slug),
+});
+
+/** Was jedes Werkzeug hier zur Ablehnung einer Übung sagt. */
+const ABLEHNUNG =
+  "Was eine Regel verletzt, wird nicht still verworfen: Dann bleibt alles, wie es war, und " +
+  "«verstoesse» nennt jede verletzte Angabe mit Feld, Grund und, wo es eine Aufzählung gibt, den " +
+  "zulässigen Werten — auch einen Wert, der nicht zur Einordnung oder zur Altersstufe passt. Ist " +
+  "die Einordnung ungültig oder fehlt im Hauptteil die Hauptteilkategorie, kann der nächste " +
+  "Versuch weitere Verstösse nennen.";
+
+// ── uebung_anlegen (#143) ───────────────────────────────────────────────────
+
+export const uebungAnlegen = werkzeug({
+  name: "uebung_anlegen",
+  titel: "Übung anlegen",
+  beschreibung:
+    "Legt eine eigene Übung als privaten Entwurf an — sichtbar nur für dich und in KiFu unter " +
+    "deinen eigenen Übungen, bis «uebung_veroeffentlichen» sie öffentlich schaltet. Es gelten " +
+    "dieselben Regeln wie im Formular in KiFu, je Altersstufe die ihren; die Altersstufe steht " +
+    `danach fest. ${ABLEHNUNG} Danach die ` +
+    `ganze Übung korrigiert noch einmal senden. ${UEBUNG_ANGABEN} Die Werte samt Klartext liefert ` +
+    "«vokabular». Ein Feld-Diagramm lässt sich in «diagramm» gleich mitgeben, mit denselben " +
+    "Grenzen wie bei «uebung_diagramm_setzen»: Es wird das Bild der Übung, und KiFu zählt das " +
+    "Material daraus selbst — dann «material.liste» weglassen, die Ergänzung bleibt möglich — und " +
+    "nennt die gezählte Liste in «material». Verletzt das Diagramm eine Grenze, entsteht nichts, " +
+    "und «verstoesse» nennt die betroffenen Elemente zusammen mit den übrigen Angaben. Die Mängel " +
+    "eines angenommenen Diagramms stehen in «maengel», wie bei «uebung_diagramm_setzen»: keine " +
+    "Fehler, die Übung ist angelegt. Fotos nimmt das Werkzeug nicht an. Liefert Kennung, slug und " +
+    "die Adresse der Übung in KiFu.",
+  nurLesen: false,
+  eingabe: UebungAnlegenEingabe,
+  ausgabe: z.object({
+    ...Kopf,
+    sichtbarkeit: z.literal("entwurf"),
+    material: materialSchema().optional().describe("Nur mit Diagramm: das daraus gezählte Material."),
+    maengel: z
+      .array(MangelAusgabe)
+      .optional()
+      .describe("Nur mit Diagramm: seine inhaltlichen Mängel; leer heisst nichts zu melden."),
+  }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(
+      await legeUebungAn(zugang.supabase, zugang.userId, {
+        ...alsUebungInhalt(e),
+        altersstufe: e.altersstufe,
+        diagramm: e.diagramm,
+      }),
+      (w) => ({
+        ...kopf(w, zugang),
+        sichtbarkeit: w.sichtbarkeit,
+        ...(w.material && { material: materialAusgabe(w.material.liste, w.material.ergaenzung) }),
+        ...(w.maengel && { maengel: w.maengel.map(alsMangel) }),
+      }),
+    ),
+});
+
+// ── uebung_aendern (#144) ───────────────────────────────────────────────────
+
+export const uebungAendern = werkzeug({
+  name: "uebung_aendern",
+  titel: "Übung ändern",
+  beschreibung:
+    "Ändert einzelne Angaben einer eigenen Übung. Was du nicht nennst, bleibt, wie es ist; " +
+    "«null» entfernt eine freiwillige Angabe. Bei «spielfeld» und «anzahl_kinder» ersetzt die " +
+    "neue Angabe die bisherige als Ganzes, bei «material» je Teil («liste», «ergaenzung»; «null» " +
+    "leert einen Teil, «material»: «null» beide). KiFu " +
+    `prüft danach die ganze Übung mit denselben Regeln wie das Formular. ${ABLEHNUNG} Wechselt ` +
+    "die Einordnung, prüft KiFu auch die gespeicherten Angaben, die die neue Einordnung nicht " +
+    "kennt, und löscht sie nicht still, sondern nennt sie: mit «null» entfernen und die neuen " +
+    "Pflichtangaben mitsenden. Welche Angaben es gibt, welche Pflicht sind und welche Werte " +
+    "zulässig sind, steht bei «uebung_anlegen» und in «vokabular». Es gelten die Regeln der " +
+    "Altersstufe der Übung; die Altersstufe selbst ändert sich nie. Bild und Feld-Diagramm " +
+    "ändert dieses Werkzeug nicht — das Diagramm setzt «uebung_diagramm_setzen», die Sichtbarkeit " +
+    "«uebung_veroeffentlichen» und " +
+    "«uebung_auf_entwurf_setzen»; steht die Übung schon in einem Training, behält sie dort ihre " +
+    `Fassung. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
+  nurLesen: false,
+  eingabe: UebungAendernEingabe,
+  ausgabe: z.object({ ...Kopf, sichtbarkeit: Sichtbarkeit }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(
+      await aendereUebung(zugang.supabase, zugang.userId, {
+        kennung: e.kennung,
+        altersstufe: e.altersstufe,
+        aenderung: alsUebungPatch(e),
+      }),
+      (w) => ({ ...kopf(w, zugang), sichtbarkeit: w.sichtbarkeit }),
+    ),
+});
+
+// ── uebung_veroeffentlichen / uebung_auf_entwurf_setzen (#144) ──────────────
+
+export const uebungVeroeffentlichen = werkzeug({
+  name: "uebung_veroeffentlichen",
+  titel: "Übung veröffentlichen",
+  beschreibung:
+    "Schaltet eine eigene Übung öffentlich — ohne Rückfrage und in beiden Altersstufen. " +
+    "Tragweite, die du dem Trainer vorher nennen solltest: " +
+    `«${TRAGWEITE_UEBUNG_VEROEFFENTLICHEN}» Es entsteht keine Kopie: Die Übung bleibt ` +
+    "bearbeitbar, und die Öffentlichkeit sieht jeweils den aktuellen Stand. Eine öffentliche " +
+    `Übung bleibt öffentlich. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({ kennung: UebungKennung }),
+  ausgabe: z.object({ ...Kopf, sichtbarkeit: z.literal("oeffentlich"), tragweite: z.string() }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await veroeffentlicheUebung(zugang.supabase, zugang.userId, { kennung: e.kennung }), (w) => ({
+      ...kopf(w, zugang),
+      sichtbarkeit: w.sichtbarkeit,
+      tragweite: w.tragweite,
+    })),
+});
+
+export const uebungAufEntwurfSetzen = werkzeug({
+  name: "uebung_auf_entwurf_setzen",
+  titel: "Übung auf Entwurf setzen",
+  beschreibung:
+    "Nimmt eine eigene öffentliche Übung aus dem öffentlichen Bestand; sie bleibt als privater " +
+    "Entwurf in deinem Bestand. Was andere bereits in ihre Trainings übernommen oder in ihren " +
+    "Bestand kopiert haben, bleibt bestehen — es sind eigenständige Kopien; benachrichtigt wird " +
+    `niemand. Ein Entwurf bleibt Entwurf. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({ kennung: UebungKennung }),
+  ausgabe: z.object({ ...Kopf, sichtbarkeit: z.literal("entwurf") }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await setzeUebungAufEntwurf(zugang.supabase, zugang.userId, { kennung: e.kennung }), (w) => ({
+      ...kopf(w, zugang),
+      sichtbarkeit: w.sichtbarkeit,
+    })),
+});
+
+// ── uebung_kopieren (#317) ──────────────────────────────────────────────────
+
+export const uebungKopieren = werkzeug({
+  name: "uebung_kopieren",
+  titel: "Übung in den eigenen Bestand kopieren",
+  beschreibung:
+    "Kopiert eine Übung, die dein Konto sieht — aus dem Kifu-Manual, die öffentliche eines " +
+    "anderen Kontos oder eine eigene, in beiden Altersstufen — in deinen Bestand, wie «Übung " +
+    "kopieren» in KiFu. Es entsteht ein privater Entwurf mit allen Angaben, eigener Kopie von Bild " +
+    "und Feld-Diagramm und derselben Altersstufe, ohne Verbindung zur Quelle: Spätere Änderungen " +
+    "wirken in keine Richtung, und die Quelle bleibt unberührt. Die Kopie einer eigenen Übung " +
+    "trägt im Namen den Zusatz «(Kopie)», die einer Manual- oder fremden Übung behält den Namen. " +
+    "Danach lässt sich die Kopie mit «uebung_aendern» anpassen. Je Aufruf entsteht genau eine " +
+    "Kopie; scheitert es mit einer Meldung, bleibt nichts zurück (siehe «hinweis»); bei " +
+    "«technisch» oder «konflikt» ist ein zweiter Versuch gefahrlos. Bricht der Vorgang ohne " +
+    "Meldung ab (Zeitüberschreitung), " +
+    "kann die Kopie trotzdem entstanden sein — prüfe dann mit «uebungen_suchen» («nur_eigene»), " +
+    "bevor du es noch einmal versuchst. Übungen aus Trainings («fassung_id» aus «training_abrufen») lassen sich hier nicht " +
+    `kopieren — ihre Kennung ergibt «nicht_gefunden». ${UEBUNG_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({ kennung: UebungKennung }),
+  ausgabe: z.object({ ...Kopf, name: z.string(), sichtbarkeit: z.literal("entwurf") }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await kopiereUebungNach(zugang.supabase, zugang.userId, { kennung: e.kennung }), (w) => ({
+      ...kopf(w, zugang),
+      name: w.name,
+      sichtbarkeit: w.sichtbarkeit,
+    })),
+});

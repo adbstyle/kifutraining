@@ -14,16 +14,16 @@ import {
 } from "@/lib/kern/training";
 import { TRAGWEITE_VEROEFFENTLICHEN } from "@/lib/training-bedingungen";
 import { entferneUebung, setzeDauer, setzeNotiz, setzeUebungsfolge } from "@/lib/kern/fassung";
-import { Wert, alsEnum, kennung, wert } from "@/lib/mcp/bausteine";
 import {
   Einordnung,
-  FassungId,
   Hauptteilkategorie,
-  KENNUNG_FEHLER,
-  TrainingId,
-  VarianteId,
+  Wert,
+  alsEnum,
   kategorienText,
-} from "@/lib/mcp/werkzeuge/trainings";
+  kennung,
+  wert,
+} from "@/lib/mcp/bausteine";
+import { FassungId, KENNUNG_FEHLER, TrainingId, VarianteId } from "@/lib/mcp/werkzeuge/trainings";
 import { werkzeug } from "@/lib/mcp/werkzeug";
 
 /**

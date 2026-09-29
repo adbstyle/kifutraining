@@ -43,8 +43,9 @@ import {
  *    nicht existiert oder jemand anderem privat gehört, bleibt bewusst
  *    ununterscheidbar (#193 OoS 7).
  *  - `keine_rechte`: sichtbar, aber nicht bearbeitbar — ein fremdes
- *    öffentliches Training (PO 2026-09-23: eigene Meldung erlaubt, sie verrät
- *    nichts, was nicht ohnehin öffentlich ist).
+ *    öffentliches Training oder eine Übung aus dem Manual bzw. eines anderen
+ *    Kontos (PO 2026-09-23: eigene Meldung erlaubt, sie verrät nichts, was
+ *    nicht ohnehin öffentlich ist).
  *  - `konflikt`: Nebenläufigkeit, etwa zwei Zuordnungen auf dieselbe Position;
  *    `wiederholbar: true` — nochmals senden genügt (#192 NFR 5).
  *  - `gebremst`: Aufruf-Begrenzung je Konto (#142 AK 12); `retryAfter` in
@@ -59,6 +60,12 @@ export type FehlerArt =
   | "konflikt"
   | "gebremst"
   | "technisch";
+
+/** Ein einzelner Verstoss einer abgelehnten Eingabe (#143 AK 6). `feld` ist
+ *  der Eingabename des Werkzeugs, bei Verschachtelung mit Pfad
+ *  («anzahl_kinder.max», «material.liste[1].menge»). `zulaessig` nennt, wo
+ *  es eine Aufzählung gibt, die zulässigen Werte. */
+export type Verstoss = { feld: string; meldung: string; zulaessig?: readonly string[] };
 
 export type KernFehler = {
   ok: false;
@@ -84,10 +91,15 @@ export type KernFehler = {
   wiederholbar?: boolean;
   /** Nur bei `art: "gebremst"`: Sekunden bis zum nächsten möglichen Aufruf. */
   retryAfter?: number;
-  /** Nur bei `art: "keine_rechte"`: Das Training ist sichtbar, gehört aber
-   *  jemand anderem (fremd und öffentlich). Die Oberfläche meldet es dann wie
+  /** Nur bei `art: "keine_rechte"`: Das Training oder die Übung ist
+   *  sichtbar, gehört aber jemand anderem (fremd und öffentlich, bei Übungen
+   *  auch aus dem Manual). Ein fremdes Training meldet die Oberfläche wie
    *  «nicht gefunden» (`oberflaechenMeldung`), nur der KI-Weg eigens. */
   fremd?: true;
+  /** Alle Verstösse einer abgelehnten Übung auf einmal, statt nur des
+   *  ersten (#143 AK 6) — dann bleiben `feld` und `zulaessig` oben leer.
+   *  Nie eine leere Liste. */
+  verstoesse?: readonly Verstoss[];
   /** Zusatz nur für den Assistenten (die Oberfläche zeigt ihn nie), etwa
    *  «Es ist keine Kopie entstanden.» */
   hinweis?: string;
@@ -137,6 +149,13 @@ export const NICHT_GEFUNDEN = {
  *  Oberfläche bleibt bei «Training nicht gefunden.». */
 export const FREMDES_TRAINING =
   "Dieses Training gehört jemand anderem. Du kannst es ansehen und übernehmen, aber nicht ändern.";
+
+/** Eine sichtbare, aber nicht bearbeitbare Übung — aus dem Kifu-Manual, die
+ *  öffentliche eines anderen Kontos oder eine verwaiste (#144 AK 4). Nur der
+ *  KI-Weg meldet das eigens, wie beim Training. */
+export const FREMDE_UEBUNG =
+  "Diese Übung stammt aus dem Kifu-Manual oder gehört jemand anderem. Du kannst sie ansehen und " +
+  "in deinen Bestand kopieren, aber nicht ändern.";
 
 /** Zwei Aufrufe haben gleichzeitig dieselbe Position vergeben (Unique-Index
  *  `training_ex_pos_*`, #192 NFR 5). Nichts wurde überschrieben; ein zweiter

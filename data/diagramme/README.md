@@ -30,7 +30,10 @@ Farben und Geometrie siehe `web/lib/diagramm.ts` und `web/components/diagramm/sy
 
 Der Fundus ist vollständig: für jede der 75 Manual-Übungen liegt ein Diagramm
 vor (`data/uebungen/<slug>.yaml` ↔ `data/diagramme/<slug>.json`, gleiche Slugs).
-`npm run check:diagramme` prüft den Bestand strukturell.
+`npm run check:diagramme` prüft den Bestand nach denselben Regeln
+(`web/lib/diagramm-pruefung.ts`), die beim Speichern aus der Übungsmaske und
+beim Setzen über den KI-Assistenten gelten — für eine Vorlage ist dabei jeder
+Befund ein Fehler, auch ein blosser Mangel.
 
 Die Diagramme sind in unserer eigenen Diagrammsprache gezeichnet — Symbole,
 Farben und Geometrie stammen aus `web/lib/diagramm.ts` und

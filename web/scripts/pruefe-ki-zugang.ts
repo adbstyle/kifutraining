@@ -1,6 +1,6 @@
 // Prüft die Regeln des KI-Zugangs (Story #142): web/lib/mcp/regeln.ts,
 // web/lib/weiterleitung.ts und die reinen Werkzeug-Bausteine
-// web/lib/mcp/{vokabular,eingaben,ergebnis}.ts. Ohne DB und ohne Netz; läuft
+// web/lib/mcp/{vokabular,eingaben,uebung-eingaben,diagramm-eingaben,ergebnis}.ts. Ohne DB und ohne Netz; läuft
 // im PR-Check neben `typecheck` und den übrigen `check:*`.
 //
 // Der Wert dieser Prüfung liegt an fünf Stellen:
@@ -63,6 +63,16 @@ import { ANZAHL_HINWEIS, HAUPTTEILKATEGORIE_SLUGS, LEER_HINWEIS, OHNE_DAUER_TEIL
 import { istHauptteil } from "../lib/gruppen";
 import { VokabularSchema, baueVokabular } from "../lib/mcp/vokabular";
 import { SucheEingabe } from "../lib/mcp/eingaben";
+import { DiagrammEingabe } from "../lib/mcp/diagramm-eingaben";
+import { z } from "zod";
+import {
+  UEBUNG_ANGABEN,
+  UebungAendernEingabe,
+  UebungAnlegenEingabe,
+  alsUebungInhalt,
+  alsUebungPatch,
+  angabenText,
+} from "../lib/mcp/uebung-eingaben";
 import { ausKern, erfolg, fehlerErgebnis } from "../lib/mcp/ergebnis";
 import type { CallToolResult } from "@modelcontextprotocol/server";
 import type { KernFehler } from "../lib/kern/ergebnis";
@@ -557,6 +567,7 @@ pruefe("fehlerErgebnis: jedes gesetzte Feld eines Kern-Fehlers kommt an", () => 
     wiederholbar: false,
     retryAfter: 7,
     fremd: true,
+    verstoesse: [{ feld: "kategorien", meldung: "m", zulaessig: ["G"] }],
     hinweis: "Es ist keine Kopie entstanden.",
   };
   const aussen = (k: string) =>
@@ -571,10 +582,189 @@ pruefe("fehlerErgebnis: jedes gesetzte Feld eines Kern-Fehlers kommt an", () => 
   // Auch in `fehlend` snake_case (#196): aussen trägt nichts camelCase.
   assert.deepEqual(f.fehlend, [{ bedingung: "einleitung", variante_id: null }]);
   assert.equal(f.variante_id, "v1");
+  // Die Verstösse sind schon in Werkzeug-Feldnamen (#143) und reisen unverändert.
+  assert.deepEqual(f.verstoesse, [{ feld: "kategorien", meldung: "m", zulaessig: ["G"] }]);
   // `false` ist eine Auskunft und bleibt; Leeres fällt weg.
   assert.equal(f.wiederholbar, false);
   const knapp = fehlerVon(fehlerErgebnis({ art: "regel", meldung: "m", zulaessig: [], feld: "" }));
   assert.deepEqual(knapp, { art: "regel", meldung: "m" });
+});
+
+pruefe("fehlerErgebnis: mehrere Verstösse je auf einer Zeile, der Hinweis zuletzt (#143 AK 6)", () => {
+  const r = fehlerErgebnis({
+    art: "regel",
+    meldung: "Die Übung entspricht den Regeln nicht.",
+    verstoesse: [
+      { feld: "kategorien", meldung: "Gehört nicht dazu. Nicht zulässig: D.", zulaessig: ["G", "F", "E"] },
+      { feld: "name", meldung: "Bitte einen Namen angeben." },
+    ],
+    hinweis: "Es ist nichts angelegt worden.",
+  });
+  assert.equal(
+    textVon(r),
+    "[regel] Die Übung entspricht den Regeln nicht.\n" +
+      "- kategorien: Gehört nicht dazu. Nicht zulässig: D. Zulässig: G, F, E.\n" +
+      "- name: Bitte einen Namen angeben.\n" +
+      "Es ist nichts angelegt worden.",
+  );
+  // Ohne Verstösse bleibt es eine Zeile.
+  assert.equal(textVon(fehlerErgebnis({ art: "eingabe", meldung: "m", hinweis: "h" })), "[eingabe] m h");
+});
+
+// ── Übungsangaben (#143) ────────────────────────────────────────────────────
+const ANLEGEN = { name: "Probe", einordnung: "einleitung", kategorien: ["F"], altersstufe: "kinderfussball" };
+
+pruefe("UebungAnlegenEingabe: beide Altersstufen und alle Angaben, Pflicht nur das Nötigste", () => {
+  assert.ok(UebungAnlegenEingabe.safeParse(ANLEGEN).success);
+  assert.ok(
+    UebungAnlegenEingabe.safeParse({ ...ANLEGEN, einordnung: "jun-spiel", kategorien: ["D"], altersstufe: "juniorenfussball" })
+      .success,
+    "die Zugehörigkeit zur Altersstufe entscheidet der Kern, nicht das Schema",
+  );
+  const voll = {
+    ...ANLEGEN,
+    hauptteilkategorie: null,
+    offen_starten: "a",
+    ueben: ["- b"],
+    wetteifern: "c",
+    aufbau: null,
+    varianten: "v",
+    erscheinungsformen: [erscheinungsformSlugs[0], erscheinungsform_juniorenSlugs[0]],
+    uebungstyp: null,
+    feldtyp: "freies_feld",
+    spielfeld: { laenge_m: 20, breite_m: 15 },
+    anzahl_kinder: { min: 6, max: null },
+    material: { liste: [{ art: "pylone", farbe: "rot", menge: 4 }, { art: "tor", menge: 2 }], ergaenzung: ["Pfeife"] },
+  };
+  assert.ok(UebungAnlegenEingabe.safeParse(voll).success);
+  assert.ok(UebungAnlegenEingabe.safeParse({ ...voll, ueben: "b" }).success, "«ueben» auch als Text");
+  for (const pflicht of ["name", "einordnung", "kategorien", "altersstufe"]) {
+    const { [pflicht]: _weg, ...ohne } = ANLEGEN as Record<string, unknown>;
+    assert.ok(!UebungAnlegenEingabe.safeParse(ohne).success, `ohne ${pflicht}`);
+  }
+});
+
+pruefe("UebungAnlegenEingabe: streng — ein unbekanntes oder vertipptes Feld fällt nicht still weg", () => {
+  const abgelehnt = [
+    { ...ANLEGEN, erscheinungsform: ["mutig-tore-erzielen"] }, // Name des Suchfilters
+    { ...ANLEGEN, spielfeld: { laenge: 20, breite_m: 15 } },
+    { ...ANLEGEN, anzahl_kinder: { min: 1, empfohlen: 4 } },
+    { ...ANLEGEN, material: { liste: [{ art: "pylone", menge: 1, farben: "rot" }] } },
+    { ...ANLEGEN, material: { zusatz: ["Pfeife"] } },
+    { ...ANLEGEN, einordnung: "hauptteil-x" },
+    { ...ANLEGEN, altersstufe: "erwachsene" },
+  ];
+  for (const e of abgelehnt) assert.ok(!UebungAnlegenEingabe.safeParse(e).success, JSON.stringify(e));
+});
+
+pruefe("alsUebungInhalt: jede Angabe kommt beim Kern an, null bleibt null", () => {
+  const i = alsUebungInhalt(
+    UebungAnlegenEingabe.parse({
+      ...ANLEGEN,
+      hauptteilkategorie: null,
+      offen_starten: "a",
+      ueben: "b",
+      wetteifern: "c",
+      aufbau: "d",
+      varianten: "v",
+      erscheinungsformen: ["mutig-tore-erzielen"],
+      uebungstyp: "spielform",
+      feldtyp: "freies_feld",
+      spielfeld: { laenge_m: 20, breite_m: 15 },
+      anzahl_kinder: { min: 6, max: 8 },
+      material: { liste: [{ art: "pylone", menge: 4 }], ergaenzung: ["Pfeife"] },
+    }),
+  );
+  assert.deepEqual(i, {
+    name: "Probe",
+    einordnung: "einleitung",
+    kategorien: ["F"],
+    hauptteilkategorie: null,
+    offenStarten: "a",
+    ueben: "b",
+    wetteifern: "c",
+    aufbau: "d",
+    varianten: "v",
+    erscheinungsformen: ["mutig-tore-erzielen"],
+    uebungstyp: "spielform",
+    feldtyp: "freies_feld",
+    spielfeld: { laengeM: 20, breiteM: 15 },
+    anzahlKinder: { min: 6, max: 8 },
+    material: { liste: [{ art: "pylone", menge: 4 }], ergaenzung: ["Pfeife"] },
+  });
+  assert.equal(alsUebungInhalt(UebungAnlegenEingabe.parse({ ...ANLEGEN, spielfeld: null })).spielfeld, null);
+});
+
+pruefe("UebungAendernEingabe: Pflicht nur die Kennung, jede Angabe frei, null nur wo freiwillig (#144)", () => {
+  const K = { kennung: "mein-slug-abc123" };
+  assert.ok(UebungAendernEingabe.safeParse(K).success);
+  assert.ok(UebungAendernEingabe.safeParse({ ...K, name: "Neu", altersstufe: "juniorenfussball" }).success);
+  assert.ok(UebungAendernEingabe.safeParse({ ...K, varianten: null, spielfeld: null, material: null }).success);
+  // Je Teil des Materials: `null` leert genau diesen Teil.
+  const teile = UebungAendernEingabe.parse({ ...K, material: { liste: null, ergaenzung: null } });
+  assert.deepEqual(alsUebungPatch(teile).material, { liste: null, ergaenzung: null });
+  assert.ok(!UebungAendernEingabe.safeParse({ name: "Neu" }).success, "ohne Kennung");
+  assert.ok(!UebungAendernEingabe.safeParse({ kennung: "  " }).success, "leere Kennung");
+  for (const pflicht of ["name", "einordnung", "kategorien"])
+    assert.ok(!UebungAendernEingabe.safeParse({ ...K, [pflicht]: null }).success, `${pflicht}: null`);
+  // Streng wie beim Anlegen: ein vertipptes Feld fällt nicht still weg.
+  assert.ok(!UebungAendernEingabe.safeParse({ ...K, erscheinungsform: [] }).success);
+  assert.ok(!UebungAendernEingabe.safeParse({ ...K, spielfeld: { laenge: 1, breite_m: 2 } }).success);
+});
+
+pruefe("alsUebungPatch: Fehlendes bleibt undefined («bleibt»), null bleibt null («leeren»)", () => {
+  const p = alsUebungPatch(UebungAendernEingabe.parse({ kennung: "k", name: "Neu", aufbau: null, spielfeld: null }));
+  assert.equal(p.name, "Neu");
+  assert.equal(p.aufbau, null);
+  assert.equal(p.spielfeld, null);
+  for (const bleibt of ["einordnung", "kategorien", "offenStarten", "material", "anzahlKinder"] as const)
+    assert.equal(p[bleibt], undefined, bleibt);
+  assert.ok(!("kennung" in p) && !("altersstufe" in p), "Kennung und Altersstufe sind keine Angaben");
+});
+
+// ── Feld-Diagramm (#145) ────────────────────────────────────────────────────
+pruefe("DiagrammEingabe: locker — jedes Element erreicht den Kern, Pflicht ist nur «elemente» als Liste", () => {
+  // Der Kern benennt jedes schlechte Element einzeln; das Schema bricht nie
+  // beim ersten ab.
+  assert.ok(DiagrammEingabe.safeParse({ elemente: [1, "x", null] }).success);
+  assert.ok(DiagrammEingabe.safeParse({ elemente: [], version: 1 }).success);
+  for (const roh of [{}, { elemente: "x" }, null, []]) assert.ok(!DiagrammEingabe.safeParse(roh).success, JSON.stringify(roh));
+  // Nur beim Anlegen; an einer bestehenden Übung setzt «uebung_diagramm_setzen».
+  assert.ok(UebungAnlegenEingabe.safeParse({ ...ANLEGEN, diagramm: { elemente: [] } }).success);
+  assert.ok(!UebungAendernEingabe.safeParse({ kennung: "k", diagramm: { elemente: [] } }).success);
+  z.toJSONSchema(UebungAnlegenEingabe);
+});
+
+pruefe("UEBUNG_ANGABEN: beide Altersstufen mit Pflicht, Ablaufform und Spielfeld-Grenzen (#147 AK 1)", () => {
+  const kifu = angabenText("kinderfussball");
+  const jun = angabenText("juniorenfussball");
+  assert.equal(UEBUNG_ANGABEN, `${kifu} ${jun}`);
+  for (const teil of [
+    "Pflicht sind «name», «einordnung» (auffangen, einleitung, hauptteil, ausklang) und «kategorien» (G, F, E)",
+    "in auffangen, ausklang: «aufbau»",
+    "in einleitung: «offen_starten», «ueben», «wetteifern»",
+    "in hauptteil mit «hauptteilkategorie» fussball-spielen-lernen oder vielseitigkeit-erleben: " +
+      "«hauptteilkategorie», «offen_starten», «ueben», «wetteifern»",
+    "in hauptteil mit «hauptteilkategorie» fussball-spielen: «hauptteilkategorie», «aufbau»",
+    "«feldtyp» (kleinfeld, grossfeld, freies_feld)",
+    "«spielfeld» (nur bei «feldtyp» freies_feld; Länge und Breite zusammen, ganze Meter von 5 bis 120)",
+  ])
+    assert.ok(kifu.includes(teil), `fehlt: ${teil}\n${kifu}`);
+  assert.ok(kifu.endsWith("Nicht vorgesehen: «uebungstyp»."), kifu);
+  // Juniorenfussball: in jedem Block der Beschreibungstext, kein Fahrplan,
+  // keine Hauptteilkategorie, kein Feldtyp; Spielfeld ohne Feldtyp-Bedingung.
+  for (const teil of [
+    "Pflicht sind «name», «einordnung» (jun-auffangen, jun-aufwaermen, jun-spielform-trainingsziel, " +
+      "jun-explosivitaet, jun-spielformen, jun-spiel, jun-abschluss) und «kategorien» (D, C, B, A), " +
+      "dazu in jeder Einordnung «aufbau».",
+    "«uebungstyp» (basisspielform, spielform, isolierte-form; nur in jun-aufwaermen, " +
+      "jun-spielform-trainingsziel, jun-explosivitaet, jun-spielformen, jun-spiel)",
+    "«spielfeld» (Länge und Breite zusammen, ganze Meter von 5 bis 120)",
+    "Nicht vorgesehen: «hauptteilkategorie», «offen_starten», «ueben», «wetteifern», «feldtyp».",
+  ])
+    assert.ok(jun.includes(teil), `fehlt: ${teil}\n${jun}`);
+  // Das Auffangen trägt keine Erscheinungsform.
+  assert.match(jun, /«erscheinungsformen» \([^)]*; nur in jun-aufwaermen, [^)]*jun-abschluss\)/);
 });
 
 pruefe("erfolg: structuredContent ist der Wert selbst, content derselbe als JSON", () => {

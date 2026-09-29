@@ -49,13 +49,17 @@ function ohneLeere<T extends Record<string, unknown>>(o: T): T {
   ) as T;
 }
 
-/** Die Textzeile eines Fehlers: `[<art>] <feld>: <meldung>` samt zulässigen
- *  Werten und Wartezeit — für Clients, die nur `content` lesen. */
+/** Der Text eines Fehlers: `[<art>] <feld>: <meldung>` samt zulässigen
+ *  Werten und Wartezeit — für Clients, die nur `content` lesen. Trägt der
+ *  Fehler mehrere Verstösse (#143 AK 6), folgt je Verstoss eine Zeile
+ *  `- <feld>: <meldung>` und der Hinweis auf einer eigenen letzten Zeile. */
 export function fehlerText(f: Omit<KernFehler, "ok">): string {
   let text = `[${f.art}] ${f.feld ? `${f.feld}: ` : ""}${f.meldung}`;
   if (f.zulaessig?.length) text += ` Zulässig: ${f.zulaessig.join(", ")}.`;
   if (typeof f.retryAfter === "number") text += ` retry_after=${f.retryAfter}`;
-  if (f.hinweis) text += ` ${f.hinweis}`;
+  for (const v of f.verstoesse ?? [])
+    text += `\n- ${v.feld}: ${v.meldung}${v.zulaessig?.length ? ` Zulässig: ${v.zulaessig.join(", ")}.` : ""}`;
+  if (f.hinweis) text += `${f.verstoesse?.length ? "\n" : " "}${f.hinweis}`;
   return text;
 }
 

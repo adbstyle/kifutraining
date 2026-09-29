@@ -23,7 +23,7 @@ import {
   kategorieStufe,
 } from "@/lib/labels";
 import { einordnungNachSpalten } from "@/lib/filter-optionen";
-import { hatDiagramm } from "@/lib/diagramm";
+import { hatDiagramm, parseDiagramm } from "@/lib/diagramm";
 import { NICHT_GEFUNDEN, fehlschlag, ok } from "@/lib/kern/ergebnis";
 import { istUuid } from "@/lib/kennung";
 import { sichtbarkeitVon, wert, wertOderNull, type UebungKopf } from "@/lib/mcp/bausteine";
@@ -122,7 +122,9 @@ function alsUebung(ex: ExerciseDetail, zugang: Zugang): z.infer<typeof UebungAus
     aufbau: ex.aufbau,
     varianten: ex.varianten_text,
     bild_quelle: ex.bild_quelle,
-    diagramm: mitDiagramm ? ex.diagramm : null,
+    // Nachsichtig gelesen wie in der Anzeige: dieselbe Form, die
+    // «uebung_diagramm_setzen» annimmt, ohne Strukturkaputtes.
+    diagramm: mitDiagramm ? parseDiagramm(ex.diagramm) : null,
     // Statt der Eigentümer-ID: fremde Konto-IDs gibt kein Werkzeug aus.
     eigene: ex.owner_id === zugang.userId,
   };
@@ -179,7 +181,8 @@ export const uebungAbrufen = werkzeug({
   beschreibung:
     "Liefert eine Übung mit allen Angaben, die ihre Seite in KiFu zeigt: Einordnung, " +
     "Alterskategorien, Gruppengrösse, Material, Ablauf (methodischer Fahrplan oder " +
-    "Beschreibung), Varianten, Herkunft und das Feld-Diagramm als Vektordaten. " +
+    "Beschreibung), Varianten, Herkunft und das Feld-Diagramm als Vektordaten — in derselben " +
+    "Form, die «uebung_diagramm_setzen» annimmt. " +
     "Kennung ist die id oder der slug aus «uebungen_suchen». Eine Übung, die dein " +
     "Konto nicht sehen darf, gilt als nicht gefunden.",
   nurLesen: true,

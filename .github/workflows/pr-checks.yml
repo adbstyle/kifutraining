@@ -28,6 +28,12 @@ jobs:
       # doppelte IDs, Elemente ausserhalb der Zeichenfläche. parseDiagramm
       # allein würde das durchlassen (Fallback-Rendering).
       - run: npm run check:diagramme
+      # Regeln eines Feld-Diagramms (Story #145/#146): Grenzen gegen Mängel,
+      # dieselben beim Speichern aus der Übungsmaske und beim Setzen über den
+      # KI-Assistenten. Nie ablehnen, was der Editor erzeugt (er klemmt die
+      # Mitte eines Symbols, nicht den Rahmen), beim Normalisieren kein Feld
+      # verlieren, und der Diagramm-Katalog sagt, was die Prüfung tut.
+      - run: npm run check:diagramm-regeln
       # Regeln für Gruppen-Bezeichnungen: der TS-Zwilling des Unique-Index
       # tg_name_je_training. Läuft er auseinander, bekommt der Trainer statt
       # einer Meldung am Feld einen Datenbankfehler.

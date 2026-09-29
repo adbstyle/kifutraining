@@ -10,7 +10,7 @@ import { dirname, resolve } from "node:path";
 import yaml from "js-yaml";
 import { createClient } from "@supabase/supabase-js";
 import { parseDiagramm, type DiagrammData } from "../lib/diagramm";
-import { diagrammProbleme } from "./diagramm-pruefung";
+import { diagrammProbleme } from "../lib/diagramm-pruefung";
 import { materialVorschlag, parseMaterialListe } from "../lib/material";
 import { alsAufzaehlung } from "../lib/freitext";
 
