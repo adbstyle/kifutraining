@@ -27,6 +27,7 @@ import {
   Banner,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
+import { uebungEckdaten } from "@/lib/eckdaten";
 import { ChipsDemo } from "./ChipsDemo";
 import { ChoiceChipDemo } from "./ChoiceChipDemo";
 import { MenuDemo } from "./MenuDemo";
@@ -1304,7 +1305,9 @@ export default function Styleguide() {
           Feldtyp; die Spielerzahl kürzt «Sp.» ab und wird voll vorgelesen.
           Was eine Übung nicht trägt, fällt ohne Platzhalter weg. Die Zeile
           hat höchstens zwei Zeilen (<code>line-clamp-2</code>) und endet
-          sonst in Auslassungspunkten. Überfahren färbt die ganze Karte über{" "}
+          sonst in Auslassungspunkten. Die Zeile setzt{" "}
+          <code>uebungEckdaten</code> zusammen — im Katalog wie in diesen
+          Beispielen. Überfahren färbt die ganze Karte über{" "}
           <code>state</code> — kein eigener Hover-Ton, und die Ebene sitzt auf
           dem Link, der die Karte deckt.
         </p>
@@ -1315,12 +1318,16 @@ export default function Styleguide() {
             ex={{
               slug: "schiessbude",
               name: "Schiessbude",
-              eckdaten: [
-                { text: "G F E" },
-                { text: "Ausklang" },
-                { text: "Kleinfeld" },
-                { text: "6–10 Sp.", vorgelesen: "6–10 Spieler:innen" },
-              ],
+              eckdaten: uebungEckdaten({
+                altersstufe: "kinderfussball",
+                trainingsteil: "ausklang",
+                hauptteilkategorie: null,
+                feldtyp: "kleinfeld",
+                spielfeld_laenge_m: null,
+                spielfeld_breite_m: null,
+                kategorien: ["E", "G", "F"],
+                anzahl_kinder: { min: 6, max: 10 },
+              }),
               herkunft: "manual",
             }}
             actionSlot={
@@ -1336,12 +1343,16 @@ export default function Styleguide() {
             ex={{
               slug: "mein-4-gegen-4",
               name: "Mein 4-gegen-4",
-              eckdaten: [
-                { text: "F E" },
-                { text: "Fussball spielen lernen" },
-                { text: "20 × 15 m" },
-                { text: "8 Sp.", vorgelesen: "8 Spieler:innen" },
-              ],
+              eckdaten: uebungEckdaten({
+                altersstufe: "kinderfussball",
+                trainingsteil: "hauptteil",
+                hauptteilkategorie: "fussball-spielen-lernen",
+                feldtyp: "freies_feld",
+                spielfeld_laenge_m: 20,
+                spielfeld_breite_m: 15,
+                kategorien: ["F", "E"],
+                anzahl_kinder: { min: 8, max: 8 },
+              }),
               herkunft: "user",
               visibility: "private",
             }}
@@ -1350,12 +1361,16 @@ export default function Styleguide() {
             ex={{
               slug: "toblerone",
               name: "Toblerone",
-              eckdaten: [
-                { text: "D C B A" },
-                { text: "Spielformen und unterstützende Übungen" },
-                { text: "40 × 30 m" },
-                { text: "ab 10 Sp.", vorgelesen: "ab 10 Spieler:innen" },
-              ],
+              eckdaten: uebungEckdaten({
+                altersstufe: "juniorenfussball",
+                trainingsteil: "jun-spielformen",
+                hauptteilkategorie: null,
+                feldtyp: null,
+                spielfeld_laenge_m: 40,
+                spielfeld_breite_m: 30,
+                kategorien: ["D", "C", "B", "A"],
+                anzahl_kinder: { min: 10 },
+              }),
               herkunft: "user",
               visibility: "public",
             }}

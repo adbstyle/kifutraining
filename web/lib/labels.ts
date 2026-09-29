@@ -138,7 +138,11 @@ export function herkunftText(
 
 /** Wie die Spielerzahl einer Übung heisst — in Maske, Detailseite, Druck und
  *  Trainings-Ansicht dasselbe Wort. Die Spalte heisst weiter `anzahl_kinder`. */
-export const ANZAHL_SPIELER_LABEL = "Anzahl Spieler:innen";
+export const SPIELER_BEGRIFF = "Spieler:innen";
+export const ANZAHL_SPIELER_LABEL = `Anzahl ${SPIELER_BEGRIFF}`;
+/** Die Kurzform auf der schmalen Übungskarte (#305); vorgelesen wird dort
+ *  `SPIELER_BEGRIFF`. */
+export const SPIELER_KURZ = "Sp.";
 
 /** Die Spielfeldgrösse als Text: «20 × 15 m»; null, solange das Paar aus Länge
  *  und Breite nicht vollständig ist. Eine Schreibweise für Übungsseite und

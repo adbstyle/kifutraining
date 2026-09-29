@@ -1,27 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import {
-  feldtyp as feldtypLabels,
-  hauptteilkategorie as hauptteilkategorieLabels,
-} from "@/lib/vocab";
-import {
   getExercisesFuer,
   type ExerciseFilters,
   type ExerciseListRow,
 } from "@/lib/queries/uebungen-fuer";
-import {
-  traegtFeldtyp,
-  traegtSpielfeldgroesse,
-  type Altersstufe,
-} from "@/lib/altersstufe";
-import {
-  EINORDNUNG_LABEL,
-  anzahlSpielerText,
-  spielfeldText,
-} from "@/lib/labels";
-import { sortStufen } from "@/lib/training";
+import type { Altersstufe } from "@/lib/altersstufe";
+import { uebungEckdaten } from "@/lib/eckdaten";
 import { hatDiagramm } from "@/lib/diagramm";
-import type { Eckdatum, ExerciseCardData } from "@/components/ui";
+import type { ExerciseCardData } from "@/components/ui";
 
 /**
  * Query-Layer für Übungen — der EINZIGE Datenpfad zu `exercises`
@@ -166,54 +153,12 @@ export async function isFavorited(exerciseId: string): Promise<boolean> {
   return data != null;
 }
 
-/** Die Eckdaten einer Übungskarte (#305): Alterskategorien · Einordnung ·
- *  Feld · Spieler:innen. Nicht erfasste Angaben fallen ohne Platzhalter weg.
- *
- *  - Alterskategorien als Buchstaben, aufsteigend G bis A — auch unter
- *    aktivem Alterskategorien-Filter (PO 2026-09-29).
- *  - Einordnung nur auf der feinsten Ebene: im Kinderfussball-Hauptteil die
- *    Hauptteilkategorie, sonst Trainingsteil bzw. Junioren-Block.
- *  - Feld: die Spielfeldgrösse, wo die Übung eine trägt und sie erfasst ist,
- *    sonst der Feldtyp einer Kinderfussball-Übung. Beim freien Feld mit
- *    Massen genügen die Masse. */
-function eckdaten(row: ExerciseListRow): Eckdatum[] {
-  const einordnung = row.hauptteilkategorie
-    ? hauptteilkategorieLabels[
-        row.hauptteilkategorie as keyof typeof hauptteilkategorieLabels
-      ] ?? row.hauptteilkategorie
-    : EINORDNUNG_LABEL[row.trainingsteil] ?? row.trainingsteil;
-  const spielfeld = traegtSpielfeldgroesse(row.altersstufe, row.feldtyp)
-    ? spielfeldText(row.spielfeld_laenge_m, row.spielfeld_breite_m)
-    : null;
-  const feld =
-    spielfeld ??
-    (traegtFeldtyp(row.altersstufe) && row.feldtyp
-      ? feldtypLabels[row.feldtyp as keyof typeof feldtypLabels] ?? row.feldtyp
-      : null);
-  const anzahl = anzahlSpielerText(row.anzahl_kinder);
-
-  return [
-    row.kategorien.length > 0 ? { text: zusammen(sortStufen(row.kategorien).join(" ")) } : null,
-    { text: einordnung },
-    feld ? { text: zusammen(feld) } : null,
-    // Auf der schmalen Karte abgekürzt; vorgelesen wird der volle Begriff.
-    anzahl ? { text: zusammen(`${anzahl} Sp.`), vorgelesen: `${anzahl} Spieler:innen` } : null,
-  ].filter((e): e is Eckdatum => e != null);
-}
-
-/** Kurze Angaben umbrechen nie in sich («ab 4 Sp.», «25 × 18 m»), sondern
- *  nur an den Trennern; umbrechen darf allein die Einordnung, die auf einer
- *  schmalen Karte länger als eine Zeile sein kann. */
-function zusammen(text: string): string {
-  return text.replace(/ /g, "\u00a0");
-}
-
 /** DB-Zeile -> Karten-Props (Labels aus dem Vokabular). */
 export function toCardData(row: ExerciseListRow): ExerciseCardData {
   return {
     slug: row.slug,
     name: row.name,
-    eckdaten: eckdaten(row),
+    eckdaten: uebungEckdaten(row),
     herkunft: row.source,
     visibility: row.visibility,
     bildUrl: row.bild_url,

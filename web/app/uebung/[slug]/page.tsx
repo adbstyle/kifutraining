@@ -26,7 +26,6 @@ import {
   type ExerciseDetail,
 } from "@/lib/queries/exercises";
 import {
-  feldtyp as feldLabels,
   uebungstyp as uebungstypLabels,
   hauptteilkategorie as hkatLabels,
   type KategorieSlug,
@@ -36,10 +35,9 @@ import {
   EINORDNUNG_LABEL,
   ERSCHEINUNGSFORM_LABEL,
   anzahlSpielerText,
-  spielfeldText,
 } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
-import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
+import { feldAngaben } from "@/lib/eckdaten";
 import { AenderungBanner } from "@/components/exercise/MaterialField";
 import {
   AENDERUNG_BEIBEHALTEN,
@@ -123,17 +121,8 @@ export default async function ExerciseDetailPage({
     { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
     { label: ex.name },
   ];
-  // Die Spielfeldgrösse führt das Junioren-Manual an Stelle des Feldtyps
-  // (Story 3 AK 8/10); im Kinderfussball ergänzt sie das freie Feld (#272).
-  const spielfeld = traegtSpielfeldgroesse(ex.altersstufe, ex.feldtyp)
-    ? spielfeldText(ex.spielfeld_laenge_m, ex.spielfeld_breite_m)
-    : null;
-  const meta = [
-    traegtFeldtyp(ex.altersstufe) && ex.feldtyp
-      ? feldLabels[ex.feldtyp as keyof typeof feldLabels]
-      : null,
-    spielfeld,
-  ].filter(Boolean);
+  const { feldtyp, spielfeld } = feldAngaben(ex);
+  const meta = [feldtyp, spielfeld].filter(Boolean);
   const anzahl = anzahlSpielerText(ex.anzahl_kinder);
   const materialListe = parseMaterialListe(ex.material_liste);
   const materialHinweis = isOwner

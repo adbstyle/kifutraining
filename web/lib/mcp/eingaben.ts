@@ -73,8 +73,8 @@ export const SucheEingabe = z.object({
     .describe("Ab welchem Treffer; für die nächste Seite «naechster_offset» übernehmen."),
 });
 
-/** Ein Treffer — die Angaben der Katalog-Karte samt Alterskategorien
- *  (#142 AK 7). */
+/** Ein Treffer — die Angaben der Katalog-Karte (#142 AK 7): der Kopf mit
+ *  Einordnung, Feld und Spielerzahl, dazu die Alterskategorien (#305). */
 export const SuchTreffer = UebungKopf.extend({
   kategorien: z.array(Wert),
 });
@@ -104,10 +104,6 @@ export const UebungAusgabe = UebungKopf.extend({
   trainingsteil: Wert,
   erscheinungsformen: z.array(Wert),
   uebungstyp: Wert.nullable(),
-  spielfeld: z.object({ laenge_m: z.number(), breite_m: z.number() }).nullable(),
-  anzahl_kinder: z
-    .object({ min: z.number().nullable(), max: z.number().nullable() })
-    .nullable(),
   /** Material gegliedert: Liste aus dem Diagramm-Vorrat und freie Ergänzung. */
   material: materialSchema(),
   /** Die drei Stufen sind Freitext wie `aufbau` und `varianten`; `ueben` sind

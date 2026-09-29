@@ -60,6 +60,9 @@ type Grunddaten = Pick<
   | "trainingsteil"
   | "hauptteilkategorie"
   | "feldtyp"
+  | "spielfeld_laenge_m"
+  | "spielfeld_breite_m"
+  | "anzahl_kinder"
   | "kategorien"
   | "source"
   | "visibility"
@@ -76,6 +79,13 @@ function kopf(ex: Grunddaten, zugang: Zugang, mitDiagramm: boolean): z.infer<typ
     einordnung: wert(EINORDNUNG_LABEL, ex.trainingsteil),
     hauptteilkategorie: wertOderNull(hauptteilkategorieLabels, ex.hauptteilkategorie),
     feldtyp: wertOderNull(feldtypLabels, ex.feldtyp),
+    spielfeld:
+      ex.spielfeld_laenge_m != null && ex.spielfeld_breite_m != null
+        ? { laenge_m: ex.spielfeld_laenge_m, breite_m: ex.spielfeld_breite_m }
+        : null,
+    anzahl_kinder: ex.anzahl_kinder
+      ? { min: ex.anzahl_kinder.min ?? null, max: ex.anzahl_kinder.max ?? null }
+      : null,
     herkunft: wert(HERKUNFT_LABEL, herkunftArt(ex.source, ex.visibility)),
     sichtbarkeit: sichtbarkeitVon(ex.visibility),
     bild_url: ex.bild_url,
@@ -101,13 +111,6 @@ function alsUebung(ex: ExerciseDetail, zugang: Zugang): z.infer<typeof UebungAus
     trainingsteil: wert(teilLabels, teilDerEinordnung(stufe, ex.trainingsteil)),
     erscheinungsformen: (ex.erscheinungsform ?? []).map((f) => wert(ERSCHEINUNGSFORM_LABEL, f)),
     uebungstyp: wertOderNull(uebungstypLabels, ex.uebungstyp),
-    spielfeld:
-      ex.spielfeld_laenge_m != null && ex.spielfeld_breite_m != null
-        ? { laenge_m: ex.spielfeld_laenge_m, breite_m: ex.spielfeld_breite_m }
-        : null,
-    anzahl_kinder: ex.anzahl_kinder
-      ? { min: ex.anzahl_kinder.min ?? null, max: ex.anzahl_kinder.max ?? null }
-      : null,
     material: materialAusgabe(parseMaterialListe(ex.material_liste), ex.material ?? []),
     methodischer_fahrplan: fahrplan
       ? {
