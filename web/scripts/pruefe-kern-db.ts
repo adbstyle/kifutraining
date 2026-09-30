@@ -1114,7 +1114,7 @@ try {
       uebungen: 3,
       warOeffentlich: true,
       teamId: null,
-      terminEntfiel: false,
+      terminBleibt: null,
     });
     fehler(await trainingAbrufen(a.supabase, a.id, { trainingId: k1 }), "nicht_gefunden", "Training nicht gefunden.");
     fehler(await loescheTraining(a.supabase, a.id, { trainingId: k1 }), "nicht_gefunden", "Training nicht gefunden.");

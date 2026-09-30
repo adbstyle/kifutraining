@@ -79,10 +79,11 @@ export async function getTeamAufloesungsInfo(
     .select("id", { count: "exact", head: true })
     .eq("team_id", teamId);
 
-  const { data: termine } = await supabase
+  // Alle Termine des Teams, auch jene ohne Training (#322 PC 10).
+  const { count: termine } = await supabase
     .from("training_termine")
-    .select("id, trainings!inner ( team_id )")
-    .eq("trainings.team_id", teamId);
+    .select("id", { count: "exact", head: true })
+    .eq("team_id", teamId);
 
-  return { trainings: trainings ?? 0, termine: (termine ?? []).length };
+  return { trainings: trainings ?? 0, termine: termine ?? 0 };
 }

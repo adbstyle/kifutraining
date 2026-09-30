@@ -59,8 +59,9 @@ export type TrainingGeloescht = {
    *  verschwunden (#197 PC 6). */
   warOeffentlich: boolean;
   teamId: string | null;
-  /** Hatte das Team-Training einen Termin? Die Kaskade nimmt ihn mit. */
-  terminEntfiel: boolean;
+  /** Der Termin, dem das Team-Training zugeordnet war: Er bleibt ohne
+   *  Training im Trainingsplan (#322 PC 7, 8). */
+  terminBleibt: { id: string; datum: string } | null;
 };
 
 /** Ein Training löschen, das dieses Konto bearbeiten darf: ein eigenes oder
@@ -94,7 +95,7 @@ export async function loescheTraining(
       .from("training_exercises")
       .select("id", { count: "exact", head: true })
       .eq("training_id", zeile.id),
-    supabase.from("training_termine").select("id").eq("training_id", zeile.id).maybeSingle(),
+    supabase.from("training_termine").select("id, datum").eq("training_id", zeile.id).maybeSingle<{ id: string; datum: string }>(),
   ]);
   if (fassungen.error) return ausDbFehler(fassungen.error);
   if (termin.error) return ausDbFehler(termin.error);
@@ -107,6 +108,6 @@ export async function loescheTraining(
     uebungen: fassungen.count ?? 0,
     warOeffentlich: zeile.visibility === "public",
     teamId: zeile.team_id,
-    terminEntfiel: termin.data !== null,
+    terminBleibt: termin.data ?? null,
   });
 }

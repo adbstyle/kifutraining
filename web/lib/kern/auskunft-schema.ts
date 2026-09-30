@@ -162,6 +162,7 @@ function baueSchema(streng: boolean) {
       id: z.string(),
       datum: z.string(),
       beginn: z.string().nullable(),
+      ende: z.string().nullable(),
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
       anstehend: z.boolean(),

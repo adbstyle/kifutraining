@@ -494,24 +494,23 @@ export async function getTrainingPoolFuer(
 // ── Team-Trainings (Team-Epic Story 5, #198 AK 2) ────────────────────────────
 
 /** Ein Team-Training im Bestand des Teams. Wie eine Pool-Zeile, zusätzlich mit
- *  dem Termin, falls es angesetzt ist. */
+ *  dem Termin, falls es eingeplant ist. */
 export type TeamTrainingRow = TrainingListRow & {
-  /** Der Termin dieses Trainings, falls es angesetzt ist. Höchstens einer je
-   *  Training — eine weitere Einheit entsteht als Kopie (Story 8). Beginn, Ort
-   *  und Bemerkung dienen als Vorbelegung beim erneuten Ansetzen, damit der
-   *  Weg aus dem Bestand derselbe ist wie aus dem Plan (Story 16 AK 3). */
+  /** Der Termin dieses Trainings, falls es eingeplant ist. Höchstens einer je
+   *  Training — eine weitere Einheit entsteht als Kopie (Story 8). */
   termin: {
     id: string;
-    /** Der Tag der Einheit als `YYYY-MM-DD`. Er unterscheidet angesetzte
+    /** Der Tag der Einheit als `YYYY-MM-DD`. Er unterscheidet eingeplante
      *  Einheiten desselben Trainings im Bestand voneinander (#156 AK 7). */
     datum: string;
     beginn: string | null;
+    ende: string | null;
     ort: string | null;
     bemerkung: string | null;
   } | null;
 };
 
-const TEAM_LIST_SELECT = `${LIST_SELECT}, training_termine ( id, datum, beginn, ort, bemerkung )`;
+const TEAM_LIST_SELECT = `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung )`;
 
 export type TeamTrainingFilter = {
   /** Sucht im Namen, wie die Trainings-Übersicht (`search_text`). */
@@ -560,6 +559,7 @@ export async function getTeamTrainingsFuer(
       id: string;
       datum: string;
       beginn: string | null;
+      ende: string | null;
       ort: string | null;
       bemerkung: string | null;
     };
@@ -574,6 +574,7 @@ export async function getTeamTrainingsFuer(
             id: termin.id,
             datum: termin.datum,
             beginn: kurzeZeit(termin.beginn),
+            ende: kurzeZeit(termin.ende),
             ort: termin.ort,
             bemerkung: termin.bemerkung,
           }
