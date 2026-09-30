@@ -4,6 +4,7 @@ import { createContext, useContext, useRef, useState, useTransition } from "reac
 import { useRouter } from "next/navigation";
 import { Button, Dialog } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
+import { AusfallDialog } from "./AusfallDialog";
 import { EntfallendBestaetigung } from "./EntfallendBestaetigung";
 import { ReichweiteDialog } from "./ReichweiteDialog";
 import { SerieDialog } from "./SerieDialog";
@@ -16,9 +17,11 @@ import {
   entferneSerieAktion,
   entferneTerminAktion,
   folgeDerSerieAktion,
+  lasseAusfallenAktion,
   legeSerieFestAktion,
   legeTerminFestAktion,
   loeseTrainingAktion,
+  nimmAusfallZurueckAktion,
   ordneTrainingZuAktion,
   setzeVerantwortlicheAktion,
   vorschauSerieAktion,
@@ -52,6 +55,9 @@ export type TerminAktionen = {
   zuordnen: (t: TerminZeile) => void;
   loesen: (t: TerminZeile) => void;
   entfernen: (t: TerminZeile) => void;
+  /** Ausfall markieren oder, bei einem ausgefallenen Termin, den Grund ändern (#327). */
+  ausfallen: (t: TerminZeile) => void;
+  ausfallZuruecknehmen: (t: TerminZeile) => void;
   pending: boolean;
 };
 
@@ -130,6 +136,7 @@ export function TerminBereich({
   const [bearbeiten, setBearbeiten] = useState<TerminZeile | null>(null);
   const [zuordnen, setZuordnen] = useState<TerminZeile | null>(null);
   const [entfernen, setEntfernen] = useState<TerminZeile | null>(null);
+  const [ausfall, setAusfall] = useState<TerminZeile | null>(null);
   const [reichweite, setReichweite] = useState<ReichweiteFrage | null>(null);
   const [bestaetigen, setBestaetigen] = useState<SerienSchritt | null>(null);
   const [dialogFehler, setDialogFehler] = useState<string | undefined>();
@@ -354,7 +361,8 @@ export function TerminBereich({
     neu: (datum) => { neuerLauf(); setDialogFehler(undefined); setNeu(datum ?? ""); },
     neueSerie: (datum) => { setDialogFehler(undefined); setSerieNeu(datum ?? ""); },
     bearbeiten: (t) => { neuerLauf(); setDialogFehler(undefined); setBearbeiten(t); },
-    zuordnen: (t) => { setDialogFehler(undefined); setZuordnen(t); },
+    // Ein ausgefallener Termin trägt kein Training (#327 AK 9): kein Dialog.
+    zuordnen: (t) => { if (t.ausgefallen) return; setDialogFehler(undefined); setZuordnen(t); },
     loesen: (t) =>
       t.training &&
       !pending &&
@@ -367,6 +375,9 @@ export function TerminBereich({
       }
       else setEntfernen(t);
     },
+    ausfallen: (t) => { neuerLauf(); setDialogFehler(undefined); setAusfall(t); },
+    ausfallZuruecknehmen: (t) =>
+      !pending && lauf(() => nimmAusfallZurueckAktion(t.id), () => "Ausfall zurückgenommen.", () => {}),
     pending,
   };
 
@@ -488,6 +499,29 @@ export function TerminBereich({
             true,
           )
         }
+      />
+
+      <AusfallDialog
+        termin={ausfall}
+        pending={pending}
+        fehler={dialogFehler}
+        onClose={() => {
+          if (!ausfall) return;
+          neuerLauf();
+          setAusfall(null);
+        }}
+        onSpeichern={(grund) => {
+          const t = ausfall;
+          if (!t) return;
+          // Der Grund geht immer als Text mit; «» leert ihn (ausdrücklich «Grund setzen»).
+          lauf(
+            () => lasseAusfallenAktion(t.id, grund, t.training?.id ?? null),
+            () => (t.ausgefallen ? "Grund gespeichert." : "Termin als ausgefallen markiert."),
+            () => setAusfall(null),
+            true,
+            laufNr.current,
+          );
+        }}
       />
 
       <Dialog

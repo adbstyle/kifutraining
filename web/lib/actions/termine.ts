@@ -3,8 +3,10 @@
 import {
   aendereTermin,
   entferneTermin,
+  lasseAusfallen,
   legeTerminFest,
   loeseTraining,
+  nimmAusfallZurueck,
   ordneTrainingZu,
   type Zuordnung,
 } from "@/lib/kern/termine";
@@ -90,6 +92,34 @@ export async function entferneTerminAktion(
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
+  return { ok: true };
+}
+
+/** Einen Termin ausfallen lassen oder den Grund eines ausgefallenen ändern
+ *  (#327). Die Oberfläche sendet den Grund immer als Text — «» leert ihn —,
+ *  also ist das der ausdrückliche Weg «Grund setzen». `erwartetesTraining`
+ *  ist, was sie bei der Auswahl sah: Das Training wird gelöst (PO 17). */
+export async function lasseAusfallenAktion(
+  terminId: string,
+  grund: string,
+  erwartetesTraining: string | null,
+): Promise<{ ok: true } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await lasseAusfallen(a.supabase, a.userId, { terminId, grund, erwartetesTraining });
+  if (!r.ok) return { ok: false, error: r.meldung };
+  revalidiereTeam(r.wert.teamId);
+  if (r.wert.geloestesTraining) revalidiereTraining(r.wert.geloestesTraining);
+  return { ok: true };
+}
+
+/** Den Ausfall eines Termins zurücknehmen (#327 AK 6). */
+export async function nimmAusfallZurueckAktion(terminId: string): Promise<{ ok: true } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await nimmAusfallZurueck(a.supabase, a.userId, { terminId });
+  if (!r.ok) return { ok: false, error: r.meldung };
+  revalidiereTeam(r.wert.teamId);
   return { ok: true };
 }
 

@@ -37,7 +37,8 @@ export function TerminWahlDialog({
   useEffect(() => { setGewaehlt(null); setArt(null); }, [training]);
 
   const liste = useMemo(
-    () => termine.filter((t) => t.id !== training?.termin?.id),
+    // Ein ausgefallener Termin trägt auf keinem Weg ein Training (#327 AK 9).
+    () => termine.filter((t) => t.id !== training?.termin?.id && !t.ausgefallen),
     [termine, training],
   );
   const wahl = liste.find((t) => t.id === gewaehlt) ?? null;
