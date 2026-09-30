@@ -125,6 +125,7 @@ const SuchenTreffer = z.object({
       ende: z.string().nullable(),
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
+      serie_id: z.string().nullable(),
       anstehend: z.boolean(),
     })
     .nullable()
@@ -175,7 +176,20 @@ export const trainingsSuchen = werkzeug({
           varianten_zahl: t.variantenZahl,
           urheber: t.urheber,
           geaendert_am: t.updatedAt,
-          ...(t.termin !== undefined ? { termin: t.termin } : {}),
+          ...(t.termin !== undefined
+            ? {
+                termin: t.termin && {
+                  id: t.termin.id,
+                  datum: t.termin.datum,
+                  beginn: t.termin.beginn,
+                  ende: t.termin.ende,
+                  ort: t.termin.ort,
+                  bemerkung: t.termin.bemerkung,
+                  serie_id: t.termin.serieId,
+                  anstehend: t.termin.anstehend,
+                },
+              }
+            : {}),
         })),
         weitere: w.weitere,
       }),

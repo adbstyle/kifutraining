@@ -51,7 +51,9 @@ import {
   teamsAbrufen,
   terminAendern,
   terminEntfernen,
+  terminDerSerieFolgen,
   terminFestlegen,
+  terminserieFestlegen,
   trainingLoesen,
   trainingZuordnen,
 } from "@/lib/mcp/werkzeuge/team";
@@ -105,6 +107,8 @@ export const WERKZEUGE = [
   terminFestlegen,
   terminAendern,
   terminEntfernen,
+  terminserieFestlegen,
+  terminDerSerieFolgen,
   trainingZuordnen,
   trainingLoesen,
 ] as const;

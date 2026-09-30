@@ -94,6 +94,8 @@ export type TrefferTermin = {
   ende: string | null;
   ort: string | null;
   bemerkung: string | null;
+  /** Die Terminserie des Termins; `null` bei einem einzelnen (#324). */
+  serieId: string | null;
   /** Heute oder später, am Trainingsort — wie der Plan teilt. */
   anstehend: boolean;
 };

@@ -1425,6 +1425,7 @@ try {
       ende: "20:00",
       ort: "Allmend",
       bemerkung: "Leibchen",
+      serieId: null,
       anstehend: true,
     });
     assert.equal(suche.treffer.find((t) => t.id === vergangenes)!.termin?.anstehend, false);
@@ -1442,6 +1443,7 @@ try {
       ende: "20:00",
       ort: "Allmend",
       bemerkung: "Leibchen",
+      serie_id: null,
       anstehend: true,
     });
     assert.equal(wert(await trainingAbrufen(a.supabase, a.id, { trainingId: persoenlich })).termin, null);

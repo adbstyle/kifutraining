@@ -542,6 +542,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     ende: "20:00",
     ort: "Allmend",
     bemerkung: null,
+    serie_id: null,
     anstehend: true,
   });
   // Der heutige Tag zählt ganz zum Anstehenden — wie im Plan (`teilePlan`).
@@ -1514,6 +1515,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#198": ["teams_abrufen", "team_plan_abrufen"],
     "#322": ["termin_festlegen", "termin_aendern", "termin_entfernen"],
     "#323": ["training_zuordnen", "training_loesen"],
+    "#324": ["terminserie_festlegen"],
+    "#326": ["termin_der_serie_folgen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
