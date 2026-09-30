@@ -32,6 +32,14 @@ as $$
    where extract(isodow from d)::smallint = any(p_wochentage)
 $$;
 
+-- Reine Hilfsfunktionen: anon darf sie nicht über PostgREST aufrufen
+-- (/rpc/serien_tage mit riesigem Bereich kostet CPU). CHECK-Constraint und die
+-- SECURITY-DEFINER-RPCs laufen als Eigentümer und brauchen kein Recht.
+revoke all on function wochentage_gueltig(smallint[]) from public, anon;
+grant execute on function wochentage_gueltig(smallint[]) to authenticated, service_role;
+revoke all on function serien_tage(smallint[], date, date) from public, anon;
+grant execute on function serien_tage(smallint[], date, date) to authenticated, service_role;
+
 create table termin_serien (
   id uuid primary key default gen_random_uuid(),
   team_id uuid not null references teams(id) on delete cascade,
@@ -102,9 +110,10 @@ create policy tsl_select on termin_serien_luecken for select to authenticated
   using (exists (select 1 from termin_serien s where s.id = serie_id and ist_team_mitglied(s.team_id)));
 -- Geschrieben wird nur über die RPCs: Serie und ihre Termine ändern sich in
 -- einer Transaktion (Story 5 PC 15).
+-- Erst alles entziehen (die Default-Privilegien vergeben auch REFERENCES und
+-- TRIGGER), dann nur das Lesen für angemeldete Nutzer.
+revoke all on termin_serien, termin_serien_luecken from anon, authenticated;
 grant select on termin_serien, termin_serien_luecken to authenticated;
-revoke insert, update, delete, truncate on termin_serien, termin_serien_luecken from anon, authenticated;
-revoke select on termin_serien, termin_serien_luecken from anon;
 
 -- Festlegen (Story 3 AK 1–7, PC 1–3) -----------------------------------------
 create function terminserie_festlegen(
@@ -127,6 +136,7 @@ begin
   if auth.uid() is null then raise exception 'not authenticated'; end if;
   if not ist_team_mitglied(p_team) then raise exception 'TEAM_NICHT_GEFUNDEN'; end if;
   if not wochentage_gueltig(p_wochentage) then raise exception 'SERIE_WOCHENTAGE'; end if;
+  if p_von is null or p_bis is null then raise exception 'SERIE_ZEITRAUM_FEHLT'; end if;
   if p_bis < p_von then raise exception 'SERIE_ENDE_VOR_BEGINN'; end if;
   if p_bis > (p_von + interval '1 year')::date then raise exception 'SERIE_ZU_LANG'; end if;
   if p_beginn is null or p_ende is null or p_ende <= p_beginn then raise exception 'SERIE_ZEIT'; end if;
