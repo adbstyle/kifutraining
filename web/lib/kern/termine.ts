@@ -45,7 +45,8 @@ import {
 
 export const TERMIN_FELD = { feld: "termin_id" } as const;
 
-export const TERMIN_ROH = "id, team_id, training_id, datum, beginn, ende, ort, bemerkung";
+export const TERMIN_ROH =
+  "id, team_id, training_id, datum, beginn, ende, ort, bemerkung, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend";
 
 export type TerminRoh = {
   id: string;
@@ -56,6 +57,12 @@ export type TerminRoh = {
   ende: string | null;
   ort: string | null;
   bemerkung: string | null;
+  /** Nur Serientermine tragen eine Serie; die Flags zeigen, welche Angaben
+   *  von ihr abweichen. */
+  serie_id: string | null;
+  zeit_abweichend: boolean;
+  ort_abweichend: boolean;
+  bemerkung_abweichend: boolean;
 };
 
 function feldFehler(p: TerminProblem | null): KernFehler | null {
@@ -200,8 +207,20 @@ export async function aendereTermin(
   if (e.ort !== undefined) aenderung.ort = neu.ort;
   if (e.bemerkung !== undefined) aenderung.bemerkung = neu.bemerkung;
 
+  // «Nur dieser» (#326 AK 1, PC 1): Jede Angabe eines Serientermins, die sich
+  // ändert, weicht danach ab — bis man sie wieder der Serie folgen lässt. Nur
+  // was übergeben wird und sich vom Stand unterscheidet, setzt ein Flag; ein
+  // schon gesetztes bleibt ungeschrieben stehen. Das Datum braucht keines: Es
+  // weicht ab, sobald es nicht mehr auf dem Serientag liegt.
+  const flags: Record<string, boolean> = {};
+  if (t.serie_id) {
+    if ("beginn" in aenderung && (neu.beginn !== t.beginn || neu.ende !== t.ende)) flags.zeit_abweichend = true;
+    if ("ort" in aenderung && neu.ort !== t.ort) flags.ort_abweichend = true;
+    if ("bemerkung" in aenderung && neu.bemerkung !== t.bemerkung) flags.bemerkung_abweichend = true;
+  }
+
   const erwartet = e.erwartetesTraining !== undefined ? e.erwartetesTraining : t.training_id;
-  const basis = supabase.from("training_termine").update(aenderung).eq("id", t.id);
+  const basis = supabase.from("training_termine").update({ ...aenderung, ...flags }).eq("id", t.id);
   const { data, error } = await (erwartet === null
     ? basis.is("training_id", null)
     : basis.eq("training_id", erwartet)

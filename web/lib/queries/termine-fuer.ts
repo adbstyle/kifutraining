@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
+import type { Wochentag } from "@/lib/serie";
 import { sortStufen } from "@/lib/training";
 import type { KategorieSlug } from "@/lib/vocab";
 
@@ -19,6 +20,24 @@ import type { KategorieSlug } from "@/lib/vocab";
  * UTC. Sichtbar sind Termine nur Mitgliedern des Teams (RLS `tt_select`).
  */
 
+/** Die Regel und die Werte der Serie, zu der ein Termin gehört (#324, #326). */
+export type TerminSerie = {
+  id: string;
+  version: number;
+  wochentage: Wochentag[];
+  beginnDatum: string;
+  endDatum: string;
+  beginn: string;
+  ende: string;
+  ort: string | null;
+  bemerkung: string | null;
+};
+
+/** Welche Angaben eines Serientermins von seiner Serie abweichen (#326 AK 12,
+ *  14; PO 3). Das Datum weicht ab, wenn der Termin nicht mehr an seinem
+ *  Serientag liegt. */
+export type Abweichung = "datum" | "zeit" | "ort" | "bemerkung";
+
 export type TerminZeile = {
   id: string;
   teamId: string;
@@ -31,6 +50,12 @@ export type TerminZeile = {
   bemerkung: string | null;
   /** `null`: Der Termin trägt (noch) kein Training (#322). */
   training: { id: string; name: string; stufen: KategorieSlug[] } | null;
+  /** `null`: ein einzelner Termin ohne Serie. */
+  serie: TerminSerie | null;
+  /** Der Tag der Serienregel, für den der Termin angelegt wurde. */
+  serienTag: string | null;
+  /** Leer für einzelne Termine und Serientermine ohne Abweichung. */
+  abweichungen: Abweichung[];
 };
 
 type RawTermin = {
@@ -42,7 +67,22 @@ type RawTermin = {
   ort: string | null;
   bemerkung: string | null;
   created_at: string;
+  serien_tag: string | null;
+  zeit_abweichend: boolean;
+  ort_abweichend: boolean;
+  bemerkung_abweichend: boolean;
   trainings: { id: string; name: string; stufen: string[] | null } | null;
+  termin_serien: {
+    id: string;
+    version: number;
+    wochentage: number[];
+    beginn_datum: string;
+    end_datum: string;
+    beginn: string;
+    ende: string;
+    ort: string | null;
+    bemerkung: string | null;
+  } | null;
 };
 
 /** Beginn oder Ende auf `HH:MM` kürzen — Postgres liefert `HH:MM:SS`.
@@ -56,7 +96,8 @@ export function kurzeZeit(t: string | null): string | null {
 }
 
 const TERMIN_SELECT =
-  "id, team_id, datum, beginn, ende, ort, bemerkung, created_at, trainings ( id, name, stufen )";
+  "id, team_id, datum, beginn, ende, ort, bemerkung, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, " +
+  "trainings ( id, name, stufen ), termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung )";
 
 function mapTermin(t: RawTermin): TerminZeile {
   return {
@@ -70,6 +111,28 @@ function mapTermin(t: RawTermin): TerminZeile {
     training: t.trainings
       ? { id: t.trainings.id, name: t.trainings.name, stufen: sortStufen(t.trainings.stufen ?? []) }
       : null,
+    serie: t.termin_serien
+      ? {
+          id: t.termin_serien.id,
+          version: t.termin_serien.version,
+          wochentage: t.termin_serien.wochentage as Wochentag[],
+          beginnDatum: t.termin_serien.beginn_datum,
+          endDatum: t.termin_serien.end_datum,
+          beginn: kurzeZeit(t.termin_serien.beginn)!,
+          ende: kurzeZeit(t.termin_serien.ende)!,
+          ort: t.termin_serien.ort,
+          bemerkung: t.termin_serien.bemerkung,
+        }
+      : null,
+    serienTag: t.serien_tag,
+    abweichungen: t.termin_serien
+      ? ([
+          t.serien_tag !== t.datum && "datum",
+          t.zeit_abweichend && "zeit",
+          t.ort_abweichend && "ort",
+          t.bemerkung_abweichend && "bemerkung",
+        ].filter(Boolean) as Abweichung[])
+      : [],
   };
 }
 

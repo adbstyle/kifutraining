@@ -145,6 +145,7 @@ export const SERIE_MELDUNG = {
   SERIE_BELEGUNG_GEAENDERT:
     "Seit deiner Auswahl hat sich geändert, welche wegfallenden Termine ein Training tragen. Sieh dir die Änderung noch einmal an.",
   KEINE_AENDERUNG: "Gib mindestens eine Angabe an, die sich ändern soll.",
+  SERIE_ANGABEN_UNGUELTIG: "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort oder Bemerkung.",
 } as const;
 
 /** Der KI-Weg verlangt eine ausdrückliche Bestätigung, wenn «dieser und
