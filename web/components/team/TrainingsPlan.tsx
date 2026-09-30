@@ -18,14 +18,16 @@ export function TrainingsPlan({ plan, heute }: { plan: Plan; heute: string }) {
   const nichtsMehrOffen = plan.kommend.length === 0;
   return (
     <>
-      <section>
-        <h3 className="type-title-small text-on-surface-mittel">
-          Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
-        </h3>
-        <ol className="mt-2 flex flex-col gap-3">
-          {plan.kommend.map((t) => <TerminKarte key={t.id} t={t} heute={heute} />)}
-        </ol>
-      </section>
+      {!nichtsMehrOffen && (
+        <section>
+          <h3 className="type-title-small text-on-surface-mittel">
+            Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
+          </h3>
+          <ol className="mt-2 flex flex-col gap-3">
+            {plan.kommend.map((t) => <TerminKarte key={t.id} t={t} heute={heute} />)}
+          </ol>
+        </section>
+      )}
       {plan.vergangen.length > 0 && (
         <Disclosure
           key={nichtsMehrOffen ? "allein" : "mit-kommendem"}
@@ -84,13 +86,14 @@ export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
           <div className="flex shrink-0 gap-0.5">
             {t.training && (
               <Tooltip label="Durchführen">
-                <IconButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`} icon={PlayCircle} label={`${t.training.name} durchführen`} />
+                <IconButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`} icon={PlayCircle} label={`${t.training.name} durchführen`} size="sm" />
               </Tooltip>
             )}
             <Tooltip label={t.training ? "Training ersetzen" : "Training zuordnen"}>
-              <IconButton icon={CalendarPlus} label={`Training für ${datumKurz(t.datum)} ${t.training ? "ersetzen" : "zuordnen"}`} onClick={() => a.zuordnen(t)} />
+              <IconButton icon={CalendarPlus} label={`Training für ${datumKurz(t.datum)} ${t.training ? "ersetzen" : "zuordnen"}`} size="sm" onClick={() => a.zuordnen(t)} />
             </Tooltip>
             <OverflowMenu
+              size="sm"
               label={`Weitere Aktionen zum Termin ${datumKurz(t.datum)}`}
               items={[
                 { label: "Termin ändern", icon: Pencil, onSelect: () => a.bearbeiten(t) },

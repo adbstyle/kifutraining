@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Button, ChoiceChip, ChoiceChipGroup, Dialog } from "@/components/ui";
+import { AuswahlListe, Button, ChoiceChip, ChoiceChipGroup, Dialog } from "@/components/ui";
 import { datumKurz } from "@/lib/zeit";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
@@ -18,6 +18,7 @@ export function TrainingWahlDialog({
   trainings,
   heute,
   pending,
+  fehler,
   onClose,
   onWahl,
 }: {
@@ -25,6 +26,8 @@ export function TrainingWahlDialog({
   trainings: TeamTrainingRow[];
   heute: string;
   pending?: boolean;
+  /** Die Meldung des Servers; der Dialog bleibt dann offen. */
+  fehler?: string;
   onClose: () => void;
   onWahl: (w: TrainingWahl) => void;
 }) {
@@ -68,6 +71,7 @@ export function TrainingWahlDialog({
         </>
       }
     >
+      {fehler && <p role="alert" className="mb-3 text-error">{fehler}</p>}
       {termin?.training && (
         <p className="mb-3">
           «{termin.training.name}» bleibt ohne Termin im Team-Bestand.
@@ -76,24 +80,16 @@ export function TrainingWahlDialog({
       {liste.length === 0 ? (
         <p>Im Team-Bestand gibt es noch kein weiteres Training.</p>
       ) : (
-        <ul role="listbox" aria-label="Trainings des Teams" className="flex max-h-80 flex-col gap-1 overflow-y-auto">
-          {liste.map((t) => (
-            <li key={t.id}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={t.id === gewaehlt}
-                onClick={() => { setGewaehlt(t.id); setArt(null); }}
-                className={`focus-ring w-full rounded-flaeche px-3 py-2 text-left ${t.id === gewaehlt ? "bg-elev-08" : "hover:bg-elev-04"}`}
-              >
-                <span className="block text-on-surface">{t.name}</span>
-                <span className="type-body-small text-on-surface-mittel">
-                  {t.termin ? `Eingeplant · ${datumKurz(t.termin.datum)}` : "Noch nicht eingeplant"}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <AuswahlListe
+          ariaLabel="Trainings des Teams"
+          items={liste.map((t) => ({
+            id: t.id,
+            titel: t.name,
+            untertitel: t.termin ? `Eingeplant · ${datumKurz(t.termin.datum)}` : "Noch nicht eingeplant",
+          }))}
+          wert={gewaehlt}
+          onWahl={(id) => { setGewaehlt(id); setArt(null); }}
+        />
       )}
       {wahl?.termin && anstehend && (
         <div className="mt-4">

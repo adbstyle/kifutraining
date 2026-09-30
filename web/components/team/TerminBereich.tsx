@@ -14,6 +14,7 @@ import {
   ordneTrainingZuAktion,
   type TerminFelder,
 } from "@/lib/actions/termine";
+import { TERMIN_MELDUNG } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
@@ -32,6 +33,19 @@ export type TerminAktionen = {
 };
 
 const Kontext = createContext<TerminAktionen | null>(null);
+
+/** Sagt die Meldung «seit deiner Auswahl hat sich etwas geändert» (PO 17) oder
+ *  «gibt es nicht mehr»? Dieselben Sätze wie im Fachkern (TERMIN_MELDUNG); eine
+ *  Meldung kann einen Zusatz tragen (Kopie geblieben), darum Präfix-Vergleich. */
+const VERALTET_MARKER = [
+  "TERMIN_BELEGUNG_GEAENDERT",
+  "TRAINING_EINPLANUNG_GEAENDERT",
+  "TERMIN_NICHT_GEFUNDEN",
+  "TRAINING_NICHT_GEFUNDEN",
+] as const;
+function istVeraltet(meldung: string | undefined): boolean {
+  return !!meldung && VERALTET_MARKER.some((m) => meldung.startsWith(TERMIN_MELDUNG[m]));
+}
 
 export function useTerminAktionen(): TerminAktionen {
   const k = useContext(Kontext);
@@ -59,9 +73,14 @@ export function TerminBereich({
   const [entfernen, setEntfernen] = useState<TerminZeile | null>(null);
   const [dialogFehler, setDialogFehler] = useState<string | undefined>();
 
-  /** Eine Aktion ausführen: bei Erfolg schliessen, neu laden, melden; bei
-   *  einem Fehler bleibt ein Formular offen und zeigt ihn (`imDialog`),
-   *  sonst meldet die Snackbar. */
+  /** Eine Aktion ausführen. Bei Erfolg: schliessen, neu laden, melden.
+   *
+   *  Bei einem Fehler wird IMMER neu geladen, damit die Liste den Stand zeigt,
+   *  gegen den die Aktion abgewiesen wurde. Ob der Dialog offen bleibt, hängt
+   *  an `imDialog`: dann steht der Fehler im Dialog — ausser er sagt «seit der
+   *  Auswahl geändert» (PO 17). Dann trägt die Auswahl veraltete Angaben
+   *  (`erwartet`), ein erneuter Versuch scheiterte immer wieder; der Dialog
+   *  schliesst, die Snackbar meldet, und man öffnet die aufgefrischte Karte. */
   function lauf<T extends { ok: boolean; error?: string }>(
     aufruf: () => Promise<T>,
     erfolg: (r: T) => string,
@@ -70,10 +89,13 @@ export function TerminBereich({
   ) {
     startTransition(async () => {
       const r = await aufruf();
-      if (!r.ok && imDialog) { setDialogFehler(r.error); return; }
+      router.refresh();
+      if (!r.ok && imDialog && !istVeraltet(r.error)) {
+        setDialogFehler(r.error ?? "Fehlgeschlagen.");
+        return;
+      }
       schliessen();
       setDialogFehler(undefined);
-      router.refresh();
       melde(r.ok ? erfolg(r) : (r.error ?? "Fehlgeschlagen."));
     });
   }
@@ -81,9 +103,10 @@ export function TerminBereich({
   const aktionen: TerminAktionen = {
     neu: (datum) => { setDialogFehler(undefined); setNeu(datum ?? ""); },
     bearbeiten: (t) => { setDialogFehler(undefined); setBearbeiten(t); },
-    zuordnen: setZuordnen,
+    zuordnen: (t) => { setDialogFehler(undefined); setZuordnen(t); },
     loesen: (t) =>
       t.training &&
+      !pending &&
       lauf(() => loeseTrainingAktion(t.id, t.training!.id), () => `«${t.training!.name}» ist gelöst und bleibt im Team-Bestand.`, () => {}),
     entfernen: setEntfernen,
     pending,
@@ -113,11 +136,10 @@ export function TerminBereich({
         start={bearbeiten ? { datum: bearbeiten.datum, beginn: bearbeiten.beginn ?? "", ende: bearbeiten.ende ?? "", ort: bearbeiten.ort ?? "", bemerkung: bearbeiten.bemerkung ?? "" } : undefined}
         bisher={bearbeiten ? { beginn: bearbeiten.beginn, ende: bearbeiten.ende } : undefined}
         pending={pending}
-        fehler={dialogFehler}
         onClose={() => setBearbeiten(null)}
         onSpeichern={(f) =>
           bearbeiten &&
-          lauf(() => aendereTerminAktion(bearbeiten.id, f, bearbeiten.training?.id ?? null), () => "Termin geändert.", () => setBearbeiten(null), true)
+          lauf(() => aendereTerminAktion(bearbeiten.id, f, bearbeiten.training?.id ?? null), () => "Termin geändert.", () => setBearbeiten(null))
         }
       />
 
@@ -126,6 +148,7 @@ export function TerminBereich({
         trainings={trainings}
         heute={heute}
         pending={pending}
+        fehler={dialogFehler}
         onClose={() => setZuordnen(null)}
         onWahl={(w: TrainingWahl) =>
           zuordnen &&
@@ -138,6 +161,7 @@ export function TerminBereich({
             }),
             (r) => ("kopie" in r && r.kopie ? "Kopie angelegt und dem Termin zugeordnet." : "Training zugeordnet."),
             () => setZuordnen(null),
+            true,
           )
         }
       />
