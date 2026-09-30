@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { SERIE_MELDUNG, type Reichweite } from "@/lib/serie";
+import { SERIE_MELDUNG, SERIE_TEXT, type Reichweite } from "@/lib/serie";
 import { getTeamMitgliederFuer } from "@/lib/queries/teams-fuer";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { bereinigeVerantwortliche, kalenderFehler, ladeTermin } from "@/lib/kern/termine";
@@ -41,7 +41,10 @@ export async function setzeVerantwortliche(
   e: {
     terminId: string;
     userIds: string[];
-    /** Einträge ohne Namen (gelöschte Konten), die bleiben; `null`/fehlend = alle behalten. */
+    /** Einträge ohne Namen (gelöschte Konten), die bleiben; `null`/fehlend = alle behalten.
+     *  Nur für einen Termin einzeln (`nur_dieser` oder ohne Serie): Eine
+     *  Änderung für folgende oder alle ersetzt an jedem erfassten Termin ALLE
+     *  Einträge, darum lehnt sie `anonyme` ab (AK 18, PC 8). */
     anonyme?: string[] | null;
     reichweite?: Reichweite;
     erwartet?: { version: number; entfallend: string[] };
@@ -66,6 +69,9 @@ export async function setzeVerantwortliche(
     });
   if (!t.serie_id && e.reichweite && e.reichweite !== "nur_dieser")
     return fehlschlag("regel", SERIE_MELDUNG.TERMIN_OHNE_SERIE, { feld: "reichweite" });
+
+  if (e.reichweite && e.reichweite !== "nur_dieser" && e.anonyme != null)
+    return fehlschlag("regel", SERIE_TEXT.namenloseNurEinzeln, { feld: "ohne_namen_behalten" });
 
   if (!t.serie_id || e.reichweite === "nur_dieser") {
     const { error } = await supabase.rpc("termin_verantwortliche_setzen", {

@@ -1912,6 +1912,101 @@ try {
     assert.deepEqual(v.map((y) => y.ehemalig), [false, false, true]);
   });
 
+  // ── Kalender: Verantwortliche und Serienteilung (#325 PC 4, 11, AK 18) ──────
+  const leuteVon = async (terminId: string) =>
+    (await admin.from("termin_verantwortliche").select("user_id").eq("termin_id", terminId)).data!.map((x) => x.user_id).sort();
+  const serienLeute = async (serieId: string) =>
+    (await admin.from("termin_serien_verantwortliche").select("user_id").eq("serie_id", serieId)).data!.map((x) => x.user_id).sort();
+  const serieVon = async (terminId: string) =>
+    (await admin.from("training_termine").select("serie_id").eq("id", terminId).single()).data!.serie_id as string;
+  /** Ein Team mit A und B und einer Serie mit beiden als Verantwortlichen: Termine bei -14, -7, 0, 7, 14 Tagen. */
+  async function serieMitZweien(name: string) {
+    const team = await serienTeam(name);
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [wochentagVon(heuteCh)], von: tagCh(-14), bis: tagCh(14), beginn: "18:00", ende: "19:30", verantwortliche: [a.id, b.id] }));
+    return { team, serieId: s.serieId, t: await termineDer(s.serieId) };
+  }
+  const beide = [a.id, b.id].sort();
+
+  await pruefe("«Dieser und folgende» mit neuen Verantwortlichen teilt die Serie (#325 PC 11)", async () => {
+    const { serieId, t } = await serieMitZweien("Kern-DB-Verantwortliche-Teilen");
+    const ab = t.find((x) => x.datum === tagCh(7))!;
+    wert(await setzeVerantwortliche(a.supabase, a.id, { terminId: ab.id, userIds: [a.id], reichweite: "dieser_und_folgende" }));
+    const neueSerie = await serieVon(ab.id);
+    assert.notEqual(neueSerie, serieId, "neue Serie");
+    assert.deepEqual(await serienLeute(serieId), beide, "alte Serie behält die alte Liste");
+    assert.deepEqual(await serienLeute(neueSerie), [a.id], "neue Serie trägt die neue Liste");
+    for (const x of t) {
+      const ab_ = x.datum >= tagCh(7);
+      assert.equal(await serieVon(x.id), ab_ ? neueSerie : serieId, `Serie von ${x.datum}`);
+      assert.deepEqual(await leuteVon(x.id), ab_ ? [a.id] : beide, `Termin ${x.datum}`);
+    }
+  });
+
+  await pruefe("Teilung durch eine Ortsänderung: die neue Serie übernimmt die Verantwortlichen (#325 PC 4)", async () => {
+    const { serieId, t } = await serieMitZweien("Kern-DB-Verantwortliche-Ort");
+    const ab = t.find((x) => x.datum === tagCh(7))!;
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: ab.id, reichweite: "dieser_und_folgende", ort: "Neuer Platz" }));
+    const neueSerie = await serieVon(ab.id);
+    assert.notEqual(neueSerie, serieId, "geteilt");
+    assert.deepEqual(await serienLeute(neueSerie), beide, "neue Serie übernimmt die Liste");
+    assert.deepEqual(await serienLeute(serieId), beide, "alte Serie behält sie");
+    assert.deepEqual(await leuteVon(ab.id), beide);
+  });
+
+  await pruefe("Zeitraum erweitern: neue Termine tragen die Verantwortlichen der Serie (#325 PC 1)", async () => {
+    const { serieId, t } = await serieMitZweien("Kern-DB-Verantwortliche-Erweitern");
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", bis: tagCh(28), bestaetigt: true }));
+    const alle = await termineDer(serieId);
+    const neu = alle.filter((x) => x.datum > tagCh(14));
+    assert.ok(neu.length >= 2, "neue Termine");
+    for (const x of neu) assert.deepEqual(await leuteVon(x.id), beide, `neuer Termin ${x.datum}`);
+  });
+
+  await pruefe("Namenlose Einträge: p_anonyme null behält alle, [] entfernt alle, [id] genau den (#325 PC 8, AK 18)", async () => {
+    const team = await serienTeam("Kern-DB-Verantwortliche-Namenlose");
+    const d1 = await wegwerfKonto();
+    const d2 = await wegwerfKonto();
+    await admin.from("team_members").insert([{ team_id: team, user_id: d1.id }, { team_id: team, user_id: d2.id }]);
+    const alt = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(-3), beginn: "10:00", ende: "11:00" }));
+    wert(await setzeVerantwortliche(a.supabase, a.id, { terminId: alt.terminId, userIds: [a.id, d1.id, d2.id] }));
+    for (const d of [d1, d2]) {
+      await admin.from("team_members").delete().eq("team_id", team).eq("user_id", d.id);
+      assert.equal((await d.supabase.rpc("delete_account")).error, null);
+    }
+    const eintraege = async () =>
+      (await admin.from("termin_verantwortliche").select("id, user_id").eq("termin_id", alt.terminId)).data!;
+    const namenlos = async () => (await eintraege()).filter((x) => x.user_id === null).map((x) => x.id).sort();
+    const beide2 = await namenlos();
+    assert.equal(beide2.length, 2, "zwei namenlose Einträge");
+
+    // null (auch ohne Angabe): alle behalten.
+    wert(await setzeVerantwortliche(a.supabase, a.id, { terminId: alt.terminId, userIds: [a.id], anonyme: null }));
+    assert.deepEqual(await namenlos(), beide2);
+    // Genau einer bleibt.
+    wert(await setzeVerantwortliche(a.supabase, a.id, { terminId: alt.terminId, userIds: [a.id], anonyme: [beide2[0]] }));
+    assert.deepEqual(await namenlos(), [beide2[0]]);
+    // Keiner bleibt.
+    wert(await setzeVerantwortliche(a.supabase, a.id, { terminId: alt.terminId, userIds: [a.id], anonyme: [] }));
+    assert.deepEqual(await namenlos(), []);
+    assert.deepEqual(await leuteVon(alt.terminId), [a.id]);
+
+    // AK 18: Für folgende und alle gilt dieselbe Regel wie in der Oberfläche — `anonyme` wird abgelehnt, nichts geschrieben.
+    const { serieId, t } = await serieMitZweien("Kern-DB-Verantwortliche-Namenlose-Serie");
+    for (const reichweite of ["dieser_und_folgende", "alle"] as const)
+      fehler(
+        await setzeVerantwortliche(a.supabase, a.id, { terminId: t[2].id, userIds: [a.id], anonyme: [], reichweite, bestaetigt: true }),
+        "regel",
+        SERIE_TEXT.namenloseNurEinzeln,
+      );
+    assert.deepEqual(await serienLeute(serieId), beide, "Serie unverändert");
+    assert.equal(await serieVon(t[2].id), serieId, "nicht geteilt");
+    assert.deepEqual(await leuteVon(t[2].id), beide);
+    // Ohne `anonyme` (KI-Standard) läuft dieselbe Änderung.
+    wert(await setzeVerantwortliche(a.supabase, a.id, { terminId: t[2].id, userIds: [a.id], reichweite: "alle", bestaetigt: true }));
+    assert.deepEqual(await serienLeute(serieId), [a.id]);
+  });
+
   // ── Übung anlegen (#143) ─────────────────────────────────────────────────
   const uebungenVon = async (id: string) =>
     (await admin.from("exercises").select("id", { count: "exact", head: true }).eq("owner_id", id)).count ?? 0;

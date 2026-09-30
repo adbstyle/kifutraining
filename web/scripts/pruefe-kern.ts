@@ -657,6 +657,14 @@ pruefe("Serie: Reichweiten je nach Änderung (#326 AK 1–4)", () => {
   assert.equal(SERIE_TEXT.datumUndRegel, "Datum und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.");
 });
 
+pruefe("Termin: Wortlaut der Verantwortlichen-Meldungen (#325)", () => {
+  assert.equal(
+    TERMIN_MELDUNG.NICHT_MEHR_MITGLIED,
+    "Mindestens eine gewählte Person ist nicht mehr Mitglied des Teams. Sieh dir die Mitglieder noch einmal an.",
+  );
+  assert.equal(TERMIN_TEXT.verantwortlicheUngueltig, "Bitte nur Mitglieder des Teams als Verantwortliche wählen.");
+});
+
 pruefe("Serie: namenlose Verantwortliche nur für diesen Termin (#325 PC 8)", () => {
   assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false, namenlose: true }), ["nur_dieser"]);
   assert.equal(erlaubteReichweiten({ datum: false, regel: true, namenlose: true }), null);

@@ -518,16 +518,23 @@ export const terminVerantwortlicheSetzen = werkzeug({
   titel: "Verantwortliche eines Termins setzen",
   beschreibung:
     "Setzt die Mitglieder, die einen Termin vorbereiten und leiten — ein oder mehrere, oder keine " +
-    "(leere Liste). Neu eintragen lassen sich nur aktuelle Mitglieder; Einträge ehemaliger " +
-    "Mitglieder an vergangenen Terminen bleiben, wenn du sie mitgibst. Einträge gelöschter Konten " +
-    "(ohne Kennung) bleiben, ausser «ohne_namen_behalten» ist false. Für einen Termin einer Serie " +
-    "ist «reichweite» Pflicht; «dieser_und_folgende» teilt die Serie, die neue Serie trägt die " +
-    `neuen Verantwortlichen. ${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+    "(leere Liste). Neu eintragen lassen sich nur aktuelle Mitglieder. Für einen Termin einer Serie " +
+    "ist «reichweite» Pflicht. Bei «nur_dieser» (und an einem einzelnen Termin) bleiben Einträge " +
+    "ehemaliger Mitglieder, wenn du sie mitgibst, und Einträge gelöschter Konten (ohne Kennung), " +
+    "ausser «ohne_namen_behalten» ist false. «dieser_und_folgende» und «alle» ersetzen dagegen alle " +
+    "Einträge der erfassten Termine durch die genannten aktuellen Mitglieder — auch die " +
+    "ehemaliger Mitglieder und gelöschter Konten; «dieser_und_folgende» teilt dabei die Serie, die " +
+    `neue Serie trägt die neuen Verantwortlichen. ${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     termin_id: TerminId,
     verantwortliche: z.array(kennung("Kennung eines Mitglieds aus «team_mitglieder_abrufen».")),
-    ohne_namen_behalten: z.boolean().optional(),
+    ohne_namen_behalten: z
+      .boolean()
+      .optional()
+      .describe(
+        "Nur bei nur_dieser oder einem Einzeltermin: false entfernt Einträge gelöschter Konten; ohne Angabe bleiben sie.",
+      ),
     reichweite: Reichweite.optional(),
     bestaetigt: Bestaetigt,
   }),
