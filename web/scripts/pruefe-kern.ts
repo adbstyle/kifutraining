@@ -71,7 +71,14 @@ import { trainingAuskunft as auskunftRoh } from "../lib/kern/auskunft";
 import { TrainingAuskunftStreng } from "../lib/kern/auskunft-schema";
 import { zeitAbgleich } from "../lib/junioren";
 import { verteilungAus } from "../lib/gruppen";
-import { leerZuNull, terminProblem } from "../lib/termin";
+import {
+  TERMIN_MELDUNG,
+  TERMIN_TEXT,
+  kopieGebliebenText,
+  leerZuNull,
+  terminProblem,
+  zeitText,
+} from "../lib/termin";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 
 let gelaufen = 0;
@@ -174,8 +181,8 @@ pruefe("fachlicheMeldung erklärt Marker, fehlerMeldung bleibt wortgleich", () =
     ],
     ["UEBUNGSFOLGE_ABSCHNITT_LEER", "In diesem Abschnitt steht keine Übung."],
     [
-      "TERMIN_NUR_FUER_TEAM_TRAININGS: Training x",
-      "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.",
+      "TERMIN_TRAINING_FREMDES_TEAM",
+      "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams zuordnen.",
     ],
   );
   // #263: die Varianten-Marker, die der KI-Weg jetzt erreicht, und die der
@@ -508,31 +515,50 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
   assert.throws(() => TrainingAuskunftStreng.parse({ ...heute, termin: { ...heute.termin, extra: 1 } }));
 });
 
-// ── Termin-Felder (#198 AK 7/8) ─────────────────────────────────────────────
-// Die Texte sind die bisherigen der Server Actions. Neu ist die echte
-// Kalenderprüfung: «2026-02-30» und «25:99» passten auf das Muster und
-// scheiterten erst in der Datenbank — als «liess sich nicht speichern».
-pruefe("terminProblem: gültig, leer, erfundene Tage und Uhrzeiten", () => {
-  const DATUM = { feld: "datum", text: "Bitte ein Datum angeben." };
-  const ZEIT = { feld: "beginn", text: "Bitte eine gültige Uhrzeit angeben." };
-  assert.equal(terminProblem({ datum: "2026-09-23" }), null);
-  assert.equal(terminProblem({ datum: "2028-02-29", beginn: "00:00" }), null, "Schalttag");
-  assert.equal(terminProblem({ datum: "2026-12-31", beginn: "23:59" }), null);
-  assert.equal(terminProblem({ datum: "2026-09-23", beginn: "" }), null, "leerer Beginn = keiner");
-  assert.equal(terminProblem({ datum: "2026-09-23", beginn: null }), null);
-  for (const datum of ["", undefined, null, "2026-02-30", "2027-02-29", "2026-13-01", "2026-04-31", "0000-01-01", "2026-9-3", "23.09.2026"])
-    assert.deepEqual(terminProblem({ datum }), DATUM, `Datum ${datum}`);
-  for (const beginn of ["25:99", "24:00", "18:60", "8:30", "18.30", "18:30:00"])
-    assert.deepEqual(terminProblem({ datum: "2026-09-23", beginn }), ZEIT, `Beginn ${beginn}`);
-  assert.equal(leerZuNull("  "), null);
-  assert.equal(leerZuNull(" Allmend "), "Allmend");
-  assert.equal(leerZuNull(undefined), null);
+// ── Termin-Felder (#322 AK 2, 5, 6, 8–10) ────────────────────────────────────
+pruefe("terminProblem: neuer Termin braucht Datum, Beginn und Ende", () => {
+  const ok = { datum: "2026-10-07", beginn: "18:30", ende: "20:00" };
+  assert.equal(terminProblem(ok), null);
+  assert.equal(terminProblem({ ...ok, datum: "2028-02-29" }), null, "Schalttag");
+  for (const datum of ["", undefined, "2026-02-30", "2027-02-29", "2026-13-01", "0000-01-01", "23.09.2026"])
+    assert.deepEqual(terminProblem({ ...ok, datum: datum as string }), { feld: "datum", text: TERMIN_TEXT.datum }, `Datum ${datum}`);
+  assert.deepEqual(terminProblem({ ...ok, beginn: "" }), { feld: "beginn", text: TERMIN_TEXT.zeitPflicht });
+  assert.deepEqual(terminProblem({ ...ok, ende: null }), { feld: "ende", text: TERMIN_TEXT.zeitPflicht });
+  for (const beginn of ["25:99", "24:00", "8:30", "18.30", "18:30:00"])
+    assert.deepEqual(terminProblem({ ...ok, beginn }), { feld: "beginn", text: TERMIN_TEXT.uhrzeit }, `Beginn ${beginn}`);
+  assert.deepEqual(terminProblem({ ...ok, ende: "18:30" }), { feld: "ende", text: TERMIN_TEXT.endeNachBeginn }, "gleich");
+  assert.deepEqual(terminProblem({ ...ok, ende: "17:00" }), { feld: "ende", text: TERMIN_TEXT.endeNachBeginn }, "davor");
+  assert.deepEqual(terminProblem({ ...ok, ort: "x".repeat(101) }), { feld: "ort", text: TERMIN_TEXT.ortLang });
+  assert.equal(terminProblem({ ...ok, ort: "x".repeat(100) }), null);
+  assert.deepEqual(terminProblem({ ...ok, bemerkung: "x".repeat(501) }), { feld: "bemerkung", text: TERMIN_TEXT.bemerkungLang });
 });
 
-pruefe("Termin-Marker: vorab und aus der Datenbank derselbe Satz", () => {
-  const f = still(() => ausDbFehler({ message: "TERMIN_NUR_FUER_TEAM_TRAININGS" }));
-  assert.equal(f.art, "regel");
-  assert.equal(f.meldung, "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.");
+pruefe("terminProblem: Bestand ohne vollständige Zeit bleibt änderbar, eine geänderte Zeit muss vollständig sein", () => {
+  const alt = { beginn: "18:30", ende: null };
+  // AK 9: Datum, Ort, Bemerkung ändern, ohne die Zeit zu ergänzen.
+  assert.equal(terminProblem({ datum: "2026-10-08", beginn: "18:30", ende: null, ort: "Halle" }, alt), null);
+  assert.equal(terminProblem({ datum: "2026-10-08", beginn: null, ende: null }, { beginn: null, ende: null }), null);
+  // AK 10: Wer die Zeit anfasst, muss sie vollständig geben.
+  assert.deepEqual(terminProblem({ datum: "2026-10-08", beginn: "19:00", ende: null }, alt), { feld: "ende", text: TERMIN_TEXT.zeitPflicht });
+  assert.equal(terminProblem({ datum: "2026-10-08", beginn: "19:00", ende: "20:30" }, alt), null);
+  // AK 8: Beginn und Ende lassen sich nicht leeren.
+  assert.deepEqual(
+    terminProblem({ datum: "2026-10-08", beginn: null, ende: null }, { beginn: "18:30", ende: "20:00" }),
+    { feld: "beginn", text: TERMIN_TEXT.zeitPflicht },
+  );
+  assert.equal(leerZuNull("  "), null);
+  assert.equal(leerZuNull(" Allmend "), "Allmend");
+});
+
+pruefe("Termin-Anzeige und -Marker: derselbe Satz vorab und aus der Datenbank", () => {
+  assert.equal(zeitText("18:30", "20:00"), "18:30–20:00");
+  assert.equal(zeitText("18:30", null), "ab 18:30");
+  assert.equal(zeitText(null, null), null);
+  for (const [marker, satz] of Object.entries(TERMIN_MELDUNG)) {
+    const f = still(() => ausDbFehler({ message: `${marker}` }));
+    assert.equal(f.meldung, satz, marker);
+  }
+  assert.match(kopieGebliebenText("Spielformen"), /«Spielformen» ist im Team-Bestand geblieben/);
   assert.equal(NICHT_GEFUNDEN.termin, "Termin nicht gefunden.");
 });
 

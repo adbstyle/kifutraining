@@ -1,19 +1,36 @@
-// Die Regeln eines Termins (Team-Epic Stories 7–9, #198 AK 7/8).
+// Die Regeln eines Termins (Team-Kalender #322, #323; vorher Team-Epic
+// Stories 7–9 und #198).
 //
-// Eine Regelquelle für den Termin-Dialog des Team-Bereichs und die
-// KI-Werkzeuge «termin_ansetzen», «termin_aendern» und
-// «training_erneut_ansetzen» — der Fachkern (lib/kern/termine.ts) ruft sie vor
-// jedem Schreiben auf. Die Meldungen sind wortgleich mit den bisherigen der
-// Server Actions.
+// Eine Regelquelle für den Kalender der Oberfläche und die KI-Werkzeuge
+// «termin_*» und «training_zuordnen» — der Fachkern (lib/kern/termine.ts)
+// ruft sie vor jedem Schreiben auf, und die Datenebene meldet mit denselben
+// Markern (TERMIN_MELDUNG), wenn sie trotzdem abweist.
 //
 // REIN: keine Importe — `check:kern` lädt diese Datei mit tsx.
 
 export type TerminFelder = {
   datum: string;
   beginn?: string | null;
+  ende?: string | null;
   ort?: string | null;
   bemerkung?: string | null;
 };
+
+export type TerminFeld = "datum" | "beginn" | "ende" | "ort" | "bemerkung";
+export type TerminProblem = { feld: TerminFeld; text: string };
+
+/** Zwillinge der Checks `tt_ort_laenge` und `tt_bemerkung_laenge`. */
+export const ORT_MAX = 100;
+export const BEMERKUNG_MAX = 500;
+
+export const TERMIN_TEXT = {
+  datum: "Bitte ein Datum angeben.",
+  uhrzeit: "Bitte eine gültige Uhrzeit angeben.",
+  zeitPflicht: "Bitte Beginn und Ende angeben.",
+  endeNachBeginn: "Das Ende muss am selben Tag nach dem Beginn liegen.",
+  ortLang: `Der Ort darf höchstens ${ORT_MAX} Zeichen lang sein.`,
+  bemerkungLang: `Die Bemerkung darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
+} as const;
 
 /** Leere Eingaben sind „nicht erfasst", nicht „leerer Text". */
 export function leerZuNull(v: string | null | undefined): string | null {
@@ -22,44 +39,110 @@ export function leerZuNull(v: string | null | undefined): string | null {
 }
 
 /** Gibt es diesen Kalendertag? `YYYY-MM-DD` allein genügt nicht: «2026-02-30»
- *  passt auf das Muster und wäre bisher bis in die Datenbank gelangt, die ihn
- *  mit «date/time field value out of range» abweist — an der Oberfläche
- *  hiesse das «Das liess sich nicht speichern», also ein Wiederholen, das nie
- *  gelingt. Über das native Datumsfeld der Oberfläche ist so ein Tag nicht
- *  eingebbar, über den KI-Client dagegen jederzeit. Das Jahr 0000 kennt
- *  Postgres ebenfalls nicht. */
-function gibtEsDenTag(iso: string): boolean {
+ *  passt auf das Muster, die `date`-Spalte weist ihn aber ab — über den
+ *  KI-Client jederzeit eingebbar. Das Jahr 0000 kennt Postgres ebenfalls nicht. */
+export function istKalendertag(iso: string): boolean {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
   if (!m) return false;
   const [j, mo, t] = [Number(m[1]), Number(m[2]), Number(m[3])];
   if (j < 1 || mo < 1 || mo > 12 || t < 1) return false;
-  // Der letzte Tag des Monats: Tag 0 des Folgemonats (UTC, ohne Zeitzone).
-  const letzter = new Date(Date.UTC(j, mo, 0)).getUTCDate();
-  return t <= letzter;
+  return t <= new Date(Date.UTC(j, mo, 0)).getUTCDate();
 }
 
-/** Eine Uhrzeit `HH:MM` innerhalb eines Tages. «25:99» passt auf das Muster,
- *  die `time`-Spalte weist es aber ab — dieselbe Begründung wie beim Datum.
- *  «24:00» nimmt Postgres zwar an, als Beginn einer Einheit ist es aber kein
- *  sinnvoller Wert, und das Zeitfeld der Oberfläche kennt es nicht. */
-function gibtEsDieUhrzeit(hhmm: string): boolean {
+/** Eine Uhrzeit `HH:MM` innerhalb eines Tages; «24:00» ist kein Beginn. */
+export function istUhrzeit(hhmm: string): boolean {
   const m = /^(\d{2}):(\d{2})$/.exec(hhmm);
   return !!m && Number(m[1]) <= 23 && Number(m[2]) <= 59;
 }
 
-/** Was an den Feldern eines Termins nicht stimmt, sonst `null`. `feld` ist der
- *  Eingabename des KI-Werkzeugs (Kern-Konvention, lib/kern/ergebnis.ts).
- *
- *  `YYYY-MM-DD` und `HH:MM` liefern die nativen Felder der Oberfläche; alles
- *  andere ist ein manipulierter Aufruf oder eine Eingabe des KI-Clients und
- *  wird hier abgewiesen statt in der DB. Ort und Bemerkung sind frei. */
-export function terminProblem(f: {
-  datum?: string | null;
-  beginn?: string | null;
-}): { feld: "datum" | "beginn"; text: string } | null {
-  if (!gibtEsDenTag(f.datum ?? "")) return { feld: "datum", text: "Bitte ein Datum angeben." };
-  const beginn = leerZuNull(f.beginn);
-  if (beginn && !gibtEsDieUhrzeit(beginn))
-    return { feld: "beginn", text: "Bitte eine gültige Uhrzeit angeben." };
+/** Beginn und Ende als EINE Angabe (Story 5 PC 2): beide da, beide gültig,
+ *  das Ende am selben Tag danach (AK 5). */
+export function zeitProblem(
+  beginnRoh: string | null | undefined,
+  endeRoh: string | null | undefined,
+): TerminProblem | null {
+  const beginn = leerZuNull(beginnRoh);
+  const ende = leerZuNull(endeRoh);
+  if (!beginn) return { feld: "beginn", text: TERMIN_TEXT.zeitPflicht };
+  if (!ende) return { feld: "ende", text: TERMIN_TEXT.zeitPflicht };
+  if (!istUhrzeit(beginn)) return { feld: "beginn", text: TERMIN_TEXT.uhrzeit };
+  if (!istUhrzeit(ende)) return { feld: "ende", text: TERMIN_TEXT.uhrzeit };
+  if (ende <= beginn) return { feld: "ende", text: TERMIN_TEXT.endeNachBeginn };
   return null;
+}
+
+/** Ort und Bemerkung sind frei, aber begrenzt (AK 6). */
+export function textProblem(f: {
+  ort?: string | null;
+  bemerkung?: string | null;
+}): TerminProblem | null {
+  if ((leerZuNull(f.ort) ?? "").length > ORT_MAX) return { feld: "ort", text: TERMIN_TEXT.ortLang };
+  if ((leerZuNull(f.bemerkung) ?? "").length > BEMERKUNG_MAX)
+    return { feld: "bemerkung", text: TERMIN_TEXT.bemerkungLang };
+  return null;
+}
+
+/** Was an einem Termin nicht stimmt, sonst `null`.
+ *
+ *  Ohne `bisher` ist der Termin neu: Datum, Beginn und Ende sind Pflicht
+ *  (AK 2, PO 9). Mit `bisher` wird geändert: Eine Zeit, die sich ändert, muss
+ *  danach vollständig sein (AK 8, 10); eine unveränderte, unvollständige Zeit
+ *  eines übernommenen Termins bleibt stehen (AK 9). `bisher` trägt `HH:MM`. */
+export function terminProblem(
+  f: { datum?: string | null; beginn?: string | null; ende?: string | null; ort?: string | null; bemerkung?: string | null },
+  bisher?: { beginn: string | null; ende: string | null },
+): TerminProblem | null {
+  if (!istKalendertag(f.datum ?? "")) return { feld: "datum", text: TERMIN_TEXT.datum };
+  const beginn = leerZuNull(f.beginn);
+  const ende = leerZuNull(f.ende);
+  const zeitGeaendert = !bisher || beginn !== bisher.beginn || ende !== bisher.ende;
+  if (zeitGeaendert) {
+    const z = zeitProblem(beginn, ende);
+    if (z) return z;
+  }
+  return textProblem(f);
+}
+
+/** Die Zeit eines Termins zum Anzeigen: «18:30–20:00», «ab 18:30» für einen
+ *  übernommenen Termin ohne Ende, sonst `null` (AK 14, 15). */
+export function zeitText(beginn: string | null, ende: string | null): string | null {
+  if (beginn && ende) return `${beginn}–${ende}`;
+  if (beginn) return `ab ${beginn}`;
+  return null;
+}
+
+/** Die Sätze zu den Markern der Datenebene (Migration termine_ohne_training)
+ *  — dieselben, die der Fachkern vorab verwendet. */
+export const TERMIN_MELDUNG = {
+  TERMIN_NICHT_GEFUNDEN: "Termin nicht gefunden.",
+  TRAINING_NICHT_GEFUNDEN: "Training nicht gefunden.",
+  TERMIN_BELEGUNG_GEAENDERT:
+    "Am Termin hat sich inzwischen etwas geändert: Ihm wurde ein anderes Training zugeordnet " +
+    "oder sein Training gelöst. Sieh ihn dir noch einmal an.",
+  TRAINING_EINPLANUNG_GEAENDERT:
+    "Das Training wurde inzwischen einem anderen Termin zugeordnet oder von seinem Termin gelöst. " +
+    "Wähle noch einmal.",
+  TERMIN_TRAINING_FREMDES_TEAM:
+    "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams zuordnen.",
+  TRAINING_SCHON_EINGEPLANT:
+    "Dieses Training ist bereits für einen anstehenden Termin eingeplant. Wähle, ob du es für " +
+    "diesen Termin kopierst oder auf ihn verschiebst.",
+  NUR_KOPIE_BEI_VERGANGENEM:
+    "Ein Training mit vergangenem Termin lässt sich nur kopieren, nicht verschieben.",
+} as const;
+
+export type TerminMarker = keyof typeof TERMIN_MELDUNG;
+
+/** Marker, die «seit der Auswahl geändert» heissen (PO 17) — der Fachkern
+ *  ordnet sie als `konflikt` ein, nicht als Regel. Teil B ergänzt die der
+ *  Serien. */
+export const KONFLIKT_MARKER: readonly string[] = [
+  "TERMIN_BELEGUNG_GEAENDERT",
+  "TRAINING_EINPLANUNG_GEAENDERT",
+];
+
+/** Ein Zusatz zu jeder Meldung, deren Kopie nicht aufgeräumt werden konnte
+ *  (Story 2 PC 9, Story 7 PC 8) — in der Oberfläche und beim Assistenten. */
+export function kopieGebliebenText(name: string): string {
+  return `Eine unvollständige Kopie «${name}» ist im Team-Bestand geblieben; du kannst sie dort entfernen.`;
 }
