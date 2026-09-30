@@ -166,9 +166,11 @@ async function warumNichtGeschrieben(
     : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
 }
 
-/** Datum, Zeit, Ort und Bemerkung eines Termins ändern (AK 7–10, 23). Nur die
- *  übergebenen Felder ändern sich; der Termin wird mit seinem Stand
- *  zusammengeführt und als Ganzes geprüft. */
+/** Datum, Zeit, Ort und Bemerkung eines Termins ändern (AK 7–10, 23). Der
+ *  Termin wird mit seinem Stand zusammengeführt und als Ganzes geprüft;
+ *  geschrieben werden aber nur die übergebenen Felder (Beginn und Ende stets
+ *  zusammen). So überschreibt eine gleichzeitige Änderung eines anderen
+ *  Feldes nichts still mit dem alten Stand (PO 17). */
 export async function aendereTermin(
   supabase: SupabaseClient,
   _userId: string,
@@ -188,8 +190,17 @@ export async function aendereTermin(
   const problem = feldFehler(terminProblem(neu, { beginn: t.beginn, ende: t.ende }));
   if (problem) return problem;
 
+  const aenderung: Partial<typeof neu> = {};
+  if (e.datum !== undefined) aenderung.datum = neu.datum;
+  if (e.beginn !== undefined || e.ende !== undefined) {
+    aenderung.beginn = neu.beginn;
+    aenderung.ende = neu.ende;
+  }
+  if (e.ort !== undefined) aenderung.ort = neu.ort;
+  if (e.bemerkung !== undefined) aenderung.bemerkung = neu.bemerkung;
+
   const erwartet = e.erwartetesTraining !== undefined ? e.erwartetesTraining : t.training_id;
-  const basis = supabase.from("training_termine").update(neu).eq("id", t.id);
+  const basis = supabase.from("training_termine").update(aenderung).eq("id", t.id);
   const { data, error } = await (erwartet === null
     ? basis.is("training_id", null)
     : basis.eq("training_id", erwartet)
@@ -297,6 +308,10 @@ export async function ordneTrainingZu(
     return fehlschlag("regel", TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM, { feld: "training_id" });
   if (t.training_id === e.trainingId)
     return ok({ terminId: t.id, teamId: t.team_id, trainingId: e.trainingId, kopie: false, imBestand: null, freierTermin: null });
+
+  // Eine veraltete Auswahl legt keine Kopie an.
+  if (e.erwartet && t.training_id !== e.erwartet.terminTraining)
+    return fehlschlag("konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
 
   const { data: bisher, error } = await supabase
     .from("training_termine")
