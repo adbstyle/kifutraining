@@ -82,6 +82,11 @@ export const SERIE_TEXT = {
     "Eine Terminserie dauert höchstens bis zum gleichen Kalendertag im Folgejahr (nach einem 29. Februar bis zum 28. Februar).",
   ohneTag: "Im gewählten Zeitraum liegt keiner der gewählten Wochentage.",
   datumUndRegel: "Datum und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
+  /** #325: Einträge gelöschter Konten gibt es nur am Termin, nicht an der
+   *  Serie; eine Serienänderung der Verantwortlichen ersetzte sie überall. */
+  namenloseNurEinzeln: "Ehemalige Mitglieder ohne Namen lassen sich nur für diesen einen Termin entfernen.",
+  namenloseUndRegel:
+    "Ehemalige Mitglieder ohne Namen und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
 } as const;
 
 export type SerienRegel = { wochentage: Wochentag[]; von: string; bis: string };
@@ -127,12 +132,20 @@ export function regelProblemVorab(
 
 /** Für welche Reichweiten eine Änderung an einem Serientermin gilt
  *  (#326 AK 1–4): das Datum nur für diesen Termin, Wochentage und Zeitraum nur
- *  für diesen und folgende oder für alle; Zeit, Ort und Bemerkung für jede.
- *  `null`, wenn Datum und Regel zugleich geändert werden — das schliesst sich
- *  aus (`SERIE_TEXT.datumUndRegel`). */
-export function erlaubteReichweiten(g: { datum: boolean; regel: boolean }): readonly Reichweite[] | null {
-  if (g.datum && g.regel) return null;
-  if (g.datum) return ["nur_dieser"];
+ *  für diesen und folgende oder für alle; Zeit, Ort, Bemerkung und
+ *  Verantwortliche (#325) für jede. `null`, wenn Datum und Regel zugleich
+ *  geändert werden — das schliesst sich aus (`SERIE_TEXT.datumUndRegel`).
+ *
+ *  `namenlose`: An den Verantwortlichen ändern sich allein die Einträge
+ *  gelöschter Konten (#325 PC 8). Die gibt es nur am Termin; eine Änderung für
+ *  folgende oder alle ersetzte an jedem erfassten Termin ALLE Einträge, auch
+ *  die namenlosen. Darum gilt sie wie das Datum nur für diesen Termin
+ *  (`SERIE_TEXT.namenloseNurEinzeln`, mit der Regel zusammen
+ *  `SERIE_TEXT.namenloseUndRegel`). */
+export function erlaubteReichweiten(g: { datum: boolean; regel: boolean; namenlose?: boolean }): readonly Reichweite[] | null {
+  const nurEinzeln = g.datum || !!g.namenlose;
+  if (nurEinzeln && g.regel) return null;
+  if (nurEinzeln) return ["nur_dieser"];
   if (g.regel) return ["dieser_und_folgende", "alle"];
   return ["nur_dieser", "dieser_und_folgende", "alle"];
 }

@@ -48,10 +48,12 @@ import { trainingHinweiseAbrufen } from "@/lib/mcp/werkzeuge/hinweise";
 import { trainingKopieren, trainingLoeschen } from "@/lib/mcp/werkzeuge/trainings-bestand";
 import {
   teamPlanAbrufen,
+  teamMitgliederAbrufen,
   teamsAbrufen,
   terminAendern,
   terminEntfernen,
   terminDerSerieFolgen,
+  terminVerantwortlicheSetzen,
   terminFestlegen,
   terminserieFestlegen,
   trainingLoesen,
@@ -104,11 +106,13 @@ export const WERKZEUGE = [
   trainingLoeschen,
   teamsAbrufen,
   teamPlanAbrufen,
+  teamMitgliederAbrufen,
   terminFestlegen,
   terminAendern,
   terminEntfernen,
   terminserieFestlegen,
   terminDerSerieFolgen,
+  terminVerantwortlicheSetzen,
   trainingZuordnen,
   trainingLoesen,
 ] as const;

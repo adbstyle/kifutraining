@@ -5,6 +5,7 @@ import {
   KONFLIKT_MARKER,
   TERMIN_MELDUNG,
   kopieGebliebenText,
+  TERMIN_TEXT,
   leerZuNull,
   terminProblem,
   type TerminProblem,
@@ -64,6 +65,18 @@ export type TerminRoh = {
   ort_abweichend: boolean;
   bemerkung_abweichend: boolean;
 };
+
+/** Kennungen von Verantwortlichen vorab prüfen und von Doppelten befreien
+ *  (#325): Jede muss eine UUID sein, sonst wiese Postgres mit einem rohen
+ *  Fehler ab. Geteilt von Einzeltermin, Serie und Festlegen. */
+export function bereinigeVerantwortliche(ids: readonly unknown[]): { ok: true; ids: string[] } | { ok: false; fehler: KernFehler } {
+  if (!Array.isArray(ids) || !ids.every((x) => istUuid(x)))
+    return {
+      ok: false,
+      fehler: fehlschlag("eingabe", TERMIN_TEXT.verantwortlicheUngueltig, { feld: "verantwortliche" }),
+    };
+  return { ok: true, ids: [...new Set((ids as string[]).map((x) => x.toLowerCase()))] };
+}
 
 function feldFehler(p: TerminProblem | null): KernFehler | null {
   return p ? fehlschlag("eingabe", p.text, { feld: p.feld }) : null;

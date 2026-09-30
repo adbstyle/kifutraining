@@ -9,6 +9,7 @@ import { ReichweiteDialog } from "./ReichweiteDialog";
 import { SerieDialog } from "./SerieDialog";
 import { TerminDialog } from "./TerminDialog";
 import { TrainingWahlDialog, type TrainingWahl } from "./TrainingWahlDialog";
+import { nurNamenloseGeaendert, verantwortlicheStart, type VerantwortlicheWert } from "./VerantwortlicheWahl";
 import {
   aendereSerieAktion,
   aendereTerminAktion,
@@ -19,6 +20,7 @@ import {
   legeTerminFestAktion,
   loeseTrainingAktion,
   ordneTrainingZuAktion,
+  setzeVerantwortlicheAktion,
   vorschauSerieAktion,
   vorschauSerieEntfernenAktion,
   type TerminFelder,
@@ -32,11 +34,12 @@ import {
   type Reichweite,
   type SerienRegel,
 } from "@/lib/serie";
-import type { SerienAenderung, SerienFolge } from "@/lib/kern/serien";
+import type { FolgeAngabe, SerienAenderung, SerienFolge } from "@/lib/kern/serien";
 import { istVeraltet } from "@/lib/veraltet";
 import { datumKurz } from "@/lib/zeit";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
+import type { TeamMitglied } from "@/lib/queries/teams";
 
 /* Alle Aktionen am Kalender eines Teams an einer Stelle (Team-Kalender
    #322, #323). Die Liste und — ab Teil F — der Monatsüberblick rufen
@@ -71,23 +74,30 @@ type SerienArt = "aendern" | "entfernen";
 
 const JEDE_REICHWEITE: readonly Reichweite[] = ["nur_dieser", "dieser_und_folgende", "alle"];
 
-const FOLGT_WIEDER: Record<"zeit" | "ort" | "bemerkung", string> = {
+const FOLGT_WIEDER: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit folgt wieder der Serie.",
   ort: "Der Ort folgt wieder der Serie.",
   bemerkung: "Die Bemerkung folgt wieder der Serie.",
+  verantwortliche: "Die Verantwortlichen folgen wieder der Serie.",
 };
 
 /** Die offene Frage nach der Reichweite (#326 AK 1–4, 7). Beim Ändern stehen
- *  die geänderten Felder für «nur dieser» (`geaendert`, wie beim einzelnen
- *  Termin) und die Änderung für die Serie (`aenderung`, ohne Datum) bereit. */
+ *  die geänderten Felder und Verantwortlichen für «nur dieser» (`geaendert`,
+ *  `verantwortlich`, wie beim einzelnen Termin) und die Änderung für die Serie
+ *  (`aenderung`, ohne Datum, die Verantwortlichen als Konten) bereit. */
 type ReichweiteFrage = {
   art: SerienArt;
   t: TerminZeile;
   erlaubt: readonly Reichweite[];
   hinweis?: string;
   geaendert?: Partial<TerminFelder> | null;
+  verantwortlich?: VerantwortlicheWert;
   aenderung?: SerienAenderung;
 };
+
+/** Die Felder sind gespeichert, die Verantwortlichen nicht — weil der USER
+ *  zwischen den beiden Schritten abbrach oder der zweite scheiterte (#325). */
+const NUR_FELDER_GEAENDERT = "Termin geändert. Die Verantwortlichen blieben unverändert.";
 
 /** Eine gerechnete Vorschau, die auf Bestätigung oder Ausführung wartet. */
 type SerienSchritt = {
@@ -101,11 +111,14 @@ type SerienSchritt = {
 export function TerminBereich({
   teamId,
   trainings,
+  mitglieder,
   heute,
   children,
 }: {
   teamId: string;
   trainings: TeamTrainingRow[];
+  /** Wer als Verantwortliche:r zur Wahl steht (#325). */
+  mitglieder: TeamMitglied[];
   heute: string;
   children: React.ReactNode;
 }) {
@@ -121,6 +134,17 @@ export function TerminBereich({
   const [bestaetigen, setBestaetigen] = useState<SerienSchritt | null>(null);
   const [dialogFehler, setDialogFehler] = useState<string | undefined>();
 
+  /** Die Nummer des laufenden Ablaufs in einem Dialog. Öffnen und Abbrechen
+   *  (Knopf, Escape, Klick daneben) zählen sie hoch; wer nach einem `await`
+   *  weitermacht, prüft zuerst, ob seine Nummer noch gilt. Sonst liefe eine
+   *  Vorschau, die der USER abgebrochen hat, trotzdem in die Bestätigung
+   *  oder gleich ins Ausführen, und ein spätes Ergebnis schlösse einen
+   *  inzwischen neu geöffneten Dialog oder schriebe seinen Fehler hinein.
+   *  Abbrechen lässt sich der Server-Aufruf nicht; die Transition endet mit
+   *  seiner Antwort, `pending` bleibt nicht hängen. */
+  const laufNr = useRef(0);
+  const neuerLauf = () => ++laufNr.current;
+
   /** Eine Aktion ausführen. Bei Erfolg: schliessen, neu laden, melden.
    *
    *  Bei einem Fehler wird IMMER neu geladen, damit die Liste den Stand zeigt,
@@ -128,16 +152,24 @@ export function TerminBereich({
    *  an `imDialog`: dann steht der Fehler im Dialog — ausser er sagt «seit der
    *  Auswahl geändert» (PO 17). Dann trägt die Auswahl veraltete Angaben
    *  (`erwartet`), ein erneuter Versuch scheiterte immer wieder; der Dialog
-   *  schliesst, die Snackbar meldet, und man öffnet die aufgefrischte Karte. */
+   *  schliesst, die Snackbar meldet, und man öffnet die aufgefrischte Karte.
+   *
+   *  Mit `nr` (siehe `laufNr`): Gilt die Nummer nach dem Aufruf nicht mehr,
+   *  bleiben die Dialoge unberührt, und nur die Snackbar sagt, was geschah. */
   function lauf<T extends { ok: boolean; error?: string }>(
     aufruf: () => Promise<T>,
     erfolg: (r: T) => string,
     schliessen: () => void,
     imDialog = false,
+    nr?: number,
   ) {
     startTransition(async () => {
       const r = await aufruf();
       router.refresh();
+      if (nr !== undefined && laufNr.current !== nr) {
+        melde(r.ok ? erfolg(r) : (r.error ?? "Fehlgeschlagen."));
+        return;
+      }
       if (!r.ok && imDialog && !istVeraltet(r.error)) {
         setDialogFehler(r.error ?? "Fehlgeschlagen.");
         return;
@@ -148,16 +180,64 @@ export function TerminBereich({
     });
   }
 
-  // ── Serientermine (#326) ──────────────────────────────────────────────────
+  /** Einen neuen Termin festlegen, danach seine Verantwortlichen (#325 AK 1).
+   *  Zwei Aufrufe, weil das Festlegen keine Verantwortlichen kennt. Scheitert
+   *  erst der zweite, steht der Termin schon: Dann schliesst der Dialog (ein
+   *  erneutes «Festlegen» legte ihn doppelt an), und die Snackbar sagt beides. */
+  async function legeNeuFest(f: TerminFelder, verantwortlich?: VerantwortlicheWert) {
+    const r = await legeTerminFestAktion(teamId, f);
+    if (!r.ok || !verantwortlich) return r;
+    const v = await setzeVerantwortlicheAktion(r.terminId, verantwortlich, undefined);
+    return v.ok ? v : { ok: true as const, meldung: `Termin festgelegt. ${v.error}` };
+  }
 
-  /** Die Nummer des laufenden Serien-Ablaufs. Öffnen und Abbrechen (Knopf,
-   *  Escape, Klick daneben) zählen sie hoch; wer nach einem `await`
-   *  weitermacht, prüft zuerst, ob seine Nummer noch gilt. Sonst liefe eine
-   *  Vorschau, die der USER abgebrochen hat, trotzdem in die Bestätigung
-   *  oder gleich ins Ausführen. Abbrechen lässt sich der Server-Aufruf nicht;
-   *  die Transition endet mit seiner Antwort, `pending` bleibt nicht hängen. */
-  const laufNr = useRef(0);
-  const neuerLauf = () => ++laufNr.current;
+  /** Einen Termin einzeln ändern — einen einzelnen oder einen Serientermin mit
+   *  «nur dieser»: erst die Felder, dann die Verantwortlichen (#325 AK 2, 5).
+   *  Jeder Aufruf läuft nur, wenn sich bei ihm etwas geändert hat (PO 17);
+   *  scheitert der erste, läuft der zweite nicht. Hat der USER nach dem
+   *  ersten abgebrochen, läuft der zweite auch nicht: Die Dialoge bleiben
+   *  unberührt, die Snackbar sagt, dass nur die Felder gespeichert sind. */
+  function aendereEinzeln(t: TerminZeile, geaendert: Partial<TerminFelder> | null | undefined, verantwortlich?: VerantwortlicheWert) {
+    const nr = laufNr.current;
+    const gilt = () => laufNr.current === nr;
+    startTransition(async () => {
+      if (geaendert) {
+        const r = await aendereTerminAktion(t.id, geaendert, t.training?.id ?? null);
+        if (!r.ok) return einzelnGescheitert(r.error, gilt(), false);
+      }
+      if (verantwortlich) {
+        if (!gilt()) {
+          router.refresh();
+          return melde(NUR_FELDER_GEAENDERT);
+        }
+        const v = await setzeVerantwortlicheAktion(t.id, verantwortlich, t.serie ? "nur_dieser" : undefined);
+        if (!v.ok) return einzelnGescheitert(v.error, gilt(), !!geaendert);
+      }
+      router.refresh();
+      if (gilt()) {
+        setBearbeiten(null);
+        setDialogFehler(undefined);
+      }
+      melde("Termin geändert.");
+    });
+  }
+
+  /** Ein Fehler beim einzelnen Ändern, wie in `lauf`: Im noch offenen Dialog
+   *  steht er dort, ausser er ist veraltet (PO 17) — dann schliessen und
+   *  melden. Abgebrochen: nur melden. Waren die Felder schon gespeichert, sagt
+   *  die Meldung auch das. */
+  function einzelnGescheitert(fehler: string, gilt: boolean, felderGespeichert: boolean) {
+    router.refresh();
+    const text = felderGespeichert ? `${NUR_FELDER_GEAENDERT} ${fehler}` : fehler;
+    if (gilt && !istVeraltet(fehler)) return setDialogFehler(text);
+    if (gilt) {
+      setBearbeiten(null);
+      setDialogFehler(undefined);
+    }
+    melde(text);
+  }
+
+  // ── Serientermine (#326) ──────────────────────────────────────────────────
 
   function serieSchliessen() {
     setReichweite(null);
@@ -199,23 +279,23 @@ export function TerminBereich({
   }
 
   /** Speichern im Termin-Dialog. Ein einzelner Termin geht direkt; ein
-   *  Serientermin fragt erst, wofür die Änderung gilt. Gesendet wird in jedem
-   *  Fall nur, was sich geändert hat (PO 17); nichts geändert: kein Aufruf. */
-  function speichereBearbeitung(t: TerminZeile, f: TerminFelder, regel?: SerienRegel) {
+   *  Serientermin fragt erst, wofür die Änderung gilt — auch, wenn sich nur
+   *  die Verantwortlichen geändert haben (#325 AK 4). Gesendet wird in jedem
+   *  Fall nur, was sich geändert hat (PO 17); nichts geändert: kein Aufruf.
+   *  `verantwortlich` kommt nur, wenn sich die Wahl geändert hat. */
+  function speichereBearbeitung(t: TerminZeile, f: TerminFelder, regel?: SerienRegel, verantwortlich?: VerantwortlicheWert) {
     const geaendert = geaenderteFelder(f, startWerte(t));
     const regelNeu = t.serie && regel ? regelAenderung(t.serie, regel) : null;
-    if (!geaendert && !regelNeu) {
+    if (!geaendert && !regelNeu && !verantwortlich) {
       setBearbeiten(null);
       return;
     }
-    if (!t.serie) {
-      lauf(() => aendereTerminAktion(t.id, geaendert!, t.training?.id ?? null), () => "Termin geändert.", () => setBearbeiten(null), true);
-      return;
-    }
+    if (!t.serie) return aendereEinzeln(t, geaendert, verantwortlich);
     const datum = geaendert?.datum !== undefined;
-    const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu });
+    const namenlose = !!verantwortlich && nurNamenloseGeaendert(verantwortlich, verantwortlicheStart(t.verantwortliche));
+    const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose });
     // Der Dialog prüft das schon; hier nur als Rückhalt.
-    if (!erlaubt) return setDialogFehler(SERIE_TEXT.datumUndRegel);
+    if (!erlaubt) return setDialogFehler(datum ? SERIE_TEXT.datumUndRegel : SERIE_TEXT.namenloseUndRegel);
     const { datum: _datum, ...werte } = geaendert ?? {};
     setDialogFehler(undefined);
     neuerLauf();
@@ -223,9 +303,21 @@ export function TerminBereich({
       art: "aendern",
       t,
       erlaubt,
-      hinweis: datum ? SERIE_MELDUNG.DATUM_NUR_EINZELN : regelNeu ? SERIE_MELDUNG.REGEL_NUR_SERIE : undefined,
+      hinweis: datum
+        ? SERIE_MELDUNG.DATUM_NUR_EINZELN
+        : namenlose
+          ? SERIE_TEXT.namenloseNurEinzeln
+          : regelNeu
+            ? SERIE_MELDUNG.REGEL_NUR_SERIE
+            : undefined,
       geaendert,
-      aenderung: { ...werte, ...regelNeu },
+      verantwortlich,
+      // Für folgende und alle gehen die Verantwortlichen mit der übrigen
+      // Änderung in EINE Serienänderung (PC 3, 11). Die Serienrechnung
+      // (terminserie_rechnen) ersetzt damit an jedem erfassten Termin ALLE
+      // Einträge durch diese Konten, auch die namenlosen gelöschter Konten.
+      // Ändern sich allein diese, bleibt darum nur «nur dieser» (`namenlose`).
+      aenderung: { ...werte, ...regelNeu, ...(verantwortlich && { verantwortliche: verantwortlich.userIds }) },
     });
   }
 
@@ -238,10 +330,8 @@ export function TerminBereich({
       // Einzeln entfernen geht durch die Bestätigung aus Teil A: Sie nennt das
       // Training, das im Bestand bleibt (#322).
       if (art === "entfernen") return setEntfernen(t);
-      if (!frage.geaendert) return;
-      const geaendert = frage.geaendert;
-      lauf(() => aendereTerminAktion(t.id, geaendert, t.training?.id ?? null), () => "Termin geändert.", () => setBearbeiten(null), true);
-      return;
+      if (!frage.geaendert && !frage.verantwortlich) return;
+      return aendereEinzeln(t, frage.geaendert, frage.verantwortlich);
     }
     const version = t.serie?.version ?? 0;
     const nr = laufNr.current;
@@ -261,9 +351,9 @@ export function TerminBereich({
   }
 
   const aktionen: TerminAktionen = {
-    neu: (datum) => { setDialogFehler(undefined); setNeu(datum ?? ""); },
+    neu: (datum) => { neuerLauf(); setDialogFehler(undefined); setNeu(datum ?? ""); },
     neueSerie: (datum) => { setDialogFehler(undefined); setSerieNeu(datum ?? ""); },
-    bearbeiten: (t) => { setDialogFehler(undefined); setBearbeiten(t); },
+    bearbeiten: (t) => { neuerLauf(); setDialogFehler(undefined); setBearbeiten(t); },
     zuordnen: (t) => { setDialogFehler(undefined); setZuordnen(t); },
     loesen: (t) =>
       t.training &&
@@ -291,9 +381,20 @@ export function TerminBereich({
         start={{ datum: neu ?? "" }}
         pending={pending}
         fehler={dialogFehler}
-        onClose={() => setNeu(null)}
-        onSpeichern={(f: TerminFelder) =>
-          lauf(() => legeTerminFestAktion(teamId, f), () => "Termin festgelegt.", () => setNeu(null), true)
+        mitglieder={mitglieder}
+        onClose={() => {
+          if (neu === null) return;
+          neuerLauf();
+          setNeu(null);
+        }}
+        onSpeichern={(f: TerminFelder, _regel, verantwortlich) =>
+          lauf(
+            () => legeNeuFest(f, verantwortlich),
+            (r) => ("meldung" in r && r.meldung) || "Termin festgelegt.",
+            () => setNeu(null),
+            true,
+            laufNr.current,
+          )
         }
       />
 
@@ -302,6 +403,7 @@ export function TerminBereich({
         start={{ von: serieNeu ?? "" }}
         pending={pending}
         fehler={dialogFehler}
+        mitglieder={mitglieder}
         onClose={() => setSerieNeu(null)}
         onSpeichern={(f) =>
           lauf(() => legeSerieFestAktion(teamId, f), () => "Terminserie festgelegt.", () => setSerieNeu(null), true)
@@ -319,6 +421,8 @@ export function TerminBereich({
         serie={bearbeiten?.serie}
         serienTag={bearbeiten?.serienTag}
         abweichungen={bearbeiten?.abweichungen}
+        mitglieder={mitglieder}
+        verantwortliche={bearbeiten?.verantwortliche}
         onFolgen={(angabe) =>
           bearbeiten &&
           lauf(() => folgeDerSerieAktion(bearbeiten.id, [angabe]), () => FOLGT_WIEDER[angabe], () => setBearbeiten(null), true)
@@ -330,7 +434,7 @@ export function TerminBereich({
           neuerLauf();
           setBearbeiten(null);
         }}
-        onSpeichern={(f, regel) => bearbeiten && speichereBearbeitung(bearbeiten, f, regel)}
+        onSpeichern={(f, regel, verantwortlich) => bearbeiten && speichereBearbeitung(bearbeiten, f, regel, verantwortlich)}
       />
 
       <ReichweiteDialog

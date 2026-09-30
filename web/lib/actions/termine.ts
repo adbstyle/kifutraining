@@ -17,9 +17,10 @@ import {
   type SerienAenderung,
   type SerienFolge,
 } from "@/lib/kern/serien";
+import { setzeVerantwortliche } from "@/lib/kern/verantwortliche";
 import type { KernErgebnis } from "@/lib/kern/ergebnis";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Wochentag } from "@/lib/serie";
+import type { Reichweite, Wochentag } from "@/lib/serie";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
 import type { TerminFelder } from "@/lib/termin";
@@ -118,17 +119,51 @@ export async function loeseTrainingAktion(
   return { ok: true };
 }
 
-/** Eine Terminserie festlegen (#324): die Termine entstehen ohne Training;
- *  die Oberfläche bestätigt ohne Anzahl (Story 3 PC 4). */
+/** Eine Terminserie festlegen (#324): die Termine entstehen ohne Training,
+ *  aber mit den Verantwortlichen der Serie (#325 AK 3, PC 1); die Oberfläche
+ *  bestätigt ohne Anzahl (Story 3 PC 4). */
 export async function legeSerieFestAktion(
   teamId: string,
-  f: { wochentage: Wochentag[]; von: string; bis: string; beginn: string; ende: string; ort: string; bemerkung: string },
+  f: {
+    wochentage: Wochentag[];
+    von: string;
+    bis: string;
+    beginn: string;
+    ende: string;
+    ort: string;
+    bemerkung: string;
+    verantwortliche: string[];
+  },
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await legeSerieFest(a.supabase, a.userId, { ...f, teamId });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(teamId);
+  return { ok: true };
+}
+
+/** Die Verantwortlichen eines Termins festlegen (#325 AK 1, 2, 5, 9). Die
+ *  Oberfläche nimmt diesen Weg für einen einzelnen Termin (`reichweite`
+ *  fehlt) und für «nur dieser» an einem Serientermin; für folgende und alle
+ *  gehen die Verantwortlichen mit der Serienänderung durch Vorschau und
+ *  Ausführung (`aendereSerieAktion`, PC 3, 11). `anonyme` sind die Einträge
+ *  gelöschter Konten, die bleiben sollen (PC 8). */
+export async function setzeVerantwortlicheAktion(
+  terminId: string,
+  wert: { userIds: string[]; anonyme: string[] },
+  reichweite: Reichweite | undefined,
+): Promise<{ ok: true } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await setzeVerantwortliche(a.supabase, a.userId, {
+    terminId,
+    userIds: wert.userIds,
+    anonyme: wert.anonyme,
+    reichweite,
+  });
+  if (!r.ok) return { ok: false, error: r.meldung };
+  revalidiereTeam(r.wert.teamId);
   return { ok: true };
 }
 

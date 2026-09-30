@@ -509,7 +509,7 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
 });
 
 pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
-  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, training: null, serie: null, serienTag: null, abweichungen: [] };
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [] };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [] } }, "2026-10-01"), false);
@@ -536,6 +536,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     serie: null,
     serienTag: null,
     abweichungen: [],
+    verantwortliche: [],
   };
   const heute = trainingAuskunft(team, { userId: ICH, termin, heute: "2026-09-23" });
   assert.deepEqual(heute.termin, {
@@ -546,6 +547,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     ort: "Allmend",
     bemerkung: null,
     serie_id: null,
+    verantwortliche: [],
     anstehend: true,
   });
   // Der heutige Tag zählt ganz zum Anstehenden — wie im Plan (`teilePlan`).
@@ -653,6 +655,25 @@ pruefe("Serie: Reichweiten je nach Änderung (#326 AK 1–4)", () => {
   assert.deepEqual(regelAenderung(alt, { wochentage: [2, 4], von: "2026-10-01", bis: "2027-06-30" }), { bis: "2027-06-30" }, "nur das Geänderte");
   assert.deepEqual(regelAenderung(alt, { wochentage: [2, 5], von: "2026-09-01", bis: "2027-03-31" }), { wochentage: [2, 5], von: "2026-09-01" });
   assert.equal(SERIE_TEXT.datumUndRegel, "Datum und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.");
+});
+
+pruefe("Termin: Wortlaut der Verantwortlichen-Meldungen (#325)", () => {
+  assert.equal(
+    TERMIN_MELDUNG.NICHT_MEHR_MITGLIED,
+    "Mindestens eine gewählte Person ist nicht mehr Mitglied des Teams. Sieh dir die Mitglieder noch einmal an.",
+  );
+  assert.equal(TERMIN_TEXT.verantwortlicheUngueltig, "Bitte nur Mitglieder des Teams als Verantwortliche wählen.");
+});
+
+pruefe("Serie: namenlose Verantwortliche nur für diesen Termin (#325 PC 8)", () => {
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false, namenlose: true }), ["nur_dieser"]);
+  assert.equal(erlaubteReichweiten({ datum: false, regel: true, namenlose: true }), null);
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false, namenlose: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
+  assert.equal(SERIE_TEXT.namenloseNurEinzeln, "Ehemalige Mitglieder ohne Namen lassen sich nur für diesen einen Termin entfernen.");
+  assert.equal(
+    SERIE_TEXT.namenloseUndRegel,
+    "Ehemalige Mitglieder ohne Namen und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
+  );
 });
 
 pruefe("Serie: Obergrenze vor der Wahl der Reichweite (#326 AK 5, PC 19; Review Focus 2)", () => {
@@ -1546,6 +1567,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#323": ["training_zuordnen", "training_loesen"],
     "#324": ["terminserie_festlegen"],
     "#326": ["termin_der_serie_folgen"],
+    "#325": ["team_mitglieder_abrufen", "termin_verantwortliche_setzen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))

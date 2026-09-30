@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin, Users } from "lucide-react";
 import { TrainingExerciseDetail } from "./TrainingExerciseDetail";
 import { VariantenWahl } from "./VariantenWahl";
 import { GesamtMaterialListe } from "./GesamtMaterialListe";
@@ -23,10 +23,12 @@ type TerminKontext = {
   ende: string | null;
   ort: string | null;
   bemerkung: string | null;
+  /** Die Namen der Verantwortlichen (#325 AK 10); leer: niemand eingetragen. */
+  verantwortliche: string[];
 };
 
-/** Datum, Beginn und Ende, Ort und Bemerkung der Einheit — der Kontext für alle, die
- *  gerade am Platz stehen (Story 7 AK 19). */
+/** Datum, Beginn und Ende, Ort, Verantwortliche und Bemerkung der Einheit —
+ *  der Kontext für alle, die gerade am Platz stehen (Story 7 AK 19, #325 AK 10). */
 function TerminKopf({ termin, className }: { termin: TerminKontext; className?: string }) {
   return (
     <div
@@ -44,6 +46,13 @@ function TerminKopf({ termin, className }: { termin: TerminKontext; className?: 
         <span className="inline-flex items-center gap-1.5">
           <MapPin size={14} strokeWidth={2} aria-hidden />
           {termin.ort}
+        </span>
+      )}
+      {termin.verantwortliche.length > 0 && (
+        <span className="inline-flex items-center gap-1.5">
+          <Users size={14} strokeWidth={2} aria-hidden />
+          <span className="sr-only">Verantwortlich: </span>
+          {termin.verantwortliche.join(", ")}
         </span>
       )}
       {termin.bemerkung && (

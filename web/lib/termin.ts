@@ -30,6 +30,7 @@ export const TERMIN_TEXT = {
   endeNachBeginn: "Das Ende muss am selben Tag nach dem Beginn liegen.",
   ortLang: `Der Ort darf höchstens ${ORT_MAX} Zeichen lang sein.`,
   bemerkungLang: `Die Bemerkung darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
+  verantwortlicheUngueltig: "Bitte nur Mitglieder des Teams als Verantwortliche wählen.",
 } as const;
 
 /** Leere Eingaben sind „nicht erfasst", nicht „leerer Text". */
@@ -156,6 +157,8 @@ export const TERMIN_MELDUNG = {
     "diesen Termin kopierst oder auf ihn verschiebst.",
   NUR_KOPIE_BEI_VERGANGENEM:
     "Ein Training mit vergangenem Termin lässt sich nur kopieren, nicht verschieben.",
+  NICHT_MEHR_MITGLIED:
+    "Mindestens eine gewählte Person ist nicht mehr Mitglied des Teams. Sieh dir die Mitglieder noch einmal an.",
 } as const;
 
 export type TerminMarker = keyof typeof TERMIN_MELDUNG;

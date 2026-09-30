@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, CalendarPlus, CalendarX2, MapPin, Pencil, PlayCircle, Repeat, Trash2, Unlink } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarX2, MapPin, Pencil, PlayCircle, Repeat, Trash2, Unlink, Users } from "lucide-react";
 import { Badge, Card, Disclosure, IconButton, IconButtonLink, KategorieChip, OverflowMenu, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
@@ -10,7 +10,7 @@ import { zeitText } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
 // (next/headers) ins Client-Bundle.
-import { nochNichtVorbereitet, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { nochNichtVorbereitet, verantwortlichenNamen, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
 
 /* Der Kalender eines Teams als Liste (Team-Kalender #322, #323; gegliedert
    mit Story 18): zuoberst, was ansteht, danach der Rückblick, zugeklappt.
@@ -78,6 +78,15 @@ export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className={cn("min-w-0 flex-1", vergangen && "opacity-60")}>
             {kopf}
+            {/* #325 AK 10, 12: wer den Termin vorbereitet und leitet, mit dem
+                aktuellen Namen. Ohne Verantwortliche steht nichts (OoS 2). */}
+            {t.verantwortliche.length > 0 && (
+              <p className="mt-0.5 flex items-center gap-1 type-body-small text-on-surface-mittel">
+                <Users size={14} aria-hidden className="shrink-0" />
+                <span className="sr-only">Verantwortlich: </span>
+                {verantwortlichenNamen(t.verantwortliche).join(", ")}
+              </p>
+            )}
             {t.training ? (
               <Link href={`/training/${t.training.id}`} className="focus-ring group mt-1 block rounded-flaeche">
                 <span className="block type-title-medium text-on-surface group-hover:underline">{t.training.name}</span>

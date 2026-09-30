@@ -32,12 +32,25 @@ export type TerminSerie = {
   ende: string;
   ort: string | null;
   bemerkung: string | null;
+  /** Wer die Serie vorgibt (#325), nach Name geordnet. */
+  verantwortliche: { userId: string; name: string }[];
+};
+
+/** Ein Eintrag der Verantwortlichen eines Termins (#325). */
+export type Verantwortlicher = {
+  eintragId: string;
+  /** `null`: ein gelöschtes Konto (#325 PC 8). */
+  userId: string | null;
+  /** Der aktuelle Anzeigename (AK 12); `null` bei gelöschtem Konto. */
+  name: string | null;
+  /** Nicht mehr im Team (oder Konto gelöscht). */
+  ehemalig: boolean;
 };
 
 /** Welche Angaben eines Serientermins von seiner Serie abweichen (#326 AK 12,
  *  14; PO 3). Das Datum weicht ab, wenn der Termin nicht mehr an seinem
  *  Serientag liegt. */
-export type Abweichung = "datum" | "zeit" | "ort" | "bemerkung";
+export type Abweichung = "datum" | "zeit" | "ort" | "bemerkung" | "verantwortliche";
 
 export type TerminZeile = {
   id: string;
@@ -57,7 +70,25 @@ export type TerminZeile = {
   serienTag: string | null;
   /** Leer für einzelne Termine und Serientermine ohne Abweichung. */
   abweichungen: Abweichung[];
+  /** Wer den Termin vorbereitet und leitet (#325), nach Name geordnet,
+   *  Einträge gelöschter Konten zuletzt. */
+  verantwortliche: Verantwortlicher[];
 };
+
+/** Ist dieses Konto für den Termin verantwortlich? (#325 AK 11) */
+export function istVerantwortlich(t: TerminZeile, userId: string): boolean {
+  return t.verantwortliche.some((v) => v.userId === userId);
+}
+
+/** Wie ein Eintrag ohne Namen (gelöschtes Konto, PC 8) überall heisst. */
+export const EHEMALIGES_MITGLIED = "Ehemaliges Mitglied";
+
+/** Die Verantwortlichen als Namen zum Anzeigen, in der Reihenfolge des
+ *  Lesepfads (AK 10, 12). Einträge gelöschter Konten stehen namenlos als
+ *  ehemaliges Mitglied da. */
+export function verantwortlichenNamen(liste: readonly Verantwortlicher[]): string[] {
+  return liste.map((v) => v.name ?? EHEMALIGES_MITGLIED);
+}
 
 type RawTermin = {
   id: string;
@@ -72,6 +103,13 @@ type RawTermin = {
   zeit_abweichend: boolean;
   ort_abweichend: boolean;
   bemerkung_abweichend: boolean;
+  verantwortliche_abweichend: boolean;
+  termin_verantwortliche: {
+    id: string;
+    user_id: string | null;
+    verantwortlich_name: string | null;
+    verantwortlich_ehemalig: boolean;
+  }[];
   trainings: { id: string; name: string; stufen: string[] | null } | null;
   termin_serien: {
     id: string;
@@ -83,6 +121,7 @@ type RawTermin = {
     ende: string;
     ort: string | null;
     bemerkung: string | null;
+    termin_serien_verantwortliche: { user_id: string; verantwortlich_name: string | null }[];
   } | null;
 };
 
@@ -97,8 +136,26 @@ export function kurzeZeit(t: string | null): string | null {
 }
 
 const TERMIN_SELECT =
-  "id, team_id, datum, beginn, ende, ort, bemerkung, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, " +
-  "trainings ( id, name, stufen ), termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung )";
+  "id, team_id, datum, beginn, ende, ort, bemerkung, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, " +
+  "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ), " +
+  "trainings ( id, name, stufen ), " +
+  "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, " +
+  "termin_serien_verantwortliche ( user_id, verantwortlich_name ) )";
+
+/** Nach Anzeigename ordnen, unbenannte (gelöschte Konten) zuletzt. Der Schlüssel
+ *  (Eintrags- bzw. Konto-Kennung) macht die Reihenfolge bei gleichem Namen stabil. */
+export function nachName<T>(liste: T[], name: (x: T) => string | null, schluessel: (x: T) => string): T[] {
+  return [...liste].sort((a, b) => {
+    const [x, y] = [name(a), name(b)];
+    if (x === null || y === null) {
+      if (x !== y) return x === null ? 1 : -1;
+    } else {
+      const n = x.localeCompare(y, "de");
+      if (n !== 0) return n;
+    }
+    return schluessel(a).localeCompare(schluessel(b));
+  });
+}
 
 function mapTermin(t: RawTermin): TerminZeile {
   return {
@@ -123,6 +180,14 @@ function mapTermin(t: RawTermin): TerminZeile {
           ende: kurzeZeit(t.termin_serien.ende)!,
           ort: t.termin_serien.ort,
           bemerkung: t.termin_serien.bemerkung,
+          verantwortliche: nachName(
+            (t.termin_serien.termin_serien_verantwortliche ?? []).map((v) => ({
+              userId: v.user_id,
+              name: v.verantwortlich_name ?? "",
+            })),
+            (v) => v.name,
+            (v) => v.userId,
+          ),
         }
       : null,
     serienTag: t.serien_tag,
@@ -132,8 +197,19 @@ function mapTermin(t: RawTermin): TerminZeile {
           t.zeit_abweichend && "zeit",
           t.ort_abweichend && "ort",
           t.bemerkung_abweichend && "bemerkung",
+          t.verantwortliche_abweichend && "verantwortliche",
         ].filter(Boolean) as Abweichung[])
       : [],
+    verantwortliche: nachName(
+      (t.termin_verantwortliche ?? []).map((v) => ({
+        eintragId: v.id,
+        userId: v.user_id,
+        name: v.user_id === null ? null : v.verantwortlich_name,
+        ehemalig: v.verantwortlich_ehemalig,
+      })),
+      (v) => v.name,
+      (v) => v.eintragId,
+    ),
   };
 }
 
@@ -157,8 +233,14 @@ const PLAN_OBERGRENZE = 1000;
 export async function getTeamPlanFuer(
   supabase: SupabaseClient,
   teamId: string,
-  heute: string = heuteAmTrainingsort(),
+  o: {
+    /** Der Tag der Grenze «anstehend»/«vergangen»; Standard: heute am Trainingsort. */
+    heute?: string;
+    /** Nur Termine, für die dieses Konto (userId) verantwortlich ist (#325 AK 11). */
+    nurMeine?: string;
+  } = {},
 ): Promise<TerminZeile[]> {
+  const heute = o.heute ?? heuteAmTrainingsort();
   // Ungültige UUID würde die Query mit Fehler abbrechen; defensiv abfangen.
   // Der Guard im Layout greift hier nicht — Layout und Page rendern parallel;
   // die leere Liste verhindert den 500 vor dem Redirect.
@@ -188,7 +270,9 @@ export async function getTeamPlanFuer(
   }
   // Die Vergangenheit kam absteigend; umgedreht ergibt sie wieder die
   // aufsteigende Reihenfolge inkl. Beginn-ohne-Zeit-zuletzt und created_at.
-  return [...davor.reverse(), ...kommend].map(mapTermin);
+  const alle = [...davor.reverse(), ...kommend].map(mapTermin);
+  const meine = o.nurMeine;
+  return meine ? alle.filter((t) => istVerantwortlich(t, meine)) : alle;
 }
 
 /** «Noch nicht vorbereitet» (Epic PO 7): anstehend und ohne Training. Teil D

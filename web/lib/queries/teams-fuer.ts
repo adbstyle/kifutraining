@@ -33,3 +33,17 @@ export async function getMeineTeamsFuer(supabase: SupabaseClient): Promise<TeamU
     mitgliederAnzahl: (t.team_members ?? []).length,
   }));
 }
+
+/** Die Mitglieder eines Teams mit Anzeigename, ohne E-Mail (Story 1 NFR 4,
+ *  #325 PC 9) — dieselbe RPC wie der Team-Bereich (`getTeam`). */
+export async function getTeamMitgliederFuer(
+  supabase: SupabaseClient,
+  teamId: string,
+): Promise<{ userId: string; anzeigeName: string }[]> {
+  const { data, error } = await supabase.rpc("team_mitglieder", { p_team: teamId });
+  if (error) throw error;
+  return ((data ?? []) as { user_id: string; anzeige_name: string }[]).map((m) => ({
+    userId: m.user_id,
+    anzeigeName: m.anzeige_name,
+  }));
+}
