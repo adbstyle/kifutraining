@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
 import { HERKUNFT_LABEL, herkunftArt } from "@/lib/labels";
 
-type Tone = "manual" | "entwurf" | "oeffentlich" | "neutral" | "varianten";
+type Tone = "manual" | "entwurf" | "oeffentlich" | "neutral" | "varianten" | "befund";
 
 /* Gefüllt heisst still, umrandet heisst gilt.
    Eine Plakette meldet entweder bloss, woher etwas stammt oder in welchem
@@ -25,6 +25,11 @@ const tones: Record<Tone, string> = {
   // Varianten-Zahl (TrainingCard, TeamTrainingsListe): wie `oeffentlich` —
   // sie sagt etwas über den Inhalt aus, das man beim Öffnen erwarten darf.
   varianten: "kontur border-primary text-primary",
+  // Etwas ist offen, das jemand erledigen muss — noch kein Training am
+  // anstehenden Termin (Team-Kalender #322 AK 16). Derselbe Ton wie der
+  // Befund am ChipMenu: Rahmen und Schrift in Error, keine Fläche. Er meldet
+  // eine Lücke, keinen Fehler; darum umrandet statt gefüllt.
+  befund: "kontur border-error text-error",
 };
 
 /* Nur die Töne, deren Aufschrift IMMER dieselbe ist, führen hier eine Vorgabe.
