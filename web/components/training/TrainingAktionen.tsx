@@ -20,6 +20,7 @@ import {
   Tooltip,
   type MenuItemDef,
 } from "@/components/ui";
+import { datumKurz } from "@/lib/zeit";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import {
   SichtbarkeitDialoge,
@@ -70,6 +71,7 @@ export function TrainingAktionen({
   name,
   visibility,
   teamId,
+  terminDatum,
   angemeldet,
   bearbeitungsziel,
   teams,
@@ -84,6 +86,9 @@ export function TrainingAktionen({
   name: string;
   visibility: "public" | "private";
   teamId: string | null;
+  /** Der Termin, dem das Team-Training zugeordnet ist — der Löschdialog nennt
+   *  ihn, weil er bestehen bleibt. */
+  terminDatum?: string | null;
   angemeldet: boolean;
   bearbeitungsziel: Bearbeitungsziel | null;
   /** Die Teams des USERS — Ziele für Übernehmen und Ins-Team-Stellen. */
@@ -323,6 +328,11 @@ export function TrainingAktionen({
             Das Training „{name}" und alle seine Übungszuordnungen werden
             unwiderruflich gelöscht.
           </p>
+          {terminDatum && (
+            <p className="mt-3">
+              Der Termin am {datumKurz(terminDatum)} bleibt ohne Training im Trainingsplan des Teams bestehen.
+            </p>
+          )}
           {/* Beim öffentlichen Training ist das Löschen mehr als ein Aufräumen
               im eigenen Bestand: es verschwindet aus der Öffentlichkeit
               (Story A AK 8). */}

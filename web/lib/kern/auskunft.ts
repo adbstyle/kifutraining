@@ -249,6 +249,7 @@ export function trainingAuskunft(
           id: k.termin.id,
           datum: k.termin.datum,
           beginn: k.termin.beginn,
+          ende: k.termin.ende,
           ort: k.termin.ort,
           bemerkung: k.termin.bemerkung,
           // Dieselbe Grenze wie der Plan (`teilePlan`): der heutige Tag zählt

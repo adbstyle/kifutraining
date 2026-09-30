@@ -9,6 +9,7 @@
 import { JUNIOREN_PFLICHT_BLOECKE } from "@/lib/junioren";
 import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
+import { TERMIN_MELDUNG } from "@/lib/termin";
 import { sichtbareZuordnungen } from "@/lib/varianten";
 
 /** Marker, mit dem die Datenebene eine verletzte Bedingung meldet. */
@@ -326,16 +327,10 @@ export const VARIANTENFOLGE_MELDUNG = {
     "Lies das Training neu und sende die vollständige Folge.",
 } as const;
 
-/** Termine gibt es nur an Team-Trainings (Team-Epic Out of Scope 3). Der
- *  Fachkern weist einen Termin an einem persönlichen Training mit diesem Satz
- *  vorab ab (#198 AK 10); die Datenebene ist der Rückhalt. */
-export const TERMIN_NUR_FUER_TEAM =
-  "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.";
-
-/** Der Marker, mit dem die Datenebene einen Termin an einem persönlichen
- *  Training abweist (Team-Epic, #156). Bisher unübersetzt — der Trainer sah
- *  den Rohtext. */
-const TERMIN_MARKER: [string, string][] = [["TERMIN_NUR_FUER_TEAM_TRAININGS", TERMIN_NUR_FUER_TEAM]];
+/** Die Marker, mit denen die Datenebene im Kalender abweist (#322, #323) —
+ *  ihre Sätze stehen in lib/termin.ts, damit Fachkern und Datenebene
+ *  denselben Wortlaut tragen. */
+const TERMIN_MARKER: [string, string][] = Object.entries(TERMIN_MELDUNG);
 
 /** Die Meldung zu einem Marker aus Übungsfolge, Variantenfolge oder Termin,
  *  sonst `null`. */

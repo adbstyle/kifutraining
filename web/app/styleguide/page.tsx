@@ -30,6 +30,7 @@ import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { uebungEckdaten } from "@/lib/eckdaten";
 import { ChipsDemo } from "./ChipsDemo";
 import { ChoiceChipDemo } from "./ChoiceChipDemo";
+import { AuswahlListeDemo } from "./AuswahlListeDemo";
 import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
 import { HeaderNavDemo } from "./HeaderNavDemo";
@@ -60,6 +61,8 @@ import {
   MailCheck,
   ListPlus,
   RefreshCw,
+  CalendarX2,
+  CalendarPlus,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { ROTATIONEN, SPIELER_POSEN, type DiagrammElement } from "@/lib/diagramm";
@@ -1138,10 +1141,18 @@ export default function Styleguide() {
           <Badge tone="oeffentlich" />
           <Badge tone="varianten">2 Varianten</Badge>
           <Badge tone="neutral">Kinderfussball</Badge>
+          <Badge tone="befund">
+            <CalendarX2 size={12} strokeWidth={2.5} aria-hidden />
+            Noch kein Training
+          </Badge>
           <span className="type-label-small text-on-surface-mittel">
-            manual · entwurf · oeffentlich · varianten · neutral
+            manual · entwurf · oeffentlich · varianten · neutral · befund
           </span>
         </div>
+        <p className="type-body-medium mb-6 max-w-2xl text-on-surface-mittel">
+          Befund: eine offene Lücke, die jemand schliessen muss — etwa ein
+          anstehender Termin ohne Training.
+        </p>
 
         <p className="type-label-small mb-2 text-on-surface-mittel">
           Alterskategorien — dieselbe Regel, eigene Farbtabelle
@@ -1238,6 +1249,19 @@ export default function Styleguide() {
           Bezeichnungen bis vierzig Zeichen lang sein dürfen.
         </p>
         <ChoiceChipDemo />
+
+        <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+          <code>AuswahlListe</code> — Einträge mit Titel und Untertitel
+        </p>
+        <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+          Dieselbe Radiogroup-Semantik wie die Chip-Gruppe, aber senkrecht und
+          mit zwei Zeilen je Eintrag — für Trainings und Termine, die zu lang
+          für Chips sind; ein <code>listbox</code> mit verschachtelten Knöpfen
+          wäre kein gültiges ARIA. Pfeil hoch/runter wählt und bewegt den
+          Fokus, und ein <strong>Häkchen</strong> zeigt die Wahl zusätzlich zur
+          Fläche an.
+        </p>
+        <AuswahlListeDemo />
 
         <div className="mt-6 rounded-flaeche bg-elev-01 p-4">
           <p className="type-label-large mb-1 text-on-surface">
@@ -2283,9 +2307,9 @@ export default function Styleguide() {
             Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne Filter
             oder setze sie zurück.
           </Leerzustand>
-          <Leerzustand titel="Noch nichts angesetzt" dicht>
-            Setze unter „Trainings“ ein Training des Teams auf ein Datum an — es
-            erscheint dann hier im Plan.
+          <Leerzustand icon={CalendarPlus} titel="Noch keine Termine" dicht>
+            Lege die Trainingszeiten des Teams als Termine fest. Welches
+            Training dort stattfindet, ordnest du danach zu.
           </Leerzustand>
         </div>
 

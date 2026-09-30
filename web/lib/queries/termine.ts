@@ -10,6 +10,7 @@ import { getTeamPlanFuer, getTerminZuTrainingFuer, type TerminZeile } from "@/li
 
 export {
   kurzeZeit,
+  nochNichtVorbereitet,
   teilePlan,
   type Plan,
   type TerminZeile,
@@ -21,8 +22,8 @@ export async function getTeamPlan(teamId: string): Promise<TerminZeile[]> {
   return getTeamPlanFuer(await createClient(), teamId);
 }
 
-/** Der Termin eines einzelnen Trainings, falls es einen hat. Für den Kopf der
- *  Durchführen-Ansicht (AK 19) und die Vorbelegung beim erneuten Ansetzen. */
+/** Der Termin, dem ein Training zugeordnet ist, falls es einen hat. Für den
+ *  Kopf der Durchführen-Ansicht (AK 19). */
 export async function getTerminZuTraining(trainingId: string): Promise<TerminZeile | null> {
   return getTerminZuTrainingFuer(await createClient(), trainingId);
 }

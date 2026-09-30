@@ -33,8 +33,8 @@
 //   npx tsx scripts/pruefe-kern.ts
 import assert from "node:assert/strict";
 import { isDeepStrictEqual } from "node:util";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { erscheinungsform_juniorenSlugs, erscheinungsformSlugs, hauptteilkategorieSlugs } from "../lib/vocab";
 import {
@@ -71,8 +71,20 @@ import { trainingAuskunft as auskunftRoh } from "../lib/kern/auskunft";
 import { TrainingAuskunftStreng } from "../lib/kern/auskunft-schema";
 import { zeitAbgleich } from "../lib/junioren";
 import { verteilungAus } from "../lib/gruppen";
-import { leerZuNull, terminProblem } from "../lib/termin";
+import {
+  TERMIN_MELDUNG,
+  KONFLIKT_MARKER,
+  TERMIN_TEXT,
+  ZUORDNEN_ERFOLG,
+  geaenderteFelder,
+  istVeraltet,
+  kopieGebliebenText,
+  leerZuNull,
+  terminProblem,
+  zeitText,
+} from "../lib/termin";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
+import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
 
 let gelaufen = 0;
 
@@ -174,8 +186,8 @@ pruefe("fachlicheMeldung erklärt Marker, fehlerMeldung bleibt wortgleich", () =
     ],
     ["UEBUNGSFOLGE_ABSCHNITT_LEER", "In diesem Abschnitt steht keine Übung."],
     [
-      "TERMIN_NUR_FUER_TEAM_TRAININGS: Training x",
-      "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.",
+      "TERMIN_TRAINING_FREMDES_TEAM",
+      "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams zuordnen.",
     ],
   );
   // #263: die Varianten-Marker, die der KI-Weg jetzt erreicht, und die der
@@ -474,6 +486,13 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
   assert.deepEqual(leer.gesamt[0].richtwert, { min_min: 90, max_min: 90, abweichung_min: 0 });
 });
 
+pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, training: null };
+  assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
+  assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
+  assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [] } }, "2026-10-01"), false);
+});
+
 pruefe("Auskunft-Vertrag: das strenge Schema weist ein undeklariertes Feld ab", () => {
   const a = trainingAuskunft(training({}), { userId: ICH });
   assert.throws(() => TrainingAuskunftStreng.parse({ ...a, uebungszahl: 1 }));
@@ -485,8 +504,10 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
   const team = training({ ownerId: null, team: { id: "team1", name: "Ea" } });
   const termin = {
     id: "tt1",
+    teamId: "team1",
     datum: "2026-09-23",
     beginn: "18:30",
+    ende: "20:00",
     ort: "Allmend",
     bemerkung: null,
     training: { id: "t1", name: "Probe", stufen: ["F" as const] },
@@ -496,6 +517,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     id: "tt1",
     datum: "2026-09-23",
     beginn: "18:30",
+    ende: "20:00",
     ort: "Allmend",
     bemerkung: null,
     anstehend: true,
@@ -508,32 +530,95 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
   assert.throws(() => TrainingAuskunftStreng.parse({ ...heute, termin: { ...heute.termin, extra: 1 } }));
 });
 
-// ── Termin-Felder (#198 AK 7/8) ─────────────────────────────────────────────
-// Die Texte sind die bisherigen der Server Actions. Neu ist die echte
-// Kalenderprüfung: «2026-02-30» und «25:99» passten auf das Muster und
-// scheiterten erst in der Datenbank — als «liess sich nicht speichern».
-pruefe("terminProblem: gültig, leer, erfundene Tage und Uhrzeiten", () => {
-  const DATUM = { feld: "datum", text: "Bitte ein Datum angeben." };
-  const ZEIT = { feld: "beginn", text: "Bitte eine gültige Uhrzeit angeben." };
-  assert.equal(terminProblem({ datum: "2026-09-23" }), null);
-  assert.equal(terminProblem({ datum: "2028-02-29", beginn: "00:00" }), null, "Schalttag");
-  assert.equal(terminProblem({ datum: "2026-12-31", beginn: "23:59" }), null);
-  assert.equal(terminProblem({ datum: "2026-09-23", beginn: "" }), null, "leerer Beginn = keiner");
-  assert.equal(terminProblem({ datum: "2026-09-23", beginn: null }), null);
-  for (const datum of ["", undefined, null, "2026-02-30", "2027-02-29", "2026-13-01", "2026-04-31", "0000-01-01", "2026-9-3", "23.09.2026"])
-    assert.deepEqual(terminProblem({ datum }), DATUM, `Datum ${datum}`);
-  for (const beginn of ["25:99", "24:00", "18:60", "8:30", "18.30", "18:30:00"])
-    assert.deepEqual(terminProblem({ datum: "2026-09-23", beginn }), ZEIT, `Beginn ${beginn}`);
-  assert.equal(leerZuNull("  "), null);
-  assert.equal(leerZuNull(" Allmend "), "Allmend");
-  assert.equal(leerZuNull(undefined), null);
+// ── Termin-Felder (#322 AK 2, 5, 6, 8–10) ────────────────────────────────────
+pruefe("terminProblem: neuer Termin braucht Datum, Beginn und Ende", () => {
+  const ok = { datum: "2026-10-07", beginn: "18:30", ende: "20:00" };
+  assert.equal(terminProblem(ok), null);
+  assert.equal(terminProblem({ ...ok, datum: "2028-02-29" }), null, "Schalttag");
+  for (const datum of ["", undefined, "2026-02-30", "2027-02-29", "2026-13-01", "0000-01-01", "23.09.2026"])
+    assert.deepEqual(terminProblem({ ...ok, datum: datum as string }), { feld: "datum", text: TERMIN_TEXT.datum }, `Datum ${datum}`);
+  assert.deepEqual(terminProblem({ ...ok, beginn: "" }), { feld: "beginn", text: TERMIN_TEXT.zeitPflicht });
+  assert.deepEqual(terminProblem({ ...ok, ende: null }), { feld: "ende", text: TERMIN_TEXT.zeitPflicht });
+  for (const beginn of ["25:99", "24:00", "8:30", "18.30", "18:30:00"])
+    assert.deepEqual(terminProblem({ ...ok, beginn }), { feld: "beginn", text: TERMIN_TEXT.uhrzeit }, `Beginn ${beginn}`);
+  assert.deepEqual(terminProblem({ ...ok, ende: "18:30" }), { feld: "ende", text: TERMIN_TEXT.endeNachBeginn }, "gleich");
+  assert.deepEqual(terminProblem({ ...ok, ende: "17:00" }), { feld: "ende", text: TERMIN_TEXT.endeNachBeginn }, "davor");
+  assert.deepEqual(terminProblem({ ...ok, ort: "x".repeat(101) }), { feld: "ort", text: TERMIN_TEXT.ortLang });
+  assert.equal(terminProblem({ ...ok, ort: "x".repeat(100) }), null);
+  assert.deepEqual(terminProblem({ ...ok, bemerkung: "x".repeat(501) }), { feld: "bemerkung", text: TERMIN_TEXT.bemerkungLang });
 });
 
-pruefe("Termin-Marker: vorab und aus der Datenbank derselbe Satz", () => {
-  const f = still(() => ausDbFehler({ message: "TERMIN_NUR_FUER_TEAM_TRAININGS" }));
-  assert.equal(f.art, "regel");
-  assert.equal(f.meldung, "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.");
+pruefe("terminProblem: Bestand ohne vollständige Zeit bleibt änderbar, eine geänderte Zeit muss vollständig sein", () => {
+  const alt = { beginn: "18:30", ende: null };
+  // AK 9: Datum, Ort, Bemerkung ändern, ohne die Zeit zu ergänzen.
+  assert.equal(terminProblem({ datum: "2026-10-08", beginn: "18:30", ende: null, ort: "Halle" }, alt), null);
+  assert.equal(terminProblem({ datum: "2026-10-08", beginn: null, ende: null }, { beginn: null, ende: null }), null);
+  // AK 10: Wer die Zeit anfasst, muss sie vollständig geben.
+  assert.deepEqual(terminProblem({ datum: "2026-10-08", beginn: "19:00", ende: null }, alt), { feld: "ende", text: TERMIN_TEXT.zeitPflicht });
+  assert.equal(terminProblem({ datum: "2026-10-08", beginn: "19:00", ende: "20:30" }, alt), null);
+  // AK 8: Beginn und Ende lassen sich nicht leeren.
+  assert.deepEqual(
+    terminProblem({ datum: "2026-10-08", beginn: null, ende: null }, { beginn: "18:30", ende: "20:00" }),
+    { feld: "beginn", text: TERMIN_TEXT.zeitPflicht },
+  );
+  assert.equal(leerZuNull("  "), null);
+  assert.equal(leerZuNull(" Allmend "), "Allmend");
+});
+
+pruefe("Termin-Anzeige und -Marker: derselbe Satz vorab und aus der Datenbank", () => {
+  assert.equal(zeitText("18:30", "20:00"), "18:30–20:00");
+  assert.equal(zeitText("18:30", null), "ab 18:30");
+  assert.equal(zeitText(null, null), null);
+  for (const [marker, satz] of Object.entries(TERMIN_MELDUNG)) {
+    const f = still(() => ausDbFehler({ message: `${marker}` }));
+    assert.equal(f.meldung, satz, marker);
+  }
+  assert.match(kopieGebliebenText("Spielformen"), /«Spielformen» ist im Team-Bestand geblieben/);
   assert.equal(NICHT_GEFUNDEN.termin, "Termin nicht gefunden.");
+});
+
+pruefe("istVeraltet: trifft «seit der Auswahl geändert» und «gibt es nicht mehr», sonst nichts (PO 17)", () => {
+  // Jeder Konflikt-Marker — auch ein später ergänzter — und beide Nicht-gefunden-Sätze.
+  const saetze: Record<string, string> = TERMIN_MELDUNG;
+  for (const m of KONFLIKT_MARKER) assert.ok(istVeraltet(saetze[m]), m);
+  assert.ok(istVeraltet(TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN));
+  assert.ok(istVeraltet(TERMIN_MELDUNG.TRAINING_NICHT_GEFUNDEN));
+  // Eine Meldung mit Zusatz (Kopie geblieben) bleibt veraltet: Präfix-Vergleich.
+  assert.ok(istVeraltet(`${TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT} ${kopieGebliebenText("Spielformen")}`));
+  // Regeln, die ein erneuter Versuch mit anderer Wahl löst, schliessen den Dialog nicht.
+  assert.ok(!istVeraltet(TERMIN_MELDUNG.TRAINING_SCHON_EINGEPLANT));
+  assert.ok(!istVeraltet(TERMIN_MELDUNG.NUR_KOPIE_BEI_VERGANGENEM));
+  assert.ok(!istVeraltet(TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM));
+  assert.ok(!istVeraltet(undefined));
+  assert.ok(!istVeraltet(""));
+  assert.ok(!istVeraltet(TERMIN_TEXT.datum));
+});
+
+pruefe("geaenderteFelder: nur Geändertes, Beginn und Ende als Paar, nichts geändert = null (PO 17)", () => {
+  const start = { datum: "2026-10-08", beginn: "18:30", ende: "20:00", ort: "Allmend", bemerkung: "" };
+  assert.equal(geaenderteFelder({ ...start }, start), null, "unverändert");
+  assert.equal(geaenderteFelder({ ...start, ort: " Allmend " }, start), null, "Leerraum ist keine Änderung");
+  assert.deepEqual(geaenderteFelder({ ...start, ort: "Halle" }, start), { ort: "Halle" });
+  assert.deepEqual(geaenderteFelder({ ...start, ort: "" }, start), { ort: "" }, "leeren");
+  assert.deepEqual(geaenderteFelder({ ...start, bemerkung: "Bälle" }, start), { bemerkung: "Bälle" });
+  assert.deepEqual(geaenderteFelder({ ...start, datum: "2026-10-09" }, start), { datum: "2026-10-09" });
+  assert.deepEqual(geaenderteFelder({ ...start, ende: "20:30" }, start), { beginn: "18:30", ende: "20:30" }, "Paar");
+  assert.deepEqual(geaenderteFelder({ ...start, beginn: "18:00" }, start), { beginn: "18:00", ende: "20:00" }, "Paar");
+  assert.deepEqual(
+    geaenderteFelder({ ...start, datum: "2026-10-09", ort: "Halle" }, start),
+    { datum: "2026-10-09", ort: "Halle" },
+    "Zeit bleibt draussen",
+  );
+  // Übernommener Termin ohne Zeit: unverändert heisst weiter «nichts senden».
+  const ohneZeit = { datum: "2026-10-08", beginn: "", ende: "", ort: "", bemerkung: "" };
+  assert.equal(geaenderteFelder({ ...ohneZeit }, ohneZeit), null);
+});
+
+pruefe("Erfolgstexte und Nicht-gefunden-Sätze haben je eine Quelle", () => {
+  assert.equal(ZUORDNEN_ERFOLG.kopie, "Kopie angelegt und dem Termin zugeordnet.");
+  assert.equal(ZUORDNEN_ERFOLG.direkt, "Training zugeordnet.");
+  assert.equal(NICHT_GEFUNDEN.termin, TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN);
+  assert.equal(NICHT_GEFUNDEN.training, TERMIN_MELDUNG.TRAINING_NICHT_GEFUNDEN);
 });
 
 // ── Durchlauf (#194 AK 8, PC 3, NFR 1) ──────────────────────────────────────
@@ -1297,12 +1382,11 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
       }
       if (/\b(TrainingId|FassungId|GruppeId|VarianteId)\b/.test(eingabe))
         assert.ok(/\bKENNUNG_FEHLER\b/.test(block), `${m[1]} nimmt eine Kennung, erklärt aber KENNUNG_FEHLER nicht`);
-      // Dasselbe für Teams und Termine (#198 AK 11). «termin_entfernen» ist
-      // ausgenommen: Es kennt kein «nicht_gefunden» — ein fehlender Termin
-      // gilt als entfernt.
+      // Dasselbe für Teams und Termine (#198 AK 11; #322: auch «termin_entfernen»
+      // meldet «nicht gefunden»).
       if (/\bTeamId\b/.test(eingabe))
         assert.ok(block.includes("TEAM_KENNUNG_FEHLER"), `${m[1]} nimmt team_id, erklärt aber TEAM_KENNUNG_FEHLER nicht`);
-      if (/\bTerminId\b/.test(eingabe) && m[1] !== "terminEntfernen")
+      if (/\bTerminId\b/.test(eingabe))
         assert.ok(block.includes("TERMIN_KENNUNG_FEHLER"), `${m[1]} nimmt termin_id, erklärt aber TERMIN_KENNUNG_FEHLER nicht`);
     }
   }
@@ -1335,18 +1419,33 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#195": ["training_hinweise_abrufen"],
     "#196": ["training_veroeffentlichen", "training_auf_entwurf_setzen"],
     "#197": ["training_kopieren", "training_loeschen"],
-    "#198": [
-      "teams_abrufen",
-      "team_plan_abrufen",
-      "termin_ansetzen",
-      "termin_aendern",
-      "termin_entfernen",
-      "training_erneut_ansetzen",
-    ],
+    "#198": ["teams_abrufen", "team_plan_abrufen"],
+    "#322": ["termin_festlegen", "termin_aendern", "termin_entfernen"],
+    "#323": ["training_zuordnen", "training_loesen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
+});
+
+/** Alle .ts/.tsx-Dateien unter einem Ordner, ohne node_modules und .next. */
+function quelldateien(wurzel: string): string[] {
+  return readdirSync(wurzel, { recursive: true, encoding: "utf8" })
+    .filter((d) => /\.tsx?$/.test(d) && !/(^|\/)(node_modules|\.next)(\/|$)/.test(d))
+    .map((d) => join(wurzel, d));
+}
+
+pruefe("Kein «ansetzen» mehr in Oberfläche und KI-Texten (#323 PC 11)", () => {
+  const treffer: string[] = [];
+  for (const wurzel of ["app", "components", "lib/mcp", "lib/kern", "lib/actions", "lib/termin.ts"].map((p) => join(web, p)))
+    for (const datei of existsSync(wurzel) && statSync(wurzel).isDirectory() ? quelldateien(wurzel) : existsSync(wurzel) ? [wurzel] : [])
+      readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
+        // Kommentare sieht niemand; geprüft wird, was Oberfläche und KI sagen.
+        if (/^\s*(\*|\/\/|\/\*)/.test(zeile)) return;
+        const ohneKommentar = zeile.replace(/\/\/.*$/, "").replace(/\/\*.*?\*\//g, "");
+        if (/ansetz|angesetzt|Ansetz|Angesetzt/.test(ohneKommentar)) treffer.push(`${relative(web, datei)}:${i + 1}`);
+      });
+  assert.deepEqual(treffer, [], `«ansetzen» steht noch in: ${treffer.join(", ")}`);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

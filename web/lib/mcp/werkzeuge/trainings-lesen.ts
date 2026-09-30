@@ -60,8 +60,8 @@ export const trainingAbrufen = werkzeug({
     "konkretes Training nennt «vokabular» im Abschnitt «schema». " +
     "Lesbar ist jedes Training, " +
     "das dein Konto in KiFu sieht; ändern lassen sich nur die mit «bearbeitbar». Ein " +
-    "Team-Training trägt in «termin» seinen Termin (höchstens einen; «anstehend» sagt, ob er " +
-    "heute oder später ist), sonst steht dort null. Ob es " +
+    "Team-Training trägt in «termin» den Termin, dem es zugeordnet ist (höchstens einen; " +
+    "«anstehend» sagt, ob er heute oder später ist), sonst null. Ob es " +
     "veröffentlicht werden kann und was dazu fehlt, zeigt «training_hinweise_abrufen». " +
     `${KENNUNG_FEHLER}`,
   nurLesen: true,
@@ -122,6 +122,7 @@ const SuchenTreffer = z.object({
       id: z.string(),
       datum: z.string(),
       beginn: z.string().nullable(),
+      ende: z.string().nullable(),
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
       anstehend: z.boolean(),

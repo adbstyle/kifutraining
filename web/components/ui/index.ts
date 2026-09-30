@@ -14,6 +14,8 @@ export {
   chipTextSelected,
 } from "./Chip";
 export { Card } from "./Card";
+export { AuswahlListe } from "./AuswahlListe";
+export type { AuswahlEintrag } from "./AuswahlListe";
 export { FormAbschnitt } from "./FormAbschnitt";
 export { Leerzustand } from "./Leerzustand";
 export { Banner } from "./Banner";

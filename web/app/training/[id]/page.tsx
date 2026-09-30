@@ -102,6 +102,7 @@ export default async function TrainingViewPage({
           name={training.name}
           visibility={training.visibility}
           teamId={training.team?.id ?? null}
+          terminDatum={training.terminDatum}
           angemeldet={!!user}
           bearbeitungsziel={bearbeitungsziel}
           teams={teams}

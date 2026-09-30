@@ -11,36 +11,43 @@ import type { KategorieSlug } from "@/lib/vocab";
  * Die Cookie-Wrapper (`getTeamPlan`, `getTerminZuTraining`) bleiben in
  * termine.ts; die Typen und reinen Helfer werden dort weiter exportiert.
  *
- * Ein Termin hängt an genau einem Team-Training (UNIQUE) — das erneute
- * Ansetzen kopiert deshalb, statt den Termin zu verschieben. Datum und Beginn
- * sind bewusst ohne Zeitzone gespeichert: gemeint ist die Uhrzeit am
- * Trainingsort, nicht ein Zeitpunkt in UTC. Sichtbar sind Termine nur
- * Mitgliedern des Teams (RLS `tt_select`).
+ * Ein Termin gehört dem Team; das Training ist freiwillig (#322). Trägt er
+ * eines, ist es ihm genau einmal zugeordnet (UNIQUE `training_id`) — ein
+ * weiteres Training für einen anderen Tag entsteht als Kopie, der Termin wird
+ * nicht verschoben. Datum, Beginn und Ende sind bewusst ohne Zeitzone
+ * gespeichert: gemeint ist die Uhrzeit am Trainingsort, nicht ein Zeitpunkt in
+ * UTC. Sichtbar sind Termine nur Mitgliedern des Teams (RLS `tt_select`).
  */
 
 export type TerminZeile = {
   id: string;
+  teamId: string;
   datum: string;
-  /** `HH:MM`, wenn erfasst — der Beginn ist optional (AK 17). */
+  /** `HH:MM`. Neue Termine tragen Beginn und Ende immer; übernommene können
+   *  ohne sein (#322 PO 9). */
   beginn: string | null;
+  ende: string | null;
   ort: string | null;
   bemerkung: string | null;
-  training: { id: string; name: string; stufen: KategorieSlug[] };
+  /** `null`: Der Termin trägt (noch) kein Training (#322). */
+  training: { id: string; name: string; stufen: KategorieSlug[] } | null;
 };
 
 type RawTermin = {
   id: string;
+  team_id: string;
   datum: string;
   beginn: string | null;
+  ende: string | null;
   ort: string | null;
   bemerkung: string | null;
   created_at: string;
-  trainings: { id: string; name: string; stufen: string[] | null; team_id: string };
+  trainings: { id: string; name: string; stufen: string[] | null } | null;
 };
 
-/** Beginn auf `HH:MM` kürzen — Postgres liefert `HH:MM:SS`.
+/** Beginn oder Ende auf `HH:MM` kürzen — Postgres liefert `HH:MM:SS`.
  *
- *  Exportiert, weil jede Abfrage, die einen Beginn ausliefert, ihn so kürzen
+ *  Exportiert, weil jede Abfrage, die eine Uhrzeit ausliefert, sie so kürzen
  *  MUSS: das Zeitfeld der Oberfläche und die serverseitige Prüfung akzeptieren
  *  ausschliesslich `HH:MM`. Ein roh durchgereichter Wert wird sonst erst beim
  *  Speichern als «ungültige Uhrzeit» abgewiesen. */
@@ -49,20 +56,20 @@ export function kurzeZeit(t: string | null): string | null {
 }
 
 const TERMIN_SELECT =
-  "id, datum, beginn, ort, bemerkung, created_at, trainings!inner ( id, name, stufen, team_id )";
+  "id, team_id, datum, beginn, ende, ort, bemerkung, created_at, trainings ( id, name, stufen )";
 
 function mapTermin(t: RawTermin): TerminZeile {
   return {
     id: t.id,
+    teamId: t.team_id,
     datum: t.datum,
     beginn: kurzeZeit(t.beginn),
+    ende: kurzeZeit(t.ende),
     ort: t.ort,
     bemerkung: t.bemerkung,
-    training: {
-      id: t.trainings.id,
-      name: t.trainings.name,
-      stufen: sortStufen(t.trainings.stufen ?? []),
-    },
+    training: t.trainings
+      ? { id: t.trainings.id, name: t.trainings.name, stufen: sortStufen(t.trainings.stufen ?? []) }
+      : null,
   };
 }
 
@@ -71,7 +78,7 @@ function mapTermin(t: RawTermin): TerminZeile {
  *  Ein Select mit Embed statt zwei Abfragen — der Plan soll auch bei hundert
  *  Terminen in einem Rutsch stehen. Sortiert wird in der DB nach Datum und
  *  Beginn (ohne Beginn zuletzt am selben Tag); `created_at` ist der stabile
- *  Tiebreaker, damit zwei gleich angesetzte Termine nicht bei jedem Laden die
+ *  Tiebreaker, damit zwei gleich eingeplante Termine nicht bei jedem Laden die
  *  Plätze tauschen. */
 export async function getTeamPlanFuer(
   supabase: SupabaseClient,
@@ -84,13 +91,19 @@ export async function getTeamPlanFuer(
   const { data, error } = await supabase
     .from("training_termine")
     .select(TERMIN_SELECT)
-    .eq("trainings.team_id", teamId)
+    .eq("team_id", teamId)
     .order("datum", { ascending: true })
     .order("beginn", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: true });
   if (error) throw error;
 
   return ((data ?? []) as unknown as RawTermin[]).map(mapTermin);
+}
+
+/** «Noch nicht vorbereitet» (Epic PO 7): anstehend und ohne Training. Teil D
+ *  nimmt ausgefallene Termine aus. */
+export function nochNichtVorbereitet(t: TerminZeile, heute: string): boolean {
+  return t.datum >= heute && t.training === null;
 }
 
 /** Ein Trainingsplan, geteilt in Kommendes und Vergangenes (Story 18). */
@@ -103,7 +116,7 @@ export type Plan = { kommend: TerminZeile[]; vergangen: TerminZeile[] };
  *  Sie sollen auch rückwärts betrachtet hinter denen mit Beginn bleiben.
  *  `Array.sort` ist stabil, und die Liste kommt bereits nach `created_at`
  *  geordnet aus der Datenbank; damit bleibt die Reihenfolge zweier gleich
- *  angesetzter Termine über wiederholte Aufrufe dieselbe. */
+ *  eingeplanter Termine über wiederholte Aufrufe dieselbe. */
 function juengsteZuerst(a: TerminZeile, b: TerminZeile): number {
   if (a.datum !== b.datum) return a.datum < b.datum ? 1 : -1;
   if (a.beginn === b.beginn) return 0;
@@ -132,8 +145,8 @@ export function teilePlan(termine: TerminZeile[], heute: string): Plan {
   };
 }
 
-/** Der Termin eines einzelnen Trainings, falls es einen hat. Für den Kopf der
- *  Durchführen-Ansicht (AK 19) und die Vorbelegung beim erneuten Ansetzen. */
+/** Der Termin, dem ein Training zugeordnet ist, falls es einen hat. Für den
+ *  Kopf der Durchführen-Ansicht (AK 19). */
 export async function getTerminZuTrainingFuer(
   supabase: SupabaseClient,
   trainingId: string,

@@ -13,11 +13,11 @@ import type { BreadcrumbItem } from "@/components/ui";
  * Drei Fälle:
  *
  * - **Persönlich oder öffentlich** — `Trainings › ‹Name›` wie bisher (AK 11).
- * - **Team, angesetzt** — `Teams › ‹Team› › ‹Name (Datum)›`. Die Team-Stufe
+ * - **Team, einem Termin zugeordnet** — `Teams › ‹Team› › ‹Name (Datum)›`. Die Team-Stufe
  *   führt in den Trainingsplan, denn das ist die Basis-Adresse des Teams;
  *   eine eigene Plan-Stufe gäbe es deshalb doppelt (AK 4/5). Das Datum
  *   unterscheidet die Einheiten desselben Trainings (AK 6).
- * - **Team, nicht angesetzt** — `Teams › ‹Team› › Trainings › ‹Name›`: dort
+ * - **Team, keinem Termin zugeordnet** — `Teams › ‹Team› › Trainings › ‹Name›`: dort
  *   liegt das Training, solange kein Termin daran hängt (AK 3).
  *
  * `blatt` hängt tiefere Stufen an (Fassung, Feld-Diagramm). Die bisher

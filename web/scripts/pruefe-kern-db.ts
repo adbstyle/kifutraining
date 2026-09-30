@@ -56,10 +56,12 @@ const { legeVarianteAn, benenneVariante, entferneVariante, setzeVariantenfolge }
 const { loescheTraining, loescheTrainingMitBildern } = await import("../lib/kern/loeschen");
 const { kopiereTrainingNach, HINWEIS_NICHTS_ENTSTANDEN } = await import("../lib/kern/kopie");
 const { ladeTrainingDetail } = await import("../lib/queries/trainings-fuer");
-const { setzeAn, aendereTermin, entferneTermin, setzeErneutAn, BEREITS_ANGESETZT } = await import(
+const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTraining } = await import(
   "../lib/kern/termine"
 );
+const { TERMIN_MELDUNG, TERMIN_TEXT } = await import("../lib/termin");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
+const { AendernEingabe: TerminAendernEingabe } = await import("../lib/mcp/werkzeuge/team");
 const {
   legeUebungAn,
   aendereUebung,
@@ -1114,7 +1116,7 @@ try {
       uebungen: 3,
       warOeffentlich: true,
       teamId: null,
-      terminEntfiel: false,
+      terminBleibt: null,
     });
     fehler(await trainingAbrufen(a.supabase, a.id, { trainingId: k1 }), "nicht_gefunden", "Training nicht gefunden.");
     fehler(await loescheTraining(a.supabase, a.id, { trainingId: k1 }), "nicht_gefunden", "Training nicht gefunden.");
@@ -1129,133 +1131,300 @@ try {
     assert.ok(await ladeTrainingDetail(a.supabase, kb), "die Übernahme von A besteht weiter");
   });
 
-  // ── Teams und Termine (#198) ────────────────────────────────────────────
-  await pruefe("Teams und Termine: ansetzen, einmal je Training, ändern, Plan, erneut ansetzen, entfernen, fremd", async () => {
+  // ── Kalender: Termin ohne Training (#322) ───────────────────────────────
+  await pruefe("Kalender: festlegen, ändern, entfernen, Bestand, Löschen, fremd", async () => {
     const TEAM_FREMD = "Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist.";
-    const NUR_TEAM = "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.";
-    const { data: team, error } = await admin.from("teams").insert({ name: "Kern-DB-Termine" }).select("id").single();
+    const { data: team, error } = await admin.from("teams").insert({ name: "Kern-DB-Kalender" }).select("id").single();
     if (error) throw error;
     teams.push(team.id);
     const { error: e2 } = await admin.from("team_members").insert({ team_id: team.id, user_id: a.id });
     if (e2) throw e2;
+    const heute = new Date();
+    const tag = (d: number) => new Date(heute.getTime() + d * 86_400_000).toISOString().slice(0, 10);
+    const zeile = async (id: string) =>
+      (await admin.from("training_termine").select("datum, beginn, ende, ort, bemerkung, training_id").eq("id", id).single()).data;
+
+    // AK 1, 2, 4: ohne Training, auch vergangen; Beginn und Ende Pflicht.
+    fehler(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(2), beginn: "18:30", ende: "" }), "eingabe", TERMIN_TEXT.zeitPflicht);
+    fehler(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(2), beginn: "18:30", ende: "18:00" }), "eingabe", TERMIN_TEXT.endeNachBeginn);
+    const t1 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(2), beginn: "18:30", ende: "20:00", ort: " Allmend " }));
+    const t0 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(-3), beginn: "10:00", ende: "11:30" }));
+    assert.deepEqual(await zeile(t1.terminId), { datum: tag(2), beginn: "18:30:00", ende: "20:00:00", ort: "Allmend", bemerkung: null, training_id: null });
+    // AK 22: nur Mitglieder.
+    fehler(await legeTerminFest(b.supabase, b.id, { teamId: team.id, datum: tag(2), beginn: "18:30", ende: "20:00" }), "nicht_gefunden", TEAM_FREMD);
+
+    // PO 17: geschrieben wird nur, was übergeben wurde — eine gleichzeitige
+    // Änderung eines anderen Feldes bleibt stehen. Der Client protokolliert
+    // die Update-Nutzlast.
+    await admin.from("training_termine").update({ bemerkung: "X" }).eq("id", t1.terminId);
+    const spur: string[][] = [];
+    const mitSpur = new Proxy(a.supabase, {
+      get(ziel, name, empf) {
+        if (name === "from")
+          return (tabelle: string) => {
+            const q = ziel.from(tabelle);
+            return tabelle !== "training_termine"
+              ? q
+              : new Proxy(q, {
+                  get(z, n, r) {
+                    if (n === "update")
+                      return (nutzlast: object) => {
+                        spur.push(Object.keys(nutzlast).sort());
+                        return z.update(nutzlast as never);
+                      };
+                    const v = Reflect.get(z, n, r);
+                    return typeof v === "function" ? v.bind(z) : v;
+                  },
+                });
+          };
+        const v = Reflect.get(ziel, name, empf);
+        return typeof v === "function" ? v.bind(ziel) : v;
+      },
+    });
+    wert(await aendereTermin(mitSpur, a.id, { terminId: t1.terminId, ort: "Platz" }));
+    assert.deepEqual(spur, [["ort"]], "nur das übergebene Feld wird geschrieben");
+    assert.deepEqual(await zeile(t1.terminId), { datum: tag(2), beginn: "18:30:00", ende: "20:00:00", ort: "Platz", bemerkung: "X", training_id: null });
+    // PO 17 (Oberfläche): Der Dialog sendet nur Geändertes. Hat ein anderes
+    // Mitglied inzwischen den Ort geändert, bleibt seine Änderung stehen, wenn
+    // dieses Mitglied nur die Bemerkung sendet.
+    await admin.from("training_termine").update({ ort: "Von anderem Mitglied" }).eq("id", t1.terminId);
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, bemerkung: "Neu" }));
+    assert.deepEqual(await zeile(t1.terminId), { datum: tag(2), beginn: "18:30:00", ende: "20:00:00", ort: "Von anderem Mitglied", bemerkung: "Neu", training_id: null });
+    await admin.from("training_termine").update({ ort: "Platz", bemerkung: "X" }).eq("id", t1.terminId);
+    spur.length = 0;
+    wert(await aendereTermin(mitSpur, a.id, { terminId: t1.terminId, beginn: "18:45", ende: "20:00" }));
+    assert.deepEqual(spur, [["beginn", "ende"]], "Beginn und Ende gehen stets zusammen");
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, beginn: "18:30", ende: "20:00" }));
+
+    // PC 5 / AK 9: ein übernommener Termin ohne Ende bleibt änderbar.
+    const { data: alt } = await admin.from("training_termine")
+      .insert({ team_id: team.id, datum: tag(5), beginn: "17:00" }).select("id").single();
+    wert(await aendereTermin(a.supabase, a.id, { terminId: alt!.id, ort: "Halle" }));
+    assert.deepEqual(await zeile(alt!.id), { datum: tag(5), beginn: "17:00:00", ende: null, ort: "Halle", bemerkung: null, training_id: null });
+    // AK 10: Wer die Zeit ändert, gibt sie vollständig.
+    fehler(await aendereTermin(a.supabase, a.id, { terminId: alt!.id, beginn: "17:30" }), "eingabe", TERMIN_TEXT.zeitPflicht);
+    wert(await aendereTermin(a.supabase, a.id, { terminId: alt!.id, beginn: "17:30", ende: "19:00" }));
+    // AK 8: nicht leeren.
+    fehler(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, beginn: null, ende: null }), "eingabe", TERMIN_TEXT.zeitPflicht);
+    // #322 AK 21: Ein `null` für Beginn oder Ende passiert die Eingabeprüfung des
+    // Werkzeugs und wird vom Kern mit demselben Satz abgewiesen.
+    {
+      const e = TerminAendernEingabe.parse({ termin_id: t1.terminId, beginn: null, ende: null });
+      assert.equal(e.beginn, null);
+      fehler(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, beginn: e.beginn, ende: e.ende }), "eingabe", TERMIN_TEXT.zeitPflicht);
+      fehler(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, beginn: null }), "eingabe", TERMIN_TEXT.zeitPflicht);
+    }
+
+    // Plan: Termine ohne Training zählen wie alle anderen (PC 3).
+    const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team.id }));
+    assert.deepEqual(plan.kommend.map((t) => t.id), [t1.terminId, alt!.id]);
+    assert.deepEqual(plan.vergangen.map((t) => t.id), [t0.terminId]);
+    assert.equal(plan.kommend[0].training, null);
+    assert.equal(plan.kommend[0].ende, "20:00");
+
+    // PC 7, 8: Löschen des Trainings lässt den Termin stehen.
+    const tt = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Kalender", altersstufe: "kinderfussball", stufen: ["F"], teamId: team.id }));
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: tt.id }));
+    const weg = wert(await loescheTraining(a.supabase, a.id, { trainingId: tt.id }));
+    assert.deepEqual(weg.terminBleibt, { id: t1.terminId, datum: tag(2) });
+    assert.equal((await zeile(t1.terminId))!.training_id, null);
+
+    // AK 23: Wer mit veralteter Auswahl ändert oder entfernt, wird abgewiesen.
+    const tt2 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Zwei", altersstufe: "kinderfussball", stufen: ["F"], teamId: team.id }));
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: tt2.id }));
+    fehler(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, ort: "x", erwartetesTraining: null }), "konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
+    assert.equal((await zeile(t1.terminId))!.ort, "Platz", "abgewiesen heisst unverändert");
+    fehler(await entferneTermin(a.supabase, a.id, { terminId: t1.terminId, erwartetesTraining: null }), "konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
+    assert.ok(await zeile(t1.terminId), "der Termin steht noch");
+    // KI-Weg ohne erwartetes Training: geprüft wird gegen den gelesenen Stand.
+    assert.deepEqual(
+      wert(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, ort: "KI-Ort" })),
+      { terminId: t1.terminId, teamId: team.id, trainingId: tt2.id },
+    );
+    assert.equal((await zeile(t1.terminId))!.ort, "KI-Ort");
+    const t3 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(9), beginn: "18:00", ende: "19:00" }));
+    const tt3 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Drei", altersstufe: "kinderfussball", stufen: ["F"], teamId: team.id }));
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t3.terminId, trainingId: tt3.id }));
+    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { terminId: t3.terminId })), { teamId: team.id, trainingId: tt3.id });
+    assert.equal(await zeile(t3.terminId), null);
+    assert.ok(await ladeTrainingDetail(a.supabase, tt3.id), "das Training bleibt im Team-Bestand");
+    // PC 6: Entfernen lässt das Training im Bestand.
+    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { terminId: t1.terminId, erwartetesTraining: tt2.id })), { teamId: team.id, trainingId: tt2.id });
+    assert.ok(await ladeTrainingDetail(a.supabase, tt2.id), "das Training bleibt im Team-Bestand");
+    fehler(await entferneTermin(a.supabase, a.id, { terminId: t1.terminId }), "nicht_gefunden", "Termin nicht gefunden.");
+    fehler(await aendereTermin(b.supabase, b.id, { terminId: t0.terminId, ort: "x" }), "nicht_gefunden", "Termin nicht gefunden.");
+    // Die SECURITY-DEFINER-Sperre: ein Nicht-Mitglied ändert nichts, auch nicht direkt über die RPC.
+    fehler(await entferneTermin(b.supabase, b.id, { terminId: t0.terminId }), "nicht_gefunden", "Termin nicht gefunden.");
+    assert.ok(await zeile(t0.terminId), "der Termin des fremden Teams steht noch");
+    const { error: direkt } = await b.supabase.rpc("termin_training_setzen", { p_termin: t0.terminId, p_training: null });
+    assert.ok(direkt?.message.includes("TERMIN_NICHT_GEFUNDEN"), "RPC weist Nicht-Mitglieder ab");
+
+    // PC 10: Anzahl aller Termine (auch ohne Training).
+    const termineDes = async () =>
+      (await admin.from("training_termine").select("id", { count: "exact", head: true }).eq("team_id", team.id)).count;
+    assert.equal(await termineDes(), 2);
+    // PC 9: Das Team aufzulösen nimmt alle seine Termine mit.
+    const { error: aufloesen } = await admin.from("teams").delete().eq("id", team.id);
+    if (aufloesen) throw aufloesen;
+    assert.equal(await termineDes(), 0);
+  });
+
+  // ── Kalender: Training zuordnen und lösen (#323) ───────────────────────
+  await pruefe("Kalender: zuordnen, ersetzen, Kopie, Verschieben, lösen, Konflikte", async () => {
+    const { data: team } = await admin.from("teams").insert({ name: "Kern-DB-Zuordnen" }).select("id").single();
+    teams.push(team!.id);
+    await admin.from("team_members").insert({ team_id: team!.id, user_id: a.id });
+    const { data: anderes } = await admin.from("teams").insert({ name: "Kern-DB-Anderes" }).select("id").single();
+    teams.push(anderes!.id);
+    await admin.from("team_members").insert({ team_id: anderes!.id, user_id: a.id });
+    const heute = new Date();
+    const tag = (d: number) => new Date(heute.getTime() + d * 86_400_000).toISOString().slice(0, 10);
+    const termin = async (d: number, teamId = team!.id) =>
+      wert(await legeTerminFest(a.supabase, a.id, { teamId, datum: tag(d), beginn: "18:00", ende: "19:30" })).terminId;
+    // `null` = persönliches Training (ein `undefined` würde den Vorgabewert treffen).
+    const training = async (name: string, teamId: string | null = team!.id) =>
+      wert(await legeTrainingAn(a.supabase, a.id, { name, altersstufe: "kinderfussball", stufen: ["F"], teamId: teamId ?? undefined })).id;
+    const traegt = async (terminId: string) =>
+      (await admin.from("training_termine").select("training_id").eq("id", terminId).single()).data!.training_id;
+
+    const morgen = await termin(1), uebermorgen = await termin(2), gestern = await termin(-1);
+    const x = await training("Kern-DB-X");
+
+    // AK 1, PC 1: Training ohne Termin wird verknüpft.
+    const z1 = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: morgen, trainingId: x }));
+    assert.deepEqual({ kopie: z1.kopie, imBestand: z1.imBestand, freierTermin: z1.freierTermin }, { kopie: false, imBestand: null, freierTermin: null });
+    // AK 4: fremdes Team und persönliches Training.
+    const fremd = await training("Kern-DB-Fremd", anderes!.id);
+    fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: uebermorgen, trainingId: fremd }), "regel", TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM);
+    const persoenlich = await training("Kern-DB-Persönlich", null);
+    fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: uebermorgen, trainingId: persoenlich }), "regel", TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM);
+
+    // AK 10, 16: anstehend eingeplant → Wahl Pflicht.
+    fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: uebermorgen, trainingId: x }), "regel", TERMIN_MELDUNG.TRAINING_SCHON_EINGEPLANT);
+    // PC 2, 3: Kopie — gleichnamig, das Original bleibt.
+    const k = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: uebermorgen, trainingId: x, art: "kopie" }));
+    assert.equal(k.kopie, true);
+    assert.notEqual(k.trainingId, x);
+    assert.equal((await admin.from("trainings").select("name").eq("id", k.trainingId).single()).data!.name, "Kern-DB-X");
+    assert.equal(await traegt(morgen), x);
+    // PC 4: Verschieben — der bisherige Termin wird frei.
+    const v = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: gestern, trainingId: x, art: "verschieben" }));
+    assert.deepEqual({ frei: v.freierTermin, auf: await traegt(gestern), weg: await traegt(morgen) }, { frei: morgen, auf: x, weg: null });
+    // AK 11, 16: vergangen → nur Kopie; ohne Wahl ist es eine Kopie.
+    fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: morgen, trainingId: x, art: "verschieben" }), "regel", TERMIN_MELDUNG.NUR_KOPIE_BEI_VERGANGENEM);
+    const k2 = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: morgen, trainingId: x }));
+    assert.equal(k2.kopie, true);
+    assert.equal(await traegt(gestern), x);
+
+    // AK 9, PC 5: ersetzen — das bisherige bleibt ohne Termin im Bestand.
+    const y = await training("Kern-DB-Y");
+    const r = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: morgen, trainingId: y }));
+    assert.equal(r.imBestand, k2.trainingId);
+    assert.equal((await admin.from("training_termine").select("id").eq("training_id", k2.trainingId).maybeSingle()).data, null);
+
+    // AK 14: veraltete Auswahl.
+    const w = await training("Kern-DB-W");
+    fehler(
+      await ordneTrainingZu(a.supabase, a.id, { terminId: morgen, trainingId: w, erwartet: { terminTraining: null, trainingTermin: null } }),
+      "konflikt",
+      TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT,
+    );
+    fehler(
+      await ordneTrainingZu(a.supabase, a.id, { terminId: uebermorgen, trainingId: y, art: "verschieben", erwartet: { terminTraining: k.trainingId, trainingTermin: null } }),
+      "konflikt",
+      TERMIN_MELDUNG.TRAINING_EINPLANUNG_GEAENDERT,
+    );
+    assert.equal(await traegt(morgen), y, "PC 7: abgewiesen heisst unverändert");
+
+    // AK 12, PC 6: lösen.
+    assert.equal(wert(await loeseTraining(a.supabase, a.id, { terminId: morgen })).trainingId, y);
+    assert.equal(await traegt(morgen), null);
+
+    // PC 8: scheitert die Zuordnung der Kopie, geht die Kopie wieder.
+    const kaputt = new Proxy(a.supabase, {
+      get(ziel, name, empf) {
+        if (name === "rpc")
+          return async (fn: string, args: unknown) =>
+            fn === "termin_training_setzen" && (args as { p_verschieben: boolean }).p_verschieben === false
+              ? { data: null, error: { message: "Probe", code: "XX000" } }
+              : ziel.rpc(fn, args as never);
+        return Reflect.get(ziel, name, empf);
+      },
+    });
+    const zahl = async () => (await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", team!.id)).count;
+    const vorher = await zahl();
+    const f = fehler(await ordneTrainingZu(kaputt, a.id, { terminId: morgen, trainingId: x, art: "kopie" }), "technisch") as { hinweis?: string };
+    assert.equal(f.hinweis, HINWEIS_NICHTS_ENTSTANDEN);
+    assert.equal(await zahl(), vorher, "keine Kopie bleibt stehen");
+  });
+
+  // ── Kalender: Lesen und Zugang ─────────────────────────────────────────
+  await pruefe("Kalender: Teams, Plan-Grenze, Suche, Auskunft, fremd", async () => {
+    const TEAM_FREMD = "Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist.";
+    const { data: team, error } = await admin.from("teams").insert({ name: "Kern-DB-Lesen" }).select("id").single();
+    if (error) throw error;
+    teams.push(team.id);
+    const { error: e2 } = await admin.from("team_members").insert({ team_id: team.id, user_id: a.id });
+    if (e2) throw e2;
+    const heute = new Date();
+    const tag = (d: number) => new Date(heute.getTime() + d * 86_400_000).toISOString().slice(0, 10);
 
     // AK 1: die eigenen Teams; B ist in keinem.
     const ta = wert(await meineTeams(a.supabase, a.id)).teams;
-    assert.deepEqual(ta.find((t) => t.id === team.id), { id: team.id, name: "Kern-DB-Termine", mitglieder: 1 });
+    assert.deepEqual(ta.find((t) => t.id === team.id), { id: team.id, name: "Kern-DB-Lesen", mitglieder: 1 });
     assert.equal(wert(await meineTeams(b.supabase, b.id)).teams.length, 0);
 
-    // AK 4: direkt im Team anlegen.
-    const tt = wert(
-      await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Termin", altersstufe: "kinderfussball", stufen: ["F"], teamId: team.id }),
-    );
-    assert.equal(tt.teamId, team.id);
-    wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tt.id, einordnung: "einleitung", exerciseId: ein }));
+    const neuesTraining = async (name: string, teamId?: string) =>
+      wert(await legeTrainingAn(a.supabase, a.id, { name, altersstufe: "kinderfussball", stufen: ["F"], teamId })).id;
+    const tt = await neuesTraining("Kern-DB-Lesen", team.id);
+    const vergangenes = await neuesTraining("Kern-DB-Lesen-Vergangen", team.id);
+    const persoenlich = await neuesTraining("Kern-DB-Lesen-Persönlich");
+    const t1 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(2), beginn: "18:30", ende: "20:00", ort: " Allmend ", bemerkung: "Leibchen" }));
+    const t0 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(-1), beginn: "10:00", ende: "11:30" }));
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: tt }));
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t0.terminId, trainingId: vergangenes }));
 
-    // AK 10: ein persönliches Training nimmt keinen Termin.
-    const persoenlich = wert(
-      await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Persönlich", altersstufe: "kinderfussball", stufen: ["F"] }),
-    ).id;
-    fehler(await setzeAn(a.supabase, a.id, { trainingId: persoenlich, datum: "2030-01-01" }), "regel", NUR_TEAM);
-    // Felder zuerst: ein erfundener Tag, eine erfundene Uhrzeit.
-    fehler(await setzeAn(a.supabase, a.id, { trainingId: tt.id, datum: "2026-02-30" }), "eingabe", "Bitte ein Datum angeben.");
-    fehler(
-      await setzeAn(a.supabase, a.id, { trainingId: tt.id, datum: "2030-01-01", beginn: "25:99" }),
-      "eingabe",
-      "Bitte eine gültige Uhrzeit angeben.",
-    );
-
-    // AK 7: ansetzen mit Beginn, Ort, Bemerkung; PC 3: höchstens einer.
-    const heute = new Date();
-    const tag = (d: number) => new Date(heute.getTime() + d * 86_400_000).toISOString().slice(0, 10);
-    const t1 = wert(
-      await setzeAn(a.supabase, a.id, { trainingId: tt.id, datum: tag(2), beginn: "18:30", ort: " Allmend ", bemerkung: "Leibchen" }),
-    );
-    assert.deepEqual({ trainingId: t1.trainingId, teamId: t1.teamId }, { trainingId: tt.id, teamId: team.id });
-    fehler(await setzeAn(a.supabase, a.id, { trainingId: tt.id, datum: tag(3) }), "regel", BEREITS_ANGESETZT);
-    const zeile = async (id: string) =>
-      (await admin.from("training_termine").select("datum, beginn, ort, bemerkung").eq("id", id).single()).data;
-    assert.deepEqual(await zeile(t1.terminId), { datum: tag(2), beginn: "18:30:00", ort: "Allmend", bemerkung: "Leibchen" });
-
-    // AK 8: nur Übergebenes ändert sich; null leert.
-    assert.deepEqual(
-      wert(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, ort: "Sportplatz Nord", bemerkung: null })),
-      { trainingId: tt.id, teamId: team.id },
-    );
-    assert.deepEqual(await zeile(t1.terminId), { datum: tag(2), beginn: "18:30:00", ort: "Sportplatz Nord", bemerkung: null });
-    fehler(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, datum: "2026-13-01" }), "eingabe", "Bitte ein Datum angeben.");
-    fehler(await aendereTermin(a.supabase, a.id, { terminId: randomUUID(), ort: "x" }), "nicht_gefunden", "Termin nicht gefunden.");
-
-    // AK 9 / PC 4: erneut ansetzen (gestern) → neue Kopie mit eigenem Termin;
-    // das Original behält seinen.
-    const neu = wert(await setzeErneutAn(a.supabase, a.id, { trainingId: tt.id, datum: tag(-1), ort: "Halle" }));
-    assert.notEqual(neu.trainingId, tt.id);
-    assert.equal(neu.teamId, team.id);
-    const { data: kz } = await admin.from("trainings").select("team_id, owner_id, name").eq("id", neu.trainingId).single();
-    assert.deepEqual(kz, { team_id: team.id, owner_id: null, name: "Kern-DB-Termin" });
-    assert.deepEqual(await zeile(t1.terminId), { datum: tag(2), beginn: "18:30:00", ort: "Sportplatz Nord", bemerkung: null });
-
-    // AK 3 / NFR 1: der Plan ist bereits geteilt.
+    // Der Plan ist bereits geteilt; am Tag des Termins zählt er noch zum Kommenden.
     const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team.id }));
-    assert.equal(plan.team.name, "Kern-DB-Termine");
+    assert.equal(plan.team.name, "Kern-DB-Lesen");
     assert.deepEqual(plan.kommend.map((t) => t.id), [t1.terminId]);
-    assert.deepEqual(plan.vergangen.map((t) => t.id), [neu.terminId]);
-    assert.equal(plan.vergangen[0].training.id, neu.trainingId);
-    // Am Tag des Termins zählt er noch zum Kommenden.
+    assert.deepEqual(plan.vergangen.map((t) => t.id), [t0.terminId]);
+    assert.equal(plan.vergangen[0].training?.id, vergangenes);
     const amTag = wert(await teamPlan(a.supabase, a.id, { teamId: team.id, heute: tag(-1) }));
-    assert.equal(amTag.kommend.length, 2);
+    assert.deepEqual(amTag.kommend.map((t) => t.id), [t0.terminId, t1.terminId]);
 
-    // AK 2: der Team-Bestand samt Termin; ohne Team-Kennung → eingabe.
+    // Suche im Team-Bestand samt Termin.
     const suche = wert(await trainingsSuchen(a.supabase, a.id, { bestand: "team", teamId: team.id, limit: 10 }));
     assert.equal(suche.treffer.length, 2);
-    const original = suche.treffer.find((t) => t.id === tt.id)!;
-    assert.equal(original.termin?.id, t1.terminId);
-    assert.equal(original.termin?.anstehend, true);
-    assert.equal(suche.treffer.find((t) => t.id === neu.trainingId)!.termin?.anstehend, false);
-    const gesucht = wert(await trainingsSuchen(a.supabase, a.id, { bestand: "team", teamId: team.id, q: "Termin", limit: 1 }));
+    assert.deepEqual(suche.treffer.find((t) => t.id === tt)!.termin, {
+      id: t1.terminId,
+      datum: tag(2),
+      beginn: "18:30",
+      ende: "20:00",
+      ort: "Allmend",
+      bemerkung: "Leibchen",
+      anstehend: true,
+    });
+    assert.equal(suche.treffer.find((t) => t.id === vergangenes)!.termin?.anstehend, false);
+    const gesucht = wert(await trainingsSuchen(a.supabase, a.id, { bestand: "team", teamId: team.id, q: "Kern-DB-Lesen", limit: 1 }));
     assert.equal(gesucht.treffer.length, 1);
     assert.equal(gesucht.weitere, true);
     fehler(await trainingsSuchen(a.supabase, a.id, { bestand: "team", limit: 10 }), "eingabe");
-    // Die Auskunft nennt den Termin.
-    const auskunft = wert(await trainingAbrufen(a.supabase, a.id, { trainingId: tt.id }));
+
+    // Die Auskunft nennt den Termin; ein persönliches Training hat keinen.
+    const auskunft = wert(await trainingAbrufen(a.supabase, a.id, { trainingId: tt }));
     assert.deepEqual(auskunft.termin, {
       id: t1.terminId,
       datum: tag(2),
       beginn: "18:30",
-      ort: "Sportplatz Nord",
-      bemerkung: null,
+      ende: "20:00",
+      ort: "Allmend",
+      bemerkung: "Leibchen",
       anstehend: true,
     });
     assert.equal(wert(await trainingAbrufen(a.supabase, a.id, { trainingId: persoenlich })).termin, null);
 
-    // Scheitert das Ansetzen der Kopie, geht die Kopie wieder (Risiko 2): ein
-    // Client, dessen Termin-Insert fehlschlägt.
-    const kaputt = new Proxy(a.supabase, {
-      get(ziel, name, empf) {
-        if (name === "from")
-          return (tabelle: string) =>
-            tabelle === "training_termine"
-              ? {
-                  insert: () => ({
-                    select: () => ({ single: async () => ({ data: null, error: { message: "Probe", code: "XX000" } }) }),
-                  }),
-                }
-              : ziel.from(tabelle);
-        return Reflect.get(ziel, name, empf);
-      },
-    });
-    const zahl = async () =>
-      (await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", team.id)).count;
-    const vorher = await zahl();
-    const f = fehler(
-      await setzeErneutAn(kaputt, a.id, { trainingId: tt.id, datum: tag(5) }),
-      "technisch",
-    ) as { hinweis?: string };
-    assert.equal(f.hinweis, HINWEIS_NICHTS_ENTSTANDEN);
-    assert.equal(await zahl(), vorher, "keine Kopie ohne Termin bleibt stehen");
-    // Erneut ansetzen braucht ein Team-Training.
-    fehler(await setzeErneutAn(a.supabase, a.id, { trainingId: persoenlich, datum: tag(5) }), "regel", NUR_TEAM);
-
-    // AK 11: fremdes Team und fremder Termin.
+    // Fremdes Team und unbekanntes Team.
     fehler(await teamPlan(b.supabase, b.id, { teamId: team.id }), "nicht_gefunden", TEAM_FREMD);
     fehler(await teamPlan(a.supabase, a.id, { teamId: randomUUID() }), "nicht_gefunden", TEAM_FREMD);
     fehler(await trainingsSuchen(b.supabase, b.id, { bestand: "team", teamId: team.id, limit: 5 }), "nicht_gefunden", TEAM_FREMD);
@@ -1264,21 +1433,6 @@ try {
       "nicht_gefunden",
       TEAM_FREMD,
     );
-    fehler(await setzeAn(b.supabase, b.id, { trainingId: tt.id, datum: tag(1) }), "nicht_gefunden", "Training nicht gefunden.");
-    fehler(await aendereTermin(b.supabase, b.id, { terminId: t1.terminId, ort: "x" }), "nicht_gefunden", "Termin nicht gefunden.");
-    // Ein fremder Termin lässt sich nicht entfernen — er bleibt stehen.
-    assert.deepEqual(wert(await entferneTermin(b.supabase, b.id, { terminId: t1.terminId })), { trainingId: null, teamId: null });
-    assert.ok(await zeile(t1.terminId), "der Termin des fremden Teams steht noch");
-
-    // AK 8: entfernen, idempotent; das Training bleibt.
-    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { terminId: t1.terminId })), {
-      trainingId: tt.id,
-      teamId: team.id,
-    });
-    assert.deepEqual(wert(await entferneTermin(a.supabase, a.id, { terminId: t1.terminId })), { trainingId: null, teamId: null });
-    assert.ok(await ladeTrainingDetail(a.supabase, tt.id), "das Training bleibt im Team-Bestand");
-    // Danach lässt es sich wieder ansetzen.
-    wert(await setzeAn(a.supabase, a.id, { trainingId: tt.id, datum: tag(7) }));
   });
 
   // ── Übung anlegen (#143) ─────────────────────────────────────────────────

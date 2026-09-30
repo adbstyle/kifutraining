@@ -2,7 +2,7 @@
 // #197 im Fachkern).
 //
 // Geteilt wird nie, kopiert immer: ins Team stellen, zu mir übernehmen, ein
-// öffentliches Training übernehmen und je Termin ansetzen — alle gehen durch
+// öffentliches Training übernehmen und je Termin zuordnen — alle gehen durch
 // `kopiereTraining`, die ersten drei (und das KI-Werkzeug «training_kopieren»)
 // über `kopiereTrainingNach`. Das Veröffentlichen gehört nicht
 // dazu: Es schaltet dasselbe Training sichtbar und kopiert nichts.
@@ -44,7 +44,7 @@ import {
 export type KopieZiel =
   /** Zu mir übernehmen, ein öffentliches Training übernehmen. */
   | { art: "persoenlich"; ownerId: string }
-  /** Ins Team stellen bzw. je Termin ansetzen — Eigentum des Teams. */
+  /** Ins Team stellen bzw. je Termin zuordnen — Eigentum des Teams. */
   | { art: "team"; teamId: string };
 
 /** Das Ergebnis einer Kopie. Ein Fehlschlag sagt zusätzlich, was davon übrig
