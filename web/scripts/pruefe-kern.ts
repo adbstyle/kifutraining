@@ -94,7 +94,9 @@ import {
   alsWochentag,
   erlaubteReichweiten,
   maxEnddatum,
+  obergrenzeVorab,
   regelAenderung,
+  regelProblemVorab,
   serieProblem,
   serienTage,
   tausch,
@@ -652,6 +654,23 @@ pruefe("Serie: Reichweiten je nach Änderung (#326 AK 1–4)", () => {
   assert.deepEqual(regelAenderung(alt, { wochentage: [2, 4], von: "2026-10-01", bis: "2027-06-30" }), { bis: "2027-06-30" }, "nur das Geänderte");
   assert.deepEqual(regelAenderung(alt, { wochentage: [2, 5], von: "2026-09-01", bis: "2027-03-31" }), { wochentage: [2, 5], von: "2026-09-01" });
   assert.equal(SERIE_TEXT.datumUndRegel, "Datum und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.");
+});
+
+pruefe("Serie: Obergrenze vor der Wahl der Reichweite (#326 AK 5, PC 19; Review Focus 2)", () => {
+  const serie = { beginnDatum: "2028-02-01" };
+  // Beginn unverändert: Für «dieser und folgende» beginnt die Teilserie am Termin.
+  assert.equal(obergrenzeVorab(serie, { von: "2028-02-01" }, "2028-02-29"), "2029-02-28", "29.2. → 28.2.");
+  assert.equal(obergrenzeVorab(serie, { von: "2028-02-01" }, "2028-06-15"), "2029-06-15");
+  // Beginn verschoben: dann zählt er, für jede Reichweite.
+  assert.equal(obergrenzeVorab(serie, { von: "2028-02-29" }, "2028-06-15"), "2029-02-28");
+  // Ein verlegter Termin vor dem Serienbeginn weitet nichts.
+  assert.equal(obergrenzeVorab(serie, { von: "2028-02-01" }, "2028-01-20"), "2029-02-01");
+  const regel = { wochentage: [2] as Wochentag[], von: "2028-02-01", bis: "2029-02-20" };
+  assert.equal(regelProblemVorab(serie, regel, "2028-02-29"), null, "nur die engere Grenze («alle») verletzt");
+  assert.deepEqual(regelProblemVorab(serie, { ...regel, bis: "2029-03-01" }, "2028-02-29"), { feld: "bis", text: SERIE_TEXT.zuLang });
+  assert.deepEqual(regelProblemVorab(serie, { ...regel, von: "2028-02-29" }, "2028-06-15"), null, "verschobener Beginn, innerhalb");
+  assert.deepEqual(regelProblemVorab(serie, { ...regel, von: "2028-02-29", bis: "2029-03-01" }, "2028-06-15"), { feld: "bis", text: SERIE_TEXT.zuLang });
+  assert.deepEqual(regelProblemVorab(serie, { ...regel, wochentage: [] }, "2028-02-29"), { feld: "wochentage", text: SERIE_TEXT.wochentage });
 });
 
 pruefe("Serie: Rand der Jahre (9999) endet, kein fünfstelliges Jahr", () => {

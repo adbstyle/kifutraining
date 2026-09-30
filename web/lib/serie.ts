@@ -107,6 +107,31 @@ export function regelAenderung(
   return Object.keys(a).length > 0 ? a : null;
 }
 
+/** Die Obergrenze des Enddatums, solange die Reichweite noch nicht gewählt
+ *  ist (#326 AK 5, PC 19). Für «alle» zählt das Beginndatum der Serie, für
+ *  «dieser und folgende» das der neuen Teilserie — ohne verschobenes
+ *  Beginndatum also der gewählte Termin. Vorab gilt die weitere der beiden
+ *  Grenzen; die engere prüft der Fachkern mit der Reichweite, mit demselben
+ *  Satz (`SERIE_TEXT.zuLang`). */
+export function obergrenzeVorab(serie: { beginnDatum: string }, regel: { von: string }, terminDatum: string): string {
+  const von = regel.von === serie.beginnDatum && terminDatum > regel.von ? terminDatum : regel.von;
+  return maxEnddatum(von);
+}
+
+/** Was an einer geänderten Regel schon vor der Wahl der Reichweite nicht
+ *  stimmt, sonst `null`: die Regeln von `serieProblem` (nur Wochentage und
+ *  Zeitraum, Platzhalterzeit wie im Fachkern), die Obergrenze aber nach
+ *  `obergrenzeVorab`. */
+export function regelProblemVorab(
+  serie: { beginnDatum: string },
+  regel: SerienRegel,
+  terminDatum: string,
+): { feld: SerieFeld; text: string } | null {
+  const p = serieProblem({ ...regel, beginn: "00:00", ende: "00:01" });
+  if (p?.text === SERIE_TEXT.zuLang && regel.bis <= obergrenzeVorab(serie, regel, terminDatum)) return null;
+  return p;
+}
+
 /** Für welche Reichweiten eine Änderung an einem Serientermin gilt
  *  (#326 AK 1–4): das Datum nur für diesen Termin, Wochentage und Zeitraum nur
  *  für diesen und folgende oder für alle; Zeit, Ort und Bemerkung für jede.

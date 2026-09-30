@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useTransition } from "react";
+import { createContext, useContext, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Dialog } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
@@ -70,8 +70,6 @@ type Serienweit = Exclude<Reichweite, "nur_dieser">;
 type SerienArt = "aendern" | "entfernen";
 
 const JEDE_REICHWEITE: readonly Reichweite[] = ["nur_dieser", "dieser_und_folgende", "alle"];
-
-const REGEL_HINWEIS = "Wochentage und Zeitraum lassen sich nur für diesen und alle folgenden oder für alle Termine der Serie ändern.";
 
 const FOLGT_WIEDER: Record<"zeit" | "ort" | "bemerkung", string> = {
   zeit: "Die Zeit folgt wieder der Serie.",
@@ -152,6 +150,15 @@ export function TerminBereich({
 
   // ── Serientermine (#326) ──────────────────────────────────────────────────
 
+  /** Die Nummer des laufenden Serien-Ablaufs. Öffnen und Abbrechen (Knopf,
+   *  Escape, Klick daneben) zählen sie hoch; wer nach einem `await`
+   *  weitermacht, prüft zuerst, ob seine Nummer noch gilt. Sonst liefe eine
+   *  Vorschau, die der USER abgebrochen hat, trotzdem in die Bestätigung
+   *  oder gleich ins Ausführen. Abbrechen lässt sich der Server-Aufruf nicht;
+   *  die Transition endet mit seiner Antwort, `pending` bleibt nicht hängen. */
+  const laufNr = useRef(0);
+  const neuerLauf = () => ++laufNr.current;
+
   function serieSchliessen() {
     setReichweite(null);
     setBestaetigen(null);
@@ -164,9 +171,9 @@ export function TerminBereich({
    *  Plan ist schon neu geladen. Sonst bleibt beim Ändern der Termin-Dialog
    *  offen und zeigt den Grund (etwa eine Regel, die erst mit der Reichweite
    *  feststeht); beim Entfernen gibt es keinen Dialog, der ihn trüge. */
-  function serienFehler(art: SerienArt, fehler: string) {
+  function serienFehler(art: SerienArt, fehler: string, abgebrochen = false) {
     router.refresh();
-    if (art === "entfernen" || istVeraltet(fehler)) {
+    if (abgebrochen || art === "entfernen" || istVeraltet(fehler)) {
       serieSchliessen();
       melde(fehler);
       return;
@@ -177,13 +184,15 @@ export function TerminBereich({
   }
 
   /** Ausführen mit dem, was die Vorschau sah: die Version der Serie und die
-   *  entfallenden Termine mit Training (PO 17, AK 9). */
-  async function fuehreAus(b: SerienSchritt) {
+   *  entfallenden Termine mit Training (PO 17, AK 9). Wurde währenddessen
+   *  abgebrochen, ist die Änderung trotzdem geschehen (oder gescheitert):
+   *  Dann schliessen und in der Snackbar melden, was passiert ist. */
+  async function fuehreAus(b: SerienSchritt, nr: number) {
     const erwartet = { version: b.folge.versionVorher, entfallend: b.folge.entfallend.map((e) => e.terminId) };
     const r = b.art === "aendern"
       ? await aendereSerieAktion(b.t.id, b.reichweite, b.aenderung ?? {}, erwartet)
       : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
-    if (!r.ok) return serienFehler(b.art, r.error);
+    if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
     router.refresh();
     serieSchliessen();
     melde(b.art === "aendern" ? "Terminserie geändert." : "Termine entfernt.");
@@ -209,11 +218,12 @@ export function TerminBereich({
     if (!erlaubt) return setDialogFehler(SERIE_TEXT.datumUndRegel);
     const { datum: _datum, ...werte } = geaendert ?? {};
     setDialogFehler(undefined);
+    neuerLauf();
     setReichweite({
       art: "aendern",
       t,
       erlaubt,
-      hinweis: datum ? SERIE_MELDUNG.DATUM_NUR_EINZELN : regelNeu ? REGEL_HINWEIS : undefined,
+      hinweis: datum ? SERIE_MELDUNG.DATUM_NUR_EINZELN : regelNeu ? SERIE_MELDUNG.REGEL_NUR_SERIE : undefined,
       geaendert,
       aenderung: { ...werte, ...regelNeu },
     });
@@ -234,16 +244,19 @@ export function TerminBereich({
       return;
     }
     const version = t.serie?.version ?? 0;
+    const nr = laufNr.current;
     startTransition(async () => {
       const v = art === "aendern"
         ? await vorschauSerieAktion(t.id, r, frage.aenderung ?? {}, version)
         : await vorschauSerieEntfernenAktion(t.id, r, version);
+      // Abgebrochen, während die Vorschau lief: nichts mehr tun.
+      if (laufNr.current !== nr) return;
       if (!v.ok) return serienFehler(art, v.error);
       setReichweite(null);
       const schritt: SerienSchritt = { art, t, reichweite: r, aenderung: frage.aenderung, folge: v.folge };
       // AK 8: bestätigen, wenn Termine wegfallen — beim Entfernen immer.
       if (art === "entfernen" || v.folge.entfallendAnzahl > 0) setBestaetigen(schritt);
-      else await fuehreAus(schritt);
+      else await fuehreAus(schritt, nr);
     });
   }
 
@@ -258,7 +271,10 @@ export function TerminBereich({
       lauf(() => loeseTrainingAktion(t.id, t.training!.id), () => `«${t.training!.name}» ist gelöst und bleibt im Team-Bestand.`, () => {}),
     entfernen: (t) => {
       setDialogFehler(undefined);
-      if (t.serie) setReichweite({ art: "entfernen", t, erlaubt: JEDE_REICHWEITE });
+      if (t.serie) {
+        neuerLauf();
+        setReichweite({ art: "entfernen", t, erlaubt: JEDE_REICHWEITE });
+      }
       else setEntfernen(t);
     },
     pending,
@@ -307,7 +323,13 @@ export function TerminBereich({
           bearbeiten &&
           lauf(() => folgeDerSerieAktion(bearbeiten.id, [angabe]), () => FOLGT_WIEDER[angabe], () => setBearbeiten(null), true)
         }
-        onClose={() => setBearbeiten(null)}
+        onClose={() => {
+          // Nur ein Abbruch durch den USER zählt; schliesst der Code den
+          // Dialog, ist `bearbeiten` schon leer (gilt für alle drei Dialoge).
+          if (!bearbeiten) return;
+          neuerLauf();
+          setBearbeiten(null);
+        }}
         onSpeichern={(f, regel) => bearbeiten && speichereBearbeitung(bearbeiten, f, regel)}
       />
 
@@ -317,7 +339,11 @@ export function TerminBereich({
         erlaubt={reichweite?.erlaubt ?? JEDE_REICHWEITE}
         hinweis={reichweite?.hinweis}
         pending={pending}
-        onClose={() => setReichweite(null)}
+        onClose={() => {
+          if (!reichweite) return;
+          neuerLauf();
+          setReichweite(null);
+        }}
         onWahl={reichweiteGewaehlt}
       />
 
@@ -325,10 +351,15 @@ export function TerminBereich({
         folge={bestaetigen?.folge ?? null}
         aktion={bestaetigen?.art ?? "aendern"}
         pending={pending}
-        onClose={() => setBestaetigen(null)}
+        onClose={() => {
+          if (!bestaetigen) return;
+          neuerLauf();
+          setBestaetigen(null);
+        }}
         onBestaetigen={() => {
           const b = bestaetigen;
-          if (b) startTransition(() => fuehreAus(b));
+          const nr = laufNr.current;
+          if (b) startTransition(() => fuehreAus(b, nr));
         }}
       />
 

@@ -58,7 +58,7 @@ export function ReichweiteDialog({
       {hinweis && <p className="mb-3">{hinweis}</p>}
       <ChoiceChipGroup ariaLabel="Gilt für" className="flex-col items-start">
         {optionen.map((r, i) => (
-          <ChoiceChip key={r} tabStop={i === 0} selected={wahl === r} onSelect={() => setWahl(r)} look="nutzertext">
+          <ChoiceChip key={r} tabStop={i === 0 && !wahl} selected={wahl === r} onSelect={() => setWahl(r)} look="nutzertext">
             {TEXT[r]}
           </ChoiceChip>
         ))}

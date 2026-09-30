@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Button, DateField, Dialog, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
 import { BEMERKUNG_MAX, ORT_MAX, terminProblem, type TerminFeld, type TerminFelder } from "@/lib/termin";
 import {
+  SERIE_MELDUNG,
   SERIE_TEXT,
-  maxEnddatum,
+  obergrenzeVorab,
   regelAenderung,
-  serieProblem,
+  regelProblemVorab,
   wochentageText,
   type SerieFeld,
   type SerienRegel,
@@ -17,6 +18,11 @@ import type { Abweichung, TerminSerie } from "@/lib/queries/termine";
 
 type FolgeAngabe = "zeit" | "ort" | "bemerkung";
 const ANGABE: Record<FolgeAngabe, string> = { zeit: "Die Zeit", ort: "Der Ort", bemerkung: "Die Bemerkung" };
+const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
+  zeit: "Zeit wieder der Serie folgen lassen",
+  ort: "Ort wieder der Serie folgen lassen",
+  bemerkung: "Bemerkung wieder der Serie folgen lassen",
+};
 
 /* Einen einzelnen Termin festlegen oder ändern (Team-Kalender #322).
    Die Regeln kommen aus lib/termin.ts — dieselben, die der Fachkern prüft;
@@ -85,13 +91,8 @@ export function TerminDialog({
   const fehlerAn = (k: TerminFeld) => (problem?.feld === k ? problem.text : undefined);
 
   const regelFehlerAn = (k: SerieFeld) => (regelProblem?.feld === k ? regelProblem.text : undefined);
-
-  /** Die Obergrenze des Enddatums hängt an der Reichweite (AK 5, PC 19): Für
-   *  «alle» zählt das Beginndatum der Serie, für «dieser und folgende» das der
-   *  neuen Teilserie — ohne verschobenes Beginndatum der gewählte Termin. Der
-   *  Dialog kennt die Reichweite noch nicht und lässt darum die weitere Grenze
-   *  zu; die engere prüft der Fachkern in der Vorschau, mit demselben Satz. */
-  const grenzVon = serie && regel.von === serie.beginnDatum && start?.datum && start.datum > regel.von ? start.datum : regel.von;
+  const serieTitelId = useId();
+  const terminDatum = start?.datum ?? "";
 
   function regelPruefen(): boolean {
     if (!serie) return true;
@@ -104,10 +105,8 @@ export function TerminDialog({
       setRegelProblem({ feld: "beides", text: SERIE_TEXT.datumUndRegel });
       return false;
     }
-    // Geprüft wird nur die Regel — Platzhalterzeit wie im Fachkern.
-    const p = serieProblem({ ...regel, beginn: "00:00", ende: "00:01" });
-    const nurEngereGrenze = p?.text === SERIE_TEXT.zuLang && regel.von === serie.beginnDatum && regel.bis <= maxEnddatum(grenzVon);
-    const r = p && !nurEngereGrenze ? p : null;
+    // Die Reichweite ist noch offen: weitere Obergrenze, die engere prüft die Vorschau.
+    const r = regelProblemVorab(serie, regel, terminDatum);
     setRegelProblem(r);
     return !r;
   }
@@ -142,8 +141,8 @@ export function TerminDialog({
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
       </div>
       {serie && (
-        <section aria-labelledby="terminserie-titel" className="mt-6 border-t border-linie pt-4">
-          <h3 id="terminserie-titel" className="type-title-small text-on-surface">Terminserie</h3>
+        <section aria-labelledby={serieTitelId} className="mt-6 border-t border-linie pt-4">
+          <h3 id={serieTitelId} className="type-title-small text-on-surface">Terminserie</h3>
           <p className="type-body-small">
             {wochentageText(serie.wochentage)} · {datumKurz(serie.beginnDatum)} bis {datumKurz(serie.endDatum)} · {serie.beginn}–{serie.ende} Uhr
             {serie.ort ? <> · {serie.ort}</> : null}
@@ -158,7 +157,7 @@ export function TerminDialog({
               {(["zeit", "ort", "bemerkung"] as const).filter((a) => abweichungen.includes(a)).map((a) => (
                 <li key={a} className="flex flex-wrap items-center justify-between gap-x-2">
                   <span>{ANGABE[a]} weicht von der Serie ab.</span>
-                  <Button variant="text" size="sm" disabled={pending} onClick={() => onFolgen?.(a)}>Der Serie folgen</Button>
+                  <Button variant="text" size="sm" aria-label={FOLGEN_LABEL[a]} disabled={pending} onClick={() => onFolgen?.(a)}>Der Serie folgen</Button>
                 </li>
               ))}
             </ul>
@@ -172,14 +171,14 @@ export function TerminDialog({
                 className="flex-1"
                 value={regel.bis}
                 min={regel.von || undefined}
-                max={regel.von ? maxEnddatum(grenzVon) : undefined}
+                max={regel.von ? obergrenzeVorab(serie, regel, terminDatum) : undefined}
                 onChange={(e) => setRegel((r) => ({ ...r, bis: e.target.value }))}
                 error={!!regelFehlerAn("bis")}
                 supportingText={regelFehlerAn("bis")}
               />
             </div>
             {regelProblem?.feld === "beides" && <p role="alert" className="type-body-small text-error">{regelProblem.text}</p>}
-            <p className="type-body-small">Wochentage und Zeitraum gelten für diesen und alle folgenden oder für alle Termine der Serie.</p>
+            <p className="type-body-small">{SERIE_MELDUNG.REGEL_NUR_SERIE}</p>
           </div>
         </section>
       )}
