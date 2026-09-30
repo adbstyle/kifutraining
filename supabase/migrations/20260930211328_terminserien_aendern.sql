@@ -86,7 +86,11 @@ begin
   if not wochentage_gueltig(v_neu_tage) then raise exception 'SERIE_WOCHENTAGE'; end if;
   if v_neu_bis < v_neu_von then raise exception 'SERIE_ENDE_VOR_BEGINN'; end if;
   if v_neu_bis > (v_neu_von + interval '1 year')::date then raise exception 'SERIE_ZU_LANG'; end if;
-  if not exists (select 1 from serien_tage(v_neu_tage, v_neu_von, v_neu_bis)) then
+  -- Nur wenn die Regel sich ändert: Bei reinen Werteänderungen kann der
+  -- gewählte Termin hinter dem Serienende liegen (verlegt), ohne dass die
+  -- unveränderte Regel dort einen Tag hätte.
+  if (p_aenderung ? 'wochentage' or p_aenderung ? 'beginn_datum' or p_aenderung ? 'end_datum')
+     and not exists (select 1 from serien_tage(v_neu_tage, v_neu_von, v_neu_bis)) then
     raise exception 'SERIE_OHNE_TAG';
   end if;
   if v_zeit then
@@ -97,12 +101,16 @@ begin
 
   -- Teilen (PC 3) oder an Ort und Stelle (PC 4).
   if p_reichweite = 'dieser_und_folgende' then
-    insert into termin_serien (team_id, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung)
+    -- Die Teilserie erbt die Version der bisherigen Serie plus eins (der
+    -- Versions-Trigger greift nur bei UPDATE): Wer vor einer Teilung die alte
+    -- Version gesehen hat, wird auch an der neuen Serie abgewiesen (AK 9).
+    insert into termin_serien (team_id, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, version)
     values (s.team_id, v_neu_tage, v_neu_von, v_neu_bis,
             case when v_zeit then v_beginn else s.beginn end,
             case when v_zeit then v_ende else s.ende end,
             case when p_aenderung ? 'ort' then nullif(btrim(p_aenderung->>'ort'), '') else s.ort end,
-            case when p_aenderung ? 'bemerkung' then nullif(btrim(p_aenderung->>'bemerkung'), '') else s.bemerkung end)
+            case when p_aenderung ? 'bemerkung' then nullif(btrim(p_aenderung->>'bemerkung'), '') else s.bemerkung end,
+            s.version + 1)
     returning id into x;
     update training_termine set serie_id = x where serie_id = s.id and datum >= t.datum;
     update termin_serien_luecken set serie_id = x where serie_id = s.id and tag >= t.datum;
@@ -227,6 +235,7 @@ begin
                                                  v_alt_von, v_alt_bis) a where a = d)
        and not exists (select 1 from termin_serien_luecken l where l.serie_id = x and l.tag = d)
        and not exists (select 1 from training_termine o where o.serie_id = x and o.serien_tag = d)
+       and not exists (select 1 from training_termine o where o.serie_id = x and o.datum = d)
     returning id, datum)
   select coalesce(array_agg(id) filter (where datum < v_heute), '{}') into v_neu_vergangen from neu;
   v_vergangen := v_vergangen || v_neu_vergangen;
@@ -264,6 +273,9 @@ begin
   if p_ausfuehren then
     return terminserie_rechnen(p_termin, p_reichweite, p_aenderung, p_version, p_entfallend);
   end if;
+  -- Vorschau: Die Rechnung läuft bis zum Ende und wird zurückgerollt. Die im
+  -- Ergebnis genannte `serie` einer Teilung stammt aus diesem zurückgerollten
+  -- Einfügen und darf von Aufrufern nicht verwendet werden.
   begin
     v := terminserie_rechnen(p_termin, p_reichweite, p_aenderung, p_version, null);
     raise exception 'VORSCHAU_ZURUECK';
@@ -300,6 +312,7 @@ begin
   end if;
   select * into s from termin_serien where id = t.serie_id for update;
   if p_version is not null and s.version <> p_version then raise exception 'SERIE_GEAENDERT'; end if;
+  perform 1 from training_termine where serie_id = s.id for update;
 
   v_entfallend := array(select id from training_termine
                          where serie_id = s.id and (p_reichweite = 'alle' or datum >= t.datum));
@@ -409,6 +422,10 @@ begin
   if auth.uid() is null then raise exception 'not authenticated'; end if;
   select * into t from training_termine where id = p_termin for update;
   if not found or not ist_team_mitglied(t.team_id) then raise exception 'TERMIN_NICHT_GEFUNDEN'; end if;
+  if p_angaben is null or cardinality(p_angaben) = 0
+     or not (p_angaben <@ array['zeit', 'ort', 'bemerkung', 'datum']) then
+    raise exception 'SERIE_ANGABEN_UNGUELTIG';
+  end if;
   if t.serie_id is null then raise exception 'TERMIN_OHNE_SERIE'; end if;
   if 'datum' = any(p_angaben) then raise exception 'DATUM_FOLGT_NICHT'; end if;
   select * into s from termin_serien where id = t.serie_id;
