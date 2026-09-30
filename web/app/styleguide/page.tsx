@@ -33,6 +33,7 @@ import { ChoiceChipDemo } from "./ChoiceChipDemo";
 import { AuswahlListeDemo } from "./AuswahlListeDemo";
 import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
+import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { HeaderNavDemo } from "./HeaderNavDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
@@ -1864,6 +1865,21 @@ export default function Styleguide() {
           im Formular heisst es <em>nichts</em>.
         </p>
         <MultiSelectDemo />
+
+        <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+          <code>WochentagWahl</code> — sieben feste Werte, sichtbar
+        </p>
+        <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+          Für die sieben festen Wochentage einer Terminserie; alle Werte stehen
+          sichtbar nebeneinander. Neu ist der Baustein, weil die
+          Mehrfachauswahl ein Panel öffnet — bei sieben kurzen Werten, die man
+          auf einen Blick vergleichen will, wäre das ein Klick zu viel. Jeder
+          Wert ist ein <code>FilterChip</code> (Ein/Aus, <code>aria-pressed</code>,
+          Häkchen auf der Wahl); das Kürzel steht sichtbar, der volle
+          Wochentag für Screenreader. Montag zuerst, die Wahl bleibt sortiert.
+          Ein Fehler steht unter den Chips.
+        </p>
+        <WochentagWahlDemo />
       </Section>
 
       <Section n="18" title="Dialog &amp; Snackbar">

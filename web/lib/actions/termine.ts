@@ -8,6 +8,8 @@ import {
   ordneTrainingZu,
   type Zuordnung,
 } from "@/lib/kern/termine";
+import { legeSerieFest } from "@/lib/kern/serien";
+import type { Wochentag } from "@/lib/serie";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
 import type { TerminFelder } from "@/lib/termin";
@@ -103,5 +105,19 @@ export async function loeseTrainingAktion(
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
+  return { ok: true };
+}
+
+/** Eine Terminserie festlegen (#324): die Termine entstehen ohne Training;
+ *  die Oberfläche bestätigt ohne Anzahl (Story 3 PC 4). */
+export async function legeSerieFestAktion(
+  teamId: string,
+  f: { wochentage: Wochentag[]; von: string; bis: string; beginn: string; ende: string; ort: string; bemerkung: string },
+): Promise<{ ok: true } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await legeSerieFest(a.supabase, a.userId, { teamId, ...f });
+  if (!r.ok) return { ok: false, error: r.meldung };
+  revalidiereTeam(teamId);
   return { ok: true };
 }

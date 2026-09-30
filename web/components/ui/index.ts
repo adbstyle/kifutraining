@@ -41,6 +41,7 @@ export { Select } from "./Select";
 export type { SelectProps, SelectOption } from "./Select";
 export { MultiSelect } from "./MultiSelect";
 export type { MultiSelectProps } from "./MultiSelect";
+export { WochentagWahl } from "./WochentagWahl";
 export { Menu } from "./Menu";
 export type { MenuItemDef } from "./Menu";
 export { OverflowMenu } from "./OverflowMenu";

@@ -4,11 +4,13 @@ import { createContext, useContext, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Dialog } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
+import { SerieDialog } from "./SerieDialog";
 import { TerminDialog } from "./TerminDialog";
 import { TrainingWahlDialog, type TrainingWahl } from "./TrainingWahlDialog";
 import {
   aendereTerminAktion,
   entferneTerminAktion,
+  legeSerieFestAktion,
   legeTerminFestAktion,
   loeseTrainingAktion,
   ordneTrainingZuAktion,
@@ -26,6 +28,7 @@ import type { TerminZeile } from "@/lib/queries/termine";
    Aktionen bietet (#329 AK 8). */
 export type TerminAktionen = {
   neu: (datum?: string) => void;
+  neueSerie: (datum?: string) => void;
   bearbeiten: (t: TerminZeile) => void;
   zuordnen: (t: TerminZeile) => void;
   loesen: (t: TerminZeile) => void;
@@ -62,6 +65,7 @@ export function TerminBereich({
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
   const [neu, setNeu] = useState<string | null>(null); // Vorbelegtes Datum; "" = ohne
+  const [serieNeu, setSerieNeu] = useState<string | null>(null); // Vorbelegtes Beginndatum; "" = ohne
   const [bearbeiten, setBearbeiten] = useState<TerminZeile | null>(null);
   const [zuordnen, setZuordnen] = useState<TerminZeile | null>(null);
   const [entfernen, setEntfernen] = useState<TerminZeile | null>(null);
@@ -96,6 +100,7 @@ export function TerminBereich({
 
   const aktionen: TerminAktionen = {
     neu: (datum) => { setDialogFehler(undefined); setNeu(datum ?? ""); },
+    neueSerie: (datum) => { setDialogFehler(undefined); setSerieNeu(datum ?? ""); },
     bearbeiten: (t) => { setDialogFehler(undefined); setBearbeiten(t); },
     zuordnen: (t) => { setDialogFehler(undefined); setZuordnen(t); },
     loesen: (t) =>
@@ -120,6 +125,17 @@ export function TerminBereich({
         onClose={() => setNeu(null)}
         onSpeichern={(f: TerminFelder) =>
           lauf(() => legeTerminFestAktion(teamId, f), () => "Termin festgelegt.", () => setNeu(null), true)
+        }
+      />
+
+      <SerieDialog
+        open={serieNeu !== null}
+        start={{ von: serieNeu ?? "" }}
+        pending={pending}
+        fehler={dialogFehler}
+        onClose={() => setSerieNeu(null)}
+        onSpeichern={(f) =>
+          lauf(() => legeSerieFestAktion(teamId, f), () => "Terminserie festgelegt.", () => setSerieNeu(null), true)
         }
       />
 
