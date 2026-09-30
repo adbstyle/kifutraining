@@ -2028,11 +2028,26 @@ try {
     // Auch die Datenebene weist ab (RPC direkt).
     const { error: rpcFehler } = await a.supabase.rpc("termin_training_setzen", { p_termin: t.terminId, p_training: tr.id });
     assert.match(rpcFehler!.message, /TERMIN_AUSGEFALLEN/);
+    // Ohne Angabe bleibt der Grund eines ausgefallenen Termins stehen …
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId }));
+    assert.equal((await zeile()).ausfall_grund, "Platz gesperrt", "grund weggelassen = unverändert");
+    // … «» und null leeren ihn, ein neuer Text ersetzt ihn.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Neu" }));
+    assert.equal((await zeile()).ausfall_grund, "Neu");
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "" }));
+    assert.equal((await zeile()).ausfall_grund, null);
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Nochmal" }));
     // AK 3: Grund ändern und leeren, ohne den Ausfall zurückzunehmen.
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: null }));
     assert.equal((await zeile()).ausfall_grund, null);
     // PC 3: zurücknehmen → normal, ohne Training, ohne Grund.
     wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Nochmal" }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }));
+    // Ein zweites Zurücknehmen (etwa eines anderen Mitglieds) weist ab.
+    fehler(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }), "regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN);
+    // Ein neu markierter Termin ohne Grund trägt keinen.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId }));
+    assert.equal((await zeile()).ausfall_grund, null);
     wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }));
     assert.deepEqual(await zeile(), { ausgefallen: false, ausfall_grund: null, training_id: null, bemerkung: "Leibchen" });
     // PC 4/5: Einzeln auf heute oder später verlegt endet der Ausfall, auf gestern nicht.
@@ -2044,6 +2059,35 @@ try {
     assert.equal((await zeile()).ausgefallen, true);
     wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, datum: tagCh(4) }));
     assert.deepEqual(await zeile(), { ausgefallen: false, ausfall_grund: null, training_id: null, bemerkung: "Leibchen" });
+    // PC 4, Grenze: Genau auf heute verlegt endet der Ausfall ebenfalls.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Schnee" }));
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, datum: tagCh(0) }));
+    assert.deepEqual(await zeile(), { ausgefallen: false, ausfall_grund: null, training_id: null, bemerkung: "Leibchen" });
+  });
+
+  await pruefe("Ausfall in der Serie: Tausch behält ihn, Serienänderung wirkt wie bei anderen, keine Abweichung (#327 PC 5, 7, 8)", async () => {
+    const team = await serienTeam("Kern-DB-Ausfall-Serie");
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: tagCh(7), bis: tagCh(49), beginn: "18:00", ende: "19:30", ort: "A" }));
+    const t = await termineDer(s.serieId);
+    const z = async (id: string) =>
+      (await admin.from("training_termine").select("datum, serien_tag, ort, ausgefallen, ausfall_grund, zeit_abweichend, ort_abweichend, bemerkung_abweichend").eq("id", id).single()).data!;
+    // PC 8: Markieren und Zurücknehmen setzt kein Abweichungs-Flag.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t[1].id, grund: "Platz gesperrt" }));
+    let r = await z(t[1].id);
+    assert.deepEqual([r.ausgefallen, r.zeit_abweichend, r.ort_abweichend, r.bemerkung_abweichend, r.datum === r.serien_tag], [true, false, false, false, true]);
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t[1].id }));
+    r = await z(t[1].id);
+    assert.deepEqual([r.ausgefallen, r.zeit_abweichend, r.ort_abweichend, r.bemerkung_abweichend], [false, false, false, false]);
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t[1].id, grund: "Platz gesperrt" }));
+    // PC 7: Eine Serienänderung trifft den ausgefallenen Termin wie jeden anderen.
+    wert(await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { ort: "Halle" } }));
+    r = await z(t[1].id);
+    assert.deepEqual([r.ort, r.ausgefallen, r.ausfall_grund, r.ort_abweichend], ["Halle", true, "Platz gesperrt", false]);
+    // PC 5: Ein Tausch des Wochentags verlegt nicht einzeln — der Ausfall bleibt.
+    const wt = wochentagVon(t[1].datum);
+    wert(await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { wochentage: [((wt % 7) + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7] }, bestaetigt: true }));
+    r = await z(t[1].id);
+    assert.deepEqual([r.ausgefallen, r.ausfall_grund, wochentagVon(r.datum)], [true, "Platz gesperrt", (wt % 7) + 1]);
   });
 
   // ── Übung anlegen (#143) ─────────────────────────────────────────────────

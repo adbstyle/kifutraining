@@ -435,9 +435,13 @@ export async function lasseAusfallen(
   if (!geladen.ok) return geladen;
   const t = geladen.wert;
   const erwartet = e.erwartetesTraining !== undefined ? e.erwartetesTraining : t.training_id;
+  // `grund` weggelassen heisst bei einem schon ausgefallenen Termin «Grund
+  // unverändert» (kein Schreiben); `null` oder «» leert ihn. Beim Markieren
+  // gibt es ohne Angabe keinen Grund.
+  const grund = e.grund === undefined && t.ausgefallen ? {} : { ausfall_grund: leerZuNull(e.grund) };
   const basis = supabase
     .from("training_termine")
-    .update({ ausgefallen: true, ausfall_grund: leerZuNull(e.grund), training_id: null })
+    .update({ ausgefallen: true, ...grund, training_id: null })
     .eq("id", t.id);
   const { data, error } = await (erwartet === null ? basis.is("training_id", null) : basis.eq("training_id", erwartet))
     .select("id")
@@ -457,10 +461,21 @@ export async function nimmAusfallZurueck(
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   if (!geladen.wert.ausgefallen) return fehlschlag("regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN, TERMIN_FELD);
-  const { error } = await supabase
+  // Bedingt schreiben: Hat ein anderes Mitglied den Ausfall inzwischen
+  // zurückgenommen, trifft das Update keine Zeile.
+  const { data, error } = await supabase
     .from("training_termine")
     .update({ ausgefallen: false, ausfall_grund: null })
-    .eq("id", e.terminId);
+    .eq("id", e.terminId)
+    .eq("ausgefallen", true)
+    .select("id")
+    .maybeSingle();
   if (error) return ausDbFehler(error);
+  if (!data) {
+    const { data: da } = await supabase.from("training_termine").select("id").eq("id", e.terminId).maybeSingle();
+    return da
+      ? fehlschlag("regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN, TERMIN_FELD)
+      : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
+  }
   return ok({ terminId: e.terminId, teamId: geladen.wert.team_id });
 }
