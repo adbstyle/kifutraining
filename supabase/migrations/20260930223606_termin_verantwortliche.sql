@@ -31,14 +31,18 @@ alter table training_termine
 
 -- Berechnete Felder für PostgREST (`select=…,verantwortlich_name`). Namen immer
 -- aktuell (AK 12) — über anzeige_name, nie über profiles direkt.
+-- SECURITY INVOKER: Sie lesen mit den Rechten des Aufrufers (RLS auf
+-- training_termine und team_members). Mitglieder erhalten so das richtige
+-- Ergebnis, ein direkter /rpc-Aufruf mit einer erfundenen Zeile zu einem
+-- fremden Termin verrät nichts.
 create function verantwortlich_name(v termin_verantwortliche) returns text
-language sql stable security definer
+language sql stable security invoker
 set search_path = public, pg_temp
 as $$ select case when v.user_id is null then null else anzeige_name(v.user_id) end $$;
 
 -- Ehemalig: gelöschtes Konto oder nicht mehr Mitglied des Teams des Termins.
 create function verantwortlich_ehemalig(v termin_verantwortliche) returns boolean
-language sql stable security definer
+language sql stable security invoker
 set search_path = public, pg_temp
 as $$
   select v.user_id is null or not exists (
@@ -49,12 +53,11 @@ $$;
 -- Eigener Parametername: Sonst sind die beiden Überladungen für PostgREST
 -- (und gen:types) nicht unterscheidbar.
 create function verantwortlich_name(sv termin_serien_verantwortliche) returns text
-language sql stable security definer
+language sql stable security invoker
 set search_path = public, pg_temp
 as $$ select anzeige_name(sv.user_id) $$;
 
--- Bei DEFINER-Funktionen das implizite EXECUTE für PUBLIC entziehen; die
--- Tabellen liest ohnehin nur `authenticated`.
+-- Nur `authenticated` liest die Tabellen; das implizite EXECUTE für PUBLIC fällt weg.
 revoke all on function verantwortlich_name(termin_verantwortliche) from public, anon;
 revoke all on function verantwortlich_ehemalig(termin_verantwortliche) from public, anon;
 revoke all on function verantwortlich_name(termin_serien_verantwortliche) from public, anon;
