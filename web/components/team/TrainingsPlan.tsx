@@ -49,8 +49,10 @@ export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
   const a = useTerminAktionen();
   const vergangen = t.datum < heute;
   const zeit = zeitText(t.beginn, t.ende);
+  // Die Datum-/Zeitzeile ist die Überschrift jeder Karte — auch die eines
+  // Termins ohne Training hat so eine (Screenreader-Navigation per Überschrift).
   const kopf = (
-    <p className="flex flex-wrap items-center gap-x-2 type-body-small text-on-surface-mittel">
+    <h4 className="flex flex-wrap items-center gap-x-2 type-body-small text-on-surface-mittel">
       <CalendarDays size={14} aria-hidden />
       {datumKurz(t.datum)}
       {zeit ? <> · {zeit} Uhr</> : null}
@@ -58,7 +60,7 @@ export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
       {!t.beginn && <span className="text-error">· Zeit fehlt</span>}
       {t.beginn && !t.ende && <span className="text-error">· Ende fehlt</span>}
       {t.ort && <><MapPin size={14} aria-hidden />{t.ort}</>}
-    </p>
+    </h4>
   );
 
   return (
@@ -69,7 +71,7 @@ export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
             {kopf}
             {t.training ? (
               <Link href={`/training/${t.training.id}`} className="focus-ring group mt-1 block rounded-flaeche">
-                <h4 className="type-title-medium text-on-surface group-hover:underline">{t.training.name}</h4>
+                <span className="block type-title-medium text-on-surface group-hover:underline">{t.training.name}</span>
                 <div className="mt-1 flex flex-wrap gap-1">{t.training.stufen.map((k) => <KategorieChip key={k} k={k} />)}</div>
               </Link>
             ) : (

@@ -6,7 +6,7 @@
 // Bild einer noch existierenden Fassung fällt. Sie dient dem Löschen eines
 // Trainings (`loescheTraining`: Oberfläche, Team-Bestand, KI-Werkzeug
 // «training_loeschen») und dem Aufräumen nach einem gescheiterten erneuten
-// Ansetzen. Das Auflösen eines Teams räumt seine Bilder anderswo ab
+// Zuordnen. Das Auflösen eines Teams räumt seine Bilder anderswo ab
 // (`lib/storage-aufraeumen.ts`).
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";

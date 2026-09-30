@@ -26,7 +26,7 @@ import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { TerminWahlDialog } from "./TerminWahlDialog";
 import { entferneTeamTraining, uebernimmZuMir } from "@/lib/actions/team-trainings";
 import { ordneTrainingZuAktion } from "@/lib/actions/termine";
-import { istVeraltet } from "@/lib/termin";
+import { istVeraltet, ZUORDNEN_ERFOLG } from "@/lib/termin";
 import { formatDuration } from "@/lib/training";
 import { datumKurz } from "@/lib/zeit";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
@@ -74,7 +74,7 @@ export function TeamTrainingsListe({
       }
       setZuordnen(null);
       setDialogFehler(undefined);
-      melde(res.ok ? (res.kopie ? "Kopie angelegt und dem Termin zugeordnet." : "Training zugeordnet.") : res.error);
+      melde(res.ok ? (res.kopie ? ZUORDNEN_ERFOLG.kopie : ZUORDNEN_ERFOLG.direkt) : res.error);
     });
   }
 

@@ -89,8 +89,8 @@ export type TrainingDetail = {
   ziel: string | null;
   /** Gehört das Training einem Team? Dann steht hier dessen Name (Story 6). */
   team: { id: string; name: string } | null;
-  /** Datum des Termins, falls das Training angesetzt ist (`YYYY-MM-DD`);
-   *  sonst `null`. Höchstens einer je Training — ein erneutes Ansetzen legt
+  /** Datum des Termins, falls das Training einem Termin zugeordnet ist (`YYYY-MM-DD`);
+   *  sonst `null`. Höchstens einer je Training — ein erneutes Einplanen legt
    *  eine eigene Kopie an. Die RLS gibt Termine nur Team-Mitgliedern (#156). */
   terminDatum: string | null;
   /** Anzeigename des Urhebers; `null` bei anonymisierten Trainings (Story 15). */
@@ -553,9 +553,9 @@ export async function getTeamTrainingsFuer(
 
   const rows: TeamTrainingRow[] = (data ?? []).map((raw) => {
     // Bewusst eigener Name: `RawTermin` in queries/termine-fuer.ts bezeichnet
-    // die vollständige Termin-Zeile, hier stehen nur die Felder der
-    // Vorbelegung.
-    type RawTerminVorbelegung = {
+    // die vollständige Termin-Zeile, hier stehen nur die Felder, die
+    // `TEAM_LIST_SELECT` einbettet.
+    type RawTerminEingebettet = {
       id: string;
       datum: string;
       beginn: string | null;
@@ -564,7 +564,7 @@ export async function getTeamTrainingsFuer(
       bemerkung: string | null;
     };
     const r = raw as unknown as RawListTraining & {
-      training_termine: RawTerminVorbelegung | RawTerminVorbelegung[] | null;
+      training_termine: RawTerminEingebettet | RawTerminEingebettet[] | null;
     };
     const termin = einzelnerTermin(r.training_termine);
     return {

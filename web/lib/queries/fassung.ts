@@ -16,7 +16,7 @@ export type FassungZumBearbeiten = {
   /** Das Team, dem das Training gehört; `null` bei einem persönlichen
    *  Training. Trägt den Team-Kontext in die Brotkrumen (#156). */
   trainingTeam: { id: string; name: string } | null;
-  /** Datum des Termins, falls das Training angesetzt ist; sonst `null`. */
+  /** Datum des Termins, falls das Training einem Termin zugeordnet ist; sonst `null`. */
   trainingTerminDatum: string | null;
   /** Altersstufe des Trainings. Die Fassung folgt ihr; sie entscheidet über
    *  Alterskategorien, Erscheinungsformen und Ablaufform (Story 1,

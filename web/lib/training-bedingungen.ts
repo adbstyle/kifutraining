@@ -9,6 +9,7 @@
 import { JUNIOREN_PFLICHT_BLOECKE } from "@/lib/junioren";
 import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
+import { TERMIN_MELDUNG } from "@/lib/termin";
 import { sichtbareZuordnungen } from "@/lib/varianten";
 
 /** Marker, mit dem die Datenebene eine verletzte Bedingung meldet. */
@@ -325,8 +326,6 @@ export const VARIANTENFOLGE_MELDUNG = {
     "Die Reihenfolge muss genau die Varianten dieses Trainings nennen — jede einmal. " +
     "Lies das Training neu und sende die vollständige Folge.",
 } as const;
-
-import { TERMIN_MELDUNG } from "@/lib/termin";
 
 /** Die Marker, mit denen die Datenebene im Kalender abweist (#322, #323) —
  *  ihre Sätze stehen in lib/termin.ts, damit Fachkern und Datenebene
