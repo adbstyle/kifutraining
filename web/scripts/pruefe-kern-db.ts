@@ -1751,6 +1751,9 @@ try {
     assert.equal(m.length, 3);
     assert.equal(m.find((x) => x.id === a.id)!.ich, true);
     assert.ok(m.every((x) => !("email" in x)), "PC 9");
+    // Ein viertes Mitglied, das nur einen einzelnen Termin trägt: macht den Filter «nur meine» prüfbar.
+    const e4 = await wegwerfKonto();
+    await admin.from("team_members").insert({ team_id: team, user_id: e4.id });
 
     const w = wochentagVon(heuteCh);
     const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [w], von: tagCh(-14), bis: tagCh(14), beginn: "18:00", ende: "19:30", verantwortliche: [a.id, b.id] }));
@@ -1759,6 +1762,8 @@ try {
     const t = await termineDer(s.serieId);
     assert.deepEqual(await leute(t[0].id), [a.id, b.id].sort(), "PC 1");
 
+    const fremder = t.find((x) => x.datum === tagCh(14))!;
+    wert(await setzeVerantwortliche(a.supabase, a.id, { terminId: fremder.id, userIds: [e4.id], reichweite: "nur_dieser" }));
     // Nur dieser: C statt B (AK 5, PC 2).
     const kuenftig = t.find((x) => x.datum === tagCh(7))!;
     wert(await setzeVerantwortliche(a.supabase, a.id, { terminId: kuenftig.id, userIds: [c.id], reichweite: "nur_dieser" }));
@@ -1809,6 +1814,7 @@ try {
     assert.ok(vb.name, "mit aktuellem Anzeigenamen");
     // Die Serie trägt nur noch A; der Serientermin ohne Abweichung folgt ihr.
     assert.deepEqual(plan.kommend[0].serie!.verantwortliche.map((v) => v.userId), [a.id]);
+    assert.ok(plan.kommend[0].serie!.verantwortliche.every((v) => typeof v.name === "string" && v.name.length > 0), "Serie mit Namen");
     assert.ok(plan.vergangen.find((x) => x.id === vergangen.id)!.abweichungen.includes("verantwortliche"));
     // PC 13: Verlegt man ihn auf heute, fällt B heraus.
     wert(await aendereTermin(a.supabase, a.id, { terminId: vergangen.id, datum: heuteCh }));
@@ -1816,7 +1822,35 @@ try {
 
     // AK 11, 17: nur die eigenen.
     const meine = wert(await teamPlan(a.supabase, a.id, { teamId: team, nurMeine: true }));
+    const meineIds = [...meine.kommend, ...meine.vergangen].map((x) => x.id);
+    assert.ok(meineIds.length >= 1, "nicht leer");
+    assert.ok(!meineIds.includes(fremder.id), "der Termin einer anderen Person fehlt");
     assert.ok([...meine.kommend, ...meine.vergangen].every((x) => x.verantwortliche.some((v) => v.userId === a.id)));
+    const alle = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
+    assert.ok([...alle.kommend, ...alle.vergangen].some((x) => x.id === fremder.id), "im ganzen Plan steht er");
+    assert.ok(meineIds.length < alle.kommend.length + alle.vergangen.length, "der Filter schränkt ein");
+  });
+
+  await pruefe("Austritt eines Serien-Verantwortlichen: Serie und anstehende Termine ohne ihn, Vergangenes behält ihn (#325 PC 6, 7)", async () => {
+    const team = await serienTeam("Kern-DB-Serie-Austritt");
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [wochentagVon(heuteCh)], von: tagCh(-14), bis: tagCh(14), beginn: "18:00", ende: "19:30", verantwortliche: [a.id, b.id] }));
+    const t = await termineDer(s.serieId);
+    const leute = async (terminId: string) =>
+      (await admin.from("termin_verantwortliche").select("user_id").eq("termin_id", terminId)).data!.map((x) => x.user_id).sort();
+    const anstehend = t.find((x) => x.datum === tagCh(7))!;
+    const vergangen = t.find((x) => x.datum === tagCh(-7))!;
+    assert.equal((await admin.from("training_termine").select("verantwortliche_abweichend").eq("id", anstehend.id).single()).data!.verantwortliche_abweichend, false, "folgt der Serie");
+    assert.deepEqual(await leute(anstehend.id), [a.id, b.id].sort());
+
+    await admin.from("team_members").delete().eq("team_id", team).eq("user_id", b.id);
+    const serie = (await admin.from("termin_serien_verantwortliche").select("user_id").eq("serie_id", s.serieId)).data!;
+    assert.deepEqual(serie, [{ user_id: a.id }], "aus der Serie ausgetragen");
+    assert.deepEqual(await leute(anstehend.id), [a.id], "aus dem anstehenden Termin ausgetragen");
+    assert.deepEqual(await leute(vergangen.id), [a.id, b.id].sort(), "der vergangene behält ihn");
+    const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
+    assert.equal(plan.vergangen.find((x) => x.id === vergangen.id)!.verantwortliche.find((v) => v.userId === b.id)!.ehemalig, true);
+    assert.deepEqual(plan.kommend.find((x) => x.id === anstehend.id)!.serie!.verantwortliche.map((v) => v.userId), [a.id]);
   });
 
   await pruefe("Konto löschen anonymisiert vergangene Einträge, auch nach dem Austritt (#325 PC 8)", async () => {
@@ -1833,6 +1867,35 @@ try {
     assert.deepEqual(e, [{ user_id: null }]);
     const p = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
     assert.deepEqual(p.vergangen[0].verantwortliche.map((v) => ({ name: v.name, ehemalig: v.ehemalig })), [{ name: null, ehemalig: true }]);
+  });
+
+  await pruefe("Konto löschen als noch aktives Mitglied: anstehend und Serie ohne es, vergangen anonym und zuletzt (#325 PC 6, 8)", async () => {
+    const team = await serienTeam("Kern-DB-Anonym-Mitglied");
+    const d = await wegwerfKonto();
+    const x = await wegwerfKonto();
+    await admin.from("team_members").insert([{ team_id: team, user_id: d.id }, { team_id: team, user_id: x.id }]);
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [wochentagVon(heuteCh)], von: tagCh(-7), bis: tagCh(14), beginn: "18:00", ende: "19:30", verantwortliche: [d.id] }));
+    const alt = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(-3), beginn: "10:00", ende: "11:00" }));
+    const neu = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "10:00", ende: "11:00" }));
+    wert(await setzeVerantwortliche(a.supabase, a.id, { terminId: alt.terminId, userIds: [d.id, a.id, x.id] }));
+    wert(await setzeVerantwortliche(a.supabase, a.id, { terminId: neu.terminId, userIds: [d.id] }));
+    assert.equal((await d.supabase.rpc("delete_account")).error, null); // noch Mitglied
+    const leute = async (terminId: string) =>
+      (await admin.from("termin_verantwortliche").select("user_id").eq("termin_id", terminId)).data!.map((v) => v.user_id);
+    assert.deepEqual(await leute(neu.terminId), [], "anstehender Eintrag entfernt");
+    assert.deepEqual((await admin.from("termin_serien_verantwortliche").select("user_id").eq("serie_id", s.serieId)).data, [], "Serie ohne das Konto");
+    const serienTermine = await termineDer(s.serieId);
+    for (const st of serienTermine.filter((y) => y.datum >= heuteCh)) assert.deepEqual(await leute(st.id), [], "anstehender Serientermin");
+    const vergangeneSerie = serienTermine.find((y) => y.datum < heuteCh)!;
+    assert.deepEqual(await leute(vergangeneSerie.id), [null], "vergangener Serientermin anonym");
+    // Lesepfad: zwei benannte, ein anonymer Eintrag — der anonyme zuletzt, die benannten nach Name.
+    const p = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
+    const v = p.vergangen.find((y) => y.id === alt.terminId)!.verantwortliche;
+    assert.equal(v.length, 3);
+    assert.equal(v[2].name, null, "anonym zuletzt");
+    assert.ok(v[0].name && v[1].name, "zwei benannte");
+    assert.ok(v[0].name!.localeCompare(v[1].name!, "de") <= 0, "nach Name geordnet");
+    assert.deepEqual(v.map((y) => y.ehemalig), [false, false, true]);
   });
 
   // ── Übung anlegen (#143) ─────────────────────────────────────────────────

@@ -132,12 +132,18 @@ const TERMIN_SELECT =
   "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, " +
   "termin_serien_verantwortliche ( user_id, verantwortlich_name ) )";
 
-/** Nach Anzeigename ordnen, unbenannte (gelöschte Konten) zuletzt. */
-function nachName<T>(liste: T[], name: (x: T) => string | null): T[] {
+/** Nach Anzeigename ordnen, unbenannte (gelöschte Konten) zuletzt. Der Schlüssel
+ *  (Eintrags- bzw. Konto-Kennung) macht die Reihenfolge bei gleichem Namen stabil. */
+function nachName<T>(liste: T[], name: (x: T) => string | null, schluessel: (x: T) => string): T[] {
   return [...liste].sort((a, b) => {
     const [x, y] = [name(a), name(b)];
-    if (x === null || y === null) return x === y ? 0 : x === null ? 1 : -1;
-    return x.localeCompare(y, "de");
+    if (x === null || y === null) {
+      if (x !== y) return x === null ? 1 : -1;
+    } else {
+      const n = x.localeCompare(y, "de");
+      if (n !== 0) return n;
+    }
+    return schluessel(a).localeCompare(schluessel(b));
   });
 }
 
@@ -170,6 +176,7 @@ function mapTermin(t: RawTermin): TerminZeile {
               name: v.verantwortlich_name ?? "",
             })),
             (v) => v.name,
+            (v) => v.userId,
           ),
         }
       : null,
@@ -191,6 +198,7 @@ function mapTermin(t: RawTermin): TerminZeile {
         ehemalig: v.verantwortlich_ehemalig,
       })),
       (v) => v.name,
+      (v) => v.eintragId,
     ),
   };
 }
