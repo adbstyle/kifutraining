@@ -14,6 +14,7 @@ import {
   TERMIN_FELD,
   aendereTermin,
   entferneTermin,
+  bereinigeVerantwortliche,
   kalenderFehler,
   ladeTermin,
   type TerminAendern,
@@ -40,6 +41,8 @@ export type SerieFestlegen = {
   ende: string;
   ort?: string | null;
   bemerkung?: string | null;
+  /** Kennungen der Mitglieder, die jeder Termin der Serie trägt (#325 AK 3). */
+  verantwortliche?: string[];
 };
 
 /** Eine Terminserie festlegen (#324): je gewähltem Wochentag im Zeitraum ein
@@ -51,6 +54,8 @@ export async function legeSerieFest(
 ): Promise<KernErgebnis<{ serieId: string; teamId: string; termine: number }>> {
   const p = serieProblem(e);
   if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
+  const verantwortliche = bereinigeVerantwortliche(e.verantwortliche ?? []);
+  if (!verantwortliche.ok) return verantwortliche.fehler;
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
   const { data, error } = await supabase.rpc("terminserie_festlegen", {
@@ -62,6 +67,7 @@ export async function legeSerieFest(
     p_ende: e.ende,
     p_ort: leerZuNull(e.ort),
     p_bemerkung: leerZuNull(e.bemerkung),
+    p_verantwortliche: verantwortliche.ids,
   });
   if (error) return kalenderFehler(error);
   const r = data as { serie: string; termine: number };
@@ -78,6 +84,8 @@ export type SerienAenderung = {
   /** `null` oder `""` = leeren. */
   ort?: string | null;
   bemerkung?: string | null;
+  /** Kennungen der künftigen Verantwortlichen der Serie (#325); `[]` = niemand. */
+  verantwortliche?: string[];
 };
 
 export type EntfallenderTermin = {
@@ -171,7 +179,7 @@ export async function aendereSerie(
   const a = e.aenderung;
   const hatZeit = a.beginn !== undefined || a.ende !== undefined;
   const hatRegel = a.wochentage !== undefined || a.von !== undefined || a.bis !== undefined;
-  if (!hatZeit && !hatRegel && a.ort === undefined && a.bemerkung === undefined)
+  if (!hatZeit && !hatRegel && a.ort === undefined && a.bemerkung === undefined && a.verantwortliche === undefined)
     return fehlschlag("eingabe", SERIE_MELDUNG.KEINE_AENDERUNG);
   if (a.von !== undefined && !istKalendertag(a.von)) return fehlschlag("eingabe", TERMIN_TEXT.datum, { feld: "von" });
   if (a.bis !== undefined && !istKalendertag(a.bis)) return fehlschlag("eingabe", TERMIN_TEXT.datum, { feld: "bis" });
@@ -181,6 +189,8 @@ export async function aendereSerie(
   }
   const tp = textProblem(a);
   if (tp) return fehlschlag("eingabe", tp.text, { feld: tp.feld });
+  const verantwortliche = a.verantwortliche === undefined ? null : bereinigeVerantwortliche(a.verantwortliche);
+  if (verantwortliche && !verantwortliche.ok) return verantwortliche.fehler;
 
   // Die Regel vorab prüfen, mit den Feldnamen des Werkzeugs (AK 5, PC 19) —
   // nur wenn sie sich ändert: Eine reine Werteänderung an einem verlegten
@@ -210,6 +220,7 @@ export async function aendereSerie(
   if (hatZeit) Object.assign(aenderung, { beginn: leerZuNull(a.beginn), ende: leerZuNull(a.ende) });
   if (a.ort !== undefined) aenderung.ort = leerZuNull(a.ort);
   if (a.bemerkung !== undefined) aenderung.bemerkung = leerZuNull(a.bemerkung);
+  if (verantwortliche?.ok) aenderung.verantwortliche = verantwortliche.ids;
 
   return laufe(t.team_id, e, async (ausfuehren, erwartet) =>
     supabase.rpc("terminserie_aendern", {
@@ -245,11 +256,11 @@ export async function entferneSerie(
   );
 }
 
-export type FolgeAngabe = "zeit" | "ort" | "bemerkung";
+export type FolgeAngabe = "zeit" | "ort" | "bemerkung" | "verantwortliche";
 /** Auch das Datum lässt sich nennen — die Datenebene weist es ab (PO 3). */
 export type FolgeWunsch = FolgeAngabe | "datum";
 
-const FOLGE_ANGABEN: readonly string[] = ["zeit", "ort", "bemerkung"];
+const FOLGE_ANGABEN: readonly string[] = ["zeit", "ort", "bemerkung", "verantwortliche"];
 
 /** Abweichende Angaben wieder der Serie folgen lassen (#326 AK 6; das Datum
  *  nie, PO 3 — «datum» reicht der Kern an die Datenebene durch, die es mit

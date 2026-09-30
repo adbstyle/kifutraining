@@ -113,7 +113,7 @@ const PlanEintrag = z.object({
   /** `null`: ein einzelner Termin ohne Serie (#324). */
   serie_id: z.string().nullable(),
   /** Die Angaben, in denen der Termin von seiner Serie abweicht; leer ohne Serie. */
-  abweichungen: z.array(z.enum(["datum", "zeit", "ort", "bemerkung"])),
+  abweichungen: z.array(z.enum(["datum", "zeit", "ort", "bemerkung", "verantwortliche"])),
   /** `null`: Der Termin trägt kein Training (#322 AK 20). */
   training: z.object({ id: z.string(), name: z.string(), stufen: z.array(Wert), url: z.string() }).nullable(),
 });

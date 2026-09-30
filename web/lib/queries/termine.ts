@@ -9,6 +9,7 @@ import { getTeamPlanFuer, getTerminZuTrainingFuer, type TerminZeile } from "@/li
  */
 
 export {
+  istVerantwortlich,
   kurzeZeit,
   nochNichtVorbereitet,
   teilePlan,
@@ -16,6 +17,7 @@ export {
   type Plan,
   type TerminSerie,
   type TerminZeile,
+  type Verantwortlicher,
 } from "@/lib/queries/termine-fuer";
 
 /** Der Trainingsplan eines Teams mit der Anmeldung aus den Cookies —

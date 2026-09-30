@@ -32,7 +32,7 @@ import {
   type Reichweite,
   type SerienRegel,
 } from "@/lib/serie";
-import type { SerienAenderung, SerienFolge } from "@/lib/kern/serien";
+import type { FolgeAngabe, SerienAenderung, SerienFolge } from "@/lib/kern/serien";
 import { istVeraltet } from "@/lib/veraltet";
 import { datumKurz } from "@/lib/zeit";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
@@ -71,10 +71,11 @@ type SerienArt = "aendern" | "entfernen";
 
 const JEDE_REICHWEITE: readonly Reichweite[] = ["nur_dieser", "dieser_und_folgende", "alle"];
 
-const FOLGT_WIEDER: Record<"zeit" | "ort" | "bemerkung", string> = {
+const FOLGT_WIEDER: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit folgt wieder der Serie.",
   ort: "Der Ort folgt wieder der Serie.",
   bemerkung: "Die Bemerkung folgt wieder der Serie.",
+  verantwortliche: "Die Verantwortlichen folgen wieder der Serie.",
 };
 
 /** Die offene Frage nach der Reichweite (#326 AK 1–4, 7). Beim Ändern stehen

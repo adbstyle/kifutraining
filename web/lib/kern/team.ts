@@ -54,13 +54,14 @@ export type TeamPlan = {
  *  dieselbe wie im Team-Bereich (`teilePlan` am Tag des Trainingsorts). */
 export async function teamPlan(
   supabase: SupabaseClient,
-  _userId: string,
-  e: { teamId: string; heute?: string },
+  userId: string,
+  e: { teamId: string; heute?: string; nurMeine?: boolean },
 ): Promise<KernErgebnis<TeamPlan>> {
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
   const heute = e.heute ?? heuteAmTrainingsort();
-  const termine = await ohneWurf("teamPlan", () => getTeamPlanFuer(supabase, e.teamId, heute));
+  const nurMeine = e.nurMeine ? userId : undefined;
+  const termine = await ohneWurf("teamPlan", () => getTeamPlanFuer(supabase, e.teamId, { heute, nurMeine }));
   if (!termine.ok) return termine;
   return ok({ team: team.wert, heute, ...teilePlan(termine.wert, heute) });
 }

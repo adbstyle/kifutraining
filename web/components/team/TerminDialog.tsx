@@ -17,11 +17,17 @@ import { datumKurz } from "@/lib/zeit";
 import type { Abweichung, TerminSerie } from "@/lib/queries/termine";
 import type { FolgeAngabe } from "@/lib/kern/serien";
 
-const ANGABE: Record<FolgeAngabe, string> = { zeit: "Die Zeit", ort: "Der Ort", bemerkung: "Die Bemerkung" };
+const ANGABE: Record<FolgeAngabe, string> = {
+  zeit: "Die Zeit",
+  ort: "Der Ort",
+  bemerkung: "Die Bemerkung",
+  verantwortliche: "Die Verantwortlichen",
+};
 const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   zeit: "Zeit wieder der Serie folgen lassen",
   ort: "Ort wieder der Serie folgen lassen",
   bemerkung: "Bemerkung wieder der Serie folgen lassen",
+  verantwortliche: "Verantwortliche wieder der Serie folgen lassen",
 };
 
 /* Einen einzelnen Termin festlegen oder ändern (Team-Kalender #322).
