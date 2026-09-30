@@ -60,7 +60,7 @@ export function istUhrzeit(hhmm: string): boolean {
 export function zeitProblem(
   beginnRoh: string | null | undefined,
   endeRoh: string | null | undefined,
-): TerminProblem | null {
+): { feld: "beginn" | "ende"; text: string } | null {
   const beginn = leerZuNull(beginnRoh);
   const ende = leerZuNull(endeRoh);
   if (!beginn) return { feld: "beginn", text: TERMIN_TEXT.zeitPflicht };
@@ -75,7 +75,7 @@ export function zeitProblem(
 export function textProblem(f: {
   ort?: string | null;
   bemerkung?: string | null;
-}): TerminProblem | null {
+}): { feld: "ort" | "bemerkung"; text: string } | null {
   if ((leerZuNull(f.ort) ?? "").length > ORT_MAX) return { feld: "ort", text: TERMIN_TEXT.ortLang };
   if ((leerZuNull(f.bemerkung) ?? "").length > BEMERKUNG_MAX)
     return { feld: "bemerkung", text: TERMIN_TEXT.bemerkungLang };
@@ -161,28 +161,15 @@ export const TERMIN_MELDUNG = {
 export type TerminMarker = keyof typeof TERMIN_MELDUNG;
 
 /** Marker, die «seit der Auswahl geändert» heissen (PO 17) — der Fachkern
- *  ordnet sie als `konflikt` ein, nicht als Regel. Teil B ergänzt die der
- *  Serien. */
+ *  ordnet sie als `konflikt` ein, nicht als Regel. Die Sätze der Serien-Marker
+ *  stehen in `SERIE_MELDUNG` (lib/serie.ts); `istVeraltet` (lib/veraltet.ts)
+ *  löst beide Tabellen auf. */
 export const KONFLIKT_MARKER: readonly string[] = [
   "TERMIN_BELEGUNG_GEAENDERT",
   "TRAINING_EINPLANUNG_GEAENDERT",
+  "SERIE_GEAENDERT",
+  "SERIE_BELEGUNG_GEAENDERT",
 ];
-
-/** Sagt die Meldung «seit deiner Auswahl hat sich etwas geändert» (PO 17) oder
- *  «gibt es nicht mehr»? Dann trägt die Auswahl veraltete Angaben, und ein
- *  erneuter Versuch scheiterte immer wieder — die Oberfläche schliesst den
- *  Dialog und meldet per Snackbar. Gebaut aus `KONFLIKT_MARKER` (spätere
- *  Serien-Marker kommen automatisch dazu) und den beiden «nicht gefunden»-
- *  Sätzen. Eine Meldung kann einen Zusatz tragen (Kopie geblieben), darum
- *  Präfix-Vergleich. */
-export function istVeraltet(meldung: string | undefined): boolean {
-  if (!meldung) return false;
-  const saetze: Record<string, string> = TERMIN_MELDUNG;
-  return [...KONFLIKT_MARKER, "TERMIN_NICHT_GEFUNDEN", "TRAINING_NICHT_GEFUNDEN"].some((m) => {
-    const satz = saetze[m];
-    return !!satz && meldung.startsWith(satz);
-  });
-}
 
 /** Ein Zusatz zu jeder Meldung, deren Kopie nicht aufgeräumt werden konnte
  *  (Story 2 PC 9, Story 7 PC 8) — in der Oberfläche und beim Assistenten. */

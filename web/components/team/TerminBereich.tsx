@@ -14,7 +14,8 @@ import {
   ordneTrainingZuAktion,
   type TerminFelder,
 } from "@/lib/actions/termine";
-import { geaenderteFelder, istVeraltet, ZUORDNEN_ERFOLG } from "@/lib/termin";
+import { geaenderteFelder, ZUORDNEN_ERFOLG } from "@/lib/termin";
+import { istVeraltet } from "@/lib/veraltet";
 import { datumKurz } from "@/lib/zeit";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";

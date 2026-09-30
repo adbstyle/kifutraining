@@ -10,6 +10,7 @@ import { JUNIOREN_PFLICHT_BLOECKE } from "@/lib/junioren";
 import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
 import { TERMIN_MELDUNG } from "@/lib/termin";
+import { SERIE_MELDUNG } from "@/lib/serie";
 import { sichtbareZuordnungen } from "@/lib/varianten";
 
 /** Marker, mit dem die Datenebene eine verletzte Bedingung meldet. */
@@ -327,10 +328,11 @@ export const VARIANTENFOLGE_MELDUNG = {
     "Lies das Training neu und sende die vollständige Folge.",
 } as const;
 
-/** Die Marker, mit denen die Datenebene im Kalender abweist (#322, #323) —
- *  ihre Sätze stehen in lib/termin.ts, damit Fachkern und Datenebene
- *  denselben Wortlaut tragen. */
-const TERMIN_MARKER: [string, string][] = Object.entries(TERMIN_MELDUNG);
+/** Die Marker, mit denen die Datenebene im Kalender abweist (#322, #323,
+ *  #324, #326) — ihre Sätze stehen in lib/termin.ts und lib/serie.ts, damit
+ *  Fachkern und Datenebene denselben Wortlaut tragen. Kein Marker steckt in
+ *  einem anderen (Test in `check:kern`), die Reihenfolge ist daher gleichgültig. */
+const TERMIN_MARKER: [string, string][] = [...Object.entries(TERMIN_MELDUNG), ...Object.entries(SERIE_MELDUNG)];
 
 /** Die Meldung zu einem Marker aus Übungsfolge, Variantenfolge oder Termin,
  *  sonst `null`. */

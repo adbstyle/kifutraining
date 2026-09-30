@@ -77,12 +77,26 @@ import {
   TERMIN_TEXT,
   ZUORDNEN_ERFOLG,
   geaenderteFelder,
-  istVeraltet,
   kopieGebliebenText,
   leerZuNull,
   terminProblem,
   zeitText,
 } from "../lib/termin";
+import {
+  SERIE_MELDUNG,
+  SERIE_TEXT,
+  alsKiWochentag,
+  alsWochentag,
+  maxEnddatum,
+  serieProblem,
+  serienTage,
+  tausch,
+  vergangeneBestaetigen,
+  wochentagVon,
+  wochentageText,
+  type Wochentag,
+} from "../lib/serie";
+import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
 
@@ -579,7 +593,7 @@ pruefe("Termin-Anzeige und -Marker: derselbe Satz vorab und aus der Datenbank", 
 
 pruefe("istVeraltet: trifft «seit der Auswahl geändert» und «gibt es nicht mehr», sonst nichts (PO 17)", () => {
   // Jeder Konflikt-Marker — auch ein später ergänzter — und beide Nicht-gefunden-Sätze.
-  const saetze: Record<string, string> = TERMIN_MELDUNG;
+  const saetze: Record<string, string> = { ...TERMIN_MELDUNG, ...SERIE_MELDUNG };
   for (const m of KONFLIKT_MARKER) assert.ok(istVeraltet(saetze[m]), m);
   assert.ok(istVeraltet(TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN));
   assert.ok(istVeraltet(TERMIN_MELDUNG.TRAINING_NICHT_GEFUNDEN));
@@ -589,9 +603,59 @@ pruefe("istVeraltet: trifft «seit der Auswahl geändert» und «gibt es nicht m
   assert.ok(!istVeraltet(TERMIN_MELDUNG.TRAINING_SCHON_EINGEPLANT));
   assert.ok(!istVeraltet(TERMIN_MELDUNG.NUR_KOPIE_BEI_VERGANGENEM));
   assert.ok(!istVeraltet(TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM));
+  // Serien-Konflikte: Sätze aus SERIE_MELDUNG, Marker aus KONFLIKT_MARKER (#326).
+  assert.ok(KONFLIKT_MARKER.includes("SERIE_GEAENDERT") && KONFLIKT_MARKER.includes("SERIE_BELEGUNG_GEAENDERT"));
+  assert.ok(istVeraltet(SERIE_MELDUNG.SERIE_GEAENDERT));
+  assert.ok(istVeraltet(SERIE_MELDUNG.SERIE_BELEGUNG_GEAENDERT));
+  assert.ok(!istVeraltet(SERIE_MELDUNG.REICHWEITE_FEHLT));
+  assert.ok(!istVeraltet(SERIE_MELDUNG.KEINE_AENDERUNG));
   assert.ok(!istVeraltet(undefined));
   assert.ok(!istVeraltet(""));
   assert.ok(!istVeraltet(TERMIN_TEXT.datum));
+});
+
+// ── Terminserien (#324 AK 2–6, #326 AK 5; Review Focus 2, 3) ─────────────────
+pruefe("Serie: Enddatum höchstens am gleichen Kalendertag des Folgejahres, 29.2. → 28.2.", () => {
+  assert.equal(maxEnddatum("2026-10-07"), "2027-10-07");
+  assert.equal(maxEnddatum("2028-02-29"), "2029-02-28");
+  assert.equal(maxEnddatum("2027-02-28"), "2028-02-28");
+  const gut = { wochentage: [2, 4] as Wochentag[], von: "2026-10-01", bis: "2027-03-31", beginn: "18:00", ende: "19:30" };
+  assert.equal(serieProblem(gut), null);
+  assert.equal(serieProblem({ ...gut, von: "2028-02-29", bis: "2029-02-28" }), null);
+  assert.deepEqual(serieProblem({ ...gut, von: "2028-02-29", bis: "2029-03-01" }), { feld: "bis", text: SERIE_TEXT.zuLang });
+  assert.deepEqual(serieProblem({ ...gut, bis: "2026-09-30" }), { feld: "bis", text: SERIE_TEXT.endeVorBeginn });
+  assert.deepEqual(serieProblem({ ...gut, wochentage: [] }), { feld: "wochentage", text: SERIE_TEXT.wochentage });
+  // AK 6: kein gewählter Wochentag im Zeitraum.
+  assert.deepEqual(serieProblem({ ...gut, wochentage: [6], von: "2026-10-05", bis: "2026-10-09" }), { feld: "wochentage", text: SERIE_TEXT.ohneTag });
+  assert.deepEqual(serieProblem({ ...gut, ende: "17:00" }), { feld: "ende", text: TERMIN_TEXT.endeNachBeginn });
+  assert.deepEqual(serieProblem({ ...gut, von: "2026-02-30" }), { feld: "von", text: TERMIN_TEXT.datum });
+});
+
+pruefe("Serie: Tage, Wochentage, Tausch", () => {
+  assert.deepEqual(serienTage([2, 4], "2026-10-01", "2026-10-08"), ["2026-10-01", "2026-10-06", "2026-10-08"]);
+  assert.equal(wochentagVon("2026-10-04"), 7, "Sonntag");
+  assert.equal(wochentagVon("2026-10-05"), 1, "Montag");
+  // Zeitumstellung am 25.10.2026 verschiebt keinen Tag.
+  assert.deepEqual(serienTage([7], "2026-10-24", "2026-11-01"), ["2026-10-25", "2026-11-01"]);
+  assert.deepEqual(tausch([2, 4], [3, 4]), { von: 2, nach: 3 });
+  assert.equal(tausch([2, 4], [4]), null, "weggenommen");
+  assert.equal(tausch([2], [3, 5]), null, "zwei dazu");
+  assert.equal(wochentageText([2, 4]), "Di, Do");
+  assert.equal(alsWochentag("so"), 7);
+  assert.equal(alsKiWochentag(1), "mo");
+});
+
+pruefe("Serien-Marker: vorab und aus der Datenbank derselbe Satz", () => {
+  for (const [marker, satz] of Object.entries(SERIE_MELDUNG))
+    assert.equal(still(() => ausDbFehler({ message: marker })).meldung, satz, marker);
+  assert.match(vergangeneBestaetigen(3), /3 vergangene Termine.*«bestaetigt: true»/);
+});
+
+pruefe("Serien-Marker: kein Marker steckt in einem anderen (includes-Suche bleibt eindeutig)", () => {
+  const alle = [...Object.keys(TERMIN_MELDUNG), ...Object.keys(SERIE_MELDUNG)];
+  assert.equal(new Set(alle).size, alle.length, "Marker doppelt vergeben");
+  for (const a of alle)
+    for (const b of alle) if (a !== b) assert.ok(!b.includes(a), `${a} steckt in ${b}`);
 });
 
 pruefe("geaenderteFelder: nur Geändertes, Beginn und Ende als Paar, nichts geändert = null (PO 17)", () => {

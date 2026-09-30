@@ -7,9 +7,9 @@ import {
   kopieGebliebenText,
   leerZuNull,
   terminProblem,
-  type TerminMarker,
   type TerminProblem,
 } from "@/lib/termin";
+import { kalenderMeldung } from "@/lib/veraltet";
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugriff";
@@ -70,16 +70,17 @@ export function kalenderFehler(e: { message: string; code?: string }, wiederholb
     return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   if (e.message.includes("TRAINING_NICHT_GEFUNDEN"))
     return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.training, { feld: "training_id" });
+  if (e.message.includes("TEAM_NICHT_GEFUNDEN"))
+    return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.team, { feld: "team_id" });
   const konflikt = KONFLIKT_MARKER.find((m) => e.message.includes(m));
   if (konflikt)
     return fehlschlag("konflikt", meldungZu(konflikt), wiederholbar ? { wiederholbar: true } : {});
   return ausDbFehler(e);
 }
 
-/** Der Satz zu einem Konflikt-Marker. Teil B ergänzt die Serien-Marker in
- *  `KONFLIKT_MARKER`; ihre Sätze stehen dann ebenfalls in einer Meldungstabelle. */
+/** Der Satz zu einem Konflikt-Marker, aus den Tabellen der Termine und Serien. */
 function meldungZu(marker: string): string {
-  return TERMIN_MELDUNG[marker as TerminMarker] ?? marker;
+  return kalenderMeldung(marker) ?? marker;
 }
 
 /** Einen Termin lesen, soweit die RLS ihn zeigt (nur Mitglieder des Teams).

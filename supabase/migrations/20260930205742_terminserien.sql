@@ -136,7 +136,7 @@ begin
   if auth.uid() is null then raise exception 'not authenticated'; end if;
   if not ist_team_mitglied(p_team) then raise exception 'TEAM_NICHT_GEFUNDEN'; end if;
   if not wochentage_gueltig(p_wochentage) then raise exception 'SERIE_WOCHENTAGE'; end if;
-  if p_von is null or p_bis is null then raise exception 'SERIE_ZEITRAUM_FEHLT'; end if;
+  if p_von is null or p_bis is null then raise exception 'SERIE_OHNE_ZEITRAUM'; end if;
   if p_bis < p_von then raise exception 'SERIE_ENDE_VOR_BEGINN'; end if;
   if p_bis > (p_von + interval '1 year')::date then raise exception 'SERIE_ZU_LANG'; end if;
   if p_beginn is null or p_ende is null or p_ende <= p_beginn then raise exception 'SERIE_ZEIT'; end if;

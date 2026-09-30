@@ -56,10 +56,11 @@ const { legeVarianteAn, benenneVariante, entferneVariante, setzeVariantenfolge }
 const { loescheTraining, loescheTrainingMitBildern } = await import("../lib/kern/loeschen");
 const { kopiereTrainingNach, HINWEIS_NICHTS_ENTSTANDEN } = await import("../lib/kern/kopie");
 const { ladeTrainingDetail } = await import("../lib/queries/trainings-fuer");
-const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTraining } = await import(
+const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTraining, kalenderFehler } = await import(
   "../lib/kern/termine"
 );
 const { TERMIN_MELDUNG, TERMIN_TEXT } = await import("../lib/termin");
+const { SERIE_MELDUNG, SERIE_TEXT } = await import("../lib/serie");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
 const { AendernEingabe: TerminAendernEingabe } = await import("../lib/mcp/werkzeuge/team");
 const {
@@ -1129,6 +1130,24 @@ try {
     const kb = wert(await kopiereTrainingNach(a.supabase, a.id, { quelleId: tq })).id;
     wert(await loescheTraining(b.supabase, b.id, { trainingId: tq }));
     assert.ok(await ladeTrainingDetail(a.supabase, kb), "die Übernahme von A besteht weiter");
+  });
+
+  // ── Kalender: Fehler der RPCs einordnen (#324, #326) — ohne Datenbankzugriff,
+  //    liegt hier, weil kalenderFehler server-only ist (check:kern lädt es nicht).
+  await pruefe("Kalender: Serien-Konflikte, Team nicht gefunden, Serien-Regeln", async () => {
+    const konflikt = kalenderFehler({ message: "SERIE_BELEGUNG_GEAENDERT" }, true);
+    assert.equal(konflikt.art, "konflikt");
+    assert.equal(konflikt.meldung, SERIE_MELDUNG.SERIE_BELEGUNG_GEAENDERT);
+    assert.equal(konflikt.wiederholbar, true);
+    assert.equal(kalenderFehler({ message: "SERIE_GEAENDERT" }).meldung, SERIE_MELDUNG.SERIE_GEAENDERT);
+    const team = kalenderFehler({ message: "TEAM_NICHT_GEFUNDEN" });
+    assert.equal(team.art, "nicht_gefunden");
+    assert.equal(team.feld, "team_id");
+    assert.equal(team.meldung, "Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist.");
+    const regel = kalenderFehler({ message: "SERIE_ZU_LANG" });
+    assert.equal(regel.art, "regel");
+    assert.equal(regel.meldung, SERIE_TEXT.zuLang);
+    assert.equal(kalenderFehler({ message: "SERIE_OHNE_ZEITRAUM" }).meldung, "Bitte Beginn- und Enddatum angeben.");
   });
 
   // ── Kalender: Termin ohne Training (#322) ───────────────────────────────
