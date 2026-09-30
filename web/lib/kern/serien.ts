@@ -246,6 +246,8 @@ export async function entferneSerie(
 }
 
 export type FolgeAngabe = "zeit" | "ort" | "bemerkung";
+/** Auch das Datum lässt sich nennen — die Datenebene weist es ab (PO 3). */
+export type FolgeWunsch = FolgeAngabe | "datum";
 
 const FOLGE_ANGABEN: readonly string[] = ["zeit", "ort", "bemerkung"];
 
@@ -255,10 +257,10 @@ const FOLGE_ANGABEN: readonly string[] = ["zeit", "ort", "bemerkung"];
 export async function folgeDerSerie(
   supabase: SupabaseClient,
   _userId: string,
-  e: { terminId: string; angaben: FolgeAngabe[] },
+  e: { terminId: string; angaben: FolgeWunsch[] },
 ): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
-  if (e.angaben.length === 0 || e.angaben.some((x) => !FOLGE_ANGABEN.includes(x) && (x as string) !== "datum"))
+  if (e.angaben.length === 0 || e.angaben.some((x) => x !== "datum" && !FOLGE_ANGABEN.includes(x)))
     return fehlschlag("eingabe", SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG, {
       feld: "angaben",
       zulaessig: FOLGE_ANGABEN,

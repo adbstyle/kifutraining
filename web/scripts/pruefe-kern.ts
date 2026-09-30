@@ -99,7 +99,6 @@ import {
   regelProblemVorab,
   serieProblem,
   serienTage,
-  tausch,
   vergangeneBestaetigen,
   wochentagVon,
   wochentageText,
@@ -685,15 +684,12 @@ pruefe("Serie: Rand der Jahre (9999) endet, kein fünfstelliges Jahr", () => {
   assert.deepEqual(serienTage([1], "2026-10-05", "2026-10-05"), ["2026-10-05"], "ein Tag");
 });
 
-pruefe("Serie: Tage, Wochentage, Tausch", () => {
+pruefe("Serie: Tage, Wochentage", () => {
   assert.deepEqual(serienTage([2, 4], "2026-10-01", "2026-10-08"), ["2026-10-01", "2026-10-06", "2026-10-08"]);
   assert.equal(wochentagVon("2026-10-04"), 7, "Sonntag");
   assert.equal(wochentagVon("2026-10-05"), 1, "Montag");
   // Zeitumstellung am 25.10.2026 verschiebt keinen Tag.
   assert.deepEqual(serienTage([7], "2026-10-24", "2026-11-01"), ["2026-10-25", "2026-11-01"]);
-  assert.deepEqual(tausch([2, 4], [3, 4]), { von: 2, nach: 3 });
-  assert.equal(tausch([2, 4], [4]), null, "weggenommen");
-  assert.equal(tausch([2], [3, 5]), null, "zwei dazu");
   assert.equal(wochentageText([2, 4]), "Di, Do");
   assert.equal(alsWochentag("so"), 7);
   assert.equal(alsKiWochentag(1), "mo");

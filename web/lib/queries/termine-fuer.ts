@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import type { Wochentag } from "@/lib/serie";
 import { sortStufen } from "@/lib/training";
+import { heuteAmTrainingsort } from "@/lib/zeit";
 import type { KategorieSlug } from "@/lib/vocab";
 
 /**
@@ -136,31 +137,58 @@ function mapTermin(t: RawTermin): TerminZeile {
   };
 }
 
+/** Obergrenze je Abschnitt: PostgREST kappt jede Antwort bei `max_rows` (1000,
+ *  supabase/config.toml). Eine einzige aufsteigende Abfrage schnitte bei vielen
+ *  Terminen die NEUESTEN ab — die anstehenden verschwänden still. Darum zwei
+ *  Abfragen, je ab der Grenze «heute» nach aussen; das Limit trifft so nur die
+ *  fernste Zukunft bzw. die älteste Vergangenheit. */
+const PLAN_OBERGRENZE = 1000;
+
 /** Der Trainingsplan eines Teams: alle Termine chronologisch aufsteigend.
  *
- *  Ein Select mit Embed statt zwei Abfragen — der Plan soll auch bei hundert
- *  Terminen in einem Rutsch stehen. Sortiert wird in der DB nach Datum und
- *  Beginn (ohne Beginn zuletzt am selben Tag); `created_at` ist der stabile
- *  Tiebreaker, damit zwei gleich eingeplante Termine nicht bei jedem Laden die
- *  Plätze tauschen. */
+ *  Zwei Abfragen statt einer (siehe `PLAN_OBERGRENZE`): anstehend (Datum ab
+ *  `heute`, aufsteigend) und vergangen (Datum vor `heute`, absteigend, die
+ *  jüngsten zuerst); die Vergangenheit wird danach umgedreht und vorangestellt.
+ *  Das Embed holt Training und Serie im selben Rutsch. Sortiert wird in der DB
+ *  nach Datum und Beginn (ohne Beginn zuletzt am selben Tag); `created_at` ist
+ *  der stabile Tiebreaker, damit zwei gleich eingeplante Termine nicht bei
+ *  jedem Laden die Plätze tauschen. `teilePlan` ordnet die Vergangenheit
+ *  anschliessend selbst. */
 export async function getTeamPlanFuer(
   supabase: SupabaseClient,
   teamId: string,
+  heute: string = heuteAmTrainingsort(),
 ): Promise<TerminZeile[]> {
   // Ungültige UUID würde die Query mit Fehler abbrechen; defensiv abfangen.
   // Der Guard im Layout greift hier nicht — Layout und Page rendern parallel;
   // die leere Liste verhindert den 500 vor dem Redirect.
   if (!istUuid(teamId)) return [];
-  const { data, error } = await supabase
-    .from("training_termine")
-    .select(TERMIN_SELECT)
-    .eq("team_id", teamId)
-    .order("datum", { ascending: true })
-    .order("beginn", { ascending: true, nullsFirst: false })
-    .order("created_at", { ascending: true });
-  if (error) throw error;
+  const basis = () => supabase.from("training_termine").select(TERMIN_SELECT).eq("team_id", teamId);
+  const [anstehend, vergangen] = await Promise.all([
+    basis()
+      .gte("datum", heute)
+      .order("datum", { ascending: true })
+      .order("beginn", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: true })
+      .limit(PLAN_OBERGRENZE),
+    basis()
+      .lt("datum", heute)
+      .order("datum", { ascending: false })
+      .order("beginn", { ascending: false, nullsFirst: true })
+      .order("created_at", { ascending: false })
+      .limit(PLAN_OBERGRENZE),
+  ]);
+  if (anstehend.error) throw anstehend.error;
+  if (vergangen.error) throw vergangen.error;
 
-  return ((data ?? []) as unknown as RawTermin[]).map(mapTermin);
+  const kommend = (anstehend.data ?? []) as unknown as RawTermin[];
+  const davor = (vergangen.data ?? []) as unknown as RawTermin[];
+  if (kommend.length >= PLAN_OBERGRENZE || davor.length >= PLAN_OBERGRENZE) {
+    console.warn(`getTeamPlanFuer: Obergrenze von ${PLAN_OBERGRENZE} Terminen erreicht (Team ${teamId}).`);
+  }
+  // Die Vergangenheit kam absteigend; umgedreht ergibt sie wieder die
+  // aufsteigende Reihenfolge inkl. Beginn-ohne-Zeit-zuletzt und created_at.
+  return [...davor.reverse(), ...kommend].map(mapTermin);
 }
 
 /** «Noch nicht vorbereitet» (Epic PO 7): anstehend und ohne Training. Teil D

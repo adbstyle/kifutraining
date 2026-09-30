@@ -75,13 +75,6 @@ export function wochentageText(w: readonly Wochentag[]): string {
   return [...w].sort().map((x) => WOCHENTAG_KURZ[x]).join(", ");
 }
 
-/** Genau ein Wochentag weg und genau einer dazu: ein Tausch (#326 PC 8). */
-export function tausch(alt: readonly Wochentag[], neu: readonly Wochentag[]): { von: Wochentag; nach: Wochentag } | null {
-  const weg = alt.filter((w) => !neu.includes(w));
-  const dazu = neu.filter((w) => !alt.includes(w));
-  return weg.length === 1 && dazu.length === 1 ? { von: weg[0], nach: dazu[0] } : null;
-}
-
 export const SERIE_TEXT = {
   wochentage: "Bitte mindestens einen Wochentag wählen.",
   endeVorBeginn: "Das Enddatum darf nicht vor dem Beginndatum liegen.",

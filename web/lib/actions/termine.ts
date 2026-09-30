@@ -126,7 +126,7 @@ export async function legeSerieFestAktion(
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await legeSerieFest(a.supabase, a.userId, { teamId, ...f });
+  const r = await legeSerieFest(a.supabase, a.userId, { ...f, teamId });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(teamId);
   return { ok: true };

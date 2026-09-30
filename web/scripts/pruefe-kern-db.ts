@@ -65,6 +65,7 @@ const { kalendertagAmTrainingsort } = await import("../lib/zeit");
 const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitReichweite, entferneMitReichweite } =
   await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
+const { getTeamPlanFuer } = await import("../lib/queries/termine-fuer");
 const { AendernEingabe: TerminAendernEingabe } = await import("../lib/mcp/werkzeuge/team");
 const {
   legeUebungAn,
@@ -1414,6 +1415,21 @@ try {
     assert.equal(plan.vergangen[0].training?.id, vergangenes);
     const amTag = wert(await teamPlan(a.supabase, a.id, { teamId: team.id, heute: tag(-1) }));
     assert.deepEqual(amTag.kommend.map((t) => t.id), [t0.terminId, t1.terminId]);
+
+    // Die Abfrage läuft in zwei Hälften (anstehend aufsteigend, vergangen
+    // absteigend; max_rows kappt sonst die neuesten): die zusammengeführte
+    // Liste bleibt aufsteigend, die Teilung unverändert. Drei vergangene
+    // (am selben Tag eines ohne Beginn zuletzt), zwei anstehende.
+    const v3 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(-3), beginn: "17:00", ende: "18:00" }));
+    const v2a = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(-2), beginn: "09:00", ende: "10:00" }));
+    const v2b = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(-2), beginn: "16:00", ende: "17:00" }));
+    const k0 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(0), beginn: "08:00", ende: "09:00" }));
+    const reihe = (ts: { terminId: string }[]) => ts.map((t) => t.terminId);
+    const aufsteigend = (await getTeamPlanFuer(a.supabase, team.id, tag(0))).map((t) => t.id);
+    assert.deepEqual(aufsteigend, reihe([v3, v2a, v2b, t0, k0, t1]), "aufsteigend über beide Hälften");
+    const geteilt = wert(await teamPlan(a.supabase, a.id, { teamId: team.id, heute: tag(0) }));
+    assert.deepEqual(geteilt.kommend.map((t) => t.id), reihe([k0, t1]));
+    assert.deepEqual(geteilt.vergangen.map((t) => t.id), reihe([t0, v2b, v2a, v3]), "jüngste zuerst");
 
     // Suche im Team-Bestand samt Termin.
     const suche = wert(await trainingsSuchen(a.supabase, a.id, { bestand: "team", teamId: team.id, limit: 10 }));

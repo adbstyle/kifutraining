@@ -319,12 +319,15 @@ export const terminEntfernen = werkzeug({
   name: "termin_entfernen",
   titel: "Termin entfernen",
   beschreibung:
-    "Entfernt einen Termin sofort und ohne Rückfrage. Sein Training bleibt im Bestand des Teams " +
+    "Entfernt einen Termin. Sein Training bleibt im Bestand des Teams " +
     "— «training_id» nennt es — und lässt sich mit «training_zuordnen» einem anderen Termin " +
     "zuordnen. Ein ganzes Team-Training löscht «training_loeschen»; sein Termin bleibt dann ohne " +
     "Training bestehen. Für einen Termin einer Serie ist «reichweite» Pflicht; bei " +
     "«dieser_und_folgende» oder «alle» nennt das Ergebnis die entfallenen Termine mit Training — " +
-    "ihre Trainings bleiben im Bestand des Teams. " +
+    "ihre Trainings bleiben im Bestand des Teams. Erfasst «dieser_und_folgende» oder «alle» " +
+    "auch vergangene Termine, wird die Serie nur mit «bestaetigt: true» entfernt; ohne diese " +
+    "Bestätigung nennt das Ergebnis, was entfiele. Ein einzelner Termin oder «nur_dieser» wird " +
+    "sofort entfernt. " +
     `${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ termin_id: TerminId, reichweite: Reichweite.optional(), bestaetigt: Bestaetigt }),
@@ -387,9 +390,9 @@ export const terminDerSerieFolgen = werkzeug({
   beschreibung:
     "Lässt abweichende Angaben eines Serientermins wieder seiner Serie folgen: Zeit, Ort oder " +
     "Bemerkung übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
-    `lässt sich nicht zurücksetzen. ${TERMIN_KENNUNG_FEHLER}`,
+    `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
-  eingabe: z.object({ termin_id: TerminId, angaben: z.array(z.enum(["zeit", "ort", "bemerkung"])).min(1) }),
+  eingabe: z.object({ termin_id: TerminId, angaben: z.array(z.enum(["zeit", "ort", "bemerkung", "datum"])).min(1) }),
   ausgabe: z.object({ termin_id: z.string() }),
   ausfuehren: async (e, zugang) =>
     abgebildet(await folgeDerSerie(zugang.supabase, zugang.userId, { terminId: e.termin_id, angaben: e.angaben }), (w) => ({

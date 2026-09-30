@@ -15,8 +15,8 @@ import {
 } from "@/lib/serie";
 import { datumKurz } from "@/lib/zeit";
 import type { Abweichung, TerminSerie } from "@/lib/queries/termine";
+import type { FolgeAngabe } from "@/lib/kern/serien";
 
-type FolgeAngabe = "zeit" | "ort" | "bemerkung";
 const ANGABE: Record<FolgeAngabe, string> = { zeit: "Die Zeit", ort: "Der Ort", bemerkung: "Die Bemerkung" };
 const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   zeit: "Zeit wieder der Serie folgen lassen",

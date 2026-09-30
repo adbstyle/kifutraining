@@ -59,8 +59,8 @@ export async function teamPlan(
 ): Promise<KernErgebnis<TeamPlan>> {
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
-  const termine = await ohneWurf("teamPlan", () => getTeamPlanFuer(supabase, e.teamId));
-  if (!termine.ok) return termine;
   const heute = e.heute ?? heuteAmTrainingsort();
+  const termine = await ohneWurf("teamPlan", () => getTeamPlanFuer(supabase, e.teamId, heute));
+  if (!termine.ok) return termine;
   return ok({ team: team.wert, heute, ...teilePlan(termine.wert, heute) });
 }

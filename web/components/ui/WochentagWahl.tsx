@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { FilterChip } from "./Chip";
 import { WOCHENTAGE, WOCHENTAG_KURZ, WOCHENTAG_LANG, type Wochentag } from "@/lib/serie";
 
@@ -7,7 +8,8 @@ import { WOCHENTAGE, WOCHENTAG_KURZ, WOCHENTAG_LANG, type Wochentag } from "@/li
    sichtbar nebeneinander statt in einem Menü (die MultiSelect öffnet ein
    Panel), Montag zuerst wie im Schweizer Kalender. Die Chips sind
    Ein/Aus-Schalter (`aria-pressed`); das Kürzel steht sichtbar, der volle
-   Name für Screenreader. */
+   Name für Screenreader; eine Fehlermeldung hängt per `aria-describedby`
+   am Fieldset. */
 export function WochentagWahl({
   wert,
   onChange,
@@ -17,8 +19,9 @@ export function WochentagWahl({
   onChange: (w: Wochentag[]) => void;
   error?: string;
 }) {
+  const fehlerId = useId();
   return (
-    <fieldset>
+    <fieldset aria-describedby={error ? fehlerId : undefined}>
       <legend className="mb-2 type-body-small text-on-surface-mittel">Wochentage</legend>
       <div className="flex flex-wrap gap-2">
         {WOCHENTAGE.map((w) => (
@@ -32,7 +35,7 @@ export function WochentagWahl({
           </FilterChip>
         ))}
       </div>
-      {error && <p role="alert" className="mt-1 type-body-small text-error">{error}</p>}
+      {error && <p id={fehlerId} role="alert" className="mt-1 type-body-small text-error">{error}</p>}
     </fieldset>
   );
 }
