@@ -56,7 +56,7 @@ const { legeVarianteAn, benenneVariante, entferneVariante, setzeVariantenfolge }
 const { loescheTraining, loescheTrainingMitBildern } = await import("../lib/kern/loeschen");
 const { kopiereTrainingNach, HINWEIS_NICHTS_ENTSTANDEN } = await import("../lib/kern/kopie");
 const { ladeTrainingDetail } = await import("../lib/queries/trainings-fuer");
-const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTraining, kalenderFehler } = await import(
+const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTraining, kalenderFehler, lasseAusfallen, nimmAusfallZurueck } = await import(
   "../lib/kern/termine"
 );
 const { TERMIN_MELDUNG, TERMIN_TEXT } = await import("../lib/termin");
@@ -2005,6 +2005,45 @@ try {
     // Ohne `anonyme` (KI-Standard) läuft dieselbe Änderung.
     wert(await setzeVerantwortliche(a.supabase, a.id, { terminId: t[2].id, userIds: [a.id], reichweite: "alle", bestaetigt: true }));
     assert.deepEqual(await serienLeute(serieId), [a.id]);
+  });
+
+  // ── Kalender: Ausfall (#327) ─────────────────────────────────────────────
+  await pruefe("Ausfall: markieren löst das Training, Grund, zurücknehmen, verlegen, Konflikt (#327)", async () => {
+    const team = await serienTeam("Kern-DB-Ausfall");
+    const tr = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Ausfall", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
+    const t = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", bemerkung: "Leibchen" }));
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: tr.id }));
+    // AK 11: Wer den Termin ohne Training sah, wird abgewiesen.
+    fehler(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, erwartetesTraining: null }), "konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
+    // Zu langer Grund: vorab abgewiesen, der Termin bleibt unverändert.
+    fehler(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "x".repeat(501) }), "eingabe", TERMIN_TEXT.grundLang);
+    // Kein Ausfall zum Zurücknehmen.
+    fehler(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }), "regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN);
+    const r = wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Platz gesperrt", erwartetesTraining: tr.id }));
+    assert.equal(r.geloestesTraining, tr.id, "PC 1");
+    const zeile = async () => (await admin.from("training_termine").select("ausgefallen, ausfall_grund, training_id, bemerkung").eq("id", t.terminId).single()).data!;
+    assert.deepEqual(await zeile(), { ausgefallen: true, ausfall_grund: "Platz gesperrt", training_id: null, bemerkung: "Leibchen" });
+    // AK 9: kein Training auf einen ausgefallenen Termin.
+    fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: tr.id }), "regel", TERMIN_MELDUNG.TERMIN_AUSGEFALLEN);
+    // Auch die Datenebene weist ab (RPC direkt).
+    const { error: rpcFehler } = await a.supabase.rpc("termin_training_setzen", { p_termin: t.terminId, p_training: tr.id });
+    assert.match(rpcFehler!.message, /TERMIN_AUSGEFALLEN/);
+    // AK 3: Grund ändern und leeren, ohne den Ausfall zurückzunehmen.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: null }));
+    assert.equal((await zeile()).ausfall_grund, null);
+    // PC 3: zurücknehmen → normal, ohne Training, ohne Grund.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Nochmal" }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }));
+    assert.deepEqual(await zeile(), { ausgefallen: false, ausfall_grund: null, training_id: null, bemerkung: "Leibchen" });
+    // PC 4/5: Einzeln auf heute oder später verlegt endet der Ausfall, auf gestern nicht.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen" }));
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, datum: tagCh(-1) }));
+    assert.equal((await zeile()).ausgefallen, true);
+    // Ein anderes Feld beendet den Ausfall nicht.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, ort: "Halle" }));
+    assert.equal((await zeile()).ausgefallen, true);
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, datum: tagCh(4) }));
+    assert.deepEqual(await zeile(), { ausgefallen: false, ausfall_grund: null, training_id: null, bemerkung: "Leibchen" });
   });
 
   // ── Übung anlegen (#143) ─────────────────────────────────────────────────

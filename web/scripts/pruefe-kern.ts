@@ -79,6 +79,7 @@ import { verteilungAus } from "../lib/gruppen";
 import {
   TERMIN_MELDUNG,
   KONFLIKT_MARKER,
+  ausfallProblem,
   TERMIN_TEXT,
   ZUORDNEN_ERFOLG,
   geaenderteFelder,
@@ -509,10 +510,24 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
 });
 
 pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
-  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [] };
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: false, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [] } }, "2026-10-01"), false);
+});
+
+pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst Ausfälle aus (#327)", () => {
+  assert.equal(ausfallProblem(null), null);
+  assert.equal(ausfallProblem("Platz gesperrt"), null);
+  assert.equal(ausfallProblem("x".repeat(500)), null);
+  assert.deepEqual(ausfallProblem("x".repeat(501)), { feld: "grund", text: TERMIN_TEXT.grundLang });
+  assert.equal(TERMIN_TEXT.grundLang, "Der Grund darf höchstens 500 Zeichen lang sein.");
+  assert.equal(TERMIN_MELDUNG.NICHT_AUSGEFALLEN, "Dieser Termin ist nicht ausgefallen.");
+  assert.ok(!KONFLIKT_MARKER.includes("TERMIN_AUSGEFALLEN"), "eine Regel, kein Konflikt");
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null,
+    training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: true, ausfallGrund: null };
+  assert.equal(nochNichtVorbereitet(t, "2026-10-01"), false, "AK 8");
+  assert.equal(nochNichtVorbereitet({ ...t, ausgefallen: false }, "2026-10-01"), true);
 });
 
 pruefe("Auskunft-Vertrag: das strenge Schema weist ein undeklariertes Feld ab", () => {
@@ -537,6 +552,8 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     serienTag: null,
     abweichungen: [],
     verantwortliche: [],
+    ausgefallen: false,
+    ausfallGrund: null,
   };
   const heute = trainingAuskunft(team, { userId: ICH, termin, heute: "2026-09-23" });
   assert.deepEqual(heute.termin, {
