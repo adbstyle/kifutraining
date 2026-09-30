@@ -139,6 +139,8 @@ begin
   if p_von is null or p_bis is null then raise exception 'SERIE_OHNE_ZEITRAUM'; end if;
   if p_bis < p_von then raise exception 'SERIE_ENDE_VOR_BEGINN'; end if;
   if p_bis > (p_von + interval '1 year')::date then raise exception 'SERIE_ZU_LANG'; end if;
+  -- Reihenfolge wie `serieProblem` (lib/serie.ts): Wochentage im Zeitraum vor der Zeit.
+  if not exists (select 1 from serien_tage(p_wochentage, p_von, p_bis)) then raise exception 'SERIE_OHNE_TAG'; end if;
   if p_beginn is null or p_ende is null or p_ende <= p_beginn then raise exception 'SERIE_ZEIT'; end if;
 
   insert into termin_serien (team_id, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung)
@@ -154,8 +156,8 @@ begin
   select p_team, v_serie.id, d, d, v_serie.beginn, v_serie.ende, v_serie.ort, v_serie.bemerkung
     from serien_tage(v_serie.wochentage, v_serie.beginn_datum, v_serie.end_datum) d;
   get diagnostics v_anzahl = row_count;
-  -- AK 6: Kein gewählter Wochentag im Zeitraum — dann entsteht gar nichts
-  -- (die Ausnahme rollt auch die Serie zurück, PC 2).
+  -- AK 6: Kein gewählter Wochentag im Zeitraum — vorab geprüft; diese Prüfung
+  -- bleibt als Rückhalt (die Ausnahme rollt auch die Serie zurück, PC 2).
   if v_anzahl = 0 then raise exception 'SERIE_OHNE_TAG'; end if;
   return jsonb_build_object('serie', v_serie.id, 'termine', v_anzahl);
 end;

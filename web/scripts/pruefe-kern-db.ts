@@ -1147,7 +1147,7 @@ try {
     const regel = kalenderFehler({ message: "SERIE_ZU_LANG" });
     assert.equal(regel.art, "regel");
     assert.equal(regel.meldung, SERIE_TEXT.zuLang);
-    assert.equal(kalenderFehler({ message: "SERIE_OHNE_ZEITRAUM" }).meldung, "Bitte Beginn- und Enddatum angeben.");
+    assert.equal(kalenderFehler({ message: "SERIE_OHNE_ZEITRAUM" }).meldung, "Bitte ein Datum angeben.");
   });
 
   // ── Kalender: Termin ohne Training (#322) ───────────────────────────────

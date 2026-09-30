@@ -38,9 +38,13 @@ const alsIso = (d: Date) => `${String(d.getUTCFullYear()).padStart(4, "0")}-${zw
 
 /** Der letzte zulässige Tag einer Serie: der gleiche Kalendertag im
  *  Folgejahr, nach einem 29. Februar der 28. Februar (#324 AK 5) —
- *  Zwilling von `(beginn_datum + interval '1 year')::date`. */
+ *  Zwilling von `(beginn_datum + interval '1 year')::date`. Am Rand der
+ *  vierstelligen Jahre (ab 9999) gibt es kein Folgejahr: Dann gilt
+ *  «9999-12-31», damit nie ein fünfstelliges Jahr entsteht (Postgres kennt
+ *  es nicht, und `serienTage` käme mit ihm nicht zurecht). */
 export function maxEnddatum(von: string): string {
   const [j, m, t] = von.split("-").map(Number);
+  if (j >= 9999) return "9999-12-31";
   const letzter = new Date(Date.UTC(j + 1, m, 0)).getUTCDate();
   return `${String(j + 1).padStart(4, "0")}-${zwei(m)}-${zwei(Math.min(t, letzter))}`;
 }
@@ -52,10 +56,17 @@ export function plusTage(iso: string, n: number): string {
   return alsIso(d);
 }
 
-/** Die Tage einer Regel, aufsteigend (Zwilling von `serien_tage`). */
+/** Die Tage einer Regel, aufsteigend (Zwilling von `serien_tage`). Die
+ *  Schleife läuft über die Zahl der Tage zwischen `von` und `bis`, nicht über
+ *  das Datum selbst: Am Jahr 9999 schlüge ein «Tag plus eins» in einen
+ *  ungültigen Wert um und die Schleife endete nie. Erwartet gültige Tage. */
 export function serienTage(wochentage: readonly Wochentag[], von: string, bis: string): string[] {
   const tage: string[] = [];
-  for (let d = von; d <= bis; d = plusTage(d, 1)) if (wochentage.includes(wochentagVon(d))) tage.push(d);
+  const n = Math.round((new Date(`${bis}T00:00:00Z`).getTime() - new Date(`${von}T00:00:00Z`).getTime()) / 86_400_000);
+  for (let i = 0; i <= n; i++) {
+    const d = plusTage(von, i);
+    if (wochentage.includes(wochentagVon(d))) tage.push(d);
+  }
   return tage;
 }
 
@@ -120,7 +131,7 @@ export const SERIE_MELDUNG = {
   SERIE_ZU_LANG: SERIE_TEXT.zuLang,
   SERIE_OHNE_TAG: SERIE_TEXT.ohneTag,
   SERIE_ZEIT: "Bitte Beginn und Ende angeben; das Ende liegt am selben Tag nach dem Beginn.",
-  SERIE_OHNE_ZEITRAUM: "Bitte Beginn- und Enddatum angeben.",
+  SERIE_OHNE_ZEITRAUM: TERMIN_TEXT.datum,
   TERMIN_OHNE_SERIE: "Dieser Termin gehört zu keiner Terminserie.",
   REICHWEITE_UNGUELTIG: "Wähle «nur dieser», «dieser und folgende» oder «alle».",
   REICHWEITE_FEHLT:

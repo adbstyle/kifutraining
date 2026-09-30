@@ -58,7 +58,12 @@ import {
   type UebungPatch,
   type UebungsZeile,
 } from "../lib/kern/uebung-inhalt";
-import { fachlicheMeldung, fehlerMeldung } from "../lib/training-bedingungen";
+import {
+  UEBUNGSFOLGE_MELDUNG,
+  VARIANTENFOLGE_MELDUNG,
+  fachlicheMeldung,
+  fehlerMeldung,
+} from "../lib/training-bedingungen";
 import {
   FREMDE_UEBUNG,
   FREMDES_TRAINING,
@@ -631,6 +636,18 @@ pruefe("Serie: Enddatum höchstens am gleichen Kalendertag des Folgejahres, 29.2
   assert.deepEqual(serieProblem({ ...gut, von: "2026-02-30" }), { feld: "von", text: TERMIN_TEXT.datum });
 });
 
+pruefe("Serie: Rand der Jahre (9999) endet, kein fünfstelliges Jahr", () => {
+  // Früher lief plusTage("9999-12-31", 1) in «0NaN-…» und die Schleife endete nie.
+  const freitage = serienTage([5], "9998-12-31", "9999-12-31");
+  assert.equal(freitage.length, 53);
+  assert.equal(freitage[0], "9999-01-01", "9999-01-01 ist ein Freitag");
+  assert.equal(freitage.at(-1), "9999-12-31", "auch 9999-12-31");
+  assert.equal(maxEnddatum("9999-06-01"), "9999-12-31");
+  assert.equal(maxEnddatum("9998-12-31"), "9999-12-31");
+  assert.equal(serieProblem({ wochentage: [5], von: "9998-12-31", bis: "9999-12-31", beginn: "18:00", ende: "19:00" }), null);
+  assert.deepEqual(serienTage([1], "2026-10-05", "2026-10-05"), ["2026-10-05"], "ein Tag");
+});
+
 pruefe("Serie: Tage, Wochentage, Tausch", () => {
   assert.deepEqual(serienTage([2, 4], "2026-10-01", "2026-10-08"), ["2026-10-01", "2026-10-06", "2026-10-08"]);
   assert.equal(wochentagVon("2026-10-04"), 7, "Sonntag");
@@ -648,11 +665,19 @@ pruefe("Serie: Tage, Wochentage, Tausch", () => {
 pruefe("Serien-Marker: vorab und aus der Datenbank derselbe Satz", () => {
   for (const [marker, satz] of Object.entries(SERIE_MELDUNG))
     assert.equal(still(() => ausDbFehler({ message: marker })).meldung, satz, marker);
+  assert.equal(SERIE_MELDUNG.SERIE_OHNE_ZEITRAUM, TERMIN_TEXT.datum, "vorab und aus der Datenbank wortgleich");
+  assert.deepEqual(serieProblem({ wochentage: [2], von: "", bis: "2026-10-31" }), { feld: "von", text: SERIE_MELDUNG.SERIE_OHNE_ZEITRAUM });
   assert.match(vergangeneBestaetigen(3), /3 vergangene Termine.*«bestaetigt: true»/);
 });
 
 pruefe("Serien-Marker: kein Marker steckt in einem anderen (includes-Suche bleibt eindeutig)", () => {
-  const alle = [...Object.keys(TERMIN_MELDUNG), ...Object.keys(SERIE_MELDUNG)];
+  // Alle Tabellen, die `weitereMeldung` (training-bedingungen) per includes durchsucht.
+  const alle = [
+    ...Object.keys(UEBUNGSFOLGE_MELDUNG),
+    ...Object.keys(VARIANTENFOLGE_MELDUNG),
+    ...Object.keys(TERMIN_MELDUNG),
+    ...Object.keys(SERIE_MELDUNG),
+  ];
   assert.equal(new Set(alle).size, alle.length, "Marker doppelt vergeben");
   for (const a of alle)
     for (const b of alle) if (a !== b) assert.ok(!b.includes(a), `${a} steckt in ${b}`);
@@ -1501,7 +1526,7 @@ function quelldateien(wurzel: string): string[] {
 
 pruefe("Kein «ansetzen» mehr in Oberfläche und KI-Texten (#323 PC 11)", () => {
   const treffer: string[] = [];
-  for (const wurzel of ["app", "components", "lib/mcp", "lib/kern", "lib/actions", "lib/termin.ts"].map((p) => join(web, p)))
+  for (const wurzel of ["app", "components", "lib/mcp", "lib/kern", "lib/actions", "lib/termin.ts", "lib/serie.ts", "lib/veraltet.ts"].map((p) => join(web, p)))
     for (const datei of existsSync(wurzel) && statSync(wurzel).isDirectory() ? quelldateien(wurzel) : existsSync(wurzel) ? [wurzel] : [])
       readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
         // Kommentare sieht niemand; geprüft wird, was Oberfläche und KI sagen.
