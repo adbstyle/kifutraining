@@ -253,6 +253,11 @@ export function trainingAuskunft(
           ort: k.termin.ort,
           bemerkung: k.termin.bemerkung,
           serie_id: k.termin.serie?.id ?? null,
+          verantwortliche: k.termin.verantwortliche.map((v) => ({
+            id: v.userId,
+            anzeigename: v.name,
+            ehemalig: v.ehemalig,
+          })),
           // Dieselbe Grenze wie der Plan (`teilePlan`): der heutige Tag zählt
           // ganz zum Anstehenden.
           anstehend: k.termin.datum >= (k.heute ?? heuteAmTrainingsort()),

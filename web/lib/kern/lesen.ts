@@ -96,6 +96,8 @@ export type TrefferTermin = {
   bemerkung: string | null;
   /** Die Terminserie des Termins; `null` bei einem einzelnen (#324). */
   serieId: string | null;
+  /** Wer den Termin vorbereitet und leitet (#325 AK 16). */
+  verantwortliche: { userId: string | null; name: string | null; ehemalig: boolean }[];
   /** Heute oder später, am Trainingsort — wie der Plan teilt. */
   anstehend: boolean;
 };

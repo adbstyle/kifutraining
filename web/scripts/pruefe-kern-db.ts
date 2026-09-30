@@ -1442,6 +1442,7 @@ try {
       ort: "Allmend",
       bemerkung: "Leibchen",
       serieId: null,
+      verantwortliche: [],
       anstehend: true,
     });
     assert.equal(suche.treffer.find((t) => t.id === vergangenes)!.termin?.anstehend, false);
@@ -1460,9 +1461,22 @@ try {
       ort: "Allmend",
       bemerkung: "Leibchen",
       serie_id: null,
+      verantwortliche: [],
       anstehend: true,
     });
     assert.equal(wert(await trainingAbrufen(a.supabase, a.id, { trainingId: persoenlich })).termin, null);
+
+    // Die Verantwortlichen des Termins stehen in Suchtreffer und Auskunft (#325 AK 16).
+    const { setzeVerantwortliche: setzeLeute } = await import("../lib/kern/verantwortliche");
+    wert(await setzeLeute(a.supabase, a.id, { terminId: t1.terminId, userIds: [a.id] }));
+    const name = (await admin.rpc("anzeige_name", { p_user: a.id })).data as string;
+    const erwartetLeute = [{ userId: a.id, name, ehemalig: false }];
+    const mitLeuten = wert(await trainingsSuchen(a.supabase, a.id, { bestand: "team", teamId: team.id, limit: 10 }));
+    assert.deepEqual(mitLeuten.treffer.find((t) => t.id === tt)!.termin!.verantwortliche, erwartetLeute);
+    assert.deepEqual(
+      wert(await trainingAbrufen(a.supabase, a.id, { trainingId: tt })).termin!.verantwortliche,
+      [{ id: a.id, anzeigename: name, ehemalig: false }],
+    );
 
     // Fremdes Team und unbekanntes Team.
     fehler(await teamPlan(b.supabase, b.id, { teamId: team.id }), "nicht_gefunden", TEAM_FREMD);

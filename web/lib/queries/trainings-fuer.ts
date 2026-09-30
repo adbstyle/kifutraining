@@ -509,10 +509,15 @@ export type TeamTrainingRow = TrainingListRow & {
     bemerkung: string | null;
     /** Die Terminserie, zu der der Termin gehört; `null` bei einem einzelnen. */
     serieId: string | null;
+    /** Wer den Termin vorbereitet und leitet (#325 AK 16); `userId` und `name`
+     *  sind bei einem gelöschten Konto `null`, `ehemalig` heisst: nicht mehr im Team. */
+    verantwortliche: { userId: string | null; name: string | null; ehemalig: boolean }[];
   } | null;
 };
 
-const TEAM_LIST_SELECT = `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, serie_id )`;
+const TEAM_LIST_SELECT =
+  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, serie_id, ` +
+  "termin_verantwortliche ( user_id, verantwortlich_name, verantwortlich_ehemalig ) )";
 
 export type TeamTrainingFilter = {
   /** Sucht im Namen, wie die Trainings-Übersicht (`search_text`). */
@@ -565,6 +570,11 @@ export async function getTeamTrainingsFuer(
       ort: string | null;
       bemerkung: string | null;
       serie_id: string | null;
+      termin_verantwortliche: {
+        user_id: string | null;
+        verantwortlich_name: string | null;
+        verantwortlich_ehemalig: boolean;
+      }[];
     };
     const r = raw as unknown as RawListTraining & {
       training_termine: RawTerminEingebettet | RawTerminEingebettet[] | null;
@@ -581,6 +591,18 @@ export async function getTeamTrainingsFuer(
             ort: termin.ort,
             bemerkung: termin.bemerkung,
             serieId: termin.serie_id,
+            // Wie im Plan nach Name geordnet, gelöschte Konten zuletzt.
+            verantwortliche: (termin.termin_verantwortliche ?? [])
+              .map((v) => ({
+                userId: v.user_id,
+                name: v.user_id === null ? null : v.verantwortlich_name,
+                ehemalig: v.verantwortlich_ehemalig,
+              }))
+              .sort((a, b) =>
+                a.name === null || b.name === null
+                  ? Number(a.name === null) - Number(b.name === null)
+                  : a.name.localeCompare(b.name, "de"),
+              ),
           }
         : null,
     };

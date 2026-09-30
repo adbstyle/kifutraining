@@ -3,11 +3,12 @@ import { z } from "zod";
 import { kategorieStufe } from "@/lib/labels";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import { meineTeams, teamPlan } from "@/lib/kern/team";
+import { setzeVerantwortliche, teamMitglieder } from "@/lib/kern/verantwortliche";
 import { aendereMitReichweite, entferneMitReichweite, folgeDerSerie, legeSerieFest } from "@/lib/kern/serien";
 import { legeTerminFest, loeseTraining, ordneTrainingZu } from "@/lib/kern/termine";
 import { KI_WOCHENTAG, alsKiWochentag, alsWochentag } from "@/lib/serie";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
-import { Wert, wert } from "@/lib/mcp/bausteine";
+import { Wert, kennung, wert } from "@/lib/mcp/bausteine";
 import {
   KENNUNG_FEHLER,
   TEAM_KENNUNG_FEHLER,
@@ -26,6 +27,9 @@ import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
  * im Team-Bereich. Team-Trainings anlegen, ins Team stellen und zu sich
  * übernehmen gehen über «training_anlegen» und «training_kopieren» mit
  * «team_id»; bearbeitet werden sie mit denselben Werkzeugen wie persönliche.
+ *
+ * Verantwortliche (#325) sind Mitglieder des Teams; ihre Kennungen nennt
+ * «team_mitglieder_abrufen» — ohne E-Mail-Adresse, nur mit Anzeigename.
  *
  * Datum und Uhrzeit sind hier nur Zeichenketten: Das Format — und ob es den
  * Tag gibt — prüft der Kern (`terminProblem`, lib/termin.ts) und benennt es
@@ -67,7 +71,7 @@ const SERIEN_MODELL =
   "Eine Terminserie läuft wöchentlich an einem oder mehreren Wochentagen zwischen Beginn- und " +
   "Enddatum (höchstens bis zum gleichen Kalendertag im Folgejahr) und legt ihre Termine als " +
   "einzelne Termine an. Ein Termin einer Serie kann je Angabe abweichen (Datum, Zeit, Ort, " +
-  "Bemerkung) und behält die Abweichung bei späteren Serienänderungen; das Datum gilt immer, wie " +
+  "Bemerkung, Verantwortliche) und behält die Abweichung bei späteren Serienänderungen; das Datum gilt immer, wie " +
   "es ist. Einzeln entfernte Termine legt keine Serienänderung wieder an.";
 
 // ── teams_abrufen ───────────────────────────────────────────────────────────
@@ -102,6 +106,12 @@ export const teamsAbrufen = werkzeug({
 
 // ── team_plan_abrufen ───────────────────────────────────────────────────────
 
+const Verantwortlich = z.object({
+  id: z.string().nullable().describe("Kennung des Mitglieds; null bei einem gelöschten Konto."),
+  anzeigename: z.string().nullable(),
+  ehemalig: z.boolean().describe("Nicht mehr im Team."),
+});
+
 const PlanEintrag = z.object({
   /** Kennung des Termins — für «termin_aendern», «termin_entfernen», «training_zuordnen» und «training_loesen». */
   id: z.string(),
@@ -114,6 +124,8 @@ const PlanEintrag = z.object({
   serie_id: z.string().nullable(),
   /** Die Angaben, in denen der Termin von seiner Serie abweicht; leer ohne Serie. */
   abweichungen: z.array(z.enum(["datum", "zeit", "ort", "bemerkung", "verantwortliche"])),
+  /** Wer den Termin vorbereitet und leitet (#325); leer ohne Eintrag. */
+  verantwortliche: z.array(Verantwortlich),
   /** `null`: Der Termin trägt kein Training (#322 AK 20). */
   training: z.object({ id: z.string(), name: z.string(), stufen: z.array(Wert), url: z.string() }).nullable(),
 });
@@ -128,6 +140,7 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     bemerkung: t.bemerkung,
     serie_id: t.serie?.id ?? null,
     abweichungen: t.abweichungen,
+    verantwortliche: t.verantwortliche.map((v) => ({ id: v.userId, anzeigename: v.name, ehemalig: v.ehemalig })),
     training: t.training
       ? {
           id: t.training.id,
@@ -148,6 +161,8 @@ const PlanSerie = z.object({
   ende: z.string(),
   ort: z.string().nullable(),
   bemerkung: z.string().nullable(),
+  /** Wer die Serie vorgibt (#325). */
+  verantwortliche: z.array(z.object({ id: z.string(), anzeigename: z.string() })),
 });
 
 /** Die Serien der Einträge, eindeutig je Kennung. */
@@ -164,6 +179,7 @@ function planSerien(termine: TerminZeile[]) {
         ende: t.serie.ende,
         ort: t.serie.ort,
         bemerkung: t.serie.bemerkung,
+        verantwortliche: t.serie.verantwortliche.map((v) => ({ id: v.userId, anzeigename: v.name })),
       });
   return [...nachId.values()];
 }
@@ -179,11 +195,15 @@ export const teamPlanAbrufen = werkzeug({
     "zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
     "Termin ohne Training ist noch nicht vorbereitet. Übernommene Termine können ohne Beginn oder " +
     "Ende sein. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
-    "Ort und Bemerkung jeder Serie, «abweichungen» die Angaben, in denen ein Termin von ihr " +
-    "abweicht. Team-Trainings ohne Termin nennt «trainings_suchen» (bestand: team). " +
+    "Ort, Bemerkung und Verantwortliche jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
+    "von ihr abweicht. Jeder Eintrag nennt seine Verantwortlichen; «nur_meine» grenzt auf deine ein. " +
+    "Team-Trainings ohne Termin nennt «trainings_suchen» (bestand: team). " +
     TEAM_KENNUNG_FEHLER,
   nurLesen: true,
-  eingabe: z.object({ team_id: TeamId }),
+  eingabe: z.object({
+    team_id: TeamId,
+    nur_meine: z.boolean().optional().describe("Nur Termine, für die du verantwortlich bist."),
+  }),
   ausgabe: z.object({
     team: z.object({ id: z.string(), name: z.string() }),
     heute: z.string(),
@@ -192,7 +212,7 @@ export const teamPlanAbrufen = werkzeug({
     vergangen: z.array(PlanEintrag),
   }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(await teamPlan(zugang.supabase, zugang.userId, { teamId: e.team_id }), (w) => ({
+    abgebildet(await teamPlan(zugang.supabase, zugang.userId, { teamId: e.team_id, nurMeine: e.nur_meine }), (w) => ({
       team: w.team,
       heute: w.heute,
       serien: planSerien([...w.kommend, ...w.vergangen]),
@@ -351,7 +371,7 @@ export const terminserieFestlegen = werkzeug({
   beschreibung:
     "Legt für eines deiner Teams eine wöchentliche Terminserie fest: je gewähltem Wochentag " +
     "zwischen «von» und «bis» (beide eingeschlossen) einen Termin ohne Training mit Beginn, Ende, " +
-    "Ort und Bemerkung der Serie — auch ganz oder teilweise in der Vergangenheit. Bestehende " +
+    "Ort, Bemerkung und Verantwortlichen der Serie — auch ganz oder teilweise in der Vergangenheit. Bestehende " +
     "Termine an denselben Tagen bleiben daneben stehen. " +
     `${SERIEN_MODELL} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
@@ -364,6 +384,10 @@ export const terminserieFestlegen = werkzeug({
     ende: UHRZEIT,
     ort: ORT.optional(),
     bemerkung: BEMERKUNG.optional(),
+    verantwortliche: z
+      .array(kennung("Kennung eines Mitglieds aus «team_mitglieder_abrufen»."))
+      .optional()
+      .describe("Mitglieder, die jeden Termin der Serie vorbereiten und leiten; ohne Angabe niemand."),
   }),
   ausgabe: z.object({ serie_id: z.string(), termine: z.number().int() }),
   ausfuehren: async (e, zugang) =>
@@ -377,6 +401,7 @@ export const terminserieFestlegen = werkzeug({
         ende: e.ende,
         ort: e.ort,
         bemerkung: e.bemerkung,
+        verantwortliche: e.verantwortliche,
       }),
       (w) => ({ serie_id: w.serieId, termine: w.termine }),
     ),
@@ -388,11 +413,14 @@ export const terminDerSerieFolgen = werkzeug({
   name: "termin_der_serie_folgen",
   titel: "Termin wieder der Serie folgen lassen",
   beschreibung:
-    "Lässt abweichende Angaben eines Serientermins wieder seiner Serie folgen: Zeit, Ort oder " +
-    "Bemerkung übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
+    "Lässt abweichende Angaben eines Serientermins wieder seiner Serie folgen: Zeit, Ort, " +
+    "Bemerkung oder Verantwortliche übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
     `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
-  eingabe: z.object({ termin_id: TerminId, angaben: z.array(z.enum(["zeit", "ort", "bemerkung", "datum"])).min(1) }),
+  eingabe: z.object({
+    termin_id: TerminId,
+    angaben: z.array(z.enum(["zeit", "ort", "bemerkung", "verantwortliche", "datum"])).min(1),
+  }),
   ausgabe: z.object({ termin_id: z.string() }),
   ausfuehren: async (e, zugang) =>
     abgebildet(await folgeDerSerie(zugang.supabase, zugang.userId, { terminId: e.termin_id, angaben: e.angaben }), (w) => ({
@@ -464,4 +492,55 @@ export const trainingLoesen = werkzeug({
     abgebildet(await loeseTraining(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
       training_id: w.trainingId,
     })),
+});
+
+// ── team_mitglieder_abrufen ─────────────────────────────────────────────────
+
+export const teamMitgliederAbrufen = werkzeug({
+  name: "team_mitglieder_abrufen",
+  titel: "Mitglieder eines Teams",
+  beschreibung:
+    "Nennt die Mitglieder eines deiner Teams mit Anzeigename und Kennung — ohne E-Mail-Adresse. " +
+    "«ich» markiert dich selbst. Die Kennungen brauchst du für «verantwortliche» in " +
+    `«termin_verantwortliche_setzen» und «terminserie_festlegen». ${TEAM_KENNUNG_FEHLER}`,
+  nurLesen: true,
+  eingabe: z.object({ team_id: TeamId }),
+  ausgabe: z.object({
+    mitglieder: z.array(z.object({ id: z.string(), anzeigename: z.string(), ich: z.boolean() })),
+  }),
+  ausfuehren: async (e, zugang) => teamMitglieder(zugang.supabase, zugang.userId, { teamId: e.team_id }),
+});
+
+// ── termin_verantwortliche_setzen ───────────────────────────────────────────
+
+export const terminVerantwortlicheSetzen = werkzeug({
+  name: "termin_verantwortliche_setzen",
+  titel: "Verantwortliche eines Termins setzen",
+  beschreibung:
+    "Setzt die Mitglieder, die einen Termin vorbereiten und leiten — ein oder mehrere, oder keine " +
+    "(leere Liste). Neu eintragen lassen sich nur aktuelle Mitglieder; Einträge ehemaliger " +
+    "Mitglieder an vergangenen Terminen bleiben, wenn du sie mitgibst. Einträge gelöschter Konten " +
+    "(ohne Kennung) bleiben, ausser «ohne_namen_behalten» ist false. Für einen Termin einer Serie " +
+    "ist «reichweite» Pflicht; «dieser_und_folgende» teilt die Serie, die neue Serie trägt die " +
+    `neuen Verantwortlichen. ${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({
+    termin_id: TerminId,
+    verantwortliche: z.array(kennung("Kennung eines Mitglieds aus «team_mitglieder_abrufen».")),
+    ohne_namen_behalten: z.boolean().optional(),
+    reichweite: Reichweite.optional(),
+    bestaetigt: Bestaetigt,
+  }),
+  ausgabe: z.object({ termin_id: z.string(), serie_id: z.string().nullable() }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(
+      await setzeVerantwortliche(zugang.supabase, zugang.userId, {
+        terminId: e.termin_id,
+        userIds: e.verantwortliche,
+        anonyme: e.ohne_namen_behalten === false ? [] : null,
+        reichweite: e.reichweite,
+        bestaetigt: e.bestaetigt,
+      }),
+      (w) => ({ termin_id: w.terminId, serie_id: w.serie?.serieId ?? null }),
+    ),
 });

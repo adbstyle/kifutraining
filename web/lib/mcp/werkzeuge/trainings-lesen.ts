@@ -61,7 +61,7 @@ export const trainingAbrufen = werkzeug({
     "Lesbar ist jedes Training, " +
     "das dein Konto in KiFu sieht; ändern lassen sich nur die mit «bearbeitbar». Ein " +
     "Team-Training trägt in «termin» den Termin, dem es zugeordnet ist (höchstens einen; " +
-    "«anstehend» sagt, ob er heute oder später ist), sonst null. Ob es " +
+    "«anstehend» sagt, ob er heute oder später ist; «verantwortliche» nennt, wer ihn vorbereitet und leitet), sonst null. Ob es " +
     "veröffentlicht werden kann und was dazu fehlt, zeigt «training_hinweise_abrufen». " +
     `${KENNUNG_FEHLER}`,
   nurLesen: true,
@@ -126,6 +126,13 @@ const SuchenTreffer = z.object({
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
       serie_id: z.string().nullable(),
+      verantwortliche: z.array(
+        z.object({
+          id: z.string().nullable().describe("Kennung des Mitglieds; null bei einem gelöschten Konto."),
+          anzeigename: z.string().nullable(),
+          ehemalig: z.boolean().describe("Nicht mehr im Team."),
+        }),
+      ),
       anstehend: z.boolean(),
     })
     .nullable()
@@ -143,7 +150,7 @@ export const trainingsSuchen = werkzeug({
     "Alterskategorie (ODER). «uebungszahl» und «dauer_min» beziehen sich wie die Kachel der " +
     "Übersicht auf die erste Variante; «varianten_zahl» sagt, wie viele es gibt. " +
     "Team-Trainings erscheinen nur mit «bestand: team»; dort trägt jeder Treffer seinen " +
-    "Termin («termin», null ohne) — «eigen» ist bei ihnen immer false, bearbeiten darf sie " +
+    "Termin samt Verantwortlichen («termin», null ohne) — «eigen» ist bei ihnen immer false, bearbeiten darf sie " +
     "jedes Mitglied. Das ganze Training liefert «training_abrufen», " +
     `übernehmen lässt es sich mit «training_kopieren». ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: true,
@@ -186,6 +193,11 @@ export const trainingsSuchen = werkzeug({
                   ort: t.termin.ort,
                   bemerkung: t.termin.bemerkung,
                   serie_id: t.termin.serieId,
+                  verantwortliche: t.termin.verantwortliche.map((v) => ({
+                    id: v.userId,
+                    anzeigename: v.name,
+                    ehemalig: v.ehemalig,
+                  })),
                   anstehend: t.termin.anstehend,
                 },
               }
