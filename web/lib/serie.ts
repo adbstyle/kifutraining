@@ -88,7 +88,36 @@ export const SERIE_TEXT = {
   zuLang:
     "Eine Terminserie dauert höchstens bis zum gleichen Kalendertag im Folgejahr (nach einem 29. Februar bis zum 28. Februar).",
   ohneTag: "Im gewählten Zeitraum liegt keiner der gewählten Wochentage.",
+  datumUndRegel: "Datum und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
 } as const;
+
+export type SerienRegel = { wochentage: Wochentag[]; von: string; bis: string };
+
+/** Was sich an Wochentagen und Zeitraum gegenüber der Serie geändert hat —
+ *  nur diese Teile, wie beim Termin (PO 17); `null`, wenn nichts. Die
+ *  Reihenfolge der Wochentage zählt nicht. */
+export function regelAenderung(
+  alt: { wochentage: readonly Wochentag[]; beginnDatum: string; endDatum: string },
+  neu: SerienRegel,
+): Partial<SerienRegel> | null {
+  const a: Partial<SerienRegel> = {};
+  if ([...neu.wochentage].sort().join() !== [...alt.wochentage].sort().join()) a.wochentage = [...neu.wochentage].sort() as Wochentag[];
+  if (neu.von !== alt.beginnDatum) a.von = neu.von;
+  if (neu.bis !== alt.endDatum) a.bis = neu.bis;
+  return Object.keys(a).length > 0 ? a : null;
+}
+
+/** Für welche Reichweiten eine Änderung an einem Serientermin gilt
+ *  (#326 AK 1–4): das Datum nur für diesen Termin, Wochentage und Zeitraum nur
+ *  für diesen und folgende oder für alle; Zeit, Ort und Bemerkung für jede.
+ *  `null`, wenn Datum und Regel zugleich geändert werden — das schliesst sich
+ *  aus (`SERIE_TEXT.datumUndRegel`). */
+export function erlaubteReichweiten(g: { datum: boolean; regel: boolean }): readonly Reichweite[] | null {
+  if (g.datum && g.regel) return null;
+  if (g.datum) return ["nur_dieser"];
+  if (g.regel) return ["dieser_und_folgende", "alle"];
+  return ["nur_dieser", "dieser_und_folgende", "alle"];
+}
 
 export type SerieFeld = "wochentage" | "von" | "bis" | "beginn" | "ende" | "ort" | "bemerkung";
 

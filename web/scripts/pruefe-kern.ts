@@ -92,7 +92,9 @@ import {
   SERIE_TEXT,
   alsKiWochentag,
   alsWochentag,
+  erlaubteReichweiten,
   maxEnddatum,
+  regelAenderung,
   serieProblem,
   serienTage,
   tausch,
@@ -638,6 +640,18 @@ pruefe("Serie: Enddatum höchstens am gleichen Kalendertag des Folgejahres, 29.2
   assert.deepEqual(serieProblem({ ...gut, wochentage: [6], von: "2026-10-05", bis: "2026-10-09" }), { feld: "wochentage", text: SERIE_TEXT.ohneTag });
   assert.deepEqual(serieProblem({ ...gut, ende: "17:00" }), { feld: "ende", text: TERMIN_TEXT.endeNachBeginn });
   assert.deepEqual(serieProblem({ ...gut, von: "2026-02-30" }), { feld: "von", text: TERMIN_TEXT.datum });
+});
+
+pruefe("Serie: Reichweiten je nach Änderung (#326 AK 1–4)", () => {
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
+  assert.deepEqual(erlaubteReichweiten({ datum: true, regel: false }), ["nur_dieser"]);
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: true }), ["dieser_und_folgende", "alle"]);
+  assert.equal(erlaubteReichweiten({ datum: true, regel: true }), null);
+  const alt = { wochentage: [4, 2] as Wochentag[], beginnDatum: "2026-10-01", endDatum: "2027-03-31" };
+  assert.equal(regelAenderung(alt, { wochentage: [2, 4], von: "2026-10-01", bis: "2027-03-31" }), null, "Reihenfolge zählt nicht");
+  assert.deepEqual(regelAenderung(alt, { wochentage: [2, 4], von: "2026-10-01", bis: "2027-06-30" }), { bis: "2027-06-30" }, "nur das Geänderte");
+  assert.deepEqual(regelAenderung(alt, { wochentage: [2, 5], von: "2026-09-01", bis: "2027-03-31" }), { wochentage: [2, 5], von: "2026-09-01" });
+  assert.equal(SERIE_TEXT.datumUndRegel, "Datum und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.");
 });
 
 pruefe("Serie: Rand der Jahre (9999) endet, kein fünfstelliges Jahr", () => {
