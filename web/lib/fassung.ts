@@ -3,7 +3,8 @@
 // die Server Actions bleiben dadurch dünn.
 import { brauchtFahrplan, type Altersstufe } from "@/lib/altersstufe";
 import { STORAGE_BUCKET, bildUrlToPath } from "@/lib/storage";
-import { kopiereDiagramm, parseDiagramm } from "@/lib/diagramm";
+import { bildQuelleZurZeichnung, kopiereDiagramm, parseDiagramm } from "@/lib/diagramm";
+import { ausDbFehler, type FehlerArt } from "@/lib/kern/ergebnis";
 import { userSlug } from "@/lib/slug";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -318,7 +319,8 @@ export type UebungsKopieQuelle = {
  *  keine Richtung. Die Altersstufe gibt der Aufrufer mit — sie stammt bei der
  *  Übung von ihr selbst, bei der Fassung von ihrem Training.
  *
- *  Scheitert der Insert, fällt die bereits erzeugte Bildkopie wieder weg. */
+ *  Scheitert der Insert, fällt die bereits erzeugte Bildkopie wieder weg. Die
+ *  Meldung ist übersetzt (`ausDbFehler`), nie der Rohtext der Datenbank. */
 export async function legeUebungsKopieAn(
   supabase: SupabaseClient,
   quelle: UebungsKopieQuelle,
@@ -328,11 +330,12 @@ export async function legeUebungsKopieAn(
     /** Abweichender Name der Kopie. Ohne ihn trägt sie den Namen der Quelle. */
     name?: string;
   },
-): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; slug: string; id: string } | { ok: false; error: string; art: FehlerArt }> {
   // ID vorab: sie benennt die Bildkopie, die vor dem Insert liegen muss.
   const uebungId = crypto.randomUUID();
   const bild = await kopiereBild(supabase, quelle.bild_url, userOrdner(ziel.ownerId), uebungId);
-  if (bild.error) return { ok: false, error: bild.error };
+  if (bild.error) return { ok: false, error: bild.error, art: "technisch" };
+  const diagramm = kopiereDiagrammVon(quelle.diagramm);
 
   const { data: angelegt, error } = await supabase
     .from("exercises")
@@ -349,7 +352,13 @@ export async function legeUebungsKopieAn(
       // mitgegebener ersetzt ihn (die Kopie der eigenen Übung, #171).
       ...(ziel.name ? { name: ziel.name } : {}),
       bild_url: bild.url,
-      diagramm: kopiereDiagrammVon(quelle.diagramm),
+      diagramm,
+      // Fällt das Diagramm beim Kopieren weg (leer oder unlesbar), zeigt die
+      // Kopie nicht «Diagramm» als Bild — dieselbe Regel wie beim Leeren der
+      // Zeichnung.
+      ...(diagramm
+        ? {}
+        : { bild_quelle: bildQuelleZurZeichnung(quelle.bild_quelle as "foto" | "diagramm" | null, null, false) }),
       source: "user",
       owner_id: ziel.ownerId,
       // Zunächst privat: veröffentlicht wird bewusst separat.
@@ -358,9 +367,10 @@ export async function legeUebungsKopieAn(
     .select("slug")
     .single();
 
-  if (error || !angelegt) {
+  if (error) {
     await entferneStorageObjekt(supabase, bild.pfad);
-    return { ok: false, error: error?.message ?? "Kopieren fehlgeschlagen." };
+    const f = ausDbFehler(error);
+    return { ok: false, error: f.meldung, art: f.art };
   }
-  return { ok: true, slug: angelegt.slug };
+  return { ok: true, slug: angelegt.slug, id: uebungId };
 }

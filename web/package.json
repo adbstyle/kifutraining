@@ -1,6 +1,6 @@
 {
   "name": "kifu-web",
-  "version": "1.17.1",
+  "version": "1.18.0",
   "license": "CC-BY-SA-4.0",
   "private": true,
   "type": "module",
@@ -21,6 +21,7 @@
     "db:push": "npx supabase db push --workdir ..",
     "seed": "tsx scripts/seed.ts",
     "check:diagramme": "tsx scripts/check-diagramme.ts",
+    "check:diagramm-regeln": "tsx scripts/pruefe-diagramm-regeln.ts",
     "check:gruppen": "tsx scripts/pruefe-gruppen.ts",
     "check:varianten": "tsx scripts/pruefe-varianten.ts",
     "check:farben": "tsx scripts/pruefe-farben.ts",

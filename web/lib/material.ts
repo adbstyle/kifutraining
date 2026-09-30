@@ -102,6 +102,11 @@ export type MaterialPosten = {
   menge: number;
 };
 
+/** Die Regel einer Menge: eine ganze Zahl von 1 bis `MATERIAL_MENGE_MAX`. */
+export function mengeGueltig(n: unknown): n is number {
+  return typeof n === "number" && Number.isInteger(n) && n >= 1 && n <= MATERIAL_MENGE_MAX;
+}
+
 export function istMaterialArt(v: unknown): v is MaterialArt {
   return typeof v === "string" && (MATERIAL_ARTEN as readonly string[]).includes(v);
 }
@@ -155,13 +160,13 @@ export function parseMaterialListe(json: unknown): MaterialPosten[] {
     if (!roh || typeof roh !== "object") continue;
     const r = roh as Record<string, unknown>;
     if (!istMaterialArt(r.art)) continue;
-    const menge = r.menge;
-    if (typeof menge !== "number" || !Number.isInteger(menge) || menge < 1) continue;
-    gueltig.push({
-      art: r.art,
-      farbe: wirksameFarbe(r.art, r.farbe),
-      menge: Math.min(MATERIAL_MENGE_MAX, menge),
-    });
+    // Eine zu grosse ganze Zahl wird gekappt statt verworfen; sonst gilt die Regel.
+    const menge =
+      typeof r.menge === "number" && Number.isInteger(r.menge)
+        ? Math.min(MATERIAL_MENGE_MAX, r.menge)
+        : r.menge;
+    if (!mengeGueltig(menge)) continue;
+    gueltig.push({ art: r.art, farbe: wirksameFarbe(r.art, r.farbe), menge });
   }
   return normalisiere(gueltig);
 }

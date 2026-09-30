@@ -60,6 +60,24 @@ const { setzeAn, aendereTermin, entferneTermin, setzeErneutAn, BEREITS_ANGESETZT
   "../lib/kern/termine"
 );
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
+const {
+  legeUebungAn,
+  aendereUebung,
+  veroeffentlicheUebung,
+  setzeUebungAufEntwurf,
+  kopiereUebungNach,
+  TRAGWEITE_UEBUNG_VEROEFFENTLICHEN,
+  UEBUNG_QUELLE_NICHT_VERFUEGBAR,
+} = await import("../lib/kern/uebungen");
+const { aktualisiereZeile, UEBUNG_ZEILE } = await import("../lib/kern/zugriff");
+const { FASSUNG_INHALT_FELDER } = await import("../lib/fassung");
+const { parseDiagramm } = await import("../lib/diagramm");
+const { setzeDiagramm, diagrammMaengel, DIAGRAMM_LEER, MATERIAL_MIT_DIAGRAMM } = await import(
+  "../lib/kern/uebung-diagramm"
+);
+const { pruefeDiagramm, diagrammAusFormular } = await import("../lib/diagramm-pruefung");
+const { materialVorschlag } = await import("../lib/material");
+const { getExercisesFuer } = await import("../lib/queries/uebungen-fuer");
 
 const URL_ = process.env.SUPABASE_URL!;
 const admin = createClient(URL_, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -152,6 +170,12 @@ async function aufraeumen() {
   }
   for (const id of konten) {
     try {
+      // Bildkopien im Ordner des Kontos (Übungskopien #317) — auch die, die
+      // ein gescheitertes Szenario hinterliess.
+      const ordner = `user/${id}`;
+      const { data: imOrdner } = await admin.storage.from("exercise-images").list(ordner, { limit: 1000 });
+      if (imOrdner?.length)
+        await admin.storage.from("exercise-images").remove(imOrdner.map((d) => `${ordner}/${d.name}`));
       const { data } = await admin.from("trainings").select("id").eq("owner_id", id);
       for (const t of data ?? []) {
         // Ein öffentliches Training verlöre sonst beim Löschen die Pflicht-Übungen.
@@ -1255,6 +1279,970 @@ try {
     assert.ok(await ladeTrainingDetail(a.supabase, tt.id), "das Training bleibt im Team-Bestand");
     // Danach lässt es sich wieder ansetzen.
     wert(await setzeAn(a.supabase, a.id, { trainingId: tt.id, datum: tag(7) }));
+  });
+
+  // ── Übung anlegen (#143) ─────────────────────────────────────────────────
+  const uebungenVon = async (id: string) =>
+    (await admin.from("exercises").select("id", { count: "exact", head: true }).eq("owner_id", id)).count ?? 0;
+  const NICHTS_ANGELEGT = "Es ist nichts angelegt worden.";
+
+  await pruefe("Übung anlegen: privater Entwurf des Aufrufers, nur für ihn sichtbar, unter seinen eigenen (PC 1–3)", async () => {
+    const u = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "kinderfussball",
+        name: "KI-Probe Anlegen",
+        einordnung: "einleitung",
+        kategorien: ["F"],
+        offenStarten: "Offen",
+        ueben: "Üben",
+        wetteifern: "Wett",
+      }),
+    );
+    assert.match(u.slug, /^ki-probe-anlegen-[0-9a-f]{6}$/);
+    assert.equal(u.sichtbarkeit, "entwurf");
+    const { data: zeile } = await admin
+      .from("exercises")
+      .select("owner_id, source, visibility, altersstufe")
+      .eq("id", u.id)
+      .single();
+    assert.deepEqual(zeile, { owner_id: a.id, source: "user", visibility: "private", altersstufe: "kinderfussball" });
+    const { data: fremd } = await b.supabase.from("exercises").select("id").eq("id", u.id).maybeSingle();
+    assert.equal(fremd, null, "ein anderes Konto sieht den Entwurf nicht");
+    const eigene = await getExercisesFuer(a.supabase, a.id, { mine: true }, { favoriten: false });
+    assert.ok(eigene.some((x) => x.id === u.id), "unter den eigenen Übungen");
+  });
+
+  await pruefe("Übung anlegen: jede Angabe des Formulars landet in der Zeile (AK 3)", async () => {
+    const u = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "kinderfussball",
+        name: "KI-Probe Voll",
+        einordnung: "hauptteil",
+        hauptteilkategorie: "fussball-spielen-lernen",
+        kategorien: ["G", "F"],
+        offenStarten: "Offen",
+        ueben: ["- links", "- rechts"],
+        wetteifern: "Wett",
+        varianten: "Mit zwei Bällen",
+        erscheinungsformen: ["mutig-tore-erzielen"],
+        feldtyp: "freies_feld",
+        spielfeld: { laengeM: 25, breiteM: 20 },
+        anzahlKinder: { min: 6, max: 10 },
+        material: {
+          liste: [
+            { art: "fussball", menge: 6 },
+            { art: "pylone", farbe: "rot", menge: 4 },
+          ],
+          ergaenzung: ["Pfeife"],
+        },
+      }),
+    );
+    const { data } = await admin
+      .from("exercises")
+      .select(
+        "name, trainingsteil, hauptteilkategorie, kategorien, methodischer_fahrplan, aufbau, varianten_text, " +
+          "erscheinungsform, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, anzahl_kinder, material_liste, " +
+          "material, uebungstyp, bild_url, diagramm, bild_quelle, material_basis",
+      )
+      .eq("id", u.id)
+      .single();
+    assert.deepEqual(data, {
+      name: "KI-Probe Voll",
+      trainingsteil: "hauptteil",
+      hauptteilkategorie: "fussball-spielen-lernen",
+      kategorien: ["G", "F"],
+      methodischer_fahrplan: { offen_starten: "Offen", ueben: ["- links", "- rechts"], wetteifern: "Wett" },
+      aufbau: null,
+      varianten_text: "Mit zwei Bällen",
+      erscheinungsform: ["mutig-tore-erzielen"],
+      feldtyp: "freies_feld",
+      spielfeld_laenge_m: 25,
+      spielfeld_breite_m: 20,
+      anzahl_kinder: { min: 6, max: 10 },
+      // In der Normalform: Katalogreihenfolge, Farbe bei färbbarem Material.
+      material_liste: [
+        { art: "pylone", farbe: "rot", menge: 4 },
+        { art: "fussball", farbe: null, menge: 6 },
+      ],
+      material: ["Pfeife"],
+      uebungstyp: null,
+      bild_url: null,
+      diagramm: null,
+      bild_quelle: null,
+      material_basis: null,
+    });
+  });
+
+  await pruefe("Übung anlegen: abgelehnt nennt jeden Verstoss einzeln und legt nichts an (AK 5/6, PC 4)", async () => {
+    const vorher = await uebungenVon(a.id);
+    const r = await legeUebungAn(a.supabase, a.id, {
+      altersstufe: "kinderfussball",
+      name: " ",
+      einordnung: "auffangen",
+      kategorien: ["F", "D"],
+      hauptteilkategorie: "fussball-spielen",
+      offenStarten: "x",
+      erscheinungsformen: ["mutig-tore-erzielen"],
+      uebungstyp: "spielform",
+      anzahlKinder: { min: 1.5 },
+    });
+    fehler(
+      r,
+      "regel",
+      "Die Übung entspricht den Regeln nicht. Korrigiere die unter «verstoesse» genannten Angaben und sende sie noch einmal.",
+    );
+    assert.ok(!r.ok);
+    assert.equal(r.hinweis, NICHTS_ANGELEGT);
+    assert.deepEqual(r.verstoesse?.map((v) => v.feld), [
+      "name",
+      "kategorien",
+      "aufbau",
+      "anzahl_kinder.min",
+      "hauptteilkategorie",
+      "offen_starten",
+      "erscheinungsformen",
+      "uebungstyp",
+    ]);
+    assert.deepEqual(r.verstoesse?.[1], {
+      feld: "kategorien",
+      meldung: "Diese Alterskategorie gehört nicht zur Altersstufe dieser Übung. Nicht zulässig: D.",
+      zulaessig: ["G", "F", "E"],
+    });
+    assert.deepEqual(r.verstoesse?.[4], {
+      feld: "hauptteilkategorie",
+      meldung: "Eine Hauptteilkategorie gibt es nur im Kinderfussball-Hauptteil.",
+    });
+    // Im Kinderfussball gibt es gar keinen Übungstyp — nicht der Junioren-Text.
+    assert.equal(r.verstoesse?.[7].meldung, "Den Übungstyp gibt es nur im Juniorenfussball — lass «uebungstyp» weg.");
+    assert.equal(await uebungenVon(a.id), vorher, "nichts angelegt");
+  });
+
+  await pruefe("Übung anlegen Juniorenfussball: jede Angabe landet in der Zeile (#147 AK 2, PC 1)", async () => {
+    const u = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "juniorenfussball",
+        name: "KI-Probe Junioren",
+        einordnung: "jun-spielformen",
+        kategorien: ["D", "C"],
+        aufbau: "Zwei gegen zwei auf Minitore",
+        varianten: "Mit Joker",
+        erscheinungsformen: ["offensive-zweikaempfe-bestreiten"],
+        uebungstyp: "spielform",
+        spielfeld: { laengeM: 25, breiteM: 20 },
+        anzahlKinder: { min: 8, max: 12 },
+        material: {
+          liste: [
+            { art: "leibchen", farbe: "blau", menge: 4 },
+            { art: "minitor", menge: 4 },
+          ],
+          ergaenzung: ["Pfeife"],
+        },
+      }),
+    );
+    const { data } = await admin
+      .from("exercises")
+      .select(
+        "altersstufe, trainingsteil, hauptteilkategorie, kategorien, methodischer_fahrplan, aufbau, " +
+          "varianten_text, erscheinungsform, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, anzahl_kinder, " +
+          "material_liste, material, uebungstyp, visibility, owner_id",
+      )
+      .eq("id", u.id)
+      .single();
+    assert.deepEqual(data, {
+      altersstufe: "juniorenfussball",
+      trainingsteil: "jun-spielformen",
+      hauptteilkategorie: null,
+      kategorien: ["D", "C"],
+      methodischer_fahrplan: null,
+      aufbau: "Zwei gegen zwei auf Minitore",
+      varianten_text: "Mit Joker",
+      erscheinungsform: ["offensive-zweikaempfe-bestreiten"],
+      feldtyp: null,
+      spielfeld_laenge_m: 25,
+      spielfeld_breite_m: 20,
+      anzahl_kinder: { min: 8, max: 12 },
+      material_liste: [
+        { art: "minitor", farbe: null, menge: 4 },
+        { art: "leibchen", farbe: "blau", menge: 4 },
+      ],
+      material: ["Pfeife"],
+      uebungstyp: "spielform",
+      visibility: "private",
+      owner_id: a.id,
+    });
+  });
+
+  await pruefe("Übung anlegen: Angaben der anderen Altersstufe werden genannt, fremde Einordnung ohne Folgefehler (#147 AK 4)", async () => {
+    const vorher = await uebungenVon(a.id);
+    const j = await legeUebungAn(a.supabase, a.id, {
+      altersstufe: "juniorenfussball",
+      name: "x",
+      einordnung: "jun-abschluss",
+      kategorien: ["D", "F"],
+      aufbau: "x",
+      hauptteilkategorie: "fussball-spielen",
+      offenStarten: "y",
+      feldtyp: "kleinfeld",
+      uebungstyp: "spielform",
+    });
+    fehler(j, "regel");
+    assert.ok(!j.ok);
+    assert.equal(j.hinweis, NICHTS_ANGELEGT);
+    assert.deepEqual(j.verstoesse?.map((v) => v.feld), ["kategorien", "hauptteilkategorie", "offen_starten", "feldtyp", "uebungstyp"]);
+    // Im Juniorenfussball nennt die Meldung die Blöcke, die einen Übungstyp tragen.
+    assert.ok(j.verstoesse?.[4].meldung.startsWith("Der Übungstyp ist eine Angabe des Manuals Fussball Jugendliche"));
+    const kinderEinordnung = await legeUebungAn(a.supabase, a.id, {
+      altersstufe: "juniorenfussball",
+      name: "x",
+      einordnung: "einleitung",
+      kategorien: ["D"],
+      offenStarten: "y",
+    });
+    assert.ok(!kinderEinordnung.ok);
+    assert.deepEqual(kinderEinordnung.verstoesse, [
+      {
+        feld: "einordnung",
+        meldung: '„einleitung" ist keine Einordnung der Altersstufe Juniorenfussball.',
+        zulaessig: [
+          "jun-auffangen",
+          "jun-aufwaermen",
+          "jun-spielform-trainingsziel",
+          "jun-explosivitaet",
+          "jun-spielformen",
+          "jun-spiel",
+          "jun-abschluss",
+        ],
+      },
+    ]);
+    const e = await legeUebungAn(a.supabase, a.id, {
+      altersstufe: "kinderfussball",
+      name: "x",
+      einordnung: "jun-spiel",
+      kategorien: ["F"],
+      aufbau: "x",
+      offenStarten: "y",
+    });
+    fehler(e, "regel");
+    assert.ok(!e.ok);
+    assert.deepEqual(e.verstoesse, [
+      {
+        feld: "einordnung",
+        meldung: '„jun-spiel" ist keine Einordnung der Altersstufe Kinderfussball.',
+        zulaessig: ["auffangen", "einleitung", "hauptteil", "ausklang"],
+      },
+    ]);
+    assert.equal(await uebungenVon(a.id), vorher, "nichts angelegt");
+  });
+
+  // ── Übung ändern und öffentlich schalten (#144) ──────────────────────────
+  const UNVERAENDERT = "Die Übung ist unverändert.";
+  const FREMDE_UEBUNG =
+    "Diese Übung stammt aus dem Kifu-Manual oder gehört jemand anderem. Du kannst sie ansehen und " +
+    "in deinen Bestand kopieren, aber nicht ändern.";
+  const NICHT_SICHTBAR = "Diese Übung gibt es nicht oder sie ist für dein Konto nicht sichtbar.";
+  const UEBUNG_SPALTEN =
+    "slug, name, trainingsteil, hauptteilkategorie, kategorien, methodischer_fahrplan, aufbau, " +
+    "varianten_text, erscheinungsform, feldtyp, spielfeld_laenge_m, spielfeld_breite_m, anzahl_kinder, " +
+    "material_liste, material, visibility, updated_at";
+  /** Die Zeile ohne den Zeitstempel, den jeder Update neu setzt. */
+  const ohneZeit = ({ updated_at: _z, ...rest }: Record<string, unknown>) => rest;
+  const uebungszeile = async (id: string) => {
+    const { data, error } = await admin.from("exercises").select(UEBUNG_SPALTEN).eq("id", id).single<Record<string, unknown>>();
+    if (error) throw error;
+    return data;
+  };
+  const probe = wert(
+    await legeUebungAn(a.supabase, a.id, {
+      altersstufe: "kinderfussball",
+      name: "KI-Probe Ändern",
+      einordnung: "einleitung",
+      kategorien: ["F"],
+      offenStarten: "Offen",
+      ueben: "Üben",
+      wetteifern: "Wett",
+      varianten: "Mit zwei Bällen",
+      erscheinungsformen: ["mutig-tore-erzielen"],
+      material: { liste: [{ art: "pylone", farbe: "rot", menge: 4 }], ergaenzung: ["Pfeife"] },
+    }),
+  );
+
+  await pruefe("Übung ändern: nur das Genannte, null leert, material je Teil, Slug bleibt (AK 1)", async () => {
+    const vorher = await uebungszeile(probe.id);
+    const r = wert(await aendereUebung(a.supabase, a.id, { kennung: probe.id, aenderung: { name: "KI-Probe Neu" } }));
+    assert.deepEqual(r, { id: probe.id, slug: probe.slug, sichtbarkeit: "entwurf" });
+    assert.deepEqual(
+      ohneZeit(await uebungszeile(probe.id)),
+      { ...ohneZeit(vorher), name: "KI-Probe Neu" },
+      "nur der Name ändert sich, auch nicht der Slug",
+    );
+
+    wert(await aendereUebung(a.supabase, a.id, { kennung: probe.slug, aenderung: { varianten: null, material: { ergaenzung: null } } }));
+    const danach = await uebungszeile(probe.id);
+    assert.equal(danach.varianten_text, null);
+    assert.deepEqual(danach.material, []);
+    assert.deepEqual(danach.material_liste, [{ art: "pylone", farbe: "rot", menge: 4 }], "die gezählte Liste bleibt");
+
+    // Leer oder nur die gleiche Altersstufe: nichts zu ändern bzw. nichts geändert.
+    fehler(await aendereUebung(a.supabase, a.id, { kennung: probe.id, aenderung: {} }), "eingabe", "Nenne mindestens eine Angabe, die sich ändern soll.");
+    wert(await aendereUebung(a.supabase, a.id, { kennung: probe.id, aenderung: {}, altersstufe: "kinderfussball" }));
+    assert.deepEqual(await uebungszeile(probe.id), danach, "kein Schreiben, auch updated_at bleibt");
+  });
+
+  await pruefe("Übung ändern: jsonb in anderer Schlüsselfolge gilt als gleich — geschrieben wird nur Geändertes", async () => {
+    // jsonb gibt Schlüssel in eigener Folge zurück ({max, min}, {ueben,
+    // wetteifern, offen_starten}); das darf nicht als Änderung zählen.
+    const zweite = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "kinderfussball",
+        name: "KI-Probe Zwei",
+        einordnung: "hauptteil",
+        hauptteilkategorie: "vielseitigkeit-erleben",
+        kategorien: ["E"],
+        offenStarten: "Offen",
+        ueben: ["- links", "- rechts"],
+        wetteifern: "Wett",
+        feldtyp: "freies_feld",
+        spielfeld: { laengeM: 30, breiteM: 20 },
+        anzahlKinder: { min: 6, max: 8 },
+        material: { liste: [{ art: "teller", menge: 8 }] },
+      }),
+    );
+    const vorher = await uebungszeile(zweite.id);
+    wert(await aendereUebung(a.supabase, a.id, { kennung: zweite.id, aenderung: {}, altersstufe: "kinderfussball" }));
+    assert.deepEqual(await uebungszeile(zweite.id), vorher, "nur die gleiche Altersstufe: nichts geschrieben, updated_at bleibt");
+    wert(await aendereUebung(a.supabase, a.id, { kennung: zweite.id, aenderung: { name: "KI-Probe Zwei neu" } }));
+    const danach = await uebungszeile(zweite.id);
+    assert.deepEqual(ohneZeit(danach), { ...ohneZeit(vorher), name: "KI-Probe Zwei neu" });
+    assert.notEqual(danach.updated_at, vorher.updated_at, "der Name wurde geschrieben");
+  });
+
+  await pruefe("Übung ändern: neue Einordnung nennt Altwerte und lässt die Übung sonst unverändert (AK 5, PC 2)", async () => {
+    const vorher = await uebungszeile(probe.id);
+    const r = await aendereUebung(a.supabase, a.id, { kennung: probe.id, aenderung: { einordnung: "ausklang" } });
+    fehler(r, "regel");
+    assert.ok(!r.ok);
+    assert.equal(r.hinweis, UNVERAENDERT);
+    assert.deepEqual(r.verstoesse?.map((v) => v.feld), ["aufbau", "offen_starten", "ueben", "wetteifern", "erscheinungsformen"]);
+    assert.ok(r.verstoesse?.[1].meldung.endsWith("setze «offen_starten» auf null, um sie zu entfernen."));
+    assert.deepEqual(await uebungszeile(probe.id), vorher, "die Übung ist unverändert");
+
+    // Die Altersstufe wechselt nie — der Verstoss reist mit den übrigen.
+    const stufe = await aendereUebung(a.supabase, a.id, { kennung: probe.id, aenderung: { name: " " }, altersstufe: "juniorenfussball" });
+    assert.ok(!stufe.ok);
+    assert.deepEqual(stufe.verstoesse?.map((v) => v.feld), ["altersstufe", "name"]);
+    assert.deepEqual(stufe.verstoesse?.[0].zulaessig, ["kinderfussball"]);
+
+    wert(
+      await aendereUebung(a.supabase, a.id, {
+        kennung: probe.id,
+        aenderung: { einordnung: "ausklang", offenStarten: null, ueben: null, wetteifern: null, erscheinungsformen: null, aufbau: "Auslaufen" },
+      }),
+    );
+    const danach = await uebungszeile(probe.id);
+    assert.equal(danach.trainingsteil, "ausklang");
+    assert.equal(danach.methodischer_fahrplan, null);
+    assert.equal(danach.aufbau, "Auslaufen");
+    assert.deepEqual(danach.erscheinungsform, []);
+  });
+
+  await pruefe("Übung ändern: nur eigene; Manual, fremde und unsichtbare abgewiesen (AK 4, OoS 2/3)", async () => {
+    const manual = await vorlage("einleitung");
+    const f = fehler(await aendereUebung(a.supabase, a.id, { kennung: manual, aenderung: { name: "x" } }), "keine_rechte", FREMDE_UEBUNG);
+    assert.equal(f.fremd, true);
+    // Private Übung von a: für b unsichtbar; öffentlich: sichtbar, aber fremd.
+    fehler(await aendereUebung(b.supabase, b.id, { kennung: probe.id, aenderung: { name: "x" } }), "nicht_gefunden", NICHT_SICHTBAR);
+    fehler(await aendereUebung(a.supabase, a.id, { kennung: randomUUID(), aenderung: { name: "x" } }), "nicht_gefunden", NICHT_SICHTBAR);
+    fehler(await aendereUebung(a.supabase, a.id, { kennung: "gibt-es-nicht-000000", aenderung: { name: "x" } }), "nicht_gefunden", NICHT_SICHTBAR);
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: probe.id }));
+    const fremd = fehler(await aendereUebung(b.supabase, b.id, { kennung: probe.slug, aenderung: { name: "x" } }), "keine_rechte", FREMDE_UEBUNG);
+    assert.equal(fremd.fremd, true);
+    // Auch am Loader vorbei schützt die RLS (`ex_update`): Konto b schreibt die
+    // öffentliche Übung von a, trifft keine Zeile, und die Übung bleibt.
+    fehler(
+      await aktualisiereZeile(b.supabase, "exercises", probe.id, { name: "x" }, UEBUNG_ZEILE),
+      "nicht_gefunden",
+      NICHT_SICHTBAR,
+    );
+    assert.equal((await uebungszeile(probe.id)).name, "KI-Probe Neu");
+    wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: probe.id }));
+
+  });
+
+  await pruefe("Übung ändern Juniorenfussball: ändern, zurücklesen, Altwerte nennen; die Altersstufe wechselt nie (#147 AK 3, OoS 1)", async () => {
+    const j = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "juniorenfussball",
+        name: "KI-Probe Junioren ändern",
+        einordnung: "jun-spiel",
+        kategorien: ["C"],
+        aufbau: "Spiel 7 gegen 7",
+        uebungstyp: "basisspielform",
+        spielfeld: { laengeM: 50, breiteM: 35 },
+      }),
+    );
+    wert(
+      await aendereUebung(a.supabase, a.id, {
+        kennung: j.slug,
+        altersstufe: "juniorenfussball",
+        aenderung: {
+          kategorien: ["C", "B"],
+          erscheinungsformen: ["schnell-umschalten"],
+          spielfeld: { laengeM: 60, breiteM: 40 },
+          anzahlKinder: { min: 14 },
+          varianten: "Mit Torhütern",
+          material: { ergaenzung: ["Leibchen in zwei Farben"] },
+        },
+      }),
+    );
+    const zeile = await uebungszeile(j.id);
+    assert.deepEqual(
+      [zeile.kategorien, zeile.erscheinungsform, zeile.spielfeld_laenge_m, zeile.spielfeld_breite_m, zeile.anzahl_kinder, zeile.varianten_text, zeile.material],
+      [["C", "B"], ["schnell-umschalten"], 60, 40, { min: 14, max: null }, "Mit Torhütern", ["Leibchen in zwei Farben"]],
+    );
+    assert.equal(zeile.aufbau, "Spiel 7 gegen 7");
+
+    // Ein Block ohne Übungstyp: der gespeicherte wird genannt, im Wortlaut der Datenebene.
+    const abschluss = await aendereUebung(a.supabase, a.id, { kennung: j.id, aenderung: { einordnung: "jun-abschluss" } });
+    assert.ok(!abschluss.ok);
+    assert.deepEqual(abschluss.verstoesse?.map((v) => v.feld), ["uebungstyp"]);
+    assert.ok(abschluss.verstoesse?.[0].meldung.startsWith("Der Übungstyp ist eine Angabe des Manuals Fussball Jugendliche"));
+    assert.deepEqual(await uebungszeile(j.id), zeile, "die Übung ist unverändert");
+    wert(await aendereUebung(a.supabase, a.id, { kennung: j.id, aenderung: { einordnung: "jun-abschluss", uebungstyp: null } }));
+    assert.equal((await uebungszeile(j.id)).trainingsteil, "jun-abschluss");
+
+    // Die Altersstufe wechselt nie — auch nicht in den Kinderfussball.
+    const stufe = await aendereUebung(a.supabase, a.id, { kennung: j.id, aenderung: { name: "x" }, altersstufe: "kinderfussball" });
+    assert.ok(!stufe.ok);
+    assert.deepEqual(stufe.verstoesse?.map((v) => v.feld), ["altersstufe"]);
+    assert.deepEqual(stufe.verstoesse?.[0].zulaessig, ["juniorenfussball"]);
+    assert.equal((await uebungszeile(j.id)).name, "KI-Probe Junioren ändern");
+
+    // Die Sichtbarkeit hängt an keiner Altersstufe.
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: j.id }));
+    wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: j.id }));
+  });
+
+  await pruefe("Übung ändern: die Fassung in einem Training bleibt unberührt (OoS 3)", async () => {
+    const tr = wert(await legeTrainingAn(a.supabase, a.id, { name: "Fassung-Probe", altersstufe: "kinderfussball", stufen: ["F"] })).id;
+    const f = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tr, einordnung: "ausklang", exerciseId: probe.id }));
+    wert(await aendereUebung(a.supabase, a.id, { kennung: probe.id, aenderung: { name: "KI-Probe Umbenannt", aufbau: "Neu" } }));
+    const { data } = await admin.from("training_exercises").select("name, aufbau").eq("id", f.fassungId).single();
+    assert.deepEqual(data, { name: "KI-Probe Neu", aufbau: "Auslaufen" });
+  });
+
+  await pruefe("Sichtbarkeit: öffentlich für alle mit Tragweite, zurückgezogen wieder privat, idempotent (AK 2/3, PC 3)", async () => {
+    const pub = wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: probe.slug }));
+    assert.deepEqual(pub, { id: probe.id, slug: probe.slug, sichtbarkeit: "oeffentlich", tragweite: TRAGWEITE_UEBUNG_VEROEFFENTLICHEN });
+    assert.equal(
+      TRAGWEITE_UEBUNG_VEROEFFENTLICHEN,
+      "Die Übung wird für alle sichtbar — mit allen Angaben, Bild und Feld-Diagramm — und trägt die " +
+        "Plakette «Community». Einen Trainernamen zeigt KiFu bei Übungen nicht.",
+    );
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: probe.id }));
+    const sieht = async () => (await b.supabase.from("exercises").select("id").eq("id", probe.id).maybeSingle()).data;
+    assert.ok(await sieht(), "ein anderes Konto sieht die öffentliche Übung");
+    fehler(await veroeffentlicheUebung(b.supabase, b.id, { kennung: probe.id }), "keine_rechte", FREMDE_UEBUNG);
+    fehler(await setzeUebungAufEntwurf(b.supabase, b.id, { kennung: probe.id }), "keine_rechte", FREMDE_UEBUNG);
+    fehler(await veroeffentlicheUebung(a.supabase, a.id, { kennung: await vorlage("einleitung") }), "keine_rechte", FREMDE_UEBUNG);
+
+    assert.deepEqual(wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: probe.id })), {
+      id: probe.id,
+      slug: probe.slug,
+      sichtbarkeit: "entwurf",
+    });
+    wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: probe.id }));
+    assert.equal(await sieht(), null, "zurückgezogen sieht es nur noch das eigene Konto");
+    fehler(await setzeUebungAufEntwurf(b.supabase, b.id, { kennung: probe.id }), "nicht_gefunden", NICHT_SICHTBAR);
+    fehler(await veroeffentlicheUebung(a.supabase, a.id, { kennung: randomUUID() }), "nicht_gefunden", NICHT_SICHTBAR);
+  });
+
+  // ── Feld-Diagramm setzen (#145) ──────────────────────────────────────────
+  /** Ein kleines Spielfeld: zwei Teams (ergibt Leibchen), drei Pylonen, ein Tor. */
+  const FELD = {
+    elemente: [
+      { id: "feld", art: "form", form: "rechteck", x: 200, y: 150, breite: 1200, hoehe: 700 },
+      { id: "tor", art: "symbol", typ: "tor", x: 800, y: 150, rotation: 0 },
+      { id: "rot-1", art: "symbol", typ: "spieler", x: 600, y: 500, farbe: "rot" },
+      { id: "blau-1", art: "symbol", typ: "spieler", x: 1000, y: 500, farbe: "blau" },
+      ...[400, 800, 1200].map((x, i) => ({ id: `py-${i}`, art: "symbol", typ: "pylone", x, y: 780, farbe: "gelb" })),
+    ],
+  };
+  const ZWEI_BAELLE = {
+    version: 1,
+    elemente: [
+      { id: "b1", art: "symbol", typ: "fussball", x: 700, y: 500 },
+      { id: "b2", art: "symbol", typ: "fussball", x: 900, y: 500 },
+    ],
+  };
+  const vorschlag = (d: unknown) => materialVorschlag(pruefeDiagramm(d).daten);
+  const DIAGRAMM_SPALTEN = "diagramm, bild_quelle, bild_url, material_liste, material_basis, material, updated_at";
+  const diagrammzeile = async (id: string) => {
+    const { data, error } = await admin.from("exercises").select(DIAGRAMM_SPALTEN).eq("id", id).single<Record<string, unknown>>();
+    if (error) throw error;
+    return data;
+  };
+  const kinderUebung = async (name: string) =>
+    wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "kinderfussball",
+        name,
+        einordnung: "einleitung",
+        kategorien: ["F"],
+        offenStarten: "Offen",
+        ueben: "Üben",
+        wetteifern: "Wett",
+        material: { liste: [{ art: "pylone", farbe: "rot", menge: 4 }], ergaenzung: ["Pfeife"] },
+      }),
+    );
+
+  await pruefe("Diagramm setzen: eigene Kinder- und Junioren-Übung, Bild, Liste = Basis = Vorschlag, Ergänzung bleibt; Ersetzen (AK 2/3, PC 1–6)", async () => {
+    const u = await kinderUebung("KI-Probe Diagramm");
+    const r = wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.slug, diagramm: FELD }));
+    assert.deepEqual(r, {
+      id: u.id,
+      slug: u.slug,
+      name: "KI-Probe Diagramm",
+      anzahlElemente: FELD.elemente.length,
+      angezeigtesBild: "diagramm",
+      material: { liste: vorschlag(FELD), ergaenzung: ["Pfeife"] },
+      maengel: [],
+    });
+    const z = await diagrammzeile(u.id);
+    assert.equal((z.diagramm as { elemente: unknown[] }).elemente.length, FELD.elemente.length);
+    assert.equal((z.diagramm as { version: number }).version, 1);
+    assert.equal(z.bild_quelle, "diagramm");
+    // Die handgepflegte Liste (4 rote Pylonen) ist durch die gezählte ersetzt.
+    assert.deepEqual(z.material_liste, vorschlag(FELD));
+    assert.deepEqual(z.material_basis, vorschlag(FELD));
+    assert.deepEqual(z.material, ["Pfeife"]);
+
+    const ersetzt = wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: ZWEI_BAELLE }));
+    assert.equal(ersetzt.anzahlElemente, 2);
+    const z2 = await diagrammzeile(u.id);
+    assert.deepEqual((z2.diagramm as { elemente: { id: string }[] }).elemente.map((e) => e.id), ["b1", "b2"]);
+    assert.deepEqual(z2.material_liste, [{ art: "fussball", farbe: null, menge: 2 }]);
+    assert.deepEqual(z2.material_basis, z2.material_liste);
+
+    const { data: jun, error } = await admin
+      .from("exercises")
+      .insert({
+        slug: `kern-db-jun-dia-${randomBytes(4).toString("hex")}`,
+        name: "Kern-DB Junioren Diagramm",
+        altersstufe: "juniorenfussball",
+        trainingsteil: "jun-spiel",
+        kategorien: ["D"],
+        aufbau: "Im Wechsel",
+        owner_id: a.id,
+        visibility: "private",
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    assert.equal(wert(await setzeDiagramm(a.supabase, a.id, { kennung: jun.id, diagramm: FELD })).angezeigtesBild, "diagramm");
+    assert.equal((await diagrammzeile(jun.id)).bild_quelle, "diagramm");
+  });
+
+  await pruefe("Diagramm setzen: ein vorhandenes Foto bleibt das angezeigte Bild (PC 3)", async () => {
+    const u = await kinderUebung("KI-Probe Foto");
+    const { error } = await admin.from("exercises").update({ bild_url: "https://example.test/foto.webp", bild_quelle: null }).eq("id", u.id);
+    if (error) throw error;
+    assert.equal(wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: FELD })).angezeigtesBild, "foto");
+    const z = await diagrammzeile(u.id);
+    assert.equal(z.bild_quelle, "foto");
+    assert.equal(z.bild_url, "https://example.test/foto.webp");
+  });
+
+  await pruefe("Diagramm setzen: Grenzen → eingabe mit jedem Element, leer abgelehnt, Übung unverändert (AK 4/6)", async () => {
+    const u = await kinderUebung("KI-Probe Grenzen");
+    wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: ZWEI_BAELLE }));
+    const vorher = await diagrammzeile(u.id);
+    const r = fehler(
+      await setzeDiagramm(a.supabase, a.id, {
+        kennung: u.id,
+        diagramm: {
+          elemente: [
+            { id: "tw", art: "symbol", typ: "torhueter", x: 800, y: 500 },
+            { id: "weit", art: "symbol", typ: "pylone", x: 1700, y: 500 },
+            { id: "lila", art: "pfad", typ: "linie", punkte: [{ x: 1, y: 1 }, { x: 9, y: 9 }], farbe: "lila" },
+          ],
+        },
+      }),
+      "eingabe",
+      "Das Diagramm wurde nicht gesetzt: 3 Angaben verletzen die Grenzen eines Feld-Diagramms. Jede " +
+        "steht mit Element und Grund unter «verstoesse».",
+    ) as { verstoesse?: { feld: string; meldung: string }[]; hinweis?: string };
+    assert.deepEqual(r.verstoesse?.map((v) => v.feld), [
+      "diagramm.elemente[0].typ",
+      "diagramm.elemente[1]",
+      "diagramm.elemente[2].farbe",
+    ]);
+    assert.match(r.verstoesse![0].meldung, /^Element «tw» \(elemente\[0\]\): Das Symbol «torhueter» gibt es nicht\.$/);
+    assert.equal(r.hinweis, UNVERAENDERT);
+    const leer = fehler(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: { elemente: [] } }), "eingabe") as {
+      verstoesse?: { feld: string; meldung: string }[];
+    };
+    assert.deepEqual(leer.verstoesse, [{ feld: "diagramm", meldung: DIAGRAMM_LEER }]);
+    assert.deepEqual(await diagrammzeile(u.id), vorher, "die Übung ist unverändert");
+  });
+
+  await pruefe("Diagramm setzen: nur eigene; Manual und fremd öffentlich → keine_rechte, privat fremd und unbekannt → nicht_gefunden", async () => {
+    const u = await kinderUebung("KI-Probe Rechte");
+    const manual = await vorlage("einleitung");
+    assert.equal(fehler(await setzeDiagramm(a.supabase, a.id, { kennung: manual, diagramm: FELD }), "keine_rechte", FREMDE_UEBUNG).fremd, true);
+    fehler(await setzeDiagramm(b.supabase, b.id, { kennung: u.id, diagramm: FELD }), "nicht_gefunden", NICHT_SICHTBAR);
+    fehler(await setzeDiagramm(a.supabase, a.id, { kennung: randomUUID(), diagramm: FELD }), "nicht_gefunden", NICHT_SICHTBAR);
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: u.id }));
+    assert.equal(fehler(await setzeDiagramm(b.supabase, b.id, { kennung: u.slug, diagramm: FELD }), "keine_rechte", FREMDE_UEBUNG).fremd, true);
+    assert.equal((await diagrammzeile(u.id)).diagramm, null, "das fremde Setzen hat nichts geschrieben");
+  });
+
+  await pruefe("Diagramm setzen: die Fassung in einem Training bleibt unberührt (#145, OoS #144)", async () => {
+    const u = await kinderUebung("KI-Probe Fassung");
+    wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: ZWEI_BAELLE }));
+    const tr = wert(await legeTrainingAn(a.supabase, a.id, { name: "Diagramm-Fassung", altersstufe: "kinderfussball", stufen: ["F"] })).id;
+    const f = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tr, einordnung: "einleitung", exerciseId: u.id }));
+    const fassung = async () =>
+      (await admin.from("training_exercises").select("diagramm, material_liste").eq("id", f.fassungId).single()).data;
+    const vorher = await fassung();
+    wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: FELD }));
+    assert.deepEqual(await fassung(), vorher);
+  });
+
+  await pruefe("Übung anlegen mit Diagramm: Bild, gezählte Liste, Ergänzung; Angaben und Diagramm in EINER Ablehnung (#145 AK 5/7, PC 7)", async () => {
+    const angaben = {
+      altersstufe: "kinderfussball",
+      name: "KI-Probe Anlegen Diagramm",
+      einordnung: "einleitung",
+      kategorien: ["F"],
+      offenStarten: "Offen",
+      ueben: "Üben",
+      wetteifern: "Wett",
+      material: { ergaenzung: ["Pfeife"] },
+    };
+    const u = wert(await legeUebungAn(a.supabase, a.id, { ...angaben, diagramm: FELD }));
+    assert.deepEqual(u.material, { liste: vorschlag(FELD), ergaenzung: ["Pfeife"] });
+    assert.deepEqual(u.maengel, []);
+    const z = await diagrammzeile(u.id);
+    assert.equal(z.bild_quelle, "diagramm");
+    assert.equal((z.diagramm as { elemente: unknown[] }).elemente.length, FELD.elemente.length);
+    assert.deepEqual(z.material_liste, vorschlag(FELD));
+    assert.deepEqual(z.material_basis, vorschlag(FELD));
+    assert.deepEqual(z.material, ["Pfeife"]);
+    // Ohne Diagramm bleibt die Antwort wie in #143.
+    assert.equal("material" in wert(await legeUebungAn(a.supabase, a.id, angaben)), false);
+
+    const vorher = await uebungenVon(a.id);
+    const r = fehler(
+      await legeUebungAn(a.supabase, a.id, {
+        ...angaben,
+        kategorien: [],
+        material: { liste: [{ art: "pylone", farbe: "rot", menge: 4 }] },
+        diagramm: { elemente: [{ id: "tw", art: "symbol", typ: "torhueter", x: 800, y: 500 }] },
+      }),
+      "regel",
+    ) as { verstoesse?: { feld: string; meldung: string }[]; hinweis?: string };
+    const felder = r.verstoesse?.map((v) => v.feld) ?? [];
+    assert.ok(felder.includes("kategorien"), felder.join(", "));
+    assert.ok(felder.includes("diagramm.elemente[0].typ"), felder.join(", "));
+    assert.deepEqual(r.verstoesse?.find((v) => v.feld === "material.liste")?.meldung, MATERIAL_MIT_DIAGRAMM);
+    assert.equal(r.hinweis, NICHTS_ANGELEGT);
+    fehler(await legeUebungAn(a.supabase, a.id, { ...angaben, diagramm: { elemente: [] } }), "eingabe");
+    assert.equal(await uebungenVon(a.id), vorher, "nichts angelegt");
+  });
+
+  // ── Mängel des Diagramms (#146) ──────────────────────────────────────────
+  /** Ein Leibchen 60 Einheiten neben einer Figur, aber an keiner Hand. */
+  const FREIES_LEIBCHEN = {
+    elemente: [
+      { id: "kind", art: "symbol", typ: "spieler", x: 600, y: 500 },
+      { id: "tuch", art: "symbol", typ: "leibchen", x: 600, y: 560 },
+    ],
+  };
+
+  await pruefe("Mängel: gespeichert UND gemeldet — beim Setzen, beim Anlegen und jederzeit abrufbar, gleich lautend (#146 AK 1–4, PC 1)", async () => {
+    const u = await kinderUebung("KI-Probe Mängel");
+    const r = wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: FREIES_LEIBCHEN }));
+    assert.deepEqual(r.maengel.map((b) => `${b.code}:${b.element}:${b.index}`), ["leibchen:tuch:1"]);
+    assert.match(r.maengel[0].meldung, /^Element «tuch» \(elemente\[1\]\): Das Leibchen liegt 60 Einheiten neben einer Figur/);
+    const z = await diagrammzeile(u.id);
+    assert.deepEqual((z.diagramm as { elemente: { id: string }[] }).elemente.map((e) => e.id), ["kind", "tuch"], "trotz Mangel gespeichert");
+
+    const abgerufen = wert(await diagrammMaengel(a.supabase, a.id, { kennung: u.slug }));
+    assert.deepEqual(abgerufen, { id: u.id, slug: u.slug, name: "KI-Probe Mängel", hatDiagramm: true, befunde: r.maengel });
+
+    const neu = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "kinderfussball",
+        name: "KI-Probe Mängel Anlegen",
+        einordnung: "einleitung",
+        kategorien: ["F"],
+        offenStarten: "Offen",
+        ueben: "Üben",
+        wetteifern: "Wett",
+        diagramm: FREIES_LEIBCHEN,
+      }),
+    );
+    assert.deepEqual(neu.maengel?.map((b) => b.code), ["leibchen"], "auch beim Anlegen");
+  });
+
+  await pruefe("Mängel: auch am in KiFu gezeichneten Diagramm, samt Altbestand; ohne Diagramm leer (#146 AK 4)", async () => {
+    const u = await kinderUebung("KI-Probe Mängel UI");
+    const leer = wert(await diagrammMaengel(a.supabase, a.id, { kennung: u.id }));
+    assert.deepEqual({ hat: leer.hatDiagramm, befunde: leer.befunde }, { hat: false, befunde: [] });
+    // Wie aus der Maske gespeichert: ein Feld mit einem Tor, das vom Feld weg
+    // öffnet — und ein älteres, unbekanntes Symbol, das heute eine Grenze wäre.
+    const { error } = await admin
+      .from("exercises")
+      .update({
+        diagramm: {
+          version: 1,
+          elemente: [
+            { id: "feld", art: "form", form: "rechteck", x: 200, y: 150, breite: 1200, hoehe: 700 },
+            { id: "tor", art: "symbol", typ: "tor", x: 800, y: 150, rotation: 180 },
+            { id: "alt", art: "symbol", typ: "torhueter", x: 800, y: 500 },
+          ],
+        },
+        bild_quelle: "diagramm",
+      })
+      .eq("id", u.id);
+    if (error) throw error;
+    const m = wert(await diagrammMaengel(a.supabase, a.id, { kennung: u.id }));
+    assert.equal(m.hatDiagramm, true);
+    assert.deepEqual(m.befunde.map((b) => `${b.art}:${b.code}:${b.element}`), ["grenze:unbekannt:alt", "mangel:tor_richtung:tor"]);
+  });
+
+  await pruefe("Mängel abrufen: nur eigene; Manual und fremd öffentlich → keine_rechte, privat fremd und unbekannt → nicht_gefunden", async () => {
+    const u = await kinderUebung("KI-Probe Mängel Rechte");
+    const manual = await vorlage("einleitung");
+    assert.equal(fehler(await diagrammMaengel(a.supabase, a.id, { kennung: manual }), "keine_rechte", FREMDE_UEBUNG).fremd, true);
+    fehler(await diagrammMaengel(b.supabase, b.id, { kennung: u.id }), "nicht_gefunden", NICHT_SICHTBAR);
+    fehler(await diagrammMaengel(a.supabase, a.id, { kennung: randomUUID() }), "nicht_gefunden", NICHT_SICHTBAR);
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: u.id }));
+    assert.equal(fehler(await diagrammMaengel(b.supabase, b.id, { kennung: u.slug }), "keine_rechte", FREMDE_UEBUNG).fremd, true);
+  });
+  // ── Übung kopieren (#317) ────────────────────────────────────────────────
+  const KOPIER_SPALTEN = [
+    "name",
+    "owner_id",
+    "source",
+    "visibility",
+    "altersstufe",
+    "trainingsteil",
+    "hauptteilkategorie",
+    "bild_url",
+    "diagramm",
+    ...FASSUNG_INHALT_FELDER,
+  ];
+  const kopierZeile = async (id: string) => {
+    const { data, error } = await admin
+      .from("exercises")
+      .select([...new Set(KOPIER_SPALTEN)].join(", "))
+      .eq("id", id)
+      .single<Record<string, unknown>>();
+    if (error) throw error;
+    return data;
+  };
+  const bildOrdner = `user/${a.id}`;
+  const bildUrl = (pfad: string) => `${URL_}/storage/v1/object/public/exercise-images/${pfad}`;
+  const imBildOrdner = async () =>
+    ((await admin.storage.from("exercise-images").list(bildOrdner, { limit: 100 })).data ?? [])
+      .map((d) => `${bildOrdner}/${d.name}`)
+      .sort();
+  const kinderUebungFuerKopie = async (name: string) =>
+    wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "kinderfussball",
+        name,
+        einordnung: "einleitung",
+        kategorien: ["F"],
+        offenStarten: "Offen",
+        ueben: "Üben",
+        wetteifern: "Wett",
+      }),
+    );
+
+  await pruefe("Übung kopieren: Manual-Übung → privater Entwurf mit allen Angaben und Diagramm, Quelle unberührt (AK 1, PC 1/2/4)", async () => {
+    const { data: m, error } = await admin
+      .from("exercises")
+      .select("id, slug")
+      .eq("source", "manual")
+      .not("diagramm", "is", null)
+      .order("name")
+      .limit(1)
+      .single();
+    if (error) throw error;
+    const quelle = await kopierZeile(m.id);
+    const k = wert(await kopiereUebungNach(a.supabase, a.id, { kennung: m.slug }));
+    assert.deepEqual([k.name, k.sichtbarkeit], [quelle.name, "entwurf"], "eine Manual-Kopie behält den Namen");
+    const kopie = await kopierZeile(k.id);
+    assert.deepEqual([kopie.owner_id, kopie.source, kopie.visibility], [a.id, "user", "private"]);
+    for (const f of ["altersstufe", "trainingsteil", "hauptteilkategorie", ...FASSUNG_INHALT_FELDER])
+      assert.deepEqual(kopie[f], quelle[f], f);
+    // Dasselbe Diagramm, aber entkoppelt: jede Element-ID neu.
+    const elemente = (d: unknown) => (d as { elemente: { id: string }[] }).elemente;
+    const ohneId = (d: unknown) => elemente(d).map(({ id: _id, ...rest }) => rest);
+    assert.deepEqual(ohneId(kopie.diagramm), ohneId(quelle.diagramm));
+    assert.ok(elemente(kopie.diagramm).every((e, i) => e.id !== elemente(quelle.diagramm)[i].id));
+    assert.deepEqual(await kopierZeile(m.id), quelle, "die Quelle bleibt unberührt");
+    assert.equal((await b.supabase.from("exercises").select("id").eq("id", k.id).maybeSingle()).data, null);
+  });
+
+  await pruefe("Übung kopieren: «(Kopie)» nur bei eigener Quelle, fremde behält den Namen, Junioren-Stufe bleibt (PC 2/3)", async () => {
+    const eigen = wert(
+      await legeUebungAn(a.supabase, a.id, {
+        altersstufe: "juniorenfussball",
+        name: "KI-Probe Kopierquelle",
+        einordnung: "jun-spiel",
+        kategorien: ["D"],
+        aufbau: "Spiel",
+      }),
+    );
+    const k1 = wert(await kopiereUebungNach(a.supabase, a.id, { kennung: eigen.id }));
+    assert.equal(k1.name, "KI-Probe Kopierquelle (Kopie)");
+    const k2 = wert(await kopiereUebungNach(a.supabase, a.id, { kennung: k1.slug }));
+    assert.equal(k2.name, "KI-Probe Kopierquelle (Kopie) (Kopie)");
+    assert.equal((await kopierZeile(k2.id)).altersstufe, "juniorenfussball");
+    assert.notEqual(k1.id, k2.id);
+
+    wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: eigen.id }));
+    const fremd = wert(await kopiereUebungNach(b.supabase, b.id, { kennung: eigen.slug }));
+    assert.equal(fremd.name, "KI-Probe Kopierquelle", "die Kopie einer fremden Übung behält den Namen");
+    assert.deepEqual([(await kopierZeile(fremd.id)).owner_id, (await kopierZeile(fremd.id)).visibility], [b.id, "private"]);
+    wert(await setzeUebungAufEntwurf(a.supabase, a.id, { kennung: eigen.id }));
+  });
+
+  await pruefe("Übung kopieren: unsichtbar, unbekannt und aus einem Training → nicht_gefunden, nichts entsteht (OoS 1)", async () => {
+    const privat = await kinderUebungFuerKopie("KI-Probe privat");
+    const tr = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kopier-Probe", altersstufe: "kinderfussball", stufen: ["F"] })).id;
+    const fassung = wert(await ordneUebungZu(a.supabase, a.id, { trainingId: tr, einordnung: "einleitung", exerciseId: ein }));
+    const vorherA = await uebungenVon(a.id);
+    const vorherB = await uebungenVon(b.id);
+    for (const [konto, kennung] of [
+      [b, privat.id],
+      [a, randomUUID()],
+      [a, "gibt-es-nicht-000000"],
+      [a, fassung.fassungId],
+    ] as const) {
+      const r = await kopiereUebungNach(konto.supabase, konto.id, { kennung });
+      fehler(r, "nicht_gefunden", UEBUNG_QUELLE_NICHT_VERFUEGBAR);
+      assert.ok(!r.ok);
+      // Ein zweiter Versuch ändert daran nichts — keine Aufforderung dazu.
+      assert.equal(r.hinweis, "Es ist keine Kopie entstanden.");
+    }
+    assert.deepEqual([await uebungenVon(a.id), await uebungenVon(b.id)], [vorherA, vorherB]);
+  });
+
+  await pruefe("Übung kopieren: eigene Bilddatei, Quelldatei bleibt; fehlende Datei → nichts entsteht (PC 2)", async () => {
+    const mitBild = await kinderUebungFuerKopie("KI-Probe Bild");
+    const pfad = `${bildOrdner}/${mitBild.id}.webp`;
+    const { error: up } = await admin.storage
+      .from("exercise-images")
+      .upload(pfad, new Blob([new Uint8Array([82, 73, 70, 70, 0, 0, 0, 0, 87, 69, 66, 80])], { type: "image/webp" }), {
+        contentType: "image/webp",
+      });
+    if (up) throw up;
+    dateien.push(pfad);
+    const { error: e1 } = await admin
+      .from("exercises")
+      .update({ bild_url: bildUrl(pfad), bild_quelle: "foto" })
+      .eq("id", mitBild.id);
+    if (e1) throw e1;
+    const k = wert(await kopiereUebungNach(a.supabase, a.id, { kennung: mitBild.id }));
+    const kopie = await kopierZeile(k.id);
+    assert.equal(kopie.bild_url, bildUrl(`${bildOrdner}/${k.id}.webp`));
+    assert.equal(kopie.bild_quelle, "foto");
+    assert.ok((await imBildOrdner()).includes(pfad), "die Quelldatei bleibt");
+    assert.ok((await imBildOrdner()).includes(`${bildOrdner}/${k.id}.webp`), "die Kopie hat ihre eigene Datei");
+
+    const ohneDatei = await kinderUebungFuerKopie("KI-Probe Bild fehlt");
+    const { error: e2 } = await admin
+      .from("exercises")
+      .update({ bild_url: bildUrl(`${bildOrdner}/fehlt-${randomUUID()}.webp`) })
+      .eq("id", ohneDatei.id);
+    if (e2) throw e2;
+    const vorher = await uebungenVon(a.id);
+    const dateienVorher = await imBildOrdner();
+    const r = await kopiereUebungNach(a.supabase, a.id, { kennung: ohneDatei.id });
+    fehler(r, "technisch", "Das Bild liess sich nicht kopieren. Bitte versuche es noch einmal.");
+    assert.ok(!r.ok);
+    assert.equal(r.hinweis, HINWEIS_NICHTS_ENTSTANDEN);
+    assert.equal(await uebungenVon(a.id), vorher, "keine neue Übung");
+    assert.deepEqual(await imBildOrdner(), dateienVorher, "keine neue Datei");
+
+    // Weist die Datenbank ab, kommt die Meldung übersetzt, und die schon
+    // kopierte Datei fällt wieder weg: ein Client, dessen Insert scheitert.
+    const kaputt = new Proxy(a.supabase, {
+      get(ziel, name, empf) {
+        if (name === "from")
+          return (tabelle: string) => {
+            const echt = ziel.from(tabelle);
+            if (tabelle !== "exercises") return echt;
+            return new Proxy(echt, {
+              get(q, n) {
+                if (n === "insert")
+                  return () => ({
+                    select: () => ({
+                      single: async () => ({
+                        data: null,
+                        error: {
+                          message: 'new row for relation "exercises" violates check constraint "ex_kategorien_je_altersstufe"',
+                          code: "23514",
+                        },
+                      }),
+                    }),
+                  });
+                const v = Reflect.get(q, n);
+                return typeof v === "function" ? v.bind(q) : v;
+              },
+            });
+          };
+        return Reflect.get(ziel, name, empf);
+      },
+    });
+    const uebersetzt = await kopiereUebungNach(kaputt, a.id, { kennung: mitBild.id });
+    fehler(uebersetzt, "regel", "Diese Alterskategorie gehört nicht zur Altersstufe dieser Übung.");
+    assert.ok(!uebersetzt.ok);
+    assert.equal(uebersetzt.hinweis, "Es ist keine Kopie entstanden.", "eine Regel ändert kein zweiter Versuch");
+    assert.equal(await uebungenVon(a.id), vorher, "keine neue Übung");
+    assert.deepEqual(await imBildOrdner(), dateienVorher, "die schon kopierte Datei ist wieder entfernt");
+  });
+
+  await pruefe("Übung kopieren: Diagramm-Altbestand bleibt im Editor speicherbar, leeres Diagramm nicht als Bild", async () => {
+    // Ein Element, das die Zeichenfläche nicht kennt: für den Bestand
+    // lesbar (nachsichtig), für neue Diagramme eine Grenze.
+    const alt = await kinderUebungFuerKopie("KI-Probe Altbestand");
+    const { error } = await admin
+      .from("exercises")
+      .update({
+        diagramm: { version: 1, elemente: [{ id: "alt-1", art: "symbol", typ: "gibt-es-nicht", x: 400, y: 300 }] },
+        bild_quelle: "diagramm",
+      })
+      .eq("id", alt.id);
+    if (error) throw error;
+    const k = wert(await kopiereUebungNach(a.supabase, a.id, { kennung: alt.id }));
+    const gespeichert = (await kopierZeile(k.id)).diagramm;
+    assert.equal(pruefeDiagramm(gespeichert).grenzen.length, 1, "die Kopie trägt den Altbestand mit");
+    // Die Maske schickt das gespeicherte Diagramm unverändert zurück …
+    const form = new FormData();
+    form.set("diagramm", JSON.stringify(parseDiagramm(gespeichert)));
+    const r = diagrammAusFormular(form, gespeichert);
+    assert.ok(!(r && typeof r === "object" && "fehler" in r), "die Kopie lässt sich speichern");
+    // … ein geändertes mit demselben Element weist sie ab.
+    const geaendert = parseDiagramm(gespeichert)!;
+    form.set("diagramm", JSON.stringify({ ...geaendert, elemente: [{ ...geaendert.elemente[0], x: 500 }] }));
+    const r2 = diagrammAusFormular(form, gespeichert);
+    assert.ok(r2 && typeof r2 === "object" && "fehler" in r2);
+
+    // Ein leeres Diagramm fällt beim Kopieren weg — dann zeigt die Kopie
+    // auch nicht «Diagramm» als Bild.
+    const leer = await kinderUebungFuerKopie("KI-Probe leeres Diagramm");
+    const { error: e2 } = await admin
+      .from("exercises")
+      .update({ diagramm: { version: 1, elemente: [] }, bild_quelle: "diagramm" })
+      .eq("id", leer.id);
+    if (e2) throw e2;
+    const kl = await kopierZeile(wert(await kopiereUebungNach(a.supabase, a.id, { kennung: leer.id })).id);
+    assert.deepEqual([kl.diagramm, kl.bild_quelle], [null, null]);
   });
 } finally {
   await aufraeumen();

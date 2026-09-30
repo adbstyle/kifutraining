@@ -9,14 +9,11 @@ import { STORED_IMAGE_TYPES, storedImageError } from "@/lib/image";
 import { parseUebungsInhalt } from "@/lib/uebung-form";
 import { alsAltersstufe, istAltersstufe } from "@/lib/altersstufe";
 import { materialBasisAusDiagramm } from "@/lib/material";
-import { bildQuelleZurZeichnung, diagrammAusFormular } from "@/lib/diagramm";
+import { bildQuelleZurZeichnung } from "@/lib/diagramm";
+import { diagrammAusFormular } from "@/lib/diagramm-pruefung";
 import { fehlerMeldung } from "@/lib/training-bedingungen";
-import {
-  VORLAGE_SELECT,
-  entferneStorageObjekt,
-  kopieName,
-  legeUebungsKopieAn,
-} from "@/lib/fassung";
+import { entferneStorageObjekt } from "@/lib/fassung";
+import { kopiereUebungNach } from "@/lib/kern/uebungen";
 
 export type ExerciseFormState = {
   status: "idle" | "error";
@@ -77,8 +74,7 @@ export async function createExercise(
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
   const gezeichnet = diagrammAusFormular(form);
-  if (gezeichnet === "ungueltig")
-    return { status: "error", message: "Das Feld-Diagramm konnte nicht gelesen werden." };
+  if (gezeichnet && "fehler" in gezeichnet) return { status: "error", message: gezeichnet.fehler };
   const diagramm = gezeichnet ?? null;
 
   const file = form.get("bild");
@@ -186,9 +182,10 @@ export async function updateExercise(
   const parsed = parseUebungsInhalt(form, { altersstufe });
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
 
-  const gezeichnet = diagrammAusFormular(form);
-  if (gezeichnet === "ungueltig")
-    return { status: "error", message: "Das Feld-Diagramm konnte nicht gelesen werden." };
+  // Die gespeicherte Zeichnung kommt mit: unverändert zurückgeschickt, wird
+  // sie nicht neu beanstandet (Altbestand).
+  const gezeichnet = diagrammAusFormular(form, bestand.diagramm);
+  if (gezeichnet && "fehler" in gezeichnet) return { status: "error", message: gezeichnet.fehler };
 
   const file = form.get("bild");
   const hasImage = file instanceof File && file.size > 0;
@@ -253,38 +250,10 @@ export async function updateExercise(
   redirect(`/uebung/${updated.slug}?updated=1`, RedirectType.replace);
 }
 
-/** Eine Übung, wie sie fürs Kopieren gelesen wird (`KOPIE_SELECT`). */
-type ZuKopierendeUebung = {
-  owner_id: string | null;
-  altersstufe: string | null;
-  trainingsteil: string;
-  hauptteilkategorie: string | null;
-  name: string | null;
-  bild_url: string | null;
-  diagramm: unknown;
-} & Record<string, unknown>;
-
-/** Die Spalten der Quelle. `VORLAGE_SELECT` ist bereits die Übungs-Spaltenliste
- *  fürs Kopieren (Inhalt, Einordnung, Bild, Diagramm) — dazu kommt hier nur der
- *  Eigentümer: An ihm hängt, ob die Kopie das Kopie-Suffix trägt (#171). Eine
- *  handgepflegte Zweitliste liesse ein neues Übungsfeld hier still wegfallen. */
-const KOPIE_SELECT = `${VORLAGE_SELECT}, owner_id`;
-
 /** Eine sichtbare Übung in den eigenen Bestand kopieren — die eigene (#171)
- *  ebenso wie eine kuratierte oder fremde (Story 7, Übungswelten).
- *
- *  Es entsteht eine gewöhnliche, zunächst private Trainer-Übung mit eigener
- *  Bild- und Diagrammkopie; eine Verknüpfung zur Quelle gibt es nicht (#171
- *  PC 6) — spätere Änderungen wirken in keine Richtung. Mehrfaches Kopieren ist
- *  erlaubt und ergibt jedes Mal eine eigenständige Übung (AK 2).
- *
- *  Die Kopie behält die Altersstufe der Quelle (PC 3). Wer sie in der anderen
- *  Stufe braucht, wandelt sie anschliessend um (Story 4, Übungswelten); das
- *  sind zwei getrennte Vorgänge.
- *
- *  Der Favoritenstatus reist NICHT mit (PC 4), und zwar ohne eigenen Code:
- *  `exercise_favorites` hängt an `(user_id, exercise_id)`, und die Kopie trägt
- *  eine neue ID. */
+ *  ebenso wie eine kuratierte oder fremde (Story 7, Übungswelten). Die Regeln
+ *  stehen im Fachkern (`kopiereUebungNach`), den auch das KI-Werkzeug
+ *  «uebung_kopieren» nutzt (#317 NFR 1). */
 export async function kopiereUebung(
   exerciseId: string,
 ): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
@@ -294,34 +263,10 @@ export async function kopiereUebung(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Nicht angemeldet." };
 
-  // RLS deckt die Sichtbarkeit ab: eigene, kuratierte und fremde öffentliche
-  // Übungen kommen durch, eine fremde private nicht. Kein Treffer heisst, dass
-  // die Übung im Moment des Kopierens nicht (mehr) da ist (#171 PC 8).
-  const { data: q } = await supabase
-    .from("exercises")
-    .select(KOPIE_SELECT)
-    .eq("id", exerciseId)
-    .maybeSingle<ZuKopierendeUebung>();
-  if (!q) return { ok: false, error: "Die Übung ist nicht mehr verfügbar." };
-
-  // Gekennzeichnet wird nur die Kopie einer EIGENEN Übung (#171 AK 3): sie
-  // stünde sonst namensgleich neben der Quelle im eigenen Bestand. Die Kopie
-  // einer kuratierten oder fremden Übung behält ihren Namen (OOS 5) — dort
-  // trennt schon die Herkunft.
-  const name = q.owner_id === user.id && q.name ? kopieName(q.name) : undefined;
-
-  // Kopiert wird mit dem gemeinsamen Rumpf (`legeUebungsKopieAn`): Slug,
-  // Bild- und Diagrammkopie, Eigentum und der private Anfangszustand (PC 1)
-  // sind dieselben wie beim Kopieren einer Fassung aus einem Training.
-  const kopie = await legeUebungsKopieAn(supabase, q, {
-    ownerId: user.id,
-    altersstufe: alsAltersstufe(q.altersstufe),
-    name,
-  });
-  if (!kopie.ok) return kopie;
-
+  const kopie = await kopiereUebungNach(supabase, user.id, { kennung: exerciseId });
+  if (!kopie.ok) return { ok: false, error: kopie.meldung };
   revalidateLists();
-  return kopie;
+  return { ok: true, slug: kopie.wert.slug };
 }
 
 /** Sichtbarkeit zwischen public/private umschalten (Story 7 EK2). */

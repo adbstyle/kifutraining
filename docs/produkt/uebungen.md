@@ -26,7 +26,10 @@ Juniorenfussball gibt es keinen solchen kuratierten Bestand.
 Die andere Quelle sind die Trainerinnen und Trainer selbst. Wer eine eigene Übung erfasst, legt
 sie zunächst als Entwurf an; sie bleibt privat, bis er sie öffentlich schaltet. Danach trägt
 sie die Plakette „Community" und steht allen zur Verfügung. Die Sichtbarkeit lässt sich
-jederzeit in beide Richtungen umschalten.
+jederzeit in beide Richtungen umschalten. Eine eigene Übung beider Altersstufen kann auch ein
+verbundener KI-Assistent anlegen, ändern, öffentlich schalten und zurückziehen; sie entsteht
+ebenso als Entwurf und folgt denselben Regeln wie im Formular, je Altersstufe den ihren (siehe
+[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
 ## Was eine Übung ausmacht
 
@@ -176,7 +179,9 @@ dort trennt schon die Herkunft. Ein Favorit wird nie mitkopiert, auch wenn die Q
 
 Die eigene Übung wird über das Menü hinter den drei Punkten kopiert, die kuratierte oder fremde
 über das Kopieren-Symbol in derselben Zeile. Die Übungsliste bietet das Kopieren nicht an; der
-Weg führt über die Übung selbst.
+Weg führt über die Übung selbst. Ein verbundener KI-Assistent kopiert nach denselben Regeln,
+aber nur aus dem Übungsbestand, nicht aus einem Training (siehe
+[Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
 Denselben Weg gibt es aus einem Training heraus: Eine Übung, die dort angepasst wurde, lässt
 sich als eigene Vorlage in die Bibliothek kopieren, auch aus einem fremden, veröffentlichten
@@ -239,6 +244,18 @@ die sie trug. Zum Zeichnen braucht es einen breiteren Bildschirm als den eines T
 einem schmaleren sagt die Maske das an der Stelle der Fläche und zeigt beim Bearbeiten darüber
 die bisherige Zeichnung. Die übrigen Angaben lassen sich dort erfassen und bearbeiten.
 
+Beim Speichern prüft die Anwendung das Diagramm nach denselben Grenzen, die auch für einen
+verbundenen KI-Assistenten gelten: nur Elemente, Farben, Posen und Drehungen, die die
+Zeichenfläche kennt, jedes Element auf der Fläche — bei Symbolen und Texten deren Mitte —,
+höchstens 300 Elemente, jedes mit eigener Kennung. Was die Fläche nicht führen kann, etwa ein
+«?»-Platzhalter aus einer alten Zeichnung, lässt sich nicht speichern; die Maske nennt dann Art
+und Zahl der betroffenen Elemente — unbekannt, beschädigt, ausserhalb der Fläche oder zu viele —
+und bittet, sie zu entfernen oder zu verschieben. Eine gespeicherte Zeichnung, die
+unverändert zurückkommt, beanstandet sie nicht neu — eine Übung mit einer älteren Zeichnung lässt
+sich also weiterhin umbenennen. Der Assistent kann das Diagramm einer eigenen Übung auch selbst
+setzen und sich seine inhaltlichen Mängel melden lassen; die Anwendung selbst zeigt diese Mängel
+nicht an (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
+
 Dasselbe Diagramm sieht am Bildschirm anders aus als auf Papier, und beides ist Absicht. Am
 Bildschirm liegt es auf einem dunklen Rasen, passend zur übrigen Anwendung, mit hellen
 Bewegungspfeilen und kräftigeren Farben für Leibchen und Material. Auf Papier kommt dieselbe
@@ -249,13 +266,14 @@ wählt nicht einen Farbton, sondern «rot» oder «blau»; wie kräftig der ausf
 Anwendung je nach Bildschirm oder Papier.
 
 Ein vorhandenes Diagramm kann als Vorlage in eine andere eigene Übung oder eine Übung im Training
-kopiert werden. Zur
-Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar über den Namen der
-Quell-Übung und mit Vorschau; die Altersstufe spielt dabei keine Rolle. Fremde
+kopiert werden. Zur Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar
+über den Namen der Quell-Übung und mit Vorschau; die Altersstufe spielt dabei keine Rolle. Fremde
 Trainer-Diagramme sind bewusst nicht dabei. Das Kopieren erzeugt eine eigenständige Kopie ohne
 Verbindung zum Original; ein bereits vorhandenes Diagramm wird erst nach Rückfrage ersetzt.
-Angeboten wird die Vorlage auf der leeren Zeichenfläche und daneben auch, wenn schon etwas
-gezeichnet ist; die Übung selbst steht nicht zur Wahl. Das Ersetzen ist ein gewöhnlicher Schritt:
+Übernommen wird nur, was die Fläche führen kann: Trägt eine ältere Vorlage Elemente, die sich
+heute nicht mehr speichern liessen, fehlen sie schon in der Vorschau, und eine Vorlage ohne ein
+einziges solches Element steht nicht zur Wahl. Angeboten wird die Vorlage auf der leeren
+Zeichenfläche und daneben auch, wenn schon etwas gezeichnet ist; die Übung selbst steht nicht zur Wahl. Das Ersetzen ist ein gewöhnlicher Schritt:
 „Rückgängig" holt die Zeichnung zurück, und wirksam wird es erst mit dem Speichern der Übung.
 
 Statt eines Diagramms oder zusätzlich kann auch ein Foto hochgeladen werden. Zulässig sind die

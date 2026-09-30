@@ -7,7 +7,7 @@ import {
 } from "@/lib/queries/uebungen-fuer";
 import type { Altersstufe } from "@/lib/altersstufe";
 import { uebungEckdaten } from "@/lib/eckdaten";
-import { hatDiagramm } from "@/lib/diagramm";
+import { zeichenbaresDiagramm } from "@/lib/diagramm-pruefung";
 import type { ExerciseCardData } from "@/components/ui";
 
 /**
@@ -113,7 +113,8 @@ export type VorlageItem = {
  *  KiFu-Manual-Diagramme. Fremde Trainer-Diagramme sind bewusst ausgeschlossen
  *  (Epic #58 Out-of-Scope 1) — der `or`-Filter grenzt auf Manual ODER eigene
  *  ein, RLS deckt die Lesbarkeit ab. Die Zielübung selbst wird ausgeklammert.
- *  Nur Übungen mit einem nicht-leeren Diagramm erscheinen. */
+ *  Nur Übungen mit mindestens einem zeichenbaren Element erscheinen, und das
+ *  Diagramm kommt bereinigt (`zeichenbaresDiagramm`). */
 export async function getVorlagen(excludeId?: string): Promise<VorlageItem[]> {
   const supabase = await createClient();
   const {
@@ -131,9 +132,14 @@ export async function getVorlagen(excludeId?: string): Promise<VorlageItem[]> {
 
   const { data, error } = await query;
   if (error) throw error;
+  // Nur, was die Zeichenfläche führen kann: Ein älteres Diagramm kann
+  // Elemente tragen, die sich heute nicht mehr speichern liessen. Vorschau und
+  // Übernahme zeigen dasselbe, und eine übernommene Vorlage lässt sich immer
+  // speichern; eine Vorlage ohne solches Element fällt weg.
   return (data ?? [])
-    .filter((r) => r.id !== excludeId && hatDiagramm(r.diagramm))
-    .map((r) => ({ id: r.id, slug: r.slug, name: r.name, diagramm: r.diagramm }));
+    .filter((r) => r.id !== excludeId)
+    .map((r) => ({ id: r.id, slug: r.slug, name: r.name, diagramm: zeichenbaresDiagramm(r.diagramm) }))
+    .filter((v) => v.diagramm.elemente.length > 0);
 }
 
 /** Hat der angemeldete USER diese Übung favorisiert? (Detailseite) */

@@ -11,7 +11,7 @@
 
 export const ZUGANG_DARF: readonly string[] = [
   "Übungen suchen und abrufen — den ganzen Bestand, den du auch in KiFu siehst",
-  "eigene Übungen samt Feld-Diagramm anlegen und ändern",
+  "eigene Übungen samt Feld-Diagramm anlegen, kopieren, ändern, öffentlich schalten und zurückziehen",
   "Trainings anlegen, überarbeiten, veröffentlichen, zurückziehen, übernehmen und löschen",
   "Team-Trainings deiner Teams führen und auf Termine ansetzen",
 ];

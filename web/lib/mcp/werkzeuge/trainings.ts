@@ -1,26 +1,25 @@
 import "server-only";
 import { z } from "zod";
-import {
-  altersstufe as altersstufeLabels,
-  hauptteilkategorieSlugs,
-  kategorienSlugs,
-} from "@/lib/vocab";
-import {
-  ALTERSSTUFEN,
-  einordnungenFuer,
-  einordnungsSlugsFuer,
-  kategorienFuer,
-  traegtHauptteilkategorie,
-  type Altersstufe,
-} from "@/lib/altersstufe";
-import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL, kategorieStufe } from "@/lib/labels";
+import { kategorienSlugs } from "@/lib/vocab";
+import { ALTERSSTUFEN } from "@/lib/altersstufe";
+import { EINORDNUNG_LABEL, ERSCHEINUNGSFORM_LABEL } from "@/lib/labels";
 import { BLOCK_ERSCHEINUNGSFORM } from "@/lib/junioren";
-import { HAUPTTEILKATEGORIEN, TRAINING_NAME_MAX, ZIEL_MAX } from "@/lib/training";
+import { TRAINING_NAME_MAX, ZIEL_MAX } from "@/lib/training";
 import { formOptionen, typOptionen } from "@/lib/filter-optionen";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import { legeTrainingAn } from "@/lib/kern/training";
 import { ordneUebungZu, vorlagenFuerBlock } from "@/lib/kern/fassung";
-import { alsEnum, katalogFilter, kennung } from "@/lib/mcp/bausteine";
+import {
+  ALTERSSTUFEN_TEXT,
+  Einordnung,
+  Hauptteilkategorie,
+  PFLICHT_SATZ,
+  SCHEMA_TEXT,
+  alsEnum,
+  katalogFilter,
+  kategorienText,
+  kennung,
+} from "@/lib/mcp/bausteine";
 import { SuchTreffer } from "@/lib/mcp/eingaben";
 import { alsTreffer } from "@/lib/mcp/werkzeuge/uebungen";
 import { werkzeug } from "@/lib/mcp/werkzeug";
@@ -36,31 +35,10 @@ import { werkzeug } from "@/lib/mcp/werkzeug";
  * jede Fachregel — auch «mindestens eine Alterskategorie» und die
  * Längengrenzen — prüft der Kern und benennt sie (#192 NFR 3/4).
  *
- * Alle Beschreibungen sind aus dem Vokabular erzeugt: Ein neuer Wert in
- * data/vokabular.yaml erscheint hier ohne Zutun.
+ * Alle Beschreibungen sind aus dem Vokabular erzeugt (die geteilten Bausteine
+ * in lib/mcp/bausteine.ts): Ein neuer Wert in data/vokabular.yaml erscheint
+ * hier ohne Zutun.
  */
-
-const liste = (werte: readonly { slug: string; label: string }[]) =>
-  werte.map((w) => `${w.slug} (${w.label})`).join(", ");
-
-/** Das Trainingsschema einer Altersstufe als ein Satz: Teile, Blöcke,
- *  Hauptteilkategorien — damit der Assistent die Einordnung nicht rät. */
-function schemaText(stufe: Altersstufe): string {
-  const teile = einordnungenFuer(stufe).map((g) => {
-    if (g.bloecke.length > 0) return `${g.label}: ${liste(g.bloecke)}`;
-    const hkat = traegtHauptteilkategorie(stufe, g.teil)
-      ? ` — Hauptteilkategorie Pflicht: ${liste(HAUPTTEILKATEGORIEN)}`
-      : "";
-    return `${g.teil} (${g.label}${hkat})`;
-  });
-  return `${altersstufeLabels[stufe]}: ${teile.join("; ")}.`;
-}
-
-const SCHEMA_TEXT = ALTERSSTUFEN.map(schemaText).join(" ");
-
-/** Alle Einordnungen beider Altersstufen — welche zum Training gehört,
- *  entscheidet der Kern an dessen Altersstufe und nennt sonst die zulässigen. */
-const EINORDNUNGEN = [...new Set(ALTERSSTUFEN.flatMap(einordnungsSlugsFuer))];
 
 /** Die anziehenden Erscheinungsformen des Juniorenschemas als Satz (#199
  *  AK 5) — aus `BLOCK_ERSCHEINUNGSFORM`, der einzigen Stelle, an der sie
@@ -76,15 +54,6 @@ const ANZIEHEND_TEXT =
     .join(" und ") +
   ", gleich wo sie eingeordnet sind.";
 
-const PFLICHT_SATZ =
-  "Im Kinderfussball-Hauptteil ist die Hauptteilkategorie Pflicht; ausserhalb davon bleibt sie leer.";
-
-export const Einordnung = alsEnum(EINORDNUNGEN).describe(
-  `Wohin die Übung gehört: im Kinderfussball der Trainingsteil, im Juniorenfussball der Block. ${SCHEMA_TEXT}`,
-);
-export const Hauptteilkategorie = alsEnum(hauptteilkategorieSlugs)
-  .optional()
-  .describe(`${PFLICHT_SATZ} Werte: ${liste(HAUPTTEILKATEGORIEN)}.`);
 export const TrainingId = kennung(
   "Kennung des Trainings, etwa aus «training_anlegen» oder «trainings_suchen».",
 );
@@ -128,26 +97,12 @@ export const TERMIN_KENNUNG_FEHLER =
   "ihn nicht, er wurde entfernt, oder er gehört einem fremden Team; bewusst nicht " +
   "unterscheidbar).";
 
-/** Die Alterskategorien je Altersstufe als ein Satz, etwa «Kinderfussball: G
- *  (G-Junior:innen), F (…)» — für jede Beschreibung, die Kategorien annimmt. */
-export function kategorienText(stufen: readonly Altersstufe[]): string {
-  return stufen
-    .map(
-      (s) =>
-        `${altersstufeLabels[s]}: ${kategorienFuer(s)
-          .map((k) => `${k} (${kategorieStufe[k as keyof typeof kategorieStufe] ?? k})`)
-          .join(", ")}`,
-    )
-    .join(". ");
-}
-
 // ── training_anlegen ────────────────────────────────────────────────────────
 
 const AnlegenEingabe = z.object({
   name: z.string().describe(`Name des Trainings, höchstens ${TRAINING_NAME_MAX} Zeichen.`),
   altersstufe: alsEnum(ALTERSSTUFEN).describe(
-    `Altersstufe: ${ALTERSSTUFEN.map((s) => `${s} (${altersstufeLabels[s]})`).join(", ")}. ` +
-      "Sie bestimmt das Trainingsschema und steht danach fest.",
+    `Altersstufe: ${ALTERSSTUFEN_TEXT}. Sie bestimmt das Trainingsschema und steht danach fest.`,
   ),
   stufen: z
     .array(alsEnum(kategorienSlugs))

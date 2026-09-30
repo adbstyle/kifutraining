@@ -3,6 +3,18 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { vokabular, werBinIch } from "@/lib/mcp/werkzeuge/konto";
 import { uebungAbrufen, uebungenSuchen } from "@/lib/mcp/werkzeuge/uebungen";
 import {
+  uebungAendern,
+  uebungAnlegen,
+  uebungAufEntwurfSetzen,
+  uebungKopieren,
+  uebungVeroeffentlichen,
+} from "@/lib/mcp/werkzeuge/uebungen-bearbeiten";
+import {
+  diagrammKatalogAbrufen,
+  uebungDiagrammMaengelAbrufen,
+  uebungDiagrammSetzen,
+} from "@/lib/mcp/werkzeuge/diagramm";
+import {
   trainingAnlegen,
   trainingUebungenFuerBlock,
   trainingUebungZuordnen,
@@ -53,6 +65,14 @@ export const WERKZEUGE = [
   vokabular,
   uebungenSuchen,
   uebungAbrufen,
+  uebungAnlegen,
+  uebungAendern,
+  uebungVeroeffentlichen,
+  uebungAufEntwurfSetzen,
+  uebungKopieren,
+  diagrammKatalogAbrufen,
+  uebungDiagrammSetzen,
+  uebungDiagrammMaengelAbrufen,
   trainingAnlegen,
   trainingUebungenFuerBlock,
   trainingUebungZuordnen,

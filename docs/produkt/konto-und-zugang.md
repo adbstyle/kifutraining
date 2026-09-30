@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-09-23. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-09-29. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -44,6 +44,73 @@ Gespräch im Übungsbestand suchen und einzelne Übungen mit allen Angaben abruf
 Bestand, den man auch selbst in der Anwendung sieht, mit denselben Filtern und denselben Werten
 für Altersstufe, Trainingsteil und die übrigen Angaben. Private Übungen anderer bleiben auch
 dem Assistenten verborgen.
+
+Eigene Übungen beider Altersstufen legt der Assistent ebenfalls an. Er erfährt dafür, welche
+Angaben eine Übung der gewählten Altersstufe führt, welche davon je nach Einordnung und
+Hauptteilkategorie Pflicht sind und welche Werte zulässig sind, und setzt dieselben Angaben wie
+das Formular — ohne Foto; ein Feld-Diagramm kann er gleich mitgeben (siehe unten). Die Übung
+entsteht als privater Entwurf unter den eigenen Übungen, und der Assistent bekommt die Adresse,
+unter der sie sich in der Anwendung öffnen lässt. Es gelten dieselben Regeln wie im Formular, nur die Reaktion ist strenger: Wo das
+Formular einen Wert gar nicht erst anbietet — eine Hauptteilkategorie ausserhalb des
+Hauptteils, eine Erscheinungsform des anderen Manuals, eine Spielfeldgrösse auf dem Kleinfeld —,
+fiele er dort still weg; beim Assistenten lehnt die Anwendung ab. Sie nennt dann jede verletzte
+Angabe einzeln samt den zulässigen Werten, auch jede fehlende Pflichtangabe, und legt nichts
+an; der Assistent korrigiert und schickt die ganze Übung noch einmal. Ist die Einordnung
+ungültig oder fehlt im Hauptteil die Hauptteilkategorie, kann der nächste Versuch weitere
+Verstösse nennen, die davon abhingen. Die Anzahl Spieler:innen
+und die Mengen der Materialliste nimmt sie nur als ganze Zahlen an. Für jede Übung gelten die
+Regeln ihrer Altersstufe: Eine Übung des Juniorenfussballs trägt in jedem Block eine Beschreibung
+als Pflicht, keinen methodischen Fahrplan, keine Hauptteilkategorie und keinen Feldtyp;
+Spielfeldgrösse und, in den Blöcken, die ihn kennen, der Übungstyp sind freiwillig. Den
+Übungstyp nimmt sie im Kinderfussball gar nicht an, und eine Angabe der anderen Altersstufe
+nennt sie wie jede andere verletzte Regel.
+
+Ebenso ändert der Assistent eine eigene Übung beider Altersstufen. Er nennt nur, was sich
+ändern soll; alles andere bleibt, wie es ist, und eine freiwillige Angabe entfernt er
+ausdrücklich. Geprüft wird danach die ganze Übung mit denselben Regeln wie beim Anlegen; verletzt
+sie eine, bleibt sie unverändert, und die Anwendung nennt jede verletzte Angabe. Wechselt die
+Einordnung, löscht die Anwendung gespeicherte Angaben, die die neue Einordnung nicht kennt,
+nicht still — sie nennt sie, und der Assistent entfernt sie ausdrücklich. Die Altersstufe
+einer Übung wechselt er dabei nie — wie bei Trainings; das Überführen in die andere Altersstufe
+gibt es nur in der Anwendung. Das Foto ändert er nicht, und eine Übung, die schon
+in einem Training steht, behält dort ihre Fassung. Übungen aus dem Manual und die anderer
+Trainer ändert er nicht; er erfährt, dass sie nicht die eigenen sind. Eine eigene Übung
+schaltet der Assistent auch öffentlich und zieht sie wieder zurück, ohne
+nachzufragen. Vorher weiss er, was das bedeutet: Die Übung wird mit allen Angaben, Bild und
+Diagramm für alle sichtbar und trägt die Plakette „Community", einen Trainernamen zeigt sie
+nicht. Zurückgezogen verschwindet sie aus dem öffentlichen Bestand; was andere schon in ihre
+Trainings oder ihren Bestand übernommen haben, bleibt bestehen.
+
+Jede Übung, die das Konto sieht — aus dem Manual, die öffentliche eines anderen Trainers oder
+eine eigene —, kopiert der Assistent auch in den eigenen Bestand, nach denselben Regeln wie
+„Übung kopieren" in der Anwendung: Es entsteht ein privater Entwurf mit allen Angaben, eigener
+Kopie von Bild und Feld-Diagramm und derselben Altersstufe, ohne Verbindung zur Quelle. Nur die
+Kopie einer eigenen Übung trägt den Zusatz „(Kopie)"; die einer Manual- oder fremden Übung
+behält ihren Namen. Der Assistent bekommt die Adresse der Kopie und kann sie danach ändern wie
+jede eigene Übung. Scheitert das Kopieren, bleibt nichts zurück.
+
+Das Feld-Diagramm einer eigenen Übung beider Altersstufen setzt der Assistent ebenfalls, oder er
+ersetzt ein vorhandenes als Ganzes; beim Anlegen kann er es gleich mitgeben, dann aber ohne
+gezählte Materialliste — die zählt die Anwendung selbst, eine freie Ergänzung ist weiterhin
+möglich. Welche Elemente, Farben, Drehungen und Posen ein Diagramm führen kann, wie gross die
+Zeichenfläche ist und wo die Figuren ihre Hände haben, erfährt er vorher. Die Anwendung nimmt ein
+Diagramm nur an, wenn es dieselben Grenzen einhält wie ein in der Maske gezeichnetes (siehe [Übungen](uebungen.md#feld-diagramme)); sonst lehnt sie ab, nennt
+jedes betroffene Element samt Grund und speichert nichts. Beim Anlegen stehen diese Gründe in
+derselben Rückmeldung wie die zu den übrigen Angaben, und die Übung entsteht nicht. Mit dem
+Diagramm ersetzt die Anwendung die gezählte Materialliste durch die aus dem Diagramm gezählte und
+nennt sie dem Assistenten; die freie Ergänzung bleibt. Hatte die Übung kein Bild, wird das
+Diagramm ihr Bild; ein vorhandenes Foto bleibt das angezeigte Bild. In der Anwendung liegt das
+Diagramm danach wie jedes andere zum Weiterzeichnen bereit, und die Fassungen der Übung in
+Trainings bleiben unverändert.
+
+Mit dem Ergebnis des Setzens — auch beim Anlegen — meldet die Anwendung dem Assistenten jeden
+inhaltlichen Mangel einzeln, mit dem betroffenen Element und wie er sich beheben lässt: etwa ein
+Leibchen neben einer Figur, aber nicht an deren Hand, ein Tor an der Feldkante, das vom Feld weg
+öffnet, ein Symbol, dessen Rahmen über den Rand ragt, einen leeren Text oder eine Angabe, die das
+Element nicht vorsieht. Ein Mangel hindert nichts: Das Diagramm ist gespeichert, und der
+Assistent setzt es korrigiert neu. Die Mängel des Diagramms einer eigenen Übung ruft er
+ausserdem jederzeit ab, auch eines, das in der Anwendung gezeichnet wurde; ein älteres Diagramm
+nennt dabei auch, was die Anwendung heute nicht mehr annähme.
 
 Der Assistent kann ausserdem Trainings beider Altersstufen anlegen — mit Name, Altersstufe,
 Alterskategorien und auf Wunsch einem Ziel — und ihnen Übungen zuordnen. Das Training entsteht
@@ -179,7 +246,7 @@ gibt, oder eine ungültige Uhrzeit lehnt die Anwendung ab und nennt den Grund. E
 man nicht Mitglied ist, gilt als nicht gefunden. Teams gründen, umbenennen, auflösen oder
 Mitglieder verwalten kann der Assistent nicht. Damit legt der Assistent Trainings beider
 Altersstufen an und führt sie weitgehend wie die Anwendung; was ihm fehlt, steht unter den
-bekannten Grenzen. Eigene Übungen legt er noch nicht an.
+bekannten Grenzen.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man die Adresse `https://ki-fu.ch/api/mcp` in
 den Assistenten ein; die Konto-Seite nennt sie ebenfalls und zeigt die zwei gängigen Wege: In
@@ -193,7 +260,8 @@ Assistenten nie geben.
 Die Seite zum Erlauben nennt, welcher Assistent anfragt, mit welchem Konto man angemeldet ist
 und wohin es danach zurückgeht. Sie zählt auf, was ein Zugang künftig insgesamt darf — also
 auch das, was erst mit späteren Erweiterungen dazukommt und heute noch nicht geht: Übungen
-suchen und abrufen, eigene Übungen samt Feld-Diagramm anlegen und ändern, Trainings anlegen,
+suchen und abrufen, eigene Übungen samt Feld-Diagramm anlegen, kopieren, ändern, öffentlich
+schalten und zurückziehen, Trainings anlegen,
 überarbeiten, veröffentlichen, zurückziehen, übernehmen und löschen sowie Team-Trainings der
 eigenen Teams führen und auf Termine ansetzen. Nie erreichbar sind die Favoriten, die
 Verwaltung der Teams und das Konto selbst. Kommt eine dieser Fähigkeiten dazu, muss man nicht
@@ -259,13 +327,19 @@ Wann und wie oft ein Zugang benutzt wurde, ist nicht einsehbar; was über ihn ge
 gesondert festgehalten, und der Name eines Zugangs lässt sich nach dem Erlauben nicht mehr
 ändern. Die Grenze von fünf Zugängen gilt nur auf dem Weg über die Erlauben-Seite der
 Anwendung; ein Zugang, der an ihr vorbei zustande käme, würde nicht mitgezählt. Ändert jemand
-dasselbe Training gleichzeitig in der Anwendung, merkt das niemand; ein bereits offener
+dasselbe Training oder dieselbe Übung gleichzeitig in der Anwendung, merkt das niemand; ein bereits offener
 Browser-Tab zeigt eine Änderung des Assistenten erst nach dem Neuladen. Im Training ist eine
 Änderung des Assistenten nicht von einer eigenen zu unterscheiden.
 
-Der Assistent ordnet nur zu, was der Bestand hergibt; er erfindet keine Übungen und ändert den
-Inhalt einer zugeordneten Übung nicht. Feld-Diagramme erstellt er nicht, und Fotos lädt er
-nicht hoch. Eine leere Variante legt der Assistent so wenig an wie die Anwendung, und eine
+Einem Training ordnet der Assistent nur zu, was der Bestand hergibt; eine Übung, die dort
+fehlt, legt er zuerst als eigene an, und den Inhalt einer zugeordneten Übung ändert er nicht.
+Eigene Übungen legt, ändert und kopiert er je Vorgang genau eine, nie als unvollständigen
+Entwurf; löschen kann er sie nicht. Eine Übung aus einem Training kopiert er nicht in den
+eigenen Bestand — das geht nur in der Anwendung. Ein Feld-Diagramm setzt er nur als Ganzes
+und nur an eigenen Übungen: Einzelne Elemente ändert er nicht, und entfernen kann er ein
+Diagramm nicht. Das Diagramm sieht er nicht als Bild. Die gemeldeten Mängel betreffen einzelne
+Elemente; ob das Diagramm die Übung fachlich richtig abbildet, beurteilt die Anwendung nicht, und
+in der Anwendung selbst erscheinen diese Mängel nirgends. Fotos lädt er nicht hoch. Eine leere Variante legt der Assistent so wenig an wie die Anwendung, und eine
 einzelne Übung kopiert oder verschiebt er nicht von einer Variante in eine andere. Anders als
 der Dialog der Anwendung erzwingt der Weg über den Assistenten beim Anlegen der zweiten Variante
 keinen neuen Namen für die bisherige. Die Reihenfolge
@@ -285,5 +359,6 @@ unvollständige Kopie als eigenes Training stehen bleiben; sie ist nicht als unf
 und wird nicht nachträglich aufgeräumt. Ebenso kann die Kopie vollständig entstanden sein, ohne
 dass der Assistent davon erfährt. Bleibt die Rückmeldung aus, prüft der Assistent darum vor einem
 zweiten Versuch den eigenen Bestand bzw. den des Teams. Dasselbe gilt für das erneute Ansetzen,
-das ebenfalls kopiert. Serientermine, abgesagte Einheiten und ob eine Einheit stattgefunden hat,
+das ebenfalls kopiert. Bricht das Kopieren einer Übung auf diese Weise ab, kann eine kopierte
+Bilddatei ohne Übung liegen bleiben; zu sehen ist sie nirgends. Serientermine, abgesagte Einheiten und ob eine Einheit stattgefunden hat,
 kennt die Anwendung auch über den Assistenten nicht.
