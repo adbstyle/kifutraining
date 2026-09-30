@@ -172,13 +172,20 @@ export const terminFestlegen = werkzeug({
 
 // ── termin_aendern ──────────────────────────────────────────────────────────
 
-const AendernEingabe = z.object({
+export const AendernEingabe = z.object({
   termin_id: TerminId,
   datum: DATUM.optional().describe("Neues Datum als JJJJ-MM-TT; ohne Angabe unverändert."),
-  beginn: UHRZEIT.optional().describe(
-    "Neuer Beginn als HH:MM; ohne Angabe unverändert. Wer die Zeit ändert, gibt Beginn UND Ende an.",
+  // `nullable`, damit ein `null` beim Kern ankommt und dort mit «Bitte Beginn
+  // und Ende angeben.» abgewiesen wird, statt schon an der Eingabeprüfung
+  // mit einem Typfehler zu scheitern (#322 AK 21).
+  beginn: UHRZEIT.nullable().optional().describe(
+    "Neuer Beginn als HH:MM; ohne Angabe unverändert. Wer die Zeit ändert, gibt Beginn UND Ende an. " +
+      "null wird abgewiesen: Beginn und Ende lassen sich nicht leeren.",
   ),
-  ende: UHRZEIT.optional().describe("Neues Ende als HH:MM am selben Tag; ohne Angabe unverändert."),
+  ende: UHRZEIT.nullable().optional().describe(
+    "Neues Ende als HH:MM am selben Tag; ohne Angabe unverändert. null wird abgewiesen: Beginn " +
+      "und Ende lassen sich nicht leeren.",
+  ),
   ort: ORT.nullable().optional().describe("Neuer Ort; null leert ihn, ohne Angabe unverändert."),
   bemerkung: BEMERKUNG.nullable().optional().describe("Neue Bemerkung; null leert sie, ohne Angabe unverändert."),
 });

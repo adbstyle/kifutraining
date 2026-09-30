@@ -14,7 +14,7 @@ import {
   ordneTrainingZuAktion,
   type TerminFelder,
 } from "@/lib/actions/termine";
-import { istVeraltet } from "@/lib/termin";
+import { geaenderteFelder, istVeraltet, ZUORDNEN_ERFOLG } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
@@ -38,6 +38,12 @@ export function useTerminAktionen(): TerminAktionen {
   const k = useContext(Kontext);
   if (!k) throw new Error("useTerminAktionen ausserhalb von <TerminBereich>");
   return k;
+}
+
+/** Die Werte, mit denen der Änderungs-Dialog öffnet — auch die Vergleichsbasis
+ *  für `geaenderteFelder`. */
+function startWerte(t: TerminZeile): TerminFelder {
+  return { datum: t.datum, beginn: t.beginn ?? "", ende: t.ende ?? "", ort: t.ort ?? "", bemerkung: t.bemerkung ?? "" };
 }
 
 export function TerminBereich({
@@ -120,14 +126,26 @@ export function TerminBereich({
         open={bearbeiten !== null}
         titel="Termin ändern"
         bestaetigung="Speichern"
-        start={bearbeiten ? { datum: bearbeiten.datum, beginn: bearbeiten.beginn ?? "", ende: bearbeiten.ende ?? "", ort: bearbeiten.ort ?? "", bemerkung: bearbeiten.bemerkung ?? "" } : undefined}
+        start={bearbeiten ? startWerte(bearbeiten) : undefined}
         bisher={bearbeiten ? { beginn: bearbeiten.beginn, ende: bearbeiten.ende } : undefined}
         pending={pending}
+        fehler={dialogFehler}
         onClose={() => setBearbeiten(null)}
-        onSpeichern={(f) =>
-          bearbeiten &&
-          lauf(() => aendereTerminAktion(bearbeiten.id, f, bearbeiten.training?.id ?? null), () => "Termin geändert.", () => setBearbeiten(null))
-        }
+        onSpeichern={(f) => {
+          if (!bearbeiten) return;
+          // Nur gesendet, was sich geändert hat (PO 17); nichts geändert: kein Aufruf.
+          const geaendert = geaenderteFelder(f, startWerte(bearbeiten));
+          if (!geaendert) {
+            setBearbeiten(null);
+            return;
+          }
+          lauf(
+            () => aendereTerminAktion(bearbeiten.id, geaendert, bearbeiten.training?.id ?? null),
+            () => "Termin geändert.",
+            () => setBearbeiten(null),
+            true,
+          );
+        }}
       />
 
       <TrainingWahlDialog
@@ -146,7 +164,7 @@ export function TerminBereich({
               art: w.art,
               erwartet: { terminTraining: zuordnen.training?.id ?? null, trainingTermin: w.trainingTermin },
             }),
-            (r) => ("kopie" in r && r.kopie ? "Kopie angelegt und dem Termin zugeordnet." : "Training zugeordnet."),
+            (r) => ("kopie" in r && r.kopie ? ZUORDNEN_ERFOLG.kopie : ZUORDNEN_ERFOLG.direkt),
             () => setZuordnen(null),
             true,
           )
@@ -174,7 +192,7 @@ export function TerminBereich({
         }
       >
         <p>
-          Der Termin am {entfernen ? datumKurz(entfernen.datum) : ""} verschwindet aus dem Kalender.
+          Der Termin am {entfernen ? datumKurz(entfernen.datum) : ""} verschwindet aus dem Trainingsplan.
           {entfernen?.training && (
             <> <strong className="text-on-surface">{entfernen.training.name}</strong> bleibt ohne Termin im Team-Bestand.</>
           )}

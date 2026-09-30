@@ -15,7 +15,8 @@ import type { TerminFelder } from "@/lib/termin";
 /**
  * Der Kalender eines Teams (#322, #323) — dünne Adapter über den Fachkern
  * (lib/kern/termine.ts), dieselben Funktionen wie die KI-Werkzeuge. Die
- * Oberfläche sendet stets mit, was sie bei der Auswahl sah (PO 17).
+ * Oberfläche sendet mit, was sie bei der Auswahl sah (PO 17): das Training
+ * und, beim Ändern, nur die Felder, die sich geändert haben.
  */
 
 export type { TerminFelder } from "@/lib/termin";
@@ -41,10 +42,12 @@ export async function legeTerminFestAktion(
   return { ok: true, terminId: r.wert.terminId };
 }
 
-/** Der Dialog sendet immer alle Felder; ein leeres heisst «leeren». */
+/** Der Dialog sendet nur, was sich gegenüber seinen Startwerten geändert hat
+ *  (`geaenderteFelder`, PO 17): `undefined` heisst unverändert, ein leerer
+ *  Text «leeren». Beginn und Ende kommen als Paar. */
 export async function aendereTerminAktion(
   terminId: string,
-  felder: TerminFelder,
+  felder: Partial<TerminFelder>,
   erwartetesTraining: string | null,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
@@ -52,10 +55,10 @@ export async function aendereTerminAktion(
   const r = await aendereTermin(a.supabase, a.userId, {
     terminId,
     datum: felder.datum,
-    beginn: felder.beginn ?? null,
-    ende: felder.ende ?? null,
-    ort: felder.ort ?? null,
-    bemerkung: felder.bemerkung ?? null,
+    beginn: felder.beginn,
+    ende: felder.ende,
+    ort: felder.ort,
+    bemerkung: felder.bemerkung,
     erwartetesTraining,
   });
   if (!r.ok) return { ok: false, error: r.meldung };

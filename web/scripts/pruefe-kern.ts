@@ -73,7 +73,11 @@ import { zeitAbgleich } from "../lib/junioren";
 import { verteilungAus } from "../lib/gruppen";
 import {
   TERMIN_MELDUNG,
+  KONFLIKT_MARKER,
   TERMIN_TEXT,
+  ZUORDNEN_ERFOLG,
+  geaenderteFelder,
+  istVeraltet,
   kopieGebliebenText,
   leerZuNull,
   terminProblem,
@@ -571,6 +575,50 @@ pruefe("Termin-Anzeige und -Marker: derselbe Satz vorab und aus der Datenbank", 
   }
   assert.match(kopieGebliebenText("Spielformen"), /«Spielformen» ist im Team-Bestand geblieben/);
   assert.equal(NICHT_GEFUNDEN.termin, "Termin nicht gefunden.");
+});
+
+pruefe("istVeraltet: trifft «seit der Auswahl geändert» und «gibt es nicht mehr», sonst nichts (PO 17)", () => {
+  // Jeder Konflikt-Marker — auch ein später ergänzter — und beide Nicht-gefunden-Sätze.
+  const saetze: Record<string, string> = TERMIN_MELDUNG;
+  for (const m of KONFLIKT_MARKER) assert.ok(istVeraltet(saetze[m]), m);
+  assert.ok(istVeraltet(TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN));
+  assert.ok(istVeraltet(TERMIN_MELDUNG.TRAINING_NICHT_GEFUNDEN));
+  // Eine Meldung mit Zusatz (Kopie geblieben) bleibt veraltet: Präfix-Vergleich.
+  assert.ok(istVeraltet(`${TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT} ${kopieGebliebenText("Spielformen")}`));
+  // Regeln, die ein erneuter Versuch mit anderer Wahl löst, schliessen den Dialog nicht.
+  assert.ok(!istVeraltet(TERMIN_MELDUNG.TRAINING_SCHON_EINGEPLANT));
+  assert.ok(!istVeraltet(TERMIN_MELDUNG.NUR_KOPIE_BEI_VERGANGENEM));
+  assert.ok(!istVeraltet(TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM));
+  assert.ok(!istVeraltet(undefined));
+  assert.ok(!istVeraltet(""));
+  assert.ok(!istVeraltet(TERMIN_TEXT.datum));
+});
+
+pruefe("geaenderteFelder: nur Geändertes, Beginn und Ende als Paar, nichts geändert = null (PO 17)", () => {
+  const start = { datum: "2026-10-08", beginn: "18:30", ende: "20:00", ort: "Allmend", bemerkung: "" };
+  assert.equal(geaenderteFelder({ ...start }, start), null, "unverändert");
+  assert.equal(geaenderteFelder({ ...start, ort: " Allmend " }, start), null, "Leerraum ist keine Änderung");
+  assert.deepEqual(geaenderteFelder({ ...start, ort: "Halle" }, start), { ort: "Halle" });
+  assert.deepEqual(geaenderteFelder({ ...start, ort: "" }, start), { ort: "" }, "leeren");
+  assert.deepEqual(geaenderteFelder({ ...start, bemerkung: "Bälle" }, start), { bemerkung: "Bälle" });
+  assert.deepEqual(geaenderteFelder({ ...start, datum: "2026-10-09" }, start), { datum: "2026-10-09" });
+  assert.deepEqual(geaenderteFelder({ ...start, ende: "20:30" }, start), { beginn: "18:30", ende: "20:30" }, "Paar");
+  assert.deepEqual(geaenderteFelder({ ...start, beginn: "18:00" }, start), { beginn: "18:00", ende: "20:00" }, "Paar");
+  assert.deepEqual(
+    geaenderteFelder({ ...start, datum: "2026-10-09", ort: "Halle" }, start),
+    { datum: "2026-10-09", ort: "Halle" },
+    "Zeit bleibt draussen",
+  );
+  // Übernommener Termin ohne Zeit: unverändert heisst weiter «nichts senden».
+  const ohneZeit = { datum: "2026-10-08", beginn: "", ende: "", ort: "", bemerkung: "" };
+  assert.equal(geaenderteFelder({ ...ohneZeit }, ohneZeit), null);
+});
+
+pruefe("Erfolgstexte und Nicht-gefunden-Sätze haben je eine Quelle", () => {
+  assert.equal(ZUORDNEN_ERFOLG.kopie, "Kopie angelegt und dem Termin zugeordnet.");
+  assert.equal(ZUORDNEN_ERFOLG.direkt, "Training zugeordnet.");
+  assert.equal(NICHT_GEFUNDEN.termin, TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN);
+  assert.equal(NICHT_GEFUNDEN.training, TERMIN_MELDUNG.TRAINING_NICHT_GEFUNDEN);
 });
 
 // ── Durchlauf (#194 AK 8, PC 3, NFR 1) ──────────────────────────────────────

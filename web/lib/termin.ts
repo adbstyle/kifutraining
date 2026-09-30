@@ -103,6 +103,33 @@ export function terminProblem(
   return textProblem(f);
 }
 
+/** Was sich gegenüber den Startwerten des Dialogs geändert hat — sonst nichts
+ *  (PO 17): Der Dialog sendet nur diese Felder, damit eine gleichzeitige
+ *  Änderung eines anderen Feldes durch ein anderes Mitglied nicht still mit
+ *  dem alten Stand überschrieben wird. Beginn und Ende gehen als Paar (ändert
+ *  sich eines, stehen beide drin); ein leerer Text heisst «leeren».
+ *  `null`, wenn sich nichts geändert hat — dann braucht es keinen Aufruf.
+ *  Gleich sind zwei Werte, wenn sie nach `leerZuNull` gleich sind. */
+export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partial<TerminFelder> | null {
+  const gleich = (a: string | null | undefined, b: string | null | undefined) => leerZuNull(a) === leerZuNull(b);
+  const aenderung: Partial<TerminFelder> = {};
+  if (neu.datum !== start.datum) aenderung.datum = neu.datum;
+  if (!gleich(neu.beginn, start.beginn) || !gleich(neu.ende, start.ende)) {
+    aenderung.beginn = neu.beginn ?? "";
+    aenderung.ende = neu.ende ?? "";
+  }
+  if (!gleich(neu.ort, start.ort)) aenderung.ort = neu.ort ?? "";
+  if (!gleich(neu.bemerkung, start.bemerkung)) aenderung.bemerkung = neu.bemerkung ?? "";
+  return Object.keys(aenderung).length > 0 ? aenderung : null;
+}
+
+/** Die Erfolgsmeldungen nach dem Zuordnen eines Trainings — Kalender und
+ *  Team-Bestand sagen dasselbe. */
+export const ZUORDNEN_ERFOLG = {
+  kopie: "Kopie angelegt und dem Termin zugeordnet.",
+  direkt: "Training zugeordnet.",
+} as const;
+
 /** Die Zeit eines Termins zum Anzeigen: «18:30–20:00», «ab 18:30» für einen
  *  übernommenen Termin ohne Ende, sonst `null` (AK 14, 15). */
 export function zeitText(beginn: string | null, ende: string | null): string | null {

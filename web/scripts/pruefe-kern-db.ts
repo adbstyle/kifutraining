@@ -61,6 +61,7 @@ const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTra
 );
 const { TERMIN_MELDUNG, TERMIN_TEXT } = await import("../lib/termin");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
+const { AendernEingabe: TerminAendernEingabe } = await import("../lib/mcp/werkzeuge/team");
 const {
   legeUebungAn,
   aendereUebung,
@@ -1183,6 +1184,13 @@ try {
     wert(await aendereTermin(mitSpur, a.id, { terminId: t1.terminId, ort: "Platz" }));
     assert.deepEqual(spur, [["ort"]], "nur das übergebene Feld wird geschrieben");
     assert.deepEqual(await zeile(t1.terminId), { datum: tag(2), beginn: "18:30:00", ende: "20:00:00", ort: "Platz", bemerkung: "X", training_id: null });
+    // PO 17 (Oberfläche): Der Dialog sendet nur Geändertes. Hat ein anderes
+    // Mitglied inzwischen den Ort geändert, bleibt seine Änderung stehen, wenn
+    // dieses Mitglied nur die Bemerkung sendet.
+    await admin.from("training_termine").update({ ort: "Von anderem Mitglied" }).eq("id", t1.terminId);
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, bemerkung: "Neu" }));
+    assert.deepEqual(await zeile(t1.terminId), { datum: tag(2), beginn: "18:30:00", ende: "20:00:00", ort: "Von anderem Mitglied", bemerkung: "Neu", training_id: null });
+    await admin.from("training_termine").update({ ort: "Platz", bemerkung: "X" }).eq("id", t1.terminId);
     spur.length = 0;
     wert(await aendereTermin(mitSpur, a.id, { terminId: t1.terminId, beginn: "18:45", ende: "20:00" }));
     assert.deepEqual(spur, [["beginn", "ende"]], "Beginn und Ende gehen stets zusammen");
@@ -1198,6 +1206,14 @@ try {
     wert(await aendereTermin(a.supabase, a.id, { terminId: alt!.id, beginn: "17:30", ende: "19:00" }));
     // AK 8: nicht leeren.
     fehler(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, beginn: null, ende: null }), "eingabe", TERMIN_TEXT.zeitPflicht);
+    // #322 AK 21: Ein `null` für Beginn oder Ende passiert die Eingabeprüfung des
+    // Werkzeugs und wird vom Kern mit demselben Satz abgewiesen.
+    {
+      const e = TerminAendernEingabe.parse({ termin_id: t1.terminId, beginn: null, ende: null });
+      assert.equal(e.beginn, null);
+      fehler(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, beginn: e.beginn, ende: e.ende }), "eingabe", TERMIN_TEXT.zeitPflicht);
+      fehler(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, beginn: null }), "eingabe", TERMIN_TEXT.zeitPflicht);
+    }
 
     // Plan: Termine ohne Training zählen wie alle anderen (PC 3).
     const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team.id }));
