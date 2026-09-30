@@ -7,9 +7,9 @@
 -- ============================================================================
 set lock_timeout = '5s';
 
--- Teil A hat die Längen NOT VALID eingeführt; der Bestand ist gezählt (Step 1).
-alter table training_termine validate constraint tt_ort_laenge;
-alter table training_termine validate constraint tt_bemerkung_laenge;
+-- Die Längenchecks aus Teil A sind noch NOT VALID; das VALIDATE steht bewusst in
+-- der eigenen, späteren Migration laengen_validieren, damit ein Bestandsproblem
+-- nicht das ganze Serienschema zurückrollt.
 
 -- ISO-Wochentage 1 = Montag … 7 = Sonntag, mindestens einer, keiner doppelt
 -- (Zwilling von wochentageProblem() in web/lib/serie.ts).
@@ -32,13 +32,13 @@ as $$
    where extract(isodow from d)::smallint = any(p_wochentage)
 $$;
 
--- Reine Hilfsfunktionen: anon darf sie nicht über PostgREST aufrufen
--- (/rpc/serien_tage mit riesigem Bereich kostet CPU). CHECK-Constraint und die
--- SECURITY-DEFINER-RPCs laufen als Eigentümer und brauchen kein Recht.
-revoke all on function wochentage_gueltig(smallint[]) from public, anon;
-grant execute on function wochentage_gueltig(smallint[]) to authenticated, service_role;
-revoke all on function serien_tage(smallint[], date, date) from public, anon;
-grant execute on function serien_tage(smallint[], date, date) to authenticated, service_role;
+-- Reine Hilfsfunktionen: weder anon noch authenticated dürfen sie über PostgREST
+-- aufrufen (/rpc/serien_tage mit riesigem Bereich kostet CPU). CHECK-Constraint
+-- und die SECURITY-DEFINER-RPCs laufen als Eigentümer und brauchen kein Recht.
+revoke all on function wochentage_gueltig(smallint[]) from public, anon, authenticated;
+grant execute on function wochentage_gueltig(smallint[]) to service_role;
+revoke all on function serien_tage(smallint[], date, date) from public, anon, authenticated;
+grant execute on function serien_tage(smallint[], date, date) to service_role;
 
 create table termin_serien (
   id uuid primary key default gen_random_uuid(),

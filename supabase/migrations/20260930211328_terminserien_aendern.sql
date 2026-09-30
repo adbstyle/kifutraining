@@ -84,14 +84,15 @@ begin
     raise exception 'TEILSERIE_BEGINN';   -- PC 19
   end if;
   if not wochentage_gueltig(v_neu_tage) then raise exception 'SERIE_WOCHENTAGE'; end if;
-  if v_neu_bis < v_neu_von then raise exception 'SERIE_ENDE_VOR_BEGINN'; end if;
-  if v_neu_bis > (v_neu_von + interval '1 year')::date then raise exception 'SERIE_ZU_LANG'; end if;
   -- Nur wenn die Regel sich ändert: Bei reinen Werteänderungen kann der
-  -- gewählte Termin hinter dem Serienende liegen (verlegt), ohne dass die
-  -- unveränderte Regel dort einen Tag hätte.
-  if (p_aenderung ? 'wochentage' or p_aenderung ? 'beginn_datum' or p_aenderung ? 'end_datum')
-     and not exists (select 1 from serien_tage(v_neu_tage, v_neu_von, v_neu_bis)) then
-    raise exception 'SERIE_OHNE_TAG';
+  -- gewählte Termin hinter dem Serienende liegen (verlegt), sodass der Bereich
+  -- der Reichweite keine Regelprüfung bestünde.
+  if p_aenderung ? 'wochentage' or p_aenderung ? 'beginn_datum' or p_aenderung ? 'end_datum' then
+    if v_neu_bis < v_neu_von then raise exception 'SERIE_ENDE_VOR_BEGINN'; end if;
+    if v_neu_bis > (v_neu_von + interval '1 year')::date then raise exception 'SERIE_ZU_LANG'; end if;
+    if not exists (select 1 from serien_tage(v_neu_tage, v_neu_von, v_neu_bis)) then
+      raise exception 'SERIE_OHNE_TAG';
+    end if;
   end if;
   if v_zeit then
     v_beginn := (p_aenderung->>'beginn')::time;
