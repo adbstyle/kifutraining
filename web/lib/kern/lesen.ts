@@ -98,6 +98,9 @@ export type TrefferTermin = {
   serieId: string | null;
   /** Wer den Termin vorbereitet und leitet (#325 AK 16). */
   verantwortliche: { userId: string | null; name: string | null; ehemalig: boolean }[];
+  /** Bei einem Training immer `false`/`null` (#327 AK 9) — die Gestalt bleibt wie im Plan. */
+  ausgefallen: boolean;
+  ausfallGrund: string | null;
   /** Heute oder später, am Trainingsort — wie der Plan teilt. */
   anstehend: boolean;
 };

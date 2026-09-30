@@ -54,6 +54,8 @@ import {
   terminEntfernen,
   terminDerSerieFolgen,
   terminVerantwortlicheSetzen,
+  terminAusfallenLassen,
+  terminAusfallZuruecknehmen,
   terminFestlegen,
   terminserieFestlegen,
   trainingLoesen,
@@ -113,6 +115,8 @@ export const WERKZEUGE = [
   terminserieFestlegen,
   terminDerSerieFolgen,
   terminVerantwortlicheSetzen,
+  terminAusfallenLassen,
+  terminAusfallZuruecknehmen,
   trainingZuordnen,
   trainingLoesen,
 ] as const;

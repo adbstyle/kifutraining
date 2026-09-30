@@ -565,6 +565,8 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     bemerkung: null,
     serie_id: null,
     verantwortliche: [],
+    ausgefallen: false,
+    ausfall_grund: null,
     anstehend: true,
   });
   // Der heutige Tag zählt ganz zum Anstehenden — wie im Plan (`teilePlan`).
@@ -1585,6 +1587,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#324": ["terminserie_festlegen"],
     "#326": ["termin_der_serie_folgen"],
     "#325": ["team_mitglieder_abrufen", "termin_verantwortliche_setzen"],
+    "#327": ["termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))

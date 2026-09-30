@@ -5,7 +5,7 @@ import { abgebildet } from "@/lib/kern/ergebnis";
 import { meineTeams, teamPlan } from "@/lib/kern/team";
 import { setzeVerantwortliche, teamMitglieder } from "@/lib/kern/verantwortliche";
 import { aendereMitReichweite, entferneMitReichweite, folgeDerSerie, legeSerieFest } from "@/lib/kern/serien";
-import { legeTerminFest, loeseTraining, ordneTrainingZu } from "@/lib/kern/termine";
+import { lasseAusfallen, legeTerminFest, loeseTraining, nimmAusfallZurueck, ordneTrainingZu } from "@/lib/kern/termine";
 import { KI_WOCHENTAG, alsKiWochentag, alsWochentag } from "@/lib/serie";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { Wert, kennung, wert } from "@/lib/mcp/bausteine";
@@ -44,7 +44,8 @@ const TERMIN_MODELL =
   "bestehenden Termin auf ein Datum. Ein Termin trägt höchstens " +
   "ein Training, und ein Training ist höchstens für einen Termin eingeplant — für einen weiteren " +
   "Termin entsteht eine eigenständige Kopie, oder ein Training mit anstehendem Termin wird " +
-  "verschoben. Zeiten gelten am Trainingsort (Schweiz). «hat stattgefunden» kennt KiFu nicht.";
+  "verschoben. Zeiten gelten am Trainingsort (Schweiz). Ein Termin kann ausfallen (mit freiwilligem " +
+  "Grund); «hat stattgefunden» kennt KiFu nicht.";
 
 const DATUM = z.string().describe("Datum als JJJJ-MM-TT, etwa 2026-10-07.");
 const UHRZEIT = z.string().describe("Uhrzeit als HH:MM (24 Stunden), etwa 18:30.");
@@ -126,6 +127,10 @@ const PlanEintrag = z.object({
   abweichungen: z.array(z.enum(["datum", "zeit", "ort", "bemerkung", "verantwortliche"])),
   /** Wer den Termin vorbereitet und leitet (#325); leer ohne Eintrag. */
   verantwortliche: z.array(Verantwortlich),
+  /** Ein ausgefallener Termin trägt kein Training und gilt nicht als unvorbereitet (#327). */
+  ausgefallen: z.boolean(),
+  /** Freiwilliger Grund des Ausfalls; `null` ohne Angabe und bei einem Termin, der stattfindet. */
+  ausfall_grund: z.string().nullable(),
   /** `null`: Der Termin trägt kein Training (#322 AK 20). */
   training: z.object({ id: z.string(), name: z.string(), stufen: z.array(Wert), url: z.string() }).nullable(),
 });
@@ -141,6 +146,8 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     serie_id: t.serie?.id ?? null,
     abweichungen: t.abweichungen,
     verantwortliche: t.verantwortliche.map((v) => ({ id: v.userId, anzeigename: v.name, ehemalig: v.ehemalig })),
+    ausgefallen: t.ausgefallen,
+    ausfall_grund: t.ausfallGrund,
     training: t.training
       ? {
           id: t.training.id,
@@ -197,6 +204,7 @@ export const teamPlanAbrufen = werkzeug({
     "Ende sein. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
     "Ort, Bemerkung und Verantwortliche jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
     "von ihr abweicht. Jeder Eintrag nennt seine Verantwortlichen; «nur_meine» grenzt auf deine ein. " +
+    "Ausgefallene Termine stehen mit «ausgefallen: true» und Grund im Plan. " +
     "Team-Trainings ohne Termin nennt «trainings_suchen» (bestand: team). " +
     TEAM_KENNUNG_FEHLER,
   nurLesen: true,
@@ -491,6 +499,53 @@ export const trainingLoesen = werkzeug({
   ausfuehren: async (e, zugang) =>
     abgebildet(await loeseTraining(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
       training_id: w.trainingId,
+    })),
+});
+
+// ── termin_ausfallen_lassen ─────────────────────────────────────────────────
+
+export const terminAusfallenLassen = werkzeug({
+  name: "termin_ausfallen_lassen",
+  titel: "Termin ausfallen lassen",
+  beschreibung:
+    "Markiert einen Termin als ausgefallen — wie ein abgesagter Kalendereintrag — oder ändert den " +
+    "Grund eines schon ausgefallenen. Ohne «grund» bleibt ein vorhandener Grund stehen; «grund»: " +
+    "null (oder leer) leert ihn. Trägt der Termin ein Training, wird es gelöst und bleibt ohne " +
+    "Termin im Bestand («geloestes_training»). Ein ausgefallener Termin gilt nicht als " +
+    "unvorbereitet und nimmt kein Training an. Einzeln auf heute oder später verlegt, findet er " +
+    `wieder statt. ${TERMIN_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({
+    termin_id: TerminId,
+    grund: BEMERKUNG.nullable()
+      .optional()
+      .describe("Grund, frei, höchstens 500 Zeichen. Weggelassen: ein vorhandener Grund bleibt. null: leert ihn."),
+  }),
+  ausgabe: z.object({
+    termin_id: z.string(),
+    geloestes_training: z.string().nullable().describe("Kennung des Trainings, das vom Termin gelöst wurde; null ohne."),
+  }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await lasseAusfallen(zugang.supabase, zugang.userId, { terminId: e.termin_id, grund: e.grund }), (w) => ({
+      termin_id: w.terminId,
+      geloestes_training: w.geloestesTraining,
+    })),
+});
+
+// ── termin_ausfall_zuruecknehmen ────────────────────────────────────────────
+
+export const terminAusfallZuruecknehmen = werkzeug({
+  name: "termin_ausfall_zuruecknehmen",
+  titel: "Ausfall zurücknehmen",
+  beschreibung:
+    "Nimmt den Ausfall eines Termins zurück: Er ist danach wieder ein normaler Termin, ohne Training " +
+    `und ohne Grund; ein früher gelöstes Training ordnet KiFu nicht wieder zu. ${TERMIN_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({ termin_id: TerminId }),
+  ausgabe: z.object({ termin_id: z.string() }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await nimmAusfallZurueck(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
+      termin_id: w.terminId,
     })),
 });
 

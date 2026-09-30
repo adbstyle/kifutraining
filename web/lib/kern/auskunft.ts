@@ -258,6 +258,8 @@ export function trainingAuskunft(
             anzeigename: v.name,
             ehemalig: v.ehemalig,
           })),
+          ausgefallen: k.termin.ausgefallen,
+          ausfall_grund: k.termin.ausfallGrund,
           // Dieselbe Grenze wie der Plan (`teilePlan`): der heutige Tag zählt
           // ganz zum Anstehenden.
           anstehend: k.termin.datum >= (k.heute ?? heuteAmTrainingsort()),

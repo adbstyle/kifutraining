@@ -1443,6 +1443,8 @@ try {
       bemerkung: "Leibchen",
       serieId: null,
       verantwortliche: [],
+      ausgefallen: false,
+      ausfallGrund: null,
       anstehend: true,
     });
     assert.equal(suche.treffer.find((t) => t.id === vergangenes)!.termin?.anstehend, false);
@@ -1462,6 +1464,8 @@ try {
       bemerkung: "Leibchen",
       serie_id: null,
       verantwortliche: [],
+      ausgefallen: false,
+      ausfall_grund: null,
       anstehend: true,
     });
     assert.equal(wert(await trainingAbrufen(a.supabase, a.id, { trainingId: persoenlich })).termin, null);

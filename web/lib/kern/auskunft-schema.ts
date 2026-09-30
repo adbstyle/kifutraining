@@ -172,6 +172,10 @@ function baueSchema(streng: boolean) {
       verantwortliche: z.array(
         obj({ id: z.string().nullable(), anzeigename: z.string().nullable(), ehemalig: z.boolean() }),
       ),
+      /** Ein Training trägt nie einen ausgefallenen Termin (#327 AK 9); die
+       *  Felder stehen trotzdem in jeder Auskunft, damit die Gestalt einheitlich bleibt. */
+      ausgefallen: z.boolean(),
+      ausfall_grund: z.string().nullable(),
       anstehend: z.boolean(),
     }).nullable(),
     /** Alle Übungen des Trainings über ALLE Varianten des Hauptteils. */
