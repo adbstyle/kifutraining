@@ -196,8 +196,7 @@ export function TerminBereich({
    *  Jeder Aufruf läuft nur, wenn sich bei ihm etwas geändert hat (PO 17);
    *  scheitert der erste, läuft der zweite nicht. Hat der USER nach dem
    *  ersten abgebrochen, läuft der zweite auch nicht: Die Dialoge bleiben
-   *  unberührt, die Snackbar sagt, dass nur die Felder gespeichert sind. Die
-   *  Serienversion geht mit, wie beim KI-Weg. */
+   *  unberührt, die Snackbar sagt, dass nur die Felder gespeichert sind. */
   function aendereEinzeln(t: TerminZeile, geaendert: Partial<TerminFelder> | null | undefined, verantwortlich?: VerantwortlicheWert) {
     const nr = laufNr.current;
     const gilt = () => laufNr.current === nr;
@@ -211,12 +210,7 @@ export function TerminBereich({
           router.refresh();
           return melde(NUR_FELDER_GEAENDERT);
         }
-        const v = await setzeVerantwortlicheAktion(
-          t.id,
-          verantwortlich,
-          t.serie ? "nur_dieser" : undefined,
-          t.serie ? { version: t.serie.version, entfallend: [] } : undefined,
-        );
+        const v = await setzeVerantwortlicheAktion(t.id, verantwortlich, t.serie ? "nur_dieser" : undefined);
         if (!v.ok) return einzelnGescheitert(v.error, gilt(), !!geaendert);
       }
       router.refresh();

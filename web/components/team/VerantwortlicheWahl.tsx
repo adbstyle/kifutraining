@@ -60,7 +60,12 @@ export function VerantwortlicheWahl({
   // ausgetretenes Mitglied gewählt im Wert, aber in keiner Zeile der Liste,
   // und liesse sich nicht abwählen.
   const ehemalige = bisher.filter((v) => !v.userId || !imTeam.has(v.userId));
-  const gruppiert = ehemalige.length > 0;
+  // Gewählt, aber weder im Team noch unter `bisher` — etwa in einer Serie, in
+  // der ein Mitglied inzwischen ausgetreten ist (kein `bisher`): Ohne Zeile
+  // liesse es sich nicht abwählen. Der Name ist hier nicht bekannt.
+  const bekannt = new Set(ehemalige.flatMap((v) => (v.userId ? [v.userId] : [])));
+  const unbekannte = wert.userIds.filter((u) => !imTeam.has(u) && !bekannt.has(u));
+  const gruppiert = ehemalige.length > 0 || unbekannte.length > 0;
   const options = [
     ...mitglieder.map((m) => ({
       value: `u:${m.userId}`,
@@ -72,6 +77,7 @@ export function VerantwortlicheWahl({
       label: v.name ? `${v.name} (nicht mehr im Team)` : EHEMALIGES_MITGLIED,
       group: "Ehemalige",
     })),
+    ...unbekannte.map((u) => ({ value: `u:${u}`, label: EHEMALIGES_MITGLIED, group: "Ehemalige" })),
   ];
   const value = [...wert.userIds.map((u) => `u:${u}`), ...wert.anonyme.map((a) => `a:${a}`)];
   return (

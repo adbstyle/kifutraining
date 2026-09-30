@@ -8,7 +8,7 @@ import { JUNIOREN_BLOCK_SLUGS, type Einordnung } from "@/lib/junioren";
 import type { Altersstufe } from "@/lib/altersstufe";
 import { FASSUNG_INHALT_FELDER, FASSUNG_ZUORDNUNG_FELDER } from "@/lib/fassung";
 import type { Variante } from "@/lib/varianten";
-import { kurzeZeit } from "@/lib/queries/termine-fuer";
+import { kurzeZeit, nachName } from "@/lib/queries/termine-fuer";
 import { parseMaterialBasis, parseMaterialListe, type MaterialPosten } from "@/lib/material";
 
 // Trainings lesen für einen Client, der bereits als Nutzer spricht (Cookie-
@@ -517,7 +517,7 @@ export type TeamTrainingRow = TrainingListRow & {
 
 const TEAM_LIST_SELECT =
   `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, serie_id, ` +
-  "termin_verantwortliche ( user_id, verantwortlich_name, verantwortlich_ehemalig ) )";
+  "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ) )";
 
 export type TeamTrainingFilter = {
   /** Sucht im Namen, wie die Trainings-Übersicht (`search_text`). */
@@ -571,6 +571,7 @@ export async function getTeamTrainingsFuer(
       bemerkung: string | null;
       serie_id: string | null;
       termin_verantwortliche: {
+        id: string;
         user_id: string | null;
         verantwortlich_name: string | null;
         verantwortlich_ehemalig: boolean;
@@ -591,18 +592,18 @@ export async function getTeamTrainingsFuer(
             ort: termin.ort,
             bemerkung: termin.bemerkung,
             serieId: termin.serie_id,
-            // Wie im Plan nach Name geordnet, gelöschte Konten zuletzt.
-            verantwortliche: (termin.termin_verantwortliche ?? [])
-              .map((v) => ({
+            // Wie im Plan nach Name geordnet (gleiche Funktion, gleicher
+            // Tiebreak), gelöschte Konten zuletzt.
+            verantwortliche: nachName(
+              (termin.termin_verantwortliche ?? []).map((v) => ({
+                eintragId: v.id,
                 userId: v.user_id,
                 name: v.user_id === null ? null : v.verantwortlich_name,
                 ehemalig: v.verantwortlich_ehemalig,
-              }))
-              .sort((a, b) =>
-                a.name === null || b.name === null
-                  ? Number(a.name === null) - Number(b.name === null)
-                  : a.name.localeCompare(b.name, "de"),
-              ),
+              })),
+              (v) => v.name,
+              (v) => v.eintragId,
+            ).map(({ userId, name, ehemalig }) => ({ userId, name, ehemalig })),
           }
         : null,
     };

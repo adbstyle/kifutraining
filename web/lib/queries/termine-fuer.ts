@@ -144,7 +144,7 @@ const TERMIN_SELECT =
 
 /** Nach Anzeigename ordnen, unbenannte (gelöschte Konten) zuletzt. Der Schlüssel
  *  (Eintrags- bzw. Konto-Kennung) macht die Reihenfolge bei gleichem Namen stabil. */
-function nachName<T>(liste: T[], name: (x: T) => string | null, schluessel: (x: T) => string): T[] {
+export function nachName<T>(liste: T[], name: (x: T) => string | null, schluessel: (x: T) => string): T[] {
   return [...liste].sort((a, b) => {
     const [x, y] = [name(a), name(b)];
     if (x === null || y === null) {

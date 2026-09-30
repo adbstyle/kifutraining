@@ -153,7 +153,6 @@ export async function setzeVerantwortlicheAktion(
   terminId: string,
   wert: { userIds: string[]; anonyme: string[] },
   reichweite: Reichweite | undefined,
-  erwartet?: { version: number; entfallend: string[] },
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
@@ -162,7 +161,6 @@ export async function setzeVerantwortlicheAktion(
     userIds: wert.userIds,
     anonyme: wert.anonyme,
     reichweite,
-    erwartet,
   });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
