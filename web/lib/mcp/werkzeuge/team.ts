@@ -3,7 +3,7 @@ import { z } from "zod";
 import { kategorieStufe } from "@/lib/labels";
 import { abgebildet } from "@/lib/kern/ergebnis";
 import { meineTeams, teamPlan } from "@/lib/kern/team";
-import { aendereTermin, entferneTermin, setzeAn, setzeErneutAn } from "@/lib/kern/termine";
+import { aendereTermin, entferneTermin, legeTerminFest, loeseTraining, ordneTrainingZu } from "@/lib/kern/termine";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { Wert, wert } from "@/lib/mcp/bausteine";
 import {
@@ -17,7 +17,7 @@ import {
 import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
 
 /**
- * Teams und Termine (Story #198).
+ * Teams und Kalender (Stories #198, #322, #323).
  *
  * Dünne Adapter über den Fachkern (lib/kern/team.ts, lib/kern/termine.ts) —
  * dieselben Funktionen wie Team-Übersicht, Trainingsplan und Termin-Dialog
@@ -32,15 +32,17 @@ import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
 
 /** Was jede Beschreibung eines Termin-Werkzeugs über das Modell sagt. */
 const TERMIN_MODELL =
-  "Termine gibt es nur an Team-Trainings, und ein Training trägt höchstens einen. Eine weitere " +
-  "Einheit desselben Trainings plant «training_erneut_ansetzen»: Es entsteht eine eigenständige " +
-  "Kopie im selben Team mit eigenem Termin — so bleibt jede Einheit bei dem Stand, mit dem sie " +
-  "gehalten wurde. Serientermine, Absagen und «hat stattgefunden» kennt KiFu nicht.";
+  "Der Kalender eines Teams besteht aus Terminen: Datum, Beginn, Ende, Ort und Bemerkung, mit oder " +
+  "ohne Training. Termine entstehen nur mit «termin_festlegen»; ein Training kommt ausschliesslich " +
+  "durch «training_zuordnen» an einen bestehenden Termin auf ein Datum. Ein Termin trägt höchstens " +
+  "ein Training, und ein Training ist höchstens für einen Termin eingeplant — für einen weiteren " +
+  "Termin entsteht eine eigenständige Kopie, oder ein Training mit anstehendem Termin wird " +
+  "verschoben. Zeiten gelten am Trainingsort (Schweiz). «hat stattgefunden» kennt KiFu nicht.";
 
-const DATUM = z.string().describe("Datum der Einheit als JJJJ-MM-TT, etwa 2026-10-07.");
-const BEGINN = z.string().describe("Beginn als HH:MM (24 Stunden), etwa 18:30.");
-const ORT = z.string().describe("Ort, frei formuliert, etwa «Sportplatz Allmend, Feld 2».");
-const BEMERKUNG = z.string().describe("Bemerkung zur Einheit, frei formuliert.");
+const DATUM = z.string().describe("Datum als JJJJ-MM-TT, etwa 2026-10-07.");
+const UHRZEIT = z.string().describe("Uhrzeit als HH:MM (24 Stunden), etwa 18:30.");
+const ORT = z.string().describe("Ort, frei formuliert, höchstens 100 Zeichen, etwa «Sportplatz Allmend, Feld 2».");
+const BEMERKUNG = z.string().describe("Bemerkung, frei formuliert, höchstens 500 Zeichen.");
 
 // ── teams_abrufen ───────────────────────────────────────────────────────────
 
@@ -75,13 +77,15 @@ export const teamsAbrufen = werkzeug({
 // ── team_plan_abrufen ───────────────────────────────────────────────────────
 
 const PlanEintrag = z.object({
-  /** Kennung des Termins — für «termin_aendern» und «termin_entfernen». */
+  /** Kennung des Termins — für «termin_aendern», «termin_entfernen», «training_zuordnen» und «training_loesen». */
   id: z.string(),
   datum: z.string(),
   beginn: z.string().nullable(),
+  ende: z.string().nullable(),
   ort: z.string().nullable(),
   bemerkung: z.string().nullable(),
-  training: z.object({ id: z.string(), name: z.string(), stufen: z.array(Wert), url: z.string() }),
+  /** `null`: Der Termin trägt kein Training (#322 AK 20). */
+  training: z.object({ id: z.string(), name: z.string(), stufen: z.array(Wert), url: z.string() }).nullable(),
 });
 
 function planEintrag(t: TerminZeile, zugang: Zugang) {
@@ -89,27 +93,31 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     id: t.id,
     datum: t.datum,
     beginn: t.beginn,
+    ende: t.ende,
     ort: t.ort,
     bemerkung: t.bemerkung,
-    training: {
-      id: t.training.id,
-      name: t.training.name,
-      stufen: t.training.stufen.map((s) => wert(kategorieStufe, s)),
-      url: zugang.url("training", t.training.id, "edit"),
-    },
+    training: t.training
+      ? {
+          id: t.training.id,
+          name: t.training.name,
+          stufen: t.training.stufen.map((s) => wert(kategorieStufe, s)),
+          url: zugang.url("training", t.training.id, "edit"),
+        }
+      : null,
   };
 }
 
 export const teamPlanAbrufen = werkzeug({
   name: "team_plan_abrufen",
-  titel: "Trainingsplan eines Teams",
+  titel: "Kalender eines Teams",
   beschreibung:
-    "Liefert den Trainingsplan eines deiner Teams, bereits geteilt wie im Team-Bereich: " +
-    "«kommend» (ab heute, aufsteigend; der heutige Tag zählt ganz dazu) und «vergangen» (die " +
-    "jüngste Einheit zuerst). «heute» ist der Tag, an dem geteilt wurde — gemessen am " +
-    "Trainingsort (Schweiz), nicht in deiner Zeitzone; rechne nicht selbst. Jeder Eintrag " +
-    "nennt Datum, Beginn, Ort, Bemerkung und das angesetzte Training. Team-Trainings ohne " +
-    "Termin stehen nicht im Plan — die nennt «trainings_suchen» (bestand: team). " +
+    "Liefert den Kalender eines deiner Teams, bereits geteilt wie im Team-Bereich: «kommend» (ab " +
+    "heute, aufsteigend; der heutige Tag zählt ganz dazu) und «vergangen» (der jüngste zuerst). " +
+    "«heute» ist der Tag, an dem geteilt wurde — gemessen am Trainingsort (Schweiz), nicht in deiner " +
+    "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung und das " +
+    "zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
+    "Termin ohne Training ist noch nicht vorbereitet. Übernommene Termine können ohne Beginn oder " +
+    "Ende sein. Team-Trainings ohne Termin nennt «trainings_suchen» (bestand: team). " +
     TEAM_KENNUNG_FEHLER,
   nurLesen: true,
   eingabe: z.object({ team_id: TeamId }),
@@ -128,38 +136,37 @@ export const teamPlanAbrufen = werkzeug({
     })),
 });
 
-// ── termin_ansetzen ─────────────────────────────────────────────────────────
+// ── termin_festlegen ────────────────────────────────────────────────────────
 
-const AnsetzenEingabe = z.object({
-  training_id: TrainingId,
-  datum: DATUM,
-  beginn: BEGINN.optional(),
-  ort: ORT.optional(),
-  bemerkung: BEMERKUNG.optional(),
-});
-
-export const terminAnsetzen = werkzeug({
-  name: "termin_ansetzen",
-  titel: "Team-Training ansetzen",
+export const terminFestlegen = werkzeug({
+  name: "termin_festlegen",
+  titel: "Termin festlegen",
   beschreibung:
-    "Setzt ein Team-Training auf ein Datum an, optional mit Beginn, Ort und Bemerkung. Es " +
-    "erscheint danach im Trainingsplan des Teams. Trägt das Training schon einen Termin, wird " +
-    "abgewiesen — dann «training_erneut_ansetzen». Ein persönliches Training lässt sich nicht " +
-    "ansetzen; stelle es zuerst mit «training_kopieren» (mit «team_id») ins Team. " +
-    `${TERMIN_MODELL} ${KENNUNG_FEHLER}`,
+    "Legt im Kalender eines deiner Teams einen einzelnen Termin ohne Training fest — auch in der " +
+    "Vergangenheit. Datum, Beginn und Ende sind Pflicht, das Ende liegt am selben Tag nach dem " +
+    "Beginn; Ort und Bemerkung sind frei. Ein Training ordnest du danach mit «training_zuordnen» zu. " +
+    `${TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
-  eingabe: AnsetzenEingabe,
-  ausgabe: z.object({ termin_id: z.string(), training_id: z.string(), team_id: z.string() }),
+  eingabe: z.object({
+    team_id: TeamId,
+    datum: DATUM,
+    beginn: UHRZEIT.describe("Beginn als HH:MM, etwa 18:30."),
+    ende: UHRZEIT.describe("Ende als HH:MM am selben Tag, etwa 20:00."),
+    ort: ORT.optional(),
+    bemerkung: BEMERKUNG.optional(),
+  }),
+  ausgabe: z.object({ termin_id: z.string(), team_id: z.string() }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
-      await setzeAn(zugang.supabase, zugang.userId, {
-        trainingId: e.training_id,
+      await legeTerminFest(zugang.supabase, zugang.userId, {
+        teamId: e.team_id,
         datum: e.datum,
         beginn: e.beginn,
+        ende: e.ende,
         ort: e.ort,
         bemerkung: e.bemerkung,
       }),
-      (w) => ({ termin_id: w.terminId, training_id: w.trainingId, team_id: w.teamId }),
+      (w) => ({ termin_id: w.terminId, team_id: w.teamId }),
     ),
 });
 
@@ -168,36 +175,37 @@ export const terminAnsetzen = werkzeug({
 const AendernEingabe = z.object({
   termin_id: TerminId,
   datum: DATUM.optional().describe("Neues Datum als JJJJ-MM-TT; ohne Angabe unverändert."),
-  beginn: BEGINN.nullable()
-    .optional()
-    .describe("Neuer Beginn als HH:MM; null leert ihn, ohne Angabe unverändert."),
+  beginn: UHRZEIT.optional().describe(
+    "Neuer Beginn als HH:MM; ohne Angabe unverändert. Wer die Zeit ändert, gibt Beginn UND Ende an.",
+  ),
+  ende: UHRZEIT.optional().describe("Neues Ende als HH:MM am selben Tag; ohne Angabe unverändert."),
   ort: ORT.nullable().optional().describe("Neuer Ort; null leert ihn, ohne Angabe unverändert."),
-  bemerkung: BEMERKUNG.nullable()
-    .optional()
-    .describe("Neue Bemerkung; null leert sie, ohne Angabe unverändert."),
+  bemerkung: BEMERKUNG.nullable().optional().describe("Neue Bemerkung; null leert sie, ohne Angabe unverändert."),
 });
 
 export const terminAendern = werkzeug({
   name: "termin_aendern",
   titel: "Termin ändern",
   beschreibung:
-    "Ändert Datum, Beginn, Ort oder Bemerkung eines Termins — nur die Felder, die du " +
-    "mitgibst; «null» leert Beginn, Ort oder Bemerkung. Das Datum lässt sich ändern, aber " +
-    "nicht leeren. Das angesetzte Training bleibt dasselbe. " +
-    TERMIN_KENNUNG_FEHLER,
+    "Ändert Datum, Zeit, Ort oder Bemerkung eines Termins — nur, was du mitgibst. Beginn und Ende " +
+    "lassen sich nicht leeren; ändert sich die Zeit, braucht der Termin danach beide. Ein " +
+    "übernommener Termin ohne vollständige Zeit lässt sich ändern, ohne die Zeit zu ergänzen. Das " +
+    "zugeordnete Training bleibt dasselbe. " +
+    `${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: AendernEingabe,
-  ausgabe: z.object({ training_id: z.string() }),
+  ausgabe: z.object({ termin_id: z.string(), training_id: z.string().nullable() }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
       await aendereTermin(zugang.supabase, zugang.userId, {
         terminId: e.termin_id,
         datum: e.datum,
         beginn: e.beginn,
+        ende: e.ende,
         ort: e.ort,
         bemerkung: e.bemerkung,
       }),
-      (w) => ({ training_id: w.trainingId }),
+      (w) => ({ termin_id: w.terminId, training_id: w.trainingId }),
     ),
 });
 
@@ -207,56 +215,81 @@ export const terminEntfernen = werkzeug({
   name: "termin_entfernen",
   titel: "Termin entfernen",
   beschreibung:
-    "Entfernt einen Termin sofort. Das Training bleibt im Bestand des Teams — es ist danach " +
-    "nur nicht mehr angesetzt und lässt sich wieder mit «termin_ansetzen» planen. Ein bereits " +
-    "entfernter Termin gilt als erledigt: kein Fehler, «training_id» ist dann null. " +
-    "Ein ganzes Team-Training samt Termin löscht «training_loeschen».",
+    "Entfernt einen Termin sofort und ohne Rückfrage. Sein Training bleibt im Bestand des Teams " +
+    "— «training_id» nennt es — und lässt sich mit «training_zuordnen» einem anderen Termin " +
+    "zuordnen. Ein ganzes Team-Training löscht «training_loeschen»; sein Termin bleibt dann ohne " +
+    `Training bestehen. ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ termin_id: TerminId }),
   ausgabe: z.object({ training_id: z.string().nullable() }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(
-      await entferneTermin(zugang.supabase, zugang.userId, { terminId: e.termin_id }),
-      (w) => ({ training_id: w.trainingId }),
-    ),
+    abgebildet(await entferneTermin(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
+      training_id: w.trainingId,
+    })),
 });
 
-// ── training_erneut_ansetzen ────────────────────────────────────────────────
+// ── training_zuordnen ───────────────────────────────────────────────────────
 
-export const trainingErneutAnsetzen = werkzeug({
-  name: "training_erneut_ansetzen",
-  titel: "Team-Training erneut ansetzen",
+export const trainingZuordnen = werkzeug({
+  name: "training_zuordnen",
+  titel: "Training einem Termin zuordnen",
   beschreibung:
-    "Plant eine weitere Einheit eines Team-Trainings: Es entsteht eine eigenständige Kopie im " +
-    "selben Team (samt Übungen, Bildern, Gruppen, Durchlauf und Varianten), und diese Kopie " +
-    "bekommt den neuen Termin. Das bisherige Training behält seinen Termin unverändert. " +
-    "Das Ergebnis nennt die Kennung der Kopie — spätere Anpassungen für diese Einheit gehören " +
-    "an sie. Scheitert das Ansetzen, entfernt KiFu die Kopie wieder, und «hinweis» sagt, dass " +
-    "nichts entstanden ist (oder welche Kopie stehen blieb). Geht auch mit einem Training, das " +
-    `noch keinen Termin trägt. ${TERMIN_MODELL} ${KENNUNG_FEHLER}`,
+    "Ordnet einem Termin ein Training aus dem Bestand desselben Teams zu; trägt der Termin schon " +
+    "eins, bleibt jenes ohne Termin im Bestand («im_bestand_geblieben»). Ist das Training bereits " +
+    "für einen ANSTEHENDEN Termin eingeplant, musst du «art» wählen: «kopie» legt eine " +
+    "eigenständige, gleichnamige Kopie für diesen Termin an, «verschieben» nimmt es vom bisherigen " +
+    "Termin weg («frei_gewordener_termin»). Ist sein Termin VERGANGEN, entsteht immer eine Kopie; " +
+    "«verschieben» wird dann abgewiesen. Scheitert die Zuordnung einer Kopie, entfernt KiFu die " +
+    `Kopie wieder; «hinweis» sagt, ob etwas stehen blieb. ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER} ` +
+    KENNUNG_FEHLER,
   nurLesen: false,
-  eingabe: AnsetzenEingabe,
+  eingabe: z.object({
+    termin_id: TerminId,
+    training_id: TrainingId,
+    art: z
+      .enum(["kopie", "verschieben"])
+      .optional()
+      .describe("Nur für ein Training, das schon einem anderen Termin gehört."),
+  }),
   ausgabe: z.object({
-    /** Kennung der neuen Kopie, die den Termin trägt. */
-    training_id: z.string(),
     termin_id: z.string(),
-    team_id: z.string(),
+    training_id: z.string().describe("Das Training, das jetzt am Termin steht — bei einer Kopie die Kopie."),
+    kopie: z.boolean(),
+    im_bestand_geblieben: z.string().nullable(),
+    frei_gewordener_termin: z.string().nullable(),
     url: z.string(),
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
-      await setzeErneutAn(zugang.supabase, zugang.userId, {
+      await ordneTrainingZu(zugang.supabase, zugang.userId, {
+        terminId: e.termin_id,
         trainingId: e.training_id,
-        datum: e.datum,
-        beginn: e.beginn,
-        ort: e.ort,
-        bemerkung: e.bemerkung,
+        art: e.art,
       }),
       (w) => ({
-        training_id: w.trainingId,
         termin_id: w.terminId,
-        team_id: w.teamId,
+        training_id: w.trainingId,
+        kopie: w.kopie,
+        im_bestand_geblieben: w.imBestand,
+        frei_gewordener_termin: w.freierTermin,
         url: zugang.url("training", w.trainingId, "edit"),
       }),
     ),
+});
+
+// ── training_loesen ─────────────────────────────────────────────────────────
+
+export const trainingLoesen = werkzeug({
+  name: "training_loesen",
+  titel: "Training vom Termin lösen",
+  beschreibung:
+    "Löst das Training von seinem Termin: Der Termin bleibt ohne Training im Kalender, das " +
+    `Training ohne Termin im Bestand des Teams. ${TERMIN_KENNUNG_FEHLER}`,
+  nurLesen: false,
+  eingabe: z.object({ termin_id: TerminId }),
+  ausgabe: z.object({ training_id: z.string().nullable() }),
+  ausfuehren: async (e, zugang) =>
+    abgebildet(await loeseTraining(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
+      training_id: w.trainingId,
+    })),
 });

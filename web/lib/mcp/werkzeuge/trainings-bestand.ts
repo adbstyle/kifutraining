@@ -83,7 +83,8 @@ export const trainingLoeschen = werkzeug({
   titel: "Training löschen",
   beschreibung:
     "Löscht ein eigenes Training oder eines deiner Teams sofort und ohne Rückfrage, samt " +
-    "allen Übungen, Bildern, Gruppen, Varianten und einem angesetzten Termin. Was mitgeht, " +
+    "allen Übungen, Bildern, Gruppen und Varianten. War es einem Termin zugeordnet, bleibt der " +
+    "Termin ohne Training im Kalender («termin_bleibt»). Was mitgeht, " +
     "zeigt vorher «training_abrufen» («uebungen_gesamt», «sichtbarkeit»); das Ergebnis nennt " +
     "es noch einmal. Ein öffentliches Training verschwindet damit zugleich aus dem " +
     "öffentlichen Bestand. Kopien, die andere bereits übernommen haben, bleiben bestehen — " +
@@ -96,7 +97,7 @@ export const trainingLoeschen = werkzeug({
     /** Zahl der Übungen über alle Varianten, die mitgingen. */
     uebungen: z.number().int(),
     war_oeffentlich: z.boolean(),
-    termin_entfiel: z.boolean(),
+    termin_bleibt: z.object({ id: z.string(), datum: z.string() }).nullable(),
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
@@ -105,7 +106,7 @@ export const trainingLoeschen = werkzeug({
         name: w.name,
         uebungen: w.uebungen,
         war_oeffentlich: w.warOeffentlich,
-        termin_entfiel: w.terminEntfiel,
+        termin_bleibt: w.terminBleibt,
       }),
     ),
 });

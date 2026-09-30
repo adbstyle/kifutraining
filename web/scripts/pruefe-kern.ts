@@ -33,8 +33,8 @@
 //   npx tsx scripts/pruefe-kern.ts
 import assert from "node:assert/strict";
 import { isDeepStrictEqual } from "node:util";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { erscheinungsform_juniorenSlugs, erscheinungsformSlugs, hauptteilkategorieSlugs } from "../lib/vocab";
 import {
@@ -1334,12 +1334,11 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
       }
       if (/\b(TrainingId|FassungId|GruppeId|VarianteId)\b/.test(eingabe))
         assert.ok(/\bKENNUNG_FEHLER\b/.test(block), `${m[1]} nimmt eine Kennung, erklärt aber KENNUNG_FEHLER nicht`);
-      // Dasselbe für Teams und Termine (#198 AK 11). «termin_entfernen» ist
-      // ausgenommen: Es kennt kein «nicht_gefunden» — ein fehlender Termin
-      // gilt als entfernt.
+      // Dasselbe für Teams und Termine (#198 AK 11; #322: auch «termin_entfernen»
+      // meldet «nicht gefunden»).
       if (/\bTeamId\b/.test(eingabe))
         assert.ok(block.includes("TEAM_KENNUNG_FEHLER"), `${m[1]} nimmt team_id, erklärt aber TEAM_KENNUNG_FEHLER nicht`);
-      if (/\bTerminId\b/.test(eingabe) && m[1] !== "terminEntfernen")
+      if (/\bTerminId\b/.test(eingabe))
         assert.ok(block.includes("TERMIN_KENNUNG_FEHLER"), `${m[1]} nimmt termin_id, erklärt aber TERMIN_KENNUNG_FEHLER nicht`);
     }
   }
@@ -1372,18 +1371,33 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#195": ["training_hinweise_abrufen"],
     "#196": ["training_veroeffentlichen", "training_auf_entwurf_setzen"],
     "#197": ["training_kopieren", "training_loeschen"],
-    "#198": [
-      "teams_abrufen",
-      "team_plan_abrufen",
-      "termin_ansetzen",
-      "termin_aendern",
-      "termin_entfernen",
-      "training_erneut_ansetzen",
-    ],
+    "#198": ["teams_abrufen", "team_plan_abrufen"],
+    "#322": ["termin_festlegen", "termin_aendern", "termin_entfernen"],
+    "#323": ["training_zuordnen", "training_loesen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
+});
+
+/** Alle .ts/.tsx-Dateien unter einem Ordner, ohne node_modules und .next. */
+function quelldateien(wurzel: string): string[] {
+  return readdirSync(wurzel, { recursive: true, encoding: "utf8" })
+    .filter((d) => /\.tsx?$/.test(d) && !/(^|\/)(node_modules|\.next)(\/|$)/.test(d))
+    .map((d) => join(wurzel, d));
+}
+
+pruefe("Kein «ansetzen» mehr in Oberfläche und KI-Texten (#323 PC 11)", () => {
+  const treffer: string[] = [];
+  for (const wurzel of ["app", "components", "lib/mcp", "lib/kern", "lib/actions", "lib/termin.ts"].map((p) => join(web, p)))
+    for (const datei of existsSync(wurzel) && statSync(wurzel).isDirectory() ? quelldateien(wurzel) : existsSync(wurzel) ? [wurzel] : [])
+      readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
+        // Kommentare sieht niemand; geprüft wird, was Oberfläche und KI sagen.
+        if (/^\s*(\*|\/\/|\/\*)/.test(zeile)) return;
+        const ohneKommentar = zeile.replace(/\/\/.*$/, "").replace(/\/\*.*?\*\//g, "");
+        if (/ansetz|angesetzt|Ansetz|Angesetzt/.test(ohneKommentar)) treffer.push(`${relative(web, datei)}:${i + 1}`);
+      });
+  assert.deepEqual(treffer, [], `«ansetzen» steht noch in: ${treffer.join(", ")}`);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);
