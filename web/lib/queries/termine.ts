@@ -9,7 +9,6 @@ import { getTeamPlanFuer, getTerminZuTrainingFuer, type TerminZeile } from "@/li
  */
 
 export {
-  EHEMALIGES_MITGLIED,
   istVerantwortlich,
   kurzeZeit,
   nochNichtVorbereitet,

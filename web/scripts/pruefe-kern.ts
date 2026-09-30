@@ -657,6 +657,17 @@ pruefe("Serie: Reichweiten je nach Änderung (#326 AK 1–4)", () => {
   assert.equal(SERIE_TEXT.datumUndRegel, "Datum und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.");
 });
 
+pruefe("Serie: namenlose Verantwortliche nur für diesen Termin (#325 PC 8)", () => {
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false, namenlose: true }), ["nur_dieser"]);
+  assert.equal(erlaubteReichweiten({ datum: false, regel: true, namenlose: true }), null);
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false, namenlose: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
+  assert.equal(SERIE_TEXT.namenloseNurEinzeln, "Ehemalige Mitglieder ohne Namen lassen sich nur für diesen einen Termin entfernen.");
+  assert.equal(
+    SERIE_TEXT.namenloseUndRegel,
+    "Ehemalige Mitglieder ohne Namen und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
+  );
+});
+
 pruefe("Serie: Obergrenze vor der Wahl der Reichweite (#326 AK 5, PC 19; Review Focus 2)", () => {
   const serie = { beginnDatum: "2028-02-01" };
   // Beginn unverändert: Für «dieser und folgende» beginnt die Teilserie am Termin.

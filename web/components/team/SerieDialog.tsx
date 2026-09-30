@@ -102,6 +102,7 @@ export function SerieDialog({
           mitglieder={mitglieder}
           wert={{ userIds: f.verantwortliche, anonyme: [] }}
           onChange={(w) => setze("verantwortliche", w.userIds)}
+          disabled={pending}
         />
       </div>
     </Dialog>

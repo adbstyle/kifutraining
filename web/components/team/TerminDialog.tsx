@@ -20,6 +20,7 @@ import type { FolgeAngabe } from "@/lib/kern/serien";
 import {
   KEINE_VERANTWORTLICHEN,
   VerantwortlicheWahl,
+  nurNamenloseGeaendert,
   verantwortlicheGeaendert,
   verantwortlicheStart,
   type VerantwortlicheWert,
@@ -136,6 +137,10 @@ export function TerminDialog({
       setRegelProblem({ feld: "beides", text: SERIE_TEXT.datumUndRegel });
       return false;
     }
+    if (nurNamenloseGeaendert(verantwortlich, verantwortlicheStart(verantwortliche ?? []))) {
+      setRegelProblem({ feld: "beides", text: SERIE_TEXT.namenloseUndRegel });
+      return false;
+    }
     // Die Reichweite ist noch offen: weitere Obergrenze, die engere prüft die Vorschau.
     const r = regelProblemVorab(serie, regel, terminDatum);
     setRegelProblem(r);
@@ -173,7 +178,7 @@ export function TerminDialog({
         </div>
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={felder.ort ?? ""} onChange={(e) => setze("ort")(e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
-        <VerantwortlicheWahl mitglieder={mitglieder} bisher={verantwortliche} wert={verantwortlich} onChange={setVerantwortlich} />
+        <VerantwortlicheWahl mitglieder={mitglieder} bisher={verantwortliche} wert={verantwortlich} onChange={setVerantwortlich} disabled={pending} />
       </div>
       {serie && (
         <section aria-labelledby={serieTitelId} className="mt-6 border-t border-linie pt-4">

@@ -21,10 +21,17 @@ export function verantwortlicheStart(bisher: readonly Verantwortlicher[]): Veran
   };
 }
 
+const gleicheMenge = (a: string[], b: string[]) => [...a].sort().join() === [...b].sort().join();
+
 /** Hat sich die Wahl geändert? Die Reihenfolge zählt nicht. */
 export function verantwortlicheGeaendert(neu: VerantwortlicheWert, alt: VerantwortlicheWert): boolean {
-  const gleich = (a: string[], b: string[]) => [...a].sort().join() === [...b].sort().join();
-  return !gleich(neu.userIds, alt.userIds) || !gleich(neu.anonyme, alt.anonyme);
+  return !gleicheMenge(neu.userIds, alt.userIds) || !gleicheMenge(neu.anonyme, alt.anonyme);
+}
+
+/** Ändern sich allein die Einträge gelöschter Konten? Das geht nur für diesen
+ *  einen Termin (`erlaubteReichweiten`, `namenlose`). */
+export function nurNamenloseGeaendert(neu: VerantwortlicheWert, alt: VerantwortlicheWert): boolean {
+  return gleicheMenge(neu.userIds, alt.userIds) && !gleicheMenge(neu.anonyme, alt.anonyme);
 }
 
 /* Verantwortliche eines Termins oder einer Serie (#325 AK 1, 2, 7, 9). Zur
@@ -69,7 +76,7 @@ export function VerantwortlicheWahl({
   const value = [...wert.userIds.map((u) => `u:${u}`), ...wert.anonyme.map((a) => `a:${a}`)];
   return (
     <MultiSelect
-      label="Verantwortlich"
+      label="Verantwortlich (optional)"
       placeholder="Verantwortlich (optional)"
       options={options}
       value={value}
