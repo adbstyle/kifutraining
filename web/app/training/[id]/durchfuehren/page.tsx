@@ -46,6 +46,7 @@ export default async function TrainingDurchfuehrenPage({
           ? {
               datum: termin.datum,
               beginn: termin.beginn,
+              ende: termin.ende,
               ort: termin.ort,
               bemerkung: termin.bemerkung,
             }

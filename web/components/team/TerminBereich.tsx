@@ -14,7 +14,7 @@ import {
   ordneTrainingZuAktion,
   type TerminFelder,
 } from "@/lib/actions/termine";
-import { TERMIN_MELDUNG } from "@/lib/termin";
+import { istVeraltet } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
@@ -33,19 +33,6 @@ export type TerminAktionen = {
 };
 
 const Kontext = createContext<TerminAktionen | null>(null);
-
-/** Sagt die Meldung «seit deiner Auswahl hat sich etwas geändert» (PO 17) oder
- *  «gibt es nicht mehr»? Dieselben Sätze wie im Fachkern (TERMIN_MELDUNG); eine
- *  Meldung kann einen Zusatz tragen (Kopie geblieben), darum Präfix-Vergleich. */
-const VERALTET_MARKER = [
-  "TERMIN_BELEGUNG_GEAENDERT",
-  "TRAINING_EINPLANUNG_GEAENDERT",
-  "TERMIN_NICHT_GEFUNDEN",
-  "TRAINING_NICHT_GEFUNDEN",
-] as const;
-function istVeraltet(meldung: string | undefined): boolean {
-  return !!meldung && VERALTET_MARKER.some((m) => meldung.startsWith(TERMIN_MELDUNG[m]));
-}
 
 export function useTerminAktionen(): TerminAktionen {
   const k = useContext(Kontext);

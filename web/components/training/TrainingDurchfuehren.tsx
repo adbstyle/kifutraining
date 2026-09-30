@@ -8,6 +8,7 @@ import { GesamtMaterialListe } from "./GesamtMaterialListe";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui";
 import { leseGliederung, formatDuration } from "@/lib/training";
 import { datumKurz } from "@/lib/zeit";
+import { zeitText } from "@/lib/termin";
 import {
   VARIANTE_PARAM,
   abschnittMitVariante,
@@ -19,11 +20,12 @@ import type { TrainingDetail } from "@/lib/queries/trainings";
 type TerminKontext = {
   datum: string;
   beginn: string | null;
+  ende: string | null;
   ort: string | null;
   bemerkung: string | null;
 };
 
-/** Datum, Beginn, Ort und Bemerkung der Einheit — der Kontext für alle, die
+/** Datum, Beginn und Ende, Ort und Bemerkung der Einheit — der Kontext für alle, die
  *  gerade am Platz stehen (Story 7 AK 19). */
 function TerminKopf({ termin, className }: { termin: TerminKontext; className?: string }) {
   return (
@@ -33,8 +35,11 @@ function TerminKopf({ termin, className }: { termin: TerminKontext; className?: 
       <span className="inline-flex items-center gap-1.5 text-on-surface">
         <CalendarDays size={15} strokeWidth={2} aria-hidden />
         {datumKurz(termin.datum)}
-        {termin.beginn && <> · {termin.beginn} Uhr</>}
+        {zeitText(termin.beginn, termin.ende) && <> · {zeitText(termin.beginn, termin.ende)} Uhr</>}
       </span>
+      {/* Ein übernommener Termin kann ohne Beginn sein (#322 PO 9) — das
+          steht am Platz im Weg, darum sagt der Kopf es. */}
+      {!termin.beginn && <span className="text-error">· Zeit fehlt</span>}
       {termin.ort && (
         <span className="inline-flex items-center gap-1.5">
           <MapPin size={14} strokeWidth={2} aria-hidden />

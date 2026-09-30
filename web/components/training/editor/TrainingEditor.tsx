@@ -585,6 +585,7 @@ export function TrainingEditor({
           name={name}
           visibility={oeffentlich ? "public" : "private"}
           teamId={training.team?.id ?? null}
+          terminDatum={training.terminDatum}
           angemeldet
           bearbeitungsziel={bearbeitungsziel}
           teams={teams}

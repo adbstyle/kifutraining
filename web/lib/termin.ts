@@ -141,6 +141,22 @@ export const KONFLIKT_MARKER: readonly string[] = [
   "TRAINING_EINPLANUNG_GEAENDERT",
 ];
 
+/** Sagt die Meldung «seit deiner Auswahl hat sich etwas geändert» (PO 17) oder
+ *  «gibt es nicht mehr»? Dann trägt die Auswahl veraltete Angaben, und ein
+ *  erneuter Versuch scheiterte immer wieder — die Oberfläche schliesst den
+ *  Dialog und meldet per Snackbar. Gebaut aus `KONFLIKT_MARKER` (spätere
+ *  Serien-Marker kommen automatisch dazu) und den beiden «nicht gefunden»-
+ *  Sätzen. Eine Meldung kann einen Zusatz tragen (Kopie geblieben), darum
+ *  Präfix-Vergleich. */
+export function istVeraltet(meldung: string | undefined): boolean {
+  if (!meldung) return false;
+  const saetze: Record<string, string> = TERMIN_MELDUNG;
+  return [...KONFLIKT_MARKER, "TERMIN_NICHT_GEFUNDEN", "TRAINING_NICHT_GEFUNDEN"].some((m) => {
+    const satz = saetze[m];
+    return !!satz && meldung.startsWith(satz);
+  });
+}
+
 /** Ein Zusatz zu jeder Meldung, deren Kopie nicht aufgeräumt werden konnte
  *  (Story 2 PC 9, Story 7 PC 8) — in der Oberfläche und beim Assistenten. */
 export function kopieGebliebenText(name: string): string {
