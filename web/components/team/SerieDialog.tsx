@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Button, DateField, Dialog, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
 import { maxEnddatum, serieProblem, type SerieFeld, type Wochentag } from "@/lib/serie";
 import { BEMERKUNG_MAX, ORT_MAX } from "@/lib/termin";
+import type { TeamMitglied } from "@/lib/queries/teams";
+import { VerantwortlicheWahl } from "./VerantwortlicheWahl";
 
 export type SerieFelder = {
   wochentage: Wochentag[];
@@ -13,18 +15,23 @@ export type SerieFelder = {
   ende: string;
   ort: string;
   bemerkung: string;
+  /** Kennungen der Mitglieder, die jeder Termin der Serie trägt (#325 AK 3). */
+  verantwortliche: string[];
 };
 
-const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: "", ort: "", bemerkung: "" };
+const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: "", ort: "", bemerkung: "", verantwortliche: [] };
 
 /* Eine Terminserie festlegen (#324 AK 1–7). Die Regeln sind dieselben wie
    im Fachkern (lib/serie.ts); das Enddatum lässt sich nicht über den
-   gleichen Kalendertag im Folgejahr hinaus wählen. */
+   gleichen Kalendertag im Folgejahr hinaus wählen. Verantwortliche lassen
+   sich gleich mitgeben (#325 AK 3); gelöschte Konten gibt es hier noch
+   nicht, darum ohne `bisher`. */
 export function SerieDialog({
   open,
   start,
   pending,
   fehler: serverFehler,
+  mitglieder,
   onClose,
   onSpeichern,
 }: {
@@ -32,6 +39,7 @@ export function SerieDialog({
   start?: Partial<SerieFelder>;
   pending?: boolean;
   fehler?: string;
+  mitglieder: readonly TeamMitglied[];
   onClose: () => void;
   onSpeichern: (f: SerieFelder) => void;
 }) {
@@ -90,6 +98,11 @@ export function SerieDialog({
         </div>
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={f.ort} onChange={(e) => setze("ort", e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={f.bemerkung} onChange={(e) => setze("bemerkung", e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
+        <VerantwortlicheWahl
+          mitglieder={mitglieder}
+          wert={{ userIds: f.verantwortliche, anonyme: [] }}
+          onChange={(w) => setze("verantwortliche", w.userIds)}
+        />
       </div>
     </Dialog>
   );

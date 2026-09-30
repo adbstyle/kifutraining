@@ -9,6 +9,7 @@ import { ReichweiteDialog } from "./ReichweiteDialog";
 import { SerieDialog } from "./SerieDialog";
 import { TerminDialog } from "./TerminDialog";
 import { TrainingWahlDialog, type TrainingWahl } from "./TrainingWahlDialog";
+import type { VerantwortlicheWert } from "./VerantwortlicheWahl";
 import {
   aendereSerieAktion,
   aendereTerminAktion,
@@ -19,6 +20,7 @@ import {
   legeTerminFestAktion,
   loeseTrainingAktion,
   ordneTrainingZuAktion,
+  setzeVerantwortlicheAktion,
   vorschauSerieAktion,
   vorschauSerieEntfernenAktion,
   type TerminFelder,
@@ -37,6 +39,7 @@ import { istVeraltet } from "@/lib/veraltet";
 import { datumKurz } from "@/lib/zeit";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
+import type { TeamMitglied } from "@/lib/queries/teams";
 
 /* Alle Aktionen am Kalender eines Teams an einer Stelle (Team-Kalender
    #322, #323). Die Liste und — ab Teil F — der Monatsüberblick rufen
@@ -79,16 +82,50 @@ const FOLGT_WIEDER: Record<FolgeAngabe, string> = {
 };
 
 /** Die offene Frage nach der Reichweite (#326 AK 1–4, 7). Beim Ändern stehen
- *  die geänderten Felder für «nur dieser» (`geaendert`, wie beim einzelnen
- *  Termin) und die Änderung für die Serie (`aenderung`, ohne Datum) bereit. */
+ *  die geänderten Felder und Verantwortlichen für «nur dieser» (`geaendert`,
+ *  `verantwortlich`, wie beim einzelnen Termin) und die Änderung für die Serie
+ *  (`aenderung`, ohne Datum, die Verantwortlichen als Konten) bereit. */
 type ReichweiteFrage = {
   art: SerienArt;
   t: TerminZeile;
   erlaubt: readonly Reichweite[];
   hinweis?: string;
   geaendert?: Partial<TerminFelder> | null;
+  verantwortlich?: VerantwortlicheWert;
   aenderung?: SerienAenderung;
 };
+
+type Antwort = { ok: true } | { ok: false; error: string };
+
+/** Schritte nacheinander, beim ersten Fehler Schluss (#325): Er ist die
+ *  Antwort. Ausgelassene Schritte (`null`, `undefined`, `false`) zählen nicht. */
+async function nacheinander(...schritte: (false | null | undefined | (() => Promise<Antwort>))[]): Promise<Antwort> {
+  for (const schritt of schritte) {
+    if (!schritt) continue;
+    const r = await schritt();
+    if (!r.ok) return r;
+  }
+  return { ok: true };
+}
+
+/** Einen Termin einzeln ändern — einen einzelnen oder einen Serientermin mit
+ *  «nur dieser»: erst die Felder, dann die Verantwortlichen (#325 AK 2, 5).
+ *  Jeder Aufruf läuft nur, wenn sich bei ihm etwas geändert hat (PO 17).
+ *  Scheitert der erste, läuft der zweite nicht. Die Serienversion geht mit,
+ *  wie beim KI-Weg. */
+function aendereEinzeln(t: TerminZeile, geaendert: Partial<TerminFelder> | null | undefined, verantwortlich?: VerantwortlicheWert) {
+  return nacheinander(
+    geaendert && (() => aendereTerminAktion(t.id, geaendert, t.training?.id ?? null)),
+    verantwortlich &&
+      (() =>
+        setzeVerantwortlicheAktion(
+          t.id,
+          verantwortlich,
+          t.serie ? "nur_dieser" : undefined,
+          t.serie ? { version: t.serie.version, entfallend: [] } : undefined,
+        )),
+  );
+}
 
 /** Eine gerechnete Vorschau, die auf Bestätigung oder Ausführung wartet. */
 type SerienSchritt = {
@@ -102,11 +139,14 @@ type SerienSchritt = {
 export function TerminBereich({
   teamId,
   trainings,
+  mitglieder,
   heute,
   children,
 }: {
   teamId: string;
   trainings: TeamTrainingRow[];
+  /** Wer als Verantwortliche:r zur Wahl steht (#325). */
+  mitglieder: TeamMitglied[];
   heute: string;
   children: React.ReactNode;
 }) {
@@ -147,6 +187,17 @@ export function TerminBereich({
       setDialogFehler(undefined);
       melde(r.ok ? erfolg(r) : (r.error ?? "Fehlgeschlagen."));
     });
+  }
+
+  /** Einen neuen Termin festlegen, danach seine Verantwortlichen (#325 AK 1).
+   *  Zwei Aufrufe, weil das Festlegen keine Verantwortlichen kennt. Scheitert
+   *  erst der zweite, steht der Termin schon: Dann schliesst der Dialog (ein
+   *  erneutes «Festlegen» legte ihn doppelt an), und die Snackbar sagt beides. */
+  async function legeNeuFest(f: TerminFelder, verantwortlich?: VerantwortlicheWert) {
+    const r = await legeTerminFestAktion(teamId, f);
+    if (!r.ok || !verantwortlich) return r;
+    const v = await setzeVerantwortlicheAktion(r.terminId, verantwortlich, undefined);
+    return v.ok ? v : { ok: true as const, meldung: `Termin festgelegt. ${v.error}` };
   }
 
   // ── Serientermine (#326) ──────────────────────────────────────────────────
@@ -200,17 +251,19 @@ export function TerminBereich({
   }
 
   /** Speichern im Termin-Dialog. Ein einzelner Termin geht direkt; ein
-   *  Serientermin fragt erst, wofür die Änderung gilt. Gesendet wird in jedem
-   *  Fall nur, was sich geändert hat (PO 17); nichts geändert: kein Aufruf. */
-  function speichereBearbeitung(t: TerminZeile, f: TerminFelder, regel?: SerienRegel) {
+   *  Serientermin fragt erst, wofür die Änderung gilt — auch, wenn sich nur
+   *  die Verantwortlichen geändert haben (#325 AK 4). Gesendet wird in jedem
+   *  Fall nur, was sich geändert hat (PO 17); nichts geändert: kein Aufruf.
+   *  `verantwortlich` kommt nur, wenn sich die Wahl geändert hat. */
+  function speichereBearbeitung(t: TerminZeile, f: TerminFelder, regel?: SerienRegel, verantwortlich?: VerantwortlicheWert) {
     const geaendert = geaenderteFelder(f, startWerte(t));
     const regelNeu = t.serie && regel ? regelAenderung(t.serie, regel) : null;
-    if (!geaendert && !regelNeu) {
+    if (!geaendert && !regelNeu && !verantwortlich) {
       setBearbeiten(null);
       return;
     }
     if (!t.serie) {
-      lauf(() => aendereTerminAktion(t.id, geaendert!, t.training?.id ?? null), () => "Termin geändert.", () => setBearbeiten(null), true);
+      lauf(() => aendereEinzeln(t, geaendert, verantwortlich), () => "Termin geändert.", () => setBearbeiten(null), true);
       return;
     }
     const datum = geaendert?.datum !== undefined;
@@ -226,7 +279,11 @@ export function TerminBereich({
       erlaubt,
       hinweis: datum ? SERIE_MELDUNG.DATUM_NUR_EINZELN : regelNeu ? SERIE_MELDUNG.REGEL_NUR_SERIE : undefined,
       geaendert,
-      aenderung: { ...werte, ...regelNeu },
+      verantwortlich,
+      // Für folgende und alle gehen die Verantwortlichen mit der übrigen
+      // Änderung in EINE Serienänderung (PC 3, 11). Einträge gelöschter
+      // Konten gibt es an einer Serie nicht; sie bleiben am Termin.
+      aenderung: { ...werte, ...regelNeu, ...(verantwortlich && { verantwortliche: verantwortlich.userIds }) },
     });
   }
 
@@ -239,9 +296,8 @@ export function TerminBereich({
       // Einzeln entfernen geht durch die Bestätigung aus Teil A: Sie nennt das
       // Training, das im Bestand bleibt (#322).
       if (art === "entfernen") return setEntfernen(t);
-      if (!frage.geaendert) return;
-      const geaendert = frage.geaendert;
-      lauf(() => aendereTerminAktion(t.id, geaendert, t.training?.id ?? null), () => "Termin geändert.", () => setBearbeiten(null), true);
+      if (!frage.geaendert && !frage.verantwortlich) return;
+      lauf(() => aendereEinzeln(t, frage.geaendert, frage.verantwortlich), () => "Termin geändert.", () => setBearbeiten(null), true);
       return;
     }
     const version = t.serie?.version ?? 0;
@@ -292,9 +348,10 @@ export function TerminBereich({
         start={{ datum: neu ?? "" }}
         pending={pending}
         fehler={dialogFehler}
+        mitglieder={mitglieder}
         onClose={() => setNeu(null)}
-        onSpeichern={(f: TerminFelder) =>
-          lauf(() => legeTerminFestAktion(teamId, f), () => "Termin festgelegt.", () => setNeu(null), true)
+        onSpeichern={(f: TerminFelder, _regel, verantwortlich) =>
+          lauf(() => legeNeuFest(f, verantwortlich), (r) => ("meldung" in r && r.meldung) || "Termin festgelegt.", () => setNeu(null), true)
         }
       />
 
@@ -303,6 +360,7 @@ export function TerminBereich({
         start={{ von: serieNeu ?? "" }}
         pending={pending}
         fehler={dialogFehler}
+        mitglieder={mitglieder}
         onClose={() => setSerieNeu(null)}
         onSpeichern={(f) =>
           lauf(() => legeSerieFestAktion(teamId, f), () => "Terminserie festgelegt.", () => setSerieNeu(null), true)
@@ -320,6 +378,8 @@ export function TerminBereich({
         serie={bearbeiten?.serie}
         serienTag={bearbeiten?.serienTag}
         abweichungen={bearbeiten?.abweichungen}
+        mitglieder={mitglieder}
+        verantwortliche={bearbeiten?.verantwortliche}
         onFolgen={(angabe) =>
           bearbeiten &&
           lauf(() => folgeDerSerieAktion(bearbeiten.id, [angabe]), () => FOLGT_WIEDER[angabe], () => setBearbeiten(null), true)
@@ -331,7 +391,7 @@ export function TerminBereich({
           neuerLauf();
           setBearbeiten(null);
         }}
-        onSpeichern={(f, regel) => bearbeiten && speichereBearbeitung(bearbeiten, f, regel)}
+        onSpeichern={(f, regel, verantwortlich) => bearbeiten && speichereBearbeitung(bearbeiten, f, regel, verantwortlich)}
       />
 
       <ReichweiteDialog

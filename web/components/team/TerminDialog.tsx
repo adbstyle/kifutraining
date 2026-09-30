@@ -14,8 +14,16 @@ import {
   type SerienRegel,
 } from "@/lib/serie";
 import { datumKurz } from "@/lib/zeit";
-import type { Abweichung, TerminSerie } from "@/lib/queries/termine";
+import type { Abweichung, TerminSerie, Verantwortlicher } from "@/lib/queries/termine";
+import type { TeamMitglied } from "@/lib/queries/teams";
 import type { FolgeAngabe } from "@/lib/kern/serien";
+import {
+  KEINE_VERANTWORTLICHEN,
+  VerantwortlicheWahl,
+  verantwortlicheGeaendert,
+  verantwortlicheStart,
+  type VerantwortlicheWert,
+} from "./VerantwortlicheWahl";
 
 const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
@@ -23,6 +31,8 @@ const ANGABE: Record<FolgeAngabe, string> = {
   bemerkung: "Die Bemerkung",
   verantwortliche: "Die Verantwortlichen",
 };
+/** Die Angaben, die wieder der Serie folgen können, in der Reihenfolge des Dialogs. */
+const FOLGEN_KANN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "verantwortliche"];
 const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   zeit: "Zeit wieder der Serie folgen lassen",
   ort: "Ort wieder der Serie folgen lassen",
@@ -37,7 +47,11 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
    Ein Serientermin (#326) zeigt zusätzlich seine Serie: welche Angaben von
    ihr abweichen, mit dem Weg zurück (AK 6, 14), und Wochentage und Zeitraum
    zum Ändern (AK 3, 4). Für welchen Teil der Serie eine Änderung gilt, fragt
-   danach der ReichweiteDialog. */
+   danach der ReichweiteDialog.
+
+   Die Verantwortlichen (#325) stehen nach der Bemerkung; weichen sie an
+   einem Serientermin ab, sagt es der Serien-Abschnitt (AK 19) und bietet den
+   Weg zurück (AK 6). */
 export function TerminDialog({
   open,
   titel,
@@ -50,6 +64,8 @@ export function TerminDialog({
   serie,
   serienTag,
   abweichungen,
+  mitglieder,
+  verantwortliche,
   onFolgen,
   onClose,
   onSpeichern,
@@ -65,16 +81,22 @@ export function TerminDialog({
   serie?: TerminSerie | null;
   serienTag?: string | null;
   abweichungen?: readonly Abweichung[];
+  /** Wer als Verantwortliche:r zur Wahl steht (#325). */
+  mitglieder: readonly TeamMitglied[];
+  /** Die Verantwortlichen des geöffneten Termins; ohne: neuer Termin. */
+  verantwortliche?: readonly Verantwortlicher[];
   onFolgen?: (angabe: FolgeAngabe) => void;
   onClose: () => void;
   /** `regel` nur bei einem Serientermin: Wochentage und Zeitraum, wie sie im
-   *  Dialog stehen (geändert oder nicht). */
-  onSpeichern: (felder: TerminFelder, regel?: SerienRegel) => void;
+   *  Dialog stehen (geändert oder nicht). `verantwortlich` nur, wenn sich die
+   *  Wahl gegenüber dem Öffnen geändert hat (PO 17). */
+  onSpeichern: (felder: TerminFelder, regel?: SerienRegel, verantwortlich?: VerantwortlicheWert) => void;
 }) {
   const [felder, setFelder] = useState<TerminFelder>({ datum: "" });
   const [problem, setProblem] = useState<{ feld: TerminFeld; text: string } | null>(null);
   const [regel, setRegel] = useState<SerienRegel>({ wochentage: [], von: "", bis: "" });
   const [regelProblem, setRegelProblem] = useState<{ feld: SerieFeld | "beides"; text: string } | null>(null);
+  const [verantwortlich, setVerantwortlich] = useState<VerantwortlicheWert>(KEINE_VERANTWORTLICHEN);
 
   // Beim Öffnen auf die Vorbelegung zurücksetzen — der Dialog überlebt sonst
   // mit den Werten des zuletzt bearbeiteten Termins.
@@ -90,6 +112,7 @@ export function TerminDialog({
     setProblem(null);
     if (serie) setRegel({ wochentage: [...serie.wochentage], von: serie.beginnDatum, bis: serie.endDatum });
     setRegelProblem(null);
+    setVerantwortlich(verantwortlicheStart(verantwortliche ?? []));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -99,6 +122,8 @@ export function TerminDialog({
   const regelFehlerAn = (k: SerieFeld) => (regelProblem?.feld === k ? regelProblem.text : undefined);
   const serieTitelId = useId();
   const terminDatum = start?.datum ?? "";
+  const verschoben = !!serienTag && !!abweichungen?.includes("datum");
+  const folgenKann = FOLGEN_KANN.filter((a) => abweichungen?.includes(a));
 
   function regelPruefen(): boolean {
     if (!serie) return true;
@@ -121,7 +146,10 @@ export function TerminDialog({
     const p = terminProblem(felder, bisher);
     setProblem(p);
     const regelOk = regelPruefen();
-    if (!p && regelOk) onSpeichern(felder, serie ? regel : undefined);
+    if (!p && regelOk) {
+      const geaendert = verantwortlicheGeaendert(verantwortlich, verantwortlicheStart(verantwortliche ?? []));
+      onSpeichern(felder, serie ? regel : undefined, geaendert ? verantwortlich : undefined);
+    }
   }
 
   return (
@@ -145,6 +173,7 @@ export function TerminDialog({
         </div>
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={felder.ort ?? ""} onChange={(e) => setze("ort")(e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
+        <VerantwortlicheWahl mitglieder={mitglieder} bisher={verantwortliche} wert={verantwortlich} onChange={setVerantwortlich} />
       </div>
       {serie && (
         <section aria-labelledby={serieTitelId} className="mt-6 border-t border-linie pt-4">
@@ -153,16 +182,18 @@ export function TerminDialog({
             {wochentageText(serie.wochentage)} · {datumKurz(serie.beginnDatum)} bis {datumKurz(serie.endDatum)} · {serie.beginn}–{serie.ende} Uhr
             {serie.ort ? <> · {serie.ort}</> : null}
           </p>
-          {/* AK 14: welche Angaben abweichen — mit dem Weg zurück (AK 6). Das
-              Datum folgt nie wieder der Serie (PO 3), es zählt das aktuelle. */}
-          {abweichungen && abweichungen.length > 0 && (
+          {serie.verantwortliche.length > 0 && (
+            <p className="type-body-small">Verantwortlich: {serie.verantwortliche.map((v) => v.name).join(", ")}</p>
+          )}
+          {/* AK 14 (#326), AK 19 (#325): welche Angaben abweichen — mit dem Weg
+              zurück (AK 6). Das Datum folgt nie wieder der Serie (PO 3), es
+              zählt das aktuelle. Keine Zeile, keine Liste. */}
+          {(verschoben || folgenKann.length > 0) && (
             <ul className="mt-2 flex flex-col gap-1 type-body-small">
-              {abweichungen.includes("datum") && serienTag && (
-                <li>Verschoben — ursprünglich am {datumKurz(serienTag)}.</li>
-              )}
-              {(["zeit", "ort", "bemerkung"] as const).filter((a) => abweichungen.includes(a)).map((a) => (
+              {verschoben && <li>Verschoben — ursprünglich am {datumKurz(serienTag!)}.</li>}
+              {folgenKann.map((a) => (
                 <li key={a} className="flex flex-wrap items-center justify-between gap-x-2">
-                  <span>{ANGABE[a]} weicht von der Serie ab.</span>
+                  <span>{ANGABE[a]} {a === "verantwortliche" ? "weichen" : "weicht"} von der Serie ab.</span>
                   <Button variant="text" size="sm" aria-label={FOLGEN_LABEL[a]} disabled={pending} onClick={() => onFolgen?.(a)}>Der Serie folgen</Button>
                 </li>
               ))}

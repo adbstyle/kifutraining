@@ -80,6 +80,16 @@ export function istVerantwortlich(t: TerminZeile, userId: string): boolean {
   return t.verantwortliche.some((v) => v.userId === userId);
 }
 
+/** Wie ein Eintrag ohne Namen (gelöschtes Konto, PC 8) überall heisst. */
+export const EHEMALIGES_MITGLIED = "Ehemaliges Mitglied";
+
+/** Die Verantwortlichen als Namen zum Anzeigen, in der Reihenfolge des
+ *  Lesepfads (AK 10, 12). Einträge gelöschter Konten stehen namenlos als
+ *  ehemaliges Mitglied da. */
+export function verantwortlichenNamen(liste: readonly Verantwortlicher[]): string[] {
+  return liste.map((v) => v.name ?? EHEMALIGES_MITGLIED);
+}
+
 type RawTermin = {
   id: string;
   team_id: string;
