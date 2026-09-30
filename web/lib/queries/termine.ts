@@ -12,7 +12,9 @@ export {
   kurzeZeit,
   nochNichtVorbereitet,
   teilePlan,
+  type Abweichung,
   type Plan,
+  type TerminSerie,
   type TerminZeile,
 } from "@/lib/queries/termine-fuer";
 

@@ -165,6 +165,8 @@ function baueSchema(streng: boolean) {
       ende: z.string().nullable(),
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
+      /** Die Terminserie, zu der der Termin gehört; `null` bei einem einzelnen (#324). */
+      serie_id: z.string().nullable(),
       anstehend: z.boolean(),
     }).nullable(),
     /** Alle Übungen des Trainings über ALLE Varianten des Hauptteils. */

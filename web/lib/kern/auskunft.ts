@@ -252,6 +252,7 @@ export function trainingAuskunft(
           ende: k.termin.ende,
           ort: k.termin.ort,
           bemerkung: k.termin.bemerkung,
+          serie_id: k.termin.serie?.id ?? null,
           // Dieselbe Grenze wie der Plan (`teilePlan`): der heutige Tag zählt
           // ganz zum Anstehenden.
           anstehend: k.termin.datum >= (k.heute ?? heuteAmTrainingsort()),

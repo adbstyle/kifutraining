@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, CalendarPlus, CalendarX2, MapPin, Pencil, PlayCircle, Trash2, Unlink } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarX2, MapPin, Pencil, PlayCircle, Repeat, Trash2, Unlink } from "lucide-react";
 import { Badge, Card, Disclosure, IconButton, IconButtonLink, KategorieChip, OverflowMenu, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
+import { wochentageText } from "@/lib/serie";
 import { zeitText } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
@@ -60,6 +61,14 @@ export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
       {!t.beginn && <span className="text-error">· Zeit fehlt</span>}
       {t.beginn && !t.ende && <span className="text-error">· Ende fehlt</span>}
       {t.ort && <><MapPin size={14} aria-hidden />{t.ort}</>}
+      {/* #324 AK 8: die Serie am Termin erkennbar machen. */}
+      {t.serie && (
+        <span className="inline-flex items-center gap-1">
+          <Repeat size={14} aria-hidden />
+          <span className="sr-only">Teil einer Terminserie </span>
+          {wochentageText(t.serie.wochentage)}
+        </span>
+      )}
     </h4>
   );
 

@@ -58,7 +58,12 @@ import {
   type UebungPatch,
   type UebungsZeile,
 } from "../lib/kern/uebung-inhalt";
-import { fachlicheMeldung, fehlerMeldung } from "../lib/training-bedingungen";
+import {
+  UEBUNGSFOLGE_MELDUNG,
+  VARIANTENFOLGE_MELDUNG,
+  fachlicheMeldung,
+  fehlerMeldung,
+} from "../lib/training-bedingungen";
 import {
   FREMDE_UEBUNG,
   FREMDES_TRAINING,
@@ -77,12 +82,29 @@ import {
   TERMIN_TEXT,
   ZUORDNEN_ERFOLG,
   geaenderteFelder,
-  istVeraltet,
   kopieGebliebenText,
   leerZuNull,
   terminProblem,
   zeitText,
 } from "../lib/termin";
+import {
+  SERIE_MELDUNG,
+  SERIE_TEXT,
+  alsKiWochentag,
+  alsWochentag,
+  erlaubteReichweiten,
+  maxEnddatum,
+  obergrenzeVorab,
+  regelAenderung,
+  regelProblemVorab,
+  serieProblem,
+  serienTage,
+  vergangeneBestaetigen,
+  wochentagVon,
+  wochentageText,
+  type Wochentag,
+} from "../lib/serie";
+import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
 
@@ -487,7 +509,7 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
 });
 
 pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
-  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, training: null };
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, training: null, serie: null, serienTag: null, abweichungen: [] };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [] } }, "2026-10-01"), false);
@@ -511,6 +533,9 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     ort: "Allmend",
     bemerkung: null,
     training: { id: "t1", name: "Probe", stufen: ["F" as const] },
+    serie: null,
+    serienTag: null,
+    abweichungen: [],
   };
   const heute = trainingAuskunft(team, { userId: ICH, termin, heute: "2026-09-23" });
   assert.deepEqual(heute.termin, {
@@ -520,6 +545,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     ende: "20:00",
     ort: "Allmend",
     bemerkung: null,
+    serie_id: null,
     anstehend: true,
   });
   // Der heutige Tag zählt ganz zum Anstehenden — wie im Plan (`teilePlan`).
@@ -579,7 +605,7 @@ pruefe("Termin-Anzeige und -Marker: derselbe Satz vorab und aus der Datenbank", 
 
 pruefe("istVeraltet: trifft «seit der Auswahl geändert» und «gibt es nicht mehr», sonst nichts (PO 17)", () => {
   // Jeder Konflikt-Marker — auch ein später ergänzter — und beide Nicht-gefunden-Sätze.
-  const saetze: Record<string, string> = TERMIN_MELDUNG;
+  const saetze: Record<string, string> = { ...TERMIN_MELDUNG, ...SERIE_MELDUNG };
   for (const m of KONFLIKT_MARKER) assert.ok(istVeraltet(saetze[m]), m);
   assert.ok(istVeraltet(TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN));
   assert.ok(istVeraltet(TERMIN_MELDUNG.TRAINING_NICHT_GEFUNDEN));
@@ -589,9 +615,105 @@ pruefe("istVeraltet: trifft «seit der Auswahl geändert» und «gibt es nicht m
   assert.ok(!istVeraltet(TERMIN_MELDUNG.TRAINING_SCHON_EINGEPLANT));
   assert.ok(!istVeraltet(TERMIN_MELDUNG.NUR_KOPIE_BEI_VERGANGENEM));
   assert.ok(!istVeraltet(TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM));
+  // Serien-Konflikte: Sätze aus SERIE_MELDUNG, Marker aus KONFLIKT_MARKER (#326).
+  assert.ok(KONFLIKT_MARKER.includes("SERIE_GEAENDERT") && KONFLIKT_MARKER.includes("SERIE_BELEGUNG_GEAENDERT"));
+  assert.ok(istVeraltet(SERIE_MELDUNG.SERIE_GEAENDERT));
+  assert.ok(istVeraltet(SERIE_MELDUNG.SERIE_BELEGUNG_GEAENDERT));
+  assert.ok(!istVeraltet(SERIE_MELDUNG.REICHWEITE_FEHLT));
+  assert.ok(!istVeraltet(SERIE_MELDUNG.KEINE_AENDERUNG));
   assert.ok(!istVeraltet(undefined));
   assert.ok(!istVeraltet(""));
   assert.ok(!istVeraltet(TERMIN_TEXT.datum));
+});
+
+// ── Terminserien (#324 AK 2–6, #326 AK 5; Review Focus 2, 3) ─────────────────
+pruefe("Serie: Enddatum höchstens am gleichen Kalendertag des Folgejahres, 29.2. → 28.2.", () => {
+  assert.equal(maxEnddatum("2026-10-07"), "2027-10-07");
+  assert.equal(maxEnddatum("2028-02-29"), "2029-02-28");
+  assert.equal(maxEnddatum("2027-02-28"), "2028-02-28");
+  const gut = { wochentage: [2, 4] as Wochentag[], von: "2026-10-01", bis: "2027-03-31", beginn: "18:00", ende: "19:30" };
+  assert.equal(serieProblem(gut), null);
+  assert.equal(serieProblem({ ...gut, von: "2028-02-29", bis: "2029-02-28" }), null);
+  assert.deepEqual(serieProblem({ ...gut, von: "2028-02-29", bis: "2029-03-01" }), { feld: "bis", text: SERIE_TEXT.zuLang });
+  assert.deepEqual(serieProblem({ ...gut, bis: "2026-09-30" }), { feld: "bis", text: SERIE_TEXT.endeVorBeginn });
+  assert.deepEqual(serieProblem({ ...gut, wochentage: [] }), { feld: "wochentage", text: SERIE_TEXT.wochentage });
+  // AK 6: kein gewählter Wochentag im Zeitraum.
+  assert.deepEqual(serieProblem({ ...gut, wochentage: [6], von: "2026-10-05", bis: "2026-10-09" }), { feld: "wochentage", text: SERIE_TEXT.ohneTag });
+  assert.deepEqual(serieProblem({ ...gut, ende: "17:00" }), { feld: "ende", text: TERMIN_TEXT.endeNachBeginn });
+  assert.deepEqual(serieProblem({ ...gut, von: "2026-02-30" }), { feld: "von", text: TERMIN_TEXT.datum });
+});
+
+pruefe("Serie: Reichweiten je nach Änderung (#326 AK 1–4)", () => {
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
+  assert.deepEqual(erlaubteReichweiten({ datum: true, regel: false }), ["nur_dieser"]);
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: true }), ["dieser_und_folgende", "alle"]);
+  assert.equal(erlaubteReichweiten({ datum: true, regel: true }), null);
+  const alt = { wochentage: [4, 2] as Wochentag[], beginnDatum: "2026-10-01", endDatum: "2027-03-31" };
+  assert.equal(regelAenderung(alt, { wochentage: [2, 4], von: "2026-10-01", bis: "2027-03-31" }), null, "Reihenfolge zählt nicht");
+  assert.deepEqual(regelAenderung(alt, { wochentage: [2, 4], von: "2026-10-01", bis: "2027-06-30" }), { bis: "2027-06-30" }, "nur das Geänderte");
+  assert.deepEqual(regelAenderung(alt, { wochentage: [2, 5], von: "2026-09-01", bis: "2027-03-31" }), { wochentage: [2, 5], von: "2026-09-01" });
+  assert.equal(SERIE_TEXT.datumUndRegel, "Datum und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.");
+});
+
+pruefe("Serie: Obergrenze vor der Wahl der Reichweite (#326 AK 5, PC 19; Review Focus 2)", () => {
+  const serie = { beginnDatum: "2028-02-01" };
+  // Beginn unverändert: Für «dieser und folgende» beginnt die Teilserie am Termin.
+  assert.equal(obergrenzeVorab(serie, { von: "2028-02-01" }, "2028-02-29"), "2029-02-28", "29.2. → 28.2.");
+  assert.equal(obergrenzeVorab(serie, { von: "2028-02-01" }, "2028-06-15"), "2029-06-15");
+  // Beginn verschoben: dann zählt er, für jede Reichweite.
+  assert.equal(obergrenzeVorab(serie, { von: "2028-02-29" }, "2028-06-15"), "2029-02-28");
+  // Ein verlegter Termin vor dem Serienbeginn weitet nichts.
+  assert.equal(obergrenzeVorab(serie, { von: "2028-02-01" }, "2028-01-20"), "2029-02-01");
+  const regel = { wochentage: [2] as Wochentag[], von: "2028-02-01", bis: "2029-02-20" };
+  assert.equal(regelProblemVorab(serie, regel, "2028-02-29"), null, "nur die engere Grenze («alle») verletzt");
+  assert.deepEqual(regelProblemVorab(serie, { ...regel, bis: "2029-03-01" }, "2028-02-29"), { feld: "bis", text: SERIE_TEXT.zuLang });
+  assert.deepEqual(regelProblemVorab(serie, { ...regel, von: "2028-02-29" }, "2028-06-15"), null, "verschobener Beginn, innerhalb");
+  assert.deepEqual(regelProblemVorab(serie, { ...regel, von: "2028-02-29", bis: "2029-03-01" }, "2028-06-15"), { feld: "bis", text: SERIE_TEXT.zuLang });
+  assert.deepEqual(regelProblemVorab(serie, { ...regel, wochentage: [] }, "2028-02-29"), { feld: "wochentage", text: SERIE_TEXT.wochentage });
+});
+
+pruefe("Serie: Rand der Jahre (9999) endet, kein fünfstelliges Jahr", () => {
+  // Früher lief plusTage("9999-12-31", 1) in «0NaN-…» und die Schleife endete nie.
+  const freitage = serienTage([5], "9998-12-31", "9999-12-31");
+  assert.equal(freitage.length, 53);
+  assert.equal(freitage[0], "9999-01-01", "9999-01-01 ist ein Freitag");
+  assert.equal(freitage.at(-1), "9999-12-31", "auch 9999-12-31");
+  assert.equal(maxEnddatum("9999-06-01"), "9999-12-31");
+  assert.equal(maxEnddatum("9998-12-31"), "9999-12-31");
+  assert.equal(serieProblem({ wochentage: [5], von: "9998-12-31", bis: "9999-12-31", beginn: "18:00", ende: "19:00" }), null);
+  assert.deepEqual(serienTage([1], "2026-10-05", "2026-10-05"), ["2026-10-05"], "ein Tag");
+});
+
+pruefe("Serie: Tage, Wochentage", () => {
+  assert.deepEqual(serienTage([2, 4], "2026-10-01", "2026-10-08"), ["2026-10-01", "2026-10-06", "2026-10-08"]);
+  assert.equal(wochentagVon("2026-10-04"), 7, "Sonntag");
+  assert.equal(wochentagVon("2026-10-05"), 1, "Montag");
+  // Zeitumstellung am 25.10.2026 verschiebt keinen Tag.
+  assert.deepEqual(serienTage([7], "2026-10-24", "2026-11-01"), ["2026-10-25", "2026-11-01"]);
+  assert.equal(wochentageText([2, 4]), "Di, Do");
+  assert.equal(alsWochentag("so"), 7);
+  assert.equal(alsKiWochentag(1), "mo");
+});
+
+pruefe("Serien-Marker: vorab und aus der Datenbank derselbe Satz", () => {
+  for (const [marker, satz] of Object.entries(SERIE_MELDUNG))
+    assert.equal(still(() => ausDbFehler({ message: marker })).meldung, satz, marker);
+  assert.equal(SERIE_MELDUNG.SERIE_OHNE_ZEITRAUM, TERMIN_TEXT.datum, "vorab und aus der Datenbank wortgleich");
+  assert.deepEqual(serieProblem({ wochentage: [2], von: "", bis: "2026-10-31" }), { feld: "von", text: SERIE_MELDUNG.SERIE_OHNE_ZEITRAUM });
+  assert.match(vergangeneBestaetigen(3), /3 vergangene Termine.*«bestaetigt: true»/);
+});
+
+pruefe("Serien-Marker: kein Marker steckt in einem anderen (includes-Suche bleibt eindeutig)", () => {
+  // Alle Tabellen, die `weitereMeldung` (training-bedingungen) per includes durchsucht.
+  const alle = [
+    ...Object.keys(UEBUNGSFOLGE_MELDUNG),
+    ...Object.keys(VARIANTENFOLGE_MELDUNG),
+    ...Object.keys(TERMIN_MELDUNG),
+    ...Object.keys(SERIE_MELDUNG),
+  ];
+  assert.equal(new Set(alle).size, alle.length, "Marker doppelt vergeben");
+  for (const a of alle)
+    for (const b of alle) if (a !== b) assert.ok(!b.includes(a), `${a} steckt in ${b}`);
 });
 
 pruefe("geaenderteFelder: nur Geändertes, Beginn und Ende als Paar, nichts geändert = null (PO 17)", () => {
@@ -1422,6 +1544,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#198": ["teams_abrufen", "team_plan_abrufen"],
     "#322": ["termin_festlegen", "termin_aendern", "termin_entfernen"],
     "#323": ["training_zuordnen", "training_loesen"],
+    "#324": ["terminserie_festlegen"],
+    "#326": ["termin_der_serie_folgen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
@@ -1437,7 +1561,7 @@ function quelldateien(wurzel: string): string[] {
 
 pruefe("Kein «ansetzen» mehr in Oberfläche und KI-Texten (#323 PC 11)", () => {
   const treffer: string[] = [];
-  for (const wurzel of ["app", "components", "lib/mcp", "lib/kern", "lib/actions", "lib/termin.ts"].map((p) => join(web, p)))
+  for (const wurzel of ["app", "components", "lib/mcp", "lib/kern", "lib/actions", "lib/termin.ts", "lib/serie.ts", "lib/veraltet.ts"].map((p) => join(web, p)))
     for (const datei of existsSync(wurzel) && statSync(wurzel).isDirectory() ? quelldateien(wurzel) : existsSync(wurzel) ? [wurzel] : [])
       readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
         // Kommentare sieht niemand; geprüft wird, was Oberfläche und KI sagen.

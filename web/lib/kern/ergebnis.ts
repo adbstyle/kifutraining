@@ -21,6 +21,7 @@
 // REIN: keine Importe aus `next/*`, `server-only` oder Datenbank-Modulen —
 // die Prüfskripte (`tsx scripts/pruefe-*.ts`) laden diese Datei ohne Server.
 import { MELDUNG_VERGEBEN } from "@/lib/bezeichnung";
+import { SERIE_MELDUNG } from "@/lib/serie";
 import { TERMIN_MELDUNG } from "@/lib/termin";
 import {
   bedingungAusFehler,
@@ -138,7 +139,9 @@ export const NICHT_GEFUNDEN = {
   fassung: "Zuordnung nicht gefunden.",
   /** Eine Vorlage, die zugeordnet werden soll (Wortlaut des Pickers). */
   vorlage: "Übung nicht verfügbar.",
-  team: "Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist.",
+  /** Wie «Termin/Training»: der Satz steht einmal in lib/serie.ts
+   *  (`SERIE_MELDUNG`), die Datenebene meldet mit demselben Marker. */
+  team: SERIE_MELDUNG.TEAM_NICHT_GEFUNDEN,
   gruppe: "Gruppe nicht gefunden.",
   /** Ein Termin eines Team-Trainings (#198); sichtbar nur Mitgliedern. */
   termin: TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN,

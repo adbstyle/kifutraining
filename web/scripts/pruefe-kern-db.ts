@@ -56,11 +56,16 @@ const { legeVarianteAn, benenneVariante, entferneVariante, setzeVariantenfolge }
 const { loescheTraining, loescheTrainingMitBildern } = await import("../lib/kern/loeschen");
 const { kopiereTrainingNach, HINWEIS_NICHTS_ENTSTANDEN } = await import("../lib/kern/kopie");
 const { ladeTrainingDetail } = await import("../lib/queries/trainings-fuer");
-const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTraining } = await import(
+const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTraining, kalenderFehler } = await import(
   "../lib/kern/termine"
 );
 const { TERMIN_MELDUNG, TERMIN_TEXT } = await import("../lib/termin");
+const { SERIE_MELDUNG, SERIE_TEXT, plusTage, wochentagVon } = await import("../lib/serie");
+const { kalendertagAmTrainingsort } = await import("../lib/zeit");
+const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitReichweite, entferneMitReichweite } =
+  await import("../lib/kern/serien");
 const { meineTeams, teamPlan } = await import("../lib/kern/team");
+const { getTeamPlanFuer } = await import("../lib/queries/termine-fuer");
 const { AendernEingabe: TerminAendernEingabe } = await import("../lib/mcp/werkzeuge/team");
 const {
   legeUebungAn,
@@ -1131,6 +1136,24 @@ try {
     assert.ok(await ladeTrainingDetail(a.supabase, kb), "die Übernahme von A besteht weiter");
   });
 
+  // ── Kalender: Fehler der RPCs einordnen (#324, #326) — ohne Datenbankzugriff,
+  //    liegt hier, weil kalenderFehler server-only ist (check:kern lädt es nicht).
+  await pruefe("Kalender: Serien-Konflikte, Team nicht gefunden, Serien-Regeln", async () => {
+    const konflikt = kalenderFehler({ message: "SERIE_BELEGUNG_GEAENDERT" }, true);
+    assert.equal(konflikt.art, "konflikt");
+    assert.equal(konflikt.meldung, SERIE_MELDUNG.SERIE_BELEGUNG_GEAENDERT);
+    assert.equal(konflikt.wiederholbar, true);
+    assert.equal(kalenderFehler({ message: "SERIE_GEAENDERT" }).meldung, SERIE_MELDUNG.SERIE_GEAENDERT);
+    const team = kalenderFehler({ message: "TEAM_NICHT_GEFUNDEN" });
+    assert.equal(team.art, "nicht_gefunden");
+    assert.equal(team.feld, "team_id");
+    assert.equal(team.meldung, "Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist.");
+    const regel = kalenderFehler({ message: "SERIE_ZU_LANG" });
+    assert.equal(regel.art, "regel");
+    assert.equal(regel.meldung, SERIE_TEXT.zuLang);
+    assert.equal(kalenderFehler({ message: "SERIE_OHNE_ZEITRAUM" }).meldung, "Bitte ein Datum angeben.");
+  });
+
   // ── Kalender: Termin ohne Training (#322) ───────────────────────────────
   await pruefe("Kalender: festlegen, ändern, entfernen, Bestand, Löschen, fremd", async () => {
     const TEAM_FREMD = "Team nicht gefunden. Du kannst nur in Teams arbeiten, in denen du Mitglied bist.";
@@ -1393,6 +1416,21 @@ try {
     const amTag = wert(await teamPlan(a.supabase, a.id, { teamId: team.id, heute: tag(-1) }));
     assert.deepEqual(amTag.kommend.map((t) => t.id), [t0.terminId, t1.terminId]);
 
+    // Die Abfrage läuft in zwei Hälften (anstehend aufsteigend, vergangen
+    // absteigend; max_rows kappt sonst die neuesten): die zusammengeführte
+    // Liste bleibt aufsteigend, die Teilung unverändert. Drei vergangene
+    // (am selben Tag eines ohne Beginn zuletzt), zwei anstehende.
+    const v3 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(-3), beginn: "17:00", ende: "18:00" }));
+    const v2a = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(-2), beginn: "09:00", ende: "10:00" }));
+    const v2b = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(-2), beginn: "16:00", ende: "17:00" }));
+    const k0 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(0), beginn: "08:00", ende: "09:00" }));
+    const reihe = (ts: { terminId: string }[]) => ts.map((t) => t.terminId);
+    const aufsteigend = (await getTeamPlanFuer(a.supabase, team.id, tag(0))).map((t) => t.id);
+    assert.deepEqual(aufsteigend, reihe([v3, v2a, v2b, t0, k0, t1]), "aufsteigend über beide Hälften");
+    const geteilt = wert(await teamPlan(a.supabase, a.id, { teamId: team.id, heute: tag(0) }));
+    assert.deepEqual(geteilt.kommend.map((t) => t.id), reihe([k0, t1]));
+    assert.deepEqual(geteilt.vergangen.map((t) => t.id), reihe([t0, v2b, v2a, v3]), "jüngste zuerst");
+
     // Suche im Team-Bestand samt Termin.
     const suche = wert(await trainingsSuchen(a.supabase, a.id, { bestand: "team", teamId: team.id, limit: 10 }));
     assert.equal(suche.treffer.length, 2);
@@ -1403,6 +1441,7 @@ try {
       ende: "20:00",
       ort: "Allmend",
       bemerkung: "Leibchen",
+      serieId: null,
       anstehend: true,
     });
     assert.equal(suche.treffer.find((t) => t.id === vergangenes)!.termin?.anstehend, false);
@@ -1420,6 +1459,7 @@ try {
       ende: "20:00",
       ort: "Allmend",
       bemerkung: "Leibchen",
+      serie_id: null,
       anstehend: true,
     });
     assert.equal(wert(await trainingAbrufen(a.supabase, a.id, { trainingId: persoenlich })).termin, null);
@@ -1433,6 +1473,269 @@ try {
       "nicht_gefunden",
       TEAM_FREMD,
     );
+  });
+
+  // ── Kalender: Terminserien (#324, #326) ──────────────────────────────────
+  // Hilfen: ein Team mit dem Konto a, das Kalenderdatum relativ zu heute (am
+  // Trainingsort) und die Termine einer Serie in Datumsfolge.
+  async function serienTeam(name: string) {
+    const { data: team } = await admin.from("teams").insert({ name }).select("id").single();
+    teams.push(team!.id);
+    await admin.from("team_members").insert({ team_id: team!.id, user_id: a.id });
+    return team!.id as string;
+  }
+  const heuteCh = kalendertagAmTrainingsort();
+  const tagCh = (d: number) => plusTage(heuteCh, d);
+  const termineDer = async (serieId: string) =>
+    (
+      await admin
+        .from("training_termine")
+        .select("id, datum, serien_tag, beginn, ende, ort, bemerkung, zeit_abweichend, ort_abweichend, bemerkung_abweichend, training_id")
+        .eq("serie_id", serieId)
+        .order("datum")
+    ).data!;
+
+  await pruefe("Serie festlegen: je Wochentag ein Termin, Regeln, bestehende Termine bleiben (#324)", async () => {
+    const team = await serienTeam("Kern-DB-Serie");
+    const einzel = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: "2030-01-01", beginn: "10:00", ende: "11:00" }));
+    const s = wert(
+      await legeSerieFest(a.supabase, a.id, {
+        teamId: team, wochentage: [2, 4], von: "2030-01-01", bis: "2030-01-30", beginn: "18:00", ende: "19:30", ort: "Allmend",
+      }),
+    );
+    assert.equal(s.termine, 9); // 1.–30. Januar 2030: 5 Di + 4 Do (der 31. ist ein Donnerstag)
+    const t = await termineDer(s.serieId);
+    assert.equal(t[0].datum, "2030-01-01");
+    assert.ok(t.every((x) => x.training_id === null && x.ort === "Allmend" && x.serien_tag === x.datum));
+    assert.ok((await admin.from("training_termine").select("id").eq("id", einzel.terminId).single()).data, "PC 3");
+    fehler(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [6], von: "2030-01-07", bis: "2030-01-11", beginn: "18:00", ende: "19:30" }), "eingabe", SERIE_TEXT.ohneTag);
+    fehler(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: "2028-02-29", bis: "2029-03-01", beginn: "18:00", ende: "19:30" }), "eingabe", SERIE_TEXT.zuLang);
+    wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: "2028-02-29", bis: "2029-02-28", beginn: "18:00", ende: "19:30" }));
+    fehler(await legeSerieFest(b.supabase, b.id, { teamId: team, wochentage: [2], von: "2030-01-01", bis: "2030-01-31", beginn: "18:00", ende: "19:30" }), "nicht_gefunden");
+    // Die Vorprüfung fängt ab, was die Datenebene sonst roh meldete.
+    fehler(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: "2030-02-30", bis: "2030-03-31", beginn: "18:00", ende: "19:30" }), "eingabe");
+    fehler(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: "2030-01-01", bis: "2030-01-31", beginn: "25:00", ende: "26:00" }), "eingabe");
+    fehler(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: "2030-01-01", bis: "2030-01-31", beginn: "18:00", ende: "19:30", ort: "x".repeat(101) }), "eingabe", TERMIN_TEXT.ortLang);
+  });
+
+  await pruefe("Serie ändern: nur dieser, folgende teilt, alle erfasst Vergangenes, Abweichungen bleiben (#326)", async () => {
+    const team = await serienTeam("Kern-DB-Serie-Ändern");
+    // Wöchentlich am heutigen Wochentag, drei Wochen zurück bis fünf Wochen voraus.
+    const von = tagCh(-21), bis = tagCh(35);
+    const w = wochentagVon(heuteCh);
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [w], von, bis, beginn: "18:00", ende: "19:30", ort: "A" }));
+    let t = await termineDer(s.serieId);
+    const heuteTermin = t.find((x) => x.datum === heuteCh)!;
+    const naechster = t.find((x) => x.datum === tagCh(7))!;
+
+    // Nur dieser: Ort weicht ab, Zeit und Bemerkung nicht.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: naechster.id, ort: "B" }));
+    const nach = (await termineDer(s.serieId)).find((x) => x.id === naechster.id)!;
+    assert.equal(nach.ort_abweichend, true);
+    assert.equal(nach.zeit_abweichend, false);
+    assert.equal(nach.bemerkung_abweichend, false);
+    // Lesepfad: Serie, Serientag und Abweichungen im Plan.
+    const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
+    const zeile = [...plan.kommend, ...plan.vergangen].find((x) => x.id === naechster.id)!;
+    assert.deepEqual(zeile.abweichungen, ["ort"]);
+    assert.equal(zeile.serienTag, naechster.datum);
+    assert.deepEqual(
+      [zeile.serie?.id, zeile.serie?.wochentage, zeile.serie?.beginnDatum, zeile.serie?.endDatum, zeile.serie?.beginn, zeile.serie?.ende, zeile.serie?.ort],
+      [s.serieId, [w], von, bis, "18:00", "19:30", "A"],
+    );
+    assert.deepEqual([...plan.kommend, ...plan.vergangen].find((x) => x.id === heuteTermin.id)!.abweichungen, []);
+    // Ein unveränderter Ort setzt kein Flag: derselbe Wert wie die Serie.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: heuteTermin.id, ort: "A" }));
+    assert.equal((await termineDer(s.serieId)).find((x) => x.id === heuteTermin.id)!.ort_abweichend, false);
+
+    // KI ohne Reichweite → abgewiesen (AK 11).
+    fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: naechster.id, ort: "C" }), "regel", SERIE_MELDUNG.REICHWEITE_FEHLT);
+    // KI «alle» mit Vergangenem → Bestätigung nötig.
+    const ohne = fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: naechster.id, reichweite: "alle", beginn: "18:30", ende: "20:00" }), "regel");
+    assert.match((ohne as { meldung: string }).meldung, /vergangene Termine/);
+    // Alle, bestätigt: Zeit überall, auch vergangen; der abweichende Ort bleibt.
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: naechster.id, reichweite: "alle", beginn: "18:30", ende: "20:00", bestaetigt: true }));
+    t = await termineDer(s.serieId);
+    assert.ok(t.every((x) => x.beginn === "18:30:00"), "PC 4");
+    assert.equal(t.find((x) => x.id === naechster.id)!.ort, "B", "PC 5");
+
+    // Dieser und folgende ab heute: teilt; alte Serie endet gestern.
+    const f = wert(await aendereSerie(a.supabase, a.id, { terminId: heuteTermin.id, reichweite: "dieser_und_folgende", aenderung: { ort: "C" } }));
+    assert.notEqual(f.serieId, s.serieId);
+    const alt = (await admin.from("termin_serien").select("end_datum").eq("id", s.serieId).single()).data!;
+    assert.equal(alt.end_datum, tagCh(-1), "PC 3");
+    const neu = await termineDer(f.serieId!);
+    assert.equal(neu[0].id, heuteTermin.id);
+    assert.equal(neu.find((x) => x.id === naechster.id)!.ort, "B", "die Abweichung reist mit");
+    assert.ok(neu.filter((x) => x.id !== naechster.id).every((x) => x.ort === "C"));
+    // PC 19: Mit «folgende» beginnt die Teilserie frühestens am gewählten Termin.
+    fehler(await aendereSerie(a.supabase, a.id, { terminId: naechster.id, reichweite: "dieser_und_folgende", aenderung: { von: heuteCh } }), "eingabe", SERIE_MELDUNG.TEILSERIE_BEGINN);
+
+    // Der Serie folgen lassen (AK 6): Ort wieder aus der Serie.
+    wert(await folgeDerSerie(a.supabase, a.id, { terminId: naechster.id, angaben: ["ort"] }));
+    const gefolgt = (await termineDer(f.serieId!)).find((x) => x.id === naechster.id)!;
+    assert.equal(gefolgt.ort, "C");
+    assert.equal(gefolgt.ort_abweichend, false);
+    // Keine oder unbekannte Angaben: die Meldung nennt, was wählbar ist; das Datum folgt nie (PO 3).
+    fehler(await folgeDerSerie(a.supabase, a.id, { terminId: naechster.id, angaben: [] }), "eingabe", SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG);
+    fehler(await folgeDerSerie(a.supabase, a.id, { terminId: naechster.id, angaben: ["farbe" as never] }), "eingabe", SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG);
+    fehler(await folgeDerSerie(a.supabase, a.id, { terminId: naechster.id, angaben: ["datum" as never] }), "regel", SERIE_MELDUNG.DATUM_FOLGT_NICHT);
+  });
+
+  await pruefe("Serie: Wochentag weg/dazu/Tausch, Zeitraum, belegte vorab genannt, Konflikt, Lücken (#326)", async () => {
+    const team = await serienTeam("Kern-DB-Serie-Regel");
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2, 4], von: "2030-01-01", bis: "2030-01-30", beginn: "18:00", ende: "19:30" }));
+    let t = await termineDer(s.serieId);
+    const tt = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Serie-Training", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
+    const donnerstag = t.find((x) => x.datum === "2030-01-03")!;
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: donnerstag.id, trainingId: tt.id }));
+    // Einzeln entfernt: Der 8.1. kommt bei keiner Änderung zurück (PC 10).
+    wert(await entferneTermin(a.supabase, a.id, { terminId: t.find((x) => x.datum === "2030-01-08")!.id }));
+
+    // Tausch Do → Fr (PC 8): samt Training in dieselbe Woche.
+    const v = wert(await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { wochentage: [2, 5] }, vorschau: true }));
+    assert.equal(v.entfallendAnzahl, 0);
+    wert(await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { wochentage: [2, 5] }, erwartet: { version: v.versionVorher, entfallend: [] } }));
+    t = await termineDer(s.serieId);
+    assert.equal(t.find((x) => x.id === donnerstag.id)!.datum, "2030-01-04");
+    assert.equal(t.find((x) => x.id === donnerstag.id)!.training_id, tt.id);
+    assert.equal(t.filter((x) => x.datum === "2030-01-08").length, 0, "PC 10");
+
+    // Wochentag weg (PC 7): Fr entfällt, auch mit Training — vorab genannt (AK 8).
+    const v2 = wert(await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { wochentage: [2] }, vorschau: true }));
+    assert.deepEqual(v2.entfallend.map((e) => e.terminId), [donnerstag.id]);
+    assert.equal(v2.entfallend[0].training.name, "Kern-DB-Serie-Training");
+    // AK 9: Hat sich die Belegung seit der Vorschau geändert → abgewiesen.
+    fehler(
+      await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { wochentage: [2] }, erwartet: { version: v2.versionVorher, entfallend: [] } }),
+      "konflikt",
+      SERIE_MELDUNG.SERIE_BELEGUNG_GEAENDERT,
+    );
+    fehler(
+      await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { wochentage: [2] }, erwartet: { version: v2.versionVorher - 1, entfallend: [donnerstag.id] } }),
+      "konflikt",
+      SERIE_MELDUNG.SERIE_GEAENDERT,
+    );
+    wert(await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { wochentage: [2] }, erwartet: { version: v2.versionVorher, entfallend: [donnerstag.id] } }));
+    assert.ok(await ladeTrainingDetail(a.supabase, tt.id), "PC 13: das Training bleibt im Bestand");
+
+    // Zeitraum erweitern (PC 6) — der 8.1. bleibt Lücke, der Februar kommt dazu.
+    wert(await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { bis: "2030-02-12" }, erwartet: { version: v2.versionVorher + 1, entfallend: [] } }));
+    t = await termineDer(s.serieId);
+    assert.deepEqual(t.map((x) => x.datum), ["2030-01-01", "2030-01-15", "2030-01-22", "2030-01-29", "2030-02-05", "2030-02-12"]);
+
+    // Entfernen «dieser und folgende» (PC 11) und «alle» (PC 12, 14).
+    const e1 = wert(await entferneSerie(a.supabase, a.id, { terminId: t[3].id, reichweite: "dieser_und_folgende" }));
+    assert.equal(e1.entfallendAnzahl, 3);
+    assert.equal((await admin.from("termin_serien").select("end_datum").eq("id", s.serieId).single()).data!.end_datum, "2030-01-28");
+    wert(await entferneSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle" }));
+    assert.equal((await admin.from("termin_serien").select("id").eq("id", s.serieId).maybeSingle()).data, null);
+  });
+
+  await pruefe("Tausch So → Mo über die Wochengrenze; anstehend nicht in die Vergangenheit (Review Focus 3)", async () => {
+    const team = await serienTeam("Kern-DB-Tausch");
+    // Ein Sonntag in der Zukunft und einer zwei Wochen zurück.
+    const sonntagVoraus = plusTage(heuteCh, (7 - wochentagVon(heuteCh)) % 7 || 7);
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [7], von: plusTage(sonntagVoraus, -14), bis: sonntagVoraus, beginn: "10:00", ende: "11:30" }));
+    wert(await aendereSerie(a.supabase, a.id, { terminId: (await termineDer(s.serieId))[0].id, reichweite: "alle", aenderung: { wochentage: [1] }, bestaetigt: true }));
+    const t = await termineDer(s.serieId);
+    // Jeder Sonntag wandert auf den Montag DERSELBEN Woche (6 Tage zurück).
+    assert.ok(t.every((x) => wochentagVon(x.datum) === 1));
+    // Liegt der Montag vor heute, entfällt der anstehende Sonntag (PC 9).
+    const montag = plusTage(sonntagVoraus, -6);
+    assert.equal(t.some((x) => x.datum === montag), montag >= heuteCh);
+  });
+
+  await pruefe("Serie: Teilung durch ein anderes Mitglied → SERIE_GEAENDERT bei «alle» (Änderung und Entfernen)", async () => {
+    const team = await serienTeam("Kern-DB-Serie-Wettlauf");
+    // Das zweite Mitglied, das die Serie teilt, während a noch die alte Vorschau hat.
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: "2030-03-05", bis: "2030-04-30", beginn: "18:00", ende: "19:30" }));
+    const t = await termineDer(s.serieId);
+    for (const art of ["aendern", "entfernen"] as const) {
+      const veraltet = art === "aendern"
+        ? wert(await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { ort: "Halle" }, vorschau: true }))
+        : wert(await entferneSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", vorschau: true }));
+      // Mitglied b teilt die Serie an einem späteren Termin — die
+      // Serie S behält ihre Zeile, ihre Version steigt aber (Teilung).
+      // Beim zweiten Durchgang liegt t[3] schon in der Teilserie; geteilt wird
+      // darum an einem Termin, der noch in S liegt.
+      wert(await aendereSerie(b.supabase, b.id, { terminId: art === "aendern" ? t[3].id : t[2].id, reichweite: "dieser_und_folgende", aenderung: { ort: "Andere" } }));
+      const r = art === "aendern"
+        ? await aendereSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", aenderung: { ort: "Halle" }, erwartet: { version: veraltet.versionVorher, entfallend: [] } })
+        : await entferneSerie(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", erwartet: { version: veraltet.versionVorher, entfallend: [] } });
+      fehler(r, "konflikt", SERIE_MELDUNG.SERIE_GEAENDERT);
+      // Die Serie ist unverändert geblieben: noch immer t[0] da, kein Löschen.
+      assert.ok((await admin.from("training_termine").select("id").eq("id", t[0].id).maybeSingle()).data);
+    }
+  });
+
+  await pruefe("Kalender: Serie mit Reichweite über den KI-Weg — nur dieser, Regeln, Datum, Entfernen (#326 AK 2–4, 7, 10, 11)", async () => {
+    const team = await serienTeam("Kern-DB-Serie-KI");
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: tagCh(7), bis: tagCh(49), beginn: "18:00", ende: "19:30", ort: "A" }));
+    const t = await termineDer(s.serieId);
+    // Nur dieser: Einzeländerung, Ort weicht ab.
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t[1].id, reichweite: "nur_dieser", ort: "Z" }));
+    assert.equal((await termineDer(s.serieId)).find((x) => x.id === t[1].id)!.ort_abweichend, true);
+    // Zeit (nur als Paar) und Bemerkung setzen ihre Flags; das Datum braucht keines.
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t[1].id, reichweite: "nur_dieser", beginn: "17:00", ende: "18:00", bemerkung: "Test" }));
+    const z = (await termineDer(s.serieId)).find((x) => x.id === t[1].id)!;
+    assert.deepEqual([z.zeit_abweichend, z.ort_abweichend, z.bemerkung_abweichend], [true, true, true]);
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t[0].id, reichweite: "nur_dieser", datum: plusTage(t[0].datum, 1) }));
+    const d = (await termineDer(s.serieId)).find((x) => x.id === t[0].id)!;
+    assert.deepEqual([d.zeit_abweichend, d.ort_abweichend, d.bemerkung_abweichend], [false, false, false]);
+    assert.notEqual(d.datum, d.serien_tag);
+    // Unveränderte Zeit und Bemerkung setzen kein Flag (gleicher Wert wie die Serie bzw. leer → leer).
+    const flagsVon = async (id: string) => {
+      const x = (await termineDer(s.serieId)).find((r) => r.id === id)!;
+      return [x.zeit_abweichend, x.ort_abweichend, x.bemerkung_abweichend];
+    };
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t[3].id, reichweite: "nur_dieser", beginn: "18:00", ende: "19:30", bemerkung: "" }));
+    assert.deepEqual(await flagsVon(t[3].id), [false, false, false]);
+    // Lesepfad: ein verlegtes Datum und eine geänderte Zeit erscheinen als Abweichung.
+    const planKi = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
+    const zeileKi = (id: string) => [...planKi.kommend, ...planKi.vergangen].find((x) => x.id === id)!;
+    assert.ok(zeileKi(t[0].id).abweichungen.includes("datum"), "verlegtes Datum");
+    assert.ok(zeileKi(t[1].id).abweichungen.includes("zeit"), "geänderte Zeit");
+    assert.deepEqual(zeileKi(t[3].id).abweichungen, [], "unverändert");
+    // Regeln nur für folgende oder alle; das Datum nur für diesen.
+    fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: t[1].id, reichweite: "nur_dieser", bis: tagCh(40) }), "regel", SERIE_MELDUNG.REGEL_NUR_SERIE);
+    fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: t[1].id, reichweite: "alle", datum: tagCh(9) }), "regel", SERIE_MELDUNG.DATUM_NUR_EINZELN);
+    // Ein Einzeltermin kennt keine Reichweite ausser «nur dieser».
+    const einzel = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "10:00", ende: "11:00" }));
+    fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: einzel.terminId, reichweite: "alle", ort: "Q" }), "regel", SERIE_MELDUNG.TERMIN_OHNE_SERIE);
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: einzel.terminId, ort: "Q" }));
+    // Entfernen: Reichweite Pflicht; «nur dieser» lässt eine Lücke, «alle» löscht die Serie.
+    fehler(await entferneMitReichweite(a.supabase, a.id, { terminId: t[2].id }), "regel", SERIE_MELDUNG.REICHWEITE_FEHLT);
+    wert(await entferneMitReichweite(a.supabase, a.id, { terminId: t[2].id, reichweite: "nur_dieser" }));
+    assert.equal((await termineDer(s.serieId)).some((x) => x.id === t[2].id), false);
+    wert(await entferneMitReichweite(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle" }));
+    assert.equal((await admin.from("termin_serien").select("id").eq("id", s.serieId).maybeSingle()).data, null);
+  });
+
+  await pruefe("Serie entfernen über den KI-Weg: Vergangenes verlangt Bestätigung, vorher bleibt alles stehen (#326 AK 11)", async () => {
+    const team = await serienTeam("Kern-DB-Serie-Entfernen-KI");
+    const w = wochentagVon(heuteCh);
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [w], von: tagCh(-14), bis: tagCh(14), beginn: "18:00", ende: "19:30" }));
+    const t = await termineDer(s.serieId);
+    assert.equal(t[0].datum, tagCh(-14));
+    const tr = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Serie-Vergangen", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t[0].id, trainingId: tr.id }));
+    const anzahl = async () =>
+      (await admin.from("training_termine").select("id", { count: "exact", head: true }).eq("team_id", team)).count;
+    const vorher = await anzahl();
+
+    // «Dieser und folgende» ab einem vergangenen Termin, «alle»: ohne Bestätigung nichts.
+    fehler(await entferneMitReichweite(a.supabase, a.id, { terminId: t[1].id, reichweite: "dieser_und_folgende" }), "regel", /vergangene/);
+    fehler(await entferneMitReichweite(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle" }), "regel", /vergangene/);
+    assert.equal(await anzahl(), vorher, "nichts gelöscht");
+    assert.ok((await admin.from("termin_serien").select("id").eq("id", s.serieId).maybeSingle()).data);
+
+    // Bestätigt: die Serie ist weg, das Training bleibt im Bestand.
+    wert(await entferneMitReichweite(a.supabase, a.id, { terminId: t[0].id, reichweite: "alle", bestaetigt: true }));
+    assert.equal(await anzahl(), 0);
+    assert.equal((await admin.from("termin_serien").select("id").eq("id", s.serieId).maybeSingle()).data, null);
+    assert.ok(await ladeTrainingDetail(a.supabase, tr.id), "das Training bleibt im Bestand");
   });
 
   // ── Übung anlegen (#143) ─────────────────────────────────────────────────

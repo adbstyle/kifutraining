@@ -8,6 +8,18 @@ import {
   ordneTrainingZu,
   type Zuordnung,
 } from "@/lib/kern/termine";
+import {
+  aendereSerie,
+  entferneSerie,
+  folgeDerSerie,
+  legeSerieFest,
+  type FolgeAngabe,
+  type SerienAenderung,
+  type SerienFolge,
+} from "@/lib/kern/serien";
+import type { KernErgebnis } from "@/lib/kern/ergebnis";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Wochentag } from "@/lib/serie";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
 import type { TerminFelder } from "@/lib/termin";
@@ -103,5 +115,73 @@ export async function loeseTrainingAktion(
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
+  return { ok: true };
+}
+
+/** Eine Terminserie festlegen (#324): die Termine entstehen ohne Training;
+ *  die Oberfläche bestätigt ohne Anzahl (Story 3 PC 4). */
+export async function legeSerieFestAktion(
+  teamId: string,
+  f: { wochentage: Wochentag[]; von: string; bis: string; beginn: string; ende: string; ort: string; bemerkung: string },
+): Promise<{ ok: true } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await legeSerieFest(a.supabase, a.userId, { ...f, teamId });
+  if (!r.ok) return { ok: false, error: r.meldung };
+  revalidiereTeam(teamId);
+  return { ok: true };
+}
+
+// ── Serien mit Reichweite (#326) ──────────────────────────────────────────────
+//
+// «Nur dieser» läuft über `aendereTerminAktion` / `entferneTerminAktion`. Die
+// Oberfläche fährt erst die Vorschau (dieselbe Rechnung, danach zurückgerollt)
+// und sendet beim Ausführen mit, was sie dort sah (PO 17): die Version der
+// Serie und die entfallenden Termine mit Training.
+
+type Serienweit = "dieser_und_folgende" | "alle";
+type Erwartet = { version: number; entfallend: string[] };
+
+async function serienLauf(
+  f: (s: SupabaseClient, u: string) => Promise<KernErgebnis<SerienFolge>>,
+): Promise<{ ok: true; folge: SerienFolge } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await f(a.supabase, a.userId);
+  if (!r.ok) return { ok: false, error: r.meldung };
+  return { ok: true, folge: r.wert };
+}
+
+/** Was eine Änderung bewirkte, ohne sie zu behalten. `version` ist die der
+ *  geladenen Serie: So fällt ein veralteter Plan schon hier auf, nicht erst
+ *  nach der Bestätigung. Die entfallenden Termine vergleicht die Vorschau
+ *  nicht — sie liefert sie erst. */
+export async function vorschauSerieAktion(terminId: string, reichweite: Serienweit, aenderung: SerienAenderung, version: number) {
+  return serienLauf((s, u) => aendereSerie(s, u, { terminId, reichweite, aenderung, vorschau: true, erwartet: { version, entfallend: [] } }));
+}
+
+export async function aendereSerieAktion(terminId: string, reichweite: Serienweit, aenderung: SerienAenderung, erwartet: Erwartet) {
+  const r = await serienLauf((s, u) => aendereSerie(s, u, { terminId, reichweite, aenderung, erwartet }));
+  if (r.ok) revalidiereTeam(r.folge.teamId);
+  return r;
+}
+
+export async function vorschauSerieEntfernenAktion(terminId: string, reichweite: Serienweit, version: number) {
+  return serienLauf((s, u) => entferneSerie(s, u, { terminId, reichweite, vorschau: true, erwartet: { version, entfallend: [] } }));
+}
+
+export async function entferneSerieAktion(terminId: string, reichweite: Serienweit, erwartet: Erwartet) {
+  const r = await serienLauf((s, u) => entferneSerie(s, u, { terminId, reichweite, erwartet }));
+  if (r.ok) revalidiereTeam(r.folge.teamId);
+  return r;
+}
+
+/** Abweichende Angaben wieder der Serie folgen lassen (#326 AK 6). */
+export async function folgeDerSerieAktion(terminId: string, angaben: FolgeAngabe[]): Promise<{ ok: true } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await folgeDerSerie(a.supabase, a.userId, { terminId, angaben });
+  if (!r.ok) return { ok: false, error: r.meldung };
+  revalidiereTeam(r.wert.teamId);
   return { ok: true };
 }

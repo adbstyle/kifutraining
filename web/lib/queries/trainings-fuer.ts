@@ -507,10 +507,12 @@ export type TeamTrainingRow = TrainingListRow & {
     ende: string | null;
     ort: string | null;
     bemerkung: string | null;
+    /** Die Terminserie, zu der der Termin gehört; `null` bei einem einzelnen. */
+    serieId: string | null;
   } | null;
 };
 
-const TEAM_LIST_SELECT = `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung )`;
+const TEAM_LIST_SELECT = `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, serie_id )`;
 
 export type TeamTrainingFilter = {
   /** Sucht im Namen, wie die Trainings-Übersicht (`search_text`). */
@@ -562,6 +564,7 @@ export async function getTeamTrainingsFuer(
       ende: string | null;
       ort: string | null;
       bemerkung: string | null;
+      serie_id: string | null;
     };
     const r = raw as unknown as RawListTraining & {
       training_termine: RawTerminEingebettet | RawTerminEingebettet[] | null;
@@ -577,6 +580,7 @@ export async function getTeamTrainingsFuer(
             ende: kurzeZeit(termin.ende),
             ort: termin.ort,
             bemerkung: termin.bemerkung,
+            serieId: termin.serie_id,
           }
         : null,
     };
