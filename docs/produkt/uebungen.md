@@ -87,9 +87,8 @@ Links folgen das „Feld-Diagramm" mit der Zeichenfläche, die „Beschreibung" 
 Varianten und ganz am Schluss das „Foto". Rechts steht die „Einordnung": Altersstufe,
 Alterskategorie, der Trainingsteil — im Kinderfussball-Hauptteil samt Hauptteilkategorie, im
 Juniorenfussball samt Block, jeweils in einem Feld —, Feldtyp oder Spielfeldgrösse, die Anzahl
-Spieler:innen, Übungstyp und Erscheinungsform, darunter das „Material". Es sind dieselben Angaben
-wie zuvor, nur gesammelt; Herkunft und Sichtbarkeit setzt weiterhin die Detailseite, die
-Altersstufe einer bestehenden Übung ändert weiterhin nur das Überführen. Inhalt und Einordnung
+Spieler:innen, Übungstyp und Erscheinungsform, darunter das „Material". Herkunft und Sichtbarkeit setzt die
+Detailseite, die Altersstufe einer bestehenden Übung ändert nur das Überführen. Inhalt und Einordnung
 werden zusammen mit einem Speichern gesichert. Auf einem schmalen Bildschirm steht die
 Einordnung vor dem Inhalt — sie bestimmt, ob der Ablauf als Fahrplan oder als Beschreibung
 verlangt ist —, zusammengehörige Felder stehen dort paarweise, auf dem Telefon untereinander.
@@ -124,13 +123,13 @@ Inhalt ein zweites Mal; wer eine Übung öffnet, sieht auf einen Blick, wofür s
 Bild und Ablauf ohne Unterbrechung. Gezeigt wird, was die Übung erfasst hat. Nur die
 Eigentümerin sieht zusätzlich, was ihre Übung tragen könnte, aber noch nicht erfasst hat: die
 Erscheinungsform, im Juniorenfussball den Übungstyp, im Kinderfussball den Feldtyp, dazu die
-Spielfeldgrösse in Metern — jeweils nur, wo Altersstufe, Trainingsteil oder Block und Feldtyp sie vorsehen.
-Diese Angaben speisen die Filter des Katalogs; eine Übung ohne sie bleibt dort für manche Suche
-unsichtbar. Sie stehen an ihrem Platz als «Nicht erfasst», verschwinden, sobald die Angabe
+Spielfeldgrösse in Metern — jeweils nur, wo Altersstufe, Trainingsteil oder Block und Feldtyp
+sie vorsehen. Erscheinungsform, Übungstyp und Feldtyp sind zugleich Filter des Katalogs; eine
+Übung ohne sie bleibt dort für manche Suche unsichtbar. Sie stehen an ihrem Platz als «Nicht erfasst», verschwinden, sobald die Angabe
 gespeichert ist, und erscheinen nie auf dem Druckblatt. Pflicht wird dadurch nichts: Eine Übung
 lässt sich ohne sie speichern und veröffentlichen. Leeres Material und eine fehlende Anzahl
-Spieler:innen gelten nicht als fehlend, denn es gibt Übungen ohne beides. Auffangen und Abschluss im Juniorenfussball heissen wie ihr einziger
-Block und stehen darum einmal. Hat eine Änderung am Feld-Diagramm das Material verändert, sieht
+Spieler:innen gelten nicht als fehlend, denn es gibt Übungen ohne beides. Auffangen und
+Abschluss im Juniorenfussball heissen wie ihr einziger Block und stehen darum einmal. Hat eine Änderung am Feld-Diagramm das Material verändert, sieht
 die Eigentümerin den Hinweis dazu in der Einordnung, beim Material, und entscheidet dort, ob sie
 den neuen Vorschlag übernimmt oder ihr Material beibehält.
 

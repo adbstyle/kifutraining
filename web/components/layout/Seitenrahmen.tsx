@@ -21,7 +21,8 @@ const BREITE = {
  * die zur Seite passt — Übersichten über die ganze Fläche, Formulare und
  * Lesetext in ihrer Lesebreite —, und zuoberst die Kopfzeile (Umschalter der
  * Seitenleiste, Brotkrumen, Aktionen). Nicht zentriert: Die Fläche rechts
- * gehört der zweiten Spalte (`spalte`, etwa die Einordnung einer Übung). Jede Seite hat Brotkrumen — darum ist `krumen` Pflicht.
+ * gehört der zweiten Spalte (`spalte`, etwa die Einordnung einer Übung).
+ * Jede Seite hat Brotkrumen — darum ist `krumen` Pflicht.
  * `null` nur dort, wo die Seite die Kopfzeile selbst setzt, weil ihre
  * Aktionen Zustand brauchen, der erst tiefer entsteht (Trainings-Editor).
  */

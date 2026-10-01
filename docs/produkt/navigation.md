@@ -43,9 +43,9 @@ Jede Seite beginnt links neben der Leiste, nichts steht zentriert in der Mitte. 
 die Kacheln reihen sich so dicht, wie Platz ist, auf einem breiten Bildschirm also in mehr
 Spalten. Formulare und Seiten zum Lesen, etwa eine Übung oder ein Training, behalten eine
 angenehme Lesebreite und stehen ebenfalls links. Auch die Durchführung steht links. Die Seite
-einer Übung hat rechts neben dem Inhalt eine zweite Spalte mit ihrer Einordnung; der Inhalt
-behält dabei seine Lesebreite. Ist das Fenster dafür zu schmal, steht die Einordnung nach dem
-Inhalt.
+einer Übung und ihre Maske haben rechts neben dem Inhalt eine zweite Spalte mit der Einordnung;
+der Inhalt behält dabei seine Lesebreite. Ist das Fenster dafür zu schmal, steht die Einordnung
+auf der Übungsseite nach dem Inhalt, in der Maske davor.
 
 ## Auf schmalen Bildschirmen
 

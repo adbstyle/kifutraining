@@ -28,7 +28,7 @@ import type { ExerciseDetail } from "@/lib/queries/exercises";
 /** Trainingsteil und — im Juniorenschema — Block einer Übung als Klartext.
  *  Der Block steht nur, wo der Teil untergliedert ist: Auffangen und
  *  Abschluss tragen genau einen Block und heissen wie er (Story #127). */
-export function teilUndBlock(ex: Pick<ExerciseDetail, "altersstufe" | "trainingsteil">): {
+function teilUndBlock(ex: Pick<ExerciseDetail, "altersstufe" | "trainingsteil">): {
   teil: string;
   block: string | null;
 } {

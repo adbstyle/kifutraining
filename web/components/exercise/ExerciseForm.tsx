@@ -531,18 +531,15 @@ export function ExerciseForm({
         )}
 
         {/* Im Kinderfussball-Hauptteil wählt dasselbe Feld die
-            Hauptteilkategorie mit — wie den Block im Juniorenfussball. Es
-            steht in der linken Spalte unter der Altersstufe. */}
-        <div className={PAAR_LEISTE}>
-          <EinordnungField
-            altersstufe={stufe}
-            wert={teil}
-            hauptteilkategorie={zeigtHkat ? hkat : ""}
-            onChange={wechsleEinordnung}
-            error={err.trainingsteil ?? err.hauptteilkategorie}
-            hinweis={entfallHinweis}
-          />
-        </div>
+            Hauptteilkategorie mit — wie den Block im Juniorenfussball. */}
+        <EinordnungField
+          altersstufe={stufe}
+          wert={teil}
+          hauptteilkategorie={zeigtHkat ? hkat : ""}
+          onChange={wechsleEinordnung}
+          error={err.trainingsteil ?? err.hauptteilkategorie}
+          hinweis={entfallHinweis}
+        />
 
         {/* Neben der Spielerzahl steht, was das Feld beschreibt: im
             Kinderfussball der Feldtyp (beim freien Feld mit den Metern

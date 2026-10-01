@@ -27,13 +27,13 @@ export function Eigenschaften({
   children,
   className,
 }: {
-  /** Überschrift der Liste — zugleich der Name der Region. */
+  /** Überschrift der Liste — zugleich der Name des Abschnitts für Vorlesehilfen. */
   titel: string;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <Card className={cn("p-4", className)}>
+    <Card role="region" aria-label={titel} className={cn("p-4", className)}>
       <h2 className="type-title-small text-on-surface">{titel}</h2>
       <dl className="mt-4 grid grid-cols-[8.5rem_minmax(0,1fr)] gap-x-3 gap-y-3 print:grid-cols-1 print:gap-y-0">
         {children}
@@ -92,7 +92,7 @@ export function EigenschaftBreit({
   return (
     <div className={cn("contents", className)}>
       <dt className="sr-only">{label}</dt>
-      <dd className="col-span-2 min-w-0">{children}</dd>
+      <dd className="col-span-2 min-w-0 print:col-span-1">{children}</dd>
     </div>
   );
 }

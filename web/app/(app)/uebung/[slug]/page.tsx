@@ -75,9 +75,9 @@ export default async function ExerciseDetailPage({
   // Favoriten-Aktion nur für angemeldete USER (AC2/AC11).
   const favorited = user ? await isFavorited(ex.id) : false;
 
-  // Die Brotkrumen nennen die Einordnung als Filter-Link auf den Pool. Der Link zielt auf die feinste Einordnung, die der Katalog
-  // filtern kann — im Kinderfussball-Hauptteil auf die Hauptteilkategorie
-  // (Story #129). Der TEXT bleibt die Einordnung selbst.
+  // Die Brotkrumen nennen die Einordnung als Filter-Link auf den Pool. Der
+  // Link zielt auf die feinste Einordnung, die der Katalog filtern kann — im
+  // Kinderfussball-Hauptteil auf die Hauptteilkategorie (Story #129). Der TEXT bleibt die Einordnung selbst.
   const teilLabel = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
     { label: "Übungen", href: "/" },

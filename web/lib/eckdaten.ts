@@ -94,10 +94,10 @@ function zusammen(text: string): string {
 }
 
 /** Fachliche Einordnung, die eine Übung tragen kann, aber nicht erfasst hat
- *  (#352). Gemeint sind die freiwilligen Angaben, die die Filter des Katalogs
- *  speisen: Erscheinungsform, Übungstyp, Feldtyp und Spielfeldgrösse — je nur,
- *  wo Altersstufe, Trainingsteil oder Block und Feldtyp sie vorsehen (die
- *  Regeln aus `lib/altersstufe.ts`). Pflichtangaben fehlen bei einer
+ *  (#352): die freiwilligen Angaben Erscheinungsform, Übungstyp, Feldtyp und
+ *  Spielfeldgrösse — je nur, wo Altersstufe, Trainingsteil oder Block und
+ *  Feldtyp sie vorsehen (die Regeln aus `lib/altersstufe.ts`). Die ersten drei
+ *  sind zugleich Filter des Katalogs. Pflichtangaben fehlen bei einer
  *  gesicherten Übung nie; Material und Anzahl Spieler:innen dürfen leer sein,
  *  ohne zu fehlen (PO 2026-10-01). */
 export type FehlendeAngabe = "erscheinungsform" | "uebungstyp" | "feldtyp" | "spielfeld";
