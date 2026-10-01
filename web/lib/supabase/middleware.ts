@@ -10,6 +10,11 @@ const PROTECTED_PREFIXES = [
   "/neu",
   "/konto",
   "/training/neu",
+  // Der Team-Bereich (#330 PC 7): Der Verweis aus dem Kalenderprogramm führt
+  // über die Anmeldung hierher zurück. `/team` und `/teams` stehen getrennt,
+  // weil der Vergleich am Pfadsegment endet (`/teamwork` ist nicht gemeint).
+  "/team",
+  "/teams",
 ];
 
 function isProtected(pathname: string): boolean {
@@ -62,7 +67,10 @@ export async function updateSession(request: NextRequest) {
   if (!user && isProtected(request.nextUrl.pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("redirect", request.nextUrl.pathname);
+    // Der Rücksprung trägt die Abfrage mit (`?termin=…`, `?ansicht=monat`); auf
+    // der Login-Adresse selbst bleibt sie weg — dort bedeutet `?error` etwas.
+    url.search = "";
+    url.searchParams.set("redirect", request.nextUrl.pathname + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
 

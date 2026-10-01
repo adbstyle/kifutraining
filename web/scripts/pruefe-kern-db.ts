@@ -3309,6 +3309,32 @@ try {
       assert.deepEqual(await feed(t), { gueltig: false }, `Token «${t.slice(0, 8)}…» ist ungültig`);
   });
 
+  await pruefe("Abo-Feed über den Kern-Pfad: Festlegen, Verlegen, Ausfallen, Entfernen — der Termin erscheint genau einmal im neuen Stand (#330 PC 1, 5, 6)", async () => {
+    const team = await serienTeam("Kern-DB-Abo-Kern");
+    const tagCh = (d: number) => plusTage(kalendertagAmTrainingsort(), d);
+    const token = (await holen(a, team)).token!;
+    const alt = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(-29), beginn: "10:00", ende: "11:00" }));
+    const rand = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(-28), beginn: "10:00", ende: "11:00" }));
+    const aus = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(2), beginn: "10:00", ende: "11:00" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus.terminId }));
+    const ids = async () => (await feed(token)).termine!.map((t) => t.id);
+    assert.deepEqual(await ids(), [rand.terminId], "PC 1, 5: heute−28 ja, heute−29 und Ausgefallene nein");
+    assert.ok(!(await ids()).includes(alt.terminId));
+    // PC 6: Verlegen ändert den Stand, die Kennung bleibt — genau ein Eintrag.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: rand.terminId, datum: tagCh(4), beginn: "17:00", ende: "18:30", ort: "Halle" }));
+    const nachVerlegen = (await feed(token)).termine!;
+    assert.equal(nachVerlegen.length, 1, "genau einmal");
+    assert.deepEqual(
+      { id: nachVerlegen[0].id, datum: nachVerlegen[0].datum, beginn: nachVerlegen[0].beginn, ende: nachVerlegen[0].ende, ort: nachVerlegen[0].ort },
+      { id: rand.terminId, datum: tagCh(4), beginn: "17:00", ende: "18:30", ort: "Halle" },
+    );
+    // Ausfall zurücknehmen bringt den Termin wieder; Entfernen nimmt ihn weg.
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: aus.terminId }));
+    assert.deepEqual(await ids(), [aus.terminId, rand.terminId], "Datumsfolge: heute+2, heute+4");
+    wert(await entferneTermin(a.supabase, a.id, { terminId: aus.terminId }));
+    assert.deepEqual(await ids(), [rand.terminId], "PC 5: entfernt");
+  });
+
   await pruefe("Abo erlischt beim Austritt und lebt bei erneuter Aufnahme nicht wieder auf (#330 AK 9, PC 9, 10)", async () => {
     const team = await serienTeam("Kern-DB-Abo-Austritt");
     await admin.from("team_members").insert({ team_id: team, user_id: b.id });

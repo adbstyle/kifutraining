@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { CalendarDays, CalendarOff, CalendarPlus, CalendarX2, MapPin, MessageSquareText, Pencil, PlayCircle, Repeat, Trash2, Undo2, Unlink, Users } from "lucide-react";
 import { Badge, Card, Disclosure, IconButton, IconButtonLink, KategorieChip, OverflowMenu, Tooltip } from "@/components/ui";
@@ -15,8 +16,16 @@ import { nochNichtVorbereitet, verantwortlichenNamen, type Plan, type TerminZeil
 /* Der Kalender eines Teams als Liste (Team-Kalender #322, #323; gegliedert
    mit Story 18): zuoberst, was ansteht, danach der Rückblick, zugeklappt.
    Ein Termin ohne Training ist auf einen Blick erkennbar (AK 16, 17). */
-export function TrainingsPlan({ plan, heute }: { plan: Plan; heute: string }) {
+export function TrainingsPlan({ plan, heute, hervorheben }: { plan: Plan; heute: string; hervorheben?: string }) {
   const nichtsMehrOffen = plan.kommend.length === 0;
+  // #330 PC 7: Der Verweis aus dem Kalender zeigt auch einen Termin im
+  // Rückblick — der Abschnitt klappt dafür auf, und `key` setzt den
+  // Anfangszustand neu, wenn ein anderer Termin gemeint ist.
+  const imRueckblick = hervorheben !== undefined && plan.vergangen.some((t) => t.id === hervorheben);
+  // Beim Einhängen (Kindeffekte laufen vor diesem): Der Rückblick ist dann schon offen.
+  useEffect(() => {
+    if (hervorheben) document.getElementById(hervorheben)?.scrollIntoView({ block: "center" });
+  }, [hervorheben]);
   return (
     <>
       {!nichtsMehrOffen && (
@@ -25,20 +34,20 @@ export function TrainingsPlan({ plan, heute }: { plan: Plan; heute: string }) {
             Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
           </h3>
           <ol className="mt-2 flex flex-col gap-3">
-            {plan.kommend.map((t) => <TerminKarte key={t.id} t={t} heute={heute} />)}
+            {plan.kommend.map((t) => <TerminKarte key={t.id} t={t} heute={heute} hervorgehoben={t.id === hervorheben} />)}
           </ol>
         </section>
       )}
       {plan.vergangen.length > 0 && (
         <Disclosure
-          key={nichtsMehrOffen ? "allein" : "mit-kommendem"}
+          key={`${nichtsMehrOffen ? "allein" : "mit-kommendem"}-${imRueckblick ? hervorheben : ""}`}
           title="Vergangen"
           count={plan.vergangen.length}
-          defaultOpen={nichtsMehrOffen}
+          defaultOpen={nichtsMehrOffen || imRueckblick}
           className={cn(plan.kommend.length > 0 && "mt-6")}
         >
           <ol className="mt-2 flex flex-col gap-3">
-            {plan.vergangen.map((t) => <TerminKarte key={t.id} t={t} heute={heute} />)}
+            {plan.vergangen.map((t) => <TerminKarte key={t.id} t={t} heute={heute} hervorgehoben={t.id === hervorheben} />)}
           </ol>
         </Disclosure>
       )}
@@ -47,8 +56,10 @@ export function TrainingsPlan({ plan, heute }: { plan: Plan; heute: string }) {
 }
 
 /** `ebene`: die Überschriftsebene der Datum-/Zeitzeile — in der Liste h4, im
- *  Detail-Dialog des Monatsüberblicks h3 (unter dessen h2), ohne Sprung. */
-export function TerminKarte({ t, heute, ebene: Kopf = "h4" }: { t: TerminZeile; heute: string; ebene?: "h3" | "h4" }) {
+ *  Detail-Dialog des Monatsüberblicks h3 (unter dessen h2), ohne Sprung.
+ *  `hervorgehoben`: der Termin, auf den der Verweis aus dem Kalender-Abo zeigt
+ *  (#330) — Kontur in Primary, `aria-current` und die Kennung als Sprungziel. */
+export function TerminKarte({ t, heute, ebene: Kopf = "h4", hervorgehoben = false }: { t: TerminZeile; heute: string; ebene?: "h3" | "h4"; hervorgehoben?: boolean }) {
   const a = useTerminAktionen();
   const vergangen = t.datum < heute;
   const zeit = zeitText(t.beginn, t.ende);
@@ -76,7 +87,11 @@ export function TerminKarte({ t, heute, ebene: Kopf = "h4" }: { t: TerminZeile; 
 
   return (
     <li>
-      <Card className="p-4">
+      <Card
+        id={hervorgehoben ? t.id : undefined}
+        aria-current={hervorgehoben ? "true" : undefined}
+        className={cn("p-4", hervorgehoben && "kontur border-primary")}
+      >
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className={cn("min-w-0 flex-1", vergangen && !t.ausgefallen && "opacity-60")}>
             {/* Bei einem ausgefallenen Termin dämpft nur Kopf und Verantwortliche;
