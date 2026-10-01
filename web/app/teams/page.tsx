@@ -25,13 +25,9 @@ export default async function TeamsPage() {
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
       <header className="mb-8">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="type-headline-large text-on-surface">Teams</h1>
+          <h1 className="type-title-large text-on-surface">Teams</h1>
           <TeamErstellenButton />
         </div>
-        <p className="type-body-medium mt-2 max-w-2xl text-on-surface-mittel">
-          Ein Team plant gemeinsam: Trainings gehören dem Team, jedes Mitglied
-          darf sie bearbeiten, terminieren und durchführen.
-        </p>
       </header>
 
       {teams.length === 0 ? (

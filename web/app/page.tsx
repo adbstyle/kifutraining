@@ -1,4 +1,4 @@
-import { SearchX, Heart, Plus } from "lucide-react";
+import { SearchX, Heart } from "lucide-react";
 import { ExerciseCard, ButtonLink, Leerzustand, Banner } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { CatalogFilterBar, type CatalogFilters } from "@/components/catalog/CatalogFilterBar";
@@ -86,20 +86,13 @@ export default async function Home({
       {sp.deleted && <Flash message="Übung gelöscht." param="deleted" />}
       <header className="mb-8">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="type-display-small text-on-surface">Übungen</h1>
+          <h1 className="type-title-large text-on-surface">Übungen</h1>
           {user && (
-            <ButtonLink href="/neu" variant="filled" className="shrink-0">
-              <Plus size={20} strokeWidth={2.5} aria-hidden />
-              Neue Übung
+            <ButtonLink href="/neu" variant="filled" size="sm" className="shrink-0">
+              Übung erstellen
             </ButtonLink>
           )}
         </div>
-        <p className="type-body-large mt-3 max-w-2xl text-on-surface-mittel">
-          Der offizielle Kinderfussball-Bestand und Übungen der Community —
-          durchsuchbar und filterbar nach Trainingsteil, Alter, Feld und mehr.
-          Trainings stellst du nach dem Schema des Kinderfussballs oder des
-          Juniorenfussballs zusammen, von der Stufe G bis A.
-        </p>
       </header>
 
       {error && (

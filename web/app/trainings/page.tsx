@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus, ClipboardList, SearchX, Sparkles } from "lucide-react";
+import { ClipboardList, SearchX, Sparkles } from "lucide-react";
 import { ButtonLink, Leerzustand } from "@/components/ui";
 import { Flash } from "@/components/Flash";
 import { TrainingCard } from "@/components/training/TrainingCard";
@@ -45,21 +45,13 @@ export default async function TrainingsPage({
 
       <header className="mb-8">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="type-headline-large text-on-surface">Trainings</h1>
+          <h1 className="type-title-large text-on-surface">Trainings</h1>
           {user && (
-            <ButtonLink href="/training/neu" variant="filled" className="shrink-0">
-              <Plus size={20} strokeWidth={2.5} aria-hidden />
-              Neues Training
+            <ButtonLink href="/training/neu" variant="filled" size="sm" className="shrink-0">
+              Training erstellen
             </ButtonLink>
           )}
         </div>
-        <p className="type-body-medium mt-2 max-w-2xl text-on-surface-mittel">
-          {mine
-            ? "Deine eigenen Trainings, Entwürfe eingeschlossen. Team-Trainings findest du im jeweiligen Team."
-            : user
-              ? "Die öffentlichen Trainings der Community und deine eigenen — zum Stöbern, Durchführen und Übernehmen. Eine Übernahme ist eine eigenständige Kopie, die du frei anpassen kannst."
-              : "Öffentliche Trainings der Community — zum Stöbern, Durchführen und Übernehmen. Eine Übernahme ist eine eigenständige Kopie, die du frei anpassen kannst."}
-        </p>
       </header>
 
       <TrainingFilterBar q={q} stufen={stufen} mine={mine} showMine={!!user} />
