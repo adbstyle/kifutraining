@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Breadcrumbs } from "@/components/ui";
+import { SeitenKopf } from "@/components/layout/SeitenKopf";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { createExercise } from "@/lib/actions/exercises";
 import {
@@ -38,8 +38,8 @@ export default async function NeuePage({
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
       {/* Kopf wie im Trainings-Editor: Brotkrumen, darunter der Name als
           Kopf-Feld der Maske. Die Überschrift trägt die Seite unsichtbar. */}
-      <Breadcrumbs
-        items={[{ label: "Übungspool", href: "/" }, { label: "Neue Übung" }]}
+      <SeitenKopf
+        krumen={[{ label: "Übungspool", href: "/" }, { label: "Neue Übung" }]}
         className="mb-6"
       />
       <h1 className="sr-only">Neue Übung</h1>

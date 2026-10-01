@@ -106,8 +106,9 @@ export function SnackbarProvider({ children }: { children: React.ReactNode }) {
     <SnackbarKontext.Provider value={einreihen}>
       {children}
       {/* Unten bleibt mindestens ein Rem frei, auf Geräten mit Home-Leiste
-          deren sichere Zone. */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-4 print:hidden">
+          deren sichere Zone. Ab lg mittig über dem Inhalt, nicht über der
+          Seitenleiste — ihre Breite kommt vom AppRahmen. */}
+      <div className="pointer-events-none fixed right-0 bottom-[max(1rem,env(safe-area-inset-bottom))] left-0 z-40 flex transition-[left] duration-200 motion-reduce:transition-none lg:left-[var(--leiste-breite,0px)] justify-center px-4 print:hidden">
         {/* Der Zeiger wird hier gemessen, nicht an der einzelnen Snackbar:
             Schliesst der Trainer eine per X, rückt die nächste unter den
             ruhenden Zeiger, ohne dass ein neues Betreten gemeldet würde. */}
@@ -137,7 +138,7 @@ export function SnackbarProvider({ children }: { children: React.ReactNode }) {
  *  Hooks ist eine eigene Stelle: Ihre neuere Meldung ersetzt ihre ältere. */
 export function useSnackbar(): Melde {
   const einreihen = useContext(SnackbarKontext);
-  if (!einreihen) throw new Error("useSnackbar braucht den SnackbarProvider im Root-Layout.");
+  if (!einreihen) throw new Error("useSnackbar braucht den SnackbarProvider im (app)-Layout.");
   const quelle = useId();
   return useCallback<Melde>((text, aktion) => einreihen(text, aktion, quelle), [einreihen, quelle]);
 }

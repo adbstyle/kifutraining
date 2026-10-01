@@ -7,7 +7,7 @@ import { TeamBereichMelder } from "@/components/layout/TeamKontext";
    und nicht daran, was die einzelne Seite zeigt.
 
    Warum überhaupt, obwohl `AppNav` dasselbe serverseitig nachschlägt: Das
-   Root-Layout mit der Navigation wird bei einer Client-Navigation nicht neu
+   (app)-Layout mit der Navigation wird bei einer Client-Navigation nicht neu
    gerendert, dieses Layout schon. Die Begründung steht bei `TeamKontext`.
 
    Angemeldet kostet das keine zusätzliche Abfrage: `getTrainingNavKontext` ist

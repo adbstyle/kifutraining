@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui";
+import { type BreadcrumbItem } from "@/components/ui";
+import { SeitenKopf } from "@/components/layout/SeitenKopf";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { updateExercise } from "@/lib/actions/exercises";
 import { getExerciseDetail } from "@/lib/queries/exercises";
@@ -46,7 +47,7 @@ export default async function EditPage({
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-      <Breadcrumbs items={crumbs} className="mb-6" />
+      <SeitenKopf krumen={crumbs} className="mb-6" />
       <h1 className="sr-only">Übung bearbeiten</h1>
       <ExerciseForm
         action={updateExercise.bind(null, ex.id)}

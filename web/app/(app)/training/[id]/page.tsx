@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, Sparkles } from "lucide-react";
-import { Badge, Breadcrumbs, KategorieChip } from "@/components/ui";
+import { Badge, KategorieChip } from "@/components/ui";
+import { SeitenKopf } from "@/components/layout/SeitenKopf";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { Flash } from "@/components/Flash";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
@@ -94,23 +95,25 @@ export default async function TrainingViewPage({
           Stelle wie im Editor (#249 AK 8). Dort oben gehören sie hin: Sie
           betreffen das Training als Ganzes, nicht seine Überschrift, und der
           Kopf darunter bleibt ungestört. */}
-      <div className="flex items-center gap-3">
-        <Breadcrumbs items={trainingsKrumen(training)} className="min-w-0" />
-        <TrainingAktionen
-          ort="ansicht"
-          trainingId={training.id}
-          name={training.name}
-          visibility={training.visibility}
-          teamId={training.team?.id ?? null}
-          terminDatum={training.terminDatum}
-          angemeldet={!!user}
-          bearbeitungsziel={bearbeitungsziel}
-          teams={teams}
-          fehlendeBedingungen={fehlendeBedingungen}
-          varianten={training.varianten}
-          aktiveVarianteId={aktive?.id}
-        />
-      </div>
+      <SeitenKopf
+        krumen={trainingsKrumen(training)}
+        aktionen={
+          <TrainingAktionen
+            ort="ansicht"
+            trainingId={training.id}
+            name={training.name}
+            visibility={training.visibility}
+            teamId={training.team?.id ?? null}
+            terminDatum={training.terminDatum}
+            angemeldet={!!user}
+            bearbeitungsziel={bearbeitungsziel}
+            teams={teams}
+            fehlendeBedingungen={fehlendeBedingungen}
+            varianten={training.varianten}
+            aktiveVarianteId={aktive?.id}
+          />
+        }
+      />
 
       <header className="mb-6 mt-4">
         <h1 className="type-headline-large text-on-surface">{training.name}</h1>

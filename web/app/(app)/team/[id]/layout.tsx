@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Breadcrumbs } from "@/components/ui";
+import { SeitenKopf } from "@/components/layout/SeitenKopf";
 import { TeamKopf } from "@/components/team/TeamKopf";
 import { TeamAnsichten } from "@/components/team/TeamAnsichten";
 import { getTeam } from "@/lib/queries/teams";
@@ -30,7 +30,7 @@ export default async function TeamLayout({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <Breadcrumbs items={[{ label: "Teams", href: "/teams" }, { label: team.name }]} />
+      <SeitenKopf krumen={[{ label: "Teams", href: "/teams" }, { label: team.name }]} />
 
       <header className="mt-4 mb-6">
         <TeamKopf teamId={team.id} name={team.name} />

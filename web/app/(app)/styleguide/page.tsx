@@ -2057,7 +2057,7 @@ export default function Styleguide() {
           sitzt ohne Autosave als <code>DiagrammFeld</code> unter der
           Zuordnung, beim Erfassen wie beim Bearbeiten. Dort wacht{" "}
           <code>VerlassenWarnung</code> über ungesicherte Angaben — ein
-          Bestätigungs-Dialog aus dem Kit für Links, Kontomenü und
+          Bestätigungs-Dialog aus dem Kit für Links (auch die der Seitenleiste) und
           Browser-Zurück, die Abfrage des Browsers für Neuladen und Schliessen.
           Symbol-Geometrie ist im Register verankert (Anker = Mittelpunkt),
           damit zentrale Symbol-Updates bestehende Diagramme nie verschieben.

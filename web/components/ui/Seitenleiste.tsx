@@ -192,8 +192,11 @@ export function Seitenleiste({
     const el = (ziel as HTMLElement).closest<HTMLElement>("[data-hinweis]");
     if (!el || !slim) return setHinweis(null);
     if (!eingebettet && !window.matchMedia("(min-width: 64rem)").matches) return;
+    // Waagrecht an der Kante der Leiste, nicht des Eintrags — sonst läge der
+    // Hinweis noch auf ihr.
     const r = el.getBoundingClientRect();
-    setHinweis({ label: el.dataset.hinweis ?? "", top: r.top + r.height / 2, left: r.right + 12 });
+    const kante = navRef.current?.getBoundingClientRect().right ?? r.right;
+    setHinweis({ label: el.dataset.hinweis ?? "", top: r.top + r.height / 2, left: kante + 8 });
   }
   useEffect(() => setHinweis(null), [slim]);
 
@@ -210,8 +213,12 @@ export function Seitenleiste({
     : cn(
         "flex flex-col print:hidden",
         // Unter lg: Drawer von links.
-        "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:w-[min(17.5rem,86vw)] max-lg:bg-elev-08 max-lg:shadow-dp-08 max-lg:transition-[translate,visibility] max-lg:duration-200 motion-reduce:transition-none",
-        !offen && "max-lg:invisible max-lg:-translate-x-full",
+        "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:w-[min(17.5rem,86vw)] max-lg:bg-elev-08 max-lg:shadow-dp-08 max-lg:duration-200 motion-reduce:transition-none",
+        // Sichtbar wird er sofort (sonst nähme er den Fokus beim Öffnen
+        // nicht an), unsichtbar erst, wenn er hinausgeglitten ist.
+        offen
+          ? "max-lg:transition-[translate]"
+          : "max-lg:invisible max-lg:-translate-x-full max-lg:transition-[translate,visibility]",
         // Ab lg: feste Spalte, klebt beim Scrollen.
         "lg:sticky lg:top-0 lg:h-dvh lg:w-(--leiste-breite) lg:shrink-0 lg:self-start lg:overflow-hidden lg:border-r lg:border-linie lg:bg-elev-01 lg:transition-[width] lg:duration-200",
       );
@@ -401,11 +408,11 @@ function Eintrag({
   const Icon = eintrag.icon;
   const unter = eintrag.unterpunkte ?? [];
   const listeId = `${idBasis}-unter`;
-  // Hervorgehoben: die Seite selbst — oder ein Bereich darunter, dessen
-  // Unterpunkt gerade nicht zu sehen ist. Breit und aufgeklappt trägt der
-  // Unterpunkt die Markierung selbst; schmal ist keiner zu sehen.
-  const hervorBreit =
-    eintrag.current || (eintrag.bereichAktiv && (!aufgeklappt || unter.length === 0));
+  // Hervorgehoben: die Seite selbst — oder ein Bereich darunter, solange kein
+  // sichtbarer Unterpunkt die Markierung selbst trägt (zugeklappt, schmal,
+  // oder offen ist etwas ohne eigenen Unterpunkt, etwa ein Team-Training).
+  const unterpunktZeigtEs = aufgeklappt && unter.some((u) => u.current);
+  const hervorBreit = eintrag.current || (eintrag.bereichAktiv && !unterpunktZeigtEs);
   const hervorSchmal = eintrag.current || eintrag.bereichAktiv;
   const hervor = schmalAb === "immer" ? hervorSchmal : hervorBreit;
   // Schmal ab lg: darunter zeigt der Drawer die breite Form, also nur ab lg.

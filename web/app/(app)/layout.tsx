@@ -1,29 +1,30 @@
+import { cookies } from "next/headers";
 import { AppNav } from "@/components/layout/AppNav";
+import { AppRahmen } from "@/components/layout/AppRahmen";
 import { SnackbarProvider } from "@/components/layout/SnackbarKontext";
 import { TeamKontextProvider } from "@/components/layout/TeamKontext";
+import { LEISTE_COOKIE, leseLeiste } from "@/lib/seitenleiste";
 
-/* App-Chrome für alle Seiten ausser den Anmelde-Seiten unter `(auth)`.
-   Route-Gruppen wirken nicht auf die URL. */
-export default function AppLayout({
+/* App-Chrome für alle Seiten ausser den Anmelde-Seiten unter `(auth)`:
+   Seitenleiste links, Inhalt rechts. Route-Gruppen wirken nicht auf die URL. */
+export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const slim = leseLeiste((await cookies()).get(LEISTE_COOKIE)?.value);
   return (
     // Der Team-Kontext des geöffneten Trainings überdauert die einzelne
     // Seite und wohnt darum hier — siehe TeamKontext (#156).
     <TeamKontextProvider>
-      {/* Der eine Platz für Snackbars am unteren Rand überdauert ebenfalls
-          die einzelne Seite — siehe SnackbarKontext (#234). */}
-      <SnackbarProvider>
-        <div className="flex min-h-dvh flex-col">
-          {/* App-Navigation im Druck ausblenden (Story #18). */}
-          <div className="print:hidden">
-            <AppNav />
-          </div>
-          {/* Inhaltsspalte unter dem (klebenden) Header. Seiten bringen ihren
-              eigenen <main>-Container mit eigener max-width mit. */}
+      <AppRahmen anfangsSlim={slim}>
+        <AppNav />
+        {/* Der eine Platz für Snackbars am unteren Rand überdauert ebenfalls
+            die einzelne Seite — siehe SnackbarKontext (#234). Er liegt im
+            Rahmen, damit er dessen Leistenbreite erbt. Seiten bringen ihren
+            eigenen <main>-Container mit. */}
+        <SnackbarProvider>
           <div className="min-w-0 flex-1">{children}</div>
-        </div>
-      </SnackbarProvider>
+        </SnackbarProvider>
+      </AppRahmen>
     </TeamKontextProvider>
   );
 }

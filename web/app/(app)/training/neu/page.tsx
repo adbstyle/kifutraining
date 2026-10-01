@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Breadcrumbs } from "@/components/ui";
+import { SeitenKopf } from "@/components/layout/SeitenKopf";
 import { TrainingCreateForm } from "@/components/training/TrainingCreateForm";
 
 export const dynamic = "force-dynamic";
@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 export default function NeuesTrainingPage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
-      <Breadcrumbs
-        items={[
+      <SeitenKopf
+        krumen={[
           { label: "Trainings", href: "/trainings" },
           { label: "Neues Training" },
         ]}

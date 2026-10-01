@@ -3,7 +3,6 @@ import { BookOpen } from "lucide-react";
 import type { Metadata } from "next";
 import {
   HerkunftBadge,
-  Breadcrumbs,
   type BreadcrumbItem,
   Card,
   Freitext,
@@ -49,6 +48,7 @@ import {
   parseMaterialListe,
 } from "@/lib/material";
 import { behalteMaterial, uebernehmeMaterialVorschlag } from "@/lib/actions/material";
+import { SeitenKopf } from "@/components/layout/SeitenKopf";
 
 export const dynamic = "force-dynamic";
 
@@ -140,7 +140,7 @@ export default async function ExerciseDetailPage({
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
       {flash && <Flash message={flash} param={FLASH_PARAMS} />}
       <div className="print:hidden">
-        <Breadcrumbs items={crumbs} />
+        <SeitenKopf krumen={crumbs} />
       </div>
 
       <header className="mt-4">
