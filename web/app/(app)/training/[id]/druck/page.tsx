@@ -6,6 +6,7 @@ import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable
 import { TrainingExerciseDetail } from "@/components/training/TrainingExerciseDetail";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { getTrainingView } from "@/lib/queries/trainings";
+import { trainingsKrumen } from "@/lib/brotkrumen";
 import { leseGliederung, formatDuration } from "@/lib/training";
 import {
   abschnittMitVariante,
@@ -13,6 +14,7 @@ import {
   varianteAnhang,
   varianteAus,
 } from "@/lib/varianten";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -44,7 +46,7 @@ export default async function TrainingDruckPage({
   const hasAnyDuration = sections.some((s) => s.sum > 0);
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 print:max-w-none print:px-0 print:py-0">
+    <Seitenrahmen breite="3xl" krumen={trainingsKrumen(training)} druckVoll>
       {/* Die Variantenwahl gehört zur Bedienung der Seite, nicht aufs Papier —
           darum steht sie neben dem Druckknopf und teilt dessen `print:hidden`
           (#203 AK 4). Auf dem Blatt nennen die Hauptteil-Überschrift und der
@@ -154,6 +156,6 @@ export default async function TrainingDruckPage({
           );
         })}
       </div>
-    </main>
+    </Seitenrahmen>
   );
 }

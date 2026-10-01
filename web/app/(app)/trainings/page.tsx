@@ -9,6 +9,7 @@ import { getTrainingPool } from "@/lib/queries/trainings";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/training";
 import { kategorienSlugs } from "@/lib/vocab";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -40,7 +41,12 @@ export default async function TrainingsPage({
   const trainings = await getTrainingPool({ q, stufen, mine });
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+    <Seitenrahmen
+      breite="6xl"
+      krumen={
+        mine ? [{ label: "Trainings", href: "/trainings" }, { label: "Meine Trainings" }] : [{ label: "Trainings" }]
+      }
+    >
       {sp.deleted && <Flash message="Training gelöscht." param="deleted" />}
 
       <header className="mb-8">
@@ -113,6 +119,6 @@ export default async function TrainingsPage({
           </p>
         </div>
       )}
-    </main>
+    </Seitenrahmen>
   );
 }

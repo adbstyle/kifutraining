@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { type BreadcrumbItem } from "@/components/ui";
-import { SeitenKopf } from "@/components/layout/SeitenKopf";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { updateFassung } from "@/lib/actions/fassung";
 import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
@@ -53,8 +53,7 @@ export default async function FassungBearbeitenPage({
   );
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-      <SeitenKopf krumen={crumbs} className="mb-6" />
+    <Seitenrahmen breite="4xl" krumen={crumbs}>
       <h1 className="sr-only">Übung bearbeiten</h1>
       <ExerciseForm
         action={updateFassung.bind(null, f.id, variante)}
@@ -85,6 +84,6 @@ export default async function FassungBearbeitenPage({
         bildEntfernenMoeglich
         fussnote="Änderungen gelten nur für dieses Training."
       />
-    </main>
+    </Seitenrahmen>
   );
 }

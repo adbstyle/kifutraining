@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { type BreadcrumbItem } from "@/components/ui";
-import { SeitenKopf } from "@/components/layout/SeitenKopf";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { updateExercise } from "@/lib/actions/exercises";
 import { getExerciseDetail } from "@/lib/queries/exercises";
@@ -39,15 +39,14 @@ export default async function EditPage({
   // (Story #129). Der TEXT bleibt die Einordnung selbst.
   const teilLabel = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
-    { label: "Übungspool", href: "/" },
+    { label: "Übungen", href: "/" },
     { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
     { label: ex.name, href: `/uebung/${slug}` },
     { label: "Übung bearbeiten" },
   ];
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-      <SeitenKopf krumen={crumbs} className="mb-6" />
+    <Seitenrahmen breite="4xl" krumen={crumbs}>
       <h1 className="sr-only">Übung bearbeiten</h1>
       <ExerciseForm
         action={updateExercise.bind(null, ex.id)}
@@ -83,6 +82,6 @@ export default async function EditPage({
         }}
         submitLabel="Änderungen speichern"
       />
-    </main>
+    </Seitenrahmen>
   );
 }

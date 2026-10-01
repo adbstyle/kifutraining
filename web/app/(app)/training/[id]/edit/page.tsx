@@ -4,6 +4,7 @@ import { TrainingEditor } from "@/components/training/editor/TrainingEditor";
 import { getTrainingForEdit } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { trainingsKrumen } from "@/lib/brotkrumen";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -33,7 +34,7 @@ export default async function TrainingEditPage({
   const teams = await getMeineTeams();
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+    <Seitenrahmen breite="3xl" krumen={null}>
       {/* Die Brotkrumen gehen in den Editor hinein, statt darüber zu stehen:
           Neben ihnen stehen die Aktionen am Training (#249 AK 8), und die
           kennen nur die Laufzeit des Editors — die angezeigte Variante und die
@@ -47,6 +48,6 @@ export default async function TrainingEditPage({
         varianteParam={variante}
         brotkrumen={trainingsKrumen(training)}
       />
-    </main>
+    </Seitenrahmen>
   );
 }

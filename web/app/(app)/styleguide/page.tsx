@@ -100,6 +100,7 @@ import {
   ueberlagern,
   type KatSchluessel,
 } from "@/lib/farben";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const metadata: Metadata = {
   title: "Styleguide — KiFu Designsystem",
@@ -429,7 +430,7 @@ const druckProben: [string, string, string][] = [
 
 export default function Styleguide() {
   return (
-    <main className="mx-auto max-w-5xl px-5 py-12">
+    <Seitenrahmen breite="5xl" krumen={[{ label: "Styleguide" }]}>
       <header className="mb-4">
         <p className="type-label-medium text-primary">KiFu · Designsystem</p>
         <h1 className="type-display-large mt-2 text-on-surface">Material 2 Dark</h1>
@@ -2785,6 +2786,6 @@ export default function Styleguide() {
         </p>
         <AnsichtWahl ansicht="monat" hrefListe="#" hrefMonat="#" />
       </Section>
-    </main>
+    </Seitenrahmen>
   );
 }

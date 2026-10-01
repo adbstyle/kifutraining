@@ -20,7 +20,7 @@ export default async function AppLayout({
         {/* Der eine Platz für Snackbars am unteren Rand überdauert ebenfalls
             die einzelne Seite — siehe SnackbarKontext (#234). Er liegt im
             Rahmen, damit er dessen Leistenbreite erbt. Seiten bringen ihren
-            eigenen <main>-Container mit. */}
+            Seitenrahmen (Breite + Kopfzeile) selbst mit. */}
         <SnackbarProvider>
           <div className="min-w-0 flex-1">{children}</div>
         </SnackbarProvider>

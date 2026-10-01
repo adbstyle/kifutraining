@@ -6,6 +6,7 @@ import { Card, Leerzustand } from "@/components/ui";
 import { TeamErstellenButton } from "@/components/team/TeamErstellenButton";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { createClient } from "@/lib/supabase/server";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Teams — KiFu", robots: { index: false } };
@@ -22,7 +23,7 @@ export default async function TeamsPage() {
   const teams = await getMeineTeams();
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+    <Seitenrahmen breite="6xl" krumen={[{ label: "Teams" }]}>
       <header className="mb-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="type-title-large text-on-surface">Teams</h1>
@@ -69,6 +70,6 @@ export default async function TeamsPage() {
           ))}
         </div>
       )}
-    </main>
+    </Seitenrahmen>
   );
 }

@@ -13,7 +13,7 @@ export function BreadcrumbsDemo() {
         </p>
         <Breadcrumbs
           items={[
-            { label: "Übungspool", href: "#" },
+            { label: "Übungen", href: "#" },
             { label: "Hauptteil", href: "#" },
             { label: "Schiessbude" },
           ]}
@@ -42,7 +42,7 @@ export function BreadcrumbsDemo() {
           maxItems={4}
           items={[
             { label: "Start", href: "#", icon: Home },
-            { label: "Übungspool", href: "#" },
+            { label: "Übungen", href: "#" },
             { label: "Kleinfeld", href: "#" },
             { label: "Hauptteil", href: "#" },
             { label: "Abschluss", href: "#" },

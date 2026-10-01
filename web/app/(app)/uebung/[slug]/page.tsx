@@ -48,7 +48,7 @@ import {
   parseMaterialListe,
 } from "@/lib/material";
 import { behalteMaterial, uebernehmeMaterialVorschlag } from "@/lib/actions/material";
-import { SeitenKopf } from "@/components/layout/SeitenKopf";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const dynamic = "force-dynamic";
 
@@ -117,7 +117,7 @@ export default async function ExerciseDetailPage({
   // (Story #129). Der TEXT bleibt die Einordnung selbst.
   const teilLabel = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
-    { label: "Übungspool", href: "/" },
+    { label: "Übungen", href: "/" },
     { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
     { label: ex.name },
   ];
@@ -137,13 +137,10 @@ export default async function ExerciseDetailPage({
   const hatEinordnung = !!ex.uebungstyp || ex.erscheinungsform.length > 0;
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+    <Seitenrahmen breite="4xl" krumen={crumbs}>
       {flash && <Flash message={flash} param={FLASH_PARAMS} />}
-      <div className="print:hidden">
-        <SeitenKopf krumen={crumbs} />
-      </div>
 
-      <header className="mt-4">
+      <header>
         <div className="mb-3 flex flex-wrap items-center gap-2.5">
           {ex.kategorien.length > 0 && (
             <>
@@ -385,6 +382,6 @@ export default async function ExerciseDetailPage({
           </p>
         </footer>
       )}
-    </main>
+    </Seitenrahmen>
   );
 }

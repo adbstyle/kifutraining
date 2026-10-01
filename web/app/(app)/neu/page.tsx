@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SeitenKopf } from "@/components/layout/SeitenKopf";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { ExerciseForm } from "@/components/exercise/ExerciseForm";
 import { createExercise } from "@/lib/actions/exercises";
 import {
@@ -35,13 +35,9 @@ export default async function NeuePage({
       : undefined;
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+    <Seitenrahmen breite="4xl" krumen={[{ label: "Übungen", href: "/" }, { label: "Neue Übung" }]}>
       {/* Kopf wie im Trainings-Editor: Brotkrumen, darunter der Name als
           Kopf-Feld der Maske. Die Überschrift trägt die Seite unsichtbar. */}
-      <SeitenKopf
-        krumen={[{ label: "Übungspool", href: "/" }, { label: "Neue Übung" }]}
-        className="mb-6"
-      />
       <h1 className="sr-only">Neue Übung</h1>
       <ExerciseForm
         action={createExercise}
@@ -51,6 +47,6 @@ export default async function NeuePage({
         initial={{ trainingsteil: teil, hauptteilkategorie: kategorie }}
         submitLabel="Übung speichern"
       />
-    </main>
+    </Seitenrahmen>
   );
 }

@@ -10,6 +10,7 @@ import {
   type ExerciseFilters,
 } from "@/lib/queries/exercises";
 import { alsEinordnungsFilter, einordnungNachSpalten } from "@/lib/filter-optionen";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 // Server-only Datenzugriff (anon-Key + RLS); kein Prerender ohne DB.
 export const dynamic = "force-dynamic";
@@ -76,7 +77,10 @@ export default async function Home({
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+    <Seitenrahmen
+      breite="6xl"
+      krumen={filters.mine ? [{ label: "Übungen", href: "/" }, { label: "Meine Übungen" }] : [{ label: "Übungen" }]}
+    >
       {sp.account_deleted && (
         <Flash
           message="Konto gelöscht. Deine öffentlichen Übungen bleiben anonym erhalten."
@@ -145,6 +149,6 @@ export default async function Home({
           )}
         </>
       )}
-    </main>
+    </Seitenrahmen>
   );
 }

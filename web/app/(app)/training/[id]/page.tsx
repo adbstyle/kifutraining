@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, Sparkles } from "lucide-react";
 import { Badge, KategorieChip } from "@/components/ui";
-import { SeitenKopf } from "@/components/layout/SeitenKopf";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { Flash } from "@/components/Flash";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
@@ -83,39 +83,38 @@ export default async function TrainingViewPage({
   const total = sections.reduce((a, s) => a + s.sum, 0);
   const hasAnyDuration = sections.some((s) => s.sum > 0);
 
+  // Die Aktionen stehen auf der Brotkrumen-Zeile, rechtsbündig — dieselbe
+  // Stelle wie im Editor (#249 AK 8). Dort oben gehören sie hin: Sie
+  // betreffen das Training als Ganzes, nicht seine Überschrift, und der Kopf
+  // darunter bleibt ungestört.
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+    <Seitenrahmen
+      breite="3xl"
+      krumen={trainingsKrumen(training)}
+      aktionen={
+        <TrainingAktionen
+          ort="ansicht"
+          trainingId={training.id}
+          name={training.name}
+          visibility={training.visibility}
+          teamId={training.team?.id ?? null}
+          terminDatum={training.terminDatum}
+          angemeldet={!!user}
+          bearbeitungsziel={bearbeitungsziel}
+          teams={teams}
+          fehlendeBedingungen={fehlendeBedingungen}
+          varianten={training.varianten}
+          aktiveVarianteId={aktive?.id}
+        />
+      }
+    >
       {sp.uebernommen && (
         <Flash
           message="Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen."
           param="uebernommen"
         />
       )}
-      {/* Die Aktionen stehen auf der Brotkrumen-Zeile, rechtsbündig — dieselbe
-          Stelle wie im Editor (#249 AK 8). Dort oben gehören sie hin: Sie
-          betreffen das Training als Ganzes, nicht seine Überschrift, und der
-          Kopf darunter bleibt ungestört. */}
-      <SeitenKopf
-        krumen={trainingsKrumen(training)}
-        aktionen={
-          <TrainingAktionen
-            ort="ansicht"
-            trainingId={training.id}
-            name={training.name}
-            visibility={training.visibility}
-            teamId={training.team?.id ?? null}
-            terminDatum={training.terminDatum}
-            angemeldet={!!user}
-            bearbeitungsziel={bearbeitungsziel}
-            teams={teams}
-            fehlendeBedingungen={fehlendeBedingungen}
-            varianten={training.varianten}
-            aktiveVarianteId={aktive?.id}
-          />
-        }
-      />
-
-      <header className="mb-6 mt-4">
+      <header className="mb-6">
         <h1 className="type-headline-large text-on-surface">{training.name}</h1>
         {/* Urheber: der Anzeigename, nie die E-Mail. Bei anonymisierten
             Trainings (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
@@ -252,6 +251,6 @@ export default async function TrainingViewPage({
           </p>
         </div>
       )}
-    </main>
+    </Seitenrahmen>
   );
 }

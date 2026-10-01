@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SeitenKopf } from "@/components/layout/SeitenKopf";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { TrainingCreateForm } from "@/components/training/TrainingCreateForm";
 
 export const dynamic = "force-dynamic";
@@ -10,14 +10,14 @@ export const metadata: Metadata = {
 
 export default function NeuesTrainingPage() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
-      <SeitenKopf
-        krumen={[
-          { label: "Trainings", href: "/trainings" },
-          { label: "Neues Training" },
-        ]}
-      />
-      <header className="mb-8 mt-4">
+    <Seitenrahmen
+      breite="2xl"
+      krumen={[
+        { label: "Trainings", href: "/trainings" },
+        { label: "Neues Training" },
+      ]}
+    >
+      <header className="mb-8">
         <p className="type-label-medium text-primary">Trainings</p>
         <h1 className="type-headline-large mt-1 text-on-surface">
           Neues Training
@@ -30,6 +30,6 @@ export default function NeuesTrainingPage() {
       </header>
 
       <TrainingCreateForm />
-    </main>
+    </Seitenrahmen>
   );
 }

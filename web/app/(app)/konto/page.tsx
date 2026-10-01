@@ -14,6 +14,7 @@ import { KI_ZUGAENGE_MAX } from "@/lib/mcp/regeln";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { MCP_PFAD } from "@/lib/mcp/pfad";
 import Link from "next/link";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,7 @@ export default async function KontoPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
+    <Seitenrahmen breite="2xl" krumen={[{ label: "Konto" }]}>
       <header className="mb-8">
         <h1 className="type-headline-large text-on-surface">Dein Konto</h1>
         {user?.email && (
@@ -153,6 +154,6 @@ export default async function KontoPage() {
           <KontoClient />
         </div>
       </Card>
-    </main>
+    </Seitenrahmen>
   );
 }

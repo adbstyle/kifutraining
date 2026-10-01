@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { SeitenKopf } from "@/components/layout/SeitenKopf";
+import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { TeamKopf } from "@/components/team/TeamKopf";
 import { TeamAnsichten } from "@/components/team/TeamAnsichten";
 import { getTeam } from "@/lib/queries/teams";
@@ -29,16 +29,14 @@ export default async function TeamLayout({
   if (!team) redirect("/teams");
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <SeitenKopf krumen={[{ label: "Teams", href: "/teams" }, { label: team.name }]} />
-
-      <header className="mt-4 mb-6">
+    <Seitenrahmen breite="6xl" krumen={[{ label: "Teams", href: "/teams" }, { label: team.name }]}>
+      <header className="mb-6">
         <TeamKopf teamId={team.id} name={team.name} />
       </header>
 
       <TeamAnsichten teamId={team.id} />
 
       {children}
-    </main>
+    </Seitenrahmen>
   );
 }
