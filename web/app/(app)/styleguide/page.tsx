@@ -1489,7 +1489,7 @@ export default function Styleguide() {
           <strong>Seitenleiste</strong> am linken Rand, auf{" "}
           <code>bg-elev-01</code> mit <code>border-linie</code> zum Inhalt. Sie
           ist Rahmen, keine schwebende Fläche, und trägt darum keinen Schatten.
-          Oben die Marke (Fussball im Primary-Quadrat), darunter die Einträge in
+          Oben die Marke (Fussball im Primary-Quadrat, zugleich das Favicon), darunter die Einträge in
           Gruppen, unten die Konto-Karte: Avatar, Anzeigename und E-Mail
           führen als Ganzes ins Konto. Abmelden steht im Konto, nicht in der
           Leiste. Der offene Eintrag steht eine Stufe höher als sein Grund

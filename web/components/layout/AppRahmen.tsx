@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { SeitenleistenKnopf, leisteStil } from "@/components/ui";
 import { leisteCookie } from "@/lib/seitenleiste";
 
@@ -31,11 +31,12 @@ export function AppRahmen({
   const [slim, setSlim] = useState(anfangsSlim);
   const [drawerOffen, setzeDrawerOffen] = useState(false);
 
-  function slimUmschalten() {
-    const neu = !slim;
-    setSlim(neu);
-    document.cookie = leisteCookie(neu);
-  }
+  // Das Cookie folgt dem Zustand, statt im Klick gesetzt zu werden — so
+  // zählt jeder Klick, auch zwei vor dem nächsten Rendern.
+  useEffect(() => {
+    document.cookie = leisteCookie(slim);
+  }, [slim]);
+  const slimUmschalten = () => setSlim((s) => !s);
 
   return (
     <SeitenleisteKontext.Provider value={{ slim, slimUmschalten, drawerOffen, setzeDrawerOffen }}>
@@ -50,6 +51,17 @@ export function useSeitenleiste(): SeitenleisteZustand {
   const zustand = useContext(SeitenleisteKontext);
   if (!zustand) throw new Error("useSeitenleiste braucht den AppRahmen im (app)-Layout.");
   return zustand;
+}
+
+/** Die Inhaltsspalte. Solange der Drawer offen ist, liegt sie unter dem Scrim
+ *  und ist `inert` — weder Tastatur noch Screenreader erreichen sie dann. */
+export function AppInhalt({ children }: { children: React.ReactNode }) {
+  const { drawerOffen } = useSeitenleiste();
+  return (
+    <div className="min-w-0 flex-1" inert={drawerOffen}>
+      {children}
+    </div>
+  );
 }
 
 /** Der Umschalter vor den Brotkrumen, verbunden mit dem Rahmen. */

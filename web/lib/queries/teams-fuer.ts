@@ -34,16 +34,6 @@ export async function getMeineTeamsFuer(supabase: SupabaseClient): Promise<TeamU
   }));
 }
 
-/** Nur Kennung und Name der eigenen Teams, alphabetisch — für die
- *  Seitenleiste, die keine Mitglieder zählt. */
-export async function getMeineTeamNamenFuer(
-  supabase: SupabaseClient,
-): Promise<{ id: string; name: string }[]> {
-  const { data, error } = await supabase.from("teams").select("id, name").order("name");
-  if (error) throw error;
-  return data ?? [];
-}
-
 /** Die Mitglieder eines Teams mit Anzeigename, ohne E-Mail (Story 1 NFR 4,
  *  #325 PC 9) — dieselbe RPC wie der Team-Bereich (`getTeam`). */
 export async function getTeamMitgliederFuer(

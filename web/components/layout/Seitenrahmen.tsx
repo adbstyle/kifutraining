@@ -24,12 +24,15 @@ export function Seitenrahmen({
   breite,
   krumen,
   aktionen,
+  kopfImDruck,
   druckVoll,
   children,
 }: {
   breite: keyof typeof BREITE;
   krumen: BreadcrumbItem[] | null;
   aktionen?: ReactNode;
+  /** Der Pfad steht auch auf dem Papier (Trainingsansicht). */
+  kopfImDruck?: boolean;
   /** Auf Papier die volle Breite ohne Rand — für die Druckansicht. */
   druckVoll?: boolean;
   children: ReactNode;
@@ -42,7 +45,9 @@ export function Seitenrahmen({
         druckVoll && "print:max-w-none print:px-0 print:py-0",
       )}
     >
-      {krumen && <SeitenKopf krumen={krumen} aktionen={aktionen} className="mb-6" />}
+      {krumen && (
+        <SeitenKopf krumen={krumen} aktionen={aktionen} imDruck={kopfImDruck} className="mb-6" />
+      )}
       {children}
     </main>
   );

@@ -204,7 +204,12 @@ export function Seitenleiste({
       );
       const erstes = ziele[0];
       const letztes = ziele[ziele.length - 1];
-      if (e.shiftKey && document.activeElement === erstes) {
+      // Steht der Fokus nicht auf einem der Ziele (etwa nach einem Klick auf
+      // eine leere Stelle der Leiste), holt Tab ihn zurück hinein.
+      if (!ziele.includes(document.activeElement as HTMLElement)) {
+        e.preventDefault();
+        (e.shiftKey ? letztes : erstes)?.focus();
+      } else if (e.shiftKey && document.activeElement === erstes) {
         e.preventDefault();
         letztes?.focus();
       } else if (!e.shiftKey && document.activeElement === letztes) {
@@ -237,7 +242,11 @@ export function Seitenleiste({
   // Hinweis neben dem schmalen Eintrag. Er steht `fixed` ausserhalb der
   // Leiste, weil deren Scrollbereich ein seitlich herausragendes Kind
   // abschnitte; die Lage rechnet er beim Zeigen aus dem Eintrag.
-  function zeigeHinweis(ziel: EventTarget) {
+  function zeigeHinweis(ziel: EventTarget, perFokus = false) {
+    // Fokus zählt nur von der Tastatur: Ein Mausklick fokussiert den Link
+    // ebenfalls, und weil die Leiste beim Seitenwechsel stehen bleibt, stünde
+    // der Hinweis sonst noch auf der neuen Seite.
+    if (perFokus && !(ziel as HTMLElement).matches(":focus-visible")) return;
     const el = (ziel as HTMLElement).closest<HTMLElement>("[data-hinweis]");
     if (!el || !slim) return setHinweis(null);
     if (!eingebettet && !window.matchMedia(AB_LG).matches) return;
@@ -300,10 +309,14 @@ export function Seitenleiste({
         ref={navRef}
         id={eingebettet ? undefined : SEITENLEISTE_ID}
         aria-label="Hauptnavigation"
+        // Offen ist der Drawer ein modaler Dialog: Der Inhalt dahinter ist
+        // `inert` (AppInhalt), Screenreader bleiben in der Leiste.
+        role={offen ? "dialog" : undefined}
+        aria-modal={offen || undefined}
         className={navKlassen}
         onPointerOver={(e) => zeigeHinweis(e.target)}
         onPointerLeave={() => setHinweis(null)}
-        onFocus={(e) => zeigeHinweis(e.target)}
+        onFocus={(e) => zeigeHinweis(e.target, true)}
         onBlur={() => setHinweis(null)}
       >
         <div className="flex h-16 shrink-0 items-center gap-2 px-4">
@@ -533,7 +546,7 @@ export function SeitenleistenKnopf({
   /** Styleguide: auch unter `lg` zeigen. */
   immer?: boolean;
 }) {
-  const sichtbar = immer ? "" : "max-lg:hidden";
+  const sichtbar = cn("print:hidden", !immer && "max-lg:hidden");
   return (
     <>
       <IconButton

@@ -107,6 +107,7 @@ export default async function TrainingViewPage({
           aktiveVarianteId={aktive?.id}
         />
       }
+      kopfImDruck
     >
       {sp.uebernommen && (
         <Flash

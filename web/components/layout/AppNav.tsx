@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { PFAD_HEADER } from "@/lib/pfad";
 import { getAnzeigenameFuer } from "@/lib/queries/profil";
-import { getMeineTeamNamenFuer } from "@/lib/queries/teams-fuer";
+import { getMeineTeamsImRequest } from "@/lib/queries/teams";
 import { getTrainingNavKontext } from "@/lib/queries/trainings";
 import { AppNavClient } from "./AppNavClient";
 
@@ -40,7 +40,9 @@ export async function AppNav() {
   const [kontext, teams, name] = user
     ? await Promise.all([
         trainingId ? getTrainingNavKontext(trainingId) : null,
-        getMeineTeamNamenFuer(supabase).catch(() => []),
+        getMeineTeamsImRequest()
+          .then((teams) => teams.map(({ id, name }) => ({ id, name })))
+          .catch(() => []),
         getAnzeigenameFuer(supabase, user.id).catch(() => null),
       ])
     : [null, [], null];

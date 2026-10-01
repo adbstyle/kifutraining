@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { AppNav } from "@/components/layout/AppNav";
-import { AppRahmen } from "@/components/layout/AppRahmen";
+import { AppInhalt, AppRahmen } from "@/components/layout/AppRahmen";
 import { SnackbarProvider } from "@/components/layout/SnackbarKontext";
 import { TeamKontextProvider } from "@/components/layout/TeamKontext";
 import { LEISTE_COOKIE, leseLeiste } from "@/lib/seitenleiste";
@@ -22,7 +22,7 @@ export default async function AppLayout({
             Rahmen, damit er dessen Leistenbreite erbt. Seiten bringen ihren
             Seitenrahmen (Breite + Kopfzeile) selbst mit. */}
         <SnackbarProvider>
-          <div className="min-w-0 flex-1">{children}</div>
+          <AppInhalt>{children}</AppInhalt>
         </SnackbarProvider>
       </AppRahmen>
     </TeamKontextProvider>
