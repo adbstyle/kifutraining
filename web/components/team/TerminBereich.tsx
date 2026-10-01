@@ -7,7 +7,7 @@ import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { AusfallDialog } from "./AusfallDialog";
 import { EntfallendBestaetigung } from "./EntfallendBestaetigung";
 import { ReichweiteDialog } from "./ReichweiteDialog";
-import { SerieDialog } from "./SerieDialog";
+import { NeuerTerminDialog } from "./NeuerTerminDialog";
 import { TerminDetailDialog } from "./TerminDetailDialog";
 import { TerminDialog } from "./TerminDialog";
 import { TrainingWahlDialog, type TrainingWahl } from "./TrainingWahlDialog";
@@ -52,8 +52,8 @@ import type { TeamMitglied } from "@/lib/queries/teams";
 export type TerminAktionen = {
   /** Einen Termin im Detail öffnen — für den Monatsüberblick (#329 AK 8). */
   oeffnen: (t: TerminZeile) => void;
+  /** Einen Termin oder eine Terminserie festlegen, optional ab einem Tag. */
   neu: (datum?: string) => void;
-  neueSerie: (datum?: string) => void;
   bearbeiten: (t: TerminZeile) => void;
   zuordnen: (t: TerminZeile) => void;
   loesen: (t: TerminZeile) => void;
@@ -145,7 +145,6 @@ export function TerminBereich({
   const offen = offenId ? (termine.find((t) => t.id === offenId) ?? null) : null;
   const setOffen = (t: TerminZeile | null) => setOffenId(t?.id ?? null);
   const [neu, setNeu] = useState<string | null>(null); // Vorbelegtes Datum; "" = ohne
-  const [serieNeu, setSerieNeu] = useState<string | null>(null); // Vorbelegtes Beginndatum; "" = ohne
   const [bearbeiten, setBearbeiten] = useState<TerminZeile | null>(null);
   const [zuordnen, setZuordnen] = useState<TerminZeile | null>(null);
   const [entfernen, setEntfernen] = useState<TerminZeile | null>(null);
@@ -376,7 +375,6 @@ export function TerminBereich({
   const aktionen: TerminAktionen = {
     oeffnen: (t) => setOffen(t),
     neu: (datum) => { setOffen(null); neuerLauf(); setDialogFehler(undefined); setNeu(datum ?? ""); },
-    neueSerie: (datum) => { setOffen(null); setDialogFehler(undefined); setSerieNeu(datum ?? ""); },
     bearbeiten: (t) => { setOffen(null); neuerLauf(); setDialogFehler(undefined); setBearbeiten(t); },
     // Ein ausgefallener Termin trägt kein Training (#327 AK 9): kein Dialog.
     zuordnen: (t) => { if (t.ausgefallen) return; setOffen(null); neuerLauf(); setDialogFehler(undefined); setZuordnen(t); },
@@ -409,11 +407,9 @@ export function TerminBereich({
 
       <TerminDetailDialog termin={offen} heute={heute} onClose={() => setOffen(null)} />
 
-      <TerminDialog
+      <NeuerTerminDialog
         open={neu !== null}
-        titel="Termin festlegen"
-        bestaetigung="Festlegen"
-        start={{ datum: neu ?? "" }}
+        start={neu ?? ""}
         pending={pending}
         fehler={dialogFehler}
         mitglieder={mitglieder}
@@ -422,33 +418,21 @@ export function TerminBereich({
           neuerLauf();
           setNeu(null);
         }}
-        onSpeichern={(f: TerminFelder, _regel, verantwortlich) =>
-          lauf(
-            () => legeNeuFest(f, verantwortlich),
-            (r) => ("meldung" in r && r.meldung) || "Termin festgelegt.",
-            () => setNeu(null),
-            true,
-            laufNr.current,
-          )
-        }
-      />
-
-      <SerieDialog
-        open={serieNeu !== null}
-        start={{ von: serieNeu ?? "" }}
-        pending={pending}
-        fehler={dialogFehler}
-        mitglieder={mitglieder}
-        onClose={() => setSerieNeu(null)}
-        onSpeichern={(f) =>
-          lauf(() => legeSerieFestAktion(teamId, f), () => "Terminserie festgelegt.", () => setSerieNeu(null), true)
+        onSpeichern={(t) =>
+          t.art === "serie"
+            ? lauf(() => legeSerieFestAktion(teamId, t.felder), () => "Terminserie festgelegt.", () => setNeu(null), true, laufNr.current)
+            : lauf(
+                () => legeNeuFest(t.felder, t.verantwortlich),
+                (r) => ("meldung" in r && r.meldung) || "Termin festgelegt.",
+                () => setNeu(null),
+                true,
+                laufNr.current,
+              )
         }
       />
 
       <TerminDialog
         open={bearbeiten !== null}
-        titel="Termin ändern"
-        bestaetigung="Speichern"
         start={bearbeiten ? startWerte(bearbeiten) : undefined}
         bisher={bearbeiten ? { beginn: bearbeiten.beginn, ende: bearbeiten.ende } : undefined}
         pending={pending}

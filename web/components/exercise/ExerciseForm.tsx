@@ -12,6 +12,7 @@ import {
   Banner,
   FormAbschnitt,
   HeadlineField,
+  Checkbox,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
@@ -822,15 +823,12 @@ export function ExerciseForm({
               </p>
             )}
             {bildEntfernenMoeglich && initial.bildUrl && (
-              <label className="mt-2 flex items-center gap-2 type-body-small text-on-surface-mittel">
-                <input
-                  type="checkbox"
-                  checked={bildEntfernen}
-                  onChange={(e) => setBildEntfernen(e.target.checked)}
-                  className="focus-ring h-4 w-4 accent-primary"
-                />
-                Foto entfernen
-              </label>
+              <Checkbox
+                label="Foto entfernen"
+                className="mt-2"
+                checked={bildEntfernen}
+                onChange={(e) => setBildEntfernen(e.target.checked)}
+              />
             )}
           </div>
         )}

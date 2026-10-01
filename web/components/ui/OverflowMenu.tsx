@@ -44,7 +44,8 @@ export function OverflowMenu({
 
   return (
     <div className={cn("relative", className)}>
-      <Tooltip label={tooltip}>
+      {/* Rechtsbündig wie das Menü: Das ⋮ steht meist am rechten Rand. */}
+      <Tooltip label={tooltip} ende>
         <IconButton
           ref={triggerRef}
           icon={MoreVertical}

@@ -34,6 +34,7 @@ import { AuswahlListeDemo } from "./AuswahlListeDemo";
 import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
+import { CheckboxDemo } from "./CheckboxDemo";
 import { HeaderNavDemo } from "./HeaderNavDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
@@ -1043,7 +1044,11 @@ export default function Styleguide() {
           öffentlich vs. Schloss = privat). CSS-only, <code>aria-hidden</code>
           (der Name kommt schon vom <code>aria-label</code> des Triggers). Er
           steht auf 24dp wie der Dialog: Was über allem schwebt, trägt die
-          oberste Stufe.
+          oberste Stufe. Verborgen ist er <code>display: none</code>, damit er
+          am Rand die Seite nie verbreitert. Mit <code>ende</code> steht er
+          bündig zur rechten Kante des Triggers statt mittig — für Trigger am
+          rechten Rand; das Überlaufmenü (⋮) trägt ihn immer so, wie sein
+          Menü.
         </p>
         <div className="flex items-center gap-4">
           <Tooltip label="Bearbeiten">
@@ -1054,6 +1059,9 @@ export default function Styleguide() {
           </Tooltip>
           <Tooltip label="Auf privat setzen">
             <IconButton icon={Lock} label="Auf privat setzen" size="sm" />
+          </Tooltip>
+          <Tooltip label="Rechtsbündig (ende)" ende>
+            <IconButton icon={Pencil} label="Rechtsbündig" size="sm" />
           </Tooltip>
           <span className="type-label-small text-on-surface-mittel">
             (hovern oder per Tab fokussieren)
@@ -1694,6 +1702,22 @@ export default function Styleguide() {
           <DateField label="Datum" />
           <TimeField label="Beginn (optional)" />
         </div>
+
+        <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
+          Checkbox
+        </h3>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Für eine Ja/Nein-Angabe in einem Formular, die weitere Felder
+          zuschaltet oder eine Folge hat — «Wiederholender Termin» im
+          Termin-Dialog, «Foto entfernen» im Übungsformular. Neu ist sie, weil
+          beide Stellen sonst ein unverkleidetes Browser-Kästchen trügen. Sie
+          trägt dasselbe eckige Kästchen wie die Optionen der Mehrfachauswahl
+          (17): gewählt gefüllt in Primary, Haken in on-primary. Darunter liegt
+          ein echtes <code>&lt;input type=&quot;checkbox&quot;&gt;</code>;
+          das Label gehört zur Klickfläche. Ein Filter ist sie nicht — der
+          bleibt ein <code>FilterChip</code> (9).
+        </p>
+        <CheckboxDemo />
       </Section>
 
       <Section n="15" title="Menü">
