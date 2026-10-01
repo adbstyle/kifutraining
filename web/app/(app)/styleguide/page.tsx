@@ -36,7 +36,7 @@ import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
-import { HeaderNavDemo } from "./HeaderNavDemo";
+import { SeitenleisteDemo } from "./SeitenleisteDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
@@ -326,13 +326,13 @@ const elevKlasse: Record<number, string> = {
 
 const elevVerwendung: Record<number, string> = {
   0: "Seitengrund, Feldfläche im Grund",
-  1: "Karte, Teil-Karte, Übungszeile",
+  1: "Karte, Teil-Karte, Übungszeile, Seitenleiste",
   2: "Block im Teil, dichtes Feld, Platzhalter",
   3: "— frei —",
-  4: "Kopfleiste (deckend, kein Blur)",
+  4: "Kopfzeile unter lg (deckend, kein Blur)",
   6: "Elevated-Knopf und -Chip, Overlay-Icon-Knopf",
-  8: "Menü, Select-Panel, Tonal-Knopf, Entwurf-Plakette, Drawer, aktives Segment, Avatar",
-  12: "— frei —",
+  8: "Menü, Select-Panel, Tonal-Knopf, Entwurf-Plakette, Drawer, aktives Segment, offener Navigationseintrag",
+  12: "Avatar, offener Navigationseintrag im Drawer",
   16: "— frei —",
   24: "Dialog, Tooltip",
 };
@@ -458,7 +458,8 @@ export default function Styleguide() {
               <li>
                 <strong>Ripple und Bewegung.</strong> Die Zustands-Ebene blendet
                 auf und ab, sie läuft nicht vom Klickpunkt aus. Das Kit animiert
-                nirgends Flächen oder Höhen.
+                keine Höhen und nur eine Fläche: die Breite der Seitenleiste
+                beim Umschalten (siehe 13).
               </li>
               <li>
                 <strong>Primary Variant.</strong> Das dunkle Zweit-Lila der
@@ -697,14 +698,14 @@ export default function Styleguide() {
           </table>
         </div>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Drei Stufen — 03, 12 und 16 dp — sind <strong>frei</strong>. Sie
+          Zwei Stufen — 03 und 16 dp — sind <strong>frei</strong>. Sie
           stehen in der Leiter, weil Material sie führt und weil eine Lücke
           später schwerer nachzutragen wäre als eine ungenutzte Stufe; angewandt
-          wird keine von ihnen. Wer eine braucht, trägt hier ein, wofür.
+          wird keine von beiden. Wer eine braucht, trägt hier ein, wofür.
         </p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
           <strong>Die Höhe trägt die Fläche, der Schatten nur, was schwebt.</strong>{" "}
-          Karte, Block und Kopfleiste bekommen keinen Schatten — sie liegen im
+          Karte, Block und Seitenleiste bekommen keinen Schatten — sie liegen im
           Bild, sie stehen nicht darüber. Vier Schatten gibt es, und jeder
           gehört zu genau einer Sorte schwebender Fläche:
         </p>
@@ -724,7 +725,7 @@ export default function Styleguide() {
           eine Ebene auf — <strong>in der Farbe ihres eigenen Inhalts</strong>,
           mit fest vorgegebener Deckung. Die Ebene steckt im Basis-Bündel der
           Bausteine (<code>state</code> in Button, Chip, Icon-Knopf, Menüzeile,
-          Nav-Link), nicht an den Aufrufstellen: Darum kennt das Kit kein
+          Navigationszeile), nicht an den Aufrufstellen: Darum kennt das Kit kein
           einziges <code>hover:bg-*</code>. Sie gehört zudem auf das{" "}
           <strong>fokussierbare</strong> Element: Deckt ein Link eine ganze
           Karte, trägt der Link die Ebene und nicht das{" "}
@@ -1097,9 +1098,7 @@ export default function Styleguide() {
           lebt im Formularzustand. Die Leiste trennt sich nach
           unten mit <code>border-linie</code>, die offene Ansicht trägt einen
           2 px starken Strich in Primary. Die Reiter stehen in{" "}
-          <code>type-title-small</code>, normal gesetzt — eine Stufe unter der
-          versalen Hauptnavigation, damit die beiden Leisten übereinander nicht
-          gleich laut sprechen.
+          <code>type-title-small</code>, normal gesetzt.
         </p>
         <TabNav
           ariaLabel="Beispiel-Ansichten"
@@ -1475,22 +1474,38 @@ export default function Styleguide() {
       </Section>
 
       <Section n="13" title="Navigation">
-        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Kopfleiste</strong> — klebt oben, steht auf{" "}
-          <code>bg-elev-04</code> und trennt sich nach unten mit{" "}
-          <code>border-linie</code>. <strong>Deckend, ohne Blur:</strong> Eine
-          halbdurchsichtige Leiste liesse den Inhalt darunter durchscheinen, und
-          weil die Höhe hier die Fläche trägt, wäre die Stufe nicht mehr
-          ablesbar — 04dp über 00dp ist ein Unterschied von neun Prozent, den
-          ein Verlauf darunter sofort zunichtemacht. Primär-Links tragen die
-          Zustands-Ebene und einen Strich in Primary, wenn sie offen sind; das
-          Flyout darunter zeigt Zeichen, Titel und Beschreibung. Rechts: Suche
-          mit <code>⌘K</code>, Glocke mit Zähler (Plakette in Primary), Avatar
-          auf 08dp mit Konto-Menü und ein CTA. Unter <code>lg</code> kollabiert
-          alles in einen Drawer auf 08dp (Scrim, Escape, Akkordeon für
-          Flyout-Gruppen).
+        <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+          <strong>Seitenleiste</strong> am linken Rand, auf{" "}
+          <code>bg-elev-01</code> mit <code>border-linie</code> zum Inhalt. Sie
+          ist Rahmen, keine schwebende Fläche, und trägt darum keinen Schatten.
+          Oben die Marke (Fussball im Primary-Quadrat), darunter die Einträge in
+          Gruppen, unten die Konto-Karte: Avatar, Anzeigename und E-Mail
+          führen als Ganzes ins Konto. Abmelden steht im Konto, nicht in der
+          Leiste. Der offene Eintrag steht eine Stufe höher als sein Grund
+          (08dp auf 01dp) und trägt sein Zeichen in Primary; aufklappbare
+          Einträge (Teams) haben einen eigenen Pfeil, damit der Name selbst
+          zur Übersicht führen kann.
         </p>
-        <HeaderNavDemo />
+        <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+          <strong>Breit oder schmal</strong> — 280 px mit Namen, 72 px nur mit
+          Zeichen. Umgeschaltet wird <strong>nur von Hand</strong>, über den
+          Knopf vor den Brotkrumen; beim Überfahren öffnet sich nichts, sonst
+          schöbe sich die Leiste über das, was man gerade ansteuern wollte.
+          Schmal zeigt jeder Eintrag seinen Namen beim Überfahren und
+          Fokussieren als Hinweis daneben (Tooltip-Fläche, 24dp). Die Wahl
+          merkt sich der Browser in einem Cookie, so steht die Leiste schon
+          beim Laden in der richtigen Breite. Die Breite gleitet beim
+          Umschalten — die einzige Fläche im Kit, die sich bewegt, weil der
+          Inhalt daneben mitwandert und das Auge ihm folgen soll.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Unter <code>lg</code> wird die Leiste zum <strong>Drawer von
+          links</strong> auf 08dp, geöffnet über eine schmale Kopfzeile
+          (04dp, deckend) mit Hamburger. Scrim, Escape und Scroll-Sperre wie
+          bei jedem Overlay; dort ist die Leiste immer breit, die aktive Zeile
+          steht auf 12dp.
+        </p>
+        <SeitenleisteDemo />
       </Section>
 
       <Section n="14" title="Textfelder, Text-Area, Datum &amp; Zeit">

@@ -16,12 +16,9 @@ export interface TabNavItem {
    Eingabefelder für eine Auswahl, kein Navigationsmittel, und ihr Wert lebt im
    Formularzustand.
 
-   Das Bild folgt der Hauptnavigation (Unterstreichung in Primary), damit
-   „hier wechselt man den Ort" überall gleich aussieht — die Schrift aber
-   nicht: Die Reiter stehen in `type-title-small` und normal gesetzt, eine
-   Stufe unter der versalen Hauptnavigation, damit die beiden Leisten
-   übereinander nicht gleich laut sprechen. `aria-current`
-   macht die offene Ansicht auch ohne die Farbe erkennbar. */
+   Die offene Ansicht trägt einen Strich in Primary, die Reiter stehen in
+   `type-title-small` und normal gesetzt. `aria-current` macht die offene
+   Ansicht auch ohne die Farbe erkennbar. */
 export function TabNav({
   items,
   ariaLabel,
