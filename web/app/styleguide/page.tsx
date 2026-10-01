@@ -1044,7 +1044,11 @@ export default function Styleguide() {
           öffentlich vs. Schloss = privat). CSS-only, <code>aria-hidden</code>
           (der Name kommt schon vom <code>aria-label</code> des Triggers). Er
           steht auf 24dp wie der Dialog: Was über allem schwebt, trägt die
-          oberste Stufe.
+          oberste Stufe. Verborgen ist er <code>display: none</code>, damit er
+          am Rand die Seite nie verbreitert. Mit <code>ende</code> steht er
+          bündig zur rechten Kante des Triggers statt mittig — für Trigger am
+          rechten Rand; das Überlaufmenü (⋮) trägt ihn immer so, wie sein
+          Menü.
         </p>
         <div className="flex items-center gap-4">
           <Tooltip label="Bearbeiten">
@@ -1055,6 +1059,9 @@ export default function Styleguide() {
           </Tooltip>
           <Tooltip label="Auf privat setzen">
             <IconButton icon={Lock} label="Auf privat setzen" size="sm" />
+          </Tooltip>
+          <Tooltip label="Rechtsbündig (ende)" ende>
+            <IconButton icon={Pencil} label="Rechtsbündig" size="sm" />
           </Tooltip>
           <span className="type-label-small text-on-surface-mittel">
             (hovern oder per Tab fokussieren)

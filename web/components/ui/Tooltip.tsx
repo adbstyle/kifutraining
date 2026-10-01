@@ -15,9 +15,15 @@ import { cn } from "@/lib/cn";
        <IconButton icon={Pencil} label="Bearbeiten" … />
      </Tooltip>
 
+   Verborgen ist er `display: none`, nicht bloss durchsichtig: Ein
+   durchsichtiger Tooltip liegt trotzdem im Layout und verbreiterte an einem
+   Trigger am rechten Rand die ganze Seite (waagrechter Scroll). Das Einblenden
+   bleibt weich — `transition-discrete` lässt `display` mitlaufen, `starting:`
+   setzt den Anfangswert beim Erscheinen.
+
    `ende`: bündig mit der rechten Kante des Triggers statt mittig — für
-   Trigger am rechten Rand, über den ein mittiger Tooltip hinausragte (auch
-   unsichtbar verbreitert er die Seite). */
+   Trigger am rechten Rand, über den ein mittiger Tooltip beim Zeigen
+   hinausragte und abgeschnitten würde. */
 export function Tooltip({
   label,
   children,
@@ -36,10 +42,10 @@ export function Tooltip({
         aria-hidden
         className={cn(
           // Standard: versteckt + nicht klickbar; sichtbar bei Hover/Fokus.
-          "pointer-events-none absolute top-full z-50 mt-1.5 whitespace-nowrap rounded-flaeche bg-elev-24 px-2 py-1 text-on-surface shadow-dp-08 opacity-0 transition-opacity duration-150",
+          "pointer-events-none absolute top-full z-50 mt-1.5 hidden whitespace-nowrap rounded-flaeche bg-elev-24 px-2 py-1 text-on-surface shadow-dp-08 opacity-0 transition-[opacity,display] transition-discrete duration-150 starting:opacity-0",
           ende ? "right-0" : "left-1/2 -translate-x-1/2",
           "type-body-small",
-          "group-hover:opacity-100 group-focus-within:opacity-100",
+          "group-hover:block group-hover:opacity-100 group-focus-within:block group-focus-within:opacity-100",
         )}
       >
         {label}

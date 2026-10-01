@@ -61,6 +61,10 @@ export function NeuerTerminDialog({
   const [wiederholen, setWiederholen] = useState(false);
   const [tageVonHand, setTageVonHand] = useState(false);
   const [problem, setProblem] = useState<{ feld: SerieFeld; text: string } | null>(null);
+  // Ein Server-Fehler gilt für die Art, mit der gespeichert wurde; schaltet
+  // der USER um, ist er verworfen — bis zum nächsten Speichern.
+  const [verworfen, setVerworfen] = useState<string | undefined>();
+  const fehlerAnzeigen = serverFehler && serverFehler !== verworfen ? serverFehler : undefined;
 
   // Beim Öffnen auf die Vorbelegung zurücksetzen — der Dialog überlebt sonst
   // mit den Werten des letzten Termins.
@@ -70,6 +74,7 @@ export function NeuerTerminDialog({
     setWiederholen(false);
     setTageVonHand(false);
     setProblem(null);
+    setVerworfen(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -84,14 +89,22 @@ export function NeuerTerminDialog({
   function wiederholenGewaehlt(an: boolean) {
     setWiederholen(an);
     setProblem(null);
+    setVerworfen(serverFehler);
     if (an && !tageVonHand) setze("wochentage", tageZu(f.von));
+  }
+
+  /** Erst beim Senden gilt ein verworfener Fehler wieder — sonst tauchte er
+   *  bei einer Feldprüfung, die gar nicht sendet, erneut auf. */
+  function senden(t: NeuerTermin) {
+    setVerworfen(undefined);
+    onSpeichern(t);
   }
 
   function speichern() {
     if (wiederholen) {
       const p = serieProblem(f);
       setProblem(p);
-      if (!p) onSpeichern({ art: "serie", felder: f });
+      if (!p) senden({ art: "serie", felder: f });
       return;
     }
     const felder: TerminFelder = { datum: f.von, beginn: f.beginn, ende: f.ende, ort: f.ort, bemerkung: f.bemerkung };
@@ -100,7 +113,7 @@ export function NeuerTerminDialog({
     setProblem(p && { feld: p.feld === "datum" ? "von" : p.feld, text: p.text });
     if (!p) {
       const verantwortlich = f.verantwortliche.length > 0 ? { userIds: f.verantwortliche, anonyme: [] } : undefined;
-      onSpeichern({ art: "einzeln", felder, verantwortlich });
+      senden({ art: "einzeln", felder, verantwortlich });
     }
   }
 
@@ -116,7 +129,7 @@ export function NeuerTerminDialog({
         </>
       }
     >
-      {serverFehler && <p role="alert" className="mb-4 text-error">{serverFehler}</p>}
+      {fehlerAnzeigen && <p role="alert" className="mb-4 text-error">{fehlerAnzeigen}</p>}
       <div className="flex flex-col gap-4">
         <DateField
           label={wiederholen ? "Beginndatum" : "Datum"}

@@ -25,10 +25,13 @@ export default async function TeamTrainingsPage({
           für Screenreader bleibt sie, damit unter dem Teamnamen keine Ebene
           fehlt. */}
       <h2 className="sr-only">Trainings</h2>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="type-body-medium text-on-surface-mittel">
-          {trainings.length === 1 ? "1 Training" : `${trainings.length} Trainings`}
-        </p>
+      {/* Ohne Trainings sagt es der Leerzustand; die Anzahl entfällt dann. */}
+      <div className="mb-4 flex items-center justify-end gap-3">
+        {trainings.length > 0 && (
+          <p className="mr-auto type-body-medium text-on-surface-mittel">
+            {trainings.length === 1 ? "1 Training" : `${trainings.length} Trainings`}
+          </p>
+        )}
         <TeamTrainingErstellenButton teamId={id} />
       </div>
       {trainings.length === 0 ? (
