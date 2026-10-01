@@ -109,6 +109,23 @@ Schritte der Manual-Übungen und der bisher erfassten Übungen stehen als Aufzä
 vorher. Die Felder tragen keine Hilfetexte; nur ein Fehler beim Speichern erscheint darunter. Die
 Varianten stehen unmittelbar nach dem Ablauf, ob er als Freitext oder als Fahrplan erfasst ist.
 
+## Die Übungsseite
+
+Die Seite einer Übung trennt Inhalt und Einordnung. Links stehen Name, Bild oder Diagramm, der
+Ablauf und die Varianten; rechts daneben steht gesammelt, wie die Übung eingeordnet ist:
+Altersstufe, Alterskategorien, Herkunft, Trainingsteil und im Juniorenfussball der Block,
+im Kinderfussball-Hauptteil die Hauptteilkategorie, Feldtyp oder Spielfeldgrösse, die Anzahl
+Spieler:innen, Übungstyp, Erscheinungsformen und das Material. Keine dieser Angaben steht im
+Inhalt ein zweites Mal; wer eine Übung öffnet, sieht auf einen Blick, wofür sie taugt, und liest
+Bild und Ablauf ohne Unterbrechung. Gezeigt wird, was die Übung erfasst hat — ein Platzhalter für
+Fehlendes steht dort nicht. Auffangen und Abschluss im Juniorenfussball heissen wie ihr einziger
+Block und stehen darum einmal. Hat eine Änderung am Feld-Diagramm das Material verändert, sieht
+die Eigentümerin den Hinweis dazu in der Einordnung, beim Material, und entscheidet dort, ob sie
+den neuen Vorschlag übernimmt oder ihr Material beibehält.
+
+Auf einem schmalen Bildschirm steht die Einordnung nach dem Inhalt, auf einem breiten daneben.
+Tastatur und Sprachausgabe erreichen sie in beiden Fällen nach dem Inhalt.
+
 ## Material
 
 Das Material einer Übung steht zweigeteilt. Oben die Liste dessen, was sich im Feld-Diagramm
@@ -205,8 +222,8 @@ die Spielerzahl ist abgekürzt und wird von einer Sprachausgabe ausgeschrieben v
 eine Übung nicht erfasst hat, fehlt ohne Platzhalter. Die Eckdaten nehmen höchstens zwei Zeilen
 ein; was darüber hinausginge, endet in Auslassungspunkten. Die Alterskategorien stehen auch dann
 auf der Kachel, wenn nach ihnen gefiltert wird — der Filter ist freiwillig, und ohne ihn stehen G
-bis A gemischt in der Liste. Übungsseite und Druck zeigen die Einordnung weiterhin mit
-Trainingsteil und Hauptteilkategorie. Gefiltert wird nach
+bis A gemischt in der Liste. Übungsseite und Druck nennen in der Einordnung Trainingsteil
+und Hauptteilkategorie je für sich. Gefiltert wird nach
 Trainingsteil, wobei die Kinderfussball-Teile und die sieben Junioren-Blöcke in zwei beschrifteten
 Gruppen stehen — das Auffangen kommt in beiden Gruppen vor und heisst dort gleich; die Beschriftung
 sagt, welches gemeint ist. Der Kinderfussball-Hauptteil steht dort nicht als Ganzes, sondern als
@@ -284,16 +301,14 @@ langen Kante. Trägt eine Übung beides, zeigt sie das Diagramm; das Foto bleibt
 ## Drucken
 
 Jede Übung, die ein Trainer ansehen darf, lässt sich einzeln ausdrucken — auch ohne Konto und
-ohne dafür ein Training anzulegen. Das Blatt trägt Name, Alterskategorien, Bild oder Diagramm,
-den Trainingsteil oder Block, im Kinderfussball-Hauptteil dessen Kategorie, Feldtyp oder
-Spielfeldgrösse, dazu die Anzahl Spieler:innen, danach Ablauf und Varianten, dann das Material — die
-Liste und darunter die Ergänzung — und zuunterst, was
-der Einordnung dient: Übungstyp und Erscheinungsform. Diese Reihenfolge gilt auf dem Papier wie
-am Bildschirm — wer eine Übung öffnet, liest zuerst, was gemacht wird, und trifft erst danach
-auf die beiden Einordnungsangaben, die dort beisammenstehen. Führt die Übung weder das eine
-noch das andere, steht an dieser Stelle nichts. Was die Übung nicht führt, erscheint auch
-nicht; fehlen Bild und Diagramm, steht dort eine leere Feld-Skizze. Eine Dauer trägt das Blatt
-nie, weil eine Übung in der Bibliothek keine hat.
+ohne dafür ein Training anzulegen. Das Blatt ist aufgeteilt wie die Übungsseite am Bildschirm:
+links Name, Bild oder Diagramm, Ablauf und Varianten, rechts daneben in einer schmaleren Spalte
+die Einordnung mit Altersstufe, Alterskategorien, Herkunft, Trainingsteil oder Block, im
+Kinderfussball-Hauptteil dessen Kategorie, Feldtyp oder Spielfeldgrösse, der Anzahl
+Spieler:innen, Übungstyp, Erscheinungsformen und dem Material. Auf dem Papier steht in der
+Einordnung jeder Wert unter seiner Bezeichnung statt daneben, damit die schmale Spalte lesbar
+bleibt. Was die Übung nicht führt, erscheint auch nicht; fehlen Bild und Diagramm, steht dort eine
+leere Feld-Skizze. Eine Dauer trägt das Blatt nie, weil eine Übung in der Bibliothek keine hat.
 
 Im Fuss steht, woher die Übung stammt: nach dem Manual Kinderfussball des SFV oder aus der
 Gemeinschaft der Trainerinnen und Trainer. Ein Trainername steht nie dabei. Beim eigenen, noch

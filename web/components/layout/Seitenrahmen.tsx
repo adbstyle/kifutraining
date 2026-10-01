@@ -20,7 +20,7 @@ const BREITE = {
  * die zur Seite passt — Übersichten über die ganze Fläche, Formulare und
  * Lesetext in ihrer Lesebreite —, und zuoberst die Kopfzeile (Umschalter der
  * Seitenleiste, Brotkrumen, Aktionen). Nicht zentriert: Die Fläche rechts
- * bleibt frei für eine spätere zweite Spalte (Details, geteilte Ansicht). Jede Seite hat Brotkrumen — darum ist `krumen` Pflicht.
+ * gehört der zweiten Spalte (`spalte`, etwa die Einordnung einer Übung). Jede Seite hat Brotkrumen — darum ist `krumen` Pflicht.
  * `null` nur dort, wo die Seite die Kopfzeile selbst setzt, weil ihre
  * Aktionen Zustand brauchen, der erst tiefer entsteht (Trainings-Editor).
  */
@@ -30,6 +30,7 @@ export function Seitenrahmen({
   aktionen,
   kopfImDruck,
   druckVoll,
+  spalte,
   children,
 }: {
   breite: keyof typeof BREITE;
@@ -39,6 +40,13 @@ export function Seitenrahmen({
   kopfImDruck?: boolean;
   /** Auf Papier die volle Breite ohne Rand — für die Druckansicht. */
   druckVoll?: boolean;
+  /** Die zweite Spalte rechts neben dem Inhalt (Epic #350). Ab `xl` steht sie
+   *  daneben, schmaler steht sie nach dem Inhalt — im Quelltext folgt sie ihm
+   *  ohnehin, so lesen Tastatur und Vorlesehilfe überall in derselben
+   *  Reihenfolge. Auf Papier bleibt sie daneben, schmaler als am Schirm.
+   *  `breite` gilt dann für beide Spalten zusammen; der Inhalt behält seine
+   *  Lesebreite (`max-w-4xl`). */
+  spalte?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -52,7 +60,14 @@ export function Seitenrahmen({
       {krumen && (
         <SeitenKopf krumen={krumen} aktionen={aktionen} imDruck={kopfImDruck} className="mb-6" />
       )}
-      {children}
+      {spalte ? (
+        <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start xl:gap-10 print:grid print:grid-cols-[minmax(0,1fr)_14rem] print:items-start print:gap-6">
+          <div className="min-w-0 max-w-4xl">{children}</div>
+          <aside className="mt-10 max-w-4xl xl:mt-0 print:mt-0">{spalte}</aside>
+        </div>
+      ) : (
+        children
+      )}
     </main>
   );
 }

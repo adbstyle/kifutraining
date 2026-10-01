@@ -23,6 +23,8 @@ import {
   MethodischerFahrplan,
   Freitext,
   MaterialListe,
+  Eigenschaften,
+  Eigenschaft,
   Disclosure,
   Leerzustand,
   Banner,
@@ -938,8 +940,11 @@ export default function Styleguide() {
           neben der Seitenleiste, Übersichten über die ganze Fläche
           (<code>voll</code>, Kachelraster mit so vielen Spalten, wie Platz
           ist), Formulare und Lesetext in ihrer Lesebreite (<code>xl</code>{" "}
-          bis <code>5xl</code>). Nicht zentriert, damit rechts Platz für eine
-          zweite Spalte bleibt. Zuoberst
+          bis <code>5xl</code>). Nicht zentriert, denn rechts steht, wo eine
+          Seite eine hat, die zweite Spalte (<code>spalte</code>, etwa die
+          Einordnung einer Übung, siehe 28): ab <code>xl</code> 22 rem breit
+          neben dem Inhalt, schmaler nach ihm, auf Papier daneben. Der Inhalt
+          behält dabei seine Lesebreite. Zuoberst
           die Kopfzeile mit dem Umschalter der Seitenleiste, den Brotkrumen und
           rechts den Aktionen der Seite. Brotkrumen sind Pflicht, auch auf den
           Einstiegsseiten. Ab <code>lg</code> gehen 280 oder 72 px an die
@@ -2798,6 +2803,63 @@ export default function Styleguide() {
           ein Ein/Aus ist und keine Ansicht.
         </p>
         <AnsichtWahl ansicht="monat" hrefListe="#" hrefMonat="#" />
+      </Section>
+
+      <Section n="28" title="Eigenschaften">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Bezeichnung und Wert paarweise — die Einordnung einer Übung in der
+          Spalte rechts (Epic #350), angelehnt an das Details-Panel von Jira.
+          Neu, weil kein Baustein Bezeichnung und Wert zusammen führt:{" "}
+          <code>FormAbschnitt</code> gliedert Formulare, die Eckdatenzeile der
+          Karte reiht Werte ohne Bezeichnung.
+        </p>
+        <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+          <li>
+            <strong>Beschreibungsliste</strong> — <code>dl</code> mit{" "}
+            <code>dt</code>/<code>dd</code>. Die Bezeichnung steht in fester
+            Spalte (8.5 rem), der Wert bricht in seiner um. Ein Wert darf ein
+            Baustein sein: Plakette, Chips, <code>MaterialListe</code>.
+          </li>
+          <li>
+            <strong>Gedämpfte Lesetype statt Versalien</strong> — gesperrte
+            Versalien bräuchten für «Hauptteilkategorie» mehr Breite, als neben
+            dem Wert bleibt.
+          </li>
+          <li>
+            <strong>Über beide Spalten</strong> — <code>EigenschaftBreit</code>{" "}
+            für das, was zu einer Zeile gehört, aber keine sichtbare
+            Bezeichnung braucht (der Material-Hinweis). Die Bezeichnung bleibt
+            für Vorlesehilfen.
+          </li>
+          <li>
+            <strong>Fläche</strong> — eine <code>Card</code>; auf Papier stehen
+            Bezeichnung und Wert untereinander, weil die Spalte dort schmaler
+            ist.
+          </li>
+        </ul>
+        <div className="max-w-[22rem]">
+          <Eigenschaften titel="Einordnung">
+            <Eigenschaft label="Altersstufe">Kinderfussball</Eigenschaft>
+            <Eigenschaft label="Alterskategorien">
+              <span className="flex flex-wrap gap-1.5">
+                <KategorieChip k="F" />
+                <KategorieChip k="E" />
+              </span>
+            </Eigenschaft>
+            <Eigenschaft label="Trainingsteil">Hauptteil</Eigenschaft>
+            <Eigenschaft label="Hauptteilkategorie">Fussball spielen lernen</Eigenschaft>
+            <Eigenschaft label="Anzahl Spieler:innen">9–11</Eigenschaft>
+            <Eigenschaft label="Material">
+              <MaterialListe
+                liste={[
+                  { art: "minitor", farbe: null, menge: 2 },
+                  { art: "pylone", farbe: "orange", menge: 4 },
+                ]}
+                ergaenzung={["Pfeife"]}
+              />
+            </Eigenschaft>
+          </Eigenschaften>
+        </div>
       </Section>
     </Seitenrahmen>
   );

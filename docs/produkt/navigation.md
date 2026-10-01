@@ -42,7 +42,10 @@ Jede Seite beginnt links neben der Leiste, nichts steht zentriert in der Mitte. 
 Übungen, Trainings, Teams und der Bereich eines Teams — nutzen die ganze Breite des Fensters;
 die Kacheln reihen sich so dicht, wie Platz ist, auf einem breiten Bildschirm also in mehr
 Spalten. Formulare und Seiten zum Lesen, etwa eine Übung oder ein Training, behalten eine
-angenehme Lesebreite und stehen ebenfalls links. Auch die Durchführung steht links.
+angenehme Lesebreite und stehen ebenfalls links. Auch die Durchführung steht links. Die Seite
+einer Übung hat rechts neben dem Inhalt eine zweite Spalte mit ihrer Einordnung; der Inhalt
+behält dabei seine Lesebreite. Ist das Fenster dafür zu schmal, steht die Einordnung nach dem
+Inhalt.
 
 ## Auf schmalen Bildschirmen
 
