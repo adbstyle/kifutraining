@@ -105,6 +105,7 @@ import {
   wochentageText,
   type Wochentag,
 } from "../lib/serie";
+import { ZEITRAUM_TEXT, istMonat, monatVon, monatsName, monatsRaster, plusMonate, zeitraumProblem } from "../lib/monat";
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
@@ -578,6 +579,27 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
 });
 
 // ── Termin-Felder (#322 AK 2, 5, 6, 8–10) ────────────────────────────────────
+pruefe("Monat: Raster Montag–Sonntag, Wechsel, Name (#329)", () => {
+  const r = monatsRaster("2026-10");
+  assert.equal(r[0][0].tag, "2026-09-28", "beginnt am Montag vor dem 1.");
+  assert.equal(r[0][3].tag, "2026-10-01");
+  assert.ok(r.every((w) => w.length === 7));
+  assert.equal(r.at(-1)!.at(-1)!.tag, "2026-11-01");
+  assert.equal(plusMonate("2026-12", 1), "2027-01");
+  assert.equal(plusMonate("2026-01", -1), "2025-12");
+  assert.equal(monatsName("2026-10"), "Oktober 2026");
+  assert.equal(monatVon("2026-10-07"), "2026-10");
+  assert.equal(istMonat("2026-13"), false);
+});
+
+pruefe("KI-Zeitraum: höchstens bis zum gleichen Kalendertag im Folgejahr (#329 AK 14, Review Focus 2)", () => {
+  assert.equal(zeitraumProblem("2026-10-01", "2027-10-01"), null);
+  assert.equal(zeitraumProblem("2028-02-29", "2029-02-28"), null);
+  assert.deepEqual(zeitraumProblem("2028-02-29", "2029-03-01"), { feld: "bis", text: ZEITRAUM_TEXT.zuLang });
+  assert.deepEqual(zeitraumProblem("2026-10-02", "2026-10-01"), { feld: "bis", text: ZEITRAUM_TEXT.bisVorVon });
+  assert.deepEqual(zeitraumProblem("2026-02-30", "2026-03-01"), { feld: "von", text: TERMIN_TEXT.datum });
+});
+
 pruefe("terminProblem: neuer Termin braucht Datum, Beginn und Ende", () => {
   const ok = { datum: "2026-10-07", beginn: "18:30", ende: "20:00" };
   assert.equal(terminProblem(ok), null);
@@ -1587,6 +1609,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#323": ["training_zuordnen", "training_loesen"],
     "#324": ["terminserie_festlegen"],
     "#326": ["termin_der_serie_folgen"],
+    "#329": ["team_plan_abrufen"],
     "#325": ["team_mitglieder_abrufen", "termin_verantwortliche_setzen"],
     "#327": ["termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
