@@ -45,7 +45,8 @@ const TERMIN_MODELL =
   "ein Training, und ein Training ist höchstens für einen Termin eingeplant — für einen weiteren " +
   "Termin entsteht eine eigenständige Kopie, oder ein Training mit anstehendem Termin wird " +
   "verschoben. Zeiten gelten am Trainingsort (Schweiz). Ein Termin kann ausfallen (mit freiwilligem " +
-  "Grund); «hat stattgefunden» kennt KiFu nicht.";
+  "Grund); ein ausgefallener nimmt kein Training an und findet wieder statt, wenn er einzeln auf " +
+  "heute oder später verlegt wird; «hat stattgefunden» kennt KiFu nicht.";
 
 const DATUM = z.string().describe("Datum als JJJJ-MM-TT, etwa 2026-10-07.");
 const UHRZEIT = z.string().describe("Uhrzeit als HH:MM (24 Stunden), etwa 18:30.");
@@ -200,7 +201,7 @@ export const teamPlanAbrufen = werkzeug({
     "«heute» ist der Tag, an dem geteilt wurde — gemessen am Trainingsort (Schweiz), nicht in deiner " +
     "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung und das " +
     "zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
-    "Termin ohne Training ist noch nicht vorbereitet. Übernommene Termine können ohne Beginn oder " +
+    "Termin ohne Training, der nicht ausgefallen ist, ist noch nicht vorbereitet. Übernommene Termine können ohne Beginn oder " +
     "Ende sein. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
     "Ort, Bemerkung und Verantwortliche jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
     "von ihr abweicht. Jeder Eintrag nennt seine Verantwortlichen; «nur_meine» grenzt auf deine ein. " +

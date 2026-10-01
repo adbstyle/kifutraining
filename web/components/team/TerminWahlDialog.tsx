@@ -70,7 +70,11 @@ export function TerminWahlDialog({
     >
       {fehler && <p role="alert" className="mb-3 text-error">{fehler}</p>}
       {liste.length === 0 ? (
-        <p>Das Team hat noch keinen weiteren Termin. Lege ihn im Trainingsplan fest.</p>
+        <p>
+          {termine.some((t) => t.id !== training?.termin?.id)
+            ? "Alle weiteren Termine sind ausgefallen. Lege einen neuen im Trainingsplan fest."
+            : "Das Team hat noch keinen weiteren Termin. Lege ihn im Trainingsplan fest."}
+        </p>
       ) : (
         <AuswahlListe
           ariaLabel="Termine des Teams"

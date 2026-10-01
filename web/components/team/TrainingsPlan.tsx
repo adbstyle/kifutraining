@@ -76,7 +76,10 @@ export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
     <li>
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className={cn("min-w-0 flex-1", (vergangen || t.ausgefallen) && "opacity-60")}>
+          <div className={cn("min-w-0 flex-1", vergangen && !t.ausgefallen && "opacity-60")}>
+            {/* Bei einem ausgefallenen Termin dämpft nur Kopf und Verantwortliche;
+                Badge und Grund bleiben im vollen Kontrast (AA). */}
+            <div className={cn(t.ausgefallen && "opacity-60")}>
             {kopf}
             {/* #325 AK 10, 12: wer den Termin vorbereitet und leitet, mit dem
                 aktuellen Namen. Ohne Verantwortliche steht nichts (OoS 2). */}
@@ -87,11 +90,17 @@ export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
                 {verantwortlichenNamen(t.verantwortliche).join(", ")}
               </p>
             )}
+            </div>
             {t.ausgefallen ? (
               <div className="mt-1">
                 <Badge tone="neutral"><CalendarOff size={12} strokeWidth={2.5} aria-hidden />Ausgefallen</Badge>
                 {/* AK 7: der Grund steht darunter, wenn es einen gibt. */}
-                {t.ausfallGrund && <p className="mt-1 type-body-small text-on-surface-mittel">{t.ausfallGrund}</p>}
+                {t.ausfallGrund && (
+                  <p className="mt-1 type-body-small text-on-surface-mittel">
+                    <span className="sr-only">Grund: </span>
+                    {t.ausfallGrund}
+                  </p>
+                )}
               </div>
             ) : t.training ? (
               <Link href={`/training/${t.training.id}`} className="focus-ring group mt-1 block rounded-flaeche">
