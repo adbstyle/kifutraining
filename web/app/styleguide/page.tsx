@@ -1238,13 +1238,12 @@ export default function Styleguide() {
         </p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
           <strong>Schrift.</strong> Der <strong>Filter</strong> steht normal
-          gesetzt in <code>type-title-small</code> — er sitzt in Leisten neben
-          Suchfeld, Auswahl und Knöpfen und liest sich dort als Wort («Meine
-          Termine»), nicht als Rubrik; dieselbe Schrift tragen die Reiter
-          (<code>TabNav</code>) und der leise Knopf. Assist, Suggestion, Input
-          und die offene Einfachauswahl bleiben versal in{" "}
-          <code>type-label-medium</code>, der Nutzertext-Chip in{" "}
-          <code>type-body-medium</code>.
+          gesetzt in <code>type-body-medium</code>, wie der Nutzertext-Chip —
+          er sitzt in Leisten neben Suchfeld, Auswahl und Knöpfen und liest
+          sich dort als Wort («Meine Termine»), nicht als Rubrik, und bleibt
+          leiser als der versale Knopf daneben, der die Handlung trägt.
+          Assist, Suggestion, Input und die offene Einfachauswahl bleiben
+          versal in <code>type-label-medium</code>.
         </p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
           <strong>Zwei Höhen, geführt statt von aussen.</strong> Ein Chip im

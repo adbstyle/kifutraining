@@ -71,11 +71,12 @@ const chipBase =
 /* Die Schrift ist wie die Höhe ein eigener Slot (`cn` ist ein reiner Joiner).
    Assist, Suggestion, Input und die Einfachauswahl tragen das Vokabular
    versal (`type-label-medium`). Der FILTER steht normal gesetzt in
-   `type-title-small`: Er sitzt in Leisten neben Suchfeld, Auswahl und
+   `type-body-medium`: Er sitzt in Leisten neben Suchfeld, Auswahl und
    Knöpfen und liest sich dort als Wort («Meine Termine»), nicht als Rubrik —
-   dieselbe Schrift wie die Reiter (TabNav) und der leise Knopf. */
+   dieselbe Schrift wie der Nutzertext-Chip. Leiser als der versale Knopf
+   daneben, der die Handlung trägt. */
 const chipLabel = "type-label-medium";
-const chipFilterTypo = "type-title-small";
+const chipFilterTypo = "type-body-medium";
 
 /* Die Höhe ist ein eigener Slot und steht NICHT in `chipBase` — `cn` ist ein
    reiner Joiner (kein tailwind-merge), eine Basis-Höhe liesse sich von aussen
