@@ -10,7 +10,7 @@ import { AboDialog } from "./AboDialog";
 /** Das ⋮ des Trainingsplans — darin der Einstieg ins Kalender-Abo (#330 AK 1).
  *  Er holt den persönlichen Link (beim ersten Mal wird er angelegt, danach
  *  kommt derselbe, AK 6) und zeigt ihn im Dialog samt Warnung und Anleitung.
- *  Das Abo richtet man einmal ein; offen neben «Termin festlegen» stünde es
+ *  Das Abo richtet man einmal ein; offen neben «Termin erstellen» stünde es
  *  bei jedem Besuch im Weg. Nach der Wahl liegt der Fokus wieder auf dem ⋮,
  *  und der Dialog gibt ihn beim Schliessen dorthin zurück. */
 export function PlanMenue({ teamId, teamName }: { teamId: string; teamName: string }) {
@@ -34,7 +34,7 @@ export function PlanMenue({ teamId, teamName }: { teamId: string; teamName: stri
     <>
       <OverflowMenu
         label="Weitere Aktionen zum Trainingsplan"
-        size="md"
+        size="sm"
         items={[{ label: "Kalender abonnieren", icon: CalendarDays, onSelect: holen }]}
       />
       <AboDialog links={links} teamName={teamName} onClose={() => setLinks(null)} />

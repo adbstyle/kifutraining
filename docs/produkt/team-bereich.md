@@ -60,10 +60,10 @@ Zeitrahmen: Datum, Beginn, Ende, auf Wunsch ein Ort und eine Bemerkung. Welches 
 stattfindet, wird getrennt davon entschieden — oft erst Tage später. So steht die Trainingszeit
 des nächsten Dienstags schon im Plan, auch wenn noch niemand weiss, was geübt wird.
 
-Ein einzelner Termin entsteht im Trainingsplan über „Termin festlegen". Datum, Beginn und Ende
+Ein einzelner Termin entsteht im Trainingsplan über „Termin erstellen". Datum, Beginn und Ende
 sind Pflicht, das Ende liegt am selben Tag nach dem Beginn; der Ort darf höchstens 100 Zeichen
 lang sein, die Bemerkung höchstens 500. Termine in der Vergangenheit sind erlaubt, damit sich
-Durchgeführtes nachtragen lässt. Beim Festlegen lassen sich gleich die Verantwortlichen
+Durchgeführtes nachtragen lässt. Beim Erstellen lassen sich gleich die Verantwortlichen
 eintragen (siehe unten). Wie viele Termine ein Tag trägt, ist nicht begrenzt; sie stehen nach
 ihrem Beginn geordnet, bei gleichem Beginn in der Reihenfolge, in der sie angelegt wurden.
 
@@ -129,7 +129,7 @@ solange es geöffnet ist. Die Schreibweise ist überall dieselbe wie im Training
 ## Terminserien
 
 Wer jede Woche zur selben Zeit trainiert, legt die Termine einer ganzen Saison in einem Schritt
-an: Im selben Dialog wie der einzelne Termin („Termin festlegen") macht das Ankreuzen von
+an: Im selben Dialog wie der einzelne Termin („Termin erstellen") macht das Ankreuzen von
 „Wiederholender Termin" daraus eine Serie. Das Datum wird zum Beginndatum, dazu kommen ein oder
 mehrere Wochentage und ein Enddatum; vorgewählt ist der Wochentag des Datums, und er folgt
 einem geänderten Datum, bis man selbst Wochentage wählt. Beginn, Ende, Ort, Bemerkung und
@@ -259,11 +259,11 @@ Termin entfernen. Die Durchführen-Ansicht zeigt, aus dem Plan geöffnet, zuober
 Ort, Verantwortliche und Bemerkung des Termins.
 
 Eine eigene Überschrift trägt der Trainingsplan nicht, sie steht schon im Umschalter. Über
-den Terminen liegt eine Zeile: links, wie man den Plan sieht — „Liste" oder „Monat" und die
-Eingrenzung „Meine Termine" —, rechts „Termin festlegen" und ein Menü mit „Kalender
+den Terminen liegt eine Zeile: links, wie man den Plan sieht — Liste oder Monat, als zwei
+verbundene Knöpfe mit Zeichen, und die Eingrenzung „Meine Termine" —, rechts „Termin erstellen" und ein Menü mit „Kalender
 abonnieren".
 
-Neben der Liste steht der Monatsüberblick, umgeschaltet über „Liste" und „Monat". Er zeigt einen
+Neben der Liste steht der Monatsüberblick, umgeschaltet über die beiden Knöpfe Liste und Monat. Er zeigt einen
 Monat in Wochen von Montag bis Sonntag, samt den Randtagen der Nachbarmonate, und hebt den
 heutigen Tag hervor. Mit den Pfeilen geht es zu früheren und späteren Monaten, mit „Heute"
 zurück zum aktuellen, bestimmt nach dem Kalendertag in der Schweiz. Jeder Termin eines Tages
@@ -271,8 +271,10 @@ steht einzeln mit seinem Beginn und dem Namen seines Trainings, oder mit „Noch
 (anstehend, umrandet), „Ohne Training" (vergangen, leise) oder „Ausgefallen"
 (durchgestrichen); fehlt der Beginn, steht „Zeit fehlt". Eine Woche ganz ohne Termin ist
 gestrichelt umrandet. Ein Klick öffnet den Termin mit denselben Angaben und Handgriffen wie in
-der Liste. Das Plus an jedem Tag öffnet „Termin festlegen" mit dem Tag als Datum vorbelegt; wer
-„Wiederholender Termin" ankreuzt, macht ihn zum Beginndatum einer Terminserie. Beide Ansichten zeigen dieselben Termine,
+der Liste. Ein Klick auf die freie Fläche eines Tages öffnet „Termin erstellen" mit dem Tag als
+Datum vorbelegt; mit der Maus hebt sich der Tag dabei ab und zeigt oben rechts ein Plus, am Handy
+genügt ein Tipp. Wer „Wiederholender Termin" ankreuzt, macht den Tag zum Beginndatum einer
+Terminserie. Beide Ansichten zeigen dieselben Termine,
 jede Änderung erscheint sofort in beiden, und die Bestätigung kommt auch dann, wenn das
 Ergebnis ausserhalb des gezeigten Monats oder der Eingrenzung liegt. Liste und Monat lassen
 sich am Handy ebenso bedienen wie am Desktop; schmal scrollt der Monat in sich waagrecht.
@@ -280,7 +282,7 @@ sich am Handy ebenso bedienen wie am Desktop; schmal scrollt der Monat in sich w
 ## Kalender-Abo
 
 Die Trainingszeiten eines Teams lassen sich im eigenen Kalenderprogramm abonnieren. Im
-Trainingsplan holt „Kalender abonnieren" im Menü neben „Termin festlegen" den persönlichen
+Trainingsplan holt „Kalender abonnieren" im Menü neben „Termin erstellen" den persönlichen
 Abo-Link für dieses Team; beim ersten
 Mal entsteht er, danach kommt derselbe, solange das Abo gilt. Der Dialog warnt, dass der Link
 persönlich ist und nicht weitergegeben werden soll, weil jeder, der ihn hat, Zeit und Ort der

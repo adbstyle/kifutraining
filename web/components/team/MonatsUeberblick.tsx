@@ -78,17 +78,26 @@ export function MonatsUeberblick({
         leereWoche={(tage) => tage.every((d) => !jeTag.has(d))}
         renderTag={(tag) => (
           <>
-            {(jeTag.get(tag) ?? []).map(eintrag)}
-            {/* Ein Termin oder, im selben Dialog, eine Serie ab diesem Tag. */}
+            {/* Erstellen wie in Jira: Die ganze freie Fläche des Tages ist der
+                Knopf, das «+» oben rechts zeigt er erst beim Überfahren oder
+                im Tastaturfokus — ein Raster voller «+» lenkte von den
+                Terminen ab. Ohne Maus (Touch) genügt ein Tipp auf den Tag.
+                Er liegt im DOM vor den Terminen, die darum (positioniert)
+                über ihm stehen und ihre eigenen Klicks behalten. */}
             <button
               type="button"
-              aria-label={`Am ${tagText(tag)} Termin festlegen`}
+              aria-label={`Am ${tagText(tag)} Termin erstellen`}
               aria-haspopup="dialog"
               onClick={() => a.neu(tag)}
-              className="focus-ring mt-1 block rounded-full p-1 text-on-surface-mittel hover:text-on-surface"
+              className="group/neu focus-ring-inset absolute inset-0 transition-colors hover:bg-elev-04"
             >
-              <Plus size={14} aria-hidden />
+              <Plus
+                size={16}
+                aria-hidden
+                className="absolute right-1.5 top-1.5 text-on-surface-mittel opacity-0 transition-opacity group-hover/neu:opacity-100 group-focus-visible/neu:opacity-100"
+              />
             </button>
+            {(jeTag.get(tag) ?? []).map(eintrag)}
           </>
         )}
       />

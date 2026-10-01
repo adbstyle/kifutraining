@@ -79,7 +79,9 @@ export function Monatsraster({
                   key={tag}
                   aria-current={tag === heute ? "date" : undefined}
                   className={cn(
-                    "min-h-24 min-w-0 p-1",
+                    // `relative`: Ein Inhalt darf die ganze Zelle belegen (das
+                    // Erstellen im Monatsüberblick).
+                    "relative min-h-24 min-w-0 p-1",
                     // Die Tage der Nachbarmonate liegen auf dem Grund statt auf
                     // der Tagesfläche — NICHT über `opacity` gedämpft: Das risse
                     // die Schrift der Einträge unter 4.5:1.

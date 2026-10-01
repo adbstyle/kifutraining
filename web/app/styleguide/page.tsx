@@ -3,6 +3,7 @@ import {
   Button,
   ButtonLink,
   ButtonGroup,
+  segmentClasses,
   Badge,
   Card,
   ExerciseCard,
@@ -68,6 +69,8 @@ import {
   CalendarOff,
   CalendarX2,
   CalendarPlus,
+  List,
+  CalendarDays,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { ROTATIONEN, SPIELER_POSEN, type DiagrammElement } from "@/lib/diagramm";
@@ -1019,6 +1022,26 @@ export default function Styleguide() {
           <Button variant="outlined">Raster</Button>
           <Button variant="outlined">Karte</Button>
         </ButtonGroup>
+        <p className="type-body-medium mb-3 mt-4 max-w-2xl text-on-surface-mittel">
+          Nur mit Zeichen (<code>segmentClasses</code>), für den Wechsel der
+          Darstellung — etwa Liste/Monat im Trainingsplan. 36 px im Quadrat,
+          der Name steht im <code>Tooltip</code> und im zugänglichen Namen.
+          Gewählt trägt ein Glied die Auswahl-Optik der Chips: Kontur und
+          Zeichen in Primary, die Fläche Primary/12 — leiser als ein gefüllter
+          Knopf daneben, der die Handlung trägt.
+        </p>
+        <ButtonGroup ariaLabel="Ansicht">
+          <Tooltip label="Liste">
+            <button type="button" aria-label="Liste" aria-pressed={false} className={segmentClasses(false)}>
+              <List size={18} aria-hidden />
+            </button>
+          </Tooltip>
+          <Tooltip label="Monat">
+            <button type="button" aria-label="Monat" aria-pressed className={segmentClasses(true)}>
+              <CalendarDays size={18} aria-hidden />
+            </button>
+          </Tooltip>
+        </ButtonGroup>
 
         <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
           Icon-Knöpfe — Zeichen plus Zustands-Ebene, aktiv in Primary
@@ -1080,7 +1103,10 @@ export default function Styleguide() {
           Eingabefelder für eine Auswahl, kein Navigationsmittel, und ihr Wert
           lebt im Formularzustand. Die Leiste trennt sich nach
           unten mit <code>border-linie</code>, die offene Ansicht trägt einen
-          2 px starken Strich in Primary.
+          2 px starken Strich in Primary. Die Reiter stehen in{" "}
+          <code>type-title-small</code>, normal gesetzt — eine Stufe unter der
+          versalen Hauptnavigation, damit die beiden Leisten übereinander nicht
+          gleich laut sprechen.
         </p>
         <TabNav
           ariaLabel="Beispiel-Ansichten"
