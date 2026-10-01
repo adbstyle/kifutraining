@@ -578,7 +578,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
   assert.throws(() => TrainingAuskunftStreng.parse({ ...heute, termin: { ...heute.termin, extra: 1 } }));
 });
 
-// ── Termin-Felder (#322 AK 2, 5, 6, 8–10) ────────────────────────────────────
+// ── Monatsüberblick und KI-Zeitraum (#329 AK 13, 14) ─────────────────────────
 pruefe("Monat: Raster Montag–Sonntag, Wechsel, Name (#329)", () => {
   const r = monatsRaster("2026-10");
   assert.equal(r[0][0].tag, "2026-09-28", "beginnt am Montag vor dem 1.");
@@ -592,6 +592,41 @@ pruefe("Monat: Raster Montag–Sonntag, Wechsel, Name (#329)", () => {
   assert.equal(istMonat("2026-13"), false);
 });
 
+pruefe("Monat: Raster-Grenzfälle — Montag-Beginn, Sonntag-Ende, Februar, Schaltjahr, Jahreswechsel (#329)", () => {
+  const erstesUndLetztes = (m: string) => {
+    const r = monatsRaster(m);
+    return { wochen: r.length, erster: r[0][0].tag, letzter: r.at(-1)!.at(-1)!.tag, imMonat: r.flat().filter((t) => t.imMonat).length };
+  };
+  // Beginnt am Montag: keine Vorwoche.
+  assert.deepEqual(erstesUndLetztes("2026-06"), { wochen: 5, erster: "2026-06-01", letzter: "2026-07-05", imMonat: 30 });
+  // Endet am Sonntag: keine Zusatzwoche.
+  assert.deepEqual(erstesUndLetztes("2026-05"), { wochen: 5, erster: "2026-04-27", letzter: "2026-05-31", imMonat: 31 });
+  // Februar, Montag bis Sonntag: genau vier Wochen.
+  assert.deepEqual(erstesUndLetztes("2027-02"), { wochen: 4, erster: "2027-02-01", letzter: "2027-02-28", imMonat: 28 });
+  // Schaltjahr: der 29. Februar liegt im Raster.
+  assert.deepEqual(erstesUndLetztes("2028-02"), { wochen: 5, erster: "2028-01-31", letzter: "2028-03-05", imMonat: 29 });
+  assert.equal(monatsRaster("2028-02").flat().some((t) => t.tag === "2028-02-29" && t.imMonat), true);
+  // Sechs Wochen, wenn der Monat spät in der Woche beginnt und lang ist.
+  assert.equal(monatsRaster("2026-03").length, 6);
+  // Jahreswechsel, auch mehrfach und über ein Jahr hinaus.
+  assert.equal(plusMonate("2026-01", -13), "2024-12");
+  assert.equal(plusMonate("2026-01", -12), "2025-01");
+  assert.equal(plusMonate("2026-12", 13), "2028-01");
+  assert.equal(plusMonate("2026-03", -3), "2025-12");
+  assert.equal(monatsName("2028-02"), "Februar 2028");
+});
+
+pruefe("Monat: istMonat nimmt nur Monate mit tragfähigem Raster an (?monat= aus der Adresse)", () => {
+  for (const ok of ["2026-10", "2026-01", "2026-12", "0002-01", "9998-12"]) assert.equal(istMonat(ok), true, ok);
+  for (const schlecht of ["2026-1", "2026-00", "2026-13", "0000-01", "0001-01", "9999-12", "9999-01", "10000-01", "2026-10-01", "", "morgen"])
+    assert.equal(istMonat(schlecht), false, schlecht);
+  // Jeder zulässige Rand ergibt ein Raster nur aus gültigen Kalendertagen.
+  for (const m of ["0002-01", "9998-12"]) {
+    const tage = monatsRaster(m).flat().map((t) => t.tag);
+    assert.ok(tage.length >= 28 && tage.every((t) => zeitraumProblem(t, t) === null), `${m}: Raster aus gültigen Tagen`);
+  }
+});
+
 pruefe("KI-Zeitraum: höchstens bis zum gleichen Kalendertag im Folgejahr (#329 AK 14, Review Focus 2)", () => {
   assert.equal(zeitraumProblem("2026-10-01", "2027-10-01"), null);
   assert.equal(zeitraumProblem("2028-02-29", "2029-02-28"), null);
@@ -600,6 +635,7 @@ pruefe("KI-Zeitraum: höchstens bis zum gleichen Kalendertag im Folgejahr (#329 
   assert.deepEqual(zeitraumProblem("2026-02-30", "2026-03-01"), { feld: "von", text: TERMIN_TEXT.datum });
 });
 
+// ── Termin-Felder (#322 AK 2, 5, 6, 8–10) ────────────────────────────────────
 pruefe("terminProblem: neuer Termin braucht Datum, Beginn und Ende", () => {
   const ok = { datum: "2026-10-07", beginn: "18:30", ende: "20:00" };
   assert.equal(terminProblem(ok), null);
@@ -1609,9 +1645,9 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#323": ["training_zuordnen", "training_loesen"],
     "#324": ["terminserie_festlegen"],
     "#326": ["termin_der_serie_folgen"],
-    "#329": ["team_plan_abrufen"],
     "#325": ["team_mitglieder_abrufen", "termin_verantwortliche_setzen"],
     "#327": ["termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen"],
+    "#329": ["team_plan_abrufen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))

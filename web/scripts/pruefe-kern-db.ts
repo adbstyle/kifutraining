@@ -1852,6 +1852,21 @@ try {
     const alle = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
     assert.ok([...alle.kommend, ...alle.vergangen].some((x) => x.id === fremder.id), "im ganzen Plan steht er");
     assert.ok(meineIds.length < alle.kommend.length + alle.vergangen.length, "der Filter schränkt ein");
+    // #329: Zeitraum und «nur meine» verbinden sich; beide Grenzen schliessen ein.
+    const ids = (p: { kommend: { id: string }[]; vergangen: { id: string }[] }) => [...p.kommend, ...p.vergangen].map((x) => x.id).sort();
+    const weit = { teamId: team, von: tagCh(-14), bis: tagCh(14) };
+    assert.deepEqual(ids(wert(await teamPlan(a.supabase, a.id, { ...weit, nurMeine: true }))), [...meineIds].sort(), "weiter Zeitraum + nur meine = nur meine");
+    const amRand = { teamId: team, von: tagCh(14), bis: tagCh(14) };
+    assert.deepEqual(ids(wert(await teamPlan(a.supabase, a.id, amRand))), [fremder.id], "von = bis = ein Tag, eingeschlossen");
+    assert.deepEqual(ids(wert(await teamPlan(a.supabase, a.id, { ...amRand, nurMeine: true }))), [], "Zeitraum + nur meine: der fremde Termin fällt heraus");
+    const ueberHeute = wert(await teamPlan(a.supabase, a.id, weit));
+    assert.ok(ueberHeute.kommend.length > 0 && ueberHeute.vergangen.length > 0, "ein Zeitraum über heute teilt in kommend und vergangen");
+    assert.ok(ueberHeute.kommend.every((x) => x.datum >= heuteCh) && ueberHeute.vergangen.every((x) => x.datum < heuteCh));
+    // Leere Angaben sind gegeben, aber ungültig — nicht «kein Zeitraum» (AK 14).
+    fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: "", bis: "" }), "eingabe", TERMIN_TEXT.datum);
+    fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: "", bis: tagCh(1) }), "eingabe", TERMIN_TEXT.datum);
+    fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: tagCh(1), bis: tagCh(0) }), "eingabe", ZEITRAUM_TEXT.bisVorVon);
+    fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: "2030-02-30", bis: "2030-03-01" }), "eingabe", TERMIN_TEXT.datum);
   });
 
   await pruefe("Austritt eines Serien-Verantwortlichen: Serie und anstehende Termine ohne ihn, Vergangenes behält ihn (#325 PC 6, 7)", async () => {

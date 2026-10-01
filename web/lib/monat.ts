@@ -8,10 +8,21 @@ import { TERMIN_TEXT, istKalendertag } from "@/lib/termin";
 
 const MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
-/** Ein Monat als `YYYY-MM`. */
-export const istMonat = (s: string): boolean => /^\d{4}-(0[1-9]|1[0-2])$/.test(s);
+/** Ein Monat als `YYYY-MM` — nur Jahre, deren Raster samt Nachbarwochen und
+ *  Vor-/Folgemonat aus gültigen Kalendertagen besteht (`istKalendertag` kennt
+ *  die Jahre 1–9999): also 0002 bis 9998. Ein Wert aus `?monat=` kann so nie
+ *  ein leeres oder zerbrochenes Raster ergeben. */
+export function istMonat(s: string): boolean {
+  const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(s);
+  if (!m) return false;
+  const j = Number(m[1]);
+  return j >= 2 && j <= 9998;
+}
+
+/** Der Monat (`YYYY-MM`) eines Kalendertags. */
 export const monatVon = (iso: string): string => iso.slice(0, 7);
 
+/** Der Monat `n` Monate vor oder nach `monat` (`YYYY-MM`); n darf negativ sein. */
 export function plusMonate(monat: string, n: number): string {
   const [j, m] = monat.split("-").map(Number);
   const i = j * 12 + (m - 1) + n;

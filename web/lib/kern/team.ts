@@ -62,8 +62,9 @@ export async function teamPlan(
 ): Promise<KernErgebnis<TeamPlan>> {
   // Ein Zeitraum braucht beide Tage und höchstens ein Jahr (#329 AK 14); die
   // Abweisung nennt das Feld, damit der Assistent den richtigen Tag korrigiert.
-  if (e.von || e.bis) {
-    if (!e.von || !e.bis) return fehlschlag("eingabe", ZEITRAUM_TEXT.beideTage, { feld: e.von ? "bis" : "von" });
+  if (e.von !== undefined || e.bis !== undefined) {
+    if (e.von === undefined || e.bis === undefined)
+      return fehlschlag("eingabe", ZEITRAUM_TEXT.beideTage, { feld: e.von === undefined ? "von" : "bis" });
     const problem = zeitraumProblem(e.von, e.bis);
     if (problem) return fehlschlag("eingabe", problem.text, { feld: problem.feld });
   }
