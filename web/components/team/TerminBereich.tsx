@@ -40,7 +40,7 @@ import {
 import type { FolgeAngabe, SerienAenderung, SerienFolge } from "@/lib/kern/serien";
 import { istVeraltet } from "@/lib/veraltet";
 import { datumKurz } from "@/lib/zeit";
-import type { TeamTrainingRow } from "@/lib/queries/trainings";
+import type { TeamTrainingRow, TrainingListRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
 import type { TeamMitglied } from "@/lib/queries/teams";
 
@@ -117,12 +117,15 @@ type SerienSchritt = {
 export function TerminBereich({
   teamId,
   trainings,
+  persoenliche,
   mitglieder,
   heute,
   children,
 }: {
   teamId: string;
   trainings: TeamTrainingRow[];
+  /** Die eigenen persönlichen Trainings des USERS — zuordenbar als Kopie (#328). */
+  persoenliche: TrainingListRow[];
   /** Wer als Verantwortliche:r zur Wahl steht (#325). */
   mitglieder: TeamMitglied[];
   heute: string;
@@ -362,7 +365,7 @@ export function TerminBereich({
     neueSerie: (datum) => { setDialogFehler(undefined); setSerieNeu(datum ?? ""); },
     bearbeiten: (t) => { neuerLauf(); setDialogFehler(undefined); setBearbeiten(t); },
     // Ein ausgefallener Termin trägt kein Training (#327 AK 9): kein Dialog.
-    zuordnen: (t) => { if (t.ausgefallen) return; setDialogFehler(undefined); setZuordnen(t); },
+    zuordnen: (t) => { if (t.ausgefallen) return; neuerLauf(); setDialogFehler(undefined); setZuordnen(t); },
     loesen: (t) =>
       t.training &&
       !pending &&
@@ -481,10 +484,15 @@ export function TerminBereich({
       <TrainingWahlDialog
         termin={zuordnen}
         trainings={trainings}
+        persoenliche={persoenliche}
         heute={heute}
         pending={pending}
         fehler={dialogFehler}
-        onClose={() => setZuordnen(null)}
+        onClose={() => {
+          if (!zuordnen) return;
+          neuerLauf();
+          setZuordnen(null);
+        }}
         onWahl={(w: TrainingWahl) =>
           zuordnen &&
           lauf(
@@ -494,9 +502,15 @@ export function TerminBereich({
               art: w.art,
               erwartet: { terminTraining: zuordnen.training?.id ?? null, trainingTermin: w.trainingTermin },
             }),
-            (r) => ("kopie" in r && r.kopie ? ZUORDNEN_ERFOLG.kopie : ZUORDNEN_ERFOLG.direkt),
+            (r) =>
+              w.quelle === "persoenlich"
+                ? ZUORDNEN_ERFOLG.persoenlich
+                : "kopie" in r && r.kopie
+                  ? ZUORDNEN_ERFOLG.kopie
+                  : ZUORDNEN_ERFOLG.direkt,
             () => setZuordnen(null),
             true,
+            laufNr.current,
           )
         }
       />

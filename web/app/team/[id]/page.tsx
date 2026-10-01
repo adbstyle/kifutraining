@@ -7,7 +7,7 @@ import { NeuerTerminKnopf } from "@/components/team/NeuerTerminKnopf";
 import { NurMeineFilter } from "@/components/team/NurMeineFilter";
 import { getTeam } from "@/lib/queries/teams";
 import { getTeamPlan, teilePlan } from "@/lib/queries/termine";
-import { getTeamTrainings } from "@/lib/queries/trainings";
+import { getTeamTrainings, getTrainingPool } from "@/lib/queries/trainings";
 import { createClient } from "@/lib/supabase/server";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 
@@ -37,16 +37,18 @@ export default async function TeamPlanPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [termine, trainings, team] = await Promise.all([
+  const [termine, trainings, persoenliche, team] = await Promise.all([
     getTeamPlan(id, { nurMeine: meine ? user.id : undefined }),
     getTeamTrainings(id),
+    // Die eigenen Trainings, Entwürfe und öffentliche: zuordenbar als Kopie (#328).
+    getTrainingPool({ mine: true }),
     getTeam(id),
   ]);
   const plan = teilePlan(termine, heute);
   const leer = termine.length === 0;
 
   return (
-    <TerminBereich teamId={id} trainings={trainings} mitglieder={team?.mitglieder ?? []} heute={heute}>
+    <TerminBereich teamId={id} trainings={trainings} persoenliche={persoenliche} mitglieder={team?.mitglieder ?? []} heute={heute}>
       <section>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="type-title-large text-on-surface">Trainingsplan</h2>

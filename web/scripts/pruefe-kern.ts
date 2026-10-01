@@ -779,6 +779,7 @@ pruefe("geaenderteFelder: nur Geändertes, Beginn und Ende als Paar, nichts geä
 pruefe("Erfolgstexte und Nicht-gefunden-Sätze haben je eine Quelle", () => {
   assert.equal(ZUORDNEN_ERFOLG.kopie, "Kopie angelegt und dem Termin zugeordnet.");
   assert.equal(ZUORDNEN_ERFOLG.direkt, "Training zugeordnet.");
+  assert.equal(ZUORDNEN_ERFOLG.persoenlich, "Kopie im Team angelegt und dem Termin zugeordnet.");
   assert.equal(NICHT_GEFUNDEN.termin, TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN);
   assert.equal(NICHT_GEFUNDEN.training, TERMIN_MELDUNG.TRAINING_NICHT_GEFUNDEN);
 });

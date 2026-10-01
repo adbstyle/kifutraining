@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
+  CalendarPlus,
   Download,
   Globe,
   Pencil,
@@ -27,6 +28,7 @@ import {
   type SichtbarkeitSchritt,
 } from "./SichtbarkeitDialoge";
 import { TrainingZielDialog, type KopieZielWahl } from "./TrainingZielDialog";
+import { TerminZuordnenAusTraining } from "./TerminZuordnenAusTraining";
 import {
   hatUeberlauf,
   trainingAktionsRechte,
@@ -114,6 +116,7 @@ export function TrainingAktionen({
   const [zielWahl, setZielWahl] = useState<"uebernehmen" | "ins_team_stellen" | null>(
     null,
   );
+  const [terminZuordnen, setTerminZuordnen] = useState(false);
   const [loeschen, setLoeschen] = useState(false);
 
   const rechte = trainingAktionsRechte(
@@ -228,6 +231,12 @@ export function TrainingAktionen({
       icon: Users,
       onSelect: () => setZielWahl("ins_team_stellen"),
     });
+  if (rechte.terminZuordnen)
+    eintraege.push({
+      label: "Einem Team-Termin zuordnen",
+      icon: CalendarPlus,
+      onSelect: () => setTerminZuordnen(true),
+    });
   if (rechte.loeschen)
     eintraege.push({
       label: "Löschen",
@@ -303,6 +312,16 @@ export function TrainingAktionen({
           teams={teams}
           pending={pending}
           onBestaetigen={zielWahl === "ins_team_stellen" ? insTeamJetzt : uebernehmenJetzt}
+        />
+      )}
+
+      {rechte.terminZuordnen && (
+        <TerminZuordnenAusTraining
+          open={terminZuordnen}
+          trainingId={trainingId}
+          name={name}
+          teams={teams}
+          onClose={() => setTerminZuordnen(false)}
         />
       )}
 

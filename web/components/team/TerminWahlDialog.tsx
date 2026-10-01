@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { AuswahlListe, Button, ChoiceChip, ChoiceChipGroup, Dialog } from "@/components/ui";
 import { zeitText } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
-import type { TeamTrainingRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
 
 /* Einem Training aus dem Team-Bestand einen Termin wählen (#323 AK 2, 7, 8).
@@ -12,23 +11,31 @@ import type { TerminZeile } from "@/lib/queries/termine";
    dem, den das Training schon trägt. Bei jedem steht, ob und welches
    Training er trägt. Gehört das Training schon einem ANSTEHENDEN Termin,
    muss zwischen Kopie und Verschieben gewählt werden; bei einem
-   vergangenen entsteht immer eine Kopie. */
+   vergangenen entsteht immer eine Kopie.
+
+   `training` ist der schmale Ausschnitt, den der Dialog braucht: Ein
+   persönliches Training (#328 AK 2) hat keinen Termin und keine Team-Zeile.
+   Mit `hinweis` steht ein Satz über der Liste — dort sagt das persönliche
+   Training, dass eine Kopie entsteht (#328 AK 6). */
 export function TerminWahlDialog({
   training,
   termine,
   heute,
   pending,
   fehler,
+  hinweis,
   onClose,
   onWahl,
 }: {
-  training: TeamTrainingRow | null;
+  training: { id: string; name: string; termin: { id: string; datum: string } | null } | null;
   /** Anstehende aufsteigend, dann vergangene absteigend (`teilePlan`). */
   termine: TerminZeile[];
   heute: string;
   pending?: boolean;
   /** Die Meldung des Servers; der Dialog bleibt dann offen. */
   fehler?: string;
+  /** Ein Satz über der Liste, etwa «Es entsteht eine Kopie im Team». */
+  hinweis?: string;
   onClose: () => void;
   onWahl: (w: { termin: TerminZeile; art?: "kopie" | "verschieben" }) => void;
 }) {
@@ -69,6 +76,7 @@ export function TerminWahlDialog({
       }
     >
       {fehler && <p role="alert" className="mb-3 text-error">{fehler}</p>}
+      {hinweis && <p className="mb-3">{hinweis}</p>}
       {liste.length === 0 ? (
         <p>
           {termine.some((t) => t.id !== training?.termin?.id)

@@ -444,7 +444,12 @@ export const trainingZuordnen = werkzeug({
   titel: "Training einem Termin zuordnen",
   beschreibung:
     "Ordnet einem Termin ein Training aus dem Bestand desselben Teams zu; trägt der Termin schon " +
-    "eins, bleibt jenes ohne Termin im Bestand («im_bestand_geblieben»). Ist das Training bereits " +
+    "eins, bleibt jenes ohne Termin im Bestand («im_bestand_geblieben»). Auch ein eigenes " +
+    "persönliches Training (jeder Altersstufe, Entwurf oder öffentlich) lässt sich zuordnen: Es " +
+    "entsteht immer eine eigenständige Kopie im Team des Termins, die alle Mitglieder sehen und " +
+    "bearbeiten; das Original bleibt unverändert und ohne Verbindung. «art» darf dann nur «kopie» " +
+    "sein oder fehlen. Trainings eines anderen Teams lassen sich nicht zuordnen. " +
+    "Ist ein Team-Training bereits " +
     "für einen ANSTEHENDEN Termin eingeplant, musst du «art» wählen: «kopie» legt eine " +
     "eigenständige, gleichnamige Kopie für diesen Termin an, «verschieben» nimmt es vom bisherigen " +
     "Termin weg («frei_gewordener_termin»). Ist sein Termin VERGANGEN, entsteht immer eine Kopie; " +
@@ -462,9 +467,14 @@ export const trainingZuordnen = werkzeug({
   }),
   ausgabe: z.object({
     termin_id: z.string(),
-    training_id: z.string().describe("Das Training, das jetzt am Termin steht — bei einer Kopie die Kopie."),
+    training_id: z
+      .string()
+      .describe("Das Team-Training, das jetzt am Termin steht — bei einer Kopie (auch eines persönlichen Trainings) die neu entstandene Kopie."),
     kopie: z.boolean(),
-    im_bestand_geblieben: z.string().nullable(),
+    im_bestand_geblieben: z
+      .string()
+      .nullable()
+      .describe("Kennung des Trainings, das den belegten Termin verlassen hat und ohne Termin im Team-Bestand blieb; null, wenn der Termin frei war."),
     frei_gewordener_termin: z.string().nullable(),
     url: z.string(),
   }),
