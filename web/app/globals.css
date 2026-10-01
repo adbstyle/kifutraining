@@ -243,7 +243,10 @@
    Drei Zustände, nicht vier: Material führt zusätzlich «gezogen», aber das
    Einzige, was in dieser Anwendung gezogen wird, sind Diagramm-Elemente — und
    die leben im SVG, nicht im DOM. Sie melden das Ziehen in ihrer eigenen
-   Zeichnung; ein DOM-Zustand, den niemand auslöst, wäre ein totes Token. */
+   Zeichnung; ein DOM-Zustand, den niemand auslöst, wäre ein totes Token.
+   Überfahren gilt nur mit Zeiger (`hover: hover`): Auf Touch bliebe `:hover`
+   nach einem Tipp hängen, und die angetippte Fläche stünde aufgehellt da,
+   bis man woanders hintippt — wie es Tailwinds eigene `hover:` auch halten. */
 @utility state {
   position: relative;
   &::after {
@@ -256,8 +259,10 @@
     pointer-events: none;
     transition: opacity 150ms;
   }
-  &:hover::after {
-    opacity: var(--state-hover);
+  @media (hover: hover) {
+    &:hover::after {
+      opacity: var(--state-hover);
+    }
   }
   &:focus-visible::after {
     opacity: var(--state-focus);

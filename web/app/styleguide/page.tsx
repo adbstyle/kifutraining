@@ -2577,10 +2577,9 @@ export default function Styleguide() {
           Sache, gleiches Bild. Kein wandernder Tabstopp — durch Links tabbt man,
           Pfeiltasten gehören der Radiogroup. Nicht <code>TabNav</code> (08): Die
           wechselt die <em>Sicht</em> auf einen Gegenstand; hier bleibt die Sicht
-          dieselbe und der <em>Inhalt</em> wechselt. Und sie trägt{" "}
-          <code>type-label-large</code> — Nutzertext stünde dort versal
-          verfälscht. Aus demselben Grund kennt <code>ChoiceChip</code> seit
-          dem Chip-Umbau ein <code>look=&quot;nutzertext&quot;</code> mit
+          dieselbe und der <em>Inhalt</em> wechselt. Weil Nutzertext versal
+          verfälscht stünde, kennt <code>ChoiceChip</code> seit dem Chip-Umbau
+          ein <code>look=&quot;nutzertext&quot;</code> mit
           denselben Bündeln: dieselbe Pille, aber normal gesetzt und h-9 hoch,
           damit sie neben dem geteilten Chip aus 23 und dem leisen Knopf aus 08
           auf einer Linie sitzt.

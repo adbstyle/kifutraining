@@ -291,7 +291,7 @@ export function TrainingDurchfuehren({
             type="button"
             onClick={() => setIdx((i) => Math.max(0, i - 1))}
             disabled={idx === 0}
-            className="state focus-ring inline-flex h-14 flex-1 items-center justify-center gap-1.5 rounded-flaeche kontur border-kante type-label-large text-on-surface disabled:opacity-30"
+            className="state focus-ring inline-flex h-14 flex-1 items-center justify-center gap-1.5 rounded-flaeche kontur border-kante type-title-small text-on-surface disabled:opacity-30"
           >
             <ChevronLeft size={22} strokeWidth={2.5} aria-hidden />
             Zurück
@@ -300,7 +300,7 @@ export function TrainingDurchfuehren({
             type="button"
             onClick={() => setIdx((i) => Math.min(sections.length - 1, i + 1))}
             disabled={idx === sections.length - 1}
-            className="state focus-ring inline-flex h-14 flex-1 items-center justify-center gap-1.5 rounded-flaeche bg-primary type-label-large text-on-primary disabled:opacity-30"
+            className="state focus-ring inline-flex h-14 flex-1 items-center justify-center gap-1.5 rounded-flaeche bg-primary type-title-small text-on-primary disabled:opacity-30"
           >
             Weiter
             <ChevronRight size={22} strokeWidth={2.5} aria-hidden />
