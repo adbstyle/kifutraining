@@ -53,8 +53,8 @@ export function MonatsUeberblick({
     if (vorherMonat.current === monat) return;
     vorherMonat.current = monat;
     setPlus(null);
-    const a = document.activeElement;
-    if (!a || a === document.body) ueberschriftRef.current?.focus({ preventScroll: true });
+    const fokus = document.activeElement;
+    if (!fokus || fokus === document.body) ueberschriftRef.current?.focus({ preventScroll: true });
   }, [monat]);
 
   // Das Menü hängt an Fensterkoordinaten: Scrollt oder wechselt die Grösse,
@@ -140,9 +140,11 @@ export function MonatsUeberblick({
           className="fixed z-50"
           style={{ left: plus.links, top: plus.oben }}
           // Tab aus dem Menü hinaus schliesst es (der Fokus bleibt dort, wohin er ging).
+          // Ohne Ziel (Safari: Mausklick auf einen Eintrag) bleibt es offen — sonst
+          // verschwände es vor dem Klick; Klicks daneben schliesst Menu selbst.
           onBlur={(e) => {
             const ziel = e.relatedTarget as Node | null;
-            if (ziel && (menueRef.current?.contains(ziel) || plusRef.current?.contains(ziel))) return;
+            if (!ziel || menueRef.current?.contains(ziel) || plusRef.current?.contains(ziel)) return;
             setPlus(null);
           }}
         >
