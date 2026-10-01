@@ -107,6 +107,7 @@ import {
 } from "../lib/serie";
 import { ZEITRAUM_TEXT, istMonat, monatVon, monatsName, monatsRaster, plusMonate, tagText, zeitraumProblem } from "../lib/monat";
 import { planHref } from "../lib/team-ansicht";
+import { ABO_DAUER_MIN, aboDatei, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
@@ -1692,6 +1693,86 @@ pruefe("Kein «ansetzen» mehr in Oberfläche und KI-Texten (#323 PC 11)", () =>
         if (/ansetz|angesetzt|Ansetz|Angesetzt/.test(ohneKommentar)) treffer.push(`${relative(web, datei)}:${i + 1}`);
       });
   assert.deepEqual(treffer, [], `«ansetzen» steht noch in: ${treffer.join(", ")}`);
+});
+
+const ABO_JETZT = new Date("2026-10-01T10:00:00Z");
+const aboTermin = (t: Partial<AboTermin> & { id: string }): AboTermin => ({
+  datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, geaendert: "2026-09-30T08:00:00Z", ...t,
+});
+const aboText = (termine: AboTermin[]) =>
+  kalenderText({ kalenderName: "Training · FC Test", titel: "Training · FC Test", teamId: "team", origin: "https://ki-fu.ch", jetzt: ABO_JETZT, termine });
+
+pruefe("Abo: Wanduhrzeit mit TZID, ganztägig ohne Beginn, 90 Minuten ohne Ende, über Mitternacht (#330 PC 2–4, Review Focus 1)", () => {
+  const text = aboText([
+    { id: "a", datum: "2027-03-28", beginn: "02:30", ende: "04:00", ort: "Halle; Nord, 2", geaendert: "2026-09-30T08:00:00Z" },
+    { id: "b", datum: "2026-10-07", beginn: "23:00", ende: null, ort: null, geaendert: "2026-09-30T08:00:00Z" },
+    { id: "c", datum: "2026-10-08", beginn: null, ende: null, ort: null, geaendert: "2026-09-30T08:00:00Z" },
+  ]);
+  assert.ok(text.includes("BEGIN:VTIMEZONE\r\nTZID:Europe/Zurich"));
+  assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20270328T023000"), "Wanduhrzeit, nicht UTC");
+  assert.ok(text.includes("DTEND;TZID=Europe/Zurich:20261008T003000"), "23:00 + 90 Min. endet am Folgetag");
+  assert.ok(text.includes("DTSTART;VALUE=DATE:20261008\r\nDTEND;VALUE=DATE:20261009"), "ganztägig");
+  assert.ok(text.includes("LOCATION:Halle\; Nord\\, 2"), "Escaping");
+  assert.ok(text.includes("UID:a@ki-fu.ch"));
+  assert.ok(text.includes("URL:https://ki-fu.ch/team/team/termin/a"));
+  assert.ok(!/DESCRIPTION:(?!https:\/\/ki-fu\.ch\/team\/team\/termin\/)/.test(text), "PC 2: nur der Verweis");
+  assert.ok(text.split("\r\n").every((z) => new TextEncoder().encode(z).length <= 75), "gefaltet");
+  assert.ok(text.endsWith("END:VCALENDAR\r\n"));
+});
+
+pruefe("Abo: Kopf, Zeitstempel und CRLF überall (RFC 5545, AK 2)", () => {
+  const text = aboText([aboTermin({ id: "a", geaendert: "2026-09-30T08:15:30.123456+00:00" })]);
+  assert.ok(text.startsWith("BEGIN:VCALENDAR\r\nVERSION:2.0\r\n"));
+  for (const zeile of ["PRODID:-//KiFu//Team-Kalender//DE", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:Training · FC Test", "X-WR-TIMEZONE:Europe/Zurich"])
+    assert.ok(text.includes(`\r\n${zeile}\r\n`), zeile);
+  assert.ok(text.includes("\r\nDTSTAMP:20261001T100000Z\r\n"), "DTSTAMP UTC aus jetzt");
+  assert.ok(text.includes("\r\nLAST-MODIFIED:20260930T081530Z\r\n"), "LAST-MODIFIED UTC aus geaendert");
+  assert.ok(!/(^|[^\r])\n/.test(text), "kein nacktes LF");
+  assert.ok(!text.includes("\r\nLOCATION"), "kein Ort, keine LOCATION-Zeile");
+  assert.equal((text.match(/BEGIN:VEVENT/g) ?? []).length, 1);
+  assert.equal(aboDatei("tok"), "tok.ics");
+  assert.equal(aboPfad("tok"), "/api/kalender/tok.ics");
+});
+
+pruefe("Abo: Ende nicht nach Beginn gilt wie «ohne Ende» (nie DTEND vor DTSTART)", () => {
+  for (const ende of ["18:00", "17:00"]) {
+    const text = aboText([aboTermin({ id: "a", beginn: "18:00", ende })]);
+    assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20261007T180000\r\nDTEND;TZID=Europe/Zurich:20261007T193000"), `ende ${ende}`);
+  }
+  assert.equal(ABO_DAUER_MIN, 90);
+  // Zeiten mit Sekunden (time-Spalte) gehen als HH:MM durch.
+  const mitSekunden = aboText([aboTermin({ id: "a", beginn: "18:00:00", ende: "19:30:00" })]);
+  assert.ok(mitSekunden.includes("DTSTART;TZID=Europe/Zurich:20261007T180000\r\nDTEND;TZID=Europe/Zurich:20261007T193000"));
+});
+
+pruefe("Abo: Ohne Termine bleibt es ein gültiger Kalender samt Zeitzone", () => {
+  const text = aboText([]);
+  assert.ok(text.startsWith("BEGIN:VCALENDAR\r\n") && text.endsWith("END:VTIMEZONE\r\nEND:VCALENDAR\r\n"));
+  assert.ok(!text.includes("BEGIN:VEVENT"));
+});
+
+pruefe("Abo: Semikolon, Komma, Backslash und Zeilenumbruch im Text werden maskiert", () => {
+  assert.equal(textEscape("a;b,c\\d\ne\r\nf"), "a\;b\\,c\\\\d\\ne\\nf");
+  const text = kalenderText({ kalenderName: "Kids; U9, A\nB", titel: "Training; X, Y\nZ", teamId: "t", origin: "https://ki-fu.ch", jetzt: ABO_JETZT, termine: [aboTermin({ id: "a" })] });
+  assert.ok(text.includes("\r\nSUMMARY:Training\; X\\, Y\\nZ\r\n"));
+  assert.ok(text.includes("\r\nX-WR-CALNAME:Kids\; U9\\, A\\nB\r\n"));
+});
+
+pruefe("Abo: Faltung zählt Oktette, nicht Zeichen", () => {
+  const z = "SUMMARY:" + "ä".repeat(60);
+  const f = falten(z).split("\r\n");
+  assert.ok(f.every((l) => new TextEncoder().encode(l).length <= 75));
+  assert.equal(f.map((l, i) => (i ? l.slice(1) : l)).join(""), z);
+});
+
+pruefe("Abo: Eine lange URL-Zeile wird gefaltet und fügt sich wieder zusammen", () => {
+  const origin = "https://" + "sehr-lange-adresse.".repeat(6) + "ki-fu.ch";
+  const text = kalenderText({ kalenderName: "K", titel: "T", teamId: "t", origin, jetzt: ABO_JETZT, termine: [aboTermin({ id: "a" })] });
+  const zeilen = text.split("\r\n");
+  assert.ok(zeilen.every((l) => new TextEncoder().encode(l).length <= 75), "alle Zeilen ≤ 75 Oktette");
+  const entfaltet = text.replace(/\r\n /g, "");
+  assert.ok(entfaltet.includes(`\r\nURL:${origin}/team/t/termin/a\r\n`), "URL entfaltet vollständig");
+  assert.ok(zeilen.some((l) => l.startsWith(" ")), "es wurde tatsächlich gefaltet");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);
