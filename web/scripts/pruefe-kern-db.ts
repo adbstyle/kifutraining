@@ -3219,6 +3219,10 @@ try {
     assert.match(abgewiesen.error!.message, /TEAM_NICHT_GEFUNDEN/);
     assert.match((await holen(a, randomUUID())).error!.message, /TEAM_NICHT_GEFUNDEN/);
     assert.equal((await aboZeilen(fremdesTeam, b.id)).length, 0);
+    // Ein Abo ohne Mitgliedschaft kann es nicht geben (Fremdschlüssel auf team_members), auch nicht
+    // durch ein direktes Einfügen — das schliesst das Rennen «holen während Entfernen».
+    const ohneMitglied = await admin.from("kalender_abos").insert({ team_id: fremdesTeam, user_id: b.id });
+    assert.equal(ohneMitglied.error?.code, "23503", "kein Abo ohne Mitgliedschaft");
     // Ohne Anmeldung gibt es kein Abo zu holen — die RPC ist für anon nicht aufrufbar.
     assert.ok((await feldAnon.rpc("kalender_abo_holen", { p_team: team })).error, "anon darf kalender_abo_holen nicht aufrufen");
   });
@@ -3253,6 +3257,9 @@ try {
 
   await pruefe("Abo-Feed: ohne Anmeldung, nur Zeit und Ort, anstehende und die der letzten 28 Tage, ohne ausgefallene (#330 PC 1, 2, 5, 6)", async () => {
     const team = await serienTeam("Kern-DB-Abo-Feed");
+    // Das Fenster hängt am Kalendertag der DB: heute frisch rechnen, nicht den
+    // beim Start gemerkten nehmen (sonst kippt der Test um Mitternacht).
+    const tagCh = (d: number) => plusTage(kalendertagAmTrainingsort(), d);
     const token = (await holen(a, team)).token!;
     const ins = async (d: string, extra: Record<string, unknown> = {}) => {
       const { data, error } = await admin

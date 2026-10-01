@@ -7,17 +7,27 @@ set lock_timeout = '5s';
 
 create table kalender_abos (
   id uuid primary key default gen_random_uuid(),
-  team_id uuid not null references teams(id) on delete cascade,
-  -- Konto gelöscht → Abo weg (PC 9).
-  user_id uuid not null references auth.users(id) on delete cascade,
+  team_id uuid not null,
+  user_id uuid not null,
   -- 244 zufällige Bit aus zwei v4-UUIDs (CSPRNG von Postgres), 64 Hex-Zeichen:
   -- nicht erratbar (AK 11). Im Klartext gespeichert, weil der Link im Konto
   -- jederzeit wieder einsehbar ist (AK 5); lesen darf ihn nur sein Konto.
   token text not null unique
     default replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''),
   created_at timestamptz not null default now(),
-  unique (team_id, user_id)   -- AK 10: höchstens ein gültiger Link je Mitglied und Team
+  unique (team_id, user_id),  -- AK 10: höchstens ein gültiger Link je Mitglied und Team
+  -- Das Abo hängt an der MITGLIEDSCHAFT, nicht an Team und Konto einzeln (PC 9,
+  -- 10): Austritt, Entfernen, Auflösung (teams → team_members) und Konto
+  -- löschen (auth.users → team_members) löschen die Mitgliedszeile und mit ihr
+  -- das Abo. Ein Abo ohne Mitgliedschaft kann es nicht geben — auch nicht, wenn
+  -- `kalender_abo_holen` gleichzeitig mit dem Entfernen läuft: die Prüfung des
+  -- Fremdschlüssels sperrt die Mitgliedszeile und weist das Einfügen ab. Eine
+  -- spätere Wiederaufnahme belebt darum nie einen alten Link wieder.
+  foreign key (team_id, user_id) references team_members (team_id, user_id) on delete cascade
 );
+-- Die Liste der eigenen Abos (AK 4) sucht nach dem Konto; (team_id, user_id)
+-- deckt schon der Unique-Index ab.
+create index kalender_abos_user_idx on kalender_abos (user_id);
 
 alter table kalender_abos enable row level security;
 create policy ka_select on kalender_abos for select to authenticated using (user_id = auth.uid());
@@ -37,8 +47,13 @@ as $$
 begin
   if auth.uid() is null then raise exception 'not authenticated'; end if;
   if not ist_team_mitglied(p_team) then raise exception 'TEAM_NICHT_GEFUNDEN'; end if;
-  insert into kalender_abos (team_id, user_id) values (p_team, auth.uid())
-    on conflict (team_id, user_id) do nothing;
+  begin
+    insert into kalender_abos (team_id, user_id) values (p_team, auth.uid())
+      on conflict (team_id, user_id) do nothing;
+  exception when foreign_key_violation then
+    -- Gleichzeitig entfernt: nach der Prüfung oben, vor dem Einfügen.
+    raise exception 'TEAM_NICHT_GEFUNDEN';
+  end;
   return (select token from kalender_abos where team_id = p_team and user_id = auth.uid());
 end;
 $$;
@@ -47,7 +62,12 @@ grant execute on function kalender_abo_holen(uuid) to authenticated;
 
 -- Der Feed (PC 1, 2, 5, 6, 9): anstehende Termine und die der 28 Tage vor
 -- heute (Schweiz), ohne ausgefallene, nur Zeit und Ort. Aufrufbar ohne
--- Anmeldung — das Geheimnis IST die Berechtigung (AK 11).
+-- Anmeldung — das Geheimnis IST die Berechtigung (AK 11). Ob die Person noch
+-- Mitglied ist, muss er nicht prüfen: gibt es das Abo, gibt es die
+-- Mitgliedschaft (Fremdschlüssel oben).
+-- `geaendert` (updated_at) dient allein der Kalender-App als Änderungsstempel
+-- (LAST-MODIFIED/SEQUENCE/DTSTAMP, Task G2), nicht der Anzeige. Er rückt auch bei
+-- Änderungen vor, die der Feed nicht zeigt (Bemerkung, Training, Verantwortliche).
 create function kalender_abo_termine(p_token text) returns jsonb
 language plpgsql stable security definer
 set search_path = public, pg_temp
@@ -57,8 +77,7 @@ declare
   v_team teams;
 begin
   select * into a from kalender_abos k
-   where k.token = p_token
-     and exists (select 1 from team_members m where m.team_id = k.team_id and m.user_id = k.user_id);
+   where k.token = p_token;
   if not found then return jsonb_build_object('gueltig', false); end if;
   select * into v_team from teams where id = a.team_id;
   return jsonb_build_object(
@@ -77,19 +96,5 @@ end;
 $$;
 revoke all on function kalender_abo_termine(text) from public;
 grant execute on function kalender_abo_termine(text) to anon, authenticated;
-
--- Austritt, Entfernen, Auflösen, Konto löschen: Das Abo erlischt (PC 9) und
--- bleibt erloschen, auch bei erneuter Aufnahme (PC 10).
-create function abo_erlischt() returns trigger
-language plpgsql security definer
-set search_path = public, pg_temp
-as $$
-begin
-  delete from kalender_abos where team_id = old.team_id and user_id = old.user_id;
-  return old;
-end;
-$$;
-create trigger abo_erlischt after delete on team_members
-  for each row execute function abo_erlischt();
 
 reset lock_timeout;
