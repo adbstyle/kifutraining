@@ -929,9 +929,12 @@ export default function Styleguide() {
           Lange Formulare gliedert <code>FormAbschnitt</code>: eine Überschrift
           in <code>type-title-medium</code>, gedämpft — dieselbe, die die
           Abschnitte der Übungs-Detailseite tragen, damit Maske und Ansicht
-          gleich gegliedert sind. Die Übungsmaske ist darum auch so breit wie
-          die Detailseite (<code>max-w-4xl</code>) und stellt
-          Zusammengehöriges ab <code>sm</code> paarweise nebeneinander. Ein Feld
+          gleich gegliedert sind. Die Übungsmaske teilt sich darum wie die
+          Detailseite in Inhalt und Einordnung (<code>ZweiSpalten</code>); die
+          Einordnung steht schmal VOR dem Inhalt, weil sie bestimmt, welche
+          Felder er verlangt, und stellt Zusammengehöriges ab <code>sm</code>{" "}
+          paarweise nebeneinander, in der schmalen Spalte ab <code>xl</code>{" "}
+          untereinander. Ein Feld
           ohne eigenes Label (Dateifeld, Material-Gruppe) bekommt die Id der
           Überschrift für <code>aria-labelledby</code>, statt den Namen doppelt
           zu zeigen.
@@ -943,7 +946,7 @@ export default function Styleguide() {
           ist), Formulare und Lesetext in ihrer Lesebreite (<code>xl</code>{" "}
           bis <code>5xl</code>). Nicht zentriert, denn rechts steht, wo eine
           Seite eine hat, die zweite Spalte (<code>spalte</code>, etwa die
-          Einordnung einer Übung, siehe 28): ab <code>xl</code> 22 rem breit
+          Einordnung einer Übung, siehe 28): ab <code>xl</code> 20 rem breit
           neben dem Inhalt, schmaler nach ihm, auf Papier daneben. Der Inhalt
           behält dabei seine Lesebreite. Zuoberst
           die Kopfzeile mit dem Umschalter der Seitenleiste, den Brotkrumen und

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { BreadcrumbItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { SeitenKopf } from "./SeitenKopf";
+import { ZweiSpalten } from "./ZweiSpalten";
 
 /* Literale Klassen — Tailwind findet nur, was ausgeschrieben im Quelltext steht.
    `voll`: Übersichten (Kachelraster, Kalender) nutzen die ganze Fläche. */
@@ -40,12 +41,9 @@ export function Seitenrahmen({
   kopfImDruck?: boolean;
   /** Auf Papier die volle Breite ohne Rand — für die Druckansicht. */
   druckVoll?: boolean;
-  /** Die zweite Spalte rechts neben dem Inhalt (Epic #350). Ab `xl` steht sie
-   *  daneben, schmaler steht sie nach dem Inhalt — im Quelltext folgt sie ihm
-   *  ohnehin, so lesen Tastatur und Vorlesehilfe überall in derselben
-   *  Reihenfolge. Auf Papier bleibt sie daneben, schmaler als am Schirm.
-   *  `breite` gilt dann für beide Spalten zusammen; der Inhalt behält seine
-   *  Lesebreite (`max-w-4xl`). */
+  /** Die zweite Spalte rechts neben dem Inhalt (Epic #350, `ZweiSpalten`):
+   *  ab `xl` daneben, schmaler nach dem Inhalt, auf Papier daneben. `breite`
+   *  gilt dann für beide Spalten zusammen. */
   spalte?: ReactNode;
   children: ReactNode;
 }) {
@@ -61,10 +59,9 @@ export function Seitenrahmen({
         <SeitenKopf krumen={krumen} aktionen={aktionen} imDruck={kopfImDruck} className="mb-6" />
       )}
       {spalte ? (
-        <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start xl:gap-10 print:grid print:grid-cols-[minmax(0,1fr)_14rem] print:items-start print:gap-6">
-          <div className="min-w-0 max-w-4xl">{children}</div>
-          <aside className="mt-10 max-w-4xl xl:mt-0 print:mt-0">{spalte}</aside>
-        </div>
+        <ZweiSpalten spalte={spalte} druckDaneben>
+          {children}
+        </ZweiSpalten>
       ) : (
         children
       )}

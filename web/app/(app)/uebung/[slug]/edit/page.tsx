@@ -46,7 +46,7 @@ export default async function EditPage({
   ];
 
   return (
-    <Seitenrahmen breite="4xl" krumen={crumbs}>
+    <Seitenrahmen breite="6xl" krumen={crumbs}>
       <h1 className="sr-only">Übung bearbeiten</h1>
       <ExerciseForm
         action={updateExercise.bind(null, ex.id)}

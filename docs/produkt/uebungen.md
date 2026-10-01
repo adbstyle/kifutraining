@@ -80,17 +80,21 @@ Feld-Diagramm, ein Foto oder beides. Das Diagramm zeichnet der Trainer direkt in
 Erfassen wie beim Bearbeiten; beides ist freiwillig, und die Übung wird mit einem einzigen
 Speichern samt Diagramm gesichert.
 
-Die Maske ist so breit wie die Detailseite einer Übung und in derselben Reihenfolge gegliedert.
-Oben stehen die Brotkrumen — beim Erfassen „Übungen › Neue Übung" —, darunter der Name als
-Überschrift, die sich direkt beschreiben lässt, wie der Trainingsname im Trainings-Editor.
-Darunter steht die „Zuordnung": Altersstufe und Alterskategorie auf einer Zeile, darunter
-der Trainingsteil — im Kinderfussball-Hauptteil samt Hauptteilkategorie, im Juniorenfussball
-samt Block, jeweils in einem Feld. Es folgt das
-„Feld-Diagramm" mit der Zeichenfläche, darunter
-Feldtyp oder Spielfeldgrösse neben der Anzahl Spieler:innen. Die „Beschreibung" fasst Ablauf,
-Varianten sowie Erscheinungsform und Übungstyp zusammen, danach kommen „Material" und ganz am
-Schluss das „Foto". Auf einem schmalen Bildschirm stehen die Paare untereinander. Dieselbe Maske
-gilt beim Erfassen, beim Bearbeiten einer eigenen Übung und für eine Übung im Training.
+Die Maske ist aufgebaut wie die Detailseite einer Übung: links der Inhalt, rechts die
+Einordnung. Oben stehen die Brotkrumen — beim Erfassen „Übungen › Neue Übung" —, darunter der Name
+als Überschrift, die sich direkt beschreiben lässt, wie der Trainingsname im Trainings-Editor.
+Links folgen das „Feld-Diagramm" mit der Zeichenfläche, die „Beschreibung" mit Ablauf und
+Varianten und ganz am Schluss das „Foto". Rechts steht die „Einordnung": Altersstufe,
+Alterskategorie, der Trainingsteil — im Kinderfussball-Hauptteil samt Hauptteilkategorie, im
+Juniorenfussball samt Block, jeweils in einem Feld —, Feldtyp oder Spielfeldgrösse, die Anzahl
+Spieler:innen, Übungstyp und Erscheinungsform, darunter das „Material". Es sind dieselben Angaben
+wie zuvor, nur gesammelt; Herkunft und Sichtbarkeit setzt weiterhin die Detailseite, die
+Altersstufe einer bestehenden Übung ändert weiterhin nur das Überführen. Inhalt und Einordnung
+werden zusammen mit einem Speichern gesichert. Auf einem schmalen Bildschirm steht die
+Einordnung vor dem Inhalt — sie bestimmt, ob der Ablauf als Fahrplan oder als Beschreibung
+verlangt ist —, zusammengehörige Felder stehen dort paarweise, auf dem Telefon untereinander.
+Dieselbe Maske gilt beim Erfassen, beim Bearbeiten einer eigenen Übung und für eine Übung im
+Training.
 
 Bis dahin ist nichts gesichert. Will der Trainer die Maske mit ungesicherten Angaben oder einer
 ungesicherten Zeichnung verlassen — über einen Link, einen Eintrag der Seitenleiste, den Zurück-Knopf des
@@ -119,7 +123,7 @@ Spieler:innen, Übungstyp, Erscheinungsformen und das Material. Keine dieser Ang
 Inhalt ein zweites Mal; wer eine Übung öffnet, sieht auf einen Blick, wofür sie taugt, und liest
 Bild und Ablauf ohne Unterbrechung. Gezeigt wird, was die Übung erfasst hat. Nur die
 Eigentümerin sieht zusätzlich, was ihre Übung tragen könnte, aber noch nicht erfasst hat: die
-Erscheinungsform, im Juniorenfussball den Übungstyp, im Kinderfussball den Feldtyp und die
+Erscheinungsform, im Juniorenfussball den Übungstyp, im Kinderfussball den Feldtyp, dazu die
 Spielfeldgrösse in Metern — jeweils nur, wo Altersstufe, Trainingsteil oder Block und Feldtyp sie vorsehen.
 Diese Angaben speisen die Filter des Katalogs; eine Übung ohne sie bleibt dort für manche Suche
 unsichtbar. Sie stehen an ihrem Platz als «Nicht erfasst», verschwinden, sobald die Angabe
