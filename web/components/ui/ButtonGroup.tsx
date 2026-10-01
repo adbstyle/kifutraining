@@ -3,8 +3,8 @@ import { cn } from "@/lib/cn";
 import { chipTextSelected } from "./Chip";
 
 /* Verbundene Knopfgruppe: Knöpfe oder Links in einer Reihe. Aussenecken
-   gerundet, Innenecken eckig, 2 px Lücke (der Grund scheint durch). Ein
-   Glied darf in einem `Tooltip` stehen — die Ecken gelten dann seinem Inhalt.
+   gerundet, Innenecken eckig, 2 px Lücke (der Grund scheint durch). Die
+   Glieder stehen direkt in der Gruppe, ohne Tooltip.
    Für GRUPPIERTE AKTIONEN und für den Wechsel der Darstellung derselben Sache
    (Liste/Monat) — die Einfachauswahl in einem Formular machen die
    ChoiceChipGroup (offen, 10) und das Auswahlfeld mit Panel (16). */
@@ -24,10 +24,9 @@ export function ButtonGroup({
       aria-label={ariaLabel}
       className={cn(
         "inline-flex gap-0.5",
-        // `>:first-child` im Glied: der Trigger im Tooltip, nicht dessen Beschriftung.
-        "[&>:first-child]:rounded-r-none [&>:first-child>:first-child]:rounded-r-none",
-        "[&>:last-child]:rounded-l-none [&>:last-child>:first-child]:rounded-l-none",
-        "[&>:not(:first-child):not(:last-child)]:rounded-none [&>:not(:first-child):not(:last-child)>:first-child]:rounded-none",
+        "[&>:first-child]:rounded-r-none",
+        "[&>:last-child]:rounded-l-none",
+        "[&>:not(:first-child):not(:last-child)]:rounded-none",
         className,
       )}
     >
