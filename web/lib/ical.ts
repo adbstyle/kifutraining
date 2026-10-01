@@ -47,7 +47,7 @@ const VTIMEZONE = [
 export function textEscape(v: string): string {
   return v
     .replace(/\\/g, "\\\\")
-    .replace(/;/g, "\;")
+    .replace(/;/g, "\\;")
     .replace(/,/g, "\\,")
     .replace(/\r\n|\r|\n/g, "\\n");
 }
@@ -123,7 +123,8 @@ export function kalenderText(k: {
     // oder in eine neue Serie übergegangener Termin erscheint genau einmal.
     z.push("BEGIN:VEVENT", `UID:${t.id}@ki-fu.ch`, `DTSTAMP:${utc(k.jetzt.toISOString())}`, `LAST-MODIFIED:${utc(t.geaendert)}`);
     if (!t.beginn) {
-      z.push(`DTSTART;VALUE=DATE:${kompakt(t.datum)}`, `DTEND;VALUE=DATE:${kompakt(plusTage(t.datum, 1))}`);
+      // Ganztägig ohne bekannte Zeit: nicht als «den ganzen Tag belegt» zählen.
+      z.push(`DTSTART;VALUE=DATE:${kompakt(t.datum)}`, `DTEND;VALUE=DATE:${kompakt(plusTage(t.datum, 1))}`, "TRANSP:TRANSPARENT");
     } else {
       // Die Datenbank erzwingt «Ende nach Beginn» (tt_ende_nach_beginn); ein
       // Ende, das es nicht ist, gilt wie «ohne Ende» — nie ein DTEND vor dem

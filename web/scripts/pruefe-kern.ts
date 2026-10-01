@@ -1711,8 +1711,8 @@ pruefe("Abo: Wanduhrzeit mit TZID, ganztägig ohne Beginn, 90 Minuten ohne Ende,
   assert.ok(text.includes("BEGIN:VTIMEZONE\r\nTZID:Europe/Zurich"));
   assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20270328T023000"), "Wanduhrzeit, nicht UTC");
   assert.ok(text.includes("DTEND;TZID=Europe/Zurich:20261008T003000"), "23:00 + 90 Min. endet am Folgetag");
-  assert.ok(text.includes("DTSTART;VALUE=DATE:20261008\r\nDTEND;VALUE=DATE:20261009"), "ganztägig");
-  assert.ok(text.includes("LOCATION:Halle\; Nord\\, 2"), "Escaping");
+  assert.ok(text.includes("DTSTART;VALUE=DATE:20261008\r\nDTEND;VALUE=DATE:20261009\r\nTRANSP:TRANSPARENT"), "ganztägig, nicht belegt");
+  assert.ok(text.includes("LOCATION:Halle\\; Nord\\, 2"), "Escaping");
   assert.ok(text.includes("UID:a@ki-fu.ch"));
   assert.ok(text.includes("URL:https://ki-fu.ch/team/team/termin/a"));
   assert.ok(!/DESCRIPTION:(?!https:\/\/ki-fu\.ch\/team\/team\/termin\/)/.test(text), "PC 2: nur der Verweis");
@@ -1752,10 +1752,10 @@ pruefe("Abo: Ohne Termine bleibt es ein gültiger Kalender samt Zeitzone", () =>
 });
 
 pruefe("Abo: Semikolon, Komma, Backslash und Zeilenumbruch im Text werden maskiert", () => {
-  assert.equal(textEscape("a;b,c\\d\ne\r\nf"), "a\;b\\,c\\\\d\\ne\\nf");
+  assert.equal(textEscape("a;b,c\\d\ne\r\nf"), "a\\;b\\,c\\\\d\\ne\\nf");
   const text = kalenderText({ kalenderName: "Kids; U9, A\nB", titel: "Training; X, Y\nZ", teamId: "t", origin: "https://ki-fu.ch", jetzt: ABO_JETZT, termine: [aboTermin({ id: "a" })] });
-  assert.ok(text.includes("\r\nSUMMARY:Training\; X\\, Y\\nZ\r\n"));
-  assert.ok(text.includes("\r\nX-WR-CALNAME:Kids\; U9\\, A\\nB\r\n"));
+  assert.ok(text.includes("\r\nSUMMARY:Training\\; X\\, Y\\nZ\r\n"));
+  assert.ok(text.includes("\r\nX-WR-CALNAME:Kids\\; U9\\, A\\nB\r\n"));
 });
 
 pruefe("Abo: Faltung zählt Oktette, nicht Zeichen", () => {
