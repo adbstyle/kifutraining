@@ -11,7 +11,7 @@ import { aboLinks } from "@/lib/ical";
 
 export type MeinAbo = {
   id: string;
-  team: { id: string; name: string };
+  team: { name: string };
   /** Der https-Link zum Feed — der, den Google, Outlook und Proton brauchen. */
   url: string;
   /** Derselbe Link mit `webcal:` — Apple Kalender öffnet ihn direkt. */
@@ -49,6 +49,6 @@ export async function getMeineAbos(): Promise<MeinAbo[] | null> {
   // aufgelöst), ist auch das Abo schon erloschen.
   return data.flatMap((a) => {
     const name = namen.get(a.team_id);
-    return name === undefined ? [] : [{ id: a.id, team: { id: a.team_id, name }, ...aboLinks(origin, a.token) }];
+    return name === undefined ? [] : [{ id: a.id, team: { name }, ...aboLinks(origin, a.token) }];
   });
 }
