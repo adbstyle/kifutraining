@@ -107,16 +107,20 @@ export function TeamTrainingsListe({
     <>
       <div className="flex flex-col gap-3">
         {trainings.map((t) => (
-          <Card key={t.id} className="p-4">
+          // Die ganze Karte führt ins Training und hellt beim Überfahren auf
+          // wie die Teamkarte (`state`). Der Link spannt sich dafür über sie
+          // (`before:inset-0`); die Aktionen liegen darüber und behalten
+          // ihre eigenen Klicks.
+          <Card key={t.id} className="state p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              {/* Wie im Trainingsplan: der ganze Textblock führt ins
-                  Training, nicht nur der Titel. Er enthält nichts
-                  Interaktives — die Aktionen stehen daneben. Ohne eigenes
-                  aria-label, damit Übungszahl und Dauer mitgelesen werden:
-                  gleichnamige Einheiten sind sonst nicht auseinanderzuhalten. */}
+              {/* Der ganze Textblock führt ins Training, nicht nur der Titel.
+                  Er enthält nichts Interaktives — die Aktionen stehen
+                  daneben. Ohne eigenes aria-label, damit Übungszahl und Dauer
+                  mitgelesen werden: gleichnamige Einheiten sind sonst nicht
+                  auseinanderzuhalten. */}
               <Link
                 href={`/training/${t.id}/edit`}
-                className="focus-ring group block min-w-0 flex-1 rounded-flaeche"
+                className="focus-ring block min-w-0 flex-1 rounded-flaeche before:absolute before:inset-0 before:rounded-flaeche before:content-['']"
               >
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   {t.stufen.map((k) => (
@@ -150,7 +154,7 @@ export function TeamTrainingsListe({
                     </Badge>
                   )}
                 </div>
-                <h3 className="type-title-medium text-on-surface transition-colors group-hover:text-primary">
+                <h3 className="type-title-medium text-on-surface">
                   {t.name}
                 </h3>
                 {/* Kennzahlen der ERSTEN Variante (#206 AK 2), gerechnet in
@@ -172,7 +176,7 @@ export function TeamTrainingsListe({
                   eingeplanten Training erreichbar (Story 16): dort, wo der
                   Trainer sein Training auswählt, endete sonst der Weg zum
                   nächsten Termin. Den Termin selbst ändert man im Plan. */}
-              <div className="flex shrink-0 items-center gap-0.5">
+              <div className="relative flex shrink-0 items-center gap-0.5">
                 <Tooltip label="Termin zuordnen">
                   <IconButton
                     icon={CalendarPlus}
