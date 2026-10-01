@@ -463,7 +463,9 @@ export const trainingZuordnen = werkzeug({
     art: z
       .enum(["kopie", "verschieben"])
       .optional()
-      .describe("Nur für ein Training, das schon einem anderen Termin gehört."),
+      .describe(
+        "Nur für ein Team-Training, das schon einem anderen Termin gehört. Bei einem persönlichen Training nur «kopie» oder weglassen.",
+      ),
   }),
   ausgabe: z.object({
     termin_id: z.string(),
