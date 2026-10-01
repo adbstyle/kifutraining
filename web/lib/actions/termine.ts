@@ -98,15 +98,17 @@ export async function entferneTerminAktion(
 /** Einen Termin ausfallen lassen oder den Grund eines ausgefallenen ändern
  *  (#327). Die Oberfläche sendet den Grund immer als Text — «» leert ihn —,
  *  also ist das der ausdrückliche Weg «Grund setzen». `erwartetesTraining`
- *  ist, was sie bei der Auswahl sah: Das Training wird gelöst (PO 17). */
+ *  und `erwartetAusgefallen` sind, was sie bei der Auswahl sah: Das Training
+ *  wird gelöst, ein inzwischen geänderter Ausfall weist ab (PO 17). */
 export async function lasseAusfallenAktion(
   terminId: string,
   grund: string,
   erwartetesTraining: string | null,
+  erwartetAusgefallen: boolean,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await lasseAusfallen(a.supabase, a.userId, { terminId, grund, erwartetesTraining });
+  const r = await lasseAusfallen(a.supabase, a.userId, { terminId, grund, erwartetesTraining, erwartetAusgefallen });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.geloestesTraining) revalidiereTraining(r.wert.geloestesTraining);

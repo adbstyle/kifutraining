@@ -427,7 +427,15 @@ export async function loeseTraining(
 export async function lasseAusfallen(
   supabase: SupabaseClient,
   _userId: string,
-  e: { terminId: string; grund?: string | null; erwartetesTraining?: string | null },
+  e: {
+    terminId: string;
+    grund?: string | null;
+    erwartetesTraining?: string | null;
+    /** Ob der Termin bei der Auswahl ausgefallen war (nur die Oberfläche sendet
+     *  es, PO 17): Hat ein anderes Mitglied den Ausfall inzwischen gesetzt oder
+     *  zurückgenommen, wird nicht geschrieben (`AUSFALL_GEAENDERT`). */
+    erwartetAusgefallen?: boolean;
+  },
 ): Promise<KernErgebnis<{ terminId: string; teamId: string; geloestesTraining: string | null }>> {
   const p = ausfallProblem(e.grund);
   if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
@@ -443,11 +451,22 @@ export async function lasseAusfallen(
     .from("training_termine")
     .update({ ausgefallen: true, ...grund, training_id: null })
     .eq("id", t.id);
-  const { data, error } = await (erwartet === null ? basis.is("training_id", null) : basis.eq("training_id", erwartet))
+  const mitTraining = erwartet === null ? basis.is("training_id", null) : basis.eq("training_id", erwartet);
+  const { data, error } = await (e.erwartetAusgefallen === undefined
+    ? mitTraining
+    : mitTraining.eq("ausgefallen", e.erwartetAusgefallen)
+  )
     .select("id")
     .maybeSingle();
   if (error) return ausDbFehler(error);
-  if (!data) return warumNichtGeschrieben(supabase, t.id, e.erwartetesTraining === undefined);
+  if (!data) {
+    // Der Ausfall-Zustand hat Vorrang vor dem Training: Ein ausgefallener
+    // Termin trägt keines mehr, die Ursache steht dann im Ausfall.
+    const { data: jetzt } = await supabase.from("training_termine").select("ausgefallen").eq("id", t.id).maybeSingle();
+    if (jetzt && e.erwartetAusgefallen !== undefined && jetzt.ausgefallen !== e.erwartetAusgefallen)
+      return fehlschlag("konflikt", TERMIN_MELDUNG.AUSFALL_GEAENDERT);
+    return warumNichtGeschrieben(supabase, t.id, e.erwartetesTraining === undefined);
+  }
   return ok({ terminId: t.id, teamId: t.team_id, geloestesTraining: erwartet });
 }
 

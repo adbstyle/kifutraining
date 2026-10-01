@@ -2069,6 +2069,35 @@ try {
     assert.deepEqual(await zeile(), { ausgefallen: false, ausfall_grund: null, training_id: null, bemerkung: "Leibchen" });
   });
 
+  await pruefe("Ausfall: ein inzwischen geänderter Ausfall-Zustand weist ab, nichts wird überschrieben (PO 17)", async () => {
+    const team = await serienTeam("Kern-DB-Ausfall-Konflikt");
+    const t = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30" }));
+    const zeile = async () => (await admin.from("training_termine").select("ausgefallen, ausfall_grund").eq("id", t.terminId).single()).data!;
+    // (a) «Grund ändern»: Ein anderes Mitglied hat den Ausfall inzwischen zurückgenommen.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen" }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }));
+    fehler(
+      await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Schnee", erwartetesTraining: null, erwartetAusgefallen: true }),
+      "konflikt",
+      TERMIN_MELDUNG.AUSFALL_GEAENDERT,
+    );
+    assert.deepEqual(await zeile(), { ausgefallen: false, ausfall_grund: null }, "bleibt nicht ausgefallen");
+    // (b) «Ausfallen lassen»: Ein anderes Mitglied ist zuvorgekommen, sein Grund bleibt.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Fremder Grund" }));
+    fehler(
+      await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Eigener Grund", erwartetesTraining: null, erwartetAusgefallen: false }),
+      "konflikt",
+      TERMIN_MELDUNG.AUSFALL_GEAENDERT,
+    );
+    assert.deepEqual(await zeile(), { ausgefallen: true, ausfall_grund: "Fremder Grund" }, "fremder Grund bleibt");
+    // Passt die Erwartung, schreibt es; ohne Angabe (KI) gilt der eben gelesene Stand.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Neu", erwartetesTraining: null, erwartetAusgefallen: true }));
+    assert.equal((await zeile()).ausfall_grund, "Neu");
+    // Termin weg → nicht gefunden.
+    await admin.from("training_termine").delete().eq("id", t.terminId);
+    fehler(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "x", erwartetesTraining: null, erwartetAusgefallen: true }), "nicht_gefunden", TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN);
+  });
+
   await pruefe("Ausfall in der Serie: Tausch behält ihn, Serienänderung wirkt wie bei anderen, keine Abweichung (#327 PC 5, 7, 8)", async () => {
     const team = await serienTeam("Kern-DB-Ausfall-Serie");
     const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: tagCh(7), bis: tagCh(49), beginn: "18:00", ende: "19:30", ort: "A" }));

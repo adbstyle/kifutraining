@@ -167,6 +167,8 @@ export const TERMIN_MELDUNG = {
   TERMIN_AUSGEFALLEN:
     "Einem ausgefallenen Termin lässt sich kein Training zuordnen. Nimm den Ausfall zuerst zurück.",
   NICHT_AUSGEFALLEN: "Dieser Termin ist nicht ausgefallen.",
+  AUSFALL_GEAENDERT:
+    "Der Termin ist inzwischen ausgefallen oder sein Ausfall wurde zurückgenommen. Sieh ihn dir noch einmal an.",
   NICHT_MEHR_MITGLIED:
     "Mindestens eine gewählte Person ist nicht mehr Mitglied des Teams. Sieh dir die Mitglieder noch einmal an.",
 } as const;
@@ -180,6 +182,7 @@ export type TerminMarker = keyof typeof TERMIN_MELDUNG;
 export const KONFLIKT_MARKER: readonly string[] = [
   "TERMIN_BELEGUNG_GEAENDERT",
   "TRAINING_EINPLANUNG_GEAENDERT",
+  "AUSFALL_GEAENDERT",
   "SERIE_GEAENDERT",
   "SERIE_BELEGUNG_GEAENDERT",
 ];

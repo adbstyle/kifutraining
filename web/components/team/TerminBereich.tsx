@@ -515,7 +515,7 @@ export function TerminBereich({
           if (!t) return;
           // Der Grund geht immer als Text mit; «» leert ihn (ausdrücklich «Grund setzen»).
           lauf(
-            () => lasseAusfallenAktion(t.id, grund, t.training?.id ?? null),
+            () => lasseAusfallenAktion(t.id, grund, t.training?.id ?? null, t.ausgefallen),
             () => (t.ausgefallen ? "Grund gespeichert." : "Termin als ausgefallen markiert."),
             () => setAusfall(null),
             true,
