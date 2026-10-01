@@ -371,12 +371,8 @@ const radien: [string, string, string][] = [
 const hoehen: [string, string][] = [
   ["h-[22px] · 22 px", "Plakette und Kategorie-Chip — die kleinste beschriftete Fläche."],
   [
-    "h-8 · 32 px",
-    "Label-Chip im Grundmass: Filter, Assist, Suggestion, Input — alles mit Vokabular-Aufschrift.",
-  ],
-  [
     "h-9 · 36 px",
-    "Knopf klein, Nutzertext-Chip, geteilter Chip, leiser Knopf — sie stehen in einer Leiste nebeneinander und fluchten darum.",
+    "Knopf klein, Glied der Knopfgruppe, Label-Chip im Grundmass (Filter, Assist, Suggestion, Input), Nutzertext-Chip, geteilter Chip, leiser Knopf — sie stehen in einer Leiste nebeneinander und fluchten darum.",
   ],
   ["h-11 · 44 px", "Knopf mittel, Icon-Knopf, Menühälfte — Mindestmass für den Finger."],
   [
@@ -1242,7 +1238,7 @@ export default function Styleguide() {
         </p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
           <strong>Zwei Höhen, geführt statt von aussen.</strong> Ein Chip im
-          Fliesstext oder in einer Chip-Reihe trägt das Grundmass (32 px). Steht
+          Fliesstext oder in einer Chip-Reihe trägt das Grundmass (36 px, wie der kleine Knopf). Steht
           er in einer <strong>Filterleiste</strong>, fluchtet er mit den dichten
           Feldern daneben und nimmt deren 48 px — über{" "}
           <code>groesse=&quot;leiste&quot;</code> am{" "}
@@ -1251,7 +1247,7 @@ export default function Styleguide() {
           Höhe von aussen entschiede allein über die Reihenfolge im erzeugten
           CSS. Dieselbe Überlegung wie bei <code>look</code> am{" "}
           <code>ChoiceChip</code>. Den Nutzertext-Chip betrifft es nicht — er
-          bleibt bei 36 px, weil er neben dem leisen Knopf steht (siehe 08).
+          trägt immer 36 px.
         </p>
         <ChipsDemo />
       </Section>

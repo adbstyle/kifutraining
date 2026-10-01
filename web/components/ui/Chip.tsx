@@ -62,8 +62,9 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
    Nutzertext-Bündel weiter unten — die tragen auch Links und den geteilten
    Chip, die hier nicht wohnen.
 
-   Höhe fest gesetzt statt über die Polsterung: Aus `py-1.5` folgten 31 px, und
-   der Chip stünde neben jedem anderen 32-px-Element um einen Pixel versetzt. */
+   Höhe fest gesetzt statt über die Polsterung: Aus der Polsterung folgten
+   krumme Masse, und der Chip stünde neben dem kleinen Knopf um ein, zwei
+   Pixel versetzt. */
 const chipBase =
   "state focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-full kontur px-3 transition-colors";
 
@@ -73,13 +74,15 @@ const chipBase =
    Entscheidung der Reihenfolge im erzeugten CSS. Genau die Falle, um die es
    schon bei `look` geht. Darum eine geführte Prop.
 
-   `normal` (32 px) ist das Grundmass des Label-Chips: Es gilt im Fliesstext
-   und in jeder Chip-Reihe. `leiste` (48 px) ist das Mass der dichten Felder —
+   `normal` (36 px) ist das Grundmass des Label-Chips: Es gilt im Fliesstext
+   und in jeder Chip-Reihe, und es ist das Mass des kleinen Knopfes, des
+   Nutzertext-Chips und der verbundenen Knopfgruppe — ein Filter-Chip neben
+   ihnen fluchtet. `leiste` (48 px) ist das Mass der dichten Felder —
    ein Chip in einer FILTERLEISTE steht neben Suchfeld und Auswahlfeld und muss
    mit ihnen fluchten, sonst zerfällt die Zeile optisch in zwei Bänder.
    Nur der Filter-Chip kennt die Prop, weil nur er in solchen Leisten steht;
    die übrigen Typen tragen das Grundmass. */
-const chipHoehen = { normal: "h-8", leiste: "h-12" } as const;
+const chipHoehen = { normal: "h-9", leiste: "h-12" } as const;
 /* Modul-lokal wie die Bündel: Die Aufrufstellen schreiben das Wort
    («leiste»), niemand ausserhalb braucht den Typ zu benennen. */
 type ChipGroesse = keyof typeof chipHoehen;
@@ -137,7 +140,7 @@ export function FilterChip({
   onClick?: () => void;
   children: React.ReactNode;
   icon?: LucideIcon;
-  /** `normal` (Vorgabe, 32 px) im Fliesstext und in Chip-Reihen; `leiste`
+  /** `normal` (Vorgabe, 36 px) im Fliesstext und in Chip-Reihen; `leiste`
    *  (48 px) in einer Filterleiste, wo der Chip mit den dichten Feldern
    *  fluchtet. Bewusst eine Prop statt `className` — siehe `chipHoehen`. */
   groesse?: ChipGroesse;
