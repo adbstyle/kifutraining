@@ -41,7 +41,21 @@ export function MonatsUeberblick({
   const [plus, setPlus] = useState<PlusMenue | null>(null);
   const plusRef = useRef<HTMLElement | null>(null);
   const menueRef = useRef<HTMLDivElement | null>(null);
+  const ueberschriftRef = useRef<HTMLHeadingElement | null>(null);
+  const vorherMonat = useRef(monat);
   const hrefMonat = (m: string) => planHref(teamId, { ansicht: "monat", monat: m, meine }, heute);
+
+  // Ein Monatswechsel schliesst das Menü: Sein Tag gehört zum vorigen Monat.
+  // Verschwand dabei das fokussierte Element («Heute» gibt es im aktuellen Monat
+  // nicht mehr), landet der Fokus auf der Monatsüberschrift statt auf `body` —
+  // ein Wechsel mit «Vorheriger/Nächster Monat» behält seinen Knopf.
+  useEffect(() => {
+    if (vorherMonat.current === monat) return;
+    vorherMonat.current = monat;
+    setPlus(null);
+    const a = document.activeElement;
+    if (!a || a === document.body) ueberschriftRef.current?.focus({ preventScroll: true });
+  }, [monat]);
 
   // Das Menü hängt an Fensterkoordinaten: Scrollt oder wechselt die Grösse,
   // schliesst es, statt vom Knopf wegzuwandern.
@@ -73,10 +87,10 @@ export function MonatsUeberblick({
   }
 
   return (
-    <section aria-label="Monatsüberblick">
+    <section>
       <div className="mb-3 flex items-center justify-between gap-2">
         <IconButtonLink href={hrefMonat(plusMonate(monat, -1))} icon={ChevronLeft} label="Vorheriger Monat" scroll={false} />
-        <h3 className="type-title-medium text-on-surface">{monatsName(monat)}</h3>
+        <h3 ref={ueberschriftRef} tabIndex={-1} className="type-title-medium text-on-surface focus-visible:outline-none">{monatsName(monat)}</h3>
         <div className="flex items-center gap-1">
           {monat !== monatVon(heute) && (
             <ButtonLink variant="text" size="sm" href={hrefMonat(monatVon(heute))} scroll={false}>Heute</ButtonLink>
@@ -88,13 +102,15 @@ export function MonatsUeberblick({
         monat={monat}
         heute={heute}
         label={`Termine im ${monatsName(monat)}`}
+        // Eingegrenzt sagt die Kennzeichnung nur, was die Ansicht weiss: keinen eigenen Termin.
+        leereWocheText={meine ? "Woche ohne eigenen Termin" : "Woche ohne Termin"}
         leereWoche={(tage) => tage.every((d) => !jeTag.has(d))}
         renderTag={(tag) => (
           <>
             {(jeTag.get(tag) ?? []).map(eintrag)}
             <button
               type="button"
-              aria-label={`Am ${tagText(tag)} festlegen`}
+              aria-label={`Am ${tagText(tag)} Termin oder Terminserie festlegen`}
               aria-haspopup="menu"
               aria-expanded={plus?.tag === tag}
               onClick={(e) => {
@@ -119,7 +135,17 @@ export function MonatsUeberblick({
         )}
       />
       {plus && (
-        <div ref={menueRef} className="fixed z-50" style={{ left: plus.links, top: plus.oben }}>
+        <div
+          ref={menueRef}
+          className="fixed z-50"
+          style={{ left: plus.links, top: plus.oben }}
+          // Tab aus dem Menü hinaus schliesst es (der Fokus bleibt dort, wohin er ging).
+          onBlur={(e) => {
+            const ziel = e.relatedTarget as Node | null;
+            if (ziel && (menueRef.current?.contains(ziel) || plusRef.current?.contains(ziel))) return;
+            setPlus(null);
+          }}
+        >
           <Menu
             open
             onClose={() => setPlus(null)}

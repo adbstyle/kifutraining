@@ -17,7 +17,7 @@ const WOCHENTAGE = [
 
    Bewusst eine TABELLE und kein Gitter (kein role="grid"): Das Raster wird
    gelesen, nicht mit Pfeiltasten durchwandert — die Bedienelemente in den
-   Tagen sind gewöhnliche Knöpfe in der Tab-Reihenfolge. Ein «grid» versprächt
+   Tagen sind gewöhnliche Knöpfe in der Tab-Reihenfolge. Ein «grid» verspräche
    Pfeiltasten-Navigation, die es hier nicht gibt. Darum role="table" mit
    Zeilen, Spaltenköpfen und Zellen, auf Blöcken statt <table>, weil die leere
    Woche eine gerundete, gestrichelte Zeile trägt.
@@ -31,6 +31,7 @@ export function Monatsraster({
   heute,
   renderTag,
   leereWoche,
+  leereWocheText = "Woche ohne Termin",
   label,
 }: {
   /** `YYYY-MM`. */
@@ -40,6 +41,8 @@ export function Monatsraster({
   renderTag: (tag: string) => React.ReactNode;
   /** Ist diese Woche (ihre sieben Kalendertage) leer? Dann trägt die Zeile eine Kennzeichnung. */
   leereWoche?: (tage: string[]) => boolean;
+  /** Der Text für Screenreader an einer leeren Woche. */
+  leereWocheText?: string;
   /** Benennt den Behälter (Region), etwa den Monatsnamen; die Tabelle darin trägt keinen zweiten Namen. */
   label: string;
 }) {
@@ -84,7 +87,7 @@ export function Monatsraster({
                     tag === heute && "kontur border-primary",
                   )}
                 >
-                  {leer && i === 0 && <span className="sr-only">Woche ohne Termin. </span>}
+                  {leer && i === 0 && <span className="sr-only">{leereWocheText}. </span>}
                   <div className={cn("type-body-small", imMonat ? "text-on-surface" : "text-on-surface-mittel")} aria-hidden>
                     {Number(tag.slice(8))}
                   </div>

@@ -1683,7 +1683,7 @@ function quelldateien(wurzel: string): string[] {
 
 pruefe("Kein «ansetzen» mehr in Oberfläche und KI-Texten (#323 PC 11)", () => {
   const treffer: string[] = [];
-  for (const wurzel of ["app", "components", "lib/mcp", "lib/kern", "lib/actions", "lib/termin.ts", "lib/serie.ts", "lib/veraltet.ts"].map((p) => join(web, p)))
+  for (const wurzel of ["app", "components", "lib/mcp", "lib/kern", "lib/actions", "lib/termin.ts", "lib/serie.ts", "lib/veraltet.ts", "lib/monat.ts", "lib/team-ansicht.ts"].map((p) => join(web, p)))
     for (const datei of existsSync(wurzel) && statSync(wurzel).isDirectory() ? quelldateien(wurzel) : existsSync(wurzel) ? [wurzel] : [])
       readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
         // Kommentare sieht niemand; geprüft wird, was Oberfläche und KI sagen.

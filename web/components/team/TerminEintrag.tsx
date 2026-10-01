@@ -36,9 +36,8 @@ export function TerminEintrag({
       type="button"
       onClick={onClick}
       aria-label={label}
-      title={label}
       className={cn(
-        "focus-ring mt-1 block min-h-6 w-full break-words rounded-plakette px-1 text-left type-body-small",
+        "focus-ring mt-1 block min-h-6 w-full break-words hyphens-auto rounded-plakette px-1 text-left type-body-small",
         zustand === "ausgefallen" && "text-on-surface-mittel line-through",
         zustand === "training" && "bg-elev-08 text-on-surface",
         zustand === "noch-nicht" && "kontur border-error text-error",

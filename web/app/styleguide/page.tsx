@@ -2654,7 +2654,7 @@ export default function Styleguide() {
         <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
           <li>
             <strong>Tabelle statt Gitter</strong> — <code>role=&quot;table&quot;</code>{" "}
-            mit Zeilen, Spaltenköpfen und Zellen. Ein <code>grid</code> versprächt
+            mit Zeilen, Spaltenköpfen und Zellen. Ein <code>grid</code> verspräche
             Pfeiltasten-Navigation, die es nicht gibt; die Knöpfe in den Tagen
             liegen in der normalen Tab-Reihenfolge. Jeder Tag trägt sein
             ausgeschriebenes Datum für Screenreader, «heute» als{" "}
