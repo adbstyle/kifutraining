@@ -24,9 +24,10 @@ export function ButtonGroup({
       aria-label={ariaLabel}
       className={cn(
         "inline-flex gap-0.5",
-        "[&>:first-child]:rounded-r-none [&>:first-child>*]:rounded-r-none",
-        "[&>:last-child]:rounded-l-none [&>:last-child>*]:rounded-l-none",
-        "[&>:not(:first-child):not(:last-child)]:rounded-none [&>:not(:first-child):not(:last-child)>*]:rounded-none",
+        // `>:first-child` im Glied: der Trigger im Tooltip, nicht dessen Beschriftung.
+        "[&>:first-child]:rounded-r-none [&>:first-child>:first-child]:rounded-r-none",
+        "[&>:last-child]:rounded-l-none [&>:last-child>:first-child]:rounded-l-none",
+        "[&>:not(:first-child):not(:last-child)]:rounded-none [&>:not(:first-child):not(:last-child)>:first-child]:rounded-none",
         className,
       )}
     >
