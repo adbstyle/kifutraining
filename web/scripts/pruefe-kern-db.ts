@@ -3093,7 +3093,11 @@ try {
     const p = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Meins", altersstufe: "juniorenfussball", stufen: ["D"] })).id;
 
     // AK 13: Verschieben ist für ein persönliches Training abgewiesen.
+    const anzahl = async (teamId: string) =>
+      (await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", teamId)).count;
+    const start = await anzahl(team);
     fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: p, art: "verschieben" }), "regel", TERMIN_MELDUNG.PERSOENLICH_NUR_KOPIE);
+    assert.equal(await anzahl(team), start, "PC 7: abgewiesen heisst keine Kopie");
     // AK 1, 8, PC 1, 3, 4: Kopie im Team, auch vergangen; jede Zuordnung eine neue.
     const k1 = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: p }));
     const k2 = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t2.terminId, trainingId: p }));
@@ -3111,8 +3115,39 @@ try {
     const vorher = (await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", team)).count;
     fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: p }), "regel", TERMIN_MELDUNG.TERMIN_AUSGEFALLEN);
     assert.equal((await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", team)).count, vorher);
-    // Ein fremdes öffentliches Training erst übernehmen (Epic OoS 4).
+    // Ein fremdes privates Training bleibt unsichtbar (Epic OoS 4): nicht gefunden.
     fehler(await ordneTrainingZu(b.supabase, b.id, { terminId: t2.terminId, trainingId: p }), "nicht_gefunden");
+  });
+  await pruefe("Persönliches Training: veraltete Auswahl legt keine Kopie an, belegter Termin behält das alte Training im Bestand (#328 AK 11, PC 5/7)", async () => {
+    const team = await serienTeam("Kern-DB-Persoenlich-Belegt");
+    const anzahl = async () =>
+      (await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", team)).count;
+    const termin = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const traegt = async () => (await admin.from("training_termine").select("training_id").eq("id", termin).single()).data!.training_id;
+    const p = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Persoenlich-Kinder", altersstufe: "kinderfussball", stufen: ["F"] })).id;
+
+    // AK 11 (UI-Weg): Wer den Termin ohne Training sah, obwohl er eines trägt, wird abgewiesen — ohne Kopie.
+    const altes = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Alt", altersstufe: "kinderfussball", stufen: ["F"], teamId: team })).id;
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: termin, trainingId: altes }));
+    const vorher = await anzahl();
+    fehler(
+      await ordneTrainingZu(a.supabase, a.id, { terminId: termin, trainingId: p, erwartet: { terminTraining: null, trainingTermin: null } }),
+      "konflikt",
+      TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT,
+    );
+    assert.equal(await anzahl(), vorher, "veraltete Auswahl: keine Kopie");
+    assert.equal(await traegt(), altes, "der Termin bleibt unverändert");
+
+    // PC 5, AK 7: Mit zutreffender Erwartung wird die Kopie verknüpft; das alte Training bleibt ohne Termin im Bestand.
+    const z = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: termin, trainingId: p, erwartet: { terminTraining: altes, trainingTermin: null } }));
+    assert.equal(z.kopie, true);
+    assert.equal(z.imBestand, altes, "das ersetzte Training wird genannt");
+    assert.equal(await traegt(), z.trainingId, "der Termin trägt die Kopie");
+    assert.notEqual(z.trainingId, p);
+    const alt = (await admin.from("trainings").select("team_id").eq("id", altes).single()).data!;
+    assert.equal(alt.team_id, team, "das alte Training bleibt im Team-Bestand");
+    assert.equal((await admin.from("training_termine").select("id").eq("training_id", altes)).data!.length, 0, "… ohne Termin");
+    assert.equal(await anzahl(), (vorher ?? 0) + 1, "genau eine Kopie ist hinzugekommen");
   });
 } finally {
   await aufraeumen();
