@@ -73,7 +73,7 @@ export type TrainingNavKontext = {
   terminDatum: string | null;
 };
 
-/** Diesen Kontext braucht die Hauptnavigation im Root-Layout, um bei einem
+/** Diesen Kontext braucht die Seitenleiste im (app)-Layout, um bei einem
  *  Team-Training „Teams" statt „Trainings" hervorzuheben. Die Abfrage ist
  *  bewusst schmal: die Navigation lädt kein ganzes Training.
  *
@@ -82,7 +82,7 @@ export type TrainingNavKontext = {
  *
  *  `cache()` bindet das Ergebnis an den laufenden Request. Beim harten Laden
  *  einer Trainingsseite fragen zwei Stellen dasselbe: die Navigation im
- *  Root-Layout und das Layout unter `/training/[id]`, das den Team-Kontext für
+ *  (app)-Layout und das Layout unter `/training/[id]`, das den Team-Kontext für
  *  spätere Client-Navigationen meldet. Die Datenbank sieht davon eine
  *  Abfrage. */
 export const getTrainingNavKontext = cache(

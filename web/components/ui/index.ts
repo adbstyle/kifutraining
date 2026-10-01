@@ -48,8 +48,14 @@ export { Menu } from "./Menu";
 export type { MenuItemDef } from "./Menu";
 export { OverflowMenu } from "./OverflowMenu";
 export { ChipMenu } from "./ChipMenu";
-export { Header } from "./Header";
-export type { HeaderProps, HeaderNavItem, HeaderMenuItem, HeaderAccount } from "./Header";
+export { Seitenleiste, SeitenleistenKnopf, leisteStil, nebenLeiste } from "./Seitenleiste";
+export type {
+  SeitenleisteProps,
+  SeitenleisteGruppe,
+  SeitenleisteEintrag,
+  SeitenleisteUnterpunkt,
+  SeitenleisteKonto,
+} from "./Seitenleiste";
 export { Disclosure } from "./Disclosure";
 export type { DisclosureProps } from "./Disclosure";
 export { Dialog } from "./Dialog";

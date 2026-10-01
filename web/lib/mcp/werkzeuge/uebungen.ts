@@ -155,7 +155,7 @@ export const uebungenSuchen = werkzeug({
       typ: e.uebungstyp,
       kinder: e.kinder,
       mine: e.nur_eigene,
-      // Wie der Katalog (app/page.tsx): Trainingsteile/Blöcke und
+      // Wie der Katalog (app/(app)/page.tsx): Trainingsteile/Blöcke und
       // Hauptteilkategorien als EINE ODER-Dimension über zwei Spalten.
       einordnung: e.einordnung?.length ? einordnungNachSpalten(e.einordnung) : undefined,
     };

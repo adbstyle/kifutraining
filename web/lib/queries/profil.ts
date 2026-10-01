@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -18,8 +19,16 @@ export async function getMeinAnzeigename(): Promise<string | null> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
+  return getAnzeigenameFuer(supabase, user.id);
+}
 
-  const { data } = await supabase.rpc("anzeige_name", { p_user: user.id });
+/** Der Anzeigename eines Kontos — für einen Aufrufer, der den Client und den
+ *  User schon hat (die Navigation). */
+export async function getAnzeigenameFuer(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<string | null> {
+  const { data } = await supabase.rpc("anzeige_name", { p_user: userId });
   return (data as string | null) ?? null;
 }
 

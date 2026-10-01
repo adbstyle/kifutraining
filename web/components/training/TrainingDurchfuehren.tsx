@@ -5,7 +5,9 @@ import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin, Users } from "l
 import { TrainingExerciseDetail } from "./TrainingExerciseDetail";
 import { VariantenWahl } from "./VariantenWahl";
 import { GesamtMaterialListe } from "./GesamtMaterialListe";
-import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui";
+import { nebenLeiste, type BreadcrumbItem } from "@/components/ui";
+import { cn } from "@/lib/cn";
+import { SeitenKopf } from "@/components/layout/SeitenKopf";
 import { leseGliederung, formatDuration } from "@/lib/training";
 import { datumKurz } from "@/lib/zeit";
 import { zeitText } from "@/lib/termin";
@@ -160,8 +162,8 @@ export function TrainingDurchfuehren({
 
   if (sections.length === 0) {
     return (
-      <main className="mx-auto max-w-2xl px-4 py-16">
-        <Breadcrumbs items={crumbs} className="mb-6 print:hidden" />
+      <main className="max-w-2xl px-4 py-16 sm:px-6 lg:pt-0">
+        <SeitenKopf krumen={crumbs} className="mb-6" />
         <h1 className="type-headline-small text-center text-on-surface">
           {training.name}
         </h1>
@@ -188,11 +190,11 @@ export function TrainingDurchfuehren({
   const section = sections[idx];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-28 pt-4 sm:px-6">
+    <div className="max-w-2xl px-4 pb-28 pt-4 sm:px-6 lg:pt-0">
       <header className="mb-4">
         {/* Der Rückweg steht zuoberst — wie auf jeder anderen Trainingsseite.
             Im Druck hat er nichts verloren (OOS 2). */}
-        <Breadcrumbs items={crumbs} className="mb-3 print:hidden" />
+        <SeitenKopf krumen={crumbs} className="mb-3" />
         {termin && <TerminKopf termin={termin} className="mb-3" />}
         <p className="type-label-medium text-on-surface-mittel">{training.name}</p>
         {/* Unter dem Trainingsnamen und über dem Abschnitt: Die Variante gilt
@@ -262,7 +264,7 @@ export function TrainingDurchfuehren({
                 Eine Stufe über dem Grund reicht, um die durchlaufenden
                 Übungen zu überdecken. */}
             {b.label && (
-              <h2 className="sticky top-0 z-10 -mx-1 bg-elev-01 px-1 py-2 type-title-medium text-on-surface-mittel">
+              <h2 className="sticky top-14 z-10 lg:top-0 -mx-1 bg-elev-01 px-1 py-2 type-title-medium text-on-surface-mittel">
                 {b.label}
                 {b.sum > 0 && (
                   <span className="ml-2 type-label-medium">{formatDuration(b.sum)}</span>
@@ -282,11 +284,12 @@ export function TrainingDurchfuehren({
       </div>
 
       {/* Spielfeldrand-Navigation: grosse, sicher treffbare Flächen. Deckend
-          auf Kopfleisten-Höhe und mit einer Haarlinie abgesetzt — durch eine
+          auf 04dp und mit einer Haarlinie abgesetzt; ab lg beginnt sie neben
+          der Seitenleiste (Breite vom AppRahmen). Durch eine
           schwebende Leiste darf der Inhalt nicht durchscheinen, sonst trägt
           die Höhe die Trennung nicht mehr (kein Blur über der Höhenleiter). */}
-      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-linie bg-elev-04">
-        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
+      <nav className={cn("fixed right-0 bottom-0 z-10 border-t border-linie bg-elev-04", nebenLeiste)}>
+        <div className="flex max-w-2xl items-center gap-3 px-4 py-3 sm:px-6">
           <button
             type="button"
             onClick={() => setIdx((i) => Math.max(0, i - 1))}

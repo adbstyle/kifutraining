@@ -22,9 +22,9 @@ Weg, das Passwort im laufenden Betrieb ohne diesen Mailversand zu wechseln, gibt
 
 ## Was im Konto steht
 
-Die Konto-Seite zeigt die eigene E-Mail-Adresse, führt zu den eigenen Übungen, lässt den
-Anzeigenamen setzen, listet die verbundenen KI-Assistenten und die Kalender-Abos und bietet das
-Löschen des Kontos an. Mehr Profilangaben gibt es nicht — kein Bild, keine Adresse, keine
+Die Konto-Seite zeigt die eigene E-Mail-Adresse, bietet das Abmelden an, führt zu den eigenen
+Übungen, lässt den Anzeigenamen setzen, listet die verbundenen KI-Assistenten und die
+Kalender-Abos und bietet das Löschen des Kontos an. Mehr Profilangaben gibt es nicht — kein Bild, keine Adresse, keine
 Vereinszugehörigkeit.
 
 ## Der Anzeigename
@@ -344,9 +344,9 @@ widerrufen.
 Der gesamte Übungsbestand und alle öffentlichen Trainings sind ohne Anmeldung
 zugänglich — ansehen, durchsuchen, filtern, durchführen und drucken inbegriffen. Verwehrt
 bleibt alles Eigene: Übungen und Trainings anlegen oder bearbeiten, favorisieren, Trainings
-übernehmen, Teams. Der Menüpunkt für Teams erscheint gar nicht erst, und wer eine geschützte
-Adresse direkt aufruft, landet bei der Anmeldung und wird danach dorthin zurückgeführt, wo er
-hinwollte. Eine Ausnahme ist das Kalender-Abo: Das Kalenderprogramm ruft die Termine ohne
+übernehmen, Teams. Die Gruppe „Mein Bereich" der Seitenleiste erscheint gar nicht erst, und
+wer eine geschützte Adresse direkt aufruft, landet bei der Anmeldung und wird danach dorthin
+zurückgeführt, wo er hinwollte. Eine Ausnahme ist das Kalender-Abo: Das Kalenderprogramm ruft die Termine ohne
 Anmeldung ab, denn der Link selbst ist die Berechtigung; der Verweis in einem Kalendereintrag
 führt dagegen über die Anmeldung in den Trainingsplan.
 

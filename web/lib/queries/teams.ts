@@ -25,6 +25,14 @@ export type TeamDetail = {
   mitglieder: TeamMitglied[];
 };
 
+/** Die eigenen Teams, einmal pro Request gelesen: Die Seitenleiste braucht
+ *  sie auf jeder Seite, die Teamübersicht und die Trainingsseiten noch
+ *  einmal. Ohne Anmeldung liefert die RLS keine Zeile — wer den User schon
+ *  kennt (die Navigation), ruft das hier direkt. */
+export const getMeineTeamsImRequest = cache(async (): Promise<TeamUebersicht[]> =>
+  getMeineTeamsFuer(await createClient()),
+);
+
 /** Die Teams des angemeldeten Kontos, alphabetisch (`getMeineTeamsFuer`).
  *  Anonym: leere Liste. */
 export async function getMeineTeams(): Promise<TeamUebersicht[]> {
@@ -33,7 +41,7 @@ export async function getMeineTeams(): Promise<TeamUebersicht[]> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return [];
-  return getMeineTeamsFuer(supabase);
+  return getMeineTeamsImRequest();
 }
 
 /** Ein Team samt Mitgliedern. `null`, wenn es das Team nicht gibt oder der

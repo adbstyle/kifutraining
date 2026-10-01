@@ -100,7 +100,8 @@
 
   /* ─── Bewegung: nur, wo etwas von selbst erscheint. Die Snackbar fährt
      von unten ein — am Bildrand fällt Bewegung eher auf als Kontrast. Wer
-     reduzierte Bewegung eingestellt hat, sieht sie nur einblenden. ─── */
+     reduzierte Bewegung eingestellt hat, sieht sie nur einblenden. Dazu
+     gleitet die Seitenleiste beim Umschalten in ihre Breite (siehe dort). ─── */
   --animate-snackbar-ein: snackbar-ein 180ms cubic-bezier(0, 0, 0.2, 1);
   --animate-einblenden: einblenden 150ms linear;
   @keyframes snackbar-ein {
@@ -239,7 +240,7 @@
    im selben Ton auf. Und weil nichts untergeschoben werden muss,
    erspart sie jede z-index-Buchhaltung im Inhalt.
    Gehört in die BASIS-Bündel (Button, Chip, IconButton, Menüzeile,
-   Nav-Link), nicht an die Aufrufstellen.
+   Navigationszeile), nicht an die Aufrufstellen.
    Drei Zustände, nicht vier: Material führt zusätzlich «gezogen», aber das
    Einzige, was in dieser Anwendung gezogen wird, sind Diagramm-Elemente — und
    die leben im SVG, nicht im DOM. Sie melden das Ziehen in ihrer eigenen

@@ -407,7 +407,7 @@ pruefe(`Keine Altlast der alten Palette (${DATEIEN.length} Dateien)`, () => {
       for (const [muster, grund] of VERBOTEN) {
         if (muster.test(zeile)) treffer.push(`${kurz}:${i + 1}  ${grund}  — ${zeile.trim()}`);
       }
-      if (!kurz.startsWith("app/styleguide/") && NUR_STYLEGUIDE[0].test(zeile)) {
+      if (!kurz.startsWith("app/(app)/styleguide/") && NUR_STYLEGUIDE[0].test(zeile)) {
         treffer.push(`${kurz}:${i + 1}  ${NUR_STYLEGUIDE[1]}  — ${zeile.trim()}`);
       }
     });

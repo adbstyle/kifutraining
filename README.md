@@ -67,7 +67,7 @@ Die `supabase`-CLI läuft aus `web/` heraus mit `--workdir ..` – die
   verlassen nie den Server.
 - **RLS + RPC:** Zugriffskontrolle via Row Level Security; mehrstufige Mutationen
   über `SECURITY DEFINER`-RPCs mit Owner-Check.
-- **Styleguide-first UI:** vor neuen Komponenten an `web/app/styleguide` /
+- **Styleguide-first UI:** vor neuen Komponenten an `web/app/(app)/styleguide` /
   `web/components/ui` orientieren.
 
 ## CI / Deploy

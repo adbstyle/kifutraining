@@ -8,7 +8,7 @@ import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
  * hinweg festgehalten.
  *
  * Warum das nicht der Server allein erledigt: Die Hauptnavigation sitzt im
- * Root-Layout, und ein Layout rendert Next.js bei einer Client-Navigation
+ * (app)-Layout, und ein Layout rendert Next.js bei einer Client-Navigation
  * nicht neu (Partial Rendering). Wer im Trainingsplan auf eine Einheit klickt,
  * bekäme also weiterhin den Zustand des letzten harten Ladens zu sehen —
  * „Trainings" aktiv statt „Teams", genau das, was #156 abschaffen soll.

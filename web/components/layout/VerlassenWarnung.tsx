@@ -19,19 +19,6 @@ const traegtMarke = (state: unknown) =>
  *  aus, gab es keinen Eintrag davor (neuer Tab) — die Seite bleibt. */
 const ZURUECK_FRIST_MS = 500;
 
-/** Die aktive Warnung, solange eine Seite ungesicherte Angaben hält — im
- *  Browser gibt es höchstens eine. Navigationen ohne Link (das Kontomenü
- *  springt per `router.push`, Abmelden ruft eine Server Action) fragen hier
- *  nach, weil sie am Klick-Abfangen vorbeilaufen. */
-let waechter: ((weiter: () => void) => void) | null = null;
-
-/** Eine Navigation erst ausführen, wenn keine Warnung aktiv ist oder der USER
- *  das Verlassen bestätigt. Für Navigationen, die kein Link sind. */
-export function nachVerlassenFrage(weiter: () => void) {
-  if (waechter) waechter(weiter);
-  else weiter();
-}
-
 /**
  * Warnt vor dem Verlassen einer Seite mit ungesicherten Angaben (#246 AK 7).
  *
@@ -146,13 +133,11 @@ export function VerlassenWarnung({
     // Ein Wächter pro Aufenthalt: Scheitert das Speichern, wird die Warnung
     // erneut scharf und findet ihn schon vor.
     if (!aufWaechter()) legeWaechter();
-    waechter = (weiter) => setAusstehend({ weiter });
     window.addEventListener("beforeunload", vorEntladen);
     document.addEventListener("click", klick, true);
     window.addEventListener("popstate", zurueck);
     return () => {
       if (zurueckFrist.current) clearTimeout(zurueckFrist.current);
-      waechter = null;
       window.removeEventListener("beforeunload", vorEntladen);
       document.removeEventListener("click", klick, true);
       window.removeEventListener("popstate", zurueck);

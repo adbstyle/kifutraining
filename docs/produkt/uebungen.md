@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-09-29. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-10-01. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -81,7 +81,7 @@ Erfassen wie beim Bearbeiten; beides ist freiwillig, und die Übung wird mit ein
 Speichern samt Diagramm gesichert.
 
 Die Maske ist so breit wie die Detailseite einer Übung und in derselben Reihenfolge gegliedert.
-Oben stehen die Brotkrumen — beim Erfassen „Übungspool › Neue Übung" —, darunter der Name als
+Oben stehen die Brotkrumen — beim Erfassen „Übungen › Neue Übung" —, darunter der Name als
 Überschrift, die sich direkt beschreiben lässt, wie der Trainingsname im Trainings-Editor.
 Darunter steht die „Zuordnung": Altersstufe und Alterskategorie auf einer Zeile, darunter
 der Trainingsteil — im Kinderfussball-Hauptteil samt Hauptteilkategorie, im Juniorenfussball
@@ -93,7 +93,7 @@ Schluss das „Foto". Auf einem schmalen Bildschirm stehen die Paare untereinand
 gilt beim Erfassen, beim Bearbeiten einer eigenen Übung und für eine Übung im Training.
 
 Bis dahin ist nichts gesichert. Will der Trainer die Maske mit ungesicherten Angaben oder einer
-ungesicherten Zeichnung verlassen — über einen Link, das Kontomenü, den Zurück-Knopf des
+ungesicherten Zeichnung verlassen — über einen Link, einen Eintrag der Seitenleiste, den Zurück-Knopf des
 Browsers, durch Neuladen oder Schliessen —, fragt die Anwendung nach, ob sie verloren gehen
 sollen; beim Bearbeiten bleibt dann der zuletzt gespeicherte Stand. Scheitert das Speichern,
 bleiben Angaben und Zeichnung stehen.

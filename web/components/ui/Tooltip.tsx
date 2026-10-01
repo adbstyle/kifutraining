@@ -24,6 +24,13 @@ import { cn } from "@/lib/cn";
    `ende`: bündig mit der rechten Kante des Triggers statt mittig — für
    Trigger am rechten Rand, über den ein mittiger Tooltip beim Zeigen
    hinausragte und abgeschnitten würde. */
+
+/** Die Fläche des Tooltips — geteilt mit der Hinweisblase der schmalen
+ *  Seitenleiste, die neben statt unter ihrem Eintrag steht und darum selbst
+ *  positioniert wird. */
+export const tooltipFlaeche =
+  "whitespace-nowrap rounded-flaeche bg-elev-24 px-2 py-1 text-on-surface shadow-dp-08 type-body-small";
+
 export function Tooltip({
   label,
   children,
@@ -42,9 +49,9 @@ export function Tooltip({
         aria-hidden
         className={cn(
           // Standard: versteckt + nicht klickbar; sichtbar bei Hover/Fokus.
-          "pointer-events-none absolute top-full z-50 mt-1.5 hidden whitespace-nowrap rounded-flaeche bg-elev-24 px-2 py-1 text-on-surface shadow-dp-08 opacity-0 transition-[opacity,display] transition-discrete duration-150 starting:opacity-0",
+          "pointer-events-none absolute top-full z-50 mt-1.5 hidden opacity-0 transition-[opacity,display] transition-discrete duration-150 starting:opacity-0",
+          tooltipFlaeche,
           ende ? "right-0" : "left-1/2 -translate-x-1/2",
-          "type-body-small",
           "group-hover:block group-hover:opacity-100 group-focus-within:block group-focus-within:opacity-100",
         )}
       >
