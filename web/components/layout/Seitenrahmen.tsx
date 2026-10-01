@@ -3,8 +3,10 @@ import type { BreadcrumbItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { SeitenKopf } from "./SeitenKopf";
 
-/* Literale Klassen — Tailwind findet nur, was ausgeschrieben im Quelltext steht. */
+/* Literale Klassen — Tailwind findet nur, was ausgeschrieben im Quelltext steht.
+   `voll`: Übersichten (Kachelraster, Kalender) nutzen die ganze Fläche. */
 const BREITE = {
+  voll: "",
   xl: "max-w-xl",
   "2xl": "max-w-2xl",
   "3xl": "max-w-3xl",
@@ -14,9 +16,11 @@ const BREITE = {
 } as const;
 
 /**
- * Der Rahmen einer Seite: zentrierter Inhalt in der Breite, die zur Seite
- * passt, und zuoberst die Kopfzeile (Umschalter der Seitenleiste, Brotkrumen,
- * Aktionen). Jede Seite hat Brotkrumen — darum ist `krumen` Pflicht.
+ * Der Rahmen einer Seite: linksbündig neben der Seitenleiste, in der Breite,
+ * die zur Seite passt — Übersichten über die ganze Fläche, Formulare und
+ * Lesetext in ihrer Lesebreite —, und zuoberst die Kopfzeile (Umschalter der
+ * Seitenleiste, Brotkrumen, Aktionen). Nicht zentriert: Die Fläche rechts
+ * bleibt frei für eine spätere zweite Spalte (Details, geteilte Ansicht). Jede Seite hat Brotkrumen — darum ist `krumen` Pflicht.
  * `null` nur dort, wo die Seite die Kopfzeile selbst setzt, weil ihre
  * Aktionen Zustand brauchen, der erst tiefer entsteht (Trainings-Editor).
  */
@@ -40,7 +44,7 @@ export function Seitenrahmen({
   return (
     <main
       className={cn(
-        "mx-auto px-4 py-8 sm:px-6 sm:py-10",
+        "px-4 py-8 sm:px-6 sm:py-10 lg:pt-0",
         BREITE[breite],
         druckVoll && "print:max-w-none print:px-0 print:py-0",
       )}

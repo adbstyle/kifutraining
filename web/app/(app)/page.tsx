@@ -78,7 +78,7 @@ export default async function Home({
 
   return (
     <Seitenrahmen
-      breite="6xl"
+      breite="voll"
       krumen={filters.mine ? [{ label: "Übungen", href: "/" }, { label: "Meine Übungen" }] : [{ label: "Übungen" }]}
     >
       {sp.account_deleted && (
@@ -128,7 +128,7 @@ export default async function Home({
                 : "Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne Filter oder setze sie zurück."}
             </Leerzustand>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
               {rows.map((row) => (
                 <ExerciseCard
                   key={row.id}

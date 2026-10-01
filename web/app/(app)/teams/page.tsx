@@ -23,7 +23,7 @@ export default async function TeamsPage() {
   const teams = await getMeineTeams();
 
   return (
-    <Seitenrahmen breite="6xl" krumen={[{ label: "Teams" }]}>
+    <Seitenrahmen breite="voll" krumen={[{ label: "Teams" }]}>
       <header className="mb-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="type-title-large text-on-surface">Teams</h1>
@@ -37,7 +37,7 @@ export default async function TeamsPage() {
           zusammen planst.
         </Leerzustand>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-3">
           {teams.map((team) => (
             /* Zustands-Ebene auf dem Link, nicht auf der Karte darin: Er
                deckt die ganze Zeile, und nur er meldet Fokus und Druck. */
