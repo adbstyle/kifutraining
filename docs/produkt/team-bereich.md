@@ -40,7 +40,7 @@ Trainings; einzig beim Zuordnen eines Trainings zu einem Termin stehen die eigen
 (siehe unten).
 
 Deshalb bleibt der Team-Bereich auch dann bestehen, wenn ein Team-Training geöffnet ist: Die
-Hauptnavigation hält „Teams" hervorgehoben — beim Ansehen, Bearbeiten und Durchführen ebenso
+Seitenleiste hält „Teams" hervorgehoben — beim Ansehen, Bearbeiten und Durchführen ebenso
 wie beim Bearbeiten einer Übung und ihres Feld-Diagramms, und gleichgültig, ob das Training
 aus dem Team heraus, über einen geteilten Link oder ein Lesezeichen geöffnet wurde. Die
 Brotkrumen führen entsprechend zurück: über das Team in die Teamübersicht, und dazwischen

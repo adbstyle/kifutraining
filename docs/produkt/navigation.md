@@ -1,0 +1,54 @@
+# Navigation
+
+Stand 2026-10-01. Wie man sich in der Anwendung bewegt.
+
+## Die Seitenleiste
+
+Die Hauptnavigation steht als Leiste am linken Rand. Oben steht die Marke — ein Fussball mit
+dem Namen KiFu —, die zum Übungsbestand führt. Darunter folgen zwei Gruppen. Unter
+„Bibliothek" stehen „Übungen" und „Trainings", der ganze Bestand. Unter „Mein Bereich" stehen
+„Meine Übungen" und „Meine Trainings", also derselbe Bestand, eingegrenzt auf das Eigene, und
+„Teams". Unter „Teams" sind die eigenen Teams als Unterpunkte aufgeführt. Ein Klick auf
+„Teams" führt in die Teamübersicht, der Pfeil daneben klappt die Teamnamen auf und zu. Ein
+neues, umbenanntes oder aufgelöstes Team erscheint dort ohne Neuladen.
+
+Hervorgehoben ist, wo man gerade steht. Ein geöffnetes Team-Training hält „Teams" hervor,
+wie im Team-Bereich beschrieben.
+
+Ganz unten steht das Konto: Initialen, Anzeigename und E-Mail-Adresse. Ein Klick darauf führt
+ins Konto, wo auch das Abmelden zu finden ist. Ohne Anmeldung steht an dieser Stelle
+„Anmelden", und die Gruppe „Mein Bereich" fehlt.
+
+## Breit oder schmal
+
+Die Leiste lässt sich verkleinern. Dann zeigt sie nur noch die Zeichen der Einträge. Den
+Namen eines Eintrags zeigt ein Hinweis daneben, sobald man ihn mit dem Zeiger überfährt oder
+mit der Tastatur ansteuert. Umgeschaltet wird nur von Hand, über den Knopf links vor den
+Brotkrumen. Beim Überfahren öffnet sich die schmale Leiste nicht von selbst. Die Wahl merkt
+sich der Browser und behält sie beim nächsten Besuch.
+
+## Brotkrumen
+
+Jede Seite zeigt zuoberst ihren Pfad als Brotkrumen, auch die Einstiegsseiten: der
+Übungsbestand etwa „Übungen", eine Übung „Übungen › Hauptteil › ‹Name›". Davor steht der
+Knopf zum Verkleinern der Leiste. Auf Trainingsseiten stehen in derselben Zeile rechts die
+Aktionen am Training. Im Druck erscheinen weder Leiste noch Brotkrumen.
+
+## Auf schmalen Bildschirmen
+
+Auf einem Telefon oder einem schmalen Fenster steht oben eine Kopfzeile mit dem Menüknopf.
+Er öffnet die Leiste von links über dem Inhalt. Dort zeigt sie immer alle Namen.
+Schliessen lässt sie sich über das Kreuz, einen Klick daneben, die Escape-Taste oder die
+Wahl eines Eintrags. Den Knopf zum Verkleinern gibt es dort nicht.
+
+## Anmelde-Seiten
+
+Die Seiten zum Anmelden, Registrieren und Zurücksetzen des Passworts kommen ohne Leiste aus,
+ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
+
+## Bekannte Grenzen
+
+Wird jemand von einem anderen Konto in ein Team aufgenommen, erscheint das Team in der Leiste
+erst beim nächsten Neuladen oder nach der nächsten eigenen Aktion. Breit oder schmal merkt
+sich jeder Browser für sich, nicht das Konto. Eine Seite, die es nicht gibt, zeigt die
+schlichte Fehlermeldung ohne Leiste.
