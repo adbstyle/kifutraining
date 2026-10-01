@@ -979,13 +979,13 @@ export default function Styleguide() {
           <code>text</code>
         </p>
         <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-          Der leise Knopf ist eine <strong>Schrift</strong>-Stufe, keine
-          Emphase-Stufe: Die Farbe bleibt Primary, nur die Versalien fallen —{" "}
-          <code>type-title-small</code> statt <code>type-label-large</code>.
-          Sie gilt für Handlungen, die <strong>am Rand mitlaufen</strong>: ein
-          Knopf in einer Leiste aus Chips, die Nutzertext tragen und darum
-          normal gesetzt sind. Mono-versal danebengestellt schriee er, und die
-          Leiste zerfiele in zwei Stimmen. Sie gilt <strong>nicht</strong> für
+          Alle Knöpfe stehen normal gesetzt in <code>type-title-small</code>{" "}
+          (Geist 600, 14/20), nicht versal — wie die Reiter. Der leise Knopf
+          ist die <strong>dichte Bauform</strong> des <code>text</code>-Knopfes:
+          dieselbe Farbe und Schrift, fest h-9 mit knapper Polsterung. Er gilt
+          für Handlungen, die <strong>am Rand mitlaufen</strong>: ein Knopf in
+          einer Leiste aus Chips, auf deren Linie er sitzen soll. Er gilt{" "}
+          <strong>nicht</strong> für
           Knöpfe, die einen Vorgang abschliessen oder abbrechen —
           Dialog-Knöpfe, Formularfüsse und alles, was neben einem{" "}
           <code>filled</code> steht, bleibt <code>text</code>. <code>size</code>{" "}
@@ -999,7 +999,7 @@ export default function Styleguide() {
           </Button>
           <Button variant="text">Abbrechen</Button>
           <span className="type-label-small text-on-surface-mittel">
-            quiet (Geist, normal) · text (Geist Mono, versal)
+            quiet (dicht, h-9) · text
           </span>
         </div>
 
@@ -1241,7 +1241,7 @@ export default function Styleguide() {
           gesetzt in <code>type-body-medium</code>, wie der Nutzertext-Chip —
           er sitzt in Leisten neben Suchfeld, Auswahl und Knöpfen und liest
           sich dort als Wort («Meine Termine»), nicht als Rubrik, und bleibt
-          leiser als der versale Knopf daneben, der die Handlung trägt.
+          leiser als der halbfette Knopf daneben, der die Handlung trägt.
           Assist, Suggestion, Input und die offene Einfachauswahl bleiben
           versal in <code>type-label-medium</code>.
         </p>

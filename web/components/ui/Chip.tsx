@@ -73,8 +73,8 @@ const chipBase =
    versal (`type-label-medium`). Der FILTER steht normal gesetzt in
    `type-body-medium`: Er sitzt in Leisten neben Suchfeld, Auswahl und
    Knöpfen und liest sich dort als Wort («Meine Termine»), nicht als Rubrik —
-   dieselbe Schrift wie der Nutzertext-Chip. Leiser als der versale Knopf
-   daneben, der die Handlung trägt. */
+   dieselbe Schrift wie der Nutzertext-Chip. Leiser als der Knopf daneben
+   (`type-title-small`, halbfett), der die Handlung trägt. */
 const chipLabel = "type-label-medium";
 const chipFilterTypo = "type-body-medium";
 
