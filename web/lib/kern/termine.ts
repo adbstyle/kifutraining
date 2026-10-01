@@ -15,7 +15,7 @@ import { kalenderMeldung } from "@/lib/veraltet";
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugriff";
-import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining } from "@/lib/kern/kopie";
+import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
 import { loescheTrainingMitBildern } from "@/lib/kern/loeschen";
 import {
   NICHT_GEFUNDEN,
@@ -335,6 +335,20 @@ export async function mitAufgeraeumterKopie(
   return { ...f, meldung: `${f.meldung} ${kopieGebliebenText(data?.name ?? "Kopie")}`, hinweis: hinweisRest(kopieId) };
 }
 
+/** Das Scheitern der Kopie selbst. Räumte sie nicht auf, nennt schon die
+ *  Meldung die stehen gebliebene Teilkopie — die Oberfläche zeigt `hinweis`
+ *  nie (Story 7 PC 8), wie bei `mitAufgeraeumterKopie`. */
+async function kopierFehler(
+  supabase: SupabaseClient,
+  kopie: Extract<KopieErgebnis, { ok: false }>,
+): Promise<KernFehler> {
+  if (kopie.nichtsEntstanden) return fehlschlag(kopie.art, kopie.error, { hinweis: HINWEIS_NICHTS_ENTSTANDEN });
+  const { data } = await supabase.from("trainings").select("name").eq("id", kopie.rest).maybeSingle<{ name: string }>();
+  return fehlschlag(kopie.art, `${kopie.error} ${kopieGebliebenText(data?.name ?? "Kopie")}`, {
+    hinweis: hinweisRest(kopie.rest),
+  });
+}
+
 /** Einem Termin ein Training aus dem Team-Bestand oder ein eigenes
  *  persönliches Training (dann als Kopie, #328) zuordnen (AK 1–11, 14–17;
  *  PC 1–9). Ersetzt ein Training, das der Termin schon trägt (AK 9). */
@@ -362,12 +376,9 @@ export async function ordneTrainingZu(
     if (e.erwartet && t.training_id !== e.erwartet.terminTraining)
       return fehlschlag("konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
     const kopie = await kopiereTraining(supabase, e.trainingId, { art: "team", teamId: t.team_id });
-    if (!kopie.ok)
-      // AK 10: Erfüllt es die Bedingungen eines Team-Trainings nicht, nennt die
-      // Meldung der Kopie den Grund.
-      return fehlschlag(kopie.art, kopie.error, {
-        hinweis: kopie.nichtsEntstanden ? HINWEIS_NICHTS_ENTSTANDEN : hinweisRest(kopie.rest),
-      });
+    // AK 10: Erfüllt es die Bedingungen eines Team-Trainings nicht, nennt die
+    // Meldung der Kopie den Grund.
+    if (!kopie.ok) return kopierFehler(supabase, kopie);
     // Die Kopie hat nie einen Termin; das Original wird nicht berührt (PC 3).
     const erwartet: Erwartung = {
       termin_training: e.erwartet ? e.erwartet.terminTraining : t.training_id,
@@ -414,10 +425,7 @@ export async function ordneTrainingZu(
 
   // Kopie (PC 2, 3): eigenständig, gleichnamig, so vollständig wie jede Kopie.
   const kopie = await kopiereTraining(supabase, e.trainingId, { art: "team", teamId: t.team_id });
-  if (!kopie.ok)
-    return fehlschlag(kopie.art, kopie.error, {
-      hinweis: kopie.nichtsEntstanden ? HINWEIS_NICHTS_ENTSTANDEN : hinweisRest(kopie.rest),
-    });
+  if (!kopie.ok) return kopierFehler(supabase, kopie);
   const r = await setze(supabase, t, kopie.neueId, false, { ...erwartet, training_termin: null }, wiederholbar, true);
   return r.ok ? r : mitAufgeraeumterKopie(supabase, r, kopie.neueId);
 }

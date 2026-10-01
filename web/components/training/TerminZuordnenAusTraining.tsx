@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Dialog, Select } from "@/components/ui";
+import { Button, ChoiceChip, ChoiceChipGroup, Dialog } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { TerminWahlDialog } from "@/components/team/TerminWahlDialog";
 import { ordneTrainingZuAktion, termineFuerZuordnungAktion } from "@/lib/actions/termine";
@@ -66,7 +66,12 @@ export function TerminZuordnenAusTraining({
       const r = await termineFuerZuordnungAktion(teamId);
       if (laufNr.current !== nr) return;
       if (r.ok) setDaten({ termine: r.termine, heute: r.heute });
-      else setFehler(r.error);
+      else {
+        // Keine Sackgasse: Ohne gewähltes Team lässt sich dasselbe Team
+        // (auch das einzige) erneut wählen und damit neu laden.
+        setFehler(r.error);
+        setTeamId("");
+      }
     });
   }, [open, teamId]);
 
@@ -90,14 +95,23 @@ export function TerminZuordnenAusTraining({
         actions={<Button variant="text" onClick={schliessen}>Abbrechen</Button>}
       >
         {fehler && <p role="alert" className="mb-3 text-error">{fehler}</p>}
-        <Select
-          label="Team"
-          value={teamId}
-          onChange={setTeamId}
-          options={teams.map((t) => ({ value: t.id, label: t.name }))}
-          placeholder="Team wählen"
-          disabled={pending}
-        />
+        {/* Wie `TrainingZielDialog`: Teamnamen als Einfachauswahl, `nutzertext`,
+            weil sie vom Trainer vergeben sind. Ein Select ragte mit seinem
+            Panel über den Rand des Dialogs. */}
+        <ChoiceChipGroup ariaLabel="In welchem Team">
+          {teams.map((t, i) => (
+            <ChoiceChip
+              key={t.id}
+              look="nutzertext"
+              selected={teamId === t.id}
+              tabStop={teamId === t.id || (teamId === "" && i === 0)}
+              onSelect={() => !pending && setTeamId(t.id)}
+            >
+              {t.name}
+            </ChoiceChip>
+          ))}
+        </ChoiceChipGroup>
+        {pending && <p className="mt-3">Termine werden geladen …</p>}
       </Dialog>
     );
 
@@ -122,7 +136,13 @@ export function TerminZuordnenAusTraining({
           router.refresh();
           // Abgebrochen, während die Zuordnung lief: nur melden, was geschah.
           if (laufNr.current !== nr) return melde(r.ok ? ZUORDNEN_ERFOLG.persoenlich : r.error);
-          if (!r.ok && !istVeraltet(r.error)) return setFehler(r.error);
+          if (!r.ok && !istVeraltet(r.error)) {
+            setFehler(r.error);
+            // Die Liste zeigt sonst Belegungen von vor dem Fehler.
+            const neu = await termineFuerZuordnungAktion(teamId);
+            if (neu.ok && laufNr.current === nr) setDaten({ termine: neu.termine, heute: neu.heute });
+            return;
+          }
           onClose();
           melde(r.ok ? ZUORDNEN_ERFOLG.persoenlich : r.error);
         });

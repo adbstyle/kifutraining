@@ -100,7 +100,7 @@ export function TrainingWahlDialog({
           «{termin.training.name}» bleibt ohne Termin im Team-Bestand.
         </p>
       )}
-      <h3 className="type-title-small mb-2">Aus dem Team-Bestand</h3>
+      <h3 className="type-title-small mb-2 text-on-surface">Aus dem Team-Bestand</h3>
       {liste.length === 0 ? (
         <p>Im Team-Bestand gibt es noch kein weiteres Training.</p>
       ) : (
@@ -115,7 +115,7 @@ export function TrainingWahlDialog({
           onWahl={(id) => { setGewaehlt(id); setArt(null); }}
         />
       )}
-      <h3 className="type-title-small mb-2 mt-6">Meine Trainings</h3>
+      <h3 className="type-title-small mb-2 mt-6 text-on-surface">Meine Trainings</h3>
       {persoenliche.length === 0 ? (
         <p>Du hast noch kein persönliches Training.</p>
       ) : (
