@@ -117,8 +117,15 @@ Altersstufe, Alterskategorien, Herkunft, Trainingsteil und im Juniorenfussball d
 im Kinderfussball-Hauptteil die Hauptteilkategorie, Feldtyp oder Spielfeldgrösse, die Anzahl
 Spieler:innen, Übungstyp, Erscheinungsformen und das Material. Keine dieser Angaben steht im
 Inhalt ein zweites Mal; wer eine Übung öffnet, sieht auf einen Blick, wofür sie taugt, und liest
-Bild und Ablauf ohne Unterbrechung. Gezeigt wird, was die Übung erfasst hat — ein Platzhalter für
-Fehlendes steht dort nicht. Auffangen und Abschluss im Juniorenfussball heissen wie ihr einziger
+Bild und Ablauf ohne Unterbrechung. Gezeigt wird, was die Übung erfasst hat. Nur die
+Eigentümerin sieht zusätzlich, was ihre Übung tragen könnte, aber noch nicht erfasst hat: die
+Erscheinungsform, im Juniorenfussball den Übungstyp, im Kinderfussball den Feldtyp und die
+Spielfeldgrösse in Metern — jeweils nur, wo Altersstufe, Trainingsteil oder Block und Feldtyp sie vorsehen.
+Diese Angaben speisen die Filter des Katalogs; eine Übung ohne sie bleibt dort für manche Suche
+unsichtbar. Sie stehen an ihrem Platz als «Nicht erfasst», verschwinden, sobald die Angabe
+gespeichert ist, und erscheinen nie auf dem Druckblatt. Pflicht wird dadurch nichts: Eine Übung
+lässt sich ohne sie speichern und veröffentlichen. Leeres Material und eine fehlende Anzahl
+Spieler:innen gelten nicht als fehlend, denn es gibt Übungen ohne beides. Auffangen und Abschluss im Juniorenfussball heissen wie ihr einziger
 Block und stehen darum einmal. Hat eine Änderung am Feld-Diagramm das Material verändert, sieht
 die Eigentümerin den Hinweis dazu in der Einordnung, beim Material, und entscheidet dort, ob sie
 den neuen Vorschlag übernimmt oder ihr Material beibehält.

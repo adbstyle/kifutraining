@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import {
   Eigenschaft,
   EigenschaftBreit,
+  EigenschaftFehlt,
   Eigenschaften,
   HerkunftBadge,
   KategorieChip,
@@ -19,7 +20,7 @@ import {
   anzahlSpielerText,
 } from "@/lib/labels";
 import { einordnungenFuer, teilDerEinordnung } from "@/lib/altersstufe";
-import { feldAngaben } from "@/lib/eckdaten";
+import { fehlendeEinordnung, feldAngaben } from "@/lib/eckdaten";
 import { hatMaterial, parseMaterialListe } from "@/lib/material";
 import { sortStufen } from "@/lib/training";
 import type { ExerciseDetail } from "@/lib/queries/exercises";
@@ -51,13 +52,19 @@ export function teilUndBlock(ex: Pick<ExerciseDetail, "altersstufe" | "trainings
  * `materialHinweis` ist der Hinweis auf ein geändertes Diagramm-Material,
  * nur für die Eigentümerin: Er steht bei dem, was er betrifft, und ist auf
  * dem Papier weg (Story #269).
+ *
+ * `fehlendeZeigen` (nur für die Eigentümerin, #352): Was die Übung tragen
+ * kann, aber nicht erfasst hat, steht an seinem Platz als «Nicht erfasst» —
+ * nur am Bildschirm. Alle anderen sehen allein das Erfasste.
  */
 export function EinordnungsLeiste({
   ex,
   materialHinweis,
+  fehlendeZeigen = false,
 }: {
   ex: ExerciseDetail;
   materialHinweis?: ReactNode;
+  fehlendeZeigen?: boolean;
 }) {
   const { teil, block } = teilUndBlock(ex);
   const { feldtyp, spielfeld } = feldAngaben(ex);
@@ -65,6 +72,7 @@ export function EinordnungsLeiste({
   const materialListe = parseMaterialListe(ex.material_liste);
   const mitMaterial = hatMaterial(materialListe, ex.material);
   const kategorien = sortStufen(ex.kategorien);
+  const fehlt = fehlendeZeigen ? fehlendeEinordnung(ex) : new Set<string>();
 
   return (
     <Eigenschaften titel="Einordnung">
@@ -90,7 +98,9 @@ export function EinordnungsLeiste({
         </Eigenschaft>
       )}
       {feldtyp && <Eigenschaft label="Feldtyp">{feldtyp}</Eigenschaft>}
+      {fehlt.has("feldtyp") && <EigenschaftFehlt label="Feldtyp" />}
       {spielfeld && <Eigenschaft label="Spielfeldgrösse">{spielfeld}</Eigenschaft>}
+      {fehlt.has("spielfeld") && <EigenschaftFehlt label="Spielfeldgrösse" />}
       {anzahl && <Eigenschaft label={ANZAHL_SPIELER_LABEL}>{anzahl}</Eigenschaft>}
       {ex.uebungstyp && (
         <Eigenschaft label="Übungstyp">
@@ -98,6 +108,7 @@ export function EinordnungsLeiste({
             ex.uebungstyp}
         </Eigenschaft>
       )}
+      {fehlt.has("uebungstyp") && <EigenschaftFehlt label="Übungstyp" />}
       {ex.erscheinungsform.length > 0 && (
         <Eigenschaft label="Erscheinungsform">
           <ul className="flex flex-col gap-1">
@@ -107,6 +118,7 @@ export function EinordnungsLeiste({
           </ul>
         </Eigenschaft>
       )}
+      {fehlt.has("erscheinungsform") && <EigenschaftFehlt label="Erscheinungsform" />}
       {materialHinweis && (
         <EigenschaftBreit label="Hinweis zum Material" className="print:hidden">
           {materialHinweis}

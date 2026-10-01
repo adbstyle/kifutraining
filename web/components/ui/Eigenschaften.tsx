@@ -63,6 +63,19 @@ export function Eigenschaft({
   );
 }
 
+/** Eine Zeile ohne Wert: Die Angabe ist vorgesehen, aber nicht erfasst (#352).
+ *  Gedämpft wie die Bezeichnung, damit sie sich von erfassten Werten abhebt,
+ *  ohne nach einem Fehler auszusehen — fehlen darf sie. Nie auf Papier: Das
+ *  Blatt geht an Co-Trainer und Eltern, für sie zählt, was erfasst ist. */
+export function EigenschaftFehlt({ label }: { label: string }) {
+  return (
+    <div className="contents print:hidden">
+      <dt className="type-body-medium text-on-surface-mittel">{label}</dt>
+      <dd className="type-body-medium min-w-0 text-on-surface-mittel">Nicht erfasst</dd>
+    </div>
+  );
+}
+
 /** Ein Eintrag über beide Spalten — für das, was zu einer Zeile gehört, aber
  *  keine sichtbare Bezeichnung braucht (der Hinweis auf geändertes Material).
  *  Die Bezeichnung bleibt für Vorlesehilfen da: Eine Beschreibungsliste kennt

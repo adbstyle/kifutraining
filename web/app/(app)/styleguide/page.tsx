@@ -25,6 +25,7 @@ import {
   MaterialListe,
   Eigenschaften,
   Eigenschaft,
+  EigenschaftFehlt,
   Disclosure,
   Leerzustand,
   Banner,
@@ -2832,6 +2833,12 @@ export default function Styleguide() {
             für Vorlesehilfen.
           </li>
           <li>
+            <strong>Nicht erfasst</strong> — <code>EigenschaftFehlt</code>{" "}
+            zeigt eine vorgesehene, aber leere Angabe (nur der Eigentümerin,
+            #352): der Wert gedämpft wie die Bezeichnung, damit er sich vom
+            Erfassten abhebt, ohne nach einem Fehler auszusehen. Nie auf Papier.
+          </li>
+          <li>
             <strong>Fläche</strong> — eine <code>Card</code>; auf Papier stehen
             Bezeichnung und Wert untereinander, weil die Spalte dort schmaler
             ist.
@@ -2848,6 +2855,7 @@ export default function Styleguide() {
             </Eigenschaft>
             <Eigenschaft label="Trainingsteil">Hauptteil</Eigenschaft>
             <Eigenschaft label="Hauptteilkategorie">Fussball spielen lernen</Eigenschaft>
+            <EigenschaftFehlt label="Erscheinungsform" />
             <Eigenschaft label="Anzahl Spieler:innen">9–11</Eigenschaft>
             <Eigenschaft label="Material">
               <MaterialListe

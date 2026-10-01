@@ -26,7 +26,7 @@ export { ExerciseCard } from "./ExerciseCard";
 export type { Eckdatum, ExerciseCardData } from "./ExerciseCard";
 export { MethodischerFahrplan } from "./MethodischerFahrplan";
 export { MaterialListe } from "./MaterialListe";
-export { Eigenschaften, Eigenschaft, EigenschaftBreit } from "./Eigenschaften";
+export { Eigenschaften, Eigenschaft, EigenschaftBreit, EigenschaftFehlt } from "./Eigenschaften";
 export { Freitext } from "./Freitext";
 export { PrintButton } from "./PrintButton";
 export type { FahrplanData } from "./MethodischerFahrplan";

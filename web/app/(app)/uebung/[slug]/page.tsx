@@ -97,6 +97,8 @@ export default async function ExerciseDetailPage({
   const leiste = (
     <EinordnungsLeiste
       ex={ex}
+      // Fehlende Einordnung sieht nur, wer sie nachtragen kann (#352).
+      fehlendeZeigen={isOwner}
       materialHinweis={
         materialHinweis.length > 0 && (
           // Hat eine Diagrammänderung das Material verändert (Story #269)? Nur
