@@ -162,8 +162,20 @@ function baueSchema(streng: boolean) {
       id: z.string(),
       datum: z.string(),
       beginn: z.string().nullable(),
+      ende: z.string().nullable(),
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
+      /** Die Terminserie, zu der der Termin gehört; `null` bei einem einzelnen (#324). */
+      serie_id: z.string().nullable(),
+      /** Wer den Termin vorbereitet und leitet (#325 AK 16); `id` und
+       *  `anzeigename` sind bei einem gelöschten Konto `null`. */
+      verantwortliche: z.array(
+        obj({ id: z.string().nullable(), anzeigename: z.string().nullable(), ehemalig: z.boolean() }),
+      ),
+      /** Ein Training trägt nie einen ausgefallenen Termin (#327 AK 9); die
+       *  Felder stehen trotzdem in jeder Auskunft, damit die Gestalt einheitlich bleibt. */
+      ausgefallen: z.boolean(),
+      ausfall_grund: z.string().nullable(),
       anstehend: z.boolean(),
     }).nullable(),
     /** Alle Übungen des Trainings über ALLE Varianten des Hauptteils. */

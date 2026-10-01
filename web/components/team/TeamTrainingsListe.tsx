@@ -23,49 +23,59 @@ import {
   Tooltip,
 } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
-import { TerminDialog } from "./TerminDialog";
+import { TerminWahlDialog } from "./TerminWahlDialog";
 import { entferneTeamTraining, uebernimmZuMir } from "@/lib/actions/team-trainings";
-import { erstelleTermin, setzeErneutAn, type TerminFelder } from "@/lib/actions/termine";
+import { ordneTrainingZuAktion } from "@/lib/actions/termine";
+import { ZUORDNEN_ERFOLG } from "@/lib/termin";
+import { istVeraltet } from "@/lib/veraltet";
 import { formatDuration } from "@/lib/training";
 import { datumKurz } from "@/lib/zeit";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
+import type { TerminZeile } from "@/lib/queries/termine";
 
 /* Der Trainingsbestand eines Teams (Story 5).
    Je Eintrag: „Zu mir übernehmen" (erzeugt eine persönliche Kopie) und
-   „Entfernen" (nimmt es dem ganzen Team weg). */
+   „Entfernen" (nimmt es dem ganzen Team weg) und „Termin zuordnen"
+   (Team-Kalender #323). */
 export function TeamTrainingsListe({
-  teamId,
   trainings,
+  termine,
+  heute,
 }: {
-  teamId: string;
   trainings: TeamTrainingRow[];
+  /** Alle Termine des Teams: anstehende aufsteigend, dann vergangene
+   *  absteigend (`teilePlan`). */
+  termine: TerminZeile[];
+  heute: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [entfernen, setEntfernen] = useState<TeamTrainingRow | null>(null);
-  const [ansetzen, setAnsetzen] = useState<TeamTrainingRow | null>(null);
+  const [zuordnen, setZuordnen] = useState<TeamTrainingRow | null>(null);
+  const [dialogFehler, setDialogFehler] = useState<string | undefined>();
   const melde = useSnackbar();
 
-  /** Ansetzen und erneut Ansetzen sind derselbe Vorgang aus Sicht des Trainers
-   *  — nur führt der zweite über eine eigenständige Kopie (Story 8). Welcher
-   *  Weg gilt, entscheidet allein, ob das Training schon einen Termin trägt. */
-  function ansetzenSpeichern(felder: TerminFelder) {
-    if (!ansetzen) return;
-    const weitereEinheit = ansetzen.termin != null;
+  /** Zuordnen mit den Angaben, auf die sich die Wahl stützt (`erwartet`, PO 17).
+   *  Fehler stehen im Dialog — ausser die Auswahl ist veraltet: dann würde ein
+   *  erneuter Versuch immer wieder scheitern, der Dialog schliesst, und die
+   *  aufgefrischte Liste zeigt den neuen Stand. */
+  function zuordnenSpeichern({ termin, art }: { termin: TerminZeile; art?: "kopie" | "verschieben" }) {
+    if (!zuordnen) return;
     startTransition(async () => {
-      const res = weitereEinheit
-        ? await setzeErneutAn(ansetzen.id, felder)
-        : await erstelleTermin(ansetzen.id, felder);
-      setAnsetzen(null);
-      if (!res.ok) {
-        melde(res.error);
+      const res = await ordneTrainingZuAktion({
+        terminId: termin.id,
+        trainingId: zuordnen.id,
+        art,
+        erwartet: { terminTraining: termin.training?.id ?? null, trainingTermin: zuordnen.termin?.id ?? null },
+      });
+      router.refresh();
+      if (!res.ok && !istVeraltet(res.error)) {
+        setDialogFehler(res.error);
         return;
       }
-      // In den Trainingsplan wechseln — dort landet die neue Einheit. Die
-      // Bestätigung reist über die Adresse mit: eine Snackbar von hier fiele
-      // beim Wechsel der Ansicht weg, weil sie zur alten gehört. Der Wechsel lädt
-      // die Zielansicht ohnehin frisch; ein zusätzliches Auffrischen erübrigt sich.
-      router.push(`/team/${teamId}?angesetzt=1`);
+      setZuordnen(null);
+      setDialogFehler(undefined);
+      melde(res.ok ? (res.kopie ? ZUORDNEN_ERFOLG.kopie : ZUORDNEN_ERFOLG.direkt) : res.error);
     });
   }
 
@@ -127,16 +137,16 @@ export function TeamTrainingsListe({
                       {t.variantenZahl} Varianten
                     </Badge>
                   )}
-                  {/* „Angesetzt" ist ein Zustand, keine Aktion — darum als
+                  {/* „Eingeplant" ist ein Zustand, keine Aktion — darum als
                       Plakette beim Titel statt als Attrappe eines Buttons in
                       der Aktionsreihe. Geändert wird der Termin im Plan.
-                      Das Datum steht mit dabei: mehrere angesetzte Einheiten
+                      Das Datum steht mit dabei: mehrere eingeplante Einheiten
                       desselben Trainings heissen gleich und sind sonst nicht
                       auseinanderzuhalten (#156 AK 7). */}
                   {t.termin && (
                     <Badge tone="neutral">
                       <CalendarCheck size={12} strokeWidth={2.5} aria-hidden />
-                      Angesetzt · {datumKurz(t.termin.datum)}
+                      Eingeplant · {datumKurz(t.termin.datum)}
                     </Badge>
                   )}
                 </div>
@@ -158,20 +168,18 @@ export function TeamTrainingsListe({
               </Link>
 
               {/* Icon-only wie auf der Übungsseite; Entfernen liegt im
-                  ⋮-Menü. Das Ansetzen bleibt auch bei einem bereits
-                  angesetzten Training erreichbar (Story 16): dort, wo der
-                  Trainer sein Training auswählt, endete sonst der Weg zur
-                  nächsten Einheit. Den Termin selbst ändert man im Plan. */}
+                  ⋮-Menü. Das Zuordnen bleibt auch bei einem bereits
+                  eingeplanten Training erreichbar (Story 16): dort, wo der
+                  Trainer sein Training auswählt, endete sonst der Weg zum
+                  nächsten Termin. Den Termin selbst ändert man im Plan. */}
               <div className="flex shrink-0 items-center gap-0.5">
-                <Tooltip label={t.termin ? "Erneut ansetzen" : "Ansetzen"}>
+                <Tooltip label="Termin zuordnen">
                   <IconButton
                     icon={CalendarPlus}
-                    label={
-                      t.termin ? `${t.name} erneut ansetzen` : `${t.name} ansetzen`
-                    }
+                    label={`${t.name} einem Termin zuordnen`}
                     size="sm"
                     disabled={pending}
-                    onClick={() => setAnsetzen(t)}
+                    onClick={() => { setDialogFehler(undefined); setZuordnen(t); }}
                   />
                 </Tooltip>
                 <Tooltip label="Zu mir übernehmen">
@@ -201,30 +209,14 @@ export function TeamTrainingsListe({
         ))}
       </div>
 
-      {/* Beim erneuten Ansetzen dieselbe Vorbelegung wie im Plan: Beginn, Ort
-          und Bemerkung stehen meist wieder gleich, das Datum ist bewusst leer.
-          Der Hinweis nennt die Tragweite — es entsteht eine eigene Kopie. */}
-      <TerminDialog
-        open={ansetzen != null}
-        titel={ansetzen?.termin ? "Weitere Einheit ansetzen" : "Training ansetzen"}
-        bestaetigung="Ansetzen"
-        hinweis={
-          ansetzen?.termin
-            ? "Es entsteht eine eigenständige Kopie des Trainings für den neuen Termin. Die bisherige Einheit bleibt mit ihrem Stand bestehen."
-            : "Der Termin erscheint im Trainingsplan des Teams."
-        }
-        start={
-          ansetzen?.termin
-            ? {
-                beginn: ansetzen.termin.beginn,
-                ort: ansetzen.termin.ort,
-                bemerkung: ansetzen.termin.bemerkung,
-              }
-            : undefined
-        }
+      <TerminWahlDialog
+        training={zuordnen}
+        termine={termine}
+        heute={heute}
         pending={pending}
-        onClose={() => setAnsetzen(null)}
-        onSpeichern={ansetzenSpeichern}
+        fehler={dialogFehler}
+        onClose={() => setZuordnen(null)}
+        onWahl={zuordnenSpeichern}
       />
 
       <Dialog
@@ -248,7 +240,10 @@ export function TeamTrainingsListe({
       >
         <p>
           <strong className="text-on-surface">{entfernen?.name}</strong> wird für
-          das ganze Team gelöscht. Ein angesetzter Termin entfällt dabei.
+          das ganze Team gelöscht.
+          {entfernen?.termin && (
+            <> Der Termin am {datumKurz(entfernen.termin.datum)} bleibt ohne Training im Trainingsplan bestehen.</>
+          )}
         </p>
         <p className="mt-3">
           Persönliche Kopien, die jemand zu sich übernommen hat, bleiben

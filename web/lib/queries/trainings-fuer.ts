@@ -8,7 +8,7 @@ import { JUNIOREN_BLOCK_SLUGS, type Einordnung } from "@/lib/junioren";
 import type { Altersstufe } from "@/lib/altersstufe";
 import { FASSUNG_INHALT_FELDER, FASSUNG_ZUORDNUNG_FELDER } from "@/lib/fassung";
 import type { Variante } from "@/lib/varianten";
-import { kurzeZeit } from "@/lib/queries/termine-fuer";
+import { kurzeZeit, nachName } from "@/lib/queries/termine-fuer";
 import { parseMaterialBasis, parseMaterialListe, type MaterialPosten } from "@/lib/material";
 
 // Trainings lesen für einen Client, der bereits als Nutzer spricht (Cookie-
@@ -89,8 +89,8 @@ export type TrainingDetail = {
   ziel: string | null;
   /** Gehört das Training einem Team? Dann steht hier dessen Name (Story 6). */
   team: { id: string; name: string } | null;
-  /** Datum des Termins, falls das Training angesetzt ist (`YYYY-MM-DD`);
-   *  sonst `null`. Höchstens einer je Training — ein erneutes Ansetzen legt
+  /** Datum des Termins, falls das Training einem Termin zugeordnet ist (`YYYY-MM-DD`);
+   *  sonst `null`. Höchstens einer je Training — ein erneutes Einplanen legt
    *  eine eigene Kopie an. Die RLS gibt Termine nur Team-Mitgliedern (#156). */
   terminDatum: string | null;
   /** Anzeigename des Urhebers; `null` bei anonymisierten Trainings (Story 15). */
@@ -494,24 +494,34 @@ export async function getTrainingPoolFuer(
 // ── Team-Trainings (Team-Epic Story 5, #198 AK 2) ────────────────────────────
 
 /** Ein Team-Training im Bestand des Teams. Wie eine Pool-Zeile, zusätzlich mit
- *  dem Termin, falls es angesetzt ist. */
+ *  dem Termin, falls es eingeplant ist. */
 export type TeamTrainingRow = TrainingListRow & {
-  /** Der Termin dieses Trainings, falls es angesetzt ist. Höchstens einer je
-   *  Training — eine weitere Einheit entsteht als Kopie (Story 8). Beginn, Ort
-   *  und Bemerkung dienen als Vorbelegung beim erneuten Ansetzen, damit der
-   *  Weg aus dem Bestand derselbe ist wie aus dem Plan (Story 16 AK 3). */
+  /** Der Termin dieses Trainings, falls es eingeplant ist. Höchstens einer je
+   *  Training — eine weitere Einheit entsteht als Kopie (Story 8). */
   termin: {
     id: string;
-    /** Der Tag der Einheit als `YYYY-MM-DD`. Er unterscheidet angesetzte
+    /** Der Tag der Einheit als `YYYY-MM-DD`. Er unterscheidet eingeplante
      *  Einheiten desselben Trainings im Bestand voneinander (#156 AK 7). */
     datum: string;
     beginn: string | null;
+    ende: string | null;
     ort: string | null;
     bemerkung: string | null;
+    /** Die Terminserie, zu der der Termin gehört; `null` bei einem einzelnen. */
+    serieId: string | null;
+    /** Wer den Termin vorbereitet und leitet (#325 AK 16); `userId` und `name`
+     *  sind bei einem gelöschten Konto `null`, `ehemalig` heisst: nicht mehr im Team. */
+    verantwortliche: { userId: string | null; name: string | null; ehemalig: boolean }[];
+    /** Ein Training trägt nie einen ausgefallenen Termin (#327 AK 9); die
+     *  Felder halten die Gestalt wie im Plan. */
+    ausgefallen: boolean;
+    ausfallGrund: string | null;
   } | null;
 };
 
-const TEAM_LIST_SELECT = `${LIST_SELECT}, training_termine ( id, datum, beginn, ort, bemerkung )`;
+const TEAM_LIST_SELECT =
+  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, serie_id, ausgefallen, ausfall_grund, ` +
+  "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ) )";
 
 export type TeamTrainingFilter = {
   /** Sucht im Namen, wie die Trainings-Übersicht (`search_text`). */
@@ -554,17 +564,27 @@ export async function getTeamTrainingsFuer(
 
   const rows: TeamTrainingRow[] = (data ?? []).map((raw) => {
     // Bewusst eigener Name: `RawTermin` in queries/termine-fuer.ts bezeichnet
-    // die vollständige Termin-Zeile, hier stehen nur die Felder der
-    // Vorbelegung.
-    type RawTerminVorbelegung = {
+    // die vollständige Termin-Zeile, hier stehen nur die Felder, die
+    // `TEAM_LIST_SELECT` einbettet.
+    type RawTerminEingebettet = {
       id: string;
       datum: string;
       beginn: string | null;
+      ende: string | null;
       ort: string | null;
       bemerkung: string | null;
+      serie_id: string | null;
+      ausgefallen: boolean;
+      ausfall_grund: string | null;
+      termin_verantwortliche: {
+        id: string;
+        user_id: string | null;
+        verantwortlich_name: string | null;
+        verantwortlich_ehemalig: boolean;
+      }[];
     };
     const r = raw as unknown as RawListTraining & {
-      training_termine: RawTerminVorbelegung | RawTerminVorbelegung[] | null;
+      training_termine: RawTerminEingebettet | RawTerminEingebettet[] | null;
     };
     const termin = einzelnerTermin(r.training_termine);
     return {
@@ -574,8 +594,24 @@ export async function getTeamTrainingsFuer(
             id: termin.id,
             datum: termin.datum,
             beginn: kurzeZeit(termin.beginn),
+            ende: kurzeZeit(termin.ende),
             ort: termin.ort,
             bemerkung: termin.bemerkung,
+            serieId: termin.serie_id,
+            ausgefallen: termin.ausgefallen,
+            ausfallGrund: termin.ausfall_grund,
+            // Wie im Plan nach Name geordnet (gleiche Funktion, gleicher
+            // Tiebreak), gelöschte Konten zuletzt.
+            verantwortliche: nachName(
+              (termin.termin_verantwortliche ?? []).map((v) => ({
+                eintragId: v.id,
+                userId: v.user_id,
+                name: v.user_id === null ? null : v.verantwortlich_name,
+                ehemalig: v.verantwortlich_ehemalig,
+              })),
+              (v) => v.name,
+              (v) => v.eintragId,
+            ).map(({ userId, name, ehemalig }) => ({ userId, name, ehemalig })),
           }
         : null,
     };

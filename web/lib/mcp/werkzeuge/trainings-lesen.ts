@@ -60,8 +60,8 @@ export const trainingAbrufen = werkzeug({
     "konkretes Training nennt «vokabular» im Abschnitt «schema». " +
     "Lesbar ist jedes Training, " +
     "das dein Konto in KiFu sieht; ändern lassen sich nur die mit «bearbeitbar». Ein " +
-    "Team-Training trägt in «termin» seinen Termin (höchstens einen; «anstehend» sagt, ob er " +
-    "heute oder später ist), sonst steht dort null. Ob es " +
+    "Team-Training trägt in «termin» den Termin, dem es zugeordnet ist (höchstens einen; " +
+    "«anstehend» sagt, ob er heute oder später ist; «verantwortliche» nennt, wer ihn vorbereitet und leitet), sonst null. Ob es " +
     "veröffentlicht werden kann und was dazu fehlt, zeigt «training_hinweise_abrufen». " +
     `${KENNUNG_FEHLER}`,
   nurLesen: true,
@@ -122,8 +122,19 @@ const SuchenTreffer = z.object({
       id: z.string(),
       datum: z.string(),
       beginn: z.string().nullable(),
+      ende: z.string().nullable(),
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
+      serie_id: z.string().nullable(),
+      verantwortliche: z.array(
+        z.object({
+          id: z.string().nullable().describe("Kennung des Mitglieds; null bei einem gelöschten Konto."),
+          anzeigename: z.string().nullable(),
+          ehemalig: z.boolean().describe("Nicht mehr im Team."),
+        }),
+      ),
+      ausgefallen: z.boolean().describe("Bei einem Training immer false — ein ausgefallener Termin trägt kein Training."),
+      ausfall_grund: z.string().nullable(),
       anstehend: z.boolean(),
     })
     .nullable()
@@ -141,7 +152,7 @@ export const trainingsSuchen = werkzeug({
     "Alterskategorie (ODER). «uebungszahl» und «dauer_min» beziehen sich wie die Kachel der " +
     "Übersicht auf die erste Variante; «varianten_zahl» sagt, wie viele es gibt. " +
     "Team-Trainings erscheinen nur mit «bestand: team»; dort trägt jeder Treffer seinen " +
-    "Termin («termin», null ohne) — «eigen» ist bei ihnen immer false, bearbeiten darf sie " +
+    "Termin samt Verantwortlichen («termin», null ohne) — «eigen» ist bei ihnen immer false, bearbeiten darf sie " +
     "jedes Mitglied. Das ganze Training liefert «training_abrufen», " +
     `übernehmen lässt es sich mit «training_kopieren». ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: true,
@@ -174,7 +185,27 @@ export const trainingsSuchen = werkzeug({
           varianten_zahl: t.variantenZahl,
           urheber: t.urheber,
           geaendert_am: t.updatedAt,
-          ...(t.termin !== undefined ? { termin: t.termin } : {}),
+          ...(t.termin !== undefined
+            ? {
+                termin: t.termin && {
+                  id: t.termin.id,
+                  datum: t.termin.datum,
+                  beginn: t.termin.beginn,
+                  ende: t.termin.ende,
+                  ort: t.termin.ort,
+                  bemerkung: t.termin.bemerkung,
+                  serie_id: t.termin.serieId,
+                  verantwortliche: t.termin.verantwortliche.map((v) => ({
+                    id: v.userId,
+                    anzeigename: v.name,
+                    ehemalig: v.ehemalig,
+                  })),
+                  ausgefallen: t.termin.ausgefallen,
+                  ausfall_grund: t.termin.ausfallGrund,
+                  anstehend: t.termin.anstehend,
+                },
+              }
+            : {}),
         })),
         weitere: w.weitere,
       }),

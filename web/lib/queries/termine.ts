@@ -10,19 +10,25 @@ import { getTeamPlanFuer, getTerminZuTrainingFuer, type TerminZeile } from "@/li
 
 export {
   kurzeZeit,
+  nochNichtVorbereitet,
   teilePlan,
+  type Abweichung,
   type Plan,
+  type TerminSerie,
   type TerminZeile,
+  type Verantwortlicher,
+  verantwortlichenNamen,
 } from "@/lib/queries/termine-fuer";
 
 /** Der Trainingsplan eines Teams mit der Anmeldung aus den Cookies —
- *  chronologisch aufsteigend (`getTeamPlanFuer`). */
-export async function getTeamPlan(teamId: string): Promise<TerminZeile[]> {
-  return getTeamPlanFuer(await createClient(), teamId);
+ *  chronologisch aufsteigend (`getTeamPlanFuer`). `nurMeine`: nur die Termine,
+ *  für die dieses Konto verantwortlich ist (#325 AK 11). */
+export async function getTeamPlan(teamId: string, o: { nurMeine?: string } = {}): Promise<TerminZeile[]> {
+  return getTeamPlanFuer(await createClient(), teamId, { nurMeine: o.nurMeine });
 }
 
-/** Der Termin eines einzelnen Trainings, falls es einen hat. Für den Kopf der
- *  Durchführen-Ansicht (AK 19) und die Vorbelegung beim erneuten Ansetzen. */
+/** Der Termin, dem ein Training zugeordnet ist, falls es einen hat. Für den
+ *  Kopf der Durchführen-Ansicht (AK 19). */
 export async function getTerminZuTraining(trainingId: string): Promise<TerminZeile | null> {
   return getTerminZuTrainingFuer(await createClient(), trainingId);
 }

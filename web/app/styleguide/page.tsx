@@ -30,14 +30,18 @@ import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { uebungEckdaten } from "@/lib/eckdaten";
 import { ChipsDemo } from "./ChipsDemo";
 import { ChoiceChipDemo } from "./ChoiceChipDemo";
+import { AuswahlListeDemo } from "./AuswahlListeDemo";
 import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
+import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { HeaderNavDemo } from "./HeaderNavDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
 import { MaterialDemo } from "./MaterialDemo";
+import { MonatsrasterDemo } from "./MonatsrasterDemo";
+import { AnsichtWahl } from "@/components/team/AnsichtWahl";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import {
@@ -60,6 +64,9 @@ import {
   MailCheck,
   ListPlus,
   RefreshCw,
+  CalendarOff,
+  CalendarX2,
+  CalendarPlus,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { ROTATIONEN, SPIELER_POSEN, type DiagrammElement } from "@/lib/diagramm";
@@ -1138,10 +1145,22 @@ export default function Styleguide() {
           <Badge tone="oeffentlich" />
           <Badge tone="varianten">2 Varianten</Badge>
           <Badge tone="neutral">Kinderfussball</Badge>
+          <Badge tone="befund">
+            <CalendarX2 size={12} strokeWidth={2.5} aria-hidden />
+            Noch kein Training
+          </Badge>
+          <Badge tone="neutral">
+            <CalendarOff size={12} strokeWidth={2.5} aria-hidden />
+            Ausgefallen
+          </Badge>
           <span className="type-label-small text-on-surface-mittel">
-            manual · entwurf · oeffentlich · varianten · neutral
+            manual · entwurf · oeffentlich · varianten · neutral · befund
           </span>
         </div>
+        <p className="type-body-medium mb-6 max-w-2xl text-on-surface-mittel">
+          Befund: eine offene Lücke, die jemand schliessen muss — etwa ein
+          anstehender Termin ohne Training.
+        </p>
 
         <p className="type-label-small mb-2 text-on-surface-mittel">
           Alterskategorien — dieselbe Regel, eigene Farbtabelle
@@ -1238,6 +1257,19 @@ export default function Styleguide() {
           Bezeichnungen bis vierzig Zeichen lang sein dürfen.
         </p>
         <ChoiceChipDemo />
+
+        <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+          <code>AuswahlListe</code> — Einträge mit Titel und Untertitel
+        </p>
+        <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+          Dieselbe Radiogroup-Semantik wie die Chip-Gruppe, aber senkrecht und
+          mit zwei Zeilen je Eintrag — für Trainings und Termine, die zu lang
+          für Chips sind; ein <code>listbox</code> mit verschachtelten Knöpfen
+          wäre kein gültiges ARIA. Pfeil hoch/runter wählt und bewegt den
+          Fokus, und ein <strong>Häkchen</strong> zeigt die Wahl zusätzlich zur
+          Fläche an.
+        </p>
+        <AuswahlListeDemo />
 
         <div className="mt-6 rounded-flaeche bg-elev-01 p-4">
           <p className="type-label-large mb-1 text-on-surface">
@@ -1840,6 +1872,21 @@ export default function Styleguide() {
           im Formular heisst es <em>nichts</em>.
         </p>
         <MultiSelectDemo />
+
+        <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+          <code>WochentagWahl</code> — sieben feste Werte, sichtbar
+        </p>
+        <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+          Für die sieben festen Wochentage einer Terminserie; alle Werte stehen
+          sichtbar nebeneinander. Neu ist der Baustein, weil die
+          Mehrfachauswahl ein Panel öffnet — bei sieben kurzen Werten, die man
+          auf einen Blick vergleichen will, wäre das ein Klick zu viel. Jeder
+          Wert ist ein <code>FilterChip</code> (Ein/Aus, <code>aria-pressed</code>,
+          Häkchen auf der Wahl); das Kürzel steht sichtbar, der volle
+          Wochentag für Screenreader. Montag zuerst, die Wahl bleibt sortiert.
+          Ein Fehler steht unter den Chips.
+        </p>
+        <WochentagWahlDemo />
       </Section>
 
       <Section n="18" title="Dialog &amp; Snackbar">
@@ -1898,6 +1945,20 @@ export default function Styleguide() {
           versuchen —, nie ein blosses «OK». Und sie liegt unter jedem Dialog:
           Scheitert ein Vorgang und bleibt der Dialog offen, steht der Grund als
           Banner im Dialog.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Ein <strong>Link zum Kopieren</strong> (Kalender-Abo,{" "}
+          <code>AboDialog</code>) ist kein neuer Baustein, sondern eine
+          Zeile aus dem Kit: ein <code>TextField</code> mit{" "}
+          <code>readOnly</code> und ein tonaler <code>Button</code> daneben.
+          Das Feld wählt beim Fokus alles aus, damit sich der Link auch von
+          Hand kopieren lässt. Das Ergebnis des Knopfes erscheint{" "}
+          <strong>im Dialog</strong>, nicht in der Snackbar — die liegt unter
+          ihm: Gelingt es, zeigt der Knopf kurz «Kopiert» (mit Häkchen, dazu
+          eine Live-Region für die Vorlesehilfe); scheitert es, steht ein
+          Fehler-Banner im Dialog, und das Feld ist markiert. Ist der Link ein
+          Geheimnis, geht die Warnung
+          als Banner im Dialog voran.
         </p>
         <OverlaysDemo />
       </Section>
@@ -2283,9 +2344,9 @@ export default function Styleguide() {
             Keine Übung erfüllt alle gesetzten Filter. Entferne einzelne Filter
             oder setze sie zurück.
           </Leerzustand>
-          <Leerzustand titel="Noch nichts angesetzt" dicht>
-            Setze unter „Trainings“ ein Training des Teams auf ein Datum an — es
-            erscheint dann hier im Plan.
+          <Leerzustand icon={CalendarPlus} titel="Noch keine Termine" dicht>
+            Lege die Trainingszeiten des Teams als Termine fest. Welches
+            Training dort stattfindet, ordnest du danach zu.
           </Leerzustand>
         </div>
 
@@ -2592,6 +2653,69 @@ export default function Styleguide() {
             />
           </div>
         </div>
+      </Section>
+
+      <Section n="27" title="Monatsraster">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Ein Monat als Raster Montag bis Sonntag; der Inhalt eines Tages kommt
+          vom Aufrufer. Neu ist der Baustein, weil keiner der bestehenden ein
+          Kalenderraster kennt: Liste, Karte und Tabs zeigen Dinge nacheinander,
+          nicht nach Datum verteilt. <code>Monatsraster</code> kennt nur den
+          Kalender — Wochen, Randtage der Nachbarmonate (gedämpft), den heutigen
+          Tag (Kontur in Primary) und auf Wunsch die leere Woche
+          (gestrichelte Kontur wie beim <code>Leerzustand</code>, dazu als Text
+          für Screenreader). Was ein Tag zeigt, bestimmt <code>renderTag</code>.
+        </p>
+        <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+          <li>
+            <strong>Tabelle statt Gitter</strong> — <code>role=&quot;table&quot;</code>{" "}
+            mit Zeilen, Spaltenköpfen und Zellen. Ein <code>grid</code> verspräche
+            Pfeiltasten-Navigation, die es nicht gibt; die Knöpfe in den Tagen
+            liegen in der normalen Tab-Reihenfolge. Jeder Tag trägt sein
+            ausgeschriebenes Datum für Screenreader, «heute» als{" "}
+            <code>aria-current</code>.
+          </li>
+          <li>
+            <strong>Schmal</strong> — das Raster scrollt waagrecht im eigenen
+            Behälter, nie die Seite.
+          </li>
+          <li>
+            <strong>Randtage</strong> — liegen auf dem Grund (<code>elev-00</code>)
+            statt auf der Tagesfläche (<code>elev-01</code>), die Tageszahl ist
+            leiser. Nicht über <code>opacity</code> gedämpft: Das risse die
+            Schrift der Einträge unter 4.5:1.
+          </li>
+          <li>
+            <strong>Termineintrag</strong> (<code>TerminEintrag</code>) — Beginn
+            oder «Zeit fehlt», dazu der Zustand als Wort, nie nur als Farbe:
+            Training (Name auf <code>elev-08</code>), «Noch kein Training»
+            (Fehlerkontur, nur anstehend), «Ohne Training» (leise, vergangen),
+            «Ausgefallen» (durchgestrichen). Gerechnet: Fehler-Schrift{" "}
+            {v(kontrast(ERROR, elev(1)))} auf der Tagesfläche und{" "}
+            {v(kontrast(ERROR, GRUND))} in der Randwoche; leise Schrift{" "}
+            {v(kontrast(weissAuf(SCHRIFT.mittel, elev(1)), elev(1)))} bzw.{" "}
+            {v(kontrast(weissAuf(SCHRIFT.mittel, GRUND), GRUND))}. «Ausgefallen»
+            trägt bewusst die leise und nicht die tiefe Schrift (
+            {v(kontrast(weissAuf(SCHRIFT.tief, elev(1)), elev(1)))}): Es ist
+            wesentlicher Inhalt, nicht Deaktiviertes.
+          </li>
+        </ul>
+        <MonatsrasterDemo />
+        <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+          <code>AnsichtWahl</code> — Liste oder Monat als Links
+        </p>
+        <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+          Zwei Links statt einer <code>ChoiceChipGroup</code>: Die Ansicht lebt
+          in der Adresse (<code>?ansicht=monat</code>), ist damit weitergebbar
+          und der Zurück-Schritt des Browsers geht — und die Eingrenzung
+          «Meine Termine» reist in derselben Adresse mit (#329 PC 4). Ein Chip
+          hielte die Wahl im Zustand und verlöre beides. Die Optik ist die des
+          Knopfes: <code>tonal</code> für die offene, <code>text</code> für die
+          andere Ansicht, <code>aria-current</code> trägt die Wahl auch ohne
+          Fläche. Der Filter daneben bleibt ein <code>FilterChip</code>, weil er
+          ein Ein/Aus ist und keine Ansicht.
+        </p>
+        <AnsichtWahl ansicht="monat" hrefListe="#" hrefMonat="#" />
       </Section>
     </main>
   );

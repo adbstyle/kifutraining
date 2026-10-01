@@ -48,11 +48,18 @@ import { trainingHinweiseAbrufen } from "@/lib/mcp/werkzeuge/hinweise";
 import { trainingKopieren, trainingLoeschen } from "@/lib/mcp/werkzeuge/trainings-bestand";
 import {
   teamPlanAbrufen,
+  teamMitgliederAbrufen,
   teamsAbrufen,
   terminAendern,
-  terminAnsetzen,
   terminEntfernen,
-  trainingErneutAnsetzen,
+  terminDerSerieFolgen,
+  terminVerantwortlicheSetzen,
+  terminAusfallenLassen,
+  terminAusfallZuruecknehmen,
+  terminFestlegen,
+  terminserieFestlegen,
+  trainingLoesen,
+  trainingZuordnen,
 } from "@/lib/mcp/werkzeuge/team";
 
 /** Der vollständige Werkzeugsatz (Story #142; Epic #139 und #190 hängen ihre
@@ -101,10 +108,17 @@ export const WERKZEUGE = [
   trainingLoeschen,
   teamsAbrufen,
   teamPlanAbrufen,
-  terminAnsetzen,
+  teamMitgliederAbrufen,
+  terminFestlegen,
   terminAendern,
   terminEntfernen,
-  trainingErneutAnsetzen,
+  terminserieFestlegen,
+  terminDerSerieFolgen,
+  terminVerantwortlicheSetzen,
+  terminAusfallenLassen,
+  terminAusfallZuruecknehmen,
+  trainingZuordnen,
+  trainingLoesen,
 ] as const;
 
 export function registriereWerkzeuge(server: McpServer): void {

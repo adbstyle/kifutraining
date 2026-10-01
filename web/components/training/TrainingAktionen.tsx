@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
+  CalendarPlus,
   Download,
   Globe,
   Pencil,
@@ -20,12 +21,14 @@ import {
   Tooltip,
   type MenuItemDef,
 } from "@/components/ui";
+import { datumKurz } from "@/lib/zeit";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import {
   SichtbarkeitDialoge,
   type SichtbarkeitSchritt,
 } from "./SichtbarkeitDialoge";
 import { TrainingZielDialog, type KopieZielWahl } from "./TrainingZielDialog";
+import { TerminZuordnenAusTraining } from "./TerminZuordnenAusTraining";
 import {
   hatUeberlauf,
   trainingAktionsRechte,
@@ -70,6 +73,7 @@ export function TrainingAktionen({
   name,
   visibility,
   teamId,
+  terminDatum,
   angemeldet,
   bearbeitungsziel,
   teams,
@@ -84,6 +88,9 @@ export function TrainingAktionen({
   name: string;
   visibility: "public" | "private";
   teamId: string | null;
+  /** Der Termin, dem das Team-Training zugeordnet ist — der Löschdialog nennt
+   *  ihn, weil er bestehen bleibt. */
+  terminDatum?: string | null;
   angemeldet: boolean;
   bearbeitungsziel: Bearbeitungsziel | null;
   /** Die Teams des USERS — Ziele für Übernehmen und Ins-Team-Stellen. */
@@ -109,6 +116,7 @@ export function TrainingAktionen({
   const [zielWahl, setZielWahl] = useState<"uebernehmen" | "ins_team_stellen" | null>(
     null,
   );
+  const [terminZuordnen, setTerminZuordnen] = useState(false);
   const [loeschen, setLoeschen] = useState(false);
 
   const rechte = trainingAktionsRechte(
@@ -223,6 +231,12 @@ export function TrainingAktionen({
       icon: Users,
       onSelect: () => setZielWahl("ins_team_stellen"),
     });
+  if (rechte.terminZuordnen)
+    eintraege.push({
+      label: "Einem Team-Termin zuordnen",
+      icon: CalendarPlus,
+      onSelect: () => setTerminZuordnen(true),
+    });
   if (rechte.loeschen)
     eintraege.push({
       label: "Löschen",
@@ -301,6 +315,16 @@ export function TrainingAktionen({
         />
       )}
 
+      {rechte.terminZuordnen && (
+        <TerminZuordnenAusTraining
+          open={terminZuordnen}
+          trainingId={trainingId}
+          name={name}
+          teams={teams}
+          onClose={() => setTerminZuordnen(false)}
+        />
+      )}
+
       {rechte.loeschen && (
         <Dialog
           open={loeschen}
@@ -323,6 +347,11 @@ export function TrainingAktionen({
             Das Training „{name}" und alle seine Übungszuordnungen werden
             unwiderruflich gelöscht.
           </p>
+          {terminDatum && (
+            <p className="mt-3">
+              Der Termin am {datumKurz(terminDatum)} bleibt ohne Training im Trainingsplan des Teams bestehen.
+            </p>
+          )}
           {/* Beim öffentlichen Training ist das Löschen mehr als ein Aufräumen
               im eigenen Bestand: es verschwindet aus der Öffentlichkeit
               (Story A AK 8). */}

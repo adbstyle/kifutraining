@@ -47,8 +47,8 @@ export async function trainingAbrufen(
   if (!detail.ok) return detail;
   if (!detail.wert)
     return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.training, { feld: "training_id" });
-  // Termine tragen nur Team-Trainings (Trigger `termin_nur_fuer_team_trainings`)
-  // — bei persönlichen spart das die Abfrage.
+  // Nur Team-Trainings lassen sich einem Termin zuordnen (Trigger
+  // `termin_training_im_team`) — bei persönlichen spart das die Abfrage.
   const d = detail.wert;
   const termin = d.team
     ? await ohneWurf("trainingAbrufen/termin", () => getTerminZuTrainingFuer(supabase, d.id))
@@ -91,8 +91,16 @@ export type TrefferTermin = {
   id: string;
   datum: string;
   beginn: string | null;
+  ende: string | null;
   ort: string | null;
   bemerkung: string | null;
+  /** Die Terminserie des Termins; `null` bei einem einzelnen (#324). */
+  serieId: string | null;
+  /** Wer den Termin vorbereitet und leitet (#325 AK 16). */
+  verantwortliche: { userId: string | null; name: string | null; ehemalig: boolean }[];
+  /** Bei einem Training immer `false`/`null` (#327 AK 9) — die Gestalt bleibt wie im Plan. */
+  ausgefallen: boolean;
+  ausfallGrund: string | null;
   /** Heute oder später, am Trainingsort — wie der Plan teilt. */
   anstehend: boolean;
 };

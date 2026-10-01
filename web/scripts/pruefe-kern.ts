@@ -33,8 +33,8 @@
 //   npx tsx scripts/pruefe-kern.ts
 import assert from "node:assert/strict";
 import { isDeepStrictEqual } from "node:util";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { erscheinungsform_juniorenSlugs, erscheinungsformSlugs, hauptteilkategorieSlugs } from "../lib/vocab";
 import {
@@ -58,7 +58,12 @@ import {
   type UebungPatch,
   type UebungsZeile,
 } from "../lib/kern/uebung-inhalt";
-import { fachlicheMeldung, fehlerMeldung } from "../lib/training-bedingungen";
+import {
+  UEBUNGSFOLGE_MELDUNG,
+  VARIANTENFOLGE_MELDUNG,
+  fachlicheMeldung,
+  fehlerMeldung,
+} from "../lib/training-bedingungen";
 import {
   FREMDE_UEBUNG,
   FREMDES_TRAINING,
@@ -71,8 +76,41 @@ import { trainingAuskunft as auskunftRoh } from "../lib/kern/auskunft";
 import { TrainingAuskunftStreng } from "../lib/kern/auskunft-schema";
 import { zeitAbgleich } from "../lib/junioren";
 import { verteilungAus } from "../lib/gruppen";
-import { leerZuNull, terminProblem } from "../lib/termin";
+import {
+  TERMIN_MELDUNG,
+  KONFLIKT_MARKER,
+  ausfallProblem,
+  TERMIN_TEXT,
+  ZUORDNEN_ERFOLG,
+  geaenderteFelder,
+  kopieGebliebenText,
+  leerZuNull,
+  terminProblem,
+  zeitText,
+} from "../lib/termin";
+import {
+  SERIE_MELDUNG,
+  SERIE_TEXT,
+  alsKiWochentag,
+  alsWochentag,
+  erlaubteReichweiten,
+  maxEnddatum,
+  obergrenzeVorab,
+  regelAenderung,
+  regelProblemVorab,
+  serieProblem,
+  serienTage,
+  vergangeneBestaetigen,
+  wochentagVon,
+  wochentageText,
+  type Wochentag,
+} from "../lib/serie";
+import { ZEITRAUM_TEXT, istMonat, monatVon, monatsName, monatsRaster, plusMonate, tagText, zeitraumProblem } from "../lib/monat";
+import { planHref } from "../lib/team-ansicht";
+import { ABO_DAUER_MIN, aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
+import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
+import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
 
 let gelaufen = 0;
 
@@ -174,8 +212,8 @@ pruefe("fachlicheMeldung erklärt Marker, fehlerMeldung bleibt wortgleich", () =
     ],
     ["UEBUNGSFOLGE_ABSCHNITT_LEER", "In diesem Abschnitt steht keine Übung."],
     [
-      "TERMIN_NUR_FUER_TEAM_TRAININGS: Training x",
-      "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.",
+      "TERMIN_TRAINING_FREMDES_TEAM",
+      "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams oder deine persönlichen Trainings zuordnen.",
     ],
   );
   // #263: die Varianten-Marker, die der KI-Weg jetzt erreicht, und die der
@@ -474,6 +512,27 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
   assert.deepEqual(leer.gesamt[0].richtwert, { min_min: 90, max_min: 90, abweichung_min: 0 });
 });
 
+pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: false, ausfallGrund: null };
+  assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
+  assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
+  assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [] } }, "2026-10-01"), false);
+});
+
+pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst Ausfälle aus (#327)", () => {
+  assert.equal(ausfallProblem(null), null);
+  assert.equal(ausfallProblem("Platz gesperrt"), null);
+  assert.equal(ausfallProblem("x".repeat(500)), null);
+  assert.deepEqual(ausfallProblem("x".repeat(501)), { feld: "grund", text: TERMIN_TEXT.grundLang });
+  assert.equal(TERMIN_TEXT.grundLang, "Der Grund darf höchstens 500 Zeichen lang sein.");
+  assert.equal(TERMIN_MELDUNG.NICHT_AUSGEFALLEN, "Dieser Termin ist nicht ausgefallen.");
+  assert.ok(!KONFLIKT_MARKER.includes("TERMIN_AUSGEFALLEN"), "eine Regel, kein Konflikt");
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null,
+    training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: true, ausfallGrund: null };
+  assert.equal(nochNichtVorbereitet(t, "2026-10-01"), false, "AK 8");
+  assert.equal(nochNichtVorbereitet({ ...t, ausgefallen: false }, "2026-10-01"), true);
+});
+
 pruefe("Auskunft-Vertrag: das strenge Schema weist ein undeklariertes Feld ab", () => {
   const a = trainingAuskunft(training({}), { userId: ICH });
   assert.throws(() => TrainingAuskunftStreng.parse({ ...a, uebungszahl: 1 }));
@@ -485,19 +544,32 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
   const team = training({ ownerId: null, team: { id: "team1", name: "Ea" } });
   const termin = {
     id: "tt1",
+    teamId: "team1",
     datum: "2026-09-23",
     beginn: "18:30",
+    ende: "20:00",
     ort: "Allmend",
     bemerkung: null,
     training: { id: "t1", name: "Probe", stufen: ["F" as const] },
+    serie: null,
+    serienTag: null,
+    abweichungen: [],
+    verantwortliche: [],
+    ausgefallen: false,
+    ausfallGrund: null,
   };
   const heute = trainingAuskunft(team, { userId: ICH, termin, heute: "2026-09-23" });
   assert.deepEqual(heute.termin, {
     id: "tt1",
     datum: "2026-09-23",
     beginn: "18:30",
+    ende: "20:00",
     ort: "Allmend",
     bemerkung: null,
+    serie_id: null,
+    verantwortliche: [],
+    ausgefallen: false,
+    ausfall_grund: null,
     anstehend: true,
   });
   // Der heutige Tag zählt ganz zum Anstehenden — wie im Plan (`teilePlan`).
@@ -508,32 +580,287 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
   assert.throws(() => TrainingAuskunftStreng.parse({ ...heute, termin: { ...heute.termin, extra: 1 } }));
 });
 
-// ── Termin-Felder (#198 AK 7/8) ─────────────────────────────────────────────
-// Die Texte sind die bisherigen der Server Actions. Neu ist die echte
-// Kalenderprüfung: «2026-02-30» und «25:99» passten auf das Muster und
-// scheiterten erst in der Datenbank — als «liess sich nicht speichern».
-pruefe("terminProblem: gültig, leer, erfundene Tage und Uhrzeiten", () => {
-  const DATUM = { feld: "datum", text: "Bitte ein Datum angeben." };
-  const ZEIT = { feld: "beginn", text: "Bitte eine gültige Uhrzeit angeben." };
-  assert.equal(terminProblem({ datum: "2026-09-23" }), null);
-  assert.equal(terminProblem({ datum: "2028-02-29", beginn: "00:00" }), null, "Schalttag");
-  assert.equal(terminProblem({ datum: "2026-12-31", beginn: "23:59" }), null);
-  assert.equal(terminProblem({ datum: "2026-09-23", beginn: "" }), null, "leerer Beginn = keiner");
-  assert.equal(terminProblem({ datum: "2026-09-23", beginn: null }), null);
-  for (const datum of ["", undefined, null, "2026-02-30", "2027-02-29", "2026-13-01", "2026-04-31", "0000-01-01", "2026-9-3", "23.09.2026"])
-    assert.deepEqual(terminProblem({ datum }), DATUM, `Datum ${datum}`);
-  for (const beginn of ["25:99", "24:00", "18:60", "8:30", "18.30", "18:30:00"])
-    assert.deepEqual(terminProblem({ datum: "2026-09-23", beginn }), ZEIT, `Beginn ${beginn}`);
-  assert.equal(leerZuNull("  "), null);
-  assert.equal(leerZuNull(" Allmend "), "Allmend");
-  assert.equal(leerZuNull(undefined), null);
+// ── Monatsüberblick und KI-Zeitraum (#329 AK 13, 14) ─────────────────────────
+pruefe("Monat: Raster Montag–Sonntag, Wechsel, Name (#329)", () => {
+  const r = monatsRaster("2026-10");
+  assert.equal(r[0][0].tag, "2026-09-28", "beginnt am Montag vor dem 1.");
+  assert.equal(r[0][3].tag, "2026-10-01");
+  assert.ok(r.every((w) => w.length === 7));
+  assert.equal(r.at(-1)!.at(-1)!.tag, "2026-11-01");
+  assert.equal(plusMonate("2026-12", 1), "2027-01");
+  assert.equal(plusMonate("2026-01", -1), "2025-12");
+  assert.equal(monatsName("2026-10"), "Oktober 2026");
+  assert.equal(monatVon("2026-10-07"), "2026-10");
+  assert.equal(istMonat("2026-13"), false);
 });
 
-pruefe("Termin-Marker: vorab und aus der Datenbank derselbe Satz", () => {
-  const f = still(() => ausDbFehler({ message: "TERMIN_NUR_FUER_TEAM_TRAININGS" }));
-  assert.equal(f.art, "regel");
-  assert.equal(f.meldung, "Termine gibt es nur für Team-Trainings. Stelle das Training zuerst ins Team.");
+pruefe("Monat: Raster-Grenzfälle — Montag-Beginn, Sonntag-Ende, Februar, Schaltjahr, Jahreswechsel (#329)", () => {
+  const erstesUndLetztes = (m: string) => {
+    const r = monatsRaster(m);
+    return { wochen: r.length, erster: r[0][0].tag, letzter: r.at(-1)!.at(-1)!.tag, imMonat: r.flat().filter((t) => t.imMonat).length };
+  };
+  // Beginnt am Montag: keine Vorwoche.
+  assert.deepEqual(erstesUndLetztes("2026-06"), { wochen: 5, erster: "2026-06-01", letzter: "2026-07-05", imMonat: 30 });
+  // Endet am Sonntag: keine Zusatzwoche.
+  assert.deepEqual(erstesUndLetztes("2026-05"), { wochen: 5, erster: "2026-04-27", letzter: "2026-05-31", imMonat: 31 });
+  // Februar, Montag bis Sonntag: genau vier Wochen.
+  assert.deepEqual(erstesUndLetztes("2027-02"), { wochen: 4, erster: "2027-02-01", letzter: "2027-02-28", imMonat: 28 });
+  // Schaltjahr: der 29. Februar liegt im Raster.
+  assert.deepEqual(erstesUndLetztes("2028-02"), { wochen: 5, erster: "2028-01-31", letzter: "2028-03-05", imMonat: 29 });
+  assert.equal(monatsRaster("2028-02").flat().some((t) => t.tag === "2028-02-29" && t.imMonat), true);
+  // Sechs Wochen, wenn der Monat spät in der Woche beginnt und lang ist.
+  assert.equal(monatsRaster("2026-03").length, 6);
+  // Jahreswechsel, auch mehrfach und über ein Jahr hinaus.
+  assert.equal(plusMonate("2026-01", -13), "2024-12");
+  assert.equal(plusMonate("2026-01", -12), "2025-01");
+  assert.equal(plusMonate("2026-12", 13), "2028-01");
+  assert.equal(plusMonate("2026-03", -3), "2025-12");
+  assert.equal(monatsName("2028-02"), "Februar 2028");
+});
+
+pruefe("Monat: istMonat nimmt nur Monate mit tragfähigem Raster an (?monat= aus der Adresse)", () => {
+  for (const ok of ["2026-10", "2026-01", "2026-12", "0002-01", "9998-12"]) assert.equal(istMonat(ok), true, ok);
+  for (const schlecht of ["2026-1", "2026-00", "2026-13", "0000-01", "0001-01", "9999-12", "9999-01", "10000-01", "2026-10-01", "", "morgen"])
+    assert.equal(istMonat(schlecht), false, schlecht);
+  // Jeder zulässige Rand ergibt ein Raster nur aus gültigen Kalendertagen.
+  for (const m of ["0002-01", "9998-12"]) {
+    const tage = monatsRaster(m).flat().map((t) => t.tag);
+    assert.ok(tage.length >= 28 && tage.every((t) => zeitraumProblem(t, t) === null), `${m}: Raster aus gültigen Tagen`);
+  }
+});
+
+pruefe("Monat: tagText schreibt den Tag aus, ohne führende Null", () => {
+  assert.equal(tagText("2026-10-07"), "7. Oktober 2026");
+  assert.equal(tagText("2026-12-31"), "31. Dezember 2026");
+  assert.equal(tagText("2028-02-29"), "29. Februar 2028");
+});
+
+pruefe("planHref: die Eingrenzung reist auf jeder Adresse mit; der heutige Monat bleibt ungenannt (#329 PC 1, 2, 4)", () => {
+  const heute = "2026-10-15";
+  // Liste: nur die Eingrenzung, nie ein Monat.
+  assert.equal(planHref("t1", { ansicht: "liste", meine: false }, heute), "/team/t1");
+  assert.equal(planHref("t1", { ansicht: "liste", monat: "2026-11", meine: true }, heute), "/team/t1?meine=1");
+  // Monat: Ansicht, der Monat nur wenn er nicht der heutige ist, dazu die Eingrenzung.
+  assert.equal(planHref("t1", { ansicht: "monat", meine: false }, heute), "/team/t1?ansicht=monat");
+  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-10", meine: false }, heute), "/team/t1?ansicht=monat");
+  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-11", meine: false }, heute), "/team/t1?ansicht=monat&monat=2026-11");
+  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-11", meine: true }, heute), "/team/t1?ansicht=monat&monat=2026-11&meine=1");
+  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-10", meine: true }, heute), "/team/t1?ansicht=monat&meine=1");
+});
+
+pruefe("KI-Zeitraum: höchstens bis zum gleichen Kalendertag im Folgejahr (#329 AK 14, Review Focus 2)", () => {
+  assert.equal(zeitraumProblem("2026-10-01", "2027-10-01"), null);
+  assert.equal(zeitraumProblem("2028-02-29", "2029-02-28"), null);
+  assert.deepEqual(zeitraumProblem("2028-02-29", "2029-03-01"), { feld: "bis", text: ZEITRAUM_TEXT.zuLang });
+  assert.deepEqual(zeitraumProblem("2026-10-02", "2026-10-01"), { feld: "bis", text: ZEITRAUM_TEXT.bisVorVon });
+  assert.deepEqual(zeitraumProblem("2026-02-30", "2026-03-01"), { feld: "von", text: TERMIN_TEXT.datum });
+});
+
+// ── Termin-Felder (#322 AK 2, 5, 6, 8–10) ────────────────────────────────────
+pruefe("terminProblem: neuer Termin braucht Datum, Beginn und Ende", () => {
+  const ok = { datum: "2026-10-07", beginn: "18:30", ende: "20:00" };
+  assert.equal(terminProblem(ok), null);
+  assert.equal(terminProblem({ ...ok, datum: "2028-02-29" }), null, "Schalttag");
+  for (const datum of ["", undefined, "2026-02-30", "2027-02-29", "2026-13-01", "0000-01-01", "23.09.2026"])
+    assert.deepEqual(terminProblem({ ...ok, datum: datum as string }), { feld: "datum", text: TERMIN_TEXT.datum }, `Datum ${datum}`);
+  assert.deepEqual(terminProblem({ ...ok, beginn: "" }), { feld: "beginn", text: TERMIN_TEXT.zeitPflicht });
+  assert.deepEqual(terminProblem({ ...ok, ende: null }), { feld: "ende", text: TERMIN_TEXT.zeitPflicht });
+  for (const beginn of ["25:99", "24:00", "8:30", "18.30", "18:30:00"])
+    assert.deepEqual(terminProblem({ ...ok, beginn }), { feld: "beginn", text: TERMIN_TEXT.uhrzeit }, `Beginn ${beginn}`);
+  assert.deepEqual(terminProblem({ ...ok, ende: "18:30" }), { feld: "ende", text: TERMIN_TEXT.endeNachBeginn }, "gleich");
+  assert.deepEqual(terminProblem({ ...ok, ende: "17:00" }), { feld: "ende", text: TERMIN_TEXT.endeNachBeginn }, "davor");
+  assert.deepEqual(terminProblem({ ...ok, ort: "x".repeat(101) }), { feld: "ort", text: TERMIN_TEXT.ortLang });
+  assert.equal(terminProblem({ ...ok, ort: "x".repeat(100) }), null);
+  assert.deepEqual(terminProblem({ ...ok, bemerkung: "x".repeat(501) }), { feld: "bemerkung", text: TERMIN_TEXT.bemerkungLang });
+});
+
+pruefe("terminProblem: Bestand ohne vollständige Zeit bleibt änderbar, eine geänderte Zeit muss vollständig sein", () => {
+  const alt = { beginn: "18:30", ende: null };
+  // AK 9: Datum, Ort, Bemerkung ändern, ohne die Zeit zu ergänzen.
+  assert.equal(terminProblem({ datum: "2026-10-08", beginn: "18:30", ende: null, ort: "Halle" }, alt), null);
+  assert.equal(terminProblem({ datum: "2026-10-08", beginn: null, ende: null }, { beginn: null, ende: null }), null);
+  // AK 10: Wer die Zeit anfasst, muss sie vollständig geben.
+  assert.deepEqual(terminProblem({ datum: "2026-10-08", beginn: "19:00", ende: null }, alt), { feld: "ende", text: TERMIN_TEXT.zeitPflicht });
+  assert.equal(terminProblem({ datum: "2026-10-08", beginn: "19:00", ende: "20:30" }, alt), null);
+  // AK 8: Beginn und Ende lassen sich nicht leeren.
+  assert.deepEqual(
+    terminProblem({ datum: "2026-10-08", beginn: null, ende: null }, { beginn: "18:30", ende: "20:00" }),
+    { feld: "beginn", text: TERMIN_TEXT.zeitPflicht },
+  );
+  assert.equal(leerZuNull("  "), null);
+  assert.equal(leerZuNull(" Allmend "), "Allmend");
+});
+
+pruefe("Termin-Anzeige und -Marker: derselbe Satz vorab und aus der Datenbank", () => {
+  assert.equal(zeitText("18:30", "20:00"), "18:30–20:00");
+  assert.equal(zeitText("18:30", null), "ab 18:30");
+  assert.equal(zeitText(null, null), null);
+  for (const [marker, satz] of Object.entries(TERMIN_MELDUNG)) {
+    const f = still(() => ausDbFehler({ message: `${marker}` }));
+    assert.equal(f.meldung, satz, marker);
+  }
+  assert.match(kopieGebliebenText("Spielformen"), /«Spielformen» ist im Team-Bestand geblieben/);
   assert.equal(NICHT_GEFUNDEN.termin, "Termin nicht gefunden.");
+});
+
+pruefe("istVeraltet: trifft «seit der Auswahl geändert» und «gibt es nicht mehr», sonst nichts (PO 17)", () => {
+  // Jeder Konflikt-Marker — auch ein später ergänzter — und beide Nicht-gefunden-Sätze.
+  const saetze: Record<string, string> = { ...TERMIN_MELDUNG, ...SERIE_MELDUNG };
+  for (const m of KONFLIKT_MARKER) assert.ok(istVeraltet(saetze[m]), m);
+  assert.ok(istVeraltet(TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN));
+  assert.ok(istVeraltet(TERMIN_MELDUNG.TRAINING_NICHT_GEFUNDEN));
+  // Eine Meldung mit Zusatz (Kopie geblieben) bleibt veraltet: Präfix-Vergleich.
+  assert.ok(istVeraltet(`${TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT} ${kopieGebliebenText("Spielformen")}`));
+  // Regeln, die ein erneuter Versuch mit anderer Wahl löst, schliessen den Dialog nicht.
+  assert.ok(!istVeraltet(TERMIN_MELDUNG.TRAINING_SCHON_EINGEPLANT));
+  assert.ok(!istVeraltet(TERMIN_MELDUNG.NUR_KOPIE_BEI_VERGANGENEM));
+  assert.ok(!istVeraltet(TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM));
+  // Serien-Konflikte: Sätze aus SERIE_MELDUNG, Marker aus KONFLIKT_MARKER (#326).
+  assert.ok(KONFLIKT_MARKER.includes("SERIE_GEAENDERT") && KONFLIKT_MARKER.includes("SERIE_BELEGUNG_GEAENDERT"));
+  assert.ok(istVeraltet(SERIE_MELDUNG.SERIE_GEAENDERT));
+  assert.ok(istVeraltet(SERIE_MELDUNG.SERIE_BELEGUNG_GEAENDERT));
+  assert.ok(!istVeraltet(SERIE_MELDUNG.REICHWEITE_FEHLT));
+  assert.ok(!istVeraltet(SERIE_MELDUNG.KEINE_AENDERUNG));
+  assert.ok(!istVeraltet(undefined));
+  assert.ok(!istVeraltet(""));
+  assert.ok(!istVeraltet(TERMIN_TEXT.datum));
+});
+
+// ── Terminserien (#324 AK 2–6, #326 AK 5; Review Focus 2, 3) ─────────────────
+pruefe("Serie: Enddatum höchstens am gleichen Kalendertag des Folgejahres, 29.2. → 28.2.", () => {
+  assert.equal(maxEnddatum("2026-10-07"), "2027-10-07");
+  assert.equal(maxEnddatum("2028-02-29"), "2029-02-28");
+  assert.equal(maxEnddatum("2027-02-28"), "2028-02-28");
+  const gut = { wochentage: [2, 4] as Wochentag[], von: "2026-10-01", bis: "2027-03-31", beginn: "18:00", ende: "19:30" };
+  assert.equal(serieProblem(gut), null);
+  assert.equal(serieProblem({ ...gut, von: "2028-02-29", bis: "2029-02-28" }), null);
+  assert.deepEqual(serieProblem({ ...gut, von: "2028-02-29", bis: "2029-03-01" }), { feld: "bis", text: SERIE_TEXT.zuLang });
+  assert.deepEqual(serieProblem({ ...gut, bis: "2026-09-30" }), { feld: "bis", text: SERIE_TEXT.endeVorBeginn });
+  assert.deepEqual(serieProblem({ ...gut, wochentage: [] }), { feld: "wochentage", text: SERIE_TEXT.wochentage });
+  // AK 6: kein gewählter Wochentag im Zeitraum.
+  assert.deepEqual(serieProblem({ ...gut, wochentage: [6], von: "2026-10-05", bis: "2026-10-09" }), { feld: "wochentage", text: SERIE_TEXT.ohneTag });
+  assert.deepEqual(serieProblem({ ...gut, ende: "17:00" }), { feld: "ende", text: TERMIN_TEXT.endeNachBeginn });
+  assert.deepEqual(serieProblem({ ...gut, von: "2026-02-30" }), { feld: "von", text: TERMIN_TEXT.datum });
+});
+
+pruefe("Serie: Reichweiten je nach Änderung (#326 AK 1–4)", () => {
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
+  assert.deepEqual(erlaubteReichweiten({ datum: true, regel: false }), ["nur_dieser"]);
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: true }), ["dieser_und_folgende", "alle"]);
+  assert.equal(erlaubteReichweiten({ datum: true, regel: true }), null);
+  const alt = { wochentage: [4, 2] as Wochentag[], beginnDatum: "2026-10-01", endDatum: "2027-03-31" };
+  assert.equal(regelAenderung(alt, { wochentage: [2, 4], von: "2026-10-01", bis: "2027-03-31" }), null, "Reihenfolge zählt nicht");
+  assert.deepEqual(regelAenderung(alt, { wochentage: [2, 4], von: "2026-10-01", bis: "2027-06-30" }), { bis: "2027-06-30" }, "nur das Geänderte");
+  assert.deepEqual(regelAenderung(alt, { wochentage: [2, 5], von: "2026-09-01", bis: "2027-03-31" }), { wochentage: [2, 5], von: "2026-09-01" });
+  assert.equal(SERIE_TEXT.datumUndRegel, "Datum und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.");
+});
+
+pruefe("Termin: Wortlaut der Verantwortlichen-Meldungen (#325)", () => {
+  assert.equal(
+    TERMIN_MELDUNG.NICHT_MEHR_MITGLIED,
+    "Mindestens eine gewählte Person ist nicht mehr Mitglied des Teams. Sieh dir die Mitglieder noch einmal an.",
+  );
+  assert.equal(TERMIN_TEXT.verantwortlicheUngueltig, "Bitte nur Mitglieder des Teams als Verantwortliche wählen.");
+});
+
+pruefe("Serie: namenlose Verantwortliche nur für diesen Termin (#325 PC 8)", () => {
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false, namenlose: true }), ["nur_dieser"]);
+  assert.equal(erlaubteReichweiten({ datum: false, regel: true, namenlose: true }), null);
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false, namenlose: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
+  assert.equal(SERIE_TEXT.namenloseNurEinzeln, "Ehemalige Mitglieder ohne Namen lassen sich nur für diesen einen Termin entfernen.");
+  assert.equal(
+    SERIE_TEXT.namenloseUndRegel,
+    "Ehemalige Mitglieder ohne Namen und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
+  );
+});
+
+pruefe("Serie: Obergrenze vor der Wahl der Reichweite (#326 AK 5, PC 19; Review Focus 2)", () => {
+  const serie = { beginnDatum: "2028-02-01" };
+  // Beginn unverändert: Für «dieser und folgende» beginnt die Teilserie am Termin.
+  assert.equal(obergrenzeVorab(serie, { von: "2028-02-01" }, "2028-02-29"), "2029-02-28", "29.2. → 28.2.");
+  assert.equal(obergrenzeVorab(serie, { von: "2028-02-01" }, "2028-06-15"), "2029-06-15");
+  // Beginn verschoben: dann zählt er, für jede Reichweite.
+  assert.equal(obergrenzeVorab(serie, { von: "2028-02-29" }, "2028-06-15"), "2029-02-28");
+  // Ein verlegter Termin vor dem Serienbeginn weitet nichts.
+  assert.equal(obergrenzeVorab(serie, { von: "2028-02-01" }, "2028-01-20"), "2029-02-01");
+  const regel = { wochentage: [2] as Wochentag[], von: "2028-02-01", bis: "2029-02-20" };
+  assert.equal(regelProblemVorab(serie, regel, "2028-02-29"), null, "nur die engere Grenze («alle») verletzt");
+  assert.deepEqual(regelProblemVorab(serie, { ...regel, bis: "2029-03-01" }, "2028-02-29"), { feld: "bis", text: SERIE_TEXT.zuLang });
+  assert.deepEqual(regelProblemVorab(serie, { ...regel, von: "2028-02-29" }, "2028-06-15"), null, "verschobener Beginn, innerhalb");
+  assert.deepEqual(regelProblemVorab(serie, { ...regel, von: "2028-02-29", bis: "2029-03-01" }, "2028-06-15"), { feld: "bis", text: SERIE_TEXT.zuLang });
+  assert.deepEqual(regelProblemVorab(serie, { ...regel, wochentage: [] }, "2028-02-29"), { feld: "wochentage", text: SERIE_TEXT.wochentage });
+});
+
+pruefe("Serie: Rand der Jahre (9999) endet, kein fünfstelliges Jahr", () => {
+  // Früher lief plusTage("9999-12-31", 1) in «0NaN-…» und die Schleife endete nie.
+  const freitage = serienTage([5], "9998-12-31", "9999-12-31");
+  assert.equal(freitage.length, 53);
+  assert.equal(freitage[0], "9999-01-01", "9999-01-01 ist ein Freitag");
+  assert.equal(freitage.at(-1), "9999-12-31", "auch 9999-12-31");
+  assert.equal(maxEnddatum("9999-06-01"), "9999-12-31");
+  assert.equal(maxEnddatum("9998-12-31"), "9999-12-31");
+  assert.equal(serieProblem({ wochentage: [5], von: "9998-12-31", bis: "9999-12-31", beginn: "18:00", ende: "19:00" }), null);
+  assert.deepEqual(serienTage([1], "2026-10-05", "2026-10-05"), ["2026-10-05"], "ein Tag");
+});
+
+pruefe("Serie: Tage, Wochentage", () => {
+  assert.deepEqual(serienTage([2, 4], "2026-10-01", "2026-10-08"), ["2026-10-01", "2026-10-06", "2026-10-08"]);
+  assert.equal(wochentagVon("2026-10-04"), 7, "Sonntag");
+  assert.equal(wochentagVon("2026-10-05"), 1, "Montag");
+  // Zeitumstellung am 25.10.2026 verschiebt keinen Tag.
+  assert.deepEqual(serienTage([7], "2026-10-24", "2026-11-01"), ["2026-10-25", "2026-11-01"]);
+  assert.equal(wochentageText([2, 4]), "Di, Do");
+  assert.equal(alsWochentag("so"), 7);
+  assert.equal(alsKiWochentag(1), "mo");
+});
+
+pruefe("Serien-Marker: vorab und aus der Datenbank derselbe Satz", () => {
+  for (const [marker, satz] of Object.entries(SERIE_MELDUNG))
+    assert.equal(still(() => ausDbFehler({ message: marker })).meldung, satz, marker);
+  assert.equal(SERIE_MELDUNG.SERIE_OHNE_ZEITRAUM, TERMIN_TEXT.datum, "vorab und aus der Datenbank wortgleich");
+  assert.deepEqual(serieProblem({ wochentage: [2], von: "", bis: "2026-10-31" }), { feld: "von", text: SERIE_MELDUNG.SERIE_OHNE_ZEITRAUM });
+  assert.match(vergangeneBestaetigen(3), /3 vergangene Termine.*«bestaetigt: true»/);
+});
+
+pruefe("Serien-Marker: kein Marker steckt in einem anderen (includes-Suche bleibt eindeutig)", () => {
+  // Alle Tabellen, die `weitereMeldung` (training-bedingungen) per includes durchsucht.
+  const alle = [
+    ...Object.keys(UEBUNGSFOLGE_MELDUNG),
+    ...Object.keys(VARIANTENFOLGE_MELDUNG),
+    ...Object.keys(TERMIN_MELDUNG),
+    ...Object.keys(SERIE_MELDUNG),
+  ];
+  assert.equal(new Set(alle).size, alle.length, "Marker doppelt vergeben");
+  for (const a of alle)
+    for (const b of alle) if (a !== b) assert.ok(!b.includes(a), `${a} steckt in ${b}`);
+});
+
+pruefe("geaenderteFelder: nur Geändertes, Beginn und Ende als Paar, nichts geändert = null (PO 17)", () => {
+  const start = { datum: "2026-10-08", beginn: "18:30", ende: "20:00", ort: "Allmend", bemerkung: "" };
+  assert.equal(geaenderteFelder({ ...start }, start), null, "unverändert");
+  assert.equal(geaenderteFelder({ ...start, ort: " Allmend " }, start), null, "Leerraum ist keine Änderung");
+  assert.deepEqual(geaenderteFelder({ ...start, ort: "Halle" }, start), { ort: "Halle" });
+  assert.deepEqual(geaenderteFelder({ ...start, ort: "" }, start), { ort: "" }, "leeren");
+  assert.deepEqual(geaenderteFelder({ ...start, bemerkung: "Bälle" }, start), { bemerkung: "Bälle" });
+  assert.deepEqual(geaenderteFelder({ ...start, datum: "2026-10-09" }, start), { datum: "2026-10-09" });
+  assert.deepEqual(geaenderteFelder({ ...start, ende: "20:30" }, start), { beginn: "18:30", ende: "20:30" }, "Paar");
+  assert.deepEqual(geaenderteFelder({ ...start, beginn: "18:00" }, start), { beginn: "18:00", ende: "20:00" }, "Paar");
+  assert.deepEqual(
+    geaenderteFelder({ ...start, datum: "2026-10-09", ort: "Halle" }, start),
+    { datum: "2026-10-09", ort: "Halle" },
+    "Zeit bleibt draussen",
+  );
+  // Übernommener Termin ohne Zeit: unverändert heisst weiter «nichts senden».
+  const ohneZeit = { datum: "2026-10-08", beginn: "", ende: "", ort: "", bemerkung: "" };
+  assert.equal(geaenderteFelder({ ...ohneZeit }, ohneZeit), null);
+});
+
+pruefe("Erfolgstexte und Nicht-gefunden-Sätze haben je eine Quelle", () => {
+  assert.equal(ZUORDNEN_ERFOLG.kopie, "Kopie angelegt und dem Termin zugeordnet.");
+  assert.equal(ZUORDNEN_ERFOLG.direkt, "Training zugeordnet.");
+  assert.equal(ZUORDNEN_ERFOLG.persoenlich, "Kopie im Team angelegt und dem Termin zugeordnet.");
+  assert.equal(NICHT_GEFUNDEN.termin, TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN);
+  assert.equal(NICHT_GEFUNDEN.training, TERMIN_MELDUNG.TRAINING_NICHT_GEFUNDEN);
 });
 
 // ── Durchlauf (#194 AK 8, PC 3, NFR 1) ──────────────────────────────────────
@@ -1297,12 +1624,11 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
       }
       if (/\b(TrainingId|FassungId|GruppeId|VarianteId)\b/.test(eingabe))
         assert.ok(/\bKENNUNG_FEHLER\b/.test(block), `${m[1]} nimmt eine Kennung, erklärt aber KENNUNG_FEHLER nicht`);
-      // Dasselbe für Teams und Termine (#198 AK 11). «termin_entfernen» ist
-      // ausgenommen: Es kennt kein «nicht_gefunden» — ein fehlender Termin
-      // gilt als entfernt.
+      // Dasselbe für Teams und Termine (#198 AK 11; #322: auch «termin_entfernen»
+      // meldet «nicht gefunden»).
       if (/\bTeamId\b/.test(eingabe))
         assert.ok(block.includes("TEAM_KENNUNG_FEHLER"), `${m[1]} nimmt team_id, erklärt aber TEAM_KENNUNG_FEHLER nicht`);
-      if (/\bTerminId\b/.test(eingabe) && m[1] !== "terminEntfernen")
+      if (/\bTerminId\b/.test(eingabe))
         assert.ok(block.includes("TERMIN_KENNUNG_FEHLER"), `${m[1]} nimmt termin_id, erklärt aber TERMIN_KENNUNG_FEHLER nicht`);
     }
   }
@@ -1335,18 +1661,129 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#195": ["training_hinweise_abrufen"],
     "#196": ["training_veroeffentlichen", "training_auf_entwurf_setzen"],
     "#197": ["training_kopieren", "training_loeschen"],
-    "#198": [
-      "teams_abrufen",
-      "team_plan_abrufen",
-      "termin_ansetzen",
-      "termin_aendern",
-      "termin_entfernen",
-      "training_erneut_ansetzen",
-    ],
+    "#198": ["teams_abrufen", "team_plan_abrufen"],
+    "#322": ["termin_festlegen", "termin_aendern", "termin_entfernen"],
+    "#323": ["training_zuordnen", "training_loesen"],
+    "#324": ["terminserie_festlegen"],
+    "#326": ["termin_der_serie_folgen"],
+    "#325": ["team_mitglieder_abrufen", "termin_verantwortliche_setzen"],
+    "#327": ["termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen"],
+    "#329": ["team_plan_abrufen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
+});
+
+/** Alle .ts/.tsx-Dateien unter einem Ordner, ohne node_modules und .next. */
+function quelldateien(wurzel: string): string[] {
+  return readdirSync(wurzel, { recursive: true, encoding: "utf8" })
+    .filter((d) => /\.tsx?$/.test(d) && !/(^|\/)(node_modules|\.next)(\/|$)/.test(d))
+    .map((d) => join(wurzel, d));
+}
+
+pruefe("Kein «ansetzen» mehr in Oberfläche und KI-Texten (#323 PC 11)", () => {
+  const treffer: string[] = [];
+  for (const wurzel of ["app", "components", "lib/mcp", "lib/kern", "lib/actions", "lib/termin.ts", "lib/serie.ts", "lib/veraltet.ts", "lib/monat.ts", "lib/team-ansicht.ts"].map((p) => join(web, p)))
+    for (const datei of existsSync(wurzel) && statSync(wurzel).isDirectory() ? quelldateien(wurzel) : existsSync(wurzel) ? [wurzel] : [])
+      readFileSync(datei, "utf8").split("\n").forEach((zeile, i) => {
+        // Kommentare sieht niemand; geprüft wird, was Oberfläche und KI sagen.
+        if (/^\s*(\*|\/\/|\/\*)/.test(zeile)) return;
+        const ohneKommentar = zeile.replace(/\/\/.*$/, "").replace(/\/\*.*?\*\//g, "");
+        if (/ansetz|angesetzt|Ansetz|Angesetzt/.test(ohneKommentar)) treffer.push(`${relative(web, datei)}:${i + 1}`);
+      });
+  assert.deepEqual(treffer, [], `«ansetzen» steht noch in: ${treffer.join(", ")}`);
+});
+
+const ABO_JETZT = new Date("2026-10-01T10:00:00Z");
+const aboTermin = (t: Partial<AboTermin> & { id: string }): AboTermin => ({
+  datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, geaendert: "2026-09-30T08:00:00Z", ...t,
+});
+const aboText = (termine: AboTermin[]) =>
+  kalenderText({ kalenderName: "Training · FC Test", titel: "Training · FC Test", teamId: "team", origin: "https://ki-fu.ch", jetzt: ABO_JETZT, termine });
+
+pruefe("Abo: Wanduhrzeit mit TZID, ganztägig ohne Beginn, 90 Minuten ohne Ende, über Mitternacht (#330 PC 2–4, Review Focus 1)", () => {
+  const text = aboText([
+    { id: "a", datum: "2027-03-28", beginn: "02:30", ende: "04:00", ort: "Halle; Nord, 2", geaendert: "2026-09-30T08:00:00Z" },
+    { id: "b", datum: "2026-10-07", beginn: "23:00", ende: null, ort: null, geaendert: "2026-09-30T08:00:00Z" },
+    { id: "c", datum: "2026-10-08", beginn: null, ende: null, ort: null, geaendert: "2026-09-30T08:00:00Z" },
+  ]);
+  assert.ok(text.includes("BEGIN:VTIMEZONE\r\nTZID:Europe/Zurich"));
+  assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20270328T023000"), "Wanduhrzeit, nicht UTC");
+  assert.ok(text.includes("DTEND;TZID=Europe/Zurich:20261008T003000"), "23:00 + 90 Min. endet am Folgetag");
+  assert.ok(text.includes("DTSTART;VALUE=DATE:20261008\r\nDTEND;VALUE=DATE:20261009\r\nTRANSP:TRANSPARENT"), "ganztägig, nicht belegt");
+  assert.ok(text.includes("LOCATION:Halle\\; Nord\\, 2"), "Escaping");
+  assert.ok(text.includes("UID:a@ki-fu.ch"));
+  assert.ok(text.includes("URL:https://ki-fu.ch/team/team/termin/a"));
+  assert.ok(!/DESCRIPTION:(?!https:\/\/ki-fu\.ch\/team\/team\/termin\/)/.test(text), "PC 2: nur der Verweis");
+  assert.ok(text.split("\r\n").every((z) => new TextEncoder().encode(z).length <= 75), "gefaltet");
+  assert.ok(text.endsWith("END:VCALENDAR\r\n"));
+});
+
+pruefe("Abo: Kopf, Zeitstempel und CRLF überall (RFC 5545, AK 2)", () => {
+  const text = aboText([aboTermin({ id: "a", geaendert: "2026-09-30T08:15:30.123456+00:00" })]);
+  assert.ok(text.startsWith("BEGIN:VCALENDAR\r\nVERSION:2.0\r\n"));
+  for (const zeile of ["PRODID:-//KiFu//Team-Kalender//DE", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:Training · FC Test", "X-WR-TIMEZONE:Europe/Zurich"])
+    assert.ok(text.includes(`\r\n${zeile}\r\n`), zeile);
+  assert.ok(text.includes("\r\nDTSTAMP:20261001T100000Z\r\n"), "DTSTAMP UTC aus jetzt");
+  assert.ok(text.includes("\r\nLAST-MODIFIED:20260930T081530Z\r\n"), "LAST-MODIFIED UTC aus geaendert");
+  assert.ok(!/(^|[^\r])\n/.test(text), "kein nacktes LF");
+  assert.ok(!text.includes("\r\nLOCATION"), "kein Ort, keine LOCATION-Zeile");
+  assert.equal((text.match(/BEGIN:VEVENT/g) ?? []).length, 1);
+  assert.equal(aboDatei("tok"), "tok.ics");
+  assert.equal(aboPfad("tok"), "/api/kalender/tok.ics");
+});
+
+pruefe("Abo: aboLinks — https und http werden zu webcal:, der Pfad bleibt", () => {
+  assert.deepEqual(aboLinks("https://ki-fu.ch", "tok"), {
+    url: "https://ki-fu.ch/api/kalender/tok.ics",
+    webcal: "webcal://ki-fu.ch/api/kalender/tok.ics",
+  });
+  assert.deepEqual(aboLinks("http://127.0.0.1:3000", "tok"), {
+    url: "http://127.0.0.1:3000/api/kalender/tok.ics",
+    webcal: "webcal://127.0.0.1:3000/api/kalender/tok.ics",
+  });
+});
+
+pruefe("Abo: Ende nicht nach Beginn gilt wie «ohne Ende» (nie DTEND vor DTSTART)", () => {
+  for (const ende of ["18:00", "17:00"]) {
+    const text = aboText([aboTermin({ id: "a", beginn: "18:00", ende })]);
+    assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20261007T180000\r\nDTEND;TZID=Europe/Zurich:20261007T193000"), `ende ${ende}`);
+  }
+  assert.equal(ABO_DAUER_MIN, 90);
+  // Zeiten mit Sekunden (time-Spalte) gehen als HH:MM durch.
+  const mitSekunden = aboText([aboTermin({ id: "a", beginn: "18:00:00", ende: "19:30:00" })]);
+  assert.ok(mitSekunden.includes("DTSTART;TZID=Europe/Zurich:20261007T180000\r\nDTEND;TZID=Europe/Zurich:20261007T193000"));
+});
+
+pruefe("Abo: Ohne Termine bleibt es ein gültiger Kalender samt Zeitzone", () => {
+  const text = aboText([]);
+  assert.ok(text.startsWith("BEGIN:VCALENDAR\r\n") && text.endsWith("END:VTIMEZONE\r\nEND:VCALENDAR\r\n"));
+  assert.ok(!text.includes("BEGIN:VEVENT"));
+});
+
+pruefe("Abo: Semikolon, Komma, Backslash und Zeilenumbruch im Text werden maskiert", () => {
+  assert.equal(textEscape("a;b,c\\d\ne\r\nf"), "a\\;b\\,c\\\\d\\ne\\nf");
+  const text = kalenderText({ kalenderName: "Kids; U9, A\nB", titel: "Training; X, Y\nZ", teamId: "t", origin: "https://ki-fu.ch", jetzt: ABO_JETZT, termine: [aboTermin({ id: "a" })] });
+  assert.ok(text.includes("\r\nSUMMARY:Training\\; X\\, Y\\nZ\r\n"));
+  assert.ok(text.includes("\r\nX-WR-CALNAME:Kids\\; U9\\, A\\nB\r\n"));
+});
+
+pruefe("Abo: Faltung zählt Oktette, nicht Zeichen", () => {
+  const z = "SUMMARY:" + "ä".repeat(60);
+  const f = falten(z).split("\r\n");
+  assert.ok(f.every((l) => new TextEncoder().encode(l).length <= 75));
+  assert.equal(f.map((l, i) => (i ? l.slice(1) : l)).join(""), z);
+});
+
+pruefe("Abo: Eine lange URL-Zeile wird gefaltet und fügt sich wieder zusammen", () => {
+  const origin = "https://" + "sehr-lange-adresse.".repeat(6) + "ki-fu.ch";
+  const text = kalenderText({ kalenderName: "K", titel: "T", teamId: "t", origin, jetzt: ABO_JETZT, termine: [aboTermin({ id: "a" })] });
+  const zeilen = text.split("\r\n");
+  assert.ok(zeilen.every((l) => new TextEncoder().encode(l).length <= 75), "alle Zeilen ≤ 75 Oktette");
+  const entfaltet = text.replace(/\r\n /g, "");
+  assert.ok(entfaltet.includes(`\r\nURL:${origin}/team/t/termin/a\r\n`), "URL entfaltet vollständig");
+  assert.ok(zeilen.some((l) => l.startsWith(" ")), "es wurde tatsächlich gefaltet");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

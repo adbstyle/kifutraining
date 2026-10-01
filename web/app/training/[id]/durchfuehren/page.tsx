@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTrainingView } from "@/lib/queries/trainings";
-import { getTerminZuTraining } from "@/lib/queries/termine";
+import { getTerminZuTraining, verantwortlichenNamen } from "@/lib/queries/termine";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { TrainingDurchfuehren } from "@/components/training/TrainingDurchfuehren";
 import { trainingsKrumen } from "@/lib/brotkrumen";
@@ -46,8 +46,10 @@ export default async function TrainingDurchfuehrenPage({
           ? {
               datum: termin.datum,
               beginn: termin.beginn,
+              ende: termin.ende,
               ort: termin.ort,
               bemerkung: termin.bemerkung,
+              verantwortliche: verantwortlichenNamen(termin.verantwortliche),
             }
           : undefined
       }

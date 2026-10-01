@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
+import type { Wochentag } from "@/lib/serie";
 import { sortStufen } from "@/lib/training";
+import { heuteAmTrainingsort } from "@/lib/zeit";
 import type { KategorieSlug } from "@/lib/vocab";
 
 /**
@@ -11,36 +13,127 @@ import type { KategorieSlug } from "@/lib/vocab";
  * Die Cookie-Wrapper (`getTeamPlan`, `getTerminZuTraining`) bleiben in
  * termine.ts; die Typen und reinen Helfer werden dort weiter exportiert.
  *
- * Ein Termin hängt an genau einem Team-Training (UNIQUE) — das erneute
- * Ansetzen kopiert deshalb, statt den Termin zu verschieben. Datum und Beginn
- * sind bewusst ohne Zeitzone gespeichert: gemeint ist die Uhrzeit am
- * Trainingsort, nicht ein Zeitpunkt in UTC. Sichtbar sind Termine nur
- * Mitgliedern des Teams (RLS `tt_select`).
+ * Ein Termin gehört dem Team; das Training ist freiwillig (#322). Trägt er
+ * eines, ist es ihm genau einmal zugeordnet (UNIQUE `training_id`) — ein
+ * weiteres Training für einen anderen Tag entsteht als Kopie, der Termin wird
+ * nicht verschoben. Datum, Beginn und Ende sind bewusst ohne Zeitzone
+ * gespeichert: gemeint ist die Uhrzeit am Trainingsort, nicht ein Zeitpunkt in
+ * UTC. Sichtbar sind Termine nur Mitgliedern des Teams (RLS `tt_select`).
  */
+
+/** Die Regel und die Werte der Serie, zu der ein Termin gehört (#324, #326). */
+export type TerminSerie = {
+  id: string;
+  version: number;
+  wochentage: Wochentag[];
+  beginnDatum: string;
+  endDatum: string;
+  beginn: string;
+  ende: string;
+  ort: string | null;
+  bemerkung: string | null;
+  /** Wer die Serie vorgibt (#325), nach Name geordnet. */
+  verantwortliche: { userId: string; name: string }[];
+};
+
+/** Ein Eintrag der Verantwortlichen eines Termins (#325). */
+export type Verantwortlicher = {
+  eintragId: string;
+  /** `null`: ein gelöschtes Konto (#325 PC 8). */
+  userId: string | null;
+  /** Der aktuelle Anzeigename (AK 12); `null` bei gelöschtem Konto. */
+  name: string | null;
+  /** Nicht mehr im Team (oder Konto gelöscht). */
+  ehemalig: boolean;
+};
+
+/** Welche Angaben eines Serientermins von seiner Serie abweichen (#326 AK 12,
+ *  14; PO 3). Das Datum weicht ab, wenn der Termin nicht mehr an seinem
+ *  Serientag liegt. */
+export type Abweichung = "datum" | "zeit" | "ort" | "bemerkung" | "verantwortliche";
 
 export type TerminZeile = {
   id: string;
+  teamId: string;
   datum: string;
-  /** `HH:MM`, wenn erfasst — der Beginn ist optional (AK 17). */
+  /** `HH:MM`. Neue Termine tragen Beginn und Ende immer; übernommene können
+   *  ohne sein (#322 PO 9). */
   beginn: string | null;
+  ende: string | null;
   ort: string | null;
   bemerkung: string | null;
-  training: { id: string; name: string; stufen: KategorieSlug[] };
+  /** `null`: Der Termin trägt (noch) kein Training (#322). */
+  training: { id: string; name: string; stufen: KategorieSlug[] } | null;
+  /** `null`: ein einzelner Termin ohne Serie. */
+  serie: TerminSerie | null;
+  /** Der Tag der Serienregel, für den der Termin angelegt wurde. */
+  serienTag: string | null;
+  /** Leer für einzelne Termine und Serientermine ohne Abweichung. */
+  abweichungen: Abweichung[];
+  /** Wer den Termin vorbereitet und leitet (#325), nach Name geordnet,
+   *  Einträge gelöschter Konten zuletzt. */
+  verantwortliche: Verantwortlicher[];
+  /** Der Termin findet nicht statt (#327); er trägt dann kein Training. */
+  ausgefallen: boolean;
+  /** Freiwilliger Grund des Ausfalls; nur bei `ausgefallen`. */
+  ausfallGrund: string | null;
 };
+
+/** Ist dieses Konto für den Termin verantwortlich? (#325 AK 11) */
+export function istVerantwortlich(t: TerminZeile, userId: string): boolean {
+  return t.verantwortliche.some((v) => v.userId === userId);
+}
+
+/** Wie ein Eintrag ohne Namen (gelöschtes Konto, PC 8) überall heisst. */
+export const EHEMALIGES_MITGLIED = "Ehemaliges Mitglied";
+
+/** Die Verantwortlichen als Namen zum Anzeigen, in der Reihenfolge des
+ *  Lesepfads (AK 10, 12). Einträge gelöschter Konten stehen namenlos als
+ *  ehemaliges Mitglied da. */
+export function verantwortlichenNamen(liste: readonly Verantwortlicher[]): string[] {
+  return liste.map((v) => v.name ?? EHEMALIGES_MITGLIED);
+}
 
 type RawTermin = {
   id: string;
+  team_id: string;
   datum: string;
   beginn: string | null;
+  ende: string | null;
   ort: string | null;
   bemerkung: string | null;
   created_at: string;
-  trainings: { id: string; name: string; stufen: string[] | null; team_id: string };
+  serien_tag: string | null;
+  zeit_abweichend: boolean;
+  ort_abweichend: boolean;
+  bemerkung_abweichend: boolean;
+  verantwortliche_abweichend: boolean;
+  ausgefallen: boolean;
+  ausfall_grund: string | null;
+  termin_verantwortliche: {
+    id: string;
+    user_id: string | null;
+    verantwortlich_name: string | null;
+    verantwortlich_ehemalig: boolean;
+  }[];
+  trainings: { id: string; name: string; stufen: string[] | null } | null;
+  termin_serien: {
+    id: string;
+    version: number;
+    wochentage: number[];
+    beginn_datum: string;
+    end_datum: string;
+    beginn: string;
+    ende: string;
+    ort: string | null;
+    bemerkung: string | null;
+    termin_serien_verantwortliche: { user_id: string; verantwortlich_name: string | null }[];
+  } | null;
 };
 
-/** Beginn auf `HH:MM` kürzen — Postgres liefert `HH:MM:SS`.
+/** Beginn oder Ende auf `HH:MM` kürzen — Postgres liefert `HH:MM:SS`.
  *
- *  Exportiert, weil jede Abfrage, die einen Beginn ausliefert, ihn so kürzen
+ *  Exportiert, weil jede Abfrage, die eine Uhrzeit ausliefert, sie so kürzen
  *  MUSS: das Zeitfeld der Oberfläche und die serverseitige Prüfung akzeptieren
  *  ausschliesslich `HH:MM`. Ein roh durchgereichter Wert wird sonst erst beim
  *  Speichern als «ungültige Uhrzeit» abgewiesen. */
@@ -49,48 +142,161 @@ export function kurzeZeit(t: string | null): string | null {
 }
 
 const TERMIN_SELECT =
-  "id, datum, beginn, ort, bemerkung, created_at, trainings!inner ( id, name, stufen, team_id )";
+  "id, team_id, datum, beginn, ende, ort, bemerkung, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, ausgefallen, ausfall_grund, " +
+  "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ), " +
+  "trainings ( id, name, stufen ), " +
+  "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, " +
+  "termin_serien_verantwortliche ( user_id, verantwortlich_name ) )";
+
+/** Nach Anzeigename ordnen, unbenannte (gelöschte Konten) zuletzt. Der Schlüssel
+ *  (Eintrags- bzw. Konto-Kennung) macht die Reihenfolge bei gleichem Namen stabil. */
+export function nachName<T>(liste: T[], name: (x: T) => string | null, schluessel: (x: T) => string): T[] {
+  return [...liste].sort((a, b) => {
+    const [x, y] = [name(a), name(b)];
+    if (x === null || y === null) {
+      if (x !== y) return x === null ? 1 : -1;
+    } else {
+      const n = x.localeCompare(y, "de");
+      if (n !== 0) return n;
+    }
+    return schluessel(a).localeCompare(schluessel(b));
+  });
+}
 
 function mapTermin(t: RawTermin): TerminZeile {
   return {
     id: t.id,
+    teamId: t.team_id,
     datum: t.datum,
     beginn: kurzeZeit(t.beginn),
+    ende: kurzeZeit(t.ende),
     ort: t.ort,
     bemerkung: t.bemerkung,
-    training: {
-      id: t.trainings.id,
-      name: t.trainings.name,
-      stufen: sortStufen(t.trainings.stufen ?? []),
-    },
+    training: t.trainings
+      ? { id: t.trainings.id, name: t.trainings.name, stufen: sortStufen(t.trainings.stufen ?? []) }
+      : null,
+    serie: t.termin_serien
+      ? {
+          id: t.termin_serien.id,
+          version: t.termin_serien.version,
+          wochentage: t.termin_serien.wochentage as Wochentag[],
+          beginnDatum: t.termin_serien.beginn_datum,
+          endDatum: t.termin_serien.end_datum,
+          beginn: kurzeZeit(t.termin_serien.beginn)!,
+          ende: kurzeZeit(t.termin_serien.ende)!,
+          ort: t.termin_serien.ort,
+          bemerkung: t.termin_serien.bemerkung,
+          verantwortliche: nachName(
+            (t.termin_serien.termin_serien_verantwortliche ?? []).map((v) => ({
+              userId: v.user_id,
+              name: v.verantwortlich_name ?? "",
+            })),
+            (v) => v.name,
+            (v) => v.userId,
+          ),
+        }
+      : null,
+    serienTag: t.serien_tag,
+    abweichungen: t.termin_serien
+      ? ([
+          t.serien_tag !== t.datum && "datum",
+          t.zeit_abweichend && "zeit",
+          t.ort_abweichend && "ort",
+          t.bemerkung_abweichend && "bemerkung",
+          t.verantwortliche_abweichend && "verantwortliche",
+        ].filter(Boolean) as Abweichung[])
+      : [],
+    verantwortliche: nachName(
+      (t.termin_verantwortliche ?? []).map((v) => ({
+        eintragId: v.id,
+        userId: v.user_id,
+        name: v.user_id === null ? null : v.verantwortlich_name,
+        ehemalig: v.verantwortlich_ehemalig,
+      })),
+      (v) => v.name,
+      (v) => v.eintragId,
+    ),
+    ausgefallen: t.ausgefallen,
+    ausfallGrund: t.ausfall_grund,
   };
 }
 
+/** Obergrenze je Abschnitt: PostgREST kappt jede Antwort bei `max_rows` (1000,
+ *  supabase/config.toml). Eine einzige aufsteigende Abfrage schnitte bei vielen
+ *  Terminen die NEUESTEN ab — die anstehenden verschwänden still. Darum zwei
+ *  Abfragen, je ab der Grenze «heute» nach aussen; das Limit trifft so nur die
+ *  fernste Zukunft bzw. die älteste Vergangenheit. */
+const PLAN_OBERGRENZE = 1000;
+
 /** Der Trainingsplan eines Teams: alle Termine chronologisch aufsteigend.
  *
- *  Ein Select mit Embed statt zwei Abfragen — der Plan soll auch bei hundert
- *  Terminen in einem Rutsch stehen. Sortiert wird in der DB nach Datum und
- *  Beginn (ohne Beginn zuletzt am selben Tag); `created_at` ist der stabile
- *  Tiebreaker, damit zwei gleich angesetzte Termine nicht bei jedem Laden die
- *  Plätze tauschen. */
+ *  Zwei Abfragen statt einer (siehe `PLAN_OBERGRENZE`): anstehend (Datum ab
+ *  `heute`, aufsteigend) und vergangen (Datum vor `heute`, absteigend, die
+ *  jüngsten zuerst); die Vergangenheit wird danach umgedreht und vorangestellt.
+ *  Das Embed holt Training und Serie im selben Rutsch. Sortiert wird in der DB
+ *  nach Datum und Beginn (ohne Beginn zuletzt am selben Tag); `created_at` ist
+ *  der stabile Tiebreaker, damit zwei gleich eingeplante Termine nicht bei
+ *  jedem Laden die Plätze tauschen. `teilePlan` ordnet die Vergangenheit
+ *  anschliessend selbst. */
 export async function getTeamPlanFuer(
   supabase: SupabaseClient,
   teamId: string,
+  o: {
+    /** Der Tag der Grenze «anstehend»/«vergangen»; Standard: heute am Trainingsort. */
+    heute?: string;
+    /** Nur Termine, für die dieses Konto (userId) verantwortlich ist (#325 AK 11). */
+    nurMeine?: string;
+    /** Nur Termine ab diesem Tag und/oder bis zu diesem Tag, beide eingeschlossen (#329). */
+    von?: string;
+    bis?: string;
+  } = {},
 ): Promise<TerminZeile[]> {
+  const heute = o.heute ?? heuteAmTrainingsort();
   // Ungültige UUID würde die Query mit Fehler abbrechen; defensiv abfangen.
   // Der Guard im Layout greift hier nicht — Layout und Page rendern parallel;
   // die leere Liste verhindert den 500 vor dem Redirect.
   if (!istUuid(teamId)) return [];
-  const { data, error } = await supabase
-    .from("training_termine")
-    .select(TERMIN_SELECT)
-    .eq("trainings.team_id", teamId)
-    .order("datum", { ascending: true })
-    .order("beginn", { ascending: true, nullsFirst: false })
-    .order("created_at", { ascending: true });
-  if (error) throw error;
+  // Der Zeitraum gilt für beide Abfragen; die Grenze «heute» und die
+  // Obergrenze je Seite (`PLAN_OBERGRENZE`) bleiben davon unberührt.
+  const basis = () => {
+    let q = supabase.from("training_termine").select(TERMIN_SELECT).eq("team_id", teamId);
+    if (o.von) q = q.gte("datum", o.von);
+    if (o.bis) q = q.lte("datum", o.bis);
+    return q;
+  };
+  const [anstehend, vergangen] = await Promise.all([
+    basis()
+      .gte("datum", heute)
+      .order("datum", { ascending: true })
+      .order("beginn", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: true })
+      .limit(PLAN_OBERGRENZE),
+    basis()
+      .lt("datum", heute)
+      .order("datum", { ascending: false })
+      .order("beginn", { ascending: false, nullsFirst: true })
+      .order("created_at", { ascending: false })
+      .limit(PLAN_OBERGRENZE),
+  ]);
+  if (anstehend.error) throw anstehend.error;
+  if (vergangen.error) throw vergangen.error;
 
-  return ((data ?? []) as unknown as RawTermin[]).map(mapTermin);
+  const kommend = (anstehend.data ?? []) as unknown as RawTermin[];
+  const davor = (vergangen.data ?? []) as unknown as RawTermin[];
+  if (kommend.length >= PLAN_OBERGRENZE || davor.length >= PLAN_OBERGRENZE) {
+    console.warn(`getTeamPlanFuer: Obergrenze von ${PLAN_OBERGRENZE} Terminen erreicht (Team ${teamId}).`);
+  }
+  // Die Vergangenheit kam absteigend; umgedreht ergibt sie wieder die
+  // aufsteigende Reihenfolge inkl. Beginn-ohne-Zeit-zuletzt und created_at.
+  const alle = [...davor.reverse(), ...kommend].map(mapTermin);
+  const meine = o.nurMeine;
+  return meine ? alle.filter((t) => istVerantwortlich(t, meine)) : alle;
+}
+
+/** «Noch nicht vorbereitet» (Epic PO 7): anstehend, ohne Training und nicht
+ *  ausgefallen (#327 AK 8). */
+export function nochNichtVorbereitet(t: TerminZeile, heute: string): boolean {
+  return t.datum >= heute && t.training === null && !t.ausgefallen;
 }
 
 /** Ein Trainingsplan, geteilt in Kommendes und Vergangenes (Story 18). */
@@ -103,7 +309,7 @@ export type Plan = { kommend: TerminZeile[]; vergangen: TerminZeile[] };
  *  Sie sollen auch rückwärts betrachtet hinter denen mit Beginn bleiben.
  *  `Array.sort` ist stabil, und die Liste kommt bereits nach `created_at`
  *  geordnet aus der Datenbank; damit bleibt die Reihenfolge zweier gleich
- *  angesetzter Termine über wiederholte Aufrufe dieselbe. */
+ *  eingeplanter Termine über wiederholte Aufrufe dieselbe. */
 function juengsteZuerst(a: TerminZeile, b: TerminZeile): number {
   if (a.datum !== b.datum) return a.datum < b.datum ? 1 : -1;
   if (a.beginn === b.beginn) return 0;
@@ -132,8 +338,8 @@ export function teilePlan(termine: TerminZeile[], heute: string): Plan {
   };
 }
 
-/** Der Termin eines einzelnen Trainings, falls es einen hat. Für den Kopf der
- *  Durchführen-Ansicht (AK 19) und die Vorbelegung beim erneuten Ansetzen. */
+/** Der Termin, dem ein Training zugeordnet ist, falls es einen hat. Für den
+ *  Kopf der Durchführen-Ansicht (AK 19). */
 export async function getTerminZuTrainingFuer(
   supabase: SupabaseClient,
   trainingId: string,

@@ -58,8 +58,8 @@ export async function uebernimmZuMir(teamTrainingId: string): Promise<TeamTraini
   return r;
 }
 
-/** Ein Training aus dem Team-Bestand entfernen (AK 7). Ein angesetzter Termin
- *  entfällt dabei — die Kaskade nimmt ihn mit; der Dialog nennt ihn vorher.
+/** Ein Training aus dem Team-Bestand entfernen (AK 7). Ein zugeordneter Termin
+ *  bleibt dabei ohne Training im Kalender; der Dialog nennt ihn vorher.
  *  Persönliche Kopien, die jemand übernommen hat, bleiben unberührt. */
 export async function entferneTeamTraining(
   teamTrainingId: string,
