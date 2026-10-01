@@ -1952,8 +1952,12 @@ export default function Styleguide() {
           Zeile aus dem Kit: ein <code>TextField</code> mit{" "}
           <code>readOnly</code> und ein tonaler <code>Button</code> daneben.
           Das Feld wählt beim Fokus alles aus, damit sich der Link auch von
-          Hand kopieren lässt; das Ergebnis des Knopfes meldet die Snackbar —
-          sichtbar und vorlesbar. Ist der Link ein Geheimnis, geht die Warnung
+          Hand kopieren lässt. Das Ergebnis des Knopfes erscheint{" "}
+          <strong>im Dialog</strong>, nicht in der Snackbar — die liegt unter
+          ihm: Gelingt es, zeigt der Knopf kurz «Kopiert» (mit Häkchen, dazu
+          eine Live-Region für die Vorlesehilfe); scheitert es, steht ein
+          Fehler-Banner im Dialog, und das Feld ist markiert. Ist der Link ein
+          Geheimnis, geht die Warnung
           als Banner im Dialog voran.
         </p>
         <OverlaysDemo />

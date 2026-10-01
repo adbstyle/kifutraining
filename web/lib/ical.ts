@@ -94,6 +94,13 @@ function plusMinuten(datum: string, zeit: string, min: number): { datum: string;
 export const aboDatei = (token: string) => `${token}.ics`;
 export const aboPfad = (token: string) => `/api/kalender/${aboDatei(token)}`;
 
+/** Die beiden Schreibweisen eines Abo-Links: https für Google, Outlook und
+ *  Proton, `webcal:` für Apple Kalender (öffnet das Abonnement direkt). */
+export function aboLinks(origin: string, token: string) {
+  const url = `${origin}${aboPfad(token)}`;
+  return { url, webcal: url.replace(/^https?:/, "webcal:") };
+}
+
 export function kalenderText(k: {
   kalenderName: string;
   /** «Training · Teamname» (PC 2). */

@@ -16,6 +16,7 @@ export function AboKnopf({ teamId, teamName }: { teamId: string; teamName: strin
   const [links, setLinks] = useState<{ url: string; webcal: string } | null>(null);
 
   function holen() {
+    if (pending) return;
     startTransition(async () => {
       const res = await holeAboAktion(teamId);
       if (!res.ok) {
@@ -28,7 +29,9 @@ export function AboKnopf({ teamId, teamName }: { teamId: string; teamName: strin
 
   return (
     <>
-      <Button variant="outlined" onClick={holen} disabled={pending}>
+      {/* Nicht `disabled`: Ein gesperrter Knopf verliert den Fokus, und der
+          Dialog könnte ihn beim Schliessen nicht dorthin zurückgeben. */}
+      <Button variant="outlined" onClick={holen} aria-disabled={pending}>
         <CalendarDays size={18} aria-hidden /> Kalender abonnieren
       </Button>
       <AboDialog links={links} teamName={teamName} onClose={() => setLinks(null)} />

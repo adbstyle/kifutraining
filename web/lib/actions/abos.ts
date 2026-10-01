@@ -7,7 +7,7 @@
 import { revalidatePath } from "next/cache";
 import { NICHT_ANGEMELDET, angemeldet } from "@/lib/actions/adapter";
 import { oeffentlicherOrigin } from "@/lib/origin";
-import { aboLinks } from "@/lib/queries/abos";
+import { aboLinks } from "@/lib/ical";
 import { NICHT_GEFUNDEN } from "@/lib/kern/ergebnis";
 import { istUuid } from "@/lib/kennung";
 
@@ -35,7 +35,6 @@ export async function holeAboAktion(teamId: string): Promise<AboHolenErgebnis> {
     console.error("[kalender-abo] holen: kein Token zurückgegeben");
     return { ok: false, error: MELDUNG_NICHT_GEHOLT };
   }
-  revalidatePath("/konto");
   return { ok: true, ...aboLinks(await oeffentlicherOrigin(), data) };
 }
 

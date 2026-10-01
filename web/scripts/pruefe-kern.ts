@@ -107,7 +107,7 @@ import {
 } from "../lib/serie";
 import { ZEITRAUM_TEXT, istMonat, monatVon, monatsName, monatsRaster, plusMonate, tagText, zeitraumProblem } from "../lib/monat";
 import { planHref } from "../lib/team-ansicht";
-import { ABO_DAUER_MIN, aboDatei, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
+import { ABO_DAUER_MIN, aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
@@ -1732,6 +1732,17 @@ pruefe("Abo: Kopf, Zeitstempel und CRLF überall (RFC 5545, AK 2)", () => {
   assert.equal((text.match(/BEGIN:VEVENT/g) ?? []).length, 1);
   assert.equal(aboDatei("tok"), "tok.ics");
   assert.equal(aboPfad("tok"), "/api/kalender/tok.ics");
+});
+
+pruefe("Abo: aboLinks — https und http werden zu webcal:, der Pfad bleibt", () => {
+  assert.deepEqual(aboLinks("https://ki-fu.ch", "tok"), {
+    url: "https://ki-fu.ch/api/kalender/tok.ics",
+    webcal: "webcal://ki-fu.ch/api/kalender/tok.ics",
+  });
+  assert.deepEqual(aboLinks("http://127.0.0.1:3000", "tok"), {
+    url: "http://127.0.0.1:3000/api/kalender/tok.ics",
+    webcal: "webcal://127.0.0.1:3000/api/kalender/tok.ics",
+  });
 });
 
 pruefe("Abo: Ende nicht nach Beginn gilt wie «ohne Ende» (nie DTEND vor DTSTART)", () => {

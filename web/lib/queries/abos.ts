@@ -7,7 +7,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { oeffentlicherOrigin } from "@/lib/origin";
-import { aboPfad } from "@/lib/ical";
+import { aboLinks } from "@/lib/ical";
 
 export type MeinAbo = {
   id: string;
@@ -51,10 +51,4 @@ export async function getMeineAbos(): Promise<MeinAbo[] | null> {
     const name = namen.get(a.team_id);
     return name === undefined ? [] : [{ id: a.id, team: { id: a.team_id, name }, ...aboLinks(origin, a.token) }];
   });
-}
-
-/** Die beiden Schreibweisen eines Abo-Links. */
-export function aboLinks(origin: string, token: string) {
-  const url = `${origin}${aboPfad(token)}`;
-  return { url, webcal: url.replace(/^https?:/, "webcal:") };
 }
