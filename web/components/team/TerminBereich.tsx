@@ -123,6 +123,7 @@ export function TerminBereich({
   persoenliche,
   mitglieder,
   heute,
+  termine,
   children,
 }: {
   teamId: string;
@@ -132,12 +133,17 @@ export function TerminBereich({
   /** Wer als Verantwortliche:r zur Wahl steht (#325). */
   mitglieder: TeamMitglied[];
   heute: string;
+  /** Die Termine der Seite — der Detail-Dialog liest seinen Termin daraus, damit er nie einen veralteten Stand zeigt. */
+  termine: TerminZeile[];
   children: React.ReactNode;
 }) {
   const router = useRouter();
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
-  const [offen, setOffen] = useState<TerminZeile | null>(null); // Der im Überblick geöffnete Termin
+  const [offenId, setOffenId] = useState<string | null>(null); // Der im Überblick geöffnete Termin
+  // Aus den aktuellen Terminen gelesen: Ist er verschwunden, schliesst der Dialog.
+  const offen = offenId ? (termine.find((t) => t.id === offenId) ?? null) : null;
+  const setOffen = (t: TerminZeile | null) => setOffenId(t?.id ?? null);
   const [neu, setNeu] = useState<string | null>(null); // Vorbelegtes Datum; "" = ohne
   const [serieNeu, setSerieNeu] = useState<string | null>(null); // Vorbelegtes Beginndatum; "" = ohne
   const [bearbeiten, setBearbeiten] = useState<TerminZeile | null>(null);

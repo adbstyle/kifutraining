@@ -12,7 +12,8 @@ const WOCHENTAGE = [
 ] as const;
 
 /* Ein Monat als Raster Montag bis Sonntag; der Inhalt eines Tages kommt vom
-   Aufrufer. Die Randwochen zeigen die Tage der Nachbarmonate gedämpft.
+   Aufrufer. Die Randwochen zeigen die Tage der Nachbarmonate auf dem Grund,
+   mit leiserer Tageszahl — Einträge behalten ihren vollen Kontrast.
 
    Bewusst eine TABELLE und kein Gitter (kein role="grid"): Das Raster wird
    gelesen, nicht mit Pfeiltasten durchwandert — die Bedienelemente in den
@@ -39,7 +40,7 @@ export function Monatsraster({
   renderTag: (tag: string) => React.ReactNode;
   /** Ist diese Woche (ihre sieben Kalendertage) leer? Dann trägt die Zeile eine Kennzeichnung. */
   leereWoche?: (tage: string[]) => boolean;
-  /** Benennt den Behälter, etwa den Monatsnamen. */
+  /** Benennt den Behälter (Region), etwa den Monatsnamen; die Tabelle darin trägt keinen zweiten Namen. */
   label: string;
 }) {
   const wochen = monatsRaster(monat);
@@ -47,7 +48,7 @@ export function Monatsraster({
     <div role="region" aria-label={label} className="overflow-x-auto">
       {/* Die Zeilen tragen immer eine Kontur (durchsichtig), damit die leere
           Woche mit ihrer sichtbaren die Spalten nicht verschiebt. */}
-      <div role="table" aria-label={label} className="flex min-w-[36rem] flex-col gap-px">
+      <div role="table" className="flex min-w-[36rem] flex-col gap-px">
         <div role="row" className="kontur grid grid-cols-7 gap-px border-transparent text-center type-body-small text-on-surface-mittel">
           {WOCHENTAGE.map(([kurz, lang]) => (
             <div role="columnheader" key={kurz} className="py-1">
@@ -73,13 +74,16 @@ export function Monatsraster({
                   key={tag}
                   aria-current={tag === heute ? "date" : undefined}
                   className={cn(
-                    "min-h-24 min-w-0 bg-elev-01 p-1",
-                    !imMonat && "opacity-60",
+                    "min-h-24 min-w-0 p-1",
+                    // Die Tage der Nachbarmonate liegen auf dem Grund statt auf
+                    // der Tagesfläche — NICHT über `opacity` gedämpft: Das risse
+                    // die Schrift der Einträge unter 4.5:1.
+                    imMonat ? "bg-elev-01" : "bg-elev-00",
                     tag === heute && "kontur border-primary",
                   )}
                 >
                   {leer && i === 0 && <span className="sr-only">Woche ohne Termin. </span>}
-                  <div className="type-body-small text-on-surface-mittel" aria-hidden>
+                  <div className={cn("type-body-small", imMonat ? "text-on-surface" : "text-on-surface-mittel")} aria-hidden>
                     {Number(tag.slice(8))}
                   </div>
                   <span className="sr-only">{tagText(tag)}{tag === heute ? ", heute" : ""}. </span>

@@ -105,7 +105,8 @@ import {
   wochentageText,
   type Wochentag,
 } from "../lib/serie";
-import { ZEITRAUM_TEXT, istMonat, monatVon, monatsName, monatsRaster, plusMonate, zeitraumProblem } from "../lib/monat";
+import { ZEITRAUM_TEXT, istMonat, monatVon, monatsName, monatsRaster, plusMonate, tagText, zeitraumProblem } from "../lib/monat";
+import { planHref } from "../lib/team-ansicht";
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
@@ -625,6 +626,25 @@ pruefe("Monat: istMonat nimmt nur Monate mit tragfähigem Raster an (?monat= aus
     const tage = monatsRaster(m).flat().map((t) => t.tag);
     assert.ok(tage.length >= 28 && tage.every((t) => zeitraumProblem(t, t) === null), `${m}: Raster aus gültigen Tagen`);
   }
+});
+
+pruefe("Monat: tagText schreibt den Tag aus, ohne führende Null", () => {
+  assert.equal(tagText("2026-10-07"), "7. Oktober 2026");
+  assert.equal(tagText("2026-12-31"), "31. Dezember 2026");
+  assert.equal(tagText("2028-02-29"), "29. Februar 2028");
+});
+
+pruefe("planHref: die Eingrenzung reist auf jeder Adresse mit; der heutige Monat bleibt ungenannt (#329 PC 1, 2, 4)", () => {
+  const heute = "2026-10-15";
+  // Liste: nur die Eingrenzung, nie ein Monat.
+  assert.equal(planHref("t1", { ansicht: "liste", meine: false }, heute), "/team/t1");
+  assert.equal(planHref("t1", { ansicht: "liste", monat: "2026-11", meine: true }, heute), "/team/t1?meine=1");
+  // Monat: Ansicht, der Monat nur wenn er nicht der heutige ist, dazu die Eingrenzung.
+  assert.equal(planHref("t1", { ansicht: "monat", meine: false }, heute), "/team/t1?ansicht=monat");
+  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-10", meine: false }, heute), "/team/t1?ansicht=monat");
+  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-11", meine: false }, heute), "/team/t1?ansicht=monat&monat=2026-11");
+  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-11", meine: true }, heute), "/team/t1?ansicht=monat&monat=2026-11&meine=1");
+  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-10", meine: true }, heute), "/team/t1?ansicht=monat&meine=1");
 });
 
 pruefe("KI-Zeitraum: höchstens bis zum gleichen Kalendertag im Folgejahr (#329 AK 14, Review Focus 2)", () => {

@@ -7,10 +7,10 @@ import { buttonClasses } from "@/components/ui";
 export function AnsichtWahl({ ansicht, hrefListe, hrefMonat }: { ansicht: "liste" | "monat"; hrefListe: string; hrefMonat: string }) {
   return (
     <nav aria-label="Ansicht des Trainingsplans" className="flex gap-1">
-      <Link href={hrefListe} aria-current={ansicht === "liste" ? "page" : undefined} className={buttonClasses(ansicht === "liste" ? "tonal" : "text", "sm")}>
+      <Link href={hrefListe} scroll={false} aria-current={ansicht === "liste" ? "page" : undefined} className={buttonClasses(ansicht === "liste" ? "tonal" : "text", "sm")}>
         <List size={16} aria-hidden /> Liste
       </Link>
-      <Link href={hrefMonat} aria-current={ansicht === "monat" ? "page" : undefined} className={buttonClasses(ansicht === "monat" ? "tonal" : "text", "sm")}>
+      <Link href={hrefMonat} scroll={false} aria-current={ansicht === "monat" ? "page" : undefined} className={buttonClasses(ansicht === "monat" ? "tonal" : "text", "sm")}>
         <CalendarDays size={16} aria-hidden /> Monat
       </Link>
     </nav>

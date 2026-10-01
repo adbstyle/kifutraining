@@ -2664,6 +2664,26 @@ export default function Styleguide() {
             <strong>Schmal</strong> — das Raster scrollt waagrecht im eigenen
             Behälter, nie die Seite.
           </li>
+          <li>
+            <strong>Randtage</strong> — liegen auf dem Grund (<code>elev-00</code>)
+            statt auf der Tagesfläche (<code>elev-01</code>), die Tageszahl ist
+            leiser. Nicht über <code>opacity</code> gedämpft: Das risse die
+            Schrift der Einträge unter 4.5:1.
+          </li>
+          <li>
+            <strong>Termineintrag</strong> (<code>TerminEintrag</code>) — Beginn
+            oder «Zeit fehlt», dazu der Zustand als Wort, nie nur als Farbe:
+            Training (Name auf <code>elev-08</code>), «Noch kein Training»
+            (Fehlerkontur, nur anstehend), «Ohne Training» (leise, vergangen),
+            «Ausgefallen» (durchgestrichen). Gerechnet: Fehler-Schrift{" "}
+            {v(kontrast(ERROR, elev(1)))} auf der Tagesfläche und{" "}
+            {v(kontrast(ERROR, GRUND))} in der Randwoche; leise Schrift{" "}
+            {v(kontrast(weissAuf(SCHRIFT.mittel, elev(1)), elev(1)))} bzw.{" "}
+            {v(kontrast(weissAuf(SCHRIFT.mittel, GRUND), GRUND))}. «Ausgefallen»
+            trägt bewusst die leise und nicht die tiefe Schrift (
+            {v(kontrast(weissAuf(SCHRIFT.tief, elev(1)), elev(1)))}): Es ist
+            wesentlicher Inhalt, nicht Deaktiviertes.
+          </li>
         </ul>
         <MonatsrasterDemo />
       </Section>

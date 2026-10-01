@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { CalendarPlus, ChevronLeft, ChevronRight, Plus, Repeat } from "lucide-react";
 import { ButtonLink, IconButtonLink, Menu, Monatsraster } from "@/components/ui";
-import { cn } from "@/lib/cn";
 import { monatsName, monatVon, plusMonate, tagText } from "@/lib/monat";
 import { planHref } from "@/lib/team-ansicht";
+import { TerminEintrag, type EintragZustand } from "./TerminEintrag";
 import { useTerminAktionen } from "./TerminBereich";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
 // (next/headers) ins Client-Bundle.
@@ -16,7 +16,7 @@ import { nochNichtVorbereitet, type TerminZeile } from "@/lib/queries/termine-fu
  *  abschnitte. */
 type PlusMenue = { tag: string; links: number; oben: number };
 const MENUE_BREITE = 192; // min-w-48 des Menüs
-const MENUE_HOEHE = 100; // zwei Einträge samt Rand; reicht zum Umklappen nach oben
+const MENUE_HOEHE = 108; // zwei Einträge samt Rand; reicht zum Umklappen nach oben
 
 /* Die Termine eines Teams Monat für Monat (#329). Jeder Termin eines Tages
    steht einzeln (AK 4) mit Beginn und Trainingsname oder seinem Zustand
@@ -40,13 +40,18 @@ export function MonatsUeberblick({
   const a = useTerminAktionen();
   const [plus, setPlus] = useState<PlusMenue | null>(null);
   const plusRef = useRef<HTMLElement | null>(null);
+  const menueRef = useRef<HTMLDivElement | null>(null);
   const hrefMonat = (m: string) => planHref(teamId, { ansicht: "monat", monat: m, meine }, heute);
 
   // Das Menü hängt an Fensterkoordinaten: Scrollt oder wechselt die Grösse,
   // schliesst es, statt vom Knopf wegzuwandern.
   useEffect(() => {
     if (!plus) return;
-    const zu = () => setPlus(null);
+    const zu = () => {
+      // Lag der Fokus im Menü, das jetzt verschwindet, geht er an den «+»-Knopf zurück.
+      if (menueRef.current?.contains(document.activeElement)) plusRef.current?.focus({ preventScroll: true });
+      setPlus(null);
+    };
     window.addEventListener("scroll", zu, true);
     window.addEventListener("resize", zu);
     return () => {
@@ -59,28 +64,12 @@ export function MonatsUeberblick({
   for (const t of termine) jeTag.set(t.datum, [...(jeTag.get(t.datum) ?? []), t]);
 
   function eintrag(t: TerminZeile) {
-    const offen = nochNichtVorbereitet(t, heute);
-    const zustand = t.ausgefallen ? "Ausgefallen" : t.training ? t.training.name : offen ? "Noch kein Training" : "Ohne Training";
-    const name = `${tagText(t.datum)}, ${t.beginn ? `${t.beginn} Uhr` : "Zeit fehlt"}, ${zustand}`;
-    return (
-      <button
-        key={t.id}
-        type="button"
-        onClick={() => a.oeffnen(t)}
-        aria-label={name}
-        title={name}
-        className={cn(
-          "focus-ring mt-1 block w-full break-words rounded-plakette px-1 text-left type-body-small",
-          t.ausgefallen && "text-on-surface-tief line-through",
-          !t.ausgefallen && t.training && "bg-elev-08 text-on-surface",
-          !t.ausgefallen && !t.training && offen && "kontur border-error text-error",
-          !t.ausgefallen && !t.training && !offen && "text-on-surface-mittel",
-        )}
-      >
-        {t.beginn ? `${t.beginn} ` : <span className="text-error">Zeit fehlt </span>}
-        {zustand}
-      </button>
-    );
+    const zustand: EintragZustand = t.ausgefallen ? "ausgefallen" : t.training ? "training" : nochNichtVorbereitet(t, heute) ? "noch-nicht" : "ohne";
+    const text = zustand === "ausgefallen" ? "Ausgefallen" : zustand === "training" ? t.training!.name : zustand === "noch-nicht" ? "Noch kein Training" : "Ohne Training";
+    // Der sichtbare Text steht im Namen zusammenhängend («18:00 Passspiel»):
+    // WCAG 2.5.3 — «Uhr» dazwischen zerrisse ihn.
+    const label = `${tagText(t.datum)}, ${t.beginn ? `${t.beginn} ${text}` : `Zeit fehlt, ${text}`}`;
+    return <TerminEintrag key={t.id} beginn={t.beginn} zustand={zustand} name={t.training?.name} label={label} onClick={() => a.oeffnen(t)} />;
   }
 
   return (
@@ -130,7 +119,7 @@ export function MonatsUeberblick({
         )}
       />
       {plus && (
-        <div className="fixed z-50" style={{ left: plus.links, top: plus.oben }}>
+        <div ref={menueRef} className="fixed z-50" style={{ left: plus.links, top: plus.oben }}>
           <Menu
             open
             onClose={() => setPlus(null)}

@@ -62,7 +62,7 @@ export default async function TeamPlanPage({
   const leer = termine.length === 0;
 
   return (
-    <TerminBereich teamId={id} trainings={trainings} persoenliche={persoenliche} mitglieder={team?.mitglieder ?? []} heute={heute}>
+    <TerminBereich teamId={id} trainings={trainings} persoenliche={persoenliche} mitglieder={team?.mitglieder ?? []} heute={heute} termine={termine}>
       <section>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="type-title-large text-on-surface">Trainingsplan</h2>

@@ -20,7 +20,7 @@ export function TerminDetailDialog({ termin, heute, onClose }: { termin: TerminZ
       className="overflow-visible"
       actions={<Button variant="text" onClick={onClose}>Schliessen</Button>}
     >
-      {termin && <ul><TerminKarte t={termin} heute={heute} /></ul>}
+      {termin && <ul><TerminKarte t={termin} heute={heute} ebene="h3" /></ul>}
     </Dialog>
   );
 }
