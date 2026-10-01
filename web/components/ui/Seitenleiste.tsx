@@ -60,25 +60,60 @@ export interface SeitenleisteProps {
   /** Schmal (nur Zeichen). Wirkt ab `lg`; darunter ist die Leiste ein Drawer
    *  und zeigt immer alles. */
   slim: boolean;
-  drawerOffen: boolean;
-  onDrawerOffenChange: (offen: boolean) => void;
+  /** Drawer unter `lg`; eingebettet ohne Wirkung. */
+  drawerOffen?: boolean;
+  onDrawerOffenChange?: (offen: boolean) => void;
   /** Styleguide: füllt den umgebenden Rahmen statt des Fensters — kein
    *  Drawer, keine Kopfzeile, immer die Desktop-Form. */
   eingebettet?: boolean;
 }
 
 /* ── Breite ─────────────────────────────────────────────────────
-   Die einzige Stelle mit den beiden Breiten. Wer die Leiste trägt (App-Rahmen,
+   Die Breiten der festen Spalte ab `lg` (der Drawer darunter ist ein
+   Tailwind-Literal und so breit wie BREIT). Wer die Leiste trägt (App-Rahmen,
    Styleguide-Demo), setzt die Variable auf seinen Wrapper; die Leiste und
-   alles, was neben ihr fest am Fenster klebt (Snackbar, Durchführungsleiste),
-   liest sie von dort. */
-export const SEITENLEISTE_ID = "seitenleiste";
+   alles, was neben ihr fest am Fenster klebt, liest sie von dort. */
+const BREIT = "17.5rem";
+const SCHMAL = "4.5rem";
+const AB_LG = "(min-width: 64rem)";
+const SEITENLEISTE_ID = "seitenleiste";
 
 export function leisteStil(slim: boolean): CSSProperties {
-  return { "--leiste-breite": slim ? "4.5rem" : "17.5rem" } as CSSProperties;
+  return { "--leiste-breite": slim ? SCHMAL : BREIT } as CSSProperties;
 }
 
+/** Für Flächen, die fest am Fenster unten kleben (Snackbar, Leiste der
+ *  Durchführung): ab `lg` beginnen sie neben der Seitenleiste und laufen beim
+ *  Umschalten mit. Fallback 0, falls kein Rahmen die Breite setzt. */
+export const nebenLeiste =
+  "left-0 transition-[left] duration-200 motion-reduce:transition-none lg:left-[var(--leiste-breite,0px)]";
+
+/* Schmale Form: eingebettet auf jeder Breite, sonst erst ab `lg` — darunter
+   zeigt der Drawer immer alles. Ausgeschriebene Literale, damit Tailwind sie
+   findet. */
+const SCHMAL_KLASSEN = {
+  lg: {
+    textWeg: "lg:sr-only",
+    nurBreit: "lg:hidden",
+    mitte: "lg:justify-center",
+    linie: "lg:block",
+    konto: "lg:justify-center lg:p-0",
+    anmelden: "lg:px-0",
+  },
+  immer: {
+    textWeg: "sr-only",
+    nurBreit: "hidden",
+    mitte: "justify-center",
+    linie: "block!",
+    konto: "justify-center p-0!",
+    anmelden: "px-0!",
+  },
+} as const;
+type SchmalAb = keyof typeof SCHMAL_KLASSEN;
+
 /* ── Kleinteile ─────────────────────────────────────────────── */
+
+function keineAktion() {}
 
 /** Initialen: zwei Wörter → je der erste Buchstabe, sonst die ersten zwei. */
 function initialen(name: string) {
@@ -140,8 +175,8 @@ export function Seitenleiste({
   konto,
   anmeldenHref = "/login",
   slim,
-  drawerOffen,
-  onDrawerOffenChange,
+  drawerOffen = false,
+  onDrawerOffenChange = keineAktion,
   eingebettet,
 }: SeitenleisteProps) {
   const reactId = useId();
@@ -156,12 +191,26 @@ export function Seitenleiste({
   const schliessen = () => onDrawerOffenChange(false);
 
   // Drawer: Escape schliesst, der Seiteninhalt scrollt nicht mit, der Fokus
-  // springt hinein und beim Schliessen zurück auf den Auslöser.
+  // springt hinein, bleibt darin (Tab läuft im Kreis — der Inhalt dahinter
+  // liegt unter dem Scrim) und geht beim Schliessen zurück auf den Auslöser.
   useEffect(() => {
     if (!offen) return;
     schliessenRef.current?.focus();
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onDrawerOffenChange(false);
+      if (e.key === "Escape") return onDrawerOffenChange(false);
+      if (e.key !== "Tab" || !navRef.current) return;
+      const ziele = [...navRef.current.querySelectorAll<HTMLElement>("a[href], button")].filter(
+        (el) => el.offsetParent !== null,
+      );
+      const erstes = ziele[0];
+      const letztes = ziele[ziele.length - 1];
+      if (e.shiftKey && document.activeElement === erstes) {
+        e.preventDefault();
+        letztes?.focus();
+      } else if (!e.shiftKey && document.activeElement === letztes) {
+        e.preventDefault();
+        erstes?.focus();
+      }
     }
     document.addEventListener("keydown", onKey);
     const vorher = document.body.style.overflow;
@@ -179,7 +228,7 @@ export function Seitenleiste({
   // die Scroll-Sperre am Desktop hängen.
   useEffect(() => {
     if (!offen) return;
-    const mq = window.matchMedia("(min-width: 64rem)");
+    const mq = window.matchMedia(AB_LG);
     const onChange = () => mq.matches && onDrawerOffenChange(false);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -191,7 +240,7 @@ export function Seitenleiste({
   function zeigeHinweis(ziel: EventTarget) {
     const el = (ziel as HTMLElement).closest<HTMLElement>("[data-hinweis]");
     if (!el || !slim) return setHinweis(null);
-    if (!eingebettet && !window.matchMedia("(min-width: 64rem)").matches) return;
+    if (!eingebettet && !window.matchMedia(AB_LG).matches) return;
     // Waagrecht an der Kante der Leiste, nicht des Eintrags — sonst läge der
     // Hinweis noch auf ihr.
     const r = el.getBoundingClientRect();
@@ -200,13 +249,8 @@ export function Seitenleiste({
   }
   useEffect(() => setHinweis(null), [slim]);
 
-  // Slim-Varianten. Eingebettet gilt die Desktop-Form auf jeder Breite, sonst
-  // erst ab `lg` — darunter zeigt der Drawer immer alles.
-  const s = (klassen: { lg: string; immer: string }) =>
-    slim ? (eingebettet ? klassen.immer : klassen.lg) : "";
-  const textWeg = s({ lg: "lg:sr-only", immer: "sr-only" });
-  const nurBreit = s({ lg: "lg:hidden", immer: "hidden" });
-  const zeileMitte = s({ lg: "lg:justify-center", immer: "justify-center" });
+  const schmalAb: SchmalAb | null = slim ? (eingebettet ? "immer" : "lg") : null;
+  const k = schmalAb ? SCHMAL_KLASSEN[schmalAb] : null;
 
   const navKlassen = eingebettet
     ? "flex h-full w-(--leiste-breite) shrink-0 flex-col overflow-hidden border-r border-linie bg-elev-01 transition-[width] duration-200 motion-reduce:transition-none"
@@ -263,7 +307,7 @@ export function Seitenleiste({
         onBlur={() => setHinweis(null)}
       >
         <div className="flex h-16 shrink-0 items-center gap-2 px-4">
-          <Marke textKlasse={textWeg} />
+          <Marke textKlasse={k?.textWeg} />
           {!eingebettet && (
             <IconButton
               ref={schliessenRef}
@@ -281,7 +325,7 @@ export function Seitenleiste({
         >
           {gruppen.map((gruppe, gi) => (
             <div key={gruppe.titel} role="group" aria-label={gruppe.titel} className="flex flex-col gap-0.5">
-              <p className={cn("type-label-small mb-1 px-2.5 whitespace-nowrap text-on-surface-tief", nurBreit)}>
+              <p className={cn("type-label-small mb-1 px-2.5 whitespace-nowrap text-on-surface-tief", k?.nurBreit)}>
                 {gruppe.titel}
               </p>
               {/* Schmal steht statt des Titels eine Haarlinie — vor der
@@ -289,10 +333,7 @@ export function Seitenleiste({
               {gi > 0 && (
                 <span
                   aria-hidden
-                  className={cn(
-                    "mx-1 mb-2 hidden h-px bg-linie",
-                    s({ lg: "lg:block", immer: "block!" }),
-                  )}
+                  className={cn("mx-1 mb-2 hidden h-px bg-linie", k?.linie)}
                 />
               )}
               {gruppe.eintraege.map((eintrag, ei) => (
@@ -300,10 +341,7 @@ export function Seitenleiste({
                   key={eintrag.href}
                   eintrag={eintrag}
                   idBasis={`${reactId}-${gi}-${ei}`}
-                  schmalAb={slim ? (eingebettet ? "immer" : "lg") : null}
-                  textWeg={textWeg}
-                  nurBreit={nurBreit}
-                  zeileMitte={zeileMitte}
+                  schmalAb={schmalAb}
                   onNavigiert={schliessen}
                 />
               ))}
@@ -321,7 +359,7 @@ export function Seitenleiste({
               className={cn(
                 zeile,
                 "gap-3 p-2",
-                s({ lg: "lg:justify-center lg:p-0", immer: "justify-center p-0!" }),
+                k?.konto,
                 konto.current ? zeileAktiv : "text-on-surface",
               )}
             >
@@ -334,7 +372,7 @@ export function Seitenleiste({
               >
                 {initialen(konto.name)}
               </span>
-              <span className={cn("flex min-w-0 flex-col", textWeg)}>
+              <span className={cn("flex min-w-0 flex-col", k?.textWeg)}>
                 <span className="type-title-small truncate">{konto.name}</span>
                 {konto.email && (
                   <span className="type-body-small truncate text-on-surface-mittel">
@@ -348,10 +386,10 @@ export function Seitenleiste({
               href={anmeldenHref}
               data-hinweis="Anmelden"
               onClick={schliessen}
-              className={cn("w-full", s({ lg: "lg:px-0", immer: "px-0!" }))}
+              className={cn("w-full", k?.anmelden)}
             >
               <LogIn size={18} strokeWidth={2.5} aria-hidden className="shrink-0" />
-              <span className={textWeg}>Anmelden</span>
+              <span className={k?.textWeg}>Anmelden</span>
             </ButtonLink>
           )}
         </div>
@@ -390,20 +428,15 @@ function Eintrag({
   eintrag,
   idBasis,
   schmalAb,
-  textWeg,
-  nurBreit,
-  zeileMitte,
   onNavigiert,
 }: {
   eintrag: SeitenleisteEintrag;
   idBasis: string;
   /** Wo die schmale Form gilt: ab `lg`, immer (eingebettet) oder nirgends. */
-  schmalAb: "lg" | "immer" | null;
-  textWeg: string;
-  nurBreit: string;
-  zeileMitte: string;
+  schmalAb: SchmalAb | null;
   onNavigiert: () => void;
 }) {
+  const k = schmalAb ? SCHMAL_KLASSEN[schmalAb] : null;
   const [aufgeklappt, setAufgeklappt] = useState(true);
   const Icon = eintrag.icon;
   const unter = eintrag.unterpunkte ?? [];
@@ -429,7 +462,7 @@ function Eintrag({
           className={cn(
             zeile,
             "type-title-small h-10 min-w-0 flex-1 gap-3 px-2.5",
-            zeileMitte,
+            k?.mitte,
             hervor ? zeileAktiv : cn(zeileRuhe, nurAbLg && "lg:bg-elev-08 lg:text-on-surface"),
           )}
         >
@@ -439,7 +472,7 @@ function Eintrag({
             aria-hidden
             className={cn("shrink-0", hervor && "text-primary", nurAbLg && "lg:text-primary")}
           />
-          <span className={cn("truncate", textWeg)}>{eintrag.label}</span>
+          <span className={cn("truncate", k?.textWeg)}>{eintrag.label}</span>
         </Link>
         {unter.length > 0 && (
           <button
@@ -451,7 +484,7 @@ function Eintrag({
             className={cn(
               zeile,
               "h-10 w-9 shrink-0 justify-center text-on-surface-tief hover:text-on-surface",
-              nurBreit,
+              k?.nurBreit,
             )}
           >
             <ChevronDown
@@ -464,7 +497,7 @@ function Eintrag({
         )}
       </div>
       {unter.length > 0 && (
-        <ul id={listeId} hidden={!aufgeklappt} className={cn("mt-0.5 flex flex-col gap-0.5", nurBreit)}>
+        <ul id={listeId} hidden={!aufgeklappt} className={cn("mt-0.5 flex flex-col gap-0.5", k?.nurBreit)}>
           {unter.map((u) => (
             <li key={u.href}>
               <Link

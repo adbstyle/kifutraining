@@ -5,7 +5,8 @@ import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin, Users } from "l
 import { TrainingExerciseDetail } from "./TrainingExerciseDetail";
 import { VariantenWahl } from "./VariantenWahl";
 import { GesamtMaterialListe } from "./GesamtMaterialListe";
-import { type BreadcrumbItem } from "@/components/ui";
+import { nebenLeiste, type BreadcrumbItem } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { SeitenKopf } from "@/components/layout/SeitenKopf";
 import { leseGliederung, formatDuration } from "@/lib/training";
 import { datumKurz } from "@/lib/zeit";
@@ -287,7 +288,7 @@ export function TrainingDurchfuehren({
           der Seitenleiste (Breite vom AppRahmen). Durch eine
           schwebende Leiste darf der Inhalt nicht durchscheinen, sonst trägt
           die Höhe die Trennung nicht mehr (kein Blur über der Höhenleiter). */}
-      <nav className="fixed right-0 bottom-0 left-0 z-10 border-t transition-[left] duration-200 motion-reduce:transition-none lg:left-[var(--leiste-breite,0px)] border-linie bg-elev-04">
+      <nav className={cn("fixed right-0 bottom-0 z-10 border-t border-linie bg-elev-04", nebenLeiste)}>
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
           <button
             type="button"

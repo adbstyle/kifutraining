@@ -52,7 +52,7 @@ export async function AppNav() {
           ? {
               // Ohne Namen (Abfrage gescheitert) der Teil vor dem @.
               name: name ?? user.email?.split("@")[0] ?? "Konto",
-              email: user.email ?? null,
+              email: user.email,
             }
           : null
       }

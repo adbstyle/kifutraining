@@ -10,7 +10,8 @@ import {
   useState,
 } from "react";
 import { usePathname } from "next/navigation";
-import { Snackbar } from "@/components/ui";
+import { Snackbar, nebenLeiste } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
 
 /**
@@ -108,7 +109,10 @@ export function SnackbarProvider({ children }: { children: React.ReactNode }) {
       {/* Unten bleibt mindestens ein Rem frei, auf Geräten mit Home-Leiste
           deren sichere Zone. Ab lg mittig über dem Inhalt, nicht über der
           Seitenleiste — ihre Breite kommt vom AppRahmen. */}
-      <div className="pointer-events-none fixed right-0 bottom-[max(1rem,env(safe-area-inset-bottom))] left-0 z-40 flex transition-[left] duration-200 motion-reduce:transition-none lg:left-[var(--leiste-breite,0px)] justify-center px-4 print:hidden">
+      <div className={cn(
+          "pointer-events-none fixed right-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-4 print:hidden",
+          nebenLeiste,
+        )}>
         {/* Der Zeiger wird hier gemessen, nicht an der einzelnen Snackbar:
             Schliesst der Trainer eine per X, rückt die nächste unter den
             ruhenden Zeiger, ohne dass ein neues Betreten gemeldet würde. */}

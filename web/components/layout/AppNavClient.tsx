@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ClipboardCheck, ClipboardList, LayoutGrid, ListChecks, Users } from "lucide-react";
 import { Seitenleiste } from "@/components/ui";
@@ -19,7 +20,7 @@ export function AppNavClient({
   teams,
   imTeamBereich: imTeamBereichVomServer,
 }: {
-  konto: { name: string; email: string | null } | null;
+  konto: { name: string; email?: string } | null;
   teams: { id: string; name: string }[];
   /** Ist das geöffnete Training ein Team-Training? Der Server schlägt das
    *  nach — der Adresse ist es nicht anzusehen (#156). Der Wert stimmt für
@@ -28,9 +29,16 @@ export function AppNavClient({
   imTeamBereich: boolean;
 }) {
   const pfad = usePathname();
-  const mine = useSearchParams().get("mine") === "1";
+  const suche = useSearchParams();
+  const mine = suche.get("mine") === "1";
   const imTeamBereich = useTeamBereich(imTeamBereichVomServer);
   const { slim, drawerOffen, setzeDrawerOffen } = useSeitenleiste();
+
+  // Jeder Seitenwechsel schliesst den Drawer — auch der über die Marke oder
+  // das Zurück des Browsers, die nicht über einen Eintrag laufen.
+  const adresse = `${pfad}?${suche.toString()}`;
+  useEffect(() => setzeDrawerOffen(false), [adresse, setzeDrawerOffen]);
+
   const aktiv = aktiveBereiche(pfad, mine, imTeamBereich);
 
   const gruppen: SeitenleisteGruppe[] = [
@@ -73,16 +81,7 @@ export function AppNavClient({
   return (
     <Seitenleiste
       gruppen={gruppen}
-      konto={
-        konto
-          ? {
-              name: konto.name,
-              email: konto.email ?? undefined,
-              href: "/konto",
-              current: pfad === "/konto",
-            }
-          : undefined
-      }
+      konto={konto ? { ...konto, href: "/konto", current: pfad === "/konto" } : undefined}
       slim={slim}
       drawerOffen={drawerOffen}
       onDrawerOffenChange={setzeDrawerOffen}

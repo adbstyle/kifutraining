@@ -933,6 +933,16 @@ export default function Styleguide() {
           Überschrift für <code>aria-labelledby</code>, statt den Namen doppelt
           zu zeigen.
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Jede Seite steht in einem <code>Seitenrahmen</code>: zentriert, in
+          einer von sechs Breiten (<code>xl</code> bis <code>6xl</code>) nach
+          dem, was sie zeigt — Formular schmal, Übersicht breit — und zuoberst
+          die Kopfzeile mit dem Umschalter der Seitenleiste, den Brotkrumen und
+          rechts den Aktionen der Seite. Brotkrumen sind Pflicht, auch auf den
+          Einstiegsseiten. Ab <code>lg</code> gehen 280 oder 72 px an die
+          Seitenleiste (siehe 13); die Fenstergrössen unten meinen das ganze
+          Fenster.
+        </p>
         <div className="space-y-2">
           {sizeClasses.map(([cls, range, note]) => (
             <div
@@ -1496,8 +1506,8 @@ export default function Styleguide() {
           Fokussieren als Hinweis daneben (Tooltip-Fläche, 24dp). Die Wahl
           merkt sich der Browser in einem Cookie, so steht die Leiste schon
           beim Laden in der richtigen Breite. Die Breite gleitet beim
-          Umschalten — die einzige Fläche im Kit, die sich bewegt, weil der
-          Inhalt daneben mitwandert und das Auge ihm folgen soll.
+          Umschalten — die einzige Fläche im Kit, die ihre Breite ändert,
+          weil der Inhalt daneben mitwandert und das Auge ihm folgen soll.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Unter <code>lg</code> wird die Leiste zum <strong>Drawer von
@@ -1995,7 +2005,7 @@ export default function Styleguide() {
           einen <strong>Zustand</strong>. Darum hat sie genau einen Platz: unten
           in der Mitte, für die ganze Anwendung. Niemand rendert sie selbst —
           gemeldet wird über <code>useSnackbar()</code>, und der Platz im
-          Root-Layout zeigt immer nur <strong>eine</strong>. Weitere warten;
+          App-Rahmen zeigt immer nur <strong>eine</strong>. Weitere warten;
           ihre Zeit läuft erst, wenn sie erscheinen. Jeder Aufruf des Hooks ist
           eine eigene Stelle: Meldet sie erneut, ersetzt die neue Meldung ihre
           ältere, und ein Text, der schon ansteht, kommt nicht zweimal in die

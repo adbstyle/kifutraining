@@ -48,7 +48,7 @@ export { Menu } from "./Menu";
 export type { MenuItemDef } from "./Menu";
 export { OverflowMenu } from "./OverflowMenu";
 export { ChipMenu } from "./ChipMenu";
-export { Seitenleiste, SeitenleistenKnopf, leisteStil, SEITENLEISTE_ID } from "./Seitenleiste";
+export { Seitenleiste, SeitenleistenKnopf, leisteStil, nebenLeiste } from "./Seitenleiste";
 export type {
   SeitenleisteProps,
   SeitenleisteGruppe,
@@ -62,7 +62,7 @@ export { Dialog } from "./Dialog";
 export { Snackbar } from "./Snackbar";
 export { IconButton, IconButtonLink } from "./IconButton";
 export type { IconButtonProps, IconButtonLinkProps } from "./IconButton";
-export { Tooltip, tooltipFlaeche } from "./Tooltip";
+export { Tooltip } from "./Tooltip";
 export { TabNav } from "./TabNav";
 export type { TabNavItem } from "./TabNav";
 export { Breadcrumbs } from "./Breadcrumbs";

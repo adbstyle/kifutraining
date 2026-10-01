@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { SeitenleistenKnopf, leisteStil } from "@/components/ui";
 import { leisteCookie } from "@/lib/seitenleiste";
 
@@ -31,19 +31,14 @@ export function AppRahmen({
   const [slim, setSlim] = useState(anfangsSlim);
   const [drawerOffen, setzeDrawerOffen] = useState(false);
 
-  const slimUmschalten = useCallback(() => {
+  function slimUmschalten() {
     const neu = !slim;
     setSlim(neu);
     document.cookie = leisteCookie(neu);
-  }, [slim]);
-
-  const wert = useMemo(
-    () => ({ slim, slimUmschalten, drawerOffen, setzeDrawerOffen }),
-    [slim, slimUmschalten, drawerOffen],
-  );
+  }
 
   return (
-    <SeitenleisteKontext.Provider value={wert}>
+    <SeitenleisteKontext.Provider value={{ slim, slimUmschalten, drawerOffen, setzeDrawerOffen }}>
       <div className="flex min-h-dvh flex-col lg:flex-row" style={leisteStil(slim)}>
         {children}
       </div>

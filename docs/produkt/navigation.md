@@ -39,7 +39,13 @@ Aktionen am Training. Im Druck erscheinen weder Leiste noch Brotkrumen.
 Auf einem Telefon oder einem schmalen Fenster steht oben eine Kopfzeile mit dem Menüknopf.
 Er öffnet die Leiste von links über dem Inhalt. Dort zeigt sie immer alle Namen.
 Schliessen lässt sie sich über das Kreuz, einen Klick daneben, die Escape-Taste oder die
-Wahl eines Eintrags. Den Knopf zum Verkleinern gibt es dort nicht.
+Wahl eines Eintrags; auch jeder Seitenwechsel schliesst sie. Solange sie offen ist, bleibt die
+Tastatur in ihr. Den Knopf zum Verkleinern gibt es dort nicht.
+
+## Seiten, die es nicht gibt
+
+Eine falsche Adresse oder ein entfernter Inhalt zeigt eine Hinweisseite mit Leiste und
+Brotkrumen und einem Weg zurück zu den Übungen.
 
 ## Anmelde-Seiten
 
@@ -50,5 +56,4 @@ ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
 
 Wird jemand von einem anderen Konto in ein Team aufgenommen, erscheint das Team in der Leiste
 erst beim nächsten Neuladen oder nach der nächsten eigenen Aktion. Breit oder schmal merkt
-sich jeder Browser für sich, nicht das Konto. Eine Seite, die es nicht gibt, zeigt die
-schlichte Fehlermeldung ohne Leiste.
+sich jeder Browser für sich, nicht das Konto.
