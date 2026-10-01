@@ -66,7 +66,16 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
    krumme Masse, und der Chip stünde neben dem kleinen Knopf um ein, zwei
    Pixel versetzt. */
 const chipBase =
-  "state focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-full kontur px-3 transition-colors";
+  "state focus-ring inline-flex items-center gap-1.5 rounded-full kontur px-3 transition-colors";
+
+/* Die Schrift ist wie die Höhe ein eigener Slot (`cn` ist ein reiner Joiner).
+   Assist, Suggestion, Input und die Einfachauswahl tragen das Vokabular
+   versal (`type-label-medium`). Der FILTER steht normal gesetzt in
+   `type-title-small`: Er sitzt in Leisten neben Suchfeld, Auswahl und
+   Knöpfen und liest sich dort als Wort («Meine Termine»), nicht als Rubrik —
+   dieselbe Schrift wie die Reiter (TabNav) und der leise Knopf. */
+const chipLabel = "type-label-medium";
+const chipFilterTypo = "type-title-small";
 
 /* Die Höhe ist ein eigener Slot und steht NICHT in `chipBase` — `cn` ist ein
    reiner Joiner (kein tailwind-merge), eine Basis-Höhe liesse sich von aussen
@@ -153,6 +162,7 @@ export function FilterChip({
       aria-pressed={selected}
       className={cn(
         chipBase,
+        chipFilterTypo,
         chipHoehen[groesse],
         selected ? chipTextSelected : chipOutlined,
         className,
@@ -235,7 +245,7 @@ export function ChoiceChip({
       className={cn(
         // Der Nutzertext-Chip trägt seine Höhe (h-9) in der eigenen Hülle —
         // er fluchtet mit dem leisen Knopf, nicht mit dem Label-Chip.
-        look === "nutzertext" ? chipTextBase : `${chipBase} ${chipHoehen.normal}`,
+        look === "nutzertext" ? chipTextBase : `${chipBase} ${chipLabel} ${chipHoehen.normal}`,
         look === "nutzertext"
           ? selected
             ? chipTextSelected
@@ -312,6 +322,7 @@ export function AssistChip({
       aria-expanded={ariaHasPopup ? ariaExpanded : undefined}
       className={cn(
         chipBase,
+        chipLabel,
         chipHoehen.normal,
         elevated ? chipElevated : chipOutlined,
         className,
@@ -337,7 +348,7 @@ export function SuggestionChip({
     <button
       type="button"
       onClick={onClick}
-      className={cn(chipBase, chipHoehen.normal, chipOutlined, className)}
+      className={cn(chipBase, chipLabel, chipHoehen.normal, chipOutlined, className)}
     >
       {children}
     </button>
@@ -358,7 +369,7 @@ export function InputChip({
   className?: string;
 }) {
   return (
-    <span className={cn(chipBase, chipHoehen.normal, chipOutlined, "pr-2", className)}>
+    <span className={cn(chipBase, chipLabel, chipHoehen.normal, chipOutlined, "pr-2", className)}>
       {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
       {children}
       {onRemove && (
