@@ -33,7 +33,7 @@ export function TrainingCard({
   // kann Fokus und Druck überhaupt melden — auf dem <div> bliebe die Ebene
   // beim Tabben und beim Drücken stumm.
   return (
-    <Card className="group">
+    <Card>
       <Link
         href={href}
         className="state focus-ring-inset block rounded-flaeche p-4"
@@ -75,7 +75,7 @@ export function TrainingCard({
           )}
         </div>
 
-        <h3 className="type-title-medium text-on-surface transition-colors group-hover:text-primary">
+        <h3 className="type-title-medium text-on-surface">
           {training.name}
         </h3>
 

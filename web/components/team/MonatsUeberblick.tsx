@@ -83,15 +83,15 @@ export function MonatsUeberblick({
                 im Tastaturfokus — ein Raster voller «+» lenkte von den
                 Terminen ab. Ohne Maus (Touch) genügt ein Tipp auf den Tag.
                 Er liegt im DOM vor den Terminen, die darum (positioniert)
-                über ihm stehen und ihre eigenen Klicks behalten. Die
-                Tageszahl liegt unter ihm; darum hebt er sich nur mit der
-                durchscheinenden Zustands-Deckung ab, nie mit einer Fläche. */}
+                über ihm stehen und ihre eigenen Klicks behalten. Er trägt die
+                Zustands-Ebene (`state`, durchscheinend — die Tageszahl unter
+                ihm bleibt lesbar); `absolute!` schlägt deren `relative`. */}
             <button
               type="button"
               aria-label={`Am ${tagText(tag)} Termin erstellen`}
               aria-haspopup="dialog"
               onClick={() => a.neu(tag)}
-              className="group/neu focus-ring-inset absolute inset-0 transition-colors hover:bg-on-surface/[calc(var(--state-hover)*100%)]"
+              className="group/neu state focus-ring-inset absolute! inset-0"
             >
               <Plus
                 size={16}

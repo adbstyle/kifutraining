@@ -107,107 +107,104 @@ export function TeamTrainingsListe({
     <>
       <div className="flex flex-col gap-3">
         {trainings.map((t) => (
-          // Die ganze Karte führt ins Training und hellt beim Überfahren auf
-          // wie die Teamkarte (`state`). Der Link spannt sich dafür über sie
-          // (`before:inset-0`); die Aktionen liegen darüber und behalten
-          // ihre eigenen Klicks.
-          <Card key={t.id} className="state p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              {/* Der ganze Textblock führt ins Training, nicht nur der Titel.
-                  Er enthält nichts Interaktives — die Aktionen stehen
-                  daneben. Ohne eigenes aria-label, damit Übungszahl und Dauer
-                  mitgelesen werden: gleichnamige Einheiten sind sonst nicht
-                  auseinanderzuhalten. */}
-              <Link
-                href={`/training/${t.id}/edit`}
-                className="focus-ring block min-w-0 flex-1 rounded-flaeche before:absolute before:inset-0 before:rounded-flaeche before:content-['']"
-              >
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  {t.stufen.map((k) => (
-                    <KategorieChip key={k} k={k} />
-                  ))}
-                  {/* Dieselbe Marke wie auf der Trainings-Kachel, an derselben
-                      Stelle der Chip-Zeile: der Trainingsbestand des Teams
-                      zeigt Varianten genauso an (#206 AK 1). Die Liste
-                      dupliziert die Kachel-Anzeige bewusst — sie trägt eigene
-                      Aktionen und lässt sich darum nicht durch TrainingCard
-                      ersetzen. Umrandet in Primary (`varianten`), weil die Zahl
-                      eine Eigenschaft des Trainings meldet und keine
-                      Alterskategorie ist; Plural immer, die Marke erscheint
-                      erst ab zwei (AK 3). */}
-                  {t.variantenZahl > 1 && (
-                    <Badge tone="varianten">
-                      <Layers size={12} strokeWidth={2.5} aria-hidden />
-                      {t.variantenZahl} Varianten
-                    </Badge>
-                  )}
-                  {/* „Eingeplant" ist ein Zustand, keine Aktion — darum als
-                      Plakette beim Titel statt als Attrappe eines Buttons in
-                      der Aktionsreihe. Geändert wird der Termin im Plan.
-                      Das Datum steht mit dabei: mehrere eingeplante Einheiten
-                      desselben Trainings heissen gleich und sind sonst nicht
-                      auseinanderzuhalten (#156 AK 7). */}
-                  {t.termin && (
-                    <Badge tone="neutral">
-                      <CalendarCheck size={12} strokeWidth={2.5} aria-hidden />
-                      Eingeplant · {datumKurz(t.termin.datum)}
-                    </Badge>
-                  )}
-                </div>
-                <h3 className="type-title-medium text-on-surface">
-                  {t.name}
-                </h3>
-                {/* Kennzahlen der ERSTEN Variante (#206 AK 2), gerechnet in
-                    `mapListRow` — ein Training spielt nur eine Variante. */}
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 type-body-medium text-on-surface-mittel">
-                  <span className="inline-flex items-center gap-1.5">
-                    <ListChecks size={16} strokeWidth={2} aria-hidden />
-                    {t.exerciseCount} {t.exerciseCount === 1 ? "Übung" : "Übungen"}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <Clock size={16} strokeWidth={2} aria-hidden />
-                    {t.hasAnyDuration ? formatDuration(t.totalDuration) : "Keine Dauer"}
-                  </span>
-                </div>
-              </Link>
-
-              {/* Icon-only wie auf der Übungsseite; Entfernen liegt im
-                  ⋮-Menü. Das Zuordnen bleibt auch bei einem bereits
-                  eingeplanten Training erreichbar (Story 16): dort, wo der
-                  Trainer sein Training auswählt, endete sonst der Weg zum
-                  nächsten Termin. Den Termin selbst ändert man im Plan. */}
-              <div className="relative flex shrink-0 items-center gap-0.5">
-                <Tooltip label="Termin zuordnen">
-                  <IconButton
-                    icon={CalendarPlus}
-                    label={`${t.name} einem Termin zuordnen`}
-                    size="sm"
-                    disabled={pending}
-                    onClick={() => { setDialogFehler(undefined); setZuordnen(t); }}
-                  />
-                </Tooltip>
-                <Tooltip label="Zu mir übernehmen">
-                  <IconButton
-                    icon={Download}
-                    label={`${t.name} zu mir übernehmen`}
-                    size="sm"
-                    disabled={pending}
-                    onClick={() => uebernehmen(t)}
-                  />
-                </Tooltip>
-                <OverflowMenu
-                  label={`Weitere Aktionen zu ${t.name}`}
-                  disabled={pending}
-                  items={[
-                    {
-                      label: "Aus dem Team entfernen",
-                      icon: Trash2,
-                      danger: true,
-                      onSelect: () => setEntfernen(t),
-                    },
-                  ]}
-                />
+          // Wie die Trainings- und die Teamkarte: Der Link deckt die ganze
+          // Karte und trägt die Zustands-Ebene (`state`) — auf dem Link, weil
+          // nur er Fokus und Druck meldet. Die Aktionen liegen als Geschwister
+          // oben rechts darüber (kein <button> in <a>); der Link hält ihnen
+          // rechts Platz frei.
+          <Card key={t.id}>
+            {/* Ohne eigenes aria-label, damit Übungszahl und Dauer mitgelesen
+                werden: gleichnamige Einheiten sind sonst nicht
+                auseinanderzuhalten. */}
+            <Link
+              href={`/training/${t.id}/edit`}
+              className="state focus-ring-inset block rounded-flaeche p-4 pr-32"
+            >
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                {t.stufen.map((k) => (
+                  <KategorieChip key={k} k={k} />
+                ))}
+                {/* Dieselbe Marke wie auf der Trainings-Kachel, an derselben
+                    Stelle der Chip-Zeile: der Trainingsbestand des Teams
+                    zeigt Varianten genauso an (#206 AK 1). Die Liste
+                    dupliziert die Kachel-Anzeige bewusst — sie trägt eigene
+                    Aktionen und lässt sich darum nicht durch TrainingCard
+                    ersetzen. Umrandet in Primary (`varianten`), weil die Zahl
+                    eine Eigenschaft des Trainings meldet und keine
+                    Alterskategorie ist; Plural immer, die Marke erscheint
+                    erst ab zwei (AK 3). */}
+                {t.variantenZahl > 1 && (
+                  <Badge tone="varianten">
+                    <Layers size={12} strokeWidth={2.5} aria-hidden />
+                    {t.variantenZahl} Varianten
+                  </Badge>
+                )}
+                {/* „Eingeplant" ist ein Zustand, keine Aktion — darum als
+                    Plakette beim Titel statt als Attrappe eines Buttons in
+                    der Aktionsreihe. Geändert wird der Termin im Plan.
+                    Das Datum steht mit dabei: mehrere eingeplante Einheiten
+                    desselben Trainings heissen gleich und sind sonst nicht
+                    auseinanderzuhalten (#156 AK 7). */}
+                {t.termin && (
+                  <Badge tone="neutral">
+                    <CalendarCheck size={12} strokeWidth={2.5} aria-hidden />
+                    Eingeplant · {datumKurz(t.termin.datum)}
+                  </Badge>
+                )}
               </div>
+              <h3 className="type-title-medium text-on-surface">
+                {t.name}
+              </h3>
+              {/* Kennzahlen der ERSTEN Variante (#206 AK 2), gerechnet in
+                  `mapListRow` — ein Training spielt nur eine Variante. */}
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 type-body-medium text-on-surface-mittel">
+                <span className="inline-flex items-center gap-1.5">
+                  <ListChecks size={16} strokeWidth={2} aria-hidden />
+                  {t.exerciseCount} {t.exerciseCount === 1 ? "Übung" : "Übungen"}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock size={16} strokeWidth={2} aria-hidden />
+                  {t.hasAnyDuration ? formatDuration(t.totalDuration) : "Keine Dauer"}
+                </span>
+              </div>
+            </Link>
+
+            {/* Icon-only wie auf der Übungsseite; Entfernen liegt im
+                ⋮-Menü. Das Zuordnen bleibt auch bei einem bereits
+                eingeplanten Training erreichbar (Story 16): dort, wo der
+                Trainer sein Training auswählt, endete sonst der Weg zum
+                nächsten Termin. Den Termin selbst ändert man im Plan. */}
+            <div className="absolute right-4 top-4 flex items-center gap-0.5">
+              <Tooltip label="Termin zuordnen">
+                <IconButton
+                  icon={CalendarPlus}
+                  label={`${t.name} einem Termin zuordnen`}
+                  size="sm"
+                  disabled={pending}
+                  onClick={() => { setDialogFehler(undefined); setZuordnen(t); }}
+                />
+              </Tooltip>
+              <Tooltip label="Zu mir übernehmen">
+                <IconButton
+                  icon={Download}
+                  label={`${t.name} zu mir übernehmen`}
+                  size="sm"
+                  disabled={pending}
+                  onClick={() => uebernehmen(t)}
+                />
+              </Tooltip>
+              <OverflowMenu
+                label={`Weitere Aktionen zu ${t.name}`}
+                disabled={pending}
+                items={[
+                  {
+                    label: "Aus dem Team entfernen",
+                    icon: Trash2,
+                    danger: true,
+                    onSelect: () => setEntfernen(t),
+                  },
+                ]}
+              />
             </div>
           </Card>
         ))}

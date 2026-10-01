@@ -34,7 +34,7 @@ export function ExerciseCard({
   actionSlot?: ReactNode;
 }) {
   return (
-    <Card className="group overflow-hidden">
+    <Card className="overflow-hidden">
       {/* Die ganze Karte ist eine Trefferfläche — darum trägt der Link die
           Zustands-Ebene (`state`) und nicht der Kartenrand: die Karte hat
           keinen mehr, und ein Overlay über der gesamten Fläche zeigt
@@ -74,7 +74,7 @@ export function ExerciseCard({
 
         {/* Inhalt */}
         <div className="p-3">
-          <h3 className="type-title-medium text-on-surface transition-colors group-hover:text-primary">
+          <h3 className="type-title-medium text-on-surface">
             {ex.name}
           </h3>
           {/* Eckdaten: höchstens zwei Zeilen, was nicht passt, endet in
