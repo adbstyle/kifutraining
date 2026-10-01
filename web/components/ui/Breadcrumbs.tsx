@@ -15,7 +15,7 @@ export interface BreadcrumbItem {
 }
 
 /* ── Brotkrumen ───────────────────────────────────────────────────────
-   Sekundäre Pfad-Navigation. Datengetrieben wie Header/Menu: ein
+   Sekundäre Pfad-Navigation. Datengetrieben wie Menu und Seitenleiste: ein
    `items`-Array, das letzte Item ohne `href` ist die aktuelle Seite.
    Lange Pfade kollabieren (maxItems) zu einem aufklappbaren „…"-Button.
    Separator als ChevronRight (kanonisches Icon), per `separator` ersetzbar.

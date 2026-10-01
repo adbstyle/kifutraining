@@ -112,7 +112,7 @@ function stelleDerBedingung(altersstufe: Altersstufe, b: Bedingung): HinweisStel
  *
  * Die Veröffentlichungsbedingungen kommen nur beim eigenen persönlichen
  * Training — nur dort steht das Veröffentlichen offen (wie
- * `app/training/[id]/page.tsx`): Ein Team-Training wird nicht
+ * `app/(app)/training/[id]/page.tsx`): Ein Team-Training wird nicht
  * veröffentlicht, ein fremdes nicht von diesem Konto.
  *
  * Nur, was zur Altersstufe gehört (AK 9): Zeitrichtwerte gibt es allein im

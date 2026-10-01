@@ -4,7 +4,6 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Clock } from "lucide-react";
 import {
-  Breadcrumbs,
   Button,
   Dialog,
   type BreadcrumbItem,
@@ -64,6 +63,7 @@ import type { TrainingActionResult } from "@/lib/actions/trainings";
 import type { Bearbeitungsziel } from "@/lib/training-zugriff";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings";
 import type { TeamUebersicht } from "@/lib/queries/teams";
+import { SeitenKopf } from "@/components/layout/SeitenKopf";
 
 /* Trainings-Editor (Stories #10/#11/#12). Eine Karte je Trainingsteil mit
    Übungs-Picker, Dauer-Erfassung, Umsortieren (Hoch/Runter) und Entfernen.
@@ -89,7 +89,7 @@ export function TrainingEditor({
   varianteParam?: string;
   /** Die Brotkrumen der Seite. Sie stehen hier drin, weil die Aktionsreihe
    *  neben ihnen sitzt und die Laufzeit des Editors braucht. */
-  brotkrumen?: BreadcrumbItem[];
+  brotkrumen: BreadcrumbItem[];
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -577,23 +577,25 @@ export function TrainingEditor({
     <div className="flex flex-col gap-4">
       {/* Brotkrumen links, Aktionen rechts — dieselbe Zeile und dieselbe
           Stelle wie auf der Ansichtsseite (#249 AK 8). */}
-      <div className="flex items-center gap-3">
-        {brotkrumen && <Breadcrumbs items={brotkrumen} className="min-w-0" />}
-        <TrainingAktionen
-          ort="editor"
-          trainingId={training.id}
-          name={name}
-          visibility={oeffentlich ? "public" : "private"}
-          teamId={training.team?.id ?? null}
-          terminDatum={training.terminDatum}
-          angemeldet
-          bearbeitungsziel={bearbeitungsziel}
-          teams={teams}
-          fehlendeBedingungen={fehlendeBedingungen}
-          varianten={varianten}
-          aktiveVarianteId={aktive?.id}
-        />
-      </div>
+      <SeitenKopf
+        krumen={brotkrumen}
+        aktionen={
+          <TrainingAktionen
+            ort="editor"
+            trainingId={training.id}
+            name={name}
+            visibility={oeffentlich ? "public" : "private"}
+            teamId={training.team?.id ?? null}
+            terminDatum={training.terminDatum}
+            angemeldet
+            bearbeitungsziel={bearbeitungsziel}
+            teams={teams}
+            fehlendeBedingungen={fehlendeBedingungen}
+            varianten={varianten}
+            aktiveVarianteId={aktive?.id}
+          />
+        }
+      />
 
       <TrainingKopf
         training={training}

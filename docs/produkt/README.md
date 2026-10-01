@@ -5,6 +5,7 @@ Antwort auf die Frage „Was geht heute?" für alle, die nicht im Code nachsehen
 
 | Bereich | Inhalt |
 |---|---|
+| [Navigation](navigation.md) | Seitenleiste, breit oder schmal, Brotkrumen, Bedienung auf schmalen Bildschirmen |
 | [Konto und Zugang](konto-und-zugang.md) | Registrieren, Anmelden, Anzeigename, KI-Assistent verbinden, Kalender-Abos, Konto löschen |
 | [Übungen](uebungen.md) | Altersstufen, Übungsbestand, eigene Übungen, Feld-Diagramme, Favoriten |
 | [Trainings](trainings.md) | Trainings der beiden Altersstufen zusammenstellen, durchführen, drucken, veröffentlichen |
