@@ -22,7 +22,7 @@ export default async function TeamsPage() {
   const teams = await getMeineTeams();
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <header className="mb-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="type-headline-large text-on-surface">Teams</h1>
@@ -40,7 +40,7 @@ export default async function TeamsPage() {
           zusammen planst.
         </Leerzustand>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {teams.map((team) => (
             /* Zustands-Ebene auf dem Link, nicht auf der Karte darin: Er
                deckt die ganze Zeile, und nur er meldet Fokus und Druck. */
@@ -49,12 +49,12 @@ export default async function TeamsPage() {
               href={`/team/${team.id}`}
               className="state focus-ring group block rounded-flaeche"
             >
-              <Card className="flex items-center gap-4 p-5">
+              <Card className="flex h-full items-center gap-4 p-5">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
                   <Users size={22} strokeWidth={2} aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="type-title-medium block truncate text-on-surface">
+                  <span className="type-title-large block truncate text-on-surface">
                     {team.name}
                   </span>
                   <span className="type-body-small block text-on-surface-mittel">

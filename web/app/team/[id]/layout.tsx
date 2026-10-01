@@ -29,7 +29,7 @@ export default async function TeamLayout({
   if (!team) redirect("/teams");
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <Breadcrumbs items={[{ label: "Teams", href: "/teams" }, { label: team.name }]} />
 
       <header className="mt-4 mb-6">

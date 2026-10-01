@@ -22,13 +22,11 @@ export default async function TeamTrainingsPage({
 
   return (
     <section>
+      {/* Keine Überschrift: «Trainings» steht schon im Reiter. */}
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="type-title-large text-on-surface">
-          Trainings
-          <span className="type-label-small ml-2 text-on-surface-mittel">
-            {trainings.length}
-          </span>
-        </h2>
+        <p className="type-body-medium text-on-surface-mittel">
+          {trainings.length === 1 ? "1 Training" : `${trainings.length} Trainings`}
+        </p>
         <TeamTrainingErstellenButton teamId={id} />
       </div>
       {trainings.length === 0 ? (

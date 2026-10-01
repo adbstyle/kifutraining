@@ -34,7 +34,7 @@ export function TeamKopf({ teamId, name }: { teamId: string; name: string }) {
   return (
     <>
       <div className="flex items-center gap-2">
-        <h1 className="type-headline-large truncate text-on-surface">{name}</h1>
+        <h1 className="type-title-large truncate text-on-surface">{name}</h1>
         {/* `shrink-0` gehört an den Tooltip: er ist das Flex-Kind, nicht der
             Button. Sonst schrumpft der Wrapper neben dem langen, truncateten
             Teamnamen und der Button ragt über dessen Ellipse. */}

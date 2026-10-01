@@ -41,7 +41,8 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   verantwortliche: "Verantwortliche wieder der Serie folgen lassen",
 };
 
-/* Einen einzelnen Termin festlegen oder ändern (Team-Kalender #322).
+/* Einen Termin ändern (Team-Kalender #322); festgelegt wird im
+   NeuerTerminDialog.
    Die Regeln kommen aus lib/termin.ts — dieselben, die der Fachkern prüft;
    der Dialog zeigt den Fehler am Feld, bevor er etwas sendet.
 
@@ -58,7 +59,7 @@ export function TerminDialog({
   titel,
   bestaetigung,
   start,
-  /** Die Zeit vor dem Ändern — ohne: neuer Termin, Beginn und Ende Pflicht. */
+  /** Die Zeit vor dem Ändern — ohne: Beginn und Ende Pflicht. */
   bisher,
   pending,
   fehler: serverFehler,
@@ -84,7 +85,7 @@ export function TerminDialog({
   abweichungen?: readonly Abweichung[];
   /** Wer als Verantwortliche:r zur Wahl steht (#325). */
   mitglieder: readonly TeamMitglied[];
-  /** Die Verantwortlichen des geöffneten Termins; ohne: neuer Termin. */
+  /** Die Verantwortlichen des geöffneten Termins; ohne: keine. */
   verantwortliche?: readonly Verantwortlicher[];
   onFolgen?: (angabe: FolgeAngabe) => void;
   onClose: () => void;

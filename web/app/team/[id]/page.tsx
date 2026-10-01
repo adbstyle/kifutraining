@@ -6,7 +6,7 @@ import { MonatsUeberblick } from "@/components/team/MonatsUeberblick";
 import { TerminBereich } from "@/components/team/TerminBereich";
 import { TrainingsPlan } from "@/components/team/TrainingsPlan";
 import { NeuerTerminKnopf } from "@/components/team/NeuerTerminKnopf";
-import { AboKnopf } from "@/components/team/AboKnopf";
+import { PlanMenue } from "@/components/team/PlanMenue";
 import { NurMeineFilter } from "@/components/team/NurMeineFilter";
 import { istUuid } from "@/lib/kennung";
 import { getTeam } from "@/lib/queries/teams";
@@ -78,22 +78,23 @@ export default async function TeamPlanPage({
   return (
     <TerminBereich teamId={id} trainings={trainings} persoenliche={persoenliche} mitglieder={team?.mitglieder ?? []} heute={heute} termine={termine}>
       <section>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="type-title-large text-on-surface">Trainingsplan</h2>
-          <div className="flex flex-wrap gap-2">
+        {/* Keine Überschrift: «Trainingsplan» steht schon im Reiter. Links,
+            wie man den Plan sieht; rechts, was man ihm hinzufügt. */}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <AnsichtWahl
+              ansicht={ansicht}
+              hrefListe={href({ ansicht: "liste", meine })}
+              hrefMonat={href({ ansicht: "monat", meine })}
+            />
+            {(meine || !leer) && <NurMeineFilter aktiv={meine} href={href({ ansicht, meine: !meine })} />}
+          </div>
+          <div className="ml-auto flex items-center gap-1">
             <NeuerTerminKnopf />
-            {team && <AboKnopf teamId={id} teamName={team.name} />}
+            {team && <PlanMenue teamId={id} teamName={team.name} />}
           </div>
         </div>
         {terminWeg && <Banner tone="hinweis" className="mb-4">{TERMIN_WEG}</Banner>}
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <AnsichtWahl
-            ansicht={ansicht}
-            hrefListe={href({ ansicht: "liste", meine })}
-            hrefMonat={href({ ansicht: "monat", meine })}
-          />
-          {(meine || !leer) && <NurMeineFilter aktiv={meine} href={href({ ansicht, meine: !meine })} />}
-        </div>
         {ansicht === "monat" ? (
           <MonatsUeberblick teamId={id} monat={monat} termine={termine} heute={heute} meine={meine} />
         ) : leer && meine ? (

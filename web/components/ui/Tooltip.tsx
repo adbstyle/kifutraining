@@ -13,15 +13,21 @@ import { cn } from "@/lib/cn";
    Verwendung: einen einzelnen interaktiven Trigger umschliessen.
      <Tooltip label="Bearbeiten">
        <IconButton icon={Pencil} label="Bearbeiten" … />
-     </Tooltip> */
+     </Tooltip>
+
+   `ende`: bündig mit der rechten Kante des Triggers statt mittig — für
+   Trigger am rechten Rand, über den ein mittiger Tooltip hinausragte (auch
+   unsichtbar verbreitert er die Seite). */
 export function Tooltip({
   label,
   children,
   className,
+  ende,
 }: {
   label: string;
   children: ReactNode;
   className?: string;
+  ende?: boolean;
 }) {
   return (
     <span className={cn("group relative inline-flex", className)}>
@@ -30,7 +36,8 @@ export function Tooltip({
         aria-hidden
         className={cn(
           // Standard: versteckt + nicht klickbar; sichtbar bei Hover/Fokus.
-          "pointer-events-none absolute left-1/2 top-full z-50 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-flaeche bg-elev-24 px-2 py-1 text-on-surface shadow-dp-08 opacity-0 transition-opacity duration-150",
+          "pointer-events-none absolute top-full z-50 mt-1.5 whitespace-nowrap rounded-flaeche bg-elev-24 px-2 py-1 text-on-surface shadow-dp-08 opacity-0 transition-opacity duration-150",
+          ende ? "right-0" : "left-1/2 -translate-x-1/2",
           "type-body-small",
           "group-hover:opacity-100 group-focus-within:opacity-100",
         )}

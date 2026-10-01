@@ -129,8 +129,11 @@ solange es geöffnet ist. Die Schreibweise ist überall dieselbe wie im Training
 ## Terminserien
 
 Wer jede Woche zur selben Zeit trainiert, legt die Termine einer ganzen Saison in einem Schritt
-an: „Terminserie festlegen" verlangt einen oder mehrere Wochentage, ein Beginn- und ein
-Enddatum, Beginn und Ende, dazu auf Wunsch Ort, Bemerkung und Verantwortliche. Es gelten
+an: Im selben Dialog wie der einzelne Termin („Termin festlegen") macht das Ankreuzen von
+„Wiederholender Termin" daraus eine Serie. Das Datum wird zum Beginndatum, dazu kommen ein oder
+mehrere Wochentage und ein Enddatum; vorgewählt ist der Wochentag des Datums, und er folgt
+einem geänderten Datum, bis man selbst Wochentage wählt. Beginn, Ende, Ort, Bemerkung und
+Verantwortliche sind dieselben Felder wie beim einzelnen Termin. Es gelten
 dieselben Regeln wie für einen einzelnen Termin. Das Enddatum liegt frühestens am Beginndatum
 und spätestens am gleichen Kalendertag des Folgejahres — nach einem 29. Februar am 28. Februar
 —, und im Zeitraum muss mindestens einer der gewählten Wochentage liegen. Auch eine Serie darf
@@ -255,6 +258,11 @@ Ausfallen lassen oder — bei einem ausgefallenen — Grund ändern und Ausfall 
 Termin entfernen. Die Durchführen-Ansicht zeigt, aus dem Plan geöffnet, zuoberst Datum, Zeit,
 Ort, Verantwortliche und Bemerkung des Termins.
 
+Eine eigene Überschrift trägt der Trainingsplan nicht, sie steht schon im Umschalter. Über
+den Terminen liegt eine Zeile: links, wie man den Plan sieht — „Liste" oder „Monat" und die
+Eingrenzung „Meine Termine" —, rechts „Termin festlegen" und ein Menü mit „Kalender
+abonnieren".
+
 Neben der Liste steht der Monatsüberblick, umgeschaltet über „Liste" und „Monat". Er zeigt einen
 Monat in Wochen von Montag bis Sonntag, samt den Randtagen der Nachbarmonate, und hebt den
 heutigen Tag hervor. Mit den Pfeilen geht es zu früheren und späteren Monaten, mit „Heute"
@@ -263,8 +271,8 @@ steht einzeln mit seinem Beginn und dem Namen seines Trainings, oder mit „Noch
 (anstehend, umrandet), „Ohne Training" (vergangen, leise) oder „Ausgefallen"
 (durchgestrichen); fehlt der Beginn, steht „Zeit fehlt". Eine Woche ganz ohne Termin ist
 gestrichelt umrandet. Ein Klick öffnet den Termin mit denselben Angaben und Handgriffen wie in
-der Liste. Über das Plus an jedem Tag entsteht dort ein Termin oder eine Terminserie, mit dem Tag
-als Datum beziehungsweise Beginndatum vorbelegt. Beide Ansichten zeigen dieselben Termine,
+der Liste. Das Plus an jedem Tag öffnet „Termin festlegen" mit dem Tag als Datum vorbelegt —
+angekreuzt als Beginndatum einer Terminserie. Beide Ansichten zeigen dieselben Termine,
 jede Änderung erscheint sofort in beiden, und die Bestätigung kommt auch dann, wenn das
 Ergebnis ausserhalb des gezeigten Monats oder der Eingrenzung liegt. Liste und Monat lassen
 sich am Handy ebenso bedienen wie am Desktop; schmal scrollt der Monat in sich waagrecht.
@@ -272,7 +280,8 @@ sich am Handy ebenso bedienen wie am Desktop; schmal scrollt der Monat in sich w
 ## Kalender-Abo
 
 Die Trainingszeiten eines Teams lassen sich im eigenen Kalenderprogramm abonnieren. Im
-Trainingsplan holt „Kalender abonnieren" den persönlichen Abo-Link für dieses Team; beim ersten
+Trainingsplan holt „Kalender abonnieren" im Menü neben „Termin festlegen" den persönlichen
+Abo-Link für dieses Team; beim ersten
 Mal entsteht er, danach kommt derselbe, solange das Abo gilt. Der Dialog warnt, dass der Link
 persönlich ist und nicht weitergegeben werden soll, weil jeder, der ihn hat, Zeit und Ort der
 Trainings sieht. Er bietet den Link zum Kopieren an und sagt, wie er in Apple Kalender — dort
