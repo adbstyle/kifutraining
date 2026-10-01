@@ -158,7 +158,8 @@ export const TERMIN_MELDUNG = {
     "Das Training wurde inzwischen einem anderen Termin zugeordnet oder von seinem Termin gelöst. " +
     "Wähle noch einmal.",
   TERMIN_TRAINING_FREMDES_TEAM:
-    "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams zuordnen.",
+    "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams oder deine persönlichen Trainings zuordnen.",
+  PERSOENLICH_NUR_KOPIE: "Ein persönliches Training lässt sich einem Termin nur als Kopie zuordnen.",
   TRAINING_SCHON_EINGEPLANT:
     "Dieses Training ist bereits für einen anstehenden Termin eingeplant. Wähle, ob du es für " +
     "diesen Termin kopierst oder auf ihn verschiebst.",

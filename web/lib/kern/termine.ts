@@ -335,7 +335,8 @@ export async function mitAufgeraeumterKopie(
   return { ...f, meldung: `${f.meldung} ${kopieGebliebenText(data?.name ?? "Kopie")}`, hinweis: hinweisRest(kopieId) };
 }
 
-/** Einem Termin ein Training aus dem Team-Bestand zuordnen (AK 1–11, 14–17;
+/** Einem Termin ein Training aus dem Team-Bestand oder ein eigenes
+ *  persönliches Training (dann als Kopie, #328) zuordnen (AK 1–11, 14–17;
  *  PC 1–9). Ersetzt ein Training, das der Termin schon trägt (AK 9). */
 export async function ordneTrainingZu(
   supabase: SupabaseClient,
@@ -351,7 +352,31 @@ export async function ordneTrainingZu(
   const training = await ladeTrainingZumBearbeiten(supabase, userId, e.trainingId);
   if (!training.ok) return training;
   const { ziel } = training.wert;
-  if (ziel.art !== "team" || ziel.teamId !== t.team_id)
+  // #328: Ein persönliches Training kommt als eigenständige Kopie ins Team des
+  // Termins (PC 1–4). Verschieben gibt es dafür nicht (AK 13). Die Zuordnung
+  // ist eine Regel, kein Konflikt — darum nicht in KONFLIKT_MARKER.
+  if (ziel.art === "persoenlich") {
+    if (e.art === "verschieben")
+      return fehlschlag("regel", TERMIN_MELDUNG.PERSOENLICH_NUR_KOPIE, { feld: "art" });
+    // Eine veraltete Auswahl legt keine Kopie an.
+    if (e.erwartet && t.training_id !== e.erwartet.terminTraining)
+      return fehlschlag("konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
+    const kopie = await kopiereTraining(supabase, e.trainingId, { art: "team", teamId: t.team_id });
+    if (!kopie.ok)
+      // AK 10: Erfüllt es die Bedingungen eines Team-Trainings nicht, nennt die
+      // Meldung der Kopie den Grund.
+      return fehlschlag(kopie.art, kopie.error, {
+        hinweis: kopie.nichtsEntstanden ? HINWEIS_NICHTS_ENTSTANDEN : hinweisRest(kopie.rest),
+      });
+    // Die Kopie hat nie einen Termin; das Original wird nicht berührt (PC 3).
+    const erwartet: Erwartung = {
+      termin_training: e.erwartet ? e.erwartet.terminTraining : t.training_id,
+      training_termin: null,
+    };
+    const r = await setze(supabase, t, kopie.neueId, false, erwartet, !e.erwartet, true);
+    return r.ok ? r : mitAufgeraeumterKopie(supabase, r, kopie.neueId);
+  }
+  if (ziel.teamId !== t.team_id)
     return fehlschlag("regel", TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM, { feld: "training_id" });
   if (t.training_id === e.trainingId)
     return ok({ terminId: t.id, teamId: t.team_id, trainingId: e.trainingId, kopie: false, imBestand: null, freierTermin: null });
