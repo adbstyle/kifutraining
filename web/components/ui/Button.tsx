@@ -9,12 +9,14 @@ import { cn } from "@/lib/cn";
 // Zwischenschicht aus Component-Tokens mehr: Wer den Knopf liest, sieht, auf
 // welcher Höhe er sitzt, ohne in globals.css nachschlagen zu müssen.
 //
-// Warum es `quiet` überhaupt gibt: Versalien sind für eine Randhandlung zu
-// laut. «+ Variante hinzufügen» steht in einer Leiste NEBEN Chips, die
-// Nutzertext tragen und darum normal gesetzt sind — ein mono-versaler Knopf
-// daneben schriee, und die Leiste zerfiele in zwei Stimmen. `quiet` behält die
-// Primary-Farbe des `text`-Knopfes (es ist dieselbe Emphase-Ebene), lässt aber
-// die Versalien fallen: so liest sich die Leiste als EINE Zeile.
+// Schrift: Jeder Knopf steht normal gesetzt in `type-title-small` (Geist 600,
+// 14/20) — nicht versal. Dieselbe Schrift tragen die Reiter (TabNav); neben
+// Chips und Feldern liest sich ein Knopf so als Wort und nicht als Rubrik.
+//
+// `quiet` ist die dichte Bauform des `text`-Knopfes für Handlungen, die am
+// Rand einer Chip-Leiste mitlaufen («+ Variante hinzufügen»): dieselbe Farbe
+// und Schrift, aber fest h-9 mit knapper Polsterung, damit er in der Leiste
+// auf der Linie sitzt.
 type Variant = "filled" | "tonal" | "elevated" | "outlined" | "text" | "danger" | "quiet";
 type Size = "sm" | "md" | "lg";
 
@@ -29,10 +31,10 @@ const base =
 /** Schrift und Icon-Abstand einer Variante. Eigener Slot und nicht in `base`,
  *  weil `cn` ein reiner Joiner ist (kein tailwind-merge): In den fertigen
  *  String darf genau EINE Typo-Klasse gelangen, eine Basis-Klasse liesse sich
- *  nicht überschreiben. `quiet` ist als einzige eine Schrift-Stufe — siehe
- *  oben —, alle übrigen tragen die Label-Typo des Knopfes. */
+ *  nicht überschreiben. Die Schrift ist für alle gleich; `quiet` rückt nur
+ *  das Zeichen näher an den Text. */
 function typo(variant: Variant): string {
-  return variant === "quiet" ? "type-title-small gap-1.5" : "type-label-large gap-2";
+  return variant === "quiet" ? "type-title-small gap-1.5" : "type-title-small gap-2";
 }
 
 // Nur noch Farbe und Fläche — Schrift kommt aus `typo`, Höhe und Polsterung
@@ -57,9 +59,7 @@ const variants: Record<Variant, string> = {
   // trägt auch dort 4.56:1, und der Rahmen ist hier das einzige, was den
   // Knopf als Fläche überhaupt begrenzt.
   danger: "bg-transparent text-error kontur border-error",
-  // Eine Stufe UNTER `text` — für Handlungen, die am Rand mitlaufen. Nicht
-  // leiser in der Farbe (Primary bleibt, es ist dieselbe Emphase), sondern in
-  // der Schrift: normal gesetzt statt mono-versal.
+  // Die dichte Bauform von `text` — dieselbe Farbe, siehe oben.
   quiet: "bg-transparent text-primary",
 };
 

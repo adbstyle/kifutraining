@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus } from "lucide-react";
 import { AltersstufeField, Button, Dialog, TextField } from "@/components/ui";
 import { StufenField } from "@/components/training/StufenField";
 import { kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
@@ -59,8 +58,7 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
 
   return (
     <>
-      <Button variant="tonal" size="sm" onClick={() => setOpen(true)}>
-        <Plus size={18} strokeWidth={2.5} aria-hidden />
+      <Button variant="filled" size="sm" onClick={() => setOpen(true)}>
         Training erstellen
       </Button>
 

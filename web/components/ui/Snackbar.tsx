@@ -37,7 +37,7 @@ export function Snackbar({
         <button
           type="button"
           onClick={onAction}
-          className="state focus-ring type-label-large -my-1 shrink-0 rounded-flaeche px-2 py-1 text-primary"
+          className="state focus-ring type-title-small -my-1 shrink-0 rounded-flaeche px-2 py-1 text-primary"
         >
           {actionLabel}
         </button>

@@ -2,15 +2,18 @@
 
 import { useState, useTransition } from "react";
 import { CalendarDays } from "lucide-react";
-import { Button } from "@/components/ui";
+import { OverflowMenu } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { holeAboAktion } from "@/lib/actions/abos";
 import { AboDialog } from "./AboDialog";
 
-/** Der Einstieg ins Kalender-Abo im Trainingsplan eines Teams (#330 AK 1):
- *  holt den persönlichen Link (beim ersten Mal wird er angelegt, danach kommt
- *  derselbe, AK 6) und zeigt ihn im Dialog samt Warnung und Anleitung. */
-export function AboKnopf({ teamId, teamName }: { teamId: string; teamName: string }) {
+/** Das ⋮ des Trainingsplans — darin der Einstieg ins Kalender-Abo (#330 AK 1).
+ *  Er holt den persönlichen Link (beim ersten Mal wird er angelegt, danach
+ *  kommt derselbe, AK 6) und zeigt ihn im Dialog samt Warnung und Anleitung.
+ *  Das Abo richtet man einmal ein; offen neben «Termin erstellen» stünde es
+ *  bei jedem Besuch im Weg. Nach der Wahl liegt der Fokus wieder auf dem ⋮,
+ *  und der Dialog gibt ihn beim Schliessen dorthin zurück. */
+export function PlanMenue({ teamId, teamName }: { teamId: string; teamName: string }) {
   const [pending, startTransition] = useTransition();
   const melde = useSnackbar();
   const [links, setLinks] = useState<{ url: string; webcal: string } | null>(null);
@@ -29,11 +32,11 @@ export function AboKnopf({ teamId, teamName }: { teamId: string; teamName: strin
 
   return (
     <>
-      {/* Nicht `disabled`: Ein gesperrter Knopf verliert den Fokus, und der
-          Dialog könnte ihn beim Schliessen nicht dorthin zurückgeben. */}
-      <Button variant="outlined" onClick={holen} aria-disabled={pending}>
-        <CalendarDays size={18} aria-hidden /> Kalender abonnieren
-      </Button>
+      <OverflowMenu
+        label="Weitere Aktionen zum Trainingsplan"
+        size="sm"
+        items={[{ label: "Kalender abonnieren", icon: CalendarDays, onSelect: holen }]}
+      />
       <AboDialog links={links} teamName={teamName} onClose={() => setLinks(null)} />
     </>
   );

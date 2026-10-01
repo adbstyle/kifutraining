@@ -3,6 +3,7 @@ import {
   Button,
   ButtonLink,
   ButtonGroup,
+  segmentClasses,
   Badge,
   Card,
   ExerciseCard,
@@ -34,6 +35,7 @@ import { AuswahlListeDemo } from "./AuswahlListeDemo";
 import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
+import { CheckboxDemo } from "./CheckboxDemo";
 import { HeaderNavDemo } from "./HeaderNavDemo";
 import { OverlaysDemo } from "./OverlaysDemo";
 import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
@@ -67,6 +69,8 @@ import {
   CalendarOff,
   CalendarX2,
   CalendarPlus,
+  List,
+  CalendarDays,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { ROTATIONEN, SPIELER_POSEN, type DiagrammElement } from "@/lib/diagramm";
@@ -367,12 +371,8 @@ const radien: [string, string, string][] = [
 const hoehen: [string, string][] = [
   ["h-[22px] · 22 px", "Plakette und Kategorie-Chip — die kleinste beschriftete Fläche."],
   [
-    "h-8 · 32 px",
-    "Label-Chip im Grundmass: Filter, Assist, Suggestion, Input — alles mit Vokabular-Aufschrift.",
-  ],
-  [
     "h-9 · 36 px",
-    "Knopf klein, Nutzertext-Chip, geteilter Chip, leiser Knopf — sie stehen in einer Leiste nebeneinander und fluchten darum.",
+    "Knopf klein, Glied der Knopfgruppe, Label-Chip im Grundmass (Filter, Assist, Suggestion, Input), Nutzertext-Chip, geteilter Chip, leiser Knopf — sie stehen in einer Leiste nebeneinander und fluchten darum.",
   ],
   ["h-11 · 44 px", "Knopf mittel, Icon-Knopf, Menühälfte — Mindestmass für den Finger."],
   [
@@ -979,13 +979,13 @@ export default function Styleguide() {
           <code>text</code>
         </p>
         <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-          Der leise Knopf ist eine <strong>Schrift</strong>-Stufe, keine
-          Emphase-Stufe: Die Farbe bleibt Primary, nur die Versalien fallen —{" "}
-          <code>type-title-small</code> statt <code>type-label-large</code>.
-          Sie gilt für Handlungen, die <strong>am Rand mitlaufen</strong>: ein
-          Knopf in einer Leiste aus Chips, die Nutzertext tragen und darum
-          normal gesetzt sind. Mono-versal danebengestellt schriee er, und die
-          Leiste zerfiele in zwei Stimmen. Sie gilt <strong>nicht</strong> für
+          Alle Knöpfe stehen normal gesetzt in <code>type-title-small</code>{" "}
+          (Geist 600, 14/20), nicht versal — wie die Reiter. Der leise Knopf
+          ist die <strong>dichte Bauform</strong> des <code>text</code>-Knopfes:
+          dieselbe Farbe und Schrift, fest h-9 mit knapper Polsterung. Er gilt
+          für Handlungen, die <strong>am Rand mitlaufen</strong>: ein Knopf in
+          einer Leiste aus Chips, auf deren Linie er sitzen soll. Er gilt{" "}
+          <strong>nicht</strong> für
           Knöpfe, die einen Vorgang abschliessen oder abbrechen —
           Dialog-Knöpfe, Formularfüsse und alles, was neben einem{" "}
           <code>filled</code> steht, bleibt <code>text</code>. <code>size</code>{" "}
@@ -999,7 +999,7 @@ export default function Styleguide() {
           </Button>
           <Button variant="text">Abbrechen</Button>
           <span className="type-label-small text-on-surface-mittel">
-            quiet (Geist, normal) · text (Geist Mono, versal)
+            quiet (dicht, h-9) · text
           </span>
         </div>
 
@@ -1017,6 +1017,23 @@ export default function Styleguide() {
           <Button variant="outlined">Liste</Button>
           <Button variant="outlined">Raster</Button>
           <Button variant="outlined">Karte</Button>
+        </ButtonGroup>
+        <p className="type-body-medium mb-3 mt-4 max-w-2xl text-on-surface-mittel">
+          Nur mit Zeichen (<code>segmentClasses</code>), für den Wechsel der
+          Darstellung — etwa Liste/Monat im Trainingsplan. 36 px im Quadrat,
+          ohne Tooltip; der Name steht im zugänglichen Namen
+          (<code>aria-label</code>).
+          Gewählt trägt ein Glied die Auswahl-Optik der Chips: Kontur und
+          Zeichen in Primary, die Fläche Primary/12 — leiser als ein gefüllter
+          Knopf daneben, der die Handlung trägt.
+        </p>
+        <ButtonGroup ariaLabel="Ansicht">
+          <button type="button" aria-label="Liste" aria-pressed={false} className={segmentClasses(false)}>
+            <List size={18} aria-hidden />
+          </button>
+          <button type="button" aria-label="Monat" aria-pressed className={segmentClasses(true)}>
+            <CalendarDays size={18} aria-hidden />
+          </button>
         </ButtonGroup>
 
         <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
@@ -1043,7 +1060,11 @@ export default function Styleguide() {
           öffentlich vs. Schloss = privat). CSS-only, <code>aria-hidden</code>
           (der Name kommt schon vom <code>aria-label</code> des Triggers). Er
           steht auf 24dp wie der Dialog: Was über allem schwebt, trägt die
-          oberste Stufe.
+          oberste Stufe. Verborgen ist er <code>display: none</code>, damit er
+          am Rand die Seite nie verbreitert. Mit <code>ende</code> steht er
+          bündig zur rechten Kante des Triggers statt mittig — für Trigger am
+          rechten Rand; das Überlaufmenü (⋮) trägt ihn immer so, wie sein
+          Menü.
         </p>
         <div className="flex items-center gap-4">
           <Tooltip label="Bearbeiten">
@@ -1054,6 +1075,9 @@ export default function Styleguide() {
           </Tooltip>
           <Tooltip label="Auf privat setzen">
             <IconButton icon={Lock} label="Auf privat setzen" size="sm" />
+          </Tooltip>
+          <Tooltip label="Rechtsbündig (ende)" ende>
+            <IconButton icon={Pencil} label="Rechtsbündig" size="sm" />
           </Tooltip>
           <span className="type-label-small text-on-surface-mittel">
             (hovern oder per Tab fokussieren)
@@ -1072,7 +1096,10 @@ export default function Styleguide() {
           Eingabefelder für eine Auswahl, kein Navigationsmittel, und ihr Wert
           lebt im Formularzustand. Die Leiste trennt sich nach
           unten mit <code>border-linie</code>, die offene Ansicht trägt einen
-          2 px starken Strich in Primary.
+          2 px starken Strich in Primary. Die Reiter stehen in{" "}
+          <code>type-title-small</code>, normal gesetzt — eine Stufe unter der
+          versalen Hauptnavigation, damit die beiden Leisten übereinander nicht
+          gleich laut sprechen.
         </p>
         <TabNav
           ariaLabel="Beispiel-Ansichten"
@@ -1188,15 +1215,17 @@ export default function Styleguide() {
         <p className="type-label-small mb-2 text-on-surface-mittel">Chips</p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
           Ungewählt steht jeder Chip auf der Kante. <strong>Gewählt gibt es
-          zweimal</strong>, und der Unterschied ist der Inhalt: Ein{" "}
-          <strong>Filter</strong> wird gefüllt (<code>chipSelected</code> —
-          Primary-Fläche, schwarze Schrift, Häkchen), denn er ist ein
-          Ein/Aus-Zustand über einer Liste und darf laut sein. Ein Chip, der{" "}
-          <strong>Nutzertext</strong> trägt — eine Variante, ein Gruppenname —,
-          wird nur umrandet (<code>chipTextSelected</code> — Primary-Kontur,
-          Primary-Schrift, 12 % Fläche): Eine gefüllte Primary-Fläche schriee
-          den Namen an, den die Trainerin selbst vergeben hat, und der Chip
-          stünde als Knopf da statt als Wahl. Im geteilten Chip folgt der
+          zweimal.</strong> Getönt (<code>chipTextSelected</code> —
+          Primary-Kontur, Primary-Schrift, 12 % Fläche, kein Häkchen) sind der{" "}
+          <strong>Filter</strong> und der Chip, der{" "}
+          <strong>Nutzertext</strong> trägt — eine Variante, ein Gruppenname.
+          Dieselbe Tönung trägt das gewählte Glied der verbundenen
+          Knopfgruppe (08). Ein Filter steht neben Suchfeld, Auswahl und
+          Knöpfen; gefüllt wäre er lauter als die Handlung daneben, und der
+          Farbwechsel sagt «an» bereits. Eine gefüllte Fläche schriee zudem den
+          Namen an, den die Trainerin selbst vergeben hat. Gefüllt
+          (<code>chipSelected</code> — Primary-Fläche, schwarze Schrift) bleibt
+          allein die offene Einfachauswahl (10). Im geteilten Chip folgt der
           Trennstrich dem Zustand (<code>border-primary/50</code> gewählt,{" "}
           <code>border-kante</code> sonst). Der schwebende Assist-Chip
           (<code>elevated</code> — 06dp plus <code>shadow-dp-04</code> statt
@@ -1205,8 +1234,17 @@ export default function Styleguide() {
           vollständig ist.
         </p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+          <strong>Schrift.</strong> Der <strong>Filter</strong> steht normal
+          gesetzt in <code>type-body-medium</code>, wie der Nutzertext-Chip —
+          er sitzt in Leisten neben Suchfeld, Auswahl und Knöpfen und liest
+          sich dort als Wort («Meine Termine»), nicht als Rubrik, und bleibt
+          leiser als der halbfette Knopf daneben, der die Handlung trägt.
+          Assist, Suggestion, Input und die offene Einfachauswahl bleiben
+          versal in <code>type-label-medium</code>.
+        </p>
+        <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
           <strong>Zwei Höhen, geführt statt von aussen.</strong> Ein Chip im
-          Fliesstext oder in einer Chip-Reihe trägt das Grundmass (32 px). Steht
+          Fliesstext oder in einer Chip-Reihe trägt das Grundmass (36 px, wie der kleine Knopf). Steht
           er in einer <strong>Filterleiste</strong>, fluchtet er mit den dichten
           Feldern daneben und nimmt deren 48 px — über{" "}
           <code>groesse=&quot;leiste&quot;</code> am{" "}
@@ -1215,7 +1253,7 @@ export default function Styleguide() {
           Höhe von aussen entschiede allein über die Reihenfolge im erzeugten
           CSS. Dieselbe Überlegung wie bei <code>look</code> am{" "}
           <code>ChoiceChip</code>. Den Nutzertext-Chip betrifft es nicht — er
-          bleibt bei 36 px, weil er neben dem leisen Knopf steht (siehe 08).
+          trägt immer 36 px.
         </p>
         <ChipsDemo />
       </Section>
@@ -1694,6 +1732,22 @@ export default function Styleguide() {
           <DateField label="Datum" />
           <TimeField label="Beginn (optional)" />
         </div>
+
+        <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
+          Checkbox
+        </h3>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Für eine Ja/Nein-Angabe in einem Formular, die weitere Felder
+          zuschaltet oder eine Folge hat — «Wiederholender Termin» im
+          Termin-Dialog, «Foto entfernen» im Übungsformular. Neu ist sie, weil
+          beide Stellen sonst ein unverkleidetes Browser-Kästchen trügen. Sie
+          trägt dasselbe eckige Kästchen wie die Optionen der Mehrfachauswahl
+          (17): gewählt gefüllt in Primary, Haken in on-primary. Darunter liegt
+          ein echtes <code>&lt;input type=&quot;checkbox&quot;&gt;</code>;
+          das Label gehört zur Klickfläche. Ein Filter ist sie nicht — der
+          bleibt ein <code>FilterChip</code> (9).
+        </p>
+        <CheckboxDemo />
       </Section>
 
       <Section n="15" title="Menü">
@@ -1882,7 +1936,7 @@ export default function Styleguide() {
           Mehrfachauswahl ein Panel öffnet — bei sieben kurzen Werten, die man
           auf einen Blick vergleichen will, wäre das ein Klick zu viel. Jeder
           Wert ist ein <code>FilterChip</code> (Ein/Aus, <code>aria-pressed</code>,
-          Häkchen auf der Wahl); das Kürzel steht sichtbar, der volle
+          gewählt getönt); das Kürzel steht sichtbar, der volle
           Wochentag für Screenreader. Montag zuerst, die Wahl bleibt sortiert.
           Ein Fehler steht unter den Chips.
         </p>
@@ -2523,10 +2577,9 @@ export default function Styleguide() {
           Sache, gleiches Bild. Kein wandernder Tabstopp — durch Links tabbt man,
           Pfeiltasten gehören der Radiogroup. Nicht <code>TabNav</code> (08): Die
           wechselt die <em>Sicht</em> auf einen Gegenstand; hier bleibt die Sicht
-          dieselbe und der <em>Inhalt</em> wechselt. Und sie trägt{" "}
-          <code>type-label-large</code> — Nutzertext stünde dort versal
-          verfälscht. Aus demselben Grund kennt <code>ChoiceChip</code> seit
-          dem Chip-Umbau ein <code>look=&quot;nutzertext&quot;</code> mit
+          dieselbe und der <em>Inhalt</em> wechselt. Weil Nutzertext versal
+          verfälscht stünde, kennt <code>ChoiceChip</code> seit dem Chip-Umbau
+          ein <code>look=&quot;nutzertext&quot;</code> mit
           denselben Bündeln: dieselbe Pille, aber normal gesetzt und h-9 hoch,
           damit sie neben dem geteilten Chip aus 23 und dem leisen Knopf aus 08
           auf einer Linie sitzt.

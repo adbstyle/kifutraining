@@ -5,7 +5,6 @@ import { getTeamTrainings } from "@/lib/queries/trainings";
 import { getTeamPlan, teilePlan } from "@/lib/queries/termine";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 
-
 /* Der Trainingsbestand eines Teams (Story 17).
  *
  * Hier liegt das Material, aus dem geplant wird; einem Termin zugeordnet wird
@@ -22,13 +21,17 @@ export default async function TeamTrainingsPage({
 
   return (
     <section>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="type-title-large text-on-surface">
-          Trainings
-          <span className="type-label-small ml-2 text-on-surface-mittel">
-            {trainings.length}
-          </span>
-        </h2>
+      {/* Keine sichtbare Überschrift: «Trainings» steht schon im Reiter;
+          für Screenreader bleibt sie, damit unter dem Teamnamen keine Ebene
+          fehlt. */}
+      <h2 className="sr-only">Trainings</h2>
+      {/* Ohne Trainings sagt es der Leerzustand; die Anzahl entfällt dann. */}
+      <div className="mb-4 flex items-center justify-end gap-3">
+        {trainings.length > 0 && (
+          <p className="mr-auto type-body-medium text-on-surface-mittel">
+            {trainings.length === 1 ? "1 Training" : `${trainings.length} Trainings`}
+          </p>
+        )}
         <TeamTrainingErstellenButton teamId={id} />
       </div>
       {trainings.length === 0 ? (

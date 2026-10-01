@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
 import { Button, Dialog, TextField } from "@/components/ui";
 import { erstelleTeam } from "@/lib/actions/teams";
 
@@ -31,9 +30,8 @@ export function TeamErstellenButton() {
 
   return (
     <>
-      <Button variant="filled" className="shrink-0" onClick={() => setOpen(true)}>
-        <Plus size={20} strokeWidth={2.5} aria-hidden />
-        Neues Team
+      <Button variant="filled" size="sm" className="shrink-0" onClick={() => setOpen(true)}>
+        Team erstellen
       </Button>
 
       <Dialog

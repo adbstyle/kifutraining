@@ -41,7 +41,8 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   verantwortliche: "Verantwortliche wieder der Serie folgen lassen",
 };
 
-/* Einen einzelnen Termin festlegen oder ändern (Team-Kalender #322).
+/* Einen Termin ändern (Team-Kalender #322); erstellt wird im
+   NeuerTerminDialog.
    Die Regeln kommen aus lib/termin.ts — dieselben, die der Fachkern prüft;
    der Dialog zeigt den Fehler am Feld, bevor er etwas sendet.
 
@@ -55,10 +56,8 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
    Weg zurück (AK 6). */
 export function TerminDialog({
   open,
-  titel,
-  bestaetigung,
   start,
-  /** Die Zeit vor dem Ändern — ohne: neuer Termin, Beginn und Ende Pflicht. */
+  /** Die Zeit vor dem Ändern: Nur wenn sie sich ändert, wird sie geprüft. */
   bisher,
   pending,
   fehler: serverFehler,
@@ -72,19 +71,18 @@ export function TerminDialog({
   onSpeichern,
 }: {
   open: boolean;
-  titel: string;
-  bestaetigung: string;
+  /** Die Angaben des Termins; leer nur, solange der Dialog zu ist. */
   start?: Partial<TerminFelder>;
   bisher?: { beginn: string | null; ende: string | null };
   pending?: boolean;
   fehler?: string;
-  /** Die Serie des geöffneten Termins; ohne: ein einzelner oder neuer Termin. */
+  /** Die Serie des geöffneten Termins; ohne: ein einzelner Termin. */
   serie?: TerminSerie | null;
   serienTag?: string | null;
   abweichungen?: readonly Abweichung[];
   /** Wer als Verantwortliche:r zur Wahl steht (#325). */
   mitglieder: readonly TeamMitglied[];
-  /** Die Verantwortlichen des geöffneten Termins; ohne: neuer Termin. */
+  /** Die Verantwortlichen des geöffneten Termins; ohne: keine. */
   verantwortliche?: readonly Verantwortlicher[];
   onFolgen?: (angabe: FolgeAngabe) => void;
   onClose: () => void;
@@ -161,11 +159,11 @@ export function TerminDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={titel}
+      title="Termin ändern"
       actions={
         <>
           <Button variant="text" onClick={onClose}>Abbrechen</Button>
-          <Button variant="filled" onClick={speichern} disabled={pending}>{bestaetigung}</Button>
+          <Button variant="filled" onClick={speichern} disabled={pending}>Speichern</Button>
         </>
       }
     >
