@@ -20,6 +20,8 @@ name: Sync Staging (Prod-Spiegel, manuell)
 #   verbinden. Die mitkopierten `ki_zugang_namen` zeigen auf Prod-Client-IDs;
 #   ohne passende Zustimmung erscheinen sie nirgends (die Konto-Liste geht
 #   von den Zustimmungen aus). `ki_aufrufe` ist ein flüchtiger Zähler.
+# - `kalender_abos` wird kopiert und direkt danach geleert (Abo-Links sind
+#   Geheimnisse der Prod-Konten, Story #330); auf Staging holt man sich neue.
 #
 # Voraussetzung: Staging-Schema ist per deploy-staging.yml aktuell (develop >= main).
 # Das deckt nur ADDITIVE Migrationen ab. Trägt develop eine Migration, die eine
@@ -48,7 +50,7 @@ env:
   # Sortierung im Guard-Query entsprechen. Neue public-Tabelle in einer
   # Migration? -> hier ergänzen, sonst bricht der Guard den Sync bewusst ab
   # (statt die Tabelle still leer zu lassen).
-  PUBLIC_TABLES: "exercise_favorites exercises ki_aufrufe ki_zugang_namen profiles team_members teams termin_serien termin_serien_luecken termin_serien_verantwortliche termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings"
+  PUBLIC_TABLES: "exercise_favorites exercises kalender_abos ki_aufrufe ki_zugang_namen profiles team_members teams termin_serien termin_serien_luecken termin_serien_verantwortliche termin_verantwortliche trainer_suchversuche training_exercise_gruppen training_exercises training_gruppen training_termine training_varianten trainings"
 
 jobs:
   sync:
@@ -175,6 +177,9 @@ jobs:
             echo "truncate $TRUNCATE_LIST cascade;"
             cat dump.sql
             cat <<'SQL'
+          -- Abo-Links sind Geheimnisse der Prod-Konten (#330). Auf Staging gelten
+          -- sie nicht; wer dort testet, holt sich einen neuen.
+          delete from public.kalender_abos;
           select set_config('sync.staging_ref', :'staging_ref', true);
           update public.exercises
           set bild_url = replace(bild_url,
