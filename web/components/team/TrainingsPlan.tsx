@@ -46,14 +46,16 @@ export function TrainingsPlan({ plan, heute }: { plan: Plan; heute: string }) {
   );
 }
 
-export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
+/** `ebene`: die Überschriftsebene der Datum-/Zeitzeile — in der Liste h4, im
+ *  Detail-Dialog des Monatsüberblicks h3 (unter dessen h2), ohne Sprung. */
+export function TerminKarte({ t, heute, ebene: Kopf = "h4" }: { t: TerminZeile; heute: string; ebene?: "h3" | "h4" }) {
   const a = useTerminAktionen();
   const vergangen = t.datum < heute;
   const zeit = zeitText(t.beginn, t.ende);
   // Die Datum-/Zeitzeile ist die Überschrift jeder Karte — auch die eines
   // Termins ohne Training hat so eine (Screenreader-Navigation per Überschrift).
   const kopf = (
-    <h4 className="flex flex-wrap items-center gap-x-2 type-body-small text-on-surface-mittel">
+    <Kopf className="flex flex-wrap items-center gap-x-2 type-body-small text-on-surface-mittel">
       <CalendarDays size={14} aria-hidden />
       {datumKurz(t.datum)}
       {zeit ? <> · {zeit} Uhr</> : null}
@@ -69,7 +71,7 @@ export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
           {wochentageText(t.serie.wochentage)}
         </span>
       )}
-    </h4>
+    </Kopf>
   );
 
   return (

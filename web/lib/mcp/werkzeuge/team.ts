@@ -206,12 +206,16 @@ export const teamPlanAbrufen = werkzeug({
     "Ort, Bemerkung und Verantwortliche jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
     "von ihr abweicht. Jeder Eintrag nennt seine Verantwortlichen; «nur_meine» grenzt auf deine ein. " +
     "Ausgefallene Termine stehen mit «ausgefallen: true» und Grund im Plan. " +
+    "Mit «von» und «bis» (beide eingeschlossen, höchstens bis zum gleichen Kalendertag im Folgejahr) " +
+    "nur die Termine dieses Zeitraums, nach denselben Regeln für kommend und vergangen; ohne Termine eine leere Auskunft. " +
     "Team-Trainings ohne Termin nennt «trainings_suchen» (bestand: team). " +
     TEAM_KENNUNG_FEHLER,
   nurLesen: true,
   eingabe: z.object({
     team_id: TeamId,
     nur_meine: z.boolean().optional().describe("Nur Termine, für die du verantwortlich bist."),
+    von: DATUM.optional().describe("Erster Tag des Zeitraums (eingeschlossen); nur zusammen mit «bis»."),
+    bis: DATUM.optional().describe("Letzter Tag des Zeitraums (eingeschlossen); nur zusammen mit «von»."),
   }),
   ausgabe: z.object({
     team: z.object({ id: z.string(), name: z.string() }),
@@ -221,7 +225,7 @@ export const teamPlanAbrufen = werkzeug({
     vergangen: z.array(PlanEintrag),
   }),
   ausfuehren: async (e, zugang) =>
-    abgebildet(await teamPlan(zugang.supabase, zugang.userId, { teamId: e.team_id, nurMeine: e.nur_meine }), (w) => ({
+    abgebildet(await teamPlan(zugang.supabase, zugang.userId, { teamId: e.team_id, nurMeine: e.nur_meine, von: e.von, bis: e.bis }), (w) => ({
       team: w.team,
       heute: w.heute,
       serien: planSerien([...w.kommend, ...w.vergangen]),

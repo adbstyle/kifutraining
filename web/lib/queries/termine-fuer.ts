@@ -246,6 +246,9 @@ export async function getTeamPlanFuer(
     heute?: string;
     /** Nur Termine, für die dieses Konto (userId) verantwortlich ist (#325 AK 11). */
     nurMeine?: string;
+    /** Nur Termine ab diesem Tag und/oder bis zu diesem Tag, beide eingeschlossen (#329). */
+    von?: string;
+    bis?: string;
   } = {},
 ): Promise<TerminZeile[]> {
   const heute = o.heute ?? heuteAmTrainingsort();
@@ -253,7 +256,14 @@ export async function getTeamPlanFuer(
   // Der Guard im Layout greift hier nicht — Layout und Page rendern parallel;
   // die leere Liste verhindert den 500 vor dem Redirect.
   if (!istUuid(teamId)) return [];
-  const basis = () => supabase.from("training_termine").select(TERMIN_SELECT).eq("team_id", teamId);
+  // Der Zeitraum gilt für beide Abfragen; die Grenze «heute» und die
+  // Obergrenze je Seite (`PLAN_OBERGRENZE`) bleiben davon unberührt.
+  const basis = () => {
+    let q = supabase.from("training_termine").select(TERMIN_SELECT).eq("team_id", teamId);
+    if (o.von) q = q.gte("datum", o.von);
+    if (o.bis) q = q.lte("datum", o.bis);
+    return q;
+  };
   const [anstehend, vergangen] = await Promise.all([
     basis()
       .gte("datum", heute)

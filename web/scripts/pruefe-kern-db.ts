@@ -60,6 +60,7 @@ const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTra
   "../lib/kern/termine"
 );
 const { TERMIN_MELDUNG, TERMIN_TEXT } = await import("../lib/termin");
+const { ZEITRAUM_TEXT } = await import("../lib/monat");
 const { SERIE_MELDUNG, SERIE_TEXT, plusTage, wochentagVon } = await import("../lib/serie");
 const { kalendertagAmTrainingsort } = await import("../lib/zeit");
 const { legeSerieFest, aendereSerie, entferneSerie, folgeDerSerie, aendereMitReichweite, entferneMitReichweite } =
@@ -1532,6 +1533,12 @@ try {
     fehler(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: "2030-02-30", bis: "2030-03-31", beginn: "18:00", ende: "19:30" }), "eingabe");
     fehler(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: "2030-01-01", bis: "2030-01-31", beginn: "25:00", ende: "26:00" }), "eingabe");
     fehler(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: "2030-01-01", bis: "2030-01-31", beginn: "18:00", ende: "19:30", ort: "x".repeat(101) }), "eingabe", TERMIN_TEXT.ortLang);
+    // Zeitraum-Abruf (#329): beide Tage eingeschlossen, leer ohne Termine, Grenze wie bei Serien.
+    const z = wert(await teamPlan(a.supabase, a.id, { teamId: team, von: "2030-01-06", bis: "2030-01-10" }));
+    assert.deepEqual([...z.kommend, ...z.vergangen].map((x) => x.datum), ["2030-01-08", "2030-01-10"]);
+    assert.equal(wert(await teamPlan(a.supabase, a.id, { teamId: team, von: "2031-06-01", bis: "2031-06-30" })).kommend.length, 0, "PC 7: leer");
+    fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: "2030-01-01", bis: "2031-01-02" }), "eingabe", ZEITRAUM_TEXT.zuLang);
+    fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: "2030-01-01" }), "eingabe", ZEITRAUM_TEXT.beideTage);
   });
 
   await pruefe("Serie ändern: nur dieser, folgende teilt, alle erfasst Vergangenes, Abweichungen bleiben (#326)", async () => {
@@ -1845,6 +1852,21 @@ try {
     const alle = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
     assert.ok([...alle.kommend, ...alle.vergangen].some((x) => x.id === fremder.id), "im ganzen Plan steht er");
     assert.ok(meineIds.length < alle.kommend.length + alle.vergangen.length, "der Filter schränkt ein");
+    // #329: Zeitraum und «nur meine» verbinden sich; beide Grenzen schliessen ein.
+    const ids = (p: { kommend: { id: string }[]; vergangen: { id: string }[] }) => [...p.kommend, ...p.vergangen].map((x) => x.id).sort();
+    const weit = { teamId: team, von: tagCh(-14), bis: tagCh(14) };
+    assert.deepEqual(ids(wert(await teamPlan(a.supabase, a.id, { ...weit, nurMeine: true }))), [...meineIds].sort(), "weiter Zeitraum + nur meine = nur meine");
+    const amRand = { teamId: team, von: tagCh(14), bis: tagCh(14) };
+    assert.deepEqual(ids(wert(await teamPlan(a.supabase, a.id, amRand))), [fremder.id], "von = bis = ein Tag, eingeschlossen");
+    assert.deepEqual(ids(wert(await teamPlan(a.supabase, a.id, { ...amRand, nurMeine: true }))), [], "Zeitraum + nur meine: der fremde Termin fällt heraus");
+    const ueberHeute = wert(await teamPlan(a.supabase, a.id, weit));
+    assert.ok(ueberHeute.kommend.length > 0 && ueberHeute.vergangen.length > 0, "ein Zeitraum über heute teilt in kommend und vergangen");
+    assert.ok(ueberHeute.kommend.every((x) => x.datum >= heuteCh) && ueberHeute.vergangen.every((x) => x.datum < heuteCh));
+    // Leere Angaben sind gegeben, aber ungültig — nicht «kein Zeitraum» (AK 14).
+    fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: "", bis: "" }), "eingabe", TERMIN_TEXT.datum);
+    fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: "", bis: tagCh(1) }), "eingabe", TERMIN_TEXT.datum);
+    fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: tagCh(1), bis: tagCh(0) }), "eingabe", ZEITRAUM_TEXT.bisVorVon);
+    fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: "2030-02-30", bis: "2030-03-01" }), "eingabe", TERMIN_TEXT.datum);
   });
 
   await pruefe("Austritt eines Serien-Verantwortlichen: Serie und anstehende Termine ohne ihn, Vergangenes behält ihn (#325 PC 6, 7)", async () => {

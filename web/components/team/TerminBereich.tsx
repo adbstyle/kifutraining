@@ -8,6 +8,7 @@ import { AusfallDialog } from "./AusfallDialog";
 import { EntfallendBestaetigung } from "./EntfallendBestaetigung";
 import { ReichweiteDialog } from "./ReichweiteDialog";
 import { SerieDialog } from "./SerieDialog";
+import { TerminDetailDialog } from "./TerminDetailDialog";
 import { TerminDialog } from "./TerminDialog";
 import { TrainingWahlDialog, type TrainingWahl } from "./TrainingWahlDialog";
 import { nurNamenloseGeaendert, verantwortlicheStart, type VerantwortlicheWert } from "./VerantwortlicheWahl";
@@ -49,6 +50,8 @@ import type { TeamMitglied } from "@/lib/queries/teams";
    dieselben Funktionen auf, damit ein Termin in beiden Ansichten dieselben
    Aktionen bietet (#329 AK 8). */
 export type TerminAktionen = {
+  /** Einen Termin im Detail öffnen — für den Monatsüberblick (#329 AK 8). */
+  oeffnen: (t: TerminZeile) => void;
   neu: (datum?: string) => void;
   neueSerie: (datum?: string) => void;
   bearbeiten: (t: TerminZeile) => void;
@@ -120,6 +123,7 @@ export function TerminBereich({
   persoenliche,
   mitglieder,
   heute,
+  termine,
   children,
 }: {
   teamId: string;
@@ -129,11 +133,17 @@ export function TerminBereich({
   /** Wer als Verantwortliche:r zur Wahl steht (#325). */
   mitglieder: TeamMitglied[];
   heute: string;
+  /** Die Termine der Seite — der Detail-Dialog liest seinen Termin daraus, damit er nie einen veralteten Stand zeigt. */
+  termine: TerminZeile[];
   children: React.ReactNode;
 }) {
   const router = useRouter();
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
+  const [offenId, setOffenId] = useState<string | null>(null); // Der im Überblick geöffnete Termin
+  // Aus den aktuellen Terminen gelesen: Ist er verschwunden, schliesst der Dialog.
+  const offen = offenId ? (termine.find((t) => t.id === offenId) ?? null) : null;
+  const setOffen = (t: TerminZeile | null) => setOffenId(t?.id ?? null);
   const [neu, setNeu] = useState<string | null>(null); // Vorbelegtes Datum; "" = ohne
   const [serieNeu, setSerieNeu] = useState<string | null>(null); // Vorbelegtes Beginndatum; "" = ohne
   const [bearbeiten, setBearbeiten] = useState<TerminZeile | null>(null);
@@ -360,17 +370,23 @@ export function TerminBereich({
     });
   }
 
+  // Jede Aktion der Karte schliesst zuerst den Detail-Dialog (`offen`), damit
+  // nicht zwei Dialoge übereinander liegen. Ohne offenen Dialog ist das ein
+  // leerer Zustandswechsel.
   const aktionen: TerminAktionen = {
-    neu: (datum) => { neuerLauf(); setDialogFehler(undefined); setNeu(datum ?? ""); },
-    neueSerie: (datum) => { setDialogFehler(undefined); setSerieNeu(datum ?? ""); },
-    bearbeiten: (t) => { neuerLauf(); setDialogFehler(undefined); setBearbeiten(t); },
+    oeffnen: (t) => setOffen(t),
+    neu: (datum) => { setOffen(null); neuerLauf(); setDialogFehler(undefined); setNeu(datum ?? ""); },
+    neueSerie: (datum) => { setOffen(null); setDialogFehler(undefined); setSerieNeu(datum ?? ""); },
+    bearbeiten: (t) => { setOffen(null); neuerLauf(); setDialogFehler(undefined); setBearbeiten(t); },
     // Ein ausgefallener Termin trägt kein Training (#327 AK 9): kein Dialog.
-    zuordnen: (t) => { if (t.ausgefallen) return; neuerLauf(); setDialogFehler(undefined); setZuordnen(t); },
-    loesen: (t) =>
-      t.training &&
-      !pending &&
-      lauf(() => loeseTrainingAktion(t.id, t.training!.id), () => `«${t.training!.name}» ist gelöst und bleibt im Team-Bestand.`, () => {}),
+    zuordnen: (t) => { if (t.ausgefallen) return; setOffen(null); neuerLauf(); setDialogFehler(undefined); setZuordnen(t); },
+    loesen: (t) => {
+      setOffen(null);
+      if (!t.training || pending) return;
+      lauf(() => loeseTrainingAktion(t.id, t.training!.id), () => `«${t.training!.name}» ist gelöst und bleibt im Team-Bestand.`, () => {});
+    },
     entfernen: (t) => {
+      setOffen(null);
       setDialogFehler(undefined);
       if (t.serie) {
         neuerLauf();
@@ -378,15 +394,20 @@ export function TerminBereich({
       }
       else setEntfernen(t);
     },
-    ausfallen: (t) => { neuerLauf(); setDialogFehler(undefined); setAusfall(t); },
-    ausfallZuruecknehmen: (t) =>
-      !pending && lauf(() => nimmAusfallZurueckAktion(t.id), () => "Ausfall zurückgenommen.", () => {}),
+    ausfallen: (t) => { setOffen(null); neuerLauf(); setDialogFehler(undefined); setAusfall(t); },
+    ausfallZuruecknehmen: (t) => {
+      setOffen(null);
+      if (pending) return;
+      lauf(() => nimmAusfallZurueckAktion(t.id), () => "Ausfall zurückgenommen.", () => {});
+    },
     pending,
   };
 
   return (
     <Kontext.Provider value={aktionen}>
       {children}
+
+      <TerminDetailDialog termin={offen} heute={heute} onClose={() => setOffen(null)} />
 
       <TerminDialog
         open={neu !== null}
