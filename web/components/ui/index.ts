@@ -1,5 +1,5 @@
 export { Button, ButtonLink, buttonClasses } from "./Button";
-export { ButtonGroup } from "./ButtonGroup";
+export { ButtonGroup, segmentClasses } from "./ButtonGroup";
 export { Badge, HerkunftBadge } from "./Badge";
 export {
   KategorieChip,

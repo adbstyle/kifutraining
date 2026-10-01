@@ -16,8 +16,11 @@ export interface TabNavItem {
    Eingabefelder für eine Auswahl, kein Navigationsmittel, und ihr Wert lebt im
    Formularzustand.
 
-   Die Optik folgt der Hauptnavigation (Label plus Unterstreichung), damit
-   „hier wechselt man den Ort" überall dasselbe Bild ergibt. `aria-current`
+   Das Bild folgt der Hauptnavigation (Unterstreichung in Primary), damit
+   „hier wechselt man den Ort" überall gleich aussieht — die Schrift aber
+   nicht: Die Reiter stehen in `type-title-small` und normal gesetzt, eine
+   Stufe unter der versalen Hauptnavigation, damit die beiden Leisten
+   übereinander nicht gleich laut sprechen. `aria-current`
    macht die offene Ansicht auch ohne die Farbe erkennbar. */
 export function TabNav({
   items,
@@ -44,7 +47,7 @@ export function TabNav({
               href={item.href}
               aria-current={item.current ? "page" : undefined}
               className={cn(
-                "state focus-ring type-label-large relative flex h-11 items-center gap-2 whitespace-nowrap px-3 transition-colors",
+                "state focus-ring type-title-small relative flex h-11 items-center gap-2 whitespace-nowrap px-3 transition-colors",
                 item.current ? "text-on-surface" : "text-on-surface-mittel",
               )}
             >

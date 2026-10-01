@@ -1,9 +1,13 @@
 import { cn } from "@/lib/cn";
 
-/* Verbundene Knopfgruppe: Aktions-Knöpfe in einer Reihe. Aussenecken gerundet,
-   Innenecken eckig, 2 px Lücke (der Grund scheint durch).
-   Für GRUPPIERTE AKTIONEN — die Einfachauswahl machen die ChoiceChipGroup
-   (offen, 10) und das Auswahlfeld mit Panel (16). */
+import { chipTextSelected } from "./Chip";
+
+/* Verbundene Knopfgruppe: Knöpfe oder Links in einer Reihe. Aussenecken
+   gerundet, Innenecken eckig, 2 px Lücke (der Grund scheint durch). Die
+   Glieder stehen direkt in der Gruppe, ohne Tooltip.
+   Für GRUPPIERTE AKTIONEN und für den Wechsel der Darstellung derselben Sache
+   (Liste/Monat) — die Einfachauswahl in einem Formular machen die
+   ChoiceChipGroup (offen, 10) und das Auswahlfeld mit Panel (16). */
 export function ButtonGroup({
   children,
   ariaLabel,
@@ -20,13 +24,25 @@ export function ButtonGroup({
       aria-label={ariaLabel}
       className={cn(
         "inline-flex gap-0.5",
-        "[&>button:first-child]:rounded-r-none",
-        "[&>button:last-child]:rounded-l-none",
-        "[&>button:not(:first-child):not(:last-child)]:rounded-none",
+        "[&>:first-child]:rounded-r-none",
+        "[&>:last-child]:rounded-l-none",
+        "[&>:not(:first-child):not(:last-child)]:rounded-none",
         className,
       )}
     >
       {children}
     </div>
+  );
+}
+
+/** Ein Glied nur mit Zeichen (36 px im Quadrat), etwa die Ansicht Liste/Monat.
+ *  Gewählt trägt es die Auswahl-Optik der Chips — Kontur und Zeichen in
+ *  Primary, die Fläche Primary/12 —, leiser als ein gefüllter Knopf daneben;
+ *  sonst nur die Kontur. Die Gruppe kennt keine Wahl: Wer `gewaehlt` setzt,
+ *  setzt auch `aria-current` bzw. `aria-pressed`. */
+export function segmentClasses(gewaehlt: boolean): string {
+  return cn(
+    "state focus-ring kontur inline-flex h-9 w-9 items-center justify-center rounded-flaeche transition-colors",
+    gewaehlt ? chipTextSelected : "border-kante text-on-surface-mittel",
   );
 }

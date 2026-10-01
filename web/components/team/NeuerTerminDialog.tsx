@@ -27,7 +27,7 @@ export type NeuerTermin =
 
 const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: "", ort: "", bemerkung: "", verantwortliche: [] };
 
-/* Einen neuen Termin festlegen — einzeln oder, mit «Wiederholender Termin»,
+/* Einen neuen Termin erstellen — einzeln oder, mit «Wiederholender Termin»,
    als Terminserie. Ein Einstieg statt zweier: Die Angaben sind dieselben, die
    Serie bringt nur Wochentage und Enddatum dazu, und das Datum wird zu ihrem
    Beginndatum. Die Regeln sind die des Fachkerns (lib/termin.ts bzw.
@@ -121,11 +121,11 @@ export function NeuerTerminDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Termin festlegen"
+      title="Termin erstellen"
       actions={
         <>
           <Button variant="text" onClick={onClose}>Abbrechen</Button>
-          <Button variant="filled" onClick={speichern} disabled={pending}>Festlegen</Button>
+          <Button variant="filled" onClick={speichern} disabled={pending}>Erstellen</Button>
         </>
       }
     >

@@ -52,7 +52,7 @@ import type { TeamMitglied } from "@/lib/queries/teams";
 export type TerminAktionen = {
   /** Einen Termin im Detail öffnen — für den Monatsüberblick (#329 AK 8). */
   oeffnen: (t: TerminZeile) => void;
-  /** Einen Termin oder eine Terminserie festlegen, optional ab einem Tag. */
+  /** Einen Termin oder eine Terminserie erstellen, optional ab einem Tag. */
   neu: (datum?: string) => void;
   bearbeiten: (t: TerminZeile) => void;
   zuordnen: (t: TerminZeile) => void;
@@ -199,15 +199,15 @@ export function TerminBereich({
     });
   }
 
-  /** Einen neuen Termin festlegen, danach seine Verantwortlichen (#325 AK 1).
-   *  Zwei Aufrufe, weil das Festlegen keine Verantwortlichen kennt. Scheitert
+  /** Einen neuen Termin erstellen, danach seine Verantwortlichen (#325 AK 1).
+   *  Zwei Aufrufe, weil das Erstellen keine Verantwortlichen kennt. Scheitert
    *  erst der zweite, steht der Termin schon: Dann schliesst der Dialog (ein
-   *  erneutes «Festlegen» legte ihn doppelt an), und die Snackbar sagt beides. */
+   *  erneutes «Erstellen» legte ihn doppelt an), und die Snackbar sagt beides. */
   async function legeNeuFest(f: TerminFelder, verantwortlich?: VerantwortlicheWert) {
     const r = await legeTerminFestAktion(teamId, f);
     if (!r.ok || !verantwortlich) return r;
     const v = await setzeVerantwortlicheAktion(r.terminId, verantwortlich, undefined);
-    return v.ok ? v : { ok: true as const, meldung: `Termin festgelegt. ${v.error}` };
+    return v.ok ? v : { ok: true as const, meldung: `Termin erstellt. ${v.error}` };
   }
 
   /** Einen Termin einzeln ändern — einen einzelnen oder einen Serientermin mit
@@ -420,10 +420,10 @@ export function TerminBereich({
         }}
         onSpeichern={(t) =>
           t.art === "serie"
-            ? lauf(() => legeSerieFestAktion(teamId, t.felder), () => "Terminserie festgelegt.", () => setNeu(null), true, laufNr.current)
+            ? lauf(() => legeSerieFestAktion(teamId, t.felder), () => "Terminserie erstellt.", () => setNeu(null), true, laufNr.current)
             : lauf(
                 () => legeNeuFest(t.felder, t.verantwortlich),
-                (r) => ("meldung" in r && r.meldung) || "Termin festgelegt.",
+                (r) => ("meldung" in r && r.meldung) || "Termin erstellt.",
                 () => setNeu(null),
                 true,
                 laufNr.current,

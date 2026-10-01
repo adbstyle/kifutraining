@@ -1,6 +1,5 @@
 "use client";
 
-import { CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useTerminAktionen } from "./TerminBereich";
 
@@ -9,8 +8,8 @@ import { useTerminAktionen } from "./TerminBereich";
 export function NeuerTerminKnopf() {
   const a = useTerminAktionen();
   return (
-    <Button variant="tonal" onClick={() => a.neu()}>
-      <CalendarPlus size={18} aria-hidden /> Termin festlegen
+    <Button variant="filled" size="sm" onClick={() => a.neu()}>
+      Termin erstellen
     </Button>
   );
 }

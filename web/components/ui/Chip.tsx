@@ -1,4 +1,4 @@
-import { Check, X } from "lucide-react";
+import { X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { kategorieStufe } from "@/lib/labels";
@@ -50,8 +50,8 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
 
 /* ── Chips ────────────────────────────────────────────────────
    Eine gemeinsame Basis, vier Typen: Assist · Filter · Input · Suggestion.
-   Die Rollen stehen direkt in den Bündeln — gewählt füllt Primary, ungewählt
-   umrandet die Kante, und `state` in der Basis trägt Überfahren, Fokus und
+   Die Rollen stehen direkt in den Bündeln — gewählt füllt Primary (die
+   Einfachauswahl) oder tönt es (der Filter), ungewählt umrandet die Kante, und `state` in der Basis trägt Überfahren, Fokus und
    Druck. Darum trägt kein Bündel mehr eine eigene Überfahr-Fläche: Die
    Zustands-Ebene färbt sich in der Farbe des Chip-Inhalts ein und passt so
    auf jede Variante.
@@ -62,10 +62,21 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
    Nutzertext-Bündel weiter unten — die tragen auch Links und den geteilten
    Chip, die hier nicht wohnen.
 
-   Höhe fest gesetzt statt über die Polsterung: Aus `py-1.5` folgten 31 px, und
-   der Chip stünde neben jedem anderen 32-px-Element um einen Pixel versetzt. */
+   Höhe fest gesetzt statt über die Polsterung: Aus der Polsterung folgten
+   krumme Masse, und der Chip stünde neben dem kleinen Knopf um ein, zwei
+   Pixel versetzt. */
 const chipBase =
-  "state focus-ring type-label-medium inline-flex items-center gap-1.5 rounded-full kontur px-3 transition-colors";
+  "state focus-ring inline-flex items-center gap-1.5 rounded-full kontur px-3 transition-colors";
+
+/* Die Schrift ist wie die Höhe ein eigener Slot (`cn` ist ein reiner Joiner).
+   Assist, Suggestion, Input und die Einfachauswahl tragen das Vokabular
+   versal (`type-label-medium`). Der FILTER steht normal gesetzt in
+   `type-body-medium`: Er sitzt in Leisten neben Suchfeld, Auswahl und
+   Knöpfen und liest sich dort als Wort («Meine Termine»), nicht als Rubrik —
+   dieselbe Schrift wie der Nutzertext-Chip. Leiser als der Knopf daneben
+   (`type-title-small`, halbfett), der die Handlung trägt. */
+const chipLabel = "type-label-medium";
+const chipFilterTypo = "type-body-medium";
 
 /* Die Höhe ist ein eigener Slot und steht NICHT in `chipBase` — `cn` ist ein
    reiner Joiner (kein tailwind-merge), eine Basis-Höhe liesse sich von aussen
@@ -73,13 +84,15 @@ const chipBase =
    Entscheidung der Reihenfolge im erzeugten CSS. Genau die Falle, um die es
    schon bei `look` geht. Darum eine geführte Prop.
 
-   `normal` (32 px) ist das Grundmass des Label-Chips: Es gilt im Fliesstext
-   und in jeder Chip-Reihe. `leiste` (48 px) ist das Mass der dichten Felder —
+   `normal` (36 px) ist das Grundmass des Label-Chips: Es gilt im Fliesstext
+   und in jeder Chip-Reihe, und es ist das Mass des kleinen Knopfes, des
+   Nutzertext-Chips und der verbundenen Knopfgruppe — ein Filter-Chip neben
+   ihnen fluchtet. `leiste` (48 px) ist das Mass der dichten Felder —
    ein Chip in einer FILTERLEISTE steht neben Suchfeld und Auswahlfeld und muss
    mit ihnen fluchten, sonst zerfällt die Zeile optisch in zwei Bänder.
    Nur der Filter-Chip kennt die Prop, weil nur er in solchen Leisten steht;
    die übrigen Typen tragen das Grundmass. */
-const chipHoehen = { normal: "h-8", leiste: "h-12" } as const;
+const chipHoehen = { normal: "h-9", leiste: "h-12" } as const;
 /* Modul-lokal wie die Bündel: Die Aufrufstellen schreiben das Wort
    («leiste»), niemand ausserhalb braucht den Typ zu benennen. */
 type ChipGroesse = keyof typeof chipHoehen;
@@ -119,8 +132,12 @@ export const chipTextOutlined = "border-kante text-on-surface";
    vergeben hat, soll auch gewählt wie ihr Name aussehen. */
 export const chipTextSelected = "border-primary bg-primary/12 text-primary";
 
-/* Filter-Chip (toggelbar) — gewählt: gefüllt in Primary, mit Häkchen.
-   Optionales führendes Icon, wenn nicht selektiert. */
+/* Filter-Chip (toggelbar) — gewählt: getönt wie ein Glied der verbundenen
+   Knopfgruppe (Kontur und Schrift in Primary, die Fläche Primary/12), ohne
+   Häkchen. Ein Filter steht neben Suchfeld, Auswahl und Knöpfen; gefüllt
+   wäre er lauter als die Handlung daneben, und der Farbwechsel von Kontur
+   und Schrift sagt «an» bereits — für Screenreader `aria-pressed`.
+   Optionales führendes Icon, gewählt wie ungewählt. */
 export function FilterChip({
   selected = false,
   onClick,
@@ -133,7 +150,7 @@ export function FilterChip({
   onClick?: () => void;
   children: React.ReactNode;
   icon?: LucideIcon;
-  /** `normal` (Vorgabe, 32 px) im Fliesstext und in Chip-Reihen; `leiste`
+  /** `normal` (Vorgabe, 36 px) im Fliesstext und in Chip-Reihen; `leiste`
    *  (48 px) in einer Filterleiste, wo der Chip mit den dichten Feldern
    *  fluchtet. Bewusst eine Prop statt `className` — siehe `chipHoehen`. */
   groesse?: ChipGroesse;
@@ -146,16 +163,13 @@ export function FilterChip({
       aria-pressed={selected}
       className={cn(
         chipBase,
+        chipFilterTypo,
         chipHoehen[groesse],
-        selected ? chipSelected : chipOutlined,
+        selected ? chipTextSelected : chipOutlined,
         className,
       )}
     >
-      {selected ? (
-        <Check size={14} strokeWidth={2.5} aria-hidden />
-      ) : (
-        Icon && <Icon size={16} strokeWidth={2} aria-hidden />
-      )}
+      {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
       {children}
     </button>
   );
@@ -169,7 +183,7 @@ export function FilterChip({
    (role=radiogroup / role=radio, aria-checked) — es ist ein Eingabefeld und
    keine Ansicht —, mit Pfeiltasten-Navigation und wanderndem Tabstopp.
 
-   Optik: dieselben Chip-Bündel, ausgewählt wie der Filter-Chip.
+   Optik: dieselben Chip-Bündel, ausgewählt gefüllt in Primary.
    Kein Häkchen — es ist eine Einfachauswahl, nicht ein Ein/Aus-Zustand,
    und der Umriss-Wechsel trägt die Aussage bereits.
 
@@ -232,7 +246,7 @@ export function ChoiceChip({
       className={cn(
         // Der Nutzertext-Chip trägt seine Höhe (h-9) in der eigenen Hülle —
         // er fluchtet mit dem leisen Knopf, nicht mit dem Label-Chip.
-        look === "nutzertext" ? chipTextBase : `${chipBase} ${chipHoehen.normal}`,
+        look === "nutzertext" ? chipTextBase : `${chipBase} ${chipLabel} ${chipHoehen.normal}`,
         look === "nutzertext"
           ? selected
             ? chipTextSelected
@@ -309,6 +323,7 @@ export function AssistChip({
       aria-expanded={ariaHasPopup ? ariaExpanded : undefined}
       className={cn(
         chipBase,
+        chipLabel,
         chipHoehen.normal,
         elevated ? chipElevated : chipOutlined,
         className,
@@ -334,7 +349,7 @@ export function SuggestionChip({
     <button
       type="button"
       onClick={onClick}
-      className={cn(chipBase, chipHoehen.normal, chipOutlined, className)}
+      className={cn(chipBase, chipLabel, chipHoehen.normal, chipOutlined, className)}
     >
       {children}
     </button>
@@ -355,7 +370,7 @@ export function InputChip({
   className?: string;
 }) {
   return (
-    <span className={cn(chipBase, chipHoehen.normal, chipOutlined, "pr-2", className)}>
+    <span className={cn(chipBase, chipLabel, chipHoehen.normal, chipOutlined, "pr-2", className)}>
       {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
       {children}
       {onRemove && (

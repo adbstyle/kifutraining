@@ -41,7 +41,7 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   verantwortliche: "Verantwortliche wieder der Serie folgen lassen",
 };
 
-/* Einen Termin ändern (Team-Kalender #322); festgelegt wird im
+/* Einen Termin ändern (Team-Kalender #322); erstellt wird im
    NeuerTerminDialog.
    Die Regeln kommen aus lib/termin.ts — dieselben, die der Fachkern prüft;
    der Dialog zeigt den Fehler am Feld, bevor er etwas sendet.
