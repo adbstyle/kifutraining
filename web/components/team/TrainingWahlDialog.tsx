@@ -2,20 +2,34 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AuswahlListe, Button, ChoiceChip, ChoiceChipGroup, Dialog } from "@/components/ui";
+import { zaehle } from "@/lib/labels";
+import { PERSOENLICH_KOPIE_HINWEIS } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
-import type { TeamTrainingRow } from "@/lib/queries/trainings";
+import type { TeamTrainingRow, TrainingListRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
 
 /* Einem Termin ein Training wählen (Team-Kalender #323 AK 5, 6, 10, 11).
    Noch nicht eingeplante Trainings stehen zuerst; bei eingeplanten steht,
    für welchen Termin. Gehört das gewählte schon einem ANSTEHENDEN Termin,
    muss zwischen Kopie und Verschieben gewählt werden; bei einem vergangenen
-   entsteht immer eine Kopie. */
-export type TrainingWahl = { trainingId: string; art?: "kopie" | "verschieben"; trainingTermin: string | null };
+   entsteht immer eine Kopie.
+
+   Darunter stehen die eigenen persönlichen Trainings (#328 AK 5), getrennt
+   durch eine Überschrift. Ein persönliches Training hat keinen Termin und
+   kommt immer als Kopie ins Team: Die Wahl Kopie/Verschieben entfällt, und
+   ein Hinweis sagt, was geschieht (AK 6). */
+export type TrainingWahl = {
+  trainingId: string;
+  /** Woher das Training stammt: aus dem Bestand des Teams oder aus «Meine Trainings». */
+  quelle: "team" | "persoenlich";
+  art?: "kopie" | "verschieben";
+  trainingTermin: string | null;
+};
 
 export function TrainingWahlDialog({
   termin,
   trainings,
+  persoenliche,
   heute,
   pending,
   fehler,
@@ -24,6 +38,8 @@ export function TrainingWahlDialog({
 }: {
   termin: TerminZeile | null;
   trainings: TeamTrainingRow[];
+  /** Die eigenen persönlichen Trainings des USERS, Entwürfe und öffentliche. */
+  persoenliche: TrainingListRow[];
   heute: string;
   pending?: boolean;
   /** Die Meldung des Servers; der Dialog bleibt dann offen. */
@@ -43,9 +59,12 @@ export function TrainingWahlDialog({
         .sort((a, b) => Number(a.termin !== null) - Number(b.termin !== null)),
     [trainings, termin],
   );
-  const wahl = liste.find((t) => t.id === gewaehlt) ?? null;
-  const anstehend = wahl?.termin ? wahl.termin.datum >= heute : false;
-  const bereit = wahl !== null && (!anstehend || art !== null);
+  // Die Kennungen beider Listen sind verschieden (ein Training gehört dem Team
+  // ODER einer Person); die Quelle ergibt sich daraus, in welcher Liste es steht.
+  const teamWahl = liste.find((t) => t.id === gewaehlt) ?? null;
+  const eigeneWahl = persoenliche.find((t) => t.id === gewaehlt) ?? null;
+  const anstehend = teamWahl?.termin ? teamWahl.termin.datum >= heute : false;
+  const bereit = (teamWahl !== null && (!anstehend || art !== null)) || eigeneWahl !== null;
 
   return (
     <Dialog
@@ -58,13 +77,17 @@ export function TrainingWahlDialog({
           <Button
             variant="filled"
             disabled={!bereit || pending}
-            onClick={() =>
-              wahl && onWahl({
-                trainingId: wahl.id,
-                art: wahl.termin ? (anstehend ? art! : "kopie") : undefined,
-                trainingTermin: wahl.termin?.id ?? null,
-              })
-            }
+            onClick={() => {
+              if (eigeneWahl)
+                return onWahl({ trainingId: eigeneWahl.id, quelle: "persoenlich", art: "kopie", trainingTermin: null });
+              if (teamWahl)
+                onWahl({
+                  trainingId: teamWahl.id,
+                  quelle: "team",
+                  art: teamWahl.termin ? (anstehend ? art! : "kopie") : undefined,
+                  trainingTermin: teamWahl.termin?.id ?? null,
+                });
+            }}
           >
             Zuordnen
           </Button>
@@ -77,6 +100,7 @@ export function TrainingWahlDialog({
           «{termin.training.name}» bleibt ohne Termin im Team-Bestand.
         </p>
       )}
+      <h3 className="type-title-small mb-2 text-on-surface">Aus dem Team-Bestand</h3>
       {liste.length === 0 ? (
         <p>Im Team-Bestand gibt es noch kein weiteres Training.</p>
       ) : (
@@ -91,10 +115,25 @@ export function TrainingWahlDialog({
           onWahl={(id) => { setGewaehlt(id); setArt(null); }}
         />
       )}
-      {wahl?.termin && anstehend && (
+      <h3 className="type-title-small mb-2 mt-6 text-on-surface">Meine Trainings</h3>
+      {persoenliche.length === 0 ? (
+        <p>Du hast noch kein persönliches Training.</p>
+      ) : (
+        <AuswahlListe
+          ariaLabel="Meine Trainings"
+          items={persoenliche.map((t) => ({
+            id: t.id,
+            titel: t.name,
+            untertitel: `${t.visibility === "public" ? "Öffentlich" : "Entwurf"} · ${zaehle(t.exerciseCount, "Übung", "Übungen")}`,
+          }))}
+          wert={gewaehlt}
+          onWahl={(id) => { setGewaehlt(id); setArt(null); }}
+        />
+      )}
+      {teamWahl?.termin && anstehend && (
         <div className="mt-4">
           <p className="mb-2">
-            «{wahl.name}» ist schon für {datumKurz(wahl.termin.datum)} eingeplant.
+            «{teamWahl.name}» ist schon für {datumKurz(teamWahl.termin.datum)} eingeplant.
           </p>
           <ChoiceChipGroup ariaLabel="Kopieren oder verschieben">
             <ChoiceChip tabStop selected={art === "kopie"} onSelect={() => setArt("kopie")} look="nutzertext">
@@ -106,12 +145,13 @@ export function TrainingWahlDialog({
           </ChoiceChipGroup>
         </div>
       )}
-      {wahl?.termin && !anstehend && (
+      {teamWahl?.termin && !anstehend && (
         <p className="mt-4">
-          «{wahl.name}» gehört zum vergangenen Termin {datumKurz(wahl.termin.datum)}. Für diesen
+          «{teamWahl.name}» gehört zum vergangenen Termin {datumKurz(teamWahl.termin.datum)}. Für diesen
           Termin entsteht eine eigenständige Kopie.
         </p>
       )}
+      {eigeneWahl && <p className="mt-4">{PERSOENLICH_KOPIE_HINWEIS}</p>}
     </Dialog>
   );
 }

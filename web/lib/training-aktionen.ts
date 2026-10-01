@@ -30,6 +30,9 @@ export type TrainingAktionsRechte = {
    *  einen der beiden Knöpfe nie zu brauchen. */
   sichtbarkeit: "veroeffentlichen" | "auf_entwurf" | null;
   insTeamStellen: boolean;
+  /** Einem Termin eines eigenen Teams zuordnen (#328 AK 2) — als Kopie, nur
+   *  vom persönlichen Training aus und wenn es ein Team gibt. */
+  terminZuordnen: boolean;
   loeschen: boolean;
 };
 
@@ -47,7 +50,11 @@ export type TrainingAktionsRechte = {
  *  `hatTeams` schliesst «Ins Team stellen» aus, solange der USER in keinem
  *  Team ist: Es gäbe kein Ziel, und ein Eintrag, der nur einen leeren Dialog
  *  öffnet, ist kein Angebot. Beim Übernehmen ist es umgekehrt kein
- *  Ausschlussgrund — dort bleibt man selbst immer ein gültiges Ziel. */
+ *  Ausschlussgrund — dort bleibt man selbst immer ein gültiges Ziel.
+ *
+ *  Dem Termin zuordnen (#328) gibt es wie Ins-Team-Stellen nur am persönlichen
+ *  Training und nur mit einem Team: Ein Team-Training liegt schon im Bestand
+ *  und wird dort zugeordnet. */
 export function trainingAktionsRechte(
   training: { visibility: "public" | "private"; teamId: string | null },
   angemeldet: boolean,
@@ -63,6 +70,7 @@ export function trainingAktionsRechte(
     uebernehmen: angemeldet && oeffentlich,
     sichtbarkeit: persoenlich ? (oeffentlich ? "auf_entwurf" : "veroeffentlichen") : null,
     insTeamStellen: persoenlich && hatTeams,
+    terminZuordnen: persoenlich && hatTeams,
     loeschen: darfBearbeiten,
   };
 }
@@ -75,6 +83,7 @@ export function hatUeberlauf(rechte: TrainingAktionsRechte): boolean {
     rechte.uebernehmen ||
     rechte.sichtbarkeit !== null ||
     rechte.insTeamStellen ||
+    rechte.terminZuordnen ||
     rechte.loeschen
   );
 }

@@ -210,7 +210,7 @@ pruefe("fachlicheMeldung erklärt Marker, fehlerMeldung bleibt wortgleich", () =
     ["UEBUNGSFOLGE_ABSCHNITT_LEER", "In diesem Abschnitt steht keine Übung."],
     [
       "TERMIN_TRAINING_FREMDES_TEAM",
-      "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams zuordnen.",
+      "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams oder deine persönlichen Trainings zuordnen.",
     ],
   );
   // #263: die Varianten-Marker, die der KI-Weg jetzt erreicht, und die der
@@ -779,6 +779,7 @@ pruefe("geaenderteFelder: nur Geändertes, Beginn und Ende als Paar, nichts geä
 pruefe("Erfolgstexte und Nicht-gefunden-Sätze haben je eine Quelle", () => {
   assert.equal(ZUORDNEN_ERFOLG.kopie, "Kopie angelegt und dem Termin zugeordnet.");
   assert.equal(ZUORDNEN_ERFOLG.direkt, "Training zugeordnet.");
+  assert.equal(ZUORDNEN_ERFOLG.persoenlich, "Kopie im Team angelegt und dem Termin zugeordnet.");
   assert.equal(NICHT_GEFUNDEN.termin, TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN);
   assert.equal(NICHT_GEFUNDEN.training, TERMIN_MELDUNG.TRAINING_NICHT_GEFUNDEN);
 });

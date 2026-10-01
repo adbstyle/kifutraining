@@ -136,7 +136,16 @@ export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partia
 export const ZUORDNEN_ERFOLG = {
   kopie: "Kopie angelegt und dem Termin zugeordnet.",
   direkt: "Training zugeordnet.",
+  /** Ein persönliches Training kommt immer als Kopie ins Team (#328 PC 9). */
+  persoenlich: "Kopie im Team angelegt und dem Termin zugeordnet.",
 } as const;
+
+/** Was die Oberfläche vor dem Zuordnen eines persönlichen Trainings sagt
+ *  (#328 AK 6): dass eine Kopie entsteht, dass das Original nicht mitzieht
+ *  und wer sie sieht. Am Termin und vom Training aus derselbe Satz. */
+export const PERSOENLICH_KOPIE_HINWEIS =
+  "Es entsteht eine Kopie im Team. Spätere Änderungen an deinem Original wirken nicht auf sie, " +
+  "und alle Mitglieder des Teams sehen und bearbeiten sie.";
 
 /** Die Zeit eines Termins zum Anzeigen: «18:30–20:00», «ab 18:30» für einen
  *  übernommenen Termin ohne Ende, sonst `null` (AK 14, 15). */
@@ -158,7 +167,8 @@ export const TERMIN_MELDUNG = {
     "Das Training wurde inzwischen einem anderen Termin zugeordnet oder von seinem Termin gelöst. " +
     "Wähle noch einmal.",
   TERMIN_TRAINING_FREMDES_TEAM:
-    "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams zuordnen.",
+    "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams oder deine persönlichen Trainings zuordnen.",
+  PERSOENLICH_NUR_KOPIE: "Ein persönliches Training lässt sich einem Termin nur als Kopie zuordnen.",
   TRAINING_SCHON_EINGEPLANT:
     "Dieses Training ist bereits für einen anstehenden Termin eingeplant. Wähle, ob du es für " +
     "diesen Termin kopierst oder auf ihn verschiebst.",

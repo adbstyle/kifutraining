@@ -1316,11 +1316,9 @@ try {
     // AK 1, PC 1: Training ohne Termin wird verknüpft.
     const z1 = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: morgen, trainingId: x }));
     assert.deepEqual({ kopie: z1.kopie, imBestand: z1.imBestand, freierTermin: z1.freierTermin }, { kopie: false, imBestand: null, freierTermin: null });
-    // AK 4: fremdes Team und persönliches Training.
+    // AK 4: Training eines anderen Teams (persönliche Trainings: eigene Prüfung, #328).
     const fremd = await training("Kern-DB-Fremd", anderes!.id);
     fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: uebermorgen, trainingId: fremd }), "regel", TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM);
-    const persoenlich = await training("Kern-DB-Persönlich", null);
-    fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: uebermorgen, trainingId: persoenlich }), "regel", TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM);
 
     // AK 10, 16: anstehend eingeplant → Wahl Pflicht.
     fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: uebermorgen, trainingId: x }), "regel", TERMIN_MELDUNG.TRAINING_SCHON_EINGEPLANT);
@@ -3085,6 +3083,71 @@ try {
     if (e2) throw e2;
     const kl = await kopierZeile(wert(await kopiereUebungNach(a.supabase, a.id, { kennung: leer.id })).id);
     assert.deepEqual([kl.diagramm, kl.bild_quelle], [null, null]);
+  });
+  // ── Kalender: persönliches Training als Kopie zuordnen (#328) ──────────
+  await pruefe("Persönliches Training: nur als Kopie, Original unberührt, jede Zuordnung eine neue Kopie (#328)", async () => {
+    const team = await serienTeam("Kern-DB-Persoenlich");
+    const anderes = await serienTeam("Kern-DB-Persoenlich-Anderes");
+    const t1 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" }));
+    const t2 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(-2), beginn: "18:00", ende: "19:00" }));
+    const p = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Meins", altersstufe: "juniorenfussball", stufen: ["D"] })).id;
+
+    // AK 13: Verschieben ist für ein persönliches Training abgewiesen.
+    const anzahl = async (teamId: string) =>
+      (await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", teamId)).count;
+    const start = await anzahl(team);
+    fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: p, art: "verschieben" }), "regel", TERMIN_MELDUNG.PERSOENLICH_NUR_KOPIE);
+    assert.equal(await anzahl(team), start, "PC 7: abgewiesen heisst keine Kopie");
+    // AK 1, 8, PC 1, 3, 4: Kopie im Team, auch vergangen; jede Zuordnung eine neue.
+    const k1 = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: p }));
+    const k2 = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t2.terminId, trainingId: p }));
+    assert.equal(k1.kopie && k2.kopie, true);
+    assert.notEqual(k1.trainingId, k2.trainingId);
+    const kz = (await admin.from("trainings").select("team_id, owner_id, name").eq("id", k1.trainingId).single()).data!;
+    assert.deepEqual(kz, { team_id: team, owner_id: null, name: "Kern-DB-Meins" });
+    const orig = (await admin.from("trainings").select("owner_id, team_id").eq("id", p).single()).data!;
+    assert.deepEqual(orig, { owner_id: a.id, team_id: null }, "PC 3");
+    // AK 4: Ein Training eines ANDEREN eigenen Teams geht nicht.
+    const fremd = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Fremdteam", altersstufe: "kinderfussball", stufen: ["F"], teamId: anderes })).id;
+    fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: fremd }), "regel", TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM);
+    // AK 9: nicht auf einen ausgefallenen Termin — und es entsteht keine Kopie.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t1.terminId }));
+    const vorher = (await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", team)).count;
+    fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: t1.terminId, trainingId: p }), "regel", TERMIN_MELDUNG.TERMIN_AUSGEFALLEN);
+    assert.equal((await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", team)).count, vorher);
+    // Ein fremdes privates Training bleibt unsichtbar (Epic OoS 4): nicht gefunden.
+    fehler(await ordneTrainingZu(b.supabase, b.id, { terminId: t2.terminId, trainingId: p }), "nicht_gefunden");
+  });
+  await pruefe("Persönliches Training: veraltete Auswahl legt keine Kopie an, belegter Termin behält das alte Training im Bestand (#328 AK 11, PC 5/7)", async () => {
+    const team = await serienTeam("Kern-DB-Persoenlich-Belegt");
+    const anzahl = async () =>
+      (await admin.from("trainings").select("*", { count: "exact", head: true }).eq("team_id", team)).count;
+    const termin = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    const traegt = async () => (await admin.from("training_termine").select("training_id").eq("id", termin).single()).data!.training_id;
+    const p = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Persoenlich-Kinder", altersstufe: "kinderfussball", stufen: ["F"] })).id;
+
+    // AK 11 (UI-Weg): Wer den Termin ohne Training sah, obwohl er eines trägt, wird abgewiesen — ohne Kopie.
+    const altes = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Alt", altersstufe: "kinderfussball", stufen: ["F"], teamId: team })).id;
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: termin, trainingId: altes }));
+    const vorher = await anzahl();
+    fehler(
+      await ordneTrainingZu(a.supabase, a.id, { terminId: termin, trainingId: p, erwartet: { terminTraining: null, trainingTermin: null } }),
+      "konflikt",
+      TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT,
+    );
+    assert.equal(await anzahl(), vorher, "veraltete Auswahl: keine Kopie");
+    assert.equal(await traegt(), altes, "der Termin bleibt unverändert");
+
+    // PC 5, AK 7: Mit zutreffender Erwartung wird die Kopie verknüpft; das alte Training bleibt ohne Termin im Bestand.
+    const z = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: termin, trainingId: p, erwartet: { terminTraining: altes, trainingTermin: null } }));
+    assert.equal(z.kopie, true);
+    assert.equal(z.imBestand, altes, "das ersetzte Training wird genannt");
+    assert.equal(await traegt(), z.trainingId, "der Termin trägt die Kopie");
+    assert.notEqual(z.trainingId, p);
+    const alt = (await admin.from("trainings").select("team_id").eq("id", altes).single()).data!;
+    assert.equal(alt.team_id, team, "das alte Training bleibt im Team-Bestand");
+    assert.equal((await admin.from("training_termine").select("id").eq("training_id", altes)).data!.length, 0, "… ohne Termin");
+    assert.equal(await anzahl(), (vorher ?? 0) + 1, "genau eine Kopie ist hinzugekommen");
   });
 } finally {
   await aufraeumen();

@@ -19,6 +19,7 @@ import {
   type SerienAenderung,
   type SerienFolge,
 } from "@/lib/kern/serien";
+import { teamPlan } from "@/lib/kern/team";
 import { setzeVerantwortliche } from "@/lib/kern/verantwortliche";
 import type { KernErgebnis } from "@/lib/kern/ergebnis";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -26,6 +27,7 @@ import type { Reichweite, Wochentag } from "@/lib/serie";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
 import type { TerminFelder } from "@/lib/termin";
+import type { TerminZeile } from "@/lib/queries/termine";
 
 /**
  * Der Kalender eines Teams (#322, #323) — dünne Adapter über den Fachkern
@@ -136,6 +138,21 @@ export async function ordneTrainingZuAktion(
   for (const id of [r.wert.trainingId, r.wert.imBestand, e.trainingId])
     if (id) revalidiereTraining(id);
   return { ok: true, kopie: r.wert.kopie, imBestand: r.wert.imBestand };
+}
+
+/** Die Termine eines Teams zur Wahl, wenn ein persönliches Training einem
+ *  Termin zugeordnet werden soll (#328 AK 2): anstehende aufsteigend, dann
+ *  vergangene absteigend — wie der Trainingsplan. Gebraucht wird die Liste
+ *  erst, wenn der USER das Team gewählt hat; darum eine Aktion statt einer
+ *  Seitenabfrage für alle Teams. Mitglied-Prüfung und Rechte macht der Kern. */
+export async function termineFuerZuordnungAktion(
+  teamId: string,
+): Promise<{ ok: true; termine: TerminZeile[]; heute: string } | Fehler> {
+  const a = await angemeldet();
+  if (!a) return { ok: false, error: NICHT_ANGEMELDET };
+  const r = await teamPlan(a.supabase, a.userId, { teamId });
+  if (!r.ok) return { ok: false, error: r.meldung };
+  return { ok: true, termine: [...r.wert.kommend, ...r.wert.vergangen], heute: r.wert.heute };
 }
 
 export async function loeseTrainingAktion(
