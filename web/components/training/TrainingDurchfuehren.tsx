@@ -162,7 +162,7 @@ export function TrainingDurchfuehren({
 
   if (sections.length === 0) {
     return (
-      <main className="mx-auto max-w-2xl px-4 py-16 lg:pt-0">
+      <main className="max-w-2xl px-4 py-16 sm:px-6 lg:pt-0">
         <SeitenKopf krumen={crumbs} className="mb-6" />
         <h1 className="type-headline-small text-center text-on-surface">
           {training.name}
@@ -190,7 +190,7 @@ export function TrainingDurchfuehren({
   const section = sections[idx];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-28 pt-4 sm:px-6 lg:pt-0">
+    <div className="max-w-2xl px-4 pb-28 pt-4 sm:px-6 lg:pt-0">
       <header className="mb-4">
         {/* Der Rückweg steht zuoberst — wie auf jeder anderen Trainingsseite.
             Im Druck hat er nichts verloren (OOS 2). */}
@@ -289,7 +289,7 @@ export function TrainingDurchfuehren({
           schwebende Leiste darf der Inhalt nicht durchscheinen, sonst trägt
           die Höhe die Trennung nicht mehr (kein Blur über der Höhenleiter). */}
       <nav className={cn("fixed right-0 bottom-0 z-10 border-t border-linie bg-elev-04", nebenLeiste)}>
-        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
+        <div className="flex max-w-2xl items-center gap-3 px-4 py-3 sm:px-6">
           <button
             type="button"
             onClick={() => setIdx((i) => Math.max(0, i - 1))}

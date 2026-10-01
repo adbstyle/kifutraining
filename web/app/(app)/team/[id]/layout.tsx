@@ -29,7 +29,7 @@ export default async function TeamLayout({
   if (!team) redirect("/teams");
 
   return (
-    <Seitenrahmen breite="6xl" krumen={[{ label: "Teams", href: "/teams" }, { label: team.name }]}>
+    <Seitenrahmen breite="voll" krumen={[{ label: "Teams", href: "/teams" }, { label: team.name }]}>
       <header className="mb-6">
         <TeamKopf teamId={team.id} name={team.name} />
       </header>

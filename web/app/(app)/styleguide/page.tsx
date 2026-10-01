@@ -934,9 +934,12 @@ export default function Styleguide() {
           zu zeigen.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Jede Seite steht in einem <code>Seitenrahmen</code>: zentriert, in
-          einer von sechs Breiten (<code>xl</code> bis <code>6xl</code>) nach
-          dem, was sie zeigt — Formular schmal, Übersicht breit — und zuoberst
+          Jede Seite steht in einem <code>Seitenrahmen</code>: linksbündig
+          neben der Seitenleiste, Übersichten über die ganze Fläche
+          (<code>voll</code>, Kachelraster mit so vielen Spalten, wie Platz
+          ist), Formulare und Lesetext in ihrer Lesebreite (<code>xl</code>{" "}
+          bis <code>5xl</code>). Nicht zentriert, damit rechts Platz für eine
+          zweite Spalte bleibt. Zuoberst
           die Kopfzeile mit dem Umschalter der Seitenleiste, den Brotkrumen und
           rechts den Aktionen der Seite. Brotkrumen sind Pflicht, auch auf den
           Einstiegsseiten. Ab <code>lg</code> gehen 280 oder 72 px an die

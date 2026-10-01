@@ -42,7 +42,7 @@ export default async function TrainingsPage({
 
   return (
     <Seitenrahmen
-      breite="6xl"
+      breite="voll"
       krumen={
         mine ? [{ label: "Trainings", href: "/trainings" }, { label: "Meine Trainings" }] : [{ label: "Trainings" }]
       }
@@ -86,7 +86,7 @@ export default async function TrainingsPage({
           <p className="type-label-small mb-4 text-on-surface-mittel">
             {trainings.length} {trainings.length === 1 ? "Training" : "Trainings"}
           </p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
             {trainings.map((training) => (
               <TrainingCard
                 key={training.id}
