@@ -40,6 +40,7 @@ import { BreadcrumbsDemo } from "./BreadcrumbsDemo";
 import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
 import { MaterialDemo } from "./MaterialDemo";
+import { MonatsrasterDemo } from "./MonatsrasterDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import {
@@ -2637,6 +2638,34 @@ export default function Styleguide() {
             />
           </div>
         </div>
+      </Section>
+
+      <Section n="27" title="Monatsraster">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Ein Monat als Raster Montag bis Sonntag; der Inhalt eines Tages kommt
+          vom Aufrufer. Neu ist der Baustein, weil keiner der bestehenden ein
+          Kalenderraster kennt: Liste, Karte und Tabs zeigen Dinge nacheinander,
+          nicht nach Datum verteilt. <code>Monatsraster</code> kennt nur den
+          Kalender — Wochen, Randtage der Nachbarmonate (gedämpft), den heutigen
+          Tag (Kontur in Primary) und auf Wunsch die leere Woche
+          (gestrichelte Kontur wie beim <code>Leerzustand</code>, dazu als Text
+          für Screenreader). Was ein Tag zeigt, bestimmt <code>renderTag</code>.
+        </p>
+        <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+          <li>
+            <strong>Tabelle statt Gitter</strong> — <code>role=&quot;table&quot;</code>{" "}
+            mit Zeilen, Spaltenköpfen und Zellen. Ein <code>grid</code> versprächt
+            Pfeiltasten-Navigation, die es nicht gibt; die Knöpfe in den Tagen
+            liegen in der normalen Tab-Reihenfolge. Jeder Tag trägt sein
+            ausgeschriebenes Datum für Screenreader, «heute» als{" "}
+            <code>aria-current</code>.
+          </li>
+          <li>
+            <strong>Schmal</strong> — das Raster scrollt waagrecht im eigenen
+            Behälter, nie die Seite.
+          </li>
+        </ul>
+        <MonatsrasterDemo />
       </Section>
     </main>
   );

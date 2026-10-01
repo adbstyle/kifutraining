@@ -34,6 +34,12 @@ export function monatsName(monat: string): string {
   return `${MONATE[m - 1]} ${j}`;
 }
 
+/** Ein Kalendertag ausgeschrieben, wie ihn ein Screenreader liest: «7. Oktober 2026». */
+export function tagText(iso: string): string {
+  const [j, m, t] = iso.split("-").map(Number);
+  return `${t}. ${MONATE[m - 1]} ${j}`;
+}
+
 /** Die Wochen eines Monats, Montag bis Sonntag, samt den Tagen des Vor- und
  *  Folgemonats, die die erste und letzte Woche füllen. */
 export function monatsRaster(monat: string): { tag: string; imMonat: boolean }[][] {

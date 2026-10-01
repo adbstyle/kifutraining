@@ -1,0 +1,95 @@
+import { cn } from "@/lib/cn";
+import { monatsRaster, tagText } from "@/lib/monat";
+
+const WOCHENTAGE = [
+  ["Mo", "Montag"],
+  ["Di", "Dienstag"],
+  ["Mi", "Mittwoch"],
+  ["Do", "Donnerstag"],
+  ["Fr", "Freitag"],
+  ["Sa", "Samstag"],
+  ["So", "Sonntag"],
+] as const;
+
+/* Ein Monat als Raster Montag bis Sonntag; der Inhalt eines Tages kommt vom
+   Aufrufer. Die Randwochen zeigen die Tage der Nachbarmonate gedämpft.
+
+   Bewusst eine TABELLE und kein Gitter (kein role="grid"): Das Raster wird
+   gelesen, nicht mit Pfeiltasten durchwandert — die Bedienelemente in den
+   Tagen sind gewöhnliche Knöpfe in der Tab-Reihenfolge. Ein «grid» versprächt
+   Pfeiltasten-Navigation, die es hier nicht gibt. Darum role="table" mit
+   Zeilen, Spaltenköpfen und Zellen, auf Blöcken statt <table>, weil die leere
+   Woche eine gerundete, gestrichelte Zeile trägt.
+
+   Schmal scrollt das Raster waagrecht im eigenen Behälter, nie die Seite. Der
+   Tag kommt auch für Screenreader als ausgeschriebenes Datum (die sichtbare
+   Zahl ist stumm geschaltet), «heute» als `aria-current`. Eine leere Woche
+   trägt die Kennzeichnung sichtbar (gestrichelt) und als Text. */
+export function Monatsraster({
+  monat,
+  heute,
+  renderTag,
+  leereWoche,
+  label,
+}: {
+  /** `YYYY-MM`. */
+  monat: string;
+  /** Der heutige Kalendertag (`YYYY-MM-DD`) — er bekommt die Kontur. */
+  heute: string;
+  renderTag: (tag: string) => React.ReactNode;
+  /** Ist diese Woche (ihre sieben Kalendertage) leer? Dann trägt die Zeile eine Kennzeichnung. */
+  leereWoche?: (tage: string[]) => boolean;
+  /** Benennt den Behälter, etwa den Monatsnamen. */
+  label: string;
+}) {
+  const wochen = monatsRaster(monat);
+  return (
+    <div role="region" aria-label={label} className="overflow-x-auto">
+      {/* Die Zeilen tragen immer eine Kontur (durchsichtig), damit die leere
+          Woche mit ihrer sichtbaren die Spalten nicht verschiebt. */}
+      <div role="table" aria-label={label} className="flex min-w-[36rem] flex-col gap-px">
+        <div role="row" className="kontur grid grid-cols-7 gap-px border-transparent text-center type-body-small text-on-surface-mittel">
+          {WOCHENTAGE.map(([kurz, lang]) => (
+            <div role="columnheader" key={kurz} className="py-1">
+              <span aria-hidden>{kurz}</span>
+              <span className="sr-only">{lang}</span>
+            </div>
+          ))}
+        </div>
+        {wochen.map((w) => {
+          const leer = leereWoche?.(w.map((d) => d.tag)) ?? false;
+          return (
+            <div
+              role="row"
+              key={w[0].tag}
+              className={cn(
+                "kontur grid grid-cols-7 gap-px rounded-flaeche",
+                leer ? "border-dashed border-kante" : "border-transparent",
+              )}
+            >
+              {w.map(({ tag, imMonat }, i) => (
+                <div
+                  role="cell"
+                  key={tag}
+                  aria-current={tag === heute ? "date" : undefined}
+                  className={cn(
+                    "min-h-24 min-w-0 bg-elev-01 p-1",
+                    !imMonat && "opacity-60",
+                    tag === heute && "kontur border-primary",
+                  )}
+                >
+                  {leer && i === 0 && <span className="sr-only">Woche ohne Termin. </span>}
+                  <div className="type-body-small text-on-surface-mittel" aria-hidden>
+                    {Number(tag.slice(8))}
+                  </div>
+                  <span className="sr-only">{tagText(tag)}{tag === heute ? ", heute" : ""}. </span>
+                  {renderTag(tag)}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
