@@ -31,8 +31,18 @@ sich der Browser und behält sie beim nächsten Besuch.
 
 Jede Seite zeigt zuoberst ihren Pfad als Brotkrumen, auch die Einstiegsseiten: der
 Übungsbestand etwa „Übungen", eine Übung „Übungen › Hauptteil › ‹Name›". Davor steht der
-Knopf zum Verkleinern der Leiste. Auf Trainingsseiten stehen in derselben Zeile rechts die
-Aktionen am Training. Im Druck erscheinen weder Leiste noch Brotkrumen.
+Knopf zum Verkleinern der Leiste. Die Zeile steht auf einer Höhe mit der Marke oben in der
+Leiste. Auf Trainingsseiten stehen in derselben Zeile rechts die Aktionen am Training. Im Druck
+erscheint die Leiste nie; die Brotkrumen nur beim Drucken der Trainingsansicht aus dem
+Browser, damit auf dem Papier steht, wo das Training liegt.
+
+## Seitenaufbau
+
+Jede Seite beginnt links neben der Leiste, nichts steht zentriert in der Mitte. Übersichten —
+Übungen, Trainings, Teams und der Bereich eines Teams — nutzen die ganze Breite des Fensters;
+die Kacheln reihen sich so dicht, wie Platz ist, auf einem breiten Bildschirm also in mehr
+Spalten. Formulare und Seiten zum Lesen, etwa eine Übung oder ein Training, behalten eine
+angenehme Lesebreite und stehen ebenfalls links. Auch die Durchführung steht links.
 
 ## Auf schmalen Bildschirmen
 
