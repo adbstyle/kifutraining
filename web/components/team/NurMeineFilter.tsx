@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { UserCheck } from "lucide-react";
 import { FilterChip } from "@/components/ui";
 
 /** Den Trainingsplan auf die eigenen Termine eingrenzen (#325 AK 11). Die
@@ -13,7 +12,7 @@ import { FilterChip } from "@/components/ui";
 export function NurMeineFilter({ aktiv, href }: { aktiv: boolean; href: string }) {
   const router = useRouter();
   return (
-    <FilterChip selected={aktiv} icon={UserCheck} onClick={() => router.push(href, { scroll: false })}>
+    <FilterChip selected={aktiv} onClick={() => router.push(href, { scroll: false })}>
       Meine Termine
     </FilterChip>
   );

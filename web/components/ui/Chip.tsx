@@ -1,4 +1,4 @@
-import { Check, X } from "lucide-react";
+import { X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { kategorieStufe } from "@/lib/labels";
@@ -50,8 +50,8 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
 
 /* ── Chips ────────────────────────────────────────────────────
    Eine gemeinsame Basis, vier Typen: Assist · Filter · Input · Suggestion.
-   Die Rollen stehen direkt in den Bündeln — gewählt füllt Primary, ungewählt
-   umrandet die Kante, und `state` in der Basis trägt Überfahren, Fokus und
+   Die Rollen stehen direkt in den Bündeln — gewählt füllt Primary (die
+   Einfachauswahl) oder tönt es (der Filter), ungewählt umrandet die Kante, und `state` in der Basis trägt Überfahren, Fokus und
    Druck. Darum trägt kein Bündel mehr eine eigene Überfahr-Fläche: Die
    Zustands-Ebene färbt sich in der Farbe des Chip-Inhalts ein und passt so
    auf jede Variante.
@@ -119,8 +119,12 @@ export const chipTextOutlined = "border-kante text-on-surface";
    vergeben hat, soll auch gewählt wie ihr Name aussehen. */
 export const chipTextSelected = "border-primary bg-primary/12 text-primary";
 
-/* Filter-Chip (toggelbar) — gewählt: gefüllt in Primary, mit Häkchen.
-   Optionales führendes Icon, wenn nicht selektiert. */
+/* Filter-Chip (toggelbar) — gewählt: getönt wie ein Glied der verbundenen
+   Knopfgruppe (Kontur und Schrift in Primary, die Fläche Primary/12), ohne
+   Häkchen. Ein Filter steht neben Suchfeld, Auswahl und Knöpfen; gefüllt
+   wäre er lauter als die Handlung daneben, und der Farbwechsel von Kontur
+   und Schrift sagt «an» bereits — für Screenreader `aria-pressed`.
+   Optionales führendes Icon, gewählt wie ungewählt. */
 export function FilterChip({
   selected = false,
   onClick,
@@ -147,15 +151,11 @@ export function FilterChip({
       className={cn(
         chipBase,
         chipHoehen[groesse],
-        selected ? chipSelected : chipOutlined,
+        selected ? chipTextSelected : chipOutlined,
         className,
       )}
     >
-      {selected ? (
-        <Check size={14} strokeWidth={2.5} aria-hidden />
-      ) : (
-        Icon && <Icon size={16} strokeWidth={2} aria-hidden />
-      )}
+      {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
       {children}
     </button>
   );
@@ -169,7 +169,7 @@ export function FilterChip({
    (role=radiogroup / role=radio, aria-checked) — es ist ein Eingabefeld und
    keine Ansicht —, mit Pfeiltasten-Navigation und wanderndem Tabstopp.
 
-   Optik: dieselben Chip-Bündel, ausgewählt wie der Filter-Chip.
+   Optik: dieselben Chip-Bündel, ausgewählt gefüllt in Primary.
    Kein Häkchen — es ist eine Einfachauswahl, nicht ein Ein/Aus-Zustand,
    und der Umriss-Wechsel trägt die Aussage bereits.
 
