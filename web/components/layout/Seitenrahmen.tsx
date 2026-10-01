@@ -40,7 +40,7 @@ export function Seitenrahmen({
   return (
     <main
       className={cn(
-        "mx-auto px-4 py-8 sm:px-6 sm:py-10",
+        "mx-auto px-4 py-8 sm:px-6 sm:py-10 lg:pt-0",
         BREITE[breite],
         druckVoll && "print:max-w-none print:px-0 print:py-0",
       )}

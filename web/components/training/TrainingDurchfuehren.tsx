@@ -162,7 +162,7 @@ export function TrainingDurchfuehren({
 
   if (sections.length === 0) {
     return (
-      <main className="mx-auto max-w-2xl px-4 py-16">
+      <main className="mx-auto max-w-2xl px-4 py-16 lg:pt-0">
         <SeitenKopf krumen={crumbs} className="mb-6" />
         <h1 className="type-headline-small text-center text-on-surface">
           {training.name}
@@ -190,7 +190,7 @@ export function TrainingDurchfuehren({
   const section = sections[idx];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-28 pt-4 sm:px-6">
+    <div className="mx-auto max-w-2xl px-4 pb-28 pt-4 sm:px-6 lg:pt-0">
       <header className="mb-4">
         {/* Der Rückweg steht zuoberst — wie auf jeder anderen Trainingsseite.
             Im Druck hat er nichts verloren (OOS 2). */}

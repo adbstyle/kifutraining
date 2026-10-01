@@ -10,6 +10,11 @@ import { SlimSchalter } from "./AppRahmen";
  * fehlt sie, ausser `imDruck`: Dann steht der Pfad auf dem Papier (Umschalter
  * und Aktionen blenden sich selbst aus).
  *
+ * Ab `lg` ist sie mindestens so hoch wie der Kopf der Seitenleiste (64 px)
+ * und steht ohne Rand am oberen Rand: So liegen Umschalter und Brotkrumen auf
+ * einer Linie mit der Marke. Ein langer Pfad darf umbrechen, dann wächst sie.
+ * Die Seite setzt darum ab `lg` keinen oberen Rand vor sie.
+ *
  * Auf Server-Seiten keine `icon`-Funktionen in `krumen` reichen — sie lassen
  * sich nicht an den Client übergeben.
  */
@@ -25,7 +30,7 @@ export function SeitenKopf({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center gap-3", !imDruck && "print:hidden", className)}>
+    <div className={cn("flex items-center gap-3 lg:min-h-16", !imDruck && "print:hidden", className)}>
       <SlimSchalter />
       <Breadcrumbs items={krumen} />
       {aktionen}
