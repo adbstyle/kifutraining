@@ -3,9 +3,10 @@
 // Eigenes Modul, weil die Meldungstabellen in lib/termin.ts (Termine) und
 // lib/serie.ts (Serien) liegen und serie.ts termin.ts importiert: Läge die
 // Funktion in termin.ts, müsste dieses serie.ts laden — ein Zyklus. Spätere
-// Teile mit eigener Tabelle von Konflikt-Sätzen ergänzen sie hier. Der Ausfall
-// braucht keine: TERMIN_AUSGEFALLEN ist bewusst eine Regel, nicht veraltet —
-// ein erneuter Versuch mit anderer Wahl (Ausfall zuerst zurücknehmen) gelingt.
+// Teile mit eigener Tabelle von Konflikt-Sätzen ergänzen sie hier. Beim Ausfall
+// ist nur AUSFALL_GEAENDERT veraltet (steht in KONFLIKT_MARKER);
+// TERMIN_AUSGEFALLEN ist bewusst eine Regel — ein erneuter Versuch mit anderer
+// Wahl (Ausfall zuerst zurücknehmen) gelingt.
 //
 // REIN: importiert nur die reinen Regelmodule — `check:kern` lädt sie mit tsx.
 import { KONFLIKT_MARKER, TERMIN_MELDUNG } from "@/lib/termin";
