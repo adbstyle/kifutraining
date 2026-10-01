@@ -5,7 +5,7 @@ import { CalendarPlus, ChevronLeft, ChevronRight, Plus, Repeat } from "lucide-re
 import { ButtonLink, IconButtonLink, Menu, Monatsraster } from "@/components/ui";
 import { monatsName, monatVon, plusMonate, tagText } from "@/lib/monat";
 import { planHref } from "@/lib/team-ansicht";
-import { TerminEintrag, type EintragZustand } from "./TerminEintrag";
+import { TerminEintrag, eintragText, type EintragZustand } from "./TerminEintrag";
 import { useTerminAktionen } from "./TerminBereich";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
 // (next/headers) ins Client-Bundle.
@@ -79,7 +79,7 @@ export function MonatsUeberblick({
 
   function eintrag(t: TerminZeile) {
     const zustand: EintragZustand = t.ausgefallen ? "ausgefallen" : t.training ? "training" : nochNichtVorbereitet(t, heute) ? "noch-nicht" : "ohne";
-    const text = zustand === "ausgefallen" ? "Ausgefallen" : zustand === "training" ? t.training!.name : zustand === "noch-nicht" ? "Noch kein Training" : "Ohne Training";
+    const text = eintragText(zustand, t.training?.name);
     // Der sichtbare Text steht im Namen zusammenhängend («18:00 Passspiel»):
     // WCAG 2.5.3 — «Uhr» dazwischen zerrisse ihn.
     const label = `${tagText(t.datum)}, ${t.beginn ? `${t.beginn} ${text}` : `Zeit fehlt, ${text}`}`;

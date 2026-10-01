@@ -41,6 +41,7 @@ import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
 import { MaterialDemo } from "./MaterialDemo";
 import { MonatsrasterDemo } from "./MonatsrasterDemo";
+import { AnsichtWahl } from "@/components/team/AnsichtWahl";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import {
@@ -2686,6 +2687,21 @@ export default function Styleguide() {
           </li>
         </ul>
         <MonatsrasterDemo />
+        <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
+          <code>AnsichtWahl</code> — Liste oder Monat als Links
+        </p>
+        <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+          Zwei Links statt einer <code>ChoiceChipGroup</code>: Die Ansicht lebt
+          in der Adresse (<code>?ansicht=monat</code>), ist damit weitergebbar
+          und der Zurück-Schritt des Browsers geht — und die Eingrenzung
+          «Meine Termine» reist in derselben Adresse mit (#329 PC 4). Ein Chip
+          hielte die Wahl im Zustand und verlöre beides. Die Optik ist die des
+          Knopfes: <code>tonal</code> für die offene, <code>text</code> für die
+          andere Ansicht, <code>aria-current</code> trägt die Wahl auch ohne
+          Fläche. Der Filter daneben bleibt ein <code>FilterChip</code>, weil er
+          ein Ein/Aus ist und keine Ansicht.
+        </p>
+        <AnsichtWahl ansicht="monat" hrefListe="#" hrefMonat="#" />
       </Section>
     </main>
   );

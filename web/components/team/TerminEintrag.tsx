@@ -5,6 +5,14 @@ import { cn } from "@/lib/cn";
 /** Wie ein Termin im Monatsüberblick steht (#329 AK 5–7). */
 export type EintragZustand = "training" | "noch-nicht" | "ohne" | "ausgefallen";
 
+/** Der Text, den der Zustand zeigt — für die Anzeige und den zugänglichen Namen. */
+export function eintragText(zustand: EintragZustand, name?: string): string {
+  return zustand === "ausgefallen" ? "Ausgefallen"
+    : zustand === "training" ? (name ?? "")
+    : zustand === "noch-nicht" ? "Noch kein Training"
+    : "Ohne Training";
+}
+
 /* Ein Termin im Monatsraster: Beginn (oder «Zeit fehlt») und, was er trägt.
    Der Zustand steht immer als WORT da und nie nur als Farbe: das Training mit
    seinem Namen, «Noch kein Training» (anstehend, Fehlerkontur), «Ohne
@@ -26,11 +34,6 @@ export function TerminEintrag({
   label: string;
   onClick?: () => void;
 }) {
-  const text =
-    zustand === "ausgefallen" ? "Ausgefallen"
-    : zustand === "training" ? name
-    : zustand === "noch-nicht" ? "Noch kein Training"
-    : "Ohne Training";
   return (
     <button
       type="button"
@@ -45,7 +48,7 @@ export function TerminEintrag({
       )}
     >
       {beginn ? `${beginn} ` : <span className="text-error">Zeit fehlt </span>}
-      {text}
+      {eintragText(zustand, name)}
     </button>
   );
 }

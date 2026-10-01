@@ -11,7 +11,7 @@ import { getTeam } from "@/lib/queries/teams";
 import { getTeamPlan, teilePlan } from "@/lib/queries/termine";
 import { getTeamTrainings, getTrainingPool } from "@/lib/queries/trainings";
 import { istMonat, monatVon } from "@/lib/monat";
-import { planHref } from "@/lib/team-ansicht";
+import { planHref, type Ansicht } from "@/lib/team-ansicht";
 import { createClient } from "@/lib/supabase/server";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 
@@ -39,9 +39,9 @@ export default async function TeamPlanPage({
   const meine = sp.meine === "1";
   const heute = heuteAmTrainingsort();
   // PC 1: Die Liste bleibt der Start. PC 2: Der aktuelle Monat nach dem Schweizer Kalendertag.
-  const ansicht = sp.ansicht === "monat" ? "monat" : "liste";
+  const ansicht: Ansicht = sp.ansicht === "monat" ? "monat" : "liste";
   const monat = sp.monat && istMonat(sp.monat) ? sp.monat : monatVon(heute);
-  const href = (o: { ansicht: "liste" | "monat"; meine: boolean }) => planHref(id, { ...o, monat }, heute);
+  const href = (o: { ansicht: Ansicht; meine: boolean }) => planHref(id, { ...o, monat }, heute);
 
   // Den Zugriff hat der Rahmen geprüft; gebraucht wird die eigene Kennung für
   // die Eingrenzung, das Team (aus dem Request-Cache) für die Mitglieder.
