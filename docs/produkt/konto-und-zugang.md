@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-09-29. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-10-01. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -23,15 +23,17 @@ Weg, das Passwort im laufenden Betrieb ohne diesen Mailversand zu wechseln, gibt
 ## Was im Konto steht
 
 Die Konto-Seite zeigt die eigene E-Mail-Adresse, führt zu den eigenen Übungen, lässt den
-Anzeigenamen setzen, listet die verbundenen KI-Assistenten und bietet das Löschen des Kontos
-an. Mehr Profilangaben gibt es nicht — kein Bild, keine Adresse, keine Vereinszugehörigkeit.
+Anzeigenamen setzen, listet die verbundenen KI-Assistenten und die Kalender-Abos und bietet das
+Löschen des Kontos an. Mehr Profilangaben gibt es nicht — kein Bild, keine Adresse, keine
+Vereinszugehörigkeit.
 
 ## Der Anzeigename
 
 Der Anzeigename ist das Einzige, was andere von einer Person zu sehen bekommen; die
-E-Mail-Adresse bleibt immer verborgen. Er steht als Urheber an veröffentlichten Trainings und
-in den Mitgliederlisten der Teams. Wer keinen gewählt hat, erscheint nicht namenlos, sondern
-unter einer automatisch vergebenen, je Konto verschiedenen Kennung — etwa „Trainer:in a1b2".
+E-Mail-Adresse bleibt immer verborgen. Er steht als Urheber an veröffentlichten Trainings, in
+den Mitgliederlisten der Teams und an den Terminen, für die man verantwortlich ist. Wer keinen
+gewählt hat, erscheint nicht namenlos, sondern unter einer automatisch vergebenen, je Konto
+verschiedenen Kennung — etwa „Trainer:in a1b2".
 
 Ein einmal gesetzter Name lässt sich ersetzen, aber nicht mehr entfernen. Das ist Absicht: An
 bereits veröffentlichten Trainings soll nicht plötzlich wieder eine Zufallskennung auftauchen.
@@ -220,33 +222,63 @@ dass nichts entstanden ist und er es gefahrlos wiederholen kann — oder, falls 
 scheiterte, welche unvollständige Kopie stehen blieb. Ein eigenes Training oder eines der
 eigenen Teams kann der Assistent auch löschen. Er fragt dafür nicht nach, weiss aber vorher, wie
 viele Übungen es trägt und ob es öffentlich ist, und nennt danach, was mitging. Das Training
-verschwindet samt Übungen, Bildern und einem angesetzten Termin, ein öffentliches zugleich aus
-dem öffentlichen Bestand; Kopien, die andere übernommen haben, bleiben. Ein fremdes Training
-lässt sich nicht löschen.
+verschwindet samt Übungen und Bildern, ein öffentliches zugleich aus dem öffentlichen Bestand;
+Kopien, die andere übernommen haben, bleiben. War ein Team-Training einem Termin zugeordnet,
+bleibt der Termin ohne Training im Kalender des Teams, und der Assistent erfährt, welcher. Ein
+fremdes Training lässt sich nicht löschen.
 
 Auch in den eigenen Teams arbeitet der Assistent. Er nennt die Teams, in denen man Mitglied ist,
-mit Namen und Mitgliederzahl, sucht im Trainingsbestand eines Teams wie im eigenen — jedes
-Team-Training mit seinem Termin, falls es angesetzt ist — und ruft den Trainingsplan eines Teams
-ab, bereits getrennt in Anstehendes und Vergangenes. Die Grenze liegt wie im Team-Bereich am
-heutigen Tag in der Schweiz; die Einheit von heute zählt noch zum Anstehenden, und der Assistent
-muss nicht selbst rechnen. Ein Training legt er auf Wunsch direkt im Team an, stellt ein eigenes
-Training als Kopie ins Team oder übernimmt ein Team-Training als Kopie in den persönlichen
-Bestand; das Original bleibt jeweils, wie es ist, und ein Termin geht nie mit. Team-Trainings
-überarbeitet er mit denselben Möglichkeiten wie persönliche; veröffentlichen lassen sie sich
-nicht.
+mit Namen und Mitgliederzahl, und die Mitglieder eines Teams mit ihrem Anzeigenamen und einer
+Kennung — nie mit der E-Mail-Adresse —, wobei er erfährt, welches davon man selbst ist. Er sucht
+im Trainingsbestand eines Teams wie im eigenen; jedes Team-Training nennt dabei den Termin, für
+den es eingeplant ist, samt Zeit, Ort und Verantwortlichen. Ein Training legt er auf Wunsch
+direkt im Team an, stellt ein eigenes Training als Kopie ins Team oder übernimmt ein
+Team-Training als Kopie in den persönlichen Bestand; das Original bleibt jeweils, wie es ist,
+und ein Termin geht nie mit. Team-Trainings überarbeitet er mit denselben Möglichkeiten wie
+persönliche; veröffentlichen lassen sie sich nicht.
 
-Ein Team-Training setzt der Assistent auf ein Datum an, auf Wunsch mit Beginn, Ort und
-Bemerkung; es erscheint danach im Trainingsplan des Teams. Einen Termin ändert er — nur die
-Angaben, die er nennt; Beginn, Ort und Bemerkung kann er auch leeren — oder entfernt ihn, wobei
-das Training im Team-Bestand bleibt. Wie in der Anwendung trägt ein Training höchstens einen
-Termin: Wer dasselbe Training ein weiteres Mal ansetzen will, setzt es erneut an, und dabei
-entsteht eine eigenständige Kopie im selben Team mit eigenem Termin, während das bisherige
-Training seinen behält. Einen Termin an einem persönlichen Training, ein Datum, das es nicht
-gibt, oder eine ungültige Uhrzeit lehnt die Anwendung ab und nennt den Grund. Ein Team, in dem
-man nicht Mitglied ist, gilt als nicht gefunden. Teams gründen, umbenennen, auflösen oder
-Mitglieder verwalten kann der Assistent nicht. Damit legt der Assistent Trainings beider
-Altersstufen an und führt sie weitgehend wie die Anwendung; was ihm fehlt, steht unter den
-bekannten Grenzen.
+Den Kalender eines Teams führt der Assistent nach denselben Regeln wie der
+[Team-Bereich](team-bereich.md#der-kalender-des-teams). Er ruft ihn ab, bereits getrennt in
+Anstehendes und Vergangenes; die Grenze liegt wie im Team-Bereich am heutigen Tag in der
+Schweiz, die Einheit von heute zählt noch zum Anstehenden, und der Assistent muss nicht selbst
+rechnen. Auf Wunsch beschränkt er die Auskunft auf einen Zeitraum, dessen Von- und Bis-Tag
+beide mitzählen und der höchstens bis zum gleichen Kalendertag im Folgejahr reicht, und auf die
+Termine, für die man selbst verantwortlich ist; ein Zeitraum ohne Termine ergibt eine leere
+Auskunft. Jeder Termin nennt Datum, Beginn, Ende, Ort und Bemerkung, sein Training oder dass er
+keines trägt, seine Verantwortlichen, ob er ausgefallen ist und aus welchem Grund, und bei
+einem Serientermin die Serie und die Angaben, in denen er von ihr abweicht. Zu jeder Serie
+erfährt er Wochentage, Zeitraum, Zeit, Ort, Bemerkung und Verantwortliche. Ein anstehender
+Termin ohne Training, der nicht ausgefallen ist, gilt auch für ihn als noch nicht vorbereitet.
+
+Er legt einzelne Termine fest — Datum, Beginn und Ende sind auch hier Pflicht — und wöchentliche
+Terminserien mit Wochentagen, Zeitraum, Zeit, Ort, Bemerkung und Verantwortlichen. Er ändert und
+entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für diesen, für diesen und alle
+folgenden oder für alle Termine der Serie gilt, sonst lehnt die Anwendung ab. Eine abweichende
+Angabe lässt er wieder der Serie folgen, das Datum ausgenommen. Er ordnet Terminen Trainings zu
+— aus dem Bestand des Teams oder ein eigenes persönliches Training jeder Altersstufe, das dabei
+immer als eigenständige Kopie ins Team kommt —, ersetzt und löst sie. Ist ein Team-Training
+schon für einen anstehenden Termin eingeplant, muss er zwischen Kopie und Verschieben wählen;
+bei einem vergangenen Termin und bei einem persönlichen Training entsteht immer eine Kopie, und
+eine Angabe zum Verschieben lehnt die Anwendung dort ab. Er trägt Verantwortliche ein, ändert und
+entfernt sie, lässt Termine ausfallen, setzt, ändert oder leert den Grund und nimmt einen Ausfall
+zurück. Ein Training ohne bestehenden Termin auf ein Datum zu setzen, gibt es auch beim
+Assistenten nicht mehr; er legt zuerst den Termin fest und ordnet das Training dann zu.
+
+Es gelten dieselben Regeln wie in der Anwendung, und abgewiesen wird mit denselben Sätzen.
+Nachfragen muss der Assistent nicht: Er entfernt, ersetzt, verschiebt, löst und lässt ausfallen
+ohne Bestätigung. Ausgenommen sind Änderungen und Entfernungen einer Serie für folgende oder
+alle Termine, die vergangene Termine erfassen oder entfallen lassen: Die führt die Anwendung
+erst aus, wenn der Aufruf das ausdrücklich bestätigt, und nennt vorher, wie viele vergangene
+Termine es trifft. Nach jedem Schritt erfährt der Assistent, was geschehen ist — welche
+entfallenen Termine ein Training trugen und dass deren Trainings im Bestand des Teams geblieben
+sind, ob beim Zuordnen eine Kopie entstand und welches Team-Training es ist, welches Training
+ohne Termin im Bestand blieb, welcher Termin beim Verschieben frei wurde, welches Training ein
+Ausfall gelöst hat und, falls eine gescheiterte Kopie nicht ganz aufgeräumt werden konnte, was
+davon stehen blieb. Ein Team, in dem man nicht Mitglied ist, gilt als nicht gefunden.
+Kalender-Abos holt, zeigt und widerruft der Assistent nicht, und Teams gründen, umbenennen,
+auflösen oder Mitglieder verwalten kann er nicht. Damit legt der Assistent Trainings beider
+Altersstufen an und führt sie samt dem Kalender der Teams weitgehend wie die Anwendung; was ihm
+fehlt, steht unter den bekannten Grenzen.
 
 Verbunden wird in zwei Schritten. Zuerst trägt man die Adresse `https://ki-fu.ch/api/mcp` in
 den Assistenten ein; die Konto-Seite nennt sie ebenfalls und zeigt die zwei gängigen Wege: In
@@ -259,14 +291,20 @@ Assistenten nie geben.
 
 Die Seite zum Erlauben nennt, welcher Assistent anfragt, mit welchem Konto man angemeldet ist
 und wohin es danach zurückgeht. Sie zählt auf, was ein Zugang künftig insgesamt darf — also
-auch das, was erst mit späteren Erweiterungen dazukommt und heute noch nicht geht: Übungen
-suchen und abrufen, eigene Übungen samt Feld-Diagramm anlegen, kopieren, ändern, öffentlich
-schalten und zurückziehen, Trainings anlegen,
-überarbeiten, veröffentlichen, zurückziehen, übernehmen und löschen sowie Team-Trainings der
-eigenen Teams führen und auf Termine ansetzen. Nie erreichbar sind die Favoriten, die
-Verwaltung der Teams und das Konto selbst. Kommt eine dieser Fähigkeiten dazu, muss man nicht
-erneut zustimmen. Weil jeder Assistent seinen Namen selbst angibt, warnt die Seite, nur zu
-erlauben, wenn man das Verbinden eben selbst gestartet hat.
+auch das, was erst mit späteren Erweiterungen dazukommt und heute noch nicht geht —, im
+Wortlaut der Seite: „Übungen suchen und abrufen — den ganzen Bestand, den du auch in KiFu
+siehst"; „eigene Übungen samt Feld-Diagramm anlegen, kopieren, ändern, öffentlich schalten und
+zurückziehen"; „Trainings anlegen, überarbeiten, veröffentlichen, zurückziehen, übernehmen und
+löschen"; „Team-Trainings deiner Teams führen und im Kalender deiner Teams Termine und
+Terminserien festlegen, ändern und entfernen, ihnen Trainings aus dem Team oder als Kopie deine
+persönlichen Trainings zuordnen und sie wieder lösen, Verantwortliche eintragen, Ausfälle
+festhalten und zurücknehmen sowie die Termine eines Zeitraums abrufen"; „die Anzeigenamen der
+Mitglieder deiner Teams lesen (ohne E-Mail-Adressen)". Nie erreichbar sind „deine Favoriten",
+„die Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)" und
+„dein Konto selbst (Anzeigename, Passwort, Löschen)". Kommt eine dieser Fähigkeiten dazu, muss
+man nicht erneut zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender dazukam,
+führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt die
+Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
 
 Beim Erlauben kann man dem Zugang einen eigenen Namen geben, etwa „Claude auf dem Laptop",
 höchstens vierzig Zeichen. Vorgeschlagen ist der Name, den der Assistent selbst nennt; wer ihn
@@ -285,6 +323,22 @@ Erlaubnis, bei einem eigenen Namen zusätzlich der Name des Assistenten. Jeder Z
 einzeln widerrufen; das wirkt sofort, auch auf eine noch laufende Sitzung, und die übrigen
 Zugänge bleiben bestehen. Von selbst verfällt ein Zugang nicht.
 
+## Kalender-Abos
+
+Unter „Kalender-Abos" auf der Konto-Seite stehen alle gültigen Abos mit dem Namen ihres Teams.
+Geholt wird ein Abo im Trainingsplan des Teams; was es liefert und wie es ins Kalenderprogramm
+kommt, beschreibt der [Team-Bereich](team-bereich.md#kalender-abo). Hier lässt sich der Link
+jedes gültigen Abos jederzeit wieder anzeigen und kopieren — im selben Dialog wie im Team und mit
+derselben Warnung, dass er persönlich ist. Ohne Abo steht ein Hinweis, wo man eines holt.
+
+Jedes Abo lässt sich einzeln widerrufen, nach einer Bestätigung, die sagt, dass der Link danach
+keine Termine mehr liefert und dass man sich im Team jederzeit einen neuen holen kann. Von
+selbst erlischt ein Abo, wenn man das Team verlässt, daraus entfernt wird, das Konto löscht oder
+das Team aufgelöst wird. Ein erloschener Link liefert ab dem nächsten Abruf keine Termine mehr
+und wird nie wieder gültig, auch nicht nach einer erneuten Aufnahme ins Team; der neue Link ist
+ein anderer. Über einen KI-Assistenten lassen sich Abos weder holen noch einsehen noch
+widerrufen.
+
 ## Ohne Konto
 
 Der gesamte Übungsbestand und alle öffentlichen Trainings sind ohne Anmeldung
@@ -292,7 +346,9 @@ zugänglich — ansehen, durchsuchen, filtern, durchführen und drucken inbegrif
 bleibt alles Eigene: Übungen und Trainings anlegen oder bearbeiten, favorisieren, Trainings
 übernehmen, Teams. Der Menüpunkt für Teams erscheint gar nicht erst, und wer eine geschützte
 Adresse direkt aufruft, landet bei der Anmeldung und wird danach dorthin zurückgeführt, wo er
-hinwollte.
+hinwollte. Eine Ausnahme ist das Kalender-Abo: Das Kalenderprogramm ruft die Termine ohne
+Anmeldung ab, denn der Link selbst ist die Berechtigung; der Verweis in einem Kalendereintrag
+führt dagegen über die Anmeldung in den Trainingsplan.
 
 ## Konto löschen
 
@@ -306,8 +362,13 @@ gelöscht und die persönlichen Trainings mitsamt den Bildern ihrer Übungsfassu
 
 Bei Teams entscheidet die Mitgliederzahl: Ist noch jemand anderes im Team, bleibt es samt allen
 Trainings und Terminen unangetastet, und nur die gelöschte Person verschwindet aus der
-Mitgliederliste. War sie die letzte, löst sich das Team auf — mit seinen Trainings, Terminen
-und Bildern.
+Mitgliederliste. War sie die letzte, löst sich das Team auf — mit seinen Trainings, Terminen,
+Terminserien und Bildern.
+
+Als Verantwortliche wird die Person aus allen anstehenden Terminen und Terminserien ausgetragen.
+An vergangenen Terminen bleibt ihr Eintrag ohne Namen als „Ehemaliges Mitglied" stehen, auch in
+Teams, die sie schon früher verlassen hatte. Ihre Kalender-Abos erlöschen; ein Hinweis darauf
+steht nicht in der Bestätigung.
 
 Alle KI-Zugänge werden entzogen; ein verbundener Assistent kommt danach nicht mehr ins Konto.
 
@@ -317,7 +378,8 @@ Es gibt keine Rollen und keine Rechteabstufung, weder anwendungsweit noch innerh
 Teams; alle Mitglieder eines Teams dürfen dasselbe. Eine Einladung an jemanden ohne Konto ist
 nicht möglich — ins Team kommt nur, wer bereits registriert und bestätigt ist. Ein Profilbild
 ist nicht vorgesehen, und der Anzeigename lässt sich nicht mehr auf die automatische Kennung
-zurücksetzen.
+zurücksetzen. Ob und wann ein Kalenderprogramm ein Abo zuletzt abgerufen hat, ist nicht
+einsehbar, und einem Abo lässt sich kein eigener Name geben.
 
 Ein KI-Zugang reicht so weit wie das Konto selbst; begrenzt wird er allein durch die
 Fähigkeiten, die die Anwendung dem Assistenten anbietet, nicht durch eine abgestufte
@@ -343,8 +405,8 @@ in der Anwendung selbst erscheinen diese Mängel nirgends. Fotos lädt er nicht 
 einzelne Übung kopiert oder verschiebt er nicht von einer Variante in eine andere. Anders als
 der Dialog der Anwendung erzwingt der Weg über den Assistenten beim Anlegen der zweiten Variante
 keinen neuen Namen für die bisherige. Die Reihenfolge
-der Gruppen untereinander ändert er nicht. Die Favoriten erreicht er nicht, Teams gründet oder besetzt er nicht. Eine Übung
-überführt er nicht in die andere Altersstufe, und die Altersstufe eines Trainings wechselt er so
+der Gruppen untereinander ändert er nicht. Die Favoriten erreicht er nicht, Teams gründet oder
+besetzt er nicht, und Kalender-Abos holt oder widerruft er nicht. Eine Übung überführt er nicht in die andere Altersstufe, und die Altersstufe eines Trainings wechselt er so
 wenig wie die Anwendung. Für den Juniorenfussball gibt es keinen kuratierten Übungsbestand; ein
 Block, zu dem der sichtbare Bestand nichts führt, bleibt leer und wird gemeldet. Die
 Zeitrichtwerte erzwingt die Anwendung weder beim Speichern noch beim Veröffentlichen. Was im
@@ -358,7 +420,14 @@ etwa durch eine Zeitüberschreitung oder einen Absturz mitten im Kopieren —, k
 unvollständige Kopie als eigenes Training stehen bleiben; sie ist nicht als unfertig erkennbar
 und wird nicht nachträglich aufgeräumt. Ebenso kann die Kopie vollständig entstanden sein, ohne
 dass der Assistent davon erfährt. Bleibt die Rückmeldung aus, prüft der Assistent darum vor einem
-zweiten Versuch den eigenen Bestand bzw. den des Teams. Dasselbe gilt für das erneute Ansetzen,
-das ebenfalls kopiert. Bricht das Kopieren einer Übung auf diese Weise ab, kann eine kopierte
-Bilddatei ohne Übung liegen bleiben; zu sehen ist sie nirgends. Serientermine, abgesagte Einheiten und ob eine Einheit stattgefunden hat,
-kennt die Anwendung auch über den Assistenten nicht.
+zweiten Versuch den eigenen Bestand bzw. den des Teams. Dasselbe gilt für das Zuordnen eines
+Trainings als Kopie zu einem Termin, auch eines persönlichen. Bricht das Kopieren einer Übung
+auf diese Weise ab, kann eine kopierte Bilddatei ohne Übung liegen bleiben; zu sehen ist sie
+nirgends.
+
+Im Kalender fragt der Assistent vor dem Entfernen eines Termins, dem Löschen eines Trainings
+mit Termin, dem Zuordnen, Ersetzen, Verschieben und Lösen nicht nach. Fallen durch eine
+Serienänderung anstehende Termine mit Training weg, erfährt er das erst danach; nur wenn
+vergangene Termine erfasst sind oder entfallen, verlangt die Anwendung eine Bestätigung im
+Aufruf und nennt vorher, was es trifft. Ob ein Termin stattgefunden hat und wer dabei war, kennt
+die Anwendung auch über den Assistenten nicht.
