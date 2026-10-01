@@ -62,6 +62,7 @@ import {
   MailCheck,
   ListPlus,
   RefreshCw,
+  CalendarOff,
   CalendarX2,
   CalendarPlus,
 } from "lucide-react";
@@ -1145,6 +1146,10 @@ export default function Styleguide() {
           <Badge tone="befund">
             <CalendarX2 size={12} strokeWidth={2.5} aria-hidden />
             Noch kein Training
+          </Badge>
+          <Badge tone="neutral">
+            <CalendarOff size={12} strokeWidth={2.5} aria-hidden />
+            Ausgefallen
           </Badge>
           <span className="type-label-small text-on-surface-mittel">
             manual · entwurf · oeffentlich · varianten · neutral · befund

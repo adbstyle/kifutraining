@@ -73,6 +73,10 @@ export type TerminZeile = {
   /** Wer den Termin vorbereitet und leitet (#325), nach Name geordnet,
    *  Einträge gelöschter Konten zuletzt. */
   verantwortliche: Verantwortlicher[];
+  /** Der Termin findet nicht statt (#327); er trägt dann kein Training. */
+  ausgefallen: boolean;
+  /** Freiwilliger Grund des Ausfalls; nur bei `ausgefallen`. */
+  ausfallGrund: string | null;
 };
 
 /** Ist dieses Konto für den Termin verantwortlich? (#325 AK 11) */
@@ -104,6 +108,8 @@ type RawTermin = {
   ort_abweichend: boolean;
   bemerkung_abweichend: boolean;
   verantwortliche_abweichend: boolean;
+  ausgefallen: boolean;
+  ausfall_grund: string | null;
   termin_verantwortliche: {
     id: string;
     user_id: string | null;
@@ -136,7 +142,7 @@ export function kurzeZeit(t: string | null): string | null {
 }
 
 const TERMIN_SELECT =
-  "id, team_id, datum, beginn, ende, ort, bemerkung, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, " +
+  "id, team_id, datum, beginn, ende, ort, bemerkung, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, ausgefallen, ausfall_grund, " +
   "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ), " +
   "trainings ( id, name, stufen ), " +
   "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, " +
@@ -210,6 +216,8 @@ function mapTermin(t: RawTermin): TerminZeile {
       (v) => v.name,
       (v) => v.eintragId,
     ),
+    ausgefallen: t.ausgefallen,
+    ausfallGrund: t.ausfall_grund,
   };
 }
 
@@ -275,10 +283,10 @@ export async function getTeamPlanFuer(
   return meine ? alle.filter((t) => istVerantwortlich(t, meine)) : alle;
 }
 
-/** «Noch nicht vorbereitet» (Epic PO 7): anstehend und ohne Training. Teil D
- *  nimmt ausgefallene Termine aus. */
+/** «Noch nicht vorbereitet» (Epic PO 7): anstehend, ohne Training und nicht
+ *  ausgefallen (#327 AK 8). */
 export function nochNichtVorbereitet(t: TerminZeile, heute: string): boolean {
-  return t.datum >= heute && t.training === null;
+  return t.datum >= heute && t.training === null && !t.ausgefallen;
 }
 
 /** Ein Trainingsplan, geteilt in Kommendes und Vergangenes (Story 18). */

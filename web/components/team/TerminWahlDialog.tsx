@@ -37,7 +37,8 @@ export function TerminWahlDialog({
   useEffect(() => { setGewaehlt(null); setArt(null); }, [training]);
 
   const liste = useMemo(
-    () => termine.filter((t) => t.id !== training?.termin?.id),
+    // Ein ausgefallener Termin trägt auf keinem Weg ein Training (#327 AK 9).
+    () => termine.filter((t) => t.id !== training?.termin?.id && !t.ausgefallen),
     [termine, training],
   );
   const wahl = liste.find((t) => t.id === gewaehlt) ?? null;
@@ -69,7 +70,11 @@ export function TerminWahlDialog({
     >
       {fehler && <p role="alert" className="mb-3 text-error">{fehler}</p>}
       {liste.length === 0 ? (
-        <p>Das Team hat noch keinen weiteren Termin. Lege ihn im Trainingsplan fest.</p>
+        <p>
+          {termine.some((t) => t.id !== training?.termin?.id)
+            ? "Alle weiteren Termine sind ausgefallen. Lege einen neuen im Trainingsplan fest."
+            : "Das Team hat noch keinen weiteren Termin. Lege ihn im Trainingsplan fest."}
+        </p>
       ) : (
         <AuswahlListe
           ariaLabel="Termine des Teams"

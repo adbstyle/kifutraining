@@ -512,11 +512,15 @@ export type TeamTrainingRow = TrainingListRow & {
     /** Wer den Termin vorbereitet und leitet (#325 AK 16); `userId` und `name`
      *  sind bei einem gelöschten Konto `null`, `ehemalig` heisst: nicht mehr im Team. */
     verantwortliche: { userId: string | null; name: string | null; ehemalig: boolean }[];
+    /** Ein Training trägt nie einen ausgefallenen Termin (#327 AK 9); die
+     *  Felder halten die Gestalt wie im Plan. */
+    ausgefallen: boolean;
+    ausfallGrund: string | null;
   } | null;
 };
 
 const TEAM_LIST_SELECT =
-  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, serie_id, ` +
+  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, serie_id, ausgefallen, ausfall_grund, ` +
   "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ) )";
 
 export type TeamTrainingFilter = {
@@ -570,6 +574,8 @@ export async function getTeamTrainingsFuer(
       ort: string | null;
       bemerkung: string | null;
       serie_id: string | null;
+      ausgefallen: boolean;
+      ausfall_grund: string | null;
       termin_verantwortliche: {
         id: string;
         user_id: string | null;
@@ -592,6 +598,8 @@ export async function getTeamTrainingsFuer(
             ort: termin.ort,
             bemerkung: termin.bemerkung,
             serieId: termin.serie_id,
+            ausgefallen: termin.ausgefallen,
+            ausfallGrund: termin.ausfall_grund,
             // Wie im Plan nach Name geordnet (gleiche Funktion, gleicher
             // Tiebreak), gelöschte Konten zuletzt.
             verantwortliche: nachName(

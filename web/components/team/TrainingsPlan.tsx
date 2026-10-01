@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, CalendarPlus, CalendarX2, MapPin, Pencil, PlayCircle, Repeat, Trash2, Unlink, Users } from "lucide-react";
+import { CalendarDays, CalendarOff, CalendarPlus, CalendarX2, MapPin, MessageSquareText, Pencil, PlayCircle, Repeat, Trash2, Undo2, Unlink, Users } from "lucide-react";
 import { Badge, Card, Disclosure, IconButton, IconButtonLink, KategorieChip, OverflowMenu, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
@@ -76,7 +76,10 @@ export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
     <li>
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className={cn("min-w-0 flex-1", vergangen && "opacity-60")}>
+          <div className={cn("min-w-0 flex-1", vergangen && !t.ausgefallen && "opacity-60")}>
+            {/* Bei einem ausgefallenen Termin dämpft nur Kopf und Verantwortliche;
+                Badge und Grund bleiben im vollen Kontrast (AA). */}
+            <div className={cn(t.ausgefallen && "opacity-60")}>
             {kopf}
             {/* #325 AK 10, 12: wer den Termin vorbereitet und leitet, mit dem
                 aktuellen Namen. Ohne Verantwortliche steht nichts (OoS 2). */}
@@ -87,7 +90,19 @@ export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
                 {verantwortlichenNamen(t.verantwortliche).join(", ")}
               </p>
             )}
-            {t.training ? (
+            </div>
+            {t.ausgefallen ? (
+              <div className="mt-1">
+                <Badge tone="neutral"><CalendarOff size={12} strokeWidth={2.5} aria-hidden />Ausgefallen</Badge>
+                {/* AK 7: der Grund steht darunter, wenn es einen gibt. */}
+                {t.ausfallGrund && (
+                  <p className="mt-1 type-body-small text-on-surface-mittel">
+                    <span className="sr-only">Grund: </span>
+                    {t.ausfallGrund}
+                  </p>
+                )}
+              </div>
+            ) : t.training ? (
               <Link href={`/training/${t.training.id}`} className="focus-ring group mt-1 block rounded-flaeche">
                 <span className="block type-title-medium text-on-surface group-hover:underline">{t.training.name}</span>
                 <div className="mt-1 flex flex-wrap gap-1">{t.training.stufen.map((k) => <KategorieChip key={k} k={k} />)}</div>
@@ -104,20 +119,29 @@ export function TerminKarte({ t, heute }: { t: TerminZeile; heute: string }) {
             {t.bemerkung && <p className="mt-1 type-body-small text-on-surface-mittel">{t.bemerkung}</p>}
           </div>
           <div className="flex shrink-0 gap-0.5">
-            {t.training && (
+            {!t.ausgefallen && t.training && (
               <Tooltip label="Durchführen">
                 <IconButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`} icon={PlayCircle} label={`${t.training.name} durchführen`} size="sm" />
               </Tooltip>
             )}
-            <Tooltip label={t.training ? "Training ersetzen" : "Training zuordnen"}>
-              <IconButton icon={CalendarPlus} label={`Training für ${datumKurz(t.datum)} ${t.training ? "ersetzen" : "zuordnen"}`} size="sm" onClick={() => a.zuordnen(t)} />
-            </Tooltip>
+            {!t.ausgefallen && (
+              <Tooltip label={t.training ? "Training ersetzen" : "Training zuordnen"}>
+                <IconButton icon={CalendarPlus} label={`Training für ${datumKurz(t.datum)} ${t.training ? "ersetzen" : "zuordnen"}`} size="sm" onClick={() => a.zuordnen(t)} />
+              </Tooltip>
+            )}
             <OverflowMenu
               size="sm"
               label={`Weitere Aktionen zum Termin ${datumKurz(t.datum)}`}
               items={[
+                ...(t.ausgefallen
+                  ? [
+                      { label: "Grund ändern", icon: MessageSquareText, onSelect: () => a.ausfallen(t) },
+                      { label: "Ausfall zurücknehmen", icon: Undo2, onSelect: () => a.ausfallZuruecknehmen(t) },
+                    ]
+                  : []),
                 { label: "Termin ändern", icon: Pencil, onSelect: () => a.bearbeiten(t) },
                 ...(t.training ? [{ label: "Training lösen", icon: Unlink, onSelect: () => a.loesen(t) }] : []),
+                ...(!t.ausgefallen ? [{ label: "Ausfallen lassen", icon: CalendarOff, onSelect: () => a.ausfallen(t) }] : []),
                 { label: "Termin entfernen", icon: Trash2, danger: true, onSelect: () => a.entfernen(t) },
               ]}
             />

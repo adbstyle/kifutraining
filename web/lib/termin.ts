@@ -30,6 +30,7 @@ export const TERMIN_TEXT = {
   endeNachBeginn: "Das Ende muss am selben Tag nach dem Beginn liegen.",
   ortLang: `Der Ort darf höchstens ${ORT_MAX} Zeichen lang sein.`,
   bemerkungLang: `Die Bemerkung darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
+  grundLang: `Der Grund darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
   verantwortlicheUngueltig: "Bitte nur Mitglieder des Teams als Verantwortliche wählen.",
 } as const;
 
@@ -104,6 +105,12 @@ export function terminProblem(
   return textProblem(f);
 }
 
+/** Der Grund eines Ausfalls folgt den Regeln der Bemerkung (#327 AK 4);
+ *  Zwilling des Checks `tt_ausfall_grund`. */
+export function ausfallProblem(grund: string | null | undefined): { feld: "grund"; text: string } | null {
+  return (leerZuNull(grund) ?? "").length > BEMERKUNG_MAX ? { feld: "grund", text: TERMIN_TEXT.grundLang } : null;
+}
+
 /** Was sich gegenüber den Startwerten des Dialogs geändert hat — sonst nichts
  *  (PO 17): Der Dialog sendet nur diese Felder, damit eine gleichzeitige
  *  Änderung eines anderen Feldes durch ein anderes Mitglied nicht still mit
@@ -157,6 +164,11 @@ export const TERMIN_MELDUNG = {
     "diesen Termin kopierst oder auf ihn verschiebst.",
   NUR_KOPIE_BEI_VERGANGENEM:
     "Ein Training mit vergangenem Termin lässt sich nur kopieren, nicht verschieben.",
+  TERMIN_AUSGEFALLEN:
+    "Einem ausgefallenen Termin lässt sich kein Training zuordnen. Nimm den Ausfall zuerst zurück.",
+  NICHT_AUSGEFALLEN: "Dieser Termin ist nicht ausgefallen.",
+  AUSFALL_GEAENDERT:
+    "Der Termin ist inzwischen ausgefallen oder sein Ausfall wurde zurückgenommen. Sieh ihn dir noch einmal an.",
   NICHT_MEHR_MITGLIED:
     "Mindestens eine gewählte Person ist nicht mehr Mitglied des Teams. Sieh dir die Mitglieder noch einmal an.",
 } as const;
@@ -170,6 +182,7 @@ export type TerminMarker = keyof typeof TERMIN_MELDUNG;
 export const KONFLIKT_MARKER: readonly string[] = [
   "TERMIN_BELEGUNG_GEAENDERT",
   "TRAINING_EINPLANUNG_GEAENDERT",
+  "AUSFALL_GEAENDERT",
   "SERIE_GEAENDERT",
   "SERIE_BELEGUNG_GEAENDERT",
 ];

@@ -133,6 +133,8 @@ const SuchenTreffer = z.object({
           ehemalig: z.boolean().describe("Nicht mehr im Team."),
         }),
       ),
+      ausgefallen: z.boolean().describe("Bei einem Training immer false — ein ausgefallener Termin trägt kein Training."),
+      ausfall_grund: z.string().nullable(),
       anstehend: z.boolean(),
     })
     .nullable()
@@ -198,6 +200,8 @@ export const trainingsSuchen = werkzeug({
                     anzeigename: v.name,
                     ehemalig: v.ehemalig,
                   })),
+                  ausgefallen: t.termin.ausgefallen,
+                  ausfall_grund: t.termin.ausfallGrund,
                   anstehend: t.termin.anstehend,
                 },
               }

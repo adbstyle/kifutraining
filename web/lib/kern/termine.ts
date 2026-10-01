@@ -4,6 +4,7 @@ import { istUuid } from "@/lib/kennung";
 import {
   KONFLIKT_MARKER,
   TERMIN_MELDUNG,
+  ausfallProblem,
   kopieGebliebenText,
   TERMIN_TEXT,
   leerZuNull,
@@ -47,7 +48,7 @@ import {
 export const TERMIN_FELD = { feld: "termin_id" } as const;
 
 export const TERMIN_ROH =
-  "id, team_id, training_id, datum, beginn, ende, ort, bemerkung, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend";
+  "id, team_id, training_id, datum, beginn, ende, ort, bemerkung, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
 
 export type TerminRoh = {
   id: string;
@@ -64,6 +65,9 @@ export type TerminRoh = {
   zeit_abweichend: boolean;
   ort_abweichend: boolean;
   bemerkung_abweichend: boolean;
+  /** Ein ausgefallener Termin trägt kein Training (#327). */
+  ausgefallen: boolean;
+  ausfall_grund: string | null;
 };
 
 /** Kennungen von Verantwortlichen vorab prüfen und von Doppelten befreien
@@ -232,8 +236,16 @@ export async function aendereTermin(
     if ("bemerkung" in aenderung && neu.bemerkung !== t.bemerkung) flags.bemerkung_abweichend = true;
   }
 
+  // #327 PO 6, PC 4: Ein einzeln auf heute oder später verlegter Termin findet
+  // wieder statt. Ein Tausch der Serie verlegt nicht einzeln (PC 5). Das
+  // Zurücksetzen gehört zur Änderung des Datums und steht darum nur dann im
+  // Schreiben, wenn es sie gibt.
+  const ausfallEndet =
+    t.ausgefallen && "datum" in aenderung && neu.datum !== t.datum && neu.datum >= heuteAmTrainingsort();
+  const ausfall = ausfallEndet ? { ausgefallen: false, ausfall_grund: null } : {};
+
   const erwartet = e.erwartetesTraining !== undefined ? e.erwartetesTraining : t.training_id;
-  const basis = supabase.from("training_termine").update({ ...aenderung, ...flags }).eq("id", t.id);
+  const basis = supabase.from("training_termine").update({ ...aenderung, ...flags, ...ausfall }).eq("id", t.id);
   const { data, error } = await (erwartet === null
     ? basis.is("training_id", null)
     : basis.eq("training_id", erwartet)
@@ -333,6 +345,8 @@ export async function ordneTrainingZu(
   const termin = await ladeTermin(supabase, e.terminId);
   if (!termin.ok) return termin;
   const t = termin.wert;
+  // AK 9: Vor jeder Kopie abweisen, sonst bliebe eine Kopie zurück.
+  if (t.ausgefallen) return fehlschlag("regel", TERMIN_MELDUNG.TERMIN_AUSGEFALLEN, TERMIN_FELD);
 
   const training = await ladeTrainingZumBearbeiten(supabase, userId, e.trainingId);
   if (!training.ok) return training;
@@ -403,4 +417,84 @@ export async function loeseTraining(
   });
   if (error) return kalenderFehler(error, e.erwartetesTraining === undefined);
   return ok({ terminId: t.id, teamId: t.team_id, trainingId: (data as { bisher: string | null }).bisher });
+}
+
+// ── Ausfall (#327) ───────────────────────────────────────────────────────────
+
+/** Einen Termin als ausgefallen markieren oder den Grund eines ausgefallenen
+ *  ändern (#327 AK 1–5, 11; PC 1, 2). Ein zugeordnetes Training wird gelöst
+ *  und bleibt ohne Termin im Team-Bestand. */
+export async function lasseAusfallen(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: {
+    terminId: string;
+    grund?: string | null;
+    erwartetesTraining?: string | null;
+    /** Ob der Termin bei der Auswahl ausgefallen war (nur die Oberfläche sendet
+     *  es, PO 17): Hat ein anderes Mitglied den Ausfall inzwischen gesetzt oder
+     *  zurückgenommen, wird nicht geschrieben (`AUSFALL_GEAENDERT`). */
+    erwartetAusgefallen?: boolean;
+  },
+): Promise<KernErgebnis<{ terminId: string; teamId: string; geloestesTraining: string | null }>> {
+  const p = ausfallProblem(e.grund);
+  if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
+  const geladen = await ladeTermin(supabase, e.terminId);
+  if (!geladen.ok) return geladen;
+  const t = geladen.wert;
+  const erwartet = e.erwartetesTraining !== undefined ? e.erwartetesTraining : t.training_id;
+  // `grund` weggelassen heisst bei einem schon ausgefallenen Termin «Grund
+  // unverändert» (kein Schreiben); `null` oder «» leert ihn. Beim Markieren
+  // gibt es ohne Angabe keinen Grund.
+  const grund = e.grund === undefined && t.ausgefallen ? {} : { ausfall_grund: leerZuNull(e.grund) };
+  const basis = supabase
+    .from("training_termine")
+    .update({ ausgefallen: true, ...grund, training_id: null })
+    .eq("id", t.id);
+  const mitTraining = erwartet === null ? basis.is("training_id", null) : basis.eq("training_id", erwartet);
+  const { data, error } = await (e.erwartetAusgefallen === undefined
+    ? mitTraining
+    : mitTraining.eq("ausgefallen", e.erwartetAusgefallen)
+  )
+    .select("id")
+    .maybeSingle();
+  if (error) return ausDbFehler(error);
+  if (!data) {
+    // Der Ausfall-Zustand hat Vorrang vor dem Training: Ein ausgefallener
+    // Termin trägt keines mehr, die Ursache steht dann im Ausfall.
+    const { data: jetzt } = await supabase.from("training_termine").select("ausgefallen").eq("id", t.id).maybeSingle();
+    if (jetzt && e.erwartetAusgefallen !== undefined && jetzt.ausgefallen !== e.erwartetAusgefallen)
+      return fehlschlag("konflikt", TERMIN_MELDUNG.AUSFALL_GEAENDERT);
+    return warumNichtGeschrieben(supabase, t.id, e.erwartetesTraining === undefined);
+  }
+  return ok({ terminId: t.id, teamId: t.team_id, geloestesTraining: erwartet });
+}
+
+/** Den Ausfall zurücknehmen (#327 AK 6, PC 3): wieder ein normaler Termin,
+ *  ohne Training und ohne Grund. */
+export async function nimmAusfallZurueck(
+  supabase: SupabaseClient,
+  _userId: string,
+  e: { terminId: string },
+): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
+  const geladen = await ladeTermin(supabase, e.terminId);
+  if (!geladen.ok) return geladen;
+  if (!geladen.wert.ausgefallen) return fehlschlag("regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN, TERMIN_FELD);
+  // Bedingt schreiben: Hat ein anderes Mitglied den Ausfall inzwischen
+  // zurückgenommen, trifft das Update keine Zeile.
+  const { data, error } = await supabase
+    .from("training_termine")
+    .update({ ausgefallen: false, ausfall_grund: null })
+    .eq("id", e.terminId)
+    .eq("ausgefallen", true)
+    .select("id")
+    .maybeSingle();
+  if (error) return ausDbFehler(error);
+  if (!data) {
+    const { data: da } = await supabase.from("training_termine").select("id").eq("id", e.terminId).maybeSingle();
+    return da
+      ? fehlschlag("regel", TERMIN_MELDUNG.NICHT_AUSGEFALLEN, TERMIN_FELD)
+      : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
+  }
+  return ok({ terminId: e.terminId, teamId: geladen.wert.team_id });
 }
