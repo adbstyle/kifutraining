@@ -40,7 +40,7 @@ import {
   zugangsAnzeigename,
   zugangsnameProblem,
 } from "../lib/mcp/regeln";
-import { sichererRuecksprung } from "../lib/weiterleitung";
+import { loginAdresse, sichererRuecksprung } from "../lib/weiterleitung";
 import {
   altersstufeSlugs,
   erscheinungsform_juniorenSlugs,
@@ -193,6 +193,16 @@ pruefe("Fremde Ziele fallen auf die Startseite", () => {
   }
   assert.equal(sichererRuecksprung(undefined), "/");
   assert.equal(sichererRuecksprung(null), "/");
+});
+
+pruefe("Die Login-Adresse trägt Pfad und Abfrage als Rücksprung, sonst nichts (#330 PC 7)", () => {
+  const ziel = "/team/abc/termin/def?ansicht=monat&meine=1";
+  const u = new URL(loginAdresse("/team/abc/termin/def", "?ansicht=monat&meine=1"), "http://x");
+  assert.equal(u.pathname, "/login");
+  assert.deepEqual([...u.searchParams.keys()], ["redirect"], "keine fremden Parameter");
+  assert.equal(u.searchParams.get("redirect"), ziel);
+  assert.equal(sichererRuecksprung(u.searchParams.get("redirect")), ziel, "und der Login nimmt es an");
+  assert.equal(new URL(loginAdresse("/teams", ""), "http://x").searchParams.get("redirect"), "/teams");
 });
 
 pruefe("Der Rückfall ist wählbar", () => {

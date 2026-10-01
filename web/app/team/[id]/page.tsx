@@ -7,6 +7,7 @@ import { TerminBereich } from "@/components/team/TerminBereich";
 import { TrainingsPlan } from "@/components/team/TrainingsPlan";
 import { NeuerTerminKnopf } from "@/components/team/NeuerTerminKnopf";
 import { NurMeineFilter } from "@/components/team/NurMeineFilter";
+import { istUuid } from "@/lib/kennung";
 import { getTeam } from "@/lib/queries/teams";
 import { getTeamPlan, teilePlan } from "@/lib/queries/termine";
 import { getTeamTrainings, getTrainingPool } from "@/lib/queries/trainings";
@@ -47,7 +48,7 @@ export default async function TeamPlanPage({
   const sp = await searchParams;
   const meine = sp.meine === "1";
   // Nur eine Kennung ist ein Ziel; alles andere bleibt ohne Wirkung.
-  const hervorheben = sp.termin && /^[0-9a-f-]{36}$/i.test(sp.termin) ? sp.termin : undefined;
+  const hervorheben = istUuid(sp.termin) ? sp.termin : undefined;
   const terminWeg = sp.hinweis === "termin_weg";
   const heute = heuteAmTrainingsort();
   // PC 1: Die Liste bleibt der Start. PC 2: Der aktuelle Monat nach dem Schweizer Kalendertag.

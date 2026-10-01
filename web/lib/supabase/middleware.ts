@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { PFAD_HEADER } from "@/lib/pfad";
+import { loginAdresse } from "@/lib/weiterleitung";
 
 // URL-Präfixe, die ein eingeloggtes Konto erfordern (UX-Guard; die echte
 // Durchsetzung bleibt RLS). Route-Groups wie (app) wirken nicht auf die URL,
@@ -65,13 +66,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user && isProtected(request.nextUrl.pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    // Der Rücksprung trägt die Abfrage mit (`?termin=…`, `?ansicht=monat`); auf
-    // der Login-Adresse selbst bleibt sie weg — dort bedeutet `?error` etwas.
-    url.search = "";
-    url.searchParams.set("redirect", request.nextUrl.pathname + request.nextUrl.search);
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL(loginAdresse(request.nextUrl.pathname, request.nextUrl.search), request.url));
   }
 
   return response;

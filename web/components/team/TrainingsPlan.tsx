@@ -24,7 +24,10 @@ export function TrainingsPlan({ plan, heute, hervorheben }: { plan: Plan; heute:
   const imRueckblick = hervorheben !== undefined && plan.vergangen.some((t) => t.id === hervorheben);
   // Beim Einhängen (Kindeffekte laufen vor diesem): Der Rückblick ist dann schon offen.
   useEffect(() => {
-    if (hervorheben) document.getElementById(hervorheben)?.scrollIntoView({ block: "center" });
+    const karte = hervorheben ? document.getElementById(hervorheben) : null;
+    karte?.scrollIntoView({ block: "center" });
+    // Auch Tastatur und Vorlesehilfe landen dort: Der Fokus folgt dem Scrollen.
+    karte?.focus({ preventScroll: true });
   }, [hervorheben]);
   return (
     <>
@@ -90,7 +93,8 @@ export function TerminKarte({ t, heute, ebene: Kopf = "h4", hervorgehoben = fals
       <Card
         id={hervorgehoben ? t.id : undefined}
         aria-current={hervorgehoben ? "true" : undefined}
-        className={cn("p-4", hervorgehoben && "kontur border-primary")}
+        tabIndex={hervorgehoben ? -1 : undefined}
+        className={cn("p-4", hervorgehoben && "kontur border-primary outline-none")}
       >
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className={cn("min-w-0 flex-1", vergangen && !t.ausgefallen && "opacity-60")}>
