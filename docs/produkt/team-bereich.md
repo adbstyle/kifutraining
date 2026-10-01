@@ -271,8 +271,8 @@ steht einzeln mit seinem Beginn und dem Namen seines Trainings, oder mit „Noch
 (anstehend, umrandet), „Ohne Training" (vergangen, leise) oder „Ausgefallen"
 (durchgestrichen); fehlt der Beginn, steht „Zeit fehlt". Eine Woche ganz ohne Termin ist
 gestrichelt umrandet. Ein Klick öffnet den Termin mit denselben Angaben und Handgriffen wie in
-der Liste. Das Plus an jedem Tag öffnet „Termin festlegen" mit dem Tag als Datum vorbelegt —
-angekreuzt als Beginndatum einer Terminserie. Beide Ansichten zeigen dieselben Termine,
+der Liste. Das Plus an jedem Tag öffnet „Termin festlegen" mit dem Tag als Datum vorbelegt; wer
+„Wiederholender Termin" ankreuzt, macht ihn zum Beginndatum einer Terminserie. Beide Ansichten zeigen dieselben Termine,
 jede Änderung erscheint sofort in beiden, und die Bestätigung kommt auch dann, wenn das
 Ergebnis ausserhalb des gezeigten Monats oder der Eingrenzung liegt. Liste und Monat lassen
 sich am Handy ebenso bedienen wie am Desktop; schmal scrollt der Monat in sich waagrecht.

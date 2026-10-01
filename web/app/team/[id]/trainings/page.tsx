@@ -5,7 +5,6 @@ import { getTeamTrainings } from "@/lib/queries/trainings";
 import { getTeamPlan, teilePlan } from "@/lib/queries/termine";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 
-
 /* Der Trainingsbestand eines Teams (Story 17).
  *
  * Hier liegt das Material, aus dem geplant wird; einem Termin zugeordnet wird
@@ -22,7 +21,10 @@ export default async function TeamTrainingsPage({
 
   return (
     <section>
-      {/* Keine Überschrift: «Trainings» steht schon im Reiter. */}
+      {/* Keine sichtbare Überschrift: «Trainings» steht schon im Reiter;
+          für Screenreader bleibt sie, damit unter dem Teamnamen keine Ebene
+          fehlt. */}
+      <h2 className="sr-only">Trainings</h2>
       <div className="mb-4 flex items-center justify-between gap-3">
         <p className="type-body-medium text-on-surface-mittel">
           {trainings.length === 1 ? "1 Training" : `${trainings.length} Trainings`}

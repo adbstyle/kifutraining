@@ -56,10 +56,8 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
    Weg zurück (AK 6). */
 export function TerminDialog({
   open,
-  titel,
-  bestaetigung,
   start,
-  /** Die Zeit vor dem Ändern — ohne: Beginn und Ende Pflicht. */
+  /** Die Zeit vor dem Ändern: Nur wenn sie sich ändert, wird sie geprüft. */
   bisher,
   pending,
   fehler: serverFehler,
@@ -73,13 +71,12 @@ export function TerminDialog({
   onSpeichern,
 }: {
   open: boolean;
-  titel: string;
-  bestaetigung: string;
+  /** Die Angaben des Termins; leer nur, solange der Dialog zu ist. */
   start?: Partial<TerminFelder>;
   bisher?: { beginn: string | null; ende: string | null };
   pending?: boolean;
   fehler?: string;
-  /** Die Serie des geöffneten Termins; ohne: ein einzelner oder neuer Termin. */
+  /** Die Serie des geöffneten Termins; ohne: ein einzelner Termin. */
   serie?: TerminSerie | null;
   serienTag?: string | null;
   abweichungen?: readonly Abweichung[];
@@ -162,11 +159,11 @@ export function TerminDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={titel}
+      title="Termin ändern"
       actions={
         <>
           <Button variant="text" onClick={onClose}>Abbrechen</Button>
-          <Button variant="filled" onClick={speichern} disabled={pending}>{bestaetigung}</Button>
+          <Button variant="filled" onClick={speichern} disabled={pending}>Speichern</Button>
         </>
       }
     >

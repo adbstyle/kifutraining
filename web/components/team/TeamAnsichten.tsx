@@ -11,8 +11,8 @@ import { TabNav } from "@/components/ui";
 
    Die Anzahl der Einträge steht in der jeweiligen Ansicht und NICHT an den
    Reitern: sonst müsste jeder Aufruf die Daten aller drei Ansichten laden —
-   genau das, was die Aufteilung vermeiden soll. Trainings und Team nennen sie
-   in ihrer Überschrift; der Trainingsplan nennt sie je Abschnitt, weil dort
+   genau das, was die Aufteilung vermeiden soll. Trainings nennt sie in der
+   Zeile über der Liste, Team in seiner Überschrift; der Trainingsplan nennt sie je Abschnitt, weil dort
    „was steht noch an" und „wie viel liegt hinter uns" zwei verschiedene
    Fragen sind und eine Gesamtzahl beide verdeckte. */
 export function TeamAnsichten({ teamId }: { teamId: string }) {

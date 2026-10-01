@@ -433,8 +433,6 @@ export function TerminBereich({
 
       <TerminDialog
         open={bearbeiten !== null}
-        titel="Termin ändern"
-        bestaetigung="Speichern"
         start={bearbeiten ? startWerte(bearbeiten) : undefined}
         bisher={bearbeiten ? { beginn: bearbeiten.beginn, ende: bearbeiten.ende } : undefined}
         pending={pending}

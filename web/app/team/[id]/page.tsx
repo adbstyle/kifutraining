@@ -78,8 +78,11 @@ export default async function TeamPlanPage({
   return (
     <TerminBereich teamId={id} trainings={trainings} persoenliche={persoenliche} mitglieder={team?.mitglieder ?? []} heute={heute} termine={termine}>
       <section>
-        {/* Keine Überschrift: «Trainingsplan» steht schon im Reiter. Links,
-            wie man den Plan sieht; rechts, was man ihm hinzufügt. */}
+        {/* Keine sichtbare Überschrift: «Trainingsplan» steht schon im
+            Reiter; für Screenreader bleibt sie, damit unter dem Teamnamen
+            keine Ebene fehlt. Links, wie man den Plan sieht; rechts, was man
+            ihm hinzufügt. */}
+        <h2 className="sr-only">Trainingsplan</h2>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <AnsichtWahl
