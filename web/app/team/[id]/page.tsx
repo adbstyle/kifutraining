@@ -6,6 +6,7 @@ import { MonatsUeberblick } from "@/components/team/MonatsUeberblick";
 import { TerminBereich } from "@/components/team/TerminBereich";
 import { TrainingsPlan } from "@/components/team/TrainingsPlan";
 import { NeuerTerminKnopf } from "@/components/team/NeuerTerminKnopf";
+import { AboKnopf } from "@/components/team/AboKnopf";
 import { NurMeineFilter } from "@/components/team/NurMeineFilter";
 import { istUuid } from "@/lib/kennung";
 import { getTeam } from "@/lib/queries/teams";
@@ -79,7 +80,10 @@ export default async function TeamPlanPage({
       <section>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="type-title-large text-on-surface">Trainingsplan</h2>
-          <NeuerTerminKnopf />
+          <div className="flex flex-wrap gap-2">
+            <NeuerTerminKnopf />
+            {team && <AboKnopf teamId={id} teamName={team.name} />}
+          </div>
         </div>
         {terminWeg && <Banner tone="hinweis" className="mb-4">{TERMIN_WEG}</Banner>}
         <div className="mb-4 flex flex-wrap items-center gap-2">

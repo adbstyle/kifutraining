@@ -1946,6 +1946,16 @@ export default function Styleguide() {
           Scheitert ein Vorgang und bleibt der Dialog offen, steht der Grund als
           Banner im Dialog.
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Ein <strong>Link zum Kopieren</strong> (Kalender-Abo,{" "}
+          <code>AboDialog</code>) ist kein neuer Baustein, sondern eine
+          Zeile aus dem Kit: ein <code>TextField</code> mit{" "}
+          <code>readOnly</code> und ein tonaler <code>Button</code> daneben.
+          Das Feld wählt beim Fokus alles aus, damit sich der Link auch von
+          Hand kopieren lässt; das Ergebnis des Knopfes meldet die Snackbar —
+          sichtbar und vorlesbar. Ist der Link ein Geheimnis, geht die Warnung
+          als Banner im Dialog voran.
+        </p>
         <OverlaysDemo />
       </Section>
 
