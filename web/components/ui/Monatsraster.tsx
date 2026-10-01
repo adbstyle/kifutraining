@@ -44,8 +44,10 @@ export function Monatsraster({
   label: string;
 }) {
   const wochen = monatsRaster(monat);
+  // `relative`: ohne eigenen Bezug entkommen die sr-only-Texte (absolut) dem
+  // Scroll-Behälter und weiten auf dem Handy die ganze Seite.
   return (
-    <div role="region" aria-label={label} className="overflow-x-auto">
+    <div role="region" aria-label={label} className="relative overflow-x-auto">
       {/* Die Zeilen tragen immer eine Kontur (durchsichtig), damit die leere
           Woche mit ihrer sichtbaren die Spalten nicht verschiebt. */}
       <div role="table" className="flex min-w-[36rem] flex-col gap-px">
