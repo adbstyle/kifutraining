@@ -17,3 +17,10 @@ export function sichererRuecksprung(roh: unknown, rueckfall = "/"): string {
   if (/[\u0000-\u001f\u007f\\]/.test(v)) return rueckfall;
   return v;
 }
+
+/** Die Login-Adresse für einen geschützten Pfad: Der Rücksprung trägt Pfad UND
+ *  Abfrage (`?termin=…`, `?ansicht=monat`), die Login-Adresse selbst sonst
+ *  nichts — dort bedeutet etwa `?error` etwas. */
+export function loginAdresse(pfad: string, abfrage: string): string {
+  return `/login?${new URLSearchParams({ redirect: pfad + abfrage })}`;
+}

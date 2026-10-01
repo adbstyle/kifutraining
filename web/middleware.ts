@@ -9,10 +9,11 @@ export const config = {
   // Alles ausser statischen Assets und Bild-Optimierung. Ausgenommen sind
   // auch der KI-Endpoint und die Well-known-Metadaten (#142): sie tragen ein
   // Bearer-Token statt eines Session-Cookies, eine Session-Erneuerung wäre
-  // dort sinnlos. `/oauth/consent` bleibt drin — dort braucht es die Session.
+  // dort sinnlos. `api/kalender` trägt ein Abo-Token statt einer Sitzung (#330).
+  // `/oauth/consent` bleibt drin — dort braucht es die Session.
   // `api/mcp` ist die einzige unvermeidbare Kopie von MCP_PFAD
   // (lib/mcp/pfad.ts): Next.js verlangt hier ein statisches Literal.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api/mcp|\\.well-known/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/mcp|api/kalender|\\.well-known/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

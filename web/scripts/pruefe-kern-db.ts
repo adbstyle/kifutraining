@@ -3171,6 +3171,221 @@ try {
     assert.equal((await admin.from("training_termine").select("id").eq("training_id", altes)).data!.length, 0, "… ohne Termin");
     assert.equal(await anzahl(), (vorher ?? 0) + 1, "genau eine Kopie ist hinzugekommen");
   });
+
+  // ── Kalender: Abo (#330) ─────────────────────────────────────────────────
+  // Der Feed ist ohne Anmeldung aufrufbar (das Geheimnis ist die Berechtigung),
+  // die Tabelle selbst nur für den Besitzer des Abos lesbar.
+  const feldAnon = createClient(URL_, process.env.SUPABASE_ANON_KEY!, { auth: { persistSession: false } });
+  const holen = async (k: Konto, team: string) => {
+    const { data, error } = await k.supabase.rpc("kalender_abo_holen", { p_team: team });
+    return { token: data as string | null, error };
+  };
+  const feed = async (token: string) => {
+    const { data, error } = await feldAnon.rpc("kalender_abo_termine", { p_token: token });
+    if (error) throw error;
+    return data as {
+      gueltig: boolean;
+      team?: { id: string; name: string };
+      termine?: { id: string; datum: string; beginn: string | null; ende: string | null; ort: string | null; geaendert: string }[];
+    };
+  };
+  const aboZeilen = async (team: string, user?: string) => {
+    let q = admin.from("kalender_abos").select("id, token, user_id").eq("team_id", team);
+    if (user) q = q.eq("user_id", user);
+    return (await q).data ?? [];
+  };
+  const austreten = async (k: Konto, team: string, bestaetigt = false) => {
+    const { error } = await k.supabase.rpc("entferne_team_mitglied", { p_team: team, p_user: k.id, p_bestaetigt: bestaetigt });
+    if (error) throw error;
+  };
+
+  await pruefe("Abo holen: derselbe Link bei jedem Aufruf, 64 Hex-Zeichen, Nichtmitglied abgewiesen (#330 AK 6, 11)", async () => {
+    const team = await serienTeam("Kern-DB-Abo-Holen");
+    const eins = await holen(a, team);
+    const zwei = await holen(a, team);
+    assert.equal(eins.error, null);
+    assert.match(eins.token!, /^[0-9a-f]{64}$/, "64 Hex-Zeichen");
+    assert.equal(zwei.token, eins.token, "AK 6: derselbe Link");
+    assert.equal((await aboZeilen(team, a.id)).length, 1, "AK 10: höchstens ein Link je Mitglied und Team");
+    // Ein anderes Mitglied desselben Teams bekommt einen eigenen Link.
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const fuerB = await holen(b, team);
+    assert.match(fuerB.token!, /^[0-9a-f]{64}$/);
+    assert.notEqual(fuerB.token, eins.token);
+    // Wer nicht im Team ist (oder ein unbekanntes Team nennt): nicht gefunden, und es entsteht nichts.
+    const fremdesTeam = await serienTeam("Kern-DB-Abo-Fremd");
+    const abgewiesen = await holen(b, fremdesTeam);
+    assert.equal(abgewiesen.token, null);
+    assert.match(abgewiesen.error!.message, /TEAM_NICHT_GEFUNDEN/);
+    assert.match((await holen(a, randomUUID())).error!.message, /TEAM_NICHT_GEFUNDEN/);
+    assert.equal((await aboZeilen(fremdesTeam, b.id)).length, 0);
+    // Ein Abo ohne Mitgliedschaft kann es nicht geben (Fremdschlüssel auf team_members), auch nicht
+    // durch ein direktes Einfügen — das schliesst das Rennen «holen während Entfernen».
+    const ohneMitglied = await admin.from("kalender_abos").insert({ team_id: fremdesTeam, user_id: b.id });
+    assert.equal(ohneMitglied.error?.code, "23503", "kein Abo ohne Mitgliedschaft");
+    // Ohne Anmeldung gibt es kein Abo zu holen — die RPC ist für anon nicht aufrufbar.
+    assert.ok((await feldAnon.rpc("kalender_abo_holen", { p_team: team })).error, "anon darf kalender_abo_holen nicht aufrufen");
+  });
+
+  await pruefe("Abo-Tabelle: nur das eigene Abo lesbar, nicht schreibbar, für anon gesperrt (#330 AK 11)", async () => {
+    const team = await serienTeam("Kern-DB-Abo-Rls");
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const ta = (await holen(a, team)).token!;
+    const tb = (await holen(b, team)).token!;
+    const sichtA = (await a.supabase.from("kalender_abos").select("token").eq("team_id", team)).data ?? [];
+    assert.deepEqual(sichtA.map((z) => z.token), [ta], "a sieht nur das eigene Abo");
+    const sichtB = (await b.supabase.from("kalender_abos").select("token").eq("team_id", team)).data ?? [];
+    assert.deepEqual(sichtB.map((z) => z.token), [tb], "b sieht nur das eigene Abo");
+    // Schreiben geht nur über die RPC.
+    const ins = await a.supabase.from("kalender_abos").insert({ team_id: team, user_id: a.id, token: "x".repeat(64) });
+    assert.ok(ins.error, "direktes Einfügen ist gesperrt");
+    const upd = await a.supabase.from("kalender_abos").update({ token: "y".repeat(64) }).eq("team_id", team).select();
+    assert.ok(upd.error || (upd.data ?? []).length === 0, "direktes Ändern ist gesperrt");
+    assert.equal((await aboZeilen(team, a.id))[0].token, ta, "Token unverändert");
+    // anon: weder lesen noch schreiben.
+    const anonLesen = await feldAnon.from("kalender_abos").select("token");
+    assert.ok(anonLesen.error, "anon hat nicht einmal das Leserecht");
+    assert.ok((await feldAnon.from("kalender_abos").insert({ team_id: team, user_id: a.id })).error);
+    // Fremdes Abo löschen bleibt wirkungslos (RLS).
+    await b.supabase.from("kalender_abos").delete().eq("token", ta);
+    assert.equal((await aboZeilen(team, a.id)).length, 1, "fremdes Abo bleibt");
+    // Das eigene löschen geht; ein neuer Aufruf legt dann einen neuen Link an.
+    await a.supabase.from("kalender_abos").delete().eq("token", ta);
+    assert.equal((await aboZeilen(team, a.id)).length, 0);
+    assert.notEqual((await holen(a, team)).token, ta, "nach dem Löschen ein neuer Link");
+  });
+
+  await pruefe("Abo-Feed: ohne Anmeldung, nur Zeit und Ort, anstehende und die der letzten 28 Tage, ohne ausgefallene (#330 PC 1, 2, 5, 6)", async () => {
+    const team = await serienTeam("Kern-DB-Abo-Feed");
+    // Das Fenster hängt am Kalendertag der DB: heute frisch rechnen, nicht den
+    // beim Start gemerkten nehmen (sonst kippt der Test um Mitternacht).
+    const tagCh = (d: number) => plusTage(kalendertagAmTrainingsort(), d);
+    const token = (await holen(a, team)).token!;
+    const ins = async (d: string, extra: Record<string, unknown> = {}) => {
+      const { data, error } = await admin
+        .from("training_termine")
+        .insert({ team_id: team, datum: d, beginn: "18:00", ende: "19:15", ort: "Sportplatz", bemerkung: "geheim", ...extra })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id as string;
+    };
+    const anstehend = await ins(tagCh(3));
+    const heute = await ins(tagCh(0), { beginn: null, ende: null, ort: null });
+    const grenze = await ins(tagCh(-28));
+    const zuAlt = await ins(tagCh(-29));
+    const ausgefallen = await ins(tagCh(5), { ausgefallen: true, ausfall_grund: "Regen" });
+    const ausgefallenVergangen = await ins(tagCh(-3), { ausgefallen: true });
+
+    const f = await feed(token);
+    assert.equal(f.gueltig, true);
+    assert.deepEqual(f.team, { id: team, name: "Kern-DB-Abo-Feed" });
+    const ids = f.termine!.map((t) => t.id);
+    assert.deepEqual(ids, [grenze, heute, anstehend], "Datumsfolge: heute−28, heute, anstehend");
+    assert.ok(!ids.includes(zuAlt), "älter als 28 Tage fehlt");
+    assert.ok(!ids.includes(ausgefallen) && !ids.includes(ausgefallenVergangen), "Ausgefallene fehlen");
+    for (const t of f.termine!)
+      assert.deepEqual(Object.keys(t).sort(), ["beginn", "datum", "ende", "geaendert", "id", "ort"], "nur Zeit und Ort — weder Bemerkung noch Verantwortliche noch Training");
+    const a1 = f.termine!.find((t) => t.id === anstehend)!;
+    assert.deepEqual(
+      { datum: a1.datum, beginn: a1.beginn, ende: a1.ende, ort: a1.ort },
+      { datum: tagCh(3), beginn: "18:00", ende: "19:15", ort: "Sportplatz" },
+    );
+    assert.ok(!Number.isNaN(Date.parse(a1.geaendert)), "geaendert ist ein Zeitstempel");
+    const ohne = f.termine!.find((t) => t.id === heute)!;
+    assert.deepEqual([ohne.beginn, ohne.ende, ohne.ort], [null, null, null], "Bestandstermin ohne Zeit und Ort bleibt im Feed");
+    // Ein Termin eines anderen Teams taucht nicht auf.
+    const fremd = await serienTeam("Kern-DB-Abo-Feed-Fremd");
+    await admin.from("training_termine").insert({ team_id: fremd, datum: tagCh(4) });
+    assert.equal((await feed(token)).termine!.length, 3);
+    // Eine Änderung zeigt sich im Zeitstempel.
+    const vorher = a1.geaendert;
+    await admin.from("training_termine").update({ ort: "Halle" }).eq("id", anstehend);
+    const danach = (await feed(token)).termine!.find((t) => t.id === anstehend)!;
+    assert.equal(danach.ort, "Halle");
+    assert.ok(Date.parse(danach.geaendert) > Date.parse(vorher), "geaendert rückt bei Änderung vor");
+    // Unbekannte und abgeschnittene Token: ungültig, ohne Hinweis auf das Team.
+    for (const t of ["", "0".repeat(64), token.slice(0, 63), token.toUpperCase()])
+      assert.deepEqual(await feed(t), { gueltig: false }, `Token «${t.slice(0, 8)}…» ist ungültig`);
+  });
+
+  await pruefe("Abo-Feed über den Kern-Pfad: Festlegen, Verlegen, Ausfallen, Entfernen — der Termin erscheint genau einmal im neuen Stand (#330 PC 1, 5, 6)", async () => {
+    const team = await serienTeam("Kern-DB-Abo-Kern");
+    const tagCh = (d: number) => plusTage(kalendertagAmTrainingsort(), d);
+    const token = (await holen(a, team)).token!;
+    const alt = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(-29), beginn: "10:00", ende: "11:00" }));
+    const rand = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(-28), beginn: "10:00", ende: "11:00" }));
+    const aus = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(2), beginn: "10:00", ende: "11:00" }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: aus.terminId }));
+    const ids = async () => (await feed(token)).termine!.map((t) => t.id);
+    assert.deepEqual(await ids(), [rand.terminId], "PC 1, 5: heute−28 ja, heute−29 und Ausgefallene nein");
+    assert.ok(!(await ids()).includes(alt.terminId));
+    // PC 6: Verlegen ändert den Stand, die Kennung bleibt — genau ein Eintrag.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: rand.terminId, datum: tagCh(4), beginn: "17:00", ende: "18:30", ort: "Halle" }));
+    const nachVerlegen = (await feed(token)).termine!;
+    assert.equal(nachVerlegen.length, 1, "genau einmal");
+    assert.deepEqual(
+      { id: nachVerlegen[0].id, datum: nachVerlegen[0].datum, beginn: nachVerlegen[0].beginn, ende: nachVerlegen[0].ende, ort: nachVerlegen[0].ort },
+      { id: rand.terminId, datum: tagCh(4), beginn: "17:00", ende: "18:30", ort: "Halle" },
+    );
+    // Ausfall zurücknehmen bringt den Termin wieder; Entfernen nimmt ihn weg.
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: aus.terminId }));
+    assert.deepEqual(await ids(), [aus.terminId, rand.terminId], "Datumsfolge: heute+2, heute+4");
+    wert(await entferneTermin(a.supabase, a.id, { terminId: aus.terminId }));
+    assert.deepEqual(await ids(), [rand.terminId], "PC 5: entfernt");
+  });
+
+  await pruefe("Abo erlischt beim Austritt und lebt bei erneuter Aufnahme nicht wieder auf (#330 AK 9, PC 9, 10)", async () => {
+    const team = await serienTeam("Kern-DB-Abo-Austritt");
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    await admin.from("training_termine").insert({ team_id: team, datum: tagCh(2) });
+    const alt = (await holen(b, team)).token!;
+    const vonA = (await holen(a, team)).token!;
+    assert.equal((await feed(alt)).gueltig, true);
+    await austreten(b, team);
+    assert.deepEqual(await feed(alt), { gueltig: false }, "PC 9: Link ungültig");
+    assert.equal((await aboZeilen(team, b.id)).length, 0, "die Zeile ist weg");
+    assert.equal((await feed(vonA)).gueltig, true, "das Abo der Verbliebenen gilt weiter");
+    // Nichtmitglied holt nichts mehr.
+    assert.match((await holen(b, team)).error!.message, /TEAM_NICHT_GEFUNDEN/);
+    // PC 10: Wiederaufnahme belebt den alten Link nicht.
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    assert.deepEqual(await feed(alt), { gueltig: false }, "PC 10: der alte Link bleibt tot");
+    const neu = (await holen(b, team)).token!;
+    assert.notEqual(neu, alt, "AK 9: ein neuer Link");
+    assert.equal((await feed(neu)).gueltig, true);
+  });
+
+  await pruefe("Abo erlischt beim Entfernen durch ein anderes Mitglied, bei Teamauflösung und bei Kontolöschung (#330 PC 9)", async () => {
+    // Entfernen durch ein anderes Mitglied.
+    const team = await serienTeam("Kern-DB-Abo-Entfernen");
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const tb = (await holen(b, team)).token!;
+    const { error } = await a.supabase.rpc("entferne_team_mitglied", { p_team: team, p_user: b.id, p_bestaetigt: false });
+    assert.equal(error, null);
+    assert.deepEqual(await feed(tb), { gueltig: false });
+    assert.equal((await aboZeilen(team, b.id)).length, 0);
+
+    // Auflösung: das letzte Mitglied tritt aus; Team und Abo sind weg.
+    const aufgeloest = await serienTeam("Kern-DB-Abo-Aufloesen");
+    const ta = (await holen(a, aufgeloest)).token!;
+    await austreten(a, aufgeloest, true);
+    assert.equal((await admin.from("teams").select("id").eq("id", aufgeloest)).data!.length, 0, "Team aufgelöst");
+    assert.deepEqual(await feed(ta), { gueltig: false });
+    assert.equal((await aboZeilen(aufgeloest)).length, 0);
+
+    // Kontolöschung.
+    const c = await wegwerfKonto();
+    const tc = await serienTeam("Kern-DB-Abo-Konto");
+    await admin.from("team_members").insert({ team_id: tc, user_id: c.id });
+    const token = (await holen(c, tc)).token!;
+    assert.equal((await feed(token)).gueltig, true);
+    const { error: e2 } = await admin.auth.admin.deleteUser(c.id);
+    if (e2) throw e2;
+    konten.splice(konten.indexOf(c.id), 1);
+    assert.deepEqual(await feed(token), { gueltig: false });
+    assert.equal((await aboZeilen(tc)).length, 0, "kein verwaistes Abo");
+  });
 } finally {
   await aufraeumen();
 }

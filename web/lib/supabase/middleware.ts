@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { PFAD_HEADER } from "@/lib/pfad";
+import { loginAdresse } from "@/lib/weiterleitung";
 
 // URL-Präfixe, die ein eingeloggtes Konto erfordern (UX-Guard; die echte
 // Durchsetzung bleibt RLS). Route-Groups wie (app) wirken nicht auf die URL,
@@ -10,6 +11,11 @@ const PROTECTED_PREFIXES = [
   "/neu",
   "/konto",
   "/training/neu",
+  // Der Team-Bereich (#330 PC 7): Der Verweis aus dem Kalenderprogramm führt
+  // über die Anmeldung hierher zurück. `/team` und `/teams` stehen getrennt,
+  // weil der Vergleich am Pfadsegment endet (`/teamwork` ist nicht gemeint).
+  "/team",
+  "/teams",
 ];
 
 function isProtected(pathname: string): boolean {
@@ -60,10 +66,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user && isProtected(request.nextUrl.pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirect", request.nextUrl.pathname);
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL(loginAdresse(request.nextUrl.pathname, request.nextUrl.search), request.url));
   }
 
   return response;

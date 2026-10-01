@@ -4,10 +4,12 @@ import { Card, Button, Banner } from "@/components/ui";
 import { KontoClient } from "./KontoClient";
 import { AnzeigenameForm } from "./AnzeigenameForm";
 import { KiZugaengeListe } from "./KiZugaengeListe";
+import { AbosListe } from "./AbosListe";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
 import { getMeinAnzeigename, hatEigenenAnzeigenamen } from "@/lib/queries/profil";
 import { getMeineZugaenge } from "@/lib/queries/ki-zugaenge";
+import { getMeineAbos } from "@/lib/queries/abos";
 import { KI_ZUGAENGE_MAX } from "@/lib/mcp/regeln";
 import { oeffentlicherOrigin } from "@/lib/origin";
 import { MCP_PFAD } from "@/lib/mcp/pfad";
@@ -22,10 +24,11 @@ export default async function KontoPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [anzeigeName, eigenerName, zugaenge, origin] = await Promise.all([
+  const [anzeigeName, eigenerName, zugaenge, abos, origin] = await Promise.all([
     getMeinAnzeigename(),
     hatEigenenAnzeigenamen(),
     getMeineZugaenge(),
+    getMeineAbos(),
     oeffentlicherOrigin(),
   ]);
 
@@ -118,6 +121,23 @@ export default async function KontoPage() {
             </Banner>
           ) : (
             <KiZugaengeListe zugaenge={zugaenge} />
+          )}
+        </div>
+      </Card>
+
+      {/* Kalender-Abos (Story #330 AK 4, 5, 7). Der Link ist ein Geheimnis; er
+          erscheint nur im Dialog «Link anzeigen», mit seiner Warnung. */}
+      <Card className="mb-4 p-6">
+        <h2 className="type-title-large text-on-surface">Kalender-Abos</h2>
+        <p className="type-body-medium mt-2 text-on-surface-mittel">
+          Deine persönlichen Links, mit denen dein Kalenderprogramm die Trainingszeiten deiner Teams
+          abonniert.
+        </p>
+        <div className="mt-4">
+          {abos === null ? (
+            <Banner tone="fehler">Deine Abos liessen sich gerade nicht laden.</Banner>
+          ) : (
+            <AbosListe abos={abos} />
           )}
         </div>
       </Card>
