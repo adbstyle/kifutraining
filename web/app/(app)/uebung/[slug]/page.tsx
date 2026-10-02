@@ -196,7 +196,10 @@ export default async function ExerciseDetailPage({
       {flash && <Flash message={flash} param={FLASH_PARAMS} />}
 
       <header>
-        <h1 className="type-headline-large text-on-surface">{ex.name}</h1>
+        {/* Der Name in Title Large (PO 2026-10-02): Neben der Einordnung und
+            den Abschnittstiteln liest er sich als Titel der Übung, nicht als
+            Plakat. */}
+        <h1 className="type-title-large text-on-surface">{ex.name}</h1>
       </header>
 
       {/* Aktives Bild — gezeichnetes Diagramm, Foto oder Platzhalter */}

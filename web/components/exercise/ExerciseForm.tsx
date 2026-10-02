@@ -726,6 +726,7 @@ export function ExerciseForm({
       <div className={UEBER_BEIDEN}>
         <HeadlineField
           aria-label="Name der Übung"
+          schrift="title"
           name="name"
           placeholder="Name der Übung"
           defaultValue={initial.name}

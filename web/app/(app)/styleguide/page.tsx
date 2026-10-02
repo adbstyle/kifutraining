@@ -1655,6 +1655,12 @@ export default function Styleguide() {
           gehört daneben eine echte, nur vorgelesene (<code>sr-only</code>),
           sonst verlöre die Seite ihre Gliederung.
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Schrift der Überschrift, die es ersetzt:</strong>{" "}
+          <code>schrift=&quot;headline&quot;</code> (Vorgabe, Trainingsname) oder{" "}
+          <code>schrift=&quot;title&quot;</code> für den Namen einer Übung — ihre
+          Seite führt ihn in <code>type-title-large</code>.
+        </p>
         <div className="grid max-w-md gap-6">
           <HeadlineField
             aria-label="Name des Trainings"
@@ -1662,8 +1668,8 @@ export default function Styleguide() {
           />
           {/* Leer zeigt es seinen Platzhalter gedämpft, sonst wäre es in Ruhe
               nicht da; `error` stellt die Kontur auch in Ruhe in Fehlerfarbe. */}
-          <HeadlineField aria-label="Name der Übung" placeholder="Name der Übung" />
-          <HeadlineField aria-label="Name der Übung" placeholder="Name der Übung" error />
+          <HeadlineField aria-label="Name der Übung" placeholder="Name der Übung" schrift="title" />
+          <HeadlineField aria-label="Name der Übung" placeholder="Name der Übung" schrift="title" error />
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
