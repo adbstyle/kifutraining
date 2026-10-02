@@ -89,7 +89,9 @@ Alterskategorie, der Trainingsteil — im Kinderfussball-Hauptteil samt Haupttei
 Juniorenfussball samt Block, jeweils in einem Feld —, Feldtyp oder Spielfeldgrösse, die Anzahl
 Spieler:innen, Übungstyp und Erscheinungsform, darunter das „Material". Herkunft und Sichtbarkeit setzt die
 Detailseite, die Altersstufe einer bestehenden Übung ändert nur das Überführen. Inhalt und Einordnung
-werden zusammen mit einem Speichern gesichert. Auf einem schmalen Bildschirm steht die
+werden zusammen mit einem Speichern gesichert. Auf einem breiten Bildschirm ist die Maske geteilt
+wie die Übungsseite: Name und Speichern stehen fest, dazwischen scrollen Inhalt und Einordnung je
+für sich. Auf einem schmalen Bildschirm steht die
 Einordnung vor dem Inhalt — sie bestimmt, ob der Ablauf als Fahrplan oder als Beschreibung
 verlangt ist —, zusammengehörige Felder stehen dort paarweise, auf dem Telefon untereinander.
 Dieselbe Maske gilt beim Erfassen, beim Bearbeiten einer eigenen Übung und für eine Übung im
@@ -133,8 +135,10 @@ Abschluss im Juniorenfussball heissen wie ihr einziger Block und stehen darum ei
 die Eigentümerin den Hinweis dazu in der Einordnung, beim Material, und entscheidet dort, ob sie
 den neuen Vorschlag übernimmt oder ihr Material beibehält.
 
-Auf einem schmalen Bildschirm steht die Einordnung nach dem Inhalt, auf einem breiten daneben.
-Tastatur und Sprachausgabe erreichen sie in beiden Fällen nach dem Inhalt.
+Auf einem breiten Bildschirm ist die Seite geteilt: Inhalt und Einordnung füllen das Fenster,
+jede Seite scrollt für sich, und die Breite der Einordnung lässt sich ziehen (siehe Navigation,
+Seitenaufbau). Auf einem schmalen Bildschirm steht die Einordnung nach dem Inhalt. Tastatur und
+Sprachausgabe erreichen sie in beiden Fällen nach dem Inhalt.
 
 ## Material
 

@@ -690,7 +690,9 @@ export function ExerciseForm({
       onInput={(e) => {
         if ((e.target as HTMLInputElement).name) setEingetippt(true);
       }}
-      className="flex flex-col gap-10"
+      // Ab `xl` wächst das Formular auf die freie Höhe der geteilten Seite; Name
+      // und Speichern stehen dann fest, dazwischen scrollen die Spalten.
+      className="flex flex-col gap-10 xl:min-h-0 xl:flex-1 xl:gap-6"
     >
       {state.message && (
         <Banner tone="fehler" className={UEBER_BEIDEN}>
@@ -739,7 +741,12 @@ export function ExerciseForm({
       </div>
 
       {/* Links der Inhalt — Bild, Ablauf, Foto —, rechts die Einordnung. */}
-      <ZweiSpalten spalte={einordnung} spalteZuerst beiseite={false}>
+      <ZweiSpalten
+        spalte={einordnung}
+        spalteZuerst
+        beiseite={false}
+        className="xl:min-h-0 xl:flex-1"
+      >
         <div className="flex flex-col gap-10">
           <FormAbschnitt titel="Feld-Diagramm (optional)">
             <DiagrammFeld
@@ -856,7 +863,7 @@ export function ExerciseForm({
         </div>
       </ZweiSpalten>
 
-      <div className={`flex items-center gap-3 border-t border-linie pt-5 ${UEBER_BEIDEN}`}>
+      <div className={`flex items-center gap-3 border-t border-linie pt-5 xl:pb-6 ${UEBER_BEIDEN}`}>
         <Button type="submit" size="lg" disabled={isPending || isCompressing}>
           {isCompressing
             ? "Foto wird optimiert …"

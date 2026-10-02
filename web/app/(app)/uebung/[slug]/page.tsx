@@ -206,9 +206,8 @@ export default async function ExerciseDetailPage({
           bildUrl={ex.bild_url}
           diagramm={ex.diagramm}
           bildQuelle={ex.bild_quelle}
-          // Ab `xl` steht das Bild in der Spalte neben der Einordnung,
-          // höchstens rund 800 px breit.
-          sizes="(min-width: 1280px) 800px, (max-width: 896px) 100vw, 896px"
+          // Ab `xl` füllt das Bild die Spalte neben der Einordnung.
+          sizes="(min-width: 1280px) 70vw, (max-width: 896px) 100vw, 896px"
         />
       </div>
 

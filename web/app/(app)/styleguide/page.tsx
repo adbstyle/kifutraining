@@ -946,11 +946,18 @@ export default function Styleguide() {
           ist), Formulare und Lesetext in ihrer Lesebreite (<code>xl</code>{" "}
           bis <code>5xl</code>). Nicht zentriert, denn rechts steht, wo eine
           Seite eine hat, die zweite Spalte (<code>spalte</code>, etwa die
-          Einordnung einer Übung, siehe 28): ab <code>xl</code> 20 rem breit
-          neben dem Inhalt, schmaler nach ihm, auf Papier daneben. Der Inhalt
-          behält dabei seine Lesebreite. Zuoberst
-          die Kopfzeile mit dem Umschalter der Seitenleiste, den Brotkrumen und
-          rechts den Aktionen der Seite. Brotkrumen sind Pflicht, auch auf den
+          Einordnung einer Übung, siehe 28, <code>ZweiSpalten</code>). Ab{" "}
+          <code>xl</code> ist die Seite dann geteilt (<code>geteilt</code>):
+          beide Spalten füllen Breite und Höhe des Fensters und scrollen je
+          für sich; die rechte wächst von 20 bis 26 rem mit und lässt sich am
+          Griff dazwischen ziehen (<code>role=&quot;separator&quot;</code>,
+          Pfeiltasten, Doppelklick = Vorgabe; Cookie <code>kifu-spalte</code>).
+          Schmaler steht sie nach dem Inhalt (in der Maske davor), der Inhalt in
+          seiner Lesebreite; auf Papier daneben. Zuoberst die Kopfzeile mit dem
+          Umschalter der Seitenleiste, den Brotkrumen und rechts den Aktionen
+          der Seite — sie klebt beim Scrollen oben (ausser in der
+          Durchführung), darum setzt der Aufrufer den Abstand darunter als
+          Innenabstand. Brotkrumen sind Pflicht, auch auf den
           Einstiegsseiten. Ab <code>lg</code> gehen 280 oder 72 px an die
           Seitenleiste (siehe 13); die Fenstergrössen unten meinen das ganze
           Fenster.
