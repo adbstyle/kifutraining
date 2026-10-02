@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-10-01. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-10-02. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -380,6 +380,10 @@ Eine begonnene, noch nicht gespeicherte Übung bleibt nicht als Entwurf erhalten
 Maske gezeichnetes Diagramm wird bis zum Speichern nirgends zwischengesichert — auch beim
 Bearbeiten nicht; bricht der Browser ab, ist die ungespeicherte Zeichnung verloren. Die
 Zeichenfläche ist für Maus und Tastatur gebaut, nicht für die Bedienung per Touch.
+
+Die Einordnung lässt sich auf der Übungsseite nur lesen, nicht direkt ändern; geändert wird sie
+in der Maske, zusammen mit dem Inhalt. Fehlende Einordnung sieht nur die Eigentümerin; wer eine
+fremde Übung kopiert, sieht die Lücken erst an der eigenen Kopie.
 
 Die Listenzeichen in Ablauf, Fahrplan und Varianten lassen sich nicht abschalten: Beginnt eine Zeile mit
 «- », «* » oder einer Zahl mit Punkt und Leerzeichen — etwa «2. Halbzeit» —, wird sie zum
