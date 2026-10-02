@@ -956,8 +956,11 @@ export default function Styleguide() {
           seiner Lesebreite; auf Papier daneben. Zuoberst die Kopfzeile mit dem
           Umschalter der Seitenleiste, den Brotkrumen und rechts den Aktionen
           der Seite — sie klebt ab <code>lg</code> beim Scrollen oben (ausser
-          in der Durchführung), darum setzt der Aufrufer den Abstand darunter
-          als Innenabstand. Brotkrumen sind Pflicht, auch auf den
+          in der Durchführung), 64 px hoch mit den Brotkrumen auf der Linie
+          der Marke. Einen Innenabstand bekommt sie nie, er zählte zur Höhe
+          und schöbe die Brotkrumen aus der Mitte; darunter beginnt ab{" "}
+          <code>lg</code> direkt der Inhalt, schmaler mit einem Rand von 24 px.
+          Brotkrumen sind Pflicht, auch auf den
           Einstiegsseiten. Ab <code>lg</code> gehen 280 oder 72 px an die
           Seitenleiste (siehe 13); die Fenstergrössen unten meinen das ganze
           Fenster.
