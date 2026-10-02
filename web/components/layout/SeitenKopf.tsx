@@ -19,8 +19,8 @@ import { SlimSchalter } from "./AppRahmen";
  * Dort klebt schon die Zeile mit dem Menüknopf, und die Brotkrumen brechen
  * über mehrere Zeilen — beides zusammen nähme zu viel vom Fenster. Ihre
  * Fläche ist der Grund der Seite, so
- * verschwindet der Inhalt darunter; den Abstand zum Inhalt setzt der Aufrufer
- * darum als Innenabstand, nicht als Rand. `mitlaufend={false}` für Seiten mit
+ * verschwindet der Inhalt darunter. Einen Innenabstand gibt ihr der Aufrufer
+ * nicht: Er zählte zur Mindesthöhe und schöbe die Brotkrumen aus der Mitte. `mitlaufend={false}` für Seiten mit
  * eigenen klebenden Überschriften (Durchführung).
  *
  * Auf Server-Seiten keine `icon`-Funktionen in `krumen` reichen — sie lassen
