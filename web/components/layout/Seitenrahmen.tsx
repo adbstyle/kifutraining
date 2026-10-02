@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { BreadcrumbItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { SeitenKopf } from "./SeitenKopf";
+import { ZweiSpalten } from "./ZweiSpalten";
 
 /* Literale Klassen — Tailwind findet nur, was ausgeschrieben im Quelltext steht.
    `voll`: Übersichten (Kachelraster, Kalender) nutzen die ganze Fläche. */
@@ -20,7 +21,8 @@ const BREITE = {
  * die zur Seite passt — Übersichten über die ganze Fläche, Formulare und
  * Lesetext in ihrer Lesebreite —, und zuoberst die Kopfzeile (Umschalter der
  * Seitenleiste, Brotkrumen, Aktionen). Nicht zentriert: Die Fläche rechts
- * bleibt frei für eine spätere zweite Spalte (Details, geteilte Ansicht). Jede Seite hat Brotkrumen — darum ist `krumen` Pflicht.
+ * gehört der zweiten Spalte (`spalte`, etwa die Einordnung einer Übung).
+ * Jede Seite hat Brotkrumen — darum ist `krumen` Pflicht.
  * `null` nur dort, wo die Seite die Kopfzeile selbst setzt, weil ihre
  * Aktionen Zustand brauchen, der erst tiefer entsteht (Trainings-Editor).
  */
@@ -30,6 +32,7 @@ export function Seitenrahmen({
   aktionen,
   kopfImDruck,
   druckVoll,
+  spalte,
   children,
 }: {
   breite: keyof typeof BREITE;
@@ -39,6 +42,10 @@ export function Seitenrahmen({
   kopfImDruck?: boolean;
   /** Auf Papier die volle Breite ohne Rand — für die Druckansicht. */
   druckVoll?: boolean;
+  /** Die zweite Spalte rechts neben dem Inhalt (Epic #350, `ZweiSpalten`):
+   *  ab `xl` daneben, schmaler nach dem Inhalt, auf Papier daneben. `breite`
+   *  gilt dann für beide Spalten zusammen. */
+  spalte?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -52,7 +59,13 @@ export function Seitenrahmen({
       {krumen && (
         <SeitenKopf krumen={krumen} aktionen={aktionen} imDruck={kopfImDruck} className="mb-6" />
       )}
-      {children}
+      {spalte ? (
+        <ZweiSpalten spalte={spalte} druckDaneben>
+          {children}
+        </ZweiSpalten>
+      ) : (
+        children
+      )}
     </main>
   );
 }

@@ -1,5 +1,7 @@
 import {
   kategorien,
+  hauptteilkategorie as hauptteilkategorieLabels,
+  uebungstyp as uebungstypLabels,
   trainingsteil as trainingsteilLabels,
   junioren_block as juniorenBlockLabels,
   erscheinungsform as erscheinungsformLabels,
@@ -95,6 +97,17 @@ export const ERSCHEINUNGSFORM_LABEL: Record<string, string> = {
   ...erscheinungsformLabels,
   ...erscheinungsformJuniorenLabels,
 };
+
+/** Klartext einer gespeicherten Hauptteilkategorie bzw. eines Übungstyps; ein
+ *  unbekannter Slug bleibt roh stehen. Eine Regel für Übungsseite, Karte,
+ *  Training und Übungsauswahl. */
+export function hauptteilkategorieText(slug: string): string {
+  return hauptteilkategorieLabels[slug as keyof typeof hauptteilkategorieLabels] ?? slug;
+}
+
+export function uebungstypText(slug: string): string {
+  return uebungstypLabels[slug as keyof typeof uebungstypLabels] ?? slug;
+}
 
 /** «1 Übung» / «3 Übungen» — Rückfragen nennen eine Zahl, und die Einzahl soll
  *  dabei nicht wie ein Tippfehler aussehen. Steht hier statt in einem der
