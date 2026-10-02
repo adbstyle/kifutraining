@@ -814,6 +814,23 @@ export function ExerciseForm({
     </FormAbschnitt>
   );
 
+  // Speichern samt Hinweis: beim Erfassen am Schluss der Schritte, beim
+  // Bearbeiten rechts neben dem Namen.
+  const speichern = (
+    <div className="flex items-center gap-3">
+      {fussnote && <p className="type-body-small text-on-surface-mittel">{fussnote}</p>}
+      <Button type="submit" disabled={isPending || isCompressing}>
+        {isCompressing
+          ? "Foto wird optimiert …"
+          : isPending
+            ? "Wird gespeichert …"
+            : umwandlung
+              ? "Umwandeln und speichern"
+              : submitLabel}
+      </Button>
+    </div>
+  );
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -854,23 +871,34 @@ export function ExerciseForm({
       )}
 
       {/* Der Name ist die Überschrift der Maske — dasselbe Kopf-Feld wie der
-          Trainingsname im Editor. Die echte Überschrift setzt die Seite. */}
-      <div className={UEBER_BEIDEN}>
-        <HeadlineField
-          aria-label="Name der Übung"
-          schrift="title"
-          name="name"
-          placeholder="Name der Übung"
-          defaultValue={initial.name}
-          required
-          error={!!err.name}
-          aria-describedby={err.name ? "name-fehler" : undefined}
-        />
-        {err.name && (
-          <p id="name-fehler" className="type-body-small mt-1.5 text-error">
-            {err.name}
-          </p>
+          Trainingsname im Editor. Die echte Überschrift setzt die Seite.
+          Beim Bearbeiten steht das Speichern rechts daneben (PO 2026-10-02):
+          Die Spalten darunter scrollen, der Kopf bleibt — so ist es immer zur
+          Hand. Ist es zu eng, bricht es unter den Namen. */}
+      <div
+        className={cn(
+          UEBER_BEIDEN,
+          geteilt && "flex flex-wrap items-start justify-end gap-x-6 gap-y-3",
         )}
+      >
+        <div className={cn(geteilt && "min-w-64 flex-1")}>
+          <HeadlineField
+            aria-label="Name der Übung"
+            schrift="title"
+            name="name"
+            placeholder="Name der Übung"
+            defaultValue={initial.name}
+            required
+            error={!!err.name}
+            aria-describedby={err.name ? "name-fehler" : undefined}
+          />
+          {err.name && (
+            <p id="name-fehler" className="type-body-small mt-1.5 text-error">
+              {err.name}
+            </p>
+          )}
+        </div>
+        {geteilt && speichern}
       </div>
 
       {geteilt ? (
@@ -897,20 +925,9 @@ export function ExerciseForm({
         </>
       )}
 
-      <div className={cn("flex items-center gap-3 border-t border-linie pt-5", geteilt && `xl:pb-6 ${UEBER_BEIDEN}`)}>
-        <Button type="submit" disabled={isPending || isCompressing}>
-          {isCompressing
-            ? "Foto wird optimiert …"
-            : isPending
-              ? "Wird gespeichert …"
-              : umwandlung
-                ? "Umwandeln und speichern"
-                : submitLabel}
-        </Button>
-        {fussnote && (
-          <p className="type-body-small text-on-surface-mittel">{fussnote}</p>
-        )}
-      </div>
+      {!geteilt && (
+        <div className="flex items-center gap-3 border-t border-linie pt-5">{speichern}</div>
+      )}
     </form>
   );
 }

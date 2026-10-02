@@ -96,8 +96,8 @@ nebeneinander, auf dem Telefon untereinander.
 
 Beim Bearbeiten — einer eigenen Übung wie einer Übung im Training — ist die Maske aufgebaut wie
 die Übungsseite: links der Inhalt mit Feld-Diagramm, Beschreibung und Foto, rechts die Einordnung
-samt Material. Auf einem breiten Bildschirm ist sie geteilt: Name und Speichern stehen fest,
-dazwischen scrollen Inhalt und Einordnung je für sich. Auf einem schmalen Bildschirm steht die
+samt Material. Das Speichern steht rechts neben dem Namen. Auf einem breiten Bildschirm ist sie
+geteilt: Name und Speichern stehen fest, darunter scrollen Inhalt und Einordnung je für sich. Auf einem schmalen Bildschirm steht die
 Einordnung vor dem Inhalt.
 
 Bis dahin ist nichts gesichert. Will der Trainer die Maske mit ungesicherten Angaben oder einer
