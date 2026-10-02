@@ -1,7 +1,7 @@
 import { JUNIOREN_TEILE, istEinblockig, type Einordnung } from "@/lib/junioren";
 import { istHauptteil } from "@/lib/gruppen";
 import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
-import { EINORDNUNG_LABEL } from "@/lib/labels";
+import { EINORDNUNG_LABEL, hauptteilkategorieText } from "@/lib/labels";
 import type { JuniorenBlockSlug } from "@/lib/vocab";
 import {
   altersstufe as altersstufeLabels,
@@ -140,9 +140,7 @@ export const KEINE_PASSENDE_UEBUNG = "Keine passende Übung gefunden.";
 export function zielLabel(einordnung: string, hauptteilkategorie?: string | null): string {
   const block = EINORDNUNG_LABEL[einordnung] ?? einordnung;
   if (!hauptteilkategorie) return block;
-  const kategorie =
-    hauptteilkategorieLabels[hauptteilkategorie as HauptteilkategorieSlug] ?? hauptteilkategorie;
-  return `${block} · ${kategorie}`;
+  return `${block} · ${hauptteilkategorieText(hauptteilkategorie)}`;
 }
 
 /** Der sichtbare Bestand hält für diesen Block gar nichts bereit. `zielLabel`

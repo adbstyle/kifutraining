@@ -428,6 +428,16 @@
 }
 
 @layer base {
+  /* Klebt die Kopfzeile oben (ab `lg`, Epic #350): Springt der Browser zu
+     einem Feld — Fokus per Tab, Anker, Fehler —, hält er so viel Abstand,
+     dass es nicht unter ihr verschwindet. Nur wo sie wirklich klebt, nicht
+     auf der Durchführung oder den Anmeldeseiten. */
+  @media (min-width: 64rem) {
+    html:has([data-kopf-klebt]) {
+      scroll-padding-top: 6rem;
+    }
+  }
+
   body {
     font-family: var(--font-sans);
     /* Eine ruhige, gleichmässige Fläche — die Höhe soll die einzige

@@ -23,6 +23,9 @@ import {
   MethodischerFahrplan,
   Freitext,
   MaterialListe,
+  Eigenschaften,
+  Eigenschaft,
+  EigenschaftFehlt,
   Disclosure,
   Leerzustand,
   Banner,
@@ -926,9 +929,12 @@ export default function Styleguide() {
           Lange Formulare gliedert <code>FormAbschnitt</code>: eine Überschrift
           in <code>type-title-medium</code>, gedämpft — dieselbe, die die
           Abschnitte der Übungs-Detailseite tragen, damit Maske und Ansicht
-          gleich gegliedert sind. Die Übungsmaske ist darum auch so breit wie
-          die Detailseite (<code>max-w-4xl</code>) und stellt
-          Zusammengehöriges ab <code>sm</code> paarweise nebeneinander. Ein Feld
+          gleich gegliedert sind. Die Übungsmaske teilt sich darum wie die
+          Detailseite in Inhalt und Einordnung (<code>ZweiSpalten</code>); die
+          Einordnung steht schmal VOR dem Inhalt, weil sie bestimmt, welche
+          Felder er verlangt, und stellt Zusammengehöriges ab <code>sm</code>{" "}
+          paarweise nebeneinander, in der schmalen Spalte ab <code>xl</code>{" "}
+          untereinander. Ein Feld
           ohne eigenes Label (Dateifeld, Material-Gruppe) bekommt die Id der
           Überschrift für <code>aria-labelledby</code>, statt den Namen doppelt
           zu zeigen.
@@ -938,10 +944,23 @@ export default function Styleguide() {
           neben der Seitenleiste, Übersichten über die ganze Fläche
           (<code>voll</code>, Kachelraster mit so vielen Spalten, wie Platz
           ist), Formulare und Lesetext in ihrer Lesebreite (<code>xl</code>{" "}
-          bis <code>5xl</code>). Nicht zentriert, damit rechts Platz für eine
-          zweite Spalte bleibt. Zuoberst
-          die Kopfzeile mit dem Umschalter der Seitenleiste, den Brotkrumen und
-          rechts den Aktionen der Seite. Brotkrumen sind Pflicht, auch auf den
+          bis <code>5xl</code>). Nicht zentriert, denn rechts steht, wo eine
+          Seite eine hat, die zweite Spalte (<code>spalte</code>, etwa die
+          Einordnung einer Übung, siehe 28, <code>ZweiSpalten</code>). Ab{" "}
+          <code>xl</code> ist die Seite dann geteilt (<code>geteilt</code>):
+          beide Spalten füllen Breite und Höhe des Fensters und scrollen je
+          für sich; die rechte wächst von 20 bis 26 rem mit und lässt sich am
+          Griff dazwischen ziehen (<code>role=&quot;separator&quot;</code>,
+          Pfeiltasten, Doppelklick = Vorgabe; Cookie <code>kifu-spalte</code>).
+          Schmaler steht sie nach dem Inhalt (in der Maske davor), der Inhalt in
+          seiner Lesebreite; auf Papier daneben. Zuoberst die Kopfzeile mit dem
+          Umschalter der Seitenleiste, den Brotkrumen und rechts den Aktionen
+          der Seite — sie klebt ab <code>lg</code> beim Scrollen oben (ausser
+          in der Durchführung), 64 px hoch mit den Brotkrumen auf der Linie
+          der Marke. Einen Innenabstand bekommt sie nie, er zählte zur Höhe
+          und schöbe die Brotkrumen aus der Mitte; darunter beginnt ab{" "}
+          <code>lg</code> direkt der Inhalt, schmaler mit einem Rand von 24 px.
+          Brotkrumen sind Pflicht, auch auf den
           Einstiegsseiten. Ab <code>lg</code> gehen 280 oder 72 px an die
           Seitenleiste (siehe 13); die Fenstergrössen unten meinen das ganze
           Fenster.
@@ -1639,6 +1658,12 @@ export default function Styleguide() {
           gehört daneben eine echte, nur vorgelesene (<code>sr-only</code>),
           sonst verlöre die Seite ihre Gliederung.
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Schrift der Überschrift, die es ersetzt:</strong>{" "}
+          <code>schrift=&quot;headline&quot;</code> (Vorgabe, Trainingsname) oder{" "}
+          <code>schrift=&quot;title&quot;</code> für den Namen einer Übung — ihre
+          Seite führt ihn in <code>type-title-large</code>.
+        </p>
         <div className="grid max-w-md gap-6">
           <HeadlineField
             aria-label="Name des Trainings"
@@ -1646,8 +1671,8 @@ export default function Styleguide() {
           />
           {/* Leer zeigt es seinen Platzhalter gedämpft, sonst wäre es in Ruhe
               nicht da; `error` stellt die Kontur auch in Ruhe in Fehlerfarbe. */}
-          <HeadlineField aria-label="Name der Übung" placeholder="Name der Übung" />
-          <HeadlineField aria-label="Name der Übung" placeholder="Name der Übung" error />
+          <HeadlineField aria-label="Name der Übung" placeholder="Name der Übung" schrift="title" />
+          <HeadlineField aria-label="Name der Übung" placeholder="Name der Übung" schrift="title" error />
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
@@ -2798,6 +2823,70 @@ export default function Styleguide() {
           ein Ein/Aus ist und keine Ansicht.
         </p>
         <AnsichtWahl ansicht="monat" hrefListe="#" hrefMonat="#" />
+      </Section>
+
+      <Section n="28" title="Eigenschaften">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Bezeichnung und Wert paarweise — die Einordnung einer Übung in der
+          Spalte rechts (Epic #350), angelehnt an das Details-Panel von Jira.
+          Neu, weil kein Baustein Bezeichnung und Wert zusammen führt:{" "}
+          <code>FormAbschnitt</code> gliedert Formulare, die Eckdatenzeile der
+          Karte reiht Werte ohne Bezeichnung.
+        </p>
+        <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+          <li>
+            <strong>Beschreibungsliste</strong> — <code>dl</code> mit{" "}
+            <code>dt</code>/<code>dd</code>. Die Bezeichnung steht in fester
+            Spalte (8.5 rem), der Wert bricht in seiner um. Ein Wert darf ein
+            Baustein sein: Plakette, Chips, <code>MaterialListe</code>.
+          </li>
+          <li>
+            <strong>Gedämpfte Lesetype statt Versalien</strong> — gesperrte
+            Versalien bräuchten für «Hauptteilkategorie» mehr Breite, als neben
+            dem Wert bleibt.
+          </li>
+          <li>
+            <strong>Über beide Spalten</strong> — <code>EigenschaftBreit</code>{" "}
+            für das, was zu einer Zeile gehört, aber keine sichtbare
+            Bezeichnung braucht (der Material-Hinweis). Die Bezeichnung bleibt
+            für Vorlesehilfen.
+          </li>
+          <li>
+            <strong>Nicht erfasst</strong> — <code>EigenschaftFehlt</code>{" "}
+            zeigt eine vorgesehene, aber leere Angabe (nur der Eigentümerin,
+            #352): der Wert gedämpft wie die Bezeichnung, damit er sich vom
+            Erfassten abhebt, ohne nach einem Fehler auszusehen. Nie auf Papier.
+          </li>
+          <li>
+            <strong>Fläche</strong> — eine <code>Card</code>; auf Papier stehen
+            Bezeichnung und Wert untereinander, weil die Spalte dort schmaler
+            ist.
+          </li>
+        </ul>
+        <div className="max-w-[22rem]">
+          <Eigenschaften titel="Einordnung">
+            <Eigenschaft label="Altersstufe">Kinderfussball</Eigenschaft>
+            <Eigenschaft label="Alterskategorien">
+              <span className="flex flex-wrap gap-1.5">
+                <KategorieChip k="F" />
+                <KategorieChip k="E" />
+              </span>
+            </Eigenschaft>
+            <Eigenschaft label="Trainingsteil">Hauptteil</Eigenschaft>
+            <Eigenschaft label="Hauptteilkategorie">Fussball spielen lernen</Eigenschaft>
+            <EigenschaftFehlt label="Erscheinungsform" />
+            <Eigenschaft label="Anzahl Spieler:innen">9–11</Eigenschaft>
+            <Eigenschaft label="Material">
+              <MaterialListe
+                liste={[
+                  { art: "minitor", farbe: null, menge: 2 },
+                  { art: "pylone", farbe: "orange", menge: 4 },
+                ]}
+                ergaenzung={["Pfeife"]}
+              />
+            </Eigenschaft>
+          </Eigenschaften>
+        </div>
       </Section>
     </Seitenrahmen>
   );

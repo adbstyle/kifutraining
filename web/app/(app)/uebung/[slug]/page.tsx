@@ -1,51 +1,30 @@
 import { notFound } from "next/navigation";
-import { BookOpen } from "lucide-react";
 import type { Metadata } from "next";
 import {
-  HerkunftBadge,
   type BreadcrumbItem,
   Card,
   Freitext,
-  KategorieChip,
   MethodischerFahrplan,
   PrintButton,
   UebungsBild,
-  MaterialListe,
   Button,
 } from "@/components/ui";
 import { Flash } from "@/components/Flash";
-import { cn } from "@/lib/cn";
 import { OwnerActions } from "@/components/exercise/OwnerActions";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { UebungKopierenButton } from "@/components/exercise/UebungKopierenButton";
+import { EinordnungsLeiste } from "@/components/exercise/EinordnungsLeiste";
 import { createClient } from "@/lib/supabase/server";
-import {
-  getExerciseDetail,
-  isFavorited,
-  type ExerciseDetail,
-} from "@/lib/queries/exercises";
-import {
-  uebungstyp as uebungstypLabels,
-  hauptteilkategorie as hkatLabels,
-  type KategorieSlug,
-} from "@/lib/vocab";
-import {
-  ANZAHL_SPIELER_LABEL,
-  EINORDNUNG_LABEL,
-  ERSCHEINUNGSFORM_LABEL,
-  anzahlSpielerText,
-} from "@/lib/labels";
+import { getExerciseDetail, isFavorited } from "@/lib/queries/exercises";
+import { EINORDNUNG_LABEL } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
-import { feldAngaben } from "@/lib/eckdaten";
 import { AenderungBanner } from "@/components/exercise/MaterialField";
 import {
   AENDERUNG_BEIBEHALTEN,
   AENDERUNG_UEBERNEHMEN,
-  hatMaterial,
   materialAenderungen,
   materialBasisAusDiagramm,
   parseMaterialBasis,
-  parseMaterialListe,
 } from "@/lib/material";
 import { behalteMaterial, uebernehmeMaterialVorschlag } from "@/lib/actions/material";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
@@ -61,21 +40,6 @@ export async function generateMetadata({
   const ex = await getExerciseDetail(slug).catch(() => null);
   if (!ex) return { title: "Übung nicht gefunden" };
   return { title: `${ex.name} — Übung` };
-}
-
-function Meta({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <p className="type-label-small text-on-surface-mittel">{label}</p>
-      <div className="type-body-large mt-1 text-on-surface">{children}</div>
-    </div>
-  );
 }
 
 /** Die Bestätigungen, die über die Adresse auf diese Seite reisen — je
@@ -110,100 +74,121 @@ export default async function ExerciseDetailPage({
   // Favoriten-Aktion nur für angemeldete USER (AC2/AC11).
   const favorited = user ? await isFavorited(ex.id) : false;
 
-  // Einordnung wandert in die Brotkrumen (als Filter-Link auf den Pool); die
-  // Eyebrow-Zeile zeigt nur noch ergänzenden Kontext.
-  // Der Brotkrumen-Link zielt auf die feinste Einordnung, die der Katalog
-  // filtern kann — im Kinderfussball-Hauptteil auf die Hauptteilkategorie
-  // (Story #129). Der TEXT bleibt die Einordnung selbst.
+  // Die Brotkrumen nennen die Einordnung als Filter-Link auf den Pool. Der
+  // Link zielt auf die feinste Einordnung, die der Katalog filtern kann — im
+  // Kinderfussball-Hauptteil auf die Hauptteilkategorie (Story #129). Der TEXT bleibt die Einordnung selbst.
   const teilLabel = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const crumbs: BreadcrumbItem[] = [
     { label: "Übungen", href: "/" },
     { label: teilLabel, href: `/?teil=${katalogFilterZiel(ex)}` },
     { label: ex.name },
   ];
-  const { feldtyp, spielfeld } = feldAngaben(ex);
-  const meta = [feldtyp, spielfeld].filter(Boolean);
-  const anzahl = anzahlSpielerText(ex.anzahl_kinder);
-  const materialListe = parseMaterialListe(ex.material_liste);
   const materialHinweis = isOwner
     ? materialAenderungen(parseMaterialBasis(ex.material_basis), materialBasisAusDiagramm(ex.diagramm))
     : [];
-  const hatEckdaten =
-    !!spielfeld ||
-    !!ex.hauptteilkategorie ||
-    !!anzahl;
-  // Übungstyp und Erscheinungsform zählen bewusst NICHT zu den Eckdaten: sie
-  // stehen seit Story #124 unterhalb des Ablaufs (siehe dort).
-  const hatEinordnung = !!ex.uebungstyp || ex.erscheinungsform.length > 0;
+
+  // Die Einordnung steht gesammelt in der Spalte rechts (Epic #350, Story
+  // #351) — Alterskategorien, Herkunft, Feld, Eckdaten, Material, Übungstyp
+  // und Erscheinungsform. Das hebt die Reihenfolge aus Story #124 auf (Übungstyp
+  // und Erscheinungsform hinter dem Ablauf): Neben dem Inhalt unterbrechen sie
+  // ihn nicht mehr. Der Inhaltsbereich trägt nur noch Titel, Bild, Ablauf und
+  // Varianten.
+  const leiste = (
+    <>
+      <EinordnungsLeiste
+        ex={ex}
+        // Fehlende Einordnung sieht nur, wer sie nachtragen kann (#352).
+        fehlendeZeigen={isOwner}
+        materialHinweis={
+          materialHinweis.length > 0 && (
+            // Hat eine Diagrammänderung das Material verändert (Story #269)? Nur
+            // die Eigentümerin sieht es — sie allein kann antworten. Die
+            // Entscheidung bleibt auf der Detailseite (PO 2026-10-01).
+            <AenderungBanner
+              aenderungen={materialHinweis}
+              actions={
+                <>
+                  <form action={behalteMaterial.bind(null, ex.id)}>
+                    <Button type="submit" variant="text" size="sm">
+                      {AENDERUNG_BEIBEHALTEN}
+                    </Button>
+                  </form>
+                  <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
+                    <Button type="submit" variant="text" size="sm">
+                      {AENDERUNG_UEBERNEHMEN}
+                    </Button>
+                  </form>
+                </>
+              }
+            />
+          )
+        }
+      />
+      {/* Quellen-/Urheberangabe (Manual), nur am Bildschirm. Sie steht unter
+          der Einordnung, bei der Herkunft — schmal damit am Ende der Seite,
+          nicht zwischen Inhalt und Einordnung. */}
+      {ex.source === "manual" && (
+        <p className="type-body-small mt-5 px-1 text-on-surface-mittel print:hidden">
+          Übung nach dem Manual Kinderfussball des Schweizerischen Fussballverbands (SFV) —
+          Aufbau und Regeln aus dem Manual, Text in eigener Formulierung.
+        </p>
+      )}
+    </>
+  );
+
+  // Aktions-Cluster auf der Brotkrumen-Zeile, rechtsbündig — dieselbe Stelle
+  // wie beim Training (#249 AK 8); der Titel behält so die volle Breite.
+  // Drucken · Stift · Globus · Herz · ⋮. Drucken steht ausserhalb der
+  // Anmelde-Bedingung: eine Übung lässt sich auch ohne Konto ausdrucken (Story
+  // #114 AK 3). Owner sieht alle Aktionen, sonstige angemeldete User nur den
+  // Favoriten. Im Druck ist der ganze Cluster weg — auf dem Blatt hat kein
+  // Bedienelement etwas verloren (Postcondition 5).
+  const aktionen = (
+    <div className="ml-auto flex shrink-0 items-center gap-0.5 print:hidden">
+      <PrintButton variant="icon" size="sm" />
+      {(isOwner || user) && (
+        <>
+          {isOwner ? (
+            <OwnerActions
+              id={ex.id}
+              slug={ex.slug}
+              name={ex.name}
+              visibility={ex.visibility}
+              favoriteSlot={
+                <FavoriteButton
+                  exerciseId={ex.id}
+                  initial={favorited}
+                  size="sm"
+                />
+              }
+            />
+          ) : (
+            <>
+              {/* Kopieren (Story 7, Übungswelten) — hier an einer
+                  fremden oder kuratierten Übung; die eigene wird über das
+                  ⋮-Menü der Eigentümer-Aktionen kopiert (#171). */}
+              <UebungKopierenButton exerciseId={ex.id} name={ex.name} />
+              <FavoriteButton
+                exerciseId={ex.id}
+                initial={favorited}
+                size="sm"
+              />
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
 
   return (
-    <Seitenrahmen breite="4xl" krumen={crumbs}>
+    <Seitenrahmen breite="6xl" krumen={crumbs} aktionen={aktionen} spalte={leiste}>
       {flash && <Flash message={flash} param={FLASH_PARAMS} />}
 
       <header>
-        <div className="mb-3 flex flex-wrap items-center gap-2.5">
-          {ex.kategorien.length > 0 && (
-            <>
-              <div
-                className="flex items-center gap-1.5"
-                aria-label="Geeignete Alterskategorien"
-              >
-                {ex.kategorien.map((k) => (
-                  <KategorieChip key={k} k={k as KategorieSlug} />
-                ))}
-              </div>
-              <span aria-hidden className="h-3.5 w-px bg-linie" />
-            </>
-          )}
-          <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
-
-          {/* Aktions-Cluster rechts: Drucken · Stift · Globus · Herz · ⋮.
-              Drucken steht ausserhalb der Anmelde-Bedingung: eine Übung lässt
-              sich auch ohne Konto ausdrucken (Story #114 AK 3). Owner sieht
-              alle Aktionen, sonstige angemeldete User nur den Favoriten.
-              Im Druck ist der ganze Cluster weg — auf dem Blatt hat kein
-              Bedienelement etwas verloren (Postcondition 5). */}
-          <div className="ml-auto flex items-center gap-0.5 print:hidden">
-            <PrintButton variant="icon" size="sm" />
-            {(isOwner || user) && (
-              <>
-                {isOwner ? (
-                  <OwnerActions
-                    id={ex.id}
-                    slug={ex.slug}
-                    name={ex.name}
-                    visibility={ex.visibility}
-                    favoriteSlot={
-                      <FavoriteButton
-                        exerciseId={ex.id}
-                        initial={favorited}
-                        size="sm"
-                      />
-                    }
-                  />
-                ) : (
-                  <>
-                    {/* Kopieren (Story 7, Übungswelten) — hier an einer
-                        fremden oder kuratierten Übung; die eigene wird über das
-                        ⋮-Menü der Eigentümer-Aktionen kopiert (#171). */}
-                    <UebungKopierenButton exerciseId={ex.id} name={ex.name} />
-                    <FavoriteButton
-                      exerciseId={ex.id}
-                      initial={favorited}
-                      size="sm"
-                    />
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-        <h1 className="type-headline-large text-on-surface">{ex.name}</h1>
-        {meta.length > 0 && (
-          <p className="type-label-medium mt-2 text-on-surface-mittel">
-            {meta.join(" · ")}
-          </p>
-        )}
+        {/* Der Name in Title Large (PO 2026-10-02): Neben der Einordnung und
+            den Abschnittstiteln liest er sich als Titel der Übung, nicht als
+            Plakat. */}
+        <h1 className="type-title-large text-on-surface">{ex.name}</h1>
       </header>
 
       {/* Aktives Bild — gezeichnetes Diagramm, Foto oder Platzhalter */}
@@ -213,33 +198,9 @@ export default async function ExerciseDetailPage({
           bildUrl={ex.bild_url}
           diagramm={ex.diagramm}
           bildQuelle={ex.bild_quelle}
-          sizes="(max-width: 896px) 100vw, 896px"
+          // Ab `xl` füllt das Bild die Spalte neben der Einordnung.
+          sizes="(min-width: 1280px) 70vw, (max-width: 896px) 100vw, 896px"
         />
-      </div>
-      {/* Eckdaten — unterhalb des Bildes.
-
-          Der Trainingsteil steht am Bildschirm in den Brotkrumen und wäre hier
-          doppelt. Im Druck sind die Brotkrumen weg, und der Ausdruck muss ihn
-          nennen (Story #114 AK 4) — dort tritt er an ihre Stelle. Die Leiste
-          selbst bleibt am Bildschirm verborgen, wenn sie ausser ihm nichts zu
-          zeigen hat, damit dort kein leerer Abstand entsteht. */}
-      <div
-        className={cn(
-          "mt-6 flex flex-wrap gap-x-12 gap-y-5",
-          !hatEckdaten && "hidden print:flex",
-        )}
-      >
-        <div className="hidden print:block">
-          <Meta label="Trainingsteil">{teilLabel}</Meta>
-        </div>
-        {spielfeld && <Meta label="Spielfeldgrösse">{spielfeld}</Meta>}
-        {ex.hauptteilkategorie && (
-          <Meta label="Hauptteilkategorie">
-            {hkatLabels[ex.hauptteilkategorie as keyof typeof hkatLabels] ??
-              ex.hauptteilkategorie}
-          </Meta>
-        )}
-        {anzahl && <Meta label={ANZAHL_SPIELER_LABEL}>{anzahl}</Meta>}
       </div>
 
       {/* Ablauf */}
@@ -272,74 +233,9 @@ export default async function ExerciseDetailPage({
         </section>
       )}
 
-      {/* Material — hinter Ablauf und Varianten (PO 2026-09-25): Wer die Seite
-          öffnet, liest zuerst, was gemacht wird, und danach, was es dafür
-          braucht. Der Hinweis auf eine Diagrammänderung steht bei dem, was er
-          betrifft. */}
-      {(hatMaterial(materialListe, ex.material) || materialHinweis.length > 0) && (
-        // Nur der Hinweis, noch kein Material: auf dem Ausdruck stünde sonst
-        // eine leere Überschrift.
-        <section className={cn("mt-8", !hatMaterial(materialListe, ex.material) && "print:hidden")}>
-          <h2 className="type-title-medium mb-3 text-on-surface-mittel">Material</h2>
-          {/* Hat eine Diagrammänderung das Material verändert (Story #269)? Nur
-              die Eigentümerin sieht es — sie allein kann antworten. Nicht im
-              Druck: der Hinweis gilt dem Bearbeiten, nicht dem Platz. */}
-          {materialHinweis.length > 0 && (
-            <AenderungBanner
-              aenderungen={materialHinweis}
-              className="mb-4 print:hidden"
-              actions={
-                <>
-                  <form action={behalteMaterial.bind(null, ex.id)}>
-                    <Button type="submit" variant="text" size="sm">
-                      {AENDERUNG_BEIBEHALTEN}
-                    </Button>
-                  </form>
-                  <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
-                    <Button type="submit" variant="text" size="sm">
-                      {AENDERUNG_UEBERNEHMEN}
-                    </Button>
-                  </form>
-                </>
-              }
-            />
-          )}
-
-          <div className="type-body-large text-on-surface">
-            <MaterialListe liste={materialListe} ergaenzung={ex.material} />
-          </div>
-        </section>
-      )}
-
-      {/* Einordnung — Übungstyp und Erscheinungsform, beisammen unterhalb von
-          Ablauf und Varianten (Story #124, PO 2026-08-31). Beide ordnen die
-          Übung ein und speisen die Filter; für die Durchführung auf dem Platz
-          sagen sie nichts. Wer die Seite öffnet, soll zuerst lesen, was gemacht
-          wird — darum stehen sie hinter dem Ablauf, am Bildschirm wie im Druck
-          an derselben Stelle (gleicher DOM). Ist nichts davon erfasst, entfällt
-          der Abschnitt ganz. */}
-      {hatEinordnung && (
-        <div className="mt-8 flex flex-wrap gap-x-12 gap-y-5">
-          {ex.uebungstyp && (
-            <Meta label="Übungstyp">
-              {uebungstypLabels[
-                ex.uebungstyp as keyof typeof uebungstypLabels
-              ] ?? ex.uebungstyp}
-            </Meta>
-          )}
-          {ex.erscheinungsform.length > 0 && (
-            <Meta label="Erscheinungsform">
-              {ex.erscheinungsform
-                .map((f) => ERSCHEINUNGSFORM_LABEL[f] ?? f)
-                .join(", ")}
-            </Meta>
-          )}
-        </div>
-      )}
-
-      {/* Herkunft auf dem Ausdruck (Story #114 AK 7). Am Bildschirm sagt sie
-          schon die Plakette oben; auf Papier fehlt sie, denn die Plakette nennt
-          beim eigenen Entwurf nur den Zustand, nicht die Herkunft. Darum im
+      {/* Herkunft auf dem Ausdruck (Story #114 AK 7). Die Plakette in der
+          Einordnung genügt dem Papier nicht: Beim eigenen Entwurf nennt sie
+          nur den Zustand, nicht die Herkunft. Darum im
           Druck ein eigener Satz für alle drei Fälle — und der Manual-Fuss
           darunter entfällt dort, sonst stünde dieselbe Aussage zweimal.
 
@@ -365,23 +261,6 @@ export default async function ExerciseDetailPage({
         )}
       </footer>
 
-      {/* Quellen-/Urheberangabe (Manual), nur am Bildschirm */}
-      {ex.source === "manual" && (
-        <footer className="mt-12 flex items-start gap-2 border-t border-linie pt-5 print:hidden">
-          <BookOpen
-            size={18}
-            strokeWidth={2}
-            className="mt-0.5 shrink-0 text-on-surface-mittel"
-            aria-hidden
-          />
-          <p className="type-body-small text-on-surface-mittel">
-            Übung nach dem{" "}
-            <strong className="text-on-surface">Manual Kinderfussball</strong>{" "}
-            des Schweizerischen Fussballverbands (SFV) — Aufbau und Regeln aus dem
-            Manual, Text in eigener Formulierung.
-          </p>
-        </footer>
-      )}
     </Seitenrahmen>
   );
 }

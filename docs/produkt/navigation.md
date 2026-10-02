@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-10-01. Wie man sich in der Anwendung bewegt.
+Stand 2026-10-02. Wie man sich in der Anwendung bewegt.
 
 ## Die Seitenleiste
 
@@ -44,6 +44,21 @@ die Kacheln reihen sich so dicht, wie Platz ist, auf einem breiten Bildschirm al
 Spalten. Formulare und Seiten zum Lesen, etwa eine Übung oder ein Training, behalten eine
 angenehme Lesebreite und stehen ebenfalls links. Auch die Durchführung steht links.
 
+Ab Laptop-Breite bleibt die Kopfzeile mit den Brotkrumen und den Aktionen der Seite beim
+Scrollen oben stehen. Einzig die Durchführung lässt sie mitlaufen; dort kleben stattdessen die
+Überschriften der Blöcke oben. Auf einem Telefon klebt nur die Zeile mit dem Menüknopf — die
+Brotkrumen brechen dort um und nähmen sonst zu viel vom Bildschirm.
+
+Die Seite einer Übung und ihre Bearbeitungsmaske sind auf einem breiten Bildschirm geteilt: links der
+Inhalt, rechts die Einordnung. Beide füllen dann die ganze Breite und Höhe des Fensters, und
+jede Seite der Teilung scrollt für sich — wer im Ablauf liest, behält die Einordnung im Blick,
+und in der Maske bleibt das Speichern unten stehen. Die Einordnung wächst mit dem Fenster etwas
+mit; zwischen beiden liegt eine Trennlinie, an der sich die Breite der Einordnung ziehen lässt,
+mit der Maus oder per Pfeiltaste. Ein Doppelklick stellt die übliche Breite wieder her. Die
+gewählte Breite gilt für alle geteilten Seiten und bleibt auf dem Gerät gespeichert. Ist das
+Fenster dafür zu schmal, scrollt die Seite als Ganzes, der Inhalt behält seine Lesebreite, und
+die Einordnung steht auf der Übungsseite nach dem Inhalt, in der Maske davor.
+
 ## Auf schmalen Bildschirmen
 
 Auf einem Telefon oder einem schmalen Fenster steht oben eine Kopfzeile mit dem Menüknopf.
@@ -66,4 +81,7 @@ ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
 
 Wird jemand von einem anderen Konto in ein Team aufgenommen, erscheint das Team in der Leiste
 erst beim nächsten Neuladen oder nach der nächsten eigenen Aktion. Breit oder schmal merkt
-sich jeder Browser für sich, nicht das Konto.
+sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite der Einordnung auf den
+geteilten Seiten. Die Teilung gibt es nur auf breiten Bildschirmen; auf einem Tablet im
+Hochformat oder einem Telefon steht alles untereinander, und die Breite lässt sich dort nicht
+ziehen.

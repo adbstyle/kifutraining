@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useActionState, startTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useActionState, startTransition } from "react";
 import { ArrowLeftRight } from "lucide-react";
 import {
   TextField,
@@ -13,6 +13,7 @@ import {
   FormAbschnitt,
   HeadlineField,
   Checkbox,
+  Card,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
@@ -61,12 +62,22 @@ import {
 } from "@/lib/material";
 import { DiagrammFeld } from "@/components/exercise/DiagrammFeld";
 import { VerlassenWarnung } from "@/components/layout/VerlassenWarnung";
+import { ZweiSpalten } from "@/components/layout/ZweiSpalten";
+import { cn } from "@/lib/cn";
 import { LEERES_DIAGRAMM, parseDiagramm, type DiagrammData } from "@/lib/diagramm";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
 
-/** Zwei zusammengehörige Felder auf einer Zeile, ab `sm`. */
+/** Zwei zusammengehörige Felder auf einer Zeile, ab `sm`. In der geteilten
+ *  Maske (Bearbeiten) steht die Einordnung ab `xl` in der schmalen Spalte
+ *  rechts, dort untereinander. */
 const PAAR = "grid gap-5 sm:grid-cols-2 sm:items-start";
+const PAAR_LEISTE = `${PAAR} xl:grid-cols-1`;
+
+/** Was über und unter beiden Spalten steht (Name, Meldungen, Speichern), so
+ *  breit wie sie: gestapelt in der Lesebreite des Inhalts, ab `xl` über
+ *  Inhalt und Einordnung zusammen. */
+const UEBER_BEIDEN = "max-w-4xl xl:max-w-none";
 
 /** Die Namenszeile über einer Feldgruppe (Anzahl, Spielfeldgrösse, feste
  *  Altersstufe) — dieselben Klassen wie `SpielfeldgroesseField` und
@@ -76,10 +87,11 @@ const GRUPPEN_LABEL = "type-label-small mb-2";
 /** Steht ein Feld mit schwebendem Label neben einer Feldgruppe, hält diese
  *  unsichtbare Zeile den Platz ihrer Namenszeile frei: So stehen die Felder
  *  auf einer Linie, ohne dass ein fester Versatz ihre Höhe nachbauen muss.
- *  Nur nebeneinander nötig, gestapelt entfällt sie. */
-function GruppenLabelPlatz() {
+ *  Nur nebeneinander nötig, gestapelt entfällt sie — in der geteilten Maske
+ *  auch ab `xl`, wo die Einordnung in der schmalen Spalte steht. */
+function GruppenLabelPlatz({ geteilt }: { geteilt: boolean }) {
   return (
-    <p aria-hidden className={`${GRUPPEN_LABEL} invisible hidden sm:block`}>
+    <p aria-hidden className={`${GRUPPEN_LABEL} invisible hidden sm:block ${geteilt ? "xl:hidden" : ""}`}>
       &nbsp;
     </p>
   );
@@ -154,6 +166,23 @@ export function ExerciseForm({
   vorlagenAusser?: string;
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
+  const formRef = useRef<HTMLFormElement>(null);
+  // Scheitert das Speichern an einem Feld, rückt es ins Bild: In der geteilten
+  // Maske scrollen die Spalten für sich, und das markierte Feld läge sonst
+  // irgendwo darin, während oben nur die Meldung steht. Gesucht wird das erste
+  // als ungültig markierte Feld, sonst der erste Fehlertext unter einem Feld
+  // (die Auswahlfelder markieren sich nur so) — sichtbar, nicht die Meldung
+  // und nicht ein Knopf in einem der Dialoge der Maske.
+  useEffect(() => {
+    if (state.status !== "error" || !state.errors || Object.keys(state.errors).length === 0) return;
+    const form = formRef.current;
+    const ziel =
+      form?.querySelector<HTMLElement>('[aria-invalid="true"]') ??
+      [...(form?.querySelectorAll<HTMLElement>(".text-error") ?? [])].find(
+        (el) => el.offsetParent !== null && !el.closest('dialog, [role="alert"], [role="status"]'),
+      );
+    ziel?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [state]);
   const err = state.errors ?? {};
 
   const [stufe, setStufe] = useState<Altersstufe>(initialeStufe);
@@ -255,6 +284,11 @@ export function ExerciseForm({
   // Nur beim Erfassen ist die Altersstufe wählbar — und ist noch nichts von
   // der Übung gespeichert.
   const erfassen = stufenWahl === "waehlbar";
+  // Erfassen führt Schritt für Schritt durch eine Spalte — Einordnung,
+  // Feld-Diagramm, Beschreibung, Material, Foto (PO 2026-10-02). Bearbeiten
+  // teilt die Maske wie die Detailseite in Inhalt und Einordnung (#353).
+  const geteilt = !erfassen;
+  const paar = geteilt ? PAAR_LEISTE : PAAR;
 
   // Das Feld-Gating kommt geschlossen aus lib/altersstufe.ts — derselben
   // Quelle, gegen die die Server Action prüft und die die DB-CHECKs spiegelt.
@@ -452,65 +486,15 @@ export function ExerciseForm({
     />
   );
 
-  return (
-    <form
-      onSubmit={handleSubmit}
-      // Nur benannte Felder tragen Angaben; eine Suche in einem Dialog der
-      // Maske (Vorlagen, Auswahllisten) ist keine.
-      onInput={(e) => {
-        if ((e.target as HTMLInputElement).name) setEingetippt(true);
-      }}
-      className="flex flex-col gap-10"
-    >
-      {state.message && <Banner tone="fehler">{state.message}</Banner>}
-
-      <VerlassenWarnung
-        // Während des Speicherns nicht: Die Weiterleitung nach dem Speichern
-        // ist kein Verlassen.
-        aktiv={ungesichert && !isPending}
-        titel={erfassen ? "Erfassung verlassen?" : "Bearbeitung verlassen?"}
-        text={
-          erfassen
-            ? "Die Übung ist noch nicht gespeichert. Wenn du die Seite verlässt, gehen deine Angaben und die Zeichnung verloren."
-            : "Deine Änderungen sind noch nicht gespeichert. Wenn du die Seite verlässt, gehen sie verloren."
-        }
-      />
-
-      {/* Die Umwandlung ist vorgemerkt, nicht geschehen: Das Formular zeigt
-          bereits die Zielstufe, die Übung liegt aber unverändert in der
-          Datenbank (Story 4 PC 5). Der Hinweis sagt, was noch fehlt. */}
-      {umwandlung && (
-        <Banner>
-          Umwandlung vorgemerkt — sie wird mit «Umwandeln und speichern» wirksam.
-        </Banner>
-      )}
-
-      {/* Der Name ist die Überschrift der Maske — dasselbe Kopf-Feld wie der
-          Trainingsname im Editor. Die echte Überschrift setzt die Seite. */}
-      <div>
-        <HeadlineField
-          aria-label="Name der Übung"
-          name="name"
-          placeholder="Name der Übung"
-          defaultValue={initial.name}
-          required
-          error={!!err.name}
-          aria-describedby={err.name ? "name-fehler" : undefined}
-        />
-        {err.name && (
-          <p id="name-fehler" className="type-body-small mt-1.5 text-error">
-            {err.name}
-          </p>
-        )}
-      </div>
-
-      {/* Die Maske folgt der Detailseite einer Übung: erst, wofür und wohin sie
-          gehört, dann das Bild, dann was gemacht wird, was es dafür braucht und
-          zuletzt das Foto. Zusammengehöriges steht nebeneinander — die
-          abhängige Angabe neben der, von der sie abhängt. Unter `sm` stehen
-          die Paare untereinander. */}
-      <FormAbschnitt titel="Zuordnung">
-        <div className={PAAR}>
+  // Die Einordnung steht in der Spalte rechts, wie auf der Detailseite (Epic
+  // #350, Story #353): Altersstufe, Alterskategorie, Trainingsteil oder Block,
+  // Feld, Spielerzahl, Übungstyp, Erscheinungsform und Material. Schmal steht
+  // sie VOR dem Inhalt — sie bestimmt, welche Felder der Inhalt verlangt
+  // (Fahrplan oder Beschreibung). Dieselben Felder wie bisher, nur an anderer
+  // Stelle; Herkunft und Sichtbarkeit setzt die Detailseite.
+  const einordnungAbschnitt = (
+      <FormAbschnitt titel="Einordnung">
+        <div className={paar}>
           <AltersstufeField
             wert={stufe}
             onChange={stufenWahl === "waehlbar" ? wechsleAltersstufe : undefined}
@@ -546,7 +530,7 @@ export function ExerciseForm({
               es die Mehrfachauswahl vorsieht. */}
           <div>
             {/* Die feste Altersstufe steht als Namenszeile und Badge da. */}
-            {stufenWahl === "fest" && <GruppenLabelPlatz />}
+            {stufenWahl === "fest" && <GruppenLabelPlatz geteilt={geteilt} />}
             <MultiSelect
               label="Alterskategorie"
               options={kategorienFuer(stufe).map((k) => ({
@@ -575,43 +559,23 @@ export function ExerciseForm({
         )}
 
         {/* Im Kinderfussball-Hauptteil wählt dasselbe Feld die
-            Hauptteilkategorie mit — wie den Block im Juniorenfussball. Es
-            steht in der linken Spalte unter der Altersstufe. */}
-        <div className={PAAR}>
-          <EinordnungField
-            altersstufe={stufe}
-            wert={teil}
-            hauptteilkategorie={zeigtHkat ? hkat : ""}
-            onChange={wechsleEinordnung}
-            error={err.trainingsteil ?? err.hauptteilkategorie}
-            hinweis={entfallHinweis}
-          />
-        </div>
-      </FormAbschnitt>
-
-      <FormAbschnitt titel="Feld-Diagramm (optional)">
-        <DiagrammFeld
-          initial={anfangsDiagramm}
-          name={initial.name}
-          vorlagenAusser={vorlagenAusser}
-          schmalHinweis={
-            erfassen
-              ? "Zum Zeichnen braucht es einen breiteren Bildschirm. Erfasse die Übung hier ohne Diagramm — zeichnen kannst du es später beim Bearbeiten."
-              : "Zum Zeichnen braucht es einen breiteren Bildschirm. Die übrigen Angaben kannst du hier bearbeiten."
-          }
-          onChange={(data, info) => {
-            setDiagramm(data);
-            if (info.ausVorlage) setAusVorlage(true);
-          }}
+            Hauptteilkategorie mit — wie den Block im Juniorenfussball. */}
+        <EinordnungField
+          altersstufe={stufe}
+          wert={teil}
+          hauptteilkategorie={zeigtHkat ? hkat : ""}
+          onChange={wechsleEinordnung}
+          error={err.trainingsteil ?? err.hauptteilkategorie}
+          hinweis={entfallHinweis}
         />
 
         {/* Neben der Spielerzahl steht, was das Feld beschreibt: im
             Kinderfussball der Feldtyp (beim freien Feld mit den Metern
             darunter), im Juniorenfussball gleich die Spielfeldgrösse. */}
-        <div className={PAAR}>
+        <div className={paar}>
           {zeigtFeldtyp ? (
             <div>
-              <GruppenLabelPlatz />
+              <GruppenLabelPlatz geteilt={geteilt} />
               <Select
                 label="Feldtyp (optional)"
                 value={feld}
@@ -663,67 +627,24 @@ export function ExerciseForm({
           </div>
         </div>
         {zeigtFeldtyp && zeigtSpielfeld && spielfeldFeld}
-      </FormAbschnitt>
 
-      <FormAbschnitt titel="Beschreibung">
-        {/* Welche Form der Ablauf hat, entscheidet der Trainingsteil — bis er
-            gewählt ist, sagt der Abschnitt, wo das Feld bleibt. */}
-        {!teil && (
-          <p className="type-body-medium text-on-surface-mittel">
-            Wähle zuerst den Trainingsteil — danach beschreibst du hier den Ablauf.
-          </p>
-        )}
-        {/* Der methodische Fahrplan als drei gewöhnliche Textfelder in der
-            Reihe des Abschnitts, wie die Varianten — ohne eigenen Rahmen und
-            ohne Überschrift: die Feldnamen sagen, was hinein gehört. */}
-        {teil && (istFahrplan ? (
-          <>
-            <TextArea
-              label="Offen starten"
-              name="offen_starten"
-              value={offenStarten}
-              onChange={(e) => setOffenStarten(e.target.value)}
-              error={!!err.offen_starten}
-              supportingText={err.offen_starten}
-            />
-            <TextArea
-              label="Üben"
-              name="ueben"
-              value={ueben}
-              onChange={(e) => setUeben(e.target.value)}
-              error={!!err.ueben}
-              supportingText={err.ueben}
-            />
-            <TextArea
-              label="Wetteifern"
-              name="wetteifern"
-              value={wetteifern}
-              onChange={(e) => setWetteifern(e.target.value)}
-              error={!!err.wetteifern}
-              supportingText={err.wetteifern}
-            />
-          </>
-        ) : (
-          <TextArea
-            label={istFreiesSpiel ? "Beschreibung des Spiels" : "Aufbau / Beschreibung"}
-            name="aufbau"
-            value={aufbau}
-            onChange={(e) => setAufbau(e.target.value)}
-            error={!!err.aufbau}
-            supportingText={err.aufbau}
-          />
-        ))}
-
-        <TextArea
-          label="Varianten (optional)"
-          name="varianten"
-          defaultValue={initial.varianten ?? ""}
-        />
-
-        {/* Erscheinungsform und Übungstyp stehen beisammen wie im Abschnitt
-            «Einordnung» der Detailseite. */}
+        {/* Übungstyp und Erscheinungsform in der Reihenfolge der Detailseite. */}
         {(zeigtForm || zeigtTyp) && (
-          <div className={PAAR}>
+          <div className={paar}>
+            {/* Übungstyp: optionale Selbstauskunft des Junioren-Manuals, und nur
+                in den Blöcken, in denen eine Spielform vorkommen kann. Ohne
+                Hilfstext, wie die übrigen Felder der Maske. */}
+            {zeigtTyp && (
+              <Select
+                label="Übungstyp (optional)"
+                value={uebungstyp}
+                onChange={setUebungstyp}
+                options={[
+                  { value: "", label: "— kein Übungstyp —" },
+                  ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
+                ]}
+              />
+            )}
             {/* Die Erscheinungsformen des Manuals, dem diese Übung folgt — in
                 der Reihenfolge ihrer Quelle. Eine Gruppierung nach Spielphasen
                 hat der Product Owner bewusst abgelehnt (Story 12 Out of Scope 2). */}
@@ -740,24 +661,12 @@ export function ExerciseForm({
               />
             )}
 
-            {/* Übungstyp: optionale Selbstauskunft des Junioren-Manuals, und nur
-                in den Blöcken, in denen eine Spielform vorkommen kann. Ohne
-                Hilfstext, wie die übrigen Felder der Maske. */}
-            {zeigtTyp && (
-              <Select
-                label="Übungstyp (optional)"
-                value={uebungstyp}
-                onChange={setUebungstyp}
-                options={[
-                  { value: "", label: "— kein Übungstyp —" },
-                  ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
-                ]}
-              />
-            )}
           </div>
         )}
       </FormAbschnitt>
+  );
 
+  const materialAbschnitt = (
       <FormAbschnitt titel="Material (optional)" fehler={!!materialError}>
         {(titelId) => (
           <MaterialField
@@ -795,59 +704,249 @@ export function ExerciseForm({
           />
         )}
       </FormAbschnitt>
+  );
 
-      {/* Das Foto heisst Foto und steht zuletzt, weit weg vom Feld-Diagramm —
-          allein die Überschrift trägt die Unterscheidung (#246 AK 8). Trägt
-          die Übung beides, bleibt das Foto als Umschalt-Option erhalten;
-          angezeigt wird das Diagramm (PC 4). */}
-      <FormAbschnitt titel="Foto (optional)">
-        {(titelId) => (
-          <div>
-            <input
-              id="bild"
-              name="bild"
-              type="file"
-              accept={IMAGE_ACCEPT}
-              aria-labelledby={titelId}
-              onChange={() => setBildError(null)}
-              className="focus-ring type-body-medium block w-full rounded-flaeche kontur border-kante text-on-surface-mittel file:mr-4 file:border-0 file:bg-elev-08 file:type-label-medium file:px-4 file:py-2.5 file:text-on-surface"
-            />
-            <p className={`type-body-small mt-1.5 ${err.bild || bildError ? "text-error" : "text-on-surface-mittel"}`}>
-              {err.bild ?? bildError ?? "JPG, PNG, WebP oder HEIC. Grosse Fotos werden automatisch verkleinert."}
+  const einordnung = (
+    <Card className="flex flex-col gap-10 p-5">
+      {einordnungAbschnitt}
+      {materialAbschnitt}
+    </Card>
+  );
+
+  const diagrammAbschnitt = (
+    <FormAbschnitt titel="Feld-Diagramm (optional)">
+      <DiagrammFeld
+        initial={anfangsDiagramm}
+        name={initial.name}
+        vorlagenAusser={vorlagenAusser}
+        schmalHinweis={
+          erfassen
+            ? "Zum Zeichnen braucht es einen breiteren Bildschirm. Erfasse die Übung hier ohne Diagramm — zeichnen kannst du es später beim Bearbeiten."
+            : "Zum Zeichnen braucht es einen breiteren Bildschirm. Die übrigen Angaben kannst du hier bearbeiten."
+        }
+        onChange={(data, info) => {
+          setDiagramm(data);
+          if (info.ausVorlage) setAusVorlage(true);
+        }}
+      />
+
+    </FormAbschnitt>
+  );
+
+  const beschreibungAbschnitt = (
+    <FormAbschnitt titel="Beschreibung">
+      {/* Welche Form der Ablauf hat, entscheidet der Trainingsteil — bis er
+          gewählt ist, sagt der Abschnitt, wo das Feld bleibt. */}
+      {!teil && (
+        <p className="type-body-medium text-on-surface-mittel">
+          Wähle zuerst den Trainingsteil — danach beschreibst du hier den Ablauf.
+        </p>
+      )}
+      {/* Der methodische Fahrplan als drei gewöhnliche Textfelder in der
+          Reihe des Abschnitts, wie die Varianten — ohne eigenen Rahmen und
+          ohne Überschrift: die Feldnamen sagen, was hinein gehört. */}
+      {teil && (istFahrplan ? (
+        <>
+          <TextArea
+            label="Offen starten"
+            name="offen_starten"
+            value={offenStarten}
+            onChange={(e) => setOffenStarten(e.target.value)}
+            error={!!err.offen_starten}
+            supportingText={err.offen_starten}
+          />
+          <TextArea
+            label="Üben"
+            name="ueben"
+            value={ueben}
+            onChange={(e) => setUeben(e.target.value)}
+            error={!!err.ueben}
+            supportingText={err.ueben}
+          />
+          <TextArea
+            label="Wetteifern"
+            name="wetteifern"
+            value={wetteifern}
+            onChange={(e) => setWetteifern(e.target.value)}
+            error={!!err.wetteifern}
+            supportingText={err.wetteifern}
+          />
+        </>
+      ) : (
+        <TextArea
+          label={istFreiesSpiel ? "Beschreibung des Spiels" : "Aufbau / Beschreibung"}
+          name="aufbau"
+          value={aufbau}
+          onChange={(e) => setAufbau(e.target.value)}
+          error={!!err.aufbau}
+          supportingText={err.aufbau}
+        />
+      ))}
+
+      <TextArea
+        label="Varianten (optional)"
+        name="varianten"
+        defaultValue={initial.varianten ?? ""}
+      />
+    </FormAbschnitt>
+  );
+
+  // Das Foto heisst Foto und steht zuletzt, weit weg vom Feld-Diagramm —
+  // allein die Überschrift trägt die Unterscheidung (#246 AK 8). Trägt die
+  // Übung beides, bleibt das Foto als Umschalt-Option erhalten; angezeigt
+  // wird das Diagramm (PC 4).
+  const fotoAbschnitt = (
+    <FormAbschnitt titel="Foto (optional)">
+      {(titelId) => (
+        <div>
+          <input
+            id="bild"
+            name="bild"
+            type="file"
+            accept={IMAGE_ACCEPT}
+            aria-labelledby={titelId}
+            onChange={() => setBildError(null)}
+            className="focus-ring type-body-medium block w-full rounded-flaeche kontur border-kante text-on-surface-mittel file:mr-4 file:border-0 file:bg-elev-08 file:type-label-medium file:px-4 file:py-2.5 file:text-on-surface"
+          />
+          <p className={`type-body-small mt-1.5 ${err.bild || bildError ? "text-error" : "text-on-surface-mittel"}`}>
+            {err.bild ?? bildError ?? "JPG, PNG, WebP oder HEIC. Grosse Fotos werden automatisch verkleinert."}
+          </p>
+          {initial.bildUrl && !err.bild && !bildError && (
+            <p className="type-body-small mt-1 text-on-surface-mittel">
+              {bildEntfernen
+                ? "Das aktuelle Foto wird beim Speichern entfernt."
+                : "Aktuelles Foto bleibt erhalten, wenn du keines hochlädst."}
             </p>
-            {initial.bildUrl && !err.bild && !bildError && (
-              <p className="type-body-small mt-1 text-on-surface-mittel">
-                {bildEntfernen
-                  ? "Das aktuelle Foto wird beim Speichern entfernt."
-                  : "Aktuelles Foto bleibt erhalten, wenn du keines hochlädst."}
-              </p>
-            )}
-            {bildEntfernenMoeglich && initial.bildUrl && (
-              <Checkbox
-                label="Foto entfernen"
-                className="mt-2"
-                checked={bildEntfernen}
-                onChange={(e) => setBildEntfernen(e.target.checked)}
-              />
-            )}
-          </div>
-        )}
-      </FormAbschnitt>
+          )}
+          {bildEntfernenMoeglich && initial.bildUrl && (
+            <Checkbox
+              label="Foto entfernen"
+              className="mt-2"
+              checked={bildEntfernen}
+              onChange={(e) => setBildEntfernen(e.target.checked)}
+            />
+          )}
+        </div>
+      )}
+    </FormAbschnitt>
+  );
 
-      <div className="flex items-center gap-3 border-t border-linie pt-5">
-        <Button type="submit" size="lg" disabled={isPending || isCompressing}>
-          {isCompressing
-            ? "Foto wird optimiert …"
-            : isPending
-              ? "Wird gespeichert …"
-              : umwandlung
-                ? "Umwandeln und speichern"
-                : submitLabel}
-        </Button>
-        {fussnote && (
-          <p className="type-body-small text-on-surface-mittel">{fussnote}</p>
+  // Speichern samt Hinweis: beim Erfassen am Schluss der Schritte, beim
+  // Bearbeiten rechts neben dem Namen.
+  const speichern = (
+    <div className="flex items-center gap-3">
+      {fussnote && <p className="type-body-small text-on-surface-mittel">{fussnote}</p>}
+      {/* Neben dem Namen klein, am Schluss der Schritte mittel. */}
+      <Button type="submit" size={geteilt ? "sm" : "md"} disabled={isPending || isCompressing}>
+        {isCompressing
+          ? "Foto wird optimiert …"
+          : isPending
+            ? "Wird gespeichert …"
+            : umwandlung
+              ? "Umwandeln und speichern"
+              : submitLabel}
+      </Button>
+    </div>
+  );
+
+  return (
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      // Nur benannte Felder tragen Angaben; eine Suche in einem Dialog der
+      // Maske (Vorlagen, Auswahllisten) ist keine.
+      onInput={(e) => {
+        if ((e.target as HTMLInputElement).name) setEingetippt(true);
+      }}
+      // Geteilt wächst das Formular ab `xl` auf die freie Höhe der Seite; Name
+      // und Speichern stehen dann fest, dazwischen scrollen die Spalten.
+      className={cn("flex flex-col gap-10", geteilt && "xl:min-h-0 xl:flex-1 xl:gap-6")}
+    >
+      {state.message && (
+        <Banner tone="fehler" className={UEBER_BEIDEN}>
+          {state.message}
+        </Banner>
+      )}
+
+      <VerlassenWarnung
+        // Während des Speicherns nicht: Die Weiterleitung nach dem Speichern
+        // ist kein Verlassen.
+        aktiv={ungesichert && !isPending}
+        titel={erfassen ? "Erfassung verlassen?" : "Bearbeitung verlassen?"}
+        text={
+          erfassen
+            ? "Die Übung ist noch nicht gespeichert. Wenn du die Seite verlässt, gehen deine Angaben und die Zeichnung verloren."
+            : "Deine Änderungen sind noch nicht gespeichert. Wenn du die Seite verlässt, gehen sie verloren."
+        }
+      />
+
+      {/* Die Umwandlung ist vorgemerkt, nicht geschehen: Das Formular zeigt
+          bereits die Zielstufe, die Übung liegt aber unverändert in der
+          Datenbank (Story 4 PC 5). Der Hinweis sagt, was noch fehlt. */}
+      {umwandlung && (
+        <Banner className={UEBER_BEIDEN}>
+          Umwandlung vorgemerkt — sie wird mit «Umwandeln und speichern» wirksam.
+        </Banner>
+      )}
+
+      {/* Der Name ist die Überschrift der Maske — dasselbe Kopf-Feld wie der
+          Trainingsname im Editor. Die echte Überschrift setzt die Seite.
+          Beim Bearbeiten steht das Speichern rechts daneben (PO 2026-10-02):
+          Die Spalten darunter scrollen, der Kopf bleibt — so ist es immer zur
+          Hand. Ist es zu eng, bricht es unter den Namen. */}
+      <div
+        className={cn(
+          UEBER_BEIDEN,
+          geteilt && "flex flex-wrap items-start justify-end gap-x-6 gap-y-3",
         )}
+      >
+        <div className={cn(geteilt && "min-w-64 flex-1")}>
+          <HeadlineField
+            aria-label="Name der Übung"
+            schrift="title"
+            name="name"
+            placeholder="Name der Übung"
+            defaultValue={initial.name}
+            required
+            error={!!err.name}
+            aria-describedby={err.name ? "name-fehler" : undefined}
+          />
+          {err.name && (
+            <p id="name-fehler" className="type-body-small mt-1.5 text-error">
+              {err.name}
+            </p>
+          )}
+        </div>
+        {geteilt && speichern}
       </div>
+
+      {geteilt ? (
+        // Links der Inhalt — Bild, Ablauf, Foto —, rechts die Einordnung.
+        <ZweiSpalten
+          spalte={einordnung}
+          spalteZuerst
+          beiseite={false}
+          className="xl:min-h-0 xl:flex-1"
+        >
+          <div className="flex flex-col gap-10">
+            {diagrammAbschnitt}
+            {beschreibungAbschnitt}
+            {fotoAbschnitt}
+          </div>
+        </ZweiSpalten>
+      ) : (
+        <>
+          {einordnungAbschnitt}
+          {diagrammAbschnitt}
+          {beschreibungAbschnitt}
+          {materialAbschnitt}
+          {fotoAbschnitt}
+        </>
+      )}
+
+      {!geteilt && (
+        <div className="flex items-center gap-3 border-t border-linie pt-5">{speichern}</div>
+      )}
     </form>
   );
 }

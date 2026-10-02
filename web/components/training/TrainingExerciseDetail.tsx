@@ -9,13 +9,16 @@ import {
 import { formatDuration, teilTraegtDauer } from "@/lib/training";
 import {
   feldtyp as feldLabels,
-  uebungstyp as uebungstypLabels,
-  hauptteilkategorie as hkatLabels,
   type KategorieSlug,
 } from "@/lib/vocab";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
 import { hatMaterial } from "@/lib/material";
-import { ANZAHL_SPIELER_LABEL, anzahlSpielerText } from "@/lib/labels";
+import {
+  ANZAHL_SPIELER_LABEL,
+  anzahlSpielerText,
+  hauptteilkategorieText,
+  uebungstypText,
+} from "@/lib/labels";
 
 function Meta({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -150,8 +153,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
           {spielfeld && <Meta label="Spielfeldgrösse">{spielfeld}</Meta>}
           {item.hauptteilkategorie && (
             <Meta label="Hauptteilkategorie">
-              {hkatLabels[item.hauptteilkategorie as keyof typeof hkatLabels] ??
-                item.hauptteilkategorie}
+              {hauptteilkategorieText(item.hauptteilkategorie)}
             </Meta>
           )}
           {anzahl && <Meta label={ANZAHL_SPIELER_LABEL}>{anzahl}</Meta>}
@@ -190,8 +192,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
       {item.uebungstyp && (
         <div className="mt-4">
           <Meta label="Übungstyp">
-            {uebungstypLabels[item.uebungstyp as keyof typeof uebungstypLabels] ??
-              item.uebungstyp}
+            {uebungstypText(item.uebungstyp)}
           </Meta>
         </div>
       )}

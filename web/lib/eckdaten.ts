@@ -1,11 +1,14 @@
+import { feldtyp as feldtypLabels } from "@/lib/vocab";
 import {
-  feldtyp as feldtypLabels,
-  hauptteilkategorie as hauptteilkategorieLabels,
-} from "@/lib/vocab";
-import { traegtFeldtyp, traegtSpielfeldgroesse } from "@/lib/altersstufe";
+  traegtErscheinungsform,
+  traegtFeldtyp,
+  traegtSpielfeldgroesse,
+  traegtUebungstyp,
+} from "@/lib/altersstufe";
 import {
   EINORDNUNG_LABEL,
   SPIELER_BEGRIFF,
+  hauptteilkategorieText,
   SPIELER_KURZ,
   anzahlSpielerText,
   spielfeldText,
@@ -59,9 +62,7 @@ export function feldAngaben(ex: EckdatenQuelle): {
  *    Massen genügen die Masse. */
 export function uebungEckdaten(ex: EckdatenQuelle): Eckdatum[] {
   const einordnung = ex.hauptteilkategorie
-    ? hauptteilkategorieLabels[
-        ex.hauptteilkategorie as keyof typeof hauptteilkategorieLabels
-      ] ?? ex.hauptteilkategorie
+    ? hauptteilkategorieText(ex.hauptteilkategorie)
     : EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const { feldtyp, spielfeld } = feldAngaben(ex);
   const feld = spielfeld ?? feldtyp;
@@ -86,4 +87,32 @@ export function uebungEckdaten(ex: EckdatenQuelle): Eckdatum[] {
  *  schmalen Karte länger als eine Zeile sein kann. */
 function zusammen(text: string): string {
   return text.replace(/ /g, " ");
+}
+
+/** Fachliche Einordnung, die eine Übung tragen kann, aber nicht erfasst hat
+ *  (#352): die freiwilligen Angaben Erscheinungsform, Übungstyp, Feldtyp und
+ *  Spielfeldgrösse — je nur, wo Altersstufe, Trainingsteil oder Block und
+ *  Feldtyp sie vorsehen (die Regeln aus `lib/altersstufe.ts`). Die ersten drei
+ *  sind zugleich Filter des Katalogs. Pflichtangaben fehlen bei einer
+ *  gesicherten Übung nie; Material und Anzahl Spieler:innen dürfen leer sein,
+ *  ohne zu fehlen (PO 2026-10-01). */
+export type FehlendeAngabe = "erscheinungsform" | "uebungstyp" | "feldtyp" | "spielfeld";
+
+export function fehlendeEinordnung(
+  ex: Pick<
+    EckdatenQuelle,
+    "altersstufe" | "trainingsteil" | "feldtyp" | "spielfeld_laenge_m" | "spielfeld_breite_m"
+  > & { uebungstyp: string | null; erscheinungsform: readonly string[] },
+): ReadonlySet<FehlendeAngabe> {
+  const fehlt = new Set<FehlendeAngabe>();
+  if (traegtErscheinungsform(ex.altersstufe, ex.trainingsteil) && ex.erscheinungsform.length === 0)
+    fehlt.add("erscheinungsform");
+  if (traegtUebungstyp(ex.altersstufe, ex.trainingsteil) && !ex.uebungstyp) fehlt.add("uebungstyp");
+  if (traegtFeldtyp(ex.altersstufe) && !ex.feldtyp) fehlt.add("feldtyp");
+  if (
+    traegtSpielfeldgroesse(ex.altersstufe, ex.feldtyp) &&
+    (ex.spielfeld_laenge_m == null || ex.spielfeld_breite_m == null)
+  )
+    fehlt.add("spielfeld");
+  return fehlt;
 }

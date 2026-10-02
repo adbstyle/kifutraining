@@ -53,7 +53,7 @@ export default async function FassungBearbeitenPage({
   );
 
   return (
-    <Seitenrahmen breite="4xl" krumen={crumbs}>
+    <Seitenrahmen breite="6xl" geteilt krumen={crumbs}>
       <h1 className="sr-only">Übung bearbeiten</h1>
       <ExerciseForm
         action={updateFassung.bind(null, f.id, variante)}
