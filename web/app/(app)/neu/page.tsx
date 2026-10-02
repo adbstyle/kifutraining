@@ -35,7 +35,7 @@ export default async function NeuePage({
       : undefined;
 
   return (
-    <Seitenrahmen breite="6xl" krumen={[{ label: "Übungen", href: "/" }, { label: "Neue Übung" }]}>
+    <Seitenrahmen breite="4xl" krumen={[{ label: "Übungen", href: "/" }, { label: "Neue Übung" }]}>
       {/* Kopf wie im Trainings-Editor: Brotkrumen, darunter der Name als
           Kopf-Feld der Maske. Die Überschrift trägt die Seite unsichtbar. */}
       <h1 className="sr-only">Neue Übung</h1>

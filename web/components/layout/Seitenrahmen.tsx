@@ -33,6 +33,7 @@ export function Seitenrahmen({
   kopfImDruck,
   druckVoll,
   spalte,
+  geteilt = false,
   children,
 }: {
   breite: keyof typeof BREITE;
@@ -43,24 +44,32 @@ export function Seitenrahmen({
   /** Auf Papier die volle Breite ohne Rand — für die Druckansicht. */
   druckVoll?: boolean;
   /** Die zweite Spalte rechts neben dem Inhalt (Epic #350, `ZweiSpalten`):
-   *  ab `xl` daneben, schmaler nach dem Inhalt, auf Papier daneben. `breite`
-   *  gilt dann für beide Spalten zusammen. */
+   *  ab `xl` daneben, schmaler nach dem Inhalt, auf Papier daneben. Setzt
+   *  `geteilt` mit. */
   spalte?: ReactNode;
+  /** Ab `xl` eine geteilte Fläche: Die Seite füllt Breite und Höhe des
+   *  Fensters und scrollt nicht selbst — das tun die Spalten darin
+   *  (`ZweiSpalten`). Die Maske setzt es selbst, weil ihr Formular die Spalten
+   *  trägt; es wächst dann als einziges Kind auf die freie Höhe. `breite` gilt
+   *  darunter. */
+  geteilt?: boolean;
   children: ReactNode;
 }) {
+  const flaeche = geteilt || !!spalte;
   return (
     <main
       className={cn(
         "px-4 py-8 sm:px-6 sm:py-10 lg:pt-0",
         BREITE[breite],
         druckVoll && "print:max-w-none print:px-0 print:py-0",
+        flaeche && "xl:flex xl:h-dvh xl:max-w-none xl:flex-col xl:pb-0 print:block print:h-auto",
       )}
     >
       {krumen && (
-        <SeitenKopf krumen={krumen} aktionen={aktionen} imDruck={kopfImDruck} className="mb-6" />
+        <SeitenKopf krumen={krumen} aktionen={aktionen} imDruck={kopfImDruck} className="pb-6" />
       )}
       {spalte ? (
-        <ZweiSpalten spalte={spalte} druckDaneben>
+        <ZweiSpalten spalte={spalte} druckDaneben className="xl:min-h-0 xl:flex-1">
           {children}
         </ZweiSpalten>
       ) : (

@@ -80,20 +80,25 @@ Feld-Diagramm, ein Foto oder beides. Das Diagramm zeichnet der Trainer direkt in
 Erfassen wie beim Bearbeiten; beides ist freiwillig, und die Übung wird mit einem einzigen
 Speichern samt Diagramm gesichert.
 
-Die Maske ist aufgebaut wie die Detailseite einer Übung: links der Inhalt, rechts die
-Einordnung. Oben stehen die Brotkrumen — beim Erfassen „Übungen › Neue Übung" —, darunter der Name
-als Überschrift, die sich direkt beschreiben lässt, wie der Trainingsname im Trainings-Editor.
-Links folgen das „Feld-Diagramm" mit der Zeichenfläche, die „Beschreibung" mit Ablauf und
-Varianten und ganz am Schluss das „Foto". Rechts steht die „Einordnung": Altersstufe,
-Alterskategorie, der Trainingsteil — im Kinderfussball-Hauptteil samt Hauptteilkategorie, im
-Juniorenfussball samt Block, jeweils in einem Feld —, Feldtyp oder Spielfeldgrösse, die Anzahl
-Spieler:innen, Übungstyp und Erscheinungsform, darunter das „Material". Herkunft und Sichtbarkeit setzt die
-Detailseite, die Altersstufe einer bestehenden Übung ändert nur das Überführen. Inhalt und Einordnung
-werden zusammen mit einem Speichern gesichert. Auf einem schmalen Bildschirm steht die
-Einordnung vor dem Inhalt — sie bestimmt, ob der Ablauf als Fahrplan oder als Beschreibung
-verlangt ist —, zusammengehörige Felder stehen dort paarweise, auf dem Telefon untereinander.
-Dieselbe Maske gilt beim Erfassen, beim Bearbeiten einer eigenen Übung und für eine Übung im
-Training.
+Oben stehen die Brotkrumen — beim Erfassen „Übungen › Neue Übung" —, darunter der Name als
+Überschrift, die sich direkt beschreiben lässt, wie der Trainingsname im Trainings-Editor. Die
+„Einordnung" umfasst Altersstufe, Alterskategorie, den Trainingsteil — im Kinderfussball-Hauptteil
+samt Hauptteilkategorie, im Juniorenfussball samt Block, jeweils in einem Feld —, Feldtyp oder
+Spielfeldgrösse, die Anzahl Spieler:innen, Übungstyp und Erscheinungsform. Herkunft und
+Sichtbarkeit setzt die Detailseite, die Altersstufe einer bestehenden Übung ändert nur das
+Überführen. Inhalt und Einordnung werden zusammen mit einem Speichern gesichert.
+
+Beim Erfassen führt die Maske Schritt für Schritt durch eine Spalte: zuerst die Einordnung — sie
+bestimmt, welche Felder folgen und ob der Ablauf als Fahrplan oder als Beschreibung verlangt
+ist —, dann das „Feld-Diagramm" mit der Zeichenfläche, die „Beschreibung" mit Ablauf und
+Varianten, das „Material" und zuletzt das „Foto". Zusammengehörige Felder stehen paarweise
+nebeneinander, auf dem Telefon untereinander.
+
+Beim Bearbeiten — einer eigenen Übung wie einer Übung im Training — ist die Maske aufgebaut wie
+die Übungsseite: links der Inhalt mit Feld-Diagramm, Beschreibung und Foto, rechts die Einordnung
+samt Material. Das Speichern steht rechts neben dem Namen. Auf einem breiten Bildschirm ist sie
+geteilt: Name und Speichern stehen fest, darunter scrollen Inhalt und Einordnung je für sich. Auf einem schmalen Bildschirm steht die
+Einordnung vor dem Inhalt.
 
 Bis dahin ist nichts gesichert. Will der Trainer die Maske mit ungesicherten Angaben oder einer
 ungesicherten Zeichnung verlassen — über einen Link, einen Eintrag der Seitenleiste, den Zurück-Knopf des
@@ -116,9 +121,9 @@ Varianten stehen unmittelbar nach dem Ablauf, ob er als Freitext oder als Fahrpl
 
 Die Seite einer Übung trennt Inhalt und Einordnung. Links stehen Name, Bild oder Diagramm, der
 Ablauf und die Varianten; rechts daneben steht gesammelt, wie die Übung eingeordnet ist:
-Altersstufe, Alterskategorien, Herkunft, Trainingsteil und im Juniorenfussball der Block,
+Altersstufe, Alterskategorien, Trainingsteil und im Juniorenfussball der Block,
 im Kinderfussball-Hauptteil die Hauptteilkategorie, Feldtyp oder Spielfeldgrösse, die Anzahl
-Spieler:innen, Übungstyp, Erscheinungsformen und das Material. Keine dieser Angaben steht im
+Spieler:innen, Übungstyp, Erscheinungsformen, das Material und zuletzt die Herkunft. Keine dieser Angaben steht im
 Inhalt ein zweites Mal; wer eine Übung öffnet, sieht auf einen Blick, wofür sie taugt, und liest
 Bild und Ablauf ohne Unterbrechung. Gezeigt wird, was die Übung erfasst hat. Nur die
 Eigentümerin sieht zusätzlich, was ihre Übung tragen könnte, aber noch nicht erfasst hat: die
@@ -133,8 +138,10 @@ Abschluss im Juniorenfussball heissen wie ihr einziger Block und stehen darum ei
 die Eigentümerin den Hinweis dazu in der Einordnung, beim Material, und entscheidet dort, ob sie
 den neuen Vorschlag übernimmt oder ihr Material beibehält.
 
-Auf einem schmalen Bildschirm steht die Einordnung nach dem Inhalt, auf einem breiten daneben.
-Tastatur und Sprachausgabe erreichen sie in beiden Fällen nach dem Inhalt.
+Auf einem breiten Bildschirm ist die Seite geteilt: Inhalt und Einordnung füllen das Fenster,
+jede Seite scrollt für sich, und die Breite der Einordnung lässt sich ziehen (siehe Navigation,
+Seitenaufbau). Auf einem schmalen Bildschirm steht die Einordnung nach dem Inhalt. Tastatur und
+Sprachausgabe erreichen sie in beiden Fällen nach dem Inhalt.
 
 ## Material
 
@@ -313,9 +320,9 @@ langen Kante. Trägt eine Übung beides, zeigt sie das Diagramm; das Foto bleibt
 Jede Übung, die ein Trainer ansehen darf, lässt sich einzeln ausdrucken — auch ohne Konto und
 ohne dafür ein Training anzulegen. Das Blatt ist aufgeteilt wie die Übungsseite am Bildschirm:
 links Name, Bild oder Diagramm, Ablauf und Varianten, rechts daneben in einer schmaleren Spalte
-die Einordnung mit Altersstufe, Alterskategorien, Herkunft, Trainingsteil oder Block, im
+die Einordnung mit Altersstufe, Alterskategorien, Trainingsteil oder Block, im
 Kinderfussball-Hauptteil dessen Kategorie, Feldtyp oder Spielfeldgrösse, der Anzahl
-Spieler:innen, Übungstyp, Erscheinungsformen und dem Material. Auf dem Papier steht in der
+Spieler:innen, Übungstyp, Erscheinungsformen, dem Material und der Herkunft. Auf dem Papier steht in der
 Einordnung jeder Wert unter seiner Bezeichnung statt daneben, damit die schmale Spalte lesbar
 bleibt. Was die Übung nicht führt, erscheint auch nicht; fehlen Bild und Diagramm, steht dort eine
 leere Feld-Skizze. Eine Dauer trägt das Blatt nie, weil eine Übung in der Bibliothek keine hat.

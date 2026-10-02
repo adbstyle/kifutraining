@@ -85,9 +85,6 @@ export function EinordnungsLeiste({
           </span>
         </Eigenschaft>
       )}
-      <Eigenschaft label="Herkunft">
-        <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
-      </Eigenschaft>
       <Eigenschaft label="Trainingsteil">{teil}</Eigenschaft>
       {block && <Eigenschaft label="Block">{block}</Eigenschaft>}
       {ex.hauptteilkategorie && (
@@ -126,6 +123,11 @@ export function EinordnungsLeiste({
           <MaterialListe liste={materialListe} ergaenzung={ex.material} />
         </Eigenschaft>
       )}
+      {/* Zuletzt: Woher die Übung stammt, ordnet sie am wenigsten ein
+          (PO 2026-10-02). */}
+      <Eigenschaft label="Herkunft">
+        <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
+      </Eigenschaft>
     </Eigenschaften>
   );
 }

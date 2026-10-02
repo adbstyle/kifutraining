@@ -10,6 +10,9 @@ export interface HeadlineFieldProps
   /** Fehlerzustand: Die Kontur steht dann auch in Ruhe, in der Fehlerfarbe —
    *  ein leeres Pflichtfeld wäre sonst unsichtbar. */
   error?: boolean;
+  /** Die Schrift der Überschrift, die das Feld ersetzt: `headline` (Vorgabe,
+   *  Trainingsname) oder `title` (Name einer Übung, wie auf ihrer Seite). */
+  schrift?: "headline" | "title";
 }
 
 /* Kopf-Feld — die Überschrift selbst ist das Eingabefeld.
@@ -67,13 +70,14 @@ export interface HeadlineFieldProps
  * Verwendung:
  *   <HeadlineField aria-label="Name des Trainings" value={…} onChange={…} onBlur={…} /> */
 export const HeadlineField = forwardRef<HTMLInputElement, HeadlineFieldProps>(
-  ({ className, error = false, ...props }, ref) => (
+  ({ className, error = false, schrift = "headline", ...props }, ref) => (
     <input
       ref={ref}
       type="text"
       aria-invalid={error || undefined}
       className={cn(
-        "type-headline-medium -mx-2 w-[calc(100%+1rem)] rounded-flaeche kontur bg-transparent px-2 py-1 text-on-surface outline-none",
+        schrift === "title" ? "type-title-large" : "type-headline-medium",
+        "-mx-2 w-[calc(100%+1rem)] rounded-flaeche kontur bg-transparent px-2 py-1 text-on-surface outline-none",
         "placeholder:text-on-surface-mittel",
         "transition-colors duration-150",
         "hover:bg-elev-04 focus:bg-transparent",

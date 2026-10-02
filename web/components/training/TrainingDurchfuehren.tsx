@@ -163,7 +163,8 @@ export function TrainingDurchfuehren({
   if (sections.length === 0) {
     return (
       <main className="max-w-2xl px-4 py-16 sm:px-6 lg:pt-0">
-        <SeitenKopf krumen={crumbs} className="mb-6" />
+        {/* Läuft nicht mit: Die Blöcke unten kleben selbst oben (#350). */}
+        <SeitenKopf krumen={crumbs} mitlaufend={false} className="mb-6" />
         <h1 className="type-headline-small text-center text-on-surface">
           {training.name}
         </h1>
@@ -194,7 +195,7 @@ export function TrainingDurchfuehren({
       <header className="mb-4">
         {/* Der Rückweg steht zuoberst — wie auf jeder anderen Trainingsseite.
             Im Druck hat er nichts verloren (OOS 2). */}
-        <SeitenKopf krumen={crumbs} className="mb-3" />
+        <SeitenKopf krumen={crumbs} mitlaufend={false} className="mb-3" />
         {termin && <TerminKopf termin={termin} className="mb-3" />}
         <p className="type-label-medium text-on-surface-mittel">{training.name}</p>
         {/* Unter dem Trainingsnamen und über dem Abschnitt: Die Variante gilt

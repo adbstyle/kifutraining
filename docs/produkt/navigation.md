@@ -42,10 +42,22 @@ Jede Seite beginnt links neben der Leiste, nichts steht zentriert in der Mitte. 
 Übungen, Trainings, Teams und der Bereich eines Teams — nutzen die ganze Breite des Fensters;
 die Kacheln reihen sich so dicht, wie Platz ist, auf einem breiten Bildschirm also in mehr
 Spalten. Formulare und Seiten zum Lesen, etwa eine Übung oder ein Training, behalten eine
-angenehme Lesebreite und stehen ebenfalls links. Auch die Durchführung steht links. Die Seite
-einer Übung und ihre Maske haben rechts neben dem Inhalt eine zweite Spalte mit der Einordnung;
-der Inhalt behält dabei seine Lesebreite. Ist das Fenster dafür zu schmal, steht die Einordnung
-auf der Übungsseite nach dem Inhalt, in der Maske davor.
+angenehme Lesebreite und stehen ebenfalls links. Auch die Durchführung steht links.
+
+Ab Laptop-Breite bleibt die Kopfzeile mit den Brotkrumen und den Aktionen der Seite beim
+Scrollen oben stehen. Einzig die Durchführung lässt sie mitlaufen; dort kleben stattdessen die
+Überschriften der Blöcke oben. Auf einem Telefon klebt nur die Zeile mit dem Menüknopf — die
+Brotkrumen brechen dort um und nähmen sonst zu viel vom Bildschirm.
+
+Die Seite einer Übung und ihre Bearbeitungsmaske sind auf einem breiten Bildschirm geteilt: links der
+Inhalt, rechts die Einordnung. Beide füllen dann die ganze Breite und Höhe des Fensters, und
+jede Seite der Teilung scrollt für sich — wer im Ablauf liest, behält die Einordnung im Blick,
+und in der Maske bleibt das Speichern unten stehen. Die Einordnung wächst mit dem Fenster etwas
+mit; zwischen beiden liegt eine Trennlinie, an der sich die Breite der Einordnung ziehen lässt,
+mit der Maus oder per Pfeiltaste. Ein Doppelklick stellt die übliche Breite wieder her. Die
+gewählte Breite gilt für alle geteilten Seiten und bleibt auf dem Gerät gespeichert. Ist das
+Fenster dafür zu schmal, scrollt die Seite als Ganzes, der Inhalt behält seine Lesebreite, und
+die Einordnung steht auf der Übungsseite nach dem Inhalt, in der Maske davor.
 
 ## Auf schmalen Bildschirmen
 
