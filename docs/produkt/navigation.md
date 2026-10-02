@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-10-01. Wie man sich in der Anwendung bewegt.
+Stand 2026-10-02. Wie man sich in der Anwendung bewegt.
 
 ## Die Seitenleiste
 
@@ -81,4 +81,7 @@ ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
 
 Wird jemand von einem anderen Konto in ein Team aufgenommen, erscheint das Team in der Leiste
 erst beim nächsten Neuladen oder nach der nächsten eigenen Aktion. Breit oder schmal merkt
-sich jeder Browser für sich, nicht das Konto.
+sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite der Einordnung auf den
+geteilten Seiten. Die Teilung gibt es nur auf breiten Bildschirmen; auf einem Tablet im
+Hochformat oder einem Telefon steht alles untereinander, und die Breite lässt sich dort nicht
+ziehen.
