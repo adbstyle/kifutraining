@@ -819,7 +819,8 @@ export function ExerciseForm({
   const speichern = (
     <div className="flex items-center gap-3">
       {fussnote && <p className="type-body-small text-on-surface-mittel">{fussnote}</p>}
-      <Button type="submit" disabled={isPending || isCompressing}>
+      {/* Neben dem Namen klein, am Schluss der Schritte mittel. */}
+      <Button type="submit" size={geteilt ? "sm" : "md"} disabled={isPending || isCompressing}>
         {isCompressing
           ? "Foto wird optimiert …"
           : isPending
