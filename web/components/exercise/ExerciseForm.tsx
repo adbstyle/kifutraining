@@ -72,6 +72,11 @@ import { compressImage } from "@/lib/image-compress";
  *  schmalen Spalte rechts, dort untereinander. */
 const PAAR_LEISTE = "grid gap-5 sm:grid-cols-2 sm:items-start xl:grid-cols-1";
 
+/** Was über und unter beiden Spalten steht (Name, Meldungen, Speichern), so
+ *  breit wie sie: gestapelt in der Lesebreite des Inhalts, ab `xl` über
+ *  Inhalt und Einordnung zusammen. */
+const UEBER_BEIDEN = "max-w-4xl xl:max-w-none";
+
 /** Die Namenszeile über einer Feldgruppe (Anzahl, Spielfeldgrösse, feste
  *  Altersstufe) — dieselben Klassen wie `SpielfeldgroesseField` und
  *  `AltersstufeField` sie tragen. */
@@ -687,7 +692,11 @@ export function ExerciseForm({
       }}
       className="flex flex-col gap-10"
     >
-      {state.message && <Banner tone="fehler">{state.message}</Banner>}
+      {state.message && (
+        <Banner tone="fehler" className={UEBER_BEIDEN}>
+          {state.message}
+        </Banner>
+      )}
 
       <VerlassenWarnung
         // Während des Speicherns nicht: Die Weiterleitung nach dem Speichern
@@ -705,14 +714,14 @@ export function ExerciseForm({
           bereits die Zielstufe, die Übung liegt aber unverändert in der
           Datenbank (Story 4 PC 5). Der Hinweis sagt, was noch fehlt. */}
       {umwandlung && (
-        <Banner>
+        <Banner className={UEBER_BEIDEN}>
           Umwandlung vorgemerkt — sie wird mit «Umwandeln und speichern» wirksam.
         </Banner>
       )}
 
       {/* Der Name ist die Überschrift der Maske — dasselbe Kopf-Feld wie der
           Trainingsname im Editor. Die echte Überschrift setzt die Seite. */}
-      <div>
+      <div className={UEBER_BEIDEN}>
         <HeadlineField
           aria-label="Name der Übung"
           name="name"
@@ -730,7 +739,7 @@ export function ExerciseForm({
       </div>
 
       {/* Links der Inhalt — Bild, Ablauf, Foto —, rechts die Einordnung. */}
-      <ZweiSpalten spalte={einordnung} spalteZuerst>
+      <ZweiSpalten spalte={einordnung} spalteZuerst beiseite={false}>
         <div className="flex flex-col gap-10">
           <FormAbschnitt titel="Feld-Diagramm (optional)">
             <DiagrammFeld
@@ -847,7 +856,7 @@ export function ExerciseForm({
         </div>
       </ZweiSpalten>
 
-      <div className="flex items-center gap-3 border-t border-linie pt-5">
+      <div className={`flex items-center gap-3 border-t border-linie pt-5 ${UEBER_BEIDEN}`}>
         <Button type="submit" size="lg" disabled={isPending || isCompressing}>
           {isCompressing
             ? "Foto wird optimiert …"

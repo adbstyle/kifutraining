@@ -8,18 +8,16 @@ import {
   KategorieChip,
   MaterialListe,
 } from "@/components/ui";
-import {
-  altersstufe as altersstufeLabels,
-  hauptteilkategorie as hkatLabels,
-  uebungstyp as uebungstypLabels,
-} from "@/lib/vocab";
+import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import {
   ANZAHL_SPIELER_LABEL,
   EINORDNUNG_LABEL,
   ERSCHEINUNGSFORM_LABEL,
   anzahlSpielerText,
+  hauptteilkategorieText,
+  uebungstypText,
 } from "@/lib/labels";
-import { einordnungenFuer, teilDerEinordnung } from "@/lib/altersstufe";
+import { einordnungenFuer } from "@/lib/altersstufe";
 import { fehlendeEinordnung, feldAngaben } from "@/lib/eckdaten";
 import { hatMaterial, parseMaterialListe } from "@/lib/material";
 import { sortStufen } from "@/lib/training";
@@ -32,14 +30,15 @@ function teilUndBlock(ex: Pick<ExerciseDetail, "altersstufe" | "trainingsteil">)
   teil: string;
   block: string | null;
 } {
-  const teil = teilDerEinordnung(ex.altersstufe, ex.trainingsteil);
-  const gruppe = einordnungenFuer(ex.altersstufe).find((g) => g.teil === teil);
+  const roh = EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
+  // Nur die Gruppe, die die Einordnung wirklich enthält: Ein unbekannter Slug
+  // steht roh da, statt still als erster Teil zu erscheinen.
+  const gruppe = einordnungenFuer(ex.altersstufe).find(
+    (g) => g.teil === ex.trainingsteil || g.bloecke.some((b) => b.slug === ex.trainingsteil),
+  );
   return {
-    teil: gruppe?.label ?? EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil,
-    block:
-      gruppe && gruppe.bloecke.length > 1
-        ? EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil
-        : null,
+    teil: gruppe?.label ?? roh,
+    block: gruppe && gruppe.bloecke.length > 1 ? roh : null,
   };
 }
 
@@ -93,8 +92,7 @@ export function EinordnungsLeiste({
       {block && <Eigenschaft label="Block">{block}</Eigenschaft>}
       {ex.hauptteilkategorie && (
         <Eigenschaft label="Hauptteilkategorie">
-          {hkatLabels[ex.hauptteilkategorie as keyof typeof hkatLabels] ??
-            ex.hauptteilkategorie}
+          {hauptteilkategorieText(ex.hauptteilkategorie)}
         </Eigenschaft>
       )}
       {feldtyp && <Eigenschaft label="Feldtyp">{feldtyp}</Eigenschaft>}
@@ -104,8 +102,7 @@ export function EinordnungsLeiste({
       {anzahl && <Eigenschaft label={ANZAHL_SPIELER_LABEL}>{anzahl}</Eigenschaft>}
       {ex.uebungstyp && (
         <Eigenschaft label="Übungstyp">
-          {uebungstypLabels[ex.uebungstyp as keyof typeof uebungstypLabels] ??
-            ex.uebungstyp}
+          {uebungstypText(ex.uebungstyp)}
         </Eigenschaft>
       )}
       {fehlt.has("uebungstyp") && <EigenschaftFehlt label="Übungstyp" />}

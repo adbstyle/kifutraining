@@ -95,83 +95,108 @@ export default async function ExerciseDetailPage({
   // ihn nicht mehr. Der Inhaltsbereich trägt nur noch Titel, Bild, Ablauf und
   // Varianten.
   const leiste = (
-    <EinordnungsLeiste
-      ex={ex}
-      // Fehlende Einordnung sieht nur, wer sie nachtragen kann (#352).
-      fehlendeZeigen={isOwner}
-      materialHinweis={
-        materialHinweis.length > 0 && (
-          // Hat eine Diagrammänderung das Material verändert (Story #269)? Nur
-          // die Eigentümerin sieht es — sie allein kann antworten. Die
-          // Entscheidung bleibt auf der Detailseite (PO 2026-10-01).
-          <AenderungBanner
-            aenderungen={materialHinweis}
-            actions={
-              <>
-                <form action={behalteMaterial.bind(null, ex.id)}>
-                  <Button type="submit" variant="text" size="sm">
-                    {AENDERUNG_BEIBEHALTEN}
-                  </Button>
-                </form>
-                <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
-                  <Button type="submit" variant="text" size="sm">
-                    {AENDERUNG_UEBERNEHMEN}
-                  </Button>
-                </form>
-              </>
-            }
+    <>
+      <EinordnungsLeiste
+        ex={ex}
+        // Fehlende Einordnung sieht nur, wer sie nachtragen kann (#352).
+        fehlendeZeigen={isOwner}
+        materialHinweis={
+          materialHinweis.length > 0 && (
+            // Hat eine Diagrammänderung das Material verändert (Story #269)? Nur
+            // die Eigentümerin sieht es — sie allein kann antworten. Die
+            // Entscheidung bleibt auf der Detailseite (PO 2026-10-01).
+            <AenderungBanner
+              aenderungen={materialHinweis}
+              actions={
+                <>
+                  <form action={behalteMaterial.bind(null, ex.id)}>
+                    <Button type="submit" variant="text" size="sm">
+                      {AENDERUNG_BEIBEHALTEN}
+                    </Button>
+                  </form>
+                  <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
+                    <Button type="submit" variant="text" size="sm">
+                      {AENDERUNG_UEBERNEHMEN}
+                    </Button>
+                  </form>
+                </>
+              }
+            />
+          )
+        }
+      />
+      {/* Quellen-/Urheberangabe (Manual), nur am Bildschirm. Sie steht unter
+          der Einordnung, bei der Herkunft — schmal damit am Ende der Seite,
+          nicht zwischen Inhalt und Einordnung. */}
+      {ex.source === "manual" && (
+        <p className="mt-5 flex items-start gap-2 px-1 print:hidden">
+          <BookOpen
+            size={18}
+            strokeWidth={2}
+            className="mt-0.5 shrink-0 text-on-surface-mittel"
+            aria-hidden
           />
-        )
-      }
-    />
+          <span className="type-body-small text-on-surface-mittel">
+            Übung nach dem{" "}
+            <strong className="text-on-surface">Manual Kinderfussball</strong>{" "}
+            des Schweizerischen Fussballverbands (SFV) — Aufbau und Regeln aus dem
+            Manual, Text in eigener Formulierung.
+          </span>
+        </p>
+      )}
+    </>
+  );
+
+  // Aktions-Cluster auf der Brotkrumen-Zeile, rechtsbündig — dieselbe Stelle
+  // wie beim Training (#249 AK 8); der Titel behält so die volle Breite.
+  // Drucken · Stift · Globus · Herz · ⋮. Drucken steht ausserhalb der
+  // Anmelde-Bedingung: eine Übung lässt sich auch ohne Konto ausdrucken (Story
+  // #114 AK 3). Owner sieht alle Aktionen, sonstige angemeldete User nur den
+  // Favoriten. Im Druck ist der ganze Cluster weg — auf dem Blatt hat kein
+  // Bedienelement etwas verloren (Postcondition 5).
+  const aktionen = (
+    <div className="ml-auto flex shrink-0 items-center gap-0.5 print:hidden">
+      <PrintButton variant="icon" size="sm" />
+      {(isOwner || user) && (
+        <>
+          {isOwner ? (
+            <OwnerActions
+              id={ex.id}
+              slug={ex.slug}
+              name={ex.name}
+              visibility={ex.visibility}
+              favoriteSlot={
+                <FavoriteButton
+                  exerciseId={ex.id}
+                  initial={favorited}
+                  size="sm"
+                />
+              }
+            />
+          ) : (
+            <>
+              {/* Kopieren (Story 7, Übungswelten) — hier an einer
+                  fremden oder kuratierten Übung; die eigene wird über das
+                  ⋮-Menü der Eigentümer-Aktionen kopiert (#171). */}
+              <UebungKopierenButton exerciseId={ex.id} name={ex.name} />
+              <FavoriteButton
+                exerciseId={ex.id}
+                initial={favorited}
+                size="sm"
+              />
+            </>
+          )}
+        </>
+      )}
+    </div>
   );
 
   return (
-    <Seitenrahmen breite="6xl" krumen={crumbs} spalte={leiste}>
+    <Seitenrahmen breite="6xl" krumen={crumbs} aktionen={aktionen} spalte={leiste}>
       {flash && <Flash message={flash} param={FLASH_PARAMS} />}
 
-      <header className="flex items-start gap-4">
-        <h1 className="type-headline-large min-w-0 flex-1 text-on-surface">{ex.name}</h1>
-        {/* Aktions-Cluster rechts: Drucken · Stift · Globus · Herz · ⋮.
-            Drucken steht ausserhalb der Anmelde-Bedingung: eine Übung lässt
-            sich auch ohne Konto ausdrucken (Story #114 AK 3). Owner sieht
-            alle Aktionen, sonstige angemeldete User nur den Favoriten.
-            Im Druck ist der ganze Cluster weg — auf dem Blatt hat kein
-            Bedienelement etwas verloren (Postcondition 5). */}
-        <div className="mt-1 flex shrink-0 items-center gap-0.5 print:hidden">
-          <PrintButton variant="icon" size="sm" />
-          {(isOwner || user) && (
-            <>
-              {isOwner ? (
-                <OwnerActions
-                  id={ex.id}
-                  slug={ex.slug}
-                  name={ex.name}
-                  visibility={ex.visibility}
-                  favoriteSlot={
-                    <FavoriteButton
-                      exerciseId={ex.id}
-                      initial={favorited}
-                      size="sm"
-                    />
-                  }
-                />
-              ) : (
-                <>
-                  {/* Kopieren (Story 7, Übungswelten) — hier an einer
-                      fremden oder kuratierten Übung; die eigene wird über das
-                      ⋮-Menü der Eigentümer-Aktionen kopiert (#171). */}
-                  <UebungKopierenButton exerciseId={ex.id} name={ex.name} />
-                  <FavoriteButton
-                    exerciseId={ex.id}
-                    initial={favorited}
-                    size="sm"
-                  />
-                </>
-              )}
-            </>
-          )}
-        </div>
+      <header>
+        <h1 className="type-headline-large text-on-surface">{ex.name}</h1>
       </header>
 
       {/* Aktives Bild — gezeichnetes Diagramm, Foto oder Platzhalter */}
@@ -181,7 +206,9 @@ export default async function ExerciseDetailPage({
           bildUrl={ex.bild_url}
           diagramm={ex.diagramm}
           bildQuelle={ex.bild_quelle}
-          sizes="(max-width: 896px) 100vw, 896px"
+          // Ab `xl` steht das Bild in der Spalte neben der Einordnung,
+          // höchstens rund 800 px breit.
+          sizes="(min-width: 1280px) 800px, (max-width: 896px) 100vw, 896px"
         />
       </div>
 
@@ -243,23 +270,6 @@ export default async function ExerciseDetailPage({
         )}
       </footer>
 
-      {/* Quellen-/Urheberangabe (Manual), nur am Bildschirm */}
-      {ex.source === "manual" && (
-        <footer className="mt-12 flex items-start gap-2 border-t border-linie pt-5 print:hidden">
-          <BookOpen
-            size={18}
-            strokeWidth={2}
-            className="mt-0.5 shrink-0 text-on-surface-mittel"
-            aria-hidden
-          />
-          <p className="type-body-small text-on-surface-mittel">
-            Übung nach dem{" "}
-            <strong className="text-on-surface">Manual Kinderfussball</strong>{" "}
-            des Schweizerischen Fussballverbands (SFV) — Aufbau und Regeln aus dem
-            Manual, Text in eigener Formulierung.
-          </p>
-        </footer>
-      )}
     </Seitenrahmen>
   );
 }

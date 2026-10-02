@@ -16,30 +16,37 @@ import { cn } from "@/lib/cn";
  *
  * `druckDaneben`: Auf Papier bleibt die Spalte daneben, schmaler als am
  * Schirm (Übungsblatt).
+ *
+ * `beiseite`: Die Spalte ist ergänzender Inhalt (`aside`, Übungsseite). In der
+ * Maske trägt sie Pflichtfelder und ist darum ein gewöhnlicher Block — eine
+ * Vorlesehilfe soll sie nicht als Nebensache ankündigen.
  */
 export function ZweiSpalten({
   spalte,
   spalteZuerst = false,
   druckDaneben = false,
+  beiseite = true,
   children,
   className,
 }: {
   spalte: ReactNode;
   spalteZuerst?: boolean;
   druckDaneben?: boolean;
+  beiseite?: boolean;
   children: ReactNode;
   className?: string;
 }) {
   const inhalt = <div className="min-w-0 max-w-4xl xl:col-start-1 xl:row-start-1">{children}</div>;
+  const Spalte = beiseite ? "aside" : "div";
   const rechts = (
-    <aside
+    <Spalte
       className={cn(
         "min-w-0 max-w-4xl xl:col-start-2 xl:row-start-1",
         druckDaneben && "print:col-start-2 print:row-start-1",
       )}
     >
       {spalte}
-    </aside>
+    </Spalte>
   );
   return (
     <div

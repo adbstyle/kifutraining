@@ -1,7 +1,4 @@
-import {
-  feldtyp as feldtypLabels,
-  hauptteilkategorie as hauptteilkategorieLabels,
-} from "@/lib/vocab";
+import { feldtyp as feldtypLabels } from "@/lib/vocab";
 import {
   traegtErscheinungsform,
   traegtFeldtyp,
@@ -11,6 +8,7 @@ import {
 import {
   EINORDNUNG_LABEL,
   SPIELER_BEGRIFF,
+  hauptteilkategorieText,
   SPIELER_KURZ,
   anzahlSpielerText,
   spielfeldText,
@@ -64,9 +62,7 @@ export function feldAngaben(ex: EckdatenQuelle): {
  *    Massen genügen die Masse. */
 export function uebungEckdaten(ex: EckdatenQuelle): Eckdatum[] {
   const einordnung = ex.hauptteilkategorie
-    ? hauptteilkategorieLabels[
-        ex.hauptteilkategorie as keyof typeof hauptteilkategorieLabels
-      ] ?? ex.hauptteilkategorie
+    ? hauptteilkategorieText(ex.hauptteilkategorie)
     : EINORDNUNG_LABEL[ex.trainingsteil] ?? ex.trainingsteil;
   const { feldtyp, spielfeld } = feldAngaben(ex);
   const feld = spielfeld ?? feldtyp;
