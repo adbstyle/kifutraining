@@ -118,9 +118,9 @@ Varianten stehen unmittelbar nach dem Ablauf, ob er als Freitext oder als Fahrpl
 
 Die Seite einer Übung trennt Inhalt und Einordnung. Links stehen Name, Bild oder Diagramm, der
 Ablauf und die Varianten; rechts daneben steht gesammelt, wie die Übung eingeordnet ist:
-Altersstufe, Alterskategorien, Herkunft, Trainingsteil und im Juniorenfussball der Block,
+Altersstufe, Alterskategorien, Trainingsteil und im Juniorenfussball der Block,
 im Kinderfussball-Hauptteil die Hauptteilkategorie, Feldtyp oder Spielfeldgrösse, die Anzahl
-Spieler:innen, Übungstyp, Erscheinungsformen und das Material. Keine dieser Angaben steht im
+Spieler:innen, Übungstyp, Erscheinungsformen, das Material und zuletzt die Herkunft. Keine dieser Angaben steht im
 Inhalt ein zweites Mal; wer eine Übung öffnet, sieht auf einen Blick, wofür sie taugt, und liest
 Bild und Ablauf ohne Unterbrechung. Gezeigt wird, was die Übung erfasst hat. Nur die
 Eigentümerin sieht zusätzlich, was ihre Übung tragen könnte, aber noch nicht erfasst hat: die
@@ -317,9 +317,9 @@ langen Kante. Trägt eine Übung beides, zeigt sie das Diagramm; das Foto bleibt
 Jede Übung, die ein Trainer ansehen darf, lässt sich einzeln ausdrucken — auch ohne Konto und
 ohne dafür ein Training anzulegen. Das Blatt ist aufgeteilt wie die Übungsseite am Bildschirm:
 links Name, Bild oder Diagramm, Ablauf und Varianten, rechts daneben in einer schmaleren Spalte
-die Einordnung mit Altersstufe, Alterskategorien, Herkunft, Trainingsteil oder Block, im
+die Einordnung mit Altersstufe, Alterskategorien, Trainingsteil oder Block, im
 Kinderfussball-Hauptteil dessen Kategorie, Feldtyp oder Spielfeldgrösse, der Anzahl
-Spieler:innen, Übungstyp, Erscheinungsformen und dem Material. Auf dem Papier steht in der
+Spieler:innen, Übungstyp, Erscheinungsformen, dem Material und der Herkunft. Auf dem Papier steht in der
 Einordnung jeder Wert unter seiner Bezeichnung statt daneben, damit die schmale Spalte lesbar
 bleibt. Was die Übung nicht führt, erscheint auch nicht; fehlen Bild und Diagramm, steht dort eine
 leere Feld-Skizze. Eine Dauer trägt das Blatt nie, weil eine Übung in der Bibliothek keine hat.
