@@ -15,8 +15,10 @@ import { SlimSchalter } from "./AppRahmen";
  * einer Linie mit der Marke. Ein langer Pfad darf umbrechen, dann wächst sie.
  * Die Seite setzt darum ab `lg` keinen oberen Rand vor sie.
  *
- * Sie bleibt beim Scrollen oben stehen (Epic #350) — unter `lg` unter der
- * Kopfzeile mit dem Menüknopf (56 px). Ihre Fläche ist der Grund der Seite, so
+ * Ab `lg` bleibt sie beim Scrollen oben stehen (Epic #350). Schmaler nicht:
+ * Dort klebt schon die Zeile mit dem Menüknopf, und die Brotkrumen brechen
+ * über mehrere Zeilen — beides zusammen nähme zu viel vom Fenster. Ihre
+ * Fläche ist der Grund der Seite, so
  * verschwindet der Inhalt darunter; den Abstand zum Inhalt setzt der Aufrufer
  * darum als Innenabstand, nicht als Rand. `mitlaufend={false}` für Seiten mit
  * eigenen klebenden Überschriften (Durchführung).
@@ -39,9 +41,11 @@ export function SeitenKopf({
 }) {
   return (
     <div
+      // Sagt dem Stilblatt, dass oben etwas klebt (`scroll-padding-top`).
+      data-kopf-klebt={mitlaufend || undefined}
       className={cn(
         "flex shrink-0 items-center gap-3 lg:min-h-16",
-        mitlaufend && "sticky top-14 z-20 bg-elev-00 max-lg:pt-3 lg:top-0 print:static",
+        mitlaufend && "lg:sticky lg:top-0 lg:z-20 lg:bg-elev-00 print:static",
         !imDruck && "print:hidden",
         className,
       )}

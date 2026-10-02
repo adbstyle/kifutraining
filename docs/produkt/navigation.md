@@ -44,9 +44,10 @@ die Kacheln reihen sich so dicht, wie Platz ist, auf einem breiten Bildschirm al
 Spalten. Formulare und Seiten zum Lesen, etwa eine Übung oder ein Training, behalten eine
 angenehme Lesebreite und stehen ebenfalls links. Auch die Durchführung steht links.
 
-Die Kopfzeile mit den Brotkrumen und den Aktionen der Seite bleibt beim Scrollen oben stehen,
-auf einem Telefon unter der Zeile mit dem Menüknopf. Einzig die Durchführung lässt sie
-mitlaufen; dort kleben stattdessen die Überschriften der Blöcke oben.
+Ab Laptop-Breite bleibt die Kopfzeile mit den Brotkrumen und den Aktionen der Seite beim
+Scrollen oben stehen. Einzig die Durchführung lässt sie mitlaufen; dort kleben stattdessen die
+Überschriften der Blöcke oben. Auf einem Telefon klebt nur die Zeile mit dem Menüknopf — die
+Brotkrumen brechen dort um und nähmen sonst zu viel vom Bildschirm.
 
 Die Seite einer Übung und ihre Bearbeitungsmaske sind auf einem breiten Bildschirm geteilt: links der
 Inhalt, rechts die Einordnung. Beide füllen dann die ganze Breite und Höhe des Fensters, und

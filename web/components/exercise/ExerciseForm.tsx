@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useActionState, startTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useActionState, startTransition } from "react";
 import { ArrowLeftRight } from "lucide-react";
 import {
   TextField,
@@ -166,6 +166,23 @@ export function ExerciseForm({
   vorlagenAusser?: string;
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
+  const formRef = useRef<HTMLFormElement>(null);
+  // Scheitert das Speichern an einem Feld, rückt es ins Bild: In der geteilten
+  // Maske scrollen die Spalten für sich, und das markierte Feld läge sonst
+  // irgendwo darin, während oben nur die Meldung steht. Gesucht wird das erste
+  // als ungültig markierte Feld, sonst der erste Fehlertext unter einem Feld
+  // (die Auswahlfelder markieren sich nur so) — sichtbar, nicht die Meldung
+  // und nicht ein Knopf in einem der Dialoge der Maske.
+  useEffect(() => {
+    if (state.status !== "error" || !state.errors || Object.keys(state.errors).length === 0) return;
+    const form = formRef.current;
+    const ziel =
+      form?.querySelector<HTMLElement>('[aria-invalid="true"]') ??
+      [...(form?.querySelectorAll<HTMLElement>(".text-error") ?? [])].find(
+        (el) => el.offsetParent !== null && !el.closest('dialog, [role="alert"], [role="status"]'),
+      );
+    ziel?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [state]);
   const err = state.errors ?? {};
 
   const [stufe, setStufe] = useState<Altersstufe>(initialeStufe);
@@ -834,6 +851,7 @@ export function ExerciseForm({
 
   return (
     <form
+      ref={formRef}
       onSubmit={handleSubmit}
       // Nur benannte Felder tragen Angaben; eine Suche in einem Dialog der
       // Maske (Vorlagen, Auswahllisten) ist keine.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { SPALTE_MAX, SPALTE_MIN, begrenzeSpalte } from "@/lib/spalte";
 import { useSeitenleiste } from "./AppRahmen";
@@ -17,8 +17,8 @@ const SCHRITT = 16;
  * scrollt nicht. Dafür braucht der Aufrufer eine Fläche fester Höhe
  * (`Seitenrahmen` mit `geteilt`). Die Spalte rechts wächst bis 26 rem mit dem
  * Fenster; zwischen beiden liegt ein Griff, mit dem der Trainer sie breiter
- * oder schmaler zieht — mit der Maus oder per Pfeiltaste, Doppelklick stellt
- * die Vorgabe wieder her. Die Wahl gilt für alle zweispaltigen Seiten
+ * oder schmaler zieht — mit der Maus oder per Pfeiltaste (Home/End: schmalste
+ * bzw. breiteste), Doppelklick stellt die Vorgabe wieder her. Die Wahl gilt für alle zweispaltigen Seiten
  * (Cookie, siehe `lib/spalte.ts`).
  *
  * Darunter stehen beide untereinander, der Inhalt in seiner Lesebreite
@@ -55,15 +55,35 @@ export function ZweiSpalten({
   // Während des Ziehens folgt die Breite nur hier; gespeichert wird beim
   // Loslassen, damit nicht jede Mausbewegung ein Cookie schreibt.
   const [ziehend, setZiehend] = useState<number | null>(null);
+  // Wo der Zug begann: Zeigerposition und Breite der Spalte. Die neue Breite
+  // ist die alte plus die Strecke — so bleibt die Linie unter dem Zeiger, und
+  // ein Klick ohne Bewegung ändert nichts.
+  const start = useRef<{ x: number; breite: number } | null>(null);
   const flaeche = useRef<HTMLDivElement>(null);
-  const rechtsRef = useRef<HTMLElement>(null);
+  // Die tatsächliche Breite der Spalte, auch ohne gezogene Wahl — für die
+  // Vorlesehilfe (`aria-valuenow`) und als Ausgangswert der Pfeiltasten.
+  const [gemessen, setGemessen] = useState<number | null>(null);
   const breite = ziehend ?? gespeichert;
 
-  const flaechenBreite = () => flaeche.current?.getBoundingClientRect().width ?? 0;
-  const ausZeiger = (clientX: number) => {
-    const rect = flaeche.current!.getBoundingClientRect();
-    return begrenzeSpalte(rect.right - clientX, rect.width);
+  /** Die Breite der Spur, die die Spalte belegt — aus dem Raster selbst,
+   *  unabhängig von Innenabständen und Rändern der Spalte. */
+  const spurBreite = () => {
+    const el = flaeche.current;
+    if (!el) return null;
+    const px = parseFloat(getComputedStyle(el).gridTemplateColumns.split(" ")[2] ?? "");
+    return Number.isFinite(px) ? Math.round(px) : null;
   };
+  const flaechenBreite = () => flaeche.current?.getBoundingClientRect().width ?? 0;
+
+  useEffect(() => {
+    const el = flaeche.current;
+    if (!el) return;
+    const messen = () => setGemessen(spurBreite());
+    messen();
+    const beobachter = new ResizeObserver(messen);
+    beobachter.observe(el);
+    return () => beobachter.disconnect();
+  }, [breite]);
 
   const scroll = "xl:h-full xl:overflow-y-auto xl:overscroll-contain xl:pb-10 print:h-auto print:overflow-visible print:pb-0";
   const inhalt = (
@@ -81,7 +101,6 @@ export function ZweiSpalten({
   const Spalte = beiseite ? "aside" : "div";
   const rechts = (
     <Spalte
-      ref={rechtsRef as React.RefObject<HTMLDivElement>}
       className={cn(
         "min-w-0 max-w-4xl xl:col-start-3 xl:row-start-1 xl:max-w-none xl:-mr-1 xl:pl-1 xl:pr-1",
         druckDaneben && "print:col-start-2 print:row-start-1",
@@ -98,30 +117,41 @@ export function ZweiSpalten({
       aria-label="Breite der Einordnung"
       aria-valuemin={SPALTE_MIN}
       aria-valuemax={SPALTE_MAX}
-      aria-valuenow={breite ?? undefined}
+      aria-valuenow={breite ?? gemessen ?? undefined}
       tabIndex={0}
       title="Ziehen, um die Breite zu ändern — Doppelklick stellt sie zurück"
       onPointerDown={(e) => {
+        const aktuell = breite ?? spurBreite();
+        if (aktuell === null) return;
         e.preventDefault();
         e.currentTarget.setPointerCapture(e.pointerId);
-        setZiehend(ausZeiger(e.clientX));
+        start.current = { x: e.clientX, breite: aktuell };
       }}
       onPointerMove={(e) => {
-        if (ziehend !== null) setZiehend(ausZeiger(e.clientX));
+        if (!start.current) return;
+        // Nach links ziehen macht die Spalte rechts breiter.
+        setZiehend(
+          begrenzeSpalte(start.current.breite + start.current.x - e.clientX, flaechenBreite()),
+        );
       }}
       onPointerUp={() => {
         if (ziehend !== null) setzeSpalte(ziehend);
+        start.current = null;
         setZiehend(null);
       }}
-      onPointerCancel={() => setZiehend(null)}
+      onPointerCancel={() => {
+        start.current = null;
+        setZiehend(null);
+      }}
       onDoubleClick={() => setzeSpalte(null)}
       onKeyDown={(e) => {
-        const aktuell = breite ?? rechtsRef.current?.getBoundingClientRect().width ?? SPALTE_MIN;
+        const aktuell = breite ?? spurBreite() ?? SPALTE_MIN;
+        // Wie beim Trennbalken üblich: Home = kleinster, End = grösster Wert.
         const ziel =
           e.key === "ArrowLeft" ? aktuell + SCHRITT
           : e.key === "ArrowRight" ? aktuell - SCHRITT
-          : e.key === "Home" ? SPALTE_MAX
-          : e.key === "End" ? SPALTE_MIN
+          : e.key === "Home" ? SPALTE_MIN
+          : e.key === "End" ? SPALTE_MAX
           : null;
         if (ziel === null) return;
         e.preventDefault();

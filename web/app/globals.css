@@ -428,15 +428,12 @@
 }
 
 @layer base {
-  /* Die Kopfzeile klebt oben (Epic #350): Springt der Browser zu einem Feld —
-     Fokus per Tab, Anker, Fehler —, hält er so viel Abstand, dass es nicht
-     unter ihr verschwindet. Unter `lg` liegt darüber noch die Zeile mit dem
-     Menüknopf (56 px), und die Brotkrumen brechen schneller um. */
-  html {
-    scroll-padding-top: 8.5rem;
-  }
+  /* Klebt die Kopfzeile oben (ab `lg`, Epic #350): Springt der Browser zu
+     einem Feld — Fokus per Tab, Anker, Fehler —, hält er so viel Abstand,
+     dass es nicht unter ihr verschwindet. Nur wo sie wirklich klebt, nicht
+     auf der Durchführung oder den Anmeldeseiten. */
   @media (min-width: 64rem) {
-    html {
+    html:has([data-kopf-klebt]) {
       scroll-padding-top: 6rem;
     }
   }
