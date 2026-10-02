@@ -48,7 +48,7 @@ Die Kopfzeile mit den Brotkrumen und den Aktionen der Seite bleibt beim Scrollen
 auf einem Telefon unter der Zeile mit dem Menüknopf. Einzig die Durchführung lässt sie
 mitlaufen; dort kleben stattdessen die Überschriften der Blöcke oben.
 
-Die Seite einer Übung und ihre Maske sind auf einem breiten Bildschirm geteilt: links der
+Die Seite einer Übung und ihre Bearbeitungsmaske sind auf einem breiten Bildschirm geteilt: links der
 Inhalt, rechts die Einordnung. Beide füllen dann die ganze Breite und Höhe des Fensters, und
 jede Seite der Teilung scrollt für sich — wer im Ablauf liest, behält die Einordnung im Blick,
 und in der Maske bleibt das Speichern unten stehen. Die Einordnung wächst mit dem Fenster etwas

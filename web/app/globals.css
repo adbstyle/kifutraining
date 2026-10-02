@@ -428,6 +428,19 @@
 }
 
 @layer base {
+  /* Die Kopfzeile klebt oben (Epic #350): Springt der Browser zu einem Feld —
+     Fokus per Tab, Anker, Fehler —, hält er so viel Abstand, dass es nicht
+     unter ihr verschwindet. Unter `lg` liegt darüber noch die Zeile mit dem
+     Menüknopf (56 px), und die Brotkrumen brechen schneller um. */
+  html {
+    scroll-padding-top: 8.5rem;
+  }
+  @media (min-width: 64rem) {
+    html {
+      scroll-padding-top: 6rem;
+    }
+  }
+
   body {
     font-family: var(--font-sans);
     /* Eine ruhige, gleichmässige Fläche — die Höhe soll die einzige
