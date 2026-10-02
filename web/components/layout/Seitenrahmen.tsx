@@ -66,7 +66,10 @@ export function Seitenrahmen({
       )}
     >
       {krumen && (
-        <SeitenKopf krumen={krumen} aktionen={aktionen} imDruck={kopfImDruck} className="pb-6" />
+        // Ab `lg` ist die Kopfzeile 64 px hoch, die Brotkrumen in ihrer Mitte —
+        // auf einer Linie mit der Marke der Seitenleiste —, und der Inhalt
+        // beginnt direkt darunter. Schmaler läuft sie mit und hält Abstand.
+        <SeitenKopf krumen={krumen} aktionen={aktionen} imDruck={kopfImDruck} className="mb-6 lg:mb-0" />
       )}
       {spalte ? (
         <ZweiSpalten spalte={spalte} druckDaneben className="xl:min-h-0 xl:flex-1">
