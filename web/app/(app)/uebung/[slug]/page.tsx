@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { BookOpen } from "lucide-react";
 import type { Metadata } from "next";
 import {
   type BreadcrumbItem,
@@ -129,19 +128,9 @@ export default async function ExerciseDetailPage({
           der Einordnung, bei der Herkunft — schmal damit am Ende der Seite,
           nicht zwischen Inhalt und Einordnung. */}
       {ex.source === "manual" && (
-        <p className="mt-5 flex items-start gap-2 px-1 print:hidden">
-          <BookOpen
-            size={18}
-            strokeWidth={2}
-            className="mt-0.5 shrink-0 text-on-surface-mittel"
-            aria-hidden
-          />
-          <span className="type-body-small text-on-surface-mittel">
-            Übung nach dem{" "}
-            <strong className="text-on-surface">Manual Kinderfussball</strong>{" "}
-            des Schweizerischen Fussballverbands (SFV) — Aufbau und Regeln aus dem
-            Manual, Text in eigener Formulierung.
-          </span>
+        <p className="type-body-small mt-5 px-1 text-on-surface-mittel print:hidden">
+          Übung nach dem Manual Kinderfussball des Schweizerischen Fussballverbands (SFV) —
+          Aufbau und Regeln aus dem Manual, Text in eigener Formulierung.
         </p>
       )}
     </>
