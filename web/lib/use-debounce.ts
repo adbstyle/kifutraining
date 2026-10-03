@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
    Rückgabe: der anzuzeigende Wert und der Setzer fürs onChange.
 
      const [wert, aendern] = useDebouncedWert(filters.q ?? "", (v) => setScalar("q", v));
-     <TextField dense value={wert} onChange={(e) => aendern(e.target.value)} … /> */
+     <TextField value={wert} onChange={(e) => aendern(e.target.value)} … /> */
 export function useDebouncedWert(
   initial: string,
   onCommit: (wert: string) => void,

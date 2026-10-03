@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ClipboardList } from "lucide-react";
-import { FilterChip, MultiSelect, Button, SearchField } from "@/components/ui";
+import { AuswahlFilter, Button, FilterChip, SearchField } from "@/components/ui";
 import { useDebouncedWert } from "@/lib/use-debounce";
 import { stufenOptionen } from "@/lib/filter-optionen";
 
@@ -68,11 +68,8 @@ export function TrainingFilterBar({
 
   return (
     // Eine durchgehende, umbrechende Zeile: Suchfeld zuerst, dann die Filter
-    // direkt dahinter angereiht. Labels stehen in den Feldern (ruhend als
-    // Beschriftung, geschwebt auf der Kontur), darum alle Elemente auf
-    // gleicher Höhe: 48 px, beim Feld über die dichte Bauform, beim Chip über
-    // `groesse="leiste"` statt über eine Klasse von aussen.
-    <div className="mb-6 flex flex-wrap items-center gap-3">
+    // direkt dahinter angereiht — alle Elemente 36 px hoch (Epic #363).
+    <div className="mb-6 flex flex-wrap items-center gap-2">
       <SearchField
         label="Nach Trainingsnamen suchen"
         labelVersteckt
@@ -83,22 +80,14 @@ export function TrainingFilterBar({
         className="w-full sm:w-72"
       />
 
-      <MultiSelect
+      <AuswahlFilter
         label="Alterskategorie"
         options={stufenOptionen}
         value={stufen}
         onChange={setStufen}
-        searchable={false}
-        placeholder="Alle Stufen"
-        className="w-full sm:w-64"
       />
       {showMine && (
-        <FilterChip
-          selected={mine}
-          onClick={toggleMine}
-          icon={ClipboardList}
-         
-        >
+        <FilterChip selected={mine} onClick={toggleMine} icon={ClipboardList}>
           Meine Trainings
         </FilterChip>
       )}

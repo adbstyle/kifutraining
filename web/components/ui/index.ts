@@ -73,3 +73,4 @@ export type { SearchFieldProps } from "./SearchField";
 export { PasswordField } from "./PasswordField";
 export type { PasswordFieldProps } from "./PasswordField";
 export { FeldGruppe, feldNameKlasse } from "./feld";
+export { FilterKnopf, AuswahlFilter } from "./FilterKnopf";

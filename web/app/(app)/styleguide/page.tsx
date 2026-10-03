@@ -37,6 +37,7 @@ import { ChoiceChipDemo } from "./ChoiceChipDemo";
 import { AuswahlListeDemo } from "./AuswahlListeDemo";
 import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
+import { FilterKnopfDemo } from "./FilterKnopfDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
@@ -2817,6 +2818,42 @@ export default function Styleguide() {
             </Eigenschaft>
           </Eigenschaften>
         </div>
+      </Section>
+
+      <Section n="29" title="Filterknopf">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Ein Filter ist ein Knopf mit seinem Namen</strong> (Epic
+          #363, nach dem Vorbild der Filter in Jira). Er nennt, <em>wonach</em>{" "}
+          gefiltert wird, und zählt, wie viele Werte gewählt sind;{" "}
+          <em>welche</em>, sieht man im geöffneten Panel. So bleibt eine
+          Filterleiste eine Zeile aus Wörtern — auf dem Handy umbrechend, aber
+          nie ein Stapel aus Feldern mit abgeschnittenen Wertlisten. Neu ist
+          der Baustein, weil die Mehrfachauswahl (17) ein Formularfeld ist: Sie
+          zeigt ihre Werte, weil sie dort die Eingabe <em>sind</em>; im Filter
+          sind sie nur ein Zustand der Übersicht.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Grenzt er ein, steht er getönt (Knopf-Variante <code>aktiv</code>,
+          dasselbe Kleid wie ein gewählter Chip) und trägt die Zahl als
+          Plakette — vorgelesen wird «Alterskategorie, 2 gewählt». Das Panel
+          ist breiter als der Knopf, wo der Inhalt es braucht (bis 34 rem; der
+          längste Übungstyp misst 484 px), und rückt am rechten Rand nach links
+          (<code>usePanelAnker</code>, geteilt mit der Mehrfachauswahl). Es ist
+          kein Menü und keine Listbox, sondern eine Gruppe gewöhnlicher
+          Bedienelemente: Kontrollkästchen im <code>AuswahlFilter</code>, ein
+          Zahlenfeld bei «Verfügbare Kinder». ↑/↓ wandern zwischen ihnen, Esc
+          schliesst und gibt den Fokus an den Knopf zurück. Eine Wahl wirkt
+          sofort, das Panel bleibt offen; Zahl und Suche wirken nach einer
+          Tipppause.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Die Suche steht in der Leiste ohne sichtbaren Namen, dafür umrandet
+          und mit Platzhalter (14) — ohne Kante stünde neben den umrandeten
+          Knöpfen ein Feld, das man nicht sieht. Schalter wie «Meine Übungen»
+          bleiben <code>FilterChip</code> (9): Sie haben kein Panel, nur an
+          und aus.
+        </p>
+        <FilterKnopfDemo />
       </Section>
     </Seitenrahmen>
   );

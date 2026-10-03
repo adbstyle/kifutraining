@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { FilterChip, MultiSelect, Button, SearchField, TextField } from "@/components/ui";
+import { AuswahlFilter, Button, FilterChip, FilterKnopf, SearchField, TextField } from "@/components/ui";
 import { useDebouncedWert } from "@/lib/use-debounce";
 import {
   einordnungFilterOptionen,
@@ -27,9 +27,10 @@ export type CatalogFilters = {
 };
 
 /* Such-/Filterleiste für den Übungspool — eine durchgehende, umbrechende Zeile
-   statt Sidebar, analog zur Trainings-Filter-Bar. Mehrfach-Dimensionen sind
-   MultiSelect-Dropdowns (Leerfall als ruhendes Label), Suche und
-   „Verfügbare Kinder" sind debounced Felder, Favoriten ein Toggle-Chip.
+   statt Sidebar, analog zur Trainings-Filter-Bar. Jede Dimension ist ein
+   Filterknopf mit Namen und Zahl (Epic #363), «Verfügbare Kinder» einer mit
+   einem Zahlenfeld im Panel; Suche und Kinderzahl wirken nach einer
+   Tipppause, «Meine Übungen» und Favoriten sind Schalter-Chips.
    URL ist die Quelle der Wahrheit: jede Änderung schreibt in die URL und löst
    eine neue Server-Abfrage aus. */
 export function CatalogFilterBar({
@@ -93,7 +94,7 @@ export function CatalogFilterBar({
     !!filters.mine;
 
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-3">
+    <div className="mb-6 flex flex-wrap items-center gap-2">
       <DebouncedSuche
         initial={filters.q ?? ""}
         label="Übungen durchsuchen"
@@ -101,64 +102,40 @@ export function CatalogFilterBar({
         onCommit={(v) => setScalar("q", v)}
       />
 
-      <MultiSelect
+      <AuswahlFilter
         label="Trainingsteil"
         options={einordnungFilterOptionen}
         value={filters.teil}
         onChange={(v) => setList("teil", v)}
-        searchable={false}
-        placeholder="Alle Trainingsteile"
-        className="w-full sm:w-56"
       />
-      <MultiSelect
+      <AuswahlFilter
         label="Alterskategorie"
         options={stufenOptionen}
         value={filters.kat}
         onChange={(v) => setList("kat", v)}
-        searchable={false}
-        placeholder="Alle Stufen"
-        className="w-full sm:w-52"
       />
-      <MultiSelect
+      <AuswahlFilter
         label="Feldtyp"
         options={feldOptionen}
         value={filters.feld}
         onChange={(v) => setList("feld", v)}
-        searchable={false}
-        placeholder="Alle Feldtypen"
-        className="w-full sm:w-48"
       />
-      <MultiSelect
+      <AuswahlFilter
         label="Erscheinungsform"
         options={formOptionen}
         value={filters.form}
         onChange={(v) => setList("form", v)}
-        searchable={false}
-        placeholder="Alle Erscheinungsformen"
-        className="w-full sm:w-64"
       />
-      <MultiSelect
+      <AuswahlFilter
         label="Übungstyp"
         options={typOptionen}
         value={filters.typ}
         onChange={(v) => setList("typ", v)}
-        searchable={false}
-        placeholder="Alle Übungstypen"
-        className="w-full sm:w-64"
       />
 
-      <DebouncedField
-        type="number"
-        inputMode="numeric"
-        min={1}
+      <KinderFilter
         initial={filters.kinder?.toString() ?? ""}
-        ariaLabel="Verfügbare Kinder"
-        title="Zeigt Übungen, die mit so vielen Kindern durchführbar sind."
-        /* Breiter als früher (w-40): Seit das Feld sein Label statt eines
-           Platzhalters trägt, muss «Verfügbare Kinder» in der Schrift des
-           Werts neben dem Icon hineinpassen, ohne an die rechte Kante zu
-           stossen. */
-        className="w-full sm:w-52"
+        gesetzt={filters.kinder}
         onCommit={(v) => setScalar("kinder", v)}
       />
 
@@ -183,37 +160,41 @@ export function CatalogFilterBar({
   );
 }
 
-/* Feld mit verzögerter Übernahme (300 ms) — schreibt erst nach der Tipppause
-   in die URL. Die Optik kommt aus dem Kit, hier bleibt nur die Verzögerung. */
-function DebouncedField({
+/* «Verfügbare Kinder» als Filterknopf: Der Knopf nennt die übernommene Zahl,
+   eingegeben wird sie im Panel — mit Tipppause (300 ms), wie die Suche. Der
+   Knopf zeigt den Wert aus der Adresse, nicht den gerade getippten: Er sagt,
+   was die Übersicht tatsächlich einschränkt. */
+function KinderFilter({
   initial,
+  gesetzt,
   onCommit,
-  ariaLabel,
-  className,
-  ...props
 }: {
   initial: string;
+  gesetzt?: number;
   onCommit: (value: string) => void;
-  ariaLabel: string;
-  className?: string;
-  type?: string;
-  inputMode?: "numeric";
-  min?: number;
-  title?: string;
 }) {
   const [wert, aendern] = useDebouncedWert(initial, onCommit);
+  const aktiv = gesetzt !== undefined;
 
   return (
-    <TextField
-      label={ariaLabel}
-      labelVersteckt
-      umrandet
-      placeholder={ariaLabel}
-      value={wert}
-      onChange={(e) => aendern(e.target.value)}
-      className={className}
-      {...props}
-    />
+    <FilterKnopf
+      label="Verfügbare Kinder"
+      aktiv={aktiv}
+      badge={gesetzt}
+      badgeLabel={aktiv ? `${gesetzt} Kinder` : undefined}
+      panelClassName="w-64 px-3 py-2"
+    >
+      <TextField
+        label="Anzahl Kinder"
+        type="number"
+        inputMode="numeric"
+        min={1}
+        umrandet
+        value={wert}
+        onChange={(e) => aendern(e.target.value)}
+        supportingText="Zeigt Übungen, die mit so vielen Kindern durchführbar sind."
+      />
+    </FilterKnopf>
   );
 }
 

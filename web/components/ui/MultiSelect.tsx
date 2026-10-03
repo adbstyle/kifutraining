@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { bedienzeile } from "./Menu";
 import { IconButton } from "./IconButton";
 import { Feld, hinweisIdVon, useFeldId } from "./feld";
+import { usePanelAnker } from "./use-panel-anker";
 import type { SelectOption } from "./Select";
 
 export interface MultiSelectProps {
@@ -33,14 +34,6 @@ export interface MultiSelectProps {
   id?: string;
   className?: string;
 }
-
-/* Die Masse des Panels in px. `PANEL_MAX_HOEHE` ist die Vorgabe (das frühere
-   `max-h-80`), `PANEL_MIN_HOEHE` die Untergrenze, unter die keine Messung
-   drücken darf — etwa zwei Zeilen plus Kopf und Fuss. `PANEL_ABSTAND` ist der
-   Spalt zwischen Feld und Panel, nach oben wie nach unten. */
-const PANEL_MAX_HOEHE = 320;
-const PANEL_MIN_HOEHE = 160;
-const PANEL_ABSTAND = 4;
 
 /* Mehrfachauswahl im Formular — der Name steht über dem Feld (`Feld`), der
    Auslöser ist ein Feldkasten (`feldkasten`) und zeigt die Auswahl als
@@ -86,25 +79,22 @@ export function MultiSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
-  // Wohin das Panel aufklappt und wie hoch es werden darf — gemessen, nicht
-  // gesetzt (siehe `messePlatz`). Bis zur ersten Messung gilt die Vorgabe:
-  // nach unten, volle Höhe.
-  const [platz, setPlatz] = useState<{ oben: boolean; maxHoehe: number }>({
-    oben: false,
-    maxHoehe: PANEL_MAX_HOEHE,
-  });
-
-  const rootRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLDivElement>(null);
+  // Aufklappen, Grösse, Klick daneben und Zuklappen beim Hinausscrollen —
+  // geteilt mit dem Filterknopf (siehe `usePanelAnker`).
+  const { wurzelRef, triggerRef, panelRef, messe, panelStil, panelLage } =
+    usePanelAnker<HTMLDivElement>({
+      offen: open,
+      onSchliessen: () => {
+        setOpen(false);
+        setQuery("");
+      },
+    });
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   // Nur Tastatur-Navigation soll die aktive Option ins Sichtfeld scrollen.
   // Hover setzt `active` ebenfalls — würde das scrollen, springt die Liste
   // bei jeder Mausbewegung (scrollIntoView auf der überlaufenden Liste).
   const kbdNav = useRef(false);
-  // Der Vorfahre, gegen den zuletzt gemessen wurde (null = das Sichtfeld).
-  // Solange das Panel offen ist, wird er beobachtet — siehe den Effekt unten.
-  const grenzRef = useRef<HTMLElement | null>(null);
 
   // Sichtbare (gefilterte) Optionen. Ohne Suche bleibt die volle Liste.
   const filtered = useMemo(() => {
@@ -147,63 +137,9 @@ export function MultiSelect({
     (searchable ? searchRef : triggerRef).current?.focus();
   }
 
-  /* Wie viel Raum das Panel wirklich hat — und auf welcher Seite.
-
-     Nötig, weil eine feste Höhe nur dort stimmt, wo unter dem Feld auch 320 px
-     liegen. Im Übungs-Picker etwa steht das Feld in einem nativen <dialog>;
-     der schrumpft auf seinen Inhalt und trägt aus der Browser-Vorgabe
-     `overflow: auto`. Ist die Trefferliste darunter kurz oder leer — also
-     genau dann, wenn jemand den Filter öffnet, um die Eingrenzung zu lockern
-     —, schnitt der Dialog die untere Hälfte des Panels ab, mitsamt seinem
-     Aktions-Footer.
-
-     Gemessen wird gegen den nächsten Vorfahren, der überhaupt abschneidet
-     (`overflow` ≠ `visible`), sonst gegen das Sichtfeld. Die Seite mit mehr
-     Raum gewinnt; die Höhe ist der kleinere Wert aus Vorgabe und dem, was dort
-     hinpasst. Die Liste im Panel scrollt ohnehin — ein knapperes Panel zeigt
-     also weniger auf einmal, verliert aber nichts. */
-  function messePlatz(): boolean {
-    const t = triggerRef.current;
-    if (!t) return true;
-    const feld = t.getBoundingClientRect();
-
-    let grenze = { top: 0, bottom: window.innerHeight };
-    let grenzElement: HTMLElement | null = null;
-    for (let el = t.parentElement; el; el = el.parentElement) {
-      if (getComputedStyle(el).overflow !== "visible") {
-        const r = el.getBoundingClientRect();
-        grenze = {
-          top: Math.max(grenze.top, r.top),
-          bottom: Math.min(grenze.bottom, r.bottom),
-        };
-        grenzElement = el;
-        break;
-      }
-    }
-    grenzRef.current = grenzElement;
-
-    const unten = grenze.bottom - feld.bottom - PANEL_ABSTAND;
-    const oben = feld.top - grenze.top - PANEL_ABSTAND;
-    const nachOben = unten < Math.min(PANEL_MAX_HOEHE, oben);
-    setPlatz({
-      oben: nachOben,
-      // Nie unter die Untergrenze: Lieber ragt das Panel ein Stück hinaus, als
-      // dass es auf einen unbedienbaren Spalt zusammenfällt.
-      maxHoehe: Math.max(
-        PANEL_MIN_HOEHE,
-        Math.min(PANEL_MAX_HOEHE, nachOben ? oben : unten),
-      ),
-    });
-
-    // Liegt das Feld selbst noch im sichtbaren Bereich? Ist es ganz
-    // hinausgescrollt, hilft keine Messung mehr: Das Panel hängt am Feld und
-    // ist mit ihm draussen. Der Aufrufer entscheidet, was dann zu tun ist.
-    return feld.bottom > grenze.top && feld.top < grenze.bottom;
-  }
-
   function openPanel() {
     if (disabled) return;
-    messePlatz();
+    messe();
     setOpen(true);
   }
   function closePanel() {
@@ -232,76 +168,6 @@ export function MultiSelect({
     kbdNav.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, open]);
-
-  // Die Messung beim Öffnen ist eine Momentaufnahme — sie veraltet, sobald
-  // sich darunter etwas verschiebt. Solange das Panel offen ist, wird sie
-  // darum an den drei Wegen nachgezogen, auf denen sich seine Geometrie
-  // überhaupt ändern kann:
-  //
-  // 1. `scroll` am Dokument, in der Capture-Phase. Das Scroll-Ereignis steigt
-  //    nicht auf, wenn ein Kasten im Inneren scrollt statt der Seite — beim
-  //    Abwärtsfangen erwischt man beide. Der häufigste Fall überhaupt: Ein
-  //    nach oben geklapptes Panel wandert beim Weiterscrollen aus dem oberen
-  //    Rand, bis nur noch ein Streifen dasteht.
-  // 2. Grösse des Vorfahren, gegen den gemessen wurde (`ResizeObserver`). Der
-  //    scharfe Fall steht im Übungs-Picker: Das Panel bleibt nach einer Wahl
-  //    bewusst offen, und genau diese Wahl kürzt die Trefferliste unter ihm —
-  //    der Dialog schrumpft auf seinen Inhalt, die Kante wandert nach oben,
-  //    und das eben noch passende Panel ragt hinaus.
-  // 3. `resize` am Fenster — Fenstergrösse wie Drehung des Geräts.
-  //
-  // Scrollt das Feld ganz aus dem Bild, wird zugeklappt statt nachgemessen:
-  // Das Panel hängt am Feld und ist mit ihm draussen — ein Streifen davon am
-  // Rand wäre nur noch ein Rest ohne seinen Bezug. Der Fokus bleibt dabei, wo
-  // er ist (kein `closePanel`), sonst risse das Zuklappen die Seite an eine
-  // Stelle zurück, von der der Nutzer gerade weggescrollt ist.
-  //
-  // Gemessen wird höchstens einmal pro Bild: `scroll` feuert dicht, und die
-  // Messung liest Layout (`getBoundingClientRect`, `getComputedStyle` über die
-  // Vorfahren). Kein Rückkopplungsrisiko: Das Panel ist absolut positioniert
-  // und ändert die Grösse des beobachteten Elements nicht.
-  useEffect(() => {
-    if (!open) return;
-    let bild = 0;
-    const nachmessen = () => {
-      if (bild) return;
-      bild = requestAnimationFrame(() => {
-        bild = 0;
-        if (!messePlatz()) {
-          setOpen(false);
-          setQuery("");
-        }
-      });
-    };
-    document.addEventListener("scroll", nachmessen, true);
-    window.addEventListener("resize", nachmessen);
-    const beobachter = grenzRef.current
-      ? new ResizeObserver(nachmessen)
-      : null;
-    if (beobachter && grenzRef.current) beobachter.observe(grenzRef.current);
-    return () => {
-      if (bild) cancelAnimationFrame(bild);
-      document.removeEventListener("scroll", nachmessen, true);
-      window.removeEventListener("resize", nachmessen);
-      beobachter?.disconnect();
-    };
-    // `messePlatz` liest nur Refs und ruft `setPlatz` — beide über Renders
-    // hinweg stabil, eine veraltete Closure kann hier nichts Falsches tun.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  // Outside-Click schliesst und setzt die Suche zurück.
-  useEffect(() => {
-    if (!open) return;
-    function onDoc(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        setQuery("");
-      }
-    }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [open]);
 
   // Listen-Navigation — geteilt von Suchfeld (searchable) und Trigger (sonst).
   function onNavKey(e: React.KeyboardEvent) {
@@ -364,7 +230,7 @@ export function MultiSelect({
     // werden als ein langer Wert — der bricht dann um, statt das Raster zu
     // sprengen.
     <Feld id={fid} label={label} hinweis={supportingText} error={error} className={cn("min-w-0", className)}>
-      <div ref={rootRef} className="relative">
+      <div ref={wurzelRef} className="relative">
         {/* Ohne Suche ist der Auslöser die Combobox (treibt die Liste), mit
             Suche ein Button, der das Panel öffnet (Fokus springt dann ins
             Suchfeld). Die gewählten Werte stehen durch Komma getrennt im Feld
@@ -386,7 +252,7 @@ export function MultiSelect({
           }
           onClick={() => {
             if (disabled) return;
-            if (!open) messePlatz();
+            if (!open) messe();
             setOpen((o) => !o);
           }}
           onKeyDown={onTriggerKey}
@@ -414,10 +280,11 @@ export function MultiSelect({
 
         {open && (
           <div
-            style={{ maxHeight: platz.maxHoehe }}
+            ref={panelRef}
+            style={panelStil}
             className={cn(
               "absolute z-50 flex w-full flex-col overflow-hidden rounded-flaeche border border-linie bg-elev-08 shadow-dp-08",
-              platz.oben ? "bottom-full mb-1" : "top-full mt-1",
+              panelLage,
             )}
           >
             {searchable && (

@@ -7,7 +7,7 @@ import {
   Dialog,
   KategorieChip,
   HerkunftBadge,
-  MultiSelect,
+  AuswahlFilter,
   IconButton,
   Badge,
   Banner,
@@ -190,9 +190,7 @@ export function ExercisePickerDialog({
       title={`Übung hinzufügen — ${ziel}`}
       /* Breiter als die 28rem des Kit-Dialogs. Der Dialog trägt eine
          Trefferliste, deren Zeilen Name, Alterskategorien und Herkunft
-         nebeneinander führen, und darüber Felder, deren Optionen ganze Sätze
-         sind — der längste misst 484 px. Mit 52rem bleiben innen 784 px: die
-         Sätze passen ganz, und die Trefferzeilen bekommen Luft. */
+         nebeneinander führen; mit 52rem bekommen sie Luft. */
       className="w-[min(52rem,calc(100vw-2rem))]"
     >
       <div className="flex flex-col gap-4">
@@ -204,84 +202,48 @@ export function ExercisePickerDialog({
           <Badge tone="neutral">{altersstufeLabels[altersstufe]}</Badge>
         </div>
 
-        {/* Suche aus dem Kit. Offen statt gefüllt: Das Feld liegt im Dialog,
-            und eine eigene Fläche darunter ginge in der Höhenleiter abwärts —
-            die Kontur umreisst es, der Dialoggrund bleibt stehen. Dicht, weil
-            der Dialog seine Höhe für die Trefferliste braucht. */}
-        <SearchField
-          label="Übungen durchsuchen"
-          labelVersteckt
-          umrandet
-          placeholder="Übungen durchsuchen"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
-
-        {/* Die eingrenzenden Dimensionen als Mehrfachauswahl des Kits — eine
-            umbrechende Zeile, beide Felder gleich breit. Aufgeklappte
-            Chip-Reihen standen hier früher: Die Junioren-Erscheinungsformen
-            sind ganze Sätze, elf davon füllten den Dialog, bevor die erste
-            Übung zu sehen war. Die Trefferliste ist der Inhalt dieses Dialogs,
-            nicht das Filtervokabular.
-            Welche Felder überhaupt erscheinen, entscheidet dasselbe Gating wie
+        {/* Suche und Filter aus dem Kit, in einer umbrechenden Zeile wie auf
+            den Übersichten (Epic #363). Die Suche trägt im Dialog eine
+            Kontur, ohne eigene Fläche — der Dialoggrund bleibt stehen.
+            Welche Filter überhaupt erscheinen, entscheidet dasselbe Gating wie
             am Übungsformular: Erscheinungsformen tragen nicht alle
             Einordnungen, den Übungstyp kennt nur der Juniorenfussball, dort nur
-            in den Blöcken mit Spielformen (Story 9 AC 6).
-            Anders als die Filterleiste des Katalogs behalten beide Felder die
-            Suche im Panel (`searchable` bleibt auf seinem Vorgabewert): Im
-            Dialog steht weniger Höhe zur Verfügung als auf der Katalogseite,
-            und die langen Satz-Labels finden sich so schneller. Der Übungstyp
-            mit seinen drei Werten braucht sie nicht, bekommt sie aber trotzdem
-            — zwei Felder, von denen sich nur eines durchsuchen lässt, wären
-            die grössere Irritation. */}
-        {(hatErscheinungsform || hatUebungstyp) && (
-          // Untereinander, nicht nebeneinander. Das Panel ist so breit wie sein
-          // Feld, und die Erscheinungsformen des Juniorenschemas sind ganze
-          // Sätze: Der längste braucht 484 px, nebeneinander blieben je 386 —
-          // sieben von elf Optionen brachen am Ende ab. Über die volle Breite
-          // passen alle elf. Zwei Felder nebeneinander unterzubringen wäre
-          // Ökonomie auf Kosten dessen, was in ihnen steht.
-          <div className="flex flex-col gap-3">
-            {hatErscheinungsform && (
-              <MultiSelect
-                label="Erscheinungsform"
-                options={formen}
-                value={form}
-                onChange={setForm}
-                placeholder="Alle Erscheinungsformen"
-              />
-            )}
-            {hatUebungstyp && (
-              <MultiSelect
-                label="Übungstyp"
-                options={uebungstypOptionen}
-                value={typ}
-                onChange={setTyp}
-                placeholder="Alle Übungstypen"
-              />
-            )}
-          </div>
-        )}
+            in den Blöcken mit Spielformen (Story 9 AC 6). Die Erscheinungsformen
+            des Juniorenschemas sind ganze Sätze; das Panel ist darum breiter als
+            sein Knopf, und jeder Satz bleibt ganz lesbar. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <SearchField
+            label="Übungen durchsuchen"
+            labelVersteckt
+            umrandet
+            placeholder="Übungen durchsuchen"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-full sm:w-72"
+          />
+          {hatErscheinungsform && (
+            <AuswahlFilter label="Erscheinungsform" options={formen} value={form} onChange={setForm} />
+          )}
+          {hatUebungstyp && (
+            <AuswahlFilter label="Übungstyp" options={uebungstypOptionen} value={typ} onChange={setTyp} />
+          )}
+        </div>
 
         {error && <Banner tone="fehler">{error}</Banner>}
 
         {/* Trefferliste. Die Mindesthöhe ist das, was dem Dialog seine Statur
             gibt: Ohne sie fällt er auf seinen Inhalt zusammen, sobald die Liste
-            kurz oder leer ist — und dann bleibt der Mehrfachauswahl darüber so
-            wenig Raum, dass ihr Panel auf zwei Zeilen zusammenschnurrt oder
-            nach oben über den Titel klappt. Sie hält ausserdem die Höhe ruhig:
+            kurz oder leer ist — und dann bleibt den Filtern darüber so wenig
+            Raum, dass ihr Panel auf zwei Zeilen zusammenschnurrt oder nach oben
+            über den Titel klappt. Sie hält ausserdem die Höhe ruhig:
             Der Dialog springt beim Eingrenzen nicht mehr auf und zu.
             Nach oben gedeckelt bleibt sie wie bisher; beide Schranken weichen
             auf kleinen Schirmen dem Sichtfeld.
             Bewusst in Kauf genommen: Auf einem Telefon im Querformat (gemessen
             844×390) wird der Dialog höher als das Sichtfeld und scrollt — von
-            der Trefferliste steht dann nur noch eine Zeile im Bild. Die feste
-            Kopfzone aus Titel, Badge, Suchfeld und den zwei Feldern misst rund
-            290 px und schrumpft nicht mit. Die Felder dafür erst ab einer
-            Sichtfeldhöhe zu stapeln hiesse, im Querformat das Abschneiden der
-            Optionen zurückzuholen — ein Tausch, kein Gewinn. Ein Training wird
-            am Schreibtisch oder im Hochformat zusammengestellt; dort stimmt
-            das Bild. */}
+            der Trefferliste stehen dann nur wenige Zeilen im Bild. Ein Training
+            wird am Schreibtisch oder im Hochformat zusammengestellt; dort
+            stimmt das Bild. */}
         <ul className="-mx-2 flex min-h-[min(20rem,45vh)] max-h-[min(24rem,50vh)] flex-col overflow-y-auto">
           {loading && results.length === 0 ? (
             <li className="flex flex-1 items-center justify-center px-2 py-6 text-center type-body-medium text-on-surface-mittel">
