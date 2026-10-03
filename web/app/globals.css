@@ -349,38 +349,39 @@
 }
 
 /* ─── Typo-Skala ──────────────────────────────────────────────────────
-   Display und Headline versal und leicht gesperrt: eine Neo-Grotesk
-   trägt Versalien eng, mehr als 3.5 % risse die Wörter auseinander.
-   Titel bekommen dafür ein negatives Tracking, damit sie kompakt
-   bleiben. Label stehen ebenfalls versal, gehen aber den umgekehrten
-   Weg und trennen sich gerade dadurch von den Headlines: ein Gewicht
-   TIEFER (600) und mit 8–10 % rund dreimal so weit gesperrt. Bei 700
-   und engem Tracking läsen sie sich als Headlines in Miniatur.
+   Display, Headline und Titel stehen in normaler Schreibung und im
+   selben Gewicht (600, Epic #363): Die Rangfolge trägt die Grösse, nicht
+   die Wucht. Eine Neo-Grotesk in Gemischtschreibung will eng stehen,
+   darum laufen die grossen Stufen mit leicht negativem Tracking — je
+   grösser, desto enger. So erscheinen auch Namen, die Trainer:innen
+   selbst erfassen, in Überschriften genau so, wie sie sie geschrieben
+   haben. Versal bleiben nur die Label: kleiner, mit 8–10 % weit
+   gesperrt und damit deutlich von jeder Überschrift geschieden.
    `tabular-nums` auf jeder Label-Stufe, weil Label zählen — Dauern,
    Zählungen, Positionsnummern fluchten sonst nicht. */
 @utility type-display-large {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 57px; line-height: 60px; letter-spacing: 0.035em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 57px; line-height: 60px; letter-spacing: -0.02em;
 }
 @utility type-display-medium {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 45px; line-height: 50px; letter-spacing: 0.035em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 45px; line-height: 50px; letter-spacing: -0.02em;
 }
 @utility type-display-small {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 36px; line-height: 42px; letter-spacing: 0.03em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 36px; line-height: 42px; letter-spacing: -0.02em;
 }
 @utility type-headline-large {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 32px; line-height: 38px; letter-spacing: 0.03em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 32px; line-height: 38px; letter-spacing: -0.015em;
 }
 @utility type-headline-medium {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 28px; line-height: 34px; letter-spacing: 0.03em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 28px; line-height: 34px; letter-spacing: -0.015em;
 }
 @utility type-headline-small {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 24px; line-height: 30px; letter-spacing: 0.025em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 24px; line-height: 30px; letter-spacing: -0.01em;
 }
 @utility type-title-large {
   font-family: var(--font-sans); font-weight: 600; text-transform: none;
@@ -448,10 +449,9 @@
 
   h1, h2, h3, h4 {
     font-family: var(--font-sans);
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    line-height: 1.05;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
   }
 
   ::selection {

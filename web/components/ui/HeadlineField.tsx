@@ -50,14 +50,9 @@ export interface HeadlineFieldProps
  * `aria-label`. Und weil ein `<input>` keine Überschrift ist, gehört daneben
  * eine echte — sonst verlöre die Seite ihre Gliederung.
  *
- * Die Überschriften-Schrift des Hauses setzt in VERSALIEN, und dabei bleibt
- * es auch hier — obwohl der Wert Nutzertext ist und Chips ihn darum gemischt
- * setzen (`look="nutzertext"` in Chip.tsx). Der Trainer sieht seine eigene
- * Gross- und Kleinschreibung beim Tippen also nicht; gespeichert wird sie
- * unverfälscht. Bewusster Entscheid (#250 NFR 1, PO 2026-09-19): Der Kopf
- * soll dasselbe Schriftbild behalten wie vorher und wie die Ansichtsseite
- * daneben — eine Ausnahme für dieses eine Feld risse die Typografie der
- * Überschriften auseinander.
+ * Die Überschriften stehen in normaler Schreibung (Epic #363), darum sieht
+ * der Trainer seinen Namen beim Tippen genau so, wie er ihn schreibt — und
+ * wie ihn die Ansichtsseite danach zeigt.
  *
  * Keine Höhe in `h-*`: Das Feld wächst mit seiner Schrift und bleibt so in
  * jeder Zoomstufe so hoch wie die Überschrift, die es ersetzt. Der

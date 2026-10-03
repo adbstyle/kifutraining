@@ -295,12 +295,12 @@ const strichRollen: [string, string, string, string, string][] = [
 const kategorien: KategorieSlug[] = ["G", "F", "E", "D", "C", "B", "A"];
 
 const typeScale: [string, string, string][] = [
-  ["type-display-large", "Display Large", "Geist 700 · 57/60 · +.035 em · versal"],
-  ["type-display-medium", "Display Medium", "Geist 700 · 45/50 · +.035 em · versal"],
-  ["type-display-small", "Display Small", "Geist 700 · 36/42 · +.03 em · versal"],
-  ["type-headline-large", "Headline Large", "Geist 700 · 32/38 · +.03 em · versal"],
-  ["type-headline-medium", "Headline Medium", "Geist 700 · 28/34 · +.03 em · versal"],
-  ["type-headline-small", "Headline Small", "Geist 700 · 24/30 · +.025 em · versal"],
+  ["type-display-large", "Display Large", "Geist 600 · 57/60 · −.02 em"],
+  ["type-display-medium", "Display Medium", "Geist 600 · 45/50 · −.02 em"],
+  ["type-display-small", "Display Small", "Geist 600 · 36/42 · −.02 em"],
+  ["type-headline-large", "Headline Large", "Geist 600 · 32/38 · −.015 em"],
+  ["type-headline-medium", "Headline Medium", "Geist 600 · 28/34 · −.015 em"],
+  ["type-headline-small", "Headline Small", "Geist 600 · 24/30 · −.01 em"],
   ["type-title-large", "Title Large", "Geist 600 · 22/28 · −.01 em"],
   ["type-title-medium", "Title Medium", "Geist 600 · 16/24 · −.005 em"],
   ["type-title-small", "Title Small", "Geist 600 · 14/20"],
@@ -604,18 +604,19 @@ export default function Styleguide() {
           Label-Stufe bündig; dafür braucht es keine Monospace mehr.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Display und Headline stehen versal und leicht gesperrt: Eine
-          Neo-Grotesk trägt Versalien eng, mehr als 3.5 % risse die Wörter
-          auseinander. Titel bekommen dafür ein negatives Tracking, damit sie
-          kompakt bleiben.
+          Display, Headline und Titel stehen in normaler Schreibung und im
+          selben Gewicht (600): Die Rangfolge trägt die Grösse, nicht die
+          Wucht (Epic #363). Eine Neo-Grotesk in Gemischtschreibung will eng
+          stehen, darum laufen die grossen Stufen mit leicht negativem
+          Tracking — je grösser, desto enger. Namen, die Trainer:innen selbst
+          erfassen, erscheinen so in jeder Überschrift genau so, wie sie sie
+          geschrieben haben.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Label gehen den umgekehrten Weg und trennen sich damit von den
-          Headlines, obwohl beide versal stehen: ein Gewicht <em>tiefer</em> als
-          die Titel (600 statt 700) und mit 8–10 % rund dreimal so weit
-          gesperrt. Bei 700 und engem Tracking läsen sie sich als Headlines in
-          Miniatur; bei 400 verlöre die kleinste Stufe auf dem dunklen Grund
-          ihre Stämme — darum steht Label Small auf 500.
+          Label gehen den umgekehrten Weg: Sie allein stehen versal, klein und
+          mit 8–10 % weit gesperrt, und trennen sich so von jeder Überschrift.
+          Bei 400 verlöre die kleinste Stufe auf dem dunklen Grund ihre
+          Stämme — darum steht Label Small auf 500.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Regel: Nutzertext nie in Label-Typografie.</strong> Die{" "}
