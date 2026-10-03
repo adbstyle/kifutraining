@@ -247,6 +247,8 @@ export function TrainingAktionen({
 
   return (
     <>
+      {/* Rechtsbündig und im Druck ausgeblendet wird die Leiste von der
+          Kopfzeile (`SeitenKopf`) — ausserhalb von ihr fehlt beides. */}
       <div className="flex items-center gap-0.5">
         <Tooltip label="Durchführen">
           <IconButtonLink

@@ -34,7 +34,8 @@ Jede Seite zeigt zuoberst ihren Pfad als Brotkrumen, auch die Einstiegsseiten: d
 Knopf zum Verkleinern der Leiste. Die Zeile steht auf einer Höhe mit der Marke oben in der
 Leiste. In derselben Zeile stehen rechts die Aktionen der Seite: auf den Übersichten von
 Übungen, Trainings und Teams der Knopf zum Erstellen, auf Trainingsseiten die Aktionen am
-Training. Eine eigene Überschrift tragen die Übersichten nicht, ihren Namen nennt die Brotkrume. Im Druck
+Training. Eine sichtbare Überschrift tragen die Übersichten nicht, ihren Namen nennt die
+Brotkrume; für Screenreader steht er unsichtbar als Überschrift der Seite. Im Druck
 erscheint die Leiste nie; die Brotkrumen nur beim Drucken der Trainingsansicht aus dem
 Browser, damit auf dem Papier steht, wo das Training liegt.
 

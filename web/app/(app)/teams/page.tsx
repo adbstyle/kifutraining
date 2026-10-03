@@ -24,6 +24,8 @@ export default async function TeamsPage() {
 
   return (
     <Seitenrahmen breite="voll" krumen={[{ label: "Teams" }]} aktionen={<TeamErstellenButton />}>
+      {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
+      <h1 className="sr-only">Teams</h1>
       {teams.length === 0 ? (
         <Leerzustand icon={Users} titel="Noch kein Team">
           Lege ein Team an und nimm die Trainer:innen dazu, mit denen du

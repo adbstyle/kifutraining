@@ -54,6 +54,8 @@ export default async function TrainingsPage({
         )
       }
     >
+      {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
+      <h1 className="sr-only">{mine ? "Meine Trainings" : "Trainings"}</h1>
       {sp.deleted && <Flash message="Training gelöscht." param="deleted" />}
 
       <TrainingFilterBar q={q} stufen={stufen} mine={mine} showMine={!!user} />

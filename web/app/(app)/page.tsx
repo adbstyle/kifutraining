@@ -88,6 +88,8 @@ export default async function Home({
         )
       }
     >
+      {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
+      <h1 className="sr-only">{filters.mine ? "Meine Übungen" : "Übungen"}</h1>
       {sp.account_deleted && (
         <Flash
           message="Konto gelöscht. Deine öffentlichen Übungen bleiben anonym erhalten."
