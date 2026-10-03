@@ -370,8 +370,9 @@ liegen die Trainings, also der Bestand, aus dem geplant wird, und unter „Team"
 die Mitglieder samt Verlassen und Auflösen.
 
 Umbenannt wird das Team im Feld „Teamname" unter „Team". Gespeichert wird beim Verlassen des
-Felds, ohne Knopf und ohne Bestätigung. Ein leerer Name wird nicht gespeichert: Das Feld fällt
-auf den bisherigen Namen zurück, und eine Meldung am Bildschirmrand sagt warum.
+Felds, ohne Knopf und ohne Rückfrage; eine kurze Meldung am Bildschirmrand sagt, dass es
+geklappt hat. Ein leerer Name wird nicht gespeichert: Das Feld fällt auf den bisherigen Namen
+zurück, und die Meldung sagt warum. Dasselbe gilt, wenn das Speichern scheitert.
 
 Jede Ansicht hat ihre eigene Adresse, auch die Liste und der Monat des Trainingsplans samt dem
 gezeigten Monat und der Eingrenzung auf die eigenen Termine. Sie lässt sich einem Mitglied

@@ -18,7 +18,9 @@ import { useRef, useState } from "react";
  *    nächsten Aufruf gelten, nicht erst beim nächsten Rendern.
  * 3. Ändert sich der Wert von AUSSEN — nach einer Rücknahme durch den Server
  *    oder durch frische Serverdaten —, gilt er und nicht mehr, was im Feld
- *    steht.
+ *    steht. Ausnahme: Wer seither weitergeschrieben hat, behält seinen Text.
+ *    Er ist noch nicht gesendet und geht beim nächsten Verlassen hinaus; ihn
+ *    zu überschreiben hiesse, eine Eingabe mitten im Tippen zu verwerfen.
  *
  * Was ein gültiger Wert ist, bleibt beim Aufrufer (`pruefe`): Die Notiz darf
  * leer sein und heisst dann «keine Notiz», ein Trainingsname darf es nicht.
@@ -59,8 +61,11 @@ export function useBlurSpeichern({
   const [gesehen, setGesehen] = useState(wert);
 
   if (wert !== gesehen) {
+    // Weitergeschrieben: Nach dem letzten Senden (oder ohne eines) steht etwas
+    // anderes im Feld als der zuletzt gesehene Wert.
+    const weitergeschrieben = gesendet.current === undefined && entwurf !== gesehen;
     setGesehen(wert);
-    setEntwurfIntern(wert);
+    if (!weitergeschrieben) setEntwurfIntern(wert);
     gesendet.current = undefined;
   }
 

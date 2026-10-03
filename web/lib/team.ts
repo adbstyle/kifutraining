@@ -1,5 +1,9 @@
 /** Obergrenze eines Teamnamens in Zeichen (getrimmt gezählt). Gilt beim
- *  Anlegen wie beim Umbenennen. */
+ *  Anlegen wie beim Umbenennen.
+ *
+ *  Spiegel des CHECK auf `teams.name` (Migration `team_datenmodell`): Wer die
+ *  Grenze hier ändert, ändert sie dort mit — sonst nimmt das Feld an, was die
+ *  Datenbank abweist. */
 export const TEAM_NAME_MAX = 60;
 
 /** Was einem Teamnamen im Weg steht — `null`, wenn er sich speichern lässt.

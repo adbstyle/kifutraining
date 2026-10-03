@@ -57,7 +57,12 @@ export async function benenneTeamUm(teamId: string, name: string): Promise<TeamA
     .eq("id", teamId)
     .select("id")
     .maybeSingle();
-  if (error) return { ok: false, error: error.message };
+  // Die Rohmeldung der Datenbank ist englisch und erklärt dem Trainer nichts;
+  // sie gehört ins Log, nicht an den Bildschirmrand.
+  if (error) {
+    console.error("[team] umbenennen", error);
+    return { ok: false, error: "Der Teamname liess sich nicht speichern. Bitte erneut versuchen." };
+  }
   if (!data) return { ok: false, error: "Team nicht gefunden." };
 
   revalidiereTeam(teamId);

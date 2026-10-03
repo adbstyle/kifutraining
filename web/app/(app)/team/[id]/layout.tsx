@@ -10,8 +10,9 @@ export const metadata: Metadata = { title: "Team — KiFu", robots: { index: fal
 /* Der Rahmen um alle Ansichten eines Teams (Story 17).
  *
  * Hier steht, was in jeder Ansicht gleich ist: die Zugehörigkeitsprüfung, die
- * Brotkrumen mit dem Namen des Teams und der Umschalter. Damit lädt keine Ansicht diese Dinge
- * selbst, und der Wechsel zwischen ihnen tauscht nur den Inhalt aus.
+ * Brotkrumen mit dem Namen des Teams und der Umschalter. Damit lädt keine
+ * Ansicht diese Dinge selbst, und der Wechsel zwischen ihnen tauscht nur den
+ * Inhalt aus.
  *
  * Ein Team ist ausschliesslich seinen Mitgliedern sichtbar. Ob es nicht
  * existiert oder ob der USER nicht dazugehört, bleibt ununterscheidbar — die
