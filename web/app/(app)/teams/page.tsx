@@ -23,14 +23,9 @@ export default async function TeamsPage() {
   const teams = await getMeineTeams();
 
   return (
-    <Seitenrahmen breite="voll" krumen={[{ label: "Teams" }]}>
-      <header className="mb-8">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="type-title-large text-on-surface">Teams</h1>
-          <TeamErstellenButton />
-        </div>
-      </header>
-
+    <Seitenrahmen breite="voll" krumen={[{ label: "Teams" }]} aktionen={<TeamErstellenButton />}>
+      {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
+      <h1 className="sr-only">Teams</h1>
       {teams.length === 0 ? (
         <Leerzustand icon={Users} titel="Noch kein Team">
           Lege ein Team an und nimm die Trainer:innen dazu, mit denen du

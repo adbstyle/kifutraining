@@ -46,19 +46,17 @@ export default async function TrainingsPage({
       krumen={
         mine ? [{ label: "Trainings", href: "/trainings" }, { label: "Meine Trainings" }] : [{ label: "Trainings" }]
       }
+      aktionen={
+        user && (
+          <ButtonLink href="/training/neu" variant="filled" size="sm">
+            Training erstellen
+          </ButtonLink>
+        )
+      }
     >
+      {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
+      <h1 className="sr-only">{mine ? "Meine Trainings" : "Trainings"}</h1>
       {sp.deleted && <Flash message="Training gelöscht." param="deleted" />}
-
-      <header className="mb-8">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="type-title-large text-on-surface">Trainings</h1>
-          {user && (
-            <ButtonLink href="/training/neu" variant="filled" size="sm" className="shrink-0">
-              Training erstellen
-            </ButtonLink>
-          )}
-        </div>
-      </header>
 
       <TrainingFilterBar q={q} stufen={stufen} mine={mine} showMine={!!user} />
 

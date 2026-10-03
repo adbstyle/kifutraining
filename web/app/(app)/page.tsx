@@ -80,7 +80,16 @@ export default async function Home({
     <Seitenrahmen
       breite="voll"
       krumen={filters.mine ? [{ label: "Übungen", href: "/" }, { label: "Meine Übungen" }] : [{ label: "Übungen" }]}
+      aktionen={
+        user && (
+          <ButtonLink href="/neu" variant="filled" size="sm">
+            Übung erstellen
+          </ButtonLink>
+        )
+      }
     >
+      {/* Den Namen zeigt die Brotkrume; die Überschrift trägt die Seite unsichtbar. */}
+      <h1 className="sr-only">{filters.mine ? "Meine Übungen" : "Übungen"}</h1>
       {sp.account_deleted && (
         <Flash
           message="Konto gelöscht. Deine öffentlichen Übungen bleiben anonym erhalten."
@@ -88,17 +97,6 @@ export default async function Home({
         />
       )}
       {sp.deleted && <Flash message="Übung gelöscht." param="deleted" />}
-      <header className="mb-8">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="type-title-large text-on-surface">Übungen</h1>
-          {user && (
-            <ButtonLink href="/neu" variant="filled" size="sm" className="shrink-0">
-              Übung erstellen
-            </ButtonLink>
-          )}
-        </div>
-      </header>
-
       {error && (
         <Banner tone="fehler">
           Datenbank nicht erreichbar oder noch nicht geseedet:{" "}

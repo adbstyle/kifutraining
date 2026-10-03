@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-10-02. Wie man sich in der Anwendung bewegt.
+Stand 2026-10-03. Wie man sich in der Anwendung bewegt.
 
 ## Die Seitenleiste
 
@@ -32,7 +32,10 @@ sich der Browser und behält sie beim nächsten Besuch.
 Jede Seite zeigt zuoberst ihren Pfad als Brotkrumen, auch die Einstiegsseiten: der
 Übungsbestand etwa „Übungen", eine Übung „Übungen › Hauptteil › ‹Name›". Davor steht der
 Knopf zum Verkleinern der Leiste. Die Zeile steht auf einer Höhe mit der Marke oben in der
-Leiste. Auf Trainingsseiten stehen in derselben Zeile rechts die Aktionen am Training. Im Druck
+Leiste. In derselben Zeile stehen rechts die Aktionen der Seite: auf den Übersichten von
+Übungen, Trainings und Teams der Knopf zum Erstellen, auf Trainingsseiten die Aktionen am
+Training. Eine sichtbare Überschrift tragen die Übersichten nicht, ihren Namen nennt die
+Brotkrume; für Screenreader steht er unsichtbar als Überschrift der Seite. Im Druck
 erscheint die Leiste nie; die Brotkrumen nur beim Drucken der Trainingsansicht aus dem
 Browser, damit auf dem Papier steht, wo das Training liegt.
 

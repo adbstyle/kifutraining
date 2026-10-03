@@ -247,7 +247,9 @@ export function TrainingAktionen({
 
   return (
     <>
-      <div className="ml-auto flex shrink-0 items-center gap-0.5 print:hidden">
+      {/* Rechtsbündig und im Druck ausgeblendet wird die Leiste von der
+          Kopfzeile (`SeitenKopf`) — ausserhalb von ihr fehlt beides. */}
+      <div className="flex items-center gap-0.5">
         <Tooltip label="Durchführen">
           <IconButtonLink
             href={ziel(`/training/${trainingId}/durchfuehren`)}

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { revalidiereTeam } from "@/lib/revalidate";
+import { teamNameProblem } from "@/lib/team";
 import { eigeneBildPfade } from "@/lib/fassung";
 import { raeumeVerwaisteBilder, teamBildKandidaten } from "@/lib/storage-aufraeumen";
 
@@ -14,16 +15,11 @@ import { raeumeVerwaisteBilder, teamBildKandidaten } from "@/lib/storage-aufraeu
  * der RPC-Zustände in Klartext und die Cache-Invalidierung.
  */
 
-const MAX_NAME = 60;
-
 export type TeamActionResult = { ok: boolean; error?: string };
 
 function pruefeName(name: string): { ok: true; name: string } | { ok: false; error: string } {
-  const trimmed = name.trim();
-  if (!trimmed) return { ok: false, error: "Bitte einen Teamnamen angeben." };
-  if (trimmed.length > MAX_NAME)
-    return { ok: false, error: `Der Teamname darf höchstens ${MAX_NAME} Zeichen lang sein.` };
-  return { ok: true, name: trimmed };
+  const problem = teamNameProblem(name);
+  return problem ? { ok: false, error: problem } : { ok: true, name: name.trim() };
 }
 
 /** Ein Team anlegen; der Anlegende ist sofort Mitglied (Story 3). Team und
@@ -61,7 +57,12 @@ export async function benenneTeamUm(teamId: string, name: string): Promise<TeamA
     .eq("id", teamId)
     .select("id")
     .maybeSingle();
-  if (error) return { ok: false, error: error.message };
+  // Die Rohmeldung der Datenbank ist englisch und erklärt dem Trainer nichts;
+  // sie gehört ins Log, nicht an den Bildschirmrand.
+  if (error) {
+    console.error("[team] umbenennen", error);
+    return { ok: false, error: "Der Teamname liess sich nicht speichern. Bitte erneut versuchen." };
+  }
   if (!data) return { ok: false, error: "Team nicht gefunden." };
 
   revalidiereTeam(teamId);
