@@ -31,7 +31,7 @@ export function TeamErstellenButton() {
 
   return (
     <>
-      <Button variant="filled" size="sm" onClick={() => setOpen(true)}>
+      <Button variant="filled" onClick={() => setOpen(true)}>
         Team erstellen
       </Button>
 

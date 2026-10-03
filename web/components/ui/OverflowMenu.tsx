@@ -25,7 +25,6 @@ export function OverflowMenu({
   items,
   label = "Weitere Aktionen",
   tooltip = "Weitere Aktionen",
-  size = "sm",
   disabled,
   className,
 }: {
@@ -35,7 +34,6 @@ export function OverflowMenu({
   label?: string;
   /** Tooltip-Text; bleibt bewusst kurz, auch wenn `label` ausführlich ist. */
   tooltip?: string;
-  size?: "sm" | "md";
   disabled?: boolean;
   className?: string;
 }) {
@@ -50,7 +48,6 @@ export function OverflowMenu({
           ref={triggerRef}
           icon={MoreVertical}
           label={label}
-          size={size}
           disabled={disabled}
           aria-haspopup="menu"
           aria-expanded={offen}

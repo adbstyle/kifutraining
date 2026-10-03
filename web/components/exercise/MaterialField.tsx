@@ -174,7 +174,6 @@ export function MaterialField({
         <Button
           type="button"
           variant="quiet"
-          size="sm"
           onClick={() =>
             onZeilenChange([
               ...zeilen,
@@ -214,7 +213,7 @@ export function VorschlagBanner({
     <Banner
       icon={ListPlus}
       actions={
-        <Button type="button" variant="text" size="sm" onClick={onUebernehmen}>
+        <Button type="button" variant="text" onClick={onUebernehmen}>
           Vorschlag übernehmen
         </Button>
       }

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { TriangleAlert, ChevronUp, ChevronDown, Trash2, Pencil, PackageSearch } from "lucide-react";
-import { KategorieChip, Tooltip } from "@/components/ui";
+import { IconButton, IconButtonLink, KategorieChip, Tooltip } from "@/components/ui";
 import { ExerciseThumb } from "../ExerciseThumb";
 import { InBibliothekButton } from "../InBibliothekButton";
 import { DauerFeld } from "./DauerFeld";
@@ -148,17 +148,15 @@ export function TrainingExerciseRow({
             <InBibliothekButton fassungId={item.id} name={item.name} />
 
             <Tooltip label="Übung bearbeiten">
-              <Link
+              <IconButtonLink
+                icon={Pencil}
                 // Die Variante fährt mit: Nach dem Speichern führt
                 // `updateFassung` in genau diese zurück, und eine Fassung, die
                 // von aussen in den Hauptteil wandert, landet in ihr statt in
                 // der ersten (#201 AK 6).
                 href={`/training/${trainingId}/uebung/${item.id}/edit${varianteAnhang(varianteId)}`}
-                aria-label={`${item.name} bearbeiten`}
-                className="state focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-mittel"
-              >
-                <Pencil size={16} strokeWidth={2.5} aria-hidden />
-              </Link>
+                label={`${item.name} bearbeiten`}
+              />
             </Tooltip>
 
             {/* Der einzige Knopf der Zeile, der etwas wegnimmt — er färbt sich
@@ -167,14 +165,12 @@ export function TrainingExerciseRow({
                 Zustands-Ebene nimmt die Farbe des Zeichens mit, der Overlay
                 wird damit im selben Zug rötlich. */}
             <Tooltip label="Übung entfernen">
-              <button
-                type="button"
-                aria-label="Übung entfernen"
+              <IconButton
+                icon={Trash2}
+                label="Übung entfernen"
                 onClick={onRemove}
-                className="state focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-mittel transition-colors hover:text-error"
-              >
-                <Trash2 size={16} strokeWidth={2.5} aria-hidden />
-              </button>
+                className="hover:text-error"
+              />
             </Tooltip>
           </span>
 

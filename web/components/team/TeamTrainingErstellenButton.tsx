@@ -58,7 +58,7 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
 
   return (
     <>
-      <Button variant="filled" size="sm" onClick={() => setOpen(true)}>
+      <Button variant="filled" onClick={() => setOpen(true)}>
         Training erstellen
       </Button>
 

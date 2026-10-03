@@ -5,7 +5,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin, Users } from "l
 import { TrainingExerciseDetail } from "./TrainingExerciseDetail";
 import { VariantenWahl } from "./VariantenWahl";
 import { GesamtMaterialListe } from "./GesamtMaterialListe";
-import { nebenLeiste, type BreadcrumbItem } from "@/components/ui";
+import { Button, nebenLeiste, unterKopfzeile, type BreadcrumbItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { SeitenKopf } from "@/components/layout/SeitenKopf";
 import { leseGliederung, formatDuration } from "@/lib/training";
@@ -191,7 +191,7 @@ export function TrainingDurchfuehren({
   const section = sections[idx];
 
   return (
-    <div className="max-w-2xl px-4 pb-28 pt-4 sm:px-6 lg:pt-0">
+    <div className="max-w-2xl px-4 pb-20 pt-4 sm:px-6 lg:pt-0">
       <header className="mb-4">
         {/* Der Rückweg steht zuoberst — wie auf jeder anderen Trainingsseite.
             Im Druck hat er nichts verloren (OOS 2). */}
@@ -265,7 +265,7 @@ export function TrainingDurchfuehren({
                 Eine Stufe über dem Grund reicht, um die durchlaufenden
                 Übungen zu überdecken. */}
             {b.label && (
-              <h2 className="sticky top-14 z-10 lg:top-0 -mx-1 bg-elev-01 px-1 py-2 type-title-medium text-on-surface-mittel">
+              <h2 className={cn("sticky z-10 -mx-1 bg-elev-01 px-1 py-2 type-title-medium text-on-surface-mittel", unterKopfzeile)}>
                 {b.label}
                 {b.sum > 0 && (
                   <span className="ml-2 type-label-medium">{formatDuration(b.sum)}</span>
@@ -284,31 +284,32 @@ export function TrainingDurchfuehren({
         ))}
       </div>
 
-      {/* Spielfeldrand-Navigation: grosse, sicher treffbare Flächen. Deckend
-          auf 04dp und mit einer Haarlinie abgesetzt; ab lg beginnt sie neben
+      {/* Spielfeldrand-Navigation: zwei Knöpfe über die volle Breite, im
+          einen Mass der Anwendung (36 px, Epic #363). Deckend auf 04dp und mit einer Haarlinie abgesetzt; ab lg beginnt sie neben
           der Seitenleiste (Breite vom AppRahmen). Durch eine
           schwebende Leiste darf der Inhalt nicht durchscheinen, sonst trägt
           die Höhe die Trennung nicht mehr (kein Blur über der Höhenleiter). */}
       <nav className={cn("fixed right-0 bottom-0 z-10 border-t border-linie bg-elev-04", nebenLeiste)}>
-        <div className="flex max-w-2xl items-center gap-3 px-4 py-3 sm:px-6">
-          <button
+        <div className="flex max-w-2xl items-center gap-2 px-4 py-2 sm:px-6">
+          <Button
             type="button"
+            variant="outlined"
             onClick={() => setIdx((i) => Math.max(0, i - 1))}
             disabled={idx === 0}
-            className="state focus-ring inline-flex h-14 flex-1 items-center justify-center gap-1.5 rounded-flaeche kontur border-kante type-title-small text-on-surface disabled:opacity-30"
+            className="flex-1"
           >
-            <ChevronLeft size={22} strokeWidth={2.5} aria-hidden />
+            <ChevronLeft size={18} strokeWidth={2.5} aria-hidden />
             Zurück
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => setIdx((i) => Math.min(sections.length - 1, i + 1))}
             disabled={idx === sections.length - 1}
-            className="state focus-ring inline-flex h-14 flex-1 items-center justify-center gap-1.5 rounded-flaeche bg-primary type-title-small text-on-primary disabled:opacity-30"
+            className="flex-1"
           >
             Weiter
-            <ChevronRight size={22} strokeWidth={2.5} aria-hidden />
-          </button>
+            <ChevronRight size={18} strokeWidth={2.5} aria-hidden />
+          </Button>
         </div>
       </nav>
     </div>

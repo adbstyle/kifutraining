@@ -12,25 +12,14 @@ import { IconButton } from "./IconButton";
    Druckansicht ist nur zum Drucken da — dort trägt der Auslöser eine
    Beschriftung. Auf einer Inhaltsseite ist Drucken dagegen eine Aktion unter
    mehreren und reiht sich als Icon neben Favorisieren und Bearbeiten ein. */
-export function PrintButton({
-  variant = "label",
-  size = "md",
-}: {
-  variant?: "label" | "icon";
-  size?: "sm" | "md";
-}) {
+export function PrintButton({ variant = "label" }: { variant?: "label" | "icon" }) {
   if (variant === "icon") {
     return (
-      <IconButton
-        icon={Printer}
-        label="Drucken"
-        size={size}
-        onClick={() => window.print()}
-      />
+      <IconButton icon={Printer} label="Drucken" onClick={() => window.print()} />
     );
   }
   return (
-    <Button variant="filled" size="sm" onClick={() => window.print()}>
+    <Button variant="filled" onClick={() => window.print()}>
       <Printer size={18} strokeWidth={2} aria-hidden />
       Drucken / als PDF speichern
     </Button>

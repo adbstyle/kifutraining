@@ -43,7 +43,7 @@ export default async function KontoPage() {
           </p>
         )}
         <form action={signOut} className="mt-5">
-          <Button type="submit" variant="outlined" size="sm">
+          <Button type="submit" variant="outlined">
             <LogOut size={18} strokeWidth={2} aria-hidden />
             Abmelden
           </Button>

@@ -72,7 +72,6 @@ export function TeilKarte({
             <IconButton
               icon={Plus}
               label={`Übung zu ${teil.label} hinzufügen`}
-              size="sm"
               onClick={() => onAdd(teil.bloecke[0])}
             />
           </Tooltip>

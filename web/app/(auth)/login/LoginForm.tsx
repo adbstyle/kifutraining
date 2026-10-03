@@ -22,7 +22,7 @@ function SubmitButton() {
 function ResendButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="text" size="sm" disabled={pending}>
+    <Button type="submit" variant="text" disabled={pending}>
       {pending ? "Wird gesendet …" : "Bestätigung erneut senden"}
     </Button>
   );

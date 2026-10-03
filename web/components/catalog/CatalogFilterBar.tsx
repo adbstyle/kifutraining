@@ -166,13 +166,13 @@ export function CatalogFilterBar({
       />
 
       {showMine && (
-        <FilterChip selected={!!filters.mine} onClick={toggleMine} groesse="leiste">
+        <FilterChip selected={!!filters.mine} onClick={toggleMine}>
           Meine Übungen
         </FilterChip>
       )}
 
       {canFavorite && (
-        <FilterChip selected={!!filters.fav} onClick={toggleFav} groesse="leiste">
+        <FilterChip selected={!!filters.fav} onClick={toggleFav}>
           Favoriten
         </FilterChip>
       )}

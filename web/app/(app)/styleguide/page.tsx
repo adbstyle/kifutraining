@@ -376,14 +376,10 @@ const hoehen: [string, string][] = [
   ["h-[22px] · 22 px", "Plakette und Kategorie-Chip — die kleinste beschriftete Fläche."],
   [
     "h-9 · 36 px",
-    "Knopf klein, Glied der Knopfgruppe, Label-Chip im Grundmass (Filter, Assist, Suggestion, Input), Nutzertext-Chip, geteilter Chip, leiser Knopf — sie stehen in einer Leiste nebeneinander und fluchten darum.",
+    "Das eine Mass alles Bedienbaren (Epic #363): Knopf, Icon-Knopf, Glied der Knopfgruppe, jeder Chip samt geteiltem Chip und Menühälfte, Reiter, Zeile in Menü und Auswahlpanel, Kontrollkästchen, Eintrag der Seitenleiste, Werkzeug im Diagramm-Editor — auf dem Platz wie am Schreibtisch. Weil alles gleich hoch ist, fluchtet jede Leiste von selbst.",
   ],
-  ["h-11 · 44 px", "Knopf mittel, Icon-Knopf, Menühälfte — Mindestmass für den Finger."],
-  [
-    "h-12 · 48 px",
-    "Dichtes Feld in Filter- und Listenzeilen — und der Filter-Chip daneben (groesse=\u00ableiste\u00bb), damit die Leiste eine Linie bleibt.",
-  ],
-  ["h-14 · 56 px", "Hohes Feld, grosser Knopf — auf dem Platz, mit Handschuhen."],
+  ["h-12 · 48 px", "Kopfzeile mit Menüknopf unter lg. Dazu das dichte Feld in Filter- und Listenzeilen."],
+  ["h-14 · 56 px", "Hohes Feld."],
 ];
 
 const sizeClasses: [string, string, string][] = [
@@ -1004,28 +1000,22 @@ export default function Styleguide() {
           <Button variant="text">Abbrechen</Button>
           <Button variant="danger">Übung löschen</Button>
         </div>
-        <div className="mt-4 flex flex-wrap items-end gap-3">
-          <Button size="sm">Klein · h-9</Button>
-          <Button size="md">Mittel · h-11</Button>
-          <Button size="lg">Gross · h-14 · Spielfeldrand</Button>
-        </div>
         <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
           Leiser Knopf (<code>variant=&quot;quiet&quot;</code>) — eine Stufe unter{" "}
           <code>text</code>
         </p>
         <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
           Alle Knöpfe stehen normal gesetzt in <code>type-title-small</code>{" "}
-          (Geist 600, 14/20), nicht versal — wie die Reiter. Der leise Knopf
-          ist die <strong>dichte Bauform</strong> des <code>text</code>-Knopfes:
-          dieselbe Farbe und Schrift, fest h-9 mit knapper Polsterung. Er gilt
+          (Geist 600, 14/20), nicht versal — wie die Reiter — und sind 36 px
+          hoch; eine Grössen-Prop gibt es nicht mehr. Der leise Knopf ist die{" "}
+          <strong>knappe Bauform</strong> des <code>text</code>-Knopfes:
+          dieselbe Farbe und Schrift, nur mit knapperer Polsterung. Er gilt
           für Handlungen, die <strong>am Rand mitlaufen</strong>: ein Knopf in
           einer Leiste aus Chips, auf deren Linie er sitzen soll. Er gilt{" "}
           <strong>nicht</strong> für
           Knöpfe, die einen Vorgang abschliessen oder abbrechen —
           Dialog-Knöpfe, Formularfüsse und alles, was neben einem{" "}
-          <code>filled</code> steht, bleibt <code>text</code>. <code>size</code>{" "}
-          wird übergangen: Den leisen Knopf gibt es nur in einer Höhe (h-9),
-          damit er in der Chip-Leiste auf der Linie sitzt.
+          <code>filled</code> steht, bleibt <code>text</code>.
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="quiet">
@@ -1034,7 +1024,7 @@ export default function Styleguide() {
           </Button>
           <Button variant="text">Abbrechen</Button>
           <span className="type-label-small text-on-surface-mittel">
-            quiet (dicht, h-9) · text
+            quiet · text
           </span>
         </div>
 
@@ -1043,7 +1033,7 @@ export default function Styleguide() {
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <ButtonLink href="#" variant="filled">Neue Übung</ButtonLink>
-          <ButtonLink href="#" variant="tonal" size="sm">Bearbeiten</ButtonLink>
+          <ButtonLink href="#" variant="tonal">Bearbeiten</ButtonLink>
         </div>
         <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
           Verbundene Knopfgruppe
@@ -1077,7 +1067,7 @@ export default function Styleguide() {
         <div className="flex items-center gap-4">
           <IconButton icon={Search} label="Suchen" />
           <IconButton icon={SlidersHorizontal} label="Filter" active />
-          <IconButton icon={Plus} label="Hinzufügen" size="sm" />
+          <IconButton icon={Plus} label="Hinzufügen" />
           <IconButton icon={Plus} label="Hinzufügen" variant="overlay" />
           <span className="type-label-small text-on-surface-mittel">
             ruhig · aktiv (<code>state-primary</code>) · sm · overlay (06dp über Bild)
@@ -1103,16 +1093,16 @@ export default function Styleguide() {
         </p>
         <div className="flex items-center gap-4">
           <Tooltip label="Bearbeiten">
-            <IconButtonLink href="#" icon={Pencil} label="Bearbeiten" size="sm" />
+            <IconButtonLink href="#" icon={Pencil} label="Bearbeiten" />
           </Tooltip>
           <Tooltip label="Öffentlich schalten">
-            <IconButton icon={Globe} label="Öffentlich schalten" size="sm" />
+            <IconButton icon={Globe} label="Öffentlich schalten" />
           </Tooltip>
           <Tooltip label="Auf privat setzen">
-            <IconButton icon={Lock} label="Auf privat setzen" size="sm" />
+            <IconButton icon={Lock} label="Auf privat setzen" />
           </Tooltip>
           <Tooltip label="Rechtsbündig (ende)" ende>
-            <IconButton icon={Pencil} label="Rechtsbündig" size="sm" />
+            <IconButton icon={Pencil} label="Rechtsbündig" />
           </Tooltip>
           <span className="type-label-small text-on-surface-mittel">
             (hovern oder per Tab fokussieren)
@@ -1276,17 +1266,9 @@ export default function Styleguide() {
           versal in <code>type-label-medium</code>.
         </p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
-          <strong>Zwei Höhen, geführt statt von aussen.</strong> Ein Chip im
-          Fliesstext oder in einer Chip-Reihe trägt das Grundmass (36 px, wie der kleine Knopf). Steht
-          er in einer <strong>Filterleiste</strong>, fluchtet er mit den dichten
-          Feldern daneben und nimmt deren 48 px — über{" "}
-          <code>groesse=&quot;leiste&quot;</code> am{" "}
-          <code>FilterChip</code>, nicht über eine Höhenklasse im{" "}
-          <code>className</code>: <code>cn</code> ist ein reiner Joiner, eine
-          Höhe von aussen entschiede allein über die Reihenfolge im erzeugten
-          CSS. Dieselbe Überlegung wie bei <code>look</code> am{" "}
-          <code>ChoiceChip</code>. Den Nutzertext-Chip betrifft es nicht — er
-          trägt immer 36 px.
+          <strong>Eine Höhe.</strong> Jeder Chip ist 36 px hoch, im Fliesstext
+          wie in einer Filterleiste — dasselbe Mass wie Knopf, Feld und
+          Filterknopf, darum fluchtet er überall ohne eigene Stufe.
         </p>
         <ChipsDemo />
       </Section>
@@ -1436,7 +1418,6 @@ export default function Styleguide() {
               <FavoriteButton
                 exerciseId="00000000-0000-0000-0000-000000000000"
                 initial={false}
-                size="sm"
                 variant="overlay"
               />
             }
@@ -2279,9 +2260,9 @@ export default function Styleguide() {
           ).map((el) => (
             <div
               key={el.id}
-              className="flex size-12 items-center justify-center overflow-hidden rounded-flaeche border border-linie"
+              className="flex size-9 items-center justify-center overflow-hidden rounded-flaeche border border-linie"
             >
-              <GlyphVorschau element={el} groesse={40} />
+              <GlyphVorschau element={el} groesse={28} />
             </div>
           ))}
         </div>
@@ -2511,10 +2492,10 @@ export default function Styleguide() {
             icon={RefreshCw}
             actions={
               <>
-                <Button type="button" variant="text" size="sm">
+                <Button type="button" variant="text">
                   Material beibehalten
                 </Button>
-                <Button type="button" variant="text" size="sm">
+                <Button type="button" variant="text">
                   Neuen Vorschlag übernehmen
                 </Button>
               </>
@@ -2525,7 +2506,7 @@ export default function Styleguide() {
           <Banner
             icon={ListPlus}
             actions={
-              <Button type="button" variant="text" size="sm">
+              <Button type="button" variant="text">
                 Vorschlag übernehmen
               </Button>
             }
@@ -2557,8 +2538,8 @@ export default function Styleguide() {
           Chip in der Mitte geteilt: links wählen, rechts das Menü. Ein
           Menüeintrag „Anzeigen" allein reichte nicht, denn Wechseln ist die
           häufigste Handlung der Leiste und darf nicht zwei Klicks kosten. Die
-          Menühälfte ist <strong>44 px</strong> breit — ein eigenständiges
-          Touch-Ziel, nicht ein angehängtes 16px-Chevron. Der Umriss gehört
+          Menühälfte ist <strong>36 px</strong> breit wie jeder Icon-Knopf —
+          ein eigenes Bedienelement, nicht ein angehängtes 16px-Chevron. Der Umriss gehört
           trotzdem der Gruppe: eine Reihe von Varianten, nicht eine Reihe von
           Knopfpaaren; der Trennstrich darin folgt dem Zustand.
         </p>

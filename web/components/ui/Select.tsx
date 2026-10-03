@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useId, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { bedienzeile } from "./Menu";
 import {
   feldLabelBase,
   feldLabelRuhend,
@@ -316,7 +317,8 @@ export function Select({
                     // Zeile — die Tastatur-Aktivzeile leiht sich darum die
                     // Fokus-Deckung der Zustands-Ebene (`state-aktiv`),
                     // während Hover aus `state` selbst kommt.
-                    "state type-body-medium flex cursor-pointer items-center gap-3 px-3 py-2 text-on-surface",
+                    bedienzeile,
+                    "cursor-pointer text-on-surface",
                     isActive && "state-aktiv",
                   )}
                 >

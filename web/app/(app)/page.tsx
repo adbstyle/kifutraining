@@ -82,7 +82,7 @@ export default async function Home({
       krumen={filters.mine ? [{ label: "Übungen", href: "/" }, { label: "Meine Übungen" }] : [{ label: "Übungen" }]}
       aktionen={
         user && (
-          <ButtonLink href="/neu" variant="filled" size="sm">
+          <ButtonLink href="/neu" variant="filled">
             Übung erstellen
           </ButtonLink>
         )
@@ -136,7 +136,6 @@ export default async function Home({
                       <FavoriteButton
                         exerciseId={row.id}
                         initial={row.is_favorited}
-                        size="sm"
                         variant="overlay"
                       />
                     ) : undefined

@@ -75,7 +75,6 @@ export function OwnerActions({
           href={`/uebung/${slug}/edit`}
           icon={Pencil}
           label="Bearbeiten"
-          size="sm"
         />
       </Tooltip>
 
@@ -85,7 +84,6 @@ export function OwnerActions({
             type="submit"
             icon={isPublic ? Lock : Globe}
             label={visibilityLabel}
-            size="sm"
           />
         </Tooltip>
       </form>

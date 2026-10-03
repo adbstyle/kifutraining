@@ -179,7 +179,6 @@ export function TeamTrainingsListe({
                 <IconButton
                   icon={CalendarPlus}
                   label={`${t.name} einem Termin zuordnen`}
-                  size="sm"
                   disabled={pending}
                   onClick={() => { setDialogFehler(undefined); setZuordnen(t); }}
                 />
@@ -188,7 +187,6 @@ export function TeamTrainingsListe({
                 <IconButton
                   icon={Download}
                   label={`${t.name} zu mir übernehmen`}
-                  size="sm"
                   disabled={pending}
                   onClick={() => uebernehmen(t)}
                 />

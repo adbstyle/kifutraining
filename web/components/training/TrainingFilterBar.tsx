@@ -95,7 +95,7 @@ export function TrainingFilterBar({
           selected={mine}
           onClick={toggleMine}
           icon={ClipboardList}
-          groesse="leiste"
+         
         >
           Meine Trainings
         </FilterChip>

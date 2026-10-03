@@ -75,7 +75,6 @@ export function VorlagePicker({
       <Button
         type="button"
         variant={triggerVariant}
-        size="sm"
         onClick={() => {
           setFehler(null);
           setOffen(true);

@@ -511,7 +511,6 @@ export function ExerciseForm({
                 <Button
                   type="button"
                   variant="text"
-                  size="sm"
                   onClick={() => setDialogOffen(true)}
                 >
                   <ArrowLeftRight size={18} strokeWidth={2} aria-hidden />
@@ -684,10 +683,10 @@ export function ExerciseForm({
                   aenderungen={aenderungen}
                   actions={
                     <>
-                      <Button type="button" variant="text" size="sm" onClick={() => setQuittiert(vorschlag)}>
+                      <Button type="button" variant="text" onClick={() => setQuittiert(vorschlag)}>
                         {AENDERUNG_BEIBEHALTEN}
                       </Button>
-                      <Button type="button" variant="text" size="sm" onClick={uebernehmeVorschlag}>
+                      <Button type="button" variant="text" onClick={uebernehmeVorschlag}>
                         {AENDERUNG_UEBERNEHMEN}
                       </Button>
                     </>
@@ -836,8 +835,7 @@ export function ExerciseForm({
   const speichern = (
     <div className="flex items-center gap-3">
       {fussnote && <p className="type-body-small text-on-surface-mittel">{fussnote}</p>}
-      {/* Neben dem Namen klein, am Schluss der Schritte mittel. */}
-      <Button type="submit" size={geteilt ? "sm" : "md"} disabled={isPending || isCompressing}>
+      <Button type="submit" disabled={isPending || isCompressing}>
         {isCompressing
           ? "Foto wird optimiert …"
           : isPending

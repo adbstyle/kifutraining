@@ -49,7 +49,7 @@ export { Menu } from "./Menu";
 export type { MenuItemDef } from "./Menu";
 export { OverflowMenu } from "./OverflowMenu";
 export { ChipMenu } from "./ChipMenu";
-export { Seitenleiste, SeitenleistenKnopf, leisteStil, nebenLeiste } from "./Seitenleiste";
+export { Seitenleiste, SeitenleistenKnopf, leisteStil, nebenLeiste, unterKopfzeile } from "./Seitenleiste";
 export type {
   SeitenleisteProps,
   SeitenleisteGruppe,

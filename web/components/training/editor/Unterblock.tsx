@@ -64,7 +64,6 @@ export function Unterblock({
           <IconButton
             icon={Plus}
             label={`Übung zu ${block.label} hinzufügen`}
-            size="sm"
             onClick={onAdd}
           />
         </Tooltip>

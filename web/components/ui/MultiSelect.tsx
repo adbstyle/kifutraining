@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Check, CheckCheck, ChevronDown, RotateCcw, Search } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { bedienzeile } from "./Menu";
 import { IconButton } from "./IconButton";
 import {
   feldLabelBase,
@@ -509,7 +510,7 @@ export function MultiSelect({
                   placeholder="Suchen …"
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={onNavKey}
-                  className="type-body-medium h-10 w-full bg-transparent text-on-surface outline-none placeholder:text-on-surface-mittel"
+                  className="type-body-medium h-9 w-full bg-transparent text-on-surface outline-none placeholder:text-on-surface-mittel"
                 />
               </div>
             )}
@@ -563,7 +564,8 @@ export function MultiSelect({
                       // Trigger, nicht auf der Zeile — die Tastatur-Aktivzeile
                       // leiht sich darum die Fokus-Deckung der Zustands-Ebene
                       // (`state-aktiv`), Hover kommt aus `state` selbst.
-                      "state type-body-medium flex cursor-pointer items-center gap-3 px-3 py-2 text-on-surface",
+                      bedienzeile,
+                      "cursor-pointer text-on-surface",
                       isActive && "state-aktiv",
                     )}
                   >
@@ -599,7 +601,6 @@ export function MultiSelect({
                   icon={RotateCcw}
                   label="Zurücksetzen"
                   title="Zurücksetzen"
-                  size="sm"
                   onClick={reset}
                   disabled={current.length === 0}
                 />
@@ -607,7 +608,6 @@ export function MultiSelect({
                   icon={CheckCheck}
                   label="Alle auswählen"
                   title="Alle auswählen"
-                  size="sm"
                   onClick={selectAllVisible}
                   iconProps={{ className: "text-primary" }}
                 />
