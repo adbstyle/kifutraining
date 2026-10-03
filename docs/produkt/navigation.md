@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-10-02. Wie man sich in der Anwendung bewegt.
+Stand 2026-10-03. Wie man sich in der Anwendung bewegt.
 
 ## Die Seitenleiste
 
