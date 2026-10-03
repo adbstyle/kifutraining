@@ -5,9 +5,10 @@ import { useRef, useState } from "react";
 /**
  * Ein Feld, das beim Verlassen speichert — die Mechanik dahinter, einmal.
  *
- * Zwei Felder im Editor arbeiten so: die Notiz an einer Übung (#152) und der
- * Name des Trainings im Kopf (#250). Beide brauchen dieselben drei Schranken,
- * und jede einzelne davon ist ein Fehler, den man sonst zweimal macht:
+ * Drei Felder arbeiten so: im Editor die Notiz an einer Übung (#152) und der
+ * Name des Trainings im Kopf (#250), in der Teamverwaltung der Teamname. Alle
+ * brauchen dieselben drei Schranken, und jede einzelne davon ist ein Fehler,
+ * den man sonst mehrfach macht:
  *
  * 1. Der EINGETIPPTE Text lebt lokal, damit das Feld beim Tippen nicht auf den
  *    Serverstand zurückspringt.
@@ -17,7 +18,9 @@ import { useRef, useState } from "react";
  *    nächsten Aufruf gelten, nicht erst beim nächsten Rendern.
  * 3. Ändert sich der Wert von AUSSEN — nach einer Rücknahme durch den Server
  *    oder durch frische Serverdaten —, gilt er und nicht mehr, was im Feld
- *    steht.
+ *    steht. Ausnahme: Wer seither weitergeschrieben hat, behält seinen Text.
+ *    Er ist noch nicht gesendet und geht beim nächsten Verlassen hinaus; ihn
+ *    zu überschreiben hiesse, eine Eingabe mitten im Tippen zu verwerfen.
  *
  * Was ein gültiger Wert ist, bleibt beim Aufrufer (`pruefe`): Die Notiz darf
  * leer sein und heisst dann «keine Notiz», ein Trainingsname darf es nicht.
@@ -58,8 +61,11 @@ export function useBlurSpeichern({
   const [gesehen, setGesehen] = useState(wert);
 
   if (wert !== gesehen) {
+    // Weitergeschrieben: Nach dem letzten Senden (oder ohne eines) steht etwas
+    // anderes im Feld als der zuletzt gesehene Wert.
+    const weitergeschrieben = gesendet.current === undefined && entwurf !== gesehen;
     setGesehen(wert);
-    setEntwurfIntern(wert);
+    if (!weitergeschrieben) setEntwurfIntern(wert);
     gesendet.current = undefined;
   }
 

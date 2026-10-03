@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { TextArea } from "@/components/ui";
-import { useBlurSpeichern } from "./useBlurSpeichern";
+import { useBlurSpeichern } from "@/lib/use-blur-speichern";
 import { NOTIZ_MAX } from "@/lib/training";
 
 /**

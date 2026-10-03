@@ -5,7 +5,7 @@ import { Users } from "lucide-react";
 import { Card, Badge, HeadlineField, TextArea } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { StufenField } from "../StufenField";
-import { useBlurSpeichern } from "./useBlurSpeichern";
+import { useBlurSpeichern } from "@/lib/use-blur-speichern";
 import { kategorienFuer } from "@/lib/altersstufe";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { TRAINING_NAME_MAX, ZIEL_MAX, trainingNameProblem } from "@/lib/training";
