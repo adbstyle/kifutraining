@@ -337,6 +337,63 @@
   border-style: solid;
 }
 
+/* Feldkasten (Epic #363): das Eingabe-Element jedes Felds — Input, Textarea,
+   Auslöser einer Auswahl. Ruhend weder Kontur noch Fläche: Der Name steht
+   darüber, der Wert spricht für sich, und ein Formular liest sich als Text
+   statt als Stapel von Kästen. Beim Überfahren hellt eine leise Ebene in der
+   Schriftfarbe auf (6 %, auf jeder Höhenstufe dieselbe Aussage, und im Druck
+   kippt sie mit der Schrift). Im Fokus und bei offenem Panel trägt die Kontur
+   Primary, bei Fehler oder Befund Error — Error zuletzt, weil was sich nicht
+   speichern lässt, den Fokus überdauern muss. Die Stärke bleibt immer
+   1.5 px, nur die Farbe wechselt: Nichts springt beim Hineinklicken.
+   `data-umrandet` gibt dem Feld auch ruhend die Kante — für Felder ohne
+   sichtbaren Namen (Suche in der Filterleiste), die sonst schlicht fehlten.
+   Zustände über Attribute statt Klassen, weil `cn` kein tailwind-merge ist:
+   So entscheidet die Reihenfolge hier, nicht die im erzeugten CSS. */
+@utility feldkasten {
+  border-width: 1.5px;
+  border-style: solid;
+  border-color: transparent;
+  border-radius: var(--radius-flaeche);
+  background-color: transparent;
+  color: var(--color-on-surface);
+  outline: none;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+  @media (hover: hover) {
+    &:hover {
+      background-color: color-mix(in srgb, var(--color-on-surface) 6%, transparent);
+    }
+  }
+  &[data-umrandet] {
+    border-color: var(--color-kante);
+  }
+  &:focus,
+  &[aria-expanded="true"] {
+    border-color: var(--color-primary);
+    background-color: transparent;
+  }
+  &[data-befund],
+  &[aria-invalid="true"] {
+    border-color: var(--color-error);
+  }
+  /* Fokus im Fehler: Die Kontur bleibt Error, ein zweiter halber Pixel nach
+     innen zeigt trotzdem, wo die Tastatur steht. */
+  &[data-befund]:focus,
+  &[aria-invalid="true"]:focus {
+    box-shadow: inset 0 0 0 0.5px var(--color-error);
+  }
+  /* Platzhalter in der gedämpften Schrift, nicht der tiefen: Er sagt oft
+     etwas («Alterskategorie wählen …») und muss lesbar bleiben (4.5:1). */
+  &::placeholder {
+    color: var(--color-on-surface-mittel);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
 /* Diagramm-Platzhalter: 45°-Schraffur, sehr leise. */
 @utility schraffur {
   background-image: repeating-linear-gradient(

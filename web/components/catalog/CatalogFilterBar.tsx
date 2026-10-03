@@ -1,8 +1,6 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Users } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { FilterChip, MultiSelect, Button, SearchField, TextField } from "@/components/ui";
 import { useDebouncedWert } from "@/lib/use-debounce";
 import {
@@ -153,7 +151,6 @@ export function CatalogFilterBar({
         type="number"
         inputMode="numeric"
         min={1}
-        icon={Users}
         initial={filters.kinder?.toString() ?? ""}
         ariaLabel="Verfügbare Kinder"
         title="Zeigt Übungen, die mit so vielen Kindern durchführbar sind."
@@ -186,20 +183,17 @@ export function CatalogFilterBar({
   );
 }
 
-/* Feld mit Lead-Icon und verzögerter Übernahme (300 ms) — schreibt erst nach
-   der Tipppause in die URL. Die Optik kommt aus dem Kit (`TextField dense`),
-   hier bleibt nur die Verzögerung. */
+/* Feld mit verzögerter Übernahme (300 ms) — schreibt erst nach der Tipppause
+   in die URL. Die Optik kommt aus dem Kit, hier bleibt nur die Verzögerung. */
 function DebouncedField({
   initial,
   onCommit,
-  icon: Icon,
   ariaLabel,
   className,
   ...props
 }: {
   initial: string;
   onCommit: (value: string) => void;
-  icon: LucideIcon;
   ariaLabel: string;
   className?: string;
   type?: string;
@@ -211,9 +205,10 @@ function DebouncedField({
 
   return (
     <TextField
-      dense
       label={ariaLabel}
-      leadingIcon={Icon}
+      labelVersteckt
+      umrandet
+      placeholder={ariaLabel}
       value={wert}
       onChange={(e) => aendern(e.target.value)}
       className={className}
@@ -241,8 +236,10 @@ function DebouncedSuche({
 
   return (
     <SearchField
-      dense
       label={label}
+      labelVersteckt
+      umrandet
+      placeholder={label}
       value={wert}
       onChange={(e) => aendern(e.target.value)}
       className={className}

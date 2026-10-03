@@ -14,6 +14,7 @@ import {
   HeadlineField,
   Checkbox,
   Card,
+  FeldGruppe,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
@@ -70,8 +71,11 @@ import { compressImage } from "@/lib/image-compress";
 
 /** Zwei zusammengehörige Felder auf einer Zeile, ab `sm`. In der geteilten
  *  Maske (Bearbeiten) steht die Einordnung ab `xl` in der schmalen Spalte
- *  rechts, dort untereinander. */
-const PAAR = "grid gap-5 sm:grid-cols-2 sm:items-start";
+ *  rechts, dort untereinander. Die Ausrichtung kommt je Zeile dazu: oben
+ *  bündig, wo beide Zellen eine Namenszeile tragen; unten bündig, wo neben
+ *  einem Feld eine Feldgruppe mit zwei Namenszeilen steht — so stehen die
+ *  Feldkästen auf einer Linie. */
+const PAAR = "grid gap-5 sm:grid-cols-2";
 const PAAR_LEISTE = `${PAAR} xl:grid-cols-1`;
 
 /** Was über und unter beiden Spalten steht (Name, Meldungen, Speichern), so
@@ -79,23 +83,6 @@ const PAAR_LEISTE = `${PAAR} xl:grid-cols-1`;
  *  Inhalt und Einordnung zusammen. */
 const UEBER_BEIDEN = "max-w-4xl xl:max-w-none";
 
-/** Die Namenszeile über einer Feldgruppe (Anzahl, Spielfeldgrösse, feste
- *  Altersstufe) — dieselben Klassen wie `SpielfeldgroesseField` und
- *  `AltersstufeField` sie tragen. */
-const GRUPPEN_LABEL = "type-label-small mb-2";
-
-/** Steht ein Feld mit schwebendem Label neben einer Feldgruppe, hält diese
- *  unsichtbare Zeile den Platz ihrer Namenszeile frei: So stehen die Felder
- *  auf einer Linie, ohne dass ein fester Versatz ihre Höhe nachbauen muss.
- *  Nur nebeneinander nötig, gestapelt entfällt sie — in der geteilten Maske
- *  auch ab `xl`, wo die Einordnung in der schmalen Spalte steht. */
-function GruppenLabelPlatz({ geteilt }: { geteilt: boolean }) {
-  return (
-    <p aria-hidden className={`${GRUPPEN_LABEL} invisible hidden sm:block ${geteilt ? "xl:hidden" : ""}`}>
-      &nbsp;
-    </p>
-  );
-}
 
 export type ExerciseInitial = {
   name?: string;
@@ -494,7 +481,7 @@ export function ExerciseForm({
   // Stelle; Herkunft und Sichtbarkeit setzt die Detailseite.
   const einordnungAbschnitt = (
       <FormAbschnitt titel="Einordnung">
-        <div className={paar}>
+        <div className={cn(paar, "sm:items-start")}>
           <AltersstufeField
             wert={stufe}
             onChange={stufenWahl === "waehlbar" ? wechsleAltersstufe : undefined}
@@ -524,12 +511,9 @@ export function ExerciseForm({
               Buchstabe: In einer Optionsliste ist ein einzelnes «G» kein Wort,
               sondern ein Kürzel ohne Kontext — der Katalogfilter beschriftet sie
               aus demselben Grund so. Weder Suche noch Aktions-Fuss: drei bis vier
-              kurze Werte liest man schneller, als man sie filtert. Vier gewählte
-              Kategorien passen nicht in die Zelle; sie werden abgeschnitten, wie
-              es die Mehrfachauswahl vorsieht. */}
+              kurze Werte liest man schneller, als man sie filtert. Passen alle
+              gewählten Kategorien nicht in eine Zeile, bricht das Feld um. */}
           <div>
-            {/* Die feste Altersstufe steht als Namenszeile und Badge da. */}
-            {stufenWahl === "fest" && <GruppenLabelPlatz geteilt={geteilt} />}
             <MultiSelect
               label="Alterskategorie"
               options={kategorienFuer(stufe).map((k) => ({
@@ -571,10 +555,9 @@ export function ExerciseForm({
         {/* Neben der Spielerzahl steht, was das Feld beschreibt: im
             Kinderfussball der Feldtyp (beim freien Feld mit den Metern
             darunter), im Juniorenfussball gleich die Spielfeldgrösse. */}
-        <div className={paar}>
+        <div className={cn(paar, "sm:items-end")}>
           {zeigtFeldtyp ? (
             <div>
-              <GruppenLabelPlatz geteilt={geteilt} />
               <Select
                 label="Feldtyp (optional)"
                 value={feld}
@@ -592,11 +575,8 @@ export function ExerciseForm({
             zeigtSpielfeld && spielfeldFeld
           )}
 
-          <div>
-            <p className={`${GRUPPEN_LABEL} ${err.anzahl_max ? "text-error" : "text-on-surface-mittel"}`}>
-              {ANZAHL_SPIELER_LABEL}
-            </p>
-            <div className="flex items-start gap-3">
+          <FeldGruppe name={ANZAHL_SPIELER_LABEL} error={!!err.anzahl_max}>
+            <div className="flex items-end gap-3">
               <TextField
                 label="Minimum"
                 name="anzahl_min"
@@ -606,7 +586,7 @@ export function ExerciseForm({
                 className="flex-1"
                 defaultValue={initial.anzahl_kinder?.min ?? undefined}
               />
-              <span aria-hidden className="type-body-large flex h-12 items-center text-on-surface-mittel">
+              <span aria-hidden className="type-body-large flex h-9 items-center text-on-surface-mittel">
                 –
               </span>
               <TextField
@@ -621,15 +601,15 @@ export function ExerciseForm({
               />
             </div>
             {err.anzahl_max && (
-              <p className="type-body-small mt-1.5 text-error">{err.anzahl_max}</p>
+              <p className="type-body-small mt-1 text-error">{err.anzahl_max}</p>
             )}
-          </div>
+          </FeldGruppe>
         </div>
         {zeigtFeldtyp && zeigtSpielfeld && spielfeldFeld}
 
         {/* Übungstyp und Erscheinungsform in der Reihenfolge der Detailseite. */}
         {(zeigtForm || zeigtTyp) && (
-          <div className={paar}>
+          <div className={cn(paar, "sm:items-start")}>
             {/* Übungstyp: optionale Selbstauskunft des Junioren-Manuals, und nur
                 in den Blöcken, in denen eine Spielform vorkommen kann. Ohne
                 Hilfstext, wie die übrigen Felder der Maske. */}

@@ -74,8 +74,10 @@ export function TrainingFilterBar({
     // `groesse="leiste"` statt über eine Klasse von aussen.
     <div className="mb-6 flex flex-wrap items-center gap-3">
       <SearchField
-        dense
         label="Nach Trainingsnamen suchen"
+        labelVersteckt
+        umrandet
+        placeholder="Nach Trainingsnamen suchen"
         value={text}
         onChange={(e) => onSearch(e.target.value)}
         className="w-full sm:w-72"

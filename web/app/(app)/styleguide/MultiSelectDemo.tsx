@@ -61,15 +61,14 @@ export function MultiSelectDemo() {
         supportingText="searchable={false} actions={false}: Trigger treibt die Liste, ↑/↓ + Enter."
       />
 
-      {/* Leerfall — nichts gewählt: Der Platzhalter steht als ruhendes Label im
-          Feld. Beim ersten Wert schwebt an seiner Stelle «Alterskategorie» auf
-          die Kontur. */}
+      {/* Leerfall — nichts gewählt: Der Platzhalter steht gedämpft im Feld,
+          der Name darüber bleibt. */}
       <MultiSelect
         label="Alterskategorie"
         searchable={false}
         options={themen}
-        placeholder="Alle Stufen"
-        supportingText="Leer: der Platzhalter beschriftet · gewählt: das Label schwebt."
+        placeholder="Alterskategorie wählen …"
+        supportingText="Leer: der Platzhalter steht im Feld · gewählt: die Werte, umbrechend."
       />
 
       {/* Gruppiert — Optionen aus zwei Welten unter je einer nicht wählbaren

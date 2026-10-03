@@ -209,8 +209,10 @@ export function ExercisePickerDialog({
             die Kontur umreisst es, der Dialoggrund bleibt stehen. Dicht, weil
             der Dialog seine Höhe für die Trefferliste braucht. */}
         <SearchField
-          dense
           label="Übungen durchsuchen"
+          labelVersteckt
+          umrandet
+          placeholder="Übungen durchsuchen"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />

@@ -51,7 +51,6 @@ import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import {
   Search,
-  Users,
   SlidersHorizontal,
   Plus,
   X,
@@ -376,10 +375,9 @@ const hoehen: [string, string][] = [
   ["h-[22px] · 22 px", "Plakette und Kategorie-Chip — die kleinste beschriftete Fläche."],
   [
     "h-9 · 36 px",
-    "Das eine Mass alles Bedienbaren (Epic #363): Knopf, Icon-Knopf, Glied der Knopfgruppe, jeder Chip samt geteiltem Chip und Menühälfte, Reiter, Zeile in Menü und Auswahlpanel, Kontrollkästchen, Eintrag der Seitenleiste, Werkzeug im Diagramm-Editor — auf dem Platz wie am Schreibtisch. Weil alles gleich hoch ist, fluchtet jede Leiste von selbst.",
+    "Das eine Mass alles Bedienbaren (Epic #363): Feldkasten, Knopf, Icon-Knopf, Glied der Knopfgruppe, jeder Chip samt geteiltem Chip und Menühälfte, Reiter, Zeile in Menü und Auswahlpanel, Kontrollkästchen, Eintrag der Seitenleiste, Werkzeug im Diagramm-Editor — auf dem Platz wie am Schreibtisch. Weil alles gleich hoch ist, fluchtet jede Leiste von selbst.",
   ],
-  ["h-12 · 48 px", "Kopfzeile mit Menüknopf unter lg. Dazu das dichte Feld in Filter- und Listenzeilen."],
-  ["h-14 · 56 px", "Hohes Feld."],
+  ["h-12 · 48 px", "Kopfzeile mit Menüknopf unter lg."],
 ];
 
 const sizeClasses: [string, string, string][] = [
@@ -1525,38 +1523,28 @@ export default function Styleguide() {
 
       <Section n="14" title="Textfelder, Text-Area, Datum &amp; Zeit">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Umrissen, mit schwebendem Label: Kontur auf der Kante (1.5 px),{" "}
-          <code>rounded-flaeche</code>, durchsichtige Fläche und{" "}
-          <code>h-14</code> — beziehungsweise <code>h-12</code>, wo es dicht
-          steht (siehe unten); mehr Bauformen gibt es nicht. Im Fokus wird die Kontur 2 px stark und Primary;
-          die Zustands-Ebene bleibt hier aussen vor, denn ein{" "}
-          <code>&lt;input&gt;</code> hat kein <code>::after</code> — Ring und
-          Rahmen tragen den Fokus allein. Das schwebende Label stanzt ein Loch in
-          die Kontur, indem es die Fläche hinter sich malt; welche das ist, sagt{" "}
-          <code>--feld-grund</code> (voreingestellt der Grund, 00dp — Karte,
-          Block, Übungszeile und Dialog setzen ihre Stufe selbst, ein Feld muss
-          nichts wissen).
+          <strong>Der Name steht über dem Feld, jederzeit</strong> (Epic #363):
+          leer, ausgefüllt, im Fokus, im Fehler. Ein ausgefülltes Formular
+          bleibt so lesbar, ohne dass man ins Feld klickt. Er steht klein und
+          gedämpft in der Lesetype (<code>type-body-small</code>), nicht in der
+          Versal-Type der Label — er benennt, er ruft nicht. Darunter folgt der
+          Feldkasten, darunter Hinweis oder Fehler in derselben kleinen Schrift.
+          Der Rahmen dafür ist <code>Feld</code>; mehrere Felder unter einem
+          gemeinsamen Namen («Spielfeldgrösse» über Länge × Breite) nimmt{" "}
+          <code>FeldGruppe</code>, im selben Stil.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Das Label trägt in seinen zwei Lagen zwei Schriften, und das
-          ist Absicht.</strong> Ruhend steht es <em>im</em> Feld, an genau der
-          Stelle, an der gleich der Wert stehen wird — also in der Schrift des
-          Werts (<code>type-body-large</code>), unterschieden nur durch die
-          blassere Farbe: Was dort steht, ist noch nichts Eingegebenes. In
-          Mono-Versalien sähe es aus wie eine Beschriftung, die zufällig im Feld
-          liegt, und Auswahlfelder, deren Leerfall seit je ein Satz ist («Alle
-          Stufen»), stünden in derselben Zeile sichtbar anders da. Geschwebt
-          sitzt es auf der Kontur und benennt das Feld nur noch — dieselbe
-          Schrift, zwei Stufen kleiner (<code>type-body-small</code>, 12 px):
-          dasselbe Wort, leiser gesagt. Der Label-Stil des Hauses
-          (mono/versal) stünde hier quer, denn er ruft Aufmerksamkeit, und ein
-          Label, das gerade aus dem Weg gegangen ist, will keine. So liest sich
-          das Feld von oben nach unten in einer Schrift: Name, Wert,
-          Hinweistext — die beiden Kleinen im selben Grad. Dieselben zwei Lagen
-          tragen Text-Area, Datum &amp; Zeit sowie Einfach- und Mehrfachauswahl
-          (16 und 17); die drei Klassenbündel stehen als{" "}
-          <code>feldLabelBase</code> / <code>-Ruhend</code> /{" "}
-          <code>-Schwebend</code> im TextField.
+          <strong>Der Feldkasten ist ruhend leer:</strong> keine Kontur, keine
+          Fläche (Utility <code>feldkasten</code>). Ein Formular liest sich so
+          als Text statt als Stapel von Kästen. Beim Überfahren hellt eine
+          leise Ebene in der Schriftfarbe auf (6 %), im Fokus trägt die Kontur
+          Primary, bei Fehler und Befund Error. Die Stärke bleibt dabei immer
+          1.5 px — nur die Farbe wechselt, nichts springt beim Hineinklicken.
+          36 px hoch wie jedes Bedienelement, der Wert in{" "}
+          <code>type-body-large</code>. Ein Platzhalter steht gedämpft im Feld
+          und sagt, was hinein soll. Wo ein Feld keinen sichtbaren Namen trägt
+          — die Suche in der Filterleiste —, gibt <code>umrandet</code> ihm auch
+          ruhend die Kante, sonst fehlte es dort schlicht.
         </p>
         <div className="grid max-w-md gap-6">
           <TextField label="Übungsname" supportingText="Pflichtfeld" />
@@ -1575,11 +1563,11 @@ export default function Styleguide() {
           />
           <TextArea
             label="Aufbau / Beschreibung"
-            supportingText="Mehrzeilig — wächst bis 10 Zeilen, dann scrollen."
+            supportingText="Leer zwei Zeilen hoch — wächst bis 10 Zeilen, dann scrollen."
           />
           <TextArea
             label="Weiteres Material"
-            placeholder="Mit placeholder: leer spricht der Platzhalter, das Label erscheint erst geschwebt."
+            placeholder="Mit Platzhalter: Er steht im Feld und bricht um, wo er nicht in eine Zeile passt."
           />
         </div>
 
@@ -1594,15 +1582,21 @@ export default function Styleguide() {
           nacheinander — solange nichts eingegeben ist, sagt die Lupe, wofür das
           Feld da ist; sobald etwas dasteht, tritt an ihre Stelle ein Kreuz, das
           die Suche mit einem Klick leert und den Cursor zurück ins Feld setzt.
-          Nebenbei bekommt das schwebende Label seinen ruhigen Platz an der
-          linken Kante zurück. Das Kreuz meldet sich über dasselbe{" "}
-          <code>onChange</code> wie eine Tastatureingabe — es gibt keinen
-          zweiten Rückkanal, den ein Aufrufer vergessen könnte, und eine
-          verzögerte Suche verzögert auch das Leeren.
+          Das Kreuz meldet sich über dasselbe <code>onChange</code> wie eine
+          Tastatureingabe — es gibt keinen zweiten Rückkanal, den ein Aufrufer
+          vergessen könnte, und eine verzögerte Suche verzögert auch das Leeren.
+          In der Filterleiste steht es ohne sichtbaren Namen (
+          <code>labelVersteckt</code>), dafür umrandet und mit Platzhalter.
         </p>
         <div className="grid max-w-md gap-6">
           <SearchField label="Übungen durchsuchen" />
-          <SearchField dense label="Übungen durchsuchen" defaultValue="Passspiel" />
+          <SearchField
+            label="Übungen durchsuchen"
+            labelVersteckt
+            umrandet
+            placeholder="Übungen durchsuchen"
+            defaultValue="Passspiel"
+          />
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
@@ -1623,17 +1617,14 @@ export default function Styleguide() {
           rechnerisch eine Fläche und am Bildschirm keine.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Warum nicht wie bei <code>TextField</code> die Kontur in Ruhe? Weil
-          das Feld hier nicht in einem Formular steht, sondern in einem Kopf.
-          Eine Kontur machte aus der Überschrift dauerhaft ein Bedienelement und
-          zöge Aufmerksamkeit auf etwas, das man selten braucht; die Fläche beim
-          Zeigen sagt dasselbe, aber erst dann, wenn jemand hinschaut. Die
-          Konturstärke bleibt zwischen Ruhe und Fokus gleich und wechselt nur die
-          Farbe — ein Sprung von 1.5 auf 2 px verschöbe bei 28 px Schrift die
-          ganze Zeile sichtbar.
+          Es folgt derselben Idee wie der Feldkasten — ruhend nichts, beim
+          Zeigen eine Fläche, im Fokus die Kontur —, nur in der Schrift der
+          Überschrift und ohne Namen darüber. Die Konturstärke bleibt zwischen
+          Ruhe und Fokus gleich und wechselt nur die Farbe — ein Sprung verschöbe
+          bei 28 px Schrift die ganze Zeile sichtbar.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Kein schwebendes Label:</strong> Der Wert <em>ist</em> bereits
+          <strong>Kein Name darüber:</strong> Der Wert <em>ist</em> bereits
           die Überschrift, ein Label daneben benennte dieselbe Sache ein zweites
           Mal. Den Namen trägt darum <code>aria-label</code> — Pflicht, nicht
           Kür. Und weil ein <code>&lt;input&gt;</code> keine Überschrift ist,
@@ -1658,32 +1649,17 @@ export default function Styleguide() {
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
-          Dichte Bauform (<code>dense</code>)
+          Zahlenfelder
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Warum das hohe Feld nicht reicht: In Filterzeilen und dichten
-          Listenzeilen stehen Felder neben Select-Triggern und Chips und müssen
-          mit ihnen fluchten — <code>h-12</code> statt <code>h-14</code>.{" "}
-          <strong>Das ist der ganze Unterschied.</strong> Kontur, Radius,
-          durchsichtige Fläche, Schriftgrad und schwebendes Label sind
-          dieselben; <code>supportingText</code>, <code>error</code> und{" "}
-          <code>befund</code> ebenso. Eine dichte Bauform ist dasselbe Feld,
-          enger gestellt — sähe sie anders aus, wäre sie ein zweites Feld, und
-          die Filterzeile müsste erklären, warum ihre Felder nicht wie Felder
-          aussehen.
-        </p>
-        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Zahlenfelder</strong> (<code>type=&quot;number&quot;</code>)
-          stehen immer dicht, auf der Höhe der Auswahlfelder, neben denen sie
-          meist stehen — etwa die Menge neben der Material-Art. Sie zählen nie
-          von selbst: keine Pfeile im Feld, und weder Pfeiltasten noch Mausrad
-          ändern den Wert. Eine Zahl wird getippt; ein Scrollen über dem
-          fokussierten Feld verstellte sie sonst unbemerkt.
+          zählen nie von selbst: keine Pfeile im Feld, und weder Pfeiltasten
+          noch Mausrad ändern den Wert. Eine Zahl wird getippt; ein Scrollen
+          über dem fokussierten Feld verstellte sie sonst unbemerkt.
         </p>
         <div className="grid max-w-md gap-6">
-          <TextField dense label="Verfügbare Kinder" type="number" min={1} leadingIcon={Users} />
+          <TextField label="Verfügbare Kinder" type="number" min={1} />
           <TextField
-            dense
             label="Verfügbare Kinder"
             type="number"
             min={1}
@@ -1711,8 +1687,8 @@ export default function Styleguide() {
           <code>befund</code> lässt speichern und trägt seinen Satz im
           Supporting-Text. Am Rahmen gilt die Rangfolge <code>error</code> &gt;{" "}
           <code>befund</code> &gt; Fokus: Der Fokus färbt nur den ruhigen Rahmen
-          um und zeigt sich sonst über seine Dicke, damit ein Befund nicht
-          ausgerechnet beim Hinschauen verschwindet. Weil der Rahmen allein nur
+          um und zeigt sich im Fehler über einen halben Pixel nach innen, damit
+          ein Befund nicht ausgerechnet beim Hinschauen verschwindet. Weil der Rahmen allein nur
           sehend wahrnehmbar ist, gehört zu <code>befund</code> ein Hinweis für
           Screenreader (am Dauerfeld ein <code>sr-only</code>-Satz per{" "}
           <code>aria-describedby</code>).
@@ -1727,7 +1703,6 @@ export default function Styleguide() {
         </p>
         <div className="grid max-w-md gap-6">
           <TextField
-            dense
             label="Minuten"
             aria-label="Dauer in Minuten"
             type="number"
@@ -1755,12 +1730,8 @@ export default function Styleguide() {
           Datum &amp; Uhrzeit
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Für Trainings-Termine. Das Label liegt auf der Kontur wie überall,
-          aber es <strong>schwebt nicht</strong>: Native <code>date</code>/
-          <code>time</code>-Felder zeigen immer ihre Platzhalter-Maske, es gäbe
-          also keine Ruhelage im Feld und die Bewegung liefe nie. Es steht von
-          Anfang an oben — wie bei der Einfachauswahl (16), die aus demselben
-          Grund immer einen Wert hat. Das native Steuerelement ist Absicht —
+          Für Trainings-Termine, mit Name und Feldkasten wie jedes Feld. Das
+          native Steuerelement ist Absicht —
           Datumsauswahl, Tastatureingabe und Lokalisierung kommen vom
           Betriebssystem.
         </p>
@@ -1821,37 +1792,27 @@ export default function Styleguide() {
       <Section n="16" title="Einfachauswahl mit Panel">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Auswahl <strong>eines</strong> Werts — kein natives{" "}
-          <code>&lt;select&gt;</code>. Der Trigger ist ein Feld (durchsichtige
-          Fläche, Kontur auf der Kante), das aufgeklappte Panel ist ein Menü
+          <code>&lt;select&gt;</code>. Der Auslöser ist ein Feldkasten wie am
+          Textfeld (14), mit dem Namen darüber; das aufgeklappte Panel ist ein Menü
           (08dp, Haarlinie, <code>shadow-dp-08</code>, Häkchen auf der Auswahl).
           Die Zeile, auf der die Tastatur gerade steht, trägt{" "}
           <code>state-aktiv</code> — dieselbe Deckung wie der Fokus, aber ohne
           echten <code>:focus-visible</code>, denn der liegt auf dem Trigger.
           Listbox-Semantik mit voller Tastatursteuerung (↑/↓, Home/End, Enter,
-          Esc). Das Label schwebt auf der Kontur wie am Textfeld (14). Ein
-          Label <em>über</em> dem Feld, wie es hier früher stand, gibt es im
-          Kit nicht mehr — jede Beschriftung liegt auf oder in ihrer Kontur.
+          Esc). Offen trägt der Auslöser die Kontur in Primary — er gehört dann
+          zum Panel darunter. Der gewählte Wert steht ganz im Feld und bricht
+          um, statt abgeschnitten zu werden: Eine Einordnung ist oft ein Satz.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Leerwert und Platzhalter sind zweierlei</strong>, und das Feld
           zeigt sie verschieden. «— kein Feldtyp —» ist ein <em>Wert</em>: Die
           Übung hat keinen, das ist die Antwort, und sie steht als Option in der
-          Liste und danach als Wert im Feld — das Label schwebt wie bei jedem
-          anderen. «Einordnung wählen …» ist <em>keine Antwort</em>, sondern das
-          Fehlen einer: Dafür gibt es <code>placeholder</code>, dann ruht das
-          Label im Feld und trägt diesen Satz, grau und im Label-Schnitt —
-          genau wie an der Mehrfachauswahl (17). Sobald gewählt ist, oder
-          solange das Panel offen steht, schwebt <code>label</code> an seine
-          Stelle. Ein Feld hat das eine oder das andere, nie beides; wer «noch
-          nichts gewählt» als Option in die Liste schriebe, liesse es aussehen
-          wie eine getroffene Wahl. Der barrierefreie Name bleibt dabei konstant
-          das <code>label</code> — ein Feld darf nicht umbenannt werden, bloss
-          weil jemand noch nichts gewählt hat.
-        </p>
-        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Datum &amp; Zeit (14) kennt darum keine Ruhelage: Ein natives
-          Datumsfeld zeigt sein <code>tt.mm.jjjj</code> immer, sein Label hat
-          also nie eine.
+          Liste und danach als Wert im Feld. «Einordnung wählen …» ist{" "}
+          <em>keine Antwort</em>, sondern das Fehlen einer: Dafür gibt es{" "}
+          <code>placeholder</code>, der gedämpft im Feld steht — genau wie an der
+          Mehrfachauswahl (17). Ein Feld hat das eine oder das andere, nie
+          beides; wer «noch nichts gewählt» als Option in die Liste schriebe,
+          liesse es aussehen wie eine getroffene Wahl.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <code>group</code> stellt einer Option eine nicht wählbare Kopfzeile
@@ -1900,37 +1861,25 @@ export default function Styleguide() {
               { value: "hauptteil", label: "Hauptteil" },
               { value: "ausklang", label: "Ausklang" },
             ]}
-            supportingText="Noch nichts gewählt: Das Label ruht im Feld und trägt den Platzhalter."
+            supportingText="Noch nichts gewählt: Der Platzhalter steht gedämpft im Feld."
           />
         </div>
       </Section>
 
       <Section n="17" title="Mehrfachauswahl">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Auswahl <strong>mehrerer</strong> Werte: einzeiliger Feld-Trigger,
-          der die gewählten Werte als kommagetrennte Zeile zeigt, öffnet ein
-          Panel mit Suchfeld im Kopf, Optionsliste (eckige Checkbox,{" "}
-          <code>rounded-plakette</code>) und Aktions-Fuss
+          Auswahl <strong>mehrerer</strong> Werte im Formular: ein Feldkasten
+          mit dem Namen darüber, der die gewählten Werte als kommagetrennte
+          Zeile zeigt und umbricht, wo sie nicht in eine Zeile passen (Epic
+          #363). Er öffnet ein Panel mit Suchfeld im Kopf, Optionsliste (eckige
+          Checkbox, <code>rounded-plakette</code>) und Aktions-Fuss
           (<code>Zurücksetzen</code> / <code>Alle auswählen</code>, respektiert
-          den aktiven Filter). Das Feld trägt seinen Wert wie die Einzelauswahl
-          (16): eine Zeile Text, am Ende abgeschnitten (<code>truncate</code>) —
-          keine Tags im Feld und kein <code>+N</code>-Zähler. Entfernt wird in
-          der Liste, wo auch gewählt wird; ein Kreuzchen pro Wert im Feld wäre
-          ein zweiter Ort dafür, und gefüllte Tags im Feld eine Fläche, die die
-          Kontur überstrahlt, in der sie liegt. Die Werte stehen in der
-          Reihenfolge der Optionsliste, nicht in der des Anklickens: Dieselbe
-          Auswahl soll immer gleich lauten. Trigger wie ein Feld, Panel wie ein
-          Menü — und das Label wie am Textfeld (14), nur von Hand geschaltet,
-          denn ein Trigger ohne <code>&lt;input&gt;</code> kennt kein{" "}
-          <code>:placeholder-shown</code>. Ruhend steht dort der Leerfall in
-          Worten («Alle Stufen», der <code>placeholder</code>) — genau da, wo
-          gleich der Wert steht. Beim ersten Wert, und ebenso solange das Panel
-          offen ist, schwebt an seiner Stelle der Name der Dimension
-          («Alterskategorie», das <code>label</code>) auf die Kontur. Zwei
-          Sätze für zwei Zustände, weil sie Verschiedenes sagen; der
-          barrierefreie Name bleibt konstant das <code>label</code> — ein Feld
-          darf nicht umbenannt werden, bloss weil jemand etwas ausgewählt hat.
-          Combobox- und Listbox-Semantik
+          den aktiven Filter). Keine Tags im Feld: Entfernt wird in der Liste,
+          wo auch gewählt wird; ein Kreuzchen pro Wert im Feld wäre ein zweiter
+          Ort dafür. Die Werte stehen in der Reihenfolge der Optionsliste,
+          nicht in der des Anklickens: Dieselbe Auswahl soll immer gleich
+          lauten. Ist nichts gewählt, steht der <code>placeholder</code>{" "}
+          gedämpft im Feld. Combobox- und Listbox-Semantik
           (<code>aria-multiselectable</code>) mit voller Tastatursteuerung (↑/↓,
           Home/End, Enter toggelt, Esc schliesst). <code>searchable</code> /{" "}
           <code>actions</code> einzeln abschaltbar für kurze feste Listen.{" "}
@@ -1956,10 +1905,9 @@ export default function Styleguide() {
           <code>actions</code> ab (drei bis vier kurze Werte liest man
           schneller, als man sie filtert), die Erscheinungsform behält beides
           (der Junioren-Katalog führt elf Werte, und jeder ist ein ganzer Satz).
-          Und der <code>placeholder</code> sagt hier nicht mehr den Leerfall
-          einer Abfrage («Alle Stufen»), sondern den einer Eingabe
-          («Alterskategorie wählen …»): Im Filter heisst nichts gewählt <em>alles</em>,
-          im Formular heisst es <em>nichts</em>.
+          Der <code>placeholder</code> sagt den Leerfall einer Eingabe
+          («Alterskategorie wählen …»): Im Formular heisst nichts gewählt{" "}
+          <em>nichts</em>.
         </p>
         <MultiSelectDemo />
 

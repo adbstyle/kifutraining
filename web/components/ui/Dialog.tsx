@@ -49,10 +49,6 @@ export function Dialog({
       }}
       className={cn(
         "m-auto w-[min(28rem,calc(100vw-2rem))] rounded-dialog bg-elev-24 p-5 shadow-dp-24",
-        // Schwebende Feldbeschriftungen stanzen ihre Fläche aus `--feld-grund`
-        // (Vorgabe 00dp, der Grund). Im Dialog liegt darunter 24dp — ohne
-        // diese Zeile stünde jedes Label in einem dunklen Rechteck.
-        "[--feld-grund:var(--color-elev-24)]",
         "backdrop:bg-scrim/60 backdrop:backdrop-blur-[2px]",
         className,
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { TextField } from "@/components/ui";
+import { FeldGruppe, TextField } from "@/components/ui";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
 
 /** Die Spielfeldgrösse einer Junioren-Übung (Story 3 AK 8).
@@ -30,13 +30,8 @@ export function SpielfeldgroesseField({
   error?: string;
 }) {
   return (
-    <div>
-      <p
-        className={`type-label-small mb-2 ${error ? "text-error" : "text-on-surface-mittel"}`}
-      >
-        Spielfeldgrösse (optional)
-      </p>
-      <div className="flex items-start gap-3 sm:max-w-sm">
+    <FeldGruppe name="Spielfeldgrösse (optional)" error={!!error}>
+      <div className="flex items-end gap-3 sm:max-w-sm">
         <TextField
           label="Länge (m)"
           type="number"
@@ -50,7 +45,7 @@ export function SpielfeldgroesseField({
         />
         <span
           aria-hidden
-          className="type-body-large flex h-12 items-center text-on-surface-mittel"
+          className="type-body-large flex h-9 items-center text-on-surface-mittel"
         >
           ×
         </span>
@@ -66,7 +61,7 @@ export function SpielfeldgroesseField({
           onChange={(e) => onBreiteChange(e.target.value)}
         />
       </div>
-      {error && <p className="type-body-small mt-1.5 text-error">{error}</p>}
-    </div>
+      {error && <p className="type-body-small mt-1 text-error">{error}</p>}
+    </FeldGruppe>
   );
 }

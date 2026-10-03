@@ -75,7 +75,7 @@ export function TrainingExerciseRow({
     materialAenderungen(item.materialBasis, materialBasisAusDiagramm(item.diagramm)).length > 0;
 
   return (
-    <li className="flex flex-col rounded-flaeche border border-linie bg-elev-01 px-3 py-2.5 [--feld-grund:var(--color-elev-01)]">
+    <li className="flex flex-col rounded-flaeche border border-linie bg-elev-01 px-3 py-2.5">
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Hoch/Runter */}
         <span className="flex shrink-0 flex-col">
@@ -140,9 +140,9 @@ export function TrainingExerciseRow({
         </span>
 
         {/* Aktionen und Dauer stehen übereinander, nicht nebeneinander: Das
-            Dauerfeld ist ein 48px hohes Feld, in einer Reihe mit drei runden
-            Knöpfen liesse es die Zeile auseinanderfallen. Rechtsbündig, damit
-            die Felder aller Zeilen eine Kante bilden. */}
+            Dauerfeld trägt seinen Namen über sich, in einer Reihe mit drei
+            runden Knöpfen liesse es die Zeile auseinanderfallen. Rechtsbündig,
+            damit die Felder aller Zeilen eine Kante bilden. */}
         <span className="flex shrink-0 flex-col items-end gap-2">
           <span className="flex items-center">
             <InBibliothekButton fassungId={item.id} name={item.name} />

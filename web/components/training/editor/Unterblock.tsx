@@ -45,7 +45,7 @@ export function Unterblock({
   if (!block.flaeche) return liste;
 
   return (
-    <div className="rounded-flaeche bg-elev-02 p-3 [--feld-grund:var(--color-elev-02)]">
+    <div className="rounded-flaeche bg-elev-02 p-3">
       <div className="mb-2 flex items-center justify-between gap-3">
         <h3 className="type-title-small text-on-surface">
           {block.label}

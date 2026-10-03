@@ -1,15 +1,11 @@
 "use client";
 
-import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Check, CheckCheck, ChevronDown, RotateCcw, Search } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { bedienzeile } from "./Menu";
 import { IconButton } from "./IconButton";
-import {
-  feldLabelBase,
-  feldLabelRuhend,
-  feldLabelSchwebend,
-} from "./TextField";
+import { Feld, hinweisIdVon, useFeldId } from "./feld";
 import type { SelectOption } from "./Select";
 
 export interface MultiSelectProps {
@@ -40,29 +36,19 @@ export interface MultiSelectProps {
 
 /* Die Masse des Panels in px. `PANEL_MAX_HOEHE` ist die Vorgabe (das frühere
    `max-h-80`), `PANEL_MIN_HOEHE` die Untergrenze, unter die keine Messung
-   drücken darf — etwa zwei Zeilen plus Kopf und Fuss.
-
-   Der Spalt zwischen Feld und Panel ist nach oben grösser als nach unten, und
-   das ist keine Kosmetik: Die schwebende Beschriftung sitzt mit
-   `-translate-y-1/2` auf der oberen Kontur, ragt also um ihre halbe Zeilenhöhe
-   (18 px / 2) über das Feld hinaus. Ein Panel, das mit denselben 4 px nach
-   oben aufklappt, legt sich mit seinem `z-50` über genau diese Hälfte und
-   schneidet dem Feld den Namen an — bei «Übungstyp» zuerst die Umlautpunkte.
-   Nach unten gibt es nichts freizuhalten. */
+   drücken darf — etwa zwei Zeilen plus Kopf und Fuss. `PANEL_ABSTAND` ist der
+   Spalt zwischen Feld und Panel, nach oben wie nach unten. */
 const PANEL_MAX_HOEHE = 320;
 const PANEL_MIN_HOEHE = 160;
-const PANEL_ABSTAND_UNTEN = 4;
-const PANEL_ABSTAND_OBEN = 10;
+const PANEL_ABSTAND = 4;
 
-/* M2 Multi-Select — einzeiliger Feld-Trigger, der die Auswahl als
-   kommaseparierte Liste zeigt, und ein Panel mit Suchfeld (Kopf), Optionsliste
-   (eckige Checkbox) und Aktions-Footer (Zurücksetzen / Alle auswählen). Der
-   Trigger ist gebaut wie ein Feld (Kontur in `kante`, offener Grund), das
-   Panel wie ein Menü (08dp, Haarlinie, Schatten).
-   Der Trigger trägt den Wert wie die Einzelauswahl: eine Zeile Text, am Ende
-   abgeschnitten (`truncate`) — keine Tags, kein Zähler. Was nicht mehr in die
-   Zeile passt, steht in der Liste darunter, und dort wird auch entfernt; ein
-   Kreuzchen pro Wert im Feld wäre ein zweiter Ort fürs Abwählen.
+/* Mehrfachauswahl im Formular — der Name steht über dem Feld (`Feld`), der
+   Auslöser ist ein Feldkasten (`feldkasten`) und zeigt die Auswahl als
+   kommaseparierte Liste, die umbricht. Dazu ein Panel mit Suchfeld (Kopf),
+   Optionsliste (eckige Checkbox) und Aktions-Footer (Zurücksetzen / Alle
+   auswählen), gebaut wie ein Menü (08dp, Haarlinie, Schatten). Keine Tags
+   im Feld: Entfernt wird in der Liste, wo auch gewählt wird; ein Kreuzchen
+   pro Wert im Feld wäre ein zweiter Ort fürs Abwählen.
    Combobox-/Listbox-Semantik (aria-multiselectable) mit voller
    Tastatursteuerung (↑/↓, Home/End, Enter toggelt, Esc schliesst). Panel
    bleibt nach Auswahl offen. „Alle auswählen" respektiert den aktiven
@@ -83,8 +69,7 @@ export function MultiSelect({
   id,
   className,
 }: MultiSelectProps) {
-  const reactId = useId();
-  const fid = id ?? `ms-${reactId}`;
+  const fid = useFeldId(id);
   const listId = `${fid}-list`;
   const optId = (i: number) => `${fid}-opt-${i}`;
   // Id der Gruppen-Kopfzeile. Die Kopfzeile ist `role="presentation"` und damit
@@ -197,8 +182,8 @@ export function MultiSelect({
     }
     grenzRef.current = grenzElement;
 
-    const unten = grenze.bottom - feld.bottom - PANEL_ABSTAND_UNTEN;
-    const oben = feld.top - grenze.top - PANEL_ABSTAND_OBEN;
+    const unten = grenze.bottom - feld.bottom - PANEL_ABSTAND;
+    const oben = feld.top - grenze.top - PANEL_ABSTAND;
     const nachOben = unten < Math.min(PANEL_MAX_HOEHE, oben);
     setPlatz({
       oben: nachOben,
@@ -373,31 +358,18 @@ export function MultiSelect({
   }
 
   const showPlaceholder = selectedOptions.length === 0;
-  // Das Label schwebt, sobald etwas gewählt ist — und auch, solange das Panel
-  // offen steht: Dann liegt die Aufmerksamkeit auf der Liste, und der Leerfall
-  // im Feld wäre eine Aussage über einen Zustand, der sich gerade ändert.
-  const schwebt = !showPlaceholder || open;
 
   return (
-    // `min-w-0`: Die Wertzeile läuft auf einer Zeile (`truncate`) und hat damit
-    // eine natürliche Mindestbreite. In einem Grid- oder Flex-Elternteil
-    // (Filterzeile, Styleguide-Raster) zöge die über `min-width: auto` das
-    // ganze Feld breiter als seine Spalte — abgeschnitten würde dann nie,
-    // stattdessen sprengte das Feld das Raster.
-    <div className={cn("min-w-0", className)}>
-      {/* Der barrierefreie Name des Triggers und der Liste. Er bleibt konstant
-          `label` («Trainingsteil»), während das sichtbare Label je nach Zustand
-          zwei verschiedene Sätze zeigt — der Vorlesehilfe darf ein Feld nicht
-          umbenannt werden, bloss weil jemand etwas ausgewählt hat. */}
-      <span id={`${fid}-label`} className="sr-only">
-        {label}
-      </span>
-
+    // `min-w-0`: In einem Grid- oder Flex-Elternteil darf das Feld schmaler
+    // werden als ein langer Wert — der bricht dann um, statt das Raster zu
+    // sprengen.
+    <Feld id={fid} label={label} hinweis={supportingText} error={error} className={cn("min-w-0", className)}>
       <div ref={rootRef} className="relative">
-        {/* Trigger = Feld-Kontrakt, auf eine Zeile begrenzt. Ohne Suche ist er
-            die Combobox (treibt die Liste), mit Suche ein Button, der das Panel
-            öffnet (Fokus springt dann ins Suchfeld). Der Wert steht als eine
-            Zeile Text und wird am Ende abgeschnitten. */}
+        {/* Ohne Suche ist der Auslöser die Combobox (treibt die Liste), mit
+            Suche ein Button, der das Panel öffnet (Fokus springt dann ins
+            Suchfeld). Die gewählten Werte stehen durch Komma getrennt im Feld
+            und brechen um, statt abgeschnitten zu werden (Epic #363) — keine
+            Tags: Entfernt wird in der Liste, wo auch gewählt wird. */}
         <div
           id={fid}
           ref={triggerRef}
@@ -407,6 +379,8 @@ export function MultiSelect({
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
           aria-labelledby={`${fid}-label`}
+          aria-describedby={hinweisIdVon(fid, supportingText)}
+          aria-invalid={error || undefined}
           aria-activedescendant={
             !searchable && open && filtered[active] ? optId(active) : undefined
           }
@@ -417,34 +391,14 @@ export function MultiSelect({
           }}
           onKeyDown={onTriggerKey}
           className={cn(
-            // `contain-inline-size` ist hier nicht Kosmetik, sondern das, was das
-            // Abschneiden überhaupt erst erlaubt: Eine Textzeile ohne Umbruch
-            // meldet ihre volle Breite als Mindestbreite nach oben und zöge
-            // sonst das Feld — und mit ihm seine Rasterspalte — beliebig breit,
-            // statt zu kürzen. Mit Inline-Containment kommt die Breite von
-            // aussen, und der Inhalt fügt sich. `min-w-0` allein genügt nicht:
-            // Es wirkt nur auf dem Weg nach oben, und schon ein fremdes <div>
-            // um das Feld herum unterbricht die Kette.
-            // `min-w-40` ist der Preis dafür: Wo die Breite NICHT von aussen
-            // kommt — ein Elternteil, der sich um seinen Inhalt legt —, hätte
-            // das Feld sonst keine, es fiele auf Polsterung und Pfeil zusammen
-            // (gemessen: 35 px). Die Schranke liegt unter jeder Breite, die die
-            // Filterzeile vergibt (schmalste: 192 px), ändert dort also nichts.
-            "focus-ring type-body-large flex h-12 w-full min-w-40 items-center gap-2 contain-inline-size rounded-flaeche kontur bg-transparent px-4 text-on-surface",
-            error ? "border-error" : "border-kante",
-            // Offen zieht der Trigger die Kontur auf Primary — er gehört dann
-            // zum Panel darunter und soll das auch zeigen.
-            open && !error && "border-primary",
+            // Offen trägt der Auslöser die Kontur in Primary (`aria-expanded`
+            // im Feldkasten) — er gehört dann zum Panel darunter.
+            "feldkasten type-body-large flex min-h-9 w-full items-center gap-2 px-3 py-1",
             disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
           )}
         >
-          {/* Der Leerfall steht nicht hier drin, sondern im Label darüber —
-              sonst stünden im selben Feld zwei Beschriftungen übereinander.
-              Bleibt die Wertzeile: die gewählten Werte durch Komma getrennt,
-              eine Zeile, am Ende abgeschnitten — wie die Einzelauswahl ihren
-              einen Wert zeigt. */}
-          <span className="min-w-0 flex-1 truncate text-left">
-            {anzeigeText}
+          <span className={cn("min-w-0 flex-1 break-words text-left", showPlaceholder && "text-on-surface-mittel")}>
+            {showPlaceholder ? (placeholder ?? "Auswählen …") : anzeigeText}
           </span>
 
           <ChevronDown
@@ -458,35 +412,12 @@ export function MultiSelect({
           />
         </div>
 
-        {/* Das Label wie am TextField, nur von Hand geschaltet: Ein Trigger
-            ohne <input> kennt kein `:placeholder-shown`. Ruhend zeigt es den
-            Leerfall («Alle Stufen») dort, wo gleich der Wert steht; sobald
-            etwas gewählt ist — oder das Panel offen ist und die Wahl also
-            gerade läuft —, schwebt an dessen Stelle der Name der Dimension auf
-            die Kontur. `aria-hidden`, weil der Name des Felds aus dem
-            sr-only-Label oben kommt und sich nicht ändern darf. */}
-        <span
-          aria-hidden
-          className={cn(
-            feldLabelBase,
-            "left-3",
-            schwebt ? feldLabelSchwebend : feldLabelRuhend,
-            error
-              ? "text-error"
-              : schwebt && open
-                ? "text-primary"
-                : "text-on-surface-mittel",
-          )}
-        >
-          {schwebt ? label : (placeholder ?? "Auswählen …")}
-        </span>
-
         {open && (
           <div
             style={{ maxHeight: platz.maxHoehe }}
             className={cn(
               "absolute z-50 flex w-full flex-col overflow-hidden rounded-flaeche border border-linie bg-elev-08 shadow-dp-08",
-              platz.oben ? "bottom-full mb-2.5" : "top-full mt-1",
+              platz.oben ? "bottom-full mb-1" : "top-full mt-1",
             )}
           >
             {searchable && (
@@ -621,17 +552,6 @@ export function MultiSelect({
             <input key={v} type="hidden" name={name} value={v} />
           ))}
       </div>
-
-      {supportingText && (
-        <p
-          className={cn(
-            "type-body-small mt-1 px-1",
-            error ? "text-error" : "text-on-surface-mittel",
-          )}
-        >
-          {supportingText}
-        </p>
-      )}
-    </div>
+    </Feld>
   );
 }

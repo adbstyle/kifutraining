@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Badge } from "./Badge";
 import { Select } from "./Select";
+import { feldNameKlasse } from "./feld";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { ALTERSSTUFEN, istAltersstufe, type Altersstufe } from "@/lib/altersstufe";
 
@@ -61,8 +62,8 @@ export function AltersstufeField({
   if (!onChange)
     return (
       <div>
-        <p className="type-label-small mb-2 text-on-surface-mittel">Altersstufe</p>
-        <div className="flex flex-wrap items-center gap-2">
+        <p className={feldNameKlasse()}>Altersstufe</p>
+        <div className="flex min-h-9 flex-wrap items-center gap-2">
           {wert && <Badge tone="neutral">{altersstufeLabels[wert]}</Badge>}
           {aktion}
           <p className="type-body-small text-on-surface-mittel">
