@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Dialog, TextField } from "@/components/ui";
 import { erstelleTeam } from "@/lib/actions/teams";
+import { TEAM_NAME_MAX } from "@/lib/team";
 
 /* Neues Team anlegen (Story 3 AK 1–3). Gefragt wird nur der Name — wer anlegt,
    ist sofort Mitglied; Mitglieder kommen anschliessend im Team dazu. */
@@ -56,7 +57,7 @@ export function TeamErstellenButton() {
         <TextField
           label="Teamname"
           value={name}
-          maxLength={60}
+          maxLength={TEAM_NAME_MAX}
           onChange={(e) => setName(e.target.value)}
           error={!!fehler}
           supportingText={fehler}

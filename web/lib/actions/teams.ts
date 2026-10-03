@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { revalidiereTeam } from "@/lib/revalidate";
+import { teamNameProblem } from "@/lib/team";
 import { eigeneBildPfade } from "@/lib/fassung";
 import { raeumeVerwaisteBilder, teamBildKandidaten } from "@/lib/storage-aufraeumen";
 
@@ -14,16 +15,11 @@ import { raeumeVerwaisteBilder, teamBildKandidaten } from "@/lib/storage-aufraeu
  * der RPC-Zustände in Klartext und die Cache-Invalidierung.
  */
 
-const MAX_NAME = 60;
-
 export type TeamActionResult = { ok: boolean; error?: string };
 
 function pruefeName(name: string): { ok: true; name: string } | { ok: false; error: string } {
-  const trimmed = name.trim();
-  if (!trimmed) return { ok: false, error: "Bitte einen Teamnamen angeben." };
-  if (trimmed.length > MAX_NAME)
-    return { ok: false, error: `Der Teamname darf höchstens ${MAX_NAME} Zeichen lang sein.` };
-  return { ok: true, name: trimmed };
+  const problem = teamNameProblem(name);
+  return problem ? { ok: false, error: problem } : { ok: true, name: name.trim() };
 }
 
 /** Ein Team anlegen; der Anlegende ist sofort Mitglied (Story 3). Team und

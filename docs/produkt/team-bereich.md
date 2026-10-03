@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-01. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-03. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -363,10 +363,15 @@ Trainings, Terminen, Terminserien und Bilddateien.
 
 ## Drei Ansichten
 
-Der Team-Bereich gliedert sich in drei Ansichten, zwischen denen ein Umschalter unter dem
-Teamnamen wechselt. Wer ein Team öffnet, landet im Trainingsplan — was als Nächstes ansteht,
-ist beim Öffnen die häufigste Frage. Daneben liegen die Trainings, also der Bestand, aus dem
-geplant wird, und unter „Team" die Mitglieder samt Verlassen und Auflösen.
+Der Team-Bereich gliedert sich in drei Ansichten, zwischen denen ein Umschalter direkt unter
+den Brotkrumen wechselt; den Namen des Teams nennt die Brotkrume. Wer ein Team öffnet, landet
+im Trainingsplan — was als Nächstes ansteht, ist beim Öffnen die häufigste Frage. Daneben
+liegen die Trainings, also der Bestand, aus dem geplant wird, und unter „Team" der Teamname,
+die Mitglieder samt Verlassen und Auflösen.
+
+Umbenannt wird das Team im Feld „Teamname" unter „Team". Gespeichert wird beim Verlassen des
+Felds, ohne Knopf und ohne Bestätigung. Ein leerer Name wird nicht gespeichert: Das Feld fällt
+auf den bisherigen Namen zurück, und eine Meldung am Bildschirmrand sagt warum.
 
 Jede Ansicht hat ihre eigene Adresse, auch die Liste und der Monat des Trainingsplans samt dem
 gezeigten Monat und der Eingrenzung auf die eigenen Termine. Sie lässt sich einem Mitglied

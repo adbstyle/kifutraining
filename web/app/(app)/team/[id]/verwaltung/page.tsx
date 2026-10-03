@@ -2,14 +2,16 @@ import { redirect } from "next/navigation";
 import { Card } from "@/components/ui";
 import { MitgliederListe } from "@/components/team/MitgliederListe";
 import { TeamGefahrenzone } from "@/components/team/TeamGefahrenzone";
+import { TeamNameFeld } from "@/components/team/TeamNameFeld";
 import { getTeam, getTeamAufloesungsInfo } from "@/lib/queries/teams";
 import { createClient } from "@/lib/supabase/server";
 
 
-/* Die Teamverwaltung: wer dabei ist und wie man wieder herauskommt (Story 17).
+/* Die Teamverwaltung: wie das Team heisst, wer dabei ist und wie man wieder
+ * herauskommt (Story 17).
  *
- * Beides gehört zusammen, weil beides die Zusammensetzung des Teams betrifft
- * und nicht die Trainingsarbeit. Die Zahlen für den Auflösen-Dialog werden nur
+ * Das gehört zusammen, weil es das Team selbst betrifft und nicht die
+ * Trainingsarbeit. Die Zahlen für den Auflösen-Dialog werden nur
  * hier geladen — die übrigen Ansichten brauchen sie nicht. */
 export default async function TeamVerwaltungPage({
   params,
@@ -36,6 +38,10 @@ export default async function TeamVerwaltungPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <Card className="p-5 sm:p-6">
+        <TeamNameFeld teamId={team.id} name={team.name} />
+      </Card>
+
       <Card className="p-5 sm:p-6">
         <h2 className="type-title-large text-on-surface">
           Mitglieder

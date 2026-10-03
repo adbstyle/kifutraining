@@ -5,9 +5,10 @@ import { useRef, useState } from "react";
 /**
  * Ein Feld, das beim Verlassen speichert — die Mechanik dahinter, einmal.
  *
- * Zwei Felder im Editor arbeiten so: die Notiz an einer Übung (#152) und der
- * Name des Trainings im Kopf (#250). Beide brauchen dieselben drei Schranken,
- * und jede einzelne davon ist ein Fehler, den man sonst zweimal macht:
+ * Drei Felder arbeiten so: im Editor die Notiz an einer Übung (#152) und der
+ * Name des Trainings im Kopf (#250), in der Teamverwaltung der Teamname. Alle
+ * brauchen dieselben drei Schranken, und jede einzelne davon ist ein Fehler,
+ * den man sonst mehrfach macht:
  *
  * 1. Der EINGETIPPTE Text lebt lokal, damit das Feld beim Tippen nicht auf den
  *    Serverstand zurückspringt.
