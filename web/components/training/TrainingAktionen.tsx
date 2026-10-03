@@ -247,7 +247,7 @@ export function TrainingAktionen({
 
   return (
     <>
-      <div className="ml-auto flex shrink-0 items-center gap-0.5 print:hidden">
+      <div className="flex items-center gap-0.5">
         <Tooltip label="Durchführen">
           <IconButtonLink
             href={ziel(`/training/${trainingId}/durchfuehren`)}

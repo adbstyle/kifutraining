@@ -6,9 +6,9 @@ import { SlimSchalter } from "./AppRahmen";
 
 /**
  * Kopfzeile jeder Seite: der Umschalter der Seitenleiste, die Brotkrumen und
- * rechts optional Aktionen (Training: Bearbeiten, Kopieren, …). Im Druck
- * fehlt sie, ausser `imDruck`: Dann steht der Pfad auf dem Papier (Umschalter
- * und Aktionen blenden sich selbst aus).
+ * rechtsbündig optional Aktionen (Übersichten: Erstellen; Training:
+ * Bearbeiten, Kopieren, …). Im Druck fehlt sie, ausser `imDruck`: Dann steht
+ * der Pfad auf dem Papier (Umschalter und Aktionen blenden sich aus).
  *
  * Ab `lg` ist sie mindestens so hoch wie der Kopf der Seitenleiste (64 px)
  * und steht ohne Rand am oberen Rand: So liegen Umschalter und Brotkrumen auf
@@ -33,7 +33,7 @@ export function SeitenKopf({
     <div className={cn("flex items-center gap-3 lg:min-h-16", !imDruck && "print:hidden", className)}>
       <SlimSchalter />
       <Breadcrumbs items={krumen} />
-      {aktionen}
+      {aktionen && <div className="ml-auto flex shrink-0 items-center print:hidden">{aktionen}</div>}
     </div>
   );
 }
