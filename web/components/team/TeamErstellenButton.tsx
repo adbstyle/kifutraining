@@ -30,7 +30,7 @@ export function TeamErstellenButton() {
 
   return (
     <>
-      <Button variant="filled" size="sm" className="shrink-0" onClick={() => setOpen(true)}>
+      <Button variant="filled" size="sm" onClick={() => setOpen(true)}>
         Team erstellen
       </Button>
 
