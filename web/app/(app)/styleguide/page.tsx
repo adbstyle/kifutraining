@@ -1048,8 +1048,8 @@ export default function Styleguide() {
           ohne Tooltip; der Name steht im zugänglichen Namen
           (<code>aria-label</code>).
           Gewählt trägt ein Glied die Auswahl-Optik der Chips: Kontur und
-          Zeichen in Primary, die Fläche Primary/12 — leiser als ein gefüllter
-          Knopf daneben, der die Handlung trägt.
+          Zeichen in Primary, ohne Fläche — leiser als ein gefüllter Knopf
+          daneben, der die Handlung trägt.
         </p>
         <ButtonGroup ariaLabel="Ansicht">
           <button type="button" aria-label="Liste" aria-pressed={false} className={segmentClasses(false)}>
@@ -1241,12 +1241,14 @@ export default function Styleguide() {
         <p className="type-label-small mb-2 text-on-surface-mittel">Chips</p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
           Ungewählt steht jeder Chip auf der Kante. <strong>Gewählt gibt es
-          zweimal.</strong> Getönt (<code>chipTextSelected</code> —
-          Primary-Kontur, Primary-Schrift, 12 % Fläche, kein Häkchen) sind der{" "}
+          zweimal.</strong> Umrandet (<code>chipTextSelected</code> —
+          Primary-Kontur, Primary-Schrift, keine Fläche, kein Häkchen) sind der{" "}
           <strong>Filter</strong> und der Chip, der{" "}
           <strong>Nutzertext</strong> trägt — eine Variante, ein Gruppenname.
-          Dieselbe Tönung trägt das gewählte Glied der verbundenen
-          Knopfgruppe (08). Ein Filter steht neben Suchfeld, Auswahl und
+          Dasselbe trägt das gewählte Glied der verbundenen Knopfgruppe (08) und
+          der eingrenzende Filterknopf (29). Ohne Fläche steht die
+          Primary-Schrift auf dem dunklen Grund am klarsten (Epic #363); eine
+          getönte Fläche nahm ihr Kontrast. Ein Filter steht neben Suchfeld, Auswahl und
           Knöpfen; gefüllt wäre er lauter als die Handlung daneben, und der
           Farbwechsel sagt «an» bereits. Eine gefüllte Fläche schriee zudem den
           Namen an, den die Trainerin selbst vergeben hat. Gefüllt
@@ -1930,7 +1932,7 @@ export default function Styleguide() {
           Mehrfachauswahl ein Panel öffnet — bei sieben kurzen Werten, die man
           auf einen Blick vergleichen will, wäre das ein Klick zu viel. Jeder
           Wert ist ein <code>FilterChip</code> (Ein/Aus, <code>aria-pressed</code>,
-          gewählt getönt); das Kürzel steht sichtbar, der volle
+          gewählt in Primary umrandet); das Kürzel steht sichtbar, der volle
           Wochentag für Screenreader. Montag zuerst, die Wahl bleibt sortiert.
           Ein Fehler steht unter den Chips.
         </p>
@@ -2846,8 +2848,8 @@ export default function Styleguide() {
           in derselben Leiste steht — normal gesetzt in{" "}
           <code>type-body-medium</code>, leiser als ein halbfetter Knopf, denn
           er grenzt ein, statt etwas auszulösen; nur eckig statt rund, weil er
-          ein Panel öffnet statt bloss umzuschalten. Grenzt er ein, steht er
-          getönt wie ein gewählter Chip und trägt die Zahl als{" "}
+          ein Panel öffnet statt bloss umzuschalten. Grenzt er ein, steht er in
+          Primary umrandet wie ein gewählter Chip und trägt die Zahl als{" "}
           <code>Zaehler</code> (09) — vorgelesen wird «Alterskategorie, 2
           gewählt». Das Panel
           ist breiter als der Knopf, wo der Inhalt es braucht (bis 34 rem; der

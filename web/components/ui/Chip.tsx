@@ -109,15 +109,16 @@ export const chipTextHuelle =
   "type-body-medium inline-flex h-9 rounded-full kontur normal-case transition-colors";
 export const chipTextBase = `${chipTextHuelle} state focus-ring items-center gap-1.5 px-3`;
 export const chipTextOutlined = "border-kante text-on-surface";
-/* Gewählter Nutzertext-Chip: umrandet und beschriftet in Primary, dazu ein
-   sehr leiser Grund. Nicht gefüllt wie der Filter-Chip — eine gefüllte Pille
-   kehrte den Nutzertext in schwarze Schrift, und der Name, den die Trainerin
-   vergeben hat, soll auch gewählt wie ihr Name aussehen. */
-export const chipTextSelected = "border-primary bg-primary/12 text-primary";
+/* Gewählt: umrandet und beschriftet in Primary, ohne Fläche (Epic #363) —
+   für jeden gewählten Chip, den Filterknopf und das gewählte Glied der
+   Knopfgruppe. Ohne Grund steht die Primary-Schrift auf dem dunklen Grund am
+   klarsten; eine getönte Fläche nahm ihr Kontrast, und gefüllt kehrte sie
+   den Nutzertext in schwarze Schrift — der Name, den die Trainerin vergeben
+   hat, soll auch gewählt wie ihr Name aussehen. */
+export const chipTextSelected = "border-primary text-primary";
 
-/* Filter-Chip (toggelbar) — gewählt: getönt wie ein Glied der verbundenen
-   Knopfgruppe (Kontur und Schrift in Primary, die Fläche Primary/12), ohne
-   Häkchen. Ein Filter steht neben Suchfeld, Auswahl und Knöpfen; gefüllt
+/* Filter-Chip (toggelbar) — gewählt: Kontur und Schrift in Primary, ohne
+   Fläche und ohne Häkchen (`chipTextSelected`). Ein Filter steht neben Suchfeld, Auswahl und Knöpfen; gefüllt
    wäre er lauter als die Handlung daneben, und der Farbwechsel von Kontur
    und Schrift sagt «an» bereits — für Screenreader `aria-pressed`.
    Optionales führendes Icon, gewählt wie ungewählt. */

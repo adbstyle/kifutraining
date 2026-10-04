@@ -20,9 +20,9 @@ import { useDebouncedWert } from "@/lib/use-debounce";
    im geöffneten Panel. So bleibt eine Filterleiste eine Zeile aus Wörtern,
    statt sich in Feldern mit abgeschnittenen Wertlisten zu stapeln.
 
-   Er trägt Schrift und Kleid des Filter-Chips: normal gesetzt, grenzt er ein,
-   steht er getönt wie ein gewählter Chip und trägt die Zahl als `Zaehler`. Das Panel ist breiter als der Knopf, wo der Inhalt
-   es braucht, und rückt am rechten Rand nach links (`usePanelAnker`). Es ist
+   Er trägt Schrift und Kleid des Filter-Chips: normal gesetzt; grenzt er ein,
+   steht er in Primary umrandet wie ein gewählter Chip und trägt die Zahl als
+   `Zaehler`. Das Panel ist breiter als der Knopf, wo der Inhalt es braucht, und rückt am rechten Rand nach links (`usePanelAnker`). Es ist
    kein Menü und keine Listbox, sondern eine Gruppe gewöhnlicher Bedien-
    elemente — Kontrollkästchen, ein Zahlenfeld —, darum gelten deren eigene
    Tasten; dazu wandern ↑/↓ zwischen ihnen, und Esc schliesst mit dem Fokus
@@ -120,7 +120,7 @@ export function FilterKnopf({
           }
         }}
         // In der Schrift und im Kleid des Filter-Chips, der in derselben Leiste
-        // steht: normal gesetzt, gewählt getönt — nur eckig, weil er ein Panel
+        // steht: normal gesetzt, gewählt in Primary — nur eckig, weil er ein Panel
         // öffnet statt bloss umzuschalten.
         className={cn(
           "state focus-ring type-body-medium inline-flex h-9 items-center gap-2 rounded-flaeche kontur bg-transparent px-3 transition-colors",

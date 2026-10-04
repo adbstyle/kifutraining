@@ -154,10 +154,10 @@ export function ChipMenu({
       : selected
         ? "border-primary"
         : "border-kante";
-  // Gewählt wie jeder Nutzertext-Chip (`chipTextSelected`): Primary umrandet
-  // und beschriftet, dazu ein sehr leiser Grund — nicht gefüllt, sonst kippte
-  // der selbst vergebene Name in schwarze Schrift.
-  const flaeche = selected ? "bg-primary/12 text-primary" : "text-on-surface";
+  // Gewählt wie jeder Chip (`chipTextSelected`): Primary umrandet und
+  // beschriftet, ohne Fläche — gefüllt kippte der selbst vergebene Name in
+  // schwarze Schrift.
+  const flaeche = selected ? "text-primary" : "text-on-surface";
 
   const chevron = (
     <ChevronDown
