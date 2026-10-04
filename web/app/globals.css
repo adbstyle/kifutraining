@@ -394,6 +394,42 @@
   }
 }
 
+/* Leeres Feld (Epic #363, nach dem Vorbild von Jira): Solange ein Feld leer
+   ist und nicht bearbeitet wird, steht sein Name IM Feld, gedämpft an der
+   Stelle des Werts, und die Zeile darüber bleibt leer — kein zweiter Satz.
+   Ein Formular mit vielen leeren Feldern liest sich so als ruhige, knappe
+   Liste von Namen. Sobald man hineinklickt oder ein Wert drinsteht, springt
+   der Name in eine eigene Zeile darüber, und das Feld wird um diese Zeile
+   höher — eine von Anfang an freigehaltene Zeile wäre zu grosszügig.
+   «Leer» heisst: ein Feldkasten zeigt seinen Platzhalter (der Name ist dann
+   der Platzhalter), oder der Rahmen meldet `data-leer` (die Auswahlfelder,
+   deren Auslöser kein Eingabe-Element ist). Im Fehler bleibt der Name
+   darüber stehen — er sagt, wo etwas fehlt.
+   Versteckt wird der Name nur für das Auge (wie `sr-only`): Er bleibt das
+   Label des Felds und wird vorgelesen. */
+.feld-rahmen:not(:focus-within):not([data-fehler]):is(
+    [data-leer],
+    :has(.feldkasten:placeholder-shown)
+  )
+  > .feld-name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* Im Feld steht der Name dann nicht ein zweites Mal: Wer hineinklickt, sieht
+   ihn darüber und darunter ein leeres Feld. Nur wo der Name unsichtbar ist
+   (Suche in der Filterleiste), bleibt der Platzhalter auch beim Tippen stehen. */
+.feld-rahmen:not([data-name-versteckt]) .feldkasten:focus::placeholder {
+  color: transparent;
+}
+.feld-rahmen:focus-within .feld-leertext {
+  visibility: hidden;
+}
+
 /* Diagramm-Platzhalter: 45°-Schraffur, sehr leise. */
 @utility schraffur {
   background-image: repeating-linear-gradient(

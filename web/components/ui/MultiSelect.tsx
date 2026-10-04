@@ -25,9 +25,6 @@ export interface MultiSelectProps {
   searchable?: boolean;
   /** Footer mit „Zurücksetzen" / „Alle auswählen" (Default). */
   actions?: boolean;
-  /** Der Leerfall in Worten («Alterskategorie wählen …»). Er steht gedämpft
-      im Feld, solange nichts gewählt ist. Voreingestellt «Auswählen …». */
-  placeholder?: string;
   supportingText?: string;
   error?: boolean;
   disabled?: boolean;
@@ -55,7 +52,6 @@ export function MultiSelect({
   name,
   searchable = true,
   actions = true,
-  placeholder,
   supportingText,
   error,
   disabled,
@@ -229,6 +225,7 @@ export function MultiSelect({
       label={label}
       hinweis={supportingText}
       error={error}
+      leer={showPlaceholder}
       className={cn("min-w-0", className)}
       // Der Auslöser ist ein <div> und lässt sich nicht beschriften; ein
       // Klick auf den Namen öffnet ihn darum von Hand, wie ein Label es täte.
@@ -270,8 +267,8 @@ export function MultiSelect({
             disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
           )}
         >
-          <span className={cn("min-w-0 flex-1 break-words text-left", showPlaceholder && "text-on-surface-mittel")}>
-            {showPlaceholder ? (placeholder ?? "Auswählen …") : anzeigeText}
+          <span className={cn("min-w-0 flex-1 break-words text-left", showPlaceholder && "feld-leertext text-on-surface-mittel")}>
+            {showPlaceholder ? label : anzeigeText}
           </span>
 
           <ChevronDown

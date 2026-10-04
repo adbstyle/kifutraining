@@ -52,7 +52,6 @@ export function StufenField({
       onChange={onChange}
       searchable={false}
       actions={false}
-      placeholder="Alterskategorie wählen …"
       error={!!error}
       supportingText={error ?? supportingText}
     />

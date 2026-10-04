@@ -80,11 +80,10 @@ export function AltersstufeField({
       className={className}
       value={wert ?? ""}
       options={optionen}
-      // Kein Leerwert in der Liste, sondern ein Platzhalter: «noch nicht
-      // gewählt» ist der Ausgangszustand am Training, keine Altersstufe.
+      // Kein Leerwert in der Liste: «noch nicht gewählt» ist der
+      // Ausgangszustand am Training (leeres Feld), keine Altersstufe.
       // Einmal gesetzt, lässt sie sich auch nicht mehr auf «keine»
       // zurückstellen — sie ist an Übung wie Training eine Pflichtangabe.
-      placeholder="Altersstufe wählen …"
       onChange={(v) => istAltersstufe(v) && onChange(v)}
       error={!!fehler}
       supportingText={fehler ?? hinweis}

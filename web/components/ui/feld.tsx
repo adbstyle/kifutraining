@@ -2,12 +2,15 @@ import { useId } from "react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-/* Der Rahmen jedes Formularfelds (Epic #363): der Name ÜBER dem Feld, darunter
-   der Feldkasten, darunter Hinweis oder Fehler. Der Name steht jederzeit da —
-   leer, ausgefüllt, im Fokus, im Fehler —, damit ein ausgefülltes Formular
-   lesbar bleibt, ohne dass man ins Feld klickt. Er trägt die Lesetype klein
-   und gedämpft (`type-body-small`), nicht die Versal-Type der Label: Er
-   benennt nur, er ruft nicht.
+/* Der Rahmen jedes Formularfelds (Epic #363, nach dem Vorbild von Jira): Ist
+   das Feld leer und wird nicht bearbeitet, steht sein Name gedämpft IM Feld.
+   Sobald man hineinklickt oder ein Wert drinsteht, springt der Name ÜBER das
+   Feld, und das Feld wird um diese Zeile höher. So bleibt ein ausgefülltes
+   Formular lesbar, ohne dass man ins Feld klickt, und ein leeres eine ruhige,
+   knappe Liste von Namen. Darunter steht
+   Hinweis oder Fehler. Der Name trägt darüber die Lesetype klein und gedämpft
+   (`type-body-small`), nicht die Versal-Type der Label: Er benennt nur, er
+   ruft nicht. Den Wechsel regelt `.feld-rahmen` in globals.css.
 
    Hier und nur hier steht der Stil des Feldnamens. TextField, TextArea,
    DateTimeField, Select und MultiSelect bauen ihr Feld in diesen Rahmen; eine
@@ -49,6 +52,7 @@ export function Feld({
   id,
   label,
   labelVersteckt = false,
+  leer = false,
   hinweis,
   error = false,
   className,
@@ -61,6 +65,10 @@ export function Feld({
   /** Echtes Label, aber nur für die Vorlesehilfe — für Felder, deren Zweck
    *  ihr Platzhalter und ihr Ort schon sagen (Suche in der Filterleiste). */
   labelVersteckt?: boolean;
+  /** Für Auswahlfelder: Ist noch nichts gewählt? Dann steht der Name im Feld
+   *  statt darüber (siehe `.feld-rahmen` in globals.css). Text-Eingaben
+   *  brauchen das nicht — dort sagt es ihr Platzhalter. */
+  leer?: boolean;
   hinweis?: ReactNode;
   error?: boolean;
   className?: string;
@@ -70,12 +78,17 @@ export function Feld({
   children: ReactNode;
 }) {
   return (
-    <div className={className}>
+    <div
+      className={cn("feld-rahmen", className)}
+      data-leer={leer || undefined}
+      data-fehler={error || undefined}
+      data-name-versteckt={labelVersteckt || undefined}
+    >
       <label
         id={`${id}-label`}
         htmlFor={id}
         onClick={onLabelClick}
-        className={labelVersteckt ? "sr-only" : feldNameKlasse(error)}
+        className={labelVersteckt ? "sr-only" : cn("feld-name", feldNameKlasse(error))}
       >
         {label}
       </label>

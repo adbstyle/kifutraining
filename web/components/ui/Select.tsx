@@ -27,14 +27,6 @@ export interface SelectProps {
   onChange?: (value: string) => void;
   /** Optionales Hidden-Input, damit das Feld an nativer Form-Serialisierung teilnimmt. */
   name?: string;
-  /** Der Leerfall in Worten, für Felder, die noch KEINE Wahl haben
-   *  («Einordnung wählen …»). Er steht gedämpft im Feld, solange nichts
-   *  gewählt ist; der Name steht ohnehin darüber.
-   *
-   *  NICHT zu verwechseln mit einer Leer-Option in `options` («— kein
-   *  Feldtyp —»): Die ist ein gewählter Wert und steht darum als Wert im Feld.
-   *  Ein Feld hat das eine oder das andere, nie beides. */
-  placeholder?: string;
   supportingText?: string;
   error?: boolean;
   disabled?: boolean;
@@ -51,15 +43,13 @@ export interface SelectProps {
    Der gewählte Wert steht ganz im Feld und bricht um, statt abgeschnitten zu
    werden — eine Einordnung ist oft ein ganzer Satz (Epic #363).
 
-   Leerwert und Platzhalter sind zweierlei und mischen sich nicht:
+   Leerwert und «nichts gewählt» sind zweierlei:
 
    1. Der Leerfall ist ein WERT: «— kein Feldtyp —» heisst «diese Übung hat
       keinen». Er steht als Option in `options` und darum, gewählt, als Wert im
       Feld.
-   2. Es ist noch NICHTS gewählt: Die Einordnung einer neuen Übung hat keinen
-      Leerwert, sie hat noch keine Antwort. Dann steht der `placeholder`
-      («Einordnung wählen …») gedämpft im Feld — er soll nicht wie eine
-      getroffene Wahl aussehen. */
+   2. Es ist noch NICHTS gewählt (der Wert steht in keiner Option): Dann steht
+      der Name gedämpft im Feld, wie bei jedem leeren Feld (`Feld`). */
 export function Select({
   label,
   options,
@@ -67,7 +57,6 @@ export function Select({
   defaultValue,
   onChange,
   name,
-  placeholder,
   supportingText,
   error,
   disabled,
@@ -86,22 +75,19 @@ export function Select({
   // erste. Sonst behauptete das Feld einen Zustand, den der Datensatz nicht
   // hat, und ein unbedachtes Speichern schriebe ihn fest.
   //
-  // `foundIndex === -1` ist mit `placeholder` der Normalfall, nicht die
+  // `foundIndex === -1` ist bei einem leeren Feld der Normalfall, nicht die
   // Ausnahme: Ein Feld, das noch nichts gewählt hat, findet keinen Treffer.
   // Darum zwei Grössen, die auseinanderzuhalten sind — `foundIndex` sagt, WAS
   // gewählt ist (nichts, wenn -1), `startIndex` nur, wo die Tastatur zu laufen
   // beginnt, wenn die Liste aufgeht. Wer den Startpunkt zum Häkchen macht,
-  // markiert die erste Option als gewählt, während das Feld den Platzhalter
-  // zeigt.
+  // markiert die erste Option als gewählt, während das Feld leer dasteht.
   const foundIndex = options.findIndex((o) => o.value === current);
   const startIndex = foundIndex === -1 ? 0 : foundIndex;
   const selected = foundIndex === -1 ? undefined : options[foundIndex];
 
   const [open, setOpen] = useState(false);
 
-  // Der Platzhalter steht nur, wo das Feld einen mitbringt UND noch nichts
-  // gewählt ist.
-  const zeigtPlatzhalter = !!placeholder && !current;
+  const leer = foundIndex === -1;
   const [active, setActive] = useState(startIndex);
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -195,7 +181,7 @@ export function Select({
   }
 
   return (
-    <Feld id={fid} label={label} hinweis={supportingText} error={error} className={className}>
+    <Feld id={fid} label={label} leer={leer} hinweis={supportingText} error={error} className={className}>
       <div ref={rootRef} className="relative">
         <button
           id={fid}
@@ -218,8 +204,8 @@ export function Select({
             disabled && "cursor-not-allowed opacity-50",
           )}
         >
-          <span className={cn("min-w-0 flex-1 break-words", zeigtPlatzhalter && "text-on-surface-mittel")}>
-            {zeigtPlatzhalter ? placeholder : selected?.label}
+          <span className={cn("min-w-0 flex-1 break-words", leer && "feld-leertext text-on-surface-mittel")}>
+            {leer ? label : selected?.label}
           </span>
           <ChevronDown
             size={18}

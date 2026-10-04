@@ -12,8 +12,8 @@ export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
    dem Feld und Feldkasten wie beim TextField (`Feld`, `feldkasten`). Leer ist
    sie zwei Zeilen hoch, damit man ihr ansieht, dass hier mehr als ein Wort
    hineingehört (Epic #363); sie wächst mit dem Inhalt (CSS field-sizing) bis
-   rund zehn Zeilen, danach scrollt sie. Ein Platzhalter steht im Feld und
-   bricht um, wo er nicht in eine Zeile passt. */
+   rund zehn Zeilen, danach scrollt sie. Leer steht der Name als Platzhalter
+   im Feld (siehe `Feld`). */
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
   ({ label, supportingText, error = false, id, className, ...props }, ref) => {
     const fid = useFeldId(id);
@@ -22,6 +22,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
         <textarea
           id={fid}
           ref={ref}
+          placeholder={label}
           aria-invalid={error || undefined}
           aria-describedby={hinweisIdVon(fid, supportingText)}
           // min-h-16 = zwei Zeilen à 24 px plus Polster und Kontur.

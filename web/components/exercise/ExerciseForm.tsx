@@ -524,7 +524,6 @@ export function ExerciseForm({
               onChange={setKat}
               searchable={false}
               actions={false}
-              placeholder="Alterskategorie wählen …"
               error={!!err.kat}
               supportingText={err.kat}
             />
@@ -633,7 +632,6 @@ export function ExerciseForm({
                 }))}
                 value={form}
                 onChange={setForm}
-                placeholder="Keine Erscheinungsform"
               />
             )}
 

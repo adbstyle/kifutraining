@@ -1530,12 +1530,17 @@ export default function Styleguide() {
 
       <Section n="14" title="Textfelder, Text-Area, Datum &amp; Zeit">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Der Name steht über dem Feld, jederzeit</strong> (Epic #363):
-          leer, ausgefüllt, im Fokus, im Fehler. Ein ausgefülltes Formular
-          bleibt so lesbar, ohne dass man ins Feld klickt. Er steht klein und
-          gedämpft in der Lesetype (<code>type-body-small</code>), nicht in der
-          Versal-Type der Label — er benennt, er ruft nicht. Darunter folgt der
-          Feldkasten, darunter Hinweis oder Fehler in derselben kleinen Schrift.
+          <strong>Leer steht der Name im Feld, sonst darüber</strong> (Epic
+          #363, nach dem Vorbild von Jira). Ein leeres Feld zeigt nur seinen
+          Namen, gedämpft an der Stelle des Werts — kein zweiter Satz wie
+          «… wählen», ein Formular mit vielen leeren Feldern bleibt eine ruhige
+          Liste von Namen. Klickt man hinein oder steht ein Wert drin, springt
+          der Name in eine eigene Zeile darüber, und das Feld wird um diese
+          Zeile höher — eine von Anfang an freigehaltene Zeile wäre zu
+          grosszügig. Im Fehler steht der Name immer darüber. Er steht dort klein und gedämpft in der Lesetype (
+          <code>type-body-small</code>), nicht in der Versal-Type der Label — er
+          benennt, er ruft nicht. Darunter folgt der Feldkasten, darunter
+          Hinweis oder Fehler in derselben kleinen Schrift.
           Der Rahmen dafür ist <code>Feld</code>; mehrere Felder unter einem
           gemeinsamen Namen («Spielfeldgrösse» über Länge × Breite) nimmt{" "}
           <code>FeldGruppe</code>, im selben Stil.
@@ -1548,15 +1553,13 @@ export default function Styleguide() {
           Primary, bei Fehler und Befund Error. Die Stärke bleibt dabei immer
           1.5 px — nur die Farbe wechselt, nichts springt beim Hineinklicken.
           36 px hoch wie jedes Bedienelement, der Wert in{" "}
-          <code>type-body-large</code>. Ein Platzhalter steht gedämpft im Feld
-          und sagt, was hinein soll. Wo ein Feld keinen sichtbaren Namen trägt
+          <code>type-body-large</code>. Wo ein Feld keinen sichtbaren Namen trägt
           — die Suche in der Filterleiste —, gibt <code>umrandet</code> ihm auch
           ruhend die Kante, sonst fehlte es dort schlicht.{" "}
           <strong>Auf Touch-Geräten</strong> gibt es kein Überfahren: Ein leeres
-          Feld kündigt sich dort allein über seinen Namen und den Platzhalter
-          an. Das ist gewollt (PO-Entscheid 2026-10-03, Variante «ohne
-          Kontur») — der Name steht jederzeit darüber, und jedes Feld trägt
-          einen Platzhalter oder einen Wert.
+          Feld kündigt sich dort allein über seinen Namen im Feld an. Das ist
+          gewollt (PO-Entscheid 2026-10-03, Variante «ohne Kontur») — jedes
+          Feld zeigt entweder seinen Namen oder einen Wert.
         </p>
         <div className="grid max-w-md gap-6">
           <TextField label="Übungsname" supportingText="Pflichtfeld" />
@@ -1579,7 +1582,7 @@ export default function Styleguide() {
           />
           <TextArea
             label="Weiteres Material"
-            placeholder="Mit Platzhalter: Er steht im Feld und bricht um, wo er nicht in eine Zeile passt."
+            supportingText="Leer steht der Name im Feld; der Hinweis darunter bleibt."
           />
         </div>
 
@@ -1816,15 +1819,14 @@ export default function Styleguide() {
           um, statt abgeschnitten zu werden: Eine Einordnung ist oft ein Satz.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Leerwert und Platzhalter sind zweierlei</strong>, und das Feld
-          zeigt sie verschieden. «— kein Feldtyp —» ist ein <em>Wert</em>: Die
-          Übung hat keinen, das ist die Antwort, und sie steht als Option in der
-          Liste und danach als Wert im Feld. «Einordnung wählen …» ist{" "}
-          <em>keine Antwort</em>, sondern das Fehlen einer: Dafür gibt es{" "}
-          <code>placeholder</code>, der gedämpft im Feld steht — genau wie an der
-          Mehrfachauswahl (17). Ein Feld hat das eine oder das andere, nie
-          beides; wer «noch nichts gewählt» als Option in die Liste schriebe,
-          liesse es aussehen wie eine getroffene Wahl.
+          <strong>Leerwert und «nichts gewählt» sind zweierlei</strong>, und das
+          Feld zeigt sie verschieden. «— kein Feldtyp —» ist ein{" "}
+          <em>Wert</em>: Die Übung hat keinen, das ist die Antwort, und sie
+          steht als Option in der Liste und danach als Wert im Feld, mit dem
+          Namen darüber. Ist dagegen noch <em>keine Antwort</em> gewählt, ist
+          das Feld leer und zeigt nur seinen Namen (14) — wer «noch nichts
+          gewählt» als Option in die Liste schriebe, liesse es aussehen wie
+          eine getroffene Wahl.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <code>group</code> stellt einer Option eine nicht wählbare Kopfzeile
@@ -1866,14 +1868,13 @@ export default function Styleguide() {
           <Select
             label="Trainingsteil"
             defaultValue=""
-            placeholder="Einordnung wählen …"
             options={[
               { value: "auffangen", label: "Auffangen" },
               { value: "einleitung", label: "Einleitung" },
               { value: "hauptteil", label: "Hauptteil" },
               { value: "ausklang", label: "Ausklang" },
             ]}
-            supportingText="Noch nichts gewählt: Der Platzhalter steht gedämpft im Feld."
+            supportingText="Noch nichts gewählt: Der Name steht gedämpft im Feld."
           />
         </div>
       </Section>
@@ -1890,8 +1891,8 @@ export default function Styleguide() {
           wo auch gewählt wird; ein Kreuzchen pro Wert im Feld wäre ein zweiter
           Ort dafür. Die Werte stehen in der Reihenfolge der Optionsliste,
           nicht in der des Anklickens: Dieselbe Auswahl soll immer gleich
-          lauten. Ist nichts gewählt, steht der <code>placeholder</code>{" "}
-          gedämpft im Feld. Combobox- und Listbox-Semantik
+          lauten. Ist nichts gewählt, ist das Feld leer und zeigt seinen Namen
+          (14). Combobox- und Listbox-Semantik
           (<code>aria-multiselectable</code>) mit voller Tastatursteuerung (↑/↓,
           Home/End, Enter toggelt, Esc schliesst). <code>searchable</code> /{" "}
           <code>actions</code> einzeln abschaltbar für kurze feste Listen.{" "}
@@ -1917,9 +1918,8 @@ export default function Styleguide() {
           <code>actions</code> ab (drei bis vier kurze Werte liest man
           schneller, als man sie filtert), die Erscheinungsform behält beides
           (der Junioren-Katalog führt elf Werte, und jeder ist ein ganzer Satz).
-          Der <code>placeholder</code> sagt den Leerfall einer Eingabe
-          («Alterskategorie wählen …»): Im Formular heisst nichts gewählt{" "}
-          <em>nichts</em>.
+          Im Formular heisst nichts gewählt <em>nichts</em>, im Filter{" "}
+          <em>alles</em> — darum ist der Filter ein eigener Baustein (29).
         </p>
         <MultiSelectDemo />
 

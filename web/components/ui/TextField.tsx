@@ -39,9 +39,9 @@ export const feldTrailingKnopf =
 /* Text-Feld (Epic #363): der Name steht über dem Feld (`Feld`), der Feldkasten
    ist 36 px hoch und ruhend ohne Kontur und Fläche, beim Überfahren leise
    aufgehellt, im Fokus Primary, im Fehler Error (`feldkasten` in globals.css).
-   Der Platzhalter gehört wieder dem Aufrufer — er steht im Feld und sagt, was
-   hinein soll; beschriftet wird über `label`. `id` optional (sonst von React
-   vergeben). */
+   Leer steht der Name als Platzhalter im Feld (siehe `Feld`); ein eigener
+   `placeholder` ersetzt ihn nur dort, wo kein Name sichtbar ist (Suche in der
+   Filterleiste). `id` optional (sonst von React vergeben). */
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
   (
     {
@@ -79,6 +79,9 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             ref={ref}
             // `error` zusätzlich als aria-invalid, weil der rote Rahmen allein
             // nur sehend wahrnehmbar ist; der Befund ist keine Fehleingabe.
+            // Der Name ist der Platzhalter: Leer steht er im Feld, und
+            // `:placeholder-shown` sagt dem Rahmen, dass das Feld leer ist.
+            placeholder={label}
             aria-invalid={error || undefined}
             aria-describedby={hinweisIdVon(fid, supportingText)}
             data-befund={befund || undefined}

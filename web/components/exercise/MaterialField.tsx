@@ -126,7 +126,6 @@ export function MaterialField({
                   className="min-w-44 flex-1"
                   value={z.art}
                   onChange={(v) => waehleArt(z.key, v)}
-                  placeholder="Art wählen …"
                   options={MATERIAL_ARTEN.map((a) => ({
                     value: a,
                     label: MATERIAL_KATALOG[a].einzahl,
@@ -189,7 +188,7 @@ export function MaterialField({
 
       <TextArea
         label="Weiteres Material"
-        placeholder="Weiteres Material (welches das Feld-Diagramm nicht erkennt, eines pro Zeile)"
+        supportingText="Was das Feld-Diagramm nicht erkennt, eines pro Zeile."
         name="material"
         defaultValue={ergaenzung.join("\n")}
       />

@@ -39,7 +39,6 @@ export function MultiSelectDemo() {
           options={themen}
           value={werte}
           onChange={setWerte}
-          placeholder="Themen auswählen …"
           supportingText="Suche im Panel-Kopf · Footer: Zurücksetzen / Alle auswählen."
         />
         <p className="type-label-small mt-2 text-on-surface-mittel">
@@ -61,14 +60,13 @@ export function MultiSelectDemo() {
         supportingText="searchable={false} actions={false}: Trigger treibt die Liste, ↑/↓ + Enter."
       />
 
-      {/* Leerfall — nichts gewählt: Der Platzhalter steht gedämpft im Feld,
-          der Name darüber bleibt. */}
+      {/* Leerfall — nichts gewählt: Der Name steht gedämpft im Feld; erst
+          beim Hineinklicken oder mit einem Wert rückt er darüber. */}
       <MultiSelect
         label="Alterskategorie"
         searchable={false}
         options={themen}
-        placeholder="Alterskategorie wählen …"
-        supportingText="Leer: der Platzhalter steht im Feld · gewählt: die Werte, umbrechend."
+        supportingText="Leer: der Name steht im Feld · gewählt: Name darüber, die Werte umbrechend."
       />
 
       {/* Gruppiert — Optionen aus zwei Welten unter je einer nicht wählbaren

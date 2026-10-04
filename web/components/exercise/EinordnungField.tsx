@@ -103,7 +103,6 @@ export function EinordnungField({
         // ist Pflicht — «noch nichts gewählt» ist ein Zustand des Formulars,
         // keine Angabe über die Übung, und darf darum nicht wie eine
         // getroffene Wahl im Feld stehen.
-        placeholder="Einordnung wählen …"
         value={auswahl}
         onChange={waehle}
         error={!!error}
