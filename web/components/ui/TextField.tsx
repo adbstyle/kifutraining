@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { ZahlInput } from "./ZahlInput";
-import { Feld, hinweisIdVon, useFeldId } from "./feld";
+import { Feld, beschreibungIdVon, useFeldId } from "./feld";
 import { cn } from "@/lib/cn";
 
 export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -10,6 +10,8 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
       gefärbt sein kann als der Rest — Anlass war die Gruppenzeile (Story #151),
       die Zeitsumme und Konflikt in einer Zeile trug, nur den Konflikt gefärbt. */
   supportingText?: ReactNode;
+  /** Fester Hinweis hinter einem ⓘ (siehe `Feld`). */
+  info?: ReactNode;
   error?: boolean;
   /** Ein BEFUND am Feld, keine Fehleingabe — der Wert ist gespeichert und
       richtig erfasst, geht aber mit anderen nicht auf (Story #151: ungleich
@@ -47,6 +49,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
     {
       label,
       supportingText,
+      info,
       error = false,
       befund = false,
       labelVersteckt = false,
@@ -70,6 +73,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
         label={label}
         labelVersteckt={labelVersteckt}
         hinweis={supportingText}
+        info={info}
         error={error}
         className={className}
       >
@@ -83,7 +87,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             // `:placeholder-shown` sagt dem Rahmen, dass das Feld leer ist.
             placeholder={label}
             aria-invalid={error || undefined}
-            aria-describedby={hinweisIdVon(fid, supportingText)}
+            aria-describedby={beschreibungIdVon(fid, supportingText, info)}
             data-befund={befund || undefined}
             data-umrandet={umrandet || undefined}
             className={cn(

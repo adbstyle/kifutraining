@@ -139,7 +139,8 @@ export function UmwandelnDialog({
           searchable={false}
           actions={false}
           error={!!fehler.kat}
-          supportingText={fehler.kat ?? "Mindestens eine Kategorie dieser Altersstufe."}
+          supportingText={fehler.kat}
+          info="Mindestens eine Kategorie dieser Altersstufe."
         />
       </div>
     </Dialog>

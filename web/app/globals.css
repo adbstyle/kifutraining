@@ -392,7 +392,8 @@
    ist und nicht bearbeitet wird, steht sein Name IM Feld, gedämpft an der
    Stelle des Werts, und die Zeile darüber bleibt leer — kein zweiter Satz.
    Ein Formular mit vielen leeren Feldern liest sich so als ruhige, knappe
-   Liste von Namen. Sobald man hineinklickt oder ein Wert drinsteht, springt
+   Liste von Namen. Sobald man im Feld arbeitet (Fokus oder offenes Panel,
+   nicht schon ein Klick aufs ⓘ daneben) oder ein Wert drinsteht, springt
    der Name in eine eigene Zeile darüber, und das Feld wird um diese Zeile
    höher — eine von Anfang an freigehaltene Zeile wäre zu grosszügig.
    «Leer» heisst: ein Feldkasten zeigt seinen Platzhalter (der Name ist dann
@@ -401,7 +402,7 @@
    darüber stehen — er sagt, wo etwas fehlt.
    Versteckt wird der Name nur für das Auge (wie `sr-only`): Er bleibt das
    Label des Felds und wird vorgelesen. */
-.feld-rahmen:not(:focus-within):not([data-fehler]):is(
+.feld-rahmen:not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not([data-fehler]):is(
     [data-leer],
     :has(.feldkasten:placeholder-shown)
   )
@@ -427,7 +428,7 @@
    gesperrten Feld und nicht an der umrandeten Suche der Filterleiste, die
    neben Knöpfen steht und sich schon über ihre Kante zeigt. */
 @media (hover: hover) {
-  .feld-rahmen:not([data-name-versteckt]):not(:focus-within):not(:has(:disabled)):hover {
+  .feld-rahmen:not([data-name-versteckt]):not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled)):hover {
     --feld-hover: color-mix(in srgb, var(--color-on-surface) 6%, transparent);
     border-radius: var(--radius-flaeche);
     background-color: var(--feld-hover);
@@ -438,7 +439,7 @@
 .feld-rahmen:not([data-name-versteckt]) .feldkasten:focus::placeholder {
   color: transparent;
 }
-.feld-rahmen:focus-within .feld-leertext {
+.feld-rahmen:has(.feldkasten:is(:focus, [aria-expanded="true"])) .feld-leertext {
   visibility: hidden;
 }
 

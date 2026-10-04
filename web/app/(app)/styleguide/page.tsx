@@ -1564,8 +1564,20 @@ export default function Styleguide() {
           gewollt (PO-Entscheid 2026-10-03, Variante «ohne Kontur») — jedes
           Feld zeigt entweder seinen Namen oder einen Wert.
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Hinweise:</strong> Was ein Feld nur erklärt («Höchstens 200
+          Zeichen»), steht nach dem Vorbild von Jira hinter einem ⓘ rechts
+          neben dem Feld (<code>info</code>, Baustein <code>InfoKnopf</code>):
+          beim Zeigen ein Tooltip, ein Klick öffnet ein kleines Panel. Die
+          Vorlesehilfe hört ihn trotzdem mit dem Feld. Fehler und Hinweise, die
+          sich mit der Eingabe ändern, bleiben sichtbar unter dem Feld (
+          <code>supportingText</code>) — die muss man sehen, ohne zu klicken.
+        </p>
         <div className="grid max-w-md gap-6">
-          <TextField label="Übungsname" supportingText="Pflichtfeld" />
+          <TextField
+            label="Übungsname"
+            info="Ein fester Hinweis steht hinter dem ⓘ, nicht dauernd unter dem Feld."
+          />
           <SearchField label="Suche" />
           <TextField
             label="Anzahl Spieler:innen"

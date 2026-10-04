@@ -1,6 +1,7 @@
 import { useId } from "react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { InfoKnopf } from "./InfoKnopf";
 
 /* Der Rahmen jedes Formularfelds (Epic #363, nach dem Vorbild von Jira): Ist
    das Feld leer und wird nicht bearbeitet, steht sein Name gedämpft IM Feld.
@@ -22,9 +23,11 @@ import { cn } from "@/lib/cn";
 /* Name und Hinweis stehen bündig mit dem Text im Feld (`px-3.5` = Polster
    des Feldkastens plus seine Kontur) und ohne eigenen Abstand zum Feld: Der
    Feldkasten polstert seinen Text ohnehin, und so liest sich Name und Wert
-   als ein Eintrag wie in Jira, nicht als Beschriftung über einem Kasten. */
+   als ein Eintrag wie in Jira, nicht als Beschriftung über einem Kasten. Der
+   Name steht dafür auf knapper Zeile (14 statt 18 px) — die Schrift bleibt
+   12 px, er rückt nur näher an den Wert. */
 export function feldNameKlasse(error?: boolean): string {
-  return cn("type-body-small block px-3.5", farbe(error));
+  return cn("type-body-small block px-3.5 leading-3.5", farbe(error));
 }
 
 /** Hinweis oder Fehler unter einem Feld oder einer Gruppe. */
@@ -45,11 +48,12 @@ export function useFeldId(id?: string): string {
   return id ?? `feld-${reactId}`;
 }
 
-/** Die id des Hinweises unter dem Feld — der Aufrufer hängt sie per
- *  `aria-describedby` an sein Eingabe-Element, sonst liest ihn kein
- *  Screenreader vor. */
-export function hinweisIdVon(id: string, hinweis?: ReactNode): string | undefined {
-  return hinweis ? `${id}-hinweis` : undefined;
+/** Die ids von Hinweis (unter dem Feld) und Info (hinter dem ⓘ) — der
+ *  Aufrufer hängt sie per `aria-describedby` an sein Eingabe-Element, sonst
+ *  liest sie kein Screenreader vor. */
+export function beschreibungIdVon(id: string, hinweis?: ReactNode, info?: ReactNode): string | undefined {
+  const ids = [hinweis ? `${id}-hinweis` : null, info ? `${id}-info` : null].filter(Boolean);
+  return ids.length ? ids.join(" ") : undefined;
 }
 
 export function Feld({
@@ -58,6 +62,7 @@ export function Feld({
   labelVersteckt = false,
   leer = false,
   hinweis,
+  info,
   error = false,
   className,
   onLabelClick,
@@ -73,7 +78,12 @@ export function Feld({
    *  statt darüber (siehe `.feld-rahmen` in globals.css). Text-Eingaben
    *  brauchen das nicht — dort sagt es ihr Platzhalter. */
   leer?: boolean;
+  /** Fehler und Hinweise, die sich mit der Eingabe ändern — sichtbar unter
+   *  dem Feld. */
   hinweis?: ReactNode;
+  /** Ein fester Hinweis, der das Feld erklärt — hinter einem ⓘ rechts neben
+   *  dem Feld (`InfoKnopf`), damit er das Formular nicht dauernd füllt. */
+  info?: ReactNode;
   error?: boolean;
   className?: string;
   /** Für Eingabe-Elemente, die kein <label> beschriften kann (ein <div> als
@@ -96,9 +106,19 @@ export function Feld({
       >
         {label}
       </label>
-      {children}
+      {info ? (
+        <div className="flex items-center gap-1">
+          <div className="min-w-0 flex-1">{children}</div>
+          <InfoKnopf label={label}>{info}</InfoKnopf>
+          <span id={`${id}-info`} className="sr-only">
+            {info}
+          </span>
+        </div>
+      ) : (
+        children
+      )}
       {hinweis && (
-        <p id={hinweisIdVon(id, hinweis)} className={hinweisKlasse(error)}>
+        <p id={`${id}-hinweis`} className={hinweisKlasse(error)}>
           {hinweis}
         </p>
       )}

@@ -2,11 +2,12 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Check, CheckCheck, ChevronDown, RotateCcw, Search } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { bedienzeile } from "./Menu";
 import { gruppenIdVon, gruppenKopf, gruppenKopfKlasse } from "./gruppen";
 import { IconButton } from "./IconButton";
-import { Feld, hinweisIdVon, useFeldId } from "./feld";
+import { Feld, beschreibungIdVon, useFeldId } from "./feld";
 import { usePanelAnker } from "./use-panel-anker";
 import type { SelectOption } from "./Select";
 
@@ -26,6 +27,8 @@ export interface MultiSelectProps {
   /** Footer mit „Zurücksetzen" / „Alle auswählen" (Default). */
   actions?: boolean;
   supportingText?: string;
+  /** Fester Hinweis hinter einem ⓘ (siehe `Feld`). */
+  info?: ReactNode;
   error?: boolean;
   disabled?: boolean;
   id?: string;
@@ -53,6 +56,7 @@ export function MultiSelect({
   searchable = true,
   actions = true,
   supportingText,
+  info,
   error,
   disabled,
   id,
@@ -224,6 +228,7 @@ export function MultiSelect({
       id={fid}
       label={label}
       hinweis={supportingText}
+      info={info}
       error={error}
       leer={showPlaceholder}
       className={cn("min-w-0", className)}
@@ -249,7 +254,7 @@ export function MultiSelect({
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
           aria-labelledby={`${fid}-label`}
-          aria-describedby={hinweisIdVon(fid, supportingText)}
+          aria-describedby={beschreibungIdVon(fid, supportingText, info)}
           aria-invalid={error || undefined}
           aria-activedescendant={
             !searchable && open && filtered[active] ? optId(active) : undefined

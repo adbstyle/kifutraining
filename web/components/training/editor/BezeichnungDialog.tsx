@@ -162,7 +162,8 @@ export function BezeichnungDialog({
         }}
         onKeyDown={beiTaste}
         error={!!fehler}
-        supportingText={fehler ?? hilfetext}
+        supportingText={fehler}
+        info={hilfetext}
       />
     </Dialog>
   );

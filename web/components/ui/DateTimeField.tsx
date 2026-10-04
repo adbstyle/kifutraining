@@ -1,11 +1,13 @@
 import { forwardRef } from "react";
-import type { InputHTMLAttributes } from "react";
-import { Feld, hinweisIdVon, useFeldId } from "./feld";
+import type { InputHTMLAttributes, ReactNode } from "react";
+import { Feld, beschreibungIdVon, useFeldId } from "./feld";
 
 export interface DateTimeFieldProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
   label: string;
   supportingText?: string;
+  /** Fester Hinweis hinter einem ⓘ (siehe `Feld`). */
+  info?: ReactNode;
   error?: boolean;
 }
 
@@ -21,16 +23,16 @@ export interface DateTimeFieldProps
 const DateTimeBase = forwardRef<
   HTMLInputElement,
   DateTimeFieldProps & { type: "date" | "time" }
->(({ label, supportingText, error = false, id, className, type, ...props }, ref) => {
+>(({ label, supportingText, info, error = false, id, className, type, ...props }, ref) => {
   const fid = useFeldId(id);
   return (
-    <Feld id={fid} label={label} hinweis={supportingText} error={error} className={className}>
+    <Feld id={fid} label={label} hinweis={supportingText} info={info} error={error} className={className}>
       <input
         id={fid}
         ref={ref}
         type={type}
         aria-invalid={error || undefined}
-        aria-describedby={hinweisIdVon(fid, supportingText)}
+        aria-describedby={beschreibungIdVon(fid, supportingText, info)}
         className="feldkasten type-body-large h-9 w-full px-3"
         {...props}
       />

@@ -2,10 +2,11 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { bedienzeile } from "./Menu";
 import { gruppenIdVon, gruppenKopf, gruppenKopfKlasse } from "./gruppen";
-import { Feld, hinweisIdVon, useFeldId } from "./feld";
+import { Feld, beschreibungIdVon, useFeldId } from "./feld";
 
 export interface SelectOption {
   value: string;
@@ -28,6 +29,8 @@ export interface SelectProps {
   /** Optionales Hidden-Input, damit das Feld an nativer Form-Serialisierung teilnimmt. */
   name?: string;
   supportingText?: string;
+  /** Fester Hinweis hinter einem ⓘ (siehe `Feld`). */
+  info?: ReactNode;
   error?: boolean;
   disabled?: boolean;
   id?: string;
@@ -58,6 +61,7 @@ export function Select({
   onChange,
   name,
   supportingText,
+  info,
   error,
   disabled,
   id,
@@ -181,7 +185,7 @@ export function Select({
   }
 
   return (
-    <Feld id={fid} label={label} leer={leer} hinweis={supportingText} error={error} className={className}>
+    <Feld id={fid} label={label} leer={leer} hinweis={supportingText} info={info} error={error} className={className}>
       <div ref={rootRef} className="relative">
         <button
           id={fid}
@@ -193,7 +197,7 @@ export function Select({
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
           aria-labelledby={`${fid}-label`}
-          aria-describedby={hinweisIdVon(fid, supportingText)}
+          aria-describedby={beschreibungIdVon(fid, supportingText, info)}
           aria-invalid={error || undefined}
           onClick={() => !disabled && setOpen((o) => !o)}
           onKeyDown={onTriggerKey}

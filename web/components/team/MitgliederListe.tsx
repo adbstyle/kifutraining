@@ -114,10 +114,11 @@ export function MitgliederListe({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           error={!!fehler}
-          supportingText={fehler ?? "Die Person braucht bereits ein bestätigtes KiFu-Konto."}
+          supportingText={fehler}
+          info="Die Person braucht bereits ein bestätigtes KiFu-Konto."
         />
-        {/* Neben dem Feldkasten, unter der Namenszeile des Felds (18 px). */}
-        <Button type="submit" variant="tonal" disabled={pending} className="sm:mt-4.5">
+        {/* Neben dem Feldkasten, unter der Namenszeile des Felds (14 px). */}
+        <Button type="submit" variant="tonal" disabled={pending} className="sm:mt-3.5">
           <UserPlus size={18} strokeWidth={2} aria-hidden />
           Suchen
         </Button>

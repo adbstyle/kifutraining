@@ -188,7 +188,7 @@ export function MaterialField({
 
       <TextArea
         label="Weiteres Material"
-        supportingText="Was das Feld-Diagramm nicht erkennt, eines pro Zeile."
+        info="Was das Feld-Diagramm nicht erkennt, eines pro Zeile."
         name="material"
         defaultValue={ergaenzung.join("\n")}
       />

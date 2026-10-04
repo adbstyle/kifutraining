@@ -79,14 +79,14 @@ export function TrainingCreateForm() {
         maxLength={ZIEL_MAX}
         value={ziel}
         onChange={(e) => setZiel(e.target.value)}
-        supportingText={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
+        info={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
       />
 
       <AltersstufeField
         className="max-w-xs"
         wert={altersstufe}
         onChange={waehleAltersstufe}
-        hinweis="Nach welchem Manual du planst. Bestimmt Trainingsteile, Gliederung und Alterskategorien — und steht danach fest."
+        info="Nach welchem Manual du planst. Bestimmt Trainingsteile, Gliederung und Alterskategorien — und steht danach fest."
         fehler={fehler.altersstufe}
       />
 
@@ -102,7 +102,7 @@ export function TrainingCreateForm() {
           onChange={setStufen}
           kategorien={kategorienFuer(altersstufe)}
           error={fehler.stufen}
-          supportingText="Für welche Alterskategorien ist das Training gedacht? Mindestens eine ist nötig; du kannst die Auswahl später jederzeit ändern."
+          info="Für welche Alterskategorien ist das Training gedacht? Mindestens eine ist nötig; du kannst die Auswahl später jederzeit ändern."
         />
       ) : (
         <p className="type-body-small text-on-surface-mittel">

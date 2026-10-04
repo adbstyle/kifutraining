@@ -1,10 +1,12 @@
 import { forwardRef } from "react";
-import type { TextareaHTMLAttributes } from "react";
-import { Feld, hinweisIdVon, useFeldId } from "./feld";
+import type { ReactNode, TextareaHTMLAttributes } from "react";
+import { Feld, beschreibungIdVon, useFeldId } from "./feld";
 
 export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string;
   supportingText?: string;
+  /** Fester Hinweis hinter einem ⓘ (siehe `Feld`). */
+  info?: ReactNode;
   error?: boolean;
 }
 
@@ -15,16 +17,16 @@ export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
    rund zehn Zeilen, danach scrollt sie. Leer steht der Name als Platzhalter
    im Feld (siehe `Feld`). */
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  ({ label, supportingText, error = false, id, className, ...props }, ref) => {
+  ({ label, supportingText, info, error = false, id, className, ...props }, ref) => {
     const fid = useFeldId(id);
     return (
-      <Feld id={fid} label={label} hinweis={supportingText} error={error} className={className}>
+      <Feld id={fid} label={label} hinweis={supportingText} info={info} error={error} className={className}>
         <textarea
           id={fid}
           ref={ref}
           placeholder={label}
           aria-invalid={error || undefined}
-          aria-describedby={hinweisIdVon(fid, supportingText)}
+          aria-describedby={beschreibungIdVon(fid, supportingText, info)}
           // min-h-16 = zwei Zeilen à 24 px plus Polster und Kontur.
           className="feldkasten type-body-large field-sizing-content block min-h-16 max-h-[17rem] w-full resize-none overflow-y-auto px-3 py-1.5"
           {...props}

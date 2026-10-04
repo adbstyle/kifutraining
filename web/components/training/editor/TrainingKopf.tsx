@@ -77,7 +77,7 @@ export function TrainingKopf({
           value={ziel}
           onChange={(e) => onZielChange(e.target.value)}
           onBlur={onZielSpeichern}
-          supportingText={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
+          info={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
         />
       </div>
 
@@ -90,7 +90,7 @@ export function TrainingKopf({
           value={stufen}
           onChange={onStufen}
           kategorien={kategorienFuer(training.altersstufe)}
-          supportingText="Für welche Alterskategorien dieses Training gedacht ist."
+          info="Für welche Alterskategorien dieses Training gedacht ist."
         />
       </div>
     </Card>

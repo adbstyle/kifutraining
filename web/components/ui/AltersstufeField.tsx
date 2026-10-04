@@ -35,7 +35,7 @@ export function AltersstufeField({
   onChange,
   festHinweis,
   aktion,
-  hinweis,
+  info,
   fehler,
   className,
 }: {
@@ -50,10 +50,10 @@ export function AltersstufeField({
    *  Stufenwechsel ist an einer gespeicherten Übung kein Feld, sondern ein
    *  eigener, zu bestätigender Vorgang. */
   aktion?: ReactNode;
-  /** Erklärung unter der Wahl. Ohne bleibt die Zeile leer: An der Übung sagt
+  /** Erklärung hinter einem ⓘ neben der Wahl. Ohne steht keines: An der Übung sagt
    *  der Feldname alles, und was die Wahl nach sich zieht, sieht man an der
    *  Maske selbst. Das Training erklärt sie, weil sie dort lebenslang bindet. */
-  hinweis?: string;
+  info?: string;
   /** Fehlermeldung, wenn die Wahl fehlt. */
   fehler?: string;
   /** Breite der Auswahl. Ohne füllt sie ihren Platz (etwa eine Rasterzelle). */
@@ -86,7 +86,8 @@ export function AltersstufeField({
       // zurückstellen — sie ist an Übung wie Training eine Pflichtangabe.
       onChange={(v) => istAltersstufe(v) && onChange(v)}
       error={!!fehler}
-      supportingText={fehler ?? hinweis}
+      supportingText={fehler}
+      info={info}
     />
   );
 }
