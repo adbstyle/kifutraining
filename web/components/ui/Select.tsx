@@ -46,13 +46,10 @@ export interface SelectProps {
    Der gewählte Wert steht ganz im Feld und bricht um, statt abgeschnitten zu
    werden — eine Einordnung ist oft ein ganzer Satz (Epic #363).
 
-   Leerwert und «nichts gewählt» sind zweierlei:
-
-   1. Der Leerfall ist ein WERT: «— kein Feldtyp —» heisst «diese Übung hat
-      keinen». Er steht als Option in `options` und darum, gewählt, als Wert im
-      Feld.
-   2. Es ist noch NICHTS gewählt (der Wert steht in keiner Option): Dann steht
-      der Name gedämpft im Feld, wie bei jedem leeren Feld (`Feld`). */
+   Leer ist ein Feld, dessen Wert in keiner Option steht: Dann steht der Name
+   gedämpft im Feld, wie bei jedem leeren Feld (`Feld`). Ein optionales Feld
+   bietet darum keine Option «— kein … —» an — leer heisst schon «nicht
+   angegeben», und eine solche Option sähe aus wie eine getroffene Wahl. */
 export function Select({
   label,
   options,

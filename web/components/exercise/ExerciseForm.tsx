@@ -561,13 +561,10 @@ export function ExerciseForm({
                 label="Feldtyp (optional)"
                 value={feld}
                 onChange={setFeld}
-                options={[
-                  { value: "", label: "— kein Feldtyp —" },
-                  ...(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => ({
-                    value: t,
-                    label: feldLabels[t],
-                  })),
-                ]}
+                options={(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => ({
+                  value: t,
+                  label: feldLabels[t],
+                }))}
               />
             </div>
           ) : (
@@ -614,10 +611,7 @@ export function ExerciseForm({
                 label="Übungstyp (optional)"
                 value={uebungstyp}
                 onChange={setUebungstyp}
-                options={[
-                  { value: "", label: "— kein Übungstyp —" },
-                  ...uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] })),
-                ]}
+                options={uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] }))}
               />
             )}
             {/* Die Erscheinungsformen des Manuals, dem diese Übung folgt — in

@@ -1839,14 +1839,12 @@ export default function Styleguide() {
           um, statt abgeschnitten zu werden: Eine Einordnung ist oft ein Satz.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Leerwert und «nichts gewählt» sind zweierlei</strong>, und das
-          Feld zeigt sie verschieden. «— kein Feldtyp —» ist ein{" "}
-          <em>Wert</em>: Die Übung hat keinen, das ist die Antwort, und sie
-          steht als Option in der Liste und danach als Wert im Feld, mit dem
-          Namen darüber. Ist dagegen noch <em>keine Antwort</em> gewählt, ist
-          das Feld leer und zeigt nur seinen Namen (14) — wer «noch nichts
-          gewählt» als Option in die Liste schriebe, liesse es aussehen wie
-          eine getroffene Wahl.
+          <strong>Keine Option «— kein … —»</strong>: Ist nichts gewählt, ist
+          das Feld leer und zeigt nur seinen Namen (14) — bei einem optionalen
+          Feld heisst das schon «nicht angegeben». Eine Option für «keiner»
+          sähe aus wie eine getroffene Wahl und verdoppelte, was das leere Feld
+          sagt. Wo «keiner» fachlich doch eine Antwort ist, gehört sie als
+          eigener Wert ins Vokabular (beim Feldtyp etwa «Freies Feld»).
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <code>group</code> stellt einer Option eine nicht wählbare Kopfzeile
@@ -1868,7 +1866,6 @@ export default function Styleguide() {
             label="Feldtyp"
             defaultValue="kleinfeld"
             options={[
-              { value: "", label: "— kein Feldtyp —" },
               { value: "kleinfeld", label: "Kleinfeld" },
               { value: "grossfeld", label: "Grossfeld" },
               { value: "freies_feld", label: "Freies Feld" },
