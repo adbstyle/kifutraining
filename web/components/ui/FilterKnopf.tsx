@@ -5,7 +5,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Zaehler } from "./Badge";
-import { buttonClasses } from "./Button";
+import { chipTextOutlined, chipTextSelected } from "./Chip";
 import { Checkbox } from "./Checkbox";
 import { usePanelAnker } from "./use-panel-anker";
 import { gruppenIdVon, gruppenKopf, gruppenKopfKlasse } from "./gruppen";
@@ -20,8 +20,8 @@ import { useDebouncedWert } from "@/lib/use-debounce";
    im geöffneten Panel. So bleibt eine Filterleiste eine Zeile aus Wörtern,
    statt sich in Feldern mit abgeschnittenen Wertlisten zu stapeln.
 
-   Grenzt er ein, steht er getönt (Knopf-Variante `aktiv`, wie ein gewählter
-   Chip) und trägt die Zahl als `Zaehler`. Das Panel ist breiter als der Knopf, wo der Inhalt
+   Er trägt Schrift und Kleid des Filter-Chips: normal gesetzt, grenzt er ein,
+   steht er getönt wie ein gewählter Chip und trägt die Zahl als `Zaehler`. Das Panel ist breiter als der Knopf, wo der Inhalt
    es braucht, und rückt am rechten Rand nach links (`usePanelAnker`). Es ist
    kein Menü und keine Listbox, sondern eine Gruppe gewöhnlicher Bedien-
    elemente — Kontrollkästchen, ein Zahlenfeld —, darum gelten deren eigene
@@ -119,7 +119,13 @@ export function FilterKnopf({
             oeffnen();
           }
         }}
-        className={buttonClasses(aktiv ? "aktiv" : "outlined")}
+        // In der Schrift und im Kleid des Filter-Chips, der in derselben Leiste
+        // steht: normal gesetzt, gewählt getönt — nur eckig, weil er ein Panel
+        // öffnet statt bloss umzuschalten.
+        className={cn(
+          "state focus-ring type-body-medium inline-flex h-9 items-center gap-2 rounded-flaeche kontur bg-transparent px-3 transition-colors",
+          aktiv ? chipTextSelected : chipTextOutlined,
+        )}
       >
         {label}
         {aktiv && <Zaehler>{badge}</Zaehler>}

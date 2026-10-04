@@ -977,15 +977,12 @@ export default function Styleguide() {
 
       <Section n="08" title="Knöpfe">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Acht Varianten, eine Regel: <strong>Gefüllt trägt Schwarz.</strong>{" "}
+          Sieben Varianten, eine Regel: <strong>Gefüllt trägt Schwarz.</strong>{" "}
           <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
           Höhenstufe (08dp), <code>elevated</code> dieselbe Idee eine Stufe
           tiefer (06dp) mit Schatten und Primary-Schrift — im Bild bisher nicht
           angewandt, die Rolle bleibt besetzt —, <code>outlined</code> Kontur
-          auf der Kante, <code>aktiv</code> der eingeschaltete{" "}
-          <code>outlined</code> — getönt wie ein gewählter Chip, er trägt den
-          Filterknopf, sobald dieser eingrenzt (29) —, <code>text</code> nur
-          Schrift, <code>danger</code>{" "}
+          auf der Kante, <code>text</code> nur Schrift, <code>danger</code>{" "}
           Kontur und Schrift in Error; dazu der leise Knopf (<code>quiet</code>)
           weiter unten, der als einziger nicht über die Emphase leiser wird,
           sondern über die Schrift. Alle tragen{" "}
@@ -999,7 +996,6 @@ export default function Styleguide() {
           <Button variant="tonal">Duplizieren</Button>
           <Button variant="elevated">Teilen</Button>
           <Button variant="outlined">Filter zurücksetzen</Button>
-          <Button variant="aktiv">Alterskategorie</Button>
           <Button variant="text">Abbrechen</Button>
           <Button variant="danger">Übung löschen</Button>
         </div>
@@ -2846,8 +2842,12 @@ export default function Styleguide() {
           sind sie nur ein Zustand der Übersicht.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Grenzt er ein, steht er getönt (Knopf-Variante <code>aktiv</code>,
-          dasselbe Kleid wie ein gewählter Chip) und trägt die Zahl als{" "}
+          Er trägt <strong>Schrift und Kleid des Filter-Chips</strong> (9), der
+          in derselben Leiste steht — normal gesetzt in{" "}
+          <code>type-body-medium</code>, leiser als ein halbfetter Knopf, denn
+          er grenzt ein, statt etwas auszulösen; nur eckig statt rund, weil er
+          ein Panel öffnet statt bloss umzuschalten. Grenzt er ein, steht er
+          getönt wie ein gewählter Chip und trägt die Zahl als{" "}
           <code>Zaehler</code> (09) — vorgelesen wird «Alterskategorie, 2
           gewählt». Das Panel
           ist breiter als der Knopf, wo der Inhalt es braucht (bis 34 rem; der
