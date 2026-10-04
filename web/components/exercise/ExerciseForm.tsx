@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useActionState, startTransition } from "react";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, ImagePlus } from "lucide-react";
 import {
   TextField,
   TextArea,
@@ -182,6 +182,8 @@ export function ExerciseForm({
   const [dialogOffen, setDialogOffen] = useState(false);
   const [umwandlung, setUmwandlung] = useState(false);
   const [bildError, setBildError] = useState<string | null>(null);
+  const [bildName, setBildName] = useState<string | null>(null);
+  const bildRef = useRef<HTMLInputElement>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [bildEntfernen, setBildEntfernen] = useState(false);
 
@@ -740,15 +742,38 @@ export function ExerciseForm({
     <FormAbschnitt titel="Foto (optional)">
       {(titelId) => (
         <div>
+          {/* Das Dateifeld des Browsers beschriftet sich selbst, in der
+              Sprache des Browsers («Choose file», «No file chosen») und in
+              seinem Aussehen. Es bleibt darum unsichtbar im Formular — es
+              trägt die Datei in die FormData —, bedient wird es über einen
+              eigenen Knopf, daneben steht der Name der gewählten Datei. */}
           <input
+            ref={bildRef}
             id="bild"
             name="bild"
             type="file"
             accept={IMAGE_ACCEPT}
-            aria-labelledby={titelId}
-            onChange={() => setBildError(null)}
-            className="focus-ring type-body-medium block w-full rounded-flaeche kontur border-kante text-on-surface-mittel file:mr-4 file:border-0 file:bg-elev-08 file:type-label-medium file:px-4 file:py-2.5 file:text-on-surface"
+            hidden
+            onChange={(e) => {
+              setBildError(null);
+              setBildName(e.target.files?.[0]?.name ?? null);
+            }}
           />
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="tonal"
+              aria-labelledby={`${titelId} bild-knopf`}
+              aria-describedby="bild-name"
+              onClick={() => bildRef.current?.click()}
+            >
+              <ImagePlus size={18} strokeWidth={2} aria-hidden />
+              <span id="bild-knopf">{bildName ? "Anderes Foto wählen" : "Foto wählen"}</span>
+            </Button>
+            <span id="bild-name" className="type-body-medium min-w-0 truncate text-on-surface-mittel">
+              {bildName ?? (initial.bildUrl ? "Kein neues Foto gewählt" : "Kein Foto gewählt")}
+            </span>
+          </div>
           <p className={`type-body-small mt-1.5 ${err.bild || bildError ? "text-error" : "text-on-surface-mittel"}`}>
             {err.bild ?? bildError ?? "JPG, PNG, WebP oder HEIC. Grosse Fotos werden automatisch verkleinert."}
           </p>
