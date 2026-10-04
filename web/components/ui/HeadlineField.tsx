@@ -45,7 +45,7 @@ export interface HeadlineFieldProps
  * durchsichtig auf Primary) — ein Sprung von 1.5 auf 2 px verschöbe bei
  * 28 px Schrift die ganze Zeile sichtbar.
  *
- * KEIN schwebendes Label: Der Wert IST bereits die Überschrift, ein Label
+ * KEIN Feldname darüber: Der Wert IST bereits die Überschrift, ein Name
  * daneben benennte dieselbe Sache ein zweites Mal. Den Namen trägt darum
  * `aria-label`. Und weil ein `<input>` keine Überschrift ist, gehört daneben
  * eine echte — sonst verlöre die Seite ihre Gliederung.

@@ -53,7 +53,7 @@ export function TrainingKopf({
         {training.team ? (
           <Link
             href={`/team/${training.team.id}`}
-            className="focus-ring inline-flex items-center gap-1.5 rounded-flaeche type-label-medium text-on-surface-mittel hover:text-primary"
+            className="focus-ring inline-flex items-center gap-1.5 rounded-flaeche type-body-small text-on-surface-mittel hover:text-primary"
           >
             <Users size={16} strokeWidth={2} aria-hidden />
             Team-Training von {training.team.name}

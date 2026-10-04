@@ -4,6 +4,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { bedienzeile } from "./Menu";
+import { gruppenIdVon, gruppenKopf, gruppenKopfKlasse } from "./gruppen";
 import { Feld, hinweisIdVon, useFeldId } from "./feld";
 
 export interface SelectOption {
@@ -76,12 +77,7 @@ export function Select({
   const fid = useFeldId(id);
   const listId = `${fid}-list`;
   const optId = (i: number) => `${fid}-opt-${i}`;
-  // Id der Gruppen-Kopfzeile. Die Kopfzeile ist `role="presentation"` und damit
-  // strukturell unsichtbar — ohne Verweis erführe eine Screenreader-Nutzerin
-  // nie, zu welcher Gruppe ein Wert gehört. Jede Option zeigt darum per
-  // `aria-describedby` auf sie: vorgelesen wird «<Wert>, <Gruppe>».
-  const gruppenId = (gruppe: string) =>
-    `${fid}-gruppe-${gruppe.replace(/[^\p{L}\p{N}]+/gu, "-").toLowerCase()}`;
+  const gruppenId = (gruppe: string) => gruppenIdVon(fid, gruppe);
 
   const isControlled = value !== undefined;
   const [internal, setInternal] = useState(defaultValue ?? options[0]?.value ?? "");
@@ -253,14 +249,14 @@ export function Select({
               const isSelected = i === foundIndex;
               const isActive = i === active;
               // Gruppen-Überschrift, sobald eine neue Gruppe beginnt.
-              const kopf = o.group && o.group !== options[i - 1]?.group ? o.group : null;
+              const kopf = gruppenKopf(options, i);
               return (
                 <Fragment key={o.value}>
                 {kopf && (
                   <li
                     id={gruppenId(kopf)}
                     role="presentation"
-                    className="px-3 pb-1 pt-2 type-label-small text-on-surface-mittel"
+                    className={gruppenKopfKlasse}
                   >
                     {kopf}
                   </li>

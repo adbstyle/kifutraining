@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Plus, TriangleAlert } from "lucide-react";
 import {
   Dialog,
   KategorieChip,
   HerkunftBadge,
   AuswahlFilter,
+  ButtonLink,
   IconButton,
+  Zaehler,
   Badge,
   Banner,
-  SearchField,
+  FilterSuche,
 } from "@/components/ui";
 import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
 import {
@@ -212,15 +213,7 @@ export function ExercisePickerDialog({
             des Juniorenschemas sind ganze Sätze; das Panel ist darum breiter als
             sein Knopf, und jeder Satz bleibt ganz lesbar. */}
         <div className="flex flex-wrap items-center gap-2">
-          <SearchField
-            label="Übungen durchsuchen"
-            labelVersteckt
-            umrandet
-            placeholder="Übungen durchsuchen"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="w-full sm:w-72"
-          />
+          <FilterSuche label="Übungen durchsuchen" initial={q} onCommit={setQ} />
           {hatErscheinungsform && (
             <AuswahlFilter label="Erscheinungsform" options={formen} value={form} onChange={setForm} />
           )}
@@ -264,17 +257,17 @@ export function ExercisePickerDialog({
                 // herausgenommen — der eigene Bestand entsteht erst.
                 <>
                   <span>{leerBestandText(ziel, altersstufe)} Erfasse zuerst eine.</span>
-                  <Link
+                  <ButtonLink
+                    variant="text"
                     // Im Kinderfussball-Hauptteil kennt der Block seine Kategorie;
                     // sie reist mit, sonst stünde das Einordnungsfeld leer da.
                     href={`/neu?stufe=${altersstufe}&teil=${trainingsteil}${
                       hauptteilkategorie ? `&kategorie=${hauptteilkategorie}` : ""
                     }`}
-                    className="state focus-ring inline-flex items-center gap-1.5 rounded-flaeche px-3 py-1.5 type-title-small text-primary"
                   >
                     <Plus size={18} strokeWidth={2} aria-hidden />
                     Übung erfassen
-                  </Link>
+                  </ButtonLink>
                 </>
               )}
             </li>
@@ -324,14 +317,7 @@ export function ExercisePickerDialog({
 
                   {/* Nur Hinzufügen; die Zahl zeigt die Übernahmen dieser Sitzung. */}
                   <span className="flex shrink-0 items-center gap-1">
-                    {count > 0 && (
-                      <span
-                        aria-hidden
-                        className="inline-flex h-6 min-w-[1.75rem] items-center justify-center rounded-full bg-primary px-1.5 type-plakette text-on-primary"
-                      >
-                        {count}×
-                      </span>
-                    )}
+                    {count > 0 && <Zaehler>{count}×</Zaehler>}
                     <IconButton
                       icon={Plus}
                       label={

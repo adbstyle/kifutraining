@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Button } from "./Button";
 
 /* M2 Snackbar — die Fläche einer kurzen Rückmeldung zu einem Vorgang. Sie ist
    die eine UMGEKEHRTE Fläche der Anwendung (@utility umkehr): hell, mit dunkler
@@ -34,19 +35,17 @@ export function Snackbar({
     >
       <span className="type-body-medium">{message}</span>
       {actionLabel && (
-        <button
-          type="button"
-          onClick={onAction}
-          className="state focus-ring type-title-small -my-1 shrink-0 rounded-flaeche px-2 py-1 text-primary"
-        >
+        <Button type="button" variant="quiet" onClick={onAction} className="-my-1.5 shrink-0">
           {actionLabel}
-        </button>
+        </Button>
       )}
       <button
         type="button"
         onClick={onClose}
         aria-label="Schliessen"
-        className="state focus-ring -mr-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-on-surface"
+        // Kein IconButton: dessen gedämpfte Zeichenfarbe kehrt die umgekehrte
+        // Fläche nicht mit um. Dasselbe Mass (36 px) trägt er trotzdem.
+        className="state focus-ring -my-1.5 -mr-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-on-surface"
       >
         <X size={18} strokeWidth={2} aria-hidden />
       </button>

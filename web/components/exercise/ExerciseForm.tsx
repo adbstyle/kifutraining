@@ -575,7 +575,7 @@ export function ExerciseForm({
             zeigtSpielfeld && spielfeldFeld
           )}
 
-          <FeldGruppe name={ANZAHL_SPIELER_LABEL} error={!!err.anzahl_max}>
+          <FeldGruppe name={ANZAHL_SPIELER_LABEL} fehler={err.anzahl_max}>
             <div className="flex items-end gap-3">
               <TextField
                 label="Minimum"
@@ -600,9 +600,6 @@ export function ExerciseForm({
                 defaultValue={initial.anzahl_kinder?.max ?? undefined}
               />
             </div>
-            {err.anzahl_max && (
-              <p className="type-body-small mt-1 text-error">{err.anzahl_max}</p>
-            )}
           </FeldGruppe>
         </div>
         {zeigtFeldtyp && zeigtSpielfeld && spielfeldFeld}

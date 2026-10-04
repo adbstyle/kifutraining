@@ -30,7 +30,7 @@ export function SpielfeldgroesseField({
   error?: string;
 }) {
   return (
-    <FeldGruppe name="Spielfeldgrösse (optional)" error={!!error}>
+    <FeldGruppe name="Spielfeldgrösse (optional)" fehler={error}>
       <div className="flex items-end gap-3 sm:max-w-sm">
         <TextField
           label="Länge (m)"
@@ -61,7 +61,6 @@ export function SpielfeldgroesseField({
           onChange={(e) => onBreiteChange(e.target.value)}
         />
       </div>
-      {error && <p className="type-body-small mt-1 text-error">{error}</p>}
     </FeldGruppe>
   );
 }

@@ -17,7 +17,16 @@ import { cn } from "@/lib/cn";
 /** Der Feldname als Klassen — für die seltenen Orte, an denen ein Name ohne
  *  Rahmen steht (eine feste Angabe an der Stelle eines Felds). */
 export function feldNameKlasse(error?: boolean): string {
-  return cn("type-body-small mb-1 block", error ? "text-error" : "text-on-surface-mittel");
+  return cn("type-body-small mb-1 block", farbe(error));
+}
+
+/** Hinweis oder Fehler unter einem Feld oder einer Gruppe. */
+function hinweisKlasse(error?: boolean): string {
+  return cn("type-body-small mt-1", farbe(error));
+}
+
+function farbe(error?: boolean): string {
+  return error ? "text-error" : "text-on-surface-mittel";
 }
 
 /** Feld-id aus React statt aus dem Label-Text: Dialoge halten ihre Felder auch
@@ -43,6 +52,7 @@ export function Feld({
   hinweis,
   error = false,
   className,
+  onLabelClick,
   children,
 }: {
   /** Id des Eingabe-Elements; der Name hängt als `${id}-label` daran. */
@@ -54,6 +64,9 @@ export function Feld({
   hinweis?: ReactNode;
   error?: boolean;
   className?: string;
+  /** Für Eingabe-Elemente, die kein <label> beschriften kann (ein <div> als
+   *  Auslöser): was ein Klick auf den Namen auslösen soll. */
+  onLabelClick?: () => void;
   children: ReactNode;
 }) {
   return (
@@ -61,16 +74,14 @@ export function Feld({
       <label
         id={`${id}-label`}
         htmlFor={id}
+        onClick={onLabelClick}
         className={labelVersteckt ? "sr-only" : feldNameKlasse(error)}
       >
         {label}
       </label>
       {children}
       {hinweis && (
-        <p
-          id={hinweisIdVon(id, hinweis)}
-          className={cn("type-body-small mt-1", error ? "text-error" : "text-on-surface-mittel")}
-        >
+        <p id={hinweisIdVon(id, hinweis)} className={hinweisKlasse(error)}>
           {hinweis}
         </p>
       )}
@@ -83,22 +94,41 @@ export function Feld({
  *  eine eigene Einheit (`role="group"`), jedes Feld darin behält seinen Namen. */
 export function FeldGruppe({
   name,
-  error = false,
+  beschriftetVon,
+  fehler,
   className,
   children,
 }: {
-  name: ReactNode;
-  error?: boolean;
+  /** Der Name über der Gruppe. Fehlt er, nennt `beschriftetVon` die id einer
+   *  Überschrift, die die Gruppe schon von aussen benennt. */
+  name?: ReactNode;
+  beschriftetVon?: string;
+  /** Ein Fehler, der die Gruppe als Ganzes betrifft — er färbt den Namen und
+   *  steht unter den Feldern. */
+  fehler?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
   const id = useId();
+  const fehlerId = `${id}-fehler`;
   return (
-    <div role="group" aria-labelledby={id} className={className}>
-      <p id={id} className={feldNameKlasse(error)}>
-        {name}
-      </p>
+    <div
+      role="group"
+      aria-labelledby={beschriftetVon ?? id}
+      aria-describedby={fehler ? fehlerId : undefined}
+      className={className}
+    >
+      {name && !beschriftetVon && (
+        <p id={id} className={feldNameKlasse(!!fehler)}>
+          {name}
+        </p>
+      )}
       {children}
+      {fehler && (
+        <p id={fehlerId} className={hinweisKlasse(true)}>
+          {fehler}
+        </p>
+      )}
     </div>
   );
 }

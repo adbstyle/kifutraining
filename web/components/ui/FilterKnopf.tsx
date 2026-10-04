@@ -4,10 +4,15 @@ import { Fragment, useEffect, useId, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Zaehler } from "./Badge";
 import { buttonClasses } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { usePanelAnker } from "./use-panel-anker";
+import { gruppenIdVon, gruppenKopf, gruppenKopfKlasse } from "./gruppen";
+import { SearchField } from "./SearchField";
+import { TextField } from "./TextField";
 import type { SelectOption } from "./Select";
+import { useDebouncedWert } from "@/lib/use-debounce";
 
 /* Filterknopf (Epic #363): ein 36-px-Knopf mit dem Namen des Filters, der ein
    Panel öffnet — nach dem Vorbild der Filter in Jira. Er nennt, WONACH
@@ -15,8 +20,8 @@ import type { SelectOption } from "./Select";
    im geöffneten Panel. So bleibt eine Filterleiste eine Zeile aus Wörtern,
    statt sich in Feldern mit abgeschnittenen Wertlisten zu stapeln.
 
-   Grenzt er ein, steht er getönt (`aktiv`, wie ein gewählter Chip) und trägt
-   die Zahl als Plakette. Das Panel ist breiter als der Knopf, wo der Inhalt
+   Grenzt er ein, steht er getönt (Knopf-Variante `aktiv`, wie ein gewählter
+   Chip) und trägt die Zahl als `Zaehler`. Das Panel ist breiter als der Knopf, wo der Inhalt
    es braucht, und rückt am rechten Rand nach links (`usePanelAnker`). Es ist
    kein Menü und keine Listbox, sondern eine Gruppe gewöhnlicher Bedien-
    elemente — Kontrollkästchen, ein Zahlenfeld —, darum gelten deren eigene
@@ -25,7 +30,6 @@ import type { SelectOption } from "./Select";
    offen. */
 export function FilterKnopf({
   label,
-  aktiv,
   badge,
   badgeLabel,
   maxHoehe = 440,
@@ -34,11 +38,10 @@ export function FilterKnopf({
   children,
 }: {
   label: string;
-  /** Grenzt der Filter gerade ein? Dann steht der Knopf getönt. */
-  aktiv: boolean;
   /** Was hinter dem Namen steht, solange der Filter eingrenzt — die Zahl der
-   *  gewählten Werte oder der gesetzte Wert. */
-  badge?: ReactNode;
+   *  gewählten Werte oder der gesetzte Wert. Fehlt er, grenzt der Filter
+   *  nicht ein, und der Knopf steht ruhig. */
+  badge?: string | number;
   /** Dasselbe in Worten für die Vorlesehilfe («2 gewählt»). */
   badgeLabel?: string;
   maxHoehe?: number;
@@ -85,15 +88,22 @@ export function FilterKnopf({
     }
   }
 
-  const zeigtBadge = aktiv && badge !== undefined && badge !== null && badge !== "";
+  const aktiv = badge !== undefined && badge !== "";
 
   return (
     <div
       ref={wurzelRef}
       className={cn("relative", className)}
-      // Verlässt der Fokus Knopf und Panel (Tab hinaus), geht das Panel zu.
+      // Wandert der Fokus nachweislich nach draussen (Tab hinaus), geht das
+      // Panel zu. Ohne Ziel (`relatedTarget` leer) bleibt es offen: Safari
+      // und Firefox auf dem Mac geben einem angeklickten Kontrollkästchen
+      // keinen Fokus, der Fokus fällt beim Drücken ins Leere — schlösse das
+      // Panel dann, käme der Klick nie an. Klicks daneben schliesst ohnehin
+      // `usePanelAnker`.
       onBlur={(e) => {
-        if (offen && !wurzelRef.current?.contains(e.relatedTarget as Node)) setOffen(false);
+        if (offen && e.relatedTarget && !wurzelRef.current?.contains(e.relatedTarget as Node)) {
+          setOffen(false);
+        }
       }}
     >
       <button
@@ -101,7 +111,7 @@ export function FilterKnopf({
         type="button"
         aria-expanded={offen}
         aria-controls={offen ? panelId : undefined}
-        aria-label={zeigtBadge && badgeLabel ? `${label}, ${badgeLabel}` : undefined}
+        aria-label={aktiv && badgeLabel ? `${label}, ${badgeLabel}` : undefined}
         onClick={() => (offen ? setOffen(false) : oeffnen())}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown" && !offen) {
@@ -112,14 +122,7 @@ export function FilterKnopf({
         className={buttonClasses(aktiv ? "aktiv" : "outlined")}
       >
         {label}
-        {zeigtBadge && (
-          <span
-            aria-hidden={badgeLabel ? true : undefined}
-            className="type-plakette inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-on-primary"
-          >
-            {badge}
-          </span>
-        )}
+        {aktiv && <Zaehler>{badge}</Zaehler>}
         <ChevronDown
           size={16}
           strokeWidth={2}
@@ -174,8 +177,7 @@ export function AuswahlFilter({
   className?: string;
 }) {
   const basisId = useId();
-  const gruppenId = (gruppe: string) =>
-    `${basisId}-${gruppe.replace(/[^\p{L}\p{N}]+/gu, "-").toLowerCase()}`;
+  const gruppenId = (gruppe: string) => gruppenIdVon(basisId, gruppe);
 
   // Die Wahl wirkt über die Adresse, und die kommt erst mit der nächsten
   // Antwort des Servers zurück. Wer schnell hintereinander wählt, baute sonst
@@ -203,8 +205,7 @@ export function AuswahlFilter({
   return (
     <FilterKnopf
       label={label}
-      aktiv={anzahl > 0}
-      badge={anzahl}
+      badge={anzahl || undefined}
       badgeLabel={`${anzahl} gewählt`}
       // Breiter als der Knopf, so breit wie der längste Wert es braucht —
       // höchstens 34 rem (der längste Übungstyp misst 484 px) und nie über das
@@ -213,11 +214,11 @@ export function AuswahlFilter({
       className={className}
     >
       {options.map((o, i) => {
-        const kopf = o.group && o.group !== options[i - 1]?.group ? o.group : null;
+        const kopf = gruppenKopf(options, i);
         return (
           <Fragment key={o.value}>
             {kopf && (
-              <p id={gruppenId(kopf)} className="px-3 pb-1 pt-2 type-label-small text-on-surface-mittel">
+              <p id={gruppenId(kopf)} className={gruppenKopfKlasse}>
                 {kopf}
               </p>
             )}
@@ -232,5 +233,81 @@ export function AuswahlFilter({
         );
       })}
     </FilterKnopf>
+  );
+}
+
+/* Zahlenfilter: der Filterknopf für eine Zahl («Verfügbare Kinder»). Der
+   Knopf nennt die übernommene Zahl, eingegeben wird sie im Panel — mit
+   Tipppause (300 ms), wie die Suche. Er zeigt den Wert, den der Aufrufer als
+   `gesetzt` meldet, nicht den gerade getippten: Er sagt, was die Übersicht
+   tatsächlich einschränkt. */
+export function ZahlFilter({
+  label,
+  feldLabel,
+  einheit,
+  hinweis,
+  gesetzt,
+  onCommit,
+  min = 1,
+}: {
+  label: string;
+  /** Name des Zahlenfelds im Panel. */
+  feldLabel: string;
+  /** Wofür die Zahl steht, für die Vorlesehilfe am Knopf («12 Kinder»). */
+  einheit: string;
+  hinweis?: string;
+  gesetzt?: number;
+  onCommit: (wert: string) => void;
+  min?: number;
+}) {
+  const [wert, aendern] = useDebouncedWert(gesetzt?.toString() ?? "", onCommit);
+  return (
+    <FilterKnopf
+      label={label}
+      badge={gesetzt}
+      badgeLabel={gesetzt !== undefined ? `${gesetzt} ${einheit}` : undefined}
+      panelClassName="w-64 px-3 py-2"
+    >
+      <TextField
+        label={feldLabel}
+        type="number"
+        inputMode="numeric"
+        min={min}
+        umrandet
+        value={wert}
+        onChange={(e) => aendern(e.target.value)}
+        supportingText={hinweis}
+      />
+    </FilterKnopf>
+  );
+}
+
+/* Die Suche einer Filterleiste: ohne sichtbaren Namen — ihr Ort und ihr
+   Platzhalter sagen, wofür sie da ist —, dafür umrandet, denn neben den
+   umrandeten Filterknöpfen stünde sonst ein Feld, das man nicht sieht. Wirkt
+   nach einer Tipppause (300 ms); das Kreuz zum Leeren läuft über denselben
+   Weg. */
+export function FilterSuche({
+  label,
+  initial,
+  onCommit,
+  className = "w-full sm:w-72",
+}: {
+  label: string;
+  initial: string;
+  onCommit: (wert: string) => void;
+  className?: string;
+}) {
+  const [wert, aendern] = useDebouncedWert(initial, onCommit);
+  return (
+    <SearchField
+      label={label}
+      labelVersteckt
+      umrandet
+      placeholder={label}
+      value={wert}
+      onChange={(e) => aendern(e.target.value)}
+      className={className}
+    />
   );
 }

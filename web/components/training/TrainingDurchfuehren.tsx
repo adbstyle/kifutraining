@@ -34,7 +34,7 @@ type TerminKontext = {
 function TerminKopf({ termin, className }: { termin: TerminKontext; className?: string }) {
   return (
     <div
-      className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-flaeche border border-linie bg-elev-01 px-3 py-2 type-label-medium text-on-surface-mittel ${className ?? ""}`}
+      className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-flaeche border border-linie bg-elev-01 px-3 py-2 type-body-small text-on-surface-mittel ${className ?? ""}`}
     >
       <span className="inline-flex items-center gap-1.5 text-on-surface">
         <CalendarDays size={15} strokeWidth={2} aria-hidden />
@@ -197,7 +197,7 @@ export function TrainingDurchfuehren({
             Im Druck hat er nichts verloren (OOS 2). */}
         <SeitenKopf krumen={crumbs} mitlaufend={false} className="mb-3" />
         {termin && <TerminKopf termin={termin} className="mb-3" />}
-        <p className="type-label-medium text-on-surface-mittel">{training.name}</p>
+        <p className="type-body-small text-on-surface-mittel">{training.name}</p>
         {/* Unter dem Trainingsnamen und über dem Abschnitt: Die Variante gilt
             für das ganze Training, nicht für den gerade offenen Teil — und sie
             bleibt beim Blättern an derselben Stelle stehen (#203 AK 2). */}
@@ -284,11 +284,12 @@ export function TrainingDurchfuehren({
         ))}
       </div>
 
-      {/* Spielfeldrand-Navigation: zwei Knöpfe über die volle Breite, im
-          einen Mass der Anwendung (36 px, Epic #363). Deckend auf 04dp und mit einer Haarlinie abgesetzt; ab lg beginnt sie neben
-          der Seitenleiste (Breite vom AppRahmen). Durch eine
-          schwebende Leiste darf der Inhalt nicht durchscheinen, sonst trägt
-          die Höhe die Trennung nicht mehr (kein Blur über der Höhenleiter). */}
+      {/* Spielfeldrand-Navigation: zwei Knöpfe über die volle Breite, 36 px
+          hoch wie alle Bedienelemente (Epic #363). Deckend auf 04dp und mit
+          einer Haarlinie abgesetzt; ab lg beginnt sie neben der Seitenleiste
+          (Breite vom AppRahmen). Durch eine schwebende Leiste darf der Inhalt
+          nicht durchscheinen, sonst trägt die Höhe die Trennung nicht mehr
+          (kein Blur über der Höhenleiter). */}
       <nav className={cn("fixed right-0 bottom-0 z-10 border-t border-linie bg-elev-04", nebenLeiste)}>
         <div className="flex max-w-2xl items-center gap-2 px-4 py-2 sm:px-6">
           <Button

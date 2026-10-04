@@ -1,6 +1,6 @@
 export { Button, ButtonLink, buttonClasses } from "./Button";
 export { ButtonGroup, segmentClasses } from "./ButtonGroup";
-export { Badge, HerkunftBadge } from "./Badge";
+export { Badge, HerkunftBadge, Zaehler } from "./Badge";
 export {
   KategorieChip,
   FilterChip,
@@ -73,4 +73,4 @@ export type { SearchFieldProps } from "./SearchField";
 export { PasswordField } from "./PasswordField";
 export type { PasswordFieldProps } from "./PasswordField";
 export { FeldGruppe, feldNameKlasse } from "./feld";
-export { FilterKnopf, AuswahlFilter } from "./FilterKnopf";
+export { FilterKnopf, AuswahlFilter, FilterSuche, ZahlFilter } from "./FilterKnopf";

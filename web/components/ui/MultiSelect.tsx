@@ -4,6 +4,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Check, CheckCheck, ChevronDown, RotateCcw, Search } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { bedienzeile } from "./Menu";
+import { gruppenIdVon, gruppenKopf, gruppenKopfKlasse } from "./gruppen";
 import { IconButton } from "./IconButton";
 import { Feld, hinweisIdVon, useFeldId } from "./feld";
 import { usePanelAnker } from "./use-panel-anker";
@@ -24,9 +25,8 @@ export interface MultiSelectProps {
   searchable?: boolean;
   /** Footer mit „Zurücksetzen" / „Alle auswählen" (Default). */
   actions?: boolean;
-  /** Der Leerfall in Worten — «Alle Stufen» statt eines leeren Felds. Er steht
-      im ruhenden Label; sobald etwas gewählt ist, schwebt an dessen Stelle
-      `label` auf die Kontur. Voreingestellt «Auswählen …». */
+  /** Der Leerfall in Worten («Alterskategorie wählen …»). Er steht gedämpft
+      im Feld, solange nichts gewählt ist. Voreingestellt «Auswählen …». */
   placeholder?: string;
   supportingText?: string;
   error?: boolean;
@@ -65,12 +65,7 @@ export function MultiSelect({
   const fid = useFeldId(id);
   const listId = `${fid}-list`;
   const optId = (i: number) => `${fid}-opt-${i}`;
-  // Id der Gruppen-Kopfzeile. Die Kopfzeile ist `role="presentation"` und damit
-  // strukturell unsichtbar — ohne Verweis erführe eine Screenreader-Nutzerin
-  // nie, zu welcher Gruppe ein Wert gehört. Jede Option zeigt darum per
-  // `aria-describedby` auf sie: vorgelesen wird «<Wert>, <Gruppe>».
-  const gruppenId = (gruppe: string) =>
-    `${fid}-gruppe-${gruppe.replace(/[^\p{L}\p{N}]+/gu, "-").toLowerCase()}`;
+  const gruppenId = (gruppe: string) => gruppenIdVon(fid, gruppe);
 
   const isControlled = value !== undefined;
   const [internal, setInternal] = useState<string[]>(defaultValue ?? []);
@@ -229,7 +224,19 @@ export function MultiSelect({
     // `min-w-0`: In einem Grid- oder Flex-Elternteil darf das Feld schmaler
     // werden als ein langer Wert — der bricht dann um, statt das Raster zu
     // sprengen.
-    <Feld id={fid} label={label} hinweis={supportingText} error={error} className={cn("min-w-0", className)}>
+    <Feld
+      id={fid}
+      label={label}
+      hinweis={supportingText}
+      error={error}
+      className={cn("min-w-0", className)}
+      // Der Auslöser ist ein <div> und lässt sich nicht beschriften; ein
+      // Klick auf den Namen öffnet ihn darum von Hand, wie ein Label es täte.
+      onLabelClick={() => {
+        triggerRef.current?.focus();
+        openPanel();
+      }}
+    >
       <div ref={wurzelRef} className="relative">
         {/* Ohne Suche ist der Auslöser die Combobox (treibt die Liste), mit
             Suche ein Button, der das Panel öffnet (Fokus springt dann ins
@@ -331,14 +338,14 @@ export function MultiSelect({
                 const isActive = i === active;
                 // Gruppen-Überschrift, sobald eine neue Gruppe beginnt — nötig,
                 // wo eine Dimension Werte aus zwei Welten führt (Epic #71).
-                const kopf = o.group && o.group !== filtered[i - 1]?.group ? o.group : null;
+                const kopf = gruppenKopf(filtered, i);
                 return (
                   <Fragment key={o.value}>
                   {kopf && (
                     <li
                       id={gruppenId(kopf)}
                       role="presentation"
-                      className="px-3 pb-1 pt-2 type-label-small text-on-surface-mittel"
+                      className={gruppenKopfKlasse}
                     >
                       {kopf}
                     </li>
@@ -381,7 +388,7 @@ export function MultiSelect({
                     >
                       {isSelected && <Check size={13} strokeWidth={3} />}
                     </span>
-                    <span className="min-w-0 flex-1 truncate">{o.label}</span>
+                    <span className="min-w-0 flex-1 break-words">{o.label}</span>
                   </li>
                   </Fragment>
                 );

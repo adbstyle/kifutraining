@@ -977,12 +977,15 @@ export default function Styleguide() {
 
       <Section n="08" title="Knöpfe">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Sieben Varianten, eine Regel: <strong>Gefüllt trägt Schwarz.</strong>{" "}
+          Acht Varianten, eine Regel: <strong>Gefüllt trägt Schwarz.</strong>{" "}
           <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
           Höhenstufe (08dp), <code>elevated</code> dieselbe Idee eine Stufe
           tiefer (06dp) mit Schatten und Primary-Schrift — im Bild bisher nicht
           angewandt, die Rolle bleibt besetzt —, <code>outlined</code> Kontur
-          auf der Kante, <code>text</code> nur Schrift, <code>danger</code>{" "}
+          auf der Kante, <code>aktiv</code> der eingeschaltete{" "}
+          <code>outlined</code> — getönt wie ein gewählter Chip, er trägt den
+          Filterknopf, sobald dieser eingrenzt (29) —, <code>text</code> nur
+          Schrift, <code>danger</code>{" "}
           Kontur und Schrift in Error; dazu der leise Knopf (<code>quiet</code>)
           weiter unten, der als einziger nicht über die Emphase leiser wird,
           sondern über die Schrift. Alle tragen{" "}
@@ -996,6 +999,7 @@ export default function Styleguide() {
           <Button variant="tonal">Duplizieren</Button>
           <Button variant="elevated">Teilen</Button>
           <Button variant="outlined">Filter zurücksetzen</Button>
+          <Button variant="aktiv">Alterskategorie</Button>
           <Button variant="text">Abbrechen</Button>
           <Button variant="danger">Übung löschen</Button>
         </div>
@@ -1069,7 +1073,7 @@ export default function Styleguide() {
           <IconButton icon={Plus} label="Hinzufügen" />
           <IconButton icon={Plus} label="Hinzufügen" variant="overlay" />
           <span className="type-label-small text-on-surface-mittel">
-            ruhig · aktiv (<code>state-primary</code>) · sm · overlay (06dp über Bild)
+            ruhig · aktiv (<code>state-primary</code>) · overlay (06dp über Bild)
           </span>
         </div>
 
@@ -1183,7 +1187,11 @@ export default function Styleguide() {
           dann steht sie umrandet in Primary (<code>oeffentlich</code>,{" "}
           <code>varianten</code>). Keine der beiden Formen füllt mit
           Akzentfarbe; das bleibt dem gefüllten Knopf vorbehalten, der etwas
-          auslöst. Anatomie: <code>rounded-plakette</code>, 22 px hoch,{" "}
+          auslöst — und dem <code>Zaehler</code>, der an einem Knopf hängt und
+          zählt, was dessen Handlung bewirkt (gewählte Werte am Filterknopf,
+          Übernahmen in der Übungsauswahl). Er ist gefüllt, weil er als Teil
+          des Knopfes gelesen wird, nicht als eigene Aussage, und für die
+          Vorlesehilfe stumm: Der Knopf sagt die Zahl in Worten. Anatomie: <code>rounded-plakette</code>, 22 px hoch,{" "}
           <code>type-plakette</code> — dasselbe Mass trägt die
           Kategorie-Plakette darunter, sonst stünden zwei Plaketten
           nebeneinander verschieden hoch.
@@ -1545,7 +1553,12 @@ export default function Styleguide() {
           <code>type-body-large</code>. Ein Platzhalter steht gedämpft im Feld
           und sagt, was hinein soll. Wo ein Feld keinen sichtbaren Namen trägt
           — die Suche in der Filterleiste —, gibt <code>umrandet</code> ihm auch
-          ruhend die Kante, sonst fehlte es dort schlicht.
+          ruhend die Kante, sonst fehlte es dort schlicht.{" "}
+          <strong>Auf Touch-Geräten</strong> gibt es kein Überfahren: Ein leeres
+          Feld kündigt sich dort allein über seinen Namen und den Platzhalter
+          an. Das ist gewollt (PO-Entscheid 2026-10-03, Variante «ohne
+          Kontur») — der Name steht jederzeit darüber, und jedes Feld trägt
+          einen Platzhalter oder einen Wert.
         </p>
         <div className="grid max-w-md gap-6">
           <TextField label="Übungsname" supportingText="Pflichtfeld" />
@@ -1900,8 +1913,8 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Der Baustein trägt beide Mehrfachauswahlen des Übungsformulars —{" "}
           <strong>Alterskategorie</strong> und{" "}
-          <strong>Erscheinungsform</strong> — und nicht mehr nur die
-          Filterzeilen. Im Formular unterscheiden sich die beiden in der
+          <strong>Erscheinungsform</strong>; die Filterleisten führen ihre
+          Dimensionen dagegen als Filterknopf (29). Im Formular unterscheiden sich die beiden in der
           Ausstattung: Die Alterskategorie schaltet <code>searchable</code> und{" "}
           <code>actions</code> ab (drei bis vier kurze Werte liest man
           schneller, als man sie filtert), die Erscheinungsform behält beides
@@ -2834,21 +2847,22 @@ export default function Styleguide() {
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Grenzt er ein, steht er getönt (Knopf-Variante <code>aktiv</code>,
-          dasselbe Kleid wie ein gewählter Chip) und trägt die Zahl als
-          Plakette — vorgelesen wird «Alterskategorie, 2 gewählt». Das Panel
+          dasselbe Kleid wie ein gewählter Chip) und trägt die Zahl als{" "}
+          <code>Zaehler</code> (09) — vorgelesen wird «Alterskategorie, 2
+          gewählt». Das Panel
           ist breiter als der Knopf, wo der Inhalt es braucht (bis 34 rem; der
           längste Übungstyp misst 484 px), und rückt am rechten Rand nach links
           (<code>usePanelAnker</code>, geteilt mit der Mehrfachauswahl). Es ist
           kein Menü und keine Listbox, sondern eine Gruppe gewöhnlicher
           Bedienelemente: Kontrollkästchen im <code>AuswahlFilter</code>, ein
-          Zahlenfeld bei «Verfügbare Kinder». ↑/↓ wandern zwischen ihnen, Esc
+          Zahlenfeld im <code>ZahlFilter</code> («Verfügbare Kinder»). ↑/↓ wandern zwischen ihnen, Esc
           schliesst und gibt den Fokus an den Knopf zurück. Eine Wahl wirkt
           sofort, das Panel bleibt offen; Zahl und Suche wirken nach einer
           Tipppause.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Die Suche steht in der Leiste ohne sichtbaren Namen, dafür umrandet
-          und mit Platzhalter (14) — ohne Kante stünde neben den umrandeten
+          Die Suche der Leiste (<code>FilterSuche</code>) steht ohne
+          sichtbaren Namen, dafür umrandet und mit Platzhalter (14) — ohne Kante stünde neben den umrandeten
           Knöpfen ein Feld, das man nicht sieht. Schalter wie «Meine Übungen»
           bleiben <code>FilterChip</code> (9): Sie haben kein Panel, nur an
           und aus.

@@ -1529,7 +1529,7 @@ const ElementLeiste = forwardRef<
                 onClick={() => onPose(p)}
                 aria-label={`Pose ${p}`}
                 aria-pressed={aktiv}
-                className={`focus-ring rounded-flaeche border p-0.5 ${
+                className={`focus-ring flex size-9 items-center justify-center rounded-flaeche border ${
                   aktiv
                     ? "border-on-surface bg-elev-08"
                     : "border-linie"
@@ -1564,11 +1564,15 @@ const ElementLeiste = forwardRef<
                 onClick={() => onFarbe(slug)}
                 aria-label={`Farbe ${slug}`}
                 aria-pressed={aktiv}
-                className={`focus-ring h-6 w-6 rounded-full border-2 ${
-                  aktiv ? "border-on-surface" : "border-linie"
-                }`}
-                style={{ backgroundColor: FARBEN[slug] }}
-              />
+                // 36 px Trefferfläche wie jedes Werkzeug, der Farbpunkt darin 24 px.
+                className="focus-ring flex size-9 items-center justify-center rounded-full"
+              >
+                <span
+                  aria-hidden
+                  className={`size-6 rounded-full border-2 ${aktiv ? "border-on-surface" : "border-linie"}`}
+                  style={{ backgroundColor: FARBEN[slug] }}
+                />
+              </button>
             );
           })}
         </div>

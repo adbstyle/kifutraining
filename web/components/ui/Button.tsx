@@ -27,19 +27,11 @@ type Variant = "filled" | "tonal" | "elevated" | "outlined" | "aktiv" | "text" |
 // Überfahr-Fläche je Variante; ein Versatz nach unten beim Drücken ebenso, die
 // Ebene meldet den Druck bereits.
 const base =
-  "state focus-ring inline-flex items-center justify-center rounded-flaeche transition-colors duration-150 disabled:opacity-40 disabled:pointer-events-none select-none";
+  "state focus-ring type-title-small inline-flex h-9 items-center justify-center rounded-flaeche transition-colors duration-150 disabled:opacity-40 disabled:pointer-events-none select-none";
 
-/** Schrift und Icon-Abstand einer Variante. Eigener Slot und nicht in `base`,
- *  weil `cn` ein reiner Joiner ist (kein tailwind-merge): In den fertigen
- *  String darf genau EINE Typo-Klasse gelangen, eine Basis-Klasse liesse sich
- *  nicht überschreiben. Die Schrift ist für alle gleich; `quiet` rückt nur
- *  das Zeichen näher an den Text. */
-function typo(variant: Variant): string {
-  return variant === "quiet" ? "type-title-small gap-1.5" : "type-title-small gap-2";
-}
 
-// Nur noch Farbe und Fläche — Schrift kommt aus `typo`, Höhe und Polsterung
-// aus `buttonClasses`, der Zustand aus `state` in `base`.
+// Nur noch Farbe und Fläche — Schrift, Höhe und Zustand stehen in `base`,
+// Polsterung und Icon-Abstand in `buttonClasses`.
 const variants: Record<Variant, string> = {
   // Höchste Emphase: die einzige Variante, die den Akzent als FLÄCHE trägt.
   filled: "bg-primary text-on-primary",
@@ -71,7 +63,8 @@ const variants: Record<Variant, string> = {
 /** Gemeinsame Button-Klassen — geteilt von Button und ButtonLink, damit ein
  *  navigierender Button als <a>/<Link> dieselbe Optik trägt (kein <a><button>). */
 export function buttonClasses(variant: Variant = "filled", className?: string): string {
-  return cn(base, typo(variant), variants[variant], variant === "quiet" ? "h-9 px-2" : "h-9 px-4", className);
+  // `quiet` rückt Zeichen und Rand näher an den Text.
+  return cn(base, variants[variant], variant === "quiet" ? "gap-1.5 px-2" : "gap-2 px-4", className);
 }
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

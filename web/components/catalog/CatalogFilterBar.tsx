@@ -1,8 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { AuswahlFilter, Button, FilterChip, FilterKnopf, SearchField, TextField } from "@/components/ui";
-import { useDebouncedWert } from "@/lib/use-debounce";
+import { AuswahlFilter, Button, FilterChip, FilterSuche, ZahlFilter } from "@/components/ui";
 import {
   einordnungFilterOptionen,
   feldOptionen,
@@ -95,10 +94,9 @@ export function CatalogFilterBar({
 
   return (
     <div className="mb-6 flex flex-wrap items-center gap-2">
-      <DebouncedSuche
-        initial={filters.q ?? ""}
+      <FilterSuche
         label="Übungen durchsuchen"
-        className="w-full sm:w-72"
+        initial={filters.q ?? ""}
         onCommit={(v) => setScalar("q", v)}
       />
 
@@ -133,8 +131,11 @@ export function CatalogFilterBar({
         onChange={(v) => setList("typ", v)}
       />
 
-      <KinderFilter
-        initial={filters.kinder?.toString() ?? ""}
+      <ZahlFilter
+        label="Verfügbare Kinder"
+        feldLabel="Anzahl Kinder"
+        einheit="Kinder"
+        hinweis="Zeigt Übungen, die mit so vielen Kindern durchführbar sind."
         gesetzt={filters.kinder}
         onCommit={(v) => setScalar("kinder", v)}
       />
@@ -157,73 +158,5 @@ export function CatalogFilterBar({
         </Button>
       )}
     </div>
-  );
-}
-
-/* «Verfügbare Kinder» als Filterknopf: Der Knopf nennt die übernommene Zahl,
-   eingegeben wird sie im Panel — mit Tipppause (300 ms), wie die Suche. Der
-   Knopf zeigt den Wert aus der Adresse, nicht den gerade getippten: Er sagt,
-   was die Übersicht tatsächlich einschränkt. */
-function KinderFilter({
-  initial,
-  gesetzt,
-  onCommit,
-}: {
-  initial: string;
-  gesetzt?: number;
-  onCommit: (value: string) => void;
-}) {
-  const [wert, aendern] = useDebouncedWert(initial, onCommit);
-  const aktiv = gesetzt !== undefined;
-
-  return (
-    <FilterKnopf
-      label="Verfügbare Kinder"
-      aktiv={aktiv}
-      badge={gesetzt}
-      badgeLabel={aktiv ? `${gesetzt} Kinder` : undefined}
-      panelClassName="w-64 px-3 py-2"
-    >
-      <TextField
-        label="Anzahl Kinder"
-        type="number"
-        inputMode="numeric"
-        min={1}
-        umrandet
-        value={wert}
-        onChange={(e) => aendern(e.target.value)}
-        supportingText="Zeigt Übungen, die mit so vielen Kindern durchführbar sind."
-      />
-    </FilterKnopf>
-  );
-}
-
-/* Dasselbe für die Suche, nur auf dem `SearchField` des Kits: Lupe rechts, nach
-   der ersten Eingabe ein Kreuz zum Leeren. Das Kreuz meldet sich über dasselbe
-   `onChange` — die Verzögerung greift also auch für es, und die URL verliert
-   `?q=` eine Tipppause später. */
-function DebouncedSuche({
-  initial,
-  onCommit,
-  label,
-  className,
-}: {
-  initial: string;
-  onCommit: (value: string) => void;
-  label: string;
-  className?: string;
-}) {
-  const [wert, aendern] = useDebouncedWert(initial, onCommit);
-
-  return (
-    <SearchField
-      label={label}
-      labelVersteckt
-      umrandet
-      placeholder={label}
-      value={wert}
-      onChange={(e) => aendern(e.target.value)}
-      className={className}
-    />
   );
 }

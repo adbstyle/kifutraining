@@ -12,7 +12,7 @@ import type { CSSProperties } from "react";
    Kopf und Fuss. `PANEL_ABSTAND` ist der Spalt zwischen Auslöser und Panel,
    nach oben wie nach unten; `RAND` der Abstand, den ein Panel seitlich zur
    Kante hält, gegen die es gemessen wird. */
-export const PANEL_MAX_HOEHE = 320;
+const PANEL_MAX_HOEHE = 320;
 const PANEL_MIN_HOEHE = 160;
 const PANEL_ABSTAND = 4;
 const RAND = 8;

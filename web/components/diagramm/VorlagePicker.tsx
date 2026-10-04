@@ -130,7 +130,7 @@ export function VorlagePicker({
                     <span className="block aspect-[16/10] w-full border-b border-linie">
                       <DiagrammView diagramm={data} title={`Vorlage: ${vorlage.name}`} />
                     </span>
-                    <span className="type-label-small block truncate p-2 text-on-surface-mittel">
+                    <span className="type-body-small block truncate p-2 text-on-surface-mittel">
                       {vorlage.name}
                     </span>
                   </button>
