@@ -1548,9 +1548,12 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Der Feldkasten ist ruhend leer:</strong> keine Kontur, keine
           Fläche (Utility <code>feldkasten</code>). Ein Formular liest sich so
-          als Text statt als Stapel von Kästen. Beim Überfahren hellt eine
-          leise Ebene in der Schriftfarbe auf (6 %), im Fokus trägt die Kontur
-          Primary, bei Fehler und Befund Error. Die Stärke bleibt dabei immer
+          als Text statt als Stapel von Kästen. Beim Überfahren hellt die ganze
+          Angabe auf, Name und Kasten zusammen, mit einer leisen Ebene in der
+          Schriftfarbe (6 %), die ringsum 6 px über den Kasten hinausragt —
+          gerade ein leeres Feld gibt sich so deutlich als Feld zu erkennen,
+          ohne dass sich etwas verschiebt. Im Fokus trägt die Kontur Primary,
+          bei Fehler und Befund Error. Die Stärke bleibt dabei immer
           1.5 px — nur die Farbe wechselt, nichts springt beim Hineinklicken.
           36 px hoch wie jedes Bedienelement, der Wert in{" "}
           <code>type-body-large</code>. Wo ein Feld keinen sichtbaren Namen trägt
