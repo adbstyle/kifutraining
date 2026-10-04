@@ -1565,7 +1565,7 @@ const ElementLeiste = forwardRef<
                 aria-label={`Farbe ${slug}`}
                 aria-pressed={aktiv}
                 // 36 px Trefferfläche wie jedes Werkzeug, der Farbpunkt darin 24 px.
-                className="focus-ring flex size-9 items-center justify-center rounded-full"
+                className="focus-ring flex size-9 items-center justify-center rounded-flaeche"
               >
                 <span
                   aria-hidden

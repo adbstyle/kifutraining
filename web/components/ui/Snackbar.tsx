@@ -45,7 +45,7 @@ export function Snackbar({
         aria-label="Schliessen"
         // Kein IconButton: dessen gedämpfte Zeichenfarbe kehrt die umgekehrte
         // Fläche nicht mit um. Dasselbe Mass (36 px) trägt er trotzdem.
-        className="state focus-ring -my-1.5 -mr-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-on-surface"
+        className="state focus-ring -my-1.5 -mr-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-flaeche text-on-surface"
       >
         <X size={18} strokeWidth={2} aria-hidden />
       </button>

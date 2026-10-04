@@ -369,7 +369,7 @@ const radien: [string, string, string][] = [
   ["rounded-plakette", "2 px", "Plakette, Kategorie-Chip — die kleinste beschriftete Fläche."],
   ["rounded-flaeche", "4 px", "Karte, Feld, Knopf, Menü, Snackbar, Auswahl-Panel."],
   ["rounded-dialog", "6 px", "Nur der Dialog: die grösste Fläche verträgt mehr Rundung."],
-  ["rounded-full", "voll", "Chips und runde Knöpfe — alles, was man antippt und loslässt."],
+  ["rounded-full", "voll", "Chips — Werte und Schalter, die man antippt und wieder loslässt."],
 ];
 
 const hoehen: [string, string][] = [
@@ -849,8 +849,10 @@ export default function Styleguide() {
           ))}
         </div>
         <p className="type-body-medium mb-8 max-w-2xl text-on-surface-mittel">
-          Eckig für alles, was Inhalt hält; voll gerundet für alles, was man
-          antippt und wieder loslässt. Mehr Werte gibt es nicht — 3 px, 5 px und
+          Eckig mit gerundeten Kanten für alles, was Inhalt hält oder eine
+          Handlung auslöst — Karte, Feld, Knopf, Icon-Knopf, Filterknopf; voll
+          gerundet nur der Chip, ein Wert oder Schalter, den man antippt und
+          wieder loslässt (Epic #363: Icon-Knöpfe sind kein Kreis mehr). Mehr Werte gibt es nicht — 3 px, 5 px und
           8 px sind aus dem System gefallen, und ein{" "}
           <code>rounded-</code>-Wert in eckigen Klammern ist ein Fehler, kein
           Sonderfall.

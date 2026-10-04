@@ -141,7 +141,7 @@ export function TrainingExerciseRow({
 
         {/* Aktionen und Dauer stehen übereinander, nicht nebeneinander: Das
             Dauerfeld trägt seinen Namen über sich, in einer Reihe mit drei
-            runden Knöpfen liesse es die Zeile auseinanderfallen. Rechtsbündig,
+            Icon-Knöpfen liesse es die Zeile auseinanderfallen. Rechtsbündig,
             damit die Felder aller Zeilen eine Kante bilden. */}
         <span className="flex shrink-0 flex-col items-end gap-2">
           <span className="flex items-center">

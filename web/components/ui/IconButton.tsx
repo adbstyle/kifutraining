@@ -23,7 +23,8 @@ function iconButtonClasses(
     // Beim aktiven Knopf färbt `state-primary` die Ebene mit ein, damit der
     // eingeschaltete Zustand auch in Ruhe leicht angehoben steht, ohne eine
     // eigene Fläche zu bekommen.
-    "state focus-ring inline-flex items-center justify-center rounded-full transition-colors",
+    // Eckig mit gerundeten Kanten wie Knopf und Feld (Epic #363), kein Kreis.
+    "state focus-ring inline-flex items-center justify-center rounded-flaeche transition-colors",
     "disabled:opacity-40 disabled:pointer-events-none",
     BOX,
     active ? "text-primary state-primary" : "text-on-surface-mittel",
