@@ -359,7 +359,7 @@
   color: var(--color-on-surface);
   outline: none;
   /* Kein Übergang: Die Kontur erscheint im selben Augenblick, in dem der
-     Name über sie springt (`.feld-rahmen > .feld-name`) — eine noch
+     Name über sie springt (`.feld-rahmen .feld-name`) — eine noch
      ausblendende Kontur liefe sonst mitten durch den Namen. */
   &[data-umrandet] {
     border-color: var(--color-kante);
@@ -395,13 +395,13 @@
    auch zu ihr 6 px. Beim Hineinklicken springt er hoch, ohne dass sich das
    Formular verschiebt (`translate` statt Abstand). Wo die Kontur auch ruhend
    steht — im Fehler, im Befund, umrandet —, bleibt er oben. */
-.feld-rahmen > .feld-name {
+.feld-rahmen .feld-name {
   margin-bottom: 0.375rem;
 }
 .feld-rahmen:not([data-fehler]):not(
     :has(.feldkasten:is(:focus, [aria-expanded="true"], [data-befund], [data-umrandet], [aria-invalid="true"]))
   )
-  > .feld-name {
+  .feld-name {
   translate: 0 0.75rem;
 }
 
@@ -423,7 +423,7 @@
     [data-leer],
     :has(.feldkasten:placeholder-shown)
   )
-  > .feld-name {
+  .feld-name {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -450,6 +450,29 @@
     border-radius: var(--radius-flaeche);
     background-color: var(--feld-hover);
     box-shadow: 0 0 0 6px var(--feld-hover);
+  }
+}
+
+/* Das ⓘ eines festen Hinweises (`Feld` mit `info`) zeigt sich nur beim
+   Überfahren — ruhend und während man im Feld arbeitet steht es nicht da
+   (PO 2026-10-04). Ein Formular zeigt so Namen und Werte, keine Zeichen; wer
+   über eine Angabe fährt, sieht, dass es zu ihr mehr zu wissen gibt. Auf
+   Touch-Geräten bleibt es verborgen (PO-Entscheid); die Vorlesehilfe hört
+   den Hinweis ohnehin mit dem Feld. Unsichtbar heisst hier durchsichtig, nicht
+   weg: Die Tastatur erreicht das ⓘ weiterhin und macht es dabei sichtbar,
+   ebenso ein offenes Panel. Durchsichtig nimmt es keine Klicks an. */
+.feld-info {
+  opacity: 0;
+  pointer-events: none;
+}
+.feld-info:has(:focus-visible, [aria-expanded="true"]) {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (hover: hover) {
+  .feld-rahmen:not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):hover .feld-info {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 

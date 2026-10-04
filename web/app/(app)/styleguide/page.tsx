@@ -1594,9 +1594,14 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Hinweise:</strong> Was ein Feld nur erklärt («Höchstens 200
           Zeichen»), steht nach dem Vorbild von Jira hinter einem ⓘ rechts
-          neben dem Feld (<code>info</code>, Baustein <code>InfoKnopf</code>):
-          beim Zeigen ein Tooltip, ein Klick öffnet ein kleines Panel. Die
-          Vorlesehilfe hört ihn trotzdem mit dem Feld. Fehler und Hinweise, die
+          im Feld (<code>info</code>, Baustein <code>InfoKnopf</code>): beim
+          Zeigen ein Tooltip, ein Klick öffnet ein kleines Panel. Das ⓘ zeigt
+          sich <strong>nur beim Überfahren</strong> der Angabe — nicht ruhend,
+          nicht während man im Feld arbeitet, und auf Touch-Geräten gar nicht
+          (PO 2026-10-04). Es steht senkrecht mittig auf der ganzen Angabe,
+          zwischen Name und Wert. Die Tastatur erreicht es weiterhin und macht
+          es dabei sichtbar; die Vorlesehilfe hört den Hinweis ohnehin mit dem
+          Feld. Fehler und Hinweise, die
           sich mit der Eingabe ändern, bleiben sichtbar unter dem Feld (
           <code>supportingText</code>) — die muss man sehen, ohne zu klicken.
         </p>

@@ -83,8 +83,9 @@ export function Feld({
   /** Fehler und Hinweise, die sich mit der Eingabe ändern — sichtbar unter
    *  dem Feld. */
   hinweis?: ReactNode;
-  /** Ein fester Hinweis, der das Feld erklärt — hinter einem ⓘ rechts neben
-   *  dem Feld (`InfoKnopf`), damit er das Formular nicht dauernd füllt. */
+  /** Ein fester Hinweis, der das Feld erklärt — hinter einem ⓘ rechts im
+   *  Feld (`InfoKnopf`), damit er das Formular nicht dauernd füllt. Das ⓘ
+   *  zeigt sich nur beim Überfahren (siehe `.feld-info` in globals.css). */
   info?: ReactNode;
   /** Ein Knopf, der mit dem Feld zusammen eine Handlung bildet (Speichern,
    *  Suchen) — in derselben Zeile wie der Feldkasten, damit beide auf einer
@@ -104,30 +105,36 @@ export function Feld({
       data-fehler={error || undefined}
       data-name-versteckt={labelVersteckt || undefined}
     >
-      <label
-        id={`${id}-label`}
-        htmlFor={id}
-        onClick={onLabelClick}
-        className={labelVersteckt ? "sr-only" : cn("feld-name", feldNameKlasse(error))}
-      >
-        {label}
-      </label>
-      {info || aktion ? (
-        <div className="flex items-center gap-1">
-          <div className="min-w-0 flex-1">{children}</div>
+      <div className={cn(!!aktion && "flex items-end gap-3")}>
+        {/* Name und Feldkasten — die «Angabe». Das ⓘ steht in ihr rechts,
+            senkrecht mittig: zwischen Name und Wert, bei leerem Feld (Name
+            im Feld) mittig im Kasten. Sein Platz bleibt frei, auch wenn es
+            nicht zu sehen ist, damit der Wert nicht darunter läuft. */}
+        <div className={cn("relative", !!aktion && "min-w-0 flex-1", !!info && "pr-10")}>
+          <label
+            id={`${id}-label`}
+            htmlFor={id}
+            onClick={onLabelClick}
+            className={labelVersteckt ? "sr-only" : cn("feld-name", feldNameKlasse(error))}
+          >
+            {label}
+          </label>
+          {children}
           {info && (
             <>
-              <InfoKnopf label={label}>{info}</InfoKnopf>
+              <div className="feld-info absolute top-1/2 right-0 -translate-y-1/2">
+                <InfoKnopf label={label}>{info}</InfoKnopf>
+              </div>
               <span id={`${id}-info`} className="sr-only">
                 {info}
               </span>
             </>
           )}
-          {aktion && <div className="ml-2 shrink-0">{aktion}</div>}
         </div>
-      ) : (
-        children
-      )}
+        {/* Unten bündig: Der Knopf steht auf einer Linie mit dem Kasten, ob
+            der Name darüber steht oder (leer) ausgeblendet ist. */}
+        {aktion && <div className="shrink-0">{aktion}</div>}
+      </div>
       {hinweis && (
         <p id={`${id}-hinweis`} className={hinweisKlasse(error)}>
           {hinweis}
