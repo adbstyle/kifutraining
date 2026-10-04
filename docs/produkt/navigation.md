@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-10-03. Wie man sich in der Anwendung bewegt.
+Stand 2026-10-04. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
@@ -62,6 +62,39 @@ gewählte Breite gilt für alle geteilten Seiten und bleibt auf dem Gerät gespe
 Fenster dafür zu schmal, scrollt die Seite als Ganzes, der Inhalt behält seine Lesebreite, und
 die Einordnung steht auf der Übungsseite nach dem Inhalt, in der Maske davor.
 
+## Bedienung
+
+Die Oberfläche ist knapp gehalten. Überschriften stehen in gewöhnlicher Schreibung, nicht in
+Grossbuchstaben; klein und in Grossbuchstaben bleiben nur kurze Beschriftungen und Plaketten.
+Alles, was sich bedienen lässt — Knöpfe, Felder, Filter, Einträge der Seitenleiste, Zeilen in
+Menüs und Listen, die Werkzeuge der Zeichenfläche —, ist gleich hoch, 36 Pixel, auf dem Rechner
+wie auf dem Telefon und auch in der Durchführen-Ansicht. Knöpfe, die nur ein Zeichen tragen,
+haben wie alle Knöpfe und Felder abgerundete Ecken; ganz rund sind nur die Chips, die man an-
+und wieder abwählt.
+
+Ein Formular liest sich als Liste aus Namen und Werten. Jede Angabe steht als eigenes Feld in
+einer eigenen Zeile, auch wo zwei Angaben zusammengehören wie Länge und Breite oder Mindest- und
+Höchstanzahl. Ein Feld zeigt ruhend weder Rahmen noch Fläche: Über dem Wert steht klein sein
+Name. Ein leeres Feld zeigt nur seinen Namen, gedämpft an der Stelle des Werts. Klickt man
+hinein, springt der Name darüber und das Feld trägt einen farbigen Rahmen. Fährt man mit der Maus
+über eine Angabe, hellt sie auf. Den Pfeil einer Auswahl zeigt das Feld nur, solange man darin
+arbeitet; ruhend steht dort nur der gewählte Wert. Eine Auswahl, die man auch leer lassen darf,
+bietet keinen Eintrag „kein …" an — leer heisst nicht angegeben.
+
+Was ein Feld nur erklärt, steht nicht dauernd darunter, sondern hinter einem kleinen ⓘ rechts im
+Feld. Es erscheint erst, wenn man mit der Maus über die Angabe fährt; ein Klick darauf öffnet den
+Hinweis. Mit der Tastatur lässt es sich ansteuern, und eine Sprachausgabe liest den Hinweis mit
+dem Feld vor. Fehler dagegen stehen immer sichtbar rot unter dem Feld. Sie kommen von der
+Anwendung selbst und sind deutsch — die eigenen, englischen Meldungen des Browsers erscheinen
+nicht. Ebenso ist die Wahl einer Datei ein eigener Knopf mit deutscher Beschriftung.
+
+Filter stehen über den Übersichten in einer Zeile als Knöpfe: Jeder nennt, wonach er filtert,
+und zählt, wie viele Werte gewählt sind; welche, zeigt ein Klick, der darunter eine Liste mit
+Kästchen zum An- und Abwählen öffnet. Ein Filter, der eingrenzt, ist farbig umrandet. Die Wahl
+wirkt sofort und die Liste bleibt offen; Escape oder ein Klick daneben schliesst sie. Die Zahl der
+verfügbaren Kinder trägt man an derselben Stelle als Zahl ein. Sie wirkt wie die Suche daneben
+nach einer kurzen Tipppause.
+
 ## Auf schmalen Bildschirmen
 
 Auf einem Telefon oder einem schmalen Fenster steht oben eine Kopfzeile mit dem Menüknopf.
@@ -88,3 +121,7 @@ sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite der
 geteilten Seiten. Die Teilung gibt es nur auf breiten Bildschirmen; auf einem Tablet im
 Hochformat oder einem Telefon steht alles untereinander, und die Breite lässt sich dort nicht
 ziehen.
+
+Auf Geräten ohne Maus, also auf Telefon und Tablet, erscheint das ⓘ eines Feldes nie; die
+Hinweise dahinter bleiben dort nur der Sprachausgabe zugänglich. Die Bedienflächen sind dort
+ebenfalls 36 Pixel hoch und damit kleiner als die sonst für Finger empfohlene Grösse.
