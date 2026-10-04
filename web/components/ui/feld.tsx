@@ -19,13 +19,17 @@ import { cn } from "@/lib/cn";
 
 /** Der Feldname als Klassen — für die seltenen Orte, an denen ein Name ohne
  *  Rahmen steht (eine feste Angabe an der Stelle eines Felds). */
+/* Name und Hinweis stehen bündig mit dem Text im Feld (`px-3.5` = Polster
+   des Feldkastens plus seine Kontur) und ohne eigenen Abstand zum Feld: Der
+   Feldkasten polstert seinen Text ohnehin, und so liest sich Name und Wert
+   als ein Eintrag wie in Jira, nicht als Beschriftung über einem Kasten. */
 export function feldNameKlasse(error?: boolean): string {
-  return cn("type-body-small mb-1 block", farbe(error));
+  return cn("type-body-small block px-3.5", farbe(error));
 }
 
 /** Hinweis oder Fehler unter einem Feld oder einer Gruppe. */
 function hinweisKlasse(error?: boolean): string {
-  return cn("type-body-small mt-1", farbe(error));
+  return cn("type-body-small px-3.5", farbe(error));
 }
 
 function farbe(error?: boolean): string {

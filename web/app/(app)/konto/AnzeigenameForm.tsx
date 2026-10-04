@@ -75,8 +75,8 @@ export function AnzeigenameForm({
           error={!!fehler}
           supportingText={fehler}
         />
-        {/* Neben dem Feldkasten, unter dem Feldnamen: 18 px Zeile + 4 px Abstand. */}
-        <Button type="submit" variant="tonal" disabled={pending} className="sm:mt-5.5">
+        {/* Neben dem Feldkasten, unter der Namenszeile des Felds (18 px). */}
+        <Button type="submit" variant="tonal" disabled={pending} className="sm:mt-4.5">
           <Check size={18} strokeWidth={2} aria-hidden />
           Speichern
         </Button>
