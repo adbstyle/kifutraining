@@ -14,9 +14,10 @@ import { InfoKnopf } from "./InfoKnopf";
    ruft nicht. Den Wechsel regelt `.feld-rahmen` in globals.css.
 
    Hier und nur hier steht der Stil des Feldnamens. TextField, TextArea,
-   DateTimeField, Select und MultiSelect bauen ihr Feld in diesen Rahmen; eine
-   Gruppe zusammengehöriger Felder («Spielfeldgrösse» über Länge × Breite)
-   nimmt `FeldGruppe` und trägt ihren Namen im selben Stil. */
+   DateTimeField, Select und MultiSelect bauen ihr Feld in diesen Rahmen. Jedes
+   Feld trägt seinen eigenen Namen — auch zwei zusammengehörige Werte wie
+   Länge und Breite stehen als zwei Felder untereinander, nicht unter einem
+   gemeinsamen Namen (PO 2026-10-04). */
 
 /** Der Feldname als Klassen — für die seltenen Orte, an denen ein Name ohne
  *  Rahmen steht (eine feste Angabe an der Stelle eines Felds). */
@@ -30,7 +31,7 @@ export function feldNameKlasse(error?: boolean): string {
   return cn("type-body-small block px-3.5 leading-3", farbe(error));
 }
 
-/** Hinweis oder Fehler unter einem Feld oder einer Gruppe. */
+/** Hinweis oder Fehler unter einem Feld. */
 function hinweisKlasse(error?: boolean): string {
   return cn("type-body-small px-3.5", farbe(error));
 }
@@ -120,50 +121,6 @@ export function Feld({
       {hinweis && (
         <p id={`${id}-hinweis`} className={hinweisKlasse(error)}>
           {hinweis}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/** Mehrere Felder unter einem gemeinsamen Namen — Länge × Breite, Minimum bis
- *  Maximum, die Zeilen der Materialliste. Die Gruppe ist für die Vorlesehilfe
- *  eine eigene Einheit (`role="group"`), jedes Feld darin behält seinen Namen. */
-export function FeldGruppe({
-  name,
-  beschriftetVon,
-  fehler,
-  className,
-  children,
-}: {
-  /** Der Name über der Gruppe. Fehlt er, nennt `beschriftetVon` die id einer
-   *  Überschrift, die die Gruppe schon von aussen benennt. */
-  name?: ReactNode;
-  beschriftetVon?: string;
-  /** Ein Fehler, der die Gruppe als Ganzes betrifft — er färbt den Namen und
-   *  steht unter den Feldern. */
-  fehler?: ReactNode;
-  className?: string;
-  children: ReactNode;
-}) {
-  const id = useId();
-  const fehlerId = `${id}-fehler`;
-  return (
-    <div
-      role="group"
-      aria-labelledby={beschriftetVon ?? id}
-      aria-describedby={fehler ? fehlerId : undefined}
-      className={className}
-    >
-      {name && !beschriftetVon && (
-        <p id={id} className={feldNameKlasse(!!fehler)}>
-          {name}
-        </p>
-      )}
-      {children}
-      {fehler && (
-        <p id={fehlerId} className={hinweisKlasse(true)}>
-          {fehler}
         </p>
       )}
     </div>

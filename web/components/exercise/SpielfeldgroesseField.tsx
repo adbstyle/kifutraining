@@ -1,6 +1,6 @@
 "use client";
 
-import { FeldGruppe, TextField } from "@/components/ui";
+import { TextField } from "@/components/ui";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
 
 /** Die Spielfeldgrösse einer Junioren-Übung (Story 3 AK 8).
@@ -13,9 +13,10 @@ import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
  *  (PO 2026-08-30). Die Prüfung sitzt in `parseUebungsInhalt`, die Regel selbst
  *  in den CHECKs `ex_spielfeld_paarweise` / `ex_spielfeld_bereich`.
  *
- *  Layout wie das Paar «Anzahl Spieler:innen» darunter: zwei Zahlenfelder mit einem
- *  Trennzeichen — dort ein Bis-Strich, hier ein Mal-Zeichen, weil es keine
- *  Spanne ist, sondern zwei Kanten. */
+ *  Zwei Felder untereinander, jedes mit eigenem Namen wie jedes andere Feld
+ *  der Maske — kein gemeinsamer Name über zwei Teilnamen (PO 2026-10-04).
+ *  Ein Fehler betrifft das Paar: Rot sind beide, die Meldung steht unter dem
+ *  zweiten. */
 export function SpielfeldgroesseField({
   laenge,
   breite,
@@ -30,37 +31,28 @@ export function SpielfeldgroesseField({
   error?: string;
 }) {
   return (
-    <FeldGruppe name="Spielfeldgrösse (optional)" fehler={error}>
-      <div className="flex items-end gap-3 sm:max-w-sm">
-        <TextField
-          label="Länge (m)"
-          type="number"
-          inputMode="numeric"
-          min={SPIELFELD_MIN}
-          max={SPIELFELD_MAX}
-          className="flex-1"
-          error={!!error}
-          value={laenge}
-          onChange={(e) => onLaengeChange(e.target.value)}
-        />
-        <span
-          aria-hidden
-          className="type-body-large flex h-9 items-center text-on-surface-mittel"
-        >
-          ×
-        </span>
-        <TextField
-          label="Breite (m)"
-          type="number"
-          inputMode="numeric"
-          min={SPIELFELD_MIN}
-          max={SPIELFELD_MAX}
-          className="flex-1"
-          error={!!error}
-          value={breite}
-          onChange={(e) => onBreiteChange(e.target.value)}
-        />
-      </div>
-    </FeldGruppe>
+    <>
+      <TextField
+        label="Spielfeldlänge (m, optional)"
+        type="number"
+        inputMode="numeric"
+        min={SPIELFELD_MIN}
+        max={SPIELFELD_MAX}
+        error={!!error}
+        value={laenge}
+        onChange={(e) => onLaengeChange(e.target.value)}
+      />
+      <TextField
+        label="Spielfeldbreite (m, optional)"
+        type="number"
+        inputMode="numeric"
+        min={SPIELFELD_MIN}
+        max={SPIELFELD_MAX}
+        error={!!error}
+        supportingText={error}
+        value={breite}
+        onChange={(e) => onBreiteChange(e.target.value)}
+      />
+    </>
   );
 }

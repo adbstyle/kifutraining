@@ -933,8 +933,9 @@ export default function Styleguide() {
           Felder er verlangt. Ihre Felder stehen in jeder Breite
           untereinander, eins pro Zeile — eine Spalte liest sich von oben nach
           unten, ohne dass das Auge zwischen Nachbarn springt (PO 2026-10-04).
-          Nebeneinander steht nur, was ein einziger Wert ist: Minimum bis
-          Maximum, Länge × Breite (<code>FeldGruppe</code>). Ein Feld
+          Auch zusammengehörige Werte stehen als eigene Felder mit eigenem
+          Namen untereinander — «Spielfeldlänge», «Spielfeldbreite» statt
+          eines gemeinsamen Namens über zwei Teilnamen. Ein Feld
           ohne eigenes Label (Dateifeld, Material-Gruppe) bekommt die Id der
           Überschrift für <code>aria-labelledby</code>, statt den Namen doppelt
           zu zeigen.
@@ -1545,9 +1546,11 @@ export default function Styleguide() {
           <code>type-body-small</code>), nicht in der Versal-Type der Label — er
           benennt, er ruft nicht. Darunter folgt der Feldkasten, darunter
           Hinweis oder Fehler in derselben kleinen Schrift.
-          Der Rahmen dafür ist <code>Feld</code>; mehrere Felder unter einem
-          gemeinsamen Namen («Spielfeldgrösse» über Länge × Breite) nimmt{" "}
-          <code>FeldGruppe</code>, im selben Stil.
+          Der Rahmen dafür ist <code>Feld</code>. Jedes Feld trägt genau einen
+          Namen: Zwei zusammengehörige Werte (Länge und Breite, Mindest- und
+          Höchstanzahl) sind zwei Felder untereinander, nicht ein gemeinsamer
+          Name über zwei Teilnamen — zwei Namensstufen brächen die ruhige
+          Liste aus Namen und Werten (PO 2026-10-04).
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Der Feldkasten ist ruhend leer:</strong> keine Kontur, keine

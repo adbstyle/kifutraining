@@ -14,7 +14,6 @@ import {
   HeadlineField,
   Checkbox,
   Card,
-  FeldGruppe,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
@@ -25,7 +24,8 @@ import {
 import {
   kategorieStufe,
   ERSCHEINUNGSFORM_LABEL,
-  ANZAHL_SPIELER_LABEL,
+  HOECHSTANZAHL_SPIELER_LABEL,
+  MINDESTANZAHL_SPIELER_LABEL,
   ueberfuehreAblauf,
 } from "@/lib/labels";
 import {
@@ -554,32 +554,29 @@ export function ExerciseForm({
         )}
         {zeigtSpielfeld && spielfeldFeld}
 
-        <FeldGruppe name={ANZAHL_SPIELER_LABEL} fehler={err.anzahl_max}>
-          <div className="flex items-end gap-3">
-            <TextField
-              label="Minimum"
-              name="anzahl_min"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              className="flex-1"
-              defaultValue={initial.anzahl_kinder?.min ?? undefined}
-            />
-            <span aria-hidden className="type-body-large flex h-9 items-center text-on-surface-mittel">
-              –
-            </span>
-            <TextField
-              label="Maximum"
-              name="anzahl_max"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              className="flex-1"
-              error={!!err.anzahl_max}
-              defaultValue={initial.anzahl_kinder?.max ?? undefined}
-            />
-          </div>
-        </FeldGruppe>
+        {/* Die Spielerzahl als zwei Felder mit je eigenem Namen, wie jedes
+            andere Feld der Maske — kein gemeinsamer Name über zwei
+            Teilnamen (PO 2026-10-04). Ein Fehler betrifft die Spanne: Rot
+            sind beide, die Meldung steht unter dem zweiten. */}
+        <TextField
+          label={MINDESTANZAHL_SPIELER_LABEL}
+          name="anzahl_min"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          error={!!err.anzahl_max}
+          defaultValue={initial.anzahl_kinder?.min ?? undefined}
+        />
+        <TextField
+          label={HOECHSTANZAHL_SPIELER_LABEL}
+          name="anzahl_max"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          error={!!err.anzahl_max}
+          supportingText={err.anzahl_max}
+          defaultValue={initial.anzahl_kinder?.max ?? undefined}
+        />
 
         {/* Übungstyp: optionale Selbstauskunft des Junioren-Manuals, und nur
             in den Blöcken, in denen eine Spielform vorkommen kann. Ohne
