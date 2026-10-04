@@ -443,9 +443,11 @@
    Höhenstufe dieselbe Aussage, und im Druck kippt sie mit der Schrift. Nicht
    während man im Feld arbeitet — dann trägt die Kontur —, nicht an einem
    gesperrten Feld und nicht an der umrandeten Suche der Filterleiste, die
-   neben Knöpfen steht und sich schon über ihre Kante zeigt. */
+   neben Knöpfen steht und sich schon über ihre Kante zeigt. Die Fläche liegt
+   auf der Angabe (`.feld-angabe`), nicht auf dem ganzen Rahmen: Ein Knopf
+   daneben (`aktion`) ist eine eigene Handlung und hellt nicht mit auf. */
 @media (hover: hover) {
-  .feld-rahmen:not([data-name-versteckt]):not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled)):hover {
+  .feld-rahmen:not([data-name-versteckt]):not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled)) .feld-angabe:hover {
     --feld-hover: color-mix(in srgb, var(--color-on-surface) 6%, transparent);
     border-radius: var(--radius-flaeche);
     background-color: var(--feld-hover);
@@ -470,18 +472,10 @@
   pointer-events: auto;
 }
 @media (hover: hover) {
-  .feld-rahmen:not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):hover .feld-info {
+  .feld-rahmen:not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled)) .feld-angabe:hover .feld-info {
     opacity: 1;
     pointer-events: auto;
   }
-}
-/* Das ⓘ liegt über dem rechten Rand des Kastens, der Kasten selbst bleibt so
-   breit wie bei Feldern ohne Hinweis. Ein Text-Feld hält rechts Platz frei,
-   damit ein langer Wert nicht unter dem ⓘ verschwindet; die Auswahlfelder
-   haben dort ohnehin den Platz ihres Pfeils, der nur beim Arbeiten im Feld
-   steht — dann, wenn das ⓘ verborgen ist. */
-.feld-rahmen:has(.feld-info) :is(input, textarea).feldkasten {
-  padding-right: 2.5rem;
 }
 
 .feld-rahmen:not([data-name-versteckt]) .feldkasten:focus::placeholder {

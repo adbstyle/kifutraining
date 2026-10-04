@@ -941,7 +941,7 @@ export default function Styleguide() {
           zu zeigen.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Jedes Formular trägt <code>noValidate</code></strong>: Fehler
+          <strong>Jedes Formular mit Eingabefeldern trägt <code>noValidate</code></strong>: Fehler
           meldet die App, nicht der Browser. Dessen eigene Prüfung (Pflicht,
           Mindestlänge, Zahlengrenzen, E-Mail-Form) hielte das Absenden an und
           zeigte eine Sprechblase in der Sprache des Browsers, in seinem

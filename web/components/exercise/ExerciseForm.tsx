@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useActionState, startTransition } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useActionState, startTransition } from "react";
 import { ArrowLeftRight, ImagePlus } from "lucide-react";
 import {
   TextField,
@@ -184,6 +184,8 @@ export function ExerciseForm({
   const [bildError, setBildError] = useState<string | null>(null);
   const [bildName, setBildName] = useState<string | null>(null);
   const bildRef = useRef<HTMLInputElement>(null);
+  const bildKnopfId = useId();
+  const bildNameId = useId();
   const [isCompressing, setIsCompressing] = useState(false);
   const [bildEntfernen, setBildEntfernen] = useState(false);
 
@@ -763,14 +765,14 @@ export function ExerciseForm({
             <Button
               type="button"
               variant="tonal"
-              aria-labelledby={`${titelId} bild-knopf`}
-              aria-describedby="bild-name"
+              aria-labelledby={`${titelId} ${bildKnopfId}`}
+              aria-describedby={bildNameId}
               onClick={() => bildRef.current?.click()}
             >
               <ImagePlus size={18} strokeWidth={2} aria-hidden />
-              <span id="bild-knopf">{bildName ? "Anderes Foto wählen" : "Foto wählen"}</span>
+              <span id={bildKnopfId}>{bildName ? "Anderes Foto wählen" : "Foto wählen"}</span>
             </Button>
-            <span id="bild-name" className="type-body-medium min-w-0 truncate text-on-surface-mittel">
+            <span id={bildNameId} className="type-body-medium min-w-0 truncate text-on-surface-mittel">
               {bildName ?? (initial.bildUrl ? "Kein neues Foto gewählt" : "Kein Foto gewählt")}
             </span>
           </div>

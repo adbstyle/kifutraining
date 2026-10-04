@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { TextField } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
@@ -15,23 +15,49 @@ import { setzeAnzeigename } from "@/lib/actions/profil";
    die andere zu sehen bekommen, auch an öffentlichen Vorlagen. */
 export function AnzeigenameForm({ aktuell }: { aktuell: string }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [gespeichert, setGespeichert] = useState(aktuell);
-  const [wert, setWert] = useState(aktuell);
-  const [fehler, setFehler] = useState<string | undefined>();
   const melde = useSnackbar();
+  const [wert, setWertState] = useState(aktuell);
+  const [fehler, setFehler] = useState<string | undefined>();
+  // Als Refs, weil das Speichern über die Antwort des Servers hinweg den
+  // jeweils neuesten Stand braucht, nicht den beim Absenden eingefangenen.
+  const wertRef = useRef(aktuell);
+  const gespeichert = useRef(aktuell);
+  const laeuft = useRef(false);
+  const nochmal = useRef(false);
+
+  function setWert(neu: string) {
+    wertRef.current = neu;
+    setWertState(neu);
+  }
 
   function speichern() {
-    if (pending || wert.trim() === gespeichert) return;
+    const neu = wertRef.current;
+    if (neu.trim() === gespeichert.current) return;
+    // Läuft schon ein Speichern, wird nach dessen Antwort mit dem dann
+    // aktuellen Stand nachgespeichert — eine Änderung in der Zwischenzeit
+    // geht so nicht verloren.
+    if (laeuft.current) {
+      nochmal.current = true;
+      return;
+    }
+    laeuft.current = true;
     setFehler(undefined);
     startTransition(async () => {
-      const res = await setzeAnzeigename(wert);
+      const res = await setzeAnzeigename(neu);
+      laeuft.current = false;
       if (res.ok) {
-        setWert(res.anzeigeName);
-        setGespeichert(res.anzeigeName);
+        gespeichert.current = res.anzeigeName;
+        // Die bereinigte Fassung des Servers nur übernehmen, wenn seither
+        // nichts mehr getippt wurde.
+        if (wertRef.current === neu) setWert(res.anzeigeName);
         melde("Anzeigename gespeichert.");
         router.refresh();
+        if (nochmal.current) {
+          nochmal.current = false;
+          speichern();
+        }
       } else {
+        nochmal.current = false;
         setFehler(res.error);
       }
     });
@@ -49,7 +75,7 @@ export function AnzeigenameForm({ aktuell }: { aktuell: string }) {
           e.preventDefault();
           e.currentTarget.blur();
         } else if (e.key === "Escape") {
-          setWert(gespeichert);
+          setWert(gespeichert.current);
           setFehler(undefined);
         }
       }}

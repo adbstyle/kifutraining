@@ -96,7 +96,10 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             data-umrandet={umrandet || undefined}
             className={cn(
               "feldkasten type-body-large h-9 w-full px-3",
-              trailing ? "pr-10" : undefined,
+              // Rechts Platz für das Zeichen am Feldrand und das ⓘ, das beim
+              // Überfahren über dem Kasten liegt (`Feld`) — je 40 px, damit
+              // ein langer Wert unter keinem von beiden verschwindet.
+              trailing && info ? "pr-20" : trailing || info ? "pr-10" : undefined,
               // Das Suchfeld trägt sein eigenes Kreuz; das von WebKit für
               // `type="search"` gezeichnete wäre ein zweites ohne Unterschied.
               props.type === "search" && "[&::-webkit-search-cancel-button]:appearance-none",
@@ -105,7 +108,11 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             )}
             {...props}
           />
-          {trailing && <span className="absolute inset-y-0 right-0 flex">{trailing}</span>}
+          {/* Mit ⓘ rückt das Zeichen um dessen Breite nach links: Am Rand
+              läge sonst beim Überfahren das ⓘ darüber und finge den Klick. */}
+          {trailing && (
+            <span className={cn("absolute inset-y-0 flex", info ? "right-10" : "right-0")}>{trailing}</span>
+          )}
         </div>
       </Feld>
     );
