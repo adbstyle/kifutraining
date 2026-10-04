@@ -443,6 +443,19 @@
   visibility: hidden;
 }
 
+/* Der Pfeil eines Auswahlfelds steht nur, solange man darin arbeitet (Fokus
+   oder offene Liste) — nach dem Vorbild von Jira. Ruhend zeigt das Formular
+   Namen und Werte, keine Bedienelemente; sobald man hineingeht, sagt der
+   Pfeil, dass hier gewählt wird. Sein Platz bleibt frei, damit der Wert beim
+   Hineinklicken nicht umbricht. Die Vorlesehilfe kennt die Auswahl ohnehin
+   über ihre Rolle (`combobox`). */
+.feldkasten .feld-chevron {
+  visibility: hidden;
+}
+.feldkasten:is(:focus, :focus-within, [aria-expanded="true"]) .feld-chevron {
+  visibility: visible;
+}
+
 /* Diagramm-Platzhalter: 45°-Schraffur, sehr leise. */
 @utility schraffur {
   background-image: repeating-linear-gradient(

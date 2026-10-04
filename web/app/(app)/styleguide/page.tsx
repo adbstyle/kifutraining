@@ -1830,7 +1830,10 @@ export default function Styleguide() {
           echten <code>:focus-visible</code>, denn der liegt auf dem Trigger.
           Listbox-Semantik mit voller Tastatursteuerung (↑/↓, Home/End, Enter,
           Esc). Offen trägt der Auslöser die Kontur in Primary — er gehört dann
-          zum Panel darunter. Der gewählte Wert steht ganz im Feld und bricht
+          zum Panel darunter. Den Pfeil zeigt das Feld nur, solange man darin
+          arbeitet (Fokus oder offene Liste): Ruhend zeigt das Formular Namen
+          und Werte, keine Bedienelemente — sobald man hineingeht, sagt der
+          Pfeil, dass hier gewählt wird (nach dem Vorbild von Jira). Der gewählte Wert steht ganz im Feld und bricht
           um, statt abgeschnitten zu werden: Eine Einordnung ist oft ein Satz.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">

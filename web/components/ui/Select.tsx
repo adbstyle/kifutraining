@@ -216,7 +216,7 @@ export function Select({
             strokeWidth={2}
             aria-hidden
             className={cn(
-              "shrink-0 text-on-surface-mittel transition-transform",
+              "feld-chevron shrink-0 text-on-surface-mittel transition-transform",
               open && "rotate-180",
             )}
           />

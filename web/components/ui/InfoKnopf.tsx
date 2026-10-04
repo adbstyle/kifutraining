@@ -41,6 +41,9 @@ export function InfoKnopf({ label, children }: { label: string; children: ReactN
           ref={triggerRef}
           type="button"
           icon={Info}
+          // Kleiner als die übrigen Zeichen: Der Hinweis ist Beiwerk, die
+          // Trefferfläche bleibt beim Mass aller Knöpfe (36 px).
+          iconProps={{ size: 16 }}
           label={`Hinweis zu ${label}`}
           aria-expanded={offen}
           aria-controls={offen ? panelId : undefined}
