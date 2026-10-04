@@ -24,10 +24,10 @@ import { InfoKnopf } from "./InfoKnopf";
    des Feldkastens plus seine Kontur) und ohne eigenen Abstand zum Feld: Der
    Feldkasten polstert seinen Text ohnehin, und so liest sich Name und Wert
    als ein Eintrag wie in Jira, nicht als Beschriftung über einem Kasten. Der
-   Name steht dafür auf knapper Zeile (14 statt 18 px) — die Schrift bleibt
-   12 px, er rückt nur näher an den Wert. */
+   Name steht dafür auf einer Zeile so hoch wie seine Schrift (12 statt 18 px)
+   — die Schrift bleibt 12 px, er rückt nur näher an den Wert. */
 export function feldNameKlasse(error?: boolean): string {
-  return cn("type-body-small block px-3.5 leading-3.5", farbe(error));
+  return cn("type-body-small block px-3.5 leading-3", farbe(error));
 }
 
 /** Hinweis oder Fehler unter einem Feld oder einer Gruppe. */
