@@ -142,16 +142,15 @@ export function TerminKarte({ t, heute, ebene: Kopf = "h4", hervorgehoben = fals
           <div className="flex shrink-0 gap-0.5">
             {!t.ausgefallen && t.training && (
               <Tooltip label="Durchführen">
-                <IconButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`} icon={PlayCircle} label={`${t.training.name} durchführen`} size="sm" />
+                <IconButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`} icon={PlayCircle} label={`${t.training.name} durchführen`} />
               </Tooltip>
             )}
             {!t.ausgefallen && (
               <Tooltip label={t.training ? "Training ersetzen" : "Training zuordnen"}>
-                <IconButton icon={CalendarPlus} label={`Training für ${datumKurz(t.datum)} ${t.training ? "ersetzen" : "zuordnen"}`} size="sm" onClick={() => a.zuordnen(t)} />
+                <IconButton icon={CalendarPlus} label={`Training für ${datumKurz(t.datum)} ${t.training ? "ersetzen" : "zuordnen"}`} onClick={() => a.zuordnen(t)} />
               </Tooltip>
             )}
             <OverflowMenu
-              size="sm"
               label={`Weitere Aktionen zum Termin ${datumKurz(t.datum)}`}
               items={[
                 ...(t.ausgefallen

@@ -2,17 +2,9 @@
 
 import { forwardRef, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
-import { cn } from "@/lib/cn";
-import {
-  TextField,
-  feldTrailingKnopf,
-  feldTrailingPadding,
-  feldTrailingSlot,
-  type TextFieldProps,
-} from "./TextField";
+import { TextField, feldTrailingKnopf, type TextFieldProps } from "./TextField";
 
-export interface SearchFieldProps
-  extends Omit<TextFieldProps, "type" | "leadingIcon"> {
+export interface SearchFieldProps extends Omit<TextFieldProps, "type" | "trailing"> {
   /** Beschriftung des Leeren-Knopfs. Voreingestellt «Suche leeren»; wo mehrere
    *  Suchen auf einer Seite stehen, sagt eine eigene Fassung welche. */
   clearLabel?: string;
@@ -43,8 +35,7 @@ function setzeWert(el: HTMLInputElement, wert: string) {
  * Lupe, wofür das Feld da ist; sobald etwas dasteht, tritt an ihre Stelle ein
  * Kreuz, das die Suche mit einem Klick leert. Beides an derselben Stelle, und
  * zwar an der, an der das Passwortfeld schon sein Auge trägt: Bedienbares
- * gehört im Kit rechts ins Feld, links steht nur Schmuck. Nebenbei bekommt das
- * schwebende Label seinen ruhigen Platz an der linken Kante zurück.
+ * gehört im Kit rechts ins Feld, links steht nur Schmuck.
  *
  * Steuerung: `value` (gesteuert) und `defaultValue` (ungesteuert) verhalten
  * sich wie am Input. Das Kreuz meldet sich in beiden Fällen über `onChange`
@@ -55,7 +46,6 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(
   (
     {
       className,
-      dense,
       clearLabel = "Suche leeren",
       value,
       defaultValue,
@@ -89,50 +79,31 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(
     }
 
     return (
-      <div className={className}>
-        <div className="relative">
-          <TextField
-            ref={refSetzen}
-            dense={dense}
-            type="search"
-            /* Der eigene Leeren-Knopf ersetzt den, den WebKit für
-               `type="search"` selbst zeichnet — zwei Kreuze nebeneinander
-               wären eine Wahl ohne Unterschied. */
-            className={cn(
-              feldTrailingPadding,
-              "[&_input::-webkit-search-cancel-button]:appearance-none",
-            )}
-            {...(gesteuert ? { value } : { defaultValue })}
-            onChange={(e) => {
-              if (!gesteuert) setEigenerWert(e.target.value);
-              onChange?.(e);
-            }}
-            {...props}
-          />
-          <span className={feldTrailingSlot(dense)}>
-            {hatText ? (
-              <button
-                type="button"
-                onClick={leeren}
-                aria-label={clearLabel}
-                className={feldTrailingKnopf}
-              >
-                <X size={18} strokeWidth={2} aria-hidden />
-              </button>
-            ) : (
-              /* Die Lupe ist reine Auskunft — kein Knopf, keine Zustands-Ebene,
-                 und für die Vorlesehilfe nicht vorhanden: Das Feld heisst
-                 bereits «suchen». */
-              <span
-                aria-hidden
-                className="pointer-events-none flex h-full items-center px-2 text-on-surface-mittel"
-              >
-                <Search size={18} strokeWidth={2} />
-              </span>
-            )}
-          </span>
-        </div>
-      </div>
+      <TextField
+        ref={refSetzen}
+        type="search"
+        className={className}
+        {...(gesteuert ? { value } : { defaultValue })}
+        onChange={(e) => {
+          if (!gesteuert) setEigenerWert(e.target.value);
+          onChange?.(e);
+        }}
+        trailing={
+          hatText ? (
+            <button type="button" onClick={leeren} aria-label={clearLabel} className={feldTrailingKnopf}>
+              <X size={18} strokeWidth={2} aria-hidden />
+            </button>
+          ) : (
+            /* Die Lupe ist reine Auskunft — kein Knopf, keine Zustands-Ebene,
+               und für die Vorlesehilfe nicht vorhanden: Das Feld heisst
+               bereits «suchen». */
+            <span aria-hidden className="pointer-events-none flex h-full items-center px-2 text-on-surface-mittel">
+              <Search size={18} strokeWidth={2} />
+            </span>
+          )
+        }
+        {...props}
+      />
     );
   },
 );

@@ -82,6 +82,11 @@ export function leisteStil(slim: boolean): CSSProperties {
   return { "--leiste-breite": slim ? SCHMAL : BREIT } as CSSProperties;
 }
 
+/** Wer unter lg oben klebt, steht unter der Kopfzeile mit dem Menüknopf
+ *  (48 px, `h-12`) und ab lg am Fensterrand. Steht hier, neben der Höhe der
+ *  Kopfzeile, damit beide Zahlen zusammen wandern. */
+export const unterKopfzeile = "top-12 lg:top-0";
+
 /** Für Flächen, die fest am Fenster unten kleben (Snackbar, Leiste der
  *  Durchführung): ab `lg` beginnen sie neben der Seitenleiste und laufen beim
  *  Umschalten mit. Fallback 0, falls kein Rahmen die Breite setzt. */
@@ -281,7 +286,7 @@ export function Seitenleiste({
       {!eingebettet && (
         <>
           {/* Kopfzeile unter lg: Auslöser des Drawers + Marke. */}
-          <div className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-linie bg-elev-04 px-2 lg:hidden print:hidden">
+          <div className="sticky top-0 z-30 flex h-12 shrink-0 items-center gap-2 border-b border-linie bg-elev-04 px-2 lg:hidden print:hidden">
             <IconButton
               ref={oeffnenRef}
               icon={MenuIcon}
@@ -474,7 +479,7 @@ function Eintrag({
           onClick={onNavigiert}
           className={cn(
             zeile,
-            "type-title-small h-10 min-w-0 flex-1 gap-3 px-2.5",
+            "type-title-small h-9 min-w-0 flex-1 gap-3 px-2.5",
             k?.mitte,
             hervor ? zeileAktiv : cn(zeileRuhe, nurAbLg && "lg:bg-elev-08 lg:text-on-surface"),
           )}
@@ -496,7 +501,7 @@ function Eintrag({
             onClick={() => setAufgeklappt(!aufgeklappt)}
             className={cn(
               zeile,
-              "h-10 w-9 shrink-0 justify-center text-on-surface-tief hover:text-on-surface",
+              "h-9 w-9 shrink-0 justify-center text-on-surface-tief hover:text-on-surface",
               k?.nurBreit,
             )}
           >
@@ -551,7 +556,6 @@ export function SeitenleistenKnopf({
     <>
       <IconButton
         icon={slim ? PanelLeftOpen : PanelLeftClose}
-        size="sm"
         label={slim ? "Seitenleiste vergrössern" : "Seitenleiste verkleinern"}
         aria-expanded={!slim}
         aria-controls={SEITENLEISTE_ID}

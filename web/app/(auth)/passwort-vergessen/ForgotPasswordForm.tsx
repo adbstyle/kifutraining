@@ -36,7 +36,7 @@ export function ForgotPasswordForm() {
 
   const isError = state.status === "error";
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form noValidate action={formAction} className="flex flex-col gap-5">
       <TextField
         label="E-Mail-Adresse"
         name="email"

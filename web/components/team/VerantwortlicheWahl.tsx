@@ -83,7 +83,6 @@ export function VerantwortlicheWahl({
   return (
     <MultiSelect
       label="Verantwortlich (optional)"
-      placeholder="Verantwortlich (optional)"
       options={options}
       value={value}
       searchable={options.length > 8}

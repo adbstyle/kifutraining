@@ -64,7 +64,7 @@ export function MonatsUeberblick({
         <h3 ref={ueberschriftRef} tabIndex={-1} className="type-title-medium text-on-surface focus-visible:outline-none">{monatsName(monat)}</h3>
         <div className="flex items-center gap-1">
           {monat !== monatVon(heute) && (
-            <ButtonLink variant="text" size="sm" href={hrefMonat(monatVon(heute))} scroll={false}>Heute</ButtonLink>
+            <ButtonLink variant="text" href={hrefMonat(monatVon(heute))} scroll={false}>Heute</ButtonLink>
           )}
           <IconButtonLink href={hrefMonat(plusMonate(monat, 1))} icon={ChevronRight} label="Nächster Monat" scroll={false} />
         </div>

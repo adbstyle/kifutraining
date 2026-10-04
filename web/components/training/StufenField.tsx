@@ -29,7 +29,7 @@ export function StufenField({
   onChange,
   kategorien = kategorienSlugs,
   error,
-  supportingText,
+  info,
   className,
 }: {
   value: string[];
@@ -37,7 +37,8 @@ export function StufenField({
   /** Die wählbaren Alterskategorien; Vorgabe ist das ganze Vokabular. */
   kategorien?: readonly string[];
   error?: string;
-  supportingText?: string;
+  /** Fester Hinweis hinter einem ⓘ. */
+  info?: string;
   className?: string;
 }) {
   return (
@@ -52,9 +53,9 @@ export function StufenField({
       onChange={onChange}
       searchable={false}
       actions={false}
-      placeholder="Alterskategorie wählen …"
       error={!!error}
-      supportingText={error ?? supportingText}
+      supportingText={error}
+      info={info}
     />
   );
 }

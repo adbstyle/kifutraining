@@ -111,17 +111,14 @@ export function DauerFeld({
   return (
     <>
       <TextField
-        dense
         type="number"
         inputMode="numeric"
         min={0}
         step={DAUER_SCHRITT}
-        /* Sichtbar nur «Minuten» — mehr trägt ein 112 px schmales Feld als
-           ruhendes Label nicht. Der volle Name bleibt der Vorlesehilfe
-           erhalten; er enthält das sichtbare Wort, ist also auch per Sprache
-           bedienbar (WCAG 2.5.3). Und ohne Uhr-Icon: Das Label sagt die
-           Einheit jetzt selbst, und neben ihm blieben in 112 px keine 4 px
-           bis zur rechten Kante. */
+        /* Sichtbar nur «Minuten» — über einem 112 px schmalen Feld ist für
+           mehr kein Platz. Der volle Name bleibt der Vorlesehilfe erhalten;
+           er enthält das sichtbare Wort, ist also auch per Sprache bedienbar
+           (WCAG 2.5.3). */
         label="Minuten"
         aria-label="Dauer in Minuten"
         className="w-28 shrink-0"

@@ -44,7 +44,7 @@ export function TabNav({
               href={item.href}
               aria-current={item.current ? "page" : undefined}
               className={cn(
-                "state focus-ring type-title-small relative flex h-11 items-center gap-2 whitespace-nowrap px-3 transition-colors",
+                "state focus-ring type-title-small relative flex h-9 items-center gap-2 whitespace-nowrap px-3 transition-colors",
                 item.current ? "text-on-surface" : "text-on-surface-mittel",
               )}
             >

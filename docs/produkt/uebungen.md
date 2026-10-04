@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-10-02. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-10-04. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -47,7 +47,8 @@ Kopfzeile; sonst läse sich etwa der Ausklang als Teil des Hauptteils darüber. 
 dreistufiger methodischer Fahrplan — offen starten, üben, wett-eifern —, ausser beim freien
 Spiel sowie in Auffangen und Ausklang, wo ein zusammenhängender Beschreibungstext gilt.
 Erscheinungsformen trägt eine Kinderfussball-Übung in der Einleitung und im Hauptteil. Das
-Spielfeld wird als Feldtyp angegeben: Kleinfeld, Grossfeld oder freies Feld. Beim freien Feld
+Spielfeld wird als Feldtyp angegeben: Kleinfeld, Grossfeld oder freies Feld; ist keiner gewählt,
+bleibt das Feld leer. Beim freien Feld
 lässt sich zusätzlich seine Grösse in Metern angeben, denn anders als Klein- und Grossfeld sagt
 es nicht, wie gross abzustecken ist — freiwillig wie im Juniorenfussball, aber nur ganz. Wechselt
 der Feldtyp auf Kleinfeld oder Grossfeld, entfallen die Meter. Jede Manual-Übung trägt einen
@@ -91,8 +92,10 @@ Sichtbarkeit setzt die Detailseite, die Altersstufe einer bestehenden Übung än
 Beim Erfassen führt die Maske Schritt für Schritt durch eine Spalte: zuerst die Einordnung — sie
 bestimmt, welche Felder folgen und ob der Ablauf als Fahrplan oder als Beschreibung verlangt
 ist —, dann das „Feld-Diagramm" mit der Zeichenfläche, die „Beschreibung" mit Ablauf und
-Varianten, das „Material" und zuletzt das „Foto". Zusammengehörige Felder stehen paarweise
-nebeneinander, auf dem Telefon untereinander.
+Varianten, das „Material" und zuletzt das „Foto". Jede Angabe steht als eigenes Feld in einer
+eigenen Zeile, auf jedem Bildschirm — die Spielfeldgrösse als „Spielfeldlänge" und
+„Spielfeldbreite", die Spielerzahl als „Mindestanzahl" und „Höchstanzahl Spieler:innen"; ein
+Fehler, der das Paar betrifft, färbt beide Felder und steht unter dem zweiten.
 
 Beim Bearbeiten — einer eigenen Übung wie einer Übung im Training — ist die Maske aufgebaut wie
 die Übungsseite: links der Inhalt mit Feld-Diagramm, Beschreibung und Foto, rechts die Einordnung
@@ -114,7 +117,8 @@ bilden eine Liste, jede andere Zeile beendet sie. Mehr formatiert die Anwendung 
 Fettschrift, keine Überschriften, keine Links, keine verschachtelten Listen; alles Übrige
 erscheint als Text. Auch beim Üben ist eine Zeile ohne Listenzeichen gewöhnlicher Text; die
 Schritte der Manual-Übungen und der bisher erfassten Übungen stehen als Aufzählung da, wie
-vorher. Die Felder tragen keine Hilfetexte; nur ein Fehler beim Speichern erscheint darunter. Die
+vorher. Unter den Feldern stehen keine Hilfetexte, nur ein Fehler beim Speichern; einzig das
+weitere Material erklärt sich hinter einem ⓘ. Die
 Varianten stehen unmittelbar nach dem Ablauf, ob er als Freitext oder als Fahrplan erfasst ist.
 
 ## Die Übungsseite
@@ -248,7 +252,9 @@ seine drei Hauptteilkategorien: Gewählt wird in beiden Welten die feinste Ebene
 Lehrmittel kennt, und einen eigenen Hauptteilkategorie-Filter gibt es darum nicht. Weiter gefiltert
 wird nach Alterskategorie, Feldtyp, Erscheinungsform und Übungstyp, jeweils mit Mehrfachauswahl,
 sowie nach der Zahl der verfügbaren Kinder — dann erscheinen alle Übungen, die mit mindestens so
-vielen durchführbar sind. Auch diese Filter beschriften ihre Werte nach Altersstufe: die
+vielen durchführbar sind. Jede dieser Dimensionen ist ein Filterknopf, der zählt, wie viele Werte
+gewählt sind, die Zahl der verfügbaren Kinder ein Knopf mit dem gesetzten Wert (siehe
+[Navigation](navigation.md#bedienung)). Auch diese Filter beschriften ihre Werte nach Altersstufe: die
 Erscheinungsformen beider Manuals, die Alterskategorien G bis A, und ebenso die zwei Filter, die
 ganz einer Altersstufe gehören — der Feldtyp dem Kinderfussball, der Übungstyp dem
 Juniorenfussball. Die Beschriftung ist Text und wird mitvorgelesen, nicht bloss Farbe. Mehrere
@@ -310,7 +316,8 @@ einziges solches Element steht nicht zur Wahl. Angeboten wird die Vorlage auf de
 Zeichenfläche und daneben auch, wenn schon etwas gezeichnet ist; die Übung selbst steht nicht zur Wahl. Das Ersetzen ist ein gewöhnlicher Schritt:
 „Rückgängig" holt die Zeichnung zurück, und wirksam wird es erst mit dem Speichern der Übung.
 
-Statt eines Diagramms oder zusätzlich kann auch ein Foto hochgeladen werden. Zulässig sind die
+Statt eines Diagramms oder zusätzlich kann auch ein Foto hochgeladen werden, über den Knopf
+„Foto wählen"; daneben steht der Name der gewählten Datei. Zulässig sind die
 gängigen Formate einschliesslich der HEIC-Bilder von iPhones. Grosse Fotos verkleinert die
 Anwendung schon im Browser, bevor der Upload beginnt, auf höchstens zweitausend Bildpunkte an der
 langen Kante. Trägt eine Übung beides, zeigt sie das Diagramm; das Foto bleibt erhalten.
@@ -384,6 +391,10 @@ Zeichenfläche ist für Maus und Tastatur gebaut, nicht für die Bedienung per T
 Die Einordnung lässt sich auf der Übungsseite nur lesen, nicht direkt ändern; geändert wird sie
 in der Maske, zusammen mit dem Inhalt. Fehlende Einordnung sieht nur die Eigentümerin; wer eine
 fremde Übung kopiert, sieht die Lücken erst an der eigenen Kopie.
+
+Ein einmal gewählter Feldtyp oder Übungstyp lässt sich in der Maske wechseln, aber nicht mehr
+leeren; einen Eintrag „kein Feldtyp" gibt es nicht, wer keinen genauen Feldtyp hat, nimmt das
+freie Feld.
 
 Die Listenzeichen in Ablauf, Fahrplan und Varianten lassen sich nicht abschalten: Beginnt eine Zeile mit
 «- », «* » oder einer Zahl mit Punkt und Leerzeichen — etwa «2. Halbzeit» —, wird sie zum

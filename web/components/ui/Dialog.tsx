@@ -48,11 +48,7 @@ export function Dialog({
         if (e.target === ref.current) onClose();
       }}
       className={cn(
-        "m-auto w-[min(28rem,calc(100vw-2rem))] rounded-dialog bg-elev-24 p-6 shadow-dp-24",
-        // Schwebende Feldbeschriftungen stanzen ihre Fläche aus `--feld-grund`
-        // (Vorgabe 00dp, der Grund). Im Dialog liegt darunter 24dp — ohne
-        // diese Zeile stünde jedes Label in einem dunklen Rechteck.
-        "[--feld-grund:var(--color-elev-24)]",
+        "m-auto w-[min(28rem,calc(100vw-2rem))] rounded-dialog bg-elev-24 p-5 shadow-dp-24",
         "backdrop:bg-scrim/60 backdrop:backdrop-blur-[2px]",
         className,
       )}
@@ -64,7 +60,7 @@ export function Dialog({
       )}
       <div className="type-body-medium text-on-surface-mittel">{children}</div>
       {actions && (
-        <div className="mt-6 flex justify-end gap-2">{actions}</div>
+        <div className="mt-5 flex justify-end gap-2">{actions}</div>
       )}
     </dialog>
   );

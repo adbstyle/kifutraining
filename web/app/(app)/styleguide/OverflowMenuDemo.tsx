@@ -23,7 +23,6 @@ function Reihe({
         <IconButton
           icon={Play}
           label={`${name} durchführen`}
-          size="sm"
           onClick={() => onAktion(`Durchführen (${name})`)}
         />
       </Tooltip>
@@ -31,7 +30,6 @@ function Reihe({
         <IconButton
           icon={Pencil}
           label={`Termin von ${name} ändern`}
-          size="sm"
           onClick={() => onAktion(`Ändern (${name})`)}
         />
       </Tooltip>

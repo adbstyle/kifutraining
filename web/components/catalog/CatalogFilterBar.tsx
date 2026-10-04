@@ -1,10 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Users } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { FilterChip, MultiSelect, Button, SearchField, TextField } from "@/components/ui";
-import { useDebouncedWert } from "@/lib/use-debounce";
+import { AuswahlFilter, Button, FilterChip, FilterSuche, ZahlFilter } from "@/components/ui";
 import {
   einordnungFilterOptionen,
   feldOptionen,
@@ -29,9 +26,10 @@ export type CatalogFilters = {
 };
 
 /* Such-/Filterleiste für den Übungspool — eine durchgehende, umbrechende Zeile
-   statt Sidebar, analog zur Trainings-Filter-Bar. Mehrfach-Dimensionen sind
-   MultiSelect-Dropdowns (Leerfall als ruhendes Label), Suche und
-   „Verfügbare Kinder" sind debounced Felder, Favoriten ein Toggle-Chip.
+   statt Sidebar, analog zur Trainings-Filter-Bar. Jede Dimension ist ein
+   Filterknopf mit Namen und Zahl (Epic #363), «Verfügbare Kinder» einer mit
+   einem Zahlenfeld im Panel; Suche und Kinderzahl wirken nach einer
+   Tipppause, «Meine Übungen» und Favoriten sind Schalter-Chips.
    URL ist die Quelle der Wahrheit: jede Änderung schreibt in die URL und löst
    eine neue Server-Abfrage aus. */
 export function CatalogFilterBar({
@@ -95,84 +93,61 @@ export function CatalogFilterBar({
     !!filters.mine;
 
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-3">
-      <DebouncedSuche
-        initial={filters.q ?? ""}
+    <div className="mb-6 flex flex-wrap items-center gap-2">
+      <FilterSuche
         label="Übungen durchsuchen"
-        className="w-full sm:w-72"
+        initial={filters.q ?? ""}
         onCommit={(v) => setScalar("q", v)}
       />
 
-      <MultiSelect
+      <AuswahlFilter
         label="Trainingsteil"
         options={einordnungFilterOptionen}
         value={filters.teil}
         onChange={(v) => setList("teil", v)}
-        searchable={false}
-        placeholder="Alle Trainingsteile"
-        className="w-full sm:w-56"
       />
-      <MultiSelect
+      <AuswahlFilter
         label="Alterskategorie"
         options={stufenOptionen}
         value={filters.kat}
         onChange={(v) => setList("kat", v)}
-        searchable={false}
-        placeholder="Alle Stufen"
-        className="w-full sm:w-52"
       />
-      <MultiSelect
+      <AuswahlFilter
         label="Feldtyp"
         options={feldOptionen}
         value={filters.feld}
         onChange={(v) => setList("feld", v)}
-        searchable={false}
-        placeholder="Alle Feldtypen"
-        className="w-full sm:w-48"
       />
-      <MultiSelect
+      <AuswahlFilter
         label="Erscheinungsform"
         options={formOptionen}
         value={filters.form}
         onChange={(v) => setList("form", v)}
-        searchable={false}
-        placeholder="Alle Erscheinungsformen"
-        className="w-full sm:w-64"
       />
-      <MultiSelect
+      <AuswahlFilter
         label="Übungstyp"
         options={typOptionen}
         value={filters.typ}
         onChange={(v) => setList("typ", v)}
-        searchable={false}
-        placeholder="Alle Übungstypen"
-        className="w-full sm:w-64"
       />
 
-      <DebouncedField
-        type="number"
-        inputMode="numeric"
-        min={1}
-        icon={Users}
-        initial={filters.kinder?.toString() ?? ""}
-        ariaLabel="Verfügbare Kinder"
-        title="Zeigt Übungen, die mit so vielen Kindern durchführbar sind."
-        /* Breiter als früher (w-40): Seit das Feld sein Label statt eines
-           Platzhalters trägt, muss «Verfügbare Kinder» in der Schrift des
-           Werts neben dem Icon hineinpassen, ohne an die rechte Kante zu
-           stossen. */
-        className="w-full sm:w-52"
+      <ZahlFilter
+        label="Verfügbare Kinder"
+        feldLabel="Anzahl Kinder"
+        einheit="Kinder"
+        hinweis="Zeigt Übungen, die mit so vielen Kindern durchführbar sind."
+        gesetzt={filters.kinder}
         onCommit={(v) => setScalar("kinder", v)}
       />
 
       {showMine && (
-        <FilterChip selected={!!filters.mine} onClick={toggleMine} groesse="leiste">
+        <FilterChip selected={!!filters.mine} onClick={toggleMine}>
           Meine Übungen
         </FilterChip>
       )}
 
       {canFavorite && (
-        <FilterChip selected={!!filters.fav} onClick={toggleFav} groesse="leiste">
+        <FilterChip selected={!!filters.fav} onClick={toggleFav}>
           Favoriten
         </FilterChip>
       )}
@@ -183,69 +158,5 @@ export function CatalogFilterBar({
         </Button>
       )}
     </div>
-  );
-}
-
-/* Feld mit Lead-Icon und verzögerter Übernahme (300 ms) — schreibt erst nach
-   der Tipppause in die URL. Die Optik kommt aus dem Kit (`TextField dense`),
-   hier bleibt nur die Verzögerung. */
-function DebouncedField({
-  initial,
-  onCommit,
-  icon: Icon,
-  ariaLabel,
-  className,
-  ...props
-}: {
-  initial: string;
-  onCommit: (value: string) => void;
-  icon: LucideIcon;
-  ariaLabel: string;
-  className?: string;
-  type?: string;
-  inputMode?: "numeric";
-  min?: number;
-  title?: string;
-}) {
-  const [wert, aendern] = useDebouncedWert(initial, onCommit);
-
-  return (
-    <TextField
-      dense
-      label={ariaLabel}
-      leadingIcon={Icon}
-      value={wert}
-      onChange={(e) => aendern(e.target.value)}
-      className={className}
-      {...props}
-    />
-  );
-}
-
-/* Dasselbe für die Suche, nur auf dem `SearchField` des Kits: Lupe rechts, nach
-   der ersten Eingabe ein Kreuz zum Leeren. Das Kreuz meldet sich über dasselbe
-   `onChange` — die Verzögerung greift also auch für es, und die URL verliert
-   `?q=` eine Tipppause später. */
-function DebouncedSuche({
-  initial,
-  onCommit,
-  label,
-  className,
-}: {
-  initial: string;
-  onCommit: (value: string) => void;
-  label: string;
-  className?: string;
-}) {
-  const [wert, aendern] = useDebouncedWert(initial, onCommit);
-
-  return (
-    <SearchField
-      dense
-      label={label}
-      value={wert}
-      onChange={(e) => aendern(e.target.value)}
-      className={className}
-    />
   );
 }

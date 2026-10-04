@@ -11,7 +11,7 @@ export function Card({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("relative rounded-flaeche bg-elev-01 [--feld-grund:var(--color-elev-01)]", className)}
+      className={cn("relative rounded-flaeche bg-elev-01", className)}
       {...props}
     >
       {children}

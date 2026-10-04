@@ -13,12 +13,13 @@ import { cn } from "@/lib/cn";
 // 14/20) — nicht versal. Dieselbe Schrift tragen die Reiter (TabNav); neben
 // Chips und Feldern liest sich ein Knopf so als Wort und nicht als Rubrik.
 //
-// `quiet` ist die dichte Bauform des `text`-Knopfes für Handlungen, die am
+// Höhe: Jeder Knopf ist 36 px hoch (Epic #363) — es gibt nur noch dieses
+// eine Mass, darum auch keine `size`-Prop. Auf dem Platz wie am Schreibtisch.
+//
+// `quiet` ist die knappe Bauform des `text`-Knopfes für Handlungen, die am
 // Rand einer Chip-Leiste mitlaufen («+ Variante hinzufügen»): dieselbe Farbe
-// und Schrift, aber fest h-9 mit knapper Polsterung, damit er in der Leiste
-// auf der Linie sitzt.
+// und Schrift, nur mit knapperer Polsterung.
 type Variant = "filled" | "tonal" | "elevated" | "outlined" | "text" | "danger" | "quiet";
-type Size = "sm" | "md" | "lg";
 
 // `state` gehört in die Basis und nicht an die Varianten: Die Zustands-Ebene
 // färbt sich in der Farbe des Inhalts ein und gilt darum für jede Variante
@@ -26,19 +27,11 @@ type Size = "sm" | "md" | "lg";
 // Überfahr-Fläche je Variante; ein Versatz nach unten beim Drücken ebenso, die
 // Ebene meldet den Druck bereits.
 const base =
-  "state focus-ring inline-flex items-center justify-center rounded-flaeche transition-colors duration-150 disabled:opacity-40 disabled:pointer-events-none select-none";
+  "state focus-ring type-title-small inline-flex h-9 items-center justify-center rounded-flaeche transition-colors duration-150 disabled:opacity-40 disabled:pointer-events-none select-none";
 
-/** Schrift und Icon-Abstand einer Variante. Eigener Slot und nicht in `base`,
- *  weil `cn` ein reiner Joiner ist (kein tailwind-merge): In den fertigen
- *  String darf genau EINE Typo-Klasse gelangen, eine Basis-Klasse liesse sich
- *  nicht überschreiben. Die Schrift ist für alle gleich; `quiet` rückt nur
- *  das Zeichen näher an den Text. */
-function typo(variant: Variant): string {
-  return variant === "quiet" ? "type-title-small gap-1.5" : "type-title-small gap-2";
-}
 
-// Nur noch Farbe und Fläche — Schrift kommt aus `typo`, Höhe und Polsterung
-// aus `sizes` bzw. dem `quiet`-Mass, der Zustand aus `state` in `base`.
+// Nur noch Farbe und Fläche — Schrift, Höhe und Zustand stehen in `base`,
+// Polsterung und Icon-Abstand in `buttonClasses`.
 const variants: Record<Variant, string> = {
   // Höchste Emphase: die einzige Variante, die den Akzent als FLÄCHE trägt.
   filled: "bg-primary text-on-primary",
@@ -63,49 +56,30 @@ const variants: Record<Variant, string> = {
   quiet: "bg-transparent text-primary",
 };
 
-const sizes: Record<Size, string> = {
-  sm: "h-9 px-3",
-  md: "h-11 px-5",
-  lg: "h-14 px-7", // Spielfeldrand-Grösse (Touch ≥ 56px)
-};
-
 /** Gemeinsame Button-Klassen — geteilt von Button und ButtonLink, damit ein
  *  navigierender Button als <a>/<Link> dieselbe Optik trägt (kein <a><button>). */
-export function buttonClasses(
-  variant: Variant = "filled",
-  size: Size = "md",
-  className?: string,
-): string {
-  return cn(
-    base,
-    typo(variant),
-    variants[variant],
-    // `quiet` ist eine SCHRIFT-Stufe, keine Emphase-Stufe mit eigener Grössen-
-    // leiter: Es gibt ihn nur in einer Höhe, darum ignoriert er `size`.
-    variant === "quiet" ? "h-9 px-2" : sizes[size],
-    className,
-  );
+export function buttonClasses(variant: Variant = "filled", className?: string): string {
+  // `quiet` rückt Zeichen und Rand näher an den Text.
+  return cn(base, variants[variant], variant === "quiet" ? "gap-1.5 px-2" : "gap-2 px-4", className);
 }
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
-  size?: Size;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = "filled", size = "md", className, ...props }, ref) => (
-    <button ref={ref} className={buttonClasses(variant, size, className)} {...props} />
+  ({ variant = "filled", className, ...props }, ref) => (
+    <button ref={ref} className={buttonClasses(variant, className)} {...props} />
   ),
 );
 Button.displayName = "Button";
 
 export type ButtonLinkProps = ComponentProps<typeof Link> & {
   variant?: Variant;
-  size?: Size;
 };
 
 /** Wie Button, aber als Navigations-Link (Next <Link>). Verhindert das
  *  ungültige <a><button>-Nesting bei „Button, der navigiert". */
-export function ButtonLink({ variant = "filled", size = "md", className, ...props }: ButtonLinkProps) {
-  return <Link className={buttonClasses(variant, size, className)} {...props} />;
+export function ButtonLink({ variant = "filled", className, ...props }: ButtonLinkProps) {
+  return <Link className={buttonClasses(variant, className)} {...props} />;
 }

@@ -149,10 +149,8 @@ export function VarianteAnlegenDialog({
             }}
             onKeyDown={beiTaste}
             error={!!fehlerQuelle}
-            supportingText={
-              fehlerQuelle ??
-              "Unter diesem Namen steht der bisherige Hauptteil künftig in der Leiste."
-            }
+            supportingText={fehlerQuelle}
+            info="Unter diesem Namen steht der bisherige Hauptteil künftig in der Leiste."
           />
         )}
         <TextField
@@ -167,10 +165,8 @@ export function VarianteAnlegenDialog({
           }}
           onKeyDown={beiTaste}
           error={!!fehlerNeu}
-          supportingText={
-            fehlerNeu ??
-            `Woran du sie erkennst, etwa „21 Kinder". Höchstens ${VARIANTE_NAME_MAX} Zeichen.`
-          }
+          supportingText={fehlerNeu}
+          info={`Woran du sie erkennst, etwa „21 Kinder". Höchstens ${VARIANTE_NAME_MAX} Zeichen.`}
         />
       </div>
     </Dialog>

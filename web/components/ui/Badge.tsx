@@ -10,7 +10,7 @@ type Tone = "manual" | "entwurf" | "oeffentlich" | "neutral" | "varianten" | "be
    meldet eine Eigenschaft, die nach aussen wirkt: öffentlich sichtbar, mehrere
    Varianten vorhanden — dann steht sie umrandet in Primary. Keine der beiden
    Formen füllt mit Akzentfarbe; das bleibt dem gefüllten Knopf vorbehalten,
-   der etwas auslöst. */
+   der etwas auslöst — und dem `Zaehler` unten, der an einem solchen hängt. */
 const tones: Record<Tone, string> = {
   // Manual-Bestand: eine Herkunftsangabe, mehr nicht — Kontur und gedämpfte
   // Schrift, damit sie neben dem Titel der Übung nicht mitspricht.
@@ -79,4 +79,24 @@ export function HerkunftBadge({
   // Der Entwurf trägt auf der Plakette zusätzlich den Stift.
   if (art === "entwurf") return <Badge tone="entwurf">✎ {HERKUNFT_LABEL.entwurf}</Badge>;
   return <Badge tone={art} />;
+}
+
+/* Zähler: die eine gefüllte Plakette des Kits. Er hängt an einem Knopf und
+   zählt, was dessen Handlung gerade bewirkt — die gewählten Werte am
+   Filterknopf, die Übernahmen einer Übung in dieser Sitzung. Gefüllt, weil er
+   als Teil des Knopfes gelesen wird, nicht als eigene Aussage über den Inhalt
+   wie die Plaketten oben. Für die Vorlesehilfe stumm: Der Knopf, an dem er
+   hängt, sagt die Zahl in seinem Namen in Worten. */
+export function Zaehler({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "type-plakette inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-on-primary",
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
 }

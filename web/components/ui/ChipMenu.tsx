@@ -154,10 +154,10 @@ export function ChipMenu({
       : selected
         ? "border-primary"
         : "border-kante";
-  // Gewählt wie jeder Nutzertext-Chip (`chipTextSelected`): Primary umrandet
-  // und beschriftet, dazu ein sehr leiser Grund — nicht gefüllt, sonst kippte
-  // der selbst vergebene Name in schwarze Schrift.
-  const flaeche = selected ? "bg-primary/12 text-primary" : "text-on-surface";
+  // Gewählt wie jeder Chip (`chipTextSelected`): Primary umrandet und
+  // beschriftet, ohne Fläche — gefüllt kippte der selbst vergebene Name in
+  // schwarze Schrift.
+  const flaeche = selected ? "text-primary" : "text-on-surface";
 
   const chevron = (
     <ChevronDown
@@ -205,8 +205,8 @@ export function ChipMenu({
             {label}
             {trailing}
           </button>
-          {/* 44 px breit — die Menü-Hälfte ist ein eigenständiges Touch-Ziel
-              und nicht ein angehängtes 16px-Chevron. Der Trennstrich ist der
+          {/* 36 px im Quadrat wie jeder Icon-Knopf — die Menü-Hälfte ist ein
+              eigenes Bedienelement, nicht ein angehängtes 16px-Chevron. Der Trennstrich ist der
               linke Rand dieser Hälfte und darum die einzige Stelle, an der
               `border-l-[1.5px]` statt der `kontur`-Utility steht: Die Utility
               setzt alle vier Seiten, hier ist nur eine gemeint — ein Strich
@@ -217,7 +217,7 @@ export function ChipMenu({
             {...menuProps}
             aria-label={menuAriaLabel ?? `Menü zu „${label}“`}
             className={cn(
-              "state focus-ring inline-flex w-11 shrink-0 items-center justify-center rounded-r-full border-l-[1.5px] transition-colors",
+              "state focus-ring inline-flex w-9 shrink-0 items-center justify-center rounded-r-full border-l-[1.5px] transition-colors",
               selected ? "border-primary/50" : "border-kante",
               disabled && "cursor-not-allowed opacity-50",
             )}

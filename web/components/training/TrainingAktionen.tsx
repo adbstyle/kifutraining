@@ -255,7 +255,6 @@ export function TrainingAktionen({
             href={ziel(`/training/${trainingId}/durchfuehren`)}
             icon={Play}
             label={`„${name}" durchführen`}
-            size="sm"
           />
         </Tooltip>
 
@@ -267,7 +266,6 @@ export function TrainingAktionen({
             href={ziel(`/training/${trainingId}/druck`)}
             icon={Printer}
             label={`„${name}" drucken`}
-            size="sm"
           />
         </Tooltip>
 
@@ -277,7 +275,6 @@ export function TrainingAktionen({
               href={ziel(`/training/${trainingId}/edit`)}
               icon={Pencil}
               label={`„${name}" bearbeiten`}
-              size="sm"
             />
           </Tooltip>
         )}

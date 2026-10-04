@@ -160,7 +160,7 @@ function GeteilterChipDemo({ onMeldung }: { onMeldung: (text: string) => void })
     <div>
       <p className="type-label-small mb-2 text-on-surface-mittel">
         geteilt — links wählt (<code>aria-pressed</code>), rechts öffnet das Menü
-        (44 px)
+        (36 px)
       </p>
       <div className="flex flex-wrap items-center gap-2">
         {varianten.map((name, i) => (

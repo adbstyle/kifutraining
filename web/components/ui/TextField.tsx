@@ -1,7 +1,7 @@
-import { forwardRef, useId } from "react";
+import { forwardRef } from "react";
 import type { InputHTMLAttributes, ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
 import { ZahlInput } from "./ZahlInput";
+import { Feld, beschreibungIdVon, useFeldId } from "./feld";
 import { cn } from "@/lib/cn";
 
 export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -10,6 +10,10 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
       gefärbt sein kann als der Rest — Anlass war die Gruppenzeile (Story #151),
       die Zeitsumme und Konflikt in einer Zeile trug, nur den Konflikt gefärbt. */
   supportingText?: ReactNode;
+  /** Fester Hinweis hinter einem ⓘ (siehe `Feld`). */
+  info?: ReactNode;
+  /** Ein Knopf neben dem Feld, auf einer Linie mit dem Feldkasten (siehe `Feld`). */
+  aktion?: ReactNode;
   error?: boolean;
   /** Ein BEFUND am Feld, keine Fehleingabe — der Wert ist gespeichert und
       richtig erfasst, geht aber mit anderen nicht auf (Story #151: ungleich
@@ -20,190 +24,97 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
       error > befund > focus — was sich nicht speichern lässt, verdrängt den
       Hinweis auf etwas Gespeichertes, und beide überdauern den Fokus. */
   befund?: boolean;
-  /** Führendes Icon (Lucide) im Feld — z. B. Uhr für eine Dauer. Input und
-      Label rücken automatisch ein, damit nichts mit dem Icon überlappt. */
-  leadingIcon?: LucideIcon;
-  /** Dichte Bauform für Filterzeilen und dichte Listenzeilen: `h-12` statt
-      `h-14`, die Höhe des MultiSelect-Triggers, damit alles in einer Zeile
-      fluchtet. Sie ändert NUR die Höhe — Kontur, Radius, durchsichtige Fläche,
-      Schriftgrad und schwebendes Label sind dieselben. Eine dichte Bauform ist
-      dasselbe Feld, enger gestellt; sähe sie anders aus, wäre sie ein zweites
-      Feld, und die Filterzeile müsste erklären, warum ihre Felder nicht wie
-      Felder aussehen. Zahlenfelder (`type="number"`) stehen immer dicht. */
-  dense?: boolean;
+  /** Name nur für die Vorlesehilfe — für Felder, deren Zweck Platzhalter und
+      Ort schon sagen (die Suche in der Filterleiste). */
+  labelVersteckt?: boolean;
+  /** Kontur auch in Ruhe. Für Felder ohne sichtbaren Namen, die neben
+      umrandeten Knöpfen stehen — ohne Kante wären sie dort schlicht nicht da. */
+  umrandet?: boolean;
+  /** Ein bedienbares Zeichen am rechten Feldrand — das Auge im Passwortfeld,
+      das Kreuz im Suchfeld. Bedienbares steht im Kit rechts im Feld. */
+  trailing?: ReactNode;
 }
 
-/* Das schwebende Label — zwei Zustände, und sie sagen Verschiedenes.
- *
- * RUHEND steht es IM Feld, an genau der Stelle, an der gleich der Wert stehen
- * wird. Es trägt darum die Schrift des Werts (`type-body-large`) und
- * unterscheidet sich von ihm nur in der Farbe: Was dort steht, ist noch nichts
- * Eingegebenes. In der Label-Schrift (mono/versal) sähe es aus wie eine
- * Beschriftung, die zufällig im Feld liegt — und Auswahlfelder, deren Leerfall
- * seit je ein Satz ist («Alle Stufen»), stünden in einer Zeile daneben sichtbar
- * anders da.
- *
- * GESCHWEBT sitzt es auf der Kontur und benennt das Feld nur noch. Es bleibt
- * dieselbe Schrift, zwei Stufen kleiner (`type-body-small`, 12 px) — dasselbe
- * Wort, leiser gesagt. Der Label-Stil des Hauses (mono/versal) stünde hier
- * quer: Er ruft Aufmerksamkeit, und ein Label, das gerade aus dem Weg gegangen
- * ist, will keine. Auf der Kontur liest sich das Feld dann von oben nach unten
- * in einer Schrift — Name, Wert, Hinweistext (der ebenfalls `type-body-small`
- * trägt).
- *
- * Beim Schweben stanzt es die Kontur aus und braucht dafür die Farbe der
- * Fläche DAHINTER: `--feld-grund` ist die Stellschraube. Vorbelegt mit dem
- * Grund (00dp); jede Fläche, die Felder trägt, erklärt ihre Stufe selbst —
- * Card (01), Unterblock (02), Übungszeile (01), Dialog (24) setzen
- * `[--feld-grund:var(--color-elev-NN)]`. So kann ein Feld nirgends ein
- * falsches Rechteck stanzen, ohne dass der Aufrufer daran denken müsste.
- *
- * Die drei Bausteine sind exportiert, weil Select und MultiSelect dasselbe
- * Label tragen — sie schalten es aber selbst um (`schwebt ? … : …`), denn ein
- * Trigger ohne `<input>` kennt kein `:placeholder-shown`. */
-export const feldLabelBase =
-  "pointer-events-none absolute -translate-y-1/2 bg-(--feld-grund,var(--color-elev-00)) px-1 transition-all duration-150";
-export const feldLabelRuhend = "top-1/2 type-body-large";
-export const feldLabelSchwebend = "top-0 type-body-small";
-
-// Für das TextField hängen die beiden Zustände am Platzhalter (`placeholder=" "`)
-// und am Fokus des Nachbar-Inputs (`peer`).
-const labelBase = `${feldLabelBase} ${feldLabelRuhend} peer-focus:top-0 peer-focus:type-body-small peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:type-body-small`;
-
-// Horizontale Lage des Labels. Ohne Icon konstant bei left-3 (Text bündig mit
-// dem Input-px-4). Mit Icon ruht das Label rechts neben dem Icon (left-10) und
-// springt im schwebenden Zustand zurück auf left-3 — dort sitzt es auf der
-// oberen Kante oberhalb des Icons, kollidiert also nicht.
-const labelLeftRest = "left-3";
-const labelLeftIcon =
-  "left-10 peer-focus:left-3 peer-[:not(:placeholder-shown)]:left-3";
-
-/** Der Ankerplatz für ein bedienbares Zeichen am rechten Feldrand — das Auge
- *  im Passwortfeld, das Kreuz im Suchfeld. Er hängt an der OBERKANTE der
- *  Inputzeile und ist so hoch wie sie: an der Mitte des Wrappers ausgerichtet
- *  rutschte er nach unten, sobald ein `supportingText` darunter steht.
- *  `dense` muss dieselbe Höhe nennen wie das Feld, sonst mittet das Zeichen
- *  im falschen Kasten. Aufrufer legen die Klassen auf ein `<span>` um den
- *  Knopf, damit der Knopf selbst `relative` bleiben kann (die Zustands-Ebene
- *  `state` braucht das). */
-export const feldTrailingSlot = (dense?: boolean) =>
-  cn("absolute right-2 top-0", dense ? "h-12" : "h-14");
-
-/** Das Zeichen selbst: der Knopf im Slot, auf voller Slot-Höhe. */
+/** Das Zeichen am rechten Feldrand selbst: ein Knopf auf voller Feldhöhe. Die
+ *  Aufrufer legen ihn in `trailing`; der Slot dafür gehört dem Feld. */
 export const feldTrailingKnopf =
   "state focus-ring flex h-full items-center rounded-flaeche px-2 text-on-surface-mittel";
 
-/** Was der Slot rechts wegnimmt — der Input braucht so viel Innenabstand,
- *  damit der Text nicht unter dem Zeichen verschwindet. */
-export const feldTrailingPadding = "[&_input]:pr-12";
-
-/* M2 Text-Field (outlined) mit schwebendem Label, optionalem führenden Icon,
-   Supporting-Text und Error-State. Die Kontur trägt das Feld (1.5 px in
-   `kante`), die Fläche bleibt der Grund — gefüllt wäre ein Feld eine Fläche
-   mehr, die nichts bedeutet. `id` optional (sonst von React vergeben).
-
-   Es gibt EIN Feld in zwei Höhen: `dense` stellt `h-14` auf `h-12` und sonst
-   nichts. Der Platzhalter gehört damit überall der Float-Mechanik
-   (`placeholder=" "`); beschriftet wird ausschliesslich über `label`. */
+/* Text-Feld (Epic #363): der Name steht über dem Feld (`Feld`), der Feldkasten
+   ist 36 px hoch und ruhend ohne Kontur und Fläche, beim Überfahren leise
+   aufgehellt, im Fokus Primary, im Fehler Error (`feldkasten` in globals.css).
+   Leer steht der Name als Platzhalter im Feld (siehe `Feld`); ein eigener
+   `placeholder` ersetzt ihn nur dort, wo kein Name sichtbar ist (Suche in der
+   Filterleiste). `id` optional (sonst von React vergeben). */
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
   (
     {
       label,
       supportingText,
+      info,
+      aktion,
       error = false,
       befund = false,
-      leadingIcon: Icon,
-      dense = false,
+      labelVersteckt = false,
+      umrandet = false,
+      trailing,
       id,
       className,
       ...props
     },
     ref,
   ) => {
-    // Zahlenfelder (`type="number"`) stehen immer in der dichten Bauform —
-    // auf der Höhe der Auswahlfelder, neben denen sie meist stehen — und
-    // zählen nie von selbst: keine Pfeile im Feld (CSS unten), und weder
-    // Pfeiltasten noch Mausrad ändern den Wert (`ZahlInput`).
+    // Zahlenfelder zählen nie von selbst: keine Pfeile im Feld (Klassen
+    // unten), und weder Pfeiltasten noch Mausrad ändern den Wert (`ZahlInput`).
     const zahl = props.type === "number";
-    const dicht = dense || zahl;
     const Eingabe = zahl ? ZahlInput : "input";
-    // Feld-id aus React statt aus dem Label-Text: Dialoge halten ihre Felder auch
-    // im geschlossenen Zustand im DOM (natives <dialog>), zwei gleichzeitig
-    // gemountete Dialoge mit gleichem Label ergäben sonst dieselbe id — Label-Klick
-    // und Screenreader träfen das Feld im falschen Dialog.
-    const reactId = useId();
-    const fid = id ?? `tf-${reactId}`;
-    // Supporting-Text (auch der Fehlertext) muss am Input hängen, sonst liest
-    // ihn kein Screenreader vor; `error` zusätzlich als aria-invalid, weil der
-    // rote Rahmen allein nur sehend wahrnehmbar ist.
-    const hinweisId = supportingText ? `${fid}-hinweis` : undefined;
-
-    const feld = cn(
-      "peer type-body-large w-full rounded-flaeche kontur bg-transparent px-4 text-on-surface outline-none transition-[border-color] duration-150 focus:border-2",
-      dicht ? "h-12" : "h-14",
-      Icon && "pl-11",
-      zahl &&
-        "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
-      // Rangfolge der Rahmenfarbe: error > befund > focus. Der Fokus färbt nur
-      // den ruhigen Rahmen um; einen Befund überschriebe er sonst genau in dem
-      // Moment, in dem hingeschaut wird. Sichtbar bleibt der Fokus über den
-      // dickeren Rahmen (focus:border-2).
-      error || befund ? "border-error" : "border-kante focus:border-primary",
-    );
+    const fid = useFeldId(id);
 
     return (
-      <div className={className}>
-        {/* Eigener relative-Wrapper nur um Icon + Input + Label -> alles mittet im Feld. */}
+      <Feld
+        id={fid}
+        label={label}
+        labelVersteckt={labelVersteckt}
+        hinweis={supportingText}
+        info={info}
+        aktion={aktion}
+        error={error}
+        className={className}
+      >
         <div className="relative">
-          {Icon && (
-            <Icon
-              size={18}
-              strokeWidth={2}
-              aria-hidden
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-mittel"
-            />
-          )}
           <Eingabe
             id={fid}
             ref={ref}
-            /* Der Platzhalter treibt die Float-Mechanik (:placeholder-shown)
-               und gehört darum dem Feld, nicht der Aufruferin. Er steht VOR
-               {...props}, damit eine bewusste eigene Angabe trotzdem gewinnt —
-               sie schaltet dann allerdings das Schweben ab. */
-            placeholder=" "
+            // `error` zusätzlich als aria-invalid, weil der rote Rahmen allein
+            // nur sehend wahrnehmbar ist; der Befund ist keine Fehleingabe.
+            // Der Name ist der Platzhalter: Leer steht er im Feld, und
+            // `:placeholder-shown` sagt dem Rahmen, dass das Feld leer ist.
+            placeholder={label}
             aria-invalid={error || undefined}
-            aria-describedby={hinweisId}
-            className={feld}
+            aria-describedby={beschreibungIdVon(fid, supportingText, info)}
+            data-befund={befund || undefined}
+            data-umrandet={umrandet || undefined}
+            className={cn(
+              "feldkasten type-body-large h-9 w-full px-3",
+              // Rechts Platz für das Zeichen am Feldrand und das ⓘ, das beim
+              // Überfahren über dem Kasten liegt (`Feld`) — je 40 px, damit
+              // ein langer Wert unter keinem von beiden verschwindet.
+              trailing && info ? "pr-20" : trailing || info ? "pr-10" : undefined,
+              // Das Suchfeld trägt sein eigenes Kreuz; das von WebKit für
+              // `type="search"` gezeichnete wäre ein zweites ohne Unterschied.
+              props.type === "search" && "[&::-webkit-search-cancel-button]:appearance-none",
+              zahl &&
+                "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+            )}
             {...props}
           />
-          <label
-            htmlFor={fid}
-            className={cn(
-              labelBase,
-              Icon ? labelLeftIcon : labelLeftRest,
-              // Nur `error` färbt Label und Hinweis: Der Befund meldet sich
-              // am Rahmen und in seinem eigenen Hinweistext, die Beschriftung
-              // des Felds bleibt davon unberührt.
-              error
-                ? "text-error"
-                : "text-on-surface-mittel peer-focus:text-primary",
-            )}
-          >
-            {label}
-          </label>
+          {/* Mit ⓘ rückt das Zeichen um dessen Breite nach links: Am Rand
+              läge sonst beim Überfahren das ⓘ darüber und finge den Klick. */}
+          {trailing && (
+            <span className={cn("absolute inset-y-0 flex", info ? "right-10" : "right-0")}>{trailing}</span>
+          )}
         </div>
-        {supportingText && (
-          <p
-            id={hinweisId}
-            className={cn(
-              "type-body-small mt-1 px-4",
-              error ? "text-error" : "text-on-surface-mittel",
-            )}
-          >
-            {supportingText}
-          </p>
-        )}
-      </div>
+      </Feld>
     );
   },
 );

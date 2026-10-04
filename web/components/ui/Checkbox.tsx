@@ -17,7 +17,7 @@ export function Checkbox({
   return (
     <label
       className={cn(
-        "inline-flex items-center gap-3 type-body-medium text-on-surface",
+        "inline-flex min-h-9 items-center gap-3 type-body-medium text-on-surface",
         disabled ? "opacity-40" : "cursor-pointer",
         className,
       )}

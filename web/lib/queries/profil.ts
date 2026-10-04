@@ -31,20 +31,3 @@ export async function getAnzeigenameFuer(
   const { data } = await supabase.rpc("anzeige_name", { p_user: userId });
   return (data as string | null) ?? null;
 }
-
-/** Hat das Konto einen selbst gewählten Namen — oder steht dort noch der
- *  automatisch vergebene? Steuert nur den Hinweistext im Konto. */
-export async function hatEigenenAnzeigenamen(): Promise<boolean> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
-
-  const { data } = await supabase
-    .from("profiles")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  return !!data;
-}

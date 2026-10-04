@@ -77,7 +77,6 @@ export function TeamGefahrenzone({
       <div className="flex flex-wrap gap-2">
         <Button
           variant="outlined"
-          size="sm"
           disabled={pending}
           onClick={() => oeffnen(letzte ? "aufloesen" : "verlassen")}
         >
@@ -86,7 +85,6 @@ export function TeamGefahrenzone({
         </Button>
         <Button
           variant="danger"
-          size="sm"
           disabled={pending}
           onClick={() => oeffnen("aufloesen")}
         >

@@ -104,7 +104,7 @@ function AboInhalt({ links }: { links: { url: string; webcal: string } }) {
       <ul className="type-body-small mt-4 list-disc space-y-1 pl-5">
         <li>
           <strong className="text-on-surface">Apple Kalender:</strong>{" "}
-          <ButtonLink variant="text" size="sm" href={links.webcal}>
+          <ButtonLink variant="text" href={links.webcal}>
             <ExternalLink size={14} aria-hidden /> Direkt öffnen
           </ButtonLink>{" "}
           oder Ablage → Neues Kalenderabonnement → Link einfügen.

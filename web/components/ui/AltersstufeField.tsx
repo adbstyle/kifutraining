@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Badge } from "./Badge";
 import { Select } from "./Select";
+import { feldNameKlasse } from "./feld";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { ALTERSSTUFEN, istAltersstufe, type Altersstufe } from "@/lib/altersstufe";
 
@@ -34,7 +35,7 @@ export function AltersstufeField({
   onChange,
   festHinweis,
   aktion,
-  hinweis,
+  info,
   fehler,
   className,
 }: {
@@ -49,10 +50,10 @@ export function AltersstufeField({
    *  Stufenwechsel ist an einer gespeicherten Übung kein Feld, sondern ein
    *  eigener, zu bestätigender Vorgang. */
   aktion?: ReactNode;
-  /** Erklärung unter der Wahl. Ohne bleibt die Zeile leer: An der Übung sagt
+  /** Erklärung hinter einem ⓘ neben der Wahl. Ohne steht keines: An der Übung sagt
    *  der Feldname alles, und was die Wahl nach sich zieht, sieht man an der
    *  Maske selbst. Das Training erklärt sie, weil sie dort lebenslang bindet. */
-  hinweis?: string;
+  info?: string;
   /** Fehlermeldung, wenn die Wahl fehlt. */
   fehler?: string;
   /** Breite der Auswahl. Ohne füllt sie ihren Platz (etwa eine Rasterzelle). */
@@ -61,8 +62,8 @@ export function AltersstufeField({
   if (!onChange)
     return (
       <div>
-        <p className="type-label-small mb-2 text-on-surface-mittel">Altersstufe</p>
-        <div className="flex flex-wrap items-center gap-2">
+        <p className={feldNameKlasse()}>Altersstufe</p>
+        <div className="flex min-h-9 flex-wrap items-center gap-2">
           {wert && <Badge tone="neutral">{altersstufeLabels[wert]}</Badge>}
           {aktion}
           <p className="type-body-small text-on-surface-mittel">
@@ -79,14 +80,14 @@ export function AltersstufeField({
       className={className}
       value={wert ?? ""}
       options={optionen}
-      // Kein Leerwert in der Liste, sondern ein Platzhalter: «noch nicht
-      // gewählt» ist der Ausgangszustand am Training, keine Altersstufe.
+      // Kein Leerwert in der Liste: «noch nicht gewählt» ist der
+      // Ausgangszustand am Training (leeres Feld), keine Altersstufe.
       // Einmal gesetzt, lässt sie sich auch nicht mehr auf «keine»
       // zurückstellen — sie ist an Übung wie Training eine Pflichtangabe.
-      placeholder="Altersstufe wählen …"
       onChange={(v) => istAltersstufe(v) && onChange(v)}
       error={!!fehler}
-      supportingText={fehler ?? hinweis}
+      supportingText={fehler}
+      info={info}
     />
   );
 }

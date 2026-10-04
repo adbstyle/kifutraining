@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { ListPlus, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { Banner, Button, IconButton, Select, TextArea, TextField } from "@/components/ui";
+import { Banner, Button, IconButton, Select, TextArea, TextField, feldNameKlasse } from "@/components/ui";
 import { farbSlugs, type FarbSlug } from "@/lib/diagramm";
 import {
   FARBE_LABEL,
@@ -105,7 +105,7 @@ export function MaterialField({
   return (
     <div role="group" aria-labelledby={legendeId} className="flex flex-col gap-4">
       {!beschriftetVon && (
-        <p id={legendeId} className={`type-label-small ${error ? "text-error" : "text-on-surface-mittel"}`}>
+        <p id={legendeId} className={feldNameKlasse(!!error)}>
           Material (optional)
         </p>
       )}
@@ -118,13 +118,14 @@ export function MaterialField({
             const farbig = z.art !== "" && MATERIAL_KATALOG[z.art].farbig;
             const problem = error ? zeilenProblem(z) : null;
             return (
-              <li key={z.key} className="flex flex-wrap items-start gap-3">
+              // Unten bündig: Jedes Feld trägt seinen Namen darüber, der
+              // Papierkorb keinen — so steht er auf der Linie der Feldkästen.
+              <li key={z.key} className="flex flex-wrap items-end gap-3">
                 <Select
                   label="Art"
                   className="min-w-44 flex-1"
                   value={z.art}
                   onChange={(v) => waehleArt(z.key, v)}
-                  placeholder="Art wählen …"
                   options={MATERIAL_ARTEN.map((a) => ({
                     value: a,
                     label: MATERIAL_KATALOG[a].einzahl,
@@ -159,7 +160,6 @@ export function MaterialField({
                       ? `${MATERIAL_KATALOG[z.art].einzahl} entfernen`
                       : "Material entfernen"
                   }
-                  className="mt-0.5"
                   onClick={() => onZeilenChange(zeilen.filter((x) => x.key !== z.key))}
                 />
               </li>
@@ -174,7 +174,6 @@ export function MaterialField({
         <Button
           type="button"
           variant="quiet"
-          size="sm"
           onClick={() =>
             onZeilenChange([
               ...zeilen,
@@ -189,7 +188,7 @@ export function MaterialField({
 
       <TextArea
         label="Weiteres Material"
-        placeholder="Weiteres Material (welches das Feld-Diagramm nicht erkennt, eines pro Zeile)"
+        info="Was das Feld-Diagramm nicht erkennt, eines pro Zeile."
         name="material"
         defaultValue={ergaenzung.join("\n")}
       />
@@ -214,7 +213,7 @@ export function VorschlagBanner({
     <Banner
       icon={ListPlus}
       actions={
-        <Button type="button" variant="text" size="sm" onClick={onUebernehmen}>
+        <Button type="button" variant="text" onClick={onUebernehmen}>
           Vorschlag übernehmen
         </Button>
       }
