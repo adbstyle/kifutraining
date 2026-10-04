@@ -1556,7 +1556,12 @@ export default function Styleguide() {
           gerade ein leeres Feld gibt sich so deutlich als Feld zu erkennen,
           ohne dass sich etwas verschiebt. Im Fokus trägt die Kontur Primary,
           bei Fehler und Befund Error. Die Stärke bleibt dabei immer
-          1.5 px — nur die Farbe wechselt, nichts springt beim Hineinklicken.
+          1.5 px — nur die Farbe wechselt, der Kasten verschiebt sich beim
+          Hineinklicken nicht. <strong>Der Name hält immer 6 px</strong> zu
+          dem, was unter ihm sichtbar ist: im Fokus zur Kontur, ruhend — wo
+          die Kontur fehlt — zur Schrift des Werts. Beim Hineinklicken springt
+          er darum um 12 px hoch, ohne Übergang und ohne das Formular zu
+          verschieben (nach dem Vorbild von Jira).
           36 px hoch wie jedes Bedienelement, der Wert in{" "}
           <code>type-body-large</code>. Wo ein Feld keinen sichtbaren Namen trägt
           — die Suche in der Filterleiste —, gibt <code>umrandet</code> ihm auch

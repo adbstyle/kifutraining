@@ -21,11 +21,11 @@ import { InfoKnopf } from "./InfoKnopf";
 /** Der Feldname als Klassen — für die seltenen Orte, an denen ein Name ohne
  *  Rahmen steht (eine feste Angabe an der Stelle eines Felds). */
 /* Name und Hinweis stehen bündig mit dem Text im Feld (`px-3.5` = Polster
-   des Feldkastens plus seine Kontur) und ohne eigenen Abstand zum Feld: Der
-   Feldkasten polstert seinen Text ohnehin, und so liest sich Name und Wert
-   als ein Eintrag wie in Jira, nicht als Beschriftung über einem Kasten. Der
-   Name steht dafür auf einer Zeile so hoch wie seine Schrift (12 statt 18 px)
-   — die Schrift bleibt 12 px, er rückt nur näher an den Wert. */
+   des Feldkastens plus seine Kontur), und Name und Wert lesen sich als ein
+   Eintrag wie in Jira, nicht als Beschriftung über einem Kasten. Der Name
+   steht dafür auf einer Zeile so hoch wie seine Schrift (12 statt 18 px).
+   Seinen Abstand zum Feld regelt `.feld-rahmen > .feld-name` in globals.css:
+   im Fokus zur Kontur, ruhend zur Schrift des Werts, beide Male gleich. */
 export function feldNameKlasse(error?: boolean): string {
   return cn("type-body-small block px-3.5 leading-3", farbe(error));
 }

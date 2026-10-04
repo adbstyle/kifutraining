@@ -344,7 +344,8 @@
    (siehe `.feld-rahmen` unten). Im Fokus und bei offenem Panel trägt die Kontur
    Primary, bei Fehler oder Befund Error — Error zuletzt, weil was sich nicht
    speichern lässt, den Fokus überdauern muss. Die Stärke bleibt immer
-   1.5 px, nur die Farbe wechselt: Nichts springt beim Hineinklicken.
+   1.5 px, nur die Farbe wechselt: Der Kasten verschiebt sich beim
+   Hineinklicken nicht, nur der Name darüber springt (siehe unten).
    `data-umrandet` gibt dem Feld auch ruhend die Kante — für Felder ohne
    sichtbaren Namen (Suche in der Filterleiste), die sonst schlicht fehlten.
    Zustände über Attribute statt Klassen, weil `cn` kein tailwind-merge ist:
@@ -357,9 +358,9 @@
   background-color: transparent;
   color: var(--color-on-surface);
   outline: none;
-  transition:
-    border-color 150ms,
-    background-color 150ms;
+  /* Kein Übergang: Die Kontur erscheint im selben Augenblick, in dem der
+     Name über sie springt (`.feld-rahmen > .feld-name`) — eine noch
+     ausblendende Kontur liefe sonst mitten durch den Namen. */
   &[data-umrandet] {
     border-color: var(--color-kante);
   }
@@ -383,9 +384,25 @@
   &::placeholder {
     color: var(--color-on-surface-mittel);
   }
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
+}
+
+/* Abstand des Namens (Epic #363, nach dem Vorbild von Jira): Der Name hält
+   zu dem, was unter ihm sichtbar ist, immer denselben Abstand. Arbeitet man
+   im Feld, ist das die Kontur — der Name steht 6 px darüber. Ruhend ist die
+   Kontur unsichtbar und das Nächste darunter die Schrift des Werts, die
+   12 px unter der Oberkante des Kastens beginnt (Kontur, Polster, halber
+   Zeilenabstand); der Name rückt darum um diese 12 px an sie heran und hält
+   auch zu ihr 6 px. Beim Hineinklicken springt er hoch, ohne dass sich das
+   Formular verschiebt (`translate` statt Abstand). Wo die Kontur auch ruhend
+   steht — im Fehler, im Befund, umrandet —, bleibt er oben. */
+.feld-rahmen > .feld-name {
+  margin-bottom: 0.375rem;
+}
+.feld-rahmen:not([data-fehler]):not(
+    :has(.feldkasten:is(:focus, [aria-expanded="true"], [data-befund], [data-umrandet], [aria-invalid="true"]))
+  )
+  > .feld-name {
+  translate: 0 0.75rem;
 }
 
 /* Leeres Feld (Epic #363, nach dem Vorbild von Jira): Solange ein Feld leer

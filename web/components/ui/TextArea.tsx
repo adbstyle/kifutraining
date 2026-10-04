@@ -27,8 +27,11 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           placeholder={label}
           aria-invalid={error || undefined}
           aria-describedby={beschreibungIdVon(fid, supportingText, info)}
-          // min-h-16 = zwei Zeilen à 24 px plus Polster und Kontur.
-          className="feldkasten type-body-large field-sizing-content block min-h-16 max-h-[17rem] w-full resize-none overflow-y-auto px-3 py-1.5"
+          // min-h-16 = zwei Zeilen à 24 px plus Polster und Kontur. Oben nur
+          // 4 px: Die erste Zeile beginnt so auf derselben Höhe wie der Wert
+          // eines einzeiligen Felds, und der Name hält ruhend zu ihr denselben
+          // Abstand wie dort (`.feld-rahmen > .feld-name`).
+          className="feldkasten type-body-large field-sizing-content block min-h-16 max-h-[17rem] w-full resize-none overflow-y-auto px-3 pt-1 pb-1.5"
           {...props}
         />
       </Feld>
