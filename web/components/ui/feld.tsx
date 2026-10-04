@@ -108,9 +108,11 @@ export function Feld({
       <div className={cn(!!aktion && "flex items-end gap-3")}>
         {/* Name und Feldkasten — die «Angabe». Das ⓘ steht in ihr rechts,
             senkrecht mittig: zwischen Name und Wert, bei leerem Feld (Name
-            im Feld) mittig im Kasten. Sein Platz bleibt frei, auch wenn es
-            nicht zu sehen ist, damit der Wert nicht darunter läuft. */}
-        <div className={cn("relative", !!aktion && "min-w-0 flex-1", !!info && "pr-10")}>
+            im Feld) mittig im Kasten. Es liegt ÜBER dem Kasten, der so breit
+            bleibt wie jeder andere: Sichtbar ist es nur beim Überfahren,
+            nie während man im Feld arbeitet. Dass der Wert nicht darunter
+            läuft, regelt `.feld-info` in globals.css. */}
+        <div className={cn("relative", !!aktion && "min-w-0 flex-1")}>
           <label
             id={`${id}-label`}
             htmlFor={id}

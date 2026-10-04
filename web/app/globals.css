@@ -475,6 +475,14 @@
     pointer-events: auto;
   }
 }
+/* Das ⓘ liegt über dem rechten Rand des Kastens, der Kasten selbst bleibt so
+   breit wie bei Feldern ohne Hinweis. Ein Text-Feld hält rechts Platz frei,
+   damit ein langer Wert nicht unter dem ⓘ verschwindet; die Auswahlfelder
+   haben dort ohnehin den Platz ihres Pfeils, der nur beim Arbeiten im Feld
+   steht — dann, wenn das ⓘ verborgen ist. */
+.feld-rahmen:has(.feld-info) :is(input, textarea).feldkasten {
+  padding-right: 2.5rem;
+}
 
 .feld-rahmen:not([data-name-versteckt]) .feldkasten:focus::placeholder {
   color: transparent;
