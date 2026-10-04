@@ -930,9 +930,11 @@ export default function Styleguide() {
           gleich gegliedert sind. Die Übungsmaske teilt sich darum wie die
           Detailseite in Inhalt und Einordnung (<code>ZweiSpalten</code>); die
           Einordnung steht schmal VOR dem Inhalt, weil sie bestimmt, welche
-          Felder er verlangt, und stellt Zusammengehöriges ab <code>sm</code>{" "}
-          paarweise nebeneinander, in der schmalen Spalte ab <code>xl</code>{" "}
-          untereinander. Ein Feld
+          Felder er verlangt. Ihre Felder stehen in jeder Breite
+          untereinander, eins pro Zeile — eine Spalte liest sich von oben nach
+          unten, ohne dass das Auge zwischen Nachbarn springt (PO 2026-10-04).
+          Nebeneinander steht nur, was ein einziger Wert ist: Minimum bis
+          Maximum, Länge × Breite (<code>FeldGruppe</code>). Ein Feld
           ohne eigenes Label (Dateifeld, Material-Gruppe) bekommt die Id der
           Überschrift für <code>aria-labelledby</code>, statt den Namen doppelt
           zu zeigen.

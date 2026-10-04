@@ -13,7 +13,7 @@ import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
  *  (PO 2026-08-30). Die Prüfung sitzt in `parseUebungsInhalt`, die Regel selbst
  *  in den CHECKs `ex_spielfeld_paarweise` / `ex_spielfeld_bereich`.
  *
- *  Layout wie das Paar «Anzahl Spieler:innen» daneben: zwei Zahlenfelder mit einem
+ *  Layout wie das Paar «Anzahl Spieler:innen» darunter: zwei Zahlenfelder mit einem
  *  Trennzeichen — dort ein Bis-Strich, hier ein Mal-Zeichen, weil es keine
  *  Spanne ist, sondern zwei Kanten. */
 export function SpielfeldgroesseField({

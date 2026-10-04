@@ -69,14 +69,6 @@ import { LEERES_DIAGRAMM, parseDiagramm, type DiagrammData } from "@/lib/diagram
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
 
-/** Zwei zusammengehörige Felder auf einer Zeile, ab `sm`. In der geteilten
- *  Maske (Bearbeiten) steht die Einordnung ab `xl` in der schmalen Spalte
- *  rechts, dort untereinander. Die Ausrichtung kommt je Zeile dazu: oben
- *  bündig, wo beide Zellen eine Namenszeile tragen; unten bündig, wo neben
- *  einem Feld eine Feldgruppe mit zwei Namenszeilen steht — so stehen die
- *  Feldkästen auf einer Linie. */
-const PAAR = "grid gap-5 sm:grid-cols-2";
-const PAAR_LEISTE = `${PAAR} xl:grid-cols-1`;
 
 /** Was über und unter beiden Spalten steht (Name, Meldungen, Speichern), so
  *  breit wie sie: gestapelt in der Lesebreite des Inhalts, ab `xl` über
@@ -275,7 +267,6 @@ export function ExerciseForm({
   // Feld-Diagramm, Beschreibung, Material, Foto (PO 2026-10-02). Bearbeiten
   // teilt die Maske wie die Detailseite in Inhalt und Einordnung (#353).
   const geteilt = !erfassen;
-  const paar = geteilt ? PAAR_LEISTE : PAAR;
 
   // Das Feld-Gating kommt geschlossen aus lib/altersstufe.ts — derselben
   // Quelle, gegen die die Server Action prüft und die die DB-CHECKs spiegelt.
@@ -481,54 +472,50 @@ export function ExerciseForm({
   // Stelle; Herkunft und Sichtbarkeit setzt die Detailseite.
   const einordnungAbschnitt = (
       <FormAbschnitt titel="Einordnung">
-        <div className={cn(paar, "sm:items-start")}>
-          <AltersstufeField
-            wert={stufe}
-            onChange={stufenWahl === "waehlbar" ? wechsleAltersstufe : undefined}
-            festHinweis={
-              kontext === "fassung"
-                ? "Folgt dem Training — Felder und Werte kommen aus dessen Manual."
-                : umwandlung
-                  ? "Wird beim Speichern übernommen."
-                  : undefined
-            }
-            aktion={
-              ueberfuehrbar &&
-              !umwandlung && (
-                <Button
-                  type="button"
-                  variant="text"
-                  onClick={() => setDialogOffen(true)}
-                >
-                  <ArrowLeftRight size={18} strokeWidth={2} aria-hidden />
-                  In den {altersstufeLabels[andereAltersstufe(stufe)]} überführen
-                </Button>
-              )
-            }
-          />
+        <AltersstufeField
+          wert={stufe}
+          onChange={stufenWahl === "waehlbar" ? wechsleAltersstufe : undefined}
+          festHinweis={
+            kontext === "fassung"
+              ? "Folgt dem Training — Felder und Werte kommen aus dessen Manual."
+              : umwandlung
+                ? "Wird beim Speichern übernommen."
+                : undefined
+          }
+          aktion={
+            ueberfuehrbar &&
+            !umwandlung && (
+              <Button
+                type="button"
+                variant="text"
+                onClick={() => setDialogOffen(true)}
+              >
+                <ArrowLeftRight size={18} strokeWidth={2} aria-hidden />
+                In den {altersstufeLabels[andereAltersstufe(stufe)]} überführen
+              </Button>
+            )
+          }
+        />
 
-          {/* Die Werte stehen ausgeschrieben («G-Junior:innen») statt als blosser
-              Buchstabe: In einer Optionsliste ist ein einzelnes «G» kein Wort,
-              sondern ein Kürzel ohne Kontext — der Katalogfilter beschriftet sie
-              aus demselben Grund so. Weder Suche noch Aktions-Fuss: drei bis vier
-              kurze Werte liest man schneller, als man sie filtert. Passen alle
-              gewählten Kategorien nicht in eine Zeile, bricht das Feld um. */}
-          <div>
-            <MultiSelect
-              label="Alterskategorie"
-              options={kategorienFuer(stufe).map((k) => ({
-                value: k,
-                label: kategorieStufe[k as keyof typeof kategorieStufe],
-              }))}
-              value={kat}
-              onChange={setKat}
-              searchable={false}
-              actions={false}
-              error={!!err.kat}
-              supportingText={err.kat}
-            />
-          </div>
-        </div>
+        {/* Die Werte stehen ausgeschrieben («G-Junior:innen») statt als blosser
+            Buchstabe: In einer Optionsliste ist ein einzelnes «G» kein Wort,
+            sondern ein Kürzel ohne Kontext — der Katalogfilter beschriftet sie
+            aus demselben Grund so. Weder Suche noch Aktions-Fuss: drei bis vier
+            kurze Werte liest man schneller, als man sie filtert. Passen alle
+            gewählten Kategorien nicht in eine Zeile, bricht das Feld um. */}
+        <MultiSelect
+          label="Alterskategorie"
+          options={kategorienFuer(stufe).map((k) => ({
+            value: k,
+            label: kategorieStufe[k as keyof typeof kategorieStufe],
+          }))}
+          value={kat}
+          onChange={setKat}
+          searchable={false}
+          actions={false}
+          error={!!err.kat}
+          supportingText={err.kat}
+        />
 
         {dialogOffen && (
           <UmwandelnDialog
@@ -551,85 +538,74 @@ export function ExerciseForm({
           hinweis={entfallHinweis}
         />
 
-        {/* Neben der Spielerzahl steht, was das Feld beschreibt: im
-            Kinderfussball der Feldtyp (beim freien Feld mit den Metern
-            darunter), im Juniorenfussball gleich die Spielfeldgrösse. */}
-        <div className={cn(paar, "sm:items-end")}>
-          {zeigtFeldtyp ? (
-            <div>
-              <Select
-                label="Feldtyp (optional)"
-                value={feld}
-                onChange={setFeld}
-                options={(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => ({
-                  value: t,
-                  label: feldLabels[t],
-                }))}
-              />
-            </div>
-          ) : (
-            zeigtSpielfeld && spielfeldFeld
-          )}
+        {/* Was das Feld beschreibt: im Kinderfussball der Feldtyp (beim
+            freien Feld mit den Metern darunter), im Juniorenfussball gleich
+            die Spielfeldgrösse. */}
+        {zeigtFeldtyp && (
+          <Select
+            label="Feldtyp (optional)"
+            value={feld}
+            onChange={setFeld}
+            options={(Object.keys(feldLabels) as (keyof typeof feldLabels)[]).map((t) => ({
+              value: t,
+              label: feldLabels[t],
+            }))}
+          />
+        )}
+        {zeigtSpielfeld && spielfeldFeld}
 
-          <FeldGruppe name={ANZAHL_SPIELER_LABEL} fehler={err.anzahl_max}>
-            <div className="flex items-end gap-3">
-              <TextField
-                label="Minimum"
-                name="anzahl_min"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                className="flex-1"
-                defaultValue={initial.anzahl_kinder?.min ?? undefined}
-              />
-              <span aria-hidden className="type-body-large flex h-9 items-center text-on-surface-mittel">
-                –
-              </span>
-              <TextField
-                label="Maximum"
-                name="anzahl_max"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                className="flex-1"
-                error={!!err.anzahl_max}
-                defaultValue={initial.anzahl_kinder?.max ?? undefined}
-              />
-            </div>
-          </FeldGruppe>
-        </div>
-        {zeigtFeldtyp && zeigtSpielfeld && spielfeldFeld}
-
-        {/* Übungstyp und Erscheinungsform in der Reihenfolge der Detailseite. */}
-        {(zeigtForm || zeigtTyp) && (
-          <div className={cn(paar, "sm:items-start")}>
-            {/* Übungstyp: optionale Selbstauskunft des Junioren-Manuals, und nur
-                in den Blöcken, in denen eine Spielform vorkommen kann. Ohne
-                Hilfstext, wie die übrigen Felder der Maske. */}
-            {zeigtTyp && (
-              <Select
-                label="Übungstyp (optional)"
-                value={uebungstyp}
-                onChange={setUebungstyp}
-                options={uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] }))}
-              />
-            )}
-            {/* Die Erscheinungsformen des Manuals, dem diese Übung folgt — in
-                der Reihenfolge ihrer Quelle. Eine Gruppierung nach Spielphasen
-                hat der Product Owner bewusst abgelehnt (Story 12 Out of Scope 2). */}
-            {zeigtForm && (
-              <MultiSelect
-                label="Erscheinungsform (optional)"
-                options={erscheinungsformenFuer(stufe).map((f) => ({
-                  value: f,
-                  label: ERSCHEINUNGSFORM_LABEL[f] ?? f,
-                }))}
-                value={form}
-                onChange={setForm}
-              />
-            )}
-
+        <FeldGruppe name={ANZAHL_SPIELER_LABEL} fehler={err.anzahl_max}>
+          <div className="flex items-end gap-3">
+            <TextField
+              label="Minimum"
+              name="anzahl_min"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              className="flex-1"
+              defaultValue={initial.anzahl_kinder?.min ?? undefined}
+            />
+            <span aria-hidden className="type-body-large flex h-9 items-center text-on-surface-mittel">
+              –
+            </span>
+            <TextField
+              label="Maximum"
+              name="anzahl_max"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              className="flex-1"
+              error={!!err.anzahl_max}
+              defaultValue={initial.anzahl_kinder?.max ?? undefined}
+            />
           </div>
+        </FeldGruppe>
+
+        {/* Übungstyp: optionale Selbstauskunft des Junioren-Manuals, und nur
+            in den Blöcken, in denen eine Spielform vorkommen kann. Ohne
+            Hilfstext, wie die übrigen Felder der Maske. Danach die
+            Erscheinungsform — in der Reihenfolge der Detailseite. */}
+        {zeigtTyp && (
+          <Select
+            label="Übungstyp (optional)"
+            value={uebungstyp}
+            onChange={setUebungstyp}
+            options={uebungstypSlugs.map((t) => ({ value: t, label: uebungstypLabels[t] }))}
+          />
+        )}
+        {/* Die Erscheinungsformen des Manuals, dem diese Übung folgt — in
+            der Reihenfolge ihrer Quelle. Eine Gruppierung nach Spielphasen
+            hat der Product Owner bewusst abgelehnt (Story 12 Out of Scope 2). */}
+        {zeigtForm && (
+          <MultiSelect
+            label="Erscheinungsform (optional)"
+            options={erscheinungsformenFuer(stufe).map((f) => ({
+              value: f,
+              label: ERSCHEINUNGSFORM_LABEL[f] ?? f,
+            }))}
+            value={form}
+            onChange={setForm}
+          />
         )}
       </FormAbschnitt>
   );
