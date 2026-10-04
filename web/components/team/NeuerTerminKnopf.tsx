@@ -8,7 +8,7 @@ import { useTerminAktionen } from "./TerminBereich";
 export function NeuerTerminKnopf() {
   const a = useTerminAktionen();
   return (
-    <Button variant="filled" size="sm" onClick={() => a.neu()}>
+    <Button variant="filled" onClick={() => a.neu()}>
       Termin erstellen
     </Button>
   );

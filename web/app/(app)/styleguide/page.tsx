@@ -37,6 +37,7 @@ import { ChoiceChipDemo } from "./ChoiceChipDemo";
 import { AuswahlListeDemo } from "./AuswahlListeDemo";
 import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
+import { FilterKnopfDemo } from "./FilterKnopfDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
@@ -51,7 +52,6 @@ import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import {
   Search,
-  Users,
   SlidersHorizontal,
   Plus,
   X,
@@ -295,12 +295,12 @@ const strichRollen: [string, string, string, string, string][] = [
 const kategorien: KategorieSlug[] = ["G", "F", "E", "D", "C", "B", "A"];
 
 const typeScale: [string, string, string][] = [
-  ["type-display-large", "Display Large", "Geist 700 · 57/60 · +.035 em · versal"],
-  ["type-display-medium", "Display Medium", "Geist 700 · 45/50 · +.035 em · versal"],
-  ["type-display-small", "Display Small", "Geist 700 · 36/42 · +.03 em · versal"],
-  ["type-headline-large", "Headline Large", "Geist 700 · 32/38 · +.03 em · versal"],
-  ["type-headline-medium", "Headline Medium", "Geist 700 · 28/34 · +.03 em · versal"],
-  ["type-headline-small", "Headline Small", "Geist 700 · 24/30 · +.025 em · versal"],
+  ["type-display-large", "Display Large", "Geist 600 · 57/60 · −.02 em"],
+  ["type-display-medium", "Display Medium", "Geist 600 · 45/50 · −.02 em"],
+  ["type-display-small", "Display Small", "Geist 600 · 36/42 · −.02 em"],
+  ["type-headline-large", "Headline Large", "Geist 600 · 32/38 · −.015 em"],
+  ["type-headline-medium", "Headline Medium", "Geist 600 · 28/34 · −.015 em"],
+  ["type-headline-small", "Headline Small", "Geist 600 · 24/30 · −.01 em"],
   ["type-title-large", "Title Large", "Geist 600 · 22/28 · −.01 em"],
   ["type-title-medium", "Title Medium", "Geist 600 · 16/24 · −.005 em"],
   ["type-title-small", "Title Small", "Geist 600 · 14/20"],
@@ -369,21 +369,16 @@ const radien: [string, string, string][] = [
   ["rounded-plakette", "2 px", "Plakette, Kategorie-Chip — die kleinste beschriftete Fläche."],
   ["rounded-flaeche", "4 px", "Karte, Feld, Knopf, Menü, Snackbar, Auswahl-Panel."],
   ["rounded-dialog", "6 px", "Nur der Dialog: die grösste Fläche verträgt mehr Rundung."],
-  ["rounded-full", "voll", "Chips und runde Knöpfe — alles, was man antippt und loslässt."],
+  ["rounded-full", "voll", "Chips — Werte und Schalter, die man antippt und wieder loslässt."],
 ];
 
 const hoehen: [string, string][] = [
   ["h-[22px] · 22 px", "Plakette und Kategorie-Chip — die kleinste beschriftete Fläche."],
   [
     "h-9 · 36 px",
-    "Knopf klein, Glied der Knopfgruppe, Label-Chip im Grundmass (Filter, Assist, Suggestion, Input), Nutzertext-Chip, geteilter Chip, leiser Knopf — sie stehen in einer Leiste nebeneinander und fluchten darum.",
+    "Das eine Mass alles Bedienbaren (Epic #363): Feldkasten, Knopf, Icon-Knopf, Glied der Knopfgruppe, jeder Chip samt geteiltem Chip und Menühälfte, Reiter, Zeile in Menü und Auswahlpanel, Kontrollkästchen, Eintrag der Seitenleiste, Werkzeug im Diagramm-Editor — auf dem Platz wie am Schreibtisch. Weil alles gleich hoch ist, fluchtet jede Leiste von selbst.",
   ],
-  ["h-11 · 44 px", "Knopf mittel, Icon-Knopf, Menühälfte — Mindestmass für den Finger."],
-  [
-    "h-12 · 48 px",
-    "Dichtes Feld in Filter- und Listenzeilen — und der Filter-Chip daneben (groesse=\u00ableiste\u00bb), damit die Leiste eine Linie bleibt.",
-  ],
-  ["h-14 · 56 px", "Hohes Feld, grosser Knopf — auf dem Platz, mit Handschuhen."],
+  ["h-12 · 48 px", "Kopfzeile mit Menüknopf unter lg."],
 ];
 
 const sizeClasses: [string, string, string][] = [
@@ -604,18 +599,19 @@ export default function Styleguide() {
           Label-Stufe bündig; dafür braucht es keine Monospace mehr.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Display und Headline stehen versal und leicht gesperrt: Eine
-          Neo-Grotesk trägt Versalien eng, mehr als 3.5 % risse die Wörter
-          auseinander. Titel bekommen dafür ein negatives Tracking, damit sie
-          kompakt bleiben.
+          Display, Headline und Titel stehen in normaler Schreibung und im
+          selben Gewicht (600): Die Rangfolge trägt die Grösse, nicht die
+          Wucht (Epic #363). Eine Neo-Grotesk in Gemischtschreibung will eng
+          stehen, darum laufen die grossen Stufen mit leicht negativem
+          Tracking — je grösser, desto enger. Namen, die Trainer:innen selbst
+          erfassen, erscheinen so in jeder Überschrift genau so, wie sie sie
+          geschrieben haben.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Label gehen den umgekehrten Weg und trennen sich damit von den
-          Headlines, obwohl beide versal stehen: ein Gewicht <em>tiefer</em> als
-          die Titel (600 statt 700) und mit 8–10 % rund dreimal so weit
-          gesperrt. Bei 700 und engem Tracking läsen sie sich als Headlines in
-          Miniatur; bei 400 verlöre die kleinste Stufe auf dem dunklen Grund
-          ihre Stämme — darum steht Label Small auf 500.
+          Label gehen den umgekehrten Weg: Sie allein stehen versal, klein und
+          mit 8–10 % weit gesperrt, und trennen sich so von jeder Überschrift.
+          Bei 400 verlöre die kleinste Stufe auf dem dunklen Grund ihre
+          Stämme — darum steht Label Small auf 500.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Regel: Nutzertext nie in Label-Typografie.</strong> Die{" "}
@@ -853,8 +849,10 @@ export default function Styleguide() {
           ))}
         </div>
         <p className="type-body-medium mb-8 max-w-2xl text-on-surface-mittel">
-          Eckig für alles, was Inhalt hält; voll gerundet für alles, was man
-          antippt und wieder loslässt. Mehr Werte gibt es nicht — 3 px, 5 px und
+          Eckig mit gerundeten Kanten für alles, was Inhalt hält oder eine
+          Handlung auslöst — Karte, Feld, Knopf, Icon-Knopf, Filterknopf; voll
+          gerundet nur der Chip, ein Wert oder Schalter, den man antippt und
+          wieder loslässt (Epic #363: Icon-Knöpfe sind kein Kreis mehr). Mehr Werte gibt es nicht — 3 px, 5 px und
           8 px sind aus dem System gefallen, und ein{" "}
           <code>rounded-</code>-Wert in eckigen Klammern ist ein Fehler, kein
           Sonderfall.
@@ -932,12 +930,26 @@ export default function Styleguide() {
           gleich gegliedert sind. Die Übungsmaske teilt sich darum wie die
           Detailseite in Inhalt und Einordnung (<code>ZweiSpalten</code>); die
           Einordnung steht schmal VOR dem Inhalt, weil sie bestimmt, welche
-          Felder er verlangt, und stellt Zusammengehöriges ab <code>sm</code>{" "}
-          paarweise nebeneinander, in der schmalen Spalte ab <code>xl</code>{" "}
-          untereinander. Ein Feld
+          Felder er verlangt. Ihre Felder stehen in jeder Breite
+          untereinander, eins pro Zeile — eine Spalte liest sich von oben nach
+          unten, ohne dass das Auge zwischen Nachbarn springt (PO 2026-10-04).
+          Auch zusammengehörige Werte stehen als eigene Felder mit eigenem
+          Namen untereinander — «Spielfeldlänge», «Spielfeldbreite» statt
+          eines gemeinsamen Namens über zwei Teilnamen. Ein Feld
           ohne eigenes Label (Dateifeld, Material-Gruppe) bekommt die Id der
           Überschrift für <code>aria-labelledby</code>, statt den Namen doppelt
           zu zeigen.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Jedes Formular mit Eingabefeldern trägt <code>noValidate</code></strong>: Fehler
+          meldet die App, nicht der Browser. Dessen eigene Prüfung (Pflicht,
+          Mindestlänge, Zahlengrenzen, E-Mail-Form) hielte das Absenden an und
+          zeigte eine Sprechblase in der Sprache des Browsers, in seinem
+          Aussehen — und die deutsche Meldung der App unter dem Feld käme nie
+          zum Zug. Die Regeln selbst prüft der Server ohnehin. Die Attribute
+          bleiben stehen: <code>required</code> und <code>min</code>/
+          <code>max</code> sagen der Vorlesehilfe, was das Feld verlangt
+          (PO 2026-10-04).
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Jede Seite steht in einem <code>Seitenrahmen</code>: linksbündig
@@ -1003,28 +1015,22 @@ export default function Styleguide() {
           <Button variant="text">Abbrechen</Button>
           <Button variant="danger">Übung löschen</Button>
         </div>
-        <div className="mt-4 flex flex-wrap items-end gap-3">
-          <Button size="sm">Klein · h-9</Button>
-          <Button size="md">Mittel · h-11</Button>
-          <Button size="lg">Gross · h-14 · Spielfeldrand</Button>
-        </div>
         <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
           Leiser Knopf (<code>variant=&quot;quiet&quot;</code>) — eine Stufe unter{" "}
           <code>text</code>
         </p>
         <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
           Alle Knöpfe stehen normal gesetzt in <code>type-title-small</code>{" "}
-          (Geist 600, 14/20), nicht versal — wie die Reiter. Der leise Knopf
-          ist die <strong>dichte Bauform</strong> des <code>text</code>-Knopfes:
-          dieselbe Farbe und Schrift, fest h-9 mit knapper Polsterung. Er gilt
+          (Geist 600, 14/20), nicht versal — wie die Reiter — und sind 36 px
+          hoch; eine Grössen-Prop gibt es nicht mehr. Der leise Knopf ist die{" "}
+          <strong>knappe Bauform</strong> des <code>text</code>-Knopfes:
+          dieselbe Farbe und Schrift, nur mit knapperer Polsterung. Er gilt
           für Handlungen, die <strong>am Rand mitlaufen</strong>: ein Knopf in
           einer Leiste aus Chips, auf deren Linie er sitzen soll. Er gilt{" "}
           <strong>nicht</strong> für
           Knöpfe, die einen Vorgang abschliessen oder abbrechen —
           Dialog-Knöpfe, Formularfüsse und alles, was neben einem{" "}
-          <code>filled</code> steht, bleibt <code>text</code>. <code>size</code>{" "}
-          wird übergangen: Den leisen Knopf gibt es nur in einer Höhe (h-9),
-          damit er in der Chip-Leiste auf der Linie sitzt.
+          <code>filled</code> steht, bleibt <code>text</code>.
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="quiet">
@@ -1033,7 +1039,7 @@ export default function Styleguide() {
           </Button>
           <Button variant="text">Abbrechen</Button>
           <span className="type-label-small text-on-surface-mittel">
-            quiet (dicht, h-9) · text
+            quiet · text
           </span>
         </div>
 
@@ -1042,7 +1048,7 @@ export default function Styleguide() {
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <ButtonLink href="#" variant="filled">Neue Übung</ButtonLink>
-          <ButtonLink href="#" variant="tonal" size="sm">Bearbeiten</ButtonLink>
+          <ButtonLink href="#" variant="tonal">Bearbeiten</ButtonLink>
         </div>
         <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
           Verbundene Knopfgruppe
@@ -1058,8 +1064,8 @@ export default function Styleguide() {
           ohne Tooltip; der Name steht im zugänglichen Namen
           (<code>aria-label</code>).
           Gewählt trägt ein Glied die Auswahl-Optik der Chips: Kontur und
-          Zeichen in Primary, die Fläche Primary/12 — leiser als ein gefüllter
-          Knopf daneben, der die Handlung trägt.
+          Zeichen in Primary, ohne Fläche — leiser als ein gefüllter Knopf
+          daneben, der die Handlung trägt.
         </p>
         <ButtonGroup ariaLabel="Ansicht">
           <button type="button" aria-label="Liste" aria-pressed={false} className={segmentClasses(false)}>
@@ -1076,10 +1082,10 @@ export default function Styleguide() {
         <div className="flex items-center gap-4">
           <IconButton icon={Search} label="Suchen" />
           <IconButton icon={SlidersHorizontal} label="Filter" active />
-          <IconButton icon={Plus} label="Hinzufügen" size="sm" />
+          <IconButton icon={Plus} label="Hinzufügen" />
           <IconButton icon={Plus} label="Hinzufügen" variant="overlay" />
           <span className="type-label-small text-on-surface-mittel">
-            ruhig · aktiv (<code>state-primary</code>) · sm · overlay (06dp über Bild)
+            ruhig · aktiv (<code>state-primary</code>) · overlay (06dp über Bild)
           </span>
         </div>
 
@@ -1102,16 +1108,16 @@ export default function Styleguide() {
         </p>
         <div className="flex items-center gap-4">
           <Tooltip label="Bearbeiten">
-            <IconButtonLink href="#" icon={Pencil} label="Bearbeiten" size="sm" />
+            <IconButtonLink href="#" icon={Pencil} label="Bearbeiten" />
           </Tooltip>
           <Tooltip label="Öffentlich schalten">
-            <IconButton icon={Globe} label="Öffentlich schalten" size="sm" />
+            <IconButton icon={Globe} label="Öffentlich schalten" />
           </Tooltip>
           <Tooltip label="Auf privat setzen">
-            <IconButton icon={Lock} label="Auf privat setzen" size="sm" />
+            <IconButton icon={Lock} label="Auf privat setzen" />
           </Tooltip>
           <Tooltip label="Rechtsbündig (ende)" ende>
-            <IconButton icon={Pencil} label="Rechtsbündig" size="sm" />
+            <IconButton icon={Pencil} label="Rechtsbündig" />
           </Tooltip>
           <span className="type-label-small text-on-surface-mittel">
             (hovern oder per Tab fokussieren)
@@ -1193,7 +1199,11 @@ export default function Styleguide() {
           dann steht sie umrandet in Primary (<code>oeffentlich</code>,{" "}
           <code>varianten</code>). Keine der beiden Formen füllt mit
           Akzentfarbe; das bleibt dem gefüllten Knopf vorbehalten, der etwas
-          auslöst. Anatomie: <code>rounded-plakette</code>, 22 px hoch,{" "}
+          auslöst — und dem <code>Zaehler</code>, der an einem Knopf hängt und
+          zählt, was dessen Handlung bewirkt (gewählte Werte am Filterknopf,
+          Übernahmen in der Übungsauswahl). Er ist gefüllt, weil er als Teil
+          des Knopfes gelesen wird, nicht als eigene Aussage, und für die
+          Vorlesehilfe stumm: Der Knopf sagt die Zahl in Worten. Anatomie: <code>rounded-plakette</code>, 22 px hoch,{" "}
           <code>type-plakette</code> — dasselbe Mass trägt die
           Kategorie-Plakette darunter, sonst stünden zwei Plaketten
           nebeneinander verschieden hoch.
@@ -1247,12 +1257,14 @@ export default function Styleguide() {
         <p className="type-label-small mb-2 text-on-surface-mittel">Chips</p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
           Ungewählt steht jeder Chip auf der Kante. <strong>Gewählt gibt es
-          zweimal.</strong> Getönt (<code>chipTextSelected</code> —
-          Primary-Kontur, Primary-Schrift, 12 % Fläche, kein Häkchen) sind der{" "}
+          zweimal.</strong> Umrandet (<code>chipTextSelected</code> —
+          Primary-Kontur, Primary-Schrift, keine Fläche, kein Häkchen) sind der{" "}
           <strong>Filter</strong> und der Chip, der{" "}
           <strong>Nutzertext</strong> trägt — eine Variante, ein Gruppenname.
-          Dieselbe Tönung trägt das gewählte Glied der verbundenen
-          Knopfgruppe (08). Ein Filter steht neben Suchfeld, Auswahl und
+          Dasselbe trägt das gewählte Glied der verbundenen Knopfgruppe (08) und
+          der eingrenzende Filterknopf (29). Ohne Fläche steht die
+          Primary-Schrift auf dem dunklen Grund am klarsten (Epic #363); eine
+          getönte Fläche nahm ihr Kontrast. Ein Filter steht neben Suchfeld, Auswahl und
           Knöpfen; gefüllt wäre er lauter als die Handlung daneben, und der
           Farbwechsel sagt «an» bereits. Eine gefüllte Fläche schriee zudem den
           Namen an, den die Trainerin selbst vergeben hat. Gefüllt
@@ -1275,17 +1287,9 @@ export default function Styleguide() {
           versal in <code>type-label-medium</code>.
         </p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
-          <strong>Zwei Höhen, geführt statt von aussen.</strong> Ein Chip im
-          Fliesstext oder in einer Chip-Reihe trägt das Grundmass (36 px, wie der kleine Knopf). Steht
-          er in einer <strong>Filterleiste</strong>, fluchtet er mit den dichten
-          Feldern daneben und nimmt deren 48 px — über{" "}
-          <code>groesse=&quot;leiste&quot;</code> am{" "}
-          <code>FilterChip</code>, nicht über eine Höhenklasse im{" "}
-          <code>className</code>: <code>cn</code> ist ein reiner Joiner, eine
-          Höhe von aussen entschiede allein über die Reihenfolge im erzeugten
-          CSS. Dieselbe Überlegung wie bei <code>look</code> am{" "}
-          <code>ChoiceChip</code>. Den Nutzertext-Chip betrifft es nicht — er
-          trägt immer 36 px.
+          <strong>Eine Höhe.</strong> Jeder Chip ist 36 px hoch, im Fliesstext
+          wie in einer Filterleiste — dasselbe Mass wie Knopf, Feld und
+          Filterknopf, darum fluchtet er überall ohne eigene Stufe.
         </p>
         <ChipsDemo />
       </Section>
@@ -1435,7 +1439,6 @@ export default function Styleguide() {
               <FavoriteButton
                 exerciseId="00000000-0000-0000-0000-000000000000"
                 initial={false}
-                size="sm"
                 variant="overlay"
               />
             }
@@ -1543,41 +1546,70 @@ export default function Styleguide() {
 
       <Section n="14" title="Textfelder, Text-Area, Datum &amp; Zeit">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Umrissen, mit schwebendem Label: Kontur auf der Kante (1.5 px),{" "}
-          <code>rounded-flaeche</code>, durchsichtige Fläche und{" "}
-          <code>h-14</code> — beziehungsweise <code>h-12</code>, wo es dicht
-          steht (siehe unten); mehr Bauformen gibt es nicht. Im Fokus wird die Kontur 2 px stark und Primary;
-          die Zustands-Ebene bleibt hier aussen vor, denn ein{" "}
-          <code>&lt;input&gt;</code> hat kein <code>::after</code> — Ring und
-          Rahmen tragen den Fokus allein. Das schwebende Label stanzt ein Loch in
-          die Kontur, indem es die Fläche hinter sich malt; welche das ist, sagt{" "}
-          <code>--feld-grund</code> (voreingestellt der Grund, 00dp — Karte,
-          Block, Übungszeile und Dialog setzen ihre Stufe selbst, ein Feld muss
-          nichts wissen).
+          <strong>Leer steht der Name im Feld, sonst darüber</strong> (Epic
+          #363, nach dem Vorbild von Jira). Ein leeres Feld zeigt nur seinen
+          Namen, gedämpft an der Stelle des Werts — kein zweiter Satz wie
+          «… wählen», ein Formular mit vielen leeren Feldern bleibt eine ruhige
+          Liste von Namen. Klickt man hinein oder steht ein Wert drin, springt
+          der Name in eine eigene Zeile darüber, und das Feld wird um diese
+          Zeile höher — eine von Anfang an freigehaltene Zeile wäre zu
+          grosszügig. Im Fehler steht der Name immer darüber. Er steht dort klein und gedämpft in der Lesetype (
+          <code>type-body-small</code>), nicht in der Versal-Type der Label — er
+          benennt, er ruft nicht. Darunter folgt der Feldkasten, darunter
+          Hinweis oder Fehler in derselben kleinen Schrift.
+          Der Rahmen dafür ist <code>Feld</code>. Jedes Feld trägt genau einen
+          Namen: Zwei zusammengehörige Werte (Länge und Breite, Mindest- und
+          Höchstanzahl) sind zwei Felder untereinander, nicht ein gemeinsamer
+          Name über zwei Teilnamen — zwei Namensstufen brächen die ruhige
+          Liste aus Namen und Werten (PO 2026-10-04). Bildet ein Knopf mit
+          dem Feld eine Handlung (Mitglied suchen),
+          steht er in <code>aktion</code>: in derselben Zeile wie der
+          Feldkasten, auf einer Linie mit ihm — ob der Name darüber steht oder
+          das leere Feld ihn ausblendet.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Das Label trägt in seinen zwei Lagen zwei Schriften, und das
-          ist Absicht.</strong> Ruhend steht es <em>im</em> Feld, an genau der
-          Stelle, an der gleich der Wert stehen wird — also in der Schrift des
-          Werts (<code>type-body-large</code>), unterschieden nur durch die
-          blassere Farbe: Was dort steht, ist noch nichts Eingegebenes. In
-          Mono-Versalien sähe es aus wie eine Beschriftung, die zufällig im Feld
-          liegt, und Auswahlfelder, deren Leerfall seit je ein Satz ist («Alle
-          Stufen»), stünden in derselben Zeile sichtbar anders da. Geschwebt
-          sitzt es auf der Kontur und benennt das Feld nur noch — dieselbe
-          Schrift, zwei Stufen kleiner (<code>type-body-small</code>, 12 px):
-          dasselbe Wort, leiser gesagt. Der Label-Stil des Hauses
-          (mono/versal) stünde hier quer, denn er ruft Aufmerksamkeit, und ein
-          Label, das gerade aus dem Weg gegangen ist, will keine. So liest sich
-          das Feld von oben nach unten in einer Schrift: Name, Wert,
-          Hinweistext — die beiden Kleinen im selben Grad. Dieselben zwei Lagen
-          tragen Text-Area, Datum &amp; Zeit sowie Einfach- und Mehrfachauswahl
-          (16 und 17); die drei Klassenbündel stehen als{" "}
-          <code>feldLabelBase</code> / <code>-Ruhend</code> /{" "}
-          <code>-Schwebend</code> im TextField.
+          <strong>Der Feldkasten ist ruhend leer:</strong> keine Kontur, keine
+          Fläche (Utility <code>feldkasten</code>). Ein Formular liest sich so
+          als Text statt als Stapel von Kästen. Beim Überfahren hellt die ganze
+          Angabe auf, Name und Kasten zusammen, mit einer leisen Ebene in der
+          Schriftfarbe (6 %), die ringsum 6 px über den Kasten hinausragt —
+          gerade ein leeres Feld gibt sich so deutlich als Feld zu erkennen,
+          ohne dass sich etwas verschiebt. Im Fokus trägt die Kontur Primary,
+          bei Fehler und Befund Error. Die Stärke bleibt dabei immer
+          1.5 px — nur die Farbe wechselt, der Kasten verschiebt sich beim
+          Hineinklicken nicht. <strong>Der Name hält immer 6 px</strong> zu
+          dem, was unter ihm sichtbar ist: im Fokus zur Kontur, ruhend — wo
+          die Kontur fehlt — zur Schrift des Werts. Beim Hineinklicken springt
+          er darum um 12 px hoch, ohne Übergang und ohne das Formular zu
+          verschieben (nach dem Vorbild von Jira).
+          36 px hoch wie jedes Bedienelement, der Wert in{" "}
+          <code>type-body-large</code>. Wo ein Feld keinen sichtbaren Namen trägt
+          — die Suche in der Filterleiste —, gibt <code>umrandet</code> ihm auch
+          ruhend die Kante, sonst fehlte es dort schlicht.{" "}
+          <strong>Auf Touch-Geräten</strong> gibt es kein Überfahren: Ein leeres
+          Feld kündigt sich dort allein über seinen Namen im Feld an. Das ist
+          gewollt (PO-Entscheid 2026-10-03, Variante «ohne Kontur») — jedes
+          Feld zeigt entweder seinen Namen oder einen Wert.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Hinweise:</strong> Was ein Feld nur erklärt («Höchstens 200
+          Zeichen»), steht nach dem Vorbild von Jira hinter einem ⓘ rechts
+          im Feld (<code>info</code>, Baustein <code>InfoKnopf</code>): beim
+          Zeigen ein Tooltip, ein Klick öffnet ein kleines Panel. Das ⓘ zeigt
+          sich <strong>nur beim Überfahren</strong> der Angabe — nicht ruhend,
+          nicht während man im Feld arbeitet, und auf Touch-Geräten gar nicht
+          (PO 2026-10-04). Es steht senkrecht mittig auf der ganzen Angabe,
+          zwischen Name und Wert. Die Tastatur erreicht es weiterhin und macht
+          es dabei sichtbar; die Vorlesehilfe hört den Hinweis ohnehin mit dem
+          Feld. Fehler und Hinweise, die
+          sich mit der Eingabe ändern, bleiben sichtbar unter dem Feld (
+          <code>supportingText</code>) — die muss man sehen, ohne zu klicken.
         </p>
         <div className="grid max-w-md gap-6">
-          <TextField label="Übungsname" supportingText="Pflichtfeld" />
+          <TextField
+            label="Übungsname"
+            info="Ein fester Hinweis steht hinter dem ⓘ, nicht dauernd unter dem Feld."
+          />
           <SearchField label="Suche" />
           <TextField
             label="Anzahl Spieler:innen"
@@ -1593,11 +1625,11 @@ export default function Styleguide() {
           />
           <TextArea
             label="Aufbau / Beschreibung"
-            supportingText="Mehrzeilig — wächst bis 10 Zeilen, dann scrollen."
+            supportingText="Leer zwei Zeilen hoch — wächst bis 10 Zeilen, dann scrollen."
           />
           <TextArea
             label="Weiteres Material"
-            placeholder="Mit placeholder: leer spricht der Platzhalter, das Label erscheint erst geschwebt."
+            supportingText="Leer steht der Name im Feld; der Hinweis darunter bleibt."
           />
         </div>
 
@@ -1612,15 +1644,21 @@ export default function Styleguide() {
           nacheinander — solange nichts eingegeben ist, sagt die Lupe, wofür das
           Feld da ist; sobald etwas dasteht, tritt an ihre Stelle ein Kreuz, das
           die Suche mit einem Klick leert und den Cursor zurück ins Feld setzt.
-          Nebenbei bekommt das schwebende Label seinen ruhigen Platz an der
-          linken Kante zurück. Das Kreuz meldet sich über dasselbe{" "}
-          <code>onChange</code> wie eine Tastatureingabe — es gibt keinen
-          zweiten Rückkanal, den ein Aufrufer vergessen könnte, und eine
-          verzögerte Suche verzögert auch das Leeren.
+          Das Kreuz meldet sich über dasselbe <code>onChange</code> wie eine
+          Tastatureingabe — es gibt keinen zweiten Rückkanal, den ein Aufrufer
+          vergessen könnte, und eine verzögerte Suche verzögert auch das Leeren.
+          In der Filterleiste steht es ohne sichtbaren Namen (
+          <code>labelVersteckt</code>), dafür umrandet und mit Platzhalter.
         </p>
         <div className="grid max-w-md gap-6">
           <SearchField label="Übungen durchsuchen" />
-          <SearchField dense label="Übungen durchsuchen" defaultValue="Passspiel" />
+          <SearchField
+            label="Übungen durchsuchen"
+            labelVersteckt
+            umrandet
+            placeholder="Übungen durchsuchen"
+            defaultValue="Passspiel"
+          />
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
@@ -1641,17 +1679,14 @@ export default function Styleguide() {
           rechnerisch eine Fläche und am Bildschirm keine.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Warum nicht wie bei <code>TextField</code> die Kontur in Ruhe? Weil
-          das Feld hier nicht in einem Formular steht, sondern in einem Kopf.
-          Eine Kontur machte aus der Überschrift dauerhaft ein Bedienelement und
-          zöge Aufmerksamkeit auf etwas, das man selten braucht; die Fläche beim
-          Zeigen sagt dasselbe, aber erst dann, wenn jemand hinschaut. Die
-          Konturstärke bleibt zwischen Ruhe und Fokus gleich und wechselt nur die
-          Farbe — ein Sprung von 1.5 auf 2 px verschöbe bei 28 px Schrift die
-          ganze Zeile sichtbar.
+          Es folgt derselben Idee wie der Feldkasten — ruhend nichts, beim
+          Zeigen eine Fläche, im Fokus die Kontur —, nur in der Schrift der
+          Überschrift und ohne Namen darüber. Die Konturstärke bleibt zwischen
+          Ruhe und Fokus gleich und wechselt nur die Farbe — ein Sprung verschöbe
+          bei 28 px Schrift die ganze Zeile sichtbar.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Kein schwebendes Label:</strong> Der Wert <em>ist</em> bereits
+          <strong>Kein Name darüber:</strong> Der Wert <em>ist</em> bereits
           die Überschrift, ein Label daneben benennte dieselbe Sache ein zweites
           Mal. Den Namen trägt darum <code>aria-label</code> — Pflicht, nicht
           Kür. Und weil ein <code>&lt;input&gt;</code> keine Überschrift ist,
@@ -1676,32 +1711,17 @@ export default function Styleguide() {
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
-          Dichte Bauform (<code>dense</code>)
+          Zahlenfelder
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Warum das hohe Feld nicht reicht: In Filterzeilen und dichten
-          Listenzeilen stehen Felder neben Select-Triggern und Chips und müssen
-          mit ihnen fluchten — <code>h-12</code> statt <code>h-14</code>.{" "}
-          <strong>Das ist der ganze Unterschied.</strong> Kontur, Radius,
-          durchsichtige Fläche, Schriftgrad und schwebendes Label sind
-          dieselben; <code>supportingText</code>, <code>error</code> und{" "}
-          <code>befund</code> ebenso. Eine dichte Bauform ist dasselbe Feld,
-          enger gestellt — sähe sie anders aus, wäre sie ein zweites Feld, und
-          die Filterzeile müsste erklären, warum ihre Felder nicht wie Felder
-          aussehen.
-        </p>
-        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Zahlenfelder</strong> (<code>type=&quot;number&quot;</code>)
-          stehen immer dicht, auf der Höhe der Auswahlfelder, neben denen sie
-          meist stehen — etwa die Menge neben der Material-Art. Sie zählen nie
-          von selbst: keine Pfeile im Feld, und weder Pfeiltasten noch Mausrad
-          ändern den Wert. Eine Zahl wird getippt; ein Scrollen über dem
-          fokussierten Feld verstellte sie sonst unbemerkt.
+          zählen nie von selbst: keine Pfeile im Feld, und weder Pfeiltasten
+          noch Mausrad ändern den Wert. Eine Zahl wird getippt; ein Scrollen
+          über dem fokussierten Feld verstellte sie sonst unbemerkt.
         </p>
         <div className="grid max-w-md gap-6">
-          <TextField dense label="Verfügbare Kinder" type="number" min={1} leadingIcon={Users} />
+          <TextField label="Verfügbare Kinder" type="number" min={1} />
           <TextField
-            dense
             label="Verfügbare Kinder"
             type="number"
             min={1}
@@ -1729,8 +1749,8 @@ export default function Styleguide() {
           <code>befund</code> lässt speichern und trägt seinen Satz im
           Supporting-Text. Am Rahmen gilt die Rangfolge <code>error</code> &gt;{" "}
           <code>befund</code> &gt; Fokus: Der Fokus färbt nur den ruhigen Rahmen
-          um und zeigt sich sonst über seine Dicke, damit ein Befund nicht
-          ausgerechnet beim Hinschauen verschwindet. Weil der Rahmen allein nur
+          um und zeigt sich im Fehler über einen halben Pixel nach innen, damit
+          ein Befund nicht ausgerechnet beim Hinschauen verschwindet. Weil der Rahmen allein nur
           sehend wahrnehmbar ist, gehört zu <code>befund</code> ein Hinweis für
           Screenreader (am Dauerfeld ein <code>sr-only</code>-Satz per{" "}
           <code>aria-describedby</code>).
@@ -1745,7 +1765,6 @@ export default function Styleguide() {
         </p>
         <div className="grid max-w-md gap-6">
           <TextField
-            dense
             label="Minuten"
             aria-label="Dauer in Minuten"
             type="number"
@@ -1773,12 +1792,8 @@ export default function Styleguide() {
           Datum &amp; Uhrzeit
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Für Trainings-Termine. Das Label liegt auf der Kontur wie überall,
-          aber es <strong>schwebt nicht</strong>: Native <code>date</code>/
-          <code>time</code>-Felder zeigen immer ihre Platzhalter-Maske, es gäbe
-          also keine Ruhelage im Feld und die Bewegung liefe nie. Es steht von
-          Anfang an oben — wie bei der Einfachauswahl (16), die aus demselben
-          Grund immer einen Wert hat. Das native Steuerelement ist Absicht —
+          Für Trainings-Termine, mit Name und Feldkasten wie jedes Feld. Das
+          native Steuerelement ist Absicht —
           Datumsauswahl, Tastatureingabe und Lokalisierung kommen vom
           Betriebssystem.
         </p>
@@ -1839,37 +1854,27 @@ export default function Styleguide() {
       <Section n="16" title="Einfachauswahl mit Panel">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Auswahl <strong>eines</strong> Werts — kein natives{" "}
-          <code>&lt;select&gt;</code>. Der Trigger ist ein Feld (durchsichtige
-          Fläche, Kontur auf der Kante), das aufgeklappte Panel ist ein Menü
+          <code>&lt;select&gt;</code>. Der Auslöser ist ein Feldkasten wie am
+          Textfeld (14), mit dem Namen darüber; das aufgeklappte Panel ist ein Menü
           (08dp, Haarlinie, <code>shadow-dp-08</code>, Häkchen auf der Auswahl).
           Die Zeile, auf der die Tastatur gerade steht, trägt{" "}
           <code>state-aktiv</code> — dieselbe Deckung wie der Fokus, aber ohne
           echten <code>:focus-visible</code>, denn der liegt auf dem Trigger.
           Listbox-Semantik mit voller Tastatursteuerung (↑/↓, Home/End, Enter,
-          Esc). Das Label schwebt auf der Kontur wie am Textfeld (14). Ein
-          Label <em>über</em> dem Feld, wie es hier früher stand, gibt es im
-          Kit nicht mehr — jede Beschriftung liegt auf oder in ihrer Kontur.
+          Esc). Offen trägt der Auslöser die Kontur in Primary — er gehört dann
+          zum Panel darunter. Den Pfeil zeigt das Feld nur, solange man darin
+          arbeitet (Fokus oder offene Liste): Ruhend zeigt das Formular Namen
+          und Werte, keine Bedienelemente — sobald man hineingeht, sagt der
+          Pfeil, dass hier gewählt wird (nach dem Vorbild von Jira). Der gewählte Wert steht ganz im Feld und bricht
+          um, statt abgeschnitten zu werden: Eine Einordnung ist oft ein Satz.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Leerwert und Platzhalter sind zweierlei</strong>, und das Feld
-          zeigt sie verschieden. «— kein Feldtyp —» ist ein <em>Wert</em>: Die
-          Übung hat keinen, das ist die Antwort, und sie steht als Option in der
-          Liste und danach als Wert im Feld — das Label schwebt wie bei jedem
-          anderen. «Einordnung wählen …» ist <em>keine Antwort</em>, sondern das
-          Fehlen einer: Dafür gibt es <code>placeholder</code>, dann ruht das
-          Label im Feld und trägt diesen Satz, grau und im Label-Schnitt —
-          genau wie an der Mehrfachauswahl (17). Sobald gewählt ist, oder
-          solange das Panel offen steht, schwebt <code>label</code> an seine
-          Stelle. Ein Feld hat das eine oder das andere, nie beides; wer «noch
-          nichts gewählt» als Option in die Liste schriebe, liesse es aussehen
-          wie eine getroffene Wahl. Der barrierefreie Name bleibt dabei konstant
-          das <code>label</code> — ein Feld darf nicht umbenannt werden, bloss
-          weil jemand noch nichts gewählt hat.
-        </p>
-        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Datum &amp; Zeit (14) kennt darum keine Ruhelage: Ein natives
-          Datumsfeld zeigt sein <code>tt.mm.jjjj</code> immer, sein Label hat
-          also nie eine.
+          <strong>Keine Option «— kein … —»</strong>: Ist nichts gewählt, ist
+          das Feld leer und zeigt nur seinen Namen (14) — bei einem optionalen
+          Feld heisst das schon «nicht angegeben». Eine Option für «keiner»
+          sähe aus wie eine getroffene Wahl und verdoppelte, was das leere Feld
+          sagt. Wo «keiner» fachlich doch eine Antwort ist, gehört sie als
+          eigener Wert ins Vokabular (beim Feldtyp etwa «Freies Feld»).
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <code>group</code> stellt einer Option eine nicht wählbare Kopfzeile
@@ -1891,7 +1896,6 @@ export default function Styleguide() {
             label="Feldtyp"
             defaultValue="kleinfeld"
             options={[
-              { value: "", label: "— kein Feldtyp —" },
               { value: "kleinfeld", label: "Kleinfeld" },
               { value: "grossfeld", label: "Grossfeld" },
               { value: "freies_feld", label: "Freies Feld" },
@@ -1911,44 +1915,31 @@ export default function Styleguide() {
           <Select
             label="Trainingsteil"
             defaultValue=""
-            placeholder="Einordnung wählen …"
             options={[
               { value: "auffangen", label: "Auffangen" },
               { value: "einleitung", label: "Einleitung" },
               { value: "hauptteil", label: "Hauptteil" },
               { value: "ausklang", label: "Ausklang" },
             ]}
-            supportingText="Noch nichts gewählt: Das Label ruht im Feld und trägt den Platzhalter."
+            supportingText="Noch nichts gewählt: Der Name steht gedämpft im Feld."
           />
         </div>
       </Section>
 
       <Section n="17" title="Mehrfachauswahl">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Auswahl <strong>mehrerer</strong> Werte: einzeiliger Feld-Trigger,
-          der die gewählten Werte als kommagetrennte Zeile zeigt, öffnet ein
-          Panel mit Suchfeld im Kopf, Optionsliste (eckige Checkbox,{" "}
-          <code>rounded-plakette</code>) und Aktions-Fuss
+          Auswahl <strong>mehrerer</strong> Werte im Formular: ein Feldkasten
+          mit dem Namen darüber, der die gewählten Werte als kommagetrennte
+          Zeile zeigt und umbricht, wo sie nicht in eine Zeile passen (Epic
+          #363). Er öffnet ein Panel mit Suchfeld im Kopf, Optionsliste (eckige
+          Checkbox, <code>rounded-plakette</code>) und Aktions-Fuss
           (<code>Zurücksetzen</code> / <code>Alle auswählen</code>, respektiert
-          den aktiven Filter). Das Feld trägt seinen Wert wie die Einzelauswahl
-          (16): eine Zeile Text, am Ende abgeschnitten (<code>truncate</code>) —
-          keine Tags im Feld und kein <code>+N</code>-Zähler. Entfernt wird in
-          der Liste, wo auch gewählt wird; ein Kreuzchen pro Wert im Feld wäre
-          ein zweiter Ort dafür, und gefüllte Tags im Feld eine Fläche, die die
-          Kontur überstrahlt, in der sie liegt. Die Werte stehen in der
-          Reihenfolge der Optionsliste, nicht in der des Anklickens: Dieselbe
-          Auswahl soll immer gleich lauten. Trigger wie ein Feld, Panel wie ein
-          Menü — und das Label wie am Textfeld (14), nur von Hand geschaltet,
-          denn ein Trigger ohne <code>&lt;input&gt;</code> kennt kein{" "}
-          <code>:placeholder-shown</code>. Ruhend steht dort der Leerfall in
-          Worten («Alle Stufen», der <code>placeholder</code>) — genau da, wo
-          gleich der Wert steht. Beim ersten Wert, und ebenso solange das Panel
-          offen ist, schwebt an seiner Stelle der Name der Dimension
-          («Alterskategorie», das <code>label</code>) auf die Kontur. Zwei
-          Sätze für zwei Zustände, weil sie Verschiedenes sagen; der
-          barrierefreie Name bleibt konstant das <code>label</code> — ein Feld
-          darf nicht umbenannt werden, bloss weil jemand etwas ausgewählt hat.
-          Combobox- und Listbox-Semantik
+          den aktiven Filter). Keine Tags im Feld: Entfernt wird in der Liste,
+          wo auch gewählt wird; ein Kreuzchen pro Wert im Feld wäre ein zweiter
+          Ort dafür. Die Werte stehen in der Reihenfolge der Optionsliste,
+          nicht in der des Anklickens: Dieselbe Auswahl soll immer gleich
+          lauten. Ist nichts gewählt, ist das Feld leer und zeigt seinen Namen
+          (14). Combobox- und Listbox-Semantik
           (<code>aria-multiselectable</code>) mit voller Tastatursteuerung (↑/↓,
           Home/End, Enter toggelt, Esc schliesst). <code>searchable</code> /{" "}
           <code>actions</code> einzeln abschaltbar für kurze feste Listen.{" "}
@@ -1968,16 +1959,14 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Der Baustein trägt beide Mehrfachauswahlen des Übungsformulars —{" "}
           <strong>Alterskategorie</strong> und{" "}
-          <strong>Erscheinungsform</strong> — und nicht mehr nur die
-          Filterzeilen. Im Formular unterscheiden sich die beiden in der
+          <strong>Erscheinungsform</strong>; die Filterleisten führen ihre
+          Dimensionen dagegen als Filterknopf (29). Im Formular unterscheiden sich die beiden in der
           Ausstattung: Die Alterskategorie schaltet <code>searchable</code> und{" "}
           <code>actions</code> ab (drei bis vier kurze Werte liest man
           schneller, als man sie filtert), die Erscheinungsform behält beides
           (der Junioren-Katalog führt elf Werte, und jeder ist ein ganzer Satz).
-          Und der <code>placeholder</code> sagt hier nicht mehr den Leerfall
-          einer Abfrage («Alle Stufen»), sondern den einer Eingabe
-          («Alterskategorie wählen …»): Im Filter heisst nichts gewählt <em>alles</em>,
-          im Formular heisst es <em>nichts</em>.
+          Im Formular heisst nichts gewählt <em>nichts</em>, im Filter{" "}
+          <em>alles</em> — darum ist der Filter ein eigener Baustein (29).
         </p>
         <MultiSelectDemo />
 
@@ -1990,7 +1979,7 @@ export default function Styleguide() {
           Mehrfachauswahl ein Panel öffnet — bei sieben kurzen Werten, die man
           auf einen Blick vergleichen will, wäre das ein Klick zu viel. Jeder
           Wert ist ein <code>FilterChip</code> (Ein/Aus, <code>aria-pressed</code>,
-          gewählt getönt); das Kürzel steht sichtbar, der volle
+          gewählt in Primary umrandet); das Kürzel steht sichtbar, der volle
           Wochentag für Screenreader. Montag zuerst, die Wahl bleibt sortiert.
           Ein Fehler steht unter den Chips.
         </p>
@@ -2278,9 +2267,9 @@ export default function Styleguide() {
           ).map((el) => (
             <div
               key={el.id}
-              className="flex size-12 items-center justify-center overflow-hidden rounded-flaeche border border-linie"
+              className="flex size-9 items-center justify-center overflow-hidden rounded-flaeche border border-linie"
             >
-              <GlyphVorschau element={el} groesse={40} />
+              <GlyphVorschau element={el} groesse={28} />
             </div>
           ))}
         </div>
@@ -2510,10 +2499,10 @@ export default function Styleguide() {
             icon={RefreshCw}
             actions={
               <>
-                <Button type="button" variant="text" size="sm">
+                <Button type="button" variant="text">
                   Material beibehalten
                 </Button>
-                <Button type="button" variant="text" size="sm">
+                <Button type="button" variant="text">
                   Neuen Vorschlag übernehmen
                 </Button>
               </>
@@ -2524,7 +2513,7 @@ export default function Styleguide() {
           <Banner
             icon={ListPlus}
             actions={
-              <Button type="button" variant="text" size="sm">
+              <Button type="button" variant="text">
                 Vorschlag übernehmen
               </Button>
             }
@@ -2556,8 +2545,8 @@ export default function Styleguide() {
           Chip in der Mitte geteilt: links wählen, rechts das Menü. Ein
           Menüeintrag „Anzeigen" allein reichte nicht, denn Wechseln ist die
           häufigste Handlung der Leiste und darf nicht zwei Klicks kosten. Die
-          Menühälfte ist <strong>44 px</strong> breit — ein eigenständiges
-          Touch-Ziel, nicht ein angehängtes 16px-Chevron. Der Umriss gehört
+          Menühälfte ist <strong>36 px</strong> breit wie jeder Icon-Knopf —
+          ein eigenes Bedienelement, nicht ein angehängtes 16px-Chevron. Der Umriss gehört
           trotzdem der Gruppe: eine Reihe von Varianten, nicht eine Reihe von
           Knopfpaaren; der Trennstrich darin folgt dem Zustand.
         </p>
@@ -2887,6 +2876,47 @@ export default function Styleguide() {
             </Eigenschaft>
           </Eigenschaften>
         </div>
+      </Section>
+
+      <Section n="29" title="Filterknopf">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Ein Filter ist ein Knopf mit seinem Namen</strong> (Epic
+          #363, nach dem Vorbild der Filter in Jira). Er nennt, <em>wonach</em>{" "}
+          gefiltert wird, und zählt, wie viele Werte gewählt sind;{" "}
+          <em>welche</em>, sieht man im geöffneten Panel. So bleibt eine
+          Filterleiste eine Zeile aus Wörtern — auf dem Handy umbrechend, aber
+          nie ein Stapel aus Feldern mit abgeschnittenen Wertlisten. Neu ist
+          der Baustein, weil die Mehrfachauswahl (17) ein Formularfeld ist: Sie
+          zeigt ihre Werte, weil sie dort die Eingabe <em>sind</em>; im Filter
+          sind sie nur ein Zustand der Übersicht.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Er trägt <strong>Schrift und Kleid des Filter-Chips</strong> (9), der
+          in derselben Leiste steht — normal gesetzt in{" "}
+          <code>type-body-medium</code>, leiser als ein halbfetter Knopf, denn
+          er grenzt ein, statt etwas auszulösen; nur eckig statt rund, weil er
+          ein Panel öffnet statt bloss umzuschalten. Grenzt er ein, steht er in
+          Primary umrandet wie ein gewählter Chip und trägt die Zahl als{" "}
+          <code>Zaehler</code> (09) — vorgelesen wird «Alterskategorie, 2
+          gewählt». Das Panel
+          ist breiter als der Knopf, wo der Inhalt es braucht (bis 34 rem; der
+          längste Übungstyp misst 484 px), und rückt am rechten Rand nach links
+          (<code>usePanelAnker</code>, geteilt mit der Mehrfachauswahl). Es ist
+          kein Menü und keine Listbox, sondern eine Gruppe gewöhnlicher
+          Bedienelemente: Kontrollkästchen im <code>AuswahlFilter</code>, ein
+          Zahlenfeld im <code>ZahlFilter</code> («Verfügbare Kinder»). ↑/↓ wandern zwischen ihnen, Esc
+          schliesst und gibt den Fokus an den Knopf zurück. Eine Wahl wirkt
+          sofort, das Panel bleibt offen; Zahl und Suche wirken nach einer
+          Tipppause.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Die Suche der Leiste (<code>FilterSuche</code>) steht ohne
+          sichtbaren Namen, dafür umrandet und mit Platzhalter (14) — ohne Kante stünde neben den umrandeten
+          Knöpfen ein Feld, das man nicht sieht. Schalter wie «Meine Übungen»
+          bleiben <code>FilterChip</code> (9): Sie haben kein Panel, nur an
+          und aus.
+        </p>
+        <FilterKnopfDemo />
       </Section>
     </Seitenrahmen>
   );

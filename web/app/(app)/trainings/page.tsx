@@ -48,7 +48,7 @@ export default async function TrainingsPage({
       }
       aktionen={
         user && (
-          <ButtonLink href="/training/neu" variant="filled" size="sm">
+          <ButtonLink href="/training/neu" variant="filled">
             Training erstellen
           </ButtonLink>
         )

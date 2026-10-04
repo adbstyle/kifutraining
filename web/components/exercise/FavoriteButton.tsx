@@ -28,13 +28,11 @@ import { setFavorite } from "@/lib/actions/favorites";
 export function FavoriteButton({
   exerciseId,
   initial,
-  size = "md",
   variant = "standard",
   className,
 }: {
   exerciseId: string;
   initial: boolean;
-  size?: "sm" | "md";
   variant?: "standard" | "overlay";
   className?: string;
 }) {
@@ -58,7 +56,6 @@ export function FavoriteButton({
     <IconButton
       icon={Heart}
       label={isFav ? "Favorit entfernen" : "Als Favorit markieren"}
-      size={size}
       variant={variant}
       active={isFav}
       onClick={toggle}

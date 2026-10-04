@@ -257,12 +257,12 @@ function GlyphKachel({ label, element, active = false, disabled = false, onClick
         disabled={disabled}
         onClick={onClick}
         className={cn(
-          "focus-ring state kontur flex size-12 items-center justify-center overflow-hidden rounded-flaeche",
+          "focus-ring state kontur flex size-9 items-center justify-center overflow-hidden rounded-flaeche",
           active ? "border-primary" : "border-kante",
           disabled && "cursor-not-allowed opacity-40",
         )}
       >
-        <GlyphVorschau element={element} groesse={40} />
+        <GlyphVorschau element={element} groesse={28} />
       </button>
     </Tooltip>
   );
@@ -980,7 +980,6 @@ export function DiagrammZeichnen({
           type="button"
           icon={Undo2}
           label="Rückgängig"
-          size="sm"
           onClick={rueckgaengig}
           disabled={verlauf.length === 0 || !!zeichnen}
         />
@@ -990,7 +989,6 @@ export function DiagrammZeichnen({
           type="button"
           icon={Redo2}
           label="Wiederherstellen"
-          size="sm"
           onClick={wiederherstellen}
           disabled={zukunft.length === 0 || !!zeichnen}
         />
@@ -1000,7 +998,6 @@ export function DiagrammZeichnen({
           type="button"
           icon={ClipboardPaste}
           label="Kopiertes Element einfügen"
-          size="sm"
           onClick={einfuegen}
           disabled={!zwischenablage || !!zeichnen}
         />
@@ -1019,7 +1016,7 @@ export function DiagrammZeichnen({
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Elemente, Bewegungen, Formen und Text">
         {gruppen.map((gruppe, gi) => (
           <Fragment key={gi}>
-            {gi > 0 && <span aria-hidden className="h-10 w-px shrink-0 self-center bg-linie" />}
+            {gi > 0 && <span aria-hidden className="h-9 w-px shrink-0 self-center bg-linie" />}
             <div className="flex shrink-0 items-center gap-1.5">
               {gruppe.map(({ key, ...rest }) => (
                 <GlyphKachel key={key} {...rest} />
@@ -1044,7 +1041,6 @@ export function DiagrammZeichnen({
             <Button
               type="button"
               variant="filled"
-              size="sm"
               onClick={() => fertigZeichnen()}
               disabled={zeichnen.punkte.length < minPunkte(zeichnen.werkzeug)}
             >
@@ -1052,7 +1048,7 @@ export function DiagrammZeichnen({
               Fertig
             </Button>
           )}
-          <Button type="button" variant="text" size="sm" onClick={abbrechenZeichnen}>
+          <Button type="button" variant="text" onClick={abbrechenZeichnen}>
             <X size={16} strokeWidth={2} aria-hidden />
             Abbrechen
           </Button>
@@ -1511,14 +1507,12 @@ const ElementLeiste = forwardRef<
             type="button"
             icon={RotateCcw}
             label="45 Grad nach links drehen"
-            size="sm"
             onClick={() => onDrehen(-45)}
           />
           <IconButton
             type="button"
             icon={RotateCw}
             label="45 Grad nach rechts drehen"
-            size="sm"
             onClick={() => onDrehen(45)}
           />
         </>
@@ -1535,7 +1529,7 @@ const ElementLeiste = forwardRef<
                 onClick={() => onPose(p)}
                 aria-label={`Pose ${p}`}
                 aria-pressed={aktiv}
-                className={`focus-ring rounded-flaeche border p-0.5 ${
+                className={`focus-ring flex size-9 items-center justify-center rounded-flaeche border ${
                   aktiv
                     ? "border-on-surface bg-elev-08"
                     : "border-linie"
@@ -1553,7 +1547,6 @@ const ElementLeiste = forwardRef<
           type="button"
           icon={FlipHorizontal2}
           label="Blickrichtung spiegeln"
-          size="sm"
           active={!!element.spiegeln}
           onClick={() => onSpiegeln(!element.spiegeln)}
         />
@@ -1571,11 +1564,15 @@ const ElementLeiste = forwardRef<
                 onClick={() => onFarbe(slug)}
                 aria-label={`Farbe ${slug}`}
                 aria-pressed={aktiv}
-                className={`focus-ring h-6 w-6 rounded-full border-2 ${
-                  aktiv ? "border-on-surface" : "border-linie"
-                }`}
-                style={{ backgroundColor: FARBEN[slug] }}
-              />
+                // 36 px Trefferfläche wie jedes Werkzeug, der Farbpunkt darin 24 px.
+                className="focus-ring flex size-9 items-center justify-center rounded-flaeche"
+              >
+                <span
+                  aria-hidden
+                  className={`size-6 rounded-full border-2 ${aktiv ? "border-on-surface" : "border-linie"}`}
+                  style={{ backgroundColor: FARBEN[slug] }}
+                />
+              </button>
             );
           })}
         </div>
@@ -1587,7 +1584,6 @@ const ElementLeiste = forwardRef<
             type="button"
             icon={Minus}
             label="Durchgezogene Linie"
-            size="sm"
             active={!element.gestrichelt}
             onClick={() => onGestrichelt(false)}
           />
@@ -1595,7 +1591,6 @@ const ElementLeiste = forwardRef<
             type="button"
             icon={Ellipsis}
             label="Gestrichelte Linie"
-            size="sm"
             active={!!element.gestrichelt}
             onClick={() => onGestrichelt(true)}
           />
@@ -1607,7 +1602,6 @@ const ElementLeiste = forwardRef<
           type="button"
           icon={PaintBucket}
           label={element.gefuellt ? "Füllung entfernen" : "Fläche füllen"}
-          size="sm"
           active={!!element.gefuellt}
           onClick={() => onGefuellt(!element.gefuellt)}
         />
@@ -1618,7 +1612,6 @@ const ElementLeiste = forwardRef<
           type="button"
           icon={Waypoints}
           label={imBearbeiten ? "Punkte bearbeiten beenden" : "Punkte bearbeiten"}
-          size="sm"
           active={imBearbeiten}
           onClick={onBearbeiten}
         />
@@ -1630,14 +1623,12 @@ const ElementLeiste = forwardRef<
         type="button"
         icon={Copy}
         label="Ausgewähltes Element kopieren"
-        size="sm"
         onClick={onKopieren}
       />
       <IconButton
         type="button"
         icon={Trash2}
         label="Ausgewähltes Element entfernen"
-        size="sm"
         onClick={onEntfernen}
         className="text-error"
       />
@@ -1677,14 +1668,12 @@ const MehrfachLeiste = forwardRef<
         type="button"
         icon={Copy}
         label="Ausgewählte Elemente kopieren"
-        size="sm"
         onClick={onKopieren}
       />
       <IconButton
         type="button"
         icon={Trash2}
         label="Ausgewählte Elemente entfernen"
-        size="sm"
         onClick={onEntfernen}
         className="text-error"
       />

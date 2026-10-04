@@ -63,10 +63,11 @@ export function KategorieChip({ k }: { k: KategorieSlug }) {
    Chip, die hier nicht wohnen.
 
    Höhe fest gesetzt statt über die Polsterung: Aus der Polsterung folgten
-   krumme Masse, und der Chip stünde neben dem kleinen Knopf um ein, zwei
-   Pixel versetzt. */
+   krumme Masse, und der Chip stünde neben dem Knopf um ein, zwei Pixel
+   versetzt. Ein Mass für jeden Chip (36 px, Epic #363) — dasselbe wie Knopf,
+   Feld und Filterknopf, darum fluchtet er in jeder Leiste ohne eigene Stufe. */
 const chipBase =
-  "state focus-ring inline-flex items-center gap-1.5 rounded-full kontur px-3 transition-colors";
+  "state focus-ring inline-flex h-9 items-center gap-1.5 rounded-full kontur px-3 transition-colors";
 
 /* Die Schrift ist wie die Höhe ein eigener Slot (`cn` ist ein reiner Joiner).
    Assist, Suggestion, Input und die Einfachauswahl tragen das Vokabular
@@ -78,24 +79,6 @@ const chipBase =
 const chipLabel = "type-label-medium";
 const chipFilterTypo = "type-body-medium";
 
-/* Die Höhe ist ein eigener Slot und steht NICHT in `chipBase` — `cn` ist ein
-   reiner Joiner (kein tailwind-merge), eine Basis-Höhe liesse sich von aussen
-   also nicht überschreiben: Wer `className="h-12"` mitgäbe, überliesse die
-   Entscheidung der Reihenfolge im erzeugten CSS. Genau die Falle, um die es
-   schon bei `look` geht. Darum eine geführte Prop.
-
-   `normal` (36 px) ist das Grundmass des Label-Chips: Es gilt im Fliesstext
-   und in jeder Chip-Reihe, und es ist das Mass des kleinen Knopfes, des
-   Nutzertext-Chips und der verbundenen Knopfgruppe — ein Filter-Chip neben
-   ihnen fluchtet. `leiste` (48 px) ist das Mass der dichten Felder —
-   ein Chip in einer FILTERLEISTE steht neben Suchfeld und Auswahlfeld und muss
-   mit ihnen fluchten, sonst zerfällt die Zeile optisch in zwei Bänder.
-   Nur der Filter-Chip kennt die Prop, weil nur er in solchen Leisten steht;
-   die übrigen Typen tragen das Grundmass. */
-const chipHoehen = { normal: "h-9", leiste: "h-12" } as const;
-/* Modul-lokal wie die Bündel: Die Aufrufstellen schreiben das Wort
-   («leiste»), niemand ausserhalb braucht den Typ zu benennen. */
-type ChipGroesse = keyof typeof chipHoehen;
 const chipOutlined = "border-kante bg-transparent text-on-surface";
 const chipSelected = "border-transparent bg-primary text-on-primary";
 /* Schwebender Chip: eine Höhenstufe plus Schatten statt einer Kontur — er
@@ -126,15 +109,16 @@ export const chipTextHuelle =
   "type-body-medium inline-flex h-9 rounded-full kontur normal-case transition-colors";
 export const chipTextBase = `${chipTextHuelle} state focus-ring items-center gap-1.5 px-3`;
 export const chipTextOutlined = "border-kante text-on-surface";
-/* Gewählter Nutzertext-Chip: umrandet und beschriftet in Primary, dazu ein
-   sehr leiser Grund. Nicht gefüllt wie der Filter-Chip — eine gefüllte Pille
-   kehrte den Nutzertext in schwarze Schrift, und der Name, den die Trainerin
-   vergeben hat, soll auch gewählt wie ihr Name aussehen. */
-export const chipTextSelected = "border-primary bg-primary/12 text-primary";
+/* Gewählt: umrandet und beschriftet in Primary, ohne Fläche (Epic #363) —
+   für jeden gewählten Chip, den Filterknopf und das gewählte Glied der
+   Knopfgruppe. Ohne Grund steht die Primary-Schrift auf dem dunklen Grund am
+   klarsten; eine getönte Fläche nahm ihr Kontrast, und gefüllt kehrte sie
+   den Nutzertext in schwarze Schrift — der Name, den die Trainerin vergeben
+   hat, soll auch gewählt wie ihr Name aussehen. */
+export const chipTextSelected = "border-primary text-primary";
 
-/* Filter-Chip (toggelbar) — gewählt: getönt wie ein Glied der verbundenen
-   Knopfgruppe (Kontur und Schrift in Primary, die Fläche Primary/12), ohne
-   Häkchen. Ein Filter steht neben Suchfeld, Auswahl und Knöpfen; gefüllt
+/* Filter-Chip (toggelbar) — gewählt: Kontur und Schrift in Primary, ohne
+   Fläche und ohne Häkchen (`chipTextSelected`). Ein Filter steht neben Suchfeld, Auswahl und Knöpfen; gefüllt
    wäre er lauter als die Handlung daneben, und der Farbwechsel von Kontur
    und Schrift sagt «an» bereits — für Screenreader `aria-pressed`.
    Optionales führendes Icon, gewählt wie ungewählt. */
@@ -143,17 +127,12 @@ export function FilterChip({
   onClick,
   children,
   icon: Icon,
-  groesse = "normal",
   className,
 }: {
   selected?: boolean;
   onClick?: () => void;
   children: React.ReactNode;
   icon?: LucideIcon;
-  /** `normal` (Vorgabe, 36 px) im Fliesstext und in Chip-Reihen; `leiste`
-   *  (48 px) in einer Filterleiste, wo der Chip mit den dichten Feldern
-   *  fluchtet. Bewusst eine Prop statt `className` — siehe `chipHoehen`. */
-  groesse?: ChipGroesse;
   className?: string;
 }) {
   return (
@@ -164,7 +143,6 @@ export function FilterChip({
       className={cn(
         chipBase,
         chipFilterTypo,
-        chipHoehen[groesse],
         selected ? chipTextSelected : chipOutlined,
         className,
       )}
@@ -246,7 +224,7 @@ export function ChoiceChip({
       className={cn(
         // Der Nutzertext-Chip trägt seine Höhe (h-9) in der eigenen Hülle —
         // er fluchtet mit dem leisen Knopf, nicht mit dem Label-Chip.
-        look === "nutzertext" ? chipTextBase : `${chipBase} ${chipLabel} ${chipHoehen.normal}`,
+        look === "nutzertext" ? chipTextBase : `${chipBase} ${chipLabel}`,
         look === "nutzertext"
           ? selected
             ? chipTextSelected
@@ -324,7 +302,6 @@ export function AssistChip({
       className={cn(
         chipBase,
         chipLabel,
-        chipHoehen.normal,
         elevated ? chipElevated : chipOutlined,
         className,
       )}
@@ -349,7 +326,7 @@ export function SuggestionChip({
     <button
       type="button"
       onClick={onClick}
-      className={cn(chipBase, chipLabel, chipHoehen.normal, chipOutlined, className)}
+      className={cn(chipBase, chipLabel, chipOutlined, className)}
     >
       {children}
     </button>
@@ -370,7 +347,7 @@ export function InputChip({
   className?: string;
 }) {
   return (
-    <span className={cn(chipBase, chipLabel, chipHoehen.normal, chipOutlined, "pr-2", className)}>
+    <span className={cn(chipBase, chipLabel, chipOutlined, "pr-2", className)}>
       {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
       {children}
       {onRemove && (

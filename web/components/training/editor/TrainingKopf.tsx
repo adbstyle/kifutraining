@@ -53,7 +53,7 @@ export function TrainingKopf({
         {training.team ? (
           <Link
             href={`/team/${training.team.id}`}
-            className="focus-ring inline-flex items-center gap-1.5 rounded-flaeche type-label-medium text-on-surface-mittel hover:text-primary"
+            className="focus-ring inline-flex items-center gap-1.5 rounded-flaeche type-body-small text-on-surface-mittel hover:text-primary"
           >
             <Users size={16} strokeWidth={2} aria-hidden />
             Team-Training von {training.team.name}
@@ -77,7 +77,7 @@ export function TrainingKopf({
           value={ziel}
           onChange={(e) => onZielChange(e.target.value)}
           onBlur={onZielSpeichern}
-          supportingText={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
+          info={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
         />
       </div>
 
@@ -90,7 +90,7 @@ export function TrainingKopf({
           value={stufen}
           onChange={onStufen}
           kategorien={kategorienFuer(training.altersstufe)}
-          supportingText="Für welche Alterskategorien dieses Training gedacht ist."
+          info="Für welche Alterskategorien dieses Training gedacht ist."
         />
       </div>
     </Card>

@@ -1,6 +1,6 @@
 export { Button, ButtonLink, buttonClasses } from "./Button";
 export { ButtonGroup, segmentClasses } from "./ButtonGroup";
-export { Badge, HerkunftBadge } from "./Badge";
+export { Badge, HerkunftBadge, Zaehler } from "./Badge";
 export {
   KategorieChip,
   FilterChip,
@@ -49,7 +49,7 @@ export { Menu } from "./Menu";
 export type { MenuItemDef } from "./Menu";
 export { OverflowMenu } from "./OverflowMenu";
 export { ChipMenu } from "./ChipMenu";
-export { Seitenleiste, SeitenleistenKnopf, leisteStil, nebenLeiste } from "./Seitenleiste";
+export { Seitenleiste, SeitenleistenKnopf, leisteStil, nebenLeiste, unterKopfzeile } from "./Seitenleiste";
 export type {
   SeitenleisteProps,
   SeitenleisteGruppe,
@@ -72,3 +72,5 @@ export { SearchField } from "./SearchField";
 export type { SearchFieldProps } from "./SearchField";
 export { PasswordField } from "./PasswordField";
 export type { PasswordFieldProps } from "./PasswordField";
+export { feldNameKlasse } from "./feld";
+export { FilterKnopf, AuswahlFilter, FilterSuche, ZahlFilter } from "./FilterKnopf";

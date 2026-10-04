@@ -109,12 +109,12 @@ export default async function ExerciseDetailPage({
               actions={
                 <>
                   <form action={behalteMaterial.bind(null, ex.id)}>
-                    <Button type="submit" variant="text" size="sm">
+                    <Button type="submit" variant="text">
                       {AENDERUNG_BEIBEHALTEN}
                     </Button>
                   </form>
                   <form action={uebernehmeMaterialVorschlag.bind(null, ex.id)}>
-                    <Button type="submit" variant="text" size="sm">
+                    <Button type="submit" variant="text">
                       {AENDERUNG_UEBERNEHMEN}
                     </Button>
                   </form>
@@ -145,7 +145,7 @@ export default async function ExerciseDetailPage({
   // Bedienelement etwas verloren (Postcondition 5).
   const aktionen = (
     <div className="ml-auto flex shrink-0 items-center gap-0.5 print:hidden">
-      <PrintButton variant="icon" size="sm" />
+      <PrintButton variant="icon" />
       {(isOwner || user) && (
         <>
           {isOwner ? (
@@ -158,7 +158,6 @@ export default async function ExerciseDetailPage({
                 <FavoriteButton
                   exerciseId={ex.id}
                   initial={favorited}
-                  size="sm"
                 />
               }
             />
@@ -171,7 +170,6 @@ export default async function ExerciseDetailPage({
               <FavoriteButton
                 exerciseId={ex.id}
                 initial={favorited}
-                size="sm"
               />
             </>
           )}

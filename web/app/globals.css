@@ -337,6 +337,167 @@
   border-style: solid;
 }
 
+/* Feldkasten (Epic #363): das Eingabe-Element jedes Felds — Input, Textarea,
+   Auslöser einer Auswahl. Ruhend weder Kontur noch Fläche: Der Name steht
+   darüber, der Wert spricht für sich, und ein Formular liest sich als Text
+   statt als Stapel von Kästen. Beim Überfahren hellt das ganze Feld auf
+   (siehe `.feld-rahmen` unten). Im Fokus und bei offenem Panel trägt die Kontur
+   Primary, bei Fehler oder Befund Error — Error zuletzt, weil was sich nicht
+   speichern lässt, den Fokus überdauern muss. Die Stärke bleibt immer
+   1.5 px, nur die Farbe wechselt: Der Kasten verschiebt sich beim
+   Hineinklicken nicht, nur der Name darüber springt (siehe unten).
+   `data-umrandet` gibt dem Feld auch ruhend die Kante — für Felder ohne
+   sichtbaren Namen (Suche in der Filterleiste), die sonst schlicht fehlten.
+   Zustände über Attribute statt Klassen, weil `cn` kein tailwind-merge ist:
+   So entscheidet die Reihenfolge hier, nicht die im erzeugten CSS. */
+@utility feldkasten {
+  border-width: 1.5px;
+  border-style: solid;
+  border-color: transparent;
+  border-radius: var(--radius-flaeche);
+  background-color: transparent;
+  color: var(--color-on-surface);
+  outline: none;
+  /* Kein Übergang: Die Kontur erscheint im selben Augenblick, in dem der
+     Name über sie springt (`.feld-rahmen .feld-name`) — eine noch
+     ausblendende Kontur liefe sonst mitten durch den Namen. */
+  &[data-umrandet] {
+    border-color: var(--color-kante);
+  }
+  &:focus,
+  &[aria-expanded="true"] {
+    border-color: var(--color-primary);
+    background-color: transparent;
+  }
+  &[data-befund],
+  &[aria-invalid="true"] {
+    border-color: var(--color-error);
+  }
+  /* Fokus im Fehler: Die Kontur bleibt Error, ein zweiter halber Pixel nach
+     innen zeigt trotzdem, wo die Tastatur steht. */
+  &[data-befund]:focus,
+  &[aria-invalid="true"]:focus {
+    box-shadow: inset 0 0 0 0.5px var(--color-error);
+  }
+  /* Platzhalter in der gedämpften Schrift, nicht der tiefen: Er sagt oft
+     etwas («Alterskategorie wählen …») und muss lesbar bleiben (4.5:1). */
+  &::placeholder {
+    color: var(--color-on-surface-mittel);
+  }
+}
+
+/* Abstand des Namens (Epic #363, nach dem Vorbild von Jira): Der Name hält
+   zu dem, was unter ihm sichtbar ist, immer denselben Abstand. Arbeitet man
+   im Feld, ist das die Kontur — der Name steht 6 px darüber. Ruhend ist die
+   Kontur unsichtbar und das Nächste darunter die Schrift des Werts, die
+   12 px unter der Oberkante des Kastens beginnt (Kontur, Polster, halber
+   Zeilenabstand); der Name rückt darum um diese 12 px an sie heran und hält
+   auch zu ihr 6 px. Beim Hineinklicken springt er hoch, ohne dass sich das
+   Formular verschiebt (`translate` statt Abstand). Wo die Kontur auch ruhend
+   steht — im Fehler, im Befund, umrandet —, bleibt er oben. */
+.feld-rahmen .feld-name {
+  margin-bottom: 0.375rem;
+}
+.feld-rahmen:not([data-fehler]):not(
+    :has(.feldkasten:is(:focus, [aria-expanded="true"], [data-befund], [data-umrandet], [aria-invalid="true"]))
+  )
+  .feld-name {
+  translate: 0 0.75rem;
+}
+
+/* Leeres Feld (Epic #363, nach dem Vorbild von Jira): Solange ein Feld leer
+   ist und nicht bearbeitet wird, steht sein Name IM Feld, gedämpft an der
+   Stelle des Werts, und die Zeile darüber bleibt leer — kein zweiter Satz.
+   Ein Formular mit vielen leeren Feldern liest sich so als ruhige, knappe
+   Liste von Namen. Sobald man im Feld arbeitet (Fokus oder offenes Panel,
+   nicht schon ein Klick aufs ⓘ daneben) oder ein Wert drinsteht, springt
+   der Name in eine eigene Zeile darüber, und das Feld wird um diese Zeile
+   höher — eine von Anfang an freigehaltene Zeile wäre zu grosszügig.
+   «Leer» heisst: ein Feldkasten zeigt seinen Platzhalter (der Name ist dann
+   der Platzhalter), oder der Rahmen meldet `data-leer` (die Auswahlfelder,
+   deren Auslöser kein Eingabe-Element ist). Im Fehler bleibt der Name
+   darüber stehen — er sagt, wo etwas fehlt.
+   Versteckt wird der Name nur für das Auge (wie `sr-only`): Er bleibt das
+   Label des Felds und wird vorgelesen. */
+.feld-rahmen:not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not([data-fehler]):is(
+    [data-leer],
+    :has(.feldkasten:placeholder-shown)
+  )
+  .feld-name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* Im Feld steht der Name dann nicht ein zweites Mal: Wer hineinklickt, sieht
+   ihn darüber und darunter ein leeres Feld. Nur wo der Name unsichtbar ist
+   (Suche in der Filterleiste), bleibt der Platzhalter auch beim Tippen stehen. */
+/* Überfahren (nach dem Vorbild von Jira): Die ganze Angabe hellt auf — Name
+   und Feldkasten zusammen — und die Fläche ragt ringsum 6 px über den Kasten
+   hinaus, ohne dass sich etwas verschiebt (Schatten statt Polster). Gerade
+   ein leeres Feld, das ruhend nur seinen Namen zeigt, gibt sich so deutlich
+   als Feld zu erkennen. Eine leise Ebene in der Schriftfarbe (6 %): auf jeder
+   Höhenstufe dieselbe Aussage, und im Druck kippt sie mit der Schrift. Nicht
+   während man im Feld arbeitet — dann trägt die Kontur —, nicht an einem
+   gesperrten Feld und nicht an der umrandeten Suche der Filterleiste, die
+   neben Knöpfen steht und sich schon über ihre Kante zeigt. Die Fläche liegt
+   auf der Angabe (`.feld-angabe`), nicht auf dem ganzen Rahmen: Ein Knopf
+   daneben (`aktion`) ist eine eigene Handlung und hellt nicht mit auf. */
+@media (hover: hover) {
+  .feld-rahmen:not([data-name-versteckt]):not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled)) .feld-angabe:hover {
+    --feld-hover: color-mix(in srgb, var(--color-on-surface) 6%, transparent);
+    border-radius: var(--radius-flaeche);
+    background-color: var(--feld-hover);
+    box-shadow: 0 0 0 6px var(--feld-hover);
+  }
+}
+
+/* Das ⓘ eines festen Hinweises (`Feld` mit `info`) zeigt sich nur beim
+   Überfahren — ruhend und während man im Feld arbeitet steht es nicht da
+   (PO 2026-10-04). Ein Formular zeigt so Namen und Werte, keine Zeichen; wer
+   über eine Angabe fährt, sieht, dass es zu ihr mehr zu wissen gibt. Auf
+   Touch-Geräten bleibt es verborgen (PO-Entscheid); die Vorlesehilfe hört
+   den Hinweis ohnehin mit dem Feld. Unsichtbar heisst hier durchsichtig, nicht
+   weg: Die Tastatur erreicht das ⓘ weiterhin und macht es dabei sichtbar,
+   ebenso ein offenes Panel. Durchsichtig nimmt es keine Klicks an. */
+.feld-info {
+  opacity: 0;
+  pointer-events: none;
+}
+.feld-info:has(:focus-visible, [aria-expanded="true"]) {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (hover: hover) {
+  .feld-rahmen:not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled)) .feld-angabe:hover .feld-info {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.feld-rahmen:not([data-name-versteckt]) .feldkasten:focus::placeholder {
+  color: transparent;
+}
+.feld-rahmen:has(.feldkasten:is(:focus, [aria-expanded="true"])) .feld-leertext {
+  visibility: hidden;
+}
+
+/* Der Pfeil eines Auswahlfelds steht nur, solange man darin arbeitet (Fokus
+   oder offene Liste) — nach dem Vorbild von Jira. Ruhend zeigt das Formular
+   Namen und Werte, keine Bedienelemente; sobald man hineingeht, sagt der
+   Pfeil, dass hier gewählt wird. Sein Platz bleibt frei, damit der Wert beim
+   Hineinklicken nicht umbricht. Die Vorlesehilfe kennt die Auswahl ohnehin
+   über ihre Rolle (`combobox`). */
+.feldkasten .feld-chevron {
+  visibility: hidden;
+}
+.feldkasten:is(:focus, :focus-within, [aria-expanded="true"]) .feld-chevron {
+  visibility: visible;
+}
+
 /* Diagramm-Platzhalter: 45°-Schraffur, sehr leise. */
 @utility schraffur {
   background-image: repeating-linear-gradient(
@@ -349,38 +510,39 @@
 }
 
 /* ─── Typo-Skala ──────────────────────────────────────────────────────
-   Display und Headline versal und leicht gesperrt: eine Neo-Grotesk
-   trägt Versalien eng, mehr als 3.5 % risse die Wörter auseinander.
-   Titel bekommen dafür ein negatives Tracking, damit sie kompakt
-   bleiben. Label stehen ebenfalls versal, gehen aber den umgekehrten
-   Weg und trennen sich gerade dadurch von den Headlines: ein Gewicht
-   TIEFER (600) und mit 8–10 % rund dreimal so weit gesperrt. Bei 700
-   und engem Tracking läsen sie sich als Headlines in Miniatur.
+   Display, Headline und Titel stehen in normaler Schreibung und im
+   selben Gewicht (600, Epic #363): Die Rangfolge trägt die Grösse, nicht
+   die Wucht. Eine Neo-Grotesk in Gemischtschreibung will eng stehen,
+   darum laufen die grossen Stufen mit leicht negativem Tracking — je
+   grösser, desto enger. So erscheinen auch Namen, die Trainer:innen
+   selbst erfassen, in Überschriften genau so, wie sie sie geschrieben
+   haben. Versal bleiben nur die Label: kleiner, mit 8–10 % weit
+   gesperrt und damit deutlich von jeder Überschrift geschieden.
    `tabular-nums` auf jeder Label-Stufe, weil Label zählen — Dauern,
    Zählungen, Positionsnummern fluchten sonst nicht. */
 @utility type-display-large {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 57px; line-height: 60px; letter-spacing: 0.035em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 57px; line-height: 60px; letter-spacing: -0.02em;
 }
 @utility type-display-medium {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 45px; line-height: 50px; letter-spacing: 0.035em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 45px; line-height: 50px; letter-spacing: -0.02em;
 }
 @utility type-display-small {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 36px; line-height: 42px; letter-spacing: 0.03em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 36px; line-height: 42px; letter-spacing: -0.02em;
 }
 @utility type-headline-large {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 32px; line-height: 38px; letter-spacing: 0.03em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 32px; line-height: 38px; letter-spacing: -0.015em;
 }
 @utility type-headline-medium {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 28px; line-height: 34px; letter-spacing: 0.03em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 28px; line-height: 34px; letter-spacing: -0.015em;
 }
 @utility type-headline-small {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 24px; line-height: 30px; letter-spacing: 0.025em;
+  font-family: var(--font-sans); font-weight: 600; text-transform: none;
+  font-size: 24px; line-height: 30px; letter-spacing: -0.01em;
 }
 @utility type-title-large {
   font-family: var(--font-sans); font-weight: 600; text-transform: none;
@@ -448,10 +610,9 @@
 
   h1, h2, h3, h4 {
     font-family: var(--font-sans);
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    line-height: 1.05;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
   }
 
   ::selection {

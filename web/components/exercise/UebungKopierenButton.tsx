@@ -47,7 +47,6 @@ export function UebungKopierenButton({
       <IconButton
         icon={Copy}
         label={`„${name}" in meinen Bestand kopieren`}
-        size="sm"
         disabled={pending}
         onClick={kopieren}
       />

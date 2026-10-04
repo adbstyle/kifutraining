@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import { FilterChip } from "./Chip";
+import { feldNameKlasse } from "./feld";
 import { WOCHENTAGE, WOCHENTAG_KURZ, WOCHENTAG_LANG, type Wochentag } from "@/lib/serie";
 
 /* Wochentage einer Terminserie wählen (#324 AK 2). Sieben feste Werte —
@@ -22,7 +23,7 @@ export function WochentagWahl({
   const fehlerId = useId();
   return (
     <fieldset aria-describedby={error ? fehlerId : undefined}>
-      <legend className="mb-2 type-body-small text-on-surface-mittel">Wochentage</legend>
+      <legend className={feldNameKlasse(!!error)}>Wochentage</legend>
       <div className="flex flex-wrap gap-2">
         {WOCHENTAGE.map((w) => (
           <FilterChip

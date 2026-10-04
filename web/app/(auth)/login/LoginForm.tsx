@@ -22,7 +22,7 @@ function SubmitButton() {
 function ResendButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="text" size="sm" disabled={pending}>
+    <Button type="submit" variant="text" disabled={pending}>
       {pending ? "Wird gesendet …" : "Bestätigung erneut senden"}
     </Button>
   );
@@ -71,7 +71,7 @@ export function LoginForm({ redirect }: { redirect: string }) {
       {state.status === "needs-confirmation" && (
         <NeedsConfirmation email={state.email} />
       )}
-      <form action={formAction} className="flex flex-col gap-5">
+      <form noValidate action={formAction} className="flex flex-col gap-5">
         <input type="hidden" name="redirect" value={redirect} />
         <TextField
           label="E-Mail-Adresse"

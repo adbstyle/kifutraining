@@ -2,8 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ClipboardList } from "lucide-react";
-import { FilterChip, MultiSelect, Button, SearchField } from "@/components/ui";
-import { useDebouncedWert } from "@/lib/use-debounce";
+import { AuswahlFilter, Button, FilterChip, FilterSuche } from "@/components/ui";
 import { stufenOptionen } from "@/lib/filter-optionen";
 
 /* Such-/Filterleiste für die Trainings-Übersicht.
@@ -35,13 +34,13 @@ export function TrainingFilterBar({
     router.push(`${pathname}?${p.toString()}`, { scroll: false });
   }
 
-  // Freitext erst nach der Tipppause in die URL schreiben.
-  const [text, onSearch] = useDebouncedWert(q, (value) =>
+  // Freitext erst nach der Tipppause in die URL schreiben (`FilterSuche`).
+  function setQ(value: string) {
     pushParams((p) => {
       if (value.trim()) p.set("q", value.trim());
       else p.delete("q");
-    }),
-  );
+    });
+  }
 
   function setStufen(next: string[]) {
     pushParams((p) => {
@@ -68,35 +67,18 @@ export function TrainingFilterBar({
 
   return (
     // Eine durchgehende, umbrechende Zeile: Suchfeld zuerst, dann die Filter
-    // direkt dahinter angereiht. Labels stehen in den Feldern (ruhend als
-    // Beschriftung, geschwebt auf der Kontur), darum alle Elemente auf
-    // gleicher Höhe: 48 px, beim Feld über die dichte Bauform, beim Chip über
-    // `groesse="leiste"` statt über eine Klasse von aussen.
-    <div className="mb-6 flex flex-wrap items-center gap-3">
-      <SearchField
-        dense
-        label="Nach Trainingsnamen suchen"
-        value={text}
-        onChange={(e) => onSearch(e.target.value)}
-        className="w-full sm:w-72"
-      />
+    // direkt dahinter angereiht — alle Elemente 36 px hoch (Epic #363).
+    <div className="mb-6 flex flex-wrap items-center gap-2">
+      <FilterSuche label="Nach Trainingsnamen suchen" initial={q} onCommit={setQ} />
 
-      <MultiSelect
+      <AuswahlFilter
         label="Alterskategorie"
         options={stufenOptionen}
         value={stufen}
         onChange={setStufen}
-        searchable={false}
-        placeholder="Alle Stufen"
-        className="w-full sm:w-64"
       />
       {showMine && (
-        <FilterChip
-          selected={mine}
-          onClick={toggleMine}
-          icon={ClipboardList}
-          groesse="leiste"
-        >
+        <FilterChip selected={mine} onClick={toggleMine} icon={ClipboardList}>
           Meine Trainings
         </FilterChip>
       )}

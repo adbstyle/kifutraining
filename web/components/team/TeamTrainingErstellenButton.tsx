@@ -58,7 +58,7 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
 
   return (
     <>
-      <Button variant="filled" size="sm" onClick={() => setOpen(true)}>
+      <Button variant="filled" onClick={() => setOpen(true)}>
         Training erstellen
       </Button>
 
@@ -91,7 +91,7 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
             className="max-w-xs"
             wert={altersstufe}
             onChange={waehleAltersstufe}
-            hinweis="Nach welchem Manual das Team plant. Bestimmt Trainingsteile, Gliederung und Alterskategorien — und steht danach fest."
+            info="Nach welchem Manual das Team plant. Bestimmt Trainingsteile, Gliederung und Alterskategorien — und steht danach fest."
             fehler={fehler.altersstufe}
           />
 
@@ -103,7 +103,7 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
               onChange={setStufen}
               kategorien={kategorienFuer(altersstufe)}
               error={fehler.stufen}
-              supportingText="Mindestens eine ist nötig; ihr könnt die Auswahl später jederzeit ändern."
+              info="Mindestens eine ist nötig; ihr könnt die Auswahl später jederzeit ändern."
             />
           ) : (
             <p className="type-body-small text-on-surface-mittel">

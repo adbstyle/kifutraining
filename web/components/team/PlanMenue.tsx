@@ -34,7 +34,6 @@ export function PlanMenue({ teamId, teamName }: { teamId: string; teamName: stri
     <>
       <OverflowMenu
         label="Weitere Aktionen zum Trainingsplan"
-        size="sm"
         items={[{ label: "Kalender abonnieren", icon: CalendarDays, onSelect: holen }]}
       />
       <AboDialog links={links} teamName={teamName} onClose={() => setLinks(null)} />

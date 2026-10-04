@@ -5,6 +5,13 @@ import type { RefObject } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
+/* Eine Zeile in Menü und Auswahlpanel: 36 px wie jedes Bedienelement
+   (Epic #363). `min-h` statt fester Höhe, damit ein langer Wert umbrechen
+   darf, statt abgeschnitten zu werden — einzeilig hält die Mindesthöhe sie
+   genau auf 36 px. Geteilt von Menu, Select und MultiSelect, damit
+   das Mass an EINER Stelle steht. */
+export const bedienzeile = "state type-body-medium flex min-h-9 items-center gap-3 px-3 py-1.5";
+
 /** Die fokussierbaren Einträge des Menüs in DOM-Reihenfolge. Über das DOM
  *  statt über Refs, damit die Reihenfolge auch dann stimmt, wenn `items`
  *  zwischen zwei Renders wechselt. */
@@ -153,7 +160,8 @@ export function Menu({
                (15 «Menü») nach. Icon und Wortlaut sagen die Zerstörung
                trotzdem mit — Farbe allein trägt hier nie. */
             className={cn(
-              "state type-body-medium flex w-full items-center gap-3 px-3 py-2 text-left focus-visible:outline-none",
+              bedienzeile,
+              "w-full text-left focus-visible:outline-none",
               item.danger ? "text-error" : "text-on-surface",
             )}
           >

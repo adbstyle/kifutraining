@@ -153,6 +153,9 @@ export function herkunftText(
  *  Trainings-Ansicht dasselbe Wort. Die Spalte heisst weiter `anzahl_kinder`. */
 export const SPIELER_BEGRIFF = "Spieler:innen";
 export const ANZAHL_SPIELER_LABEL = `Anzahl ${SPIELER_BEGRIFF}`;
+/** Die beiden Felder der Spielerzahl in der Maske — jedes mit eigenem Namen. */
+export const MINDESTANZAHL_SPIELER_LABEL = `Mindestanzahl ${SPIELER_BEGRIFF}`;
+export const HOECHSTANZAHL_SPIELER_LABEL = `Höchstanzahl ${SPIELER_BEGRIFF}`;
 /** Die Kurzform auf der schmalen Übungskarte (#305); vorgelesen wird dort
  *  `SPIELER_BEGRIFF`. */
 export const SPIELER_KURZ = "Sp.";

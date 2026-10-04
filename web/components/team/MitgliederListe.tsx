@@ -101,7 +101,8 @@ export function MitgliederListe({
       </ul>
 
       <form
-        className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start"
+        noValidate
+        className="mt-4"
         onSubmit={(e) => {
           e.preventDefault();
           suchen();
@@ -110,16 +111,18 @@ export function MitgliederListe({
         <TextField
           label="E-Mail-Adresse"
           type="email"
-          className="flex-1"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           error={!!fehler}
-          supportingText={fehler ?? "Die Person braucht bereits ein bestätigtes KiFu-Konto."}
+          supportingText={fehler}
+          info="Die Person braucht bereits ein bestätigtes KiFu-Konto."
+          aktion={
+            <Button type="submit" variant="tonal" disabled={pending}>
+              <UserPlus size={18} strokeWidth={2} aria-hidden />
+              Suchen
+            </Button>
+          }
         />
-        <Button type="submit" variant="tonal" disabled={pending} className="sm:mt-1.5">
-          <UserPlus size={18} strokeWidth={2} aria-hidden />
-          Suchen
-        </Button>
       </form>
 
       <Dialog

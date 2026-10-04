@@ -7,7 +7,7 @@ import { KiZugaengeListe } from "./KiZugaengeListe";
 import { AbosListe } from "./AbosListe";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
-import { getMeinAnzeigename, hatEigenenAnzeigenamen } from "@/lib/queries/profil";
+import { getMeinAnzeigename } from "@/lib/queries/profil";
 import { getMeineZugaenge } from "@/lib/queries/ki-zugaenge";
 import { getMeineAbos } from "@/lib/queries/abos";
 import { KI_ZUGAENGE_MAX } from "@/lib/mcp/regeln";
@@ -25,9 +25,8 @@ export default async function KontoPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [anzeigeName, eigenerName, zugaenge, abos, origin] = await Promise.all([
+  const [anzeigeName, zugaenge, abos, origin] = await Promise.all([
     getMeinAnzeigename(),
-    hatEigenenAnzeigenamen(),
     getMeineZugaenge(),
     getMeineAbos(),
     oeffentlicherOrigin(),
@@ -43,7 +42,7 @@ export default async function KontoPage() {
           </p>
         )}
         <form action={signOut} className="mt-5">
-          <Button type="submit" variant="outlined" size="sm">
+          <Button type="submit" variant="outlined">
             <LogOut size={18} strokeWidth={2} aria-hidden />
             Abmelden
           </Button>
@@ -52,10 +51,7 @@ export default async function KontoPage() {
 
       {anzeigeName && (
         <Card className="mb-4 p-6">
-          <h2 className="type-title-large text-on-surface">Anzeigename</h2>
-          <div className="mt-2">
-            <AnzeigenameForm aktuell={anzeigeName} eigen={eigenerName} />
-          </div>
+          <AnzeigenameForm aktuell={anzeigeName} />
         </Card>
       )}
 

@@ -37,7 +37,7 @@ export function ButtonGroup({
 
 /** Ein Glied nur mit Zeichen (36 px im Quadrat), etwa die Ansicht Liste/Monat.
  *  Gewählt trägt es die Auswahl-Optik der Chips — Kontur und Zeichen in
- *  Primary, die Fläche Primary/12 —, leiser als ein gefüllter Knopf daneben;
+ *  Primary, ohne Fläche —, leiser als ein gefüllter Knopf daneben;
  *  sonst nur die Kontur. Die Gruppe kennt keine Wahl: Wer `gewaehlt` setzt,
  *  setzt auch `aria-current` bzw. `aria-pressed`. */
 export function segmentClasses(gewaehlt: boolean): string {
