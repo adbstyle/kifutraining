@@ -53,7 +53,7 @@ export function TrainingCreateForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-6">
       {state.status === "error" && state.message && (
         <Banner tone="fehler">{state.message}</Banner>
       )}

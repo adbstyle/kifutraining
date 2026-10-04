@@ -66,6 +66,7 @@ export function ZustimmungFormular({
 
   return (
     <form
+      noValidate
       onSubmit={(e) => {
         e.preventDefault();
         ausfuehren("erlauben");

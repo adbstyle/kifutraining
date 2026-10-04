@@ -60,7 +60,8 @@ export function AnzeigenameForm({
       </p>
 
       <form
-        className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start"
+        noValidate
+        className="mt-4"
         onSubmit={(e) => {
           e.preventDefault();
           speichern();
@@ -68,18 +69,18 @@ export function AnzeigenameForm({
       >
         <TextField
           label="Anzeigename"
-          className="flex-1"
           value={wert}
           maxLength={40}
           onChange={(e) => setWert(e.target.value)}
           error={!!fehler}
           supportingText={fehler}
+          aktion={
+            <Button type="submit" variant="tonal" disabled={pending}>
+              <Check size={18} strokeWidth={2} aria-hidden />
+              Speichern
+            </Button>
+          }
         />
-        {/* Neben dem Feldkasten, unter der Namenszeile des Felds (14 px). */}
-        <Button type="submit" variant="tonal" disabled={pending} className="sm:mt-3.5">
-          <Check size={18} strokeWidth={2} aria-hidden />
-          Speichern
-        </Button>
       </form>
     </>
   );

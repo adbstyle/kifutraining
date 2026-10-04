@@ -94,10 +94,6 @@ export function EinordnungField({
     <div>
       <Select
         label={zweistufig ? "Trainingsteil und Block" : "Trainingsteil und Hauptteilkategorie"}
-        // Breiter als die übrigen Auswahlfelder, aber nicht über die ganze
-        // Spalte: «Spielformen und unterstützende Übungen» soll ungekürzt in
-        // die Wertzeile passen.
-        className="max-w-lg"
         options={optionen}
         // Kein Leerwert in der Liste, sondern ein Platzhalter: Die Einordnung
         // ist Pflicht — «noch nichts gewählt» ist ein Zustand des Formulars,

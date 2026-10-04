@@ -64,6 +64,7 @@ export function Feld({
   leer = false,
   hinweis,
   info,
+  aktion,
   error = false,
   className,
   onLabelClick,
@@ -85,6 +86,10 @@ export function Feld({
   /** Ein fester Hinweis, der das Feld erklärt — hinter einem ⓘ rechts neben
    *  dem Feld (`InfoKnopf`), damit er das Formular nicht dauernd füllt. */
   info?: ReactNode;
+  /** Ein Knopf, der mit dem Feld zusammen eine Handlung bildet (Speichern,
+   *  Suchen) — in derselben Zeile wie der Feldkasten, damit beide auf einer
+   *  Linie stehen, ob der Name darüber steht oder (leer) ausgeblendet ist. */
+  aktion?: ReactNode;
   error?: boolean;
   className?: string;
   /** Für Eingabe-Elemente, die kein <label> beschriften kann (ein <div> als
@@ -107,13 +112,18 @@ export function Feld({
       >
         {label}
       </label>
-      {info ? (
+      {info || aktion ? (
         <div className="flex items-center gap-1">
           <div className="min-w-0 flex-1">{children}</div>
-          <InfoKnopf label={label}>{info}</InfoKnopf>
-          <span id={`${id}-info`} className="sr-only">
-            {info}
-          </span>
+          {info && (
+            <>
+              <InfoKnopf label={label}>{info}</InfoKnopf>
+              <span id={`${id}-info`} className="sr-only">
+                {info}
+              </span>
+            </>
+          )}
+          {aktion && <div className="ml-2 shrink-0">{aktion}</div>}
         </div>
       ) : (
         children

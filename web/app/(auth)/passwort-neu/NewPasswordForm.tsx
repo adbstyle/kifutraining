@@ -22,7 +22,7 @@ export function NewPasswordForm() {
   const [state, formAction] = useActionState(setNewPassword, initial);
   const isError = state.status === "error";
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form noValidate action={formAction} className="flex flex-col gap-5">
       <PasswordField
         label="Neues Passwort"
         name="password"

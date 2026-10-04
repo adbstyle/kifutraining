@@ -792,6 +792,7 @@ export function ExerciseForm({
   return (
     <form
       ref={formRef}
+      noValidate
       onSubmit={handleSubmit}
       // Nur benannte Felder tragen Angaben; eine Suche in einem Dialog der
       // Maske (Vorlagen, Auswahllisten) ist keine.

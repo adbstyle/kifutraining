@@ -941,6 +941,17 @@ export default function Styleguide() {
           zu zeigen.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Jedes Formular trägt <code>noValidate</code></strong>: Fehler
+          meldet die App, nicht der Browser. Dessen eigene Prüfung (Pflicht,
+          Mindestlänge, Zahlengrenzen, E-Mail-Form) hielte das Absenden an und
+          zeigte eine Sprechblase in der Sprache des Browsers, in seinem
+          Aussehen — und die deutsche Meldung der App unter dem Feld käme nie
+          zum Zug. Die Regeln selbst prüft der Server ohnehin. Die Attribute
+          bleiben stehen: <code>required</code> und <code>min</code>/
+          <code>max</code> sagen der Vorlesehilfe, was das Feld verlangt
+          (PO 2026-10-04).
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Jede Seite steht in einem <code>Seitenrahmen</code>: linksbündig
           neben der Seitenleiste, Übersichten über die ganze Fläche
           (<code>voll</code>, Kachelraster mit so vielen Spalten, wie Platz
@@ -1550,7 +1561,11 @@ export default function Styleguide() {
           Namen: Zwei zusammengehörige Werte (Länge und Breite, Mindest- und
           Höchstanzahl) sind zwei Felder untereinander, nicht ein gemeinsamer
           Name über zwei Teilnamen — zwei Namensstufen brächen die ruhige
-          Liste aus Namen und Werten (PO 2026-10-04).
+          Liste aus Namen und Werten (PO 2026-10-04). Bildet ein Knopf mit
+          dem Feld eine Handlung (Anzeigename speichern, Mitglied suchen),
+          steht er in <code>aktion</code>: in derselben Zeile wie der
+          Feldkasten, auf einer Linie mit ihm — ob der Name darüber steht oder
+          das leere Feld ihn ausblendet.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Der Feldkasten ist ruhend leer:</strong> keine Kontur, keine
