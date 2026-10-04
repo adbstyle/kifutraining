@@ -37,8 +37,9 @@ verschiedenen Kennung — etwa „Trainer:in a1b2".
 
 Gesetzt wird er im Konto in einem einzigen Feld. Es zeigt den aktuellen Namen, auch die
 automatische Kennung, solange kein eigener gewählt ist, und speichert beim Verlassen oder mit der
-Eingabetaste — nur wenn sich etwas geändert hat; Escape nimmt die Eingabe zurück. Wer ihn sieht,
-sagt der Hinweis hinter dem ⓘ.
+Eingabetaste — nur wenn sich etwas geändert hat; Escape nimmt die Eingabe zurück. Ein leeres
+Feld oder ein abgewiesener Name fällt auf den gespeicherten zurück, und die Anwendung sagt am
+Bildschirmrand, warum. Wer den Namen sieht, sagt der Hinweis hinter dem ⓘ.
 
 Ein einmal gesetzter Name lässt sich ersetzen, aber nicht mehr entfernen. Das ist Absicht: An
 bereits veröffentlichten Trainings soll nicht plötzlich wieder eine Zufallskennung auftauchen.

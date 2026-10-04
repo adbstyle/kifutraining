@@ -84,9 +84,10 @@ bietet keinen Eintrag „kein …" an — leer heisst nicht angegeben.
 Was ein Feld nur erklärt, steht nicht dauernd darunter, sondern hinter einem kleinen ⓘ rechts im
 Feld. Es erscheint erst, wenn man mit der Maus über die Angabe fährt; ein Klick darauf öffnet den
 Hinweis. Mit der Tastatur lässt es sich ansteuern, und eine Sprachausgabe liest den Hinweis mit
-dem Feld vor. Fehler dagegen stehen immer sichtbar rot unter dem Feld. Sie kommen von der
-Anwendung selbst und sind deutsch — die eigenen, englischen Meldungen des Browsers erscheinen
-nicht. Ebenso ist die Wahl einer Datei ein eigener Knopf mit deutscher Beschriftung.
+dem Feld vor. Fehler dagegen stehen beim Speichern eines Formulars sichtbar rot unter dem Feld;
+ein Feld, das schon beim Verlassen speichert, fällt bei einem Fehler auf den gespeicherten Wert
+zurück und meldet ihn am Bildschirmrand. Die Meldungen kommen von der Anwendung selbst und sind
+deutsch — die eigenen, englischen Meldungen des Browsers erscheinen nicht. Ebenso ist die Wahl einer Datei ein eigener Knopf mit deutscher Beschriftung.
 
 Filter stehen über den Übersichten in einer Zeile als Knöpfe: Jeder nennt, wonach er filtert,
 und zählt, wie viele Werte gewählt sind; welche, zeigt ein Klick, der darunter eine Liste mit
