@@ -1562,7 +1562,7 @@ export default function Styleguide() {
           Höchstanzahl) sind zwei Felder untereinander, nicht ein gemeinsamer
           Name über zwei Teilnamen — zwei Namensstufen brächen die ruhige
           Liste aus Namen und Werten (PO 2026-10-04). Bildet ein Knopf mit
-          dem Feld eine Handlung (Anzeigename speichern, Mitglied suchen),
+          dem Feld eine Handlung (Mitglied suchen),
           steht er in <code>aktion</code>: in derselben Zeile wie der
           Feldkasten, auf einer Linie mit ihm — ob der Name darüber steht oder
           das leere Feld ihn ausblendet.
