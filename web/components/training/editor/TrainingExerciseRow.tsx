@@ -176,10 +176,11 @@ export function TrainingExerciseRow({
           <span className="flex items-center">
             <InBibliothekButton fassungId={item.id} name={item.name} className="xl:hidden" />
 
-            {/* Schmal führt der Stift in die Bearbeitungsmaske, breit öffnet
-                er die Übung zum Bearbeiten in der Spalte (Epic #369, #372) —
-                breit gibt es für eine Übung im Training nur diesen einen Ort
-                (EK 5). Die Weiche ist CSS wie beim Namen. */}
+            {/* Schmal führt der Stift in die Bearbeitungsmaske. Breit steht er
+                im Detail der geöffneten Übung, nicht an der Zeile (PO
+                2026-10-05): Die Zeile öffnet die Übung, bearbeitet wird, was
+                man vor sich hat — breit gibt es dafür nur diesen einen Ort
+                (Epic #369 EK 5). Die Weiche ist CSS wie beim Namen. */}
             <Tooltip label="Übung bearbeiten" className="xl:hidden">
               <IconButtonLink
                 icon={Pencil}
@@ -190,9 +191,6 @@ export function TrainingExerciseRow({
                 href={`/training/${trainingId}/uebung/${item.id}/edit${varianteAnhang(varianteId)}`}
                 label={`${item.name} bearbeiten`}
               />
-            </Tooltip>
-            <Tooltip label="Übung bearbeiten" className="hidden xl:inline-flex">
-              <IconButton icon={Pencil} label={`${item.name} bearbeiten`} onClick={onBearbeiten} />
             </Tooltip>
 
             {/* Der einzige Knopf der Zeile, der etwas wegnimmt — er färbt sich

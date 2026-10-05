@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { IconButton, Tooltip } from "@/components/ui";
 import { UebungsName } from "@/components/training/UebungsName";
 import { cn } from "@/lib/cn";
@@ -35,8 +35,8 @@ export function OeffnenZeileDemo() {
               onOeffnen={() => setOffen(offen === z.id ? null : z.id)}
             />
           </span>
-          <Tooltip label="Bearbeiten">
-            <IconButton icon={Pencil} label={`${z.name} bearbeiten`} onClick={() => {}} />
+          <Tooltip label="Entfernen">
+            <IconButton icon={Trash2} label={`${z.name} entfernen`} onClick={() => {}} />
           </Tooltip>
         </li>
       ))}

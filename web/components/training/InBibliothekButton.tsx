@@ -11,8 +11,8 @@ import { kopiereInBibliothek } from "@/lib/actions/fassung";
  * „In meine Bibliothek kopieren" an einer Übung im Training (Story 7).
  *
  * Breit steht es im Detail der geöffneten Übung und nicht an der Zeile
- * (PO 2026-10-05): Übernommen wird, was man gesehen hat — nicht blind nach
- * Name und Bild. Schmal, wo es keine Spalte gibt, bleibt es an der Zeile
+ * (PO 2026-10-05), wie das Bearbeiten: Übernommen wird, was man gesehen hat —
+ * nicht blind nach Name und Bild. Schmal, wo es keine Spalte gibt, bleibt es an der Zeile
  * (`className="xl:hidden"`).
  *
  * Es entsteht eine eigene, zunächst private Vorlage — eine Kopie, die mit der
