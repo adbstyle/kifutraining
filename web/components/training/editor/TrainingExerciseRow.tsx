@@ -1,8 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import Link from "next/link";
-import { TriangleAlert, ChevronUp, ChevronDown, X, Pencil, PackageSearch } from "lucide-react";
+import { TriangleAlert, ChevronUp, ChevronDown, X, Pencil } from "lucide-react";
 import { IconButton, IconButtonLink, KategorieChip, Tooltip } from "@/components/ui";
 import { ExerciseThumb } from "../ExerciseThumb";
 import { InBibliothekButton } from "../InBibliothekButton";
@@ -12,12 +11,6 @@ import { varianteAnhang } from "@/lib/varianten";
 import { cn } from "@/lib/cn";
 import { UebungsName } from "../UebungsName";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
-import { materialAenderungen, materialBasisAusDiagramm } from "@/lib/material";
-
-/** Der Hinweis an der Zeile, wenn eine Diagrammänderung das Material dieser
- *  Übung verändert hat (Story #269). Beantwortet wird er im Bearbeiten. */
-export const MATERIAL_GEAENDERT_TEXT =
-  "Das Feld-Diagramm zeigt inzwischen anderes Material - beim Bearbeiten übernehmen oder beibehalten.";
 
 /** Eine Zuordnung im Editor: Reihenfolge, Bild, Name, Stufen, Dauer und die
  *  Aktionen an ihr.
@@ -46,7 +39,6 @@ export function TrainingExerciseRow({
   etage,
   offen = false,
   onOeffnen,
-  onBearbeiten,
   onDuration,
   onMove,
   onRemove,
@@ -68,7 +60,6 @@ export function TrainingExerciseRow({
   /** Steht diese Übung in der Spalte offen (Epic #369)? */
   offen?: boolean;
   onOeffnen: () => void;
-  onBearbeiten: () => void;
   onDuration: (next: number | null) => void;
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
@@ -78,8 +69,6 @@ export function TrainingExerciseRow({
   // sonst stünde ein Warndreieck, das keine Stufenwahl je entfernt.
   const mismatch =
     item.kategorien.length > 0 && !stufenAbgedeckt(trainingStufen, item.kategorien);
-  const materialGeaendert =
-    materialAenderungen(item.materialBasis, materialBasisAusDiagramm(item.diagramm)).length > 0;
 
   return (
     <li
@@ -128,29 +117,6 @@ export function TrainingExerciseRow({
               <span title={STUFE_ABWEICHEND_TEXT} className="relative">
                 <TriangleAlert size={15} className="shrink-0 text-primary" aria-hidden />
               </span>
-            )}
-            {materialGeaendert && (
-              <>
-                {/* Der Hinweis führt dorthin, wo er beantwortet wird: schmal in
-                    die Maske, breit in die Spalte zum Bearbeiten (#373 AK 7). */}
-                <Link
-                  href={`/training/${trainingId}/uebung/${item.id}/edit${varianteAnhang(varianteId)}`}
-                  title={MATERIAL_GEAENDERT_TEXT}
-                  aria-label={MATERIAL_GEAENDERT_TEXT}
-                  className="focus-ring inline-flex shrink-0 rounded-flaeche text-primary xl:hidden"
-                >
-                  <PackageSearch size={15} aria-hidden />
-                </Link>
-                <button
-                  type="button"
-                  onClick={onBearbeiten}
-                  title={MATERIAL_GEAENDERT_TEXT}
-                  aria-label={MATERIAL_GEAENDERT_TEXT}
-                  className="focus-ring relative hidden shrink-0 rounded-flaeche text-primary xl:inline-flex"
-                >
-                  <PackageSearch size={15} aria-hidden />
-                </button>
-              </>
             )}
           </span>
           {item.kategorien.length > 0 && (

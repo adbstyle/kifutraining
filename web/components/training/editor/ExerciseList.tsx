@@ -26,8 +26,6 @@ export type ZeilenKontext = {
   offenId: string | null;
   /** Eine Übung in der Spalte öffnen — nur breit (#371 AK 1). */
   onOeffnen: (item: TrainingExerciseItem) => void;
-  /** Eine Übung in der Spalte zum Bearbeiten öffnen — nur breit (#372). */
-  onBearbeiten: (item: TrainingExerciseItem) => void;
   onDuration: (item: TrainingExerciseItem, next: number | null) => void;
   onMove: (item: TrainingExerciseItem, dir: -1 | 1) => void;
   onRemove: (item: TrainingExerciseItem) => void;
@@ -86,7 +84,6 @@ export function ExerciseList({
           etage={kontext.etage(item, showGruppen)}
           offen={kontext.offenId === item.id}
           onOeffnen={() => kontext.onOeffnen(item)}
-          onBearbeiten={() => kontext.onBearbeiten(item)}
           onDuration={(next) => kontext.onDuration(item, next)}
           onMove={(d) => kontext.onMove(item, d)}
           onRemove={() => kontext.onRemove(item)}

@@ -614,7 +614,6 @@ export function TrainingEditor({
     dauerWarnung: (item) => modell.befund.dauerWarnung.has(item.id),
     offenId,
     onOeffnen: (item) => steuerung.oeffne(item.id),
-    onBearbeiten: (item) => steuerung.oeffne(item.id, true),
     onDuration: changeDuration,
     onMove: move,
     onRemove: remove,
