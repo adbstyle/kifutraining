@@ -43,7 +43,12 @@ export default async function TrainingViewPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ uebernommen?: string; variante?: string; uebung?: string }>;
+  searchParams: Promise<{
+    uebernommen?: string;
+    variante?: string;
+    uebung?: string;
+    bearbeiten?: string;
+  }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -117,7 +122,11 @@ export default async function TrainingViewPage({
     <AnsichtFlaeche
       key={aktive?.id ?? "ohne"}
       anfangsOffen={anfangsUebung?.id ?? null}
+      anfangsBearbeiten={!!sp.bearbeiten}
       uebungParam={sp.uebung}
+      // Bearbeiten in der Ansicht nur mit Bearbeitungsrecht (#374 AK 7) —
+      // die Server Action und die RLS prüfen es ohnehin noch einmal.
+      bearbeitbar={!!bearbeitungsziel}
     >
       <Seitenrahmen
         breite="3xl"
@@ -143,6 +152,7 @@ export default async function TrainingViewPage({
           <AnsichtSpalte
             uebungen={sichtbar}
             altersstufe={training.altersstufe}
+            variante={aktive?.id}
             eigenschaften={eigenschaften}
           />
         }
