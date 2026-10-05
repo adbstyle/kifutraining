@@ -62,7 +62,9 @@ export function TrainingCreateForm() {
     // Aufbau wie «Neue Übung»: zuoberst der Name, gross, darunter die Felder
     // im selben Abstand — ohne Zwischentitel, es sind nur drei —, am Schluss
     // das Anlegen.
-    <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-10">
+    // `lg:pt-2`: Ab `lg` klebt die Kopfzeile direkt darüber; ohne Abstand
+    // verdeckte sie die Fläche, die beim Überfahren 6 px über das Feld ragt.
+    <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-10 lg:pt-2">
       {state.status === "error" && state.message && (
         <Banner tone="fehler">{state.message}</Banner>
       )}
