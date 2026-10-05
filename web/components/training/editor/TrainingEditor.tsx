@@ -11,7 +11,9 @@ import {
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { ExercisePickerDialog } from "../ExercisePickerDialog";
 import { GesamtAbgleich } from "../ZeitAbgleich";
-import { TrainingKopf } from "./TrainingKopf";
+import { NameFeld, TrainingKopf, TrainingStufenFeld, ZielFeld } from "./TrainingKopf";
+import { TrainingEigenschaften } from "../TrainingEigenschaften";
+import { ZweiSpalten } from "@/components/layout/ZweiSpalten";
 import { GesamtMaterialListe } from "../GesamtMaterialListe";
 import { TrainingAktionen } from "../TrainingAktionen";
 import { TeilKarte } from "./TeilKarte";
@@ -46,7 +48,7 @@ import {
 import {
   HAUPTTEILKATEGORIEN,
   editorGliederung,
-  teilTraegtDauer,
+  gesamtDauer,
   formatDuration,
 } from "@/lib/training";
 import {
@@ -505,10 +507,8 @@ export function TrainingEditor({
   const teile = editorGliederung(training.altersstufe, sichtbar);
 
   // Auffangen trägt keine Dauer und zählt weder zur Summe noch zum
-  // „ohne Dauer"-Hinweis.
-  const dauerItems = sichtbar.filter((e) => teilTraegtDauer(e.trainingsteil));
-  const totalDuration = dauerItems.reduce<number>((a, it) => a + (it.durationMin ?? 0), 0);
-  const totalMissing = dauerItems.filter((it) => it.durationMin == null).length;
+  // „ohne Dauer"-Hinweis — dieselbe Rechnung wie in der Spalte (#370 AK 5).
+  const dauer = gesamtDauer(sichtbar);
 
   // Der Gruppen-Bereich der Hauptteil-Karte (#209 AK 1/3): die Leiste unter dem
   // Kartenkopf, die Konflikte im Kartenfuss. Die Leiste steht IMMER — ohne
@@ -573,8 +573,17 @@ export function TrainingEditor({
     onRemove: remove,
   };
 
+  // Ziel und Alterskategorien gibt es zweimal: schmal im Kopf, breit in der
+  // Spalte (#370 AK 10). Beide hängen am selben Zustand; zu sehen ist je eines.
+  const zielFeld = <ZielFeld ziel={ziel} onChange={setZiel} onSpeichern={speichereZiel} />;
+  const stufenFeld = (
+    <TrainingStufenFeld altersstufe={training.altersstufe} stufen={stufen} onStufen={changeStufen} />
+  );
+
   return (
-    <div className="flex flex-col gap-4">
+    // Ab `xl` wächst der Editor auf die freie Höhe der geteilten Seite; die
+    // Brotkrumen stehen fest, darunter scrollen Übungen und Spalte je für sich.
+    <div className="flex flex-col gap-4 xl:min-h-0 xl:flex-1">
       {/* Brotkrumen links, Aktionen rechts — dieselbe Zeile und dieselbe
           Stelle wie auf der Ansichtsseite (#249 AK 8). */}
       <SeitenKopf
@@ -597,73 +606,103 @@ export function TrainingEditor({
         }
       />
 
-      <TrainingKopf
-        training={training}
-        oeffentlich={oeffentlich}
-        stufen={stufen}
-        onStufen={changeStufen}
-        ziel={ziel}
-        onZielChange={setZiel}
-        onZielSpeichern={speichereZiel}
-        name={name}
-        onNameSpeichern={speichereName}
-      />
+      {/* Breit stehen die Eigenschaften des Trainings in der Spalte neben den
+          Übungen (Epic #369, Story #370), schmal bleibt alles wie bisher: Kopf,
+          Summenleiste und Material über den Trainingsteilen. */}
+      <ZweiSpalten
+        spalte={
+          <TrainingEigenschaften
+            training={training}
+            sichtbar={sichtbar}
+            stufen={stufen}
+            ziel={ziel}
+            zielFeld={zielFeld}
+            stufenFeld={stufenFeld}
+            hinweise
+          />
+        }
+        nurBreit
+        spaltenName="Eigenschaften"
+        className="xl:min-h-0 xl:flex-1"
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 xl:hidden">
+            <TrainingKopf
+              training={training}
+              oeffentlich={oeffentlich}
+              stufen={stufen}
+              onStufen={changeStufen}
+              ziel={ziel}
+              onZielChange={setZiel}
+              onZielSpeichern={speichereZiel}
+              name={name}
+              onNameSpeichern={speichereName}
+            />
 
-      {/* Summenleiste — eine Fläche auf der Stufe der Karten daneben, denn sie
-          liegt wie diese direkt auf dem Grund. Ohne Kontur: Höhe und Rand
-          sagten dasselbe zweimal, und ein Umriss ist im Bild die Sprache der
-          Meldungen, nicht die einer Auskunft. */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-flaeche bg-elev-01 px-4 py-3">
-        <span className="inline-flex items-center gap-2 type-title-medium text-on-surface">
-          <Clock size={18} strokeWidth={2} aria-hidden />
-          Gesamtdauer: {formatDuration(totalDuration)}
-        </span>
-        {/* Die Zeit-Orientierung gilt nur im Juniorenschema — das
-            Kinderfussball-Manual gibt bewusst keine Zeiten vor (Story 6
-            AC 5 / Out of Scope 1). */}
-        {junioren && <GesamtAbgleich sum={totalDuration} soll={GESAMTDAUER_JUNIOREN} />}
-        {totalMissing > 0 && (
-          <span className="type-label-medium text-on-surface-mittel">
-            {totalMissing} {totalMissing === 1 ? "Übung ohne" : "Übungen ohne"} Dauer
-          </span>
-        )}
-      </div>
+            {/* Summenleiste — eine Fläche auf der Stufe der Karten daneben, denn
+                sie liegt wie diese direkt auf dem Grund. Ohne Kontur: Höhe und
+                Rand sagten dasselbe zweimal, und ein Umriss ist im Bild die
+                Sprache der Meldungen, nicht die einer Auskunft. */}
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-flaeche bg-elev-01 px-4 py-3">
+              <span className="inline-flex items-center gap-2 type-title-medium text-on-surface">
+                <Clock size={18} strokeWidth={2} aria-hidden />
+                Gesamtdauer: {formatDuration(dauer.summe)}
+              </span>
+              {/* Die Zeit-Orientierung gilt nur im Juniorenschema — das
+                  Kinderfussball-Manual gibt bewusst keine Zeiten vor (Story 6
+                  AC 5 / Out of Scope 1). */}
+              {junioren && <GesamtAbgleich sum={dauer.summe} soll={GESAMTDAUER_JUNIOREN} />}
+              {dauer.ohneDauer > 0 && (
+                <span className="type-label-medium text-on-surface-mittel">
+                  {dauer.ohneDauer} {dauer.ohneDauer === 1 ? "Übung ohne" : "Übungen ohne"} Dauer
+                </span>
+              )}
+            </div>
 
-      {/* Was das Training gleichzeitig höchstens braucht (Story #271) — auf
-          derselben Stufe wie die Summenleiste, die ebenfalls über das ganze
-          Training Auskunft gibt. */}
-      <GesamtMaterialListe
-        exercises={training.exercises}
-        varianten={varianten}
-        className="rounded-flaeche bg-elev-01 px-4 py-3"
-      />
+            {/* Was das Training gleichzeitig höchstens braucht (Story #271) —
+                auf derselben Stufe wie die Summenleiste, die ebenfalls über das
+                ganze Training Auskunft gibt. */}
+            <GesamtMaterialListe
+              exercises={training.exercises}
+              varianten={varianten}
+              className="rounded-flaeche bg-elev-01 px-4 py-3"
+            />
+          </div>
 
-      {teile.map((teil) => (
-        <TeilKarte
-          key={teil.key}
-          teil={teil}
-          kontext={kontext}
-          onAdd={(block) => setOpen({ teil: block.einordnung, hkat: block.hkat })}
-          // Varianten gibt es nur für den Hauptteil (#201 PC 4) — derselbe
-          // Schlüssel in beiden Altersstufen wie bei den Gruppen.
-          varianten={
-            teil.key === "hauptteil" ? (
-              <VariantenLeiste
-                varianten={varianten}
-                aktiv={aktive?.id}
-                onWechsel={wechsleVariante}
-                onHinzufuegen={() => setVarianteDialog(true)}
-                onBearbeiten={setVarianteBearbeiten}
-                onVerschieben={variantenModell.verschiebe}
-                onEntfernen={varianteEntfernen}
-              />
-            ) : undefined
-          }
-          // Verteilt wird allein der Hauptteil — in beiden Altersstufen trägt er
-          // denselben Schlüssel (Story #149 AK 9 / Epic Out of Scope 2).
-          gruppen={teil.key === "hauptteil" ? gruppenBereich : undefined}
-        />
-      ))}
+          {/* Breit bleibt vom Kopf allein der Name: Er steht über den Übungen
+              und nicht in der Spalte (#370 OOS 2). */}
+          <div className="hidden xl:block">
+            <NameFeld name={name} onSpeichern={speichereName} />
+          </div>
+
+          {teile.map((teil) => (
+            <TeilKarte
+              key={teil.key}
+              teil={teil}
+              kontext={kontext}
+              onAdd={(block) => setOpen({ teil: block.einordnung, hkat: block.hkat })}
+              // Varianten gibt es nur für den Hauptteil (#201 PC 4) — derselbe
+              // Schlüssel in beiden Altersstufen wie bei den Gruppen.
+              varianten={
+                teil.key === "hauptteil" ? (
+                  <VariantenLeiste
+                    varianten={varianten}
+                    aktiv={aktive?.id}
+                    onWechsel={wechsleVariante}
+                    onHinzufuegen={() => setVarianteDialog(true)}
+                    onBearbeiten={setVarianteBearbeiten}
+                    onVerschieben={variantenModell.verschiebe}
+                    onEntfernen={varianteEntfernen}
+                  />
+                ) : undefined
+              }
+              // Verteilt wird allein der Hauptteil — in beiden Altersstufen trägt
+              // er denselben Schlüssel (Story #149 AK 9 / Epic Out of Scope 2).
+              gruppen={teil.key === "hauptteil" ? gruppenBereich : undefined}
+            />
+          ))}
+        </div>
+      </ZweiSpalten>
 
       {/* Ein Picker, gesteuert über `open` (Trainingsteil + ggf. Unterkategorie). */}
       {open &&

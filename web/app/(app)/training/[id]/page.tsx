@@ -10,6 +10,7 @@ import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
 import { TrainingAktionen } from "@/components/training/TrainingAktionen";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
+import { TrainingEigenschaften } from "@/components/training/TrainingEigenschaften";
 import { getTrainingView } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
@@ -82,6 +83,19 @@ export default async function TrainingViewPage({
   );
   const total = sections.reduce((a, s) => a + s.sum, 0);
   const hasAnyDuration = sections.some((s) => s.sum > 0);
+  // Ab `xl` stehen die Eigenschaften gesammelt in der Spalte neben den Übungen
+  // (Epic #369, Story #370) — dieselbe Liste wie beim Zusammenstellen. Die
+  // Arbeitshinweise zur Dauer bekommt nur, wer das Training bearbeiten darf
+  // (AK 6).
+  const eigenschaften = (
+    <TrainingEigenschaften
+      training={training}
+      sichtbar={sichtbareZuordnungen(training.exercises, aktive?.id)}
+      stufen={training.stufen}
+      ziel={training.ziel}
+      hinweise={!!bearbeitungsziel}
+    />
+  );
 
   // Die Aktionen stehen auf der Brotkrumen-Zeile, rechtsbündig — dieselbe
   // Stelle wie im Editor (#249 AK 8). Dort oben gehören sie hin: Sie
@@ -108,6 +122,8 @@ export default async function TrainingViewPage({
         />
       }
       kopfImDruck
+      spalte={eigenschaften}
+      spalteNurBreit
     >
       {sp.uebernommen && (
         <Flash
@@ -117,37 +133,41 @@ export default async function TrainingViewPage({
       )}
       <header className="mb-6">
         <h1 className="type-headline-large text-on-surface">{training.name}</h1>
-        {/* Urheber: der Anzeigename, nie die E-Mail. Bei anonymisierten
-            Trainings (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
-        {training.urheber && (
-          <p className="mt-1 type-body-medium text-on-surface-mittel">
-            von {training.urheber}
-          </p>
-        )}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {/* Die Altersstufe benennen, nicht nur andeuten (Story 5 AK 3):
-              Derselbe neutrale Badge wie im Editor und auf der Trainingskarte.
-              Für ein fremdes öffentliches Training ist diese Seite die einzige
-              Sicht — dort stünde die Angabe sonst nirgends. */}
-          <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
-          {training.stufen.map((k) => (
-            <KategorieChip key={k} k={k} />
-          ))}
-          <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-mittel">
-            <Clock size={16} strokeWidth={2} aria-hidden />
-            {hasAnyDuration ? formatDuration(total) : "Keine Dauer erfasst"}
-          </span>
-        </div>
+        {/* Breit steht all das in der Spalte daneben — hier nicht ein
+            zweites Mal (#370 AK 7). Schmal und auf Papier wie bisher. */}
+        <div className="xl:hidden print:block">
+          {/* Urheber: der Anzeigename, nie die E-Mail. Bei anonymisierten
+              Trainings (Konto gelöscht) entfällt die Zeile ganz (Story 15). */}
+          {training.urheber && (
+            <p className="mt-1 type-body-medium text-on-surface-mittel">
+              von {training.urheber}
+            </p>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {/* Die Altersstufe benennen, nicht nur andeuten (Story 5 AK 3):
+                Derselbe neutrale Badge wie im Editor und auf der Trainingskarte.
+                Für ein fremdes öffentliches Training ist diese Seite die einzige
+                Sicht — dort stünde die Angabe sonst nirgends. */}
+            <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
+            {training.stufen.map((k) => (
+              <KategorieChip key={k} k={k} />
+            ))}
+            <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-mittel">
+              <Clock size={16} strokeWidth={2} aria-hidden />
+              {hasAnyDuration ? formatDuration(total) : "Keine Dauer erfasst"}
+            </span>
+          </div>
 
-        {/* Das Ziel sehen auch Betrachter eines veröffentlichten Trainings:
-            feldweises Verbergen kennt das Zugriffsmodell nicht (Story 10
-            PC 1). Ohne Ziel bleibt der Bereich weg (PC 2). */}
-        {training.ziel && (
-          <p className="mt-3 type-body-medium text-on-surface">
-            <span className="type-label-small text-on-surface-mittel">Ziel: </span>
-            {training.ziel}
-          </p>
-        )}
+          {/* Das Ziel sehen auch Betrachter eines veröffentlichten Trainings:
+              feldweises Verbergen kennt das Zugriffsmodell nicht (Story 10
+              PC 1). Ohne Ziel bleibt der Bereich weg (PC 2). */}
+          {training.ziel && (
+            <p className="mt-3 type-body-medium text-on-surface">
+              <span className="type-label-small text-on-surface-mittel">Ziel: </span>
+              {training.ziel}
+            </p>
+          )}
+        </div>
       </header>
 
       {/* Über den Trainingsteilen, weil die Variante entscheidet, WAS darunter

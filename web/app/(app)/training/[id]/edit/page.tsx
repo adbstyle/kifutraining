@@ -34,7 +34,7 @@ export default async function TrainingEditPage({
   const teams = await getMeineTeams();
 
   return (
-    <Seitenrahmen breite="3xl" krumen={null}>
+    <Seitenrahmen breite="3xl" krumen={null} geteilt>
       {/* Die Brotkrumen gehen in den Editor hinein, statt darüber zu stehen:
           Neben ihnen stehen die Aktionen am Training (#249 AK 8), und die
           kennen nur die Laufzeit des Editors — die angezeigte Variante und die

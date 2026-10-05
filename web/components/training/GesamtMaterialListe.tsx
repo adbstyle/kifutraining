@@ -19,14 +19,42 @@ export function GesamtMaterialListe({
   varianten: readonly { id: string }[];
   className?: string;
 }) {
-  const { liste, ergaenzungen } = gesamtMaterial(exercises, varianten);
-  if (liste.length === 0 && ergaenzungen.length === 0) return null;
+  if (!traegtGesamtMaterial(exercises, varianten)) return null;
   return (
     <section aria-labelledby="gesamt-material" className={cn("break-inside-avoid", className)}>
       <h2 id="gesamt-material" className="type-title-small text-on-surface">
         Material fürs Training
       </h2>
-      <p className="type-body-small mt-0.5 text-on-surface-mittel">
+      <GesamtMaterialInhalt exercises={exercises} varianten={varianten} className="mt-0.5" />
+    </section>
+  );
+}
+
+/** Braucht das Training überhaupt Material? */
+export function traegtGesamtMaterial(
+  exercises: readonly MaterialFassung[],
+  varianten: readonly { id: string }[],
+): boolean {
+  const { liste, ergaenzungen } = gesamtMaterial(exercises, varianten);
+  return liste.length > 0 || ergaenzungen.length > 0;
+}
+
+/** Die Liste selbst, ohne Überschrift — für die Zeile «Material» in den
+ *  Eigenschaften des Trainings (#370), wo die Bezeichnung links daneben steht. */
+export function GesamtMaterialInhalt({
+  exercises,
+  varianten,
+  className,
+}: {
+  exercises: readonly MaterialFassung[];
+  varianten: readonly { id: string }[];
+  className?: string;
+}) {
+  const { liste, ergaenzungen } = gesamtMaterial(exercises, varianten);
+  if (liste.length === 0 && ergaenzungen.length === 0) return null;
+  return (
+    <div className={className}>
+      <p className="type-body-small text-on-surface-mittel">
         Höchster gleichzeitiger Bedarf
         {varianten.length > 1 ? " — reicht für jede Variante des Hauptteils" : ""}.
       </p>
@@ -48,6 +76,6 @@ export function GesamtMaterialListe({
           </ul>
         </div>
       )}
-    </section>
+    </div>
   );
 }

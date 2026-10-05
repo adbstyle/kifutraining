@@ -61,6 +61,21 @@ export function teilTraegtDauer(slug: string): boolean {
   return !OHNE_DAUER_TEILE.has(slug);
 }
 
+/** Die Gesamtdauer der angezeigten Übungen eines Trainings — eine Rechnung
+ *  für Zusammenstellen und Ansicht (#370 AK 5). Das Auffangen trägt keine
+ *  Dauer und zählt weder zur Summe noch zu den Übungen ohne Dauer.
+ *  `erfasst`: Trägt überhaupt eine Übung eine Dauer? */
+export function gesamtDauer(
+  items: readonly { trainingsteil: string; durationMin: number | null }[],
+): { summe: number; ohneDauer: number; erfasst: boolean } {
+  const mitDauer = items.filter((e) => teilTraegtDauer(e.trainingsteil));
+  return {
+    summe: mitDauer.reduce((a, e) => a + (e.durationMin ?? 0), 0),
+    ohneDauer: mitDauer.filter((e) => e.durationMin == null).length,
+    erfasst: mitDauer.some((e) => e.durationMin != null),
+  };
+}
+
 /** Schwellenwerte für den „ungewöhnlich viele Übungen"-Hinweis je Trainingsteil
  *  (Story #10 AC9 / Lösungsansatz 1). Mehr als dieser Wert ⇒ Hinweis, keine
  *  Blockade. */

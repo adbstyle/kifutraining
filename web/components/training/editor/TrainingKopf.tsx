@@ -66,34 +66,66 @@ export function TrainingKopf({
         <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
       </div>
 
-      {/* Ziel: optional, jederzeit änder- und entfernbar (Story 10 AC 3).
-          Gespeichert wird beim Verlassen des Felds — wie der Trainingsname
-          direkt darüber. */}
       <div className="mt-4">
-        <TextArea
-          label="Ziel (optional)"
-          rows={2}
-          maxLength={ZIEL_MAX}
-          value={ziel}
-          onChange={(e) => onZielChange(e.target.value)}
-          onBlur={onZielSpeichern}
-          info={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
-        />
+        <ZielFeld ziel={ziel} onChange={onZielChange} onSpeichern={onZielSpeichern} />
       </div>
 
-      {/* Nur die Kategorien der Altersstufe dieses Trainings: Sie folgen ihr,
-          statt sie zu bestimmen (Story 5 AK 4). Ein Wechsel der Altersstufe
-          ist bewusst nirgends vorgesehen (AK 5) — wer für die andere plant,
-          legt ein neues Training an. */}
       <div className="mt-4">
-        <StufenField
-          value={stufen}
-          onChange={onStufen}
-          kategorien={kategorienFuer(training.altersstufe)}
-          info="Für welche Alterskategorien dieses Training gedacht ist."
+        <TrainingStufenFeld
+          altersstufe={training.altersstufe}
+          stufen={stufen}
+          onStufen={onStufen}
         />
       </div>
     </Card>
+  );
+}
+
+/** Das Ziel des Trainings: optional, jederzeit änder- und entfernbar (Story 10
+ *  AC 3). Gespeichert wird beim Verlassen des Felds — wie der Trainingsname.
+ *  Im Kopf (schmal) wie in den Eigenschaften der Spalte (breit, #370 AK 10). */
+export function ZielFeld({
+  ziel,
+  onChange,
+  onSpeichern,
+}: {
+  ziel: string;
+  onChange: (next: string) => void;
+  onSpeichern: () => void;
+}) {
+  return (
+    <TextArea
+      label="Ziel (optional)"
+      rows={2}
+      maxLength={ZIEL_MAX}
+      value={ziel}
+      onChange={(e) => onChange(e.target.value)}
+      onBlur={onSpeichern}
+      info={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
+    />
+  );
+}
+
+/** Die Alterskategorien des Trainings — nur die seiner Altersstufe: Sie folgen
+ *  ihr, statt sie zu bestimmen (Story 5 AK 4). Ein Wechsel der Altersstufe ist
+ *  bewusst nirgends vorgesehen (AK 5) — wer für die andere plant, legt ein
+ *  neues Training an. */
+export function TrainingStufenFeld({
+  altersstufe,
+  stufen,
+  onStufen,
+}: {
+  altersstufe: TrainingDetail["altersstufe"];
+  stufen: string[];
+  onStufen: (next: string[]) => void;
+}) {
+  return (
+    <StufenField
+      value={stufen}
+      onChange={onStufen}
+      kategorien={kategorienFuer(altersstufe)}
+      info="Für welche Alterskategorien dieses Training gedacht ist."
+    />
   );
 }
 
@@ -113,7 +145,7 @@ export function TrainingKopf({
  * mehr. Sichtbar wäre sie doppelt gemoppelt, denn das Feld zeigt denselben
  * Text in derselben Schrift.
  */
-function NameFeld({
+export function NameFeld({
   name,
   onSpeichern,
 }: {

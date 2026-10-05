@@ -32,6 +32,10 @@ const SCHRITT = 16;
  * `druckDaneben`: Auf Papier bleibt die Spalte daneben, schmaler als am
  * Schirm (Übungsblatt).
  *
+ * `nurBreit`: Die Spalte gibt es nur nebeneinander — gestapelt und auf Papier
+ * fehlt sie, und der Inhalt steht allein (Training, #370: schmal bleibt es
+ * beim heutigen Aufbau, die Eigenschaften stehen dort im Inhalt).
+ *
  * `beiseite`: Die Spalte ist ergänzender Inhalt (`aside`, Übungsseite). In der
  * Maske trägt sie Pflichtfelder und ist darum ein gewöhnlicher Block — eine
  * Vorlesehilfe soll sie nicht als Nebensache ankündigen.
@@ -40,6 +44,8 @@ export function ZweiSpalten({
   spalte,
   spalteZuerst = false,
   druckDaneben = false,
+  nurBreit = false,
+  spaltenName = "Einordnung",
   beiseite = true,
   children,
   className,
@@ -47,6 +53,9 @@ export function ZweiSpalten({
   spalte: ReactNode;
   spalteZuerst?: boolean;
   druckDaneben?: boolean;
+  nurBreit?: boolean;
+  /** Was die Spalte zeigt — für den Namen des Griffs («Breite der …»). */
+  spaltenName?: string;
   beiseite?: boolean;
   children: ReactNode;
   className?: string;
@@ -104,6 +113,7 @@ export function ZweiSpalten({
       className={cn(
         "min-w-0 max-w-4xl xl:col-start-3 xl:row-start-1 xl:max-w-none xl:-mr-1 xl:pl-1 xl:pr-1",
         druckDaneben && "print:col-start-2 print:row-start-1",
+        nurBreit && "hidden xl:block print:hidden",
         scroll,
       )}
     >
@@ -114,7 +124,7 @@ export function ZweiSpalten({
     <div
       role="separator"
       aria-orientation="vertical"
-      aria-label="Breite der Einordnung"
+      aria-label={`Breite der ${spaltenName}`}
       aria-valuemin={SPALTE_MIN}
       aria-valuemax={SPALTE_MAX}
       aria-valuenow={breite ?? gemessen ?? undefined}
