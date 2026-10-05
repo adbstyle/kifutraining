@@ -255,7 +255,9 @@ Jeder Termin zeigt Datum, Zeit, Ort, die Serie, die Verantwortlichen und die Bem
 er trägt: das Training mit Namen und Alterskategorien, oder — anstehend und ohne Training — die
 Plakette „Noch kein Training". So fällt eine noch nicht vorbereitete Einheit auf, ohne dass man
 einen Termin öffnet. Ein vergangener Termin ohne Training heisst schlicht „Ohne Training"; ob er
-stattgefunden hat, sagt die Anwendung nicht. Am Termin liegen Durchführen, Training zuordnen
+stattgefunden hat, sagt die Anwendung nicht. Trägt ein Termin ein Training, öffnet ein Klick auf
+die Karte das Training; mit der Maus hellt sich die ganze Karte dabei auf, wie eine Trainingskachel.
+Am Termin liegen Durchführen, Training zuordnen
 oder ersetzen und in einem Menü die übrigen Handgriffe: Termin ändern, Training lösen,
 Ausfallen lassen oder — bei einem ausgefallenen — Grund ändern und Ausfall zurücknehmen, und
 Termin entfernen. Die Durchführen-Ansicht zeigt, aus dem Plan geöffnet, zuoberst Datum, Zeit,
