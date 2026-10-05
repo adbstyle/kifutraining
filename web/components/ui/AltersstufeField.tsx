@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Badge } from "./Badge";
+import { Lozenge } from "./Lozenge";
 import { Select } from "./Select";
 import { feldNameKlasse } from "./feld";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
@@ -28,8 +28,8 @@ const optionen = ALTERSSTUFEN.map((s) => ({ value: s as string, label: altersstu
  *
  *  Steht die Stufe fest, wird sie nur noch benannt (AK 2/3). Sie zu ändern ist
  *  bei der Übung ein eigener, ausdrücklicher Weg (Story 4) und beim Training
- *  gar nicht vorgesehen. Der Badge ist bewusst neutral: die Altersstufe ist
- *  keine Alterskategorie und darf deren gelernte Farbcodierung nicht borgen. */
+ *  gar nicht vorgesehen. Die Lozenge ist bewusst neutral: die Altersstufe ist
+ *  keine Alterskategorie und trägt darum keinen Akzent. */
 export function AltersstufeField({
   wert,
   onChange,
@@ -44,7 +44,7 @@ export function AltersstufeField({
   onChange?: (wert: Altersstufe) => void;
   /** Zusatz beim festen Zustand, etwa «folgt dem Training». */
   festHinweis?: string;
-  /** Bedienelement neben dem Badge — der einzige Weg, eine feststehende
+  /** Bedienelement neben der Lozenge — der einzige Weg, eine feststehende
    *  Altersstufe doch noch zu verlassen: das Überführen einer eigenen Übung
    *  (Story 4). Es steht bewusst hier und nicht im Auswahlfeld: ein
    *  Stufenwechsel ist an einer gespeicherten Übung kein Feld, sondern ein
@@ -64,7 +64,7 @@ export function AltersstufeField({
       <div>
         <p className={feldNameKlasse()}>Altersstufe</p>
         <div className="flex min-h-9 flex-wrap items-center gap-2">
-          {wert && <Badge tone="neutral">{altersstufeLabels[wert]}</Badge>}
+          {wert && <Lozenge>{altersstufeLabels[wert]}</Lozenge>}
           {aktion}
           <p className="type-body-small text-on-surface-mittel">
             {festHinweis ??
@@ -88,6 +88,9 @@ export function AltersstufeField({
       error={!!fehler}
       supportingText={fehler}
       info={info}
+      // Die Erklärung gibt es nur, wo die Wahl lebenslang bindet (Training) —
+      // das muss man auch auf dem Handy lesen, bevor man anlegt.
+      infoAufTouch
     />
   );
 }

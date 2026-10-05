@@ -9,7 +9,7 @@ import {
   MultiSelect,
   Button,
   AltersstufeField,
-  Banner,
+  SectionMessage,
   FormAbschnitt,
   HeadlineField,
   Checkbox,
@@ -49,9 +49,9 @@ import { EinordnungField } from "@/components/exercise/EinordnungField";
 import { UmwandelnDialog, type Umwandlung } from "@/components/exercise/UmwandelnDialog";
 import { SpielfeldgroesseField } from "@/components/exercise/SpielfeldgroesseField";
 import {
-  AenderungBanner,
+  AenderungMessage,
   MaterialField,
-  VorschlagBanner,
+  VorschlagMessage,
   listeAusZeilen,
   zeilenAus,
 } from "@/components/exercise/MaterialField";
@@ -664,7 +664,7 @@ export function ExerciseForm({
             error={materialError ?? undefined}
             hinweis={
               aenderungen.length > 0 ? (
-                <AenderungBanner
+                <AenderungMessage
                   aenderungen={aenderungen}
                   actions={
                     <>
@@ -678,7 +678,7 @@ export function ExerciseForm({
                   }
                 />
               ) : zeigtVorschlag ? (
-                <VorschlagBanner vorschlag={vorschlag} onUebernehmen={uebernehmeVorschlag} />
+                <VorschlagMessage vorschlag={vorschlag} onUebernehmen={uebernehmeVorschlag} />
               ) : basisBestaetigt ? (
                 <p className="type-body-small text-on-surface-mittel">
                   Wird mit dem Speichern übernommen.
@@ -882,9 +882,9 @@ export function ExerciseForm({
       className={cn("flex flex-col gap-10", geteilt && "xl:min-h-0 xl:flex-1 xl:gap-6")}
     >
       {state.message && (
-        <Banner tone="fehler" className={UEBER_BEIDEN}>
+        <SectionMessage appearance="error" className={UEBER_BEIDEN}>
           {state.message}
-        </Banner>
+        </SectionMessage>
       )}
 
       <VerlassenWarnung
@@ -906,9 +906,9 @@ export function ExerciseForm({
           bereits die Zielstufe, die Übung liegt aber unverändert in der
           Datenbank (Story 4 PC 5). Der Hinweis sagt, was noch fehlt. */}
       {umwandlung && (
-        <Banner className={UEBER_BEIDEN}>
+        <SectionMessage className={UEBER_BEIDEN}>
           Umwandlung vorgemerkt - sie wird mit «Umwandeln und speichern» wirksam.
-        </Banner>
+        </SectionMessage>
       )}
 
       {/* In der Spalte steht obenauf, was die Bearbeitung abschliesst — es
@@ -933,8 +933,8 @@ export function ExerciseForm({
         </div>
       )}
 
-      {/* Der Name ist die Überschrift der Maske — dasselbe Kopf-Feld wie der
-          Trainingsname im Editor. Die echte Überschrift setzt die Seite.
+      {/* Beim Bearbeiten ist der Name die Überschrift der Maske — dasselbe
+          Kopf-Feld wie der Trainingsname im Editor. Die echte Überschrift setzt die Seite.
           Beim Bearbeiten steht das Speichern rechts daneben (PO 2026-10-02):
           Die Spalten darunter scrollen, der Kopf bleibt — so ist es immer zur
           Hand. Ist es zu eng, bricht es unter den Namen. */}
@@ -942,25 +942,42 @@ export function ExerciseForm({
         className={cn(
           UEBER_BEIDEN,
           geteilt && "flex flex-wrap items-start justify-end gap-x-6 gap-y-3",
+          // Ab `lg` klebt die Kopfzeile direkt darüber; ohne Abstand verdeckte
+          // sie die Fläche, die beim Überfahren 6 px über das Feld ragt.
+          erfassen && "lg:pt-2",
         )}
       >
-        <div className={cn(geteilt && "min-w-64 flex-1")}>
-          <HeadlineField
-            aria-label="Name der Übung"
+        {/* Beim Erfassen entsteht der Name erst: ein gewöhnliches Feld mit
+            grossem Wert, wie «Neues Training». */}
+        {erfassen ? (
+          <TextField
+            label="Name der Übung"
             schrift="title"
             name="name"
-            placeholder="Name der Übung"
             defaultValue={initial.name}
             required
             error={!!err.name}
-            aria-describedby={err.name ? "name-fehler" : undefined}
+            supportingText={err.name}
           />
-          {err.name && (
-            <p id="name-fehler" className="type-body-small mt-1.5 text-error">
-              {err.name}
-            </p>
-          )}
-        </div>
+        ) : (
+          <div className={cn(geteilt && "min-w-64 flex-1")}>
+            <HeadlineField
+              aria-label="Name der Übung"
+              schrift="title"
+              name="name"
+              placeholder="Name der Übung"
+              defaultValue={initial.name}
+              required
+              error={!!err.name}
+              aria-describedby={err.name ? "name-fehler" : undefined}
+            />
+            {err.name && (
+              <p id="name-fehler" className="type-body-small mt-1.5 text-error">
+                {err.name}
+              </p>
+            )}
+          </div>
+        )}
         {geteilt && speichern}
       </div>
 

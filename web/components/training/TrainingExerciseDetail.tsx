@@ -2,7 +2,7 @@ import { Clock } from "lucide-react";
 import { DurchlaufListe } from "./DurchlaufListe";
 import {
   Freitext,
-  KategorieChip,
+  KategorieLozenge,
   MaterialListe,
   MethodischerFahrplan,
   UebungsBild,
@@ -65,7 +65,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
 
       {/* Der Durchlauf zuoberst (Stories #153/#154): Er sagt, WER als Nächstes
           an diese Übung kommt — Durchführungswissen wie die Dauer, darum über
-          den Kategorie-Plaketten und nicht im umbrechenden Eckdaten-Fluss unter
+          den Kategorie-Lozenges und nicht im umbrechenden Eckdaten-Fluss unter
           dem Bild. Übungen ohne Zuweisung zeigen die Zeile gar nicht: Auf dem
           Platz ist ihr Fehlen selbsterklärend. */}
       {item.gruppen.length > 0 && (
@@ -89,7 +89,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
 
       {/* Die Notiz gleich hinter dem Durchlauf (Story #152 AK 4): Sie sagt, was für
           GENAU dieses Training gilt — etwa wer die Übung betreut —, und das
-          gehört gelesen, bevor der Blick zu Plaketten und Ablauf wandert. Der
+          gehört gelesen, bevor der Blick zu Lozenges und Ablauf wandert. Der
           Text selbst steht in Fliesstext-Typografie und nicht in der des
           Labels: Er stammt vom Trainer. */}
       {item.notiz && (
@@ -104,7 +104,7 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
       {item.kategorien.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-1.5">
           {item.kategorien.map((k) => (
-            <KategorieChip key={k} k={k as KategorieSlug} />
+            <KategorieLozenge key={k} k={k as KategorieSlug} />
           ))}
         </div>
       )}

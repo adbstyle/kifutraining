@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import {
-  Badge,
+  SichtbarkeitLozenge,
   Eigenschaft,
   Eigenschaften,
-  KategorieChip,
+  KategorieLozenge,
 } from "@/components/ui";
 import { altersstufe as altersstufeLabels, type KategorieSlug } from "@/lib/vocab";
 import { GESAMTDAUER_JUNIOREN } from "@/lib/junioren";
@@ -74,7 +74,7 @@ export function TrainingEigenschaften({
           <Eigenschaft label="Alterskategorien">
             <span className="flex flex-wrap gap-1.5">
               {stufen.map((k) => (
-                <KategorieChip key={k} k={k as KategorieSlug} />
+                <KategorieLozenge key={k} k={k as KategorieSlug} />
               ))}
             </span>
           </Eigenschaft>
@@ -131,9 +131,7 @@ export function TrainingEigenschaften({
           sagt die Zeile darüber. Nur ein persönliches führt eine Sichtbarkeit. */}
       {!training.team && (
         <Eigenschaft label="Sichtbarkeit">
-          <Badge tone={training.visibility === "public" ? "oeffentlich" : "entwurf"}>
-            {training.visibility === "public" ? "Öffentlich" : "✎ Entwurf"}
-          </Badge>
+          <SichtbarkeitLozenge oeffentlich={training.visibility === "public"} />
         </Eigenschaft>
       )}
 

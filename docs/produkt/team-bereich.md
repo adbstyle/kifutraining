@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-03. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-05. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -32,7 +32,10 @@ nichts. Auch sie sind danach eigenständig: Wer in der Kopie eine Variante umbau
 entfernt, lässt das Training unberührt, aus dem sie hervorging — und umgekehrt. Ein Training lässt
 sich auch direkt im Team anlegen; es gehört dann von Beginn an dem Team. Dabei gelten dieselben
 Pflichtangaben wie beim persönlichen Anlegen: Name, Altersstufe und mindestens eine
-Alterskategorie der gewählten Altersstufe. Auch hier steht die Altersstufe danach fest.
+Alterskategorie der gewählten Altersstufe. Auch hier steht die Altersstufe danach fest. Der
+Dialog dafür verhält sich wie „Neues Training": Die Alterskategorie ist gesperrt, bis eine
+Altersstufe gewählt ist, und auf Touch-Geräten steht der Hinweis zur festen Altersstufe unter
+dem Feld.
 
 Team-Trainings tauchen in der allgemeinen Trainingsübersicht nie auf — sie leben
 ausschliesslich im Team-Bereich. Umgekehrt zeigt der Team-Bereich keine persönlichen
@@ -252,7 +255,9 @@ Jeder Termin zeigt Datum, Zeit, Ort, die Serie, die Verantwortlichen und die Bem
 er trägt: das Training mit Namen und Alterskategorien, oder — anstehend und ohne Training — die
 Plakette „Noch kein Training". So fällt eine noch nicht vorbereitete Einheit auf, ohne dass man
 einen Termin öffnet. Ein vergangener Termin ohne Training heisst schlicht „Ohne Training"; ob er
-stattgefunden hat, sagt die Anwendung nicht. Am Termin liegen Durchführen, Training zuordnen
+stattgefunden hat, sagt die Anwendung nicht. Trägt ein Termin ein Training, öffnet ein Klick auf
+die Karte das Training; mit der Maus hellt sich die ganze Karte dabei auf, wie eine Trainingskachel.
+Am Termin liegen Durchführen, Training zuordnen
 oder ersetzen und in einem Menü die übrigen Handgriffe: Termin ändern, Training lösen,
 Ausfallen lassen oder — bei einem ausgefallenen — Grund ändern und Ausfall zurücknehmen, und
 Termin entfernen. Die Durchführen-Ansicht zeigt, aus dem Plan geöffnet, zuoberst Datum, Zeit,
@@ -268,7 +273,7 @@ Monat in Wochen von Montag bis Sonntag, samt den Randtagen der Nachbarmonate, un
 heutigen Tag hervor. Mit den Pfeilen geht es zu früheren und späteren Monaten, mit „Heute"
 zurück zum aktuellen, bestimmt nach dem Kalendertag in der Schweiz. Jeder Termin eines Tages
 steht einzeln mit seinem Beginn und dem Namen seines Trainings, oder mit „Noch kein Training"
-(anstehend, umrandet), „Ohne Training" (vergangen, leise) oder „Ausgefallen"
+(anstehend, orange hinterlegt), „Ohne Training" (vergangen, leise) oder „Ausgefallen"
 (durchgestrichen); fehlt der Beginn, steht „Zeit fehlt". Eine Woche ganz ohne Termin ist
 gestrichelt umrandet. Ein Klick öffnet den Termin mit denselben Angaben und Handgriffen wie in
 der Liste. Ein Klick auf die freie Fläche eines Tages öffnet „Termin erstellen" mit dem Tag als

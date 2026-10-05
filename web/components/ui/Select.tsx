@@ -31,6 +31,8 @@ export interface SelectProps {
   supportingText?: string;
   /** Fester Hinweis hinter einem ⓘ (siehe `Feld`). */
   info?: ReactNode;
+  /** Den festen Hinweis auf Touch-Geräten unter dem Feld zeigen (siehe `Feld`). */
+  infoAufTouch?: boolean;
   error?: boolean;
   disabled?: boolean;
   id?: string;
@@ -59,6 +61,7 @@ export function Select({
   name,
   supportingText,
   info,
+  infoAufTouch,
   error,
   disabled,
   id,
@@ -182,7 +185,7 @@ export function Select({
   }
 
   return (
-    <Feld id={fid} label={label} leer={leer} hinweis={supportingText} info={info} error={error} className={className}>
+    <Feld id={fid} label={label} leer={leer} hinweis={supportingText} info={info} infoAufTouch={infoAufTouch} error={error} className={className}>
       <div ref={rootRef} className="relative">
         <button
           id={fid}

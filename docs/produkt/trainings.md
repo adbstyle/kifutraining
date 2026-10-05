@@ -90,6 +90,12 @@ Kategorie entsteht kein Training, und die letzte lässt sich später auch nicht 
 Ein Ziel darf gleich mitgegeben werden: ein kurzer Satz dazu, woran das Team in dieser Einheit
 arbeitet, freiwillig, höchstens zweihundert Zeichen und jederzeit änderbar. Der Name darf
 höchstens achtzig Zeichen lang sein, auch bei einem Training, das direkt im Team entsteht.
+Die Seite „Neues Training" ist aufgebaut wie „Neue Übung": Unter den Brotkrumen steht zuoberst
+der Name als Feld mit grosser Schrift, darunter Altersstufe, Alterskategorie und Ziel, am
+Schluss „Training anlegen". Solange keine Altersstufe gewählt ist, ist die Alterskategorie
+gesperrt, und ein Hinweis darunter sagt, dass zuerst die Altersstufe kommt. Dass die Altersstufe
+danach feststeht, erklärt ein ⓘ am Feld; auf Touch-Geräten, wo das ⓘ verborgen bleibt, steht
+dieser Satz unter dem Feld.
 Anlegen und Übungen zuordnen lässt sich ein Training beider Altersstufen auch über einen verbundenen
 KI-Assistenten, nach denselben Regeln (siehe [Konto und Zugang](konto-und-zugang.md)). Über ihn
 lässt sich auch ein bestehendes Training beider Altersstufen überarbeiten — Name, Ziel,
@@ -244,7 +250,7 @@ Jede Gruppe ist dort ein Chip, der ihre Bezeichnung und die ihr zugewiesene Zeit
 24 min", und einen Gedankenstrich, solange keine Dauer zusammenkommt. Führt das Training mehrere
 Varianten seines Hauptteils, gilt die Zeit der angezeigten Variante. Trägt die Gruppe einen
 Konflikt der Verteilung, ist der Chip rot umrandet und trägt ein Warnzeichen — dieselbe Farbe
-wie eine abgewiesene Eingabe, denn die Anwendung kennt für Hinweise keine zweite; was genau nicht
+wie eine abgewiesene Eingabe, denn die Anwendung kennt für Konflikte an Chips und Feldern keine zweite; was genau nicht
 stimmt, steht im Klartext am Fuss der Karte, und gespeichert wird trotzdem.
 
 Ein Klick auf den Chip öffnet sein Menü. Darin steht, was mit dieser Gruppe zu tun ist:

@@ -102,7 +102,7 @@ export function Breadcrumbs({
               {item.href && !isCurrent ? (
                 <Link
                   href={item.href}
-                  className="state focus-ring type-body-medium flex min-w-0 items-center gap-1.5 rounded-plakette text-on-surface-mittel underline decoration-transparent decoration-1 underline-offset-[3px] transition-colors hover:decoration-current"
+                  className="state focus-ring type-body-medium flex min-w-0 items-center gap-1.5 rounded-klein text-on-surface-mittel underline decoration-transparent decoration-1 underline-offset-[3px] transition-colors hover:decoration-current"
                 >
                   {content}
                 </Link>

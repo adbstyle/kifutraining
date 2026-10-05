@@ -1,8 +1,7 @@
 export { Button, ButtonLink, buttonClasses } from "./Button";
 export { ButtonGroup, segmentClasses } from "./ButtonGroup";
-export { Badge, HerkunftBadge, Zaehler } from "./Badge";
+export { Lozenge, HerkunftLozenge, SichtbarkeitLozenge, KategorieLozenge, Badge, lozengeFarben } from "./Lozenge";
 export {
-  KategorieChip,
   FilterChip,
   ChoiceChip,
   ChoiceChipGroup,
@@ -19,7 +18,7 @@ export { AuswahlListe } from "./AuswahlListe";
 export type { AuswahlEintrag } from "./AuswahlListe";
 export { FormAbschnitt } from "./FormAbschnitt";
 export { Leerzustand } from "./Leerzustand";
-export { Banner } from "./Banner";
+export { SectionMessage } from "./SectionMessage";
 export { UebungsBild } from "./UebungsBild";
 export { FieldPlaceholder } from "./FieldPlaceholder";
 export { ExerciseCard } from "./ExerciseCard";

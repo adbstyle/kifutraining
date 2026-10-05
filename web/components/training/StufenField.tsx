@@ -1,7 +1,6 @@
 "use client";
 
 import { MultiSelect } from "@/components/ui";
-import { cn } from "@/lib/cn";
 import { kategorieStufe } from "@/lib/labels";
 import { kategorienSlugs, type KategorieSlug } from "@/lib/vocab";
 
@@ -10,16 +9,16 @@ import { kategorienSlugs, type KategorieSlug } from "@/lib/vocab";
 
    Eine Mehrfachauswahl (Styleguide 17), wie jede Mehrfachauswahl seit dem
    2026-09-13. Sie war bis dahin eine Reihe toggelbarer Plaketten, die ihre
-   Kategoriefarbe trugen — dieselbe Tabelle, die Übungskarte,
-   Katalog und Druck benutzen. Diese Farbe entfällt hier (PO-Entscheid
+   Kategoriefarbe trugen — dieselbe, die Übungskarte, Katalog und Druck
+   zeigen (`KategorieLozenge`). Diese Farbe entfällt hier (PO-Entscheid
    2026-09-13): Sie sagt, WELCHE Kategorie man vor sich hat, und das ist beim
    Anzeigen die Aussage, beim Auswählen aber steht der Name ohnehin
    ausgeschrieben da. Wo eine Kategorie angezeigt wird, trägt sie ihre Farbe
-   unverändert weiter.
+   weiter.
 
    Angeboten werden nur die Kategorien der Altersstufe (`kategorien`;
-   Story 5 AK 4) — G bis A stehen nie gemeinsam zur Wahl. Beim Anlegen
-   erscheint das Feld deshalb erst nach der Wahl der Altersstufe: welche
+   Story 5 AK 4) — G bis A stehen nie gemeinsam zur Wahl. Beim Anlegen ist
+   das Feld deshalb gesperrt, bis die Altersstufe gewählt ist: welche
    Kategorien es überhaupt gibt, folgt aus ihr.
 
    Weder Suche noch Aktions-Fuss: drei bis vier kurze Werte liest man
@@ -30,6 +29,8 @@ export function StufenField({
   kategorien = kategorienSlugs,
   error,
   info,
+  hinweis,
+  disabled,
   className,
 }: {
   value: string[];
@@ -39,12 +40,16 @@ export function StufenField({
   error?: string;
   /** Fester Hinweis hinter einem ⓘ. */
   info?: string;
+  /** Hinweis unter dem Feld, solange kein Fehler dasteht. */
+  hinweis?: string;
+  disabled?: boolean;
+  /** Ersetzt die Vorgabe `max-w-lg`. */
   className?: string;
 }) {
   return (
     <MultiSelect
       label="Alterskategorie"
-      className={cn("max-w-lg", className)}
+      className={className ?? "max-w-lg"}
       options={(kategorien as KategorieSlug[]).map((k) => ({
         value: k,
         label: kategorieStufe[k],
@@ -54,8 +59,9 @@ export function StufenField({
       searchable={false}
       actions={false}
       error={!!error}
-      supportingText={error}
+      supportingText={error ?? hinweis}
       info={info}
+      disabled={disabled}
     />
   );
 }

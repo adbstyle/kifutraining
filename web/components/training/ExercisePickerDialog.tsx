@@ -4,13 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { Plus, TriangleAlert } from "lucide-react";
 import {
   Dialog,
-  KategorieChip,
-  HerkunftBadge,
+  KategorieLozenge,
+  HerkunftLozenge,
   AuswahlFilter,
   ButtonLink,
   UebungsBild,
-  Zaehler,
-  Banner,
+  Badge,
+  SectionMessage,
   FilterSuche,
 } from "@/components/ui";
 import { addTrainingExercise, pickExercises } from "@/lib/actions/trainings";
@@ -209,7 +209,7 @@ export function ExercisePickerDialog({
           )}
         </div>
 
-        {error && <Banner tone="fehler">{error}</Banner>}
+        {error && <SectionMessage appearance="error">{error}</SectionMessage>}
 
         {/* Die Treffer als Raster aus Karten, wie die Diagramm-Vorlagen
             (PO 2026-10-05): vorne, was zeigt, ob die Übung passt — Diagramm
@@ -287,7 +287,7 @@ export function ExercisePickerDialog({
                           sizes="(min-width: 640px) 16rem, 50vw"
                         />
                         {count > 0 && (
-                          <Zaehler className="absolute right-1.5 top-1.5">{count}×</Zaehler>
+                          <Badge className="absolute right-1.5 top-1.5">{count}×</Badge>
                         )}
                       </span>
                       <span className="flex flex-col gap-1.5 p-2">
@@ -311,9 +311,9 @@ export function ExercisePickerDialog({
                         </span>
                         <span className="flex flex-wrap items-center gap-1">
                           {(ex.kategorien as KategorieSlug[]).map((k) => (
-                            <KategorieChip key={k} k={k} />
+                            <KategorieLozenge key={k} k={k} />
                           ))}
-                          <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
+                          <HerkunftLozenge herkunft={ex.source} visibility={ex.visibility} />
                         </span>
                       </span>
                     </button>

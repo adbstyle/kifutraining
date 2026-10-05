@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, LogOut, Trash2 } from "lucide-react";
-import { Banner, Button, Dialog } from "@/components/ui";
+import { SectionMessage, Button, Dialog } from "@/components/ui";
 import { loeseTeamAuf, verlasseTeam } from "@/lib/actions/teams";
 
 /* Team verlassen und Team auflösen (Story 13).
@@ -12,7 +12,7 @@ import { loeseTeamAuf, verlasseTeam } from "@/lib/actions/teams";
    der Auflösung, mit dem, was dabei verloren geht.
 
    Scheitert einer der beiden Wege, bleibt sein Dialog offen und nennt den
-   Grund als Banner — dort, wo der Trainer erneut bestätigen oder abbrechen
+   Grund als Section Message — dort, wo der Trainer erneut bestätigen oder abbrechen
    kann. Eine Snackbar läge unter dem Dialog (Material, #234). */
 export function TeamGefahrenzone({
   teamId,
@@ -109,9 +109,9 @@ export function TeamGefahrenzone({
         }
       >
         {fehler && (
-          <Banner tone="fehler" className="mb-4">
+          <SectionMessage appearance="error" className="mb-4">
             {fehler}
-          </Banner>
+          </SectionMessage>
         )}
         <p>
           Du siehst die Trainings und Termine dieses Teams danach nicht mehr.
@@ -137,7 +137,7 @@ export function TeamGefahrenzone({
         }
       >
         <div className="flex flex-col gap-3">
-          {fehler && <Banner tone="fehler">{fehler}</Banner>}
+          {fehler && <SectionMessage appearance="error">{fehler}</SectionMessage>}
           <p className="flex items-start gap-2">
             <AlertTriangle
               size={18}

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { LogOut, Bookmark, ChevronRight } from "lucide-react";
-import { Card, Button, Banner } from "@/components/ui";
+import { Card, Button, SectionMessage } from "@/components/ui";
 import { KontoClient } from "./KontoClient";
 import { AnzeigenameForm } from "./AnzeigenameForm";
 import { KiZugaengeListe } from "./KiZugaengeListe";
@@ -112,10 +112,10 @@ export default async function KontoPage() {
         </p>
         <div className="mt-4">
           {zugaenge === null ? (
-            <Banner tone="fehler">
+            <SectionMessage appearance="error">
               Deine KI-Zugänge lassen sich gerade nicht anzeigen. Bitte lade die
               Seite später erneut.
-            </Banner>
+            </SectionMessage>
           ) : (
             <KiZugaengeListe zugaenge={zugaenge} />
           )}
@@ -132,7 +132,7 @@ export default async function KontoPage() {
         </p>
         <div className="mt-4">
           {abos === null ? (
-            <Banner tone="fehler">Deine Abos liessen sich gerade nicht laden.</Banner>
+            <SectionMessage appearance="error">Deine Abos liessen sich gerade nicht laden.</SectionMessage>
           ) : (
             <AbosListe abos={abos} />
           )}

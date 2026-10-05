@@ -1,6 +1,7 @@
 /**
  * Die Farbpalette des Designsystems als TypeScript-Zwilling von
- * `app/globals.css` (Material 2 Dark: Grund plus weisses Overlay je Höhe).
+ * `app/globals.css` (Material 2 Dark: Grund plus weisses Overlay je Höhe;
+ * dazu die Rollen der Atlassian-Bausteine Lozenge und Section Message).
  *
  * Warum es diese Datei gibt, obwohl die Farben schon im CSS stehen:
  *
@@ -115,26 +116,101 @@ export const UMKEHR = {
   akzent: "#4527a0",
 } as const;
 
-// ── Alterskategorien ───────────────────────────────────────────────────────
+// ── Atlassian: Lozenge, Badge, Section Message ────────────────────────────
 /**
- * G/F/E Kinderfussball, D/C/B/A Juniorenfussball. Sie erscheinen als Kontur
- * und Schrift auf dem Grund und auf der Karte (nie als Fläche — ausser im
- * Druck), müssen also auf elev-00 UND elev-01 als Schrift lesbar sein.
+ * Drei Bausteine folgen nicht Material, sondern dem Atlassian Design System
+ * (wie Jira): die Lozenge (Plakette), die Badge (Zähler) und die Section
+ * Message (Meldung im Fluss der Seite). Ihre Farben stehen hier WÖRTLICH aus
+ * `@atlaskit/tokens` (20.2.0) — der Bildschirm aus dem Theme `atlassian-dark`,
+ * der Druck aus `atlassian-light`. Nachgemischt wird nichts: Wer Jira kennt,
+ * soll dieselben Töne wiedererkennen.
  *
- * Zweite Bedingung: Keine darf mit Primary verwechselbar sein, sonst liest
- * sich eine Kategorie-Plakette wie ein aktiver Zustand.
+ * Lozenge: `flaeche` ist ADS `color.background.<x>.subtler` (bei `neutral`
+ * `color.background.neutral`, bei `accent-gray` `…accent.gray.subtlest`),
+ * `schrift` ist `color.text.<x>.bolder` (bei `neutral` `color.text`).
+ * Die Akzente tragen die Alterskategorien; geführt sind nur die sieben, die
+ * eine Kategorie belegt.
  */
-export const KAT = {
-  g: "#5eb3f5",
-  f: "#e6c044",
-  e: "#ff8a65",
-  d: "#5ee0a0",
-  c: "#f48fb1",
-  b: "#a5b4fc",
-  a: "#cfd8dc",
+export const LOZENGE = {
+  neutral: { flaeche: "#ceced912", schrift: "#cecfd2" },
+  success: { flaeche: "#37471f", schrift: "#d3f1a7" },
+  warning: { flaeche: "#693200", schrift: "#fce4a6" },
+  danger: { flaeche: "#5d1f1a", schrift: "#ffd5d2" },
+  information: { flaeche: "#123263", schrift: "#cfe1fd" },
+  discovery: { flaeche: "#48245d", schrift: "#eed7fc" },
+  "accent-blue": { flaeche: "#123263", schrift: "#cfe1fd" },
+  "accent-yellow": { flaeche: "#533f04", schrift: "#f5e989" },
+  "accent-orange": { flaeche: "#693200", schrift: "#fce4a6" },
+  "accent-green": { flaeche: "#164b35", schrift: "#baf3db" },
+  "accent-magenta": { flaeche: "#50253f", schrift: "#fdd0ec" },
+  "accent-purple": { flaeche: "#48245d", schrift: "#eed7fc" },
+  "accent-gray": { flaeche: "#303134", schrift: "#e2e3e4" },
 } as const;
 
-export type KatSchluessel = keyof typeof KAT;
+export type LozengeAppearance = keyof typeof LOZENGE;
+
+/** Dieselben Rollen aus `atlassian-light` — die Lozenge auf Papier. */
+export const LOZENGE_DRUCK: Record<LozengeAppearance, { flaeche: string; schrift: string }> = {
+  neutral: { flaeche: "#0515240f", schrift: "#292a2e" },
+  success: { flaeche: "#d3f1a7", schrift: "#37471f" },
+  warning: { flaeche: "#fce4a6", schrift: "#693200" },
+  danger: { flaeche: "#ffd5d2", schrift: "#5d1f1a" },
+  information: { flaeche: "#cfe1fd", schrift: "#123263" },
+  discovery: { flaeche: "#eed7fc", schrift: "#48245d" },
+  "accent-blue": { flaeche: "#cfe1fd", schrift: "#123263" },
+  "accent-yellow": { flaeche: "#f5e989", schrift: "#533f04" },
+  "accent-orange": { flaeche: "#fce4a6", schrift: "#693200" },
+  "accent-green": { flaeche: "#baf3db", schrift: "#164b35" },
+  "accent-magenta": { flaeche: "#fdd0ec", schrift: "#50253f" },
+  "accent-purple": { flaeche: "#eed7fc", schrift: "#48245d" },
+  "accent-gray": { flaeche: "#f0f1f2", schrift: "#1e1f21" },
+};
+
+/**
+ * Section Message: `flaeche` ist ADS `color.background.<x>`, `icon` ist
+ * `color.icon.<x>`. Die Schrift darauf ist die gewöhnliche (`on-surface`).
+ * Die Darstellung `error` der Section Message liegt auf `danger` — so heisst
+ * die Rolle bei Atlassian, nur die Komponente sagt «error».
+ */
+export const SECTION = {
+  information: { flaeche: "#1c2b42", icon: "#4688ec" },
+  warning: { flaeche: "#3a2c1f", icon: "#fbc828" },
+  danger: { flaeche: "#42221f", icon: "#f15b50" },
+  success: { flaeche: "#28311b", icon: "#82b536" },
+  discovery: { flaeche: "#35243f", icon: "#bf63f3" },
+} as const;
+
+export type SectionRolle = keyof typeof SECTION;
+
+/** Dieselben Rollen aus `atlassian-light` — die Section Message auf Papier. */
+export const SECTION_DRUCK: Record<SectionRolle, { flaeche: string; icon: string }> = {
+  information: { flaeche: "#e9f2fe", icon: "#357de8" },
+  warning: { flaeche: "#fff5db", icon: "#e06c00" },
+  danger: { flaeche: "#ffeceb", icon: "#c9372c" },
+  success: { flaeche: "#efffd6", icon: "#6a9a23" },
+  discovery: { flaeche: "#f8eefe", icon: "#af59e1" },
+};
+
+/** Die `--color-*`-Rollen eines Lozenge- und eines Section-Satzes. */
+function atlassianRollen(
+  lozenge: Record<LozengeAppearance, { flaeche: string; schrift: string }>,
+  section: Record<SectionRolle, { flaeche: string; icon: string }>,
+): Record<string, string> {
+  return {
+    ...Object.fromEntries(
+      Object.entries(lozenge).flatMap(([k, { flaeche, schrift }]) => [
+        [`lozenge-${k}`, flaeche],
+        [`on-lozenge-${k}`, schrift],
+      ]),
+    ),
+    ...Object.fromEntries(
+      Object.entries(section).flatMap(([k, { flaeche, icon }]) => [
+        [`section-${k}`, flaeche],
+        [`icon-${k}`, icon],
+      ]),
+    ),
+  };
+}
 
 // ── Zustände ───────────────────────────────────────────────────────────────
 /**
@@ -175,7 +251,7 @@ export const BILDSCHIRM: Readonly<Record<string, string>> = {
   umkehr: UMKEHR.flaeche,
   "on-umkehr": UMKEHR.schrift,
   "umkehr-akzent": UMKEHR.akzent,
-  ...Object.fromEntries(Object.entries(KAT).map(([k, v]) => [`kat-${k}`, v])),
+  ...atlassianRollen(LOZENGE, SECTION),
 };
 
 /**
@@ -184,8 +260,8 @@ export const BILDSCHIRM: Readonly<Record<string, string>> = {
  * damit gestapelte Karten sich weiter voneinander abheben.
  *
  * Primary und Error werden dunkel: Ein Lila mit 4.3:1 auf Schwarz hat auf
- * Weiss nur noch 2.8:1. Die beiden Kategorien, die im Druck als Fläche
- * erscheinen (kat-a und kat-f), tragen darum eigene, kräftigere Werte.
+ * Weiss nur noch 2.8:1. Lozenge und Section Message wechseln auf Papier in
+ * Atlassians helles Theme.
  */
 export const DRUCK = {
   "elev-00": "#ffffff",
@@ -207,8 +283,7 @@ export const DRUCK = {
   "on-primary": "#ffffff",
   error: "#a32036",
   "on-error": "#ffffff",
-  "kat-a": "#78909c",
-  "kat-f": "#b8960f",
+  ...atlassianRollen(LOZENGE_DRUCK, SECTION_DRUCK),
 } as const;
 
 /** Die Schriftfarbe des Drucks — sie liegt auf jeder gedruckten Fläche. */
@@ -287,6 +362,16 @@ export function hex8(hexRgb: string, alpha: number): string {
   }
   const [r, g, b] = kanaele(hexRgb);
   return `#${zweiHex(r)}${zweiHex(g)}${zweiHex(b)}${zweiHex(Math.round(alpha * 255))}`;
+}
+
+/**
+ * Eine Farbe deckend machen: Hex8 wird über den Untergrund gelegt, Hex6 bleibt
+ * wie er ist. Nötig für Rollen mit Alphakanal wie `lozenge-neutral`, gegen die
+ * sich sonst kein Kontrast rechnen lässt.
+ */
+export function deckend(farbe: string, untergrund: string): string {
+  const treffer = /^#([0-9a-f]{6})([0-9a-f]{2})$/i.exec(farbe.trim());
+  return treffer ? ueberlagern(`#${treffer[1]}`, parseInt(treffer[2], 16) / 255, untergrund) : farbe;
 }
 
 /** Euklidischer Abstand zweier Farben im RGB-Würfel (0…441). Grobes Mass —

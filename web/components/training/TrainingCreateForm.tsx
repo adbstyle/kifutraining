@@ -1,7 +1,13 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { TextField, TextArea, Button, AltersstufeField, Banner } from "@/components/ui";
+import {
+  TextArea,
+  Button,
+  AltersstufeField,
+  SectionMessage,
+  TextField,
+} from "@/components/ui";
 import { StufenField } from "./StufenField";
 import { kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
 import { TRAINING_NAME_MAX, ZIEL_MAX } from "@/lib/training";
@@ -53,65 +59,70 @@ export function TrainingCreateForm() {
   }
 
   return (
-    <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-6">
+    // Aufbau wie «Neue Übung»: zuoberst der Name, gross, darunter die Felder
+    // im selben Abstand — ohne Zwischentitel, es sind nur drei —, am Schluss
+    // das Anlegen.
+    // `lg:pt-2`: Ab `lg` klebt die Kopfzeile direkt darüber; ohne Abstand
+    // verdeckte sie die Fläche, die beim Überfahren 6 px über das Feld ragt.
+    <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-10 lg:pt-2">
       {state.status === "error" && state.message && (
-        <Banner tone="fehler">{state.message}</Banner>
+        <SectionMessage appearance="error">{state.message}</SectionMessage>
       )}
 
-      <TextField
-        label="Name des Trainings"
-        name="name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        maxLength={TRAINING_NAME_MAX}
-        error={!!state.errors?.name}
-        supportingText={state.errors?.name}
-        required
-        autoFocus
-      />
+      <div className="flex flex-col gap-5">
+        <TextField
+          label="Name des Trainings"
+          schrift="title"
+          name="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          maxLength={TRAINING_NAME_MAX}
+          required
+          autoFocus
+          error={!!state.errors?.name}
+          supportingText={state.errors?.name}
+        />
 
-      {/* Das Ziel begleitet das Training von der Planung bis auf den Platz.
-          Es ist optional und schon beim Anlegen erfassbar (Story 10 AC 2). */}
-      <TextArea
-        label="Ziel (optional)"
-        name="ziel"
-        rows={2}
-        maxLength={ZIEL_MAX}
-        value={ziel}
-        onChange={(e) => setZiel(e.target.value)}
-        info={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
-      />
+        <AltersstufeField
+          wert={altersstufe}
+          onChange={waehleAltersstufe}
+          info="Nach welchem Manual du planst. Bestimmt Trainingsteile, Gliederung und Alterskategorien - und steht danach fest."
+          fehler={fehler.altersstufe}
+        />
 
-      <AltersstufeField
-        className="max-w-xs"
-        wert={altersstufe}
-        onChange={waehleAltersstufe}
-        info="Nach welchem Manual du planst. Bestimmt Trainingsteile, Gliederung und Alterskategorien - und steht danach fest."
-        fehler={fehler.altersstufe}
-      />
-
-      {/* Mindestens eine Alterskategorie, ab dem Anlegen (PO 2026-08-30,
-          Epic Übungswelten). Bestehende Trainings ohne bleiben bearbeitbar,
-          ein neues entsteht nicht mehr ohne.
-          Ohne gewählte Altersstufe gibt es das Feld nicht — welche Kategorien
-          es überhaupt gibt, folgt aus ihr. Dann steht nur der Satz da, der das
-          sagt; ein leeres Auswahlfeld wäre ein Angebot ohne Inhalt. */}
-      {altersstufe ? (
+        {/* Mindestens eine Alterskategorie, ab dem Anlegen (PO 2026-08-30,
+            Epic Übungswelten). Bestehende Trainings ohne bleiben bearbeitbar,
+            ein neues entsteht nicht mehr ohne.
+            Ohne gewählte Altersstufe ist das Feld gesperrt — welche Kategorien
+            es überhaupt gibt, folgt aus ihr; der Hinweis darunter sagt das. */}
         <StufenField
+          className="w-full"
           value={stufen}
           onChange={setStufen}
-          kategorien={kategorienFuer(altersstufe)}
+          kategorien={altersstufe ? kategorienFuer(altersstufe) : []}
+          disabled={!altersstufe}
           error={fehler.stufen}
+          hinweis={
+            altersstufe
+              ? undefined
+              : "Wähle zuerst die Altersstufe - sie bestimmt, welche Alterskategorien es hier gibt."
+          }
           info="Für welche Alterskategorien ist das Training gedacht? Mindestens eine ist nötig; du kannst die Auswahl später jederzeit ändern."
         />
-      ) : (
-        <p className="type-body-small text-on-surface-mittel">
-          Wähle zuerst die Altersstufe - sie bestimmt, welche Alterskategorien
-          es hier gibt.
-        </p>
-      )}
 
-      <div className="flex justify-end gap-2">
+        {/* Das Ziel begleitet das Training von der Planung bis auf den Platz.
+            Es ist optional und schon beim Anlegen erfassbar (Story 10 AC 2). */}
+        <TextArea
+          label="Ziel (optional)"
+          name="ziel"
+          maxLength={ZIEL_MAX}
+          value={ziel}
+          onChange={(e) => setZiel(e.target.value)}
+          info={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
+        />
+      </div>
+
+      <div className="flex items-center border-t border-linie pt-5">
         <Button type="submit" variant="filled" disabled={pending}>
           {pending ? "Wird angelegt…" : "Training anlegen"}
         </Button>

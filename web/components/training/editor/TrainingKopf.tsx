@@ -5,11 +5,12 @@ import Link from "next/link";
 import { Users } from "lucide-react";
 import {
   Card,
-  Badge,
+  Lozenge,
+  SichtbarkeitLozenge,
   EigenschaftAuswahl,
   EigenschaftText,
   HeadlineField,
-  KategorieChip,
+  KategorieLozenge,
   TextArea,
 } from "@/components/ui";
 import { kategorieStufe } from "@/lib/labels";
@@ -66,11 +67,9 @@ export function TrainingKopf({
             Team-Training von {training.team.name}
           </Link>
         ) : (
-          <Badge tone={oeffentlich ? "oeffentlich" : "entwurf"}>
-            {oeffentlich ? "Öffentlich" : "✎ Entwurf"}
-          </Badge>
+          <SichtbarkeitLozenge oeffentlich={oeffentlich} />
         )}
-        <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
+        <Lozenge>{altersstufeLabels[training.altersstufe]}</Lozenge>
       </div>
 
       <div className="mt-4">{zielFeld}</div>
@@ -148,7 +147,7 @@ export function ZielEigenschaft({
 }
 
 /** Die Alterskategorien als bearbeitbare Eigenschaft in der Spalte — ruhend
- *  als Plaketten in ihrer Farbe, im Bearbeiten die Liste der Altersstufe. */
+ *  als Lozenges in ihrer Farbe, im Bearbeiten die Liste der Altersstufe. */
 export function StufenEigenschaft({
   altersstufe,
   stufen,
@@ -174,7 +173,7 @@ export function StufenEigenschaft({
       anzeige={
         <span className="flex flex-wrap gap-1.5">
           {sortStufen(stufen).map((k) => (
-            <KategorieChip key={k} k={k} />
+            <KategorieLozenge key={k} k={k} />
           ))}
         </span>
       }

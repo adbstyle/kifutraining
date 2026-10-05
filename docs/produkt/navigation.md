@@ -73,7 +73,12 @@ unter den Übungen stehen.
 ## Bedienung
 
 Die Oberfläche ist knapp gehalten. Überschriften stehen in gewöhnlicher Schreibung, nicht in
-Grossbuchstaben; klein und in Grossbuchstaben bleiben nur kurze Beschriftungen und Plaketten.
+Grossbuchstaben; klein und in Grossbuchstaben bleiben nur kurze Beschriftungen. Plaketten stehen
+wie in Jira in gewöhnlicher Schreibung auf einer zart getönten Fläche. Ihre Farbe sagt, ob sie
+bloss etwas benennt — Herkunft, Entwurf, Altersstufe (grau) —, nach aussen gilt (blau), etwas
+Zusätzliches meldet wie mehrere Varianten (violett) oder Aufmerksamkeit braucht wie ein Termin
+ohne Training (orange). Die Alterskategorien stehen als einzelne Buchstaben, jede in einer festen
+Farbe aus derselben Palette; bei ihnen zählt der Buchstabe, nicht die Bedeutung der Farbe.
 Alles, was sich bedienen lässt — Knöpfe, Felder, Filter, Einträge der Seitenleiste, Zeilen in
 Menüs und Listen, die Werkzeuge der Zeichenfläche —, ist gleich hoch, 36 Pixel, auf dem Rechner
 wie auf dem Telefon und auch in der Durchführen-Ansicht. Knöpfe, die nur ein Zeichen tragen,

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { CalendarDays, CalendarOff, CalendarPlus, CalendarX2, MapPin, MessageSquareText, Pencil, PlayCircle, Repeat, Trash2, Undo2, Unlink, Users } from "lucide-react";
-import { Badge, Card, Disclosure, IconButton, IconButtonLink, KategorieChip, OverflowMenu, Tooltip } from "@/components/ui";
+import { Card, Disclosure, IconButton, IconButtonLink, KategorieLozenge, Lozenge, OverflowMenu, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
 import { wochentageText } from "@/lib/serie";
@@ -66,6 +66,7 @@ export function TerminKarte({ t, heute, ebene: Kopf = "h4", hervorgehoben = fals
   const a = useTerminAktionen();
   const vergangen = t.datum < heute;
   const zeit = zeitText(t.beginn, t.ende);
+  const oeffnetTraining = !t.ausgefallen && t.training !== null;
   // Die Datum-/Zeitzeile ist die Überschrift jeder Karte — auch die eines
   // Termins ohne Training hat so eine (Screenreader-Navigation per Überschrift).
   const kopf = (
@@ -94,12 +95,21 @@ export function TerminKarte({ t, heute, ebene: Kopf = "h4", hervorgehoben = fals
         id={hervorgehoben ? t.id : undefined}
         aria-current={hervorgehoben ? "true" : undefined}
         tabIndex={hervorgehoben ? -1 : undefined}
-        className={cn("p-4", hervorgehoben && "kontur border-primary outline-none")}
+        className={cn(
+          "p-4",
+          // Trägt der Termin ein Training, verhält sich die Karte wie eine
+          // Trainingskachel: Sie hellt als Ganzes auf (`state`) und öffnet das
+          // Training, wo sie keinen eigenen Knopf trägt — die Fläche des Links
+          // reicht dafür über die ganze Karte (`before:`). Ohne Training gibt
+          // es nichts zu öffnen, die Karte bleibt still.
+          oeffnetTraining && "state",
+          hervorgehoben && "kontur border-primary outline-none",
+        )}
       >
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className={cn("min-w-0 flex-1", vergangen && !t.ausgefallen && "opacity-60")}>
             {/* Bei einem ausgefallenen Termin dämpft nur Kopf und Verantwortliche;
-                Badge und Grund bleiben im vollen Kontrast (AA). */}
+                Lozenge und Grund bleiben im vollen Kontrast (AA). */}
             <div className={cn(t.ausgefallen && "opacity-60")}>
             {kopf}
             {/* #325 AK 10, 12: wer den Termin vorbereitet und leitet, mit dem
@@ -114,7 +124,7 @@ export function TerminKarte({ t, heute, ebene: Kopf = "h4", hervorgehoben = fals
             </div>
             {t.ausgefallen ? (
               <div className="mt-1">
-                <Badge tone="neutral"><CalendarOff size={12} strokeWidth={2.5} aria-hidden />Ausgefallen</Badge>
+                <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
                 {/* AK 7: der Grund steht darunter, wenn es einen gibt. */}
                 {t.ausfallGrund && (
                   <p className="mt-1 type-body-small text-on-surface-mittel">
@@ -124,22 +134,26 @@ export function TerminKarte({ t, heute, ebene: Kopf = "h4", hervorgehoben = fals
                 )}
               </div>
             ) : t.training ? (
-              <Link href={`/training/${t.training.id}`} className="focus-ring group mt-1 block rounded-flaeche">
-                <span className="block type-title-medium text-on-surface group-hover:underline">{t.training.name}</span>
-                <div className="mt-1 flex flex-wrap gap-1">{t.training.stufen.map((k) => <KategorieChip key={k} k={k} />)}</div>
+              <Link
+                href={`/training/${t.training.id}`}
+                className="focus-ring mt-1 block rounded-flaeche before:absolute before:inset-0 before:rounded-flaeche before:content-['']"
+              >
+                <span className="block type-title-medium text-on-surface">{t.training.name}</span>
+                <div className="mt-1 flex flex-wrap gap-1">{t.training.stufen.map((k) => <KategorieLozenge key={k} k={k} />)}</div>
               </Link>
             ) : (
               <div className="mt-1">
                 {nochNichtVorbereitet(t, heute) ? (
-                  <Badge tone="befund"><CalendarX2 size={12} strokeWidth={2.5} aria-hidden />Noch kein Training</Badge>
+                  <Lozenge appearance="warning" iconBefore={CalendarX2}>Noch kein Training</Lozenge>
                 ) : (
-                  <Badge tone="neutral">Ohne Training</Badge>
+                  <Lozenge>Ohne Training</Lozenge>
                 )}
               </div>
             )}
             {t.bemerkung && <p className="mt-1 type-body-small text-on-surface-mittel">{t.bemerkung}</p>}
           </div>
-          <div className="flex shrink-0 gap-0.5">
+          {/* Über der Link-Fläche, damit die Knöpfe für sich bedienbar bleiben. */}
+          <div className="relative flex shrink-0 gap-0.5">
             {!t.ausgefallen && t.training && (
               <Tooltip label="Durchführen">
                 <IconButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`} icon={PlayCircle} label={`${t.training.name} durchführen`} />

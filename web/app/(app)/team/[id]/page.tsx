@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { CalendarPlus, UserCheck } from "lucide-react";
-import { Banner, Leerzustand } from "@/components/ui";
+import { SectionMessage, Leerzustand } from "@/components/ui";
 import { AnsichtWahl } from "@/components/team/AnsichtWahl";
 import { MonatsUeberblick } from "@/components/team/MonatsUeberblick";
 import { TerminBereich } from "@/components/team/TerminBereich";
@@ -97,7 +97,7 @@ export default async function TeamPlanPage({
             {team && <PlanMenue teamId={id} teamName={team.name} />}
           </div>
         </div>
-        {terminWeg && <Banner tone="hinweis" className="mb-4">{TERMIN_WEG}</Banner>}
+        {terminWeg && <SectionMessage className="mb-4">{TERMIN_WEG}</SectionMessage>}
         {ansicht === "monat" ? (
           <MonatsUeberblick teamId={id} monat={monat} termine={termine} heute={heute} meine={meine} />
         ) : leer && meine ? (
