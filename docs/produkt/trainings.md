@@ -90,6 +90,12 @@ Kategorie entsteht kein Training, und die letzte lässt sich später auch nicht 
 Ein Ziel darf gleich mitgegeben werden: ein kurzer Satz dazu, woran das Team in dieser Einheit
 arbeitet, freiwillig, höchstens zweihundert Zeichen und jederzeit änderbar. Der Name darf
 höchstens achtzig Zeichen lang sein, auch bei einem Training, das direkt im Team entsteht.
+Die Seite „Neues Training" ist aufgebaut wie „Neue Übung": Unter den Brotkrumen steht zuoberst
+der Name als Feld mit grosser Schrift, darunter Altersstufe, Alterskategorie und Ziel, am
+Schluss „Training anlegen". Solange keine Altersstufe gewählt ist, ist die Alterskategorie
+gesperrt, und ein Hinweis darunter sagt, dass zuerst die Altersstufe kommt. Dass die Altersstufe
+danach feststeht, erklärt ein ⓘ am Feld; auf Touch-Geräten, wo das ⓘ verborgen bleibt, steht
+dieser Satz unter dem Feld.
 Anlegen und Übungen zuordnen lässt sich ein Training beider Altersstufen auch über einen verbundenen
 KI-Assistenten, nach denselben Regeln (siehe [Konto und Zugang](konto-und-zugang.md)). Über ihn
 lässt sich auch ein bestehendes Training beider Altersstufen überarbeiten — Name, Ziel,

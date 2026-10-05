@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-03. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-05. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -32,7 +32,10 @@ nichts. Auch sie sind danach eigenständig: Wer in der Kopie eine Variante umbau
 entfernt, lässt das Training unberührt, aus dem sie hervorging — und umgekehrt. Ein Training lässt
 sich auch direkt im Team anlegen; es gehört dann von Beginn an dem Team. Dabei gelten dieselben
 Pflichtangaben wie beim persönlichen Anlegen: Name, Altersstufe und mindestens eine
-Alterskategorie der gewählten Altersstufe. Auch hier steht die Altersstufe danach fest.
+Alterskategorie der gewählten Altersstufe. Auch hier steht die Altersstufe danach fest. Der
+Dialog dafür verhält sich wie „Neues Training": Die Alterskategorie ist gesperrt, bis eine
+Altersstufe gewählt ist, und auf Touch-Geräten steht der Hinweis zur festen Altersstufe unter
+dem Feld.
 
 Team-Trainings tauchen in der allgemeinen Trainingsübersicht nie auf — sie leben
 ausschliesslich im Team-Bereich. Umgekehrt zeigt der Team-Bereich keine persönlichen
