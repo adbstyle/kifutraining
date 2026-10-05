@@ -11,6 +11,8 @@
 // - `lib/labels.ts`, `lib/training.ts` und `lib/filter-optionen.ts` für
 //   Stufen-Namen, Übungstyp-Definitionen, die Hauptteilkategorien in ihrer
 //   methodischen Reihenfolge und die Werte des Katalogfilters,
+// - `lib/feldtyp-richtmasse.ts` für die Richtmasse von Kleinfeld und
+//   Grossfeld je Alterskategorie (#392),
 // - für den Abschnitt `schema` (#199 AK 2, NFR 1) die Editor-Gliederung
 //   (`editorGliederung` in lib/training.ts, dieselbe wie im Editor und in
 //   «training_abrufen») und für die Veröffentlichungspflicht der Spiegel der
@@ -50,6 +52,13 @@ import {
   uebungstypOptionen,
 } from "@/lib/filter-optionen";
 import { Wert } from "@/lib/mcp/bausteine";
+import {
+  FELDTYP_RICHTMASSE,
+  FELDTYP_TORE,
+  FELDTYPEN_MIT_RICHTMASS,
+  richtmassText,
+  type RichtmassKategorie,
+} from "@/lib/feldtyp-richtmasse";
 
 const ABLAUF = z.enum(["fahrplan", "beschreibung"]);
 
@@ -69,6 +78,30 @@ const EinordnungSchema = z.object({
   zieht_erscheinungsform_an: z.string().nullable(),
 });
 
+/** Eine Spanne in ganzen Metern; «ca. 20» ist min 20, max 20. */
+const SpanneSchema = z.object({ min: z.number().int(), max: z.number().int() });
+
+/** Die Richtmasse eines Feldtyps je Alterskategorie (#392). */
+const FeldtypRichtmassSchema = z.object({
+  feldtyp: Wert,
+  /** Die Tore, auf die dieser Feldtyp spielt - die Torregel seiner Einstufung. */
+  tore: z.string(),
+  je_alterskategorie: z.array(
+    z.object({
+      alterskategorie: z.string(),
+      laenge_m: SpanneSchema,
+      breite_m: SpanneSchema,
+      /** Nennt die Quelle das Mass nur ungefähr («ca.»)? */
+      ungefaehr: z.boolean(),
+      /** Kategorie, deren Mass hier gilt, weil die Quelle für diese keins
+       *  kennt (Grossfeld in G → F); `null` = eigenes Mass. */
+      wie_alterskategorie: z.string().nullable(),
+      /** Klartext wie in der Quelle, etwa «ca. 20 × 15 m». */
+      text: z.string(),
+    }),
+  ),
+});
+
 const AltersstufeSchema = z.object({
   slug: z.string(),
   label: z.string(),
@@ -85,6 +118,12 @@ const AltersstufeSchema = z.object({
   /** Nur bei diesem Feldtyp — im Kinderfussball das freie Feld; `null`, wo
    *  sie nicht am Feldtyp hängt (Juniorenfussball). */
   spielfeldgroesse_bei_feldtyp: Wert.nullable(),
+  /** Richtmasse von Kleinfeld und Grossfeld je Alterskategorie (#392); leer,
+   *  wo die Stufe keinen Feldtyp kennt. */
+  feldtyp_richtmasse: z.array(FeldtypRichtmassSchema),
+  /** Wie Feldtypen eingestuft sind und was ihre Richtmasse bedeuten; `null`,
+   *  wo die Stufe keinen Feldtyp kennt. */
+  feldtyp_hinweis: z.string().nullable(),
   uebungstypen: z.array(z.object({ slug: z.string(), label: z.string(), definition: z.string() })),
 });
 
@@ -163,6 +202,47 @@ function ablaufVon(stufe: Altersstufe, einordnung: string, hkat: string | null) 
   return brauchtFahrplan(stufe, einordnung, hkat) ? "fahrplan" : "beschreibung";
 }
 
+/** Die Erklärung zu Feldtyp und Richtmass (#392 AK 3-6) - im Vokabular am
+ *  Kinderfussball und wortgleich in der Beschreibung von «vokabular». */
+export const FELDTYP_HINWEIS =
+  "Kleinfeld und Grossfeld sind nach den Toren einer Übung eingestuft, nicht nach ihrer " +
+  "Fläche: Grossfeld spielt auf grosse Tore, Kleinfeld auf Minitore oder 3:3 in einem " +
+  "abgegrenzten Feld. Ein grosses Tor einer Kinderfussball-Übung (Material «Tor», im " +
+  "Unterschied zu «Minitor») meint ein 5-m-Tor (5 × 2 m). Den Platzbedarf in Metern " +
+  "schätzen die Richtmasse je Alterskategorie in «feldtyp_richtmasse» ab, festgelegt nach " +
+  "den SFV-Ausführungsbestimmungen Kinder- und Jugendfussball 2026/27; die Bestimmungen " +
+  "kennen in G kein Grossfeld, dort gilt das Richtmass von F. Ein freies Feld ohne " +
+  "Meterangabe («spielfeld» leer) hat keine bekannte Grösse. Der Juniorenfussball kennt " +
+  "keinen Feldtyp und keine solche Torzuordnung; dort ist der Platzbedarf die freiwillige " +
+  "Spielfeldgrösse.";
+
+/** Der Verweis aus den Übungs-Werkzeugen, die einen Feldtyp liefern. */
+export const FELDTYP_VERWEIS =
+  "Wie Kleinfeld und Grossfeld eingestuft sind und wie gross sie je Alterskategorie " +
+  "ungefähr sind, liefert «vokabular».";
+
+function baueFeldtypRichtmasse(stufe: Altersstufe): z.infer<typeof FeldtypRichtmassSchema>[] {
+  if (!traegtFeldtyp(stufe)) return [];
+  return FELDTYPEN_MIT_RICHTMASS.map((ft) => ({
+    feldtyp: alsWert(feldOptionen.find((o) => o.value === ft)!),
+    tore: FELDTYP_TORE[ft],
+    je_alterskategorie: kategorienFuer(stufe).map((k) => {
+      const r = FELDTYP_RICHTMASSE[ft][k as RichtmassKategorie];
+      // Fehlt ein Mass, soll das laut scheitern statt still zu fehlen;
+      // `check:ki-zugang` fängt es vor jedem Deploy.
+      if (!r) throw new Error(`Richtmass ${ft}/${k} fehlt in lib/feldtyp-richtmasse.ts`);
+      return {
+        alterskategorie: k,
+        laenge_m: r.laenge_m,
+        breite_m: r.breite_m,
+        ungefaehr: r.ungefaehr,
+        wie_alterskategorie: r.wie_kategorie,
+        text: richtmassText(r),
+      };
+    }),
+  }));
+}
+
 function baueAltersstufe(stufe: Altersstufe): z.infer<typeof AltersstufeSchema> {
   const einordnungen = einordnungsSlugsFuer(stufe);
   // Die Einordnung, die eine Hauptteilkategorie trägt — heute genau der
@@ -215,6 +295,8 @@ function baueAltersstufe(stufe: Altersstufe): z.infer<typeof AltersstufeSchema> 
     spielfeldgroesse_bei_feldtyp: traegtFeldtyp(stufe)
       ? alsWert(feldOptionen.find((o) => o.value === FELDTYP_MIT_SPIELFELD)!)
       : null,
+    feldtyp_richtmasse: baueFeldtypRichtmasse(stufe),
+    feldtyp_hinweis: traegtFeldtyp(stufe) ? FELDTYP_HINWEIS : null,
     uebungstypen: mitUebungstyp
       ? uebungstypOptionen.map((o) => ({
           ...alsWert(o),

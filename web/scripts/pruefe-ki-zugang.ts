@@ -58,10 +58,16 @@ import {
   GESAMTDAUER_JUNIOREN,
   JUNIOREN_PFLICHT_BLOECKE,
 } from "../lib/junioren";
-import { FREIES_SPIEL, altersstufeDerEinordnung, einordnungenFuer } from "../lib/altersstufe";
+import {
+  FELDTYP_MIT_SPIELFELD,
+  FREIES_SPIEL,
+  altersstufeDerEinordnung,
+  einordnungenFuer,
+  kategorienFuer,
+} from "../lib/altersstufe";
 import { ANZAHL_HINWEIS, HAUPTTEILKATEGORIE_SLUGS, LEER_HINWEIS, OHNE_DAUER_TEILE } from "../lib/training";
 import { istHauptteil } from "../lib/gruppen";
-import { VokabularSchema, baueVokabular } from "../lib/mcp/vokabular";
+import { FELDTYP_HINWEIS, VokabularSchema, baueVokabular } from "../lib/mcp/vokabular";
 import { SucheEingabe } from "../lib/mcp/eingaben";
 import { DiagrammEingabe } from "../lib/mcp/diagramm-eingaben";
 import { z } from "zod";
@@ -344,6 +350,81 @@ pruefe("Feldtypen nur im Kinderfussball, Übungstypen nur im Juniorenfussball", 
   assert.equal(stufe("juniorenfussball").spielfeldgroesse_bei_feldtyp, null);
   for (const e of alleEinordnungen.filter((x) => x.stufe === "kinderfussball"))
     assert.equal(e.traegt_uebungstyp, false, e.slug);
+});
+
+// ── Richtmasse von Kleinfeld und Grossfeld (#392) ──────────────────────────
+// Ohne sie kann der Assistent den Platzbedarf einer Kinderfussball-Übung
+// nicht mit den Feldern eines Termins vergleichen. Fehlt eine Kategorie oder
+// ein Feldtyp, schätzt er still ins Blaue.
+const richtmasse = stufe("kinderfussball").feldtyp_richtmasse;
+const richtmass = (ft: string, k: string) => {
+  const r = richtmasse.find((x) => x.feldtyp.slug === ft)?.je_alterskategorie.find((x) => x.alterskategorie === k);
+  assert.ok(r, `Richtmass ${ft}/${k} fehlt`);
+  return r;
+};
+
+pruefe("Richtmasse: jeder Feldtyp ausser dem freien Feld, je Kategorie der Kinderfussball-Stufe", () => {
+  gleicheMenge(
+    richtmasse.map((r) => r.feldtyp.slug),
+    feldtypSlugs.filter((f) => f !== FELDTYP_MIT_SPIELFELD),
+    "Feldtypen mit Richtmass",
+  );
+  for (const r of richtmasse) {
+    assert.ok(r.tore.trim(), `${r.feldtyp.slug}: Tore fehlen`);
+    // In der Reihenfolge der Alterskategorien, keine fehlt, keine doppelt.
+    assert.deepEqual(
+      r.je_alterskategorie.map((k) => k.alterskategorie),
+      [...kategorienFuer("kinderfussball")],
+      r.feldtyp.slug,
+    );
+    for (const k of r.je_alterskategorie)
+      for (const s of [k.laenge_m, k.breite_m]) {
+        assert.ok(Number.isInteger(s.min) && s.min > 0 && s.min <= s.max, `${r.feldtyp.slug}/${k.alterskategorie}`);
+        assert.ok(k.text.endsWith(" m"), k.text);
+      }
+  }
+  assert.deepEqual(stufe("juniorenfussball").feldtyp_richtmasse, []);
+  assert.equal(stufe("juniorenfussball").feldtyp_hinweis, null);
+});
+
+pruefe("Richtmasse = SFV-Ausführungsbestimmungen 2026/27, G beim Grossfeld wie F", () => {
+  const soll: [string, string, [number, number], [number, number], string][] = [
+    ["kleinfeld", "G", [20, 20], [15, 15], "ca. 20 × 15 m"],
+    ["kleinfeld", "F", [25, 25], [20, 20], "ca. 25 × 20 m"],
+    ["kleinfeld", "E", [25, 30], [20, 25], "25–30 × 20–25 m"],
+    ["grossfeld", "F", [30, 30], [25, 25], "ca. 30 × 25 m"],
+    ["grossfeld", "E", [43, 48], [25, 30], "43–48 × 25–30 m"],
+  ];
+  for (const [ft, k, [lMin, lMax], [bMin, bMax], text] of soll) {
+    const r = richtmass(ft, k);
+    assert.deepEqual(r.laenge_m, { min: lMin, max: lMax }, `${ft}/${k} Länge`);
+    assert.deepEqual(r.breite_m, { min: bMin, max: bMax }, `${ft}/${k} Breite`);
+    assert.equal(r.text, text, `${ft}/${k}`);
+    assert.equal(r.wie_alterskategorie, null, `${ft}/${k}`);
+  }
+  // PO-Entscheid 12: Die Bestimmungen kennen in G kein Grossfeld.
+  const g = richtmass("grossfeld", "G");
+  const f = richtmass("grossfeld", "F");
+  assert.equal(g.wie_alterskategorie, "F");
+  assert.deepEqual(
+    { l: g.laenge_m, b: g.breite_m, u: g.ungefaehr, t: g.text },
+    { l: f.laenge_m, b: f.breite_m, u: f.ungefaehr, t: f.text },
+  );
+  assert.match(richtmasse.find((r) => r.feldtyp.slug === "grossfeld")!.tore, /5-m-Tore \(5 × 2 m\)/);
+});
+
+pruefe("Feldtyp-Hinweis nennt Torregel, 5-m-Tor, G wie F und das freie Feld ohne Meter", () => {
+  assert.equal(stufe("kinderfussball").feldtyp_hinweis, FELDTYP_HINWEIS);
+  for (const teil of [
+    "nach den Toren einer Übung eingestuft, nicht nach ihrer Fläche",
+    "grosses Tor einer Kinderfussball-Übung",
+    "5-m-Tor",
+    "in G kein Grossfeld, dort gilt das Richtmass von F",
+    "freies Feld ohne Meterangabe",
+    "keine bekannte Grösse",
+  ])
+    assert.ok(FELDTYP_HINWEIS.includes(teil), `«${teil}» fehlt im Hinweis`);
+  assert.ok(!FELDTYP_HINWEIS.includes("—"), "Werkzeugtexte ohne Geviertstrich");
 });
 
 pruefe("Erscheinungsformen je Stufe = das jeweilige Manual", () => {
