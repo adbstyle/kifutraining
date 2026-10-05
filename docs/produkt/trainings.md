@@ -1,6 +1,6 @@
 # Trainings
 
-Stand 2026-10-04. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
+Stand 2026-10-05. Ein Training ist eine einzelne Einheit — im SFV-Sprachgebrauch eine
 Trainingslektion. Was ein Team damit tut, steht im [Team-Bereich](team-bereich.md).
 
 ## Die Altersstufe wird beim Anlegen gewählt
@@ -101,9 +101,9 @@ Trainings selbst das Feld. Dass sie beschreibbar ist, sagt eine Fläche, die bei
 erscheint; angefasst trägt sie die Kontur eines Feldes. Übernommen wird der neue Name beim
 Verlassen des Feldes — ohne Eingabetaste und ohne Bestätigung. Wer das Feld leer oder nur mit
 Leerzeichen verlässt, bekommt den zuletzt gespeicherten Namen zurück und dazu den Hinweis, dass
-ein Training einen Namen braucht. Höchstens achtzig Zeichen. Geändert wird er nur hier: aus der
-Übersicht heraus nicht und auf der Ansichtsseite auch nicht, selbst mit Bearbeitungsrecht. Eine
-Historie führt die Anwendung nicht, und bereits übernommene Kopien behalten ihren eigenen Namen.
+ein Training einen Namen braucht. Höchstens achtzig Zeichen. Dasselbe gilt auf der Ansichtsseite für alle, die das Training
+bearbeiten dürfen; aus der Übersicht heraus lässt er sich nicht ändern. Eine Historie führt die
+Anwendung nicht, und bereits übernommene Kopien behalten ihren eigenen Namen.
 
 Danach füllt der Trainer die Teile. Über eine Auswahl durchsucht und filtert er den für ihn
 sichtbaren Übungsbestand und übernimmt, was passt. Angeboten wird nur, was zur Altersstufe des
@@ -116,7 +116,10 @@ eingeordnet ist, spielt keine Rolle, und die Auswahl hebt sie auch nicht hervor;
 sie wie jede andere, mitsamt ihrem Übungstyp, und die Vorlage behält ihre eigene Einordnung. Im
 Kinderfussball bleibt es beim Bestand des Blocks allein. Findet sich nichts, sagt die Anwendung, ob das an der Eingrenzung
 liegt oder ob der sichtbare Bestand für diesen Block noch leer ist, und führt im zweiten Fall
-direkt zum Erfassen einer eigenen Übung. Mehrere Übungen nacheinander zu übernehmen ist
+direkt zum Erfassen einer eigenen Übung. Die Auswahl zeigt die Übungen als Karten, wie die
+Diagramm-Vorlagen: zuerst Feld-Diagramm oder Bild und der Name, darunter Alterskategorien und
+Herkunft. Ein Klick auf eine Karte übernimmt die Übung, und eine Zahl im Bild zählt, wie oft
+sie in dieser Sitzung übernommen wurde. Mehrere Übungen nacheinander zu übernehmen ist
 möglich, dieselbe Übung auch mehrfach.
 
 Beim Zusammenstellen zeigt die Anwendung je Trainingsteil eine Karte und darin jeden Block auf
@@ -126,17 +129,23 @@ einem Block: den Kinderfussball-Hauptteil mit seinen drei Unterkategorien sowie 
 Hauptteil im Juniorenfussball. Ein Teil, der selbst ein einziger Block ist — Auffangen,
 Einleitung, Ausklang, Abschluss —, bleibt ungeteilt; dort hängt der Hinzufügen-Knopf am Teil.
 
-Innerhalb eines Blocks lässt sich die Reihenfolge ändern. Jeder Übung ausser im Auffangen kann
-eine Dauer gegeben werden — das gilt in beiden Altersstufen, denn beide haben ein Auffangen. Die
-Dauer steht als Zahlenfeld an der Übung und nimmt jede ganze Zahl an Minuten ab 0; die
-Pfeiltasten des Felds gehen in Einerschritten. Eingetragen wird sie beim Verlassen des Felds und
-mit Enter. Eine Eingabe, die keine ganze Zahl ab 0 ist, bleibt am Feld stehen und wird nicht
-gespeichert; das leere Feld heisst «ohne Dauer». Das Training summiert laufend mit und weist
+Jede Übung steht als Zeile mit Vorschaubild, Name und Alterskategorien; eine Nummer trägt sie
+nicht, die Reihenfolge zeigt die Liste selbst. Innerhalb eines Blocks lässt sie sich mit den
+Pfeilen ändern, und das X entfernt die Übung aus dem Training — gelöscht wird dabei nichts
+ausser dieser Fassung. Jeder Übung ausser im Auffangen kann eine Dauer gegeben werden — das gilt
+in beiden Altersstufen, denn beide haben ein Auffangen. Die Dauer steht als dritte Zeile unter
+Name und Kategorien, etwa „15 min", ohne Dauer gedämpft „Dauer hinzufügen". Ein Klick darauf
+öffnet ein Zahlenfeld mit Bestätigen und Verwerfen darunter: Enter oder das Häkchen speichert,
+Escape oder das Kreuz verwirft, ein Klick daneben speichert ebenfalls. Es nimmt jede ganze Zahl
+an Minuten ab 0, die Pfeiltasten gehen in Einerschritten. Eine Eingabe, die keine ganze Zahl ab
+0 ist, bleibt mit ihrer Meldung am Feld stehen und wird nicht gespeichert; das leere Feld heisst
+«ohne Dauer». Das Training summiert laufend mit und weist
 gesondert aus, wie viele Übungen noch ohne Zeitangabe sind; das Auffangen bleibt in beiden
 Rechnungen aussen vor.
 
 Ändert der Trainer die Alterskategorien, prüft die Anwendung, ob die bereits zugeordneten
-Übungen noch dazu passen, und benennt die abweichenden. Behalten oder entfernen entscheidet er.
+Übungen noch dazu passen, und benennt die abweichenden. Behalten oder entfernen entscheidet er;
+in der Ansicht nennt sie sie nur, entfernt werden sie beim Zusammenstellen.
 
 Wo die Anwendung etwas zu bemerken hat, bleibt sie bei einem Hinweis. Im Kinderfussball
 erwähnt sie einen Teil mit ungewöhnlich vielen Übungen und ein leeres freies Spiel, das dort in
@@ -145,6 +154,53 @@ Hinweis gibt es dort, wenn Spielform zum Trainingsziel, Explosivität, Spiel ode
 leer bleiben. Ein solcher Hinweis steht im betroffenen Block selbst, an der Stelle, an der sonst
 „Noch keine Übung zugeordnet" stünde, und sagt in einem Satz auch, warum der Block ins Training
 gehört. Alle übrigen leeren Blöcke bleiben bei der neutralen Zeile. Gesperrt wird nie.
+
+## Übungen und Eigenschaften nebeneinander
+
+Auf einem breiten Bildschirm teilen Zusammenstellen und Ansicht die Fläche wie die Seite einer
+Übung: links die Übungen des Trainings, rechts eine Spalte, die für sich scrollt und sich am
+Griff dazwischen breiter oder schmaler ziehen lässt. Auf schmalen Bildschirmen und auf Papier
+gibt es die Spalte nicht; dort bleibt der Aufbau, wie er war.
+
+Solange keine Übung geöffnet ist, stehen in der Spalte die Eigenschaften des Trainings gesammelt:
+Altersstufe, Alterskategorien, Ziel, Gesamtdauer, das Material fürs ganze Training, Team und
+Termin, die Sichtbarkeit und der Urheber — jeweils nur, was das Training führt. Über den Übungen
+steht dann nur noch der Name. Die Gesamtdauer gilt für die angezeigte Variante des Hauptteils;
+wer bearbeiten darf, liest dazu, wie viele Übungen noch ohne Dauer sind, und im Juniorenfussball
+den Abgleich mit den vorgesehenen neunzig Minuten. Ziel und Alterskategorien ändert, wer
+bearbeiten darf, direkt dort, beim Zusammenstellen wie in der Ansicht — nach dem Vorbild der
+Details in Jira: Ruhend sehen sie aus wie jede andere Angabe, beim Überfahren zeigt der Wert,
+dass er sich ändern lässt, und ein Klick macht ihn an derselben Stelle zum Feld. Das Ziel
+speichert mit Enter, dem Häkchen oder einem Klick daneben und verwirft mit Escape oder dem
+Kreuz; fehlt es, steht gedämpft „Ziel hinzufügen". Bei den Alterskategorien geht die Liste
+sofort auf, und jede Wahl ist gleich gespeichert. Team, Termin und Sichtbarkeit wechseln weiter
+über ihre eigenen Vorgänge.
+
+Ein Klick auf eine Übung — irgendwo auf ihrer Zeile ausser auf ihren eigenen Knöpfen — öffnet
+sie in der Spalte, anstelle der Eigenschaften; die geöffnete Zeile ist umrandet, ein zweiter
+Klick oder das Kreuz im Detail schliesst sie wieder. Das Detail zeigt unter dem Namen, was die
+Übung in diesem Training trägt — Dauer, Durchlauf und Notiz —, danach Feld-Diagramm oder Bild,
+den Ablauf und die Varianten der Übung und zuletzt Einordnung und Material. Woraus die Übung
+hervorging, zeigt es nicht. Neben dem Namen stehen „In meine Bibliothek kopieren" und, für alle,
+die bearbeiten dürfen, „Bearbeiten"; breit gibt es beide nur hier, an der Zeile stehen sie dann nicht
+mehr, denn übernommen und geändert wird, was man vor sich hat. Die geöffnete Übung hat eine
+eigene Adresse: Neu geladen oder weitergegeben, zeigt sie dieselbe Übung wieder, eine des
+Hauptteils in ihrer Variante. Kann die Seite die Übung nicht zeigen — entfernt, auf einem
+schmalen Bildschirm —, öffnet sie ohne.
+
+Bearbeitet wird in der Spalte mit derselben Maske wie bisher, samt Feld-Diagramm, Vorlagen und
+Material-Vorschlag, in der Reihenfolge des Details; Sichern, Verwerfen und Schliessen kleben am
+oberen Rand. Gesichert wird die Übung als Ganzes, und sie bleibt danach geöffnet, auch wenn sie
+dabei in einen anderen Trainingsteil oder Block gewandert ist; was der neue Platz nicht führt,
+etwa eine Dauer im Auffangen, entfällt ohne Rückfrage. Hält die Maske ungesicherte Änderungen,
+fragt jeder Vorgang, der die Übung verlässt oder trifft — eine andere öffnen, schliessen,
+entfernen, umsortieren, die Variante wechseln —, ob man weiter bearbeiten oder verwerfen will;
+ein „Sichern und weiter" gibt es nicht. Wird der Bildschirm während des Bearbeitens schmal, bleibt
+eine Maske mit ungesicherten Änderungen unter den Übungen stehen, damit sie sich noch sichern
+lässt. In der Ansicht bearbeitet, wer das Training bearbeiten darf, genauso, auch Trainingsteil
+und Block; Übungen hinzufügen, umsortieren, entfernen oder ihre Dauer und Notiz ändern geht dort
+nicht. Ein Wechsel der Variante schliesst die geöffnete Übung. Ältere Adressen der eigenen
+Bearbeitungsseite einer Übung im Training öffnen breit die Übung zum Bearbeiten in der Spalte.
 
 ## Notiz je Übung
 
@@ -351,7 +407,8 @@ jede genannte Übung des Hauptteils trägt dann ihre Variante dazu.
 
 Wird eine Übung in ein Training übernommen, entsteht keine Verknüpfung, sondern eine
 vollständige Kopie samt Bild und Diagramm. Diese Fassung lässt sich im Training frei
-bearbeiten — Ablauf, Material, Varianten, Bild, alles. Die Felder richten sich dabei nach dem
+bearbeiten — Ablauf, Material, Varianten, Bild, alles; breit in der Spalte neben den übrigen
+Übungen (siehe oben), schmal auf einer eigenen Bearbeitungsseite. Die Felder richten sich dabei nach dem
 Manual des Trainings, denn die Fassung folgt dessen Altersstufe.
 
 Das hat Folgen, die man kennen sollte. Änderungen im Training erreichen die Bibliotheks-Übung
@@ -374,8 +431,8 @@ erscheinen in beiden Ansichten nicht. Aus dem Trainingsplan eines Teams geöffne
 Durchführen-Ansicht zuoberst den Termin: Datum, Beginn und Ende, Ort, Verantwortliche und
 Bemerkung, und sagt, wenn die Zeit fehlt.
 
-Beim Zusammenstellen, zu Beginn der Durchführen-Ansicht und im Kopf des Drucks steht, welches
-Material das Training braucht — und zwar höchstens gleichzeitig, nicht die Summe über alle
+Beim Zusammenstellen, in der Ansicht (breit in den Eigenschaften), zu Beginn der
+Durchführen-Ansicht und im Kopf des Drucks steht, welches Material das Training braucht — und zwar höchstens gleichzeitig, nicht die Summe über alle
 Übungen, denn Material einer beendeten Übung ist für die nächste wieder frei. Übungen, an denen
 im selben Wechsel parallele Gruppen stehen, zählen zusammen; eine Station, die mehrere Gruppen
 nacheinander durchlaufen, zählt einmal; nacheinander laufende Übungen und Trainingsteile zählen
@@ -537,3 +594,10 @@ enthält immer nur eine Variante; wer alle auf Papier will, druckt mehrmals.
 
 Eine Historie früherer öffentlicher Stände gibt es nicht, und wer ein öffentliches Training
 ändert oder zurückzieht, benachrichtigt damit niemanden.
+
+Die Spalte neben den Übungen gibt es nur auf breiten Bildschirmen; schmal und auf Papier fehlen
+Eigenschaften und Übungsdetail an dieser Stelle. Eine Übung aus der Bibliothek lässt sich vor dem
+Übernehmen nur als Karte, nicht im Detail ansehen. Wer eine Übung im Training sichert, erfährt
+nicht, ob ein Team-Mitglied sie inzwischen geändert hat; es gilt der zuletzt gesicherte Stand.
+Hat sich das Material im Feld-Diagramm einer Übung im Training geändert, zeigt die Anwendung das
+erst beim Bearbeiten der Übung, nicht an ihrer Zeile.
