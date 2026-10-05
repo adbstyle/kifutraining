@@ -47,6 +47,7 @@ export function TrainingExerciseRow({
   etage,
   offen = false,
   onOeffnen,
+  onBearbeiten,
   onDuration,
   onMove,
   onRemove,
@@ -69,6 +70,7 @@ export function TrainingExerciseRow({
   /** Steht diese Übung in der Spalte offen (Epic #369)? */
   offen?: boolean;
   onOeffnen: () => void;
+  onBearbeiten: () => void;
   onDuration: (next: number | null) => void;
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
@@ -159,7 +161,11 @@ export function TrainingExerciseRow({
           <span className="flex items-center">
             <InBibliothekButton fassungId={item.id} name={item.name} />
 
-            <Tooltip label="Übung bearbeiten">
+            {/* Schmal führt der Stift in die Bearbeitungsmaske, breit öffnet
+                er die Übung zum Bearbeiten in der Spalte (Epic #369, #372) —
+                breit gibt es für eine Übung im Training nur diesen einen Ort
+                (EK 5). Die Weiche ist CSS wie beim Namen. */}
+            <Tooltip label="Übung bearbeiten" className="xl:hidden">
               <IconButtonLink
                 icon={Pencil}
                 // Die Variante fährt mit: Nach dem Speichern führt
@@ -169,6 +175,9 @@ export function TrainingExerciseRow({
                 href={`/training/${trainingId}/uebung/${item.id}/edit${varianteAnhang(varianteId)}`}
                 label={`${item.name} bearbeiten`}
               />
+            </Tooltip>
+            <Tooltip label="Übung bearbeiten" className="hidden xl:inline-flex">
+              <IconButton icon={Pencil} label={`${item.name} bearbeiten`} onClick={onBearbeiten} />
             </Tooltip>
 
             {/* Der einzige Knopf der Zeile, der etwas wegnimmt — er färbt sich

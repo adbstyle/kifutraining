@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Clock } from "lucide-react";
+import { Clock, Pencil } from "lucide-react";
 import {
   Button,
   Dialog,
+  IconButton,
+  Tooltip,
   type BreadcrumbItem,
 } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
@@ -14,6 +16,7 @@ import { GesamtAbgleich } from "../ZeitAbgleich";
 import { NameFeld, TrainingKopf, TrainingStufenFeld, ZielFeld } from "./TrainingKopf";
 import { TrainingEigenschaften } from "../TrainingEigenschaften";
 import { UebungImTraining } from "../UebungImTraining";
+import { FassungInSpalte } from "../FassungInSpalte";
 import { schreibeUebungInAdresse, uebungAus } from "@/lib/offene-uebung";
 import { ZweiSpalten } from "@/components/layout/ZweiSpalten";
 import { GesamtMaterialListe } from "../GesamtMaterialListe";
@@ -87,6 +90,7 @@ export function TrainingEditor({
    *  Startwert, nicht die laufende Quelle: Gewechselt wird ohne Navigation. */
   varianteParam,
   uebungParam,
+  bearbeitenParam,
   brotkrumen,
 }: {
   training: TrainingDetail;
@@ -95,6 +99,8 @@ export function TrainingEditor({
   /** Die geöffnete Übung aus der Adresse (#371 AK 10) — wie die Variante nur
    *  der Startwert. */
   uebungParam?: string;
+  /** Steht sie zum Bearbeiten offen (#372)? Ebenfalls nur der Startwert. */
+  bearbeitenParam?: boolean;
   /** Die Brotkrumen der Seite. Sie stehen hier drin, weil die Aktionsreihe
    *  neben ihnen sitzt und die Laufzeit des Editors braucht. */
   brotkrumen: BreadcrumbItem[];
@@ -146,6 +152,12 @@ export function TrainingEditor({
   // Eigenschaften des Trainings. Nur ihre ID — der Inhalt kommt aus dem
   // laufenden Stand, damit Dauer, Notiz und Durchlauf mitgehen (#371 PC 1).
   const [offenId, setOffenId] = useState<string | null>(anfangsUebung?.id ?? null);
+  // Wird die geöffnete Übung bearbeitet (#372) — und hält ihre Maske
+  // ungesicherte Angaben? Dann fragt jeder Vorgang nach, der sie verlässt
+  // (AK 4). Die Rückfrage hält den Vorgang, der danach auszuführen ist.
+  const [bearbeiten, setBearbeiten] = useState(!!anfangsUebung && !!bearbeitenParam);
+  const [ungesichert, setUngesichert] = useState(false);
+  const [rueckfrage, setRueckfrage] = useState<(() => void) | null>(null);
   const [varianteDialog, setVarianteDialog] = useState(false);
   // Die Variante, deren Bezeichnung bearbeitet wird, und die, deren Entfernen
   // noch zu bestätigen ist (#209 AK 6/7).
@@ -202,16 +214,43 @@ export function TrainingEditor({
     [zuordnungen, aktive?.id],
   );
 
-  /** Eine Übung öffnen; die geöffnete noch einmal gewählt schliesst sie. */
-  function oeffne(item: TrainingExerciseItem) {
-    const naechste = item.id === offenId ? null : item.id;
-    setOffenId(naechste);
-    schreibeUebungInAdresse(naechste);
+  /** Einen Vorgang ausführen, der die geöffnete Übung verlässt oder trifft —
+   *  hält ihre Maske ungesicherte Angaben, erst nach Rückfrage (#372 AK 4):
+   *  bei der Übung bleiben oder die Änderungen verwerfen, wie heute in der
+   *  Maske. Ein «Sichern und weiter» gibt es bewusst nicht (PO 2026-10-04). */
+  function nachRueckfrage(vorgang: () => void) {
+    if (bearbeiten && ungesichert) setRueckfrage(() => vorgang);
+    else vorgang();
+  }
+
+  /** Eine Übung öffnen — zum Ansehen oder gleich zum Bearbeiten. Die
+   *  geöffnete noch einmal zum Ansehen gewählt schliesst sie. */
+  function oeffne(item: TrainingExerciseItem, zumBearbeiten = false) {
+    if (item.id === offenId && zumBearbeiten === bearbeiten) {
+      if (!zumBearbeiten) schliesse();
+      return;
+    }
+    nachRueckfrage(() => zeige(item.id, zumBearbeiten));
+  }
+
+  function zeige(id: string | null, zumBearbeiten: boolean) {
+    setOffenId(id);
+    setBearbeiten(!!id && zumBearbeiten);
+    setUngesichert(false);
+    schreibeUebungInAdresse(id, zumBearbeiten);
   }
 
   function schliesse() {
-    setOffenId(null);
-    schreibeUebungInAdresse(null);
+    nachRueckfrage(() => zeige(null, false));
+  }
+
+  /** Gesichert (#372 PC 1/2): Die Übung bleibt geöffnet — auch an einem
+   *  neuen Platz, denn sie behält ihre ID — und zeigt ihren neuen Stand im
+   *  Detail. Aufgefrischt wird alles, was sie mitrechnet (PC 6). */
+  function gesichert() {
+    zeige(offenId, false);
+    router.refresh();
+    melde("Übung gesichert.");
   }
 
   // Die geöffnete Übung, wie sie gerade angezeigt wird — `undefined`, sobald
@@ -221,7 +260,7 @@ export function TrainingEditor({
   // entfernte Übung meint, verliert ihre Angabe (AK 11).
   const offen = offenId ? sichtbar.find((e) => e.id === offenId) : undefined;
   useEffect(() => {
-    if (offenId && !offen) schliesse();
+    if (offenId && !offen) zeige(null, false);
     else if (!offenId && uebungParam) schreibeUebungInAdresse(null);
     // `uebungParam` ist nur der Startwert; geprüft wird bei jedem Wechsel des
     // Angezeigten.
@@ -276,9 +315,19 @@ export function TrainingEditor({
     });
   }
 
+  /** Was die geöffnete Übung verbirgt, fragt vorher nach: ein Wechsel, der
+   *  ihre Variante verlässt (Epic EK 14), gilt als Schliessen. */
+  function trifftOffene(varianteId?: string) {
+    return !!offen?.varianteId && offen.varianteId !== varianteId;
+  }
+
   function wechsleVariante(varianteId: string) {
-    setAktiveVariante(varianteId);
-    schreibeAdresse(varianteId, varianten.length);
+    const wechsel = () => {
+      setAktiveVariante(varianteId);
+      schreibeAdresse(varianteId, varianten.length);
+    };
+    if (trifftOffene(varianteId)) nachRueckfrage(wechsel);
+    else wechsel();
   }
 
   /** Eine Variante wurde angelegt (#201 AK 1, PC 1): Sie wird zur angezeigten —
@@ -299,6 +348,14 @@ export function TrainingEditor({
    *  entdecken. Sonst bleibt es beim Entfernen ohne Rückfrage — eine leere
    *  Variante ist bloss eine Bezeichnung. */
   function varianteEntfernen(variante: Variante) {
+    if (offen?.varianteId === variante.id) {
+      nachRueckfrage(() => varianteEntfernenJetzt(variante));
+      return;
+    }
+    varianteEntfernenJetzt(variante);
+  }
+
+  function varianteEntfernenJetzt(variante: Variante) {
     if (fassungenVon(fassungenLokal, variante.id).length > 0 || varianten.length === 2) {
       setVarianteWeg(variante);
       return;
@@ -360,6 +417,11 @@ export function TrainingEditor({
   }
 
   function move(item: TrainingExerciseItem, dir: -1 | 1) {
+    if (item.id === offenId) nachRueckfrage(() => moveJetzt(item, dir));
+    else moveJetzt(item, dir);
+  }
+
+  function moveJetzt(item: TrainingExerciseItem, dir: -1 | 1) {
     modell.vergissFolge(item.id);
     startTransition(async () => {
       await moveTrainingExercise(item.id, dir);
@@ -388,6 +450,11 @@ export function TrainingEditor({
    *  fallen ihre Zuweisungen weg, und die stehen nirgends sonst. Ohne
    *  Zuweisungen bleibt es beim Entfernen ohne Rückfrage. */
   function remove(item: TrainingExerciseItem) {
+    if (item.id === offenId) nachRueckfrage(() => removeJetzt(item));
+    else removeJetzt(item);
+  }
+
+  function removeJetzt(item: TrainingExerciseItem) {
     if (modell.gruppenAn(item.id) > 0) {
       setUebungWeg(item);
       return;
@@ -461,6 +528,11 @@ export function TrainingEditor({
   }
 
   function removeMismatched(ids: string[]) {
+    if (offenId && ids.includes(offenId)) nachRueckfrage(() => removeMismatchedJetzt(ids));
+    else removeMismatchedJetzt(ids);
+  }
+
+  function removeMismatchedJetzt(ids: string[]) {
     startTransition(async () => {
       let fehler: string | null = null;
       for (const id of ids) modell.vergissFolge(id);
@@ -608,7 +680,8 @@ export function TrainingEditor({
     ),
     dauerWarnung: (item) => modell.befund.dauerWarnung.has(item.id),
     offenId,
-    onOeffnen: oeffne,
+    onOeffnen: (item) => oeffne(item),
+    onBearbeiten: (item) => oeffne(item, true),
     onDuration: changeDuration,
     onMove: move,
     onRemove: remove,
@@ -652,7 +725,18 @@ export function TrainingEditor({
           Summenleiste und Material über den Trainingsteilen. */}
       <ZweiSpalten
         spalte={
-          offen ? (
+          offen && bearbeiten ? (
+            <FassungInSpalte
+              key={offen.id}
+              item={offen}
+              altersstufe={training.altersstufe}
+              variante={aktive?.id}
+              onUngesichert={setUngesichert}
+              onGesichert={gesichert}
+              onVerwerfen={() => zeige(offen.id, false)}
+              onSchliessen={schliesse}
+            />
+          ) : offen ? (
             <UebungImTraining
               item={offen}
               altersstufe={training.altersstufe}
@@ -662,6 +746,15 @@ export function TrainingEditor({
                 .folgeVon(offen)
                 .map((id) => modell.gruppen.find((g) => g.id === id))
                 .filter((g): g is { id: string; name: string } => g != null)}
+              aktionen={
+                <Tooltip label="Übung bearbeiten">
+                  <IconButton
+                    icon={Pencil}
+                    label={`${offen.name} bearbeiten`}
+                    onClick={() => oeffne(offen, true)}
+                  />
+                </Tooltip>
+              }
               onSchliessen={schliesse}
             />
           ) : (
@@ -676,7 +769,10 @@ export function TrainingEditor({
             />
           )
         }
-        nurBreit
+        // Wird der Bildschirm schmal, während ungesicherte Änderungen anstehen,
+        // bleibt die Maske stehen — unter den Übungen, damit sie sich noch
+        // sichern lassen (#372 AK 5). Sonst gibt es die Spalte nur breit.
+        nurBreit={!(bearbeiten && ungesichert)}
         spaltenName="Eigenschaften"
         className="xl:min-h-0 xl:flex-1"
       >
@@ -744,7 +840,11 @@ export function TrainingEditor({
                     varianten={varianten}
                     aktiv={aktive?.id}
                     onWechsel={wechsleVariante}
-                    onHinzufuegen={() => setVarianteDialog(true)}
+                    onHinzufuegen={() =>
+                      // Die neue Variante wird die angezeigte — eine
+                      // geöffnete Hauptteil-Übung verschwände dabei.
+                      trifftOffene() ? nachRueckfrage(() => setVarianteDialog(true)) : setVarianteDialog(true)
+                    }
                     onBearbeiten={setVarianteBearbeiten}
                     onVerschieben={variantenModell.verschiebe}
                     onEntfernen={varianteEntfernen}
@@ -758,6 +858,38 @@ export function TrainingEditor({
           ))}
         </div>
       </ZweiSpalten>
+
+      {/* Rückfrage vor jedem Vorgang, der die geöffnete Übung mit
+          ungesicherten Änderungen verlässt (#372 AK 4) — derselbe Wortlaut
+          wie in der Maske: bleiben oder verwerfen. */}
+      <Dialog
+        open={rueckfrage != null}
+        onClose={() => setRueckfrage(null)}
+        title="Änderungen verwerfen?"
+        actions={
+          <>
+            <Button variant="text" onClick={() => setRueckfrage(null)}>
+              Weiter bearbeiten
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                const vorgang = rueckfrage;
+                setRueckfrage(null);
+                setUngesichert(false);
+                vorgang?.();
+              }}
+            >
+              Verwerfen
+            </Button>
+          </>
+        }
+      >
+        <p>
+          Deine Änderungen an „{offen?.name}" sind noch nicht gesichert. Wenn du
+          weitermachst, gehen sie verloren.
+        </p>
+      </Dialog>
 
       {/* Ein Picker, gesteuert über `open` (Trainingsteil + ggf. Unterkategorie). */}
       {open &&

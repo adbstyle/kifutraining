@@ -79,6 +79,48 @@ export async function updateFassung(
   _prev: ExerciseFormState,
   form: FormData,
 ): Promise<ExerciseFormState> {
+  const r = await sichereFassung(fassungId, variante, form);
+  if (r.status === "error") return r;
+  // Der Rückweg trägt die Variante mit: Sonst landete der Trainer nach dem
+  // Speichern in der ersten Variante und suchte die eben bearbeitete Übung
+  // (#201 AK 6). Massgebend ist, wo die Fassung jetzt LIEGT, nicht woher der
+  // Aufruf kam — kommt sie ohne Suchparameter herein (ein Lesezeichen, ein
+  // geteilter Link), führt ihre eigene Variante zurück. Ausserhalb des
+  // Hauptteils ist beides leer und der Anhang entfällt.
+  const zurueck = `/training/${r.trainingId}/edit?bearbeitet=1`;
+  // Ersetzen statt anhängen: Der aktuelle Eintrag ist der Wächter der
+  // Verlassen-Warnung (#247 AK 8).
+  redirect(
+    `${zurueck}${varianteAnhang(variante ?? r.varianteId ?? undefined, "&")}`,
+    RedirectType.replace,
+  );
+}
+
+/** Eine Fassung in der Spalte neben den Übungen des Trainings sichern
+ *  (Epic #369, Story #372) — dieselben Regeln wie in der Maske, aber ohne
+ *  Weiterleitung: Die Übung bleibt geöffnet, auch wenn sie an einen anderen
+ *  Platz gewandert ist (PC 2). Das Auffrischen übernimmt die Spalte. */
+export async function updateFassungInSpalte(
+  fassungId: string,
+  /** Die angezeigte Variante — wie bei `updateFassung`. */
+  variante: string | undefined,
+  _prev: ExerciseFormState,
+  form: FormData,
+): Promise<ExerciseFormState> {
+  const r = await sichereFassung(fassungId, variante, form);
+  return r.status === "error" ? r : { status: "gesichert" };
+}
+
+/** Der gemeinsame Rumpf beider Wege: prüfen, schreiben, aufräumen,
+ *  revalidieren. Liefert, wo die Fassung danach liegt. */
+async function sichereFassung(
+  fassungId: string,
+  variante: string | undefined,
+  form: FormData,
+): Promise<
+  | (ExerciseFormState & { status: "error" })
+  | { status: "ok"; trainingId: string; varianteId: string | null }
+> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -222,19 +264,7 @@ export async function updateFassung(
     await supabase.storage.from(STORAGE_BUCKET).remove([altPfad]);
 
   revalidiereTraining(fassung.training_id, fassungId);
-  // Der Rückweg trägt die Variante mit: Sonst landete der Trainer nach dem
-  // Speichern in der ersten Variante und suchte die eben bearbeitete Übung
-  // (#201 AK 6). Massgebend ist, wo die Fassung jetzt LIEGT, nicht woher der
-  // Aufruf kam — kommt sie ohne Suchparameter herein (ein Lesezeichen, ein
-  // geteilter Link), führt ihre eigene Variante zurück. Ausserhalb des
-  // Hauptteils ist beides leer und der Anhang entfällt.
-  const zurueck = `/training/${fassung.training_id}/edit?bearbeitet=1`;
-  // Ersetzen statt anhängen: Der aktuelle Eintrag ist der Wächter der
-  // Verlassen-Warnung (#247 AK 8).
-  redirect(
-    `${zurueck}${varianteAnhang(variante ?? neueVariante ?? undefined, "&")}`,
-    RedirectType.replace,
-  );
+  return { status: "ok", trainingId: fassung.training_id, varianteId: neueVariante };
 }
 
 /** Eine Fassung, wie sie fürs Kopieren in die Bibliothek gelesen wird

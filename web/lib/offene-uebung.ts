@@ -6,6 +6,11 @@
 /** Der Name des Suchparameters der geöffneten Übung. */
 export const UEBUNG_PARAM = "uebung";
 
+/** Steht die geöffnete Übung zum Bearbeiten offen (#372)? Dann trägt die
+ *  Adresse zusätzlich diesen Parameter — so führt auch eine ältere Adresse der
+ *  Bearbeitungsmaske breit in die Spalte zum Bearbeiten (#373 PC 3). */
+export const BEARBEITEN_PARAM = "bearbeiten";
+
 /** Die Übung, die die Adresse meint — `undefined`, wenn das Training sie nicht
  *  (mehr) führt. Eine solche Adresse gilt wie die des Trainings ohne
  *  geöffnete Übung (AK 11). */
@@ -19,9 +24,11 @@ export function uebungAus<T extends { id: string }>(
 /** Die Adresse an die geöffnete Übung angleichen — ohne Navigation, wie beim
  *  Wechsel der Variante: Öffnen und Schliessen sind eine Frage der Anzeige,
  *  alle Übungen stehen bereits im Speicher. Nur im Browser aufzurufen. */
-export function schreibeUebungInAdresse(id: string | null) {
+export function schreibeUebungInAdresse(id: string | null, bearbeiten = false) {
   const url = new URL(window.location.href);
   if (id) url.searchParams.set(UEBUNG_PARAM, id);
   else url.searchParams.delete(UEBUNG_PARAM);
+  if (id && bearbeiten) url.searchParams.set(BEARBEITEN_PARAM, "1");
+  else url.searchParams.delete(BEARBEITEN_PARAM);
   if (url.href !== window.location.href) window.history.replaceState(null, "", url);
 }

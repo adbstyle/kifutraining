@@ -16,7 +16,9 @@ import { entferneStorageObjekt } from "@/lib/fassung";
 import { kopiereUebungNach } from "@/lib/kern/uebungen";
 
 export type ExerciseFormState = {
-  status: "idle" | "error";
+  /** `gesichert`: nur ohne Weiterleitung — die Übung im Training in der
+   *  Spalte (#372); alle übrigen Wege leiten nach dem Speichern weiter. */
+  status: "idle" | "error" | "gesichert";
   errors?: Record<string, string>;
   message?: string;
 };

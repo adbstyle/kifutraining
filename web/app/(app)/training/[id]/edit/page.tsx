@@ -22,11 +22,11 @@ export default async function TrainingEditPage({
    *  stammt vom Rückweg aus der Fassungs-Bearbeitung und wird hier nicht
    *  ausgewertet; er steht in der Signatur, damit sichtbar ist, womit diese
    *  Seite aufgerufen wird. `uebung`: die in der Spalte geöffnete Übung
-   *  (#371 AK 10). */
-  searchParams: Promise<{ variante?: string; bearbeitet?: string; uebung?: string }>;
+   *  (#371 AK 10), `bearbeiten`: zum Bearbeiten (#372). */
+  searchParams: Promise<{ variante?: string; bearbeitet?: string; uebung?: string; bearbeiten?: string }>;
 }) {
   const { id } = await params;
-  const { variante, uebung } = await searchParams;
+  const { variante, uebung, bearbeiten } = await searchParams;
   const training = await getTrainingForEdit(id);
   // Nicht vorhanden oder fremd -> zurück in die eigene Übersicht (kein Schreib-
   // zugriff auf fremde Trainings, Story #12 AC8).
@@ -48,6 +48,7 @@ export default async function TrainingEditPage({
         teams={teams}
         varianteParam={variante}
         uebungParam={uebung}
+        bearbeitenParam={!!bearbeiten}
         brotkrumen={trainingsKrumen(training)}
       />
     </Seitenrahmen>

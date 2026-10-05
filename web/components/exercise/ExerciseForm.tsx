@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState, useActionState, startTransition } from "react";
-import { ArrowLeftRight, ImagePlus } from "lucide-react";
+import { ArrowLeftRight, ImagePlus, X } from "lucide-react";
 import {
   TextField,
   TextArea,
@@ -14,6 +14,8 @@ import {
   HeadlineField,
   Checkbox,
   Card,
+  IconButton,
+  Tooltip,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
@@ -62,6 +64,7 @@ import {
   type MaterialPosten,
 } from "@/lib/material";
 import { DiagrammFeld } from "@/components/exercise/DiagrammFeld";
+import { DiagrammView } from "@/components/diagramm/DiagrammView";
 import { VerlassenWarnung } from "@/components/layout/VerlassenWarnung";
 import { ZweiSpalten } from "@/components/layout/ZweiSpalten";
 import { cn } from "@/lib/cn";
@@ -114,6 +117,7 @@ export function ExerciseForm({
   materialBasis = null,
   diagramm: gespeichertesDiagramm,
   vorlagenAusser,
+  spalte,
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
@@ -143,6 +147,20 @@ export function ExerciseForm({
   diagramm?: unknown;
   /** Die Bibliotheks-Übung, die nicht als ihre eigene Vorlage erscheint. */
   vorlagenAusser?: string;
+  /** Die Maske steht nicht auf eigener Seite, sondern in der Spalte neben den
+   *  Übungen eines Trainings (Epic #369, Story #372): eine Spalte in der
+   *  Reihenfolge des Detail — Name, Diagramm, Beschreibung, Einordnung samt
+   *  Material, Foto —, Sichern und Verwerfen klebend obenauf. Gesichert wird
+   *  ohne Weiterleitung (`status: "gesichert"`); was dann geschieht, ebenso
+   *  wie Verwerfen und Schliessen, entscheidet die Spalte. `onUngesichert`
+   *  meldet ihr, ob ungesicherte Angaben anstehen — sie fragt dann nach,
+   *  bevor ein Vorgang die Übung verlässt (AK 4). */
+  spalte?: {
+    onUngesichert: (ungesichert: boolean) => void;
+    onGesichert: () => void;
+    onVerwerfen: () => void;
+    onSchliessen: () => void;
+  };
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -270,7 +288,20 @@ export function ExerciseForm({
   // Erfassen führt Schritt für Schritt durch eine Spalte — Einordnung,
   // Feld-Diagramm, Beschreibung, Material, Foto (PO 2026-10-02). Bearbeiten
   // teilt die Maske wie die Detailseite in Inhalt und Einordnung (#353).
-  const geteilt = !erfassen;
+  const geteilt = !erfassen && !spalte;
+
+  // Die Spalte erfährt jeden Wechsel; sie fragt damit vor dem Verlassen nach.
+  // Über eine Ref: Die Rückrufe entstehen bei jedem Rendern der Spalte neu,
+  // gemeldet wird aber nur, wenn sich hier etwas geändert hat — das Gesichert
+  // genau einmal je Antwort des Servers.
+  const spalteRef = useRef(spalte);
+  spalteRef.current = spalte;
+  useEffect(() => {
+    spalteRef.current?.onUngesichert(ungesichert);
+  }, [ungesichert]);
+  useEffect(() => {
+    if (state.status === "gesichert") spalteRef.current?.onGesichert();
+  }, [state]);
 
   // Das Feld-Gating kommt geschlossen aus lib/altersstufe.ts — derselben
   // Quelle, gegen die die Server Action prüft und die die DB-CHECKs spiegelt.
@@ -658,7 +689,15 @@ export function ExerciseForm({
     </Card>
   );
 
-  const diagrammAbschnitt = (
+  const diagrammAbschnitt = spalte ? (
+    anfangsDiagramm.elemente.length > 0 ? (
+      <FormAbschnitt titel="Feld-Diagramm">
+        <div className="aspect-[16/10] w-full overflow-hidden rounded-flaeche border border-linie">
+          <DiagrammView diagramm={anfangsDiagramm} title={`Feld-Diagramm: ${initial.name ?? "Übung"}`} />
+        </div>
+      </FormAbschnitt>
+    ) : null
+  ) : (
     <FormAbschnitt titel="Feld-Diagramm (optional)">
       <DiagrammFeld
         initial={anfangsDiagramm}
@@ -857,6 +896,30 @@ export function ExerciseForm({
         </Banner>
       )}
 
+      {/* In der Spalte steht obenauf, was die Bearbeitung abschliesst — es
+          klebt am oberen Rand, während die Spalte darunter scrollt. */}
+      {spalte && (
+        <div className="sticky top-0 z-10 -mx-1 flex items-center gap-1 bg-elev-00 px-1 py-2">
+          <p className="type-title-small min-w-0 flex-1 text-on-surface-mittel">Übung bearbeiten</p>
+          <Button
+            type="button"
+            variant="text"
+            onClick={spalte.onVerwerfen}
+            disabled={isPending || isCompressing}
+          >
+            {/* Ohne Änderung gibt es nichts zu verwerfen — dann führt derselbe
+                Knopf bloss zurück ins Detail. */}
+            {ungesichert ? "Verwerfen" : "Abbrechen"}
+          </Button>
+          <Button type="submit" disabled={isPending || isCompressing}>
+            {isCompressing ? "Foto wird optimiert …" : isPending ? "Wird gesichert …" : submitLabel}
+          </Button>
+          <Tooltip label="Übung schliessen">
+            <IconButton icon={X} label="Übung schliessen" onClick={spalte.onSchliessen} />
+          </Tooltip>
+        </div>
+      )}
+
       {/* Der Name ist die Überschrift der Maske — dasselbe Kopf-Feld wie der
           Trainingsname im Editor. Die echte Überschrift setzt die Seite.
           Beim Bearbeiten steht das Speichern rechts daneben (PO 2026-10-02):
@@ -888,7 +951,15 @@ export function ExerciseForm({
         {geteilt && speichern}
       </div>
 
-      {geteilt ? (
+      {spalte ? (
+        <>
+          {diagrammAbschnitt}
+          {beschreibungAbschnitt}
+          {einordnung}
+          {fotoAbschnitt}
+          {fussnote && <p className="type-body-small text-on-surface-mittel">{fussnote}</p>}
+        </>
+      ) : geteilt ? (
         // Links der Inhalt — Bild, Ablauf, Foto —, rechts die Einordnung.
         <ZweiSpalten
           spalte={einordnung}
@@ -912,7 +983,7 @@ export function ExerciseForm({
         </>
       )}
 
-      {!geteilt && (
+      {!geteilt && !spalte && (
         <div className="flex items-center gap-3 border-t border-linie pt-5">{speichern}</div>
       )}
     </form>
