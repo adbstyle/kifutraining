@@ -2007,7 +2007,9 @@ export default function Styleguide() {
           <code>&lt;dialog&gt;</code> (Fokus-Falle, Escape, Scrim) und trägt die
           oberste Stufe: <code>bg-elev-24</code>,{" "}
           <code>rounded-dialog</code> — der einzige Ort mit 6 px —,{" "}
-          <code>shadow-dp-24</code> und ein Scrim bei 60 %. Die{" "}
+          <code>shadow-dp-24</code> und ein Scrim bei 60 %. Sein Titel steht
+          in <code>type-title-large</code> wie der Name einer Übung —
+          ein Dialog ist ein Arbeitsschritt, kein Plakat. Die{" "}
           <strong>Snackbar</strong> ist die eine <strong>umgekehrte</strong>{" "}
           Fläche der Anwendung (<code>umkehr</code>): Weiss zu{" "}
           {Math.round(UMKEHR.deckung * 100)} % über dem Grund, darauf der Grund
