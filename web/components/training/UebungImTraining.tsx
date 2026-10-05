@@ -1,9 +1,7 @@
 import type { ReactNode } from "react";
-import { ArrowRight, X } from "lucide-react";
+import { ArrowRight, Clock, X } from "lucide-react";
 import {
   Card,
-  Eigenschaft,
-  Eigenschaften,
   Freitext,
   IconButton,
   MethodischerFahrplan,
@@ -40,10 +38,11 @@ export function einordnungAusFassung(
  * Eine geöffnete Übung des Trainings in der Spalte neben den übrigen
  * (Epic #369, Story #371) — anstelle der Eigenschaften des Trainings.
  *
- * Vorne, was zeigt, ob die Übung passt: Diagramm oder Bild, Beschreibung und
- * die Varianten der Übung. Danach, was sie in DIESEM Training trägt — Dauer,
- * Durchlauf und Notiz (AK 4) —, und zuletzt Einordnung und Material wie auf
- * der Übungsseite (AK 3). Eine Herkunft gibt es nicht (OOS 1).
+ * Unter dem Namen, was sie in DIESEM Training trägt — Dauer, Durchlauf und
+ * Notiz (AK 4). Dann, was zeigt, ob die Übung passt: Diagramm oder Bild,
+ * Beschreibung und die Varianten der Übung, und zuletzt Einordnung und
+ * Material wie auf der Übungsseite (AK 3). Eine Herkunft gibt es nicht
+ * (OOS 1).
  *
  * Dauer, Notiz und Durchlauf kommen als eigene Angaben herein und nicht aus
  * `item`: Beim Zusammenstellen liegen sie lokal über dem Serverstand, und das
@@ -71,20 +70,57 @@ export function UebungImTraining({
 }) {
   const dauerText =
     teilTraegtDauer(item.trainingsteil) && dauer != null ? formatDuration(dauer) : null;
-  const imTraining = dauerText || notiz || durchlauf.length > 0;
 
   return (
     <article aria-labelledby={`uebung-${item.id}`} className="flex flex-col gap-6">
-      <header className="flex items-start gap-2">
-        <h2 id={`uebung-${item.id}`} className="type-title-large min-w-0 flex-1 text-on-surface">
-          {item.name}
-        </h2>
-        <div className="-mr-1 -mt-1 flex shrink-0 items-center">
-          {aktionen}
-          <Tooltip label="Übung schliessen">
-            <IconButton icon={X} label="Übung schliessen" onClick={onSchliessen} />
-          </Tooltip>
+      <header className="flex flex-col gap-2">
+        <div className="flex items-start gap-2">
+          <h2 id={`uebung-${item.id}`} className="type-title-large min-w-0 flex-1 text-on-surface">
+            {item.name}
+          </h2>
+          <div className="-mr-1 -mt-1 flex shrink-0 items-center">
+            {aktionen}
+            <Tooltip label="Übung schliessen">
+              <IconButton icon={X} label="Übung schliessen" onClick={onSchliessen} />
+            </Tooltip>
+          </div>
         </div>
+        {/* Was die Übung in DIESEM Training trägt, steht ohne eigene Fläche
+            unter ihrem Namen (PO 2026-10-05) — wie in der Durchführung. */}
+        {dauerText && (
+          <p className="inline-flex items-center gap-1.5 type-label-large text-on-surface-mittel">
+            <Clock size={16} strokeWidth={2} aria-hidden />
+            {dauerText}
+          </p>
+        )}
+        {durchlauf.length > 0 && (
+          <div className="flex gap-3">
+            <span id={`durchlauf-${item.id}`} className="type-label-small w-16 shrink-0 pt-0.5 text-on-surface-mittel">
+              Durchlauf
+            </span>
+            <ol aria-labelledby={`durchlauf-${item.id}`} className="type-body-medium flex flex-wrap items-baseline gap-x-2 text-on-surface">
+              {durchlauf.map((g, i) => (
+                <li key={g.id}>
+                  {i > 0 && (
+                    <ArrowRight
+                      size={14}
+                      strokeWidth={2}
+                      aria-hidden
+                      className="mr-2 inline-block align-middle text-on-surface-mittel"
+                    />
+                  )}
+                  {g.name}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+        {notiz && (
+          <div className="flex gap-3">
+            <span className="type-label-small w-16 shrink-0 pt-0.5 text-on-surface-mittel">Notiz</span>
+            <p className="type-body-medium whitespace-pre-line text-on-surface">{notiz}</p>
+          </div>
+        )}
       </header>
 
       <div className="relative aspect-[16/9] w-full overflow-hidden rounded-flaeche border border-linie">
@@ -117,36 +153,6 @@ export function UebungImTraining({
             <Freitext text={item.uebungsvarianten} />
           </Card>
         </section>
-      )}
-
-      {imTraining && (
-        <Eigenschaften titel="Im Training">
-          {dauerText && <Eigenschaft label="Dauer">{dauerText}</Eigenschaft>}
-          {durchlauf.length > 0 && (
-            <Eigenschaft label="Durchlauf">
-              <ol className="flex flex-wrap items-baseline gap-x-2">
-                {durchlauf.map((g, i) => (
-                  <li key={g.id}>
-                    {i > 0 && (
-                      <ArrowRight
-                        size={14}
-                        strokeWidth={2}
-                        aria-hidden
-                        className="mr-2 inline-block align-middle text-on-surface-mittel"
-                      />
-                    )}
-                    {g.name}
-                  </li>
-                ))}
-              </ol>
-            </Eigenschaft>
-          )}
-          {notiz && (
-            <Eigenschaft label="Notiz">
-              <span className="whitespace-pre-line">{notiz}</span>
-            </Eigenschaft>
-          )}
-        </Eigenschaften>
       )}
 
       <EinordnungsLeiste ex={einordnungAusFassung(item, altersstufe)} />
