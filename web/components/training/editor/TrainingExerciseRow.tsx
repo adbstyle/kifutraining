@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { TriangleAlert, ChevronUp, ChevronDown, Trash2, Pencil, PackageSearch } from "lucide-react";
+import { TriangleAlert, ChevronUp, ChevronDown, X, Pencil, PackageSearch } from "lucide-react";
 import { IconButton, IconButtonLink, KategorieChip, Tooltip } from "@/components/ui";
 import { ExerciseThumb } from "../ExerciseThumb";
 import { InBibliothekButton } from "../InBibliothekButton";
@@ -197,10 +197,12 @@ export function TrainingExerciseRow({
                 beim Überfahren ein. Nicht dauerhaft rot: An jeder Zeile stünde
                 sonst ein Alarm, und die Zeile hat nichts Alarmierendes. Die
                 Zustands-Ebene nimmt die Farbe des Zeichens mit, der Overlay
-                wird damit im selben Zug rötlich. */}
+                wird damit im selben Zug rötlich. Ein X und kein Papierkorb
+                (PO 2026-10-05): Die Übung verlässt nur dieses Training, gelöscht
+                wird nichts. */}
             <Tooltip label="Übung entfernen">
               <IconButton
-                icon={Trash2}
+                icon={X}
                 label="Übung entfernen"
                 onClick={onRemove}
                 className="hover:text-error"
