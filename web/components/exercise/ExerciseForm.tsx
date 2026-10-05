@@ -942,6 +942,9 @@ export function ExerciseForm({
         className={cn(
           UEBER_BEIDEN,
           geteilt && "flex flex-wrap items-start justify-end gap-x-6 gap-y-3",
+          // Ab `lg` klebt die Kopfzeile direkt darüber; ohne Abstand verdeckte
+          // sie die Fläche, die beim Überfahren 6 px über das Feld ragt.
+          erfassen && "lg:pt-2",
         )}
       >
         {/* Beim Erfassen entsteht der Name erst: ein gewöhnliches Feld mit
