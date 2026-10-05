@@ -18,6 +18,7 @@ import {
   AnsichtZeile,
 } from "@/components/training/AnsichtFlaeche";
 import { uebungAus } from "@/lib/offene-uebung";
+import { AnsichtName, AnsichtStufen, AnsichtZiel } from "@/components/training/AnsichtEingaben";
 import { getTrainingView } from "@/lib/queries/trainings";
 import { getMeineTeams } from "@/lib/queries/teams";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
@@ -110,6 +111,20 @@ export default async function TrainingViewPage({
       stufen={training.stufen}
       ziel={training.ziel}
       hinweise={!!bearbeitungsziel}
+      // Wer bearbeiten darf, ändert Ziel und Alterskategorien hier (#375).
+      zielFeld={
+        bearbeitungsziel && <AnsichtZiel trainingId={training.id} ziel={training.ziel} />
+      }
+      stufenFeld={
+        bearbeitungsziel && (
+          <AnsichtStufen
+            trainingId={training.id}
+            altersstufe={training.altersstufe}
+            stufen={training.stufen}
+            varianten={training.varianten}
+          />
+        )
+      }
     />
   );
 
@@ -165,7 +180,14 @@ export default async function TrainingViewPage({
           />
         )}
         <header className="mb-6">
+          {/* Wer bearbeiten darf, ändert den Namen dort, wo er steht — wie beim
+            Zusammenstellen (#375 AK 1); das hebt den früheren Entscheid auf,
+            dass er in der Ansicht fest steht. */}
+        {bearbeitungsziel ? (
+          <AnsichtName trainingId={training.id} name={training.name} />
+        ) : (
           <h1 className="type-headline-large text-on-surface">{training.name}</h1>
+        )}
           {/* Breit steht all das in der Spalte daneben — hier nicht ein
               zweites Mal (#370 AK 7). Schmal und auf Papier wie bisher. */}
           <div className="xl:hidden print:block">
