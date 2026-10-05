@@ -29,12 +29,12 @@ import { MASS_TEXT, SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 export const TORARTEN = ["minitor", "tor_5m", "tor_7m"] as const;
 export type Torart = (typeof TORARTEN)[number];
 
-/** Die Torarten zum Anzeigen — Mehrzahl für Feldnamen und Zählungen, Einzahl
- *  für «1 Minitor». */
-export const TORART_LABEL: Record<Torart, { einzahl: string; mehrzahl: string }> = {
-  minitor: { einzahl: "Minitor", mehrzahl: "Minitore" },
-  tor_5m: { einzahl: "5-m-Tor", mehrzahl: "5-m-Tore" },
-  tor_7m: { einzahl: "7-m-Tor", mehrzahl: "7-m-Tore" },
+/** Die Torarten zum Anzeigen — als Feldname und vor der Zahl
+ *  («Minitore: 4»), damit nie eine Zahl direkt vor «5-m» steht. */
+export const TORART_LABEL: Record<Torart, string> = {
+  minitor: "Minitore",
+  tor_5m: "5-m-Tore",
+  tor_7m: "7-m-Tore",
 };
 
 export const UNTERGRUENDE = ["naturrasen", "kunstrasen", "hartplatz", "halle"] as const;
@@ -144,10 +144,14 @@ export function felderPfad(p: FelderProblem): string {
  *  (unbekannt), die Schlüssel stehen in fester Reihenfolge, und eine leere
  *  Liste heisst «ohne Felder» (`null`). Geprüft wird hier nichts — das tut
  *  `felderProblem` auf dem Ergebnis; ein Wert ausserhalb der Form bleibt
- *  stehen, damit es ihn meldet. */
+ *  stehen, damit es ihn meldet — auch keine Liste (etwa eine präparierte
+ *  Nutzlast einer Server Action): Sie ergibt die Fachmeldung, keinen
+ *  TypeError. */
 export function normalisiereFelder(felder: readonly FeldEingabe[] | null | undefined): Felder | null {
-  if (!felder || felder.length === 0) return null;
-  return felder.map((f) => {
+  if (felder === null || felder === undefined) return null;
+  if (!Array.isArray(felder)) return felder as unknown as Felder;
+  if (felder.length === 0) return null;
+  return felder.map((f: unknown) => {
     if (!istObjekt(f)) return f as unknown as Feld;
     const tore = f.tore ?? {};
     return {
@@ -155,9 +159,9 @@ export function normalisiereFelder(felder: readonly FeldEingabe[] | null | undef
       breite_m: f.breite_m ?? null,
       tore: istObjekt(tore)
         ? { minitor: tore.minitor ?? null, tor_5m: tore.tor_5m ?? null, tor_7m: tore.tor_7m ?? null }
-        : (tore as unknown as Feld["tore"]),
-      untergrund: (f.untergrund ?? null) as Untergrund | null,
-    };
+        : tore,
+      untergrund: f.untergrund ?? null,
+    } as Feld;
   });
 }
 
@@ -176,16 +180,21 @@ export function gleicheFelder(
 
 const masse = (f: Feld) => (f.laenge_m !== null && f.breite_m !== null ? `${f.laenge_m} × ${f.breite_m} m` : null);
 
-/** Die Tore eines Feldes als Text: «2 Minitore, keine 5-m-Tore». Unbekannte
+/** Die Tore eines Feldes als Text: «Minitore: 4, 5-m-Tore: keine» — die
+ *  Torart vor der Zahl, sonst läse sich «2 5-m-Tore» als «25 m». Unbekannte
  *  Torarten fehlen; `null`, wenn keine bekannt ist. */
 export function toreText(tore: Feld["tore"]): string | null {
   const teile = TORARTEN.flatMap((art) => {
     const n = tore[art];
-    if (n === null) return [];
-    const l = TORART_LABEL[art];
-    return [n === 0 ? `keine ${l.mehrzahl}` : `${n} ${n === 1 ? l.einzahl : l.mehrzahl}`];
+    return n === null ? [] : [`${TORART_LABEL[art]}: ${n === 0 ? "keine" : n}`];
   });
   return teile.length > 0 ? teile.join(", ") : null;
+}
+
+/** Der Name eines Feldes in einer Aufzählung: «Feld» allein, «Feld 1» …
+ *  ab zwei Feldern. */
+export function feldName(index: number, anzahl: number): string {
+  return anzahl > 1 ? `Feld ${index + 1}` : "Feld";
 }
 
 /** Ein Feld ausführlich — für den geöffneten Termin und die

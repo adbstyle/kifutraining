@@ -20,7 +20,7 @@ export function SpielerzahlField({
 }) {
   return (
     <TextField
-      label="Erwartete Spieler:innen (optional)"
+      label="Erwartete Spielerzahl (optional)"
       type="number"
       inputMode="numeric"
       min={SPIELERZAHL_MIN}

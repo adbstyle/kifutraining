@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { Button, Checkbox, DateField, Dialog, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
 import { maxEnddatum, serieProblem, wochentagVon, type SerieFeld, type Wochentag } from "@/lib/serie";
-import { BEMERKUNG_MAX, ORT_MAX, istKalendertag, spielerzahlProblem, terminProblem, zahlOderNull, type TerminFelder } from "@/lib/termin";
-import { felderProblem, type FelderProblem, type Felder } from "@/lib/termin-felder";
+import { BEMERKUNG_MAX, ORT_MAX, istKalendertag, terminProblem, type TerminFelder } from "@/lib/termin";
+import type { Felder } from "@/lib/termin-felder";
 import type { TeamMitglied } from "@/lib/queries/teams";
 import { VerantwortlicheWahl, type VerantwortlicheWert } from "./VerantwortlicheWahl";
-import { FelderField, felderAusZeilen, type FeldZeile } from "./FelderField";
+import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
+import { usePlatzAngaben } from "./usePlatzAngaben";
 
 export type SerieFelder = {
   wochentage: Wochentag[];
@@ -69,10 +70,7 @@ export function NeuerTerminDialog({
   const [wiederholen, setWiederholen] = useState(false);
   const [tageVonHand, setTageVonHand] = useState(false);
   const [problem, setProblem] = useState<{ feld: SerieFeld; text: string } | null>(null);
-  const [felderZeilen, setFelderZeilen] = useState<FeldZeile[]>([]);
-  const [felderFehler, setFelderFehler] = useState<FelderProblem | null>(null);
-  const [spielerzahl, setSpielerzahl] = useState("");
-  const [spielerzahlFehler, setSpielerzahlFehler] = useState<string | undefined>();
+  const platz = usePlatzAngaben();
   // Ein Server-Fehler gilt für die Art, mit der gespeichert wurde; schaltet
   // der USER um, ist er verworfen — bis zum nächsten Speichern.
   const [verworfen, setVerworfen] = useState<string | undefined>();
@@ -86,10 +84,7 @@ export function NeuerTerminDialog({
     setWiederholen(false);
     setTageVonHand(false);
     setProblem(null);
-    setFelderZeilen([]);
-    setFelderFehler(null);
-    setSpielerzahl("");
-    setSpielerzahlFehler(undefined);
+    platz.zuruecksetzen();
     setVerworfen(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -118,16 +113,11 @@ export function NeuerTerminDialog({
 
   function speichern() {
     // Felder und Spielerzahl prüfen beide Arten gleich.
-    const platz = felderAusZeilen(felderZeilen);
-    const zahl = zahlOderNull(spielerzahl);
-    const fp = felderProblem(platz);
-    setFelderFehler(fp);
-    const zp = spielerzahlProblem(zahl);
-    setSpielerzahlFehler(zp?.text);
+    const angaben = platz.pruefe();
     if (wiederholen) {
       const p = serieProblem(f);
       setProblem(p);
-      if (!p && !fp && !zp) senden({ art: "serie", felder: { ...f, felder: platz, spielerzahl: zahl } });
+      if (!p && angaben) senden({ art: "serie", felder: { ...f, ...angaben } });
       return;
     }
     const felder: TerminFelder = {
@@ -136,13 +126,12 @@ export function NeuerTerminDialog({
       ende: f.ende,
       ort: f.ort,
       bemerkung: f.bemerkung,
-      felder: platz,
-      spielerzahl: zahl,
+      ...angaben,
     };
     const p = terminProblem(felder);
     // Das Datum heisst in beiden Fällen `von` — so steht ein Fehler am selben Feld.
     setProblem(p && { feld: p.feld === "datum" ? "von" : p.feld, text: p.text });
-    if (!p && !fp && !zp) {
+    if (!p && angaben) {
       const verantwortlich = f.verantwortliche.length > 0 ? { userIds: f.verantwortliche, anonyme: [] } : undefined;
       senden({ art: "einzeln", felder, verantwortlich });
     }
@@ -203,8 +192,8 @@ export function NeuerTerminDialog({
           onChange={(w) => setze("verantwortliche", w.userIds)}
           disabled={pending}
         />
-        <SpielerzahlField wert={spielerzahl} onChange={setSpielerzahl} fehler={spielerzahlFehler} disabled={pending} />
-        <FelderField zeilen={felderZeilen} onZeilenChange={setFelderZeilen} problem={felderFehler} disabled={pending} />
+        <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} />
+        <FelderField {...platz.felderProps} disabled={pending} />
       </div>
     </Dialog>
   );

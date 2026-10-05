@@ -236,7 +236,7 @@ function baueFeldtypRichtmasse(stufe: Altersstufe): z.infer<typeof FeldtypRichtm
         laenge_m: r.laenge_m,
         breite_m: r.breite_m,
         ungefaehr: r.ungefaehr,
-        wie_alterskategorie: r.wie_kategorie,
+        wie_alterskategorie: r.wie_alterskategorie,
         text: richtmassText(r),
       };
     }),

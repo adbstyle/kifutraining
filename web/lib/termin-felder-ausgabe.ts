@@ -1,18 +1,20 @@
-// Platz und Spielerzahl eines Termins (#389, #390) in der Form der
-// KI-Werkzeuge. Für die Felder eine Quelle
-// für jede Auskunft, die einen Termin nennt («team_plan_abrufen»,
-// «training_abrufen», «trainings_suchen»; AK 13, 14), und für die Eingabe von
-// «termin_festlegen» und «termin_aendern» (AK 12).
+// Felder und erwartete Spielerzahl eines Termins in der Form der
+// KI-Werkzeuge (#389, #390, #391) — eine Quelle für jede Auskunft, die einen
+// Termin oder eine Terminserie nennt («team_plan_abrufen», «training_abrufen»,
+// «trainings_suchen»), und für die Eingaben von «termin_festlegen»,
+// «termin_aendern» und «terminserie_festlegen».
 //
 // Ausgabe wie gespeichert, nur der Untergrund als `Wert` (`{ slug, label }`),
 // wie jede geführte Angabe (lib/mcp/bausteine.ts). Unbekanntes steht als
 // `null` da, damit der Assistent «unbekannt» von «keine» unterscheiden kann.
+// Die Eingaben sind bewusst locker; die Regeln prüft der Fachkern mit den
+// Sätzen der Oberfläche.
 //
 // Eigenes Modul neben lib/termin-felder.ts, damit zod nicht in die
 // Client-Bundles der Termin-Dialoge gerät.
 //
-// REIN: nur zod, lib/wert und lib/termin-felder — die Prüfskripte laden diese
-// Datei mit tsx.
+// REIN: nur zod, lib/feldmass, lib/wert, lib/termin-felder und lib/termin —
+// die Prüfskripte laden diese Datei mit tsx.
 import { z } from "zod";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 import { Wert, wert } from "@/lib/wert";

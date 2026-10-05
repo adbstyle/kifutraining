@@ -5,14 +5,12 @@ import { Button, DateField, Dialog, TextArea, TextField, TimeField, WochentagWah
 import {
   BEMERKUNG_MAX,
   ORT_MAX,
-  spielerzahlProblem,
   spielerzahlText,
   terminProblem,
-  zahlOderNull,
   type TerminFeld,
   type TerminFelder,
 } from "@/lib/termin";
-import { feldText, felderProblem, type FelderProblem } from "@/lib/termin-felder";
+import { feldName, feldText } from "@/lib/termin-felder";
 import {
   SERIE_MELDUNG,
   SERIE_TEXT,
@@ -35,8 +33,9 @@ import {
   verantwortlicheStart,
   type VerantwortlicheWert,
 } from "./VerantwortlicheWahl";
-import { FelderField, felderAusZeilen, zeilenAusFeldern, type FeldZeile } from "./FelderField";
+import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
+import { usePlatzAngaben } from "./usePlatzAngaben";
 
 const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
@@ -120,10 +119,7 @@ export function TerminDialog({
   const [regel, setRegel] = useState<SerienRegel>({ wochentage: [], von: "", bis: "" });
   const [regelProblem, setRegelProblem] = useState<{ feld: SerieFeld | "beides"; text: string } | null>(null);
   const [verantwortlich, setVerantwortlich] = useState<VerantwortlicheWert>(KEINE_VERANTWORTLICHEN);
-  const [felderZeilen, setFelderZeilen] = useState<FeldZeile[]>([]);
-  const [felderFehler, setFelderFehler] = useState<FelderProblem | null>(null);
-  const [spielerzahl, setSpielerzahl] = useState("");
-  const [spielerzahlFehler, setSpielerzahlFehler] = useState<string | undefined>();
+  const platz = usePlatzAngaben();
 
   // Beim Öffnen auf die Vorbelegung zurücksetzen — der Dialog überlebt sonst
   // mit den Werten des zuletzt bearbeiteten Termins.
@@ -136,10 +132,7 @@ export function TerminDialog({
       ort: start?.ort ?? "",
       bemerkung: start?.bemerkung ?? "",
     });
-    setFelderZeilen(zeilenAusFeldern(start?.felder));
-    setFelderFehler(null);
-    setSpielerzahl(start?.spielerzahl != null ? String(start.spielerzahl) : "");
-    setSpielerzahlFehler(undefined);
+    platz.zuruecksetzen(start);
     setProblem(null);
     if (serie) setRegel({ wochentage: [...serie.wochentage], von: serie.beginnDatum, bis: serie.endDatum });
     setRegelProblem(null);
@@ -180,16 +173,11 @@ export function TerminDialog({
   function speichern() {
     const p = terminProblem(felder, bisher);
     setProblem(p);
-    const platz = felderAusZeilen(felderZeilen);
-    const fp = felderProblem(platz);
-    setFelderFehler(fp);
-    const zahl = zahlOderNull(spielerzahl);
-    const zp = spielerzahlProblem(zahl);
-    setSpielerzahlFehler(zp?.text);
+    const angaben = platz.pruefe();
     const regelOk = regelPruefen();
-    if (!p && !fp && !zp && regelOk) {
+    if (!p && angaben && regelOk) {
       const geaendert = verantwortlicheGeaendert(verantwortlich, verantwortlicheStart(verantwortliche ?? []));
-      onSpeichern({ ...felder, felder: platz, spielerzahl: zahl }, serie ? regel : undefined, geaendert ? verantwortlich : undefined);
+      onSpeichern({ ...felder, ...angaben }, serie ? regel : undefined, geaendert ? verantwortlich : undefined);
     }
   }
 
@@ -215,8 +203,8 @@ export function TerminDialog({
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={felder.ort ?? ""} onChange={(e) => setze("ort")(e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         <VerantwortlicheWahl mitglieder={mitglieder} bisher={verantwortliche} wert={verantwortlich} onChange={setVerantwortlich} disabled={pending} />
-        <SpielerzahlField wert={spielerzahl} onChange={setSpielerzahl} fehler={spielerzahlFehler} disabled={pending} />
-        <FelderField zeilen={felderZeilen} onZeilenChange={setFelderZeilen} problem={felderFehler} disabled={pending} />
+        <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} />
+        <FelderField {...platz.felderProps} disabled={pending} />
       </div>
       {serie && (
         <section aria-labelledby={serieTitelId} className="mt-6 border-t border-linie pt-4">
@@ -232,9 +220,9 @@ export function TerminDialog({
           {serie.spielerzahl !== null && (
             <p className="type-body-small">Erwartet: {spielerzahlText(serie.spielerzahl)}</p>
           )}
-          {serie.felder?.map((f, i) => (
+          {serie.felder?.map((f, i, alle) => (
             <p key={i} className="type-body-small">
-              {serie.felder!.length > 1 ? `Feld ${i + 1}` : "Feld"}: {feldText(f)}
+              {feldName(i, alle.length)}: {feldText(f)}
             </p>
           ))}
           {/* AK 14 (#326), AK 19 (#325): welche Angaben abweichen — mit dem Weg

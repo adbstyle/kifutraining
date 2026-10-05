@@ -112,6 +112,7 @@ import {
   FELDER_TEXT,
   UNTERGRUENDE,
   feldText,
+  feldName,
   felderKurz,
   felderPfad,
   felderProblem,
@@ -939,6 +940,10 @@ pruefe("Felder: Normalform, Vergleich, geänderte Felder (#389 AK 5, 7)", () => 
   ]);
   assert.deepEqual(normalisiereFelder([{ tore: { tor_5m: 2 } }]), [{ ...UNBEKANNT, tore: { minitor: null, tor_5m: 2, tor_7m: null } }]);
   assert.equal(normalisiereFelder([]), null);
+  // Eine präparierte Nutzlast (keine Liste) ergibt die Fachmeldung, keinen TypeError.
+  for (const roh of ["x", 3, { laenge_m: 30 }, true] as unknown[])
+    assert.deepEqual(felderProblem(normalisiereFelder(roh as never)), { index: null, teil: null, text: FELDER_TEXT.form }, String(roh));
+  assert.deepEqual(felderProblem(normalisiereFelder(["x"] as never)), { index: 0, teil: null, text: FELDER_TEXT.form });
   assert.equal(normalisiereFelder(undefined), null);
   // jsonb kommt mit anderer Schlüsselfolge zurück — gleich bleibt gleich.
   const umgestellt = { untergrund: "kunstrasen", tore: { tor_7m: null, tor_5m: 0, minitor: 2 }, breite_m: 25, laenge_m: 30 };
@@ -964,9 +969,12 @@ pruefe("Felder: Anzeige knapp und ausführlich, unbekannt ≠ keine (#389 AK 10,
   assert.equal(felderKurz([UNBEKANNT]), "1 Feld");
   assert.equal(felderKurz([{ ...UNBEKANNT, untergrund: "halle" }]), "Halle");
   assert.equal(felderKurz([KUNSTRASEN, UNBEKANNT]), "2 Felder");
-  assert.equal(feldText(KUNSTRASEN), "30 × 25 m · 2 Minitore, keine 5-m-Tore · Kunstrasen");
+  assert.equal(feldText(KUNSTRASEN), "30 × 25 m · Minitore: 2, 5-m-Tore: keine · Kunstrasen");
   assert.equal(feldText(UNBEKANNT), "Grösse unbekannt · Tore unbekannt · Untergrund unbekannt");
-  assert.equal(toreText({ minitor: 1, tor_5m: 1, tor_7m: 3 }), "1 Minitor, 1 5-m-Tor, 3 7-m-Tore");
+  assert.equal(toreText({ minitor: 1, tor_5m: 2, tor_7m: 3 }), "Minitore: 1, 5-m-Tore: 2, 7-m-Tore: 3", "nie eine Zahl direkt vor «5-m»");
+  assert.equal(toreText({ minitor: null, tor_5m: 0, tor_7m: null }), "5-m-Tore: keine", "unbekannte fehlen");
+  assert.equal(feldName(0, 1), "Feld");
+  assert.equal(feldName(1, 3), "Feld 2");
   assert.equal(toreText({ minitor: null, tor_5m: null, tor_7m: null }), null);
 });
 

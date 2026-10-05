@@ -11,7 +11,7 @@ import { SeitenKopf } from "@/components/layout/SeitenKopf";
 import { leseGliederung, formatDuration } from "@/lib/training";
 import { datumKurz } from "@/lib/zeit";
 import { spielerzahlText, zeitText } from "@/lib/termin";
-import { feldText, type Felder } from "@/lib/termin-felder";
+import { feldName, feldText, type Felder } from "@/lib/termin-felder";
 import {
   VARIANTE_PARAM,
   abschnittMitVariante,
@@ -72,12 +72,11 @@ function TerminKopf({ termin, className }: { termin: TerminKontext; className?: 
       )}
       {termin.felder && (
         <ul className="basis-full" aria-label="Felder">
-          {termin.felder.map((f, i) => (
+          {termin.felder.map((f, i, alle) => (
             <li key={i} className="flex items-start gap-1.5">
               <LandPlot size={14} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0" />
               <span>
-                {termin.felder!.length > 1 && <>Feld {i + 1}: </>}
-                {feldText(f)}
+                {feldName(i, alle.length)}: {feldText(f)}
               </span>
             </li>
           ))}

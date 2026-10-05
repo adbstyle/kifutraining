@@ -4,6 +4,7 @@ import { useId } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button, IconButton, Select, TextField, feldNameKlasse } from "@/components/ui";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
+import { zahlOderNull } from "@/lib/termin";
 import {
   TORARTEN,
   TORART_LABEL,
@@ -39,19 +40,20 @@ export function zeilenAusFeldern(felder: Felder | null | undefined): FeldZeile[]
   }));
 }
 
-/** Leer = unbekannt (`null`); sonst die getippte Zahl, auch eine ungültige —
- *  `felderProblem` meldet sie dann an der richtigen Stelle. */
-const zahl = (s: string): number | null => (s.trim() === "" ? null : Number(s));
-
 /** Die Zeilen in der gespeicherten Form; keine Zeile heisst «ohne Felder»
- *  (`null`). Geprüft wird mit `felderProblem` (lib/termin-felder.ts) —
- *  derselben Regel wie im Fachkern. */
+ *  (`null`). Leer heisst unbekannt, eine ungültige Zahl bleibt stehen
+ *  (`zahlOderNull`) — geprüft wird mit `felderProblem` (lib/termin-felder.ts),
+ *  derselben Regel wie im Fachkern, die sie an der richtigen Stelle meldet. */
 export function felderAusZeilen(zeilen: readonly FeldZeile[]): Felder | null {
   if (zeilen.length === 0) return null;
   return zeilen.map((z) => ({
-    laenge_m: zahl(z.laenge),
-    breite_m: zahl(z.breite),
-    tore: { minitor: zahl(z.tore.minitor), tor_5m: zahl(z.tore.tor_5m), tor_7m: zahl(z.tore.tor_7m) },
+    laenge_m: zahlOderNull(z.laenge),
+    breite_m: zahlOderNull(z.breite),
+    tore: {
+      minitor: zahlOderNull(z.tore.minitor),
+      tor_5m: zahlOderNull(z.tore.tor_5m),
+      tor_7m: zahlOderNull(z.tore.tor_7m),
+    },
     untergrund: z.untergrund === "" ? null : z.untergrund,
   }));
 }
@@ -78,9 +80,15 @@ const UNTERGRUND_OPTIONEN = [
    (kein Repeat-Baustein im Kit): je Feld ein umrandeter Block aus TextField,
    Select und IconButton.
 
-   Kontrolliert — die Zeilen hält der Dialog. `problem` ist das Ergebnis von
-   `felderProblem` auf `felderAusZeilen(zeilen)`: Rot wird genau die Angabe,
-   die nicht stimmt; bei Länge und Breite beide, denn sie gelten als Paar. */
+   Alle Felder stehen untereinander, jedes mit eigenem Namen (PO
+   2026-10-04, wie die Spielfeldgrösse einer Übung): Länge über Breite, die
+   drei Torarten untereinander. Jedes Feld ist eine Gruppe, benannt nach
+   seinem Titel «Feld N».
+
+   Kontrolliert — die Zeilen hält der Dialog (`usePlatzAngaben`). `problem`
+   ist das Ergebnis von `felderProblem` auf `felderAusZeilen(zeilen)`: Rot
+   wird genau die Angabe, die nicht stimmt; bei Länge und Breite beide, denn
+   sie gelten als Paar. */
 export function FelderField({
   zeilen,
   onZeilenChange,
@@ -94,6 +102,7 @@ export function FelderField({
 }) {
   const legendeId = useId();
   const hinweisId = useId();
+  const titelId = (key: string) => `${legendeId}-${key}`;
 
   function aendere(key: string, teil: Partial<FeldZeile>) {
     onZeilenChange(zeilen.map((z) => (z.key === key ? { ...z, ...teil } : z)));
@@ -118,9 +127,9 @@ export function FelderField({
           {zeilen.map((z, i) => {
             const ganzesFeld = problem?.index === i && problem.teil === null ? problem.text : undefined;
             return (
-              <li key={z.key} className="rounded-flaeche border border-linie p-3">
+              <li key={z.key} role="group" aria-labelledby={titelId(z.key)} className="rounded-flaeche border border-linie p-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="type-title-small text-on-surface">Feld {i + 1}</p>
+                  <p id={titelId(z.key)} className="type-title-small text-on-surface">Feld {i + 1}</p>
                   <IconButton
                     type="button"
                     icon={Trash2}
@@ -130,49 +139,43 @@ export function FelderField({
                   />
                 </div>
                 <div className="mt-2 flex flex-col gap-3">
-                  <div className="flex flex-col gap-3 sm:flex-row">
+                  <TextField
+                    label="Länge (m)"
+                    type="number"
+                    inputMode="numeric"
+                    min={SPIELFELD_MIN}
+                    max={SPIELFELD_MAX}
+                    value={z.laenge}
+                    disabled={disabled}
+                    error={!!masseFehler(i)}
+                    onChange={(e) => aendere(z.key, { laenge: e.target.value })}
+                  />
+                  <TextField
+                    label="Breite (m)"
+                    type="number"
+                    inputMode="numeric"
+                    min={SPIELFELD_MIN}
+                    max={SPIELFELD_MAX}
+                    value={z.breite}
+                    disabled={disabled}
+                    error={!!masseFehler(i)}
+                    supportingText={masseFehler(i)}
+                    onChange={(e) => aendere(z.key, { breite: e.target.value })}
+                  />
+                  {TORARTEN.map((art) => (
                     <TextField
-                      label="Länge (m)"
+                      key={art}
+                      label={TORART_LABEL[art]}
                       type="number"
                       inputMode="numeric"
-                      min={SPIELFELD_MIN}
-                      max={SPIELFELD_MAX}
-                      className="flex-1"
-                      value={z.laenge}
+                      min={0}
+                      value={z.tore[art]}
                       disabled={disabled}
-                      error={!!masseFehler(i)}
-                      onChange={(e) => aendere(z.key, { laenge: e.target.value })}
+                      error={!!fehlerAn(i, `tore.${art}`)}
+                      supportingText={fehlerAn(i, `tore.${art}`)}
+                      onChange={(e) => aendere(z.key, { tore: { ...z.tore, [art]: e.target.value } })}
                     />
-                    <TextField
-                      label="Breite (m)"
-                      type="number"
-                      inputMode="numeric"
-                      min={SPIELFELD_MIN}
-                      max={SPIELFELD_MAX}
-                      className="flex-1"
-                      value={z.breite}
-                      disabled={disabled}
-                      error={!!masseFehler(i)}
-                      supportingText={masseFehler(i)}
-                      onChange={(e) => aendere(z.key, { breite: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    {TORARTEN.map((art) => (
-                      <TextField
-                        key={art}
-                        label={TORART_LABEL[art].mehrzahl}
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
-                        value={z.tore[art]}
-                        disabled={disabled}
-                        error={!!fehlerAn(i, `tore.${art}`)}
-                        supportingText={fehlerAn(i, `tore.${art}`)}
-                        onChange={(e) => aendere(z.key, { tore: { ...z.tore, [art]: e.target.value } })}
-                      />
-                    ))}
-                  </div>
+                  ))}
                   <Select
                     label="Untergrund"
                     value={z.untergrund}

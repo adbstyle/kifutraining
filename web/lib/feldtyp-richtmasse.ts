@@ -68,18 +68,18 @@ export const FELDTYP_TORE: Record<FeldtypMitRichtmass, string> = {
  *  Mass übernommen ist (`null` = eigenes Mass der Quelle). */
 export const FELDTYP_RICHTMASSE: Record<
   FeldtypMitRichtmass,
-  Record<RichtmassKategorie, Richtmass & { wie_kategorie: RichtmassKategorie | null }>
+  Record<RichtmassKategorie, Richtmass & { wie_alterskategorie: RichtmassKategorie | null }>
 > = {
   kleinfeld: {
-    G: { ...ca(20, 15), wie_kategorie: null },
-    F: { ...ca(25, 20), wie_kategorie: null },
-    E: { ...spanne([25, 30], [20, 25]), wie_kategorie: null },
+    G: { ...ca(20, 15), wie_alterskategorie: null },
+    F: { ...ca(25, 20), wie_alterskategorie: null },
+    E: { ...spanne([25, 30], [20, 25]), wie_alterskategorie: null },
   },
   grossfeld: {
     // Die SFV-Bestimmungen kennen in G kein Grossfeld → Mass von F.
-    G: { ...GROSSFELD_F, wie_kategorie: "F" },
-    F: { ...GROSSFELD_F, wie_kategorie: null },
-    E: { ...spanne([43, 48], [25, 30]), wie_kategorie: null },
+    G: { ...GROSSFELD_F, wie_alterskategorie: "F" },
+    F: { ...GROSSFELD_F, wie_alterskategorie: null },
+    E: { ...spanne([43, 48], [25, 30]), wie_alterskategorie: null },
   },
 };
 
