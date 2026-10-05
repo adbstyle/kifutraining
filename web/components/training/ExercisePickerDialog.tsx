@@ -10,7 +10,6 @@ import {
   ButtonLink,
   UebungsBild,
   Zaehler,
-  Badge,
   Banner,
   FilterSuche,
 } from "@/components/ui";
@@ -22,10 +21,7 @@ import {
   stufenAbgedeckt,
   zielLabel,
 } from "@/lib/training";
-import {
-  altersstufe as altersstufeLabels,
-  type KategorieSlug,
-} from "@/lib/vocab";
+import type { KategorieSlug } from "@/lib/vocab";
 import {
   erscheinungsformOptionen,
   uebungstypOptionen,
@@ -194,14 +190,6 @@ export function ExercisePickerDialog({
       className="w-[min(52rem,calc(100vw-2rem))]"
     >
       <div className="flex flex-col gap-4">
-        {/* Aus welcher Welt hier gewählt wird. Beide Schemata kennen einen
-            „Hauptteil" — ohne die Altersstufe sagt der Titel allein nicht,
-            welcher gemeint ist. Derselbe neutrale Badge wie im Editor-Kopf:
-            die Altersstufe ist keine Alterskategorie. */}
-        <div className="-mt-1">
-          <Badge tone="neutral">{altersstufeLabels[altersstufe]}</Badge>
-        </div>
-
         {/* Suche und Filter aus dem Kit, in einer umbrechenden Zeile wie auf
             den Übersichten (Epic #363). Die Suche trägt im Dialog eine
             Kontur, ohne eigene Fläche — der Dialoggrund bleibt stehen.
