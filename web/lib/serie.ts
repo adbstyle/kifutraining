@@ -87,13 +87,6 @@ export const SERIE_TEXT = {
   namenloseNurEinzeln: "Ehemalige Mitglieder ohne Namen lassen sich nur für diesen einen Termin entfernen.",
   namenloseUndRegel:
     "Ehemalige Mitglieder ohne Namen und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
-  /** #389, #390: Eine Serie gibt noch keine Felder und keine Spielerzahl vor
-   *  — beide gelten an einem Serientermin nur für ihn. Übergang bis #391
-   *  (Felder und Spielerzahl einer Terminserie), das beide Sätze wieder
-   *  entfernt. */
-  platzNurEinzeln: "Felder und erwartete Spielerzahl lassen sich nur für diesen einen Termin festhalten.",
-  platzUndRegel:
-    "Felder oder erwartete Spielerzahl und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
 } as const;
 
 export type SerienRegel = { wochentage: Wochentag[]; von: string; bis: string };
@@ -139,8 +132,9 @@ export function regelProblemVorab(
 
 /** Für welche Reichweiten eine Änderung an einem Serientermin gilt
  *  (#326 AK 1–4): das Datum nur für diesen Termin, Wochentage und Zeitraum nur
- *  für diesen und folgende oder für alle; Zeit, Ort, Bemerkung und
- *  Verantwortliche (#325) für jede. `null`, wenn Datum und Regel zugleich
+ *  für diesen und folgende oder für alle; Zeit, Ort, Bemerkung,
+ *  Verantwortliche (#325), Felder und erwartete Spielerzahl (#391) für jede.
+ *  `null`, wenn Datum und Regel zugleich
  *  geändert werden — das schliesst sich aus (`SERIE_TEXT.datumUndRegel`).
  *
  *  `namenlose`: An den Verantwortlichen ändern sich allein die Einträge
@@ -148,18 +142,9 @@ export function regelProblemVorab(
  *  folgende oder alle ersetzte an jedem erfassten Termin ALLE Einträge, auch
  *  die namenlosen. Darum gilt sie wie das Datum nur für diesen Termin
  *  (`SERIE_TEXT.namenloseNurEinzeln`, mit der Regel zusammen
- *  `SERIE_TEXT.namenloseUndRegel`).
- *
- *  `platz`: Felder (#389) oder erwartete Spielerzahl (#390) ändern sich. Die
- *  Serie gibt noch keine vor, darum gelten sie nur für diesen Termin
- *  (`SERIE_TEXT.platzNurEinzeln`) — bis #391. */
-export function erlaubteReichweiten(g: {
-  datum: boolean;
-  regel: boolean;
-  namenlose?: boolean;
-  platz?: boolean;
-}): readonly Reichweite[] | null {
-  const nurEinzeln = g.datum || !!g.namenlose || !!g.platz;
+ *  `SERIE_TEXT.namenloseUndRegel`). */
+export function erlaubteReichweiten(g: { datum: boolean; regel: boolean; namenlose?: boolean }): readonly Reichweite[] | null {
+  const nurEinzeln = g.datum || !!g.namenlose;
   if (nurEinzeln && g.regel) return null;
   if (nurEinzeln) return ["nur_dieser"];
   if (g.regel) return ["dieser_und_folgende", "alle"];
@@ -221,7 +206,8 @@ export const SERIE_MELDUNG = {
   SERIE_BELEGUNG_GEAENDERT:
     "Seit deiner Auswahl hat sich geändert, welche wegfallenden Termine ein Training tragen. Sieh dir die Änderung noch einmal an.",
   KEINE_AENDERUNG: "Gib mindestens eine Angabe an, die sich ändern soll.",
-  SERIE_ANGABEN_UNGUELTIG: "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort oder Bemerkung.",
+  SERIE_ANGABEN_UNGUELTIG:
+    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Verantwortliche, Felder oder Spielerzahl.",
 } as const;
 
 /** Der KI-Weg verlangt eine ausdrückliche Bestätigung, wenn «dieser und

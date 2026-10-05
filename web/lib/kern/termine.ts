@@ -15,6 +15,7 @@ import {
 import {
   felderPfad,
   felderProblem,
+  gleicheFelder,
   normalisiereFelder,
   type FeldEingabe,
   type Felder,
@@ -113,7 +114,7 @@ export function pruefeFelder(
 
 /** Die erwartete Spielerzahl prüfen (#390 AK 3, 7) — mit dem Satz der
  *  Oberfläche und dem Eingabenamen des Werkzeugs. */
-function spielerzahlFehler(n: number | null | undefined): KernFehler | null {
+export function spielerzahlFehler(n: number | null | undefined): KernFehler | null {
   const p = n === undefined ? null : spielerzahlProblem(n);
   return p ? fehlschlag("eingabe", p.text, { feld: p.feld }) : null;
 }
@@ -284,14 +285,16 @@ export async function aendereTermin(
   // ändert, weicht danach ab — bis man sie wieder der Serie folgen lässt. Nur
   // was übergeben wird und sich vom Stand unterscheidet, setzt ein Flag; ein
   // schon gesetztes bleibt ungeschrieben stehen. Das Datum braucht keines: Es
-  // weicht ab, sobald es nicht mehr auf dem Serientag liegt. Felder (#389) und
-  // Spielerzahl (#390) brauchen (noch) keines: Die Serie gibt sie nicht vor
-  // (bis #391).
+  // weicht ab, sobald es nicht mehr auf dem Serientag liegt. Felder und
+  // Spielerzahl (#391 PC 4, 5) ebenso — auch beim Entfernen: Der Termin ist
+  // dann bewusst leer und weicht mit unbekannter Angabe ab.
   const flags: Record<string, boolean> = {};
   if (t.serie_id) {
     if ("beginn" in aenderung && (neu.beginn !== t.beginn || neu.ende !== t.ende)) flags.zeit_abweichend = true;
     if ("ort" in aenderung && neu.ort !== t.ort) flags.ort_abweichend = true;
     if ("bemerkung" in aenderung && neu.bemerkung !== t.bemerkung) flags.bemerkung_abweichend = true;
+    if (felder && !gleicheFelder(felder.felder, t.felder)) flags.felder_abweichend = true;
+    if (e.spielerzahl !== undefined && e.spielerzahl !== t.erwartete_spielerzahl) flags.spielerzahl_abweichend = true;
   }
 
   // #327 PO 6, PC 4: Ein einzeln auf heute oder später verlegter Termin findet

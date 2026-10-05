@@ -338,6 +338,9 @@ const TERMIN_MARKER: [string, string][] = [...Object.entries(TERMIN_MELDUNG), ..
 const TERMIN_CHECKS: [string, string][] = [
   ['"tt_felder"', FELDER_TEXT.ungueltig],
   ['"tt_spielerzahl"', TERMIN_TEXT.spielerzahl],
+  // An der Serie dieselben Regeln (#391).
+  ['"ts_felder"', FELDER_TEXT.ungueltig],
+  ['"ts_spielerzahl"', TERMIN_TEXT.spielerzahl],
 ];
 
 /** Die Meldung zu einem Marker aus Übungsfolge, Variantenfolge oder Termin,

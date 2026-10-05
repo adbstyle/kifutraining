@@ -2,8 +2,17 @@
 
 import { useEffect, useId, useState } from "react";
 import { Button, DateField, Dialog, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
-import { BEMERKUNG_MAX, ORT_MAX, spielerzahlProblem, terminProblem, zahlOderNull, type TerminFeld, type TerminFelder } from "@/lib/termin";
-import { felderProblem, gleicheFelder, type FelderProblem } from "@/lib/termin-felder";
+import {
+  BEMERKUNG_MAX,
+  ORT_MAX,
+  spielerzahlProblem,
+  spielerzahlText,
+  terminProblem,
+  zahlOderNull,
+  type TerminFeld,
+  type TerminFelder,
+} from "@/lib/termin";
+import { feldText, felderProblem, type FelderProblem } from "@/lib/termin-felder";
 import {
   SERIE_MELDUNG,
   SERIE_TEXT,
@@ -34,14 +43,20 @@ const ANGABE: Record<FolgeAngabe, string> = {
   ort: "Der Ort",
   bemerkung: "Die Bemerkung",
   verantwortliche: "Die Verantwortlichen",
+  spielerzahl: "Die erwartete Spielerzahl",
+  felder: "Die Felder",
 };
+/** Mehrzahl: «weichen» statt «weicht». */
+const MEHRZAHL: readonly FolgeAngabe[] = ["verantwortliche", "felder"];
 /** Die Angaben, die wieder der Serie folgen können, in der Reihenfolge des Dialogs. */
-const FOLGEN_KANN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "verantwortliche"];
+const FOLGEN_KANN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "verantwortliche", "spielerzahl", "felder"];
 const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   zeit: "Zeit wieder der Serie folgen lassen",
   ort: "Ort wieder der Serie folgen lassen",
   bemerkung: "Bemerkung wieder der Serie folgen lassen",
   verantwortliche: "Verantwortliche wieder der Serie folgen lassen",
+  spielerzahl: "Erwartete Spielerzahl wieder der Serie folgen lassen",
+  felder: "Felder wieder der Serie folgen lassen",
 };
 
 /* Einen Termin ändern (Team-Kalender #322); erstellt wird im
@@ -61,8 +76,8 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
    Danach die erwartete Spielerzahl (#390; leer = unbekannt) und die Felder
    des Platzes (#389): alle Einzelheiten zum Ansehen und Ändern (AK 7, 11).
    Die Felder gehen als ganze Liste mit den übrigen Angaben; keine Zeile
-   heisst «ohne Felder». An einem Serientermin gelten beide nur für ihn — die
-   Serie gibt (noch) keine vor (bis #391). */
+   heisst «ohne Felder». An einem Serientermin zeigt der Serien-Abschnitt,
+   was die Serie vorgibt und ob der Termin davon abweicht (#391 AK 4–6). */
 export function TerminDialog({
   open,
   start,
@@ -156,13 +171,6 @@ export function TerminDialog({
       setRegelProblem({ feld: "beides", text: SERIE_TEXT.namenloseUndRegel });
       return false;
     }
-    const platzGeaendert =
-      !gleicheFelder(felderAusZeilen(felderZeilen), start?.felder) ||
-      zahlOderNull(spielerzahl) !== (start?.spielerzahl ?? null);
-    if (platzGeaendert) {
-      setRegelProblem({ feld: "beides", text: SERIE_TEXT.platzUndRegel });
-      return false;
-    }
     // Die Reichweite ist noch offen: weitere Obergrenze, die engere prüft die Vorschau.
     const r = regelProblemVorab(serie, regel, terminDatum);
     setRegelProblem(r);
@@ -220,6 +228,15 @@ export function TerminDialog({
           {serie.verantwortliche.length > 0 && (
             <p className="type-body-small">Verantwortlich: {serie.verantwortliche.map((v) => v.name).join(", ")}</p>
           )}
+          {/* #391 AK 4: was die Serie an Spielerzahl und Feldern vorgibt. */}
+          {serie.spielerzahl !== null && (
+            <p className="type-body-small">Erwartet: {spielerzahlText(serie.spielerzahl)}</p>
+          )}
+          {serie.felder?.map((f, i) => (
+            <p key={i} className="type-body-small">
+              {serie.felder!.length > 1 ? `Feld ${i + 1}` : "Feld"}: {feldText(f)}
+            </p>
+          ))}
           {/* AK 14 (#326), AK 19 (#325): welche Angaben abweichen — mit dem Weg
               zurück (AK 6). Das Datum folgt nie wieder der Serie (PO 3), es
               zählt das aktuelle. Keine Zeile, keine Liste. */}
@@ -228,7 +245,7 @@ export function TerminDialog({
               {verschoben && <li>Verschoben - ursprünglich am {datumKurz(serienTag!)}.</li>}
               {folgenKann.map((a) => (
                 <li key={a} className="flex flex-wrap items-center justify-between gap-x-2">
-                  <span>{ANGABE[a]} {a === "verantwortliche" ? "weichen" : "weicht"} von der Serie ab.</span>
+                  <span>{ANGABE[a]} {MEHRZAHL.includes(a) ? "weichen" : "weicht"} von der Serie ab.</span>
                   <Button variant="text" aria-label={FOLGEN_LABEL[a]} disabled={pending} onClick={() => onFolgen?.(a)}>Der Serie folgen</Button>
                 </li>
               ))}

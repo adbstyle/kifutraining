@@ -96,6 +96,8 @@ const FOLGT_WIEDER: Record<FolgeAngabe, string> = {
   ort: "Der Ort folgt wieder der Serie.",
   bemerkung: "Die Bemerkung folgt wieder der Serie.",
   verantwortliche: "Die Verantwortlichen folgen wieder der Serie.",
+  felder: "Die Felder folgen wieder der Serie.",
+  spielerzahl: "Die erwartete Spielerzahl folgt wieder der Serie.",
 };
 
 /** Die offene Frage nach der Reichweite (#326 AK 1–4, 7). Beim Ändern stehen
@@ -320,16 +322,11 @@ export function TerminBereich({
     if (!t.serie) return aendereEinzeln(t, geaendert, verantwortlich);
     const datum = geaendert?.datum !== undefined;
     const namenlose = !!verantwortlich && nurNamenloseGeaendert(verantwortlich, verantwortlicheStart(t.verantwortliche));
-    // #389, #390: Die Serie gibt (noch) keine Felder und keine Spielerzahl
-    // vor — geändert gelten sie nur für diesen Termin (bis #391).
-    const platz = geaendert?.felder !== undefined || geaendert?.spielerzahl !== undefined;
-    const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose, platz });
+    const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose });
     // Der Dialog prüft das schon; hier nur als Rückhalt.
-    if (!erlaubt)
-      return setDialogFehler(
-        datum ? SERIE_TEXT.datumUndRegel : namenlose ? SERIE_TEXT.namenloseUndRegel : SERIE_TEXT.platzUndRegel,
-      );
-    const { datum: _datum, felder: _felder, spielerzahl: _spielerzahl, ...werte } = geaendert ?? {};
+    if (!erlaubt) return setDialogFehler(datum ? SERIE_TEXT.datumUndRegel : SERIE_TEXT.namenloseUndRegel);
+    // Felder und Spielerzahl gehen wie Ort und Bemerkung mit (#391 AK 2).
+    const { datum: _datum, ...werte } = geaendert ?? {};
     setDialogFehler(undefined);
     neuerLauf();
     setReichweite({
@@ -340,11 +337,9 @@ export function TerminBereich({
         ? SERIE_MELDUNG.DATUM_NUR_EINZELN
         : namenlose
           ? SERIE_TEXT.namenloseNurEinzeln
-          : platz
-            ? SERIE_TEXT.platzNurEinzeln
-            : regelNeu
-              ? SERIE_MELDUNG.REGEL_NUR_SERIE
-              : undefined,
+          : regelNeu
+            ? SERIE_MELDUNG.REGEL_NUR_SERIE
+            : undefined,
       geaendert,
       verantwortlich,
       // Für folgende und alle gehen die Verantwortlichen mit der übrigen

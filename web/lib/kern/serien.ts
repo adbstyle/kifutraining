@@ -3,17 +3,19 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import {
   SERIE_MELDUNG,
-  SERIE_TEXT,
   serieProblem,
   vergangeneBestaetigen,
   type Reichweite,
   type Wochentag,
 } from "@/lib/serie";
 import { TERMIN_TEXT, istKalendertag, leerZuNull, textProblem, zeitProblem } from "@/lib/termin";
+import type { FeldEingabe } from "@/lib/termin-felder";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import {
   TERMIN_FELD,
   aendereTermin,
+  pruefeFelder,
+  spielerzahlFehler,
   entferneTermin,
   bereinigeVerantwortliche,
   kalenderFehler,
@@ -31,6 +33,11 @@ import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/er
  * Bestätigung des KI-Wegs (PO 16). Was die Datenebene sonst mit einem rohen
  * Postgres-Fehler abwiese (ungültiges Datum, Uhrzeit, zu langer Text), prüft
  * dieser Kern vorab — die Datenebene bleibt der Rückhalt.
+ *
+ * Felder und erwartete Spielerzahl (#391) gibt die Serie vor wie den Ort:
+ * zwei Angaben, je mit eigener Abweichung am Termin. Ihre Regeln sind die
+ * des einzelnen Termins (`pruefeFelder`, `spielerzahlFehler`), mit
+ * denselben Sätzen.
  */
 
 export type SerieFestlegen = {
@@ -44,6 +51,9 @@ export type SerieFestlegen = {
   bemerkung?: string | null;
   /** Kennungen der Mitglieder, die jeder Termin der Serie trägt (#325 AK 3). */
   verantwortliche?: string[];
+  /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1); ohne: unbekannt. */
+  felder?: readonly FeldEingabe[] | null;
+  spielerzahl?: number | null;
 };
 
 /** Eine Terminserie festlegen (#324): je gewähltem Wochentag im Zeitraum ein
@@ -57,6 +67,10 @@ export async function legeSerieFest(
   if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
   const verantwortliche = bereinigeVerantwortliche(e.verantwortliche ?? []);
   if (!verantwortliche.ok) return verantwortliche.fehler;
+  const felder = pruefeFelder(e.felder);
+  if (!felder.ok) return felder;
+  const zahl = spielerzahlFehler(e.spielerzahl);
+  if (zahl) return zahl;
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
   const { data, error } = await supabase.rpc("terminserie_festlegen", {
@@ -69,6 +83,8 @@ export async function legeSerieFest(
     p_ort: leerZuNull(e.ort),
     p_bemerkung: leerZuNull(e.bemerkung),
     p_verantwortliche: verantwortliche.ids,
+    p_felder: felder.felder,
+    p_spielerzahl: e.spielerzahl ?? null,
   });
   if (error) return kalenderFehler(error);
   const r = data as { serie: string; termine: number };
@@ -87,6 +103,10 @@ export type SerienAenderung = {
   bemerkung?: string | null;
   /** Kennungen der künftigen Verantwortlichen der Serie (#325); `[]` = niemand. */
   verantwortliche?: string[];
+  /** Die Felder als ganze Liste (#391 AK 7); `null` oder `[]` = keine. */
+  felder?: readonly FeldEingabe[] | null;
+  /** Die erwartete Spielerzahl; `null` = unbekannt. */
+  spielerzahl?: number | null;
 };
 
 export type EntfallenderTermin = {
@@ -180,7 +200,15 @@ export async function aendereSerie(
   const a = e.aenderung;
   const hatZeit = a.beginn !== undefined || a.ende !== undefined;
   const hatRegel = a.wochentage !== undefined || a.von !== undefined || a.bis !== undefined;
-  if (!hatZeit && !hatRegel && a.ort === undefined && a.bemerkung === undefined && a.verantwortliche === undefined)
+  if (
+    !hatZeit &&
+    !hatRegel &&
+    a.ort === undefined &&
+    a.bemerkung === undefined &&
+    a.verantwortliche === undefined &&
+    a.felder === undefined &&
+    a.spielerzahl === undefined
+  )
     return fehlschlag("eingabe", SERIE_MELDUNG.KEINE_AENDERUNG);
   if (a.von !== undefined && !istKalendertag(a.von)) return fehlschlag("eingabe", TERMIN_TEXT.datum, { feld: "von" });
   if (a.bis !== undefined && !istKalendertag(a.bis)) return fehlschlag("eingabe", TERMIN_TEXT.datum, { feld: "bis" });
@@ -192,6 +220,10 @@ export async function aendereSerie(
   if (tp) return fehlschlag("eingabe", tp.text, { feld: tp.feld });
   const verantwortliche = a.verantwortliche === undefined ? null : bereinigeVerantwortliche(a.verantwortliche);
   if (verantwortliche && !verantwortliche.ok) return verantwortliche.fehler;
+  const felder = a.felder === undefined ? null : pruefeFelder(a.felder);
+  if (felder && !felder.ok) return felder;
+  const zahl = spielerzahlFehler(a.spielerzahl);
+  if (zahl) return zahl;
 
   // Die Regel vorab prüfen, mit den Feldnamen des Werkzeugs (AK 5, PC 19) —
   // nur wenn sie sich ändert: Eine reine Werteänderung an einem verlegten
@@ -222,6 +254,9 @@ export async function aendereSerie(
   if (a.ort !== undefined) aenderung.ort = leerZuNull(a.ort);
   if (a.bemerkung !== undefined) aenderung.bemerkung = leerZuNull(a.bemerkung);
   if (verantwortliche?.ok) aenderung.verantwortliche = verantwortliche.ids;
+  // Schlüssel vorhanden mit null heisst «auf unbekannt setzen» (#391).
+  if (felder) aenderung.felder = felder.felder;
+  if (a.spielerzahl !== undefined) aenderung.spielerzahl = a.spielerzahl;
 
   return laufe(t.team_id, e, async (ausfuehren, erwartet) =>
     supabase.rpc("terminserie_aendern", {
@@ -257,11 +292,11 @@ export async function entferneSerie(
   );
 }
 
-export type FolgeAngabe = "zeit" | "ort" | "bemerkung" | "verantwortliche";
+export type FolgeAngabe = "zeit" | "ort" | "bemerkung" | "verantwortliche" | "felder" | "spielerzahl";
 /** Auch das Datum lässt sich nennen — die Datenebene weist es ab (PO 3). */
 export type FolgeWunsch = FolgeAngabe | "datum";
 
-const FOLGE_ANGABEN: readonly string[] = ["zeit", "ort", "bemerkung", "verantwortliche"];
+const FOLGE_ANGABEN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "verantwortliche", "felder", "spielerzahl"];
 
 /** Abweichende Angaben wieder der Serie folgen lassen (#326 AK 6; das Datum
  *  nie, PO 3 — «datum» reicht der Kern an die Datenebene durch, die es mit
@@ -321,10 +356,6 @@ export async function aendereMitReichweite(
     return r.ok ? ok({ terminId: r.wert.terminId, teamId: r.wert.teamId, serie: null }) : r;
   }
   if (e.datum !== undefined) return fehlschlag("regel", SERIE_MELDUNG.DATUM_NUR_EINZELN, { feld: "datum" });
-  // #389, #390: Die Serie gibt (noch) keine Felder und keine Spielerzahl vor —
-  // bis #391 nur «nur_dieser».
-  if (e.felder !== undefined || e.spielerzahl !== undefined)
-    return fehlschlag("regel", SERIE_TEXT.platzNurEinzeln, { feld: "reichweite", zulaessig: ["nur_dieser"] });
   const r = await aendereSerie(supabase, userId, {
     terminId: e.terminId,
     reichweite: e.reichweite as "dieser_und_folgende" | "alle",
@@ -336,6 +367,8 @@ export async function aendereMitReichweite(
       ende: e.ende,
       ort: e.ort,
       bemerkung: e.bemerkung,
+      felder: e.felder,
+      spielerzahl: e.spielerzahl,
     },
     bestaetigt: e.bestaetigt,
   });

@@ -27,6 +27,7 @@ import type { Reichweite, Wochentag } from "@/lib/serie";
 import { revalidiereTeam, revalidiereTraining } from "@/lib/revalidate";
 import { NICHT_ANGEMELDET, angemeldet, oberflaechenMeldung } from "@/lib/actions/adapter";
 import type { TerminFelder } from "@/lib/termin";
+import type { Felder } from "@/lib/termin-felder";
 import type { TerminZeile } from "@/lib/queries/termine";
 
 /**
@@ -174,7 +175,8 @@ export async function loeseTrainingAktion(
 }
 
 /** Eine Terminserie festlegen (#324): die Termine entstehen ohne Training,
- *  aber mit den Verantwortlichen der Serie (#325 AK 3, PC 1); die Oberfläche
+ *  aber mit den Verantwortlichen (#325 AK 3, PC 1), Feldern und erwarteter
+ *  Spielerzahl der Serie (#391 AK 1, PC 1); die Oberfläche
  *  bestätigt ohne Anzahl (Story 3 PC 4). */
 export async function legeSerieFestAktion(
   teamId: string,
@@ -187,6 +189,9 @@ export async function legeSerieFestAktion(
     ort: string;
     bemerkung: string;
     verantwortliche: string[];
+    /** Felder und erwartete Spielerzahl jedes Termins (#391 AK 1). */
+    felder: Felder | null;
+    spielerzahl: number | null;
   },
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();

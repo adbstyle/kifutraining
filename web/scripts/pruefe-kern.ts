@@ -976,10 +976,19 @@ pruefe("Felder: der CHECK der Datenebene als Klartext, eine Regel (#389 AK 15)",
   assert.equal(still(() => ausDbFehler({ message: db })).art, "regel");
   // Der Name trifft nur sich selbst, nicht eine längere Bezeichnung.
   assert.equal(fachlicheMeldung('violates check constraint "tt_felder_abweichend"'), null);
-  assert.equal(SERIE_TEXT.platzNurEinzeln, "Felder und erwartete Spielerzahl lassen sich nur für diesen einen Termin festhalten.");
-  // Bis #391: Felder an einem Serientermin nur für ihn, nicht zusammen mit der Regel.
-  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false, platz: true }), ["nur_dieser"]);
-  assert.equal(erlaubteReichweiten({ datum: false, regel: true, platz: true }), null);
+});
+
+pruefe("Serie: Felder und Spielerzahl mit denselben Sätzen, jede Reichweite, folgen (#391 AK 2, 6, 10)", () => {
+  // Die CHECKs der Serie sagen dasselbe wie die des Termins.
+  const serie = (name: string) => `new row for relation "termin_serien" violates check constraint "${name}"`;
+  assert.equal(still(() => fehlerMeldung(serie("ts_felder"))), FELDER_TEXT.ungueltig);
+  assert.equal(still(() => fehlerMeldung(serie("ts_spielerzahl"))), TERMIN_TEXT.spielerzahl);
+  // Felder und Spielerzahl lassen jede Reichweite zu: Sie zählen nicht als Regel und nicht als Datum.
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false }), ["nur_dieser", "dieser_und_folgende", "alle"]);
+  assert.equal(
+    SERIE_MELDUNG.SERIE_ANGABEN_UNGUELTIG,
+    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Verantwortliche, Felder oder Spielerzahl.",
+  );
 });
 
 pruefe("Felder: KI-Ausgabe und -Eingabe (#389 AK 12–14)", () => {

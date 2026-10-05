@@ -30,7 +30,7 @@ import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
 
 /**
  * Teams und Kalender (Stories #198, #322, #323, #324, #326; Felder #389,
- * erwartete Spielerzahl #390).
+ * erwartete Spielerzahl #390, beide an der Serie #391).
  *
  * Dünne Adapter über den Fachkern (lib/kern/team.ts, lib/kern/termine.ts) —
  * dieselben Funktionen wie Team-Übersicht, Trainingsplan und Termin-Dialog
@@ -84,8 +84,10 @@ const SERIEN_MODELL =
   "Eine Terminserie läuft wöchentlich an einem oder mehreren Wochentagen zwischen Beginn- und " +
   "Enddatum (höchstens bis zum gleichen Kalendertag im Folgejahr) und legt ihre Termine als " +
   "einzelne Termine an. Ein Termin einer Serie kann je Angabe abweichen (Datum, Zeit, Ort, " +
-  "Bemerkung, Verantwortliche) und behält die Abweichung bei späteren Serienänderungen; das Datum gilt immer, wie " +
-  "es ist. Einzeln entfernte Termine legt keine Serienänderung wieder an.";
+  "Bemerkung, Verantwortliche, Felder, erwartete Spielerzahl) und behält die Abweichung bei späteren Serienänderungen; " +
+  "das Datum gilt immer, wie es ist. Die Felder sind eine Angabe (die ganze Liste), die Spielerzahl eine zweite. " +
+  "Wer an nur einem Serientermin Felder oder Spielerzahl entfernt, macht ihn bewusst leer: Er weicht ab und gilt " +
+  "als unbekannt, bis er wieder der Serie folgt. Einzeln entfernte Termine legt keine Serienänderung wieder an.";
 
 // ── teams_abrufen ───────────────────────────────────────────────────────────
 
@@ -140,7 +142,7 @@ const PlanEintrag = z.object({
   /** `null`: ein einzelner Termin ohne Serie (#324). */
   serie_id: z.string().nullable(),
   /** Die Angaben, in denen der Termin von seiner Serie abweicht; leer ohne Serie. */
-  abweichungen: z.array(z.enum(["datum", "zeit", "ort", "bemerkung", "verantwortliche"])),
+  abweichungen: z.array(z.enum(["datum", "zeit", "ort", "bemerkung", "verantwortliche", "felder", "spielerzahl"])),
   /** Wer den Termin vorbereitet und leitet (#325); leer ohne Eintrag. */
   verantwortliche: z.array(Verantwortlich),
   /** Ein ausgefallener Termin trägt kein Training und gilt nicht als unvorbereitet (#327). */
@@ -188,6 +190,9 @@ const PlanSerie = z.object({
   bemerkung: z.string().nullable(),
   /** Wer die Serie vorgibt (#325). */
   verantwortliche: z.array(z.object({ id: z.string(), anzeigename: z.string() })),
+  /** Felder und erwartete Spielerzahl, die die Serie vorgibt (#391 AK 9). */
+  felder: felderSchema(),
+  erwartete_spielerzahl: spielerzahlSchema(),
 });
 
 /** Die Serien der Einträge, eindeutig je Kennung. */
@@ -205,6 +210,8 @@ function planSerien(termine: TerminZeile[]) {
         ort: t.serie.ort,
         bemerkung: t.serie.bemerkung,
         verantwortliche: t.serie.verantwortliche.map((v) => ({ id: v.userId, anzeigename: v.name })),
+        felder: felderAusgabe(t.serie.felder),
+        erwartete_spielerzahl: t.serie.spielerzahl,
       });
   return [...nachId.values()];
 }
@@ -220,7 +227,7 @@ export const teamPlanAbrufen = werkzeug({
     "des Platzes, die erwartete Spielerzahl und das zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
     "Termin ohne Training, der nicht ausgefallen ist, ist noch nicht vorbereitet. Übernommene Termine können ohne Beginn oder " +
     "Ende sein. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
-    "Ort, Bemerkung und Verantwortliche jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
+    "Ort, Bemerkung, Verantwortliche, Felder und erwartete Spielerzahl jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
     "von ihr abweicht. Jeder Eintrag nennt seine Verantwortlichen; «nur_meine» grenzt auf deine ein. " +
     "Ausgefallene Termine stehen mit «ausgefallen: true» und Grund im Plan. " +
     "Mit «von» und «bis» (beide eingeschlossen, höchstens bis zum gleichen Kalendertag im Folgejahr) " +
@@ -313,13 +320,13 @@ export const AendernEingabe = z.object({
     .optional()
     .describe(
       "Die Felder des Platzes als GANZE neue Liste - sie ersetzt die bisherige; null (oder []) entfernt alle " +
-        `Felder, ohne Angabe unverändert. An einem Termin einer Serie nur mit «nur_dieser». ${FELDER_MODELL}`,
+        `Felder, ohne Angabe unverändert. An einem Termin einer Serie gilt «reichweite». ${FELDER_MODELL}`,
     ),
   erwartete_spielerzahl: SpielerzahlEingabe.nullable()
     .optional()
     .describe(
-      "Neue erwartete Spielerzahl; null entfernt sie, ohne Angabe unverändert. An einem Termin einer Serie nur " +
-        `mit «nur_dieser». ${SPIELERZAHL_MODELL}`,
+      "Neue erwartete Spielerzahl; null entfernt sie, ohne Angabe unverändert. An einem Termin einer Serie gilt " +
+        `«reichweite». ${SPIELERZAHL_MODELL}`,
     ),
   reichweite: Reichweite.optional(),
   wochentage: Wochentage.optional().describe("Neue Wochentage der Serie (nur mit «dieser_und_folgende» oder «alle»)."),
@@ -348,7 +355,7 @@ export const terminAendern = werkzeug({
     "lassen sich nicht leeren; ändert sich die Zeit, braucht der Termin danach beide. Ein " +
     "übernommener Termin ohne vollständige Zeit lässt sich ändern, ohne die Zeit zu ergänzen. Das " +
     "zugeordnete Training bleibt dasselbe. Für einen Termin einer Serie ist «reichweite» Pflicht; " +
-    "das Datum, die Felder und die erwartete Spielerzahl ändert nur «nur_dieser», Wochentage und Zeitraum nur «dieser_und_folgende» oder " +
+    "das Datum ändert nur «nur_dieser», Wochentage und Zeitraum nur «dieser_und_folgende» oder " +
     "«alle». Das Ergebnis nennt entfallene Termine mit Training; ihre Trainings bleiben im Bestand " +
     `des Teams. ${SERIEN_MODELL} ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
@@ -421,7 +428,8 @@ export const terminserieFestlegen = werkzeug({
   beschreibung:
     "Legt für eines deiner Teams eine wöchentliche Terminserie fest: je gewähltem Wochentag " +
     "zwischen «von» und «bis» (beide eingeschlossen) einen Termin ohne Training mit Beginn, Ende, " +
-    "Ort, Bemerkung und Verantwortlichen der Serie - auch ganz oder teilweise in der Vergangenheit. Bestehende " +
+    "Ort, Bemerkung, Verantwortlichen, Feldern und erwarteter Spielerzahl der Serie - auch ganz oder teilweise in " +
+    "der Vergangenheit. Bestehende " +
     "Termine an denselben Tagen bleiben daneben stehen. " +
     `${SERIEN_MODELL} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
@@ -438,6 +446,10 @@ export const terminserieFestlegen = werkzeug({
       .array(kennung("Kennung eines Mitglieds aus «team_mitglieder_abrufen»."))
       .optional()
       .describe("Mitglieder, die jeden Termin der Serie vorbereiten und leiten; ohne Angabe niemand."),
+    felder: FelderEingabe.optional().describe(`Die Felder jedes Termins der Serie; ohne Angabe unbekannt. ${FELDER_MODELL}`),
+    erwartete_spielerzahl: SpielerzahlEingabe.optional().describe(
+      `Die erwartete Spielerzahl jedes Termins der Serie; ohne Angabe unbekannt. ${SPIELERZAHL_MODELL}`,
+    ),
   }),
   ausgabe: z.object({ serie_id: z.string(), termine: z.number().int() }),
   ausfuehren: async (e, zugang) =>
@@ -452,6 +464,8 @@ export const terminserieFestlegen = werkzeug({
         ort: e.ort,
         bemerkung: e.bemerkung,
         verantwortliche: e.verantwortliche,
+        felder: e.felder,
+        spielerzahl: e.erwartete_spielerzahl,
       }),
       (w) => ({ serie_id: w.serieId, termine: w.termine }),
     ),
@@ -464,12 +478,12 @@ export const terminDerSerieFolgen = werkzeug({
   titel: "Termin wieder der Serie folgen lassen",
   beschreibung:
     "Lässt abweichende Angaben eines Serientermins wieder seiner Serie folgen: Zeit, Ort, " +
-    "Bemerkung oder Verantwortliche übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
+    "Bemerkung, Verantwortliche, Felder oder erwartete Spielerzahl («spielerzahl») übernehmen die Werte der Serie und folgen ihr bei künftigen Änderungen. Das Datum " +
     `lässt sich nicht zurücksetzen («datum» wird abgewiesen). ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     termin_id: TerminId,
-    angaben: z.array(z.enum(["zeit", "ort", "bemerkung", "verantwortliche", "datum"])).min(1),
+    angaben: z.array(z.enum(["zeit", "ort", "bemerkung", "verantwortliche", "felder", "spielerzahl", "datum"])).min(1),
   }),
   ausgabe: z.object({ termin_id: z.string() }),
   ausfuehren: async (e, zugang) =>
