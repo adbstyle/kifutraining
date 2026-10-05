@@ -28,7 +28,7 @@ export function UebungsName({
 }) {
   return (
     <>
-      <span className="truncate type-body-medium text-on-surface xl:hidden">{name}</span>
+      <span className="truncate type-title-small text-on-surface xl:hidden">{name}</span>
       <button
         type="button"
         onClick={onOeffnen}
@@ -39,7 +39,7 @@ export function UebungsName({
           // der Link einer Trainingskachel über die Kachel: Die Zeile öffnet,
           // wo sie keinen eigenen Knopf trägt. Aufgehellt wird sie von der
           // Zeile selbst (`state`), nicht vom Namen.
-          "focus-ring hidden min-w-0 cursor-pointer truncate rounded-flaeche text-left type-body-medium xl:block",
+          "focus-ring hidden min-w-0 cursor-pointer truncate rounded-flaeche text-left type-title-small xl:block",
           "xl:before:absolute xl:before:inset-0 xl:before:rounded-flaeche xl:before:content-['']",
           offen ? "text-primary" : "text-on-surface",
         )}
