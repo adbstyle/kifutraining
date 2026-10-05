@@ -174,7 +174,7 @@ export function TrainingExerciseRow({
             damit die Felder aller Zeilen eine Kante bilden. */}
         <span className="relative flex shrink-0 flex-col items-end gap-2">
           <span className="flex items-center">
-            <InBibliothekButton fassungId={item.id} name={item.name} />
+            <InBibliothekButton fassungId={item.id} name={item.name} className="xl:hidden" />
 
             {/* Schmal führt der Stift in die Bearbeitungsmaske, breit öffnet
                 er die Übung zum Bearbeiten in der Spalte (Epic #369, #372) —

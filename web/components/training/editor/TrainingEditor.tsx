@@ -15,6 +15,7 @@ import { NameFeld, TrainingKopf, TrainingStufenFeld, ZielFeld } from "./Training
 import { TrainingEigenschaften } from "../TrainingEigenschaften";
 import { OffeneUebungSpalte, VerwerfenRueckfrage } from "../OffeneUebungSpalte";
 import { useOffeneUebung } from "../useOffeneUebung";
+import { InBibliothekButton } from "../InBibliothekButton";
 import {
   AbweichendeUebungenListe,
   useNameSpeichern,
@@ -656,6 +657,7 @@ export function TrainingEditor({
             altersstufe={training.altersstufe}
             variante={aktive?.id}
             durchlauf={offen ? modell.gruppenVon(offen) : []}
+            aktionen={offen && <InBibliothekButton fassungId={offen.id} name={offen.name} />}
             eigenschaften={
               <TrainingEigenschaften
                 training={training}

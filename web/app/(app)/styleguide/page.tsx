@@ -2949,9 +2949,11 @@ export default function Styleguide() {
           beim Überfahren auf wie eine Trainingskachel der Übersicht (11): Die
           Zustands-Ebene (<code>state</code>, 04) liegt auf der Zeile, der Knopf
           dazu ist der Name (<code>UebungsName</code>), dessen Fläche über die
-          Zeile reicht. Was die Zeile sonst trägt — Kopieren, Bearbeiten,
+          Zeile reicht. Was die Zeile sonst trägt — Bearbeiten, Entfernen,
           Dauer, Notiz —, liegt mit <code>relative</code> darüber und bleibt
-          für sich bedienbar.
+          für sich bedienbar. Was man erst nach dem Ansehen tut, steht dagegen
+          im Detail: «In meine Bibliothek kopieren» gibt es breit nur dort,
+          schmal weiter an der Zeile.
         </p>
         <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
           <li>

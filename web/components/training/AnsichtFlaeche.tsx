@@ -3,6 +3,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { UebungsName } from "./UebungsName";
+import { InBibliothekButton } from "./InBibliothekButton";
 import { OffeneUebungSpalte, VerwerfenRueckfrage } from "./OffeneUebungSpalte";
 import { useOffeneUebung, type OffeneUebung } from "./useOffeneUebung";
 import type { Altersstufe } from "@/lib/altersstufe";
@@ -69,6 +70,7 @@ export function AnsichtSpalte({
   uebungen,
   altersstufe,
   variante,
+  kopierbar,
   eigenschaften,
 }: {
   /** Die angezeigten Übungen — nur sie lassen sich öffnen. */
@@ -76,6 +78,8 @@ export function AnsichtSpalte({
   altersstufe: Altersstufe;
   /** Die angezeigte Variante des Hauptteils. */
   variante: string | undefined;
+  /** In die eigene Bibliothek kopieren — nur mit Konto (Story 7). */
+  kopierbar: boolean;
   eigenschaften: ReactNode;
 }) {
   const steuerung = useAnsichtFlaeche();
@@ -87,6 +91,9 @@ export function AnsichtSpalte({
       altersstufe={altersstufe}
       variante={variante}
       durchlauf={offen?.gruppen ?? []}
+      aktionen={
+        kopierbar && offen && <InBibliothekButton fassungId={offen.id} name={offen.name} />
+      }
       eigenschaften={eigenschaften}
     />
   );

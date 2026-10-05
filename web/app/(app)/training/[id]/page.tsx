@@ -169,6 +169,7 @@ export default async function TrainingViewPage({
             uebungen={sichtbar}
             altersstufe={training.altersstufe}
             variante={aktive?.id}
+            kopierbar={!!user}
             eigenschaften={eigenschaften}
           />
         }
@@ -305,9 +306,15 @@ export default async function TrainingViewPage({
                               )}
                               {/* Auch aus einem fremden öffentlichen Training
                                   kopierbar (Story 7 AK 2) — hier gibt es keinen
-                                  Editor, darum steht die Aktion in der Ansicht. */}
+                                  Editor, darum steht die Aktion in der Ansicht.
+                                  Breit im Detail der geöffneten Übung, hier nur
+                                  schmal (`InBibliothekButton`). */}
                               {user && (
-                                <InBibliothekButton fassungId={item.id} name={item.name} />
+                                <InBibliothekButton
+                                  fassungId={item.id}
+                                  name={item.name}
+                                  className="xl:hidden"
+                                />
                               )}
                             </AnsichtZeile>
                           );
