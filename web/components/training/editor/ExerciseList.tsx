@@ -22,6 +22,10 @@ export type ZeilenKontext = {
   etage: (item: TrainingExerciseItem, traegtGruppen: boolean) => ReactNode;
   /** Steht die Dauer dieser Übung in einem ungleich langen Wechsel? (Story #151) */
   dauerWarnung: (item: TrainingExerciseItem) => boolean;
+  /** Die in der Spalte geöffnete Übung (Epic #369), sonst `null`. */
+  offenId: string | null;
+  /** Eine Übung in der Spalte öffnen — nur breit (#371 AK 1). */
+  onOeffnen: (item: TrainingExerciseItem) => void;
   onDuration: (item: TrainingExerciseItem, next: number | null) => void;
   onMove: (item: TrainingExerciseItem, dir: -1 | 1) => void;
   onRemove: (item: TrainingExerciseItem) => void;
@@ -79,6 +83,8 @@ export function ExerciseList({
           showDuration={showDuration}
           dauerWarnung={kontext.dauerWarnung(item)}
           etage={kontext.etage(item, showGruppen)}
+          offen={kontext.offenId === item.id}
+          onOeffnen={() => kontext.onOeffnen(item)}
           onDuration={(next) => kontext.onDuration(item, next)}
           onMove={(d) => kontext.onMove(item, d)}
           onRemove={() => kontext.onRemove(item)}

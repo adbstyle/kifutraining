@@ -23,10 +23,31 @@ import { hatMaterial, parseMaterialListe } from "@/lib/material";
 import { sortStufen } from "@/lib/training";
 import type { ExerciseDetail } from "@/lib/queries/exercises";
 
+/** Was die Leiste von einer Übung braucht — die Bibliotheks-Übung trägt es,
+ *  eine Übung im Training ebenso (`einordnungAusFassung`). Die Herkunft hat nur
+ *  die Bibliotheks-Übung: Eine Übung im Training hält nicht fest, woraus sie
+ *  hervorging (#371 OOS 1). */
+export type EinordnungsQuelle = Pick<
+  ExerciseDetail,
+  | "altersstufe"
+  | "trainingsteil"
+  | "kategorien"
+  | "hauptteilkategorie"
+  | "feldtyp"
+  | "spielfeld_laenge_m"
+  | "spielfeld_breite_m"
+  | "anzahl_kinder"
+  | "material_liste"
+  | "material"
+  | "uebungstyp"
+  | "erscheinungsform"
+> &
+  Partial<Pick<ExerciseDetail, "source" | "visibility">>;
+
 /** Trainingsteil und — im Juniorenschema — Block einer Übung als Klartext.
  *  Der Block steht nur, wo der Teil untergliedert ist: Auffangen und
  *  Abschluss tragen genau einen Block und heissen wie er (Story #127). */
-function teilUndBlock(ex: Pick<ExerciseDetail, "altersstufe" | "trainingsteil">): {
+function teilUndBlock(ex: Pick<EinordnungsQuelle, "altersstufe" | "trainingsteil">): {
   teil: string;
   block: string | null;
 } {
@@ -46,7 +67,8 @@ function teilUndBlock(ex: Pick<ExerciseDetail, "altersstufe" | "trainingsteil">)
  * Die Einordnung einer Übung als Liste in der Spalte neben dem Inhalt
  * (Epic #350, Story #351). Hier steht alles, was die Übung einordnet — auf
  * der Seite daneben nichts davon ein zweites Mal. Gezeigt wird nur, was die
- * Übung erfasst hat; Altersstufe, Herkunft und Trainingsteil hat jede.
+ * Übung erfasst hat; Altersstufe und Trainingsteil hat jede, die Herkunft
+ * jede Bibliotheks-Übung.
  *
  * `materialHinweis` ist der Hinweis auf ein geändertes Diagramm-Material,
  * nur für die Eigentümerin: Er steht bei dem, was er betrifft, und ist auf
@@ -61,7 +83,7 @@ export function EinordnungsLeiste({
   materialHinweis,
   fehlendeZeigen = false,
 }: {
-  ex: ExerciseDetail;
+  ex: EinordnungsQuelle;
   materialHinweis?: ReactNode;
   fehlendeZeigen?: boolean;
 }) {
@@ -125,9 +147,11 @@ export function EinordnungsLeiste({
       )}
       {/* Zuletzt: Woher die Übung stammt, ordnet sie am wenigsten ein
           (PO 2026-10-02). */}
-      <Eigenschaft label="Herkunft">
-        <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
-      </Eigenschaft>
+      {ex.source && ex.visibility && (
+        <Eigenschaft label="Herkunft">
+          <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
+        </Eigenschaft>
+      )}
     </Eigenschaften>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Clock } from "lucide-react";
 import {
@@ -13,6 +13,8 @@ import { ExercisePickerDialog } from "../ExercisePickerDialog";
 import { GesamtAbgleich } from "../ZeitAbgleich";
 import { NameFeld, TrainingKopf, TrainingStufenFeld, ZielFeld } from "./TrainingKopf";
 import { TrainingEigenschaften } from "../TrainingEigenschaften";
+import { UebungImTraining } from "../UebungImTraining";
+import { schreibeUebungInAdresse, uebungAus } from "@/lib/offene-uebung";
 import { ZweiSpalten } from "@/components/layout/ZweiSpalten";
 import { GesamtMaterialListe } from "../GesamtMaterialListe";
 import { TrainingAktionen } from "../TrainingAktionen";
@@ -84,11 +86,15 @@ export function TrainingEditor({
   /** Die Variante des Hauptteils aus der Adresse (#201 AK 6/7). Sie ist der
    *  Startwert, nicht die laufende Quelle: Gewechselt wird ohne Navigation. */
   varianteParam,
+  uebungParam,
   brotkrumen,
 }: {
   training: TrainingDetail;
   teams?: TeamUebersicht[];
   varianteParam?: string;
+  /** Die geöffnete Übung aus der Adresse (#371 AK 10) — wie die Variante nur
+   *  der Startwert. */
+  uebungParam?: string;
   /** Die Brotkrumen der Seite. Sie stehen hier drin, weil die Aktionsreihe
    *  neben ihnen sitzt und die Laufzeit des Editors braucht. */
   brotkrumen: BreadcrumbItem[];
@@ -130,9 +136,16 @@ export function TrainingEditor({
   const [uebungWeg, setUebungWeg] = useState<TrainingExerciseItem | null>(null);
   // Die angezeigte Variante des Hauptteils (#201 AK 6). Beim Öffnen gilt die
   // aus der Adresse, sonst die erste (AK 7) — gemerkt wird nichts.
+  // Die Übung, die beim Öffnen in der Spalte steht (#371 AK 10). Gehört sie in
+  // den Hauptteil, zeigt der Editor ihre Variante — sonst sähe man sie nicht.
+  const [anfangsUebung] = useState(() => uebungAus(uebungParam, training.exercises));
   const [aktiveVariante, setAktiveVariante] = useState<string | undefined>(
-    () => varianteAus(varianteParam, training.varianten)?.id,
+    () => anfangsUebung?.varianteId ?? varianteAus(varianteParam, training.varianten)?.id,
   );
+  // Die geöffnete Übung (Epic #369): Sie steht in der Spalte anstelle der
+  // Eigenschaften des Trainings. Nur ihre ID — der Inhalt kommt aus dem
+  // laufenden Stand, damit Dauer, Notiz und Durchlauf mitgehen (#371 PC 1).
+  const [offenId, setOffenId] = useState<string | null>(anfangsUebung?.id ?? null);
   const [varianteDialog, setVarianteDialog] = useState(false);
   // Die Variante, deren Bezeichnung bearbeitet wird, und die, deren Entfernen
   // noch zu bestätigen ist (#209 AK 6/7).
@@ -188,6 +201,32 @@ export function TrainingEditor({
     () => sichtbareZuordnungen(zuordnungen, aktive?.id),
     [zuordnungen, aktive?.id],
   );
+
+  /** Eine Übung öffnen; die geöffnete noch einmal gewählt schliesst sie. */
+  function oeffne(item: TrainingExerciseItem) {
+    const naechste = item.id === offenId ? null : item.id;
+    setOffenId(naechste);
+    schreibeUebungInAdresse(naechste);
+  }
+
+  function schliesse() {
+    setOffenId(null);
+    schreibeUebungInAdresse(null);
+  }
+
+  // Die geöffnete Übung, wie sie gerade angezeigt wird — `undefined`, sobald
+  // sie nicht mehr unter den Übungen steht: entfernt, in einem anderen
+  // Fenster gelöscht oder in einer anderen Variante als der angezeigten. Dann
+  // schliesst sie (#371 AK 9, Epic EK 14). Eine Adresse, die eine fremde oder
+  // entfernte Übung meint, verliert ihre Angabe (AK 11).
+  const offen = offenId ? sichtbar.find((e) => e.id === offenId) : undefined;
+  useEffect(() => {
+    if (offenId && !offen) schliesse();
+    else if (!offenId && uebungParam) schreibeUebungInAdresse(null);
+    // `uebungParam` ist nur der Startwert; geprüft wird bei jedem Wechsel des
+    // Angezeigten.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offenId, offen]);
 
   // Gruppen, Verteilung und Konflikte als ein Stück (Stories #149/#150).
   // Gerechnet wird über die angezeigte Variante (#201 AK 9), gefragt und
@@ -568,6 +607,8 @@ export function TrainingEditor({
       />
     ),
     dauerWarnung: (item) => modell.befund.dauerWarnung.has(item.id),
+    offenId,
+    onOeffnen: oeffne,
     onDuration: changeDuration,
     onMove: move,
     onRemove: remove,
@@ -611,15 +652,29 @@ export function TrainingEditor({
           Summenleiste und Material über den Trainingsteilen. */}
       <ZweiSpalten
         spalte={
-          <TrainingEigenschaften
-            training={training}
-            sichtbar={sichtbar}
-            stufen={stufen}
-            ziel={ziel}
-            zielFeld={zielFeld}
-            stufenFeld={stufenFeld}
-            hinweise
-          />
+          offen ? (
+            <UebungImTraining
+              item={offen}
+              altersstufe={training.altersstufe}
+              dauer={offen.durationMin}
+              notiz={offen.notiz}
+              durchlauf={modell
+                .folgeVon(offen)
+                .map((id) => modell.gruppen.find((g) => g.id === id))
+                .filter((g): g is { id: string; name: string } => g != null)}
+              onSchliessen={schliesse}
+            />
+          ) : (
+            <TrainingEigenschaften
+              training={training}
+              sichtbar={sichtbar}
+              stufen={stufen}
+              ziel={ziel}
+              zielFeld={zielFeld}
+              stufenFeld={stufenFeld}
+              hinweise
+            />
+          )
         }
         nurBreit
         spaltenName="Eigenschaften"

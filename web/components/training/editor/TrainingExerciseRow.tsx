@@ -9,6 +9,8 @@ import { InBibliothekButton } from "../InBibliothekButton";
 import { DauerFeld } from "./DauerFeld";
 import { STUFE_ABWEICHEND_TEXT, stufenAbgedeckt } from "@/lib/training";
 import { varianteAnhang } from "@/lib/varianten";
+import { cn } from "@/lib/cn";
+import { UebungsName } from "../UebungsName";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
 import { materialAenderungen, materialBasisAusDiagramm } from "@/lib/material";
 
@@ -43,6 +45,8 @@ export function TrainingExerciseRow({
   showDuration,
   dauerWarnung,
   etage,
+  offen = false,
+  onOeffnen,
   onDuration,
   onMove,
   onRemove,
@@ -62,6 +66,9 @@ export function TrainingExerciseRow({
   dauerWarnung?: boolean;
   /** Das zweite Geschoss der Zeile (`UebungsEtage`). */
   etage?: ReactNode;
+  /** Steht diese Übung in der Spalte offen (Epic #369)? */
+  offen?: boolean;
+  onOeffnen: () => void;
   onDuration: (next: number | null) => void;
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
@@ -75,7 +82,12 @@ export function TrainingExerciseRow({
     materialAenderungen(item.materialBasis, materialBasisAusDiagramm(item.diagramm)).length > 0;
 
   return (
-    <li className="flex flex-col rounded-flaeche border border-linie bg-elev-01 px-3 py-2.5">
+    <li
+      className={cn(
+        "flex flex-col rounded-flaeche border border-linie bg-elev-01 px-3 py-2.5",
+        offen && "xl:border-primary",
+      )}
+    >
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Hoch/Runter */}
         <span className="flex shrink-0 flex-col">
@@ -113,7 +125,7 @@ export function TrainingExerciseRow({
 
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="flex items-center gap-2">
-            <span className="truncate type-body-medium text-on-surface">{item.name}</span>
+            <UebungsName name={item.name} offen={offen} onOeffnen={onOeffnen} />
             {mismatch && (
               <span title={STUFE_ABWEICHEND_TEXT}>
                 <TriangleAlert size={15} className="shrink-0 text-primary" aria-hidden />
