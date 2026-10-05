@@ -39,6 +39,7 @@ import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
 import { FilterKnopfDemo } from "./FilterKnopfDemo";
 import { OeffnenZeileDemo } from "./OeffnenZeileDemo";
+import { EigenschaftBearbeitbarDemo } from "./EigenschaftBearbeitbarDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
@@ -2858,10 +2859,18 @@ export default function Styleguide() {
             für Vorlesehilfen.
           </li>
           <li>
-            <strong>Eingabefelder</strong> - wo eine Angabe in der Liste selbst
-            geändert wird (Ziel und Alterskategorien eines Trainings, #370),
-            steht sie als <code>EigenschaftBreit</code>: Das Feld trägt seinen
-            Namen selbst und braucht die volle Breite der Spalte.
+            <strong>Bearbeitbar</strong> - wo eine Angabe in der Liste selbst
+            geändert wird (Ziel und Alterskategorien eines Trainings), sieht
+            die Zeile ruhend aus wie jede andere; nach dem Vorbild von Jira
+            zeigt erst der Wert beim Überfahren und im Fokus, dass er ein
+            Knopf ist (Zustands-Ebene). Ein Klick macht ihn an derselben
+            Stelle zum Feld, die Bezeichnung bleibt links. Fehlt der Wert,
+            steht gedämpft, was zu tun ist («Ziel hinzufügen»).{" "}
+            <code>EigenschaftText</code>: Freitext mit ✓ und ✕ darunter -
+            Enter oder ✓ speichert, Esc oder ✕ verwirft, ein Klick daneben
+            speichert. <code>EigenschaftAuswahl</code>: Die Liste geht beim
+            Klick sofort auf, jede Wahl speichert für sich. Nach Esc, ✓, ✕
+            und Enter steht der Fokus wieder auf dem Wert.
           </li>
           <li>
             <strong>Nicht erfasst</strong> - <code>EigenschaftFehlt</code>{" "}
@@ -2875,6 +2884,9 @@ export default function Styleguide() {
             ist.
           </li>
         </ul>
+        <div className="mb-6">
+          <EigenschaftBearbeitbarDemo />
+        </div>
         <div className="max-w-[22rem]">
           <Eigenschaften titel="Einordnung">
             <Eigenschaft label="Altersstufe">Kinderfussball</Eigenschaft>

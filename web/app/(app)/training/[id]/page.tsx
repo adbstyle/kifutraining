@@ -112,10 +112,10 @@ export default async function TrainingViewPage({
       ziel={training.ziel}
       hinweise={!!bearbeitungsziel}
       // Wer bearbeiten darf, ändert Ziel und Alterskategorien hier (#375).
-      zielFeld={
+      zielZeile={
         bearbeitungsziel && <AnsichtZiel trainingId={training.id} ziel={training.ziel} />
       }
-      stufenFeld={
+      stufenZeile={
         bearbeitungsziel && (
           <AnsichtStufen
             trainingId={training.id}

@@ -45,11 +45,15 @@ export function useZielSpeichern(trainingId: string, gespeichert: string | null)
   const [, startTransition] = useTransition();
   const [ziel, setZiel] = useState(gespeichert ?? "");
 
-  /** Beim Verlassen des Felds — nur, wenn sich etwas geändert hat. */
-  function speichere() {
-    if (ziel.trim() === (gespeichert ?? "")) return;
+  /** Beim Verlassen des Felds — nur, wenn sich etwas geändert hat. Mit
+   *  `neu` speichert es einen Wert, der nicht erst im Feld stand (die
+   *  bearbeitbare Eigenschaft hält ihren Entwurf selbst). */
+  function speichere(neu?: string) {
+    const wert = neu ?? ziel;
+    if (wert.trim() === (gespeichert ?? "")) return;
+    setZiel(wert);
     startTransition(async () => {
-      const r = await setTrainingZiel(trainingId, ziel);
+      const r = await setTrainingZiel(trainingId, wert);
       if (!r.ok) {
         setZiel(gespeichert ?? "");
         melde(r.error ?? "Speichern fehlgeschlagen.");

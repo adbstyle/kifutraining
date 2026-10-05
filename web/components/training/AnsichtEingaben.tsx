@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Dialog } from "@/components/ui";
-import { NameFeld, TrainingStufenFeld, ZielFeld } from "./editor/TrainingKopf";
+import { NameFeld, StufenEigenschaft, ZielEigenschaft } from "./editor/TrainingKopf";
 import {
   AbweichendeUebungenListe,
   useNameSpeichern,
@@ -22,10 +22,10 @@ export function AnsichtName({ trainingId, name }: { trainingId: string; name: st
   return <NameFeld name={n.name} onSpeichern={n.speichere} />;
 }
 
-/** Das Ziel in der Spalte (AK 2). */
+/** Das Ziel in der Spalte (AK 2), als bearbeitbare Eigenschaft. */
 export function AnsichtZiel({ trainingId, ziel }: { trainingId: string; ziel: string | null }) {
   const z = useZielSpeichern(trainingId, ziel);
-  return <ZielFeld ziel={z.ziel} onChange={z.setZiel} onSpeichern={z.speichere} />;
+  return <ZielEigenschaft ziel={z.ziel} onSpeichern={z.speichere} />;
 }
 
 /** Die Alterskategorien in der Spalte (AK 2). Passen danach Übungen nicht
@@ -44,24 +44,28 @@ export function AnsichtStufen({
 }) {
   const s = useStufenAendern(trainingId, stufen);
   return (
-    <>
-      <TrainingStufenFeld altersstufe={altersstufe} stufen={s.stufen} onStufen={s.aendere} />
-      <Dialog
-        open={s.abweichend != null}
-        onClose={() => s.setAbweichend(null)}
-        title="Übungen ausserhalb der Stufen"
-        actions={
-          <Button variant="text" onClick={() => s.setAbweichend(null)}>
-            Verstanden
-          </Button>
-        }
-      >
-        <p className="mb-3">
-          Diese Übungen decken keine der gewählten Stufen ab. Entfernen kannst du sie beim
-          Zusammenstellen.
-        </p>
-        <AbweichendeUebungenListe liste={s.abweichend ?? []} varianten={varianten} />
-      </Dialog>
-    </>
+    <StufenEigenschaft
+      altersstufe={altersstufe}
+      stufen={s.stufen}
+      onStufen={s.aendere}
+      zusatz={
+        <Dialog
+          open={s.abweichend != null}
+          onClose={() => s.setAbweichend(null)}
+          title="Übungen ausserhalb der Stufen"
+          actions={
+            <Button variant="text" onClick={() => s.setAbweichend(null)}>
+              Verstanden
+            </Button>
+          }
+        >
+          <p className="mb-3">
+            Diese Übungen decken keine der gewählten Stufen ab. Entfernen kannst du sie beim
+            Zusammenstellen.
+          </p>
+          <AbweichendeUebungenListe liste={s.abweichend ?? []} varianten={varianten} />
+        </Dialog>
+      }
+    />
   );
 }

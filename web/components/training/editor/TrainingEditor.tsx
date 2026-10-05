@@ -11,7 +11,14 @@ import {
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { ExercisePickerDialog } from "../ExercisePickerDialog";
 import { GesamtAbgleich } from "../ZeitAbgleich";
-import { NameFeld, TrainingKopf, TrainingStufenFeld, ZielFeld } from "./TrainingKopf";
+import {
+  NameFeld,
+  StufenEigenschaft,
+  TrainingKopf,
+  TrainingStufenFeld,
+  ZielEigenschaft,
+  ZielFeld,
+} from "./TrainingKopf";
 import { TrainingEigenschaften } from "../TrainingEigenschaften";
 import { OffeneUebungSpalte, VerwerfenRueckfrage } from "../OffeneUebungSpalte";
 import { useOffeneUebung } from "../useOffeneUebung";
@@ -613,9 +620,14 @@ export function TrainingEditor({
     onRemove: remove,
   };
 
-  // Ziel und Alterskategorien gibt es zweimal: schmal im Kopf, breit in der
-  // Spalte (#370 AK 10). Beide hängen am selben Zustand; zu sehen ist je eines.
+  // Ziel und Alterskategorien gibt es zweimal: schmal als Felder im Kopf,
+  // breit als bearbeitbare Eigenschaften in der Spalte (#370 AK 10). Beide
+  // hängen am selben Zustand; zu sehen ist je eines.
   const zielFeld = <ZielFeld ziel={ziel} onChange={setZiel} onSpeichern={speichereZiel} />;
+  const zielZeile = <ZielEigenschaft ziel={ziel} onSpeichern={speichereZiel} />;
+  const stufenZeile = (
+    <StufenEigenschaft altersstufe={training.altersstufe} stufen={stufen} onStufen={changeStufen} />
+  );
   const stufenFeld = (
     <TrainingStufenFeld altersstufe={training.altersstufe} stufen={stufen} onStufen={changeStufen} />
   );
@@ -664,8 +676,8 @@ export function TrainingEditor({
                 sichtbar={sichtbar}
                 stufen={stufen}
                 ziel={ziel}
-                zielFeld={zielFeld}
-                stufenFeld={stufenFeld}
+                zielZeile={zielZeile}
+                stufenZeile={stufenZeile}
                 hinweise
               />
             }

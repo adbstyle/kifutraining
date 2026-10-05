@@ -3,13 +3,23 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Users } from "lucide-react";
-import { Card, Badge, HeadlineField, TextArea } from "@/components/ui";
+import {
+  Card,
+  Badge,
+  EigenschaftAuswahl,
+  EigenschaftText,
+  HeadlineField,
+  KategorieChip,
+  TextArea,
+} from "@/components/ui";
+import { kategorieStufe } from "@/lib/labels";
+import type { KategorieSlug } from "@/lib/vocab";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { StufenField } from "../StufenField";
 import { useBlurSpeichern } from "@/lib/use-blur-speichern";
 import { kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
-import { TRAINING_NAME_MAX, ZIEL_MAX, trainingNameProblem } from "@/lib/training";
+import { TRAINING_NAME_MAX, ZIEL_MAX, sortStufen, trainingNameProblem } from "@/lib/training";
 import type { TrainingDetail } from "@/lib/queries/trainings";
 
 /** Kopf des Editors: Name, Zugehörigkeit, Ziel und Alterskategorien.
@@ -88,7 +98,7 @@ export function ZielFeld({
       maxLength={ZIEL_MAX}
       value={ziel}
       onChange={(e) => onChange(e.target.value)}
-      onBlur={onSpeichern}
+      onBlur={() => onSpeichern()}
       info={`Woran das Team in diesem Training arbeitet. Höchstens ${ZIEL_MAX} Zeichen.`}
     />
   );
@@ -113,6 +123,63 @@ export function TrainingStufenFeld({
       onChange={onStufen}
       kategorien={kategorienFuer(altersstufe)}
       info="Für welche Alterskategorien dieses Training gedacht ist."
+    />
+  );
+}
+
+/** Das Ziel als bearbeitbare Eigenschaft in der Spalte (#370 AK 10, #375) —
+ *  derselbe Wert wie im `ZielFeld`, nach dem Vorbild von Jira mit ✓/✕. */
+export function ZielEigenschaft({
+  ziel,
+  onSpeichern,
+}: {
+  ziel: string;
+  onSpeichern: (neu: string) => void;
+}) {
+  return (
+    <EigenschaftText
+      label="Ziel"
+      wert={ziel}
+      leerText="Ziel hinzufügen"
+      maxLength={ZIEL_MAX}
+      onSpeichern={onSpeichern}
+    />
+  );
+}
+
+/** Die Alterskategorien als bearbeitbare Eigenschaft in der Spalte — ruhend
+ *  als Plaketten in ihrer Farbe, im Bearbeiten die Liste der Altersstufe. */
+export function StufenEigenschaft({
+  altersstufe,
+  stufen,
+  onStufen,
+  zusatz,
+}: {
+  altersstufe: Altersstufe;
+  stufen: string[];
+  onStufen: (next: string[]) => void;
+  /** Siehe `EigenschaftAuswahl` — die Rückmeldung zu nicht mehr passenden
+   *  Übungen in der Ansicht. */
+  zusatz?: ReactNode;
+}) {
+  return (
+    <EigenschaftAuswahl
+      zusatz={zusatz}
+      label="Alterskategorien"
+      options={(kategorienFuer(altersstufe) as KategorieSlug[]).map((k) => ({
+        value: k,
+        label: kategorieStufe[k],
+      }))}
+      wert={stufen}
+      anzeige={
+        <span className="flex flex-wrap gap-1.5">
+          {sortStufen(stufen).map((k) => (
+            <KategorieChip key={k} k={k} />
+          ))}
+        </span>
+      }
+      leerText="Alterskategorie wählen"
+      onChange={onStufen}
     />
   );
 }

@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   Badge,
   Eigenschaft,
-  EigenschaftBreit,
   Eigenschaften,
   KategorieChip,
 } from "@/components/ui";
@@ -26,11 +25,12 @@ import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainin
  * (Gesamtdauer, Material), wo es zuhause ist (Team, Termin, Sichtbarkeit) und
  * zuletzt, von wem — die Herkunft ordnet auch an der Übung am wenigsten ein.
  *
- * `zielFeld` und `stufenFeld`: Wer das Training bearbeitet, ändert Ziel und
- * Alterskategorien hier (AK 10, #375). Die Felder kommen fertig vom Aufrufer,
- * denn gespeichert wird dort; ohne sie stehen die Werte als Text. Das Ziel
- * steht beim Bearbeiten auch leer da (AK 4) — sonst gäbe es keinen Ort, es
- * zu erfassen.
+ * `zielZeile` und `stufenZeile`: Wer das Training bearbeitet, ändert Ziel und
+ * Alterskategorien hier (AK 10, #375) — als bearbeitbare Eigenschaften nach
+ * dem Vorbild von Jira (`ZielEigenschaft`, `StufenEigenschaft`). Die Zeilen
+ * kommen fertig vom Aufrufer, denn gespeichert wird dort; ohne sie stehen die
+ * Werte als Text. Das Ziel steht beim Bearbeiten auch leer da (AK 4) — als
+ * «Ziel hinzufügen», sonst gäbe es keinen Ort, es zu erfassen.
  *
  * `hinweise`: Übungen ohne Dauer und der Abgleich mit den neunzig Minuten des
  * Juniorenfussballs sind Arbeitshinweise — nur für Bearbeitende (AK 6).
@@ -42,8 +42,8 @@ export function TrainingEigenschaften({
   sichtbar,
   stufen,
   ziel,
-  zielFeld,
-  stufenFeld,
+  zielZeile,
+  stufenZeile,
   hinweise = false,
 }: {
   training: Pick<
@@ -56,8 +56,8 @@ export function TrainingEigenschaften({
   sichtbar: readonly Pick<TrainingExerciseItem, "trainingsteil" | "durationMin">[];
   stufen: readonly string[];
   ziel: string | null;
-  zielFeld?: ReactNode;
-  stufenFeld?: ReactNode;
+  zielZeile?: ReactNode;
+  stufenZeile?: ReactNode;
   hinweise?: boolean;
 }) {
   const dauer = gesamtDauer(sichtbar);
@@ -69,9 +69,7 @@ export function TrainingEigenschaften({
     <Eigenschaften titel="Eigenschaften">
       <Eigenschaft label="Altersstufe">{altersstufeLabels[training.altersstufe]}</Eigenschaft>
 
-      {stufenFeld ? (
-        <EigenschaftBreit label="Alterskategorien">{stufenFeld}</EigenschaftBreit>
-      ) : (
+      {stufenZeile ?? (
         stufen.length > 0 && (
           <Eigenschaft label="Alterskategorien">
             <span className="flex flex-wrap gap-1.5">
@@ -83,9 +81,7 @@ export function TrainingEigenschaften({
         )
       )}
 
-      {zielFeld ? (
-        <EigenschaftBreit label="Ziel">{zielFeld}</EigenschaftBreit>
-      ) : (
+      {zielZeile ?? (
         zielText && (
           <Eigenschaft label="Ziel">
             <span className="whitespace-pre-line">{zielText}</span>
