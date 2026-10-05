@@ -7,6 +7,8 @@ import { updateFassung } from "@/lib/actions/fassung";
 import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
 import { trainingsKrumen } from "@/lib/brotkrumen";
 import { VARIANTE_PARAM, varianteAnhang } from "@/lib/varianten";
+import { BEARBEITEN_PARAM, UEBUNG_PARAM } from "@/lib/offene-uebung";
+import { InSpalteWeiterleiten } from "@/components/training/InSpalteWeiterleiten";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -52,38 +54,45 @@ export default async function FassungBearbeitenPage({
     anhang,
   );
 
+  // Breit wird die Übung in der Spalte des Trainings bearbeitet (#373 PC 3) —
+  // in ihrer eigenen Variante, die der Editor aus der Übung selbst ableitet.
+  const spalte = `/training/${id}/edit?${UEBUNG_PARAM}=${teId}&${BEARBEITEN_PARAM}=1`;
+
   return (
     <Seitenrahmen breite="6xl" geteilt krumen={crumbs}>
+      <InSpalteWeiterleiten ziel={spalte} />
       <h1 className="sr-only">Übung bearbeiten</h1>
-      <ExerciseForm
-        action={updateFassung.bind(null, f.id, variante)}
-        diagramm={f.diagramm}
-        altersstufe={f.trainingAltersstufe}
-        stufenWahl="fest"
-        kontext="fassung"
-        materialBasis={f.materialBasis}
-        initial={{
-          name: f.name,
-          trainingsteil: f.trainingsteil,
-          kategorien: f.kategorien,
-          feldtyp: f.feldtyp,
-          spielfeld_laenge_m: f.spielfeldLaengeM,
-          spielfeld_breite_m: f.spielfeldBreiteM,
-          erscheinungsform: f.erscheinungsform,
-          hauptteilkategorie: f.hauptteilkategorie,
-          uebungstyp: f.uebungstyp,
-          anzahl_kinder: f.anzahlKinder,
-          material: f.material,
-          materialListe: f.materialListe,
-          methodischer_fahrplan: f.fahrplan,
-          aufbau: f.aufbau,
-          varianten: f.varianten,
-          bildUrl: f.bildUrl,
-        }}
-        submitLabel="Änderungen speichern"
-        bildEntfernenMoeglich
-        fussnote="Änderungen gelten nur für dieses Training."
-      />
+      <div className="contents xl:hidden">
+        <ExerciseForm
+          action={updateFassung.bind(null, f.id, variante)}
+          diagramm={f.diagramm}
+          altersstufe={f.trainingAltersstufe}
+          stufenWahl="fest"
+          kontext="fassung"
+          materialBasis={f.materialBasis}
+          initial={{
+            name: f.name,
+            trainingsteil: f.trainingsteil,
+            kategorien: f.kategorien,
+            feldtyp: f.feldtyp,
+            spielfeld_laenge_m: f.spielfeldLaengeM,
+            spielfeld_breite_m: f.spielfeldBreiteM,
+            erscheinungsform: f.erscheinungsform,
+            hauptteilkategorie: f.hauptteilkategorie,
+            uebungstyp: f.uebungstyp,
+            anzahl_kinder: f.anzahlKinder,
+            material: f.material,
+            materialListe: f.materialListe,
+            methodischer_fahrplan: f.fahrplan,
+            aufbau: f.aufbau,
+            varianten: f.varianten,
+            bildUrl: f.bildUrl,
+          }}
+          submitLabel="Änderungen speichern"
+          bildEntfernenMoeglich
+          fussnote="Änderungen gelten nur für dieses Training."
+        />
+      </div>
     </Seitenrahmen>
   );
 }

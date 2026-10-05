@@ -64,7 +64,6 @@ import {
   type MaterialPosten,
 } from "@/lib/material";
 import { DiagrammFeld } from "@/components/exercise/DiagrammFeld";
-import { DiagrammView } from "@/components/diagramm/DiagrammView";
 import { VerlassenWarnung } from "@/components/layout/VerlassenWarnung";
 import { ZweiSpalten } from "@/components/layout/ZweiSpalten";
 import { cn } from "@/lib/cn";
@@ -689,15 +688,10 @@ export function ExerciseForm({
     </Card>
   );
 
-  const diagrammAbschnitt = spalte ? (
-    anfangsDiagramm.elemente.length > 0 ? (
-      <FormAbschnitt titel="Feld-Diagramm">
-        <div className="aspect-[16/10] w-full overflow-hidden rounded-flaeche border border-linie">
-          <DiagrammView diagramm={anfangsDiagramm} title={`Feld-Diagramm: ${initial.name ?? "Übung"}`} />
-        </div>
-      </FormAbschnitt>
-    ) : null
-  ) : (
+  // Gezeichnet wird auch in der Spalte neben den Übungen eines Trainings
+  // (#373) — dieselbe Fläche samt Vorlagen; die Zeichnung geht mit dem
+  // Sichern der Übung mit, ungesichert gilt sie wie jede andere Angabe.
+  const diagrammAbschnitt = (
     <FormAbschnitt titel="Feld-Diagramm (optional)">
       <DiagrammFeld
         initial={anfangsDiagramm}

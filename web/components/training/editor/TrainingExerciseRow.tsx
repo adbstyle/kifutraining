@@ -134,14 +134,27 @@ export function TrainingExerciseRow({
               </span>
             )}
             {materialGeaendert && (
-              <Link
-                href={`/training/${trainingId}/uebung/${item.id}/edit${varianteAnhang(varianteId)}`}
-                title={MATERIAL_GEAENDERT_TEXT}
-                aria-label={MATERIAL_GEAENDERT_TEXT}
-                className="focus-ring inline-flex shrink-0 rounded-flaeche text-primary"
-              >
-                <PackageSearch size={15} aria-hidden />
-              </Link>
+              <>
+                {/* Der Hinweis führt dorthin, wo er beantwortet wird: schmal in
+                    die Maske, breit in die Spalte zum Bearbeiten (#373 AK 7). */}
+                <Link
+                  href={`/training/${trainingId}/uebung/${item.id}/edit${varianteAnhang(varianteId)}`}
+                  title={MATERIAL_GEAENDERT_TEXT}
+                  aria-label={MATERIAL_GEAENDERT_TEXT}
+                  className="focus-ring inline-flex shrink-0 rounded-flaeche text-primary xl:hidden"
+                >
+                  <PackageSearch size={15} aria-hidden />
+                </Link>
+                <button
+                  type="button"
+                  onClick={onBearbeiten}
+                  title={MATERIAL_GEAENDERT_TEXT}
+                  aria-label={MATERIAL_GEAENDERT_TEXT}
+                  className="focus-ring hidden shrink-0 rounded-flaeche text-primary xl:inline-flex"
+                >
+                  <PackageSearch size={15} aria-hidden />
+                </button>
+              </>
             )}
           </span>
           {item.kategorien.length > 0 && (
