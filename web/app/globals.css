@@ -442,12 +442,13 @@
    als Feld zu erkennen. Eine leise Ebene in der Schriftfarbe (6 %): auf jeder
    Höhenstufe dieselbe Aussage, und im Druck kippt sie mit der Schrift. Nicht
    während man im Feld arbeitet — dann trägt die Kontur —, nicht an einem
-   gesperrten Feld und nicht an der umrandeten Suche der Filterleiste, die
+   gesperrten Feld (nativ `:disabled` oder, bei Auslösern ohne Eingabe-Element,
+   `aria-disabled`) und nicht an der umrandeten Suche der Filterleiste, die
    neben Knöpfen steht und sich schon über ihre Kante zeigt. Die Fläche liegt
    auf der Angabe (`.feld-angabe`), nicht auf dem ganzen Rahmen: Ein Knopf
    daneben (`aktion`) ist eine eigene Handlung und hellt nicht mit auf. */
 @media (hover: hover) {
-  .feld-rahmen:not([data-name-versteckt]):not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled)) .feld-angabe:hover {
+  .feld-rahmen:not([data-name-versteckt]):not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled, .feldkasten[aria-disabled="true"])) .feld-angabe:hover {
     --feld-hover: color-mix(in srgb, var(--color-on-surface) 6%, transparent);
     border-radius: var(--radius-flaeche);
     background-color: var(--feld-hover);

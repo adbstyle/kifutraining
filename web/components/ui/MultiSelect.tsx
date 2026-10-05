@@ -258,6 +258,7 @@ export function MultiSelect({
       // Der Auslöser ist ein <div> und lässt sich nicht beschriften; ein
       // Klick auf den Namen öffnet ihn darum von Hand, wie ein Label es täte.
       onLabelClick={() => {
+        if (disabled) return;
         triggerRef.current?.focus();
         openPanel();
       }}
@@ -272,7 +273,10 @@ export function MultiSelect({
           id={fid}
           ref={triggerRef}
           role={searchable ? "button" : "combobox"}
-          tabIndex={disabled ? -1 : 0}
+          // Gesperrt gar nicht fokussierbar — auch nicht per Klick, sonst
+          // trüge das Feld die Fokus-Kontur, als liesse es sich bedienen.
+          tabIndex={disabled ? undefined : 0}
+          aria-disabled={disabled || undefined}
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
