@@ -1,4 +1,5 @@
-import { ArrowRight, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
+import { DurchlaufListe } from "./DurchlaufListe";
 import {
   Freitext,
   KategorieChip,
@@ -78,28 +79,11 @@ export function TrainingExerciseDetail({ item }: { item: TrainingExerciseItem })
           >
             Durchlauf
           </span>
-          <ol
-            aria-labelledby={`durchlauf-${item.id}`}
-            className="flex flex-wrap items-baseline gap-x-2"
-          >
-            {item.gruppen.map((g, i) => (
-              // Der Pfeil steckt im nachfolgenden Listenpunkt statt in einem
-              // eigenen: Optisch dasselbe, aber die Liste zählt genau so viele
-              // Einträge, wie Gruppen durchlaufen. Er trägt keinen Namen —
-              // vorgelesen wird die Reihenfolge, nicht die Trenner.
-              <li key={g.id} className="type-body-large text-on-surface">
-                {i > 0 && (
-                  <ArrowRight
-                    size={14}
-                    strokeWidth={2}
-                    aria-hidden
-                    className="mr-2 inline-block align-middle text-on-surface-mittel"
-                  />
-                )}
-                {g.name}
-              </li>
-            ))}
-          </ol>
+          <DurchlaufListe
+            gruppen={item.gruppen}
+            beschriftetVon={`durchlauf-${item.id}`}
+            className="type-body-large text-on-surface"
+          />
         </div>
       )}
 

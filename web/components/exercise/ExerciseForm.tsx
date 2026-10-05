@@ -116,7 +116,7 @@ export function ExerciseForm({
   materialBasis = null,
   diagramm: gespeichertesDiagramm,
   vorlagenAusser,
-  spalte,
+  inSpalte,
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
@@ -154,7 +154,7 @@ export function ExerciseForm({
    *  wie Verwerfen und Schliessen, entscheidet die Spalte. `onUngesichert`
    *  meldet ihr, ob ungesicherte Angaben anstehen — sie fragt dann nach,
    *  bevor ein Vorgang die Übung verlässt (AK 4). */
-  spalte?: {
+  inSpalte?: {
     onUngesichert: (ungesichert: boolean) => void;
     onGesichert: () => void;
     onVerwerfen: () => void;
@@ -284,17 +284,19 @@ export function ExerciseForm({
   // Nur beim Erfassen ist die Altersstufe wählbar — und ist noch nichts von
   // der Übung gespeichert.
   const erfassen = stufenWahl === "waehlbar";
-  // Erfassen führt Schritt für Schritt durch eine Spalte — Einordnung,
-  // Feld-Diagramm, Beschreibung, Material, Foto (PO 2026-10-02). Bearbeiten
-  // teilt die Maske wie die Detailseite in Inhalt und Einordnung (#353).
-  const geteilt = !erfassen && !spalte;
+  // Drei Aufbauten: Erfassen führt Schritt für Schritt durch eine Spalte —
+  // Einordnung, Feld-Diagramm, Beschreibung, Material, Foto (PO 2026-10-02).
+  // Bearbeiten teilt die Maske wie die Detailseite in Inhalt und Einordnung
+  // (#353). In der Spalte eines Trainings steht sie in der Reihenfolge des
+  // Detail untereinander (`inSpalte`, #372).
+  const geteilt = !erfassen && !inSpalte;
 
   // Die Spalte erfährt jeden Wechsel; sie fragt damit vor dem Verlassen nach.
   // Über eine Ref: Die Rückrufe entstehen bei jedem Rendern der Spalte neu,
   // gemeldet wird aber nur, wenn sich hier etwas geändert hat — das Gesichert
   // genau einmal je Antwort des Servers.
-  const spalteRef = useRef(spalte);
-  spalteRef.current = spalte;
+  const spalteRef = useRef(inSpalte);
+  spalteRef.current = inSpalte;
   useEffect(() => {
     spalteRef.current?.onUngesichert(ungesichert);
   }, [ungesichert]);
@@ -502,8 +504,9 @@ export function ExerciseForm({
   // #350, Story #353): Altersstufe, Alterskategorie, Trainingsteil oder Block,
   // Feld, Spielerzahl, Übungstyp, Erscheinungsform und Material. Schmal steht
   // sie VOR dem Inhalt — sie bestimmt, welche Felder der Inhalt verlangt
-  // (Fahrplan oder Beschreibung). Dieselben Felder wie bisher, nur an anderer
-  // Stelle; Herkunft und Sichtbarkeit setzt die Detailseite.
+  // (Fahrplan oder Beschreibung). In der Spalte eines Trainings folgt sie wie
+  // im Detail nach Diagramm und Beschreibung (#372). Herkunft und
+  // Sichtbarkeit setzt die Detailseite.
   const einordnungAbschnitt = (
       <FormAbschnitt titel="Einordnung">
         <AltersstufeField
@@ -832,20 +835,26 @@ export function ExerciseForm({
     </FormAbschnitt>
   );
 
+  // Der Knopf, der die Maske absendet — überall derselbe Wortlaut für die
+  // Zwischenstände.
+  const sendenKnopf = (
+    <Button type="submit" disabled={isPending || isCompressing}>
+      {isCompressing
+        ? "Foto wird optimiert …"
+        : isPending
+          ? "Wird gespeichert …"
+          : umwandlung
+            ? "Umwandeln und speichern"
+            : submitLabel}
+    </Button>
+  );
+
   // Speichern samt Hinweis: beim Erfassen am Schluss der Schritte, beim
   // Bearbeiten rechts neben dem Namen.
   const speichern = (
     <div className="flex items-center gap-3">
       {fussnote && <p className="type-body-small text-on-surface-mittel">{fussnote}</p>}
-      <Button type="submit" disabled={isPending || isCompressing}>
-        {isCompressing
-          ? "Foto wird optimiert …"
-          : isPending
-            ? "Wird gespeichert …"
-            : umwandlung
-              ? "Umwandeln und speichern"
-              : submitLabel}
-      </Button>
+      {sendenKnopf}
     </div>
   );
 
@@ -854,6 +863,9 @@ export function ExerciseForm({
       ref={formRef}
       noValidate
       onSubmit={handleSubmit}
+      // Die Spalte, in der die Maske steht, bleibt mit ungesicherten Angaben
+      // auch schmal stehen (`ZweiSpalten` `nurBreit`).
+      data-ungesichert={inSpalte && ungesichert ? "" : undefined}
       // Nur benannte Felder tragen Angaben; eine Suche in einem Dialog der
       // Maske (Vorlagen, Auswahllisten) ist keine.
       onInput={(e) => {
@@ -892,24 +904,22 @@ export function ExerciseForm({
 
       {/* In der Spalte steht obenauf, was die Bearbeitung abschliesst — es
           klebt am oberen Rand, während die Spalte darunter scrollt. */}
-      {spalte && (
+      {inSpalte && (
         <div className="sticky top-0 z-10 -mx-1 flex items-center gap-1 bg-elev-00 px-1 py-2">
           <p className="type-title-small min-w-0 flex-1 text-on-surface-mittel">Übung bearbeiten</p>
           <Button
             type="button"
             variant="text"
-            onClick={spalte.onVerwerfen}
+            onClick={inSpalte.onVerwerfen}
             disabled={isPending || isCompressing}
           >
             {/* Ohne Änderung gibt es nichts zu verwerfen — dann führt derselbe
                 Knopf bloss zurück ins Detail. */}
             {ungesichert ? "Verwerfen" : "Abbrechen"}
           </Button>
-          <Button type="submit" disabled={isPending || isCompressing}>
-            {isCompressing ? "Foto wird optimiert …" : isPending ? "Wird gesichert …" : submitLabel}
-          </Button>
+          {sendenKnopf}
           <Tooltip label="Übung schliessen">
-            <IconButton icon={X} label="Übung schliessen" onClick={spalte.onSchliessen} />
+            <IconButton icon={X} label="Übung schliessen" onClick={inSpalte.onSchliessen} />
           </Tooltip>
         </div>
       )}
@@ -945,7 +955,7 @@ export function ExerciseForm({
         {geteilt && speichern}
       </div>
 
-      {spalte ? (
+      {inSpalte ? (
         <>
           {diagrammAbschnitt}
           {beschreibungAbschnitt}
@@ -974,11 +984,8 @@ export function ExerciseForm({
           {beschreibungAbschnitt}
           {materialAbschnitt}
           {fotoAbschnitt}
+          <div className="flex items-center gap-3 border-t border-linie pt-5">{speichern}</div>
         </>
-      )}
-
-      {!geteilt && !spalte && (
-        <div className="flex items-center gap-3 border-t border-linie pt-5">{speichern}</div>
       )}
     </form>
   );

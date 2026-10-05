@@ -7,12 +7,13 @@ import {
   Eigenschaften,
   KategorieChip,
 } from "@/components/ui";
-import { altersstufe as altersstufeLabels } from "@/lib/vocab";
+import { altersstufe as altersstufeLabels, type KategorieSlug } from "@/lib/vocab";
 import { GESAMTDAUER_JUNIOREN } from "@/lib/junioren";
 import { formatDuration, gesamtDauer } from "@/lib/training";
 import { datumKurz } from "@/lib/zeit";
 import { GesamtAbgleich } from "./ZeitAbgleich";
-import { GesamtMaterialInhalt, traegtGesamtMaterial } from "./GesamtMaterialListe";
+import { GesamtMaterialInhalt, hatGesamtMaterial } from "./GesamtMaterialListe";
+import { gesamtMaterial } from "@/lib/material-gesamt";
 import type { TrainingDetail, TrainingExerciseItem } from "@/lib/queries/trainings";
 
 /**
@@ -62,6 +63,7 @@ export function TrainingEigenschaften({
   const dauer = gesamtDauer(sichtbar);
   const junioren = training.altersstufe === "juniorenfussball";
   const zielText = ziel?.trim() ? ziel : null;
+  const material = gesamtMaterial(training.exercises, training.varianten);
 
   return (
     <Eigenschaften titel="Eigenschaften">
@@ -74,7 +76,7 @@ export function TrainingEigenschaften({
           <Eigenschaft label="Alterskategorien">
             <span className="flex flex-wrap gap-1.5">
               {stufen.map((k) => (
-                <KategorieChip key={k} k={k as never} />
+                <KategorieChip key={k} k={k as KategorieSlug} />
               ))}
             </span>
           </Eigenschaft>
@@ -105,9 +107,12 @@ export function TrainingEigenschaften({
         </span>
       </Eigenschaft>
 
-      {traegtGesamtMaterial(training.exercises, training.varianten) && (
+      {hatGesamtMaterial(material) && (
         <Eigenschaft label="Material">
-          <GesamtMaterialInhalt exercises={training.exercises} varianten={training.varianten} />
+          <GesamtMaterialInhalt
+            material={material}
+            mehrereVarianten={training.varianten.length > 1}
+          />
         </Eigenschaft>
       )}
 

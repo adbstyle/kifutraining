@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ArrowRight, Clock, X } from "lucide-react";
+import { Clock, X } from "lucide-react";
 import {
   Card,
   Freitext,
@@ -10,11 +10,12 @@ import {
 } from "@/components/ui";
 import { EinordnungsLeiste, type EinordnungsQuelle } from "@/components/exercise/EinordnungsLeiste";
 import { formatDuration, teilTraegtDauer } from "@/lib/training";
+import { DurchlaufListe } from "./DurchlaufListe";
 import type { Altersstufe } from "@/lib/altersstufe";
 import type { TrainingExerciseItem } from "@/lib/queries/trainings";
 
 /** Eine Übung im Training in der Form, die die Einordnungs-Liste liest. */
-export function einordnungAusFassung(
+function einordnungAusFassung(
   item: TrainingExerciseItem,
   altersstufe: Altersstufe,
 ): EinordnungsQuelle {
@@ -98,21 +99,11 @@ export function UebungImTraining({
             <span id={`durchlauf-${item.id}`} className="type-label-small w-16 shrink-0 pt-0.5 text-on-surface-mittel">
               Durchlauf
             </span>
-            <ol aria-labelledby={`durchlauf-${item.id}`} className="type-body-medium flex flex-wrap items-baseline gap-x-2 text-on-surface">
-              {durchlauf.map((g, i) => (
-                <li key={g.id}>
-                  {i > 0 && (
-                    <ArrowRight
-                      size={14}
-                      strokeWidth={2}
-                      aria-hidden
-                      className="mr-2 inline-block align-middle text-on-surface-mittel"
-                    />
-                  )}
-                  {g.name}
-                </li>
-              ))}
-            </ol>
+            <DurchlaufListe
+              gruppen={durchlauf}
+              beschriftetVon={`durchlauf-${item.id}`}
+              className="type-body-medium text-on-surface"
+            />
           </div>
         )}
         {notiz && (

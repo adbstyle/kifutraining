@@ -1,5 +1,5 @@
 import { MaterialListe } from "@/components/ui";
-import { gesamtMaterial, type MaterialFassung } from "@/lib/material-gesamt";
+import { gesamtMaterial, type GesamtMaterial, type MaterialFassung } from "@/lib/material-gesamt";
 import { cn } from "@/lib/cn";
 
 /* Die Gesamt-Materialliste eines Trainings (Story #271): was das Training zu
@@ -19,44 +19,44 @@ export function GesamtMaterialListe({
   varianten: readonly { id: string }[];
   className?: string;
 }) {
-  if (!traegtGesamtMaterial(exercises, varianten)) return null;
+  const material = gesamtMaterial(exercises, varianten);
+  if (!hatGesamtMaterial(material)) return null;
   return (
     <section aria-labelledby="gesamt-material" className={cn("break-inside-avoid", className)}>
       <h2 id="gesamt-material" className="type-title-small text-on-surface">
         Material fürs Training
       </h2>
-      <GesamtMaterialInhalt exercises={exercises} varianten={varianten} className="mt-0.5" />
+      <GesamtMaterialInhalt
+        material={material}
+        mehrereVarianten={varianten.length > 1}
+        className="mt-0.5"
+      />
     </section>
   );
 }
 
 /** Braucht das Training überhaupt Material? */
-export function traegtGesamtMaterial(
-  exercises: readonly MaterialFassung[],
-  varianten: readonly { id: string }[],
-): boolean {
-  const { liste, ergaenzungen } = gesamtMaterial(exercises, varianten);
+export function hatGesamtMaterial({ liste, ergaenzungen }: GesamtMaterial): boolean {
   return liste.length > 0 || ergaenzungen.length > 0;
 }
 
 /** Die Liste selbst, ohne Überschrift — für die Zeile «Material» in den
- *  Eigenschaften des Trainings (#370), wo die Bezeichnung links daneben steht. */
+ *  Eigenschaften des Trainings (#370), wo die Bezeichnung links daneben steht.
+ *  Gerechnet wird beim Aufrufer (`gesamtMaterial`), einmal. */
 export function GesamtMaterialInhalt({
-  exercises,
-  varianten,
+  material: { liste, ergaenzungen },
+  mehrereVarianten,
   className,
 }: {
-  exercises: readonly MaterialFassung[];
-  varianten: readonly { id: string }[];
+  material: GesamtMaterial;
+  mehrereVarianten: boolean;
   className?: string;
 }) {
-  const { liste, ergaenzungen } = gesamtMaterial(exercises, varianten);
-  if (liste.length === 0 && ergaenzungen.length === 0) return null;
   return (
     <div className={className}>
       <p className="type-body-small text-on-surface-mittel">
         Höchster gleichzeitiger Bedarf
-        {varianten.length > 1 ? " — reicht für jede Variante des Hauptteils" : ""}.
+        {mehrereVarianten ? " — reicht für jede Variante des Hauptteils" : ""}.
       </p>
       {liste.length > 0 && (
         <div className="type-body-medium mt-2 text-on-surface">

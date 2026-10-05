@@ -34,6 +34,8 @@ export function Seitenrahmen({
   druckVoll,
   spalte,
   spalteNurBreit = false,
+  spaltenName,
+  spalteBeiseite,
   geteilt = false,
   children,
 }: {
@@ -51,6 +53,10 @@ export function Seitenrahmen({
   /** Die Spalte nur nebeneinander, nie gestapelt und nie auf Papier
    *  (`ZweiSpalten` `nurBreit`) — das Training (#370). */
   spalteNurBreit?: boolean;
+  /** Wie der Griff die Spalte nennt (`ZweiSpalten` `spaltenName`). */
+  spaltenName?: string;
+  /** Ist die Spalte ergänzender Inhalt (`ZweiSpalten` `beiseite`)? */
+  spalteBeiseite?: boolean;
   /** Ab `xl` eine geteilte Fläche: Die Seite füllt Breite und Höhe des
    *  Fensters und scrollt nicht selbst — das tun die Spalten darin
    *  (`ZweiSpalten`). Die Maske setzt es selbst, weil ihr Formular die Spalten
@@ -80,6 +86,8 @@ export function Seitenrahmen({
           spalte={spalte}
           druckDaneben={!spalteNurBreit}
           nurBreit={spalteNurBreit}
+          spaltenName={spaltenName}
+          beiseite={spalteBeiseite}
           className="xl:min-h-0 xl:flex-1">
           {children}
         </ZweiSpalten>

@@ -1,12 +1,13 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Users } from "lucide-react";
 import { Card, Badge, HeadlineField, TextArea } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { StufenField } from "../StufenField";
 import { useBlurSpeichern } from "@/lib/use-blur-speichern";
-import { kategorienFuer } from "@/lib/altersstufe";
+import { kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { TRAINING_NAME_MAX, ZIEL_MAX, trainingNameProblem } from "@/lib/training";
 import type { TrainingDetail } from "@/lib/queries/trainings";
@@ -21,21 +22,17 @@ import type { TrainingDetail } from "@/lib/queries/trainings";
 export function TrainingKopf({
   training,
   oeffentlich,
-  stufen,
-  onStufen,
-  ziel,
-  onZielChange,
-  onZielSpeichern,
+  zielFeld,
+  stufenFeld,
   name,
   onNameSpeichern,
 }: {
   training: TrainingDetail;
   oeffentlich: boolean;
-  stufen: string[];
-  onStufen: (next: string[]) => void;
-  ziel: string;
-  onZielChange: (next: string) => void;
-  onZielSpeichern: () => void;
+  /** Ziel und Alterskategorien als fertige Felder — dieselben, die breit in
+   *  der Spalte stehen (`ZielFeld`, `TrainingStufenFeld`). */
+  zielFeld: ReactNode;
+  stufenFeld: ReactNode;
   /** Der laufende Name — im Editor optimistisch überlagert. */
   name: string;
   onNameSpeichern: (next: string) => void;
@@ -66,17 +63,8 @@ export function TrainingKopf({
         <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
       </div>
 
-      <div className="mt-4">
-        <ZielFeld ziel={ziel} onChange={onZielChange} onSpeichern={onZielSpeichern} />
-      </div>
-
-      <div className="mt-4">
-        <TrainingStufenFeld
-          altersstufe={training.altersstufe}
-          stufen={stufen}
-          onStufen={onStufen}
-        />
-      </div>
+      <div className="mt-4">{zielFeld}</div>
+      <div className="mt-4">{stufenFeld}</div>
     </Card>
   );
 }
@@ -115,7 +103,7 @@ export function TrainingStufenFeld({
   stufen,
   onStufen,
 }: {
-  altersstufe: TrainingDetail["altersstufe"];
+  altersstufe: Altersstufe;
   stufen: string[];
   onStufen: (next: string[]) => void;
 }) {

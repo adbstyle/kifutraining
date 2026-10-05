@@ -64,7 +64,7 @@ export function FassungInSpalte({
       submitLabel="Sichern"
       bildEntfernenMoeglich
       fussnote="Änderungen gelten nur für dieses Training."
-      spalte={{ onUngesichert, onGesichert, onVerwerfen, onSchliessen }}
+      inSpalte={{ onUngesichert, onGesichert, onVerwerfen, onSchliessen }}
     />
   );
 }

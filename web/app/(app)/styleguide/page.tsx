@@ -38,6 +38,7 @@ import { AuswahlListeDemo } from "./AuswahlListeDemo";
 import { MenuDemo } from "./MenuDemo";
 import { MultiSelectDemo } from "./MultiSelectDemo";
 import { FilterKnopfDemo } from "./FilterKnopfDemo";
+import { OeffnenZeileDemo } from "./OeffnenZeileDemo";
 import { WochentagWahlDemo } from "./WochentagWahlDemo";
 import { CheckboxDemo } from "./CheckboxDemo";
 import { SeitenleisteDemo } from "./SeitenleisteDemo";
@@ -976,6 +977,20 @@ export default function Styleguide() {
           Einstiegsseiten. Ab <code>lg</code> gehen 280 oder 72 px an die
           Seitenleiste (siehe 13); die Fenstergrössen unten meinen das ganze
           Fenster.
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Das Training teilt sich ebenso, aber <strong>nur breit</strong>{" "}
+          (<code>nurBreit</code>, Epic #369): Links stehen die Übungen, rechts
+          die Eigenschaften des Trainings oder die geöffnete Übung (siehe 30).
+          Schmal und auf Papier fehlt die Spalte, und die Seite behält ihren
+          bisherigen Aufbau — dort gibt es nichts daneben zu öffnen. Eine
+          Ausnahme: Trägt eine Maske in der Spalte ungesicherte Angaben
+          (<code>data-ungesichert</code>), bleibt sie auch gestapelt stehen,
+          damit sie sich noch sichern lässt, wenn das Fenster schmal wird. Der
+          Griff nennt, was die Spalte zeigt (<code>spaltenName</code>), und
+          eine Spalte mit Eingabefeldern ist kein <code>aside</code>{" "}
+          (<code>beiseite</code>): Eine Vorlesehilfe soll sie nicht als
+          Nebensache ankündigen.
         </p>
         <div className="space-y-2">
           {sizeClasses.map(([cls, range, note]) => (
@@ -2841,6 +2856,12 @@ export default function Styleguide() {
             für Vorlesehilfen.
           </li>
           <li>
+            <strong>Eingabefelder</strong> — wo eine Angabe in der Liste selbst
+            geändert wird (Ziel und Alterskategorien eines Trainings, #370),
+            steht sie als <code>EigenschaftBreit</code>: Das Feld trägt seinen
+            Namen selbst und braucht die volle Breite der Spalte.
+          </li>
+          <li>
             <strong>Nicht erfasst</strong> — <code>EigenschaftFehlt</code>{" "}
             zeigt eine vorgesehene, aber leere Angabe (nur der Eigentümerin,
             #352): der Wert gedämpft wie die Bezeichnung, damit er sich vom
@@ -2917,6 +2938,42 @@ export default function Styleguide() {
           und aus.
         </p>
         <FilterKnopfDemo />
+      </Section>
+
+      <Section n="30" title="Liste mit Detail daneben">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Die Übungen eines Trainings öffnen ihr Detail in der Spalte daneben,
+          statt auf eine eigene Seite zu führen (Epic #369) — der Trainer
+          behält die Zusammenstellung im Blick. Breit ist darum{" "}
+          <strong>die ganze Zeile die Fläche, die öffnet</strong>, und hellt
+          beim Überfahren auf wie eine Trainingskachel der Übersicht (11): Die
+          Zustands-Ebene (<code>state</code>, 04) liegt auf der Zeile, der Knopf
+          dazu ist der Name (<code>UebungsName</code>), dessen Fläche über die
+          Zeile reicht. Was die Zeile sonst trägt — Kopieren, Bearbeiten,
+          Dauer, Notiz —, liegt mit <code>relative</code> darüber und bleibt
+          für sich bedienbar.
+        </p>
+        <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+          <li>
+            <strong>Geöffnet</strong> — die Zeile trägt eine Kontur in
+            Primary, der Name ist Primary und <code>aria-current</code>. Ein
+            zweiter Klick schliesst.
+          </li>
+          <li>
+            <strong>Schmal</strong> — der Name steht als Text, die Zeile öffnet
+            nichts; die Weiche ist CSS, so stimmt schon das erste HTML.
+          </li>
+          <li>
+            <strong>Bearbeiten in der Spalte</strong> — die Maske steht in der
+            Reihenfolge des Detail untereinander; «Sichern», «Verwerfen»
+            (ohne Änderung «Abbrechen») und Schliessen kleben auf dem Grund
+            (<code>bg-elev-00</code>) am oberen Rand, während die Spalte
+            darunter scrollt. Wer die Übung mit ungesicherten Änderungen
+            verlässt, wird gefragt: weiter bearbeiten oder verwerfen — ein
+            «Sichern und weiter» gibt es nicht.
+          </li>
+        </ul>
+        <OeffnenZeileDemo />
       </Section>
     </Seitenrahmen>
   );

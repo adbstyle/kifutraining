@@ -9,8 +9,9 @@ import { useSeitenleiste } from "./AppRahmen";
 const SCHRITT = 16;
 
 /**
- * Inhalt links, eine zweite Spalte rechts daneben (Epic #350) — die
- * Einordnung einer Übung auf ihrer Seite und in ihrer Maske.
+ * Inhalt links, eine zweite Spalte rechts daneben — die Einordnung einer
+ * Übung auf ihrer Seite und in ihrer Maske (Epic #350), die Eigenschaften
+ * eines Trainings oder seine geöffnete Übung neben seinen Übungen (Epic #369).
  *
  * Ab `xl` ist die Fläche geteilt: Beide Spalten füllen die Breite und die
  * Höhe bis zum unteren Rand, und jede scrollt für sich; die Seite selbst
@@ -33,8 +34,12 @@ const SCHRITT = 16;
  * Schirm (Übungsblatt).
  *
  * `nurBreit`: Die Spalte gibt es nur nebeneinander — gestapelt und auf Papier
- * fehlt sie, und der Inhalt steht allein (Training, #370: schmal bleibt es
- * beim heutigen Aufbau, die Eigenschaften stehen dort im Inhalt).
+ * fehlt sie, und der Inhalt steht allein (Training, #370: schmal bleibt der
+ * bisherige Aufbau). Eine Ausnahme kennt sie: Trägt eine Maske darin
+ * ungesicherte Angaben (`data-ungesichert`), bleibt die Spalte auch gestapelt
+ * stehen, damit sich die Angaben noch sichern lassen, wenn das Fenster
+ * während des Bearbeitens schmal wird (#372 AK 5). Die Weiche ist CSS — die
+ * Spalte muss dafür nichts über ihren Inhalt wissen.
  *
  * `beiseite`: Die Spalte ist ergänzender Inhalt (`aside`, Übungsseite). In der
  * Maske trägt sie Pflichtfelder und ist darum ein gewöhnlicher Block — eine
@@ -54,7 +59,7 @@ export function ZweiSpalten({
   spalteZuerst?: boolean;
   druckDaneben?: boolean;
   nurBreit?: boolean;
-  /** Was die Spalte zeigt — für den Namen des Griffs («Breite der …»). */
+  /** Wie der Griff die Spalte nennt («Breite der …»). */
   spaltenName?: string;
   beiseite?: boolean;
   children: ReactNode;
@@ -113,7 +118,7 @@ export function ZweiSpalten({
       className={cn(
         "min-w-0 max-w-4xl xl:col-start-3 xl:row-start-1 xl:max-w-none xl:-mr-1 xl:pl-1 xl:pr-1",
         druckDaneben && "print:col-start-2 print:row-start-1",
-        nurBreit && "hidden xl:block print:hidden",
+        nurBreit && "hidden xl:block has-[[data-ungesichert]]:block print:hidden!",
         scroll,
       )}
     >

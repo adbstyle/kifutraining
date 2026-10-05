@@ -54,9 +54,11 @@ export default async function FassungBearbeitenPage({
     anhang,
   );
 
-  // Breit wird die Übung in der Spalte des Trainings bearbeitet (#373 PC 3) —
-  // in ihrer eigenen Variante, die der Editor aus der Übung selbst ableitet.
-  const spalte = `/training/${id}/edit?${UEBUNG_PARAM}=${teId}&${BEARBEITEN_PARAM}=1`;
+  // Breit wird die Übung in der Spalte des Trainings bearbeitet (#373 PC 3).
+  // Eine Übung des Hauptteils bringt ihre Variante selbst mit; für jede andere
+  // gilt die, aus der die Adresse kam — dorthin wandert sie, falls sie beim
+  // Sichern in den Hauptteil wechselt.
+  const spalte = `/training/${id}/edit?${UEBUNG_PARAM}=${teId}&${BEARBEITEN_PARAM}=1${varianteAnhang(variante, "&")}`;
 
   return (
     <Seitenrahmen breite="6xl" geteilt krumen={crumbs}>

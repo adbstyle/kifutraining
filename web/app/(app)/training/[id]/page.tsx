@@ -24,7 +24,7 @@ import { getMeineTeams } from "@/lib/queries/teams";
 import { bearbeitungszielVon } from "@/lib/training-zugriff";
 import { fehlendeBedingungenAus } from "@/lib/training-bedingungen";
 import { createClient } from "@/lib/supabase/server";
-import { leseGliederung, formatDuration } from "@/lib/training";
+import { leseGliederung, formatDuration, gesamtDauer } from "@/lib/training";
 import {
   abschnittMitVariante,
   sichtbareZuordnungen,
@@ -98,8 +98,8 @@ export default async function TrainingViewPage({
     : varianteAus(sp.variante, training.varianten);
   const sichtbar = sichtbareZuordnungen(training.exercises, aktive?.id);
   const sections = leseGliederung(training.altersstufe, sichtbar);
-  const total = sections.reduce((a, s) => a + s.sum, 0);
-  const hasAnyDuration = sections.some((s) => s.sum > 0);
+  // Dieselbe Rechnung wie in der Spalte (`TrainingEigenschaften`).
+  const dauer = gesamtDauer(sichtbar);
   // Ab `xl` stehen die Eigenschaften gesammelt in der Spalte neben den Übungen
   // (Epic #369, Story #370) — dieselbe Liste wie beim Zusammenstellen. Die
   // Arbeitshinweise zur Dauer bekommt nur, wer das Training bearbeiten darf
@@ -136,12 +136,13 @@ export default async function TrainingViewPage({
     // Je Variante ein neuer Rahmen: Ihr Wechsel schliesst die Übung (EK 14).
     <AnsichtFlaeche
       key={aktive?.id ?? "ohne"}
-      anfangsOffen={anfangsUebung?.id ?? null}
+      anfangsOffenId={anfangsUebung?.id ?? null}
       anfangsBearbeiten={!!sp.bearbeiten}
       uebungParam={sp.uebung}
       // Bearbeiten in der Ansicht nur mit Bearbeitungsrecht (#374 AK 7) —
       // die Server Action und die RLS prüfen es ohnehin noch einmal.
       bearbeitbar={!!bearbeitungsziel}
+      uebungen={sichtbar}
     >
       <Seitenrahmen
         breite="3xl"
@@ -172,6 +173,10 @@ export default async function TrainingViewPage({
           />
         }
         spalteNurBreit
+        spaltenName="Spalte"
+        // Wer bearbeiten darf, findet in der Spalte Eingabefelder — dann ist
+        // sie keine Nebensache für Vorlesehilfen.
+        spalteBeiseite={!bearbeitungsziel}
       >
         {sp.uebernommen && (
           <Flash
@@ -181,13 +186,12 @@ export default async function TrainingViewPage({
         )}
         <header className="mb-6">
           {/* Wer bearbeiten darf, ändert den Namen dort, wo er steht — wie beim
-            Zusammenstellen (#375 AK 1); das hebt den früheren Entscheid auf,
-            dass er in der Ansicht fest steht. */}
-        {bearbeitungsziel ? (
-          <AnsichtName trainingId={training.id} name={training.name} />
-        ) : (
-          <h1 className="type-headline-large text-on-surface">{training.name}</h1>
-        )}
+              Zusammenstellen (#375 AK 1). */}
+          {bearbeitungsziel ? (
+            <AnsichtName trainingId={training.id} name={training.name} />
+          ) : (
+            <h1 className="type-headline-large text-on-surface">{training.name}</h1>
+          )}
           {/* Breit steht all das in der Spalte daneben — hier nicht ein
               zweites Mal (#370 AK 7). Schmal und auf Papier wie bisher. */}
           <div className="xl:hidden print:block">
@@ -209,7 +213,7 @@ export default async function TrainingViewPage({
               ))}
               <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-mittel">
                 <Clock size={16} strokeWidth={2} aria-hidden />
-                {hasAnyDuration ? formatDuration(total) : "Keine Dauer erfasst"}
+                {dauer.erfasst ? formatDuration(dauer.summe) : "Keine Dauer erfasst"}
               </span>
             </div>
 
