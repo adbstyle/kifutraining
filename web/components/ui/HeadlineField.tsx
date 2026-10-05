@@ -59,8 +59,10 @@ export interface HeadlineFieldProps
  * Innenabstand steht als negativer Aussenabstand daneben, damit der Text
  * genau dort beginnt, wo die Überschrift begänne.
  *
- * PLATZHALTER in gedämpfter Farbe: Beim Erfassen ist der Name noch leer, und
- * ein ruhendes Feld ohne Wert wäre schlicht nicht da (Übungsmaske).
+ * PLATZHALTER in gedämpfter Farbe: Ist der Name geleert, wäre ein ruhendes
+ * Feld ohne Wert sonst schlicht nicht da. Wo ein Name erst entsteht (Neue
+ * Übung, Neues Training), steht statt des Kopf-Felds ein `TextField` mit
+ * `schrift="title"`.
  *
  * Verwendung:
  *   <HeadlineField aria-label="Name des Trainings" value={…} onChange={…} onBlur={…} /> */

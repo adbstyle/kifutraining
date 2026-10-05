@@ -1621,7 +1621,18 @@ export default function Styleguide() {
           sich mit der Eingabe ändern, bleiben sichtbar unter dem Feld (
           <code>supportingText</code>) - die muss man sehen, ohne zu klicken.
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Grosser Wert (<code>schrift=&quot;title&quot;</code>):</strong>{" "}
+          Für den Namen, mit dem etwas erst angelegt wird - zuoberst in
+          «Neues Training» und «Neue Übung», nach dem Vorbild der Zusammenfassung in Jira. Der
+          Wert steht in <code>type-title-large</code>, das Feld ist 44 px hoch;
+          Name, Fläche beim Überfahren und das Verhalten leer und gefüllt
+          bleiben die eines gewöhnlichen Felds. Wo ein bestehender Name dort
+          geändert wird, wo er steht, gilt weiter das Kopf-Feld.
+        </p>
         <div className="grid max-w-md gap-6">
+          <TextField label="Name des Trainings" schrift="title" />
+          <TextField label="Name des Trainings" schrift="title" defaultValue="Passspiel im Quadrat" />
           <TextField
             label="Übungsname"
             info="Ein fester Hinweis steht hinter dem ⓘ, nicht dauernd unter dem Feld."
@@ -1682,8 +1693,8 @@ export default function Styleguide() {
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Für den Fall, in dem ein vom Trainer vergebener Name dort geändert
-          wird, wo er steht - der Trainingsname im Editor-Kopf und der Name in
-          der Übungsmaske. Es trägt die
+          wird, wo er steht - der Trainingsname im Editor-Kopf und der Name beim
+          Bearbeiten einer Übung. Es trägt die
           Schrift der Überschrift (<code>type-headline-medium</code>), damit der
           Kopf seine Gliederung behält, und zeigt sich in{" "}
           <strong>drei Lagen</strong>: Ruhend sieht man eine Überschrift und
