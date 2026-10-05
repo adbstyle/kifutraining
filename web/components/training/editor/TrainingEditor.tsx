@@ -705,7 +705,7 @@ export function TrainingEditor({
                   AC 5 / Out of Scope 1). */}
               {junioren && <GesamtAbgleich sum={dauer.summe} soll={GESAMTDAUER_JUNIOREN} />}
               {dauer.ohneDauer > 0 && (
-                <span className="type-label-medium text-on-surface-mittel">
+                <span className="type-body-small text-on-surface-mittel">
                   {dauer.ohneDauer} {dauer.ohneDauer === 1 ? "Übung ohne" : "Übungen ohne"} Dauer
                 </span>
               )}
