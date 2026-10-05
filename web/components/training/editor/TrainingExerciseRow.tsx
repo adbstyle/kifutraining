@@ -86,13 +86,15 @@ export function TrainingExerciseRow({
   return (
     <li
       className={cn(
-        "flex flex-col rounded-flaeche border border-linie bg-elev-01 px-3 py-2.5",
+        // Breit hellt die ganze Zeile auf und öffnet die Übung (`UebungsName`);
+        // was in ihr bedienbar ist, liegt mit `relative` über dieser Fläche.
+        "relative flex flex-col rounded-flaeche border border-linie bg-elev-01 px-3 py-2.5 xl:state",
         offen && "xl:border-primary",
       )}
     >
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Hoch/Runter */}
-        <span className="flex shrink-0 flex-col">
+        <span className="relative z-10 flex shrink-0 flex-col">
           <button
             type="button"
             aria-label="Nach oben"
@@ -129,7 +131,7 @@ export function TrainingExerciseRow({
           <span className="flex items-center gap-2">
             <UebungsName name={item.name} offen={offen} onOeffnen={onOeffnen} />
             {mismatch && (
-              <span title={STUFE_ABWEICHEND_TEXT}>
+              <span title={STUFE_ABWEICHEND_TEXT} className="relative">
                 <TriangleAlert size={15} className="shrink-0 text-primary" aria-hidden />
               </span>
             )}
@@ -150,7 +152,7 @@ export function TrainingExerciseRow({
                   onClick={onBearbeiten}
                   title={MATERIAL_GEAENDERT_TEXT}
                   aria-label={MATERIAL_GEAENDERT_TEXT}
-                  className="focus-ring hidden shrink-0 rounded-flaeche text-primary xl:inline-flex"
+                  className="focus-ring relative hidden shrink-0 rounded-flaeche text-primary xl:inline-flex"
                 >
                   <PackageSearch size={15} aria-hidden />
                 </button>
@@ -170,7 +172,7 @@ export function TrainingExerciseRow({
             Dauerfeld trägt seinen Namen über sich, in einer Reihe mit drei
             Icon-Knöpfen liesse es die Zeile auseinanderfallen. Rechtsbündig,
             damit die Felder aller Zeilen eine Kante bilden. */}
-        <span className="flex shrink-0 flex-col items-end gap-2">
+        <span className="relative flex shrink-0 flex-col items-end gap-2">
           <span className="flex items-center">
             <InBibliothekButton fassungId={item.id} name={item.name} />
 
@@ -218,7 +220,7 @@ export function TrainingExerciseRow({
         </span>
       </div>
 
-      {etage}
+      {etage && <div className="relative">{etage}</div>}
     </li>
   );
 }

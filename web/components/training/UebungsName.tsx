@@ -9,6 +9,11 @@ import { cn } from "@/lib/cn";
  * Weiche ist CSS — so stimmt schon das erste HTML, ohne dass die Seite die
  * Breite erst messen müsste.
  *
+ * Breit ist die ganze Zeile die Fläche des Knopfs und hellt beim Überfahren
+ * auf wie eine Trainingskachel der Übersicht — die Zeile trägt dafür `state`
+ * und ist `relative`; was in ihr selbst bedienbar ist, liegt mit `relative`
+ * darüber.
+ *
  * Die geöffnete trägt `aria-current`: Sie ist die, deren Detail daneben steht
  * (AK 5). Ein zweiter Klick schliesst sie wieder.
  */
@@ -30,8 +35,13 @@ export function UebungsName({
         aria-current={offen ? "true" : undefined}
         title={offen ? "Übung schliessen" : "Übung öffnen"}
         className={cn(
-          "focus-ring hidden min-w-0 truncate rounded-flaeche text-left type-body-medium xl:block",
-          offen ? "text-primary" : "text-on-surface hover:text-primary hover:underline",
+          // Die Fläche des Knopfs reicht über die ganze Zeile (`before:`), wie
+          // der Link einer Trainingskachel über die Kachel: Die Zeile öffnet,
+          // wo sie keinen eigenen Knopf trägt. Aufgehellt wird sie von der
+          // Zeile selbst (`state`), nicht vom Namen.
+          "focus-ring hidden min-w-0 cursor-pointer truncate rounded-flaeche text-left type-body-medium xl:block",
+          "xl:before:absolute xl:before:inset-0 xl:before:rounded-flaeche xl:before:content-['']",
+          offen ? "text-primary" : "text-on-surface",
         )}
       >
         {name}

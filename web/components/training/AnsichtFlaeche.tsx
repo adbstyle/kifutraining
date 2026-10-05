@@ -218,7 +218,8 @@ export function AnsichtZeile({
   return (
     <li
       className={cn(
-        "rounded-flaeche border border-transparent",
+        // Breit hellt die ganze Zeile auf und öffnet (`UebungsName`).
+        "relative rounded-flaeche border border-transparent xl:state",
         offenId === id && "xl:border-primary",
         className,
       )}
