@@ -1614,7 +1614,10 @@ export default function Styleguide() {
           Zeigen ein Tooltip, ein Klick öffnet ein kleines Panel. Das ⓘ zeigt
           sich <strong>nur beim Überfahren</strong> der Angabe - nicht ruhend,
           nicht während man im Feld arbeitet, und auf Touch-Geräten gar nicht
-          (PO 2026-10-04). Es steht senkrecht mittig auf der ganzen Angabe,
+          (PO 2026-10-04). Muss man den Hinweis auch dort lesen, bevor man
+          weitermacht - dass die Altersstufe eines Trainings lebenslang bindet -,
+          zeigt <code>infoAufTouch</code> ihn auf Touch-Geräten als Hinweis
+          unter dem Feld. Das ⓘ steht senkrecht mittig auf der ganzen Angabe,
           zwischen Name und Wert. Die Tastatur erreicht es weiterhin und macht
           es dabei sichtbar; die Vorlesehilfe hört den Hinweis ohnehin mit dem
           Feld. Fehler und Hinweise, die

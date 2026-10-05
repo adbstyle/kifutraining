@@ -13,9 +13,6 @@ import { kategorienFuer, type Altersstufe } from "@/lib/altersstufe";
 import { TRAINING_NAME_MAX, ZIEL_MAX } from "@/lib/training";
 import { createTraining, type TrainingFormState } from "@/lib/actions/trainings";
 
-const ALTERSSTUFE_INFO =
-  "Nach welchem Manual du planst. Bestimmt Trainingsteile, Gliederung und Alterskategorien - und steht danach fest.";
-
 /* Formular „Neues Training anlegen" (Story #10 AC1/AC2/AC3, Story 5 AK 1/2/4).
    FormData wird im onSubmit selbst aufgebaut (zuverlässige Serialisierung der
    Auswahl-Felder), dann an die Server-Action übergeben. */
@@ -87,18 +84,9 @@ export function TrainingCreateForm() {
         <AltersstufeField
           wert={altersstufe}
           onChange={waehleAltersstufe}
-          info={ALTERSSTUFE_INFO}
+          info="Nach welchem Manual du planst. Bestimmt Trainingsteile, Gliederung und Alterskategorien - und steht danach fest."
           fehler={fehler.altersstufe}
         />
-        {/* Auf Touch-Geräten bleibt das ⓘ verborgen (PO-Entscheid). Dass die
-            Wahl lebenslang bindet, muss man dort trotzdem lesen, bevor man
-            anlegt — darum steht der Hinweis dann unter dem Feld. Ein Fehler
-            steht schon an seiner Stelle. */}
-        {!fehler.altersstufe && (
-          <p className="type-body-small -mt-4 px-3.5 text-on-surface-mittel [@media(hover:hover)]:hidden">
-            {ALTERSSTUFE_INFO}
-          </p>
-        )}
 
         {/* Mindestens eine Alterskategorie, ab dem Anlegen (PO 2026-08-30,
             Epic Übungswelten). Bestehende Trainings ohne bleiben bearbeitbar,

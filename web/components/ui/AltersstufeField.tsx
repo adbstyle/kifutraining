@@ -88,6 +88,9 @@ export function AltersstufeField({
       error={!!fehler}
       supportingText={fehler}
       info={info}
+      // Die Erklärung gibt es nur, wo die Wahl lebenslang bindet (Training) —
+      // das muss man auch auf dem Handy lesen, bevor man anlegt.
+      infoAufTouch
     />
   );
 }
