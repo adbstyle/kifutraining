@@ -7,7 +7,8 @@
    durch ein weisses Overlay auf derselben Fläche. Akzent ist
    Primary #bb86fc — Material 2 Baseline, im Dunkeln hell genug,
    um Text zu tragen. Farbe umrandet und beschriftet, sie füllt
-   nur dort, wo eine Fläche wirklich gemeint ist.
+   nur dort, wo eine Fläche wirklich gemeint ist — ausgenommen die
+   drei Atlassian-Bausteine Lozenge, Badge und Section Message.
    ─────────────────────────────────────────────────────────── */
 
 @theme {
@@ -61,18 +62,50 @@
   --color-on-umkehr: #101613;
   --color-umkehr-akzent: #4527a0;
 
-  /* ─── Alterskategorien — fest lernbare, distinkte Farben (nie nur Farbe).
-     G/F/E Kinderfussball, D/C/B/A Juniorenfussball (Epic #71). Sie stehen
-     als Kontur und Schrift, nie als Fläche — gefüllt wären sieben Werte
-     nebeneinander ein Flickenteppich, und der Buchstabe trägt die
-     Unterscheidung ohnehin mit. Einzige Ausnahme ist der Druck. ─── */
-  --color-kat-g: #5eb3f5;
-  --color-kat-f: #e6c044;
-  --color-kat-e: #ff8a65;
-  --color-kat-d: #5ee0a0;
-  --color-kat-c: #f48fb1;
-  --color-kat-b: #a5b4fc;
-  --color-kat-a: #cfd8dc;
+  /* ─── Atlassian — Lozenge (Plakette), Badge (Zähler), Section Message ───
+     Diese drei Bausteine folgen dem Atlassian Design System wie Jira, nicht
+     Material. Die Werte stehen wörtlich aus @atlaskit/tokens (Theme
+     atlassian-dark); Herleitung und Zuordnung in lib/farben.ts.
+     lozenge-* = background.<x>.subtler, on-lozenge-* = text.<x>.bolder;
+     section-* = background.<x>, icon-* = icon.<x>. Die Akzente tragen die
+     Alterskategorien G bis A (KategorieLozenge). ─── */
+  --color-lozenge-neutral: #ceced912;
+  --color-on-lozenge-neutral: #cecfd2;
+  --color-lozenge-success: #37471f;
+  --color-on-lozenge-success: #d3f1a7;
+  --color-lozenge-warning: #693200;
+  --color-on-lozenge-warning: #fce4a6;
+  --color-lozenge-danger: #5d1f1a;
+  --color-on-lozenge-danger: #ffd5d2;
+  --color-lozenge-information: #123263;
+  --color-on-lozenge-information: #cfe1fd;
+  --color-lozenge-discovery: #48245d;
+  --color-on-lozenge-discovery: #eed7fc;
+  --color-lozenge-accent-blue: #123263;
+  --color-on-lozenge-accent-blue: #cfe1fd;
+  --color-lozenge-accent-yellow: #533f04;
+  --color-on-lozenge-accent-yellow: #f5e989;
+  --color-lozenge-accent-orange: #693200;
+  --color-on-lozenge-accent-orange: #fce4a6;
+  --color-lozenge-accent-green: #164b35;
+  --color-on-lozenge-accent-green: #baf3db;
+  --color-lozenge-accent-magenta: #50253f;
+  --color-on-lozenge-accent-magenta: #fdd0ec;
+  --color-lozenge-accent-purple: #48245d;
+  --color-on-lozenge-accent-purple: #eed7fc;
+  --color-lozenge-accent-gray: #303134;
+  --color-on-lozenge-accent-gray: #e2e3e4;
+
+  --color-section-information: #1c2b42;
+  --color-icon-information: #4688ec;
+  --color-section-warning: #3a2c1f;
+  --color-icon-warning: #fbc828;
+  --color-section-danger: #42221f;
+  --color-icon-danger: #f15b50;
+  --color-section-success: #28311b;
+  --color-icon-success: #82b536;
+  --color-section-discovery: #35243f;
+  --color-icon-discovery: #bf63f3;
 
   /* ─── Zustände: Deckung der Overlay-Ebene (siehe @utility state) ─── */
   --state-hover: 0.04;
@@ -80,8 +113,10 @@
   --state-pressed: 0.10;
 
   /* ─── Radien: eckig für alles, was Inhalt hält; voll gerundet für
-     alles, was man antippt und wieder loslässt (Chips → rounded-full). ─── */
-  --radius-plakette: 2px;
+     alles, was man antippt und wieder loslässt (Chips → rounded-full).
+     `klein` ist die kleinste Rundung: Kontrollkästchen, Badge, Fokusfläche
+     eines Textlinks. Die Lozenge trägt `flaeche` (4 px wie bei Atlassian). ─── */
+  --radius-klein: 2px;
   --radius-flaeche: 4px;
   --radius-dialog: 6px;
 
@@ -581,13 +616,13 @@
   font-family: var(--font-sans); font-weight: 500; text-transform: uppercase;
   font-size: 11px; line-height: 16px; letter-spacing: 0.09em; font-variant-numeric: tabular-nums;
 }
-/* Plakette: die kleinste beschriftbare Fläche (Badge, Kategorie-Chip).
-   Unter 10 px wird auch die weit gesperrte Versal unleserlich, darunter
-   geht nichts mehr. Als einzige Label-Stufe bleibt sie bei 700 — bei 600
-   fiele sie in dieser Grösse gegen ihre Kontur ab. */
-@utility type-plakette {
-  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase;
-  font-size: 10px; line-height: 14px; letter-spacing: 0.10em; font-variant-numeric: tabular-nums;
+/* Lozenge und Badge: Atlassians `font.body.small` (12/16, normal gesetzt).
+   Eine Zeile niedriger als `type-body-small`, damit die Lozenge mit 2 px
+   Polsterung genau 20 px misst. Keine Versalien — die Lozenge sagt, was
+   ist, sie ist keine Rubrik. */
+@utility type-lozenge {
+  font-family: var(--font-sans); font-weight: 400; text-transform: none;
+  font-size: 12px; line-height: 16px; letter-spacing: normal; font-variant-numeric: tabular-nums;
 }
 
 @layer base {
@@ -651,10 +686,45 @@
     --color-on-primary: #ffffff;
     --color-error: #a32036;
     --color-on-error: #ffffff;
-    /* Die beiden hellsten Kategorien tragen auf Weiss nicht — nur sie
-       werden nachgedunkelt, die übrigen fünf bleiben wie am Schirm. */
-    --color-kat-a: #78909c;
-    --color-kat-f: #b8960f;
+    /* Lozenge und Section Message auf Papier: Atlassians helles Theme
+       (atlassian-light), dieselben Rollen wie am Schirm. */
+    --color-lozenge-neutral: #0515240f;
+    --color-on-lozenge-neutral: #292a2e;
+    --color-lozenge-success: #d3f1a7;
+    --color-on-lozenge-success: #37471f;
+    --color-lozenge-warning: #fce4a6;
+    --color-on-lozenge-warning: #693200;
+    --color-lozenge-danger: #ffd5d2;
+    --color-on-lozenge-danger: #5d1f1a;
+    --color-lozenge-information: #cfe1fd;
+    --color-on-lozenge-information: #123263;
+    --color-lozenge-discovery: #eed7fc;
+    --color-on-lozenge-discovery: #48245d;
+    --color-lozenge-accent-blue: #cfe1fd;
+    --color-on-lozenge-accent-blue: #123263;
+    --color-lozenge-accent-yellow: #f5e989;
+    --color-on-lozenge-accent-yellow: #533f04;
+    --color-lozenge-accent-orange: #fce4a6;
+    --color-on-lozenge-accent-orange: #693200;
+    --color-lozenge-accent-green: #baf3db;
+    --color-on-lozenge-accent-green: #164b35;
+    --color-lozenge-accent-magenta: #fdd0ec;
+    --color-on-lozenge-accent-magenta: #50253f;
+    --color-lozenge-accent-purple: #eed7fc;
+    --color-on-lozenge-accent-purple: #48245d;
+    --color-lozenge-accent-gray: #f0f1f2;
+    --color-on-lozenge-accent-gray: #1e1f21;
+
+    --color-section-information: #e9f2fe;
+    --color-icon-information: #357de8;
+    --color-section-warning: #fff5db;
+    --color-icon-warning: #e06c00;
+    --color-section-danger: #ffeceb;
+    --color-icon-danger: #c9372c;
+    --color-section-success: #efffd6;
+    --color-icon-success: #6a9a23;
+    --color-section-discovery: #f8eefe;
+    --color-icon-discovery: #af59e1;
 
     /* ─── Diagramm auf Papier ───────────────────────────────────────────
        Aufgeführt ist nur, was sich vom Bildschirm unterscheidet; alles

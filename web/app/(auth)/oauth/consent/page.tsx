@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ButtonLink, Card, Banner } from "@/components/ui";
+import { ButtonLink, Card, SectionMessage } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import {
   MELDUNG_ANFRAGE_UNBEKANNT,
@@ -131,8 +131,8 @@ export default async function ZustimmungSeite({
       <p className="type-body-small mb-4 text-on-surface-mittel">{ZUGANG_WARNUNG}</p>
 
       {grenze && (
-        <Banner
-          tone="fehler"
+        <SectionMessage
+          appearance="error"
           className="mb-4"
           actions={
             <ButtonLink href="/konto" variant="text">
@@ -141,7 +141,7 @@ export default async function ZustimmungSeite({
           }
         >
           {MELDUNG_ZUGAENGE_GRENZE}
-        </Banner>
+        </SectionMessage>
       )}
 
       <Card className="p-6">
@@ -163,7 +163,7 @@ function Kopf({ titel, meldung }: { titel: string; meldung: string }) {
         <p className="type-label-medium text-primary">KiFu</p>
         <h1 className="type-headline-large mt-1 text-on-surface">{titel}</h1>
       </header>
-      <Banner tone="fehler">{meldung}</Banner>
+      <SectionMessage appearance="error">{meldung}</SectionMessage>
     </>
   );
 }

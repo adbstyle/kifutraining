@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Clock, Layers, ListChecks } from "lucide-react";
-import { Badge, Card, KategorieChip } from "@/components/ui";
+import { Card, KategorieLozenge, Lozenge, SichtbarkeitLozenge } from "@/components/ui";
 import { formatDuration } from "@/lib/training";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import type { TrainingListRow } from "@/lib/queries/trainings";
@@ -40,38 +40,31 @@ export function TrainingCard({
       >
         <div className="mb-2 flex flex-wrap items-center gap-2">
           {training.stufen.map((k) => (
-            <KategorieChip key={k} k={k} />
+            <KategorieLozenge key={k} k={k} />
           ))}
           {/* Welchem Lehrmittel das Training folgt (Story 5 AK 3), liest sich
               schon an den Alterskategorien ab — G/F/E ist Kinder-, D–A
               Juniorenfussball. Die Marke steht darum nur noch, wo keine
-              Kategorie gewählt ist (Entwurf). Bewusst neutral statt in einer
-              Kategorie-Farbe: die Altersstufe ist keine Alterskategorie und
-              darf deren gelernte Codierung nicht borgen. */}
+              Kategorie gewählt ist (Entwurf). Neutral statt in einem Akzent:
+              die Altersstufe ist keine Alterskategorie. */}
           {training.stufen.length === 0 && (
-            <Badge tone="neutral">{altersstufeLabels[training.altersstufe]}</Badge>
+            <Lozenge>{altersstufeLabels[training.altersstufe]}</Lozenge>
           )}
           {/* Führt das Training mehrere Varianten des Hauptteils, steht das
               schon in der Übersicht (#206 AK 1) — sonst müsste man jedes
               Training öffnen, um Alternativen zu finden. Bei genau einer
-              Variante bleibt die Zeile stumm (AK 3). Der eigene Ton trägt
-              Primary-Kontur statt einer Kategorie-Farbe: Die Variantenzahl ist
-              keine Alterskategorie und borgt deren gelernte Codierung nicht —
-              umrandet heisst hier wie überall «gilt», und was gilt, ist die
-              Wahl zwischen mehreren Hauptteilen. Plural immer, die Marke
-              erscheint erst ab zwei. */}
+              Variante bleibt die Zeile stumm (AK 3). Als `discovery`-Lozenge: Sie
+              meldet etwas Zusätzliches, die Wahl zwischen mehreren
+              Hauptteilen. Plural immer, die Marke erscheint erst ab zwei. */}
           {training.variantenZahl > 1 && (
-            <Badge tone="varianten">
-              <Layers size={12} strokeWidth={2.5} aria-hidden />
+            <Lozenge appearance="discovery" iconBefore={Layers}>
               {training.variantenZahl} Varianten
-            </Badge>
+            </Lozenge>
           )}
           {/* Nur am eigenen Eintrag: bei fremden ist der Zustand immer
               öffentlich und die Marke sagte nichts. */}
           {training.istEigen && (
-            <Badge tone={training.visibility === "public" ? "oeffentlich" : "entwurf"}>
-              {training.visibility === "public" ? "Öffentlich" : "✎ Entwurf"}
-            </Badge>
+            <SichtbarkeitLozenge oeffentlich={training.visibility === "public"} />
           )}
         </div>
 

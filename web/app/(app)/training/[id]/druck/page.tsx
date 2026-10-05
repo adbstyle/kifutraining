@@ -1,7 +1,7 @@
 import { GesamtMaterialListe } from "@/components/training/GesamtMaterialListe";
 import type { Metadata } from "next";
 import { Clock } from "lucide-react";
-import { KategorieChip, PrintButton } from "@/components/ui";
+import { KategorieLozenge, PrintButton } from "@/components/ui";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { TrainingExerciseDetail } from "@/components/training/TrainingExerciseDetail";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
@@ -69,7 +69,7 @@ export default async function TrainingDruckPage({
         <h1 className="type-headline-large text-on-surface">{training.name}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {training.stufen.map((k) => (
-            <KategorieChip key={k} k={k} />
+            <KategorieLozenge key={k} k={k} />
           ))}
           <span className="inline-flex items-center gap-1.5 type-label-large text-on-surface-mittel">
             <Clock size={16} strokeWidth={2} aria-hidden />

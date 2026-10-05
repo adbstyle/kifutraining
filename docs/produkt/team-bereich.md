@@ -271,7 +271,7 @@ Monat in Wochen von Montag bis Sonntag, samt den Randtagen der Nachbarmonate, un
 heutigen Tag hervor. Mit den Pfeilen geht es zu früheren und späteren Monaten, mit „Heute"
 zurück zum aktuellen, bestimmt nach dem Kalendertag in der Schweiz. Jeder Termin eines Tages
 steht einzeln mit seinem Beginn und dem Namen seines Trainings, oder mit „Noch kein Training"
-(anstehend, umrandet), „Ohne Training" (vergangen, leise) oder „Ausgefallen"
+(anstehend, orange hinterlegt), „Ohne Training" (vergangen, leise) oder „Ausgefallen"
 (durchgestrichen); fehlt der Beginn, steht „Zeit fehlt". Eine Woche ganz ohne Termin ist
 gestrichelt umrandet. Ein Klick öffnet den Termin mit denselben Angaben und Handgriffen wie in
 der Liste. Ein Klick auf die freie Fläche eines Tages öffnet „Termin erstellen" mit dem Tag als

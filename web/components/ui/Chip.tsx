@@ -1,52 +1,6 @@
 import { X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { kategorieStufe } from "@/lib/labels";
-import type { KategorieSlug } from "@/lib/vocab";
-
-/* ── Alterskategorie-Plakette (G bis A) ──────────────────────
-   Je Stufe eine eigene, fest lernbare Farbe — als KONTUR und Schrift,
-   nicht als Fläche: Die Farbe trägt die Stufe, sie füllt sie nicht.
-   Gefüllt stünden sieben Werte nebeneinander als Flickenteppich und
-   konkurrierten mit jedem gefüllten Knopf daneben; als Umriss bleiben
-   sie leise, und der Buchstabe unterscheidet ohnehin mit (a11y: nie
-   nur über Farbe).
-   Einzige Ausnahme ist der DRUCK: Auf Papier ist eine helle Kontur
-   kaum zu sehen — kat-a (#cfd8dc) verschwände auf Weiss ganz. Dort
-   kippt die Plakette darum in die gefüllte Form mit dunkler Schrift.
-   Die Schrift bleibt dabei `text-on-surface`: Im Druck-`:root` ist diese
-   Rolle bereits die Tinte, ein getippter Hex wäre eine dritte Stelle,
-   an der dieselbe Farbe steht.
-
-   Modul-lokal: Seit dem 2026-09-13 wählt man Alterskategorien in einer
-   Mehrfachauswahl (17) und nicht mehr in farbigen Kacheln — die Tabelle hat
-   damit nur noch einen Nutzer, die Plakette hier drunter. Sie sagt, WELCHE
-   Kategorie angezeigt wird; beim Auswählen steht der Name ausgeschrieben. */
-const katPlakette: Record<KategorieSlug, string> = {
-  G: "kontur border-current text-kat-g bg-transparent print:bg-kat-g print:text-on-surface print:border-transparent",
-  F: "kontur border-current text-kat-f bg-transparent print:bg-kat-f print:text-on-surface print:border-transparent",
-  E: "kontur border-current text-kat-e bg-transparent print:bg-kat-e print:text-on-surface print:border-transparent",
-  D: "kontur border-current text-kat-d bg-transparent print:bg-kat-d print:text-on-surface print:border-transparent",
-  C: "kontur border-current text-kat-c bg-transparent print:bg-kat-c print:text-on-surface print:border-transparent",
-  B: "kontur border-current text-kat-b bg-transparent print:bg-kat-b print:text-on-surface print:border-transparent",
-  A: "kontur border-current text-kat-a bg-transparent print:bg-kat-a print:text-on-surface print:border-transparent",
-};
-
-export function KategorieChip({ k }: { k: KategorieSlug }) {
-  return (
-    <span
-      title={kategorieStufe[k]}
-      className={cn(
-        // 22 px wie die `Badge` — beide sind Plaketten, und der Styleguide
-        // nennt für sie EIN Mass.
-        "type-plakette inline-flex h-[22px] items-center justify-center rounded-plakette px-2",
-        katPlakette[k],
-      )}
-    >
-      {k}
-    </span>
-  );
-}
 
 /* ── Chips ────────────────────────────────────────────────────
    Eine gemeinsame Basis, vier Typen: Assist · Filter · Input · Suggestion.
@@ -165,8 +119,8 @@ export function FilterChip({
    Kein Häkchen — es ist eine Einfachauswahl, nicht ein Ein/Aus-Zustand,
    und der Umriss-Wechsel trägt die Aussage bereits.
 
-   Bewusst hook-frei: Chip.tsx wird auch von Server-Komponenten importiert
-   (KategorieChip). Der Fokus wandert darum über das DOM statt über Refs. */
+   Bewusst hook-frei: Chip.tsx wird auch von Server-Komponenten importiert.
+   Der Fokus wandert darum über das DOM statt über Refs. */
 export function ChoiceChip({
   selected = false,
   tabStop = false,

@@ -9,12 +9,12 @@ import { kategorienSlugs, type KategorieSlug } from "@/lib/vocab";
 
    Eine Mehrfachauswahl (Styleguide 17), wie jede Mehrfachauswahl seit dem
    2026-09-13. Sie war bis dahin eine Reihe toggelbarer Plaketten, die ihre
-   Kategoriefarbe trugen — dieselbe Tabelle, die Übungskarte,
-   Katalog und Druck benutzen. Diese Farbe entfällt hier (PO-Entscheid
+   Kategoriefarbe trugen — dieselbe, die Übungskarte, Katalog und Druck
+   zeigen (`KategorieLozenge`). Diese Farbe entfällt hier (PO-Entscheid
    2026-09-13): Sie sagt, WELCHE Kategorie man vor sich hat, und das ist beim
    Anzeigen die Aussage, beim Auswählen aber steht der Name ohnehin
    ausgeschrieben da. Wo eine Kategorie angezeigt wird, trägt sie ihre Farbe
-   unverändert weiter.
+   weiter.
 
    Angeboten werden nur die Kategorien der Altersstufe (`kategorien`;
    Story 5 AK 4) — G bis A stehen nie gemeinsam zur Wahl. Beim Anlegen ist

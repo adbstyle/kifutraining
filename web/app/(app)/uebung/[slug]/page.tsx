@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getExerciseDetail, isFavorited } from "@/lib/queries/exercises";
 import { EINORDNUNG_LABEL } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
-import { AenderungBanner } from "@/components/exercise/MaterialField";
+import { AenderungMessage } from "@/components/exercise/MaterialField";
 import {
   AENDERUNG_BEIBEHALTEN,
   AENDERUNG_UEBERNEHMEN,
@@ -104,7 +104,7 @@ export default async function ExerciseDetailPage({
             // Hat eine Diagrammänderung das Material verändert (Story #269)? Nur
             // die Eigentümerin sieht es — sie allein kann antworten. Die
             // Entscheidung bleibt auf der Detailseite (PO 2026-10-01).
-            <AenderungBanner
+            <AenderungMessage
               aenderungen={materialHinweis}
               actions={
                 <>
@@ -231,7 +231,7 @@ export default async function ExerciseDetailPage({
         </section>
       )}
 
-      {/* Herkunft auf dem Ausdruck (Story #114 AK 7). Die Plakette in der
+      {/* Herkunft auf dem Ausdruck (Story #114 AK 7). Die Lozenge in der
           Einordnung genügt dem Papier nicht: Beim eigenen Entwurf nennt sie
           nur den Zustand, nicht die Herkunft. Darum im
           Druck ein eigener Satz für alle drei Fälle — und der Manual-Fuss

@@ -13,12 +13,12 @@ import {
   Trash2,
 } from "lucide-react";
 import {
-  Badge,
+  Lozenge,
   Button,
   Card,
   Dialog,
   IconButton,
-  KategorieChip,
+  KategorieLozenge,
   OverflowMenu,
   Tooltip,
 } from "@/components/ui";
@@ -122,34 +122,32 @@ export function TeamTrainingsListe({
             >
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 {t.stufen.map((k) => (
-                  <KategorieChip key={k} k={k} />
+                  <KategorieLozenge key={k} k={k} />
                 ))}
                 {/* Dieselbe Marke wie auf der Trainings-Kachel, an derselben
                     Stelle der Chip-Zeile: der Trainingsbestand des Teams
                     zeigt Varianten genauso an (#206 AK 1). Die Liste
                     dupliziert die Kachel-Anzeige bewusst — sie trägt eigene
                     Aktionen und lässt sich darum nicht durch TrainingCard
-                    ersetzen. Umrandet in Primary (`varianten`), weil die Zahl
-                    eine Eigenschaft des Trainings meldet und keine
-                    Alterskategorie ist; Plural immer, die Marke erscheint
+                    ersetzen. Als `discovery`-Lozenge wie auf der Karte: Die
+                    Zahl meldet etwas Zusätzliches am Training und keine
+                    Alterskategorie; Plural immer, die Marke erscheint
                     erst ab zwei (AK 3). */}
                 {t.variantenZahl > 1 && (
-                  <Badge tone="varianten">
-                    <Layers size={12} strokeWidth={2.5} aria-hidden />
+                  <Lozenge appearance="discovery" iconBefore={Layers}>
                     {t.variantenZahl} Varianten
-                  </Badge>
+                  </Lozenge>
                 )}
                 {/* „Eingeplant" ist ein Zustand, keine Aktion — darum als
-                    Plakette beim Titel statt als Attrappe eines Buttons in
+                    Lozenge beim Titel statt als Attrappe eines Buttons in
                     der Aktionsreihe. Geändert wird der Termin im Plan.
                     Das Datum steht mit dabei: mehrere eingeplante Einheiten
                     desselben Trainings heissen gleich und sind sonst nicht
                     auseinanderzuhalten (#156 AK 7). */}
                 {t.termin && (
-                  <Badge tone="neutral">
-                    <CalendarCheck size={12} strokeWidth={2.5} aria-hidden />
+                  <Lozenge iconBefore={CalendarCheck}>
                     Eingeplant · {datumKurz(t.termin.datum)}
-                  </Badge>
+                  </Lozenge>
                 )}
               </div>
               <h3 className="type-title-medium text-on-surface">

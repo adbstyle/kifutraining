@@ -148,7 +148,7 @@ export const UebungKopf = z.object({
     .object({ min: z.number().nullable(), max: z.number().nullable() })
     .nullable(),
   /** Kifu-Manual, Community (öffentlich) oder Entwurf (privat) — dieselbe
-   *  Plakette wie auf der Karte. */
+   *  Lozenge wie auf der Karte. */
   herkunft: Wert,
   sichtbarkeit: Sichtbarkeit,
   bild_url: z.string().nullable(),

@@ -9,7 +9,7 @@ import {
   MultiSelect,
   Button,
   AltersstufeField,
-  Banner,
+  SectionMessage,
   FormAbschnitt,
   HeadlineField,
   Checkbox,
@@ -49,9 +49,9 @@ import { EinordnungField } from "@/components/exercise/EinordnungField";
 import { UmwandelnDialog, type Umwandlung } from "@/components/exercise/UmwandelnDialog";
 import { SpielfeldgroesseField } from "@/components/exercise/SpielfeldgroesseField";
 import {
-  AenderungBanner,
+  AenderungMessage,
   MaterialField,
-  VorschlagBanner,
+  VorschlagMessage,
   listeAusZeilen,
   zeilenAus,
 } from "@/components/exercise/MaterialField";
@@ -664,7 +664,7 @@ export function ExerciseForm({
             error={materialError ?? undefined}
             hinweis={
               aenderungen.length > 0 ? (
-                <AenderungBanner
+                <AenderungMessage
                   aenderungen={aenderungen}
                   actions={
                     <>
@@ -678,7 +678,7 @@ export function ExerciseForm({
                   }
                 />
               ) : zeigtVorschlag ? (
-                <VorschlagBanner vorschlag={vorschlag} onUebernehmen={uebernehmeVorschlag} />
+                <VorschlagMessage vorschlag={vorschlag} onUebernehmen={uebernehmeVorschlag} />
               ) : basisBestaetigt ? (
                 <p className="type-body-small text-on-surface-mittel">
                   Wird mit dem Speichern übernommen.
@@ -882,9 +882,9 @@ export function ExerciseForm({
       className={cn("flex flex-col gap-10", geteilt && "xl:min-h-0 xl:flex-1 xl:gap-6")}
     >
       {state.message && (
-        <Banner tone="fehler" className={UEBER_BEIDEN}>
+        <SectionMessage appearance="error" className={UEBER_BEIDEN}>
           {state.message}
-        </Banner>
+        </SectionMessage>
       )}
 
       <VerlassenWarnung
@@ -906,9 +906,9 @@ export function ExerciseForm({
           bereits die Zielstufe, die Übung liegt aber unverändert in der
           Datenbank (Story 4 PC 5). Der Hinweis sagt, was noch fehlt. */}
       {umwandlung && (
-        <Banner className={UEBER_BEIDEN}>
+        <SectionMessage className={UEBER_BEIDEN}>
           Umwandlung vorgemerkt - sie wird mit «Umwandeln und speichern» wirksam.
-        </Banner>
+        </SectionMessage>
       )}
 
       {/* In der Spalte steht obenauf, was die Bearbeitung abschliesst — es

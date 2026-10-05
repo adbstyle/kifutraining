@@ -4,8 +4,8 @@ import {
   EigenschaftBreit,
   EigenschaftFehlt,
   Eigenschaften,
-  HerkunftBadge,
-  KategorieChip,
+  HerkunftLozenge,
+  KategorieLozenge,
   MaterialListe,
 } from "@/components/ui";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
@@ -102,7 +102,7 @@ export function EinordnungsLeiste({
         <Eigenschaft label="Alterskategorien">
           <span className="flex flex-wrap gap-1.5">
             {kategorien.map((k) => (
-              <KategorieChip key={k} k={k} />
+              <KategorieLozenge key={k} k={k} />
             ))}
           </span>
         </Eigenschaft>
@@ -149,7 +149,7 @@ export function EinordnungsLeiste({
           (PO 2026-10-02). */}
       {ex.source && ex.visibility && (
         <Eigenschaft label="Herkunft">
-          <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
+          <HerkunftLozenge herkunft={ex.source} visibility={ex.visibility} />
         </Eigenschaft>
       )}
     </Eigenschaften>

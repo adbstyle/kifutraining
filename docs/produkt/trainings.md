@@ -250,7 +250,7 @@ Jede Gruppe ist dort ein Chip, der ihre Bezeichnung und die ihr zugewiesene Zeit
 24 min", und einen Gedankenstrich, solange keine Dauer zusammenkommt. Führt das Training mehrere
 Varianten seines Hauptteils, gilt die Zeit der angezeigten Variante. Trägt die Gruppe einen
 Konflikt der Verteilung, ist der Chip rot umrandet und trägt ein Warnzeichen — dieselbe Farbe
-wie eine abgewiesene Eingabe, denn die Anwendung kennt für Hinweise keine zweite; was genau nicht
+wie eine abgewiesene Eingabe, denn die Anwendung kennt für Konflikte an Chips und Feldern keine zweite; was genau nicht
 stimmt, steht im Klartext am Fuss der Karte, und gespeichert wird trotzdem.
 
 Ein Klick auf den Chip öffnet sein Menü. Darin steht, was mit dieser Gruppe zu tun ist:
