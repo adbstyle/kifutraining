@@ -1768,7 +1768,7 @@ export default function Styleguide() {
           um und zeigt sich im Fehler über einen halben Pixel nach innen, damit
           ein Befund nicht ausgerechnet beim Hinschauen verschwindet. Weil der Rahmen allein nur
           sehend wahrnehmbar ist, gehört zu <code>befund</code> ein Hinweis für
-          Screenreader (am Dauerfeld ein <code>sr-only</code>-Satz per{" "}
+          Screenreader (an der Dauer einer Übung ein <code>sr-only</code>-Satz per{" "}
           <code>aria-describedby</code>).
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
@@ -2870,7 +2870,10 @@ export default function Styleguide() {
             Enter oder ✓ speichert, Esc oder ✕ verwirft, ein Klick daneben
             speichert. <code>EigenschaftAuswahl</code>: Die Liste geht beim
             Klick sofort auf, jede Wahl speichert für sich. Nach Esc, ✓, ✕
-            und Enter steht der Fokus wieder auf dem Wert.
+            und Enter steht der Fokus wieder auf dem Wert. Ohne Zeile steht
+            derselbe Baustein frei als <code>InlineWert</code> - als Text oder
+            als Zahl, etwa die Dauer an einer Übung im Training; was nicht
+            gilt, bleibt mit seiner Meldung am Feld stehen.
           </li>
           <li>
             <strong>Nicht erfasst</strong> - <code>EigenschaftFehlt</code>{" "}

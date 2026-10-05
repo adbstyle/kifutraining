@@ -206,7 +206,7 @@ export function trainingNameProblem(name: string): string | null {
 export const NOTIZ_MAX = 500;
 
 /** Granularität der Dauer-Eingabe in Minuten — die Schrittweite der Pfeiltasten
- *  am Dauerfeld.
+ *  am Zahlenfeld der Dauer (`DauerWert`).
  *
  *  Einerschritte seit dem PO-Entscheid vom 2026-09-08 (Story #151, überholt
  *  AK 4/5): Zulässig ist jede ganze Zahl ab 0. Die Fünferschritte aus Story #11

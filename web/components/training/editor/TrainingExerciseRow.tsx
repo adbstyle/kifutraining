@@ -5,7 +5,7 @@ import { TriangleAlert, ChevronUp, ChevronDown, X, Pencil } from "lucide-react";
 import { IconButton, IconButtonLink, KategorieChip, Tooltip } from "@/components/ui";
 import { ExerciseThumb } from "../ExerciseThumb";
 import { InBibliothekButton } from "../InBibliothekButton";
-import { DauerFeld } from "./DauerFeld";
+import { DauerWert } from "./DauerWert";
 import { STUFE_ABWEICHEND_TEXT, stufenAbgedeckt } from "@/lib/training";
 import { varianteAnhang } from "@/lib/varianten";
 import { cn } from "@/lib/cn";
@@ -51,9 +51,9 @@ export function TrainingExerciseRow({
   varianteId?: string;
   trainingStufen: string[];
   showDuration: boolean;
-  /** Steht die Dauer dieser Übung in einem ungleich langen Wechsel? Färbt den
-   *  Rahmen des Dauerfelds rot (Story #150 `dauerWarnung`) — ein Befund, keine
-   *  Fehleingabe: Er trägt dieselbe Farbe, bleibt aber speicherbar. */
+  /** Steht die Dauer dieser Übung in einem ungleich langen Wechsel? Färbt die
+   *  Dauer rot (Story #150 `dauerWarnung`) — ein Befund, keine Fehleingabe:
+   *  Er trägt dieselbe Farbe, bleibt aber speicherbar. */
   dauerWarnung?: boolean;
   /** Das zweite Geschoss der Zeile (`UebungsEtage`). */
   etage?: ReactNode;
@@ -128,12 +128,18 @@ export function TrainingExerciseRow({
               ))}
             </span>
           )}
+          {/* Die Dauer als dritte Zeile, direkt bearbeitbar wie das Ziel in
+              den Eigenschaften (PO 2026-10-05). `relative`: Sie liegt über der
+              Fläche, mit der die Zeile die Übung öffnet. */}
+          {showDuration && (
+            <span className="relative mt-1">
+              <DauerWert value={item.durationMin} warnung={dauerWarnung} onChange={onDuration} />
+            </span>
+          )}
         </span>
 
-        {/* Aktionen und Dauer stehen übereinander, nicht nebeneinander: Das
-            Dauerfeld trägt seinen Namen über sich, in einer Reihe mit drei
-            Icon-Knöpfen liesse es die Zeile auseinanderfallen. Rechtsbündig,
-            damit die Felder aller Zeilen eine Kante bilden. */}
+        {/* Die Aktionen rechtsbündig, damit sie in allen Zeilen eine Kante
+            bilden. */}
         <span className="relative flex shrink-0 flex-col items-end gap-2">
           <span className="flex items-center">
             <InBibliothekButton fassungId={item.id} name={item.name} className="xl:hidden" />
@@ -172,13 +178,6 @@ export function TrainingExerciseRow({
             </Tooltip>
           </span>
 
-          {showDuration && (
-            <DauerFeld
-              value={item.durationMin}
-              warnung={dauerWarnung}
-              onChange={onDuration}
-            />
-          )}
         </span>
       </div>
 
