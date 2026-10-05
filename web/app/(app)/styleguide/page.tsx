@@ -2544,7 +2544,7 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Anatomie wie <code>@atlaskit/section-message</code>: eine getönte
           Fläche ohne Kontur (<code>section-*</code>), 16 px Polsterung,{" "}
-          <code>rounded-dialog</code>, das Zeichen 24 px in{" "}
+          <code>rounded-dialog</code>, das Zeichen 16 px (im 24-px-Feld) in{" "}
           <code>icon-*</code> links, 16 px zum Text. Der Text steht in{" "}
           <code>type-body-medium</code> und <code>on-surface</code>; den Ton
           tragen Fläche und Zeichen. Die Knöpfe (<code>text</code>) stehen wie
