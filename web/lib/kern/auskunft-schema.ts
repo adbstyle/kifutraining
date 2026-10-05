@@ -13,7 +13,7 @@
 // diese Datei mit tsx.
 import { z } from "zod";
 import { Sichtbarkeit, Wert } from "@/lib/wert";
-import { felderSchema } from "@/lib/termin-felder-ausgabe";
+import { felderSchema, spielerzahlSchema } from "@/lib/termin-felder-ausgabe";
 import { gesamtMaterialSchema, materialSchema } from "@/lib/material-ausgabe";
 import { UEBEN_ZEILEN } from "@/lib/freitext";
 
@@ -169,6 +169,8 @@ function baueSchema(streng: boolean) {
       bemerkung: z.string().nullable(),
       /** Die Felder des Platzes (#389 AK 13, 14); `null` = unbekannt. */
       felder: felderSchema(streng),
+      /** Die erwartete Spielerzahl (#390 AK 6); `null` = unbekannt. */
+      erwartete_spielerzahl: spielerzahlSchema(),
       /** Die Terminserie, zu der der Termin gehört; `null` bei einem einzelnen (#324). */
       serie_id: z.string().nullable(),
       /** Wer den Termin vorbereitet und leitet (#325 AK 16); `id` und

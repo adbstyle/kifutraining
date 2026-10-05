@@ -87,11 +87,13 @@ export const SERIE_TEXT = {
   namenloseNurEinzeln: "Ehemalige Mitglieder ohne Namen lassen sich nur für diesen einen Termin entfernen.",
   namenloseUndRegel:
     "Ehemalige Mitglieder ohne Namen und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
-  /** #389: Eine Serie gibt noch keine Felder vor — die Felder eines
-   *  Serientermins gelten nur für ihn. Übergang bis #391 (Felder und
-   *  Spielerzahl einer Terminserie), das beide Sätze wieder entfernt. */
-  felderNurEinzeln: "Die Felder lassen sich nur für diesen einen Termin festhalten.",
-  felderUndRegel: "Felder und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
+  /** #389, #390: Eine Serie gibt noch keine Felder und keine Spielerzahl vor
+   *  — beide gelten an einem Serientermin nur für ihn. Übergang bis #391
+   *  (Felder und Spielerzahl einer Terminserie), das beide Sätze wieder
+   *  entfernt. */
+  platzNurEinzeln: "Felder und erwartete Spielerzahl lassen sich nur für diesen einen Termin festhalten.",
+  platzUndRegel:
+    "Felder oder erwartete Spielerzahl und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
 } as const;
 
 export type SerienRegel = { wochentage: Wochentag[]; von: string; bis: string };
@@ -148,16 +150,16 @@ export function regelProblemVorab(
  *  (`SERIE_TEXT.namenloseNurEinzeln`, mit der Regel zusammen
  *  `SERIE_TEXT.namenloseUndRegel`).
  *
- *  `felder`: Die Felder (#389) ändern sich. Die Serie gibt noch keine vor,
- *  darum gelten sie nur für diesen Termin (`SERIE_TEXT.felderNurEinzeln`) —
- *  bis #391. */
+ *  `platz`: Felder (#389) oder erwartete Spielerzahl (#390) ändern sich. Die
+ *  Serie gibt noch keine vor, darum gelten sie nur für diesen Termin
+ *  (`SERIE_TEXT.platzNurEinzeln`) — bis #391. */
 export function erlaubteReichweiten(g: {
   datum: boolean;
   regel: boolean;
   namenlose?: boolean;
-  felder?: boolean;
+  platz?: boolean;
 }): readonly Reichweite[] | null {
-  const nurEinzeln = g.datum || !!g.namenlose || !!g.felder;
+  const nurEinzeln = g.datum || !!g.namenlose || !!g.platz;
   if (nurEinzeln && g.regel) return null;
   if (nurEinzeln) return ["nur_dieser"];
   if (g.regel) return ["dieser_und_folgende", "alle"];

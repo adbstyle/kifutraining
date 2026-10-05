@@ -1,4 +1,5 @@
-// Die Felder eines Termins (#389) in der Form der KI-Werkzeuge — eine Quelle
+// Platz und Spielerzahl eines Termins (#389, #390) in der Form der
+// KI-Werkzeuge. Für die Felder eine Quelle
 // für jede Auskunft, die einen Termin nennt («team_plan_abrufen»,
 // «training_abrufen», «trainings_suchen»; AK 13, 14), und für die Eingabe von
 // «termin_festlegen» und «termin_aendern» (AK 12).
@@ -16,6 +17,7 @@ import { z } from "zod";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 import { Wert, wert } from "@/lib/wert";
 import { UNTERGRUENDE, UNTERGRUND_LABEL, type Felder } from "@/lib/termin-felder";
+import { SPIELERZAHL_MAX, SPIELERZAHL_MIN, TERMIN_TEXT } from "@/lib/termin";
 
 /** Was jede Auskunft und jede Eingabe über die Felder sagt (#389 PO 1–5). */
 export const FELDER_MODELL =
@@ -82,3 +84,20 @@ export const FelderEingabe = z
     }),
   )
   .describe(FELDER_MODELL);
+
+// ── Erwartete Spielerzahl (#390) ─────────────────────────────────────────────
+
+/** Was jede Auskunft und jede Eingabe über die Spielerzahl sagt (#390, PO 7). */
+export const SPIELERZAHL_MODELL =
+  "«erwartete_spielerzahl» ist die Zahl der Spieler:innen, mit der für den Termin gerechnet wird: " +
+  `${TERMIN_TEXT.spielerzahlZaehlt} Ganze Zahl von ${SPIELERZAHL_MIN} bis ${SPIELERZAHL_MAX}; null heisst unbekannt. ` +
+  "Eine erwartete Zahl - wer tatsächlich kommt, hält KiFu nicht fest.";
+
+/** Das Ausgabe-Schema in jeder Auskunft, die einen Termin nennt (AK 6). */
+export function spielerzahlSchema() {
+  return z.number().int().nullable().describe(SPIELERZAHL_MODELL);
+}
+
+/** Die Eingabe der Werkzeuge — bewusst eine beliebige Zahl: Ganzzahl und
+ *  Bereich prüft der Fachkern mit dem Satz der Oberfläche (AK 7). */
+export const SpielerzahlEingabe = z.number().describe(SPIELERZAHL_MODELL);

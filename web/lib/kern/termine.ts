@@ -8,6 +8,7 @@ import {
   kopieGebliebenText,
   TERMIN_TEXT,
   leerZuNull,
+  spielerzahlProblem,
   terminProblem,
   type TerminProblem,
 } from "@/lib/termin";
@@ -55,7 +56,7 @@ import {
 export const TERMIN_FELD = { feld: "termin_id" } as const;
 
 export const TERMIN_ROH =
-  "id, team_id, training_id, datum, beginn, ende, ort, bemerkung, felder, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
+  "id, team_id, training_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
 
 export type TerminRoh = {
   id: string;
@@ -68,6 +69,8 @@ export type TerminRoh = {
   bemerkung: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
+  /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
+  erwartete_spielerzahl: number | null;
   /** Nur Serientermine tragen eine Serie; die Flags zeigen, welche Angaben
    *  von ihr abweichen. */
   serie_id: string | null;
@@ -106,6 +109,13 @@ export function pruefeFelder(
   const p = felderProblem(n);
   if (p) return fehlschlag("eingabe", p.text, { feld: felderPfad(p) });
   return { ok: true, felder: n };
+}
+
+/** Die erwartete Spielerzahl prüfen (#390 AK 3, 7) — mit dem Satz der
+ *  Oberfläche und dem Eingabenamen des Werkzeugs. */
+function spielerzahlFehler(n: number | null | undefined): KernFehler | null {
+  const p = n === undefined ? null : spielerzahlProblem(n);
+  return p ? fehlschlag("eingabe", p.text, { feld: p.feld }) : null;
 }
 
 /** Ein Fehler der Kalender-RPCs als Kern-Fehler. «Nicht gefunden» und «seit
@@ -157,10 +167,13 @@ export type TerminFestlegen = {
   bemerkung?: string | null;
   /** Die Felder des Platzes (#389); ohne Angabe oder leer: keine. */
   felder?: readonly FeldEingabe[] | null;
+  /** Die erwartete Spielerzahl (#390); ohne Angabe: unbekannt. */
+  spielerzahl?: number | null;
 };
 
 /** Einen einzelnen Termin ohne Training festlegen (AK 1–6), auch in der
- *  Vergangenheit (AK 4), auf Wunsch mit seinen Feldern (#389 AK 1, 8). */
+ *  Vergangenheit (AK 4), auf Wunsch mit seinen Feldern (#389 AK 1, 8) und
+ *  der erwarteten Spielerzahl (#390 AK 1). */
 export async function legeTerminFest(
   supabase: SupabaseClient,
   _userId: string,
@@ -170,6 +183,8 @@ export async function legeTerminFest(
   if (problem) return problem;
   const felder = pruefeFelder(e.felder);
   if (!felder.ok) return felder;
+  const zahl = spielerzahlFehler(e.spielerzahl);
+  if (zahl) return zahl;
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
 
@@ -183,6 +198,7 @@ export async function legeTerminFest(
       ort: leerZuNull(e.ort),
       bemerkung: leerZuNull(e.bemerkung),
       felder: felder.felder,
+      erwartete_spielerzahl: e.spielerzahl ?? null,
     })
     .select("id")
     .single<{ id: string }>();
@@ -203,6 +219,9 @@ export type TerminAendern = {
   /** Die Felder als ganze Liste (#389 AK 7): `undefined` = unverändert,
    *  `null` oder `[]` = entfernen. */
   felder?: readonly FeldEingabe[] | null;
+  /** Die erwartete Spielerzahl (#390 AK 2): `undefined` = unverändert,
+   *  `null` = entfernen. */
+  spielerzahl?: number | null;
   /** Das Training, das der Termin bei der Auswahl trug (AK 23). `undefined`
    *  beim KI-Weg: geprüft wird dann gegen den eben gelesenen Stand. */
   erwartetesTraining?: string | null;
@@ -221,9 +240,9 @@ async function warumNichtGeschrieben(
     : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
 }
 
-/** Datum, Zeit, Ort, Bemerkung und Felder (#389) eines Termins ändern
- *  (AK 7–10, 23). Der Termin wird mit seinem Stand zusammengeführt und als Ganzes geprüft;
- *  geschrieben werden aber nur die übergebenen Felder (Beginn und Ende stets
+/** Datum, Zeit, Ort, Bemerkung, Felder (#389) und erwartete Spielerzahl
+ *  (#390) eines Termins ändern (AK 7–10, 23). Der Termin wird mit seinem
+ *  Stand zusammengeführt und als Ganzes geprüft; geschrieben werden aber nur die übergebenen Felder (Beginn und Ende stets
  *  zusammen). So überschreibt eine gleichzeitige Änderung eines anderen
  *  Feldes nichts still mit dem alten Stand (PO 17). */
 export async function aendereTermin(
@@ -246,8 +265,10 @@ export async function aendereTermin(
   if (problem) return problem;
   const felder = e.felder === undefined ? null : pruefeFelder(e.felder);
   if (felder && !felder.ok) return felder;
+  const zahl = spielerzahlFehler(e.spielerzahl);
+  if (zahl) return zahl;
 
-  const aenderung: Partial<typeof neu & { felder: Felder | null }> = {};
+  const aenderung: Partial<typeof neu & { felder: Felder | null; erwartete_spielerzahl: number | null }> = {};
   if (e.datum !== undefined) aenderung.datum = neu.datum;
   if (e.beginn !== undefined || e.ende !== undefined) {
     aenderung.beginn = neu.beginn;
@@ -257,13 +278,15 @@ export async function aendereTermin(
   if (e.bemerkung !== undefined) aenderung.bemerkung = neu.bemerkung;
   // Die Felder sind EINE Angabe und gehen als ganze Liste (#389 AK 7).
   if (felder) aenderung.felder = felder.felder;
+  if (e.spielerzahl !== undefined) aenderung.erwartete_spielerzahl = e.spielerzahl;
 
   // «Nur dieser» (#326 AK 1, PC 1): Jede Angabe eines Serientermins, die sich
   // ändert, weicht danach ab — bis man sie wieder der Serie folgen lässt. Nur
   // was übergeben wird und sich vom Stand unterscheidet, setzt ein Flag; ein
   // schon gesetztes bleibt ungeschrieben stehen. Das Datum braucht keines: Es
-  // weicht ab, sobald es nicht mehr auf dem Serientag liegt. Die Felder (#389)
-  // brauchen (noch) keines: Die Serie gibt keine vor (bis #391).
+  // weicht ab, sobald es nicht mehr auf dem Serientag liegt. Felder (#389) und
+  // Spielerzahl (#390) brauchen (noch) keines: Die Serie gibt sie nicht vor
+  // (bis #391).
   const flags: Record<string, boolean> = {};
   if (t.serie_id) {
     if ("beginn" in aenderung && (neu.beginn !== t.beginn || neu.ende !== t.ende)) flags.zeit_abweichend = true;

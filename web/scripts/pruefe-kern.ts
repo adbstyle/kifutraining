@@ -85,7 +85,10 @@ import {
   geaenderteFelder,
   kopieGebliebenText,
   leerZuNull,
+  spielerzahlProblem,
+  spielerzahlText,
   terminProblem,
+  zahlOderNull,
   zeitText,
 } from "../lib/termin";
 import {
@@ -117,7 +120,7 @@ import {
   toreText,
   type Feld,
 } from "../lib/termin-felder";
-import { FELDER_MODELL, FelderEingabe, felderAusgabe, felderSchema } from "../lib/termin-felder-ausgabe";
+import { FELDER_MODELL, FelderEingabe, SPIELERZAHL_MODELL, SpielerzahlEingabe, felderAusgabe, felderSchema, spielerzahlSchema } from "../lib/termin-felder-ausgabe";
 import { MASS_TEXT } from "../lib/feldmass";
 import { ZEITRAUM_TEXT, istMonat, monatVon, monatsName, monatsRaster, plusMonate, tagText, zeitraumProblem } from "../lib/monat";
 import { planHref } from "../lib/team-ansicht";
@@ -527,7 +530,7 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
 });
 
 pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
-  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: false, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [] } }, "2026-10-01"), false);
@@ -541,7 +544,7 @@ pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst
   assert.equal(TERMIN_TEXT.grundLang, "Der Grund darf höchstens 500 Zeichen lang sein.");
   assert.equal(TERMIN_MELDUNG.NICHT_AUSGEFALLEN, "Dieser Termin ist nicht ausgefallen.");
   assert.ok(!KONFLIKT_MARKER.includes("TERMIN_AUSGEFALLEN"), "eine Regel, kein Konflikt");
-  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null,
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null,
     training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: true, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-01"), false, "AK 8");
   assert.equal(nochNichtVorbereitet({ ...t, ausgefallen: false }, "2026-10-01"), true);
@@ -568,6 +571,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
       { laenge_m: 30, breite_m: 25, tore: { minitor: 2, tor_5m: 0, tor_7m: null }, untergrund: "kunstrasen" as const },
       { laenge_m: null, breite_m: null, tore: { minitor: null, tor_5m: null, tor_7m: null }, untergrund: null },
     ],
+    spielerzahl: 12,
     training: { id: "t1", name: "Probe", stufen: ["F" as const] },
     serie: null,
     serienTag: null,
@@ -595,6 +599,8 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
       },
       { laenge_m: null, breite_m: null, tore: { minitor: null, tor_5m: null, tor_7m: null }, untergrund: null },
     ],
+    // #390 AK 6: die erwartete Spielerzahl, unbekannt als null.
+    erwartete_spielerzahl: 12,
     serie_id: null,
     verantwortliche: [],
     ausgefallen: false,
@@ -603,6 +609,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
   });
   // Platz unbekannt: «felder: null», nicht eine leere Liste (AK 14).
   assert.equal(trainingAuskunft(team, { userId: ICH, termin: { ...termin, felder: null } }).termin?.felder, null);
+  assert.equal(trainingAuskunft(team, { userId: ICH, termin: { ...termin, spielerzahl: null } }).termin?.erwartete_spielerzahl, null);
   TrainingAuskunftStreng.parse(heute);
   // Der heutige Tag zählt ganz zum Anstehenden — wie im Plan (`teilePlan`).
   assert.equal(trainingAuskunft(team, { userId: ICH, termin, heute: "2026-09-24" }).termin?.anstehend, false);
@@ -969,10 +976,10 @@ pruefe("Felder: der CHECK der Datenebene als Klartext, eine Regel (#389 AK 15)",
   assert.equal(still(() => ausDbFehler({ message: db })).art, "regel");
   // Der Name trifft nur sich selbst, nicht eine längere Bezeichnung.
   assert.equal(fachlicheMeldung('violates check constraint "tt_felder_abweichend"'), null);
-  assert.equal(SERIE_TEXT.felderNurEinzeln, "Die Felder lassen sich nur für diesen einen Termin festhalten.");
+  assert.equal(SERIE_TEXT.platzNurEinzeln, "Felder und erwartete Spielerzahl lassen sich nur für diesen einen Termin festhalten.");
   // Bis #391: Felder an einem Serientermin nur für ihn, nicht zusammen mit der Regel.
-  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false, felder: true }), ["nur_dieser"]);
-  assert.equal(erlaubteReichweiten({ datum: false, regel: true, felder: true }), null);
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false, platz: true }), ["nur_dieser"]);
+  assert.equal(erlaubteReichweiten({ datum: false, regel: true, platz: true }), null);
 });
 
 pruefe("Felder: KI-Ausgabe und -Eingabe (#389 AK 12–14)", () => {
@@ -992,6 +999,39 @@ pruefe("Felder: KI-Ausgabe und -Eingabe (#389 AK 12–14)", () => {
     text: MASS_TEXT.bereich,
   });
   assert.match(FELDER_MODELL, /null heisst unbekannt, 0 Tore heisst: keine/);
+});
+
+// ── Erwartete Spielerzahl (#390) ────────────────────────────────────────────
+pruefe("Spielerzahl: ganze Zahl von 1 bis 200, null = unbekannt, ein Satz für Oberfläche und KI (#390 AK 3, 7)", () => {
+  for (const ok of [null, 1, 12, 200]) assert.equal(spielerzahlProblem(ok), null, String(ok));
+  const satz = "Die erwartete Spielerzahl ist eine ganze Zahl von 1 bis 200.";
+  assert.equal(TERMIN_TEXT.spielerzahl, satz);
+  for (const schlecht of [0, -3, 201, 12.5, Number.NaN, "12", undefined])
+    assert.deepEqual(spielerzahlProblem(schlecht), { feld: "erwartete_spielerzahl", text: satz }, String(schlecht));
+  // Das Formular: leer heisst unbekannt, sonst die getippte Zahl.
+  assert.equal(zahlOderNull(""), null);
+  assert.equal(zahlOderNull(" 12 "), 12);
+  assert.ok(Number.isNaN(zahlOderNull("x")));
+  // Die Datenebene als Rückhalt: derselbe Satz, eine Regel.
+  const db = 'new row for relation "training_termine" violates check constraint "tt_spielerzahl"';
+  assert.equal(still(() => fehlerMeldung(db)), satz);
+  assert.equal(still(() => ausDbFehler({ message: db })).art, "regel");
+});
+
+pruefe("Spielerzahl: geändert, entfernt, Anzeige, KI-Schema (#390 AK 2, 4–6)", () => {
+  const start = { datum: "2026-10-08", beginn: "18:30", ende: "20:00", ort: "", bemerkung: "", spielerzahl: 12 };
+  assert.equal(geaenderteFelder({ ...start }, start), null);
+  assert.deepEqual(geaenderteFelder({ ...start, spielerzahl: 14 }, start), { spielerzahl: 14 });
+  assert.deepEqual(geaenderteFelder({ ...start, spielerzahl: null }, start), { spielerzahl: null }, "entfernen");
+  assert.equal(geaenderteFelder({ ...start, spielerzahl: null }, { ...start, spielerzahl: undefined }), null);
+  assert.equal(spielerzahlText(12), "12 Spieler:innen");
+  assert.equal(spielerzahlText(1), "1 Spieler:in");
+  assert.equal(spielerzahlSchema().parse(null), null);
+  assert.throws(() => spielerzahlSchema().parse(12.5));
+  // Die Eingabe lässt eine halbe Zahl durch — der Kern weist sie mit dem Satz der Oberfläche ab.
+  assert.equal(SpielerzahlEingabe.parse(12.5), 12.5);
+  assert.match(SPIELERZAHL_MODELL, /einschliesslich Torhüter:innen, ohne Trainer:innen/);
+  assert.match(SPIELERZAHL_MODELL, /null heisst unbekannt/);
 });
 
 pruefe("Erfolgstexte und Nicht-gefunden-Sätze haben je eine Quelle", () => {

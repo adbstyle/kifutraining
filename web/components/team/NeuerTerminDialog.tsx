@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { Button, Checkbox, DateField, Dialog, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
 import { maxEnddatum, serieProblem, wochentagVon, type SerieFeld, type Wochentag } from "@/lib/serie";
-import { BEMERKUNG_MAX, ORT_MAX, istKalendertag, terminProblem, type TerminFelder } from "@/lib/termin";
+import { BEMERKUNG_MAX, ORT_MAX, istKalendertag, spielerzahlProblem, terminProblem, zahlOderNull, type TerminFelder } from "@/lib/termin";
 import { felderProblem, type FelderProblem } from "@/lib/termin-felder";
 import type { TeamMitglied } from "@/lib/queries/teams";
 import { VerantwortlicheWahl, type VerantwortlicheWert } from "./VerantwortlicheWahl";
 import { FelderField, felderAusZeilen, type FeldZeile } from "./FelderField";
+import { SpielerzahlField } from "./SpielerzahlField";
 
 export type SerieFelder = {
   wochentage: Wochentag[];
@@ -42,10 +43,10 @@ const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: 
    Verantwortliche lassen sich gleich mitgeben (#325 AK 1, 3); gelöschte
    Konten gibt es bei einem neuen Termin noch nicht, darum ohne `bisher`.
 
-   Die Felder des Platzes (#389 AK 1, 8) nur beim einzelnen Termin: Eine
-   Serie gibt (noch) keine vor (#391). Im Serienmodus ist der Baustein
-   ausgeblendet und sendet nichts; die Zeilen bleiben stehen, falls der USER
-   zurückschaltet. */
+   Erwartete Spielerzahl (#390 AK 1) und Felder des Platzes (#389 AK 1, 8)
+   nur beim einzelnen Termin: Eine Serie gibt (noch) keine vor (#391). Im
+   Serienmodus sind beide ausgeblendet und senden nichts; die Eingaben
+   bleiben stehen, falls der USER zurückschaltet. */
 export function NeuerTerminDialog({
   open,
   start,
@@ -70,6 +71,8 @@ export function NeuerTerminDialog({
   const [problem, setProblem] = useState<{ feld: SerieFeld; text: string } | null>(null);
   const [felderZeilen, setFelderZeilen] = useState<FeldZeile[]>([]);
   const [felderFehler, setFelderFehler] = useState<FelderProblem | null>(null);
+  const [spielerzahl, setSpielerzahl] = useState("");
+  const [spielerzahlFehler, setSpielerzahlFehler] = useState<string | undefined>();
   // Ein Server-Fehler gilt für die Art, mit der gespeichert wurde; schaltet
   // der USER um, ist er verworfen — bis zum nächsten Speichern.
   const [verworfen, setVerworfen] = useState<string | undefined>();
@@ -85,6 +88,8 @@ export function NeuerTerminDialog({
     setProblem(null);
     setFelderZeilen([]);
     setFelderFehler(null);
+    setSpielerzahl("");
+    setSpielerzahlFehler(undefined);
     setVerworfen(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -125,13 +130,16 @@ export function NeuerTerminDialog({
       ort: f.ort,
       bemerkung: f.bemerkung,
       felder: felderAusZeilen(felderZeilen),
+      spielerzahl: zahlOderNull(spielerzahl),
     };
     const p = terminProblem(felder);
     // Das Datum heisst in beiden Fällen `von` — so steht ein Fehler am selben Feld.
     setProblem(p && { feld: p.feld === "datum" ? "von" : p.feld, text: p.text });
     const fp = felderProblem(felder.felder ?? null);
     setFelderFehler(fp);
-    if (!p && !fp) {
+    const zp = spielerzahlProblem(felder.spielerzahl ?? null);
+    setSpielerzahlFehler(zp?.text);
+    if (!p && !fp && !zp) {
       const verantwortlich = f.verantwortliche.length > 0 ? { userIds: f.verantwortliche, anonyme: [] } : undefined;
       senden({ art: "einzeln", felder, verantwortlich });
     }
@@ -193,7 +201,10 @@ export function NeuerTerminDialog({
           disabled={pending}
         />
         {!wiederholen && (
-          <FelderField zeilen={felderZeilen} onZeilenChange={setFelderZeilen} problem={felderFehler} disabled={pending} />
+          <>
+            <SpielerzahlField wert={spielerzahl} onChange={setSpielerzahl} fehler={spielerzahlFehler} disabled={pending} />
+            <FelderField zeilen={felderZeilen} onZeilenChange={setFelderZeilen} problem={felderFehler} disabled={pending} />
+          </>
         )}
       </div>
     </Dialog>

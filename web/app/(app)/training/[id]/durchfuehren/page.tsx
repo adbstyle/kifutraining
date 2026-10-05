@@ -51,6 +51,7 @@ export default async function TrainingDurchfuehrenPage({
               bemerkung: termin.bemerkung,
               verantwortliche: verantwortlichenNamen(termin.verantwortliche),
               felder: termin.felder,
+              spielerzahl: termin.spielerzahl,
             }
           : undefined
       }

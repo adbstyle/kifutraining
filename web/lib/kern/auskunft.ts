@@ -254,6 +254,7 @@ export function trainingAuskunft(
           ort: k.termin.ort,
           bemerkung: k.termin.bemerkung,
           felder: felderAusgabe(k.termin.felder),
+          erwartete_spielerzahl: k.termin.spielerzahl,
           serie_id: k.termin.serie?.id ?? null,
           verantwortliche: k.termin.verantwortliche.map((v) => ({
             id: v.userId,

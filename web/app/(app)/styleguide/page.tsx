@@ -3067,7 +3067,7 @@ export default function Styleguide() {
         <OeffnenZeileDemo />
       </Section>
 
-      <Section n="31" title="Felder eines Termins">
+      <Section n="31" title="Platz und Spielerzahl eines Termins">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Der Platz eines Termins (Epic #388): ein oder mehrere getrennte Felder,
           je mit Länge und Breite der verfügbaren Fläche, den Toren je Torart
@@ -3101,6 +3101,14 @@ export default function Styleguide() {
             dem Zeichen <code>LandPlot</code> (ein Feld: Grösse und Untergrund,
             mehrere: ihre Zahl), in der Durchführen-Ansicht je Feld ausführlich,
             Unbekanntes als «unbekannt», damit es nicht wie «keine» aussieht.
+          </li>
+          <li>
+            <strong>Erwartete Spielerzahl</strong> (#390) - ein gewöhnliches
+            Zahlenfeld (<code>SpielerzahlField</code> = <code>TextField</code>),
+            dessen Hinweis sagt, was die Zahl zählt; ein Fehler tritt an seine
+            Stelle. Im Trainingsplan steht sie in derselben Zeile wie die
+            Felder, mit dem Zeichen <code>Shirt</code> - <code>Users</code>{" "}
+            trägt schon die Verantwortlichen.
           </li>
         </ul>
         <FelderDemo />

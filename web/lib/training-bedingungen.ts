@@ -9,7 +9,7 @@
 import { JUNIOREN_PFLICHT_BLOECKE } from "@/lib/junioren";
 import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
 import { MASS_TEXT } from "@/lib/feldmass";
-import { TERMIN_MELDUNG } from "@/lib/termin";
+import { TERMIN_MELDUNG, TERMIN_TEXT } from "@/lib/termin";
 import { SERIE_MELDUNG } from "@/lib/serie";
 import { FELDER_TEXT } from "@/lib/termin-felder";
 import { sichtbareZuordnungen } from "@/lib/varianten";
@@ -332,9 +332,13 @@ const TERMIN_MARKER: [string, string][] = [...Object.entries(TERMIN_MELDUNG), ..
 /** Die CHECKs am Termin, die die Applikation am Namen erkennt — wie
  *  `ALTERSSTUFE_CHECKS`, aber samt Anführungszeichen gesucht: Postgres meldet
  *  `violates check constraint "tt_felder"`, und so trifft der Name keine
- *  längere Bezeichnung, die mit ihm beginnt. Die Felder (#389) prüft der
- *  Fachkern vorab (`felderProblem`); die Meldung trifft nur, wer ihn umgeht. */
-const TERMIN_CHECKS: [string, string][] = [['"tt_felder"', FELDER_TEXT.ungueltig]];
+ *  längere Bezeichnung, die mit ihm beginnt. Felder (#389) und erwartete
+ *  Spielerzahl (#390) prüft der Fachkern vorab (`felderProblem`,
+ *  `spielerzahlProblem`); die Meldung trifft nur, wer ihn umgeht. */
+const TERMIN_CHECKS: [string, string][] = [
+  ['"tt_felder"', FELDER_TEXT.ungueltig],
+  ['"tt_spielerzahl"', TERMIN_TEXT.spielerzahl],
+];
 
 /** Die Meldung zu einem Marker aus Übungsfolge, Variantenfolge oder Termin,
  *  sonst `null`. */

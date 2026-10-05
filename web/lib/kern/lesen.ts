@@ -97,6 +97,8 @@ export type TrefferTermin = {
   bemerkung: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
+  /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
+  spielerzahl: number | null;
   /** Die Terminserie des Termins; `null` bei einem einzelnen (#324). */
   serieId: string | null;
   /** Wer den Termin vorbereitet und leitet (#325 AK 16). */

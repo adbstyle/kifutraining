@@ -2,12 +2,12 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { CalendarDays, CalendarOff, CalendarPlus, CalendarX2, LandPlot, MapPin, MessageSquareText, Pencil, PlayCircle, Repeat, Trash2, Undo2, Unlink, Users } from "lucide-react";
+import { CalendarDays, CalendarOff, CalendarPlus, CalendarX2, LandPlot, MapPin, MessageSquareText, Pencil, PlayCircle, Repeat, Shirt, Trash2, Undo2, Unlink, Users } from "lucide-react";
 import { Card, Disclosure, IconButton, IconButtonLink, KategorieLozenge, Lozenge, OverflowMenu, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
 import { wochentageText } from "@/lib/serie";
-import { zeitText } from "@/lib/termin";
+import { spielerzahlText, zeitText } from "@/lib/termin";
 import { felderKurz } from "@/lib/termin-felder";
 import { datumKurz } from "@/lib/zeit";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
@@ -123,13 +123,25 @@ export function TerminKarte({ t, heute, ebene: Kopf = "h4", hervorgehoben = fals
                 {verantwortlichenNamen(t.verantwortliche).join(", ")}
               </p>
             )}
-            {/* #389 AK 10: knapp, welche Felder erfasst sind; alle Einzelheiten
-                am geöffneten Termin. Ohne Felder steht nichts. */}
-            {platz && (
-              <p className="mt-0.5 flex items-center gap-1 type-body-small text-on-surface-mittel">
-                <LandPlot size={14} aria-hidden className="shrink-0" />
-                <span className="sr-only">Felder: </span>
-                {platz}
+            {/* #389 AK 10, #390 AK 4: knapp in einer Zeile, welche Felder und
+                welche Spielerzahl erfasst sind; alle Einzelheiten am geöffneten
+                Termin. Was unbekannt ist, steht nicht da. */}
+            {(platz || t.spielerzahl !== null) && (
+              <p className="mt-0.5 flex flex-wrap items-center gap-x-3 type-body-small text-on-surface-mittel">
+                {platz && (
+                  <span className="inline-flex items-center gap-1">
+                    <LandPlot size={14} aria-hidden className="shrink-0" />
+                    <span className="sr-only">Felder: </span>
+                    {platz}
+                  </span>
+                )}
+                {t.spielerzahl !== null && (
+                  <span className="inline-flex items-center gap-1">
+                    <Shirt size={14} aria-hidden className="shrink-0" />
+                    <span className="sr-only">Erwartet: </span>
+                    {spielerzahlText(t.spielerzahl)}
+                  </span>
+                )}
               </p>
             )}
             </div>

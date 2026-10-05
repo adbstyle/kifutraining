@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { Button, DateField, Dialog, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
-import { BEMERKUNG_MAX, ORT_MAX, terminProblem, type TerminFeld, type TerminFelder } from "@/lib/termin";
+import { BEMERKUNG_MAX, ORT_MAX, spielerzahlProblem, terminProblem, zahlOderNull, type TerminFeld, type TerminFelder } from "@/lib/termin";
 import { felderProblem, gleicheFelder, type FelderProblem } from "@/lib/termin-felder";
 import {
   SERIE_MELDUNG,
@@ -27,6 +27,7 @@ import {
   type VerantwortlicheWert,
 } from "./VerantwortlicheWahl";
 import { FelderField, felderAusZeilen, zeilenAusFeldern, type FeldZeile } from "./FelderField";
+import { SpielerzahlField } from "./SpielerzahlField";
 
 const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
@@ -57,10 +58,11 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
    einem Serientermin ab, sagt es der Serien-Abschnitt (AK 19) und bietet den
    Weg zurück (AK 6).
 
-   Danach die Felder des Platzes (#389): alle Einzelheiten zum Ansehen und
-   Ändern (AK 7, 11). Sie gehen als ganze Liste mit den übrigen Angaben;
-   keine Zeile heisst «ohne Felder». An einem Serientermin gelten sie nur für
-   ihn — die Serie gibt (noch) keine vor (bis #391). */
+   Danach die erwartete Spielerzahl (#390; leer = unbekannt) und die Felder
+   des Platzes (#389): alle Einzelheiten zum Ansehen und Ändern (AK 7, 11).
+   Die Felder gehen als ganze Liste mit den übrigen Angaben; keine Zeile
+   heisst «ohne Felder». An einem Serientermin gelten beide nur für ihn — die
+   Serie gibt (noch) keine vor (bis #391). */
 export function TerminDialog({
   open,
   start,
@@ -105,6 +107,8 @@ export function TerminDialog({
   const [verantwortlich, setVerantwortlich] = useState<VerantwortlicheWert>(KEINE_VERANTWORTLICHEN);
   const [felderZeilen, setFelderZeilen] = useState<FeldZeile[]>([]);
   const [felderFehler, setFelderFehler] = useState<FelderProblem | null>(null);
+  const [spielerzahl, setSpielerzahl] = useState("");
+  const [spielerzahlFehler, setSpielerzahlFehler] = useState<string | undefined>();
 
   // Beim Öffnen auf die Vorbelegung zurücksetzen — der Dialog überlebt sonst
   // mit den Werten des zuletzt bearbeiteten Termins.
@@ -119,6 +123,8 @@ export function TerminDialog({
     });
     setFelderZeilen(zeilenAusFeldern(start?.felder));
     setFelderFehler(null);
+    setSpielerzahl(start?.spielerzahl != null ? String(start.spielerzahl) : "");
+    setSpielerzahlFehler(undefined);
     setProblem(null);
     if (serie) setRegel({ wochentage: [...serie.wochentage], von: serie.beginnDatum, bis: serie.endDatum });
     setRegelProblem(null);
@@ -150,8 +156,11 @@ export function TerminDialog({
       setRegelProblem({ feld: "beides", text: SERIE_TEXT.namenloseUndRegel });
       return false;
     }
-    if (!gleicheFelder(felderAusZeilen(felderZeilen), start?.felder)) {
-      setRegelProblem({ feld: "beides", text: SERIE_TEXT.felderUndRegel });
+    const platzGeaendert =
+      !gleicheFelder(felderAusZeilen(felderZeilen), start?.felder) ||
+      zahlOderNull(spielerzahl) !== (start?.spielerzahl ?? null);
+    if (platzGeaendert) {
+      setRegelProblem({ feld: "beides", text: SERIE_TEXT.platzUndRegel });
       return false;
     }
     // Die Reichweite ist noch offen: weitere Obergrenze, die engere prüft die Vorschau.
@@ -166,10 +175,13 @@ export function TerminDialog({
     const platz = felderAusZeilen(felderZeilen);
     const fp = felderProblem(platz);
     setFelderFehler(fp);
+    const zahl = zahlOderNull(spielerzahl);
+    const zp = spielerzahlProblem(zahl);
+    setSpielerzahlFehler(zp?.text);
     const regelOk = regelPruefen();
-    if (!p && !fp && regelOk) {
+    if (!p && !fp && !zp && regelOk) {
       const geaendert = verantwortlicheGeaendert(verantwortlich, verantwortlicheStart(verantwortliche ?? []));
-      onSpeichern({ ...felder, felder: platz }, serie ? regel : undefined, geaendert ? verantwortlich : undefined);
+      onSpeichern({ ...felder, felder: platz, spielerzahl: zahl }, serie ? regel : undefined, geaendert ? verantwortlich : undefined);
     }
   }
 
@@ -195,6 +207,7 @@ export function TerminDialog({
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={felder.ort ?? ""} onChange={(e) => setze("ort")(e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         <VerantwortlicheWahl mitglieder={mitglieder} bisher={verantwortliche} wert={verantwortlich} onChange={setVerantwortlich} disabled={pending} />
+        <SpielerzahlField wert={spielerzahl} onChange={setSpielerzahl} fehler={spielerzahlFehler} disabled={pending} />
         <FelderField zeilen={felderZeilen} onZeilenChange={setFelderZeilen} problem={felderFehler} disabled={pending} />
       </div>
       {serie && (

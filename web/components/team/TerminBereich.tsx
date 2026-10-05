@@ -82,6 +82,7 @@ function startWerte(t: TerminZeile): TerminFelder {
     ort: t.ort ?? "",
     bemerkung: t.bemerkung ?? "",
     felder: t.felder,
+    spielerzahl: t.spielerzahl,
   };
 }
 
@@ -319,16 +320,16 @@ export function TerminBereich({
     if (!t.serie) return aendereEinzeln(t, geaendert, verantwortlich);
     const datum = geaendert?.datum !== undefined;
     const namenlose = !!verantwortlich && nurNamenloseGeaendert(verantwortlich, verantwortlicheStart(t.verantwortliche));
-    // #389: Die Serie gibt (noch) keine Felder vor — geänderte Felder gelten
-    // nur für diesen Termin (bis #391).
-    const felder = geaendert?.felder !== undefined;
-    const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose, felder });
+    // #389, #390: Die Serie gibt (noch) keine Felder und keine Spielerzahl
+    // vor — geändert gelten sie nur für diesen Termin (bis #391).
+    const platz = geaendert?.felder !== undefined || geaendert?.spielerzahl !== undefined;
+    const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose, platz });
     // Der Dialog prüft das schon; hier nur als Rückhalt.
     if (!erlaubt)
       return setDialogFehler(
-        datum ? SERIE_TEXT.datumUndRegel : namenlose ? SERIE_TEXT.namenloseUndRegel : SERIE_TEXT.felderUndRegel,
+        datum ? SERIE_TEXT.datumUndRegel : namenlose ? SERIE_TEXT.namenloseUndRegel : SERIE_TEXT.platzUndRegel,
       );
-    const { datum: _datum, felder: _felder, ...werte } = geaendert ?? {};
+    const { datum: _datum, felder: _felder, spielerzahl: _spielerzahl, ...werte } = geaendert ?? {};
     setDialogFehler(undefined);
     neuerLauf();
     setReichweite({
@@ -339,8 +340,8 @@ export function TerminBereich({
         ? SERIE_MELDUNG.DATUM_NUR_EINZELN
         : namenlose
           ? SERIE_TEXT.namenloseNurEinzeln
-          : felder
-            ? SERIE_TEXT.felderNurEinzeln
+          : platz
+            ? SERIE_TEXT.platzNurEinzeln
             : regelNeu
               ? SERIE_MELDUNG.REGEL_NUR_SERIE
               : undefined,

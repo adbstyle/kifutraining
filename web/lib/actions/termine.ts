@@ -54,6 +54,7 @@ export async function legeTerminFestAktion(
     ort: felder.ort,
     bemerkung: felder.bemerkung,
     felder: felder.felder,
+    spielerzahl: felder.spielerzahl,
   });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
@@ -79,6 +80,7 @@ export async function aendereTerminAktion(
     ort: felder.ort,
     bemerkung: felder.bemerkung,
     felder: felder.felder,
+    spielerzahl: felder.spielerzahl,
     erwartetesTraining,
   });
   if (!r.ok) return { ok: false, error: r.meldung };

@@ -1447,6 +1447,7 @@ try {
       ort: "Allmend",
       bemerkung: "Leibchen",
       felder: null,
+      spielerzahl: null,
       serieId: null,
       verantwortliche: [],
       ausgefallen: false,
@@ -1469,6 +1470,7 @@ try {
       ort: "Allmend",
       bemerkung: "Leibchen",
       felder: null,
+      erwartete_spielerzahl: null,
       serie_id: null,
       verantwortliche: [],
       ausgefallen: false,
@@ -3564,7 +3566,7 @@ try {
     const team = await serienTeam("Kern-DB-Felder-Serie");
     const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: tagCh(7), bis: tagCh(28), beginn: "18:00", ende: "19:30", ort: "A" }));
     const [t0, t1] = await termineDer(s.serieId);
-    fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: t0.id, felder: [KUNSTRASEN], reichweite: "alle" }), "regel", SERIE_TEXT.felderNurEinzeln);
+    fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: t0.id, felder: [KUNSTRASEN], reichweite: "alle" }), "regel", SERIE_TEXT.platzNurEinzeln);
     fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: t0.id, felder: [KUNSTRASEN] }), "regel", SERIE_MELDUNG.REICHWEITE_FEHLT);
     assert.equal(await felderVon(t0.id), null, "abgewiesen heisst unverändert");
     wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t0.id, felder: [KUNSTRASEN], reichweite: "nur_dieser" }));
@@ -3575,6 +3577,93 @@ try {
     assert.deepEqual([r.zeit_abweichend, r.ort_abweichend, r.bemerkung_abweichend], [false, false, false]);
     wert(await aendereSerie(a.supabase, a.id, { terminId: t1.id, reichweite: "alle", aenderung: { ort: "Halle" }, bestaetigt: true }));
     assert.deepEqual(await felderVon(t0.id), [KUNSTRASEN]);
+  });
+
+  // ── Kalender: erwartete Spielerzahl (#390) ───────────────────────────────
+  const zahlVon = async (id: string) =>
+    (await admin.from("training_termine").select("erwartete_spielerzahl").eq("id", id).single()).data!.erwartete_spielerzahl as number | null;
+
+  await pruefe("Spielerzahl: festlegen, ändern, entfernen, abgewiesen, KI-Parität, Plan und Auskunft (#390 AK 1–7)", async () => {
+    const team = await serienTeam("Kern-DB-Spielerzahl");
+    const ohne = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:30" }));
+    assert.equal(await zahlVon(ohne.terminId), null, "PC 2: ohne Angabe unbekannt");
+    const t = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", spielerzahl: 12 }));
+    assert.equal(await zahlVon(t.terminId), 12);
+    // AK 3: nur ganze Zahlen von 1 bis 200; vorab abgewiesen, es entsteht nichts.
+    for (const schlecht of [0, 201, 12.5])
+      fehler(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:30", spielerzahl: schlecht }), "eingabe", TERMIN_TEXT.spielerzahl);
+    assert.equal((await admin.from("training_termine").select("id", { count: "exact", head: true }).eq("team_id", team)).count, 2);
+    wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:30", spielerzahl: 200 }));
+    // AK 2: ändern und entfernen; eine andere Angabe lässt die Zahl stehen.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, spielerzahl: 1 }));
+    assert.equal(await zahlVon(t.terminId), 1);
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, ort: "Allmend" }));
+    assert.equal(await zahlVon(t.terminId), 1);
+    fehler(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, spielerzahl: -1 }), "eingabe", TERMIN_TEXT.spielerzahl);
+    assert.equal(await zahlVon(t.terminId), 1, "abgewiesen heisst unverändert");
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, spielerzahl: null }));
+    assert.equal(await zahlVon(t.terminId), null);
+
+    // AK 5, 7 über den KI-Weg: Eingabeprüfung des Werkzeugs, dann derselbe Satz.
+    const halb = TerminAendernEingabe.parse({ termin_id: t.terminId, erwartete_spielerzahl: 12.5 });
+    const kiFehler = fehler(
+      await aendereMitReichweite(a.supabase, a.id, { terminId: t.terminId, spielerzahl: halb.erwartete_spielerzahl }),
+      "eingabe",
+      TERMIN_TEXT.spielerzahl,
+    ) as { feld?: string };
+    assert.equal(kiFehler.feld, "erwartete_spielerzahl");
+    const ki = TerminAendernEingabe.parse({ termin_id: t.terminId, erwartete_spielerzahl: 14 });
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t.terminId, spielerzahl: ki.erwartete_spielerzahl }));
+    assert.equal(await zahlVon(t.terminId), 14);
+    const weg = TerminAendernEingabe.parse({ termin_id: t.terminId, erwartete_spielerzahl: null });
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t.terminId, spielerzahl: weg.erwartete_spielerzahl }));
+    assert.equal(await zahlVon(t.terminId), null, "KI: null entfernt");
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, spielerzahl: 12 }));
+
+    // Die Datenebene als Rückhalt: wer den Kern umgeht, bekommt den Klartext.
+    const { error: direkt } = await a.supabase.from("training_termine").update({ erwartete_spielerzahl: 0 }).eq("id", t.terminId);
+    assert.ok(direkt, "CHECK tt_spielerzahl weist ab");
+    const e = ausDbFehler(direkt!);
+    assert.deepEqual([e.art, e.meldung], ["regel", TERMIN_TEXT.spielerzahl]);
+    assert.equal(await zahlVon(t.terminId), 12);
+
+    // AK 4, 6: Plan, Auskunft und Suche nennen die Zahl; unbekannt als null.
+    const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
+    assert.equal(plan.kommend.find((x) => x.id === t.terminId)!.spielerzahl, 12);
+    assert.equal(plan.kommend.find((x) => x.id === ohne.terminId)!.spielerzahl, null);
+    const tr = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Spielerzahl", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: tr.id }));
+    assert.equal(wert(await trainingAbrufen(a.supabase, a.id, { trainingId: tr.id })).termin?.erwartete_spielerzahl, 12);
+    const such = wert(await trainingsSuchen(a.supabase, a.id, { bestand: "team", teamId: team, limit: 5 }));
+    assert.equal(such.treffer.find((x) => x.id === tr.id)?.termin?.spielerzahl, 12);
+  });
+
+  await pruefe("Spielerzahl bleibt beim Zuordnen, Ersetzen, Lösen und Ausfallen; nicht im Abo; am Serientermin nur für ihn (#390 PC 1, OoS 5)", async () => {
+    const team = await serienTeam("Kern-DB-Spielerzahl-Bestand");
+    const t = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", spielerzahl: 12 }));
+    const t1 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Zahl-1", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
+    const t2 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Zahl-2", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: t1.id }));
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: t2.id }));
+    wert(await loeseTraining(a.supabase, a.id, { terminId: t.terminId }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen" }));
+    assert.equal(await zahlVon(t.terminId), 12, "zuordnen, ersetzen, lösen, ausfallen");
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }));
+    assert.equal(await zahlVon(t.terminId), 12);
+    // OoS 5: Das Abo nennt nur Zeit und Ort.
+    const imFeed = (await feed((await holen(a, team)).token!)).termine!.find((x) => x.id === t.terminId)!;
+    assert.deepEqual(Object.keys(imFeed).sort(), ["beginn", "datum", "ende", "geaendert", "id", "ort"]);
+
+    // Bis #391: an einem Serientermin nur «nur_dieser»; kein Abweichungs-Flag.
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: tagCh(7), bis: tagCh(28), beginn: "18:00", ende: "19:30" }));
+    const [s0, s1] = await termineDer(s.serieId);
+    fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: s0.id, spielerzahl: 10, reichweite: "dieser_und_folgende" }), "regel", SERIE_TEXT.platzNurEinzeln);
+    assert.equal(await zahlVon(s0.id), null);
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: s0.id, spielerzahl: 10, reichweite: "nur_dieser" }));
+    assert.equal(await zahlVon(s0.id), 10);
+    assert.equal(await zahlVon(s1.id), null);
+    const r = (await termineDer(s.serieId))[0];
+    assert.deepEqual([r.zeit_abweichend, r.ort_abweichend, r.bemerkung_abweichend], [false, false, false]);
   });
 } finally {
   await aufraeumen();

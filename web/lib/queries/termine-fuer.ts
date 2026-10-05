@@ -65,6 +65,8 @@ export type TerminZeile = {
   bemerkung: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
+  /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
+  spielerzahl: number | null;
   /** `null`: Der Termin trägt (noch) kein Training (#322). */
   training: { id: string; name: string; stufen: KategorieSlug[] } | null;
   /** `null`: ein einzelner Termin ohne Serie. */
@@ -106,6 +108,7 @@ type RawTermin = {
   ort: string | null;
   bemerkung: string | null;
   felder: Felder | null;
+  erwartete_spielerzahl: number | null;
   created_at: string;
   serien_tag: string | null;
   zeit_abweichend: boolean;
@@ -146,7 +149,7 @@ export function kurzeZeit(t: string | null): string | null {
 }
 
 const TERMIN_SELECT =
-  "id, team_id, datum, beginn, ende, ort, bemerkung, felder, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, ausgefallen, ausfall_grund, " +
+  "id, team_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, ausgefallen, ausfall_grund, " +
   "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ), " +
   "trainings ( id, name, stufen ), " +
   "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, " +
@@ -177,6 +180,7 @@ function mapTermin(t: RawTermin): TerminZeile {
     ort: t.ort,
     bemerkung: t.bemerkung,
     felder: t.felder,
+    spielerzahl: t.erwartete_spielerzahl,
     training: t.trainings
       ? { id: t.trainings.id, name: t.trainings.name, stufen: sortStufen(t.trainings.stufen ?? []) }
       : null,

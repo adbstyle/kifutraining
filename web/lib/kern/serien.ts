@@ -321,9 +321,10 @@ export async function aendereMitReichweite(
     return r.ok ? ok({ terminId: r.wert.terminId, teamId: r.wert.teamId, serie: null }) : r;
   }
   if (e.datum !== undefined) return fehlschlag("regel", SERIE_MELDUNG.DATUM_NUR_EINZELN, { feld: "datum" });
-  // #389: Die Serie gibt (noch) keine Felder vor — bis #391 nur «nur_dieser».
-  if (e.felder !== undefined)
-    return fehlschlag("regel", SERIE_TEXT.felderNurEinzeln, { feld: "reichweite", zulaessig: ["nur_dieser"] });
+  // #389, #390: Die Serie gibt (noch) keine Felder und keine Spielerzahl vor —
+  // bis #391 nur «nur_dieser».
+  if (e.felder !== undefined || e.spielerzahl !== undefined)
+    return fehlschlag("regel", SERIE_TEXT.platzNurEinzeln, { feld: "reichweite", zulaessig: ["nur_dieser"] });
   const r = await aendereSerie(supabase, userId, {
     terminId: e.terminId,
     reichweite: e.reichweite as "dieser_und_folgende" | "alle",
