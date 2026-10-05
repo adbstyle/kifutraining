@@ -8,7 +8,7 @@ Vor einem Tor mit Torspieler liegen mehrere Schussbahnen. Ein Kind dribbelt in e
 
 ## Üben
 
-- Vor dem Schuss kurz hinschauen — Foto im Kopf — und die offene Ecke anvisieren.
+- Vor dem Schuss kurz hinschauen - Foto im Kopf - und die offene Ecke anvisieren.
 - Einen Versuch links schiessen, den nächsten rechts.
 
 ## Wett-eifern

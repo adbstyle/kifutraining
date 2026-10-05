@@ -18,7 +18,7 @@ import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Training drucken — KiFu",
+  title: "Training drucken - KiFu",
   robots: { index: false },
 };
 

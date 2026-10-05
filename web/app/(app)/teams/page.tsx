@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Teams — KiFu", robots: { index: false } };
+export const metadata: Metadata = { title: "Teams - KiFu", robots: { index: false } };
 
 /* Übersicht der eigenen Teams (Story 3, Story 12). Teams sind nur ihren
    Mitgliedern sichtbar — es gibt keine öffentliche Team-Liste. */

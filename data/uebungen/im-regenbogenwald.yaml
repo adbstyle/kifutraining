@@ -43,7 +43,7 @@ methodischer_fahrplan:
   - 'Drei Farbwechsel lang je eine Fussfläche: Vollspann, Innenseite, Aussenseite.'
   wetteifern: 'Mehrere Teams treten gegeneinander an: Welches ist vollzählig zuerst
     im angezeigten Feld? Schwieriger: Du zeigst zwei oder drei Farben nacheinander
-    — die Teams durchdribbeln die Felder in dieser Reihenfolge und kehren dann ins
+    - die Teams durchdribbeln die Felder in dieser Reihenfolge und kehren dann ins
     Startfeld zurück.'
 quelle:
   datei: Manual_Kinderfussball_D.pdf

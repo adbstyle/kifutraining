@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-Zwei gegen zwei mit einer Mittellinie. In der eigenen Hälfte darf einzig der Torspieler verteidigen — die Feldspieler dürfen sich also im Angriff auf ihre Überzahl verlassen.
+Zwei gegen zwei mit einer Mittellinie. In der eigenen Hälfte darf einzig der Torspieler verteidigen - die Feldspieler dürfen sich also im Angriff auf ihre Überzahl verlassen.
 
 ## Üben
 

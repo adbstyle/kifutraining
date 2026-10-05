@@ -41,7 +41,7 @@ export const DIAGRAMM_LEER =
 
 /** Mit einem Diagramm zählt KiFu das Material selbst (#145 PC 4). */
 export const MATERIAL_MIT_DIAGRAMM =
-  "Mit einem Feld-Diagramm zählt KiFu das Material selbst — lass «material.liste» weg; die " +
+  "Mit einem Feld-Diagramm zählt KiFu das Material selbst - lass «material.liste» weg; die " +
   "freie Ergänzung «material.ergaenzung» bleibt möglich.";
 
 /** Ein Diagramm, wie der Assistent es schickt: geprüft gegen die Grenzen, ein

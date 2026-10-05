@@ -212,7 +212,7 @@ export function wegfallSatz(
  */
 export function aufloesungSatz(bleibende: Variante): string {
   return (
-    "Danach bleibt eine einzige Variante übrig — sie wird aufgelöst: " +
+    "Danach bleibt eine einzige Variante übrig - sie wird aufgelöst: " +
     `„${bleibende.name}" heisst dann wieder schlicht Hauptteil, ` +
     "und die Leiste zeigt nur noch „Variante hinzufügen\"."
   );

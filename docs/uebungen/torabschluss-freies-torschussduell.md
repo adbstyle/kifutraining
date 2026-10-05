@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-2 gegen 2 auf zwei Tore mit Torspielern. Wer mutig dribbelt, sich freiläuft und zusammenspielt, schafft Überzahl — und trifft.
+2 gegen 2 auf zwei Tore mit Torspielern. Wer mutig dribbelt, sich freiläuft und zusammenspielt, schafft Überzahl - und trifft.
 
 ## Üben
 

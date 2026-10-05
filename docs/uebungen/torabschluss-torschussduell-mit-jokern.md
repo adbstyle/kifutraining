@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-Zwei Angreifer wollen treffen und holen sich dafür Joker dazu, die mit ihnen spielen — so entsteht Überzahl gegen die Verteidigung mit Torspieler.
+Zwei Angreifer wollen treffen und holen sich dafür Joker dazu, die mit ihnen spielen - so entsteht Überzahl gegen die Verteidigung mit Torspieler.
 
 ## Üben
 

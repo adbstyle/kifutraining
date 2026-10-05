@@ -11,7 +11,7 @@ import { EINORDNUNG_LABEL } from "@/lib/labels";
 import { katalogFilterZiel } from "@/lib/filter-optionen";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Übung bearbeiten — KiFu", robots: { index: false } };
+export const metadata: Metadata = { title: "Übung bearbeiten - KiFu", robots: { index: false } };
 
 export default async function EditPage({
   params,

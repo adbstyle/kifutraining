@@ -420,7 +420,7 @@ export async function kopiereTraining(
 /** Für den Assistenten: Ein zweiter Versuch ist gefahrlos (#197 NFR 2). Die
  *  Oberfläche zeigt `hinweis` nie. */
 export const HINWEIS_NICHTS_ENTSTANDEN =
-  "Es ist keine Kopie entstanden — der Versuch lässt sich gefahrlos wiederholen.";
+  "Es ist keine Kopie entstanden - der Versuch lässt sich gefahrlos wiederholen.";
 
 /** Für den Assistenten: Das Aufräumen scheiterte, eine Teilkopie steht. */
 export function hinweisRest(rest: string): string {

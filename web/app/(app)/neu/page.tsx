@@ -10,7 +10,7 @@ import {
 import { hauptteilkategorieSlugs } from "@/lib/vocab";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Neue Übung — KiFu", robots: { index: false } };
+export const metadata: Metadata = { title: "Neue Übung - KiFu", robots: { index: false } };
 
 export default async function NeuePage({
   searchParams,

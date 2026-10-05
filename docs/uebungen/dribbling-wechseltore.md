@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-Drei gegen drei, das Feld hat eine Mittellinie und in jeder Hälfte zwei Tore. Abschliessen darf nur, wer zuvor mit dem Ball die Mittellinie überquert hat — und zwar auf die Tore der Hälfte, in der es gerade steht. Kehrt das Kind in die andere Hälfte zurück, öffnen sich stattdessen deren zwei Tore. Nach einem Ballgewinn gilt dasselbe: zuerst die Mittellinie überqueren.
+Drei gegen drei, das Feld hat eine Mittellinie und in jeder Hälfte zwei Tore. Abschliessen darf nur, wer zuvor mit dem Ball die Mittellinie überquert hat - und zwar auf die Tore der Hälfte, in der es gerade steht. Kehrt das Kind in die andere Hälfte zurück, öffnen sich stattdessen deren zwei Tore. Nach einem Ballgewinn gilt dasselbe: zuerst die Mittellinie überqueren.
 
 ## Üben
 

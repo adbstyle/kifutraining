@@ -36,7 +36,7 @@ export function BreadcrumbsDemo() {
 
       <div>
         <p className="type-label-small mb-2 text-on-surface-mittel">
-          Kollabiert (maxItems=4) — „…" klappt den Pfad auf
+          Kollabiert (maxItems=4) - „…" klappt den Pfad auf
         </p>
         <Breadcrumbs
           maxItems={4}

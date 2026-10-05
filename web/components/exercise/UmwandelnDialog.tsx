@@ -123,7 +123,7 @@ export function UmwandelnDialog({
           error={fehler.einordnung ?? fehler.hauptteilkategorie}
           supportingText={
             vorschlag
-              ? "Vorgeschlagen aus der bisherigen Einordnung — du kannst anders wählen."
+              ? "Vorgeschlagen aus der bisherigen Einordnung - du kannst anders wählen."
               : "Für die bisherige Einordnung gibt es hier keine Entsprechung."
           }
         />

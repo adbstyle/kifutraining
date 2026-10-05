@@ -35,9 +35,9 @@ export const trainingHinweiseAbrufen = werkzeug({
   name: "training_hinweise_abrufen",
   titel: "Hinweise zu einem Training",
   beschreibung:
-    "Liefert alle fachlichen Hinweise, die KiFu zu einem Training zeigt, in einer Liste — " +
+    "Liefert alle fachlichen Hinweise, die KiFu zu einem Training zeigt, in einer Liste - " +
     "mit demselben Wortlaut wie in KiFu. Arten: " +
-    HINWEIS_ARTEN.map((a) => `«${a}» — ${ART_ERKLAERT[a]}`).join("; ") +
+    HINWEIS_ARTEN.map((a) => `«${a}» - ${ART_ERKLAERT[a]}`).join("; ") +
     ". «stelle» nennt, wo zu handeln ist: Trainingsteil («teil»), Block oder im " +
     "Kinderfussball-Hauptteil die «hauptteilkategorie», die Variante des Hauptteils " +
     "(«variante_id», erst ab zwei Varianten), die betroffenen Übungen («fassung_ids»), die " +

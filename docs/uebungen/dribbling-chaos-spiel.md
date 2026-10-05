@@ -8,7 +8,7 @@ Auf einer Seite stehen drei Tore. Alle Kinder starten gleichzeitig mit Ball von 
 
 ## Üben
 
-- Mutig nach vorn ziehen und Gegenspieler austricksen — mit Körpertäuschung, Übersteiger oder Schere.
+- Mutig nach vorn ziehen und Gegenspieler austricksen - mit Körpertäuschung, Übersteiger oder Schere.
 
 ## Wett-eifern
 

@@ -51,7 +51,7 @@ export function TeamErstellenButton() {
         }
       >
         <p className="mb-4">
-          Gib dem Team einen Namen — zum Beispiel den der Mannschaft. Du bist
+          Gib dem Team einen Namen - zum Beispiel den der Mannschaft. Du bist
           sofort Mitglied und kannst weitere Trainer:innen dazunehmen.
         </p>
         <TextField

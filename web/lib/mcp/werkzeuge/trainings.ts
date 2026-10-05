@@ -71,9 +71,9 @@ export const VarianteId = kennung(
  *  JEDE Beschreibung eines Werkzeugs, das `training_id` oder `fassung_id`
  *  annimmt — `check:kern` wacht darüber. */
 export const KENNUNG_FEHLER =
-  "Fehlerarten zur Kennung: «nicht_gefunden» — für dein Konto nicht sichtbar (es gibt sie " +
+  "Fehlerarten zur Kennung: «nicht_gefunden» - für dein Konto nicht sichtbar (es gibt sie " +
   "nicht, sie wurde gelöscht oder gehört jemand anderem privat; bewusst nicht " +
-  "unterscheidbar); «keine_rechte» — ein öffentliches Training eines anderen Kontos: " +
+  "unterscheidbar); «keine_rechte» - ein öffentliches Training eines anderen Kontos: " +
   "ansehen und übernehmen ja, ändern nein.";
 
 /** Die Kennung eines Teams (#198). Sichtbar sind nur die eigenen Teams. */
@@ -87,13 +87,13 @@ export const TerminId = kennung(
  *  JEDE Beschreibung eines Werkzeugs, das `team_id` annimmt — `check:kern`
  *  wacht darüber. */
 export const TEAM_KENNUNG_FEHLER =
-  "Fehlerart zur Team-Kennung: «nicht_gefunden» — kein Team, in dem du Mitglied bist (es gibt " +
+  "Fehlerart zur Team-Kennung: «nicht_gefunden» - kein Team, in dem du Mitglied bist (es gibt " +
   "es nicht, oder du gehörst nicht dazu; bewusst nicht unterscheidbar). Deine Teams nennt " +
   "«teams_abrufen».";
 
 /** Dasselbe für eine Termin-Kennung. Termine sehen nur Mitglieder des Teams. */
 export const TERMIN_KENNUNG_FEHLER =
-  "Fehlerart zur Termin-Kennung: «nicht_gefunden» — kein Termin eines deiner Teams (es gibt " +
+  "Fehlerart zur Termin-Kennung: «nicht_gefunden» - kein Termin eines deiner Teams (es gibt " +
   "ihn nicht, er wurde entfernt, oder er gehört einem fremden Team; bewusst nicht " +
   "unterscheidbar).";
 
@@ -131,7 +131,7 @@ export const trainingAnlegen = werkzeug({
   name: "training_anlegen",
   titel: "Training anlegen",
   beschreibung:
-    "Legt ein neues Training als privaten Entwurf an — " +
+    "Legt ein neues Training als privaten Entwurf an - " +
     "mit Name, Altersstufe, mindestens einer Alterskategorie und optional einem Ziel. " +
     "Ohne «team_id» in deinem persönlichen Bestand, mit «team_id» direkt im Bestand eines " +
     "deiner Teams: Dann gehört es dem Team, jedes Mitglied kann es bearbeiten, und " +
@@ -195,7 +195,7 @@ export const trainingUebungenFuerBlock = werkzeug({
   name: "training_uebungen_fuer_block",
   titel: "Passende Übungen für einen Block",
   beschreibung:
-    "Liefert ausschliesslich die Übungen, die ein Block dieses Trainings annimmt — " +
+    "Liefert ausschliesslich die Übungen, die ein Block dieses Trainings annimmt - " +
     "dieselbe Auswahl wie «Übung hinzufügen» im Editor: passend zur Altersstufe des " +
     "Trainings, zum Trainingsteil bzw. Block und im Kinderfussball-Hauptteil zur " +
     "Hauptteilkategorie. Nur Übungen, die dein Konto in KiFu sieht. Sortiert nach Name. " +
@@ -256,7 +256,7 @@ export const trainingUebungZuordnen = werkzeug({
     "eine eigenständige Kopie samt Bild und Diagramm; die Vorlage bleibt unverändert. " +
     "Dieselbe Übung darf mehrfach vorkommen. Angenommen wird nur, was zur Altersstufe " +
     "des Trainings, zum Block und im Kinderfussball-Hauptteil zur Hauptteilkategorie " +
-    "passt — eine Übung der anderen Altersstufe wird abgewiesen, und die Meldung nennt die " +
+    "passt - eine Übung der anderen Altersstufe wird abgewiesen, und die Meldung nennt die " +
     `verletzte Regel. ${PFLICHT_SATZ} ` +
     "Alle Inhalte kommen aus der Vorlage, im Juniorenfussball auch Spielfeldgrösse und " +
     "Übungstyp; «training_abrufen» zeigt sie danach an der Übung. " +

@@ -9,7 +9,7 @@ Mehrere kleine Felder liegen nebeneinander wie Ligastufen, das Super-League-Feld
 ## Üben
 
 - Den Körper als Schutzschild zwischen Ball und Gegner bringen.
-- Antäuschen, das Tempo wechseln — und den Ball sicher über die Torlinie bringen.
+- Antäuschen, das Tempo wechseln - und den Ball sicher über die Torlinie bringen.
 
 ## Wett-eifern
 

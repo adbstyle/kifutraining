@@ -63,7 +63,7 @@ export function ChipsDemo() {
         <div className="flex flex-wrap gap-2">
           {tags.length === 0 && (
             <span className="type-body-small text-on-surface-mittel">
-              — alle entfernt —
+              - alle entfernt -
             </span>
           )}
           {tags.map((t, i) => (

@@ -8,10 +8,10 @@ Aussen führt ein Dribbelparcours ums Feld, innen liegt ein Passfeld. Ein Team d
 
 ## Üben
 
-- Aussen nur mit dem linken Fuss dribbeln und innen nur mit links passen — dann alles mit rechts.
+- Aussen nur mit dem linken Fuss dribbeln und innen nur mit links passen - dann alles mit rechts.
 - Beim Dribbeln bei jedem Kontakt den Fuss wechseln.
 - Drei Durchgänge mit vorgegebener Fussfläche: Vollspann, Innenseite, Aussenseite.
-- Innen jeden Pass mit genau drei Ballkontakten spielen — annehmen, vorlegen, zuspielen — und den Abstand zwischen den Paaren immer wieder verändern.
+- Innen jeden Pass mit genau drei Ballkontakten spielen - annehmen, vorlegen, zuspielen - und den Abstand zwischen den Paaren immer wieder verändern.
 
 ## Wett-eifern
 

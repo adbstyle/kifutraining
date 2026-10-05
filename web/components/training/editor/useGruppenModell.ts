@@ -81,6 +81,13 @@ export function useGruppenModell({
   const folgeVon = (fassung: TrainingExerciseItem): string[] =>
     folgen[fassung.id] ?? fassung.gruppen.map((g) => g.id);
 
+  /** Dieselbe Folge als Gruppen mit Namen — für die Anzeige des Durchlaufs im
+   *  Detail einer geöffneten Übung (#371 PC 1). */
+  const gruppenVon = (fassung: TrainingExerciseItem): { id: string; name: string }[] =>
+    folgeVon(fassung)
+      .map((id) => gruppen.find((g) => g.id === id))
+      .filter((g): g is { id: string; name: string } => g != null);
+
   /** Die Verteilung des ganzen Hauptteils — im Juniorenfussball über BEIDE
    *  Blöcke hinweg (AK 5). Genau darum steht sie hier und nicht je Block: Der
    *  Wechsel ist eine Aussage über das ganze Training, und blockweise gerechnet
@@ -323,6 +330,7 @@ export function useGruppenModell({
   return {
     gruppen,
     folgeVon,
+    gruppenVon,
     befund,
     wechselGesamt,
     zeiten,

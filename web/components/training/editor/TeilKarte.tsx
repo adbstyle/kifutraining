@@ -107,13 +107,13 @@ export function TeilKarte({
       {(teil.tooMany || teil.missing > 0) && (
         <div className="mt-3 flex flex-col gap-1">
           {teil.tooMany && (
-            <p className="flex items-center gap-2 type-label-medium text-on-surface-mittel">
+            <p className="flex items-center gap-2 type-body-small text-on-surface-mittel">
               <Info size={15} className="shrink-0 text-primary" aria-hidden />
               {ANZAHL_HINWEIS_TEXT}
             </p>
           )}
           {teil.missing > 0 && (
-            <p className="type-label-medium text-on-surface-mittel">
+            <p className="type-body-small text-on-surface-mittel">
               {ohneDauerText(teil.missing)}
             </p>
           )}

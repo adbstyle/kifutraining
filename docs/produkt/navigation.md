@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-10-04. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-10-05. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
@@ -44,8 +44,9 @@ Browser, damit auf dem Papier steht, wo das Training liegt.
 Jede Seite beginnt links neben der Leiste, nichts steht zentriert in der Mitte. Übersichten —
 Übungen, Trainings, Teams und der Bereich eines Teams — nutzen die ganze Breite des Fensters;
 die Kacheln reihen sich so dicht, wie Platz ist, auf einem breiten Bildschirm also in mehr
-Spalten. Formulare und Seiten zum Lesen, etwa eine Übung oder ein Training, behalten eine
-angenehme Lesebreite und stehen ebenfalls links. Auch die Durchführung steht links.
+Spalten. Formulare und Seiten zum Lesen behalten eine angenehme Lesebreite und stehen ebenfalls
+links; geteilte Seiten — eine Übung, ein Training — nutzen auf einem breiten Bildschirm die ganze
+Fläche (siehe unten). Auch die Durchführung steht links.
 
 Ab Laptop-Breite bleibt die Kopfzeile mit den Brotkrumen und den Aktionen der Seite beim
 Scrollen oben stehen. Einzig die Durchführung lässt sie mitlaufen; dort kleben stattdessen die
@@ -61,6 +62,13 @@ mit der Maus oder per Pfeiltaste. Ein Doppelklick stellt die übliche Breite wie
 gewählte Breite gilt für alle geteilten Seiten und bleibt auf dem Gerät gespeichert. Ist das
 Fenster dafür zu schmal, scrollt die Seite als Ganzes, der Inhalt behält seine Lesebreite, und
 die Einordnung steht auf der Übungsseite nach dem Inhalt, in der Maske davor.
+
+Ein Training ist beim Zusammenstellen und in der Ansicht ebenso geteilt: links die Übungen,
+rechts die Eigenschaften des Trainings oder die geöffnete Übung (siehe
+[Trainings](trainings.md#übungen-und-eigenschaften-nebeneinander)). Die Spalte gibt es dort nur
+auf einem breiten Bildschirm; schmaler und auf Papier fehlt sie, und die Seite steht wie gewohnt
+untereinander. Einzig eine Übung, deren Bearbeitung ungesicherte Änderungen trägt, bleibt dann
+unter den Übungen stehen.
 
 ## Bedienung
 
@@ -118,8 +126,8 @@ ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
 
 Wird jemand von einem anderen Konto in ein Team aufgenommen, erscheint das Team in der Leiste
 erst beim nächsten Neuladen oder nach der nächsten eigenen Aktion. Breit oder schmal merkt
-sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite der Einordnung auf den
-geteilten Seiten. Die Teilung gibt es nur auf breiten Bildschirmen; auf einem Tablet im
+sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite der Spalte auf den
+geteilten Seiten; sie gilt für Übung und Training gemeinsam. Die Teilung gibt es nur auf breiten Bildschirmen; auf einem Tablet im
 Hochformat oder einem Telefon steht alles untereinander, und die Breite lässt sich dort nicht
 ziehen.
 

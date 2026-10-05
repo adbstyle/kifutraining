@@ -8,7 +8,7 @@ Drei gegen drei mit vier Toren in den Ecken, je zwei blaue und zwei gelbe, diago
 
 ## Üben
 
-- Den Kopf oben behalten, beide eigenen Tore im Blick — und das andere Team mit schnellen Richtungswechseln auf dem falschen Fuss erwischen.
+- Den Kopf oben behalten, beide eigenen Tore im Blick - und das andere Team mit schnellen Richtungswechseln auf dem falschen Fuss erwischen.
 
 ## Wett-eifern
 

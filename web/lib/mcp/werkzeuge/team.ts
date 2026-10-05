@@ -42,7 +42,7 @@ const TERMIN_MODELL =
   "ohne Training. Einzelne Termine entstehen mit «termin_festlegen», wöchentliche Serien mit " +
   "«terminserie_festlegen»; ein Training kommt ausschliesslich durch «training_zuordnen» an einen " +
   "bestehenden Termin auf ein Datum. Ein Termin trägt höchstens " +
-  "ein Training, und ein Training ist höchstens für einen Termin eingeplant — für einen weiteren " +
+  "ein Training, und ein Training ist höchstens für einen Termin eingeplant - für einen weiteren " +
   "Termin entsteht eine eigenständige Kopie, oder ein Training mit anstehendem Termin wird " +
   "verschoben. Zeiten gelten am Trainingsort (Schweiz). Ein Termin kann ausfallen (mit freiwilligem " +
   "Grund); ein ausgefallener nimmt kein Training an und findet wieder statt, wenn er einzeln auf " +
@@ -86,7 +86,7 @@ export const teamsAbrufen = werkzeug({
     "Mitglieder. Die «id» ist die Kennung für «team_plan_abrufen», «trainings_suchen» " +
     "(bestand: team) und für «team_id» in «training_anlegen» und «training_kopieren». Teams " +
     "gründen, umbenennen, auflösen oder Mitglieder verwalten lässt sich über den KI-Client " +
-    "nicht — das geht nur im Team-Bereich von KiFu.",
+    "nicht - das geht nur im Team-Bereich von KiFu.",
   nurLesen: true,
   eingabe: z.object({}),
   ausgabe: z.object({
@@ -198,7 +198,7 @@ export const teamPlanAbrufen = werkzeug({
   beschreibung:
     "Liefert den Kalender eines deiner Teams, bereits geteilt wie im Team-Bereich: «kommend» (ab " +
     "heute, aufsteigend; der heutige Tag zählt ganz dazu) und «vergangen» (der jüngste zuerst). " +
-    "«heute» ist der Tag, an dem geteilt wurde — gemessen am Trainingsort (Schweiz), nicht in deiner " +
+    "«heute» ist der Tag, an dem geteilt wurde - gemessen am Trainingsort (Schweiz), nicht in deiner " +
     "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung und das " +
     "zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
     "Termin ohne Training, der nicht ausgefallen ist, ist noch nicht vorbereitet. Übernommene Termine können ohne Beginn oder " +
@@ -240,7 +240,7 @@ export const terminFestlegen = werkzeug({
   name: "termin_festlegen",
   titel: "Termin festlegen",
   beschreibung:
-    "Legt im Kalender eines deiner Teams einen einzelnen Termin ohne Training fest — auch in der " +
+    "Legt im Kalender eines deiner Teams einen einzelnen Termin ohne Training fest - auch in der " +
     "Vergangenheit. Datum, Beginn und Ende sind Pflicht, das Ende liegt am selben Tag nach dem " +
     "Beginn; Ort und Bemerkung sind frei. Ein Training ordnest du danach mit «training_zuordnen» zu. " +
     `${TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER}`,
@@ -309,7 +309,7 @@ export const terminAendern = werkzeug({
   name: "termin_aendern",
   titel: "Termin ändern",
   beschreibung:
-    "Ändert Datum, Zeit, Ort oder Bemerkung eines Termins — nur, was du mitgibst. Beginn und Ende " +
+    "Ändert Datum, Zeit, Ort oder Bemerkung eines Termins - nur, was du mitgibst. Beginn und Ende " +
     "lassen sich nicht leeren; ändert sich die Zeit, braucht der Termin danach beide. Ein " +
     "übernommener Termin ohne vollständige Zeit lässt sich ändern, ohne die Zeit zu ergänzen. Das " +
     "zugeordnete Training bleibt dasselbe. Für einen Termin einer Serie ist «reichweite» Pflicht; " +
@@ -353,10 +353,10 @@ export const terminEntfernen = werkzeug({
   titel: "Termin entfernen",
   beschreibung:
     "Entfernt einen Termin. Sein Training bleibt im Bestand des Teams " +
-    "— «training_id» nennt es — und lässt sich mit «training_zuordnen» einem anderen Termin " +
+    "- «training_id» nennt es - und lässt sich mit «training_zuordnen» einem anderen Termin " +
     "zuordnen. Ein ganzes Team-Training löscht «training_loeschen»; sein Termin bleibt dann ohne " +
     "Training bestehen. Für einen Termin einer Serie ist «reichweite» Pflicht; bei " +
-    "«dieser_und_folgende» oder «alle» nennt das Ergebnis die entfallenen Termine mit Training — " +
+    "«dieser_und_folgende» oder «alle» nennt das Ergebnis die entfallenen Termine mit Training - " +
     "ihre Trainings bleiben im Bestand des Teams. Erfasst «dieser_und_folgende» oder «alle» " +
     "auch vergangene Termine, wird die Serie nur mit «bestaetigt: true» entfernt; ohne diese " +
     "Bestätigung nennt das Ergebnis, was entfiele. Ein einzelner Termin oder «nur_dieser» wird " +
@@ -384,7 +384,7 @@ export const terminserieFestlegen = werkzeug({
   beschreibung:
     "Legt für eines deiner Teams eine wöchentliche Terminserie fest: je gewähltem Wochentag " +
     "zwischen «von» und «bis» (beide eingeschlossen) einen Termin ohne Training mit Beginn, Ende, " +
-    "Ort, Bemerkung und Verantwortlichen der Serie — auch ganz oder teilweise in der Vergangenheit. Bestehende " +
+    "Ort, Bemerkung und Verantwortlichen der Serie - auch ganz oder teilweise in der Vergangenheit. Bestehende " +
     "Termine an denselben Tagen bleiben daneben stehen. " +
     `${SERIEN_MODELL} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
@@ -475,7 +475,7 @@ export const trainingZuordnen = werkzeug({
     termin_id: z.string(),
     training_id: z
       .string()
-      .describe("Das Team-Training, das jetzt am Termin steht — bei einer Kopie (auch eines persönlichen Trainings) die neu entstandene Kopie."),
+      .describe("Das Team-Training, das jetzt am Termin steht - bei einer Kopie (auch eines persönlichen Trainings) die neu entstandene Kopie."),
     kopie: z.boolean(),
     im_bestand_geblieben: z
       .string()
@@ -525,7 +525,7 @@ export const terminAusfallenLassen = werkzeug({
   name: "termin_ausfallen_lassen",
   titel: "Termin ausfallen lassen",
   beschreibung:
-    "Markiert einen Termin als ausgefallen — wie ein abgesagter Kalendereintrag — oder ändert den " +
+    "Markiert einen Termin als ausgefallen - wie ein abgesagter Kalendereintrag - oder ändert den " +
     "Grund eines schon ausgefallenen. Ohne «grund» bleibt ein vorhandener Grund stehen; «grund»: " +
     "null (oder leer) leert ihn. Trägt der Termin ein Training, wird es gelöst und bleibt ohne " +
     "Termin im Bestand («geloestes_training»). Ein ausgefallener Termin gilt nicht als " +
@@ -572,7 +572,7 @@ export const teamMitgliederAbrufen = werkzeug({
   name: "team_mitglieder_abrufen",
   titel: "Mitglieder eines Teams",
   beschreibung:
-    "Nennt die Mitglieder eines deiner Teams mit Anzeigename und Kennung — ohne E-Mail-Adresse. " +
+    "Nennt die Mitglieder eines deiner Teams mit Anzeigename und Kennung - ohne E-Mail-Adresse. " +
     "«ich» markiert dich selbst. Die Kennungen brauchst du für «verantwortliche» in " +
     `«termin_verantwortliche_setzen» und «terminserie_festlegen». ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: true,
@@ -589,12 +589,12 @@ export const terminVerantwortlicheSetzen = werkzeug({
   name: "termin_verantwortliche_setzen",
   titel: "Verantwortliche eines Termins setzen",
   beschreibung:
-    "Setzt die Mitglieder, die einen Termin vorbereiten und leiten — ein oder mehrere, oder keine " +
+    "Setzt die Mitglieder, die einen Termin vorbereiten und leiten - ein oder mehrere, oder keine " +
     "(leere Liste). Neu eintragen lassen sich nur aktuelle Mitglieder. Für einen Termin einer Serie " +
     "ist «reichweite» Pflicht. Bei «nur_dieser» (und an einem einzelnen Termin) bleiben Einträge " +
     "ehemaliger Mitglieder, wenn du sie mitgibst, und Einträge gelöschter Konten (ohne Kennung), " +
     "ausser «ohne_namen_behalten» ist false. «dieser_und_folgende» und «alle» ersetzen dagegen alle " +
-    "Einträge der erfassten Termine durch die genannten aktuellen Mitglieder — auch die " +
+    "Einträge der erfassten Termine durch die genannten aktuellen Mitglieder - auch die " +
     "ehemaliger Mitglieder und gelöschter Konten; «dieser_und_folgende» teilt dabei die Serie, die " +
     `neue Serie trägt die neuen Verantwortlichen. ${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,

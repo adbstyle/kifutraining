@@ -8,7 +8,7 @@ Zwischen zwei Zonen liegt die Brücke, auf ihr stehen Pylonen als Hindernisse. A
 
 ## Üben
 
-- Den Ball dicht am Fuss um jede Pylone lenken — eine Überquerung linksfüssig, die nächste rechtsfüssig.
+- Den Ball dicht am Fuss um jede Pylone lenken - eine Überquerung linksfüssig, die nächste rechtsfüssig.
 
 ## Wett-eifern
 

@@ -96,8 +96,8 @@ export const uebungDiagrammMaengelAbrufen = werkzeug({
   name: "uebung_diagramm_maengel_abrufen",
   titel: "Mängel des Feld-Diagramms",
   beschreibung:
-    "Liefert die inhaltlichen Mängel des gespeicherten Feld-Diagramms einer eigenen Übung — auch " +
-    "eines, das der Trainer in KiFu gezeichnet hat —, je mit Element und Behebung. Sie sind keine " +
+    "Liefert die inhaltlichen Mängel des gespeicherten Feld-Diagramms einer eigenen Übung - auch " +
+    "eines, das der Trainer in KiFu gezeichnet hat -, je mit Element und Behebung. Sie sind keine " +
     `Fehler und hindern nichts. Mängel: ${MANGEL_CODES.map(code).join(", ")}. Dazu stehen ` +
     `${GRENZ_CODES.map(code).join(", ")} für Angaben, die KiFu heute nicht mehr annähme (ein ` +
     "älteres Diagramm); vor einem erneuten Setzen sind sie zu beheben. Ob das Diagramm die Übung fachlich " +

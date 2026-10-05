@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-Ein Kind dribbelt allein auf den Torspieler zu und will treffen. Erlaubt ist nur, vorwärts oder seitwärts zu dribbeln — nie zurück. Danach tauschen die beiden. Variante: ein Gegenspieler jagt von hinten, im Rücken des Angreifers.
+Ein Kind dribbelt allein auf den Torspieler zu und will treffen. Erlaubt ist nur, vorwärts oder seitwärts zu dribbeln - nie zurück. Danach tauschen die beiden. Variante: ein Gegenspieler jagt von hinten, im Rücken des Angreifers.
 
 ## Üben
 

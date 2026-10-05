@@ -8,9 +8,9 @@ import { DiagrammView } from "@/components/diagramm/DiagrammView";
 import type { DiagrammData } from "@/lib/diagramm";
 import type { VorlageItem } from "@/lib/queries/exercises";
 import { ladeVorlagen } from "@/lib/actions/diagramm";
+// Ab hier zeigt die Maske die Fläche — wie die Klassen unten (`sm`).
+import { AB_SM } from "@/lib/breite";
 
-/** Ab hier zeigt die Maske die Fläche — Tailwinds `sm`, wie die Klassen unten. */
-const BREIT = "(min-width: 40rem)";
 
 /**
  * Das Feld-Diagramm in der Maske einer Übung — beim Erfassen (#246) wie beim
@@ -46,7 +46,7 @@ export function DiagrammFeld({
   const [vorlagen, setVorlagen] = useState<VorlageItem[]>([]);
 
   useEffect(() => {
-    const breit = window.matchMedia(BREIT);
+    const breit = window.matchMedia(AB_SM);
     let geholt = false;
     const holen = () => {
       if (geholt || !breit.matches) return;

@@ -13,7 +13,7 @@ import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Trainings — KiFu",
+  title: "Trainings - KiFu",
 };
 
 export default async function TrainingsPage({
@@ -74,7 +74,7 @@ export default async function TrainingsPage({
           {filtersActive
             ? "Kein Training entspricht der aktiven Suche oder den Filtern. Passe die Kriterien an."
             : mine
-              ? "Stelle aus dem Übungsbestand dein erstes Training zusammen — es bleibt ein Entwurf, bis du es veröffentlichst."
+              ? "Stelle aus dem Übungsbestand dein erstes Training zusammen - es bleibt ein Entwurf, bis du es veröffentlichst."
               : user
                 ? "Stelle dein erstes Training zusammen. Veröffentlichst du es, steht es der Community zur Verfügung."
                 : "Es wurde noch kein Training veröffentlicht. Schau später wieder vorbei."}

@@ -107,7 +107,7 @@ export function EinordnungField({
           // Steht der Hauptteil ohne Kategorie da (Vorbelegung, Vorschlag beim
           // Überführen), passt er zu keiner Option, und das Feld sähe leer aus.
           (traegtHauptteilkategorie(altersstufe, wert) && !hauptteilkategorie
-            ? "Hauptteil — bitte noch die Kategorie wählen."
+            ? "Hauptteil - bitte noch die Kategorie wählen."
             : supportingText)
         }
       />

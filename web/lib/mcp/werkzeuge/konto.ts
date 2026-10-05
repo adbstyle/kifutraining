@@ -40,7 +40,7 @@ export const vokabular = werkzeug({
     "Liefert je Altersstufe die zulässigen Werte samt Klartext: Alterskategorien, " +
     "Trainingsteile und ihre Blöcke (mit dem, was eine Übung dort trägt: " +
     "Erscheinungsform, Übungstyp, Pflicht zur Hauptteilkategorie, Ablaufform), " +
-    "Hauptteilkategorien, Erscheinungsformen, Feldtypen und Übungstypen — dazu die " +
+    "Hauptteilkategorien, Erscheinungsformen, Feldtypen und Übungstypen - dazu die " +
     "Werte des Filters «einordnung» von «uebungen_suchen». Im Abschnitt «schema» je " +
     "Altersstufe das Trainingsschema: Teile und Blöcke in Reihenfolge, je mit Dauer, " +
     "Gruppen, Pflicht zum Veröffentlichen, Leer-Hinweis, anziehender Erscheinungsform und " +

@@ -207,7 +207,7 @@ pruefe("fachlicheMeldung erklärt Marker, fehlerMeldung bleibt wortgleich", () =
     ["UEBUNGSFOLGE_DOPPELT", "Eine Übung steht in der Reihenfolge mehrfach."],
     [
       "UEBUNGSFOLGE_UNVOLLSTAENDIG",
-      "Die Reihenfolge muss genau die Übungen dieses Abschnitts nennen — jede einmal. " +
+      "Die Reihenfolge muss genau die Übungen dieses Abschnitts nennen - jede einmal. " +
         "Lies das Training neu und sende die vollständige Folge.",
     ],
     ["UEBUNGSFOLGE_ABSCHNITT_LEER", "In diesem Abschnitt steht keine Übung."],
@@ -231,7 +231,7 @@ pruefe("fachlicheMeldung erklärt Marker, fehlerMeldung bleibt wortgleich", () =
     ["VARIANTENFOLGE_DOPPELT", "Eine Variante steht in der Reihenfolge mehrfach."],
     [
       "VARIANTENFOLGE_UNVOLLSTAENDIG",
-      "Die Reihenfolge muss genau die Varianten dieses Trainings nennen — jede einmal. " +
+      "Die Reihenfolge muss genau die Varianten dieses Trainings nennen - jede einmal. " +
         "Lies das Training neu und sende die vollständige Folge.",
     ],
   );
@@ -594,7 +594,7 @@ pruefe("Monat: Raster Montag–Sonntag, Wechsel, Name (#329)", () => {
   assert.equal(istMonat("2026-13"), false);
 });
 
-pruefe("Monat: Raster-Grenzfälle — Montag-Beginn, Sonntag-Ende, Februar, Schaltjahr, Jahreswechsel (#329)", () => {
+pruefe("Monat: Raster-Grenzfälle - Montag-Beginn, Sonntag-Ende, Februar, Schaltjahr, Jahreswechsel (#329)", () => {
   const erstesUndLetztes = (m: string) => {
     const r = monatsRaster(m);
     return { wochen: r.length, erster: r[0][0].tag, letzter: r.at(-1)!.at(-1)!.tag, imMonat: r.flat().filter((t) => t.imMonat).length };
@@ -947,9 +947,9 @@ pruefe("Auskunft: Durchlauf je Variante, an_uebungen über alle Varianten, Grupp
   assert.deepEqual(a.durchlauf.map((d) => [d.variante_id, d.wechsel_zahl]), [["v1", 1], ["v2", 1]]);
   assert.deepEqual(a.durchlauf[0].zeit_je_gruppe.map((z) => z.text), [
     "Zugewiesen 20 min in dieser Variante",
-    "Zugewiesen —",
+    "Zugewiesen -",
   ]);
-  assert.deepEqual(a.durchlauf[1].zeit_je_gruppe.map((z) => z.text), ["Zugewiesen —", "Zugewiesen —"]);
+  assert.deepEqual(a.durchlauf[1].zeit_je_gruppe.map((z) => z.text), ["Zugewiesen -", "Zugewiesen -"]);
   // Ohne Gruppen gibt es keinen Wechsel.
   const leer = trainingAuskunft(training({}), { userId: ICH });
   assert.deepEqual(leer.durchlauf, [{ wechsel_zahl: 0, wechsel: [], zeit_je_gruppe: [] }]);
@@ -1035,7 +1035,7 @@ pruefe("Übungsinhalt: eine vollständige Einleitung ergibt die Zeile des Formul
   assert.ok(leer.ok && !("material_liste" in leer.row) && isDeepStrictEqual(leer.row.material, []));
 });
 
-pruefe("Übungsinhalt: Pflichtvertrag — pflichtangaben genügt, jede fehlende nennt genau ihr Feld", () => {
+pruefe("Übungsinhalt: Pflichtvertrag - pflichtangaben genügt, jede fehlende nennt genau ihr Feld", () => {
   // Bindet die erzeugte Beschreibung (angabenText) an das echte Verhalten von
   // parseUebungsInhalt, in beiden Altersstufen (#143 AK 1, #147 AK 1).
   for (const stufe of ALTERSSTUFEN)
@@ -1090,7 +1090,7 @@ pruefe("Übungsinhalt: was das Formular still verwürfe, ist ein benannter Verst
   einziger(
     pruefeInhalt({ ...nurPflicht(KIFU, "hauptteil", "fussball-spielen"), offenStarten: "x" }),
     "offen_starten",
-    "Hier gibt es keinen methodischen Fahrplan — der Ablauf steht in «aufbau».",
+    "Hier gibt es keinen methodischen Fahrplan - der Ablauf steht in «aufbau».",
   );
   einziger(
     pruefeInhalt({ ...EINLEITUNG, aufbau: "x" }),
@@ -1119,7 +1119,7 @@ pruefe("Übungsinhalt: was das Formular still verwürfe, ist ein benannter Verst
   einziger(
     pruefeInhalt({ ...EINLEITUNG, uebungstyp: "spielform" }),
     "uebungstyp",
-    "Den Übungstyp gibt es nur im Juniorenfussball — lass «uebungstyp» weg.",
+    "Den Übungstyp gibt es nur im Juniorenfussball - lass «uebungstyp» weg.",
   );
   einziger(
     pruefeInhalt({ ...nurPflicht(JUN, "jun-abschluss", null), uebungstyp: "spielform" }, JUN),
@@ -1160,7 +1160,7 @@ pruefe("Übungsinhalt: ganze Zahlen bei Anzahl und Menge, keine Farbe an Materia
   einziger(
     pruefeInhalt({ ...EINLEITUNG, material: { liste: [{ art: "tor", farbe: "rot", menge: 2 }] } }),
     "material.liste[0].farbe",
-    "Tor gibt es nicht in Farben — lass «farbe» weg.",
+    "Tor gibt es nicht in Farben - lass «farbe» weg.",
     "eingabe",
   );
   // Ohne Farbe gilt bei färbbarem Material die des Diagramms — kein Verstoss.
@@ -1209,7 +1209,7 @@ pruefe("Übungsinhalt Juniorenfussball: alle Angaben ok, Kinderfussball-Angaben 
   einziger(
     pruefeInhalt({ ...JUN_SPIEL, offenStarten: "x" }, JUN),
     "offen_starten",
-    "Hier gibt es keinen methodischen Fahrplan — der Ablauf steht in «aufbau».",
+    "Hier gibt es keinen methodischen Fahrplan - der Ablauf steht in «aufbau».",
   );
   const e = einziger(
     pruefeInhalt({ ...JUN_SPIEL, einordnung: "einleitung" }, JUN),
@@ -1408,12 +1408,12 @@ pruefe("Übung ändern: nur das Genannte ändert sich, null leert, material je T
   einziger(
     aendere(VOLL_EINLEITUNG, { uebungstyp: "spielform" }),
     "uebungstyp",
-    "Den Übungstyp gibt es nur im Juniorenfussball — lass «uebungstyp» weg.",
+    "Den Übungstyp gibt es nur im Juniorenfussball - lass «uebungstyp» weg.",
   );
 });
 
 pruefe("Übung ändern: neue Einordnung nennt stehengebliebene Angaben, statt sie still zu löschen", () => {
-  const stehen = " Die Angabe steht noch in der Übung — setze";
+  const stehen = " Die Angabe steht noch in der Übung - setze";
   const p = aendere(VOLL_EINLEITUNG, { einordnung: "ausklang" });
   assert.deepEqual(felder(p), ["aufbau", "offen_starten", "ueben", "wetteifern", "erscheinungsformen"]);
   assert.equal(funde(p)[0].meldung, "Bitte den Aufbau beschreiben.");
@@ -1529,7 +1529,7 @@ pruefe("Kopieren und Löschen leben im Kern: die alten Orte sind weg (#197)", ()
   // Zwei Orte für dieselbe Choreografie hiessen zwei Wahrheiten darüber, was
   // zu einer vollständigen Kopie gehört und wann «nichts entstanden» ist.
   for (const alt of ["lib/training-kopie.ts", "lib/training-loeschen.ts"])
-    assert.ok(!existsSync(join(web, alt)), `${alt} existiert wieder — gehört nach lib/kern/`);
+    assert.ok(!existsSync(join(web, alt)), `${alt} existiert wieder - gehört nach lib/kern/`);
   for (const neu of ["kopie.ts", "loeschen.ts"]) assert.ok(existsSync(join(kern, neu)), `lib/kern/${neu} fehlt`);
 });
 
@@ -1734,7 +1734,7 @@ pruefe("Abo: Kopf, Zeitstempel und CRLF überall (RFC 5545, AK 2)", () => {
   assert.equal(aboPfad("tok"), "/api/kalender/tok.ics");
 });
 
-pruefe("Abo: aboLinks — https und http werden zu webcal:, der Pfad bleibt", () => {
+pruefe("Abo: aboLinks - https und http werden zu webcal:, der Pfad bleibt", () => {
   assert.deepEqual(aboLinks("https://ki-fu.ch", "tok"), {
     url: "https://ki-fu.ch/api/kalender/tok.ics",
     webcal: "webcal://ki-fu.ch/api/kalender/tok.ics",

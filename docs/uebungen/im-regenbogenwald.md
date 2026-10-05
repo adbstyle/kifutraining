@@ -14,7 +14,7 @@ Rund um ein Startfeld liegen mehrere Felder, jedes mit Pylonen einer Farbe marki
 
 ## Wett-eifern
 
-Mehrere Teams treten gegeneinander an: Welches ist vollzählig zuerst im angezeigten Feld? Schwieriger: Du zeigst zwei oder drei Farben nacheinander — die Teams durchdribbeln die Felder in dieser Reihenfolge und kehren dann ins Startfeld zurück.
+Mehrere Teams treten gegeneinander an: Welches ist vollzählig zuerst im angezeigten Feld? Schwieriger: Du zeigst zwei oder drei Farben nacheinander - die Teams durchdribbeln die Felder in dieser Reihenfolge und kehren dann ins Startfeld zurück.
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 64*

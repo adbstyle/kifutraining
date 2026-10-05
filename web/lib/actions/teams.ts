@@ -98,7 +98,7 @@ export async function sucheTrainer(teamId: string, email: string): Promise<Train
     case "gebremst":
       return {
         status: "fehler",
-        error: "Zu viele Versuche — bitte später erneut.",
+        error: "Zu viele Versuche - bitte später erneut.",
       };
     default:
       return {
@@ -127,7 +127,7 @@ export async function nimmMitgliedAuf(
 
   const res = data as { status: string; anzeige_name?: string };
   if (res.status === "gebremst")
-    return { ok: false, error: "Zu viele Versuche — bitte später erneut." };
+    return { ok: false, error: "Zu viele Versuche - bitte später erneut." };
   if (res.status !== "aufgenommen")
     return { ok: false, error: "Unter dieser Adresse ist niemand registriert." };
 

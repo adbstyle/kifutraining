@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import { AB_LG } from "@/lib/breite";
 import {
   ChevronDown,
   LogIn,
@@ -75,7 +76,6 @@ export interface SeitenleisteProps {
    alles, was neben ihr fest am Fenster klebt, liest sie von dort. */
 const BREIT = "17.5rem";
 const SCHMAL = "4.5rem";
-const AB_LG = "(min-width: 64rem)";
 const SEITENLEISTE_ID = "seitenleiste";
 
 export function leisteStil(slim: boolean): CSSProperties {

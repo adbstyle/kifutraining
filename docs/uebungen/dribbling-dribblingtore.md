@@ -8,7 +8,7 @@ Drei gegen drei auf einem Feld mit zwei Minitoren pro Seite. Quer durch die Mitt
 
 ## Üben
 
-- Am Ball jedes Mal neu entscheiden: mutig allein durchs Dribbeltor — oder den Ball nach vorn zu einem Mitspieler und gemeinsam auf ein Minitor.
+- Am Ball jedes Mal neu entscheiden: mutig allein durchs Dribbeltor - oder den Ball nach vorn zu einem Mitspieler und gemeinsam auf ein Minitor.
 
 ## Wett-eifern
 

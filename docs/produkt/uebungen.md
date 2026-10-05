@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-10-04. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-10-05. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -97,17 +97,24 @@ eigenen Zeile, auf jedem Bildschirm — die Spielfeldgrösse als „Spielfeldlä
 „Spielfeldbreite", die Spielerzahl als „Mindestanzahl" und „Höchstanzahl Spieler:innen"; ein
 Fehler, der das Paar betrifft, färbt beide Felder und steht unter dem zweiten.
 
-Beim Bearbeiten — einer eigenen Übung wie einer Übung im Training — ist die Maske aufgebaut wie
-die Übungsseite: links der Inhalt mit Feld-Diagramm, Beschreibung und Foto, rechts die Einordnung
-samt Material. Das Speichern steht rechts neben dem Namen. Auf einem breiten Bildschirm ist sie
-geteilt: Name und Speichern stehen fest, darunter scrollen Inhalt und Einordnung je für sich. Auf einem schmalen Bildschirm steht die
-Einordnung vor dem Inhalt.
+Beim Bearbeiten — einer eigenen Übung wie, auf schmalen Bildschirmen, einer Übung im Training —
+ist die Maske aufgebaut wie die Übungsseite: links der Inhalt mit Feld-Diagramm, Beschreibung und
+Foto, rechts die Einordnung samt Material. Das Speichern steht rechts neben dem Namen. Auf einem
+breiten Bildschirm ist sie geteilt: Name und Speichern stehen fest, darunter scrollen Inhalt und
+Einordnung je für sich. Auf einem schmalen Bildschirm steht die Einordnung vor dem Inhalt. Eine
+Übung im Training wird auf einem breiten Bildschirm dagegen in der Spalte neben den übrigen
+Übungen bearbeitet (siehe [Trainings](trainings.md#übungen-und-eigenschaften-nebeneinander)):
+dieselben Felder untereinander in der Reihenfolge des Details — Name, Feld-Diagramm,
+Beschreibung, Einordnung samt Material, Foto —, Sichern, Verwerfen und Schliessen klebend am
+oberen Rand.
 
 Bis dahin ist nichts gesichert. Will der Trainer die Maske mit ungesicherten Angaben oder einer
 ungesicherten Zeichnung verlassen — über einen Link, einen Eintrag der Seitenleiste, den Zurück-Knopf des
 Browsers, durch Neuladen oder Schliessen —, fragt die Anwendung nach, ob sie verloren gehen
-sollen; beim Bearbeiten bleibt dann der zuletzt gespeicherte Stand. Scheitert das Speichern,
-bleiben Angaben und Zeichnung stehen.
+sollen; beim Bearbeiten bleibt dann der zuletzt gespeicherte Stand. In der Spalte eines
+Trainings fragt dasselbe auch jeder Vorgang auf der Seite, der die Übung verlässt — eine andere
+öffnen, schliessen, entfernen, umsortieren, die Variante wechseln: weiter bearbeiten oder
+verwerfen. Scheitert das Speichern, bleiben Angaben und Zeichnung stehen.
 
 Ablauf und Varianten sind Freitexte und stehen gleich da, ebenso die drei Stufen des
 methodischen Fahrplans — Offen starten, Üben, Wetteifern: Zeilenumbrüche und Leerzeilen bleiben,
@@ -170,8 +177,9 @@ ihre Liste von Hand.
 Ändert der Trainer später das Diagramm so, dass sich der Vorschlag in Art, Farbe oder Menge
 ändert, bleibt das nicht unbemerkt. Die Anwendung nennt die geänderten Posten und lässt ihn den
 neuen Vorschlag übernehmen oder sein Material beibehalten — im Formular schon während des
-Zeichnens, vor dem Speichern, und danach auf der Seite der Übung
-und an der Übung im Trainings-Editor. Verglichen wird dabei der neue Vorschlag mit dem zuletzt
+Zeichnens, vor dem Speichern, und danach auf der Seite der Übung.
+Bei einer Übung im Training steht der Hinweis beim Bearbeiten im Abschnitt Material, nicht an
+ihrer Zeile. Verglichen wird dabei der neue Vorschlag mit dem zuletzt
 übernommenen: Eigene Anpassungen an der Liste und bloss verschobene Figuren lösen keinen Hinweis
 aus, und die Ergänzung bleibt in jedem Fall stehen. Jede Kopie beobachtet ihr eigenes Diagramm;
 eine Änderung am Original erreicht bereits kopierte Übungen und Trainings nicht.
@@ -280,7 +288,7 @@ Erfassen einer neuen Übung, beim Bearbeiten einer eigenen und bei einer Übung 
 Bearbeiten liegt dort die bisherige Zeichnung zum Weiterzeichnen bereit. Das Diagramm wird mit
 der Übung gespeichert, nicht vorher; eine eigene Seite zum Zeichnen gibt es nicht, und eine
 frühere Adresse dieser Seite führt in die Maske — bei einer Übung im Training in die Variante,
-die sie trug. Zum Zeichnen braucht es einen breiteren Bildschirm als den eines Telefons; auf
+die sie trug, und auf einem breiten Bildschirm in die Spalte neben den übrigen Übungen. Zum Zeichnen braucht es einen breiteren Bildschirm als den eines Telefons; auf
 einem schmaleren sagt die Maske das an der Stelle der Fläche und zeigt beim Bearbeiten darüber
 die bisherige Zeichnung. Die übrigen Angaben lassen sich dort erfassen und bearbeiten.
 

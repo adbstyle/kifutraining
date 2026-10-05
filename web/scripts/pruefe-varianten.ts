@@ -81,7 +81,7 @@ pruefe("Genau 40 Zeichen sind erlaubt, 41 nicht", () => {
   );
 });
 
-pruefe("Die Länge zählt getrimmt — wie der SQL-CHECK", () => {
+pruefe("Die Länge zählt getrimmt - wie der SQL-CHECK", () => {
   assert.equal(varianteNameProblem(`  ${"x".repeat(VARIANTE_NAME_MAX)}  `, varianten), null);
 });
 
@@ -100,7 +100,7 @@ pruefe("Beim Umbenennen zählt die eigene Bezeichnung nicht als vergeben", () =>
   assert.equal(varianteNameProblem("21 Kinder", varianten, "v1"), MELDUNG_VERGEBEN);
 });
 
-pruefe("Der Vorgabename ist zulässig — er steht so in der Datenbank", () => {
+pruefe("Der Vorgabename ist zulässig - er steht so in der Datenbank", () => {
   // Zwilling von `variante_vorgabename()` in SQL: Denselben Namen schreiben der
   // Trigger `trainings_erste_variante`, der Backfill von
   // `hauptteil_varianten` und seit #209 die Auflösung in `entferne_variante`.
@@ -155,7 +155,7 @@ pruefe("Die Reihenfolge bleibt, wie sie hereinkam", () => {
 });
 
 // ── varianteAus (#201 AK 7) ─────────────────────────────────────────────────
-pruefe("Ohne Parameter gilt die erste — die vorderste der Liste", () => {
+pruefe("Ohne Parameter gilt die erste - die vorderste der Liste", () => {
   assert.deepEqual(varianteAus(undefined, varianten), varianten[0]);
   assert.equal(varianteAus(undefined, []), undefined);
 });
@@ -242,7 +242,7 @@ pruefe("Kinderfussball, zwei Varianten: die leere wird einzeln genannt", () => {
   );
 });
 
-pruefe("Jede Variante zählt für sich — beide leer, beide genannt", () => {
+pruefe("Jede Variante zählt für sich - beide leer, beide genannt", () => {
   assert.deepEqual(
     fehlendeBedingungenAus("kinderfussball", ["G"], [einleitung], varianten),
     [
@@ -460,7 +460,7 @@ pruefe("Die Auflösung wird angekündigt, nicht nachträglich entdeckt", () => {
   // Oberfläche zeigt danach gar keine Bezeichnung mehr (Epic EK 7).
   assert.equal(
     aufloesungSatz(varianten[0]),
-    "Danach bleibt eine einzige Variante übrig — sie wird aufgelöst: " +
+    "Danach bleibt eine einzige Variante übrig - sie wird aufgelöst: " +
       "„28 Kinder\" heisst dann wieder schlicht Hauptteil, " +
       "und die Leiste zeigt nur noch „Variante hinzufügen\".",
   );

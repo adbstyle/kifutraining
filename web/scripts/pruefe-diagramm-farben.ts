@@ -294,7 +294,7 @@ pruefe(`Kein roher Farbwert im Zeichencode (${ZEICHENDATEIEN.length} Dateien)`, 
     const zeilen = ohneKommentare(readFileSync(join(WEB, kurz), "utf8"));
     zeilen.forEach((code, i) => {
       for (const [muster, grund] of ROHE_FARBE) {
-        if (muster.test(code)) treffer.push(`${kurz}:${i + 1}  ${grund}  — ${code.trim()}`);
+        if (muster.test(code)) treffer.push(`${kurz}:${i + 1}  ${grund}  - ${code.trim()}`);
       }
     });
   }
@@ -319,7 +319,7 @@ pruefe("Jede Rolle wird auch gezeichnet", () => {
 // Nicht geprüft, sondern berichtet — die Zahlen, mit denen entschieden wurde.
 console.log("\nMesswerte (Kontrast nach WCAG 2.1, schlechterer Wert von Grund und Streifen):");
 for (const { name, werte } of SAETZE) {
-  console.log(`  ${name} — Rasen ${werte.get("rasen")} / ${werte.get("rasen-streifen")}`);
+  console.log(`  ${name} - Rasen ${werte.get("rasen")} / ${werte.get("rasen-streifen")}`);
   const zeile = (rolle: string) =>
     `    ${rolle.padEnd(16)} ${(werte.get(rolle) ?? "?").padEnd(22)} ${z(aufFlaeche(werte, rolle))}`;
   for (const rolle of [...PALETTE, "bewegung", "geraet", "torwart-trikot", ...BEIWERK]) {

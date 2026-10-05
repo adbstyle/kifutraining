@@ -86,7 +86,7 @@ export const ZUM_VEROEFFENTLICHEN_FEHLT = "Zum Veröffentlichen fehlt noch:";
  *  «training_veroeffentlichen» (#196 AK 5): Der Anzeigename wird mit dem
  *  Training öffentlich. Eine Quelle, damit beide Wege dasselbe sagen. */
 export const TRAGWEITE_VEROEFFENTLICHEN =
-  "Das Training wird für alle sichtbar — mit allen Inhalten, Bildern und " +
+  "Das Training wird für alle sichtbar - mit allen Inhalten, Bildern und " +
   "Feld-Diagrammen. Dein Anzeigename steht als Urheber daran und ist für alle sichtbar.";
 
 /** Was fehlt, aus Sicht des Trainers — mit der Variante, wenn es eine zu
@@ -226,7 +226,7 @@ const ALTERSSTUFE_CHECKS: [string, string][] = [
   ],
   [
     "dauer_nicht_auffangen",
-    "Eine Übung im Auffangen trägt keine Dauer — das Auffangen zählt nicht " +
+    "Eine Übung im Auffangen trägt keine Dauer - das Auffangen zählt nicht " +
       "zur Trainingszeit.",
   ],
 ];
@@ -309,7 +309,7 @@ function variantenMeldung(message: string): string | null {
 export const UEBUNGSFOLGE_MELDUNG = {
   UEBUNGSFOLGE_DOPPELT: "Eine Übung steht in der Reihenfolge mehrfach.",
   UEBUNGSFOLGE_UNVOLLSTAENDIG:
-    "Die Reihenfolge muss genau die Übungen dieses Abschnitts nennen — jede einmal. " +
+    "Die Reihenfolge muss genau die Übungen dieses Abschnitts nennen - jede einmal. " +
     "Lies das Training neu und sende die vollständige Folge.",
   UEBUNGSFOLGE_ABSCHNITT_LEER: "In diesem Abschnitt steht keine Übung.",
 } as const;
@@ -324,7 +324,7 @@ export const UEBUNGSFOLGE_MELDUNG = {
 export const VARIANTENFOLGE_MELDUNG = {
   VARIANTENFOLGE_DOPPELT: "Eine Variante steht in der Reihenfolge mehrfach.",
   VARIANTENFOLGE_UNVOLLSTAENDIG:
-    "Die Reihenfolge muss genau die Varianten dieses Trainings nennen — jede einmal. " +
+    "Die Reihenfolge muss genau die Varianten dieses Trainings nennen - jede einmal. " +
     "Lies das Training neu und sende die vollständige Folge.",
 } as const;
 

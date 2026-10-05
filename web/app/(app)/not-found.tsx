@@ -6,7 +6,7 @@ import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 /* Eine Seite, die es nicht gibt — innerhalb der App, also mit Seitenleiste
    und Brotkrumen, damit der Weg zurück auf der Seite selbst steht. Greift bei
    `notFound()` und über `[...nichtGefunden]` auch bei unbekannten Adressen. */
-export const metadata: Metadata = { title: "Seite nicht gefunden — KiFu" };
+export const metadata: Metadata = { title: "Seite nicht gefunden - KiFu" };
 
 export default function NichtGefunden() {
   return (

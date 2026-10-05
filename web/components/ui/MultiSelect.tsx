@@ -33,6 +33,14 @@ export interface MultiSelectProps {
   disabled?: boolean;
   id?: string;
   className?: string;
+  /** Den Namen nur der Vorlesehilfe geben (siehe `Feld`). */
+  labelVersteckt?: boolean;
+  /** Mit offener Liste beginnen und den Fokus übernehmen — für eine
+   *  bearbeitbare Eigenschaft, die sich per Klick in das Feld verwandelt. */
+  anfangsOffen?: boolean;
+  /** Die Liste hat sich geschlossen — `perTaste` bei Esc und erneutem
+   *  Auslösen am Feld, sonst (Klick daneben, Hinausscrollen) nicht. */
+  onListeZu?: (perTaste: boolean) => void;
 }
 
 /* Mehrfachauswahl im Formular — der Name steht über dem Feld (`Feld`), der
@@ -61,6 +69,9 @@ export function MultiSelect({
   disabled,
   id,
   className,
+  labelVersteckt,
+  anfangsOffen = false,
+  onListeZu,
 }: MultiSelectProps) {
   const fid = useFeldId(id);
   const listId = `${fid}-list`;
@@ -71,7 +82,7 @@ export function MultiSelect({
   const [internal, setInternal] = useState<string[]>(defaultValue ?? []);
   const current = isControlled ? value : internal;
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(anfangsOffen);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   // Aufklappen, Grösse, Klick daneben und Zuklappen beim Hinausscrollen —
@@ -82,6 +93,7 @@ export function MultiSelect({
       onSchliessen: () => {
         setOpen(false);
         setQuery("");
+        onListeZu?.(false);
       },
     });
   const searchRef = useRef<HTMLInputElement>(null);
@@ -141,7 +153,17 @@ export function MultiSelect({
     setOpen(false);
     setQuery("");
     triggerRef.current?.focus();
+    onListeZu?.(true);
   }
+
+  // Mit offener Liste begonnen: messen und den Fokus übernehmen, wie ein
+  // Öffnen per Klick es täte.
+  useEffect(() => {
+    if (!anfangsOffen) return;
+    messe();
+    if (!searchable) triggerRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Beim Öffnen: Aktiv-Index zurücksetzen, Fokus ins Suchfeld (sonst Trigger).
   useEffect(() => {
@@ -227,6 +249,7 @@ export function MultiSelect({
     <Feld
       id={fid}
       label={label}
+      labelVersteckt={labelVersteckt}
       hinweis={supportingText}
       info={info}
       error={error}
@@ -262,6 +285,7 @@ export function MultiSelect({
           onClick={() => {
             if (disabled) return;
             if (!open) messe();
+            else onListeZu?.(true);
             setOpen((o) => !o);
           }}
           onKeyDown={onTriggerKey}

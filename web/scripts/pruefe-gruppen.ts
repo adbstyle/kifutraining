@@ -68,7 +68,7 @@ pruefe("Genau 40 Zeichen sind erlaubt, 41 nicht", () => {
   );
 });
 
-pruefe("Die Länge zählt getrimmt — wie der SQL-CHECK", () => {
+pruefe("Die Länge zählt getrimmt - wie der SQL-CHECK", () => {
   assert.equal(nameProblem(`  ${"x".repeat(GRUPPE_NAME_MAX)}  `, bestehende), null);
 });
 
@@ -416,16 +416,16 @@ pruefe("Eine Übung ohne Dauer zählt nicht mit", () => {
 pruefe("Trägt keine der Übungen eine Dauer, steht dort ein Gedankenstrich", () => {
   const z = zeitJeGruppe(kifu([["A", null, ["g1"]]]));
   assert.deepEqual(z.get("g1"), { minuten: 0, mitDauer: 0 });
-  assert.equal(zeitKurz(z.get("g1")), "—");
-  assert.equal(zeitText(z.get("g1")), "Zugewiesen —");
+  assert.equal(zeitKurz(z.get("g1")), "-");
+  assert.equal(zeitText(z.get("g1")), "Zugewiesen -");
 });
 
-pruefe("Eine Gruppe ohne Übung fehlt in der Map und liest sich als «—»", () => {
+pruefe("Eine Gruppe ohne Übung fehlt in der Map und liest sich als «-»", () => {
   const z = zeitJeGruppe(kifu([["A", 15, ["g1"]]]));
   assert.equal(z.has("g2"), false);
-  assert.equal(zeitText(z.get("g2")), "Zugewiesen —");
+  assert.equal(zeitText(z.get("g2")), "Zugewiesen -");
   // Auch ganz ohne Verteilung — ein Training, das eben erst Gruppen bekam.
-  assert.equal(zeitText(zeitJeGruppe([]).get("g1")), "Zugewiesen —");
+  assert.equal(zeitText(zeitJeGruppe([]).get("g1")), "Zugewiesen -");
 });
 
 pruefe("Eine Übung ohne Zuweisung zählt bei keiner Gruppe", () => {
@@ -462,7 +462,7 @@ pruefe("Die Summe geht über beide Junioren-Blöcke hinweg", () => {
   assert.equal(zeitText(z.get("g2")), "Zugewiesen 15 min");
 });
 
-pruefe("Eine erfasste Null bleibt «0 min» — sie ist eine Angabe", () => {
+pruefe("Eine erfasste Null bleibt «0 min» - sie ist eine Angabe", () => {
   const z = zeitJeGruppe(kifu([["A", 0, ["g1"]]]));
   assert.equal(zeitText(z.get("g1")), "Zugewiesen 0 min");
 });
@@ -476,13 +476,13 @@ pruefe("Der Zusatz hängt an einer wirklichen Summe", () => {
   assert.equal(zeitText(null0.get("g1"), "in dieser Variante"), "Zugewiesen 0 min in dieser Variante");
 });
 
-pruefe("Ohne Summe bleibt «Zugewiesen —» ohne Zusatz", () => {
+pruefe("Ohne Summe bleibt «Zugewiesen -» ohne Zusatz", () => {
   // «Zugewiesen — in dieser Variante» schränkte eine Aussage ein, die es nicht
   // gibt: Es ist keine Zeit erfasst, weder hier noch anderswo.
   const ohneDauer = zeitJeGruppe(kifu([["A", null, ["g1"]]]));
-  assert.equal(zeitText(ohneDauer.get("g1"), "in dieser Variante"), "Zugewiesen —");
+  assert.equal(zeitText(ohneDauer.get("g1"), "in dieser Variante"), "Zugewiesen -");
   // Und ebenso für eine Gruppe, die in dieser Variante gar nicht vorkommt.
-  assert.equal(zeitText(undefined, "in dieser Variante"), "Zugewiesen —");
+  assert.equal(zeitText(undefined, "in dieser Variante"), "Zugewiesen -");
 });
 
 // ── Ordnung: verschoben / gleicheFolge (#209) ───────────────────────────────

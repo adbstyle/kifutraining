@@ -76,7 +76,7 @@ export const UEBUNGSTYP_DEFINITION: Record<string, string> = {
   spielform:
     "Spielnahe Form mit Gegner und Entscheidungen. Das Manual zieht sie der isolierten Übung vor.",
   "isolierte-form":
-    "Übungsform ohne Spielsituation. Im Manual heisst sie schlicht «Übung» — hier umbenannt, weil die Applikation dieses Wort für das Objekt selbst braucht.",
+    "Übungsform ohne Spielsituation. Im Manual heisst sie schlicht «Übung» - hier umbenannt, weil die Applikation dieses Wort für das Objekt selbst braucht.",
 };
 
 /** Klartext jeder Einordnung — die vier Trainingsteile des Manuals Fussball

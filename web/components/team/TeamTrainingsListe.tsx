@@ -246,7 +246,7 @@ export function TeamTrainingsListe({
         </p>
         <p className="mt-3">
           Persönliche Kopien, die jemand zu sich übernommen hat, bleiben
-          bestehen — sie sind eigenständig.
+          bestehen - sie sind eigenständig.
         </p>
       </Dialog>
     </>

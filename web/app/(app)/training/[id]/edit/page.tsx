@@ -8,7 +8,7 @@ import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Training bearbeiten — KiFu",
+  title: "Training bearbeiten - KiFu",
   robots: { index: false },
 };
 
@@ -21,11 +21,12 @@ export default async function TrainingEditPage({
    *  fehlt sie oder meint sie eine entfernte, gilt die erste. `bearbeitet`
    *  stammt vom Rückweg aus der Fassungs-Bearbeitung und wird hier nicht
    *  ausgewertet; er steht in der Signatur, damit sichtbar ist, womit diese
-   *  Seite aufgerufen wird. */
-  searchParams: Promise<{ variante?: string; bearbeitet?: string }>;
+   *  Seite aufgerufen wird. `uebung`: die in der Spalte geöffnete Übung
+   *  (#371 AK 10), `bearbeiten`: zum Bearbeiten (#372). */
+  searchParams: Promise<{ variante?: string; bearbeitet?: string; uebung?: string; bearbeiten?: string }>;
 }) {
   const { id } = await params;
-  const { variante } = await searchParams;
+  const { variante, uebung, bearbeiten } = await searchParams;
   const training = await getTrainingForEdit(id);
   // Nicht vorhanden oder fremd -> zurück in die eigene Übersicht (kein Schreib-
   // zugriff auf fremde Trainings, Story #12 AC8).
@@ -34,7 +35,7 @@ export default async function TrainingEditPage({
   const teams = await getMeineTeams();
 
   return (
-    <Seitenrahmen breite="3xl" krumen={null}>
+    <Seitenrahmen breite="3xl" krumen={null} geteilt>
       {/* Die Brotkrumen gehen in den Editor hinein, statt darüber zu stehen:
           Neben ihnen stehen die Aktionen am Training (#249 AK 8), und die
           kennen nur die Laufzeit des Editors — die angezeigte Variante und die
@@ -46,6 +47,8 @@ export default async function TrainingEditPage({
         training={training}
         teams={teams}
         varianteParam={variante}
+        uebungParam={uebung}
+        bearbeitenParam={!!bearbeiten}
         brotkrumen={trainingsKrumen(training)}
       />
     </Seitenrahmen>

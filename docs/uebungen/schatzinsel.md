@@ -14,7 +14,7 @@ In der Feldmitte liegt die Schatzinsel, ein markiertes Feld. Die Kinder dribbeln
 
 ## Wett-eifern
 
-Zwei Teams: Die Affen hüten sämtliche Bälle auf der Schatzinsel, die Piraten wollen sie dribbelnd auf ihr Schiff bringen — ein markiertes Feld am Rand. Die Affen wehren ab und dürfen erbeutete Bälle vom Schiff zurück auf die Insel holen. Nach zwei Minuten wird gezählt: Wo liegen mehr Bälle?
+Zwei Teams: Die Affen hüten sämtliche Bälle auf der Schatzinsel, die Piraten wollen sie dribbelnd auf ihr Schiff bringen - ein markiertes Feld am Rand. Die Affen wehren ab und dürfen erbeutete Bälle vom Schiff zurück auf die Insel holen. Nach zwei Minuten wird gezählt: Wo liegen mehr Bälle?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 61*
