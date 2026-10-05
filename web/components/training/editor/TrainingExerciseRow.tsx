@@ -36,7 +36,6 @@ export const MATERIAL_GEAENDERT_TEXT =
  *  Ort kippen. */
 export function TrainingExerciseRow({
   item,
-  index,
   isFirst,
   isLast,
   trainingId,
@@ -53,7 +52,6 @@ export function TrainingExerciseRow({
   onRemove,
 }: {
   item: TrainingExerciseItem;
-  index: number;
   isFirst: boolean;
   isLast: boolean;
   trainingId: string;
@@ -113,10 +111,6 @@ export function TrainingExerciseRow({
           >
             <ChevronDown size={16} strokeWidth={2.5} aria-hidden />
           </button>
-        </span>
-
-        <span className="w-4 shrink-0 text-center type-label-medium text-on-surface-mittel">
-          {index + 1}
         </span>
 
         <ExerciseThumb

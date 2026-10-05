@@ -272,7 +272,7 @@ export default async function TrainingViewPage({
                         </h3>
                       )}
                       <ol className="flex flex-col gap-2">
-                        {b.items.map((item, i) => {
+                        {b.items.map((item) => {
                           const dur =
                             s.traegtDauer && item.durationMin != null
                               ? formatDuration(item.durationMin)
@@ -287,9 +287,6 @@ export default async function TrainingViewPage({
                               id={item.id}
                               className="flex items-center gap-3 px-2 py-2"
                             >
-                              <span className="w-5 shrink-0 text-center type-label-medium text-on-surface-mittel">
-                                {i + 1}
-                              </span>
                               <ExerciseThumb
                                 bildUrl={item.bildUrl}
                                 diagramm={item.diagramm}

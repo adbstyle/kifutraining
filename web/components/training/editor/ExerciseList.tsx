@@ -76,7 +76,6 @@ export function ExerciseList({
         <TrainingExerciseRow
           key={item.id}
           item={item}
-          index={i}
           isFirst={i === 0}
           isLast={i === items.length - 1}
           trainingId={kontext.trainingId}

@@ -17,7 +17,7 @@ export function OeffnenZeileDemo() {
   ];
   return (
     <ol className="flex max-w-xl flex-col gap-2">
-      {zeilen.map((z, i) => (
+      {zeilen.map((z) => (
         <li
           key={z.id}
           className={cn(
@@ -25,9 +25,6 @@ export function OeffnenZeileDemo() {
             offen === z.id && "xl:border-primary",
           )}
         >
-          <span className="w-4 shrink-0 text-center type-label-medium text-on-surface-mittel">
-            {i + 1}
-          </span>
           <span className="flex min-w-0 flex-1">
             <UebungsName
               name={z.name}
