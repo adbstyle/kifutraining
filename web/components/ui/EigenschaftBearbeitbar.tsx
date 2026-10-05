@@ -65,7 +65,7 @@ export function EigenschaftAuswahl({
   label: string;
   options: SelectOption[];
   wert: string[];
-  /** Wie der Wert ruhend aussieht, etwa als Kategorie-Plaketten. */
+  /** Wie der Wert ruhend aussieht, etwa als Kategorie-Lozenges. */
   anzeige: ReactNode;
   leerText: string;
   /** Bei jeder Wahl — gespeichert wird sofort. */

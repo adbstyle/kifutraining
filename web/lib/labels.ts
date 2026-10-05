@@ -117,8 +117,8 @@ export function zaehle(n: number, einzahl: string, mehrzahl: string): string {
   return `${n} ${n === 1 ? einzahl : mehrzahl}`;
 }
 
-/** Die Herkunfts-Aufschriften einer Übung — wortgleich auf der Plakette der
- *  Karte (`Badge`) und im Ergebnis des KI-Werkzeugs «uebungen_suchen» (#142
+/** Die Herkunfts-Aufschriften einer Übung — wortgleich auf der Lozenge der
+ *  Karte (`HerkunftLozenge`) und im Ergebnis des KI-Werkzeugs «uebungen_suchen» (#142
  *  AK 7: ein Treffer trägt dieselben Angaben wie die Karte). Eine Quelle,
  *  damit der Assistent nicht «Community» sagt, wo die Karte etwas anderes
  *  zeigt. */
@@ -131,7 +131,7 @@ export const HERKUNFT_LABEL = {
 export type HerkunftArt = keyof typeof HERKUNFT_LABEL;
 
 /** Welche Herkunft eine Übung zeigt: Manual-Bestand, sonst nach Sichtbarkeit.
- *  Die eine Unterscheidung für Plakette (`HerkunftBadge`) und KI-Ausgabe; ohne
+ *  Die eine Unterscheidung für Lozenge (`HerkunftLozenge`) und KI-Ausgabe; ohne
  *  bekannte Sichtbarkeit gilt eine eigene Übung als Entwurf. */
 export function herkunftArt(
   source: "manual" | "user",

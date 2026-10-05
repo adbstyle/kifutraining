@@ -30,18 +30,21 @@ import {
   ELEV,
   ERROR,
   GRUND,
-  KAT,
+  LOZENGE,
+  LOZENGE_DRUCK,
   ON_ERROR,
   ON_PRIMARY,
+  SECTION,
+  SECTION_DRUCK,
   PRIMARY,
   SCHRIFT,
   UMKEHR,
+  deckend,
   elev,
   elevName,
   hex8,
   kontrast,
   relativeLuminanz,
-  rgbAbstand,
   ueberlagern,
 } from "../lib/farben";
 import { blockVon, normalisiere, tokens } from "./css-tokens";
@@ -225,45 +228,31 @@ pruefe("Schrift und Akzent tragen auf der umgekehrten Fläche", () => {
   assert.ok(akzent >= 4.5, `umkehr-akzent auf umkehr: ${z(akzent)}:1`);
 });
 
-// ── 6. Alterskategorien ────────────────────────────────────────────────────
-pruefe("Jede Alterskategorie trägt auf Grund und Karte", () => {
-  // Sie erscheinen als Kontur UND Schrift (Plakette, StufenField) — also gilt
-  // die Schrift-Schwelle, nicht die 3:1 für grafische Objekte. Karte ist
-  // elev-01, der Grund elev-00; auf beiden steht dieselbe Plakette.
-  for (const [schluessel, hex] of Object.entries(KAT)) {
-    for (const dp of [0, 1] as const) {
-      const flaeche = elev(dp);
-      const wert = kontrast(hex, flaeche);
-      assert.ok(wert >= 4.5, `kat-${schluessel} auf ${elevName(dp)}: ${z(wert)}:1`);
+// ── 6. Atlassian: Lozenge und Section Message ──────────────────────────────
+// Die Werte sind Atlassians eigene (lib/farben.ts) — geprüft wird trotzdem,
+// denn sie liegen hier auf UNSEREM Grund. Die Lozenge steht auf der Seite, auf
+// der Karte und im Dialog (Übungsauswahl), also auf jeder Höhenstufe; ihre
+// neutrale Fläche ist halbtransparent und wird darum je Stufe neu gemischt.
+pruefe("Jede Lozenge trägt ihre Schrift auf jeder Höhenstufe", () => {
+  for (const [darstellung, { flaeche, schrift }] of Object.entries(LOZENGE)) {
+    for (const stufe of ELEV) {
+      const wert = kontrast(schrift, deckend(flaeche, stufe.hex));
+      assert.ok(wert >= 4.5, `lozenge-${darstellung} auf ${elevName(stufe.dp)}: ${z(wert)}:1`);
     }
   }
 });
 
-pruefe("Keine Alterskategorie ist mit Primary verwechselbar", () => {
-  // Eine Kategorie-Plakette in Primary-Nähe liest sich wie ein aktiver Zustand.
-  // Der Abstand im RGB-Würfel ist ein grobes Mass, aber es trennt genau das:
-  // kat-e (#ff8a65) ist neu und musste weg vom Lila der alten Fassung (5.4).
-  // Schwelle 50: kat-b (#a5b4fc, 51) ist der engste Nachbar und bleibt —
-  // jeder Blauton, der weiter von Primary wegrückt, fällt auf kat-g zu; der
-  // Buchstabe trägt die Unterscheidung mit (Kommentar zu den kat-Tokens).
-  for (const [schluessel, hex] of Object.entries(KAT)) {
-    const abstand = rgbAbstand(hex, PRIMARY);
-    assert.ok(abstand >= 50, `kat-${schluessel} zu primary: ${z(abstand)}`);
-  }
-});
-
-pruefe("Error und die Alterskategorien bleiben unterscheidbar", () => {
-  // Beide erscheinen als Kontur, und sie können am selben Ort stehen: die
-  // Kategorie-Plakette und ein Fehlerrahmen auf derselben Karte. kat-c
-  // (#f48fb1) ist der engste Nachbar — mit dem helleren Error rückt er von 79
-  // auf 32 RGB-Einheiten heran. Das ist gewollt und trägt, weil nicht die
-  // Farbe die beiden trennt, sondern die FORM: eine 22-px-Plakette mit einem
-  // Buchstaben darin gegen einen Feldrahmen mit einem Satz darunter. Sie haben
-  // nie dieselbe Rolle am selben Ort. Die Schwelle hält den Abstand bloss
-  // fest: Wer Error oder kat-c weiter aneinander schiebt, muss hier vorbei.
-  for (const [schluessel, hex] of Object.entries(KAT)) {
-    const abstand = rgbAbstand(hex, ERROR);
-    assert.ok(abstand >= 30, `kat-${schluessel} zu error: ${z(abstand)}`);
+pruefe("Jede Section Message trägt Schrift und Zeichen", () => {
+  // Die Schrift ist die gewöhnliche (on-surface, 4.5:1); das Zeichen ist ein
+  // grafisches Objekt (3:1 nach WCAG 1.4.11) und trägt den Ton.
+  for (const [rolle, { flaeche, icon }] of Object.entries(SECTION)) {
+    const schrift = kontrast("#ffffff", flaeche);
+    assert.ok(schrift >= 4.5, `on-surface auf section-${rolle}: ${z(schrift)}:1`);
+    const zeichen = kontrast(icon, flaeche);
+    assert.ok(zeichen >= 3.0, `icon-${rolle} auf section-${rolle}: ${z(zeichen)}:1`);
+    // Ihre Knöpfe sind Textknöpfe in Primary und stehen auf derselben Fläche.
+    const knopf = kontrast(PRIMARY, flaeche);
+    assert.ok(knopf >= 4.5, `primary auf section-${rolle}: ${z(knopf)}:1`);
   }
 });
 
@@ -304,8 +293,9 @@ pruefe("Jede Rolle, die im Druck sichtbar wird, hat einen Override", () => {
     "on-primary",
     "error",
     "on-error",
-    "kat-a",
-    "kat-f",
+    // Lozenge und Section Message wechseln auf Papier vollständig ins helle
+    // Atlassian-Theme — jede ihrer Rollen braucht darum einen Override.
+    ...Object.keys(BILDSCHIRM).filter((rolle) => /^(on-)?lozenge-|^section-|^icon-/.test(rolle)),
   ];
   assert.deepEqual(
     pflicht.filter((rolle) => !(rolle in DRUCK)),
@@ -313,13 +303,20 @@ pruefe("Jede Rolle, die im Druck sichtbar wird, hat einen Override", () => {
   );
 });
 
-pruefe("Die beiden gedruckten Kategorie-Flächen tragen ihre Schrift", () => {
-  // Im Druck kippen kat-a und kat-f von Kontur auf Fläche (Vertrag §4), damit
-  // sie im Schwarzweiss-Ausdruck nicht verschwinden. Dann liegt die
-  // Druckschrift darauf.
-  for (const rolle of ["kat-a", "kat-f"] as const) {
-    const wert = kontrast(DRUCK_SCHRIFT, DRUCK[rolle]);
-    assert.ok(wert >= 4.5, `Druckschrift auf ${rolle}: ${z(wert)}:1`);
+pruefe("Lozenge und Section Message tragen auf Papier", () => {
+  // Gedruckt wird die Lozenge vor allem als Alterskategorie (Druckansicht des
+  // Trainings): Papier und die hellste Kartenstufe des Drucks.
+  for (const [darstellung, { flaeche, schrift }] of Object.entries(LOZENGE_DRUCK)) {
+    for (const papier of [DRUCK["elev-00"], DRUCK["elev-01"]]) {
+      const wert = kontrast(schrift, deckend(flaeche, papier));
+      assert.ok(wert >= 4.5, `Druck lozenge-${darstellung} auf ${papier}: ${z(wert)}:1`);
+    }
+  }
+  for (const [rolle, { flaeche, icon }] of Object.entries(SECTION_DRUCK)) {
+    const schrift = kontrast(DRUCK_SCHRIFT, flaeche);
+    assert.ok(schrift >= 4.5, `Druckschrift auf section-${rolle}: ${z(schrift)}:1`);
+    const zeichen = kontrast(icon, flaeche);
+    assert.ok(zeichen >= 3.0, `Druck icon-${rolle} auf section-${rolle}: ${z(zeichen)}:1`);
   }
 });
 
@@ -345,7 +342,6 @@ const VERBOTEN: [RegExp, string][] = [
   [/secondary-container/, "Container-Rollen gibt es nicht mehr"],
   [/error-container/, "Container-Rollen gibt es nicht mehr"],
   [/inverse-/, "Inverse-Rollen gibt es nicht mehr"],
-  [/\bwarning\b/, "Warning ist entfallen - der Befund trägt Error-Farbe"],
   [/shadow-e[1-5]/, "ersetzt durch shadow-dp-*"],
   [/--button-/, "Component-Token"],
   [/--chip-/, "Component-Token"],
@@ -357,7 +353,11 @@ const VERBOTEN: [RegExp, string][] = [
   [/--breadcrumb-/, "Component-Token"],
   // Jede eckige Klammer am Radius, nicht nur die in px: `rounded-[6px]` und
   // `rounded-[--x]` sind beide am System vorbei.
-  [/rounded-\[/, "freie Radien - nur rounded-plakette/-flaeche/-dialog/-full"],
+  [/rounded-\[/, "freie Radien - nur rounded-klein/-flaeche/-dialog/-full"],
+  // Die Plakette heisst seit der Angleichung an Atlassian Lozenge; ihre
+  // Alterskategorie-Farben sind in die Accent-Lozenges aufgegangen.
+  [/rounded-plakette|type-plakette/, "ersetzt durch rounded-klein / type-lozenge"],
+  [/\b(?:bg|text|border)-kat-/, "ersetzt durch die Accent-Lozenges (KategorieLozenge)"],
   [/border-\[1\.5px\]/, "ersetzt durch @utility kontur"],
   // Alpha auf einer KONTUR bricht die 3:1-Regel für grafische Objekte: Die
   // Kontur ist das Einzige, was die Fläche begrenzt, und `border-error/40` kam
@@ -429,14 +429,17 @@ for (const stufe of ELEV) {
       `error ${z(kontrast(ERROR, stufe.hex))}`,
   );
 }
-console.log(
-  "  Alterskategorien (elev-00 / elev-01 / RGB-Abstand zu primary / zu error):",
-);
-for (const [schluessel, hex] of Object.entries(KAT)) {
+console.log("  Lozenge (Schrift auf Fläche, über elev-00 / elev-24):");
+for (const [darstellung, { flaeche, schrift }] of Object.entries(LOZENGE)) {
   console.log(
-    `    kat-${schluessel}  ${hex}  ` +
-      `${z(kontrast(hex, elev(0)))}  ${z(kontrast(hex, elev(1)))}  ` +
-      `Abstand ${z(rgbAbstand(hex, PRIMARY))}  ${z(rgbAbstand(hex, ERROR))}`,
+    `    ${darstellung.padEnd(15)}  ${z(kontrast(schrift, deckend(flaeche, elev(0))))}  ` +
+      `${z(kontrast(schrift, deckend(flaeche, elev(24))))}`,
+  );
+}
+console.log("  Section Message (Schrift / Zeichen auf Fläche):");
+for (const [rolle, { flaeche, icon }] of Object.entries(SECTION)) {
+  console.log(
+    `    ${rolle.padEnd(12)}  ${z(kontrast("#ffffff", flaeche))}  ${z(kontrast(icon, flaeche))}`,
   );
 }
 console.log(
@@ -444,10 +447,6 @@ console.log(
     `error ${z(kontrast(DRUCK.error, "#ffffff"))}  ` +
     `mittel ${z(kontrast(DRUCK["on-surface-mittel"], "#ffffff"))}  ` +
     `tief ${z(kontrast(DRUCK["on-surface-tief"], "#ffffff"))}`,
-);
-console.log(
-  `  Druckschrift auf Fläche: kat-a ${z(kontrast(DRUCK_SCHRIFT, DRUCK["kat-a"]))}  ` +
-    `kat-f ${z(kontrast(DRUCK_SCHRIFT, DRUCK["kat-f"]))}`,
 );
 console.log(`  Hex8-Proben: mittel ${hex8("#ffffff", SCHRIFT.mittel)}  tief ${hex8("#ffffff", SCHRIFT.tief)}`);
 

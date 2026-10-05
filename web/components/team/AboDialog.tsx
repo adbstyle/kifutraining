@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, ExternalLink, ShieldAlert } from "lucide-react";
-import { Banner, Button, ButtonLink, Dialog, TextField } from "@/components/ui";
+import { SectionMessage, Button, ButtonLink, Dialog, TextField } from "@/components/ui";
 
 /** Wie lange der Knopf «Kopiert» zeigt. */
 const KOPIERT_MS = 2500;
@@ -73,14 +73,14 @@ function AboInhalt({ links }: { links: { url: string; webcal: string } }) {
 
   return (
     <>
-      <Banner icon={ShieldAlert}>
+      <SectionMessage icon={ShieldAlert}>
         Dieser Link ist persönlich. Gib ihn nicht weiter: Wer ihn hat, sieht Zeit und Ort der
         Trainings dieses Teams.
-      </Banner>
+      </SectionMessage>
       {fehler && (
-        <Banner tone="fehler" className="mt-3">
+        <SectionMessage appearance="error" className="mt-3">
           {KOPIEREN_FEHLER}
-        </Banner>
+        </SectionMessage>
       )}
       <div className="mt-5 flex items-center gap-2">
         <TextField

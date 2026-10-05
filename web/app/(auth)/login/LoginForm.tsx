@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { LogIn, MailCheck } from "lucide-react";
-import { TextField, PasswordField, Button, Banner } from "@/components/ui";
+import { TextField, PasswordField, Button, SectionMessage } from "@/components/ui";
 import { login, resendConfirmation, type AuthState } from "@/lib/actions/auth";
 
 const initial: AuthState = { status: "idle" };
@@ -35,19 +35,19 @@ function NeedsConfirmation({ email }: { email?: string }) {
 
   if (state.status === "confirm") {
     return (
-      <Banner icon={MailCheck}>
+      <SectionMessage icon={MailCheck}>
         Bestätigungsmail erneut an <strong>{state.email ?? email}</strong>{" "}
         gesendet.
-      </Banner>
+      </SectionMessage>
     );
   }
 
   return (
-    /* Mit Knopf trägt der Banner `status` statt `alert` (siehe Banner): jeder
-       Klick ändert die Beschriftung, `alert` läse den Banner jedes Mal
-       unterbrechend neu vor. */
-    <Banner
-      tone="fehler"
+    /* Mit Knopf trägt die Meldung `status` statt `alert` (siehe
+       SectionMessage): jeder Klick ändert die Beschriftung, `alert` läse sie
+       jedes Mal unterbrechend neu vor. */
+    <SectionMessage
+      appearance="error"
       actions={
         <form action={formAction}>
           <input type="hidden" name="email" value={email ?? ""} />
@@ -56,7 +56,7 @@ function NeedsConfirmation({ email }: { email?: string }) {
       }
     >
       Bitte bestätige zuerst deine E-Mail-Adresse. Den Link nicht erhalten?
-    </Banner>
+    </SectionMessage>
   );
 }
 

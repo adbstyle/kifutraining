@@ -17,7 +17,7 @@ import { kopiereUebung } from "@/lib/actions/exercises";
  * Eigentümer-Menü.
  *
  * Nach dem Kopieren führt der Weg unmittelbar zur eigenen Kopie (AK 5,
- * PO-Entscheid 2026-08-30) — dort sagen Entwurf-Plakette und Eigentümer-
+ * PO-Entscheid 2026-08-30) — dort sagen Entwurf-Lozenge und Eigentümer-
  * Aktionen, dass sie ihm gehört (AK 4). Der Hinweis dazu kommt als Flash über
  * `?kopiert=1`, wie nach dem Erstellen und Bearbeiten. Icon-Knopf statt
  * beschriftetem Button, weil der Aktions-Cluster der Detailseite durchgehend

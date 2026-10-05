@@ -5,11 +5,14 @@ import {
   ButtonGroup,
   segmentClasses,
   Badge,
+  Lozenge,
+  HerkunftLozenge,
+  SichtbarkeitLozenge,
   Card,
   ExerciseCard,
   IconButton,
   IconButtonLink,
-  KategorieChip,
+  KategorieLozenge,
   TabNav,
   Tooltip,
   TextField,
@@ -28,7 +31,7 @@ import {
   EigenschaftFehlt,
   Disclosure,
   Leerzustand,
-  Banner,
+  SectionMessage,
 } from "@/components/ui";
 import { FavoriteButton } from "@/components/exercise/FavoriteButton";
 import { uebungEckdaten } from "@/lib/eckdaten";
@@ -69,7 +72,7 @@ import {
   Info,
   SearchX,
   MailCheck,
-  ListPlus,
+  Layers,
   RefreshCw,
   CalendarOff,
   CalendarX2,
@@ -80,12 +83,10 @@ import {
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { ROTATIONEN, SPIELER_POSEN, type DiagrammElement } from "@/lib/diagramm";
 import { cn } from "@/lib/cn";
-import { kategorieStufe } from "@/lib/labels";
 import type { KategorieSlug } from "@/lib/vocab";
 import {
   GRUND,
   ELEV,
-  KAT,
   PRIMARY,
   ON_PRIMARY,
   SECONDARY,
@@ -97,13 +98,15 @@ import {
   UMKEHR,
   ZUSTAND,
   DRUCK,
+  LOZENGE,
+  SECTION,
+  deckend,
   elev,
   elevName,
   hex8,
   kontrast,
-  rgbAbstand,
   ueberlagern,
-  type KatSchluessel,
+  type LozengeAppearance,
 } from "@/lib/farben";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
@@ -165,12 +168,12 @@ function Farbfeld({
     <div className="rounded-flaeche kontur border-kante p-3">
       <div
         className={cn(
-          "mb-2 flex h-14 w-full items-end rounded-plakette p-2",
+          "mb-2 flex h-14 w-full items-end rounded-klein p-2",
           flaeche,
           schrift,
         )}
       >
-        <span className="type-plakette">{wert}</span>
+        <span className="type-label-small">{wert}</span>
       </div>
       <p className="type-label-small text-on-surface">{name}</p>
       <p className="type-body-small text-on-surface-mittel">{notiz}</p>
@@ -296,6 +299,17 @@ const strichRollen: [string, string, string, string, string][] = [
 
 const kategorien: KategorieSlug[] = ["G", "F", "E", "D", "C", "B", "A"];
 
+/* Die Lozenge-Darstellungen in Atlassians Reihenfolge; die Bedeutung steht
+   daneben, wie die Komponente sie führt. */
+const lozengeBedeutung: [LozengeAppearance, string][] = [
+  ["neutral", "Herkunft, Entwurf, Altersstufe, Termin ausgefallen"],
+  ["information", "gilt nach aussen: öffentlich, Community"],
+  ["discovery", "etwas Zusätzliches: mehrere Varianten"],
+  ["warning", "braucht Aufmerksamkeit: Termin ohne Training"],
+  ["success", "erledigt - im Kit, derzeit ohne Ort"],
+  ["danger", "blockiert - im Kit, derzeit ohne Ort"],
+];
+
 const typeScale: [string, string, string][] = [
   ["type-display-large", "Display Large", "Geist 600 · 57/60 · −.02 em"],
   ["type-display-medium", "Display Medium", "Geist 600 · 45/50 · −.02 em"],
@@ -312,7 +326,7 @@ const typeScale: [string, string, string][] = [
   ["type-label-large", "Label Large", "Geist 600 · 14/20 · +.08 em · versal"],
   ["type-label-medium", "Label Medium", "Geist 600 · 12/16 · +.09 em · versal"],
   ["type-label-small", "Label Small", "Geist 500 · 11/16 · +.09 em · versal"],
-  ["type-plakette", "Plakette", "Geist 700 · 10/14 · +.10 em · versal"],
+  ["type-lozenge", "Lozenge und Badge", "Geist 400 · 12/16 · Atlassian body.small"],
 ];
 
 /* Literale Klassennamen, damit Tailwind sie findet — aus einer Schleife
@@ -337,7 +351,7 @@ const elevVerwendung: Record<number, string> = {
   3: "- frei -",
   4: "Kopfzeile unter lg (deckend, kein Blur)",
   6: "Elevated-Knopf und -Chip, Overlay-Icon-Knopf",
-  8: "Menü, Select-Panel, Tonal-Knopf, Entwurf-Plakette, Drawer, aktives Segment, offener Navigationseintrag",
+  8: "Menü, Select-Panel, Tonal-Knopf, Drawer, aktives Segment, offener Navigationseintrag",
   12: "Avatar, offener Navigationseintrag im Drawer",
   16: "- frei -",
   24: "Dialog, Tooltip",
@@ -368,14 +382,15 @@ const spacingSteps: [string, string][] = [
 ];
 
 const radien: [string, string, string][] = [
-  ["rounded-plakette", "2 px", "Plakette, Kategorie-Chip - die kleinste beschriftete Fläche."],
-  ["rounded-flaeche", "4 px", "Karte, Feld, Knopf, Menü, Snackbar, Auswahl-Panel."],
-  ["rounded-dialog", "6 px", "Nur der Dialog: die grösste Fläche verträgt mehr Rundung."],
+  ["rounded-klein", "2 px", "Kontrollkästchen, Badge, Fokusfläche eines Textlinks - die kleinste Rundung."],
+  ["rounded-flaeche", "4 px", "Karte, Feld, Knopf, Menü, Snackbar, Auswahl-Panel, Lozenge."],
+  ["rounded-dialog", "6 px", "Dialog und Section Message: die grössten Flächen vertragen mehr Rundung."],
   ["rounded-full", "voll", "Chips - Werte und Schalter, die man antippt und wieder loslässt."],
 ];
 
 const hoehen: [string, string][] = [
-  ["h-[22px] · 22 px", "Plakette und Kategorie-Chip - die kleinste beschriftete Fläche."],
+  ["h-4 · 16 px", "Badge - die Zahl am Knopf (Atlassian)."],
+  ["h-5 · 20 px", "Lozenge, auch als Alterskategorie (Atlassian)."],
   [
     "h-9 · 36 px",
     "Das eine Mass alles Bedienbaren (Epic #363): Feldkasten, Knopf, Icon-Knopf, Glied der Knopfgruppe, jeder Chip samt geteiltem Chip und Menühälfte, Reiter, Zeile in Menü und Auswahlpanel, Kontrollkästchen, Eintrag der Seitenleiste, Werkzeug im Diagramm-Editor - auf dem Platz wie am Schreibtisch. Weil alles gleich hoch ist, fluchtet jede Leiste von selbst.",
@@ -441,7 +456,9 @@ export default function Styleguide() {
           Overlay auf eben dieser Fläche. Akzent ist ein Lila, das im Dunkeln
           hell genug ist, um selbst Text zu sein; Schwarz steht darauf, nicht
           Weiss. Farbe umrandet und beschriftet - sie füllt nur dort, wo eine
-          Fläche wirklich gemeint ist.
+          Fläche wirklich gemeint ist. Ausgenommen sind die drei Bausteine von
+          Atlassian (unten): Lozenge und Section Message tragen eine getönte
+          Fläche, die Badge eine gefüllte.
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="rounded-flaeche bg-elev-01 p-4">
@@ -469,12 +486,25 @@ export default function Styleguide() {
                 möglichen Ort lädt zum Missgriff ein - das System kennt ein Lila.
               </li>
               <li>
-                <strong>Eine eigene Farbe für den nicht blockierenden Hinweis.</strong>{" "}
+                <strong>Eine eigene Farbe für den nicht blockierenden Hinweis am Feld.</strong>{" "}
                 Material kennt nur Error. Der Befund trägt darum dieselbe Farbe
                 wie die Fehleingabe und unterscheidet sich im Verhalten (siehe 14).
               </li>
             </ul>
           </div>
+        </div>
+        <div className="mt-4 rounded-flaeche bg-elev-01 p-4">
+          <p className="type-label-large mb-2 text-on-surface">Von Atlassian (wie Jira)</p>
+          <p className="type-body-medium text-on-surface-mittel">
+            Drei Bausteine folgen nicht Material, sondern dem Atlassian Design
+            System - Anatomie, Namen und Farben wie in Jira: die{" "}
+            <strong>Lozenge</strong> (unsere Plakette) und die{" "}
+            <strong>Badge</strong> (der Zähler am Knopf), beide in 09, und die{" "}
+            <strong>Section Message</strong> (die Meldung im Fluss der Seite,
+            22). Ihre Farben stehen wörtlich aus <code>@atlaskit/tokens</code>{" "}
+            - am Schirm das Dark-, im Druck das Light-Theme - und werden in{" "}
+            <code>lib/farben.ts</code> gegen unseren Grund nachgerechnet.
+          </p>
         </div>
       </header>
 
@@ -513,11 +543,7 @@ export default function Styleguide() {
           behält ihre schwarze Aufschrift ({v(kontrast(ON_ERROR, ERROR))}).
           Nachgerechnet wird das seither auf jeder Stufe und zusätzlich als
           Kontur (<code>scripts/pruefe-farben.ts</code>), nicht mehr nur auf
-          dem Grund - dort lag die Lücke, durch die die Baseline kam. Näher
-          rückt Error damit an <code>kat-c</code> (Abstand{" "}
-          {rgbAbstand(ERROR, KAT.c).toFixed(0)} im RGB-Würfel): Getrennt hält
-          die beiden nicht die Farbe, sondern die Form - eine Plakette mit
-          einem Buchstaben gegen einen Feldrahmen mit einem Satz darunter.
+          dem Grund - dort lag die Lücke, durch die die Baseline kam.
         </p>
 
         <p className="type-label-small mb-2 text-on-surface-mittel">
@@ -551,50 +577,58 @@ export default function Styleguide() {
         </p>
 
         <p className="type-label-small mb-2 text-on-surface-mittel">
-          Alterskategorien - sieben lernbare Farben, als Plakette gerendert
+          Atlassian - Lozenge und Section Message
         </p>
-        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-          {kategorien.map((k) => {
-            const hex = KAT[k.toLowerCase() as KatSchluessel];
+        <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
+          Je Darstellung ein Paar aus Atlassians Dark-Theme: Die Lozenge trägt
+          die zarte Tönung (<code>lozenge-*</code> = ADS{" "}
+          <code>background.&lt;x&gt;.subtler</code>) mit kräftiger Schrift (
+          <code>on-lozenge-*</code> = <code>text.&lt;x&gt;.bolder</code>), die
+          Section Message eine noch leisere Fläche (<code>section-*</code> ={" "}
+          <code>background.&lt;x&gt;</code>) mit farbigem Zeichen (
+          <code>icon-*</code>). Die Zahlen sind die Schrift auf ihrer Fläche,
+          die neutrale Lozenge (halbtransparent) über dem Grund gemischt.
+        </p>
+        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {lozengeBedeutung.map(([darstellung, bedeutung]) => {
+            const { flaeche, schrift } = LOZENGE[darstellung];
             return (
-              <div key={k} className="rounded-flaeche kontur border-kante p-3">
-                <div className="mb-2 flex h-10 items-center justify-center">
-                  <KategorieChip k={k} />
+              <div key={darstellung} className="rounded-flaeche kontur border-kante p-3">
+                <div className="mb-2 flex h-10 items-center">
+                  <Lozenge appearance={darstellung}>{darstellung}</Lozenge>
                 </div>
-                <p className="type-label-small text-on-surface">kat-{k.toLowerCase()}</p>
-                <p className="type-body-small text-on-surface-mittel">{kategorieStufe[k]}</p>
+                <p className="type-label-small text-on-surface">lozenge-{darstellung}</p>
+                <p className="type-body-small text-on-surface-mittel">{bedeutung}</p>
                 <p className="type-body-small text-on-surface-mittel">
-                  {hex.toUpperCase()} · {v(kontrast(hex, GRUND))}
+                  {v(kontrast(schrift, deckend(flaeche, GRUND)))}
                 </p>
               </div>
             );
           })}
         </div>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
-          Sie stehen als <strong>Kontur und Schrift</strong>, nie als Fläche:
-          Gefüllt wären sieben Werte nebeneinander ein Flickenteppich und
-          konkurrierten mit jedem gefüllten Knopf daneben. Der Buchstabe trägt
-          die Unterscheidung ohnehin mit (a11y: nie nur über Farbe). Einzige
-          Ausnahme ist der Druck, wo eine helle Kontur auf Papier verschwände -
-          siehe 25.
+          Section Message (Schrift / Zeichen auf der Fläche):{" "}
+          {Object.entries(SECTION)
+            .map(([rolle, { flaeche, icon }]) => `${rolle} ${v(kontrast("#ffffff", flaeche))} / ${v(kontrast(icon, flaeche))}`)
+            .join(" · ")}
+          .
         </p>
         <p className="type-body-medium max-w-2xl text-on-surface-mittel">
-          <strong>Warum kat-e neu {KAT.e.toUpperCase()} ist.</strong> Bisher war
-          die Stufe ein Lila (#C084FC) - im RGB-Würfel{" "}
-          {Math.round(rgbAbstand("#c084fc", PRIMARY))} Einheiten von Primary{" "}
-          {PRIMARY.toUpperCase()} entfernt, also praktisch dieselbe Farbe. Eine
-          Kategorie-Plakette hätte damit ausgesehen wie ein aktiver Zustand. Das
-          neue Orange liegt {Math.round(rgbAbstand(KAT.e, PRIMARY))} Einheiten entfernt,
-          trägt {v(kontrast(KAT.e, GRUND))} auf dem Grund und bleibt von den
-          Nachbarstufen unterscheidbar (kat-f: {Math.round(rgbAbstand(KAT.e, KAT.f))},
-          kat-c: {Math.round(rgbAbstand(KAT.e, KAT.c))}).
+          <strong>Die Alterskategorien sind Accent-Lozenges.</strong> Wie Jira
+          Kategorien ohne Wertung färbt, trägt jede Stufe einen festen
+          Atlassian-Akzent - G blau, F gelb, E orange, D grün, C magenta, B
+          lila, A grau (09). Die Akzente teilen die Palette mit den Bedeutungen -
+          G hat die Farbe von <code>information</code>, B die von{" "}
+          <code>discovery</code>, E die von <code>warning</code>, wie in Jira.
+          Auseinander hält sie die Form: Die Kategorie ist immer ein einzelner
+          Buchstabe, jede andere Lozenge ein Wort (a11y: nie nur über Farbe).
         </p>
       </Section>
 
       <Section n="02" title="Typografie">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Eine Familie für alles.</strong> Geist trägt Display, Titel,
-          Fliesstext, Label und Plakette; unterschieden werden die Rollen über
+          Fliesstext, Label und Lozenge; unterschieden werden die Rollen über
           Gewicht, Versalien und Sperrung, nicht über eine zweite Schrift. Was
           in Kolonnen fluchten muss - Dauern, Zählungen, Positionsnummern -,
           hält <code>font-variant-numeric: tabular-nums</code> auf jeder
@@ -637,12 +671,11 @@ export default function Styleguide() {
           ))}
         </div>
         <p className="type-body-medium mt-5 max-w-2xl text-on-surface-mittel">
-          <code>type-plakette</code> ist die jüngste Stufe: die kleinste
-          beschriftbare Fläche (Badge, Kategorie-Plakette, Zähler an der
-          Glocke). Unter 10 px wird auch die weit gesperrte Versal unleserlich -
-          darunter geht nichts mehr. Sie ist die einzige Label-Stufe, die bei
-          700 bleibt: bei 600 fiele sie in dieser Grösse gegen ihre eigene
-          Kontur ab.
+          <code>type-lozenge</code> stammt von Atlassian (
+          <code>font.body.small</code>): 12/16, normal gesetzt, für Lozenge
+          und Badge. Keine Versalien - die Lozenge sagt, was ist, sie ist keine
+          Rubrik. Eine Zeile niedriger als <code>type-body-small</code>, damit
+          die Lozenge mit 2 px Polsterung genau 20 px misst.
         </p>
       </Section>
 
@@ -680,7 +713,7 @@ export default function Styleguide() {
                     <td className="py-2 pr-4">
                       <span
                         className={cn(
-                          "block h-7 w-20 rounded-plakette border border-linie",
+                          "block h-7 w-20 rounded-klein border border-linie",
                           elevKlasse[s.dp],
                         )}
                       />
@@ -1204,70 +1237,87 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="09" title="Plaketten &amp; Chips">
+      <Section n="09" title="Lozenge, Badge &amp; Chips">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Gefüllt heisst still, umrandet heisst gilt.</strong> Eine
-          Plakette meldet entweder bloss, woher etwas stammt oder in welchem
-          Zwischenstand es liegt - dann trägt sie eine Höhenstufe oder die Kante
-          mit gedämpfter Schrift (<code>manual</code>, <code>entwurf</code>,{" "}
-          <code>neutral</code>). Oder sie meldet eine Eigenschaft, die nach
-          aussen wirkt - öffentlich sichtbar, mehrere Varianten vorhanden -,
-          dann steht sie umrandet in Primary (<code>oeffentlich</code>,{" "}
-          <code>varianten</code>). Keine der beiden Formen füllt mit
-          Akzentfarbe; das bleibt dem gefüllten Knopf vorbehalten, der etwas
-          auslöst - und dem <code>Zaehler</code>, der an einem Knopf hängt und
-          zählt, was dessen Handlung bewirkt (gewählte Werte am Filterknopf,
-          Übernahmen in der Übungsauswahl). Er ist gefüllt, weil er als Teil
-          des Knopfes gelesen wird, nicht als eigene Aussage, und für die
-          Vorlesehilfe stumm: Der Knopf sagt die Zahl in Worten. Anatomie: <code>rounded-plakette</code>, 22 px hoch,{" "}
-          <code>type-plakette</code> - dasselbe Mass trägt die
-          Kategorie-Plakette darunter, sonst stünden zwei Plaketten
-          nebeneinander verschieden hoch.
+          <strong>Lozenge</strong> heisst die Plakette wie bei Atlassian: ein
+          kurzer Status oder eine Eigenschaft, auf einen Blick erkennbar - kein
+          Bedienelement. Anatomie wie <code>@atlaskit/lozenge</code>: 20 px
+          hoch, <code>rounded-flaeche</code> (4 px), 2 px Polsterung oben und
+          unten, 4 px seitlich, <code>type-lozenge</code>, höchstens 200 px
+          breit, Überlänge endet mit «…». Ein Zeichen davor (
+          <code>iconBefore</code>) steht 12 px gross in der Schriftfarbe.
         </p>
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <Badge tone="manual" />
-          <Badge tone="entwurf">✎ Entwurf</Badge>
-          <Badge tone="oeffentlich" />
-          <Badge tone="varianten">2 Varianten</Badge>
-          <Badge tone="neutral">Kinderfussball</Badge>
-          <Badge tone="befund">
-            <CalendarX2 size={12} strokeWidth={2.5} aria-hidden />
-            Noch kein Training
-          </Badge>
-          <Badge tone="neutral">
-            <CalendarOff size={12} strokeWidth={2.5} aria-hidden />
-            Ausgefallen
-          </Badge>
-          <span className="type-label-small text-on-surface-mittel">
-            manual · entwurf · oeffentlich · varianten · neutral · befund
-          </span>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Die Darstellung (<code>appearance</code>) trägt Atlassians Namen und
+          Bedeutung: <code>neutral</code> sagt, woher etwas stammt oder in
+          welchem Zwischenstand es liegt (Kifu-Manual, Entwurf, Altersstufe,
+          ausgefallen), <code>information</code>, was nach aussen gilt
+          (Community, Öffentlich), <code>discovery</code> etwas Zusätzliches
+          (mehrere Varianten), <code>warning</code> eine Lücke, die jemand
+          schliessen muss (Termin ohne Training). <code>success</code> und{" "}
+          <code>danger</code> stehen im Kit bereit. Herkunft und Sichtbarkeit
+          stehen fertig als <code>HerkunftLozenge</code> und{" "}
+          <code>SichtbarkeitLozenge</code>; der Entwurf trägt den Stift, damit
+          er sich vom Manual-Bestand nicht nur im Wort unterscheidet.
+        </p>
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          {lozengeBedeutung.map(([darstellung]) => (
+            <Lozenge key={darstellung} appearance={darstellung}>
+              {darstellung}
+            </Lozenge>
+          ))}
         </div>
-        <p className="type-body-medium mb-6 max-w-2xl text-on-surface-mittel">
-          Befund: eine offene Lücke, die jemand schliessen muss - etwa ein
-          anstehender Termin ohne Training.
-        </p>
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <HerkunftLozenge herkunft="manual" />
+          <HerkunftLozenge herkunft="user" visibility="private" />
+          <HerkunftLozenge herkunft="user" visibility="public" />
+          <SichtbarkeitLozenge oeffentlich />
+          <Lozenge appearance="discovery" iconBefore={Layers}>
+            2 Varianten
+          </Lozenge>
+          <Lozenge>Kinderfussball</Lozenge>
+          <Lozenge appearance="warning" iconBefore={CalendarX2}>
+            Noch kein Training
+          </Lozenge>
+          <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
+        </div>
 
         <p className="type-label-small mb-2 text-on-surface-mittel">
-          Alterskategorien - dieselbe Regel, eigene Farbtabelle
+          Alterskategorien - Accent-Lozenges
         </p>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           {kategorien.map((k) => (
-            <KategorieChip key={k} k={k} />
+            <KategorieLozenge key={k} k={k} />
           ))}
         </div>
         <p className="type-body-medium mb-6 max-w-2xl text-on-surface-mittel">
-          Nur Kontur und Schrift (<code>border-current</code>), die Fläche
-          bleibt der Grund darunter - deshalb tragen sie auf der Karte wie im
-          Katalog dasselbe Bild. Im <strong>Druck</strong> kippen sie in die
-          gefüllte Form mit dunkler Schrift: Auf Papier ist eine helle Kontur
-          kaum zu sehen. Die Tabelle steht einmal in <code>Chip.tsx</code>{" "}
-          (<code>katPlakette</code>) und gilt überall, wo eine Kategorie{" "}
-          <em>angezeigt</em> wird. Wo eine <em>gewählt</em> wird, gilt sie seit
-          dem 2026-09-13 nicht mehr: Die Alterskategorien stehen am Training,
-          am Team und an der Übung in einer Mehrfachauswahl (17), und die führt
-          Text, keine Plaketten. Die Farbe sagt, welche Kategorie man vor sich
-          hat - beim Auswählen steht deren Name ohnehin ausgeschrieben da
+          Wie Jira Kategorien ohne Wertung färbt, trägt jede Stufe einen festen
+          Atlassian-Akzent (<code>accent-blue</code> bis{" "}
+          <code>accent-gray</code>); der Titel nennt die Stufe ausgeschrieben.
+          Die Zuordnung steht einmal in <code>KategorieLozenge</code> und gilt
+          überall, wo eine Kategorie <em>angezeigt</em> wird - auch im Druck,
+          wo die Rollen ins helle Theme wechseln. Wo eine <em>gewählt</em>{" "}
+          wird, gilt sie seit dem 2026-09-13 nicht mehr: Die Alterskategorien
+          stehen am Training, am Team und an der Übung in einer
+          Mehrfachauswahl (17), und die führt Text, keine Lozenges
           (PO-Entscheid).
+        </p>
+
+        <p className="type-label-small mb-2 text-on-surface-mittel">Badge</p>
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          <Badge>2</Badge>
+          <Badge>12</Badge>
+          <Badge>3×</Badge>
+        </div>
+        <p className="type-body-medium mb-6 max-w-2xl text-on-surface-mittel">
+          <strong>Badge</strong> heisst der Zähler wie bei Atlassian: eine Zahl
+          an einem Knopf, die zählt, was dessen Handlung bewirkt (gewählte Werte
+          am Filterknopf, Übernahmen in der Übungsauswahl). Anatomie wie{" "}
+          <code>@atlaskit/badge</code>: <code>rounded-klein</code>, 4 px
+          seitlich, mindestens 24 px breit, <code>type-lozenge</code>. Gefüllt
+          in Primary - Atlassians Markenfarbe ist bei uns das Lila -, weil sie
+          als Teil des Knopfes gelesen wird, nicht als eigene Aussage über den
+          Inhalt. Für die Vorlesehilfe stumm: Der Knopf sagt die Zahl in Worten.
         </p>
 
         <p className="type-label-small mb-2 text-on-surface-mittel">Chips</p>
@@ -1390,16 +1440,16 @@ export default function Styleguide() {
             denselben Baustein im Kit - auch wenn er seit dem 2026-09-13 keine
             offene Wahl mehr ist. Er hat drei Zustände: <strong>Wahl</strong>{" "}
             (ein <code>Select</code>, siehe 16), <strong>fest</strong> (neutrale{" "}
-            <code>Badge</code> plus Erklärsatz) und <strong>ungewählt</strong>{" "}
+            <code>Lozenge</code> plus Erklärsatz) und <strong>ungewählt</strong>{" "}
             (<code>wert = null</code>). Der letzte ist der Ausgangszustand am
             Training: Die Wahl bindet dort lebenslang und darf nicht durch eine
             Voreinstellung durchrutschen - also steht dort der Leerfall als
             erste Option in der Liste, und nur dort. An der Übung ist sie
             vorbelegt, weil eine Übung umwandelbar bleibt; einmal gesetzt,
-            lässt sich die Stufe nicht auf «keine» zurückstellen. Die Plakette
+            lässt sich die Stufe nicht auf «keine» zurückstellen. Die Lozenge
             ist bewusst neutral: Die Altersstufe ist keine Alterskategorie und
-            borgt deren gelernte Farbcodierung nicht. Der feste Zustand nimmt
-            über <code>aktion</code> ein Bedienelement neben der Plakette auf -
+            borgt deren Akzentfarben nicht. Der feste Zustand nimmt
+            über <code>aktion</code> ein Bedienelement neben der Lozenge auf -
             dort hängt das Überführen einer eigenen Übung in die andere
             Altersstufe. Es gehört nicht ins Auswahlfeld: An einer
             gespeicherten Übung ist der Stufenwechsel kein Feld, sondern ein
@@ -1415,7 +1465,7 @@ export default function Styleguide() {
           Höhe und Kontur nebeneinander sagten dasselbe zweimal. Das Bild ist das
           einzige satte Farbfeld auf der Karte; an seinem <strong>Kopf</strong>{" "}
           liegt ein Verlauf aus <code>scrim</code> (<code>top-0 h-16</code>) -
-          er schützt, was dort steht: die Herkunfts-Plakette links und den
+          er schützt, was dort steht: die Herkunfts-Lozenge links und den
           Favoriten-Knopf rechts. Den Titel trägt die Kartenfläche unter dem
           Bild; er braucht den Verlauf nicht. Darunter stehen die{" "}
           <strong>Eckdaten</strong> in <code>type-body-medium</code>, getrennt
@@ -1770,11 +1820,9 @@ export default function Styleguide() {
           etwa eine Dauer in einem Wechsel, dessen Übungen ungleich lang sind.{" "}
           <strong>Befund und Fehleingabe tragen dieselbe Farbe; sie
           unterscheiden sich in <code>aria-invalid</code> und im Verhalten, nicht
-          im Bild.</strong> Material kennt nur eine Fehlerrolle, und eine achte
-          Farbe neben sieben Alterskategorien wäre nicht mehr unterscheidbar
-          gewesen - die frühere eigene Farbe lag bei{" "}
-          {v(kontrast("#f0b429", KAT.f))} zu kat-f, also praktisch deckungsgleich.
-          Was bleibt, ist der Unterschied im Verhalten: Ein <code>error</code>{" "}
+          im Bild.</strong> Material kennt nur eine Fehlerrolle; Atlassians
+          Warnfarbe (<code>warning</code>) gehört der Lozenge und der Section
+          Message, nicht dem Feld. Was bleibt, ist der Unterschied im Verhalten: Ein <code>error</code>{" "}
           weist die Eingabe ab und meldet sich der Vorlesehilfe als ungültig, ein{" "}
           <code>befund</code> lässt speichern und trägt seinen Satz im
           Supporting-Text. Am Rahmen gilt die Rangfolge <code>error</code> &gt;{" "}
@@ -1962,7 +2010,7 @@ export default function Styleguide() {
           mit dem Namen darüber, der die gewählten Werte als kommagetrennte
           Zeile zeigt und umbricht, wo sie nicht in eine Zeile passen (Epic
           #363). Er öffnet ein Panel mit Suchfeld im Kopf, Optionsliste (eckige
-          Checkbox, <code>rounded-plakette</code>) und Aktions-Fuss
+          Checkbox, <code>rounded-klein</code>) und Aktions-Fuss
           (<code>Zurücksetzen</code> / <code>Alle auswählen</code>, respektiert
           den aktiven Filter). Keine Tags im Feld: Entfernt wird in der Liste,
           wo auch gewählt wird; ein Kreuzchen pro Wert im Feld wäre ein zweiter
@@ -2050,8 +2098,8 @@ export default function Styleguide() {
           denn der Dialog nennt seine Handlung auch im Text.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Die Snackbar meldet einen <strong>Vorgang</strong>, der Banner (22)
-          einen <strong>Zustand</strong>. Darum hat sie genau einen Platz: unten
+          Die Snackbar meldet einen <strong>Vorgang</strong>, die Section
+          Message (22) einen <strong>Zustand</strong>. Darum hat sie genau einen Platz: unten
           in der Mitte, für die ganze Anwendung. Niemand rendert sie selbst -
           gemeldet wird über <code>useSnackbar()</code>, und der Platz im
           App-Rahmen zeigt immer nur <strong>eine</strong>. Weitere warten;
@@ -2067,13 +2115,13 @@ export default function Styleguide() {
           Sie ist <strong>tonlos</strong>: Ob etwas gescheitert ist, sagt der
           Text, nicht die Farbe. Die Vorlesehilfe liest sie eingereiht vor, auch
           einen Fehler, und nur den Text, nicht die Knöpfe - unterbrechen darf
-          nur ein Banner. Sie gehört zur
+          nur eine Section Message. Sie gehört zur
           Ansicht, in der sie entstand, und fällt beim Wechsel weg; wer eine
           Bestätigung für die Zielansicht braucht, schickt sie über die Adresse
           mit (<code>Flash</code>). Höchstens eine Aktion - Rückgängig, Erneut
           versuchen -, nie ein blosses «OK». Und sie liegt unter jedem Dialog:
           Scheitert ein Vorgang und bleibt der Dialog offen, steht der Grund als
-          Banner im Dialog.
+          Section Message im Dialog.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Ein <strong>Link zum Kopieren</strong> (Kalender-Abo,{" "}
@@ -2084,10 +2132,10 @@ export default function Styleguide() {
           Hand kopieren lässt. Das Ergebnis des Knopfes erscheint{" "}
           <strong>im Dialog</strong>, nicht in der Snackbar - die liegt unter
           ihm: Gelingt es, zeigt der Knopf kurz «Kopiert» (mit Häkchen, dazu
-          eine Live-Region für die Vorlesehilfe); scheitert es, steht ein
-          Fehler-Banner im Dialog, und das Feld ist markiert. Ist der Link ein
+          eine Live-Region für die Vorlesehilfe); scheitert es, steht eine
+          Section Message <code>error</code> im Dialog, und das Feld ist markiert. Ist der Link ein
           Geheimnis, geht die Warnung
-          als Banner im Dialog voran.
+          als Section Message im Dialog voran.
         </p>
         <OverlaysDemo />
       </Section>
@@ -2382,7 +2430,7 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="22" title="Leerzustand, Hinweiszeile &amp; Banner">
+      <Section n="22" title="Leerzustand, Hinweiszeile &amp; Section Message">
         <p className="type-body-medium max-w-2xl text-on-surface-mittel">
           Ein leerer Abschnitt sagt zuerst nur, dass er leer ist -{" "}
           <code>type-body-small</code>, <code>text-on-surface-mittel</code>, kein
@@ -2480,54 +2528,49 @@ export default function Styleguide() {
         </div>
 
         <h3 className="mb-2 mt-10 type-title-medium text-on-surface">
-          Banner (<code>Banner</code>)
+          Section Message (<code>SectionMessage</code>)
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Die dritte Sorte Zeile, nach Material 2: keine Auskunft über den
-          Bestand, sondern eine <strong>Nachricht an den Nutzer</strong> - das
-          Speichern ist gescheitert, die Mail ist unterwegs, das Feld-Diagramm
-          zeigt anderes Material. Ohne Knöpfe meldet der Banner bloss; mit ein
-          oder zwei Knöpfen verlangt er eine Antwort und bleibt stehen, bis eine
-          gewählt ist. <strong>Ein</strong> Baustein für beides - die frühere
-          umrandete Meldung ist in ihm aufgegangen, damit dieselbe Sache nicht in
-          zwei Sprachen erscheint.
+          Die dritte Sorte Zeile: keine Auskunft über den Bestand, sondern eine{" "}
+          <strong>Nachricht an den Nutzer</strong> - das Speichern ist
+          gescheitert, die Mail ist unterwegs, das Feld-Diagramm zeigt anderes
+          Material. Ohne Knöpfe meldet sie bloss; mit ein oder zwei Knöpfen
+          verlangt sie eine Antwort und bleibt stehen, bis eine gewählt ist.
+          Baustein und Name stammen von Atlassian wie in Jira. Nicht Atlassians{" "}
+          <em>Banner</em>: Der ist ein kräftig gefüllter, einzeiliger Streifen
+          über die ganze Seite für seitenweite Ankündigungen - eine solche gibt
+          es in KiFu nicht.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          <strong>Keine Box:</strong> ein 5-%-Overlay (<code>on-surface/5</code>)
-          und darunter eine Haarlinie (<code>linie</code>). Das Overlay statt
-          einer festen Stufe hebt den Banner immer eine Stufe über das, worauf
-          er liegt - auf dem Grund genau <code>elev-01</code>, im Dialog über
-          dessen 24dp statt als dunkles Loch darin. Text{" "}
-          <code>type-body-medium</code> in <code>on-surface</code>: Primary
-          gehört den Handlungen, und ein Fehler bleibt als Schrift auf jeder
-          Fläche lesbar.
+          Anatomie wie <code>@atlaskit/section-message</code>: eine getönte
+          Fläche ohne Kontur (<code>section-*</code>), 16 px Polsterung,{" "}
+          <code>rounded-dialog</code>, das Zeichen 24 px in{" "}
+          <code>icon-*</code> links, 16 px zum Text. Der Text steht in{" "}
+          <code>type-body-medium</code> und <code>on-surface</code>; den Ton
+          tragen Fläche und Zeichen. Die Knöpfe (<code>text</code>) stehen wie
+          Atlassians Aktionen <strong>unter</strong> dem Text und fluchten mit
+          ihm, abweisend zuerst.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Den <strong>Ton trägt das Zeichen</strong> - zwei Töne, nicht mehr:{" "}
-          <code>fehler</code> (<code>CircleAlert</code> in Error) meldet, dass
-          etwas nicht ging, <code>hinweis</code> (<code>Info</code> in Primary,
-          Vorgabe) alles andere. Das Zeichen lässt sich überschreiben, die
-          Farbe bleibt die des Tons. Es steht links in Materials 40-px-Spalte,
-          aber <strong>ohne</strong> den gefüllten Kreis: füllen darf nur der
-          auslösende Knopf (siehe 01). Die Knöpfe (<code>text</code>,{" "}
-          <code>sm</code>) stehen rechtsbündig,{" "}
-          <strong>abweisend links, bestätigend rechts</strong>; reicht die
-          Breite, stehen Text und Knöpfe in einer Zeile, sonst brechen die
-          Knöpfe darunter. Die Vorlesehilfe erfährt den Ton über{" "}
-          <code>role</code>: ein Fehler ohne Knöpfe unterbricht (
-          <code>alert</code>), alles andere reiht sich ein (<code>status</code>
-          ).
+          Die Darstellungen tragen Atlassians Namen: <code>error</code> meldet,
+          dass etwas nicht ging, <code>information</code> (Vorgabe) alles
+          andere; <code>warning</code>, <code>success</code> und{" "}
+          <code>discovery</code> stehen im Kit bereit. Das Zeichen lässt sich
+          überschreiben, die Farbe bleibt die der Darstellung. Die Vorlesehilfe
+          erfährt den Ton über <code>role</code>: ein Fehler ohne Knöpfe
+          unterbricht (<code>alert</code>), alles andere reiht sich ein (
+          <code>status</code>).
         </p>
-        <div className="grid max-w-2xl gap-6">
-          <Banner tone="fehler">
+        <div className="grid max-w-2xl gap-4">
+          <SectionMessage appearance="error">
             Das Training konnte nicht gespeichert werden. Bitte versuche es noch
             einmal.
-          </Banner>
-          <Banner icon={MailCheck}>
+          </SectionMessage>
+          <SectionMessage icon={MailCheck}>
             Bestätigungsmail erneut an <strong>trainerin@example.ch</strong>{" "}
             gesendet.
-          </Banner>
-          <Banner
+          </SectionMessage>
+          <SectionMessage
             icon={RefreshCw}
             actions={
               <>
@@ -2541,17 +2584,16 @@ export default function Styleguide() {
             }
           >
             Das Feld-Diagramm zeigt inzwischen anderes Material: Hürden: 0 → 1.
-          </Banner>
-          <Banner
-            icon={ListPlus}
-            actions={
-              <Button type="button" variant="text">
-                Vorschlag übernehmen
-              </Button>
-            }
-          >
-            Das Feld-Diagramm zeigt: 2 Minitore.
-          </Banner>
+          </SectionMessage>
+          <SectionMessage appearance="warning">
+            warning - im Kit, derzeit ohne Ort.
+          </SectionMessage>
+          <SectionMessage appearance="success">
+            success - im Kit, derzeit ohne Ort.
+          </SectionMessage>
+          <SectionMessage appearance="discovery">
+            discovery - im Kit, derzeit ohne Ort.
+          </SectionMessage>
         </div>
       </Section>
 
@@ -2679,20 +2721,19 @@ export default function Styleguide() {
           einziger Block (<code>@media print :root</code>) die Rollen um. Die
           Höhenleiter kippt: Aus dem aufgehellten Dunkel wird ein abgedunkeltes
           Weiss, die Reihenfolge der Stufen bleibt, sodass gestapelte Karten sich
-          weiter voneinander abheben. Einen Sonderfall für den Druck kennt genau{" "}
-          <strong>ein</strong> Baustein: Die Kategorie-Plakette kippt von Kontur
-          auf Fläche (<code>print:bg-kat-X</code>). Alle übrigen benutzen
-          unverändert dieselben Tokens - auch die Schrift auf jener Fläche, denn{" "}
-          <code>text-on-surface</code> ist im Druck bereits die Tinte.
+          weiter voneinander abheben. Einen Sonderfall im Klassenstring kennt kein
+          Baustein: Alle benutzen am Schirm wie auf Papier dieselben Tokens.
+          Lozenge und Section Message wechseln dabei in Atlassians helles Theme
+          - dieselben Rollen, die Werte aus <code>atlassian-light</code>.
         </p>
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {druckProben.map(([name, hex, notiz]) => (
             <div key={name} className="rounded-flaeche kontur border-kante p-3">
               <div
-                className="mb-2 flex h-14 w-full items-end rounded-plakette border border-linie p-2"
+                className="mb-2 flex h-14 w-full items-end rounded-klein border border-linie p-2"
                 style={{ backgroundColor: hex, color: DRUCK["on-surface"] }}
               >
-                <span className="type-plakette">{hex.toUpperCase()}</span>
+                <span className="type-label-small">{hex.toUpperCase()}</span>
               </div>
               <p className="type-label-small text-on-surface">{name}</p>
               <p className="type-body-small text-on-surface-mittel">{notiz}</p>
@@ -2708,13 +2749,11 @@ export default function Styleguide() {
             Schritt.
           </li>
           <li>
-            <strong>Die Alterskategorien kippen in die gefüllte Form</strong>{" "}
-            (<code>print:bg-kat-X</code>, dunkle Schrift, keine Kontur): Eine
-            helle Kontur auf Weiss ist kaum zu sehen. Zwei Werte bekommen dafür
-            eigene Druckfarben - kat-a stünde als Fläche bei{" "}
-            {v(kontrast(KAT.a, DRUCK["elev-00"]))} gegen das Papier und verschwände,
-            kat-f bei {v(kontrast(KAT.f, DRUCK["elev-00"]))}. Die übrigen fünf bleiben
-            wie am Schirm.
+            <strong>Lozenges und Section Messages werden hell</strong>: zarte
+            Tönung mit dunkler Schrift, wie Jira im hellen Theme. Am häufigsten
+            gedruckt sind die Alterskategorien in der Druckansicht des
+            Trainings; <code>scripts/pruefe-farben.ts</code> rechnet jede
+            Darstellung auf Papier nach.
           </li>
           <li>
             <strong>Schrift und Striche werden Tinte statt Deckung:</strong>{" "}
@@ -2757,7 +2796,7 @@ export default function Styleguide() {
           </li>
           <li>
             <strong>Vorschlag</strong> - das Angebot des Diagramms steht als{" "}
-            <code>Banner</code> über der Liste: es verlangt eine Antwort
+            <code>SectionMessage</code> über der Liste: es verlangt eine Antwort
             (übernehmen, bei einer Änderung auch beibehalten), siehe 22.
           </li>
           <li>
@@ -2817,8 +2856,9 @@ export default function Styleguide() {
             <strong>Termineintrag</strong> (<code>TerminEintrag</code>) - Beginn
             oder «Zeit fehlt», dazu der Zustand als Wort, nie nur als Farbe:
             Training (Name auf <code>elev-08</code>), «Noch kein Training»
-            (Fehlerkontur, nur anstehend), «Ohne Training» (leise, vergangen),
-            «Ausgefallen» (durchgestrichen). Gerechnet: Fehler-Schrift{" "}
+            (getönt wie die <code>warning</code>-Lozenge, nur anstehend), «Ohne
+            Training» (leise, vergangen), «Ausgefallen» (durchgestrichen).
+            Gerechnet: Fehler-Schrift von «Zeit fehlt»{" "}
             {v(kontrast(ERROR, elev(1)))} auf der Tagesfläche und{" "}
             {v(kontrast(ERROR, GRUND))} in der Randwoche; leise Schrift{" "}
             {v(kontrast(weissAuf(SCHRIFT.mittel, elev(1)), elev(1)))} bzw.{" "}
@@ -2859,7 +2899,7 @@ export default function Styleguide() {
             <strong>Beschreibungsliste</strong> - <code>dl</code> mit{" "}
             <code>dt</code>/<code>dd</code>. Die Bezeichnung steht in fester
             Spalte (8.5 rem), der Wert bricht in seiner um. Ein Wert darf ein
-            Baustein sein: Plakette, Chips, <code>MaterialListe</code>.
+            Baustein sein: Lozenge, Chips, <code>MaterialListe</code>.
           </li>
           <li>
             <strong>Gedämpfte Lesetype statt Versalien</strong> - gesperrte
@@ -2909,8 +2949,8 @@ export default function Styleguide() {
             <Eigenschaft label="Altersstufe">Kinderfussball</Eigenschaft>
             <Eigenschaft label="Alterskategorien">
               <span className="flex flex-wrap gap-1.5">
-                <KategorieChip k="F" />
-                <KategorieChip k="E" />
+                <KategorieLozenge k="F" />
+                <KategorieLozenge k="E" />
               </span>
             </Eigenschaft>
             <Eigenschaft label="Trainingsteil">Hauptteil</Eigenschaft>
@@ -2949,7 +2989,7 @@ export default function Styleguide() {
           er grenzt ein, statt etwas auszulösen; nur eckig statt rund, weil er
           ein Panel öffnet statt bloss umzuschalten. Grenzt er ein, steht er in
           Primary umrandet wie ein gewählter Chip und trägt die Zahl als{" "}
-          <code>Zaehler</code> (09) - vorgelesen wird «Alterskategorie, 2
+          <code>Badge</code> (09) - vorgelesen wird «Alterskategorie, 2
           gewählt». Das Panel
           ist breiter als der Knopf, wo der Inhalt es braucht (bis 34 rem; der
           längste Übungstyp misst 484 px), und rückt am rechten Rand nach links

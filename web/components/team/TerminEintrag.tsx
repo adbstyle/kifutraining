@@ -15,7 +15,8 @@ export function eintragText(zustand: EintragZustand, name?: string): string {
 
 /* Ein Termin im Monatsraster: Beginn (oder «Zeit fehlt») und, was er trägt.
    Der Zustand steht immer als WORT da und nie nur als Farbe: das Training mit
-   seinem Namen, «Noch kein Training» (anstehend, Fehlerkontur), «Ohne
+   seinem Namen, «Noch kein Training» (anstehend, getönt wie die
+   `warning`-Lozenge), «Ohne
    Training» (vergangen, leise), «Ausgefallen» (durchgestrichen). Alle Schriften
    bleiben bei 4.5:1 und besser — auch «Ausgefallen», das wesentlicher Inhalt
    ist und darum nicht die tiefe Schrift der Deaktivierung trägt. */
@@ -40,10 +41,10 @@ export function TerminEintrag({
       onClick={onClick}
       aria-label={label}
       className={cn(
-        "focus-ring relative mt-1 block min-h-6 w-full break-words hyphens-auto rounded-plakette px-1 text-left type-body-small",
+        "focus-ring relative mt-1 block min-h-6 w-full break-words hyphens-auto rounded-klein px-1 text-left type-body-small",
         zustand === "ausgefallen" && "text-on-surface-mittel line-through",
         zustand === "training" && "bg-elev-08 text-on-surface",
-        zustand === "noch-nicht" && "kontur border-error text-error",
+        zustand === "noch-nicht" && "bg-lozenge-warning text-on-lozenge-warning",
         zustand === "ohne" && "text-on-surface-mittel",
       )}
     >

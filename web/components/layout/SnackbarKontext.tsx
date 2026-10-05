@@ -18,9 +18,9 @@ import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
  * Der eine Platz für Rückmeldungen zu Vorgängen — unten in der Mitte, für die
  * ganze Anwendung (Story #234).
  *
- * Material 2 trennt zwei Bausteine: Der Banner meldet einen Zustand und bleibt
- * stehen, bis er erledigt ist; die Snackbar meldet einen Vorgang und geht von
- * selbst. Diese Datei ist die Snackbar-Seite davon:
+ * Zwei Bausteine sind getrennt: Die Section Message meldet einen Zustand und
+ * bleibt stehen, bis er erledigt ist; die Snackbar meldet einen Vorgang und
+ * geht von selbst. Diese Datei ist die Snackbar-Seite davon:
  *
  * - **Eine zur Zeit.** Weitere warten in der Reihe; ihre Anzeigedauer beginnt
  *   erst, wenn sie erscheinen — so läuft keine im Verborgenen ab.
@@ -42,7 +42,7 @@ import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
  *   Knöpfe darin, läse die Vorlesehilfe «Schliessen» zu jeder Meldung mit.
  *
  * Sie liegt unter Dialogen (z-40 gegen deren z-50), wie Material es verlangt —
- * ein Fehler, der einen offenen Dialog zurücklässt, gehört als Banner in den
+ * ein Fehler, der einen offenen Dialog zurücklässt, gehört als Section Message in den
  * Dialog, nicht hierher.
  *
  * Er rechnet mit keiner festen Fussleiste. Die einzige, die es gibt — Zurück

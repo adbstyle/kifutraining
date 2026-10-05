@@ -6,7 +6,7 @@ import {
   EigenschaftAuswahl,
   EigenschaftText,
   Eigenschaften,
-  KategorieChip,
+  KategorieLozenge,
 } from "@/components/ui";
 import type { KategorieSlug } from "@/lib/vocab";
 
@@ -30,7 +30,7 @@ export function EigenschaftBearbeitbarDemo() {
           anzeige={
             <span className="flex flex-wrap gap-1.5">
               {stufen.map((k) => (
-                <KategorieChip key={k} k={k as KategorieSlug} />
+                <KategorieLozenge key={k} k={k as KategorieSlug} />
               ))}
             </span>
           }

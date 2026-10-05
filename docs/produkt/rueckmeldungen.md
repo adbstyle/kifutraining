@@ -1,6 +1,6 @@
 # Rückmeldungen
 
-Stand 2026-09-25. Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
+Stand 2026-10-05. Wie die Anwendung dem Trainer sagt, was geschehen ist und was noch ansteht.
 
 ## Zwei Arten, etwas zu sagen
 
@@ -11,7 +11,9 @@ vorfindet und das stehen bleibt, bis es erledigt ist: ein Formular, dessen Speic
 gescheitert ist, eine Übung, deren Feld-Diagramm anderes Material zeigt als erfasst.
 
 Einen Zustand meldet ein Hinweis im Seiteninhalt, dort, wo er gilt. Er bleibt stehen, bis der
-Trainer ihn beantwortet oder die Sache behoben ist. Einen Vorgang meldet eine kurze Zeile am
+Trainer ihn beantwortet oder die Sache behoben ist. Der Hinweis steht wie in Jira auf einer leicht
+getönten Fläche mit einem Zeichen links — rötlich, wenn etwas nicht ging, bläulich für alles
+andere; verlangt er eine Antwort, stehen die Knöpfe dafür unter dem Text. Einen Vorgang meldet eine kurze Zeile am
 unteren Bildschirmrand, die von selbst wieder geht.
 
 ## Die Zeile am unteren Rand

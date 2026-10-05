@@ -18,7 +18,7 @@ import {
   kopiereUebung,
 } from "@/lib/actions/exercises";
 
-/* Eigentümer-Aktionen als Inline-Icon-Cluster, der rechts in die Badge-Zeile
+/* Eigentümer-Aktionen als Inline-Icon-Cluster, der rechts in die Lozenge-Zeile
    der Detailseite gesetzt wird (kein eigener Kasten/Label mehr): bearbeiten
    (Link), Sichtbarkeit umschalten (Form), und ein ⋮-Überlaufmenü, das die
    destruktive Löschen-Aktion vom Alltagsgeschäft trennt (Löschen liegt bewusst

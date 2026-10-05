@@ -5,7 +5,7 @@ import {
   TextArea,
   Button,
   AltersstufeField,
-  Banner,
+  SectionMessage,
   TextField,
 } from "@/components/ui";
 import { StufenField } from "./StufenField";
@@ -66,7 +66,7 @@ export function TrainingCreateForm() {
     // verdeckte sie die Fläche, die beim Überfahren 6 px über das Feld ragt.
     <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-10 lg:pt-2">
       {state.status === "error" && state.message && (
-        <Banner tone="fehler">{state.message}</Banner>
+        <SectionMessage appearance="error">{state.message}</SectionMessage>
       )}
 
       <div className="flex flex-col gap-5">

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   MaterialField,
-  VorschlagBanner,
+  VorschlagMessage,
   zeilenAus,
 } from "@/components/exercise/MaterialField";
 import type { MaterialPosten } from "@/lib/material";
@@ -30,7 +30,7 @@ export function MaterialDemo() {
         ergaenzung={["Pfeife"]}
         hinweis={
           uebernommen ? undefined : (
-            <VorschlagBanner
+            <VorschlagMessage
               vorschlag={vorschlag}
               onUebernehmen={() => {
                 setZeilen(zeilenAus(vorschlag));

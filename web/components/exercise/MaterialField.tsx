@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { ListPlus, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { Banner, Button, IconButton, Select, TextArea, TextField, feldNameKlasse } from "@/components/ui";
+import { SectionMessage, Button, IconButton, Select, TextArea, TextField, feldNameKlasse } from "@/components/ui";
 import { farbSlugs, type FarbSlug } from "@/lib/diagramm";
 import {
   FARBE_LABEL,
@@ -202,7 +202,7 @@ export function vorschlagText(liste: readonly MaterialPosten[]): string {
 }
 
 /** Das Angebot, den Vorschlag des Diagramms zu übernehmen (Story #267 AK 1/2). */
-export function VorschlagBanner({
+export function VorschlagMessage({
   vorschlag,
   onUebernehmen,
 }: {
@@ -210,7 +210,7 @@ export function VorschlagBanner({
   onUebernehmen: () => void;
 }) {
   return (
-    <Banner
+    <SectionMessage
       icon={ListPlus}
       actions={
         <Button type="button" variant="text" onClick={onUebernehmen}>
@@ -219,7 +219,7 @@ export function VorschlagBanner({
       }
     >
       Das Feld-Diagramm zeigt: {vorschlagText(vorschlag)}.
-    </Banner>
+    </SectionMessage>
   );
 }
 
@@ -227,7 +227,7 @@ export function VorschlagBanner({
  *  #269): was sich geändert hat, und die Wahl zwischen dem bisherigen Material
  *  und dem neuen Vorschlag. Die Knöpfe bringt der Aufrufer mit — im Formular
  *  wirken sie beim Speichern, auf der Übungsseite sofort. */
-export function AenderungBanner({
+export function AenderungMessage({
   aenderungen,
   actions,
   className,
@@ -238,8 +238,8 @@ export function AenderungBanner({
   className?: string;
 }) {
   return (
-    <Banner icon={RefreshCw} actions={actions} className={className}>
+    <SectionMessage icon={RefreshCw} actions={actions} className={className}>
       Das Feld-Diagramm zeigt inzwischen anderes Material: {aenderungenText(aenderungen)}.
-    </Banner>
+    </SectionMessage>
   );
 }

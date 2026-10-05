@@ -26,7 +26,7 @@ export function Checkbox({
         <input
           type="checkbox"
           disabled={disabled}
-          className="peer focus-ring block h-[18px] w-[18px] cursor-[inherit] appearance-none rounded-plakette kontur border-kante transition-colors checked:border-primary checked:bg-primary"
+          className="peer focus-ring block h-[18px] w-[18px] cursor-[inherit] appearance-none rounded-klein kontur border-kante transition-colors checked:border-primary checked:bg-primary"
           {...rest}
         />
         <Check

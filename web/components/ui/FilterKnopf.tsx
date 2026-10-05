@@ -4,7 +4,7 @@ import { Fragment, useEffect, useId, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { Zaehler } from "./Badge";
+import { Badge } from "./Lozenge";
 import { chipTextOutlined, chipTextSelected } from "./Chip";
 import { Checkbox } from "./Checkbox";
 import { usePanelAnker } from "./use-panel-anker";
@@ -22,7 +22,7 @@ import { useDebouncedWert } from "@/lib/use-debounce";
 
    Er trägt Schrift und Kleid des Filter-Chips: normal gesetzt; grenzt er ein,
    steht er in Primary umrandet wie ein gewählter Chip und trägt die Zahl als
-   `Zaehler`. Das Panel ist breiter als der Knopf, wo der Inhalt es braucht, und rückt am rechten Rand nach links (`usePanelAnker`). Es ist
+   `Badge`. Das Panel ist breiter als der Knopf, wo der Inhalt es braucht, und rückt am rechten Rand nach links (`usePanelAnker`). Es ist
    kein Menü und keine Listbox, sondern eine Gruppe gewöhnlicher Bedien-
    elemente — Kontrollkästchen, ein Zahlenfeld —, darum gelten deren eigene
    Tasten; dazu wandern ↑/↓ zwischen ihnen, und Esc schliesst mit dem Fokus
@@ -128,7 +128,7 @@ export function FilterKnopf({
         )}
       >
         {label}
-        {aktiv && <Zaehler>{badge}</Zaehler>}
+        {aktiv && <Badge>{badge}</Badge>}
         <ChevronDown
           size={16}
           strokeWidth={2}

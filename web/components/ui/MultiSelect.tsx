@@ -410,7 +410,7 @@ export function MultiSelect({
                     <span
                       aria-hidden
                       className={cn(
-                        "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-plakette kontur transition-colors",
+                        "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-klein kontur transition-colors",
                         isSelected
                           ? "border-primary bg-primary text-on-primary"
                           : "border-kante",

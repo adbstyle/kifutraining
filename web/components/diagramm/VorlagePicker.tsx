@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button, Dialog, SearchField, Banner } from "@/components/ui";
+import { Button, Dialog, SearchField, SectionMessage } from "@/components/ui";
 import { DiagrammView } from "./DiagrammView";
 import { parseDiagramm } from "@/lib/diagramm";
 import { normalizeSearch } from "@/lib/search";
@@ -94,9 +94,9 @@ export function VorlagePicker({
         className="w-[min(48rem,calc(100vw-2rem))]"
       >
         {fehler && (
-          <Banner tone="fehler" className="mb-4">
+          <SectionMessage appearance="error" className="mb-4">
             {fehler}
-          </Banner>
+          </SectionMessage>
         )}
         <SearchField
           label="Übung suchen"

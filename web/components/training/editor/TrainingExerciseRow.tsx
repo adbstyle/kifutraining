@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { TriangleAlert, ChevronUp, ChevronDown, X, Pencil } from "lucide-react";
-import { IconButton, IconButtonLink, KategorieChip, Tooltip } from "@/components/ui";
+import { IconButton, IconButtonLink, KategorieLozenge, Tooltip } from "@/components/ui";
 import { ExerciseThumb } from "../ExerciseThumb";
 import { InBibliothekButton } from "../InBibliothekButton";
 import { DauerWert } from "./DauerWert";
@@ -124,7 +124,7 @@ export function TrainingExerciseRow({
           {item.kategorien.length > 0 && (
             <span className="flex flex-wrap gap-1">
               {item.kategorien.map((k) => (
-                <KategorieChip key={k} k={k as never} />
+                <KategorieLozenge key={k} k={k as never} />
               ))}
             </span>
           )}

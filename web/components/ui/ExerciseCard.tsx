@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
-import { HerkunftBadge } from "./Badge";
+import { HerkunftLozenge } from "./Lozenge";
 import { Card } from "./Card";
 import { UebungsBild } from "./UebungsBild";
 
@@ -68,7 +68,7 @@ export function ExerciseCard({
               Der Aktions-Slot liegt oben rechts
               (ausserhalb des Links, s. u.); beide deckt derselbe Verlauf. */}
           <div className="absolute left-2 top-2">
-            <HerkunftBadge herkunft={ex.herkunft} visibility={ex.visibility} />
+            <HerkunftLozenge herkunft={ex.herkunft} visibility={ex.visibility} aufBild />
           </div>
         </div>
 

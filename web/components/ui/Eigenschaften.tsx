@@ -12,7 +12,7 @@ import { Card } from "./Card";
    Semantik: eine Beschreibungsliste (`dl`), je Zeile `dt` und `dd`. Die
    Bezeichnung steht links in fester Spalte, der Wert rechts und bricht in
    seiner Spalte um — ein langer Wert schiebt die nächste Zeile hinunter, nie
-   die Bezeichnung zur Seite. `EigenschaftBreit` (etwa ein Banner) läuft über
+   die Bezeichnung zur Seite. `EigenschaftBreit` (etwa eine Section Message) läuft über
    beide Spalten.
 
    Die Bezeichnung steht in gedämpfter Lesetype, nicht in der Versal-Type der
