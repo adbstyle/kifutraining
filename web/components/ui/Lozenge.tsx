@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import { Pencil } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { LozengeAppearance } from "@/lib/farben";
-import { HERKUNFT_LABEL, herkunftArt, kategorieStufe } from "@/lib/labels";
+import { HERKUNFT_LABEL, herkunftArt, kategorieStufe, type HerkunftArt } from "@/lib/labels";
 import type { KategorieSlug } from "@/lib/vocab";
 
 /* ── Lozenge ──────────────────────────────────────────────────
@@ -48,14 +48,27 @@ const darstellungen: Record<LozengeAppearance, string> = {
   "accent-gray": "bg-lozenge-accent-gray text-on-lozenge-accent-gray",
 };
 
+/** Fläche und Schrift einer Darstellung — für Bausteine, die einen Zustand in
+ *  derselben Farbe zeigen wie die Lozenge, aber selbst keine sind (der
+ *  Termineintrag im Monatsraster). So steht jedes Farbpaar nur hier. */
+export function lozengeFarben(appearance: LozengeAppearance): string {
+  return darstellungen[appearance];
+}
+
 export function Lozenge({
   appearance = "neutral",
+  aufBild = false,
   iconBefore: Icon,
   title,
   children,
   className,
 }: {
   appearance?: LozengeAppearance;
+  /** Liegt über einem Bild (Übungskarte). Die neutrale Fläche ist
+   *  halbtransparent und hinge dort am Foto darunter — darum steht sie dann im
+   *  deckenden Grau (`accent-gray`), das am Schirm gleich aussieht und über
+   *  jedem Bild trägt. Alle übrigen Darstellungen sind ohnehin deckend. */
+  aufBild?: boolean;
   /** Zeichen vor dem Text (ADS `iconBefore`), 12 px in der Schriftfarbe. */
   iconBefore?: LucideIcon;
   /** Ausgeschriebene Bedeutung, wo der Text abkürzt (Alterskategorie «G»). */
@@ -63,12 +76,13 @@ export function Lozenge({
   children: React.ReactNode;
   className?: string;
 }) {
+  const darstellung = aufBild && appearance === "neutral" ? "accent-gray" : appearance;
   return (
     <span
       title={title}
       className={cn(
         "type-lozenge inline-flex h-5 max-w-[200px] shrink-0 items-center gap-1 rounded-flaeche px-1 py-0.5",
-        darstellungen[appearance],
+        darstellungen[darstellung],
         className,
       )}
     >
@@ -83,32 +97,35 @@ export function Lozenge({
    Entwurf sind neutral: Sie sagen, woher etwas stammt oder in welchem
    Zwischenstand es liegt. Community ist `information`: Es gilt nach aussen.
    Der Entwurf trägt zusätzlich den Stift, damit er sich vom Manual-Bestand
-   nicht nur im Wort unterscheidet.
+   nicht nur im Wort unterscheidet. Die Zuordnung steht einmal hier und gilt
+   auch für die Sichtbarkeit eines Trainings. */
+const herkunftDarstellung: Record<HerkunftArt, { appearance: LozengeAppearance; icon?: LucideIcon }> = {
+  manual: { appearance: "neutral" },
+  entwurf: { appearance: "neutral", icon: Pencil },
+  oeffentlich: { appearance: "information" },
+};
 
-   `aufBild`: Auf der Übungskarte liegt die Lozenge über dem Bild. Die neutrale
-   Fläche ist halbtransparent und hinge dort am Foto darunter — darum steht sie
-   dort im deckenden Grau (`accent-gray`), das am Schirm gleich aussieht und
-   über jedem Bild trägt. `information` ist ohnehin deckend. */
+function HerkunftArtLozenge({ art, label, aufBild }: { art: HerkunftArt; label: string; aufBild?: boolean }) {
+  const { appearance, icon } = herkunftDarstellung[art];
+  return (
+    <Lozenge appearance={appearance} iconBefore={icon} aufBild={aufBild}>
+      {label}
+    </Lozenge>
+  );
+}
+
 export function HerkunftLozenge({
   herkunft,
   visibility,
-  aufBild = false,
+  aufBild,
 }: {
   herkunft: "manual" | "user";
   visibility?: "public" | "private";
+  /** Siehe `Lozenge`: über dem Bild der Übungskarte. */
   aufBild?: boolean;
 }) {
   const art = herkunftArt(herkunft, visibility);
-  if (art === "oeffentlich") return <Lozenge appearance="information">{HERKUNFT_LABEL.oeffentlich}</Lozenge>;
-  const neutral = aufBild ? "accent-gray" : "neutral";
-  if (art === "entwurf") {
-    return (
-      <Lozenge appearance={neutral} iconBefore={Pencil}>
-        {HERKUNFT_LABEL.entwurf}
-      </Lozenge>
-    );
-  }
-  return <Lozenge appearance={neutral}>{HERKUNFT_LABEL.manual}</Lozenge>;
+  return <HerkunftArtLozenge art={art} label={HERKUNFT_LABEL[art]} aufBild={aufBild} />;
 }
 
 /* Sichtbarkeit eines persönlichen Trainings — dieselbe Zuordnung wie bei der
@@ -117,9 +134,9 @@ export function HerkunftLozenge({
    abgrenzen müsste. Für Trainingskarte, Eigenschaften und Trainingskopf. */
 export function SichtbarkeitLozenge({ oeffentlich }: { oeffentlich: boolean }) {
   return oeffentlich ? (
-    <Lozenge appearance="information">Öffentlich</Lozenge>
+    <HerkunftArtLozenge art="oeffentlich" label="Öffentlich" />
   ) : (
-    <Lozenge iconBefore={Pencil}>Entwurf</Lozenge>
+    <HerkunftArtLozenge art="entwurf" label={HERKUNFT_LABEL.entwurf} />
   );
 }
 

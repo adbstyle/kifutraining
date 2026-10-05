@@ -1260,6 +1260,14 @@ export default function Styleguide() {
           <code>SichtbarkeitLozenge</code>; der Entwurf trägt den Stift, damit
           er sich vom Manual-Bestand nicht nur im Wort unterscheidet.
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Über einem Bild</strong> (<code>aufBild</code>, etwa die
+          Herkunft auf der Übungskarte): Die neutrale Fläche ist
+          halbtransparent und hinge dort am Foto darunter. Mit{" "}
+          <code>aufBild</code> steht sie im deckenden <code>accent-gray</code>,
+          das am Schirm gleich aussieht und über jedem Bild trägt; alle
+          übrigen Darstellungen sind ohnehin deckend.
+        </p>
         <div className="mb-3 flex flex-wrap items-center gap-3">
           {lozengeBedeutung.map(([darstellung]) => (
             <Lozenge key={darstellung} appearance={darstellung}>
@@ -1280,6 +1288,12 @@ export default function Styleguide() {
             Noch kein Training
           </Lozenge>
           <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
+        </div>
+        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-flaeche bg-[linear-gradient(135deg,#f5f5f0,#9aa79c)] p-3">
+          <HerkunftLozenge herkunft="manual" aufBild />
+          <HerkunftLozenge herkunft="user" visibility="private" aufBild />
+          <HerkunftLozenge herkunft="user" visibility="public" aufBild />
+          <span className="type-label-small text-on-umkehr">aufBild - über einem hellen Foto</span>
         </div>
 
         <p className="type-label-small mb-2 text-on-surface-mittel">
@@ -2858,7 +2872,10 @@ export default function Styleguide() {
             Training (Name auf <code>elev-08</code>), «Noch kein Training»
             (getönt wie die <code>warning</code>-Lozenge, nur anstehend), «Ohne
             Training» (leise, vergangen), «Ausgefallen» (durchgestrichen).
-            Gerechnet: Fehler-Schrift von «Zeit fehlt»{" "}
+            «Zeit fehlt» steht in Error - ausser im «Noch kein Training»: Auf
+            der warning-Fläche trüge Error nur{" "}
+            {v(kontrast(ERROR, LOZENGE.warning.flaeche))}, dort erbt das Wort
+            die Schrift der Fläche. Gerechnet: Fehler-Schrift von «Zeit fehlt»{" "}
             {v(kontrast(ERROR, elev(1)))} auf der Tagesfläche und{" "}
             {v(kontrast(ERROR, GRUND))} in der Randwoche; leise Schrift{" "}
             {v(kontrast(weissAuf(SCHRIFT.mittel, elev(1)), elev(1)))} bzw.{" "}

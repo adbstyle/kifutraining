@@ -622,7 +622,7 @@
    ist, sie ist keine Rubrik. */
 @utility type-lozenge {
   font-family: var(--font-sans); font-weight: 400; text-transform: none;
-  font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums;
+  font-size: 12px; line-height: 16px; letter-spacing: normal; font-variant-numeric: tabular-nums;
 }
 
 @layer base {

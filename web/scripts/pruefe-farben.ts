@@ -242,6 +242,25 @@ pruefe("Jede Lozenge trägt ihre Schrift auf jeder Höhenstufe", () => {
   }
 });
 
+pruefe("Der Termineintrag im Monatsraster trägt jede seiner Schriften", () => {
+  // TerminEintrag: «Noch kein Training» steht auf der warning-Fläche, die
+  // übrigen Einträge auf der Tagesfläche (elev-01) bzw. in der Randwoche auf
+  // dem Grund. «Zeit fehlt» trägt Error — nur auf der warning-Fläche nicht,
+  // denn dort käme Error nicht auf 4.5:1; dort erbt es deren Schrift.
+  const warnung = LOZENGE.warning;
+  const aufWarnung = kontrast(warnung.schrift, warnung.flaeche);
+  assert.ok(aufWarnung >= 4.5, `Noch kein Training: ${z(aufWarnung)}:1`);
+  const errorAufWarnung = kontrast(ERROR, warnung.flaeche);
+  assert.ok(
+    errorAufWarnung < 4.5,
+    `error trägt auf lozenge-warning (${z(errorAufWarnung)}:1) - TerminEintrag darf «Zeit fehlt» dort wieder in Error setzen`,
+  );
+  for (const tag of [elev(1), GRUND]) {
+    const zeitFehlt = kontrast(ERROR, tag);
+    assert.ok(zeitFehlt >= 4.5, `Zeit fehlt auf ${tag}: ${z(zeitFehlt)}:1`);
+  }
+});
+
 pruefe("Jede Section Message trägt Schrift und Zeichen", () => {
   // Die Schrift ist die gewöhnliche (on-surface, 4.5:1); das Zeichen ist ein
   // grafisches Objekt (3:1 nach WCAG 1.4.11) und trägt den Ton.

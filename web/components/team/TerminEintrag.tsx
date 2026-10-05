@@ -1,5 +1,6 @@
 "use client";
 
+import { lozengeFarben } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
 /** Wie ein Termin im Monatsüberblick steht (#329 AK 5–7). */
@@ -44,11 +45,18 @@ export function TerminEintrag({
         "focus-ring relative mt-1 block min-h-6 w-full break-words hyphens-auto rounded-klein px-1 text-left type-body-small",
         zustand === "ausgefallen" && "text-on-surface-mittel line-through",
         zustand === "training" && "bg-elev-08 text-on-surface",
-        zustand === "noch-nicht" && "bg-lozenge-warning text-on-lozenge-warning",
+        zustand === "noch-nicht" && lozengeFarben("warning"),
         zustand === "ohne" && "text-on-surface-mittel",
       )}
     >
-      {beginn ? `${beginn} ` : <span className="text-error">Zeit fehlt </span>}
+      {/* «Zeit fehlt» in Error — ausser auf der warning-Fläche: Dort trüge
+          Error nur 4.08:1 (pruefe-farben.ts), das Wort erbt die Schrift der
+          Fläche und sagt den Mangel selbst. */}
+      {beginn ? (
+        `${beginn} `
+      ) : (
+        <span className={zustand === "noch-nicht" ? undefined : "text-error"}>Zeit fehlt </span>
+      )}
       {eintragText(zustand, name)}
     </button>
   );
