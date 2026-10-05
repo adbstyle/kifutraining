@@ -8,11 +8,11 @@ Zwei Kinder stehen je in einer eigenen Zone und spielen sich den Ball flach zu. 
 
 ## Üben
 
-- Hinter dem Tiger freilaufen — raus aus dem Schatten, hinein in die Sonne — und genau passen.
+- Hinter dem Tiger freilaufen - raus aus dem Schatten, hinein in die Sonne - und genau passen.
 
 ## Wett-eifern
 
-Gelingen die Pässe vorbei am Tiger — und die saubere Annahme in der Zone?
+Gelingen die Pässe vorbei am Tiger - und die saubere Annahme in der Zone?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 74*

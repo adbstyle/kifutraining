@@ -16,7 +16,7 @@ Alle Kinder dribbeln auf der Schatzinsel, einem markierten Feld; ideal sind unte
 
 ## Wett-eifern
 
-Drei Teams, drei Schatztruhen am Rand. Welches Team hat seinen Schatz zuerst von der Insel in die eigene Truhe gedribbelt? Als Variante dürfen die Teams einander die Schätze aus den Truhen stehlen — wer besitzt nach zwei Minuten mehr?
+Drei Teams, drei Schatztruhen am Rand. Welches Team hat seinen Schatz zuerst von der Insel in die eigene Truhe gedribbelt? Als Variante dürfen die Teams einander die Schätze aus den Truhen stehlen - wer besitzt nach zwei Minuten mehr?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 64*

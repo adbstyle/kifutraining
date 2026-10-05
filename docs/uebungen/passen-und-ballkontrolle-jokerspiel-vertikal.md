@@ -8,7 +8,7 @@ Drei gegen drei; zwei Joker spielen im Feld mit, zwei weitere stehen ausserhalb 
 
 ## Üben
 
-- Die Joker im Feld und die hinter den Toren einbeziehen — so entsteht Tiefe und Überzahl.
+- Die Joker im Feld und die hinter den Toren einbeziehen - so entsteht Tiefe und Überzahl.
 
 ## Wett-eifern
 

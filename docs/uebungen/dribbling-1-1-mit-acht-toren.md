@@ -8,11 +8,11 @@ Vier Minitore auf jeder Seite, je zwei davon liegen in einer Abschlusszone. Zwei
 
 ## Üben
 
-- Den Ball kontrollieren, sofort Richtung Minitore ziehen und den Gegenspieler mit schnellen Richtungswechseln oder einer im richtigen Moment gesetzten Finte stehen lassen — dann abschliessen.
+- Den Ball kontrollieren, sofort Richtung Minitore ziehen und den Gegenspieler mit schnellen Richtungswechseln oder einer im richtigen Moment gesetzten Finte stehen lassen - dann abschliessen.
 
 ## Wett-eifern
 
-Drei Versuche pro Kind — wer trifft häufiger?
+Drei Versuche pro Kind - wer trifft häufiger?
 
 ---
 *Quelle: Manual_Kinderfussball_D.pdf, S. 69*

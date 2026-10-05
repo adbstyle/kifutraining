@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-Drei gegen eins — bei weniger Kindern auch 2 gegen 1. Weiss greift auf zwei Tore an; geschossen werden darf erst ab der Mittellinie. Tor oder Aus beendet den Angriff.
+Drei gegen eins - bei weniger Kindern auch 2 gegen 1. Weiss greift auf zwei Tore an; geschossen werden darf erst ab der Mittellinie. Tor oder Aus beendet den Angriff.
 
 ## Üben
 

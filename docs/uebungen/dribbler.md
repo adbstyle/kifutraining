@@ -9,7 +9,7 @@ Ein Rechteck ist abgesteckt, an seinen Stirnseiten stehen Pylonen. Du teilst zwe
 ## Üben
 
 - Kurz vor der Pylone die Richtung wechseln, quer zur nächsten Pylone auf der Gegenseite dribbeln und von dort neu starten.
-- Jede Runde eine andere Technik am Wendepunkt: mit der Innenseite, mit der Aussenseite, als Übersteiger — und einmal die Sohlen-Variante: Ball mit der Sohle zurückholen und hinter dem Standbein auf die andere Seite spielen.
+- Jede Runde eine andere Technik am Wendepunkt: mit der Innenseite, mit der Aussenseite, als Übersteiger - und einmal die Sohlen-Variante: Ball mit der Sohle zurückholen und hinter dem Standbein auf die andere Seite spielen.
 
 ## Wett-eifern
 

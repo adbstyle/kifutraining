@@ -8,7 +8,7 @@ In der Mitte liegt ein markiertes Viereck, rundherum stehen acht Tore. Gleichzei
 
 ## Üben
 
-- Vor dem Schuss kurz hinschauen — ein Foto im Kopf: Wo ist die Ecke offen? — und genau dorthin zielen.
+- Vor dem Schuss kurz hinschauen - ein Foto im Kopf: Wo ist die Ecke offen? - und genau dorthin zielen.
 
 ## Wett-eifern
 

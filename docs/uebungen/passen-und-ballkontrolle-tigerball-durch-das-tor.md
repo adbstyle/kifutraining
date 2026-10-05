@@ -8,7 +8,7 @@ Zwischen zwei Kindern steht ein Pylonentor. Das eine spielt den Ball flach durch
 
 ## Üben
 
-- Beim Pass den Fuss fest anspannen, ruhig halten und rund 90 Grad nach aussen drehen — wie ein Golfschläger.
+- Beim Pass den Fuss fest anspannen, ruhig halten und rund 90 Grad nach aussen drehen - wie ein Golfschläger.
 - Vor dem Pass kurz zum Mitspieler schauen, ein Foto machen, dann flach spielen, sodass der Ball zum Empfänger hin rollt.
 
 ## Wett-eifern

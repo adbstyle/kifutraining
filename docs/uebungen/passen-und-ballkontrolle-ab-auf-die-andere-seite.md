@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-Drei gegen drei, getroffen wird nur aus der Endzone. Wer trifft, behält den Ball — und greift ohne Pause in die Gegenrichtung an.
+Drei gegen drei, getroffen wird nur aus der Endzone. Wer trifft, behält den Ball - und greift ohne Pause in die Gegenrichtung an.
 
 ## Üben
 
