@@ -53,6 +53,7 @@ export async function legeTerminFestAktion(
     ende: felder.ende ?? "",
     ort: felder.ort,
     bemerkung: felder.bemerkung,
+    felder: felder.felder,
   });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
@@ -61,7 +62,8 @@ export async function legeTerminFestAktion(
 
 /** Der Dialog sendet nur, was sich gegenüber seinen Startwerten geändert hat
  *  (`geaenderteFelder`, PO 17): `undefined` heisst unverändert, ein leerer
- *  Text «leeren». Beginn und Ende kommen als Paar. */
+ *  Text «leeren». Beginn und Ende kommen als Paar, die Felder des Platzes
+ *  als ganze Liste (`null` = entfernen, #389). */
 export async function aendereTerminAktion(
   terminId: string,
   felder: Partial<TerminFelder>,
@@ -76,6 +78,7 @@ export async function aendereTerminAktion(
     ende: felder.ende,
     ort: felder.ort,
     bemerkung: felder.bemerkung,
+    felder: felder.felder,
     erwartetesTraining,
   });
   if (!r.ok) return { ok: false, error: r.meldung };

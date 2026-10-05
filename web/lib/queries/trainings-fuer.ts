@@ -9,6 +9,7 @@ import type { Altersstufe } from "@/lib/altersstufe";
 import { FASSUNG_INHALT_FELDER, FASSUNG_ZUORDNUNG_FELDER } from "@/lib/fassung";
 import type { Variante } from "@/lib/varianten";
 import { kurzeZeit, nachName } from "@/lib/queries/termine-fuer";
+import type { Felder } from "@/lib/termin-felder";
 import { parseMaterialBasis, parseMaterialListe, type MaterialPosten } from "@/lib/material";
 
 // Trainings lesen für einen Client, der bereits als Nutzer spricht (Cookie-
@@ -507,6 +508,8 @@ export type TeamTrainingRow = TrainingListRow & {
     ende: string | null;
     ort: string | null;
     bemerkung: string | null;
+    /** Die Felder des Platzes (#389); `null` = unbekannt. */
+    felder: Felder | null;
     /** Die Terminserie, zu der der Termin gehört; `null` bei einem einzelnen. */
     serieId: string | null;
     /** Wer den Termin vorbereitet und leitet (#325 AK 16); `userId` und `name`
@@ -520,7 +523,7 @@ export type TeamTrainingRow = TrainingListRow & {
 };
 
 const TEAM_LIST_SELECT =
-  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, serie_id, ausgefallen, ausfall_grund, ` +
+  `${LIST_SELECT}, training_termine ( id, datum, beginn, ende, ort, bemerkung, felder, serie_id, ausgefallen, ausfall_grund, ` +
   "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ) )";
 
 export type TeamTrainingFilter = {
@@ -573,6 +576,7 @@ export async function getTeamTrainingsFuer(
       ende: string | null;
       ort: string | null;
       bemerkung: string | null;
+      felder: Felder | null;
       serie_id: string | null;
       ausgefallen: boolean;
       ausfall_grund: string | null;
@@ -597,6 +601,7 @@ export async function getTeamTrainingsFuer(
             ende: kurzeZeit(termin.ende),
             ort: termin.ort,
             bemerkung: termin.bemerkung,
+            felder: termin.felder,
             serieId: termin.serie_id,
             ausgefallen: termin.ausgefallen,
             ausfallGrund: termin.ausfall_grund,

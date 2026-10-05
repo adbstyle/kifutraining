@@ -105,6 +105,20 @@ import {
   wochentageText,
   type Wochentag,
 } from "../lib/serie";
+import {
+  FELDER_TEXT,
+  UNTERGRUENDE,
+  feldText,
+  felderKurz,
+  felderPfad,
+  felderProblem,
+  gleicheFelder,
+  normalisiereFelder,
+  toreText,
+  type Feld,
+} from "../lib/termin-felder";
+import { FELDER_MODELL, FelderEingabe, felderAusgabe, felderSchema } from "../lib/termin-felder-ausgabe";
+import { MASS_TEXT } from "../lib/feldmass";
 import { ZEITRAUM_TEXT, istMonat, monatVon, monatsName, monatsRaster, plusMonate, tagText, zeitraumProblem } from "../lib/monat";
 import { planHref } from "../lib/team-ansicht";
 import { ABO_DAUER_MIN, aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
@@ -513,7 +527,7 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
 });
 
 pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
-  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: false, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [] } }, "2026-10-01"), false);
@@ -527,7 +541,7 @@ pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst
   assert.equal(TERMIN_TEXT.grundLang, "Der Grund darf höchstens 500 Zeichen lang sein.");
   assert.equal(TERMIN_MELDUNG.NICHT_AUSGEFALLEN, "Dieser Termin ist nicht ausgefallen.");
   assert.ok(!KONFLIKT_MARKER.includes("TERMIN_AUSGEFALLEN"), "eine Regel, kein Konflikt");
-  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null,
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null,
     training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: true, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-01"), false, "AK 8");
   assert.equal(nochNichtVorbereitet({ ...t, ausgefallen: false }, "2026-10-01"), true);
@@ -550,6 +564,10 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     ende: "20:00",
     ort: "Allmend",
     bemerkung: null,
+    felder: [
+      { laenge_m: 30, breite_m: 25, tore: { minitor: 2, tor_5m: 0, tor_7m: null }, untergrund: "kunstrasen" as const },
+      { laenge_m: null, breite_m: null, tore: { minitor: null, tor_5m: null, tor_7m: null }, untergrund: null },
+    ],
     training: { id: "t1", name: "Probe", stufen: ["F" as const] },
     serie: null,
     serienTag: null,
@@ -566,12 +584,26 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     ende: "20:00",
     ort: "Allmend",
     bemerkung: null,
+    // #389 AK 13, 14: die Felder mit Grösse, Toren und Untergrund; Unbekanntes
+    // als null, «keine» als 0, der Untergrund als Wert.
+    felder: [
+      {
+        laenge_m: 30,
+        breite_m: 25,
+        tore: { minitor: 2, tor_5m: 0, tor_7m: null },
+        untergrund: { slug: "kunstrasen", label: "Kunstrasen" },
+      },
+      { laenge_m: null, breite_m: null, tore: { minitor: null, tor_5m: null, tor_7m: null }, untergrund: null },
+    ],
     serie_id: null,
     verantwortliche: [],
     ausgefallen: false,
     ausfall_grund: null,
     anstehend: true,
   });
+  // Platz unbekannt: «felder: null», nicht eine leere Liste (AK 14).
+  assert.equal(trainingAuskunft(team, { userId: ICH, termin: { ...termin, felder: null } }).termin?.felder, null);
+  TrainingAuskunftStreng.parse(heute);
   // Der heutige Tag zählt ganz zum Anstehenden — wie im Plan (`teilePlan`).
   assert.equal(trainingAuskunft(team, { userId: ICH, termin, heute: "2026-09-24" }).termin?.anstehend, false);
   assert.equal(trainingAuskunft(team, { userId: ICH, termin: null }).termin, null);
@@ -853,6 +885,113 @@ pruefe("geaenderteFelder: nur Geändertes, Beginn und Ende als Paar, nichts geä
   // Übernommener Termin ohne Zeit: unverändert heisst weiter «nichts senden».
   const ohneZeit = { datum: "2026-10-08", beginn: "", ende: "", ort: "", bemerkung: "" };
   assert.equal(geaenderteFelder({ ...ohneZeit }, ohneZeit), null);
+});
+
+// ── Felder eines Termins (#389) ─────────────────────────────────────────────
+const KUNSTRASEN: Feld = { laenge_m: 30, breite_m: 25, tore: { minitor: 2, tor_5m: 0, tor_7m: null }, untergrund: "kunstrasen" };
+const UNBEKANNT: Feld = { laenge_m: null, breite_m: null, tore: { minitor: null, tor_5m: null, tor_7m: null }, untergrund: null };
+
+pruefe("Felder: gültig, ungültig und die Stelle des Fehlers (#389 AK 2–6, 9)", () => {
+  assert.equal(felderProblem(null), null, "ohne Felder (AK 8)");
+  assert.equal(felderProblem([KUNSTRASEN]), null);
+  assert.equal(felderProblem([KUNSTRASEN, UNBEKANNT, KUNSTRASEN]), null, "mehrere, ein Feld ganz ohne Angaben (AK 5)");
+  assert.equal(felderProblem([{ ...KUNSTRASEN, laenge_m: 5, breite_m: 120 }]), null, "Grenzen eingeschlossen");
+  assert.equal(felderProblem([{ ...KUNSTRASEN, tore: { minitor: 0, tor_5m: 0, tor_7m: 0 } }]), null, "0 = keine (AK 6)");
+  assert.equal(felderProblem([{ ...KUNSTRASEN, tore: { minitor: 1000, tor_5m: null, tor_7m: null } }]), null, "keine Obergrenze (PO 6)");
+  for (const u of UNTERGRUENDE) assert.equal(felderProblem([{ ...KUNSTRASEN, untergrund: u }]), null, u);
+
+  // AK 9: nur gemeinsam, nur ganze Meter 5 bis 120.
+  assert.deepEqual(felderProblem([KUNSTRASEN, { ...UNBEKANNT, laenge_m: 30 }]), { index: 1, teil: "breite_m", text: MASS_TEXT.paarweise });
+  assert.deepEqual(felderProblem([{ ...UNBEKANNT, breite_m: 30 }]), { index: 0, teil: "laenge_m", text: MASS_TEXT.paarweise });
+  assert.deepEqual(felderProblem([{ ...KUNSTRASEN, laenge_m: 4 }]), { index: 0, teil: "laenge_m", text: MASS_TEXT.bereich });
+  assert.deepEqual(felderProblem([{ ...KUNSTRASEN, breite_m: 121 }]), { index: 0, teil: "breite_m", text: MASS_TEXT.bereich });
+  assert.deepEqual(felderProblem([{ ...KUNSTRASEN, laenge_m: 30.5 }]), { index: 0, teil: "laenge_m", text: MASS_TEXT.bereich });
+  assert.deepEqual(felderProblem([{ ...KUNSTRASEN, laenge_m: Number.NaN }]), { index: 0, teil: "laenge_m", text: MASS_TEXT.bereich });
+  // Wortgleich mit der Spielfeldgrösse einer Übung (PO 6 «wie bei Übungen»).
+  assert.equal(MASS_TEXT.paarweise, "Bitte Länge und Breite angeben oder beides leer lassen.");
+  assert.equal(MASS_TEXT.bereich, "Länge und Breite in ganzen Metern, zwischen 5 und 120.");
+
+  const tore = (t: Partial<Feld["tore"]>) => [{ ...KUNSTRASEN, tore: { ...KUNSTRASEN.tore, ...t } }];
+  assert.deepEqual(felderProblem(tore({ tor_5m: -1 })), { index: 0, teil: "tore.tor_5m", text: FELDER_TEXT.tore });
+  assert.deepEqual(felderProblem(tore({ tor_7m: 1.5 })), { index: 0, teil: "tore.tor_7m", text: FELDER_TEXT.tore });
+  assert.deepEqual(felderProblem([{ ...KUNSTRASEN, untergrund: "sand" }]), { index: 0, teil: "untergrund", text: FELDER_TEXT.untergrund });
+  // Form: nur über den KI-Weg erreichbar.
+  assert.deepEqual(felderProblem([]), { index: null, teil: null, text: FELDER_TEXT.form });
+  assert.deepEqual(felderProblem([{ ...KUNSTRASEN, extra: 1 }]), { index: 0, teil: null, text: FELDER_TEXT.form });
+  assert.deepEqual(felderProblem([{ ...KUNSTRASEN, tore: { minitor: 1 } }]), { index: 0, teil: null, text: FELDER_TEXT.form });
+  assert.deepEqual(felderProblem([null]), { index: 0, teil: null, text: FELDER_TEXT.form });
+  assert.equal(felderPfad({ index: 1, teil: "tore.minitor", text: "" }), "felder[1].tore.minitor");
+  assert.equal(felderPfad({ index: 0, teil: null, text: "" }), "felder[0]");
+  assert.equal(felderPfad({ index: null, teil: null, text: "" }), "felder");
+});
+
+pruefe("Felder: Normalform, Vergleich, geänderte Felder (#389 AK 5, 7)", () => {
+  // Fehlende Angaben sind unbekannt; [] heisst ohne Felder.
+  assert.deepEqual(normalisiereFelder([{ laenge_m: 30, breite_m: 25, untergrund: "halle" }]), [
+    { laenge_m: 30, breite_m: 25, tore: { minitor: null, tor_5m: null, tor_7m: null }, untergrund: "halle" },
+  ]);
+  assert.deepEqual(normalisiereFelder([{ tore: { tor_5m: 2 } }]), [{ ...UNBEKANNT, tore: { minitor: null, tor_5m: 2, tor_7m: null } }]);
+  assert.equal(normalisiereFelder([]), null);
+  assert.equal(normalisiereFelder(undefined), null);
+  // jsonb kommt mit anderer Schlüsselfolge zurück — gleich bleibt gleich.
+  const umgestellt = { untergrund: "kunstrasen", tore: { tor_7m: null, tor_5m: 0, minitor: 2 }, breite_m: 25, laenge_m: 30 };
+  assert.ok(gleicheFelder([umgestellt], [KUNSTRASEN]));
+  assert.ok(gleicheFelder(null, []) && gleicheFelder(undefined, null));
+  assert.ok(!gleicheFelder([KUNSTRASEN], [{ ...KUNSTRASEN, tore: { ...KUNSTRASEN.tore, tor_7m: 0 } }]), "unbekannt ≠ keine");
+
+  const start = { datum: "2026-10-08", beginn: "18:30", ende: "20:00", ort: "", bemerkung: "", felder: [KUNSTRASEN] };
+  assert.equal(geaenderteFelder({ ...start, felder: [umgestellt as Feld] }, start), null, "nur umgestellt: nichts senden");
+  assert.deepEqual(geaenderteFelder({ ...start, felder: [KUNSTRASEN, UNBEKANNT] }, start), { felder: [KUNSTRASEN, UNBEKANNT] }, "ganze Liste");
+  assert.deepEqual(geaenderteFelder({ ...start, felder: null }, start), { felder: null }, "entfernen");
+  assert.deepEqual(geaenderteFelder({ ...start, felder: [{ ...KUNSTRASEN, untergrund: null }], ort: "Allmend" }, start), {
+    ort: "Allmend",
+    felder: [{ ...KUNSTRASEN, untergrund: null }],
+  });
+  const ohne = { ...start, felder: null };
+  assert.equal(geaenderteFelder({ ...ohne }, ohne), null);
+});
+
+pruefe("Felder: Anzeige knapp und ausführlich, unbekannt ≠ keine (#389 AK 10, 11)", () => {
+  assert.equal(felderKurz(null), null, "ohne Felder steht nichts");
+  assert.equal(felderKurz([KUNSTRASEN]), "30 × 25 m · Kunstrasen");
+  assert.equal(felderKurz([UNBEKANNT]), "1 Feld");
+  assert.equal(felderKurz([{ ...UNBEKANNT, untergrund: "halle" }]), "Halle");
+  assert.equal(felderKurz([KUNSTRASEN, UNBEKANNT]), "2 Felder");
+  assert.equal(feldText(KUNSTRASEN), "30 × 25 m · 2 Minitore, keine 5-m-Tore · Kunstrasen");
+  assert.equal(feldText(UNBEKANNT), "Grösse unbekannt · Tore unbekannt · Untergrund unbekannt");
+  assert.equal(toreText({ minitor: 1, tor_5m: 1, tor_7m: 3 }), "1 Minitor, 1 5-m-Tor, 3 7-m-Tore");
+  assert.equal(toreText({ minitor: null, tor_5m: null, tor_7m: null }), null);
+});
+
+pruefe("Felder: der CHECK der Datenebene als Klartext, eine Regel (#389 AK 15)", () => {
+  const db = 'new row for relation "training_termine" violates check constraint "tt_felder"';
+  assert.equal(still(() => fehlerMeldung(db)), FELDER_TEXT.ungueltig);
+  assert.equal(still(() => ausDbFehler({ message: db })).art, "regel");
+  // Der Name trifft nur sich selbst, nicht eine längere Bezeichnung.
+  assert.equal(fachlicheMeldung('violates check constraint "tt_felder_abweichend"'), null);
+  assert.equal(SERIE_TEXT.felderNurEinzeln, "Die Felder lassen sich nur für diesen einen Termin festhalten.");
+  // Bis #391: Felder an einem Serientermin nur für ihn, nicht zusammen mit der Regel.
+  assert.deepEqual(erlaubteReichweiten({ datum: false, regel: false, felder: true }), ["nur_dieser"]);
+  assert.equal(erlaubteReichweiten({ datum: false, regel: true, felder: true }), null);
+});
+
+pruefe("Felder: KI-Ausgabe und -Eingabe (#389 AK 12–14)", () => {
+  assert.deepEqual(felderAusgabe([KUNSTRASEN, UNBEKANNT]), [
+    { ...KUNSTRASEN, untergrund: { slug: "kunstrasen", label: "Kunstrasen" } },
+    UNBEKANNT,
+  ]);
+  assert.equal(felderAusgabe(null), null);
+  felderSchema(true).parse(felderAusgabe([KUNSTRASEN, UNBEKANNT]));
+  // Die Eingabe lässt durch, was der Kern mit dem Satz der Oberfläche abweist
+  // (AK 15) — eine halbe Zahl, ein fremder Untergrund, ein fehlender Teil.
+  const roh = [{ laenge_m: 30.5, breite_m: 25, untergrund: "sand" }, { tore: { minitor: -1 } }];
+  assert.deepEqual(FelderEingabe.parse(roh), roh);
+  assert.deepEqual(felderProblem(normalisiereFelder(FelderEingabe.parse(roh))), {
+    index: 0,
+    teil: "laenge_m",
+    text: MASS_TEXT.bereich,
+  });
+  assert.match(FELDER_MODELL, /null heisst unbekannt, 0 Tore heisst: keine/);
 });
 
 pruefe("Erfolgstexte und Nicht-gefunden-Sätze haben je eine Quelle", () => {

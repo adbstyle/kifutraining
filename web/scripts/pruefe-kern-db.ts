@@ -60,6 +60,12 @@ const { legeTerminFest, aendereTermin, entferneTermin, ordneTrainingZu, loeseTra
   "../lib/kern/termine"
 );
 const { TERMIN_MELDUNG, TERMIN_TEXT } = await import("../lib/termin");
+const { FELDER_TEXT, felderProblem } = await import("../lib/termin-felder");
+type Feld = import("../lib/termin-felder").Feld;
+type Felder = import("../lib/termin-felder").Felder;
+const { felderAusgabe } = await import("../lib/termin-felder-ausgabe");
+const { MASS_TEXT } = await import("../lib/feldmass");
+const { ausDbFehler } = await import("../lib/kern/ergebnis");
 const { ZEITRAUM_TEXT } = await import("../lib/monat");
 const { SERIE_MELDUNG, SERIE_TEXT, plusTage, wochentagVon } = await import("../lib/serie");
 const { kalendertagAmTrainingsort } = await import("../lib/zeit");
@@ -1440,6 +1446,7 @@ try {
       ende: "20:00",
       ort: "Allmend",
       bemerkung: "Leibchen",
+      felder: null,
       serieId: null,
       verantwortliche: [],
       ausgefallen: false,
@@ -1461,6 +1468,7 @@ try {
       ende: "20:00",
       ort: "Allmend",
       bemerkung: "Leibchen",
+      felder: null,
       serie_id: null,
       verantwortliche: [],
       ausgefallen: false,
@@ -3385,6 +3393,188 @@ try {
     konten.splice(konten.indexOf(c.id), 1);
     assert.deepEqual(await feed(token), { gueltig: false });
     assert.equal((await aboZeilen(tc)).length, 0, "kein verwaistes Abo");
+  });
+
+  // ── Kalender: Felder eines Termins (#389) ────────────────────────────────
+  const KUNSTRASEN: Feld = { laenge_m: 30, breite_m: 25, tore: { minitor: 2, tor_5m: 0, tor_7m: null }, untergrund: "kunstrasen" };
+  const UNBEKANNT: Feld = { laenge_m: null, breite_m: null, tore: { minitor: null, tor_5m: null, tor_7m: null }, untergrund: null };
+  const felderVon = async (id: string) =>
+    (await admin.from("training_termine").select("felder").eq("id", id).single()).data!.felder as Felder | null;
+
+  await pruefe("Felder: TS- und SQL-Zwilling nehmen dieselben Werte an (#389 AK 9)", async () => {
+    const mit = (f: Record<string, unknown>) => [{ ...KUNSTRASEN, ...f }];
+    const faelle: unknown[] = [
+      null,
+      [],
+      [KUNSTRASEN],
+      [KUNSTRASEN, UNBEKANNT],
+      mit({ laenge_m: 5, breite_m: 120 }),
+      mit({ laenge_m: 4 }),
+      mit({ breite_m: 121 }),
+      mit({ laenge_m: 30.5 }),
+      mit({ laenge_m: null }),
+      mit({ laenge_m: null, breite_m: null }),
+      mit({ laenge_m: "30" }),
+      mit({ tore: { minitor: 0, tor_5m: 0, tor_7m: 0 } }),
+      mit({ tore: { minitor: 9_007_199_254_740_991, tor_5m: null, tor_7m: null } }),
+      mit({ tore: { minitor: -1, tor_5m: null, tor_7m: null } }),
+      mit({ tore: { minitor: 1.5, tor_5m: null, tor_7m: null } }),
+      mit({ tore: { minitor: "2", tor_5m: null, tor_7m: null } }),
+      mit({ tore: { minitor: null, tor_5m: null } }),
+      mit({ tore: { minitor: null, tor_5m: null, tor_7m: null, tor_3m: 1 } }),
+      mit({ tore: null }),
+      mit({ untergrund: "halle" }),
+      mit({ untergrund: "sand" }),
+      mit({ untergrund: 1 }),
+      mit({ extra: true }),
+      [null],
+      [[]],
+      { laenge_m: 30 },
+      "30 × 30",
+      [{ laenge_m: 30, breite_m: 30, tore: { minitor: null, tor_5m: null, tor_7m: null } }],
+    ];
+    for (const f of faelle) {
+      const { data, error } = await admin.rpc("termin_felder_gueltig", { p: f as never });
+      if (error) throw error;
+      assert.equal(data, felderProblem(f) === null, `Zwilling uneins bei ${JSON.stringify(f)}`);
+    }
+  });
+
+  await pruefe("Felder: festlegen, ändern, entfernen, ungültig abgewiesen, Plan und Auskunft (#389 AK 1–9, 12–15)", async () => {
+    const team = await serienTeam("Kern-DB-Felder");
+    // AK 8: ohne Felder.
+    const ohne = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:30" }));
+    assert.equal(await felderVon(ohne.terminId), null);
+    // AK 1–6: mehrere Felder, Angaben einzeln offen, «keine» als 0; fehlende Angaben werden unbekannt.
+    const t = wert(
+      await legeTerminFest(a.supabase, a.id, {
+        teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30",
+        felder: [{ laenge_m: 30, breite_m: 25, tore: { minitor: 2, tor_5m: 0 }, untergrund: "kunstrasen" }, {}],
+      }),
+    );
+    assert.deepEqual(await felderVon(t.terminId), [KUNSTRASEN, UNBEKANNT]);
+    // Eine leere Liste heisst ohne Felder.
+    const leer = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(4), beginn: "18:00", ende: "19:30", felder: [] }));
+    assert.equal(await felderVon(leer.terminId), null);
+
+    // AK 9, 15: vorab abgewiesen, mit dem Satz der Oberfläche und der Stelle; es entsteht nichts.
+    const vorher = (await admin.from("training_termine").select("id", { count: "exact", head: true }).eq("team_id", team)).count;
+    const r = fehler(
+      await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(5), beginn: "18:00", ende: "19:30", felder: [{}, { laenge_m: 30 }] }),
+      "eingabe",
+      MASS_TEXT.paarweise,
+    ) as { feld?: string };
+    assert.equal(r.feld, "felder[1].breite_m");
+    assert.equal((await admin.from("training_termine").select("id", { count: "exact", head: true }).eq("team_id", team)).count, vorher);
+
+    // AK 7: ändern als ganze Liste; geschrieben wird nur `felder` (PO 17).
+    const spur: string[][] = [];
+    const mitSpur = new Proxy(a.supabase, {
+      get(ziel, name, empf) {
+        if (name === "from")
+          return (tabelle: string) => {
+            const q = ziel.from(tabelle);
+            return tabelle !== "training_termine"
+              ? q
+              : new Proxy(q, {
+                  get(z, n, r2) {
+                    if (n === "update")
+                      return (nutzlast: object) => {
+                        spur.push(Object.keys(nutzlast).sort());
+                        return z.update(nutzlast as never);
+                      };
+                    const v = Reflect.get(z, n, r2);
+                    return typeof v === "function" ? v.bind(z) : v;
+                  },
+                });
+          };
+        const v = Reflect.get(ziel, name, empf);
+        return typeof v === "function" ? v.bind(ziel) : v;
+      },
+    });
+    wert(await aendereTermin(mitSpur, a.id, { terminId: t.terminId, felder: [{ ...KUNSTRASEN, untergrund: "naturrasen" }] }));
+    assert.deepEqual(spur, [["felder"]]);
+    assert.deepEqual(await felderVon(t.terminId), [{ ...KUNSTRASEN, untergrund: "naturrasen" }]);
+    // Ungültig: abgewiesen, der Stand bleibt.
+    fehler(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, felder: [{ ...KUNSTRASEN, untergrund: "sand" }] }), "eingabe", FELDER_TEXT.untergrund);
+    fehler(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, felder: [{ ...KUNSTRASEN, tore: { minitor: -1 } }] }), "eingabe", FELDER_TEXT.tore);
+    assert.deepEqual(await felderVon(t.terminId), [{ ...KUNSTRASEN, untergrund: "naturrasen" }]);
+    // Ein anderes Feld des Termins lässt die Felder stehen.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, ort: "Allmend" }));
+    assert.deepEqual(await felderVon(t.terminId), [{ ...KUNSTRASEN, untergrund: "naturrasen" }]);
+
+    // AK 12, 15 über den KI-Weg: dieselbe Eingabeprüfung des Werkzeugs, derselbe Satz.
+    const ki = TerminAendernEingabe.parse({ termin_id: t.terminId, felder: [{ laenge_m: 30.5, breite_m: 25 }] });
+    const kiFehler = fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: t.terminId, felder: ki.felder }), "eingabe", MASS_TEXT.bereich) as { feld?: string };
+    assert.equal(kiFehler.feld, "felder[0].laenge_m");
+    const kiOk = TerminAendernEingabe.parse({ termin_id: t.terminId, felder: [{ laenge_m: 40, breite_m: 30, untergrund: "hartplatz" }] });
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t.terminId, felder: kiOk.felder }));
+    assert.deepEqual(await felderVon(t.terminId), [{ laenge_m: 40, breite_m: 30, tore: UNBEKANNT.tore, untergrund: "hartplatz" }]);
+    // KI: null entfernt.
+    const kiWeg = TerminAendernEingabe.parse({ termin_id: t.terminId, felder: null });
+    assert.equal(kiWeg.felder, null);
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t.terminId, felder: kiWeg.felder }));
+    assert.equal(await felderVon(t.terminId), null, "AK 7: entfernt");
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t.terminId, felder: [KUNSTRASEN, UNBEKANNT] }));
+
+    // Die Datenebene als Rückhalt: wer den Kern umgeht, bekommt den Klartext.
+    const { error: direkt } = await a.supabase.from("training_termine").update({ felder: [{ laenge_m: 30 }] }).eq("id", t.terminId);
+    assert.ok(direkt, "CHECK tt_felder weist ab");
+    const e = ausDbFehler(direkt!);
+    assert.equal(e.art, "regel");
+    assert.equal(e.meldung, FELDER_TEXT.ungueltig);
+    assert.deepEqual(await felderVon(t.terminId), [KUNSTRASEN, UNBEKANNT]);
+
+    // AK 10, 13, 14: Plan und Auskunft nennen die Felder; unbekannt als null.
+    const plan = wert(await teamPlan(a.supabase, a.id, { teamId: team }));
+    const imPlan = (id: string) => plan.kommend.find((x) => x.id === id)!;
+    assert.deepEqual(imPlan(t.terminId).felder, [KUNSTRASEN, UNBEKANNT]);
+    assert.equal(imPlan(ohne.terminId).felder, null);
+    const tr = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Felder", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: tr.id }));
+    const aus = wert(await trainingAbrufen(a.supabase, a.id, { trainingId: tr.id }));
+    assert.deepEqual(aus.termin?.felder, felderAusgabe([KUNSTRASEN, UNBEKANNT]));
+    assert.deepEqual(aus.termin?.felder?.[0].untergrund, { slug: "kunstrasen", label: "Kunstrasen" });
+    const such = wert(await trainingsSuchen(a.supabase, a.id, { bestand: "team", teamId: team, limit: 5 }));
+    assert.deepEqual(such.treffer.find((x) => x.id === tr.id)?.termin?.felder, [KUNSTRASEN, UNBEKANNT]);
+  });
+
+  await pruefe("Felder bleiben beim Zuordnen, Ersetzen, Lösen und Ausfallen; nicht im Abo (#389 PC 1, OoS 4)", async () => {
+    const team = await serienTeam("Kern-DB-Felder-Bestand");
+    const t = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:30", ort: "Platz", felder: [KUNSTRASEN] }));
+    const t1 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Felder-1", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
+    const t2 = wert(await legeTrainingAn(a.supabase, a.id, { name: "Kern-DB-Felder-2", altersstufe: "kinderfussball", stufen: ["F"], teamId: team }));
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: t1.id }));
+    assert.deepEqual(await felderVon(t.terminId), [KUNSTRASEN], "zuordnen");
+    wert(await ordneTrainingZu(a.supabase, a.id, { terminId: t.terminId, trainingId: t2.id }));
+    assert.deepEqual(await felderVon(t.terminId), [KUNSTRASEN], "ersetzen");
+    wert(await loeseTraining(a.supabase, a.id, { terminId: t.terminId }));
+    assert.deepEqual(await felderVon(t.terminId), [KUNSTRASEN], "lösen");
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: t.terminId, grund: "Regen" }));
+    assert.deepEqual(await felderVon(t.terminId), [KUNSTRASEN], "ausfallen");
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: t.terminId }));
+    assert.deepEqual(await felderVon(t.terminId), [KUNSTRASEN], "zurücknehmen");
+    // OoS 4: Das Abo nennt nur Zeit und Ort.
+    const token = (await holen(a, team)).token!;
+    const imFeed = (await feed(token)).termine!.find((x) => x.id === t.terminId)!;
+    assert.deepEqual(Object.keys(imFeed).sort(), ["beginn", "datum", "ende", "geaendert", "id", "ort"]);
+  });
+
+  await pruefe("Felder am Serientermin: nur für ihn, die Serie gibt keine vor (#389, bis #391)", async () => {
+    const team = await serienTeam("Kern-DB-Felder-Serie");
+    const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: tagCh(7), bis: tagCh(28), beginn: "18:00", ende: "19:30", ort: "A" }));
+    const [t0, t1] = await termineDer(s.serieId);
+    fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: t0.id, felder: [KUNSTRASEN], reichweite: "alle" }), "regel", SERIE_TEXT.felderNurEinzeln);
+    fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: t0.id, felder: [KUNSTRASEN] }), "regel", SERIE_MELDUNG.REICHWEITE_FEHLT);
+    assert.equal(await felderVon(t0.id), null, "abgewiesen heisst unverändert");
+    wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t0.id, felder: [KUNSTRASEN], reichweite: "nur_dieser" }));
+    assert.deepEqual(await felderVon(t0.id), [KUNSTRASEN]);
+    assert.equal(await felderVon(t1.id), null, "die anderen Termine bleiben ohne Felder");
+    // Keine Abweichung der übrigen Angaben; eine Serienänderung lässt die Felder stehen.
+    const r = (await termineDer(s.serieId))[0];
+    assert.deepEqual([r.zeit_abweichend, r.ort_abweichend, r.bemerkung_abweichend], [false, false, false]);
+    wert(await aendereSerie(a.supabase, a.id, { terminId: t1.id, reichweite: "alle", aenderung: { ort: "Halle" }, bestaetigt: true }));
+    assert.deepEqual(await felderVon(t0.id), [KUNSTRASEN]);
   });
 } finally {
   await aufraeumen();

@@ -11,6 +11,13 @@ import {
   terminProblem,
   type TerminProblem,
 } from "@/lib/termin";
+import {
+  felderPfad,
+  felderProblem,
+  normalisiereFelder,
+  type FeldEingabe,
+  type Felder,
+} from "@/lib/termin-felder";
 import { kalenderMeldung } from "@/lib/veraltet";
 import { kurzeZeit } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort } from "@/lib/zeit";
@@ -48,7 +55,7 @@ import {
 export const TERMIN_FELD = { feld: "termin_id" } as const;
 
 export const TERMIN_ROH =
-  "id, team_id, training_id, datum, beginn, ende, ort, bemerkung, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
+  "id, team_id, training_id, datum, beginn, ende, ort, bemerkung, felder, serie_id, zeit_abweichend, ort_abweichend, bemerkung_abweichend, ausgefallen, ausfall_grund";
 
 export type TerminRoh = {
   id: string;
@@ -59,6 +66,8 @@ export type TerminRoh = {
   ende: string | null;
   ort: string | null;
   bemerkung: string | null;
+  /** Die Felder des Platzes (#389); `null` = unbekannt. */
+  felder: Felder | null;
   /** Nur Serientermine tragen eine Serie; die Flags zeigen, welche Angaben
    *  von ihr abweichen. */
   serie_id: string | null;
@@ -84,6 +93,19 @@ export function bereinigeVerantwortliche(ids: readonly unknown[]): { ok: true; i
 
 function feldFehler(p: TerminProblem | null): KernFehler | null {
   return p ? fehlschlag("eingabe", p.text, { feld: p.feld }) : null;
+}
+
+/** Die Felder des Platzes in die gespeicherte Form bringen und prüfen
+ *  (#389 AK 5, 9, 15): fehlende Angaben werden unbekannt, eine leere Liste
+ *  heisst «ohne Felder». Die Meldung ist die der Oberfläche; `feld` nennt die
+ *  Stelle mit dem Eingabenamen des Werkzeugs («felder[1].laenge_m»). */
+export function pruefeFelder(
+  felder: readonly FeldEingabe[] | null | undefined,
+): { ok: true; felder: Felder | null } | KernFehler {
+  const n = normalisiereFelder(felder);
+  const p = felderProblem(n);
+  if (p) return fehlschlag("eingabe", p.text, { feld: felderPfad(p) });
+  return { ok: true, felder: n };
 }
 
 /** Ein Fehler der Kalender-RPCs als Kern-Fehler. «Nicht gefunden» und «seit
@@ -133,10 +155,12 @@ export type TerminFestlegen = {
   ende: string;
   ort?: string | null;
   bemerkung?: string | null;
+  /** Die Felder des Platzes (#389); ohne Angabe oder leer: keine. */
+  felder?: readonly FeldEingabe[] | null;
 };
 
 /** Einen einzelnen Termin ohne Training festlegen (AK 1–6), auch in der
- *  Vergangenheit (AK 4). */
+ *  Vergangenheit (AK 4), auf Wunsch mit seinen Feldern (#389 AK 1, 8). */
 export async function legeTerminFest(
   supabase: SupabaseClient,
   _userId: string,
@@ -144,6 +168,8 @@ export async function legeTerminFest(
 ): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
   const problem = feldFehler(terminProblem(e));
   if (problem) return problem;
+  const felder = pruefeFelder(e.felder);
+  if (!felder.ok) return felder;
   const team = await pruefeTeamMitglied(supabase, e.teamId);
   if (!team.ok) return team;
 
@@ -156,6 +182,7 @@ export async function legeTerminFest(
       ende: leerZuNull(e.ende),
       ort: leerZuNull(e.ort),
       bemerkung: leerZuNull(e.bemerkung),
+      felder: felder.felder,
     })
     .select("id")
     .single<{ id: string }>();
@@ -173,6 +200,9 @@ export type TerminAendern = {
   /** `undefined` = unverändert, `null` oder `""` = leeren. */
   ort?: string | null;
   bemerkung?: string | null;
+  /** Die Felder als ganze Liste (#389 AK 7): `undefined` = unverändert,
+   *  `null` oder `[]` = entfernen. */
+  felder?: readonly FeldEingabe[] | null;
   /** Das Training, das der Termin bei der Auswahl trug (AK 23). `undefined`
    *  beim KI-Weg: geprüft wird dann gegen den eben gelesenen Stand. */
   erwartetesTraining?: string | null;
@@ -191,8 +221,8 @@ async function warumNichtGeschrieben(
     : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
 }
 
-/** Datum, Zeit, Ort und Bemerkung eines Termins ändern (AK 7–10, 23). Der
- *  Termin wird mit seinem Stand zusammengeführt und als Ganzes geprüft;
+/** Datum, Zeit, Ort, Bemerkung und Felder (#389) eines Termins ändern
+ *  (AK 7–10, 23). Der Termin wird mit seinem Stand zusammengeführt und als Ganzes geprüft;
  *  geschrieben werden aber nur die übergebenen Felder (Beginn und Ende stets
  *  zusammen). So überschreibt eine gleichzeitige Änderung eines anderen
  *  Feldes nichts still mit dem alten Stand (PO 17). */
@@ -214,8 +244,10 @@ export async function aendereTermin(
   };
   const problem = feldFehler(terminProblem(neu, { beginn: t.beginn, ende: t.ende }));
   if (problem) return problem;
+  const felder = e.felder === undefined ? null : pruefeFelder(e.felder);
+  if (felder && !felder.ok) return felder;
 
-  const aenderung: Partial<typeof neu> = {};
+  const aenderung: Partial<typeof neu & { felder: Felder | null }> = {};
   if (e.datum !== undefined) aenderung.datum = neu.datum;
   if (e.beginn !== undefined || e.ende !== undefined) {
     aenderung.beginn = neu.beginn;
@@ -223,12 +255,15 @@ export async function aendereTermin(
   }
   if (e.ort !== undefined) aenderung.ort = neu.ort;
   if (e.bemerkung !== undefined) aenderung.bemerkung = neu.bemerkung;
+  // Die Felder sind EINE Angabe und gehen als ganze Liste (#389 AK 7).
+  if (felder) aenderung.felder = felder.felder;
 
   // «Nur dieser» (#326 AK 1, PC 1): Jede Angabe eines Serientermins, die sich
   // ändert, weicht danach ab — bis man sie wieder der Serie folgen lässt. Nur
   // was übergeben wird und sich vom Stand unterscheidet, setzt ein Flag; ein
   // schon gesetztes bleibt ungeschrieben stehen. Das Datum braucht keines: Es
-  // weicht ab, sobald es nicht mehr auf dem Serientag liegt.
+  // weicht ab, sobald es nicht mehr auf dem Serientag liegt. Die Felder (#389)
+  // brauchen (noch) keines: Die Serie gibt keine vor (bis #391).
   const flags: Record<string, boolean> = {};
   if (t.serie_id) {
     if ("beginn" in aenderung && (neu.beginn !== t.beginn || neu.ende !== t.ende)) flags.zeit_abweichend = true;

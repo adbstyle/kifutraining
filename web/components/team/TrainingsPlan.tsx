@@ -2,12 +2,13 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { CalendarDays, CalendarOff, CalendarPlus, CalendarX2, MapPin, MessageSquareText, Pencil, PlayCircle, Repeat, Trash2, Undo2, Unlink, Users } from "lucide-react";
+import { CalendarDays, CalendarOff, CalendarPlus, CalendarX2, LandPlot, MapPin, MessageSquareText, Pencil, PlayCircle, Repeat, Trash2, Undo2, Unlink, Users } from "lucide-react";
 import { Card, Disclosure, IconButton, IconButtonLink, KategorieLozenge, Lozenge, OverflowMenu, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
 import { wochentageText } from "@/lib/serie";
 import { zeitText } from "@/lib/termin";
+import { felderKurz } from "@/lib/termin-felder";
 import { datumKurz } from "@/lib/zeit";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
 // (next/headers) ins Client-Bundle.
@@ -67,6 +68,7 @@ export function TerminKarte({ t, heute, ebene: Kopf = "h4", hervorgehoben = fals
   const vergangen = t.datum < heute;
   const zeit = zeitText(t.beginn, t.ende);
   const oeffnetTraining = !t.ausgefallen && t.training !== null;
+  const platz = felderKurz(t.felder);
   // Die Datum-/Zeitzeile ist die Überschrift jeder Karte — auch die eines
   // Termins ohne Training hat so eine (Screenreader-Navigation per Überschrift).
   const kopf = (
@@ -119,6 +121,15 @@ export function TerminKarte({ t, heute, ebene: Kopf = "h4", hervorgehoben = fals
                 <Users size={14} aria-hidden className="shrink-0" />
                 <span className="sr-only">Verantwortlich: </span>
                 {verantwortlichenNamen(t.verantwortliche).join(", ")}
+              </p>
+            )}
+            {/* #389 AK 10: knapp, welche Felder erfasst sind; alle Einzelheiten
+                am geöffneten Termin. Ohne Felder steht nichts. */}
+            {platz && (
+              <p className="mt-0.5 flex items-center gap-1 type-body-small text-on-surface-mittel">
+                <LandPlot size={14} aria-hidden className="shrink-0" />
+                <span className="sr-only">Felder: </span>
+                {platz}
               </p>
             )}
             </div>

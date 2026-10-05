@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { Button, Checkbox, DateField, Dialog, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
 import { maxEnddatum, serieProblem, wochentagVon, type SerieFeld, type Wochentag } from "@/lib/serie";
 import { BEMERKUNG_MAX, ORT_MAX, istKalendertag, terminProblem, type TerminFelder } from "@/lib/termin";
+import { felderProblem, type FelderProblem } from "@/lib/termin-felder";
 import type { TeamMitglied } from "@/lib/queries/teams";
 import { VerantwortlicheWahl, type VerantwortlicheWert } from "./VerantwortlicheWahl";
+import { FelderField, felderAusZeilen, type FeldZeile } from "./FelderField";
 
 export type SerieFelder = {
   wochentage: Wochentag[];
@@ -38,7 +40,12 @@ const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: 
    «jeden Dienstag ab dem 6.» meint, kreuzt nur an und wählt das Ende.
 
    Verantwortliche lassen sich gleich mitgeben (#325 AK 1, 3); gelöschte
-   Konten gibt es bei einem neuen Termin noch nicht, darum ohne `bisher`. */
+   Konten gibt es bei einem neuen Termin noch nicht, darum ohne `bisher`.
+
+   Die Felder des Platzes (#389 AK 1, 8) nur beim einzelnen Termin: Eine
+   Serie gibt (noch) keine vor (#391). Im Serienmodus ist der Baustein
+   ausgeblendet und sendet nichts; die Zeilen bleiben stehen, falls der USER
+   zurückschaltet. */
 export function NeuerTerminDialog({
   open,
   start,
@@ -61,6 +68,8 @@ export function NeuerTerminDialog({
   const [wiederholen, setWiederholen] = useState(false);
   const [tageVonHand, setTageVonHand] = useState(false);
   const [problem, setProblem] = useState<{ feld: SerieFeld; text: string } | null>(null);
+  const [felderZeilen, setFelderZeilen] = useState<FeldZeile[]>([]);
+  const [felderFehler, setFelderFehler] = useState<FelderProblem | null>(null);
   // Ein Server-Fehler gilt für die Art, mit der gespeichert wurde; schaltet
   // der USER um, ist er verworfen — bis zum nächsten Speichern.
   const [verworfen, setVerworfen] = useState<string | undefined>();
@@ -74,6 +83,8 @@ export function NeuerTerminDialog({
     setWiederholen(false);
     setTageVonHand(false);
     setProblem(null);
+    setFelderZeilen([]);
+    setFelderFehler(null);
     setVerworfen(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -107,11 +118,20 @@ export function NeuerTerminDialog({
       if (!p) senden({ art: "serie", felder: f });
       return;
     }
-    const felder: TerminFelder = { datum: f.von, beginn: f.beginn, ende: f.ende, ort: f.ort, bemerkung: f.bemerkung };
+    const felder: TerminFelder = {
+      datum: f.von,
+      beginn: f.beginn,
+      ende: f.ende,
+      ort: f.ort,
+      bemerkung: f.bemerkung,
+      felder: felderAusZeilen(felderZeilen),
+    };
     const p = terminProblem(felder);
     // Das Datum heisst in beiden Fällen `von` — so steht ein Fehler am selben Feld.
     setProblem(p && { feld: p.feld === "datum" ? "von" : p.feld, text: p.text });
-    if (!p) {
+    const fp = felderProblem(felder.felder ?? null);
+    setFelderFehler(fp);
+    if (!p && !fp) {
       const verantwortlich = f.verantwortliche.length > 0 ? { userIds: f.verantwortliche, anonyme: [] } : undefined;
       senden({ art: "einzeln", felder, verantwortlich });
     }
@@ -172,6 +192,9 @@ export function NeuerTerminDialog({
           onChange={(w) => setze("verantwortliche", w.userIds)}
           disabled={pending}
         />
+        {!wiederholen && (
+          <FelderField zeilen={felderZeilen} onZeilenChange={setFelderZeilen} problem={felderFehler} disabled={pending} />
+        )}
       </div>
     </Dialog>
   );

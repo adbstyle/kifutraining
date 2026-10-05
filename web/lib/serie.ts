@@ -87,6 +87,11 @@ export const SERIE_TEXT = {
   namenloseNurEinzeln: "Ehemalige Mitglieder ohne Namen lassen sich nur für diesen einen Termin entfernen.",
   namenloseUndRegel:
     "Ehemalige Mitglieder ohne Namen und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
+  /** #389: Eine Serie gibt noch keine Felder vor — die Felder eines
+   *  Serientermins gelten nur für ihn. Übergang bis #391 (Felder und
+   *  Spielerzahl einer Terminserie), das beide Sätze wieder entfernt. */
+  felderNurEinzeln: "Die Felder lassen sich nur für diesen einen Termin festhalten.",
+  felderUndRegel: "Felder und Wochentage oder Zeitraum lassen sich nicht in einem Schritt ändern.",
 } as const;
 
 export type SerienRegel = { wochentage: Wochentag[]; von: string; bis: string };
@@ -141,9 +146,18 @@ export function regelProblemVorab(
  *  folgende oder alle ersetzte an jedem erfassten Termin ALLE Einträge, auch
  *  die namenlosen. Darum gilt sie wie das Datum nur für diesen Termin
  *  (`SERIE_TEXT.namenloseNurEinzeln`, mit der Regel zusammen
- *  `SERIE_TEXT.namenloseUndRegel`). */
-export function erlaubteReichweiten(g: { datum: boolean; regel: boolean; namenlose?: boolean }): readonly Reichweite[] | null {
-  const nurEinzeln = g.datum || !!g.namenlose;
+ *  `SERIE_TEXT.namenloseUndRegel`).
+ *
+ *  `felder`: Die Felder (#389) ändern sich. Die Serie gibt noch keine vor,
+ *  darum gelten sie nur für diesen Termin (`SERIE_TEXT.felderNurEinzeln`) —
+ *  bis #391. */
+export function erlaubteReichweiten(g: {
+  datum: boolean;
+  regel: boolean;
+  namenlose?: boolean;
+  felder?: boolean;
+}): readonly Reichweite[] | null {
+  const nurEinzeln = g.datum || !!g.namenlose || !!g.felder;
   if (nurEinzeln && g.regel) return null;
   if (nurEinzeln) return ["nur_dieser"];
   if (g.regel) return ["dieser_und_folgende", "alle"];

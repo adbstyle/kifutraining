@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin, Users } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, LandPlot, MapPin, Users } from "lucide-react";
 import { TrainingExerciseDetail } from "./TrainingExerciseDetail";
 import { VariantenWahl } from "./VariantenWahl";
 import { GesamtMaterialListe } from "./GesamtMaterialListe";
@@ -11,6 +11,7 @@ import { SeitenKopf } from "@/components/layout/SeitenKopf";
 import { leseGliederung, formatDuration } from "@/lib/training";
 import { datumKurz } from "@/lib/zeit";
 import { zeitText } from "@/lib/termin";
+import { feldText, type Felder } from "@/lib/termin-felder";
 import {
   VARIANTE_PARAM,
   abschnittMitVariante,
@@ -27,10 +28,14 @@ type TerminKontext = {
   bemerkung: string | null;
   /** Die Namen der Verantwortlichen (#325 AK 10); leer: niemand eingetragen. */
   verantwortliche: string[];
+  /** Die Felder des Platzes (#389); `null` = unbekannt. */
+  felder: Felder | null;
 };
 
-/** Datum, Beginn und Ende, Ort, Verantwortliche und Bemerkung der Einheit —
- *  der Kontext für alle, die gerade am Platz stehen (Story 7 AK 19, #325 AK 10). */
+/** Datum, Beginn und Ende, Ort, Verantwortliche, Felder und Bemerkung der
+ *  Einheit — der Kontext für alle, die gerade am Platz stehen (Story 7 AK 19,
+ *  #325 AK 10, #389 AK 11): je Feld Grösse, Tore und Untergrund, Unbekanntes
+ *  als «unbekannt». */
 function TerminKopf({ termin, className }: { termin: TerminKontext; className?: string }) {
   return (
     <div
@@ -56,6 +61,19 @@ function TerminKopf({ termin, className }: { termin: TerminKontext; className?: 
           <span className="sr-only">Verantwortlich: </span>
           {termin.verantwortliche.join(", ")}
         </span>
+      )}
+      {termin.felder && (
+        <ul className="basis-full" aria-label="Felder">
+          {termin.felder.map((f, i) => (
+            <li key={i} className="flex items-start gap-1.5">
+              <LandPlot size={14} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0" />
+              <span>
+                {termin.felder!.length > 1 && <>Feld {i + 1}: </>}
+                {feldText(f)}
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
       {termin.bemerkung && (
         <span className="type-body-small basis-full">{termin.bemerkung}</span>

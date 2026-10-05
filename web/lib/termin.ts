@@ -6,14 +6,21 @@
 // ruft sie vor jedem Schreiben auf, und die Datenebene meldet mit denselben
 // Markern (TERMIN_MELDUNG), wenn sie trotzdem abweist.
 //
-// REIN: keine Importe — `check:kern` lädt diese Datei mit tsx.
+// REIN: importiert nur lib/termin-felder.ts (ebenfalls rein) — `check:kern`
+// lädt diese Datei mit tsx.
+import { gleicheFelder, type Felder } from "@/lib/termin-felder";
 
+/** Die Angaben eines Termins, wie der Dialog sie führt. `felder` sind die
+ *  Felder des Platzes (#389, lib/termin-felder.ts) — nicht zu verwechseln mit
+ *  den Formularfeldern, nach denen dieser Typ heisst. */
 export type TerminFelder = {
   datum: string;
   beginn?: string | null;
   ende?: string | null;
   ort?: string | null;
   bemerkung?: string | null;
+  /** `null`: ohne Felder (Platz unbekannt). */
+  felder?: Felder | null;
 };
 
 export type TerminFeld = "datum" | "beginn" | "ende" | "ort" | "bemerkung";
@@ -117,7 +124,10 @@ export function ausfallProblem(grund: string | null | undefined): { feld: "grund
  *  dem alten Stand überschrieben wird. Beginn und Ende gehen als Paar (ändert
  *  sich eines, stehen beide drin); ein leerer Text heisst «leeren».
  *  `null`, wenn sich nichts geändert hat — dann braucht es keinen Aufruf.
- *  Gleich sind zwei Werte, wenn sie nach `leerZuNull` gleich sind. */
+ *  Gleich sind zwei Texte, wenn sie nach `leerZuNull` gleich sind, zwei
+ *  Angaben zu den Feldern, wenn ihre gespeicherte Form gleich ist
+ *  (`gleicheFelder`); geänderte Felder gehen als ganze Liste, `null` heisst
+ *  «entfernen». */
 export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partial<TerminFelder> | null {
   const gleich = (a: string | null | undefined, b: string | null | undefined) => leerZuNull(a) === leerZuNull(b);
   const aenderung: Partial<TerminFelder> = {};
@@ -128,6 +138,7 @@ export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partia
   }
   if (!gleich(neu.ort, start.ort)) aenderung.ort = neu.ort ?? "";
   if (!gleich(neu.bemerkung, start.bemerkung)) aenderung.bemerkung = neu.bemerkung ?? "";
+  if (!gleicheFelder(neu.felder, start.felder)) aenderung.felder = neu.felder ?? null;
   return Object.keys(aenderung).length > 0 ? aenderung : null;
 }
 

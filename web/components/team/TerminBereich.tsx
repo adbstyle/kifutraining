@@ -75,7 +75,14 @@ export function useTerminAktionen(): TerminAktionen {
 /** Die Werte, mit denen der Änderungs-Dialog öffnet — auch die Vergleichsbasis
  *  für `geaenderteFelder`. */
 function startWerte(t: TerminZeile): TerminFelder {
-  return { datum: t.datum, beginn: t.beginn ?? "", ende: t.ende ?? "", ort: t.ort ?? "", bemerkung: t.bemerkung ?? "" };
+  return {
+    datum: t.datum,
+    beginn: t.beginn ?? "",
+    ende: t.ende ?? "",
+    ort: t.ort ?? "",
+    bemerkung: t.bemerkung ?? "",
+    felder: t.felder,
+  };
 }
 
 type Serienweit = Exclude<Reichweite, "nur_dieser">;
@@ -312,10 +319,16 @@ export function TerminBereich({
     if (!t.serie) return aendereEinzeln(t, geaendert, verantwortlich);
     const datum = geaendert?.datum !== undefined;
     const namenlose = !!verantwortlich && nurNamenloseGeaendert(verantwortlich, verantwortlicheStart(t.verantwortliche));
-    const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose });
+    // #389: Die Serie gibt (noch) keine Felder vor — geänderte Felder gelten
+    // nur für diesen Termin (bis #391).
+    const felder = geaendert?.felder !== undefined;
+    const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose, felder });
     // Der Dialog prüft das schon; hier nur als Rückhalt.
-    if (!erlaubt) return setDialogFehler(datum ? SERIE_TEXT.datumUndRegel : SERIE_TEXT.namenloseUndRegel);
-    const { datum: _datum, ...werte } = geaendert ?? {};
+    if (!erlaubt)
+      return setDialogFehler(
+        datum ? SERIE_TEXT.datumUndRegel : namenlose ? SERIE_TEXT.namenloseUndRegel : SERIE_TEXT.felderUndRegel,
+      );
+    const { datum: _datum, felder: _felder, ...werte } = geaendert ?? {};
     setDialogFehler(undefined);
     neuerLauf();
     setReichweite({
@@ -326,9 +339,11 @@ export function TerminBereich({
         ? SERIE_MELDUNG.DATUM_NUR_EINZELN
         : namenlose
           ? SERIE_TEXT.namenloseNurEinzeln
-          : regelNeu
-            ? SERIE_MELDUNG.REGEL_NUR_SERIE
-            : undefined,
+          : felder
+            ? SERIE_TEXT.felderNurEinzeln
+            : regelNeu
+              ? SERIE_MELDUNG.REGEL_NUR_SERIE
+              : undefined,
       geaendert,
       verantwortlich,
       // Für folgende und alle gehen die Verantwortlichen mit der übrigen

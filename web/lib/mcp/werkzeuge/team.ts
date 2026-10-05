@@ -9,6 +9,7 @@ import { lasseAusfallen, legeTerminFest, loeseTraining, nimmAusfallZurueck, ordn
 import { KI_WOCHENTAG, alsKiWochentag, alsWochentag } from "@/lib/serie";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { Wert, kennung, wert } from "@/lib/mcp/bausteine";
+import { FELDER_MODELL, FelderEingabe, felderAusgabe, felderSchema } from "@/lib/termin-felder-ausgabe";
 import {
   KENNUNG_FEHLER,
   TEAM_KENNUNG_FEHLER,
@@ -20,7 +21,7 @@ import {
 import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
 
 /**
- * Teams und Kalender (Stories #198, #322, #323, #324, #326).
+ * Teams und Kalender (Stories #198, #322, #323, #324, #326; Felder #389).
  *
  * Dünne Adapter über den Fachkern (lib/kern/team.ts, lib/kern/termine.ts) —
  * dieselben Funktionen wie Team-Übersicht, Trainingsplan und Termin-Dialog
@@ -38,15 +39,16 @@ import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
 
 /** Was jede Beschreibung eines Termin-Werkzeugs über das Modell sagt. */
 const TERMIN_MODELL =
-  "Der Kalender eines Teams besteht aus Terminen: Datum, Beginn, Ende, Ort und Bemerkung, mit oder " +
-  "ohne Training. Einzelne Termine entstehen mit «termin_festlegen», wöchentliche Serien mit " +
+  "Der Kalender eines Teams besteht aus Terminen: Datum, Beginn, Ende, Ort, Bemerkung und die Felder " +
+  "des Platzes, mit oder ohne Training. Einzelne Termine entstehen mit «termin_festlegen», wöchentliche Serien mit " +
   "«terminserie_festlegen»; ein Training kommt ausschliesslich durch «training_zuordnen» an einen " +
   "bestehenden Termin auf ein Datum. Ein Termin trägt höchstens " +
   "ein Training, und ein Training ist höchstens für einen Termin eingeplant - für einen weiteren " +
   "Termin entsteht eine eigenständige Kopie, oder ein Training mit anstehendem Termin wird " +
   "verschoben. Zeiten gelten am Trainingsort (Schweiz). Ein Termin kann ausfallen (mit freiwilligem " +
   "Grund); ein ausgefallener nimmt kein Training an und findet wieder statt, wenn er einzeln auf " +
-  "heute oder später verlegt wird; «hat stattgefunden» kennt KiFu nicht.";
+  "heute oder später verlegt wird; «hat stattgefunden» kennt KiFu nicht. Die Felder sind Angaben " +
+  "für deine Planung; KiFu prüft nicht, ob ein Training auf sie passt - das beurteilst du.";
 
 const DATUM = z.string().describe("Datum als JJJJ-MM-TT, etwa 2026-10-07.");
 const UHRZEIT = z.string().describe("Uhrzeit als HH:MM (24 Stunden), etwa 18:30.");
@@ -122,6 +124,8 @@ const PlanEintrag = z.object({
   ende: z.string().nullable(),
   ort: z.string().nullable(),
   bemerkung: z.string().nullable(),
+  /** Die Felder des Platzes (#389); `null` = unbekannt. */
+  felder: felderSchema(),
   /** `null`: ein einzelner Termin ohne Serie (#324). */
   serie_id: z.string().nullable(),
   /** Die Angaben, in denen der Termin von seiner Serie abweicht; leer ohne Serie. */
@@ -144,6 +148,7 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     ende: t.ende,
     ort: t.ort,
     bemerkung: t.bemerkung,
+    felder: felderAusgabe(t.felder),
     serie_id: t.serie?.id ?? null,
     abweichungen: t.abweichungen,
     verantwortliche: t.verantwortliche.map((v) => ({ id: v.userId, anzeigename: v.name, ehemalig: v.ehemalig })),
@@ -199,8 +204,8 @@ export const teamPlanAbrufen = werkzeug({
     "Liefert den Kalender eines deiner Teams, bereits geteilt wie im Team-Bereich: «kommend» (ab " +
     "heute, aufsteigend; der heutige Tag zählt ganz dazu) und «vergangen» (der jüngste zuerst). " +
     "«heute» ist der Tag, an dem geteilt wurde - gemessen am Trainingsort (Schweiz), nicht in deiner " +
-    "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung und das " +
-    "zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
+    "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung, die Felder " +
+    "des Platzes und das zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
     "Termin ohne Training, der nicht ausgefallen ist, ist noch nicht vorbereitet. Übernommene Termine können ohne Beginn oder " +
     "Ende sein. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
     "Ort, Bemerkung und Verantwortliche jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
@@ -242,7 +247,7 @@ export const terminFestlegen = werkzeug({
   beschreibung:
     "Legt im Kalender eines deiner Teams einen einzelnen Termin ohne Training fest - auch in der " +
     "Vergangenheit. Datum, Beginn und Ende sind Pflicht, das Ende liegt am selben Tag nach dem " +
-    "Beginn; Ort und Bemerkung sind frei. Ein Training ordnest du danach mit «training_zuordnen» zu. " +
+    "Beginn; Ort, Bemerkung und Felder sind frei. Ein Training ordnest du danach mit «training_zuordnen» zu. " +
     `${TERMIN_MODELL} ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
@@ -252,6 +257,7 @@ export const terminFestlegen = werkzeug({
     ende: UHRZEIT.describe("Ende als HH:MM am selben Tag, etwa 20:00."),
     ort: ORT.optional(),
     bemerkung: BEMERKUNG.optional(),
+    felder: FelderEingabe.optional().describe(`Die Felder des Platzes; ohne Angabe ist der Platz unbekannt. ${FELDER_MODELL}`),
   }),
   ausgabe: z.object({ termin_id: z.string(), team_id: z.string() }),
   ausfuehren: async (e, zugang) =>
@@ -263,6 +269,7 @@ export const terminFestlegen = werkzeug({
         ende: e.ende,
         ort: e.ort,
         bemerkung: e.bemerkung,
+        felder: e.felder,
       }),
       (w) => ({ termin_id: w.terminId, team_id: w.teamId }),
     ),
@@ -286,6 +293,12 @@ export const AendernEingabe = z.object({
   ),
   ort: ORT.nullable().optional().describe("Neuer Ort; null leert ihn, ohne Angabe unverändert."),
   bemerkung: BEMERKUNG.nullable().optional().describe("Neue Bemerkung; null leert sie, ohne Angabe unverändert."),
+  felder: FelderEingabe.nullable()
+    .optional()
+    .describe(
+      "Die Felder des Platzes als GANZE neue Liste - sie ersetzt die bisherige; null (oder []) entfernt alle " +
+        `Felder, ohne Angabe unverändert. An einem Termin einer Serie nur mit «nur_dieser». ${FELDER_MODELL}`,
+    ),
   reichweite: Reichweite.optional(),
   wochentage: Wochentage.optional().describe("Neue Wochentage der Serie (nur mit «dieser_und_folgende» oder «alle»)."),
   von: DATUM.optional().describe(
@@ -309,11 +322,11 @@ export const terminAendern = werkzeug({
   name: "termin_aendern",
   titel: "Termin ändern",
   beschreibung:
-    "Ändert Datum, Zeit, Ort oder Bemerkung eines Termins - nur, was du mitgibst. Beginn und Ende " +
+    "Ändert Datum, Zeit, Ort, Bemerkung oder die Felder eines Termins - nur, was du mitgibst. Beginn und Ende " +
     "lassen sich nicht leeren; ändert sich die Zeit, braucht der Termin danach beide. Ein " +
     "übernommener Termin ohne vollständige Zeit lässt sich ändern, ohne die Zeit zu ergänzen. Das " +
     "zugeordnete Training bleibt dasselbe. Für einen Termin einer Serie ist «reichweite» Pflicht; " +
-    "das Datum ändert nur «nur_dieser», Wochentage und Zeitraum nur «dieser_und_folgende» oder " +
+    "das Datum und die Felder ändert nur «nur_dieser», Wochentage und Zeitraum nur «dieser_und_folgende» oder " +
     "«alle». Das Ergebnis nennt entfallene Termine mit Training; ihre Trainings bleiben im Bestand " +
     `des Teams. ${SERIEN_MODELL} ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
@@ -332,6 +345,7 @@ export const terminAendern = werkzeug({
         ende: e.ende,
         ort: e.ort,
         bemerkung: e.bemerkung,
+        felder: e.felder,
         reichweite: e.reichweite,
         wochentage: e.wochentage?.map(alsWochentag),
         von: e.von,
