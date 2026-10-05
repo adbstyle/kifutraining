@@ -61,6 +61,21 @@ export function teilTraegtDauer(slug: string): boolean {
   return !OHNE_DAUER_TEILE.has(slug);
 }
 
+/** Die Gesamtdauer der angezeigten Übungen eines Trainings — eine Rechnung
+ *  für Zusammenstellen und Ansicht (#370 AK 5). Das Auffangen trägt keine
+ *  Dauer und zählt weder zur Summe noch zu den Übungen ohne Dauer.
+ *  `erfasst`: Trägt überhaupt eine Übung eine Dauer? */
+export function gesamtDauer(
+  items: readonly { trainingsteil: string; durationMin: number | null }[],
+): { summe: number; ohneDauer: number; erfasst: boolean } {
+  const mitDauer = items.filter((e) => teilTraegtDauer(e.trainingsteil));
+  return {
+    summe: mitDauer.reduce((a, e) => a + (e.durationMin ?? 0), 0),
+    ohneDauer: mitDauer.filter((e) => e.durationMin == null).length,
+    erfasst: mitDauer.some((e) => e.durationMin != null),
+  };
+}
+
 /** Schwellenwerte für den „ungewöhnlich viele Übungen"-Hinweis je Trainingsteil
  *  (Story #10 AC9 / Lösungsansatz 1). Mehr als dieser Wert ⇒ Hinweis, keine
  *  Blockade. */
@@ -74,7 +89,7 @@ export const ANZAHL_HINWEIS: Record<TrainingsteilSlug, number> = {
 /** Der Wortlaut zu `ANZAHL_HINWEIS` — am Fuss der Teil-Karte und als Hinweis
  *  an den KI-Assistenten (#195 AK 7). */
 export const ANZAHL_HINWEIS_TEXT =
-  "Ungewöhnlich viele Übungen für diesen Trainingsteil — erlaubt, achte nur auf die Gesamtdauer.";
+  "Ungewöhnlich viele Übungen für diesen Trainingsteil - erlaubt, achte nur auf die Gesamtdauer.";
 
 /** Wie viele Übungen eines Teils keine Dauer tragen — am Fuss der Teil-Karte
  *  und als Hinweis an den KI-Assistenten. */
@@ -113,15 +128,15 @@ export const STUFE_ABWEICHEND_TEXT = "Deckt keine der Trainings-Stufen ab";
  *  unberührt (Story 5a AC 9). */
 export const LEER_HINWEIS: Record<string, string> = {
   "jun-spielform-trainingsziel":
-    "Die Spielform zum Trainingsziel ist noch leer — sie führt das Trainingsziel ein und spannt den roten Faden zum Hauptteil.",
+    "Die Spielform zum Trainingsziel ist noch leer - sie führt das Trainingsziel ein und spannt den roten Faden zum Hauptteil.",
   "jun-explosivitaet":
-    "Die Explosivität ist noch leer — kurze, intensive Aktionen mit vollständiger Erholung gehören im Juniorenfussball in jeden Einstieg.",
+    "Die Explosivität ist noch leer - kurze, intensive Aktionen mit vollständiger Erholung gehören im Juniorenfussball in jeden Einstieg.",
   "jun-spiel":
-    "Das Spiel ist noch leer — im Juniorenfussball gehört das freie Spiel in jedes Training.",
+    "Das Spiel ist noch leer - im Juniorenfussball gehört das freie Spiel in jedes Training.",
   "jun-abschluss":
-    "Der Abschluss ist noch leer — Cool-down und gemeinsamer Austausch beenden jedes Training.",
+    "Der Abschluss ist noch leer - Cool-down und gemeinsamer Austausch beenden jedes Training.",
   [FREIES_SPIEL]:
-    "Das freie Spiel ist noch leer — im Kinderfussball gehört es in jedes Training.",
+    "Das freie Spiel ist noch leer - im Kinderfussball gehört es in jedes Training.",
 };
 
 /** Obergrenze des Trainingsziels in Zeichen (Story 10 AC 6). Entspricht der
@@ -191,7 +206,7 @@ export function trainingNameProblem(name: string): string | null {
 export const NOTIZ_MAX = 500;
 
 /** Granularität der Dauer-Eingabe in Minuten — die Schrittweite der Pfeiltasten
- *  am Dauerfeld.
+ *  am Zahlenfeld der Dauer (`DauerWert`).
  *
  *  Einerschritte seit dem PO-Entscheid vom 2026-09-08 (Story #151, überholt
  *  AK 4/5): Zulässig ist jede ganze Zahl ab 0. Die Fünferschritte aus Story #11

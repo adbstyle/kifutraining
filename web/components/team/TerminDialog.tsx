@@ -193,7 +193,7 @@ export function TerminDialog({
               zählt das aktuelle. Keine Zeile, keine Liste. */}
           {(verschoben || folgenKann.length > 0) && (
             <ul className="mt-2 flex flex-col gap-1 type-body-small">
-              {verschoben && <li>Verschoben — ursprünglich am {datumKurz(serienTag!)}.</li>}
+              {verschoben && <li>Verschoben - ursprünglich am {datumKurz(serienTag!)}.</li>}
               {folgenKann.map((a) => (
                 <li key={a} className="flex flex-wrap items-center justify-between gap-x-2">
                   <span>{ANGABE[a]} {a === "verantwortliche" ? "weichen" : "weicht"} von der Serie ab.</span>

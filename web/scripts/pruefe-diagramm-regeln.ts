@@ -180,11 +180,11 @@ pruefe("4: je genau eine Grenze für Punkte, Typen, Rahmen, Zahlen und ids", () 
   }
   const doppelt = eineGrenze(mit(pylone("a", 10, 10), pylone("b", 20, 20), pylone("a", 30, 30)), "id", "id");
   assert.equal(doppelt.index, 2);
-  assert.equal(doppelt.meldung, "Element «a» (elemente[2]): Die id «a» steht schon bei elemente[0] — jede id gilt nur einmal.");
+  assert.equal(doppelt.meldung, "Element «a» (elemente[2]): Die id «a» steht schon bei elemente[0] - jede id gilt nur einmal.");
 });
 
 // ── 5. Ausserhalb ─────────────────────────────────────────────────────────
-pruefe("5: auf der Fläche heisst Mitte, Punkt oder Rahmen — mit 0,5 Spielraum", () => {
+pruefe("5: auf der Fläche heisst Mitte, Punkt oder Rahmen - mit 0,5 Spielraum", () => {
   assert.deepEqual(mit(pylone("a", 1600.4, 999)).grenzen, []);
   const symbol = eineGrenze(mit(pylone("a", 1601, 40)), "ausserhalb");
   assert.equal(
@@ -315,14 +315,14 @@ pruefe("10a: Leibchen neben einer Figur gehört an die Hand", () => {
   );
 });
 
-pruefe("10b: Tore öffnen ins Feld — Kante, Ecke, diagonal, kleine Zone", () => {
+pruefe("10b: Tore öffnen ins Feld - Kante, Ecke, diagonal, kleine Zone", () => {
   const feld = { id: "feld", art: "form", form: "rechteck", x: 200, y: 100, breite: 1200, hoehe: 800 } as const;
   const tor = (x: number, y: number, rotation: number) => ({ id: "tor", art: "symbol", typ: "tor", x, y, rotation });
   const falsch = mit(feld, tor(800, 100, 90));
   assert.deepEqual(codes(falsch.maengel), ["tor_richtung"]);
   assert.equal(
     falsch.maengel[0].meldung,
-    "Element «tor» (elemente[1]): Das Tor steht auf der Oberkante von «feld» (elemente[0]), hat aber die Drehung 90 statt 0 — es öffnet vom Feld weg. Drehe es auf 0.",
+    "Element «tor» (elemente[1]): Das Tor steht auf der Oberkante von «feld» (elemente[0]), hat aber die Drehung 90 statt 0 - es öffnet vom Feld weg. Drehe es auf 0.",
   );
   assert.ok(falsch.daten, "ein Mangel verhindert das Speichern nicht");
   keineBefunde(mit(feld, tor(800, 100, 0)));
@@ -385,7 +385,7 @@ pruefe("11: eine Grenze an einem Element verhindert die Mängel der anderen nich
 });
 
 // ── 12. Speichern aus der Übungsmaske ─────────────────────────────────────
-pruefe("12: diagrammAusFormular — Grenzen beim Speichern mit Meldung für den Trainer, unveränderter Altbestand bleibt speicherbar", () => {
+pruefe("12: diagrammAusFormular - Grenzen beim Speichern mit Meldung für den Trainer, unveränderter Altbestand bleibt speicherbar", () => {
   const formular = (wert?: unknown) => {
     const f = new FormData();
     if (wert !== undefined) f.set("diagramm", typeof wert === "string" ? wert : JSON.stringify(wert));
@@ -467,7 +467,7 @@ function verschoben(e: DiagrammElement, dx: number, dy: number): DiagrammElement
   }
 }
 
-pruefe("Grenz-Lage: Mitte, Punkte oder Rahmen — dieselben Stellen wie die Grenze «ausserhalb»", () => {
+pruefe("Grenz-Lage: Mitte, Punkte oder Rahmen - dieselben Stellen wie die Grenze «ausserhalb»", () => {
   const ecken = [{ x: 10, y: 10 }, { x: 60, y: 10 }, { x: 30, y: 60 }];
   assert.deepEqual(grenzLage({ id: "s", art: "symbol", typ: "spieler", x: 5, y: 6 }), { wie: "mitte", punkte: [{ x: 5, y: 6 }] });
   assert.deepEqual(grenzLage({ id: "t", art: "text", x: 5, y: 6, text: "x" }), { wie: "mitte", punkte: [{ x: 5, y: 6 }] });
@@ -526,7 +526,7 @@ pruefe("zeichenbaresDiagramm: nur Elemente ohne Grenzverletzung, normalisiert, e
 });
 
 // ── 13. Spalten beim Setzen ───────────────────────────────────────────────
-pruefe("13: diagrammSpalten — angezeigtes Bild und Materialliste", () => {
+pruefe("13: diagrammSpalten - angezeigtes Bild und Materialliste", () => {
   const daten = mit(pylone("a", 100, 100, { farbe: "rot" }), { id: "k", art: "symbol", typ: "spieler", x: 500, y: 500 }).daten!;
   const altesDiagramm = { version: 1, elemente: [pylone("x", 50, 50)] };
   const bild = (bild_quelle: string | null, bild_url: string | null, diagramm: unknown) =>
@@ -546,7 +546,7 @@ pruefe("13: diagrammSpalten — angezeigtes Bild und Materialliste", () => {
 });
 
 // ── 14. Wrapper für Seed und check:diagramme ──────────────────────────────
-pruefe("14: diagrammProbleme — leer, verworfene Elemente, Befunde als Zeilen", () => {
+pruefe("14: diagrammProbleme - leer, verworfene Elemente, Befunde als Zeilen", () => {
   assert.deepEqual(diagrammProbleme({ version: 1, elemente: [] }), ["keine Elemente"]);
   const daten = { version: 1, elemente: [pylone("a", 100, 100)] as DiagrammElement[] };
   assert.deepEqual(diagrammProbleme(daten, 1), []);
@@ -593,7 +593,7 @@ pruefe("Katalog: jedes Symbol wie im Symbol-Register", () => {
   }
 });
 
-pruefe("Katalog: was er wählbar nennt, meldet die Prüfung nicht als wirkungslos — und umgekehrt", () => {
+pruefe("Katalog: was er wählbar nennt, meldet die Prüfung nicht als wirkungslos - und umgekehrt", () => {
   const wirkungslos = (element: object, angabe: string) =>
     mit(element).maengel.some((b) => b.code === "wirkungslos" && b.angabe === angabe);
   for (const s of katalog.symbole) {

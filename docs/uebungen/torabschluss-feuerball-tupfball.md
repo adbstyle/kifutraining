@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-In jedem Viereck steht ein Dreierteam zusammen mit einem Eisbären des anderen Teams. Die drei spielen sich den Feuerball mit den Händen zu und versuchen, den Eisbären damit abzutupfen — berühren, nicht abschiessen. Jede Berührung gibt einen Punkt. Wer den Ball in der Hand hält, darf nicht laufen.
+In jedem Viereck steht ein Dreierteam zusammen mit einem Eisbären des anderen Teams. Die drei spielen sich den Feuerball mit den Händen zu und versuchen, den Eisbären damit abzutupfen - berühren, nicht abschiessen. Jede Berührung gibt einen Punkt. Wer den Ball in der Hand hält, darf nicht laufen.
 
 ## Üben
 

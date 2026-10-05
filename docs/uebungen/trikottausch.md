@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-Jedes Kind dribbelt mit einem farbigen Leibchen in der Hand durch das Feld; in der Mitte ist ein kleineres Feld frei markiert. Auf dein Signal dribbeln alle ins Mittelfeld und tauschen dort ihr Leibchen mit einem anderen Kind. Du kannst die Regel verschärfen: Nur eine Farbe darf hinein — oder du gibst die Tauschkette vor, etwa Rot gibt an Gelb, Gelb an Blau, Blau an Rot.
+Jedes Kind dribbelt mit einem farbigen Leibchen in der Hand durch das Feld; in der Mitte ist ein kleineres Feld frei markiert. Auf dein Signal dribbeln alle ins Mittelfeld und tauschen dort ihr Leibchen mit einem anderen Kind. Du kannst die Regel verschärfen: Nur eine Farbe darf hinein - oder du gibst die Tauschkette vor, etwa Rot gibt an Gelb, Gelb an Blau, Blau an Rot.
 
 ## Üben
 

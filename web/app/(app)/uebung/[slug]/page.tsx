@@ -39,7 +39,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const ex = await getExerciseDetail(slug).catch(() => null);
   if (!ex) return { title: "Übung nicht gefunden" };
-  return { title: `${ex.name} — Übung` };
+  return { title: `${ex.name} - Übung` };
 }
 
 /** Die Bestätigungen, die über die Adresse auf diese Seite reisen — je
@@ -48,7 +48,7 @@ export async function generateMetadata({
 const FLASH = {
   created: "Übung erstellt.",
   updated: "Änderungen gespeichert.",
-  kopiert: "Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen.",
+  kopiert: "Kopie liegt in deinem Bestand - du kannst sie jetzt anpassen.",
 } as const;
 const FLASH_PARAMS = Object.keys(FLASH) as (keyof typeof FLASH)[];
 
@@ -129,7 +129,7 @@ export default async function ExerciseDetailPage({
           nicht zwischen Inhalt und Einordnung. */}
       {ex.source === "manual" && (
         <p className="type-body-small mt-5 px-1 text-on-surface-mittel print:hidden">
-          Übung nach dem Manual Kinderfussball des Schweizerischen Fussballverbands (SFV) —
+          Übung nach dem Manual Kinderfussball des Schweizerischen Fussballverbands (SFV) -
           Aufbau und Regeln aus dem Manual, Text in eigener Formulierung.
         </p>
       )}
@@ -245,7 +245,7 @@ export default async function ExerciseDetailPage({
           <p className="type-body-small text-on-surface-mittel">
             Übung nach dem{" "}
             <strong className="text-on-surface">Manual Kinderfussball</strong>{" "}
-            des Schweizerischen Fussballverbands (SFV) — Aufbau und Regeln aus dem
+            des Schweizerischen Fussballverbands (SFV) - Aufbau und Regeln aus dem
             Manual, Text in eigener Formulierung.
           </p>
         ) : (
@@ -254,7 +254,7 @@ export default async function ExerciseDetailPage({
             <strong className="text-on-surface">Gemeinschaft</strong> der
             Trainerinnen und Trainer, nicht aus dem kuratierten Manual-Bestand.
             {ex.visibility === "private" &&
-              " Noch nicht veröffentlicht — ein Entwurf."}
+              " Noch nicht veröffentlicht - ein Entwurf."}
           </p>
         )}
       </footer>

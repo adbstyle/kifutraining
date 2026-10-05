@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-Ein Kind von Weiss dribbelt ins leere Feld und trifft so schnell es kann. Dann kommt ein Kind von Rot mit eigenem Ball dazu: Eins gegen Eins. Nach Tor oder Aus kommt das nächste Weisse mit neuem Ball — Zwei gegen Eins —, dann ein Rotes zum Zwei gegen Zwei, und so weiter, bis alle drin sind. Im Drei gegen Drei werden noch drei Bälle ausgespielt. Im nächsten Durchgang beginnt Rot.
+Ein Kind von Weiss dribbelt ins leere Feld und trifft so schnell es kann. Dann kommt ein Kind von Rot mit eigenem Ball dazu: Eins gegen Eins. Nach Tor oder Aus kommt das nächste Weisse mit neuem Ball - Zwei gegen Eins -, dann ein Rotes zum Zwei gegen Zwei, und so weiter, bis alle drin sind. Im Drei gegen Drei werden noch drei Bälle ausgespielt. Im nächsten Durchgang beginnt Rot.
 
 ## Üben
 

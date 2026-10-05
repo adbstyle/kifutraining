@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-Das erste Kind zieht mit dem Ball zur Schusszone und sucht im Eins gegen Eins den Abschluss. Kaum ist der Ball weg, wird es selbst zum Verteidiger — denn ohne Pause startet schon das nächste Kind und will ebenfalls treffen.
+Das erste Kind zieht mit dem Ball zur Schusszone und sucht im Eins gegen Eins den Abschluss. Kaum ist der Ball weg, wird es selbst zum Verteidiger - denn ohne Pause startet schon das nächste Kind und will ebenfalls treffen.
 
 ## Üben
 

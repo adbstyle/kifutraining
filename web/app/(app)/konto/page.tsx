@@ -18,7 +18,7 @@ import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Konto — KiFu", robots: { index: false } };
+export const metadata: Metadata = { title: "Konto - KiFu", robots: { index: false } };
 
 export default async function KontoPage() {
   const supabase = await createClient();
@@ -65,7 +65,7 @@ export default async function KontoPage() {
         <span className="min-w-0 flex-1">
           <span className="type-title-medium block text-on-surface">Meine Übungen</span>
           <span className="type-body-small block text-on-surface-mittel">
-            Deine eigenen Übungen — öffentliche und private Entwürfe.
+            Deine eigenen Übungen - öffentliche und private Entwürfe.
           </span>
         </span>
         <ChevronRight

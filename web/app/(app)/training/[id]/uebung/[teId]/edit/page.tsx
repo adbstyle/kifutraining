@@ -7,10 +7,12 @@ import { updateFassung } from "@/lib/actions/fassung";
 import { getFassungZumBearbeiten } from "@/lib/queries/fassung";
 import { trainingsKrumen } from "@/lib/brotkrumen";
 import { VARIANTE_PARAM, varianteAnhang } from "@/lib/varianten";
+import { BEARBEITEN_PARAM, UEBUNG_PARAM } from "@/lib/offene-uebung";
+import { InSpalteWeiterleiten } from "@/components/training/InSpalteWeiterleiten";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Übung im Training bearbeiten — KiFu",
+  title: "Übung im Training bearbeiten - KiFu",
   robots: { index: false },
 };
 
@@ -52,38 +54,46 @@ export default async function FassungBearbeitenPage({
     anhang,
   );
 
+  // Breit wird die Übung in der Spalte des Trainings bearbeitet (#373 PC 3).
+  // Eine Übung des Hauptteils bringt ihre Variante selbst mit; für jede andere
+  // gilt die, aus der die Adresse kam — dorthin wandert sie, falls sie beim
+  // Sichern in den Hauptteil wechselt.
+  const spalte = `/training/${id}/edit?${UEBUNG_PARAM}=${teId}&${BEARBEITEN_PARAM}=1${varianteAnhang(variante, "&")}`;
+
   return (
     <Seitenrahmen breite="6xl" geteilt krumen={crumbs}>
       <h1 className="sr-only">Übung bearbeiten</h1>
-      <ExerciseForm
-        action={updateFassung.bind(null, f.id, variante)}
-        diagramm={f.diagramm}
-        altersstufe={f.trainingAltersstufe}
-        stufenWahl="fest"
-        kontext="fassung"
-        materialBasis={f.materialBasis}
-        initial={{
-          name: f.name,
-          trainingsteil: f.trainingsteil,
-          kategorien: f.kategorien,
-          feldtyp: f.feldtyp,
-          spielfeld_laenge_m: f.spielfeldLaengeM,
-          spielfeld_breite_m: f.spielfeldBreiteM,
-          erscheinungsform: f.erscheinungsform,
-          hauptteilkategorie: f.hauptteilkategorie,
-          uebungstyp: f.uebungstyp,
-          anzahl_kinder: f.anzahlKinder,
-          material: f.material,
-          materialListe: f.materialListe,
-          methodischer_fahrplan: f.fahrplan,
-          aufbau: f.aufbau,
-          varianten: f.varianten,
-          bildUrl: f.bildUrl,
-        }}
-        submitLabel="Änderungen speichern"
-        bildEntfernenMoeglich
-        fussnote="Änderungen gelten nur für dieses Training."
-      />
+      <InSpalteWeiterleiten ziel={spalte}>
+        <ExerciseForm
+          action={updateFassung.bind(null, f.id, variante)}
+          diagramm={f.diagramm}
+          altersstufe={f.trainingAltersstufe}
+          stufenWahl="fest"
+          kontext="fassung"
+          materialBasis={f.materialBasis}
+          initial={{
+            name: f.name,
+            trainingsteil: f.trainingsteil,
+            kategorien: f.kategorien,
+            feldtyp: f.feldtyp,
+            spielfeld_laenge_m: f.spielfeldLaengeM,
+            spielfeld_breite_m: f.spielfeldBreiteM,
+            erscheinungsform: f.erscheinungsform,
+            hauptteilkategorie: f.hauptteilkategorie,
+            uebungstyp: f.uebungstyp,
+            anzahl_kinder: f.anzahlKinder,
+            material: f.material,
+            materialListe: f.materialListe,
+            methodischer_fahrplan: f.fahrplan,
+            aufbau: f.aufbau,
+            varianten: f.varianten,
+            bildUrl: f.bildUrl,
+          }}
+          submitLabel="Änderungen speichern"
+          bildEntfernenMoeglich
+          fussnote="Änderungen gelten nur für dieses Training."
+        />
+      </InSpalteWeiterleiten>
     </Seitenrahmen>
   );
 }

@@ -132,7 +132,7 @@ export function VarianteAnlegenDialog({
       }
     >
       <p className="mb-4">
-        Die neue Variante beginnt als Kopie von „{aktive.name}" — mit allen
+        Die neue Variante beginnt als Kopie von „{aktive.name}" - mit allen
         Übungen, Dauern, Notizen und der Gruppenverteilung. Danach sind beide
         unabhängig.
       </p>

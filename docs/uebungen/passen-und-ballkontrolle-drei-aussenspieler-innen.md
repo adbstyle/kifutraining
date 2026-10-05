@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-Drei gegen drei im Feld, dazu pro Team drei Aussenspieler — die Satelliten — rund um das Feld, jederzeit anspielbar. Spielt ein Satellit den Ball direkt zurück, bleibt er draussen. Kontrolliert er ihn und dribbelt ins Feld, übernimmt der Passgeber seinen Platz aussen.
+Drei gegen drei im Feld, dazu pro Team drei Aussenspieler - die Satelliten - rund um das Feld, jederzeit anspielbar. Spielt ein Satellit den Ball direkt zurück, bleibt er draussen. Kontrolliert er ihn und dribbelt ins Feld, übernimmt der Passgeber seinen Platz aussen.
 
 ## Üben
 

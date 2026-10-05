@@ -32,22 +32,22 @@ export const trainingKopieren = werkzeug({
   name: "training_kopieren",
   titel: "Training übernehmen",
   beschreibung:
-    "Übernimmt ein Training als eigenständige Kopie — ohne «team_id» in deinen persönlichen " +
+    "Übernimmt ein Training als eigenständige Kopie - ohne «team_id» in deinen persönlichen " +
     "Bestand, mit «team_id» in den Bestand eines deiner Teams: samt " +
     "allen Übungen, Bildern, Diagrammen, Gruppen, Durchlauf, Notizen, Dauern, Ziel und allen " +
     "Varianten des Hauptteils, in derselben Altersstufe. Die Kopie ist ein privater Entwurf " +
     "ohne Verbindung zur Quelle; die Quelle bleibt unberührt, und woraus die Kopie hervorging, " +
-    "wird nicht festgehalten. Übernehmen lässt sich jedes Training, das du lesen kannst — ein " +
+    "wird nicht festgehalten. Übernehmen lässt sich jedes Training, das du lesen kannst - ein " +
     "öffentliches der Community (etwa aus «trainings_suchen» mit «bestand: oeffentlich») oder " +
-    "ein eigenes, das dann eine zweite, unabhängige Fassung bekommt —, und dasselbe Training " +
+    "ein eigenes, das dann eine zweite, unabhängige Fassung bekommt -, und dasselbe Training " +
     "beliebig oft; jede Kopie hat ihre eigene Kennung. So stellst du ein eigenes Training " +
     "ins Team (mit «team_id») oder übernimmst ein Team-Training zu dir (ohne «team_id»); das " +
     "Original bleibt in beiden Fällen, wie es ist. Ein Termin geht nie mit. " +
     "Scheitert das Kopieren mit einer " +
     "Meldung, räumt KiFu weg, was schon entstanden war, und «hinweis» sagt, dass nichts " +
-    "entstanden ist (dann ist ein Wiederholen gefahrlos) — oder, falls auch das Aufräumen " +
+    "entstanden ist (dann ist ein Wiederholen gefahrlos) - oder, falls auch das Aufräumen " +
     "scheiterte, welche unvollständige Kopie stehen blieb. Bricht der Vorgang dagegen ohne " +
-    "Meldung ab — durch eine Zeitüberschreitung oder einen Absturz mitten im Kopieren —, kann " +
+    "Meldung ab - durch eine Zeitüberschreitung oder einen Absturz mitten im Kopieren -, kann " +
     "eine unvollständige Kopie stehen bleiben, die nicht als unfertig erkennbar ist, oder die " +
     "Kopie ist vollständig entstanden, ohne dass du davon erfährst. Prüfe dann vorher und " +
     "nachher mit «trainings_suchen» (bestand: eigene bzw. team), bevor du es noch einmal " +
@@ -87,7 +87,7 @@ export const trainingLoeschen = werkzeug({
     "Termin ohne Training im Kalender («termin_bleibt»). Was mitgeht, " +
     "zeigt vorher «training_abrufen» («uebungen_gesamt», «sichtbarkeit»); das Ergebnis nennt " +
     "es noch einmal. Ein öffentliches Training verschwindet damit zugleich aus dem " +
-    "öffentlichen Bestand. Kopien, die andere bereits übernommen haben, bleiben bestehen — " +
+    "öffentlichen Bestand. Kopien, die andere bereits übernommen haben, bleiben bestehen - " +
     "sie sind eigenständige Trainings. Wiederherstellen lässt sich ein gelöschtes Training " +
     `nicht. Ein fremdes Training lässt sich nicht löschen. ${KENNUNG_FEHLER}`,
   nurLesen: false,

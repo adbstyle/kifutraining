@@ -11,7 +11,26 @@ import {
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { ExercisePickerDialog } from "../ExercisePickerDialog";
 import { GesamtAbgleich } from "../ZeitAbgleich";
-import { TrainingKopf } from "./TrainingKopf";
+import {
+  NameFeld,
+  StufenEigenschaft,
+  TrainingKopf,
+  TrainingStufenFeld,
+  ZielEigenschaft,
+  ZielFeld,
+} from "./TrainingKopf";
+import { TrainingEigenschaften } from "../TrainingEigenschaften";
+import { OffeneUebungSpalte, VerwerfenRueckfrage } from "../OffeneUebungSpalte";
+import { useOffeneUebung } from "../useOffeneUebung";
+import { InBibliothekButton } from "../InBibliothekButton";
+import {
+  AbweichendeUebungenListe,
+  useNameSpeichern,
+  useStufenAendern,
+  useZielSpeichern,
+} from "../useTrainingAngaben";
+import { uebungAus } from "@/lib/offene-uebung";
+import { ZweiSpalten } from "@/components/layout/ZweiSpalten";
 import { GesamtMaterialListe } from "../GesamtMaterialListe";
 import { TrainingAktionen } from "../TrainingAktionen";
 import { TeilKarte } from "./TeilKarte";
@@ -46,7 +65,7 @@ import {
 import {
   HAUPTTEILKATEGORIEN,
   editorGliederung,
-  teilTraegtDauer,
+  gesamtDauer,
   formatDuration,
 } from "@/lib/training";
 import {
@@ -54,9 +73,6 @@ import {
   setzeNotiz,
   moveTrainingExercise,
   removeTrainingExercise,
-  renameTraining,
-  setTrainingStufen,
-  setTrainingZiel,
 } from "@/lib/actions/trainings";
 import type { HauptteilkategorieSlug } from "@/lib/vocab";
 import type { TrainingActionResult } from "@/lib/actions/trainings";
@@ -82,11 +98,18 @@ export function TrainingEditor({
   /** Die Variante des Hauptteils aus der Adresse (#201 AK 6/7). Sie ist der
    *  Startwert, nicht die laufende Quelle: Gewechselt wird ohne Navigation. */
   varianteParam,
+  uebungParam,
+  bearbeitenParam,
   brotkrumen,
 }: {
   training: TrainingDetail;
   teams?: TeamUebersicht[];
   varianteParam?: string;
+  /** Die geöffnete Übung aus der Adresse (#371 AK 10) — wie die Variante nur
+   *  der Startwert. */
+  uebungParam?: string;
+  /** Steht sie zum Bearbeiten offen (#372)? Ebenfalls nur der Startwert. */
+  bearbeitenParam?: boolean;
   /** Die Brotkrumen der Seite. Sie stehen hier drin, weil die Aktionsreihe
    *  neben ihnen sitzt und die Laufzeit des Editors braucht. */
   brotkrumen: BreadcrumbItem[];
@@ -104,18 +127,23 @@ export function TrainingEditor({
   // der Serverdaten: Eine Notiz ändert die Gliederung nicht, und ein
   // `router.refresh()` nach jedem Speichern risse den Fokus aus der Zeile.
   const [notizen, setNotizen] = useState<Record<string, string | null>>({});
-  const [stufen, setStufen] = useState<string[]>(training.stufen);
-  const [ziel, setZiel] = useState<string>(training.ziel ?? "");
   const melde = useSnackbar();
-  // Der Name liegt lokal über dem Serverstand — wie Ziel und Dauern: Das Feld
-  // im Kopf speichert beim Verlassen, und bis das Auffrischen zurück ist,
-  // stünde dort sonst wieder der alte Name (#250 AK 4).
-  const [name, setName] = useState(training.name);
-  // Die abweichenden Übungen aus dem Stufen-Abgleich — mit ihrer Variante, denn
-  // der Abgleich umfasst alle (#201 AK 11).
-  const [mismatch, setMismatch] = useState<
-    { id: string; name: string; varianteId: string | null }[] | null
-  >(null);
+  // Name, Ziel und Alterskategorien speichern je für sich (#250, Story 10,
+  // #12) — dieselbe Regel wie in der Ansicht. Die Alterskategorien melden
+  // danach die Übungen, die nicht mehr passen; hier lassen sie sich entfernen.
+  // Eine stufenfremde Kategorie weist die Server-Action ab (Story 5 AK 4/5).
+  const { name, speichere: speichereName } = useNameSpeichern(training.id, training.name);
+  const {
+    ziel,
+    setZiel,
+    speichere: speichereZiel,
+  } = useZielSpeichern(training.id, training.ziel);
+  const {
+    stufen,
+    aendere: changeStufen,
+    abweichend: mismatch,
+    setAbweichend: setMismatch,
+  } = useStufenAendern(training.id, training.stufen);
   // Der Bezeichnungs-Dialog der Gruppen (#209 AK 2/6) — anlegen und umbenennen
   // sind derselbe Dialog mit anderem Wortlaut, darum EIN Zustand.
   const [gruppeDialog, setGruppeDialog] = useState<
@@ -126,10 +154,14 @@ export function TrainingEditor({
   // Oberfläche — das Modell führt aus.
   const [gruppeWeg, setGruppeWeg] = useState<{ id: string; name: string } | null>(null);
   const [uebungWeg, setUebungWeg] = useState<TrainingExerciseItem | null>(null);
+  // Die Übung, die beim Öffnen in der Spalte steht (#371 AK 10). Gehört sie in
+  // den Hauptteil, zeigt der Editor ihre Variante — sonst sähe man sie nicht.
+  const [anfangsUebung] = useState(() => uebungAus(uebungParam, training.exercises));
   // Die angezeigte Variante des Hauptteils (#201 AK 6). Beim Öffnen gilt die
-  // aus der Adresse, sonst die erste (AK 7) — gemerkt wird nichts.
+  // der geöffneten Übung oder die aus der Adresse, sonst die erste (AK 7) —
+  // gemerkt wird nichts.
   const [aktiveVariante, setAktiveVariante] = useState<string | undefined>(
-    () => varianteAus(varianteParam, training.varianten)?.id,
+    () => anfangsUebung?.varianteId ?? varianteAus(varianteParam, training.varianten)?.id,
   );
   const [varianteDialog, setVarianteDialog] = useState(false);
   // Die Variante, deren Bezeichnung bearbeitet wird, und die, deren Entfernen
@@ -197,6 +229,27 @@ export function TrainingEditor({
     alleZuordnungen: zuordnungen,
   });
 
+  // Die geöffnete Übung (Epic #369): Sie steht in der Spalte anstelle der
+  // Eigenschaften des Trainings. Nach dem Sichern fallen ihre lokalen
+  // Überlagerungen weg — der Server kennt sie dann anders, etwa ohne Dauer im
+  // Auffangen oder ohne Durchlauf ausserhalb des Hauptteils.
+  const steuerung = useOffeneUebung({
+    uebungen: sichtbar,
+    anfangsOffenId: anfangsUebung?.id ?? null,
+    anfangsBearbeiten: !!bearbeitenParam,
+    uebungParam,
+    bearbeitbar: true,
+    beimSichern: (id) => {
+      modell.vergissFolge(id);
+      setDurations(({ [id]: _, ...rest }) => rest);
+      setNotizen(({ [id]: _, ...rest }) => rest);
+    },
+  });
+
+  // Die geöffnete Übung im laufenden Stand — Dauer, Notiz und Durchlauf gehen
+  // mit (#371 PC 1); schliesst sie, wenn sie nicht mehr angezeigt wird.
+  const { offenId, offen } = steuerung;
+
   /** Die Adresse an die angezeigte Variante angleichen — ohne Navigation.
    *
    *  `history.replaceState` statt `router.push`/`refresh`: Der Wechsel ist eine
@@ -235,9 +288,19 @@ export function TrainingEditor({
     });
   }
 
+  /** Was die geöffnete Übung verbirgt, fragt vorher nach: ein Wechsel, der
+   *  ihre Variante verlässt (Epic EK 14), gilt als Schliessen. */
+  function trifftOffene(varianteId?: string) {
+    return !!offen?.varianteId && offen.varianteId !== varianteId;
+  }
+
   function wechsleVariante(varianteId: string) {
-    setAktiveVariante(varianteId);
-    schreibeAdresse(varianteId, varianten.length);
+    const wechsel = () => {
+      setAktiveVariante(varianteId);
+      schreibeAdresse(varianteId, varianten.length);
+    };
+    if (trifftOffene(varianteId)) steuerung.nachRueckfrage(wechsel);
+    else wechsel();
   }
 
   /** Eine Variante wurde angelegt (#201 AK 1, PC 1): Sie wird zur angezeigten —
@@ -245,6 +308,10 @@ export function TrainingEditor({
    *  danach, weil die Kopie der Fassungen nur vom Server kommen kann. */
   function varianteAngelegt(varianteId: string, name: string) {
     setVarianteDialog(false);
+    // Eine geöffnete Hauptteil-Übung steht in der neuen Variante nicht — sie
+    // schliesst, bevor die Adresse neu geschrieben wird, sonst nähme diese
+    // sie mit (#371 AK 9).
+    if (offen?.varianteId) steuerung.zeige(null);
     setAktiveVariante(varianteId);
     // Ab jetzt sind es mindestens zwei — die Adresse trägt die Variante.
     navigiereZu(varianteId, varianten.length + 1);
@@ -258,6 +325,14 @@ export function TrainingEditor({
    *  entdecken. Sonst bleibt es beim Entfernen ohne Rückfrage — eine leere
    *  Variante ist bloss eine Bezeichnung. */
   function varianteEntfernen(variante: Variante) {
+    if (offen?.varianteId === variante.id) {
+      steuerung.nachRueckfrage(() => varianteEntfernenJetzt(variante));
+      return;
+    }
+    varianteEntfernenJetzt(variante);
+  }
+
+  function varianteEntfernenJetzt(variante: Variante) {
     if (fassungenVon(fassungenLokal, variante.id).length > 0 || varianten.length === 2) {
       setVarianteWeg(variante);
       return;
@@ -276,6 +351,7 @@ export function TrainingEditor({
     const rest = varianten.filter((v) => v.id !== variante.id);
     if (!(await variantenModell.entferne(variante))) return;
     const naechste = variante.id === aktive?.id ? rest[0]?.id : aktiveVariante;
+    if (offen?.varianteId && offen.varianteId !== naechste) steuerung.zeige(null);
     setAktiveVariante(naechste);
     navigiereZu(naechste, rest.length);
     // Bleibt eine einzige übrig, ist mehr geschehen als ein Entfernen: Der
@@ -319,6 +395,11 @@ export function TrainingEditor({
   }
 
   function move(item: TrainingExerciseItem, dir: -1 | 1) {
+    if (item.id === offenId) steuerung.nachRueckfrage(() => moveJetzt(item, dir));
+    else moveJetzt(item, dir);
+  }
+
+  function moveJetzt(item: TrainingExerciseItem, dir: -1 | 1) {
     modell.vergissFolge(item.id);
     startTransition(async () => {
       await moveTrainingExercise(item.id, dir);
@@ -347,6 +428,11 @@ export function TrainingEditor({
    *  fallen ihre Zuweisungen weg, und die stehen nirgends sonst. Ohne
    *  Zuweisungen bleibt es beim Entfernen ohne Rückfrage. */
   function remove(item: TrainingExerciseItem) {
+    if (item.id === offenId) steuerung.nachRueckfrage(() => removeJetzt(item));
+    else removeJetzt(item);
+  }
+
+  function removeJetzt(item: TrainingExerciseItem) {
     if (modell.gruppenAn(item.id) > 0) {
       setUebungWeg(item);
       return;
@@ -367,59 +453,12 @@ export function TrainingEditor({
     });
   }
 
-  /** Alterskategorien setzen (Story #12 AC2). Die Altersstufe ist davon
-   *  unberührt: Sie steht ab dem Anlegen fest, und die angebotenen Kategorien
-   *  gehören ohnehin nur zu ihr (Story 5 AK 4/5). Eine stufenfremde Kategorie —
-   *  etwa aus einem manipulierten Aufruf — weist die Server-Action ab und nennt
-   *  den gangbaren Weg; die Meldung erscheint hier. */
-  function changeStufen(next: string[]) {
-    const vorher = stufen;
-    setStufen(next);
-    startTransition(async () => {
-      const r = await setTrainingStufen(training.id, next);
-      router.refresh();
-      if (!r.ok) {
-        // Auswahl zurücknehmen: sonst zeigte der Editor Stufen an, die nie
-        // gespeichert wurden.
-        setStufen(vorher);
-        melde(r.error ?? "Speichern fehlgeschlagen.");
-        return;
-      }
-      if (r.mismatched && r.mismatched.length > 0) setMismatch(r.mismatched);
-    });
-  }
-
-  function speichereZiel() {
-    if (ziel.trim() === (training.ziel ?? "")) return;
-    startTransition(async () => {
-      const r = await setTrainingZiel(training.id, ziel);
-      if (!r.ok) {
-        setZiel(training.ziel ?? "");
-        melde(r.error ?? "Speichern fehlgeschlagen.");
-        return;
-      }
-      router.refresh();
-    });
-  }
-
-  /** Den Namen speichern — optimistisch wie das Ziel. Scheitert es, springt
-   *  der Kopf auf den alten Namen zurück und die Snackbar sagt, warum
-   *  (#250 PC 1/2). */
-  function speichereName(naechster: string) {
-    const vorher = name;
-    setName(naechster);
-    startTransition(async () => {
-      const r = await renameTraining(training.id, naechster);
-      if (!r.ok) {
-        setName(vorher);
-        melde(r.error ?? "Speichern fehlgeschlagen.");
-        return;
-      }
-      router.refresh();
-    });
-  }
-
   function removeMismatched(ids: string[]) {
+    if (offenId && ids.includes(offenId)) steuerung.nachRueckfrage(() => removeMismatchedJetzt(ids));
+    else removeMismatchedJetzt(ids);
+  }
+
+  function removeMismatchedJetzt(ids: string[]) {
     startTransition(async () => {
       let fehler: string | null = null;
       for (const id of ids) modell.vergissFolge(id);
@@ -505,10 +544,8 @@ export function TrainingEditor({
   const teile = editorGliederung(training.altersstufe, sichtbar);
 
   // Auffangen trägt keine Dauer und zählt weder zur Summe noch zum
-  // „ohne Dauer"-Hinweis.
-  const dauerItems = sichtbar.filter((e) => teilTraegtDauer(e.trainingsteil));
-  const totalDuration = dauerItems.reduce<number>((a, it) => a + (it.durationMin ?? 0), 0);
-  const totalMissing = dauerItems.filter((it) => it.durationMin == null).length;
+  // „ohne Dauer"-Hinweis — dieselbe Rechnung wie in der Spalte (#370 AK 5).
+  const dauer = gesamtDauer(sichtbar);
 
   // Der Gruppen-Bereich der Hauptteil-Karte (#209 AK 1/3): die Leiste unter dem
   // Kartenkopf, die Konflikte im Kartenfuss. Die Leiste steht IMMER — ohne
@@ -568,13 +605,29 @@ export function TrainingEditor({
       />
     ),
     dauerWarnung: (item) => modell.befund.dauerWarnung.has(item.id),
+    offenId,
+    onOeffnen: (item) => steuerung.oeffne(item.id),
     onDuration: changeDuration,
     onMove: move,
     onRemove: remove,
   };
 
+  // Ziel und Alterskategorien gibt es zweimal: schmal als Felder im Kopf,
+  // breit als bearbeitbare Eigenschaften in der Spalte (#370 AK 10). Beide
+  // hängen am selben Zustand; zu sehen ist je eines.
+  const zielFeld = <ZielFeld ziel={ziel} onChange={setZiel} onSpeichern={speichereZiel} />;
+  const zielZeile = <ZielEigenschaft ziel={ziel} onSpeichern={speichereZiel} />;
+  const stufenZeile = (
+    <StufenEigenschaft altersstufe={training.altersstufe} stufen={stufen} onStufen={changeStufen} />
+  );
+  const stufenFeld = (
+    <TrainingStufenFeld altersstufe={training.altersstufe} stufen={stufen} onStufen={changeStufen} />
+  );
+
   return (
-    <div className="flex flex-col gap-4">
+    // Ab `xl` wächst der Editor auf die freie Höhe der geteilten Seite; die
+    // Brotkrumen stehen fest, darunter scrollen Übungen und Spalte je für sich.
+    <div className="flex flex-col gap-4 xl:min-h-0 xl:flex-1">
       {/* Brotkrumen links, Aktionen rechts — dieselbe Zeile und dieselbe
           Stelle wie auf der Ansichtsseite (#249 AK 8). */}
       <SeitenKopf
@@ -597,73 +650,121 @@ export function TrainingEditor({
         }
       />
 
-      <TrainingKopf
-        training={training}
-        oeffentlich={oeffentlich}
-        stufen={stufen}
-        onStufen={changeStufen}
-        ziel={ziel}
-        onZielChange={setZiel}
-        onZielSpeichern={speichereZiel}
-        name={name}
-        onNameSpeichern={speichereName}
-      />
-
-      {/* Summenleiste — eine Fläche auf der Stufe der Karten daneben, denn sie
-          liegt wie diese direkt auf dem Grund. Ohne Kontur: Höhe und Rand
-          sagten dasselbe zweimal, und ein Umriss ist im Bild die Sprache der
-          Meldungen, nicht die einer Auskunft. */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-flaeche bg-elev-01 px-4 py-3">
-        <span className="inline-flex items-center gap-2 type-title-medium text-on-surface">
-          <Clock size={18} strokeWidth={2} aria-hidden />
-          Gesamtdauer: {formatDuration(totalDuration)}
-        </span>
-        {/* Die Zeit-Orientierung gilt nur im Juniorenschema — das
-            Kinderfussball-Manual gibt bewusst keine Zeiten vor (Story 6
-            AC 5 / Out of Scope 1). */}
-        {junioren && <GesamtAbgleich sum={totalDuration} soll={GESAMTDAUER_JUNIOREN} />}
-        {totalMissing > 0 && (
-          <span className="type-label-medium text-on-surface-mittel">
-            {totalMissing} {totalMissing === 1 ? "Übung ohne" : "Übungen ohne"} Dauer
-          </span>
-        )}
-      </div>
-
-      {/* Was das Training gleichzeitig höchstens braucht (Story #271) — auf
-          derselben Stufe wie die Summenleiste, die ebenfalls über das ganze
-          Training Auskunft gibt. */}
-      <GesamtMaterialListe
-        exercises={training.exercises}
-        varianten={varianten}
-        className="rounded-flaeche bg-elev-01 px-4 py-3"
-      />
-
-      {teile.map((teil) => (
-        <TeilKarte
-          key={teil.key}
-          teil={teil}
-          kontext={kontext}
-          onAdd={(block) => setOpen({ teil: block.einordnung, hkat: block.hkat })}
-          // Varianten gibt es nur für den Hauptteil (#201 PC 4) — derselbe
-          // Schlüssel in beiden Altersstufen wie bei den Gruppen.
-          varianten={
-            teil.key === "hauptteil" ? (
-              <VariantenLeiste
-                varianten={varianten}
-                aktiv={aktive?.id}
-                onWechsel={wechsleVariante}
-                onHinzufuegen={() => setVarianteDialog(true)}
-                onBearbeiten={setVarianteBearbeiten}
-                onVerschieben={variantenModell.verschiebe}
-                onEntfernen={varianteEntfernen}
+      {/* Breit stehen die Eigenschaften des Trainings in der Spalte neben den
+          Übungen (Epic #369, Story #370), schmal bleibt alles wie bisher: Kopf,
+          Summenleiste und Material über den Trainingsteilen. */}
+      <ZweiSpalten
+        spalte={
+          <OffeneUebungSpalte
+            steuerung={steuerung}
+            offen={offen}
+            altersstufe={training.altersstufe}
+            variante={aktive?.id}
+            durchlauf={offen ? modell.gruppenVon(offen) : []}
+            aktionen={offen && <InBibliothekButton fassungId={offen.id} name={offen.name} />}
+            eigenschaften={
+              <TrainingEigenschaften
+                training={training}
+                sichtbar={sichtbar}
+                stufen={stufen}
+                ziel={ziel}
+                zielZeile={zielZeile}
+                stufenZeile={stufenZeile}
+                hinweise
               />
-            ) : undefined
-          }
-          // Verteilt wird allein der Hauptteil — in beiden Altersstufen trägt er
-          // denselben Schlüssel (Story #149 AK 9 / Epic Out of Scope 2).
-          gruppen={teil.key === "hauptteil" ? gruppenBereich : undefined}
-        />
-      ))}
+            }
+          />
+        }
+        // Gibt es nur breit — ausser die Maske hält ungesicherte Änderungen,
+        // während der Bildschirm schmal wird: Dann bleibt sie stehen, damit sie
+        // sich noch sichern lässt (#372 AK 5, `ZweiSpalten`).
+        nurBreit
+        // Eine Spalte mit Eingabefeldern ist keine Nebensache (`aside`).
+        beiseite={false}
+        spaltenName="Spalte"
+        className="xl:min-h-0 xl:flex-1"
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 xl:hidden">
+            <TrainingKopf
+              training={training}
+              oeffentlich={oeffentlich}
+              zielFeld={zielFeld}
+              stufenFeld={stufenFeld}
+              name={name}
+              onNameSpeichern={speichereName}
+            />
+
+            {/* Summenleiste — eine Fläche auf der Stufe der Karten daneben, denn
+                sie liegt wie diese direkt auf dem Grund. Ohne Kontur: Höhe und
+                Rand sagten dasselbe zweimal, und ein Umriss ist im Bild die
+                Sprache der Meldungen, nicht die einer Auskunft. */}
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-flaeche bg-elev-01 px-4 py-3">
+              <span className="inline-flex items-center gap-2 type-title-medium text-on-surface">
+                <Clock size={18} strokeWidth={2} aria-hidden />
+                Gesamtdauer: {formatDuration(dauer.summe)}
+              </span>
+              {/* Die Zeit-Orientierung gilt nur im Juniorenschema — das
+                  Kinderfussball-Manual gibt bewusst keine Zeiten vor (Story 6
+                  AC 5 / Out of Scope 1). */}
+              {junioren && <GesamtAbgleich sum={dauer.summe} soll={GESAMTDAUER_JUNIOREN} />}
+              {dauer.ohneDauer > 0 && (
+                <span className="type-body-small text-on-surface-mittel">
+                  {dauer.ohneDauer} {dauer.ohneDauer === 1 ? "Übung ohne" : "Übungen ohne"} Dauer
+                </span>
+              )}
+            </div>
+
+            {/* Was das Training gleichzeitig höchstens braucht (Story #271) —
+                auf derselben Stufe wie die Summenleiste, die ebenfalls über das
+                ganze Training Auskunft gibt. */}
+            <GesamtMaterialListe
+              exercises={training.exercises}
+              varianten={varianten}
+              className="rounded-flaeche bg-elev-01 px-4 py-3"
+            />
+          </div>
+
+          {/* Breit bleibt vom Kopf allein der Name: Er steht über den Übungen
+              und nicht in der Spalte (#370 OOS 2). */}
+          <div className="hidden xl:block">
+            <NameFeld name={name} onSpeichern={speichereName} />
+          </div>
+
+          {teile.map((teil) => (
+            <TeilKarte
+              key={teil.key}
+              teil={teil}
+              kontext={kontext}
+              onAdd={(block) => setOpen({ teil: block.einordnung, hkat: block.hkat })}
+              // Varianten gibt es nur für den Hauptteil (#201 PC 4) — derselbe
+              // Schlüssel in beiden Altersstufen wie bei den Gruppen.
+              varianten={
+                teil.key === "hauptteil" ? (
+                  <VariantenLeiste
+                    varianten={varianten}
+                    aktiv={aktive?.id}
+                    onWechsel={wechsleVariante}
+                    onHinzufuegen={() =>
+                      // Die neue Variante wird die angezeigte — eine
+                      // geöffnete Hauptteil-Übung verschwände dabei.
+                      trifftOffene() ? steuerung.nachRueckfrage(() => setVarianteDialog(true)) : setVarianteDialog(true)
+                    }
+                    onBearbeiten={setVarianteBearbeiten}
+                    onVerschieben={variantenModell.verschiebe}
+                    onEntfernen={varianteEntfernen}
+                  />
+                ) : undefined
+              }
+              // Verteilt wird allein der Hauptteil — in beiden Altersstufen trägt
+              // er denselben Schlüssel (Story #149 AK 9 / Epic Out of Scope 2).
+              gruppen={teil.key === "hauptteil" ? gruppenBereich : undefined}
+            />
+          ))}
+        </div>
+      </ZweiSpalten>
+
+      <VerwerfenRueckfrage steuerung={steuerung} name={offen?.name} />
 
       {/* Ein Picker, gesteuert über `open` (Trainingsteil + ggf. Unterkategorie). */}
       {open &&
@@ -719,26 +820,8 @@ export function TrainingEditor({
           kannst sie im Training behalten oder entfernen.
         </p>
         {/* Der Abgleich umfasst alle Varianten (#201 AK 11) — sonst bliebe eine
-            abweichende Übung in der nicht gezeigten Variante unentdeckt. Bei
-            mehreren Varianten trägt darum JEDE Hauptteil-Übung ihre Variante,
-            nicht nur die aus einer anderen: Ohne Zusatz wäre nicht zu
-            unterscheiden, ob eine Übung in der gezeigten Variante steht oder
-            ausserhalb des Hauptteils. */}
-        <ul className="flex flex-col gap-1">
-          {(mismatch ?? []).map((m) => {
-            const name = mehrereVarianten
-              ? varianten.find((v) => v.id === m.varianteId)?.name
-              : undefined;
-            return (
-              <li key={m.id} className="type-body-medium text-on-surface">
-                · {m.name}
-                {name && (
-                  <span className="text-on-surface-mittel"> (Variante „{name}")</span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+            abweichende Übung in der nicht gezeigten Variante unentdeckt. */}
+        <AbweichendeUebungenListe liste={mismatch ?? []} varianten={varianten} />
       </Dialog>
 
       {/* Gruppe entfernen, solange sie Übungen zugewiesen ist (AK 8) */}

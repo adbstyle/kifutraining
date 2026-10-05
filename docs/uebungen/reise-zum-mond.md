@@ -4,7 +4,7 @@
 
 ## Offen starten
 
-Das Feld ist ein Universum: blaue Reifen sind Planeten, gelbe Teller sind Monde, die Minitore am Rand sind Sterne. Die Kinder dribbeln durchs Weltall und erfüllen deine Aufgaben — nur um Planeten kreisen, nur Monde umrunden, oder in einer Raketenkette hintereinander fliegen.
+Das Feld ist ein Universum: blaue Reifen sind Planeten, gelbe Teller sind Monde, die Minitore am Rand sind Sterne. Die Kinder dribbeln durchs Weltall und erfüllen deine Aufgaben - nur um Planeten kreisen, nur Monde umrunden, oder in einer Raketenkette hintereinander fliegen.
 
 ## Üben
 

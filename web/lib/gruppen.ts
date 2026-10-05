@@ -329,7 +329,7 @@ export function zeitJeGruppe(v: Verteilung): Map<string, Zeitsumme> {
  * und «90» liest man nebeneinander, «1 h 15 min» und «1 h 30 min» rechnet man.
  */
 export function zeitKurz(s?: Zeitsumme): string {
-  if (!s || s.mitDauer === 0) return "—";
+  if (!s || s.mitDauer === 0) return "-";
   return `${s.minuten} min`;
 }
 

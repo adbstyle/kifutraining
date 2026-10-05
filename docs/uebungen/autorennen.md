@@ -11,7 +11,7 @@
 - Eine Fahrt nur mit dem linken Fuss, die nächste nur mit dem rechten.
 - Bei jedem Ballkontakt den Fuss wechseln.
 - Drei Fahrten mit vorgegebener Fussfläche: Vollspann, Innenseite, Aussenseite.
-- Anderen Autos und Hindernissen ausweichen und dabei täuschen — Übersteiger, Schere oder ein abrupter Richtungswechsel.
+- Anderen Autos und Hindernissen ausweichen und dabei täuschen - Übersteiger, Schere oder ein abrupter Richtungswechsel.
 
 ## Wett-eifern
 

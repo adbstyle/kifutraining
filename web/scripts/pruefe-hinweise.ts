@@ -111,7 +111,7 @@ pruefe("Textkonstanten entsprechen den früheren JSX-Literalen", () => {
   // TeilKarte.tsx vor #195, Leerraum wie gerendert zusammengefasst.
   assert.equal(
     ANZAHL_HINWEIS_TEXT,
-    "Ungewöhnlich viele Übungen für diesen Trainingsteil — erlaubt, achte nur auf die Gesamtdauer.",
+    "Ungewöhnlich viele Übungen für diesen Trainingsteil - erlaubt, achte nur auf die Gesamtdauer.",
   );
   assert.equal(ohneDauerText(1), "1 Übung ohne erfasste Dauer (zählt nicht zur Summe).");
   assert.equal(ohneDauerText(3), "3 Übungen ohne erfasste Dauer (zählt nicht zur Summe).");
@@ -222,7 +222,7 @@ pruefe("Leeres Kinderfussball-Training: zwei sperrende Bedingungen, das leere fr
     {
       art: "block_leer",
       stelle: { teil: "hauptteil", hauptteilkategorie: "fussball-spielen" },
-      text: "Das freie Spiel ist noch leer — im Kinderfussball gehört es in jedes Training.",
+      text: "Das freie Spiel ist noch leer - im Kinderfussball gehört es in jedes Training.",
       sperrt: false,
     },
   ]);

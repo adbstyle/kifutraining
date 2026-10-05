@@ -8,7 +8,7 @@
 
 ## Üben
 
-- Mit den Aussenspielern und dem Torspieler die Breite und die Überzahl nutzen — dann entschlossen abschliessen.
+- Mit den Aussenspielern und dem Torspieler die Breite und die Überzahl nutzen - dann entschlossen abschliessen.
 
 ## Wett-eifern
 

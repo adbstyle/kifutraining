@@ -4,11 +4,11 @@
 
 ## Offen starten
 
-Zwei gegen eins auf dem Kleinfeld; eine rote Linie begrenzt den Raum. Du gibst vor, wo die drei starten — seitlich, nebeneinander oder direkt vor dem Verteidiger.
+Zwei gegen eins auf dem Kleinfeld; eine rote Linie begrenzt den Raum. Du gibst vor, wo die drei starten - seitlich, nebeneinander oder direkt vor dem Verteidiger.
 
 ## Üben
 
-- Die Lage schnell lesen, in die Sonne laufen — also raus aus dem Deckungsschatten des Verteidigers — und die Überzahl im Zusammenspiel ausnutzen.
+- Die Lage schnell lesen, in die Sonne laufen - also raus aus dem Deckungsschatten des Verteidigers - und die Überzahl im Zusammenspiel ausnutzen.
 
 ## Wett-eifern
 

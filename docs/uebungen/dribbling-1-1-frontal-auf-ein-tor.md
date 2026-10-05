@@ -8,7 +8,7 @@ Ein Tor auf jeder Seite, dazwischen zwei Kinder im Eins gegen Eins: Beide wollen
 
 ## Üben
 
-- Mutig nach vorn ziehen und den Gegner mit Finten überwinden — Körpertäuschung, Übersteiger oder Schere.
+- Mutig nach vorn ziehen und den Gegner mit Finten überwinden - Körpertäuschung, Übersteiger oder Schere.
 
 ## Wett-eifern
 

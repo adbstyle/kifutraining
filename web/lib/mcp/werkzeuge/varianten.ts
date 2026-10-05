@@ -36,14 +36,14 @@ export const varianteAnlegen = werkzeug({
   name: "variante_anlegen",
   titel: "Variante des Hauptteils anlegen",
   beschreibung:
-    "Legt eine weitere Variante des Hauptteils an — als vollständige Kopie einer bestehenden " +
+    "Legt eine weitere Variante des Hauptteils an - als vollständige Kopie einer bestehenden " +
     "(«quelle_variante_id», ohne Angabe die vorderste): alle Übungen des Hauptteils samt " +
     "Inhalt, Dauer, Notiz, Bild, Diagramm und Gruppen im Durchlauf. Die Quelle bleibt " +
     "unverändert, die neue Variante steht hinter den bestehenden. Eine Variante umfasst immer " +
     "den ganzen Hauptteil (im Juniorenfussball Spielformen und Spiel zusammen); alle übrigen " +
     "Teile gelten für alle Varianten gemeinsam. Eine leere Variante gibt es nicht. Die " +
     `Bezeichnung ist ${NAME_REGEL}. Solange ein Training nur eine Variante führt, trägt sie ` +
-    `unsichtbar den Vorgabenamen «${VARIANTE_VORGABENAME}» — beim Anlegen der ZWEITEN benenne ` +
+    `unsichtbar den Vorgabenamen «${VARIANTE_VORGABENAME}» - beim Anlegen der ZWEITEN benenne ` +
     "sie mit «name_quelle» mit, sonst steht dieser Name ab jetzt sichtbar da. Übungen kommen " +
     "danach mit «training_uebung_zuordnen» und «variante_id» in die neue Variante; ändern " +
     `lassen sie sich dort unabhängig von der Quelle. ${KENNUNG_FEHLER}`,
@@ -60,7 +60,7 @@ export const varianteAnlegen = werkzeug({
       .string()
       .optional()
       .describe(
-        "Optional: neue Bezeichnung der Quelle — beim Anlegen der zweiten Variante empfohlen.",
+        "Optional: neue Bezeichnung der Quelle - beim Anlegen der zweiten Variante empfohlen.",
       ),
   }),
   ausgabe: z.object({ variante: IdName, quelle: IdName, uebungen_kopiert: z.number().int() }),
@@ -107,10 +107,10 @@ export const varianteEntfernen = werkzeug({
   name: "variante_entfernen",
   titel: "Variante des Hauptteils entfernen",
   beschreibung:
-    "Entfernt eine Variante des Hauptteils sofort und ohne Rückfrage — samt allen ihren " +
+    "Entfernt eine Variante des Hauptteils sofort und ohne Rückfrage - samt allen ihren " +
     "Übungen mit Notizen, Bildern und Gruppen im Durchlauf («uebungen_entfernt»). Die Gruppen " +
     "selbst, die übrigen Varianten und alle Teile ausserhalb des Hauptteils bleiben. Was " +
-    "mitfällt, zeigt vorher «training_abrufen» (der Hauptteil je Variante) — dort nachsehen, " +
+    "mitfällt, zeigt vorher «training_abrufen» (der Hauptteil je Variante) - dort nachsehen, " +
     "bevor du entfernst. Die letzte Variante lässt sich nicht entfernen («regel»). Bleibt " +
     `genau eine übrig, wird sie aufgelöst und heisst wieder «${VARIANTE_VORGABENAME}»; KiFu ` +
     "zeigt den Hauptteil dann wieder ohne Varianten («aufgeloest: true»). Eine entfernte " +
@@ -142,10 +142,10 @@ export const variantenOrdnen = werkzeug({
   titel: "Varianten des Hauptteils ordnen",
   beschreibung:
     "Legt die Reihenfolge der Varianten des Hauptteils in einem Zug fest. «variante_ids» nennt " +
-    "ALLE Varianten des Trainings, jede genau einmal, in der gewünschten Folge — die Kennungen " +
+    "ALLE Varianten des Trainings, jede genau einmal, in der gewünschten Folge - die Kennungen " +
     "stehen in «training_abrufen» unter «varianten». Die vorderste zeigt KiFu beim Öffnen des " +
     "Trainings. Fehlt eine, nennt die Meldung sie mit Namen und Kennung; gehört eine nicht " +
-    "dazu, nennt sie deren Kennung, und «zulaessig» nennt die Kennungen des Trainings — " +
+    "dazu, nennt sie deren Kennung, und «zulaessig» nennt die Kennungen des Trainings - " +
     `geändert wird dann nichts. ${KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({

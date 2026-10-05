@@ -142,7 +142,7 @@ export async function aendereUebung(
     funde.push({
       feld: "altersstufe",
       meldung:
-        "Die Altersstufe einer Übung lässt sich über den KI-Zugang nicht wechseln — die " +
+        "Die Altersstufe einer Übung lässt sich über den KI-Zugang nicht wechseln - die " +
         "Überführung gibt es nur in KiFu selbst.",
       zulaessig: [zeile.altersstufe],
       art: "regel",
@@ -164,7 +164,7 @@ export async function aendereUebung(
  *  vorher (#144 AK 2). Einen Urheber zeigt KiFu an Übungen nie
  *  (docs/produkt/uebungen.md, «Drucken»; die Übungsseite ebenso). */
 export const TRAGWEITE_UEBUNG_VEROEFFENTLICHEN =
-  "Die Übung wird für alle sichtbar — mit allen Angaben, Bild und Feld-Diagramm — und trägt die " +
+  "Die Übung wird für alle sichtbar - mit allen Angaben, Bild und Feld-Diagramm - und trägt die " +
   "Plakette «Community». Einen Trainernamen zeigt KiFu bei Übungen nicht.";
 
 /** Die Sichtbarkeit einer eigenen Übung setzen — gleich, welcher

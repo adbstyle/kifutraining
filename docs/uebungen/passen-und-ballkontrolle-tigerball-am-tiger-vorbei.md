@@ -8,7 +8,7 @@ Zwei Kinder spielen sich den Ball flach zu und bleiben dabei immer anspielbar. Z
 
 ## Üben
 
-- Hinter dem Tiger freilaufen — aus seinem Schatten hinaus in die Sonne.
+- Hinter dem Tiger freilaufen - aus seinem Schatten hinaus in die Sonne.
 
 ## Wett-eifern
 

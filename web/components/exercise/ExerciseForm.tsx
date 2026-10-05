@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState, useActionState, startTransition } from "react";
-import { ArrowLeftRight, ImagePlus } from "lucide-react";
+import { ArrowLeftRight, ImagePlus, X } from "lucide-react";
 import {
   TextField,
   TextArea,
@@ -14,6 +14,8 @@ import {
   HeadlineField,
   Checkbox,
   Card,
+  IconButton,
+  Tooltip,
 } from "@/components/ui";
 import type { ExerciseFormState } from "@/lib/actions/exercises";
 import {
@@ -68,6 +70,7 @@ import { cn } from "@/lib/cn";
 import { LEERES_DIAGRAMM, parseDiagramm, type DiagrammData } from "@/lib/diagramm";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
+import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
 
 
 /** Was über und unter beiden Spalten steht (Name, Meldungen, Speichern), so
@@ -114,6 +117,7 @@ export function ExerciseForm({
   materialBasis = null,
   diagramm: gespeichertesDiagramm,
   vorlagenAusser,
+  inSpalte,
 }: {
   action: (state: ExerciseFormState, form: FormData) => Promise<ExerciseFormState>;
   initial?: ExerciseInitial;
@@ -143,6 +147,20 @@ export function ExerciseForm({
   diagramm?: unknown;
   /** Die Bibliotheks-Übung, die nicht als ihre eigene Vorlage erscheint. */
   vorlagenAusser?: string;
+  /** Die Maske steht nicht auf eigener Seite, sondern in der Spalte neben den
+   *  Übungen eines Trainings (Epic #369, Story #372): eine Spalte in der
+   *  Reihenfolge des Detail — Name, Diagramm, Beschreibung, Einordnung samt
+   *  Material, Foto —, Sichern und Verwerfen klebend obenauf. Gesichert wird
+   *  ohne Weiterleitung (`status: "gesichert"`); was dann geschieht, ebenso
+   *  wie Verwerfen und Schliessen, entscheidet die Spalte. `onUngesichert`
+   *  meldet ihr, ob ungesicherte Angaben anstehen — sie fragt dann nach,
+   *  bevor ein Vorgang die Übung verlässt (AK 4). */
+  inSpalte?: {
+    onUngesichert: (ungesichert: boolean) => void;
+    onGesichert: () => void;
+    onVerwerfen: () => void;
+    onSchliessen: () => void;
+  };
 }) {
   const [state, formAction, isPending] = useActionState(action, { status: "idle" } as ExerciseFormState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -267,10 +285,30 @@ export function ExerciseForm({
   // Nur beim Erfassen ist die Altersstufe wählbar — und ist noch nichts von
   // der Übung gespeichert.
   const erfassen = stufenWahl === "waehlbar";
-  // Erfassen führt Schritt für Schritt durch eine Spalte — Einordnung,
-  // Feld-Diagramm, Beschreibung, Material, Foto (PO 2026-10-02). Bearbeiten
-  // teilt die Maske wie die Detailseite in Inhalt und Einordnung (#353).
-  const geteilt = !erfassen;
+  // Drei Aufbauten: Erfassen führt Schritt für Schritt durch eine Spalte —
+  // Einordnung, Feld-Diagramm, Beschreibung, Material, Foto (PO 2026-10-02).
+  // Bearbeiten teilt die Maske wie die Detailseite in Inhalt und Einordnung
+  // (#353). In der Spalte eines Trainings steht sie in der Reihenfolge des
+  // Detail untereinander (`inSpalte`, #372).
+  const geteilt = !erfassen && !inSpalte;
+
+  // Die Spalte erfährt jeden Wechsel; sie fragt damit vor dem Verlassen nach.
+  // Über eine Ref: Die Rückrufe entstehen bei jedem Rendern der Spalte neu,
+  // gemeldet wird aber nur, wenn sich hier etwas geändert hat — das Gesichert
+  // genau einmal je Antwort des Servers.
+  const spalteRef = useRef(inSpalte);
+  // Nachgeführt nach dem Rendern, nicht währenddessen: Ein verworfenes
+  // Rendern soll keine Rückrufe hinterlassen, die nie galten. Als
+  // Layout-Effekt vor den Effekten unten, die sie aufrufen.
+  useIsomorpherEffekt(() => {
+    spalteRef.current = inSpalte;
+  });
+  useEffect(() => {
+    spalteRef.current?.onUngesichert(ungesichert);
+  }, [ungesichert]);
+  useEffect(() => {
+    if (state.status === "gesichert") spalteRef.current?.onGesichert();
+  }, [state]);
 
   // Das Feld-Gating kommt geschlossen aus lib/altersstufe.ts — derselben
   // Quelle, gegen die die Server Action prüft und die die DB-CHECKs spiegelt.
@@ -300,7 +338,7 @@ export function ExerciseForm({
   const entfallHinweis =
     entfallend.length === 0
       ? undefined
-      : `${entfallend.join(" und ")} gibt es hier nicht — ${
+      : `${entfallend.join(" und ")} gibt es hier nicht - ${
           entfallend.length === 1
             ? "die erfasste Angabe entfällt"
             : "die erfassten Angaben entfallen"
@@ -472,8 +510,9 @@ export function ExerciseForm({
   // #350, Story #353): Altersstufe, Alterskategorie, Trainingsteil oder Block,
   // Feld, Spielerzahl, Übungstyp, Erscheinungsform und Material. Schmal steht
   // sie VOR dem Inhalt — sie bestimmt, welche Felder der Inhalt verlangt
-  // (Fahrplan oder Beschreibung). Dieselben Felder wie bisher, nur an anderer
-  // Stelle; Herkunft und Sichtbarkeit setzt die Detailseite.
+  // (Fahrplan oder Beschreibung). In der Spalte eines Trainings folgt sie wie
+  // im Detail nach Diagramm und Beschreibung (#372). Herkunft und
+  // Sichtbarkeit setzt die Detailseite.
   const einordnungAbschnitt = (
       <FormAbschnitt titel="Einordnung">
         <AltersstufeField
@@ -481,7 +520,7 @@ export function ExerciseForm({
           onChange={stufenWahl === "waehlbar" ? wechsleAltersstufe : undefined}
           festHinweis={
             kontext === "fassung"
-              ? "Folgt dem Training — Felder und Werte kommen aus dessen Manual."
+              ? "Folgt dem Training - Felder und Werte kommen aus dessen Manual."
               : umwandlung
                 ? "Wird beim Speichern übernommen."
                 : undefined
@@ -658,6 +697,9 @@ export function ExerciseForm({
     </Card>
   );
 
+  // Gezeichnet wird auch in der Spalte neben den Übungen eines Trainings
+  // (#373) — dieselbe Fläche samt Vorlagen; die Zeichnung geht mit dem
+  // Sichern der Übung mit, ungesichert gilt sie wie jede andere Angabe.
   const diagrammAbschnitt = (
     <FormAbschnitt titel="Feld-Diagramm (optional)">
       <DiagrammFeld
@@ -666,7 +708,7 @@ export function ExerciseForm({
         vorlagenAusser={vorlagenAusser}
         schmalHinweis={
           erfassen
-            ? "Zum Zeichnen braucht es einen breiteren Bildschirm. Erfasse die Übung hier ohne Diagramm — zeichnen kannst du es später beim Bearbeiten."
+            ? "Zum Zeichnen braucht es einen breiteren Bildschirm. Erfasse die Übung hier ohne Diagramm - zeichnen kannst du es später beim Bearbeiten."
             : "Zum Zeichnen braucht es einen breiteren Bildschirm. Die übrigen Angaben kannst du hier bearbeiten."
         }
         onChange={(data, info) => {
@@ -684,7 +726,7 @@ export function ExerciseForm({
           gewählt ist, sagt der Abschnitt, wo das Feld bleibt. */}
       {!teil && (
         <p className="type-body-medium text-on-surface-mittel">
-          Wähle zuerst den Trainingsteil — danach beschreibst du hier den Ablauf.
+          Wähle zuerst den Trainingsteil - danach beschreibst du hier den Ablauf.
         </p>
       )}
       {/* Der methodische Fahrplan als drei gewöhnliche Textfelder in der
@@ -799,20 +841,26 @@ export function ExerciseForm({
     </FormAbschnitt>
   );
 
+  // Der Knopf, der die Maske absendet — überall derselbe Wortlaut für die
+  // Zwischenstände.
+  const sendenKnopf = (
+    <Button type="submit" disabled={isPending || isCompressing}>
+      {isCompressing
+        ? "Foto wird optimiert …"
+        : isPending
+          ? "Wird gespeichert …"
+          : umwandlung
+            ? "Umwandeln und speichern"
+            : submitLabel}
+    </Button>
+  );
+
   // Speichern samt Hinweis: beim Erfassen am Schluss der Schritte, beim
   // Bearbeiten rechts neben dem Namen.
   const speichern = (
     <div className="flex items-center gap-3">
       {fussnote && <p className="type-body-small text-on-surface-mittel">{fussnote}</p>}
-      <Button type="submit" disabled={isPending || isCompressing}>
-        {isCompressing
-          ? "Foto wird optimiert …"
-          : isPending
-            ? "Wird gespeichert …"
-            : umwandlung
-              ? "Umwandeln und speichern"
-              : submitLabel}
-      </Button>
+      {sendenKnopf}
     </div>
   );
 
@@ -821,6 +869,9 @@ export function ExerciseForm({
       ref={formRef}
       noValidate
       onSubmit={handleSubmit}
+      // Die Spalte, in der die Maske steht, bleibt mit ungesicherten Angaben
+      // auch schmal stehen (`ZweiSpalten` `nurBreit`).
+      data-ungesichert={inSpalte && ungesichert ? "" : undefined}
       // Nur benannte Felder tragen Angaben; eine Suche in einem Dialog der
       // Maske (Vorlagen, Auswahllisten) ist keine.
       onInput={(e) => {
@@ -838,8 +889,11 @@ export function ExerciseForm({
 
       <VerlassenWarnung
         // Während des Speicherns nicht: Die Weiterleitung nach dem Speichern
-        // ist kein Verlassen.
-        aktiv={ungesichert && !isPending}
+        // ist kein Verlassen. In der Spalte gibt es keine Weiterleitung — dort
+        // bleibt der Wächter, bis die Maske schliesst, und nimmt dann seinen
+        // Eintrag im Verlauf selbst zurück.
+        aktiv={ungesichert && (!isPending || !!inSpalte)}
+        amOrt={!!inSpalte}
         titel={erfassen ? "Erfassung verlassen?" : "Bearbeitung verlassen?"}
         text={
           erfassen
@@ -853,8 +907,30 @@ export function ExerciseForm({
           Datenbank (Story 4 PC 5). Der Hinweis sagt, was noch fehlt. */}
       {umwandlung && (
         <Banner className={UEBER_BEIDEN}>
-          Umwandlung vorgemerkt — sie wird mit «Umwandeln und speichern» wirksam.
+          Umwandlung vorgemerkt - sie wird mit «Umwandeln und speichern» wirksam.
         </Banner>
+      )}
+
+      {/* In der Spalte steht obenauf, was die Bearbeitung abschliesst — es
+          klebt am oberen Rand, während die Spalte darunter scrollt. */}
+      {inSpalte && (
+        <div className="sticky top-0 z-10 -mx-1 flex items-center gap-1 bg-elev-00 px-1 py-2">
+          <p className="type-title-small min-w-0 flex-1 text-on-surface-mittel">Übung bearbeiten</p>
+          <Button
+            type="button"
+            variant="text"
+            onClick={inSpalte.onVerwerfen}
+            disabled={isPending || isCompressing}
+          >
+            {/* Ohne Änderung gibt es nichts zu verwerfen — dann führt derselbe
+                Knopf bloss zurück ins Detail. */}
+            {ungesichert ? "Verwerfen" : "Abbrechen"}
+          </Button>
+          {sendenKnopf}
+          <Tooltip label="Übung schliessen">
+            <IconButton icon={X} label="Übung schliessen" onClick={inSpalte.onSchliessen} />
+          </Tooltip>
+        </div>
       )}
 
       {/* Der Name ist die Überschrift der Maske — dasselbe Kopf-Feld wie der
@@ -888,7 +964,15 @@ export function ExerciseForm({
         {geteilt && speichern}
       </div>
 
-      {geteilt ? (
+      {inSpalte ? (
+        <>
+          {diagrammAbschnitt}
+          {beschreibungAbschnitt}
+          {einordnung}
+          {fotoAbschnitt}
+          {fussnote && <p className="type-body-small text-on-surface-mittel">{fussnote}</p>}
+        </>
+      ) : geteilt ? (
         // Links der Inhalt — Bild, Ablauf, Foto —, rechts die Einordnung.
         <ZweiSpalten
           spalte={einordnung}
@@ -909,11 +993,8 @@ export function ExerciseForm({
           {beschreibungAbschnitt}
           {materialAbschnitt}
           {fotoAbschnitt}
+          <div className="flex items-center gap-3 border-t border-linie pt-5">{speichern}</div>
         </>
-      )}
-
-      {!geteilt && (
-        <div className="flex items-center gap-3 border-t border-linie pt-5">{speichern}</div>
       )}
     </form>
   );

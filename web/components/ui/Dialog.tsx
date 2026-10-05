@@ -54,7 +54,9 @@ export function Dialog({
       )}
     >
       {title && (
-        <h2 className="type-headline-small mb-3 text-on-surface">
+        // Title Large wie der Name auf Übungsseite und Detail (PO 2026-10-05):
+        // Ein Dialog ist ein Arbeitsschritt, kein Plakat.
+        <h2 className="type-title-large mb-3 text-on-surface">
           {title}
         </h2>
       )}

@@ -9,7 +9,7 @@ Der Ball kommt per diagonalem Pass. Das Kind nimmt ihn nach vorn mit und schiess
 ## Üben
 
 - Den Ball kontrolliert nach vorn mitnehmen.
-- Vor dem Schuss die offene Ecke sehen — Foto im Kopf — und sie anvisieren.
+- Vor dem Schuss die offene Ecke sehen - Foto im Kopf - und sie anvisieren.
 
 ## Wett-eifern
 

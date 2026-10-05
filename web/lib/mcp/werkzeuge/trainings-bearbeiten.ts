@@ -101,7 +101,7 @@ export const trainingKategorienSetzen = werkzeug({
     "Ersetzt die Alterskategorien eines Trainings. Mindestens eine bleibt, alle aus der " +
     "Altersstufe des Trainings (die Altersstufe selbst steht fest). Übungen, die danach " +
     "keine der Kategorien mehr abdecken, bleiben im Training und werden in " +
-    "«nicht_mehr_passend» genannt — über alle Varianten. Ob sie bleiben, entscheidest du; " +
+    "«nicht_mehr_passend» genannt - über alle Varianten. Ob sie bleiben, entscheidest du; " +
     `entfernen lassen sie sich mit «training_uebung_entfernen». ${KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
@@ -142,7 +142,7 @@ export const trainingUebungEntfernen = werkzeug({
     "Gruppen im Durchlauf und ihres Bildes; die Vorlage in der Bibliothek bleibt unberührt. " +
     "Wie viele Gruppen ihren Durchlauf tragen, zeigt vorher «training_abrufen» je Übung " +
     "(«gruppen»); das Ergebnis nennt sie noch einmal. Bei einem öffentlichen Training lässt " +
-    "sich die letzte Übung eines Pflicht-Abschnitts nicht entfernen — dann zuerst auf " +
+    "sich die letzte Übung eines Pflicht-Abschnitts nicht entfernen - dann zuerst auf " +
     `Entwurf setzen. ${KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ fassung_id: FassungId }),
@@ -176,7 +176,7 @@ export const trainingUebungenOrdnen = werkzeug({
     "ein Trainingsteil bzw. Block, im Kinderfussball-Hauptteil zusätzlich die " +
     "Hauptteilkategorie und im Hauptteil zusätzlich die Variante (Pflicht, sobald das " +
     "Training mehrere führt). «fassung_ids» nennt ALLE Übungen dieses Abschnitts, jede genau " +
-    "einmal, in der gewünschten Folge — die Kennungen und Abschnitte liefert " +
+    "einmal, in der gewünschten Folge - die Kennungen und Abschnitte liefert " +
     "«training_abrufen». Fehlt eine oder gehört eine nicht dazu, nennt die Meldung sie mit " +
     `Namen und ändert nichts. ${KENNUNG_FEHLER}`,
   nurLesen: false,
@@ -242,7 +242,7 @@ export const trainingUebungNotizSetzen = werkzeug({
   beschreibung:
     "Hält zu einer Übung in diesem Training eine Notiz fest, ändert oder leert sie " +
     `(höchstens ${NOTIZ_MAX} Zeichen; ein leerer Text entfernt sie). Die Notiz gehört dem ` +
-    `Training, nicht der Übung — in die Bibliothek gelangt sie nie. ${KENNUNG_FEHLER}`,
+    `Training, nicht der Übung - in die Bibliothek gelangt sie nie. ${KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     fassung_id: FassungId,
@@ -264,7 +264,7 @@ export const trainingVeroeffentlichen = werkzeug({
   name: "training_veroeffentlichen",
   titel: "Training veröffentlichen",
   beschreibung:
-    "Schaltet ein eigenes persönliches Training öffentlich — ohne Rückfrage. Tragweite, die " +
+    "Schaltet ein eigenes persönliches Training öffentlich - ohne Rückfrage. Tragweite, die " +
     `du dem Trainer vorher nennen solltest: «${TRAGWEITE_VEROEFFENTLICHEN}» Es entsteht keine ` +
     "Kopie und nichts wird eingefroren: Das Training bleibt bearbeitbar, die Öffentlichkeit " +
     "sieht jeweils den aktuellen Stand. Ein Team-Training lässt sich nicht veröffentlichen " +
@@ -272,7 +272,7 @@ export const trainingVeroeffentlichen = werkzeug({
     "Bedingungen erfüllt sind, zeigt vorher «training_hinweise_abrufen» (Einträge mit «sperrt: " +
     "true»). Fehlt etwas, lehnt das Werkzeug mit der Fehlerart «bedingung» ab und nennt ALLE " +
     "fehlenden Bedingungen; ergänzt wird nichts von selbst. Solange das Training öffentlich " +
-    "ist, weist KiFu jede Änderung ab, die eine Bedingung verletzte — dann zuerst " +
+    "ist, weist KiFu jede Änderung ab, die eine Bedingung verletzte - dann zuerst " +
     "«training_auf_entwurf_setzen». Das Ergebnis nennt den Anzeigenamen, der nun als Urheber " +
     `sichtbar ist («urheber»), und die Tragweite. ${KENNUNG_FEHLER}`,
   nurLesen: false,
@@ -294,7 +294,7 @@ export const trainingAufEntwurfSetzen = werkzeug({
   titel: "Training auf Entwurf setzen",
   beschreibung:
     "Nimmt ein eigenes öffentliches Training aus dem öffentlichen Bestand; im Übrigen bleibt " +
-    "es unberührt. Kopien, die andere bereits übernommen haben, bleiben bestehen — sie sind " +
+    "es unberührt. Kopien, die andere bereits übernommen haben, bleiben bestehen - sie sind " +
     "eigenständige Trainings; benachrichtigt wird niemand. Ein Entwurf bleibt Entwurf. " +
     "Team-Trainings sind nie öffentlich («regel»). Danach lassen sich auch Änderungen machen, " +
     `die ein öffentliches Training nicht erlaubt. ${KENNUNG_FEHLER}`,

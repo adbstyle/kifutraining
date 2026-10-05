@@ -4,11 +4,11 @@
 
 ## Offen starten
 
-Farbige Reifen liegen verstreut in einem abgesteckten Feld. Die Kinder bewegen sich frei und hüpfen immer wieder in einen Reifen — einbeinig oder beidbeinig. Zuerst jedes für sich, dann zu zweit: Eines hüpft vor, das andere macht es nach, danach Wechsel.
+Farbige Reifen liegen verstreut in einem abgesteckten Feld. Die Kinder bewegen sich frei und hüpfen immer wieder in einen Reifen - einbeinig oder beidbeinig. Zuerst jedes für sich, dann zu zweit: Eines hüpft vor, das andere macht es nach, danach Wechsel.
 
 ## Üben
 
-- Sauber landen, ohne den Reifen zu berühren — auf dem Vorderfuss, leicht wie eine Gazelle.
+- Sauber landen, ohne den Reifen zu berühren - auf dem Vorderfuss, leicht wie eine Gazelle.
 
 ## Wett-eifern
 

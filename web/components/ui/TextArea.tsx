@@ -9,6 +9,9 @@ export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
   /** Fester Hinweis hinter einem ⓘ (siehe `Feld`). */
   info?: ReactNode;
   error?: boolean;
+  /** Den Namen nur der Vorlesehilfe geben (siehe `Feld`) — wo er schon
+   *  daneben steht, etwa in einer bearbeitbaren Eigenschaft. */
+  labelVersteckt?: boolean;
 }
 
 /* Text-Area (mehrzeilig) — natives <textarea>: Enter = Zeilenumbruch. Name über
@@ -18,10 +21,18 @@ export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
    rund zehn Zeilen, danach scrollt sie. Leer steht der Name als Platzhalter
    im Feld (siehe `Feld`). */
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  ({ label, supportingText, info, error = false, id, className, ...props }, ref) => {
+  ({ label, supportingText, info, error = false, labelVersteckt, id, className, ...props }, ref) => {
     const fid = useFeldId(id);
     return (
-      <Feld id={fid} label={label} hinweis={supportingText} info={info} error={error} className={className}>
+      <Feld
+        id={fid}
+        label={label}
+        labelVersteckt={labelVersteckt}
+        hinweis={supportingText}
+        info={info}
+        error={error}
+        className={className}
+      >
         <textarea
           id={fid}
           ref={ref}

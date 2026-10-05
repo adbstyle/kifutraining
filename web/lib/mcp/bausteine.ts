@@ -77,7 +77,7 @@ function schemaText(stufe: Altersstufe): string {
   const teile = einordnungenFuer(stufe).map((g) => {
     if (g.bloecke.length > 0) return `${g.label}: ${liste(g.bloecke)}`;
     const hkat = traegtHauptteilkategorie(stufe, g.teil)
-      ? ` — Hauptteilkategorie Pflicht: ${liste(HAUPTTEILKATEGORIEN)}`
+      ? ` - Hauptteilkategorie Pflicht: ${liste(HAUPTTEILKATEGORIEN)}`
       : "";
     return `${g.teil} (${g.label}${hkat})`;
   });

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NewPasswordForm } from "./NewPasswordForm";
 
 export const metadata: Metadata = {
-  title: "Neues Passwort — KiFu",
+  title: "Neues Passwort - KiFu",
   robots: { index: false },
 };
 

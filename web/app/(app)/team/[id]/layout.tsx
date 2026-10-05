@@ -5,7 +5,7 @@ import { TeamAnsichten } from "@/components/team/TeamAnsichten";
 import { getTeam } from "@/lib/queries/teams";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Team — KiFu", robots: { index: false } };
+export const metadata: Metadata = { title: "Team - KiFu", robots: { index: false } };
 
 /* Der Rahmen um alle Ansichten eines Teams (Story 17).
  *

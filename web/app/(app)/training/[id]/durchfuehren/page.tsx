@@ -7,7 +7,7 @@ import { trainingsKrumen } from "@/lib/brotkrumen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Training durchführen — KiFu",
+  title: "Training durchführen - KiFu",
   robots: { index: false },
 };
 

@@ -6,7 +6,7 @@ import { Banner, Button, ButtonLink, Dialog, TextField } from "@/components/ui";
 
 /** Wie lange der Knopf «Kopiert» zeigt. */
 const KOPIERT_MS = 2500;
-const KOPIEREN_FEHLER = "Kopieren ging nicht — markiere den Link und kopiere ihn von Hand.";
+const KOPIEREN_FEHLER = "Kopieren ging nicht - markiere den Link und kopiere ihn von Hand.";
 
 /* Der persönliche Abo-Link (#330). Er ist ein Geheimnis: Wer ihn hat, sieht
    Zeit und Ort der Termine (AK 3) — die Warnung steht darum immer bei ihm,

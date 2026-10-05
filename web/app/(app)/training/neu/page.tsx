@@ -4,7 +4,7 @@ import { TrainingCreateForm } from "@/components/training/TrainingCreateForm";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Neues Training — KiFu",
+  title: "Neues Training - KiFu",
   robots: { index: false },
 };
 
@@ -23,7 +23,7 @@ export default function NeuesTrainingPage() {
           Neues Training
         </h1>
         <p className="type-body-medium mt-2 text-on-surface-mittel">
-          Gib deinem Training einen Namen und wähle die Altersstufe — sie
+          Gib deinem Training einen Namen und wähle die Altersstufe - sie
           bestimmt Gliederung und Alterskategorien und steht danach fest.
           Anschliessend ordnest du den Trainingsteilen passende Übungen zu.
         </p>
