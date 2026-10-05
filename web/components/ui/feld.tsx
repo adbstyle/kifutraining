@@ -64,6 +64,7 @@ export function Feld({
   leer = false,
   hinweis,
   info,
+  infoAufTouch = false,
   aktion,
   error = false,
   className,
@@ -87,6 +88,11 @@ export function Feld({
    *  Feld (`InfoKnopf`), damit er das Formular nicht dauernd füllt. Das ⓘ
    *  zeigt sich nur beim Überfahren (siehe `.feld-info` in globals.css). */
   info?: ReactNode;
+  /** Auf Touch-Geräten bleibt das ⓘ verborgen (PO-Entscheid). Muss man den
+   *  festen Hinweis trotzdem lesen, bevor man weitermacht — etwa dass die
+   *  Altersstufe eines Trainings lebenslang bindet —, steht er dort als
+   *  Hinweis unter dem Feld, solange kein anderer dasteht. */
+  infoAufTouch?: boolean;
   /** Ein Knopf, der mit dem Feld zusammen eine Handlung bildet (Speichern,
    *  Suchen) — in derselben Zeile wie der Feldkasten, damit beide auf einer
    *  Linie stehen, ob der Name darüber steht oder (leer) ausgeblendet ist. */
@@ -145,6 +151,12 @@ export function Feld({
       {hinweis && (
         <p id={`${id}-hinweis`} className={hinweisKlasse(error)}>
           {hinweis}
+        </p>
+      )}
+      {/* Vorgelesen wird der Hinweis schon mit dem ⓘ (`${id}-info`). */}
+      {info && infoAufTouch && !hinweis && (
+        <p aria-hidden className={cn(hinweisKlasse(), "[@media(hover:hover)]:hidden")}>
+          {info}
         </p>
       )}
     </div>
