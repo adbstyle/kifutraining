@@ -81,8 +81,11 @@ Feld-Diagramm, ein Foto oder beides. Das Diagramm zeichnet der Trainer direkt in
 Erfassen wie beim Bearbeiten; beides ist freiwillig, und die Übung wird mit einem einzigen
 Speichern samt Diagramm gesichert.
 
-Oben stehen die Brotkrumen — beim Erfassen „Übungen › Neue Übung" —, darunter der Name als
-Überschrift, die sich direkt beschreiben lässt, wie der Trainingsname im Trainings-Editor. Die
+Oben stehen die Brotkrumen — beim Erfassen „Übungen › Neue Übung" —, darunter der Name. Beim
+Erfassen ist er ein gewöhnliches Feld mit grosser Schrift: leer steht „Name der Übung" darin,
+ausgefüllt steht der Feldname klein über dem Wert, wie bei den übrigen Feldern. Beim Bearbeiten
+ist der Name die Überschrift selbst, die sich direkt beschreiben lässt, wie der Trainingsname im
+Trainings-Editor. Die
 „Einordnung" umfasst Altersstufe, Alterskategorie, den Trainingsteil — im Kinderfussball-Hauptteil
 samt Hauptteilkategorie, im Juniorenfussball samt Block, jeweils in einem Feld —, Feldtyp oder
 Spielfeldgrösse, die Anzahl Spieler:innen, Übungstyp und Erscheinungsform. Herkunft und
