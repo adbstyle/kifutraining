@@ -166,7 +166,6 @@ export default async function TrainingViewPage({
         kopfImDruck
         spalte={
           <AnsichtSpalte
-            uebungen={sichtbar}
             altersstufe={training.altersstufe}
             variante={aktive?.id}
             kopierbar={!!user}

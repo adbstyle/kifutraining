@@ -62,9 +62,8 @@ export default async function FassungBearbeitenPage({
 
   return (
     <Seitenrahmen breite="6xl" geteilt krumen={crumbs}>
-      <InSpalteWeiterleiten ziel={spalte} />
       <h1 className="sr-only">Übung bearbeiten</h1>
-      <div className="contents xl:hidden">
+      <InSpalteWeiterleiten ziel={spalte}>
         <ExerciseForm
           action={updateFassung.bind(null, f.id, variante)}
           diagramm={f.diagramm}
@@ -94,7 +93,7 @@ export default async function FassungBearbeitenPage({
           bildEntfernenMoeglich
           fussnote="Änderungen gelten nur für dieses Training."
         />
-      </div>
+      </InSpalteWeiterleiten>
     </Seitenrahmen>
   );
 }

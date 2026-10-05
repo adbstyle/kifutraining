@@ -44,22 +44,22 @@ export function AnsichtFlaeche({
   anfangsBearbeiten: boolean;
   uebungParam?: string;
   bearbeitbar: boolean;
-  /** Die angezeigten Übungen — für den Namen in der Rückfrage. */
+  /** Die angezeigten Übungen — nur sie lassen sich öffnen. Sie kommen einmal
+   *  hierher; Spalte und Zeilen lesen die geöffnete aus dem Rahmen. */
   uebungen: readonly TrainingExerciseItem[];
   children: ReactNode;
 }) {
   const steuerung = useOffeneUebung({
+    uebungen,
     anfangsOffenId,
     anfangsBearbeiten,
     uebungParam,
     bearbeitbar,
   });
-  const offen = uebungen.find((u) => u.id === steuerung.offenId);
-
   return (
     <Kontext.Provider value={steuerung}>
       {children}
-      <VerwerfenRueckfrage steuerung={steuerung} name={offen?.name} />
+      <VerwerfenRueckfrage steuerung={steuerung} name={steuerung.offen?.name} />
     </Kontext.Provider>
   );
 }
@@ -67,14 +67,11 @@ export function AnsichtFlaeche({
 /** Die Spalte der Ansicht: die geöffnete Übung — für Berechtigte auch zum
  *  Bearbeiten — oder die Eigenschaften. */
 export function AnsichtSpalte({
-  uebungen,
   altersstufe,
   variante,
   kopierbar,
   eigenschaften,
 }: {
-  /** Die angezeigten Übungen — nur sie lassen sich öffnen. */
-  uebungen: TrainingExerciseItem[];
   altersstufe: Altersstufe;
   /** Die angezeigte Variante des Hauptteils. */
   variante: string | undefined;
@@ -83,7 +80,7 @@ export function AnsichtSpalte({
   eigenschaften: ReactNode;
 }) {
   const steuerung = useAnsichtFlaeche();
-  const offen = uebungen.find((u) => u.id === steuerung.offenId);
+  const { offen } = steuerung;
   return (
     <OffeneUebungSpalte
       steuerung={steuerung}

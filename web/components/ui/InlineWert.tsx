@@ -69,7 +69,6 @@ export function WertKnopf({
       ref={knopf}
       type="button"
       onClick={onClick}
-      aria-label={`${label} bearbeiten`}
       aria-describedby={beschreibung}
       className={cn(
         "state focus-ring -mx-2 -my-1 cursor-pointer rounded-flaeche px-2 py-1 text-left",
@@ -78,7 +77,12 @@ export function WertKnopf({
         befund && "text-error",
       )}
     >
+      {/* Der Name des Knopfs ist, was er zeigt — samt Bezeichnung und
+          Handlung für die Vorlesehilfe: «Ziel: Passen unter Druck,
+          bearbeiten». Ein `aria-label` verdrängte den Wert. */}
+      <span className="sr-only">{label}: </span>
       {children}
+      <span className="sr-only">, bearbeiten</span>
     </button>
   );
 }

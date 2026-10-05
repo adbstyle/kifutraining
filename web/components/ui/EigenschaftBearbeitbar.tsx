@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { Eigenschaft } from "./Eigenschaften";
 import { InlineWert, WertKnopf, useFokusZurueck } from "./InlineWert";
 import { MultiSelect } from "./MultiSelect";
 import type { SelectOption } from "./Select";
@@ -24,15 +25,6 @@ import type { SelectOption } from "./Select";
    Gespeichert wird beim Aufrufer (`onSpeichern`, `onChange`); der meldet auch,
    was nicht ging. */
 
-function Zeile({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="contents">
-      <dt className="type-body-medium text-on-surface-mittel">{label}</dt>
-      <dd className="type-body-medium min-w-0 text-on-surface">{children}</dd>
-    </div>
-  );
-}
-
 export function EigenschaftText({
   label,
   wert,
@@ -49,7 +41,7 @@ export function EigenschaftText({
   onSpeichern: (neu: string) => void;
 }) {
   return (
-    <Zeile label={label}>
+    <Eigenschaft label={label}>
       <InlineWert
         label={label}
         wert={wert}
@@ -57,7 +49,7 @@ export function EigenschaftText({
         maxLength={maxLength}
         onSpeichern={onSpeichern}
       />
-    </Zeile>
+    </Eigenschaft>
   );
 }
 
@@ -87,7 +79,7 @@ export function EigenschaftAuswahl({
   const fokus = useFokusZurueck(offen);
 
   return (
-    <Zeile label={label}>
+    <Eigenschaft label={label}>
       {offen ? (
         <MultiSelect
           label={label}
@@ -114,6 +106,6 @@ export function EigenschaftAuswahl({
         </WertKnopf>
       )}
       {zusatz}
-    </Zeile>
+    </Eigenschaft>
   );
 }

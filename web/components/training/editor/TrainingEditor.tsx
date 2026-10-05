@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Clock } from "lucide-react";
 import {
@@ -234,6 +234,7 @@ export function TrainingEditor({
   // Überlagerungen weg — der Server kennt sie dann anders, etwa ohne Dauer im
   // Auffangen oder ohne Durchlauf ausserhalb des Hauptteils.
   const steuerung = useOffeneUebung({
+    uebungen: sichtbar,
     anfangsOffenId: anfangsUebung?.id ?? null,
     anfangsBearbeiten: !!bearbeitenParam,
     uebungParam,
@@ -245,17 +246,9 @@ export function TrainingEditor({
     },
   });
 
-  // Die geöffnete Übung, wie sie gerade angezeigt wird — `undefined`, sobald
-  // sie nicht mehr unter den Übungen steht: entfernt, in einem anderen
-  // Fenster gelöscht oder in einer anderen Variante als der angezeigten. Dann
-  // schliesst sie (#371 AK 9, Epic EK 14). Der Inhalt kommt aus dem laufenden
-  // Stand, damit Dauer, Notiz und Durchlauf mitgehen (#371 PC 1).
-  const offenId = steuerung.offenId;
-  const offen = offenId ? sichtbar.find((e) => e.id === offenId) : undefined;
-  useEffect(() => {
-    if (offenId && !offen) steuerung.zeige(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [offenId, offen]);
+  // Die geöffnete Übung im laufenden Stand — Dauer, Notiz und Durchlauf gehen
+  // mit (#371 PC 1); schliesst sie, wenn sie nicht mehr angezeigt wird.
+  const { offenId, offen } = steuerung;
 
   /** Die Adresse an die angezeigte Variante angleichen — ohne Navigation.
    *

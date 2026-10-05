@@ -40,14 +40,22 @@ const ZURUECK_FRIST_MS = 500;
  * Wer nach dem Verlassen per Link zurückkommt, trifft den Wächter nicht mehr
  * an: Der Link ersetzt ihn. Die Weiterleitung nach dem Speichern tut dasselbe
  * (`createExercise` leitet mit `replace` weiter).
+ *
+ * `amOrt`: Die Angaben werden gesichert oder verworfen, ohne dass die Seite
+ * wechselt — die Übung in der Spalte eines Trainings (#372). Dort ersetzt
+ * keine Weiterleitung den Wächter; er nimmt seinen Eintrag darum selbst
+ * zurück, sobald er nicht mehr gebraucht wird. Sonst führte das nächste
+ * Zurück bloss auf dieselbe Seite und schiene nichts zu tun.
  */
 export function VerlassenWarnung({
   aktiv,
   titel,
   text,
+  amOrt = false,
 }: {
   /** Hält die Seite gerade ungesicherte Angaben? */
   aktiv: boolean;
+  amOrt?: boolean;
   titel: string;
   text: string;
 }) {
@@ -141,8 +149,26 @@ export function VerlassenWarnung({
       window.removeEventListener("beforeunload", vorEntladen);
       document.removeEventListener("click", klick, true);
       window.removeEventListener("popstate", zurueck);
+      // Am Ort gesichert oder verworfen, und der Wächter ist noch der
+      // aktuelle Eintrag: einen Schritt zurück auf den Eintrag darunter —
+      // dieselbe Seite — und dort die Adresse übernehmen, die gerade gilt
+      // (sie kann sich beim Schliessen schon geändert haben).
+      if (amOrt && !freigegeben.current && !gehtZurueck.current && aufWaechter()) {
+        const ziel = window.location.href;
+        aufWaechterRef.current = false;
+        // Über den Router und nicht über `replaceState`: Er stellt nach dem
+        // Zurück den Eintrag darunter wieder her und schriebe dessen alte
+        // Adresse sonst über die neue. Seine Schritte laufen der Reihe nach.
+        const angekommen = () => {
+          window.removeEventListener("popstate", angekommen);
+          const url = new URL(ziel);
+          if (window.location.href !== ziel) router.replace(url.pathname + url.search, { scroll: false });
+        };
+        window.addEventListener("popstate", angekommen);
+        window.history.back();
+      }
     };
-  }, [aktiv, router]);
+  }, [aktiv, router, amOrt]);
 
   function bleiben() {
     ausstehend?.bleiben?.();

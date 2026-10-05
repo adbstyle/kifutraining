@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-
-/** Ab hier teilt sich die Fläche — Tailwinds `xl`, wie `ZweiSpalten`. */
-const AB_XL = "(min-width: 80rem)";
+import { AB_XL } from "@/lib/breite";
 
 /**
  * Die eigene Bearbeitungsseite einer Übung im Training gibt es breit nicht
@@ -13,13 +11,18 @@ const AB_XL = "(min-width: 80rem)";
  * aus dem Feld-Diagramm — führt breit darum in die Spalte (#373 PC 3), schmal
  * bleibt sie die Maske.
  *
- * Die Breite kennt erst der Browser; bis er entschieden hat, blendet die Seite
- * ihre Maske breit aus (`xl:hidden`), damit sie nicht kurz aufblitzt.
+ * Entschieden wird einmal, beim Öffnen. Bis dahin verbirgt der Rahmen die
+ * Maske breit, damit sie nicht kurz aufblitzt; danach zeigt er sie in jeder
+ * Breite. Wer die Maske schmal geöffnet hat und das Fenster später breit
+ * zieht, behält sie samt seinen Eingaben — ein Umleiten in dem Moment
+ * verwürfe sie ohne Rückfrage.
  */
-export function InSpalteWeiterleiten({ ziel }: { ziel: string }) {
+export function InSpalteWeiterleiten({ ziel, children }: { ziel: string; children: ReactNode }) {
   const router = useRouter();
+  const [geprueft, setGeprueft] = useState(false);
   useEffect(() => {
     if (window.matchMedia(AB_XL).matches) router.replace(ziel);
+    else setGeprueft(true);
   }, [router, ziel]);
-  return null;
+  return <div className={geprueft ? "contents" : "contents xl:hidden"}>{children}</div>;
 }

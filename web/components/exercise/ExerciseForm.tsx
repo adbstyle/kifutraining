@@ -70,6 +70,7 @@ import { cn } from "@/lib/cn";
 import { LEERES_DIAGRAMM, parseDiagramm, type DiagrammData } from "@/lib/diagramm";
 import { inputImageError, IMAGE_ACCEPT } from "@/lib/image";
 import { compressImage } from "@/lib/image-compress";
+import { useIsomorpherEffekt } from "@/lib/use-isomorpher-effekt";
 
 
 /** Was über und unter beiden Spalten steht (Name, Meldungen, Speichern), so
@@ -296,7 +297,12 @@ export function ExerciseForm({
   // gemeldet wird aber nur, wenn sich hier etwas geändert hat — das Gesichert
   // genau einmal je Antwort des Servers.
   const spalteRef = useRef(inSpalte);
-  spalteRef.current = inSpalte;
+  // Nachgeführt nach dem Rendern, nicht währenddessen: Ein verworfenes
+  // Rendern soll keine Rückrufe hinterlassen, die nie galten. Als
+  // Layout-Effekt vor den Effekten unten, die sie aufrufen.
+  useIsomorpherEffekt(() => {
+    spalteRef.current = inSpalte;
+  });
   useEffect(() => {
     spalteRef.current?.onUngesichert(ungesichert);
   }, [ungesichert]);
@@ -883,8 +889,11 @@ export function ExerciseForm({
 
       <VerlassenWarnung
         // Während des Speicherns nicht: Die Weiterleitung nach dem Speichern
-        // ist kein Verlassen.
-        aktiv={ungesichert && !isPending}
+        // ist kein Verlassen. In der Spalte gibt es keine Weiterleitung — dort
+        // bleibt der Wächter, bis die Maske schliesst, und nimmt dann seinen
+        // Eintrag im Verlauf selbst zurück.
+        aktiv={ungesichert && (!isPending || !!inSpalte)}
+        amOrt={!!inSpalte}
         titel={erfassen ? "Erfassung verlassen?" : "Bearbeitung verlassen?"}
         text={
           erfassen

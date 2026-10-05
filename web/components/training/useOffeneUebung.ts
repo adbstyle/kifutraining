@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { schreibeUebungInAdresse } from "@/lib/offene-uebung";
+import type { TrainingExerciseItem } from "@/lib/queries/trainings";
 
 /** Was Zeilen, Spalte und Rückfrage von der geöffneten Übung wissen müssen. */
-export type OffeneUebung = ReturnType<typeof useOffeneUebung>;
+export type OffeneUebung<T extends { id: string } = TrainingExerciseItem> = ReturnType<
+  typeof useOffeneUebung<T>
+>;
 
 /**
  * Die geöffnete Übung eines Trainings (Epic #369) — beim Zusammenstellen wie
@@ -27,14 +30,21 @@ export type OffeneUebung = ReturnType<typeof useOffeneUebung>;
  *
  * `bearbeitbar`: Ohne Bearbeitungsrecht öffnet nichts zum Bearbeiten, auch
  * keine Adresse mit `bearbeiten` (#374 AK 7).
+ *
+ * `uebungen`: die Übungen, wie die Seite sie gerade zeigt. Die geöffnete kommt
+ * aus ihnen (`offen`), damit sie den laufenden Stand trägt; steht sie nicht
+ * mehr darunter — entfernt, in einem anderen Fenster gelöscht, in einer
+ * anderen Variante —, schliesst sie (#371 AK 9, Epic EK 14).
  */
-export function useOffeneUebung({
+export function useOffeneUebung<T extends { id: string }>({
+  uebungen,
   anfangsOffenId,
   anfangsBearbeiten,
   uebungParam,
   bearbeitbar,
   beimSichern,
 }: {
+  uebungen: readonly T[];
   anfangsOffenId: string | null;
   anfangsBearbeiten: boolean;
   /** Was die Adresse beim Laden meinte. */
@@ -51,12 +61,20 @@ export function useOffeneUebung({
   const [bearbeiten, setBearbeiten] = useState(bearbeitbar && !!anfangsOffenId && anfangsBearbeiten);
   const [ungesichert, setUngesichert] = useState(false);
   const [rueckfrage, setRueckfrage] = useState<(() => void) | null>(null);
+  const offen = offenId ? uebungen.find((u) => u.id === offenId) : undefined;
 
   useEffect(() => {
     if (!anfangsOffenId && uebungParam) schreibeUebungInAdresse(null);
     // Nur beim Laden: Danach schreibt `zeige` die Adresse.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (offenId && !offen) zeige(null);
+    // `zeige` ist bei jedem Rendern neu; geprüft wird, wenn sich das
+    // Angezeigte ändert.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offenId, offen]);
 
   /** Ohne Rückfrage zeigen — für die Fälle, in denen nichts zu fragen ist. */
   function zeige(id: string | null, zumBearbeiten = false) {
@@ -98,6 +116,8 @@ export function useOffeneUebung({
 
   return {
     offenId,
+    /** Die geöffnete Übung im laufenden Stand, sonst `undefined`. */
+    offen,
     bearbeiten,
     bearbeitbar,
     setUngesichert,

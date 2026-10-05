@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { renameTraining, setTrainingStufen, setTrainingZiel } from "@/lib/actions/trainings";
@@ -78,14 +78,26 @@ export function useStufenAendern(trainingId: string, gespeichert: string[]) {
   // Was danach nicht mehr passt — die Seite entscheidet, was sie damit anbietet.
   const [abweichend, setAbweichend] = useState<AbweichendeUebung[] | null>(null);
 
+  // Bei offener Liste wählt man oft mehrmals rasch hintereinander. Die
+  // Aufträge laufen darum nacheinander und nicht gleichzeitig — sonst könnte
+  // der Server einen älteren Stand zuletzt schreiben —, und was der Trainer
+  // sieht, entscheidet allein die Antwort auf den letzten. Scheitert ein
+  // Auftrag, gilt wieder der zuletzt bestätigte Stand, nicht der vor dem
+  // Klick (der war womöglich selbst noch unbestätigt).
+  const warteschlange = useRef<Promise<void>>(Promise.resolve());
+  const letzter = useRef(0);
+  const bestaetigt = useRef(gespeichert);
+
   function aendere(naechste: string[]) {
-    const vorher = stufen;
     setStufen(naechste);
-    startTransition(async () => {
+    const auftrag = ++letzter.current;
+    warteschlange.current = warteschlange.current.then(async () => {
       const r = await setTrainingStufen(trainingId, naechste);
-      router.refresh();
+      if (r.ok) bestaetigt.current = naechste;
+      if (auftrag !== letzter.current) return;
+      startTransition(() => router.refresh());
       if (!r.ok) {
-        setStufen(vorher);
+        setStufen(bestaetigt.current);
         melde(r.error ?? "Speichern fehlgeschlagen.");
         return;
       }
