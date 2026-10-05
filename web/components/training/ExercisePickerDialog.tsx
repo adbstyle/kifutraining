@@ -8,7 +8,7 @@ import {
   HerkunftBadge,
   AuswahlFilter,
   ButtonLink,
-  IconButton,
+  UebungsBild,
   Zaehler,
   Badge,
   Banner,
@@ -189,9 +189,8 @@ export function ExercisePickerDialog({
       open={open}
       onClose={onClose}
       title={`Übung hinzufügen — ${ziel}`}
-      /* Breiter als die 28rem des Kit-Dialogs. Der Dialog trägt eine
-         Trefferliste, deren Zeilen Name, Alterskategorien und Herkunft
-         nebeneinander führen; mit 52rem bekommen sie Luft. */
+      /* Breiter als die 28rem des Kit-Dialogs: Er trägt ein Raster aus
+         Karten, drei nebeneinander, wie die Diagramm-Vorlagen. */
       className="w-[min(52rem,calc(100vw-2rem))]"
     >
       <div className="flex flex-col gap-4">
@@ -224,28 +223,31 @@ export function ExercisePickerDialog({
 
         {error && <Banner tone="fehler">{error}</Banner>}
 
-        {/* Trefferliste. Die Mindesthöhe ist das, was dem Dialog seine Statur
-            gibt: Ohne sie fällt er auf seinen Inhalt zusammen, sobald die Liste
-            kurz oder leer ist — und dann bleibt den Filtern darüber so wenig
-            Raum, dass ihr Panel auf zwei Zeilen zusammenschnurrt oder nach oben
-            über den Titel klappt. Sie hält ausserdem die Höhe ruhig:
-            Der Dialog springt beim Eingrenzen nicht mehr auf und zu.
-            Nach oben gedeckelt bleibt sie wie bisher; beide Schranken weichen
-            auf kleinen Schirmen dem Sichtfeld.
-            Bewusst in Kauf genommen: Auf einem Telefon im Querformat (gemessen
-            844×390) wird der Dialog höher als das Sichtfeld und scrollt — von
-            der Trefferliste stehen dann nur wenige Zeilen im Bild. Ein Training
-            wird am Schreibtisch oder im Hochformat zusammengestellt; dort
-            stimmt das Bild. */}
-        <ul className="-mx-2 flex min-h-[min(20rem,45vh)] max-h-[min(24rem,50vh)] flex-col overflow-y-auto">
+        {/* Die Treffer als Raster aus Karten, wie die Diagramm-Vorlagen
+            (PO 2026-10-05): vorne, was zeigt, ob die Übung passt — Diagramm
+            oder Bild und der Name —, danach Alterskategorien und Herkunft.
+            Eine Karte ist ein Knopf und übernimmt die Übung; die Zahl zeigt
+            die Übernahmen dieser Sitzung.
+
+            Die Mindesthöhe gibt dem Dialog seine Statur: Ohne sie fällt er auf
+            seinen Inhalt zusammen, sobald die Liste kurz oder leer ist — und
+            dann bleibt den Filtern darüber so wenig Raum, dass ihr Panel auf
+            zwei Zeilen zusammenschnurrt oder nach oben über den Titel klappt.
+            Sie hält ausserdem die Höhe ruhig: Der Dialog springt beim
+            Eingrenzen nicht auf und zu. Nach oben gedeckelt; beide Schranken
+            weichen auf kleinen Schirmen dem Sichtfeld. Auf einem Telefon im
+            Querformat wird der Dialog höher als das Sichtfeld und scrollt —
+            ein Training wird am Schreibtisch oder im Hochformat
+            zusammengestellt. */}
+        <div className="-mx-1 flex min-h-[min(20rem,45vh)] max-h-[min(28rem,55vh)] flex-col overflow-y-auto px-1 py-1">
           {loading && results.length === 0 ? (
-            <li className="flex flex-1 items-center justify-center px-2 py-6 text-center type-body-medium text-on-surface-mittel">
+            <p className="flex flex-1 items-center justify-center py-6 text-center type-body-medium text-on-surface-mittel">
               Lädt…
-            </li>
+            </p>
           ) : results.length === 0 ? (
-            // `flex-1` zentriert die Meldung in der nun hohen Liste — am oberen
+            // `flex-1` zentriert die Meldung im nun hohen Kasten — am oberen
             // Rand eines leeren Kastens sähe sie wie ein Rest aus.
-            <li className="flex flex-1 flex-col items-center justify-center gap-3 px-2 py-6 text-center type-body-medium text-on-surface-mittel">
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6 text-center type-body-medium text-on-surface-mittel">
               {filterAktiv ? (
                 // Eingegrenzt: es gibt hier etwas, nur nicht das Gesuchte.
                 KEINE_PASSENDE_UEBUNG
@@ -270,69 +272,69 @@ export function ExercisePickerDialog({
                   </ButtonLink>
                 </>
               )}
-            </li>
+            </div>
           ) : (
-            results.map((ex) => {
-              const count = counts[ex.id] ?? 0;
-              const mismatch = !stufenAbgedeckt(trainingStufen, ex.kategorien);
-              return (
-                /* Die Zustands-Ebene sitzt hier bewusst auf dem `<li>` und
-                   nicht auf dem interaktiven Kind — anders als bei den Karten,
-                   wo ein Link die ganze Fläche trägt. Die Zeile ist kein
-                   Bedienelement: Sie ist nicht fokussierbar, hat keine Rolle
-                   und löst nichts aus. Was `state` hier leistet, ist allein
-                   die Zeigerspur über die volle Breite — Name links, Knopf
-                   rechts —, damit sichtbar bleibt, welcher Übung der Knopf am
-                   Rand gehört. Ein Fokus-Anteil wäre nicht halb, sondern falsch:
-                   Die Tastatur landet auf dem Übernehmen-Knopf, und der trägt
-                   seinen Ring und seine eigene Ebene (`IconButton`). */
-                <li
-                  key={ex.id}
-                  /* `shrink-0`: Die Liste ist seit der Mindesthöhe ein
-                     Flex-Container. Ohne die Schranke stauchten sich die Zeilen
-                     bei vielen Treffern gegenseitig, statt dass die Liste
-                     scrollt. */
-                  className="state flex shrink-0 items-center gap-2 rounded-flaeche px-2"
-                >
-                  <span className="flex min-w-0 flex-1 flex-col gap-1 py-2.5">
-                    <span className="flex items-center gap-2">
-                      <span className="truncate type-body-medium text-on-surface">
-                        {ex.name}
-                      </span>
-                      {mismatch && (
-                        <TriangleAlert
-                          size={14}
-                          className="shrink-0 text-primary"
-                          aria-label={STUFE_ABWEICHEND_TEXT}
-                        />
-                      )}
-                    </span>
-                    <span className="flex flex-wrap items-center gap-1.5">
-                      {(ex.kategorien as KategorieSlug[]).map((k) => (
-                        <KategorieChip key={k} k={k} />
-                      ))}
-                      <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
-                    </span>
-                  </span>
-
-                  {/* Nur Hinzufügen; die Zahl zeigt die Übernahmen dieser Sitzung. */}
-                  <span className="flex shrink-0 items-center gap-1">
-                    {count > 0 && <Zaehler>{count}×</Zaehler>}
-                    <IconButton
-                      icon={Plus}
-                      label={
+            <ul className="grid grid-cols-2 content-start gap-3 sm:grid-cols-3">
+              {results.map((ex) => {
+                const count = counts[ex.id] ?? 0;
+                const mismatch = !stufenAbgedeckt(trainingStufen, ex.kategorien);
+                return (
+                  <li key={ex.id}>
+                    <button
+                      type="button"
+                      onClick={() => add(ex)}
+                      aria-label={
                         count > 0
                           ? `${ex.name} noch einmal übernehmen (in dieser Sitzung ${count}× übernommen)`
                           : `${ex.name} übernehmen`
                       }
-                      onClick={() => add(ex)}
-                    />
-                  </span>
-                </li>
-              );
-            })
+                      className="focus-ring state flex w-full flex-col overflow-hidden rounded-flaeche border border-linie text-left"
+                    >
+                      <span className="relative block aspect-[16/10] w-full border-b border-linie">
+                        <UebungsBild
+                          name={ex.name}
+                          bildUrl={ex.bild_url}
+                          diagramm={ex.diagramm}
+                          bildQuelle={ex.bild_quelle}
+                          sizes="(min-width: 640px) 16rem, 50vw"
+                        />
+                        {count > 0 && (
+                          <Zaehler className="absolute right-1.5 top-1.5">{count}×</Zaehler>
+                        )}
+                      </span>
+                      <span className="flex flex-col gap-1.5 p-2">
+                        <span className="flex items-center gap-1.5">
+                          <span className="min-w-0 flex-1 truncate type-body-medium text-on-surface">
+                            {ex.name}
+                          </span>
+                          {mismatch && (
+                            <TriangleAlert
+                              size={14}
+                              className="shrink-0 text-primary"
+                              aria-label={STUFE_ABWEICHEND_TEXT}
+                            />
+                          )}
+                          <Plus
+                            size={16}
+                            strokeWidth={2}
+                            aria-hidden
+                            className="shrink-0 text-on-surface-mittel"
+                          />
+                        </span>
+                        <span className="flex flex-wrap items-center gap-1">
+                          {(ex.kategorien as KategorieSlug[]).map((k) => (
+                            <KategorieChip key={k} k={k} />
+                          ))}
+                          <HerkunftBadge herkunft={ex.source} visibility={ex.visibility} />
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           )}
-        </ul>
+        </div>
       </div>
     </Dialog>
   );
