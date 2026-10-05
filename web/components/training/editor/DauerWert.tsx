@@ -47,7 +47,7 @@ export function DauerWert({
       wert={value == null ? "" : String(value)}
       anzeige={
         <>
-          <Clock size={14} strokeWidth={2} aria-hidden className="shrink-0" />
+          <Clock size={14} strokeWidth={2} aria-hidden className="shrink-0 text-on-surface-mittel" />
           {value == null ? "" : formatDuration(value)}
         </>
       }

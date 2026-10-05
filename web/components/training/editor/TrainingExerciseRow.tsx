@@ -132,7 +132,7 @@ export function TrainingExerciseRow({
               den Eigenschaften (PO 2026-10-05). `relative`: Sie liegt über der
               Fläche, mit der die Zeile die Übung öffnet. */}
           {showDuration && (
-            <span className="relative mt-1">
+            <span className="relative mt-1 type-body-medium">
               <DauerWert value={item.durationMin} warnung={dauerWarnung} onChange={onDuration} />
             </span>
           )}
