@@ -5,7 +5,7 @@ import { sichererRuecksprung } from "@/lib/weiterleitung";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
-  title: "Anmelden — KiFu",
+  title: "Anmelden - KiFu",
   robots: { index: false },
 };
 

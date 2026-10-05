@@ -181,7 +181,7 @@ export const uebungAbrufen = werkzeug({
   beschreibung:
     "Liefert eine Übung mit allen Angaben, die ihre Seite in KiFu zeigt: Einordnung, " +
     "Alterskategorien, Gruppengrösse, Material, Ablauf (methodischer Fahrplan oder " +
-    "Beschreibung), Varianten, Herkunft und das Feld-Diagramm als Vektordaten — in derselben " +
+    "Beschreibung), Varianten, Herkunft und das Feld-Diagramm als Vektordaten - in derselben " +
     "Form, die «uebung_diagramm_setzen» annimmt. " +
     "Kennung ist die id oder der slug aus «uebungen_suchen». Eine Übung, die dein " +
     "Konto nicht sehen darf, gilt als nicht gefunden.",

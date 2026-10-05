@@ -116,7 +116,7 @@ export function TeamGefahrenzone({
         <p>
           Du siehst die Trainings und Termine dieses Teams danach nicht mehr.
           Das Team bleibt für die übrigen Mitglieder bestehen. Deine
-          persönlichen Trainings — auch Kopien, die du zu dir übernommen hast —
+          persönlichen Trainings - auch Kopien, die du zu dir übernommen hast -
           bleiben unberührt.
         </p>
       </Dialog>
@@ -147,7 +147,7 @@ export function TeamGefahrenzone({
             />
             <span>
               {letzte
-                ? "Du bist das letzte Mitglied — mit deinem Austritt löst sich das Team auf. Diese Aktion kann nicht rückgängig gemacht werden."
+                ? "Du bist das letzte Mitglied - mit deinem Austritt löst sich das Team auf. Diese Aktion kann nicht rückgängig gemacht werden."
                 : "Diese Aktion kann nicht rückgängig gemacht werden."}
             </span>
           </p>
@@ -160,7 +160,7 @@ export function TeamGefahrenzone({
               {anzahlTermine} {anzahlTermine === 1 ? "Termin entfällt" : "Termine entfallen"}.
             </li>
             <li>
-              Persönliche Trainings der Mitglieder bleiben erhalten — auch
+              Persönliche Trainings der Mitglieder bleiben erhalten - auch
               Kopien aus diesem Team.
             </li>
           </ul>

@@ -56,7 +56,7 @@ export function GesamtMaterialInhalt({
     <div className={className}>
       <p className="type-body-small text-on-surface-mittel">
         Höchster gleichzeitiger Bedarf
-        {mehrereVarianten ? " — reicht für jede Variante des Hauptteils" : ""}.
+        {mehrereVarianten ? " - reicht für jede Variante des Hauptteils" : ""}.
       </p>
       {liste.length > 0 && (
         <div className="type-body-medium mt-2 text-on-surface">

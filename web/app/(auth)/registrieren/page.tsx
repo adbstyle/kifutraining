@@ -4,7 +4,7 @@ import { Card } from "@/components/ui";
 import { RegisterForm } from "./RegisterForm";
 
 export const metadata: Metadata = {
-  title: "Registrieren — KiFu",
+  title: "Registrieren - KiFu",
   robots: { index: false },
 };
 

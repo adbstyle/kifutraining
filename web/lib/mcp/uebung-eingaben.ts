@@ -180,8 +180,8 @@ const Angaben = z.strictObject({
         .nullable()
         .optional()
         .describe(
-          `Gezähltes Material: Art, Menge (ganze Zahl von 1 bis ${MATERIAL_MENGE_MAX}) und — nur bei ` +
-            `${MATERIAL_ARTEN.filter((a) => MATERIAL_KATALOG[a].farbig).join(", ")} — die Farbe; ohne ` +
+          `Gezähltes Material: Art, Menge (ganze Zahl von 1 bis ${MATERIAL_MENGE_MAX}) und - nur bei ` +
+            `${MATERIAL_ARTEN.filter((a) => MATERIAL_KATALOG[a].farbig).join(", ")} - die Farbe; ohne ` +
             "Farbe gilt die des Diagramms. «null» leert die Liste.",
         ),
       ergaenzung: z
@@ -215,13 +215,13 @@ export const UebungKennung = AbrufEingabe.shape.kennung.describe(
  *  JEDE Beschreibung eines Werkzeugs, das `UebungKennung` annimmt —
  *  `check:kern` wacht darüber. */
 export const UEBUNG_KENNUNG_FEHLER =
-  "Fehlerart zur Kennung: «nicht_gefunden» — für dein Konto nicht sichtbar (es gibt sie " +
+  "Fehlerart zur Kennung: «nicht_gefunden» - für dein Konto nicht sichtbar (es gibt sie " +
   "nicht, sie wurde gelöscht oder gehört jemand anderem privat; bewusst nicht unterscheidbar).";
 
 /** Dazu bei jedem Werkzeug, das nur an EIGENEN Übungen wirkt (ändern,
  *  Sichtbarkeit, Diagramm, Mängel) — «uebung_kopieren» liefert es nie. */
 export const UEBUNG_NUR_EIGENE_FEHLER =
-  "Fehlerart «keine_rechte» — eine Übung aus dem Kifu-Manual oder die öffentliche eines anderen " +
+  "Fehlerart «keine_rechte» - eine Übung aus dem Kifu-Manual oder die öffentliche eines anderen " +
   "Kontos: ansehen und mit «uebung_kopieren» kopieren ja, ändern nein.";
 
 const ALS_GANZES = "Beim Ändern ersetzt die neue Angabe die bisherige als Ganzes.";

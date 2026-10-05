@@ -131,7 +131,7 @@ export function SichtbarkeitDialoge({
         <p>
           Das Training verschwindet aus dem öffentlichen Bestand und bleibt im
           Übrigen unberührt. Kopien, die andere bereits übernommen haben, bleiben
-          bestehen — sie sind eigenständig.
+          bestehen - sie sind eigenständig.
         </p>
       </Dialog>
     </>

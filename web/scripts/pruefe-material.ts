@@ -375,7 +375,7 @@ pruefe("Gesamt: Varianten sind Alternativen und zählen mit ihrem grössten Beda
   assert.deepEqual(r.liste, parseMaterialListe([{ art: "minitor", menge: 4 }, { art: "handball", menge: 3 }]));
 });
 
-pruefe("Gesamt: Junioren-Hauptteil — ein Wechsel gilt über beide Blöcke", () => {
+pruefe("Gesamt: Junioren-Hauptteil - ein Wechsel gilt über beide Blöcke", () => {
   const r = gesamtMaterial(
     [
       fassung("j1", "jun-spielformen", [["tor", null, 2]], { gruppen: g("A") }),

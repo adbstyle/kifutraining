@@ -49,7 +49,7 @@ export function ChipMenuDemo() {
     <div className="space-y-6">
       <div>
         <p className="type-label-small mb-2 text-on-surface-mittel">
-          Sequenz aus Nutzertext — jeder Chip ein Bedienelement, ein Tabstopp
+          Sequenz aus Nutzertext - jeder Chip ein Bedienelement, ein Tabstopp
         </p>
         <div className="flex flex-wrap items-center gap-1.5">
           <ChipMenu
@@ -86,13 +86,13 @@ export function ChipMenuDemo() {
 
       <div>
         <p className="type-label-small mb-2 text-on-surface-mittel">
-          tone=&quot;befund&quot; — Rahmen und Chevron, nie die Fläche; dazu ein
+          tone=&quot;befund&quot; - Rahmen und Chevron, nie die Fläche; dazu ein
           gedämpfter <code>trailing</code>-Zusatz
         </p>
         <ChipMenu
           tone="befund"
           label="Rot"
-          ariaLabel="Rot — doppelt belegt"
+          ariaLabel="Rot - doppelt belegt"
           leading={
             <TriangleAlert
               size={16}
@@ -159,7 +159,7 @@ function GeteilterChipDemo({ onMeldung }: { onMeldung: (text: string) => void })
   return (
     <div>
       <p className="type-label-small mb-2 text-on-surface-mittel">
-        geteilt — links wählt (<code>aria-pressed</code>), rechts öffnet das Menü
+        geteilt - links wählt (<code>aria-pressed</code>), rechts öffnet das Menü
         (36 px)
       </p>
       <div className="flex flex-wrap items-center gap-2">

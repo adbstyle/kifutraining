@@ -49,7 +49,7 @@ const kopf = (w: { id: string; slug: string }, zugang: Zugang) => ({
 const ABLEHNUNG =
   "Was eine Regel verletzt, wird nicht still verworfen: Dann bleibt alles, wie es war, und " +
   "«verstoesse» nennt jede verletzte Angabe mit Feld, Grund und, wo es eine Aufzählung gibt, den " +
-  "zulässigen Werten — auch einen Wert, der nicht zur Einordnung oder zur Altersstufe passt. Ist " +
+  "zulässigen Werten - auch einen Wert, der nicht zur Einordnung oder zur Altersstufe passt. Ist " +
   "die Einordnung ungültig oder fehlt im Hauptteil die Hauptteilkategorie, kann der nächste " +
   "Versuch weitere Verstösse nennen.";
 
@@ -59,14 +59,14 @@ export const uebungAnlegen = werkzeug({
   name: "uebung_anlegen",
   titel: "Übung anlegen",
   beschreibung:
-    "Legt eine eigene Übung als privaten Entwurf an — sichtbar nur für dich und in KiFu unter " +
+    "Legt eine eigene Übung als privaten Entwurf an - sichtbar nur für dich und in KiFu unter " +
     "deinen eigenen Übungen, bis «uebung_veroeffentlichen» sie öffentlich schaltet. Es gelten " +
     "dieselben Regeln wie im Formular in KiFu, je Altersstufe die ihren; die Altersstufe steht " +
     `danach fest. ${ABLEHNUNG} Danach die ` +
     `ganze Übung korrigiert noch einmal senden. ${UEBUNG_ANGABEN} Die Werte samt Klartext liefert ` +
     "«vokabular». Ein Feld-Diagramm lässt sich in «diagramm» gleich mitgeben, mit denselben " +
     "Grenzen wie bei «uebung_diagramm_setzen»: Es wird das Bild der Übung, und KiFu zählt das " +
-    "Material daraus selbst — dann «material.liste» weglassen, die Ergänzung bleibt möglich — und " +
+    "Material daraus selbst - dann «material.liste» weglassen, die Ergänzung bleibt möglich - und " +
     "nennt die gezählte Liste in «material». Verletzt das Diagramm eine Grenze, entsteht nichts, " +
     "und «verstoesse» nennt die betroffenen Elemente zusammen mit den übrigen Angaben. Die Mängel " +
     "eines angenommenen Diagramms stehen in «maengel», wie bei «uebung_diagramm_setzen»: keine " +
@@ -115,7 +115,7 @@ export const uebungAendern = werkzeug({
     "Pflichtangaben mitsenden. Welche Angaben es gibt, welche Pflicht sind und welche Werte " +
     "zulässig sind, steht bei «uebung_anlegen» und in «vokabular». Es gelten die Regeln der " +
     "Altersstufe der Übung; die Altersstufe selbst ändert sich nie. Bild und Feld-Diagramm " +
-    "ändert dieses Werkzeug nicht — das Diagramm setzt «uebung_diagramm_setzen», die Sichtbarkeit " +
+    "ändert dieses Werkzeug nicht - das Diagramm setzt «uebung_diagramm_setzen», die Sichtbarkeit " +
     "«uebung_veroeffentlichen» und " +
     "«uebung_auf_entwurf_setzen»; steht die Übung schon in einem Training, behält sie dort ihre " +
     `Fassung. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
@@ -139,7 +139,7 @@ export const uebungVeroeffentlichen = werkzeug({
   name: "uebung_veroeffentlichen",
   titel: "Übung veröffentlichen",
   beschreibung:
-    "Schaltet eine eigene Übung öffentlich — ohne Rückfrage und in beiden Altersstufen. " +
+    "Schaltet eine eigene Übung öffentlich - ohne Rückfrage und in beiden Altersstufen. " +
     "Tragweite, die du dem Trainer vorher nennen solltest: " +
     `«${TRAGWEITE_UEBUNG_VEROEFFENTLICHEN}» Es entsteht keine Kopie: Die Übung bleibt ` +
     "bearbeitbar, und die Öffentlichkeit sieht jeweils den aktuellen Stand. Eine öffentliche " +
@@ -161,7 +161,7 @@ export const uebungAufEntwurfSetzen = werkzeug({
   beschreibung:
     "Nimmt eine eigene öffentliche Übung aus dem öffentlichen Bestand; sie bleibt als privater " +
     "Entwurf in deinem Bestand. Was andere bereits in ihre Trainings übernommen oder in ihren " +
-    "Bestand kopiert haben, bleibt bestehen — es sind eigenständige Kopien; benachrichtigt wird " +
+    "Bestand kopiert haben, bleibt bestehen - es sind eigenständige Kopien; benachrichtigt wird " +
     `niemand. Ein Entwurf bleibt Entwurf. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ kennung: UebungKennung }),
@@ -179,8 +179,8 @@ export const uebungKopieren = werkzeug({
   name: "uebung_kopieren",
   titel: "Übung in den eigenen Bestand kopieren",
   beschreibung:
-    "Kopiert eine Übung, die dein Konto sieht — aus dem Kifu-Manual, die öffentliche eines " +
-    "anderen Kontos oder eine eigene, in beiden Altersstufen — in deinen Bestand, wie «Übung " +
+    "Kopiert eine Übung, die dein Konto sieht - aus dem Kifu-Manual, die öffentliche eines " +
+    "anderen Kontos oder eine eigene, in beiden Altersstufen - in deinen Bestand, wie «Übung " +
     "kopieren» in KiFu. Es entsteht ein privater Entwurf mit allen Angaben, eigener Kopie von Bild " +
     "und Feld-Diagramm und derselben Altersstufe, ohne Verbindung zur Quelle: Spätere Änderungen " +
     "wirken in keine Richtung, und die Quelle bleibt unberührt. Die Kopie einer eigenen Übung " +
@@ -189,9 +189,9 @@ export const uebungKopieren = werkzeug({
     "Kopie; scheitert es mit einer Meldung, bleibt nichts zurück (siehe «hinweis»); bei " +
     "«technisch» oder «konflikt» ist ein zweiter Versuch gefahrlos. Bricht der Vorgang ohne " +
     "Meldung ab (Zeitüberschreitung), " +
-    "kann die Kopie trotzdem entstanden sein — prüfe dann mit «uebungen_suchen» («nur_eigene»), " +
+    "kann die Kopie trotzdem entstanden sein - prüfe dann mit «uebungen_suchen» («nur_eigene»), " +
     "bevor du es noch einmal versuchst. Übungen aus Trainings («fassung_id» aus «training_abrufen») lassen sich hier nicht " +
-    `kopieren — ihre Kennung ergibt «nicht_gefunden». ${UEBUNG_KENNUNG_FEHLER}`,
+    `kopieren - ihre Kennung ergibt «nicht_gefunden». ${UEBUNG_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ kennung: UebungKennung }),
   ausgabe: z.object({ ...Kopf, name: z.string(), sichtbarkeit: z.literal("entwurf") }),

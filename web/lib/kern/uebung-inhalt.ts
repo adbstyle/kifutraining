@@ -125,11 +125,11 @@ const REGEL = {
   uebungstyp: dbRegel("ex_uebungstyp_nur_junioren"),
 };
 
-const KEIN_FAHRPLAN = "Hier gibt es keinen methodischen Fahrplan — der Ablauf steht in «aufbau».";
+const KEIN_FAHRPLAN = "Hier gibt es keinen methodischen Fahrplan - der Ablauf steht in «aufbau».";
 const NICHT_AUFBAU =
   "Hier gilt der methodische Fahrplan («offen_starten», «ueben», «wetteifern»), nicht «aufbau».";
 const KEINE_FORM = "Diese Einordnung trägt keine Erscheinungsform.";
-const OHNE_UEBUNGSTYP = `Den Übungstyp gibt es nur im ${altersstufeLabels.juniorenfussball} — lass «uebungstyp» weg.`;
+const OHNE_UEBUNGSTYP = `Den Übungstyp gibt es nur im ${altersstufeLabels.juniorenfussball} - lass «uebungstyp» weg.`;
 const ANZAHL_GANZ = `Die ${ANZAHL_SPIELER_LABEL} ist eine ganze Zahl ab 1.`;
 const MENGE_GANZ = `Die Menge ist eine ganze Zahl von 1 bis ${MATERIAL_MENGE_MAX}.`;
 const ABGELEHNT =
@@ -238,7 +238,7 @@ function zusatz(i: UebungInhalt): Fund[] {
     if (p.farbe != null && !info.farbig)
       funde.push({
         feld: `material.liste[${n}].farbe`,
-        meldung: `${info.einzahl} gibt es nicht in Farben — lass «farbe» weg.`,
+        meldung: `${info.einzahl} gibt es nicht in Farben - lass «farbe» weg.`,
         art: "eingabe",
       });
   });
@@ -368,7 +368,7 @@ const NICHT_LEERBAR = new Set(["name", "einordnung", "kategorien"]);
 function mitAltwertZusatz(f: Fund, ausBestand: ReadonlySet<string> | undefined): Fund {
   const feld = f.feld.split(/[.[]/)[0];
   if (!ausBestand?.has(feld) || NICHT_LEERBAR.has(feld)) return f;
-  return { ...f, meldung: `${f.meldung} Die Angabe steht noch in der Übung — setze «${feld}» auf null, um sie zu entfernen.` };
+  return { ...f, meldung: `${f.meldung} Die Angabe steht noch in der Übung - setze «${feld}» auf null, um sie zu entfernen.` };
 }
 
 /** Die Pflichtangaben einer Übung — je Altersstufe, Einordnung und, wo sie

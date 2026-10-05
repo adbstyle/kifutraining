@@ -195,7 +195,7 @@ async function entferneManualBilder() {
     (await manualReferenzen("exercises")) + (await manualReferenzen("training_exercises"));
   if (offen > 0) {
     console.warn(
-      `  ${offen} Zeile(n) zeigen noch auf ${MANUAL_PREFIX}/ — Storage bleibt unangetastet.`,
+      `  ${offen} Zeile(n) zeigen noch auf ${MANUAL_PREFIX}/ - Storage bleibt unangetastet.`,
     );
     return;
   }

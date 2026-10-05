@@ -49,7 +49,7 @@ export function EntfallendBestaetigung({
           <ul className="mt-1 list-disc space-y-1 pl-5">
             {folge.entfallend.map((e) => (
               <li key={e.terminId}>
-                {datumKurz(e.datum)} — <strong className="text-on-surface">{e.training.name}</strong>
+                {datumKurz(e.datum)} - <strong className="text-on-surface">{e.training.name}</strong>
               </li>
             ))}
           </ul>

@@ -35,7 +35,7 @@ import { trainingsKrumen } from "@/lib/brotkrumen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Training — KiFu",
+  title: "Training - KiFu",
   robots: { index: false },
 };
 
@@ -181,7 +181,7 @@ export default async function TrainingViewPage({
       >
         {sp.uebernommen && (
           <Flash
-            message="Kopie liegt in deinem Bestand — du kannst sie jetzt anpassen."
+            message="Kopie liegt in deinem Bestand - du kannst sie jetzt anpassen."
             param="uebernommen"
           />
         )}

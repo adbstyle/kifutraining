@@ -144,7 +144,7 @@ pruefe("Mittlere Schrift (74 %) erreicht auf jeder Stufe 4.5:1", () => {
   }
 });
 
-pruefe("Tiefe Schrift (38 %) erreicht 3:1 — sie ist nur für Deaktiviertes", () => {
+pruefe("Tiefe Schrift (38 %) erreicht 3:1 - sie ist nur für Deaktiviertes", () => {
   // Deaktivierter Text ist unwesentlicher Inhalt (WCAG 1.4.3): Er muss
   // erkennbar bleiben, aber gerade NICHT wie lesbarer Text wirken.
   for (const stufe of ELEV) {
@@ -345,7 +345,7 @@ const VERBOTEN: [RegExp, string][] = [
   [/secondary-container/, "Container-Rollen gibt es nicht mehr"],
   [/error-container/, "Container-Rollen gibt es nicht mehr"],
   [/inverse-/, "Inverse-Rollen gibt es nicht mehr"],
-  [/\bwarning\b/, "Warning ist entfallen — der Befund trägt Error-Farbe"],
+  [/\bwarning\b/, "Warning ist entfallen - der Befund trägt Error-Farbe"],
   [/shadow-e[1-5]/, "ersetzt durch shadow-dp-*"],
   [/--button-/, "Component-Token"],
   [/--chip-/, "Component-Token"],
@@ -357,16 +357,16 @@ const VERBOTEN: [RegExp, string][] = [
   [/--breadcrumb-/, "Component-Token"],
   // Jede eckige Klammer am Radius, nicht nur die in px: `rounded-[6px]` und
   // `rounded-[--x]` sind beide am System vorbei.
-  [/rounded-\[/, "freie Radien — nur rounded-plakette/-flaeche/-dialog/-full"],
+  [/rounded-\[/, "freie Radien - nur rounded-plakette/-flaeche/-dialog/-full"],
   [/border-\[1\.5px\]/, "ersetzt durch @utility kontur"],
   // Alpha auf einer KONTUR bricht die 3:1-Regel für grafische Objekte: Die
   // Kontur ist das Einzige, was die Fläche begrenzt, und `border-error/40` kam
   // im Dialog auf 1.91:1. Volles `border-error` trägt dort 4.56:1.
-  [/border-error\/\d/, "Kontur mit Alpha — Error umrandet voll oder nicht"],
+  [/border-error\/\d/, "Kontur mit Alpha - Error umrandet voll oder nicht"],
   [/bg-on-surface\/8/, "Hover gehört in @utility state"],
   [/translate-y-px/, "Knöpfe springen nicht mehr"],
-  [/font-display/, "entfallen — es gibt nur sans und mono"],
-  [/font-body/, "entfallen — es gibt nur sans und mono"],
+  [/font-display/, "entfallen - es gibt nur sans und mono"],
+  [/font-body/, "entfallen - es gibt nur sans und mono"],
   [/chalk-hatch/, "ersetzt durch @utility schraffur"],
 ];
 
@@ -376,7 +376,7 @@ const NUR_STYLEGUIDE: [RegExp, string] = [
   // `-container` klammert aus, was ohnehin schon als Container-Rolle gemeldet
   // wird — sonst trüge dieselbe Zeile zwei Begründungen.
   /\b(bg|text|border)-secondary(?!-container)\b/,
-  "Secondary wird nirgends angewendet — ausser im Styleguide als Beleg",
+  "Secondary wird nirgends angewendet - ausser im Styleguide als Beleg",
 ];
 
 /** Alle Quelldateien unter `wurzel`, die der Altlasten-Wächter durchsieht. */
@@ -405,10 +405,10 @@ pruefe(`Keine Altlast der alten Palette (${DATEIEN.length} Dateien)`, () => {
     const zeilen = readFileSync(pfad, "utf8").split("\n");
     zeilen.forEach((zeile, i) => {
       for (const [muster, grund] of VERBOTEN) {
-        if (muster.test(zeile)) treffer.push(`${kurz}:${i + 1}  ${grund}  — ${zeile.trim()}`);
+        if (muster.test(zeile)) treffer.push(`${kurz}:${i + 1}  ${grund}  - ${zeile.trim()}`);
       }
       if (!kurz.startsWith("app/(app)/styleguide/") && NUR_STYLEGUIDE[0].test(zeile)) {
-        treffer.push(`${kurz}:${i + 1}  ${NUR_STYLEGUIDE[1]}  — ${zeile.trim()}`);
+        treffer.push(`${kurz}:${i + 1}  ${NUR_STYLEGUIDE[1]}  - ${zeile.trim()}`);
       }
     });
   }

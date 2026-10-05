@@ -86,7 +86,7 @@ function pruefe(was: string, fn: () => void) {
 }
 
 // ── Namensregel (AK 3, PC 2) ────────────────────────────────────────────────
-pruefe("Ein leerer Name ist kein Fehler — dann gilt der Client-Name", () => {
+pruefe("Ein leerer Name ist kein Fehler - dann gilt der Client-Name", () => {
   assert.equal(zugangsnameProblem(""), null);
   assert.equal(zugangsnameProblem("   "), null);
   assert.equal(eigenerZugangsname("", "Claude"), null);
@@ -99,7 +99,7 @@ pruefe(`Genau ${ZUGANGSNAME_MAX} Zeichen sind erlaubt, ${ZUGANGSNAME_MAX + 1} ni
   assert.equal(zugangsnameProblem("x".repeat(41)), "Höchstens 40 Zeichen.");
 });
 
-pruefe("Die Länge zählt bereinigt — wie der SQL-CHECK auf den gespeicherten Namen", () => {
+pruefe("Die Länge zählt bereinigt - wie der SQL-CHECK auf den gespeicherten Namen", () => {
   assert.equal(zugangsnameProblem(`  ${"x".repeat(40)}  `), null);
 });
 
@@ -156,7 +156,7 @@ pruefe("5 andere Zugänge: die Grenze ist erreicht", () => {
   assert.equal(grenzeErreicht(grants(5), "neu"), true);
 });
 
-pruefe("Der anfragende Client zählt nicht mit — erneutes Erlauben ersetzt nur", () => {
+pruefe("Der anfragende Client zählt nicht mit - erneutes Erlauben ersetzt nur", () => {
   // Fünf Zugänge, einer davon gehört dem anfragenden Client.
   assert.equal(andereZugaenge(grants(5), "c0"), 4);
   assert.equal(grenzeErreicht(grants(5), "c0"), false);
@@ -180,7 +180,7 @@ pruefe("Relative Pfade dieser Anwendung gehen durch", () => {
   assert.equal(sichererRuecksprung("/"), "/");
 });
 
-pruefe("Die Query bleibt erhalten — der Erlauben-Ablauf braucht sie", () => {
+pruefe("Die Query bleibt erhalten - der Erlauben-Ablauf braucht sie", () => {
   assert.equal(
     sichererRuecksprung("/oauth/consent?authorization_id=x"),
     "/oauth/consent?authorization_id=x",
@@ -224,7 +224,7 @@ pruefe("Die Migration trägt dieselben Zahlen wie regeln.ts", () => {
   // Leerraum-tolerant: Deklarationen im plpgsql-Block stehen ausgerichtet.
   assert.ok(
     new RegExp(`v_grenze\\s+constant\\s+integer\\s*:=\\s*${KI_AUFRUFE_JE_STUNDE}\\s*;`).test(sql),
-    `ki_aufruf_zaehlen(): «v_grenze constant integer := ${KI_AUFRUFE_JE_STUNDE}» fehlt — Zwilling von KI_AUFRUFE_JE_STUNDE.`,
+    `ki_aufruf_zaehlen(): «v_grenze constant integer := ${KI_AUFRUFE_JE_STUNDE}» fehlt - Zwilling von KI_AUFRUFE_JE_STUNDE.`,
   );
   assert.ok(
     // An den CHECK-Namen verankert: ein anderes «between 1 and 40» in der
@@ -233,7 +233,7 @@ pruefe("Die Migration trägt dieselben Zahlen wie regeln.ts", () => {
       `constraint\\s+kzn_name_laenge\\s+check\\s*\\([^;]*between\\s+1\\s+and\\s+${ZUGANGSNAME_MAX}\\b`,
       "i",
     ).test(sql),
-    `CHECK kzn_name_laenge: «between 1 and ${ZUGANGSNAME_MAX}» fehlt — Zwilling von ZUGANGSNAME_MAX.`,
+    `CHECK kzn_name_laenge: «between 1 and ${ZUGANGSNAME_MAX}» fehlt - Zwilling von ZUGANGSNAME_MAX.`,
   );
 });
 
@@ -654,7 +654,7 @@ pruefe("UebungAnlegenEingabe: beide Altersstufen und alle Angaben, Pflicht nur d
   }
 });
 
-pruefe("UebungAnlegenEingabe: streng — ein unbekanntes oder vertipptes Feld fällt nicht still weg", () => {
+pruefe("UebungAnlegenEingabe: streng - ein unbekanntes oder vertipptes Feld fällt nicht still weg", () => {
   const abgelehnt = [
     { ...ANLEGEN, erscheinungsform: ["mutig-tore-erzielen"] }, // Name des Suchfilters
     { ...ANLEGEN, spielfeld: { laenge: 20, breite_m: 15 } },
@@ -733,7 +733,7 @@ pruefe("alsUebungPatch: Fehlendes bleibt undefined («bleibt»), null bleibt nul
 });
 
 // ── Feld-Diagramm (#145) ────────────────────────────────────────────────────
-pruefe("DiagrammEingabe: locker — jedes Element erreicht den Kern, Pflicht ist nur «elemente» als Liste", () => {
+pruefe("DiagrammEingabe: locker - jedes Element erreicht den Kern, Pflicht ist nur «elemente» als Liste", () => {
   // Der Kern benennt jedes schlechte Element einzeln; das Schema bricht nie
   // beim ersten ab.
   assert.ok(DiagrammEingabe.safeParse({ elemente: [1, "x", null] }).success);

@@ -41,8 +41,8 @@ export const trainingAbrufen = werkzeug({
   beschreibung:
     "Liefert ein Training vollständig: Name, Ziel, Altersstufe, Alterskategorien, " +
     "Sichtbarkeit, Bestand (persönlich oder Team), Varianten des Hauptteils (in ihrer " +
-    "Reihenfolge — die vorderste zeigt KiFu beim Öffnen) und Gruppen (mit " +
-    "«an_uebungen») — " +
+    "Reihenfolge - die vorderste zeigt KiFu beim Öffnen) und Gruppen (mit " +
+    "«an_uebungen») - " +
     "und die Gliederung wie im Editor: alle Trainingsteile und Blöcke in fester Reihenfolge, " +
     "auch die leeren, der Hauptteil einmal je Variante (mit «variante» erst ab zwei). Jede " +
     "Übung mit Inhalt, Dauer, Notiz und den Gruppen ihres Durchlaufs; «fassung_id» ist die " +
@@ -84,7 +84,7 @@ const SuchenEingabe = z.object({
   bestand: alsEnum(["eigene", "oeffentlich", "team"] as const).describe(
     "eigene: deine persönlichen Trainings, Entwürfe eingeschlossen. " +
       "oeffentlich: alle öffentlichen Trainings der Community, auch deine eigenen öffentlichen. " +
-      "team: der Trainingsbestand eines deiner Teams — dann mit «team_id».",
+      "team: der Trainingsbestand eines deiner Teams - dann mit «team_id».",
   ),
   team_id: TeamId.optional().describe(
     "Nur mit «bestand: team», dort Pflicht: das Team (Kennung aus «teams_abrufen»).",
@@ -133,7 +133,7 @@ const SuchenTreffer = z.object({
           ehemalig: z.boolean().describe("Nicht mehr im Team."),
         }),
       ),
-      ausgefallen: z.boolean().describe("Bei einem Training immer false — ein ausgefallener Termin trägt kein Training."),
+      ausgefallen: z.boolean().describe("Bei einem Training immer false - ein ausgefallener Termin trägt kein Training."),
       ausfall_grund: z.string().nullable(),
       anstehend: z.boolean(),
     })
@@ -146,13 +146,13 @@ export const trainingsSuchen = werkzeug({
   titel: "Trainings suchen",
   beschreibung:
     "Durchsucht deine eigenen Trainings, die öffentlichen Trainings der Community oder den " +
-    "Trainingsbestand eines deiner Teams — " +
+    "Trainingsbestand eines deiner Teams - " +
     "dieselbe Suche wie die Trainings-Übersicht in KiFu: ohne Suchtext das zuletzt " +
     "Geänderte zuerst, mit Suchtext kürzere Namen zuerst. Eingrenzen nach " +
     "Alterskategorie (ODER). «uebungszahl» und «dauer_min» beziehen sich wie die Kachel der " +
     "Übersicht auf die erste Variante; «varianten_zahl» sagt, wie viele es gibt. " +
     "Team-Trainings erscheinen nur mit «bestand: team»; dort trägt jeder Treffer seinen " +
-    "Termin samt Verantwortlichen («termin», null ohne) — «eigen» ist bei ihnen immer false, bearbeiten darf sie " +
+    "Termin samt Verantwortlichen («termin», null ohne) - «eigen» ist bei ihnen immer false, bearbeiten darf sie " +
     "jedes Mitglied. Das ganze Training liefert «training_abrufen», " +
     `übernehmen lässt es sich mit «training_kopieren». ${TEAM_KENNUNG_FEHLER}`,
   nurLesen: true,

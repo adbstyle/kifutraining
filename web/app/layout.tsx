@@ -15,7 +15,7 @@ const sans = Geist({
 export const metadata: Metadata = {
   title: "Übungen & Trainings für Kinder- und Juniorenfussball",
   description:
-    "Übungen durchsuchen und filtern sowie strukturierte Trainings zusammenstellen — nach den SFV-Trainingsschemata für Kinderfussball und Juniorenfussball.",
+    "Übungen durchsuchen und filtern sowie strukturierte Trainings zusammenstellen - nach den SFV-Trainingsschemata für Kinderfussball und Juniorenfussball.",
 };
 
 /* Wurzel: nur Dokument, Schrift und globale Styles. Das App-Chrome

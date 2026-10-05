@@ -134,7 +134,7 @@ export function ZweiSpalten({
       aria-valuemax={SPALTE_MAX}
       aria-valuenow={breite ?? gemessen ?? undefined}
       tabIndex={0}
-      title="Ziehen, um die Breite zu ändern — Doppelklick stellt sie zurück"
+      title="Ziehen, um die Breite zu ändern - Doppelklick stellt sie zurück"
       onPointerDown={(e) => {
         const aktuell = breite ?? spurBreite();
         if (aktuell === null) return;

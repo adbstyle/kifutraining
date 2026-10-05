@@ -33,7 +33,7 @@ export const MANGEL_ERKLAERT: Record<BefundCode, string> = {
   ausserhalb: "ein Element liegt ausserhalb der Zeichenfläche",
   leibchen: "ein Leibchen liegt neben einer Figur, aber nicht an ihrer Hand",
   tor_richtung: "ein Tor an einer Feldkante öffnet vom Feld weg",
-  wirkungslos: "eine Angabe, die am Element nicht vorgesehen ist — eine unbekannte speichert KiFu gar nicht",
+  wirkungslos: "eine Angabe, die am Element nicht vorgesehen ist - eine unbekannte speichert KiFu gar nicht",
   ragt_hinaus: "die Mitte eines Symbols liegt auf der Fläche, sein Rahmen ragt über den Rand",
   text_leer: "ein Text ohne Inhalt",
 };

@@ -203,9 +203,9 @@ function pruefeElement(
     grenzen.push(befund(code, stelle, text, angabe, zulaessig));
 
   if (stelle.element === undefined) {
-    grenze("id", "id", "«id» fehlt oder ist leer — jedes Element braucht eine eigene Kennung als Text.");
+    grenze("id", "id", "«id» fehlt oder ist leer - jedes Element braucht eine eigene Kennung als Text.");
   } else if (ersteStelle.has(stelle.element)) {
-    grenze("id", "id", `Die id «${stelle.element}» steht schon bei elemente[${ersteStelle.get(stelle.element)}] — jede id gilt nur einmal.`);
+    grenze("id", "id", `Die id «${stelle.element}» steht schon bei elemente[${ersteStelle.get(stelle.element)}] - jede id gilt nur einmal.`);
   } else {
     ersteStelle.set(stelle.element, index);
   }
@@ -429,14 +429,14 @@ function elementMaengel(roh: Roh, art: ElementArt, { stelle, e }: Eintrag): Befu
           "wirkungslos",
           "rotation",
           (FIGUR_TYPEN.has(e.typ)
-            ? `Eine Figur dreht KiFu nicht — die Drehung ${e.rotation} bleibt an «${e.typ}» ohne Wirkung; die Blickrichtung setzt «spiegeln».`
-            : `Eine Drehung ist am Symbol «${e.typ}» nicht vorgesehen — drehbar sind nur ${[...DREHBARE_TYPEN].join(", ")}.`) +
+            ? `Eine Figur dreht KiFu nicht - die Drehung ${e.rotation} bleibt an «${e.typ}» ohne Wirkung; die Blickrichtung setzt «spiegeln».`
+            : `Eine Drehung ist am Symbol «${e.typ}» nicht vorgesehen - drehbar sind nur ${[...DREHBARE_TYPEN].join(", ")}.`) +
             " Lass «rotation» weg.",
         );
       if (e.pose !== undefined && !POSEN_TYPEN.has(e.typ))
         mangel("wirkungslos", "pose", `«pose» wirkt nur am Symbol ${[...POSEN_TYPEN].map((t) => `«${t}»`).join(", ")}. Lass «pose» weg.`);
       if (e.farbe !== undefined && !def.faerbbar)
-        mangel("wirkungslos", "farbe", `«farbe» wirkt am Symbol «${e.typ}» nicht — es hat eine feste Farbe. Lass «farbe» weg.`);
+        mangel("wirkungslos", "farbe", `«farbe» wirkt am Symbol «${e.typ}» nicht - es hat eine feste Farbe. Lass «farbe» weg.`);
       if (e.spiegeln === true && !FIGUR_TYPEN.has(e.typ))
         mangel("wirkungslos", "spiegeln", `«spiegeln» wirkt nur an den Figuren ${[...FIGUR_TYPEN].join(", ")}. Lass «spiegeln» weg.`);
 
@@ -469,12 +469,12 @@ function elementMaengel(roh: Roh, art: ElementArt, { stelle, e }: Eintrag): Befu
         mangel(
           "wirkungslos",
           "punkte",
-          `«punkte» wirkt an der Form «${e.form}» nicht und wird nicht gespeichert — Lage und Grösse stehen in «x», «y», «breite» und «hoehe».`,
+          `«punkte» wirkt an der Form «${e.form}» nicht und wird nicht gespeichert - Lage und Grösse stehen in «x», «y», «breite» und «hoehe».`,
         );
       break;
     case "text":
       if (e.text.trim() === "")
-        mangel("text_leer", "text", "Der Text ist leer — die Textbox zeigt nichts. Schreib einen Text hinein oder lass das Element weg.");
+        mangel("text_leer", "text", "Der Text ist leer - die Textbox zeigt nichts. Schreib einen Text hinein oder lass das Element weg.");
       break;
   }
   return maengel;
@@ -565,7 +565,7 @@ function torRichtungMaengel(eintraege: readonly Eintrag[]): Befund[] {
           "tor_richtung",
           stelle,
           `Das ${SYMBOLE[t.typ].label} steht auf der ${treffer.map((k) => k.name).join(" und der ")} von ` +
-            `${feld.wer.replace(/^Element /, "")}, hat aber die Drehung ${rot} statt ${soll} — es öffnet vom Feld weg. Drehe es auf ${soll}.`,
+            `${feld.wer.replace(/^Element /, "")}, hat aber die Drehung ${rot} statt ${soll} - es öffnet vom Feld weg. Drehe es auf ${soll}.`,
           "rotation",
         ),
       );

@@ -12,7 +12,7 @@ import { InSpalteWeiterleiten } from "@/components/training/InSpalteWeiterleiten
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Übung im Training bearbeiten — KiFu",
+  title: "Übung im Training bearbeiten - KiFu",
   robots: { index: false },
 };
 

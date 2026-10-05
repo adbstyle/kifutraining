@@ -89,7 +89,7 @@ export const ANZAHL_HINWEIS: Record<TrainingsteilSlug, number> = {
 /** Der Wortlaut zu `ANZAHL_HINWEIS` — am Fuss der Teil-Karte und als Hinweis
  *  an den KI-Assistenten (#195 AK 7). */
 export const ANZAHL_HINWEIS_TEXT =
-  "Ungewöhnlich viele Übungen für diesen Trainingsteil — erlaubt, achte nur auf die Gesamtdauer.";
+  "Ungewöhnlich viele Übungen für diesen Trainingsteil - erlaubt, achte nur auf die Gesamtdauer.";
 
 /** Wie viele Übungen eines Teils keine Dauer tragen — am Fuss der Teil-Karte
  *  und als Hinweis an den KI-Assistenten. */
@@ -128,15 +128,15 @@ export const STUFE_ABWEICHEND_TEXT = "Deckt keine der Trainings-Stufen ab";
  *  unberührt (Story 5a AC 9). */
 export const LEER_HINWEIS: Record<string, string> = {
   "jun-spielform-trainingsziel":
-    "Die Spielform zum Trainingsziel ist noch leer — sie führt das Trainingsziel ein und spannt den roten Faden zum Hauptteil.",
+    "Die Spielform zum Trainingsziel ist noch leer - sie führt das Trainingsziel ein und spannt den roten Faden zum Hauptteil.",
   "jun-explosivitaet":
-    "Die Explosivität ist noch leer — kurze, intensive Aktionen mit vollständiger Erholung gehören im Juniorenfussball in jeden Einstieg.",
+    "Die Explosivität ist noch leer - kurze, intensive Aktionen mit vollständiger Erholung gehören im Juniorenfussball in jeden Einstieg.",
   "jun-spiel":
-    "Das Spiel ist noch leer — im Juniorenfussball gehört das freie Spiel in jedes Training.",
+    "Das Spiel ist noch leer - im Juniorenfussball gehört das freie Spiel in jedes Training.",
   "jun-abschluss":
-    "Der Abschluss ist noch leer — Cool-down und gemeinsamer Austausch beenden jedes Training.",
+    "Der Abschluss ist noch leer - Cool-down und gemeinsamer Austausch beenden jedes Training.",
   [FREIES_SPIEL]:
-    "Das freie Spiel ist noch leer — im Kinderfussball gehört es in jedes Training.",
+    "Das freie Spiel ist noch leer - im Kinderfussball gehört es in jedes Training.",
 };
 
 /** Obergrenze des Trainingsziels in Zeichen (Story 10 AC 6). Entspricht der

@@ -150,7 +150,7 @@ async function vorlage(trainingsteil: string, hkat: string | null = null): Promi
     .eq("trainingsteil", trainingsteil);
   q = hkat ? q.eq("hauptteilkategorie", hkat) : q;
   const { data } = await q.order("name").limit(1).maybeSingle();
-  assert.ok(data, `keine Manual-Übung für ${trainingsteil}/${hkat} — lief der Seed?`);
+  assert.ok(data, `keine Manual-Übung für ${trainingsteil}/${hkat} - lief der Seed?`);
   return data.id as string;
 }
 
@@ -375,7 +375,7 @@ try {
     fehler(
       await setzeUebungsfolge(a.supabase, a.id, { trainingId: t, einordnung: "einleitung", fassungIds: [e1.fassungId] }),
       "regel",
-      /^Die Reihenfolge muss genau die Übungen dieses Abschnitts nennen — jede einmal\. Lies das Training neu und sende die vollständige Folge\. Es fehlen: „/,
+      /^Die Reihenfolge muss genau die Übungen dieses Abschnitts nennen - jede einmal\. Lies das Training neu und sende die vollständige Folge\. Es fehlen: „/,
     );
     fehler(
       await setzeUebungsfolge(a.supabase, a.id, { trainingId: t, einordnung: "ausklang", fassungIds: [] }),
@@ -918,7 +918,7 @@ try {
     fehler(
       u,
       "regel",
-      /^Die Reihenfolge muss genau die Varianten dieses Trainings nennen — jede einmal\. Lies das Training neu und sende die vollständige Folge\. Es fehlen: „/,
+      /^Die Reihenfolge muss genau die Varianten dieses Trainings nennen - jede einmal\. Lies das Training neu und sende die vollständige Folge\. Es fehlen: „/,
     );
     assert.deepEqual([...(!u.ok && u.zulaessig ? u.zulaessig : [])].sort(), [v1.id, v2.id, v3.id].sort());
     fehler(
@@ -1107,7 +1107,7 @@ try {
       "technisch",
       "Das Bild liess sich nicht kopieren. Bitte versuche es noch einmal.",
     ) as { hinweis?: string };
-    assert.equal(f.hinweis, "Es ist keine Kopie entstanden — der Versuch lässt sich gefahrlos wiederholen.");
+    assert.equal(f.hinweis, "Es ist keine Kopie entstanden - der Versuch lässt sich gefahrlos wiederholen.");
     assert.equal(await zahl(), vorher, "in der Datenbank steht kein neues Training");
     assert.deepEqual(await imOrdner(), dateienVorher, "die gelungene Bildkopie ist wieder entfernt");
   });
@@ -1693,7 +1693,7 @@ try {
     }
   });
 
-  await pruefe("Kalender: Serie mit Reichweite über den KI-Weg — nur dieser, Regeln, Datum, Entfernen (#326 AK 2–4, 7, 10, 11)", async () => {
+  await pruefe("Kalender: Serie mit Reichweite über den KI-Weg - nur dieser, Regeln, Datum, Entfernen (#326 AK 2–4, 7, 10, 11)", async () => {
     const team = await serienTeam("Kern-DB-Serie-KI");
     const s = wert(await legeSerieFest(a.supabase, a.id, { teamId: team, wochentage: [2], von: tagCh(7), bis: tagCh(49), beginn: "18:00", ende: "19:30", ort: "A" }));
     const t = await termineDer(s.serieId);
@@ -2275,7 +2275,7 @@ try {
       meldung: "Eine Hauptteilkategorie gibt es nur im Kinderfussball-Hauptteil.",
     });
     // Im Kinderfussball gibt es gar keinen Übungstyp — nicht der Junioren-Text.
-    assert.equal(r.verstoesse?.[7].meldung, "Den Übungstyp gibt es nur im Juniorenfussball — lass «uebungstyp» weg.");
+    assert.equal(r.verstoesse?.[7].meldung, "Den Übungstyp gibt es nur im Juniorenfussball - lass «uebungstyp» weg.");
     assert.equal(await uebungenVon(a.id), vorher, "nichts angelegt");
   });
 
@@ -2450,7 +2450,7 @@ try {
     assert.deepEqual(await uebungszeile(probe.id), danach, "kein Schreiben, auch updated_at bleibt");
   });
 
-  await pruefe("Übung ändern: jsonb in anderer Schlüsselfolge gilt als gleich — geschrieben wird nur Geändertes", async () => {
+  await pruefe("Übung ändern: jsonb in anderer Schlüsselfolge gilt als gleich - geschrieben wird nur Geändertes", async () => {
     // jsonb gibt Schlüssel in eigener Folge zurück ({max, min}, {ueben,
     // wetteifern, offen_starten}); das darf nicht als Änderung zählen.
     const zweite = wert(
@@ -2597,7 +2597,7 @@ try {
     assert.deepEqual(pub, { id: probe.id, slug: probe.slug, sichtbarkeit: "oeffentlich", tragweite: TRAGWEITE_UEBUNG_VEROEFFENTLICHEN });
     assert.equal(
       TRAGWEITE_UEBUNG_VEROEFFENTLICHEN,
-      "Die Übung wird für alle sichtbar — mit allen Angaben, Bild und Feld-Diagramm — und trägt die " +
+      "Die Übung wird für alle sichtbar - mit allen Angaben, Bild und Feld-Diagramm - und trägt die " +
         "Plakette «Community». Einen Trainernamen zeigt KiFu bei Übungen nicht.",
     );
     wert(await veroeffentlicheUebung(a.supabase, a.id, { kennung: probe.id }));
@@ -2821,7 +2821,7 @@ try {
     ],
   };
 
-  await pruefe("Mängel: gespeichert UND gemeldet — beim Setzen, beim Anlegen und jederzeit abrufbar, gleich lautend (#146 AK 1–4, PC 1)", async () => {
+  await pruefe("Mängel: gespeichert UND gemeldet - beim Setzen, beim Anlegen und jederzeit abrufbar, gleich lautend (#146 AK 1–4, PC 1)", async () => {
     const u = await kinderUebung("KI-Probe Mängel");
     const r = wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: FREIES_LEIBCHEN }));
     assert.deepEqual(r.maengel.map((b) => `${b.code}:${b.element}:${b.index}`), ["leibchen:tuch:1"]);
@@ -3285,7 +3285,7 @@ try {
     assert.ok(!ids.includes(zuAlt), "älter als 28 Tage fehlt");
     assert.ok(!ids.includes(ausgefallen) && !ids.includes(ausgefallenVergangen), "Ausgefallene fehlen");
     for (const t of f.termine!)
-      assert.deepEqual(Object.keys(t).sort(), ["beginn", "datum", "ende", "geaendert", "id", "ort"], "nur Zeit und Ort — weder Bemerkung noch Verantwortliche noch Training");
+      assert.deepEqual(Object.keys(t).sort(), ["beginn", "datum", "ende", "geaendert", "id", "ort"], "nur Zeit und Ort - weder Bemerkung noch Verantwortliche noch Training");
     const a1 = f.termine!.find((t) => t.id === anstehend)!;
     assert.deepEqual(
       { datum: a1.datum, beginn: a1.beginn, ende: a1.ende, ort: a1.ort },
@@ -3309,7 +3309,7 @@ try {
       assert.deepEqual(await feed(t), { gueltig: false }, `Token «${t.slice(0, 8)}…» ist ungültig`);
   });
 
-  await pruefe("Abo-Feed über den Kern-Pfad: Festlegen, Verlegen, Ausfallen, Entfernen — der Termin erscheint genau einmal im neuen Stand (#330 PC 1, 5, 6)", async () => {
+  await pruefe("Abo-Feed über den Kern-Pfad: Festlegen, Verlegen, Ausfallen, Entfernen - der Termin erscheint genau einmal im neuen Stand (#330 PC 1, 5, 6)", async () => {
     const team = await serienTeam("Kern-DB-Abo-Kern");
     const tagCh = (d: number) => plusTage(kalendertagAmTrainingsort(), d);
     const token = (await holen(a, team)).token!;

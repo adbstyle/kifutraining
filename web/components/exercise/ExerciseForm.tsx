@@ -332,7 +332,7 @@ export function ExerciseForm({
   const entfallHinweis =
     entfallend.length === 0
       ? undefined
-      : `${entfallend.join(" und ")} gibt es hier nicht — ${
+      : `${entfallend.join(" und ")} gibt es hier nicht - ${
           entfallend.length === 1
             ? "die erfasste Angabe entfällt"
             : "die erfassten Angaben entfallen"
@@ -514,7 +514,7 @@ export function ExerciseForm({
           onChange={stufenWahl === "waehlbar" ? wechsleAltersstufe : undefined}
           festHinweis={
             kontext === "fassung"
-              ? "Folgt dem Training — Felder und Werte kommen aus dessen Manual."
+              ? "Folgt dem Training - Felder und Werte kommen aus dessen Manual."
               : umwandlung
                 ? "Wird beim Speichern übernommen."
                 : undefined
@@ -702,7 +702,7 @@ export function ExerciseForm({
         vorlagenAusser={vorlagenAusser}
         schmalHinweis={
           erfassen
-            ? "Zum Zeichnen braucht es einen breiteren Bildschirm. Erfasse die Übung hier ohne Diagramm — zeichnen kannst du es später beim Bearbeiten."
+            ? "Zum Zeichnen braucht es einen breiteren Bildschirm. Erfasse die Übung hier ohne Diagramm - zeichnen kannst du es später beim Bearbeiten."
             : "Zum Zeichnen braucht es einen breiteren Bildschirm. Die übrigen Angaben kannst du hier bearbeiten."
         }
         onChange={(data, info) => {
@@ -720,7 +720,7 @@ export function ExerciseForm({
           gewählt ist, sagt der Abschnitt, wo das Feld bleibt. */}
       {!teil && (
         <p className="type-body-medium text-on-surface-mittel">
-          Wähle zuerst den Trainingsteil — danach beschreibst du hier den Ablauf.
+          Wähle zuerst den Trainingsteil - danach beschreibst du hier den Ablauf.
         </p>
       )}
       {/* Der methodische Fahrplan als drei gewöhnliche Textfelder in der
@@ -898,7 +898,7 @@ export function ExerciseForm({
           Datenbank (Story 4 PC 5). Der Hinweis sagt, was noch fehlt. */}
       {umwandlung && (
         <Banner className={UEBER_BEIDEN}>
-          Umwandlung vorgemerkt — sie wird mit «Umwandeln und speichern» wirksam.
+          Umwandlung vorgemerkt - sie wird mit «Umwandeln und speichern» wirksam.
         </Banner>
       )}
 

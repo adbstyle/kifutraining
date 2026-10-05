@@ -8,7 +8,7 @@ import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Training bearbeiten — KiFu",
+  title: "Training bearbeiten - KiFu",
   robots: { index: false },
 };
 

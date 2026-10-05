@@ -33,7 +33,7 @@ const NAME_REGEL = `nicht leer, höchstens ${GRUPPE_NAME_MAX} Zeichen, im Traini
 /** Die Wechsel-Regel in einem Satz — an jedem Werkzeug, das Durchläufe zeigt oder setzt. */
 const WECHSEL_SATZ =
   "Der n-te Eintrag eines Durchlaufs ist der n-te Wechsel; ein Wechsel ist dasselbe Zeitfenster " +
-  "an allen Übungen des Hauptteils — im Juniorenfussball über beide Hauptteil-Blöcke hinweg " +
+  "an allen Übungen des Hauptteils - im Juniorenfussball über beide Hauptteil-Blöcke hinweg " +
   "(Spielformen und Spiel) durchgezählt.";
 
 // ── gruppe_anlegen ──────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ export const gruppeAnlegen = werkzeug({
   titel: "Gruppe anlegen",
   beschreibung:
     `Legt eine Gruppe am Training an; sie steht hinter den bestehenden. Die Bezeichnung ist ` +
-    `${NAME_REGEL}. Eine Gruppe ist nur eine Bezeichnung — ohne Kinderzahl und ohne Namen von ` +
+    `${NAME_REGEL}. Eine Gruppe ist nur eine Bezeichnung - ohne Kinderzahl und ohne Namen von ` +
     `Kindern. Verteilt wird sie mit «training_uebung_durchlauf_setzen». ${KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
@@ -88,7 +88,7 @@ export const gruppeEntfernen = werkzeug({
     "Entfernt eine Gruppe sofort und ohne Rückfrage und nennt, an wie vielen Übungen sie im " +
     "Durchlauf stand («an_uebungen», über alle Varianten); aus jedem dieser Durchläufe fällt sie " +
     "heraus, die Übungen selbst bleiben. Dieselbe Zahl zeigt vorher «training_durchlauf_abrufen» " +
-    `je Gruppe — dort nachsehen, bevor du entfernst. ${KENNUNG_FEHLER}`,
+    `je Gruppe - dort nachsehen, bevor du entfernst. ${KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ gruppe_id: GruppeId }),
   ausgabe: z.object({ name: z.string(), an_uebungen: z.number().int() }),
@@ -105,7 +105,7 @@ export const trainingUebungDurchlaufSetzen = werkzeug({
   name: "training_uebung_durchlauf_setzen",
   titel: "Durchlauf einer Übung setzen",
   beschreibung:
-    "Legt fest, welche Gruppen eine Übung des Hauptteils durchlaufen und in welcher Abfolge — " +
+    "Legt fest, welche Gruppen eine Übung des Hauptteils durchlaufen und in welcher Abfolge - " +
     "der bisherige Durchlauf wird vollständig ersetzt. «[]» heisst: alle gemeinsam. " +
     `${WECHSEL_SATZ} Nur Übungen im Hauptteil, nur Gruppen dieses Trainings (bei einer fremden ` +
     "nennt «zulaessig» die Kennungen), jede Gruppe höchstens einmal. Wie die Wechsel danach " +

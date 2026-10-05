@@ -38,7 +38,7 @@ if (!PROD_URL || !PROD_KEY || !STAGING_URL || !STAGING_KEY) {
   process.exit(1);
 }
 if (PROD_URL === STAGING_URL) {
-  console.error("Prod- und Staging-URL sind identisch — falsche Env-Belegung?");
+  console.error("Prod- und Staging-URL sind identisch - falsche Env-Belegung?");
   process.exit(1);
 }
 // Schützt den Lokallauf: fehlen die Prod-Vars, liefert .env.local den lokalen
@@ -46,7 +46,7 @@ if (PROD_URL === STAGING_URL) {
 // Staging gespiegelt.
 if (/127\.0\.0\.1|localhost/.test(PROD_URL)) {
   console.error(
-    `Prod-Quelle zeigt auf den lokalen Stack (${PROD_URL}) — SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY der Prod-Umgebung explizit setzen.`,
+    `Prod-Quelle zeigt auf den lokalen Stack (${PROD_URL}) - SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY der Prod-Umgebung explizit setzen.`,
   );
   process.exit(1);
 }

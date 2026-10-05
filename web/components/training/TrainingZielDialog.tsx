@@ -123,14 +123,14 @@ export function TrainingZielDialog({
           </p>
           <p className="mt-3">
             {uebernehmen
-              ? "Das Training, aus dem sie hervorgeht, bleibt unverändert — spätere Änderungen wirken in keine Richtung."
-              : "Dein Training bleibt unverändert bei dir — spätere Änderungen wirken in keine Richtung."}
+              ? "Das Training, aus dem sie hervorgeht, bleibt unverändert - spätere Änderungen wirken in keine Richtung."
+              : "Dein Training bleibt unverändert bei dir - spätere Änderungen wirken in keine Richtung."}
           </p>
         </>
       ) : (
         <p>
           Du bekommst eine eigenständige, private Kopie dieses Trainings und
-          kannst sie frei bearbeiten. Das Original bleibt unberührt — spätere
+          kannst sie frei bearbeiten. Das Original bleibt unberührt - spätere
           Änderungen wirken in keine Richtung.
         </p>
       )}

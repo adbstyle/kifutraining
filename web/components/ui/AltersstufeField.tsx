@@ -68,7 +68,7 @@ export function AltersstufeField({
           {aktion}
           <p className="type-body-small text-on-surface-mittel">
             {festHinweis ??
-              "Steht fest — Felder und Werte folgen dem Manual dieser Stufe."}
+              "Steht fest - Felder und Werte folgen dem Manual dieser Stufe."}
           </p>
         </div>
       </div>

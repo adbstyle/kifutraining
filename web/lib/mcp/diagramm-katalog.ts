@@ -115,7 +115,7 @@ const PFAD_BESCHREIBUNG: Record<PfadTyp, string> = {
 };
 
 const FORM_BESCHREIBUNG: Record<FormTyp, string> = {
-  rechteck: "Rechteck aus x/y (obere linke Ecke), «breite» und «hoehe» — etwa ein Spielfeld oder eine Zone.",
+  rechteck: "Rechteck aus x/y (obere linke Ecke), «breite» und «hoehe» - etwa ein Spielfeld oder eine Zone.",
   ellipse: "Ellipse in ihrem Rahmen aus x/y (obere linke Ecke), «breite» und «hoehe».",
   dreieck:
     `Dreieck: entweder genau ${PUNKTE.dreieck} «punkte» als Ecken oder ohne «punkte» ein Rahmen aus x/y ` +
@@ -160,7 +160,7 @@ export function baueDiagrammKatalog(): DiagrammKatalog {
       `«rotation» dreht ein Symbol im Uhrzeigersinn in 45°-Schritten (${ROTATIONEN.join(", ")}); ` +
       `vorgesehen ist sie nur an Symbolen mit «drehbar»: true. Bei 0 öffnet ein Tor nach unten. Ein Tor auf der Oberkante eines Feldes ` +
       `steht auf ${KANTEN_SOLL.oben}, auf der Unterkante auf ${KANTEN_SOLL.unten}, an der linken Kante auf ` +
-      `${KANTEN_SOLL.links}, an der rechten auf ${KANTEN_SOLL.rechts} — so öffnet es ins Feld. Figuren drehen nicht: ` +
+      `${KANTEN_SOLL.links}, an der rechten auf ${KANTEN_SOLL.rechts} - so öffnet es ins Feld. Figuren drehen nicht: ` +
       "«spiegeln»: true lässt sie nach links statt nach rechts blicken.",
     grenzen: { max_elemente: MAX_ELEMENTE, max_text_laenge: MAX_TEXT_LAENGE },
     arten: ARTEN.map((art) => ({ art, felder: [...ELEMENT_ERLAUBT[art]] })),

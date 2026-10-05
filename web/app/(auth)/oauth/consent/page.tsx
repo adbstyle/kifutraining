@@ -18,7 +18,7 @@ import { ZustimmungFormular } from "./ZustimmungFormular";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "KI-Assistent verbinden — KiFu",
+  title: "KI-Assistent verbinden - KiFu",
   robots: { index: false },
 };
 

@@ -17,7 +17,7 @@ import { materialAenderungen, materialBasisAusDiagramm } from "@/lib/material";
 /** Der Hinweis an der Zeile, wenn eine Diagrammänderung das Material dieser
  *  Übung verändert hat (Story #269). Beantwortet wird er im Bearbeiten. */
 export const MATERIAL_GEAENDERT_TEXT =
-  "Das Feld-Diagramm zeigt inzwischen anderes Material — beim Bearbeiten übernehmen oder beibehalten.";
+  "Das Feld-Diagramm zeigt inzwischen anderes Material - beim Bearbeiten übernehmen oder beibehalten.";
 
 /** Eine Zuordnung im Editor: Reihenfolge, Bild, Name, Stufen, Dauer und die
  *  Aktionen an ihr.

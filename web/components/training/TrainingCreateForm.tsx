@@ -86,7 +86,7 @@ export function TrainingCreateForm() {
         className="max-w-xs"
         wert={altersstufe}
         onChange={waehleAltersstufe}
-        info="Nach welchem Manual du planst. Bestimmt Trainingsteile, Gliederung und Alterskategorien — und steht danach fest."
+        info="Nach welchem Manual du planst. Bestimmt Trainingsteile, Gliederung und Alterskategorien - und steht danach fest."
         fehler={fehler.altersstufe}
       />
 
@@ -106,7 +106,7 @@ export function TrainingCreateForm() {
         />
       ) : (
         <p className="type-body-small text-on-surface-mittel">
-          Wähle zuerst die Altersstufe — sie bestimmt, welche Alterskategorien
+          Wähle zuerst die Altersstufe - sie bestimmt, welche Alterskategorien
           es hier gibt.
         </p>
       )}

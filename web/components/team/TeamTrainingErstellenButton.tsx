@@ -78,7 +78,7 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
         }
       >
         <div className="flex flex-col gap-5">
-          <p>Das Training gehört dem Team — jedes Mitglied darf es bearbeiten.</p>
+          <p>Das Training gehört dem Team - jedes Mitglied darf es bearbeiten.</p>
           <TextField
             label="Name des Trainings"
             value={name}
@@ -91,7 +91,7 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
             className="max-w-xs"
             wert={altersstufe}
             onChange={waehleAltersstufe}
-            info="Nach welchem Manual das Team plant. Bestimmt Trainingsteile, Gliederung und Alterskategorien — und steht danach fest."
+            info="Nach welchem Manual das Team plant. Bestimmt Trainingsteile, Gliederung und Alterskategorien - und steht danach fest."
             fehler={fehler.altersstufe}
           />
 
@@ -107,7 +107,7 @@ export function TeamTrainingErstellenButton({ teamId }: { teamId: string }) {
             />
           ) : (
             <p className="type-body-small text-on-surface-mittel">
-              Wähle zuerst die Altersstufe — sie bestimmt, welche
+              Wähle zuerst die Altersstufe - sie bestimmt, welche
               Alterskategorien es hier gibt.
             </p>
           )}

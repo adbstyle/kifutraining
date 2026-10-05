@@ -184,7 +184,7 @@ export function ExercisePickerDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={`Übung hinzufügen — ${ziel}`}
+      title={`Übung hinzufügen - ${ziel}`}
       /* Breiter als die 28rem des Kit-Dialogs: Er trägt ein Raster aus
          Karten, drei nebeneinander, wie die Diagramm-Vorlagen. */
       className="w-[min(52rem,calc(100vw-2rem))]"
