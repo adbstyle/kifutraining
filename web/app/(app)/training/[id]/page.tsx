@@ -293,7 +293,7 @@ export default async function TrainingViewPage({
                                 bildQuelle={item.bildQuelle}
                                 name={item.name}
                               />
-                              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                              <span className="flex min-w-0 flex-1 flex-col gap-0.5 self-start">
                                 <AnsichtUebungsName id={item.id} name={item.name} />
                               </span>
                               {dur && (

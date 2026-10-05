@@ -110,7 +110,9 @@ export function TrainingExerciseRow({
           className="hidden sm:block"
         />
 
-        <span className="flex min-w-0 flex-1 flex-col gap-1">
+        {/* Name und Kategorien oben bündig mit dem Vorschaubild (PO
+            2026-10-05) — Pfeile und Aktionen bleiben mittig. */}
+        <span className="flex min-w-0 flex-1 flex-col gap-1 self-start">
           <span className="flex items-center gap-2">
             <UebungsName name={item.name} offen={offen} onOeffnen={onOeffnen} />
             {mismatch && (
