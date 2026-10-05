@@ -933,8 +933,8 @@ export function ExerciseForm({
         </div>
       )}
 
-      {/* Der Name ist die Überschrift der Maske — dasselbe Kopf-Feld wie der
-          Trainingsname im Editor. Die echte Überschrift setzt die Seite.
+      {/* Beim Bearbeiten ist der Name die Überschrift der Maske — dasselbe
+          Kopf-Feld wie der Trainingsname im Editor. Die echte Überschrift setzt die Seite.
           Beim Bearbeiten steht das Speichern rechts daneben (PO 2026-10-02):
           Die Spalten darunter scrollen, der Kopf bleibt — so ist es immer zur
           Hand. Ist es zu eng, bricht es unter den Namen. */}
@@ -944,23 +944,37 @@ export function ExerciseForm({
           geteilt && "flex flex-wrap items-start justify-end gap-x-6 gap-y-3",
         )}
       >
-        <div className={cn(geteilt && "min-w-64 flex-1")}>
-          <HeadlineField
-            aria-label="Name der Übung"
+        {/* Beim Erfassen entsteht der Name erst: ein gewöhnliches Feld mit
+            grossem Wert, wie «Neues Training». */}
+        {erfassen ? (
+          <TextField
+            label="Name der Übung"
             schrift="title"
             name="name"
-            placeholder="Name der Übung"
             defaultValue={initial.name}
             required
             error={!!err.name}
-            aria-describedby={err.name ? "name-fehler" : undefined}
+            supportingText={err.name}
           />
-          {err.name && (
-            <p id="name-fehler" className="type-body-small mt-1.5 text-error">
-              {err.name}
-            </p>
-          )}
-        </div>
+        ) : (
+          <div className={cn(geteilt && "min-w-64 flex-1")}>
+            <HeadlineField
+              aria-label="Name der Übung"
+              schrift="title"
+              name="name"
+              placeholder="Name der Übung"
+              defaultValue={initial.name}
+              required
+              error={!!err.name}
+              aria-describedby={err.name ? "name-fehler" : undefined}
+            />
+            {err.name && (
+              <p id="name-fehler" className="type-body-small mt-1.5 text-error">
+                {err.name}
+              </p>
+            )}
+          </div>
+        )}
         {geteilt && speichern}
       </div>
 

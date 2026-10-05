@@ -11,24 +11,15 @@ export const metadata: Metadata = {
 export default function NeuesTrainingPage() {
   return (
     <Seitenrahmen
-      breite="2xl"
+      breite="4xl"
       krumen={[
         { label: "Trainings", href: "/trainings" },
         { label: "Neues Training" },
       ]}
     >
-      <header className="mb-8">
-        <p className="type-label-medium text-primary">Trainings</p>
-        <h1 className="type-headline-large mt-1 text-on-surface">
-          Neues Training
-        </h1>
-        <p className="type-body-medium mt-2 text-on-surface-mittel">
-          Gib deinem Training einen Namen und wähle die Altersstufe - sie
-          bestimmt Gliederung und Alterskategorien und steht danach fest.
-          Anschliessend ordnest du den Trainingsteilen passende Übungen zu.
-        </p>
-      </header>
-
+      {/* Kopf wie bei «Neue Übung»: Brotkrumen, darunter der Name als
+          Kopf-Feld der Maske. Die Überschrift trägt die Seite unsichtbar. */}
+      <h1 className="sr-only">Neues Training</h1>
       <TrainingCreateForm />
     </Seitenrahmen>
   );

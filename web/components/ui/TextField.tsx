@@ -33,6 +33,10 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   /** Ein bedienbares Zeichen am rechten Feldrand — das Auge im Passwortfeld,
       das Kreuz im Suchfeld. Bedienbares steht im Kit rechts im Feld. */
   trailing?: ReactNode;
+  /** Der Wert in der Schrift einer Überschrift (`type-title-large`) — für den
+      Namen, mit dem etwas erst angelegt wird (Neues Training, Neue Übung). Name, Fläche
+      und Verhalten bleiben die eines gewöhnlichen Felds. */
+  schrift?: "title";
 }
 
 /** Das Zeichen am rechten Feldrand selbst: ein Knopf auf voller Feldhöhe. Die
@@ -58,6 +62,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       labelVersteckt = false,
       umrandet = false,
       trailing,
+      schrift,
       id,
       className,
       ...props
@@ -95,7 +100,12 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             data-befund={befund || undefined}
             data-umrandet={umrandet || undefined}
             className={cn(
-              "feldkasten type-body-large h-9 w-full px-3",
+              // Gross 44 px hoch: Die Schrift des Werts beginnt dann wie im
+              // 36-px-Feld rund 12 px unter der Oberkante, und der Name rückt
+              // ruhend um dasselbe Mass heran (`.feld-name` in globals.css).
+              schrift === "title"
+                ? "feldkasten type-title-large h-11 w-full px-3"
+                : "feldkasten type-body-large h-9 w-full px-3",
               // Rechts Platz für das Zeichen am Feldrand und das ⓘ, das beim
               // Überfahren über dem Kasten liegt (`Feld`) — je 40 px, damit
               // ein langer Wert unter keinem von beiden verschwindet.
