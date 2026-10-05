@@ -79,7 +79,7 @@ export function UebungImTraining({
           <h2 id={`uebung-${item.id}`} className="type-title-large min-w-0 flex-1 text-on-surface">
             {item.name}
           </h2>
-          <div className="-mr-1 -mt-1 flex shrink-0 items-center">
+          <div className="-mt-1 flex shrink-0 items-center gap-0.5">
             {aktionen}
             <Tooltip label="Übung schliessen">
               <IconButton icon={X} label="Übung schliessen" onClick={onSchliessen} />
