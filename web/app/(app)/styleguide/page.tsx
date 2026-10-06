@@ -2033,8 +2033,10 @@ export default function Styleguide() {
           trägt dasselbe eckige Kästchen wie die Optionen der Mehrfachauswahl
           (17): gewählt gefüllt in Primary, Haken in on-primary. Darunter liegt
           ein echtes <code>&lt;input type=&quot;checkbox&quot;&gt;</code>;
-          das Label gehört zur Klickfläche. Ein Filter ist sie nicht - der
-          bleibt ein <code>FilterChip</code> (9).
+          das Label gehört zur Klickfläche. Zwischen Feldern eines Formulars
+          steht sie auf der Linie der Feldnamen, eingerückt wie sie (
+          <code>px-3.5</code>), damit alles linksbündig liest (PO 2026-10-06).
+          Ein Filter ist sie nicht - der bleibt ein <code>FilterChip</code> (9).
         </p>
         <CheckboxDemo />
       </Section>
