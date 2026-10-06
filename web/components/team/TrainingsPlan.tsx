@@ -2,22 +2,20 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { CalendarDays, CalendarOff, CalendarPlus, CalendarX2, LandPlot, MapPin, MessageSquareText, Pencil, PlayCircle, Repeat, Shirt, Trash2, Undo2, Unlink, UserCheck, Users } from "lucide-react";
-import { Card, Disclosure, IconButton, IconButtonLink, Kalenderblatt, KategorieLozenge, Lozenge, OverflowMenu, Tooltip } from "@/components/ui";
+import { CalendarOff, CalendarX2, LandPlot, MapPin, Shirt, UserCheck, Users } from "lucide-react";
+import { Card, Disclosure, Kalenderblatt, Lozenge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
 import { TerminHandgriffe } from "./TerminHandgriffe";
 import { NaechsterTermin } from "./NaechsterTermin";
 import { PlanMonat } from "./PlanMonat";
-import { wochentageText } from "@/lib/serie";
 import { spielerzahlText, zeitText } from "@/lib/termin";
 import { felderKurz } from "@/lib/termin-felder";
-import { datumKurz } from "@/lib/zeit";
 import { monatVon, monatsName } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
 // (next/headers) ins Client-Bundle.
-import { nochNichtVorbereitet, verantwortlichenNamen, verantwortlicheMitDir, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { nochNichtVorbereitet, verantwortlicheMitDir, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
 
 /* Der Kalender eines Teams als Liste (Team-Kalender #322, #323; gegliedert
    mit Story 18 und Epic #401): zuoberst, was ansteht, danach der Rückblick,
@@ -238,129 +236,6 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
         </div>
       </div>
       <TerminHandgriffe t={t} />
-    </li>
-  );
-}
-
-/** `ebene`: die Überschriftsebene der Datum-/Zeitzeile — in der Liste h4, im
- *  Detail-Dialog des Monatsüberblicks h3 (unter dessen h2), ohne Sprung.
- *  `hervorgehoben`: der Termin, auf den der Verweis aus dem Kalender-Abo zeigt
- *  (#330) — Kontur in Primary, `aria-current` und die Kennung als Sprungziel. */
-export function TerminKarte({ t, heute, ebene: Kopf = "h4", hervorgehoben = false }: { t: TerminZeile; heute: string; ebene?: "h3" | "h4"; hervorgehoben?: boolean }) {
-  const vergangen = t.datum < heute;
-  const zeit = zeitText(t.beginn, t.ende);
-  const oeffnetTraining = !t.ausgefallen && t.training !== null;
-  const platz = felderKurz(t.felder);
-  // Die Datum-/Zeitzeile ist die Überschrift jeder Karte — auch die eines
-  // Termins ohne Training hat so eine (Screenreader-Navigation per Überschrift).
-  const kopf = (
-    <Kopf className="flex flex-wrap items-center gap-x-2 type-body-small text-on-surface-mittel">
-      <CalendarDays size={14} aria-hidden />
-      {datumKurz(t.datum)}
-      {zeit ? <> · {zeit} Uhr</> : null}
-      {/* AK 15: fehlende Zeit sichtbar machen, ohne den Termin zu öffnen. */}
-      {!t.beginn && <span className="text-error">· Zeit fehlt</span>}
-      {t.beginn && !t.ende && <span className="text-error">· Ende fehlt</span>}
-      {t.ort && <><MapPin size={14} aria-hidden />{t.ort}</>}
-      {/* #324 AK 8: die Serie am Termin erkennbar machen. */}
-      {t.serie && (
-        <span className="inline-flex items-center gap-1">
-          <Repeat size={14} aria-hidden />
-          <span className="sr-only">Teil einer Terminserie </span>
-          {wochentageText(t.serie.wochentage)}
-        </span>
-      )}
-    </Kopf>
-  );
-
-  return (
-    <li>
-      <Card
-        id={hervorgehoben ? t.id : undefined}
-        aria-current={hervorgehoben ? "true" : undefined}
-        tabIndex={hervorgehoben ? -1 : undefined}
-        className={cn(
-          "p-4",
-          // Trägt der Termin ein Training, verhält sich die Karte wie eine
-          // Trainingskachel: Sie hellt als Ganzes auf (`state`) und öffnet das
-          // Training, wo sie keinen eigenen Knopf trägt — die Fläche des Links
-          // reicht dafür über die ganze Karte (`before:`). Ohne Training gibt
-          // es nichts zu öffnen, die Karte bleibt still.
-          oeffnetTraining && "state",
-          hervorgehoben && "kontur border-primary outline-none",
-        )}
-      >
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className={cn("min-w-0 flex-1", vergangen && !t.ausgefallen && "opacity-60")}>
-            {/* Bei einem ausgefallenen Termin dämpft nur Kopf und Verantwortliche;
-                Lozenge und Grund bleiben im vollen Kontrast (AA). */}
-            <div className={cn(t.ausgefallen && "opacity-60")}>
-            {kopf}
-            {/* #325 AK 10, 12: wer den Termin vorbereitet und leitet, mit dem
-                aktuellen Namen. Ohne Verantwortliche steht nichts (OoS 2). */}
-            {t.verantwortliche.length > 0 && (
-              <p className="mt-0.5 flex items-center gap-1 type-body-small text-on-surface-mittel">
-                <Users size={14} aria-hidden className="shrink-0" />
-                <span className="sr-only">Verantwortlich: </span>
-                {verantwortlichenNamen(t.verantwortliche).join(", ")}
-              </p>
-            )}
-            {/* #389 AK 10, #390 AK 4: knapp in einer Zeile, welche Felder und
-                welche Spielerzahl erfasst sind; alle Einzelheiten am geöffneten
-                Termin. Was unbekannt ist, steht nicht da. */}
-            {(platz || t.spielerzahl !== null) && (
-              <p className="mt-0.5 flex flex-wrap items-center gap-x-3 type-body-small text-on-surface-mittel">
-                {platz && (
-                  <span className="inline-flex items-center gap-1">
-                    <LandPlot size={14} aria-hidden className="shrink-0" />
-                    <span className="sr-only">Felder: </span>
-                    {platz}
-                  </span>
-                )}
-                {t.spielerzahl !== null && (
-                  <span className="inline-flex items-center gap-1">
-                    <Shirt size={14} aria-hidden className="shrink-0" />
-                    <span className="sr-only">Erwartet: </span>
-                    {spielerzahlText(t.spielerzahl)}
-                  </span>
-                )}
-              </p>
-            )}
-            </div>
-            {t.ausgefallen ? (
-              <div className="mt-1">
-                <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
-                {/* AK 7: der Grund steht darunter, wenn es einen gibt. */}
-                {t.ausfallGrund && (
-                  <p className="mt-1 type-body-small text-on-surface-mittel">
-                    <span className="sr-only">Grund: </span>
-                    {t.ausfallGrund}
-                  </p>
-                )}
-              </div>
-            ) : t.training ? (
-              <Link
-                href={`/training/${t.training.id}`}
-                className="focus-ring mt-1 block rounded-flaeche before:absolute before:inset-0 before:rounded-flaeche before:content-['']"
-              >
-                <span className="block type-title-medium text-on-surface">{t.training.name}</span>
-                <div className="mt-1 flex flex-wrap gap-1">{t.training.stufen.map((k) => <KategorieLozenge key={k} k={k} />)}</div>
-              </Link>
-            ) : (
-              <div className="mt-1">
-                {nochNichtVorbereitet(t, heute) ? (
-                  <Lozenge appearance="warning" iconBefore={CalendarX2}>Noch kein Training</Lozenge>
-                ) : (
-                  <Lozenge>Ohne Training</Lozenge>
-                )}
-              </div>
-            )}
-            {t.bemerkung && <p className="mt-1 type-body-small text-on-surface-mittel">{t.bemerkung}</p>}
-          </div>
-          {/* Über der Link-Fläche, damit die Knöpfe für sich bedienbar bleiben. */}
-          <TerminHandgriffe t={t} />
-        </div>
-      </Card>
     </li>
   );
 }

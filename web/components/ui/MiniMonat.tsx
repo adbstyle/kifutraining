@@ -48,10 +48,9 @@ export function MarkenZeichen({ zustand }: { zustand: MarkenZustand }) {
 }
 
 /* Ein kleiner Monat zum Navigieren (Epic #401, Muster «Mini-Monat»): neben
-   einer Liste, die er nicht ersetzt, sondern begleitet. Neu, weil das
-   `Monatsraster` einen Monat zum Lesen zeigt (Einträge mit Zeit und Namen,
-   min. 36 rem breit); dieser passt in eine Seitenspalte und zeigt je Tag nur
-   Zeichen.
+   einer Liste, die er nicht ersetzt, sondern begleitet. Er passt in eine
+   Seitenspalte und zeigt je Tag nur Zeichen; Zeit und Namen stehen in der
+   Liste.
 
    - Tage mit Einträgen tragen je Eintrag eine Marke, einen Knopf über die
      Breite des Tages (`onWahl`); ein Tag ohne Eintrag ist kein Knopf.

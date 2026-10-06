@@ -8,7 +8,6 @@ import { AusfallDialog } from "./AusfallDialog";
 import { EntfallendBestaetigung } from "./EntfallendBestaetigung";
 import { ReichweiteDialog } from "./ReichweiteDialog";
 import { NeuerTerminDialog } from "./NeuerTerminDialog";
-import { TerminDetailDialog } from "./TerminDetailDialog";
 import { TerminDialog } from "./TerminDialog";
 import { TrainingWahlDialog, type TrainingWahl } from "./TrainingWahlDialog";
 import { nurNamenloseGeaendert, verantwortlicheStart, type VerantwortlicheWert } from "./VerantwortlicheWahl";
@@ -46,14 +45,11 @@ import type { TerminZeile } from "@/lib/queries/termine";
 import type { TeamMitglied } from "@/lib/queries/teams";
 
 /* Alle Aktionen am Kalender eines Teams an einer Stelle (Team-Kalender
-   #322, #323). Die Liste und — ab Teil F — der Monatsüberblick rufen
-   dieselben Funktionen auf, damit ein Termin in beiden Ansichten dieselben
-   Aktionen bietet (#329 AK 8). */
+   #322, #323). Die Zeilen der Liste und der nächste Termin rufen dieselben
+   Funktionen auf, damit jeder Termin dieselben Handgriffe bietet (#401). */
 export type TerminAktionen = {
-  /** Einen Termin im Detail öffnen — für den Monatsüberblick (#329 AK 8). */
-  oeffnen: (t: TerminZeile) => void;
-  /** Einen Termin oder eine Terminserie erstellen, optional ab einem Tag. */
-  neu: (datum?: string) => void;
+  /** Einen Termin oder eine Terminserie erstellen — ohne vorbelegtes Datum (#405). */
+  neu: () => void;
   bearbeiten: (t: TerminZeile) => void;
   zuordnen: (t: TerminZeile) => void;
   loesen: (t: TerminZeile) => void;
@@ -138,7 +134,6 @@ export function TerminBereich({
   persoenliche,
   mitglieder,
   heute,
-  termine,
   children,
 }: {
   teamId: string;
@@ -148,18 +143,12 @@ export function TerminBereich({
   /** Wer als Verantwortliche:r zur Wahl steht (#325). */
   mitglieder: TeamMitglied[];
   heute: string;
-  /** Die Termine der Seite — der Detail-Dialog liest seinen Termin daraus, damit er nie einen veralteten Stand zeigt. */
-  termine: TerminZeile[];
   children: React.ReactNode;
 }) {
   const router = useRouter();
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
-  const [offenId, setOffenId] = useState<string | null>(null); // Der im Überblick geöffnete Termin
-  // Aus den aktuellen Terminen gelesen: Ist er verschwunden, schliesst der Dialog.
-  const offen = offenId ? (termine.find((t) => t.id === offenId) ?? null) : null;
-  const setOffen = (t: TerminZeile | null) => setOffenId(t?.id ?? null);
-  const [neu, setNeu] = useState<string | null>(null); // Vorbelegtes Datum; "" = ohne
+  const [neu, setNeu] = useState(false);
   const [bearbeiten, setBearbeiten] = useState<TerminZeile | null>(null);
   const [zuordnen, setZuordnen] = useState<TerminZeile | null>(null);
   const [entfernen, setEntfernen] = useState<TerminZeile | null>(null);
@@ -399,22 +388,16 @@ export function TerminBereich({
     });
   }
 
-  // Jede Aktion der Karte schliesst zuerst den Detail-Dialog (`offen`), damit
-  // nicht zwei Dialoge übereinander liegen. Ohne offenen Dialog ist das ein
-  // leerer Zustandswechsel.
   const aktionen: TerminAktionen = {
-    oeffnen: (t) => setOffen(t),
-    neu: (datum) => { setOffen(null); neuerLauf(); setDialogFehler(undefined); setNeu(datum ?? ""); },
-    bearbeiten: (t) => { setOffen(null); neuerLauf(); setDialogFehler(undefined); setBearbeiten(t); },
+    neu: () => { neuerLauf(); setDialogFehler(undefined); setNeu(true); },
+    bearbeiten: (t) => { neuerLauf(); setDialogFehler(undefined); setBearbeiten(t); },
     // Ein ausgefallener Termin trägt kein Training (#327 AK 9): kein Dialog.
-    zuordnen: (t) => { if (t.ausgefallen) return; setOffen(null); neuerLauf(); setDialogFehler(undefined); setZuordnen(t); },
+    zuordnen: (t) => { if (t.ausgefallen) return; neuerLauf(); setDialogFehler(undefined); setZuordnen(t); },
     loesen: (t) => {
-      setOffen(null);
       if (!t.training || pending) return;
       lauf(() => loeseTrainingAktion(t.id, t.training!.id), () => `«${t.training!.name}» ist gelöst und bleibt im Team-Bestand.`, () => {});
     },
     entfernen: (t) => {
-      setOffen(null);
       setDialogFehler(undefined);
       if (t.serie) {
         neuerLauf();
@@ -422,9 +405,8 @@ export function TerminBereich({
       }
       else setEntfernen(t);
     },
-    ausfallen: (t) => { setOffen(null); neuerLauf(); setDialogFehler(undefined); setAusfall(t); },
+    ausfallen: (t) => { neuerLauf(); setDialogFehler(undefined); setAusfall(t); },
     ausfallZuruecknehmen: (t) => {
-      setOffen(null);
       if (pending) return;
       lauf(() => nimmAusfallZurueckAktion(t.id), () => "Ausfall zurückgenommen.", () => {});
     },
@@ -435,26 +417,23 @@ export function TerminBereich({
     <Kontext.Provider value={aktionen}>
       {children}
 
-      <TerminDetailDialog termin={offen} heute={heute} onClose={() => setOffen(null)} />
-
       <NeuerTerminDialog
-        open={neu !== null}
-        start={neu ?? ""}
+        open={neu}
         pending={pending}
         fehler={dialogFehler}
         mitglieder={mitglieder}
         onClose={() => {
-          if (neu === null) return;
+          if (!neu) return;
           neuerLauf();
-          setNeu(null);
+          setNeu(false);
         }}
         onSpeichern={(t) =>
           t.art === "serie"
-            ? lauf(() => legeSerieFestAktion(teamId, t.felder), () => "Terminserie erstellt.", () => setNeu(null), true, laufNr.current)
+            ? lauf(() => legeSerieFestAktion(teamId, t.felder), () => "Terminserie erstellt.", () => setNeu(false), true, laufNr.current)
             : lauf(
                 () => legeNeuFest(t.felder, t.verantwortlich),
                 (r) => ("meldung" in r && r.meldung) || "Termin erstellt.",
-                () => setNeu(null),
+                () => setNeu(false),
                 true,
                 laufNr.current,
               )

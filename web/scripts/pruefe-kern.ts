@@ -123,7 +123,7 @@ import {
 } from "../lib/termin-felder";
 import { FELDER_MODELL, FelderEingabe, SPIELERZAHL_MODELL, SpielerzahlEingabe, felderAusgabe, felderSchema, spielerzahlSchema } from "../lib/termin-felder-ausgabe";
 import { MASS_TEXT } from "../lib/feldmass";
-import { ZEITRAUM_TEXT, istMonat, kalenderblatt, monatVon, monatsName, monatsRaster, plusMonate, tagOhneJahr, tagText, zeitraumProblem } from "../lib/monat";
+import { ZEITRAUM_TEXT, kalenderblatt, monatVon, monatsName, monatsRaster, plusMonate, tagOhneJahr, tagText, zeitraumProblem } from "../lib/monat";
 import { nachMonatUndTag } from "../lib/plan-gliederung";
 import { planHref } from "../lib/team-ansicht";
 import { ABO_DAUER_MIN, aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
@@ -621,7 +621,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
   assert.throws(() => TrainingAuskunftStreng.parse({ ...heute, termin: { ...heute.termin, extra: 1 } }));
 });
 
-// ── Monatsüberblick und KI-Zeitraum (#329 AK 13, 14) ─────────────────────────
+// ── Monat und KI-Zeitraum (#329 AK 14, #404) ─────────────────────────────────
 pruefe("Monat: Raster Montag–Sonntag, Wechsel, Name (#329)", () => {
   const r = monatsRaster("2026-10");
   assert.equal(r[0][0].tag, "2026-09-28", "beginnt am Montag vor dem 1.");
@@ -632,7 +632,6 @@ pruefe("Monat: Raster Montag–Sonntag, Wechsel, Name (#329)", () => {
   assert.equal(plusMonate("2026-01", -1), "2025-12");
   assert.equal(monatsName("2026-10"), "Oktober 2026");
   assert.equal(monatVon("2026-10-07"), "2026-10");
-  assert.equal(istMonat("2026-13"), false);
 });
 
 pruefe("Monat: Raster-Grenzfälle - Montag-Beginn, Sonntag-Ende, Februar, Schaltjahr, Jahreswechsel (#329)", () => {
@@ -659,34 +658,15 @@ pruefe("Monat: Raster-Grenzfälle - Montag-Beginn, Sonntag-Ende, Februar, Schalt
   assert.equal(monatsName("2028-02"), "Februar 2028");
 });
 
-pruefe("Monat: istMonat nimmt nur Monate mit tragfähigem Raster an (?monat= aus der Adresse)", () => {
-  for (const ok of ["2026-10", "2026-01", "2026-12", "0002-01", "9998-12"]) assert.equal(istMonat(ok), true, ok);
-  for (const schlecht of ["2026-1", "2026-00", "2026-13", "0000-01", "0001-01", "9999-12", "9999-01", "10000-01", "2026-10-01", "", "morgen"])
-    assert.equal(istMonat(schlecht), false, schlecht);
-  // Jeder zulässige Rand ergibt ein Raster nur aus gültigen Kalendertagen.
-  for (const m of ["0002-01", "9998-12"]) {
-    const tage = monatsRaster(m).flat().map((t) => t.tag);
-    assert.ok(tage.length >= 28 && tage.every((t) => zeitraumProblem(t, t) === null), `${m}: Raster aus gültigen Tagen`);
-  }
-});
-
 pruefe("Monat: tagText schreibt den Tag aus, ohne führende Null", () => {
   assert.equal(tagText("2026-10-07"), "7. Oktober 2026");
   assert.equal(tagText("2026-12-31"), "31. Dezember 2026");
   assert.equal(tagText("2028-02-29"), "29. Februar 2028");
 });
 
-pruefe("planHref: die Eingrenzung reist auf jeder Adresse mit; der heutige Monat bleibt ungenannt (#329 PC 1, 2, 4)", () => {
-  const heute = "2026-10-15";
-  // Liste: nur die Eingrenzung, nie ein Monat.
-  assert.equal(planHref("t1", { ansicht: "liste", meine: false }, heute), "/team/t1");
-  assert.equal(planHref("t1", { ansicht: "liste", monat: "2026-11", meine: true }, heute), "/team/t1?meine=1");
-  // Monat: Ansicht, der Monat nur wenn er nicht der heutige ist, dazu die Eingrenzung.
-  assert.equal(planHref("t1", { ansicht: "monat", meine: false }, heute), "/team/t1?ansicht=monat");
-  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-10", meine: false }, heute), "/team/t1?ansicht=monat");
-  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-11", meine: false }, heute), "/team/t1?ansicht=monat&monat=2026-11");
-  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-11", meine: true }, heute), "/team/t1?ansicht=monat&monat=2026-11&meine=1");
-  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-10", meine: true }, heute), "/team/t1?ansicht=monat&meine=1");
+pruefe("planHref: nur die Eingrenzung reist in der Adresse mit (#325 AK 11, #405)", () => {
+  assert.equal(planHref("t1", false), "/team/t1");
+  assert.equal(planHref("t1", true), "/team/t1?meine=1");
 });
 
 pruefe("KI-Zeitraum: höchstens bis zum gleichen Kalendertag im Folgejahr (#329 AK 14, Review Focus 2)", () => {

@@ -245,22 +245,19 @@ pruefe("Jede Lozenge trägt ihre Schrift auf jeder Höhenstufe", () => {
   }
 });
 
-pruefe("Der Termineintrag im Monatsraster trägt jede seiner Schriften", () => {
-  // TerminEintrag: «Noch kein Training» steht auf der warning-Fläche, die
-  // übrigen Einträge auf der Tagesfläche (elev-01) bzw. in der Randwoche auf
-  // dem Grund. «Zeit fehlt» trägt Error — nur auf der warning-Fläche nicht,
-  // denn dort käme Error nicht auf 4.5:1; dort erbt es deren Schrift.
-  const warnung = LOZENGE.warning;
-  const aufWarnung = kontrast(warnung.schrift, warnung.flaeche);
-  assert.ok(aufWarnung >= 4.5, `Noch kein Training: ${z(aufWarnung)}:1`);
-  const errorAufWarnung = kontrast(ERROR, warnung.flaeche);
-  assert.ok(
-    errorAufWarnung < 4.5,
-    `error trägt auf lozenge-warning (${z(errorAufWarnung)}:1) - TerminEintrag darf «Zeit fehlt» dort wieder in Error setzen`,
-  );
-  for (const tag of [elev(1), GRUND]) {
-    const zeitFehlt = kontrast(ERROR, tag);
-    assert.ok(zeitFehlt >= 4.5, `Zeit fehlt auf ${tag}: ${z(zeitFehlt)}:1`);
+pruefe("Die Zeichen im Mini-Monat heben sich von ihrem Knopf ab (WCAG 1.4.11)", () => {
+  // MiniMonat: Punkt in Primary, Ring in der Warnfarbe (`icon-warning`),
+  // Strich und Kreuz in der leisen Schrift — je auf dem Knopf (elev-08). Als
+  // Grafik brauchen sie 3:1; die Form trägt den Zustand ohnehin mit.
+  const knopf = elev(8);
+  const zeichen: [string, string][] = [
+    ["Training", PRIMARY],
+    ["Noch kein Training", SECTION.warning.icon],
+    ["Vergangen ohne / Ausgefallen", deckend(hex8("#ffffff", SCHRIFT.mittel), knopf)],
+  ];
+  for (const [was, farbe] of zeichen) {
+    const wert = kontrast(farbe, knopf);
+    assert.ok(wert >= 3, `${was} auf ${elevName(8)}: ${z(wert)}:1`);
   }
 });
 

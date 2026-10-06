@@ -50,7 +50,6 @@ const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: 
    (#391 AK 1). */
 export function NeuerTerminDialog({
   open,
-  start,
   pending,
   fehler: serverFehler,
   mitglieder,
@@ -58,8 +57,6 @@ export function NeuerTerminDialog({
   onSpeichern,
 }: {
   open: boolean;
-  /** Das vorbelegte Datum (der Tag im Monatsüberblick); "" = ohne. */
-  start: string;
   pending?: boolean;
   fehler?: string;
   mitglieder: readonly TeamMitglied[];
@@ -76,11 +73,11 @@ export function NeuerTerminDialog({
   const [verworfen, setVerworfen] = useState<string | undefined>();
   const fehlerAnzeigen = serverFehler && serverFehler !== verworfen ? serverFehler : undefined;
 
-  // Beim Öffnen auf die Vorbelegung zurücksetzen — der Dialog überlebt sonst
-  // mit den Werten des letzten Termins.
+  // Beim Öffnen leeren — der Dialog überlebt sonst mit den Werten des letzten
+  // Termins. Ein Datum belegt er nicht vor (#405).
   useEffect(() => {
     if (!open) return;
-    setF({ ...LEER, von: start });
+    setF(LEER);
     setWiederholen(false);
     setTageVonHand(false);
     setProblem(null);

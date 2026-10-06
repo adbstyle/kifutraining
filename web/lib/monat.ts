@@ -10,17 +10,6 @@ const MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "A
 /** Die Monate abgekürzt, wie der Duden sie kürzt; kurze Namen bleiben ganz. */
 const MONATE_KURZ = ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez."];
 
-/** Ein Monat als `YYYY-MM` — nur Jahre, deren Raster samt Nachbarwochen und
- *  Vor-/Folgemonat aus gültigen Kalendertagen besteht (`istKalendertag` kennt
- *  die Jahre 1–9999): also 0002 bis 9998. Ein Wert aus `?monat=` kann so nie
- *  ein leeres oder zerbrochenes Raster ergeben. */
-export function istMonat(s: string): boolean {
-  const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(s);
-  if (!m) return false;
-  const j = Number(m[1]);
-  return j >= 2 && j <= 9998;
-}
-
 /** Der Monat (`YYYY-MM`) eines Kalendertags. */
 export const monatVon = (iso: string): string => iso.slice(0, 7);
 
