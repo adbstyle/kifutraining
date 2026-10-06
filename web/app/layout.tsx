@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,14 @@ export const metadata: Metadata = {
   title: "Übungen & Trainings für Kinder- und Juniorenfussball",
   description:
     "Übungen durchsuchen und filtern sowie strukturierte Trainings zusammenstellen - nach den SFV-Trainingsschemata für Kinderfussball und Juniorenfussball.",
+};
+
+/* Die Anwendung ist dunkel: `<meta name="color-scheme" content="dark">` lässt
+   den Browser seine Leinwand und eigenen Bedienteile dunkel zeichnen, noch
+   bevor das CSS geladen ist (kein heller Blitz). Zwilling ist `color-scheme`
+   auf `:root` in globals.css, das der Druck auf hell umstellt. */
+export const viewport: Viewport = {
+  colorScheme: "dark",
 };
 
 /* Wurzel: nur Dokument, Schrift und globale Styles. Das App-Chrome

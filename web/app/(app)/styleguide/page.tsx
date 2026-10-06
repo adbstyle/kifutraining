@@ -1893,7 +1893,10 @@ export default function Styleguide() {
           Für Trainings-Termine, mit Name und Feldkasten wie jedes Feld. Das
           native Steuerelement ist Absicht -
           Datumsauswahl, Tastatureingabe und Lokalisierung kommen vom
-          Betriebssystem.
+          Betriebssystem. Damit der Browser sie dunkel zeichnet - auch das
+          Kalender- und Uhr-Zeichen im Feld -, erklärt sich die Anwendung als
+          dunkel (<code>color-scheme: dark</code> auf <code>:root</code> und
+          im Wurzel-Layout); der Druck schaltet auf hell um.
         </p>
         <div className="grid max-w-md gap-6 sm:grid-cols-2">
           <DateField label="Datum" />
