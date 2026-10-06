@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Checkbox, DateField, Dialog, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
+import { Button, Checkbox, DateField, Dialog, SectionMessage, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
 import { maxEnddatum, serieProblem, wochentagVon, type SerieFeld, type Wochentag } from "@/lib/serie";
 import { BEMERKUNG_MAX, ORT_MAX, istKalendertag, terminProblem, type TerminFelder } from "@/lib/termin";
 import type { TeamMitglied } from "@/lib/queries/teams";
@@ -129,7 +129,7 @@ export function NeuerTerminDialog({
         </>
       }
     >
-      {fehlerAnzeigen && <p role="alert" className="mb-4 text-error">{fehlerAnzeigen}</p>}
+      {fehlerAnzeigen && <SectionMessage appearance="error" className="mb-4">{fehlerAnzeigen}</SectionMessage>}
       <div className="flex flex-col gap-4">
         <DateField
           label={wiederholen ? "Beginndatum" : "Datum"}

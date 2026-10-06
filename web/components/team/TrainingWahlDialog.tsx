@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AuswahlListe, Button, ChoiceChip, ChoiceChipGroup, Dialog } from "@/components/ui";
+import { AuswahlListe, Button, ChoiceChip, ChoiceChipGroup, Dialog, SectionMessage } from "@/components/ui";
 import { zaehle } from "@/lib/labels";
 import { PERSOENLICH_KOPIE_HINWEIS } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
@@ -94,7 +94,7 @@ export function TrainingWahlDialog({
         </>
       }
     >
-      {fehler && <p role="alert" className="mb-3 text-error">{fehler}</p>}
+      {fehler && <SectionMessage appearance="error" className="mb-4">{fehler}</SectionMessage>}
       {termin?.training && (
         <p className="mb-3">
           «{termin.training.name}» bleibt ohne Termin im Team-Bestand.

@@ -4,8 +4,8 @@ import { cn } from "@/lib/cn";
 /* ── Chips ────────────────────────────────────────────────────
    Eine gemeinsame Basis, drei Typen: Assist · Filter · Einfachauswahl.
    Die Rollen stehen direkt in den Bündeln — gewählt füllt Primary (die
-   Einfachauswahl) oder tönt es (der Filter), ungewählt umrandet die Kante, und `state` in der Basis trägt Überfahren, Fokus und
-   Druck. Darum trägt kein Bündel mehr eine eigene Überfahr-Fläche: Die
+   Einfachauswahl) oder umrandet es (der Filter), ungewählt umrandet die
+   Kante, und `state` in der Basis trägt Überfahren, Fokus und Druck. Darum trägt kein Bündel mehr eine eigene Überfahr-Fläche: Die
    Zustands-Ebene färbt sich in der Farbe des Chip-Inhalts ein und passt so
    auf jede Variante.
 
@@ -111,9 +111,10 @@ export function FilterChip({
    (role=radiogroup / role=radio, aria-checked) — es ist ein Eingabefeld und
    keine Ansicht —, mit Pfeiltasten-Navigation und wanderndem Tabstopp.
 
-   Optik: dieselben Chip-Bündel, ausgewählt gefüllt in Primary.
-   Kein Häkchen — es ist eine Einfachauswahl, nicht ein Ein/Aus-Zustand,
-   und der Umriss-Wechsel trägt die Aussage bereits.
+   Optik: dieselben Chip-Bündel, ausgewählt gefüllt in Primary — mit
+   `look="nutzertext"` umrandet wie der Filter. Kein Häkchen — es ist eine
+   Einfachauswahl, nicht ein Ein/Aus-Zustand, und der Wechsel von Fläche
+   bzw. Kontur trägt die Aussage bereits.
 
    Bewusst hook-frei: Chip.tsx wird auch von Server-Komponenten importiert.
    Der Fokus wandert darum über das DOM statt über Refs. */

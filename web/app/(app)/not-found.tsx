@@ -14,6 +14,7 @@ export default function NichtGefunden() {
       <Leerzustand
         icon={FileQuestion}
         titel="Diese Seite gibt es nicht"
+        ueberschrift="h1"
         aktion={
           <ButtonLink href="/" variant="tonal">
             Zu den Übungen

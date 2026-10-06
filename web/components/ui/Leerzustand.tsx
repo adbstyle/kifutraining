@@ -18,13 +18,18 @@ import { cn } from "@/lib/cn";
    ganzen Abschnitt füllt.
 
    `dicht` nimmt die Polsterung zurück, wo das Leerfeld unter einer Überschrift
-   im Abschnitt steht statt allein auf der Seite. */
+   im Abschnitt steht statt allein auf der Seite.
+
+   `ueberschrift` macht den Titel zur echten Überschrift, wo das Leerfeld die
+   ganze Seite ist (nicht verfügbar, nicht gefunden) und sonst keine trüge —
+   dieselbe Schrift, nur die Gliederung für die Vorlesehilfe. */
 export function Leerzustand({
   icon: Icon,
   titel,
   children,
   aktion,
   dicht = false,
+  ueberschrift,
 }: {
   /** 40 px, Strichstärke 1.5 — gross genug, um die Fläche zu tragen, leise
    *  genug, um nicht wie ein Knopf auszusehen. */
@@ -35,7 +40,10 @@ export function Leerzustand({
   /** Optionales Bedienelement unter dem Text — der eine Weg heraus. */
   aktion?: ReactNode;
   dicht?: boolean;
+  /** Rendert den Titel als diese Überschrift statt als Absatz. */
+  ueberschrift?: "h1" | "h2" | "h3";
 }) {
+  const Titel = ueberschrift ?? "p";
   return (
     <div
       className={cn(
@@ -44,7 +52,7 @@ export function Leerzustand({
       )}
     >
       {Icon && <Icon size={40} strokeWidth={1.5} aria-hidden />}
-      <p className="type-title-medium text-on-surface">{titel}</p>
+      <Titel className="type-title-medium text-on-surface">{titel}</Titel>
       <p className="type-body-medium max-w-sm">{children}</p>
       {aktion}
     </div>

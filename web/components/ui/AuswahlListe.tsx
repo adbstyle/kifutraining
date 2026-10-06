@@ -67,8 +67,11 @@ export function AuswahlListe({
             onClick={() => onWahl(it.id)}
             onKeyDown={handleKey}
             className={cn(
-              "focus-ring flex w-full items-start gap-2 rounded-flaeche px-3 py-2 text-left",
-              gewaehlt ? "bg-elev-08" : "hover:bg-elev-04",
+              // Überfahren und Fokus über die Zustands-Ebene wie überall im Kit;
+              // der Fokusring liegt innen, weil die Liste in einem scrollenden
+              // Behälter steht, an dessen Rand ein äusserer Ring abgeschnitten würde.
+              "state focus-ring-inset flex w-full items-start gap-2 rounded-flaeche px-3 py-2 text-left",
+              gewaehlt && "bg-elev-08",
             )}
           >
             <span className="min-w-0 flex-1">

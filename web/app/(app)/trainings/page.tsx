@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ClipboardList, SearchX, Sparkles } from "lucide-react";
+import { ClipboardList, SearchX } from "lucide-react";
 import { ButtonLink, Leerzustand } from "@/components/ui";
 import { Flash } from "@/components/Flash";
+import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import { TrainingCard } from "@/components/training/TrainingCard";
 import { TrainingFilterBar } from "@/components/training/TrainingFilterBar";
 import { getTrainingPool } from "@/lib/queries/trainings";
@@ -105,18 +105,7 @@ export default async function TrainingsPage({
         </>
       )}
 
-      {!user && (
-        <div className="mt-8 flex items-center gap-3 rounded-flaeche bg-elev-01 px-4 py-3">
-          <Sparkles size={18} className="shrink-0 text-primary" aria-hidden />
-          <p className="type-body-small text-on-surface-mittel">
-            Mit einem Konto kannst du eigene Trainings erstellen und
-            verwalten.{" "}
-            <Link href="/login" className="text-primary underline">
-              Anmelden
-            </Link>
-          </p>
-        </div>
-      )}
+      {!user && <AnmeldeHinweis className="mt-8" />}
     </Seitenrahmen>
   );
 }

@@ -63,13 +63,11 @@ export function elev(dp: ElevStufe["dp"]): string {
 }
 
 // ── Akzente ────────────────────────────────────────────────────────────────
-// Die Baseline-Palette von Material 2 Dark. `SECONDARY` trägt die Rolle, wird
-// aber nirgends angewendet (Vertrag §1) — sie steht hier, damit die Prüfung
-// den Token im CSS nicht als tot meldet.
+// Aus der Baseline-Palette von Material 2 Dark nur der eine Akzent: Secondary
+// ist entfallen — ein zweiter Akzent neben Primary konkurrierte nur, ohne
+// etwas zu benennen.
 export const PRIMARY = "#bb86fc";
 export const ON_PRIMARY = "#000000";
-export const SECONDARY = "#03dac6";
-export const ON_SECONDARY = "#000000";
 /**
  * Eine Stufe heller als Materials Baseline (#cf6679): Die ist als Fläche
  * gedacht und trägt als Schrift nur auf dem Grund (5.09), im Dialog fällt sie
@@ -237,8 +235,6 @@ export const BILDSCHIRM: Readonly<Record<string, string>> = {
   ...Object.fromEntries(ELEV.map((s) => [elevName(s.dp), s.hex])),
   primary: PRIMARY,
   "on-primary": ON_PRIMARY,
-  secondary: SECONDARY,
-  "on-secondary": ON_SECONDARY,
   error: ERROR,
   "on-error": ON_ERROR,
   scrim: SCRIM,

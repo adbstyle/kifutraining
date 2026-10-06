@@ -359,6 +359,8 @@ const VERBOTEN: [RegExp, string][] = [
   [/border-outline\b/, "ersetzt durch kante"],
   [/primary-container/, "Container-Rollen gibt es nicht mehr"],
   [/secondary-container/, "Container-Rollen gibt es nicht mehr"],
+  // `-container` klammert aus, was die Zeile darüber schon meldet.
+  [/\b(?:bg|text|border)-(?:on-)?secondary(?!-container)\b/, "Secondary gibt es nicht mehr - das System kennt einen Akzent"],
   [/error-container/, "Container-Rollen gibt es nicht mehr"],
   [/inverse-/, "Inverse-Rollen gibt es nicht mehr"],
   [/shadow-e[1-5]/, "ersetzt durch shadow-dp-*"],
@@ -389,15 +391,6 @@ const VERBOTEN: [RegExp, string][] = [
   [/chalk-hatch/, "ersetzt durch @utility schraffur"],
 ];
 
-/** Secondary trägt die Rolle der Baseline, wird aber nirgends angewendet — nur
- *  der Styleguide zeigt sie, damit sichtbar bleibt, dass es sie gibt. */
-const NUR_STYLEGUIDE: [RegExp, string] = [
-  // `-container` klammert aus, was ohnehin schon als Container-Rolle gemeldet
-  // wird — sonst trüge dieselbe Zeile zwei Begründungen.
-  /\b(bg|text|border)-secondary(?!-container)\b/,
-  "Secondary wird nirgends angewendet - ausser im Styleguide als Beleg",
-];
-
 /** Alle Quelldateien unter `wurzel`, die der Altlasten-Wächter durchsieht. */
 function quelldateien(wurzel: string): string[] {
   const gefunden: string[] = [];
@@ -425,9 +418,6 @@ pruefe(`Keine Altlast der alten Palette (${DATEIEN.length} Dateien)`, () => {
     zeilen.forEach((zeile, i) => {
       for (const [muster, grund] of VERBOTEN) {
         if (muster.test(zeile)) treffer.push(`${kurz}:${i + 1}  ${grund}  - ${zeile.trim()}`);
-      }
-      if (!kurz.startsWith("app/(app)/styleguide/") && NUR_STYLEGUIDE[0].test(zeile)) {
-        treffer.push(`${kurz}:${i + 1}  ${NUR_STYLEGUIDE[1]}  - ${zeile.trim()}`);
       }
     });
   }

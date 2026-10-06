@@ -29,11 +29,6 @@
   /* ─── Akzente ─── */
   --color-primary: #bb86fc;
   --color-on-primary: #000000;
-  /* Secondary hält die Rolle der Material-2-Baseline besetzt, damit die
-     Palette vollständig bleibt — angewandt wird sie NIRGENDS. Ein zweiter
-     Akzent würde neben Primary nur konkurrieren, ohne etwas zu benennen. */
-  --color-secondary: #03dac6;
-  --color-on-secondary: #000000;
   /* Eine Stufe heller als Materials Baseline (#cf6679). Die Baseline ist als
      FLÄCHE gedacht und trägt als Schrift nur auf dem Grund (5.09) — im Dialog
      fällt sie auf 3.17. Diese Anwendung setzt Error aber fast überall als
