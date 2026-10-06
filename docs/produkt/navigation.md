@@ -15,6 +15,18 @@ neues, umbenanntes oder aufgelöstes Team erscheint dort ohne Neuladen.
 Hervorgehoben ist, wo man gerade steht. Ein geöffnetes Team-Training hält „Teams" hervor,
 wie im Team-Bereich beschrieben.
 
+Über dem Konto steht die Version, die gerade läuft. Ein Klick darauf öffnet „Versionen" (siehe
+unten); in der schmalen Leiste bleibt ihr Zeichen, die Nummer zeigt der Hinweis daneben.
+
+Ist seit dem letzten Blick in „Versionen" eine neue Version erschienen, trägt die Versionszeile
+die Plakette „Neu", in der schmalen Leiste einen Punkt am Zeichen. Sie unterbricht nichts und
+verschwindet, sobald „Versionen" die neuen Versionen angezeigt hat — konnte die Seite nur einen
+älteren Stand zeigen, bleibt sie. Jede neu veröffentlichte Version gilt als neu, auch eine ohne
+spürbare Änderung; eine nachträglich korrigierte nicht. Wer KiFu in einem Browser zum ersten
+Mal öffnet, sieht keine Markierung. Eine neue Version erscheint spätestens eine Stunde nach
+ihrer Veröffentlichung, und zwar beim nächsten Seitenwechsel; eine offene Seite ändert sich
+nicht von selbst.
+
 Ganz unten steht das Konto: Initialen, Anzeigename und E-Mail-Adresse. Ein Klick darauf führt
 ins Konto, wo auch das Abmelden zu finden ist. Ohne Anmeldung steht an dieser Stelle
 „Anmelden", und die Gruppe „Mein Bereich" fehlt.
@@ -26,6 +38,38 @@ Namen eines Eintrags zeigt ein Hinweis daneben, sobald man ihn mit dem Zeiger ü
 mit der Tastatur ansteuert. Umgeschaltet wird nur von Hand, über den Knopf links vor den
 Brotkrumen. Beim Überfahren öffnet sich die schmale Leiste nicht von selbst. Die Wahl merkt
 sich der Browser und behält sie beim nächsten Besuch.
+
+## Versionen
+
+Die Seite „Versionen" zeigt, was jede Version von KiFu gebracht hat, die neueste zuerst — alle
+seit 1.0.0. Zu jeder steht ihr Thema als Titel, die Versionsnummer, der Tag der
+Veröffentlichung und der Text, wie er auf der öffentlichen Projektseite auf GitHub steht: unverändert, mit Gliederung,
+Hervorhebungen und Links, auch mit technischen Abschnitten und Nummern von Aufgaben. Ein Verweis
+führt zur Veröffentlichung auf GitHub. Auf breiten Bildschirmen steht links ein Verzeichnis
+aller Versionen mit Nummer und Thema: Ein Klick springt zum Text, und hervorgehoben ist die
+Version, deren Text gerade oben steht. An der Linie zwischen Verzeichnis und Texten zieht man
+das Verzeichnis breiter oder schmaler, mit der Maus oder per Pfeiltaste; ein Doppelklick
+stellt die übliche Breite wieder her, und der Browser merkt sich die Wahl. Auf schmalen
+Bildschirmen stehen nur die Texte.
+
+Die Texte der 30 neuesten Versionen stehen gleich da; die älteren zeigt die Seite erst auf
+Wunsch, über einen Knopf unter dem letzten Text. Das Verzeichnis nennt trotzdem alle, und ein
+Klick auf eine ältere Version öffnet die vollständige Liste an dieser Stelle. Die Seite ist ohne Anmeldung zugänglich und hat eine
+eigene Adresse, die sich weitergeben lässt.
+
+Eine neue oder geänderte Version auf GitHub erscheint spätestens nach einer Stunde. Ist GitHub
+gerade nicht erreichbar, zeigt die Seite den zuletzt bekannten Stand mit einem Hinweis, dass er
+womöglich nicht aktuell ist; die Versionsnummer in der Leiste steht trotzdem.
+
+## Cookies
+
+Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, die gewählte
+Breite der Seitenleiste, die gezogene Breite der Spalte und des Verzeichnisses unter
+„Versionen" und bis zu welcher Version man
+„Versionen" gesehen hat — je mit Zweck, Dauer, Namen und dem, was ohne sie nicht mehr geht.
+Sie sagt auch, wie man Cookies in den Einstellungen des Browsers sperrt oder löscht. Sie hängt
+am Konto (Brotkrume „Konto › Cookies") und ist ohne Anmeldung über einen Verweis unten auf allen
+Seiten ohne Leiste erreichbar, etwa beim Anmelden und Registrieren; sie funktioniert auch mit gesperrten Cookies.
 
 ## Brotkrumen
 
@@ -76,7 +120,7 @@ Die Oberfläche ist knapp gehalten. Überschriften stehen in gewöhnlicher Schre
 Grossbuchstaben; klein und in Grossbuchstaben bleiben nur kurze Beschriftungen. Plaketten stehen
 wie in Jira in gewöhnlicher Schreibung auf einer zart getönten Fläche. Ihre Farbe sagt, ob sie
 bloss etwas benennt — Herkunft, Entwurf, Altersstufe (grau) —, nach aussen gilt (blau), etwas
-Zusätzliches meldet wie mehrere Varianten (violett) oder Aufmerksamkeit braucht wie ein Termin
+Zusätzliches meldet wie mehrere Varianten oder eine neue Version (violett) oder Aufmerksamkeit braucht wie ein Termin
 ohne Training (orange). Die Alterskategorien stehen als einzelne Buchstaben, jede in einer festen
 Farbe aus derselben Palette; bei ihnen zählt der Buchstabe, nicht die Bedeutung der Farbe.
 Alles, was sich bedienen lässt — Knöpfe, Felder, Filter, Einträge der Seitenleiste, Zeilen in
@@ -138,10 +182,24 @@ ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
 
 Wird jemand von einem anderen Konto in ein Team aufgenommen, erscheint das Team in der Leiste
 erst beim nächsten Neuladen oder nach der nächsten eigenen Aktion. Breit oder schmal merkt
-sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite der Spalte auf den
+sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite des Verzeichnisses
+unter „Versionen" und die der Spalte auf den
 geteilten Seiten; sie gilt für Übung und Training gemeinsam. Die Teilung gibt es nur auf breiten Bildschirmen; auf einem Tablet im
 Hochformat oder einem Telefon steht alles untereinander, und die Breite lässt sich dort nicht
 ziehen.
+
+KiFu hat keine vollständige Datenschutzerklärung und kein Impressum; die Seite „Cookies"
+beschreibt nur, was im Browser liegt. Eine eigene Einstellung, um Cookies abzuschalten, gibt
+es nicht — das geht über den Browser.
+
+„Versionen" zeigt die Texte so, wie sie veröffentlicht wurden; ältere enthalten Technisches,
+Nummern von Aufgaben und Aussagen, die inzwischen überholt sind. Nummern von Aufgaben sind dort kein Link,
+Bilder in einem Release-Text erscheinen nicht. Kurz nach einem Release kann die Version in der
+Leiste schon neuer sein als der neueste Eintrag unter „Versionen" oder umgekehrt. Ob eine
+Version gesehen ist, merkt sich jeder Browser für sich, nicht das Konto: Auf einem anderen
+Gerät steht „Neu" weiter. Auf dem Telefon ist die Markierung erst im geöffneten Menü zu sehen,
+und „Versionen" hebt nicht hervor, welche Einträge seit dem letzten Besuch neu sind. Ein
+Browser, der keine Cookies behält, zeigt nie eine Markierung.
 
 Auf Geräten ohne Maus, also auf Telefon und Tablet, erscheint das ⓘ eines Feldes nie; die
 Hinweise dahinter bleiben dort nur der Sprachausgabe zugänglich. Ausgenommen sind die wenigen

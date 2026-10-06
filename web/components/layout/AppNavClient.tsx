@@ -8,6 +8,7 @@ import type { SeitenleisteGruppe } from "@/components/ui";
 import { aktiveBereiche, teamOffen } from "@/lib/navigation";
 import { useSeitenleiste } from "./AppRahmen";
 import { useTeamBereich } from "./TeamKontext";
+import { useVersionen } from "./VersionenKontext";
 
 /* App-Chrome, Client-Teil: baut aus Adresse und Team-Kontext die Einträge
    der Seitenleiste. Der Server-Teil (AppNav) liefert Konto, Teams und ob das
@@ -19,6 +20,7 @@ export function AppNavClient({
   konto,
   teams,
   imTeamBereich: imTeamBereichVomServer,
+  version,
 }: {
   konto: { name: string; email?: string } | null;
   teams: { id: string; name: string }[];
@@ -27,6 +29,8 @@ export function AppNavClient({
    *  den Erstaufbau; ab der ersten Client-Navigation gilt, was das Layout
    *  unter `/training/[id]` gemeldet hat. */
   imTeamBereich: boolean;
+  /** Die laufende Versionsnummer (#408). */
+  version: string;
 }) {
   const pfad = usePathname();
   const suche = useSearchParams();
@@ -38,6 +42,8 @@ export function AppNavClient({
   // das Zurück des Browsers, die nicht über einen Eintrag laufen.
   const adresse = `${pfad}?${suche.toString()}`;
   useEffect(() => setzeDrawerOffen(false), [adresse, setzeDrawerOffen]);
+
+  const { neu } = useVersionen();
 
   const aktiv = aktiveBereiche(pfad, mine, imTeamBereich);
 
@@ -82,6 +88,7 @@ export function AppNavClient({
     <Seitenleiste
       gruppen={gruppen}
       konto={konto ? { ...konto, href: "/konto", current: pfad === "/konto" } : undefined}
+      version={{ nummer: version, href: "/versionen", current: pfad === "/versionen", neu }}
       slim={slim}
       drawerOffen={drawerOffen}
       onDrawerOffenChange={setzeDrawerOffen}

@@ -55,7 +55,9 @@ export type {
   SeitenleisteEintrag,
   SeitenleisteUnterpunkt,
   SeitenleisteKonto,
+  SeitenleisteVersion,
 } from "./Seitenleiste";
+export { Ziehgriff } from "./Ziehgriff";
 export { Disclosure } from "./Disclosure";
 export type { DisclosureProps } from "./Disclosure";
 export { Dialog } from "./Dialog";

@@ -3,10 +3,8 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { SPALTE_MAX, SPALTE_MIN, begrenzeSpalte } from "@/lib/spalte";
+import { Ziehgriff } from "@/components/ui";
 import { useSeitenleiste } from "./AppRahmen";
-
-/** Ein Tastendruck verschiebt die Grenze um so viel. */
-const SCHRITT = 16;
 
 /**
  * Inhalt links, eine zweite Spalte rechts daneben — die Einordnung einer
@@ -69,10 +67,6 @@ export function ZweiSpalten({
   // Während des Ziehens folgt die Breite nur hier; gespeichert wird beim
   // Loslassen, damit nicht jede Mausbewegung ein Cookie schreibt.
   const [ziehend, setZiehend] = useState<number | null>(null);
-  // Wo der Zug begann: Zeigerposition und Breite der Spalte. Die neue Breite
-  // ist die alte plus die Strecke — so bleibt die Linie unter dem Zeiger, und
-  // ein Klick ohne Bewegung ändert nichts.
-  const start = useRef<{ x: number; breite: number } | null>(null);
   const flaeche = useRef<HTMLDivElement>(null);
   // Die tatsächliche Breite der Spalte, auch ohne gezogene Wahl — für die
   // Vorlesehilfe (`aria-valuenow`) und als Ausgangswert der Pfeiltasten.
@@ -126,64 +120,18 @@ export function ZweiSpalten({
     </Spalte>
   );
   const griff = (
-    <div
-      role="separator"
-      aria-orientation="vertical"
-      aria-label={`Breite der ${spaltenName}`}
-      aria-valuemin={SPALTE_MIN}
-      aria-valuemax={SPALTE_MAX}
-      aria-valuenow={breite ?? gemessen ?? undefined}
-      tabIndex={0}
-      title="Ziehen, um die Breite zu ändern - Doppelklick stellt sie zurück"
-      onPointerDown={(e) => {
-        const aktuell = breite ?? spurBreite();
-        if (aktuell === null) return;
-        e.preventDefault();
-        e.currentTarget.setPointerCapture(e.pointerId);
-        start.current = { x: e.clientX, breite: aktuell };
-      }}
-      onPointerMove={(e) => {
-        if (!start.current) return;
-        // Nach links ziehen macht die Spalte rechts breiter.
-        setZiehend(
-          begrenzeSpalte(start.current.breite + start.current.x - e.clientX, flaechenBreite()),
-        );
-      }}
-      onPointerUp={() => {
-        if (ziehend !== null) setzeSpalte(ziehend);
-        start.current = null;
-        setZiehend(null);
-      }}
-      onPointerCancel={() => {
-        start.current = null;
-        setZiehend(null);
-      }}
-      onDoubleClick={() => setzeSpalte(null)}
-      onKeyDown={(e) => {
-        const aktuell = breite ?? spurBreite() ?? SPALTE_MIN;
-        // Wie beim Trennbalken üblich: Home = kleinster, End = grösster Wert.
-        const ziel =
-          e.key === "ArrowLeft" ? aktuell + SCHRITT
-          : e.key === "ArrowRight" ? aktuell - SCHRITT
-          : e.key === "Home" ? SPALTE_MIN
-          : e.key === "End" ? SPALTE_MAX
-          : null;
-        if (ziel === null) return;
-        e.preventDefault();
-        setzeSpalte(begrenzeSpalte(ziel, flaechenBreite()));
-      }}
-      className="group focus-ring relative hidden cursor-col-resize touch-none select-none rounded-full xl:col-start-2 xl:row-start-1 xl:block print:hidden"
-    >
-      {/* Die Linie: ruhig in der Trennfarbe, beim Zeigen, Fokus und Ziehen
-          in Primary — die Fläche des Griffs ist breiter als die Linie. */}
-      <span
-        aria-hidden
-        className={cn(
-          "absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-linie transition-[width,background-color] group-hover:w-0.5 group-hover:bg-primary group-focus-visible:w-0.5 group-focus-visible:bg-primary",
-          ziehend !== null && "w-0.5 bg-primary",
-        )}
-      />
-    </div>
+    <Ziehgriff
+      name={`Breite der ${spaltenName}`}
+      seite="rechts"
+      min={SPALTE_MIN}
+      max={SPALTE_MAX}
+      wert={breite ?? gemessen}
+      messen={spurBreite}
+      begrenzen={(px) => begrenzeSpalte(px, flaechenBreite())}
+      onZiehen={setZiehend}
+      onSetzen={setzeSpalte}
+      className="hidden xl:col-start-2 xl:row-start-1 xl:block"
+    />
   );
 
   return (

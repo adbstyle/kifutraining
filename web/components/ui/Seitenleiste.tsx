@@ -10,11 +10,13 @@ import {
   Menu as MenuIcon,
   PanelLeftClose,
   PanelLeftOpen,
+  Tag,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "./Button";
+import { Lozenge } from "./Lozenge";
 import { IconButton } from "./IconButton";
 import { tooltipFlaeche } from "./Tooltip";
 
@@ -53,11 +55,24 @@ export interface SeitenleisteKonto {
   current?: boolean;
 }
 
+/** Die laufende Version unten in der Leiste; führt zur Release-History. */
+export interface SeitenleisteVersion {
+  /** Die Versionsnummer, z. B. «1.27.0». */
+  nummer: string;
+  href: string;
+  current?: boolean;
+  /** Ein Release ist erschienen, den dieser Browser noch nicht gesehen hat
+   *  (#410): breit die Plakette «Neu», schmal ein Punkt am Zeichen. */
+  neu?: boolean;
+}
+
 export interface SeitenleisteProps {
   gruppen: SeitenleisteGruppe[];
   /** Angemeldet: Konto-Karte unten. Sonst `anmeldenHref`. */
   konto?: SeitenleisteKonto;
   anmeldenHref?: string;
+  /** Laufende Version über der Konto-Karte. */
+  version?: SeitenleisteVersion;
   /** Schmal (nur Zeichen). Wirkt ab `lg`; darunter ist die Leiste ein Drawer
    *  und zeigt immer alles. */
   slim: boolean;
@@ -179,6 +194,7 @@ export function Seitenleiste({
   gruppen,
   konto,
   anmeldenHref = "/login",
+  version,
   slim,
   drawerOffen = false,
   onDrawerOffenChange = keineAktion,
@@ -366,6 +382,54 @@ export function Seitenleiste({
             </div>
           ))}
         </div>
+
+        {/* Die Version führt zur Release-History (#408): gleich über der Linie
+            zum Konto. Schmal bleibt das Zeichen, die Nummer steht dann im
+            Hinweis daneben. */}
+        {version && (
+          <div className="shrink-0 px-4 pb-2">
+            <Link
+              href={version.href}
+              aria-current={version.current ? "page" : undefined}
+              data-hinweis={`Version ${version.nummer}${version.neu ? " - Neu" : ""}`}
+              onClick={schliessen}
+              className={cn(
+                zeile,
+                "type-body-small h-9 gap-3 px-2.5",
+                k?.mitte,
+                version.current ? zeileAktiv : zeileRuhe,
+              )}
+            >
+              <span className="relative shrink-0">
+                <Tag
+                  size={18}
+                  strokeWidth={2}
+                  aria-hidden
+                  className={cn(version.current && "text-primary")}
+                />
+                {/* Schmal fehlt die Plakette; dann trägt das Zeichen den Punkt. */}
+                {version.neu && schmalAb && (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-elev-01",
+                      schmalAb === "lg" && "max-lg:hidden",
+                    )}
+                  />
+                )}
+              </span>
+              <span className={cn("truncate", k?.textWeg)}>Version {version.nummer}</span>
+              {version.neu && (
+                <>
+                  <Lozenge appearance="discovery" className={k?.nurBreit}>
+                    <span aria-hidden>Neu</span>
+                  </Lozenge>
+                  <span className="sr-only">, neue Version erschienen</span>
+                </>
+              )}
+            </Link>
+          </div>
+        )}
 
         <div className="mx-4 shrink-0 border-t border-linie py-3">
           {konto ? (
