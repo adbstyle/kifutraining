@@ -102,6 +102,18 @@ export function verantwortlichenNamen(liste: readonly Verantwortlicher[]): strin
   return liste.map((v) => v.name ?? EHEMALIGES_MITGLIED);
 }
 
+/** Die Verantwortlichen zum Anzeigen, aus Sicht des USERS: wer man selbst
+ *  ist, steht zuerst und mit «(du)» — so bleibt es auch in einer gekürzten
+ *  Zeile sichtbar (#402 AK 10, #403 AK 4). */
+export function verantwortlicheMitDir(t: TerminZeile, ich: string): { text: string; selbst: boolean } {
+  const eigene = t.verantwortliche.filter((v) => v.userId === ich);
+  const andere = t.verantwortliche.filter((v) => v.userId !== ich);
+  return {
+    text: [...verantwortlichenNamen(eigene).map((n) => `${n} (du)`), ...verantwortlichenNamen(andere)].join(", "),
+    selbst: eigene.length > 0,
+  };
+}
+
 type RawTermin = {
   id: string;
   team_id: string;

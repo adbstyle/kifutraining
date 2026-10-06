@@ -6,6 +6,8 @@ import { CalendarDays, CalendarOff, CalendarPlus, CalendarX2, LandPlot, MapPin, 
 import { Card, Disclosure, IconButton, IconButtonLink, Kalenderblatt, KategorieLozenge, Lozenge, OverflowMenu, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
+import { TerminHandgriffe } from "./TerminHandgriffe";
+import { NaechsterTermin } from "./NaechsterTermin";
 import { wochentageText } from "@/lib/serie";
 import { spielerzahlText, zeitText } from "@/lib/termin";
 import { felderKurz } from "@/lib/termin-felder";
@@ -14,7 +16,7 @@ import { monatsName } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
 // (next/headers) ins Client-Bundle.
-import { nochNichtVorbereitet, verantwortlichenNamen, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { nochNichtVorbereitet, verantwortlichenNamen, verantwortlicheMitDir, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
 
 /* Der Kalender eines Teams als Liste (Team-Kalender #322, #323; gegliedert
    mit Story 18 und Epic #401): zuoberst, was ansteht, danach der Rückblick,
@@ -23,6 +25,12 @@ import { nochNichtVorbereitet, verantwortlichenNamen, type Plan, type TerminZeil
    seinen Terminen als knappe Zeilen (AK 1, 2). */
 export function TrainingsPlan({ plan, heute, ich, hervorheben }: { plan: Plan; heute: string; ich: string; hervorheben?: string }) {
   const nichtsMehrOffen = plan.kommend.length === 0;
+  // #403: Der erste anstehende Termin — auch ein ausgefallener (PO 6) — steht
+  // zuoberst und nicht noch einmal in der Liste (AK 18); die Zahl zählt ihn
+  // mit (AK 19). Die Reihenfolge des Tages (Beginn, Anlegen, ohne Beginn
+  // zuletzt) kommt aus der Datenbank (AK 16), die Eingrenzung auf die
+  // eigenen Termine aus der Seite (AK 17).
+  const [naechster, ...danach] = plan.kommend;
   // #330 PC 7: Der Verweis aus dem Kalender zeigt auch einen Termin im
   // Rückblick — der Abschnitt klappt dafür auf, und `key` setzt den
   // Anfangszustand neu, wenn ein anderer Termin gemeint ist.
@@ -41,7 +49,8 @@ export function TrainingsPlan({ plan, heute, ich, hervorheben }: { plan: Plan; h
           <h3 className="type-title-small text-on-surface-mittel">
             Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
           </h3>
-          <PlanMonate termine={plan.kommend} heute={heute} ich={ich} hervorheben={hervorheben} />
+          {naechster && <NaechsterTermin t={naechster} heute={heute} ich={ich} hervorgehoben={naechster.id === hervorheben} />}
+          <PlanMonate termine={danach} heute={heute} ich={ich} hervorheben={hervorheben} />
         </section>
       )}
       {plan.vergangen.length > 0 && (
@@ -83,16 +92,6 @@ function PlanMonate({ termine, heute, ich, hervorheben }: { termine: TerminZeile
   ));
 }
 
-/** Die Verantwortlichen knapp: wer man selbst ist, steht zuerst und mit «(du)»,
- *  damit es auch in einer gekürzten Zeile sichtbar bleibt (#402 AK 10). */
-export function verantwortlichText(t: TerminZeile, ich: string): { text: string; selbst: boolean } {
-  const selbst = t.verantwortliche.some((v) => v.userId === ich);
-  const eigene = t.verantwortliche.filter((v) => v.userId === ich);
-  const andere = t.verantwortliche.filter((v) => v.userId !== ich);
-  const namen = [...verantwortlichenNamen(eigene).map((n) => `${n} (du)`), ...verantwortlichenNamen(andere)];
-  return { text: namen.join(", "), selbst };
-}
-
 /** Ort und Platz in einem: «Allmend · 30 × 30 m · Kunstrasen» (PO: der Platz steht hinter dem Ort). */
 function ortUndPlatz(t: TerminZeile): string | null {
   return [t.ort, felderKurz(t.felder)].filter(Boolean).join(" · ") || null;
@@ -109,7 +108,7 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
   const vergangen = t.datum < heute;
   const zeit = zeitText(t.beginn, t.ende);
   const ort = ortUndPlatz(t);
-  const v = verantwortlichText(t, ich);
+  const v = verantwortlicheMitDir(t, ich);
   const VIcon = v.selbst ? UserCheck : Users;
   return (
     <li
@@ -135,7 +134,7 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
           {/* AK 8: fehlende Zeit sichtbar, ohne den Termin zu öffnen. */}
           {t.beginn && !t.ende && <span className="shrink-0 type-body-small text-error">Ende fehlt</span>}
           {ort && (
-            <span className="inline-flex min-w-32 max-w-full flex-1 items-center gap-1 type-body-small text-on-surface-mittel" title={ort}>
+            <span className="inline-flex min-w-32 max-w-full items-center gap-1 type-body-small text-on-surface-mittel" title={ort}>
               {t.ort ? <MapPin size={14} aria-hidden className="shrink-0" /> : <LandPlot size={14} aria-hidden className="shrink-0" />}
               <span className="sr-only">Ort: </span>
               <span className="truncate">{ort}</span>
@@ -176,7 +175,7 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
             <Lozenge>Ohne Training</Lozenge>
           )}
           {v.text && (
-            <span className="gedaempft inline-flex min-w-32 max-w-full flex-1 items-center gap-1 type-body-small text-on-surface-mittel" title={v.text}>
+            <span className="gedaempft inline-flex min-w-32 max-w-full items-center gap-1 type-body-small text-on-surface-mittel" title={v.text}>
               <VIcon size={14} aria-hidden className="shrink-0" />
               <span className="sr-only">Verantwortlich: </span>
               <span className="truncate">{v.text}</span>
@@ -186,42 +185,6 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
       </div>
       <TerminHandgriffe t={t} />
     </li>
-  );
-}
-
-/** Alle Handgriffe eines Termins (AK 16, 17): Durchführen und Zuordnen als
- *  Knöpfe, der Rest im Menü. Positioniert, damit sie über der Fläche der Zeile
- *  liegen und für sich bedienbar bleiben. */
-function TerminHandgriffe({ t }: { t: TerminZeile }) {
-  const a = useTerminAktionen();
-  return (
-    <div className="relative flex shrink-0 gap-0.5">
-      {!t.ausgefallen && t.training && (
-        <Tooltip label="Durchführen">
-          <IconButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`} icon={PlayCircle} label={`${t.training.name} durchführen`} />
-        </Tooltip>
-      )}
-      {!t.ausgefallen && (
-        <Tooltip label={t.training ? "Training ersetzen" : "Training zuordnen"}>
-          <IconButton icon={CalendarPlus} label={`Training für ${datumKurz(t.datum)} ${t.training ? "ersetzen" : "zuordnen"}`} onClick={() => a.zuordnen(t)} />
-        </Tooltip>
-      )}
-      <OverflowMenu
-        label={`Weitere Aktionen zum Termin ${datumKurz(t.datum)}`}
-        items={[
-          ...(t.ausgefallen
-            ? [
-                { label: "Grund ändern", icon: MessageSquareText, onSelect: () => a.ausfallen(t) },
-                { label: "Ausfall zurücknehmen", icon: Undo2, onSelect: () => a.ausfallZuruecknehmen(t) },
-              ]
-            : []),
-          { label: "Termin ändern", icon: Pencil, onSelect: () => a.bearbeiten(t) },
-          ...(t.training ? [{ label: "Training lösen", icon: Unlink, onSelect: () => a.loesen(t) }] : []),
-          ...(!t.ausgefallen ? [{ label: "Ausfallen lassen", icon: CalendarOff, onSelect: () => a.ausfallen(t) }] : []),
-          { label: "Termin entfernen", icon: Trash2, danger: true, onSelect: () => a.entfernen(t) },
-        ]}
-      />
-    </div>
   );
 }
 
