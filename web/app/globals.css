@@ -465,6 +465,27 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+/* Leeres Datums- oder Zeitfeld (`DateTimeField`): Das native Feld kennt
+   keinen Platzhalter. Solange es leer ist und nicht bearbeitet wird, ist
+   seine Maske («dd/mm/yyyy», «--:--») samt Zeichen unsichtbar, und an ihrer
+   Stelle steht `.zeitfeld-leer` — Zeichen und Name, gedämpft wie der Name im
+   leeren Textfeld. Ein Klick erreicht weiterhin das native Feld. */
+.zeitfeld-leer {
+  display: none;
+}
+.zeitfeld[data-leer]:not(:focus) {
+  color: transparent;
+  /* Ganz weg, nicht nur durchsichtig: Sonst bliebe rechts eine unsichtbare
+     Stelle, die direkt die Auswahl öffnet, während ein Klick daneben nur
+     ins Feld setzt. So tut jeder Klick dasselbe. */
+  &::-webkit-calendar-picker-indicator {
+    display: none;
+  }
+  & + .zeitfeld-leer {
+    display: flex;
+  }
+}
+
 /* Im Feld steht der Name dann nicht ein zweites Mal: Wer hineinklickt, sieht
    ihn darüber und darunter ein leeres Feld. Nur wo der Name unsichtbar ist
    (Suche in der Filterleiste), bleibt der Platzhalter auch beim Tippen stehen. */
@@ -529,6 +550,15 @@
   color: transparent;
 }
 .feld-rahmen:has(.feldkasten:is(:focus, [aria-expanded="true"])) .feld-leertext {
+  visibility: hidden;
+}
+/* Im Fehler steht der Name oben (er springt nicht ins Feld, siehe oben); im
+   leeren Feld steht er dann nicht ein zweites Mal — weder als Platzhalter
+   noch als Leertext einer Auswahl oder eines Datums- und Zeitfelds. */
+.feld-rahmen[data-fehler]:not([data-name-versteckt]) .feldkasten::placeholder {
+  color: transparent;
+}
+.feld-rahmen[data-fehler] .feld-leertext {
   visibility: hidden;
 }
 

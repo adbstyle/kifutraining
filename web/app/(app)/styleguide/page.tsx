@@ -1994,7 +1994,8 @@ export default function Styleguide() {
           Gestalt eines leeren Felds, nach dem Vorbild von «Add subtask» in
           Jira (PO 2026-10-06). Gleiche Höhe, gleicher Einzug und gleiche
           Schrift wie der Name im leeren Feldkasten, ruhend ohne Fläche, beim
-          Überfahren dieselbe leise Aufhellung; vorne ein gedämpftes Plus. Ein
+          Überfahren dieselbe leise Aufhellung; ohne Zeichen - der Text sagt,
+          was ein Klick tut (PO 2026-10-06). Ein
           fachlicher Hinweis zur ganzen Liste - was ein Eintrag ist - steht
           über <code>info</code> hinter dem ⓘ rechts in der Zeile, wie bei
           einem Feld nur beim Überfahren sichtbar.
@@ -2015,7 +2016,12 @@ export default function Styleguide() {
           Betriebssystem. Damit der Browser sie dunkel zeichnet - auch das
           Kalender- und Uhr-Zeichen im Feld -, erklärt sich die Anwendung als
           dunkel (<code>color-scheme: dark</code> auf <code>:root</code> und
-          im Wurzel-Layout); der Druck schaltet auf hell um.
+          im Wurzel-Layout); der Druck schaltet auf hell um.{" "}
+          <strong>Leer</strong> zeigt es sich wie jedes leere Feld (nach dem
+          Vorbild von «Start date» in Jira, PO 2026-10-06): keine Maske
+          («dd/mm/yyyy», «--:--») und kein Name darüber, sondern das Kalender-
+          bzw. Uhr-Zeichen und der Name gedämpft im Feld. Ein Klick oder ein
+          Wert bringt das native Steuerelement zurück.
         </p>
         <div className="grid max-w-md gap-6 sm:grid-cols-2">
           <DateField label="Datum" />

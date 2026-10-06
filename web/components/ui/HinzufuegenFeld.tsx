@@ -2,7 +2,6 @@
 
 import { useId } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { Plus } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { InfoKnopf } from "./InfoKnopf";
 
@@ -11,8 +10,9 @@ import { InfoKnopf } from "./InfoKnopf";
    Zeile, die aussieht wie ein leeres Feld — gleiche Höhe (36 px), gleicher
    Einzug und gleiche Schrift wie der Name im leeren Feldkasten, ruhend ohne
    Fläche, beim Überfahren dieselbe leise Aufhellung wie eine Angabe
-   (`.hinzufuegen-feld` in globals.css). Das gedämpfte Plus vorne sagt, dass
-   ein Klick etwas hinzufügt.
+   (`.hinzufuegen-feld` in globals.css). Ohne Zeichen (PO 2026-10-06): Der
+   Text «… hinzufügen» sagt schon, was ein Klick tut, und steht so genau dort,
+   wo in einem leeren Feld sein Name stünde.
 
    `info` ist der fachliche Hinweis zur ganzen Liste — was ein Eintrag ist —
    hinter einem ⓘ rechts in der Zeile, sichtbar nur beim Überfahren wie bei
@@ -35,14 +35,13 @@ export function HinzufuegenFeld({
         type="button"
         aria-describedby={info ? infoId : undefined}
         className={cn(
-          "hinzufuegen-feld focus-ring type-body-large flex h-9 w-full items-center gap-2 rounded-flaeche",
+          "hinzufuegen-feld focus-ring type-body-large flex h-9 w-full items-center rounded-flaeche",
           "px-3.5 text-left text-on-surface-mittel",
           "disabled:cursor-not-allowed disabled:opacity-50",
           info ? "pr-11" : undefined,
         )}
         {...props}
       >
-        <Plus size={18} strokeWidth={2} aria-hidden className="shrink-0" />
         {children}
       </button>
       {info && (

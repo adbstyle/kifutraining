@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { X } from "lucide-react";
-import { HinzufuegenFeld, IconButton, Select, TextField, feldNameKlasse } from "@/components/ui";
+import { HinzufuegenFeld, IconButton, Select, TextField } from "@/components/ui";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 import { zahlOderNull } from "@/lib/termin";
 import {
@@ -101,8 +101,8 @@ export function FelderField({
   problem?: FelderProblem | null;
   disabled?: boolean;
 }) {
-  const legendeId = useId();
-  const titelId = (key: string) => `${legendeId}-${key}`;
+  const idBasis = useId();
+  const titelId = (key: string) => `${idBasis}-${key}`;
 
   function aendere(key: string, teil: Partial<FeldZeile>) {
     onZeilenChange(zeilen.map((z) => (z.key === key ? { ...z, ...teil } : z)));
@@ -114,10 +114,10 @@ export function FelderField({
   const masseFehler = (index: number) => fehlerAn(index, "laenge_m", "breite_m");
 
   return (
-    <div role="group" aria-labelledby={legendeId} className="flex flex-col gap-3">
-      <p id={legendeId} className={feldNameKlasse(problem?.index === null)}>
-        Felder (optional)
-      </p>
+    // Kein sichtbarer Gruppenname (PO 2026-10-06): «Feld hinzufügen
+    // (optional)» sagt schon, was hier entsteht, und jeder Block trägt «Feld 1»,
+    // «Feld 2». Die Vorlesehilfe hört die Gruppe trotzdem als «Felder».
+    <div role="group" aria-label="Felder" className="flex flex-col gap-3">
 
       {zeilen.length > 0 && (
         <ul className="flex flex-col gap-3">
@@ -199,7 +199,7 @@ export function FelderField({
       {problem?.index === null && <p className="type-body-small px-3.5 text-error">{problem.text}</p>}
 
       <HinzufuegenFeld info={FELD_HINWEIS.liste} disabled={disabled} onClick={() => onZeilenChange([...zeilen, neueZeile()])}>
-        Feld hinzufügen
+        Feld hinzufügen (optional)
       </HinzufuegenFeld>
     </div>
   );
