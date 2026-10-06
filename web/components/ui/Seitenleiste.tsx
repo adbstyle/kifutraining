@@ -69,6 +69,8 @@ export interface SeitenleisteProps {
   anmeldenHref?: string;
   /** Laufende Version über der Konto-Karte. */
   version?: SeitenleisteVersion;
+  /** Die Seite «Cookies» (#409), neben der Version; schmal ausgeblendet. */
+  cookies?: { href: string; current?: boolean };
   /** Schmal (nur Zeichen). Wirkt ab `lg`; darunter ist die Leiste ein Drawer
    *  und zeigt immer alles. */
   slim: boolean;
@@ -191,6 +193,7 @@ export function Seitenleiste({
   konto,
   anmeldenHref = "/login",
   version,
+  cookies,
   slim,
   drawerOffen = false,
   onDrawerOffenChange = keineAktion,
@@ -381,9 +384,10 @@ export function Seitenleiste({
 
         {/* Die Version führt zur Release-History (#408): gleich über der Linie
             zum Konto. Schmal bleibt das Zeichen, die Nummer steht dann im
-            Hinweis daneben. */}
+            Hinweis daneben. Rechts davon «Cookies» (#409) — schmal weg, die
+            Seite ist dann über «Versionen» und die breite Leiste erreichbar. */}
         {version && (
-          <div className="shrink-0 px-4 pb-2">
+          <div className="flex shrink-0 items-center gap-1 px-4 pb-2">
             <Link
               href={version.href}
               aria-current={version.current ? "page" : undefined}
@@ -391,7 +395,7 @@ export function Seitenleiste({
               onClick={schliessen}
               className={cn(
                 zeile,
-                "type-body-small h-9 gap-3 px-2.5",
+                "type-body-small h-9 min-w-0 flex-1 gap-3 px-2.5",
                 k?.mitte,
                 version.current ? zeileAktiv : zeileRuhe,
               )}
@@ -404,6 +408,21 @@ export function Seitenleiste({
               />
               <span className={cn("truncate", k?.textWeg)}>Version {version.nummer}</span>
             </Link>
+            {cookies && (
+              <Link
+                href={cookies.href}
+                aria-current={cookies.current ? "page" : undefined}
+                onClick={schliessen}
+                className={cn(
+                  zeile,
+                  "type-body-small h-9 shrink-0 px-2.5",
+                  k?.nurBreit,
+                  cookies.current ? zeileAktiv : "text-on-surface-tief hover:text-on-surface",
+                )}
+              >
+                Cookies
+              </Link>
+            )}
           </div>
         )}
 

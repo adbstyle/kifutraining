@@ -12,6 +12,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         Zum Katalog
       </Link>
       {children}
+      {/* Auch hier legt KiFu Cookies ab (die Anmeldung) — die Seite dazu (#409). */}
+      <Link
+        href="/cookies"
+        className="focus-ring type-body-small mt-8 self-start rounded-flaeche text-on-surface-tief transition-colors hover:text-on-surface"
+      >
+        Cookies
+      </Link>
     </main>
   );
 }

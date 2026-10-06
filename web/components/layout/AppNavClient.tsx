@@ -86,6 +86,7 @@ export function AppNavClient({
       gruppen={gruppen}
       konto={konto ? { ...konto, href: "/konto", current: pfad === "/konto" } : undefined}
       version={{ nummer: version, href: "/versionen", current: pfad === "/versionen" }}
+      cookies={{ href: "/cookies", current: pfad === "/cookies" }}
       slim={slim}
       drawerOffen={drawerOffen}
       onDrawerOffenChange={setzeDrawerOffen}

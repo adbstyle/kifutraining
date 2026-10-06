@@ -16,7 +16,8 @@ Hervorgehoben ist, wo man gerade steht. Ein geöffnetes Team-Training hält „T
 wie im Team-Bereich beschrieben.
 
 Über dem Konto steht die Version, die gerade läuft. Ein Klick darauf öffnet „Versionen" (siehe
-unten); in der schmalen Leiste bleibt ihr Zeichen, die Nummer zeigt der Hinweis daneben.
+unten); in der schmalen Leiste bleibt ihr Zeichen, die Nummer zeigt der Hinweis daneben. Rechts
+daneben führt „Cookies" zur gleichnamigen Seite; in der schmalen Leiste fehlt dieser Verweis.
 
 Ganz unten steht das Konto: Initialen, Anzeigename und E-Mail-Adresse. Ein Klick darauf führt
 ins Konto, wo auch das Abmelden zu finden ist. Ohne Anmeldung steht an dieser Stelle
@@ -42,6 +43,14 @@ eigene Adresse, die sich weitergeben lässt.
 Eine neue oder geänderte Version auf GitHub erscheint spätestens nach einer Stunde. Ist GitHub
 gerade nicht erreichbar, zeigt die Seite den zuletzt bekannten Stand mit einem Hinweis, dass er
 womöglich nicht aktuell ist; die Versionsnummer in der Leiste steht trotzdem.
+
+## Cookies
+
+Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, die gewählte
+Breite der Seitenleiste und die gezogene Breite der Spalte — je mit Zweck, Dauer, Namen und
+dem, was ohne sie nicht mehr geht. Sie sagt auch, wie man Cookies in den Einstellungen des
+Browsers sperrt oder löscht. Erreichbar ist sie ohne Anmeldung über die Seitenleiste und auf
+den Seiten zum Anmelden und Registrieren unten; sie funktioniert auch mit gesperrten Cookies.
 
 ## Brotkrumen
 
@@ -158,6 +167,10 @@ sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite der
 geteilten Seiten; sie gilt für Übung und Training gemeinsam. Die Teilung gibt es nur auf breiten Bildschirmen; auf einem Tablet im
 Hochformat oder einem Telefon steht alles untereinander, und die Breite lässt sich dort nicht
 ziehen.
+
+KiFu hat keine vollständige Datenschutzerklärung und kein Impressum; die Seite „Cookies"
+beschreibt nur, was im Browser liegt. Eine eigene Einstellung, um Cookies abzuschalten, gibt
+es nicht — das geht über den Browser.
 
 „Versionen" zeigt die Texte so, wie sie veröffentlicht wurden; ältere enthalten Technisches,
 Issue-Nummern und Aussagen, die inzwischen überholt sind. Issue-Nummern sind dort kein Link,
