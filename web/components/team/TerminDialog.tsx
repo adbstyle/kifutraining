@@ -1,8 +1,16 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { Button, DateField, Dialog, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
-import { BEMERKUNG_MAX, ORT_MAX, terminProblem, type TerminFeld, type TerminFelder } from "@/lib/termin";
+import { Button, DateField, Dialog, SectionMessage, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
+import {
+  BEMERKUNG_MAX,
+  ORT_MAX,
+  spielerzahlText,
+  terminProblem,
+  type TerminFeld,
+  type TerminFelder,
+} from "@/lib/termin";
+import { feldName, feldText } from "@/lib/termin-felder";
 import {
   SERIE_MELDUNG,
   SERIE_TEXT,
@@ -25,20 +33,29 @@ import {
   verantwortlicheStart,
   type VerantwortlicheWert,
 } from "./VerantwortlicheWahl";
+import { FelderField } from "./FelderField";
+import { SpielerzahlField } from "./SpielerzahlField";
+import { usePlatzAngaben } from "./usePlatzAngaben";
 
 const ANGABE: Record<FolgeAngabe, string> = {
   zeit: "Die Zeit",
   ort: "Der Ort",
   bemerkung: "Die Bemerkung",
   verantwortliche: "Die Verantwortlichen",
+  spielerzahl: "Die erwartete Spielerzahl",
+  felder: "Die Felder",
 };
+/** Mehrzahl: «weichen» statt «weicht». */
+const MEHRZAHL: readonly FolgeAngabe[] = ["verantwortliche", "felder"];
 /** Die Angaben, die wieder der Serie folgen können, in der Reihenfolge des Dialogs. */
-const FOLGEN_KANN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "verantwortliche"];
+const FOLGEN_KANN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "verantwortliche", "spielerzahl", "felder"];
 const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
   zeit: "Zeit wieder der Serie folgen lassen",
   ort: "Ort wieder der Serie folgen lassen",
   bemerkung: "Bemerkung wieder der Serie folgen lassen",
   verantwortliche: "Verantwortliche wieder der Serie folgen lassen",
+  spielerzahl: "Erwartete Spielerzahl wieder der Serie folgen lassen",
+  felder: "Felder wieder der Serie folgen lassen",
 };
 
 /* Einen Termin ändern (Team-Kalender #322); erstellt wird im
@@ -53,7 +70,13 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
 
    Die Verantwortlichen (#325) stehen nach der Bemerkung; weichen sie an
    einem Serientermin ab, sagt es der Serien-Abschnitt (AK 19) und bietet den
-   Weg zurück (AK 6). */
+   Weg zurück (AK 6).
+
+   Danach die erwartete Spielerzahl (#390; leer = unbekannt) und die Felder
+   des Platzes (#389): alle Einzelheiten zum Ansehen und Ändern (AK 7, 11).
+   Die Felder gehen als ganze Liste mit den übrigen Angaben; keine Zeile
+   heisst «ohne Felder». An einem Serientermin zeigt der Serien-Abschnitt,
+   was die Serie vorgibt und ob der Termin davon abweicht (#391 AK 4–6). */
 export function TerminDialog({
   open,
   start,
@@ -96,6 +119,7 @@ export function TerminDialog({
   const [regel, setRegel] = useState<SerienRegel>({ wochentage: [], von: "", bis: "" });
   const [regelProblem, setRegelProblem] = useState<{ feld: SerieFeld | "beides"; text: string } | null>(null);
   const [verantwortlich, setVerantwortlich] = useState<VerantwortlicheWert>(KEINE_VERANTWORTLICHEN);
+  const platz = usePlatzAngaben();
 
   // Beim Öffnen auf die Vorbelegung zurücksetzen — der Dialog überlebt sonst
   // mit den Werten des zuletzt bearbeiteten Termins.
@@ -108,6 +132,7 @@ export function TerminDialog({
       ort: start?.ort ?? "",
       bemerkung: start?.bemerkung ?? "",
     });
+    platz.zuruecksetzen(start);
     setProblem(null);
     if (serie) setRegel({ wochentage: [...serie.wochentage], von: serie.beginnDatum, bis: serie.endDatum });
     setRegelProblem(null);
@@ -148,10 +173,11 @@ export function TerminDialog({
   function speichern() {
     const p = terminProblem(felder, bisher);
     setProblem(p);
+    const angaben = platz.pruefe();
     const regelOk = regelPruefen();
-    if (!p && regelOk) {
+    if (!p && angaben && regelOk) {
       const geaendert = verantwortlicheGeaendert(verantwortlich, verantwortlicheStart(verantwortliche ?? []));
-      onSpeichern(felder, serie ? regel : undefined, geaendert ? verantwortlich : undefined);
+      onSpeichern({ ...felder, ...angaben }, serie ? regel : undefined, geaendert ? verantwortlich : undefined);
     }
   }
 
@@ -160,6 +186,7 @@ export function TerminDialog({
       open={open}
       onClose={onClose}
       title="Termin ändern"
+      breit
       actions={
         <>
           <Button variant="text" onClick={onClose}>Abbrechen</Button>
@@ -167,7 +194,7 @@ export function TerminDialog({
         </>
       }
     >
-      {serverFehler && <p role="alert" className="mb-4 text-error">{serverFehler}</p>}
+      {serverFehler && <SectionMessage appearance="error" className="mb-4">{serverFehler}</SectionMessage>}
       <div className="flex flex-col gap-4">
         <DateField label="Datum" value={felder.datum} onChange={(e) => setze("datum")(e.target.value)} error={!!fehlerAn("datum")} supportingText={fehlerAn("datum")} />
         <div className="flex flex-col gap-4 sm:flex-row">
@@ -177,6 +204,8 @@ export function TerminDialog({
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={felder.ort ?? ""} onChange={(e) => setze("ort")(e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         <VerantwortlicheWahl mitglieder={mitglieder} bisher={verantwortliche} wert={verantwortlich} onChange={setVerantwortlich} disabled={pending} />
+        <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} />
+        <FelderField {...platz.felderProps} disabled={pending} />
       </div>
       {serie && (
         <section aria-labelledby={serieTitelId} className="mt-6 border-t border-linie pt-4">
@@ -188,6 +217,15 @@ export function TerminDialog({
           {serie.verantwortliche.length > 0 && (
             <p className="type-body-small">Verantwortlich: {serie.verantwortliche.map((v) => v.name).join(", ")}</p>
           )}
+          {/* #391 AK 4: was die Serie an Spielerzahl und Feldern vorgibt. */}
+          {serie.spielerzahl !== null && (
+            <p className="type-body-small">Erwartet: {spielerzahlText(serie.spielerzahl)}</p>
+          )}
+          {serie.felder?.map((f, i, alle) => (
+            <p key={i} className="type-body-small">
+              {feldName(i, alle.length)}: {feldText(f)}
+            </p>
+          ))}
           {/* AK 14 (#326), AK 19 (#325): welche Angaben abweichen — mit dem Weg
               zurück (AK 6). Das Datum folgt nie wieder der Serie (PO 3), es
               zählt das aktuelle. Keine Zeile, keine Liste. */}
@@ -196,7 +234,7 @@ export function TerminDialog({
               {verschoben && <li>Verschoben - ursprünglich am {datumKurz(serienTag!)}.</li>}
               {folgenKann.map((a) => (
                 <li key={a} className="flex flex-wrap items-center justify-between gap-x-2">
-                  <span>{ANGABE[a]} {a === "verantwortliche" ? "weichen" : "weicht"} von der Serie ab.</span>
+                  <span>{ANGABE[a]} {MEHRZAHL.includes(a) ? "weichen" : "weicht"} von der Serie ab.</span>
                   <Button variant="text" aria-label={FOLGEN_LABEL[a]} disabled={pending} onClick={() => onFolgen?.(a)}>Der Serie folgen</Button>
                 </li>
               ))}

@@ -1,12 +1,13 @@
 "use client";
 
 import { useId } from "react";
-import { ListPlus, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { SectionMessage, Button, IconButton, Select, TextArea, TextField, feldNameKlasse } from "@/components/ui";
+import { ListPlus, RefreshCw, X } from "lucide-react";
+import { SectionMessage, Button, HinzufuegenFeld, IconButton, Select, TextArea, TextField, feldNameKlasse } from "@/components/ui";
 import { farbSlugs, type FarbSlug } from "@/lib/diagramm";
 import {
   FARBE_LABEL,
   MATERIAL_ARTEN,
+  MATERIAL_HINWEIS,
   MATERIAL_KATALOG,
   MATERIAL_MENGE_MAX,
   aenderungenText,
@@ -154,7 +155,7 @@ export function MaterialField({
                 />
                 <IconButton
                   type="button"
-                  icon={Trash2}
+                  icon={X}
                   label={
                     z.art
                       ? `${MATERIAL_KATALOG[z.art].einzahl} entfernen`
@@ -170,21 +171,17 @@ export function MaterialField({
 
       {error && <p className="type-body-small text-error">{error}</p>}
 
-      <div>
-        <Button
-          type="button"
-          variant="quiet"
-          onClick={() =>
-            onZeilenChange([
-              ...zeilen,
-              { key: crypto.randomUUID(), art: "", farbe: null, menge: "1" },
-            ])
-          }
-        >
-          <Plus size={18} strokeWidth={2} aria-hidden />
-          Material hinzufügen
-        </Button>
-      </div>
+      <HinzufuegenFeld
+        info={MATERIAL_HINWEIS}
+        onClick={() =>
+          onZeilenChange([
+            ...zeilen,
+            { key: crypto.randomUUID(), art: "", farbe: null, menge: "1" },
+          ])
+        }
+      >
+        Material hinzufügen
+      </HinzufuegenFeld>
 
       <TextArea
         label="Weiteres Material"

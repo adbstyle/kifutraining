@@ -29,11 +29,6 @@
   /* ─── Akzente ─── */
   --color-primary: #bb86fc;
   --color-on-primary: #000000;
-  /* Secondary hält die Rolle der Material-2-Baseline besetzt, damit die
-     Palette vollständig bleibt — angewandt wird sie NIRGENDS. Ein zweiter
-     Akzent würde neben Primary nur konkurrieren, ohne etwas zu benennen. */
-  --color-secondary: #03dac6;
-  --color-on-secondary: #000000;
   /* Eine Stufe heller als Materials Baseline (#cf6679). Die Baseline ist als
      FLÄCHE gedacht und trägt als Schrift nur auf dem Grund (5.09) — im Dialog
      fällt sie auf 3.17. Diese Anwendung setzt Error aber fast überall als
@@ -41,7 +36,11 @@
      durchweg über 4.5:1 (00dp 7.33 · 01dp 6.47 · 08dp 5.22 · 24dp 4.56),
      nachgerechnet in scripts/pruefe-farben.ts auf jeder Stufe. */
   --color-error: #e58a95;
-  --color-on-error: #000000; /* 8.40 auf Error */
+  /* Die Fläche des destruktiven Knopfs — dunkler als Error, weil sie Weiss
+     trägt (5.16:1); Error selbst käme mit Weiss nur auf 2.50:1. Atlassians
+     danger.bold (helles Theme). PO 2026-10-06. */
+  --color-danger: #c9372c;
+  --color-on-danger: #ffffff;
   --color-scrim: #000000;
 
   /* ─── Schrift und Striche: Weiss in vier Deckungen ───
@@ -123,7 +122,6 @@
   /* ─── Schatten — nur wo etwas wirklich schwebt. Im Dunkeln trägt die
      Helligkeit die Höhe, der Schatten trennt bloss das Schwebende vom
      Grund darunter. ─── */
-  --shadow-dp-04: 0 4px 12px rgb(0 0 0 / 0.5);
   --shadow-dp-06: 0 4px 12px rgb(0 0 0 / 0.55);
   --shadow-dp-08: 0 4px 12px rgb(0 0 0 / 0.6);
   --shadow-dp-24: 0 8px 24px rgb(0 0 0 / 0.6);
@@ -467,6 +465,27 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+/* Leeres Datums- oder Zeitfeld (`DateTimeField`): Das native Feld kennt
+   keinen Platzhalter. Solange es leer ist und nicht bearbeitet wird, ist
+   seine Maske («dd/mm/yyyy», «--:--») samt Zeichen unsichtbar, und an ihrer
+   Stelle steht `.zeitfeld-leer` — Zeichen und Name, gedämpft wie der Name im
+   leeren Textfeld. Ein Klick erreicht weiterhin das native Feld. */
+.zeitfeld-leer {
+  display: none;
+}
+.zeitfeld[data-leer]:not(:focus) {
+  color: transparent;
+  /* Ganz weg, nicht nur durchsichtig: Sonst bliebe rechts eine unsichtbare
+     Stelle, die direkt die Auswahl öffnet, während ein Klick daneben nur
+     ins Feld setzt. So tut jeder Klick dasselbe. */
+  &::-webkit-calendar-picker-indicator {
+    display: none;
+  }
+  & + .zeitfeld-leer {
+    display: flex;
+  }
+}
+
 /* Im Feld steht der Name dann nicht ein zweites Mal: Wer hineinklickt, sieht
    ihn darüber und darunter ein leeres Feld. Nur wo der Name unsichtbar ist
    (Suche in der Filterleiste), bleibt der Platzhalter auch beim Tippen stehen. */
@@ -483,6 +502,19 @@
    auf der Angabe (`.feld-angabe`), nicht auf dem ganzen Rahmen: Ein Knopf
    daneben (`aktion`) ist eine eigene Handlung und hellt nicht mit auf. */
 @media (hover: hover) {
+  /* «… hinzufügen» in Feldgestalt (`HinzufuegenFeld`) hellt auf wie eine
+     leere Angabe — es sieht aus wie ein Feld und verhält sich beim
+     Überfahren auch so. */
+  .hinzufuegen-zeile:hover .hinzufuegen-feld:not(:disabled) {
+    --feld-hover: color-mix(in srgb, var(--color-on-surface) 6%, transparent);
+    background-color: var(--feld-hover);
+    box-shadow: 0 0 0 6px var(--feld-hover);
+  }
+  /* Sein ⓘ zeigt sich wie das eines Felds nur beim Überfahren der Zeile. */
+  .hinzufuegen-zeile:not(:has(:disabled)):hover .feld-info {
+    opacity: 1;
+    pointer-events: auto;
+  }
   .feld-rahmen:not([data-name-versteckt]):not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled, .feldkasten[aria-disabled="true"])) .feld-angabe:hover {
     --feld-hover: color-mix(in srgb, var(--color-on-surface) 6%, transparent);
     border-radius: var(--radius-flaeche);
@@ -518,6 +550,15 @@
   color: transparent;
 }
 .feld-rahmen:has(.feldkasten:is(:focus, [aria-expanded="true"])) .feld-leertext {
+  visibility: hidden;
+}
+/* Im Fehler steht der Name oben (er springt nicht ins Feld, siehe oben); im
+   leeren Feld steht er dann nicht ein zweites Mal — weder als Platzhalter
+   noch als Leertext einer Auswahl oder eines Datums- und Zeitfelds. */
+.feld-rahmen[data-fehler]:not([data-name-versteckt]) .feldkasten::placeholder {
+  color: transparent;
+}
+.feld-rahmen[data-fehler] .feld-leertext {
   visibility: hidden;
 }
 
@@ -626,6 +667,17 @@
 }
 
 @layer base {
+  /* Die Anwendung ist dunkel (Material Dark) — das sagt sie auch dem
+     Browser. Ohne diese Angabe zeichnet er seine eigenen Bedienteile im
+     hellen Schema: das Uhr- und Kalender-Zeichen in Zeit- und Datumsfeldern
+     schwarz auf unserem dunklen Grund, dazu Auswahlfenster, Scrollbalken und
+     Autofill-Flächen hell. Zwilling ist `viewport.colorScheme` im
+     Wurzel-Layout, das schon vor diesem CSS gilt. Der Druck schaltet auf
+     hell um (siehe Druck-Ansicht unten). */
+  :root {
+    color-scheme: dark;
+  }
+
   /* Klebt die Kopfzeile oben (ab `lg`, Epic #350): Springt der Browser zu
      einem Feld — Fokus per Tab, Anker, Fehler —, hält er so viel Abstand,
      dass es nicht unter ihr verschwindet. Nur wo sie wirklich klebt, nicht
@@ -667,6 +719,8 @@
    ============================================================================ */
 @media print {
   :root {
+    /* Papier ist hell: Auch die Bedienteile des Browsers im Druck. */
+    color-scheme: light;
     --color-elev-00: #ffffff;
     --color-elev-01: #f6f7f6;
     --color-elev-02: #f1f2f1;
@@ -685,7 +739,8 @@
     --color-primary: #4527a0;
     --color-on-primary: #ffffff;
     --color-error: #a32036;
-    --color-on-error: #ffffff;
+    --color-danger: #a32036;
+    --color-on-danger: #ffffff;
     /* Lozenge und Section Message auf Papier: Atlassians helles Theme
        (atlassian-light), dieselben Rollen wie am Schirm. */
     --color-lozenge-neutral: #0515240f;

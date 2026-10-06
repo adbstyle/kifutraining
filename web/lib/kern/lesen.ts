@@ -7,6 +7,7 @@ import {
   type TrainingListRow,
 } from "@/lib/queries/trainings-fuer";
 import { getTerminZuTrainingFuer } from "@/lib/queries/termine-fuer";
+import type { Felder } from "@/lib/termin-felder";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { trainingAuskunft, type TrainingAuskunft } from "@/lib/kern/auskunft";
@@ -94,6 +95,10 @@ export type TrefferTermin = {
   ende: string | null;
   ort: string | null;
   bemerkung: string | null;
+  /** Die Felder des Platzes (#389); `null` = unbekannt. */
+  felder: Felder | null;
+  /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
+  spielerzahl: number | null;
   /** Die Terminserie des Termins; `null` bei einem einzelnen (#324). */
   serieId: string | null;
   /** Wer den Termin vorbereitet und leitet (#325 AK 16). */

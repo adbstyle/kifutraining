@@ -1,7 +1,7 @@
 "use client";
 
 import { TextField } from "@/components/ui";
-import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
+import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 
 /** Die Spielfeldgrösse einer Junioren-Übung (Story 3 AK 8).
  *

@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-10-04. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-10-05. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -237,7 +237,7 @@ Auch in den eigenen Teams arbeitet der Assistent. Er nennt die Teams, in denen m
 mit Namen und Mitgliederzahl, und die Mitglieder eines Teams mit ihrem Anzeigenamen und einer
 Kennung — nie mit der E-Mail-Adresse —, wobei er erfährt, welches davon man selbst ist. Er sucht
 im Trainingsbestand eines Teams wie im eigenen; jedes Team-Training nennt dabei den Termin, für
-den es eingeplant ist, samt Zeit, Ort und Verantwortlichen. Ein Training legt er auf Wunsch
+den es eingeplant ist, samt Zeit, Ort, Verantwortlichen, Feldern und erwarteter Spielerzahl. Ein Training legt er auf Wunsch
 direkt im Team an, stellt ein eigenes Training als Kopie ins Team oder übernimmt ein
 Team-Training als Kopie in den persönlichen Bestand; das Original bleibt jeweils, wie es ist,
 und ein Termin geht nie mit. Team-Trainings überarbeitet er mit denselben Möglichkeiten wie
@@ -250,17 +250,28 @@ Schweiz, die Einheit von heute zählt noch zum Anstehenden, und der Assistent mu
 rechnen. Auf Wunsch beschränkt er die Auskunft auf einen Zeitraum, dessen Von- und Bis-Tag
 beide mitzählen und der höchstens bis zum gleichen Kalendertag im Folgejahr reicht, und auf die
 Termine, für die man selbst verantwortlich ist; ein Zeitraum ohne Termine ergibt eine leere
-Auskunft. Jeder Termin nennt Datum, Beginn, Ende, Ort und Bemerkung, sein Training oder dass er
+Auskunft. Jeder Termin nennt Datum, Beginn, Ende, Ort und Bemerkung, die Felder des Platzes je
+mit Grösse, Toren je Torart und Untergrund, die erwartete Spielerzahl, sein Training oder dass er
 keines trägt, seine Verantwortlichen, ob er ausgefallen ist und aus welchem Grund, und bei
-einem Serientermin die Serie und die Angaben, in denen er von ihr abweicht. Zu jeder Serie
-erfährt er Wochentage, Zeitraum, Zeit, Ort, Bemerkung und Verantwortliche. Ein anstehender
+einem Serientermin die Serie und die Angaben, in denen er von ihr abweicht — Felder und
+Spielerzahl eingeschlossen. Zu jeder Serie erfährt er Wochentage, Zeitraum, Zeit, Ort,
+Bemerkung, Verantwortliche, Felder und erwartete Spielerzahl. Dabei unterscheidet er bei jeder
+Angabe zu Platz und Spielerzahl, ob sie unbekannt ist oder ob ausdrücklich nichts da ist: Ein
+Termin ohne Felder hat einen unbekannten Platz, eine leere Grösse, Toranzahl oder
+Untergrundangabe gilt als unbekannt, ebenso eine nicht erfasste Spielerzahl; 0 Tore einer
+Torart heisst dagegen, dass keine dastehen. Ein anstehender
 Termin ohne Training, der nicht ausgefallen ist, gilt auch für ihn als noch nicht vorbereitet.
 
-Er legt einzelne Termine fest — Datum, Beginn und Ende sind auch hier Pflicht — und wöchentliche
-Terminserien mit Wochentagen, Zeitraum, Zeit, Ort, Bemerkung und Verantwortlichen. Er ändert und
-entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für diesen, für diesen und alle
-folgenden oder für alle Termine der Serie gilt, sonst lehnt die Anwendung ab. Eine abweichende
-Angabe lässt er wieder der Serie folgen, das Datum ausgenommen. Er ordnet Terminen Trainings zu
+Er legt einzelne Termine fest — Datum, Beginn und Ende sind auch hier Pflicht, Felder und
+erwartete Spielerzahl wie in der Anwendung freiwillig — und wöchentliche Terminserien mit
+Wochentagen, Zeitraum, Zeit, Ort, Bemerkung, Verantwortlichen, Feldern und erwarteter
+Spielerzahl. Er ändert und entfernt Termine; bei einem Serientermin muss er sagen, ob es nur für
+diesen, für diesen und alle folgenden oder für alle Termine der Serie gilt, sonst lehnt die
+Anwendung ab. Felder gibt er dabei stets als ganze Liste an, die die bisherige ersetzt; Felder
+und Spielerzahl entfernt er auch wieder, an einem einzelnen Serientermin mit derselben Wirkung
+wie in der Anwendung: Der Termin weicht dann ab und gilt als unbekannt. Eine abweichende
+Angabe lässt er wieder der Serie folgen, Felder und Spielerzahl eingeschlossen, das Datum
+ausgenommen. Er ordnet Terminen Trainings zu
 — aus dem Bestand des Teams oder ein eigenes persönliches Training jeder Altersstufe, das dabei
 immer als eigenständige Kopie ins Team kommt —, ersetzt und löst sie. Ist ein Team-Training
 schon für einen anstehenden Termin eingeplant, muss er zwischen Kopie und Verschieben wählen;
@@ -269,6 +280,18 @@ eine Angabe zum Verschieben lehnt die Anwendung dort ab. Er trägt Verantwortlic
 entfernt sie, lässt Termine ausfallen, setzt, ändert oder leert den Grund und nimmt einen Ausfall
 zurück. Ein Training ohne bestehenden Termin auf ein Datum zu setzen, gibt es auch beim
 Assistenten nicht mehr; er legt zuerst den Termin fest und ordnet das Training dann zu.
+
+Damit er den Platzbedarf einer Übung mit den Feldern eines Termins vergleichen kann, erfährt der
+Assistent mit den zulässigen Werten auch die Richtmasse von Kleinfeld und Grossfeld je
+Alterskategorie des Kinderfussballs, festgelegt nach den SFV-Ausführungsbestimmungen Kinder- und
+Jugendfussball 2026/27: Kleinfeld in G ca. 20 × 15 m, in F ca. 25 × 20 m und in E 25–30 ×
+20–25 m, Grossfeld in F ca. 30 × 25 m und in E 43–48 × 25–30 m. Die Bestimmungen kennen in G kein
+Grossfeld; dort gilt das Richtmass von F. Er erfährt dazu, dass Kleinfeld und Grossfeld nach den
+Toren einer Übung eingestuft sind und nicht nach ihrer Fläche, dass ein grosses Tor einer
+Kinderfussball-Übung ein 5-m-Tor (5 × 2 m) meint und dass ein freies Feld ohne Meterangabe keine
+bekannte Grösse hat. Der Juniorenfussball kennt weder Feldtyp noch diese Zuordnung; dort ist die
+freiwillige Spielfeldgrösse der Platzbedarf einer Übung. Ob ein Training zu Platz und
+Spielerzahl eines Termins passt, beurteilt der Assistent aus diesen Angaben selbst.
 
 Es gelten dieselben Regeln wie in der Anwendung, und abgewiesen wird mit denselben Sätzen.
 Nachfragen muss der Assistent nicht: Er entfernt, ersetzt, verschiebt, löst und lässt ausfallen
@@ -298,18 +321,19 @@ Assistenten nie geben.
 Die Seite zum Erlauben nennt, welcher Assistent anfragt, mit welchem Konto man angemeldet ist
 und wohin es danach zurückgeht. Sie zählt auf, was ein Zugang künftig insgesamt darf — also
 auch das, was erst mit späteren Erweiterungen dazukommt und heute noch nicht geht —, im
-Wortlaut der Seite: „Übungen suchen und abrufen — den ganzen Bestand, den du auch in KiFu
+Wortlaut der Seite: „Übungen suchen und abrufen - den ganzen Bestand, den du auch in KiFu
 siehst"; „eigene Übungen samt Feld-Diagramm anlegen, kopieren, ändern, öffentlich schalten und
 zurückziehen"; „Trainings anlegen, überarbeiten, veröffentlichen, zurückziehen, übernehmen und
 löschen"; „Team-Trainings deiner Teams führen und im Kalender deiner Teams Termine und
-Terminserien festlegen, ändern und entfernen, ihnen Trainings aus dem Team oder als Kopie deine
-persönlichen Trainings zuordnen und sie wieder lösen, Verantwortliche eintragen, Ausfälle
-festhalten und zurücknehmen sowie die Termine eines Zeitraums abrufen"; „die Anzeigenamen der
+Terminserien samt Platz und erwarteter Spielerzahl festlegen, ändern und entfernen, ihnen
+Trainings aus dem Team oder als Kopie deine persönlichen Trainings zuordnen und sie wieder lösen,
+Verantwortliche eintragen, Ausfälle festhalten und zurücknehmen sowie die Termine eines
+Zeitraums abrufen"; „die Anzeigenamen der
 Mitglieder deiner Teams lesen (ohne E-Mail-Adressen)". Nie erreichbar sind „deine Favoriten",
 „die Verwaltung deiner Teams (gründen, umbenennen, Mitglieder aufnehmen oder entfernen)" und
 „dein Konto selbst (Anzeigename, Passwort, Löschen)". Kommt eine dieser Fähigkeiten dazu, muss
-man nicht erneut zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender dazukam,
-führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt die
+man nicht erneut zustimmen; auch wer seinen Zugang erlaubt hat, bevor der Kalender oder Platz
+und Spielerzahl der Termine dazukamen, führt ihn ohne neue Zustimmung. Weil jeder Assistent seinen Namen selbst angibt, warnt die
 Seite, nur zu erlauben, wenn man das Verbinden eben selbst gestartet hat.
 
 Beim Erlauben kann man dem Zugang einen eigenen Namen geben, etwa „Claude auf dem Laptop",
@@ -416,9 +440,13 @@ besetzt er nicht, und Kalender-Abos holt oder widerruft er nicht. Eine Übung ü
 wenig wie die Anwendung. Für den Juniorenfussball gibt es keinen kuratierten Übungsbestand; ein
 Block, zu dem der sichtbare Bestand nichts führt, bleibt leer und wird gemeldet. Die
 Zeitrichtwerte erzwingt die Anwendung weder beim Speichern noch beim Veröffentlichen. Was im
-Gespräch zur Sprache kommt — etwa die Zahl der verfügbaren Kinder oder ein Problem der Mannschaft
-—, hält das Training nicht fest, und ob eine Übung zur Zahl der Kinder passt, prüft die
-Anwendung auch beim Assistenten nicht. Einen eigenen KI-Assistenten bringt die Anwendung nicht
+Gespräch zur Sprache kommt — etwa ein Problem der Mannschaft —, hält das Training nicht fest.
+Die Zahl der erwarteten Kinder steht als erwartete Spielerzahl am Termin, nicht am Training oder
+an einer Variante; ob eine Übung oder ein Training zu ihr oder zum Platz des Termins passt,
+prüft die Anwendung auch beim Assistenten nicht und meldet keine Unstimmigkeit — das Urteil
+liegt bei ihm. Für eine Übung auf freiem Feld ohne Meterangabe und eine Junioren-Übung ohne
+Spielfeldgrösse bleibt der Platzbedarf seine Einschätzung, und die Richtmasse von Klein- und
+Grossfeld sind Richtwerte, keine Masse der einzelnen Übung. Einen eigenen KI-Assistenten bringt die Anwendung nicht
 mit; man verbindet den, den man selbst nutzt.
 
 Bricht ein Übernehmen durch den Assistenten ab, ohne dass die Anwendung einen Fehler bemerkt —

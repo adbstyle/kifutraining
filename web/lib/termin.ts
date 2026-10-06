@@ -6,14 +6,23 @@
 // ruft sie vor jedem Schreiben auf, und die Datenebene meldet mit denselben
 // Markern (TERMIN_MELDUNG), wenn sie trotzdem abweist.
 //
-// REIN: keine Importe — `check:kern` lädt diese Datei mit tsx.
+// REIN: importiert nur lib/termin-felder.ts (ebenfalls rein) — `check:kern`
+// lädt diese Datei mit tsx.
+import { gleicheFelder, type Felder } from "@/lib/termin-felder";
 
+/** Die Angaben eines Termins, wie der Dialog sie führt. `felder` sind die
+ *  Felder des Platzes (#389, lib/termin-felder.ts) — nicht zu verwechseln mit
+ *  den Formularfeldern, nach denen dieser Typ heisst. */
 export type TerminFelder = {
   datum: string;
   beginn?: string | null;
   ende?: string | null;
   ort?: string | null;
   bemerkung?: string | null;
+  /** `null`: ohne Felder (Platz unbekannt). */
+  felder?: Felder | null;
+  /** Die erwartete Spielerzahl (#390); `null`: unbekannt. */
+  spielerzahl?: number | null;
 };
 
 export type TerminFeld = "datum" | "beginn" | "ende" | "ort" | "bemerkung";
@@ -22,6 +31,11 @@ export type TerminProblem = { feld: TerminFeld; text: string };
 /** Zwillinge der Checks `tt_ort_laenge` und `tt_bemerkung_laenge`. */
 export const ORT_MAX = 100;
 export const BEMERKUNG_MAX = 500;
+
+/** Die erwartete Spielerzahl (#390, PO 7): ganze Zahl von 1 bis 200 wie der
+ *  Kinder-Filter der Übungssuche. Zwilling des Checks `tt_spielerzahl`. */
+export const SPIELERZAHL_MIN = 1;
+export const SPIELERZAHL_MAX = 200;
 
 export const TERMIN_TEXT = {
   datum: "Bitte ein Datum angeben.",
@@ -32,6 +46,9 @@ export const TERMIN_TEXT = {
   bemerkungLang: `Die Bemerkung darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
   grundLang: `Der Grund darf höchstens ${BEMERKUNG_MAX} Zeichen lang sein.`,
   verantwortlicheUngueltig: "Bitte nur Mitglieder des Teams als Verantwortliche wählen.",
+  spielerzahl: `Die erwartete Spielerzahl ist eine ganze Zahl von ${SPIELERZAHL_MIN} bis ${SPIELERZAHL_MAX}.`,
+  /** Was die Zahl zählt (PO 7) — als Hinweis am Feld und im KI-Werkzeug. */
+  spielerzahlZaehlt: "Alle erwarteten Kinder einschliesslich Torhüter:innen, ohne Trainer:innen.",
 } as const;
 
 /** Leere Eingaben sind „nicht erfasst", nicht „leerer Text". */
@@ -105,6 +122,28 @@ export function terminProblem(
   return textProblem(f);
 }
 
+/** Die erwartete Spielerzahl (#390 AK 3): `null` heisst unbekannt, sonst eine
+ *  ganze Zahl von 1 bis 200. Zwilling des Checks `tt_spielerzahl`; die
+ *  Meldung ist an Oberfläche und KI wortgleich (AK 7). */
+export function spielerzahlProblem(n: unknown): { feld: "erwartete_spielerzahl"; text: string } | null {
+  if (n === null) return null;
+  return typeof n === "number" && Number.isInteger(n) && n >= SPIELERZAHL_MIN && n <= SPIELERZAHL_MAX
+    ? null
+    : { feld: "erwartete_spielerzahl", text: TERMIN_TEXT.spielerzahl };
+}
+
+/** Eine getippte Zahl: leer heisst unbekannt (`null`), sonst die Zahl — auch
+ *  eine ungültige, damit `spielerzahlProblem` sie meldet. */
+export function zahlOderNull(text: string | null | undefined): number | null {
+  const t = (text ?? "").trim();
+  return t === "" ? null : Number(t);
+}
+
+/** Die erwartete Spielerzahl zum Anzeigen: «12 Spieler:innen», «1 Spieler:in». */
+export function spielerzahlText(n: number): string {
+  return `${n} ${n === 1 ? "Spieler:in" : "Spieler:innen"}`;
+}
+
 /** Der Grund eines Ausfalls folgt den Regeln der Bemerkung (#327 AK 4);
  *  Zwilling des Checks `tt_ausfall_grund`. */
 export function ausfallProblem(grund: string | null | undefined): { feld: "grund"; text: string } | null {
@@ -117,7 +156,10 @@ export function ausfallProblem(grund: string | null | undefined): { feld: "grund
  *  dem alten Stand überschrieben wird. Beginn und Ende gehen als Paar (ändert
  *  sich eines, stehen beide drin); ein leerer Text heisst «leeren».
  *  `null`, wenn sich nichts geändert hat — dann braucht es keinen Aufruf.
- *  Gleich sind zwei Werte, wenn sie nach `leerZuNull` gleich sind. */
+ *  Gleich sind zwei Texte, wenn sie nach `leerZuNull` gleich sind, zwei
+ *  Angaben zu den Feldern, wenn ihre gespeicherte Form gleich ist
+ *  (`gleicheFelder`); geänderte Felder gehen als ganze Liste, `null` heisst
+ *  «entfernen» — ebenso bei der erwarteten Spielerzahl. */
 export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partial<TerminFelder> | null {
   const gleich = (a: string | null | undefined, b: string | null | undefined) => leerZuNull(a) === leerZuNull(b);
   const aenderung: Partial<TerminFelder> = {};
@@ -128,6 +170,8 @@ export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partia
   }
   if (!gleich(neu.ort, start.ort)) aenderung.ort = neu.ort ?? "";
   if (!gleich(neu.bemerkung, start.bemerkung)) aenderung.bemerkung = neu.bemerkung ?? "";
+  if (!gleicheFelder(neu.felder, start.felder)) aenderung.felder = neu.felder ?? null;
+  if ((neu.spielerzahl ?? null) !== (start.spielerzahl ?? null)) aenderung.spielerzahl = neu.spielerzahl ?? null;
   return Object.keys(aenderung).length > 0 ? aenderung : null;
 }
 

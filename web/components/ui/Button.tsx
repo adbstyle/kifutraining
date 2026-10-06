@@ -19,7 +19,7 @@ import { cn } from "@/lib/cn";
 // `quiet` ist die knappe Bauform des `text`-Knopfes für Handlungen, die am
 // Rand einer Chip-Leiste mitlaufen («+ Variante hinzufügen»): dieselbe Farbe
 // und Schrift, nur mit knapperer Polsterung.
-type Variant = "filled" | "tonal" | "elevated" | "outlined" | "text" | "danger" | "quiet";
+type Variant = "filled" | "tonal" | "outlined" | "text" | "danger" | "quiet";
 
 // `state` gehört in die Basis und nicht an die Varianten: Die Zustands-Ebene
 // färbt sich in der Farbe des Inhalts ein und gilt darum für jede Variante
@@ -37,21 +37,15 @@ const variants: Record<Variant, string> = {
   filled: "bg-primary text-on-primary",
   // Mittlere Emphase — eine Höhenstufe statt einer Akzentfläche.
   tonal: "bg-elev-08 text-on-surface",
-  // Wie tonal, aber schwebend: eine Stufe darunter im Grund, dafür ein
-  // Schatten, der sie vom Untergrund abhebt — und die Schrift im Akzent.
-  elevated: "bg-elev-06 text-primary shadow-dp-04",
   // Mittlere Emphase — nur Kontur, die Fläche bleibt der Grund.
   outlined: "bg-transparent text-on-surface kontur border-kante",
   // Niedrigste Emphase — nichts als Schrift im Akzent.
   text: "bg-transparent text-primary",
-  // Destruktiv: Error umrandet und beschriftet, füllt aber nie — eine rote
-  // Fläche wäre lauter als die Handlung, die sie auslöst.
-  // Die Kontur trägt Error VOLL, nicht gedämpft: Der destruktive Knopf steht
-  // fast immer im Dialog (24dp), und dort kam eine 40-%-Kontur auf 1.91:1 —
-  // unter den 3:1 für grafische Objekte, praktisch unsichtbar. Volles Error
-  // trägt auch dort 4.56:1, und der Rahmen ist hier das einzige, was den
-  // Knopf als Fläche überhaupt begrenzt.
-  danger: "bg-transparent text-error kontur border-error",
+  // Destruktiv: gefüllt rot mit weisser Schrift (PO 2026-10-06) — Löschen
+  // soll man nicht übersehen. Die Fläche ist `danger`, nicht `error`: Das
+  // helle Schrift-Rot trüge Weiss nur mit 2.50:1, `danger` trägt 5.16:1.
+  // Die einzige gefüllte Variante mit weisser Schrift.
+  danger: "bg-danger text-on-danger",
   // Die dichte Bauform von `text` — dieselbe Farbe, siehe oben.
   quiet: "bg-transparent text-primary",
 };

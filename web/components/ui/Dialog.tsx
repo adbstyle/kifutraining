@@ -14,13 +14,17 @@ import { cn } from "@/lib/cn";
    — Materials eigene Baseline hält es genauso, und ein eigener Farbton nur für
    Dialoge risse die Handlungsfarbe der App auseinander. Die Zahl steht nicht
    hier, sondern gerechnet im Styleguide (18 «Dialog & Snackbar»), wo sie auch
-   als bewusste Abweichung begründet ist. */
+   als bewusste Abweichung begründet ist.
+
+   Breite: 28 rem für Rückfragen und kurze Formulare; `breit` (40 rem) für
+   Formulare mit vielen Angaben wie die Termin-Dialoge (PO 2026-10-06). */
 export function Dialog({
   open,
   onClose,
   title,
   children,
   actions,
+  breit,
   className,
 }: {
   open: boolean;
@@ -28,6 +32,8 @@ export function Dialog({
   title?: string;
   children: ReactNode;
   actions?: ReactNode;
+  /** Breiter Dialog (40 rem) für Formulare mit vielen Angaben. */
+  breit?: boolean;
   className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -48,7 +54,8 @@ export function Dialog({
         if (e.target === ref.current) onClose();
       }}
       className={cn(
-        "m-auto w-[min(28rem,calc(100vw-2rem))] rounded-dialog bg-elev-24 p-5 shadow-dp-24",
+        "m-auto rounded-dialog bg-elev-24 p-5 shadow-dp-24",
+        breit ? "w-[min(40rem,calc(100vw-2rem))]" : "w-[min(28rem,calc(100vw-2rem))]",
         "backdrop:bg-scrim/60 backdrop:backdrop-blur-[2px]",
         className,
       )}

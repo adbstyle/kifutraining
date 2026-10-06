@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-10-05. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-10-06. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -55,7 +55,10 @@ der Feldtyp auf Kleinfeld oder Grossfeld, entfallen die Meter. Jede Manual-Übun
 Feldtyp, so wie ihn die Abbildung im Manual erkennen lässt. Stehen sich zwei grosse Tore gegenüber,
 ist es Grossfeld. Kleinfeld ist es, wenn sich Minitore gegenüberstehen oder die Kinder 3:3 in einem
 abgegrenzten Feld spielen, dem Kleinfeld-Format des Manuals. Zeigt das Manual keins von beidem,
-gilt das freie Feld, und zwar ohne Meterangabe.
+gilt das freie Feld, und zwar ohne Meterangabe. Klein- und Grossfeld selbst tragen keine Masse;
+ein verbundener KI-Assistent kennt aber ihre Richtmasse je Alterskategorie nach den
+SFV-Ausführungsbestimmungen und schätzt damit ab, ob eine Übung auf die Felder eines Team-Termins
+passt (siehe [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)).
 
 Im Juniorenfussball ist die Zuordnung zweistufig: gewählt wird einer von sieben Blöcken, und der
 Trainingsteil, zu dem er gehört, bleibt dabei sichtbar. Der Einstieg umfasst Aufwärmen,
@@ -128,7 +131,8 @@ Fettschrift, keine Überschriften, keine Links, keine verschachtelten Listen; al
 erscheint als Text. Auch beim Üben ist eine Zeile ohne Listenzeichen gewöhnlicher Text; die
 Schritte der Manual-Übungen und der bisher erfassten Übungen stehen als Aufzählung da, wie
 vorher. Unter den Feldern stehen keine Hilfetexte, nur ein Fehler beim Speichern; einzig das
-weitere Material erklärt sich hinter einem ⓘ. Die
+Material erklärt sich hinter einem ⓘ — an „Material hinzufügen", was in die gezählte Liste
+gehört, und am weiteren Material, was dort hingehört. Die
 Varianten stehen unmittelbar nach dem Ablauf, ob er als Freitext oder als Fahrplan erfasst ist.
 
 ## Die Übungsseite

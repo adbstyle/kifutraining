@@ -19,15 +19,7 @@ import {
 } from "@/lib/altersstufe";
 import { parseMaterialListe } from "@/lib/material";
 import { freitextZeilen } from "@/lib/freitext";
-
-/** Kleinste und grösste sinnvolle Kantenlänge eines Spielfelds in Metern.
- *  Spiegelt die CHECKs `ex_spielfeld_bereich` / `te_spielfeld_bereich`.
- *
- *  Exportiert, damit das Eingabefeld dieselben Grenzen anbietet, die hier
- *  geprüft werden — sonst liefe das `min`/`max` des Formulars von der Regel
- *  weg, ohne dass es jemandem auffiele. */
-export const SPIELFELD_MIN = 5;
-export const SPIELFELD_MAX = 120;
+import { MASS_TEXT, SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 
 function lines(v: FormDataEntryValue | null): string[] {
   return String(v ?? "")
@@ -175,14 +167,14 @@ export function parseUebungsInhalt(
     const breiteRoh = clean(form.get("spielfeld_breite"));
     if (laengeRoh || breiteRoh) {
       if (!laengeRoh || !breiteRoh) {
-        errors.spielfeld = "Bitte Länge und Breite angeben oder beides leer lassen.";
+        errors.spielfeld = MASS_TEXT.paarweise;
       } else {
         const laenge = Number(laengeRoh);
         const breite = Number(breiteRoh);
         const gueltig = (n: number) =>
           Number.isInteger(n) && n >= SPIELFELD_MIN && n <= SPIELFELD_MAX;
         if (!gueltig(laenge) || !gueltig(breite))
-          errors.spielfeld = `Länge und Breite in ganzen Metern, zwischen ${SPIELFELD_MIN} und ${SPIELFELD_MAX}.`;
+          errors.spielfeld = MASS_TEXT.bereich;
         else {
           spielfeld_laenge_m = laenge;
           spielfeld_breite_m = breite;

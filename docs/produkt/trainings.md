@@ -434,8 +434,10 @@ Ablauf, gleich danach die Varianten, wo die Übung welche führt, und zuunterst 
 beide Ansichten nicht, sie ordnet ein und hilft auf dem Platz nicht weiter. Der Druck zeigt
 dasselbe als zusammenhängende, druckfertige Seite zum Mitnehmen, das Ziel im Kopf. Leere Blöcke
 erscheinen in beiden Ansichten nicht. Aus dem Trainingsplan eines Teams geöffnet, nennt die
-Durchführen-Ansicht zuoberst den Termin: Datum, Beginn und Ende, Ort, Verantwortliche und
-Bemerkung, und sagt, wenn die Zeit fehlt.
+Durchführen-Ansicht zuoberst den Termin: Datum, Beginn und Ende, Ort, Verantwortliche, die
+erwartete Spielerzahl, die Felder des Platzes je mit Grösse, Toren und Untergrund und die
+Bemerkung, und sagt, wenn die Zeit fehlt; was zu einem Feld nicht erfasst ist, steht als
+unbekannt da.
 
 Beim Zusammenstellen, in der Ansicht (breit in den Eigenschaften), zu Beginn der
 Durchführen-Ansicht und im Kopf des Drucks steht, welches Material das Training braucht — und zwar höchstens gleichzeitig, nicht die Summe über alle
@@ -581,8 +583,10 @@ dagegen in einem Zug fest.
 
 Varianten gibt es allein für den Hauptteil; wer unterschiedliche Einleitungen oder Ausklänge
 braucht, führt zwei Trainings. Eine Kinderzahl hält die Anwendung weder am Training noch an einer
-Variante fest, und welche Variante zu wie vielen Kindern passt, schlägt sie nicht vor — die
-Bezeichnung ist der ganze Hinweis. Eine einzelne Übung lässt sich nicht von einer Variante in eine
+Variante fest; eine erwartete Spielerzahl trägt allein ein Team-Termin (siehe
+[Team-Bereich](team-bereich.md#der-kalender-des-teams)). Welche Variante zu wie vielen Kindern
+passt, schlägt sie nicht vor, auch nicht anhand dieser Zahl — die Bezeichnung ist der ganze
+Hinweis. Eine einzelne Übung lässt sich nicht von einer Variante in eine
 andere kopieren oder verschieben, und Übungen, die in mehreren Varianten stehen, werden nicht
 miteinander abgeglichen: Eine Änderung wirkt allein dort, wo sie gemacht wurde. Eine Variante hat
 keine eigene Sichtbarkeit, keinen eigenen Eigentümer und keinen eigenen Termin. Welche Variante an

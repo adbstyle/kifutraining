@@ -11,10 +11,10 @@ import { cn } from "@/lib/cn";
    die man an ihrem Ort umsortieren oder entfernen können muss (Sequenz-Chips)
    und deren Beschriftung NUTZERTEXT ist.
 
-   Warum kein bestehender Chip: `InputChip` kennt nur ein Entfernen-X (16 px,
-   kein Touch-Ziel) und kann „nach vorne/nach hinten schieben" gar nicht
-   ausdrücken; `AssistChip` löst genau eine Aktion aus. Beide tragen ausserdem
-   `type-label-medium` — versal —, was einen Gruppennamen verfälscht.
+   Warum kein bestehender Chip: `AssistChip` löst genau eine Aktion aus und
+   kann „nach vorne/nach hinten schieben" und „entfernen" nicht zur Wahl
+   stellen. Er trägt ausserdem `type-label-medium` — versal —, was einen
+   Gruppennamen verfälscht.
    Darum hier `type-body-medium normal-case`.
 
    ZWEI Bauformen, je nachdem, wie viele Aufgaben an dem Wert hängen:

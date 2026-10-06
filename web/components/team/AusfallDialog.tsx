@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Dialog, TextArea } from "@/components/ui";
+import { Button, Dialog, SectionMessage, TextArea } from "@/components/ui";
 import { BEMERKUNG_MAX, ausfallProblem } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { TerminZeile } from "@/lib/queries/termine";
@@ -55,7 +55,7 @@ export function AusfallDialog({
         </>
       }
     >
-      {fehler && <p role="alert" className="mb-3 text-error">{fehler}</p>}
+      {fehler && <SectionMessage appearance="error" className="mb-4">{fehler}</SectionMessage>}
       <p className="mb-3">{termin ? datumKurz(termin.datum) : ""}</p>
       <TextArea
         label="Grund (optional)"

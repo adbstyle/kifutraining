@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-05. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-06. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -59,7 +59,8 @@ die persönliche Kopie, die beim Übernehmen eines Team-Trainings entsteht.
 ## Der Kalender des Teams
 
 Jedes Team führt einen Kalender. Er besteht aus Terminen, und ein Termin ist zunächst nur ein
-Zeitrahmen: Datum, Beginn, Ende, auf Wunsch ein Ort und eine Bemerkung. Welches Training dort
+Zeitrahmen: Datum, Beginn, Ende, auf Wunsch ein Ort, eine Bemerkung, die Felder des Platzes und
+die erwartete Spielerzahl. Welches Training dort
 stattfindet, wird getrennt davon entschieden — oft erst Tage später. So steht die Trainingszeit
 des nächsten Dienstags schon im Plan, auch wenn noch niemand weiss, was geübt wird.
 
@@ -70,8 +71,27 @@ Durchgeführtes nachtragen lässt. Beim Erstellen lassen sich gleich die Verantw
 eintragen (siehe unten). Wie viele Termine ein Tag trägt, ist nicht begrenzt; sie stehen nach
 ihrem Beginn geordnet, bei gleichem Beginn in der Reihenfolge, in der sie angelegt wurden.
 
-Ändern lassen sich Datum, Beginn, Ende, Ort und Bemerkung jederzeit, auch an vergangenen
-Terminen. Beginn und Ende lassen sich nicht leeren. Termine aus der Zeit vor dem Kalender sind
+Auf welchem Platz trainiert wird, hält ein Termin auf Wunsch in seinen Feldern fest — einem oder mehreren
+getrennten Feldern, die gleichzeitig nutzbar sind, etwa zwei Hälften eines Platzes. Je Feld gibt
+man die Fläche an, die dem Team zur Verfügung steht, auf einem geteilten Platz also nur den
+eigenen Teil: Länge und Breite nur gemeinsam, in ganzen Metern von 5 bis 120, wie die
+Spielfeldgrösse einer Übung. Dazu kommt je Torart, wie viele Tore auf dem Feld stehen —
+Minitore, 5-m-Tore und 7-m-Tore —, und der Untergrund, gewählt aus Naturrasen, Kunstrasen,
+Hartplatz und Halle. Jede dieser Angaben ist freiwillig: Was leer bleibt, gilt als unbekannt,
+beim Untergrund ausdrücklich als „Unbekannt" gewählt; 0 Tore einer Torart heisst dagegen, dass
+keine dastehen. Spielfelder innerhalb eines Feldes steckt der Trainer selbst ab. Ebenso
+freiwillig ist die erwartete Spielerzahl: alle Kinder, mit denen gerechnet wird, einschliesslich
+Torhüter:innen und ohne Trainer:innen, als ganze Zahl von 1 bis 200. Beides steht im Dialog
+unter den Verantwortlichen, als „Erwartete Spielerzahl (optional)" und „Feld hinzufügen
+(optional)". Was eine Angabe heisst — wen die Spielerzahl zählt, dass leer unbekannt und 0 Tore
+keine heisst, was ein Feld ist —, sagt der Hinweis hinter dem ⓘ der jeweiligen Angabe; auf Telefon
+und Tablet stehen die Hinweise zu Spielerzahl und Toren unter dem Feld. Ein Termin ohne Felder oder ohne Zahl ist ebenso gültig, und früher
+angelegte Termine bleiben ohne diese Angaben, bis jemand sie ergänzt. Zuordnen, Ersetzen und Lösen eines Trainings und ein Ausfall lassen
+Felder und Spielerzahl stehen.
+
+Ändern lassen sich Datum, Beginn, Ende, Ort, Bemerkung, Felder und erwartete Spielerzahl
+jederzeit, auch an vergangenen Terminen; Felder und Spielerzahl lassen sich auch wieder
+entfernen. Beginn und Ende lassen sich nicht leeren. Termine aus der Zeit vor dem Kalender sind
 unverändert übernommen, mit Training, Datum, Beginn, Ort und Bemerkung; ihnen fehlt das Ende,
 manchen auch der Beginn. Das steht sichtbar am Termin — „Ende fehlt" oder „Zeit fehlt" — und
 lässt sich ergänzen; wer an einem solchen Termin nur den Ort oder das Datum ändert, muss die
@@ -135,8 +155,9 @@ Wer jede Woche zur selben Zeit trainiert, legt die Termine einer ganzen Saison i
 an: Im selben Dialog wie der einzelne Termin („Termin erstellen") macht das Ankreuzen von
 „Wiederholender Termin" daraus eine Serie. Das Datum wird zum Beginndatum, dazu kommen ein oder
 mehrere Wochentage und ein Enddatum; vorgewählt ist der Wochentag des Datums, und er folgt
-einem geänderten Datum, bis man selbst Wochentage wählt. Beginn, Ende, Ort, Bemerkung und
-Verantwortliche sind dieselben Felder wie beim einzelnen Termin. Es gelten
+einem geänderten Datum, bis man selbst Wochentage wählt. Beginn, Ende, Ort, Bemerkung,
+Verantwortliche, erwartete Spielerzahl und Felder sind dieselben Angaben wie beim einzelnen
+Termin, und die Serie gibt sie jedem ihrer Termine mit. Es gelten
 dieselben Regeln wie für einen einzelnen Termin. Das Enddatum liegt frühestens am Beginndatum
 und spätestens am gleichen Kalendertag des Folgejahres — nach einem 29. Februar am 28. Februar
 —, und im Zeitraum muss mindestens einer der gewählten Wochentage liegen. Auch eine Serie darf
@@ -151,17 +172,23 @@ Training, seine Verantwortlichen und seinen Ausfall einzeln.
 
 Ändert man einen Serientermin, fragt die Anwendung wie gängige Kalender, wofür die Änderung
 gilt: „Nur dieser Termin", „Dieser und alle folgenden" oder „Alle Termine der Serie". Zeit, Ort,
-Bemerkung und Verantwortliche gelten für jede der drei Wahlen. Das Datum ändert sich nur für
+Bemerkung, Verantwortliche, erwartete Spielerzahl und Felder gelten für jede der drei Wahlen. Das Datum ändert sich nur für
 diesen einen Termin. Wochentage und Zeitraum stehen im selben Dialog unter „Terminserie" und
 gelten dagegen nur für folgende oder alle — Datum und Wochentage zugleich lassen sich nicht in
 einem Schritt ändern. Ist die Wahl eingeschränkt, sagt ein Satz warum; bleibt nur eine, ist sie
 vorgewählt.
 
 „Nur dieser Termin" macht die geänderte Angabe zu einer Abweichung. Ein Termin weicht je
-Angabe ab — Datum, Zeit (Beginn und Ende zusammen), Ort, Bemerkung, Verantwortliche — und behält
-die Abweichung bei späteren Änderungen der Serie. Ein zugeordnetes Training und ein Ausfall
+Angabe ab — Datum, Zeit (Beginn und Ende zusammen), Ort, Bemerkung, Verantwortliche, erwartete
+Spielerzahl, Felder — und behält die Abweichung bei späteren Änderungen der Serie. Die Felder
+zählen dabei als Ganzes als eine Angabe, wie viele es auch sind; die Spielerzahl ist eine
+zweite. Wer an nur einem Serientermin Felder oder Spielerzahl entfernt, obwohl die Serie sie
+vorgibt, macht ihn bewusst leer: Der Termin weicht ab und gilt als unbekannt, bis er wieder der
+Serie folgt. Ein zugeordnetes Training und ein Ausfall
 zählen nicht als Abweichung. Der geöffnete Termin nennt unter „Terminserie" die Serie mit
-Wochentagen, Zeitraum, Zeit, Ort und Verantwortlichen und darunter jede Angabe, die abweicht,
+Wochentagen, Zeitraum, Zeit, Ort und Verantwortlichen, mit der erwarteten Spielerzahl und den
+Feldern samt Grösse, Toren und Untergrund, soweit die Serie sie vorgibt, und darunter jede
+Angabe, die abweicht,
 mit „Der Serie folgen" als Weg zurück; ein verschobener Termin sagt, an welchem Tag er
 ursprünglich lag. Das Datum lässt sich nicht wieder der Serie folgen lassen; es zählt stets das
 aktuelle. Ein verschobener Termin bleibt Teil seiner Serie, auch ausserhalb ihres Rhythmus.
@@ -227,8 +254,8 @@ mit einem Grund von höchstens 500 Zeichen; das geht auch nachträglich an einem
 Termin. Im Plan steht er mit der Plakette „Ausgefallen" und dem Grund darunter. Ein
 ausgefallener Termin gilt nicht als unvorbereitet und nimmt auf keinem Weg ein Training an;
 trug er eines, wird es gelöst und bleibt ohne Termin im Team-Bestand — ohne Vorankündigung,
-die Bestätigung meldet nur den Ausfall. Verantwortliche, Bemerkung und Serienzugehörigkeit
-bleiben am Termin.
+die Bestätigung meldet nur den Ausfall. Verantwortliche, Bemerkung, Felder, erwartete
+Spielerzahl und Serienzugehörigkeit bleiben am Termin.
 
 Den Grund kann man ergänzen, ändern oder leeren, ohne den Ausfall zurückzunehmen. Wird der Ausfall
 zurückgenommen, ist der Termin wieder ein gewöhnlicher Termin ohne Training und ohne Grund; das
@@ -251,8 +278,11 @@ Die Grenze zwischen den Abschnitten liegt am Tagesende, gemessen an der Schweize
 Einheit von heute Abend bleibt den ganzen Tag oben, auch während sie läuft und auch, wenn ihr
 Ende schon vorüber ist. Das Ende des Termins zählt dafür bewusst nicht.
 
-Jeder Termin zeigt Datum, Zeit, Ort, die Serie, die Verantwortlichen und die Bemerkung, und was
-er trägt: das Training mit Namen und Alterskategorien, oder — anstehend und ohne Training — die
+Jeder Termin zeigt Datum, Zeit, Ort, die Serie, die Verantwortlichen und die Bemerkung, dazu
+knapp in einer Zeile Platz und erwartete Spielerzahl, soweit erfasst — ein einzelnes Feld mit
+Grösse und Untergrund, mehrere als Anzahl wie „2 Felder", die Zahl etwa als „12 Spieler:innen";
+was unbekannt ist, steht dort nicht, alle Einzelheiten stehen am geöffneten Termin. Ausserdem
+zeigt er, was er trägt: das Training mit Namen und Alterskategorien, oder — anstehend und ohne Training — die
 Plakette „Noch kein Training". So fällt eine noch nicht vorbereitete Einheit auf, ohne dass man
 einen Termin öffnet. Ein vergangener Termin ohne Training heisst schlicht „Ohne Training"; ob er
 stattgefunden hat, sagt die Anwendung nicht. Trägt ein Termin ein Training, öffnet ein Klick auf
@@ -261,7 +291,9 @@ Am Termin liegen Durchführen, Training zuordnen
 oder ersetzen und in einem Menü die übrigen Handgriffe: Termin ändern, Training lösen,
 Ausfallen lassen oder — bei einem ausgefallenen — Grund ändern und Ausfall zurücknehmen, und
 Termin entfernen. Die Durchführen-Ansicht zeigt, aus dem Plan geöffnet, zuoberst Datum, Zeit,
-Ort, Verantwortliche und Bemerkung des Termins.
+Ort, Verantwortliche, erwartete Spielerzahl, Felder und Bemerkung des Termins, jedes Feld mit
+Grösse, Toren je Torart und Untergrund; was zu einem Feld nicht erfasst ist, steht dort
+ausdrücklich als unbekannt.
 
 Eine eigene Überschrift trägt der Trainingsplan nicht, sie steht schon im Umschalter. Über
 den Terminen liegt eine Zeile: links, wie man den Plan sieht — Liste oder Monat, als zwei
@@ -301,7 +333,7 @@ Training, und bei jedem Abruf den aktuellen Stand: Ein geänderter, verschobener
 neue Serie übergegangener Termin erscheint genau einmal. Ausgefallene und entfernte Termine
 fehlen. Von einem Termin gelangen nur der Titel „Training · Teamname", Beginn, Ende, Ort und ein
 Verweis in die Anwendung ins Kalenderprogramm — kein Trainingsname, keine Verantwortlichen,
-keine Bemerkung. Die Zeiten gelten als Schweizer Zeit, auch über die Zeitumstellung hinweg und
+keine Bemerkung, weder Felder noch erwartete Spielerzahl. Die Zeiten gelten als Schweizer Zeit, auch über die Zeitumstellung hinweg und
 auf einem Gerät in einer anderen Zeitzone. Ein übernommener Termin ohne Ende erscheint mit 90
 Minuten ab Beginn, einer ohne Beginn als ganztägiger Eintrag.
 
@@ -329,9 +361,10 @@ gilt die Aktion; beim Ändern eines Termins übernimmt die Anwendung nur die Ang
 tatsächlich geändert hat, sodass die gleichzeitige Änderung eines anderen Feldes bestehen bleibt.
 
 Termine, Serien, Zuordnungen, Verantwortliche und Ausfälle lassen sich auch über einen
-verbundenen KI-Assistenten führen (siehe
+verbundenen KI-Assistenten führen, samt Feldern und erwarteter Spielerzahl (siehe
 [Konto und Zugang](konto-und-zugang.md#ki-assistent-verbinden)). Es gelten dieselben Regeln, und
-was er festlegt, steht im selben Kalender. Kalender-Abos und die Teams selbst verwaltet er
+was er festlegt, steht im selben Kalender. Platz und Spielerzahl erfährt er bei jedem Termin,
+den er nennt, und kann ein Training darauf ausrichten; ob es passt, beurteilt er selbst. Kalender-Abos und die Teams selbst verwaltet er
 nicht.
 
 ## Veröffentlichen
@@ -399,11 +432,24 @@ Trainingszeiten, keine Spiele, Turniere oder anderen Anlässe, und ein Termin tr
 Bezeichnung; wer mehrere Mannschaften getrennt plant, führt sie als eigene Teams. Die Termine
 mehrerer Teams stehen nirgends gemeinsam, weder in einem Kalender noch in einem Abo, und ein
 Wechsel zwischen Teams ohne Umweg über die Teamübersicht ist nicht vorgesehen. Überschneidende
-Termine verhindert die Anwendung nicht, sie prüft keine Platzbelegung und gleicht Beginn und
+Termine verhindert die Anwendung nicht, sie prüft keine Platzbelegung — auch nicht, ob die Felder
+eines Termins schon von einem anderen Termin oder Team belegt sind — und gleicht Beginn und
 Ende nicht mit den Zeitangaben der Übungen ab.
 
-Eine Terminserie wiederholt sich nur wöchentlich, mit denselben Zeiten und demselben Ort an
-allen ihren Wochentagen, und läuft höchstens ein Jahr. Ferien und Feiertage nimmt sie nicht
+Ob ein Training oder seine Übungen zu Platz und erwarteter Spielerzahl eines Termins passen,
+prüft die Anwendung nicht, und sie meldet keine Unstimmigkeit; das Urteil liegt bei einem
+verbundenen KI-Assistenten, der die Angaben liest. Auch die Übungssuche lässt sich nicht auf
+Platz oder Spielerzahl eines Termins eingrenzen. Mehrere Felder lassen sich nicht zu einer
+grösseren Fläche zusammenlegen, und Hütchen- oder Markierungstore zählen nicht zu den Toren
+eines Feldes. Die Spielerzahl ist eine Erwartung: Namen, Zusagen oder Anwesenheit führt die
+Anwendung nicht, und wie viele tatsächlich kamen, hält sie nicht fest. Einen Platz als Vorlage
+für weitere Termine hinterlegen lässt sich nicht; Felder werden je Termin oder Terminserie
+erfasst. Ändern sich Platz oder Spielerzahl, wirkt das nicht auf ein bereits zugeordnetes
+Training zurück.
+
+Eine Terminserie wiederholt sich nur wöchentlich, mit denselben Zeiten, demselben Ort,
+denselben Feldern und derselben erwarteten Spielerzahl an allen ihren Wochentagen, und läuft
+höchstens ein Jahr. Ferien und Feiertage nimmt sie nicht
 aus; mehrere Termine lassen sich nicht in einem Schritt als ausgefallen markieren, auch nicht
 für eine Ferienwoche. Die Anwendung weist weder auf Tage hin, an denen schon ein Termin liegt,
 noch auf eine doppelt angelegte Serie, und sie nennt nicht, wie viele Termine eine Serie anlegt,
@@ -420,16 +466,16 @@ vergangenen Terminen sind kein Nachweis geleisteter Einsätze. Ob ein Termin sta
 und wer dabei war, hält die Anwendung nicht fest; ein vergangener Termin, der nicht ausgefallen
 ist, gilt deshalb nicht als durchgeführt, und ein Tag ohne Termin ist nicht von einer bewussten
 Pause zu unterscheiden. Gleichnamige Mitglieder sind in der Auswahl nicht zu unterscheiden, und
-dass die Verantwortlichen eines Serientermins von der Serie abweichen, zeigt erst der geöffnete
-Termin. Ausfallgründe sind frei formuliert, ohne Vorschläge; einen Teilausfall oder Abbruch kennt
+dass die Verantwortlichen, die Felder oder die erwartete Spielerzahl eines Serientermins von der
+Serie abweichen, zeigt erst der geöffnete Termin. Ausfallgründe sind frei formuliert, ohne Vorschläge; einen Teilausfall oder Abbruch kennt
 die Anwendung nicht. Ob Altersstufe oder Inhalt eines Trainings zum Termin passen, prüft sie
 nicht, und ob und wie oft ein persönliches Training schon einem Termin zugeordnet wurde, steht
 nirgends. Bricht die Verbindung mitten im Kopieren ohne Rückmeldung ab, kann eine unvollständige
 Kopie unbemerkt im Team-Bestand stehen bleiben.
 
 Eine Tages- oder Wochenansicht gibt es nicht; für die nächsten Wochen dient die Liste. Der
-Monatsüberblick zeigt Ende, Ort, Verantwortliche, Serie und Ausfallgrund erst am geöffneten
-Termin, und Termine lassen sich dort nicht durch Ziehen verschieben. Wer vom Monat in die Liste
+Monatsüberblick zeigt Ende, Ort, Verantwortliche, Serie, Platz, erwartete Spielerzahl und
+Ausfallgrund erst am geöffneten Termin, und Termine lassen sich dort nicht durch Ziehen verschieben. Wer vom Monat in die Liste
 und zurück wechselt, landet wieder im aktuellen Monat. Die Liste lässt sich nicht durchsuchen
 und nur auf die eigenen Termine eingrenzen, nicht auf einen Zeitraum. Ein Archivieren
 vergangener Einheiten gibt es nicht: Der Rückblick fasst sie zusammen, der Trainingsbestand
