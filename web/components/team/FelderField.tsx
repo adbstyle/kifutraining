@@ -1,11 +1,12 @@
 "use client";
 
 import { useId } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Button, IconButton, Select, TextField, feldNameKlasse } from "@/components/ui";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 import { zahlOderNull } from "@/lib/termin";
 import {
+  FELD_HINWEIS,
   TORARTEN,
   TORART_LABEL,
   UNTERGRUENDE,
@@ -101,7 +102,6 @@ export function FelderField({
   disabled?: boolean;
 }) {
   const legendeId = useId();
-  const hinweisId = useId();
   const titelId = (key: string) => `${legendeId}-${key}`;
 
   function aendere(key: string, teil: Partial<FeldZeile>) {
@@ -114,12 +114,9 @@ export function FelderField({
   const masseFehler = (index: number) => fehlerAn(index, "laenge_m", "breite_m");
 
   return (
-    <div role="group" aria-labelledby={legendeId} aria-describedby={hinweisId} className="flex flex-col gap-3">
+    <div role="group" aria-labelledby={legendeId} className="flex flex-col gap-3">
       <p id={legendeId} className={feldNameKlasse(problem?.index === null)}>
         Felder (optional)
-      </p>
-      <p id={hinweisId} className="type-body-small px-3.5 text-on-surface-mittel">
-        Je Feld die Fläche, die euch zur Verfügung steht. Leer heisst unbekannt, 0 Tore heisst keine.
       </p>
 
       {zeilen.length > 0 && (
@@ -132,7 +129,7 @@ export function FelderField({
                   <p id={titelId(z.key)} className="type-title-small text-on-surface">Feld {i + 1}</p>
                   <IconButton
                     type="button"
-                    icon={Trash2}
+                    icon={X}
                     label={`Feld ${i + 1} entfernen`}
                     disabled={disabled}
                     onClick={() => onZeilenChange(zeilen.filter((x) => x.key !== z.key))}
@@ -141,6 +138,7 @@ export function FelderField({
                 <div className="mt-2 flex flex-col gap-3">
                   <TextField
                     label="Länge (m)"
+                    info={FELD_HINWEIS.masse("Länge")}
                     type="number"
                     inputMode="numeric"
                     min={SPIELFELD_MIN}
@@ -152,6 +150,7 @@ export function FelderField({
                   />
                   <TextField
                     label="Breite (m)"
+                    info={FELD_HINWEIS.masse("Breite")}
                     type="number"
                     inputMode="numeric"
                     min={SPIELFELD_MIN}
@@ -166,6 +165,10 @@ export function FelderField({
                     <TextField
                       key={art}
                       label={TORART_LABEL[art]}
+                      info={FELD_HINWEIS.tore(TORART_LABEL[art])}
+                      // «0 heisst keine» muss man auch auf dem Handy lesen,
+                      // bevor man ein Torfeld leer lässt.
+                      infoAufTouch
                       type="number"
                       inputMode="numeric"
                       min={0}

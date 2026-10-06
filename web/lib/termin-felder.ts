@@ -85,6 +85,17 @@ export const FELDER_TEXT = {
     "Tore als ganze Zahl ab 0, der Untergrund aus der Auswahl.",
 } as const;
 
+/** Die festen Hinweise der Oberfläche je Angabe eines Felds — sie stehen
+ *  hinter dem ⓘ des jeweiligen Eingabefelds (Styleguide, Formularfelder ›
+ *  Hinweise). Gegenstück für den KI-Assistenten ist `FELDER_MODELL` in
+ *  lib/termin-felder-ausgabe.ts: dieselbe Regel (leer = unbekannt, 0 Tore =
+ *  keine), dort in den Worten der Werkzeug-Schnittstelle (null statt leer). */
+export const FELD_HINWEIS = {
+  masse: (seite: "Länge" | "Breite") =>
+    `${seite} der Fläche, die euch zur Verfügung steht, in ganzen Metern. Leer heisst unbekannt.`,
+  tore: (torart: string) => `Wie viele ${torart} auf diesem Feld stehen. Leer heisst unbekannt, 0 heisst keine.`,
+} as const;
+
 /** Wo eine Angabe nicht stimmt: das Feld (0-basiert) und die Angabe darin;
  *  `index: null` betrifft die Liste als Ganzes, `teil: null` das Feld als Ganzes. */
 export type FeldTeil = "laenge_m" | "breite_m" | `tore.${Torart}` | "untergrund";

@@ -626,6 +626,17 @@
 }
 
 @layer base {
+  /* Die Anwendung ist dunkel (Material Dark) — das sagt sie auch dem
+     Browser. Ohne diese Angabe zeichnet er seine eigenen Bedienteile im
+     hellen Schema: das Uhr- und Kalender-Zeichen in Zeit- und Datumsfeldern
+     schwarz auf unserem dunklen Grund, dazu Auswahlfenster, Scrollbalken und
+     Autofill-Flächen hell. Zwilling ist `viewport.colorScheme` im
+     Wurzel-Layout, das schon vor diesem CSS gilt. Der Druck schaltet auf
+     hell um (siehe Druck-Ansicht unten). */
+  :root {
+    color-scheme: dark;
+  }
+
   /* Klebt die Kopfzeile oben (ab `lg`, Epic #350): Springt der Browser zu
      einem Feld — Fokus per Tab, Anker, Fehler —, hält er so viel Abstand,
      dass es nicht unter ihr verschwindet. Nur wo sie wirklich klebt, nicht
@@ -667,6 +678,8 @@
    ============================================================================ */
 @media print {
   :root {
+    /* Papier ist hell: Auch die Bedienteile des Browsers im Druck. */
+    color-scheme: light;
     --color-elev-00: #ffffff;
     --color-elev-01: #f6f7f6;
     --color-elev-02: #f1f2f1;

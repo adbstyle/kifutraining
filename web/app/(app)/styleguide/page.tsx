@@ -1688,6 +1688,11 @@ export default function Styleguide() {
           Feld. Fehler und Hinweise, die
           sich mit der Eingabe ändern, bleiben sichtbar unter dem Feld (
           <code>supportingText</code>) - die muss man sehen, ohne zu klicken.
+          Ein fester Hinweis steht also <strong>nie dauernd unter einem
+          Feld</strong>, auch nicht in eigenen Bausteinen. Betrifft ein Hinweis
+          mehrere Felder, wird er auf sie aufgeteilt: Jedes Feld sagt hinter
+          seinem ⓘ, was für es gilt - kein Sammelhinweis über einer Gruppe
+          (PO 2026-10-06).
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Grosser Wert (<code>schrift=&quot;title&quot;</code>):</strong>{" "}
@@ -1888,7 +1893,10 @@ export default function Styleguide() {
           Für Trainings-Termine, mit Name und Feldkasten wie jedes Feld. Das
           native Steuerelement ist Absicht -
           Datumsauswahl, Tastatureingabe und Lokalisierung kommen vom
-          Betriebssystem.
+          Betriebssystem. Damit der Browser sie dunkel zeichnet - auch das
+          Kalender- und Uhr-Zeichen im Feld -, erklärt sich die Anwendung als
+          dunkel (<code>color-scheme: dark</code> auf <code>:root</code> und
+          im Wurzel-Layout); der Druck schaltet auf hell um.
         </p>
         <div className="grid max-w-md gap-6 sm:grid-cols-2">
           <DateField label="Datum" />
@@ -2087,7 +2095,11 @@ export default function Styleguide() {
           <code>rounded-dialog</code> - der einzige Ort mit 6 px -,{" "}
           <code>shadow-dp-24</code> und ein Scrim bei 60 %. Sein Titel steht
           in <code>type-title-large</code> wie der Name einer Übung -
-          ein Dialog ist ein Arbeitsschritt, kein Plakat. Die{" "}
+          ein Dialog ist ein Arbeitsschritt, kein Plakat. Er ist{" "}
+          <strong>28 rem</strong> breit; Formulare mit vielen Angaben - die
+          Termin-Dialoge mit Feldern und Spielerzahl - nehmen{" "}
+          <code>breit</code> (40 rem), schmal bleibt er bis zum Rand minus
+          2 rem (PO 2026-10-06). Die{" "}
           <strong>Snackbar</strong> ist die eine <strong>umgekehrte</strong>{" "}
           Fläche der Anwendung (<code>umkehr</code>): Weiss zu{" "}
           {Math.round(UMKEHR.deckung * 100)} % über dem Grund, darauf der Grund
@@ -2806,8 +2818,9 @@ export default function Styleguide() {
             <strong>Erfassen</strong> - kein Repeat-Baustein im Kit, darum ein
             eigenes Feld aus bestehenden Teilen: je Zeile <code>Select</code>{" "}
             für Art und (nur bei färbbarem Material) Farbe, <code>TextField</code>{" "}
-            für die Menge, <code>IconButton</code> zum Entfernen. Hinzufügen ist
-            eine Randhandlung, darum <code>quiet</code> (siehe 08).
+            für die Menge, <code>IconButton</code> mit <code>X</code> zum
+            Entfernen (PO 2026-10-06). Hinzufügen ist eine Randhandlung, darum{" "}
+            <code>quiet</code> (siehe 08).
           </li>
           <li>
             <strong>Vorschlag</strong> - das Angebot des Diagramms steht als{" "}
@@ -3078,10 +3091,11 @@ export default function Styleguide() {
         <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
           <li>
             <strong>Ein Block je Feld</strong> - umrandet (<code>border-linie</code>),
-            mit «Feld 1», «Feld 2» und dem <code>IconButton</code> zum
-            Entfernen. Die Felder sind getrennte Flächen; der Block macht das
-            sichtbar, wo eine Zeile wie beim Material sie zu einem Posten
-            verkürzte. Hinzufügen ist eine Randhandlung: <code>quiet</code>.
+            mit «Feld 1», «Feld 2» und dem <code>IconButton</code> mit{" "}
+            <code>X</code> zum Entfernen (PO 2026-10-06, kein Papierkorb). Die
+            Felder sind getrennte Flächen; der Block macht das sichtbar, wo
+            eine Zeile wie beim Material sie zu einem Posten verkürzte.
+            Hinzufügen ist eine Randhandlung: <code>quiet</code>.
             Jeder Block ist eine Gruppe (<code>role=&quot;group&quot;</code>),
             benannt nach seinem Titel.
           </li>
@@ -3094,10 +3108,12 @@ export default function Styleguide() {
           </li>
           <li>
             <strong>Leer heisst unbekannt, 0 heisst keine</strong> - steht als
-            Hinweis unter dem Namen der Gruppe, weil der Unterschied für den
-            KI-Assistenten zählt. Länge und Breite sind ein Paar: Ein Fehler
-            färbt beide, der Satz steht unter der Breite (wie die
-            Spielfeldgrösse einer Übung).
+            Hinweis hinter dem ⓘ jedes Felds - bei Länge und Breite «leer heisst
+            unbekannt», bei jeder Torart dazu «0 heisst keine» -, weil der
+            Unterschied für den KI-Assistenten zählt. Der Hinweis der Torarten
+            steht auf Touch-Geräten auch unter dem Feld (<code>infoAufTouch</code>).
+            Länge und Breite sind ein Paar: Ein Fehler färbt beide, der Satz
+            steht unter der Breite (wie die Spielfeldgrösse einer Übung).
           </li>
           <li>
             <strong>Untergrund mit «Unbekannt»</strong> - anders als sonst bei
@@ -3116,10 +3132,12 @@ export default function Styleguide() {
           <li>
             <strong>Erwartete Spielerzahl</strong> (#390) - ein gewöhnliches
             Zahlenfeld (<code>SpielerzahlField</code> = <code>TextField</code>),
-            dessen Hinweis sagt, was die Zahl zählt; ein Fehler tritt an seine
-            Stelle; es heisst «Erwartete Spielerzahl» wie in der Auskunft des
-            Assistenten. Im Trainingsplan steht sie in derselben Zeile wie die
-            Felder, mit dem Zeichen <code>Shirt</code> - <code>Users</code>{" "}
+            dessen Hinweis hinter dem ⓘ sagt, was die Zahl zählt (auf
+            Touch-Geräten auch unter dem Feld, <code>infoAufTouch</code>); sonst
+            steht unter dem Feld nur ein Fehler. Es heisst «Erwartete
+            Spielerzahl» wie in der Auskunft des Assistenten. Im Trainingsplan
+            steht sie in derselben Zeile wie die Felder, mit dem Zeichen{" "}
+            <code>Shirt</code> - <code>Users</code>{" "}
             trägt schon die Verantwortlichen.
           </li>
         </ul>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import { ListPlus, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { ListPlus, Plus, RefreshCw, X } from "lucide-react";
 import { SectionMessage, Button, IconButton, Select, TextArea, TextField, feldNameKlasse } from "@/components/ui";
 import { farbSlugs, type FarbSlug } from "@/lib/diagramm";
 import {
@@ -154,7 +154,7 @@ export function MaterialField({
                 />
                 <IconButton
                   type="button"
-                  icon={Trash2}
+                  icon={X}
                   label={
                     z.art
                       ? `${MATERIAL_KATALOG[z.art].einzahl} entfernen`
