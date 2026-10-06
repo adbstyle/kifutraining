@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button, IconButton, Select, TextField, feldNameKlasse } from "@/components/ui";
+import { InfoKnopf } from "@/components/ui/InfoKnopf";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 import { zahlOderNull } from "@/lib/termin";
 import {
@@ -29,6 +30,10 @@ export type FeldZeile = {
 };
 
 const text = (n: number | null) => (n === null ? "" : String(n));
+
+/** Fester Hinweis zur ganzen Gruppe — steht hinter dem ⓘ. */
+const FELDER_HINWEIS =
+  "Je Feld die Fläche, die euch zur Verfügung steht. Leer heisst unbekannt, 0 Tore heisst keine.";
 
 export function zeilenAusFeldern(felder: Felder | null | undefined): FeldZeile[] {
   return (felder ?? []).map((f) => ({
@@ -115,12 +120,20 @@ export function FelderField({
 
   return (
     <div role="group" aria-labelledby={legendeId} aria-describedby={hinweisId} className="flex flex-col gap-3">
-      <p id={legendeId} className={feldNameKlasse(problem?.index === null)}>
-        Felder (optional)
-      </p>
-      <p id={hinweisId} className="type-body-small px-3.5 text-on-surface-mittel">
-        Je Feld die Fläche, die euch zur Verfügung steht. Leer heisst unbekannt, 0 Tore heisst keine.
-      </p>
+      {/* Der feste Hinweis zur Gruppe steht hinter dem ⓘ neben ihrem Namen,
+          wie bei einem Feld nur beim Überfahren sichtbar (Styleguide,
+          Formularfelder › Hinweise); die Vorlesehilfe hört ihn mit der Gruppe. */}
+      <div className="feld-gruppe-kopf flex items-center gap-1">
+        <p id={legendeId} className={feldNameKlasse(problem?.index === null)}>
+          Felder (optional)
+        </p>
+        <div className="feld-info">
+          <InfoKnopf label="Felder">{FELDER_HINWEIS}</InfoKnopf>
+        </div>
+      </div>
+      <span id={hinweisId} className="sr-only">
+        {FELDER_HINWEIS}
+      </span>
 
       {zeilen.length > 0 && (
         <ul className="flex flex-col gap-3">

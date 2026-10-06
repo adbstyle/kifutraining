@@ -1688,6 +1688,11 @@ export default function Styleguide() {
           Feld. Fehler und Hinweise, die
           sich mit der Eingabe ändern, bleiben sichtbar unter dem Feld (
           <code>supportingText</code>) - die muss man sehen, ohne zu klicken.
+          Ein fester Hinweis steht also <strong>nie dauernd unter einem
+          Feld</strong>, auch nicht in eigenen Bausteinen. Erklärt er eine
+          ganze Gruppe von Feldern, steht das ⓘ neben dem Namen der Gruppe
+          (Klasse <code>feld-gruppe-kopf</code>) und zeigt sich ebenso beim
+          Überfahren.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Grosser Wert (<code>schrift=&quot;title&quot;</code>):</strong>{" "}
@@ -3094,8 +3099,8 @@ export default function Styleguide() {
           </li>
           <li>
             <strong>Leer heisst unbekannt, 0 heisst keine</strong> - steht als
-            Hinweis unter dem Namen der Gruppe, weil der Unterschied für den
-            KI-Assistenten zählt. Länge und Breite sind ein Paar: Ein Fehler
+            fester Hinweis hinter dem ⓘ neben dem Namen der Gruppe, weil der
+            Unterschied für den KI-Assistenten zählt. Länge und Breite sind ein Paar: Ein Fehler
             färbt beide, der Satz steht unter der Breite (wie die
             Spielfeldgrösse einer Übung).
           </li>
@@ -3116,8 +3121,8 @@ export default function Styleguide() {
           <li>
             <strong>Erwartete Spielerzahl</strong> (#390) - ein gewöhnliches
             Zahlenfeld (<code>SpielerzahlField</code> = <code>TextField</code>),
-            dessen Hinweis sagt, was die Zahl zählt; ein Fehler tritt an seine
-            Stelle; es heisst «Erwartete Spielerzahl» wie in der Auskunft des
+            dessen Hinweis hinter dem ⓘ sagt, was die Zahl zählt; unter dem
+            Feld steht nur ein Fehler; es heisst «Erwartete Spielerzahl» wie in der Auskunft des
             Assistenten. Im Trainingsplan steht sie in derselben Zeile wie die
             Felder, mit dem Zeichen <code>Shirt</code> - <code>Users</code>{" "}
             trägt schon die Verantwortlichen.

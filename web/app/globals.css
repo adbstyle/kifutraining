@@ -508,7 +508,11 @@
   pointer-events: auto;
 }
 @media (hover: hover) {
-  .feld-rahmen:not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled)) .feld-angabe:hover .feld-info {
+  .feld-rahmen:not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled)) .feld-angabe:hover .feld-info,
+  /* Der feste Hinweis einer Gruppe von Feldern (etwa «Felder» eines Termins)
+     steht hinter dem ⓘ neben ihrem Namen und zeigt sich ebenso beim
+     Überfahren dieses Kopfs. */
+  .feld-gruppe-kopf:hover .feld-info {
     opacity: 1;
     pointer-events: auto;
   }
