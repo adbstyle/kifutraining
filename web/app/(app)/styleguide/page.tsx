@@ -3324,7 +3324,11 @@ export default function Styleguide() {
           erscheint mit seiner Gliederung in der Schrift der Anwendung: Überschriften eine Stufe
           unter dem Titel (<code>type-title-medium</code>), Listen wie im Freitext, Fettes,
           Links in Primary, Code auf 08dp. Eingebettetes HTML und Bilder fallen weg. Einträge
-          trennt eine Haarlinie. Das Markdown ist eine Ausnahme: Was Trainer:innen selbst
+          trennt eine Haarlinie. Ab <code>lg</code> steht links ein Verzeichnis (16 rem, klebt unter
+          der Kopfzeile, scrollt für sich): je Version Nummer (<code>type-body-small</code>) und
+          Thema als Sprung zum Text; die Version, deren Text oben im Fenster steht, trägt die
+          Zeile auf 08dp mit der Nummer in Primary (<code>aria-current=&quot;location&quot;</code>).
+          Schmal fehlt es. Das Markdown ist eine Ausnahme: Was Trainer:innen selbst
           schreiben, bleibt Freitext ohne Markdown.
         </p>
         <article className="flex max-w-3xl flex-col gap-3">

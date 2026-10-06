@@ -4,6 +4,8 @@ import { Leerzustand, SectionMessage } from "@/components/ui";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
 import { VersionenGesehen } from "@/components/versionen/VersionenGesehen";
+import { VersionenVerzeichnis } from "@/components/versionen/VersionenVerzeichnis";
+import { versionAnker } from "@/lib/versionen-anker";
 import { getReleasesZumLesen, neuesteVeroeffentlichung } from "@/lib/releases";
 import { APP_VERSION } from "@/lib/version";
 import { datumKurz, kalendertagAmTrainingsort } from "@/lib/zeit";
@@ -15,7 +17,10 @@ export const metadata: Metadata = { title: "Versionen - KiFu" };
    Version zuerst, je mit Titel und Text wie im Repository. Ohne Anmeldung
    erreichbar und über ihre Adresse teilbar. Ist GitHub nicht erreichbar,
    steht der zuletzt bekannte Stand mit Hinweis; gab es nie einen, nur der
-   Hinweis. */
+   Hinweis.
+
+   Ab `lg` steht links ein Verzeichnis mit Nummer und Thema jeder Version,
+   rechts stehen die Texte untereinander; schmal nur die Texte. */
 /** Der Tag in der Schweiz, geschrieben wie jedes Datum der Anwendung. */
 function tag(iso: string): string {
   return datumKurz(kalendertagAmTrainingsort(new Date(iso)));
@@ -26,7 +31,7 @@ export default async function VersionenPage() {
   const neueste = stand && neuesteVeroeffentlichung(stand.releases);
 
   return (
-    <Seitenrahmen breite="3xl" krumen={[{ label: "Versionen" }]}>
+    <Seitenrahmen breite="6xl" krumen={[{ label: "Versionen" }]}>
       <h1 className="sr-only">Versionen</h1>
       <p className="type-body-medium mb-6 text-on-surface-mittel">
         Hier läuft KiFu {APP_VERSION}. Was jede Version gebracht hat, steht darunter.
@@ -45,36 +50,43 @@ export default async function VersionenPage() {
               {tag(stand.abgerufenAm)} und womöglich nicht aktuell.
             </SectionMessage>
           )}
-          <div className="flex flex-col divide-y divide-linie">
-            {stand.releases.map((r) => (
-              <article
-                key={r.version}
-                aria-labelledby={`version-${r.version}`}
-                className="flex flex-col gap-3 py-6 first:pt-0"
-              >
-                <header className="flex flex-col gap-1">
-                  <h2 id={`version-${r.version}`} className="type-title-large text-on-surface">
-                    {r.titel}
-                  </h2>
-                  <p className="type-body-small flex flex-wrap items-center gap-x-2 text-on-surface-mittel">
-                    <span>Version {r.version}</span>
-                    <span aria-hidden>·</span>
-                    <time dateTime={r.veroeffentlicht}>{tag(r.veroeffentlicht)}</time>
-                    <span aria-hidden>·</span>
-                    <a
-                      href={r.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-primary underline"
-                    >
-                      Auf GitHub ansehen
-                      <ExternalLink size={12} aria-hidden />
-                    </a>
-                  </p>
-                </header>
-                {r.text.trim() && <ReleaseText text={r.text} />}
-              </article>
-            ))}
+          <div className="lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-10">
+            <VersionenVerzeichnis
+              eintraege={stand.releases.map(({ version, titel }) => ({ version, titel }))}
+            />
+            <div className="flex max-w-3xl flex-col divide-y divide-linie">
+              {stand.releases.map((r) => (
+                <article
+                  key={r.version}
+                  id={versionAnker(r.version)}
+                  data-version={r.version}
+                  aria-labelledby={`${versionAnker(r.version)}-titel`}
+                  className="flex flex-col gap-3 py-6 first:pt-0"
+                >
+                  <header className="flex flex-col gap-1">
+                    <h2 id={`${versionAnker(r.version)}-titel`} className="type-title-large text-on-surface">
+                      {r.titel}
+                    </h2>
+                    <p className="type-body-small flex flex-wrap items-center gap-x-2 text-on-surface-mittel">
+                      <span>Version {r.version}</span>
+                      <span aria-hidden>·</span>
+                      <time dateTime={r.veroeffentlicht}>{tag(r.veroeffentlicht)}</time>
+                      <span aria-hidden>·</span>
+                      <a
+                        href={r.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary underline"
+                      >
+                        Auf GitHub ansehen
+                        <ExternalLink size={12} aria-hidden />
+                      </a>
+                    </p>
+                  </header>
+                  {r.text.trim() && <ReleaseText text={r.text} />}
+                </article>
+              ))}
+            </div>
           </div>
         </>
       )}

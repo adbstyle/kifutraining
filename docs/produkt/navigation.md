@@ -45,7 +45,9 @@ Die Seite „Versionen" zeigt, was jede Version von KiFu gebracht hat, die neues
 seit 1.0.0. Zu jeder steht ihr Thema als Titel, die Versionsnummer, der Tag der
 Veröffentlichung und der Text, wie er auf der öffentlichen Projektseite auf GitHub steht: unverändert, mit Gliederung,
 Hervorhebungen und Links, auch mit technischen Abschnitten und Nummern von Aufgaben. Ein Verweis
-führt zur Veröffentlichung auf GitHub. Die Seite ist ohne Anmeldung zugänglich und hat eine
+führt zur Veröffentlichung auf GitHub. Auf breiten Bildschirmen steht links ein Verzeichnis
+aller Versionen mit Nummer und Thema: Ein Klick springt zum Text, und hervorgehoben ist die
+Version, deren Text gerade oben steht. Auf schmalen Bildschirmen stehen nur die Texte. Die Seite ist ohne Anmeldung zugänglich und hat eine
 eigene Adresse, die sich weitergeben lässt.
 
 Eine neue oder geänderte Version auf GitHub erscheint spätestens nach einer Stunde. Ist GitHub
