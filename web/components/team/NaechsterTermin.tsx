@@ -1,17 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarOff, CalendarPlus, CalendarX2, PlayCircle, Repeat } from "lucide-react";
-import { Button, ButtonLink, Card, Eigenschaft, EigenschaftFehlt, Lozenge, OverflowMenu } from "@/components/ui";
+import { CalendarOff, CalendarPlus, PlayCircle, Repeat } from "lucide-react";
+import { Button, ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, OverflowMenu } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage, wochentageText } from "@/lib/serie";
 import { spielerzahlText, zeitText } from "@/lib/termin";
 import { feldName, feldText } from "@/lib/termin-felder";
 import { datumKurz } from "@/lib/zeit";
-import { nochNichtVorbereitet, verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { terminZustand, verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
-import { terminMenue } from "./TerminHandgriffe";
+import { OhneTraining, terminMenue } from "./TerminHandgriffe";
 
 /* Der nächste Termin zuoberst im Trainingsplan (#403): grösser als die
    Zeilen darunter und auf einer höheren Fläche, damit man ihn am
@@ -44,14 +44,16 @@ export function NaechsterTermin({
   // AK 8: Heute oder Morgen zusätzlich zum Wochentag und Datum.
   const relativ = t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
   const v = verantwortlicheMitDir(t, ich);
+  const zustand = terminZustand(t, heute);
   return (
-    <Card
+    <div
       id={t.id}
       data-datum={t.datum}
       aria-current={hervorgehoben ? "true" : undefined}
       tabIndex={-1}
       className={cn(
-        "mt-2 bg-elev-04 p-4 outline-none focus:border-primary",
+        // Eine Stufe höher als die Karten der Tage darunter: abgehoben (AK 1).
+        "relative mt-2 rounded-flaeche bg-elev-04 p-4 outline-none focus:border-primary",
         hervorgehoben ? "kontur border-primary" : "kontur border-kante",
       )}
     >
@@ -80,7 +82,7 @@ export function NaechsterTermin({
       </div>
 
       <div className="mt-2">
-        {t.ausgefallen ? (
+        {zustand === "ausgefallen" ? (
           <>
             <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
             {/* AK 14: der Grund vollständig. */}
@@ -91,14 +93,12 @@ export function NaechsterTermin({
               </p>
             )}
           </>
-        ) : t.training ? (
-          <Link href={`/training/${t.training.id}`} className="focus-ring rounded-klein type-title-large text-on-surface hover:underline">
-            {t.training.name}
+        ) : zustand === "training" ? (
+          <Link href={`/training/${t.training!.id}`} className="focus-ring rounded-klein type-title-large text-on-surface hover:underline">
+            {t.training!.name}
           </Link>
-        ) : nochNichtVorbereitet(t, heute) ? (
-          <Lozenge appearance="warning" iconBefore={CalendarX2}>Noch kein Training</Lozenge>
         ) : (
-          <Lozenge>Ohne Training</Lozenge>
+          <OhneTraining zustand={zustand} />
         )}
       </div>
 
@@ -149,6 +149,6 @@ export function NaechsterTermin({
           </Eigenschaft>
         )}
       </dl>
-    </Card>
+    </div>
   );
 }

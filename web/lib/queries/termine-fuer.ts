@@ -331,6 +331,16 @@ export function nochNichtVorbereitet(t: TerminZeile, heute: string): boolean {
   return t.datum >= heute && t.training === null && !t.ausgefallen;
 }
 
+/** Was ein Termin trägt (Epic #401): ein Training, noch keines (anstehend),
+ *  keines (vergangen) — oder er ist ausgefallen, was allem vorgeht. */
+export type TerminZustand = "training" | "noch-nicht" | "ohne" | "ausgefallen";
+
+export function terminZustand(t: TerminZeile, heute: string): TerminZustand {
+  if (t.ausgefallen) return "ausgefallen";
+  if (t.training) return "training";
+  return nochNichtVorbereitet(t, heute) ? "noch-nicht" : "ohne";
+}
+
 /** Ein Trainingsplan, geteilt in Kommendes und Vergangenes (Story 18). */
 export type Plan = { kommend: TerminZeile[]; vergangen: TerminZeile[] };
 

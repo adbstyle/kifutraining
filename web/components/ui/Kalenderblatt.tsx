@@ -19,7 +19,7 @@ export function Kalenderblatt({
   /** `YYYY-MM-DD`. */
   datum: string;
   heute?: boolean;
-  as?: "div" | "h4" | "h5";
+  as?: "div" | "h5";
   className?: string;
 }) {
   const b = kalenderblatt(datum);

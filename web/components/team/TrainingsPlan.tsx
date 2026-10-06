@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { CalendarOff, CalendarX2, LandPlot, MapPin, Shirt, UserCheck, Users } from "lucide-react";
+import { CalendarOff, LandPlot, MapPin, Shirt, UserCheck, Users } from "lucide-react";
 import { Card, Disclosure, Kalenderblatt, Lozenge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
-import { TerminHandgriffe } from "./TerminHandgriffe";
+import { OhneTraining, TerminHandgriffe } from "./TerminHandgriffe";
 import { NaechsterTermin } from "./NaechsterTermin";
 import { PlanMonat } from "./PlanMonat";
 import { spielerzahlText, zeitText } from "@/lib/termin";
@@ -15,7 +15,7 @@ import { monatVon, monatsName } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
 // (next/headers) ins Client-Bundle.
-import { nochNichtVorbereitet, verantwortlicheMitDir, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { terminZustand, verantwortlicheMitDir, type Plan, type TerminZeile } from "@/lib/queries/termine-fuer";
 
 /* Der Kalender eines Teams als Liste (Team-Kalender #322, #323; gegliedert
    mit Story 18 und Epic #401): zuoberst, was ansteht, danach der Rückblick,
@@ -57,10 +57,11 @@ export function TrainingsPlan({
   const [sprung, setSprung] = useState<{ id: string; nr: number } | null>(null);
   // #330 PC 7: Der Verweis aus dem Kalender zeigt auch einen Termin im
   // Rückblick — der Abschnitt klappt dafür auf, und `key` setzt den
-  // Anfangszustand neu, wenn ein anderer Termin gemeint ist. Ebenso ein im
-  // Monat gewählter vergangener Termin (#404 PC 7); zugeklappt wird nie.
+  // Anfangszustand neu, wenn ein anderer Termin gemeint ist. Ebenso jeder im
+  // Monat gewählte vergangene Termin (#404 PC 7): `rueckblickAuf` zählt nur
+  // hoch, ein späterer Sprung nach vorn klappt den Rückblick nicht wieder zu.
   const imRueckblick = hervorheben !== undefined && plan.vergangen.some((t) => t.id === hervorheben);
-  const sprungZurueck = sprung !== null && plan.vergangen.some((t) => t.id === sprung.id);
+  const [rueckblickAuf, setRueckblickAuf] = useState(0);
   // Beim Einhängen (Kindeffekte laufen vor diesem): Der Rückblick ist dann schon offen.
   useEffect(() => {
     const ziel = hervorheben ? document.getElementById(hervorheben) : null;
@@ -82,22 +83,22 @@ export function TrainingsPlan({
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_16.5rem] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
       <div ref={liste} className="min-w-0">
         {alle.length === 0 && leer}
-        {!nichtsMehrOffen && (
+        {naechster && (
           <section>
             <h3 className="type-title-small text-on-surface-mittel">
               Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
             </h3>
-            {naechster && <NaechsterTermin t={naechster} heute={heute} ich={ich} hervorgehoben={naechster.id === hervorheben} />}
+            <NaechsterTermin t={naechster} heute={heute} ich={ich} hervorgehoben={naechster.id === hervorheben} />
             <PlanMonate termine={danach} heute={heute} ich={ich} hervorheben={hervorheben} />
           </section>
         )}
         {plan.vergangen.length > 0 && (
           <Disclosure
-            key={`${nichtsMehrOffen ? "allein" : "mit-kommendem"}-${imRueckblick ? hervorheben : ""}-${sprungZurueck ? sprung.nr : ""}`}
+            key={`${nichtsMehrOffen ? "allein" : "mit-kommendem"}-${imRueckblick ? hervorheben : ""}-${rueckblickAuf}`}
             title="Vergangen"
             count={plan.vergangen.length}
-            defaultOpen={nichtsMehrOffen || imRueckblick || sprungZurueck}
-            className={cn(plan.kommend.length > 0 && "mt-6")}
+            defaultOpen={nichtsMehrOffen || imRueckblick || rueckblickAuf > 0}
+            className={cn(!nichtsMehrOffen && "mt-6")}
           >
             <PlanMonate termine={plan.vergangen} heute={heute} ich={ich} hervorheben={hervorheben} />
           </Disclosure>
@@ -111,7 +112,10 @@ export function TrainingsPlan({
           meine={meine}
           anfang={monatVon(plan.kommend[0]?.datum ?? heute)}
           liste={liste}
-          onWahl={(id) => setSprung((s) => ({ id, nr: (s?.nr ?? 0) + 1 }))}
+          onWahl={(id) => {
+            if (plan.vergangen.some((t) => t.id === id)) setRueckblickAuf((n) => n + 1);
+            setSprung((s) => ({ id, nr: (s?.nr ?? 0) + 1 }));
+          }}
         />
       </div>
     </div>
@@ -148,11 +152,11 @@ function ortUndPlatz(t: TerminZeile): string | null {
 }
 
 /* Ein Termin als knappe Zeile (#402 AK 4–11, 15–17; PO 4, 5). Die ganze
-   Zeile öffnet «Termin ändern» — ihre Fläche gehört dem Knopf mit der Zeit
-   (`before:`); der Trainingsname führt für sich zum Training, die
-   Handgriffe rechts bleiben eigene Knöpfe (beide liegen positioniert darüber).
-   Was zu lang ist, endet in «…» und steht ganz im Tooltip des Browsers (AK 9);
-   alles Weitere zeigt der geöffnete Termin (AK 12). */
+   Zeile öffnet «Termin ändern»: Ihre Fläche ist ein Knopf, über dem der
+   Inhalt liegt, ohne Klicks abzufangen (`pointer-events-none`). Nur der
+   Trainingsname, der zum Training führt, und die Handgriffe rechts nehmen
+   Klicks selbst an. Was zu lang ist, endet in «…»; die ganze Zeile steht im
+   Tooltip des Knopfes (AK 9), alles Weitere am geöffneten Termin (AK 12). */
 function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: string; ich: string; hervorgehoben: boolean }) {
   const a = useTerminAktionen();
   const vergangen = t.datum < heute;
@@ -160,6 +164,12 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
   const ort = ortUndPlatz(t);
   const v = verantwortlicheMitDir(t, ich);
   const VIcon = v.selbst ? UserCheck : Users;
+  const zustand = terminZustand(t, heute);
+  const ganz = [
+    [zeit ?? "Zeit fehlt", ort, t.spielerzahl !== null && spielerzahlText(t.spielerzahl)].filter(Boolean).join(" · "),
+    zustand === "ausgefallen" ? ["Ausgefallen", t.ausfallGrund].filter(Boolean).join(": ") : t.training?.name,
+    v.text && `Verantwortlich: ${v.text}`,
+  ].filter(Boolean).join("\n");
   return (
     <li
       id={t.id}
@@ -172,62 +182,57 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
         hervorgehoben && "kontur border-primary",
       )}
     >
-      <div className={cn("min-w-0 flex-1", (vergangen || t.ausgefallen) && "[&_.gedaempft]:opacity-60")}>
+      <button type="button" onClick={() => a.bearbeiten(t)} title={ganz} className="focus-ring absolute inset-0 rounded-klein">
+        <span className="sr-only">Termin ändern: {zeit ?? "Zeit fehlt"}</span>
+      </button>
+      <div className={cn("pointer-events-none relative min-w-0 flex-1", (vergangen || t.ausgefallen) && "[&_.gedaempft]:opacity-60")}>
         {/* Schmal bricht um, was unter 8 rem schrumpfte, und kürzt erst auf ganzer Breite. */}
-        <p className="gedaempft flex min-w-0 flex-wrap items-baseline gap-x-2 type-body-medium text-on-surface">
-          <button
-            type="button"
-            onClick={() => a.bearbeiten(t)}
-            className="focus-ring shrink-0 rounded-klein text-left before:absolute before:inset-0 before:rounded-klein before:content-['']"
-          >
-            <span className="sr-only">Termin ändern: </span>
-            {zeit ? zeit : <span className="text-error">Zeit fehlt</span>}
-          </button>
+        <p aria-hidden className="gedaempft flex min-w-0 flex-wrap items-baseline gap-x-2 type-body-medium text-on-surface">
+          <span className="shrink-0">{zeit ? zeit : <span className="text-error">Zeit fehlt</span>}</span>
           {/* AK 8: fehlende Zeit sichtbar, ohne den Termin zu öffnen. */}
           {t.beginn && !t.ende && <span className="shrink-0 type-body-small text-error">Ende fehlt</span>}
           {ort && (
-            <span className="inline-flex min-w-32 max-w-full items-center gap-1 type-body-small text-on-surface-mittel" title={ort}>
-              {t.ort ? <MapPin size={14} aria-hidden className="shrink-0" /> : <LandPlot size={14} aria-hidden className="shrink-0" />}
-              <span className="sr-only">Ort: </span>
+            <span className="inline-flex min-w-32 max-w-full items-center gap-1 type-body-small text-on-surface-mittel">
+              {t.ort ? <MapPin size={14} className="shrink-0" /> : <LandPlot size={14} className="shrink-0" />}
               <span className="truncate">{ort}</span>
             </span>
           )}
           {t.spielerzahl !== null && (
-            <span className="inline-flex shrink-0 items-center gap-1 type-body-small text-on-surface-mittel" title={spielerzahlText(t.spielerzahl)}>
-              <Shirt size={14} aria-hidden className="shrink-0" />
-              <span className="sr-only">Erwartet: </span>
+            <span className="inline-flex shrink-0 items-center gap-1 type-body-small text-on-surface-mittel">
+              <Shirt size={14} className="shrink-0" />
               {t.spielerzahl}
-              <span className="sr-only"> {t.spielerzahl === 1 ? "Spieler:in" : "Spieler:innen"}</span>
             </span>
           )}
         </p>
+        {/* Vorlesehilfen hören die erste Zeile ausgeschrieben. */}
+        <p className="sr-only">
+          {[t.beginn && !t.ende && "Ende fehlt", ort && `Ort: ${ort}`, t.spielerzahl !== null && `Erwartet: ${spielerzahlText(t.spielerzahl)}`].filter(Boolean).join(", ")}
+        </p>
         <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5">
-          {t.ausgefallen ? (
+          {zustand === "ausgefallen" ? (
             <span className="flex min-w-0 max-w-full items-center gap-2">
               <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
               {/* AK 7: der Grund, gekürzt; ganz im Tooltip und am geöffneten Termin. */}
               {t.ausfallGrund && (
-                <span className="truncate type-body-small text-on-surface-mittel" title={t.ausfallGrund}>
+                <span className="truncate type-body-small text-on-surface-mittel">
                   <span className="sr-only">Grund: </span>
                   {t.ausfallGrund}
                 </span>
               )}
             </span>
-          ) : t.training ? (
+          ) : zustand === "training" ? (
             <Link
-              href={`/training/${t.training.id}`}
-              title={t.training.name}
-              className="gedaempft focus-ring relative min-w-0 truncate rounded-klein type-title-small text-on-surface hover:underline"
+              href={`/training/${t.training!.id}`}
+              title={t.training!.name}
+              className="gedaempft focus-ring pointer-events-auto min-w-0 truncate rounded-klein type-title-small text-on-surface hover:underline"
             >
-              {t.training.name}
+              {t.training!.name}
             </Link>
-          ) : nochNichtVorbereitet(t, heute) ? (
-            <Lozenge appearance="warning" iconBefore={CalendarX2}>Noch kein Training</Lozenge>
           ) : (
-            <Lozenge>Ohne Training</Lozenge>
+            <OhneTraining zustand={zustand} />
           )}
           {v.text && (
-            <span className="gedaempft inline-flex min-w-32 max-w-full items-center gap-1 type-body-small text-on-surface-mittel" title={v.text}>
+            <span className="gedaempft inline-flex min-w-32 max-w-full items-center gap-1 type-body-small text-on-surface-mittel">
               <VIcon size={14} aria-hidden className="shrink-0" />
               <span className="sr-only">Verantwortlich: </span>
               <span className="truncate">{v.text}</span>

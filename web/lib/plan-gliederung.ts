@@ -6,8 +6,8 @@ import { monatVon } from "@/lib/monat";
 
 type Datiert = { datum: string; beginn: string | null };
 
-export type TagGruppe<T> = { datum: string; termine: T[] };
-export type MonatGruppe<T> = { monat: string; tage: TagGruppe<T>[] };
+type TagGruppe<T> = { datum: string; termine: T[] };
+type MonatGruppe<T> = { monat: string; tage: TagGruppe<T>[] };
 
 /** Nach Beginn aufsteigend, Termine ohne Beginn zuletzt; bei gleichem Beginn
  *  bleibt die Reihenfolge der Eingabe (`Array.sort` ist stabil). */

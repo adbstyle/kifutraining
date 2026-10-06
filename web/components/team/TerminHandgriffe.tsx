@@ -1,10 +1,20 @@
 "use client";
 
-import { CalendarOff, CalendarPlus, MessageSquareText, Pencil, PlayCircle, Trash2, Undo2, Unlink } from "lucide-react";
-import { IconButton, IconButtonLink, OverflowMenu, Tooltip, type MenuItemDef } from "@/components/ui";
+import { CalendarOff, CalendarPlus, CalendarX2, MessageSquareText, Pencil, PlayCircle, Trash2, Undo2, Unlink } from "lucide-react";
+import { IconButton, IconButtonLink, Lozenge, OverflowMenu, Tooltip, type MenuItemDef } from "@/components/ui";
 import { useTerminAktionen, type TerminAktionen } from "./TerminBereich";
 import { datumKurz } from "@/lib/zeit";
-import type { TerminZeile } from "@/lib/queries/termine-fuer";
+import type { TerminZeile, TerminZustand } from "@/lib/queries/termine-fuer";
+
+/** Ein Termin ohne Training: anstehend «Noch kein Training» (#402 AK 6), damit
+ *  eine unvorbereitete Einheit auffällt; vergangen schlicht «Ohne Training». */
+export function OhneTraining({ zustand }: { zustand: Extract<TerminZustand, "noch-nicht" | "ohne"> }) {
+  return zustand === "noch-nicht" ? (
+    <Lozenge appearance="warning" iconBefore={CalendarX2}>Noch kein Training</Lozenge>
+  ) : (
+    <Lozenge>Ohne Training</Lozenge>
+  );
+}
 
 /** Die Handgriffe eines Termins im Menü «Weitere Aktionen» — dieselben an
  *  jeder Zeile und am nächsten Termin (#402 AK 17, #403 AK 15). */

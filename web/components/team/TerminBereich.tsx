@@ -48,7 +48,7 @@ import type { TeamMitglied } from "@/lib/queries/teams";
    #322, #323). Die Zeilen der Liste und der nächste Termin rufen dieselben
    Funktionen auf, damit jeder Termin dieselben Handgriffe bietet (#401). */
 export type TerminAktionen = {
-  /** Einen Termin oder eine Terminserie erstellen — ohne vorbelegtes Datum (#405). */
+  /** Einen Termin oder eine Terminserie erstellen. */
   neu: () => void;
   bearbeiten: (t: TerminZeile) => void;
   zuordnen: (t: TerminZeile) => void;

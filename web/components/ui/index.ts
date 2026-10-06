@@ -12,7 +12,7 @@ export {
 } from "./Chip";
 export { Card } from "./Card";
 export { Kalenderblatt } from "./Kalenderblatt";
-export { MiniMonat, MarkenZeichen, MARKEN_TEXT } from "./MiniMonat";
+export { MiniMonat, MARKEN_TEXT } from "./MiniMonat";
 export type { Marke, MarkenZustand } from "./MiniMonat";
 export { AuswahlListe } from "./AuswahlListe";
 export type { AuswahlEintrag } from "./AuswahlListe";

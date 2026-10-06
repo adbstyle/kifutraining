@@ -3266,8 +3266,8 @@ export default function Styleguide() {
       <Section n="32" title="Kalenderblatt">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Ein Tag wie ein Blatt vom Abreisskalender: Wochentag, grosse Tageszahl, Monat - nie das Jahr,
-          das steht in der Überschrift des Monats (Epic #401). Neu, weil das Datum bisher nur als Text in
-          einer Zeile stand (<code>datumKurz</code>) und sich beim Überfliegen nicht finden liess. Im
+          das steht in der Überschrift des Monats (Epic #401). Neu, weil ein Datum als Text in einer Zeile
+          (<code>datumKurz</code>) sich beim Überfliegen nicht finden lässt. Im
           Trainingsplan steht es einmal je Tag links an der Karte, die Termine des Tages als knappe Zeilen
           daneben. Der heutige Tag trägt die volle Primary-Fläche ({v(kontrast(ON_PRIMARY, PRIMARY))} Schrift auf
           Primary); vorgelesen wird der ausgeschriebene Tag samt «Heute», die Kurzform ist stumm.
@@ -3281,9 +3281,8 @@ export default function Styleguide() {
 
       <Section n="33" title="Mini-Monat">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401); er ersetzt den früheren
-          Monatsüberblick, der Einträge mit Zeit und Namen zeigte und dafür eine eigene Ansicht brauchte.
-          Neu, weil kein Baustein ein Kalenderraster kennt. <code>MiniMonat</code> zeigt je Tag nur Zeichen,
+          Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401). Neu, weil kein Baustein ein
+          Kalenderraster kennt. <code>MiniMonat</code> zeigt je Tag nur Zeichen,
           und jedes Zeichen ist ein Knopf zu seinem Eintrag (<code>onWahl</code>); ein leerer Tag ist kein
           Knopf. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender
           folgt der Monat der Liste, die Liste aber nicht ihm.

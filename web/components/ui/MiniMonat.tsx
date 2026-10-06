@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { monatsName, monatsRaster, monatVon, plusMonate, tagText } from "@/lib/monat";
 import { Button } from "./Button";
@@ -40,7 +40,7 @@ const HOECHSTENS = 2;
 /** Das Zeichen eines Zustands — eine eigene FORM je Zustand, damit er sich
  *  auch ohne Farben unterscheiden lässt (#404 AK 8): gefüllter Punkt, Ring,
  *  Strich, Kreuz. */
-export function MarkenZeichen({ zustand }: { zustand: MarkenZustand }) {
+function MarkenZeichen({ zustand }: { zustand: MarkenZustand }) {
   if (zustand === "training") return <span aria-hidden className="block size-2 rounded-full bg-primary" />;
   if (zustand === "noch-nicht") return <span aria-hidden className="block size-2 rounded-full border-2 border-icon-warning" />;
   if (zustand === "ohne") return <span aria-hidden className="block h-0.5 w-2.5 rounded-full bg-on-surface-mittel" />;
@@ -74,7 +74,6 @@ export function MiniMonat({
   onWahl,
   onMonat,
   hinweis,
-  className,
 }: {
   /** `YYYY-MM`. */
   monat: string;
@@ -86,17 +85,27 @@ export function MiniMonat({
   onMonat: (monat: string) => void;
   /** Ein Satz unter dem Monatsnamen, etwa die Eingrenzung (AK 12). */
   hinweis?: ReactNode;
-  className?: string;
 }) {
   const wochen = monatsRaster(monat);
   const aktuell = monatVon(heute);
   const zeigtBelegt = !!belegt && wochen.some((w) => w.some((d) => belegt(d.tag)));
+  const titel = useRef<HTMLHeadingElement>(null);
   return (
-    <section aria-label={`Monat ${monatsName(monat)}`} className={cn("rounded-flaeche bg-elev-01 p-3", className)}>
+    <section aria-label={`Monat ${monatsName(monat)}`} className="rounded-flaeche bg-elev-01 p-3">
       <div className="flex items-center gap-1">
-        <h3 aria-live="polite" className="type-title-small flex-1 text-on-surface">{monatsName(monat)}</h3>
+        <h3 ref={titel} tabIndex={-1} aria-live="polite" className="type-title-small flex-1 text-on-surface focus-visible:outline-none">{monatsName(monat)}</h3>
+        {/* «Heute» verschwindet mit seinem Klick; der Fokus landet darum auf
+            dem Monatsnamen statt auf der Seite. */}
         {monat !== aktuell && (
-          <Button variant="quiet" onClick={() => onMonat(aktuell)}>Heute</Button>
+          <Button
+            variant="quiet"
+            onClick={() => {
+              onMonat(aktuell);
+              titel.current?.focus();
+            }}
+          >
+            Heute
+          </Button>
         )}
         <IconButton icon={ChevronLeft} label="Vorheriger Monat" onClick={() => onMonat(plusMonate(monat, -1))} />
         <IconButton icon={ChevronRight} label="Nächster Monat" onClick={() => onMonat(plusMonate(monat, 1))} />

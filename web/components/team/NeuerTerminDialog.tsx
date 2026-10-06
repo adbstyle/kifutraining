@@ -74,7 +74,7 @@ export function NeuerTerminDialog({
   const fehlerAnzeigen = serverFehler && serverFehler !== verworfen ? serverFehler : undefined;
 
   // Beim Öffnen leeren — der Dialog überlebt sonst mit den Werten des letzten
-  // Termins. Ein Datum belegt er nicht vor (#405).
+  // Termins.
   useEffect(() => {
     if (!open) return;
     setF(LEER);

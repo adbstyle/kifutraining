@@ -1,16 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { MARKEN_TEXT, MiniMonat, type Marke, type MarkenZustand } from "@/components/ui";
+import { MARKEN_TEXT, MiniMonat, type Marke } from "@/components/ui";
 import { monatVon, tagText } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
-import { nochNichtVorbereitet, type TerminZeile } from "@/lib/queries/termine-fuer";
-
-function zustand(t: TerminZeile, heute: string): MarkenZustand {
-  if (t.ausgefallen) return "ausgefallen";
-  if (t.training) return "training";
-  return nochNichtVorbereitet(t, heute) ? "noch-nicht" : "ohne";
-}
+import { terminZustand, type TerminZeile } from "@/lib/queries/termine-fuer";
 
 /* Der Monat neben den Terminen (#404). Er folgt der Liste, die Liste aber
    nicht ihm — wie der kleine Monat im Google Kalender (PO 8):
@@ -99,7 +93,7 @@ export function PlanMonat({
         m.set(
           tag.datum,
           tag.termine.map((t) => {
-            const z = zustand(t, heute);
+            const z = terminZustand(t, heute);
             const was = z === "training" ? t.training!.name : MARKEN_TEXT[z];
             return { id: t.id, zustand: z, label: `${tagText(t.datum)}, ${t.beginn ?? "Zeit fehlt"}, ${was}` };
           }),
