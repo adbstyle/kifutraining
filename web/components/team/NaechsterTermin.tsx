@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarOff, CalendarPlus, PlayCircle, Plus, Repeat } from "lucide-react";
-import { Button, ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, OverflowMenu } from "@/components/ui";
+import { CalendarOff, CalendarPlus, PlayCircle, Repeat } from "lucide-react";
+import { ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, OverflowMenu } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage, wochentageText } from "@/lib/serie";
@@ -11,14 +11,15 @@ import { feldName, feldText } from "@/lib/termin-felder";
 import { datumKurz } from "@/lib/zeit";
 import { terminZustand, verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
-import { terminMenue } from "./TerminHandgriffe";
+import { TrainingHinzufuegen, terminMenue } from "./TerminHandgriffe";
 
 /* Der nächste Termin zuoberst im Trainingsplan (#403): grösser als die
    Zeilen darunter und auf einer höheren Fläche, damit man ihn am
    Spielfeldrand nicht suchen muss. Zuerst steht, was man auf dem Handy ohne
    Scrollen sehen soll — Tag, Zeit, Training (AK 2) —, gleich darunter die
-   Handgriffe, die man dort braucht: Durchführen und Öffnen, ohne Training das
-   Zuordnen (AK 10, 11, 13). Alle übrigen liegen im Menü (AK 15).
+   Handgriffe, die man dort braucht: Durchführen und Öffnen, ohne Training an
+   seiner Stelle «Training hinzufügen» (AK 10, 11, 13). Alle übrigen liegen im
+   Menü (AK 15).
 
    Darunter alle Angaben ungekürzt (AK 3, 5): Ort, Verantwortliche, erwartete
    Spielerzahl und Felder ausführlich, Bemerkung und die Wochentage der Serie.
@@ -77,45 +78,36 @@ export function NaechsterTermin({
         />
       </div>
 
-      {zustand !== "noch-nicht" && (
-        <div className="mt-2">
-          {zustand === "ausgefallen" ? (
-            <>
-              <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
-              {/* AK 14: der Grund vollständig. */}
-              {t.ausfallGrund && (
-                <p className="mt-1 whitespace-pre-line type-body-medium text-on-surface">
-                  <span className="sr-only">Grund: </span>
-                  {t.ausfallGrund}
-                </p>
-              )}
-            </>
-          ) : zustand === "training" ? (
-            <Link href={`/training/${t.training!.id}`} className="focus-ring rounded-klein type-title-large text-on-surface hover:underline">
-              {t.training!.name}
-            </Link>
-          ) : (
-            <Lozenge>Ohne Training</Lozenge>
-          )}
-        </div>
-      )}
+      <div className="mt-2">
+        {zustand === "ausgefallen" ? (
+          <>
+            <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
+            {/* AK 14: der Grund vollständig. */}
+            {t.ausfallGrund && (
+              <p className="mt-1 whitespace-pre-line type-body-medium text-on-surface">
+                <span className="sr-only">Grund: </span>
+                {t.ausfallGrund}
+              </p>
+            )}
+          </>
+        ) : zustand === "training" ? (
+          <Link href={`/training/${t.training!.id}`} className="focus-ring rounded-klein type-title-large text-on-surface hover:underline">
+            {t.training!.name}
+          </Link>
+        ) : zustand === "noch-nicht" ? (
+          <TrainingHinzufuegen t={t} className="type-title-medium" />
+        ) : (
+          <Lozenge>Ohne Training</Lozenge>
+        )}
+      </div>
 
-      {!t.ausgefallen && (
+      {zustand === "training" && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {t.training ? (
-            <>
-              <ButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`}>
-                <PlayCircle size={18} aria-hidden />
-                Durchführen
-              </ButtonLink>
-              <ButtonLink variant="outlined" href={`/training/${t.training.id}`}>Training öffnen</ButtonLink>
-            </>
-          ) : (
-            <Button onClick={() => a.zuordnen(t)}>
-              <Plus size={18} aria-hidden />
-              Training hinzufügen
-            </Button>
-          )}
+          <ButtonLink href={`/training/${t.training!.id}/durchfuehren?termin=${t.id}`}>
+            <PlayCircle size={18} aria-hidden />
+            Durchführen
+          </ButtonLink>
+          <ButtonLink variant="outlined" href={`/training/${t.training!.id}`}>Training öffnen</ButtonLink>
         </div>
       )}
 

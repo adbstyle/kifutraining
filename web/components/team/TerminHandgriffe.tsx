@@ -1,10 +1,34 @@
 "use client";
 
-import { CalendarOff, CalendarPlus, MessageSquareText, Pencil, PlayCircle, Trash2, Undo2, Unlink } from "lucide-react";
+import { CalendarOff, CalendarPlus, ClipboardList, MessageSquareText, Pencil, PlayCircle, Trash2, Undo2, Unlink } from "lucide-react";
 import { IconButton, IconButtonLink, OverflowMenu, Tooltip, type MenuItemDef } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { useTerminAktionen, type TerminAktionen } from "./TerminBereich";
 import { datumKurz } from "@/lib/zeit";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
+
+/** «Training hinzufügen» an einem anstehenden Termin ohne Training — wie
+ *  «Dauer hinzufügen» an einer Übung im Training (`DauerWert`): gedämpft an
+ *  der Stelle, wo sonst das Training steht, mit Zustands-Ebene beim
+ *  Überfahren. Ein Klick öffnet das Zuordnen. `className` setzt die Schrift
+ *  der Stelle. Positioniert, damit es über der Fläche einer Zeile liegt. */
+export function TrainingHinzufuegen({ t, className }: { t: TerminZeile; className?: string }) {
+  const a = useTerminAktionen();
+  return (
+    <button
+      type="button"
+      aria-haspopup="dialog"
+      onClick={() => a.zuordnen(t)}
+      className={cn(
+        "state focus-ring pointer-events-auto relative -mx-2 -my-1 inline-flex items-center gap-1.5 rounded-flaeche px-2 py-1 text-on-surface-mittel",
+        className,
+      )}
+    >
+      <ClipboardList size={14} strokeWidth={2} aria-hidden className="shrink-0" />
+      Training hinzufügen
+    </button>
+  );
+}
 
 /** Die Handgriffe eines Termins im Menü «Weitere Aktionen» — dieselben an
  *  jeder Zeile und am nächsten Termin (#402 AK 17, #403 AK 15). */

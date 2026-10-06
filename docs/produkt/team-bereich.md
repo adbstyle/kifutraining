@@ -284,8 +284,8 @@ Ende schon vorüber ist. Das Ende des Termins zählt dafür bewusst nicht.
 Ganz oben steht der nächste Termin als grössere Karte — der erste, der ansteht, auch wenn er
 ausgefallen ist, und bei mehreren am selben Tag der früheste. Sie nennt „Heute" oder „Morgen"
 vor Wochentag und Datum, darunter Zeit und Training, gross genug, dass man beides am Handy beim
-Öffnen ohne Scrollen sieht, und gleich daneben „Durchführen" und „Training öffnen" — ohne
-Training „Training hinzufügen", ausgefallen den vollständigen Grund. Darunter stehen alle
+Öffnen ohne Scrollen sieht, und gleich darunter „Durchführen" und „Training öffnen" — ohne
+Training steht an seiner Stelle „Training hinzufügen", ausgefallen der vollständige Grund. Darunter stehen alle
 Angaben ungekürzt: Ort, Verantwortliche, erwartete Spielerzahl, jedes Feld mit Grösse, Toren
 je Torart und Untergrund, die Bemerkung und die Wochentage seiner Serie; fehlen Spielerzahl
 oder Felder, steht „Nicht erfasst". Die übrigen Handgriffe liegen in ihrem Menü. In der Liste
@@ -299,9 +299,9 @@ Termin trägt: violett mit Training, gelb noch ohne, grau und durchgestrichen au
 Tönung vergangen ohne Training. Eine Zeile
 zeigt Beginn und Ende, Ort und Platz, die erwartete Spielerzahl, was der Termin trägt und die
 Verantwortlichen. Was zu lang ist, endet in „…" und steht ganz im Hinweis beim Darüberfahren. Der Termin
-trägt das Training mit seinem Namen, oder — anstehend und ohne Training — gleich den Knopf
-„Training hinzufügen"; so fällt eine noch nicht vorbereitete Einheit auf und lässt sich sofort
-vorbereiten. Ein vergangener Termin ohne Training heisst schlicht „Ohne Training"; ob er
+trägt das Training mit seinem Namen, oder — anstehend und ohne Training — an dessen Stelle
+gedämpft „Training hinzufügen", wie „Dauer hinzufügen" an einer Übung; ein Klick öffnet das
+Zuordnen. So fällt eine noch nicht vorbereitete Einheit auf und lässt sich sofort vorbereiten. Ein vergangener Termin ohne Training heisst schlicht „Ohne Training"; ob er
 stattgefunden hat, sagt die Anwendung nicht. Bemerkung, Serie und Alterskategorien stehen nicht
 in der Zeile; die Bemerkung und die Serie zeigt der Termin beim Ändern, die Alterskategorien
 das Training selbst. Der Rückblick sieht genauso aus.

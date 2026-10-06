@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { CalendarOff, LandPlot, MapPin, Plus, Shirt, UserCheck, Users } from "lucide-react";
-import { Button, Card, Disclosure, Kalenderblatt, Lozenge } from "@/components/ui";
+import { CalendarOff, LandPlot, MapPin, Shirt, UserCheck, Users } from "lucide-react";
+import { Card, Disclosure, Kalenderblatt, Lozenge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
-import { TerminHandgriffe } from "./TerminHandgriffe";
+import { TerminHandgriffe, TrainingHinzufuegen } from "./TerminHandgriffe";
 import { NaechsterTermin } from "./NaechsterTermin";
 import { PlanMonat } from "./PlanMonat";
 import { spielerzahlText, zeitText } from "@/lib/termin";
@@ -247,10 +247,7 @@ function TerminReihe({
               {t.training!.name}
             </Link>
           ) : zustand === "noch-nicht" ? (
-            <Button variant="quiet" onClick={() => a.zuordnen(t)} className="pointer-events-auto -ml-2">
-              <Plus size={16} aria-hidden />
-              Training hinzufügen
-            </Button>
+            <TrainingHinzufuegen t={t} className="type-body-medium" />
           ) : (
             <Lozenge>Ohne Training</Lozenge>
           )}
