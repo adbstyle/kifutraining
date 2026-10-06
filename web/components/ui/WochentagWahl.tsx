@@ -26,8 +26,10 @@ export function WochentagWahl({
       <legend className={feldNameKlasse(!!error)}>Wochentage</legend>
       {/* Derselbe Abstand vom Namen zur Eingabe wie bei jedem Feld
           (`.feld-rahmen .feld-name`, 0.375rem); am Legend-Element selbst
-          wirkt ein Aussenabstand nicht verlässlich, darum hier. */}
-      <div className="mt-1.5 flex flex-wrap gap-2">
+          wirkt ein Aussenabstand nicht verlässlich, darum hier. Eingerückt
+          auf die Linie der Feldnamen (px-3.5), damit im Formular alles
+          linksbündig liest (PO 2026-10-06). */}
+      <div className="mt-1.5 flex flex-wrap gap-2 px-3.5">
         {WOCHENTAGE.map((w) => (
           <FilterChip
             key={w}
@@ -39,7 +41,7 @@ export function WochentagWahl({
           </FilterChip>
         ))}
       </div>
-      {error && <p id={fehlerId} role="alert" className="mt-1 type-body-small text-error">{error}</p>}
+      {error && <p id={fehlerId} role="alert" className="mt-1 px-3.5 type-body-small text-error">{error}</p>}
     </fieldset>
   );
 }
