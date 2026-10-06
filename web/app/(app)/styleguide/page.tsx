@@ -1689,10 +1689,10 @@ export default function Styleguide() {
           sich mit der Eingabe ändern, bleiben sichtbar unter dem Feld (
           <code>supportingText</code>) - die muss man sehen, ohne zu klicken.
           Ein fester Hinweis steht also <strong>nie dauernd unter einem
-          Feld</strong>, auch nicht in eigenen Bausteinen. Erklärt er eine
-          ganze Gruppe von Feldern, steht das ⓘ neben dem Namen der Gruppe
-          (Klasse <code>feld-gruppe-kopf</code>) und zeigt sich ebenso beim
-          Überfahren.
+          Feld</strong>, auch nicht in eigenen Bausteinen. Betrifft ein Hinweis
+          mehrere Felder, wird er auf sie aufgeteilt: Jedes Feld sagt hinter
+          seinem ⓘ, was für es gilt - kein Sammelhinweis über einer Gruppe
+          (PO 2026-10-06).
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Grosser Wert (<code>schrift=&quot;title&quot;</code>):</strong>{" "}
@@ -2092,7 +2092,11 @@ export default function Styleguide() {
           <code>rounded-dialog</code> - der einzige Ort mit 6 px -,{" "}
           <code>shadow-dp-24</code> und ein Scrim bei 60 %. Sein Titel steht
           in <code>type-title-large</code> wie der Name einer Übung -
-          ein Dialog ist ein Arbeitsschritt, kein Plakat. Die{" "}
+          ein Dialog ist ein Arbeitsschritt, kein Plakat. Er ist{" "}
+          <strong>28 rem</strong> breit; Formulare mit vielen Angaben - die
+          Termin-Dialoge mit Feldern und Spielerzahl - nehmen{" "}
+          <code>breit</code> (40 rem), schmal bleibt er bis zum Rand minus
+          2 rem (PO 2026-10-06). Die{" "}
           <strong>Snackbar</strong> ist die eine <strong>umgekehrte</strong>{" "}
           Fläche der Anwendung (<code>umkehr</code>): Weiss zu{" "}
           {Math.round(UMKEHR.deckung * 100)} % über dem Grund, darauf der Grund
@@ -3099,7 +3103,8 @@ export default function Styleguide() {
           </li>
           <li>
             <strong>Leer heisst unbekannt, 0 heisst keine</strong> - steht als
-            fester Hinweis hinter dem ⓘ neben dem Namen der Gruppe, weil der
+            Hinweis hinter dem ⓘ jedes Felds - bei Länge und Breite «leer heisst
+            unbekannt», bei jeder Torart dazu «0 heisst keine» -, weil der
             Unterschied für den KI-Assistenten zählt. Länge und Breite sind ein Paar: Ein Fehler
             färbt beide, der Satz steht unter der Breite (wie die
             Spielfeldgrösse einer Übung).

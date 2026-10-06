@@ -142,6 +142,7 @@ export function NeuerTerminDialog({
       open={open}
       onClose={onClose}
       title="Termin erstellen"
+      breit
       actions={
         <>
           <Button variant="text" onClick={onClose}>Abbrechen</Button>

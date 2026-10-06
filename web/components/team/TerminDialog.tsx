@@ -186,6 +186,7 @@ export function TerminDialog({
       open={open}
       onClose={onClose}
       title="Termin ändern"
+      breit
       actions={
         <>
           <Button variant="text" onClick={onClose}>Abbrechen</Button>
