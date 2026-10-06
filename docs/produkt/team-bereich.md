@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-05. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-06. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -83,7 +83,9 @@ keine dastehen. Spielfelder innerhalb eines Feldes steckt der Trainer selbst ab.
 freiwillig ist die erwartete Spielerzahl: alle Kinder, mit denen gerechnet wird, einschliesslich
 Torhüter:innen und ohne Trainer:innen, als ganze Zahl von 1 bis 200. Beides steht im Dialog
 unter den Verantwortlichen, als „Erwartete Spielerzahl (optional)" und „Feld hinzufügen
-(optional)"; ein Termin ohne Felder oder ohne Zahl ist ebenso gültig, und früher
+(optional)". Was eine Angabe heisst — wen die Spielerzahl zählt, dass leer unbekannt und 0 Tore
+keine heisst, was ein Feld ist —, sagt der Hinweis hinter dem ⓘ der jeweiligen Angabe; auf Telefon
+und Tablet stehen die Hinweise zu Spielerzahl und Toren unter dem Feld. Ein Termin ohne Felder oder ohne Zahl ist ebenso gültig, und früher
 angelegte Termine bleiben ohne diese Angaben, bis jemand sie ergänzt. Zuordnen, Ersetzen und Lösen eines Trainings und ein Ausfall lassen
 Felder und Spielerzahl stehen.
 

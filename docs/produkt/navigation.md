@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-10-05. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-10-06. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
@@ -92,7 +92,14 @@ Name. Ein leeres Feld zeigt nur seinen Namen, gedämpft an der Stelle des Werts.
 hinein, springt der Name darüber und das Feld trägt einen farbigen Rahmen. Fährt man mit der Maus
 über eine Angabe, hellt sie auf. Den Pfeil einer Auswahl zeigt das Feld nur, solange man darin
 arbeitet; ruhend steht dort nur der gewählte Wert. Eine Auswahl, die man auch leer lassen darf,
-bietet keinen Eintrag „kein …" an — leer heisst nicht angegeben.
+bietet keinen Eintrag „kein …" an — leer heisst nicht angegeben. Ein leeres Datums- oder
+Zeitfeld zeigt ebenso nur seinen Namen, mit einem Kalender- oder Uhrzeichen davor, statt einer
+Eingabemaske; erst ein Klick bringt die Auswahl von Datum oder Zeit. Ist ein Feld beim Speichern
+fehlerhaft, steht sein Name oben und nicht zusätzlich im Feld. Wo sich in einem Formular Einträge
+wiederholen — Felder eines Termins, Material einer Übung —, steht zum Hinzufügen kein Knopf,
+sondern eine Zeile, die aussieht wie ein leeres Feld, etwa „Feld hinzufügen (optional)"; ein
+Klick fügt einen Eintrag an. Die Bedienteile des Browsers selbst, etwa das Auswahlfenster für ein
+Datum, erscheinen dunkel wie die Anwendung.
 
 Was ein Feld nur erklärt, steht nicht dauernd darunter, sondern hinter einem kleinen ⓘ rechts im
 Feld. Es erscheint erst, wenn man mit der Maus über die Angabe fährt; ein Klick darauf öffnet den
@@ -137,5 +144,8 @@ Hochformat oder einem Telefon steht alles untereinander, und die Breite lässt s
 ziehen.
 
 Auf Geräten ohne Maus, also auf Telefon und Tablet, erscheint das ⓘ eines Feldes nie; die
-Hinweise dahinter bleiben dort nur der Sprachausgabe zugänglich. Die Bedienflächen sind dort
+Hinweise dahinter bleiben dort nur der Sprachausgabe zugänglich. Ausgenommen sind die wenigen
+Hinweise, die man vor der Eingabe kennen muss — dass die Altersstufe eines Trainings danach
+feststeht, wen die erwartete Spielerzahl eines Termins zählt und dass 0 Tore keine heisst —:
+Sie stehen dort unter dem Feld. Die Bedienflächen sind dort
 ebenfalls 36 Pixel hoch und damit kleiner als die sonst für Finger empfohlene Grösse.

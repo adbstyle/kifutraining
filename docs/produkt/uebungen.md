@@ -1,6 +1,6 @@
 # Übungen
 
-Stand 2026-10-05. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
+Stand 2026-10-06. Der Übungsbestand ist die Grundlage, aus der Trainings entstehen.
 
 ## Zwei Altersstufen
 
@@ -131,7 +131,8 @@ Fettschrift, keine Überschriften, keine Links, keine verschachtelten Listen; al
 erscheint als Text. Auch beim Üben ist eine Zeile ohne Listenzeichen gewöhnlicher Text; die
 Schritte der Manual-Übungen und der bisher erfassten Übungen stehen als Aufzählung da, wie
 vorher. Unter den Feldern stehen keine Hilfetexte, nur ein Fehler beim Speichern; einzig das
-weitere Material erklärt sich hinter einem ⓘ. Die
+Material erklärt sich hinter einem ⓘ — an „Material hinzufügen", was in die gezählte Liste
+gehört, und am weiteren Material, was dort hingehört. Die
 Varianten stehen unmittelbar nach dem Ablauf, ob er als Freitext oder als Fahrplan erfasst ist.
 
 ## Die Übungsseite
