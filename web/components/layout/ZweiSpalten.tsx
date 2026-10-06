@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { SPALTE_MAX, SPALTE_MIN, begrenzeSpalte } from "@/lib/spalte";
-import { Ziehgriff } from "@/components/ui/Ziehgriff";
+import { Ziehgriff } from "@/components/ui";
 import { useSeitenleiste } from "./AppRahmen";
 
 /**
@@ -125,7 +125,8 @@ export function ZweiSpalten({
       seite="rechts"
       min={SPALTE_MIN}
       max={SPALTE_MAX}
-      aktuell={() => breite ?? gemessen ?? spurBreite()}
+      wert={breite ?? gemessen}
+      messen={spurBreite}
       begrenzen={(px) => begrenzeSpalte(px, flaechenBreite())}
       onZiehen={setZiehend}
       onSetzen={setzeSpalte}

@@ -13,7 +13,9 @@ import { versionAnker } from "@/lib/versionen-anker";
 export function VersionenVerzeichnis({
   eintraege,
 }: {
-  eintraege: { version: string; titel: string }[];
+  /** `href` nur, wo der Text nicht auf der Seite steht (ältere Versionen,
+   *  die erst `?alle=1` zeigt); sonst ist es die Sprungmarke. */
+  eintraege: { version: string; titel: string; href?: string }[];
 }) {
   const [aktiv, setzeAktiv] = useState<string | undefined>(eintraege[0]?.version);
 
@@ -22,14 +24,31 @@ export function VersionenVerzeichnis({
       .map((e) => document.getElementById(versionAnker(e.version)))
       .filter((el): el is HTMLElement => !!el);
     // Aktuell ist der unterste Text, dessen Anfang das obere Drittel des
-    // Fensters erreicht hat. Geprüft wird beim Laden, beim Scrollen (höchstens
-    // einmal pro Bild), bei Grössenänderung und nach einem Sprung.
+    // Fensters erreicht hat — am Seitenende der letzte, den sonst ein kurzer
+    // Text nie erreichte. Die Texte stehen der Reihe nach untereinander, also
+    // genügt eine binäre Suche. Geprüft wird beim Laden, beim Scrollen
+    // (höchstens einmal pro Bild), bei Grössenänderung und nach einem Sprung.
     let bild = 0;
     const pruefe = () => {
       bild = 0;
-      const oben = ziele.filter((el) => el.getBoundingClientRect().top <= window.innerHeight / 3);
-      const ziel = oben[oben.length - 1] ?? ziele[0];
-      if (ziel) setzeAktiv(ziel.dataset.version);
+      if (ziele.length === 0) return;
+      const amEnde =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      let index = 0;
+      if (amEnde) index = ziele.length - 1;
+      else {
+        const linie = window.innerHeight / 3;
+        let von = 0;
+        let bis = ziele.length - 1;
+        while (von <= bis) {
+          const mitte = (von + bis) >> 1;
+          if (ziele[mitte].getBoundingClientRect().top <= linie) {
+            index = mitte;
+            von = mitte + 1;
+          } else bis = mitte - 1;
+        }
+      }
+      setzeAktiv(ziele[index].dataset.version);
     };
     const plane = () => {
       if (!bild) bild = requestAnimationFrame(pruefe);
@@ -72,7 +91,7 @@ export function VersionenVerzeichnis({
           return (
             <li key={e.version}>
               <a
-                href={`#${versionAnker(e.version)}`}
+                href={e.href ?? `#${versionAnker(e.version)}`}
                 data-verzeichnis={e.version}
                 aria-current={istAktiv ? "location" : undefined}
                 className={cn(

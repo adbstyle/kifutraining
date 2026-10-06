@@ -50,7 +50,11 @@ aller Versionen mit Nummer und Thema: Ein Klick springt zum Text, und hervorgeho
 Version, deren Text gerade oben steht. An der Linie zwischen Verzeichnis und Texten zieht man
 das Verzeichnis breiter oder schmaler, mit der Maus oder per Pfeiltaste; ein Doppelklick
 stellt die übliche Breite wieder her, und der Browser merkt sich die Wahl. Auf schmalen
-Bildschirmen stehen nur die Texte. Die Seite ist ohne Anmeldung zugänglich und hat eine
+Bildschirmen stehen nur die Texte.
+
+Die Texte der 30 neuesten Versionen stehen gleich da; die älteren zeigt die Seite erst auf
+Wunsch, über einen Knopf unter dem letzten Text. Das Verzeichnis nennt trotzdem alle, und ein
+Klick auf eine ältere Version öffnet die vollständige Liste an dieser Stelle. Die Seite ist ohne Anmeldung zugänglich und hat eine
 eigene Adresse, die sich weitergeben lässt.
 
 Eine neue oder geänderte Version auf GitHub erscheint spätestens nach einer Stunde. Ist GitHub

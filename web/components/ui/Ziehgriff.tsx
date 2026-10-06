@@ -23,7 +23,8 @@ export function Ziehgriff({
   seite,
   min,
   max,
-  aktuell,
+  wert,
+  messen,
   begrenzen,
   onZiehen,
   onSetzen,
@@ -35,8 +36,11 @@ export function Ziehgriff({
   seite: "links" | "rechts";
   min: number;
   max: number;
-  /** Die Breite der Spalte jetzt, gespeichert oder gemessen. */
-  aktuell: () => number | null;
+  /** Die Breite der Spalte, soweit bekannt (Vorlesehilfe, Pfeiltasten). */
+  wert: number | null;
+  /** Misst die Breite, wo `wert` fehlt — nur beim Zugbeginn und bei
+   *  Pfeiltasten aufgerufen, nie im Render. */
+  messen?: () => number | null;
   /** Holt eine Breite in die Grenzen (auch die der Fläche). */
   begrenzen: (px: number) => number;
   /** Laufende Breite während des Ziehens; `null` am Ende. */
@@ -49,6 +53,8 @@ export function Ziehgriff({
   const [gezogen, setGezogen] = useState<number | null>(null);
   // Zum Zeiger hin wächst die Spalte: links von ihm nach rechts ziehen.
   const richtung = seite === "links" ? 1 : -1;
+
+  const breite = () => wert ?? messen?.() ?? null;
 
   const beenden = (setzen: boolean) => {
     if (setzen && gezogen !== null) onSetzen(gezogen);
@@ -64,15 +70,15 @@ export function Ziehgriff({
       aria-label={name}
       aria-valuemin={min}
       aria-valuemax={max}
-      aria-valuenow={gezogen ?? aktuell() ?? undefined}
+      aria-valuenow={gezogen ?? wert ?? undefined}
       tabIndex={0}
       title="Ziehen, um die Breite zu ändern - Doppelklick stellt sie zurück"
       onPointerDown={(e) => {
-        const breite = aktuell();
-        if (breite === null) return;
+        const anfang = breite();
+        if (anfang === null) return;
         e.preventDefault();
         e.currentTarget.setPointerCapture(e.pointerId);
-        start.current = { x: e.clientX, breite };
+        start.current = { x: e.clientX, breite: anfang };
       }}
       onPointerMove={(e) => {
         if (!start.current) return;
@@ -86,10 +92,10 @@ export function Ziehgriff({
       onPointerCancel={() => beenden(false)}
       onDoubleClick={() => onSetzen(null)}
       onKeyDown={(e) => {
-        const breite = aktuell() ?? min;
+        const jetzt = breite() ?? min;
         const ziel =
-          e.key === "ArrowRight" ? breite + richtung * SCHRITT
-          : e.key === "ArrowLeft" ? breite - richtung * SCHRITT
+          e.key === "ArrowRight" ? jetzt + richtung * SCHRITT
+          : e.key === "ArrowLeft" ? jetzt - richtung * SCHRITT
           : e.key === "Home" ? min
           : e.key === "End" ? max
           : null;

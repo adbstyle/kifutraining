@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Ziehgriff } from "@/components/ui/Ziehgriff";
+import { Ziehgriff } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
   VERZEICHNIS_MAX,
@@ -38,7 +38,9 @@ export function VersionenFlaeche({
       ref={flaeche}
       style={{ "--verzeichnis-breite": `${breite}px` } as CSSProperties}
       className={cn(
-        "lg:grid lg:grid-cols-[var(--verzeichnis-breite)_0.75rem_minmax(0,1fr)] lg:gap-x-4",
+        // Gespeichert ist die Breite eines anderen Fensters womöglich zu gross:
+        // nie mehr als die halbe Fläche, wie beim Ziehen.
+        "lg:grid lg:grid-cols-[min(var(--verzeichnis-breite),50%)_0.75rem_minmax(0,1fr)] lg:gap-x-4",
         ziehend !== null && "cursor-col-resize select-none",
       )}
     >
@@ -50,7 +52,7 @@ export function VersionenFlaeche({
         seite="links"
         min={VERZEICHNIS_MIN}
         max={VERZEICHNIS_MAX}
-        aktuell={() => breite}
+        wert={breite}
         begrenzen={(px) => begrenzeVerzeichnis(px, flaeche.current?.getBoundingClientRect().width ?? 0)}
         onZiehen={setZiehend}
         onSetzen={setzen}

@@ -1030,8 +1030,10 @@ export default function Styleguide() {
           <code>xl</code> ist die Seite dann geteilt (<code>geteilt</code>):
           beide Spalten füllen Breite und Höhe des Fensters und scrollen je
           für sich; die rechte wächst von 20 bis 26 rem mit und lässt sich am
-          Griff dazwischen ziehen (<code>role=&quot;separator&quot;</code>,
-          Pfeiltasten, Doppelklick = Vorgabe; Cookie <code>kifu-spalte</code>).
+          Griff dazwischen ziehen (Kit-Baustein <code>Ziehgriff</code>:{" "}
+          <code>role=&quot;separator&quot;</code>, Pfeiltasten, Pos1/Ende, Doppelklick =
+          Vorgabe; Cookie <code>kifu-spalte</code>). Derselbe Griff trennt unter
+          «Versionen» das Verzeichnis von den Texten (32).
           Schmaler steht sie nach dem Inhalt (in der Maske davor), der Inhalt in
           seiner Lesebreite; auf Papier daneben. Zuoberst die Kopfzeile mit dem
           Umschalter der Seitenleiste, den Brotkrumen und rechts den Aktionen
@@ -3329,8 +3331,10 @@ export default function Styleguide() {
           Thema als Sprung zum Text; die Version, deren Text oben im Fenster steht, trägt die
           Zeile auf 08dp mit der Nummer in Primary (<code>aria-current=&quot;location&quot;</code>).
           Seine Breite zieht man am selben Griff wie die Spalte der geteilten Fläche
-          (<code>Ziehgriff</code>: Linie in der Trennfarbe, beim Zeigen und Ziehen in Primary,
-          Pfeiltasten, Doppelklick zurück), hier zwischen 11 und 30 rem. Schmal fehlt es. Das Markdown ist eine Ausnahme: Was Trainer:innen selbst
+          (<code>Ziehgriff</code>, siehe 07), hier zwischen 11 und 30 rem, nie mehr als die
+          halbe Fläche. Schmal fehlt es. Die Texte der neuesten 30 Versionen stehen gleich da,
+          die älteren erst nach «… ältere Versionen anzeigen» (<code>?alle=1</code>); das
+          Verzeichnis nennt alle und führt bei einer älteren dorthin. Das Markdown ist eine Ausnahme: Was Trainer:innen selbst
           schreiben, bleibt Freitext ohne Markdown.
         </p>
         <article className="flex max-w-3xl flex-col gap-3">

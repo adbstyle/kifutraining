@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { ExternalLink, Tag } from "lucide-react";
-import { Leerzustand, SectionMessage } from "@/components/ui";
+import { ButtonLink, Leerzustand, SectionMessage } from "@/components/ui";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
 import { VersionenGesehen } from "@/components/versionen/VersionenGesehen";
@@ -24,15 +24,31 @@ export const metadata: Metadata = { title: "Versionen - KiFu" };
 
    Ab `lg` steht links ein Verzeichnis mit Nummer und Thema jeder Version,
    rechts stehen die Texte untereinander, dazwischen ein Griff, mit dem sich
-   die Breite des Verzeichnisses ziehen lässt; schmal nur die Texte. */
+   die Breite des Verzeichnisses ziehen lässt; schmal nur die Texte.
+
+   Die Texte der neuesten `ZUERST` Versionen stehen gleich da, die älteren erst
+   mit `?alle=1` — sonst wüchse die Seite mit jedem Release. Das Verzeichnis
+   nennt immer alle; eine ältere führt auf `?alle=1` samt Sprungmarke. */
+const ZUERST = 30;
 /** Der Tag in der Schweiz, geschrieben wie jedes Datum der Anwendung. */
 function tag(iso: string): string {
   return datumKurz(kalendertagAmTrainingsort(new Date(iso)));
 }
 
-export default async function VersionenPage() {
-  const [{ stand, veraltet }, jar] = await Promise.all([getReleasesZumLesen(), cookies()]);
-  const neueste = stand && neuesteVeroeffentlichung(stand.releases);
+export default async function VersionenPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ alle?: string }>;
+}) {
+  const [{ stand, veraltet }, jar, { alle }] = await Promise.all([
+    getReleasesZumLesen(),
+    cookies(),
+    searchParams,
+  ]);
+  const gezeigt = alle === "1" ? stand?.releases : stand?.releases.slice(0, ZUERST);
+  const weitere = (stand?.releases.length ?? 0) - (gezeigt?.length ?? 0);
+  // Gesehen ist, was die Seite zeigt (#410) — die neuesten stehen immer da.
+  const neueste = gezeigt && neuesteVeroeffentlichung(gezeigt);
 
   return (
     <Seitenrahmen breite="6xl" krumen={[{ label: "Versionen" }]}>
@@ -58,12 +74,16 @@ export default async function VersionenPage() {
             anfangsBreite={leseVerzeichnis(jar.get(VERZEICHNIS_COOKIE)?.value)}
             verzeichnis={
               <VersionenVerzeichnis
-                eintraege={stand.releases.map(({ version, titel }) => ({ version, titel }))}
+                eintraege={stand.releases.map(({ version, titel }, i) => ({
+                  version,
+                  titel,
+                  href: i < (gezeigt?.length ?? 0) ? undefined : `?alle=1#${versionAnker(version)}`,
+                }))}
               />
             }
           >
             <div className="flex flex-col divide-y divide-linie">
-              {stand.releases.map((r) => (
+              {gezeigt?.map((r) => (
                 <article
                   key={r.version}
                   id={versionAnker(r.version)}
@@ -100,6 +120,12 @@ export default async function VersionenPage() {
                 </article>
               ))}
             </div>
+            {weitere > 0 && (
+              // Ohne Sprung nach oben: Wer unten «anzeigen» wählt, liest dort weiter.
+              <ButtonLink href="?alle=1" scroll={false} variant="outlined" className="mt-6">
+                {weitere === 1 ? "Ältere Version anzeigen" : `${weitere} ältere Versionen anzeigen`}
+              </ButtonLink>
+            )}
           </VersionenFlaeche>
         </>
       )}
