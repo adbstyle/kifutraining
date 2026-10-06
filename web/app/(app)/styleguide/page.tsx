@@ -3328,7 +3328,9 @@ export default function Styleguide() {
           der Kopfzeile, scrollt für sich): je Version Nummer (<code>type-body-small</code>) und
           Thema als Sprung zum Text; die Version, deren Text oben im Fenster steht, trägt die
           Zeile auf 08dp mit der Nummer in Primary (<code>aria-current=&quot;location&quot;</code>).
-          Schmal fehlt es. Das Markdown ist eine Ausnahme: Was Trainer:innen selbst
+          Seine Breite zieht man am selben Griff wie die Spalte der geteilten Fläche
+          (<code>Ziehgriff</code>: Linie in der Trennfarbe, beim Zeigen und Ziehen in Primary,
+          Pfeiltasten, Doppelklick zurück), hier zwischen 11 und 30 rem. Schmal fehlt es. Das Markdown ist eine Ausnahme: Was Trainer:innen selbst
           schreiben, bleibt Freitext ohne Markdown.
         </p>
         <article className="flex max-w-3xl flex-col gap-3">

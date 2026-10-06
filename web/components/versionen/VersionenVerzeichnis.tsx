@@ -8,8 +8,8 @@ import { versionAnker } from "@/lib/versionen-anker";
    Thema als Sprung zu ihrem Text. Hervorgehoben ist die Version, deren Text
    gerade oben im Fenster steht — so weiss man beim Scrollen, wo man ist. Es
    klebt unter der Kopfzeile und scrollt für sich, wenn es länger ist als das
-   Fenster; die hervorgehobene Zeile bleibt darin sichtbar. Schmal gibt es
-   kein Verzeichnis, die Texte stehen allein. */
+   Fenster; die hervorgehobene Zeile bleibt darin sichtbar. Wo es steht und
+   wie breit, regelt VersionenFlaeche. */
 export function VersionenVerzeichnis({
   eintraege,
 }: {
@@ -64,7 +64,7 @@ export function VersionenVerzeichnis({
     <nav
       ref={navRef}
       aria-label="Versionen"
-      className="sticky top-16 hidden max-h-[calc(100dvh-5rem)] self-start overflow-y-auto pr-2 lg:block print:hidden"
+      className="sticky top-16 max-h-[calc(100dvh-5rem)] overflow-y-auto print:hidden"
     >
       <ol className="flex flex-col gap-0.5">
         {eintraege.map((e) => {

@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { ExternalLink, Tag } from "lucide-react";
 import { Leerzustand, SectionMessage } from "@/components/ui";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
 import { VersionenGesehen } from "@/components/versionen/VersionenGesehen";
+import { VersionenFlaeche } from "@/components/versionen/VersionenFlaeche";
 import { VersionenVerzeichnis } from "@/components/versionen/VersionenVerzeichnis";
 import { versionAnker } from "@/lib/versionen-anker";
+import { VERZEICHNIS_COOKIE, leseVerzeichnis } from "@/lib/verzeichnis";
 import { getReleasesZumLesen, neuesteVeroeffentlichung } from "@/lib/releases";
 import { APP_VERSION } from "@/lib/version";
 import { datumKurz, kalendertagAmTrainingsort } from "@/lib/zeit";
@@ -20,14 +23,15 @@ export const metadata: Metadata = { title: "Versionen - KiFu" };
    Hinweis.
 
    Ab `lg` steht links ein Verzeichnis mit Nummer und Thema jeder Version,
-   rechts stehen die Texte untereinander; schmal nur die Texte. */
+   rechts stehen die Texte untereinander, dazwischen ein Griff, mit dem sich
+   die Breite des Verzeichnisses ziehen lässt; schmal nur die Texte. */
 /** Der Tag in der Schweiz, geschrieben wie jedes Datum der Anwendung. */
 function tag(iso: string): string {
   return datumKurz(kalendertagAmTrainingsort(new Date(iso)));
 }
 
 export default async function VersionenPage() {
-  const { stand, veraltet } = await getReleasesZumLesen();
+  const [{ stand, veraltet }, jar] = await Promise.all([getReleasesZumLesen(), cookies()]);
   const neueste = stand && neuesteVeroeffentlichung(stand.releases);
 
   return (
@@ -50,11 +54,15 @@ export default async function VersionenPage() {
               {tag(stand.abgerufenAm)} und womöglich nicht aktuell.
             </SectionMessage>
           )}
-          <div className="lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-10">
-            <VersionenVerzeichnis
-              eintraege={stand.releases.map(({ version, titel }) => ({ version, titel }))}
-            />
-            <div className="flex max-w-3xl flex-col divide-y divide-linie">
+          <VersionenFlaeche
+            anfangsBreite={leseVerzeichnis(jar.get(VERZEICHNIS_COOKIE)?.value)}
+            verzeichnis={
+              <VersionenVerzeichnis
+                eintraege={stand.releases.map(({ version, titel }) => ({ version, titel }))}
+              />
+            }
+          >
+            <div className="flex flex-col divide-y divide-linie">
               {stand.releases.map((r) => (
                 <article
                   key={r.version}
@@ -92,7 +100,7 @@ export default async function VersionenPage() {
                 </article>
               ))}
             </div>
-          </div>
+          </VersionenFlaeche>
         </>
       )}
     </Seitenrahmen>
