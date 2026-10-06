@@ -12,7 +12,8 @@ also wörtlich. Darum gelten für jeden neuen Release die Regeln unten. Die Vorl
 `KiFu X.Y.Z - Thema`. Das Thema nennt die für Trainer:innen wichtigste Änderung, in wenigen
 Wörtern («KiFu 1.28.0 - Neuigkeiten in der Seitenleiste»). Bringt der Release nichts
 Bemerkbares, nennt das Thema, worum es geht («KiFu 1.28.1 - Sicherheits-Updates»). Der Tag
-heisst `vX.Y.Z`.
+heisst `vX.Y.Z`. Unter «Versionen» zeigt KiFu nur das Thema als Titel; Name und Nummer stehen
+dort in der Zeile darunter.
 
 ## Versionsnummer
 

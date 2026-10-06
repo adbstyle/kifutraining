@@ -3317,7 +3317,8 @@ export default function Styleguide() {
 
       <Section n="32" title="Release-Text">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Ein Eintrag unter «Versionen» (#408): Titel in <code>type-title-large</code>, darunter
+          Ein Eintrag unter «Versionen» (#408): das Thema des Releases als Titel in{" "}
+          <code>type-title-large</code> (ohne «KiFu X.Y.Z -», das die Metazeile schon sagt), darunter
           eine Metazeile in <code>type-body-small</code> (Version, Tag der Veröffentlichung,
           «Auf GitHub ansehen»), dann der Text, wie er auf GitHub steht. Er ist Markdown und
           erscheint mit seiner Gliederung in der Schrift der Anwendung: Überschriften eine Stufe
@@ -3328,7 +3329,7 @@ export default function Styleguide() {
         </p>
         <article className="flex max-w-3xl flex-col gap-3">
           <header className="flex flex-col gap-1">
-            <h3 className="type-title-large text-on-surface">KiFu 1.28.0 - Neuigkeiten in der Seitenleiste</h3>
+            <h3 className="type-title-large text-on-surface">Neuigkeiten in der Seitenleiste</h3>
             <p className="type-body-small flex flex-wrap items-center gap-x-2 text-on-surface-mittel">
               <span>Version 1.28.0</span>
               <span aria-hidden>·</span>

@@ -31,6 +31,7 @@ const PAUSE_NACH_FEHLER_MS = 5 * 60 * 1000;
 export interface Release {
   /** Ohne `v`, z. B. «1.27.0». */
   version: string;
+  /** Das Thema des Releases, ohne vorangestellten Namen und Nummer. */
   titel: string;
   /** Markdown, wie veröffentlicht. */
   text: string;
@@ -65,6 +66,17 @@ interface GitHubRelease {
 
 let pauseBis = 0;
 
+/** «kifutraining 1.27.0 — Platz und Spielerzahl» → «Platz und Spielerzahl».
+ *  Name und Nummer stehen in der Metazeile darunter; im Titel wären sie
+ *  doppelt. Erfasst die alten Schreibweisen («kifutraining X.Y.Z — »,
+ *  «vX.Y.Z - ») und die heutige («KiFu X.Y.Z - »). Bleibt nichts übrig, gilt
+ *  der ganze Titel. */
+function thema(titel: string, tag: string): string {
+  const nummer = tag.replace(/^v/, "").replace(/\./g, "\\.");
+  const vorspann = new RegExp(`^(?:kifutraining|kifu)?\\s*v?${nummer}\\s*[-–—:]\\s*`, "i");
+  return titel.replace(vorspann, "").trim() || titel;
+}
+
 /** Eine API-Seite, abgebildet auf das, was KiFu davon braucht. */
 async function holeSeite(seite: number): Promise<Seite> {
   if (Date.now() < pauseBis) throw new Error("GitHub-Releases: Pause nach Fehlschlag");
@@ -89,7 +101,7 @@ async function holeSeite(seite: number): Promise<Seite> {
         .filter((r) => !r.draft && !r.prerelease && r.published_at)
         .map((r) => ({
           version: r.tag_name.replace(/^v/, ""),
-          titel: r.name?.trim() || r.tag_name,
+          titel: thema(r.name?.trim() || r.tag_name, r.tag_name),
           text: r.body ?? "",
           veroeffentlicht: r.published_at!,
           url: r.html_url,
