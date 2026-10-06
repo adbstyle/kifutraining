@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { CalendarOff, LandPlot, MapPin, Shirt, UserCheck, Users } from "lucide-react";
-import { Card, Disclosure, Kalenderblatt, Lozenge } from "@/components/ui";
+import { CalendarOff, LandPlot, MapPin, Plus, Shirt, UserCheck, Users } from "lucide-react";
+import { Button, Card, Disclosure, Kalenderblatt, Lozenge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
-import { OhneTraining, TerminHandgriffe } from "./TerminHandgriffe";
+import { TerminHandgriffe } from "./TerminHandgriffe";
 import { NaechsterTermin } from "./NaechsterTermin";
 import { PlanMonat } from "./PlanMonat";
 import { spielerzahlText, zeitText } from "@/lib/termin";
@@ -123,7 +123,7 @@ export function TrainingsPlan({
 }
 
 /** Termine nach Monat und Tag: je Monat eine Überschrift mit Jahr, je Tag eine
- *  Karte mit dem Kalenderblatt links und den Terminen als Zeilen daneben. */
+ *  Karte mit seinen Terminen als Zeilen, jede mit ihrem Kalenderblatt. */
 function PlanMonate({ termine, heute, ich, hervorheben }: { termine: TerminZeile[]; heute: string; ich: string; hervorheben?: string }) {
   return nachMonatUndTag(termine).map((m) => (
     <section key={m.monat} className="mt-4 first:mt-2">
@@ -131,11 +131,10 @@ function PlanMonate({ termine, heute, ich, hervorheben }: { termine: TerminZeile
       <ol className="mt-2 flex flex-col gap-2">
         {m.tage.map((tag) => (
           <li key={tag.datum}>
-            <Card className="flex gap-2 p-2">
-              <Kalenderblatt as="h5" datum={tag.datum} heute={tag.datum === heute} className={cn(tag.datum < heute && "opacity-60")} />
-              <ol className="min-w-0 flex-1 divide-y divide-linie">
-                {tag.termine.map((t) => (
-                  <TerminReihe key={t.id} t={t} heute={heute} ich={ich} hervorgehoben={t.id === hervorheben} />
+            <Card className="p-1">
+              <ol className="divide-y divide-linie">
+                {tag.termine.map((t, i) => (
+                  <TerminReihe key={t.id} t={t} heute={heute} ich={ich} hervorgehoben={t.id === hervorheben} ersterDesTages={i === 0} />
                 ))}
               </ol>
             </Card>
@@ -156,8 +155,26 @@ function ortUndPlatz(t: TerminZeile): string | null {
    Inhalt liegt, ohne Klicks abzufangen (`pointer-events-none`). Nur der
    Trainingsname, der zum Training führt, und die Handgriffe rechts nehmen
    Klicks selbst an. Was zu lang ist, endet in «…»; die ganze Zeile steht im
-   Tooltip des Knopfes (AK 9), alles Weitere am geöffneten Termin (AK 12). */
-function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: string; ich: string; hervorgehoben: boolean }) {
+   Tooltip des Knopfes (AK 9), alles Weitere am geöffneten Termin (AK 12).
+
+   Jeder Termin hat sein Kalenderblatt, dessen Fläche sagt, was er trägt (PO
+   2026-10-06); die Termine eines Tages stehen in einer Karte zusammen. Nur
+   das erste Blatt ist die Überschrift des Tages, die übrigen sind stumm.
+   Anstehend ohne Training steht statt eines Zustands gleich «Training
+   hinzufügen». */
+function TerminReihe({
+  t,
+  heute,
+  ich,
+  hervorgehoben,
+  ersterDesTages,
+}: {
+  t: TerminZeile;
+  heute: string;
+  ich: string;
+  hervorgehoben: boolean;
+  ersterDesTages: boolean;
+}) {
   const a = useTerminAktionen();
   const vergangen = t.datum < heute;
   const zeit = zeitText(t.beginn, t.ende);
@@ -185,7 +202,10 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
       <button type="button" onClick={() => a.bearbeiten(t)} title={ganz} className="focus-ring absolute inset-0 rounded-klein">
         <span className="sr-only">Termin ändern: {zeit}</span>
       </button>
-      <div className={cn("pointer-events-none relative min-w-0 flex-1", (vergangen || t.ausgefallen) && "[&_.gedaempft]:opacity-60")}>
+      <div aria-hidden={!ersterDesTages || undefined} className="pointer-events-none relative">
+        <Kalenderblatt as={ersterDesTages ? "h5" : "div"} datum={t.datum} heute={t.datum === heute} zustand={zustand} className={cn(vergangen && "opacity-60")} />
+      </div>
+      <div className={cn("pointer-events-none relative min-w-0 flex-1 py-0.5", (vergangen || t.ausgefallen) && "[&_.gedaempft]:opacity-60")}>
         {/* Schmal bricht um, was unter 8 rem schrumpfte, und kürzt erst auf ganzer Breite. */}
         <p aria-hidden className="gedaempft flex min-w-0 flex-wrap items-baseline gap-x-2 type-body-medium text-on-surface">
           <span className="shrink-0">{zeit}</span>
@@ -226,8 +246,13 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
             >
               {t.training!.name}
             </Link>
+          ) : zustand === "noch-nicht" ? (
+            <Button variant="quiet" onClick={() => a.zuordnen(t)} className="pointer-events-auto -ml-2">
+              <Plus size={16} aria-hidden />
+              Training hinzufügen
+            </Button>
           ) : (
-            <OhneTraining zustand={zustand} />
+            <Lozenge>Ohne Training</Lozenge>
           )}
           {v.text && (
             <span className="gedaempft inline-flex min-w-32 max-w-full items-center gap-1 type-body-small text-on-surface-mittel">
@@ -238,7 +263,7 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
           )}
         </div>
       </div>
-      <TerminHandgriffe t={t} />
+      <TerminHandgriffe t={t} zuordnen={zustand !== "noch-nicht"} />
     </li>
   );
 }

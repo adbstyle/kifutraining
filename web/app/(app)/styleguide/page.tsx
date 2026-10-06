@@ -3265,17 +3265,20 @@ export default function Styleguide() {
 
       <Section n="32" title="Kalenderblatt">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Ein Tag wie ein Blatt vom Abreisskalender: Wochentag, grosse Tageszahl, Monat - nie das Jahr,
+          Ein Termin wie ein Blatt vom Abreisskalender: Wochentag, grosse Tageszahl, Monat - nie das Jahr,
           das steht in der Überschrift des Monats (Epic #401). Neu, weil ein Datum als Text in einer Zeile
-          (<code>datumKurz</code>) sich beim Überfliegen nicht finden lässt. Im
-          Trainingsplan steht es einmal je Tag links an der Karte, die Termine des Tages als knappe Zeilen
-          daneben. Der heutige Tag trägt die volle Primary-Fläche ({v(kontrast(ON_PRIMARY, PRIMARY))} Schrift auf
-          Primary); vorgelesen wird der ausgeschriebene Tag samt «Heute», die Kurzform ist stumm.
+          (<code>datumKurz</code>) sich beim Überfliegen nicht finden lässt. Im Trainingsplan steht es links an
+          jeder Terminzeile. Die Fläche sagt, was der Termin trägt (<code>zustand</code>): Training in Primary
+          ({v(kontrast(ON_PRIMARY, PRIMARY))} Schrift), noch kein Training in der Tönung der Warn-Lozenge,
+          ausgefallen grau mit durchgestrichener Zahl, vergangen ohne Training ohne Fläche. Die Farbe trägt
+          den Zustand nie allein, die Zeile daneben sagt ihn in Worten. Heute steht statt des Wochentags
+          «Heute», mit heller Kontur auf jeder Fläche.
         </p>
         <div className="flex gap-4">
-          <Kalenderblatt datum="2026-10-06" heute />
-          <Kalenderblatt datum="2026-10-08" />
-          <Kalenderblatt datum="2026-11-02" />
+          <Kalenderblatt datum="2026-10-06" heute zustand="noch-nicht" />
+          <Kalenderblatt datum="2026-10-08" zustand="training" />
+          <Kalenderblatt datum="2026-10-11" zustand="ausgefallen" />
+          <Kalenderblatt datum="2026-09-30" />
         </div>
       </Section>
 

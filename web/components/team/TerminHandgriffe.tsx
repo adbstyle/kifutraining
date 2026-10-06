@@ -1,20 +1,10 @@
 "use client";
 
-import { CalendarOff, CalendarPlus, CalendarX2, MessageSquareText, Pencil, PlayCircle, Trash2, Undo2, Unlink } from "lucide-react";
-import { IconButton, IconButtonLink, Lozenge, OverflowMenu, Tooltip, type MenuItemDef } from "@/components/ui";
+import { CalendarOff, CalendarPlus, MessageSquareText, Pencil, PlayCircle, Trash2, Undo2, Unlink } from "lucide-react";
+import { IconButton, IconButtonLink, OverflowMenu, Tooltip, type MenuItemDef } from "@/components/ui";
 import { useTerminAktionen, type TerminAktionen } from "./TerminBereich";
 import { datumKurz } from "@/lib/zeit";
-import type { TerminZeile, TerminZustand } from "@/lib/queries/termine-fuer";
-
-/** Ein Termin ohne Training: anstehend «Noch kein Training» (#402 AK 6), damit
- *  eine unvorbereitete Einheit auffällt; vergangen schlicht «Ohne Training». */
-export function OhneTraining({ zustand }: { zustand: Extract<TerminZustand, "noch-nicht" | "ohne"> }) {
-  return zustand === "noch-nicht" ? (
-    <Lozenge appearance="warning" iconBefore={CalendarX2}>Noch kein Training</Lozenge>
-  ) : (
-    <Lozenge>Ohne Training</Lozenge>
-  );
-}
+import type { TerminZeile } from "@/lib/queries/termine-fuer";
 
 /** Die Handgriffe eines Termins im Menü «Weitere Aktionen» — dieselben an
  *  jeder Zeile und am nächsten Termin (#402 AK 17, #403 AK 15). */
@@ -35,8 +25,9 @@ export function terminMenue(t: TerminZeile, a: TerminAktionen): MenuItemDef[] {
 
 /** Alle Handgriffe an einer Terminzeile (#402 AK 16, 17): Durchführen und
  *  Zuordnen als Knöpfe, der Rest im Menü. Positioniert, damit sie über der
- *  Fläche der Zeile liegen und für sich bedienbar bleiben. */
-export function TerminHandgriffe({ t }: { t: TerminZeile }) {
+ *  Fläche der Zeile liegen und für sich bedienbar bleiben. `zuordnen: false`,
+ *  wo die Zeile das Zuordnen schon selbst anbietet («Training hinzufügen»). */
+export function TerminHandgriffe({ t, zuordnen = true }: { t: TerminZeile; zuordnen?: boolean }) {
   const a = useTerminAktionen();
   return (
     <div className="relative flex shrink-0 gap-0.5">
@@ -45,7 +36,7 @@ export function TerminHandgriffe({ t }: { t: TerminZeile }) {
           <IconButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`} icon={PlayCircle} label={`${t.training.name} durchführen`} />
         </Tooltip>
       )}
-      {!t.ausgefallen && (
+      {!t.ausgefallen && zuordnen && (
         <Tooltip label={t.training ? "Training ersetzen" : "Training zuordnen"}>
           <IconButton icon={CalendarPlus} label={`Training für ${datumKurz(t.datum)} ${t.training ? "ersetzen" : "zuordnen"}`} onClick={() => a.zuordnen(t)} />
         </Tooltip>

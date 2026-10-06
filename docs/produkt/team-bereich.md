@@ -107,7 +107,7 @@ Termine gibt es nur im Team. Wer kein Team hat, führt keinen Kalender.
 
 Ein Training kommt ausschliesslich über einen bestehenden Termin auf ein Datum. Ein Termin
 trägt höchstens ein Training, und ein Training ist höchstens für einen Termin eingeplant.
-Zugeordnet wird von beiden Seiten: am Termin über „Training zuordnen" oder vom Training im
+Zugeordnet wird von beiden Seiten: am Termin über „Training hinzufügen" bzw. „Training zuordnen" oder vom Training im
 Team-Bestand aus über „Termin zuordnen".
 
 Am Termin stehen zuerst die Trainings des Team-Bestands, die noch nicht eingeplant sind, danach
@@ -285,26 +285,28 @@ Ganz oben steht der nächste Termin als grössere Karte — der erste, der anste
 ausgefallen ist, und bei mehreren am selben Tag der früheste. Sie nennt „Heute" oder „Morgen"
 vor Wochentag und Datum, darunter Zeit und Training, gross genug, dass man beides am Handy beim
 Öffnen ohne Scrollen sieht, und gleich daneben „Durchführen" und „Training öffnen" — ohne
-Training „Training zuordnen", ausgefallen den vollständigen Grund. Darunter stehen alle
+Training „Training hinzufügen", ausgefallen den vollständigen Grund. Darunter stehen alle
 Angaben ungekürzt: Ort, Verantwortliche, erwartete Spielerzahl, jedes Feld mit Grösse, Toren
 je Torart und Untergrund, die Bemerkung und die Wochentage seiner Serie; fehlen Spielerzahl
 oder Felder, steht „Nicht erfasst". Die übrigen Handgriffe liegen in ihrem Menü. In der Liste
 darunter steht er nicht noch einmal, in der Zahl der anstehenden Termine zählt er mit.
 
-Die übrigen Termine sind nach Monaten gegliedert, jede Überschrift mit Jahr. Darin steht jeder
-Tag einmal als Kalenderblatt — Wochentag, Tageszahl und Monat, ohne Jahr, der heutige Tag
-farbig — und daneben seine Termine als knappe Zeilen, nach Beginn geordnet. Eine Zeile zeigt
-Beginn und Ende, Ort und Platz, die erwartete Spielerzahl, was der Termin trägt und die
+Die übrigen Termine sind nach Monaten gegliedert, jede Überschrift mit Jahr. Die Termine eines
+Tages stehen zusammen in einer Karte, nach Beginn geordnet, jeder als knappe Zeile mit seinem
+Kalenderblatt links — Wochentag, Tageszahl und Monat, ohne Jahr, am heutigen Tag „Heute" statt
+des Wochentags. Die Farbe des Blatts sagt, was der Termin trägt: violett mit Training, orange
+noch ohne, grau und durchgestrichen ausgefallen, ohne Farbe vergangen ohne Training. Eine Zeile
+zeigt Beginn und Ende, Ort und Platz, die erwartete Spielerzahl, was der Termin trägt und die
 Verantwortlichen. Was zu lang ist, endet in „…" und steht ganz im Hinweis beim Darüberfahren. Der Termin
-trägt das Training mit seinem Namen, oder — anstehend und ohne Training — die Plakette „Noch
-kein Training"; so fällt eine noch nicht vorbereitete Einheit auf, ohne dass man einen Termin
-öffnet. Ein vergangener Termin ohne Training heisst schlicht „Ohne Training"; ob er
+trägt das Training mit seinem Namen, oder — anstehend und ohne Training — gleich den Knopf
+„Training hinzufügen"; so fällt eine noch nicht vorbereitete Einheit auf und lässt sich sofort
+vorbereiten. Ein vergangener Termin ohne Training heisst schlicht „Ohne Training"; ob er
 stattgefunden hat, sagt die Anwendung nicht. Bemerkung, Serie und Alterskategorien stehen nicht
 in der Zeile; die Bemerkung und die Serie zeigt der Termin beim Ändern, die Alterskategorien
 das Training selbst. Der Rückblick sieht genauso aus.
 
 Ein Klick auf die Zeile öffnet „Termin ändern", ein Klick auf den Trainingsnamen das Training.
-An der Zeile liegen Durchführen, Training zuordnen oder ersetzen und in einem Menü die übrigen
+An der Zeile liegen Durchführen, Training ersetzen — vergangen ohne Training: zuordnen — und in einem Menü die übrigen
 Handgriffe: Termin ändern, Training lösen, Ausfallen lassen oder — bei einem ausgefallenen —
 Grund ändern und Ausfall zurücknehmen, und Termin entfernen. Die Durchführen-Ansicht zeigt, aus
 dem Plan geöffnet, zuoberst Datum, Zeit, Ort, Verantwortliche, erwartete Spielerzahl, Felder

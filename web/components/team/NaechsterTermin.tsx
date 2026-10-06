@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarOff, CalendarPlus, PlayCircle, Repeat } from "lucide-react";
+import { CalendarOff, CalendarPlus, PlayCircle, Plus, Repeat } from "lucide-react";
 import { Button, ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, OverflowMenu } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
@@ -11,7 +11,7 @@ import { feldName, feldText } from "@/lib/termin-felder";
 import { datumKurz } from "@/lib/zeit";
 import { terminZustand, verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
-import { OhneTraining, terminMenue } from "./TerminHandgriffe";
+import { terminMenue } from "./TerminHandgriffe";
 
 /* Der nächste Termin zuoberst im Trainingsplan (#403): grösser als die
    Zeilen darunter und auf einer höheren Fläche, damit man ihn am
@@ -77,26 +77,28 @@ export function NaechsterTermin({
         />
       </div>
 
-      <div className="mt-2">
-        {zustand === "ausgefallen" ? (
-          <>
-            <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
-            {/* AK 14: der Grund vollständig. */}
-            {t.ausfallGrund && (
-              <p className="mt-1 whitespace-pre-line type-body-medium text-on-surface">
-                <span className="sr-only">Grund: </span>
-                {t.ausfallGrund}
-              </p>
-            )}
-          </>
-        ) : zustand === "training" ? (
-          <Link href={`/training/${t.training!.id}`} className="focus-ring rounded-klein type-title-large text-on-surface hover:underline">
-            {t.training!.name}
-          </Link>
-        ) : (
-          <OhneTraining zustand={zustand} />
-        )}
-      </div>
+      {zustand !== "noch-nicht" && (
+        <div className="mt-2">
+          {zustand === "ausgefallen" ? (
+            <>
+              <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
+              {/* AK 14: der Grund vollständig. */}
+              {t.ausfallGrund && (
+                <p className="mt-1 whitespace-pre-line type-body-medium text-on-surface">
+                  <span className="sr-only">Grund: </span>
+                  {t.ausfallGrund}
+                </p>
+              )}
+            </>
+          ) : zustand === "training" ? (
+            <Link href={`/training/${t.training!.id}`} className="focus-ring rounded-klein type-title-large text-on-surface hover:underline">
+              {t.training!.name}
+            </Link>
+          ) : (
+            <Lozenge>Ohne Training</Lozenge>
+          )}
+        </div>
+      )}
 
       {!t.ausgefallen && (
         <div className="mt-3 flex flex-wrap gap-2">
@@ -110,8 +112,8 @@ export function NaechsterTermin({
             </>
           ) : (
             <Button onClick={() => a.zuordnen(t)}>
-              <CalendarPlus size={18} aria-hidden />
-              Training zuordnen
+              <Plus size={18} aria-hidden />
+              Training hinzufügen
             </Button>
           )}
         </div>
