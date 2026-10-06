@@ -1,5 +1,6 @@
 import { LEISTE_COOKIE } from "@/lib/seitenleiste";
 import { SPALTE_COOKIE } from "@/lib/spalte";
+import { VERZEICHNIS_COOKIE } from "@/lib/verzeichnis";
 import { GESEHEN_COOKIE } from "@/lib/versionen-gesehen";
 
 /* Alles, was KiFu im Browser ablegt (#409) — die eine Liste, aus der die
@@ -44,6 +45,13 @@ export const SPEICHERUNGEN: Speicherung[] = [
     zweck: "Merkt sich, wie breit du die Spalte neben einer Übung oder einem Training gezogen hast.",
     dauer: "Ein Jahr.",
     ohne: "Die Spalte steht bei jedem Besuch wieder in der üblichen Breite.",
+  },
+  {
+    name: VERZEICHNIS_COOKIE,
+    titel: "Breite des Verzeichnisses",
+    zweck: "Merkt sich, wie breit du das Verzeichnis neben den Versionen gezogen hast.",
+    dauer: "Ein Jahr.",
+    ohne: "Das Verzeichnis steht bei jedem Besuch wieder in der üblichen Breite.",
   },
   {
     name: GESEHEN_COOKIE,

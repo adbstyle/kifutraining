@@ -45,7 +45,16 @@ Die Seite „Versionen" zeigt, was jede Version von KiFu gebracht hat, die neues
 seit 1.0.0. Zu jeder steht ihr Thema als Titel, die Versionsnummer, der Tag der
 Veröffentlichung und der Text, wie er auf der öffentlichen Projektseite auf GitHub steht: unverändert, mit Gliederung,
 Hervorhebungen und Links, auch mit technischen Abschnitten und Nummern von Aufgaben. Ein Verweis
-führt zur Veröffentlichung auf GitHub. Die Seite ist ohne Anmeldung zugänglich und hat eine
+führt zur Veröffentlichung auf GitHub. Auf breiten Bildschirmen steht links ein Verzeichnis
+aller Versionen mit Nummer und Thema: Ein Klick springt zum Text, und hervorgehoben ist die
+Version, deren Text gerade oben steht. An der Linie zwischen Verzeichnis und Texten zieht man
+das Verzeichnis breiter oder schmaler, mit der Maus oder per Pfeiltaste; ein Doppelklick
+stellt die übliche Breite wieder her, und der Browser merkt sich die Wahl. Auf schmalen
+Bildschirmen stehen nur die Texte.
+
+Die Texte der 30 neuesten Versionen stehen gleich da; die älteren zeigt die Seite erst auf
+Wunsch, über einen Knopf unter dem letzten Text. Das Verzeichnis nennt trotzdem alle, und ein
+Klick auf eine ältere Version öffnet die vollständige Liste an dieser Stelle. Die Seite ist ohne Anmeldung zugänglich und hat eine
 eigene Adresse, die sich weitergeben lässt.
 
 Eine neue oder geänderte Version auf GitHub erscheint spätestens nach einer Stunde. Ist GitHub
@@ -55,7 +64,8 @@ womöglich nicht aktuell ist; die Versionsnummer in der Leiste steht trotzdem.
 ## Cookies
 
 Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, die gewählte
-Breite der Seitenleiste, die gezogene Breite der Spalte und bis zu welcher Version man
+Breite der Seitenleiste, die gezogene Breite der Spalte und des Verzeichnisses unter
+„Versionen" und bis zu welcher Version man
 „Versionen" gesehen hat — je mit Zweck, Dauer, Namen und dem, was ohne sie nicht mehr geht.
 Sie sagt auch, wie man Cookies in den Einstellungen des Browsers sperrt oder löscht. Sie hängt
 am Konto (Brotkrume „Konto › Cookies") und ist ohne Anmeldung über einen Verweis unten auf allen
@@ -172,7 +182,8 @@ ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
 
 Wird jemand von einem anderen Konto in ein Team aufgenommen, erscheint das Team in der Leiste
 erst beim nächsten Neuladen oder nach der nächsten eigenen Aktion. Breit oder schmal merkt
-sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite der Spalte auf den
+sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite des Verzeichnisses
+unter „Versionen" und die der Spalte auf den
 geteilten Seiten; sie gilt für Übung und Training gemeinsam. Die Teilung gibt es nur auf breiten Bildschirmen; auf einem Tablet im
 Hochformat oder einem Telefon steht alles untereinander, und die Breite lässt sich dort nicht
 ziehen.
