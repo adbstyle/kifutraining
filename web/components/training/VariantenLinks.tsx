@@ -15,7 +15,8 @@ import type { Variante } from "@/lib/varianten";
  * die Pille für NUTZERTEXT: normal gesetzt statt mono/versal, weil auf den
  * Chips die Bezeichnung steht, die die Trainerin selbst vergeben hat. So
  * tragen Ansehen, Druck und Durchführen dieselbe Schreibweise wie der Editor,
- * und gefüllt heisst überall dasselbe: das ist die angezeigte Variante. Was
+ * und in Primary umrandet heisst überall dasselbe: das ist die angezeigte
+ * Variante. Was
  * hier fehlt, ist allein das Verwalten — kein Menü, kein Chevron; wer
  * umbenennt oder umsortiert, tut das beim Zusammenstellen.
  *
