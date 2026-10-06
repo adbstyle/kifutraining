@@ -2016,7 +2016,12 @@ export default function Styleguide() {
           Betriebssystem. Damit der Browser sie dunkel zeichnet - auch das
           Kalender- und Uhr-Zeichen im Feld -, erklärt sich die Anwendung als
           dunkel (<code>color-scheme: dark</code> auf <code>:root</code> und
-          im Wurzel-Layout); der Druck schaltet auf hell um.
+          im Wurzel-Layout); der Druck schaltet auf hell um.{" "}
+          <strong>Leer</strong> zeigt es sich wie jedes leere Feld (nach dem
+          Vorbild von «Start date» in Jira, PO 2026-10-06): keine Maske
+          («dd/mm/yyyy», «--:--») und kein Name darüber, sondern das Kalender-
+          bzw. Uhr-Zeichen und der Name gedämpft im Feld. Ein Klick oder ein
+          Wert bringt das native Steuerelement zurück.
         </p>
         <div className="grid max-w-md gap-6 sm:grid-cols-2">
           <DateField label="Datum" />

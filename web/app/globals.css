@@ -465,6 +465,24 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+/* Leeres Datums- oder Zeitfeld (`DateTimeField`): Das native Feld kennt
+   keinen Platzhalter. Solange es leer ist und nicht bearbeitet wird, ist
+   seine Maske («dd/mm/yyyy», «--:--») samt Zeichen unsichtbar, und an ihrer
+   Stelle steht `.zeitfeld-leer` — Zeichen und Name, gedämpft wie der Name im
+   leeren Textfeld. Ein Klick erreicht weiterhin das native Feld. */
+.zeitfeld-leer {
+  display: none;
+}
+.zeitfeld[data-leer]:not(:focus) {
+  color: transparent;
+  &::-webkit-calendar-picker-indicator {
+    opacity: 0;
+  }
+  & + .zeitfeld-leer {
+    display: flex;
+  }
+}
+
 /* Im Feld steht der Name dann nicht ein zweites Mal: Wer hineinklickt, sieht
    ihn darüber und darunter ein leeres Feld. Nur wo der Name unsichtbar ist
    (Suche in der Filterleiste), bleibt der Platzhalter auch beim Tippen stehen. */
