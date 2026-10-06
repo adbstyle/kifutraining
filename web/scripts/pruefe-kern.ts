@@ -860,9 +860,6 @@ pruefe("geaenderteFelder: nur Geändertes, Beginn und Ende als Paar, nichts geä
     { datum: "2026-10-09", ort: "Halle" },
     "Zeit bleibt draussen",
   );
-  // Übernommener Termin ohne Zeit: unverändert heisst weiter «nichts senden».
-  const ohneZeit = { datum: "2026-10-08", beginn: "", ende: "", ort: "", bemerkung: "" };
-  assert.equal(geaenderteFelder({ ...ohneZeit }, ohneZeit), null);
 });
 
 // ── Felder eines Termins (#389) ─────────────────────────────────────────────

@@ -491,8 +491,7 @@ nirgends. Bricht die Verbindung mitten im Kopieren ohne Rückmeldung ab, kann ei
 Kopie unbemerkt im Team-Bestand stehen bleiben.
 
 Eine Tages- oder Wochenansicht gibt es nicht; für die nächsten Wochen dient die Liste, und sie
-ist nicht nach Wochen gegliedert. Der Monat neben den Terminen zeigt weder Zeiten noch Namen und
-nicht, ob einem Termin der Beginn fehlt; trägt ein Tag mehr als drei Termine, stehen die
+ist nicht nach Wochen gegliedert. Der Monat neben den Terminen zeigt weder Zeiten noch Namen; trägt ein Tag mehr als drei Termine, stehen die
 Zustände der weiteren nur in der Liste. Termine lassen sich dort nicht durch Ziehen
 verschieben, und weder die Zurück-Taste noch eine geteilte Adresse führen zu einem gezeigten
 Monat. Am Handy fehlt der Monat ganz; wer dort weiter vorausplant, scrollt die Liste. Der

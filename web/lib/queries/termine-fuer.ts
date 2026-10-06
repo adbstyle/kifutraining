@@ -318,7 +318,7 @@ export async function getTeamPlanFuer(
     console.warn(`getTeamPlanFuer: Obergrenze von ${PLAN_OBERGRENZE} Terminen erreicht (Team ${teamId}).`);
   }
   // Die Vergangenheit kam absteigend; umgedreht ergibt sie wieder die
-  // aufsteigende Reihenfolge inkl. Beginn-ohne-Zeit-zuletzt und created_at.
+  // aufsteigende Reihenfolge inkl. Beginn und created_at.
   const alle = [...davor.reverse(), ...kommend].map(mapTermin);
   const meine = o.nurMeine;
   return meine ? alle.filter((t) => istVerantwortlich(t, meine)) : alle;

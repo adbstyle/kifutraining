@@ -31,6 +31,11 @@ name: Sync Staging (Prod-Spiegel, manuell)
 # Die Transaktion rollt zurück, Staging behält seinen Stand — der Sync ist bis
 # zum Merge nach main aber unbrauchbar.
 #
+# Ebenso eine Migration, die eine Invariante VERSCHÄRFT (NOT NULL, CHECK) und
+# main noch nicht hat: Die Prod-Zeilen verletzen sie, das COPY scheitert, die
+# Transaktion rollt zurück (zuletzt 20261006120000_termin_zeit_pflicht).
+# Den Sync dann vor dem Merge nach develop oder erst nach dem Release fahren.
+#
 # Ebenso nur additiv: eine DATENPFLEGE-Migration auf develop, die main noch
 # nicht hat (sie formt Bestandszeilen um). Der Sync bringt die Prod-Zeilen in
 # ihrer alten Form zurück, und die Migration läuft auf Staging nicht erneut.

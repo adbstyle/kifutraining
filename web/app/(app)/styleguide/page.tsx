@@ -2023,7 +2023,7 @@ export default function Styleguide() {
         </p>
         <div className="grid max-w-md gap-6 sm:grid-cols-2">
           <DateField label="Datum" />
-          <TimeField label="Beginn (optional)" />
+          <TimeField label="Beginn" />
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">

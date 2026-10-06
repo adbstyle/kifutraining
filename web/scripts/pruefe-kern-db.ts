@@ -1426,8 +1426,8 @@ try {
 
     // Die Abfrage läuft in zwei Hälften (anstehend aufsteigend, vergangen
     // absteigend; max_rows kappt sonst die neuesten): die zusammengeführte
-    // Liste bleibt aufsteigend, die Teilung unverändert. Drei vergangene
-    // (am selben Tag eines ohne Beginn zuletzt), zwei anstehende.
+    // Liste bleibt aufsteigend, die Teilung unverändert. Drei vergangene,
+    // zwei anstehende.
     const v3 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(-3), beginn: "17:00", ende: "18:00" }));
     const v2a = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(-2), beginn: "09:00", ende: "10:00" }));
     const v2b = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(-2), beginn: "16:00", ende: "17:00" }));
