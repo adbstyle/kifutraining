@@ -15,9 +15,13 @@ export type AuswahlEintrag = {
    (`role=radiogroup` / `role=radio`, `aria-checked`): Es ist ein Eingabefeld,
    und ein `listbox` mit verschachtelten Knöpfen wäre kein gültiges ARIA.
    Der Tabstopp wandert (gewählt, sonst der erste); Pfeil hoch/runter bewegt
-   Auswahl und Fokus. Die Wahl trägt zusätzlich zur Fläche ein Häkchen — die
-   Auswahl darf nicht allein an einer Farbe hängen. Der Platz für das Häkchen
-   bleibt reserviert, damit der Text beim Wählen nicht springt.
+   Auswahl und Fokus. Gewählt trägt der Eintrag eine Kontur in Primary wie
+   jede Wahl im Kit, dazu ein Häkchen — die Auswahl darf nicht allein an einer
+   Farbe hängen. Keine Fläche: Die Liste steht im Dialog (24dp), und jede
+   tiefere Stufe läge dort eingesunken statt hervorgehoben. Die Schrift bleibt
+   neutral, Primary trüge auf 24dp keine zwei Zeilen Lesetext. Kontur und
+   Häkchen-Platz sind immer da (transparent bzw. leer), damit beim Wählen
+   nichts springt.
 
    Bewusst hook-frei, wie ChoiceChip: Der Fokus wandert über das DOM. */
 export function AuswahlListe({
@@ -70,8 +74,8 @@ export function AuswahlListe({
               // Überfahren und Fokus über die Zustands-Ebene wie überall im Kit;
               // der Fokusring liegt innen, weil die Liste in einem scrollenden
               // Behälter steht, an dessen Rand ein äusserer Ring abgeschnitten würde.
-              "state focus-ring-inset flex w-full items-start gap-2 rounded-flaeche px-3 py-2 text-left",
-              gewaehlt && "bg-elev-08",
+              "state focus-ring-inset kontur flex w-full items-start gap-2 rounded-flaeche px-3 py-2 text-left",
+              gewaehlt ? "border-primary" : "border-transparent",
             )}
           >
             <span className="min-w-0 flex-1">

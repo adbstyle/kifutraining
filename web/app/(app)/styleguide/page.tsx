@@ -1444,8 +1444,11 @@ export default function Styleguide() {
           mit zwei Zeilen je Eintrag - für Trainings und Termine, die zu lang
           für Chips sind; ein <code>listbox</code> mit verschachtelten Knöpfen
           wäre kein gültiges ARIA. Pfeil hoch/runter wählt und bewegt den
-          Fokus, und ein <strong>Häkchen</strong> zeigt die Wahl zusätzlich zur
-          Fläche an.
+          Fokus. Gewählt trägt der Eintrag eine Kontur in Primary und ein{" "}
+          <strong>Häkchen</strong>, aber keine Fläche: Die Liste steht im
+          Dialog auf 24dp, und jede tiefere Stufe läge dort eingesunken statt
+          hervorgehoben. Die Schrift bleibt neutral - Primary trüge auf 24dp
+          keine zwei Zeilen Lesetext.
         </p>
         <AuswahlListeDemo />
 
@@ -2678,7 +2681,7 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Am Fuss der öffentlichen Trainings-Seiten steht für Besucher ohne
           Konto der <code>AnmeldeHinweis</code>: eine Meldung mit eigenem
-          Zeichen und dem Weg zum Konto als Aktion.
+          Zeichen und dem Weg zum Konto als Aktion. Auf Papier fehlt er.
         </p>
         <div className="grid max-w-2xl gap-4">
           <SectionMessage appearance="error">
