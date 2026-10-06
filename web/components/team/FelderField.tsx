@@ -1,7 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Button, IconButton, Select, TextField, feldNameKlasse } from "@/components/ui";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 import { zahlOderNull } from "@/lib/termin";
@@ -136,7 +136,7 @@ export function FelderField({
                   <p id={titelId(z.key)} className="type-title-small text-on-surface">Feld {i + 1}</p>
                   <IconButton
                     type="button"
-                    icon={Trash2}
+                    icon={X}
                     label={`Feld ${i + 1} entfernen`}
                     disabled={disabled}
                     onClick={() => onZeilenChange(zeilen.filter((x) => x.key !== z.key))}

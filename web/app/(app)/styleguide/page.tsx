@@ -3087,8 +3087,8 @@ export default function Styleguide() {
         <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
           <li>
             <strong>Ein Block je Feld</strong> - umrandet (<code>border-linie</code>),
-            mit «Feld 1», «Feld 2» und dem <code>IconButton</code> zum
-            Entfernen. Die Felder sind getrennte Flächen; der Block macht das
+            mit «Feld 1», «Feld 2» und dem <code>IconButton</code> mit{" "}
+            <code>X</code> zum Entfernen (PO 2026-10-06, kein Papierkorb). Die Felder sind getrennte Flächen; der Block macht das
             sichtbar, wo eine Zeile wie beim Material sie zu einem Posten
             verkürzte. Hinzufügen ist eine Randhandlung: <code>quiet</code>.
             Jeder Block ist eine Gruppe (<code>role=&quot;group&quot;</code>),
