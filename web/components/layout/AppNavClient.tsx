@@ -19,6 +19,7 @@ export function AppNavClient({
   konto,
   teams,
   imTeamBereich: imTeamBereichVomServer,
+  version,
 }: {
   konto: { name: string; email?: string } | null;
   teams: { id: string; name: string }[];
@@ -27,6 +28,8 @@ export function AppNavClient({
    *  den Erstaufbau; ab der ersten Client-Navigation gilt, was das Layout
    *  unter `/training/[id]` gemeldet hat. */
   imTeamBereich: boolean;
+  /** Die laufende Versionsnummer (#408). */
+  version: string;
 }) {
   const pfad = usePathname();
   const suche = useSearchParams();
@@ -82,6 +85,7 @@ export function AppNavClient({
     <Seitenleiste
       gruppen={gruppen}
       konto={konto ? { ...konto, href: "/konto", current: pfad === "/konto" } : undefined}
+      version={{ nummer: version, href: "/versionen", current: pfad === "/versionen" }}
       slim={slim}
       drawerOffen={drawerOffen}
       onDrawerOffenChange={setzeDrawerOffen}

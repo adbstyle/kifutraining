@@ -10,6 +10,7 @@ import {
   Menu as MenuIcon,
   PanelLeftClose,
   PanelLeftOpen,
+  Tag,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -53,11 +54,21 @@ export interface SeitenleisteKonto {
   current?: boolean;
 }
 
+/** Die laufende Version unten in der Leiste; führt zur Release-History. */
+export interface SeitenleisteVersion {
+  /** Die Versionsnummer, z. B. «1.27.0». */
+  nummer: string;
+  href: string;
+  current?: boolean;
+}
+
 export interface SeitenleisteProps {
   gruppen: SeitenleisteGruppe[];
   /** Angemeldet: Konto-Karte unten. Sonst `anmeldenHref`. */
   konto?: SeitenleisteKonto;
   anmeldenHref?: string;
+  /** Laufende Version über der Konto-Karte. */
+  version?: SeitenleisteVersion;
   /** Schmal (nur Zeichen). Wirkt ab `lg`; darunter ist die Leiste ein Drawer
    *  und zeigt immer alles. */
   slim: boolean;
@@ -179,6 +190,7 @@ export function Seitenleiste({
   gruppen,
   konto,
   anmeldenHref = "/login",
+  version,
   slim,
   drawerOffen = false,
   onDrawerOffenChange = keineAktion,
@@ -366,6 +378,34 @@ export function Seitenleiste({
             </div>
           ))}
         </div>
+
+        {/* Die Version führt zur Release-History (#408): gleich über der Linie
+            zum Konto. Schmal bleibt das Zeichen, die Nummer steht dann im
+            Hinweis daneben. */}
+        {version && (
+          <div className="shrink-0 px-4 pb-2">
+            <Link
+              href={version.href}
+              aria-current={version.current ? "page" : undefined}
+              data-hinweis={`Version ${version.nummer}`}
+              onClick={schliessen}
+              className={cn(
+                zeile,
+                "type-body-small h-9 gap-3 px-2.5",
+                k?.mitte,
+                version.current ? zeileAktiv : zeileRuhe,
+              )}
+            >
+              <Tag
+                size={18}
+                strokeWidth={2}
+                aria-hidden
+                className={cn("shrink-0", version.current && "text-primary")}
+              />
+              <span className={cn("truncate", k?.textWeg)}>Version {version.nummer}</span>
+            </Link>
+          </div>
+        )}
 
         <div className="mx-4 shrink-0 border-t border-linie py-3">
           {konto ? (

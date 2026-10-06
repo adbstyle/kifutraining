@@ -1694,8 +1694,9 @@ export default function Styleguide() {
           <code>bg-elev-01</code> mit <code>border-linie</code> zum Inhalt. Sie
           ist Rahmen, keine schwebende Fläche, und trägt darum keinen Schatten.
           Oben die Marke (Fussball im Primary-Quadrat, zugleich das Favicon), darunter die Einträge in
-          Gruppen, unten die Konto-Karte: Avatar, Anzeigename und E-Mail
-          führen als Ganzes ins Konto. Abmelden steht im Konto, nicht in der
+          Gruppen, unten die Versionszeile und die Konto-Karte: Avatar, Anzeigename und E-Mail
+          führen als Ganzes ins Konto. Die Versionszeile (Zeichen und Nummer, ruhiger als
+          ein Eintrag) führt zur Release-History; schmal bleibt das Zeichen. Abmelden steht im Konto, nicht in der
           Leiste. Der offene Eintrag steht eine Stufe höher als sein Grund
           (08dp auf 01dp) und trägt sein Zeichen in Primary; aufklappbare
           Einträge (Teams) haben einen eigenen Pfeil, damit der Name selbst

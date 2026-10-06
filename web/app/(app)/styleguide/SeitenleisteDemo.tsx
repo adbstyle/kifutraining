@@ -58,7 +58,7 @@ export function SeitenleisteDemo() {
       </ChoiceChipGroup>
 
       <div
-        className="flex h-[34rem] overflow-hidden rounded-flaeche border border-linie"
+        className="flex h-[37rem] overflow-hidden rounded-flaeche border border-linie"
         style={leisteStil(slim)}
       >
         <Seitenleiste
@@ -70,6 +70,7 @@ export function SeitenleisteDemo() {
               : undefined
           }
           anmeldenHref="#anmelden"
+          version={{ nummer: "1.27.0", href: "#versionen" }}
           slim={slim}
         />
         <div className="schraffur flex min-w-0 flex-1 flex-col p-4">

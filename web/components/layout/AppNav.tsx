@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { PFAD_HEADER } from "@/lib/pfad";
+import { APP_VERSION } from "@/lib/releases";
 import { getAnzeigenameFuer } from "@/lib/queries/profil";
 import { getMeineTeamsImRequest } from "@/lib/queries/teams";
 import { getTrainingNavKontext } from "@/lib/queries/trainings";
@@ -60,6 +61,7 @@ export async function AppNav() {
       }
       teams={teams}
       imTeamBereich={!!kontext?.team}
+      version={APP_VERSION}
     />
   );
 }

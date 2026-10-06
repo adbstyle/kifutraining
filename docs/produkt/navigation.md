@@ -15,6 +15,9 @@ neues, umbenanntes oder aufgelöstes Team erscheint dort ohne Neuladen.
 Hervorgehoben ist, wo man gerade steht. Ein geöffnetes Team-Training hält „Teams" hervor,
 wie im Team-Bereich beschrieben.
 
+Über dem Konto steht die Version, die gerade läuft. Ein Klick darauf öffnet „Versionen" (siehe
+unten); in der schmalen Leiste bleibt ihr Zeichen, die Nummer zeigt der Hinweis daneben.
+
 Ganz unten steht das Konto: Initialen, Anzeigename und E-Mail-Adresse. Ein Klick darauf führt
 ins Konto, wo auch das Abmelden zu finden ist. Ohne Anmeldung steht an dieser Stelle
 „Anmelden", und die Gruppe „Mein Bereich" fehlt.
@@ -26,6 +29,19 @@ Namen eines Eintrags zeigt ein Hinweis daneben, sobald man ihn mit dem Zeiger ü
 mit der Tastatur ansteuert. Umgeschaltet wird nur von Hand, über den Knopf links vor den
 Brotkrumen. Beim Überfahren öffnet sich die schmale Leiste nicht von selbst. Die Wahl merkt
 sich der Browser und behält sie beim nächsten Besuch.
+
+## Versionen
+
+Die Seite „Versionen" zeigt, was jede Version von KiFu gebracht hat, die neueste zuerst — alle
+seit 1.0.0. Zu jeder steht ihr Titel, die Versionsnummer, der Tag der Veröffentlichung und
+der Text, wie er im öffentlichen Repository auf GitHub steht: unverändert, mit Gliederung,
+Hervorhebungen und Links, auch mit technischen Abschnitten und Issue-Nummern. Ein Verweis
+führt zur Veröffentlichung auf GitHub. Die Seite ist ohne Anmeldung zugänglich und hat eine
+eigene Adresse, die sich weitergeben lässt.
+
+Eine neue oder geänderte Version auf GitHub erscheint spätestens nach einer Stunde. Ist GitHub
+gerade nicht erreichbar, zeigt die Seite den zuletzt bekannten Stand mit einem Hinweis, dass er
+womöglich nicht aktuell ist; die Versionsnummer in der Leiste steht trotzdem.
 
 ## Brotkrumen
 
@@ -142,6 +158,11 @@ sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite der
 geteilten Seiten; sie gilt für Übung und Training gemeinsam. Die Teilung gibt es nur auf breiten Bildschirmen; auf einem Tablet im
 Hochformat oder einem Telefon steht alles untereinander, und die Breite lässt sich dort nicht
 ziehen.
+
+„Versionen" zeigt die Texte so, wie sie veröffentlicht wurden; ältere enthalten Technisches,
+Issue-Nummern und Aussagen, die inzwischen überholt sind. Issue-Nummern sind dort kein Link,
+Bilder in einem Release-Text erscheinen nicht. Kurz nach einem Release kann die Version in der
+Leiste schon neuer sein als der neueste Eintrag unter „Versionen" oder umgekehrt.
 
 Auf Geräten ohne Maus, also auf Telefon und Tablet, erscheint das ⓘ eines Feldes nie; die
 Hinweise dahinter bleiben dort nur der Sprachausgabe zugänglich. Ausgenommen sind die wenigen

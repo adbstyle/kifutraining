@@ -55,6 +55,7 @@ export type {
   SeitenleisteEintrag,
   SeitenleisteUnterpunkt,
   SeitenleisteKonto,
+  SeitenleisteVersion,
 } from "./Seitenleiste";
 export { Disclosure } from "./Disclosure";
 export type { DisclosureProps } from "./Disclosure";

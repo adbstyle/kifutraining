@@ -35,6 +35,7 @@ liegen in den jeweiligen Paketen unter `node_modules/`.
 | tailwindcss, @tailwindcss/postcss | MIT | Tailwind Labs, Inc. — https://tailwindcss.com |
 | postcss | MIT | Andrey Sitnik — https://postcss.org |
 | lucide-react | ISC | Lucide Contributors — https://lucide.dev |
+| react-markdown, remark-breaks | MIT | Titus Wormer (unified) — https://github.com/remarkjs |
 | browser-image-compression | MIT | Donald Chan — https://github.com/Donaldcwl/browser-image-compression |
 | **heic-to** | **LGPL-3.0** | hoppergee — https://github.com/hoppergee/heic-to (nutzt libheif, LGPL-3.0) |
 | js-yaml, @types/js-yaml | MIT | Vitaly Puzrin / DefinitelyTyped |
