@@ -1,8 +1,8 @@
 "use client";
 
 import { useId } from "react";
-import { Plus, X } from "lucide-react";
-import { Button, IconButton, Select, TextField, feldNameKlasse } from "@/components/ui";
+import { X } from "lucide-react";
+import { HinzufuegenFeld, IconButton, Select, TextField, feldNameKlasse } from "@/components/ui";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 import { zahlOderNull } from "@/lib/termin";
 import {
@@ -198,12 +198,9 @@ export function FelderField({
 
       {problem?.index === null && <p className="type-body-small px-3.5 text-error">{problem.text}</p>}
 
-      <div>
-        <Button type="button" variant="quiet" disabled={disabled} onClick={() => onZeilenChange([...zeilen, neueZeile()])}>
-          <Plus size={18} strokeWidth={2} aria-hidden />
-          Feld hinzufügen
-        </Button>
-      </div>
+      <HinzufuegenFeld info={FELD_HINWEIS.liste} disabled={disabled} onClick={() => onZeilenChange([...zeilen, neueZeile()])}>
+        Feld hinzufügen
+      </HinzufuegenFeld>
     </div>
   );
 }

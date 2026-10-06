@@ -163,7 +163,7 @@ export function NeuerTerminDialog({
           <TimeField label="Beginn" className="flex-1" value={f.beginn} onChange={(e) => setze("beginn", e.target.value)} error={!!fehlerAn("beginn")} supportingText={fehlerAn("beginn")} />
           <TimeField label="Ende" className="flex-1" value={f.ende} onChange={(e) => setze("ende", e.target.value)} error={!!fehlerAn("ende")} supportingText={fehlerAn("ende")} />
         </div>
-        <Checkbox label="Wiederholender Termin" className="self-start" checked={wiederholen} onChange={(e) => wiederholenGewaehlt(e.target.checked)} />
+        <Checkbox label="Wiederholender Termin" className="self-start px-3.5" checked={wiederholen} onChange={(e) => wiederholenGewaehlt(e.target.checked)} />
         {wiederholen && (
           <>
             <WochentagWahl

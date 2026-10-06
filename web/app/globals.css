@@ -481,6 +481,19 @@
    auf der Angabe (`.feld-angabe`), nicht auf dem ganzen Rahmen: Ein Knopf
    daneben (`aktion`) ist eine eigene Handlung und hellt nicht mit auf. */
 @media (hover: hover) {
+  /* «… hinzufügen» in Feldgestalt (`HinzufuegenFeld`) hellt auf wie eine
+     leere Angabe — es sieht aus wie ein Feld und verhält sich beim
+     Überfahren auch so. */
+  .hinzufuegen-zeile:hover .hinzufuegen-feld:not(:disabled) {
+    --feld-hover: color-mix(in srgb, var(--color-on-surface) 6%, transparent);
+    background-color: var(--feld-hover);
+    box-shadow: 0 0 0 6px var(--feld-hover);
+  }
+  /* Sein ⓘ zeigt sich wie das eines Felds nur beim Überfahren der Zeile. */
+  .hinzufuegen-zeile:not(:has(:disabled)):hover .feld-info {
+    opacity: 1;
+    pointer-events: auto;
+  }
   .feld-rahmen:not([data-name-versteckt]):not(:has(.feldkasten:is(:focus, [aria-expanded="true"]))):not(:has(:disabled, .feldkasten[aria-disabled="true"])) .feld-angabe:hover {
     --feld-hover: color-mix(in srgb, var(--color-on-surface) 6%, transparent);
     border-radius: var(--radius-flaeche);
