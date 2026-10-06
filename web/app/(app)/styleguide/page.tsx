@@ -2815,7 +2815,7 @@ export default function Styleguide() {
             <strong>Erfassen</strong> - kein Repeat-Baustein im Kit, darum ein
             eigenes Feld aus bestehenden Teilen: je Zeile <code>Select</code>{" "}
             für Art und (nur bei färbbarem Material) Farbe, <code>TextField</code>{" "}
-            für die Menge, <code>IconButton</code> zum Entfernen. Hinzufügen ist
+            für die Menge, <code>IconButton</code> mit <code>X</code> zum Entfernen (PO 2026-10-06). Hinzufügen ist
             eine Randhandlung, darum <code>quiet</code> (siehe 08).
           </li>
           <li>

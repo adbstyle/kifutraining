@@ -24,7 +24,10 @@ export function WochentagWahl({
   return (
     <fieldset aria-describedby={error ? fehlerId : undefined}>
       <legend className={feldNameKlasse(!!error)}>Wochentage</legend>
-      <div className="flex flex-wrap gap-2">
+      {/* Derselbe Abstand vom Namen zur Eingabe wie bei jedem Feld
+          (`.feld-rahmen .feld-name`, 0.375rem); am Legend-Element selbst
+          wirkt ein Aussenabstand nicht verlässlich, darum hier. */}
+      <div className="mt-1.5 flex flex-wrap gap-2">
         {WOCHENTAGE.map((w) => (
           <FilterChip
             key={w}
