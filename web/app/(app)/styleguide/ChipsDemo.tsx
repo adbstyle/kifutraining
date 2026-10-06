@@ -1,13 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  FilterChip,
-  AssistChip,
-  SuggestionChip,
-  InputChip,
-} from "@/components/ui";
-import { Plus, BookOpen, User } from "lucide-react";
+import { FilterChip, AssistChip } from "@/components/ui";
+import { Plus } from "lucide-react";
 
 const FILTERS: [string, string][] = [
   ["hauptteil", "Hauptteil"],
@@ -15,10 +10,9 @@ const FILTERS: [string, string][] = [
   ["auffangen", "Auffangen"],
 ];
 
-/* Demonstriert die M3-Chip-Typen interaktiv (Filter toggeln, Input entfernen). */
+/* Demonstriert Filter-Chip (interaktiv toggelbar) und Assist-Chip. */
 export function ChipsDemo() {
   const [filters, setFilters] = useState<Set<string>>(new Set(["hauptteil"]));
-  const [tags, setTags] = useState<string[]>(["Trainer", "Kleinfeld", "G-Junioren"]);
 
   function toggle(k: string) {
     setFilters((prev) => {
@@ -45,36 +39,10 @@ export function ChipsDemo() {
 
       <div>
         <p className="type-label-small mb-2 text-on-surface-mittel">
-          Assist · Suggestion · Elevated
+          Assist-Chip
         </p>
         <div className="flex flex-wrap gap-2">
           <AssistChip icon={Plus}>Zu Training hinzufügen</AssistChip>
-          <AssistChip icon={BookOpen} elevated>
-            Im Manual öffnen
-          </AssistChip>
-          <SuggestionChip>Ähnliche Übungen</SuggestionChip>
-        </div>
-      </div>
-
-      <div>
-        <p className="type-label-small mb-2 text-on-surface-mittel">
-          Input-Chips (entfernbar)
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {tags.length === 0 && (
-            <span className="type-body-small text-on-surface-mittel">
-              - alle entfernt -
-            </span>
-          )}
-          {tags.map((t, i) => (
-            <InputChip
-              key={t}
-              icon={i === 0 ? User : undefined}
-              onRemove={() => setTags((ts) => ts.filter((x) => x !== t))}
-            >
-              {t}
-            </InputChip>
-          ))}
         </div>
       </div>
     </div>

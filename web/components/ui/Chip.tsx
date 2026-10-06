@@ -1,16 +1,15 @@
-import { X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 /* ── Chips ────────────────────────────────────────────────────
-   Eine gemeinsame Basis, vier Typen: Assist · Filter · Input · Suggestion.
+   Eine gemeinsame Basis, drei Typen: Assist · Filter · Einfachauswahl.
    Die Rollen stehen direkt in den Bündeln — gewählt füllt Primary (die
    Einfachauswahl) oder tönt es (der Filter), ungewählt umrandet die Kante, und `state` in der Basis trägt Überfahren, Fokus und
    Druck. Darum trägt kein Bündel mehr eine eigene Überfahr-Fläche: Die
    Zustands-Ebene färbt sich in der Farbe des Chip-Inhalts ein und passt so
    auf jede Variante.
 
-   Die drei Bündel bleiben modul-lokal: Jeder Chip mit Vokabular-Beschriftung
+   Die beiden Bündel bleiben modul-lokal: Jeder Chip mit Vokabular-Beschriftung
    ist in dieser Datei gebaut, und ein Bündel nach aussen zu geben lüde dazu
    ein, die Chip-Optik anderswo neu zusammenzusetzen. Exportiert sind nur die
    Nutzertext-Bündel weiter unten — die tragen auch Links und den geteilten
@@ -24,7 +23,7 @@ const chipBase =
   "state focus-ring inline-flex h-9 items-center gap-1.5 rounded-full kontur px-3 transition-colors";
 
 /* Die Schrift ist wie die Höhe ein eigener Slot (`cn` ist ein reiner Joiner).
-   Assist, Suggestion, Input und die Einfachauswahl tragen das Vokabular
+   Assist und die Einfachauswahl tragen das Vokabular
    versal (`type-label-medium`). Der FILTER steht normal gesetzt in
    `type-body-medium`: Er sitzt in Leisten neben Suchfeld, Auswahl und
    Knöpfen und liest sich dort als Wort («Meine Termine»), nicht als Rubrik —
@@ -35,9 +34,6 @@ const chipFilterTypo = "type-body-medium";
 
 const chipOutlined = "border-kante bg-transparent text-on-surface";
 const chipSelected = "border-transparent bg-primary text-on-primary";
-/* Schwebender Chip: eine Höhenstufe plus Schatten statt einer Kontur — er
-   liegt über der Fläche, statt in sie eingeschrieben zu sein. */
-const chipElevated = "border-transparent bg-elev-06 text-on-surface shadow-dp-04";
 
 /* ── Chip-Optik für NUTZERTEXT ────────────────────────────────
    Dieselbe Pille, aber normal gesetzt statt versal: `type-label-medium`
@@ -216,7 +212,6 @@ export function ChoiceChipGroup({
 }
 
 /* Assist-Chip — schlägt eine Aktion vor (führendes Icon + Label).
-   `elevated`: Höhenstufe plus Schatten statt Kontur.
 
    Öffnet die vorgeschlagene Aktion ein Menü, braucht der Chip einen Namen
    dafür (`ariaLabel`, wenn dasselbe Label mehrfach auf der Seite steht), die
@@ -230,7 +225,6 @@ export function AssistChip({
   ariaLabel,
   ariaHasPopup,
   ariaExpanded,
-  elevated = false,
   className,
 }: {
   ref?: React.Ref<HTMLButtonElement>;
@@ -242,7 +236,6 @@ export function AssistChip({
   ariaLabel?: string;
   ariaHasPopup?: "menu";
   ariaExpanded?: boolean;
-  elevated?: boolean;
   className?: string;
 }) {
   return (
@@ -253,67 +246,10 @@ export function AssistChip({
       aria-label={ariaLabel}
       aria-haspopup={ariaHasPopup}
       aria-expanded={ariaHasPopup ? ariaExpanded : undefined}
-      className={cn(
-        chipBase,
-        chipLabel,
-        elevated ? chipElevated : chipOutlined,
-        className,
-      )}
-    >
-      {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
-      {children}
-    </button>
-  );
-}
-
-/* Suggestion-Chip — dynamisch generierter Vorschlag (nur Label). */
-export function SuggestionChip({
-  onClick,
-  children,
-  className,
-}: {
-  onClick?: () => void;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
       className={cn(chipBase, chipLabel, chipOutlined, className)}
     >
-      {children}
-    </button>
-  );
-}
-
-/* Input-Chip — repräsentiert eine diskrete Eingabe/ein Tag.
-   Optionales führendes Icon + Entfernen-Button (X). Container ist kein Button. */
-export function InputChip({
-  icon: Icon,
-  onRemove,
-  children,
-  className,
-}: {
-  icon?: LucideIcon;
-  onRemove?: () => void;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span className={cn(chipBase, chipLabel, chipOutlined, "pr-2", className)}>
       {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
       {children}
-      {onRemove && (
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label="Entfernen"
-          className="state focus-ring -mr-1 ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-on-surface-mittel transition-colors"
-        >
-          <X size={14} strokeWidth={2.5} aria-hidden />
-        </button>
-      )}
-    </span>
+    </button>
   );
 }

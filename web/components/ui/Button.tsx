@@ -19,7 +19,7 @@ import { cn } from "@/lib/cn";
 // `quiet` ist die knappe Bauform des `text`-Knopfes für Handlungen, die am
 // Rand einer Chip-Leiste mitlaufen («+ Variante hinzufügen»): dieselbe Farbe
 // und Schrift, nur mit knapperer Polsterung.
-type Variant = "filled" | "tonal" | "elevated" | "outlined" | "text" | "danger" | "quiet";
+type Variant = "filled" | "tonal" | "outlined" | "text" | "danger" | "quiet";
 
 // `state` gehört in die Basis und nicht an die Varianten: Die Zustands-Ebene
 // färbt sich in der Farbe des Inhalts ein und gilt darum für jede Variante
@@ -37,9 +37,6 @@ const variants: Record<Variant, string> = {
   filled: "bg-primary text-on-primary",
   // Mittlere Emphase — eine Höhenstufe statt einer Akzentfläche.
   tonal: "bg-elev-08 text-on-surface",
-  // Wie tonal, aber schwebend: eine Stufe darunter im Grund, dafür ein
-  // Schatten, der sie vom Untergrund abhebt — und die Schrift im Akzent.
-  elevated: "bg-elev-06 text-primary shadow-dp-04",
   // Mittlere Emphase — nur Kontur, die Fläche bleibt der Grund.
   outlined: "bg-transparent text-on-surface kontur border-kante",
   // Niedrigste Emphase — nichts als Schrift im Akzent.

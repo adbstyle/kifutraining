@@ -123,7 +123,6 @@
   /* ─── Schatten — nur wo etwas wirklich schwebt. Im Dunkeln trägt die
      Helligkeit die Höhe, der Schatten trennt bloss das Schwebende vom
      Grund darunter. ─── */
-  --shadow-dp-04: 0 4px 12px rgb(0 0 0 / 0.5);
   --shadow-dp-06: 0 4px 12px rgb(0 0 0 / 0.55);
   --shadow-dp-08: 0 4px 12px rgb(0 0 0 / 0.6);
   --shadow-dp-24: 0 8px 24px rgb(0 0 0 / 0.6);

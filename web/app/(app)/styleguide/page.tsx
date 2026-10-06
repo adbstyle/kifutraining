@@ -350,7 +350,7 @@ const elevVerwendung: Record<number, string> = {
   2: "Block im Teil, dichtes Feld, Platzhalter",
   3: "- frei -",
   4: "Kopfzeile unter lg (deckend, kein Blur)",
-  6: "Elevated-Knopf und -Chip, Overlay-Icon-Knopf",
+  6: "Overlay-Icon-Knopf",
   8: "Menü, Select-Panel, Tonal-Knopf, Drawer, aktives Segment, offener Navigationseintrag",
   12: "Avatar, offener Navigationseintrag im Drawer",
   16: "- frei -",
@@ -358,7 +358,6 @@ const elevVerwendung: Record<number, string> = {
 };
 
 const schattenStufen: [string, string, string][] = [
-  ["shadow-dp-04", "dp-04", "Elevated-Knopf - er liegt auf, er deckt nichts zu."],
   ["shadow-dp-06", "dp-06", "Snackbar - sie schwebt über dem Inhalt."],
   ["shadow-dp-08", "dp-08", "Menü, Select-Panel, Drawer, Tooltip."],
   ["shadow-dp-24", "dp-24", "Dialog - das Einzige, was die Seite anhält."],
@@ -1042,11 +1041,9 @@ export default function Styleguide() {
 
       <Section n="08" title="Knöpfe">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Sieben Varianten, eine Regel: <strong>Gefüllt trägt Schwarz.</strong>{" "}
+          Sechs Varianten, eine Regel: <strong>Gefüllt trägt Schwarz.</strong>{" "}
           <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
-          Höhenstufe (08dp), <code>elevated</code> dieselbe Idee eine Stufe
-          tiefer (06dp) mit Schatten und Primary-Schrift - im Bild bisher nicht
-          angewandt, die Rolle bleibt besetzt -, <code>outlined</code> Kontur
+          Höhenstufe (08dp), <code>outlined</code> Kontur
           auf der Kante, <code>text</code> nur Schrift, <code>danger</code>{" "}
           Kontur und Schrift in Error; dazu der leise Knopf (<code>quiet</code>)
           weiter unten, der als einziger nicht über die Emphase leiser wird,
@@ -1059,7 +1056,6 @@ export default function Styleguide() {
         <div className="flex flex-wrap items-end gap-3">
           <Button variant="filled">Training erstellen</Button>
           <Button variant="tonal">Duplizieren</Button>
-          <Button variant="elevated">Teilen</Button>
           <Button variant="outlined">Filter zurücksetzen</Button>
           <Button variant="text">Abbrechen</Button>
           <Button variant="danger">Übung löschen</Button>
@@ -1351,11 +1347,7 @@ export default function Styleguide() {
           (<code>chipSelected</code> - Primary-Fläche, schwarze Schrift) bleibt
           allein die offene Einfachauswahl (10). Im geteilten Chip folgt der
           Trennstrich dem Zustand (<code>border-primary/50</code> gewählt,{" "}
-          <code>border-kante</code> sonst). Der schwebende Assist-Chip
-          (<code>elevated</code> - 06dp plus <code>shadow-dp-04</code> statt
-          einer Kontur) ist wie der gleichnamige Knopf aus 08 im Bild bisher
-          nicht angewandt; die Rolle bleibt besetzt, damit die Chip-Leiter
-          vollständig ist.
+          <code>border-kante</code> sonst).
         </p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
           <strong>Schrift.</strong> Der <strong>Filter</strong> steht normal
@@ -1363,8 +1355,8 @@ export default function Styleguide() {
           er sitzt in Leisten neben Suchfeld, Auswahl und Knöpfen und liest
           sich dort als Wort («Meine Termine»), nicht als Rubrik, und bleibt
           leiser als der halbfette Knopf daneben, der die Handlung trägt.
-          Assist, Suggestion, Input und die offene Einfachauswahl bleiben
-          versal in <code>type-label-medium</code>.
+          Der Assist-Chip und die offene Einfachauswahl bleiben versal in{" "}
+          <code>type-label-medium</code>.
         </p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
           <strong>Eine Höhe.</strong> Jeder Chip ist 36 px hoch, im Fliesstext
@@ -2615,12 +2607,10 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Ein Chip, der ein Menü öffnet - für Werte, die man an ihrem Ort
           umsortieren oder herausnehmen können muss.{" "}
-          <strong>Warum die bestehenden Chips nicht reichen:</strong> Der{" "}
-          <code>InputChip</code> kennt nur ein Entfernen-X - 16 px, kein
-          Touch-Ziel - und kann „nach vorne schieben" gar nicht ausdrücken; der{" "}
+          <strong>Warum der Assist-Chip nicht reicht:</strong> Der{" "}
           <code>AssistChip</code> löst genau eine Aktion aus, nicht mehrere zur
-          Wahl. Beide tragen ausserdem <code>type-label-medium</code>, also
-          mono und versal: ein Gruppenname stünde dort verfälscht (siehe Regel
+          Wahl. Er trägt ausserdem <code>type-label-medium</code>, also
+          versal: ein Gruppenname stünde dort verfälscht (siehe Regel
           in 02). Der Chip mit Menü trägt darum{" "}
           <code>type-body-medium</code> und ist <strong>ein</strong>{" "}
           Bedienelement mit <strong>einem</strong> Tabstopp - kein Chip plus
