@@ -475,8 +475,11 @@
 }
 .zeitfeld[data-leer]:not(:focus) {
   color: transparent;
+  /* Ganz weg, nicht nur durchsichtig: Sonst bliebe rechts eine unsichtbare
+     Stelle, die direkt die Auswahl öffnet, während ein Klick daneben nur
+     ins Feld setzt. So tut jeder Klick dasselbe. */
   &::-webkit-calendar-picker-indicator {
-    opacity: 0;
+    display: none;
   }
   & + .zeitfeld-leer {
     display: flex;
@@ -547,6 +550,15 @@
   color: transparent;
 }
 .feld-rahmen:has(.feldkasten:is(:focus, [aria-expanded="true"])) .feld-leertext {
+  visibility: hidden;
+}
+/* Im Fehler steht der Name oben (er springt nicht ins Feld, siehe oben); im
+   leeren Feld steht er dann nicht ein zweites Mal — weder als Platzhalter
+   noch als Leertext einer Auswahl oder eines Datums- und Zeitfelds. */
+.feld-rahmen[data-fehler]:not([data-name-versteckt]) .feldkasten::placeholder {
+  color: transparent;
+}
+.feld-rahmen[data-fehler] .feld-leertext {
   visibility: hidden;
 }
 

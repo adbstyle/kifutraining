@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { Calendar, Clock } from "lucide-react";
 import { Feld, beschreibungIdVon, useFeldId } from "./feld";
@@ -28,17 +28,33 @@ export interface DateTimeFieldProps
    kein `:placeholder-shown`; darum legt das Feld seinen Namen selbst darüber
    (`.zeitfeld-leer` in globals.css) und meldet `leer` an `Feld`. Sobald man
    hineinklickt oder ein Wert drinsteht, erscheint das native Steuerelement
-   wie bisher. Ob es leer ist, sagt bei einem kontrollierten Feld `value`,
-   sonst die letzte Eingabe.
+   wie bisher. Ob es leer ist, sagt bei einem kontrollierten Feld `value`;
+   sonst liest das Feld seinen Wert selbst nach — beim Einhängen (vom Browser
+   wiederhergestellte Werte), bei jeder Eingabe, beim Verlassen und nach dem
+   Zurücksetzen seines Formulars. Einen Wert, den Code still per Ref setzt,
+   sieht es erst beim nächsten dieser Anlässe; dafür ist `value` da.
 
    Eigene Komponente (statt einer bloss aufgerufenen Funktion), damit `useId`
    ein regulärer Hook-Aufruf in einem eigenen Render bleibt. */
 const DateTimeBase = forwardRef<
   HTMLInputElement,
   DateTimeFieldProps & { type: "date" | "time" }
->(({ label, supportingText, info, error = false, id, className, type, onChange, ...props }, ref) => {
+>(({ label, supportingText, info, error = false, id, className, type, onChange, onBlur, ...props }, ref) => {
   const fid = useFeldId(id);
+  const eingabe = useRef<HTMLInputElement>(null);
+  useImperativeHandle(ref, () => eingabe.current!);
   const [eingabeLeer, setEingabeLeer] = useState(!props.defaultValue);
+  useEffect(() => {
+    const el = eingabe.current;
+    if (!el) return;
+    const nachlesen = () => setEingabeLeer(!el.value);
+    nachlesen();
+    // `reset` feuert, bevor das Formular seine Felder leert.
+    const beiReset = () => requestAnimationFrame(nachlesen);
+    const form = el.form;
+    form?.addEventListener("reset", beiReset);
+    return () => form?.removeEventListener("reset", beiReset);
+  }, []);
   const leer = props.value !== undefined ? !props.value : eingabeLeer;
   const Zeichen = type === "date" ? Calendar : Clock;
   return (
@@ -46,7 +62,7 @@ const DateTimeBase = forwardRef<
       <div className="relative">
         <input
           id={fid}
-          ref={ref}
+          ref={eingabe}
           type={type}
           aria-invalid={error || undefined}
           aria-describedby={beschreibungIdVon(fid, supportingText, info)}
@@ -56,13 +72,17 @@ const DateTimeBase = forwardRef<
             setEingabeLeer(!e.target.value);
             onChange?.(e);
           }}
+          onBlur={(e) => {
+            setEingabeLeer(!e.target.value);
+            onBlur?.(e);
+          }}
           {...props}
         />
         {/* Name und Zeichen im leeren Feld — nur Bild, die Vorlesehilfe hört
             den Namen über das Label; Klicks gehen durch auf das Feld. */}
         <span
           aria-hidden
-          className="zeitfeld-leer type-body-large pointer-events-none absolute inset-y-0 left-0 items-center gap-2 px-3.5 text-on-surface-mittel"
+          className="zeitfeld-leer feld-leertext type-body-large pointer-events-none absolute inset-y-0 left-0 items-center gap-2 px-3.5 text-on-surface-mittel"
         >
           <Zeichen size={18} strokeWidth={2} className="shrink-0" />
           {label}
