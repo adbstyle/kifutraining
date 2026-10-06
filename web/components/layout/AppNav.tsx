@@ -1,8 +1,7 @@
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { PFAD_HEADER } from "@/lib/pfad";
-import { APP_VERSION, getReleases, neuesteVeroeffentlichung } from "@/lib/releases";
-import { GESEHEN_COOKIE, leseGesehen } from "@/lib/versionen-gesehen";
+import { APP_VERSION } from "@/lib/version";
 import { getAnzeigenameFuer } from "@/lib/queries/profil";
 import { getMeineTeamsImRequest } from "@/lib/queries/teams";
 import { getTrainingNavKontext } from "@/lib/queries/trainings";
@@ -13,8 +12,7 @@ import { AppNavClient } from "./AppNavClient";
 const TRAINING_PFAD = /^\/training\/([0-9a-f-]{36})(\/|$)/i;
 
 /* App-Chrome: die Seitenleiste. Server-Komponente — liest die Session, die
-   eigenen Teams (Unterpunkte von „Teams"), den Anzeigenamen (Konto-Karte) und
-   für die Markierung neuer Versionen die Releases und das Cookie (#410);
+   eigenen Teams (Unterpunkte von „Teams") und den Anzeigenamen (Konto-Karte);
    Aktiv-Zustand und Drawer übernimmt der Client-Teil.
 
    Ein Team-Training liegt zwar unter `/training/…`, gehört aber in den
@@ -37,11 +35,6 @@ export async function AppNav() {
   const pfad = (await headers()).get(PFAD_HEADER) ?? "";
   const trainingId = pfad.match(TRAINING_PFAD)?.[1];
 
-  // Für die Markierung neuer Releases (#410): der neueste veröffentlichte
-  // und der zuletzt gesehene. Ohne Releases (GitHub nie erreicht) keine
-  // Markierung — die Version steht trotzdem. Läuft parallel zum Rest.
-  const releases = getReleases();
-
   // Nur angemeldet nötig: Teams sieht nur, wer Mitglied ist. Ohne Recht am
   // Training liefert die RLS `null` — die Navigation verrät dann nichts.
   // Scheitert eine der Abfragen, fehlt nur ihr Teil der Leiste, nicht die Seite.
@@ -54,10 +47,6 @@ export async function AppNav() {
         getAnzeigenameFuer(supabase, user.id).catch(() => null),
       ])
     : [null, [], null];
-
-  const [stand, jar] = await Promise.all([releases, cookies()]);
-  const neueste = stand && neuesteVeroeffentlichung(stand.releases);
-  const gesehen = leseGesehen(jar.get(GESEHEN_COOKIE)?.value);
 
   return (
     <AppNavClient
@@ -73,8 +62,6 @@ export async function AppNav() {
       teams={teams}
       imTeamBereich={!!kontext?.team}
       version={APP_VERSION}
-      neuesteVersion={neueste}
-      gesehenVersion={gesehen}
     />
   );
 }

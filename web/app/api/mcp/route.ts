@@ -5,7 +5,7 @@ import { oeffentlicherOriginAus } from "@/lib/origin";
 import { registriereWerkzeuge } from "@/lib/mcp/server";
 import { MCP_PFAD } from "@/lib/mcp/pfad";
 import type { ZugangExtra } from "@/lib/mcp/werkzeug";
-import pkg from "@/package.json";
+import { APP_VERSION } from "@/lib/version";
 
 /**
  * Der KI-Endpoint (Story #142): MCP über Streamable HTTP, zustandslos.
@@ -22,7 +22,7 @@ import pkg from "@/package.json";
 export const dynamic = "force-dynamic";
 
 const mcp = createMcpHandler((server) => registriereWerkzeuge(server), {
-  serverInfo: { name: "ki-fu", version: pkg.version },
+  serverInfo: { name: "ki-fu", version: APP_VERSION },
 });
 
 async function pruefeToken(token: string | undefined, origin: string): Promise<AuthInfo | undefined> {

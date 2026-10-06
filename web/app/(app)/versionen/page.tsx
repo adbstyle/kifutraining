@@ -4,7 +4,9 @@ import { Leerzustand, SectionMessage } from "@/components/ui";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
 import { VersionenGesehen } from "@/components/versionen/VersionenGesehen";
-import { APP_VERSION, datumLang, getReleasesZumLesen, neuesteVeroeffentlichung } from "@/lib/releases";
+import { getReleasesZumLesen, neuesteVeroeffentlichung } from "@/lib/releases";
+import { APP_VERSION } from "@/lib/version";
+import { datumKurz, kalendertagAmTrainingsort } from "@/lib/zeit";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Versionen - KiFu" };
@@ -14,6 +16,11 @@ export const metadata: Metadata = { title: "Versionen - KiFu" };
    erreichbar und über ihre Adresse teilbar. Ist GitHub nicht erreichbar,
    steht der zuletzt bekannte Stand mit Hinweis; gab es nie einen, nur der
    Hinweis. */
+/** Der Tag in der Schweiz, geschrieben wie jedes Datum der Anwendung. */
+function tag(iso: string): string {
+  return datumKurz(kalendertagAmTrainingsort(new Date(iso)));
+}
+
 export default async function VersionenPage() {
   const { stand, veraltet } = await getReleasesZumLesen();
   const neueste = stand && neuesteVeroeffentlichung(stand.releases);
@@ -35,7 +42,7 @@ export default async function VersionenPage() {
           {veraltet && (
             <SectionMessage className="mb-6">
               Die Versionen sind gerade nicht abrufbar. Das hier ist der Stand vom{" "}
-              {datumLang(stand.abgerufenAm)} und womöglich nicht aktuell.
+              {tag(stand.abgerufenAm)} und womöglich nicht aktuell.
             </SectionMessage>
           )}
           <div className="flex flex-col divide-y divide-linie">
@@ -52,7 +59,7 @@ export default async function VersionenPage() {
                   <p className="type-body-small flex flex-wrap items-center gap-x-2 text-on-surface-mittel">
                     <span>Version {r.version}</span>
                     <span aria-hidden>·</span>
-                    <time dateTime={r.veroeffentlicht}>{datumLang(r.veroeffentlicht)}</time>
+                    <time dateTime={r.veroeffentlicht}>{tag(r.veroeffentlicht)}</time>
                     <span aria-hidden>·</span>
                     <a
                       href={r.url}

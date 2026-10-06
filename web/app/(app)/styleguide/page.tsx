@@ -3332,7 +3332,7 @@ export default function Styleguide() {
             <p className="type-body-small flex flex-wrap items-center gap-x-2 text-on-surface-mittel">
               <span>Version 1.28.0</span>
               <span aria-hidden>·</span>
-              <span>7. Oktober 2026</span>
+              <span>Mi., 07.10.2026</span>
               <span aria-hidden>·</span>
               <a href="#release" className="text-primary underline">Auf GitHub ansehen</a>
             </p>

@@ -24,7 +24,7 @@ verschwindet, sobald „Versionen" die neuen Versionen angezeigt hat — konnte 
 älteren Stand zeigen, bleibt sie. Jede neu veröffentlichte Version gilt als neu, auch eine ohne
 spürbare Änderung; eine nachträglich korrigierte nicht. Wer KiFu in einem Browser zum ersten
 Mal öffnet, sieht keine Markierung. Eine neue Version erscheint spätestens eine Stunde nach
-ihrer Veröffentlichung, und zwar beim nächsten Laden einer Seite; eine offene Seite ändert sich
+ihrer Veröffentlichung, und zwar beim nächsten Seitenwechsel; eine offene Seite ändert sich
 nicht von selbst.
 
 Ganz unten steht das Konto: Initialen, Anzeigename und E-Mail-Adresse. Ein Klick darauf führt

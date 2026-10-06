@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ClipboardCheck, ClipboardList, LayoutGrid, ListChecks, Users } from "lucide-react";
 import { Seitenleiste } from "@/components/ui";
@@ -8,12 +8,7 @@ import type { SeitenleisteGruppe } from "@/components/ui";
 import { aktiveBereiche, teamOffen } from "@/lib/navigation";
 import { useSeitenleiste } from "./AppRahmen";
 import { useTeamBereich } from "./TeamKontext";
-import {
-  GESEHEN_EREIGNIS,
-  gesehenImBrowser,
-  merkeGesehen,
-  spaeter,
-} from "@/lib/versionen-gesehen";
+import { useVersionen } from "./VersionenKontext";
 
 /* App-Chrome, Client-Teil: baut aus Adresse und Team-Kontext die Einträge
    der Seitenleiste. Der Server-Teil (AppNav) liefert Konto, Teams und ob das
@@ -26,8 +21,6 @@ export function AppNavClient({
   teams,
   imTeamBereich: imTeamBereichVomServer,
   version,
-  neuesteVersion,
-  gesehenVersion,
 }: {
   konto: { name: string; email?: string } | null;
   teams: { id: string; name: string }[];
@@ -38,9 +31,6 @@ export function AppNavClient({
   imTeamBereich: boolean;
   /** Die laufende Versionsnummer (#408). */
   version: string;
-  /** Wann der neueste Release erschien und wann der zuletzt gesehene (#410). */
-  neuesteVersion: string | null;
-  gesehenVersion: string | null;
 }) {
   const pfad = usePathname();
   const suche = useSearchParams();
@@ -53,17 +43,7 @@ export function AppNavClient({
   const adresse = `${pfad}?${suche.toString()}`;
   useEffect(() => setzeDrawerOffen(false), [adresse, setzeDrawerOffen]);
 
-  // Neue Releases (#410): Der Stand vom Server gilt bis zum nächsten Laden;
-  // nur das Ansehen der Versionen nimmt die Markierung sofort ab. Beim
-  // ersten Besuch gilt alles Erschienene als bekannt.
-  const [gesehen, setzeGesehen] = useState(gesehenVersion);
-  useEffect(() => {
-    const onGesehen = (e: Event) => setzeGesehen((e as CustomEvent<string>).detail);
-    window.addEventListener(GESEHEN_EREIGNIS, onGesehen);
-    if (neuesteVersion && !gesehenImBrowser()) merkeGesehen(neuesteVersion);
-    return () => window.removeEventListener(GESEHEN_EREIGNIS, onGesehen);
-  }, [neuesteVersion]);
-  const neu = spaeter(neuesteVersion, gesehen);
+  const { neu } = useVersionen();
 
   const aktiv = aktiveBereiche(pfad, mine, imTeamBereich);
 
