@@ -61,7 +61,11 @@ export default async function VersionenPage() {
                   id={versionAnker(r.version)}
                   data-version={r.version}
                   aria-labelledby={`${versionAnker(r.version)}-titel`}
-                  className="flex flex-col gap-3 py-6 first:pt-0"
+                  // Ein Sprung hält ab lg global 6rem Abstand zur klebenden
+                  // Kopfzeile (globals.css). Hier rückt er um 3.5rem höher:
+                  // Trennlinie und Polsterung verschwinden unter der Kopfzeile,
+                  // der Titel steht direkt darunter — ohne Rest des vorigen Texts.
+                  className="flex flex-col gap-3 py-6 first:pt-0 lg:scroll-mt-[-3.5rem]"
                 >
                   <header className="flex flex-col gap-1">
                     <h2 id={`${versionAnker(r.version)}-titel`} className="type-title-large text-on-surface">
