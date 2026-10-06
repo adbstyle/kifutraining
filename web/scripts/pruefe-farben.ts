@@ -353,7 +353,10 @@ const VERBOTEN: [RegExp, string][] = [
   // `--diagramm-rasen-streifen` und ist genau richtig so.
   [/\b(?:bg|text|border|fill|stroke|ring|from|via|to)-rasen-/, "alte Rasen-Palette"],
   [/chalk/, "alte Kreide-Palette"],
-  [/(?<![\wä-ü])signal(?![\wä-ü])|-signal\b/, "alter Signal-Akzent"],
+  // Gemeint sind die Utilities und Variablen des entfernten Akzents
+  // (`text-signal`, `bg-signal-bright`, `--color-signal-dark`), nicht das
+  // Wort — `signal` heisst auch die Abbruch-Option eines Abrufs.
+  [/-signal\b/, "alter Signal-Akzent"],
   [/surface-container/, "M3-Surface-Leiter (ersetzt durch elev-*)"],
   [/surface-dim/, "M3-Surface-Leiter"],
   [/surface-bright/, "M3-Surface-Leiter"],

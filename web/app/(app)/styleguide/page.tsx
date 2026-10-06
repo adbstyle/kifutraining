@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ReleaseText } from "@/components/versionen/ReleaseText";
 import {
   Button,
   ButtonLink,
@@ -131,6 +132,18 @@ const v = (wert: number) => `${wert.toFixed(2)}:1`;
  *  sich Schrift und Striche überhaupt rechnen lassen. */
 const weissAuf = (deckung: number, grund: string) =>
   ueberlagern("#ffffff", deckung, grund);
+
+/** Ein Release-Text nach docs/releases/ für Abschnitt 32. */
+const BEISPIEL_RELEASE = `Du siehst jetzt, welche Version läuft und was neu ist.
+
+### Neu
+
+- **Versionen**: Die Seitenleiste zeigt die laufende Version und führt zu allen Versionen. (#408)
+
+### Technisch
+
+- Die Versionen kommen einmal pro halbe Stunde von GitHub.
+- **Noch ungeprüft:** die Markierung auf einem echten Telefon.`;
 
 function Section({
   n,
@@ -304,7 +317,7 @@ const kategorien: KategorieSlug[] = ["G", "F", "E", "D", "C", "B", "A"];
 const lozengeBedeutung: [LozengeAppearance, string][] = [
   ["neutral", "Herkunft, Entwurf, Altersstufe, Termin ausgefallen"],
   ["information", "gilt nach aussen: öffentlich, Community"],
-  ["discovery", "etwas Zusätzliches: mehrere Varianten"],
+  ["discovery", "etwas Zusätzliches: mehrere Varianten, neue Version"],
   ["warning", "braucht Aufmerksamkeit: Termin ohne Training"],
   ["success", "erledigt - im Kit, derzeit ohne Ort"],
   ["danger", "blockiert - im Kit, derzeit ohne Ort"],
@@ -1289,7 +1302,7 @@ export default function Styleguide() {
           welchem Zwischenstand es liegt (Kifu-Manual, Entwurf, Altersstufe,
           ausgefallen), <code>information</code>, was nach aussen gilt
           (Community, Öffentlich), <code>discovery</code> etwas Zusätzliches
-          (mehrere Varianten), <code>warning</code> eine Lücke, die jemand
+          (mehrere Varianten, «Neu» an der Version), <code>warning</code> eine Lücke, die jemand
           schliessen muss (Termin ohne Training). <code>success</code> und{" "}
           <code>danger</code> stehen im Kit bereit. Herkunft und Sichtbarkeit
           stehen fertig als <code>HerkunftLozenge</code> und{" "}
@@ -1694,8 +1707,13 @@ export default function Styleguide() {
           <code>bg-elev-01</code> mit <code>border-linie</code> zum Inhalt. Sie
           ist Rahmen, keine schwebende Fläche, und trägt darum keinen Schatten.
           Oben die Marke (Fussball im Primary-Quadrat, zugleich das Favicon), darunter die Einträge in
-          Gruppen, unten die Konto-Karte: Avatar, Anzeigename und E-Mail
-          führen als Ganzes ins Konto. Abmelden steht im Konto, nicht in der
+          Gruppen, unten die Versionszeile und die Konto-Karte: Avatar, Anzeigename und E-Mail
+          führen als Ganzes ins Konto. Die Versionszeile (Zeichen und Nummer, ruhiger als
+          ein Eintrag) führt zur Release-History; schmal bleibt das Zeichen. Ist ein Release
+          erschienen, den dieser Browser noch nicht gesehen hat, trägt sie die Plakette «Neu»
+          (<code>discovery</code>: etwas Zusätzliches) - schmal stattdessen einen Punkt in Primary
+          am Zeichen, die einzige Punkt-Markierung im Kit. Sie drängt sich nicht auf und
+          verschwindet, sobald die Versionen angezeigt wurden. Abmelden steht im Konto, nicht in der
           Leiste. Der offene Eintrag steht eine Stufe höher als sein Grund
           (08dp auf 01dp) und trägt sein Zeichen in Primary; aufklappbare
           Einträge (Teams) haben einen eigenen Pfeil, damit der Name selbst
@@ -3295,6 +3313,33 @@ export default function Styleguide() {
           den Regeln des Fachkerns.
         </p>
         <FelderDemo />
+      </Section>
+
+      <Section n="32" title="Release-Text">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Ein Eintrag unter «Versionen» (#408): das Thema des Releases als Titel in{" "}
+          <code>type-title-large</code> (ohne «KiFu X.Y.Z -», das die Metazeile schon sagt), darunter
+          eine Metazeile in <code>type-body-small</code> (Version, Tag der Veröffentlichung,
+          «Auf GitHub ansehen»), dann der Text, wie er auf GitHub steht. Er ist Markdown und
+          erscheint mit seiner Gliederung in der Schrift der Anwendung: Überschriften eine Stufe
+          unter dem Titel (<code>type-title-medium</code>), Listen wie im Freitext, Fettes,
+          Links in Primary, Code auf 08dp. Eingebettetes HTML und Bilder fallen weg. Einträge
+          trennt eine Haarlinie. Das Markdown ist eine Ausnahme: Was Trainer:innen selbst
+          schreiben, bleibt Freitext ohne Markdown.
+        </p>
+        <article className="flex max-w-3xl flex-col gap-3">
+          <header className="flex flex-col gap-1">
+            <h3 className="type-title-large text-on-surface">Neuigkeiten in der Seitenleiste</h3>
+            <p className="type-body-small flex flex-wrap items-center gap-x-2 text-on-surface-mittel">
+              <span>Version 1.28.0</span>
+              <span aria-hidden>·</span>
+              <span>Mi., 07.10.2026</span>
+              <span aria-hidden>·</span>
+              <a href="#release" className="text-primary underline">Auf GitHub ansehen</a>
+            </p>
+          </header>
+          <ReleaseText text={BEISPIEL_RELEASE} />
+        </article>
       </Section>
     </Seitenrahmen>
   );

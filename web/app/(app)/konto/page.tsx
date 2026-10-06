@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LogOut, Bookmark, ChevronRight } from "lucide-react";
+import { Bookmark, ChevronRight, Cookie, LogOut, type LucideIcon } from "lucide-react";
 import { Card, Button, SectionMessage } from "@/components/ui";
 import { KontoClient } from "./KontoClient";
 import { AnzeigenameForm } from "./AnzeigenameForm";
@@ -19,6 +19,40 @@ import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Konto - KiFu", robots: { index: false } };
+
+/** Eine Zeile, die vom Konto weiterführt: Zeichen, Titel, ein Satz. */
+function KontoLink({
+  href,
+  icon: Icon,
+  titel,
+  children,
+}: {
+  href: string;
+  icon: LucideIcon;
+  titel: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="focus-ring state group mb-4 flex items-center gap-4 rounded-flaeche bg-elev-01 p-5"
+    >
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
+        <Icon size={22} strokeWidth={2} aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="type-title-medium block text-on-surface">{titel}</span>
+        <span className="type-body-small block text-on-surface-mittel">{children}</span>
+      </span>
+      <ChevronRight
+        size={20}
+        strokeWidth={2}
+        className="shrink-0 text-on-surface-mittel transition-transform group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </Link>
+  );
+}
 
 export default async function KontoPage() {
   const supabase = await createClient();
@@ -55,26 +89,9 @@ export default async function KontoPage() {
         </Card>
       )}
 
-      <Link
-        href="/?mine=1"
-        className="focus-ring state group mb-4 flex items-center gap-4 rounded-flaeche bg-elev-01 p-5"
-      >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
-          <Bookmark size={22} strokeWidth={2} aria-hidden />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="type-title-medium block text-on-surface">Meine Übungen</span>
-          <span className="type-body-small block text-on-surface-mittel">
-            Deine eigenen Übungen - öffentliche und private Entwürfe.
-          </span>
-        </span>
-        <ChevronRight
-          size={20}
-          strokeWidth={2}
-          className="shrink-0 text-on-surface-mittel transition-transform group-hover:translate-x-0.5"
-          aria-hidden
-        />
-      </Link>
+      <KontoLink href="/?mine=1" icon={Bookmark} titel="Meine Übungen">
+        Deine eigenen Übungen - öffentliche und private Entwürfe.
+      </KontoLink>
 
       {/* KI-Zugänge (Story #142 AK 5, AK 6). Die Adresse steht hier, weil der
           Trainer sie in seinen KI-Client eintragen muss; ein Geheimnis gibt es
@@ -138,6 +155,12 @@ export default async function KontoPage() {
           )}
         </div>
       </Card>
+
+      {/* Was KiFu im Browser speichert (#409). Die Seite selbst ist ohne
+          Anmeldung offen; ohne Konto führen die Anmeldeseiten dorthin. */}
+      <KontoLink href="/cookies" icon={Cookie} titel="Cookies">
+        Was KiFu in deinem Browser speichert, wozu und wie du es verhinderst.
+      </KontoLink>
 
       <Card className="p-6">
         <h2 className="type-title-large text-on-surface">Konto löschen</h2>
