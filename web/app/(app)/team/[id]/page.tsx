@@ -111,7 +111,7 @@ export default async function TeamPlanPage({
             ordnest du danach zu.
           </Leerzustand>
         ) : (
-          <TrainingsPlan plan={plan} heute={heute} hervorheben={hervorheben} />
+          <TrainingsPlan plan={plan} heute={heute} ich={user.id} hervorheben={hervorheben} />
         )}
       </section>
     </TerminBereich>

@@ -123,7 +123,8 @@ import {
 } from "../lib/termin-felder";
 import { FELDER_MODELL, FelderEingabe, SPIELERZAHL_MODELL, SpielerzahlEingabe, felderAusgabe, felderSchema, spielerzahlSchema } from "../lib/termin-felder-ausgabe";
 import { MASS_TEXT } from "../lib/feldmass";
-import { ZEITRAUM_TEXT, istMonat, monatVon, monatsName, monatsRaster, plusMonate, tagText, zeitraumProblem } from "../lib/monat";
+import { ZEITRAUM_TEXT, istMonat, kalenderblatt, monatVon, monatsName, monatsRaster, plusMonate, tagOhneJahr, tagText, zeitraumProblem } from "../lib/monat";
+import { nachMonatUndTag } from "../lib/plan-gliederung";
 import { planHref } from "../lib/team-ansicht";
 import { ABO_DAUER_MIN, aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
 import { istVeraltet } from "../lib/veraltet";
@@ -1889,6 +1890,28 @@ pruefe("Kein «ansetzen» mehr in Oberfläche und KI-Texten (#323 PC 11)", () =>
         if (/ansetz|angesetzt|Ansetz|Angesetzt/.test(ohneKommentar)) treffer.push(`${relative(web, datei)}:${i + 1}`);
       });
   assert.deepEqual(treffer, [], `«ansetzen» steht noch in: ${treffer.join(", ")}`);
+});
+
+pruefe("Kalenderblatt und Tag ohne Jahr: Wochentag, Tageszahl, Monat, nie das Jahr (#402 AK 1, #403 AK 8)", () => {
+  assert.deepEqual(kalenderblatt("2026-10-06"), { wochentag: "Di", tag: 6, monat: "Okt." });
+  assert.deepEqual(kalenderblatt("2027-03-01"), { wochentag: "Mo", tag: 1, monat: "März" });
+  assert.equal(tagOhneJahr("2026-10-06"), "Dienstag, 6. Oktober");
+  assert.equal(tagOhneJahr("2026-11-01"), "Sonntag, 1. November");
+});
+
+pruefe("Plan-Gliederung: Monate und Tage in der Reihenfolge der Eingabe, im Tag der Beginn aufsteigend (#402 AK 2, 19, 20)", () => {
+  const t = (id: string, datum: string, beginn: string | null) => ({ id, datum, beginn });
+  // Anstehend kommt aufsteigend, der Rückblick absteigend und im Tag mit Beginn absteigend.
+  const anstehend = nachMonatUndTag([t("a", "2026-10-06", "18:00"), t("b", "2026-10-06", null), t("c", "2026-10-08", "17:00"), t("d", "2026-11-02", "18:00")]);
+  assert.deepEqual(anstehend.map((m) => m.monat), ["2026-10", "2026-11"]);
+  assert.deepEqual(anstehend[0].tage.map((d) => [d.datum, d.termine.map((x) => x.id)]), [["2026-10-06", ["a", "b"]], ["2026-10-08", ["c"]]]);
+  const rueckblick = nachMonatUndTag([t("x", "2026-10-05", null), t("y", "2026-10-05", "19:00"), t("z", "2026-10-05", "17:00"), t("g", "2026-10-05", "17:00"), t("w", "2026-09-30", "18:00")]);
+  assert.deepEqual(rueckblick.map((m) => m.monat), ["2026-10", "2026-09"]);
+  // Gleicher Beginn: die Reihenfolge der Eingabe (nach dem Anlegen) bleibt.
+  assert.deepEqual(rueckblick[0].tage[0].termine.map((x) => x.id), ["z", "g", "y", "x"]);
+  // Derselbe Monat in zwei Jahren bleibt getrennt.
+  assert.deepEqual(nachMonatUndTag([t("1", "2026-10-01", null), t("2", "2027-10-01", null)]).map((m) => m.monat), ["2026-10", "2027-10"]);
+  assert.deepEqual(nachMonatUndTag([]), []);
 });
 
 const ABO_JETZT = new Date("2026-10-01T10:00:00Z");

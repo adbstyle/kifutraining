@@ -12,6 +12,7 @@ export {
 } from "./Chip";
 export { Card } from "./Card";
 export { Monatsraster } from "./Monatsraster";
+export { Kalenderblatt } from "./Kalenderblatt";
 export { AuswahlListe } from "./AuswahlListe";
 export type { AuswahlEintrag } from "./AuswahlListe";
 export { FormAbschnitt } from "./FormAbschnitt";

@@ -112,11 +112,15 @@ type ReichweiteFrage = {
   geaendert?: Partial<TerminFelder> | null;
   verantwortlich?: VerantwortlicheWert;
   aenderung?: SerienAenderung;
+  /** Der geänderte Ausfallgrund — er gilt nur für diesen Termin (#402 PC 4). */
+  grund?: string;
 };
 
 /** Die Felder sind gespeichert, die Verantwortlichen nicht — weil der USER
  *  zwischen den beiden Schritten abbrach oder der zweite scheiterte (#325). */
 const NUR_FELDER_GEAENDERT = "Termin geändert. Die Verantwortlichen blieben unverändert.";
+/** Dasselbe für den Ausfallgrund, den letzten Schritt (#402 AK 13). */
+const GRUND_UNVERAENDERT = "Termin geändert. Der Grund des Ausfalls blieb unverändert.";
 
 /** Eine gerechnete Vorschau, die auf Bestätigung oder Ausführung wartet. */
 type SerienSchritt = {
@@ -125,6 +129,7 @@ type SerienSchritt = {
   reichweite: Serienweit;
   aenderung?: SerienAenderung;
   folge: SerienFolge;
+  grund?: string;
 };
 
 export function TerminBereich({
@@ -225,14 +230,15 @@ export function TerminBereich({
    *  Jeder Aufruf läuft nur, wenn sich bei ihm etwas geändert hat (PO 17);
    *  scheitert der erste, läuft der zweite nicht. Hat der USER nach dem
    *  ersten abgebrochen, läuft der zweite auch nicht: Die Dialoge bleiben
-   *  unberührt, die Snackbar sagt, dass nur die Felder gespeichert sind. */
-  function aendereEinzeln(t: TerminZeile, geaendert: Partial<TerminFelder> | null | undefined, verantwortlich?: VerantwortlicheWert) {
+   *  unberührt, die Snackbar sagt, dass nur die Felder gespeichert sind.
+   *  Ein geänderter Ausfallgrund (#402 AK 13) folgt als letzter Schritt. */
+  function aendereEinzeln(t: TerminZeile, geaendert: Partial<TerminFelder> | null | undefined, verantwortlich?: VerantwortlicheWert, grund?: string) {
     const nr = laufNr.current;
     const gilt = () => laufNr.current === nr;
     startTransition(async () => {
       if (geaendert) {
         const r = await aendereTerminAktion(t.id, geaendert, t.training?.id ?? null);
-        if (!r.ok) return einzelnGescheitert(r.error, gilt(), false);
+        if (!r.ok) return einzelnGescheitert(r.error, gilt());
       }
       if (verantwortlich) {
         if (!gilt()) {
@@ -240,7 +246,16 @@ export function TerminBereich({
           return melde(NUR_FELDER_GEAENDERT);
         }
         const v = await setzeVerantwortlicheAktion(t.id, verantwortlich, t.serie ? "nur_dieser" : undefined);
-        if (!v.ok) return einzelnGescheitert(v.error, gilt(), !!geaendert);
+        if (!v.ok) return einzelnGescheitert(v.error, gilt(), geaendert ? NUR_FELDER_GEAENDERT : undefined);
+      }
+      if (grund !== undefined) {
+        const vorher = geaendert || verantwortlich ? GRUND_UNVERAENDERT : undefined;
+        if (vorher && !gilt()) {
+          router.refresh();
+          return melde(vorher);
+        }
+        const g = await lasseAusfallenAktion(t.id, grund, null, true);
+        if (!g.ok) return einzelnGescheitert(g.error, gilt(), vorher);
       }
       router.refresh();
       if (gilt()) {
@@ -253,11 +268,11 @@ export function TerminBereich({
 
   /** Ein Fehler beim einzelnen Ändern, wie in `lauf`: Im noch offenen Dialog
    *  steht er dort, ausser er ist veraltet (PO 17) — dann schliessen und
-   *  melden. Abgebrochen: nur melden. Waren die Felder schon gespeichert, sagt
-   *  die Meldung auch das. */
-  function einzelnGescheitert(fehler: string, gilt: boolean, felderGespeichert: boolean) {
+   *  melden. Abgebrochen: nur melden. War ein früherer Schritt schon
+   *  gespeichert, sagt `gespeichert` das vor dem Fehler. */
+  function einzelnGescheitert(fehler: string, gilt: boolean, gespeichert?: string) {
     router.refresh();
-    const text = felderGespeichert ? `${NUR_FELDER_GEAENDERT} ${fehler}` : fehler;
+    const text = gespeichert ? `${gespeichert} ${fehler}` : fehler;
     if (gilt && !istVeraltet(fehler)) return setDialogFehler(text);
     if (gilt) {
       setBearbeiten(null);
@@ -302,9 +317,11 @@ export function TerminBereich({
       ? await aendereSerieAktion(b.t.id, b.reichweite, b.aenderung ?? {}, erwartet)
       : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
+    // Der Grund gilt nur für diesen Termin (#402 PC 4); er folgt der Serie nicht.
+    const g = b.grund !== undefined ? await lasseAusfallenAktion(b.t.id, b.grund, null, true) : null;
     router.refresh();
     serieSchliessen();
-    melde(b.art === "aendern" ? "Terminserie geändert." : "Termine entfernt.");
+    melde(b.art === "aendern" ? `Terminserie geändert.${g && !g.ok ? ` ${g.error}` : ""}` : "Termine entfernt.");
   }
 
   /** Speichern im Termin-Dialog. Ein einzelner Termin geht direkt; ein
@@ -312,14 +329,15 @@ export function TerminBereich({
    *  die Verantwortlichen geändert haben (#325 AK 4). Gesendet wird in jedem
    *  Fall nur, was sich geändert hat (PO 17); nichts geändert: kein Aufruf.
    *  `verantwortlich` kommt nur, wenn sich die Wahl geändert hat. */
-  function speichereBearbeitung(t: TerminZeile, f: TerminFelder, regel?: SerienRegel, verantwortlich?: VerantwortlicheWert) {
+  function speichereBearbeitung(t: TerminZeile, f: TerminFelder, regel?: SerienRegel, verantwortlich?: VerantwortlicheWert, grund?: string) {
     const geaendert = geaenderteFelder(f, startWerte(t));
     const regelNeu = t.serie && regel ? regelAenderung(t.serie, regel) : null;
     if (!geaendert && !regelNeu && !verantwortlich) {
-      setBearbeiten(null);
-      return;
+      if (grund === undefined) return setBearbeiten(null);
+      // Nur der Grund: Er gilt für diesen Termin, eine Reichweite gibt es nicht (#402 PC 4).
+      return lauf(() => lasseAusfallenAktion(t.id, grund, null, true), () => "Grund gespeichert.", () => setBearbeiten(null), true, laufNr.current);
     }
-    if (!t.serie) return aendereEinzeln(t, geaendert, verantwortlich);
+    if (!t.serie) return aendereEinzeln(t, geaendert, verantwortlich, grund);
     const datum = geaendert?.datum !== undefined;
     const namenlose = !!verantwortlich && nurNamenloseGeaendert(verantwortlich, verantwortlicheStart(t.verantwortliche));
     const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose });
@@ -342,6 +360,7 @@ export function TerminBereich({
             : undefined,
       geaendert,
       verantwortlich,
+      grund,
       // Für folgende und alle gehen die Verantwortlichen mit der übrigen
       // Änderung in EINE Serienänderung (PC 3, 11). Die Serienrechnung
       // (terminserie_rechnen) ersetzt damit an jedem erfassten Termin ALLE
@@ -361,7 +380,7 @@ export function TerminBereich({
       // Training, das im Bestand bleibt (#322).
       if (art === "entfernen") return setEntfernen(t);
       if (!frage.geaendert && !frage.verantwortlich) return;
-      return aendereEinzeln(t, frage.geaendert, frage.verantwortlich);
+      return aendereEinzeln(t, frage.geaendert, frage.verantwortlich, frage.grund);
     }
     const version = t.serie?.version ?? 0;
     const nr = laufNr.current;
@@ -373,7 +392,7 @@ export function TerminBereich({
       if (laufNr.current !== nr) return;
       if (!v.ok) return serienFehler(art, v.error);
       setReichweite(null);
-      const schritt: SerienSchritt = { art, t, reichweite: r, aenderung: frage.aenderung, folge: v.folge };
+      const schritt: SerienSchritt = { art, t, reichweite: r, aenderung: frage.aenderung, folge: v.folge, grund: frage.grund };
       // AK 8: bestätigen, wenn Termine wegfallen — beim Entfernen immer.
       if (art === "entfernen" || v.folge.entfallendAnzahl > 0) setBestaetigen(schritt);
       else await fuehreAus(schritt, nr);
@@ -453,6 +472,8 @@ export function TerminBereich({
         abweichungen={bearbeiten?.abweichungen}
         mitglieder={mitglieder}
         verantwortliche={bearbeiten?.verantwortliche}
+        ausfall={bearbeiten?.ausgefallen ? { grund: bearbeiten.ausfallGrund } : null}
+        heute={heute}
         onFolgen={(angabe) =>
           bearbeiten &&
           lauf(() => folgeDerSerieAktion(bearbeiten.id, [angabe]), () => FOLGT_WIEDER[angabe], () => setBearbeiten(null), true)
@@ -464,7 +485,7 @@ export function TerminBereich({
           neuerLauf();
           setBearbeiten(null);
         }}
-        onSpeichern={(f, regel, verantwortlich) => bearbeiten && speichereBearbeitung(bearbeiten, f, regel, verantwortlich)}
+        onSpeichern={(f, regel, verantwortlich, grund) => bearbeiten && speichereBearbeitung(bearbeiten, f, regel, verantwortlich, grund)}
       />
 
       <ReichweiteDialog
