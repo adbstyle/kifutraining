@@ -10,8 +10,8 @@ import { useSeitenleiste } from "./AppRahmen";
 import { useTeamBereich } from "./TeamKontext";
 import {
   GESEHEN_EREIGNIS,
-  gesehenCookie,
   gesehenImBrowser,
+  merkeGesehen,
   spaeter,
 } from "@/lib/versionen-gesehen";
 
@@ -58,12 +58,9 @@ export function AppNavClient({
   // ersten Besuch gilt alles Erschienene als bekannt.
   const [gesehen, setzeGesehen] = useState(gesehenVersion);
   useEffect(() => {
-    if (neuesteVersion && !gesehenImBrowser()) {
-      document.cookie = gesehenCookie(neuesteVersion);
-      setzeGesehen(neuesteVersion);
-    }
     const onGesehen = (e: Event) => setzeGesehen((e as CustomEvent<string>).detail);
     window.addEventListener(GESEHEN_EREIGNIS, onGesehen);
+    if (neuesteVersion && !gesehenImBrowser()) merkeGesehen(neuesteVersion);
     return () => window.removeEventListener(GESEHEN_EREIGNIS, onGesehen);
   }, [neuesteVersion]);
   const neu = spaeter(neuesteVersion, gesehen);

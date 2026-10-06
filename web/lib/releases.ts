@@ -7,8 +7,10 @@ import { TRAININGS_ZEITZONE } from "@/lib/zeit";
    sind (#408): Titel und Text kommen unverändert aus den GitHub-Releases, die
    Regeln dafür stehen in docs/releases/.
 
-   Abgerufen wird serverseitig und höchstens einmal pro Stunde — so ist eine
-   Änderung auf GitHub spätestens eine Stunde später zu sehen, und das Limit
+   Abgerufen wird serverseitig und höchstens alle 30 Minuten. Ein abgelaufener
+   Stand wird beim nächsten Aufruf noch einmal gezeigt und im Hintergrund
+   erneuert — so ist eine Änderung auf GitHub spätestens nach einer Stunde zu
+   sehen, und das Limit
    der GitHub-API (ohne Token 60 Abrufe pro Stunde und IP) bleibt fern.
    Scheitert ein Abruf, bleibt der zuletzt bekannte Stand stehen; wie alt er
    ist, sagt `abgerufenAm`. Ein `GITHUB_TOKEN` ist freiwillig: Er hebt nur das
@@ -18,8 +20,10 @@ import { TRAININGS_ZEITZONE } from "@/lib/zeit";
 export const APP_VERSION: string = pkg.version;
 
 const REPOSITORY = "adbstyle/kifutraining";
-/** Eine Stunde: so lange gilt ein Abruf, bevor der nächste ihn ersetzt. */
-const GUELTIG_SEKUNDEN = 60 * 60;
+/** So lange gilt ein Abruf, bevor der nächste ihn ersetzt. Die halbe der
+ *  versprochenen Stunde, weil der erste Aufruf danach den alten Stand noch
+ *  zeigt (`unstable_cache` erneuert im Hintergrund). */
+const GUELTIG_SEKUNDEN = 30 * 60;
 
 export interface Release {
   /** Ohne `v`, z. B. «1.27.0». */
@@ -44,6 +48,7 @@ interface GitHubRelease {
   name: string | null;
   body: string | null;
   draft: boolean;
+  prerelease: boolean;
   published_at: string | null;
   html_url: string;
 }
@@ -56,7 +61,7 @@ function versionsteile(version: string): number[] | null {
 
 /** Höhere Version zuerst, also 1.10.0 vor 1.9.0. Ein Release ohne
  *  lesbare Versionsnummer steht hinten, nach Datum. */
-export function vergleicheReleases(a: Release, b: Release): number {
+function vergleicheReleases(a: Release, b: Release): number {
   const va = versionsteile(a.version);
   const vb = versionsteile(b.version);
   if (va && vb) {
@@ -93,7 +98,7 @@ async function holeReleases(): Promise<ReleaseStand> {
     if (teil.length < 100) break;
   }
   const releases = roh
-    .filter((r) => !r.draft && r.published_at)
+    .filter((r) => !r.draft && !r.prerelease && r.published_at)
     .map((r) => ({
       version: r.tag_name.replace(/^v/, ""),
       titel: r.name?.trim() || r.tag_name,
@@ -111,11 +116,21 @@ const holeZwischengespeichert = unstable_cache(holeReleases, ["github-releases"]
   revalidate: GUELTIG_SEKUNDEN,
 });
 
+/* Gibt es noch keinen Stand und GitHub antwortet nicht, wartete sonst jede
+   Seite (die Seitenleiste fragt mit) auf das Zeitlimit. Darum merkt sich der
+   Server-Prozess einen Fehlschlag kurz und versucht es erst danach wieder.
+   Mit vorhandenem Stand wirft `holeZwischengespeichert` nie: Den liefert es
+   sofort und holt im Hintergrund neu. */
+const PAUSE_NACH_FEHLER_MS = 5 * 60 * 1000;
+let letzterFehlschlag = 0;
+
 /** Die Releases oder `null`, wenn es noch nie einen Stand gab. */
 export async function getReleases(): Promise<ReleaseStand | null> {
+  if (Date.now() - letzterFehlschlag < PAUSE_NACH_FEHLER_MS) return null;
   try {
     return await holeZwischengespeichert();
   } catch (fehler) {
+    letzterFehlschlag = Date.now();
     console.error(fehler);
     return null;
   }
@@ -134,13 +149,17 @@ export async function getReleasesZumLesen(): Promise<{
   veraltet: boolean;
 }> {
   const stand = await getReleases();
-  const alter = stand ? Date.now() - new Date(stand.abgerufenAm).getTime() : Infinity;
-  if (stand && alter <= GUELTIG_SEKUNDEN * 1000) return { stand, veraltet: false };
+  // Ohne Stand hat `getReleases` es eben erst versucht (oder pausiert nach
+  // einem Fehlschlag) — ein zweiter Versuch liesse nur länger warten.
+  if (!stand) return { stand, veraltet: false };
+  if (Date.now() - new Date(stand.abgerufenAm).getTime() <= GUELTIG_SEKUNDEN * 1000) {
+    return { stand, veraltet: false };
+  }
   try {
     return { stand: await holeReleases(), veraltet: false };
   } catch (fehler) {
     console.error(fehler);
-    return { stand, veraltet: !!stand };
+    return { stand, veraltet: true };
   }
 }
 

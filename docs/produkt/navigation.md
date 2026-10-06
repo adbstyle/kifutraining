@@ -43,8 +43,8 @@ sich der Browser und behält sie beim nächsten Besuch.
 
 Die Seite „Versionen" zeigt, was jede Version von KiFu gebracht hat, die neueste zuerst — alle
 seit 1.0.0. Zu jeder steht ihr Titel, die Versionsnummer, der Tag der Veröffentlichung und
-der Text, wie er im öffentlichen Repository auf GitHub steht: unverändert, mit Gliederung,
-Hervorhebungen und Links, auch mit technischen Abschnitten und Issue-Nummern. Ein Verweis
+der Text, wie er auf der öffentlichen Projektseite auf GitHub steht: unverändert, mit Gliederung,
+Hervorhebungen und Links, auch mit technischen Abschnitten und Nummern von Aufgaben. Ein Verweis
 führt zur Veröffentlichung auf GitHub. Die Seite ist ohne Anmeldung zugänglich und hat eine
 eigene Adresse, die sich weitergeben lässt.
 
@@ -58,8 +58,8 @@ Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, di
 Breite der Seitenleiste, die gezogene Breite der Spalte und bis zu welcher Version man
 „Versionen" gesehen hat — je mit Zweck, Dauer, Namen und dem, was ohne sie nicht mehr geht.
 Sie sagt auch, wie man Cookies in den Einstellungen des Browsers sperrt oder löscht. Sie hängt
-am Konto (Brotkrume „Konto › Cookies") und ist ohne Anmeldung über einen Verweis unten auf den
-Seiten zum Anmelden und Registrieren erreichbar; sie funktioniert auch mit gesperrten Cookies.
+am Konto (Brotkrume „Konto › Cookies") und ist ohne Anmeldung über einen Verweis unten auf allen
+Seiten ohne Leiste erreichbar, etwa beim Anmelden und Registrieren; sie funktioniert auch mit gesperrten Cookies.
 
 ## Brotkrumen
 
@@ -110,7 +110,7 @@ Die Oberfläche ist knapp gehalten. Überschriften stehen in gewöhnlicher Schre
 Grossbuchstaben; klein und in Grossbuchstaben bleiben nur kurze Beschriftungen. Plaketten stehen
 wie in Jira in gewöhnlicher Schreibung auf einer zart getönten Fläche. Ihre Farbe sagt, ob sie
 bloss etwas benennt — Herkunft, Entwurf, Altersstufe (grau) —, nach aussen gilt (blau), etwas
-Zusätzliches meldet wie mehrere Varianten (violett) oder Aufmerksamkeit braucht wie ein Termin
+Zusätzliches meldet wie mehrere Varianten oder eine neue Version (violett) oder Aufmerksamkeit braucht wie ein Termin
 ohne Training (orange). Die Alterskategorien stehen als einzelne Buchstaben, jede in einer festen
 Farbe aus derselben Palette; bei ihnen zählt der Buchstabe, nicht die Bedeutung der Farbe.
 Alles, was sich bedienen lässt — Knöpfe, Felder, Filter, Einträge der Seitenleiste, Zeilen in
@@ -182,7 +182,7 @@ beschreibt nur, was im Browser liegt. Eine eigene Einstellung, um Cookies abzusc
 es nicht — das geht über den Browser.
 
 „Versionen" zeigt die Texte so, wie sie veröffentlicht wurden; ältere enthalten Technisches,
-Issue-Nummern und Aussagen, die inzwischen überholt sind. Issue-Nummern sind dort kein Link,
+Nummern von Aufgaben und Aussagen, die inzwischen überholt sind. Nummern von Aufgaben sind dort kein Link,
 Bilder in einem Release-Text erscheinen nicht. Kurz nach einem Release kann die Version in der
 Leiste schon neuer sein als der neueste Eintrag unter „Versionen" oder umgekehrt. Ob eine
 Version gesehen ist, merkt sich jeder Browser für sich, nicht das Konto: Auf einem anderen

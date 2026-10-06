@@ -353,7 +353,8 @@ const VERBOTEN: [RegExp, string][] = [
   // `--diagramm-rasen-streifen` und ist genau richtig so.
   [/\b(?:bg|text|border|fill|stroke|ring|from|via|to)-rasen-/, "alte Rasen-Palette"],
   [/chalk/, "alte Kreide-Palette"],
-  [/(?<![\wä-ü])signal(?![\wä-ü])|-signal\b/, "alter Signal-Akzent"],
+  // Nicht gemeint ist die Fetch-Option `signal:` (Abbruch eines Abrufs).
+  [/(?<![\wä-ü])signal(?![\wä-ü:])|-signal\b/, "alter Signal-Akzent"],
   [/surface-container/, "M3-Surface-Leiter (ersetzt durch elev-*)"],
   [/surface-dim/, "M3-Surface-Leiter"],
   [/surface-bright/, "M3-Surface-Leiter"],

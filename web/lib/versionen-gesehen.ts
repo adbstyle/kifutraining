@@ -14,21 +14,31 @@ export const GESEHEN_COOKIE = "kifu-versionen";
 /** Ein Jahr, wie die übrigen Cookies der Anwendung. */
 const GESEHEN_MAX_AGE = 60 * 60 * 24 * 365;
 
-/** Der gemerkte Zeitpunkt, oder `null`, wenn fehlend oder unlesbar. */
+/** Der gemerkte Zeitpunkt (schon dekodiert, wie ihn `cookies()` liefert),
+ *  oder `null`, wenn fehlend oder unlesbar. */
 export function leseGesehen(wert: string | undefined): string | null {
-  if (!wert) return null;
-  const iso = decodeURIComponent(wert);
-  return Number.isNaN(Date.parse(iso)) ? null : iso;
+  return wert && !Number.isNaN(Date.parse(wert)) ? wert : null;
 }
 
-export function gesehenCookie(iso: string): string {
+function gesehenCookie(iso: string): string {
   return `${GESEHEN_COOKIE}=${encodeURIComponent(iso)}; path=/; max-age=${GESEHEN_MAX_AGE}; samesite=lax`;
 }
 
-/** Aus `document.cookie` (nur im Browser). */
+/** Aus `document.cookie` (nur im Browser). Ein von Hand verdorbener Wert
+ *  gilt als fehlend, statt beim Dekodieren zu werfen. */
 export function gesehenImBrowser(): string | null {
   const paar = document.cookie.split("; ").find((c) => c.startsWith(`${GESEHEN_COOKIE}=`));
-  return leseGesehen(paar?.slice(GESEHEN_COOKIE.length + 1));
+  try {
+    return leseGesehen(paar && decodeURIComponent(paar.slice(GESEHEN_COOKIE.length + 1)));
+  } catch {
+    return null;
+  }
+}
+
+/** Merkt `iso` als gesehen und sagt es der Seitenleiste (nur im Browser). */
+export function merkeGesehen(iso: string) {
+  document.cookie = gesehenCookie(iso);
+  window.dispatchEvent(new CustomEvent(GESEHEN_EREIGNIS, { detail: iso }));
 }
 
 /** Ist `a` später als `b`? Fehlt `b`, ist nichts neu: Beim ersten Besuch

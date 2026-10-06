@@ -13,7 +13,8 @@ import { AppNavClient } from "./AppNavClient";
 const TRAINING_PFAD = /^\/training\/([0-9a-f-]{36})(\/|$)/i;
 
 /* App-Chrome: die Seitenleiste. Server-Komponente — liest die Session, die
-   eigenen Teams (Unterpunkte von „Teams") und den Anzeigenamen (Konto-Karte);
+   eigenen Teams (Unterpunkte von „Teams"), den Anzeigenamen (Konto-Karte) und
+   für die Markierung neuer Versionen die Releases und das Cookie (#410);
    Aktiv-Zustand und Drawer übernimmt der Client-Teil.
 
    Ein Team-Training liegt zwar unter `/training/…`, gehört aber in den
@@ -36,6 +37,11 @@ export async function AppNav() {
   const pfad = (await headers()).get(PFAD_HEADER) ?? "";
   const trainingId = pfad.match(TRAINING_PFAD)?.[1];
 
+  // Für die Markierung neuer Releases (#410): der neueste veröffentlichte
+  // und der zuletzt gesehene. Ohne Releases (GitHub nie erreicht) keine
+  // Markierung — die Version steht trotzdem. Läuft parallel zum Rest.
+  const releases = getReleases();
+
   // Nur angemeldet nötig: Teams sieht nur, wer Mitglied ist. Ohne Recht am
   // Training liefert die RLS `null` — die Navigation verrät dann nichts.
   // Scheitert eine der Abfragen, fehlt nur ihr Teil der Leiste, nicht die Seite.
@@ -49,10 +55,7 @@ export async function AppNav() {
       ])
     : [null, [], null];
 
-  // Für die Markierung neuer Releases (#410): der neueste veröffentlichte
-  // und der zuletzt gesehene. Ohne Releases (GitHub nie erreicht) keine
-  // Markierung — die Version steht trotzdem.
-  const [stand, jar] = await Promise.all([getReleases(), cookies()]);
+  const [stand, jar] = await Promise.all([releases, cookies()]);
   const neueste = stand && neuesteVeroeffentlichung(stand.releases);
   const gesehen = leseGesehen(jar.get(GESEHEN_COOKIE)?.value);
 

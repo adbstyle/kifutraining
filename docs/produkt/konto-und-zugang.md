@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-10-05. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-10-06. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -24,8 +24,8 @@ Weg, das Passwort im laufenden Betrieb ohne diesen Mailversand zu wechseln, gibt
 
 Die Konto-Seite zeigt die eigene E-Mail-Adresse, bietet das Abmelden an, führt zu den eigenen
 Übungen, lässt den Anzeigenamen setzen, listet die verbundenen KI-Assistenten und die
-Kalender-Abos, führt zur Seite „Cookies" (siehe Navigation) und bietet das Löschen des Kontos an. Mehr Profilangaben gibt es nicht — kein Bild, keine Adresse, keine
-Vereinszugehörigkeit.
+Kalender-Abos, führt zur Seite „Cookies" (siehe Navigation) und bietet das Löschen des Kontos
+an. Mehr Profilangaben gibt es nicht — kein Bild, keine Adresse, keine Vereinszugehörigkeit.
 
 ## Der Anzeigename
 

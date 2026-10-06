@@ -21,7 +21,7 @@ import type { KategorieSlug } from "@/lib/vocab";
    - `neutral` — benennt bloss: Herkunft, Entwurf, Altersstufe, eingeplant,
      ausgefallen, ohne Training.
    - `information` — gilt nach aussen: öffentlich, Community.
-   - `discovery` — etwas Zusätzliches: mehrere Varianten.
+   - `discovery` — etwas Zusätzliches: mehrere Varianten, eine neue Version.
    - `warning` — braucht Aufmerksamkeit: Termin ohne Training.
    - `success` / `danger` — erledigt / blockiert (im Kit, derzeit ohne Ort).
    - `accent-*` — Kategorien ohne Wertung; bei uns die Alterskategorien.

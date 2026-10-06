@@ -22,11 +22,13 @@ export interface Speicherung {
 export const SPEICHERUNGEN: Speicherung[] = [
   {
     // Supabase Auth: `sb-<Projekt>-auth-token`, bei grossen Sitzungen auf
-    // mehrere Cookies (`.0`, `.1`) verteilt.
-    name: "sb-…-auth-token",
+    // mehrere Cookies (`.0`, `.1`) verteilt; beim Registrieren und beim
+    // Zurücksetzen des Passworts dazu `…-code-verifier` (PKCE). Die Cookies
+    // von @supabase/ssr gelten 400 Tage.
+    name: "sb-…-auth-token, sb-…-auth-token-code-verifier",
     titel: "Anmeldung",
-    zweck: "Hält dich angemeldet, damit du deine Übungen, Trainings und Teams siehst.",
-    dauer: "Bis du dich abmeldest.",
+    zweck: "Hält dich angemeldet, damit du deine Übungen, Trainings und Teams siehst. Beim Registrieren und beim Zurücksetzen des Passworts sichert ein zweites Cookie den Bestätigungslink ab.",
+    dauer: "Bis du dich abmeldest, längstens gut ein Jahr.",
     ohne: "Du kannst dich nicht anmelden. Übungen und öffentliche Trainings kannst du weiterhin ansehen, durchführen und drucken.",
   },
   {
