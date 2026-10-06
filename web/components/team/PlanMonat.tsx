@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { MARKEN_TEXT, MiniMonat, type Marke } from "@/components/ui";
-import { monatVon, tagText } from "@/lib/monat";
+import { monatVon } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 import { terminZustand, type TerminZeile } from "@/lib/queries/termine-fuer";
 
@@ -95,7 +95,7 @@ export function PlanMonat({
           tag.termine.map((t) => {
             const z = terminZustand(t, heute);
             const was = z === "training" ? t.training!.name : MARKEN_TEXT[z];
-            return { id: t.id, zustand: z, label: `${tagText(t.datum)}, ${t.beginn ?? "Zeit fehlt"}, ${was}` };
+            return { id: t.id, zustand: z, label: `${t.beginn ?? "Zeit fehlt"} ${was}` };
           }),
         );
     return m;

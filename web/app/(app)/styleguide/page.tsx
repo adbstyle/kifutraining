@@ -3282,9 +3282,9 @@ export default function Styleguide() {
       <Section n="33" title="Mini-Monat">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401). Neu, weil kein Baustein ein
-          Kalenderraster kennt. <code>MiniMonat</code> zeigt je Tag nur Zeichen,
-          und jedes Zeichen ist ein Knopf zu seinem Eintrag (<code>onWahl</code>); ein leerer Tag ist kein
-          Knopf. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender
+          Kalenderraster kennt. <code>MiniMonat</code> zeigt je Eintrag ein kleines Badge unten im Tag; die
+          Zellen sind alle gleich hoch. Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
+          (<code>onWahl</code>), ein leerer Tag ist keiner. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender
           folgt der Monat der Liste, die Liste aber nicht ihm.
         </p>
         <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
@@ -3294,11 +3294,11 @@ export default function Styleguide() {
             nichts allein; die Legende nennt jedes Zeichen.
           </li>
           <li>
-            <strong>Mehr als zwei</strong> - der erste Eintrag und «+n»; die übrigen stehen in der Liste.
+            <strong>Mehr als drei</strong> - zwei Badges und «+n»; die übrigen stehen in der Liste.
           </li>
           <li>
-            <strong>Zielgrösse</strong> - die Zeichen-Knöpfe sind so breit wie der Tag und 20 px hoch, mit
-            4 px Abstand: Ihre Mitten liegen 24 px auseinander (WCAG 2.5.8).
+            <strong>Zielgrösse</strong> - geklickt wird der ganze Tag (44 px hoch), nicht das einzelne Badge,
+            das dafür zu klein wäre (WCAG 2.5.8).
           </li>
           <li>
             <strong>Belegt</strong> - ein gepunkteter Ring um die Tageszahl: Dort liegt etwas, das der Monat

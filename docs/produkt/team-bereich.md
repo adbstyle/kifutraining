@@ -322,14 +322,15 @@ kein Datum vor.
 Auf breiten Bildschirmen, ab etwa der Breite eines Tablets im Querformat, steht rechts neben
 den Terminen ein Monat und bleibt beim Scrollen stehen. Er zeigt Monat und Jahr, die Wochen von
 Montag bis Sonntag samt den Randtagen der Nachbarmonate und hebt den heutigen Tag hervor. Jeder
-Termin eines Tages steht als Zeichen, dessen Form sagt, was er ist: ein Punkt für ein Training,
+Termin eines Tages steht als kleines Zeichen unten im Tag, dessen Form sagt, was er ist: ein Punkt für ein Training,
 ein Ring für „Noch kein Training", ein Strich für vergangen ohne Training, ein Kreuz für
-ausgefallen; eine Legende darunter nennt sie. Trägt ein Tag mehr als zwei Termine, steht der
-erste und „+" mit der Zahl der weiteren. Wie im Google Kalender folgt der Monat der Liste: Er
+ausgefallen; eine Legende darunter nennt sie. Trägt ein Tag mehr als drei Termine, stehen zwei
+Zeichen und „+" mit der Zahl der weiteren. Wie im Google Kalender folgt der Monat der Liste: Er
 zeigt den Monat des obersten Termins, den man gerade sieht. Mit den Pfeilen und „Heute"
-wechselt nur der Monat, die Liste bleibt stehen, bis man wieder scrollt. Ein Klick auf ein
-Zeichen führt in der Liste zum Termin, beim nächsten Termin zur Karte zuoberst, bei einem
-vergangenen in den Rückblick, der dafür aufgeht. Ein Tag ohne Termin reagiert nicht; anlegen
+wechselt nur der Monat, die Liste bleibt stehen, bis man wieder scrollt. Ein Klick auf einen
+Tag mit Terminen führt in der Liste zu seinem ersten Termin, beim nächsten Termin zur Karte
+zuoberst, bei einem vergangenen in den Rückblick, der dafür aufgeht; die weiteren Termine des
+Tages folgen direkt darunter. Ein Tag ohne Termin reagiert nicht; anlegen
 lässt sich aus dem Monat nichts. Am Handy gibt es den Monat nicht, ebensowenig auf Papier.
 
 Jede eigene Änderung erscheint sofort in der Liste, am nächsten Termin und im Monat, und die
@@ -495,7 +496,7 @@ Kopie unbemerkt im Team-Bestand stehen bleiben.
 
 Eine Tages- oder Wochenansicht gibt es nicht; für die nächsten Wochen dient die Liste, und sie
 ist nicht nach Wochen gegliedert. Der Monat neben den Terminen zeigt weder Zeiten noch Namen und
-nicht, ob einem Termin der Beginn fehlt; trägt ein Tag mehr als zwei Termine, stehen die
+nicht, ob einem Termin der Beginn fehlt; trägt ein Tag mehr als drei Termine, stehen die
 Zustände der weiteren nur in der Liste. Termine lassen sich dort nicht durch Ziehen
 verschieben, und weder die Zurück-Taste noch eine geteilte Adresse führen zu einem gezeigten
 Monat. Am Handy fehlt der Monat ganz; wer dort weiter vorausplant, scrollt die Liste. Der

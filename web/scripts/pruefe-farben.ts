@@ -245,11 +245,12 @@ pruefe("Jede Lozenge trägt ihre Schrift auf jeder Höhenstufe", () => {
   }
 });
 
-pruefe("Die Zeichen im Mini-Monat heben sich von ihrem Knopf ab (WCAG 1.4.11)", () => {
+pruefe("Die Zeichen im Mini-Monat heben sich von seiner Fläche ab (WCAG 1.4.11)", () => {
   // MiniMonat: Punkt in Primary, Ring in der Warnfarbe (`icon-warning`),
-  // Strich und Kreuz in der leisen Schrift — je auf dem Knopf (elev-08). Als
-  // Grafik brauchen sie 3:1; die Form trägt den Zustand ohnehin mit.
-  const knopf = elev(8);
+  // Strich und Kreuz in der leisen Schrift — als Badges im Tag auf der
+  // Fläche des Monats (elev-01). Als Grafik brauchen sie 3:1; die Form trägt
+  // den Zustand ohnehin mit.
+  const knopf = elev(1);
   const zeichen: [string, string][] = [
     ["Training", PRIMARY],
     ["Noch kein Training", SECTION.warning.icon],
@@ -257,7 +258,7 @@ pruefe("Die Zeichen im Mini-Monat heben sich von ihrem Knopf ab (WCAG 1.4.11)", 
   ];
   for (const [was, farbe] of zeichen) {
     const wert = kontrast(farbe, knopf);
-    assert.ok(wert >= 3, `${was} auf ${elevName(8)}: ${z(wert)}:1`);
+    assert.ok(wert >= 3, `${was} auf ${elevName(1)}: ${z(wert)}:1`);
   }
 });
 
