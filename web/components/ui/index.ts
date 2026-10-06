@@ -13,6 +13,8 @@ export {
 export { Card } from "./Card";
 export { Monatsraster } from "./Monatsraster";
 export { Kalenderblatt } from "./Kalenderblatt";
+export { MiniMonat, MarkenZeichen, MARKEN_TEXT } from "./MiniMonat";
+export type { Marke, MarkenZustand } from "./MiniMonat";
 export { AuswahlListe } from "./AuswahlListe";
 export type { AuswahlEintrag } from "./AuswahlListe";
 export { FormAbschnitt } from "./FormAbschnitt";

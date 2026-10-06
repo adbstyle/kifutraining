@@ -47,11 +47,12 @@ export function NaechsterTermin({
   return (
     <Card
       id={t.id}
+      data-datum={t.datum}
       aria-current={hervorgehoben ? "true" : undefined}
-      tabIndex={hervorgehoben ? -1 : undefined}
+      tabIndex={-1}
       className={cn(
-        "mt-2 bg-elev-04 p-4",
-        hervorgehoben ? "kontur border-primary outline-none" : "kontur border-kante",
+        "mt-2 bg-elev-04 p-4 outline-none focus:border-primary",
+        hervorgehoben ? "kontur border-primary" : "kontur border-kante",
       )}
     >
       <div className="flex items-start justify-between gap-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { CalendarDays, CalendarOff, CalendarPlus, CalendarX2, LandPlot, MapPin, MessageSquareText, Pencil, PlayCircle, Repeat, Shirt, Trash2, Undo2, Unlink, UserCheck, Users } from "lucide-react";
 import { Card, Disclosure, IconButton, IconButtonLink, Kalenderblatt, KategorieLozenge, Lozenge, OverflowMenu, Tooltip } from "@/components/ui";
@@ -8,11 +8,12 @@ import { cn } from "@/lib/cn";
 import { useTerminAktionen } from "./TerminBereich";
 import { TerminHandgriffe } from "./TerminHandgriffe";
 import { NaechsterTermin } from "./NaechsterTermin";
+import { PlanMonat } from "./PlanMonat";
 import { wochentageText } from "@/lib/serie";
 import { spielerzahlText, zeitText } from "@/lib/termin";
 import { felderKurz } from "@/lib/termin-felder";
 import { datumKurz } from "@/lib/zeit";
-import { monatsName } from "@/lib/monat";
+import { monatVon, monatsName } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
 // Werte aus termine-fuer.ts, nicht aus termine.ts: Jenes zieht den Cookie-Client
 // (next/headers) ins Client-Bundle.
@@ -22,8 +23,29 @@ import { nochNichtVorbereitet, verantwortlichenNamen, verantwortlicheMitDir, typ
    mit Story 18 und Epic #401): zuoberst, was ansteht, danach der Rückblick,
    zugeklappt. Beide sind nach Monaten gegliedert, die Überschrift nennt das
    Jahr (#402 AK 20); darin steht jeder Tag einmal als Kalenderblatt mit
-   seinen Terminen als knappe Zeilen (AK 1, 2). */
-export function TrainingsPlan({ plan, heute, ich, hervorheben }: { plan: Plan; heute: string; ich: string; hervorheben?: string }) {
+   seinen Terminen als knappe Zeilen (AK 1, 2).
+
+   Ab `lg` steht der Monat daneben und bleibt beim Scrollen stehen (#404
+   AK 1, 15); schmal und auf Papier gibt es ihn nicht (OoS 7). Ohne Termine
+   steht `leer` an der Stelle der Liste. */
+export function TrainingsPlan({
+  plan,
+  heute,
+  ich,
+  hervorheben,
+  belegt,
+  meine,
+  leer,
+}: {
+  plan: Plan;
+  heute: string;
+  ich: string;
+  hervorheben?: string;
+  /** Tage mit Terminen, die «Meine Termine» ausblendet (#404 AK 14). */
+  belegt: readonly string[];
+  meine: boolean;
+  leer?: ReactNode;
+}) {
   const nichtsMehrOffen = plan.kommend.length === 0;
   // #403: Der erste anstehende Termin — auch ein ausgefallener (PO 6) — steht
   // zuoberst und nicht noch einmal in der Liste (AK 18); die Zahl zählt ihn
@@ -31,10 +53,16 @@ export function TrainingsPlan({ plan, heute, ich, hervorheben }: { plan: Plan; h
   // zuletzt) kommt aus der Datenbank (AK 16), die Eingrenzung auf die
   // eigenen Termine aus der Seite (AK 17).
   const [naechster, ...danach] = plan.kommend;
+  const liste = useRef<HTMLDivElement>(null);
+  // #404 AK 10, 11: ein im Monat gewählter Termin. `nr` macht jede Wahl neu,
+  // auch dieselbe zweimal.
+  const [sprung, setSprung] = useState<{ id: string; nr: number } | null>(null);
   // #330 PC 7: Der Verweis aus dem Kalender zeigt auch einen Termin im
   // Rückblick — der Abschnitt klappt dafür auf, und `key` setzt den
-  // Anfangszustand neu, wenn ein anderer Termin gemeint ist.
+  // Anfangszustand neu, wenn ein anderer Termin gemeint ist. Ebenso ein im
+  // Monat gewählter vergangener Termin (#404 PC 7); zugeklappt wird nie.
   const imRueckblick = hervorheben !== undefined && plan.vergangen.some((t) => t.id === hervorheben);
+  const sprungZurueck = sprung !== null && plan.vergangen.some((t) => t.id === sprung.id);
   // Beim Einhängen (Kindeffekte laufen vor diesem): Der Rückblick ist dann schon offen.
   useEffect(() => {
     const ziel = hervorheben ? document.getElementById(hervorheben) : null;
@@ -42,29 +70,53 @@ export function TrainingsPlan({ plan, heute, ich, hervorheben }: { plan: Plan; h
     // Auch Tastatur und Vorlesehilfe landen dort: Der Fokus folgt dem Scrollen.
     ziel?.focus({ preventScroll: true });
   }, [hervorheben]);
+  // Zum gewählten Termin, oben unter die Kopfzeile (`scroll-padding-top`) —
+  // so ist er der oberste und der Monat bleibt seiner (#404 AK 3). Der
+  // nächste Termin ist dabei die Karte zuoberst (PC 8).
+  useEffect(() => {
+    const ziel = sprung ? document.getElementById(sprung.id) : null;
+    ziel?.scrollIntoView({ block: "start" });
+    ziel?.focus({ preventScroll: true });
+  }, [sprung]);
+
+  const alle = [...plan.vergangen, ...plan.kommend];
   return (
-    <>
-      {!nichtsMehrOffen && (
-        <section>
-          <h3 className="type-title-small text-on-surface-mittel">
-            Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
-          </h3>
-          {naechster && <NaechsterTermin t={naechster} heute={heute} ich={ich} hervorgehoben={naechster.id === hervorheben} />}
-          <PlanMonate termine={danach} heute={heute} ich={ich} hervorheben={hervorheben} />
-        </section>
-      )}
-      {plan.vergangen.length > 0 && (
-        <Disclosure
-          key={`${nichtsMehrOffen ? "allein" : "mit-kommendem"}-${imRueckblick ? hervorheben : ""}`}
-          title="Vergangen"
-          count={plan.vergangen.length}
-          defaultOpen={nichtsMehrOffen || imRueckblick}
-          className={cn(plan.kommend.length > 0 && "mt-6")}
-        >
-          <PlanMonate termine={plan.vergangen} heute={heute} ich={ich} hervorheben={hervorheben} />
-        </Disclosure>
-      )}
-    </>
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_16.5rem] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
+      <div ref={liste} className="min-w-0">
+        {alle.length === 0 && leer}
+        {!nichtsMehrOffen && (
+          <section>
+            <h3 className="type-title-small text-on-surface-mittel">
+              Als Nächstes <span className="text-on-surface-tief">{plan.kommend.length}</span>
+            </h3>
+            {naechster && <NaechsterTermin t={naechster} heute={heute} ich={ich} hervorgehoben={naechster.id === hervorheben} />}
+            <PlanMonate termine={danach} heute={heute} ich={ich} hervorheben={hervorheben} />
+          </section>
+        )}
+        {plan.vergangen.length > 0 && (
+          <Disclosure
+            key={`${nichtsMehrOffen ? "allein" : "mit-kommendem"}-${imRueckblick ? hervorheben : ""}-${sprungZurueck ? sprung.nr : ""}`}
+            title="Vergangen"
+            count={plan.vergangen.length}
+            defaultOpen={nichtsMehrOffen || imRueckblick || sprungZurueck}
+            className={cn(plan.kommend.length > 0 && "mt-6")}
+          >
+            <PlanMonate termine={plan.vergangen} heute={heute} ich={ich} hervorheben={hervorheben} />
+          </Disclosure>
+        )}
+      </div>
+      <div className="sticky top-20 hidden lg:block print:hidden">
+        <PlanMonat
+          termine={alle}
+          heute={heute}
+          belegt={belegt}
+          meine={meine}
+          anfang={monatVon(plan.kommend[0]?.datum ?? heute)}
+          liste={liste}
+          onWahl={(id) => setSprung((s) => ({ id, nr: (s?.nr ?? 0) + 1 }))}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -113,11 +165,13 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
   return (
     <li
       id={t.id}
+      data-datum={t.datum}
       aria-current={hervorgehoben ? "true" : undefined}
-      tabIndex={hervorgehoben ? -1 : undefined}
+      // Sprungziel aus dem Kalender-Abo und dem Monat; die Kontur zeigt, wo man landet.
+      tabIndex={-1}
       className={cn(
-        "state relative flex items-start gap-2 rounded-klein px-2 py-1.5",
-        hervorgehoben && "kontur border-primary outline-none",
+        "state relative flex items-start gap-2 rounded-klein px-2 py-1.5 outline-none focus:kontur focus:border-primary",
+        hervorgehoben && "kontur border-primary",
       )}
     >
       <div className={cn("min-w-0 flex-1", (vergangen || t.ausgefallen) && "[&_.gedaempft]:opacity-60")}>

@@ -11,6 +11,7 @@ import { NurMeineFilter } from "@/components/team/NurMeineFilter";
 import { istUuid } from "@/lib/kennung";
 import { getTeam } from "@/lib/queries/teams";
 import { getTeamPlan, teilePlan } from "@/lib/queries/termine";
+import { istVerantwortlich } from "@/lib/queries/termine-fuer";
 import { getTeamTrainings, getTrainingPool } from "@/lib/queries/trainings";
 import { istMonat, monatVon } from "@/lib/monat";
 import { planHref, type Ansicht } from "@/lib/team-ansicht";
@@ -65,13 +66,18 @@ export default async function TeamPlanPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [termine, trainings, persoenliche, team] = await Promise.all([
-    getTeamPlan(id, { nurMeine: meine ? user.id : undefined }),
+  const [alleTermine, trainings, persoenliche, team] = await Promise.all([
+    getTeamPlan(id),
     getTeamTrainings(id),
     // Die eigenen Trainings, Entwürfe und öffentliche: zuordenbar als Kopie (#328).
     getTrainingPool({ mine: true }),
     getTeam(id),
   ]);
+  // Eingegrenzt wird hier statt in der Abfrage: Der Monat braucht auch die
+  // Tage, an denen nur Termine anderer liegen (#404 AK 14).
+  const termine = meine ? alleTermine.filter((t) => istVerantwortlich(t, user.id)) : alleTermine;
+  const eigeneTage = new Set(termine.map((t) => t.datum));
+  const belegt = meine ? [...new Set(alleTermine.map((t) => t.datum))].filter((d) => !eigeneTage.has(d)) : [];
   const plan = teilePlan(termine, heute);
   const leer = termine.length === 0;
 
@@ -100,18 +106,28 @@ export default async function TeamPlanPage({
         {terminWeg && <SectionMessage className="mb-4">{TERMIN_WEG}</SectionMessage>}
         {ansicht === "monat" ? (
           <MonatsUeberblick teamId={id} monat={monat} termine={termine} heute={heute} meine={meine} />
-        ) : leer && meine ? (
-          <Leerzustand icon={UserCheck} titel="Keine Termine für dich" dicht>
-            Du bist für keinen Termin verantwortlich. Eintragen kannst du dich, wenn du einen Termin
-            änderst.
-          </Leerzustand>
-        ) : leer ? (
-          <Leerzustand icon={CalendarPlus} titel="Noch keine Termine" dicht>
-            Lege die Trainingszeiten des Teams als Termine fest. Welches Training dort stattfindet,
-            ordnest du danach zu.
-          </Leerzustand>
         ) : (
-          <TrainingsPlan plan={plan} heute={heute} ich={user.id} hervorheben={hervorheben} />
+          <TrainingsPlan
+            plan={plan}
+            heute={heute}
+            ich={user.id}
+            hervorheben={hervorheben}
+            belegt={belegt}
+            meine={meine}
+            leer={
+              meine ? (
+                <Leerzustand icon={UserCheck} titel="Keine Termine für dich" dicht>
+                  Du bist für keinen Termin verantwortlich. Eintragen kannst du dich, wenn du einen Termin
+                  änderst.
+                </Leerzustand>
+              ) : (
+                <Leerzustand icon={CalendarPlus} titel="Noch keine Termine" dicht>
+                  Lege die Trainingszeiten des Teams als Termine fest. Welches Training dort stattfindet,
+                  ordnest du danach zu.
+                </Leerzustand>
+              )
+            }
+          />
         )}
       </section>
     </TerminBereich>

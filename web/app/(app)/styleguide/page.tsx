@@ -59,6 +59,7 @@ import { ChipMenuDemo } from "./ChipMenuDemo";
 import { MaterialDemo } from "./MaterialDemo";
 import { FelderDemo } from "./FelderDemo";
 import { MonatsrasterDemo } from "./MonatsrasterDemo";
+import { MiniMonatDemo } from "./MiniMonatDemo";
 import { AnsichtWahl } from "@/components/team/AnsichtWahl";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
@@ -3367,6 +3368,36 @@ export default function Styleguide() {
           <Kalenderblatt datum="2026-10-08" />
           <Kalenderblatt datum="2026-11-02" />
         </div>
+      </Section>
+
+      <Section n="34" title="Mini-Monat">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401). Neu, weil das{" "}
+          <code>Monatsraster</code> zum Lesen gebaut ist - Einträge mit Zeit und Namen, mindestens 36 rem
+          breit - und nicht in eine Seitenspalte passt. <code>MiniMonat</code> zeigt je Tag nur Zeichen,
+          und jedes Zeichen ist ein Knopf zu seinem Eintrag (<code>onWahl</code>); ein leerer Tag ist kein
+          Knopf. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender
+          folgt der Monat der Liste, die Liste aber nicht ihm.
+        </p>
+        <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+          <li>
+            <strong>Zustand als Form</strong> - gefüllter Punkt (Training), Ring in der Warnfarbe (noch kein
+            Training), Strich (vergangen ohne Training), Kreuz (ausgefallen). Die Farbe hilft, trägt aber
+            nichts allein; die Legende nennt jedes Zeichen.
+          </li>
+          <li>
+            <strong>Mehr als zwei</strong> - der erste Eintrag und «+n»; die übrigen stehen in der Liste.
+          </li>
+          <li>
+            <strong>Zielgrösse</strong> - die Zeichen-Knöpfe sind so breit wie der Tag und 20 px hoch, mit
+            4 px Abstand: Ihre Mitten liegen 24 px auseinander (WCAG 2.5.8).
+          </li>
+          <li>
+            <strong>Belegt</strong> - ein gepunkteter Ring um die Tageszahl: Dort liegt etwas, das der Monat
+            nicht zeigt (bei «Meine Termine» die Termine anderer). Heute trägt die Zahl auf Primary.
+          </li>
+        </ul>
+        <MiniMonatDemo />
       </Section>
     </Seitenrahmen>
   );
