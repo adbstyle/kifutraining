@@ -4,17 +4,15 @@
 // REIN: importiert nur lib/monat.ts (ebenfalls rein) — `check:kern` lädt sie mit tsx.
 import { monatVon } from "@/lib/monat";
 
-type Datiert = { datum: string; beginn: string | null };
+type Datiert = { datum: string; beginn: string };
 
 type TagGruppe<T> = { datum: string; termine: T[] };
 type MonatGruppe<T> = { monat: string; tage: TagGruppe<T>[] };
 
-/** Nach Beginn aufsteigend, Termine ohne Beginn zuletzt; bei gleichem Beginn
- *  bleibt die Reihenfolge der Eingabe (`Array.sort` ist stabil). */
+/** Nach Beginn aufsteigend; bei gleichem Beginn bleibt die Reihenfolge der
+ *  Eingabe (`Array.sort` ist stabil). */
 function nachBeginn(a: Datiert, b: Datiert): number {
   if (a.beginn === b.beginn) return 0;
-  if (a.beginn === null) return 1;
-  if (b.beginn === null) return -1;
   return a.beginn < b.beginn ? -1 : 1;
 }
 

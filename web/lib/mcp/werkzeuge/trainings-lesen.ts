@@ -122,8 +122,8 @@ const SuchenTreffer = z.object({
     .object({
       id: z.string(),
       datum: z.string(),
-      beginn: z.string().nullable(),
-      ende: z.string().nullable(),
+      beginn: z.string(),
+      ende: z.string(),
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
       felder: felderSchema(),

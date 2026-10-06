@@ -101,25 +101,14 @@ export function textProblem(f: {
   return null;
 }
 
-/** Was an einem Termin nicht stimmt, sonst `null`.
- *
- *  Ohne `bisher` ist der Termin neu: Datum, Beginn und Ende sind Pflicht
- *  (AK 2, PO 9). Mit `bisher` wird geändert: Eine Zeit, die sich ändert, muss
- *  danach vollständig sein (AK 8, 10); eine unveränderte, unvollständige Zeit
- *  eines übernommenen Termins bleibt stehen (AK 9). `bisher` trägt `HH:MM`. */
+/** Was an einem Termin nicht stimmt, sonst `null`. Datum, Beginn und Ende
+ *  sind an jedem Termin Pflicht (AK 2; Zwilling: NOT NULL und
+ *  `tt_ende_nach_beginn`). */
 export function terminProblem(
   f: { datum?: string | null; beginn?: string | null; ende?: string | null; ort?: string | null; bemerkung?: string | null },
-  bisher?: { beginn: string | null; ende: string | null },
 ): TerminProblem | null {
   if (!istKalendertag(f.datum ?? "")) return { feld: "datum", text: TERMIN_TEXT.datum };
-  const beginn = leerZuNull(f.beginn);
-  const ende = leerZuNull(f.ende);
-  const zeitGeaendert = !bisher || beginn !== bisher.beginn || ende !== bisher.ende;
-  if (zeitGeaendert) {
-    const z = zeitProblem(beginn, ende);
-    if (z) return z;
-  }
-  return textProblem(f);
+  return zeitProblem(f.beginn, f.ende) ?? textProblem(f);
 }
 
 /** Die erwartete Spielerzahl (#390 AK 3): `null` heisst unbekannt, sonst eine
@@ -191,12 +180,9 @@ export const PERSOENLICH_KOPIE_HINWEIS =
   "Es entsteht eine Kopie im Team. Spätere Änderungen an deinem Original wirken nicht auf sie, " +
   "und alle Mitglieder des Teams sehen und bearbeiten sie.";
 
-/** Die Zeit eines Termins zum Anzeigen: «18:30–20:00», «ab 18:30» für einen
- *  übernommenen Termin ohne Ende, sonst `null` (AK 14, 15). */
-export function zeitText(beginn: string | null, ende: string | null): string | null {
-  if (beginn && ende) return `${beginn}–${ende}`;
-  if (beginn) return `ab ${beginn}`;
-  return null;
+/** Die Zeit eines Termins zum Anzeigen: «18:30–20:00». */
+export function zeitText(beginn: string, ende: string): string {
+  return `${beginn}–${ende}`;
 }
 
 /** Die Sätze zu den Markern der Datenebene (Migration termine_ohne_training)

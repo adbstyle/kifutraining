@@ -73,8 +73,8 @@ export function useTerminAktionen(): TerminAktionen {
 function startWerte(t: TerminZeile): TerminFelder {
   return {
     datum: t.datum,
-    beginn: t.beginn ?? "",
-    ende: t.ende ?? "",
+    beginn: t.beginn,
+    ende: t.ende,
     ort: t.ort ?? "",
     bemerkung: t.bemerkung ?? "",
     felder: t.felder,
@@ -443,7 +443,6 @@ export function TerminBereich({
       <TerminDialog
         open={bearbeiten !== null}
         start={bearbeiten ? startWerte(bearbeiten) : undefined}
-        bisher={bearbeiten ? { beginn: bearbeiten.beginn, ende: bearbeiten.ende } : undefined}
         pending={pending}
         fehler={dialogFehler}
         serie={bearbeiten?.serie}

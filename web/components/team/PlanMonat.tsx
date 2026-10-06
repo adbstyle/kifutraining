@@ -95,7 +95,7 @@ export function PlanMonat({
           tag.termine.map((t) => {
             const z = terminZustand(t, heute);
             const was = z === "training" ? t.training!.name : MARKEN_TEXT[z];
-            return { id: t.id, zustand: z, label: `${t.beginn ?? "Zeit fehlt"} ${was}` };
+            return { id: t.id, zustand: z, label: `${t.beginn} ${was}` };
           }),
         );
     return m;

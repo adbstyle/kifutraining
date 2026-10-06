@@ -47,9 +47,9 @@ export function TrainingsPlan({
   const nichtsMehrOffen = plan.kommend.length === 0;
   // #403: Der erste anstehende Termin — auch ein ausgefallener (PO 6) — steht
   // zuoberst und nicht noch einmal in der Liste (AK 18); die Zahl zählt ihn
-  // mit (AK 19). Die Reihenfolge des Tages (Beginn, Anlegen, ohne Beginn
-  // zuletzt) kommt aus der Datenbank (AK 16), die Eingrenzung auf die
-  // eigenen Termine aus der Seite (AK 17).
+  // mit (AK 19). Die Reihenfolge des Tages (Beginn, dann Anlegen) kommt aus
+  // der Datenbank (AK 16), die Eingrenzung auf die eigenen Termine aus der
+  // Seite (AK 17).
   const [naechster, ...danach] = plan.kommend;
   const liste = useRef<HTMLDivElement>(null);
   // #404 AK 10, 11: ein im Monat gewählter Termin. `nr` macht jede Wahl neu,
@@ -166,7 +166,7 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
   const VIcon = v.selbst ? UserCheck : Users;
   const zustand = terminZustand(t, heute);
   const ganz = [
-    [zeit ?? "Zeit fehlt", ort, t.spielerzahl !== null && spielerzahlText(t.spielerzahl)].filter(Boolean).join(" · "),
+    [zeit, ort, t.spielerzahl !== null && spielerzahlText(t.spielerzahl)].filter(Boolean).join(" · "),
     zustand === "ausgefallen" ? ["Ausgefallen", t.ausfallGrund].filter(Boolean).join(": ") : t.training?.name,
     v.text && `Verantwortlich: ${v.text}`,
   ].filter(Boolean).join("\n");
@@ -183,14 +183,12 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
       )}
     >
       <button type="button" onClick={() => a.bearbeiten(t)} title={ganz} className="focus-ring absolute inset-0 rounded-klein">
-        <span className="sr-only">Termin ändern: {zeit ?? "Zeit fehlt"}</span>
+        <span className="sr-only">Termin ändern: {zeit}</span>
       </button>
       <div className={cn("pointer-events-none relative min-w-0 flex-1", (vergangen || t.ausgefallen) && "[&_.gedaempft]:opacity-60")}>
         {/* Schmal bricht um, was unter 8 rem schrumpfte, und kürzt erst auf ganzer Breite. */}
         <p aria-hidden className="gedaempft flex min-w-0 flex-wrap items-baseline gap-x-2 type-body-medium text-on-surface">
-          <span className="shrink-0">{zeit ? zeit : <span className="text-error">Zeit fehlt</span>}</span>
-          {/* AK 8: fehlende Zeit sichtbar, ohne den Termin zu öffnen. */}
-          {t.beginn && !t.ende && <span className="shrink-0 type-body-small text-error">Ende fehlt</span>}
+          <span className="shrink-0">{zeit}</span>
           {ort && (
             <span className="inline-flex min-w-32 max-w-full items-center gap-1 type-body-small text-on-surface-mittel">
               {t.ort ? <MapPin size={14} className="shrink-0" /> : <LandPlot size={14} className="shrink-0" />}
@@ -206,7 +204,7 @@ function TerminReihe({ t, heute, ich, hervorgehoben }: { t: TerminZeile; heute: 
         </p>
         {/* Vorlesehilfen hören die erste Zeile ausgeschrieben. */}
         <p className="sr-only">
-          {[t.beginn && !t.ende && "Ende fehlt", ort && `Ort: ${ort}`, t.spielerzahl !== null && `Erwartet: ${spielerzahlText(t.spielerzahl)}`].filter(Boolean).join(", ")}
+          {[ort && `Ort: ${ort}`, t.spielerzahl !== null && `Erwartet: ${spielerzahlText(t.spielerzahl)}`].filter(Boolean).join(", ")}
         </p>
         <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5">
           {zustand === "ausgefallen" ? (

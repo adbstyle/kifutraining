@@ -86,8 +86,6 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
 export function TerminDialog({
   open,
   start,
-  /** Die Zeit vor dem Ändern: Nur wenn sie sich ändert, wird sie geprüft. */
-  bisher,
   pending,
   fehler: serverFehler,
   serie,
@@ -104,7 +102,6 @@ export function TerminDialog({
   open: boolean;
   /** Die Angaben des Termins; leer nur, solange der Dialog zu ist. */
   start?: Partial<TerminFelder>;
-  bisher?: { beginn: string | null; ende: string | null };
   pending?: boolean;
   fehler?: string;
   /** Die Serie des geöffneten Termins; ohne: ein einzelner Termin. */
@@ -190,7 +187,7 @@ export function TerminDialog({
   }
 
   function speichern() {
-    const p = terminProblem(felder, bisher);
+    const p = terminProblem(felder);
     setProblem(p);
     const angaben = platz.pruefe();
     const regelOk = regelPruefen();

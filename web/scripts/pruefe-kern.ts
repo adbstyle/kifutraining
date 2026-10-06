@@ -126,7 +126,7 @@ import { MASS_TEXT } from "../lib/feldmass";
 import { ZEITRAUM_TEXT, kalenderblatt, monatVon, monatsName, monatsRaster, plusMonate, tagOhneJahr, tagText, zeitraumProblem } from "../lib/monat";
 import { nachMonatUndTag } from "../lib/plan-gliederung";
 import { planHref } from "../lib/team-ansicht";
-import { ABO_DAUER_MIN, aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
+import { aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
@@ -695,27 +695,16 @@ pruefe("terminProblem: neuer Termin braucht Datum, Beginn und Ende", () => {
   assert.deepEqual(terminProblem({ ...ok, bemerkung: "x".repeat(501) }), { feld: "bemerkung", text: TERMIN_TEXT.bemerkungLang });
 });
 
-pruefe("terminProblem: Bestand ohne vollständige Zeit bleibt änderbar, eine geänderte Zeit muss vollständig sein", () => {
-  const alt = { beginn: "18:30", ende: null };
-  // AK 9: Datum, Ort, Bemerkung ändern, ohne die Zeit zu ergänzen.
-  assert.equal(terminProblem({ datum: "2026-10-08", beginn: "18:30", ende: null, ort: "Halle" }, alt), null);
-  assert.equal(terminProblem({ datum: "2026-10-08", beginn: null, ende: null }, { beginn: null, ende: null }), null);
-  // AK 10: Wer die Zeit anfasst, muss sie vollständig geben.
-  assert.deepEqual(terminProblem({ datum: "2026-10-08", beginn: "19:00", ende: null }, alt), { feld: "ende", text: TERMIN_TEXT.zeitPflicht });
-  assert.equal(terminProblem({ datum: "2026-10-08", beginn: "19:00", ende: "20:30" }, alt), null);
-  // AK 8: Beginn und Ende lassen sich nicht leeren.
-  assert.deepEqual(
-    terminProblem({ datum: "2026-10-08", beginn: null, ende: null }, { beginn: "18:30", ende: "20:00" }),
-    { feld: "beginn", text: TERMIN_TEXT.zeitPflicht },
-  );
+pruefe("terminProblem: Beginn und Ende sind immer Pflicht und lassen sich nicht leeren (AK 2, 8)", () => {
+  assert.deepEqual(terminProblem({ datum: "2026-10-08", beginn: "18:30", ende: null, ort: "Halle" }), { feld: "ende", text: TERMIN_TEXT.zeitPflicht });
+  assert.deepEqual(terminProblem({ datum: "2026-10-08", beginn: null, ende: null }), { feld: "beginn", text: TERMIN_TEXT.zeitPflicht });
+  assert.equal(terminProblem({ datum: "2026-10-08", beginn: "19:00", ende: "20:30" }), null);
   assert.equal(leerZuNull("  "), null);
   assert.equal(leerZuNull(" Allmend "), "Allmend");
 });
 
 pruefe("Termin-Anzeige und -Marker: derselbe Satz vorab und aus der Datenbank", () => {
   assert.equal(zeitText("18:30", "20:00"), "18:30–20:00");
-  assert.equal(zeitText("18:30", null), "ab 18:30");
-  assert.equal(zeitText(null, null), null);
   for (const [marker, satz] of Object.entries(TERMIN_MELDUNG)) {
     const f = still(() => ausDbFehler({ message: `${marker}` }));
     assert.equal(f.meldung, satz, marker);
@@ -1880,17 +1869,17 @@ pruefe("Kalenderblatt und Tag ohne Jahr: Wochentag, Tageszahl, Monat, nie das Ja
 });
 
 pruefe("Plan-Gliederung: Monate und Tage in der Reihenfolge der Eingabe, im Tag der Beginn aufsteigend (#402 AK 2, 19, 20)", () => {
-  const t = (id: string, datum: string, beginn: string | null) => ({ id, datum, beginn });
+  const t = (id: string, datum: string, beginn: string) => ({ id, datum, beginn });
   // Anstehend kommt aufsteigend, der Rückblick absteigend und im Tag mit Beginn absteigend.
-  const anstehend = nachMonatUndTag([t("a", "2026-10-06", "18:00"), t("b", "2026-10-06", null), t("c", "2026-10-08", "17:00"), t("d", "2026-11-02", "18:00")]);
+  const anstehend = nachMonatUndTag([t("b", "2026-10-06", "19:00"), t("a", "2026-10-06", "18:00"), t("c", "2026-10-08", "17:00"), t("d", "2026-11-02", "18:00")]);
   assert.deepEqual(anstehend.map((m) => m.monat), ["2026-10", "2026-11"]);
   assert.deepEqual(anstehend[0].tage.map((d) => [d.datum, d.termine.map((x) => x.id)]), [["2026-10-06", ["a", "b"]], ["2026-10-08", ["c"]]]);
-  const rueckblick = nachMonatUndTag([t("x", "2026-10-05", null), t("y", "2026-10-05", "19:00"), t("z", "2026-10-05", "17:00"), t("g", "2026-10-05", "17:00"), t("w", "2026-09-30", "18:00")]);
+  const rueckblick = nachMonatUndTag([t("x", "2026-10-05", "20:00"), t("y", "2026-10-05", "19:00"), t("z", "2026-10-05", "17:00"), t("g", "2026-10-05", "17:00"), t("w", "2026-09-30", "18:00")]);
   assert.deepEqual(rueckblick.map((m) => m.monat), ["2026-10", "2026-09"]);
   // Gleicher Beginn: die Reihenfolge der Eingabe (nach dem Anlegen) bleibt.
   assert.deepEqual(rueckblick[0].tage[0].termine.map((x) => x.id), ["z", "g", "y", "x"]);
   // Derselbe Monat in zwei Jahren bleibt getrennt.
-  assert.deepEqual(nachMonatUndTag([t("1", "2026-10-01", null), t("2", "2027-10-01", null)]).map((m) => m.monat), ["2026-10", "2027-10"]);
+  assert.deepEqual(nachMonatUndTag([t("1", "2026-10-01", "18:00"), t("2", "2027-10-01", "18:00")]).map((m) => m.monat), ["2026-10", "2027-10"]);
   assert.deepEqual(nachMonatUndTag([]), []);
 });
 
@@ -1901,16 +1890,12 @@ const aboTermin = (t: Partial<AboTermin> & { id: string }): AboTermin => ({
 const aboText = (termine: AboTermin[]) =>
   kalenderText({ kalenderName: "Training · FC Test", titel: "Training · FC Test", teamId: "team", origin: "https://ki-fu.ch", jetzt: ABO_JETZT, termine });
 
-pruefe("Abo: Wanduhrzeit mit TZID, ganztägig ohne Beginn, 90 Minuten ohne Ende, über Mitternacht (#330 PC 2–4, Review Focus 1)", () => {
+pruefe("Abo: Wanduhrzeit mit TZID, Beginn und Ende des Termins (#330 PC 2–4, Review Focus 1)", () => {
   const text = aboText([
     { id: "a", datum: "2027-03-28", beginn: "02:30", ende: "04:00", ort: "Halle; Nord, 2", geaendert: "2026-09-30T08:00:00Z" },
-    { id: "b", datum: "2026-10-07", beginn: "23:00", ende: null, ort: null, geaendert: "2026-09-30T08:00:00Z" },
-    { id: "c", datum: "2026-10-08", beginn: null, ende: null, ort: null, geaendert: "2026-09-30T08:00:00Z" },
   ]);
   assert.ok(text.includes("BEGIN:VTIMEZONE\r\nTZID:Europe/Zurich"));
-  assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20270328T023000"), "Wanduhrzeit, nicht UTC");
-  assert.ok(text.includes("DTEND;TZID=Europe/Zurich:20261008T003000"), "23:00 + 90 Min. endet am Folgetag");
-  assert.ok(text.includes("DTSTART;VALUE=DATE:20261008\r\nDTEND;VALUE=DATE:20261009\r\nTRANSP:TRANSPARENT"), "ganztägig, nicht belegt");
+  assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20270328T023000\r\nDTEND;TZID=Europe/Zurich:20270328T040000"), "Wanduhrzeit, nicht UTC");
   assert.ok(text.includes("LOCATION:Halle\\; Nord\\, 2"), "Escaping");
   assert.ok(text.includes("UID:a@ki-fu.ch"));
   assert.ok(text.includes("URL:https://ki-fu.ch/team/team/termin/a"));
@@ -1944,13 +1929,7 @@ pruefe("Abo: aboLinks - https und http werden zu webcal:, der Pfad bleibt", () =
   });
 });
 
-pruefe("Abo: Ende nicht nach Beginn gilt wie «ohne Ende» (nie DTEND vor DTSTART)", () => {
-  for (const ende of ["18:00", "17:00"]) {
-    const text = aboText([aboTermin({ id: "a", beginn: "18:00", ende })]);
-    assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20261007T180000\r\nDTEND;TZID=Europe/Zurich:20261007T193000"), `ende ${ende}`);
-  }
-  assert.equal(ABO_DAUER_MIN, 90);
-  // Zeiten mit Sekunden (time-Spalte) gehen als HH:MM durch.
+pruefe("Abo: Zeiten mit Sekunden (time-Spalte) gehen als HH:MM durch", () => {
   const mitSekunden = aboText([aboTermin({ id: "a", beginn: "18:00:00", ende: "19:30:00" })]);
   assert.ok(mitSekunden.includes("DTSTART;TZID=Europe/Zurich:20261007T180000\r\nDTEND;TZID=Europe/Zurich:20261007T193000"));
 });

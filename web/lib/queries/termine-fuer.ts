@@ -60,10 +60,9 @@ export type TerminZeile = {
   id: string;
   teamId: string;
   datum: string;
-  /** `HH:MM`. Neue Termine tragen Beginn und Ende immer; übernommene können
-   *  ohne sein (#322 PO 9). */
-  beginn: string | null;
-  ende: string | null;
+  /** `HH:MM`; Pflicht an jedem Termin. */
+  beginn: string;
+  ende: string;
   ort: string | null;
   bemerkung: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
@@ -118,8 +117,8 @@ type RawTermin = {
   id: string;
   team_id: string;
   datum: string;
-  beginn: string | null;
-  ende: string | null;
+  beginn: string;
+  ende: string;
   ort: string | null;
   bemerkung: string | null;
   felder: Felder | null;
@@ -163,8 +162,8 @@ type RawTermin = {
  *  MUSS: das Zeitfeld der Oberfläche und die serverseitige Prüfung akzeptieren
  *  ausschliesslich `HH:MM`. Ein roh durchgereichter Wert wird sonst erst beim
  *  Speichern als «ungültige Uhrzeit» abgewiesen. */
-export function kurzeZeit(t: string | null): string | null {
-  return t ? t.slice(0, 5) : null;
+export function kurzeZeit(t: string): string {
+  return t.slice(0, 5);
 }
 
 const TERMIN_SELECT =
@@ -210,8 +209,8 @@ function mapTermin(t: RawTermin): TerminZeile {
           wochentage: t.termin_serien.wochentage as Wochentag[],
           beginnDatum: t.termin_serien.beginn_datum,
           endDatum: t.termin_serien.end_datum,
-          beginn: kurzeZeit(t.termin_serien.beginn)!,
-          ende: kurzeZeit(t.termin_serien.ende)!,
+          beginn: kurzeZeit(t.termin_serien.beginn),
+          ende: kurzeZeit(t.termin_serien.ende),
           ort: t.termin_serien.ort,
           bemerkung: t.termin_serien.bemerkung,
           felder: t.termin_serien.felder,
@@ -266,7 +265,7 @@ const PLAN_OBERGRENZE = 1000;
  *  `heute`, aufsteigend) und vergangen (Datum vor `heute`, absteigend, die
  *  jüngsten zuerst); die Vergangenheit wird danach umgedreht und vorangestellt.
  *  Das Embed holt Training und Serie im selben Rutsch. Sortiert wird in der DB
- *  nach Datum und Beginn (ohne Beginn zuletzt am selben Tag); `created_at` ist
+ *  nach Datum und Beginn; `created_at` ist
  *  der stabile Tiebreaker, damit zwei gleich eingeplante Termine nicht bei
  *  jedem Laden die Plätze tauschen. `teilePlan` ordnet die Vergangenheit
  *  anschliessend selbst. */
@@ -300,13 +299,13 @@ export async function getTeamPlanFuer(
     basis()
       .gte("datum", heute)
       .order("datum", { ascending: true })
-      .order("beginn", { ascending: true, nullsFirst: false })
+      .order("beginn", { ascending: true })
       .order("created_at", { ascending: true })
       .limit(PLAN_OBERGRENZE),
     basis()
       .lt("datum", heute)
       .order("datum", { ascending: false })
-      .order("beginn", { ascending: false, nullsFirst: true })
+      .order("beginn", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(PLAN_OBERGRENZE),
   ]);
@@ -346,17 +345,13 @@ export type Plan = { kommend: TerminZeile[]; vergangen: TerminZeile[] };
 
 /** Vergangene Einheiten absteigend ordnen: die jüngste zuerst.
  *
- *  Kein blosses Umdrehen der aufsteigenden Liste — dabei rutschten die
- *  Einheiten ohne Beginn, die am selben Tag zuletzt stehen, an dessen Anfang.
- *  Sie sollen auch rückwärts betrachtet hinter denen mit Beginn bleiben.
- *  `Array.sort` ist stabil, und die Liste kommt bereits nach `created_at`
- *  geordnet aus der Datenbank; damit bleibt die Reihenfolge zweier gleich
- *  eingeplanter Termine über wiederholte Aufrufe dieselbe. */
+ *  Kein blosses Umdrehen der aufsteigenden Liste: Zwei gleich eingeplante
+ *  Termine behalten so ihre Reihenfolge nach dem Anlegen. `Array.sort` ist
+ *  stabil, und die Liste kommt bereits nach `created_at` geordnet aus der
+ *  Datenbank; damit bleibt sie über wiederholte Aufrufe dieselbe. */
 function juengsteZuerst(a: TerminZeile, b: TerminZeile): number {
   if (a.datum !== b.datum) return a.datum < b.datum ? 1 : -1;
   if (a.beginn === b.beginn) return 0;
-  if (a.beginn === null) return 1;
-  if (b.beginn === null) return -1;
   return a.beginn < b.beginn ? 1 : -1;
 }
 
@@ -371,8 +366,7 @@ function juengsteZuerst(a: TerminZeile, b: TerminZeile): number {
  *  Der heutige Tag zählt vollständig zum Kommenden — die Einheit von heute
  *  Abend soll nicht schon mittags nach unten fallen.
  *
- *  Das Kommende behält die Ordnung aus der Datenbank (Datum, dann Beginn,
- *  ohne Beginn zuletzt). */
+ *  Das Kommende behält die Ordnung aus der Datenbank (Datum, dann Beginn). */
 export function teilePlan(termine: TerminZeile[], heute: string): Plan {
   return {
     kommend: termine.filter((t) => t.datum >= heute),

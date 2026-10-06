@@ -6,21 +6,17 @@
 // (PC 4), und die Zeitumstellung verschiebt nichts. Je Termin gehen nur Titel,
 // Beginn, Ende, Ort und der Verweis in die Anwendung hinaus (PC 2).
 //
-// REIN: importiert nur lib/serie.ts.
-import { plusTage } from "@/lib/serie";
+// REIN: importiert nichts.
 
 export type AboTermin = {
   id: string;
   datum: string;
-  beginn: string | null;
-  ende: string | null;
+  beginn: string;
+  ende: string;
   ort: string | null;
   /** Zeitpunkt der letzten Änderung (timestamptz, ISO). */
   geaendert: string;
 };
-
-/** Ein Termin mit Beginn, aber ohne Ende dauert im Abo 90 Minuten (PC 3). */
-export const ABO_DAUER_MIN = 90;
 
 const VTIMEZONE = [
   "BEGIN:VTIMEZONE",
@@ -80,16 +76,6 @@ const hhmm = (zeit: string) => zeit.slice(0, 5);
 const lokal = (datum: string, zeit: string) => `${kompakt(datum)}T${hhmm(zeit).replace(":", "")}00`;
 const utc = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 
-function plusMinuten(datum: string, zeit: string, min: number): { datum: string; zeit: string } {
-  const [h, m] = hhmm(zeit).split(":").map(Number);
-  const gesamt = h * 60 + m + min;
-  const rest = gesamt % 1440;
-  return {
-    datum: plusTage(datum, Math.floor(gesamt / 1440)),
-    zeit: `${String(Math.floor(rest / 60)).padStart(2, "0")}:${String(rest % 60).padStart(2, "0")}`,
-  };
-}
-
 /** Der Pfad des Feeds zu einem Abo-Token. */
 export const aboDatei = (token: string) => `${token}.ics`;
 export const aboPfad = (token: string) => `/api/kalender/${aboDatei(token)}`;
@@ -129,17 +115,9 @@ export function kalenderText(k: {
     // PC 6: Die UID ist die Kennung des Termins — ein geänderter, verschobener
     // oder in eine neue Serie übergegangener Termin erscheint genau einmal.
     z.push("BEGIN:VEVENT", `UID:${t.id}@ki-fu.ch`, `DTSTAMP:${utc(k.jetzt.toISOString())}`, `LAST-MODIFIED:${utc(t.geaendert)}`);
-    if (!t.beginn) {
-      // Ganztägig ohne bekannte Zeit: nicht als «den ganzen Tag belegt» zählen.
-      z.push(`DTSTART;VALUE=DATE:${kompakt(t.datum)}`, `DTEND;VALUE=DATE:${kompakt(plusTage(t.datum, 1))}`, "TRANSP:TRANSPARENT");
-    } else {
-      // Die Datenbank erzwingt «Ende nach Beginn» (tt_ende_nach_beginn); ein
-      // Ende, das es nicht ist, gilt wie «ohne Ende» — nie ein DTEND vor dem
-      // DTSTART, das Kalenderprogramme verwerfen.
-      const hatEnde = t.ende !== null && hhmm(t.ende) > hhmm(t.beginn);
-      const ende = hatEnde ? { datum: t.datum, zeit: t.ende as string } : plusMinuten(t.datum, t.beginn, ABO_DAUER_MIN);
-      z.push(`DTSTART;TZID=Europe/Zurich:${lokal(t.datum, t.beginn)}`, `DTEND;TZID=Europe/Zurich:${lokal(ende.datum, ende.zeit)}`);
-    }
+    // Beginn und Ende sind Pflicht, das Ende liegt am selben Tag danach
+    // (NOT NULL, `tt_ende_nach_beginn`).
+    z.push(`DTSTART;TZID=Europe/Zurich:${lokal(t.datum, t.beginn)}`, `DTEND;TZID=Europe/Zurich:${lokal(t.datum, t.ende)}`);
     z.push(`SUMMARY:${textEscape(k.titel)}`);
     if (t.ort) z.push(`LOCATION:${textEscape(t.ort)}`);
     z.push(`URL:${verweis}`, `DESCRIPTION:${textEscape(verweis)}`, "END:VEVENT");

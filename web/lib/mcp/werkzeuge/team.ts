@@ -131,8 +131,8 @@ const PlanEintrag = z.object({
   /** Kennung des Termins — für «termin_aendern», «termin_entfernen», «training_zuordnen» und «training_loesen». */
   id: z.string(),
   datum: z.string(),
-  beginn: z.string().nullable(),
-  ende: z.string().nullable(),
+  beginn: z.string(),
+  ende: z.string(),
   ort: z.string().nullable(),
   bemerkung: z.string().nullable(),
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
@@ -225,8 +225,7 @@ export const teamPlanAbrufen = werkzeug({
     "«heute» ist der Tag, an dem geteilt wurde - gemessen am Trainingsort (Schweiz), nicht in deiner " +
     "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung, die Felder " +
     "des Platzes, die erwartete Spielerzahl und das zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
-    "Termin ohne Training, der nicht ausgefallen ist, ist noch nicht vorbereitet. Übernommene Termine können ohne Beginn oder " +
-    "Ende sein. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
+    "Termin ohne Training, der nicht ausgefallen ist, ist noch nicht vorbereitet. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
     "Ort, Bemerkung, Verantwortliche, Felder und erwartete Spielerzahl jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
     "von ihr abweicht. Jeder Eintrag nennt seine Verantwortlichen; «nur_meine» grenzt auf deine ein. " +
     "Ausgefallene Termine stehen mit «ausgefallen: true» und Grund im Plan. " +
@@ -308,11 +307,11 @@ export const AendernEingabe = z.object({
   // mit einem Typfehler zu scheitern (#322 AK 21).
   beginn: UHRZEIT.nullable().optional().describe(
     "Neuer Beginn als HH:MM; ohne Angabe unverändert. Wer die Zeit ändert, gibt Beginn UND Ende an. " +
-      "Beginn und Ende lassen sich nicht leeren; «null» bei einem Termin mit Zeit wird abgewiesen.",
+      "Beginn und Ende lassen sich nicht leeren; «null» wird abgewiesen.",
   ),
   ende: UHRZEIT.nullable().optional().describe(
     "Neues Ende als HH:MM am selben Tag; ohne Angabe unverändert. Beginn und Ende lassen sich nicht " +
-      "leeren; «null» bei einem Termin mit Zeit wird abgewiesen.",
+      "leeren; «null» wird abgewiesen.",
   ),
   ort: ORT.nullable().optional().describe("Neuer Ort; null leert ihn, ohne Angabe unverändert."),
   bemerkung: BEMERKUNG.nullable().optional().describe("Neue Bemerkung; null leert sie, ohne Angabe unverändert."),
@@ -352,8 +351,7 @@ export const terminAendern = werkzeug({
   titel: "Termin ändern",
   beschreibung:
     "Ändert Datum, Zeit, Ort, Bemerkung, die Felder oder die erwartete Spielerzahl eines Termins - nur, was du mitgibst. Beginn und Ende " +
-    "lassen sich nicht leeren; ändert sich die Zeit, braucht der Termin danach beide. Ein " +
-    "übernommener Termin ohne vollständige Zeit lässt sich ändern, ohne die Zeit zu ergänzen. Das " +
+    "lassen sich nicht leeren; ändert sich die Zeit, braucht der Termin danach beide. Das " +
     "zugeordnete Training bleibt dasselbe. Für einen Termin einer Serie ist «reichweite» Pflicht; " +
     "das Datum ändert nur «nur_dieser», Wochentage und Zeitraum nur «dieser_und_folgende» oder " +
     "«alle». Das Ergebnis nennt entfallene Termine mit Training; ihre Trainings bleiben im Bestand " +

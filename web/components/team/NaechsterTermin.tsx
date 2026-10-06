@@ -64,11 +64,7 @@ export function NaechsterTermin({
             {relativ && <>{relativ} · </>}
             {tagOhneJahr(t.datum)}
           </h4>
-          {/* AK 9: fehlende Zeit sichtbar. */}
-          <p className="mt-1 type-headline-small text-on-surface">
-            {zeit ? `${zeit} Uhr` : <span className="text-error">Zeit fehlt</span>}
-            {t.beginn && !t.ende && <span className="ml-2 type-body-medium text-error">Ende fehlt</span>}
-          </p>
+          <p className="mt-1 type-headline-small text-on-surface">{zeit} Uhr</p>
         </div>
         <OverflowMenu
           label={`Weitere Aktionen zum Termin ${datumKurz(t.datum)}`}

@@ -1226,14 +1226,17 @@ try {
     assert.deepEqual(spur, [["beginn", "ende"]], "Beginn und Ende gehen stets zusammen");
     wert(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, beginn: "18:30", ende: "20:00" }));
 
-    // PC 5 / AK 9: ein übernommener Termin ohne Ende bleibt änderbar.
+    // Beginn und Ende sind Pflicht, auch in der Datenebene (2026-10-06).
+    for (const ohne of [{ beginn: "17:00" }, { ende: "18:30" }, {}]) {
+      const { error } = await admin.from("training_termine").insert({ team_id: team.id, datum: tag(5), ...ohne });
+      assert.ok(error, `ohne Zeit abgewiesen: ${JSON.stringify(ohne)}`);
+    }
     const { data: alt } = await admin.from("training_termine")
-      .insert({ team_id: team.id, datum: tag(5), beginn: "17:00" }).select("id").single();
-    wert(await aendereTermin(a.supabase, a.id, { terminId: alt!.id, ort: "Halle" }));
-    assert.deepEqual(await zeile(alt!.id), { datum: tag(5), beginn: "17:00:00", ende: null, ort: "Halle", bemerkung: null, training_id: null });
-    // AK 10: Wer die Zeit ändert, gibt sie vollständig.
-    fehler(await aendereTermin(a.supabase, a.id, { terminId: alt!.id, beginn: "17:30" }), "eingabe", TERMIN_TEXT.zeitPflicht);
-    wert(await aendereTermin(a.supabase, a.id, { terminId: alt!.id, beginn: "17:30", ende: "19:00" }));
+      .insert({ team_id: team.id, datum: tag(5), beginn: "17:00", ende: "18:30" }).select("id").single();
+    // Wer nur den Beginn ändert, behält das Ende — solange es danach liegt.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: alt!.id, beginn: "17:30" }));
+    assert.deepEqual(await zeile(alt!.id), { datum: tag(5), beginn: "17:30:00", ende: "18:30:00", ort: null, bemerkung: null, training_id: null });
+    fehler(await aendereTermin(a.supabase, a.id, { terminId: alt!.id, beginn: "19:00" }), "eingabe", TERMIN_TEXT.endeNachBeginn);
     // AK 8: nicht leeren.
     fehler(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, beginn: null, ende: null }), "eingabe", TERMIN_TEXT.zeitPflicht);
     // #322 AK 21: Ein `null` für Beginn oder Ende passiert die Eingabeprüfung des
@@ -3196,7 +3199,7 @@ try {
     return data as {
       gueltig: boolean;
       team?: { id: string; name: string };
-      termine?: { id: string; datum: string; beginn: string | null; ende: string | null; ort: string | null; geaendert: string }[];
+      termine?: { id: string; datum: string; beginn: string; ende: string; ort: string | null; geaendert: string }[];
     };
   };
   const aboZeilen = async (team: string, user?: string) => {
@@ -3281,7 +3284,7 @@ try {
       return data.id as string;
     };
     const anstehend = await ins(tagCh(3));
-    const heute = await ins(tagCh(0), { beginn: null, ende: null, ort: null });
+    const heute = await ins(tagCh(0), { ort: null });
     const grenze = await ins(tagCh(-28));
     const zuAlt = await ins(tagCh(-29));
     const ausgefallen = await ins(tagCh(5), { ausgefallen: true, ausfall_grund: "Regen" });
@@ -3303,10 +3306,10 @@ try {
     );
     assert.ok(!Number.isNaN(Date.parse(a1.geaendert)), "geaendert ist ein Zeitstempel");
     const ohne = f.termine!.find((t) => t.id === heute)!;
-    assert.deepEqual([ohne.beginn, ohne.ende, ohne.ort], [null, null, null], "Bestandstermin ohne Zeit und Ort bleibt im Feed");
+    assert.equal(ohne.ort, null, "ein Termin ohne Ort bleibt im Feed");
     // Ein Termin eines anderen Teams taucht nicht auf.
     const fremd = await serienTeam("Kern-DB-Abo-Feed-Fremd");
-    await admin.from("training_termine").insert({ team_id: fremd, datum: tagCh(4) });
+    await admin.from("training_termine").insert({ team_id: fremd, datum: tagCh(4), beginn: "18:00", ende: "19:30" });
     assert.equal((await feed(token)).termine!.length, 3);
     // Eine Änderung zeigt sich im Zeitstempel.
     const vorher = a1.geaendert;
@@ -3348,7 +3351,7 @@ try {
   await pruefe("Abo erlischt beim Austritt und lebt bei erneuter Aufnahme nicht wieder auf (#330 AK 9, PC 9, 10)", async () => {
     const team = await serienTeam("Kern-DB-Abo-Austritt");
     await admin.from("team_members").insert({ team_id: team, user_id: b.id });
-    await admin.from("training_termine").insert({ team_id: team, datum: tagCh(2) });
+    await admin.from("training_termine").insert({ team_id: team, datum: tagCh(2), beginn: "18:00", ende: "19:30" });
     const alt = (await holen(b, team)).token!;
     const vonA = (await holen(a, team)).token!;
     assert.equal((await feed(alt)).gueltig, true);

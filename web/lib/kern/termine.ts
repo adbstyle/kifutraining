@@ -64,8 +64,8 @@ export type TerminRoh = {
   team_id: string;
   training_id: string | null;
   datum: string;
-  beginn: string | null;
-  ende: string | null;
+  beginn: string;
+  ende: string;
   ort: string | null;
   bemerkung: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
@@ -262,7 +262,7 @@ export async function aendereTermin(
     ort: e.ort !== undefined ? leerZuNull(e.ort) : t.ort,
     bemerkung: e.bemerkung !== undefined ? leerZuNull(e.bemerkung) : t.bemerkung,
   };
-  const problem = feldFehler(terminProblem(neu, { beginn: t.beginn, ende: t.ende }));
+  const problem = feldFehler(terminProblem(neu));
   if (problem) return problem;
   const felder = e.felder === undefined ? null : pruefeFelder(e.felder);
   if (felder && !felder.ok) return felder;

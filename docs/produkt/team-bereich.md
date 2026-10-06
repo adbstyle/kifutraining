@@ -91,11 +91,9 @@ Felder und Spielerzahl stehen.
 
 Ändern lassen sich Datum, Beginn, Ende, Ort, Bemerkung, Felder und erwartete Spielerzahl
 jederzeit, auch an vergangenen Terminen; Felder und Spielerzahl lassen sich auch wieder
-entfernen. Beginn und Ende lassen sich nicht leeren. Termine aus der Zeit vor dem Kalender sind
-unverändert übernommen, mit Training, Datum, Beginn, Ort und Bemerkung; ihnen fehlt das Ende,
-manchen auch der Beginn. Das steht sichtbar am Termin — „Ende fehlt" oder „Zeit fehlt" — und
-lässt sich ergänzen; wer an einem solchen Termin nur den Ort oder das Datum ändert, muss die
-Zeit dafür nicht nachtragen. Wer sie aber ändert, gibt danach Beginn und Ende an.
+entfernen. Beginn und Ende hat jeder Termin; sie lassen sich ändern, aber nicht leeren. Termine
+aus der Zeit vor dem Kalender, die ohne Ende übernommen worden waren, dauern seit dem 6. Oktober
+2026 90 Minuten ab ihrem Beginn; die wenigen ganz ohne Zeit stehen von 18:00 bis 19:30.
 
 Ein Termin lässt sich entfernen; die Rückfrage dazu nennt das Training, das er trägt, und sagt,
 dass es ohne Termin im Team-Bestand bleibt. Umgekehrt bleibt ein Termin bestehen, wenn sein
@@ -295,10 +293,9 @@ darunter steht er nicht noch einmal, in der Zahl der anstehenden Termine zählt 
 
 Die übrigen Termine sind nach Monaten gegliedert, jede Überschrift mit Jahr. Darin steht jeder
 Tag einmal als Kalenderblatt — Wochentag, Tageszahl und Monat, ohne Jahr, der heutige Tag
-farbig — und daneben seine Termine als knappe Zeilen, nach Beginn geordnet, ohne Beginn
-zuletzt. Eine Zeile zeigt Beginn und Ende, Ort und Platz, die erwartete Spielerzahl, was der
-Termin trägt und die Verantwortlichen; fehlen Beginn oder Ende, steht „Zeit fehlt" oder „Ende
-fehlt". Was zu lang ist, endet in „…" und steht ganz im Hinweis beim Darüberfahren. Der Termin
+farbig — und daneben seine Termine als knappe Zeilen, nach Beginn geordnet. Eine Zeile zeigt
+Beginn und Ende, Ort und Platz, die erwartete Spielerzahl, was der Termin trägt und die
+Verantwortlichen. Was zu lang ist, endet in „…" und steht ganz im Hinweis beim Darüberfahren. Der Termin
 trägt das Training mit seinem Namen, oder — anstehend und ohne Training — die Plakette „Noch
 kein Training"; so fällt eine noch nicht vorbereitete Einheit auf, ohne dass man einen Termin
 öffnet. Ein vergangener Termin ohne Training heisst schlicht „Ohne Training"; ob er
@@ -354,8 +351,7 @@ neue Serie übergegangener Termin erscheint genau einmal. Ausgefallene und entfe
 fehlen. Von einem Termin gelangen nur der Titel „Training · Teamname", Beginn, Ende, Ort und ein
 Verweis in die Anwendung ins Kalenderprogramm — kein Trainingsname, keine Verantwortlichen,
 keine Bemerkung, weder Felder noch erwartete Spielerzahl. Die Zeiten gelten als Schweizer Zeit, auch über die Zeitumstellung hinweg und
-auf einem Gerät in einer anderen Zeitzone. Ein übernommener Termin ohne Ende erscheint mit 90
-Minuten ab Beginn, einer ohne Beginn als ganztägiger Eintrag.
+auf einem Gerät in einer anderen Zeitzone.
 
 Der Verweis im Kalendereintrag führt, nach einer Anmeldung falls nötig, zum Termin im
 Trainingsplan und hebt ihn hervor, auch wenn er im Rückblick liegt. Gibt es den Termin nicht

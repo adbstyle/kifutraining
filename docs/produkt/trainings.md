@@ -436,7 +436,7 @@ dasselbe als zusammenhängende, druckfertige Seite zum Mitnehmen, das Ziel im Ko
 erscheinen in beiden Ansichten nicht. Aus dem Trainingsplan eines Teams geöffnet, nennt die
 Durchführen-Ansicht zuoberst den Termin: Datum, Beginn und Ende, Ort, Verantwortliche, die
 erwartete Spielerzahl, die Felder des Platzes je mit Grösse, Toren und Untergrund und die
-Bemerkung, und sagt, wenn die Zeit fehlt; was zu einem Feld nicht erfasst ist, steht als
+Bemerkung; was zu einem Feld nicht erfasst ist, steht als
 unbekannt da.
 
 Beim Zusammenstellen, in der Ansicht (breit in den Eigenschaften), zu Beginn der
