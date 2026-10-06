@@ -75,7 +75,15 @@ export function useTerminAktionen(): TerminAktionen {
 /** Die Werte, mit denen der Änderungs-Dialog öffnet — auch die Vergleichsbasis
  *  für `geaenderteFelder`. */
 function startWerte(t: TerminZeile): TerminFelder {
-  return { datum: t.datum, beginn: t.beginn ?? "", ende: t.ende ?? "", ort: t.ort ?? "", bemerkung: t.bemerkung ?? "" };
+  return {
+    datum: t.datum,
+    beginn: t.beginn ?? "",
+    ende: t.ende ?? "",
+    ort: t.ort ?? "",
+    bemerkung: t.bemerkung ?? "",
+    felder: t.felder,
+    spielerzahl: t.spielerzahl,
+  };
 }
 
 type Serienweit = Exclude<Reichweite, "nur_dieser">;
@@ -88,6 +96,8 @@ const FOLGT_WIEDER: Record<FolgeAngabe, string> = {
   ort: "Der Ort folgt wieder der Serie.",
   bemerkung: "Die Bemerkung folgt wieder der Serie.",
   verantwortliche: "Die Verantwortlichen folgen wieder der Serie.",
+  felder: "Die Felder folgen wieder der Serie.",
+  spielerzahl: "Die erwartete Spielerzahl folgt wieder der Serie.",
 };
 
 /** Die offene Frage nach der Reichweite (#326 AK 1–4, 7). Beim Ändern stehen
@@ -315,6 +325,7 @@ export function TerminBereich({
     const erlaubt = erlaubteReichweiten({ datum, regel: !!regelNeu, namenlose });
     // Der Dialog prüft das schon; hier nur als Rückhalt.
     if (!erlaubt) return setDialogFehler(datum ? SERIE_TEXT.datumUndRegel : SERIE_TEXT.namenloseUndRegel);
+    // Felder und Spielerzahl gehen wie Ort und Bemerkung mit (#391 AK 2).
     const { datum: _datum, ...werte } = geaendert ?? {};
     setDialogFehler(undefined);
     neuerLauf();

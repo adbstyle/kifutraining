@@ -1,7 +1,13 @@
 import "server-only";
 import { ok } from "@/lib/kern/ergebnis";
 import { LeereEingabe, WerBinIchAusgabe } from "@/lib/mcp/eingaben";
-import { RICHTWERTE_HINWEIS, RICHTWERTE_VERWEIS, VokabularSchema, baueVokabular } from "@/lib/mcp/vokabular";
+import {
+  FELDTYP_HINWEIS,
+  RICHTWERTE_HINWEIS,
+  RICHTWERTE_VERWEIS,
+  VokabularSchema,
+  baueVokabular,
+} from "@/lib/mcp/vokabular";
 import { werkzeug } from "@/lib/mcp/werkzeug";
 
 /**
@@ -40,8 +46,10 @@ export const vokabular = werkzeug({
     "Liefert je Altersstufe die zulässigen Werte samt Klartext: Alterskategorien, " +
     "Trainingsteile und ihre Blöcke (mit dem, was eine Übung dort trägt: " +
     "Erscheinungsform, Übungstyp, Pflicht zur Hauptteilkategorie, Ablaufform), " +
-    "Hauptteilkategorien, Erscheinungsformen, Feldtypen und Übungstypen - dazu die " +
-    "Werte des Filters «einordnung» von «uebungen_suchen». Im Abschnitt «schema» je " +
+    "Hauptteilkategorien, Erscheinungsformen, Feldtypen samt den Richtmassen von " +
+    "Kleinfeld und Grossfeld je Alterskategorie («feldtyp_richtmasse», Spannen in Metern) " +
+    "und Übungstypen - dazu die Werte des Filters «einordnung» von «uebungen_suchen». " +
+    `${FELDTYP_HINWEIS} Im Abschnitt «schema» je ` +
     "Altersstufe das Trainingsschema: Teile und Blöcke in Reihenfolge, je mit Dauer, " +
     "Gruppen, Pflicht zum Veröffentlichen, Leer-Hinweis, anziehender Erscheinungsform und " +
     `Zeitrichtwert. ${RICHTWERTE_HINWEIS} ${RICHTWERTE_VERWEIS} Ändert sich nur mit KiFu ` +

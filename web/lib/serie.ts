@@ -132,8 +132,9 @@ export function regelProblemVorab(
 
 /** Für welche Reichweiten eine Änderung an einem Serientermin gilt
  *  (#326 AK 1–4): das Datum nur für diesen Termin, Wochentage und Zeitraum nur
- *  für diesen und folgende oder für alle; Zeit, Ort, Bemerkung und
- *  Verantwortliche (#325) für jede. `null`, wenn Datum und Regel zugleich
+ *  für diesen und folgende oder für alle; Zeit, Ort, Bemerkung,
+ *  Verantwortliche (#325), Felder und erwartete Spielerzahl (#391) für jede.
+ *  `null`, wenn Datum und Regel zugleich
  *  geändert werden — das schliesst sich aus (`SERIE_TEXT.datumUndRegel`).
  *
  *  `namenlose`: An den Verantwortlichen ändern sich allein die Einträge
@@ -205,7 +206,8 @@ export const SERIE_MELDUNG = {
   SERIE_BELEGUNG_GEAENDERT:
     "Seit deiner Auswahl hat sich geändert, welche wegfallenden Termine ein Training tragen. Sieh dir die Änderung noch einmal an.",
   KEINE_AENDERUNG: "Gib mindestens eine Angabe an, die sich ändern soll.",
-  SERIE_ANGABEN_UNGUELTIG: "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort oder Bemerkung.",
+  SERIE_ANGABEN_UNGUELTIG:
+    "Wähle, welche Angaben wieder der Serie folgen sollen: Zeit, Ort, Bemerkung, Verantwortliche, Felder oder Spielerzahl.",
 } as const;
 
 /** Der KI-Weg verlangt eine ausdrückliche Bestätigung, wenn «dieser und

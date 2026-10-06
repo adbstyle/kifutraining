@@ -34,6 +34,7 @@ import {
   type SuchTreffer,
   UebungAusgabe,
 } from "@/lib/mcp/eingaben";
+import { FELDTYP_VERWEIS } from "@/lib/mcp/vokabular";
 import { werkzeug, type Zugang } from "@/lib/mcp/werkzeug";
 
 /**
@@ -140,6 +141,7 @@ export const uebungenSuchen = werkzeug({
     "mehrere Werte innerhalb einer Dimension als ODER. Die zulässigen Werte und ihre " +
     "Zugehörigkeit liefert «vokabular». Liefert je Treffer die Angaben der Katalog-Karte " +
     "und eine Adresse in KiFu; alle Angaben einer Übung liefert «uebung_abrufen». " +
+    `${FELDTYP_VERWEIS} ` +
     "Seitenweise: «naechster_offset» als «offset» übernehmen. Favoriten sind über " +
     "diesen Zugang nicht erreichbar.",
   nurLesen: true,
@@ -183,6 +185,7 @@ export const uebungAbrufen = werkzeug({
     "Alterskategorien, Gruppengrösse, Material, Ablauf (methodischer Fahrplan oder " +
     "Beschreibung), Varianten, Herkunft und das Feld-Diagramm als Vektordaten - in derselben " +
     "Form, die «uebung_diagramm_setzen» annimmt. " +
+    `${FELDTYP_VERWEIS} ` +
     "Kennung ist die id oder der slug aus «uebungen_suchen». Eine Übung, die dein " +
     "Konto nicht sehen darf, gilt als nicht gefunden.",
   nurLesen: true,

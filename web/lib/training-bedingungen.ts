@@ -8,9 +8,10 @@
 
 import { JUNIOREN_PFLICHT_BLOECKE } from "@/lib/junioren";
 import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
-import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
-import { TERMIN_MELDUNG } from "@/lib/termin";
+import { MASS_TEXT } from "@/lib/feldmass";
+import { TERMIN_MELDUNG, TERMIN_TEXT } from "@/lib/termin";
 import { SERIE_MELDUNG } from "@/lib/serie";
+import { FELDER_TEXT } from "@/lib/termin-felder";
 import { sichtbareZuordnungen } from "@/lib/varianten";
 
 /** Marker, mit dem die Datenebene eine verletzte Bedingung meldet. */
@@ -194,14 +195,8 @@ const ALTERSSTUFE_CHECKS: [string, string][] = [
   // gleich, bloss mit dem Präfix `ex_` bzw. `te_` — der Namensrest genügt
   // darum als Erkennungsmerkmal für beide. Die Meldungen sind wortgleich mit
   // denen aus `parseUebungsInhalt`, dem Spiegel derselben Regeln.
-  [
-    "spielfeld_paarweise",
-    "Bitte Länge und Breite angeben oder beides leer lassen.",
-  ],
-  [
-    "spielfeld_bereich",
-    `Länge und Breite in ganzen Metern, zwischen ${SPIELFELD_MIN} und ${SPIELFELD_MAX}.`,
-  ],
+  ["spielfeld_paarweise", MASS_TEXT.paarweise],
+  ["spielfeld_bereich", MASS_TEXT.bereich],
   [
     "spielfeld_je_feld",
     "Eine Kinderfussball-Übung trägt eine Spielfeldgrösse nur auf freiem Feld; " +
@@ -334,6 +329,20 @@ export const VARIANTENFOLGE_MELDUNG = {
  *  einem anderen (Test in `check:kern`), die Reihenfolge ist daher gleichgültig. */
 const TERMIN_MARKER: [string, string][] = [...Object.entries(TERMIN_MELDUNG), ...Object.entries(SERIE_MELDUNG)];
 
+/** Die CHECKs am Termin, die die Applikation am Namen erkennt — wie
+ *  `ALTERSSTUFE_CHECKS`, aber samt Anführungszeichen gesucht: Postgres meldet
+ *  `violates check constraint "tt_felder"`, und so trifft der Name keine
+ *  längere Bezeichnung, die mit ihm beginnt. Felder (#389) und erwartete
+ *  Spielerzahl (#390) prüft der Fachkern vorab (`felderProblem`,
+ *  `spielerzahlProblem`); die Meldung trifft nur, wer ihn umgeht. */
+const TERMIN_CHECKS: [string, string][] = [
+  ['"tt_felder"', FELDER_TEXT.ungueltig],
+  ['"tt_spielerzahl"', TERMIN_TEXT.spielerzahl],
+  // An der Serie dieselben Regeln (#391).
+  ['"ts_felder"', FELDER_TEXT.ungueltig],
+  ['"ts_spielerzahl"', TERMIN_TEXT.spielerzahl],
+];
+
 /** Die Meldung zu einem Marker aus Übungsfolge, Variantenfolge oder Termin,
  *  sonst `null`. */
 function weitereMeldung(message: string): string | null {
@@ -341,6 +350,7 @@ function weitereMeldung(message: string): string | null {
     ...Object.entries(UEBUNGSFOLGE_MELDUNG),
     ...Object.entries(VARIANTENFOLGE_MELDUNG),
     ...TERMIN_MARKER,
+    ...TERMIN_CHECKS,
   ])
     if (message.includes(marker)) return klartext;
   return null;

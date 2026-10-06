@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import type { Wochentag } from "@/lib/serie";
+import type { Felder } from "@/lib/termin-felder";
 import { sortStufen } from "@/lib/training";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 import type { KategorieSlug } from "@/lib/vocab";
@@ -32,6 +33,9 @@ export type TerminSerie = {
   ende: string;
   ort: string | null;
   bemerkung: string | null;
+  /** Felder und erwartete Spielerzahl, die die Serie vorgibt (#391); `null` = unbekannt. */
+  felder: Felder | null;
+  spielerzahl: number | null;
   /** Wer die Serie vorgibt (#325), nach Name geordnet. */
   verantwortliche: { userId: string; name: string }[];
 };
@@ -50,7 +54,7 @@ export type Verantwortlicher = {
 /** Welche Angaben eines Serientermins von seiner Serie abweichen (#326 AK 12,
  *  14; PO 3). Das Datum weicht ab, wenn der Termin nicht mehr an seinem
  *  Serientag liegt. */
-export type Abweichung = "datum" | "zeit" | "ort" | "bemerkung" | "verantwortliche";
+export type Abweichung = "datum" | "zeit" | "ort" | "bemerkung" | "verantwortliche" | "felder" | "spielerzahl";
 
 export type TerminZeile = {
   id: string;
@@ -62,6 +66,10 @@ export type TerminZeile = {
   ende: string | null;
   ort: string | null;
   bemerkung: string | null;
+  /** Die Felder des Platzes (#389); `null` = unbekannt. */
+  felder: Felder | null;
+  /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
+  spielerzahl: number | null;
   /** `null`: Der Termin trägt (noch) kein Training (#322). */
   training: { id: string; name: string; stufen: KategorieSlug[] } | null;
   /** `null`: ein einzelner Termin ohne Serie. */
@@ -102,12 +110,16 @@ type RawTermin = {
   ende: string | null;
   ort: string | null;
   bemerkung: string | null;
+  felder: Felder | null;
+  erwartete_spielerzahl: number | null;
   created_at: string;
   serien_tag: string | null;
   zeit_abweichend: boolean;
   ort_abweichend: boolean;
   bemerkung_abweichend: boolean;
   verantwortliche_abweichend: boolean;
+  felder_abweichend: boolean;
+  spielerzahl_abweichend: boolean;
   ausgefallen: boolean;
   ausfall_grund: string | null;
   termin_verantwortliche: {
@@ -127,6 +139,8 @@ type RawTermin = {
     ende: string;
     ort: string | null;
     bemerkung: string | null;
+    felder: Felder | null;
+    erwartete_spielerzahl: number | null;
     termin_serien_verantwortliche: { user_id: string; verantwortlich_name: string | null }[];
   } | null;
 };
@@ -142,10 +156,10 @@ export function kurzeZeit(t: string | null): string | null {
 }
 
 const TERMIN_SELECT =
-  "id, team_id, datum, beginn, ende, ort, bemerkung, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, ausgefallen, ausfall_grund, " +
+  "id, team_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, felder_abweichend, spielerzahl_abweichend, ausgefallen, ausfall_grund, " +
   "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ), " +
   "trainings ( id, name, stufen ), " +
-  "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, " +
+  "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, " +
   "termin_serien_verantwortliche ( user_id, verantwortlich_name ) )";
 
 /** Nach Anzeigename ordnen, unbenannte (gelöschte Konten) zuletzt. Der Schlüssel
@@ -172,6 +186,8 @@ function mapTermin(t: RawTermin): TerminZeile {
     ende: kurzeZeit(t.ende),
     ort: t.ort,
     bemerkung: t.bemerkung,
+    felder: t.felder,
+    spielerzahl: t.erwartete_spielerzahl,
     training: t.trainings
       ? { id: t.trainings.id, name: t.trainings.name, stufen: sortStufen(t.trainings.stufen ?? []) }
       : null,
@@ -186,6 +202,8 @@ function mapTermin(t: RawTermin): TerminZeile {
           ende: kurzeZeit(t.termin_serien.ende)!,
           ort: t.termin_serien.ort,
           bemerkung: t.termin_serien.bemerkung,
+          felder: t.termin_serien.felder,
+          spielerzahl: t.termin_serien.erwartete_spielerzahl,
           verantwortliche: nachName(
             (t.termin_serien.termin_serien_verantwortliche ?? []).map((v) => ({
               userId: v.user_id,
@@ -204,6 +222,8 @@ function mapTermin(t: RawTermin): TerminZeile {
           t.ort_abweichend && "ort",
           t.bemerkung_abweichend && "bemerkung",
           t.verantwortliche_abweichend && "verantwortliche",
+          t.felder_abweichend && "felder",
+          t.spielerzahl_abweichend && "spielerzahl",
         ].filter(Boolean) as Abweichung[])
       : [],
     verantwortliche: nachName(
