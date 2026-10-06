@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AuswahlListe, Button, Dialog, SectionMessage } from "@/components/ui";
-import { zeitText } from "@/lib/termin";
+import { trainingOhneTermin, zeitText } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { TerminZeile } from "@/lib/queries/termine";
 
@@ -67,11 +67,7 @@ export function TerminWahlDialog({
           items={liste.map((t) => ({
             id: t.id,
             titel: `${datumKurz(t.datum)} · ${zeitText(t.beginn, t.ende)} Uhr`,
-            untertitel: !t.training
-              ? "Ohne Training"
-              : t.training.terminTraining
-                ? `Trägt «${t.training.name}» - wird ersetzt und gelöscht`
-                : `Trägt «${t.training.name}» - bleibt im Team-Bestand`,
+            untertitel: t.training ? `Trägt «${t.training.name}» - ${trainingOhneTermin(t.training.terminTraining)}` : "Ohne Training",
             gedaempft: t.datum < heute,
           }))}
           wert={gewaehlt}

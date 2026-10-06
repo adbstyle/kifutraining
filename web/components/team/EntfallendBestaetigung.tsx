@@ -2,6 +2,7 @@
 
 import { TriangleAlert } from "lucide-react";
 import { Button, Dialog } from "@/components/ui";
+import { trainingOhneTermin } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { SerienFolge } from "@/lib/kern/serien";
 
@@ -51,7 +52,7 @@ export function EntfallendBestaetigung({
             {folge.entfallend.map((e) => (
               <li key={e.terminId}>
                 {datumKurz(e.datum)} - <strong className="text-on-surface">{e.training.name}</strong>
-                {e.training.terminTraining ? " wird mitgelöscht" : " bleibt im Team-Bestand"}
+                {" "}{trainingOhneTermin(e.training.terminTraining)}
               </li>
             ))}
           </ul>

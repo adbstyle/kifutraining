@@ -232,7 +232,7 @@ pruefe("fachlicheMeldung erklärt Marker, fehlerMeldung bleibt wortgleich", () =
     ["UEBUNGSFOLGE_ABSCHNITT_LEER", "In diesem Abschnitt steht keine Übung."],
     [
       "TERMIN_TRAINING_FREMDES_TEAM",
-      "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams oder deine persönlichen Trainings zuordnen.",
+      "Einem Termin lassen sich nur Trainings seines Teams oder deine persönlichen Trainings zuordnen.",
     ],
   );
   // #263: die Varianten-Marker, die der KI-Weg jetzt erreicht, und die der

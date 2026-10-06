@@ -78,7 +78,7 @@ export function TerminZuordnenAusTraining({
 
   // Der Wahldialog setzt seine Auswahl zurück, sobald `training` wechselt:
   // darum eine stabile Identität.
-  const training = useMemo(() => ({ id: trainingId, name, termin: null }), [trainingId, name]);
+  const training = useMemo(() => ({ id: trainingId, name }), [trainingId, name]);
 
   function schliessen() {
     laufNr.current++;
@@ -130,7 +130,7 @@ export function TerminZuordnenAusTraining({
           const r = await ordneTrainingZuAktion({
             terminId: termin.id,
             trainingId,
-            erwartet: { terminTraining: termin.training?.id ?? null },
+            erwartet: { trainingAmTermin: termin.training?.id ?? null },
           });
           router.refresh();
           // Abgebrochen, während die Zuordnung lief: nur melden, was geschah.

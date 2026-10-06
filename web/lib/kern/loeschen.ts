@@ -10,7 +10,7 @@
 // (`lib/storage-aufraeumen.ts`).
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { eigeneBildPfade, entferneStorageObjekte } from "@/lib/fassung";
+import { eigeneBildPfade, entferneStorageObjekte, type BildKandidat } from "@/lib/fassung";
 import { ladeTrainingZumBearbeiten } from "@/lib/kern/zugriff";
 import {
   NICHT_GEFUNDEN,
@@ -113,9 +113,6 @@ export async function loescheTraining(
 }
 
 // ── Termin-Trainings (PO 2026-10-06) ─────────────────────────────────────────
-
-/** Eine Fassung mit ihrem Bild — soweit fürs Aufräumen nötig. */
-export type BildKandidat = { id: string; bild_url: string | null };
 
 /** Die Fassungen der Termin-Trainings unter diesen Trainings. Verliert ein
  *  Termin-Training seinen Termin, löscht die Datenebene es samt Fassungen

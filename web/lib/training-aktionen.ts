@@ -59,7 +59,7 @@ export type TrainingAktionsRechte = {
  *  Training und nur mit einem Team: Ein Team-Training liegt schon im Bestand
  *  und wird dort zugeordnet. */
 export function trainingAktionsRechte(
-  training: { visibility: "public" | "private"; teamId: string | null; terminTraining?: boolean },
+  training: { visibility: "public" | "private"; teamId: string | null; terminTraining: boolean },
   angemeldet: boolean,
   bearbeitungsziel: Bearbeitungsziel | null,
   hatTeams: boolean,
@@ -74,7 +74,7 @@ export function trainingAktionsRechte(
     sichtbarkeit: persoenlich ? (oeffentlich ? "auf_entwurf" : "veroeffentlichen") : null,
     insTeamStellen: persoenlich && hatTeams,
     terminZuordnen: persoenlich && hatTeams,
-    inBestandKopieren: darfBearbeiten && training.teamId !== null && !!training.terminTraining,
+    inBestandKopieren: darfBearbeiten && training.teamId !== null && training.terminTraining,
     loeschen: darfBearbeiten,
   };
 }

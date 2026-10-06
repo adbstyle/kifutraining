@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AuswahlListe, Button, Dialog, SectionMessage } from "@/components/ui";
 import { zaehle } from "@/lib/labels";
+import { trainingOhneTermin } from "@/lib/termin";
 import type { TeamTrainingRow, TrainingListRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
 
@@ -15,10 +16,6 @@ import type { TerminZeile } from "@/lib/queries/termine";
    Trägt der Termin schon ein Training, sagt der Dialog, was mit ihm
    geschieht: Ein Termin-Training wird ersetzt und gelöscht, ein älteres aus
    dem Bestand bleibt dort. */
-export type TrainingWahl = {
-  trainingId: string;
-};
-
 export function TrainingWahlDialog({
   termin,
   trainings,
@@ -37,7 +34,7 @@ export function TrainingWahlDialog({
   /** Die Meldung des Servers; der Dialog bleibt dann offen. */
   fehler?: string;
   onClose: () => void;
-  onWahl: (w: TrainingWahl) => void;
+  onWahl: (trainingId: string) => void;
 }) {
   const [gewaehlt, setGewaehlt] = useState<string | null>(null);
   useEffect(() => setGewaehlt(null), [termin]);
@@ -51,7 +48,7 @@ export function TrainingWahlDialog({
       actions={
         <>
           <Button variant="text" onClick={onClose}>Abbrechen</Button>
-          <Button variant="filled" disabled={!gewaehlt || pending} onClick={() => gewaehlt && onWahl({ trainingId: gewaehlt })}>
+          <Button variant="filled" disabled={!gewaehlt || pending} onClick={() => gewaehlt && onWahl(gewaehlt)}>
             Zuordnen
           </Button>
         </>
@@ -60,11 +57,7 @@ export function TrainingWahlDialog({
       {fehler && <SectionMessage appearance="error" className="mb-4">{fehler}</SectionMessage>}
       {bisher && (
         <p className="mb-3">
-          {bisher.terminTraining ? (
-            <>«{bisher.name}» wird dabei gelöscht — es gehört nur zu diesem Termin.</>
-          ) : (
-            <>«{bisher.name}» bleibt im Team-Bestand.</>
-          )}
+          «{bisher.name}» {trainingOhneTermin(bisher.terminTraining)}.
         </p>
       )}
       <h3 className="type-title-small mb-2 text-on-surface">Aus dem Team-Bestand</h3>

@@ -66,7 +66,7 @@ export function TeamTrainingsListe({
       const res = await ordneTrainingZuAktion({
         terminId: termin.id,
         trainingId: zuordnen.id,
-        erwartet: { terminTraining: termin.training?.id ?? null },
+        erwartet: { trainingAmTermin: termin.training?.id ?? null },
       });
       router.refresh();
       if (!res.ok && !istVeraltet(res.error)) {

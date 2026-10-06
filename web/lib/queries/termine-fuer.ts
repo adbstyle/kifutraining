@@ -69,9 +69,9 @@ export type TerminZeile = {
   felder: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
   spielerzahl: number | null;
-  /** `null`: Der Termin trägt (noch) kein Training (#322). */
-  /** `terminTraining`: eine Kopie, die mit dem Termin lebt und beim Lösen
-   *  gelöscht wird; sonst ein Training aus dem Bestand (PO 2026-10-06). */
+  /** `null`: Der Termin trägt (noch) kein Training (#322). `terminTraining`:
+   *  eine Kopie, die mit dem Termin lebt und beim Lösen gelöscht wird; sonst
+   *  ein älteres Training aus dem Bestand (PO 2026-10-06). */
   training: { id: string; name: string; stufen: KategorieSlug[]; terminTraining: boolean } | null;
   /** `null`: ein einzelner Termin ohne Serie. */
   serie: TerminSerie | null;
@@ -82,7 +82,7 @@ export type TerminZeile = {
   /** Wer den Termin vorbereitet und leitet (#325), nach Name geordnet,
    *  Einträge gelöschter Konten zuletzt. */
   verantwortliche: Verantwortlicher[];
-  /** Der Termin findet nicht statt (#327); er trägt dann kein Training. */
+  /** Der Termin findet nicht statt (#327); ein Training ruht dann an ihm. */
   ausgefallen: boolean;
   /** Freiwilliger Grund des Ausfalls; nur bei `ausgefallen`. */
   ausfallGrund: string | null;

@@ -168,6 +168,14 @@ export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partia
  *  Termin still eine eigene Kopie bekommt, sagt sie nicht (PO 2026-10-06). */
 export const ZUORDNEN_ERFOLG = "Training zugeordnet.";
 
+/** Was mit einem Training geschieht, das seinen Termin verliert (lösen,
+ *  ersetzen, Termin entfernen, Serienänderung): Ein Termin-Training wird
+ *  gelöscht, ein älteres Training aus dem Bestand bleibt dort (PO 2026-10-06).
+ *  Eine Formulierung für alle Dialoge. */
+export function trainingOhneTermin(terminTraining: boolean): string {
+  return terminTraining ? "wird gelöscht" : "bleibt im Team-Bestand";
+}
+
 /** Die Zeit eines Termins zum Anzeigen: «18:30–20:00». */
 export function zeitText(beginn: string, ende: string): string {
   return `${beginn}–${ende}`;
@@ -182,7 +190,7 @@ export const TERMIN_MELDUNG = {
     "Am Termin hat sich inzwischen etwas geändert: Ihm wurde ein anderes Training zugeordnet " +
     "oder sein Training gelöst. Sieh ihn dir noch einmal an.",
   TERMIN_TRAINING_FREMDES_TEAM:
-    "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams oder deine persönlichen Trainings zuordnen.",
+    "Einem Termin lassen sich nur Trainings seines Teams oder deine persönlichen Trainings zuordnen.",
   /** Rückhalt der Datenebene: Zugeordnet wird nur eine frische Kopie. */
   TRAINING_SCHON_EINGEPLANT: "Dieses Training gehört schon einem Termin.",
   TERMIN_AUSGEFALLEN:

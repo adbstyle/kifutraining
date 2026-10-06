@@ -41,9 +41,9 @@ import {
  *
  * Zeitrahmen und Inhalt sind getrennt (PO 15): Ein Termin gehört dem Team und
  * besteht auch ohne Training; ein Training kommt nur durch Zuordnen an einen
- * bestehenden Termin auf ein Datum. Ein Termin trägt höchstens ein Training,
- * ein Training ist höchstens für einen Termin eingeplant — ein weiterer Termin
- * bekommt eine eigenständige Kopie, oder das Training wird verschoben.
+ * bestehenden Termin auf ein Datum. Ein Termin trägt höchstens ein Training:
+ * immer eine eigene Kopie, ein Termin-Training, das mit ihm lebt; die Quelle
+ * bleibt unberührt (PO 2026-10-06).
  *
  * Gleichzeitige Änderungen (PO 17): Die Oberfläche sendet mit, was sie bei der
  * Auswahl sah (`erwartet…`), und wird abgewiesen, wenn sich genau das geändert
@@ -78,7 +78,7 @@ export type TerminRoh = {
   zeit_abweichend: boolean;
   ort_abweichend: boolean;
   bemerkung_abweichend: boolean;
-  /** Ein ausgefallener Termin trägt kein Training (#327). */
+  /** Ein ausgefallener Termin behält sein Training; es ruht (PO 2026-10-06). */
   ausgefallen: boolean;
   ausfall_grund: string | null;
 };
@@ -354,7 +354,7 @@ export type Zuordnung = {
    *  persönliches oder ein anderes Termin-Training des Teams. */
   trainingId: string;
   /** Was die Oberfläche bei der Auswahl sah (AK 14); `undefined` beim KI-Weg. */
-  erwartet?: { terminTraining: string | null };
+  erwartet?: { trainingAmTermin: string | null };
 };
 
 export type Zugeordnet = {
@@ -423,7 +423,7 @@ export async function ordneTrainingZu(
   if (t.training_id === e.trainingId) return ok({ terminId: t.id, teamId: t.team_id, trainingId: e.trainingId, ersetzt: null });
 
   // Eine veraltete Auswahl legt keine Kopie an.
-  if (e.erwartet && t.training_id !== e.erwartet.terminTraining)
+  if (e.erwartet && t.training_id !== e.erwartet.trainingAmTermin)
     return fehlschlag("konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
 
   const bilder = await terminTrainingBilder(supabase, [t.training_id]);
@@ -432,7 +432,7 @@ export async function ordneTrainingZu(
   const { data, error } = await supabase.rpc("termin_training_setzen", {
     p_termin: t.id,
     p_training: kopie.neueId,
-    p_erwartet: { termin_training: e.erwartet ? e.erwartet.terminTraining : t.training_id },
+    p_erwartet: { termin_training: e.erwartet ? e.erwartet.trainingAmTermin : t.training_id },
   });
   if (error) return mitAufgeraeumterKopie(supabase, await kalenderFehler(error, !e.erwartet), kopie.neueId);
   await raeumeBilderAb(supabase, bilder);

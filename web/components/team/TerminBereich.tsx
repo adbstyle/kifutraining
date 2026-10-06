@@ -9,7 +9,7 @@ import { EntfallendBestaetigung } from "./EntfallendBestaetigung";
 import { ReichweiteDialog } from "./ReichweiteDialog";
 import { NeuerTerminDialog } from "./NeuerTerminDialog";
 import { TerminDialog } from "./TerminDialog";
-import { TrainingWahlDialog, type TrainingWahl } from "./TrainingWahlDialog";
+import { TrainingWahlDialog } from "./TrainingWahlDialog";
 import { nurNamenloseGeaendert, verantwortlicheStart, type VerantwortlicheWert } from "./VerantwortlicheWahl";
 import {
   aendereSerieAktion,
@@ -28,7 +28,7 @@ import {
   vorschauSerieEntfernenAktion,
   type TerminFelder,
 } from "@/lib/actions/termine";
-import { geaenderteFelder, ZUORDNEN_ERFOLG } from "@/lib/termin";
+import { geaenderteFelder, trainingOhneTermin, ZUORDNEN_ERFOLG } from "@/lib/termin";
 import {
   SERIE_MELDUNG,
   SERIE_TEXT,
@@ -138,7 +138,7 @@ export function TerminBereich({
 }: {
   teamId: string;
   trainings: TeamTrainingRow[];
-  /** Die eigenen persönlichen Trainings des USERS — zuordenbar als Kopie (#328). */
+  /** Die eigenen persönlichen Trainings des USERS (#328). */
   persoenliche: TrainingListRow[];
   /** Wer als Verantwortliche:r zur Wahl steht (#325). */
   mitglieder: TeamMitglied[];
@@ -394,7 +394,7 @@ export function TerminBereich({
     if (!training) return;
     lauf(
       () => loeseTrainingAktion(t.id, training.id),
-      () => (training.terminTraining ? `«${training.name}» ist gelöst und gelöscht.` : `«${training.name}» ist gelöst und bleibt im Team-Bestand.`),
+      () => `«${training.name}» ist gelöst und ${trainingOhneTermin(training.terminTraining)}.`,
       () => setLoesen(null),
     );
   }
@@ -402,7 +402,7 @@ export function TerminBereich({
   const aktionen: TerminAktionen = {
     neu: () => { neuerLauf(); setDialogFehler(undefined); setNeu(true); },
     bearbeiten: (t) => { neuerLauf(); setDialogFehler(undefined); setBearbeiten(t); },
-    // Ein ausgefallener Termin trägt kein Training (#327 AK 9): kein Dialog.
+    // Einem ausgefallenen Termin lässt sich kein Training zuordnen (#327 AK 9).
     zuordnen: (t) => { if (t.ausgefallen) return; neuerLauf(); setDialogFehler(undefined); setZuordnen(t); },
     // Ein Termin-Training geht beim Lösen verloren: erst nachfragen. Ein
     // Training aus dem Bestand bleibt dort — das löst sofort (PO 2026-10-06).
@@ -521,13 +521,13 @@ export function TerminBereich({
           neuerLauf();
           setZuordnen(null);
         }}
-        onWahl={(w: TrainingWahl) =>
+        onWahl={(trainingId) =>
           zuordnen &&
           lauf(
             () => ordneTrainingZuAktion({
               terminId: zuordnen.id,
-              trainingId: w.trainingId,
-              erwartet: { terminTraining: zuordnen.training?.id ?? null },
+              trainingId,
+              erwartet: { trainingAmTermin: zuordnen.training?.id ?? null },
             }),
             () => ZUORDNEN_ERFOLG,
             () => setZuordnen(null),
@@ -582,12 +582,9 @@ export function TerminBereich({
       >
         <p>
           Der Termin am {entfernen ? datumKurz(entfernen.datum) : ""} verschwindet aus dem Trainingsplan.
-          {entfernen?.training &&
-            (entfernen.training.terminTraining ? (
-              <> <strong className="text-on-surface">{entfernen.training.name}</strong> wird mit ihm gelöscht.</>
-            ) : (
-              <> <strong className="text-on-surface">{entfernen.training.name}</strong> bleibt ohne Termin im Team-Bestand.</>
-            ))}
+          {entfernen?.training && (
+            <> <strong className="text-on-surface">{entfernen.training.name}</strong> {trainingOhneTermin(entfernen.training.terminTraining)}.</>
+          )}
         </p>
       </Dialog>
 

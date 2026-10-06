@@ -1365,7 +1365,7 @@ try {
 
     // AK 14: veraltete Auswahl.
     const w = await training("Kern-DB-W");
-    fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: morgen, trainingId: w, erwartet: { terminTraining: null } }), "konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
+    fehler(await ordneTrainingZu(a.supabase, a.id, { terminId: morgen, trainingId: w, erwartet: { trainingAmTermin: null } }), "konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
 
     // Ausfall: Das Training ruht am Termin und ist nach der Rücknahme wieder da.
     const amMorgen = await traegt(morgen);
@@ -3179,7 +3179,7 @@ try {
     const amTermin = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: termin, trainingId: altes })).trainingId;
     const vorher = await anzahl();
     fehler(
-      await ordneTrainingZu(a.supabase, a.id, { terminId: termin, trainingId: p, erwartet: { terminTraining: null } }),
+      await ordneTrainingZu(a.supabase, a.id, { terminId: termin, trainingId: p, erwartet: { trainingAmTermin: null } }),
       "konflikt",
       TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT,
     );
@@ -3187,7 +3187,7 @@ try {
     assert.equal(await traegt(), amTermin, "der Termin bleibt unverändert");
 
     // PC 5, AK 7: Mit zutreffender Erwartung wird die Kopie verknüpft; das ersetzte Termin-Training geht.
-    const z = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: termin, trainingId: p, erwartet: { terminTraining: amTermin } }));
+    const z = wert(await ordneTrainingZu(a.supabase, a.id, { terminId: termin, trainingId: p, erwartet: { trainingAmTermin: amTermin } }));
     assert.deepEqual(z.ersetzt, { trainingId: amTermin, geloescht: true }, "das ersetzte Training wird genannt");
     assert.equal(await traegt(), z.trainingId, "der Termin trägt die Kopie");
     assert.notEqual(z.trainingId, p);

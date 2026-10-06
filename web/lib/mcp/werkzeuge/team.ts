@@ -147,7 +147,7 @@ const PlanEintrag = z.object({
   abweichungen: z.array(z.enum(["datum", "zeit", "ort", "bemerkung", "verantwortliche", "felder", "spielerzahl"])),
   /** Wer den Termin vorbereitet und leitet (#325); leer ohne Eintrag. */
   verantwortliche: z.array(Verantwortlich),
-  /** Ein ausgefallener Termin trägt kein Training und gilt nicht als unvorbereitet (#327). */
+  /** Ein ausgefallener Termin gilt nicht als unvorbereitet; ein Training ruht an ihm (#327, PO 2026-10-06). */
   ausgefallen: z.boolean(),
   /** Freiwilliger Grund des Ausfalls; `null` ohne Angabe und bei einem Termin, der stattfindet. */
   ausfall_grund: z.string().nullable(),
