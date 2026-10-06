@@ -138,12 +138,17 @@ export async function terminTrainingBilder(
  *  harmlos, das Bild einer lebenden Fassung zu löschen wäre Datenverlust. */
 export async function raeumeBilderAb(supabase: SupabaseClient, kandidaten: readonly BildKandidat[]): Promise<void> {
   if (kandidaten.length === 0) return;
-  const { data, error } = await supabase
-    .from("training_exercises")
-    .select("id")
-    .in("id", kandidaten.map((k) => k.id));
-  if (error) return;
-  const nochDa = new Set((data ?? []).map((r) => r.id as string));
+  // In Stücken gefragt: Eine Serie kann viele Fassungen mitnehmen, und eine
+  // lange `in`-Liste sprengte die Länge der Adresse.
+  const nochDa = new Set<string>();
+  for (let i = 0; i < kandidaten.length; i += 100) {
+    const { data, error } = await supabase
+      .from("training_exercises")
+      .select("id")
+      .in("id", kandidaten.slice(i, i + 100).map((k) => k.id));
+    if (error) return;
+    for (const r of data ?? []) nochDa.add(r.id as string);
+  }
   try {
     await entferneStorageObjekte(supabase, eigeneBildPfade(kandidaten.filter((k) => !nochDa.has(k.id))));
   } catch {
