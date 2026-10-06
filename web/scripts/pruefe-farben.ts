@@ -245,6 +245,19 @@ pruefe("Jede Lozenge trägt ihre Schrift auf jeder Höhenstufe", () => {
   }
 });
 
+pruefe("Kalenderblatt: Tageszahl und Beschriftung tragen auf ihrer Tönung (4.5:1)", () => {
+  // Kalenderblatt: 12 % der Zustandsfarbe über der Karte (elev-01), die Zahl
+  // in der Farbe selbst, Wochentag und Monat in der leisen Schrift.
+  const karte = elev(1);
+  for (const [was, farbe] of [["Training", PRIMARY], ["Noch kein Training", SECTION.warning.icon]] as const) {
+    const flaeche = ueberlagern(farbe, 0.12, karte);
+    const zahl = kontrast(farbe, flaeche);
+    assert.ok(zahl >= 4.5, `${was}: Zahl ${z(zahl)}:1`);
+    const leise = kontrast(deckend(hex8("#ffffff", SCHRIFT.mittel), flaeche), flaeche);
+    assert.ok(leise >= 4.5, `${was}: Beschriftung ${z(leise)}:1`);
+  }
+});
+
 pruefe("Die Zeichen im Mini-Monat heben sich von seiner Fläche ab (WCAG 1.4.11)", () => {
   // MiniMonat: Punkt in Primary, Ring in der Warnfarbe (`icon-warning`),
   // Strich und Kreuz in der leisen Schrift — als Badges im Tag auf der

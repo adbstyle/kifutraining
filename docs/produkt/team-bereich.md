@@ -293,9 +293,10 @@ darunter steht er nicht noch einmal, in der Zahl der anstehenden Termine zählt 
 
 Die übrigen Termine sind nach Monaten gegliedert, jede Überschrift mit Jahr. Die Termine eines
 Tages stehen zusammen in einer Karte, nach Beginn geordnet, jeder als knappe Zeile mit seinem
-Kalenderblatt links — Wochentag, Tageszahl und Monat, ohne Jahr, am heutigen Tag „Heute" statt
-des Wochentags. Die Farbe des Blatts sagt, was der Termin trägt: violett mit Training, orange
-noch ohne, grau und durchgestrichen ausgefallen, ohne Farbe vergangen ohne Training. Eine Zeile
+Kalenderblatt links — Wochentag, Tageszahl und Monat, ohne Jahr; den heutigen Tag hebt es nicht
+hervor, dafür steht der nächste Termin zuoberst. Eine leise Tönung des Blatts sagt, was der
+Termin trägt: violett mit Training, gelb noch ohne, grau und durchgestrichen ausgefallen, ohne
+Tönung vergangen ohne Training. Eine Zeile
 zeigt Beginn und Ende, Ort und Platz, die erwartete Spielerzahl, was der Termin trägt und die
 Verantwortlichen. Was zu lang ist, endet in „…" und steht ganz im Hinweis beim Darüberfahren. Der Termin
 trägt das Training mit seinem Namen, oder — anstehend und ohne Training — gleich den Knopf

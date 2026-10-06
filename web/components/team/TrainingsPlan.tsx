@@ -203,7 +203,7 @@ function TerminReihe({
         <span className="sr-only">Termin ändern: {zeit}</span>
       </button>
       <div aria-hidden={!ersterDesTages || undefined} className="pointer-events-none relative">
-        <Kalenderblatt as={ersterDesTages ? "h5" : "div"} datum={t.datum} heute={t.datum === heute} zustand={zustand} className={cn(vergangen && "opacity-60")} />
+        <Kalenderblatt as={ersterDesTages ? "h5" : "div"} datum={t.datum} zustand={zustand} className={cn(vergangen && "opacity-60")} />
       </div>
       <div className={cn("pointer-events-none relative min-w-0 flex-1 py-0.5", (vergangen || t.ausgefallen) && "[&_.gedaempft]:opacity-60")}>
         {/* Schmal bricht um, was unter 8 rem schrumpfte, und kürzt erst auf ganzer Breite. */}
