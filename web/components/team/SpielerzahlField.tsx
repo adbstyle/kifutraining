@@ -30,6 +30,9 @@ export function SpielerzahlField({
       disabled={disabled}
       error={!!fehler}
       info={TERMIN_TEXT.spielerzahlZaehlt}
+      // Wer zählt, muss man auch auf dem Handy wissen, bevor man eine Zahl
+      // einträgt (Styleguide, Formularfelder › Hinweise: `infoAufTouch`).
+      infoAufTouch
       supportingText={fehler}
       onChange={(e) => onChange(e.target.value)}
     />

@@ -2818,8 +2818,9 @@ export default function Styleguide() {
             <strong>Erfassen</strong> - kein Repeat-Baustein im Kit, darum ein
             eigenes Feld aus bestehenden Teilen: je Zeile <code>Select</code>{" "}
             für Art und (nur bei färbbarem Material) Farbe, <code>TextField</code>{" "}
-            für die Menge, <code>IconButton</code> mit <code>X</code> zum Entfernen (PO 2026-10-06). Hinzufügen ist
-            eine Randhandlung, darum <code>quiet</code> (siehe 08).
+            für die Menge, <code>IconButton</code> mit <code>X</code> zum
+            Entfernen (PO 2026-10-06). Hinzufügen ist eine Randhandlung, darum{" "}
+            <code>quiet</code> (siehe 08).
           </li>
           <li>
             <strong>Vorschlag</strong> - das Angebot des Diagramms steht als{" "}
@@ -3091,9 +3092,10 @@ export default function Styleguide() {
           <li>
             <strong>Ein Block je Feld</strong> - umrandet (<code>border-linie</code>),
             mit «Feld 1», «Feld 2» und dem <code>IconButton</code> mit{" "}
-            <code>X</code> zum Entfernen (PO 2026-10-06, kein Papierkorb). Die Felder sind getrennte Flächen; der Block macht das
-            sichtbar, wo eine Zeile wie beim Material sie zu einem Posten
-            verkürzte. Hinzufügen ist eine Randhandlung: <code>quiet</code>.
+            <code>X</code> zum Entfernen (PO 2026-10-06, kein Papierkorb). Die
+            Felder sind getrennte Flächen; der Block macht das sichtbar, wo
+            eine Zeile wie beim Material sie zu einem Posten verkürzte.
+            Hinzufügen ist eine Randhandlung: <code>quiet</code>.
             Jeder Block ist eine Gruppe (<code>role=&quot;group&quot;</code>),
             benannt nach seinem Titel.
           </li>
@@ -3108,9 +3110,10 @@ export default function Styleguide() {
             <strong>Leer heisst unbekannt, 0 heisst keine</strong> - steht als
             Hinweis hinter dem ⓘ jedes Felds - bei Länge und Breite «leer heisst
             unbekannt», bei jeder Torart dazu «0 heisst keine» -, weil der
-            Unterschied für den KI-Assistenten zählt. Länge und Breite sind ein Paar: Ein Fehler
-            färbt beide, der Satz steht unter der Breite (wie die
-            Spielfeldgrösse einer Übung).
+            Unterschied für den KI-Assistenten zählt. Der Hinweis der Torarten
+            steht auf Touch-Geräten auch unter dem Feld (<code>infoAufTouch</code>).
+            Länge und Breite sind ein Paar: Ein Fehler färbt beide, der Satz
+            steht unter der Breite (wie die Spielfeldgrösse einer Übung).
           </li>
           <li>
             <strong>Untergrund mit «Unbekannt»</strong> - anders als sonst bei
@@ -3129,10 +3132,12 @@ export default function Styleguide() {
           <li>
             <strong>Erwartete Spielerzahl</strong> (#390) - ein gewöhnliches
             Zahlenfeld (<code>SpielerzahlField</code> = <code>TextField</code>),
-            dessen Hinweis hinter dem ⓘ sagt, was die Zahl zählt; unter dem
-            Feld steht nur ein Fehler; es heisst «Erwartete Spielerzahl» wie in der Auskunft des
-            Assistenten. Im Trainingsplan steht sie in derselben Zeile wie die
-            Felder, mit dem Zeichen <code>Shirt</code> - <code>Users</code>{" "}
+            dessen Hinweis hinter dem ⓘ sagt, was die Zahl zählt (auf
+            Touch-Geräten auch unter dem Feld, <code>infoAufTouch</code>); sonst
+            steht unter dem Feld nur ein Fehler. Es heisst «Erwartete
+            Spielerzahl» wie in der Auskunft des Assistenten. Im Trainingsplan
+            steht sie in derselben Zeile wie die Felder, mit dem Zeichen{" "}
+            <code>Shirt</code> - <code>Users</code>{" "}
             trägt schon die Verantwortlichen.
           </li>
         </ul>

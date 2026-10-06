@@ -6,6 +6,7 @@ import { Button, IconButton, Select, TextField, feldNameKlasse } from "@/compone
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 import { zahlOderNull } from "@/lib/termin";
 import {
+  FELD_HINWEIS,
   TORARTEN,
   TORART_LABEL,
   UNTERGRUENDE,
@@ -29,14 +30,6 @@ export type FeldZeile = {
 };
 
 const text = (n: number | null) => (n === null ? "" : String(n));
-
-/* Feste Hinweise je Angabe — sie stehen hinter dem ⓘ des jeweiligen Felds
-   (Styleguide, Formularfelder › Hinweise), nicht als Sammelhinweis über der
-   Gruppe. Der Untergrund braucht keinen: «Unbekannt» ist dort eine Wahl. */
-const MASS_HINWEIS = (seite: "Länge" | "Breite") =>
-  `${seite} der Fläche, die euch zur Verfügung steht, in ganzen Metern. Leer heisst unbekannt.`;
-const TORE_HINWEIS = (torart: string) =>
-  `Wie viele ${torart} auf diesem Feld stehen. Leer heisst unbekannt, 0 heisst keine.`;
 
 export function zeilenAusFeldern(felder: Felder | null | undefined): FeldZeile[] {
   return (felder ?? []).map((f) => ({
@@ -145,7 +138,7 @@ export function FelderField({
                 <div className="mt-2 flex flex-col gap-3">
                   <TextField
                     label="Länge (m)"
-                    info={MASS_HINWEIS("Länge")}
+                    info={FELD_HINWEIS.masse("Länge")}
                     type="number"
                     inputMode="numeric"
                     min={SPIELFELD_MIN}
@@ -157,7 +150,7 @@ export function FelderField({
                   />
                   <TextField
                     label="Breite (m)"
-                    info={MASS_HINWEIS("Breite")}
+                    info={FELD_HINWEIS.masse("Breite")}
                     type="number"
                     inputMode="numeric"
                     min={SPIELFELD_MIN}
@@ -172,7 +165,10 @@ export function FelderField({
                     <TextField
                       key={art}
                       label={TORART_LABEL[art]}
-                      info={TORE_HINWEIS(TORART_LABEL[art])}
+                      info={FELD_HINWEIS.tore(TORART_LABEL[art])}
+                      // «0 heisst keine» muss man auch auf dem Handy lesen,
+                      // bevor man ein Torfeld leer lässt.
+                      infoAufTouch
                       type="number"
                       inputMode="numeric"
                       min={0}
