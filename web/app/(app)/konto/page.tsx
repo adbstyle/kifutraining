@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LogOut, Bookmark, ChevronRight } from "lucide-react";
+import { Bookmark, ChevronRight, Cookie, LogOut } from "lucide-react";
 import { Card, Button, SectionMessage } from "@/components/ui";
 import { KontoClient } from "./KontoClient";
 import { AnzeigenameForm } from "./AnzeigenameForm";
@@ -138,6 +138,29 @@ export default async function KontoPage() {
           )}
         </div>
       </Card>
+
+      {/* Was KiFu im Browser speichert (#409). Die Seite selbst ist ohne
+          Anmeldung offen; ohne Konto führen die Anmeldeseiten dorthin. */}
+      <Link
+        href="/cookies"
+        className="focus-ring state group mb-4 flex items-center gap-4 rounded-flaeche bg-elev-01 p-5"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
+          <Cookie size={22} strokeWidth={2} aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="type-title-medium block text-on-surface">Cookies</span>
+          <span className="type-body-small block text-on-surface-mittel">
+            Was KiFu in deinem Browser speichert, wozu und wie du es verhinderst.
+          </span>
+        </span>
+        <ChevronRight
+          size={20}
+          strokeWidth={2}
+          className="shrink-0 text-on-surface-mittel transition-transform group-hover:translate-x-0.5"
+          aria-hidden
+        />
+      </Link>
 
       <Card className="p-6">
         <h2 className="type-title-large text-on-surface">Konto löschen</h2>

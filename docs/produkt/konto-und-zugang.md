@@ -24,7 +24,7 @@ Weg, das Passwort im laufenden Betrieb ohne diesen Mailversand zu wechseln, gibt
 
 Die Konto-Seite zeigt die eigene E-Mail-Adresse, bietet das Abmelden an, führt zu den eigenen
 Übungen, lässt den Anzeigenamen setzen, listet die verbundenen KI-Assistenten und die
-Kalender-Abos und bietet das Löschen des Kontos an. Mehr Profilangaben gibt es nicht — kein Bild, keine Adresse, keine
+Kalender-Abos, führt zur Seite „Cookies" (siehe Navigation) und bietet das Löschen des Kontos an. Mehr Profilangaben gibt es nicht — kein Bild, keine Adresse, keine
 Vereinszugehörigkeit.
 
 ## Der Anzeigename
