@@ -1,7 +1,8 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { PFAD_HEADER } from "@/lib/pfad";
-import { APP_VERSION } from "@/lib/releases";
+import { APP_VERSION, getReleases, neuesteVeroeffentlichung } from "@/lib/releases";
+import { GESEHEN_COOKIE, leseGesehen } from "@/lib/versionen-gesehen";
 import { getAnzeigenameFuer } from "@/lib/queries/profil";
 import { getMeineTeamsImRequest } from "@/lib/queries/teams";
 import { getTrainingNavKontext } from "@/lib/queries/trainings";
@@ -48,6 +49,13 @@ export async function AppNav() {
       ])
     : [null, [], null];
 
+  // Für die Markierung neuer Releases (#410): der neueste veröffentlichte
+  // und der zuletzt gesehene. Ohne Releases (GitHub nie erreicht) keine
+  // Markierung — die Version steht trotzdem.
+  const [stand, jar] = await Promise.all([getReleases(), cookies()]);
+  const neueste = stand && neuesteVeroeffentlichung(stand.releases);
+  const gesehen = leseGesehen(jar.get(GESEHEN_COOKIE)?.value);
+
   return (
     <AppNavClient
       konto={
@@ -62,6 +70,8 @@ export async function AppNav() {
       teams={teams}
       imTeamBereich={!!kontext?.team}
       version={APP_VERSION}
+      neuesteVersion={neueste}
+      gesehenVersion={gesehen}
     />
   );
 }

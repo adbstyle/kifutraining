@@ -3,7 +3,8 @@ import { ExternalLink, Tag } from "lucide-react";
 import { Leerzustand, SectionMessage } from "@/components/ui";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
-import { APP_VERSION, datumLang, getReleasesZumLesen } from "@/lib/releases";
+import { VersionenGesehen } from "@/components/versionen/VersionenGesehen";
+import { APP_VERSION, datumLang, getReleasesZumLesen, neuesteVeroeffentlichung } from "@/lib/releases";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Versionen - KiFu" };
@@ -15,6 +16,7 @@ export const metadata: Metadata = { title: "Versionen - KiFu" };
    Hinweis. */
 export default async function VersionenPage() {
   const { stand, veraltet } = await getReleasesZumLesen();
+  const neueste = stand && neuesteVeroeffentlichung(stand.releases);
 
   return (
     <Seitenrahmen breite="3xl" krumen={[{ label: "Versionen" }]}>
@@ -29,6 +31,7 @@ export default async function VersionenPage() {
         </Leerzustand>
       ) : (
         <>
+          {neueste && <VersionenGesehen neueste={neueste} />}
           {veraltet && (
             <SectionMessage className="mb-6">
               Die Versionen sind gerade nicht abrufbar. Das hier ist der Stand vom{" "}

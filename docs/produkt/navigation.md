@@ -16,8 +16,16 @@ Hervorgehoben ist, wo man gerade steht. Ein geöffnetes Team-Training hält „T
 wie im Team-Bereich beschrieben.
 
 Über dem Konto steht die Version, die gerade läuft. Ein Klick darauf öffnet „Versionen" (siehe
-unten); in der schmalen Leiste bleibt ihr Zeichen, die Nummer zeigt der Hinweis daneben. Rechts
-daneben führt „Cookies" zur gleichnamigen Seite; in der schmalen Leiste fehlt dieser Verweis.
+unten); in der schmalen Leiste bleibt ihr Zeichen, die Nummer zeigt der Hinweis daneben.
+
+Ist seit dem letzten Blick in „Versionen" eine neue Version erschienen, trägt die Versionszeile
+die Plakette „Neu", in der schmalen Leiste einen Punkt am Zeichen. Sie unterbricht nichts und
+verschwindet, sobald „Versionen" die neuen Versionen angezeigt hat — konnte die Seite nur einen
+älteren Stand zeigen, bleibt sie. Jede neu veröffentlichte Version gilt als neu, auch eine ohne
+spürbare Änderung; eine nachträglich korrigierte nicht. Wer KiFu in einem Browser zum ersten
+Mal öffnet, sieht keine Markierung. Eine neue Version erscheint spätestens eine Stunde nach
+ihrer Veröffentlichung, und zwar beim nächsten Laden einer Seite; eine offene Seite ändert sich
+nicht von selbst.
 
 Ganz unten steht das Konto: Initialen, Anzeigename und E-Mail-Adresse. Ein Klick darauf führt
 ins Konto, wo auch das Abmelden zu finden ist. Ohne Anmeldung steht an dieser Stelle
@@ -47,10 +55,11 @@ womöglich nicht aktuell ist; die Versionsnummer in der Leiste steht trotzdem.
 ## Cookies
 
 Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, die gewählte
-Breite der Seitenleiste und die gezogene Breite der Spalte — je mit Zweck, Dauer, Namen und
-dem, was ohne sie nicht mehr geht. Sie sagt auch, wie man Cookies in den Einstellungen des
-Browsers sperrt oder löscht. Erreichbar ist sie ohne Anmeldung über die Seitenleiste und auf
-den Seiten zum Anmelden und Registrieren unten; sie funktioniert auch mit gesperrten Cookies.
+Breite der Seitenleiste, die gezogene Breite der Spalte und bis zu welcher Version man
+„Versionen" gesehen hat — je mit Zweck, Dauer, Namen und dem, was ohne sie nicht mehr geht.
+Sie sagt auch, wie man Cookies in den Einstellungen des Browsers sperrt oder löscht. Sie hängt
+am Konto (Brotkrume „Konto › Cookies") und ist ohne Anmeldung über einen Verweis unten auf den
+Seiten zum Anmelden und Registrieren erreichbar; sie funktioniert auch mit gesperrten Cookies.
 
 ## Brotkrumen
 
@@ -175,7 +184,11 @@ es nicht — das geht über den Browser.
 „Versionen" zeigt die Texte so, wie sie veröffentlicht wurden; ältere enthalten Technisches,
 Issue-Nummern und Aussagen, die inzwischen überholt sind. Issue-Nummern sind dort kein Link,
 Bilder in einem Release-Text erscheinen nicht. Kurz nach einem Release kann die Version in der
-Leiste schon neuer sein als der neueste Eintrag unter „Versionen" oder umgekehrt.
+Leiste schon neuer sein als der neueste Eintrag unter „Versionen" oder umgekehrt. Ob eine
+Version gesehen ist, merkt sich jeder Browser für sich, nicht das Konto: Auf einem anderen
+Gerät steht „Neu" weiter. Auf dem Telefon ist die Markierung erst im geöffneten Menü zu sehen,
+und „Versionen" hebt nicht hervor, welche Einträge seit dem letzten Besuch neu sind. Ein
+Browser, der keine Cookies behält, zeigt nie eine Markierung.
 
 Auf Geräten ohne Maus, also auf Telefon und Tablet, erscheint das ⓘ eines Feldes nie; die
 Hinweise dahinter bleiben dort nur der Sprachausgabe zugänglich. Ausgenommen sind die wenigen

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ButtonLink } from "./Button";
+import { Lozenge } from "./Lozenge";
 import { IconButton } from "./IconButton";
 import { tooltipFlaeche } from "./Tooltip";
 
@@ -60,6 +61,9 @@ export interface SeitenleisteVersion {
   nummer: string;
   href: string;
   current?: boolean;
+  /** Ein Release ist erschienen, den dieser Browser noch nicht gesehen hat
+   *  (#410): breit die Plakette «Neu», schmal ein Punkt am Zeichen. */
+  neu?: boolean;
 }
 
 export interface SeitenleisteProps {
@@ -69,8 +73,6 @@ export interface SeitenleisteProps {
   anmeldenHref?: string;
   /** Laufende Version über der Konto-Karte. */
   version?: SeitenleisteVersion;
-  /** Die Seite «Cookies» (#409), neben der Version; schmal ausgeblendet. */
-  cookies?: { href: string; current?: boolean };
   /** Schmal (nur Zeichen). Wirkt ab `lg`; darunter ist die Leiste ein Drawer
    *  und zeigt immer alles. */
   slim: boolean;
@@ -193,7 +195,6 @@ export function Seitenleiste({
   konto,
   anmeldenHref = "/login",
   version,
-  cookies,
   slim,
   drawerOffen = false,
   onDrawerOffenChange = keineAktion,
@@ -384,45 +385,49 @@ export function Seitenleiste({
 
         {/* Die Version führt zur Release-History (#408): gleich über der Linie
             zum Konto. Schmal bleibt das Zeichen, die Nummer steht dann im
-            Hinweis daneben. Rechts davon «Cookies» (#409) — schmal weg, die
-            Seite ist dann über «Versionen» und die breite Leiste erreichbar. */}
+            Hinweis daneben. */}
         {version && (
-          <div className="flex shrink-0 items-center gap-1 px-4 pb-2">
+          <div className="shrink-0 px-4 pb-2">
             <Link
               href={version.href}
               aria-current={version.current ? "page" : undefined}
-              data-hinweis={`Version ${version.nummer}`}
+              data-hinweis={`Version ${version.nummer}${version.neu ? " - Neu" : ""}`}
               onClick={schliessen}
               className={cn(
                 zeile,
-                "type-body-small h-9 min-w-0 flex-1 gap-3 px-2.5",
+                "type-body-small h-9 gap-3 px-2.5",
                 k?.mitte,
                 version.current ? zeileAktiv : zeileRuhe,
               )}
             >
-              <Tag
-                size={18}
-                strokeWidth={2}
-                aria-hidden
-                className={cn("shrink-0", version.current && "text-primary")}
-              />
-              <span className={cn("truncate", k?.textWeg)}>Version {version.nummer}</span>
-            </Link>
-            {cookies && (
-              <Link
-                href={cookies.href}
-                aria-current={cookies.current ? "page" : undefined}
-                onClick={schliessen}
-                className={cn(
-                  zeile,
-                  "type-body-small h-9 shrink-0 px-2.5",
-                  k?.nurBreit,
-                  cookies.current ? zeileAktiv : "text-on-surface-tief hover:text-on-surface",
+              <span className="relative shrink-0">
+                <Tag
+                  size={18}
+                  strokeWidth={2}
+                  aria-hidden
+                  className={cn(version.current && "text-primary")}
+                />
+                {/* Schmal fehlt die Plakette; dann trägt das Zeichen den Punkt. */}
+                {version.neu && schmalAb && (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-elev-01",
+                      schmalAb === "lg" && "max-lg:hidden",
+                    )}
+                  />
                 )}
-              >
-                Cookies
-              </Link>
-            )}
+              </span>
+              <span className={cn("truncate", k?.textWeg)}>Version {version.nummer}</span>
+              {version.neu && (
+                <>
+                  <Lozenge appearance="discovery" className={k?.nurBreit}>
+                    <span aria-hidden>Neu</span>
+                  </Lozenge>
+                  <span className="sr-only">, neue Version erschienen</span>
+                </>
+              )}
+            </Link>
           </div>
         )}
 

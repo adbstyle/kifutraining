@@ -1,5 +1,6 @@
 import { LEISTE_COOKIE } from "@/lib/seitenleiste";
 import { SPALTE_COOKIE } from "@/lib/spalte";
+import { GESEHEN_COOKIE } from "@/lib/versionen-gesehen";
 
 /* Alles, was KiFu im Browser ablegt (#409) — die eine Liste, aus der die
    Seite «Cookies» liest. Wer eine neue Speicherung einführt, trägt sie hier
@@ -41,5 +42,12 @@ export const SPEICHERUNGEN: Speicherung[] = [
     zweck: "Merkt sich, wie breit du die Spalte neben einer Übung oder einem Training gezogen hast.",
     dauer: "Ein Jahr.",
     ohne: "Die Spalte steht bei jedem Besuch wieder in der üblichen Breite.",
+  },
+  {
+    name: GESEHEN_COOKIE,
+    titel: "Gesehene Versionen",
+    zweck: "Merkt sich, bis zu welcher Version du die Seite «Versionen» gesehen hast, damit die Seitenleiste neue Versionen markiert.",
+    dauer: "Ein Jahr.",
+    ohne: "Die Seitenleiste markiert keine neuen Versionen.",
   },
 ];

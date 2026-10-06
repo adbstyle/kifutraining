@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ClipboardCheck, ClipboardList, LayoutGrid, ListChecks, Users } from "lucide-react";
 import { Seitenleiste } from "@/components/ui";
@@ -8,6 +8,12 @@ import type { SeitenleisteGruppe } from "@/components/ui";
 import { aktiveBereiche, teamOffen } from "@/lib/navigation";
 import { useSeitenleiste } from "./AppRahmen";
 import { useTeamBereich } from "./TeamKontext";
+import {
+  GESEHEN_EREIGNIS,
+  gesehenCookie,
+  gesehenImBrowser,
+  spaeter,
+} from "@/lib/versionen-gesehen";
 
 /* App-Chrome, Client-Teil: baut aus Adresse und Team-Kontext die Einträge
    der Seitenleiste. Der Server-Teil (AppNav) liefert Konto, Teams und ob das
@@ -20,6 +26,8 @@ export function AppNavClient({
   teams,
   imTeamBereich: imTeamBereichVomServer,
   version,
+  neuesteVersion,
+  gesehenVersion,
 }: {
   konto: { name: string; email?: string } | null;
   teams: { id: string; name: string }[];
@@ -30,6 +38,9 @@ export function AppNavClient({
   imTeamBereich: boolean;
   /** Die laufende Versionsnummer (#408). */
   version: string;
+  /** Wann der neueste Release erschien und wann der zuletzt gesehene (#410). */
+  neuesteVersion: string | null;
+  gesehenVersion: string | null;
 }) {
   const pfad = usePathname();
   const suche = useSearchParams();
@@ -41,6 +52,21 @@ export function AppNavClient({
   // das Zurück des Browsers, die nicht über einen Eintrag laufen.
   const adresse = `${pfad}?${suche.toString()}`;
   useEffect(() => setzeDrawerOffen(false), [adresse, setzeDrawerOffen]);
+
+  // Neue Releases (#410): Der Stand vom Server gilt bis zum nächsten Laden;
+  // nur das Ansehen der Versionen nimmt die Markierung sofort ab. Beim
+  // ersten Besuch gilt alles Erschienene als bekannt.
+  const [gesehen, setzeGesehen] = useState(gesehenVersion);
+  useEffect(() => {
+    if (neuesteVersion && !gesehenImBrowser()) {
+      document.cookie = gesehenCookie(neuesteVersion);
+      setzeGesehen(neuesteVersion);
+    }
+    const onGesehen = (e: Event) => setzeGesehen((e as CustomEvent<string>).detail);
+    window.addEventListener(GESEHEN_EREIGNIS, onGesehen);
+    return () => window.removeEventListener(GESEHEN_EREIGNIS, onGesehen);
+  }, [neuesteVersion]);
+  const neu = spaeter(neuesteVersion, gesehen);
 
   const aktiv = aktiveBereiche(pfad, mine, imTeamBereich);
 
@@ -85,8 +111,7 @@ export function AppNavClient({
     <Seitenleiste
       gruppen={gruppen}
       konto={konto ? { ...konto, href: "/konto", current: pfad === "/konto" } : undefined}
-      version={{ nummer: version, href: "/versionen", current: pfad === "/versionen" }}
-      cookies={{ href: "/cookies", current: pfad === "/cookies" }}
+      version={{ nummer: version, href: "/versionen", current: pfad === "/versionen", neu }}
       slim={slim}
       drawerOffen={drawerOffen}
       onDrawerOffenChange={setzeDrawerOffen}

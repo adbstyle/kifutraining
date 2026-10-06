@@ -144,6 +144,16 @@ export async function getReleasesZumLesen(): Promise<{
   }
 }
 
+/** Der späteste Zeitpunkt einer Veröffentlichung — für «schon gesehen?» (#410).
+ *  Nicht der Release mit der höchsten Version: Ein nachgeschobener Patch kann
+ *  später erscheinen als eine höhere Version. */
+export function neuesteVeroeffentlichung(releases: Release[]): string | null {
+  return releases.reduce<string | null>(
+    (max, r) => (!max || Date.parse(r.veroeffentlicht) > Date.parse(max) ? r.veroeffentlicht : max),
+    null,
+  );
+}
+
 /** «6. Oktober 2026» — als Tag in der Schweiz, auch kurz nach Mitternacht. */
 export function datumLang(iso: string): string {
   return new Intl.DateTimeFormat("de-CH", {

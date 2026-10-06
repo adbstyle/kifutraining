@@ -70,8 +70,7 @@ export function SeitenleisteDemo() {
               : undefined
           }
           anmeldenHref="#anmelden"
-          version={{ nummer: "1.27.0", href: "#versionen" }}
-          cookies={{ href: "#cookies" }}
+          version={{ nummer: "1.27.0", href: "#versionen", neu: true }}
           slim={slim}
         />
         <div className="schraffur flex min-w-0 flex-1 flex-col p-4">

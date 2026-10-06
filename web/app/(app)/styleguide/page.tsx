@@ -1696,7 +1696,11 @@ export default function Styleguide() {
           Oben die Marke (Fussball im Primary-Quadrat, zugleich das Favicon), darunter die Einträge in
           Gruppen, unten die Versionszeile und die Konto-Karte: Avatar, Anzeigename und E-Mail
           führen als Ganzes ins Konto. Die Versionszeile (Zeichen und Nummer, ruhiger als
-          ein Eintrag) führt zur Release-History; schmal bleibt das Zeichen. Abmelden steht im Konto, nicht in der
+          ein Eintrag) führt zur Release-History; schmal bleibt das Zeichen. Ist ein Release
+          erschienen, den dieser Browser noch nicht gesehen hat, trägt sie die Plakette «Neu»
+          (<code>discovery</code>: etwas Zusätzliches) - schmal stattdessen einen Punkt in Primary
+          am Zeichen, die einzige Punkt-Markierung im Kit. Sie drängt sich nicht auf und
+          verschwindet, sobald die Versionen angezeigt wurden. Abmelden steht im Konto, nicht in der
           Leiste. Der offene Eintrag steht eine Stufe höher als sein Grund
           (08dp auf 01dp) und trägt sein Zeichen in Primary; aufklappbare
           Einträge (Teams) haben einen eigenen Pfeil, damit der Name selbst
