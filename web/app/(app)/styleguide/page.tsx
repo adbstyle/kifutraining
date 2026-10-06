@@ -1994,7 +1994,8 @@ export default function Styleguide() {
           Gestalt eines leeren Felds, nach dem Vorbild von «Add subtask» in
           Jira (PO 2026-10-06). Gleiche Höhe, gleicher Einzug und gleiche
           Schrift wie der Name im leeren Feldkasten, ruhend ohne Fläche, beim
-          Überfahren dieselbe leise Aufhellung; vorne ein gedämpftes Plus. Ein
+          Überfahren dieselbe leise Aufhellung; ohne Zeichen - der Text sagt,
+          was ein Klick tut (PO 2026-10-06). Ein
           fachlicher Hinweis zur ganzen Liste - was ein Eintrag ist - steht
           über <code>info</code> hinter dem ⓘ rechts in der Zeile, wie bei
           einem Feld nur beim Überfahren sichtbar.
