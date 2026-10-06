@@ -6,8 +6,6 @@ export {
   ChoiceChip,
   ChoiceChipGroup,
   AssistChip,
-  SuggestionChip,
-  InputChip,
   chipTextBase,
   chipTextOutlined,
   chipTextSelected,

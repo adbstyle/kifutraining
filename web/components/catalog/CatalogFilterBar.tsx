@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AuswahlFilter, Button, FilterChip, FilterSuche, ZahlFilter } from "@/components/ui";
 import {
   einordnungFilterOptionen,
@@ -9,6 +8,7 @@ import {
   stufenOptionen,
   typOptionen,
 } from "@/lib/filter-optionen";
+import { useAdressFilter } from "@/lib/use-adress-filter";
 
 export type CatalogFilters = {
   /** Die gewählten Einordnungen: Kinderfussball-Trainingsteile und die drei
@@ -41,45 +41,7 @@ export function CatalogFilterBar({
   canFavorite?: boolean;
   showMine?: boolean;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  // Beim Mutieren die LIVE-URL lesen (nicht den evtl. veralteten Hook-Snapshot)
-  // — sonst gehen bei schnellen Klicks hintereinander Filter verloren.
-  function pushParams(mutate: (p: URLSearchParams) => void) {
-    const p = new URLSearchParams(window.location.search);
-    mutate(p);
-    const qs = p.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }
-
-  const setList = (key: string, next: string[]) =>
-    pushParams((p) => {
-      if (next.length) p.set(key, next.join(","));
-      else p.delete(key);
-    });
-
-  const setScalar = (key: string, value: string) =>
-    pushParams((p) => {
-      const v = value.trim();
-      if (v) p.set(key, v);
-      else p.delete(key);
-    });
-
-  const toggleFav = () =>
-    pushParams((p) => {
-      if (filters.fav) p.delete("fav");
-      else p.set("fav", "1");
-    });
-
-  const toggleMine = () =>
-    pushParams((p) => {
-      if (filters.mine) p.delete("mine");
-      else p.set("mine", "1");
-    });
-
-  void searchParams; // an Re-Render bei URL-Wechsel (z. B. Zurück) koppeln
+  const filter = useAdressFilter();
 
   const anyActive =
     filters.teil.length > 0 ||
@@ -97,38 +59,38 @@ export function CatalogFilterBar({
       <FilterSuche
         label="Übungen durchsuchen"
         initial={filters.q ?? ""}
-        onCommit={(v) => setScalar("q", v)}
+        onCommit={(v) => filter.setzeWert("q", v)}
       />
 
       <AuswahlFilter
         label="Trainingsteil"
         options={einordnungFilterOptionen}
         value={filters.teil}
-        onChange={(v) => setList("teil", v)}
+        onChange={(v) => filter.setzeListe("teil", v)}
       />
       <AuswahlFilter
         label="Alterskategorie"
         options={stufenOptionen}
         value={filters.kat}
-        onChange={(v) => setList("kat", v)}
+        onChange={(v) => filter.setzeListe("kat", v)}
       />
       <AuswahlFilter
         label="Feldtyp"
         options={feldOptionen}
         value={filters.feld}
-        onChange={(v) => setList("feld", v)}
+        onChange={(v) => filter.setzeListe("feld", v)}
       />
       <AuswahlFilter
         label="Erscheinungsform"
         options={formOptionen}
         value={filters.form}
-        onChange={(v) => setList("form", v)}
+        onChange={(v) => filter.setzeListe("form", v)}
       />
       <AuswahlFilter
         label="Übungstyp"
         options={typOptionen}
         value={filters.typ}
-        onChange={(v) => setList("typ", v)}
+        onChange={(v) => filter.setzeListe("typ", v)}
       />
 
       <ZahlFilter
@@ -137,23 +99,23 @@ export function CatalogFilterBar({
         einheit="Kinder"
         hinweis="Zeigt Übungen, die mit so vielen Kindern durchführbar sind."
         gesetzt={filters.kinder}
-        onCommit={(v) => setScalar("kinder", v)}
+        onCommit={(v) => filter.setzeWert("kinder", v)}
       />
 
       {showMine && (
-        <FilterChip selected={!!filters.mine} onClick={toggleMine}>
+        <FilterChip selected={!!filters.mine} onClick={() => filter.schalte("mine", !filters.mine)}>
           Meine Übungen
         </FilterChip>
       )}
 
       {canFavorite && (
-        <FilterChip selected={!!filters.fav} onClick={toggleFav}>
+        <FilterChip selected={!!filters.fav} onClick={() => filter.schalte("fav", !filters.fav)}>
           Favoriten
         </FilterChip>
       )}
 
       {anyActive && (
-        <Button variant="text" onClick={() => router.push(pathname, { scroll: false })}>
+        <Button variant="text" onClick={filter.zuruecksetzen}>
           Zurücksetzen
         </Button>
       )}

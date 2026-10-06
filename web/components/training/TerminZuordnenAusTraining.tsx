@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, ChoiceChip, ChoiceChipGroup, Dialog } from "@/components/ui";
+import { Button, ChoiceChip, ChoiceChipGroup, Dialog, SectionMessage } from "@/components/ui";
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { TerminWahlDialog } from "@/components/team/TerminWahlDialog";
 import { ordneTrainingZuAktion, termineFuerZuordnungAktion } from "@/lib/actions/termine";
@@ -94,7 +94,7 @@ export function TerminZuordnenAusTraining({
         title="Einem Team-Termin zuordnen"
         actions={<Button variant="text" onClick={schliessen}>Abbrechen</Button>}
       >
-        {fehler && <p role="alert" className="mb-3 text-error">{fehler}</p>}
+        {fehler && <SectionMessage appearance="error" className="mb-4">{fehler}</SectionMessage>}
         {/* Wie `TrainingZielDialog`: Teamnamen als Einfachauswahl, `nutzertext`,
             weil sie vom Trainer vergeben sind. Ein Select ragte mit seinem
             Panel über den Rand des Dialogs. */}

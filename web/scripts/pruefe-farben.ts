@@ -32,7 +32,8 @@ import {
   GRUND,
   LOZENGE,
   LOZENGE_DRUCK,
-  ON_ERROR,
+  DANGER,
+  ON_DANGER,
   ON_PRIMARY,
   SECTION,
   SECTION_DRUCK,
@@ -199,11 +200,13 @@ pruefe("Error trägt als Kontur auf jeder Höhenstufe", () => {
 });
 
 pruefe("Die Aufschrift gefüllter Flächen trägt", () => {
-  // Filled-Knopf und Fehlerfläche: Hier liegt on-* auf der Akzentfarbe selbst.
+  // Gefüllter und destruktiver Knopf: Hier liegt on-* auf der Fläche selbst.
   const aufPrimary = kontrast(ON_PRIMARY, PRIMARY);
   assert.ok(aufPrimary >= 4.5, `on-primary auf primary: ${z(aufPrimary)}:1`);
-  const aufError = kontrast(ON_ERROR, ERROR);
-  assert.ok(aufError >= 4.5, `on-error auf error: ${z(aufError)}:1`);
+  const aufDanger = kontrast(ON_DANGER, DANGER);
+  assert.ok(aufDanger >= 4.5, `on-danger auf danger: ${z(aufDanger)}:1`);
+  const aufDangerDruck = kontrast(DRUCK["on-danger"], DRUCK.danger);
+  assert.ok(aufDangerDruck >= 4.5, `on-danger auf danger (Druck): ${z(aufDangerDruck)}:1`);
 });
 
 // ── Umgekehrte Fläche (Snackbar) ───────────────────────────────────────────
@@ -311,7 +314,8 @@ pruefe("Jede Rolle, die im Druck sichtbar wird, hat einen Override", () => {
     "primary",
     "on-primary",
     "error",
-    "on-error",
+    "danger",
+    "on-danger",
     // Lozenge und Section Message wechseln auf Papier vollständig ins helle
     // Atlassian-Theme — jede ihrer Rollen braucht darum einen Override.
     ...Object.keys(BILDSCHIRM).filter((rolle) => /^(on-)?lozenge-|^section-|^icon-/.test(rolle)),
@@ -359,6 +363,8 @@ const VERBOTEN: [RegExp, string][] = [
   [/border-outline\b/, "ersetzt durch kante"],
   [/primary-container/, "Container-Rollen gibt es nicht mehr"],
   [/secondary-container/, "Container-Rollen gibt es nicht mehr"],
+  // `-container` klammert aus, was die Zeile darüber schon meldet.
+  [/\b(?:bg|text|border)-(?:on-)?secondary(?!-container)\b/, "Secondary gibt es nicht mehr - das System kennt einen Akzent"],
   [/error-container/, "Container-Rollen gibt es nicht mehr"],
   [/inverse-/, "Inverse-Rollen gibt es nicht mehr"],
   [/shadow-e[1-5]/, "ersetzt durch shadow-dp-*"],
@@ -389,15 +395,6 @@ const VERBOTEN: [RegExp, string][] = [
   [/chalk-hatch/, "ersetzt durch @utility schraffur"],
 ];
 
-/** Secondary trägt die Rolle der Baseline, wird aber nirgends angewendet — nur
- *  der Styleguide zeigt sie, damit sichtbar bleibt, dass es sie gibt. */
-const NUR_STYLEGUIDE: [RegExp, string] = [
-  // `-container` klammert aus, was ohnehin schon als Container-Rolle gemeldet
-  // wird — sonst trüge dieselbe Zeile zwei Begründungen.
-  /\b(bg|text|border)-secondary(?!-container)\b/,
-  "Secondary wird nirgends angewendet - ausser im Styleguide als Beleg",
-];
-
 /** Alle Quelldateien unter `wurzel`, die der Altlasten-Wächter durchsieht. */
 function quelldateien(wurzel: string): string[] {
   const gefunden: string[] = [];
@@ -425,9 +422,6 @@ pruefe(`Keine Altlast der alten Palette (${DATEIEN.length} Dateien)`, () => {
     zeilen.forEach((zeile, i) => {
       for (const [muster, grund] of VERBOTEN) {
         if (muster.test(zeile)) treffer.push(`${kurz}:${i + 1}  ${grund}  - ${zeile.trim()}`);
-      }
-      if (!kurz.startsWith("app/(app)/styleguide/") && NUR_STYLEGUIDE[0].test(zeile)) {
-        treffer.push(`${kurz}:${i + 1}  ${NUR_STYLEGUIDE[1]}  - ${zeile.trim()}`);
       }
     });
   }

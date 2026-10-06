@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { Button, DateField, Dialog, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
+import { Button, DateField, Dialog, SectionMessage, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
 import {
   BEMERKUNG_MAX,
   ORT_MAX,
@@ -194,7 +194,7 @@ export function TerminDialog({
         </>
       }
     >
-      {serverFehler && <p role="alert" className="mb-4 text-error">{serverFehler}</p>}
+      {serverFehler && <SectionMessage appearance="error" className="mb-4">{serverFehler}</SectionMessage>}
       <div className="flex flex-col gap-4">
         <DateField label="Datum" value={felder.datum} onChange={(e) => setze("datum")(e.target.value)} error={!!fehlerAn("datum")} supportingText={fehlerAn("datum")} />
         <div className="flex flex-col gap-4 sm:flex-row">

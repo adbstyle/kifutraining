@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Clock, Sparkles } from "lucide-react";
+import { Clock } from "lucide-react";
 import { Lozenge, KategorieLozenge } from "@/components/ui";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { altersstufe as altersstufeLabels } from "@/lib/vocab";
 import { Flash } from "@/components/Flash";
+import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import { TrainingNotAvailable } from "@/components/training/TrainingNotAvailable";
 import { ExerciseThumb } from "@/components/training/ExerciseThumb";
 import { InBibliothekButton } from "@/components/training/InBibliothekButton";
@@ -324,18 +324,7 @@ export default async function TrainingViewPage({
           })}
         </div>
 
-        {!user && (
-          <div className="mt-8 flex items-center gap-3 rounded-flaeche bg-elev-01 px-4 py-3">
-            <Sparkles size={18} className="shrink-0 text-primary" aria-hidden />
-            <p className="type-body-small text-on-surface-mittel">
-              Mit einem Konto kannst du eigene Trainings erstellen und
-              verwalten.{" "}
-              <Link href="/login" className="text-primary underline">
-                Anmelden
-              </Link>
-            </p>
-          </div>
-        )}
+        {!user && <AnmeldeHinweis className="mt-8" />}
       </Seitenrahmen>
     </AnsichtFlaeche>
   );

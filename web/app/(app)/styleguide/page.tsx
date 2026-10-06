@@ -10,6 +10,8 @@ import {
   SichtbarkeitLozenge,
   Card,
   ExerciseCard,
+  FormAbschnitt,
+  PrintButton,
   IconButton,
   IconButtonLink,
   KategorieLozenge,
@@ -29,6 +31,7 @@ import {
   Eigenschaften,
   Eigenschaft,
   EigenschaftFehlt,
+  EigenschaftBreit,
   Disclosure,
   Leerzustand,
   SectionMessage,
@@ -56,6 +59,8 @@ import { MonatsrasterDemo } from "./MonatsrasterDemo";
 import { AnsichtWahl } from "@/components/team/AnsichtWahl";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
+import { TrainingCard } from "@/components/training/TrainingCard";
+import { AnmeldeHinweis } from "@/components/training/AnmeldeHinweis";
 import {
   Search,
   SlidersHorizontal,
@@ -90,9 +95,9 @@ import {
   ELEV,
   PRIMARY,
   ON_PRIMARY,
-  SECONDARY,
   ERROR,
-  ON_ERROR,
+  DANGER,
+  ON_DANGER,
   SCHRIFT,
   LINIE,
   KANTE,
@@ -235,25 +240,18 @@ const akzentRollen: [string, string, string, string, string][] = [
     "text-on-surface",
   ],
   [
-    "secondary",
-    "bg-secondary",
-    SECONDARY.toUpperCase(),
-    "Geführt, nirgends angewandt - die Rolle bleibt besetzt, damit die Palette vollständig ist.",
-    "text-on-secondary",
-  ],
-  [
     "error",
     "bg-error",
     ERROR.toUpperCase(),
-    `Fehleingabe und Befund, fast immer als Schrift. ${v(kontrast(ERROR, GRUND))} auf dem Grund, ${v(kontrast(ERROR, elev(24)))} noch im Dialog.`,
-    "text-on-error",
+    `Fehleingabe und Befund, als Schrift und Kontur. ${v(kontrast(ERROR, GRUND))} auf dem Grund, ${v(kontrast(ERROR, elev(24)))} noch im Dialog.`,
+    "text-elev-00",
   ],
   [
-    "on-error",
-    "bg-on-error",
-    ON_ERROR.toUpperCase(),
-    `Schrift auf gefüllter Fehlerfläche, ${v(kontrast(ON_ERROR, ERROR))} - vorgesehen, im Bild selten.`,
-    "text-on-surface",
+    "danger",
+    "bg-danger",
+    DANGER.toUpperCase(),
+    `Fläche des destruktiven Knopfs - dunkler als Error, weil sie Weiss trägt: ${v(kontrast(ON_DANGER, DANGER))} (auf Error nur ${v(kontrast("#ffffff", ERROR))}).`,
+    "text-on-danger",
   ],
 ];
 
@@ -351,7 +349,7 @@ const elevVerwendung: Record<number, string> = {
   2: "Block im Teil, dichtes Feld, Platzhalter",
   3: "- frei -",
   4: "Kopfzeile unter lg (deckend, kein Blur)",
-  6: "Elevated-Knopf und -Chip, Overlay-Icon-Knopf",
+  6: "Overlay-Icon-Knopf",
   8: "Menü, Select-Panel, Tonal-Knopf, Drawer, aktives Segment, offener Navigationseintrag",
   12: "Avatar, offener Navigationseintrag im Drawer",
   16: "- frei -",
@@ -359,7 +357,6 @@ const elevVerwendung: Record<number, string> = {
 };
 
 const schattenStufen: [string, string, string][] = [
-  ["shadow-dp-04", "dp-04", "Elevated-Knopf - er liegt auf, er deckt nichts zu."],
   ["shadow-dp-06", "dp-06", "Snackbar - sie schwebt über dem Inhalt."],
   ["shadow-dp-08", "dp-08", "Menü, Select-Panel, Drawer, Tooltip."],
   ["shadow-dp-24", "dp-24", "Dialog - das Einzige, was die Seite anhält."],
@@ -399,12 +396,13 @@ const hoehen: [string, string][] = [
   ["h-12 · 48 px", "Kopfzeile mit Menüknopf unter lg."],
 ];
 
-const sizeClasses: [string, string, string][] = [
-  ["compact", "< 600", "Margin 16 · 4 Spalten"],
-  ["medium", "600–840", "Margin 24 · 8 Spalten"],
-  ["expanded", "840–1200", "Margin 24 · 12 Spalten"],
-  ["large", "1200–1600", "zentriert, Max-Width"],
-  ["extra-large", "> 1600", "zentriert, Max-Width"],
+/* Die Stufen, an denen sich das Layout tatsächlich ändert - Tailwinds
+   Breakpoints, ohne eigene. `md` und `2xl` nutzt die Anwendung nicht. */
+const fensterStufen: [string, string, string][] = [
+  ["schmal", "< 640", "Rand 16 px, Seitenleiste als Drawer hinter der 48-px-Zeile mit dem Menüknopf"],
+  ["sm", "ab 640", "Rand 24 px"],
+  ["lg", "ab 1024", "Seitenleiste daneben (280 oder 72 px), Kopfzeile 64 px und klebend"],
+  ["xl", "ab 1280", "geteilte Fläche: zweite Spalte neben dem Inhalt (Seitenrahmen geteilt)"],
 ];
 
 const iconSet = [
@@ -465,7 +463,7 @@ export default function Styleguide() {
           <div className="rounded-flaeche bg-elev-01 p-4">
             <p className="type-label-large mb-2 text-on-surface">Übernommen</p>
             <ul className="type-body-medium flex list-disc flex-col gap-1 pl-5 text-on-surface-mittel">
-              <li>Das Farbsystem: fünf Rollen mit ihren On-Farben, Schrift als Weiss in Deckungen.</li>
+              <li>Das Farbsystem: Rollen mit ihren On-Farben, Schrift als Weiss in Deckungen.</li>
               <li>Die Höhe als gerechnete Overlay-Leiter über einem einzigen Grund.</li>
               <li>Die Zustands-Deckungen (4 / 12 / 10 %) in der Farbe des Inhalts.</li>
               <li>Die Typo-Rollen: Display, Headline, Title, Body, Label.</li>
@@ -485,6 +483,11 @@ export default function Styleguide() {
                 Baseline stammt aus dem hellen Thema; auf dem Grund käme es auf{" "}
                 {v(kontrast("#3700b3", GRUND))}. Eine Rolle mit genau einem
                 möglichen Ort lädt zum Missgriff ein - das System kennt ein Lila.
+              </li>
+              <li>
+                <strong>Secondary.</strong> Der zweite Akzent der Baseline
+                konkurrierte neben Primary nur, ohne etwas zu benennen - das
+                System kennt einen Akzent.
               </li>
               <li>
                 <strong>Eine eigene Farbe für den nicht blockierenden Hinweis am Feld.</strong>{" "}
@@ -519,7 +522,7 @@ export default function Styleguide() {
           voneinander ab, ist das hier zu sehen.
         </p>
         <p className="type-label-small mb-2 text-on-surface-mittel">Akzente</p>
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {akzentRollen.map(([name, bg, wert, notiz, schrift]) => (
             <Farbfeld
               key={name}
@@ -540,8 +543,9 @@ export default function Styleguide() {
           fast nie als Fläche, sondern als Schrift auf der Karte, in der
           Menüzeile und im Dialog. Der hellere Ton trägt auf{" "}
           <strong>jeder</strong> Höhenstufe über 4.5:1, am engsten auf 24dp
-          mit {v(kontrast(ERROR, elev(24)))}, und die gefüllte Fehlerfläche
-          behält ihre schwarze Aufschrift ({v(kontrast(ON_ERROR, ERROR))}).
+          mit {v(kontrast(ERROR, elev(24)))}. Gefüllt wird Rot nur im
+          destruktiven Knopf, und dort mit eigener Rolle (<code>danger</code>,
+          weisse Schrift {v(kontrast(ON_DANGER, DANGER))}).
           Nachgerechnet wird das seither auf jeder Stufe und zusätzlich als
           Kontur (<code>scripts/pruefe-farben.ts</code>), nicht mehr nur auf
           dem Grund - dort lag die Lücke, durch die die Baseline kam.
@@ -956,8 +960,11 @@ export default function Styleguide() {
 
       <Section n="07" title="Layout">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Fenstergrössen und Seitenränder; Max-Width für die Lesbarkeit,
-          Spalten-Raster 4 / 8 / 12.
+          Fenstergrössen und Seitenränder: vier Stufen, an denen sich das
+          Layout ändert (Tabelle unten). Ein Spaltenraster gibt es nicht - die
+          Lesebreite setzt der <code>Seitenrahmen</code>, Übersichten reihen
+          Kacheln, so viele die Breite fasst
+          (<code>repeat(auto-fill, minmax(16rem, 1fr))</code>).
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Lange Formulare gliedert <code>FormAbschnitt</code>: eine Überschrift
@@ -976,6 +983,17 @@ export default function Styleguide() {
           Überschrift für <code>aria-labelledby</code>, statt den Namen doppelt
           zu zeigen.
         </p>
+        <div className="mb-8 grid max-w-md gap-8">
+          <FormAbschnitt titel="Durchführung">
+            <TextField label="Ablauf" />
+          </FormAbschnitt>
+          <FormAbschnitt titel="Foto" fehler>
+            <p className="type-body-small text-error">
+              Das Foto ist grösser als erlaubt. Mit <code>fehler</code> zeigt die
+              Überschrift den Fehler eines Felds ohne eigenes Label an.
+            </p>
+          </FormAbschnitt>
+        </div>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Jedes Formular mit Eingabefeldern trägt <code>noValidate</code></strong>: Fehler
           meldet die App, nicht der Browser. Dessen eigene Prüfung (Pflicht,
@@ -1010,7 +1028,7 @@ export default function Styleguide() {
           <code>lg</code> direkt der Inhalt, schmaler mit einem Rand von 24 px.
           Brotkrumen sind Pflicht, auch auf den
           Einstiegsseiten. Ab <code>lg</code> gehen 280 oder 72 px an die
-          Seitenleiste (siehe 13); die Fenstergrössen unten meinen das ganze
+          Seitenleiste (siehe 13); die Stufen unten meinen das ganze
           Fenster.
         </p>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
@@ -1028,7 +1046,7 @@ export default function Styleguide() {
           Nebensache ankündigen.
         </p>
         <div className="space-y-2">
-          {sizeClasses.map(([cls, range, note]) => (
+          {fensterStufen.map(([cls, range, note]) => (
             <div
               key={cls}
               className="flex flex-wrap items-baseline gap-3 border-b border-linie pb-2"
@@ -1043,13 +1061,13 @@ export default function Styleguide() {
 
       <Section n="08" title="Knöpfe">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Sieben Varianten, eine Regel: <strong>Gefüllt trägt Schwarz.</strong>{" "}
-          <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
-          Höhenstufe (08dp), <code>elevated</code> dieselbe Idee eine Stufe
-          tiefer (06dp) mit Schatten und Primary-Schrift - im Bild bisher nicht
-          angewandt, die Rolle bleibt besetzt -, <code>outlined</code> Kontur
+          Sechs Varianten, eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
+          - ausser Rot. <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
+          Höhenstufe (08dp), <code>outlined</code> Kontur
           auf der Kante, <code>text</code> nur Schrift, <code>danger</code>{" "}
-          Kontur und Schrift in Error; dazu der leise Knopf (<code>quiet</code>)
+          gefüllt in <code>danger</code> mit weisser Schrift - Löschen soll
+          man nicht übersehen (PO 2026-10-06). Das helle Error-Rot trüge
+          Weiss nicht, darum hat die Fläche ihre eigene, dunklere Rolle; dazu der leise Knopf (<code>quiet</code>)
           weiter unten, der als einziger nicht über die Emphase leiser wird,
           sondern über die Schrift. Alle tragen{" "}
           <code>state</code> in der Basis und <code>rounded-flaeche</code>; es
@@ -1060,7 +1078,6 @@ export default function Styleguide() {
         <div className="flex flex-wrap items-end gap-3">
           <Button variant="filled">Training erstellen</Button>
           <Button variant="tonal">Duplizieren</Button>
-          <Button variant="elevated">Teilen</Button>
           <Button variant="outlined">Filter zurücksetzen</Button>
           <Button variant="text">Abbrechen</Button>
           <Button variant="danger">Übung löschen</Button>
@@ -1112,7 +1129,9 @@ export default function Styleguide() {
           Nur mit Zeichen (<code>segmentClasses</code>), für den Wechsel der
           Darstellung - etwa Liste/Monat im Trainingsplan. 36 px im Quadrat,
           ohne Tooltip; der Name steht im zugänglichen Namen
-          (<code>aria-label</code>).
+          (<code>aria-label</code>). Die Klassen tragen Knopf wie Link: Lebt
+          die Darstellung in der Adresse, sind die Glieder Links mit{" "}
+          <code>aria-current</code> statt <code>aria-pressed</code> (siehe 27).
           Gewählt trägt ein Glied die Auswahl-Optik der Chips: Kontur und
           Zeichen in Primary, ohne Fläche - leiser als ein gefüllter Knopf
           daneben, der die Handlung trägt.
@@ -1172,6 +1191,21 @@ export default function Styleguide() {
           <span className="type-label-small text-on-surface-mittel">
             (hovern oder per Tab fokussieren)
           </span>
+        </div>
+
+        <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
+          Drucken (<code>PrintButton</code>)
+        </p>
+        <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
+          Öffnet den Druckdialog des Browsers. Auf der Druckansicht eines
+          Trainings ist Drucken der Zweck der Seite - dort steht er beschriftet
+          und gefüllt; auf der Übungsseite ist er eine Aktion unter mehreren
+          und reiht sich als Icon-Knopf ein (<code>variant=&quot;icon&quot;</code>).
+          Im Druck blendet ihn der Aufrufer aus.
+        </p>
+        <div className="flex flex-wrap items-center gap-4">
+          <PrintButton />
+          <PrintButton variant="icon" />
         </div>
 
         <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
@@ -1352,11 +1386,7 @@ export default function Styleguide() {
           (<code>chipSelected</code> - Primary-Fläche, schwarze Schrift) bleibt
           allein die offene Einfachauswahl (10). Im geteilten Chip folgt der
           Trennstrich dem Zustand (<code>border-primary/50</code> gewählt,{" "}
-          <code>border-kante</code> sonst). Der schwebende Assist-Chip
-          (<code>elevated</code> - 06dp plus <code>shadow-dp-04</code> statt
-          einer Kontur) ist wie der gleichnamige Knopf aus 08 im Bild bisher
-          nicht angewandt; die Rolle bleibt besetzt, damit die Chip-Leiter
-          vollständig ist.
+          <code>border-kante</code> sonst).
         </p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
           <strong>Schrift.</strong> Der <strong>Filter</strong> steht normal
@@ -1364,8 +1394,8 @@ export default function Styleguide() {
           er sitzt in Leisten neben Suchfeld, Auswahl und Knöpfen und liest
           sich dort als Wort («Meine Termine»), nicht als Rubrik, und bleibt
           leiser als der halbfette Knopf daneben, der die Handlung trägt.
-          Assist, Suggestion, Input und die offene Einfachauswahl bleiben
-          versal in <code>type-label-medium</code>.
+          Der Assist-Chip und die offene Einfachauswahl bleiben versal in{" "}
+          <code>type-label-medium</code>.
         </p>
         <p className="type-body-medium mb-4 max-w-2xl text-on-surface-mittel">
           <strong>Eine Höhe.</strong> Jeder Chip ist 36 px hoch, im Fliesstext
@@ -1389,11 +1419,7 @@ export default function Styleguide() {
           Mehrfachauswahl in der Mehrfachauswahl (17) - siehe den Kasten unten.
           Offen bleibt, was in kein Menü gehört: die{" "}
           <strong>Variantenwahl</strong> (24), deren Werte der Trainer selbst
-          benannt hat. Hier stand bis dahin eine zweite Bauform,{" "}
-          <code>SegmentedControl</code> - eine tab-artige Leiste für kurze
-          Werte, die Altersstufe und Trainingsteil trug. Mit deren Umzug ins
-          Auswahlmenü hatte sie keine Anwendung mehr; sie ist aus dem Kit
-          entfernt, statt als Angebot ohne Gebrauch stehen zu bleiben.
+          benannt hat.
         </p>
         <p className="type-label-small mb-2 text-on-surface-mittel">
           <code>ChoiceChipGroup</code> - lange Werte, umbrechend
@@ -1402,9 +1428,11 @@ export default function Styleguide() {
           Radiogroup-Semantik (<code>role=radiogroup</code> /{" "}
           <code>role=radio</code>, <code>aria-checked</code>) - es ist ein
           Eingabefeld, keine Ansicht, und darum keine Tabs. Optik aus den
-          Chip-Bündeln, ausgewählt wie der Filter-Chip, aber{" "}
-          <strong>ohne Häkchen</strong>: Einfachauswahl ist kein
-          Ein/Aus-Zustand, und der Umriss-Wechsel trägt die Aussage bereits.
+          Chip-Bündeln, ausgewählt gefüllt in Primary
+          (<code>chipSelected</code>) und <strong>ohne Häkchen</strong>:
+          Einfachauswahl ist kein Ein/Aus-Zustand, und der Flächenwechsel trägt
+          die Aussage bereits. Mit <code>look=&quot;nutzertext&quot;</code>
+          steht die Wahl dagegen umrandet wie ein Filter (09).
           Die Chips <strong>umbrechen</strong> - das ist ihr eigentlicher
           Vorzug: Eine Reihe, die stattdessen seitlich scrollte, zeigte dem
           Nutzer seine Optionen nicht mehr nebeneinander. In Gebrauch ist der
@@ -1421,8 +1449,11 @@ export default function Styleguide() {
           mit zwei Zeilen je Eintrag - für Trainings und Termine, die zu lang
           für Chips sind; ein <code>listbox</code> mit verschachtelten Knöpfen
           wäre kein gültiges ARIA. Pfeil hoch/runter wählt und bewegt den
-          Fokus, und ein <strong>Häkchen</strong> zeigt die Wahl zusätzlich zur
-          Fläche an.
+          Fokus. Gewählt trägt der Eintrag eine Kontur in Primary und ein{" "}
+          <strong>Häkchen</strong>, aber keine Fläche: Die Liste steht im
+          Dialog auf 24dp, und jede tiefere Stufe läge dort eingesunken statt
+          hervorgehoben. Die Schrift bleibt neutral - Primary trüge auf 24dp
+          keine zwei Zeilen Lesetext.
         </p>
         <AuswahlListeDemo />
 
@@ -1473,7 +1504,7 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="11" title="Übungskarten">
+      <Section n="11" title="Übungs- und Trainingskarten">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Die Karte ist eine Höhenstufe (<code>bg-elev-01</code>,{" "}
           <code>rounded-flaeche</code>) und trägt <strong>keinen Rand</strong>:
@@ -1558,6 +1589,72 @@ export default function Styleguide() {
               }),
               herkunft: "user",
               visibility: "public",
+            }}
+          />
+        </div>
+
+        <p className="type-body-medium mb-5 mt-8 max-w-2xl text-on-surface-mittel">
+          Die <strong>Trainingskachel</strong> (<code>TrainingCard</code>) folgt
+          derselben Regel: Höhenstufe ohne Rand, die Zustands-Ebene auf dem
+          Link, der die ganze Kachel deckt. Ein Bild hat sie nicht; oben stehen
+          die Alterskategorien - nur ohne Kategorie die Altersstufe -, ab zwei
+          Varianten die <code>discovery</code>-Lozenge und am eigenen Eintrag,
+          ob er ein Entwurf oder öffentlich ist. Darunter der Name, die
+          Kennzahlen der ersten Variante (Übungen, Gesamtdauer) und zuunterst
+          Urheber oder Änderungsdatum.
+        </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <TrainingCard
+            href="#"
+            zeigeUrheber={false}
+            training={{
+              id: "t1",
+              name: "Passspiel im Quadrat",
+              visibility: "private",
+              istEigen: true,
+              altersstufe: "kinderfussball",
+              stufen: ["F", "E"],
+              updatedAt: "2026-10-01T18:00:00Z",
+              exerciseCount: 6,
+              totalDuration: 75,
+              hasAnyDuration: true,
+              variantenZahl: 1,
+              urheber: null,
+            }}
+          />
+          <TrainingCard
+            href="#"
+            zeigeUrheber={false}
+            training={{
+              id: "t2",
+              name: "Halle oder Rasen",
+              visibility: "public",
+              istEigen: true,
+              altersstufe: "kinderfussball",
+              stufen: ["G", "F"],
+              updatedAt: "2026-09-28T18:00:00Z",
+              exerciseCount: 8,
+              totalDuration: 90,
+              hasAnyDuration: true,
+              variantenZahl: 2,
+              urheber: null,
+            }}
+          />
+          <TrainingCard
+            href="#"
+            training={{
+              id: "t3",
+              name: "Abschluss unter Druck",
+              visibility: "public",
+              istEigen: false,
+              altersstufe: "juniorenfussball",
+              stufen: ["C", "B"],
+              updatedAt: "2026-09-20T18:00:00Z",
+              exerciseCount: 5,
+              totalDuration: 0,
+              hasAnyDuration: false,
+              variantenZahl: 1,
+              urheber: "Trainerin Muster",
             }}
           />
         </div>
@@ -2537,7 +2634,11 @@ export default function Styleguide() {
           umgekehrt eine ganze Seite oder einen ganzen Abschnitt.{" "}
           <code>dicht</code> nimmt die Polsterung zurück, wo es unter einer
           Überschrift im Abschnitt steht statt allein auf der Seite; das Zeichen
-          entfällt dort meist mit.
+          entfällt dort meist mit. Ist das Leerfeld die ganze Seite - nicht
+          gefunden, Training nicht verfügbar -, macht{" "}
+          <code>ueberschrift=&quot;h1&quot;</code> den Titel zur Überschrift
+          der Seite: dieselbe Schrift, aber die Vorlesehilfe findet die Seite
+          gegliedert.
         </p>
         <div className="grid gap-4 lg:grid-cols-2">
           <Leerzustand
@@ -2588,6 +2689,17 @@ export default function Styleguide() {
           unterbricht (<code>alert</code>), alles andere reiht sich ein (
           <code>status</code>).
         </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          <strong>Im Dialog</strong> steht ein gescheiterter Vorgang als{" "}
+          <code>error</code> zuoberst, vor dem Inhalt, mit{" "}
+          <code>mb-4</code> Abstand; der Dialog bleibt offen. Was nur ein Feld
+          betrifft, bleibt dagegen Fehlertext am Feld (14).
+        </p>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Am Fuss der öffentlichen Trainings-Seiten steht für Besucher ohne
+          Konto der <code>AnmeldeHinweis</code>: eine Meldung mit eigenem
+          Zeichen und dem Weg zum Konto als Aktion. Auf Papier fehlt er.
+        </p>
         <div className="grid max-w-2xl gap-4">
           <SectionMessage appearance="error">
             Das Training konnte nicht gespeichert werden. Bitte versuche es noch
@@ -2612,6 +2724,7 @@ export default function Styleguide() {
           >
             Das Feld-Diagramm zeigt inzwischen anderes Material: Hürden: 0 → 1.
           </SectionMessage>
+          <AnmeldeHinweis />
           <SectionMessage appearance="warning">
             warning - im Kit, derzeit ohne Ort.
           </SectionMessage>
@@ -2628,12 +2741,10 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Ein Chip, der ein Menü öffnet - für Werte, die man an ihrem Ort
           umsortieren oder herausnehmen können muss.{" "}
-          <strong>Warum die bestehenden Chips nicht reichen:</strong> Der{" "}
-          <code>InputChip</code> kennt nur ein Entfernen-X - 16 px, kein
-          Touch-Ziel - und kann „nach vorne schieben" gar nicht ausdrücken; der{" "}
+          <strong>Warum der Assist-Chip nicht reicht:</strong> Der{" "}
           <code>AssistChip</code> löst genau eine Aktion aus, nicht mehrere zur
-          Wahl. Beide tragen ausserdem <code>type-label-medium</code>, also
-          mono und versal: ein Gruppenname stünde dort verfälscht (siehe Regel
+          Wahl. Er trägt ausserdem <code>type-label-medium</code>, also
+          versal: ein Gruppenname stünde dort verfälscht (siehe Regel
           in 02). Der Chip mit Menü trägt darum{" "}
           <code>type-body-medium</code> und ist <strong>ein</strong>{" "}
           Bedienelement mit <strong>einem</strong> Tabstopp - kein Chip plus
@@ -2908,10 +3019,10 @@ export default function Styleguide() {
           in der Adresse (<code>?ansicht=monat</code>), ist damit weitergebbar
           und der Zurück-Schritt des Browsers geht - und die Eingrenzung
           «Meine Termine» reist in derselben Adresse mit (#329 PC 4). Ein Chip
-          hielte die Wahl im Zustand und verlöre beides. Die Optik ist die des
-          Knopfes: <code>tonal</code> für die offene, <code>text</code> für die
-          andere Ansicht, <code>aria-current</code> trägt die Wahl auch ohne
-          Fläche. Der Filter daneben bleibt ein <code>FilterChip</code>, weil er
+          hielte die Wahl im Zustand und verlöre beides. Die Optik ist die der
+          verbundenen Knopfgruppe mit Zeichen (<code>segmentClasses</code>,
+          08): die offene Ansicht in Primary umrandet, die andere auf der
+          Kante; <code>aria-current</code> trägt die Wahl. Der Filter daneben bleibt ein <code>FilterChip</code>, weil er
           ein Ein/Aus ist und keine Ansicht.
         </p>
         <AnsichtWahl ansicht="monat" hrefListe="#" hrefMonat="#" />
@@ -2997,6 +3108,11 @@ export default function Styleguide() {
                 ergaenzung={["Pfeife"]}
               />
             </Eigenschaft>
+            <EigenschaftBreit label="Hinweis zum Material">
+              <span className="type-body-small text-on-surface-mittel">
+                Über beide Spalten, die Bezeichnung nur für die Vorlesehilfe.
+              </span>
+            </EigenschaftBreit>
           </Eigenschaften>
         </div>
       </Section>

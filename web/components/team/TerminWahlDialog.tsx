@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AuswahlListe, Button, ChoiceChip, ChoiceChipGroup, Dialog } from "@/components/ui";
+import { AuswahlListe, Button, ChoiceChip, ChoiceChipGroup, Dialog, SectionMessage } from "@/components/ui";
 import { zeitText } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { TerminZeile } from "@/lib/queries/termine";
@@ -75,7 +75,7 @@ export function TerminWahlDialog({
         </>
       }
     >
-      {fehler && <p role="alert" className="mb-3 text-error">{fehler}</p>}
+      {fehler && <SectionMessage appearance="error" className="mb-4">{fehler}</SectionMessage>}
       {hinweis && <p className="mb-3">{hinweis}</p>}
       {liste.length === 0 ? (
         <p>
