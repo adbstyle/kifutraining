@@ -82,8 +82,8 @@ beim Untergrund ausdrücklich als „Unbekannt" gewählt; 0 Tore einer Torart he
 keine dastehen. Spielfelder innerhalb eines Feldes steckt der Trainer selbst ab. Ebenso
 freiwillig ist die erwartete Spielerzahl: alle Kinder, mit denen gerechnet wird, einschliesslich
 Torhüter:innen und ohne Trainer:innen, als ganze Zahl von 1 bis 200. Beides steht im Dialog
-unter den Verantwortlichen, als „Erwartete Spielerzahl (optional)" und „Felder (optional)" mit
-„Feld hinzufügen"; ein Termin ohne Felder oder ohne Zahl ist ebenso gültig, und früher
+unter den Verantwortlichen, als „Erwartete Spielerzahl (optional)" und „Feld hinzufügen
+(optional)"; ein Termin ohne Felder oder ohne Zahl ist ebenso gültig, und früher
 angelegte Termine bleiben ohne diese Angaben, bis jemand sie ergänzt. Zuordnen, Ersetzen und Lösen eines Trainings und ein Ausfall lassen
 Felder und Spielerzahl stehen.
 
