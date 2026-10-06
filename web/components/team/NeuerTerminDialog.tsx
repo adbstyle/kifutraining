@@ -4,8 +4,12 @@ import { useEffect, useState } from "react";
 import { Button, Checkbox, DateField, Dialog, TextArea, TextField, TimeField, WochentagWahl } from "@/components/ui";
 import { maxEnddatum, serieProblem, wochentagVon, type SerieFeld, type Wochentag } from "@/lib/serie";
 import { BEMERKUNG_MAX, ORT_MAX, istKalendertag, terminProblem, type TerminFelder } from "@/lib/termin";
+import type { Felder } from "@/lib/termin-felder";
 import type { TeamMitglied } from "@/lib/queries/teams";
 import { VerantwortlicheWahl, type VerantwortlicheWert } from "./VerantwortlicheWahl";
+import { FelderField } from "./FelderField";
+import { SpielerzahlField } from "./SpielerzahlField";
+import { usePlatzAngaben } from "./usePlatzAngaben";
 
 export type SerieFelder = {
   wochentage: Wochentag[];
@@ -20,10 +24,11 @@ export type SerieFelder = {
 };
 
 /** Was der Dialog festlegt: einen einzelnen Termin (#322 AK 1) oder eine
- *  Terminserie (#324 AK 1). `verantwortlich` nur, wenn jemand gewählt ist. */
+ *  Terminserie (#324 AK 1), beide mit Feldern und erwarteter Spielerzahl
+ *  (#389, #390, #391 AK 1). `verantwortlich` nur, wenn jemand gewählt ist. */
 export type NeuerTermin =
   | { art: "einzeln"; felder: TerminFelder; verantwortlich?: VerantwortlicheWert }
-  | { art: "serie"; felder: SerieFelder };
+  | { art: "serie"; felder: SerieFelder & { felder: Felder | null; spielerzahl: number | null } };
 
 const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: "", ort: "", bemerkung: "", verantwortliche: [] };
 
@@ -38,7 +43,11 @@ const LEER: SerieFelder = { wochentage: [], von: "", bis: "", beginn: "", ende: 
    «jeden Dienstag ab dem 6.» meint, kreuzt nur an und wählt das Ende.
 
    Verantwortliche lassen sich gleich mitgeben (#325 AK 1, 3); gelöschte
-   Konten gibt es bei einem neuen Termin noch nicht, darum ohne `bisher`. */
+   Konten gibt es bei einem neuen Termin noch nicht, darum ohne `bisher`.
+
+   Erwartete Spielerzahl (#390 AK 1) und Felder des Platzes (#389 AK 1, 8)
+   gelten für den einzelnen Termin wie für jeden Termin einer Serie
+   (#391 AK 1). */
 export function NeuerTerminDialog({
   open,
   start,
@@ -61,6 +70,7 @@ export function NeuerTerminDialog({
   const [wiederholen, setWiederholen] = useState(false);
   const [tageVonHand, setTageVonHand] = useState(false);
   const [problem, setProblem] = useState<{ feld: SerieFeld; text: string } | null>(null);
+  const platz = usePlatzAngaben();
   // Ein Server-Fehler gilt für die Art, mit der gespeichert wurde; schaltet
   // der USER um, ist er verworfen — bis zum nächsten Speichern.
   const [verworfen, setVerworfen] = useState<string | undefined>();
@@ -74,6 +84,7 @@ export function NeuerTerminDialog({
     setWiederholen(false);
     setTageVonHand(false);
     setProblem(null);
+    platz.zuruecksetzen();
     setVerworfen(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -101,17 +112,26 @@ export function NeuerTerminDialog({
   }
 
   function speichern() {
+    // Felder und Spielerzahl prüfen beide Arten gleich.
+    const angaben = platz.pruefe();
     if (wiederholen) {
       const p = serieProblem(f);
       setProblem(p);
-      if (!p) senden({ art: "serie", felder: f });
+      if (!p && angaben) senden({ art: "serie", felder: { ...f, ...angaben } });
       return;
     }
-    const felder: TerminFelder = { datum: f.von, beginn: f.beginn, ende: f.ende, ort: f.ort, bemerkung: f.bemerkung };
+    const felder: TerminFelder = {
+      datum: f.von,
+      beginn: f.beginn,
+      ende: f.ende,
+      ort: f.ort,
+      bemerkung: f.bemerkung,
+      ...angaben,
+    };
     const p = terminProblem(felder);
     // Das Datum heisst in beiden Fällen `von` — so steht ein Fehler am selben Feld.
     setProblem(p && { feld: p.feld === "datum" ? "von" : p.feld, text: p.text });
-    if (!p) {
+    if (!p && angaben) {
       const verantwortlich = f.verantwortliche.length > 0 ? { userIds: f.verantwortliche, anonyme: [] } : undefined;
       senden({ art: "einzeln", felder, verantwortlich });
     }
@@ -172,6 +192,8 @@ export function NeuerTerminDialog({
           onChange={(w) => setze("verantwortliche", w.userIds)}
           disabled={pending}
         />
+        <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} />
+        <FelderField {...platz.felderProps} disabled={pending} />
       </div>
     </Dialog>
   );

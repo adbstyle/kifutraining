@@ -36,7 +36,7 @@ import {
 } from "@/lib/altersstufe";
 import { farbSlugs } from "@/lib/diagramm";
 import { MATERIAL_ARTEN, MATERIAL_KATALOG, MATERIAL_MENGE_MAX } from "@/lib/material";
-import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/uebung-form";
+import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 import { FREITEXT_LISTEN, UEBEN_ZEILEN } from "@/lib/freitext";
 import {
   pflichtangaben,

@@ -13,7 +13,7 @@ export const ZUGANG_DARF: readonly string[] = [
   "Übungen suchen und abrufen - den ganzen Bestand, den du auch in KiFu siehst",
   "eigene Übungen samt Feld-Diagramm anlegen, kopieren, ändern, öffentlich schalten und zurückziehen",
   "Trainings anlegen, überarbeiten, veröffentlichen, zurückziehen, übernehmen und löschen",
-  "Team-Trainings deiner Teams führen und im Kalender deiner Teams Termine und Terminserien festlegen, ändern und entfernen, ihnen Trainings aus dem Team oder als Kopie deine persönlichen Trainings zuordnen und sie wieder lösen, Verantwortliche eintragen, Ausfälle festhalten und zurücknehmen sowie die Termine eines Zeitraums abrufen",
+  "Team-Trainings deiner Teams führen und im Kalender deiner Teams Termine und Terminserien samt Platz und erwarteter Spielerzahl festlegen, ändern und entfernen, ihnen Trainings aus dem Team oder als Kopie deine persönlichen Trainings zuordnen und sie wieder lösen, Verantwortliche eintragen, Ausfälle festhalten und zurücknehmen sowie die Termine eines Zeitraums abrufen",
   "die Anzeigenamen der Mitglieder deiner Teams lesen (ohne E-Mail-Adressen)",
 ];
 
