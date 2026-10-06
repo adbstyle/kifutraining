@@ -23,6 +23,7 @@ import {
   PasswordField,
   TextArea,
   DateField,
+  HinzufuegenFeld,
   TimeField,
   Select,
   MethodischerFahrplan,
@@ -1984,6 +1985,27 @@ export default function Styleguide() {
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
+          Hinzufügen in Feldgestalt
+        </h3>
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Wo ein Formular eine Liste gleichartiger Einträge führt - Felder
+          eines Termins, Material einer Übung -, steht unter der Liste kein
+          Textknopf, sondern <code>HinzufuegenFeld</code>: eine Zeile in der
+          Gestalt eines leeren Felds, nach dem Vorbild von «Add subtask» in
+          Jira (PO 2026-10-06). Gleiche Höhe, gleicher Einzug und gleiche
+          Schrift wie der Name im leeren Feldkasten, ruhend ohne Fläche, beim
+          Überfahren dieselbe leise Aufhellung; vorne ein gedämpftes Plus. Ein
+          fachlicher Hinweis zur ganzen Liste - was ein Eintrag ist - steht
+          über <code>info</code> hinter dem ⓘ rechts in der Zeile, wie bei
+          einem Feld nur beim Überfahren sichtbar.
+        </p>
+        <div className="grid max-w-md gap-6">
+          <HinzufuegenFeld info="Was ein Eintrag dieser Liste ist und was nicht hierher gehört.">
+            Eintrag hinzufügen
+          </HinzufuegenFeld>
+        </div>
+
+        <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
           Datum &amp; Uhrzeit
         </h3>
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
@@ -2930,8 +2952,9 @@ export default function Styleguide() {
             eigenes Feld aus bestehenden Teilen: je Zeile <code>Select</code>{" "}
             für Art und (nur bei färbbarem Material) Farbe, <code>TextField</code>{" "}
             für die Menge, <code>IconButton</code> mit <code>X</code> zum
-            Entfernen (PO 2026-10-06). Hinzufügen ist eine Randhandlung, darum{" "}
-            <code>quiet</code> (siehe 08).
+            Entfernen (PO 2026-10-06). Hinzufügen ist{" "}
+            <code>HinzufuegenFeld</code> (siehe 14) mit dem fachlichen Hinweis,
+            was in die Liste gehört und was unter «Weiteres Material».
           </li>
           <li>
             <strong>Vorschlag</strong> - das Angebot des Diagramms steht als{" "}
@@ -3211,7 +3234,8 @@ export default function Styleguide() {
             <code>X</code> zum Entfernen (PO 2026-10-06, kein Papierkorb). Die
             Felder sind getrennte Flächen; der Block macht das sichtbar, wo
             eine Zeile wie beim Material sie zu einem Posten verkürzte.
-            Hinzufügen ist eine Randhandlung: <code>quiet</code>.
+            Hinzufügen ist <code>HinzufuegenFeld</code> (siehe 14), sein ⓘ
+            sagt, was ein Feld ist.
             Jeder Block ist eine Gruppe (<code>role=&quot;group&quot;</code>),
             benannt nach seinem Titel.
           </li>

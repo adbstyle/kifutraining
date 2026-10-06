@@ -91,6 +91,10 @@ export const FELDER_TEXT = {
  *  lib/termin-felder-ausgabe.ts: dieselbe Regel (leer = unbekannt, 0 Tore =
  *  keine), dort in den Worten der Werkzeug-Schnittstelle (null statt leer). */
 export const FELD_HINWEIS = {
+  /** Zur ganzen Liste, am «Feld hinzufügen». */
+  liste:
+    "Ein Feld ist eine eigene Fläche, die euch zur Verfügung steht - auf einem geteilten Platz nur euer Teil. " +
+    "Mehrere Felder nutzt ihr gleichzeitig; sie lassen sich nicht zu einer grösseren Fläche zusammenlegen.",
   masse: (seite: "Länge" | "Breite") =>
     `${seite} der Fläche, die euch zur Verfügung steht, in ganzen Metern. Leer heisst unbekannt.`,
   tore: (torart: string) => `Wie viele ${torart} auf diesem Feld stehen. Leer heisst unbekannt, 0 heisst keine.`,

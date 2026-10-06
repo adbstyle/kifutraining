@@ -95,6 +95,13 @@ export const FARBE_LABEL: Record<FarbSlug, string> = {
  *  weit über jedem Trainingsbedarf. */
 export const MATERIAL_MENGE_MAX = 999;
 
+/** Fachlicher Hinweis zur gegliederten Materialliste, am «Material
+ *  hinzufügen» hinter dem ⓘ: was hierher gehört und was in die freie
+ *  Ergänzung. */
+export const MATERIAL_HINWEIS =
+  "Was die Übung braucht, nach Art, Farbe und Menge - so zählt es in die Materialliste des Trainings. " +
+  "Was sich so nicht erfassen lässt, gehört unter «Weiteres Material».";
+
 /** Ein Posten der Liste. `farbe` ist genau bei färbbarem Material gesetzt. */
 export type MaterialPosten = {
   art: MaterialArt;
