@@ -70,7 +70,9 @@ export type TerminZeile = {
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
   spielerzahl: number | null;
   /** `null`: Der Termin trägt (noch) kein Training (#322). */
-  training: { id: string; name: string; stufen: KategorieSlug[] } | null;
+  /** `terminTraining`: eine Kopie, die mit dem Termin lebt und beim Lösen
+   *  gelöscht wird; sonst ein Training aus dem Bestand (PO 2026-10-06). */
+  training: { id: string; name: string; stufen: KategorieSlug[]; terminTraining: boolean } | null;
   /** `null`: ein einzelner Termin ohne Serie. */
   serie: TerminSerie | null;
   /** Der Tag der Serienregel, für den der Termin angelegt wurde. */
@@ -139,7 +141,7 @@ type RawTermin = {
     verantwortlich_name: string | null;
     verantwortlich_ehemalig: boolean;
   }[];
-  trainings: { id: string; name: string; stufen: string[] | null } | null;
+  trainings: { id: string; name: string; stufen: string[] | null; termin_training: boolean } | null;
   termin_serien: {
     id: string;
     version: number;
@@ -169,7 +171,7 @@ export function kurzeZeit(t: string): string {
 const TERMIN_SELECT =
   "id, team_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, felder_abweichend, spielerzahl_abweichend, ausgefallen, ausfall_grund, " +
   "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ), " +
-  "trainings ( id, name, stufen ), " +
+  "trainings ( id, name, stufen, termin_training ), " +
   "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, " +
   "termin_serien_verantwortliche ( user_id, verantwortlich_name ) )";
 
@@ -200,7 +202,12 @@ function mapTermin(t: RawTermin): TerminZeile {
     felder: t.felder,
     spielerzahl: t.erwartete_spielerzahl,
     training: t.trainings
-      ? { id: t.trainings.id, name: t.trainings.name, stufen: sortStufen(t.trainings.stufen ?? []) }
+      ? {
+          id: t.trainings.id,
+          name: t.trainings.name,
+          stufen: sortStufen(t.trainings.stufen ?? []),
+          terminTraining: t.trainings.termin_training,
+        }
       : null,
     serie: t.termin_serien
       ? {

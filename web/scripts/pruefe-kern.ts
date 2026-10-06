@@ -382,6 +382,7 @@ function training(extra: Partial<TrainingDetail>): TrainingDetail {
     ziel: null,
     team: null,
     terminDatum: null,
+    terminTraining: false,
     urheber: "Ich",
     createdAt: "2026-09-23T00:00:00Z",
     updatedAt: "2026-09-23T00:00:00Z",
@@ -535,7 +536,7 @@ pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
   const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: false, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
-  assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [] } }, "2026-10-01"), false);
+  assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } }, "2026-10-01"), false);
 });
 
 pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst Ausfälle aus (#327)", () => {
@@ -574,7 +575,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
       { laenge_m: null, breite_m: null, tore: { minitor: null, tor_5m: null, tor_7m: null }, untergrund: null },
     ],
     spielerzahl: 12,
-    training: { id: "t1", name: "Probe", stufen: ["F" as const] },
+    training: { id: "t1", name: "Probe", stufen: ["F" as const], terminTraining: true },
     serie: null,
     serienTag: null,
     abweichungen: [],
@@ -723,7 +724,6 @@ pruefe("istVeraltet: trifft «seit der Auswahl geändert» und «gibt es nicht m
   assert.ok(istVeraltet(`${TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT} ${kopieGebliebenText("Spielformen")}`));
   // Regeln, die ein erneuter Versuch mit anderer Wahl löst, schliessen den Dialog nicht.
   assert.ok(!istVeraltet(TERMIN_MELDUNG.TRAINING_SCHON_EINGEPLANT));
-  assert.ok(!istVeraltet(TERMIN_MELDUNG.NUR_KOPIE_BEI_VERGANGENEM));
   assert.ok(!istVeraltet(TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM));
   // Serien-Konflikte: Sätze aus SERIE_MELDUNG, Marker aus KONFLIKT_MARKER (#326).
   assert.ok(KONFLIKT_MARKER.includes("SERIE_GEAENDERT") && KONFLIKT_MARKER.includes("SERIE_BELEGUNG_GEAENDERT"));
@@ -1019,9 +1019,7 @@ pruefe("Spielerzahl: geändert, entfernt, Anzeige, KI-Schema (#390 AK 2, 4–6)"
 });
 
 pruefe("Erfolgstexte und Nicht-gefunden-Sätze haben je eine Quelle", () => {
-  assert.equal(ZUORDNEN_ERFOLG.kopie, "Kopie angelegt und dem Termin zugeordnet.");
-  assert.equal(ZUORDNEN_ERFOLG.direkt, "Training zugeordnet.");
-  assert.equal(ZUORDNEN_ERFOLG.persoenlich, "Kopie im Team angelegt und dem Termin zugeordnet.");
+  assert.equal(ZUORDNEN_ERFOLG, "Training zugeordnet.");
   assert.equal(NICHT_GEFUNDEN.termin, TERMIN_MELDUNG.TERMIN_NICHT_GEFUNDEN);
   assert.equal(NICHT_GEFUNDEN.training, TERMIN_MELDUNG.TRAINING_NICHT_GEFUNDEN);
 });

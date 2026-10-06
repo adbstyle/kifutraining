@@ -50,8 +50,8 @@ Brotkrumen führen entsprechend zurück: über das Team in die Teamübersicht, u
 dorthin, wo das Training tatsächlich liegt. Ein Team-Training ohne Termin führt über eine Stufe
 „Trainings" in den Bestand des Teams; ein eingeplantes trägt stattdessen sein Termindatum im
 Namen, und die Stufe des Teams führt direkt in den Trainingsplan — eine eigene Plan-Stufe gibt
-es nicht, weil das Team ohnehin dort beginnt. Wird ein Training einem Termin zugeordnet oder
-von ihm gelöst, wechselt das Ziel beim nächsten Aufruf entsprechend.
+es nicht, weil das Team ohnehin dort beginnt. Ein Termin-Training (siehe „Trainings
+zuordnen") trägt immer sein Termindatum.
 
 Ein persönliches oder öffentliches Training führt unverändert in die Trainingsübersicht — auch
 die persönliche Kopie, die beim Übernehmen eines Team-Trainings entsteht.
@@ -96,56 +96,53 @@ aus der Zeit vor dem Kalender, die ohne Ende übernommen worden waren, dauern se
 2026 90 Minuten ab ihrem Beginn; die wenigen ganz ohne Zeit stehen von 18:00 bis 19:30.
 
 Ein Termin lässt sich entfernen; die Rückfrage dazu nennt das Training, das er trägt, und sagt,
-dass es ohne Termin im Team-Bestand bleibt. Umgekehrt bleibt ein Termin bestehen, wenn sein
-Training gelöscht wird — der Löschdialog sagt auch das —, und steht danach ohne Training im
-Plan. Ein Training geht auf keinem Weg verloren, weil sein Termin wegfällt, und kein Termin,
-weil sein Training wegfällt.
+was mit ihm geschieht: Ein Termin-Training wird mitgelöscht, ein älteres Training aus dem
+Bestand bleibt dort. Umgekehrt bleibt ein Termin bestehen, wenn sein Training gelöscht wird —
+der Löschdialog sagt auch das —, und steht danach ohne Training im Plan.
 
 Termine gibt es nur im Team. Wer kein Team hat, führt keinen Kalender.
 
 ## Trainings zuordnen
 
 Ein Training kommt ausschliesslich über einen bestehenden Termin auf ein Datum. Ein Termin
-trägt höchstens ein Training, und ein Training ist höchstens für einen Termin eingeplant.
-Zugeordnet wird von beiden Seiten: am Termin über „Training hinzufügen" bzw. „Training zuordnen" oder vom Training im
-Team-Bestand aus über „Termin zuordnen".
+trägt höchstens ein Training. Zugeordnet wird von beiden Seiten: am Termin über „Training
+hinzufügen" bzw. „Training ersetzen" oder vom Training im Team-Bestand aus über „Termin
+zuordnen".
 
-Am Termin stehen zuerst die Trainings des Team-Bestands, die noch nicht eingeplant sind, danach
-die eingeplanten mit dem Datum ihres Termins. Darunter, unter „Meine Trainings", stehen
-die eigenen persönlichen Trainings beider Altersstufen, Entwürfe wie öffentliche. Vom Training
-aus steht jeder Termin des Teams zur Wahl, auch vergangene, ausser dem, den es schon trägt, und
-ausser ausgefallenen; bei jedem steht seine Zeit und ob er ein Training trägt und welches.
+Was immer man zuordnet, der Termin bekommt still eine eigene Kopie, ein Termin-Training — ohne
+Rückfrage, ob kopiert oder verschoben werden soll. Die Quelle bleibt unverändert, wo sie ist;
+dasselbe Training lässt sich beliebig vielen Terminen zuordnen, auch vergangenen. Ein
+Termin-Training gehört dem Team: Alle Mitglieder sehen, ändern und führen es durch. In den
+Team-Bestand kommt es nicht — dorthin kommt ein Training nur bewusst, etwa über „In den
+Team-Bestand kopieren" hinter den drei Punkten des Termin-Trainings; das Original bleibt dabei
+am Termin. Eine Kopie heisst wie ihr Original und ist so vollständig wie jede andere Kopie im
+Team — Gruppen, Verteilung, Notizen und sämtliche Varianten des Hauptteils sind darin dieselben.
+Danach ist sie eigenständig: Eine Anpassung für nächste Woche verändert die Einheit von letzter
+Woche nicht.
 
-Ist das gewählte Team-Training schon für einen anstehenden Termin eingeplant, ist zu wählen:
-eine eigenständige Kopie für diesen Termin, oder das Training auf ihn verschieben, sodass der
-bisherige Termin ohne Training zurückbleibt. Gehört es zu einem vergangenen Termin, entsteht
-immer eine Kopie; die Vergangenheit bleibt bei dem Stand, mit dem sie stattfand. Eine Kopie
-heisst wie ihr Original und ist so vollständig wie jede andere Kopie im Team — Gruppen,
-Verteilung, Notizen und sämtliche Varianten des Hauptteils sind darin dieselben. Danach ist sie
-eigenständig: Eine Anpassung für nächste Woche verändert die Einheit von letzter Woche nicht.
+Am Termin stehen die Trainings des Team-Bestands zur Wahl und darunter, unter „Meine
+Trainings", die eigenen persönlichen Trainings beider Altersstufen, Entwürfe wie öffentliche.
+Vom Training aus steht jeder Termin des Teams zur Wahl, auch vergangene, ausser ausgefallenen;
+bei jedem steht seine Zeit und ob er ein Training trägt und was mit ihm geschähe. Den Weg gibt
+es auch vom persönlichen Training aus: Hinter den drei Punkten liegt „Einem Team-Termin
+zuordnen", das erst nach dem Team fragt, sofern man in mehreren ist, und dann nach dem Termin.
+Übernommen wird das Training in dem Stand, den es beim Zuordnen hat. Erfüllt es die Bedingungen
+eines Team-Trainings nicht, lehnt die Anwendung ab und nennt den Grund. Ein öffentliches
+Training einer anderen Person lässt sich erst zuordnen, nachdem man es zu sich oder ins Team
+übernommen hat.
 
-Ein persönliches Training kommt immer als Kopie ins Team des Termins. Vor dem Zuordnen sagt die
-Anwendung, dass eine Kopie im Team entsteht, dass spätere Änderungen am Original nicht auf sie
-wirken und dass alle Mitglieder sie sehen und bearbeiten können. Das Original bleibt
-unverändert und ohne Verbindung zur Kopie; wer dasselbe persönliche Training ein weiteres Mal
-zuordnet, erzeugt eine weitere Kopie. Den Weg gibt es auch vom persönlichen Training aus: Hinter
-den drei Punkten liegt „Einem Team-Termin zuordnen", das erst nach dem Team fragt, sofern man in
-mehreren ist, und dann nach dem Termin. Übernommen wird das Training in dem Stand, den es beim
-Zuordnen hat. Erfüllt es die Bedingungen eines Team-Trainings nicht, lehnt die Anwendung ab und
-nennt den Grund. Ein öffentliches Training einer anderen Person lässt sich erst zuordnen,
-nachdem man es zu sich oder ins Team übernommen hat.
+Ein Termin-Training lebt mit seinem Termin. Verliert es ihn — weil man es löst, ein anderes
+Training an seine Stelle setzt, den Termin entfernt oder eine Serienänderung den Termin
+entfallen lässt —, wird es gelöscht. Die Dialoge sagen das vorher; „Training lösen" fragt
+eigens nach. Ein Training, das vor dem 6. Oktober 2026 direkt einem Termin zugeordnet wurde,
+steht weiter im Bestand und bleibt dort, wenn es seinen Termin verliert. Zuordnen, ersetzen
+und lösen geht auch an vergangenen Terminen. Scheitert eine Zuordnung, nachdem schon eine Kopie
+entstanden ist, räumt die Anwendung die Kopie wieder weg; gelingt das nicht vollständig, nennt
+die Meldung die unvollständige Kopie, die dann im Team-Bestand steht.
 
-Trägt der Termin schon ein Training, ersetzt das neue es; der Dialog nennt vorher, welches
-Training ohne Termin im Team-Bestand bleibt. Lösen lässt sich ein Training ebenfalls: Der
-Termin bleibt dann ohne Training im Plan, das Training ohne Termin im Bestand. Zuordnen,
-ersetzen und lösen geht auch an vergangenen Terminen. Scheitert eine Zuordnung, nachdem schon
-eine Kopie entstanden ist, räumt die Anwendung die Kopie wieder weg; gelingt das nicht
-vollständig, nennt die Meldung die unvollständige Kopie, die im Team-Bestand stehen blieb.
-
-Ein eingeplantes Team-Training trägt sein Termindatum sichtbar mit sich: an seinem Eintrag im
-Trainingsbestand des Teams als Plakette „Eingeplant" mit dem Datum und in den Brotkrumen,
-solange es geöffnet ist. Die Schreibweise ist überall dieselbe wie im Trainingsplan, etwa
-„Mi., 23.09.2026".
+Ein Training mit Termin trägt sein Termindatum in den Brotkrumen, solange es geöffnet ist, in
+derselben Schreibweise wie im Trainingsplan, etwa „Mi., 23.09.2026". Ältere Bestands-Trainings
+mit Termin zeigen es im Bestand zusätzlich als Plakette „Eingeplant".
 
 ## Terminserien
 
@@ -212,7 +209,8 @@ Ein Serientermin lässt sich nur für sich, für sich und alle folgenden oder mi
 entfernen; „dieser und alle folgenden" beendet die Serie davor, „alle" entfernt auch die
 vergangenen Termine. Wo Termine entfallen — beim Entfernen immer, beim Ändern nur dann —, ist
 das zu bestätigen. Die Rückfrage nennt vorher jeden entfallenden Termin, der ein Training
-trägt, und sagt, dass dessen Training ohne Termin im Team-Bestand bleibt; Termine ohne
+trägt, und sagt, was mit dessen Training geschieht — ein Termin-Training wird mitgelöscht, ein
+älteres Training aus dem Bestand bleibt dort; Termine ohne
 Training, mit Verantwortlichen oder mit abweichenden Angaben nennt sie nicht, eine Anzahl auch
 nicht. Geändert oder entfernt werden entweder alle betroffenen Termine oder keiner.
 
@@ -253,16 +251,16 @@ Fällt ein Training aus, bleibt der Termin bestehen und wird als ausgefallen mar
 mit einem Grund von höchstens 500 Zeichen; das geht auch nachträglich an einem vergangenen
 Termin. Im Plan steht er mit der Plakette „Ausgefallen" und dem Grund daneben, gekürzt, wenn er
 lang ist; ganz steht er am nächsten Termin und beim Ändern des Termins. Ein
-ausgefallener Termin gilt nicht als unvorbereitet und nimmt auf keinem Weg ein Training an;
-trug er eines, wird es gelöst und bleibt ohne Termin im Team-Bestand — ohne Vorankündigung,
-die Bestätigung meldet nur den Ausfall. Verantwortliche, Bemerkung, Felder, erwartete
-Spielerzahl und Serienzugehörigkeit bleiben am Termin.
+ausgefallener Termin gilt nicht als unvorbereitet und nimmt kein neues Training an. Trug er
+eines, ruht es am Termin: Der Plan nennt es leise neben dem Ausfall, und es lässt sich öffnen,
+aber nicht durchführen. Verantwortliche, Bemerkung, Felder, erwartete Spielerzahl und
+Serienzugehörigkeit bleiben ebenfalls am Termin.
 
 Den Grund kann man ergänzen, ändern oder leeren, ohne den Ausfall zurückzunehmen — über „Grund
 ändern" oder direkt beim Ändern des Termins. Er gilt immer nur für diesen Termin, auch in einer
 Serie. Wird der Ausfall
-zurückgenommen, ist der Termin wieder ein gewöhnlicher Termin ohne Training und ohne Grund; das
-früher gelöste Training kehrt nicht von selbst zurück. Einzeln auf heute oder später verlegt,
+zurückgenommen, ist der Termin wieder ein gewöhnlicher Termin ohne Grund, mit dem Training, das
+an ihm ruhte. Einzeln auf heute oder später verlegt,
 findet ein ausgefallener Termin ebenfalls wieder statt, und der Dialog sagt das vor dem
 Speichern; auf einen vergangenen Tag verlegt oder
 durch den Wochentag-Tausch seiner Serie verschoben, bleibt er ausgefallen. Ändern und
@@ -370,8 +368,7 @@ neuen Link holt man sich jederzeit wieder im Trainingsplan.
 
 Alle Mitglieder arbeiten am selben Kalender. Hat ein anderes Mitglied seit der eigenen Auswahl
 etwas geändert, das das Ergebnis oder die vorherige Auskunft verändert — etwa den Termin
-entfernt, ihm ein anderes Training zugeordnet oder sein Training gelöst, das gewählte Training
-anderswo eingeplant, den Ausfall gesetzt oder zurückgenommen, die Serie geändert oder verändert,
+entfernt, ihm ein anderes Training zugeordnet oder sein Training gelöst, den Ausfall gesetzt oder zurückgenommen, die Serie geändert oder verändert,
 welche entfallenden Termine ein Training tragen —, lehnt die Anwendung ab und nennt den Grund,
 etwa „Seit deiner Auswahl hat sich geändert, welche wegfallenden Termine ein Training tragen."
 Der Dialog schliesst dann, der Plan zeigt den neuen
@@ -440,9 +437,9 @@ Teamübersicht — ob es das Team nicht gibt oder ob er nicht dazugehört, bleib
 ununterscheidbar.
 
 Eine Handlung bleibt in der Ansicht, in der sie ausgelöst wurde, und meldet ihr Ergebnis dort:
-Wer im Trainingsbestand ein Training einem Termin zuordnet, bleibt im Bestand und sieht die
-Plakette „Eingeplant" am Training. Nach dem Löschen eines Team-Trainings kehrt die Ansicht in die
-Trainings zurück.
+Wer im Trainingsbestand ein Training einem Termin zuordnet, bleibt im Bestand; das Training
+dort bleibt unverändert. Nach dem Löschen eines Team-Trainings kehrt die Ansicht in die
+Trainings zurück, nach dem Löschen eines Trainings mit Termin in den Trainingsplan.
 
 ## Bekannte Grenzen
 
@@ -491,7 +488,9 @@ Serie abweichen, zeigt erst der geöffnete Termin. Ausfallgründe sind frei form
 die Anwendung nicht. Ob Altersstufe oder Inhalt eines Trainings zum Termin passen, prüft sie
 nicht, und ob und wie oft ein persönliches Training schon einem Termin zugeordnet wurde, steht
 nirgends. Bricht die Verbindung mitten im Kopieren ohne Rückmeldung ab, kann eine unvollständige
-Kopie unbemerkt im Team-Bestand stehen bleiben.
+Kopie unbemerkt im Team-Bestand stehen bleiben. Ein Termin-Training ist nur über seinen Termin
+erreichbar; einmal gelöscht, lässt es sich nicht wiederherstellen, und ein Ausfall oder ein
+gelöstes Training lassen sich nicht rückgängig machen, ausser über eine neue Zuordnung.
 
 Eine Tages- oder Wochenansicht gibt es nicht; für die nächsten Wochen dient die Liste, und sie
 ist nicht nach Wochen gegliedert. Der Monat neben den Terminen zeigt weder Zeiten noch Namen; trägt ein Tag mehr als drei Termine, stehen die
@@ -503,9 +502,9 @@ weitere Termine liegen, zeigt nur die Liste. Die Anwendung kennt keine Ferien: E
 in den Ferien, der nicht als ausgefallen markiert ist, gilt als nächster Termin und als belegter
 Tag. Die Liste lässt sich nicht durchsuchen
 und nur auf die eigenen Termine eingrenzen, nicht auf einen Zeitraum. Ein Archivieren
-vergangener Einheiten gibt es nicht: Der Rückblick fasst sie zusammen, der Trainingsbestand
-wächst mit jeder Kopie weiter. Mehrere Kopien desselben Trainings heissen alle gleich; eingeplante
-lassen sich im Bestand am Termindatum auseinanderhalten, nicht eingeplante dagegen nicht.
+vergangener Einheiten gibt es nicht: Der Rückblick fasst sie zusammen. Mehrere Kopien desselben
+Trainings heissen alle gleich; im Bestand lassen sich nur ältere eingeplante am Termindatum
+auseinanderhalten.
 
 Wie oft ein Kalenderprogramm das Abo abruft, bestimmt das Programm, nicht die Anwendung; eine
 Änderung kann dort deshalb erst nach einer Weile erscheinen, und ob ein Programm nach dem

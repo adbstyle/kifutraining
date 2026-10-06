@@ -78,6 +78,7 @@ function training(extra: Partial<TrainingDetail>): TrainingDetail {
     stufen: ["F"],
     ziel: null,
     team: null,
+    terminTraining: false,
     terminDatum: null,
     urheber: "Ich",
     createdAt: "2026-09-23T00:00:00Z",

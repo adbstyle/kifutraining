@@ -33,6 +33,9 @@ export type TrainingAktionsRechte = {
   /** Einem Termin eines eigenen Teams zuordnen (#328 AK 2) — als Kopie, nur
    *  vom persönlichen Training aus und wenn es ein Team gibt. */
   terminZuordnen: boolean;
+  /** Ein Termin-Training bewusst in den Bestand seines Teams kopieren (PO
+   *  2026-10-06) — das Original bleibt am Termin. */
+  inBestandKopieren: boolean;
   loeschen: boolean;
 };
 
@@ -56,7 +59,7 @@ export type TrainingAktionsRechte = {
  *  Training und nur mit einem Team: Ein Team-Training liegt schon im Bestand
  *  und wird dort zugeordnet. */
 export function trainingAktionsRechte(
-  training: { visibility: "public" | "private"; teamId: string | null },
+  training: { visibility: "public" | "private"; teamId: string | null; terminTraining?: boolean },
   angemeldet: boolean,
   bearbeitungsziel: Bearbeitungsziel | null,
   hatTeams: boolean,
@@ -71,6 +74,7 @@ export function trainingAktionsRechte(
     sichtbarkeit: persoenlich ? (oeffentlich ? "auf_entwurf" : "veroeffentlichen") : null,
     insTeamStellen: persoenlich && hatTeams,
     terminZuordnen: persoenlich && hatTeams,
+    inBestandKopieren: darfBearbeiten && training.teamId !== null && !!training.terminTraining,
     loeschen: darfBearbeiten,
   };
 }
@@ -84,6 +88,7 @@ export function hatUeberlauf(rechte: TrainingAktionsRechte): boolean {
     rechte.sichtbarkeit !== null ||
     rechte.insTeamStellen ||
     rechte.terminZuordnen ||
+    rechte.inBestandKopieren ||
     rechte.loeschen
   );
 }

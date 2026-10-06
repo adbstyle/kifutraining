@@ -111,3 +111,52 @@ export async function loescheTraining(
     terminBleibt: termin.data ?? null,
   });
 }
+
+// ── Termin-Trainings (PO 2026-10-06) ─────────────────────────────────────────
+
+/** Eine Fassung mit ihrem Bild — soweit fürs Aufräumen nötig. */
+export type BildKandidat = { id: string; bild_url: string | null };
+
+/** Die Fassungen der Termin-Trainings unter diesen Trainings. Verliert ein
+ *  Termin-Training seinen Termin, löscht die Datenebene es samt Fassungen
+ *  (Trigger `termin_training_aufraeumen`) — die Bilddateien nicht. Darum VOR
+ *  dem Vorgang einsammeln und danach `raeumeBilderAb`. Trainings aus dem
+ *  Bestand bleiben stehen und tragen hier nichts bei. */
+export async function terminTrainingBilder(
+  supabase: SupabaseClient,
+  trainingIds: readonly (string | null | undefined)[],
+): Promise<BildKandidat[]> {
+  const ids = trainingIds.filter((x): x is string => !!x);
+  if (ids.length === 0) return [];
+  const { data } = await supabase
+    .from("training_exercises")
+    .select("id, bild_url, trainings!inner ( termin_training )")
+    .in("training_id", ids)
+    .eq("trainings.termin_training", true);
+  return (data ?? []).map((f) => ({ id: f.id, bild_url: f.bild_url }));
+}
+
+/** Von den Kandidaten die Bilder derer entfernen, deren Fassung tatsächlich
+ *  weg ist. Best effort: Im Zweifel bleibt eine Datei liegen — eine Waise ist
+ *  harmlos, das Bild einer lebenden Fassung zu löschen wäre Datenverlust. */
+export async function raeumeBilderAb(supabase: SupabaseClient, kandidaten: readonly BildKandidat[]): Promise<void> {
+  if (kandidaten.length === 0) return;
+  const { data, error } = await supabase
+    .from("training_exercises")
+    .select("id")
+    .in("id", kandidaten.map((k) => k.id));
+  if (error) return;
+  const nochDa = new Set((data ?? []).map((r) => r.id as string));
+  try {
+    await entferneStorageObjekte(supabase, eigeneBildPfade(kandidaten.filter((k) => !nochDa.has(k.id))));
+  } catch {
+    /* ignorieren: Waisen im Bildspeicher sind folgenlos */
+  }
+}
+
+/** Gibt es dieses Training noch? Nach Lösen, Ersetzen oder Entfernen sagt es,
+ *  ob ein Termin-Training mitging oder ein Training im Bestand blieb. */
+export async function gibtEsTraining(supabase: SupabaseClient, trainingId: string): Promise<boolean> {
+  const { data } = await supabase.from("trainings").select("id").eq("id", trainingId).maybeSingle();
+  return !!data;
+}

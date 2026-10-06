@@ -89,6 +89,13 @@ export function NaechsterTermin({
                 {t.ausfallGrund}
               </p>
             )}
+            {/* Ein Training ruht am ausgefallenen Termin (PO 2026-10-06). */}
+            {t.training && (
+              <Link href={`/training/${t.training.id}`} className="focus-ring mt-1 inline-block rounded-klein type-body-medium text-on-surface-mittel hover:underline">
+                <span className="sr-only">Training: </span>
+                {t.training.name}
+              </Link>
+            )}
           </>
         ) : zustand === "training" ? (
           <Link href={`/training/${t.training!.id}`} className="focus-ring rounded-klein type-title-large text-on-surface hover:underline">

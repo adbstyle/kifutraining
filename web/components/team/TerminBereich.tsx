@@ -152,6 +152,7 @@ export function TerminBereich({
   const [bearbeiten, setBearbeiten] = useState<TerminZeile | null>(null);
   const [zuordnen, setZuordnen] = useState<TerminZeile | null>(null);
   const [entfernen, setEntfernen] = useState<TerminZeile | null>(null);
+  const [loesen, setLoesen] = useState<TerminZeile | null>(null);
   const [ausfall, setAusfall] = useState<TerminZeile | null>(null);
   const [reichweite, setReichweite] = useState<ReichweiteFrage | null>(null);
   const [bestaetigen, setBestaetigen] = useState<SerienSchritt | null>(null);
@@ -243,7 +244,7 @@ export function TerminBereich({
           router.refresh();
           return melde(vorher);
         }
-        const g = await lasseAusfallenAktion(t.id, grund, null, true);
+        const g = await lasseAusfallenAktion(t.id, grund, true);
         if (!g.ok) return einzelnGescheitert(g.error, gilt(), vorher);
       }
       router.refresh();
@@ -307,7 +308,7 @@ export function TerminBereich({
       : await entferneSerieAktion(b.t.id, b.reichweite, erwartet);
     if (!r.ok) return serienFehler(b.art, r.error, laufNr.current !== nr);
     // Der Grund gilt nur für diesen Termin (#402 PC 4); er folgt der Serie nicht.
-    const g = b.grund !== undefined ? await lasseAusfallenAktion(b.t.id, b.grund, null, true) : null;
+    const g = b.grund !== undefined ? await lasseAusfallenAktion(b.t.id, b.grund, true) : null;
     router.refresh();
     serieSchliessen();
     melde(b.art === "aendern" ? `Terminserie geändert.${g && !g.ok ? ` ${g.error}` : ""}` : "Termine entfernt.");
@@ -324,7 +325,7 @@ export function TerminBereich({
     if (!geaendert && !regelNeu && !verantwortlich) {
       if (grund === undefined) return setBearbeiten(null);
       // Nur der Grund: Er gilt für diesen Termin, eine Reichweite gibt es nicht (#402 PC 4).
-      return lauf(() => lasseAusfallenAktion(t.id, grund, null, true), () => "Grund gespeichert.", () => setBearbeiten(null), true, laufNr.current);
+      return lauf(() => lasseAusfallenAktion(t.id, grund, true), () => "Grund gespeichert.", () => setBearbeiten(null), true, laufNr.current);
     }
     if (!t.serie) return aendereEinzeln(t, geaendert, verantwortlich, grund);
     const datum = geaendert?.datum !== undefined;
@@ -365,8 +366,8 @@ export function TerminBereich({
     const { art, t } = frage;
     if (r === "nur_dieser") {
       setReichweite(null);
-      // Einzeln entfernen geht durch die Bestätigung aus Teil A: Sie nennt das
-      // Training, das im Bestand bleibt (#322).
+      // Einzeln entfernen geht durch die Bestätigung aus Teil A: Sie sagt, was
+      // mit dem Training geschieht (#322; PO 2026-10-06).
       if (art === "entfernen") return setEntfernen(t);
       if (!frage.geaendert && !frage.verantwortlich) return;
       return aendereEinzeln(t, frage.geaendert, frage.verantwortlich, frage.grund);
@@ -388,14 +389,27 @@ export function TerminBereich({
     });
   }
 
+  function loeseSofort(t: TerminZeile) {
+    const training = t.training;
+    if (!training) return;
+    lauf(
+      () => loeseTrainingAktion(t.id, training.id),
+      () => (training.terminTraining ? `«${training.name}» ist gelöst und gelöscht.` : `«${training.name}» ist gelöst und bleibt im Team-Bestand.`),
+      () => setLoesen(null),
+    );
+  }
+
   const aktionen: TerminAktionen = {
     neu: () => { neuerLauf(); setDialogFehler(undefined); setNeu(true); },
     bearbeiten: (t) => { neuerLauf(); setDialogFehler(undefined); setBearbeiten(t); },
     // Ein ausgefallener Termin trägt kein Training (#327 AK 9): kein Dialog.
     zuordnen: (t) => { if (t.ausgefallen) return; neuerLauf(); setDialogFehler(undefined); setZuordnen(t); },
+    // Ein Termin-Training geht beim Lösen verloren: erst nachfragen. Ein
+    // Training aus dem Bestand bleibt dort — das löst sofort (PO 2026-10-06).
     loesen: (t) => {
       if (!t.training || pending) return;
-      lauf(() => loeseTrainingAktion(t.id, t.training!.id), () => `«${t.training!.name}» ist gelöst und bleibt im Team-Bestand.`, () => {});
+      if (t.training.terminTraining) return setLoesen(t);
+      loeseSofort(t);
     },
     entfernen: (t) => {
       setDialogFehler(undefined);
@@ -500,7 +514,6 @@ export function TerminBereich({
         termin={zuordnen}
         trainings={trainings}
         persoenliche={persoenliche}
-        heute={heute}
         pending={pending}
         fehler={dialogFehler}
         onClose={() => {
@@ -514,15 +527,9 @@ export function TerminBereich({
             () => ordneTrainingZuAktion({
               terminId: zuordnen.id,
               trainingId: w.trainingId,
-              art: w.art,
-              erwartet: { terminTraining: zuordnen.training?.id ?? null, trainingTermin: w.trainingTermin },
+              erwartet: { terminTraining: zuordnen.training?.id ?? null },
             }),
-            (r) =>
-              w.quelle === "persoenlich"
-                ? ZUORDNEN_ERFOLG.persoenlich
-                : "kopie" in r && r.kopie
-                  ? ZUORDNEN_ERFOLG.kopie
-                  : ZUORDNEN_ERFOLG.direkt,
+            () => ZUORDNEN_ERFOLG,
             () => setZuordnen(null),
             true,
             laufNr.current,
@@ -544,7 +551,7 @@ export function TerminBereich({
           if (!t) return;
           // Der Grund geht immer als Text mit; «» leert ihn (ausdrücklich «Grund setzen»).
           lauf(
-            () => lasseAusfallenAktion(t.id, grund, t.training?.id ?? null, t.ausgefallen),
+            () => lasseAusfallenAktion(t.id, grund, t.ausgefallen),
             () => (t.ausgefallen ? "Grund gespeichert." : "Termin als ausgefallen markiert."),
             () => setAusfall(null),
             true,
@@ -575,9 +582,32 @@ export function TerminBereich({
       >
         <p>
           Der Termin am {entfernen ? datumKurz(entfernen.datum) : ""} verschwindet aus dem Trainingsplan.
-          {entfernen?.training && (
-            <> <strong className="text-on-surface">{entfernen.training.name}</strong> bleibt ohne Termin im Team-Bestand.</>
-          )}
+          {entfernen?.training &&
+            (entfernen.training.terminTraining ? (
+              <> <strong className="text-on-surface">{entfernen.training.name}</strong> wird mit ihm gelöscht.</>
+            ) : (
+              <> <strong className="text-on-surface">{entfernen.training.name}</strong> bleibt ohne Termin im Team-Bestand.</>
+            ))}
+        </p>
+      </Dialog>
+
+      {/* Lösen eines Termin-Trainings löscht es — darum diese Rückfrage. */}
+      <Dialog
+        open={loesen !== null}
+        onClose={() => setLoesen(null)}
+        title="Training lösen?"
+        actions={
+          <>
+            <Button variant="text" onClick={() => setLoesen(null)}>Abbrechen</Button>
+            <Button variant="danger" disabled={pending} onClick={() => loesen && loeseSofort(loesen)}>
+              Lösen und löschen
+            </Button>
+          </>
+        }
+      >
+        <p>
+          <strong className="text-on-surface">{loesen?.training?.name}</strong> wird gelöscht — es gehört nur zu diesem
+          Termin. Der Termin am {loesen ? datumKurz(loesen.datum) : ""} bleibt ohne Training im Trainingsplan.
         </p>
       </Dialog>
     </Kontext.Provider>

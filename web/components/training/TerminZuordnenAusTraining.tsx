@@ -6,14 +6,15 @@ import { Button, ChoiceChip, ChoiceChipGroup, Dialog, SectionMessage } from "@/c
 import { useSnackbar } from "@/components/layout/SnackbarKontext";
 import { TerminWahlDialog } from "@/components/team/TerminWahlDialog";
 import { ordneTrainingZuAktion, termineFuerZuordnungAktion } from "@/lib/actions/termine";
-import { PERSOENLICH_KOPIE_HINWEIS, ZUORDNEN_ERFOLG } from "@/lib/termin";
+import { ZUORDNEN_ERFOLG } from "@/lib/termin";
 import { istVeraltet } from "@/lib/veraltet";
 import type { TeamUebersicht } from "@/lib/queries/teams";
 import type { TerminZeile } from "@/lib/queries/termine";
 
 /* Ein persönliches Training einem Termin eines eigenen Teams zuordnen
    (#328 AK 2). Erst das Team, dann der Termin (der Dialog der Wahl ist
-   derselbe wie im Team-Bestand); zugeordnet wird immer eine Kopie.
+   derselbe wie im Team-Bestand); der Termin bekommt still eine eigene Kopie,
+   ein Termin-Training — ins Team kommt dabei nichts (PO 2026-10-06).
 
    Fehler wie im Trainingsplan (PO 17): Ein Fehler steht im Dialog, ausser die
    Auswahl ist veraltet — dann würde ein erneuter Versuch immer wieder
@@ -122,20 +123,18 @@ export function TerminZuordnenAusTraining({
       heute={daten.heute}
       pending={pending}
       fehler={fehler}
-      hinweis={PERSOENLICH_KOPIE_HINWEIS}
       onClose={schliessen}
-      onWahl={({ termin }) => {
+      onWahl={(termin) => {
         const nr = laufNr.current;
         startTransition(async () => {
           const r = await ordneTrainingZuAktion({
             terminId: termin.id,
             trainingId,
-            art: "kopie",
-            erwartet: { terminTraining: termin.training?.id ?? null, trainingTermin: null },
+            erwartet: { terminTraining: termin.training?.id ?? null },
           });
           router.refresh();
           // Abgebrochen, während die Zuordnung lief: nur melden, was geschah.
-          if (laufNr.current !== nr) return melde(r.ok ? ZUORDNEN_ERFOLG.persoenlich : r.error);
+          if (laufNr.current !== nr) return melde(r.ok ? ZUORDNEN_ERFOLG : r.error);
           if (!r.ok && !istVeraltet(r.error)) {
             setFehler(r.error);
             // Die Liste zeigt sonst Belegungen von vor dem Fehler.
@@ -144,7 +143,7 @@ export function TerminZuordnenAusTraining({
             return;
           }
           onClose();
-          melde(r.ok ? ZUORDNEN_ERFOLG.persoenlich : r.error);
+          melde(r.ok ? ZUORDNEN_ERFOLG : r.error);
         });
       }}
     />

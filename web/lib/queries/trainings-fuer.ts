@@ -94,6 +94,9 @@ export type TrainingDetail = {
    *  sonst `null`. Höchstens einer je Training — ein erneutes Einplanen legt
    *  eine eigene Kopie an. Die RLS gibt Termine nur Team-Mitgliedern (#156). */
   terminDatum: string | null;
+  /** Ein Termin-Training: eine Kopie, die mit ihrem Termin lebt und nicht im
+   *  Team-Bestand steht (PO 2026-10-06). */
+  terminTraining: boolean;
   /** Anzeigename des Urhebers; `null` bei anonymisierten Trainings (Story 15). */
   urheber: string | null;
   createdAt: string;
@@ -128,7 +131,7 @@ const PE_SELECT = `
   ${INHALT_FELDER}
 `;
 
-export const TRAINING_SELECT = `id, name, owner_id, visibility, altersstufe, stufen, ziel, team_id, teams ( name ), urheber, created_at, updated_at, training_termine ( datum ), training_exercises ( ${PE_SELECT} ), training_gruppen ( id, name, position ), training_varianten ( id, name, position )`;
+export const TRAINING_SELECT = `id, name, owner_id, visibility, altersstufe, stufen, ziel, team_id, termin_training, teams ( name ), urheber, created_at, updated_at, training_termine ( datum ), training_exercises ( ${PE_SELECT} ), training_gruppen ( id, name, position ), training_varianten ( id, name, position )`;
 
 /** Die Inhaltsfelder, wie sie aus der Zuordnung zurückkommen. */
 type RawInhalt = {
@@ -181,6 +184,7 @@ type RawTraining = {
    *  Termin als EIN Objekt statt als Liste. Beide Formen abfangen: eine
    *  spätere Schema-Änderung soll hier keinen stillen Nulltreffer erzeugen. */
   training_termine: { datum: string } | { datum: string }[] | null;
+  termin_training: boolean;
 };
 
 /** Sortier-Reihenfolge aller Einordnungen: erst die vier Kinderfussball-Teile,
@@ -293,6 +297,7 @@ export function mapTraining(raw: RawTraining): TrainingDetail {
     ziel: raw.ziel,
     team: raw.team_id && raw.teams ? { id: raw.team_id, name: raw.teams.name } : null,
     terminDatum: einzelnerTermin(raw.training_termine)?.datum ?? null,
+    terminTraining: raw.termin_training,
     urheber: raw.urheber ?? null,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
@@ -517,7 +522,7 @@ export type TeamTrainingRow = TrainingListRow & {
     /** Wer den Termin vorbereitet und leitet (#325 AK 16); `userId` und `name`
      *  sind bei einem gelöschten Konto `null`, `ehemalig` heisst: nicht mehr im Team. */
     verantwortliche: { userId: string | null; name: string | null; ehemalig: boolean }[];
-    /** Ein Training trägt nie einen ausgefallenen Termin (#327 AK 9); die
+    /** Ein ausgefallener Termin behält sein Training (PO 2026-10-06); die
      *  Felder halten die Gestalt wie im Plan. */
     ausgefallen: boolean;
     ausfallGrund: string | null;
@@ -554,7 +559,9 @@ export async function getTeamTrainingsFuer(
   // Der Guard im Layout greift hier nicht — Layout und Page rendern parallel;
   // die leere Liste verhindert den 500 vor dem Redirect.
   if (!istUuid(teamId)) return [];
-  let query = supabase.from("trainings").select(TEAM_LIST_SELECT).eq("team_id", teamId);
+  // Der Bestand: ohne Termin-Trainings — sie leben mit ihrem Termin und
+  // stehen nur im Trainingsplan (PO 2026-10-06).
+  let query = supabase.from("trainings").select(TEAM_LIST_SELECT).eq("team_id", teamId).eq("termin_training", false);
   if (f.stufen?.length) query = query.overlaps("stufen", f.stufen);
 
   const hasQuery = !!f.q?.trim();
