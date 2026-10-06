@@ -32,7 +32,8 @@ import {
   GRUND,
   LOZENGE,
   LOZENGE_DRUCK,
-  ON_ERROR,
+  DANGER,
+  ON_DANGER,
   ON_PRIMARY,
   SECTION,
   SECTION_DRUCK,
@@ -199,11 +200,13 @@ pruefe("Error trägt als Kontur auf jeder Höhenstufe", () => {
 });
 
 pruefe("Die Aufschrift gefüllter Flächen trägt", () => {
-  // Filled-Knopf und Fehlerfläche: Hier liegt on-* auf der Akzentfarbe selbst.
+  // Gefüllter und destruktiver Knopf: Hier liegt on-* auf der Fläche selbst.
   const aufPrimary = kontrast(ON_PRIMARY, PRIMARY);
   assert.ok(aufPrimary >= 4.5, `on-primary auf primary: ${z(aufPrimary)}:1`);
-  const aufError = kontrast(ON_ERROR, ERROR);
-  assert.ok(aufError >= 4.5, `on-error auf error: ${z(aufError)}:1`);
+  const aufDanger = kontrast(ON_DANGER, DANGER);
+  assert.ok(aufDanger >= 4.5, `on-danger auf danger: ${z(aufDanger)}:1`);
+  const aufDangerDruck = kontrast(DRUCK["on-danger"], DRUCK.danger);
+  assert.ok(aufDangerDruck >= 4.5, `on-danger auf danger (Druck): ${z(aufDangerDruck)}:1`);
 });
 
 // ── Umgekehrte Fläche (Snackbar) ───────────────────────────────────────────
@@ -311,7 +314,8 @@ pruefe("Jede Rolle, die im Druck sichtbar wird, hat einen Override", () => {
     "primary",
     "on-primary",
     "error",
-    "on-error",
+    "danger",
+    "on-danger",
     // Lozenge und Section Message wechseln auf Papier vollständig ins helle
     // Atlassian-Theme — jede ihrer Rollen braucht darum einen Override.
     ...Object.keys(BILDSCHIRM).filter((rolle) => /^(on-)?lozenge-|^section-|^icon-/.test(rolle)),

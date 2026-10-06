@@ -36,7 +36,11 @@
      durchweg über 4.5:1 (00dp 7.33 · 01dp 6.47 · 08dp 5.22 · 24dp 4.56),
      nachgerechnet in scripts/pruefe-farben.ts auf jeder Stufe. */
   --color-error: #e58a95;
-  --color-on-error: #000000; /* 8.40 auf Error */
+  /* Die Fläche des destruktiven Knopfs — dunkler als Error, weil sie Weiss
+     trägt (5.16:1); Error selbst käme mit Weiss nur auf 2.50:1. Atlassians
+     danger.bold (helles Theme). PO 2026-10-06. */
+  --color-danger: #c9372c;
+  --color-on-danger: #ffffff;
   --color-scrim: #000000;
 
   /* ─── Schrift und Striche: Weiss in vier Deckungen ───
@@ -679,7 +683,8 @@
     --color-primary: #4527a0;
     --color-on-primary: #ffffff;
     --color-error: #a32036;
-    --color-on-error: #ffffff;
+    --color-danger: #a32036;
+    --color-on-danger: #ffffff;
     /* Lozenge und Section Message auf Papier: Atlassians helles Theme
        (atlassian-light), dieselben Rollen wie am Schirm. */
     --color-lozenge-neutral: #0515240f;

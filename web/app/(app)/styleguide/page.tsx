@@ -95,7 +95,8 @@ import {
   PRIMARY,
   ON_PRIMARY,
   ERROR,
-  ON_ERROR,
+  DANGER,
+  ON_DANGER,
   SCHRIFT,
   LINIE,
   KANTE,
@@ -241,15 +242,15 @@ const akzentRollen: [string, string, string, string, string][] = [
     "error",
     "bg-error",
     ERROR.toUpperCase(),
-    `Fehleingabe und Befund, fast immer als Schrift. ${v(kontrast(ERROR, GRUND))} auf dem Grund, ${v(kontrast(ERROR, elev(24)))} noch im Dialog.`,
-    "text-on-error",
+    `Fehleingabe und Befund, als Schrift und Kontur. ${v(kontrast(ERROR, GRUND))} auf dem Grund, ${v(kontrast(ERROR, elev(24)))} noch im Dialog.`,
+    "text-elev-00",
   ],
   [
-    "on-error",
-    "bg-on-error",
-    ON_ERROR.toUpperCase(),
-    `Schrift auf gefüllter Fehlerfläche, ${v(kontrast(ON_ERROR, ERROR))} - vorgesehen, im Bild selten.`,
-    "text-on-surface",
+    "danger",
+    "bg-danger",
+    DANGER.toUpperCase(),
+    `Fläche des destruktiven Knopfs - dunkler als Error, weil sie Weiss trägt: ${v(kontrast(ON_DANGER, DANGER))} (auf Error nur ${v(kontrast("#ffffff", ERROR))}).`,
+    "text-on-danger",
   ],
 ];
 
@@ -541,8 +542,9 @@ export default function Styleguide() {
           fast nie als Fläche, sondern als Schrift auf der Karte, in der
           Menüzeile und im Dialog. Der hellere Ton trägt auf{" "}
           <strong>jeder</strong> Höhenstufe über 4.5:1, am engsten auf 24dp
-          mit {v(kontrast(ERROR, elev(24)))}, und die gefüllte Fehlerfläche
-          behält ihre schwarze Aufschrift ({v(kontrast(ON_ERROR, ERROR))}).
+          mit {v(kontrast(ERROR, elev(24)))}. Gefüllt wird Rot nur im
+          destruktiven Knopf, und dort mit eigener Rolle (<code>danger</code>,
+          weisse Schrift {v(kontrast(ON_DANGER, DANGER))}).
           Nachgerechnet wird das seither auf jeder Stufe und zusätzlich als
           Kontur (<code>scripts/pruefe-farben.ts</code>), nicht mehr nur auf
           dem Grund - dort lag die Lücke, durch die die Baseline kam.
@@ -1058,11 +1060,13 @@ export default function Styleguide() {
 
       <Section n="08" title="Knöpfe">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Sechs Varianten, eine Regel: <strong>Gefüllt trägt Schwarz.</strong>{" "}
-          <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
+          Sechs Varianten, eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
+          - ausser Rot. <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
           Höhenstufe (08dp), <code>outlined</code> Kontur
           auf der Kante, <code>text</code> nur Schrift, <code>danger</code>{" "}
-          Kontur und Schrift in Error; dazu der leise Knopf (<code>quiet</code>)
+          gefüllt in <code>danger</code> mit weisser Schrift - Löschen soll
+          man nicht übersehen (PO 2026-10-06). Das helle Error-Rot trüge
+          Weiss nicht, darum hat die Fläche ihre eigene, dunklere Rolle; dazu der leise Knopf (<code>quiet</code>)
           weiter unten, der als einziger nicht über die Emphase leiser wird,
           sondern über die Schrift. Alle tragen{" "}
           <code>state</code> in der Basis und <code>rounded-flaeche</code>; es

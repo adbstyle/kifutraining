@@ -77,7 +77,15 @@ export const ON_PRIMARY = "#000000";
  * er hat auf Papier ein anderes Problem.
  */
 export const ERROR = "#e58a95";
-export const ON_ERROR = "#000000";
+/**
+ * Die Fläche des destruktiven Knopfs (PO 2026-10-06: gefüllt rot, weisse
+ * Schrift). Nicht `ERROR`: Auf dem hellen Schrift-Rot käme Weiss nur auf
+ * 2.50:1. Der Wert ist Atlassians `color.background.danger.bold` (helles
+ * Theme) und trägt Weiss mit 5.16:1. Gegen den Dialog (24dp) hebt sich die
+ * Fläche nur mit gut 2:1 ab — den Knopf erkennbar macht seine Aufschrift.
+ */
+export const DANGER = "#c9372c";
+export const ON_DANGER = "#ffffff";
 /** Verdunkelung hinter Dialogen und über Bildern; nie als Schriftfarbe. */
 export const SCRIM = "#000000";
 
@@ -236,7 +244,8 @@ export const BILDSCHIRM: Readonly<Record<string, string>> = {
   primary: PRIMARY,
   "on-primary": ON_PRIMARY,
   error: ERROR,
-  "on-error": ON_ERROR,
+  danger: DANGER,
+  "on-danger": ON_DANGER,
   scrim: SCRIM,
   // Deckend — `SCHRIFT.hoch` ist 1, ein Alphakanal wäre nur Rauschen.
   "on-surface": "#ffffff",
@@ -278,7 +287,8 @@ export const DRUCK = {
   primary: "#4527a0",
   "on-primary": "#ffffff",
   error: "#a32036",
-  "on-error": "#ffffff",
+  danger: "#a32036",
+  "on-danger": "#ffffff",
   ...atlassianRollen(LOZENGE_DRUCK, SECTION_DRUCK),
 } as const;
 
