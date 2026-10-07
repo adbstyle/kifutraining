@@ -45,13 +45,14 @@ type ZeichenMarke = Marke & { zustand: ZeichenZustand };
 const mitZeichen = (m: Marke): m is ZeichenMarke => m.zustand !== "ohne";
 
 /** Das Zeichen eines Zustands: gefüllter Punkt in Primary (Training) oder in
- *  der Warnfarbe (noch kein Training), Kreuz (ausgefallen). Training und «noch kein Training» unterscheidet nur noch
+ *  der Warnfarbe (noch kein Training), Kreuz in Rot (ausgefallen; das Rot der
+ *  Warnzeichen wie das Gelb, PO 2026-10-07). Training und «noch kein Training» unterscheidet nur noch
  *  die Farbe — bewusst, damit das Gelb auffällt (PO 2026-10-07, hebt #404
  *  AK 8 für diese beiden auf); vorgelesen wird jeder Zustand beim Namen. */
 function MarkenZeichen({ zustand }: { zustand: ZeichenZustand }) {
   if (zustand === "training") return <span aria-hidden className="block size-2 rounded-full bg-primary" />;
   if (zustand === "noch-nicht") return <span aria-hidden className="block size-2 rounded-full bg-icon-warning" />;
-  return <X aria-hidden size={10} strokeWidth={3} className="text-on-surface-mittel" />;
+  return <X aria-hidden size={10} strokeWidth={3} className="text-icon-danger" />;
 }
 
 /** Ein Punkt auf dem Ring (24 px Durchmesser) unter dem Winkel `grad`, als
