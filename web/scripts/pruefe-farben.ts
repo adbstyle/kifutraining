@@ -270,15 +270,14 @@ pruefe("Nächster Termin ohne Training: Tag und BlattLozenge tragen auf seiner K
 });
 
 pruefe("Die Zeichen im Mini-Monat heben sich von seiner Fläche ab (WCAG 1.4.11)", () => {
-  // MiniMonat: Punkt in Primary, Ring in der Warnfarbe (`icon-warning`),
-  // Strich und Kreuz in der leisen Schrift — als Badges im Tag auf der
-  // Fläche des Monats (elev-01). Als Grafik brauchen sie 3:1; die Form trägt
-  // den Zustand ohnehin mit.
+  // MiniMonat: Punkt in Primary, Punkt in der Warnfarbe (`icon-warning`),
+  // das Kreuz in Rot (`icon-danger`) — als Badges auf dem Ring des Tags, auf der
+  // Fläche des Monats (elev-01). Als Grafik brauchen sie 3:1.
   const knopf = elev(1);
   const zeichen: [string, string][] = [
     ["Training", PRIMARY],
     ["Noch kein Training", SECTION.warning.icon],
-    ["Vergangen ohne / Ausgefallen", deckend(hex8("#ffffff", SCHRIFT.mittel), knopf)],
+    ["Ausgefallen", SECTION.danger.icon],
   ];
   for (const [was, farbe] of zeichen) {
     const wert = kontrast(farbe, knopf);

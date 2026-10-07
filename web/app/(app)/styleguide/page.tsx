@@ -477,7 +477,7 @@ export default function Styleguide() {
             <ul className="type-body-medium flex list-disc flex-col gap-1 pl-5 text-on-surface-mittel">
               <li>Das Farbsystem: Rollen mit ihren On-Farben, Schrift als Weiss in Deckungen.</li>
               <li>Die Höhe als gerechnete Overlay-Leiter über einem einzigen Grund.</li>
-              <li>Die Zustands-Deckungen (4 / 12 / 10 %) in der Farbe des Inhalts.</li>
+              <li>Die Zustands-Deckungen (4 / 12 / 10 %) in der Farbe des Inhalts; überfahren in einer schon überfahrenen Fläche 8 %.</li>
               <li>Die Typo-Rollen: Display, Headline, Title, Body, Label.</li>
             </ul>
           </div>
@@ -785,7 +785,11 @@ export default function Styleguide() {
           Drücken stumm. <strong>Drei Zustände, nicht Materials vier:</strong>{" "}
           «gezogen» fehlt, weil das Einzige, was hier gezogen wird,
           Diagramm-Elemente sind - und die leben im SVG, nicht im DOM
-          (siehe 20).
+          (siehe 20). <strong>Ebene in Ebene:</strong> Liegt eine bedienbare
+          Fläche in einer anderen («Training hinzufügen» in der Terminzeile),
+          ist beim Überfahren auch die äussere aufgehellt; die innere trägt
+          darum 8 % statt 4 % (<code>--state-hover-innen</code>). Menü und
+          Auswahlliste schweben auf eigenem Grund und bleiben bei 4 %.
         </p>
         <div className="mb-6 grid gap-6 sm:grid-cols-2">
           <div>
@@ -3285,27 +3289,32 @@ export default function Styleguide() {
       <Section n="33" title="Mini-Monat">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401). Neu, weil kein Baustein ein
-          Kalenderraster kennt. <code>MiniMonat</code> zeigt je Eintrag ein kleines Badge unten im Tag; die
-          Zellen sind alle gleich hoch. Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
+          Kalenderraster kennt. <code>MiniMonat</code> legt um jeden Tag mit Einträgen einen gepunkteten Ring und
+          setzt die Einträge als kleine Badges oben rechts darauf - wie der Punkt an einem Zeichen für
+          Neuigkeiten. Die Zellen sind alle gleich hoch, und jeder Monat zeigt sechs Wochen: Beim Blättern
+          springt die Höhe nicht (wie im Google und Proton Kalender). Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
           (<code>onWahl</code>), ein leerer Tag ist keiner. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender
           folgt der Monat der Liste, die Liste aber nicht ihm.
         </p>
         <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
           <li>
-            <strong>Zustand als Form</strong> - gefüllter Punkt (Training), Ring in der Warnfarbe (noch kein
-            Training), Strich (vergangen ohne Training), Kreuz (ausgefallen). Die Farbe hilft, trägt aber
-            nichts allein; die Legende nennt jedes Zeichen.
+            <strong>Zustand als Zeichen</strong> - Punkt in Primary (Training), Punkt in der Warnfarbe (noch kein
+            Training), rotes Kreuz (ausgefallen); vergangen ohne Training zeigt nur den Ring. Die beiden Punkte unterscheidet
+            bewusst nur die Farbe, damit das Gelb auffällt. Eine Legende gibt es nicht: Die Liste daneben
+            trägt dieselben Farben, und vorgelesen wird jeder Zustand beim Namen.
           </li>
           <li>
-            <strong>Mehr als drei</strong> - zwei Badges und «+n»; die übrigen stehen in der Liste.
+            <strong>Mehr als zwei</strong> - zwei Badges oben rechts, das zweite halb hinter dem ersten, und
+            «+n» unten rechts am Ring; die übrigen stehen in der Liste.
           </li>
           <li>
-            <strong>Zielgrösse</strong> - geklickt wird der ganze Tag (44 px hoch), nicht das einzelne Badge,
+            <strong>Zielgrösse</strong> - geklickt wird der ganze Tag (36 px hoch), nicht das einzelne Badge,
             das dafür zu klein wäre (WCAG 2.5.8).
           </li>
           <li>
-            <strong>Belegt</strong> - ein gepunkteter Ring um die Tageszahl: Dort liegt etwas, das der Monat
-            nicht zeigt (bei «Meine Termine» die Termine anderer). Heute trägt die Zahl auf Primary.
+            <strong>Belegt</strong> - der Ring ohne Badge: Dort liegt etwas, das der Monat nicht zeigt (bei
+            «Meine Termine» die Termine anderer), oder nur Vergangenes ohne Training. Heute trägt die Zahl auf
+            Primary, ohne Ring.
           </li>
         </ul>
         <MiniMonatDemo />

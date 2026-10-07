@@ -628,29 +628,29 @@ pruefe("Monat: Raster Montag–Sonntag, Wechsel, Name (#329)", () => {
   assert.equal(r[0][0].tag, "2026-09-28", "beginnt am Montag vor dem 1.");
   assert.equal(r[0][3].tag, "2026-10-01");
   assert.ok(r.every((w) => w.length === 7));
-  assert.equal(r.at(-1)!.at(-1)!.tag, "2026-11-01");
+  assert.equal(r.at(-1)!.at(-1)!.tag, "2026-11-08", "immer sechs Wochen");
   assert.equal(plusMonate("2026-12", 1), "2027-01");
   assert.equal(plusMonate("2026-01", -1), "2025-12");
   assert.equal(monatsName("2026-10"), "Oktober 2026");
   assert.equal(monatVon("2026-10-07"), "2026-10");
 });
 
-pruefe("Monat: Raster-Grenzfälle - Montag-Beginn, Sonntag-Ende, Februar, Schaltjahr, Jahreswechsel (#329)", () => {
+pruefe("Monat: Raster-Grenzfälle - immer sechs Wochen, Montag-Beginn, Februar, Schaltjahr, Jahreswechsel (#329)", () => {
   const erstesUndLetztes = (m: string) => {
     const r = monatsRaster(m);
     return { wochen: r.length, erster: r[0][0].tag, letzter: r.at(-1)!.at(-1)!.tag, imMonat: r.flat().filter((t) => t.imMonat).length };
   };
-  // Beginnt am Montag: keine Vorwoche.
-  assert.deepEqual(erstesUndLetztes("2026-06"), { wochen: 5, erster: "2026-06-01", letzter: "2026-07-05", imMonat: 30 });
-  // Endet am Sonntag: keine Zusatzwoche.
-  assert.deepEqual(erstesUndLetztes("2026-05"), { wochen: 5, erster: "2026-04-27", letzter: "2026-05-31", imMonat: 31 });
-  // Februar, Montag bis Sonntag: genau vier Wochen.
-  assert.deepEqual(erstesUndLetztes("2027-02"), { wochen: 4, erster: "2027-02-01", letzter: "2027-02-28", imMonat: 28 });
+  // Beginnt am Montag: keine Vorwoche, der Rest füllt hinten auf.
+  assert.deepEqual(erstesUndLetztes("2026-06"), { wochen: 6, erster: "2026-06-01", letzter: "2026-07-12", imMonat: 30 });
+  // Endet am Sonntag: eine Woche des Folgemonats dahinter.
+  assert.deepEqual(erstesUndLetztes("2026-05"), { wochen: 6, erster: "2026-04-27", letzter: "2026-06-07", imMonat: 31 });
+  // Februar, Montag bis Sonntag: vier eigene Wochen, zwei folgen.
+  assert.deepEqual(erstesUndLetztes("2027-02"), { wochen: 6, erster: "2027-02-01", letzter: "2027-03-14", imMonat: 28 });
   // Schaltjahr: der 29. Februar liegt im Raster.
-  assert.deepEqual(erstesUndLetztes("2028-02"), { wochen: 5, erster: "2028-01-31", letzter: "2028-03-05", imMonat: 29 });
+  assert.deepEqual(erstesUndLetztes("2028-02"), { wochen: 6, erster: "2028-01-31", letzter: "2028-03-12", imMonat: 29 });
   assert.equal(monatsRaster("2028-02").flat().some((t) => t.tag === "2028-02-29" && t.imMonat), true);
-  // Sechs Wochen, wenn der Monat spät in der Woche beginnt und lang ist.
-  assert.equal(monatsRaster("2026-03").length, 6);
+  // Der längste Fall füllt die sechs Wochen ganz: 31 Tage ab Sonntag.
+  assert.deepEqual(erstesUndLetztes("2026-03"), { wochen: 6, erster: "2026-02-23", letzter: "2026-04-05", imMonat: 31 });
   // Jahreswechsel, auch mehrfach und über ein Jahr hinaus.
   assert.equal(plusMonate("2026-01", -13), "2024-12");
   assert.equal(plusMonate("2026-01", -12), "2025-01");

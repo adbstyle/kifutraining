@@ -48,21 +48,18 @@ export function tagOhneJahr(iso: string): string {
 }
 
 /** Die Wochen eines Monats, Montag bis Sonntag, samt den Tagen des Vor- und
- *  Folgemonats, die die erste und letzte Woche füllen. */
+ *  Folgemonats: immer sechs, beginnend mit der Woche des 1. — so springt die
+ *  Höhe beim Blättern nicht, wie im Google und Proton Kalender (PO
+ *  2026-10-07). Sechs reichen für jeden Monat. */
 export function monatsRaster(monat: string): { tag: string; imMonat: boolean }[][] {
   const erster = `${monat}-01`;
-  const letzter = plusTage(`${plusMonate(monat, 1)}-01`, -1);
   const start = plusTage(erster, 1 - wochentagVon(erster));
-  const ende = plusTage(letzter, 7 - wochentagVon(letzter));
-  const wochen: { tag: string; imMonat: boolean }[][] = [];
-  for (let d = start; d <= ende; d = plusTage(d, 7))
-    wochen.push(
-      Array.from({ length: 7 }, (_, i) => {
-        const tag = plusTage(d, i);
-        return { tag, imMonat: monatVon(tag) === monat };
-      }),
-    );
-  return wochen;
+  return Array.from({ length: 6 }, (_, w) =>
+    Array.from({ length: 7 }, (_, i) => {
+      const tag = plusTage(start, w * 7 + i);
+      return { tag, imMonat: monatVon(tag) === monat };
+    }),
+  );
 }
 
 export const ZEITRAUM_TEXT = {

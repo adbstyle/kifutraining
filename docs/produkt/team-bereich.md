@@ -234,7 +234,7 @@ alle folgenden" teilt auch hier die Serie.
 Mit „Meine Termine" grenzt sich der Trainingsplan auf die Termine ein, für die man selbst
 verantwortlich ist, anstehende wie vergangene; auch der nächste Termin ist dann der nächste
 eigene. Der Monat neben den Terminen zeigt nur noch die eigenen, und Tage, an denen nur Termine
-anderer liegen, sind dort als belegt gekennzeichnet. Die Eingrenzung steht in der Adresse und
+anderer liegen, tragen dort nur den Kreis, ohne Zeichen: belegt. Die Eingrenzung steht in der Adresse und
 fällt weg, sobald man das Team erneut öffnet.
 
 Wer das Team verlässt oder daraus entfernt wird, verschwindet aus allen anstehenden Terminen und
@@ -320,11 +320,13 @@ kein Datum vor.
 
 Auf breiten Bildschirmen, ab etwa der Breite eines Tablets im Querformat, steht rechts neben
 den Terminen ein Monat und bleibt beim Scrollen stehen. Er zeigt Monat und Jahr, die Wochen von
-Montag bis Sonntag samt den Randtagen der Nachbarmonate und hebt den heutigen Tag hervor. Jeder
-Termin eines Tages steht als kleines Zeichen unten im Tag, dessen Form sagt, was er ist: ein Punkt für ein Training,
-ein Ring für „Noch kein Training", ein Strich für vergangen ohne Training, ein Kreuz für
-ausgefallen; eine Legende darunter nennt sie. Trägt ein Tag mehr als drei Termine, stehen zwei
-Zeichen und „+" mit der Zahl der weiteren. Wie im Google Kalender folgt der Monat der Liste: Er
+Montag bis Sonntag samt den Randtagen der Nachbarmonate — immer sechs Wochen, damit er beim
+Blättern nicht in der Höhe springt — und hebt den heutigen Tag hervor. Ein Tag
+mit Terminen trägt einen gepunkteten Kreis um die Zahl, und seine Termine sitzen als kleine Zeichen
+oben rechts auf dem Kreis, das zweite halb hinter dem ersten; jedes sagt, was der Termin ist: ein violetter Punkt für ein Training,
+ein gelber für „Noch kein Training", ein rotes Kreuz für ausgefallen; ein vergangener Termin ohne
+Training zeigt nur den Kreis. Eine Legende gibt es nicht. Trägt ein Tag mehr als zwei Termine, steht unten
+rechts am Kreis „+" mit der Zahl der weiteren. Wie im Google Kalender folgt der Monat der Liste: Er
 zeigt den Monat des obersten Termins, den man gerade sieht. Mit den Pfeilen und „Heute"
 wechselt nur der Monat, die Liste bleibt stehen, bis man wieder scrollt. Ein Klick auf einen
 Tag mit Terminen führt in der Liste zu seinem ersten Termin, beim nächsten Termin zur Karte
@@ -494,7 +496,7 @@ erreichbar; einmal gelöscht, lässt es sich nicht wiederherstellen, und ein Aus
 gelöstes Training lassen sich nicht rückgängig machen, ausser über eine neue Zuordnung.
 
 Eine Tages- oder Wochenansicht gibt es nicht; für die nächsten Wochen dient die Liste, und sie
-ist nicht nach Wochen gegliedert. Der Monat neben den Terminen zeigt weder Zeiten noch Namen; trägt ein Tag mehr als drei Termine, stehen die
+ist nicht nach Wochen gegliedert. Der Monat neben den Terminen zeigt weder Zeiten noch Namen; trägt ein Tag mehr als zwei Termine, stehen die
 Zustände der weiteren nur in der Liste. Termine lassen sich dort nicht durch Ziehen
 verschieben, und weder die Zurück-Taste noch eine geteilte Adresse führen zu einem gezeigten
 Monat. Am Handy fehlt der Monat ganz; wer dort weiter vorausplant, scrollt die Liste. Der
