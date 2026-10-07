@@ -19,7 +19,7 @@ import { terminMenue } from "./TerminHandgriffe";
    Scrollen sehen soll — Tag, Zeit, Training (AK 2) —, gleich darunter die
    Handgriffe, die man dort braucht: Durchführen und Öffnen (AK 10, 11). Alle
    übrigen liegen im Menü (AK 15). Fehlt das Training noch, soll das auffallen
-   (PO 2026-10-07): Wo sonst sein Name steht, steht eine Lozenge in der Gelb
+   (PO 2026-10-07): Wo sonst sein Name steht, steht eine Lozenge im Gelb
    der Kalenderblätter (`BlattLozenge`), und an
    Stelle der beiden Knöpfe einer: «Training hinzufügen», gleich wie «Training
    öffnen» (AK 13). Der nächste Termin steht nie in der Vergangenheit; ohne
