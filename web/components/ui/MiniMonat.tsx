@@ -37,15 +37,20 @@ export type Marke = {
 /** Je Tag höchstens so viele Badges; die übrigen zählt «+n». */
 const HOECHSTENS = 2;
 
+/** Zustände mit eigenem Zeichen. Ein vergangener Termin ohne Training zeigt
+ *  keines, nur die Belegung (der Ring) — rückblickend interessiert er im
+ *  Monat nicht (PO 2026-10-07). Vorgelesen und gewählt wird er weiter. */
+type ZeichenZustand = Exclude<MarkenZustand, "ohne">;
+type ZeichenMarke = Marke & { zustand: ZeichenZustand };
+const mitZeichen = (m: Marke): m is ZeichenMarke => m.zustand !== "ohne";
+
 /** Das Zeichen eines Zustands: gefüllter Punkt in Primary (Training) oder in
- *  der Warnfarbe (noch kein Training), Strich (vergangen ohne), Kreuz
- *  (ausgefallen). Training und «noch kein Training» unterscheidet nur noch
+ *  der Warnfarbe (noch kein Training), Kreuz (ausgefallen). Training und «noch kein Training» unterscheidet nur noch
  *  die Farbe — bewusst, damit das Gelb auffällt (PO 2026-10-07, hebt #404
  *  AK 8 für diese beiden auf); vorgelesen wird jeder Zustand beim Namen. */
-function MarkenZeichen({ zustand }: { zustand: MarkenZustand }) {
+function MarkenZeichen({ zustand }: { zustand: ZeichenZustand }) {
   if (zustand === "training") return <span aria-hidden className="block size-2 rounded-full bg-primary" />;
   if (zustand === "noch-nicht") return <span aria-hidden className="block size-2 rounded-full bg-icon-warning" />;
-  if (zustand === "ohne") return <span aria-hidden className="block h-0.5 w-2 rounded-full bg-on-surface-mittel" />;
   return <X aria-hidden size={10} strokeWidth={3} className="text-on-surface-mittel" />;
 }
 
@@ -77,7 +82,7 @@ function Tageszahl({
   heute: string;
   imMonat: boolean;
   ring?: boolean;
-  marken?: readonly Marke[];
+  marken?: readonly ZeichenMarke[];
   mehr?: number;
 }) {
   return (
@@ -154,7 +159,13 @@ export function MiniMonat({
 }) {
   const wochen = monatsRaster(monat);
   const aktuell = monatVon(heute);
-  const zeigtBelegt = !!belegt && wochen.some((w) => w.some((d) => belegt(d.tag)));
+  // «Belegt» heisst: der Ring ohne Zeichen — Termine anderer oder nur
+  // vergangene ohne Training.
+  const nurRing = (tag: string) => {
+    const liste = marken(tag);
+    return liste.length > 0 ? !liste.some(mitZeichen) : !!belegt?.(tag);
+  };
+  const zeigtBelegt = wochen.some((w) => w.some((d) => nurRing(d.tag)));
   const titel = useRef<HTMLHeadingElement>(null);
   return (
     <section aria-label={`Monat ${monatsName(monat)}`} className="rounded-flaeche bg-elev-01 p-3">
@@ -191,8 +202,9 @@ export function MiniMonat({
           <div role="row" key={w[0].tag} className="grid grid-cols-7 gap-px">
             {w.map(({ tag, imMonat }) => {
               const liste = marken(tag);
-              const gezeigt = liste.slice(0, HOECHSTENS);
-              const mehr = liste.length - gezeigt.length;
+              const zeichen = liste.filter(mitZeichen);
+              const gezeigt = zeichen.slice(0, HOECHSTENS);
+              const mehr = zeichen.length - gezeigt.length;
               const istBelegt = liste.length === 0 && !!belegt?.(tag);
               return (
                 <div role="cell" key={tag} aria-current={tag === heute ? "date" : undefined} className="min-w-0">
@@ -224,7 +236,7 @@ export function MiniMonat({
 
       {/* Die Legende: jedes Zeichen beim Namen (AK 8). */}
       <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-linie pt-2 type-label-small text-on-surface-mittel" aria-label="Legende">
-        {(Object.keys(MARKEN_TEXT) as MarkenZustand[]).map((z) => (
+        {(Object.keys(MARKEN_TEXT) as MarkenZustand[]).filter((z): z is ZeichenZustand => z !== "ohne").map((z) => (
           <li key={z} className="flex items-center gap-1.5">
             <span className="flex w-3 justify-center"><MarkenZeichen zustand={z} /></span>
             {MARKEN_TEXT[z]}
