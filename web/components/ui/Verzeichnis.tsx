@@ -166,7 +166,7 @@ export function Verzeichnis({
                     {g.titel && (
                       <p
                         id={titelId}
-                        className="type-body-small px-2.5 pt-3 pb-1 text-on-surface-mittel"
+                        className="type-body-small px-2.5 pt-3 pb-1 text-on-surface"
                       >
                         {g.titel}
                       </p>

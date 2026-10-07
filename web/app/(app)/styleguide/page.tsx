@@ -2698,7 +2698,7 @@ export default async function Styleguide() {
             </li>
             <li>
               <strong>Untertitel</strong> wie die Gruppen der Komponenten bei Atlassian
-              (<code>type-body-small</code>, mittel - versal waren sie kaum von den Einträgen zu unterscheiden):
+              (<code>type-body-small</code> in <code>on-surface</code>: kleiner als die Einträge, aber heller als ihr ruhiges Mittel - versal waren sie kaum zu unterscheiden):
               Sie benennen nur, was folgt, und
               klappen nicht. Auf der Seite stehen sie als Zeile in Primary über dem Abschnitt.
             </li>
