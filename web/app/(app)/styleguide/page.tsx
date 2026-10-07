@@ -3293,9 +3293,10 @@ export default function Styleguide() {
         </p>
         <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
           <li>
-            <strong>Zustand als Form</strong> - gefüllter Punkt (Training), Ring in der Warnfarbe (noch kein
-            Training), Strich (vergangen ohne Training), Kreuz (ausgefallen). Die Farbe hilft, trägt aber
-            nichts allein; die Legende nennt jedes Zeichen.
+            <strong>Zustand als Zeichen</strong> - Punkt in Primary (Training), Punkt in der Warnfarbe (noch kein
+            Training), Strich (vergangen ohne Training), Kreuz (ausgefallen). Die beiden Punkte unterscheidet
+            bewusst nur die Farbe, damit das Gelb auffällt; die Legende nennt jedes Zeichen, und vorgelesen
+            wird jeder Zustand beim Namen.
           </li>
           <li>
             <strong>Mehr als zwei</strong> - zwei Badges oben rechts, das zweite halb hinter dem ersten, und

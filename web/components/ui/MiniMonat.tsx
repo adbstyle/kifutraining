@@ -37,12 +37,14 @@ export type Marke = {
 /** Je Tag höchstens so viele Badges; die übrigen zählt «+n». */
 const HOECHSTENS = 2;
 
-/** Das Zeichen eines Zustands — eine eigene FORM je Zustand, damit er sich
- *  auch ohne Farben unterscheiden lässt (#404 AK 8): gefüllter Punkt, Ring,
- *  Strich, Kreuz. */
+/** Das Zeichen eines Zustands: gefüllter Punkt in Primary (Training) oder in
+ *  der Warnfarbe (noch kein Training), Strich (vergangen ohne), Kreuz
+ *  (ausgefallen). Training und «noch kein Training» unterscheidet nur noch
+ *  die Farbe — bewusst, damit das Gelb auffällt (PO 2026-10-07, hebt #404
+ *  AK 8 für diese beiden auf); vorgelesen wird jeder Zustand beim Namen. */
 function MarkenZeichen({ zustand }: { zustand: MarkenZustand }) {
   if (zustand === "training") return <span aria-hidden className="block size-2 rounded-full bg-primary" />;
-  if (zustand === "noch-nicht") return <span aria-hidden className="block size-2 rounded-full border-2 border-icon-warning" />;
+  if (zustand === "noch-nicht") return <span aria-hidden className="block size-2 rounded-full bg-icon-warning" />;
   if (zustand === "ohne") return <span aria-hidden className="block h-0.5 w-2 rounded-full bg-on-surface-mittel" />;
   return <X aria-hidden size={10} strokeWidth={3} className="text-on-surface-mittel" />;
 }

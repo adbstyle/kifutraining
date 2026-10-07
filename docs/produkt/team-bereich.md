@@ -322,8 +322,8 @@ Auf breiten Bildschirmen, ab etwa der Breite eines Tablets im Querformat, steht 
 den Terminen ein Monat und bleibt beim Scrollen stehen. Er zeigt Monat und Jahr, die Wochen von
 Montag bis Sonntag samt den Randtagen der Nachbarmonate und hebt den heutigen Tag hervor. Ein Tag
 mit Terminen trägt einen gepunkteten Kreis um die Zahl, und seine Termine sitzen als kleine Zeichen
-oben rechts auf dem Kreis, das zweite halb hinter dem ersten; die Form sagt, was er ist: ein Punkt für ein Training,
-ein Ring für „Noch kein Training", ein Strich für vergangen ohne Training, ein Kreuz für
+oben rechts auf dem Kreis, das zweite halb hinter dem ersten; jedes sagt, was der Termin ist: ein violetter Punkt für ein Training,
+ein gelber für „Noch kein Training", ein Strich für vergangen ohne Training, ein Kreuz für
 ausgefallen; eine Legende darunter nennt sie. Trägt ein Tag mehr als zwei Termine, steht unten
 rechts am Kreis „+" mit der Zahl der weiteren. Wie im Google Kalender folgt der Monat der Liste: Er
 zeigt den Monat des obersten Termins, den man gerade sieht. Mit den Pfeilen und „Heute"
