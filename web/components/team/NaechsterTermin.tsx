@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { CalendarOff, CalendarPlus, PlayCircle, Repeat, TriangleAlert } from "lucide-react";
-import { Button, ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, OverflowMenu } from "@/components/ui";
+import { Button, ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, MARKEN_TEXT, OverflowMenu } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage, wochentageText } from "@/lib/serie";
 import { spielerzahlText, zeitText } from "@/lib/termin";
 import { feldName, feldText } from "@/lib/termin-felder";
 import { datumKurz } from "@/lib/zeit";
-import { terminZustand, verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
 import { terminMenue } from "./TerminHandgriffe";
 
@@ -17,11 +17,12 @@ import { terminMenue } from "./TerminHandgriffe";
    Zeilen darunter und auf einer höheren Fläche, damit man ihn am
    Spielfeldrand nicht suchen muss. Zuerst steht, was man auf dem Handy ohne
    Scrollen sehen soll — Tag, Zeit, Training (AK 2) —, gleich darunter die
-   Handgriffe, die man dort braucht: Durchführen und Öffnen, ohne Training an
-   seiner Stelle «Training hinzufügen» (AK 10, 11, 13). Alle übrigen liegen im
-   Menü (AK 15). Fehlt das Training noch, sagt es eine Warn-Lozenge, wo sonst
-   sein Name steht, und «Training hinzufügen» ist ein Knopf wie «Training
-   öffnen» (PO 2026-10-07): Am nächsten Termin soll das auffallen.
+   Handgriffe, die man dort braucht: Durchführen und Öffnen (AK 10, 11). Alle
+   übrigen liegen im Menü (AK 15). Fehlt das Training noch, soll das auffallen
+   (PO 2026-10-07): Wo sonst sein Name steht, steht eine Warn-Lozenge, und an
+   Stelle der beiden Knöpfe einer: «Training hinzufügen», gleich wie «Training
+   öffnen» (AK 13). Der nächste Termin steht nie in der Vergangenheit; ohne
+   Training ist er darum immer «noch nicht vorbereitet».
 
    Darunter alle Angaben ungekürzt (AK 3, 5): Ort, Verantwortliche, erwartete
    Spielerzahl und Felder ausführlich, Bemerkung und die Wochentage der Serie.
@@ -47,7 +48,6 @@ export function NaechsterTermin({
   // AK 8: Heute oder Morgen zusätzlich zum Wochentag und Datum.
   const relativ = t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
   const v = verantwortlicheMitDir(t, ich);
-  const zustand = terminZustand(t, heute);
   return (
     <div
       id={t.id}
@@ -81,7 +81,7 @@ export function NaechsterTermin({
       </div>
 
       <div className="mt-2">
-        {zustand === "ausgefallen" ? (
+        {t.ausgefallen ? (
           <>
             <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
             {/* AK 14: der Grund vollständig. */}
@@ -99,29 +99,28 @@ export function NaechsterTermin({
               </Link>
             )}
           </>
-        ) : zustand === "training" ? (
-          <Link href={`/training/${t.training!.id}`} className="focus-ring rounded-klein type-title-large text-on-surface hover:underline">
-            {t.training!.name}
+        ) : t.training ? (
+          <Link href={`/training/${t.training.id}`} className="focus-ring rounded-klein type-title-large text-on-surface hover:underline">
+            {t.training.name}
           </Link>
-        ) : zustand === "noch-nicht" ? (
-          <Lozenge appearance="warning" iconBefore={TriangleAlert}>Noch kein Training</Lozenge>
         ) : (
-          <Lozenge>Ohne Training</Lozenge>
+          <Lozenge appearance="warning" iconBefore={TriangleAlert}>{MARKEN_TEXT["noch-nicht"]}</Lozenge>
         )}
       </div>
 
-      {zustand === "training" && (
+      {!t.ausgefallen && (
         <div className="mt-3 flex flex-wrap gap-2">
-          <ButtonLink href={`/training/${t.training!.id}/durchfuehren?termin=${t.id}`}>
-            <PlayCircle size={18} aria-hidden />
-            Durchführen
-          </ButtonLink>
-          <ButtonLink variant="outlined" href={`/training/${t.training!.id}`}>Training öffnen</ButtonLink>
-        </div>
-      )}
-      {zustand === "noch-nicht" && (
-        <div className="mt-3">
-          <Button variant="outlined" aria-haspopup="dialog" onClick={() => a.zuordnen(t)}>Training hinzufügen</Button>
+          {t.training ? (
+            <>
+              <ButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`}>
+                <PlayCircle size={18} aria-hidden />
+                Durchführen
+              </ButtonLink>
+              <ButtonLink variant="outlined" href={`/training/${t.training.id}`}>Training öffnen</ButtonLink>
+            </>
+          ) : (
+            <Button variant="outlined" aria-haspopup="dialog" onClick={() => a.zuordnen(t)}>Training hinzufügen</Button>
+          )}
         </div>
       )}
 
