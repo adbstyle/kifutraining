@@ -3286,7 +3286,7 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401). Neu, weil kein Baustein ein
           Kalenderraster kennt. <code>MiniMonat</code> legt um jeden Tag mit Einträgen einen gepunkteten Ring und
-          setzt je Eintrag ein kleines Badge darauf, oben rechts beginnend - wie der Punkt an einem Zeichen für
+          setzt die Einträge als kleine Badges oben rechts darauf - wie der Punkt an einem Zeichen für
           Neuigkeiten. Die Zellen sind alle gleich hoch. Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
           (<code>onWahl</code>), ein leerer Tag ist keiner. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender
           folgt der Monat der Liste, die Liste aber nicht ihm.
@@ -3298,7 +3298,8 @@ export default function Styleguide() {
             nichts allein; die Legende nennt jedes Zeichen.
           </li>
           <li>
-            <strong>Mehr als drei</strong> - zwei Badges und «+n» am Ring; die übrigen stehen in der Liste.
+            <strong>Mehr als zwei</strong> - zwei Badges oben rechts, das zweite halb hinter dem ersten, und
+            «+n» unten rechts am Ring; die übrigen stehen in der Liste.
           </li>
           <li>
             <strong>Zielgrösse</strong> - geklickt wird der ganze Tag (36 px hoch), nicht das einzelne Badge,

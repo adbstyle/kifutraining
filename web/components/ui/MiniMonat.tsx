@@ -34,8 +34,8 @@ export type Marke = {
   label: string;
 };
 
-/** Je Tag so viele Badges; trägt er mehr, steht eines weniger und «+n». */
-const HOECHSTENS = 3;
+/** Je Tag höchstens so viele Badges; die übrigen zählt «+n». */
+const HOECHSTENS = 2;
 
 /** Das Zeichen eines Zustands — eine eigene FORM je Zustand, damit er sich
  *  auch ohne Farben unterscheiden lässt (#404 AK 8): gefüllter Punkt, Ring,
@@ -47,12 +47,17 @@ function MarkenZeichen({ zustand }: { zustand: MarkenZustand }) {
   return <X aria-hidden size={10} strokeWidth={3} className="text-on-surface-mittel" />;
 }
 
-/** Wo die Badges auf dem Ring sitzen: oben rechts beginnend, im Uhrzeigersinn
- *  je 45° weiter (Mittelpunkt in px, Ring mit 24 px Durchmesser). */
-const BADGE_ORT = [-45, 0, 45].map((grad) => {
+/** Ein Punkt auf dem Ring (24 px Durchmesser) unter dem Winkel `grad`, als
+ *  Mittelpunkt in px; 0° ist rechts, es zählt im Uhrzeigersinn. */
+function aufDemRing(grad: number, versatz = 0) {
   const w = (grad * Math.PI) / 180;
-  return { left: 12 + 12 * Math.cos(w), top: 12 + 12 * Math.sin(w) };
-});
+  return { left: 12 + 12 * Math.cos(w) + versatz, top: 12 + 12 * Math.sin(w) };
+}
+
+/** Wo die Badges sitzen (PO 2026-10-07): das erste oben rechts auf dem Ring,
+ *  das zweite halb dahinter, «+n» unten rechts. */
+const BADGE_ORT = [aufDemRing(-45), aufDemRing(-45, 5)];
+const MEHR_ORT = aufDemRing(45);
 
 /** Die Zahl des Tages; heute auf Primary. Liegt an ihm ein Termin, trägt sie
  *  einen gepunkteten Ring, und die gezeigten Termine sitzen als Badges darauf
@@ -83,14 +88,15 @@ function Tageszahl({
       )}
     >
       {Number(tag.slice(8))}
+      {/* Das erste liegt über dem zweiten. */}
       {marken.map((m, i) => (
-        <span key={m.id} style={BADGE_ORT[i]} className="absolute flex size-3 -translate-1/2 items-center justify-center rounded-full bg-elev-01">
+        <span key={m.id} style={{ ...BADGE_ORT[i], zIndex: marken.length - i }} className="absolute flex size-3 -translate-1/2 items-center justify-center rounded-full bg-elev-01">
           <MarkenZeichen zustand={m.zustand} />
         </span>
       ))}
       {mehr > 0 && (
         <span
-          style={BADGE_ORT[marken.length]}
+          style={MEHR_ORT}
           className="absolute flex h-3 min-w-3 -translate-1/2 items-center justify-center rounded-full bg-elev-01 px-px text-[0.5rem] leading-none text-on-surface-mittel"
         >
           +{mehr}
@@ -106,14 +112,15 @@ function Tageszahl({
    Liste.
 
    - Ein Tag mit Einträgen — oder `belegt` — trägt einen gepunkteten Ring um
-     die Zahl; jeder Eintrag sitzt als kleines Badge auf dem Ring, oben
-     rechts beginnend (PO 2026-10-07). Die Zellen sind alle gleich hoch,
+     die Zahl; die Einträge sitzen als kleine Badges oben rechts auf dem Ring,
+     das zweite halb hinter dem ersten (PO 2026-10-07). Die Zellen sind alle gleich hoch,
      Einträge machen den Monat nicht grösser.
    - Ein Tag mit Einträgen ist ein Knopf und meldet seinen ersten Eintrag
      (`onWahl`) — die übrigen folgen in der Liste direkt danach. Ein Tag ohne
      Eintrag ist kein Knopf. Der Knopf ist so gross wie der Tag (36 px hoch,
      mind. 24 px nach WCAG 2.5.8); einzelne Badges wären es nicht.
-   - Trägt ein Tag mehr als drei, stehen zwei Badges und «+n» (#404 AK 6).
+   - Trägt ein Tag mehr als zwei, stehen zwei Badges und «+n» (#404 AK 6,
+     PO 2026-10-07).
    - Heute: die Tageszahl auf Primary, dazu `aria-current="date"` (AK 7).
    - `belegt`: Tage, an denen etwas liegt, das der Monat nicht zeigt (die
      Termine anderer bei «Meine Termine», AK 14) — der Ring ohne Badge, und
@@ -182,7 +189,7 @@ export function MiniMonat({
           <div role="row" key={w[0].tag} className="grid grid-cols-7 gap-px">
             {w.map(({ tag, imMonat }) => {
               const liste = marken(tag);
-              const gezeigt = liste.length > HOECHSTENS ? liste.slice(0, HOECHSTENS - 1) : liste;
+              const gezeigt = liste.slice(0, HOECHSTENS);
               const mehr = liste.length - gezeigt.length;
               const istBelegt = liste.length === 0 && !!belegt?.(tag);
               return (

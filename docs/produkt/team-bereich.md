@@ -321,11 +321,11 @@ kein Datum vor.
 Auf breiten Bildschirmen, ab etwa der Breite eines Tablets im Querformat, steht rechts neben
 den Terminen ein Monat und bleibt beim Scrollen stehen. Er zeigt Monat und Jahr, die Wochen von
 Montag bis Sonntag samt den Randtagen der Nachbarmonate und hebt den heutigen Tag hervor. Ein Tag
-mit Terminen trägt einen gepunkteten Kreis um die Zahl, und jeder Termin sitzt als kleines Zeichen
-auf dem Kreis, oben rechts beginnend; dessen Form sagt, was er ist: ein Punkt für ein Training,
+mit Terminen trägt einen gepunkteten Kreis um die Zahl, und seine Termine sitzen als kleine Zeichen
+oben rechts auf dem Kreis, das zweite halb hinter dem ersten; die Form sagt, was er ist: ein Punkt für ein Training,
 ein Ring für „Noch kein Training", ein Strich für vergangen ohne Training, ein Kreuz für
-ausgefallen; eine Legende darunter nennt sie. Trägt ein Tag mehr als drei Termine, stehen zwei
-Zeichen und „+" mit der Zahl der weiteren. Wie im Google Kalender folgt der Monat der Liste: Er
+ausgefallen; eine Legende darunter nennt sie. Trägt ein Tag mehr als zwei Termine, steht unten
+rechts am Kreis „+" mit der Zahl der weiteren. Wie im Google Kalender folgt der Monat der Liste: Er
 zeigt den Monat des obersten Termins, den man gerade sieht. Mit den Pfeilen und „Heute"
 wechselt nur der Monat, die Liste bleibt stehen, bis man wieder scrollt. Ein Klick auf einen
 Tag mit Terminen führt in der Liste zu seinem ersten Termin, beim nächsten Termin zur Karte
@@ -495,7 +495,7 @@ erreichbar; einmal gelöscht, lässt es sich nicht wiederherstellen, und ein Aus
 gelöstes Training lassen sich nicht rückgängig machen, ausser über eine neue Zuordnung.
 
 Eine Tages- oder Wochenansicht gibt es nicht; für die nächsten Wochen dient die Liste, und sie
-ist nicht nach Wochen gegliedert. Der Monat neben den Terminen zeigt weder Zeiten noch Namen; trägt ein Tag mehr als drei Termine, stehen die
+ist nicht nach Wochen gegliedert. Der Monat neben den Terminen zeigt weder Zeiten noch Namen; trägt ein Tag mehr als zwei Termine, stehen die
 Zustände der weiteren nur in der Liste. Termine lassen sich dort nicht durch Ziehen
 verschieben, und weder die Zurück-Taste noch eine geteilte Adresse führen zu einem gezeigten
 Monat. Am Handy fehlt der Monat ganz; wer dort weiter vorausplant, scrollt die Liste. Der
