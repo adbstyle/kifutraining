@@ -202,7 +202,7 @@ function TerminReihe({
         hervorgehoben && "kontur border-primary",
       )}
     >
-      <button type="button" onClick={() => a.bearbeiten(t)} title={ganz} className="focus-ring absolute inset-0 rounded-[inherit]">
+      <button type="button" onClick={() => a.bearbeiten(t)} title={ganz} className="focus-ring absolute inset-0 rounded-flaeche">
         <span className="sr-only">Termin ändern: {zeit}</span>
       </button>
       <div aria-hidden={!ersterDesTages || undefined} className="pointer-events-none relative">
