@@ -3295,8 +3295,8 @@ export default function Styleguide() {
           <li>
             <strong>Zustand als Zeichen</strong> - Punkt in Primary (Training), Punkt in der Warnfarbe (noch kein
             Training), rotes Kreuz (ausgefallen); vergangen ohne Training zeigt nur den Ring. Die beiden Punkte unterscheidet
-            bewusst nur die Farbe, damit das Gelb auffällt; die Legende nennt jedes Zeichen, und vorgelesen
-            wird jeder Zustand beim Namen.
+            bewusst nur die Farbe, damit das Gelb auffällt. Eine Legende gibt es nicht: Die Liste daneben
+            trägt dieselben Farben, und vorgelesen wird jeder Zustand beim Namen.
           </li>
           <li>
             <strong>Mehr als zwei</strong> - zwei Badges oben rechts, das zweite halb hinter dem ersten, und

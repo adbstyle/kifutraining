@@ -324,7 +324,7 @@ Montag bis Sonntag samt den Randtagen der Nachbarmonate und hebt den heutigen Ta
 mit Terminen trägt einen gepunkteten Kreis um die Zahl, und seine Termine sitzen als kleine Zeichen
 oben rechts auf dem Kreis, das zweite halb hinter dem ersten; jedes sagt, was der Termin ist: ein violetter Punkt für ein Training,
 ein gelber für „Noch kein Training", ein rotes Kreuz für ausgefallen; ein vergangener Termin ohne
-Training zeigt nur den Kreis; eine Legende darunter nennt sie. Trägt ein Tag mehr als zwei Termine, steht unten
+Training zeigt nur den Kreis. Eine Legende gibt es nicht. Trägt ein Tag mehr als zwei Termine, steht unten
 rechts am Kreis „+" mit der Zahl der weiteren. Wie im Google Kalender folgt der Monat der Liste: Er
 zeigt den Monat des obersten Termins, den man gerade sieht. Mit den Pfeilen und „Heute"
 wechselt nur der Monat, die Liste bleibt stehen, bis man wieder scrollt. Ein Klick auf einen

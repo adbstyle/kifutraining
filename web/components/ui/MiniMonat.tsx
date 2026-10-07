@@ -137,7 +137,9 @@ function Tageszahl({
    - Blättern und «Heute» melden nur den Monat (`onMonat`); was daraus folgt,
      entscheidet der Aufrufer.
 
-   Die Legende darunter nennt jedes Zeichen beim Namen. */
+   Eine Legende gibt es nicht (PO 2026-10-07): Die Zeichen erklären sich mit
+   der Liste daneben, deren Kalenderblätter dieselben Farben tragen;
+   vorgelesen wird jeder Tag mit seinen Terminen beim Namen. */
 export function MiniMonat({
   monat,
   heute,
@@ -160,13 +162,6 @@ export function MiniMonat({
 }) {
   const wochen = monatsRaster(monat);
   const aktuell = monatVon(heute);
-  // «Belegt» heisst: der Ring ohne Zeichen — Termine anderer oder nur
-  // vergangene ohne Training.
-  const nurRing = (tag: string) => {
-    const liste = marken(tag);
-    return liste.length > 0 ? !liste.some(mitZeichen) : !!belegt?.(tag);
-  };
-  const zeigtBelegt = wochen.some((w) => w.some((d) => nurRing(d.tag)));
   const titel = useRef<HTMLHeadingElement>(null);
   return (
     <section aria-label={`Monat ${monatsName(monat)}`} className="rounded-flaeche bg-elev-01 p-3">
@@ -234,22 +229,6 @@ export function MiniMonat({
           </div>
         ))}
       </div>
-
-      {/* Die Legende: jedes Zeichen beim Namen (AK 8). */}
-      <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-linie pt-2 type-label-small text-on-surface-mittel" aria-label="Legende">
-        {(Object.keys(MARKEN_TEXT) as MarkenZustand[]).filter((z): z is ZeichenZustand => z !== "ohne").map((z) => (
-          <li key={z} className="flex items-center gap-1.5">
-            <span className="flex w-3 justify-center"><MarkenZeichen zustand={z} /></span>
-            {MARKEN_TEXT[z]}
-          </li>
-        ))}
-        {zeigtBelegt && (
-          <li className="flex items-center gap-1.5">
-            <span aria-hidden className="size-3 rounded-full border border-dotted border-on-surface-mittel" />
-            Belegt
-          </li>
-        )}
-      </ul>
     </section>
   );
 }
