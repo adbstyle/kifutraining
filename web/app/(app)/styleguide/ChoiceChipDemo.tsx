@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChoiceChip, ChoiceChipGroup } from "@/components/ui";
 
 /* Zeigt die ChoiceChipGroup an ihrem Anwendungsfall: den Varianten eines
-   Hauptteils (24). Die Bezeichnungen sind Nutzertext und dürfen bis vierzig
+   Hauptteils (Styleguide › Variantenwahl). Die Bezeichnungen sind Nutzertext und dürfen bis vierzig
    Zeichen lang sein — genau die Werte, die in einer Reihe umbrechen müssen,
    statt seitlich aus dem Bild zu scrollen. Die Werte hier sind erfunden;
    echte stehen im Training. */

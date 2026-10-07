@@ -10,7 +10,7 @@ import {
 } from "@/components/ui";
 import type { KategorieSlug } from "@/lib/vocab";
 
-/** Bearbeitbare Eigenschaften (Abschnitt 28) — gespeichert wird hier nur im
+/** Bearbeitbare Eigenschaften (Styleguide › Eigenschaften) — gespeichert wird hier nur im
  *  Zustand der Demo. */
 export function EigenschaftBearbeitbarDemo() {
   const [ziel, setZiel] = useState("");

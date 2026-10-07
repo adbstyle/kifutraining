@@ -6,7 +6,7 @@ import { IconButton, Tooltip } from "@/components/ui";
 import { UebungsName } from "@/components/training/UebungsName";
 import { cn } from "@/lib/cn";
 
-/** Zeilen, die ihr Detail daneben öffnen (Abschnitt 30) — breit hellt die
+/** Zeilen, die ihr Detail daneben öffnen (Styleguide › Liste mit Detail daneben) — breit hellt die
  *  ganze Zeile auf und öffnet, die geöffnete ist markiert; der Knopf rechts
  *  bleibt eigenständig bedienbar. Schmal steht der Name als Text. */
 export function OeffnenZeileDemo() {

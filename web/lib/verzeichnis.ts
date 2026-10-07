@@ -1,7 +1,8 @@
 import { breitenCookie } from "@/lib/breite-cookie";
 
-/* Breite des Verzeichnisses auf «Versionen» (#408) als Cookie, siehe
-   `lib/breite-cookie.ts`. */
+/* Breite des Verzeichnisses neben einer langen Seite («Versionen» seit #408,
+   Styleguide) als Cookie, siehe `lib/breite-cookie.ts`. Eine Breite für alle
+   solchen Seiten: Wer sie einmal zieht, hat sie überall gleich. */
 
 export const VERZEICHNIS_COOKIE = "kifu-verzeichnis";
 

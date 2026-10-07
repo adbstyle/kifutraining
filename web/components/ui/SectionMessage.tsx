@@ -35,7 +35,7 @@ import { cn } from "@/lib/cn";
    Die Darstellungen tragen Atlassians Namen: `information` (Vorgabe),
    `warning`, `error`, `success`, `discovery`. In KiFu angewandt sind
    `error` — etwas ging nicht — und `information` für alles andere; die
-   übrigen stehen im Kit bereit (Styleguide 22). Das Zeichen lässt sich
+   übrigen stehen im Kit bereit (Styleguide › Leerzustand, Hinweiszeile & Section Message). Das Zeichen lässt sich
    überschreiben, die Farbe bleibt die der Darstellung.
 
    Die Vorlesehilfe erfährt den Ton über `role`: ein Fehler unterbricht
