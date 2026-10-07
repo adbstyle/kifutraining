@@ -63,7 +63,9 @@ export function NaechsterTermin({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h4 className="type-title-small text-primary">
+          {/* Ohne Training steht der Tag in der Warnfarbe — wie die Tageszahl
+              seines Kalenderblatts (PO 2026-10-07). */}
+          <h4 className={cn("type-title-small", !t.ausgefallen && !t.training ? "text-icon-warning" : "text-primary")}>
             <span className="sr-only">Nächster Termin: </span>
             {relativ && <>{relativ} · </>}
             {tagOhneJahr(t.datum)}
