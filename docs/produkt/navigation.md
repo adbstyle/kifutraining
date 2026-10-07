@@ -67,7 +67,9 @@ Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, di
 Breite der Seitenleiste, die gezogene Breite der Spalte und des Verzeichnisses unter
 „Versionen" und bis zu welcher Version man
 „Versionen" gesehen hat — je mit Zweck, Dauer, Namen und dem, was ohne sie nicht mehr geht.
-Sie sagt auch, wie man Cookies in den Einstellungen des Browsers sperrt oder löscht. Sie hängt
+Sie nennt auch die Besucherstatistik: KiFu zählt Seitenaufrufe mit Vercel Web Analytics nach
+Seite, Herkunft, Land und Gerätetyp. Diese legt nichts im Browser ab, kennt keine Personen und
+erhält die Adresse ohne Suchbegriffe und Filter. Ausserdem sagt sie, wie man Cookies in den Einstellungen des Browsers sperrt oder löscht. Sie hängt
 am Konto (Brotkrume „Konto › Cookies") und ist ohne Anmeldung über einen Verweis unten auf allen
 Seiten ohne Leiste erreichbar, etwa beim Anmelden und Registrieren; sie funktioniert auch mit gesperrten Cookies.
 

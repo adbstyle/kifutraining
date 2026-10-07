@@ -29,6 +29,11 @@ export default async function CookiesPage() {
           der Werbung oder einer Auswertung, und nichts geht an Dritte.
         </p>
         <p>
+          Wie oft welche Seite aufgerufen wird, zählt KiFu mit Vercel Web Analytics. Das legt
+          nichts im Browser ab und kennt dich nicht: Gezählt werden Seite, Herkunft, Land und
+          Gerätetyp, ohne Suchbegriffe und Filter.
+        </p>
+        <p>
           Du kannst diese Cookies in den Einstellungen deines Browsers für ki-fu.ch sperren oder
           löschen. Was dann nicht mehr geht, steht bei jedem Eintrag.
         </p>

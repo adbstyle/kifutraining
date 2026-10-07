@@ -39,6 +39,7 @@
     "@modelcontextprotocol/server": "^2.0.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.106.2",
+    "@vercel/analytics": "^2.0.1",
     "browser-image-compression": "^2.0.2",
     "heic-to": "^1.5.2",
     "lucide-react": "^0.460.0",

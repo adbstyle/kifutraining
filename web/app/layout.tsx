@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { Besucherstatistik } from "@/components/layout/Besucherstatistik";
 import "./globals.css";
 
 // Eine Familie für die ganze Anwendung: Display, Titel, Fliesstext und
@@ -40,7 +41,10 @@ export default function RootLayout({
   // Tailwinds Vorgabe zurück.
   return (
     <html lang="de-CH" className={sans.variable}>
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        {children}
+        <Besucherstatistik />
+      </body>
     </html>
   );
 }
