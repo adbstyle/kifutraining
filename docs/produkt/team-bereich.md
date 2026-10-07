@@ -320,7 +320,8 @@ kein Datum vor.
 
 Auf breiten Bildschirmen, ab etwa der Breite eines Tablets im Querformat, steht rechts neben
 den Terminen ein Monat und bleibt beim Scrollen stehen. Er zeigt Monat und Jahr, die Wochen von
-Montag bis Sonntag samt den Randtagen der Nachbarmonate und hebt den heutigen Tag hervor. Ein Tag
+Montag bis Sonntag samt den Randtagen der Nachbarmonate — immer sechs Wochen, damit er beim
+Blättern nicht in der Höhe springt — und hebt den heutigen Tag hervor. Ein Tag
 mit Terminen trägt einen gepunkteten Kreis um die Zahl, und seine Termine sitzen als kleine Zeichen
 oben rechts auf dem Kreis, das zweite halb hinter dem ersten; jedes sagt, was der Termin ist: ein violetter Punkt für ein Training,
 ein gelber für „Noch kein Training", ein rotes Kreuz für ausgefallen; ein vergangener Termin ohne

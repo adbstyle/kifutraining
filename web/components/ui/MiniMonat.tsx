@@ -121,8 +121,10 @@ function Tageszahl({
 
    - Ein Tag mit Einträgen — oder `belegt` — trägt einen gepunkteten Ring um
      die Zahl; die Einträge sitzen als kleine Badges oben rechts auf dem Ring,
-     das zweite halb hinter dem ersten (PO 2026-10-07). Die Zellen sind alle gleich hoch,
-     Einträge machen den Monat nicht grösser.
+     das zweite halb hinter dem ersten (PO 2026-10-07). Die Zellen sind
+     alle gleich hoch, Einträge machen den Monat nicht grösser.
+   - Jeder Monat zeigt sechs Wochen (`monatsRaster`): Beim Blättern springt
+     die Höhe nicht.
    - Ein Tag mit Einträgen ist ein Knopf und meldet seinen ersten Eintrag
      (`onWahl`) — die übrigen folgen in der Liste direkt danach. Ein Tag ohne
      Eintrag ist kein Knopf. Der Knopf ist so gross wie der Tag (36 px hoch,

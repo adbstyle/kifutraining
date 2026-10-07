@@ -3287,7 +3287,8 @@ export default function Styleguide() {
           Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401). Neu, weil kein Baustein ein
           Kalenderraster kennt. <code>MiniMonat</code> legt um jeden Tag mit Einträgen einen gepunkteten Ring und
           setzt die Einträge als kleine Badges oben rechts darauf - wie der Punkt an einem Zeichen für
-          Neuigkeiten. Die Zellen sind alle gleich hoch. Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
+          Neuigkeiten. Die Zellen sind alle gleich hoch, und jeder Monat zeigt sechs Wochen: Beim Blättern
+          springt die Höhe nicht (wie im Google und Proton Kalender). Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
           (<code>onWahl</code>), ein leerer Tag ist keiner. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender
           folgt der Monat der Liste, die Liste aber nicht ihm.
         </p>
