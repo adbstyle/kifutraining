@@ -58,8 +58,12 @@ export type {
   SeitenleisteUnterpunkt,
   SeitenleisteKonto,
   SeitenleisteVersion,
+  SeitenleisteStyleguide,
 } from "./Seitenleiste";
 export { Ziehgriff } from "./Ziehgriff";
+export { Verzeichnis } from "./Verzeichnis";
+export type { VerzeichnisBereich, VerzeichnisGruppe, VerzeichnisEintrag } from "./Verzeichnis";
+export { VerzeichnisFlaeche } from "./VerzeichnisFlaeche";
 export { Disclosure } from "./Disclosure";
 export type { DisclosureProps } from "./Disclosure";
 export { Dialog } from "./Dialog";

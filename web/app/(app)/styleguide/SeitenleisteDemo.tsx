@@ -71,6 +71,7 @@ export function SeitenleisteDemo() {
           }
           anmeldenHref="#anmelden"
           version={{ nummer: "1.27.0", href: "#versionen", neu: true }}
+          styleguide={{ href: "#styleguide" }}
           slim={slim}
         />
         <div className="schraffur flex min-w-0 flex-1 flex-col p-4">

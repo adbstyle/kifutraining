@@ -49,7 +49,7 @@ export const SPEICHERUNGEN: Speicherung[] = [
   {
     name: VERZEICHNIS_COOKIE,
     titel: "Breite des Verzeichnisses",
-    zweck: "Merkt sich, wie breit du das Verzeichnis neben den Versionen gezogen hast.",
+    zweck: "Merkt sich, wie breit du das Verzeichnis neben den Versionen und im Styleguide gezogen hast.",
     dauer: "Ein Jahr.",
     ohne: "Das Verzeichnis steht bei jedem Besuch wieder in der üblichen Breite.",
   },

@@ -13,7 +13,7 @@ import { cn } from "@/lib/cn";
    hier Primary, obwohl es auf 24dp knapp unter die 4.5:1 für Fliesstext fällt
    — Materials eigene Baseline hält es genauso, und ein eigener Farbton nur für
    Dialoge risse die Handlungsfarbe der App auseinander. Die Zahl steht nicht
-   hier, sondern gerechnet im Styleguide (18 «Dialog & Snackbar»), wo sie auch
+   hier, sondern gerechnet im Styleguide (› Dialog & Snackbar), wo sie auch
    als bewusste Abweichung begründet ist.
 
    Breite: 28 rem für Rückfragen und kurze Formulare; `breit` (40 rem) für
