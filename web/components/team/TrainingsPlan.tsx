@@ -198,11 +198,11 @@ function TerminReihe({
       // Sprungziel aus dem Kalender-Abo und dem Monat; die Kontur zeigt, wo man landet.
       tabIndex={-1}
       className={cn(
-        "state relative flex items-start gap-2 px-3 py-2.5 outline-none first:rounded-t-flaeche last:rounded-b-flaeche focus:kontur focus:border-primary",
+        "group/zeile state relative flex items-start gap-2 px-3 py-2.5 outline-none first:rounded-t-flaeche last:rounded-b-flaeche focus:kontur focus:border-primary",
         hervorgehoben && "kontur border-primary",
       )}
     >
-      <button type="button" onClick={() => a.bearbeiten(t)} title={ganz} className="focus-ring absolute inset-0 rounded-flaeche">
+      <button type="button" onClick={() => a.bearbeiten(t)} title={ganz} className="focus-ring absolute inset-0 group-first/zeile:rounded-t-flaeche group-last/zeile:rounded-b-flaeche">
         <span className="sr-only">Termin ändern: {zeit}</span>
       </button>
       <div aria-hidden={!ersterDesTages || undefined} className="pointer-events-none relative">

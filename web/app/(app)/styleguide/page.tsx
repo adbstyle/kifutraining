@@ -477,7 +477,7 @@ export default function Styleguide() {
             <ul className="type-body-medium flex list-disc flex-col gap-1 pl-5 text-on-surface-mittel">
               <li>Das Farbsystem: Rollen mit ihren On-Farben, Schrift als Weiss in Deckungen.</li>
               <li>Die Höhe als gerechnete Overlay-Leiter über einem einzigen Grund.</li>
-              <li>Die Zustands-Deckungen (4 / 12 / 10 %) in der Farbe des Inhalts.</li>
+              <li>Die Zustands-Deckungen (4 / 12 / 10 %) in der Farbe des Inhalts; überfahren in einer schon überfahrenen Fläche 8 %.</li>
               <li>Die Typo-Rollen: Display, Headline, Title, Body, Label.</li>
             </ul>
           </div>
@@ -785,7 +785,11 @@ export default function Styleguide() {
           Drücken stumm. <strong>Drei Zustände, nicht Materials vier:</strong>{" "}
           «gezogen» fehlt, weil das Einzige, was hier gezogen wird,
           Diagramm-Elemente sind - und die leben im SVG, nicht im DOM
-          (siehe 20).
+          (siehe 20). <strong>Ebene in Ebene:</strong> Liegt eine bedienbare
+          Fläche in einer anderen («Training hinzufügen» in der Terminzeile),
+          ist beim Überfahren auch die äussere aufgehellt; die innere trägt
+          darum 8 % statt 4 % (<code>--state-hover-innen</code>). Menü und
+          Auswahlliste schweben auf eigenem Grund und bleiben bei 4 %.
         </p>
         <div className="mb-6 grid gap-6 sm:grid-cols-2">
           <div>

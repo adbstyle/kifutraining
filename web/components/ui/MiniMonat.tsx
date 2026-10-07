@@ -55,15 +55,19 @@ function MarkenZeichen({ zustand }: { zustand: ZeichenZustand }) {
   return <X aria-hidden size={10} strokeWidth={3} className="text-icon-danger" />;
 }
 
-/** Ein Punkt auf dem Ring (24 px Durchmesser) unter dem Winkel `grad`, als
- *  Mittelpunkt in px; 0° ist rechts, es zählt im Uhrzeigersinn. */
+/** Ein Punkt auf dem Ring unter dem Winkel `grad`, als Mittelpunkt in px;
+ *  0° ist rechts, es zählt im Uhrzeigersinn. Gemessen in der Innenfläche der
+ *  24-px-Zahl, die immer einen 1-px-Rand trägt (22 px): Mitte 11, die Linie
+ *  des Rings liegt auf halber Randbreite (11.5). */
 function aufDemRing(grad: number, versatz = 0) {
   const w = (grad * Math.PI) / 180;
-  return { left: 12 + 12 * Math.cos(w) + versatz, top: 12 + 12 * Math.sin(w) };
+  return { left: 11 + 11.5 * Math.cos(w) + versatz, top: 11 + 11.5 * Math.sin(w) };
 }
 
 /** Wo die Badges sitzen (PO 2026-10-07): das erste oben rechts auf dem Ring,
- *  das zweite halb dahinter, «+n» unten rechts. */
+ *  das zweite halb dahinter, nach rechts versetzt — hintereinander, nicht den
+ *  Ring entlang (PO). In der schmalen Spalte (Zelle ~33 px) ragt es dabei
+ *  ein, zwei Pixel in den Nachbartag; so gewollt. «+n» unten rechts. */
 const BADGE_ORT = [aufDemRing(-45), aufDemRing(-45, 5)];
 const MEHR_ORT = aufDemRing(45);
 
@@ -90,9 +94,11 @@ function Tageszahl({
     <span
       aria-hidden
       className={cn(
-        "relative flex size-6 items-center justify-center rounded-full type-body-small",
+        // Der Rand steht immer (sonst transparent), damit die Badges überall
+        // gleich sitzen.
+        "relative flex size-6 items-center justify-center rounded-full border border-dotted type-body-small",
         tag === heute ? "bg-primary text-on-primary" : imMonat ? "text-on-surface" : "text-on-surface-mittel",
-        ring && tag !== heute && "border border-dotted border-on-surface-mittel",
+        ring && tag !== heute ? "border-on-surface-mittel" : "border-transparent",
       )}
     >
       {Number(tag.slice(8))}

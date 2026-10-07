@@ -327,6 +327,14 @@
   }
 }
 
+/* Schwebende Flächen (Menü, Auswahlliste) liegen auf eigenem Grund, auch
+   wenn sie im DOM in einer überfahrenen Zeile stecken: Ihre Einträge erben
+   die stärkere Deckung nicht. Ohne Ebene (nicht in @utility), damit die
+   Regel `&:hover > *` der Zustands-Ebene nie überstimmt. */
+:is([role="menu"], [role="listbox"]) {
+  --state-hover-umgebung: initial;
+}
+
 /* Aktiver IconButton: die Ebene färbt sich mit dem Zeichen ein. */
 @utility state-primary {
   --state-color: var(--color-primary);
