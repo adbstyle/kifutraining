@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarOff, CalendarPlus, PlayCircle, Repeat } from "lucide-react";
-import { ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, OverflowMenu } from "@/components/ui";
+import { CalendarOff, CalendarPlus, PlayCircle, Repeat, TriangleAlert } from "lucide-react";
+import { Button, ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, OverflowMenu } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage, wochentageText } from "@/lib/serie";
@@ -11,7 +11,7 @@ import { feldName, feldText } from "@/lib/termin-felder";
 import { datumKurz } from "@/lib/zeit";
 import { terminZustand, verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
-import { TrainingHinzufuegen, terminMenue } from "./TerminHandgriffe";
+import { terminMenue } from "./TerminHandgriffe";
 
 /* Der nächste Termin zuoberst im Trainingsplan (#403): grösser als die
    Zeilen darunter und auf einer höheren Fläche, damit man ihn am
@@ -19,7 +19,9 @@ import { TrainingHinzufuegen, terminMenue } from "./TerminHandgriffe";
    Scrollen sehen soll — Tag, Zeit, Training (AK 2) —, gleich darunter die
    Handgriffe, die man dort braucht: Durchführen und Öffnen, ohne Training an
    seiner Stelle «Training hinzufügen» (AK 10, 11, 13). Alle übrigen liegen im
-   Menü (AK 15).
+   Menü (AK 15). Fehlt das Training noch, sagt es eine Warn-Lozenge, wo sonst
+   sein Name steht, und «Training hinzufügen» ist ein Knopf wie «Training
+   öffnen» (PO 2026-10-07): Am nächsten Termin soll das auffallen.
 
    Darunter alle Angaben ungekürzt (AK 3, 5): Ort, Verantwortliche, erwartete
    Spielerzahl und Felder ausführlich, Bemerkung und die Wochentage der Serie.
@@ -102,7 +104,7 @@ export function NaechsterTermin({
             {t.training!.name}
           </Link>
         ) : zustand === "noch-nicht" ? (
-          <TrainingHinzufuegen t={t} className="type-title-medium" />
+          <Lozenge appearance="warning" iconBefore={TriangleAlert}>Noch kein Training</Lozenge>
         ) : (
           <Lozenge>Ohne Training</Lozenge>
         )}
@@ -115,6 +117,11 @@ export function NaechsterTermin({
             Durchführen
           </ButtonLink>
           <ButtonLink variant="outlined" href={`/training/${t.training!.id}`}>Training öffnen</ButtonLink>
+        </div>
+      )}
+      {zustand === "noch-nicht" && (
+        <div className="mt-3">
+          <Button variant="outlined" aria-haspopup="dialog" onClick={() => a.zuordnen(t)}>Training hinzufügen</Button>
         </div>
       )}
 

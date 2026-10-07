@@ -283,7 +283,8 @@ Ganz oben steht der nächste Termin als grössere Karte — der erste, der anste
 ausgefallen ist, und bei mehreren am selben Tag der früheste. Sie nennt „Heute" oder „Morgen"
 vor Wochentag und Datum, darunter Zeit und Training, gross genug, dass man beides am Handy beim
 Öffnen ohne Scrollen sieht, und gleich darunter „Durchführen" und „Training öffnen" — ohne
-Training steht an seiner Stelle „Training hinzufügen", ausgefallen der vollständige Grund. Darunter stehen alle
+Training steht an seiner Stelle eine Warn-Plakette „Noch kein Training" und als Knopf „Training
+hinzufügen", ausgefallen der vollständige Grund. Darunter stehen alle
 Angaben ungekürzt: Ort, Verantwortliche, erwartete Spielerzahl, jedes Feld mit Grösse, Toren
 je Torart und Untergrund, die Bemerkung und die Wochentage seiner Serie; fehlen Spielerzahl
 oder Felder, steht „Nicht erfasst". Die übrigen Handgriffe liegen in ihrem Menü. In der Liste
