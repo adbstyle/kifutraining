@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { Besucherstatistik } from "@/components/layout/Besucherstatistik";
 import "./globals.css";
 
 // Eine Familie für die ganze Anwendung: Display, Titel, Fliesstext und
@@ -26,9 +27,14 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-/* Wurzel: nur Dokument, Schrift und globale Styles. Das App-Chrome
+/* Wurzel: nur Dokument, Schrift, globale Styles und die Besucherstatistik —
+   Letztere hier, damit auch die Anmelde-Seiten zählen. Das App-Chrome
    (Navigation, Team-Kontext, Snackbar-Platz) wohnt im Layout der
-   Route-Gruppe `(app)`; die Anmelde-Seiten unter `(auth)` kommen ohne aus. */
+   Route-Gruppe `(app)`; die Anmelde-Seiten unter `(auth)` kommen ohne aus.
+
+   Gezählt wird nur auf Production: Staging und Feature-Previews tragen vor
+   allem Test- und Agenten-Verkehr, der das Monatskontingent des Hobby-Plans
+   aufbrauchen und die Zahlen verfälschen würde. `VERCEL_ENV` ist lokal leer. */
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -40,7 +46,10 @@ export default function RootLayout({
   // Tailwinds Vorgabe zurück.
   return (
     <html lang="de-CH" className={sans.variable}>
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        {children}
+        {process.env.VERCEL_ENV === "production" && <Besucherstatistik />}
+      </body>
     </html>
   );
 }

@@ -12,7 +12,7 @@ const optionen = ALTERSSTUFEN.map((s) => ({ value: s as string, label: altersstu
 /** Nach welchem Lehrmittel eine Übung oder ein Training geführt wird
  *  (Story 3 AK 1/2, Story 5 AK 1/3).
  *
- *  Die Wahl ist eine Einfachauswahl mit Panel (Styleguide 16) — dasselbe
+ *  Die Wahl ist eine Einfachauswahl mit Panel (Styleguide › Einfachauswahl mit Panel) — dasselbe
  *  Auswahlfeld, das auch Feldtyp, Hauptteilkategorie und Übungstyp tragen. Sie
  *  lag eine Zeit lang offen in einer Segmentleiste, weil die Tragweite der
  *  Altersstufe sichtbar sein sollte, ohne erst zu klicken; die Maske führt

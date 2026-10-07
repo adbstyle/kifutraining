@@ -7,7 +7,7 @@ import { kategorienSlugs, type KategorieSlug } from "@/lib/vocab";
 /* Die Alterskategorien eines Trainings oder Teams (Story #10 AC3,
    Story #12 AC2). Kontrolliert.
 
-   Eine Mehrfachauswahl (Styleguide 17), wie jede Mehrfachauswahl seit dem
+   Eine Mehrfachauswahl (Styleguide › Mehrfachauswahl), wie jede Mehrfachauswahl seit dem
    2026-09-13. Sie war bis dahin eine Reihe toggelbarer Plaketten, die ihre
    Kategoriefarbe trugen — dieselbe, die Übungskarte, Katalog und Druck
    zeigen (`KategorieLozenge`). Diese Farbe entfällt hier (PO-Entscheid

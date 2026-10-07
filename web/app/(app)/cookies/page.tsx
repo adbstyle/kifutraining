@@ -26,7 +26,13 @@ export default async function CookiesPage() {
       <div className="type-body-medium mb-8 flex flex-col gap-3 text-on-surface">
         <p>
           KiFu legt in deinem Browser nur ab, was die Anwendung selbst braucht. Nichts davon dient
-          der Werbung oder einer Auswertung, und nichts geht an Dritte.
+          der Werbung, und nichts davon geht an Dritte.
+        </p>
+        <p>
+          Wie oft welche Seite aufgerufen wird, zählt KiFu mit Vercel Web Analytics beim
+          Hosting-Anbieter Vercel. Dafür liegt nichts in deinem Browser, und die Statistik weiss
+          nicht, wer du bist: Sie erhält die Seite ohne Suchbegriffe und Filter, die Herkunft, das
+          Land und den Gerätetyp.
         </p>
         <p>
           Du kannst diese Cookies in den Einstellungen deines Browsers für ki-fu.ch sperren oder

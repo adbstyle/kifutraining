@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { ExternalLink, Tag } from "lucide-react";
-import { ButtonLink, Leerzustand, SectionMessage } from "@/components/ui";
+import {
+  ButtonLink,
+  Leerzustand,
+  SectionMessage,
+  Verzeichnis,
+  VerzeichnisFlaeche,
+} from "@/components/ui";
 import { Seitenrahmen } from "@/components/layout/Seitenrahmen";
 import { ReleaseText } from "@/components/versionen/ReleaseText";
 import { VersionenGesehen } from "@/components/versionen/VersionenGesehen";
-import { VersionenFlaeche } from "@/components/versionen/VersionenFlaeche";
-import { VersionenVerzeichnis } from "@/components/versionen/VersionenVerzeichnis";
-import { versionAnker } from "@/lib/versionen-anker";
 import { VERZEICHNIS_COOKIE, leseVerzeichnis } from "@/lib/verzeichnis";
 import { getReleasesZumLesen, neuesteVeroeffentlichung } from "@/lib/releases";
 import { APP_VERSION } from "@/lib/version";
@@ -30,6 +33,10 @@ export const metadata: Metadata = { title: "Versionen - KiFu" };
    mit `?alle=1` — sonst wüchse die Seite mit jedem Release. Das Verzeichnis
    nennt immer alle; eine ältere führt auf `?alle=1` samt Sprungmarke. */
 const ZUERST = 30;
+/** Die Sprungmarke einer Version, z. B. `version-1.27.0`. */
+function versionAnker(version: string): string {
+  return `version-${version}`;
+}
 /** Der Tag in der Schweiz, geschrieben wie jedes Datum der Anwendung. */
 function tag(iso: string): string {
   return datumKurz(kalendertagAmTrainingsort(new Date(iso)));
@@ -70,15 +77,28 @@ export default async function VersionenPage({
               {tag(stand.abgerufenAm)} und womöglich nicht aktuell.
             </SectionMessage>
           )}
-          <VersionenFlaeche
+          <VerzeichnisFlaeche
             anfangsBreite={leseVerzeichnis(jar.get(VERZEICHNIS_COOKIE)?.value)}
             verzeichnis={
-              <VersionenVerzeichnis
-                eintraege={stand.releases.map(({ version, titel }, i) => ({
-                  version,
-                  titel,
-                  href: i < (gezeigt?.length ?? 0) ? undefined : `?alle=1#${versionAnker(version)}`,
-                }))}
+              <Verzeichnis
+                name="Versionen"
+                bereiche={[
+                  {
+                    gruppen: [
+                      {
+                        eintraege: stand.releases.map(({ version, titel }, i) => ({
+                          id: versionAnker(version),
+                          titel,
+                          zusatz: version,
+                          href:
+                            i < (gezeigt?.length ?? 0)
+                              ? undefined
+                              : `?alle=1#${versionAnker(version)}`,
+                        })),
+                      },
+                    ],
+                  },
+                ]}
               />
             }
           >
@@ -87,7 +107,6 @@ export default async function VersionenPage({
                 <article
                   key={r.version}
                   id={versionAnker(r.version)}
-                  data-version={r.version}
                   aria-labelledby={`${versionAnker(r.version)}-titel`}
                   // Ein Sprung hält ab lg global 6rem Abstand zur klebenden
                   // Kopfzeile (globals.css). Hier rückt er so weit höher, dass
@@ -126,7 +145,7 @@ export default async function VersionenPage({
                 {weitere === 1 ? "Ältere Version anzeigen" : `${weitere} ältere Versionen anzeigen`}
               </ButtonLink>
             )}
-          </VersionenFlaeche>
+          </VerzeichnisFlaeche>
         </>
       )}
     </Seitenrahmen>

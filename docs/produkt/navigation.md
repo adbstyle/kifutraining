@@ -1,6 +1,6 @@
 # Navigation
 
-Stand 2026-10-06. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
+Stand 2026-10-07. Wie man sich in der Anwendung bewegt und wie sie sich bedienen lässt.
 
 ## Die Seitenleiste
 
@@ -16,7 +16,8 @@ Hervorgehoben ist, wo man gerade steht. Ein geöffnetes Team-Training hält „T
 wie im Team-Bereich beschrieben.
 
 Über dem Konto steht die Version, die gerade läuft. Ein Klick darauf öffnet „Versionen" (siehe
-unten); in der schmalen Leiste bleibt ihr Zeichen, die Nummer zeigt der Hinweis daneben.
+unten); in der schmalen Leiste bleibt ihr Zeichen, die Nummer zeigt der Hinweis daneben. Gleich
+darunter führt „Styleguide" zum Designsystem (siehe unten), auch ohne Anmeldung.
 
 Ist seit dem letzten Blick in „Versionen" eine neue Version erschienen, trägt die Versionszeile
 die Plakette „Neu", in der schmalen Leiste einen Punkt am Zeichen. Sie unterbricht nichts und
@@ -61,13 +62,30 @@ Eine neue oder geänderte Version auf GitHub erscheint spätestens nach einer St
 gerade nicht erreichbar, zeigt die Seite den zuletzt bekannten Stand mit einem Hinweis, dass er
 womöglich nicht aktuell ist; die Versionsnummer in der Leiste steht trotzdem.
 
+## Styleguide
+
+Der Styleguide beschreibt das Designsystem von KiFu: Farben, Schrift, Höhen, Zustände und jeden
+Baustein der Oberfläche, mit lebenden Beispielen. Er ist gegliedert wie die Designsysteme von
+Material und Atlassian: „Grundlagen" (Grundsatz und Herkunft, Zustände, Layout, Druck), „Stile" (Farbrollen,
+Typografie, Höhe, Masse und Radien, Zeichen) und „Komponenten", diese unter Untertiteln wie
+„Formulare und Eingabe", „Meldungen" oder „Training und Termine". Auf breiten Bildschirmen steht
+links ein Verzeichnis in derselben Gliederung: Ein Klick springt zum Abschnitt, hervorgehoben ist
+der Abschnitt, der gerade oben steht, und die drei Obertitel lassen sich auf- und zuklappen.
+Breiter oder schmaler zieht man es wie unter „Versionen"; die Breite gilt für beide Seiten. Wo
+ein Abschnitt auf einen anderen verweist, führt ein Link mit dessen Namen dorthin. Auf schmalen
+Bildschirmen stehen nur die Abschnitte. Die Seite ist ohne Anmeldung zugänglich.
+
 ## Cookies
 
 Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, die gewählte
 Breite der Seitenleiste, die gezogene Breite der Spalte und des Verzeichnisses unter
-„Versionen" und bis zu welcher Version man
+„Versionen" und im Styleguide und bis zu welcher Version man
 „Versionen" gesehen hat — je mit Zweck, Dauer, Namen und dem, was ohne sie nicht mehr geht.
-Sie sagt auch, wie man Cookies in den Einstellungen des Browsers sperrt oder löscht. Sie hängt
+Sie nennt auch die Besucherstatistik: KiFu zählt auf ki-fu.ch Seitenaufrufe mit Vercel Web
+Analytics nach Seite, Herkunft, Land und Gerätetyp. Diese legt nichts im Browser ab, kennt keine
+Personen und erhält die Adresse ohne Suchbegriffe und Filter; eine unbekannte Adresse zählt sie
+nicht. Ausserdem sagt die Seite, wie man Cookies in den
+Einstellungen des Browsers sperrt oder löscht. Sie hängt
 am Konto (Brotkrume „Konto › Cookies") und ist ohne Anmeldung über einen Verweis unten auf allen
 Seiten ohne Leiste erreichbar, etwa beim Anmelden und Registrieren; sie funktioniert auch mit gesperrten Cookies.
 
@@ -183,13 +201,15 @@ ebenso die Bestätigung beim Verbinden eines KI-Assistenten.
 Wird jemand von einem anderen Konto in ein Team aufgenommen, erscheint das Team in der Leiste
 erst beim nächsten Neuladen oder nach der nächsten eigenen Aktion. Breit oder schmal merkt
 sich jeder Browser für sich, nicht das Konto — ebenso die gezogene Breite des Verzeichnisses
-unter „Versionen" und die der Spalte auf den
+unter „Versionen" und im Styleguide und die der Spalte auf den
 geteilten Seiten; sie gilt für Übung und Training gemeinsam. Die Teilung gibt es nur auf breiten Bildschirmen; auf einem Tablet im
 Hochformat oder einem Telefon steht alles untereinander, und die Breite lässt sich dort nicht
 ziehen.
 
 KiFu hat keine vollständige Datenschutzerklärung und kein Impressum; die Seite „Cookies"
-beschreibt nur, was im Browser liegt. Eine eigene Einstellung, um Cookies abzuschalten, gibt
+beschreibt nur, was im Browser liegt, und die Besucherstatistik. Diese lässt sich nicht
+abwählen, und eine Seite, die über einen ungültigen Link nicht gefunden wird (etwa ein
+Training, das es nicht gibt), zählt sie unter dem eingegebenen Pfad. Eine eigene Einstellung, um Cookies abzuschalten, gibt
 es nicht — das geht über den Browser.
 
 „Versionen" zeigt die Texte so, wie sie veröffentlicht wurden; ältere enthalten Technisches,

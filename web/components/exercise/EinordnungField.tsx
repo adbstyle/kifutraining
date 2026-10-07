@@ -17,7 +17,7 @@ const TRENNER = ":";
 
 /** Wo eine Übung in ihrem Trainingsschema liegt (Story 2 AK 1, Story 3 AK 3/4).
  *
- *  Eine Einfachauswahl mit Panel (Styleguide 16) — dieselbe Form, in der die
+ *  Eine Einfachauswahl mit Panel (Styleguide › Einfachauswahl mit Panel) — dieselbe Form, in der die
  *  Maske inzwischen jede Einfachauswahl führt (PO-Vorgabe 2026-09-13). Sie lag
  *  eine Zeit lang offen (Segmentleiste, im Juniorenschema mit einer zweiten
  *  Reihe Chips), weil die Einordnung über die halbe Maske darunter entscheidet

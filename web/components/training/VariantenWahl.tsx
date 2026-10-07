@@ -6,7 +6,7 @@ import type { Variante } from "@/lib/varianten";
 /**
  * Zwischen den Varianten des Hauptteils wechseln (#201 AK 6).
  *
- * `ChoiceChipGroup` statt eines Auswahlfelds (16), weil die Werte NUTZERTEXT
+ * `ChoiceChipGroup` statt eines Auswahlfelds (Styleguide › Einfachauswahl mit Panel), weil die Werte NUTZERTEXT
  * sind: Eine Bezeichnung darf bis vierzig Zeichen lang sein («21 Kinder, zwei
  * Trainer»), und eine einzeilige Leiste hielte das nicht — sie scrollte, und
  * der Trainer sähe seine Varianten nicht mehr nebeneinander. Chips umbrechen. Es ist ausserdem eine

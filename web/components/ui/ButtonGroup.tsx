@@ -4,7 +4,8 @@ import { cn } from "@/lib/cn";
    gerundet, Innenecken eckig, 2 px Lücke (der Grund scheint durch). Die
    Glieder stehen direkt in der Gruppe, ohne Tooltip.
    Für GRUPPIERTE AKTIONEN — die Einfachauswahl in einem Formular machen die
-   ChoiceChipGroup (offen, 10) und das Auswahlfeld mit Panel (16). */
+   ChoiceChipGroup (Styleguide › Offene Einfachauswahl) und das Auswahlfeld
+   mit Panel (Styleguide › Einfachauswahl mit Panel). */
 export function ButtonGroup({
   children,
   ariaLabel,

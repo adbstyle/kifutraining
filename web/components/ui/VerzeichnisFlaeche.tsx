@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Ziehgriff } from "@/components/ui";
+import { Ziehgriff } from "./Ziehgriff";
 import { cn } from "@/lib/cn";
 import {
   VERZEICHNIS_MAX,
@@ -11,10 +11,11 @@ import {
   verzeichnisCookie,
 } from "@/lib/verzeichnis";
 
-/* «Versionen» ab `lg`: links das Verzeichnis, rechts die Texte, dazwischen
-   der Ziehgriff. Die gezogene Breite merkt sich der Browser (Cookie, siehe
-   lib/verzeichnis.ts). Schmal stehen nur die Texte. */
-export function VersionenFlaeche({
+/* Eine lange Seite mit Verzeichnis («Versionen», Styleguide) ab `lg`: links
+   das Verzeichnis, rechts die Texte, dazwischen der Ziehgriff. Die gezogene
+   Breite merkt sich der Browser (Cookie, siehe lib/verzeichnis.ts) — eine für
+   alle solchen Seiten. Schmal stehen nur die Texte. */
+export function VerzeichnisFlaeche({
   anfangsBreite,
   verzeichnis,
   children,

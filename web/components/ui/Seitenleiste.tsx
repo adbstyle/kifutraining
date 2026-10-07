@@ -8,6 +8,7 @@ import {
   ChevronDown,
   LogIn,
   Menu as MenuIcon,
+  Palette,
   PanelLeftClose,
   PanelLeftOpen,
   Tag,
@@ -66,6 +67,12 @@ export interface SeitenleisteVersion {
   neu?: boolean;
 }
 
+/** Der Styleguide unten in der Leiste, gleich unter der Version. */
+export interface SeitenleisteStyleguide {
+  href: string;
+  current?: boolean;
+}
+
 export interface SeitenleisteProps {
   gruppen: SeitenleisteGruppe[];
   /** Angemeldet: Konto-Karte unten. Sonst `anmeldenHref`. */
@@ -73,6 +80,8 @@ export interface SeitenleisteProps {
   anmeldenHref?: string;
   /** Laufende Version über der Konto-Karte. */
   version?: SeitenleisteVersion;
+  /** Styleguide unter der Version. */
+  styleguide?: SeitenleisteStyleguide;
   /** Schmal (nur Zeichen). Wirkt ab `lg`; darunter ist die Leiste ein Drawer
    *  und zeigt immer alles. */
   slim: boolean;
@@ -195,6 +204,7 @@ export function Seitenleiste({
   konto,
   anmeldenHref = "/login",
   version,
+  styleguide,
   slim,
   drawerOffen = false,
   onDrawerOffenChange = keineAktion,
@@ -383,51 +393,75 @@ export function Seitenleiste({
           ))}
         </div>
 
-        {/* Die Version führt zur Release-History (#408): gleich über der Linie
-            zum Konto. Schmal bleibt das Zeichen, die Nummer steht dann im
-            Hinweis daneben. */}
-        {version && (
-          <div className="shrink-0 px-4 pb-2">
-            <Link
-              href={version.href}
-              aria-current={version.current ? "page" : undefined}
-              data-hinweis={`Version ${version.nummer}${version.neu ? " - Neu" : ""}`}
-              onClick={schliessen}
-              className={cn(
-                zeile,
-                "type-body-small h-9 gap-3 px-2.5",
-                k?.mitte,
-                version.current ? zeileAktiv : zeileRuhe,
-              )}
-            >
-              <span className="relative shrink-0">
-                <Tag
+        {/* Die Version führt zur Release-History (#408), der Styleguide
+            darunter zum Designsystem: beide gleich über der Linie zum Konto.
+            Schmal bleibt das Zeichen, der Name steht dann im Hinweis daneben. */}
+        {(version || styleguide) && (
+          <div className="flex shrink-0 flex-col gap-0.5 px-4 pb-2">
+            {version && (
+              <Link
+                href={version.href}
+                aria-current={version.current ? "page" : undefined}
+                data-hinweis={`Version ${version.nummer}${version.neu ? " - Neu" : ""}`}
+                onClick={schliessen}
+                className={cn(
+                  zeile,
+                  "type-body-small h-9 gap-3 px-2.5",
+                  k?.mitte,
+                  version.current ? zeileAktiv : zeileRuhe,
+                )}
+              >
+                <span className="relative shrink-0">
+                  <Tag
+                    size={18}
+                    strokeWidth={2}
+                    aria-hidden
+                    className={cn(version.current && "text-primary")}
+                  />
+                  {/* Schmal fehlt die Plakette; dann trägt das Zeichen den Punkt. */}
+                  {version.neu && schmalAb && (
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-elev-01",
+                        schmalAb === "lg" && "max-lg:hidden",
+                      )}
+                    />
+                  )}
+                </span>
+                <span className={cn("truncate", k?.textWeg)}>Version {version.nummer}</span>
+                {version.neu && (
+                  <>
+                    <Lozenge appearance="discovery" className={k?.nurBreit}>
+                      <span aria-hidden>Neu</span>
+                    </Lozenge>
+                    <span className="sr-only">, neue Version erschienen</span>
+                  </>
+                )}
+              </Link>
+            )}
+            {styleguide && (
+              <Link
+                href={styleguide.href}
+                aria-current={styleguide.current ? "page" : undefined}
+                data-hinweis="Styleguide"
+                onClick={schliessen}
+                className={cn(
+                  zeile,
+                  "type-body-small h-9 gap-3 px-2.5",
+                  k?.mitte,
+                  styleguide.current ? zeileAktiv : zeileRuhe,
+                )}
+              >
+                <Palette
                   size={18}
                   strokeWidth={2}
                   aria-hidden
-                  className={cn(version.current && "text-primary")}
+                  className={cn("shrink-0", styleguide.current && "text-primary")}
                 />
-                {/* Schmal fehlt die Plakette; dann trägt das Zeichen den Punkt. */}
-                {version.neu && schmalAb && (
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-elev-01",
-                      schmalAb === "lg" && "max-lg:hidden",
-                    )}
-                  />
-                )}
-              </span>
-              <span className={cn("truncate", k?.textWeg)}>Version {version.nummer}</span>
-              {version.neu && (
-                <>
-                  <Lozenge appearance="discovery" className={k?.nurBreit}>
-                    <span aria-hidden>Neu</span>
-                  </Lozenge>
-                  <span className="sr-only">, neue Version erschienen</span>
-                </>
-              )}
-            </Link>
+                <span className={cn("truncate", k?.textWeg)}>Styleguide</span>
+              </Link>
+            )}
           </div>
         )}
 
