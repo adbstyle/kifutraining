@@ -108,6 +108,8 @@
 
   /* ─── Zustände: Deckung der Overlay-Ebene (siehe @utility state) ─── */
   --state-hover: 0.04;
+  /* Überfahren in einer schon überfahrenen Fläche (siehe @utility state). */
+  --state-hover-innen: 0.08;
   --state-focus: 0.12;
   --state-pressed: 0.10;
 
@@ -280,7 +282,14 @@
    Zeichnung; ein DOM-Zustand, den niemand auslöst, wäre ein totes Token.
    Überfahren gilt nur mit Zeiger (`hover: hover`): Auf Touch bliebe `:hover`
    nach einem Tipp hängen, und die angetippte Fläche stünde aufgehellt da,
-   bis man woanders hintippt — wie es Tailwinds eigene `hover:` auch halten. */
+   bis man woanders hintippt — wie es Tailwinds eigene `hover:` auch halten.
+   Liegt eine Fläche mit Zustands-Ebene in einer anderen (der Knopf «Training
+   hinzufügen» in einer Terminzeile, «Dauer hinzufügen» in einer Übung), ist
+   beim Überfahren auch die äussere aufgehellt — mit derselben Deckung ginge
+   die innere darin unter. Darum trägt sie dann die doppelte
+   (`--state-hover-innen`, PO 2026-10-07). Die überfahrene Fläche reicht sie
+   ihrem Inhalt als `--state-hover-umgebung` weiter, nicht sich selbst
+   (`> *`) — so gilt es auch für eine Ebene mit Breakpoint (`xl:state`). */
 @utility state {
   position: relative;
   &::after {
@@ -294,8 +303,11 @@
     transition: opacity 150ms;
   }
   @media (hover: hover) {
+    &:hover > * {
+      --state-hover-umgebung: var(--state-hover-innen);
+    }
     &:hover::after {
-      opacity: var(--state-hover);
+      opacity: var(--state-hover-umgebung, var(--state-hover));
     }
   }
   &:focus-visible::after {
