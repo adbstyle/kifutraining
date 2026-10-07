@@ -131,7 +131,9 @@ function PlanMonate({ termine, heute, ich, hervorheben }: { termine: TerminZeile
       <ol className="mt-2 flex flex-col gap-2">
         {m.tage.map((tag) => (
           <li key={tag.datum}>
-            <Card className="p-1">
+            {/* Ohne Polsterung: Die Zeilen füllen die Karte, ihre Zustands-
+                Ebene beim Überfahren reicht bis an deren Rand. */}
+            <Card>
               <ol className="divide-y divide-linie">
                 {tag.termine.map((t, i) => (
                   <TerminReihe key={t.id} t={t} heute={heute} ich={ich} hervorgehoben={t.id === hervorheben} ersterDesTages={i === 0} />
@@ -196,11 +198,11 @@ function TerminReihe({
       // Sprungziel aus dem Kalender-Abo und dem Monat; die Kontur zeigt, wo man landet.
       tabIndex={-1}
       className={cn(
-        "state relative flex items-start gap-2 rounded-klein px-2 py-1.5 outline-none focus:kontur focus:border-primary",
+        "state relative flex items-start gap-2 px-3 py-2.5 outline-none first:rounded-t-flaeche last:rounded-b-flaeche focus:kontur focus:border-primary",
         hervorgehoben && "kontur border-primary",
       )}
     >
-      <button type="button" onClick={() => a.bearbeiten(t)} title={ganz} className="focus-ring absolute inset-0 rounded-klein">
+      <button type="button" onClick={() => a.bearbeiten(t)} title={ganz} className="focus-ring absolute inset-0 rounded-[inherit]">
         <span className="sr-only">Termin ändern: {zeit}</span>
       </button>
       <div aria-hidden={!ersterDesTages || undefined} className="pointer-events-none relative">
