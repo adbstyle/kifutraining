@@ -202,8 +202,8 @@ pruefe("Fremde Ziele fallen auf die Startseite", () => {
 });
 
 pruefe("Die Login-Adresse trägt Pfad und Abfrage als Rücksprung, sonst nichts (#330 PC 7)", () => {
-  const ziel = "/team/abc/termin/def?ansicht=monat&meine=1";
-  const u = new URL(loginAdresse("/team/abc/termin/def", "?ansicht=monat&meine=1"), "http://x");
+  const ziel = "/team/abc/termin/def?meine=1&termin=t1";
+  const u = new URL(loginAdresse("/team/abc/termin/def", "?meine=1&termin=t1"), "http://x");
   assert.equal(u.pathname, "/login");
   assert.deepEqual([...u.searchParams.keys()], ["redirect"], "keine fremden Parameter");
   assert.equal(u.searchParams.get("redirect"), ziel);

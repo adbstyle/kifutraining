@@ -4,7 +4,6 @@ import {
   Button,
   ButtonLink,
   ButtonGroup,
-  segmentClasses,
   Badge,
   Lozenge,
   HerkunftLozenge,
@@ -15,6 +14,8 @@ import {
   PrintButton,
   IconButton,
   IconButtonLink,
+  BlattLozenge,
+  Kalenderblatt,
   KategorieLozenge,
   TabNav,
   Tooltip,
@@ -57,8 +58,7 @@ import { OverflowMenuDemo } from "./OverflowMenuDemo";
 import { ChipMenuDemo } from "./ChipMenuDemo";
 import { MaterialDemo } from "./MaterialDemo";
 import { FelderDemo } from "./FelderDemo";
-import { MonatsrasterDemo } from "./MonatsrasterDemo";
-import { AnsichtWahl } from "@/components/team/AnsichtWahl";
+import { MiniMonatDemo } from "./MiniMonatDemo";
 import { VariantenWahlDemo } from "./VariantenWahlDemo";
 import { VariantenLinks } from "@/components/training/VariantenLinks";
 import { TrainingCard } from "@/components/training/TrainingCard";
@@ -83,10 +83,8 @@ import {
   Layers,
   RefreshCw,
   CalendarOff,
-  CalendarX2,
+  TriangleAlert,
   CalendarPlus,
-  List,
-  CalendarDays,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
 import { ROTATIONEN, SPIELER_POSEN, type DiagrammElement } from "@/lib/diagramm";
@@ -133,7 +131,7 @@ const v = (wert: number) => `${wert.toFixed(2)}:1`;
 const weissAuf = (deckung: number, grund: string) =>
   ueberlagern("#ffffff", deckung, grund);
 
-/** Ein Release-Text nach docs/releases/ für Abschnitt 32. */
+/** Ein Release-Text nach docs/releases/ für Abschnitt 31. */
 const BEISPIEL_RELEASE = `Du siehst jetzt, welche Version läuft und was neu ist.
 
 ### Neu
@@ -479,7 +477,7 @@ export default function Styleguide() {
             <ul className="type-body-medium flex list-disc flex-col gap-1 pl-5 text-on-surface-mittel">
               <li>Das Farbsystem: Rollen mit ihren On-Farben, Schrift als Weiss in Deckungen.</li>
               <li>Die Höhe als gerechnete Overlay-Leiter über einem einzigen Grund.</li>
-              <li>Die Zustands-Deckungen (4 / 12 / 10 %) in der Farbe des Inhalts.</li>
+              <li>Die Zustands-Deckungen (4 / 12 / 10 %) in der Farbe des Inhalts; überfahren in einer schon überfahrenen Fläche 8 %.</li>
               <li>Die Typo-Rollen: Display, Headline, Title, Body, Label.</li>
             </ul>
           </div>
@@ -526,7 +524,7 @@ export default function Styleguide() {
         </div>
       </header>
 
-      <Section n="01" title="Farbrollen">
+      <Section n="1" title="Farbrollen">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Material vergibt <strong>Rollen</strong>, keine Bedeutungen: Es gibt
           einen Akzent, eine Fehlerfarbe und Schrift in Deckungen - was davon
@@ -644,7 +642,7 @@ export default function Styleguide() {
         </p>
       </Section>
 
-      <Section n="02" title="Typografie">
+      <Section n="2" title="Typografie">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Eine Familie für alles.</strong> Geist trägt Display, Titel,
           Fliesstext, Label und Lozenge; unterschieden werden die Rollen über
@@ -698,7 +696,7 @@ export default function Styleguide() {
         </p>
       </Section>
 
-      <Section n="03" title="Höhe">
+      <Section n="3" title="Höhe">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Im Dunkeln trägt nicht der Schatten die Höhe, sondern die Helligkeit:
           Jede Stufe legt ein weisses Overlay über denselben Grund. Die Werte
@@ -773,7 +771,7 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="04" title="Zustände">
+      <Section n="4" title="Zustände">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Jede bedienbare Fläche legt beim Überfahren, Fokussieren und Drücken
           eine Ebene auf - <strong>in der Farbe ihres eigenen Inhalts</strong>,
@@ -787,7 +785,11 @@ export default function Styleguide() {
           Drücken stumm. <strong>Drei Zustände, nicht Materials vier:</strong>{" "}
           «gezogen» fehlt, weil das Einzige, was hier gezogen wird,
           Diagramm-Elemente sind - und die leben im SVG, nicht im DOM
-          (siehe 20).
+          (siehe 20). <strong>Ebene in Ebene:</strong> Liegt eine bedienbare
+          Fläche in einer anderen («Training hinzufügen» in der Terminzeile),
+          ist beim Überfahren auch die äussere aufgehellt; die innere trägt
+          darum 8 % statt 4 % (<code>--state-hover-innen</code>). Menü und
+          Auswahlliste schweben auf eigenem Grund und bleiben bei 4 %.
         </p>
         <div className="mb-6 grid gap-6 sm:grid-cols-2">
           <div>
@@ -876,7 +878,7 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="05" title="Masse, Radien, Konturen">
+      <Section n="5" title="Masse, Radien, Konturen">
         <p className="type-label-small mb-2 text-on-surface-mittel">
           Abstände - Vielfache von 4
         </p>
@@ -950,7 +952,7 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="06" title="Zeichen - Lucide">
+      <Section n="6" title="Zeichen - Lucide">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Open-Source Lucide, umrissen, Strichstärke 2, runde Enden. „Gewählt"
           zeigt sich über Farbe und Zustands-Ebene, nicht über eine Füllung.
@@ -972,7 +974,7 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="07" title="Layout">
+      <Section n="7" title="Layout">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Fenstergrössen und Seitenränder: vier Stufen, an denen sich das
           Layout ändert (Tabelle unten). Ein Spaltenraster gibt es nicht - die
@@ -1026,14 +1028,14 @@ export default function Styleguide() {
           ist), Formulare und Lesetext in ihrer Lesebreite (<code>xl</code>{" "}
           bis <code>5xl</code>). Nicht zentriert, denn rechts steht, wo eine
           Seite eine hat, die zweite Spalte (<code>spalte</code>, etwa die
-          Einordnung einer Übung, siehe 28, <code>ZweiSpalten</code>). Ab{" "}
+          Einordnung einer Übung, siehe 27, <code>ZweiSpalten</code>). Ab{" "}
           <code>xl</code> ist die Seite dann geteilt (<code>geteilt</code>):
           beide Spalten füllen Breite und Höhe des Fensters und scrollen je
           für sich; die rechte wächst von 20 bis 26 rem mit und lässt sich am
           Griff dazwischen ziehen (Kit-Baustein <code>Ziehgriff</code>:{" "}
           <code>role=&quot;separator&quot;</code>, Pfeiltasten, Pos1/Ende, Doppelklick =
           Vorgabe; Cookie <code>kifu-spalte</code>). Derselbe Griff trennt unter
-          «Versionen» das Verzeichnis von den Texten (32).
+          «Versionen» das Verzeichnis von den Texten (31).
           Schmaler steht sie nach dem Inhalt (in der Maske davor), der Inhalt in
           seiner Lesebreite; auf Papier daneben. Zuoberst die Kopfzeile mit dem
           Umschalter der Seitenleiste, den Brotkrumen und rechts den Aktionen
@@ -1050,7 +1052,7 @@ export default function Styleguide() {
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Das Training teilt sich ebenso, aber <strong>nur breit</strong>{" "}
           (<code>nurBreit</code>, Epic #369): Links stehen die Übungen, rechts
-          die Eigenschaften des Trainings oder die geöffnete Übung (siehe 30).
+          die Eigenschaften des Trainings oder die geöffnete Übung (siehe 29).
           Schmal und auf Papier fehlt die Spalte, und die Seite behält ihren
           bisherigen Aufbau - dort gibt es nichts daneben zu öffnen. Eine
           Ausnahme: Trägt eine Maske in der Spalte ungesicherte Angaben
@@ -1075,7 +1077,7 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="08" title="Knöpfe">
+      <Section n="8" title="Knöpfe">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Sechs Varianten, eine Regel: <strong>Gefüllt trägt Schwarz</strong>{" "}
           - ausser Rot. <code>filled</code> ist Primary-Fläche, <code>tonal</code> eine
@@ -1140,25 +1142,6 @@ export default function Styleguide() {
           <Button variant="outlined">Liste</Button>
           <Button variant="outlined">Raster</Button>
           <Button variant="outlined">Karte</Button>
-        </ButtonGroup>
-        <p className="type-body-medium mb-3 mt-4 max-w-2xl text-on-surface-mittel">
-          Nur mit Zeichen (<code>segmentClasses</code>), für den Wechsel der
-          Darstellung - etwa Liste/Monat im Trainingsplan. 36 px im Quadrat,
-          ohne Tooltip; der Name steht im zugänglichen Namen
-          (<code>aria-label</code>). Die Klassen tragen Knopf wie Link: Lebt
-          die Darstellung in der Adresse, sind die Glieder Links mit{" "}
-          <code>aria-current</code> statt <code>aria-pressed</code> (siehe 27).
-          Gewählt trägt ein Glied die Auswahl-Optik der Chips: Kontur und
-          Zeichen in Primary, ohne Fläche - leiser als ein gefüllter Knopf
-          daneben, der die Handlung trägt.
-        </p>
-        <ButtonGroup ariaLabel="Ansicht">
-          <button type="button" aria-label="Liste" aria-pressed={false} className={segmentClasses(false)}>
-            <List size={18} aria-hidden />
-          </button>
-          <button type="button" aria-label="Monat" aria-pressed className={segmentClasses(true)}>
-            <CalendarDays size={18} aria-hidden />
-          </button>
         </ButtonGroup>
 
         <p className="type-label-small mb-2 mt-6 text-on-surface-mittel">
@@ -1288,7 +1271,7 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="09" title="Lozenge, Badge &amp; Chips">
+      <Section n="9" title="Lozenge, Badge &amp; Chips">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Lozenge</strong> heisst die Plakette wie bei Atlassian: ein
           kurzer Status oder eine Eigenschaft, auf einen Blick erkennbar - kein
@@ -1335,9 +1318,6 @@ export default function Styleguide() {
             2 Varianten
           </Lozenge>
           <Lozenge>Kinderfussball</Lozenge>
-          <Lozenge appearance="warning" iconBefore={CalendarX2}>
-            Noch kein Training
-          </Lozenge>
           <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
         </div>
         <div className="mb-6 flex flex-wrap items-center gap-3 rounded-flaeche bg-[linear-gradient(135deg,#f5f5f0,#9aa79c)] p-3">
@@ -1393,7 +1373,7 @@ export default function Styleguide() {
           <strong>Filter</strong> und der Chip, der{" "}
           <strong>Nutzertext</strong> trägt - eine Variante, ein Gruppenname.
           Dasselbe trägt das gewählte Glied der verbundenen Knopfgruppe (08) und
-          der eingrenzende Filterknopf (29). Ohne Fläche steht die
+          der eingrenzende Filterknopf (28). Ohne Fläche steht die
           Primary-Schrift auf dem dunklen Grund am klarsten (Epic #363); eine
           getönte Fläche nahm ihr Kontrast. Ein Filter steht neben Suchfeld, Auswahl und
           Knöpfen; gefüllt wäre er lauter als die Handlung daneben, und der
@@ -2045,7 +2025,7 @@ export default function Styleguide() {
         </p>
         <div className="grid max-w-md gap-6 sm:grid-cols-2">
           <DateField label="Datum" />
-          <TimeField label="Beginn (optional)" />
+          <TimeField label="Beginn" />
         </div>
 
         <h3 className="mb-2 mt-8 type-title-medium text-on-surface">
@@ -2208,13 +2188,13 @@ export default function Styleguide() {
           Der Baustein trägt beide Mehrfachauswahlen des Übungsformulars -{" "}
           <strong>Alterskategorie</strong> und{" "}
           <strong>Erscheinungsform</strong>; die Filterleisten führen ihre
-          Dimensionen dagegen als Filterknopf (29). Im Formular unterscheiden sich die beiden in der
+          Dimensionen dagegen als Filterknopf (28). Im Formular unterscheiden sich die beiden in der
           Ausstattung: Die Alterskategorie schaltet <code>searchable</code> und{" "}
           <code>actions</code> ab (drei bis vier kurze Werte liest man
           schneller, als man sie filtert), die Erscheinungsform behält beides
           (der Junioren-Katalog führt elf Werte, und jeder ist ein ganzer Satz).
           Im Formular heisst nichts gewählt <em>nichts</em>, im Filter{" "}
-          <em>alles</em> - darum ist der Filter ein eigener Baustein (29).
+          <em>alles</em> - darum ist der Filter ein eigener Baustein (28).
         </p>
         <MultiSelectDemo />
 
@@ -3012,74 +2992,7 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="27" title="Monatsraster">
-        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
-          Ein Monat als Raster Montag bis Sonntag; der Inhalt eines Tages kommt
-          vom Aufrufer. Neu ist der Baustein, weil keiner der bestehenden ein
-          Kalenderraster kennt: Liste, Karte und Tabs zeigen Dinge nacheinander,
-          nicht nach Datum verteilt. <code>Monatsraster</code> kennt nur den
-          Kalender - Wochen, Randtage der Nachbarmonate (gedämpft), den heutigen
-          Tag (Kontur in Primary) und auf Wunsch die leere Woche
-          (gestrichelte Kontur wie beim <code>Leerzustand</code>, dazu als Text
-          für Screenreader). Was ein Tag zeigt, bestimmt <code>renderTag</code>.
-        </p>
-        <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
-          <li>
-            <strong>Tabelle statt Gitter</strong> - <code>role=&quot;table&quot;</code>{" "}
-            mit Zeilen, Spaltenköpfen und Zellen. Ein <code>grid</code> verspräche
-            Pfeiltasten-Navigation, die es nicht gibt; die Knöpfe in den Tagen
-            liegen in der normalen Tab-Reihenfolge. Jeder Tag trägt sein
-            ausgeschriebenes Datum für Screenreader, «heute» als{" "}
-            <code>aria-current</code>.
-          </li>
-          <li>
-            <strong>Schmal</strong> - das Raster scrollt waagrecht im eigenen
-            Behälter, nie die Seite.
-          </li>
-          <li>
-            <strong>Randtage</strong> - liegen auf dem Grund (<code>elev-00</code>)
-            statt auf der Tagesfläche (<code>elev-01</code>), die Tageszahl ist
-            leiser. Nicht über <code>opacity</code> gedämpft: Das risse die
-            Schrift der Einträge unter 4.5:1.
-          </li>
-          <li>
-            <strong>Termineintrag</strong> (<code>TerminEintrag</code>) - Beginn
-            oder «Zeit fehlt», dazu der Zustand als Wort, nie nur als Farbe:
-            Training (Name auf <code>elev-08</code>), «Noch kein Training»
-            (getönt wie die <code>warning</code>-Lozenge, nur anstehend), «Ohne
-            Training» (leise, vergangen), «Ausgefallen» (durchgestrichen).
-            «Zeit fehlt» steht in Error - ausser im «Noch kein Training»: Auf
-            der warning-Fläche trüge Error nur{" "}
-            {v(kontrast(ERROR, LOZENGE.warning.flaeche))}, dort erbt das Wort
-            die Schrift der Fläche. Gerechnet: Fehler-Schrift von «Zeit fehlt»{" "}
-            {v(kontrast(ERROR, elev(1)))} auf der Tagesfläche und{" "}
-            {v(kontrast(ERROR, GRUND))} in der Randwoche; leise Schrift{" "}
-            {v(kontrast(weissAuf(SCHRIFT.mittel, elev(1)), elev(1)))} bzw.{" "}
-            {v(kontrast(weissAuf(SCHRIFT.mittel, GRUND), GRUND))}. «Ausgefallen»
-            trägt bewusst die leise und nicht die tiefe Schrift (
-            {v(kontrast(weissAuf(SCHRIFT.tief, elev(1)), elev(1)))}): Es ist
-            wesentlicher Inhalt, nicht Deaktiviertes.
-          </li>
-        </ul>
-        <MonatsrasterDemo />
-        <p className="type-label-small mb-2 mt-8 text-on-surface-mittel">
-          <code>AnsichtWahl</code> - Liste oder Monat als Links
-        </p>
-        <p className="type-body-medium mb-3 max-w-2xl text-on-surface-mittel">
-          Zwei Links statt einer <code>ChoiceChipGroup</code>: Die Ansicht lebt
-          in der Adresse (<code>?ansicht=monat</code>), ist damit weitergebbar
-          und der Zurück-Schritt des Browsers geht - und die Eingrenzung
-          «Meine Termine» reist in derselben Adresse mit (#329 PC 4). Ein Chip
-          hielte die Wahl im Zustand und verlöre beides. Die Optik ist die der
-          verbundenen Knopfgruppe mit Zeichen (<code>segmentClasses</code>,
-          08): die offene Ansicht in Primary umrandet, die andere auf der
-          Kante; <code>aria-current</code> trägt die Wahl. Der Filter daneben bleibt ein <code>FilterChip</code>, weil er
-          ein Ein/Aus ist und keine Ansicht.
-        </p>
-        <AnsichtWahl ansicht="monat" hrefListe="#" hrefMonat="#" />
-      </Section>
-
-      <Section n="28" title="Eigenschaften">
+      <Section n="27" title="Eigenschaften">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Bezeichnung und Wert paarweise - die Einordnung einer Übung in der
           Spalte rechts (Epic #350), angelehnt an das Details-Panel von Jira.
@@ -3168,7 +3081,7 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section n="29" title="Filterknopf">
+      <Section n="28" title="Filterknopf">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           <strong>Ein Filter ist ein Knopf mit seinem Namen</strong> (Epic
           #363, nach dem Vorbild der Filter in Jira). Er nennt, <em>wonach</em>{" "}
@@ -3209,7 +3122,7 @@ export default function Styleguide() {
         <FilterKnopfDemo />
       </Section>
 
-      <Section n="30" title="Liste mit Detail daneben">
+      <Section n="29" title="Liste mit Detail daneben">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Die Übungen eines Trainings öffnen ihr Detail in der Spalte daneben,
           statt auf eine eigene Seite zu führen (Epic #369) - der Trainer
@@ -3247,7 +3160,7 @@ export default function Styleguide() {
         <OeffnenZeileDemo />
       </Section>
 
-      <Section n="31" title="Platz und Spielerzahl eines Termins">
+      <Section n="30" title="Platz und Spielerzahl eines Termins">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Der Platz eines Termins (Epic #388): ein oder mehrere getrennte Felder,
           je mit Länge und Breite der verfügbaren Fläche, den Toren je Torart
@@ -3317,7 +3230,7 @@ export default function Styleguide() {
         <FelderDemo />
       </Section>
 
-      <Section n="32" title="Release-Text">
+      <Section n="31" title="Release-Text">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Ein Eintrag unter «Versionen» (#408): das Thema des Releases als Titel in{" "}
           <code>type-title-large</code> (ohne «KiFu X.Y.Z -», das die Metazeile schon sagt), darunter
@@ -3350,6 +3263,61 @@ export default function Styleguide() {
           </header>
           <ReleaseText text={BEISPIEL_RELEASE} />
         </article>
+      </Section>
+
+      <Section n="32" title="Kalenderblatt">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Ein Termin wie ein Blatt vom Abreisskalender: Wochentag, grosse Tageszahl, Monat - nie das Jahr,
+          das steht in der Überschrift des Monats (Epic #401). Neu, weil ein Datum als Text in einer Zeile
+          (<code>datumKurz</code>) sich beim Überfliegen nicht finden lässt. Im Trainingsplan steht es links an
+          jeder Terminzeile. Eine leise Tönung sagt, was der Termin trägt (<code>zustand</code>): Training in Primary, noch kein
+          Training in der Warnfarbe - je eine schwache Fläche (12 %) mit der Tageszahl in der Farbe selbst -,
+          ausgefallen grau mit durchgestrichener Zahl, vergangen ohne Training ohne Fläche. Die Farbe trägt
+          den Zustand nie allein, die Zeile daneben sagt ihn in Worten. Heute hebt das Blatt nicht hervor;
+          dafür steht der nächste Termin zuoberst. Wo kein Blatt steht (der nächste Termin), sagt eine
+          Lozenge in derselben Tönung den Zustand: <code>BlattLozenge</code> - Form der Lozenge, Farbe des Blatts.
+        </p>
+        <div className="flex items-start gap-4">
+          <Kalenderblatt datum="2026-10-06" zustand="noch-nicht" />
+          <Kalenderblatt datum="2026-10-08" zustand="training" />
+          <Kalenderblatt datum="2026-10-11" zustand="ausgefallen" />
+          <Kalenderblatt datum="2026-09-30" />
+          <BlattLozenge zustand="noch-nicht" iconBefore={TriangleAlert}>Noch kein Training</BlattLozenge>
+        </div>
+      </Section>
+
+      <Section n="33" title="Mini-Monat">
+        <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+          Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401). Neu, weil kein Baustein ein
+          Kalenderraster kennt. <code>MiniMonat</code> legt um jeden Tag mit Einträgen einen gepunkteten Ring und
+          setzt die Einträge als kleine Badges oben rechts darauf - wie der Punkt an einem Zeichen für
+          Neuigkeiten. Die Zellen sind alle gleich hoch, und jeder Monat zeigt sechs Wochen: Beim Blättern
+          springt die Höhe nicht (wie im Google und Proton Kalender). Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
+          (<code>onWahl</code>), ein leerer Tag ist keiner. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender
+          folgt der Monat der Liste, die Liste aber nicht ihm.
+        </p>
+        <ul className="type-body-medium mb-5 flex max-w-2xl list-disc flex-col gap-2 pl-5 text-on-surface-mittel">
+          <li>
+            <strong>Zustand als Zeichen</strong> - Punkt in Primary (Training), Punkt in der Warnfarbe (noch kein
+            Training), rotes Kreuz (ausgefallen); vergangen ohne Training zeigt nur den Ring. Die beiden Punkte unterscheidet
+            bewusst nur die Farbe, damit das Gelb auffällt. Eine Legende gibt es nicht: Die Liste daneben
+            trägt dieselben Farben, und vorgelesen wird jeder Zustand beim Namen.
+          </li>
+          <li>
+            <strong>Mehr als zwei</strong> - zwei Badges oben rechts, das zweite halb hinter dem ersten, und
+            «+n» unten rechts am Ring; die übrigen stehen in der Liste.
+          </li>
+          <li>
+            <strong>Zielgrösse</strong> - geklickt wird der ganze Tag (36 px hoch), nicht das einzelne Badge,
+            das dafür zu klein wäre (WCAG 2.5.8).
+          </li>
+          <li>
+            <strong>Belegt</strong> - der Ring ohne Badge: Dort liegt etwas, das der Monat nicht zeigt (bei
+            «Meine Termine» die Termine anderer), oder nur Vergangenes ohne Training. Heute trägt die Zahl auf
+            Primary, ohne Ring.
+          </li>
+        </ul>
+        <MiniMonatDemo />
       </Section>
     </Seitenrahmen>
   );

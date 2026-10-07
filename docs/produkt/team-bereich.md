@@ -50,8 +50,8 @@ Brotkrumen führen entsprechend zurück: über das Team in die Teamübersicht, u
 dorthin, wo das Training tatsächlich liegt. Ein Team-Training ohne Termin führt über eine Stufe
 „Trainings" in den Bestand des Teams; ein eingeplantes trägt stattdessen sein Termindatum im
 Namen, und die Stufe des Teams führt direkt in den Trainingsplan — eine eigene Plan-Stufe gibt
-es nicht, weil das Team ohnehin dort beginnt. Wird ein Training einem Termin zugeordnet oder
-von ihm gelöst, wechselt das Ziel beim nächsten Aufruf entsprechend.
+es nicht, weil das Team ohnehin dort beginnt. Ein Termin-Training (siehe „Trainings
+zuordnen") trägt immer sein Termindatum.
 
 Ein persönliches oder öffentliches Training führt unverändert in die Trainingsübersicht — auch
 die persönliche Kopie, die beim Übernehmen eines Team-Trainings entsteht.
@@ -91,63 +91,58 @@ Felder und Spielerzahl stehen.
 
 Ändern lassen sich Datum, Beginn, Ende, Ort, Bemerkung, Felder und erwartete Spielerzahl
 jederzeit, auch an vergangenen Terminen; Felder und Spielerzahl lassen sich auch wieder
-entfernen. Beginn und Ende lassen sich nicht leeren. Termine aus der Zeit vor dem Kalender sind
-unverändert übernommen, mit Training, Datum, Beginn, Ort und Bemerkung; ihnen fehlt das Ende,
-manchen auch der Beginn. Das steht sichtbar am Termin — „Ende fehlt" oder „Zeit fehlt" — und
-lässt sich ergänzen; wer an einem solchen Termin nur den Ort oder das Datum ändert, muss die
-Zeit dafür nicht nachtragen. Wer sie aber ändert, gibt danach Beginn und Ende an.
+entfernen. Beginn und Ende hat jeder Termin; sie lassen sich ändern, aber nicht leeren. Termine
+aus der Zeit vor dem Kalender, die ohne Ende übernommen worden waren, dauern seit dem 6. Oktober
+2026 90 Minuten ab ihrem Beginn; die wenigen ganz ohne Zeit stehen von 18:00 bis 19:30.
 
 Ein Termin lässt sich entfernen; die Rückfrage dazu nennt das Training, das er trägt, und sagt,
-dass es ohne Termin im Team-Bestand bleibt. Umgekehrt bleibt ein Termin bestehen, wenn sein
-Training gelöscht wird — der Löschdialog sagt auch das —, und steht danach ohne Training im
-Plan. Ein Training geht auf keinem Weg verloren, weil sein Termin wegfällt, und kein Termin,
-weil sein Training wegfällt.
+was mit ihm geschieht: Ein Termin-Training wird mitgelöscht, ein älteres Training aus dem
+Bestand bleibt dort. Umgekehrt bleibt ein Termin bestehen, wenn sein Training gelöscht wird —
+der Löschdialog sagt auch das —, und steht danach ohne Training im Plan.
 
 Termine gibt es nur im Team. Wer kein Team hat, führt keinen Kalender.
 
 ## Trainings zuordnen
 
 Ein Training kommt ausschliesslich über einen bestehenden Termin auf ein Datum. Ein Termin
-trägt höchstens ein Training, und ein Training ist höchstens für einen Termin eingeplant.
-Zugeordnet wird von beiden Seiten: am Termin über „Training zuordnen" oder vom Training im
-Team-Bestand aus über „Termin zuordnen".
+trägt höchstens ein Training. Zugeordnet wird von beiden Seiten: am Termin über „Training
+hinzufügen" bzw. „Training ersetzen" oder vom Training im Team-Bestand aus über „Termin
+zuordnen".
 
-Am Termin stehen zuerst die Trainings des Team-Bestands, die noch nicht eingeplant sind, danach
-die eingeplanten mit dem Datum ihres Termins. Darunter, unter „Meine Trainings", stehen
-die eigenen persönlichen Trainings beider Altersstufen, Entwürfe wie öffentliche. Vom Training
-aus steht jeder Termin des Teams zur Wahl, auch vergangene, ausser dem, den es schon trägt, und
-ausser ausgefallenen; bei jedem steht seine Zeit und ob er ein Training trägt und welches.
+Was immer man zuordnet, der Termin bekommt still eine eigene Kopie, ein Termin-Training — ohne
+Rückfrage, ob kopiert oder verschoben werden soll. Die Quelle bleibt unverändert, wo sie ist;
+dasselbe Training lässt sich beliebig vielen Terminen zuordnen, auch vergangenen. Ein
+Termin-Training gehört dem Team: Alle Mitglieder sehen, ändern und führen es durch. In den
+Team-Bestand kommt es nicht — dorthin kommt ein Training nur bewusst, etwa über „In den
+Team-Bestand kopieren" hinter den drei Punkten des Termin-Trainings; das Original bleibt dabei
+am Termin. Eine Kopie heisst wie ihr Original und ist so vollständig wie jede andere Kopie im
+Team — Gruppen, Verteilung, Notizen und sämtliche Varianten des Hauptteils sind darin dieselben.
+Danach ist sie eigenständig: Eine Anpassung für nächste Woche verändert die Einheit von letzter
+Woche nicht.
 
-Ist das gewählte Team-Training schon für einen anstehenden Termin eingeplant, ist zu wählen:
-eine eigenständige Kopie für diesen Termin, oder das Training auf ihn verschieben, sodass der
-bisherige Termin ohne Training zurückbleibt. Gehört es zu einem vergangenen Termin, entsteht
-immer eine Kopie; die Vergangenheit bleibt bei dem Stand, mit dem sie stattfand. Eine Kopie
-heisst wie ihr Original und ist so vollständig wie jede andere Kopie im Team — Gruppen,
-Verteilung, Notizen und sämtliche Varianten des Hauptteils sind darin dieselben. Danach ist sie
-eigenständig: Eine Anpassung für nächste Woche verändert die Einheit von letzter Woche nicht.
+Am Termin stehen die Trainings des Team-Bestands zur Wahl und darunter, unter „Meine
+Trainings", die eigenen persönlichen Trainings beider Altersstufen, Entwürfe wie öffentliche.
+Vom Training aus steht jeder Termin des Teams zur Wahl, auch vergangene, ausser ausgefallenen;
+bei jedem steht seine Zeit und ob er ein Training trägt und was mit ihm geschähe. Den Weg gibt
+es auch vom persönlichen Training aus: Hinter den drei Punkten liegt „Einem Team-Termin
+zuordnen", das erst nach dem Team fragt, sofern man in mehreren ist, und dann nach dem Termin.
+Übernommen wird das Training in dem Stand, den es beim Zuordnen hat. Erfüllt es die Bedingungen
+eines Team-Trainings nicht, lehnt die Anwendung ab und nennt den Grund. Ein öffentliches
+Training einer anderen Person lässt sich erst zuordnen, nachdem man es zu sich oder ins Team
+übernommen hat.
 
-Ein persönliches Training kommt immer als Kopie ins Team des Termins. Vor dem Zuordnen sagt die
-Anwendung, dass eine Kopie im Team entsteht, dass spätere Änderungen am Original nicht auf sie
-wirken und dass alle Mitglieder sie sehen und bearbeiten können. Das Original bleibt
-unverändert und ohne Verbindung zur Kopie; wer dasselbe persönliche Training ein weiteres Mal
-zuordnet, erzeugt eine weitere Kopie. Den Weg gibt es auch vom persönlichen Training aus: Hinter
-den drei Punkten liegt „Einem Team-Termin zuordnen", das erst nach dem Team fragt, sofern man in
-mehreren ist, und dann nach dem Termin. Übernommen wird das Training in dem Stand, den es beim
-Zuordnen hat. Erfüllt es die Bedingungen eines Team-Trainings nicht, lehnt die Anwendung ab und
-nennt den Grund. Ein öffentliches Training einer anderen Person lässt sich erst zuordnen,
-nachdem man es zu sich oder ins Team übernommen hat.
+Ein Termin-Training lebt mit seinem Termin. Verliert es ihn — weil man es löst, ein anderes
+Training an seine Stelle setzt, den Termin entfernt oder eine Serienänderung den Termin
+entfallen lässt —, wird es gelöscht. Die Dialoge sagen das vorher; „Training lösen" fragt
+eigens nach. Ein Training, das vor dem 6. Oktober 2026 direkt einem Termin zugeordnet wurde,
+steht weiter im Bestand und bleibt dort, wenn es seinen Termin verliert. Zuordnen, ersetzen
+und lösen geht auch an vergangenen Terminen. Scheitert eine Zuordnung, nachdem schon eine Kopie
+entstanden ist, räumt die Anwendung die Kopie wieder weg; gelingt das nicht vollständig, nennt
+die Meldung die unvollständige Kopie, die dann im Team-Bestand steht.
 
-Trägt der Termin schon ein Training, ersetzt das neue es; der Dialog nennt vorher, welches
-Training ohne Termin im Team-Bestand bleibt. Lösen lässt sich ein Training ebenfalls: Der
-Termin bleibt dann ohne Training im Plan, das Training ohne Termin im Bestand. Zuordnen,
-ersetzen und lösen geht auch an vergangenen Terminen. Scheitert eine Zuordnung, nachdem schon
-eine Kopie entstanden ist, räumt die Anwendung die Kopie wieder weg; gelingt das nicht
-vollständig, nennt die Meldung die unvollständige Kopie, die im Team-Bestand stehen blieb.
-
-Ein eingeplantes Team-Training trägt sein Termindatum sichtbar mit sich: an seinem Eintrag im
-Trainingsbestand des Teams als Plakette „Eingeplant" mit dem Datum und in den Brotkrumen,
-solange es geöffnet ist. Die Schreibweise ist überall dieselbe wie im Trainingsplan, etwa
-„Mi., 23.09.2026".
+Ein Training mit Termin trägt sein Termindatum in den Brotkrumen, solange es geöffnet ist, in
+derselben Schreibweise wie im Trainingsplan, etwa „Mi., 23.09.2026". Ältere Bestands-Trainings
+mit Termin zeigen es im Bestand zusätzlich als Plakette „Eingeplant".
 
 ## Terminserien
 
@@ -214,7 +209,8 @@ Ein Serientermin lässt sich nur für sich, für sich und alle folgenden oder mi
 entfernen; „dieser und alle folgenden" beendet die Serie davor, „alle" entfernt auch die
 vergangenen Termine. Wo Termine entfallen — beim Entfernen immer, beim Ändern nur dann —, ist
 das zu bestätigen. Die Rückfrage nennt vorher jeden entfallenden Termin, der ein Training
-trägt, und sagt, dass dessen Training ohne Termin im Team-Bestand bleibt; Termine ohne
+trägt, und sagt, was mit dessen Training geschieht — ein Termin-Training wird mitgelöscht, ein
+älteres Training aus dem Bestand bleibt dort; Termine ohne
 Training, mit Verantwortlichen oder mit abweichenden Angaben nennt sie nicht, eine Anzahl auch
 nicht. Geändert oder entfernt werden entweder alle betroffenen Termine oder keiner.
 
@@ -226,8 +222,8 @@ Mitglied darf sich selbst und andere eintragen, ändern und entfernen, auch an v
 Terminen, und ein Termin darf ohne Verantwortliche sein. Neu eintragen lassen sich nur
 aktuelle Mitglieder; ist eine gewählte Person inzwischen nicht mehr im Team, lehnt die
 Anwendung ab und sagt es. Angezeigt werden Verantwortliche immer mit ihrem aktuellen
-Anzeigenamen — im Trainingsplan, im Monatsüberblick beim geöffneten Termin und in der
-Durchführen-Ansicht.
+Anzeigenamen — im Trainingsplan, wo man selbst zuerst und mit „(du)" steht, beim Ändern eines
+Termins und in der Durchführen-Ansicht.
 
 Eine Serie gibt ihren Terminen Verantwortliche vor. Ein einzelner Termin kann abweichende
 haben, auch keine, und lässt sich danach wieder den Verantwortlichen der Serie folgen lassen.
@@ -236,8 +232,10 @@ gewählten Reichweite ohne abweichende Verantwortliche, und in jedem Fall der ge
 alle folgenden" teilt auch hier die Serie.
 
 Mit „Meine Termine" grenzt sich der Trainingsplan auf die Termine ein, für die man selbst
-verantwortlich ist, anstehende wie vergangene. Die Eingrenzung bleibt beim Wechsel zwischen
-Liste und Monatsüberblick bestehen und fällt weg, sobald man das Team erneut öffnet.
+verantwortlich ist, anstehende wie vergangene; auch der nächste Termin ist dann der nächste
+eigene. Der Monat neben den Terminen zeigt nur noch die eigenen, und Tage, an denen nur Termine
+anderer liegen, tragen dort nur den Kreis, ohne Zeichen: belegt. Die Eingrenzung steht in der Adresse und
+fällt weg, sobald man das Team erneut öffnet.
 
 Wer das Team verlässt oder daraus entfernt wird, verschwindet aus allen anstehenden Terminen und
 Serien des Teams. An vergangenen Terminen bleibt sein Eintrag mit dem aktuellen Anzeigenamen
@@ -251,70 +249,93 @@ Mitglieder aus ihm weg.
 
 Fällt ein Training aus, bleibt der Termin bestehen und wird als ausgefallen markiert, auf Wunsch
 mit einem Grund von höchstens 500 Zeichen; das geht auch nachträglich an einem vergangenen
-Termin. Im Plan steht er mit der Plakette „Ausgefallen" und dem Grund darunter. Ein
-ausgefallener Termin gilt nicht als unvorbereitet und nimmt auf keinem Weg ein Training an;
-trug er eines, wird es gelöst und bleibt ohne Termin im Team-Bestand — ohne Vorankündigung,
-die Bestätigung meldet nur den Ausfall. Verantwortliche, Bemerkung, Felder, erwartete
-Spielerzahl und Serienzugehörigkeit bleiben am Termin.
+Termin. Im Plan steht er mit der Plakette „Ausgefallen" und dem Grund daneben, gekürzt, wenn er
+lang ist; ganz steht er am nächsten Termin und beim Ändern des Termins. Ein
+ausgefallener Termin gilt nicht als unvorbereitet und nimmt kein neues Training an. Trug er
+eines, ruht es am Termin: Der Plan nennt es leise neben dem Ausfall, und es lässt sich öffnen,
+aber nicht durchführen. Verantwortliche, Bemerkung, Felder, erwartete Spielerzahl und
+Serienzugehörigkeit bleiben ebenfalls am Termin.
 
-Den Grund kann man ergänzen, ändern oder leeren, ohne den Ausfall zurückzunehmen. Wird der Ausfall
-zurückgenommen, ist der Termin wieder ein gewöhnlicher Termin ohne Training und ohne Grund; das
-früher gelöste Training kehrt nicht von selbst zurück. Einzeln auf heute oder später verlegt,
-findet ein ausgefallener Termin ebenfalls wieder statt; auf einen vergangenen Tag verlegt oder
+Den Grund kann man ergänzen, ändern oder leeren, ohne den Ausfall zurückzunehmen — über „Grund
+ändern" oder direkt beim Ändern des Termins. Er gilt immer nur für diesen Termin, auch in einer
+Serie. Wird der Ausfall
+zurückgenommen, ist der Termin wieder ein gewöhnlicher Termin ohne Grund, mit dem Training, das
+an ihm ruhte. Einzeln auf heute oder später verlegt,
+findet ein ausgefallener Termin ebenfalls wieder statt, und der Dialog sagt das vor dem
+Speichern; auf einen vergangenen Tag verlegt oder
 durch den Wochentag-Tausch seiner Serie verschoben, bleibt er ausgefallen. Ändern und
 entfernen lässt er sich wie jeder andere Termin, und Serienänderungen behandeln ihn wie jeden
 anderen Termin der Serie. In den Zahlen des Trainingsplans und in „Meine Termine" zählt er mit.
 
-## Trainingsplan und Monatsüberblick
+## Trainingsplan
 
-Wer ein Team öffnet, landet im Trainingsplan, und zwar in der Liste. Zuoberst steht, was
-ansteht, chronologisch aufsteigend; darunter der Rückblick, die jüngste Einheit zuerst. Er
-beginnt zusammengefasst und nennt seine Anzahl, damit eine Saison Vergangenheit nicht verdeckt,
-was als Nächstes vorzubereiten ist — steht gar nichts mehr an, ist er von Beginn an offen.
-Vergangene Einträge bleiben zusätzlich gedämpft, damit sie auch weit unten im Rückblick als
-solche erkennbar sind.
+Wer ein Team öffnet, landet im Trainingsplan. Zuoberst steht, was ansteht, chronologisch
+aufsteigend; darunter der Rückblick, die jüngste Einheit zuerst. Er beginnt zusammengefasst und
+nennt seine Anzahl, damit eine Saison Vergangenheit nicht verdeckt, was als Nächstes
+vorzubereiten ist — steht gar nichts mehr an, ist er von Beginn an offen. Vergangene Einträge
+bleiben zusätzlich gedämpft, damit sie auch weit unten im Rückblick als solche erkennbar sind.
 
 Die Grenze zwischen den Abschnitten liegt am Tagesende, gemessen an der Schweizer Zeit: Die
 Einheit von heute Abend bleibt den ganzen Tag oben, auch während sie läuft und auch, wenn ihr
 Ende schon vorüber ist. Das Ende des Termins zählt dafür bewusst nicht.
 
-Jeder Termin zeigt Datum, Zeit, Ort, die Serie, die Verantwortlichen und die Bemerkung, dazu
-knapp in einer Zeile Platz und erwartete Spielerzahl, soweit erfasst — ein einzelnes Feld mit
-Grösse und Untergrund, mehrere als Anzahl wie „2 Felder", die Zahl etwa als „12 Spieler:innen";
-was unbekannt ist, steht dort nicht, alle Einzelheiten stehen am geöffneten Termin. Ausserdem
-zeigt er, was er trägt: das Training mit Namen und Alterskategorien, oder — anstehend und ohne Training — die
-Plakette „Noch kein Training". So fällt eine noch nicht vorbereitete Einheit auf, ohne dass man
-einen Termin öffnet. Ein vergangener Termin ohne Training heisst schlicht „Ohne Training"; ob er
-stattgefunden hat, sagt die Anwendung nicht. Trägt ein Termin ein Training, öffnet ein Klick auf
-die Karte das Training; mit der Maus hellt sich die ganze Karte dabei auf, wie eine Trainingskachel.
-Am Termin liegen Durchführen, Training zuordnen
-oder ersetzen und in einem Menü die übrigen Handgriffe: Termin ändern, Training lösen,
-Ausfallen lassen oder — bei einem ausgefallenen — Grund ändern und Ausfall zurücknehmen, und
-Termin entfernen. Die Durchführen-Ansicht zeigt, aus dem Plan geöffnet, zuoberst Datum, Zeit,
-Ort, Verantwortliche, erwartete Spielerzahl, Felder und Bemerkung des Termins, jedes Feld mit
-Grösse, Toren je Torart und Untergrund; was zu einem Feld nicht erfasst ist, steht dort
-ausdrücklich als unbekannt.
+Ganz oben steht der nächste Termin als grössere Karte — der erste, der ansteht, auch wenn er
+ausgefallen ist, und bei mehreren am selben Tag der früheste. Sie nennt „Heute" oder „Morgen"
+vor Wochentag und Datum, darunter Zeit und Training, gross genug, dass man beides am Handy beim
+Öffnen ohne Scrollen sieht, und gleich darunter „Durchführen" und „Training öffnen" — ohne
+Training steht an seiner Stelle eine gelbe Plakette „Noch kein Training" in der Farbe der Kalenderblätter — auch der Tag darüber steht dann in diesem Gelb — und als Knopf „Training
+hinzufügen", ausgefallen der vollständige Grund. Darunter stehen alle
+Angaben ungekürzt: Ort, Verantwortliche, erwartete Spielerzahl, jedes Feld mit Grösse, Toren
+je Torart und Untergrund, die Bemerkung und die Wochentage seiner Serie; fehlen Spielerzahl
+oder Felder, steht „Nicht erfasst". Die übrigen Handgriffe liegen in ihrem Menü. In der Liste
+darunter steht er nicht noch einmal, in der Zahl der anstehenden Termine zählt er mit.
 
-Eine eigene Überschrift trägt der Trainingsplan nicht, sie steht schon im Umschalter. Über
-den Terminen liegt eine Zeile: links, wie man den Plan sieht — Liste oder Monat, als zwei
-verbundene Knöpfe mit Zeichen, und die Eingrenzung „Meine Termine" —, rechts „Termin erstellen" und ein Menü mit „Kalender
-abonnieren".
+Die übrigen Termine sind nach Monaten gegliedert, jede Überschrift mit Jahr. Die Termine eines
+Tages stehen zusammen in einer Karte, nach Beginn geordnet, jeder als knappe Zeile mit seinem
+Kalenderblatt links — Wochentag, Tageszahl und Monat, ohne Jahr; den heutigen Tag hebt es nicht
+hervor, dafür steht der nächste Termin zuoberst. Eine leise Tönung des Blatts sagt, was der
+Termin trägt: violett mit Training, gelb noch ohne, grau und durchgestrichen ausgefallen, ohne
+Tönung vergangen ohne Training. Eine Zeile
+zeigt Beginn und Ende, Ort und Platz, die erwartete Spielerzahl, was der Termin trägt und die
+Verantwortlichen. Was zu lang ist, endet in „…" und steht ganz im Hinweis beim Darüberfahren. Der Termin
+trägt das Training mit seinem Namen, oder — anstehend und ohne Training — an dessen Stelle
+gedämpft „Training hinzufügen", wie „Dauer hinzufügen" an einer Übung; ein Klick öffnet das
+Zuordnen. So fällt eine noch nicht vorbereitete Einheit auf und lässt sich sofort vorbereiten. Ein vergangener Termin ohne Training heisst schlicht „Ohne Training"; ob er
+stattgefunden hat, sagt die Anwendung nicht. Bemerkung, Serie und Alterskategorien stehen nicht
+in der Zeile; die Bemerkung und die Serie zeigt der Termin beim Ändern, die Alterskategorien
+das Training selbst. Der Rückblick sieht genauso aus.
 
-Neben der Liste steht der Monatsüberblick, umgeschaltet über die beiden Knöpfe Liste und Monat. Er zeigt einen
-Monat in Wochen von Montag bis Sonntag, samt den Randtagen der Nachbarmonate, und hebt den
-heutigen Tag hervor. Mit den Pfeilen geht es zu früheren und späteren Monaten, mit „Heute"
-zurück zum aktuellen, bestimmt nach dem Kalendertag in der Schweiz. Jeder Termin eines Tages
-steht einzeln mit seinem Beginn und dem Namen seines Trainings, oder mit „Noch kein Training"
-(anstehend, orange hinterlegt), „Ohne Training" (vergangen, leise) oder „Ausgefallen"
-(durchgestrichen); fehlt der Beginn, steht „Zeit fehlt". Eine Woche ganz ohne Termin ist
-gestrichelt umrandet. Ein Klick öffnet den Termin mit denselben Angaben und Handgriffen wie in
-der Liste. Ein Klick auf die freie Fläche eines Tages öffnet „Termin erstellen" mit dem Tag als
-Datum vorbelegt; mit der Maus hebt sich der Tag dabei ab und zeigt oben rechts ein Plus, am Handy
-genügt ein Tipp. Wer „Wiederholender Termin" ankreuzt, macht den Tag zum Beginndatum einer
-Terminserie. Beide Ansichten zeigen dieselben Termine,
-jede Änderung erscheint sofort in beiden, und die Bestätigung kommt auch dann, wenn das
-Ergebnis ausserhalb des gezeigten Monats oder der Eingrenzung liegt. Liste und Monat lassen
-sich am Handy ebenso bedienen wie am Desktop; schmal scrollt der Monat in sich waagrecht.
+Ein Klick auf die Zeile öffnet „Termin ändern", ein Klick auf den Trainingsnamen das Training.
+An der Zeile liegen Durchführen, Training ersetzen — vergangen ohne Training: zuordnen — und in einem Menü die übrigen
+Handgriffe: Termin ändern, Training lösen, Ausfallen lassen oder — bei einem ausgefallenen —
+Grund ändern und Ausfall zurücknehmen, und Termin entfernen. Die Durchführen-Ansicht zeigt, aus
+dem Plan geöffnet, zuoberst Datum, Zeit, Ort, Verantwortliche, erwartete Spielerzahl, Felder
+und Bemerkung des Termins, jedes Feld mit Grösse, Toren je Torart und Untergrund; was zu einem
+Feld nicht erfasst ist, steht dort ausdrücklich als unbekannt.
+
+Eine eigene Überschrift trägt der Trainingsplan nicht, sie steht schon im Umschalter der
+Team-Ansichten. Über den Terminen liegt eine Zeile: links die Eingrenzung „Meine Termine",
+rechts „Termin erstellen" und ein Menü mit „Kalender abonnieren". „Termin erstellen" belegt
+kein Datum vor.
+
+Auf breiten Bildschirmen, ab etwa der Breite eines Tablets im Querformat, steht rechts neben
+den Terminen ein Monat und bleibt beim Scrollen stehen. Er zeigt Monat und Jahr, die Wochen von
+Montag bis Sonntag samt den Randtagen der Nachbarmonate — immer sechs Wochen, damit er beim
+Blättern nicht in der Höhe springt — und hebt den heutigen Tag hervor. Ein Tag
+mit Terminen trägt einen gepunkteten Kreis um die Zahl, und seine Termine sitzen als kleine Zeichen
+oben rechts auf dem Kreis, das zweite halb hinter dem ersten; jedes sagt, was der Termin ist: ein violetter Punkt für ein Training,
+ein gelber für „Noch kein Training", ein rotes Kreuz für ausgefallen; ein vergangener Termin ohne
+Training zeigt nur den Kreis. Eine Legende gibt es nicht. Trägt ein Tag mehr als zwei Termine, steht unten
+rechts am Kreis „+" mit der Zahl der weiteren. Wie im Google Kalender folgt der Monat der Liste: Er
+zeigt den Monat des obersten Termins, den man gerade sieht. Mit den Pfeilen und „Heute"
+wechselt nur der Monat, die Liste bleibt stehen, bis man wieder scrollt. Ein Klick auf einen
+Tag mit Terminen führt in der Liste zu seinem ersten Termin, beim nächsten Termin zur Karte
+zuoberst, bei einem vergangenen in den Rückblick, der dafür aufgeht; die weiteren Termine des
+Tages folgen direkt darunter. Ein Tag ohne Termin reagiert nicht; anlegen
+lässt sich aus dem Monat nichts. Am Handy gibt es den Monat nicht, ebensowenig auf Papier.
+
+Jede eigene Änderung erscheint sofort in der Liste, am nächsten Termin und im Monat, und die
+Bestätigung kommt auch dann, wenn das Ergebnis ausserhalb der Eingrenzung liegt.
 
 ## Kalender-Abo
 
@@ -334,8 +355,7 @@ neue Serie übergegangener Termin erscheint genau einmal. Ausgefallene und entfe
 fehlen. Von einem Termin gelangen nur der Titel „Training · Teamname", Beginn, Ende, Ort und ein
 Verweis in die Anwendung ins Kalenderprogramm — kein Trainingsname, keine Verantwortlichen,
 keine Bemerkung, weder Felder noch erwartete Spielerzahl. Die Zeiten gelten als Schweizer Zeit, auch über die Zeitumstellung hinweg und
-auf einem Gerät in einer anderen Zeitzone. Ein übernommener Termin ohne Ende erscheint mit 90
-Minuten ab Beginn, einer ohne Beginn als ganztägiger Eintrag.
+auf einem Gerät in einer anderen Zeitzone.
 
 Der Verweis im Kalendereintrag führt, nach einer Anmeldung falls nötig, zum Termin im
 Trainingsplan und hebt ihn hervor, auch wenn er im Rückblick liegt. Gibt es den Termin nicht
@@ -351,8 +371,7 @@ neuen Link holt man sich jederzeit wieder im Trainingsplan.
 
 Alle Mitglieder arbeiten am selben Kalender. Hat ein anderes Mitglied seit der eigenen Auswahl
 etwas geändert, das das Ergebnis oder die vorherige Auskunft verändert — etwa den Termin
-entfernt, ihm ein anderes Training zugeordnet oder sein Training gelöst, das gewählte Training
-anderswo eingeplant, den Ausfall gesetzt oder zurückgenommen, die Serie geändert oder verändert,
+entfernt, ihm ein anderes Training zugeordnet oder sein Training gelöst, den Ausfall gesetzt oder zurückgenommen, die Serie geändert oder verändert,
 welche entfallenden Termine ein Training tragen —, lehnt die Anwendung ab und nennt den Grund,
 etwa „Seit deiner Auswahl hat sich geändert, welche wegfallenden Termine ein Training tragen."
 Der Dialog schliesst dann, der Plan zeigt den neuen
@@ -412,17 +431,18 @@ Felds, ohne Knopf und ohne Rückfrage; eine kurze Meldung am Bildschirmrand sagt
 geklappt hat. Ein leerer Name wird nicht gespeichert: Das Feld fällt auf den bisherigen Namen
 zurück, und die Meldung sagt warum. Dasselbe gilt, wenn das Speichern scheitert.
 
-Jede Ansicht hat ihre eigene Adresse, auch die Liste und der Monat des Trainingsplans samt dem
-gezeigten Monat und der Eingrenzung auf die eigenen Termine. Sie lässt sich einem Mitglied
+Jede Ansicht hat ihre eigene Adresse, der Trainingsplan samt der Eingrenzung auf die eigenen
+Termine; der gezeigte Monat steht nicht darin. Adressen des früheren Monatsüberblicks führen in
+den Trainingsplan, wie er sich sonst öffnet, die Eingrenzung bleibt. Eine Adresse lässt sich einem Mitglied
 schicken, als Lesezeichen ablegen, und der Zurück-Schritt des Browsers führt in die zuvor
 geöffnete Ansicht. Wer eine Adresse eines Teams aufruft, in dem er nicht ist, landet in der
 Teamübersicht — ob es das Team nicht gibt oder ob er nicht dazugehört, bleibt
 ununterscheidbar.
 
 Eine Handlung bleibt in der Ansicht, in der sie ausgelöst wurde, und meldet ihr Ergebnis dort:
-Wer im Trainingsbestand ein Training einem Termin zuordnet, bleibt im Bestand und sieht die
-Plakette „Eingeplant" am Training. Nach dem Löschen eines Team-Trainings kehrt die Ansicht in die
-Trainings zurück.
+Wer im Trainingsbestand ein Training einem Termin zuordnet, bleibt im Bestand; das Training
+dort bleibt unverändert. Nach dem Löschen eines Team-Trainings kehrt die Ansicht in die
+Trainings zurück, nach dem Löschen eines Trainings mit Termin in den Trainingsplan.
 
 ## Bekannte Grenzen
 
@@ -471,16 +491,23 @@ Serie abweichen, zeigt erst der geöffnete Termin. Ausfallgründe sind frei form
 die Anwendung nicht. Ob Altersstufe oder Inhalt eines Trainings zum Termin passen, prüft sie
 nicht, und ob und wie oft ein persönliches Training schon einem Termin zugeordnet wurde, steht
 nirgends. Bricht die Verbindung mitten im Kopieren ohne Rückmeldung ab, kann eine unvollständige
-Kopie unbemerkt im Team-Bestand stehen bleiben.
+Kopie unbemerkt im Team-Bestand stehen bleiben. Ein Termin-Training ist nur über seinen Termin
+erreichbar; einmal gelöscht, lässt es sich nicht wiederherstellen, und ein Ausfall oder ein
+gelöstes Training lassen sich nicht rückgängig machen, ausser über eine neue Zuordnung.
 
-Eine Tages- oder Wochenansicht gibt es nicht; für die nächsten Wochen dient die Liste. Der
-Monatsüberblick zeigt Ende, Ort, Verantwortliche, Serie, Platz, erwartete Spielerzahl und
-Ausfallgrund erst am geöffneten Termin, und Termine lassen sich dort nicht durch Ziehen verschieben. Wer vom Monat in die Liste
-und zurück wechselt, landet wieder im aktuellen Monat. Die Liste lässt sich nicht durchsuchen
+Eine Tages- oder Wochenansicht gibt es nicht; für die nächsten Wochen dient die Liste, und sie
+ist nicht nach Wochen gegliedert. Der Monat neben den Terminen zeigt weder Zeiten noch Namen; trägt ein Tag mehr als zwei Termine, stehen die
+Zustände der weiteren nur in der Liste. Termine lassen sich dort nicht durch Ziehen
+verschieben, und weder die Zurück-Taste noch eine geteilte Adresse führen zu einem gezeigten
+Monat. Am Handy fehlt der Monat ganz; wer dort weiter vorausplant, scrollt die Liste. Der
+nächste Termin nennt kein Jahr und keine Restzeit bis zum Beginn, und dass am selben Tag
+weitere Termine liegen, zeigt nur die Liste. Die Anwendung kennt keine Ferien: Ein Serientermin
+in den Ferien, der nicht als ausgefallen markiert ist, gilt als nächster Termin und als belegter
+Tag. Die Liste lässt sich nicht durchsuchen
 und nur auf die eigenen Termine eingrenzen, nicht auf einen Zeitraum. Ein Archivieren
-vergangener Einheiten gibt es nicht: Der Rückblick fasst sie zusammen, der Trainingsbestand
-wächst mit jeder Kopie weiter. Mehrere Kopien desselben Trainings heissen alle gleich; eingeplante
-lassen sich im Bestand am Termindatum auseinanderhalten, nicht eingeplante dagegen nicht.
+vergangener Einheiten gibt es nicht: Der Rückblick fasst sie zusammen. Mehrere Kopien desselben
+Trainings heissen alle gleich; im Bestand lassen sich nur ältere eingeplante am Termindatum
+auseinanderhalten.
 
 Wie oft ein Kalenderprogramm das Abo abruft, bestimmt das Programm, nicht die Anwendung; eine
 Änderung kann dort deshalb erst nach einer Weile erscheinen, und ob ein Programm nach dem

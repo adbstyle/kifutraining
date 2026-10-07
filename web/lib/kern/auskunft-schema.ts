@@ -163,8 +163,8 @@ function baueSchema(streng: boolean) {
     termin: obj({
       id: z.string(),
       datum: z.string(),
-      beginn: z.string().nullable(),
-      ende: z.string().nullable(),
+      beginn: z.string(),
+      ende: z.string(),
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
       /** Die Felder des Platzes (#389 AK 13, 14); `null` = unbekannt. */
@@ -178,8 +178,8 @@ function baueSchema(streng: boolean) {
       verantwortliche: z.array(
         obj({ id: z.string().nullable(), anzeigename: z.string().nullable(), ehemalig: z.boolean() }),
       ),
-      /** Ein Training trägt nie einen ausgefallenen Termin (#327 AK 9); die
-       *  Felder stehen trotzdem in jeder Auskunft, damit die Gestalt einheitlich bleibt. */
+      /** Ein ausgefallener Termin behält sein Training, es ruht dann an ihm
+       *  (PO 2026-10-06). */
       ausgefallen: z.boolean(),
       ausfall_grund: z.string().nullable(),
       anstehend: z.boolean(),

@@ -1,6 +1,6 @@
 export { Button, ButtonLink, buttonClasses } from "./Button";
-export { ButtonGroup, segmentClasses } from "./ButtonGroup";
-export { Lozenge, HerkunftLozenge, SichtbarkeitLozenge, KategorieLozenge, Badge, lozengeFarben } from "./Lozenge";
+export { ButtonGroup } from "./ButtonGroup";
+export { Lozenge, HerkunftLozenge, SichtbarkeitLozenge, KategorieLozenge, Badge } from "./Lozenge";
 export {
   FilterChip,
   ChoiceChip,
@@ -11,7 +11,9 @@ export {
   chipTextSelected,
 } from "./Chip";
 export { Card } from "./Card";
-export { Monatsraster } from "./Monatsraster";
+export { BlattLozenge, Kalenderblatt } from "./Kalenderblatt";
+export { MiniMonat, MARKEN_TEXT } from "./MiniMonat";
+export type { Marke, MarkenZustand } from "./MiniMonat";
 export { AuswahlListe } from "./AuswahlListe";
 export type { AuswahlEintrag } from "./AuswahlListe";
 export { FormAbschnitt } from "./FormAbschnitt";

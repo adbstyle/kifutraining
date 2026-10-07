@@ -11,12 +11,14 @@ import {
 import { TERMIN_TEXT, istKalendertag, leerZuNull, textProblem, zeitProblem } from "@/lib/termin";
 import type { FeldEingabe } from "@/lib/termin-felder";
 import { pruefeTeamMitglied } from "@/lib/kern/zugriff";
+import { raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
 import {
   TERMIN_FELD,
   aendereTermin,
   pruefeFelder,
   spielerzahlFehler,
   entferneTermin,
+  type Verlassen,
   bereinigeVerantwortliche,
   kalenderFehler,
   ladeTermin,
@@ -112,8 +114,9 @@ export type SerienAenderung = {
 export type EntfallenderTermin = {
   terminId: string;
   datum: string;
-  beginn: string | null;
-  training: { id: string; name: string };
+  beginn: string;
+  /** `terminTraining`: Es geht mit dem Termin; sonst bleibt es im Bestand. */
+  training: { id: string; name: string; terminTraining: boolean };
 };
 
 export type SerienFolge = {
@@ -134,16 +137,21 @@ export type SerienFolge = {
 type Roh = {
   serie: string | null;
   version_vorher: number;
-  entfallend: { id: string; datum: string; beginn: string | null; training: { id: string; name: string } }[];
+  entfallend: { id: string; datum: string; beginn: string; training: { id: string; name: string } }[];
   entfallend_anzahl: number;
   vergangene: number;
 };
 
-function folge(r: Roh, teamId: string): SerienFolge {
+function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): SerienFolge {
   return {
     serieId: r.serie,
     versionVorher: r.version_vorher,
-    entfallend: r.entfallend.map((x) => ({ terminId: x.id, datum: x.datum, beginn: x.beginn, training: x.training })),
+    entfallend: r.entfallend.map((x) => ({
+      terminId: x.id,
+      datum: x.datum,
+      beginn: x.beginn,
+      training: { ...x.training, terminTraining: terminTrainings.has(x.training.id) },
+    })),
     entfallendAnzahl: r.entfallend_anzahl,
     vergangene: r.vergangene,
     teamId,
@@ -160,9 +168,24 @@ type Lauf = {
 
 type RpcAntwort = { data: unknown; error: { message: string; code?: string } | null };
 
+/** Welche Trainings dieser Termine Termin-Trainings sind — sie gehen mit
+ *  ihrem Termin (PO 2026-10-06), die übrigen bleiben im Bestand. */
+async function terminTrainingsDerTermine(supabase: SupabaseClient, terminIds: readonly string[]): Promise<Set<string>> {
+  if (terminIds.length === 0) return new Set();
+  const { data } = await supabase
+    .from("training_termine")
+    .select("training_id, trainings!inner ( termin_training )")
+    .in("id", terminIds)
+    .eq("trainings.termin_training", true);
+  return new Set((data ?? []).map((z) => z.training_id as string));
+}
+
 /** Vorschau, KI-Bestätigung und Ausführung — für Ändern und Entfernen
- *  derselbe Ablauf. `rpc(ausfuehren, erwartet)` ruft die Hülle der Datenebene. */
+ *  derselbe Ablauf. `rpc(ausfuehren, erwartet)` ruft die Hülle der Datenebene.
+ *  Entfallende Termin-Trainings löscht die Datenebene mit; ihre Bilddateien
+ *  räumt der Lauf danach ab. */
 async function laufe(
+  supabase: SupabaseClient,
   teamId: string,
   lauf: Lauf,
   rpc: (ausfuehren: boolean, erwartet: { version: number; entfallend: string[] } | null) => PromiseLike<RpcAntwort>,
@@ -174,15 +197,19 @@ async function laufe(
   if (lauf.vorschau || !erwartet) {
     const v = await rpc(false, erwartet ?? null);
     if (v.error) return kalenderFehler(v.error);
-    const vorschau = folge(v.data as Roh, teamId);
+    const roh = v.data as Roh;
+    const vorschau = folge(roh, teamId, await terminTrainingsDerTermine(supabase, roh.entfallend.map((x) => x.id)));
     if (lauf.vorschau) return ok(vorschau);
     if (vorschau.vergangene > 0 && !lauf.bestaetigt)
       return fehlschlag("regel", vergangeneBestaetigen(vorschau.vergangene), { feld: "bestaetigt" });
     erwartet = { version: vorschau.versionVorher, entfallend: vorschau.entfallend.map((x) => x.terminId) };
   }
+  const terminTrainings = await terminTrainingsDerTermine(supabase, erwartet.entfallend);
+  const bilder = await terminTrainingBilder(supabase, [...terminTrainings]);
   const r = await rpc(true, erwartet);
   if (r.error) return kalenderFehler(r.error, kiWeg);
-  return ok(folge(r.data as Roh, teamId));
+  await raeumeBilderAb(supabase, bilder);
+  return ok(folge(r.data as Roh, teamId, terminTrainings));
 }
 
 /** Eine Serie ab dem gewählten Termin («dieser und folgende») oder als Ganzes
@@ -258,7 +285,7 @@ export async function aendereSerie(
   if (felder) aenderung.felder = felder.felder;
   if (a.spielerzahl !== undefined) aenderung.spielerzahl = a.spielerzahl;
 
-  return laufe(t.team_id, e, async (ausfuehren, erwartet) =>
+  return laufe(supabase, t.team_id, e, async (ausfuehren, erwartet) =>
     supabase.rpc("terminserie_aendern", {
       p_termin: t.id,
       p_reichweite: e.reichweite,
@@ -281,7 +308,7 @@ export async function entferneSerie(
   if (!geladen.ok) return geladen;
   const t = geladen.wert;
   if (!t.serie_id) return fehlschlag("regel", SERIE_MELDUNG.TERMIN_OHNE_SERIE, TERMIN_FELD);
-  return laufe(t.team_id, e, async (ausfuehren, erwartet) =>
+  return laufe(supabase, t.team_id, e, async (ausfuehren, erwartet) =>
     supabase.rpc("terminserie_entfernen", {
       p_termin: t.id,
       p_reichweite: e.reichweite,
@@ -380,7 +407,7 @@ export async function entferneMitReichweite(
   supabase: SupabaseClient,
   userId: string,
   e: { terminId: string; reichweite?: Reichweite; bestaetigt?: boolean },
-): Promise<KernErgebnis<{ teamId: string; trainingId: string | null; serie: SerienFolge | null }>> {
+): Promise<KernErgebnis<{ teamId: string; training: Verlassen; serie: SerienFolge | null }>> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   const t = geladen.wert;
@@ -400,5 +427,5 @@ export async function entferneMitReichweite(
     reichweite: e.reichweite as "dieser_und_folgende" | "alle",
     bestaetigt: e.bestaetigt,
   });
-  return r.ok ? ok({ teamId: r.wert.teamId, trainingId: null, serie: r.wert }) : r;
+  return r.ok ? ok({ teamId: r.wert.teamId, training: null, serie: r.wert }) : r;
 }

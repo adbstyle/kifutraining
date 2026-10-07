@@ -101,25 +101,14 @@ export function textProblem(f: {
   return null;
 }
 
-/** Was an einem Termin nicht stimmt, sonst `null`.
- *
- *  Ohne `bisher` ist der Termin neu: Datum, Beginn und Ende sind Pflicht
- *  (AK 2, PO 9). Mit `bisher` wird geändert: Eine Zeit, die sich ändert, muss
- *  danach vollständig sein (AK 8, 10); eine unveränderte, unvollständige Zeit
- *  eines übernommenen Termins bleibt stehen (AK 9). `bisher` trägt `HH:MM`. */
+/** Was an einem Termin nicht stimmt, sonst `null`. Datum, Beginn und Ende
+ *  sind an jedem Termin Pflicht (AK 2; Zwilling: NOT NULL und
+ *  `tt_ende_nach_beginn`). */
 export function terminProblem(
   f: { datum?: string | null; beginn?: string | null; ende?: string | null; ort?: string | null; bemerkung?: string | null },
-  bisher?: { beginn: string | null; ende: string | null },
 ): TerminProblem | null {
   if (!istKalendertag(f.datum ?? "")) return { feld: "datum", text: TERMIN_TEXT.datum };
-  const beginn = leerZuNull(f.beginn);
-  const ende = leerZuNull(f.ende);
-  const zeitGeaendert = !bisher || beginn !== bisher.beginn || ende !== bisher.ende;
-  if (zeitGeaendert) {
-    const z = zeitProblem(beginn, ende);
-    if (z) return z;
-  }
-  return textProblem(f);
+  return zeitProblem(f.beginn, f.ende) ?? textProblem(f);
 }
 
 /** Die erwartete Spielerzahl (#390 AK 3): `null` heisst unbekannt, sonst eine
@@ -175,28 +164,21 @@ export function geaenderteFelder(neu: TerminFelder, start: TerminFelder): Partia
   return Object.keys(aenderung).length > 0 ? aenderung : null;
 }
 
-/** Die Erfolgsmeldungen nach dem Zuordnen eines Trainings — Kalender und
- *  Team-Bestand sagen dasselbe. */
-export const ZUORDNEN_ERFOLG = {
-  kopie: "Kopie angelegt und dem Termin zugeordnet.",
-  direkt: "Training zugeordnet.",
-  /** Ein persönliches Training kommt immer als Kopie ins Team (#328 PC 9). */
-  persoenlich: "Kopie im Team angelegt und dem Termin zugeordnet.",
-} as const;
+/** Die Erfolgsmeldung nach dem Zuordnen — von überall dieselbe. Dass der
+ *  Termin still eine eigene Kopie bekommt, sagt sie nicht (PO 2026-10-06). */
+export const ZUORDNEN_ERFOLG = "Training zugeordnet.";
 
-/** Was die Oberfläche vor dem Zuordnen eines persönlichen Trainings sagt
- *  (#328 AK 6): dass eine Kopie entsteht, dass das Original nicht mitzieht
- *  und wer sie sieht. Am Termin und vom Training aus derselbe Satz. */
-export const PERSOENLICH_KOPIE_HINWEIS =
-  "Es entsteht eine Kopie im Team. Spätere Änderungen an deinem Original wirken nicht auf sie, " +
-  "und alle Mitglieder des Teams sehen und bearbeiten sie.";
+/** Was mit einem Training geschieht, das seinen Termin verliert (lösen,
+ *  ersetzen, Termin entfernen, Serienänderung): Ein Termin-Training wird
+ *  gelöscht, ein älteres Training aus dem Bestand bleibt dort (PO 2026-10-06).
+ *  Eine Formulierung für alle Dialoge. */
+export function trainingOhneTermin(terminTraining: boolean): string {
+  return terminTraining ? "wird gelöscht" : "bleibt im Team-Bestand";
+}
 
-/** Die Zeit eines Termins zum Anzeigen: «18:30–20:00», «ab 18:30» für einen
- *  übernommenen Termin ohne Ende, sonst `null` (AK 14, 15). */
-export function zeitText(beginn: string | null, ende: string | null): string | null {
-  if (beginn && ende) return `${beginn}–${ende}`;
-  if (beginn) return `ab ${beginn}`;
-  return null;
+/** Die Zeit eines Termins zum Anzeigen: «18:30–20:00». */
+export function zeitText(beginn: string, ende: string): string {
+  return `${beginn}–${ende}`;
 }
 
 /** Die Sätze zu den Markern der Datenebene (Migration termine_ohne_training)
@@ -207,17 +189,10 @@ export const TERMIN_MELDUNG = {
   TERMIN_BELEGUNG_GEAENDERT:
     "Am Termin hat sich inzwischen etwas geändert: Ihm wurde ein anderes Training zugeordnet " +
     "oder sein Training gelöst. Sieh ihn dir noch einmal an.",
-  TRAINING_EINPLANUNG_GEAENDERT:
-    "Das Training wurde inzwischen einem anderen Termin zugeordnet oder von seinem Termin gelöst. " +
-    "Wähle noch einmal.",
   TERMIN_TRAINING_FREMDES_TEAM:
-    "Einem Termin lassen sich nur Trainings aus dem Bestand seines Teams oder deine persönlichen Trainings zuordnen.",
-  PERSOENLICH_NUR_KOPIE: "Ein persönliches Training lässt sich einem Termin nur als Kopie zuordnen.",
-  TRAINING_SCHON_EINGEPLANT:
-    "Dieses Training ist bereits für einen anstehenden Termin eingeplant. Wähle, ob du es für " +
-    "diesen Termin kopierst oder auf ihn verschiebst.",
-  NUR_KOPIE_BEI_VERGANGENEM:
-    "Ein Training mit vergangenem Termin lässt sich nur kopieren, nicht verschieben.",
+    "Einem Termin lassen sich nur Trainings seines Teams oder deine persönlichen Trainings zuordnen.",
+  /** Rückhalt der Datenebene: Zugeordnet wird nur eine frische Kopie. */
+  TRAINING_SCHON_EINGEPLANT: "Dieses Training gehört schon einem Termin.",
   TERMIN_AUSGEFALLEN:
     "Einem ausgefallenen Termin lässt sich kein Training zuordnen. Nimm den Ausfall zuerst zurück.",
   NICHT_AUSGEFALLEN: "Dieser Termin ist nicht ausgefallen.",
@@ -235,7 +210,6 @@ export type TerminMarker = keyof typeof TERMIN_MELDUNG;
  *  löst beide Tabellen auf. */
 export const KONFLIKT_MARKER: readonly string[] = [
   "TERMIN_BELEGUNG_GEAENDERT",
-  "TRAINING_EINPLANUNG_GEAENDERT",
   "AUSFALL_GEAENDERT",
   "SERIE_GEAENDERT",
   "SERIE_BELEGUNG_GEAENDERT",

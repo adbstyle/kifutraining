@@ -60,18 +60,19 @@ export type TerminZeile = {
   id: string;
   teamId: string;
   datum: string;
-  /** `HH:MM`. Neue Termine tragen Beginn und Ende immer; übernommene können
-   *  ohne sein (#322 PO 9). */
-  beginn: string | null;
-  ende: string | null;
+  /** `HH:MM`; Pflicht an jedem Termin. */
+  beginn: string;
+  ende: string;
   ort: string | null;
   bemerkung: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
   spielerzahl: number | null;
-  /** `null`: Der Termin trägt (noch) kein Training (#322). */
-  training: { id: string; name: string; stufen: KategorieSlug[] } | null;
+  /** `null`: Der Termin trägt (noch) kein Training (#322). `terminTraining`:
+   *  eine Kopie, die mit dem Termin lebt und beim Lösen gelöscht wird; sonst
+   *  ein älteres Training aus dem Bestand (PO 2026-10-06). */
+  training: { id: string; name: string; stufen: KategorieSlug[]; terminTraining: boolean } | null;
   /** `null`: ein einzelner Termin ohne Serie. */
   serie: TerminSerie | null;
   /** Der Tag der Serienregel, für den der Termin angelegt wurde. */
@@ -81,7 +82,7 @@ export type TerminZeile = {
   /** Wer den Termin vorbereitet und leitet (#325), nach Name geordnet,
    *  Einträge gelöschter Konten zuletzt. */
   verantwortliche: Verantwortlicher[];
-  /** Der Termin findet nicht statt (#327); er trägt dann kein Training. */
+  /** Der Termin findet nicht statt (#327); ein Training ruht dann an ihm. */
   ausgefallen: boolean;
   /** Freiwilliger Grund des Ausfalls; nur bei `ausgefallen`. */
   ausfallGrund: string | null;
@@ -102,12 +103,24 @@ export function verantwortlichenNamen(liste: readonly Verantwortlicher[]): strin
   return liste.map((v) => v.name ?? EHEMALIGES_MITGLIED);
 }
 
+/** Die Verantwortlichen zum Anzeigen, aus Sicht des USERS: wer man selbst
+ *  ist, steht zuerst und mit «(du)» — so bleibt es auch in einer gekürzten
+ *  Zeile sichtbar (#402 AK 10, #403 AK 4). */
+export function verantwortlicheMitDir(t: TerminZeile, ich: string): { text: string; selbst: boolean } {
+  const eigene = t.verantwortliche.filter((v) => v.userId === ich);
+  const andere = t.verantwortliche.filter((v) => v.userId !== ich);
+  return {
+    text: [...verantwortlichenNamen(eigene).map((n) => `${n} (du)`), ...verantwortlichenNamen(andere)].join(", "),
+    selbst: eigene.length > 0,
+  };
+}
+
 type RawTermin = {
   id: string;
   team_id: string;
   datum: string;
-  beginn: string | null;
-  ende: string | null;
+  beginn: string;
+  ende: string;
   ort: string | null;
   bemerkung: string | null;
   felder: Felder | null;
@@ -128,7 +141,7 @@ type RawTermin = {
     verantwortlich_name: string | null;
     verantwortlich_ehemalig: boolean;
   }[];
-  trainings: { id: string; name: string; stufen: string[] | null } | null;
+  trainings: { id: string; name: string; stufen: string[] | null; termin_training: boolean } | null;
   termin_serien: {
     id: string;
     version: number;
@@ -151,14 +164,14 @@ type RawTermin = {
  *  MUSS: das Zeitfeld der Oberfläche und die serverseitige Prüfung akzeptieren
  *  ausschliesslich `HH:MM`. Ein roh durchgereichter Wert wird sonst erst beim
  *  Speichern als «ungültige Uhrzeit» abgewiesen. */
-export function kurzeZeit(t: string | null): string | null {
-  return t ? t.slice(0, 5) : null;
+export function kurzeZeit(t: string): string {
+  return t.slice(0, 5);
 }
 
 const TERMIN_SELECT =
   "id, team_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, felder_abweichend, spielerzahl_abweichend, ausgefallen, ausfall_grund, " +
   "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ), " +
-  "trainings ( id, name, stufen ), " +
+  "trainings ( id, name, stufen, termin_training ), " +
   "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, " +
   "termin_serien_verantwortliche ( user_id, verantwortlich_name ) )";
 
@@ -189,7 +202,12 @@ function mapTermin(t: RawTermin): TerminZeile {
     felder: t.felder,
     spielerzahl: t.erwartete_spielerzahl,
     training: t.trainings
-      ? { id: t.trainings.id, name: t.trainings.name, stufen: sortStufen(t.trainings.stufen ?? []) }
+      ? {
+          id: t.trainings.id,
+          name: t.trainings.name,
+          stufen: sortStufen(t.trainings.stufen ?? []),
+          terminTraining: t.trainings.termin_training,
+        }
       : null,
     serie: t.termin_serien
       ? {
@@ -198,8 +216,8 @@ function mapTermin(t: RawTermin): TerminZeile {
           wochentage: t.termin_serien.wochentage as Wochentag[],
           beginnDatum: t.termin_serien.beginn_datum,
           endDatum: t.termin_serien.end_datum,
-          beginn: kurzeZeit(t.termin_serien.beginn)!,
-          ende: kurzeZeit(t.termin_serien.ende)!,
+          beginn: kurzeZeit(t.termin_serien.beginn),
+          ende: kurzeZeit(t.termin_serien.ende),
           ort: t.termin_serien.ort,
           bemerkung: t.termin_serien.bemerkung,
           felder: t.termin_serien.felder,
@@ -254,7 +272,7 @@ const PLAN_OBERGRENZE = 1000;
  *  `heute`, aufsteigend) und vergangen (Datum vor `heute`, absteigend, die
  *  jüngsten zuerst); die Vergangenheit wird danach umgedreht und vorangestellt.
  *  Das Embed holt Training und Serie im selben Rutsch. Sortiert wird in der DB
- *  nach Datum und Beginn (ohne Beginn zuletzt am selben Tag); `created_at` ist
+ *  nach Datum und Beginn; `created_at` ist
  *  der stabile Tiebreaker, damit zwei gleich eingeplante Termine nicht bei
  *  jedem Laden die Plätze tauschen. `teilePlan` ordnet die Vergangenheit
  *  anschliessend selbst. */
@@ -288,13 +306,13 @@ export async function getTeamPlanFuer(
     basis()
       .gte("datum", heute)
       .order("datum", { ascending: true })
-      .order("beginn", { ascending: true, nullsFirst: false })
+      .order("beginn", { ascending: true })
       .order("created_at", { ascending: true })
       .limit(PLAN_OBERGRENZE),
     basis()
       .lt("datum", heute)
       .order("datum", { ascending: false })
-      .order("beginn", { ascending: false, nullsFirst: true })
+      .order("beginn", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(PLAN_OBERGRENZE),
   ]);
@@ -307,7 +325,7 @@ export async function getTeamPlanFuer(
     console.warn(`getTeamPlanFuer: Obergrenze von ${PLAN_OBERGRENZE} Terminen erreicht (Team ${teamId}).`);
   }
   // Die Vergangenheit kam absteigend; umgedreht ergibt sie wieder die
-  // aufsteigende Reihenfolge inkl. Beginn-ohne-Zeit-zuletzt und created_at.
+  // aufsteigende Reihenfolge inkl. Beginn und created_at.
   const alle = [...davor.reverse(), ...kommend].map(mapTermin);
   const meine = o.nurMeine;
   return meine ? alle.filter((t) => istVerantwortlich(t, meine)) : alle;
@@ -319,22 +337,28 @@ export function nochNichtVorbereitet(t: TerminZeile, heute: string): boolean {
   return t.datum >= heute && t.training === null && !t.ausgefallen;
 }
 
+/** Was ein Termin trägt (Epic #401): ein Training, noch keines (anstehend),
+ *  keines (vergangen) — oder er ist ausgefallen, was allem vorgeht. */
+export type TerminZustand = "training" | "noch-nicht" | "ohne" | "ausgefallen";
+
+export function terminZustand(t: TerminZeile, heute: string): TerminZustand {
+  if (t.ausgefallen) return "ausgefallen";
+  if (t.training) return "training";
+  return nochNichtVorbereitet(t, heute) ? "noch-nicht" : "ohne";
+}
+
 /** Ein Trainingsplan, geteilt in Kommendes und Vergangenes (Story 18). */
 export type Plan = { kommend: TerminZeile[]; vergangen: TerminZeile[] };
 
 /** Vergangene Einheiten absteigend ordnen: die jüngste zuerst.
  *
- *  Kein blosses Umdrehen der aufsteigenden Liste — dabei rutschten die
- *  Einheiten ohne Beginn, die am selben Tag zuletzt stehen, an dessen Anfang.
- *  Sie sollen auch rückwärts betrachtet hinter denen mit Beginn bleiben.
- *  `Array.sort` ist stabil, und die Liste kommt bereits nach `created_at`
- *  geordnet aus der Datenbank; damit bleibt die Reihenfolge zweier gleich
- *  eingeplanter Termine über wiederholte Aufrufe dieselbe. */
+ *  Kein blosses Umdrehen der aufsteigenden Liste: Zwei gleich eingeplante
+ *  Termine behalten so ihre Reihenfolge nach dem Anlegen. `Array.sort` ist
+ *  stabil, und die Liste kommt bereits nach `created_at` geordnet aus der
+ *  Datenbank; damit bleibt sie über wiederholte Aufrufe dieselbe. */
 function juengsteZuerst(a: TerminZeile, b: TerminZeile): number {
   if (a.datum !== b.datum) return a.datum < b.datum ? 1 : -1;
   if (a.beginn === b.beginn) return 0;
-  if (a.beginn === null) return 1;
-  if (b.beginn === null) return -1;
   return a.beginn < b.beginn ? 1 : -1;
 }
 
@@ -349,8 +373,7 @@ function juengsteZuerst(a: TerminZeile, b: TerminZeile): number {
  *  Der heutige Tag zählt vollständig zum Kommenden — die Einheit von heute
  *  Abend soll nicht schon mittags nach unten fallen.
  *
- *  Das Kommende behält die Ordnung aus der Datenbank (Datum, dann Beginn,
- *  ohne Beginn zuletzt). */
+ *  Das Kommende behält die Ordnung aus der Datenbank (Datum, dann Beginn). */
 export function teilePlan(termine: TerminZeile[], heute: string): Plan {
   return {
     kommend: termine.filter((t) => t.datum >= heute),

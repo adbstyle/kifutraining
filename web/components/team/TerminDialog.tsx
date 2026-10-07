@@ -5,6 +5,7 @@ import { Button, DateField, Dialog, SectionMessage, TextArea, TextField, TimeFie
 import {
   BEMERKUNG_MAX,
   ORT_MAX,
+  ausfallProblem,
   spielerzahlText,
   terminProblem,
   type TerminFeld,
@@ -76,12 +77,15 @@ const FOLGEN_LABEL: Record<FolgeAngabe, string> = {
    des Platzes (#389): alle Einzelheiten zum Ansehen und Ändern (AK 7, 11).
    Die Felder gehen als ganze Liste mit den übrigen Angaben; keine Zeile
    heisst «ohne Felder». An einem Serientermin zeigt der Serien-Abschnitt,
-   was die Serie vorgibt und ob der Termin davon abweicht (#391 AK 4–6). */
+   was die Serie vorgibt und ob der Termin davon abweicht (#391 AK 4–6).
+
+   Ein ausgefallener Termin zeigt zuoberst seinen Grund, ganz und änderbar
+   (#402 AK 12, 13) — er gilt nur für diesen Termin, auch in einer Serie
+   (PC 4). Wer ihn auf heute oder später verlegt, erfährt vor dem Speichern,
+   dass der Ausfall damit endet (AK 14); der Grund ist dann gegenstandslos. */
 export function TerminDialog({
   open,
   start,
-  /** Die Zeit vor dem Ändern: Nur wenn sie sich ändert, wird sie geprüft. */
-  bisher,
   pending,
   fehler: serverFehler,
   serie,
@@ -89,6 +93,8 @@ export function TerminDialog({
   abweichungen,
   mitglieder,
   verantwortliche,
+  ausfall,
+  heute,
   onFolgen,
   onClose,
   onSpeichern,
@@ -96,7 +102,6 @@ export function TerminDialog({
   open: boolean;
   /** Die Angaben des Termins; leer nur, solange der Dialog zu ist. */
   start?: Partial<TerminFelder>;
-  bisher?: { beginn: string | null; ende: string | null };
   pending?: boolean;
   fehler?: string;
   /** Die Serie des geöffneten Termins; ohne: ein einzelner Termin. */
@@ -107,18 +112,25 @@ export function TerminDialog({
   mitglieder: readonly TeamMitglied[];
   /** Die Verantwortlichen des geöffneten Termins; ohne: keine. */
   verantwortliche?: readonly Verantwortlicher[];
+  /** Der Termin ist ausgefallen, mit diesem Grund (#402 AK 12); ohne: nicht ausgefallen. */
+  ausfall?: { grund: string | null } | null;
+  /** Der heutige Kalendertag — ab ihm endet ein Ausfall beim Verlegen (AK 14). */
+  heute: string;
   onFolgen?: (angabe: FolgeAngabe) => void;
   onClose: () => void;
   /** `regel` nur bei einem Serientermin: Wochentage und Zeitraum, wie sie im
    *  Dialog stehen (geändert oder nicht). `verantwortlich` nur, wenn sich die
-   *  Wahl gegenüber dem Öffnen geändert hat (PO 17). */
-  onSpeichern: (felder: TerminFelder, regel?: SerienRegel, verantwortlich?: VerantwortlicheWert) => void;
+   *  Wahl gegenüber dem Öffnen geändert hat (PO 17); ebenso `grund`, und nur,
+   *  solange der Ausfall bestehen bleibt. */
+  onSpeichern: (felder: TerminFelder, regel?: SerienRegel, verantwortlich?: VerantwortlicheWert, grund?: string) => void;
 }) {
   const [felder, setFelder] = useState<TerminFelder>({ datum: "" });
   const [problem, setProblem] = useState<{ feld: TerminFeld; text: string } | null>(null);
   const [regel, setRegel] = useState<SerienRegel>({ wochentage: [], von: "", bis: "" });
   const [regelProblem, setRegelProblem] = useState<{ feld: SerieFeld | "beides"; text: string } | null>(null);
   const [verantwortlich, setVerantwortlich] = useState<VerantwortlicheWert>(KEINE_VERANTWORTLICHEN);
+  const [grund, setGrund] = useState("");
+  const [grundFehler, setGrundFehler] = useState<string>();
   const platz = usePlatzAngaben();
 
   // Beim Öffnen auf die Vorbelegung zurücksetzen — der Dialog überlebt sonst
@@ -137,6 +149,8 @@ export function TerminDialog({
     if (serie) setRegel({ wochentage: [...serie.wochentage], von: serie.beginnDatum, bis: serie.endDatum });
     setRegelProblem(null);
     setVerantwortlich(verantwortlicheStart(verantwortliche ?? []));
+    setGrund(ausfall?.grund ?? "");
+    setGrundFehler(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -148,6 +162,8 @@ export function TerminDialog({
   const terminDatum = start?.datum ?? "";
   const verschoben = !!serienTag && !!abweichungen?.includes("datum");
   const folgenKann = FOLGEN_KANN.filter((a) => abweichungen?.includes(a));
+  // Dieselbe Regel wie der Fachkern (`aendereTermin`): ein anderes Datum ab heute.
+  const ausfallEndet = !!ausfall && felder.datum !== terminDatum && felder.datum >= heute;
 
   function regelPruefen(): boolean {
     if (!serie) return true;
@@ -171,13 +187,16 @@ export function TerminDialog({
   }
 
   function speichern() {
-    const p = terminProblem(felder, bisher);
+    const p = terminProblem(felder);
     setProblem(p);
     const angaben = platz.pruefe();
     const regelOk = regelPruefen();
-    if (!p && angaben && regelOk) {
+    const gp = ausfall && !ausfallEndet ? ausfallProblem(grund) : null;
+    setGrundFehler(gp?.text);
+    if (!p && angaben && regelOk && !gp) {
       const geaendert = verantwortlicheGeaendert(verantwortlich, verantwortlicheStart(verantwortliche ?? []));
-      onSpeichern({ ...felder, ...angaben }, serie ? regel : undefined, geaendert ? verantwortlich : undefined);
+      const grundNeu = ausfall && !ausfallEndet && grund.trim() !== (ausfall.grund ?? "") ? grund : undefined;
+      onSpeichern({ ...felder, ...angaben }, serie ? regel : undefined, geaendert ? verantwortlich : undefined, grundNeu);
     }
   }
 
@@ -195,6 +214,29 @@ export function TerminDialog({
       }
     >
       {serverFehler && <SectionMessage appearance="error" className="mb-4">{serverFehler}</SectionMessage>}
+      {ausfall && (
+        <div className="mb-4 flex flex-col gap-3">
+          {ausfallEndet ? (
+            <SectionMessage appearance="information">
+              Am neuen Tag findet der Termin statt: Mit dem Speichern endet sein Ausfall, und der Grund entfällt.
+            </SectionMessage>
+          ) : (
+            <TextArea
+              label="Grund des Ausfalls (optional)"
+              rows={2}
+              maxLength={BEMERKUNG_MAX}
+              value={grund}
+              onChange={(e) => {
+                setGrund(e.target.value);
+                setGrundFehler(undefined);
+              }}
+              error={!!grundFehler}
+              supportingText={grundFehler}
+              disabled={pending}
+            />
+          )}
+        </div>
+      )}
       <div className="flex flex-col gap-4">
         <DateField label="Datum" value={felder.datum} onChange={(e) => setze("datum")(e.target.value)} error={!!fehlerAn("datum")} supportingText={fehlerAn("datum")} />
         <div className="flex flex-col gap-4 sm:flex-row">

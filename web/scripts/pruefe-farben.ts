@@ -245,22 +245,43 @@ pruefe("Jede Lozenge trägt ihre Schrift auf jeder Höhenstufe", () => {
   }
 });
 
-pruefe("Der Termineintrag im Monatsraster trägt jede seiner Schriften", () => {
-  // TerminEintrag: «Noch kein Training» steht auf der warning-Fläche, die
-  // übrigen Einträge auf der Tagesfläche (elev-01) bzw. in der Randwoche auf
-  // dem Grund. «Zeit fehlt» trägt Error — nur auf der warning-Fläche nicht,
-  // denn dort käme Error nicht auf 4.5:1; dort erbt es deren Schrift.
-  const warnung = LOZENGE.warning;
-  const aufWarnung = kontrast(warnung.schrift, warnung.flaeche);
-  assert.ok(aufWarnung >= 4.5, `Noch kein Training: ${z(aufWarnung)}:1`);
-  const errorAufWarnung = kontrast(ERROR, warnung.flaeche);
-  assert.ok(
-    errorAufWarnung < 4.5,
-    `error trägt auf lozenge-warning (${z(errorAufWarnung)}:1) - TerminEintrag darf «Zeit fehlt» dort wieder in Error setzen`,
-  );
-  for (const tag of [elev(1), GRUND]) {
-    const zeitFehlt = kontrast(ERROR, tag);
-    assert.ok(zeitFehlt >= 4.5, `Zeit fehlt auf ${tag}: ${z(zeitFehlt)}:1`);
+pruefe("Kalenderblatt: Tageszahl und Beschriftung tragen auf ihrer Tönung (4.5:1)", () => {
+  // Kalenderblatt: 12 % der Zustandsfarbe über der Karte (elev-01), die Zahl
+  // in der Farbe selbst, Wochentag und Monat in der leisen Schrift.
+  const karte = elev(1);
+  for (const [was, farbe] of [["Training", PRIMARY], ["Noch kein Training", SECTION.warning.icon]] as const) {
+    const flaeche = ueberlagern(farbe, 0.12, karte);
+    const zahl = kontrast(farbe, flaeche);
+    assert.ok(zahl >= 4.5, `${was}: Zahl ${z(zahl)}:1`);
+    const leise = kontrast(deckend(hex8("#ffffff", SCHRIFT.mittel), flaeche), flaeche);
+    assert.ok(leise >= 4.5, `${was}: Beschriftung ${z(leise)}:1`);
+  }
+});
+
+pruefe("Nächster Termin ohne Training: Tag und BlattLozenge tragen auf seiner Karte (4.5:1)", () => {
+  // Der nächste Termin liegt auf elev-04; die Lozenge in der Tönung des
+  // Kalenderblatts: 12 % der Warnfarbe, die Schrift in ihr selbst.
+  const flaeche = ueberlagern(SECTION.warning.icon, 0.12, elev(4));
+  const wert = kontrast(SECTION.warning.icon, flaeche);
+  assert.ok(wert >= 4.5, `Noch kein Training auf ${elevName(4)}: ${z(wert)}:1`);
+  // Dazu der Tag darüber, ohne Tönung in der Warnfarbe.
+  const tag = kontrast(SECTION.warning.icon, elev(4));
+  assert.ok(tag >= 4.5, `Tag ohne Training auf ${elevName(4)}: ${z(tag)}:1`);
+});
+
+pruefe("Die Zeichen im Mini-Monat heben sich von seiner Fläche ab (WCAG 1.4.11)", () => {
+  // MiniMonat: Punkt in Primary, Punkt in der Warnfarbe (`icon-warning`),
+  // das Kreuz in Rot (`icon-danger`) — als Badges auf dem Ring des Tags, auf der
+  // Fläche des Monats (elev-01). Als Grafik brauchen sie 3:1.
+  const knopf = elev(1);
+  const zeichen: [string, string][] = [
+    ["Training", PRIMARY],
+    ["Noch kein Training", SECTION.warning.icon],
+    ["Ausgefallen", SECTION.danger.icon],
+  ];
+  for (const [was, farbe] of zeichen) {
+    const wert = kontrast(farbe, knopf);
+    assert.ok(wert >= 3, `${was} auf ${elevName(1)}: ${z(wert)}:1`);
   }
 });
 

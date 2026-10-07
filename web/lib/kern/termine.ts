@@ -25,7 +25,7 @@ import { kurzeZeit } from "@/lib/queries/termine-fuer";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 import { ladeTrainingZumBearbeiten, pruefeTeamMitglied } from "@/lib/kern/zugriff";
 import { HINWEIS_NICHTS_ENTSTANDEN, hinweisRest, kopiereTraining, type KopieErgebnis } from "@/lib/kern/kopie";
-import { loescheTrainingMitBildern } from "@/lib/kern/loeschen";
+import { gibtEsTraining, loescheTrainingMitBildern, raeumeBilderAb, terminTrainingBilder } from "@/lib/kern/loeschen";
 import {
   NICHT_GEFUNDEN,
   ausDbFehler,
@@ -41,9 +41,9 @@ import {
  *
  * Zeitrahmen und Inhalt sind getrennt (PO 15): Ein Termin gehört dem Team und
  * besteht auch ohne Training; ein Training kommt nur durch Zuordnen an einen
- * bestehenden Termin auf ein Datum. Ein Termin trägt höchstens ein Training,
- * ein Training ist höchstens für einen Termin eingeplant — ein weiterer Termin
- * bekommt eine eigenständige Kopie, oder das Training wird verschoben.
+ * bestehenden Termin auf ein Datum. Ein Termin trägt höchstens ein Training:
+ * immer eine eigene Kopie, ein Termin-Training, das mit ihm lebt; die Quelle
+ * bleibt unberührt (PO 2026-10-06).
  *
  * Gleichzeitige Änderungen (PO 17): Die Oberfläche sendet mit, was sie bei der
  * Auswahl sah (`erwartet…`), und wird abgewiesen, wenn sich genau das geändert
@@ -64,8 +64,8 @@ export type TerminRoh = {
   team_id: string;
   training_id: string | null;
   datum: string;
-  beginn: string | null;
-  ende: string | null;
+  beginn: string;
+  ende: string;
   ort: string | null;
   bemerkung: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
@@ -78,7 +78,7 @@ export type TerminRoh = {
   zeit_abweichend: boolean;
   ort_abweichend: boolean;
   bemerkung_abweichend: boolean;
-  /** Ein ausgefallener Termin trägt kein Training (#327). */
+  /** Ein ausgefallener Termin behält sein Training; es ruht (PO 2026-10-06). */
   ausgefallen: boolean;
   ausfall_grund: string | null;
 };
@@ -262,7 +262,7 @@ export async function aendereTermin(
     ort: e.ort !== undefined ? leerZuNull(e.ort) : t.ort,
     bemerkung: e.bemerkung !== undefined ? leerZuNull(e.bemerkung) : t.bemerkung,
   };
-  const problem = feldFehler(terminProblem(neu, { beginn: t.beginn, ende: t.ende }));
+  const problem = feldFehler(terminProblem(neu));
   if (problem) return problem;
   const felder = e.felder === undefined ? null : pruefeFelder(e.felder);
   if (felder && !felder.ok) return felder;
@@ -318,70 +318,53 @@ export async function aendereTermin(
   return ok({ terminId: t.id, teamId: t.team_id, trainingId: erwartet });
 }
 
-/** Einen Termin entfernen (AK 11–13, 23). Sein Training bleibt im
- *  Team-Bestand (PC 6); `trainingId` nennt es. */
+/** Was mit dem Training geschah, das einen Termin verliess: Ein
+ *  Termin-Training ist gelöscht, ein Training aus dem Bestand bleibt dort. */
+export type Verlassen = { trainingId: string; geloescht: boolean } | null;
+
+async function verlassen(supabase: SupabaseClient, trainingId: string | null): Promise<Verlassen> {
+  return trainingId ? { trainingId, geloescht: !(await gibtEsTraining(supabase, trainingId)) } : null;
+}
+
+/** Einen Termin entfernen (AK 11–13, 23). Ein Termin-Training geht mit ihm,
+ *  ein Training aus dem Bestand bleibt dort (`training`). */
 export async function entferneTermin(
   supabase: SupabaseClient,
   _userId: string,
   e: { terminId: string; erwartetesTraining?: string | null },
-): Promise<KernErgebnis<{ teamId: string; trainingId: string | null }>> {
+): Promise<KernErgebnis<{ teamId: string; training: Verlassen }>> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
+  const { data: vorher } = await supabase.from("training_termine").select("training_id").eq("id", e.terminId).maybeSingle();
+  const bilder = await terminTrainingBilder(supabase, [vorher?.training_id]);
   const { data, error } = await supabase.rpc("termin_entfernen", {
     p_termin: e.terminId,
     p_erwartet: e.erwartetesTraining === undefined ? null : { termin_training: e.erwartetesTraining },
   });
   if (error) return kalenderFehler(error);
   const r = data as { training: string | null; team: string };
-  return ok({ teamId: r.team, trainingId: r.training });
+  await raeumeBilderAb(supabase, bilder);
+  return ok({ teamId: r.team, training: await verlassen(supabase, r.training) });
 }
 
-// ── Zuordnen und lösen (#323) ────────────────────────────────────────────────
+// ── Zuordnen und lösen (#323; Termin-Trainings, PO 2026-10-06) ───────────────
 
 export type Zuordnung = {
   terminId: string;
+  /** Die Quelle: ein Training aus dem Bestand des Teams, ein eigenes
+   *  persönliches oder ein anderes Termin-Training des Teams. */
   trainingId: string;
-  /** Nur für ein Training, das schon einem anderen Termin gehört: `kopie`
-   *  legt eine eigenständige Kopie an, `verschieben` nimmt es vom bisherigen
-   *  — nur anstehenden — Termin weg (AK 10, 11). */
-  art?: "kopie" | "verschieben";
   /** Was die Oberfläche bei der Auswahl sah (AK 14); `undefined` beim KI-Weg. */
-  erwartet?: { terminTraining: string | null; trainingTermin: string | null };
+  erwartet?: { trainingAmTermin: string | null };
 };
 
 export type Zugeordnet = {
   terminId: string;
   teamId: string;
-  /** Das Training, das jetzt am Termin steht — bei einer Kopie die Kopie. */
+  /** Die Kopie, die jetzt als Termin-Training am Termin steht. */
   trainingId: string;
-  kopie: boolean;
-  /** Das Training, das den Termin verlassen hat und ohne Termin im
-   *  Team-Bestand bleibt (PC 5). */
-  imBestand: string | null;
-  /** Der Termin, den ein verschobenes Training verlassen hat (PC 4). */
-  freierTermin: string | null;
+  /** Das Training, das der Termin vorher trug. */
+  ersetzt: Verlassen;
 };
-
-type Erwartung = { termin_training: string | null; training_termin: string | null };
-
-async function setze(
-  supabase: SupabaseClient,
-  t: TerminRoh,
-  trainingId: string,
-  verschieben: boolean,
-  erwartet: Erwartung,
-  wiederholbar: boolean,
-  kopie: boolean,
-): Promise<KernErgebnis<Zugeordnet>> {
-  const { data, error } = await supabase.rpc("termin_training_setzen", {
-    p_termin: t.id,
-    p_training: trainingId,
-    p_verschieben: verschieben,
-    p_erwartet: erwartet,
-  });
-  if (error) return kalenderFehler(error, wiederholbar);
-  const r = data as { bisher: string | null; frei: string | null };
-  return ok({ terminId: t.id, teamId: t.team_id, trainingId, kopie, imBestand: r.bisher, freierTermin: r.frei });
-}
 
 /** Eine gescheiterte Zuordnung räumt ihre Kopie wieder weg (Story 2 PC 8,
  *  Story 7 PC 8). Bleibt sie stehen, nennt die Meldung sie — in der
@@ -410,9 +393,17 @@ async function kopierFehler(
   });
 }
 
-/** Einem Termin ein Training aus dem Team-Bestand oder ein eigenes
- *  persönliches Training (dann als Kopie, #328) zuordnen (AK 1–11, 14–17;
- *  PC 1–9). Ersetzt ein Training, das der Termin schon trägt (AK 9). */
+/** Einem Termin ein Training zuordnen (AK 1–9, 14–17; PO 2026-10-06): Er
+ *  bekommt immer still eine eigene Kopie — ein Termin-Training. Die Quelle
+ *  bleibt unberührt, ob aus dem Bestand, persönlich (#328) oder das Training
+ *  eines anderen Termins; in den Bestand kommt dabei nichts. Trägt der Termin
+ *  schon ein Training, wird es ersetzt (AK 9): Ein Termin-Training geht dabei
+ *  verloren, eines aus dem Bestand bleibt dort.
+ *
+ *  Erst die Datenebene macht die Kopie im selben Schritt, in dem sie sie
+ *  verknüpft, zum Termin-Training (`termin_training_setzen`). Scheitert das
+ *  Verknüpfen, wird die Kopie wieder entfernt; misslingt auch das, steht sie
+ *  sichtbar im Bestand statt unauffindbar ohne Termin. */
 export async function ordneTrainingZu(
   supabase: SupabaseClient,
   userId: string,
@@ -421,151 +412,97 @@ export async function ordneTrainingZu(
   const termin = await ladeTermin(supabase, e.terminId);
   if (!termin.ok) return termin;
   const t = termin.wert;
-  // AK 9: Vor jeder Kopie abweisen, sonst bliebe eine Kopie zurück.
+  // AK 9 (#327): Vor jeder Kopie abweisen, sonst bliebe eine Kopie zurück.
   if (t.ausgefallen) return fehlschlag("regel", TERMIN_MELDUNG.TERMIN_AUSGEFALLEN, TERMIN_FELD);
 
   const training = await ladeTrainingZumBearbeiten(supabase, userId, e.trainingId);
   if (!training.ok) return training;
   const { ziel } = training.wert;
-  // #328: Ein persönliches Training kommt als eigenständige Kopie ins Team des
-  // Termins (PC 1–4). Verschieben gibt es dafür nicht (AK 13). Die Zuordnung
-  // ist eine Regel, kein Konflikt — darum nicht in KONFLIKT_MARKER.
-  if (ziel.art === "persoenlich") {
-    if (e.art === "verschieben")
-      return fehlschlag("regel", TERMIN_MELDUNG.PERSOENLICH_NUR_KOPIE, { feld: "art" });
-    // Eine veraltete Auswahl legt keine Kopie an.
-    if (e.erwartet && t.training_id !== e.erwartet.terminTraining)
-      return fehlschlag("konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
-    const kopie = await kopiereTraining(supabase, e.trainingId, { art: "team", teamId: t.team_id });
-    // AK 10: Erfüllt es die Bedingungen eines Team-Trainings nicht, nennt die
-    // Meldung der Kopie den Grund.
-    if (!kopie.ok) return kopierFehler(supabase, kopie);
-    // Die Kopie hat nie einen Termin; das Original wird nicht berührt (PC 3).
-    const erwartet: Erwartung = {
-      termin_training: e.erwartet ? e.erwartet.terminTraining : t.training_id,
-      training_termin: null,
-    };
-    const r = await setze(supabase, t, kopie.neueId, false, erwartet, !e.erwartet, true);
-    return r.ok ? r : mitAufgeraeumterKopie(supabase, r, kopie.neueId);
-  }
-  if (ziel.teamId !== t.team_id)
+  if (ziel.art === "team" && ziel.teamId !== t.team_id)
     return fehlschlag("regel", TERMIN_MELDUNG.TERMIN_TRAINING_FREMDES_TEAM, { feld: "training_id" });
-  if (t.training_id === e.trainingId)
-    return ok({ terminId: t.id, teamId: t.team_id, trainingId: e.trainingId, kopie: false, imBestand: null, freierTermin: null });
+  if (t.training_id === e.trainingId) return ok({ terminId: t.id, teamId: t.team_id, trainingId: e.trainingId, ersetzt: null });
 
   // Eine veraltete Auswahl legt keine Kopie an.
-  if (e.erwartet && t.training_id !== e.erwartet.terminTraining)
+  if (e.erwartet && t.training_id !== e.erwartet.trainingAmTermin)
     return fehlschlag("konflikt", TERMIN_MELDUNG.TERMIN_BELEGUNG_GEAENDERT);
 
-  const { data: bisher, error } = await supabase
-    .from("training_termine")
-    .select("id, datum")
-    .eq("training_id", e.trainingId)
-    .maybeSingle<{ id: string; datum: string }>();
-  if (error) return ausDbFehler(error);
-  if (e.erwartet && (bisher?.id ?? null) !== e.erwartet.trainingTermin)
-    return fehlschlag("konflikt", TERMIN_MELDUNG.TRAINING_EINPLANUNG_GEAENDERT);
-
-  const wiederholbar = !e.erwartet;
-  const erwartet: Erwartung = e.erwartet
-    ? { termin_training: e.erwartet.terminTraining, training_termin: e.erwartet.trainingTermin }
-    : { termin_training: t.training_id, training_termin: bisher?.id ?? null };
-
-  // Ohne bisherigen Termin wird schlicht verknüpft (PC 1).
-  if (!bisher) return setze(supabase, t, e.trainingId, false, erwartet, wiederholbar, false);
-
-  const vergangen = bisher.datum < heuteAmTrainingsort();
-  if (vergangen && e.art === "verschieben")
-    return fehlschlag("regel", TERMIN_MELDUNG.NUR_KOPIE_BEI_VERGANGENEM, { feld: "art" });
-  if (!vergangen && !e.art)
-    return fehlschlag("regel", TERMIN_MELDUNG.TRAINING_SCHON_EINGEPLANT, {
-      feld: "art",
-      zulaessig: ["kopie", "verschieben"],
-    });
-  if (e.art === "verschieben") return setze(supabase, t, e.trainingId, true, erwartet, wiederholbar, false);
-
-  // Kopie (PC 2, 3): eigenständig, gleichnamig, so vollständig wie jede Kopie.
+  const bilder = await terminTrainingBilder(supabase, [t.training_id]);
   const kopie = await kopiereTraining(supabase, e.trainingId, { art: "team", teamId: t.team_id });
   if (!kopie.ok) return kopierFehler(supabase, kopie);
-  const r = await setze(supabase, t, kopie.neueId, false, { ...erwartet, training_termin: null }, wiederholbar, true);
-  return r.ok ? r : mitAufgeraeumterKopie(supabase, r, kopie.neueId);
+  const { data, error } = await supabase.rpc("termin_training_setzen", {
+    p_termin: t.id,
+    p_training: kopie.neueId,
+    p_erwartet: { termin_training: e.erwartet ? e.erwartet.trainingAmTermin : t.training_id },
+  });
+  if (error) return mitAufgeraeumterKopie(supabase, await kalenderFehler(error, !e.erwartet), kopie.neueId);
+  await raeumeBilderAb(supabase, bilder);
+  const bisher = (data as { bisher: string | null }).bisher;
+  return ok({ terminId: t.id, teamId: t.team_id, trainingId: kopie.neueId, ersetzt: await verlassen(supabase, bisher) });
 }
 
-/** Das Training von seinem Termin lösen (AK 12, PC 6). */
+/** Das Training von seinem Termin lösen (AK 12, PC 6). Ein Termin-Training
+ *  wird dabei gelöscht, eines aus dem Bestand bleibt dort (`training`). */
 export async function loeseTraining(
   supabase: SupabaseClient,
   _userId: string,
   e: { terminId: string; erwartetesTraining?: string | null },
-): Promise<KernErgebnis<{ terminId: string; teamId: string; trainingId: string | null }>> {
+): Promise<KernErgebnis<{ terminId: string; teamId: string; training: Verlassen }>> {
   const termin = await ladeTermin(supabase, e.terminId);
   if (!termin.ok) return termin;
   const t = termin.wert;
+  const bilder = await terminTrainingBilder(supabase, [t.training_id]);
   const { data, error } = await supabase.rpc("termin_training_setzen", {
     p_termin: t.id,
     p_training: null,
-    p_verschieben: false,
-    p_erwartet: {
-      termin_training: e.erwartetesTraining !== undefined ? e.erwartetesTraining : t.training_id,
-      training_termin: null,
-    },
+    p_erwartet: { termin_training: e.erwartetesTraining !== undefined ? e.erwartetesTraining : t.training_id },
   });
   if (error) return kalenderFehler(error, e.erwartetesTraining === undefined);
-  return ok({ terminId: t.id, teamId: t.team_id, trainingId: (data as { bisher: string | null }).bisher });
+  await raeumeBilderAb(supabase, bilder);
+  return ok({ terminId: t.id, teamId: t.team_id, training: await verlassen(supabase, (data as { bisher: string | null }).bisher) });
 }
 
 // ── Ausfall (#327) ───────────────────────────────────────────────────────────
 
 /** Einen Termin als ausgefallen markieren oder den Grund eines ausgefallenen
- *  ändern (#327 AK 1–5, 11; PC 1, 2). Ein zugeordnetes Training wird gelöst
- *  und bleibt ohne Termin im Team-Bestand. */
+ *  ändern (#327 AK 1–5, 11; PC 2). Ein zugeordnetes Training bleibt am Termin
+ *  und ruht, bis der Ausfall zurückgenommen wird (PO 2026-10-06). */
 export async function lasseAusfallen(
   supabase: SupabaseClient,
   _userId: string,
   e: {
     terminId: string;
     grund?: string | null;
-    erwartetesTraining?: string | null;
     /** Ob der Termin bei der Auswahl ausgefallen war (nur die Oberfläche sendet
      *  es, PO 17): Hat ein anderes Mitglied den Ausfall inzwischen gesetzt oder
      *  zurückgenommen, wird nicht geschrieben (`AUSFALL_GEAENDERT`). */
     erwartetAusgefallen?: boolean;
   },
-): Promise<KernErgebnis<{ terminId: string; teamId: string; geloestesTraining: string | null }>> {
+): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
   const p = ausfallProblem(e.grund);
   if (p) return fehlschlag("eingabe", p.text, { feld: p.feld });
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   const t = geladen.wert;
-  const erwartet = e.erwartetesTraining !== undefined ? e.erwartetesTraining : t.training_id;
   // `grund` weggelassen heisst bei einem schon ausgefallenen Termin «Grund
   // unverändert» (kein Schreiben); `null` oder «» leert ihn. Beim Markieren
   // gibt es ohne Angabe keinen Grund.
   const grund = e.grund === undefined && t.ausgefallen ? {} : { ausfall_grund: leerZuNull(e.grund) };
-  const basis = supabase
-    .from("training_termine")
-    .update({ ausgefallen: true, ...grund, training_id: null })
-    .eq("id", t.id);
-  const mitTraining = erwartet === null ? basis.is("training_id", null) : basis.eq("training_id", erwartet);
-  const { data, error } = await (e.erwartetAusgefallen === undefined
-    ? mitTraining
-    : mitTraining.eq("ausgefallen", e.erwartetAusgefallen)
-  )
+  const basis = supabase.from("training_termine").update({ ausgefallen: true, ...grund }).eq("id", t.id);
+  const { data, error } = await (e.erwartetAusgefallen === undefined ? basis : basis.eq("ausgefallen", e.erwartetAusgefallen))
     .select("id")
     .maybeSingle();
   if (error) return ausDbFehler(error);
   if (!data) {
-    // Der Ausfall-Zustand hat Vorrang vor dem Training: Ein ausgefallener
-    // Termin trägt keines mehr, die Ursache steht dann im Ausfall.
-    const { data: jetzt } = await supabase.from("training_termine").select("ausgefallen").eq("id", t.id).maybeSingle();
-    if (jetzt && e.erwartetAusgefallen !== undefined && jetzt.ausgefallen !== e.erwartetAusgefallen)
-      return fehlschlag("konflikt", TERMIN_MELDUNG.AUSFALL_GEAENDERT);
-    return warumNichtGeschrieben(supabase, t.id, e.erwartetesTraining === undefined);
+    const { data: da } = await supabase.from("training_termine").select("id").eq("id", t.id).maybeSingle();
+    return da
+      ? fehlschlag("konflikt", TERMIN_MELDUNG.AUSFALL_GEAENDERT)
+      : fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   }
-  return ok({ terminId: t.id, teamId: t.team_id, geloestesTraining: erwartet });
+  return ok({ terminId: t.id, teamId: t.team_id });
 }
 
 /** Den Ausfall zurücknehmen (#327 AK 6, PC 3): wieder ein normaler Termin,
- *  ohne Training und ohne Grund. */
+ *  ohne Grund; ein Training, das am Termin ruhte, ist wieder da. */
 export async function nimmAusfallZurueck(
   supabase: SupabaseClient,
   _userId: string,

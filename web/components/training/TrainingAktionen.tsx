@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   CalendarPlus,
+  Copy,
   Download,
   Globe,
   Pencil,
@@ -74,6 +75,7 @@ export function TrainingAktionen({
   visibility,
   teamId,
   terminDatum,
+  terminTraining,
   angemeldet,
   bearbeitungsziel,
   teams,
@@ -91,6 +93,9 @@ export function TrainingAktionen({
   /** Der Termin, dem das Team-Training zugeordnet ist — der Löschdialog nennt
    *  ihn, weil er bestehen bleibt. */
   terminDatum?: string | null;
+  /** Ein Termin-Training (PO 2026-10-06): Es lässt sich in den Bestand
+   *  kopieren, und Löschen nimmt es vom Termin. */
+  terminTraining: boolean;
   angemeldet: boolean;
   bearbeitungsziel: Bearbeitungsziel | null;
   /** Die Teams des USERS — Ziele für Übernehmen und Ins-Team-Stellen. */
@@ -120,7 +125,7 @@ export function TrainingAktionen({
   const [loeschen, setLoeschen] = useState(false);
 
   const rechte = trainingAktionsRechte(
-    { visibility, teamId },
+    { visibility, teamId, terminTraining },
     angemeldet,
     bearbeitungsziel,
     teams.length > 0,
@@ -169,6 +174,16 @@ export function TrainingAktionen({
       } else {
         melde(res.error);
       }
+    });
+  }
+
+  /** Eine Kopie des Termin-Trainings in den Bestand des Teams — bewusst und
+   *  von Hand; das Original bleibt am Termin (PO 2026-10-06). */
+  function inBestandJetzt() {
+    if (!teamId) return;
+    startTransition(async () => {
+      const res = await stelleInsTeam(trainingId, teamId);
+      melde(res.ok ? "Kopie in den Team-Bestand gestellt." : res.error);
     });
   }
 
@@ -236,6 +251,12 @@ export function TrainingAktionen({
       label: "Einem Team-Termin zuordnen",
       icon: CalendarPlus,
       onSelect: () => setTerminZuordnen(true),
+    });
+  if (rechte.inBestandKopieren)
+    eintraege.push({
+      label: "In den Team-Bestand kopieren",
+      icon: Copy,
+      onSelect: inBestandJetzt,
     });
   if (rechte.loeschen)
     eintraege.push({

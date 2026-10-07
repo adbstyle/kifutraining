@@ -85,7 +85,7 @@ const SuchenEingabe = z.object({
   bestand: alsEnum(["eigene", "oeffentlich", "team"] as const).describe(
     "eigene: deine persönlichen Trainings, Entwürfe eingeschlossen. " +
       "oeffentlich: alle öffentlichen Trainings der Community, auch deine eigenen öffentlichen. " +
-      "team: der Trainingsbestand eines deiner Teams - dann mit «team_id».",
+      "team: der Trainingsbestand eines deiner Teams - dann mit «team_id»; ohne Termin-Trainings, die nennt «team_plan_abrufen».",
   ),
   team_id: TeamId.optional().describe(
     "Nur mit «bestand: team», dort Pflicht: das Team (Kennung aus «teams_abrufen»).",
@@ -122,8 +122,8 @@ const SuchenTreffer = z.object({
     .object({
       id: z.string(),
       datum: z.string(),
-      beginn: z.string().nullable(),
-      ende: z.string().nullable(),
+      beginn: z.string(),
+      ende: z.string(),
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
       felder: felderSchema(),
@@ -136,7 +136,7 @@ const SuchenTreffer = z.object({
           ehemalig: z.boolean().describe("Nicht mehr im Team."),
         }),
       ),
-      ausgefallen: z.boolean().describe("Bei einem Training immer false - ein ausgefallener Termin trägt kein Training."),
+      ausgefallen: z.boolean().describe("Ob der Termin ausgefallen ist; das Training ruht dann an ihm."),
       ausfall_grund: z.string().nullable(),
       anstehend: z.boolean(),
     })
@@ -154,7 +154,8 @@ export const trainingsSuchen = werkzeug({
     "Geänderte zuerst, mit Suchtext kürzere Namen zuerst. Eingrenzen nach " +
     "Alterskategorie (ODER). «uebungszahl» und «dauer_min» beziehen sich wie die Kachel der " +
     "Übersicht auf die erste Variante; «varianten_zahl» sagt, wie viele es gibt. " +
-    "Team-Trainings erscheinen nur mit «bestand: team»; dort trägt jeder Treffer seinen " +
+    "Team-Trainings erscheinen nur mit «bestand: team», ohne Termin-Trainings (die nennt " +
+    "«team_plan_abrufen»); dort trägt jeder Treffer seinen allfälligen " +
     "Termin samt Verantwortlichen, Feldern des Platzes und erwarteter Spielerzahl («termin», null ohne) - «eigen» ist bei ihnen immer false, bearbeiten darf sie " +
     "jedes Mitglied. Das ganze Training liefert «training_abrufen», " +
     `übernehmen lässt es sich mit «training_kopieren». ${TEAM_KENNUNG_FEHLER}`,
