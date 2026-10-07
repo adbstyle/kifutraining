@@ -67,9 +67,11 @@ Die Seite „Cookies" nennt alles, was KiFu im Browser ablegt: die Anmeldung, di
 Breite der Seitenleiste, die gezogene Breite der Spalte und des Verzeichnisses unter
 „Versionen" und bis zu welcher Version man
 „Versionen" gesehen hat — je mit Zweck, Dauer, Namen und dem, was ohne sie nicht mehr geht.
-Sie nennt auch die Besucherstatistik: KiFu zählt Seitenaufrufe mit Vercel Web Analytics nach
-Seite, Herkunft, Land und Gerätetyp. Diese legt nichts im Browser ab, kennt keine Personen und
-erhält die Adresse ohne Suchbegriffe und Filter. Ausserdem sagt sie, wie man Cookies in den Einstellungen des Browsers sperrt oder löscht. Sie hängt
+Sie nennt auch die Besucherstatistik: KiFu zählt auf ki-fu.ch Seitenaufrufe mit Vercel Web
+Analytics nach Seite, Herkunft, Land und Gerätetyp. Diese legt nichts im Browser ab, kennt keine
+Personen und erhält die Adresse ohne Suchbegriffe und Filter; eine unbekannte Adresse zählt sie
+nicht. Ausserdem sagt die Seite, wie man Cookies in den
+Einstellungen des Browsers sperrt oder löscht. Sie hängt
 am Konto (Brotkrume „Konto › Cookies") und ist ohne Anmeldung über einen Verweis unten auf allen
 Seiten ohne Leiste erreichbar, etwa beim Anmelden und Registrieren; sie funktioniert auch mit gesperrten Cookies.
 
@@ -191,7 +193,9 @@ Hochformat oder einem Telefon steht alles untereinander, und die Breite lässt s
 ziehen.
 
 KiFu hat keine vollständige Datenschutzerklärung und kein Impressum; die Seite „Cookies"
-beschreibt nur, was im Browser liegt. Eine eigene Einstellung, um Cookies abzuschalten, gibt
+beschreibt nur, was im Browser liegt, und die Besucherstatistik. Diese lässt sich nicht
+abwählen, und eine Seite, die über einen ungültigen Link nicht gefunden wird (etwa ein
+Training, das es nicht gibt), zählt sie unter dem eingegebenen Pfad. Eine eigene Einstellung, um Cookies abzuschalten, gibt
 es nicht — das geht über den Browser.
 
 „Versionen" zeigt die Texte so, wie sie veröffentlicht wurden; ältere enthalten Technisches,

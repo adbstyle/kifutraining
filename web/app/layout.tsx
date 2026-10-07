@@ -27,9 +27,14 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-/* Wurzel: nur Dokument, Schrift und globale Styles. Das App-Chrome
+/* Wurzel: nur Dokument, Schrift, globale Styles und die Besucherstatistik —
+   Letztere hier, damit auch die Anmelde-Seiten zählen. Das App-Chrome
    (Navigation, Team-Kontext, Snackbar-Platz) wohnt im Layout der
-   Route-Gruppe `(app)`; die Anmelde-Seiten unter `(auth)` kommen ohne aus. */
+   Route-Gruppe `(app)`; die Anmelde-Seiten unter `(auth)` kommen ohne aus.
+
+   Gezählt wird nur auf Production: Staging und Feature-Previews tragen vor
+   allem Test- und Agenten-Verkehr, der das Monatskontingent des Hobby-Plans
+   aufbrauchen und die Zahlen verfälschen würde. `VERCEL_ENV` ist lokal leer. */
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -43,7 +48,7 @@ export default function RootLayout({
     <html lang="de-CH" className={sans.variable}>
       <body className="min-h-screen antialiased">
         {children}
-        <Besucherstatistik />
+        {process.env.VERCEL_ENV === "production" && <Besucherstatistik />}
       </body>
     </html>
   );
