@@ -234,7 +234,7 @@ alle folgenden" teilt auch hier die Serie.
 Mit „Meine Termine" grenzt sich der Trainingsplan auf die Termine ein, für die man selbst
 verantwortlich ist, anstehende wie vergangene; auch der nächste Termin ist dann der nächste
 eigene. Der Monat neben den Terminen zeigt nur noch die eigenen, und Tage, an denen nur Termine
-anderer liegen, sind dort als belegt gekennzeichnet. Die Eingrenzung steht in der Adresse und
+anderer liegen, tragen dort nur den Kreis, ohne Zeichen: belegt. Die Eingrenzung steht in der Adresse und
 fällt weg, sobald man das Team erneut öffnet.
 
 Wer das Team verlässt oder daraus entfernt wird, verschwindet aus allen anstehenden Terminen und
@@ -320,8 +320,9 @@ kein Datum vor.
 
 Auf breiten Bildschirmen, ab etwa der Breite eines Tablets im Querformat, steht rechts neben
 den Terminen ein Monat und bleibt beim Scrollen stehen. Er zeigt Monat und Jahr, die Wochen von
-Montag bis Sonntag samt den Randtagen der Nachbarmonate und hebt den heutigen Tag hervor. Jeder
-Termin eines Tages steht als kleines Zeichen unten im Tag, dessen Form sagt, was er ist: ein Punkt für ein Training,
+Montag bis Sonntag samt den Randtagen der Nachbarmonate und hebt den heutigen Tag hervor. Ein Tag
+mit Terminen trägt einen gepunkteten Kreis um die Zahl, und jeder Termin sitzt als kleines Zeichen
+auf dem Kreis, oben rechts beginnend; dessen Form sagt, was er ist: ein Punkt für ein Training,
 ein Ring für „Noch kein Training", ein Strich für vergangen ohne Training, ein Kreuz für
 ausgefallen; eine Legende darunter nennt sie. Trägt ein Tag mehr als drei Termine, stehen zwei
 Zeichen und „+" mit der Zahl der weiteren. Wie im Google Kalender folgt der Monat der Liste: Er

@@ -47,18 +47,55 @@ function MarkenZeichen({ zustand }: { zustand: MarkenZustand }) {
   return <X aria-hidden size={10} strokeWidth={3} className="text-on-surface-mittel" />;
 }
 
-/** Die Zahl des Tages; heute auf Primary, belegt mit gepunktetem Ring. */
-function Tageszahl({ tag, heute, imMonat, belegt = false }: { tag: string; heute: string; imMonat: boolean; belegt?: boolean }) {
+/** Wo die Badges auf dem Ring sitzen: oben rechts beginnend, im Uhrzeigersinn
+ *  je 45° weiter (Mittelpunkt in px, Ring mit 24 px Durchmesser). */
+const BADGE_ORT = [-45, 0, 45].map((grad) => {
+  const w = (grad * Math.PI) / 180;
+  return { left: 12 + 12 * Math.cos(w), top: 12 + 12 * Math.sin(w) };
+});
+
+/** Die Zahl des Tages; heute auf Primary. Liegt an ihm ein Termin, trägt sie
+ *  einen gepunkteten Ring, und die gezeigten Termine sitzen als Badges darauf
+ *  — wie der Punkt an einem Zeichen für Neuigkeiten. Jedes Badge hat die
+ *  Fläche des Monats als Rand, damit es sich vom Ring abhebt. */
+function Tageszahl({
+  tag,
+  heute,
+  imMonat,
+  ring = false,
+  marken = [],
+  mehr = 0,
+}: {
+  tag: string;
+  heute: string;
+  imMonat: boolean;
+  ring?: boolean;
+  marken?: readonly Marke[];
+  mehr?: number;
+}) {
   return (
     <span
       aria-hidden
       className={cn(
-        "flex size-6 items-center justify-center rounded-full type-body-small",
+        "relative flex size-6 items-center justify-center rounded-full type-body-small",
         tag === heute ? "bg-primary text-on-primary" : imMonat ? "text-on-surface" : "text-on-surface-mittel",
-        belegt && "border border-dotted border-on-surface-mittel",
+        ring && tag !== heute && "border border-dotted border-on-surface-mittel",
       )}
     >
       {Number(tag.slice(8))}
+      {marken.map((m, i) => (
+        <span key={m.id} style={BADGE_ORT[i]} className="absolute flex size-3 -translate-1/2 items-center justify-center rounded-full bg-elev-01">
+          <MarkenZeichen zustand={m.zustand} />
+        </span>
+      ))}
+      {mehr > 0 && (
+        <span
+          style={BADGE_ORT[marken.length]}
+          className="absolute flex h-3 min-w-3 -translate-1/2 items-center justify-center rounded-full bg-elev-01 px-px text-[0.5rem] leading-none text-on-surface-mittel"
+        >
+          +{mehr}
+        </span>
+      )}
     </span>
   );
 }
@@ -68,17 +105,19 @@ function Tageszahl({ tag, heute, imMonat, belegt = false }: { tag: string; heute
    Seitenspalte und zeigt je Tag nur Zeichen; Zeit und Namen stehen in der
    Liste.
 
-   - Jeder Eintrag steht als kleines Badge unten im Tag; die Zellen sind
-     alle gleich hoch, Einträge machen den Monat nicht grösser.
+   - Ein Tag mit Einträgen — oder `belegt` — trägt einen gepunkteten Ring um
+     die Zahl; jeder Eintrag sitzt als kleines Badge auf dem Ring, oben
+     rechts beginnend (PO 2026-10-07). Die Zellen sind alle gleich hoch,
+     Einträge machen den Monat nicht grösser.
    - Ein Tag mit Einträgen ist ein Knopf und meldet seinen ersten Eintrag
      (`onWahl`) — die übrigen folgen in der Liste direkt danach. Ein Tag ohne
-     Eintrag ist kein Knopf. Der Knopf ist so gross wie der Tag (mind. 24 px,
-     WCAG 2.5.8); einzelne Badges wären es nicht.
+     Eintrag ist kein Knopf. Der Knopf ist so gross wie der Tag (36 px hoch,
+     mind. 24 px nach WCAG 2.5.8); einzelne Badges wären es nicht.
    - Trägt ein Tag mehr als drei, stehen zwei Badges und «+n» (#404 AK 6).
    - Heute: die Tageszahl auf Primary, dazu `aria-current="date"` (AK 7).
    - `belegt`: Tage, an denen etwas liegt, das der Monat nicht zeigt (die
-     Termine anderer bei «Meine Termine», AK 14) — gepunkteter Ring um die
-     Zahl, und so vorgelesen.
+     Termine anderer bei «Meine Termine», AK 14) — der Ring ohne Badge, und
+     so vorgelesen.
    - Die Randtage der Nachbarmonate sind leiser, tragen aber ihre Marken (AK 4).
    - Blättern und «Heute» melden nur den Monat (`onMonat`); was daraus folgt,
      entscheidet der Aufrufer.
@@ -153,21 +192,13 @@ export function MiniMonat({
                       type="button"
                       aria-label={`${tagText(tag)}${tag === heute ? ", heute" : ""}: ${liste.map((m) => m.label).join("; ")}`}
                       onClick={() => onWahl(liste[0].id)}
-                      className="state focus-ring flex h-11 w-full flex-col items-center gap-0.5 rounded-flaeche pt-0.5"
+                      className="state focus-ring flex h-9 w-full items-center justify-center rounded-flaeche"
                     >
-                      <Tageszahl tag={tag} heute={heute} imMonat={imMonat} />
-                      <span aria-hidden className="flex h-2.5 items-center gap-0.5">
-                        {gezeigt.map((m) => (
-                          <span key={m.id} className="flex size-2.5 items-center justify-center">
-                            <MarkenZeichen zustand={m.zustand} />
-                          </span>
-                        ))}
-                        {mehr > 0 && <span className="text-[0.625rem] leading-none text-on-surface-mittel">+{mehr}</span>}
-                      </span>
+                      <Tageszahl tag={tag} heute={heute} imMonat={imMonat} ring marken={gezeigt} mehr={mehr} />
                     </button>
                   ) : (
-                    <div className="flex h-11 flex-col items-center pt-0.5">
-                      <Tageszahl tag={tag} heute={heute} imMonat={imMonat} belegt={istBelegt} />
+                    <div className="flex h-9 items-center justify-center">
+                      <Tageszahl tag={tag} heute={heute} imMonat={imMonat} ring={istBelegt} />
                       <span className="sr-only">
                         {tagText(tag)}
                         {tag === heute ? ", heute" : ""}

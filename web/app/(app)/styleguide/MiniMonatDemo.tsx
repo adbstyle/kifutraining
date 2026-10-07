@@ -4,8 +4,8 @@ import { useState } from "react";
 import { MiniMonat, type Marke } from "@/components/ui";
 
 /* Der Mini-Monat mit festen Beispieltagen (Oktober 2026, «heute» der 6.):
-   alle vier Zustände, ein Tag mit drei Terminen («+2»), ein belegter Tag und
-   eine Marke in der Randwoche. In der Anwendung sind es die Termine des
+   alle vier Zustände, ein Tag mit drei Terminen, einer mit vier («+2»), ein
+   belegter Tag und eine Marke in der Randwoche. In der Anwendung sind es die Termine des
    Teams neben dem Trainingsplan (`PlanMonat`). */
 const MARKEN: Record<string, Marke[]> = {
   "2026-09-29": [{ id: "a", zustand: "ohne", label: "Vergangen ohne Training" }],
@@ -20,6 +20,12 @@ const MARKEN: Record<string, Marke[]> = {
     { id: "g", zustand: "training", label: "17:00 Training" },
     { id: "h", zustand: "noch-nicht", label: "18:00 noch kein Training" },
     { id: "i", zustand: "noch-nicht", label: "19:00 noch kein Training" },
+  ],
+  "2026-10-22": [
+    { id: "j", zustand: "training", label: "16:00 Training" },
+    { id: "k", zustand: "training", label: "17:00 Training" },
+    { id: "l", zustand: "noch-nicht", label: "18:00 noch kein Training" },
+    { id: "m", zustand: "noch-nicht", label: "19:00 noch kein Training" },
   ],
 };
 

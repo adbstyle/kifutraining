@@ -3285,8 +3285,9 @@ export default function Styleguide() {
       <Section n="33" title="Mini-Monat">
         <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
           Ein kleiner Monat zum Navigieren neben einer Liste (Epic #401). Neu, weil kein Baustein ein
-          Kalenderraster kennt. <code>MiniMonat</code> zeigt je Eintrag ein kleines Badge unten im Tag; die
-          Zellen sind alle gleich hoch. Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
+          Kalenderraster kennt. <code>MiniMonat</code> legt um jeden Tag mit Einträgen einen gepunkteten Ring und
+          setzt je Eintrag ein kleines Badge darauf, oben rechts beginnend - wie der Punkt an einem Zeichen für
+          Neuigkeiten. Die Zellen sind alle gleich hoch. Ein Tag mit Einträgen ist ein Knopf zu seinem ersten Eintrag
           (<code>onWahl</code>), ein leerer Tag ist keiner. Blättern und «Heute» melden nur den Monat (<code>onMonat</code>): Wie im Google Kalender
           folgt der Monat der Liste, die Liste aber nicht ihm.
         </p>
@@ -3297,15 +3298,15 @@ export default function Styleguide() {
             nichts allein; die Legende nennt jedes Zeichen.
           </li>
           <li>
-            <strong>Mehr als drei</strong> - zwei Badges und «+n»; die übrigen stehen in der Liste.
+            <strong>Mehr als drei</strong> - zwei Badges und «+n» am Ring; die übrigen stehen in der Liste.
           </li>
           <li>
-            <strong>Zielgrösse</strong> - geklickt wird der ganze Tag (44 px hoch), nicht das einzelne Badge,
+            <strong>Zielgrösse</strong> - geklickt wird der ganze Tag (36 px hoch), nicht das einzelne Badge,
             das dafür zu klein wäre (WCAG 2.5.8).
           </li>
           <li>
-            <strong>Belegt</strong> - ein gepunkteter Ring um die Tageszahl: Dort liegt etwas, das der Monat
-            nicht zeigt (bei «Meine Termine» die Termine anderer). Heute trägt die Zahl auf Primary.
+            <strong>Belegt</strong> - der Ring ohne Badge: Dort liegt etwas, das der Monat nicht zeigt (bei
+            «Meine Termine» die Termine anderer). Heute trägt die Zahl auf Primary, ohne Ring.
           </li>
         </ul>
         <MiniMonatDemo />
