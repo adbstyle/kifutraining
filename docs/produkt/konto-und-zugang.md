@@ -236,8 +236,9 @@ fremdes Training lässt sich nicht löschen.
 Auch in den eigenen Teams arbeitet der Assistent. Er nennt die Teams, in denen man Mitglied ist,
 mit Namen und Mitgliederzahl, und die Mitglieder eines Teams mit ihrem Anzeigenamen und einer
 Kennung — nie mit der E-Mail-Adresse —, wobei er erfährt, welches davon man selbst ist. Er sucht
-im Trainingsbestand eines Teams wie im eigenen; jedes Team-Training nennt dabei den Termin, für
-den es eingeplant ist, samt Zeit, Ort, Verantwortlichen, Feldern und erwarteter Spielerzahl. Ein Training legt er auf Wunsch
+im Trainingsbestand eines Teams wie im eigenen — Termin-Trainings stehen nicht darin, die nennt
+der Kalender —; ein älteres Bestands-Training, das einem Termin zugeordnet ist, nennt dabei
+diesen Termin samt Zeit, Ort, Verantwortlichen, Feldern und erwarteter Spielerzahl. Ein Training legt er auf Wunsch
 direkt im Team an, stellt ein eigenes Training als Kopie ins Team oder übernimmt ein
 Team-Training als Kopie in den persönlichen Bestand; das Original bleibt jeweils, wie es ist,
 und ein Termin geht nie mit. Team-Trainings überarbeitet er mit denselben Möglichkeiten wie
@@ -272,11 +273,10 @@ und Spielerzahl entfernt er auch wieder, an einem einzelnen Serientermin mit der
 wie in der Anwendung: Der Termin weicht dann ab und gilt als unbekannt. Eine abweichende
 Angabe lässt er wieder der Serie folgen, Felder und Spielerzahl eingeschlossen, das Datum
 ausgenommen. Er ordnet Terminen Trainings zu
-— aus dem Bestand des Teams oder ein eigenes persönliches Training jeder Altersstufe, das dabei
-immer als eigenständige Kopie ins Team kommt —, ersetzt und löst sie. Ist ein Team-Training
-schon für einen anstehenden Termin eingeplant, muss er zwischen Kopie und Verschieben wählen;
-bei einem vergangenen Termin und bei einem persönlichen Training entsteht immer eine Kopie, und
-eine Angabe zum Verschieben lehnt die Anwendung dort ab. Er trägt Verantwortliche ein, ändert und
+— aus dem Bestand des Teams, das Training eines anderen Termins oder ein eigenes persönliches
+Training jeder Altersstufe —, ersetzt und löst sie. Wie in der Anwendung bekommt der Termin
+dabei immer still eine eigene Kopie, ein Termin-Training, das nicht in den Bestand kommt und
+mit seinem Termin lebt: Löst er es, ersetzt es oder entfällt der Termin, wird es gelöscht. Er trägt Verantwortliche ein, ändert und
 entfernt sie, lässt Termine ausfallen, setzt, ändert oder leert den Grund und nimmt einen Ausfall
 zurück. Ein Training ohne bestehenden Termin auf ein Datum zu setzen, gibt es auch beim
 Assistenten nicht mehr; er legt zuerst den Termin fest und ordnet das Training dann zu.
@@ -294,16 +294,15 @@ freiwillige Spielfeldgrösse der Platzbedarf einer Übung. Ob ein Training zu Pl
 Spielerzahl eines Termins passt, beurteilt der Assistent aus diesen Angaben selbst.
 
 Es gelten dieselben Regeln wie in der Anwendung, und abgewiesen wird mit denselben Sätzen.
-Nachfragen muss der Assistent nicht: Er entfernt, ersetzt, verschiebt, löst und lässt ausfallen
+Nachfragen muss der Assistent nicht: Er entfernt, ersetzt, löst und lässt ausfallen
 ohne Bestätigung. Ausgenommen sind Änderungen und Entfernungen einer Serie für folgende oder
 alle Termine, die vergangene Termine erfassen oder entfallen lassen: Die führt die Anwendung
 erst aus, wenn der Aufruf das ausdrücklich bestätigt, und nennt vorher, wie viele vergangene
 Termine es trifft. Nach jedem Schritt erfährt der Assistent, was geschehen ist — welche
-entfallenen Termine ein Training trugen und dass deren Trainings im Bestand des Teams geblieben
-sind, ob beim Zuordnen eine Kopie entstand und welches Team-Training es ist, welches Training
-ohne Termin im Bestand blieb, welcher Termin beim Verschieben frei wurde, welches Training ein
-Ausfall gelöst hat und, falls eine gescheiterte Kopie nicht ganz aufgeräumt werden konnte, was
-davon stehen blieb. Ein Team, in dem man nicht Mitglied ist, gilt als nicht gefunden.
+entfallenen Termine ein Training trugen und ob es mit ihnen gelöscht wurde oder im Bestand
+blieb, welches Termin-Training beim Zuordnen entstand, welches Training ein ersetztes oder
+gelöstes war und ob es gelöscht wurde und, falls eine gescheiterte Kopie nicht ganz aufgeräumt
+werden konnte, was davon stehen blieb. Ein Team, in dem man nicht Mitglied ist, gilt als nicht gefunden.
 Kalender-Abos holt, zeigt und widerruft der Assistent nicht, und Teams gründen, umbenennen,
 auflösen oder Mitglieder verwalten kann er nicht. Damit legt der Assistent Trainings beider
 Altersstufen an und führt sie samt dem Kalender der Teams weitgehend wie die Anwendung; was ihm
@@ -326,7 +325,7 @@ siehst"; „eigene Übungen samt Feld-Diagramm anlegen, kopieren, ändern, öffe
 zurückziehen"; „Trainings anlegen, überarbeiten, veröffentlichen, zurückziehen, übernehmen und
 löschen"; „Team-Trainings deiner Teams führen und im Kalender deiner Teams Termine und
 Terminserien samt Platz und erwarteter Spielerzahl festlegen, ändern und entfernen, ihnen
-Trainings aus dem Team oder als Kopie deine persönlichen Trainings zuordnen und sie wieder lösen,
+als Kopie Trainings aus dem Team oder deine persönlichen Trainings zuordnen und sie wieder lösen,
 Verantwortliche eintragen, Ausfälle festhalten und zurücknehmen sowie die Termine eines
 Zeitraums abrufen"; „die Anzeigenamen der
 Mitglieder deiner Teams lesen (ohne E-Mail-Adressen)". Nie erreichbar sind „deine Favoriten",
@@ -460,7 +459,7 @@ auf diese Weise ab, kann eine kopierte Bilddatei ohne Übung liegen bleiben; zu 
 nirgends.
 
 Im Kalender fragt der Assistent vor dem Entfernen eines Termins, dem Löschen eines Trainings
-mit Termin, dem Zuordnen, Ersetzen, Verschieben und Lösen nicht nach. Fallen durch eine
+mit Termin, dem Zuordnen, Ersetzen und Lösen nicht nach. Fallen durch eine
 Serienänderung anstehende Termine mit Training weg, erfährt er das erst danach; nur wenn
 vergangene Termine erfasst sind oder entfallen, verlangt die Anwendung eine Bestätigung im
 Aufruf und nennt vorher, was es trifft. Ob ein Termin stattgefunden hat und wer dabei war, kennt

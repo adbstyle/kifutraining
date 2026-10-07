@@ -5,7 +5,7 @@ import { abgebildet } from "@/lib/kern/ergebnis";
 import { meineTeams, teamPlan } from "@/lib/kern/team";
 import { setzeVerantwortliche, teamMitglieder } from "@/lib/kern/verantwortliche";
 import { aendereMitReichweite, entferneMitReichweite, folgeDerSerie, legeSerieFest } from "@/lib/kern/serien";
-import { lasseAusfallen, legeTerminFest, loeseTraining, nimmAusfallZurueck, ordneTrainingZu } from "@/lib/kern/termine";
+import { lasseAusfallen, legeTerminFest, loeseTraining, nimmAusfallZurueck, ordneTrainingZu, type Verlassen } from "@/lib/kern/termine";
 import { KI_WOCHENTAG, alsKiWochentag, alsWochentag } from "@/lib/serie";
 import type { TerminZeile } from "@/lib/queries/termine-fuer";
 import { Wert, kennung, wert } from "@/lib/mcp/bausteine";
@@ -52,11 +52,13 @@ const TERMIN_MODELL =
   "des Platzes und die erwartete Spielerzahl, mit oder ohne Training. Einzelne Termine entstehen mit «termin_festlegen», wöchentliche Serien mit " +
   "«terminserie_festlegen»; ein Training kommt ausschliesslich durch «training_zuordnen» an einen " +
   "bestehenden Termin auf ein Datum. Ein Termin trägt höchstens " +
-  "ein Training, und ein Training ist höchstens für einen Termin eingeplant - für einen weiteren " +
-  "Termin entsteht eine eigenständige Kopie, oder ein Training mit anstehendem Termin wird " +
-  "verschoben. Zeiten gelten am Trainingsort (Schweiz). Ein Termin kann ausfallen (mit freiwilligem " +
-  "Grund); ein ausgefallener nimmt kein Training an und findet wieder statt, wenn er einzeln auf " +
-  "heute oder später verlegt wird; «hat stattgefunden» kennt KiFu nicht. Felder und Spielerzahl " +
+  "ein Training: immer eine eigene Kopie, ein Termin-Training. Es gehört dem Team, steht aber nicht " +
+  "im Bestand und lebt mit seinem Termin - verliert es ihn (lösen, ersetzen, Termin entfernen, " +
+  "Serienänderung), wird es gelöscht. Ältere Trainings aus dem Bestand, die einem Termin zugeordnet " +
+  "sind, bleiben dabei im Bestand. Zeiten gelten am Trainingsort (Schweiz). Ein Termin kann ausfallen " +
+  "(mit freiwilligem Grund); sein Training ruht dann am Termin. Ein ausgefallener nimmt kein neues " +
+  "Training an und findet wieder statt, wenn er einzeln auf heute oder später verlegt wird; " +
+  "«hat stattgefunden» kennt KiFu nicht. Felder und Spielerzahl " +
   "sind Angaben für deine Planung; KiFu prüft nicht, ob ein Training auf sie passt - das beurteilst du.";
 
 const DATUM = z.string().describe("Datum als JJJJ-MM-TT, etwa 2026-10-07.");
@@ -145,7 +147,7 @@ const PlanEintrag = z.object({
   abweichungen: z.array(z.enum(["datum", "zeit", "ort", "bemerkung", "verantwortliche", "felder", "spielerzahl"])),
   /** Wer den Termin vorbereitet und leitet (#325); leer ohne Eintrag. */
   verantwortliche: z.array(Verantwortlich),
-  /** Ein ausgefallener Termin trägt kein Training und gilt nicht als unvorbereitet (#327). */
+  /** Ein ausgefallener Termin gilt nicht als unvorbereitet; ein Training ruht an ihm (#327, PO 2026-10-06). */
   ausgefallen: z.boolean(),
   /** Freiwilliger Grund des Ausfalls; `null` ohne Angabe und bei einem Termin, der stattfindet. */
   ausfall_grund: z.string().nullable(),
@@ -231,7 +233,7 @@ export const teamPlanAbrufen = werkzeug({
     "Ausgefallene Termine stehen mit «ausgefallen: true» und Grund im Plan. " +
     "Mit «von» und «bis» (beide eingeschlossen, höchstens bis zum gleichen Kalendertag im Folgejahr) " +
     "nur die Termine dieses Zeitraums, nach denselben Regeln für kommend und vergangen; ohne Termine eine leere Auskunft. " +
-    "Team-Trainings ohne Termin nennt «trainings_suchen» (bestand: team). " +
+    "Den Bestand des Teams (ohne Termin-Trainings) nennt «trainings_suchen» (bestand: team). " +
     TEAM_KENNUNG_FEHLER,
   nurLesen: true,
   eingabe: z.object({
@@ -337,14 +339,35 @@ export const AendernEingabe = z.object({
 });
 
 const EntfallenMitTraining = z.array(
-  z.object({ termin_id: z.string(), datum: z.string(), training: z.object({ id: z.string(), name: z.string() }) }),
+  z.object({
+    termin_id: z.string(),
+    datum: z.string(),
+    training: z.object({
+      id: z.string(),
+      name: z.string(),
+      geloescht: z.boolean().describe("true: ein Termin-Training, das mit dem Termin gelöscht wurde; false: bleibt im Bestand."),
+    }),
+  }),
 );
 
-type Folge = { entfallend: { terminId: string; datum: string; training: { id: string; name: string } }[] } | null;
+type Folge = { entfallend: { terminId: string; datum: string; training: { id: string; name: string; terminTraining: boolean } }[] } | null;
 
-/** Die entfallenen Termine mit Training — ihre Trainings bleiben im Bestand. */
+/** Die entfallenen Termine mit Training — Termin-Trainings gehen mit, die übrigen bleiben im Bestand. */
 const entfallenMitTraining = (serie: Folge) =>
-  (serie?.entfallend ?? []).map((x) => ({ termin_id: x.terminId, datum: x.datum, training: x.training }));
+  (serie?.entfallend ?? []).map((x) => ({
+    termin_id: x.terminId,
+    datum: x.datum,
+    training: { id: x.training.id, name: x.training.name, geloescht: x.training.terminTraining },
+  }));
+
+/** Was mit dem Training geschah, das einen Termin verliess. */
+const VerlassenSchema = z
+  .object({
+    id: z.string(),
+    geloescht: z.boolean().describe("true: ein Termin-Training, das gelöscht wurde; false: bleibt im Bestand des Teams."),
+  })
+  .nullable();
+const verlassenAus = (v: Verlassen) => (v ? { id: v.trainingId, geloescht: v.geloescht } : null);
 
 export const terminAendern = werkzeug({
   name: "termin_aendern",
@@ -354,8 +377,8 @@ export const terminAendern = werkzeug({
     "lassen sich nicht leeren; ändert sich die Zeit, braucht der Termin danach beide. Das " +
     "zugeordnete Training bleibt dasselbe. Für einen Termin einer Serie ist «reichweite» Pflicht; " +
     "das Datum ändert nur «nur_dieser», Wochentage und Zeitraum nur «dieser_und_folgende» oder " +
-    "«alle». Das Ergebnis nennt entfallene Termine mit Training; ihre Trainings bleiben im Bestand " +
-    `des Teams. ${SERIEN_MODELL} ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
+    "«alle». Das Ergebnis nennt entfallene Termine mit Training; Termin-Trainings gehen mit ihnen, " +
+    `andere bleiben im Bestand. ${SERIEN_MODELL} ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: AendernEingabe,
   ausgabe: z.object({
@@ -394,19 +417,18 @@ export const terminEntfernen = werkzeug({
   name: "termin_entfernen",
   titel: "Termin entfernen",
   beschreibung:
-    "Entfernt einen Termin. Sein Training bleibt im Bestand des Teams " +
-    "- «training_id» nennt es - und lässt sich mit «training_zuordnen» einem anderen Termin " +
-    "zuordnen. Ein ganzes Team-Training löscht «training_loeschen»; sein Termin bleibt dann ohne " +
-    "Training bestehen. Für einen Termin einer Serie ist «reichweite» Pflicht; bei " +
-    "«dieser_und_folgende» oder «alle» nennt das Ergebnis die entfallenen Termine mit Training - " +
-    "ihre Trainings bleiben im Bestand des Teams. Erfasst «dieser_und_folgende» oder «alle» " +
+    "Entfernt einen Termin. Sein Termin-Training geht mit ihm; ein älteres Training aus dem " +
+    "Bestand bleibt dort («training»). Ein ganzes Team-Training löscht «training_loeschen»; sein " +
+    "Termin bleibt dann ohne Training bestehen. Für einen Termin einer Serie ist «reichweite» " +
+    "Pflicht; bei «dieser_und_folgende» oder «alle» nennt das Ergebnis die entfallenen Termine mit " +
+    "Training. Erfasst «dieser_und_folgende» oder «alle» " +
     "auch vergangene Termine, wird die Serie nur mit «bestaetigt: true» entfernt; ohne diese " +
     "Bestätigung nennt das Ergebnis, was entfiele. Ein einzelner Termin oder «nur_dieser» wird " +
     "sofort entfernt. " +
     `${SERIEN_MODELL} ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ termin_id: TerminId, reichweite: Reichweite.optional(), bestaetigt: Bestaetigt }),
-  ausgabe: z.object({ training_id: z.string().nullable(), entfallen_mit_training: EntfallenMitTraining }),
+  ausgabe: z.object({ training: VerlassenSchema, entfallen_mit_training: EntfallenMitTraining }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
       await entferneMitReichweite(zugang.supabase, zugang.userId, {
@@ -414,7 +436,7 @@ export const terminEntfernen = werkzeug({
         reichweite: e.reichweite,
         bestaetigt: e.bestaetigt,
       }),
-      (w) => ({ training_id: w.trainingId, entfallen_mit_training: entfallenMitTraining(w.serie) }),
+      (w) => ({ training: verlassenAus(w.training), entfallen_mit_training: entfallenMitTraining(w.serie) }),
     ),
 });
 
@@ -496,56 +518,30 @@ export const trainingZuordnen = werkzeug({
   name: "training_zuordnen",
   titel: "Training einem Termin zuordnen",
   beschreibung:
-    "Ordnet einem Termin ein Training aus dem Bestand desselben Teams zu; trägt der Termin schon " +
-    "eins, bleibt jenes ohne Termin im Bestand («im_bestand_geblieben»). Auch ein eigenes " +
-    "persönliches Training (jeder Altersstufe, Entwurf oder öffentlich) lässt sich zuordnen: Es " +
-    "entsteht immer eine eigenständige Kopie im Team des Termins, die alle Mitglieder sehen und " +
-    "bearbeiten; das Original bleibt unverändert und ohne Verbindung. «art» darf dann nur «kopie» " +
-    "sein oder fehlen. Trainings eines anderen Teams lassen sich nicht zuordnen. " +
-    "Ist ein Team-Training bereits " +
-    "für einen ANSTEHENDEN Termin eingeplant, musst du «art» wählen: «kopie» legt eine " +
-    "eigenständige, gleichnamige Kopie für diesen Termin an, «verschieben» nimmt es vom bisherigen " +
-    "Termin weg («frei_gewordener_termin»). Ist sein Termin VERGANGEN, entsteht immer eine Kopie; " +
-    "«verschieben» wird dann abgewiesen. Scheitert die Zuordnung einer Kopie, entfernt KiFu die " +
-    `Kopie wieder; «hinweis» sagt, ob etwas stehen blieb. ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER} ` +
+    "Ordnet einem Termin ein Training zu: Der Termin bekommt immer eine eigene Kopie als " +
+    "Termin-Training; die Quelle bleibt unverändert, und in den Bestand des Teams kommt nichts. " +
+    "Quelle kann ein Training aus dem Bestand desselben Teams, das Training eines anderen Termins " +
+    "oder ein eigenes persönliches Training sein (jeder Altersstufe, Entwurf oder öffentlich). " +
+    "Trainings eines anderen Teams lassen sich nicht zuordnen. Trägt der Termin schon eins, wird es " +
+    "ersetzt («ersetzt»): ein Termin-Training wird dabei gelöscht, ein älteres Training aus dem " +
+    "Bestand bleibt dort. Scheitert die Zuordnung, entfernt KiFu die Kopie wieder; «hinweis» sagt, " +
+    `ob etwas stehen blieb. ${TERMIN_MODELL} ${TERMIN_KENNUNG_FEHLER} ` +
     KENNUNG_FEHLER,
   nurLesen: false,
-  eingabe: z.object({
-    termin_id: TerminId,
-    training_id: TrainingId,
-    art: z
-      .enum(["kopie", "verschieben"])
-      .optional()
-      .describe(
-        "Nur für ein Team-Training, das schon einem anderen Termin gehört. Bei einem persönlichen Training nur «kopie» oder weglassen.",
-      ),
-  }),
+  eingabe: z.object({ termin_id: TerminId, training_id: TrainingId }),
   ausgabe: z.object({
     termin_id: z.string(),
-    training_id: z
-      .string()
-      .describe("Das Team-Training, das jetzt am Termin steht - bei einer Kopie (auch eines persönlichen Trainings) die neu entstandene Kopie."),
-    kopie: z.boolean(),
-    im_bestand_geblieben: z
-      .string()
-      .nullable()
-      .describe("Kennung des Trainings, das den belegten Termin verlassen hat und ohne Termin im Team-Bestand blieb; null, wenn der Termin frei war."),
-    frei_gewordener_termin: z.string().nullable(),
+    training_id: z.string().describe("Das Termin-Training, das jetzt am Termin steht - die neu entstandene Kopie."),
+    ersetzt: VerlassenSchema.describe("Das Training, das der Termin vorher trug; null, wenn er frei war."),
     url: z.string(),
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
-      await ordneTrainingZu(zugang.supabase, zugang.userId, {
-        terminId: e.termin_id,
-        trainingId: e.training_id,
-        art: e.art,
-      }),
+      await ordneTrainingZu(zugang.supabase, zugang.userId, { terminId: e.termin_id, trainingId: e.training_id }),
       (w) => ({
         termin_id: w.terminId,
         training_id: w.trainingId,
-        kopie: w.kopie,
-        im_bestand_geblieben: w.imBestand,
-        frei_gewordener_termin: w.freierTermin,
+        ersetzt: verlassenAus(w.ersetzt),
         url: zugang.url("training", w.trainingId, "edit"),
       }),
     ),
@@ -557,14 +553,15 @@ export const trainingLoesen = werkzeug({
   name: "training_loesen",
   titel: "Training vom Termin lösen",
   beschreibung:
-    "Löst das Training von seinem Termin: Der Termin bleibt ohne Training im Kalender, das " +
-    `Training ohne Termin im Bestand des Teams. ${TERMIN_KENNUNG_FEHLER}`,
+    "Löst das Training von seinem Termin: Der Termin bleibt ohne Training im Kalender. Ein " +
+    "Termin-Training wird dabei gelöscht, ein älteres Training aus dem Bestand bleibt dort. " +
+    TERMIN_KENNUNG_FEHLER,
   nurLesen: false,
   eingabe: z.object({ termin_id: TerminId }),
-  ausgabe: z.object({ training_id: z.string().nullable() }),
+  ausgabe: z.object({ training: VerlassenSchema }),
   ausfuehren: async (e, zugang) =>
     abgebildet(await loeseTraining(zugang.supabase, zugang.userId, { terminId: e.termin_id }), (w) => ({
-      training_id: w.trainingId,
+      training: verlassenAus(w.training),
     })),
 });
 
@@ -576,10 +573,9 @@ export const terminAusfallenLassen = werkzeug({
   beschreibung:
     "Markiert einen Termin als ausgefallen - wie ein abgesagter Kalendereintrag - oder ändert den " +
     "Grund eines schon ausgefallenen. Ohne «grund» bleibt ein vorhandener Grund stehen; «grund»: " +
-    "null (oder leer) leert ihn. Trägt der Termin ein Training, wird es gelöst und bleibt ohne " +
-    "Termin im Bestand («geloestes_training»). Ein ausgefallener Termin gilt nicht als " +
-    "unvorbereitet und nimmt kein Training an. Einzeln auf heute oder später verlegt, findet er " +
-    `wieder statt. ${TERMIN_KENNUNG_FEHLER}`,
+    "null (oder leer) leert ihn. Trägt der Termin ein Training, ruht es am Termin und ist wieder da, " +
+    "wenn der Ausfall zurückgenommen wird. Ein ausgefallener Termin gilt nicht als unvorbereitet " +
+    `und nimmt kein neues Training an. Einzeln auf heute oder später verlegt, findet er wieder statt. ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({
     termin_id: TerminId,
@@ -587,14 +583,10 @@ export const terminAusfallenLassen = werkzeug({
       .optional()
       .describe("Grund, frei, höchstens 500 Zeichen. Weggelassen: ein vorhandener Grund bleibt. null: leert ihn."),
   }),
-  ausgabe: z.object({
-    termin_id: z.string(),
-    geloestes_training: z.string().nullable().describe("Kennung des Trainings, das vom Termin gelöst wurde; null ohne."),
-  }),
+  ausgabe: z.object({ termin_id: z.string() }),
   ausfuehren: async (e, zugang) =>
     abgebildet(await lasseAusfallen(zugang.supabase, zugang.userId, { terminId: e.termin_id, grund: e.grund }), (w) => ({
       termin_id: w.terminId,
-      geloestes_training: w.geloestesTraining,
     })),
 });
 
@@ -604,8 +596,8 @@ export const terminAusfallZuruecknehmen = werkzeug({
   name: "termin_ausfall_zuruecknehmen",
   titel: "Ausfall zurücknehmen",
   beschreibung:
-    "Nimmt den Ausfall eines Termins zurück: Er ist danach wieder ein normaler Termin, ohne Training " +
-    `und ohne Grund; ein früher gelöstes Training ordnet KiFu nicht wieder zu. ${TERMIN_KENNUNG_FEHLER}`,
+    "Nimmt den Ausfall eines Termins zurück: Er ist danach wieder ein normaler Termin ohne Grund; " +
+    `ein Training, das am Termin ruhte, ist wieder da. ${TERMIN_KENNUNG_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ termin_id: TerminId }),
   ausgabe: z.object({ termin_id: z.string() }),

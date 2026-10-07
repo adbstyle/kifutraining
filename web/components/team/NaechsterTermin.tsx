@@ -1,25 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarOff, CalendarPlus, PlayCircle, Repeat } from "lucide-react";
-import { ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, OverflowMenu } from "@/components/ui";
+import { CalendarOff, CalendarPlus, PlayCircle, Repeat, TriangleAlert } from "lucide-react";
+import { BlattLozenge, Button, ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, MARKEN_TEXT, OverflowMenu } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage, wochentageText } from "@/lib/serie";
 import { spielerzahlText, zeitText } from "@/lib/termin";
 import { feldName, feldText } from "@/lib/termin-felder";
 import { datumKurz } from "@/lib/zeit";
-import { terminZustand, verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
+import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
 import { useTerminAktionen } from "./TerminBereich";
-import { TrainingHinzufuegen, terminMenue } from "./TerminHandgriffe";
+import { terminMenue } from "./TerminHandgriffe";
 
 /* Der nächste Termin zuoberst im Trainingsplan (#403): grösser als die
    Zeilen darunter und auf einer höheren Fläche, damit man ihn am
    Spielfeldrand nicht suchen muss. Zuerst steht, was man auf dem Handy ohne
    Scrollen sehen soll — Tag, Zeit, Training (AK 2) —, gleich darunter die
-   Handgriffe, die man dort braucht: Durchführen und Öffnen, ohne Training an
-   seiner Stelle «Training hinzufügen» (AK 10, 11, 13). Alle übrigen liegen im
-   Menü (AK 15).
+   Handgriffe, die man dort braucht: Durchführen und Öffnen (AK 10, 11). Alle
+   übrigen liegen im Menü (AK 15). Fehlt das Training noch, soll das auffallen
+   (PO 2026-10-07): Wo sonst sein Name steht, steht eine Lozenge im Gelb
+   der Kalenderblätter (`BlattLozenge`), und an
+   Stelle der beiden Knöpfe einer: «Training hinzufügen», gleich wie «Training
+   öffnen» (AK 13). Der nächste Termin steht nie in der Vergangenheit; ohne
+   Training ist er darum immer «noch nicht vorbereitet».
 
    Darunter alle Angaben ungekürzt (AK 3, 5): Ort, Verantwortliche, erwartete
    Spielerzahl und Felder ausführlich, Bemerkung und die Wochentage der Serie.
@@ -45,7 +49,6 @@ export function NaechsterTermin({
   // AK 8: Heute oder Morgen zusätzlich zum Wochentag und Datum.
   const relativ = t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
   const v = verantwortlicheMitDir(t, ich);
-  const zustand = terminZustand(t, heute);
   return (
     <div
       id={t.id}
@@ -60,7 +63,9 @@ export function NaechsterTermin({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h4 className="type-title-small text-primary">
+          {/* Ohne Training steht der Tag in der Warnfarbe — wie die Tageszahl
+              seines Kalenderblatts (PO 2026-10-07). */}
+          <h4 className={cn("type-title-small", !t.ausgefallen && !t.training ? "text-icon-warning" : "text-primary")}>
             <span className="sr-only">Nächster Termin: </span>
             {relativ && <>{relativ} · </>}
             {tagOhneJahr(t.datum)}
@@ -79,7 +84,7 @@ export function NaechsterTermin({
       </div>
 
       <div className="mt-2">
-        {zustand === "ausgefallen" ? (
+        {t.ausgefallen ? (
           <>
             <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
             {/* AK 14: der Grund vollständig. */}
@@ -89,25 +94,36 @@ export function NaechsterTermin({
                 {t.ausfallGrund}
               </p>
             )}
+            {/* Ein Training ruht am ausgefallenen Termin (PO 2026-10-06). */}
+            {t.training && (
+              <Link href={`/training/${t.training.id}`} className="focus-ring mt-1 inline-block rounded-klein type-body-medium text-on-surface-mittel hover:underline">
+                <span className="sr-only">Training: </span>
+                {t.training.name}
+              </Link>
+            )}
           </>
-        ) : zustand === "training" ? (
-          <Link href={`/training/${t.training!.id}`} className="focus-ring rounded-klein type-title-large text-on-surface hover:underline">
-            {t.training!.name}
+        ) : t.training ? (
+          <Link href={`/training/${t.training.id}`} className="focus-ring rounded-klein type-title-large text-on-surface hover:underline">
+            {t.training.name}
           </Link>
-        ) : zustand === "noch-nicht" ? (
-          <TrainingHinzufuegen t={t} className="type-title-medium" />
         ) : (
-          <Lozenge>Ohne Training</Lozenge>
+          <BlattLozenge zustand="noch-nicht" iconBefore={TriangleAlert}>{MARKEN_TEXT["noch-nicht"]}</BlattLozenge>
         )}
       </div>
 
-      {zustand === "training" && (
+      {!t.ausgefallen && (
         <div className="mt-3 flex flex-wrap gap-2">
-          <ButtonLink href={`/training/${t.training!.id}/durchfuehren?termin=${t.id}`}>
-            <PlayCircle size={18} aria-hidden />
-            Durchführen
-          </ButtonLink>
-          <ButtonLink variant="outlined" href={`/training/${t.training!.id}`}>Training öffnen</ButtonLink>
+          {t.training ? (
+            <>
+              <ButtonLink href={`/training/${t.training.id}/durchfuehren?termin=${t.id}`}>
+                <PlayCircle size={18} aria-hidden />
+                Durchführen
+              </ButtonLink>
+              <ButtonLink variant="outlined" href={`/training/${t.training.id}`}>Training öffnen</ButtonLink>
+            </>
+          ) : (
+            <Button variant="outlined" aria-haspopup="dialog" onClick={() => a.zuordnen(t)}>Training hinzufügen</Button>
+          )}
         </div>
       )}
 

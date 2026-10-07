@@ -12,13 +12,12 @@
 // ausschliesslich Pfade zu Zeilen, die nachweislich nicht mehr existieren.
 import { createAdminClient } from "@/lib/supabase/admin";
 import { STORAGE_BUCKET } from "@/lib/storage";
-import { eigeneBildPfade } from "@/lib/fassung";
+import { eigeneBildPfade, type BildKandidat } from "@/lib/fassung";
 import type { createClient } from "@/lib/supabase/server";
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
-/** Eine Fassungs-Zeile, soweit fürs Aufräumen nötig. */
-export type BildKandidat = { id: string; bild_url: string | null };
+export type { BildKandidat };
 
 /** Die Fassungen aller Trainings dieser Teams — die eine Formulierung von
  *  „welche Bilddateien hängen an diesem Team", statt sie je Aufrufer erneut zu

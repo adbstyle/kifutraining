@@ -2,13 +2,15 @@
 
 import { TriangleAlert } from "lucide-react";
 import { Button, Dialog } from "@/components/ui";
+import { trainingOhneTermin } from "@/lib/termin";
 import { datumKurz } from "@/lib/zeit";
 import type { SerienFolge } from "@/lib/kern/serien";
 
 /* Fallen Termine weg, muss das bestätigt werden (#326 AK 8). Genannt werden
-   nur die wegfallenden Termine MIT Training (OoS 2); ihre Trainings bleiben
-   ohne Termin im Team-Bestand (PC 13). Eine Anzahl nennt der Dialog nicht
-   (OoS 4).
+   nur die wegfallenden Termine MIT Training (OoS 2), je mit dem, was ihrem
+   Training geschieht: Ein Termin-Training wird mitgelöscht, ein Training aus
+   dem Bestand bleibt dort (PO 2026-10-06). Eine Anzahl nennt der Dialog
+   nicht (OoS 4).
 
    `SerienFolge` ist ein reiner Typ: `import type` zieht nichts aus dem
    server-only Fachkern in das Client-Bundle. */
@@ -45,11 +47,12 @@ export function EntfallendBestaetigung({
       </p>
       {folge && folge.entfallend.length > 0 && (
         <>
-          <p className="mt-3">Diese tragen ein Training; es bleibt ohne Termin im Team-Bestand:</p>
+          <p className="mt-3">Diese tragen ein Training:</p>
           <ul className="mt-1 list-disc space-y-1 pl-5">
             {folge.entfallend.map((e) => (
               <li key={e.terminId}>
                 {datumKurz(e.datum)} - <strong className="text-on-surface">{e.training.name}</strong>
+                {" "}{trainingOhneTermin(e.training.terminTraining)}
               </li>
             ))}
           </ul>

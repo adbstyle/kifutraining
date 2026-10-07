@@ -313,8 +313,9 @@ export async function deleteTraining(trainingId: string): Promise<void> {
   if (r.wert.teamId) {
     revalidiereTeam(r.wert.teamId);
     // Zurück in die Ansicht, aus der das Training verschwunden ist — dort
-    // erwartet der Trainer den Beleg, dass es weg ist (Story 17).
-    redirect(`/team/${r.wert.teamId}/trainings`);
+    // erwartet der Trainer den Beleg, dass es weg ist (Story 17): mit Termin
+    // der Trainingsplan (ein Termin-Training steht nur dort), sonst der Bestand.
+    redirect(r.wert.terminBleibt ? `/team/${r.wert.teamId}` : `/team/${r.wert.teamId}/trainings`);
   }
   revalidatePath("/trainings");
   redirect("/trainings?mine=1&deleted=1");

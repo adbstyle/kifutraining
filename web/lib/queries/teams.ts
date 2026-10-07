@@ -82,10 +82,13 @@ export async function getTeamAufloesungsInfo(
 ): Promise<{ trainings: number; termine: number }> {
   const supabase = await createClient();
 
+  // Gezählt wird der Bestand, wie ihn die Trainings-Ansicht zeigt; die
+  // Termin-Trainings gehen mit den Terminen, die der Dialog ebenfalls nennt.
   const { count: trainings } = await supabase
     .from("trainings")
     .select("id", { count: "exact", head: true })
-    .eq("team_id", teamId);
+    .eq("team_id", teamId)
+    .eq("termin_training", false);
 
   // Alle Termine des Teams, auch jene ohne Training (#322 PC 10).
   const { count: termine } = await supabase

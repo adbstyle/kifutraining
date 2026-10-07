@@ -74,7 +74,9 @@ Training im Trainingsplan des Teams bestehen bleibt. Angeboten wird jeweils nur,
 Betrachter offensteht: Wer ein fremdes Training bloss ansieht, findet die drei Punkte gar nicht,
 Ins-Team-Stellen und das Zuordnen zu einem Team-Termin gibt es nur für jemanden, der in einem
 Team ist, und an einem Team-Training gibt es weder Veröffentlichen noch Ins-Team-Stellen noch
-dieses Zuordnen — ein Team-Training wird im Team selbst einem Termin zugeordnet.
+dieses Zuordnen — ein Team-Training wird im Team selbst einem Termin zugeordnet. Ein
+Termin-Training hat dafür „In den Team-Bestand kopieren": Es legt eine Kopie im Bestand an und
+bleibt selbst an seinem Termin.
 
 Trainings beider Altersstufen lassen sich auch im Gespräch mit einem verbundenen KI-Assistenten
 anlegen, zusammenstellen, veröffentlichen, übernehmen und löschen (siehe
@@ -323,8 +325,8 @@ Hauptteil in einen anderen Teil, fragt die Anwendung nicht nach — dort gelten 
 die Zuweisungen fallen still weg.
 
 Kopiert jemand ein ganzes Training — ins Team stellen, ein Team-Training zu sich übernehmen, ein
-öffentliches Training übernehmen, ein eingeplantes Training einem weiteren Termin als Kopie
-zuordnen, ein persönliches Training einem Team-Termin zuordnen —, reisen
+öffentliches Training übernehmen, ein Training einem Termin zuordnen (der Termin bekommt immer
+eine eigene Kopie), ein Termin-Training in den Team-Bestand kopieren —, reisen
 Gruppen, Durchlauf und Notizen mit: Die Kopie führt dieselben Bezeichnungen in derselben
 Reihenfolge, verteilt die Übungen des Hauptteils auf dieselben Wechsel und trägt dieselben
 Notizen. Neu verteilt werden muss nichts. Führt das Original mehrere Varianten seines Hauptteils,

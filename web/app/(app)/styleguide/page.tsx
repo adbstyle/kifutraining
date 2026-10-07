@@ -14,6 +14,7 @@ import {
   PrintButton,
   IconButton,
   IconButtonLink,
+  BlattLozenge,
   Kalenderblatt,
   KategorieLozenge,
   TabNav,
@@ -82,7 +83,7 @@ import {
   Layers,
   RefreshCw,
   CalendarOff,
-  CalendarX2,
+  TriangleAlert,
   CalendarPlus,
 } from "lucide-react";
 import { DiagrammView, GlyphVorschau } from "@/components/diagramm/DiagrammView";
@@ -1313,9 +1314,6 @@ export default function Styleguide() {
             2 Varianten
           </Lozenge>
           <Lozenge>Kinderfussball</Lozenge>
-          <Lozenge appearance="warning" iconBefore={CalendarX2}>
-            Noch kein Training
-          </Lozenge>
           <Lozenge iconBefore={CalendarOff}>Ausgefallen</Lozenge>
         </div>
         <div className="mb-6 flex flex-wrap items-center gap-3 rounded-flaeche bg-[linear-gradient(135deg,#f5f5f0,#9aa79c)] p-3">
@@ -3272,13 +3270,15 @@ export default function Styleguide() {
           Training in der Warnfarbe - je eine schwache Fläche (12 %) mit der Tageszahl in der Farbe selbst -,
           ausgefallen grau mit durchgestrichener Zahl, vergangen ohne Training ohne Fläche. Die Farbe trägt
           den Zustand nie allein, die Zeile daneben sagt ihn in Worten. Heute hebt das Blatt nicht hervor;
-          dafür steht der nächste Termin zuoberst.
+          dafür steht der nächste Termin zuoberst. Wo kein Blatt steht (der nächste Termin), sagt eine
+          Lozenge in derselben Tönung den Zustand: <code>BlattLozenge</code> - Form der Lozenge, Farbe des Blatts.
         </p>
-        <div className="flex gap-4">
+        <div className="flex items-start gap-4">
           <Kalenderblatt datum="2026-10-06" zustand="noch-nicht" />
           <Kalenderblatt datum="2026-10-08" zustand="training" />
           <Kalenderblatt datum="2026-10-11" zustand="ausgefallen" />
           <Kalenderblatt datum="2026-09-30" />
+          <BlattLozenge zustand="noch-nicht" iconBefore={TriangleAlert}>Noch kein Training</BlattLozenge>
         </div>
       </Section>
 

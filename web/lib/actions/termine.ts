@@ -99,27 +99,25 @@ export async function entferneTerminAktion(
   const r = await entferneTermin(a.supabase, a.userId, { terminId, erwartetesTraining });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
-  if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
+  if (r.wert.training) revalidiereTraining(r.wert.training.trainingId);
   return { ok: true };
 }
 
 /** Einen Termin ausfallen lassen oder den Grund eines ausgefallenen ändern
  *  (#327). Die Oberfläche sendet den Grund immer als Text — «» leert ihn —,
- *  also ist das der ausdrückliche Weg «Grund setzen». `erwartetesTraining`
- *  und `erwartetAusgefallen` sind, was sie bei der Auswahl sah: Das Training
- *  wird gelöst, ein inzwischen geänderter Ausfall weist ab (PO 17). */
+ *  also ist das der ausdrückliche Weg «Grund setzen». `erwartetAusgefallen`
+ *  ist, was sie bei der Auswahl sah: Ein inzwischen geänderter Ausfall weist
+ *  ab (PO 17). Ein Training bleibt am Termin. */
 export async function lasseAusfallenAktion(
   terminId: string,
   grund: string,
-  erwartetesTraining: string | null,
   erwartetAusgefallen: boolean,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await lasseAusfallen(a.supabase, a.userId, { terminId, grund, erwartetesTraining, erwartetAusgefallen });
+  const r = await lasseAusfallen(a.supabase, a.userId, { terminId, grund, erwartetAusgefallen });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
-  if (r.wert.geloestesTraining) revalidiereTraining(r.wert.geloestesTraining);
   return { ok: true };
 }
 
@@ -133,17 +131,17 @@ export async function nimmAusfallZurueckAktion(terminId: string): Promise<{ ok: 
   return { ok: true };
 }
 
-export async function ordneTrainingZuAktion(
-  e: Zuordnung,
-): Promise<{ ok: true; kopie: boolean; imBestand: string | null } | Fehler> {
+/** Einem Termin ein Training zuordnen — immer als stille Kopie, die ein
+ *  Termin-Training wird (PO 2026-10-06). */
+export async function ordneTrainingZuAktion(e: Zuordnung): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await ordneTrainingZu(a.supabase, a.userId, e);
   if (!r.ok) return { ok: false, error: oberflaechenMeldung(r) };
   revalidiereTeam(r.wert.teamId);
-  for (const id of [r.wert.trainingId, r.wert.imBestand, e.trainingId])
+  for (const id of [r.wert.trainingId, r.wert.ersetzt?.trainingId, e.trainingId])
     if (id) revalidiereTraining(id);
-  return { ok: true, kopie: r.wert.kopie, imBestand: r.wert.imBestand };
+  return { ok: true };
 }
 
 /** Die Termine eines Teams zur Wahl, wenn ein persönliches Training einem
@@ -170,7 +168,7 @@ export async function loeseTrainingAktion(
   const r = await loeseTraining(a.supabase, a.userId, { terminId, erwartetesTraining });
   if (!r.ok) return { ok: false, error: r.meldung };
   revalidiereTeam(r.wert.teamId);
-  if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
+  if (r.wert.training) revalidiereTraining(r.wert.training.trainingId);
   return { ok: true };
 }
 

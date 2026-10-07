@@ -33,10 +33,11 @@ import { datumKurz } from "@/lib/zeit";
 import type { TeamTrainingRow } from "@/lib/queries/trainings";
 import type { TerminZeile } from "@/lib/queries/termine";
 
-/* Der Trainingsbestand eines Teams (Story 5).
-   Je Eintrag: „Zu mir übernehmen" (erzeugt eine persönliche Kopie) und
-   „Entfernen" (nimmt es dem ganzen Team weg) und „Termin zuordnen"
-   (Team-Kalender #323). */
+/* Der Trainingsbestand eines Teams (Story 5) — die Vorlagen, aus denen
+   geplant wird; Termin-Trainings stehen nicht darin (PO 2026-10-06).
+   Je Eintrag: „Zu mir übernehmen" (erzeugt eine persönliche Kopie),
+   „Entfernen" (nimmt es dem ganzen Team weg) und „Termin zuordnen" (der
+   Termin bekommt still eine eigene Kopie, Team-Kalender #323). */
 export function TeamTrainingsListe({
   trainings,
   termine,
@@ -59,14 +60,13 @@ export function TeamTrainingsListe({
    *  Fehler stehen im Dialog — ausser die Auswahl ist veraltet: dann würde ein
    *  erneuter Versuch immer wieder scheitern, der Dialog schliesst, und die
    *  aufgefrischte Liste zeigt den neuen Stand. */
-  function zuordnenSpeichern({ termin, art }: { termin: TerminZeile; art?: "kopie" | "verschieben" }) {
+  function zuordnenSpeichern(termin: TerminZeile) {
     if (!zuordnen) return;
     startTransition(async () => {
       const res = await ordneTrainingZuAktion({
         terminId: termin.id,
         trainingId: zuordnen.id,
-        art,
-        erwartet: { terminTraining: termin.training?.id ?? null, trainingTermin: zuordnen.termin?.id ?? null },
+        erwartet: { trainingAmTermin: termin.training?.id ?? null },
       });
       router.refresh();
       if (!res.ok && !istVeraltet(res.error)) {
@@ -75,7 +75,7 @@ export function TeamTrainingsListe({
       }
       setZuordnen(null);
       setDialogFehler(undefined);
-      melde(res.ok ? (res.kopie ? ZUORDNEN_ERFOLG.kopie : ZUORDNEN_ERFOLG.direkt) : res.error);
+      melde(res.ok ? ZUORDNEN_ERFOLG : res.error);
     });
   }
 
@@ -139,11 +139,10 @@ export function TeamTrainingsListe({
                   </Lozenge>
                 )}
                 {/* „Eingeplant" ist ein Zustand, keine Aktion — darum als
-                    Lozenge beim Titel statt als Attrappe eines Buttons in
-                    der Aktionsreihe. Geändert wird der Termin im Plan.
-                    Das Datum steht mit dabei: mehrere eingeplante Einheiten
-                    desselben Trainings heissen gleich und sind sonst nicht
-                    auseinanderzuhalten (#156 AK 7). */}
+                    Lozenge beim Titel. Es trifft nur noch Trainings, die vor
+                    den Termin-Trainings (2026-10-06) direkt einem Termin
+                    zugeordnet wurden; neue Zuordnungen kopieren. Das Datum
+                    hält gleichnamige auseinander (#156 AK 7). */}
                 {t.termin && (
                   <Lozenge iconBefore={CalendarCheck}>
                     Eingeplant · {datumKurz(t.termin.datum)}
@@ -168,10 +167,8 @@ export function TeamTrainingsListe({
             </Link>
 
             {/* Icon-only wie auf der Übungsseite; Entfernen liegt im
-                ⋮-Menü. Das Zuordnen bleibt auch bei einem bereits
-                eingeplanten Training erreichbar (Story 16): dort, wo der
-                Trainer sein Training auswählt, endete sonst der Weg zum
-                nächsten Termin. Den Termin selbst ändert man im Plan. */}
+                ⋮-Menü. Zuordnen lässt sich jedes Training beliebig oft —
+                jeder Termin bekommt seine eigene Kopie. */}
             <div className="absolute right-4 top-4 flex items-center gap-0.5">
               <Tooltip label="Termin zuordnen">
                 <IconButton

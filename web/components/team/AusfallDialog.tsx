@@ -7,9 +7,9 @@ import { datumKurz } from "@/lib/zeit";
 import type { TerminZeile } from "@/lib/queries/termine";
 
 /* Einen Termin ausfallen lassen oder den Grund eines ausgefallenen ändern
-   (Team-Kalender #327 AK 1–3). Die Anwendung kündigt nicht an, dass ein
-   zugeordnetes Training gelöst wird (OoS 2). Der Grund ist freiwillig; ein
-   leerer Text heisst «ohne Grund». */
+   (Team-Kalender #327 AK 1–3). Ein zugeordnetes Training bleibt am Termin
+   und ruht, bis der Ausfall zurückgenommen wird (PO 2026-10-06). Der Grund
+   ist freiwillig; ein leerer Text heisst «ohne Grund». */
 export function AusfallDialog({
   termin,
   pending,

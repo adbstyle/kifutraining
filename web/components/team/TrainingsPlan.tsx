@@ -184,7 +184,8 @@ function TerminReihe({
   const zustand = terminZustand(t, heute);
   const ganz = [
     [zeit, ort, t.spielerzahl !== null && spielerzahlText(t.spielerzahl)].filter(Boolean).join(" · "),
-    zustand === "ausgefallen" ? ["Ausgefallen", t.ausfallGrund].filter(Boolean).join(": ") : t.training?.name,
+    zustand === "ausgefallen" ? ["Ausgefallen", t.ausfallGrund].filter(Boolean).join(": ") : null,
+    t.training?.name,
     v.text && `Verantwortlich: ${v.text}`,
   ].filter(Boolean).join("\n");
   return (
@@ -236,6 +237,17 @@ function TerminReihe({
                   <span className="sr-only">Grund: </span>
                   {t.ausfallGrund}
                 </span>
+              )}
+              {/* Ein Training ruht am ausgefallenen Termin (PO 2026-10-06). */}
+              {t.training && (
+                <Link
+                  href={`/training/${t.training.id}`}
+                  title={t.training.name}
+                  className="gedaempft focus-ring pointer-events-auto min-w-0 truncate rounded-klein type-body-small text-on-surface-mittel hover:underline"
+                >
+                  <span className="sr-only">Training: </span>
+                  {t.training.name}
+                </Link>
               )}
             </span>
           ) : zustand === "training" ? (

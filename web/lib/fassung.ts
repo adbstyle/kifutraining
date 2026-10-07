@@ -258,6 +258,9 @@ export async function entferneStorageObjekte(
  *  Datei unangetastet: ein verwaistes Bild ist harmlos, ein gelöschtes fremdes
  *  wäre Datenverlust. Eine Stelle für den Guard, damit ihn kein Löschweg
  *  vergisst. */
+/** Eine Fassungs-Zeile, soweit fürs Aufräumen ihrer Bilddatei nötig. */
+export type BildKandidat = { id: string; bild_url: string | null };
+
 export function eigeneBildPfade(
   fassungen: { id: string; bild_url: string | null }[],
 ): string[] {
