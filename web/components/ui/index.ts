@@ -11,7 +11,7 @@ export {
   chipTextSelected,
 } from "./Chip";
 export { Card } from "./Card";
-export { Kalenderblatt } from "./Kalenderblatt";
+export { BlattLozenge, Kalenderblatt } from "./Kalenderblatt";
 export { MiniMonat, MARKEN_TEXT } from "./MiniMonat";
 export type { Marke, MarkenZustand } from "./MiniMonat";
 export { AuswahlListe } from "./AuswahlListe";

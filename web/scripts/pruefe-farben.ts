@@ -258,6 +258,14 @@ pruefe("Kalenderblatt: Tageszahl und Beschriftung tragen auf ihrer Tönung (4.5:
   }
 });
 
+pruefe("BlattLozenge: Schrift trägt auf der Karte des nächsten Termins (4.5:1)", () => {
+  // Der nächste Termin liegt auf elev-04; die Lozenge in der Tönung des
+  // Kalenderblatts: 12 % der Warnfarbe, die Schrift in ihr selbst.
+  const flaeche = ueberlagern(SECTION.warning.icon, 0.12, elev(4));
+  const wert = kontrast(SECTION.warning.icon, flaeche);
+  assert.ok(wert >= 4.5, `Noch kein Training auf ${elevName(4)}: ${z(wert)}:1`);
+});
+
 pruefe("Die Zeichen im Mini-Monat heben sich von seiner Fläche ab (WCAG 1.4.11)", () => {
   // MiniMonat: Punkt in Primary, Ring in der Warnfarbe (`icon-warning`),
   // Strich und Kreuz in der leisen Schrift — als Badges im Tag auf der

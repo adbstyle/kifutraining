@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CalendarOff, CalendarPlus, PlayCircle, Repeat, TriangleAlert } from "lucide-react";
-import { Button, ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, MARKEN_TEXT, OverflowMenu } from "@/components/ui";
+import { BlattLozenge, Button, ButtonLink, Eigenschaft, EigenschaftFehlt, Lozenge, MARKEN_TEXT, OverflowMenu } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage, wochentageText } from "@/lib/serie";
@@ -19,7 +19,8 @@ import { terminMenue } from "./TerminHandgriffe";
    Scrollen sehen soll — Tag, Zeit, Training (AK 2) —, gleich darunter die
    Handgriffe, die man dort braucht: Durchführen und Öffnen (AK 10, 11). Alle
    übrigen liegen im Menü (AK 15). Fehlt das Training noch, soll das auffallen
-   (PO 2026-10-07): Wo sonst sein Name steht, steht eine Warn-Lozenge, und an
+   (PO 2026-10-07): Wo sonst sein Name steht, steht eine Lozenge in der Gelb
+   der Kalenderblätter (`BlattLozenge`), und an
    Stelle der beiden Knöpfe einer: «Training hinzufügen», gleich wie «Training
    öffnen» (AK 13). Der nächste Termin steht nie in der Vergangenheit; ohne
    Training ist er darum immer «noch nicht vorbereitet».
@@ -104,7 +105,7 @@ export function NaechsterTermin({
             {t.training.name}
           </Link>
         ) : (
-          <Lozenge appearance="warning" iconBefore={TriangleAlert}>{MARKEN_TEXT["noch-nicht"]}</Lozenge>
+          <BlattLozenge zustand="noch-nicht" iconBefore={TriangleAlert}>{MARKEN_TEXT["noch-nicht"]}</BlattLozenge>
         )}
       </div>
 

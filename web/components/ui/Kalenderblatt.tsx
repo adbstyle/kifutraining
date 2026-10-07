@@ -1,5 +1,7 @@
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { kalenderblatt, tagOhneJahr } from "@/lib/monat";
+import { LOZENGE_FORM } from "./Lozenge";
 
 /** Was der Termin hinter dem Blatt trägt — dieselben Zustände wie die
  *  Marken des Mini-Monats. */
@@ -57,5 +59,27 @@ export function Kalenderblatt({
       <span aria-hidden className={cn("type-label-small", leise)}>{b.monat}</span>
       <span className="sr-only">{tagOhneJahr(datum)} {datum.slice(0, 4)}</span>
     </Element>
+  );
+}
+
+/* Der Zustand eines Termins als Lozenge in der Tönung seines Kalenderblatts
+   (PO 2026-10-07): Der nächste Termin trägt kein Blatt, sagt seinen Zustand
+   aber in derselben Farbe wie die Blätter darunter. Darum nicht Atlassians
+   `warning` (orange) — die Warnfarbe der Blätter ist das Gelb der
+   Warnzeichen. Form wie jede Lozenge (`LOZENGE_FORM`). */
+export function BlattLozenge({
+  zustand,
+  iconBefore: Icon,
+  children,
+}: {
+  zustand: BlattZustand;
+  iconBefore?: LucideIcon;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className={cn(LOZENGE_FORM, TOENUNG[zustand])}>
+      {Icon && <Icon size={12} strokeWidth={2.5} className="shrink-0" aria-hidden />}
+      <span className="truncate">{children}</span>
+    </span>
   );
 }

@@ -22,8 +22,9 @@ import type { KategorieSlug } from "@/lib/vocab";
      ausgefallen, ohne Training.
    - `information` — gilt nach aussen: öffentlich, Community.
    - `discovery` — etwas Zusätzliches: mehrere Varianten, eine neue Version.
-   - `warning` — braucht Aufmerksamkeit: Termin ohne Training.
-   - `success` / `danger` — erledigt / blockiert (im Kit, derzeit ohne Ort).
+   - `success` / `warning` / `danger` — erledigt / braucht Aufmerksamkeit /
+     blockiert (im Kit, derzeit ohne Ort; ein Termin ohne Training trägt die
+     Tönung seines Kalenderblatts, `BlattLozenge`).
    - `accent-*` — Kategorien ohne Wertung; bei uns die Alterskategorien.
    Die Akzente teilen Atlassians Palette mit den Bedeutungen (`accent-blue`
    hat die Werte von `information`, `accent-purple` die von `discovery`,
@@ -32,6 +33,9 @@ import type { KategorieSlug } from "@/lib/vocab";
    Lozenge ein Wort.
    Die Farben stehen wörtlich aus Atlassians Dark-Theme (lib/farben.ts),
    im Druck aus dem Light-Theme — die Rollen wechseln im `@media print`. */
+/** Die Form jeder Lozenge, ohne Farbe — auch für `BlattLozenge`. */
+export const LOZENGE_FORM = "type-lozenge inline-flex h-5 max-w-[200px] shrink-0 items-center gap-1 rounded-flaeche px-1 py-0.5";
+
 const darstellungen: Record<LozengeAppearance, string> = {
   neutral: "bg-lozenge-neutral text-on-lozenge-neutral",
   success: "bg-lozenge-success text-on-lozenge-success",
@@ -74,7 +78,7 @@ export function Lozenge({
     <span
       title={title}
       className={cn(
-        "type-lozenge inline-flex h-5 max-w-[200px] shrink-0 items-center gap-1 rounded-flaeche px-1 py-0.5",
+        LOZENGE_FORM,
         darstellungen[darstellung],
         className,
       )}
