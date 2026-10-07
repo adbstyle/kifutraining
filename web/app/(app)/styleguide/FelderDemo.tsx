@@ -15,11 +15,15 @@ import { spielerzahlProblem, spielerzahlText, zahlOderNull } from "@/lib/termin"
    Trainingsplan (knapp) und Durchführen-Ansicht (ausführlich) daraus machen;
    die Prüfung läuft live, damit der Fehlerzustand zu sehen ist. */
 export function FelderDemo() {
+  // Feste Schlüssel statt zufälliger: Die Zeilen entstehen schon auf dem
+  // Server, und ihre Schlüssel stehen in den IDs — zufällige wichen im
+  // Browser ab (Hydration-Fehler). In der Anwendung entstehen sie erst beim
+  // Öffnen eines Dialogs.
   const [zeilen, setZeilen] = useState(() =>
     zeilenAusFeldern([
       { laenge_m: 30, breite_m: 25, tore: { minitor: 2, tor_5m: 0, tor_7m: null }, untergrund: "kunstrasen" },
       { laenge_m: null, breite_m: null, tore: { minitor: null, tor_5m: null, tor_7m: null }, untergrund: "halle" },
-    ]),
+    ]).map((z, i) => ({ ...z, key: `demo-${i}` })),
   );
   const [zahlText, setZahlText] = useState("12");
   const felder = felderAusZeilen(zeilen);
