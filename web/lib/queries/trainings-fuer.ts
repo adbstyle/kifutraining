@@ -504,8 +504,8 @@ export type TeamTrainingRow = TrainingListRow & {
     /** Der Tag der Einheit als `YYYY-MM-DD`. Er unterscheidet eingeplante
      *  Einheiten desselben Trainings im Bestand voneinander (#156 AK 7). */
     datum: string;
-    beginn: string | null;
-    ende: string | null;
+    beginn: string;
+    ende: string;
     ort: string | null;
     bemerkung: string | null;
     /** Die Felder des Platzes (#389); `null` = unbekannt. */
@@ -574,8 +574,8 @@ export async function getTeamTrainingsFuer(
     type RawTerminEingebettet = {
       id: string;
       datum: string;
-      beginn: string | null;
-      ende: string | null;
+      beginn: string;
+      ende: string;
       ort: string | null;
       bemerkung: string | null;
       felder: Felder | null;

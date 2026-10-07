@@ -112,7 +112,7 @@ export type SerienAenderung = {
 export type EntfallenderTermin = {
   terminId: string;
   datum: string;
-  beginn: string | null;
+  beginn: string;
   training: { id: string; name: string };
 };
 
@@ -134,7 +134,7 @@ export type SerienFolge = {
 type Roh = {
   serie: string | null;
   version_vorher: number;
-  entfallend: { id: string; datum: string; beginn: string | null; training: { id: string; name: string } }[];
+  entfallend: { id: string; datum: string; beginn: string; training: { id: string; name: string } }[];
   entfallend_anzahl: number;
   vergangene: number;
 };

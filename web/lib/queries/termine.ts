@@ -21,10 +21,11 @@ export {
 } from "@/lib/queries/termine-fuer";
 
 /** Der Trainingsplan eines Teams mit der Anmeldung aus den Cookies —
- *  chronologisch aufsteigend (`getTeamPlanFuer`). `nurMeine`: nur die Termine,
- *  für die dieses Konto verantwortlich ist (#325 AK 11). */
-export async function getTeamPlan(teamId: string, o: { nurMeine?: string } = {}): Promise<TerminZeile[]> {
-  return getTeamPlanFuer(await createClient(), teamId, { nurMeine: o.nurMeine });
+ *  chronologisch aufsteigend (`getTeamPlanFuer`). Ungefiltert: Die Seite
+ *  grenzt selbst auf die eigenen Termine ein, weil der Monat daneben auch
+ *  die übrigen Tage kennen muss (#404 AK 14). */
+export async function getTeamPlan(teamId: string): Promise<TerminZeile[]> {
+  return getTeamPlanFuer(await createClient(), teamId);
 }
 
 /** Der Termin, dem ein Training zugeordnet ist, falls es einen hat. Für den

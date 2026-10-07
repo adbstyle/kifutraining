@@ -22,8 +22,8 @@ import type { TrainingDetail } from "@/lib/queries/trainings";
 
 type TerminKontext = {
   datum: string;
-  beginn: string | null;
-  ende: string | null;
+  beginn: string;
+  ende: string;
   ort: string | null;
   bemerkung: string | null;
   /** Die Namen der Verantwortlichen (#325 AK 10); leer: niemand eingetragen. */
@@ -46,11 +46,8 @@ function TerminKopf({ termin, className }: { termin: TerminKontext; className?: 
       <span className="inline-flex items-center gap-1.5 text-on-surface">
         <CalendarDays size={15} strokeWidth={2} aria-hidden />
         {datumKurz(termin.datum)}
-        {zeitText(termin.beginn, termin.ende) && <> · {zeitText(termin.beginn, termin.ende)} Uhr</>}
+        {" "}· {zeitText(termin.beginn, termin.ende)} Uhr
       </span>
-      {/* Ein übernommener Termin kann ohne Beginn sein (#322 PO 9) — das
-          steht am Platz im Weg, darum sagt der Kopf es. */}
-      {!termin.beginn && <span className="text-error">· Zeit fehlt</span>}
       {termin.ort && (
         <span className="inline-flex items-center gap-1.5">
           <MapPin size={14} strokeWidth={2} aria-hidden />

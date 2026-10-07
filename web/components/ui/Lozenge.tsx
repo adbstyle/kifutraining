@@ -48,13 +48,6 @@ const darstellungen: Record<LozengeAppearance, string> = {
   "accent-gray": "bg-lozenge-accent-gray text-on-lozenge-accent-gray",
 };
 
-/** Fläche und Schrift einer Darstellung — für Bausteine, die einen Zustand in
- *  derselben Farbe zeigen wie die Lozenge, aber selbst keine sind (der
- *  Termineintrag im Monatsraster). So steht jedes Farbpaar nur hier. */
-export function lozengeFarben(appearance: LozengeAppearance): string {
-  return darstellungen[appearance];
-}
-
 export function Lozenge({
   appearance = "neutral",
   aufBild = false,

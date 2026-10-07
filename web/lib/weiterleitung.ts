@@ -19,7 +19,7 @@ export function sichererRuecksprung(roh: unknown, rueckfall = "/"): string {
 }
 
 /** Die Login-Adresse für einen geschützten Pfad: Der Rücksprung trägt Pfad UND
- *  Abfrage (`?termin=…`, `?ansicht=monat`), die Login-Adresse selbst sonst
+ *  Abfrage (`?termin=…`, `?meine=1`), die Login-Adresse selbst sonst
  *  nichts — dort bedeutet etwa `?error` etwas. */
 export function loginAdresse(pfad: string, abfrage: string): string {
   return `/login?${new URLSearchParams({ redirect: pfad + abfrage })}`;

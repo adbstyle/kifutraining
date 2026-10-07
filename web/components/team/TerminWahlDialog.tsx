@@ -87,10 +87,9 @@ export function TerminWahlDialog({
         <AuswahlListe
           ariaLabel="Termine des Teams"
           items={liste.map((t) => {
-            const zeit = zeitText(t.beginn, t.ende);
             return {
               id: t.id,
-              titel: `${datumKurz(t.datum)}${zeit ? ` · ${zeit} Uhr` : ""}`,
+              titel: `${datumKurz(t.datum)} · ${zeitText(t.beginn, t.ende)} Uhr`,
               untertitel: t.training ? `Trägt «${t.training.name}»` : "Ohne Training",
               gedaempft: t.datum < heute,
             };

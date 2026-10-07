@@ -91,8 +91,8 @@ export type TrainingsSuche = {
 export type TrefferTermin = {
   id: string;
   datum: string;
-  beginn: string | null;
-  ende: string | null;
+  beginn: string;
+  ende: string;
   ort: string | null;
   bemerkung: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */

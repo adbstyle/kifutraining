@@ -163,8 +163,8 @@ function baueSchema(streng: boolean) {
     termin: obj({
       id: z.string(),
       datum: z.string(),
-      beginn: z.string().nullable(),
-      ende: z.string().nullable(),
+      beginn: z.string(),
+      ende: z.string(),
       ort: z.string().nullable(),
       bemerkung: z.string().nullable(),
       /** Die Felder des Platzes (#389 AK 13, 14); `null` = unbekannt. */

@@ -123,9 +123,10 @@ import {
 } from "../lib/termin-felder";
 import { FELDER_MODELL, FelderEingabe, SPIELERZAHL_MODELL, SpielerzahlEingabe, felderAusgabe, felderSchema, spielerzahlSchema } from "../lib/termin-felder-ausgabe";
 import { MASS_TEXT } from "../lib/feldmass";
-import { ZEITRAUM_TEXT, istMonat, monatVon, monatsName, monatsRaster, plusMonate, tagText, zeitraumProblem } from "../lib/monat";
+import { ZEITRAUM_TEXT, kalenderblatt, monatVon, monatsName, monatsRaster, plusMonate, tagOhneJahr, tagText, zeitraumProblem } from "../lib/monat";
+import { nachMonatUndTag } from "../lib/plan-gliederung";
 import { planHref } from "../lib/team-ansicht";
-import { ABO_DAUER_MIN, aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
+import { aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type AboTermin } from "../lib/ical";
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
@@ -620,7 +621,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
   assert.throws(() => TrainingAuskunftStreng.parse({ ...heute, termin: { ...heute.termin, extra: 1 } }));
 });
 
-// ── Monatsüberblick und KI-Zeitraum (#329 AK 13, 14) ─────────────────────────
+// ── Monat und KI-Zeitraum (#329 AK 14, #404) ─────────────────────────────────
 pruefe("Monat: Raster Montag–Sonntag, Wechsel, Name (#329)", () => {
   const r = monatsRaster("2026-10");
   assert.equal(r[0][0].tag, "2026-09-28", "beginnt am Montag vor dem 1.");
@@ -631,7 +632,6 @@ pruefe("Monat: Raster Montag–Sonntag, Wechsel, Name (#329)", () => {
   assert.equal(plusMonate("2026-01", -1), "2025-12");
   assert.equal(monatsName("2026-10"), "Oktober 2026");
   assert.equal(monatVon("2026-10-07"), "2026-10");
-  assert.equal(istMonat("2026-13"), false);
 });
 
 pruefe("Monat: Raster-Grenzfälle - Montag-Beginn, Sonntag-Ende, Februar, Schaltjahr, Jahreswechsel (#329)", () => {
@@ -658,34 +658,15 @@ pruefe("Monat: Raster-Grenzfälle - Montag-Beginn, Sonntag-Ende, Februar, Schalt
   assert.equal(monatsName("2028-02"), "Februar 2028");
 });
 
-pruefe("Monat: istMonat nimmt nur Monate mit tragfähigem Raster an (?monat= aus der Adresse)", () => {
-  for (const ok of ["2026-10", "2026-01", "2026-12", "0002-01", "9998-12"]) assert.equal(istMonat(ok), true, ok);
-  for (const schlecht of ["2026-1", "2026-00", "2026-13", "0000-01", "0001-01", "9999-12", "9999-01", "10000-01", "2026-10-01", "", "morgen"])
-    assert.equal(istMonat(schlecht), false, schlecht);
-  // Jeder zulässige Rand ergibt ein Raster nur aus gültigen Kalendertagen.
-  for (const m of ["0002-01", "9998-12"]) {
-    const tage = monatsRaster(m).flat().map((t) => t.tag);
-    assert.ok(tage.length >= 28 && tage.every((t) => zeitraumProblem(t, t) === null), `${m}: Raster aus gültigen Tagen`);
-  }
-});
-
 pruefe("Monat: tagText schreibt den Tag aus, ohne führende Null", () => {
   assert.equal(tagText("2026-10-07"), "7. Oktober 2026");
   assert.equal(tagText("2026-12-31"), "31. Dezember 2026");
   assert.equal(tagText("2028-02-29"), "29. Februar 2028");
 });
 
-pruefe("planHref: die Eingrenzung reist auf jeder Adresse mit; der heutige Monat bleibt ungenannt (#329 PC 1, 2, 4)", () => {
-  const heute = "2026-10-15";
-  // Liste: nur die Eingrenzung, nie ein Monat.
-  assert.equal(planHref("t1", { ansicht: "liste", meine: false }, heute), "/team/t1");
-  assert.equal(planHref("t1", { ansicht: "liste", monat: "2026-11", meine: true }, heute), "/team/t1?meine=1");
-  // Monat: Ansicht, der Monat nur wenn er nicht der heutige ist, dazu die Eingrenzung.
-  assert.equal(planHref("t1", { ansicht: "monat", meine: false }, heute), "/team/t1?ansicht=monat");
-  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-10", meine: false }, heute), "/team/t1?ansicht=monat");
-  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-11", meine: false }, heute), "/team/t1?ansicht=monat&monat=2026-11");
-  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-11", meine: true }, heute), "/team/t1?ansicht=monat&monat=2026-11&meine=1");
-  assert.equal(planHref("t1", { ansicht: "monat", monat: "2026-10", meine: true }, heute), "/team/t1?ansicht=monat&meine=1");
+pruefe("planHref: nur die Eingrenzung reist in der Adresse mit (#325 AK 11, #405)", () => {
+  assert.equal(planHref("t1", false), "/team/t1");
+  assert.equal(planHref("t1", true), "/team/t1?meine=1");
 });
 
 pruefe("KI-Zeitraum: höchstens bis zum gleichen Kalendertag im Folgejahr (#329 AK 14, Review Focus 2)", () => {
@@ -714,27 +695,16 @@ pruefe("terminProblem: neuer Termin braucht Datum, Beginn und Ende", () => {
   assert.deepEqual(terminProblem({ ...ok, bemerkung: "x".repeat(501) }), { feld: "bemerkung", text: TERMIN_TEXT.bemerkungLang });
 });
 
-pruefe("terminProblem: Bestand ohne vollständige Zeit bleibt änderbar, eine geänderte Zeit muss vollständig sein", () => {
-  const alt = { beginn: "18:30", ende: null };
-  // AK 9: Datum, Ort, Bemerkung ändern, ohne die Zeit zu ergänzen.
-  assert.equal(terminProblem({ datum: "2026-10-08", beginn: "18:30", ende: null, ort: "Halle" }, alt), null);
-  assert.equal(terminProblem({ datum: "2026-10-08", beginn: null, ende: null }, { beginn: null, ende: null }), null);
-  // AK 10: Wer die Zeit anfasst, muss sie vollständig geben.
-  assert.deepEqual(terminProblem({ datum: "2026-10-08", beginn: "19:00", ende: null }, alt), { feld: "ende", text: TERMIN_TEXT.zeitPflicht });
-  assert.equal(terminProblem({ datum: "2026-10-08", beginn: "19:00", ende: "20:30" }, alt), null);
-  // AK 8: Beginn und Ende lassen sich nicht leeren.
-  assert.deepEqual(
-    terminProblem({ datum: "2026-10-08", beginn: null, ende: null }, { beginn: "18:30", ende: "20:00" }),
-    { feld: "beginn", text: TERMIN_TEXT.zeitPflicht },
-  );
+pruefe("terminProblem: Beginn und Ende sind immer Pflicht und lassen sich nicht leeren (AK 2, 8)", () => {
+  assert.deepEqual(terminProblem({ datum: "2026-10-08", beginn: "18:30", ende: null, ort: "Halle" }), { feld: "ende", text: TERMIN_TEXT.zeitPflicht });
+  assert.deepEqual(terminProblem({ datum: "2026-10-08", beginn: null, ende: null }), { feld: "beginn", text: TERMIN_TEXT.zeitPflicht });
+  assert.equal(terminProblem({ datum: "2026-10-08", beginn: "19:00", ende: "20:30" }), null);
   assert.equal(leerZuNull("  "), null);
   assert.equal(leerZuNull(" Allmend "), "Allmend");
 });
 
 pruefe("Termin-Anzeige und -Marker: derselbe Satz vorab und aus der Datenbank", () => {
   assert.equal(zeitText("18:30", "20:00"), "18:30–20:00");
-  assert.equal(zeitText("18:30", null), "ab 18:30");
-  assert.equal(zeitText(null, null), null);
   for (const [marker, satz] of Object.entries(TERMIN_MELDUNG)) {
     const f = still(() => ausDbFehler({ message: `${marker}` }));
     assert.equal(f.meldung, satz, marker);
@@ -890,9 +860,6 @@ pruefe("geaenderteFelder: nur Geändertes, Beginn und Ende als Paar, nichts geä
     { datum: "2026-10-09", ort: "Halle" },
     "Zeit bleibt draussen",
   );
-  // Übernommener Termin ohne Zeit: unverändert heisst weiter «nichts senden».
-  const ohneZeit = { datum: "2026-10-08", beginn: "", ende: "", ort: "", bemerkung: "" };
-  assert.equal(geaenderteFelder({ ...ohneZeit }, ohneZeit), null);
 });
 
 // ── Felder eines Termins (#389) ─────────────────────────────────────────────
@@ -1891,6 +1858,28 @@ pruefe("Kein «ansetzen» mehr in Oberfläche und KI-Texten (#323 PC 11)", () =>
   assert.deepEqual(treffer, [], `«ansetzen» steht noch in: ${treffer.join(", ")}`);
 });
 
+pruefe("Kalenderblatt und Tag ohne Jahr: Wochentag, Tageszahl, Monat, nie das Jahr (#402 AK 1, #403 AK 8)", () => {
+  assert.deepEqual(kalenderblatt("2026-10-06"), { wochentag: "Di", tag: 6, monat: "Okt." });
+  assert.deepEqual(kalenderblatt("2027-03-01"), { wochentag: "Mo", tag: 1, monat: "März" });
+  assert.equal(tagOhneJahr("2026-10-06"), "Dienstag, 6. Oktober");
+  assert.equal(tagOhneJahr("2026-11-01"), "Sonntag, 1. November");
+});
+
+pruefe("Plan-Gliederung: Monate und Tage in der Reihenfolge der Eingabe, im Tag der Beginn aufsteigend (#402 AK 2, 19, 20)", () => {
+  const t = (id: string, datum: string, beginn: string) => ({ id, datum, beginn });
+  // Anstehend kommt aufsteigend, der Rückblick absteigend und im Tag mit Beginn absteigend.
+  const anstehend = nachMonatUndTag([t("b", "2026-10-06", "19:00"), t("a", "2026-10-06", "18:00"), t("c", "2026-10-08", "17:00"), t("d", "2026-11-02", "18:00")]);
+  assert.deepEqual(anstehend.map((m) => m.monat), ["2026-10", "2026-11"]);
+  assert.deepEqual(anstehend[0].tage.map((d) => [d.datum, d.termine.map((x) => x.id)]), [["2026-10-06", ["a", "b"]], ["2026-10-08", ["c"]]]);
+  const rueckblick = nachMonatUndTag([t("x", "2026-10-05", "20:00"), t("y", "2026-10-05", "19:00"), t("z", "2026-10-05", "17:00"), t("g", "2026-10-05", "17:00"), t("w", "2026-09-30", "18:00")]);
+  assert.deepEqual(rueckblick.map((m) => m.monat), ["2026-10", "2026-09"]);
+  // Gleicher Beginn: die Reihenfolge der Eingabe (nach dem Anlegen) bleibt.
+  assert.deepEqual(rueckblick[0].tage[0].termine.map((x) => x.id), ["z", "g", "y", "x"]);
+  // Derselbe Monat in zwei Jahren bleibt getrennt.
+  assert.deepEqual(nachMonatUndTag([t("1", "2026-10-01", "18:00"), t("2", "2027-10-01", "18:00")]).map((m) => m.monat), ["2026-10", "2027-10"]);
+  assert.deepEqual(nachMonatUndTag([]), []);
+});
+
 const ABO_JETZT = new Date("2026-10-01T10:00:00Z");
 const aboTermin = (t: Partial<AboTermin> & { id: string }): AboTermin => ({
   datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, geaendert: "2026-09-30T08:00:00Z", ...t,
@@ -1898,16 +1887,12 @@ const aboTermin = (t: Partial<AboTermin> & { id: string }): AboTermin => ({
 const aboText = (termine: AboTermin[]) =>
   kalenderText({ kalenderName: "Training · FC Test", titel: "Training · FC Test", teamId: "team", origin: "https://ki-fu.ch", jetzt: ABO_JETZT, termine });
 
-pruefe("Abo: Wanduhrzeit mit TZID, ganztägig ohne Beginn, 90 Minuten ohne Ende, über Mitternacht (#330 PC 2–4, Review Focus 1)", () => {
+pruefe("Abo: Wanduhrzeit mit TZID, Beginn und Ende des Termins (#330 PC 2–4, Review Focus 1)", () => {
   const text = aboText([
     { id: "a", datum: "2027-03-28", beginn: "02:30", ende: "04:00", ort: "Halle; Nord, 2", geaendert: "2026-09-30T08:00:00Z" },
-    { id: "b", datum: "2026-10-07", beginn: "23:00", ende: null, ort: null, geaendert: "2026-09-30T08:00:00Z" },
-    { id: "c", datum: "2026-10-08", beginn: null, ende: null, ort: null, geaendert: "2026-09-30T08:00:00Z" },
   ]);
   assert.ok(text.includes("BEGIN:VTIMEZONE\r\nTZID:Europe/Zurich"));
-  assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20270328T023000"), "Wanduhrzeit, nicht UTC");
-  assert.ok(text.includes("DTEND;TZID=Europe/Zurich:20261008T003000"), "23:00 + 90 Min. endet am Folgetag");
-  assert.ok(text.includes("DTSTART;VALUE=DATE:20261008\r\nDTEND;VALUE=DATE:20261009\r\nTRANSP:TRANSPARENT"), "ganztägig, nicht belegt");
+  assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20270328T023000\r\nDTEND;TZID=Europe/Zurich:20270328T040000"), "Wanduhrzeit, nicht UTC");
   assert.ok(text.includes("LOCATION:Halle\\; Nord\\, 2"), "Escaping");
   assert.ok(text.includes("UID:a@ki-fu.ch"));
   assert.ok(text.includes("URL:https://ki-fu.ch/team/team/termin/a"));
@@ -1941,13 +1926,7 @@ pruefe("Abo: aboLinks - https und http werden zu webcal:, der Pfad bleibt", () =
   });
 });
 
-pruefe("Abo: Ende nicht nach Beginn gilt wie «ohne Ende» (nie DTEND vor DTSTART)", () => {
-  for (const ende of ["18:00", "17:00"]) {
-    const text = aboText([aboTermin({ id: "a", beginn: "18:00", ende })]);
-    assert.ok(text.includes("DTSTART;TZID=Europe/Zurich:20261007T180000\r\nDTEND;TZID=Europe/Zurich:20261007T193000"), `ende ${ende}`);
-  }
-  assert.equal(ABO_DAUER_MIN, 90);
-  // Zeiten mit Sekunden (time-Spalte) gehen als HH:MM durch.
+pruefe("Abo: Zeiten mit Sekunden (time-Spalte) gehen als HH:MM durch", () => {
   const mitSekunden = aboText([aboTermin({ id: "a", beginn: "18:00:00", ende: "19:30:00" })]);
   assert.ok(mitSekunden.includes("DTSTART;TZID=Europe/Zurich:20261007T180000\r\nDTEND;TZID=Europe/Zurich:20261007T193000"));
 });
