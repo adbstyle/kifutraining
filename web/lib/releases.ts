@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { unstable_cache } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { APP_VERSION } from "@/lib/version";
 
 /* Die Releases von KiFu, wie sie im öffentlichen Repository veröffentlicht
@@ -28,6 +28,12 @@ const GUELTIG_SEKUNDEN = 30 * 60;
  *  Zwischenspeicher wird trotzdem gelesen: Was ein anderer Prozess geholt
  *  hat, erscheint. */
 const PAUSE_NACH_FEHLER_MS = 5 * 60 * 1000;
+/** Kennt der Stand die laufende Version nicht, fragt dieser Server-Prozess
+ *  je Weg (Seite, Route) höchstens so oft eigens bei GitHub nach. Auf Staging
+ *  trägt `develop` die neue Version schon Tage vor ihrem Release — ohne
+ *  Bremse holte dort jeder Seitenwechsel GitHub. */
+const ABGLEICH_ABSTAND_MS = 10 * 60 * 1000;
+const RELEASES_TAG = "github-releases";
 
 export interface Release {
   /** Ohne `v`, z. B. «1.27.0». */
@@ -118,16 +124,36 @@ async function holeSeite(seite: number): Promise<Seite> {
 
 // Wirft der Abruf, speichert `unstable_cache` nichts und behält den
 // bisherigen Eintrag — das ist der «zuletzt bekannte Stand». Die Seitenzahl
-// gehört zum Schlüssel, ebenso die laufende Version: Der Zwischenspeicher
-// überlebt einen Deploy, und ohne sie zeigte «Versionen» nach einem Release
-// bis zu 30 Minuten die neue Version im Kopf, aber eine Liste ohne ihren
-// Release. Mit ihr holt der erste Aufruf nach dem Deploy frisch — der Release
-// entsteht Sekunden nach dem Merge, also vor dem Ende des Builds.
-const holeSeiteZwischengespeichert = unstable_cache(
-  holeSeite,
-  ["github-releases-seite", APP_VERSION],
-  { revalidate: GUELTIG_SEKUNDEN },
-);
+// gehört zum Schlüssel. Der Eintrag überlebt einen Deploy; dass er dann den
+// Release der laufenden Version noch nicht kennt, gleicht
+// `getNeuesteVeroeffentlichungAbgeglichen` über das Tag aus.
+const holeSeiteZwischengespeichert = unstable_cache(holeSeite, ["github-releases-seite"], {
+  revalidate: GUELTIG_SEKUNDEN,
+  tags: [RELEASES_TAG],
+});
+
+/** Steht der Release der laufenden Version im Stand? Nach einem Deploy kann
+ *  der Zwischenspeicher noch von davor stammen: Der Release entsteht erst
+ *  nach dem Merge, «Versionen» zeigte sonst die neue Version im Kopf, aber
+ *  eine Liste ohne ihren Release. */
+function kenntLaufendeVersion(releases: Release[]): boolean {
+  return releases.some((r) => r.version === APP_VERSION);
+}
+
+/** Eine Bremse für den Abgleich: `true`, wenn dieser Prozess jetzt eigens bei
+ *  GitHub nachfragen darf — und zählt die Nachfrage zugleich. Seite und Route
+ *  bremsen getrennt: Holte die Seite frisch, darf die Route den
+ *  Zwischenspeicher trotzdem gleich darauf erneuern lassen. */
+function abgleichBremse(): () => boolean {
+  let naechster = 0;
+  return () => {
+    if (Date.now() < naechster) return false;
+    naechster = Date.now() + ABGLEICH_ABSTAND_MS;
+    return true;
+  };
+}
+const abgleichSeiteFaellig = abgleichBremse();
+const abgleichRouteFaellig = abgleichBremse();
 
 /** «v1.10.0» → [1, 10, 0]; was keiner Versionsnummer gleicht, → null. */
 function versionsteile(version: string): number[] | null {
@@ -189,6 +215,32 @@ export const getNeuesteVeroeffentlichung = cache(async (): Promise<string | null
   }
 });
 
+/** Wie `getNeuesteVeroeffentlichung`, aber für einen Route Handler: Kennt
+ *  der Zwischenspeicher die laufende Version nicht, fragt er GitHub direkt.
+ *  Erst wenn GitHub sie kennt, erklärt er den Zwischenspeicher für veraltet —
+ *  ein verworfener Eintrag fiele nicht mehr auf den alten Stand zurück, wenn
+ *  der nächste Abruf scheiterte. Den Tag verwerfen darf nur ein Route Handler
+ *  oder eine Server Action, nicht das Rendern einer Seite. */
+export async function getNeuesteVeroeffentlichungAbgeglichen(): Promise<string | null> {
+  let releases: Release[];
+  try {
+    releases = (await holeSeiteZwischengespeichert(1)).releases;
+  } catch {
+    return null;
+  }
+  const neueste = neuesteVeroeffentlichung(releases);
+  if (kenntLaufendeVersion(releases) || !abgleichRouteFaellig()) return neueste;
+  try {
+    const frisch = (await holeSeite(1)).releases;
+    if (!kenntLaufendeVersion(frisch)) return neueste;
+    revalidateTag(RELEASES_TAG);
+    return neuesteVeroeffentlichung(frisch);
+  } catch (fehler) {
+    console.error(fehler);
+    return neueste;
+  }
+}
+
 export function neuesteVeroeffentlichung(releases: Release[]): string | null {
   return releases.reduce<string | null>(
     (max, r) => (!max || Date.parse(r.veroeffentlicht) > Date.parse(max) ? r.veroeffentlicht : max),
@@ -203,7 +255,9 @@ export function neuesteVeroeffentlichung(releases: Release[]): string | null {
  * einer ruhigen halben Stunde ohne Besuch ist er einfach alt, und den neuen
  * holt `unstable_cache` erst im Hintergrund. Darum holt die Seite dann selbst
  * einmal frisch; nur wenn das scheitert (oder pausiert), gilt der alte Stand
- * als veraltet.
+ * als veraltet. Ebenso holt sie frisch, wenn der Stand die laufende Version
+ * nicht kennt (gebremst über `abgleichSeiteFaellig`) — gilt dabei aber nur als
+ * veraltet, wenn er auch abgelaufen ist.
  */
 export async function getReleasesZumLesen(): Promise<{
   stand: ReleaseStand | null;
@@ -211,13 +265,14 @@ export async function getReleasesZumLesen(): Promise<{
 }> {
   const stand = await getReleases();
   if (!stand) return { stand, veraltet: false };
-  if (Date.now() - Date.parse(stand.abgerufenAm) <= GUELTIG_SEKUNDEN * 1000) {
+  const abgelaufen = Date.now() - Date.parse(stand.abgerufenAm) > GUELTIG_SEKUNDEN * 1000;
+  if (!abgelaufen && (kenntLaufendeVersion(stand.releases) || !abgleichSeiteFaellig())) {
     return { stand, veraltet: false };
   }
   try {
     return { stand: await holeStand(holeSeite), veraltet: false };
   } catch (fehler) {
     console.error(fehler);
-    return { stand, veraltet: true };
+    return { stand, veraltet: abgelaufen };
   }
 }
