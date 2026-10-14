@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
+import { APP_VERSION } from "@/lib/version";
 
 /* Die Releases von KiFu, wie sie im öffentlichen Repository veröffentlicht
    sind (#408): Titel und Text kommen unverändert aus den GitHub-Releases, die
@@ -117,10 +118,16 @@ async function holeSeite(seite: number): Promise<Seite> {
 
 // Wirft der Abruf, speichert `unstable_cache` nichts und behält den
 // bisherigen Eintrag — das ist der «zuletzt bekannte Stand». Die Seitenzahl
-// gehört zum Schlüssel.
-const holeSeiteZwischengespeichert = unstable_cache(holeSeite, ["github-releases-seite"], {
-  revalidate: GUELTIG_SEKUNDEN,
-});
+// gehört zum Schlüssel, ebenso die laufende Version: Der Zwischenspeicher
+// überlebt einen Deploy, und ohne sie zeigte «Versionen» nach einem Release
+// bis zu 30 Minuten die neue Version im Kopf, aber eine Liste ohne ihren
+// Release. Mit ihr holt der erste Aufruf nach dem Deploy frisch — der Release
+// entsteht Sekunden nach dem Merge, also vor dem Ende des Builds.
+const holeSeiteZwischengespeichert = unstable_cache(
+  holeSeite,
+  ["github-releases-seite", APP_VERSION],
+  { revalidate: GUELTIG_SEKUNDEN },
+);
 
 /** «v1.10.0» → [1, 10, 0]; was keiner Versionsnummer gleicht, → null. */
 function versionsteile(version: string): number[] | null {
