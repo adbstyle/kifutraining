@@ -98,7 +98,7 @@ export function MitgliederListe({
               <Tooltip label="Aus dem Team entfernen">
                 <IconButton
                   icon={UserMinus}
-                  label={`${m.anzeigeName} aus dem Team entfernen`}
+                  label={`${m.anzeigeName} (${m.email}) aus dem Team entfernen`}
                   onClick={() => setEntfernen(m)}
                 />
               </Tooltip>
@@ -173,8 +173,11 @@ export function MitgliederListe({
           </>
         }
       >
+        {/* Mit Adresse: Bei Gleichnamigen oder automatischen Kennungen sagt
+            erst sie, wen man entfernt (#425). */}
         <p>
           <strong className="text-on-surface">{entfernen?.anzeigeName}</strong>{" "}
+          <span className="break-all">({entfernen?.email})</span>{" "}
           sieht die Trainings und Termine dieses Teams danach nicht mehr.
           Persönliche Trainings dieser Person bleiben unberührt.
         </p>
