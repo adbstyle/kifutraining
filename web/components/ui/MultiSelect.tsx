@@ -11,9 +11,17 @@ import { Feld, beschreibungIdVon, useFeldId } from "./feld";
 import { usePanelAnker } from "./use-panel-anker";
 import type { SelectOption } from "./Select";
 
+export interface MultiSelectOption extends SelectOption {
+  /** Zweite Zeile unter dem Namen, gedämpft — wo der Name allein eine Option
+      nicht sicher erkennen lässt, etwa die E-Mail-Adresse eines Mitglieds
+      neben seinem Anzeigenamen. Die Suche findet auch sie; im Feld steht nur
+      der Name. */
+  zusatz?: string;
+}
+
 export interface MultiSelectProps {
   label: string;
-  options: SelectOption[];
+  options: MultiSelectOption[];
   /** Kontrolliert (Liste der Werte). Ohne `value` unkontrolliert (interner
       State, seed = defaultValue ?? []). */
   value?: string[];
@@ -107,7 +115,9 @@ export function MultiSelect({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!searchable || !q) return options;
-    return options.filter((o) => o.label.toLowerCase().includes(q));
+    return options.filter(
+      (o) => o.label.toLowerCase().includes(q) || !!o.zusatz?.toLowerCase().includes(q),
+    );
   }, [options, query, searchable]);
 
   // Die gewählten Werte in der Reihenfolge der Optionsliste, nicht in der des
@@ -418,7 +428,16 @@ export function MultiSelect({
                     >
                       {isSelected && <Check size={13} strokeWidth={3} />}
                     </span>
-                    <span className="min-w-0 flex-1 break-words">{o.label}</span>
+                    <span className="min-w-0 flex-1 break-words">
+                      {o.label}
+                      {/* Eine Adresse bricht an jeder Stelle um: Abgeschnitten
+                          fehlte gerade der Teil, der zwei Optionen unterscheidet. */}
+                      {o.zusatz && (
+                        <span className="type-body-small block break-all text-on-surface-mittel">
+                          {o.zusatz}
+                        </span>
+                      )}
+                    </span>
                   </li>
                   </Fragment>
                 );

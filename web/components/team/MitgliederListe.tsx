@@ -9,10 +9,10 @@ import { entferneMitglied, nimmMitgliedAuf, sucheTrainer } from "@/lib/actions/t
 import type { TeamMitglied } from "@/lib/queries/teams";
 
 /* Mitgliederliste mit Aufnahme über eine Vorschau (Story 4).
-   Gezeigt werden ausschliesslich Anzeigenamen — E-Mail-Adressen bekommt hier
-   niemand zu sehen, auch nicht die eigene Eingabe anderer. Die Aufnahme läuft
-   bewusst zweistufig: erst nachsehen, wer sich hinter der Adresse verbirgt,
-   dann bestätigen. */
+   Jedes Mitglied steht mit Anzeigename und E-Mail-Adresse da, damit erkennbar
+   ist, wer hinter einer automatischen Kennung oder einem Kürzel steckt (#425).
+   Die Aufnahme läuft bewusst zweistufig: erst nachsehen, wer sich hinter der
+   Adresse verbirgt, dann bestätigen. */
 export function MitgliederListe({
   teamId,
   mitglieder,
@@ -79,11 +79,18 @@ export function MitgliederListe({
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-elev-08 text-on-surface">
               <UserRound size={18} strokeWidth={2} aria-hidden />
             </span>
-            <span className="type-body-large min-w-0 flex-1 truncate text-on-surface">
-              {m.anzeigeName}
-              {m.userId === eigeneUserId && (
-                <span className="type-label-small ml-2 text-on-surface-mittel">(du)</span>
-              )}
+            <span className="min-w-0 flex-1">
+              <span className="type-body-large block truncate text-on-surface">
+                {m.anzeigeName}
+                {m.userId === eigeneUserId && (
+                  <span className="type-label-small ml-2 text-on-surface-mittel">(du)</span>
+                )}
+              </span>
+              {/* Umbrechen statt kürzen: Abgeschnitten fehlte gerade der Teil
+                  der Adresse, der zwei Mitglieder unterscheidet. */}
+              <span className="type-body-small block break-all text-on-surface-mittel">
+                {m.email}
+              </span>
             </span>
             {/* Sich selbst entfernt man über „Team verlassen" — dort hängt der
                 Hinweis, was der Austritt bedeutet. */}
@@ -91,7 +98,7 @@ export function MitgliederListe({
               <Tooltip label="Aus dem Team entfernen">
                 <IconButton
                   icon={UserMinus}
-                  label={`${m.anzeigeName} aus dem Team entfernen`}
+                  label={`${m.anzeigeName} (${m.email}) aus dem Team entfernen`}
                   onClick={() => setEntfernen(m)}
                 />
               </Tooltip>
@@ -166,8 +173,11 @@ export function MitgliederListe({
           </>
         }
       >
+        {/* Mit Adresse: Bei Gleichnamigen oder automatischen Kennungen sagt
+            erst sie, wen man entfernt (#425). */}
         <p>
           <strong className="text-on-surface">{entfernen?.anzeigeName}</strong>{" "}
+          <span className="break-all">({entfernen?.email})</span>{" "}
           sieht die Trainings und Termine dieses Teams danach nicht mehr.
           Persönliche Trainings dieser Person bleiben unberührt.
         </p>

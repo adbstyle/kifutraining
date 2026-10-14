@@ -1,6 +1,6 @@
 # Konto und Zugang
 
-Stand 2026-10-06. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
+Stand 2026-10-14. Wie man in die Anwendung hineinkommt und was ein Konto mit sich bringt.
 
 ## Registrieren und Anmelden
 
@@ -25,15 +25,16 @@ Weg, das Passwort im laufenden Betrieb ohne diesen Mailversand zu wechseln, gibt
 Die Konto-Seite zeigt die eigene E-Mail-Adresse, bietet das Abmelden an, führt zu den eigenen
 Übungen, lässt den Anzeigenamen setzen, listet die verbundenen KI-Assistenten und die
 Kalender-Abos, führt zur Seite „Cookies" (siehe Navigation) und bietet das Löschen des Kontos
-an. Mehr Profilangaben gibt es nicht — kein Bild, keine Adresse, keine Vereinszugehörigkeit.
+an. Mehr Profilangaben gibt es nicht — kein Bild, keine Postadresse, keine Vereinszugehörigkeit.
 
 ## Der Anzeigename
 
-Der Anzeigename ist das Einzige, was andere von einer Person zu sehen bekommen; die
-E-Mail-Adresse bleibt immer verborgen. Er steht als Urheber an veröffentlichten Trainings, in
-den Mitgliederlisten der Teams und an den Terminen, für die man verantwortlich ist. Wer keinen
-gewählt hat, erscheint nicht namenlos, sondern unter einer automatisch vergebenen, je Konto
-verschiedenen Kennung — etwa „Trainer:in a1b2".
+Der Anzeigename ist das, was andere von einer Person zu sehen bekommen. Die E-Mail-Adresse
+sehen nur die Mitglieder der eigenen Teams, in der Mitgliederliste und bei der Wahl der
+Verantwortlichen eines Termins; allen anderen bleibt sie verborgen. Der Name steht als Urheber
+an veröffentlichten Trainings, in den Mitgliederlisten der Teams und an den Terminen, für die
+man verantwortlich ist. Wer keinen gewählt hat, erscheint nicht namenlos, sondern unter einer
+automatisch vergebenen, je Konto verschiedenen Kennung — etwa „Trainer:in a1b2".
 
 Gesetzt wird er im Konto in einem einzigen Feld. Es zeigt den aktuellen Namen, auch die
 automatische Kennung, solange kein eigener gewählt ist, und speichert beim Verlassen oder mit der
@@ -407,7 +408,9 @@ Es gibt keine Rollen und keine Rechteabstufung, weder anwendungsweit noch innerh
 Teams; alle Mitglieder eines Teams dürfen dasselbe. Eine Einladung an jemanden ohne Konto ist
 nicht möglich — ins Team kommt nur, wer bereits registriert und bestätigt ist. Ein Profilbild
 ist nicht vorgesehen, und der Anzeigename lässt sich nicht mehr auf die automatische Kennung
-zurücksetzen. Ob und wann ein Kalenderprogramm ein Abo zuletzt abgerufen hat, ist nicht
+zurücksetzen. Die eigene E-Mail-Adresse lässt sich vor den Mitgliedern der eigenen Teams nicht
+verbergen, und wer beim Aufnehmen eine falsche, aber registrierte Adresse trifft, zeigt dieser
+Person die Adressen aller Mitglieder, bis er sie wieder entfernt. Ob und wann ein Kalenderprogramm ein Abo zuletzt abgerufen hat, ist nicht
 einsehbar, und einem Abo lässt sich kein eigener Name geben.
 
 Ein KI-Zugang reicht so weit wie das Konto selbst; begrenzt wird er allein durch die

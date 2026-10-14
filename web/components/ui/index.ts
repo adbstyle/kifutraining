@@ -43,7 +43,7 @@ export type { TextAreaProps } from "./TextArea";
 export { Select } from "./Select";
 export type { SelectProps, SelectOption } from "./Select";
 export { MultiSelect } from "./MultiSelect";
-export type { MultiSelectProps } from "./MultiSelect";
+export type { MultiSelectProps, MultiSelectOption } from "./MultiSelect";
 export { WochentagWahl } from "./WochentagWahl";
 export { Checkbox } from "./Checkbox";
 export { Menu } from "./Menu";

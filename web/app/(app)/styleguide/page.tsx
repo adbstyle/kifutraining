@@ -2012,7 +2012,14 @@ export default async function Styleguide() {
             Kopfzeile ist nicht nur optisch: Jede Option verweist per{" "}
             <code>aria-describedby</code> auf sie, damit die Zugehörigkeit auch
             vorgelesen wird («Wert, Gruppe») - sonst hörte man eine lange Liste
-            ohne jede Gliederung.
+            ohne jede Gliederung. <code>zusatz</code> setzt unter den Namen einer
+            Option eine gedämpfte zweite Zeile - nötig, wo der Name allein eine
+            Option nicht erkennen lässt (in der Anwendung: die Verantwortlichen
+            eines Termins, deren Anzeigename gleich lauten oder eine
+            automatische Kennung sein kann, darunter die E-Mail-Adresse). Die
+            Zeile bricht an jeder Stelle um statt zu kürzen, weil gerade der
+            abgeschnittene Teil zwei Optionen unterscheiden kann; die Suche
+            findet auch sie, im Feld steht nur der Name.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Der Baustein trägt beide Mehrfachauswahlen des Übungsformulars -{" "}

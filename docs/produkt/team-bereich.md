@@ -1,6 +1,6 @@
 # Team-Bereich
 
-Stand 2026-10-06. Was Trainerteams heute mit der Anwendung tun können.
+Stand 2026-10-14. Was Trainerteams heute mit der Anwendung tun können.
 
 ## Teams
 
@@ -9,8 +9,14 @@ Weitere Trainerinnen und Trainer kommen über ihre E-Mail-Adresse dazu, sofern s
 bestätigtes Konto haben. Wer aufgenommen wird, muss nicht zustimmen — wer nicht mag, verlässt
 das Team wieder. Vor der Aufnahme zeigt eine Vorschau, wer sich hinter der Adresse verbirgt;
 erfolglose Suchen sind auf zehn je Stunde gebremst, damit sich die Anwendung nicht als
-Auskunftsmittel über registrierte Adressen missbrauchen lässt. Die E-Mail-Adresse eines
-Mitglieds bekommen die übrigen nie zu sehen, nur seinen Anzeigenamen.
+Auskunftsmittel über registrierte Adressen missbrauchen lässt.
+
+In der Mitgliederliste steht jedes Mitglied mit Anzeigename und E-Mail-Adresse, damit erkennbar
+ist, wer hinter einer automatischen Kennung oder einem Kürzel steckt. Die Adresse sehen nur die
+aktuellen Mitglieder eines gemeinsamen Teams — auch bei Mitgliedschaften, die schon vor dieser
+Anzeige bestanden. Wer aufgenommen wird, sieht ab dann die Adressen der übrigen und sie seine,
+ohne dass er gefragt wird; wer kein Team mehr mit einer Person teilt, sieht ihre Adresse nicht
+mehr. Der KI-Assistent bekommt die Adressen nicht.
 
 Im Team sind alle gleichberechtigt: jedes Mitglied darf umbenennen, aufnehmen, entfernen,
 Trainings und Termine bearbeiten und das Team auflösen. Abgestufte Rollen gibt es nicht. Ein
@@ -223,7 +229,9 @@ Terminen, und ein Termin darf ohne Verantwortliche sein. Neu eintragen lassen si
 aktuelle Mitglieder; ist eine gewählte Person inzwischen nicht mehr im Team, lehnt die
 Anwendung ab und sagt es. Angezeigt werden Verantwortliche immer mit ihrem aktuellen
 Anzeigenamen — im Trainingsplan, wo man selbst zuerst und mit „(du)" steht, beim Ändern eines
-Termins und in der Durchführen-Ansicht.
+Termins und in der Durchführen-Ansicht. In der Auswahl steht unter jedem Mitglied zusätzlich
+seine E-Mail-Adresse, und die Suche findet auch sie; ehemalige Mitglieder stehen dort ohne
+Adresse.
 
 Eine Serie gibt ihren Terminen Verantwortliche vor. Ein einzelner Termin kann abweichende
 haben, auch keine, und lässt sich danach wieder den Verantwortlichen der Serie folgen lassen.
@@ -485,8 +493,7 @@ Verantwortlich zu sein heisst nicht, als J+S-Leitperson anerkannt zu sein, und d
 vergangenen Terminen sind kein Nachweis geleisteter Einsätze. Ob ein Termin stattgefunden hat
 und wer dabei war, hält die Anwendung nicht fest; ein vergangener Termin, der nicht ausgefallen
 ist, gilt deshalb nicht als durchgeführt, und ein Tag ohne Termin ist nicht von einer bewussten
-Pause zu unterscheiden. Gleichnamige Mitglieder sind in der Auswahl nicht zu unterscheiden, und
-dass die Verantwortlichen, die Felder oder die erwartete Spielerzahl eines Serientermins von der
+Pause zu unterscheiden. Dass die Verantwortlichen, die Felder oder die erwartete Spielerzahl eines Serientermins von der
 Serie abweichen, zeigt erst der geöffnete Termin. Ausfallgründe sind frei formuliert, ohne Vorschläge; einen Teilausfall oder Abbruch kennt
 die Anwendung nicht. Ob Altersstufe oder Inhalt eines Trainings zum Termin passen, prüft sie
 nicht, und ob und wie oft ein persönliches Training schon einem Termin zugeordnet wurde, steht

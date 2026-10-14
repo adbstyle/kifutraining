@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { MultiSelect } from "@/components/ui";
-import type { SelectOption } from "@/components/ui";
+import type { MultiSelectOption, SelectOption } from "@/components/ui";
 
 const themen: SelectOption[] = [
   { value: "passen", label: "Passen & Annehmen" },
@@ -25,6 +25,15 @@ const stufen: SelectOption[] = [
   { value: "C", label: "C-Junior:innen", group: "Juniorenfussball" },
   { value: "B", label: "B-Junior:innen", group: "Juniorenfussball" },
   { value: "A", label: "A-Junior:innen", group: "Juniorenfussball" },
+];
+
+// Mit Zusatzzeile — so wählt man Verantwortliche eines Termins (#425): Der
+// Anzeigename allein unterscheidet Gleichnamige und automatische Kennungen
+// nicht, die E-Mail-Adresse darunter schon.
+const mitglieder: MultiSelectOption[] = [
+  { value: "a", label: "Gri Bader", zusatz: "gri.bader@example.ch" },
+  { value: "b", label: "Trainer:in 1162", zusatz: "lena.muster@example.ch" },
+  { value: "c", label: "Trainer:in cf4b", zusatz: "j.beispiel-mit-sehr-langer-adresse@verein-example.ch" },
 ];
 
 export function MultiSelectDemo() {
@@ -79,6 +88,15 @@ export function MultiSelectDemo() {
         defaultValue={["F"]}
         options={stufen}
         supportingText="group: nicht wählbare Kopfzeile je Gruppe. Werte beider Gruppen bleiben gemeinsam wählbar."
+      />
+
+      {/* Zusatzzeile — gedämpft unter dem Namen, bricht an jeder Stelle um
+          statt zu kürzen. Die Suche findet auch sie, im Feld steht nur der Name. */}
+      <MultiSelect
+        label="Verantwortlich (mit Zusatzzeile)"
+        actions={false}
+        options={mitglieder}
+        supportingText="zusatz: zweite Zeile je Option, etwa die E-Mail-Adresse eines Mitglieds."
       />
     </div>
   );
