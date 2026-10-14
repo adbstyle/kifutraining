@@ -34,8 +34,10 @@ export async function getMeineTeamsFuer(supabase: SupabaseClient): Promise<TeamU
   }));
 }
 
-/** Die Mitglieder eines Teams mit Anzeigename, ohne E-Mail (Story 1 NFR 4,
- *  #325 PC 9) — dieselbe RPC wie der Team-Bereich (`getTeam`). */
+/** Die Mitglieder eines Teams mit Anzeigename — dieselbe RPC wie der
+ *  Team-Bereich (`getTeam`), aber ohne die E-Mail-Adresse, die sie ebenfalls
+ *  liefert: Diesen Weg nimmt der KI-Assistent, und der gibt keine Adressen
+ *  heraus (#325 PC 9, #425 OoS 1). */
 export async function getTeamMitgliederFuer(
   supabase: SupabaseClient,
   teamId: string,

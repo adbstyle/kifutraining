@@ -1904,6 +1904,27 @@ try {
     fehler(await teamPlan(a.supabase, a.id, { teamId: team, von: "2030-02-30", bis: "2030-03-01" }), "eingabe", TERMIN_TEXT.datum);
   });
 
+  await pruefe("Mitgliederliste mit E-Mail-Adresse, nur für aktuelle Mitglieder; der KI-Weg ohne (#425 AK 1, 4, PC 3, OoS 1)", async () => {
+    const team = await serienTeam("Kern-DB-Mitglieder-Email");
+    await admin.from("team_members").insert({ team_id: team, user_id: b.id });
+    const adresse = async (id: string) => (await admin.auth.admin.getUserById(id)).data.user!.email!;
+    const liste = async (k: Konto) => k.supabase.rpc("team_mitglieder", { p_team: team });
+
+    const { data, error } = await liste(b);
+    assert.equal(error, null);
+    assert.deepEqual(
+      (data as { user_id: string; email: string }[]).map((m) => [m.user_id, m.email]).sort(),
+      [[a.id, await adresse(a.id)], [b.id, await adresse(b.id)]].sort(),
+      "AK 1: jedes Mitglied mit seiner Adresse",
+    );
+    assert.ok((await liste(await wegwerfKonto())).error, "AK 4: wer nicht im Team ist, bekommt keine Liste");
+
+    await admin.from("team_members").delete().eq("team_id", team).eq("user_id", b.id);
+    assert.ok((await liste(b)).error, "PC 3: nach dem Austritt keine Adressen mehr");
+    const m = wert(await teamMitglieder(a.supabase, a.id, { teamId: team })).mitglieder;
+    assert.ok(m.length === 1 && m.every((x) => !("email" in x)), "OoS 1: der KI-Assistent bekommt keine Adresse");
+  });
+
   await pruefe("Austritt eines Serien-Verantwortlichen: Serie und anstehende Termine ohne ihn, Vergangenes behält ihn (#325 PC 6, 7)", async () => {
     const team = await serienTeam("Kern-DB-Serie-Austritt");
     await admin.from("team_members").insert({ team_id: team, user_id: b.id });

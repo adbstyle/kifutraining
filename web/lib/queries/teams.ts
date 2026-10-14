@@ -9,14 +9,16 @@ export type { TeamUebersicht } from "@/lib/queries/teams-fuer";
  *
  * Alle Mitglieder sind gleichberechtigt — es gibt keine Rollen. Sichtbar ist
  * ein Team nur seinen Mitgliedern; das setzt die RLS durch, hier steht kein
- * zusätzlicher Filter. E-Mail-Adressen kommen nirgends vor: die Mitgliederliste
- * liefert ausschliesslich Anzeigenamen (Story 1 NFR 4), darum die RPC statt
- * eines Joins auf auth.users.
+ * zusätzlicher Filter. Die Mitgliederliste liefert Anzeigename und E-Mail-
+ * Adresse (#425) — beides nur den aktuellen Mitgliedern des Teams, darum die
+ * RPC statt eines Joins auf auth.users.
  */
 
 export type TeamMitglied = {
   userId: string;
   anzeigeName: string;
+  /** Damit erkennbar ist, wer hinter einem Anzeigenamen steckt (#425). */
+  email: string;
 };
 
 export type TeamDetail = {
@@ -66,9 +68,12 @@ export const getTeam = cache(async function getTeam(
   if (!team) return null;
 
   const { data: roh } = await supabase.rpc("team_mitglieder", { p_team: id });
-  const mitglieder = ((roh ?? []) as { user_id: string; anzeige_name: string }[]).map((m) => ({
+  const mitglieder = (
+    (roh ?? []) as { user_id: string; anzeige_name: string; email: string }[]
+  ).map((m) => ({
     userId: m.user_id,
     anzeigeName: m.anzeige_name,
+    email: m.email,
   }));
 
   return { id: team.id, name: team.name, mitglieder };
