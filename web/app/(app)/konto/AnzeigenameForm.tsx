@@ -15,9 +15,9 @@ import { useBlurSpeichern } from "@/lib/use-blur-speichern";
    Server abweist, fällt auf den gespeicherten Namen zurück und meldet sich am
    Bildschirmrand, ein gelungenes Speichern ebenfalls.
 
-   Der Hinweis hinter dem ⓘ sagt, wer den Namen sieht: Er ist die einzige
-   Personenangabe, die andere zu sehen bekommen, auch an öffentlichen
-   Vorlagen. */
+   Der Hinweis hinter dem ⓘ sagt, wer den Namen sieht — auch an öffentlichen
+   Vorlagen — und wer die E-Mail-Adresse: nur die Mitglieder der eigenen
+   Teams (#425). */
 export function AnzeigenameForm({ aktuell }: { aktuell: string }) {
   const router = useRouter();
   const melde = useSnackbar();
@@ -60,7 +60,7 @@ export function AnzeigenameForm({ aktuell }: { aktuell: string }) {
           setEntwurf(gilt);
         }
       }}
-      info="Für Team-Mitglieder und an deinen veröffentlichten Vorlagen öffentlich sichtbar. Deine E-Mail-Adresse sieht niemand."
+      info="Für Team-Mitglieder und an deinen veröffentlichten Vorlagen öffentlich sichtbar. Deine E-Mail-Adresse sehen nur die Mitglieder deiner Teams."
     />
   );
 }

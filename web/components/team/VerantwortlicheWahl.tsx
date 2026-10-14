@@ -38,8 +38,9 @@ export function nurNamenloseGeaendert(neu: VerantwortlicheWert, alt: Verantwortl
    Wahl stehen die aktuellen Mitglieder; Einträge ehemaliger Mitglieder an
    einem Termin (`bisher`) bleiben wählbar, damit man sie entfernen kann
    (AK 9), lassen sich aber nicht neu hinzufügen (AK 8): Einmal abgewählt und
-   gespeichert, fehlen sie beim nächsten Öffnen. Gleichnamige unterscheidet
-   die Anwendung nicht (OoS 4). */
+   gespeichert, fehlen sie beim nächsten Öffnen. Unter jedem Mitglied steht
+   seine E-Mail-Adresse — so sind auch Gleichnamige und automatische Kennungen
+   zu unterscheiden (#425 AK 2). Ehemalige bleiben ohne Adresse (#425 AK 4). */
 export function VerantwortlicheWahl({
   mitglieder,
   bisher = [],
@@ -70,6 +71,7 @@ export function VerantwortlicheWahl({
     ...mitglieder.map((m) => ({
       value: `u:${m.userId}`,
       label: m.anzeigeName,
+      zusatz: m.email,
       group: gruppiert ? "Mitglieder" : undefined,
     })),
     ...ehemalige.map((v) => ({
