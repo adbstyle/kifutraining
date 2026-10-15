@@ -265,6 +265,9 @@
   /* ─── Masse, die sich mit dem Satz ändern ─── */
   --diagramm-ball-strich: 1.5;
   --diagramm-form-deckung: 0.28;
+  /* Beidseitige Lücke, mit der ein oberer Weg einen unteren kreuzt — in
+     Flächeneinheiten (1600 × 1000), also gleich viel wie ein Strich. */
+  --diagramm-weg-rand: 5;
 }
 
 /* ─── Zustands-Ebene ──────────────────────────────────────────────────
@@ -849,6 +852,8 @@
        auf 14 %. Viel tiefer geht nicht: unter einem Zehntel bleibt vom
        Feld nur noch der Rahmen. */
     --diagramm-form-deckung: 0.12;
+    /* Schwarz auf Weiss trennt sich ein Strich schon mit weniger Luft. */
+    --diagramm-weg-rand: 4;
 
     /* Heller als das Gerät, damit die Figuren nicht mit ihm konkurrieren. */
     --diagramm-figur-stutzen: #aeb5b0;

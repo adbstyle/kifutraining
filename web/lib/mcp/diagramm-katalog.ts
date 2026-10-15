@@ -103,14 +103,22 @@ const B = FLAECHE.breite;
 const H = FLAECHE.hoehe;
 const eineStelle = (v: number) => Math.round(v * 10) / 10;
 
-/** Nur die Linie wertet Farbe und Strichelung aus; Laufweg, Dribbling und
- *  Pass zeichnet KiFu in fester Optik (DiagrammView.PfadGrafik). */
+/** Nur die Linie wertet die Strichelung aus und hat eine Standardfarbe aus
+ *  der Palette; Laufweg, Dribbling und Pass haben einen festen Linienstil und
+ *  ohne «farbe» die Farbe der Zeichenerklärung (DiagrammView.PfadGrafik). */
 const FREIE_LINIE: PfadTyp = "linie";
 
+/** Wann ein Bewegungspfeil eine Farbe bekommt (#430): selten, und dann
+ *  bewusst. Kreuzungen macht schon der Rand lesbar. */
+const BEWEGUNG_FARBE =
+  " Ohne «farbe» in der Farbe der Zeichenerklärung - das ist der Normalfall, darum steht bei «farbe» " +
+  "«standard»: null. «farbe» nur setzen, wenn mehrere Figuren gleichzeitig laufen und sich ihre Wege " +
+  "sonst verwechseln lassen, dann je Figur eine Farbe.";
+
 const PFAD_BESCHREIBUNG: Record<PfadTyp, string> = {
-  laufweg: "Lauf ohne Ball: gestrichelte Linie mit Pfeil auf den letzten Punkt.",
-  dribbling: "Lauf mit Ball: Wellenlinie mit Pfeil auf den letzten Punkt.",
-  pass: "Pass oder Schuss: gerade Linie mit Pfeil auf den letzten Punkt.",
+  laufweg: "Lauf ohne Ball: gestrichelte Linie mit Pfeil auf den letzten Punkt." + BEWEGUNG_FARBE,
+  dribbling: "Lauf mit Ball: Wellenlinie mit Pfeil auf den letzten Punkt." + BEWEGUNG_FARBE,
+  pass: "Pass oder Schuss: gerade Linie mit Pfeil auf den letzten Punkt." + BEWEGUNG_FARBE,
   linie: "Freie Linie ohne Pfeil, etwa eine Markierung; Farbe und Strichelung wählbar.",
 };
 
@@ -182,7 +190,9 @@ export function baueDiagrammKatalog(): DiagrammKatalog {
     pfade: PFAD_TYPEN.map((typ) => ({
       typ,
       beschreibung: PFAD_BESCHREIBUNG[typ],
-      farbe: { waehlbar: typ === FREIE_LINIE, standard: typ === FREIE_LINIE ? LINIE_DEFAULT_FARBE : null },
+      // Bewegungspfeile ohne «farbe» zeichnet KiFu in der Farbe der
+      // Zeichenerklärung — einen Slug dafür gibt es nicht, daher null.
+      farbe: { waehlbar: true, standard: typ === FREIE_LINIE ? LINIE_DEFAULT_FARBE : null },
       gestrichelt_waehlbar: typ === FREIE_LINIE,
       min_punkte: PUNKTE.pfad,
     })),

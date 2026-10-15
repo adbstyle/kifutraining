@@ -15,6 +15,10 @@ import {
 import { dv } from "@/lib/diagramm-farben";
 import { symbolDef, symbolFarbe, symbolMasse, symbolRotation } from "./symbols";
 import { cn } from "@/lib/cn";
+import { useId, type ReactNode } from "react";
+
+/** `useId()` liefert Zeichen wie `«` oder `:`, die in `url(#…)` heikel sind. */
+export const svgId = (id: string) => id.replace(/[^a-zA-Z0-9_-]/g, "");
 
 /**
  * Anzeige eines Spielfeld-Diagramms — überall dieselbe Komponente
@@ -163,58 +167,173 @@ export function wellenPunkte(punkte: Punkt[], amplitude = 8, wellenlaenge = 44):
  *  die Rolle. */
 const PFEIL = dv("bewegung");
 
+/** Strichstärke je Bewegungsart — Single Source für die Zeichnung und für
+ *  die Aussparung, die ein darüberliegender Weg in den darunterliegenden
+ *  schneidet. */
+const BEWEGUNG_STRICH = { laufweg: 5, dribbling: 4.5, pass: 5 } as const;
+type BewegungsTyp = keyof typeof BEWEGUNG_STRICH;
+type BewegungsElement = PfadElement & { typ: BewegungsTyp };
+
+function istBewegung(element: DiagrammElement): element is BewegungsElement {
+  // hasOwn statt `in`: `typ` ist beliebiger gespeicherter Text, und `in`
+  // fände auch geerbte Schlüssel wie «constructor».
+  return element.art === "pfad" && Object.hasOwn(BEWEGUNG_STRICH, element.typ);
+}
+
+/** Die Linie eines Bewegungspfeils, wie sie gezeichnet wird: gewellt fürs
+ *  Dribbling, am Ende um die Pfeilspitze gekürzt. */
+function bewegungsLinie(element: BewegungsElement): Punkt[] {
+  const roh = element.typ === "dribbling" ? wellenPunkte(element.punkte) : element.punkte;
+  return endeKuerzen(roh, PFEIL_BASIS);
+}
+
 /** Bewegungs- und Linien-Darstellung (#52) gemäss SFV-Manual-Zeichenerklärung
  *  (Abb. 24): Laufweg (Lauf ohne Ball) gestrichelt + Pfeil, Pass/Schuss
  *  durchgezogen + Pfeil, Dribbling wellenförmig + Pfeil — alle drei schwarz;
  *  freie Linie farbig, wahlweise gestrichelt. Der Linienstil — nicht die
- *  Strichstärke — unterscheidet die Bewegungsarten. */
-export function PfadGrafik({ element }: { element: PfadElement }) {
+ *  Strichstärke — unterscheidet die Bewegungsarten.
+ *
+ *  Ein Bewegungspfeil darf eine Farbe aus der Palette tragen (#430): Wer
+ *  mehrere Figuren gleichzeitig laufen lässt, färbt ihre Wege selbst. Ohne
+ *  Angabe bleibt er in der Farbe der Zeichenerklärung.
+ *
+ *  `aussparung` ist die Masken-id aus `wegAussparung()`: Sie spart den Weg
+ *  dort aus, wo ein später gezeichneter darüber läuft (#430). */
+export function PfadGrafik({ element, aussparung }: { element: PfadElement; aussparung?: string }) {
   const farbe = FARBEN[element.farbe ?? LINIE_DEFAULT_FARBE];
   const basis = {
     fill: "none" as const,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
   };
-  switch (element.typ) {
-    case "laufweg":
-      return (
-        <>
-          <polyline
-            points={punkteAttr(endeKuerzen(element.punkte, PFEIL_BASIS))}
-            {...basis}
-            stroke={PFEIL}
-            strokeWidth={5}
-            strokeDasharray="18 14"
-          />
-          <PfeilSpitze punkte={element.punkte} farbe={PFEIL} />
-        </>
-      );
-    case "dribbling":
-      return (
-        <>
-          <polyline points={punkteAttr(endeKuerzen(wellenPunkte(element.punkte), PFEIL_BASIS))} {...basis} stroke={PFEIL} strokeWidth={4.5} />
-          <PfeilSpitze punkte={element.punkte} farbe={PFEIL} />
-        </>
-      );
-    case "pass":
-      return (
-        <>
-          <polyline points={punkteAttr(endeKuerzen(element.punkte, PFEIL_BASIS))} {...basis} stroke={PFEIL} strokeWidth={5} />
-          <PfeilSpitze punkte={element.punkte} farbe={PFEIL} />
-        </>
-      );
-    case "linie":
-    default:
-      return (
+  if (istBewegung(element)) {
+    const strich = element.farbe ? FARBEN[element.farbe] : PFEIL;
+    return (
+      <g mask={aussparung ? `url(#${aussparung})` : undefined}>
         <polyline
-          points={punkteAttr(element.punkte)}
+          points={punkteAttr(bewegungsLinie(element))}
           {...basis}
-          stroke={farbe}
-          strokeWidth={5}
-          strokeDasharray={element.gestrichelt ? "16 12" : undefined}
+          stroke={strich}
+          strokeWidth={BEWEGUNG_STRICH[element.typ]}
+          strokeDasharray={element.typ === "laufweg" ? "18 14" : undefined}
         />
-      );
+        <PfeilSpitze punkte={element.punkte} farbe={strich} />
+      </g>
+    );
   }
+  return (
+    <polyline
+      points={punkteAttr(element.punkte)}
+      {...basis}
+      stroke={farbe}
+      strokeWidth={5}
+      strokeDasharray={element.gestrichelt ? "16 12" : undefined}
+    />
+  );
+}
+
+/** Masken-Werte, keine Farben: Eine Luminanz-Maske zeigt, wo sie hell ist,
+ *  und spart aus, wo sie dunkel ist. Das gilt in jedem Satz gleich — wie
+ *  `transparent` sind sie deshalb keine Diagramm-Rolle. */
+const MASKE = { zeigen: "white", aussparen: "black" } as const;
+
+/** Durchsichtiger Rand der Bewegungspfeile (#430).
+ *
+ *  Die Wege liegen in der Zeichenreihenfolge übereinander. Wo ein oberer Weg
+ *  einen unteren kreuzt oder überdeckt, wird der untere entlang des oberen
+ *  ausgespart — Strichbreite plus beidseitig `weg-rand`. Was durch die Lücke
+ *  scheint, ist der Rasen bzw. das Papier selbst, keine nachgemalte Fläche:
+ *  Mähstreifen, Zonen und Figuren bleiben sichtbar. Der obere Weg schneidet
+ *  dabei immer durchgehend, auch wo er selbst gestrichelt ist — wie eine
+ *  Strasse auf der Karte.
+ *
+ *  Liefert die `<defs>` mit einer Maske je Weg, dem ein darüberliegender nahe
+ *  kommt, und die Masken-id je Element. `praefix` hält die ids eindeutig,
+ *  wenn mehrere Diagramme auf derselben Seite stehen (`useId`). */
+export function wegAussparung(
+  elemente: DiagrammElement[],
+  praefix: string,
+): { defs: ReactNode; maske: (id: string) => string | undefined } {
+  // Linie, Schneise und Begrenzung je Weg einmal rechnen — nicht je Paar.
+  const wege: Weg[] = elemente.filter(istBewegung).map((element) => {
+    const linie = bewegungsLinie(element);
+    return {
+      element,
+      // Den Ansatz spart die Schneise aus: Beginnen zwei Wege an derselben
+      // Figur oder setzt ein Weg an der Spitze des vorigen an, schnitte der
+      // obere sonst dem unteren gerade dort ein Stück heraus, wo beide sich
+      // berühren sollen.
+      schneise: endeKuerzen([...linie].reverse(), SCHNEISE_ANSATZ).reverse(),
+      box: bbox([...linie, ...element.punkte]),
+    };
+  });
+  // Nur Wege, die einander nahe kommen, bekommen eine Maske — wer nichts
+  // kreuzt, wird gezeichnet wie bisher.
+  const masken = wege.flatMap((unten, i) => {
+    const oben = wege.slice(i + 1).filter((o) => nahe(unten.box, o.box));
+    return oben.length > 0 ? [{ unten: unten.element.id, id: `${praefix}-weg-${i}`, oben }] : [];
+  });
+  const ids = new Map(masken.map((m) => [m.unten, m.id]));
+  // Die Maske reicht über die Fläche hinaus: Pfeilspitzen und Wellen dürfen
+  // am Rand überstehen und sollen dort nicht abgeschnitten werden.
+  const b = FLAECHE.breite;
+  const h = FLAECHE.hoehe;
+  return {
+    defs:
+      masken.length > 0 ? (
+        <defs>
+          {masken.map((m) => (
+            <mask key={m.id} id={m.id} maskUnits="userSpaceOnUse" x={-b} y={-h} width={3 * b} height={3 * h}>
+              <rect x={-b} y={-h} width={3 * b} height={3 * h} fill={MASKE.zeigen} />
+              {m.oben.map((o) => (
+                <WegSchneise key={o.element.id} weg={o} />
+              ))}
+            </mask>
+          ))}
+        </defs>
+      ) : null,
+    maske: (id) => ids.get(id),
+  };
+}
+
+type Weg = { element: BewegungsElement; schneise: Punkt[]; box: ReturnType<typeof bbox> };
+
+/** Wie weit ein Weg über seine Stützpunkte hinaus zeichnen kann: Pfeilspitze,
+ *  halber Strich und Rand. Gerechnet je Weg, beide zusammen also das Doppelte —
+ *  `weg-rand` liegt in jedem Satz weit darunter. */
+const WEG_REICHWEITE = PFEIL_LAENGE;
+
+function nahe(a: Weg["box"], b: Weg["box"]): boolean {
+  const r = 2 * WEG_REICHWEITE;
+  return a.minX - r <= b.maxX && b.minX - r <= a.maxX && a.minY - r <= b.maxY && b.minY - r <= a.maxY;
+}
+
+/** Strecke ab Wegbeginn, die keine Schneise schneidet — so weit, dass zwei
+ *  Wege aus demselben Punkt auch unter spitzem Winkel schon auseinander
+ *  liegen, bevor der obere den unteren ausspart. */
+const SCHNEISE_ANSATZ = 60;
+
+/** Die Schneise, die ein oberer Weg in die Maske eines unteren schneidet:
+ *  seine Linie und seine Pfeilspitze, je um den Rand verbreitert. Die Breite
+ *  geht über `style`, weil sie aus der Massrolle gerechnet wird (`calc()` gilt
+ *  im Präsentationsattribut nicht). */
+function WegSchneise({ weg: { element, schneise } }: { weg: Weg }) {
+  const rand = dv("weg-rand");
+  return (
+    <>
+      <polyline
+        points={punkteAttr(schneise)}
+        fill="none"
+        stroke={MASKE.aussparen}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{ strokeWidth: `calc(${BEWEGUNG_STRICH[element.typ]}px + 2px * ${rand})` }}
+      />
+      <g stroke={MASKE.aussparen} strokeLinejoin="round" style={{ strokeWidth: `calc(2px * ${rand})` }}>
+        <PfeilSpitze punkte={element.punkte} farbe={MASKE.aussparen} />
+      </g>
+    </>
+  );
 }
 
 /** Form: farbiger Umriss; die Fläche ist optional gefüllt, sonst nur
@@ -287,7 +406,14 @@ export function TextGrafik({ element }: { element: TextElement }) {
 }
 
 /** Ein einzelnes Element (ohne Interaktion) — vom Editor wiederverwendet. */
-export function ElementGrafik({ element }: { element: DiagrammElement }) {
+export function ElementGrafik({
+  element,
+  aussparung,
+}: {
+  element: DiagrammElement;
+  /** Masken-id aus `wegAussparung()` — nur für Bewegungspfeile. */
+  aussparung?: string;
+}) {
   switch (element.art) {
     case "symbol": {
       const def = symbolDef(element.typ);
@@ -308,7 +434,7 @@ export function ElementGrafik({ element }: { element: DiagrammElement }) {
       );
     }
     case "pfad":
-      return <PfadGrafik element={element} />;
+      return <PfadGrafik element={element} aussparung={aussparung} />;
     case "form":
       return <FormGrafik element={element} />;
     case "text":
@@ -391,6 +517,8 @@ export function DiagrammView({
   title: string;
   className?: string;
 }) {
+  const elemente = sortiertNachEbene(diagramm.elemente);
+  const { defs, maske } = wegAussparung(elemente, svgId(useId()));
   return (
     <svg
       viewBox={`0 0 ${FLAECHE.breite} ${FLAECHE.hoehe}`}
@@ -399,9 +527,10 @@ export function DiagrammView({
       className={cn("h-full w-full", className)}
       preserveAspectRatio="xMidYMid meet"
     >
+      {defs}
       <Rasen />
-      {sortiertNachEbene(diagramm.elemente).map((e) => (
-        <ElementGrafik key={e.id} element={e} />
+      {elemente.map((e) => (
+        <ElementGrafik key={e.id} element={e} aussparung={maske(e.id)} />
       ))}
     </svg>
   );

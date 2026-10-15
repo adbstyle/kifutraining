@@ -146,6 +146,11 @@ export const DIAGRAMM_MASSROLLEN = [
    *  die Füllung sagt nur, wohin die Zone reicht, und darf auf Papier
    *  deshalb deutlich leiser sein. */
   "form-deckung",
+  /** Durchsichtiger Rand eines Bewegungspfeils (#430): So weit spart ein
+   *  oben liegender Weg den darunter liegenden beidseitig aus. Auf Papier
+   *  schmaler — die Striche sind dort dunkel auf hell und brauchen weniger
+   *  Luft, um sich zu trennen. */
+  "weg-rand",
 ] as const;
 
 export type DiagrammFarbrolle = (typeof DIAGRAMM_FARBROLLEN)[number];

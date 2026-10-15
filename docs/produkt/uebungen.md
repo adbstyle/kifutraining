@@ -290,6 +290,15 @@ Blickrichtungen, Bälle, Bewegungspfade für Laufweg, Dribbling und Pass sowie f
 Textfelder. Elemente lassen sich setzen, verschieben, drehen, einfärben, in der Grösse
 verändern, mehrfach auswählen, kopieren und löschen; jeder Schritt ist widerrufbar.
 
+Bewegungspfeile, die sich kreuzen oder überdecken, liegen übereinander: Der später gezeichnete
+läuft durch, der frühere ist entlang des oberen ausgespart, sodass an jeder Kreuzung zu sehen
+ist, welcher Strich weitergeht — wie eine Strasse auf einer Karte. Die Lücke ist durchsichtig,
+Rasen bzw. Papier scheinen durch; das gilt am Bildschirm, im Druck und beim Zeichnen.
+Bewegungspfeile tragen die Farbe der Zeichenerklärung des Manuals. Wo mehrere Figuren
+gleichzeitig laufen und sich ihre Wege sonst verwechseln liessen, lässt sich jeder Pfeil wie
+eine freie Linie in einer Farbe der Palette einfärben, etwa in der Trikotfarbe der Figur; ein
+eigener Knopf setzt ihn auf die Farbe der Zeichenerklärung zurück.
+
 Gezeichnet wird in der Maske der Übung, mit derselben Fläche und denselben Werkzeugen beim
 Erfassen einer neuen Übung, beim Bearbeiten einer eigenen und bei einer Übung im Training. Beim
 Bearbeiten liegt dort die bisherige Zeichnung zum Weiterzeichnen bereit. Das Diagramm wird mit
@@ -388,6 +397,11 @@ Kopie wechselt auch nicht von selbst die Altersstufe — wer sie in der anderen 
 sie anschliessend um. Innerhalb eines Trainings ist ausserdem nicht erkennbar, ob eine Übung
 ursprünglich aus dem Manual stammt; die Plakette trägt nur der unveränderte Bestand. Die Angabe
 zur Anzahl Spieler:innen ist Selbstauskunft und wird nicht gegen das Diagramm geprüft.
+
+Welcher Bewegungspfeil oben liegt, folgt allein der Reihenfolge, in der sie gezeichnet wurden;
+umordnen lässt sich das nicht. Verlaufen zwei Pfeile über eine Strecke genau übereinander, ist
+dort nur der obere zu sehen. Einem Pfeil ist nicht hinterlegt, welche Figur ihn läuft — die
+Farbe wählt, wer zeichnet, und die Anwendung prüft sie nicht gegen die Figuren.
 
 Die Material-Liste zählt, was gezeichnet ist, nicht wofür. Vier Pylonen bleiben vier Pylonen,
 auch wenn sie ein Tor bilden, und Teller am Feldrand zählen wie Teller im Feld. Die Mengen

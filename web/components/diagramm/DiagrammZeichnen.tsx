@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, forwardRef, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Check, ClipboardPaste, Copy, Ellipsis, FlipHorizontal2, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, Waypoints, X } from "lucide-react";
 import { Button, IconButton, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -44,7 +44,9 @@ import {
   FormGrafik,
   punkteAttr,
   sortiertNachEbene,
+  svgId,
   textBox,
+  wegAussparung,
 } from "./DiagrammView";
 
 const PFAD_WERKZEUGE: Record<PfadTyp, string> = {
@@ -318,6 +320,7 @@ export function DiagrammZeichnen({
   const [hinweis, setHinweis] = useState<string | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
+  const aussparungPraefix = svgId(useId());
   const dragRef = useRef<Drag | null>(null);
   // Auswahlrahmen-Geste (#67 AK1): Ref treibt die Logik, State das sichtbare Rechteck.
   const rahmenRef = useRef<Rahmen | null>(null);
@@ -472,7 +475,9 @@ export function DiagrammZeichnen({
     setBearbeitenId(null);
   }
 
-  function setFarbe(id: string, farbe: FarbSlug) {
+  /** `undefined` setzt einen Bewegungspfeil auf die Farbe der Zeichenerklärung
+   *  zurück; beim Speichern fällt die Angabe dann ganz weg. */
+  function setFarbe(id: string, farbe: FarbSlug | undefined) {
     merken();
     setElemente((prev) =>
       prev.map((el) => (el.id === id && el.art !== "text" ? { ...el, farbe } : el)),
@@ -1005,6 +1010,15 @@ export function DiagrammZeichnen({
     </div>
   );
 
+  // Gleiche Ebenen und Aussparungen wie in der Anzeige (#430): gezeichnet
+  // wird, was gespeichert wird.
+  // Gemerkt, damit Hover, Auswahl und Leiste die Masken nicht neu rechnen.
+  const geordnet = useMemo(() => sortiertNachEbene(elemente), [elemente]);
+  const aussparung = useMemo(
+    () => wegAussparung(geordnet, aussparungPraefix),
+    [geordnet, aussparungPraefix],
+  );
+
   // Alle Knöpfe tragen `type="button"`: In der Maske liegt die
   // Fläche in einem <form>, und dort sendet ein Knopf ohne Typ die Übung ab.
   return (
@@ -1134,8 +1148,9 @@ export function DiagrammZeichnen({
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         >
+          {aussparung.defs}
           <Rasen />
-          {sortiertNachEbene(elemente).map((el) => (
+          {geordnet.map((el) => (
             <g
               key={el.id}
               data-element-id={el.id}
@@ -1153,7 +1168,7 @@ export function DiagrammZeichnen({
                   strokeWidth={28}
                 />
               )}
-              <ElementGrafik element={el} />
+              <ElementGrafik element={el} aussparung={aussparung.maske(el.id)} />
               {selektiertSet.has(el.id) && <SelektionsRahmen element={el} />}
               {/* Eck-Anfasser zum Grössen-Anpassen (Rechteck/Ellipse) — nur bei
                   Einzelauswahl, im Form-Bearbeitungsmodus ausgeblendet. */}
@@ -1443,7 +1458,7 @@ const ElementLeiste = forwardRef<
     onDrehen: (delta: 45 | -45) => void;
     onPose: (pose: SpielerPose) => void;
     onSpiegeln: (spiegeln: boolean) => void;
-    onFarbe: (farbe: FarbSlug) => void;
+    onFarbe: (farbe: FarbSlug | undefined) => void;
     onGestrichelt: (gestrichelt: boolean) => void;
     onGefuellt: (gefuellt: boolean) => void;
     onKopieren: () => void;
@@ -1472,18 +1487,25 @@ const ElementLeiste = forwardRef<
   const poseWaehlbar = element.art === "symbol" && POSEN_TYPEN.has(element.typ);
   const faerbbar =
     (element.art === "symbol" && symbolDef(element.typ).faerbbar) ||
-    (element.art === "pfad" && element.typ === "linie") ||
+    element.art === "pfad" ||
     element.art === "form";
+  // Bewegungspfeile haben keinen Standard-Slug: ohne Farbe zeichnen sie in der
+  // Farbe der Zeichenerklärung (#430). Dafür steht vorne ein eigener Knopf.
+  const bewegung = element.art === "pfad" && element.typ !== "linie";
   const stilbar = element.art === "pfad" && element.typ === "linie";
   const fuellbar = element.art === "form";
   const hatEigenschaften =
     drehbar || figur || faerbbar || stilbar || fuellbar || bearbeitbar;
+  // Ein ungefärbter Bewegungspfeil trägt keinen Slug — sonst leuchtete
+  // «weiss» neben dem Knopf der Zeichenerklärung mit.
   const standardFarbe =
     element.art === "symbol"
       ? symbolDef(element.typ).defaultFarbe
       : element.art === "form"
         ? FORM_DEFAULT_FARBE
-        : LINIE_DEFAULT_FARBE;
+        : bewegung
+          ? undefined
+          : LINIE_DEFAULT_FARBE;
 
   return (
     <div
@@ -1554,6 +1576,22 @@ const ElementLeiste = forwardRef<
 
       {faerbbar && (
         <div className="flex items-center gap-1" role="group" aria-label="Farbe des Elements">
+          {bewegung && element.art === "pfad" && (
+            // Kein Farbpunkt: Die Farbe der Zeichenerklärung läge am Bildschirm
+            // kaum unterscheidbar neben «weiss». Der Knopf zeigt darum den Pfeil
+            // selbst, wie die Posen-Knöpfe die Figur.
+            <button
+              type="button"
+              onClick={() => onFarbe(undefined)}
+              aria-label="Farbe der Zeichenerklärung"
+              aria-pressed={!element.farbe}
+              className={`focus-ring flex size-9 items-center justify-center rounded-flaeche border ${
+                !element.farbe ? "border-on-surface bg-elev-08" : "border-linie"
+              }`}
+            >
+              <GlyphVorschau element={pfadVorschau(element.typ)} groesse={28} />
+            </button>
+          )}
           {farbSlugs.map((slug) => {
             const aktuell = "farbe" in element ? element.farbe : undefined;
             const aktiv = (aktuell ?? standardFarbe) === slug;
