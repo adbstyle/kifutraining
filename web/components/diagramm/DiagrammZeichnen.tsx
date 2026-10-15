@@ -49,7 +49,7 @@ import {
   textBox,
   wegFarben,
 } from "./DiagrammView";
-import { istBewegung, istFigur } from "@/lib/wege-zuordnung";
+import { istBewegung, istFigur, wegeJeFigur } from "@/lib/wege-zuordnung";
 
 const PFAD_WERKZEUGE: Record<PfadTyp, string> = {
   laufweg: "Laufweg",
@@ -894,6 +894,7 @@ export function DiagrammZeichnen({
   if (!dragAktiv) zuordnungsStand.current = elemente;
   const stand = zuordnungsStand.current;
   const farben = useMemo(() => wegFarben(stand), [stand]);
+  const zuordnung = useMemo(() => wegeJeFigur(stand), [stand]);
 
   // Genau ein Element ausgewählt → volle ElementLeiste; mehrere → Mehrfach-Leiste.
   const einzelId = selectedIds.length === 1 ? selectedIds[0] : null;
@@ -1199,6 +1200,12 @@ export function DiagrammZeichnen({
               )}
               <ElementGrafik element={el} wegFarbe={farben.get(el.id)} />
               {selektiertSet.has(el.id) && <SelektionsRahmen element={el} />}
+              {/* Die Figur, der der ausgewählte Weg gehört (#430): Die Farbe
+                  allein zeigt die Zuordnung nicht, wenn Figuren gleich gefärbt
+                  sind — so sieht der Trainer, ob eine Korrektur gegriffen hat. */}
+              {selected && istBewegung(selected) && zuordnung.get(selected.id) === el.id && (
+                <SelektionsRahmen element={el} zugeordnet />
+              )}
               {/* Eck-Anfasser zum Grössen-Anpassen (Rechteck/Ellipse) — nur bei
                   Einzelauswahl, im Form-Bearbeitungsmodus ausgeblendet. */}
               {el.id === einzelId && el.id !== bearbeitenId && formResizable(el) && (
@@ -1403,7 +1410,7 @@ function elementBBox(element: DiagrammElement): {
   return { x: box.x, y: box.y, breite: box.breite, hoehe: box.hoehe };
 }
 
-function SelektionsRahmen({ element }: { element: DiagrammElement }) {
+function SelektionsRahmen({ element, zugeordnet = false }: { element: DiagrammElement; zugeordnet?: boolean }) {
   const r = 8; // Luft um die Element-Begrenzung
   const { x, y, breite, hoehe } = elementBBox(element);
   return (
@@ -1414,9 +1421,15 @@ function SelektionsRahmen({ element }: { element: DiagrammElement }) {
       height={hoehe + r * 2}
       fill="none"
       stroke="#ffffff"
-      strokeWidth={2.5}
-      strokeDasharray="6 4"
+      // Die zugeordnete Figur eines ausgewählten Weges: gepunktet und leiser
+      // als die Auswahl selbst, damit beides unterscheidbar bleibt.
+      strokeWidth={zugeordnet ? 2 : 2.5}
+      strokeDasharray={zugeordnet ? "1 6" : "6 4"}
+      strokeLinecap={zugeordnet ? "round" : undefined}
+      opacity={zugeordnet ? 0.8 : undefined}
+      rx={zugeordnet ? 12 : undefined}
       pointerEvents="none"
+      data-testid={zugeordnet ? "zugeordnete-figur" : undefined}
     />
   );
 }

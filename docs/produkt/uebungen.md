@@ -315,7 +315,8 @@ Dasselbe Diagramm sieht am Bildschirm anders aus als auf Papier, und beides ist 
 Bildschirm liegt es auf einem dunklen Rasen, passend zur übrigen Anwendung, mit hellen
 Bewegungspfeilen und kräftigeren Farben für Leibchen und Material. Auf Papier kommt dieselbe
 Zeichnung auf weissem Grund mit angedeuteten Mähstreifen, schwarzen Pfeilen wie in der
-Zeichenerklärung des Manuals und dunkleren Farben. Das spart Druckfarbe — der grüne Rasen füllte
+Zeichenerklärung des Manuals und dunkleren Farben; Wege in der Farbe ihres Spielers (siehe unten)
+kommen in dessen dunklerer Druckfarbe. Das spart Druckfarbe — der grüne Rasen füllte
 bisher das ganze Blatt — und bleibt auf einem einfachen Bürodrucker lesbar. Wer eine Farbe wählt,
 wählt nicht einen Farbton, sondern «rot» oder «blau»; wie kräftig der ausfällt, entscheidet die
 Anwendung je nach Bildschirm oder Papier.
@@ -329,10 +330,12 @@ gewohnte Pfeilfarbe. Die Linienart bleibt, wie sie war; ob ein Weg ein Lauf, ein
 ein Pass ist, sieht man also weiterhin an der Linie. Zu welcher Figur ein Weg gehört, leitet die
 Anwendung aus der Zeichnung ab: Er gehört der Figur, an der er beginnt; beginnt er am Ende eines
 Laufwegs oder Dribblings, gehört er derselben Figur wie dieser, etwa der Pass nach einem
-Dribbling; sonst der nächstgelegenen Figur. Hat nur eine einzige Figur Wege, bleibt das Diagramm,
-wie es war. Das gilt für jedes Diagramm, auch für bestehende und
-für die Manual-Diagramme. Liegt die Anwendung einmal daneben, ordnet der Trainer beim Zeichnen
-einen Weg einer anderen Figur zu, indem er den Weg auswählt und dann die Figur anklickt; ebenso
+Dribbling; sonst der nächstgelegenen Figur. Gefärbt wird nur, wenn sich dadurch Wege voneinander
+abheben: Hat nur eine einzige Figur Wege oder tragen alle diese Figuren dieselbe Farbe, bleibt das
+Diagramm, wie es war. Das gilt für jedes Diagramm, auch für bestehende und
+für die Manual-Diagramme. Ist beim Zeichnen ein Weg ausgewählt, zeigt ein gepunkteter Rahmen die
+Figur, der er gehört. Liegt die Anwendung einmal daneben, ordnet der Trainer den Weg einer anderen
+Figur zu, indem er den Weg auswählt und dann die Figur anklickt; ebenso
 setzt er ihn auf die eigene Ableitung der Anwendung zurück. Diese Korrektur wird mit der Übung
 gespeichert, bleibt beim Verschieben von Weg und Figur bestehen und geht in jede Kopie mit; wird
 die Figur entfernt, ordnet die Anwendung den Weg wieder selbst zu.

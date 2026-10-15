@@ -14,7 +14,7 @@ import {
 } from "@/lib/diagramm";
 import { dv } from "@/lib/diagramm-farben";
 import { symbolDef, symbolFarbe, symbolMasse, symbolRotation } from "./symbols";
-import { istFigur, unterschiedeneWege } from "@/lib/wege-zuordnung";
+import { istFigur, wegeJeFigur } from "@/lib/wege-zuordnung";
 import { cn } from "@/lib/cn";
 
 /**
@@ -190,7 +190,8 @@ export function PfadGrafik({ element, wegFarbe }: { element: PfadElement; wegFar
           <polyline
             points={punkteAttr(endeKuerzen(element.punkte, PFEIL_BASIS))}
             {...basis}
-            stroke={pfeil} style={linie}
+            stroke={pfeil}
+            style={linie}
             strokeWidth={5}
             strokeDasharray="18 14"
           />
@@ -294,22 +295,21 @@ export function TextGrafik({ element }: { element: TextElement }) {
   );
 }
 
-/** Farbe der Wege je Figur (#430): Haben mehrere Figuren Wege, nimmt jeder
- *  Laufweg, jedes Dribbling und jeder Pass die Farbe seiner Figur an — die
- *  Trikotfarbe, also keine falsche Teamzugehörigkeit. Wege einer Figur mit
- *  fester Farbe (Torhüter) bleiben in der Bewegungsfarbe. `zuordnung` kann
- *  schon gerechnet sein, etwa der Stand vor einem Drag im Editor. */
-export function wegFarben(
-  elemente: readonly DiagrammElement[],
-  zuordnung: Map<string, string> = unterschiedeneWege(elemente),
-): Map<string, string> {
-  const farben = new Map<string, string>();
-  if (zuordnung.size === 0) return farben;
+/** Farbe der Wege je Figur (#430): Jeder Laufweg, jedes Dribbling und jeder
+ *  Pass nimmt die Farbe seiner Figur an — die Trikotfarbe, also keine falsche
+ *  Teamzugehörigkeit. Wege einer Figur mit fester Farbe (Torhüter) bleiben in
+ *  der Bewegungsfarbe. Gefärbt wird nur, wenn sich dadurch Wege voneinander
+ *  abheben: Tragen alle Wege am Ende dieselbe Farbe — eine einzige Figur, nur
+ *  gleichfarbige Figuren —, bleibt das Diagramm, wie es war (PC 2). */
+export function wegFarben(elemente: readonly DiagrammElement[]): Map<string, string> {
   const figuren = new Map(elemente.filter(istFigur).map((f) => [f.id, f]));
-  for (const [weg, id] of zuordnung) {
-    const f = figuren.get(id);
-    if (f && symbolDef(f.typ).faerbbar) farben.set(weg, symbolFarbe(f.typ, f.farbe));
+  const farben = new Map<string, string>();
+  for (const [weg, id] of wegeJeFigur(elemente)) {
+    const f = figuren.get(id)!;
+    farben.set(weg, symbolDef(f.typ).faerbbar ? symbolFarbe(f.typ, f.farbe) : BEWEGUNG);
   }
+  if (new Set(farben.values()).size < 2) return new Map();
+  for (const [weg, farbe] of farben) if (farbe === BEWEGUNG) farben.delete(weg);
   return farben;
 }
 

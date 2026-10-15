@@ -935,8 +935,8 @@ export default async function Styleguide() {
             </li>
             <li>
               <strong>Das Feld-Diagramm hat einen eigenen Druck-Satz</strong>{" "}
-              (<Siehe id="feld-diagramm" />): weisse Fläche statt Rasengrün, schwarze Pfeile,
-              gedämpfte Elementfarben. Der grüne Rasen deckte 1600×1000 und kam
+              (<Siehe id="feld-diagramm" />): weisse Fläche statt Rasengrün, schwarze Pfeile
+              (Wege je Figur in der Druckfarbe ihres Spielers), gedämpfte Elementfarben. Der grüne Rasen deckte 1600×1000 und kam
               auf geschätzt 125 % Farbauftrag - das Blatt allein trug damit fast
               den ganzen Verbrauch; weiss mit Raster liegt bei rund 3 %.
             </li>
@@ -3148,7 +3148,8 @@ export default async function Styleguide() {
             Grund bei Rot auf 2.6:1 und bei Blau auf 2.2:1, zwei Mannschaften, die
             sich nicht mehr unterscheiden liessen. Auf Papier kehrt sich fast
             alles um: weisse Fläche mit 6-%-Raster, schwarze Pfeile wie in der
-            Zeichenerklärung des Manuals, und alles, was am Bildschirm hell
+            Zeichenerklärung des Manuals (Wege je Figur in der Druckfarbe ihres
+            Spielers, siehe unten), und alles, was am Bildschirm hell
             gezeichnet ist, kippt ins Graue, weil Weiss auf Papier nicht
             existiert. Einzige Ausnahme ist der Ball - er bleibt weiss und bekommt
             eine kräftigere Kontur, sonst wäre er ein grauer Fleck unter lauter
@@ -3348,8 +3349,10 @@ export default async function Styleguide() {
             erkennbar. Zu welcher Figur ein Weg gehört, leitet{" "}
             <code>lib/wege-zuordnung.ts</code> bei jeder Anzeige ab (Start an der
             Figur, sonst am Ende ihres Laufwegs oder Dribblings, sonst die nächste
-            Figur); gespeichert wird nur eine Korrektur des Trainers. Hat nur eine
-            Figur Wege, bleibt das Diagramm, wie es war:
+            Figur); gespeichert wird nur eine Korrektur des Trainers. Gefärbt wird
+            nur, wenn sich Wege dadurch abheben - eine einzige Figur mit Wegen
+            oder lauter gleichfarbige bleiben, wie sie waren. Ist im Editor ein
+            Weg ausgewählt, zeigt ein gepunkteter Rahmen die Figur, der er gehört:
           </p>
           <div className="relative aspect-[16/10] max-w-xl overflow-hidden rounded-flaeche border border-linie">
             <DiagrammView

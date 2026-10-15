@@ -108,11 +108,3 @@ export function wirksameKorrekturen(elemente: readonly DiagrammElement[]): numbe
   const figuren = new Set(elemente.filter(istFigur).map((f) => f.id));
   return elemente.filter((e) => istBewegung(e) && e.figur !== undefined && figuren.has(e.figur)).length;
 }
-
-/** Die Wege, die KiFu von den Wegen anderer Figuren abhebt: Kennung des Weges
- *  → Kennung seiner Figur. Leer, solange höchstens eine Figur Wege hat
- *  (PC 2: dann bleibt das Diagramm, wie es ist). */
-export function unterschiedeneWege(elemente: readonly DiagrammElement[]): Map<string, string> {
-  const zuordnung = wegeJeFigur(elemente);
-  return new Set(zuordnung.values()).size >= 2 ? zuordnung : new Map();
-}

@@ -28,6 +28,7 @@ import assert from "node:assert/strict";
 import { z } from "zod";
 import {
   DREHBARE_TYPEN,
+  FARBEN,
   FIGUR_TYPEN,
   FLAECHE,
   FORM_TYPEN,
@@ -69,8 +70,8 @@ import { DiagrammKatalogSchema, baueDiagrammKatalog } from "../lib/mcp/diagramm-
 import { MANGEL_ERKLAERT, MangelAusgabe, alsMangel } from "../lib/mcp/diagramm-eingaben";
 import { SYMBOLE } from "../components/diagramm/symbols";
 import { haende } from "../components/diagramm/figur";
-import { sortiertNachEbene } from "../components/diagramm/DiagrammView";
-import { unterschiedeneWege, wegeJeFigur, wirksameKorrekturen } from "../lib/wege-zuordnung";
+import { sortiertNachEbene, wegFarben } from "../components/diagramm/DiagrammView";
+import { wegeJeFigur, wirksameKorrekturen } from "../lib/wege-zuordnung";
 
 let gelaufen = 0;
 let gescheitert = 0;
@@ -698,16 +699,25 @@ pruefe("Wege je Figur: Anfang an der Figur, Folgeweg, nächste Figur, Korrektur 
   assert.equal(zuK.get("pass-a"), "b", "der Folgeweg folgt der korrigierten Zuordnung seines Vorgängers");
 });
 
-pruefe("Wege je Figur: Unterschieden wird erst ab zwei Figuren mit Wegen (#430 PC 2)", () => {
-  const eine = unterschiedeneWege([kind("a", 200, 500), kind("b", 1400, 500), weg("w", "laufweg", [[200, 560], [600, 560]])]);
-  assert.equal(eine.size, 0, "nur eine Figur hat Wege: keine Unterscheidung");
-  const zwei = unterschiedeneWege([
-    kind("a", 200, 500),
-    kind("b", 1400, 500),
-    weg("wa", "laufweg", [[200, 560], [600, 560]]),
-    weg("wb", "pass", [[1400, 560], [900, 560]]),
+pruefe("Wege je Figur: Farbe der Figur, nur wo sie Wege unterscheidet (#430 AK 3/4, PC 2)", () => {
+  const farbig = (id: string, x: number, farbe: "rot" | "gelb"): SymbolElement => ({ ...kind(id, x, 500), farbe });
+  const lauf = (id: string, x: number) => weg(id, "laufweg", [[x, 560], [x, 900]]);
+  assert.equal(wegFarben([farbig("a", 200, "rot"), lauf("wa", 200)]).size, 0, "eine Figur: wie bisher");
+  assert.equal(
+    wegFarben([farbig("a", 200, "rot"), farbig("b", 800, "rot"), lauf("wa", 200), lauf("wb", 800)]).size,
+    0,
+    "gleichfarbige Figuren: Farbe unterscheidet nichts, wie bisher",
+  );
+  const zwei = wegFarben([
+    farbig("a", 200, "rot"),
+    farbig("b", 800, "gelb"),
+    lauf("wa", 200),
+    lauf("wb", 800),
+    weg("linie", "linie", [[200, 560], [400, 560]]),
   ]);
-  assert.deepEqual([...zwei], [["wa", "a"], ["wb", "b"]]);
+  assert.deepEqual([...zwei], [["wa", FARBEN.rot], ["wb", FARBEN.gelb]], "die freie Linie bleibt ungefärbt");
+  const mitTorwart = wegFarben([farbig("a", 200, "rot"), kind("tw", 800, 500, "torwart"), lauf("wa", 200), lauf("wt", 800)]);
+  assert.deepEqual([...mitTorwart], [["wa", FARBEN.rot]], "der Torhüter behält die Bewegungsfarbe");
   assert.equal(wegeJeFigur([kind("a", 100, 100), weg("w", "pass", [[900, 900], [950, 950]])]).get("w"), "a", "ohne Nähe: nächste Figur");
   assert.equal(wegeJeFigur([weg("w", "pass", [[900, 900], [950, 950]])]).size, 0, "ohne Figur keine Zuordnung");
 });
