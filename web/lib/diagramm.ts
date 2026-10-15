@@ -228,6 +228,19 @@ export function mitFrischenIds(elemente: readonly DiagrammElement[]): DiagrammEl
   });
 }
 
+/** Der Weg ohne korrigierte Zuordnung (#430) — KiFu leitet seine Figur
+ *  wieder selbst ab. */
+export function ohneFigur(e: PfadElement): PfadElement {
+  const { figur: _figur, ...rest } = e;
+  return rest;
+}
+
+/** Das Diagramm ohne die Korrekturen des Trainers: so, wie es ein
+ *  KI-Assistent liest und setzt — er ordnet Wege nicht zu (#430 OoS 4). */
+export function ohneKorrekturen(data: DiagrammData | null): DiagrammData | null {
+  return data && { ...data, elemente: data.elemente.map((e) => (e.art === "pfad" ? ohneFigur(e) : e)) };
+}
+
 export const istZahl = (v: unknown): v is number =>
   typeof v === "number" && Number.isFinite(v);
 export const istPunkt = (v: unknown): v is Punkt =>

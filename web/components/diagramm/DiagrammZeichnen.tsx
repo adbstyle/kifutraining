@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Check, ClipboardPaste, Copy, Ellipsis, FlipHorizontal2, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, UserRoundPen, WandSparkles, Waypoints, X } from "lucide-react";
 import { Button, IconButton, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -11,6 +11,7 @@ import {
   parseDiagramm,
   kopiereDiagramm,
   mitFrischenIds,
+  ohneFigur,
   FARBEN,
   FORM_DEFAULT_FARBE,
   LINIE_DEFAULT_FARBE,
@@ -24,7 +25,6 @@ import {
   type FarbSlug,
   type DiagrammData,
   type DiagrammElement,
-  type PfadElement,
   type PfadTyp,
   type SymbolTyp,
   type SpielerPose,
@@ -49,7 +49,7 @@ import {
   textBox,
   WegMarken,
 } from "./DiagrammView";
-import { istBewegung, istFigur } from "@/lib/wege-zuordnung";
+import { istBewegung, istFigur, wegMarken } from "@/lib/wege-zuordnung";
 
 const PFAD_WERKZEUGE: Record<PfadTyp, string> = {
   laufweg: "Laufweg",
@@ -111,12 +111,6 @@ function auswahlBox(els: DiagrammElement[]): { x: number; y: number; breite: num
 function versetzteGruppe(els: DiagrammElement[], versatz: number): DiagrammElement[] {
   const { dx, dy } = gruppenVersatz(els, versatz, versatz);
   return mitFrischenIds(els).map((el) => verschiebeElement(el, dx, dy));
-}
-
-/** Der Weg ohne korrigierte Zuordnung — KiFu leitet seine Figur wieder selbst ab. */
-function ohneFigur(e: PfadElement): PfadElement {
-  const { figur: _figur, ...rest } = e;
-  return rest;
 }
 
 /** Achsenparalleles Rechteck aus zwei Eckpunkten (Auswahlrahmen). */
@@ -893,6 +887,14 @@ export function DiagrammZeichnen({
     textGemerkt.current = false;
   }
 
+  // Zuordnung der Wege je Figur (#430): Sie hängt an der ganzen Zeichnung.
+  // Während eines Drags gilt der Stand vor dem Ziehen — jede Bewegung neu zu
+  // rechnen kostete bei jedem Frame; neu gerechnet wird beim Loslassen.
+  const zuordnungsStand = useRef(elemente);
+  if (!dragAktiv) zuordnungsStand.current = elemente;
+  const stand = zuordnungsStand.current;
+  const zuordnung = useMemo(() => wegMarken(stand), [stand]);
+
   // Genau ein Element ausgewählt → volle ElementLeiste; mehrere → Mehrfach-Leiste.
   const einzelId = selectedIds.length === 1 ? selectedIds[0] : null;
   const selected = einzelId ? (elemente.find((e) => e.id === einzelId) ?? null) : null;
@@ -1213,7 +1215,7 @@ export function DiagrammZeichnen({
           ))}
 
           {/* Marken der Wege je Figur (#430), wie in der Anzeige */}
-          <WegMarken elemente={elemente} />
+          <WegMarken elemente={elemente} zuordnung={zuordnung} />
 
           {/* Vorschau der entstehenden Bewegung bzw. der Polygon-Form */}
           {zeichnen && zeichnen.punkte.length > 0 && (

@@ -2721,6 +2721,7 @@ try {
       angezeigtesBild: "diagramm",
       material: { liste: vorschlag(FELD), ergaenzung: ["Pfeife"] },
       maengel: [],
+      verworfeneZuordnungen: 0,
     });
     const z = await diagrammzeile(u.id);
     assert.equal((z.diagramm as { elemente: unknown[] }).elemente.length, FELD.elemente.length);
@@ -2755,6 +2756,35 @@ try {
     if (error) throw error;
     assert.equal(wert(await setzeDiagramm(a.supabase, a.id, { kennung: jun.id, diagramm: FELD })).angezeigtesBild, "diagramm");
     assert.equal((await diagrammzeile(jun.id)).bild_quelle, "diagramm");
+  });
+
+  await pruefe("Diagramm setzen: Korrekturen der Wege verwirft der Assistent und zählt nur wirksame (#430 PC 6/7, OoS 4)", async () => {
+    const u = await kinderUebung("KI-Probe Wege je Figur");
+    const figuren = [
+      { id: "a", art: "symbol", typ: "spieler", x: 300, y: 400 },
+      { id: "b", art: "symbol", typ: "spieler", x: 1200, y: 400 },
+    ];
+    const mitKorrektur = {
+      version: 1,
+      elemente: [
+        ...figuren,
+        { id: "w1", art: "pfad", typ: "laufweg", punkte: [{ x: 300, y: 460 }, { x: 700, y: 700 }], figur: "b" },
+        // Wirkungslos: Linie und Verweis ins Leere zählen nicht als verworfene Korrektur.
+        { id: "w2", art: "pfad", typ: "linie", punkte: [{ x: 100, y: 100 }, { x: 200, y: 100 }], figur: "a" },
+        { id: "w3", art: "pfad", typ: "pass", punkte: [{ x: 1200, y: 460 }, { x: 900, y: 700 }], figur: "weg" },
+      ],
+    };
+    const { error } = await admin.from("exercises").update({ diagramm: mitKorrektur }).eq("id", u.id);
+    if (error) throw error;
+    const r = wert(await setzeDiagramm(a.supabase, a.id, { kennung: u.id, diagramm: mitKorrektur }));
+    assert.equal(r.verworfeneZuordnungen, 1);
+    assert.deepEqual(
+      r.maengel.filter((m) => m.angabe === "figur").map((m) => m.element),
+      ["w1", "w2", "w3"],
+      "jede «figur» vom Assistenten ist ein Mangel",
+    );
+    const gespeichert = (await diagrammzeile(u.id)).diagramm as { elemente: Record<string, unknown>[] };
+    assert.ok(gespeichert.elemente.every((e) => !("figur" in e)), "gespeichert ohne Zuordnungen");
   });
 
   await pruefe("Diagramm setzen: ein vorhandenes Foto bleibt das angezeigte Bild (PC 3)", async () => {

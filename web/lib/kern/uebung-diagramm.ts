@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { aktivesBild, hatDiagramm, parseDiagramm, type DiagrammData } from "@/lib/diagramm";
 import { ohneZuordnungen, pruefeDiagramm, type Befund } from "@/lib/diagramm-pruefung";
+import { wirksameKorrekturen } from "@/lib/wege-zuordnung";
 import { diagrammSpalten } from "@/lib/diagramm-setzen";
 import type { MaterialPosten } from "@/lib/material";
 import { fehlschlag, ok, type KernErgebnis, type Verstoss } from "@/lib/kern/ergebnis";
@@ -59,10 +60,11 @@ function diagrammVomAssistenten(
   return p.daten && funde.length === 0 ? { ok: true, daten: p.daten, maengel } : { ok: false, funde };
 }
 
-/** Wie viele Wege der Trainer im gespeicherten Diagramm von Hand einer Figur
- *  zugeordnet hat — ein neu gesetztes Diagramm verwirft sie (#430 PC 6, 7). */
+/** Wie viele Wege der Trainer im gespeicherten Diagramm wirksam von Hand
+ *  einer Figur zugeordnet hat — ein neu gesetztes Diagramm verwirft sie
+ *  (#430 PC 6, 7). */
 function korrigierteZuordnungen(diagramm: unknown): number {
-  return parseDiagramm(diagramm)?.elemente.filter((e) => e.art === "pfad" && e.figur !== undefined).length ?? 0;
+  return wirksameKorrekturen(parseDiagramm(diagramm)?.elemente ?? []);
 }
 
 /** Das Diagramm beim Anlegen (#145 AK 5, 7): Die Funde gehören in DIESELBE

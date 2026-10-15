@@ -23,7 +23,7 @@ import {
   kategorieStufe,
 } from "@/lib/labels";
 import { einordnungNachSpalten } from "@/lib/filter-optionen";
-import { hatDiagramm, parseDiagramm } from "@/lib/diagramm";
+import { hatDiagramm, ohneKorrekturen, parseDiagramm } from "@/lib/diagramm";
 import { NICHT_GEFUNDEN, fehlschlag, ok } from "@/lib/kern/ergebnis";
 import { istUuid } from "@/lib/kennung";
 import { sichtbarkeitVon, wert, wertOderNull, type UebungKopf } from "@/lib/mcp/bausteine";
@@ -124,8 +124,9 @@ function alsUebung(ex: ExerciseDetail, zugang: Zugang): z.infer<typeof UebungAus
     varianten: ex.varianten_text,
     bild_quelle: ex.bild_quelle,
     // Nachsichtig gelesen wie in der Anzeige: dieselbe Form, die
-    // «uebung_diagramm_setzen» annimmt, ohne Strukturkaputtes.
-    diagramm: mitDiagramm ? parseDiagramm(ex.diagramm) : null,
+    // «uebung_diagramm_setzen» annimmt, ohne Strukturkaputtes — und ohne die
+    // Zuordnungen, die nur der Trainer korrigiert (#430).
+    diagramm: mitDiagramm ? ohneKorrekturen(parseDiagramm(ex.diagramm)) : null,
     // Statt der Eigentümer-ID: fremde Konto-IDs gibt kein Werkzeug aus.
     eigene: ex.owner_id === zugang.userId,
   };

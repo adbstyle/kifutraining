@@ -77,20 +77,20 @@ export function wegeJeFigur(elemente: readonly DiagrammElement[]): Map<string, s
 
   let offen = wege.filter((w) => !zu.has(w.id));
   while (offen.length > 0) {
-    // Folgewege erben die Figur ihres Vorgängers, Kette um Kette.
-    let weiter = true;
-    while (weiter) {
-      weiter = false;
+    // Folgewege erben die Figur ihres Vorgängers, Kette um Kette: je Runde
+    // gegen die bis dahin zugeordneten Wege, bis keine Runde mehr etwas findet.
+    for (let neu = true; neu; ) {
+      neu = false;
+      const bekannt = wege.filter((x) => zu.has(x.id));
       for (const w of offen) {
-        if (zu.has(w.id)) continue;
-        const v = vorgaenger(w, wege.filter((x) => zu.has(x.id)));
+        const v = vorgaenger(w, bekannt);
         if (v) {
           zu.set(w.id, zu.get(v.id)!);
-          weiter = true;
+          neu = true;
         }
       }
+      offen = offen.filter((w) => !zu.has(w.id));
     }
-    offen = offen.filter((w) => !zu.has(w.id));
     if (offen.length === 0) break;
     // Der Anfang einer Kette, die an keiner Figur beginnt, geht an die
     // nächstgelegene; seine Folgewege erben sie in der nächsten Runde. Ein
@@ -100,6 +100,13 @@ export function wegeJeFigur(elemente: readonly DiagrammElement[]): Map<string, s
     offen = offen.filter((w) => w !== start);
   }
   return zu;
+}
+
+/** Wie viele Wege der Trainer wirksam einer Figur zugeordnet hat: an einem
+ *  Laufweg, Dribbling oder Pass und auf eine Figur, die es gibt. */
+export function wirksameKorrekturen(elemente: readonly DiagrammElement[]): number {
+  const figuren = new Set(elemente.filter(istFigur).map((f) => f.id));
+  return elemente.filter((e) => istBewegung(e) && e.figur !== undefined && figuren.has(e.figur)).length;
 }
 
 /** Marke der n-ten Figur: A … Z, danach Zahlen. */

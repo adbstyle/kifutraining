@@ -40,6 +40,7 @@ import {
   SYMBOL_TYPEN,
   farbSlugs,
   kopiereDiagramm,
+  ohneKorrekturen,
   parseDiagramm,
   type DiagrammElement,
   type FormElement,
@@ -69,7 +70,7 @@ import { MANGEL_ERKLAERT, MangelAusgabe, alsMangel } from "../lib/mcp/diagramm-e
 import { SYMBOLE } from "../components/diagramm/symbols";
 import { haende } from "../components/diagramm/figur";
 import { sortiertNachEbene } from "../components/diagramm/DiagrammView";
-import { wegMarken, wegeJeFigur } from "../lib/wege-zuordnung";
+import { wegMarken, wegeJeFigur, wirksameKorrekturen } from "../lib/wege-zuordnung";
 
 let gelaufen = 0;
 let gescheitert = 0;
@@ -729,6 +730,14 @@ pruefe("Wege je Figur: Prüfung, Kopie und KI-Zugang (#430 PC 3, PC 6/7, OoS 4)"
   assert.equal("figur" in ((ohne.roh as { elemente: object[] }).elemente[2]), false, "vom Assistenten verworfen");
   assert.deepEqual(ohne.maengel.map((b) => [b.code, b.index, b.angabe]), [["wirkungslos", 2, "figur"]]);
   assert.ok(NUR_IN_KIFU.has("figur"));
+  const gelesen = ohneKorrekturen({ version: 1, elemente: els })!;
+  assert.ok(gelesen.elemente.every((e) => !("figur" in e)), "der Assistent liest keine Zuordnung");
+  assert.equal(ohneKorrekturen(null), null);
+  assert.equal(
+    wirksameKorrekturen([...els, weg("l", "linie", [[1, 1], [2, 2]], "a"), weg("x", "pass", [[1, 1], [2, 2]], "weg")]),
+    1,
+    "Linie und Verweis ins Leere zählen nicht",
+  );
   assert.ok(!baueDiagrammKatalog().arten.find((a) => a.art === "pfad")!.felder.includes("figur"), "der Katalog nennt «figur» nicht");
 });
 

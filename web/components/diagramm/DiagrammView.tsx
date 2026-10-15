@@ -14,7 +14,7 @@ import {
 } from "@/lib/diagramm";
 import { dv } from "@/lib/diagramm-farben";
 import { symbolDef, symbolFarbe, symbolMasse, symbolRotation } from "./symbols";
-import { istFigur, wegMarken } from "@/lib/wege-zuordnung";
+import { istFigur, wegMarken, type WegMarken as WegMarkenDaten } from "@/lib/wege-zuordnung";
 import { cn } from "@/lib/cn";
 
 /**
@@ -338,8 +338,16 @@ function MarkeGrafik({ p, text }: { p: Punkt; text: string }) {
  *  Zuordnung im Schwarz-Weiss-Druck und bei Farbsehschwäche trägt und nicht
  *  wie eine Teamfarbe aussieht. Linienart und Pfeil bleiben unverändert, der
  *  Typ des Weges also erkennbar. Liegt über allen Elementen. */
-export function WegMarken({ elemente }: { elemente: readonly DiagrammElement[] }) {
-  const { zuordnung, marken } = wegMarken(elemente);
+export function WegMarken({
+  elemente,
+  zuordnung: vorgegeben,
+}: {
+  elemente: readonly DiagrammElement[];
+  /** Schon gerechnete Zuordnung, etwa der Stand vor einem Drag im Editor;
+   *  ohne Angabe aus `elemente`. Gezeichnet wird immer an der aktuellen Lage. */
+  zuordnung?: WegMarkenDaten;
+}) {
+  const { zuordnung, marken } = vorgegeben ?? wegMarken(elemente);
   if (marken.size === 0) return null;
   const reihe = [...marken.keys()];
   return (
