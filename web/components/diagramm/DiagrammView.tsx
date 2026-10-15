@@ -162,15 +162,17 @@ export function wellenPunkte(punkte: Punkt[], amplitude = 8, wellenlaenge = 44):
  *  sie schwarz, und auf Papier tun wir das weiterhin; auf dem dunklen Rasen
  *  läge Schwarz bei 1.3:1 und wäre schlicht weg. Welcher Fall gilt, entscheidet
  *  die Rolle. */
-const PFEIL = dv("bewegung");
+const BEWEGUNG = dv("bewegung");
 
 /** Bewegungs- und Linien-Darstellung (#52) gemäss SFV-Manual-Zeichenerklärung
  *  (Abb. 24): Laufweg (Lauf ohne Ball) gestrichelt + Pfeil, Pass/Schuss
  *  durchgezogen + Pfeil, Dribbling wellenförmig + Pfeil — alle drei schwarz;
  *  freie Linie farbig, wahlweise gestrichelt. Der Linienstil — nicht die
- *  Strichstärke — unterscheidet die Bewegungsarten. */
-export function PfadGrafik({ element }: { element: PfadElement }) {
+ *  Strichstärke — unterscheidet die Bewegungsarten. `wegFarbe` färbt einen
+ *  Bewegungsweg in der Farbe seiner Figur (#430, siehe `wegFarben`). */
+export function PfadGrafik({ element, wegFarbe }: { element: PfadElement; wegFarbe?: string }) {
   const farbe = FARBEN[element.farbe ?? LINIE_DEFAULT_FARBE];
+  const pfeil = wegFarbe ?? BEWEGUNG;
   const basis = {
     fill: "none" as const,
     strokeLinecap: "round" as const,
@@ -183,25 +185,25 @@ export function PfadGrafik({ element }: { element: PfadElement }) {
           <polyline
             points={punkteAttr(endeKuerzen(element.punkte, PFEIL_BASIS))}
             {...basis}
-            stroke={PFEIL}
+            stroke={pfeil}
             strokeWidth={5}
             strokeDasharray="18 14"
           />
-          <PfeilSpitze punkte={element.punkte} farbe={PFEIL} />
+          <PfeilSpitze punkte={element.punkte} farbe={pfeil} />
         </>
       );
     case "dribbling":
       return (
         <>
-          <polyline points={punkteAttr(endeKuerzen(wellenPunkte(element.punkte), PFEIL_BASIS))} {...basis} stroke={PFEIL} strokeWidth={4.5} />
-          <PfeilSpitze punkte={element.punkte} farbe={PFEIL} />
+          <polyline points={punkteAttr(endeKuerzen(wellenPunkte(element.punkte), PFEIL_BASIS))} {...basis} stroke={pfeil} strokeWidth={4.5} />
+          <PfeilSpitze punkte={element.punkte} farbe={pfeil} />
         </>
       );
     case "pass":
       return (
         <>
-          <polyline points={punkteAttr(endeKuerzen(element.punkte, PFEIL_BASIS))} {...basis} stroke={PFEIL} strokeWidth={5} />
-          <PfeilSpitze punkte={element.punkte} farbe={PFEIL} />
+          <polyline points={punkteAttr(endeKuerzen(element.punkte, PFEIL_BASIS))} {...basis} stroke={pfeil} strokeWidth={5} />
+          <PfeilSpitze punkte={element.punkte} farbe={pfeil} />
         </>
       );
     case "linie":
@@ -374,8 +376,24 @@ export function WegMarken({
   );
 }
 
+/** Farbe der Wege je Figur (#430): Zeigt das Diagramm Marken, nimmt jeder
+ *  Laufweg, jedes Dribbling und jeder Pass die Farbe seiner Figur an — die
+ *  Trikotfarbe, also keine falsche Teamzugehörigkeit. Wege einer Figur mit
+ *  fester Farbe (Torhüter) bleiben in der Bewegungsfarbe; im Druck und bei
+ *  Farbsehschwäche tragen ohnehin die Buchstaben. */
+export function wegFarben(elemente: readonly DiagrammElement[], { zuordnung, marken }: WegMarkenDaten): Map<string, string> {
+  const farben = new Map<string, string>();
+  if (marken.size === 0) return farben;
+  const figuren = new Map(elemente.filter(istFigur).map((f) => [f.id, f]));
+  for (const [weg, id] of zuordnung) {
+    const f = figuren.get(id);
+    if (f && symbolDef(f.typ).faerbbar) farben.set(weg, symbolFarbe(f.typ, f.farbe));
+  }
+  return farben;
+}
+
 /** Ein einzelnes Element (ohne Interaktion) — vom Editor wiederverwendet. */
-export function ElementGrafik({ element }: { element: DiagrammElement }) {
+export function ElementGrafik({ element, wegFarbe }: { element: DiagrammElement; wegFarbe?: string }) {
   switch (element.art) {
     case "symbol": {
       const def = symbolDef(element.typ);
@@ -396,7 +414,7 @@ export function ElementGrafik({ element }: { element: DiagrammElement }) {
       );
     }
     case "pfad":
-      return <PfadGrafik element={element} />;
+      return <PfadGrafik element={element} wegFarbe={wegFarbe} />;
     case "form":
       return <FormGrafik element={element} />;
     case "text":
@@ -479,6 +497,8 @@ export function DiagrammView({
   title: string;
   className?: string;
 }) {
+  const zuordnung = wegMarken(diagramm.elemente);
+  const farben = wegFarben(diagramm.elemente, zuordnung);
   return (
     <svg
       viewBox={`0 0 ${FLAECHE.breite} ${FLAECHE.hoehe}`}
@@ -489,9 +509,9 @@ export function DiagrammView({
     >
       <Rasen />
       {sortiertNachEbene(diagramm.elemente).map((e) => (
-        <ElementGrafik key={e.id} element={e} />
+        <ElementGrafik key={e.id} element={e} wegFarbe={farben.get(e.id)} />
       ))}
-      <WegMarken elemente={diagramm.elemente} />
+      <WegMarken elemente={diagramm.elemente} zuordnung={zuordnung} />
     </svg>
   );
 }

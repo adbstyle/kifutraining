@@ -3340,9 +3340,12 @@ export default async function Styleguide() {
             <strong>Wege je Figur</strong> (#430): Haben mehrere Figuren Wege,
             tragen jede Figur und ihre Wege dieselbe <strong>Marke</strong> - ein
             Buchstabe in einem hellen Kreis, oben neben dem Kopf und entlang des
-            Weges, lange Wege mehrfach. Ein Buchstabe statt einer Farbe: Er trägt
-            im Schwarz-Weiss-Druck und bei Farbsehschwäche und sieht nicht aus wie
-            eine Teamfarbe. Linienart und Pfeil bleiben, der Typ des Weges also
+            Weges, lange Wege mehrfach. Dazu nimmt jeder Weg die Farbe seiner
+            Figur an (<code>wegFarben</code>) - die Trikotfarbe, also keine falsche
+            Teamzugehörigkeit; Figuren mit fester Farbe (Torhüter) behalten die
+            Bewegungsfarbe. Getragen wird die Zuordnung vom Buchstaben: Er hält
+            im Schwarz-Weiss-Druck und bei Farbsehschwäche und trennt auch zwei
+            Figuren desselben Teams. Die Linienart bleibt, der Typ des Weges also
             erkennbar. Zu welcher Figur ein Weg gehört, leitet{" "}
             <code>lib/wege-zuordnung.ts</code> bei jeder Anzeige ab (Start an der
             Figur, sonst am Ende ihres Laufwegs oder Dribblings, sonst die nächste

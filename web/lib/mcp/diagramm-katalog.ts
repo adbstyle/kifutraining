@@ -160,7 +160,8 @@ export function baueDiagrammKatalog(): DiagrammKatalog {
       "Laufweg, Dribbling und Pass ordnet KiFu selbst einer Figur zu: der, an der der erste Punkt liegt " +
       `(bis ${AN_FIGUR} Einheiten von ihrer Mitte), sonst der des Laufwegs oder Dribblings, an dessen letztem ` +
       `Punkt er beginnt (bis ${AN_WEGENDE} Einheiten), sonst der nächstgelegenen. Haben mehrere Figuren Wege, ` +
-      "kennzeichnet KiFu jede Figur und ihre Wege mit demselben Buchstaben - lass jeden Weg darum an seiner Figur beginnen.",
+      "kennzeichnet KiFu jede Figur und ihre Wege mit demselben Buchstaben und zeichnet die Wege in der Farbe ihrer Figur - " +
+      "lass jeden Weg darum an seiner Figur beginnen.",
     ebenen: ["form", "pfad", "symbol", "text"],
     richtung:
       `«rotation» dreht ein Symbol im Uhrzeigersinn in 45°-Schritten (${ROTATIONEN.join(", ")}); ` +

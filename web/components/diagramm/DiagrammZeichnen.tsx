@@ -48,6 +48,7 @@ import {
   sortiertNachEbene,
   textBox,
   WegMarken,
+  wegFarben,
 } from "./DiagrammView";
 import { istBewegung, istFigur, wegMarken } from "@/lib/wege-zuordnung";
 
@@ -894,6 +895,7 @@ export function DiagrammZeichnen({
   if (!dragAktiv) zuordnungsStand.current = elemente;
   const stand = zuordnungsStand.current;
   const zuordnung = useMemo(() => wegMarken(stand), [stand]);
+  const farben = useMemo(() => wegFarben(stand, zuordnung), [stand, zuordnung]);
 
   // Genau ein Element ausgewählt → volle ElementLeiste; mehrere → Mehrfach-Leiste.
   const einzelId = selectedIds.length === 1 ? selectedIds[0] : null;
@@ -1197,7 +1199,7 @@ export function DiagrammZeichnen({
                   strokeWidth={28}
                 />
               )}
-              <ElementGrafik element={el} />
+              <ElementGrafik element={el} wegFarbe={farben.get(el.id)} />
               {selektiertSet.has(el.id) && <SelektionsRahmen element={el} />}
               {/* Eck-Anfasser zum Grössen-Anpassen (Rechteck/Ellipse) — nur bei
                   Einzelauswahl, im Form-Bearbeitungsmodus ausgeblendet. */}

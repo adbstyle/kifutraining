@@ -325,8 +325,11 @@ Anwendung sie von selbst voneinander ab: Jede dieser Figuren trägt oben neben d
 Buchstaben, A, B, C und so fort in der Reihenfolge, in der sie gezeichnet wurden, und derselbe
 Buchstabe steht auf jedem ihrer Laufwege, Dribblings und Pässe, auf langen Wegen mehrmals. So
 bleibt erkennbar, wer welchen Weg läuft, auch wenn sich zwei Rundläufe kreuzen oder übereinander
-liegen, und auch auf einem Ausdruck in Schwarz-Weiss. Die Linienart bleibt, wie sie war; ob ein
-Weg ein Lauf, ein Dribbling oder ein Pass ist, sieht man also weiterhin an der Linie. Zu welcher
+liegen, und auch auf einem Ausdruck in Schwarz-Weiss. Zusätzlich nimmt jeder dieser Wege die Farbe
+seiner Figur an: Wer Spieler in verschiedenen Farben zeichnet, hat damit ein zweites Merkmal neben
+dem Buchstaben; der Torhüter, dessen Farbe fest ist, behält die gewohnte Pfeilfarbe. Zwei Figuren
+in derselben Farbe trennt der Buchstabe. Die Linienart bleibt, wie sie war; ob ein Weg ein Lauf,
+ein Dribbling oder ein Pass ist, sieht man also weiterhin an der Linie. Zu welcher
 Figur ein Weg gehört, leitet die Anwendung aus der Zeichnung ab: Er gehört der Figur, an der er
 beginnt; beginnt er am Ende eines Laufwegs oder Dribblings, gehört er derselben Figur wie dieser,
 etwa der Pass nach einem Dribbling; sonst der nächstgelegenen Figur. Hat nur eine einzige Figur
