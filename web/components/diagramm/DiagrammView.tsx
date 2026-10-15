@@ -191,6 +191,10 @@ function bewegungsLinie(element: BewegungsElement): Punkt[] {
  *  freie Linie farbig, wahlweise gestrichelt. Der Linienstil — nicht die
  *  Strichstärke — unterscheidet die Bewegungsarten.
  *
+ *  Ein Bewegungspfeil darf eine Farbe aus der Palette tragen (#430): Wer
+ *  mehrere Figuren gleichzeitig laufen lässt, färbt ihre Wege selbst. Ohne
+ *  Angabe bleibt er in der Farbe der Zeichenerklärung.
+ *
  *  `aussparung` ist die Masken-id aus `wegAussparung()`: Sie spart den Weg
  *  dort aus, wo ein später gezeichneter darüber läuft (#430). */
 export function PfadGrafik({ element, aussparung }: { element: PfadElement; aussparung?: string }) {
@@ -201,16 +205,17 @@ export function PfadGrafik({ element, aussparung }: { element: PfadElement; auss
     strokeLinejoin: "round" as const,
   };
   if (istBewegung(element)) {
+    const strich = element.farbe ? FARBEN[element.farbe] : PFEIL;
     return (
       <g mask={aussparung ? `url(#${aussparung})` : undefined}>
         <polyline
           points={punkteAttr(bewegungsLinie(element))}
           {...basis}
-          stroke={PFEIL}
+          stroke={strich}
           strokeWidth={BEWEGUNG_STRICH[element.typ]}
           strokeDasharray={element.typ === "laufweg" ? "18 14" : undefined}
         />
-        <PfeilSpitze punkte={element.punkte} farbe={PFEIL} />
+        <PfeilSpitze punkte={element.punkte} farbe={strich} />
       </g>
     );
   }
@@ -230,7 +235,7 @@ export function PfadGrafik({ element, aussparung }: { element: PfadElement; auss
  *  `transparent` sind sie deshalb keine Diagramm-Rolle. */
 const MASKE = { zeigen: "white", aussparen: "black" } as const;
 
-/** Durchsichtiger Rand der Bewegungspfeile (#430, Alternative B zu #431).
+/** Durchsichtiger Rand der Bewegungspfeile (#430).
  *
  *  Die Wege liegen in der Zeichenreihenfolge übereinander. Wo ein oberer Weg
  *  einen unteren kreuzt oder überdeckt, wird der untere entlang des oberen

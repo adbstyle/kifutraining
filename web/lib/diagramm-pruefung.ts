@@ -457,10 +457,9 @@ function elementMaengel(roh: Roh, art: ElementArt, { stelle, e }: Eintrag): Befu
       break;
     }
     case "pfad":
-      // Farbe und Strichelung wertet nur die Linie aus; Laufweg, Dribbling
-      // und Pass zeichnen in fester Optik (DiagrammView.PfadGrafik).
-      if (e.typ !== "linie" && e.farbe !== undefined)
-        mangel("wirkungslos", "farbe", `«farbe» wirkt nur an einer «linie»; «${e.typ}» zeichnet KiFu in fester Farbe. Lass «farbe» weg.`);
+      // Die Farbe wirkt an jedem Pfad (#430), die Strichelung nur an der
+      // Linie: Laufweg, Dribbling und Pass unterscheidet ihr fester
+      // Linienstil (DiagrammView.PfadGrafik).
       if (e.typ !== "linie" && e.gestrichelt !== undefined)
         mangel("wirkungslos", "gestrichelt", `«gestrichelt» wirkt nur an einer «linie»; «${e.typ}» hat einen festen Linienstil. Lass «gestrichelt» weg.`);
       break;

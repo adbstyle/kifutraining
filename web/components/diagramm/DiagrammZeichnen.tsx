@@ -475,7 +475,9 @@ export function DiagrammZeichnen({
     setBearbeitenId(null);
   }
 
-  function setFarbe(id: string, farbe: FarbSlug) {
+  /** `undefined` setzt einen Bewegungspfeil auf die Farbe der Zeichenerklärung
+   *  zurück; beim Speichern fällt die Angabe dann ganz weg. */
+  function setFarbe(id: string, farbe: FarbSlug | undefined) {
     merken();
     setElemente((prev) =>
       prev.map((el) => (el.id === id && el.art !== "text" ? { ...el, farbe } : el)),
@@ -1452,7 +1454,7 @@ const ElementLeiste = forwardRef<
     onDrehen: (delta: 45 | -45) => void;
     onPose: (pose: SpielerPose) => void;
     onSpiegeln: (spiegeln: boolean) => void;
-    onFarbe: (farbe: FarbSlug) => void;
+    onFarbe: (farbe: FarbSlug | undefined) => void;
     onGestrichelt: (gestrichelt: boolean) => void;
     onGefuellt: (gefuellt: boolean) => void;
     onKopieren: () => void;
@@ -1481,8 +1483,11 @@ const ElementLeiste = forwardRef<
   const poseWaehlbar = element.art === "symbol" && POSEN_TYPEN.has(element.typ);
   const faerbbar =
     (element.art === "symbol" && symbolDef(element.typ).faerbbar) ||
-    (element.art === "pfad" && element.typ === "linie") ||
+    element.art === "pfad" ||
     element.art === "form";
+  // Bewegungspfeile haben keinen Standard-Slug: ohne Farbe zeichnen sie in der
+  // Farbe der Zeichenerklärung (#430). Dafür steht vorne ein eigener Knopf.
+  const bewegung = element.art === "pfad" && element.typ !== "linie";
   const stilbar = element.art === "pfad" && element.typ === "linie";
   const fuellbar = element.art === "form";
   const hatEigenschaften =
@@ -1563,6 +1568,22 @@ const ElementLeiste = forwardRef<
 
       {faerbbar && (
         <div className="flex items-center gap-1" role="group" aria-label="Farbe des Elements">
+          {bewegung && element.art === "pfad" && (
+            // Kein Farbpunkt: Die Farbe der Zeichenerklärung läge am Bildschirm
+            // kaum unterscheidbar neben «weiss». Der Knopf zeigt darum den Pfeil
+            // selbst, wie die Posen-Knöpfe die Figur.
+            <button
+              type="button"
+              onClick={() => onFarbe(undefined)}
+              aria-label="Farbe der Zeichenerklärung"
+              aria-pressed={!element.farbe}
+              className={`focus-ring flex size-9 items-center justify-center rounded-flaeche border ${
+                !element.farbe ? "border-on-surface bg-elev-08" : "border-linie"
+              }`}
+            >
+              <GlyphVorschau element={pfadVorschau(element.typ)} groesse={28} />
+            </button>
+          )}
           {farbSlugs.map((slug) => {
             const aktuell = "farbe" in element ? element.farbe : undefined;
             const aktiv = (aktuell ?? standardFarbe) === slug;
