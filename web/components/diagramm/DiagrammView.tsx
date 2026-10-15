@@ -14,6 +14,7 @@ import {
 } from "@/lib/diagramm";
 import { dv } from "@/lib/diagramm-farben";
 import { symbolDef, symbolFarbe, symbolMasse, symbolRotation } from "./symbols";
+import { istFigur, wegMarken } from "@/lib/wege-zuordnung";
 import { cn } from "@/lib/cn";
 
 /**
@@ -286,6 +287,85 @@ export function TextGrafik({ element }: { element: TextElement }) {
   );
 }
 
+/** Radius einer Weg-Marke (#430) und Abstand der Marken entlang eines Weges:
+ *  Ein Rundlauf trägt seine Marke mehrfach, damit jeder Abschnitt im Gewirr
+ *  zuzuordnen ist. */
+const MARKE_RADIUS = 19;
+const MARKE_ABSTAND = 420;
+/** Lage der Marken im Abschnitt, reihum je Figur (A, B, C, D, …). */
+const MARKE_LAGEN = [0.5, 0.3, 0.7, 0.4, 0.6];
+
+/** Wo die Marken eines Weges stehen: je eine pro volle `MARKE_ABSTAND`,
+ *  mindestens eine, gleichmässig verteilt. `lage` (0…1) setzt sie innerhalb
+ *  ihres Abschnitts — je Figur verschieden, damit zwei Wege, die deckungsgleich
+ *  verlaufen, ihre Marken nicht aufeinander legen. */
+function markenOrte(punkte: Punkt[], lage: number): Punkt[] {
+  const laengen = punkte.slice(1).map((p, i) => Math.hypot(p.x - punkte[i].x, p.y - punkte[i].y));
+  const gesamt = laengen.reduce((s, l) => s + l, 0);
+  const n = Math.max(1, Math.floor(gesamt / MARKE_ABSTAND));
+  return Array.from({ length: n }, (_, k) => {
+    let rest = ((k + lage) / n) * gesamt;
+    let i = 0;
+    while (i < laengen.length - 1 && rest > laengen[i]) rest -= laengen[i++];
+    const t = laengen[i] === 0 ? 0 : Math.min(1, rest / laengen[i]);
+    return { x: punkte[i].x + (punkte[i + 1].x - punkte[i].x) * t, y: punkte[i].y + (punkte[i + 1].y - punkte[i].y) * t };
+  });
+}
+
+function MarkeGrafik({ p, text }: { p: Punkt; text: string }) {
+  const x = r2(Math.min(FLAECHE.breite - MARKE_RADIUS, Math.max(MARKE_RADIUS, p.x)));
+  const y = r2(Math.min(FLAECHE.hoehe - MARKE_RADIUS, Math.max(MARKE_RADIUS, p.y)));
+  return (
+    <g data-weg-marke={text}>
+      <circle cx={x} cy={y} r={MARKE_RADIUS} fill={dv("textbox-grund")} stroke={dv("textbox-rand")} strokeWidth={2} />
+      <text
+        x={x}
+        y={y + 8.5}
+        textAnchor="middle"
+        fontSize={24}
+        fontWeight={700}
+        fontFamily="var(--font-sans, sans-serif)"
+        fill={dv("textbox-schrift")}
+      >
+        {text}
+      </text>
+    </g>
+  );
+}
+
+/** Wege je Figur (#430): Haben mehrere Figuren Wege, tragen jede Figur und
+ *  ihre Wege dieselbe Marke — ein Buchstabe statt einer Farbe, damit die
+ *  Zuordnung im Schwarz-Weiss-Druck und bei Farbsehschwäche trägt und nicht
+ *  wie eine Teamfarbe aussieht. Linienart und Pfeil bleiben unverändert, der
+ *  Typ des Weges also erkennbar. Liegt über allen Elementen. */
+export function WegMarken({ elemente }: { elemente: readonly DiagrammElement[] }) {
+  const { zuordnung, marken } = wegMarken(elemente);
+  if (marken.size === 0) return null;
+  const reihe = [...marken.keys()];
+  return (
+    <g pointerEvents="none" aria-hidden data-testid="weg-marken">
+      {elemente.map((e) => {
+        if (istFigur(e)) {
+          const m = marken.get(e.id);
+          // Oben neben dem Kopf; die Figur misst 75×145 um ihre Mitte.
+          return m ? <MarkeGrafik key={e.id} p={{ x: e.x + 34, y: e.y - 62 }} text={m} /> : null;
+        }
+        if (e.art !== "pfad") return null;
+        const figur = zuordnung.get(e.id);
+        const m = figur && marken.get(figur);
+        if (!figur || !m) return null;
+        return (
+          <g key={e.id}>
+            {markenOrte(e.punkte, MARKE_LAGEN[reihe.indexOf(figur) % MARKE_LAGEN.length]).map((p, i) => (
+              <MarkeGrafik key={i} p={p} text={m} />
+            ))}
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
 /** Ein einzelnes Element (ohne Interaktion) — vom Editor wiederverwendet. */
 export function ElementGrafik({ element }: { element: DiagrammElement }) {
   switch (element.art) {
@@ -403,6 +483,7 @@ export function DiagrammView({
       {sortiertNachEbene(diagramm.elemente).map((e) => (
         <ElementGrafik key={e.id} element={e} />
       ))}
+      <WegMarken elemente={diagramm.elemente} />
     </svg>
   );
 }

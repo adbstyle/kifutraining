@@ -320,6 +320,23 @@ bisher das ganze Blatt — und bleibt auf einem einfachen Bürodrucker lesbar. W
 wählt nicht einen Farbton, sondern «rot» oder «blau»; wie kräftig der ausfällt, entscheidet die
 Anwendung je nach Bildschirm oder Papier.
 
+Haben in einem Diagramm mehrere Figuren eigene Wege — Spieler, Torhüter oder Trainer —, hebt die
+Anwendung sie von selbst voneinander ab: Jede dieser Figuren trägt oben neben dem Kopf einen
+Buchstaben, A, B, C und so fort in der Reihenfolge, in der sie gezeichnet wurden, und derselbe
+Buchstabe steht auf jedem ihrer Laufwege, Dribblings und Pässe, auf langen Wegen mehrmals. So
+bleibt erkennbar, wer welchen Weg läuft, auch wenn sich zwei Rundläufe kreuzen oder übereinander
+liegen, und auch auf einem Ausdruck in Schwarz-Weiss. Die Linienart bleibt, wie sie war; ob ein
+Weg ein Lauf, ein Dribbling oder ein Pass ist, sieht man also weiterhin an der Linie. Zu welcher
+Figur ein Weg gehört, leitet die Anwendung aus der Zeichnung ab: Er gehört der Figur, an der er
+beginnt; beginnt er am Ende eines Laufwegs oder Dribblings, gehört er derselben Figur wie dieser,
+etwa der Pass nach einem Dribbling; sonst der nächstgelegenen Figur. Hat nur eine einzige Figur
+Wege, bleibt das Diagramm ohne Buchstaben. Das gilt für jedes Diagramm, auch für bestehende und
+für die Manual-Diagramme. Liegt die Anwendung einmal daneben, ordnet der Trainer beim Zeichnen
+einen Weg einer anderen Figur zu, indem er den Weg auswählt und dann die Figur anklickt; ebenso
+setzt er ihn auf die eigene Ableitung der Anwendung zurück. Diese Korrektur wird mit der Übung
+gespeichert, bleibt beim Verschieben von Weg und Figur bestehen und geht in jede Kopie mit; wird
+die Figur entfernt, ordnet die Anwendung den Weg wieder selbst zu.
+
 Ein vorhandenes Diagramm kann als Vorlage in eine andere eigene Übung oder eine Übung im Training
 kopiert werden. Zur Auswahl stehen die eigenen Diagramme und alle Manual-Diagramme, durchsuchbar
 über den Namen der Quell-Übung und mit Vorschau; die Altersstufe spielt dabei keine Rolle. Fremde
@@ -402,6 +419,14 @@ Eine begonnene, noch nicht gespeicherte Übung bleibt nicht als Entwurf erhalten
 Maske gezeichnetes Diagramm wird bis zum Speichern nirgends zwischengesichert — auch beim
 Bearbeiten nicht; bricht der Browser ab, ist die ungespeicherte Zeichnung verloren. Die
 Zeichenfläche ist für Maus und Tastatur gebaut, nicht für die Bedienung per Touch.
+
+Wege sind gerade Strecken von Punkt zu Punkt; einen Bogen oder Kreis zeichnet man aus mehreren
+Punkten. Die Buchstaben an Figuren und Wegen sagen, wer läuft, nicht in welcher Reihenfolge —
+eine Abfolge zeigt das Diagramm nicht, sie gehört in den Ablauf. Ein Weg ist nicht an seine
+Figur gebunden: Verschiebt man die Figur, bleibt der Weg liegen, und die Anwendung ordnet ihn
+neu zu, sofern der Trainer ihn nicht von Hand zugeordnet hat. Wer viele Figuren mit Wegen
+zeichnet, bekommt entsprechend viele Buchstaben; mehr als eine Handvoll machen ein Diagramm
+eher unruhig als klarer.
 
 Die Einordnung lässt sich auf der Übungsseite nur lesen, nicht direkt ändern; geändert wird sie
 in der Maske, zusammen mit dem Inhalt. Fehlende Einordnung sieht nur die Eigentümerin; wer eine

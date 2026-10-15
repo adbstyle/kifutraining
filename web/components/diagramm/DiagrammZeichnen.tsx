@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Check, ClipboardPaste, Copy, Ellipsis, FlipHorizontal2, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, Waypoints, X } from "lucide-react";
+import { Check, ClipboardPaste, Copy, Ellipsis, FlipHorizontal2, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, UserRoundPen, WandSparkles, Waypoints, X } from "lucide-react";
 import { Button, IconButton, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
@@ -10,6 +10,7 @@ import {
   MAX_ELEMENTE,
   parseDiagramm,
   kopiereDiagramm,
+  mitFrischenIds,
   FARBEN,
   FORM_DEFAULT_FARBE,
   LINIE_DEFAULT_FARBE,
@@ -23,6 +24,7 @@ import {
   type FarbSlug,
   type DiagrammData,
   type DiagrammElement,
+  type PfadElement,
   type PfadTyp,
   type SymbolTyp,
   type SpielerPose,
@@ -45,7 +47,9 @@ import {
   punkteAttr,
   sortiertNachEbene,
   textBox,
+  WegMarken,
 } from "./DiagrammView";
+import { istBewegung, istFigur } from "@/lib/wege-zuordnung";
 
 const PFAD_WERKZEUGE: Record<PfadTyp, string> = {
   laufweg: "Laufweg",
@@ -106,7 +110,13 @@ function auswahlBox(els: DiagrammElement[]): { x: number; y: number; breite: num
  *  begrenzt wie beim Ziehen — die relative Anordnung bleibt erhalten (PC2). */
 function versetzteGruppe(els: DiagrammElement[], versatz: number): DiagrammElement[] {
   const { dx, dy } = gruppenVersatz(els, versatz, versatz);
-  return els.map((el) => ({ ...verschiebeElement(el, dx, dy), id: crypto.randomUUID() }));
+  return mitFrischenIds(els).map((el) => verschiebeElement(el, dx, dy));
+}
+
+/** Der Weg ohne korrigierte Zuordnung — KiFu leitet seine Figur wieder selbst ab. */
+function ohneFigur(e: PfadElement): PfadElement {
+  const { figur: _figur, ...rest } = e;
+  return rest;
 }
 
 /** Achsenparalleles Rechteck aus zwei Eckpunkten (Auswahlrahmen). */
@@ -345,6 +355,9 @@ export function DiagrammZeichnen({
   const [dragAktiv, setDragAktiv] = useState(false);
   // Inline-Textbearbeitung (#65 AK9): direkt am Element statt im Werkzeugbereich.
   const [editId, setEditId] = useState<string | null>(null);
+  // Zuordnen (#430): der Weg, dessen Figur der nächste Klick auf eine Figur
+  // festlegt; null = kein Zuordnen.
+  const [zuordnenFuer, setZuordnenFuer] = useState<string | null>(null);
   const editAusgang = useRef("");
   const textGemerkt = useRef(false);
 
@@ -361,6 +374,7 @@ export function DiagrammZeichnen({
     setElemente(letzter);
     setSelectedIds([]);
     setBearbeitenId(null);
+    setZuordnenFuer(null);
   }
 
   function wiederherstellen() {
@@ -371,6 +385,7 @@ export function DiagrammZeichnen({
     setElemente(naechster);
     setSelectedIds([]);
     setBearbeitenId(null);
+    setZuordnenFuer(null);
   }
 
   // Jede Änderung der Elemente nach aussen melden — die Maske trägt sie bis
@@ -429,9 +444,25 @@ export function DiagrammZeichnen({
     if (selectedIds.length === 0) return;
     merken();
     const ids = new Set(selectedIds);
-    setElemente((prev) => prev.filter((e) => !ids.has(e.id)));
+    // Wege, die der Trainer einer entfernten Figur zugeordnet hatte, ordnet
+    // KiFu wieder selbst zu (#430 PC 5) — kein Verweis ins Leere bleibt stehen.
+    setElemente((prev) =>
+      prev
+        .filter((e) => !ids.has(e.id))
+        .map((e) => (e.art === "pfad" && e.figur && ids.has(e.figur) ? ohneFigur(e) : e)),
+    );
     setSelectedIds([]);
     setBearbeitenId(null);
+    setZuordnenFuer(null);
+  }
+
+  /** Einen Weg von Hand einer Figur zuordnen oder, mit `undefined`, auf die
+   *  automatische Zuordnung zurücksetzen (#430 AK 5, 6). */
+  function setFigur(id: string, figur: string | undefined) {
+    merken();
+    setElemente((prev) =>
+      prev.map((e) => (e.id !== id || e.art !== "pfad" ? e : figur ? { ...e, figur } : ohneFigur(e))),
+    );
   }
 
   // In den Form-Bearbeitungsmodus wechseln (#66): „tiefer auswählen" per
@@ -618,6 +649,12 @@ export function DiagrammZeichnen({
     // Im Zeichenmodus zählen Klicks auf Elemente als Stützpunkte (kein Drag).
     if (zeichnen) return;
     e.stopPropagation();
+    // Beim Zuordnen wählt der Klick die Figur; jedes andere Element bricht ab.
+    if (zuordnenFuer) {
+      if (istFigur(el)) setFigur(zuordnenFuer, el.id);
+      setZuordnenFuer(null);
+      return;
+    }
     const svg = svgRef.current;
     if (!svg) return;
 
@@ -1079,7 +1116,8 @@ export function DiagrammZeichnen({
             removeSelected();
           }
           if (e.key === "Escape") {
-            if (zeichnen) abbrechenZeichnen();
+            if (zuordnenFuer) setZuordnenFuer(null);
+            else if (zeichnen) abbrechenZeichnen();
             else if (bearbeitenId) setBearbeitenId(null);
             else if (selectedIds.length > 0) setSelectedIds([]);
           }
@@ -1102,11 +1140,15 @@ export function DiagrammZeichnen({
         <svg
           ref={svgRef}
           viewBox={`0 0 ${FLAECHE.breite} ${FLAECHE.hoehe}`}
-          className={`block h-auto w-full touch-none select-none ${zeichnen ? "cursor-crosshair" : ""}`}
+          className={`block h-auto w-full touch-none select-none ${zeichnen || zuordnenFuer ? "cursor-crosshair" : ""}`}
           data-testid="diagramm-flaeche"
           onPointerDown={(e) => {
             if (zeichnen) {
               zeichnenKlick(flaechenPunkt(e.currentTarget, e));
+              return;
+            }
+            if (zuordnenFuer) {
+              setZuordnenFuer(null);
               return;
             }
             // Druck auf die leere Fläche startet eine Auswahlrahmen-Geste (#67
@@ -1170,6 +1212,9 @@ export function DiagrammZeichnen({
             </g>
           ))}
 
+          {/* Marken der Wege je Figur (#430), wie in der Anzeige */}
+          <WegMarken elemente={elemente} />
+
           {/* Vorschau der entstehenden Bewegung bzw. der Polygon-Form */}
           {zeichnen && zeichnen.punkte.length > 0 && (
             <g pointerEvents="none" opacity={0.75} data-testid="zeichnen-vorschau">
@@ -1222,6 +1267,18 @@ export function DiagrammZeichnen({
           })()}
         </svg>
 
+        {/* Beim Zuordnen (#430): als Einblendung über der Fläche, damit die
+            Figur, die der Trainer anklicken will, nicht verrutscht. */}
+        {zuordnenFuer && (
+          <p
+            className="type-body-small pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit rounded-flaeche bg-elev-08 px-3 py-1.5 text-on-surface shadow-dp-08"
+            role="status"
+            data-testid="zuordnen-hinweis"
+          >
+            Klicke auf die Figur, die diesen Weg zurücklegt. Escape bricht ab.
+          </p>
+        )}
+
         {/* Leerzustand: Einstieg, eine Vorlage statt leerer Fläche zu kopieren
             (#61). Schwebt mittig, gibt aber Klicks an die Fläche durch — nur der
             Picker selbst fängt sie ab. */}
@@ -1240,7 +1297,9 @@ export function DiagrammZeichnen({
         )}
 
         {/* Kontextuelle Optionen am ausgewählten Element (#65) */}
-        {selected && !dragAktiv && editId === null && (
+        {/* Beim Zuordnen weicht die Leiste: Sie läge sonst oft genau über den
+            Figuren, unter denen der Trainer wählt (#430). */}
+        {selected && !dragAktiv && editId === null && !zuordnenFuer && (
           <ElementLeiste
             ref={leisteRef}
             element={selected}
@@ -1256,6 +1315,8 @@ export function DiagrammZeichnen({
             onFarbe={(farbe) => setFarbe(selected.id, farbe)}
             onGestrichelt={(gestrichelt) => setGestrichelt(selected.id, gestrichelt)}
             onGefuellt={(gefuellt) => setGefuellt(selected.id, gefuellt)}
+            onZuordnen={() => setZuordnenFuer(selected.id)}
+            onAutomatisch={() => setFigur(selected.id, undefined)}
             onKopieren={kopieren}
             onEntfernen={removeSelected}
           />
@@ -1446,6 +1507,8 @@ const ElementLeiste = forwardRef<
     onFarbe: (farbe: FarbSlug) => void;
     onGestrichelt: (gestrichelt: boolean) => void;
     onGefuellt: (gefuellt: boolean) => void;
+    onZuordnen: () => void;
+    onAutomatisch: () => void;
     onKopieren: () => void;
     onEntfernen: () => void;
   }
@@ -1462,6 +1525,8 @@ const ElementLeiste = forwardRef<
     onFarbe,
     onGestrichelt,
     onGefuellt,
+    onZuordnen,
+    onAutomatisch,
     onKopieren,
     onEntfernen,
   },
@@ -1476,8 +1541,9 @@ const ElementLeiste = forwardRef<
     element.art === "form";
   const stilbar = element.art === "pfad" && element.typ === "linie";
   const fuellbar = element.art === "form";
+  const zuordenbar = istBewegung(element);
   const hatEigenschaften =
-    drehbar || figur || faerbbar || stilbar || fuellbar || bearbeitbar;
+    drehbar || figur || faerbbar || stilbar || fuellbar || bearbeitbar || zuordenbar;
   const standardFarbe =
     element.art === "symbol"
       ? symbolDef(element.typ).defaultFarbe
@@ -1615,6 +1681,25 @@ const ElementLeiste = forwardRef<
           active={imBearbeiten}
           onClick={onBearbeiten}
         />
+      )}
+
+      {zuordenbar && (
+        <>
+          <IconButton
+            type="button"
+            icon={UserRoundPen}
+            label="Einer anderen Figur zuordnen"
+            onClick={onZuordnen}
+          />
+          {element.art === "pfad" && element.figur && (
+            <IconButton
+              type="button"
+              icon={WandSparkles}
+              label="Figur wieder automatisch zuordnen"
+              onClick={onAutomatisch}
+            />
+          )}
+        </>
       )}
 
       {hatEigenschaften && <span aria-hidden className="mx-0.5 h-5 w-px bg-linie" />}

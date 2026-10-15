@@ -3337,6 +3337,48 @@ export default async function Styleguide() {
             />
           </div>
           <p className="type-body-medium mb-4 mt-8 max-w-2xl text-on-surface-mittel">
+            <strong>Wege je Figur</strong> (#430): Haben mehrere Figuren Wege,
+            tragen jede Figur und ihre Wege dieselbe <strong>Marke</strong> - ein
+            Buchstabe in einem hellen Kreis, oben neben dem Kopf und entlang des
+            Weges, lange Wege mehrfach. Ein Buchstabe statt einer Farbe: Er trägt
+            im Schwarz-Weiss-Druck und bei Farbsehschwäche und sieht nicht aus wie
+            eine Teamfarbe. Linienart und Pfeil bleiben, der Typ des Weges also
+            erkennbar. Zu welcher Figur ein Weg gehört, leitet{" "}
+            <code>lib/wege-zuordnung.ts</code> bei jeder Anzeige ab (Start an der
+            Figur, sonst am Ende ihres Laufwegs oder Dribblings, sonst die nächste
+            Figur); gespeichert wird nur eine Korrektur des Trainers. Die Marke
+            nutzt die Rollen der Textbox (<code>textbox-grund</code>,{" "}
+            <code>-rand</code>, <code>-schrift</code>) und hat darum in jedem
+            Farbsatz ihren Wert. Hat nur eine Figur Wege, bleibt das Diagramm
+            ohne Marken:
+          </p>
+          <div className="relative aspect-[16/10] max-w-xl overflow-hidden rounded-flaeche border border-linie">
+            <DiagrammView
+              title="Zwei Figuren laufen gleichzeitig im Kreis"
+              diagramm={{
+                version: 1,
+                elemente: [
+                  { id: "wf-a", art: "symbol", typ: "spieler", x: 620, y: 300, pose: "laufen", farbe: "rot" },
+                  { id: "wf-b", art: "symbol", typ: "spieler", x: 980, y: 300, pose: "laufen", farbe: "rot", spiegeln: true },
+                  { id: "wf-ball", art: "symbol", typ: "fussball", x: 1150, y: 860 },
+                  {
+                    id: "wf-lauf-a",
+                    art: "pfad",
+                    typ: "laufweg",
+                    punkte: [{ x: 620, y: 380 }, { x: 380, y: 620 }, { x: 800, y: 880 }, { x: 1180, y: 620 }, { x: 900, y: 420 }],
+                  },
+                  {
+                    id: "wf-lauf-b",
+                    art: "pfad",
+                    typ: "laufweg",
+                    punkte: [{ x: 980, y: 380 }, { x: 1220, y: 640 }, { x: 760, y: 900 }, { x: 420, y: 600 }, { x: 700, y: 420 }],
+                  },
+                  { id: "wf-dribb", art: "pfad", typ: "dribbling", punkte: [{ x: 900, y: 420 }, { x: 1080, y: 200 }] },
+                ],
+              }}
+            />
+          </div>
+          <p className="type-body-medium mb-4 mt-8 max-w-2xl text-on-surface-mittel">
             Gezeichnet wird in der Maske der Übung, beim Erfassen wie beim
             Bearbeiten, in der Bibliothek wie im Training: <code>DiagrammFeld</code>{" "}
             zeigt im Abschnitt «Feld-Diagramm» die Zeichenfläche{" "}

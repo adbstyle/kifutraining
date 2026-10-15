@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { aktivesBild, hatDiagramm, type DiagrammData } from "@/lib/diagramm";
-import { pruefeDiagramm, type Befund } from "@/lib/diagramm-pruefung";
+import { aktivesBild, hatDiagramm, parseDiagramm, type DiagrammData } from "@/lib/diagramm";
+import { ohneZuordnungen, pruefeDiagramm, type Befund } from "@/lib/diagramm-pruefung";
 import { diagrammSpalten } from "@/lib/diagramm-setzen";
 import type { MaterialPosten } from "@/lib/material";
 import { fehlschlag, ok, type KernErgebnis, type Verstoss } from "@/lib/kern/ergebnis";
@@ -45,14 +45,24 @@ export const MATERIAL_MIT_DIAGRAMM =
   "freie Ergänzung «material.ergaenzung» bleibt möglich.";
 
 /** Ein Diagramm, wie der Assistent es schickt: geprüft gegen die Grenzen, ein
- *  leeres abgelehnt. Ohne Fund das normalisierte Diagramm und seine Mängel. */
+ *  leeres abgelehnt. Ohne Fund das normalisierte Diagramm und seine Mängel.
+ *  Zuordnungen von Wegen nimmt KiFu vom Assistenten nicht an (#430 OoS 4):
+ *  Sie fallen vorher weg und kommen als Mangel zurück. */
 function diagrammVomAssistenten(
   roh: unknown,
 ): { ok: true; daten: DiagrammData; maengel: Befund[] } | { ok: false; funde: Fund[] } {
-  const p = pruefeDiagramm(roh);
+  const ohne = ohneZuordnungen(roh);
+  const p = pruefeDiagramm(ohne.roh);
   const funde: Fund[] = p.grenzen.map((b) => ({ ...alsVerstoss(b), art: "eingabe" }));
   if (p.daten?.elemente.length === 0) funde.push({ feld: "diagramm", meldung: DIAGRAMM_LEER, art: "eingabe" });
-  return p.daten && funde.length === 0 ? { ok: true, daten: p.daten, maengel: p.maengel } : { ok: false, funde };
+  const maengel = [...ohne.maengel, ...p.maengel].sort((a, b) => (a.index ?? -1) - (b.index ?? -1));
+  return p.daten && funde.length === 0 ? { ok: true, daten: p.daten, maengel } : { ok: false, funde };
+}
+
+/** Wie viele Wege der Trainer im gespeicherten Diagramm von Hand einer Figur
+ *  zugeordnet hat — ein neu gesetztes Diagramm verwirft sie (#430 PC 6, 7). */
+function korrigierteZuordnungen(diagramm: unknown): number {
+  return parseDiagramm(diagramm)?.elemente.filter((e) => e.art === "pfad" && e.figur !== undefined).length ?? 0;
 }
 
 /** Das Diagramm beim Anlegen (#145 AK 5, 7): Die Funde gehören in DIESELBE
@@ -87,6 +97,9 @@ export type DiagrammGesetzt = {
   material: { liste: MaterialPosten[]; ergaenzung: string[] };
   /** Die Mängel des gespeicherten Diagramms (#146 AK 1–3); leer = nichts. */
   maengel: Befund[];
+  /** Wie viele vom Trainer korrigierte Zuordnungen von Wegen das Setzen
+   *  verworfen hat (#430 PC 7); 0 = keine. */
+  verworfeneZuordnungen: number;
 };
 
 /** Das Diagramm einer eigenen Übung setzen oder vollständig ersetzen (#145
@@ -132,6 +145,7 @@ export async function setzeDiagramm(
     angezeigtesBild: aktivesBild({ bildQuelle: s.bild_quelle, bildUrl: zeile.bild_url, diagramm: s.diagramm }) ?? "diagramm",
     material: { liste: s.material_liste, ergaenzung: zeile.material ?? [] },
     maengel: d.maengel,
+    verworfeneZuordnungen: korrigierteZuordnungen(zeile.diagramm),
   });
 }
 

@@ -162,6 +162,10 @@ export type PfadElement = {
   punkte: Punkt[];
   farbe?: FarbSlug;
   gestrichelt?: boolean; // nur für typ "linie"
+  /** Vom Trainer korrigierte Zuordnung zu einer Figur (Kennung eines Spielers,
+   *  Torhüters oder Trainers, #430). Ohne Angabe leitet KiFu die Figur selbst
+   *  ab (lib/wege-zuordnung.ts); nur an Laufweg, Dribbling und Pass. */
+  figur?: string;
 };
 
 export type FormElement = {
@@ -209,10 +213,19 @@ export const LEERES_DIAGRAMM: DiagrammData = {
  *  geteilten Referenzen, keine kollidierenden IDs. Wird beim Kopieren einer
  *  Vorlage genutzt (Server-Action und Editor gleichermassen). */
 export function kopiereDiagramm(data: DiagrammData): DiagrammData {
-  return {
-    version: DIAGRAMM_VERSION,
-    elemente: data.elemente.map((e) => ({ ...structuredClone(e), id: crypto.randomUUID() })),
-  };
+  return { version: DIAGRAMM_VERSION, elemente: mitFrischenIds(data.elemente) };
+}
+
+/** Tiefe Kopien mit frischen IDs. Korrigierte Zuordnungen von Wegen (#430)
+ *  zeigen danach auf die kopierte Figur, sofern sie mitkopiert wurde — sonst
+ *  weiter auf die ursprüngliche. */
+export function mitFrischenIds(elemente: readonly DiagrammElement[]): DiagrammElement[] {
+  const neu = new Map(elemente.map((e) => [e.id, crypto.randomUUID()]));
+  return elemente.map((e) => {
+    const k = { ...structuredClone(e), id: neu.get(e.id)! };
+    if (k.art === "pfad" && k.figur && neu.has(k.figur)) k.figur = neu.get(k.figur);
+    return k;
+  });
 }
 
 export const istZahl = (v: unknown): v is number =>

@@ -117,7 +117,12 @@ inhaltlichen Mangel einzeln, mit dem betroffenen Element und wie er sich beheben
 Leibchen neben einer Figur, aber nicht an deren Hand, ein Tor an der Feldkante, das vom Feld weg
 öffnet, ein Symbol, dessen Rahmen über den Rand ragt, einen leeren Text oder eine Angabe, die das
 Element nicht vorsieht. Ein Mangel hindert nichts: Das Diagramm ist gespeichert, und der
-Assistent setzt es korrigiert neu. Die Mängel des Diagramms einer eigenen Übung ruft er
+Assistent setzt es korrigiert neu. Zu welcher Figur ein Weg gehört, legt der Assistent nicht
+fest; das leitet die Anwendung wie bei jedem Diagramm selbst ab (siehe
+[Übungen](uebungen.md#feld-diagramme)), und eine solche Angabe vom Assistenten meldet sie als
+Mangel. Hatte der Trainer in der Anwendung Wege von Hand einer anderen Figur zugeordnet, gehen
+diese Korrekturen mit einem neu gesetzten Diagramm verloren; die Anwendung sagt dem Assistenten,
+wie viele es waren. Die Mängel des Diagramms einer eigenen Übung ruft er
 ausserdem jederzeit ab, auch eines, das in der Anwendung gezeichnet wurde; ein älteres Diagramm
 nennt dabei auch, was die Anwendung heute nicht mehr annähme.
 

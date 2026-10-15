@@ -69,7 +69,10 @@ export const uebungDiagrammSetzen = werkzeug({
     "«maengel» inhaltliche Befunde am gespeicherten Diagramm, je mit Element und Behebung: " +
     `${MANGEL_CODES.map(code).join(", ")}. Sie sind keine Fehler: Das Diagramm ist gespeichert. ` +
     "Setze es korrigiert erneut, bevor du es dem Trainer als fertig meldest. Eine leere Liste " +
-    `heisst: nichts zu melden. ${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
+    "heisst: nichts zu melden. Zu welcher Figur ein Weg gehört, leitet KiFu selbst ab; hatte der " +
+    "Trainer Wege in KiFu von Hand einer anderen Figur zugeordnet, verwirft das Setzen diese " +
+    "Zuordnungen - «verworfene_zuordnungen» nennt, wie viele, und das gehört dem Trainer gesagt. " +
+    `${UEBUNG_KENNUNG_FEHLER} ${UEBUNG_NUR_EIGENE_FEHLER}`,
   nurLesen: false,
   eingabe: z.object({ kennung: UebungKennung, diagramm: DiagrammEingabe }),
   ausgabe: z.object({
@@ -78,6 +81,10 @@ export const uebungDiagrammSetzen = werkzeug({
     angezeigtes_bild: z.enum(["diagramm", "foto"]),
     material: materialSchema(),
     maengel: z.array(MangelAusgabe),
+    verworfene_zuordnungen: z
+      .number()
+      .int()
+      .describe("Wie viele Zuordnungen von Wegen zu Figuren, die der Trainer korrigiert hatte, das Setzen verworfen hat."),
   }),
   ausfuehren: async (e, zugang) =>
     abgebildet(
@@ -88,6 +95,7 @@ export const uebungDiagrammSetzen = werkzeug({
         angezeigtes_bild: w.angezeigtesBild,
         material: materialAusgabe(w.material.liste, w.material.ergaenzung),
         maengel: w.maengel.map(alsMangel),
+        verworfene_zuordnungen: w.verworfeneZuordnungen,
       }),
     ),
 });

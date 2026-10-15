@@ -39,9 +39,11 @@ import {
   FIGUR_NAEHE,
   HAND_TOLERANZ,
   KANTEN_SOLL,
+  NUR_IN_KIFU,
   PUNKTE,
   type ElementArt,
 } from "@/lib/diagramm-pruefung";
+import { AN_FIGUR, AN_WEGENDE } from "@/lib/wege-zuordnung";
 import { FARBE_LABEL, SPIELER_STANDARDFARBE, istMaterialArt } from "@/lib/material";
 import { Wert, wert } from "@/lib/mcp/bausteine";
 
@@ -154,7 +156,11 @@ export function baueDiagrammKatalog(): DiagrammKatalog {
       "Rechteck, Ellipse und Dreieck ohne «punkte»: x/y ist die obere linke Ecke, dazu «breite» und «hoehe» " +
       "(grösser als 0); der ganze Rahmen muss auf der Fläche liegen. Pfade, Polygone und Dreiecke mit «punkte»: " +
       "jeder Punkt muss auf der Fläche liegen, x, y, breite und hoehe rechnet KiFu selbst daraus. " +
-      "Ein Pfeil zeigt auf den letzten Punkt. Jedes Element braucht eine eigene «id» (Text).",
+      "Ein Pfeil zeigt auf den letzten Punkt. Jedes Element braucht eine eigene «id» (Text). " +
+      "Laufweg, Dribbling und Pass ordnet KiFu selbst einer Figur zu: der, an der der erste Punkt liegt " +
+      `(bis ${AN_FIGUR} Einheiten von ihrer Mitte), sonst der des Laufwegs oder Dribblings, an dessen letztem ` +
+      `Punkt er beginnt (bis ${AN_WEGENDE} Einheiten), sonst der nächstgelegenen. Haben mehrere Figuren Wege, ` +
+      "kennzeichnet KiFu jede Figur und ihre Wege mit demselben Buchstaben - lass jeden Weg darum an seiner Figur beginnen.",
     ebenen: ["form", "pfad", "symbol", "text"],
     richtung:
       `«rotation» dreht ein Symbol im Uhrzeigersinn in 45°-Schritten (${ROTATIONEN.join(", ")}); ` +
@@ -163,7 +169,7 @@ export function baueDiagrammKatalog(): DiagrammKatalog {
       `${KANTEN_SOLL.links}, an der rechten auf ${KANTEN_SOLL.rechts} - so öffnet es ins Feld. Figuren drehen nicht: ` +
       "«spiegeln»: true lässt sie nach links statt nach rechts blicken.",
     grenzen: { max_elemente: MAX_ELEMENTE, max_text_laenge: MAX_TEXT_LAENGE },
-    arten: ARTEN.map((art) => ({ art, felder: [...ELEMENT_ERLAUBT[art]] })),
+    arten: ARTEN.map((art) => ({ art, felder: ELEMENT_ERLAUBT[art].filter((f) => !NUR_IN_KIFU.has(f)) })),
     farben: farbSlugs.map((slug) => wert(FARBE_LABEL, slug)),
     rotationen: [...ROTATIONEN],
     symbole: SYMBOL_TYPEN.map((typ) => {

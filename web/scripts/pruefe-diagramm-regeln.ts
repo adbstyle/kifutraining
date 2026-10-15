@@ -39,6 +39,7 @@ import {
   SPIELER_POSEN,
   SYMBOL_TYPEN,
   farbSlugs,
+  kopiereDiagramm,
   parseDiagramm,
   type DiagrammElement,
   type FormElement,
@@ -50,10 +51,12 @@ import {
   BEFUND_CODES,
   ELEMENT_ERLAUBT,
   GRENZ_CODES,
+  NUR_IN_KIFU,
   diagrammAusFormular,
   diagrammProbleme,
   grenzLage,
   gruppenVersatz,
+  ohneZuordnungen,
   pruefeDiagramm,
   zeichenbaresDiagramm,
   type Befund,
@@ -66,6 +69,7 @@ import { MANGEL_ERKLAERT, MangelAusgabe, alsMangel } from "../lib/mcp/diagramm-e
 import { SYMBOLE } from "../components/diagramm/symbols";
 import { haende } from "../components/diagramm/figur";
 import { sortiertNachEbene } from "../components/diagramm/DiagrammView";
+import { wegMarken, wegeJeFigur } from "../lib/wege-zuordnung";
 
 let gelaufen = 0;
 let gescheitert = 0;
@@ -283,6 +287,9 @@ pruefe("9: je Art ein Element mit ALLEN Feldern → kein Befund, nichts verworfe
   };
   const pfad: Required<PfadElement> = {
     id: "p", art: "pfad", typ: "linie", punkte: [{ x: 10, y: 10 }, { x: 90, y: 90 }], farbe: "gelb", gestrichelt: true,
+    // Farbe und Strichelung wirken nur an der Linie, «figur» nur an einem Weg:
+    // Ein Pfad mit allen Feldern trägt darum genau einen Mangel.
+    figur: "s",
   };
   const form: Required<FormElement> = {
     id: "f", art: "form", form: "polygon", x: 700, y: 100, breite: 200, hoehe: 100,
@@ -292,7 +299,8 @@ pruefe("9: je Art ein Element mit ALLEN Feldern → kein Befund, nichts verworfe
   const elemente: DiagrammElement[] = [symbol, pfad, form, text];
   for (const e of elemente) assert.deepEqual([...ELEMENT_ERLAUBT[e.art]].sort(), Object.keys(e).sort(), e.art);
   const p = mit(...elemente);
-  keineBefunde(p);
+  assert.deepEqual(p.grenzen, []);
+  assert.deepEqual(p.maengel.map((b) => [b.element, b.angabe]), [["p", "figur"]]);
   assert.deepEqual(p.daten!.elemente, elemente);
   assert.deepEqual(parseDiagramm(p.daten), p.daten, "parseDiagramm lässt das normalisierte Diagramm unverändert");
 });
@@ -570,7 +578,9 @@ pruefe("Katalog: Fläche, Grenzen, Farben, Drehungen und Felder wie in lib/diagr
   assert.deepEqual(katalog.rotationen, [...ROTATIONEN]);
   assert.deepEqual(
     Object.fromEntries(katalog.arten.map((a) => [a.art, a.felder])),
-    Object.fromEntries(Object.entries(ELEMENT_ERLAUBT).map(([art, felder]) => [art, [...felder]])),
+    Object.fromEntries(
+      Object.entries(ELEMENT_ERLAUBT).map(([art, felder]) => [art, felder.filter((f) => !NUR_IN_KIFU.has(f))]),
+    ),
   );
   assert.deepEqual(katalog.pfade.map((p) => p.typ), [...PFAD_TYPEN]);
   assert.deepEqual(katalog.formen.map((f) => f.form), [...FORM_TYPEN]);
@@ -649,6 +659,77 @@ pruefe("Mängel für den Assistenten: jeder Code erklärt, Befund als Ausgabe mi
   const ganz = alsMangel(mit(...Array.from({ length: MAX_ELEMENTE + 1 }, (_, i) => pylone(`p${i}`, 100, 100))).grenzen[0]);
   assert.deepEqual(Object.keys(ganz).sort(), ["code", "meldung"], "ein Befund zum Ganzen hat keine Stelle");
   z.toJSONSchema(MangelAusgabe);
+});
+
+// ── Wege je Figur (#430) ────────────────────────────────────────────────────
+const kind = (id: string, x: number, y: number, typ: "spieler" | "torwart" | "trainer" = "spieler"): SymbolElement => ({
+  id, art: "symbol", typ, x, y,
+});
+const weg = (id: string, typ: "laufweg" | "dribbling" | "pass" | "linie", punkte: [number, number][], figur?: string): PfadElement => ({
+  id, art: "pfad", typ, punkte: punkte.map(([x, y]) => ({ x, y })), ...(figur && { figur }),
+});
+
+pruefe("Wege je Figur: Anfang an der Figur, Folgeweg, nächste Figur, Korrektur (#430 AK 7–10, PC 4/5)", () => {
+  const els: DiagrammElement[] = [
+    kind("a", 200, 500),
+    kind("b", 1400, 500, "torwart"),
+    { id: "ball", art: "symbol", typ: "fussball", x: 700, y: 900 },
+    weg("lauf-a", "laufweg", [[230, 560], [700, 300]]),
+    weg("pass-a", "pass", [[710, 310], [1300, 480]]), // Folgeweg: beginnt am Ende des Laufwegs
+    weg("dribb-b", "dribbling", [[1380, 560], [1000, 700]]),
+    weg("schuss-b", "pass", [[1010, 690], [800, 100]]), // Folgeweg des Dribblings
+    weg("ball-pass", "pass", [[700, 880], [500, 880]]), // startet beim Ball: nächste Figur
+    weg("nach-pass", "laufweg", [[1300, 480], [1200, 200]]), // Ende eines Passes zählt nicht als Folgeweg
+    weg("markierung", "linie", [[230, 560], [900, 560]]),
+  ];
+  const zu = wegeJeFigur(els);
+  assert.equal(zu.get("lauf-a"), "a");
+  assert.equal(zu.get("pass-a"), "a");
+  assert.equal(zu.get("dribb-b"), "b");
+  assert.equal(zu.get("schuss-b"), "b");
+  assert.equal(zu.get("ball-pass"), "a", "der Ball (700/900) liegt näher bei a als bei b");
+  assert.equal(zu.get("nach-pass"), "b", "beginnt am Passende, aber an keiner Figur: nächste Figur");
+  assert.equal(zu.has("markierung"), false, "eine Linie gehört keiner Figur");
+
+  const korrigiert = els.map((e) => (e.id === "lauf-a" ? { ...e, figur: "b" } : e));
+  const zuK = wegeJeFigur(korrigiert);
+  assert.equal(zuK.get("lauf-a"), "b", "die Korrektur gewinnt");
+  assert.equal(zuK.get("pass-a"), "b", "der Folgeweg folgt der korrigierten Zuordnung seines Vorgängers");
+});
+
+pruefe("Wege je Figur: Marken erst ab zwei Figuren mit Wegen, in Zeichenreihenfolge (#430 PC 2, AK 4)", () => {
+  const eine = wegMarken([kind("a", 200, 500), kind("b", 1400, 500), weg("w", "laufweg", [[200, 560], [600, 560]])]);
+  assert.equal(eine.marken.size, 0, "nur eine Figur hat Wege: keine Marken");
+  const fuenf = wegMarken(
+    [0, 1, 2, 3, 4].flatMap((i): DiagrammElement[] => [
+      kind(`k${i}`, 150 + i * 300, 300),
+      weg(`w${i}`, "laufweg", [[150 + i * 300, 360], [150 + i * 300, 800]]),
+    ]),
+  );
+  assert.deepEqual([...fuenf.marken.values()], ["A", "B", "C", "D", "E"]);
+  assert.equal(wegMarken([kind("a", 100, 100), weg("w", "pass", [[900, 900], [950, 950]])]).zuordnung.get("w"), "a", "ohne Nähe: nächste Figur");
+  assert.equal(wegeJeFigur([weg("w", "pass", [[900, 900], [950, 950]])]).size, 0, "ohne Figur keine Zuordnung");
+});
+
+pruefe("Wege je Figur: Prüfung, Kopie und KI-Zugang (#430 PC 3, PC 6/7, OoS 4)", () => {
+  const els = [kind("a", 200, 500), kind("b", 1400, 500), weg("w", "laufweg", [[230, 560], [700, 300]], "b")];
+  const ok = pruefeDiagramm({ elemente: els });
+  assert.deepEqual(ok.grenzen, []);
+  assert.deepEqual(ok.maengel, []);
+  assert.equal((ok.daten!.elemente[2] as PfadElement).figur, "b", "die Korrektur bleibt beim Speichern aus der Maske");
+
+  assert.deepEqual(codes(pruefeDiagramm({ elemente: [weg("w", "laufweg", [[1, 1], [2, 2]], "weg")] }).maengel), ["wirkungslos"], "Figur gibt es nicht");
+  assert.deepEqual(codes(pruefeDiagramm({ elemente: [kind("a", 400, 400), weg("w", "linie", [[1, 1], [2, 2]], "a")] }).maengel), ["wirkungslos"], "Linie hat keine Figur");
+  assert.deepEqual(codes(pruefeDiagramm({ elemente: [{ ...weg("w", "pass", [[1, 1], [2, 2]]), figur: 7 }] }).grenzen), ["wert"]);
+
+  const kopie = kopiereDiagramm({ version: 1, elemente: els }).elemente;
+  assert.equal((kopie[2] as PfadElement).figur, kopie[1].id, "die Kopie zeigt auf die kopierte Figur");
+
+  const ohne = ohneZuordnungen({ elemente: els });
+  assert.equal("figur" in ((ohne.roh as { elemente: object[] }).elemente[2]), false, "vom Assistenten verworfen");
+  assert.deepEqual(ohne.maengel.map((b) => [b.code, b.index, b.angabe]), [["wirkungslos", 2, "figur"]]);
+  assert.ok(NUR_IN_KIFU.has("figur"));
+  assert.ok(!baueDiagrammKatalog().arten.find((a) => a.art === "pfad")!.felder.includes("figur"), "der Katalog nennt «figur» nicht");
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden${gescheitert ? `, ${gescheitert} gescheitert` : ""}.`);

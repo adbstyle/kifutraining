@@ -102,7 +102,7 @@ export type Pruefung = { grenzen: Befund[]; daten: DiagrammData | null; maengel:
  *  jedes Feld der Element-Typen stehen (`check:diagramm-regeln`). */
 export const ELEMENT_ERLAUBT = {
   symbol: ["id", "art", "typ", "x", "y", "rotation", "farbe", "pose", "spiegeln"],
-  pfad: ["id", "art", "typ", "punkte", "farbe", "gestrichelt"],
+  pfad: ["id", "art", "typ", "punkte", "farbe", "gestrichelt", "figur"],
   form: ["id", "art", "form", "x", "y", "breite", "hoehe", "punkte", "farbe", "gefuellt"],
   text: ["id", "art", "x", "y", "text"],
 } as const satisfies {
@@ -112,6 +112,10 @@ export const ELEMENT_ERLAUBT = {
   text: readonly (keyof TextElement)[];
 };
 export type ElementArt = keyof typeof ELEMENT_ERLAUBT;
+
+/** Angaben, die nur der Trainer in KiFu setzt — der KI-Assistent nicht, darum
+ *  nennt der Katalog sie nicht (#430: die Zuordnung eines Weges zu einer Figur). */
+export const NUR_IN_KIFU: ReadonlySet<string> = new Set(["figur"]);
 const ARTEN = Object.keys(ELEMENT_ERLAUBT) as ElementArt[];
 
 /** Punktzahlen: ein Pfad braucht mindestens 2, ein Polygon mindestens 3, ein
@@ -278,6 +282,8 @@ function pruefeElement(
       punkte(PUNKTE.pfad, "Ein Pfad");
       farbe();
       jaNein("gestrichelt");
+      if (e.figur !== undefined && (typeof e.figur !== "string" || e.figur.trim() === ""))
+        grenze("wert", "figur", "«figur» ist die id einer Figur als Text.");
       break;
     }
     case "form": {
@@ -463,6 +469,8 @@ function elementMaengel(roh: Roh, art: ElementArt, { stelle, e }: Eintrag): Befu
         mangel("wirkungslos", "farbe", `«farbe» wirkt nur an einer «linie»; «${e.typ}» zeichnet KiFu in fester Farbe. Lass «farbe» weg.`);
       if (e.typ !== "linie" && e.gestrichelt !== undefined)
         mangel("wirkungslos", "gestrichelt", `«gestrichelt» wirkt nur an einer «linie»; «${e.typ}» hat einen festen Linienstil. Lass «gestrichelt» weg.`);
+      if (e.typ === "linie" && e.figur !== undefined)
+        mangel("wirkungslos", "figur", "«figur» wirkt nur an Laufweg, Dribbling und Pass; eine «linie» gehört keiner Figur. Lass «figur» weg.");
       break;
     case "form":
       if ((e.form === "rechteck" || e.form === "ellipse") && roh.punkte !== undefined)
@@ -488,6 +496,50 @@ function elementMaengel(roh: Roh, art: ElementArt, { stelle, e }: Eintrag): Befu
  *  Prüfung anschlug. */
 export const HAND_TOLERANZ = 28;
 export const FIGUR_NAEHE = 120;
+
+/** Eine korrigierte Zuordnung (#430), deren Figur es im Diagramm nicht gibt:
+ *  KiFu ordnet den Weg dann selbst zu. Der Editor räumt solche Verweise beim
+ *  Entfernen der Figur auf. */
+function zuordnungMaengel(eintraege: readonly Eintrag[]): Befund[] {
+  const figuren = new Set(
+    eintraege.flatMap((g) => (g.e.art === "symbol" && FIGUR_TYPEN.has(g.e.typ) ? [g.e.id] : [])),
+  );
+  return eintraege.flatMap(({ stelle, e }) =>
+    e.art === "pfad" && e.typ !== "linie" && e.figur !== undefined && !figuren.has(e.figur)
+      ? [
+          befund(
+            "wirkungslos",
+            stelle,
+            `Laut «figur» gehört der Weg zu «${e.figur}», doch eine solche Figur gibt es nicht; KiFu ordnet ihn selbst zu. Lass «figur» weg.`,
+            "figur",
+          ),
+        ]
+      : [],
+  );
+}
+
+/** Der KI-Assistent ordnet Wege nicht zu (#430): KiFu leitet die Figur jedes
+ *  Weges selbst ab, korrigieren kann nur der Trainer in KiFu. Darum fällt
+ *  «figur» weg, bevor ein Diagramm vom Assistenten geprüft wird, und jede
+ *  verworfene Angabe kommt als Mangel zurück. Alles andere bleibt, wie es kam. */
+export function ohneZuordnungen(roh: unknown): { roh: unknown; maengel: Befund[] } {
+  if (!istObjekt(roh) || !Array.isArray(roh.elemente)) return { roh, maengel: [] };
+  const maengel: Befund[] = [];
+  const elemente = roh.elemente.map((e, index) => {
+    if (!istObjekt(e) || e.art !== "pfad" || !("figur" in e)) return e;
+    const { figur: _verworfen, ...rest } = e;
+    maengel.push(
+      befund(
+        "wirkungslos",
+        stelleVon(index, e.id),
+        "«figur» setzt nur der Trainer in KiFu; KiFu ordnet jeden Weg selbst der Figur zu, an der er beginnt. Lass «figur» weg.",
+        "figur",
+      ),
+    );
+    return rest;
+  });
+  return { roh: { ...roh, elemente }, maengel };
+}
 
 function leibchenMaengel(eintraege: readonly Eintrag[]): Befund[] {
   const figuren = eintraege.filter(
@@ -611,7 +663,12 @@ export function pruefeDiagramm(roh: unknown): Pruefung {
   const lauf = pruefeElemente(roh.elemente);
   const eintraege = lauf.eintraege;
   grenzen.push(...lauf.grenzen);
-  maengel.push(...lauf.maengel, ...leibchenMaengel(eintraege), ...torRichtungMaengel(eintraege));
+  maengel.push(
+    ...lauf.maengel,
+    ...leibchenMaengel(eintraege),
+    ...torRichtungMaengel(eintraege),
+    ...zuordnungMaengel(eintraege),
+  );
   maengel.sort((a, b) => (a.index ?? -1) - (b.index ?? -1));
 
   return {
