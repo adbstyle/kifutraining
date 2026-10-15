@@ -22,7 +22,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { kontrast, rgbAbstand } from "../lib/farben";
+import { kontrast, rgbAbstand, ueberlagern } from "../lib/farben";
 import {
   DIAGRAMM_FARBROLLEN,
   DIAGRAMM_MASSROLLEN,
@@ -113,6 +113,13 @@ pruefe("Eine gefüllte Zone bleibt eine Fläche, kein Nebel", () => {
   }
 });
 
+pruefe("Ein Weg in Spielerfarbe bleibt ein Strich, kein Schleier (#430)", () => {
+  for (const { name, werte } of SAETZE) {
+    const deckung = Number(werte.get("weg-deckung"));
+    assert.ok(deckung >= 0.6 && deckung <= 1, `${name}: weg-deckung ${deckung}`);
+  }
+});
+
 // ── 2. Lesbarkeit auf der Spielfläche ──────────────────────────────────────
 // Schwelle 3:1 nach WCAG 2.1 §1.4.11 (grafische Objekte) — nicht die 4.5:1 der
 // Schrift: auf dem Rasen steht kein Text.
@@ -143,6 +150,22 @@ pruefe("Jede wählbare Farbe trägt auf der Spielfläche (3:1)", () => {
     for (const rolle of PALETTE) {
       const wert = aufFlaeche(werte, rolle);
       assert.ok(wert >= 3, `${name}: ${rolle} auf der Fläche ${z(wert)}:1`);
+    }
+  }
+});
+
+pruefe("Wege in Spielerfarbe tragen auch mit ihrer Deckung auf der Fläche (3:1, #430)", () => {
+  for (const { name, werte } of SAETZE) {
+    const deckung = Number(werte.get("weg-deckung"));
+    for (const rolle of PALETTE) {
+      const farbe = werte.get(rolle)!;
+      const wert = Math.min(
+        ...(["rasen", "rasen-streifen"] as const).map((grund) => {
+          const g = werte.get(grund)!;
+          return kontrast(ueberlagern(farbe, deckung, g), g);
+        }),
+      );
+      assert.ok(wert >= 3, `${name}: Weg in ${rolle} auf der Fläche ${z(wert)}:1`);
     }
   }
 });

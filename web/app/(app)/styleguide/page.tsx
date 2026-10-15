@@ -3338,22 +3338,18 @@ export default async function Styleguide() {
           </div>
           <p className="type-body-medium mb-4 mt-8 max-w-2xl text-on-surface-mittel">
             <strong>Wege je Figur</strong> (#430): Haben mehrere Figuren Wege,
-            tragen jede Figur und ihre Wege dieselbe <strong>Marke</strong> - ein
-            Buchstabe in einem hellen Kreis, oben neben dem Kopf und entlang des
-            Weges, lange Wege mehrfach. Dazu nimmt jeder Weg die Farbe seiner
+            nimmt jeder Laufweg, jedes Dribbling und jeder Pass die Farbe seiner
             Figur an (<code>wegFarben</code>) - die Trikotfarbe, also keine falsche
             Teamzugehörigkeit; Figuren mit fester Farbe (Torhüter) behalten die
-            Bewegungsfarbe. Getragen wird die Zuordnung vom Buchstaben: Er hält
-            im Schwarz-Weiss-Druck und bei Farbsehschwäche und trennt auch zwei
-            Figuren desselben Teams. Die Linienart bleibt, der Typ des Weges also
+            Bewegungsfarbe. Am Bildschirm tritt der farbige Weg mit der Rolle{" "}
+            <code>weg-deckung</code> (0.82) etwas zurück - tiefer fiele Rot unter
+            3:1 auf dem Rasen, das prüft <code>check:diagramm-farben</code>; auf
+            Papier deckt er voll. Die Linienart bleibt, der Typ des Weges also
             erkennbar. Zu welcher Figur ein Weg gehört, leitet{" "}
             <code>lib/wege-zuordnung.ts</code> bei jeder Anzeige ab (Start an der
             Figur, sonst am Ende ihres Laufwegs oder Dribblings, sonst die nächste
-            Figur); gespeichert wird nur eine Korrektur des Trainers. Die Marke
-            nutzt die Rollen der Textbox (<code>textbox-grund</code>,{" "}
-            <code>-rand</code>, <code>-schrift</code>) und hat darum in jedem
-            Farbsatz ihren Wert. Hat nur eine Figur Wege, bleibt das Diagramm
-            ohne Marken:
+            Figur); gespeichert wird nur eine Korrektur des Trainers. Hat nur eine
+            Figur Wege, bleibt das Diagramm, wie es war:
           </p>
           <div className="relative aspect-[16/10] max-w-xl overflow-hidden rounded-flaeche border border-linie">
             <DiagrammView
@@ -3362,7 +3358,7 @@ export default async function Styleguide() {
                 version: 1,
                 elemente: [
                   { id: "wf-a", art: "symbol", typ: "spieler", x: 620, y: 300, pose: "laufen", farbe: "rot" },
-                  { id: "wf-b", art: "symbol", typ: "spieler", x: 980, y: 300, pose: "laufen", farbe: "rot", spiegeln: true },
+                  { id: "wf-b", art: "symbol", typ: "spieler", x: 980, y: 300, pose: "laufen", farbe: "gelb", spiegeln: true },
                   { id: "wf-ball", art: "symbol", typ: "fussball", x: 1150, y: 860 },
                   {
                     id: "wf-lauf-a",

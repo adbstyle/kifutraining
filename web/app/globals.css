@@ -265,6 +265,7 @@
   /* ─── Masse, die sich mit dem Satz ändern ─── */
   --diagramm-ball-strich: 1.5;
   --diagramm-form-deckung: 0.28;
+  --diagramm-weg-deckung: 0.82; /* tiefer fällt Rot unter 3:1 auf dem Rasen */
 }
 
 /* ─── Zustands-Ebene ──────────────────────────────────────────────────
@@ -849,6 +850,9 @@
        auf 14 %. Viel tiefer geht nicht: unter einem Zehntel bleibt vom
        Feld nur noch der Rahmen. */
     --diagramm-form-deckung: 0.12;
+    /* Wege in Spielerfarbe deckend: Die Druckfarben sind schon dunkel, und
+       eine Lasur fiele auf einem Graustufen-Drucker ins Grau. */
+    --diagramm-weg-deckung: 1;
 
     /* Heller als das Gerät, damit die Figuren nicht mit ihm konkurrieren. */
     --diagramm-figur-stutzen: #aeb5b0;

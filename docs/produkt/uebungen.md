@@ -320,20 +320,17 @@ bisher das ganze Blatt — und bleibt auf einem einfachen Bürodrucker lesbar. W
 wählt nicht einen Farbton, sondern «rot» oder «blau»; wie kräftig der ausfällt, entscheidet die
 Anwendung je nach Bildschirm oder Papier.
 
-Haben in einem Diagramm mehrere Figuren eigene Wege — Spieler, Torhüter oder Trainer —, hebt die
-Anwendung sie von selbst voneinander ab: Jede dieser Figuren trägt oben neben dem Kopf einen
-Buchstaben, A, B, C und so fort in der Reihenfolge, in der sie gezeichnet wurden, und derselbe
-Buchstabe steht auf jedem ihrer Laufwege, Dribblings und Pässe, auf langen Wegen mehrmals. So
-bleibt erkennbar, wer welchen Weg läuft, auch wenn sich zwei Rundläufe kreuzen oder übereinander
-liegen, und auch auf einem Ausdruck in Schwarz-Weiss. Zusätzlich nimmt jeder dieser Wege die Farbe
-seiner Figur an: Wer Spieler in verschiedenen Farben zeichnet, hat damit ein zweites Merkmal neben
-dem Buchstaben; der Torhüter, dessen Farbe fest ist, behält die gewohnte Pfeilfarbe. Zwei Figuren
-in derselben Farbe trennt der Buchstabe. Die Linienart bleibt, wie sie war; ob ein Weg ein Lauf,
-ein Dribbling oder ein Pass ist, sieht man also weiterhin an der Linie. Zu welcher
-Figur ein Weg gehört, leitet die Anwendung aus der Zeichnung ab: Er gehört der Figur, an der er
-beginnt; beginnt er am Ende eines Laufwegs oder Dribblings, gehört er derselben Figur wie dieser,
-etwa der Pass nach einem Dribbling; sonst der nächstgelegenen Figur. Hat nur eine einzige Figur
-Wege, bleibt das Diagramm ohne Buchstaben. Das gilt für jedes Diagramm, auch für bestehende und
+Haben in einem Diagramm mehrere Figuren eigene Wege — Spieler, Torhüter oder Trainer —, zeichnet
+die Anwendung jeden ihrer Laufwege, Dribblings und Pässe in der Farbe der Figur, am Bildschirm
+leicht zurückgenommen, damit die Wege nicht lauter sind als die Figuren. Wer Spieler in
+verschiedenen Farben zeichnet, sieht so auch bei zwei Rundläufen, die sich kreuzen oder
+übereinander liegen, wer welchen Weg läuft. Der Torhüter, dessen Farbe fest ist, behält die
+gewohnte Pfeilfarbe. Die Linienart bleibt, wie sie war; ob ein Weg ein Lauf, ein Dribbling oder
+ein Pass ist, sieht man also weiterhin an der Linie. Zu welcher Figur ein Weg gehört, leitet die
+Anwendung aus der Zeichnung ab: Er gehört der Figur, an der er beginnt; beginnt er am Ende eines
+Laufwegs oder Dribblings, gehört er derselben Figur wie dieser, etwa der Pass nach einem
+Dribbling; sonst der nächstgelegenen Figur. Hat nur eine einzige Figur Wege, bleibt das Diagramm,
+wie es war. Das gilt für jedes Diagramm, auch für bestehende und
 für die Manual-Diagramme. Liegt die Anwendung einmal daneben, ordnet der Trainer beim Zeichnen
 einen Weg einer anderen Figur zu, indem er den Weg auswählt und dann die Figur anklickt; ebenso
 setzt er ihn auf die eigene Ableitung der Anwendung zurück. Diese Korrektur wird mit der Übung
@@ -424,12 +421,13 @@ Bearbeiten nicht; bricht der Browser ab, ist die ungespeicherte Zeichnung verlor
 Zeichenfläche ist für Maus und Tastatur gebaut, nicht für die Bedienung per Touch.
 
 Wege sind gerade Strecken von Punkt zu Punkt; einen Bogen oder Kreis zeichnet man aus mehreren
-Punkten. Die Buchstaben an Figuren und Wegen sagen, wer läuft, nicht in welcher Reihenfolge —
-eine Abfolge zeigt das Diagramm nicht, sie gehört in den Ablauf. Ein Weg ist nicht an seine
-Figur gebunden: Verschiebt man die Figur, bleibt der Weg liegen, und die Anwendung ordnet ihn
-neu zu, sofern der Trainer ihn nicht von Hand zugeordnet hat. Wer viele Figuren mit Wegen
-zeichnet, bekommt entsprechend viele Buchstaben; mehr als eine Handvoll machen ein Diagramm
-eher unruhig als klarer.
+Punkten. Die Farbe eines Weges sagt, wer läuft, nicht in welcher Reihenfolge — eine Abfolge
+zeigt das Diagramm nicht, sie gehört in den Ablauf. Unterschieden werden die Wege allein über die
+Farbe der Figuren: Zwei Spieler in derselben Farbe laufen auch in derselben Farbe, und auf einem
+Ausdruck in Schwarz-Weiss oder für Leser mit Farbsehschwäche lässt sich kaum erkennen, welcher
+Weg zu wem gehört. Ein Weg ist nicht an seine Figur gebunden: Verschiebt man die Figur, bleibt der
+Weg liegen, und die Anwendung ordnet ihn neu zu, sofern der Trainer ihn nicht von Hand zugeordnet
+hat.
 
 Die Einordnung lässt sich auf der Übungsseite nur lesen, nicht direkt ändern; geändert wird sie
 in der Maske, zusammen mit dem Inhalt. Fehlende Einordnung sieht nur die Eigentümerin; wer eine

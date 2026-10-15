@@ -47,10 +47,9 @@ import {
   punkteAttr,
   sortiertNachEbene,
   textBox,
-  WegMarken,
   wegFarben,
 } from "./DiagrammView";
-import { istBewegung, istFigur, wegMarken } from "@/lib/wege-zuordnung";
+import { istBewegung, istFigur } from "@/lib/wege-zuordnung";
 
 const PFAD_WERKZEUGE: Record<PfadTyp, string> = {
   laufweg: "Laufweg",
@@ -894,8 +893,7 @@ export function DiagrammZeichnen({
   const zuordnungsStand = useRef(elemente);
   if (!dragAktiv) zuordnungsStand.current = elemente;
   const stand = zuordnungsStand.current;
-  const zuordnung = useMemo(() => wegMarken(stand), [stand]);
-  const farben = useMemo(() => wegFarben(stand, zuordnung), [stand, zuordnung]);
+  const farben = useMemo(() => wegFarben(stand), [stand]);
 
   // Genau ein Element ausgewählt → volle ElementLeiste; mehrere → Mehrfach-Leiste.
   const einzelId = selectedIds.length === 1 ? selectedIds[0] : null;
@@ -1215,9 +1213,6 @@ export function DiagrammZeichnen({
               )}
             </g>
           ))}
-
-          {/* Marken der Wege je Figur (#430), wie in der Anzeige */}
-          <WegMarken elemente={elemente} zuordnung={zuordnung} />
 
           {/* Vorschau der entstehenden Bewegung bzw. der Polygon-Form */}
           {zeichnen && zeichnen.punkte.length > 0 && (

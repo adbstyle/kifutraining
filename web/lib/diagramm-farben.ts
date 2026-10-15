@@ -146,6 +146,10 @@ export const DIAGRAMM_MASSROLLEN = [
    *  die Füllung sagt nur, wohin die Zone reicht, und darf auf Papier
    *  deshalb deutlich leiser sein. */
   "form-deckung",
+  /** Deckung eines Weges in der Farbe seiner Figur (#430): am Bildschirm
+   *  etwas zurückgenommen, damit die farbigen Wege nicht lauter sind als die
+   *  Figuren; auf Papier voll, dort ist die Farbe ohnehin dunkler. */
+  "weg-deckung",
 ] as const;
 
 export type DiagrammFarbrolle = (typeof DIAGRAMM_FARBROLLEN)[number];

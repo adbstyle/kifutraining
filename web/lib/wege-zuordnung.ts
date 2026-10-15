@@ -1,6 +1,6 @@
 /**
  * Wege je Figur (#430): Zu welcher Figur gehört ein Laufweg, ein Dribbling
- * oder ein Pass/Schuss, und welche Marke trägt sie?
+ * oder ein Pass/Schuss? KiFu zeichnet ihn dann in ihrer Farbe.
  *
  * Die Zuordnung wird nie gespeichert, sondern bei jeder Anzeige aus der
  * Zeichnung abgeleitet — so gilt sie sofort für jedes bestehende Diagramm,
@@ -109,25 +109,10 @@ export function wirksameKorrekturen(elemente: readonly DiagrammElement[]): numbe
   return elemente.filter((e) => istBewegung(e) && e.figur !== undefined && figuren.has(e.figur)).length;
 }
 
-/** Marke der n-ten Figur: A … Z, danach Zahlen. */
-const marke = (i: number) => (i < 26 ? String.fromCharCode(65 + i) : String(i + 1));
-
-export type WegMarken = {
-  /** Kennung des Weges → Kennung seiner Figur. */
-  zuordnung: Map<string, string>;
-  /** Kennung der Figur → ihre Marke; leer, solange höchstens eine Figur Wege
-   *  hat (PC 2: dann bleibt das Diagramm, wie es ist). */
-  marken: Map<string, string>;
-};
-
-/** Zuordnung und Marken eines Diagramms. Die Marken folgen der Reihenfolge,
- *  in der die Figuren gezeichnet wurden — stabil, solange niemand Figuren
- *  entfernt. */
-export function wegMarken(elemente: readonly DiagrammElement[]): WegMarken {
+/** Die Wege, die KiFu von den Wegen anderer Figuren abhebt: Kennung des Weges
+ *  → Kennung seiner Figur. Leer, solange höchstens eine Figur Wege hat
+ *  (PC 2: dann bleibt das Diagramm, wie es ist). */
+export function unterschiedeneWege(elemente: readonly DiagrammElement[]): Map<string, string> {
   const zuordnung = wegeJeFigur(elemente);
-  const mitWegen = new Set(zuordnung.values());
-  const figuren = elemente.filter((e) => istFigur(e) && mitWegen.has(e.id));
-  const marken = new Map<string, string>();
-  if (figuren.length >= 2) figuren.forEach((f, i) => marken.set(f.id, marke(i)));
-  return { zuordnung, marken };
+  return new Set(zuordnung.values()).size >= 2 ? zuordnung : new Map();
 }

@@ -70,7 +70,7 @@ import { MANGEL_ERKLAERT, MangelAusgabe, alsMangel } from "../lib/mcp/diagramm-e
 import { SYMBOLE } from "../components/diagramm/symbols";
 import { haende } from "../components/diagramm/figur";
 import { sortiertNachEbene } from "../components/diagramm/DiagrammView";
-import { wegMarken, wegeJeFigur, wirksameKorrekturen } from "../lib/wege-zuordnung";
+import { unterschiedeneWege, wegeJeFigur, wirksameKorrekturen } from "../lib/wege-zuordnung";
 
 let gelaufen = 0;
 let gescheitert = 0;
@@ -698,17 +698,17 @@ pruefe("Wege je Figur: Anfang an der Figur, Folgeweg, nächste Figur, Korrektur 
   assert.equal(zuK.get("pass-a"), "b", "der Folgeweg folgt der korrigierten Zuordnung seines Vorgängers");
 });
 
-pruefe("Wege je Figur: Marken erst ab zwei Figuren mit Wegen, in Zeichenreihenfolge (#430 PC 2, AK 4)", () => {
-  const eine = wegMarken([kind("a", 200, 500), kind("b", 1400, 500), weg("w", "laufweg", [[200, 560], [600, 560]])]);
-  assert.equal(eine.marken.size, 0, "nur eine Figur hat Wege: keine Marken");
-  const fuenf = wegMarken(
-    [0, 1, 2, 3, 4].flatMap((i): DiagrammElement[] => [
-      kind(`k${i}`, 150 + i * 300, 300),
-      weg(`w${i}`, "laufweg", [[150 + i * 300, 360], [150 + i * 300, 800]]),
-    ]),
-  );
-  assert.deepEqual([...fuenf.marken.values()], ["A", "B", "C", "D", "E"]);
-  assert.equal(wegMarken([kind("a", 100, 100), weg("w", "pass", [[900, 900], [950, 950]])]).zuordnung.get("w"), "a", "ohne Nähe: nächste Figur");
+pruefe("Wege je Figur: Unterschieden wird erst ab zwei Figuren mit Wegen (#430 PC 2)", () => {
+  const eine = unterschiedeneWege([kind("a", 200, 500), kind("b", 1400, 500), weg("w", "laufweg", [[200, 560], [600, 560]])]);
+  assert.equal(eine.size, 0, "nur eine Figur hat Wege: keine Unterscheidung");
+  const zwei = unterschiedeneWege([
+    kind("a", 200, 500),
+    kind("b", 1400, 500),
+    weg("wa", "laufweg", [[200, 560], [600, 560]]),
+    weg("wb", "pass", [[1400, 560], [900, 560]]),
+  ]);
+  assert.deepEqual([...zwei], [["wa", "a"], ["wb", "b"]]);
+  assert.equal(wegeJeFigur([kind("a", 100, 100), weg("w", "pass", [[900, 900], [950, 950]])]).get("w"), "a", "ohne Nähe: nächste Figur");
   assert.equal(wegeJeFigur([weg("w", "pass", [[900, 900], [950, 950]])]).size, 0, "ohne Figur keine Zuordnung");
 });
 
