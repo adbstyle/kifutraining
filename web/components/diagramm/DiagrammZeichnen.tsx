@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, forwardRef, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Check, ClipboardPaste, Copy, Ellipsis, FlipHorizontal2, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, Waypoints, X } from "lucide-react";
 import { Button, IconButton, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -44,7 +44,9 @@ import {
   FormGrafik,
   punkteAttr,
   sortiertNachEbene,
+  svgId,
   textBox,
+  wegAussparung,
 } from "./DiagrammView";
 
 const PFAD_WERKZEUGE: Record<PfadTyp, string> = {
@@ -318,6 +320,7 @@ export function DiagrammZeichnen({
   const [hinweis, setHinweis] = useState<string | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
+  const aussparungPraefix = svgId(useId());
   const dragRef = useRef<Drag | null>(null);
   // Auswahlrahmen-Geste (#67 AK1): Ref treibt die Logik, State das sichtbare Rechteck.
   const rahmenRef = useRef<Rahmen | null>(null);
@@ -1005,6 +1008,11 @@ export function DiagrammZeichnen({
     </div>
   );
 
+  // Gleiche Ebenen und Aussparungen wie in der Anzeige (#430): gezeichnet
+  // wird, was gespeichert wird.
+  const geordnet = sortiertNachEbene(elemente);
+  const aussparung = wegAussparung(geordnet, aussparungPraefix);
+
   // Alle Knöpfe tragen `type="button"`: In der Maske liegt die
   // Fläche in einem <form>, und dort sendet ein Knopf ohne Typ die Übung ab.
   return (
@@ -1134,8 +1142,9 @@ export function DiagrammZeichnen({
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         >
+          {aussparung.defs}
           <Rasen />
-          {sortiertNachEbene(elemente).map((el) => (
+          {geordnet.map((el) => (
             <g
               key={el.id}
               data-element-id={el.id}
@@ -1153,7 +1162,7 @@ export function DiagrammZeichnen({
                   strokeWidth={28}
                 />
               )}
-              <ElementGrafik element={el} />
+              <ElementGrafik element={el} aussparung={aussparung.maske(el.id)} />
               {selektiertSet.has(el.id) && <SelektionsRahmen element={el} />}
               {/* Eck-Anfasser zum Grössen-Anpassen (Rechteck/Ellipse) — nur bei
                   Einzelauswahl, im Form-Bearbeitungsmodus ausgeblendet. */}
