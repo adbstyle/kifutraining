@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, forwardRef, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, forwardRef, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Check, ClipboardPaste, Copy, Ellipsis, FlipHorizontal2, Minus, PaintBucket, Redo2, RotateCcw, RotateCw, Trash2, Undo2, Waypoints, X } from "lucide-react";
 import { Button, IconButton, Tooltip } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -1012,8 +1012,12 @@ export function DiagrammZeichnen({
 
   // Gleiche Ebenen und Aussparungen wie in der Anzeige (#430): gezeichnet
   // wird, was gespeichert wird.
-  const geordnet = sortiertNachEbene(elemente);
-  const aussparung = wegAussparung(geordnet, aussparungPraefix);
+  // Gemerkt, damit Hover, Auswahl und Leiste die Masken nicht neu rechnen.
+  const geordnet = useMemo(() => sortiertNachEbene(elemente), [elemente]);
+  const aussparung = useMemo(
+    () => wegAussparung(geordnet, aussparungPraefix),
+    [geordnet, aussparungPraefix],
+  );
 
   // Alle Knöpfe tragen `type="button"`: In der Maske liegt die
   // Fläche in einem <form>, und dort sendet ein Knopf ohne Typ die Übung ab.
@@ -1492,12 +1496,16 @@ const ElementLeiste = forwardRef<
   const fuellbar = element.art === "form";
   const hatEigenschaften =
     drehbar || figur || faerbbar || stilbar || fuellbar || bearbeitbar;
+  // Ein ungefärbter Bewegungspfeil trägt keinen Slug — sonst leuchtete
+  // «weiss» neben dem Knopf der Zeichenerklärung mit.
   const standardFarbe =
     element.art === "symbol"
       ? symbolDef(element.typ).defaultFarbe
       : element.art === "form"
         ? FORM_DEFAULT_FARBE
-        : LINIE_DEFAULT_FARBE;
+        : bewegung
+          ? undefined
+          : LINIE_DEFAULT_FARBE;
 
   return (
     <div

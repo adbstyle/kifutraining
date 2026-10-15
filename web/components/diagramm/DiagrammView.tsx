@@ -175,7 +175,9 @@ type BewegungsTyp = keyof typeof BEWEGUNG_STRICH;
 type BewegungsElement = PfadElement & { typ: BewegungsTyp };
 
 function istBewegung(element: DiagrammElement): element is BewegungsElement {
-  return element.art === "pfad" && element.typ in BEWEGUNG_STRICH;
+  // hasOwn statt `in`: `typ` ist beliebiger gespeicherter Text, und `in`
+  // fände auch geerbte Schlüssel wie «constructor».
+  return element.art === "pfad" && Object.hasOwn(BEWEGUNG_STRICH, element.typ);
 }
 
 /** Die Linie eines Bewegungspfeils, wie sie gezeichnet wird: gewellt fürs
@@ -245,35 +247,65 @@ const MASKE = { zeigen: "white", aussparen: "black" } as const;
  *  dabei immer durchgehend, auch wo er selbst gestrichelt ist — wie eine
  *  Strasse auf der Karte.
  *
- *  Liefert die `<defs>` mit einer Maske je Weg, über dem noch ein anderer
- *  liegt, und die Masken-id je Element. `praefix` hält die ids eindeutig,
+ *  Liefert die `<defs>` mit einer Maske je Weg, dem ein darüberliegender nahe
+ *  kommt, und die Masken-id je Element. `praefix` hält die ids eindeutig,
  *  wenn mehrere Diagramme auf derselben Seite stehen (`useId`). */
 export function wegAussparung(
   elemente: DiagrammElement[],
   praefix: string,
 ): { defs: ReactNode; maske: (id: string) => string | undefined } {
-  const wege = elemente.filter(istBewegung);
-  const ids = new Map<string, string>();
-  const masken = wege.slice(0, -1).map((unten, i) => {
-    const id = `${praefix}-weg-${i}`;
-    ids.set(unten.id, id);
-    // Die Maske reicht über die Fläche hinaus: Pfeilspitzen und Wellen dürfen
-    // am Rand überstehen und sollen dort nicht abgeschnitten werden.
-    const b = FLAECHE.breite;
-    const h = FLAECHE.hoehe;
-    return (
-      <mask key={id} id={id} maskUnits="userSpaceOnUse" x={-b} y={-h} width={3 * b} height={3 * h}>
-        <rect x={-b} y={-h} width={3 * b} height={3 * h} fill={MASKE.zeigen} />
-        {wege.slice(i + 1).map((oben) => (
-          <WegSchneise key={oben.id} element={oben} />
-        ))}
-      </mask>
-    );
+  // Linie, Schneise und Begrenzung je Weg einmal rechnen — nicht je Paar.
+  const wege: Weg[] = elemente.filter(istBewegung).map((element) => {
+    const linie = bewegungsLinie(element);
+    return {
+      element,
+      // Den Ansatz spart die Schneise aus: Beginnen zwei Wege an derselben
+      // Figur oder setzt ein Weg an der Spitze des vorigen an, schnitte der
+      // obere sonst dem unteren gerade dort ein Stück heraus, wo beide sich
+      // berühren sollen.
+      schneise: endeKuerzen([...linie].reverse(), SCHNEISE_ANSATZ).reverse(),
+      box: bbox([...linie, ...element.punkte]),
+    };
   });
+  // Nur Wege, die einander nahe kommen, bekommen eine Maske — wer nichts
+  // kreuzt, wird gezeichnet wie bisher.
+  const masken = wege.flatMap((unten, i) => {
+    const oben = wege.slice(i + 1).filter((o) => nahe(unten.box, o.box));
+    return oben.length > 0 ? [{ unten: unten.element.id, id: `${praefix}-weg-${i}`, oben }] : [];
+  });
+  const ids = new Map(masken.map((m) => [m.unten, m.id]));
+  // Die Maske reicht über die Fläche hinaus: Pfeilspitzen und Wellen dürfen
+  // am Rand überstehen und sollen dort nicht abgeschnitten werden.
+  const b = FLAECHE.breite;
+  const h = FLAECHE.hoehe;
   return {
-    defs: masken.length > 0 ? <defs>{masken}</defs> : null,
+    defs:
+      masken.length > 0 ? (
+        <defs>
+          {masken.map((m) => (
+            <mask key={m.id} id={m.id} maskUnits="userSpaceOnUse" x={-b} y={-h} width={3 * b} height={3 * h}>
+              <rect x={-b} y={-h} width={3 * b} height={3 * h} fill={MASKE.zeigen} />
+              {m.oben.map((o) => (
+                <WegSchneise key={o.element.id} weg={o} />
+              ))}
+            </mask>
+          ))}
+        </defs>
+      ) : null,
     maske: (id) => ids.get(id),
   };
+}
+
+type Weg = { element: BewegungsElement; schneise: Punkt[]; box: ReturnType<typeof bbox> };
+
+/** Wie weit ein Weg über seine Stützpunkte hinaus zeichnen kann: Pfeilspitze,
+ *  halber Strich und Rand. Gerechnet je Weg, beide zusammen also das Doppelte —
+ *  `weg-rand` liegt in jedem Satz weit darunter. */
+const WEG_REICHWEITE = PFEIL_LAENGE;
+
+function nahe(a: Weg["box"], b: Weg["box"]): boolean {
+  const r = 2 * WEG_REICHWEITE;
+  return a.minX - r <= b.maxX && b.minX - r <= a.maxX && a.minY - r <= b.maxY && b.minY - r <= a.maxY;
 }
 
 /** Strecke ab Wegbeginn, die keine Schneise schneidet — so weit, dass zwei
@@ -285,16 +317,12 @@ const SCHNEISE_ANSATZ = 60;
  *  seine Linie und seine Pfeilspitze, je um den Rand verbreitert. Die Breite
  *  geht über `style`, weil sie aus der Massrolle gerechnet wird (`calc()` gilt
  *  im Präsentationsattribut nicht). */
-function WegSchneise({ element }: { element: BewegungsElement }) {
+function WegSchneise({ weg: { element, schneise } }: { weg: Weg }) {
   const rand = dv("weg-rand");
-  // Den Ansatz spart die Schneise aus: Beginnen zwei Wege an derselben Figur
-  // oder setzt ein Weg an der Spitze des vorigen an, schnitte der obere sonst
-  // dem unteren gerade dort ein Stück heraus, wo beide sich berühren sollen.
-  const linie = endeKuerzen([...bewegungsLinie(element)].reverse(), SCHNEISE_ANSATZ).reverse();
   return (
     <>
       <polyline
-        points={punkteAttr(linie)}
+        points={punkteAttr(schneise)}
         fill="none"
         stroke={MASKE.aussparen}
         strokeLinecap="round"

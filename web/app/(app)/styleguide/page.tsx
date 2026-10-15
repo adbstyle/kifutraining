@@ -3241,6 +3241,17 @@ export default async function Styleguide() {
             direkt am Element bearbeitet.
           </p>
           <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
+            Auch <strong>Bewegungspfeile</strong> lassen sich einfärben (#430),
+            haben aber keine Standardfarbe aus der Palette: Ohne Farbe zeichnen
+            sie in der Farbe der Zeichenerklärung. Davor steht darum ein eigener
+            Knopf, der auf diese Farbe zurücksetzt. Er zeigt keinen Farbpunkt,
+            sondern den Pfeil selbst als Mini-Vorschau - nach dem Muster der
+            Posen-Knöpfe, denn ein Punkt in der Farbe der Zeichenerklärung wäre am
+            Bildschirm neben «weiss» nicht zu unterscheiden. Kreuzen sich Pfeile,
+            spart der obere den unteren mit einem durchsichtigen Rand aus (Rolle{" "}
+            <code>weg-rand</code>).
+          </p>
+          <p className="type-body-medium mb-5 max-w-2xl text-on-surface-mittel">
             Mehrere Elemente werden per <strong>Auswahlrahmen</strong> (Aufziehen
             auf der freien Fläche, erfasst vollständig umschlossene Elemente) oder
             additivem <strong>Umschalt-/Cmd-Klick</strong> ausgewählt (#67). Bei
