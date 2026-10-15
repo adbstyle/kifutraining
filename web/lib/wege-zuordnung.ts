@@ -42,7 +42,7 @@ export const istFigur = (e: DiagrammElement): e is SymbolElement =>
  *  dem Symbol an. */
 export const AN_FIGUR = 90;
 /** Bis hierhin vom Ende eines Laufwegs oder Dribblings beginnt ein Folgeweg. */
-export const AN_WEGENDE = 45;
+export const AN_WEGENDE = 60;
 
 const abstand = (a: Punkt, b: Punkt) => Math.hypot(a.x - b.x, a.y - b.y);
 const anfang = (w: PfadElement) => w.punkte[0];
