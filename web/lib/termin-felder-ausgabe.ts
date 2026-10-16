@@ -18,6 +18,7 @@
 import { z } from "zod";
 import { SPIELFELD_MAX, SPIELFELD_MIN } from "@/lib/feldmass";
 import { Wert, wert } from "@/lib/wert";
+import type { Spielerzahl } from "@/lib/spieler";
 import { UNTERGRUENDE, UNTERGRUND_LABEL, type Felder } from "@/lib/termin-felder";
 import { SPIELERZAHL_MAX, SPIELERZAHL_MIN, TERMIN_TEXT } from "@/lib/termin";
 
@@ -103,3 +104,30 @@ export function spielerzahlSchema() {
 /** Die Eingabe der Werkzeuge — bewusst eine beliebige Zahl: Ganzzahl und
  *  Bereich prüft der Fachkern mit dem Satz der Oberfläche (AK 7). */
 export const SpielerzahlEingabe = z.number().describe(SPIELERZAHL_MODELL);
+
+// ── Spielerzahl mit Quelle (#434 AK 12, #435) ──────────────────────────────
+
+/** Was jede Auskunft, die einen Termin nennt, über die Spielerzahl sagt. */
+export const SPIELERZAHL_QUELLE_MODELL =
+  "«spielerzahl» ist die Zahl, mit der für den Termin geplant wird, samt Quelle: «spielerliste» heisst, das Team " +
+  "führt eine Spielerliste - «zahl» sind die angemeldeten, «gesamt» alle auf der Liste (abgemeldete eingeschlossen); " +
+  "die Zahl ist eine Obergrenze, wer tatsächlich kommt, hält KiFu nicht fest. An einem begonnenen Termin gilt der Stand " +
+  "bei Beginn. «erwartet» heisst, die Zahl ist von Hand geschätzt («erwartete_spielerzahl»), «unbekannt», es gibt keine " +
+  "(auch bei einem ausgefallenen Termin).";
+
+export function spielerzahlQuelleSchema() {
+  return z
+    .object({
+      quelle: z.enum(["spielerliste", "erwartet", "unbekannt"]),
+      zahl: z.number().int().nullable(),
+      gesamt: z.number().int().nullable(),
+    })
+    .describe(SPIELERZAHL_QUELLE_MODELL);
+}
+
+/** Die Spielerzahl eines Termins in der Form der Auskunft. */
+export function spielerzahlQuelleAusgabe(s: Spielerzahl): z.infer<ReturnType<typeof spielerzahlQuelleSchema>> {
+  if (s.quelle === "liste") return { quelle: "spielerliste", zahl: s.angemeldet, gesamt: s.gesamt };
+  if (s.quelle === "erwartet") return { quelle: "erwartet", zahl: s.zahl, gesamt: null };
+  return { quelle: "unbekannt", zahl: null, gesamt: null };
+}

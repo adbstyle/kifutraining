@@ -36,6 +36,7 @@ import {
 } from "./VerantwortlicheWahl";
 import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
+import { terminBegonnen } from "@/lib/zeit";
 import { usePlatzAngaben } from "./usePlatzAngaben";
 
 const ANGABE: Record<FolgeAngabe, string> = {
@@ -95,6 +96,7 @@ export function TerminDialog({
   verantwortliche,
   ausfall,
   heute,
+  fuehrtListe,
   onFolgen,
   onClose,
   onSpeichern,
@@ -116,6 +118,9 @@ export function TerminDialog({
   ausfall?: { grund: string | null } | null;
   /** Der heutige Kalendertag — ab ihm endet ein Ausfall beim Verlegen (AK 14). */
   heute: string;
+  /** Das Team führt eine Spielerliste (#434): An einem anstehenden Termin
+   *  kommt die Spielerzahl aus ihr, das Feld entfällt. */
+  fuehrtListe?: boolean;
   onFolgen?: (angabe: FolgeAngabe) => void;
   onClose: () => void;
   /** `regel` nur bei einem Serientermin: Wochentage und Zeitraum, wie sie im
@@ -132,6 +137,9 @@ export function TerminDialog({
   const [grund, setGrund] = useState("");
   const [grundFehler, setGrundFehler] = useState<string>();
   const platz = usePlatzAngaben();
+  // Ein begonnener Termin behält seine erwartete Zahl: Sie gilt dort, wenn die
+  // Liste bei Beginn leer war (Migration spielerliste).
+  const ausListe = !!fuehrtListe && !!start?.datum && !!start.beginn && !terminBegonnen(start.datum, start.beginn);
 
   // Beim Öffnen auf die Vorbelegung zurücksetzen — der Dialog überlebt sonst
   // mit den Werten des zuletzt bearbeiteten Termins.
@@ -246,7 +254,7 @@ export function TerminDialog({
         <TextField label="Ort (optional)" maxLength={ORT_MAX} value={felder.ort ?? ""} onChange={(e) => setze("ort")(e.target.value)} error={!!fehlerAn("ort")} supportingText={fehlerAn("ort")} />
         <TextArea label="Bemerkung (optional)" rows={3} maxLength={BEMERKUNG_MAX} value={felder.bemerkung ?? ""} onChange={(e) => setze("bemerkung")(e.target.value)} error={!!fehlerAn("bemerkung")} supportingText={fehlerAn("bemerkung")} />
         <VerantwortlicheWahl mitglieder={mitglieder} bisher={verantwortliche} wert={verantwortlich} onChange={setVerantwortlich} disabled={pending} />
-        <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} />
+        <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} ausListe={ausListe} />
         <FelderField {...platz.felderProps} disabled={pending} />
       </div>
       {serie && (

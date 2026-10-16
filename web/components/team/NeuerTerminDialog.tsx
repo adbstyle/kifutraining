@@ -53,6 +53,7 @@ export function NeuerTerminDialog({
   pending,
   fehler: serverFehler,
   mitglieder,
+  fuehrtListe,
   onClose,
   onSpeichern,
 }: {
@@ -60,6 +61,8 @@ export function NeuerTerminDialog({
   pending?: boolean;
   fehler?: string;
   mitglieder: readonly TeamMitglied[];
+  /** Das Team führt eine Spielerliste (#434): kein Feld für die Spielerzahl. */
+  fuehrtListe?: boolean;
   onClose: () => void;
   onSpeichern: (t: NeuerTermin) => void;
 }) {
@@ -190,7 +193,7 @@ export function NeuerTerminDialog({
           onChange={(w) => setze("verantwortliche", w.userIds)}
           disabled={pending}
         />
-        <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} />
+        <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} ausListe={fuehrtListe} />
         <FelderField {...platz.felderProps} disabled={pending} />
       </div>
     </Dialog>

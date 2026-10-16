@@ -130,6 +130,18 @@ import { aboDatei, aboLinks, aboPfad, falten, kalenderText, textEscape, type Abo
 import { istVeraltet } from "../lib/veraltet";
 import type { TrainingDetail, TrainingExerciseItem } from "../lib/queries/trainings-fuer";
 import { nochNichtVorbereitet } from "../lib/queries/termine-fuer";
+import {
+  SPIELER_MELDUNG,
+  SPIELER_TEXT,
+  bereinigeName,
+  jahrgangAus,
+  nachSpielerName,
+  spielerProblem,
+  spielerzahlKurz,
+  spielerzahlLang,
+  spielerzahlVon,
+} from "../lib/spieler";
+import { terminBegonnen } from "../lib/zeit";
 
 let gelaufen = 0;
 
@@ -533,7 +545,7 @@ pruefe("Auskunft Juniorenfussball: Zeitrichtwerte je Teil, Block und gesamt mit 
 });
 
 pruefe("nochNichtVorbereitet: anstehend und ohne Training", () => {
-  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: false, ausfallGrund: null };
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:30", ende: "20:00", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null, training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: false, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-07"), true, "heute zählt ganz zum Anstehenden");
   assert.equal(nochNichtVorbereitet(t, "2026-10-08"), false, "vergangen");
   assert.equal(nochNichtVorbereitet({ ...t, training: { id: "a", name: "A", stufen: [], terminTraining: true } }, "2026-10-01"), false);
@@ -547,7 +559,7 @@ pruefe("Ausfall: Grund mit den Regeln der Bemerkung; nicht vorbereitet schliesst
   assert.equal(TERMIN_TEXT.grundLang, "Der Grund darf höchstens 500 Zeichen lang sein.");
   assert.equal(TERMIN_MELDUNG.NICHT_AUSGEFALLEN, "Dieser Termin ist nicht ausgefallen.");
   assert.ok(!KONFLIKT_MARKER.includes("TERMIN_AUSGEFALLEN"), "eine Regel, kein Konflikt");
-  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null,
+  const t = { id: "t", teamId: "x", datum: "2026-10-07", beginn: "18:00", ende: "19:30", ort: null, bemerkung: null, felder: null, spielerzahl: null, spielstand: null,
     training: null, serie: null, serienTag: null, abweichungen: [], verantwortliche: [], ausgefallen: true, ausfallGrund: null };
   assert.equal(nochNichtVorbereitet(t, "2026-10-01"), false, "AK 8");
   assert.equal(nochNichtVorbereitet({ ...t, ausgefallen: false }, "2026-10-01"), true);
@@ -575,6 +587,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
       { laenge_m: null, breite_m: null, tore: { minitor: null, tor_5m: null, tor_7m: null }, untergrund: null },
     ],
     spielerzahl: 12,
+    spielstand: null,
     training: { id: "t1", name: "Probe", stufen: ["F" as const], terminTraining: true },
     serie: null,
     serienTag: null,
@@ -604,6 +617,7 @@ pruefe("Auskunft: Termin eines Team-Trainings mit «anstehend» am übergebenen 
     ],
     // #390 AK 6: die erwartete Spielerzahl, unbekannt als null.
     erwartete_spielerzahl: 12,
+    spielerzahl: { quelle: "erwartet", zahl: 12, gesamt: null },
     serie_id: null,
     verantwortliche: [],
     ausgefallen: false,
@@ -839,6 +853,7 @@ pruefe("Serien-Marker: kein Marker steckt in einem anderen (includes-Suche bleib
     ...Object.keys(VARIANTENFOLGE_MELDUNG),
     ...Object.keys(TERMIN_MELDUNG),
     ...Object.keys(SERIE_MELDUNG),
+    ...Object.keys(SPIELER_MELDUNG),
   ];
   assert.equal(new Set(alle).size, alle.length, "Marker doppelt vergeben");
   for (const a of alle)
@@ -1791,6 +1806,8 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
         assert.ok(block.includes("TEAM_KENNUNG_FEHLER"), `${m[1]} nimmt team_id, erklärt aber TEAM_KENNUNG_FEHLER nicht`);
       if (/\bTerminId\b/.test(eingabe))
         assert.ok(block.includes("TERMIN_KENNUNG_FEHLER"), `${m[1]} nimmt termin_id, erklärt aber TERMIN_KENNUNG_FEHLER nicht`);
+      if (/\bSpielerId\b/.test(eingabe))
+        assert.ok(block.includes("SPIELER_KENNUNG_FEHLER"), `${m[1]} nimmt spieler_id, erklärt aber SPIELER_KENNUNG_FEHLER nicht`);
     }
   }
 
@@ -1831,6 +1848,7 @@ pruefe("Werkzeugsatz: eindeutige snake_case-Namen, nichts unregistriert", () => 
     "#327": ["termin_ausfallen_lassen", "termin_ausfall_zuruecknehmen"],
     "#329": ["team_plan_abrufen"],
     "#263": ["variante_anlegen", "variante_umbenennen", "variante_entfernen", "varianten_ordnen"],
+    "#434": ["spielerliste_abrufen", "spieler_aufnehmen", "spieler_aendern", "spieler_entfernen"],
   };
   for (const [story, erwartet] of Object.entries(jeStory))
     for (const n of erwartet) assert.ok(namen.includes(n), `${n} fehlt im Werkzeugsatz (${story})`);
@@ -1957,6 +1975,49 @@ pruefe("Abo: Eine lange URL-Zeile wird gefaltet und fügt sich wieder zusammen",
   const entfaltet = text.replace(/\r\n /g, "");
   assert.ok(entfaltet.includes(`\r\nURL:${origin}/team/t/termin/a\r\n`), "URL entfaltet vollständig");
   assert.ok(zeilen.some((l) => l.startsWith(" ")), "es wurde tatsächlich gefaltet");
+});
+
+pruefe("Spielerliste: Namen bereinigt, Grenzen der Angaben (#434 AK 6, 14)", () => {
+  assert.equal(bereinigeName("  Lena\u00a0  Marie "), "Lena Marie");
+  assert.equal(bereinigeName("Mu\u0308ller"), "Müller", "NFC wie spieler_text_bereinigt");
+  const gut = { vorname: "Lena", nachname: "Meier", jahrgang: "2017" };
+  assert.equal(spielerProblem(gut), null);
+  assert.equal(spielerProblem({ ...gut, vorname: "   " })?.feld, "vorname");
+  assert.equal(spielerProblem({ ...gut, nachname: "x".repeat(61) })?.text, SPIELER_TEXT.nachname);
+  assert.equal(spielerProblem({ ...gut, nachname: "x".repeat(60) }), null);
+  assert.equal(spielerProblem({ ...gut, vorname: "😀".repeat(60) }), null, "Länge in Code Points wie char_length");
+  for (const j of ["17", "20170", "2O17", "0999", ""]) assert.equal(spielerProblem({ ...gut, jahrgang: j })?.feld, "jahrgang", j);
+  assert.equal(jahrgangAus(" 2017 "), 2017);
+  assert.equal(spielerProblem({ ...gut, jsNummer: "x".repeat(21) })?.feld, "js_nummer");
+  assert.equal(spielerProblem({ ...gut, jsNummer: " 1234567 " }), null);
+  assert.deepEqual(
+    nachSpielerName([{ vorname: "Mia", nachname: "Kunz" }, { vorname: "Ayla", nachname: "Demir" }, { vorname: "Mia", nachname: "Bauer" }]).map((s) => s.nachname),
+    ["Demir", "Bauer", "Kunz"],
+  );
+});
+
+pruefe("Spielerliste: Marker der Datenebene tragen die Sätze der Oberfläche", () => {
+  for (const [marker, satz] of Object.entries(SPIELER_MELDUNG)) assert.equal(fehlerMeldung(`x ${marker} y`), satz, marker);
+  assert.equal(fehlerMeldung('new row violates check constraint "spieler_jahrgang"'), SPIELER_TEXT.jahrgang);
+});
+
+pruefe("Spielerzahl: Liste vor erwartet, ausgefallen ohne Zahl (#434 AK 8, #435 AK 6, #437 AK 4)", () => {
+  const liste = spielerzahlVon({ spielerzahl: 12, spielstand: { gesamt: 15, angemeldet: 0, eingefroren: false } });
+  assert.deepEqual(liste, { quelle: "liste", angemeldet: 0, gesamt: 15 });
+  assert.equal(spielerzahlKurz(liste), "0/15", "auch 0 angemeldet");
+  assert.equal(spielerzahlLang(liste), "0 von 15 angemeldet");
+  const erwartet = spielerzahlVon({ spielerzahl: 1, spielstand: null });
+  assert.equal(spielerzahlKurz(erwartet), "1");
+  assert.equal(spielerzahlLang(erwartet), "1 Spieler:in erwartet");
+  assert.deepEqual(spielerzahlVon({ spielerzahl: null, spielstand: null }), { quelle: "unbekannt" });
+  assert.deepEqual(spielerzahlVon({ spielerzahl: 12, spielstand: null, ausgefallen: true }), { quelle: "unbekannt" });
+});
+
+pruefe("terminBegonnen: minutengenau am Trainingsort (Zwilling von termin_begonnen)", () => {
+  assert.equal(terminBegonnen("2026-10-16", "18:00", "2026-10-16T17:59"), false);
+  assert.equal(terminBegonnen("2026-10-16", "18:00", "2026-10-16T18:00"), true, "ab der Minute des Beginns");
+  assert.equal(terminBegonnen("2026-10-16", "18:00:00", "2026-10-16T18:01"), true, "Postgres-Zeit mit Sekunden");
+  assert.equal(terminBegonnen("2026-10-17", "08:00", "2026-10-16T23:59"), false);
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

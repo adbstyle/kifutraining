@@ -16,8 +16,11 @@ import {
   SpielerzahlEingabe,
   felderAusgabe,
   felderSchema,
+  spielerzahlQuelleAusgabe,
+  spielerzahlQuelleSchema,
   spielerzahlSchema,
 } from "@/lib/termin-felder-ausgabe";
+import { spielerzahlVon } from "@/lib/spieler";
 import {
   KENNUNG_FEHLER,
   TEAM_KENNUNG_FEHLER,
@@ -141,6 +144,8 @@ const PlanEintrag = z.object({
   felder: felderSchema(),
   /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
   erwartete_spielerzahl: spielerzahlSchema(),
+  /** Die Spielerzahl, mit der geplant wird, samt Quelle (#434 AK 12). */
+  spielerzahl: spielerzahlQuelleSchema(),
   /** `null`: ein einzelner Termin ohne Serie (#324). */
   serie_id: z.string().nullable(),
   /** Die Angaben, in denen der Termin von seiner Serie abweicht; leer ohne Serie. */
@@ -165,6 +170,7 @@ function planEintrag(t: TerminZeile, zugang: Zugang) {
     bemerkung: t.bemerkung,
     felder: felderAusgabe(t.felder),
     erwartete_spielerzahl: t.spielerzahl,
+    spielerzahl: spielerzahlQuelleAusgabe(spielerzahlVon(t)),
     serie_id: t.serie?.id ?? null,
     abweichungen: t.abweichungen,
     verantwortliche: t.verantwortliche.map((v) => ({ id: v.userId, anzeigename: v.name, ehemalig: v.ehemalig })),
@@ -226,7 +232,8 @@ export const teamPlanAbrufen = werkzeug({
     "heute, aufsteigend; der heutige Tag zählt ganz dazu) und «vergangen» (der jüngste zuerst). " +
     "«heute» ist der Tag, an dem geteilt wurde - gemessen am Trainingsort (Schweiz), nicht in deiner " +
     "Zeitzone; rechne nicht selbst. Jeder Eintrag nennt Datum, Beginn, Ende, Ort, Bemerkung, die Felder " +
-    "des Platzes, die erwartete Spielerzahl und das zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
+    "des Platzes, die erwartete Spielerzahl, «spielerzahl» (die Zahl, mit der geplant wird, samt Quelle - aus der Spielerliste, " +
+    "sobald das Team eine führt) und das zugeordnete Training; «training: null» heisst, der Termin trägt noch keins. Ein anstehender " +
     "Termin ohne Training, der nicht ausgefallen ist, ist noch nicht vorbereitet. Termine einer Serie tragen «serie_id»; «serien» nennt Wochentage, Zeitraum, Zeit, " +
     "Ort, Bemerkung, Verantwortliche, Felder und erwartete Spielerzahl jeder Serie, «abweichungen» die Angaben, in denen ein Termin " +
     "von ihr abweicht. Jeder Eintrag nennt seine Verantwortlichen; «nur_meine» grenzt auf deine ein. " +

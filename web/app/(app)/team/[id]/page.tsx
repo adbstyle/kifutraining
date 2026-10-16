@@ -13,6 +13,7 @@ import { istVerantwortlich } from "@/lib/queries/termine-fuer";
 import { getTeamTrainings, getTrainingPool } from "@/lib/queries/trainings";
 import { planHref } from "@/lib/team-ansicht";
 import { createClient } from "@/lib/supabase/server";
+import { fuehrtSpielerliste } from "@/lib/kern/spieler";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 
 /** #330 PC 8: der Verweis zeigt auf einen Termin, den es nicht mehr gibt. */
@@ -59,12 +60,14 @@ export default async function TeamPlanPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [alleTermine, trainings, persoenliche, team] = await Promise.all([
+  const [alleTermine, trainings, persoenliche, team, fuehrtListe] = await Promise.all([
     getTeamPlan(id),
     getTeamTrainings(id),
     // Die eigenen Trainings, Entwürfe und öffentliche: zuordenbar als Kopie (#328).
     getTrainingPool({ mine: true }),
     getTeam(id),
+    // #434: Führt das Team eine Spielerliste, entfällt die erwartete Zahl.
+    fuehrtSpielerliste(supabase, id),
   ]);
   // Eingegrenzt wird hier statt in der Abfrage: Der Monat braucht auch die
   // Tage, an denen nur Termine anderer liegen (#404 AK 14).
@@ -75,7 +78,7 @@ export default async function TeamPlanPage({
   const leer = termine.length === 0;
 
   return (
-    <TerminBereich teamId={id} trainings={trainings} persoenliche={persoenliche} mitglieder={team?.mitglieder ?? []} heute={heute}>
+    <TerminBereich teamId={id} trainings={trainings} persoenliche={persoenliche} mitglieder={team?.mitglieder ?? []} heute={heute} fuehrtListe={fuehrtListe}>
       <section>
         {/* Keine sichtbare Überschrift: «Trainingsplan» steht schon im
             Reiter; für Screenreader bleibt sie, damit unter dem Teamnamen

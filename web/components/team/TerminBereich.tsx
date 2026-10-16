@@ -134,6 +134,7 @@ export function TerminBereich({
   persoenliche,
   mitglieder,
   heute,
+  fuehrtListe,
   children,
 }: {
   teamId: string;
@@ -143,6 +144,8 @@ export function TerminBereich({
   /** Wer als Verantwortliche:r zur Wahl steht (#325). */
   mitglieder: TeamMitglied[];
   heute: string;
+  /** Das Team führt eine Spielerliste (#434). */
+  fuehrtListe: boolean;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -436,6 +439,7 @@ export function TerminBereich({
         pending={pending}
         fehler={dialogFehler}
         mitglieder={mitglieder}
+        fuehrtListe={fuehrtListe}
         onClose={() => {
           if (!neu) return;
           neuerLauf();
@@ -466,6 +470,7 @@ export function TerminBereich({
         verantwortliche={bearbeiten?.verantwortliche}
         ausfall={bearbeiten?.ausgefallen ? { grund: bearbeiten.ausfallGrund } : null}
         heute={heute}
+        fuehrtListe={fuehrtListe}
         onFolgen={(angabe) =>
           bearbeiten &&
           lauf(() => folgeDerSerieAktion(bearbeiten.id, [angabe]), () => FOLGT_WIEDER[angabe], () => setBearbeiten(null), true)

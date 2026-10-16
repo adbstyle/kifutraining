@@ -44,6 +44,28 @@ export function heuteAmTrainingsort(): string {
   return kalendertagAmTrainingsort();
 }
 
+/** Datum und Uhrzeit eines Zeitpunkts am Trainingsort als `YYYY-MM-DDTHH:MM`. */
+export function jetztAmTrainingsort(d: Date = new Date()): string {
+  const teile = new Intl.DateTimeFormat("de-CH", {
+    timeZone: TRAININGS_ZEITZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(d);
+  const wert = (typ: Intl.DateTimeFormatPartTypes) => teile.find((p) => p.type === typ)?.value ?? "";
+  return `${wert("year")}-${wert("month")}-${wert("day")}T${wert("hour")}:${wert("minute")}`;
+}
+
+/** Hat ein Termin begonnen? Minutengenau an der Uhr am Trainingsort (Epic
+ *  #433). Zwilling der SQL-Funktion `termin_begonnen`. `jetzt` gibt der
+ *  Server mit, damit Server und Browser gleich entscheiden. */
+export function terminBegonnen(datum: string, beginn: string, jetzt: string = jetztAmTrainingsort()): boolean {
+  return `${datum}T${beginn.slice(0, 5)}` <= jetzt;
+}
+
 /**
  * Ein Termindatum als „Mi., 23.09.2026".
  *

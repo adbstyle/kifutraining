@@ -11,6 +11,7 @@ import { FREIES_SPIEL, type Altersstufe } from "@/lib/altersstufe";
 import { MASS_TEXT } from "@/lib/feldmass";
 import { TERMIN_MELDUNG, TERMIN_TEXT } from "@/lib/termin";
 import { SERIE_MELDUNG } from "@/lib/serie";
+import { SPIELER_CHECKS, SPIELER_MELDUNG } from "@/lib/spieler";
 import { FELDER_TEXT } from "@/lib/termin-felder";
 import { sichtbareZuordnungen } from "@/lib/varianten";
 
@@ -327,7 +328,12 @@ export const VARIANTENFOLGE_MELDUNG = {
  *  #324, #326) — ihre Sätze stehen in lib/termin.ts und lib/serie.ts, damit
  *  Fachkern und Datenebene denselben Wortlaut tragen. Kein Marker steckt in
  *  einem anderen (Test in `check:kern`), die Reihenfolge ist daher gleichgültig. */
-const TERMIN_MARKER: [string, string][] = [...Object.entries(TERMIN_MELDUNG), ...Object.entries(SERIE_MELDUNG)];
+const TERMIN_MARKER: [string, string][] = [
+  ...Object.entries(TERMIN_MELDUNG),
+  ...Object.entries(SERIE_MELDUNG),
+  // Die Spielerliste und die Spielerzahl aus ihr (#433).
+  ...Object.entries(SPIELER_MELDUNG),
+];
 
 /** Die CHECKs am Termin, die die Applikation am Namen erkennt — wie
  *  `ALTERSSTUFE_CHECKS`, aber samt Anführungszeichen gesucht: Postgres meldet
@@ -341,6 +347,7 @@ const TERMIN_CHECKS: [string, string][] = [
   // An der Serie dieselben Regeln (#391).
   ['"ts_felder"', FELDER_TEXT.ungueltig],
   ['"ts_spielerzahl"', TERMIN_TEXT.spielerzahl],
+  ...SPIELER_CHECKS,
 ];
 
 /** Die Meldung zu einem Marker aus Übungsfolge, Variantenfolge oder Termin,

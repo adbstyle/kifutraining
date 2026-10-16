@@ -5,6 +5,7 @@ import type { Felder } from "@/lib/termin-felder";
 import { sortStufen } from "@/lib/training";
 import { heuteAmTrainingsort } from "@/lib/zeit";
 import type { KategorieSlug } from "@/lib/vocab";
+import type { Spielstand } from "@/lib/spieler";
 
 /**
  * Termine lesen für einen Client, der bereits als Nutzer spricht (Cookie-
@@ -67,8 +68,12 @@ export type TerminZeile = {
   bemerkung: string | null;
   /** Die Felder des Platzes (#389); `null` = unbekannt. */
   felder: Felder | null;
-  /** Die erwartete Spielerzahl (#390); `null` = unbekannt. */
+  /** Die erwartete Spielerzahl (#390); `null` = unbekannt. Führt das Team
+   *  eine Spielerliste, geht `spielstand` vor (`spielerzahlVon`, #434). */
   spielerzahl: number | null;
+  /** Die Spielerzahl aus der Spielerliste (#434, #435); `null`, wenn die
+   *  Liste leer ist bzw. bei Beginn leer war. */
+  spielstand: Spielstand;
   /** `null`: Der Termin trägt (noch) kein Training (#322). `terminTraining`:
    *  eine Kopie, die mit dem Termin lebt und beim Lösen gelöscht wird; sonst
    *  ein älteres Training aus dem Bestand (PO 2026-10-06). */
@@ -125,6 +130,7 @@ type RawTermin = {
   bemerkung: string | null;
   felder: Felder | null;
   erwartete_spielerzahl: number | null;
+  spielstand: Spielstand;
   created_at: string;
   serien_tag: string | null;
   zeit_abweichend: boolean;
@@ -169,7 +175,7 @@ export function kurzeZeit(t: string): string {
 }
 
 const TERMIN_SELECT =
-  "id, team_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, felder_abweichend, spielerzahl_abweichend, ausgefallen, ausfall_grund, " +
+  "id, team_id, datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, spielstand, created_at, serien_tag, zeit_abweichend, ort_abweichend, bemerkung_abweichend, verantwortliche_abweichend, felder_abweichend, spielerzahl_abweichend, ausgefallen, ausfall_grund, " +
   "termin_verantwortliche ( id, user_id, verantwortlich_name, verantwortlich_ehemalig ), " +
   "trainings ( id, name, stufen, termin_training ), " +
   "termin_serien ( id, version, wochentage, beginn_datum, end_datum, beginn, ende, ort, bemerkung, felder, erwartete_spielerzahl, " +
@@ -201,6 +207,7 @@ function mapTermin(t: RawTermin): TerminZeile {
     bemerkung: t.bemerkung,
     felder: t.felder,
     spielerzahl: t.erwartete_spielerzahl,
+    spielstand: t.spielstand ?? null,
     training: t.trainings
       ? {
           id: t.trainings.id,

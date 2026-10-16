@@ -6,7 +6,8 @@ import { BlattLozenge, Button, ButtonLink, Eigenschaft, EigenschaftFehlt, Lozeng
 import { cn } from "@/lib/cn";
 import { tagOhneJahr } from "@/lib/monat";
 import { plusTage, wochentageText } from "@/lib/serie";
-import { spielerzahlText, zeitText } from "@/lib/termin";
+import { zeitText } from "@/lib/termin";
+import { spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { feldName, feldText } from "@/lib/termin-felder";
 import { datumKurz } from "@/lib/zeit";
 import { verantwortlicheMitDir, type TerminZeile } from "@/lib/queries/termine-fuer";
@@ -49,6 +50,7 @@ export function NaechsterTermin({
   // AK 8: Heute oder Morgen zusätzlich zum Wochentag und Datum.
   const relativ = t.datum === heute ? "Heute" : t.datum === plusTage(heute, 1) ? "Morgen" : null;
   const v = verantwortlicheMitDir(t, ich);
+  const zahlText = spielerzahlLang(spielerzahlVon(t));
   return (
     <div
       id={t.id}
@@ -131,11 +133,13 @@ export function NaechsterTermin({
         {t.ort && <Eigenschaft label="Ort">{t.ort}</Eigenschaft>}
         {/* AK 4: wer man selbst ist, steht zuerst und mit «(du)». */}
         {v.text && <Eigenschaft label="Verantwortlich">{v.text}</Eigenschaft>}
-        {t.spielerzahl !== null ? (
-          <Eigenschaft label="Erwartet">{spielerzahlText(t.spielerzahl)}</Eigenschaft>
+        {/* Aus der Spielerliste, sonst die erwartete Zahl (#434 AK 8); ein
+            ausgefallener Termin nennt keine (#437 AK 4). */}
+        {!t.ausgefallen && (zahlText ? (
+          <Eigenschaft label="Spieler:innen">{zahlText}</Eigenschaft>
         ) : (
-          <EigenschaftFehlt label="Erwartet" />
-        )}
+          <EigenschaftFehlt label="Spieler:innen" />
+        ))}
         {/* AK 5–7: jedes Feld mit Grösse, Toren je Torart und Untergrund;
             «keine» Tore und unbekannte unterscheiden sich (`feldText`). */}
         {t.felder && t.felder.length > 0 ? (

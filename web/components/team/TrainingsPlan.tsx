@@ -9,7 +9,8 @@ import { useTerminAktionen } from "./TerminBereich";
 import { TerminHandgriffe, TrainingHinzufuegen } from "./TerminHandgriffe";
 import { NaechsterTermin } from "./NaechsterTermin";
 import { PlanMonat } from "./PlanMonat";
-import { spielerzahlText, zeitText } from "@/lib/termin";
+import { zeitText } from "@/lib/termin";
+import { spielerzahlKurz, spielerzahlLang, spielerzahlVon } from "@/lib/spieler";
 import { felderKurz } from "@/lib/termin-felder";
 import { monatVon, monatsName } from "@/lib/monat";
 import { nachMonatUndTag } from "@/lib/plan-gliederung";
@@ -184,8 +185,11 @@ function TerminReihe({
   const v = verantwortlicheMitDir(t, ich);
   const VIcon = v.selbst ? UserCheck : Users;
   const zustand = terminZustand(t, heute);
+  const zahl = spielerzahlVon(t);
+  const zahlKurz = spielerzahlKurz(zahl);
+  const zahlLang = spielerzahlLang(zahl);
   const ganz = [
-    [zeit, ort, t.spielerzahl !== null && spielerzahlText(t.spielerzahl)].filter(Boolean).join(" · "),
+    [zeit, ort, zahlLang].filter(Boolean).join(" · "),
     zustand === "ausgefallen" ? ["Ausgefallen", t.ausfallGrund].filter(Boolean).join(": ") : null,
     t.training?.name,
     v.text && `Verantwortlich: ${v.text}`,
@@ -218,16 +222,16 @@ function TerminReihe({
               <span className="truncate">{ort}</span>
             </span>
           )}
-          {t.spielerzahl !== null && (
+          {zahlKurz && (
             <span className="inline-flex shrink-0 items-center gap-1 type-body-small text-on-surface-mittel">
               <Shirt size={14} className="shrink-0" />
-              {t.spielerzahl}
+              {zahlKurz}
             </span>
           )}
         </p>
         {/* Vorlesehilfen hören die erste Zeile ausgeschrieben. */}
         <p className="sr-only">
-          {[ort && `Ort: ${ort}`, t.spielerzahl !== null && `Erwartet: ${spielerzahlText(t.spielerzahl)}`].filter(Boolean).join(", ")}
+          {[ort && `Ort: ${ort}`, zahlLang && `Spielerzahl: ${zahlLang}`].filter(Boolean).join(", ")}
         </p>
         <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5">
           {zustand === "ausgefallen" ? (
