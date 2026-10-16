@@ -29,6 +29,10 @@ export async function ladeAbholAnsicht(token: string): Promise<AbholAnsicht> {
  *  Anschluss verfügt meist über ein ganzes /64 und könnte sonst mit jeder
  *  Adresse daraus neu raten. */
 export function anschlussVon(ip: string): string {
+  // IPv4 in IPv6-Schreibweise (`::ffff:203.0.113.7`) ist IPv4 — sonst teilten
+  // sich alle so gemeldeten Anschlüsse eine Sperre.
+  const v4 = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(ip);
+  if (v4) return v4[1];
   if (!ip.includes(":")) return ip;
   const [vorne, hinten = ""] = ip.toLowerCase().split("::");
   const a = vorne ? vorne.split(":") : [];

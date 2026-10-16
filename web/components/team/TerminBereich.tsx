@@ -424,7 +424,7 @@ export function TerminBereich({
       () => FOLGT_WIEDER[angabe],
       () => setBearbeiten(null),
       true,
-      undefined,
+      laufNr.current,
       (r) => {
         if (r.ok || !r.verfallend) return false;
         setVerfall({ anzahl: r.verfallend, weiter: () => folgen(t, angabe, true) });

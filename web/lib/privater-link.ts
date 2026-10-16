@@ -11,7 +11,9 @@ import { LINK_FEHLER, abweisungText, istLinkToken, type AbmeldeGrund, type Abmel
  * die anstehenden Termine mit der Zahl der Angemeldeten (OoS 2).
  *
  * Ungültig, erneuert, entfernt oder unbekannt sind nicht zu unterscheiden
- * (AK 11). Das Geheimnis steht in keinem Log und keiner Meldung.
+ * (AK 11). Das Geheimnis steht in keiner Meldung und keinem eigenen Log; als
+ * Teil des Pfads erscheint es aber in den Zugriffsprotokollen der Plattform —
+ * wie das Kalender-Abo.
  */
 
 export type LinkTermin = {

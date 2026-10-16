@@ -4231,6 +4231,7 @@ try {
     assert.equal(anschlussVon("2001:DB8::1"), "2001:db8:0:0::/64");
     assert.equal(anschlussVon("2001:0db8:0000:0001:1:2:3:4"), "2001:db8:0:1::/64");
     assert.equal(anschlussVon("::1"), "0:0:0:0::/64");
+    assert.equal(anschlussVon("::ffff:203.0.113.7"), "203.0.113.7", "IPv4 in IPv6-Schreibweise");
   });
 
 } finally {

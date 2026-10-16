@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { Button, Dialog, KopierFeld, OverflowMenu, Switch } from "@/components/ui";
@@ -18,6 +18,8 @@ export function Selbstabholung({ teamId, start }: { teamId: string; start: { url
   const melde = useSnackbar();
   const [pending, startTransition] = useTransition();
   const [stand, setStand] = useState(start);
+  // Neu geladen (etwa nachdem ein anderes Mitglied erneuert hat): der frische Stand.
+  useEffect(() => setStand(start), [start.url, start.aktiv]);
   const [erneuern, setErneuern] = useState(false);
 
   function schalten(aktiv: boolean) {
