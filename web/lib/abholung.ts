@@ -46,7 +46,11 @@ export function anschlussVon(ip: string): string {
  *  lokal fehlt er, dann gilt ein fester Platzhalter. */
 export function anschlussSchluessel(h: Headers): string | null {
   const geheim = env.abholSchluessel();
-  if (!geheim) return null;
+  if (!geheim) {
+    // Ohne Schlüssel holt niemand ab — das soll im Log auffallen, nicht erst bei den Eltern.
+    console.error("ABHOL_SPERRE_SCHLUESSEL fehlt: Die Selbstabholung nimmt keine Eingabe an.");
+    return null;
+  }
   const ip = h.get("x-real-ip") ?? h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "lokal";
   return createHmac("sha256", geheim).update(anschlussVon(ip)).digest("hex");
 }

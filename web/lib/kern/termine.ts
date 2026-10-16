@@ -228,8 +228,9 @@ export type TerminAendern = {
    *  beim KI-Weg: geprüft wird dann gegen den eben gelesenen Stand. */
   erwartetesTraining?: string | null;
   /** Verfallen durch eine Verlegung Abmeldungen (#437 AK 1), braucht es die
-   *  Bestätigung — sonst kommt ein Fehler mit `verfallend`. */
-  bestaetigt?: boolean;
+   *  Bestätigung — sonst kommt ein Fehler mit `verfallend`. Die Oberfläche
+   *  sendet die bestätigte Zahl, die KI `true`. */
+  bestaetigt?: boolean | number;
 };
 
 /** Wie viele Abmeldungen verfallen, wenn der Termin auf `datum`/`beginn`
@@ -336,7 +337,9 @@ export async function aendereTermin(
   if (("datum" in aenderung && neu.datum !== t.datum) || ("beginn" in aenderung && neu.beginn !== t.beginn)) {
     const n = await verfallendeAbmeldungen(supabase, t.id, neu.datum, neu.beginn);
     if (!n.ok) return n;
-    if (n.wert > 0 && !e.bestaetigt) return verfallFehler(n.wert);
+    // Eine Zahl bestätigt genau so viele (Oberfläche); sind es inzwischen
+    // andere, fragt der Kern neu. `true` (KI) bestätigt, was es ist.
+    if (n.wert > 0 && e.bestaetigt !== true && e.bestaetigt !== n.wert) return verfallFehler(n.wert);
     verfallen = n.wert;
   }
 

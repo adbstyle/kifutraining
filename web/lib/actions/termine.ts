@@ -72,7 +72,8 @@ export async function aendereTerminAktion(
   terminId: string,
   felder: Partial<TerminFelder>,
   erwartetesTraining: string | null,
-  bestaetigt = false,
+  /** Die bestätigte Zahl verfallender Abmeldungen (#437 AK 1). */
+  bestaetigt: number | false = false,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };

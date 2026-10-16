@@ -421,7 +421,7 @@ export async function aendereMitReichweite(
       felder: e.felder,
       spielerzahl: e.spielerzahl,
     },
-    bestaetigt: e.bestaetigt,
+    bestaetigt: e.bestaetigt === true,
   });
   return r.ok
     ? ok({ terminId: e.terminId, teamId: r.wert.teamId, serie: r.wert, abmeldungenVerfallen: r.wert.abmeldungenVerfallend })

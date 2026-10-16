@@ -241,7 +241,7 @@ export function TerminBereich({
     geaendert: Partial<TerminFelder> | null | undefined,
     verantwortlich?: VerantwortlicheWert,
     grund?: string,
-    bestaetigt = false,
+    bestaetigt: number | false = false,
   ) {
     const nr = laufNr.current;
     const gilt = () => laufNr.current === nr;
@@ -250,7 +250,8 @@ export function TerminBereich({
         const r = await aendereTerminAktion(t.id, geaendert, t.training?.id ?? null, bestaetigt);
         // #437 AK 1: Verfallen Abmeldungen, erst nachfragen; der Dialog bleibt offen.
         if (!r.ok && r.verfallend) {
-          if (gilt()) return setVerfall({ anzahl: r.verfallend, weiter: () => aendereEinzeln(t, geaendert, verantwortlich, grund, true) });
+          const anzahl = r.verfallend;
+          if (gilt()) return setVerfall({ anzahl, weiter: () => aendereEinzeln(t, geaendert, verantwortlich, grund, anzahl) });
           // Abgebrochen, bevor die Rückfrage kam: Gespeichert ist nichts.
           return melde(NICHT_GEAENDERT);
         }

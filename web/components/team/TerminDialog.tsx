@@ -139,7 +139,7 @@ export function TerminDialog({
   const platz = usePlatzAngaben();
   // Ein begonnener Termin behält seine erwartete Zahl: Sie gilt dort, wenn die
   // Liste bei Beginn leer war (Migration spielerliste).
-  const ausListe = !!fuehrtListe && !!start?.datum && !!start.beginn && !terminBegonnen(start.datum, start.beginn);
+  const ausListe = !!fuehrtListe && !(!!felder.datum && !!felder.beginn && terminBegonnen(felder.datum, felder.beginn));
 
   // Beim Öffnen auf die Vorbelegung zurücksetzen — der Dialog überlebt sonst
   // mit den Werten des zuletzt bearbeiteten Termins.

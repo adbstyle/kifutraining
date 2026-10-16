@@ -10,6 +10,7 @@ import { VerantwortlicheWahl, type VerantwortlicheWert } from "./Verantwortliche
 import { FelderField } from "./FelderField";
 import { SpielerzahlField } from "./SpielerzahlField";
 import { usePlatzAngaben } from "./usePlatzAngaben";
+import { terminBegonnen } from "@/lib/zeit";
 
 export type SerieFelder = {
   wochentage: Wochentag[];
@@ -193,7 +194,12 @@ export function NeuerTerminDialog({
           onChange={(w) => setze("verantwortliche", w.userIds)}
           disabled={pending}
         />
-        <SpielerzahlField {...platz.spielerzahlProps} disabled={pending} ausListe={fuehrtListe} />
+        {/* Ein einzelner Termin, der schon begonnen hat, nimmt die erwartete Zahl an (Migration spielerliste). */}
+        <SpielerzahlField
+          {...platz.spielerzahlProps}
+          disabled={pending}
+          ausListe={!!fuehrtListe && (wiederholen || !f.von || !f.beginn || !terminBegonnen(f.von, f.beginn))}
+        />
         <FelderField {...platz.felderProps} disabled={pending} />
       </div>
     </Dialog>
