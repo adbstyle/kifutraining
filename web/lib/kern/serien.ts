@@ -23,6 +23,8 @@ import {
   kalenderFehler,
   ladeTermin,
   type TerminAendern,
+  verfallFehler,
+  verfallendeAbmeldungen,
 } from "@/lib/kern/termine";
 import { NICHT_GEFUNDEN, fehlschlag, ok, type KernErgebnis } from "@/lib/kern/ergebnis";
 
@@ -131,6 +133,8 @@ export type SerienFolge = {
   entfallendAnzahl: number;
   /** Vergangene Termine, die die Änderung erfasst oder entfallen lässt. */
   vergangene: number;
+  /** Wie viele Abmeldungen die Änderung verfallen lässt (#437 AK 1). */
+  abmeldungenVerfallend: number;
   teamId: string;
 };
 
@@ -140,6 +144,8 @@ type Roh = {
   entfallend: { id: string; datum: string; beginn: string; training: { id: string; name: string } }[];
   entfallend_anzahl: number;
   vergangene: number;
+  /** Nur beim Ändern (`terminserie_aendern`). */
+  abmeldungen_verfallend?: number;
 };
 
 function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): SerienFolge {
@@ -154,6 +160,7 @@ function folge(r: Roh, teamId: string, terminTrainings: ReadonlySet<string>): Se
     })),
     entfallendAnzahl: r.entfallend_anzahl,
     vergangene: r.vergangene,
+    abmeldungenVerfallend: r.abmeldungen_verfallend ?? 0,
     teamId,
   };
 }
@@ -202,6 +209,8 @@ async function laufe(
     if (lauf.vorschau) return ok(vorschau);
     if (vorschau.vergangene > 0 && !lauf.bestaetigt)
       return fehlschlag("regel", vergangeneBestaetigen(vorschau.vergangene), { feld: "bestaetigt" });
+    // #437 AK 1: verfallende Abmeldungen ebenso erst nach Bestätigung.
+    if (vorschau.abmeldungenVerfallend > 0 && !lauf.bestaetigt) return verfallFehler(vorschau.abmeldungenVerfallend);
     erwartet = { version: vorschau.versionVorher, entfallend: vorschau.entfallend.map((x) => x.terminId) };
   }
   const terminTrainings = await terminTrainingsDerTermine(supabase, erwartet.entfallend);
@@ -331,7 +340,7 @@ const FOLGE_ANGABEN: readonly FolgeAngabe[] = ["zeit", "ort", "bemerkung", "vera
 export async function folgeDerSerie(
   supabase: SupabaseClient,
   _userId: string,
-  e: { terminId: string; angaben: FolgeWunsch[] },
+  e: { terminId: string; angaben: FolgeWunsch[]; bestaetigt?: boolean },
 ): Promise<KernErgebnis<{ terminId: string; teamId: string }>> {
   if (!istUuid(e.terminId)) return fehlschlag("nicht_gefunden", NICHT_GEFUNDEN.termin, TERMIN_FELD);
   if (e.angaben.length === 0 || e.angaben.some((x) => x !== "datum" && !FOLGE_ANGABEN.includes(x)))
@@ -339,6 +348,20 @@ export async function folgeDerSerie(
       feld: "angaben",
       zulaessig: FOLGE_ANGABEN,
     });
+  // #437 AK 1: Folgt die Zeit wieder der Serie, ändert sich womöglich der
+  // Beginn — verfallende Abmeldungen erst nach Bestätigung.
+  if (e.angaben.includes("zeit") && !e.bestaetigt) {
+    const { data: z } = await supabase
+      .from("training_termine")
+      .select("datum, termin_serien ( beginn )")
+      .eq("id", e.terminId)
+      .maybeSingle<{ datum: string; termin_serien: { beginn: string } | null }>();
+    if (z?.termin_serien) {
+      const n = await verfallendeAbmeldungen(supabase, e.terminId, z.datum, z.termin_serien.beginn);
+      if (!n.ok) return n;
+      if (n.wert > 0) return verfallFehler(n.wert);
+    }
+  }
   const { data, error } = await supabase.rpc("termin_der_serie_folgen", { p_termin: e.terminId, p_angaben: e.angaben });
   if (error) return kalenderFehler(error);
   return ok({ terminId: e.terminId, teamId: (data as { team: string }).team });
@@ -351,7 +374,6 @@ export type MitReichweite = TerminAendern & {
   wochentage?: Wochentag[];
   von?: string;
   bis?: string;
-  bestaetigt?: boolean;
 };
 
 /** Ändern mit Reichweite: Ein Serientermin verlangt sie (AK 11); das Datum
@@ -361,7 +383,7 @@ export async function aendereMitReichweite(
   supabase: SupabaseClient,
   userId: string,
   e: MitReichweite,
-): Promise<KernErgebnis<{ terminId: string; teamId: string; serie: SerienFolge | null }>> {
+): Promise<KernErgebnis<{ terminId: string; teamId: string; serie: SerienFolge | null; abmeldungenVerfallen: number }>> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   const t = geladen.wert;
@@ -380,7 +402,9 @@ export async function aendereMitReichweite(
   if (!t.serie_id || e.reichweite === "nur_dieser") {
     if (regel) return fehlschlag("regel", SERIE_MELDUNG.REGEL_NUR_SERIE, { feld: "reichweite" });
     const r = await aendereTermin(supabase, userId, e);
-    return r.ok ? ok({ terminId: r.wert.terminId, teamId: r.wert.teamId, serie: null }) : r;
+    return r.ok
+      ? ok({ terminId: r.wert.terminId, teamId: r.wert.teamId, serie: null, abmeldungenVerfallen: r.wert.abmeldungenVerfallen })
+      : r;
   }
   if (e.datum !== undefined) return fehlschlag("regel", SERIE_MELDUNG.DATUM_NUR_EINZELN, { feld: "datum" });
   const r = await aendereSerie(supabase, userId, {
@@ -399,7 +423,9 @@ export async function aendereMitReichweite(
     },
     bestaetigt: e.bestaetigt,
   });
-  return r.ok ? ok({ terminId: e.terminId, teamId: r.wert.teamId, serie: r.wert }) : r;
+  return r.ok
+    ? ok({ terminId: e.terminId, teamId: r.wert.teamId, serie: r.wert, abmeldungenVerfallen: r.wert.abmeldungenVerfallend })
+    : r;
 }
 
 /** Entfernen mit Reichweite (AK 7, 11). */

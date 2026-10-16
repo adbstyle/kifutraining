@@ -7,12 +7,15 @@ import { Kalenderblatt, Leerzustand, SectionMessage, Switch } from "@/components
 import { meldeUeberLinkAktion } from "@/lib/actions/spieler-link";
 import { tagText } from "@/lib/monat";
 import type { LinkTermin } from "@/lib/privater-link";
+import { verfallenHinweis } from "@/lib/spieler";
 
 /* Was die Spielervertretung über den privaten Link sieht (#436 AK 5–9): ihre
    Spieler:in, das Team und je anstehenden Termin ein Schalter, der sofort
    speichert. Angemeldet ist der Normalfall — man schaltet nur aus, wenn sie
    nicht kann. Ein begonnener Termin bleibt bis Ende des Tages stehen, gesperrt;
-   ein ausgefallener ist neutral gesperrt.
+   ein ausgefallener ist neutral gesperrt. Wurde ein Termin verlegt, seit sie
+   abgemeldet wurde, sagt ein Hinweis, dass die Abmeldung nicht mehr gilt
+   (#437 AK 2) — bis man neu schaltet.
 
    Fürs Handy gebaut: eine Spalte, Karten statt Tabelle. Der Satz im Kopf nennt
    den Vornamen statt eines Pronomens — KiFu kennt das Geschlecht nicht. */
@@ -105,6 +108,9 @@ export function ElternAnsicht({
                     aria-label={`${name} am ${tagText(t.datum)} dabei`}
                   />
                 </div>
+                {t.verfallen && !ab && !t.ausgefallen && !t.begonnen && (
+                  <SectionMessage>{verfallenHinweis(t.verfallen)}</SectionMessage>
+                )}
                 {fehler?.terminId === t.id && <SectionMessage appearance="error">{fehler.text}</SectionMessage>}
               </li>
             );

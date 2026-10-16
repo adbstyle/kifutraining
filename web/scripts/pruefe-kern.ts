@@ -147,6 +147,9 @@ import {
   LINK_PFAD,
   istLinkToken,
   spielerLinkUrl,
+  verfallText,
+  verfallBestaetigen,
+  verfallenHinweis,
 } from "../lib/spieler";
 import { terminBegonnen } from "../lib/zeit";
 
@@ -2053,6 +2056,16 @@ pruefe("Privater Link: Format, Adresse, Pfad von Middleware und Besucherstatisti
   // Ohne Sitzung: die Middleware lässt den Pfad aus, Next schickt die Schutz-Header.
   assert.ok(readFileSync("middleware.ts", "utf8").includes(`|${LINK_PFAD}/|`));
   assert.ok(readFileSync("next.config.ts", "utf8").includes(`source: "/${LINK_PFAD}/:pfad*"`));
+});
+
+pruefe("Verlegen: Texte zu verfallenden Abmeldungen (#437 AK 1, 2)", () => {
+  assert.equal(verfallText(1), "Damit verfällt 1 Abmeldung: Die Spieler:in gilt wieder als angemeldet.");
+  assert.equal(verfallText(3), "Damit verfallen 3 Abmeldungen: Diese Spieler:innen gelten wieder als angemeldet.");
+  assert.ok(verfallBestaetigen(2).startsWith(verfallText(2)) && verfallBestaetigen(2).includes("«bestaetigt: true»"));
+  assert.equal(
+    verfallenHinweis({ datum: "2026-10-19", beginn: "18:00" }),
+    "Verlegt, vorher Montag, 19. Oktober um 18:00. Deine Abmeldung gilt nicht mehr.",
+  );
 });
 
 console.log(`\n${gelaufen} Prüfungen bestanden.`);

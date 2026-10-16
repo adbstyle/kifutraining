@@ -26,6 +26,9 @@ export type LinkTermin = {
   /** `null` an einem ausgefallenen Termin. */
   angemeldet: number | null;
   abgemeldet: boolean;
+  /** Verlegt, seit sie abgemeldet wurde (#437 AK 2): der Zeitpunkt vorher —
+   *  die Abmeldung gilt nicht mehr. */
+  verfallen: { datum: string; beginn: string } | null;
 };
 
 export type LinkAnsicht =

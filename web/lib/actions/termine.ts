@@ -39,7 +39,9 @@ import type { TerminZeile } from "@/lib/queries/termine";
 
 export type { TerminFelder } from "@/lib/termin";
 
-type Fehler = { ok: false; error: string };
+/** `verfallend`: Das Verlegen liesse so viele Abmeldungen verfallen (#437
+ *  AK 1); erneut mit `bestaetigt` senden, wenn das gewollt ist. */
+type Fehler = { ok: false; error: string; verfallend?: number };
 
 export async function legeTerminFestAktion(
   teamId: string,
@@ -70,10 +72,12 @@ export async function aendereTerminAktion(
   terminId: string,
   felder: Partial<TerminFelder>,
   erwartetesTraining: string | null,
+  bestaetigt = false,
 ): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
   const r = await aendereTermin(a.supabase, a.userId, {
+    bestaetigt,
     terminId,
     datum: felder.datum,
     beginn: felder.beginn,
@@ -84,7 +88,7 @@ export async function aendereTerminAktion(
     spielerzahl: felder.spielerzahl,
     erwartetesTraining,
   });
-  if (!r.ok) return { ok: false, error: r.meldung };
+  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend };
   revalidiereTeam(r.wert.teamId);
   if (r.wert.trainingId) revalidiereTraining(r.wert.trainingId);
   return { ok: true };
@@ -269,11 +273,15 @@ export async function entferneSerieAktion(terminId: string, reichweite: Serienwe
 }
 
 /** Abweichende Angaben wieder der Serie folgen lassen (#326 AK 6). */
-export async function folgeDerSerieAktion(terminId: string, angaben: FolgeAngabe[]): Promise<{ ok: true } | Fehler> {
+export async function folgeDerSerieAktion(
+  terminId: string,
+  angaben: FolgeAngabe[],
+  bestaetigt = false,
+): Promise<{ ok: true } | Fehler> {
   const a = await angemeldet();
   if (!a) return { ok: false, error: NICHT_ANGEMELDET };
-  const r = await folgeDerSerie(a.supabase, a.userId, { terminId, angaben });
-  if (!r.ok) return { ok: false, error: r.meldung };
+  const r = await folgeDerSerie(a.supabase, a.userId, { terminId, angaben, bestaetigt });
+  if (!r.ok) return { ok: false, error: r.meldung, verfallend: r.verfallend };
   revalidiereTeam(r.wert.teamId);
   return { ok: true };
 }

@@ -1,4 +1,5 @@
 import "server-only";
+import { verfallBestaetigen } from "@/lib/spieler";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { istUuid } from "@/lib/kennung";
 import {
@@ -226,7 +227,32 @@ export type TerminAendern = {
   /** Das Training, das der Termin bei der Auswahl trug (AK 23). `undefined`
    *  beim KI-Weg: geprüft wird dann gegen den eben gelesenen Stand. */
   erwartetesTraining?: string | null;
+  /** Verfallen durch eine Verlegung Abmeldungen (#437 AK 1), braucht es die
+   *  Bestätigung — sonst kommt ein Fehler mit `verfallend`. */
+  bestaetigt?: boolean;
 };
+
+/** Wie viele Abmeldungen verfallen, wenn der Termin auf `datum`/`beginn`
+ *  verlegt wird (#437 AK 1) — dieselbe Entscheidung wie der Trigger. */
+export async function verfallendeAbmeldungen(
+  supabase: SupabaseClient,
+  terminId: string,
+  datum: string,
+  beginn: string | null,
+): Promise<KernErgebnis<number>> {
+  const { data, error } = await supabase.rpc("termin_abmeldungen_verfallend", {
+    p_termin: terminId,
+    p_datum: datum,
+    p_beginn: beginn,
+  });
+  if (error) return ausDbFehler(error);
+  return ok((data as number | null) ?? 0);
+}
+
+/** Ein Fehler, der vor dem Verlegen nach der Bestätigung fragt. */
+export function verfallFehler(n: number): KernFehler {
+  return fehlschlag("regel", verfallBestaetigen(n), { feld: "bestaetigt", verfallend: n });
+}
 
 /** Warum ein bedingtes Schreiben keine Zeile traf: Der Termin ist weg, oder
  *  sein Training hat sich seit der Auswahl geändert (AK 23). */
@@ -250,7 +276,7 @@ export async function aendereTermin(
   supabase: SupabaseClient,
   _userId: string,
   e: TerminAendern,
-): Promise<KernErgebnis<{ terminId: string; teamId: string; trainingId: string | null }>> {
+): Promise<KernErgebnis<{ terminId: string; teamId: string; trainingId: string | null; abmeldungenVerfallen: number }>> {
   const geladen = await ladeTermin(supabase, e.terminId);
   if (!geladen.ok) return geladen;
   const t = geladen.wert;
@@ -305,6 +331,15 @@ export async function aendereTermin(
     t.ausgefallen && "datum" in aenderung && neu.datum !== t.datum && neu.datum >= heuteAmTrainingsort();
   const ausfall = ausfallEndet ? { ausgefallen: false, ausfall_grund: null } : {};
 
+  // #437 AK 1: Verlegt, verfallen die Abmeldungen — erst nach Bestätigung.
+  let verfallen = 0;
+  if (("datum" in aenderung && neu.datum !== t.datum) || ("beginn" in aenderung && neu.beginn !== t.beginn)) {
+    const n = await verfallendeAbmeldungen(supabase, t.id, neu.datum, neu.beginn);
+    if (!n.ok) return n;
+    if (n.wert > 0 && !e.bestaetigt) return verfallFehler(n.wert);
+    verfallen = n.wert;
+  }
+
   const erwartet = e.erwartetesTraining !== undefined ? e.erwartetesTraining : t.training_id;
   const basis = supabase.from("training_termine").update({ ...aenderung, ...flags, ...ausfall }).eq("id", t.id);
   const { data, error } = await (erwartet === null
@@ -315,7 +350,7 @@ export async function aendereTermin(
     .maybeSingle();
   if (error) return ausDbFehler(error);
   if (!data) return warumNichtGeschrieben(supabase, t.id, e.erwartetesTraining === undefined);
-  return ok({ terminId: t.id, teamId: t.team_id, trainingId: erwartet });
+  return ok({ terminId: t.id, teamId: t.team_id, trainingId: erwartet, abmeldungenVerfallen: verfallen });
 }
 
 /** Was mit dem Training geschah, das einen Termin verliess: Ein

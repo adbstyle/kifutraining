@@ -1276,7 +1276,7 @@ try {
     // KI-Weg ohne erwartetes Training: geprüft wird gegen den gelesenen Stand.
     assert.deepEqual(
       wert(await aendereTermin(a.supabase, a.id, { terminId: t1.terminId, ort: "KI-Ort" })),
-      { terminId: t1.terminId, teamId: team.id, trainingId: c2 },
+      { terminId: t1.terminId, teamId: team.id, trainingId: c2, abmeldungenVerfallen: 0 },
     );
     assert.equal((await zeile(t1.terminId))!.ort, "KI-Ort");
     const t3 = wert(await legeTerminFest(a.supabase, a.id, { teamId: team.id, datum: tag(9), beginn: "18:00", ende: "19:00" }));
@@ -3990,7 +3990,7 @@ try {
     assert.deepEqual(ansicht.termine.map((x: { id: string }) => x.id), [t], "nichts Vergangenes (OoS 2)");
     assert.ok(!ansicht.termine.some((x: { id: string }) => x.id === gestern));
     assert.deepEqual(ansicht.termine[0], {
-      id: t, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ausgefallen: false, begonnen: false, angemeldet: 2, abgemeldet: false,
+      id: t, datum: tagCh(2), beginn: "18:00", ende: "19:00", ort: "Wyler", ausgefallen: false, begonnen: false, angemeldet: 2, abgemeldet: false, verfallen: null,
     });
 
     const abmelden = (token: string, abgemeldet: boolean) =>
@@ -4036,6 +4036,118 @@ try {
     fehler(await erneuereSpielerLink(b.supabase, b.id, { spielerId: lena }), "nicht_gefunden");
     wert(await entferneSpieler(a.supabase, a.id, { spielerId: lena }));
     assert.deepEqual((await feldAnon.rpc("spieler_link_ansicht", { p_token: neu })).data, { gueltig: false }, "PC 2: entfernt");
+  });
+
+  // ── Verlegen und Ausfall (#437) ──────────────────────────────────────────
+  const linkAnsicht = async (spielerId: string) =>
+    (await feldAnon.rpc("spieler_link_ansicht", { p_token: wert(await holeSpielerLink(a.supabase, a.id, { spielerId })).token })).data as {
+      termine: { id: string; abgemeldet: boolean; verfallen: { datum: string; beginn: string } | null }[];
+    };
+
+  await pruefe("Verlegen: Bestätigung nennt die Zahl, danach alle angemeldet, Link zeigt den Zeitpunkt vorher (#437 AK 1, 2, 6; PC 1, 3)", async () => {
+    const team = await serienTeam("Kern-DB-Verlegen");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    await neuerSpieler(team, "Noah");
+    const t = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
+    // PC 3: Ende, Ort, Bemerkung lassen sie stehen — ohne Rückfrage.
+    assert.equal(wert(await aendereTermin(a.supabase, a.id, { terminId: t, ende: "19:30", beginn: "18:00", ort: "Wyler", bemerkung: "x" })).abmeldungenVerfallen, 0);
+    assert.equal((await standVon(team, t)).spielstand?.angemeldet, 1);
+    // AK 1: Verlegen fragt mit der Zahl nach.
+    const f = fehler(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(4) }), "regel") as { feld?: string; verfallend?: number };
+    assert.deepEqual([f.feld, f.verfallend], ["bestaetigt", 1]);
+    assert.equal((await standVon(team, t)).spielstand?.angemeldet, 1, "ohne Bestätigung nichts geschrieben");
+    // AK 6: dasselbe über den KI-Weg.
+    fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: t, beginn: "17:00", ende: "18:00" }), "regel");
+    const r = wert(await aendereMitReichweite(a.supabase, a.id, { terminId: t, datum: tagCh(4), bestaetigt: true }));
+    assert.equal(r.abmeldungenVerfallen, 1);
+    // PC 1: alle wieder angemeldet; AK 2: der Link nennt den Zeitpunkt vorher.
+    assert.equal((await standVon(team, t)).spielstand?.angemeldet, 2);
+    assert.deepEqual(wert(await terminSpieler(a.supabase, a.id, { terminId: t })).spieler.map((s) => s.abgemeldet), [false, false]);
+    const termin = (await linkAnsicht(lena)).termine.find((x) => x.id === t)!;
+    assert.deepEqual([termin.abgemeldet, termin.verfallen], [false, { datum: tagCh(3), beginn: "18:00" }]);
+    // Ein zweites Verlegen behält den ursprünglichen Zeitpunkt und fragt nicht mehr.
+    assert.equal(wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(5) })).abmeldungenVerfallen, 0);
+    assert.deepEqual((await linkAnsicht(lena)).termine.find((x) => x.id === t)!.verfallen, { datum: tagCh(3), beginn: "18:00" });
+    // Neu abmelden ersetzt die Markierung; danach zählt die Abmeldung wieder.
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
+    assert.deepEqual((await linkAnsicht(lena)).termine.find((x) => x.id === t)!.verfallen, null);
+    assert.equal((await standVon(team, t)).spielstand?.angemeldet, 1);
+    assert.equal(
+      (await a.supabase.rpc("termin_abmeldungen_verfallend", { p_termin: t, p_datum: tagCh(5), p_beginn: "18:00" })).data,
+      0,
+      "unverändert verfällt nichts",
+    );
+  });
+
+  await pruefe("Verlegen: in die Vergangenheit behält, zurück in die Zukunft verfällt; Ausfall lässt ruhen (#437 PC 1, 2, 4)", async () => {
+    const team = await serienTeam("Kern-DB-Verlegen-Stand");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    await neuerSpieler(team, "Noah");
+    const t = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(2), beginn: "18:00", ende: "19:00" })).terminId;
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: t, spielerId: lena, abgemeldet: true }));
+    // PC 2: begonnen durch die Verlegung — kein Verfall, keine Rückfrage.
+    assert.equal(wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(-1) })).abmeldungenVerfallen, 0);
+    assert.deepEqual((await standVon(team, t)).spielstand, { gesamt: 2, angemeldet: 1, eingefroren: true });
+    // Zurück in die Zukunft: Die festgehaltene Abmeldung verfällt — nach Bestätigung.
+    const f = fehler(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(2) }), "regel") as { verfallend?: number };
+    assert.equal(f.verfallend, 1);
+    wert(await aendereTermin(a.supabase, a.id, { terminId: t, datum: tagCh(2), bestaetigt: true }));
+    assert.deepEqual((await standVon(team, t)).spielstand, { gesamt: 2, angemeldet: 2, eingefroren: false });
+    assert.deepEqual((await linkAnsicht(lena)).termine.find((x) => x.id === t)!.verfallen, { datum: tagCh(-1), beginn: "18:00" });
+
+    // PC 4: Ein Ausfall lässt die Abmeldung ruhen; zurückgenommen gilt sie wieder.
+    const u = wert(await legeTerminFest(a.supabase, a.id, { teamId: team, datum: tagCh(3), beginn: "18:00", ende: "19:00" })).terminId;
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: u, spielerId: lena, abgemeldet: true }));
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: u, grund: null }));
+    assert.equal((await linkAnsicht(lena)).termine.find((x) => x.id === u)!.abgemeldet, true);
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: u }));
+    assert.equal((await standVon(team, u)).spielstand?.angemeldet, 1);
+    // PC 1: Auch während des Ausfalls verfällt sie beim Verlegen.
+    wert(await lasseAusfallen(a.supabase, a.id, { terminId: u, grund: null }));
+    fehler(await aendereTermin(a.supabase, a.id, { terminId: u, beginn: "17:00", ende: "18:00" }), "regel");
+    wert(await aendereTermin(a.supabase, a.id, { terminId: u, beginn: "17:00", ende: "18:00", bestaetigt: true }));
+    wert(await nimmAusfallZurueck(a.supabase, a.id, { terminId: u }));
+    assert.equal((await standVon(team, u)).spielstand?.angemeldet, 2);
+    // PC 5: Entfernen nimmt die Abmeldungen mit.
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: u, spielerId: lena, abgemeldet: true }));
+    wert(await entferneTermin(a.supabase, a.id, { terminId: u }));
+    assert.equal((await admin.from("termin_abmeldungen").select("spieler_id").eq("termin_id", u)).data?.length, 0);
+  });
+
+  await pruefe("Verlegen über die Serie: Vorschau zählt, KI braucht Bestätigung, Zeit der Serie folgen ebenso (#437 AK 1, 6; PC 1)", async () => {
+    const team = await serienTeam("Kern-DB-Verlegen-Serie");
+    const lena = (await neuerSpieler(team, "Lena")).spielerId;
+    const s = wert(await legeSerieFest(a.supabase, a.id, {
+      teamId: team, wochentage: [wochentagVon(tagCh(1))], von: tagCh(1), bis: tagCh(15), beginn: "18:00", ende: "19:00",
+    }));
+    const [erster, zweiter] = await termineDer(s.serieId);
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: erster.id, spielerId: lena, abgemeldet: true }));
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: zweiter.id, spielerId: lena, abgemeldet: true }));
+    // Nur der Ort: nichts verfällt.
+    const ort = wert(await aendereSerie(a.supabase, a.id, { terminId: erster.id, reichweite: "alle", aenderung: { ort: "Wyler" } }));
+    assert.equal(ort.abmeldungenVerfallend, 0);
+    // Vorschau zählt, ohne zu schreiben.
+    const v = wert(await aendereSerie(a.supabase, a.id, {
+      terminId: erster.id, reichweite: "alle", aenderung: { beginn: "17:30", ende: "18:30" }, vorschau: true, erwartet: { version: (await admin.from("termin_serien").select("version").eq("id", s.serieId).single()).data!.version, entfallend: [] },
+    }));
+    assert.equal(v.abmeldungenVerfallend, 2);
+    assert.equal((await standVon(team, erster.id)).spielstand?.angemeldet, 0, "Vorschau schreibt nichts");
+    // KI-Weg ohne Bestätigung: abgewiesen mit der Zahl; bestätigt: geändert.
+    const f = fehler(await aendereMitReichweite(a.supabase, a.id, { terminId: erster.id, reichweite: "alle", beginn: "17:30", ende: "18:30" }), "regel") as { verfallend?: number };
+    assert.equal(f.verfallend, 2);
+    const r = wert(await aendereMitReichweite(a.supabase, a.id, { terminId: erster.id, reichweite: "alle", beginn: "17:30", ende: "18:30", bestaetigt: true }));
+    assert.equal(r.abmeldungenVerfallen, 2);
+    assert.equal((await standVon(team, erster.id)).spielstand?.angemeldet, 1);
+    assert.equal((await standVon(team, zweiter.id)).spielstand?.angemeldet, 1);
+
+    // Zeit wieder der Serie folgen lassen ändert den Beginn — ebenso nachfragen.
+    wert(await aendereTermin(a.supabase, a.id, { terminId: zweiter.id, beginn: "19:00", ende: "20:00" }));
+    wert(await setzeAbmeldung(a.supabase, a.id, { terminId: zweiter.id, spielerId: lena, abgemeldet: true }));
+    const g = fehler(await folgeDerSerie(a.supabase, a.id, { terminId: zweiter.id, angaben: ["zeit"] }), "regel") as { verfallend?: number };
+    assert.equal(g.verfallend, 1);
+    wert(await folgeDerSerie(a.supabase, a.id, { terminId: zweiter.id, angaben: ["zeit"], bestaetigt: true }));
+    assert.equal((await standVon(team, zweiter.id)).spielstand?.angemeldet, 1);
   });
 
 } finally {

@@ -10,6 +10,7 @@
 //
 // REIN: keine Server-Importe — `check:kern` lädt diese Datei mit tsx.
 import { datumKurz } from "@/lib/zeit";
+import { tagOhneJahr } from "@/lib/monat";
 
 /** Zwillinge der Checks `spieler_vorname`, `spieler_nachname`, `spieler_js`,
  *  `spieler_jahrgang` und der Obergrenze im Trigger `spieler_vorher`. */
@@ -213,3 +214,22 @@ export const LINK_TEXT = {
   ungueltigTitel: "Dieser Link gilt nicht mehr",
   ungueltig: "Vielleicht hat das Trainerteam ihn erneuert. Frag deine Trainerin oder deinen Trainer nach dem aktuellen Link.",
 } as const;
+
+// ── Verlegen lässt Abmeldungen verfallen (#437) ─────────────────────────────
+
+/** Was beim Verlegen mit den Abmeldungen geschieht (AK 1) — vor dem Speichern. */
+export function verfallText(n: number): string {
+  return n === 1
+    ? "Damit verfällt 1 Abmeldung: Die Spieler:in gilt wieder als angemeldet."
+    : `Damit verfallen ${n} Abmeldungen: Diese Spieler:innen gelten wieder als angemeldet.`;
+}
+
+/** Dasselbe für den KI-Weg, mit dem Weg zur Bestätigung. */
+export function verfallBestaetigen(n: number): string {
+  return `${verfallText(n)} Wiederhole den Aufruf mit «bestaetigt: true», wenn das so gewollt ist.`;
+}
+
+/** Am privaten Link: Der Termin wurde verlegt, seit sie abgemeldet wurde (AK 2). */
+export function verfallenHinweis(vorher: { datum: string; beginn: string }): string {
+  return `Verlegt, vorher ${tagOhneJahr(vorher.datum)} um ${vorher.beginn}. Deine Abmeldung gilt nicht mehr.`;
+}
